@@ -286,16 +286,16 @@ void	R_FillColumnP_C (void);
 void	R_FillColumnHorizP_C (void);
 void	R_FillSpan_C (void);
 
-#ifdef X86_ASM
-#define R_SetupDrawSlab R_SetupDrawSlabA
-#define R_DrawSlab R_DrawSlabA
-#else
-#define R_SetupDrawSlab R_SetupDrawSlabC
-#define R_DrawSlab R_DrawSlabC
-#endif
+extern void(*R_SetupDrawSlab)(FColormap *base_colormap, float light, int shade);
+extern void(*R_DrawSlab)(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p);
 
-extern "C" void			   R_SetupDrawSlab(const BYTE *colormap);
-extern "C" void R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p);
+#ifdef X86_ASM
+extern "C" void R_SetupDrawSlabA(const BYTE *colormap);
+extern "C" void R_DrawSlabA(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p);
+#else
+extern "C" void R_SetupDrawSlabC(const BYTE *colormap);
+extern "C" void R_DrawSlabC(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p);
+#endif
 
 extern "C" int				ds_y;
 extern "C" int				ds_x1;

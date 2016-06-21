@@ -90,6 +90,9 @@ void R_DrawSpanAddClamp_rgba();
 void R_DrawSpanMaskedAddClamp_rgba();
 void R_FillSpan_rgba();
 
+void R_SetupDrawSlab_rgba(FColormap *base_colormap, float light, int shade);
+void R_DrawSlab_rgba(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p);
+
 void R_DrawFogBoundary_rgba(int x1, int x2, short *uclip, short *dclip);
 
 DWORD vlinec1_rgba();

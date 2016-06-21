@@ -2303,6 +2303,123 @@ public:
 	}
 };
 
+class DrawSlabRGBACommand : public DrawerCommand
+{
+	int _dx;
+	fixed_t _v;
+	int _dy;
+	fixed_t _vi;
+	const BYTE *_vptr;
+	uint32_t *_p;
+	ShadeConstants _shade_constants;
+	const BYTE *_colormap;
+	fixed_t _light;
+	int _pitch;
+	int _start_y;
+
+public:
+	DrawSlabRGBACommand(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p, ShadeConstants shade_constants, const BYTE *colormap, fixed_t light)
+	{
+		_dx = dx;
+		_v = v;
+		_dy = dy;
+		_vi = vi;
+		_vptr = vptr;
+		_p = (uint32_t *)p;
+		_shade_constants = shade_constants;
+		_colormap = colormap;
+		_light = light;
+		_pitch = dc_pitch;
+		_start_y = static_cast<int>((p - dc_destorg) / (dc_pitch * 4));
+		assert(dx > 0);
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		int dx = _dx;
+		fixed_t v = _v;
+		int dy = _dy;
+		fixed_t vi = _vi;
+		const BYTE *vptr = _vptr;
+		uint32_t *p = _p;
+		ShadeConstants shade_constants = _shade_constants;
+		const BYTE *colormap = _colormap;
+		uint32_t light = calc_light_multiplier(_light);
+		int pitch = _pitch;
+		int x;
+
+		dy = thread->count_for_thread(_start_y, dy);
+		p = thread->dest_for_thread(_start_y, pitch, p);
+		v += vi * thread->skipped_by_thread(_start_y);
+		vi *= thread->num_cores;
+		pitch *= thread->num_cores;
+
+		if (dx == 1)
+		{
+			while (dy > 0)
+			{
+				*p = shade_pal_index(colormap[vptr[v >> FRACBITS]], light, shade_constants);
+				p += pitch;
+				v += vi;
+				dy--;
+			}
+		}
+		else if (dx == 2)
+		{
+			while (dy > 0)
+			{
+				uint32_t color = shade_pal_index(colormap[vptr[v >> FRACBITS]], light, shade_constants);
+				p[0] = color;
+				p[1] = color;
+				p += pitch;
+				v += vi;
+				dy--;
+			}
+		}
+		else if (dx == 3)
+		{
+			while (dy > 0)
+			{
+				uint32_t color = shade_pal_index(colormap[vptr[v >> FRACBITS]], light, shade_constants);
+				p[0] = color;
+				p[1] = color;
+				p[2] = color;
+				p += pitch;
+				v += vi;
+				dy--;
+			}
+		}
+		else if (dx == 4)
+		{
+			while (dy > 0)
+			{
+				uint32_t color = shade_pal_index(colormap[vptr[v >> FRACBITS]], light, shade_constants);
+				p[0] = color;
+				p[1] = color;
+				p[2] = color;
+				p[3] = color;
+				p += pitch;
+				v += vi;
+				dy--;
+			}
+		}
+		else while (dy > 0)
+		{
+			uint32_t color = shade_pal_index(colormap[vptr[v >> FRACBITS]], light, shade_constants);
+			// The optimizer will probably turn this into a memset call.
+			// Since dx is not likely to be large, I'm not sure that's a good thing,
+			// hence the alternatives above.
+			for (x = 0; x < dx; x++)
+			{
+				p[x] = color;
+			}
+			p += pitch;
+			v += vi;
+			dy--;
+		}
+	}
+};
+
 class Vlinec1RGBACommand : public DrawerCommand
 {
 	DWORD _iscale;
@@ -3811,6 +3928,31 @@ void R_DrawSpanMaskedAddClamp_rgba()
 void R_FillSpan_rgba()
 {
 	DrawerCommandQueue::QueueCommand<FillSpanRGBACommand>();
+}
+
+static ShadeConstants slab_rgba_shade_constants;
+static const BYTE *slab_rgba_colormap;
+static fixed_t slab_rgba_light;
+
+void R_SetupDrawSlab_rgba(FColormap *base_colormap, float light, int shade)
+{
+	slab_rgba_shade_constants.light_red = base_colormap->Color.r * 256 / 255;
+	slab_rgba_shade_constants.light_green = base_colormap->Color.g * 256 / 255;
+	slab_rgba_shade_constants.light_blue = base_colormap->Color.b * 256 / 255;
+	slab_rgba_shade_constants.light_alpha = base_colormap->Color.a * 256 / 255;
+	slab_rgba_shade_constants.fade_red = base_colormap->Fade.r;
+	slab_rgba_shade_constants.fade_green = base_colormap->Fade.g;
+	slab_rgba_shade_constants.fade_blue = base_colormap->Fade.b;
+	slab_rgba_shade_constants.fade_alpha = base_colormap->Fade.a;
+	slab_rgba_shade_constants.desaturate = MIN(abs(base_colormap->Desaturate), 255) * 255 / 256;
+	slab_rgba_shade_constants.simple_shade = (base_colormap->Color.d == 0x00ffffff && base_colormap->Fade.d == 0x00000000 && base_colormap->Desaturate == 0);
+	slab_rgba_colormap = base_colormap->Maps;
+	slab_rgba_light = LIGHTSCALE(light, shade);
+}
+
+void R_DrawSlab_rgba(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p)
+{
+	DrawerCommandQueue::QueueCommand<DrawSlabRGBACommand>(dx, v, dy, vi, vptr, p, slab_rgba_shade_constants, slab_rgba_colormap, slab_rgba_light);
 }
 
 //extern FTexture *rw_pic; // For the asserts below

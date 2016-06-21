@@ -100,6 +100,8 @@ void (*R_DrawFogBoundary)(int x1, int x2, short *uclip, short *dclip);
 void (*R_MapTiltedPlane)(int y, int x1);
 void (*R_MapColoredPlane)(int y, int x1);
 void (*R_DrawParticle)(vissprite_t *);
+void (*R_SetupDrawSlab)(FColormap *base_colormap, float light, int shade);
+void (*R_DrawSlab)(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p);
 fixed_t (*tmvline1_add)();
 void (*tmvline4_add)();
 fixed_t (*tmvline1_addclamp)();
@@ -2306,6 +2308,9 @@ void R_InitColumnDrawers ()
 		R_MapColoredPlane			= R_MapColoredPlane_rgba;
 		R_DrawParticle				= R_DrawParticle_rgba;
 
+		R_SetupDrawSlab				= R_SetupDrawSlab_rgba;
+		R_DrawSlab					= R_DrawSlab_rgba;
+
 		tmvline1_add				= tmvline1_add_rgba;
 		tmvline4_add				= tmvline4_add_rgba;
 		tmvline1_addclamp			= tmvline1_addclamp_rgba;
@@ -2402,6 +2407,14 @@ void R_InitColumnDrawers ()
 		R_MapTiltedPlane			= R_MapTiltedPlane_C;
 		R_MapColoredPlane			= R_MapColoredPlane_C;
 		R_DrawParticle				= R_DrawParticle_C;
+
+#ifdef X86_ASM
+		R_SetupDrawSlab				= [](FColormap *colormap, float light, int shade) { R_SetupDrawSlabA(colormap->Maps + (GETPALOOKUP(light, shade) << COLORMAPSHIFT)); };
+		R_DrawSlab					= R_DrawSlabA;
+#else
+		R_SetupDrawSlab				= [](FColormap *colormap, float light, int shade) { R_SetupDrawSlabC(colormap->Maps + (GETPALOOKUP(light, shade) << COLORMAPSHIFT)); };
+		R_DrawSlab					= R_DrawSlabC;
+#endif
 
 		tmvline1_add				= tmvline1_add_C;
 		tmvline4_add				= tmvline4_add_C;

@@ -688,7 +688,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 
 	// Render the voxel, either directly to the screen or offscreen.
 	R_DrawVoxel(spr->pa.vpos, spr->pa.vang, spr->gpos, spr->Angle,
-		spr->xscale, FLOAT2FIXED(spr->yscale), spr->voxel, spr->Style.BaseColormap->Maps + (spr->Style.ColormapNum << COLORMAPSHIFT), cliptop, clipbot,
+		spr->xscale, FLOAT2FIXED(spr->yscale), spr->voxel, spr->Style.BaseColormap, spr->Style.ColormapNum, cliptop, clipbot,
 		minslabz, maxslabz, flags);
 
 	// Blend the voxel, if that's what we need to do.
@@ -2775,7 +2775,7 @@ extern double BaseYaspectMul;;
 void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 	const FVector3 &dasprpos, DAngle dasprang,
 	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
-	lighttable_t *colormap, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags)
+	FColormap *colormap, int colormapnum, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags)
 {
 	int i, j, k, x, y, syoff, ggxstart, ggystart, nxoff;
 	fixed_t cosang, sinang, sprcosang, sprsinang;
@@ -2812,7 +2812,7 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 	sprcosang = FLOAT2FIXED(dasprang.Cos()) >> 2;
 	sprsinang = FLOAT2FIXED(-dasprang.Sin()) >> 2;
 
-	R_SetupDrawSlab(colormap);
+	R_SetupDrawSlab(colormap, 0.0f, colormapnum << FRACBITS);
 
 	int pixelsize = r_swtruecolor ? 4 : 1;
 

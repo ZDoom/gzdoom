@@ -193,7 +193,7 @@ EXTERN_CVAR(Bool, r_mipmap)
 // Manages queueing up commands and executing them on worker threads
 class DrawerCommandQueue
 {
-	enum { memorypool_size = 4 * 1024 * 1024 };
+	enum { memorypool_size = 16 * 1024 * 1024 };
 	char memorypool[memorypool_size];
 	size_t memorypool_pos = 0;
 
@@ -241,8 +241,13 @@ public:
 		else
 		{
 			void *ptr = AllocMemory(sizeof(T));
-			if (!ptr)
-				return;
+			if (!ptr) // Out of memory - render what we got
+			{
+				queue->Finish();
+				ptr = AllocMemory(sizeof(T));
+				if (!ptr)
+					return;
+			}
 			T *command = new (ptr)T(std::forward<Types>(args)...);
 			queue->commands.push_back(command);
 		}

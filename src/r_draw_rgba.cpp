@@ -59,6 +59,7 @@ extern int wallshade;
 
 CVAR(Bool, r_multithreaded, true, 0)
 CVAR(Bool, r_bilinear, true, 0)
+CVAR(Bool, r_mipmap, true, 0)
 
 #ifndef NO_SSE
 
@@ -1502,6 +1503,7 @@ class DrawSpanRGBACommand : public DrawerCommand
 	BYTE * RESTRICT _destorg;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
+	bool _magnifying;
 
 public:
 	DrawSpanRGBACommand()
@@ -1519,6 +1521,7 @@ public:
 		_destorg = dc_destorg;
 		_light = ds_light;
 		_shade_constants = ds_shade_constants;
+		_magnifying = !span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep);
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -1548,12 +1551,7 @@ public:
 		uint32_t light = calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
-		fixed_t xmagnitude = abs((fixed_t)xstep) >> (32 - _xbits - FRACBITS);
-		fixed_t ymagnitude = abs((fixed_t)ystep) >> (32 - _ybits - FRACBITS);
-		fixed_t magnitude = xmagnitude + ymagnitude;
-
-		bool magnifying = !r_bilinear || magnitude >> (FRACBITS - 1) == 0;
-		if (magnifying)
+		if (_magnifying)
 		{
 			if (_xbits == 6 && _ybits == 6)
 			{
@@ -1634,6 +1632,7 @@ class DrawSpanMaskedRGBACommand : public DrawerCommand
 	fixed_t _ystep;
 	int _xbits;
 	int _ybits;
+	bool _magnifying;
 
 public:
 	DrawSpanMaskedRGBACommand()
@@ -1651,6 +1650,7 @@ public:
 		_ystep = ds_ystep;
 		_xbits = ds_xbits;
 		_ybits = ds_ybits;
+		_magnifying = !span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep);
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -1680,12 +1680,7 @@ public:
 		xstep = _xstep;
 		ystep = _ystep;
 
-		fixed_t xmagnitude = abs((fixed_t)xstep) >> (32 - _xbits - FRACBITS);
-		fixed_t ymagnitude = abs((fixed_t)ystep) >> (32 - _ybits - FRACBITS);
-		fixed_t magnitude = xmagnitude + ymagnitude;
-
-		bool magnifying = !r_bilinear || magnitude >> (FRACBITS - 1) == 0;
-		if (magnifying)
+		if (_magnifying)
 		{
 			if (_xbits == 6 && _ybits == 6)
 			{
@@ -3676,6 +3671,106 @@ void ApplySpecialColormapRGBACommand::Execute(DrawerThread *thread)
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
+
+#include <map>
+
+class MipmappedTexture
+{
+public:
+	MipmappedTexture(FTexture *texture)
+	{
+		const uint32_t *base_texture = texture->GetPixelsBgra();
+		Width = texture->GetWidth();
+		Height = texture->GetHeight();
+		Levels = MAX(texture->WidthBits, texture->HeightBits);
+
+		// I bet there is a better way to calculate this..
+		int buffersize = 0;
+		for (int i = 0; i < Levels; i++)
+		{
+			int w = MAX(Width >> i, 2); // 2 instead of 1 because we texelGather in 2x2 blocks
+			int h = MAX(Height >> i, 2);
+			buffersize += w * h;
+		}
+		Pixels.resize(buffersize);
+
+		// Base level:
+		memcpy(Pixels.data(), base_texture, Width * Height * 4);
+
+		// Mipmap levels:
+		uint32_t *src = Pixels.data();
+		uint32_t *dest = src + Width * Height;
+		for (int i = 1; i < Levels; i++)
+		{
+			int srch = MAX(Height >> (i - 1), 2);
+			int w = MAX(Width >> i, 2);
+			int h = MAX(Height >> i, 2);
+
+			for (int x = 0; x < w; x++)
+			{
+				for (int y = 0; y < h; y++)
+				{
+					uint32_t src00 = src[y * 2 + x * 2 * srch];
+					uint32_t src01 = src[y * 2 + 1 + x * 2 * srch];
+					uint32_t src10 = src[y * 2 + (x * 2 + 1) * srch];
+					uint32_t src11 = src[y * 2 + 1 + (x * 2 + 1) * srch];
+
+					uint32_t alpha = (APART(src00) + APART(src01) + APART(src10) + APART(src11) + 2) / 4;
+					uint32_t red = (RPART(src00) + RPART(src01) + RPART(src10) + RPART(src11) + 2) / 4;
+					uint32_t green = (GPART(src00) + GPART(src01) + GPART(src10) + GPART(src11) + 2) / 4;
+					uint32_t blue = (BPART(src00) + BPART(src01) + BPART(src10) + BPART(src11) + 2) / 4;
+
+					dest[y + x * h] = (alpha << 24) | (red << 16) | (green << 8) | blue;
+				}
+			}
+
+			src = dest;
+			dest += w * h;
+		}
+	}
+
+	int Width = 0;
+	int Height = 0;
+	int Levels = 0;
+	std::vector<uint32_t> Pixels;
+};
+
+class TextureMipmapper
+{
+public:
+	static std::map<FTexture*, std::shared_ptr<MipmappedTexture>> &Textures()
+	{
+		static std::map<FTexture*, std::shared_ptr<MipmappedTexture>> textures;
+		return textures;
+	}
+};
+
+void R_SetMipmappedSpanSource(FTexture *tex)
+{
+	if (r_swtruecolor)
+	{
+		if (r_mipmap)
+		{
+			auto &mipmap = TextureMipmapper::Textures()[tex];
+			if (!mipmap)
+				mipmap = std::make_shared<MipmappedTexture>(tex);
+			ds_source = (const BYTE*)mipmap->Pixels.data();
+		}
+		else
+		{
+			ds_source = (const BYTE*)tex->GetPixelsBgra();
+		}
+	}
+	else
+	{
+		ds_source = tex->GetPixels();
+	}
+}
+
+void R_ClearMipmapCache()
+{
+	TextureMipmapper::Textures().clear();
+}
 
 void R_BeginDrawerCommands()
 {

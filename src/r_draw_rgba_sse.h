@@ -25,6 +25,7 @@ class VecCommand(DrawSpanRGBA) : public DrawerCommand
 	BYTE * RESTRICT _destorg;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
+	bool _magnifying;
 
 public:
 	VecCommand(DrawSpanRGBA)()
@@ -42,6 +43,7 @@ public:
 		_destorg = dc_destorg;
 		_light = ds_light;
 		_shade_constants = ds_shade_constants;
+		_magnifying = !span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep);
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -71,12 +73,7 @@ public:
 		uint32_t light = calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
-		fixed_t xmagnitude = abs((fixed_t)xstep) >> (32 - _xbits - FRACBITS);
-		fixed_t ymagnitude = abs((fixed_t)ystep) >> (32 - _ybits - FRACBITS);
-		fixed_t magnitude = xmagnitude + ymagnitude;
-
-		bool magnifying = !r_bilinear || magnitude >> (FRACBITS - 1) == 0;
-		if (magnifying)
+		if (_magnifying)
 		{
 			if (_xbits == 6 && _ybits == 6)
 			{

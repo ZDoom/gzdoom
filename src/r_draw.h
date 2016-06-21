@@ -122,7 +122,7 @@ extern void (*R_DrawTranslatedColumn)(void);
 extern void (*R_DrawSpan)(void);
 void R_SetupSpanBits(FTexture *tex);
 void R_SetSpanColormap(FDynamicColormap *colormap, int shade);
-void R_SetSpanSource(const BYTE *pixels);
+void R_SetSpanSource(FTexture *tex);
 
 // Span drawing for masked textures.
 extern void (*R_DrawSpanMasked)(void);

@@ -1178,10 +1178,7 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 		R_SetupSpanBits(tex);
 		double xscale = pl->xform.xScale * tex->Scale.X;
 		double yscale = pl->xform.yScale * tex->Scale.Y;
-		if (r_swtruecolor)
-			ds_source = (const BYTE*)tex->GetPixelsBgra();
-		else
-			ds_source = tex->GetPixels();
+		R_SetSpanSource(tex);
 
 		basecolormap = pl->colormap;
 		planeshade = LIGHT2SHADE(pl->lightlevel);

@@ -1062,13 +1062,13 @@ extern "C" BYTE *ds_curcolormap, *ds_cursource, *ds_curtiltedsource;
 //
 //==========================================================================
 
-void R_SetSpanSource(const BYTE *pixels)
+void R_SetSpanSource(FTexture *tex)
 {
-	ds_source = pixels;
+	R_SetMipmappedSpanSource(tex);
 #ifdef X86_ASM
 	if (!r_swtruecolor && ds_cursource != ds_source)
 	{
-		R_SetSpanSource_ASM(pixels);
+		R_SetSpanSource_ASM(ds_source);
 	}
 #endif
 }

@@ -170,6 +170,7 @@ void FSoftwareRenderer::RenderView(player_t *player)
 		R_InitColumnDrawers();
 	}
 
+	R_ClearMipmapCache();
 	R_BeginDrawerCommands();
 	R_RenderActorView (player->mo);
 	// [RH] Let cameras draw onto textures that were visible this frame.

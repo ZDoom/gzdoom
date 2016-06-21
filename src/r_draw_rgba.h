@@ -108,6 +108,9 @@ void tmvline4_revsubclamp_rgba();
 void R_FillColumnHoriz_rgba();
 void R_FillSpan_rgba();
 
+void R_SetMipmappedSpanSource(FTexture *tex);
+void R_ClearMipmapCache();
+
 /////////////////////////////////////////////////////////////////////////////
 // Multithreaded rendering infrastructure:
 
@@ -185,6 +188,7 @@ public:
 };
 
 EXTERN_CVAR(Bool, r_multithreaded)
+EXTERN_CVAR(Bool, r_mipmap)
 
 // Manages queueing up commands and executing them on worker threads
 class DrawerCommandQueue
@@ -424,6 +428,35 @@ FORCEINLINE uint32_t alpha_blend(uint32_t fg, uint32_t bg)
 	uint32_t blue = clamp<uint32_t>(fg_blue + (bg_blue * inv_alpha) / 256, 0, 255);
 
 	return 0xff000000 | (red << 16) | (green << 8) | blue;
+}
+
+inline bool span_sampler_setup(const uint32_t *&source, int &xbits, int &ybits, fixed_t xstep, fixed_t ystep)
+{
+	if (!r_bilinear)
+		return false;
+
+	// Is this a magfilter or minfilter?
+	fixed_t xmagnitude = abs(xstep) >> (32 - xbits - FRACBITS);
+	fixed_t ymagnitude = abs(ystep) >> (32 - ybits - FRACBITS);
+	fixed_t magnitude = (xmagnitude + ymagnitude) * 3 + (1 << (FRACBITS -1));
+	if (magnitude >> FRACBITS == 0)
+		return false;
+
+	if (r_mipmap)
+	{
+		int level = magnitude >> (FRACBITS + 1);
+		while (level != 0)
+		{
+			if (xbits <= 2 || ybits <= 2)
+				break;
+
+			source += (1 << (xbits)) * (1 << (ybits));
+			xbits -= 1;
+			ybits -= 1;
+			level >>= 1;
+		}
+	}
+	return true;
 }
 
 FORCEINLINE uint32_t sample_bilinear(const uint32_t *col0, const uint32_t *col1, uint32_t texturefracx, uint32_t texturefracy, int ybits)

@@ -2309,7 +2309,7 @@ class DrawSlabRGBACommand : public DrawerCommand
 	fixed_t _v;
 	int _dy;
 	fixed_t _vi;
-	const BYTE *_vptr;
+	const BYTE *_voxelptr;
 	uint32_t *_p;
 	ShadeConstants _shade_constants;
 	const BYTE *_colormap;
@@ -2324,7 +2324,7 @@ public:
 		_v = v;
 		_dy = dy;
 		_vi = vi;
-		_vptr = vptr;
+		_voxelptr = vptr;
 		_p = (uint32_t *)p;
 		_shade_constants = shade_constants;
 		_colormap = colormap;
@@ -2340,7 +2340,7 @@ public:
 		fixed_t v = _v;
 		int dy = _dy;
 		fixed_t vi = _vi;
-		const BYTE *vptr = _vptr;
+		const BYTE *vptr = _voxelptr;
 		uint32_t *p = _p;
 		ShadeConstants shade_constants = _shade_constants;
 		const BYTE *colormap = _colormap;

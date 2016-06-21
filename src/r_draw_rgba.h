@@ -108,9 +108,6 @@ void tmvline4_revsubclamp_rgba();
 void R_FillColumnHoriz_rgba();
 void R_FillSpan_rgba();
 
-void R_SetMipmappedSpanSource(FTexture *tex);
-void R_ClearMipmapCache();
-
 /////////////////////////////////////////////////////////////////////////////
 // Multithreaded rendering infrastructure:
 
@@ -494,9 +491,9 @@ FORCEINLINE uint32_t sample_bilinear(const uint32_t *texture, dsfixed_t xfrac, d
 	uint32_t y = (yfrac - yhalf) >> ybits;
 
 	uint32_t p00 = texture[(y & ymask)     + ((x & xmask) << yshift)];
-	uint32_t p01 = texture[(y + 1 & ymask) + ((x & xmask) << yshift)];
+	uint32_t p01 = texture[((y + 1) & ymask) + ((x & xmask) << yshift)];
 	uint32_t p10 = texture[(y & ymask)     + (((x + 1) & xmask) << yshift)];
-	uint32_t p11 = texture[(y + 1 & ymask) + (((x + 1) & xmask) << yshift)];
+	uint32_t p11 = texture[((y + 1) & ymask) + (((x + 1) & xmask) << yshift)];
 
 	uint32_t inv_b = ((xfrac + xhalf) >> (xbits - 4)) & 15;
 	uint32_t inv_a = ((yfrac + yhalf) >> (ybits - 4)) & 15;
@@ -511,87 +508,81 @@ FORCEINLINE uint32_t sample_bilinear(const uint32_t *texture, dsfixed_t xfrac, d
 	return (alpha << 24) | (red << 16) | (green << 8) | blue;
 }
 
-#ifndef NO_SSE
-FORCEINLINE __m128i sample_bilinear4_sse(const uint32_t **col0, const uint32_t **col1, uint32_t texturefracx[4], uint32_t texturefracy[4], int ybits)
-{
-	uint32_t half = 1 << (ybits - 1);
-
-	__m128i m127 = _mm_set1_epi16(127);
-	__m128i fg = _mm_setzero_si128();
-	for (int i = 0; i < 4; i++)
-	{
-		uint32_t y = (texturefracy[i] - half) >> ybits;
-
-		uint32_t inv_b = texturefracx[i];
-		uint32_t inv_a = ((texturefracy[i] + half) >> (ybits - 4)) & 15;
-		uint32_t a = 16 - inv_a;
-		uint32_t b = 16 - inv_b;
-
-		uint32_t ab = a * b;
-		uint32_t invab = inv_a * b;
-		uint32_t ainvb = a * inv_b;
-		uint32_t invainvb = inv_a * inv_b;
-		__m128i ab_invab = _mm_set_epi16(invab, invab, invab, invab, ab, ab, ab, ab);
-		__m128i ainvb_invainvb = _mm_set_epi16(invainvb, invainvb, invainvb, invainvb, ainvb, ainvb, ainvb, ainvb);
-
-		__m128i p0 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(col0[i] + y)), _mm_setzero_si128());
-		__m128i p1 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(col1[i] + y)), _mm_setzero_si128());
-
-		__m128i tmp = _mm_adds_epu16(_mm_mullo_epi16(p0, ab_invab), _mm_mullo_epi16(p1, ainvb_invainvb));
-		__m128i color = _mm_srli_epi16(_mm_adds_epu16(_mm_adds_epu16(_mm_srli_si128(tmp, 8), tmp), m127), 8);
-
-		fg = _mm_or_si128(_mm_srli_si128(fg, 4), _mm_slli_si128(_mm_packus_epi16(color, _mm_setzero_si128()), 12));
-	}
-	return fg;
+#define VEC_SAMPLE_BILINEAR4_COLUMN(fg, col0, col1, texturefracx, texturefracy, ybits) { \
+	uint32_t half = 1 << (ybits - 1); \
+	 \
+	__m128i m127 = _mm_set1_epi16(127); \
+	fg = _mm_setzero_si128(); \
+	for (int i = 0; i < 4; i++) \
+	{ \
+		uint32_t y = (texturefracy[i] - half) >> ybits; \
+		 \
+		uint32_t inv_b = texturefracx[i]; \
+		uint32_t inv_a = ((texturefracy[i] + half) >> (ybits - 4)) & 15; \
+		uint32_t a = 16 - inv_a; \
+		uint32_t b = 16 - inv_b; \
+		 \
+		uint32_t ab = a * b; \
+		uint32_t invab = inv_a * b; \
+		uint32_t ainvb = a * inv_b; \
+		uint32_t invainvb = inv_a * inv_b; \
+		__m128i ab_invab = _mm_set_epi16(invab, invab, invab, invab, ab, ab, ab, ab); \
+		__m128i ainvb_invainvb = _mm_set_epi16(invainvb, invainvb, invainvb, invainvb, ainvb, ainvb, ainvb, ainvb); \
+		 \
+		__m128i p0 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(col0[i] + y)), _mm_setzero_si128()); \
+		__m128i p1 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(col1[i] + y)), _mm_setzero_si128()); \
+		 \
+		__m128i tmp = _mm_adds_epu16(_mm_mullo_epi16(p0, ab_invab), _mm_mullo_epi16(p1, ainvb_invainvb)); \
+		__m128i color = _mm_srli_epi16(_mm_adds_epu16(_mm_adds_epu16(_mm_srli_si128(tmp, 8), tmp), m127), 8); \
+		 \
+		fg = _mm_or_si128(_mm_srli_si128(fg, 4), _mm_slli_si128(_mm_packus_epi16(color, _mm_setzero_si128()), 12)); \
+	} \
 }
 
-FORCEINLINE __m128i sample_bilinear4_sse(const uint32_t *texture, dsfixed_t &xfrac, dsfixed_t &yfrac, dsfixed_t xstep, dsfixed_t ystep, int xbits, int ybits)
-{
-	int xshift = (32 - xbits);
-	int yshift = (32 - ybits);
-	int xmask = (1 << xshift) - 1;
-	int ymask = (1 << yshift) - 1;
-	uint32_t xhalf = 1 << (xbits - 1);
-	uint32_t yhalf = 1 << (ybits - 1);
-
-	__m128i m127 = _mm_set1_epi16(127);
-	__m128i fg = _mm_setzero_si128();
-	for (int i = 0; i < 4; i++)
-	{
-		uint32_t x = (xfrac - xhalf) >> xbits;
-		uint32_t y = (yfrac - yhalf) >> ybits;
-
-		uint32_t p00 = texture[(y & ymask) + ((x & xmask) << yshift)];
-		uint32_t p01 = texture[(y + 1 & ymask) + ((x & xmask) << yshift)];
-		uint32_t p10 = texture[(y & ymask) + (((x + 1) & xmask) << yshift)];
-		uint32_t p11 = texture[(y + 1 & ymask) + (((x + 1) & xmask) << yshift)];
-
-		uint32_t inv_b = ((xfrac + xhalf) >> (xbits - 4)) & 15;
-		uint32_t inv_a = ((yfrac + yhalf) >> (ybits - 4)) & 15;
-		uint32_t a = 16 - inv_a;
-		uint32_t b = 16 - inv_b;
-
-		uint32_t ab = a * b;
-		uint32_t invab = inv_a * b;
-		uint32_t ainvb = a * inv_b;
-		uint32_t invainvb = inv_a * inv_b;
-		__m128i ab_invab = _mm_set_epi16(invab, invab, invab, invab, ab, ab, ab, ab);
-		__m128i ainvb_invainvb = _mm_set_epi16(invainvb, invainvb, invainvb, invainvb, ainvb, ainvb, ainvb, ainvb);
-
-		__m128i p0 = _mm_unpacklo_epi8(_mm_set_epi32(0, 0, p01, p00), _mm_setzero_si128());
-		__m128i p1 = _mm_unpacklo_epi8(_mm_set_epi32(0, 0, p11, p10), _mm_setzero_si128());
-
-		__m128i tmp = _mm_adds_epu16(_mm_mullo_epi16(p0, ab_invab), _mm_mullo_epi16(p1, ainvb_invainvb));
-		__m128i color = _mm_srli_epi16(_mm_adds_epu16(_mm_adds_epu16(_mm_srli_si128(tmp, 8), tmp), m127), 8);
-
-		fg = _mm_or_si128(_mm_srli_si128(fg, 4), _mm_slli_si128(_mm_packus_epi16(color, _mm_setzero_si128()), 12));
-
-		xfrac += xstep;
-		yfrac += ystep;
-	}
-	return fg;
+#define VEC_SAMPLE_BILINEAR4_SPAN(fg, texture, xfrac, yfrac, xstep, ystep, xbits, ybits) { \
+	int xshift = (32 - xbits); \
+	int yshift = (32 - ybits); \
+	int xmask = (1 << xshift) - 1; \
+	int ymask = (1 << yshift) - 1; \
+	uint32_t xhalf = 1 << (xbits - 1); \
+	uint32_t yhalf = 1 << (ybits - 1); \
+	 \
+	__m128i m127 = _mm_set1_epi16(127); \
+	fg = _mm_setzero_si128(); \
+	for (int i = 0; i < 4; i++) \
+	{ \
+		uint32_t x = (xfrac - xhalf) >> xbits; \
+		uint32_t y = (yfrac - yhalf) >> ybits; \
+		 \
+		uint32_t p00 = texture[(y & ymask) + ((x & xmask) << yshift)]; \
+		uint32_t p01 = texture[((y + 1) & ymask) + ((x & xmask) << yshift)]; \
+		uint32_t p10 = texture[(y & ymask) + (((x + 1) & xmask) << yshift)]; \
+		uint32_t p11 = texture[((y + 1) & ymask) + (((x + 1) & xmask) << yshift)]; \
+		 \
+		uint32_t inv_b = ((xfrac + xhalf) >> (xbits - 4)) & 15; \
+		uint32_t inv_a = ((yfrac + yhalf) >> (ybits - 4)) & 15; \
+		uint32_t a = 16 - inv_a; \
+		uint32_t b = 16 - inv_b; \
+		 \
+		uint32_t ab = a * b; \
+		uint32_t invab = inv_a * b; \
+		uint32_t ainvb = a * inv_b; \
+		uint32_t invainvb = inv_a * inv_b; \
+		__m128i ab_invab = _mm_set_epi16(invab, invab, invab, invab, ab, ab, ab, ab); \
+		__m128i ainvb_invainvb = _mm_set_epi16(invainvb, invainvb, invainvb, invainvb, ainvb, ainvb, ainvb, ainvb); \
+		 \
+		__m128i p0 = _mm_unpacklo_epi8(_mm_set_epi32(0, 0, p01, p00), _mm_setzero_si128()); \
+		__m128i p1 = _mm_unpacklo_epi8(_mm_set_epi32(0, 0, p11, p10), _mm_setzero_si128()); \
+		 \
+		__m128i tmp = _mm_adds_epu16(_mm_mullo_epi16(p0, ab_invab), _mm_mullo_epi16(p1, ainvb_invainvb)); \
+		__m128i color = _mm_srli_epi16(_mm_adds_epu16(_mm_adds_epu16(_mm_srli_si128(tmp, 8), tmp), m127), 8); \
+		 \
+		fg = _mm_or_si128(_mm_srli_si128(fg, 4), _mm_slli_si128(_mm_packus_epi16(color, _mm_setzero_si128()), 12)); \
+		 \
+		xfrac += xstep; \
+		yfrac += ystep; \
+	} \
 }
-#endif
 
 // Calculate constants for a simple shade with gamma correction
 #define AVX_LINEAR_SHADE_SIMPLE_INIT(light) \

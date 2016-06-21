@@ -633,7 +633,7 @@ void FPNGTexture::MakeTextureBgra ()
 		lump = new FileReader(SourceFile.GetChars());
 	}
 
-	PixelsBgra.resize(Width * Height, 0xffff0000);
+	CreatePixelsBgraWithMipmaps();
 	if (StartOfIDAT != 0)
 	{
 		DWORD len, id;
@@ -757,6 +757,7 @@ void FPNGTexture::MakeTextureBgra ()
 		}
 	}
 	delete lump;
+	GenerateBgraMipmaps();
 }
 
 //===========================================================================

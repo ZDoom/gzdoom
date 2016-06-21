@@ -200,7 +200,7 @@ const uint32_t *FTexture::GetPixelsBgra()
 		const BYTE *indices = GetPixels();
 		if (indices == nullptr)
 			return nullptr;
-		PixelsBgra.resize(Width * Height);
+		CreatePixelsBgraWithMipmaps();
 		for (int i = 0; i < Width * Height; i++)
 		{
 			if (indices[i] != 0)
@@ -208,6 +208,7 @@ const uint32_t *FTexture::GetPixelsBgra()
 			else
 				PixelsBgra[i] = 0;
 		}
+		GenerateBgraMipmaps();
 	}
 	return PixelsBgra.data();
 }
@@ -353,6 +354,71 @@ FTexture::Span **FTexture::CreateSpans (const BYTE *pixels) const
 void FTexture::FreeSpans (Span **spans) const
 {
 	M_Free (spans);
+}
+
+void FTexture::CreatePixelsBgraWithMipmaps()
+{
+	int levels = MipmapLevels();
+	int buffersize = 0;
+	for (int i = 0; i < levels; i++)
+	{
+		int w = MAX(Width >> i, 1);
+		int h = MAX(Height >> i, 1);
+		buffersize += w * h;
+	}
+	PixelsBgra.resize(buffersize, 0xffff0000);
+}
+
+int FTexture::MipmapLevels() const
+{
+	int widthbits = 0;
+	while ((Width >> widthbits) != 0) widthbits++;
+
+	int heightbits = 0;
+	while ((Height >> heightbits) != 0) heightbits++;
+
+	return MAX(widthbits, heightbits);
+}
+
+void FTexture::GenerateBgraMipmaps()
+{
+	uint32_t *src = PixelsBgra.data();
+	uint32_t *dest = src + Width * Height;
+	int levels = MipmapLevels();
+	for (int i = 1; i < levels; i++)
+	{
+		int srcw = MAX(Width >> (i - 1), 1);
+		int srch = MAX(Height >> (i - 1), 1);
+		int w = MAX(Width >> i, 1);
+		int h = MAX(Height >> i, 1);
+
+		for (int x = 0; x < w; x++)
+		{
+			int sx0 = x * 2;
+			int sx1 = MIN((x + 1) * 2, srcw - 1);
+
+			for (int y = 0; y < h; y++)
+			{
+				int sy0 = y * 2;
+				int sy1 = MIN((y + 1) * 2, srch - 1);
+
+				uint32_t src00 = src[sy0 + sx0 * srch];
+				uint32_t src01 = src[sy1 + sx0 * srch];
+				uint32_t src10 = src[sy0 + sx1 * srch];
+				uint32_t src11 = src[sy1 + sx1 * srch];
+
+				uint32_t alpha = (APART(src00) + APART(src01) + APART(src10) + APART(src11) + 2) / 4;
+				uint32_t red = (RPART(src00) + RPART(src01) + RPART(src10) + RPART(src11) + 2) / 4;
+				uint32_t green = (GPART(src00) + GPART(src01) + GPART(src10) + GPART(src11) + 2) / 4;
+				uint32_t blue = (BPART(src00) + BPART(src01) + BPART(src10) + BPART(src11) + 2) / 4;
+
+				dest[y + x * h] = (alpha << 24) | (red << 16) | (green << 8) | blue;
+			}
+		}
+
+		src = dest;
+		dest += w * h;
+	}
 }
 
 void FTexture::CopyToBlock (BYTE *dest, int dwidth, int dheight, int xpos, int ypos, int rotate, const BYTE *translation)

@@ -474,7 +474,7 @@ void FJPEGTexture::MakeTextureBgra()
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
 
-	PixelsBgra.resize(Width * Height, 0xffba0000);
+	CreatePixelsBgraWithMipmaps();
 
 	cinfo.err = jpeg_std_error(&jerr);
 	cinfo.err->output_message = JPEG_OutputMessage;
@@ -560,6 +560,8 @@ void FJPEGTexture::MakeTextureBgra()
 	{
 		delete[] buff;
 	}
+
+	GenerateBgraMipmaps();
 }
 
 

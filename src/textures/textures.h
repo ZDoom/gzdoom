@@ -271,6 +271,10 @@ protected:
 
 	std::vector<uint32_t> PixelsBgra;
 
+	void CreatePixelsBgraWithMipmaps();
+	void GenerateBgraMipmaps();
+	int MipmapLevels() const;
+
 public:
 	static void FlipSquareBlock (BYTE *block, int x, int y);
 	static void FlipSquareBlockBgra (uint32_t *block, int x, int y);

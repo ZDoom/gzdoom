@@ -280,7 +280,8 @@ public:
 					VEC_SHADE_SIMPLE_INIT(light);
 					while (sse_count--)
 					{
-						__m128i fg = sample_bilinear4_sse(source, xfrac, yfrac, xstep, ystep, 26, 26);
+						__m128i fg;
+						VEC_SAMPLE_BILINEAR4_SPAN(fg, source, xfrac, yfrac, xstep, ystep, 26, 26);
 						VEC_SHADE_SIMPLE(fg);
 						_mm_storeu_si128((__m128i*)dest, fg);
 						dest += 4;
@@ -291,7 +292,8 @@ public:
 					VEC_SHADE_INIT(light, shade_constants);
 					while (sse_count--)
 					{
-						__m128i fg = sample_bilinear4_sse(source, xfrac, yfrac, xstep, ystep, 26, 26);
+						__m128i fg;
+						VEC_SAMPLE_BILINEAR4_SPAN(fg, source, xfrac, yfrac, xstep, ystep, 26, 26);
 						VEC_SHADE(fg, shade_constants);
 						_mm_storeu_si128((__m128i*)dest, fg);
 						dest += 4;
@@ -318,7 +320,10 @@ public:
 					VEC_SHADE_SIMPLE_INIT(light);
 					while (sse_count--)
 					{
-						__m128i fg = sample_bilinear4_sse(source, xfrac, yfrac, xstep, ystep, 32 -_xbits, 32 - _ybits);
+						__m128i fg;
+						int tmpx = 32 - _xbits;
+						int tmpy = 32 - _ybits;
+						VEC_SAMPLE_BILINEAR4_SPAN(fg, source, xfrac, yfrac, xstep, ystep, tmpx, tmpy);
 						VEC_SHADE_SIMPLE(fg);
 						_mm_storeu_si128((__m128i*)dest, fg);
 						dest += 4;
@@ -329,7 +334,10 @@ public:
 					VEC_SHADE_INIT(light, shade_constants);
 					while (sse_count--)
 					{
-						__m128i fg = sample_bilinear4_sse(source, xfrac, yfrac, xstep, ystep, 32 - _xbits, 32 - _ybits);
+						__m128i fg;
+						int tmpx = 32 - _xbits;
+						int tmpy = 32 - _ybits;
+						VEC_SAMPLE_BILINEAR4_SPAN(fg, source, xfrac, yfrac, xstep, ystep, tmpx, tmpy);
 						VEC_SHADE(fg, shade_constants);
 						_mm_storeu_si128((__m128i*)dest, fg);
 						dest += 4;
@@ -471,7 +479,8 @@ public:
 				VEC_SHADE_SIMPLE_INIT4(light3, light2, light1, light0);
 				do
 				{
-					__m128i fg = sample_bilinear4_sse(bufplce, bufplce2, buftexturefracx, local_vplce, bits);
+					__m128i fg;
+					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, bits);
 
 					local_vplce[0] = local_vplce[0] + local_vince[0];
 					local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -488,7 +497,8 @@ public:
 				VEC_SHADE_INIT4(light3, light2, light1, light0, shade_constants);
 				do
 				{
-					__m128i fg = sample_bilinear4_sse(bufplce, bufplce2, buftexturefracx, local_vplce, bits);
+					__m128i fg;
+					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, bits);
 
 					local_vplce[0] = local_vplce[0] + local_vince[0];
 					local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -629,7 +639,8 @@ public:
 				VEC_SHADE_SIMPLE_INIT4(light3, light2, light1, light0);
 				do
 				{
-					__m128i fg = sample_bilinear4_sse(bufplce, bufplce2, buftexturefracx, local_vplce, bits);
+					__m128i fg;
+					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, bits);
 
 					local_vplce[0] = local_vplce[0] + local_vince[0];
 					local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -648,7 +659,8 @@ public:
 				VEC_SHADE_INIT4(light3, light2, light1, light0, shade_constants);
 				do
 				{
-					__m128i fg = sample_bilinear4_sse(bufplce, bufplce2, buftexturefracx, local_vplce, bits);
+					__m128i fg;
+					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, bits);
 
 					local_vplce[0] = local_vplce[0] + local_vince[0];
 					local_vplce[1] = local_vplce[1] + local_vince[1];

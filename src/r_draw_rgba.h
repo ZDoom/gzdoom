@@ -427,7 +427,7 @@ FORCEINLINE uint32_t alpha_blend(uint32_t fg, uint32_t bg)
 	return 0xff000000 | (red << 16) | (green << 8) | blue;
 }
 
-inline bool span_sampler_setup(const uint32_t *&source, int &xbits, int &ybits, fixed_t xstep, fixed_t ystep)
+inline bool span_sampler_setup(const uint32_t * RESTRICT &source, int &xbits, int &ybits, fixed_t xstep, fixed_t ystep)
 {
 	if (!r_bilinear)
 		return false;

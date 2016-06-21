@@ -58,7 +58,7 @@ extern float rw_lightstep;
 extern int wallshade;
 
 CVAR(Bool, r_multithreaded, true, 0)
-CVAR(Bool, r_bilinear, false, 0)
+CVAR(Bool, r_bilinear, true, 0)
 
 #ifndef NO_SSE
 
@@ -1680,43 +1680,70 @@ public:
 		xstep = _xstep;
 		ystep = _ystep;
 
-		if (_xbits == 6 && _ybits == 6)
-		{
-			// 64x64 is the most common case by far, so special case it.
-			do
-			{
-				uint32_t texdata;
+		fixed_t xmagnitude = abs((fixed_t)xstep) >> (32 - _xbits - FRACBITS);
+		fixed_t ymagnitude = abs((fixed_t)ystep) >> (32 - _ybits - FRACBITS);
+		fixed_t magnitude = xmagnitude + ymagnitude;
 
-				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-				texdata = source[spot];
-				if (texdata != 0)
+		bool magnifying = !r_bilinear || magnitude >> (FRACBITS - 1) == 0;
+		if (magnifying)
+		{
+			if (_xbits == 6 && _ybits == 6)
+			{
+				// 64x64 is the most common case by far, so special case it.
+				do
 				{
-					*dest = shade_bgra(texdata, light, shade_constants);
-				}
-				dest++;
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+					uint32_t texdata;
+
+					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+					texdata = source[spot];
+					*dest = alpha_blend(shade_bgra(texdata, light, shade_constants), *dest);
+					dest++;
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
+			else
+			{
+				BYTE yshift = 32 - _ybits;
+				BYTE xshift = yshift - _xbits;
+				int xmask = ((1 << _xbits) - 1) << _ybits;
+				do
+				{
+					uint32_t texdata;
+
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					texdata = source[spot];
+					*dest = alpha_blend(shade_bgra(texdata, light, shade_constants), *dest);
+					dest++;
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
 		}
 		else
 		{
-			BYTE yshift = 32 - _ybits;
-			BYTE xshift = yshift - _xbits;
-			int xmask = ((1 << _xbits) - 1) << _ybits;
-			do
+			if (_xbits == 6 && _ybits == 6)
 			{
-				uint32_t texdata;
-
-				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-				texdata = source[spot];
-				if (texdata != 0)
+				// 64x64 is the most common case by far, so special case it.
+				do
 				{
-					*dest = shade_bgra(texdata, light, shade_constants);
-				}
-				dest++;
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+					*dest++ = alpha_blend(shade_bgra(sample_bilinear(source, xfrac, yfrac, 26, 26), light, shade_constants), *dest);
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
+			else
+			{
+				BYTE yshift = 32 - _ybits;
+				BYTE xshift = yshift - _xbits;
+				int xmask = ((1 << _xbits) - 1) << _ybits;
+				do
+				{
+					*dest++ = alpha_blend(shade_bgra(sample_bilinear(source, xfrac, yfrac, 32 - _xbits, 32 - _ybits), light, shade_constants), *dest);
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
 		}
 	}
 };
@@ -2439,6 +2466,8 @@ class Mvlinec1RGBACommand : public DrawerCommand
 	DWORD _texturefrac;
 	int _count;
 	const BYTE * RESTRICT _source;
+	const BYTE * RESTRICT _source2;
+	uint32_t _texturefracx;
 	BYTE * RESTRICT _dest;
 	int mvlinebits;
 	int _pitch;
@@ -2452,6 +2481,8 @@ public:
 		_texturefrac = dc_texturefrac;
 		_count = dc_count;
 		_source = dc_source;
+		_source2 = dc_source2;
+		_texturefracx = dc_texturefracx;
 		_dest = dc_dest;
 		mvlinebits = ::mvlinebits;
 		_pitch = dc_pitch;
@@ -2468,6 +2499,8 @@ public:
 		DWORD fracstep = _iscale * thread->num_cores;
 		DWORD frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
 		const uint32 *source = (const uint32 *)_source;
+		const uint32 *source2 = (const uint32 *)_source2;
+		uint32_t texturefracx = _texturefracx;
 		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int bits = mvlinebits;
 		int pitch = _pitch * thread->num_cores;
@@ -2475,13 +2508,25 @@ public:
 		uint32_t light = calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
-		do
+		if (_source2 == nullptr)
 		{
-			uint32_t pix = source[frac >> bits];
-			*dest = alpha_blend(shade_bgra(pix, light, shade_constants), *dest);
-			frac += fracstep;
-			dest += pitch;
-		} while (--count);
+			do
+			{
+				uint32_t pix = source[frac >> bits];
+				*dest = alpha_blend(shade_bgra(pix, light, shade_constants), *dest);
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				*dest = alpha_blend(shade_bgra(sample_bilinear(source, source2, texturefracx, frac, bits), light, shade_constants), *dest);
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+		}
 	}
 };
 
@@ -2496,6 +2541,8 @@ class Mvlinec4RGBACommand : public DrawerCommand
 	DWORD vplce[4];
 	DWORD vince[4];
 	const uint32 * RESTRICT bufplce[4];
+	const uint32 * RESTRICT bufplce2[4];
+	uint32_t buftexturefracx[4];
 
 public:
 	Mvlinec4RGBACommand()
@@ -2511,6 +2558,8 @@ public:
 			vplce[i] = ::vplce[i];
 			vince[i] = ::vince[i];
 			bufplce[i] = (const uint32 *)::bufplce[i];
+			bufplce2[i] = (const uint32_t *)::bufplce2[i];
+			buftexturefracx[i] = ::buftexturefracx[i];
 		}
 	}
 
@@ -2541,15 +2590,29 @@ public:
 			local_vince[i] *= thread->num_cores;
 		}
 
-		do
+		if (bufplce2[0] == nullptr)
 		{
-			uint32_t pix;
-			pix = bufplce[0][(place = local_vplce[0]) >> bits]; dest[0] = alpha_blend(shade_bgra(pix, light0, shade_constants), dest[0]); local_vplce[0] = place + local_vince[0];
-			pix = bufplce[1][(place = local_vplce[1]) >> bits]; dest[1] = alpha_blend(shade_bgra(pix, light1, shade_constants), dest[1]); local_vplce[1] = place + local_vince[1];
-			pix = bufplce[2][(place = local_vplce[2]) >> bits]; dest[2] = alpha_blend(shade_bgra(pix, light2, shade_constants), dest[2]); local_vplce[2] = place + local_vince[2];
-			pix = bufplce[3][(place = local_vplce[3]) >> bits]; dest[3] = alpha_blend(shade_bgra(pix, light3, shade_constants), dest[3]); local_vplce[3] = place + local_vince[3];
-			dest += pitch;
-		} while (--count);
+			do
+			{
+				uint32_t pix;
+				pix = bufplce[0][(place = local_vplce[0]) >> bits]; dest[0] = alpha_blend(shade_bgra(pix, light0, shade_constants), dest[0]); local_vplce[0] = place + local_vince[0];
+				pix = bufplce[1][(place = local_vplce[1]) >> bits]; dest[1] = alpha_blend(shade_bgra(pix, light1, shade_constants), dest[1]); local_vplce[1] = place + local_vince[1];
+				pix = bufplce[2][(place = local_vplce[2]) >> bits]; dest[2] = alpha_blend(shade_bgra(pix, light2, shade_constants), dest[2]); local_vplce[2] = place + local_vince[2];
+				pix = bufplce[3][(place = local_vplce[3]) >> bits]; dest[3] = alpha_blend(shade_bgra(pix, light3, shade_constants), dest[3]); local_vplce[3] = place + local_vince[3];
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				dest[0] = alpha_blend(shade_bgra(sample_bilinear(bufplce[0], bufplce2[0], buftexturefracx[0], place = local_vplce[0], bits), light0, shade_constants), dest[0]); local_vplce[0] = place + local_vince[0];
+				dest[1] = alpha_blend(shade_bgra(sample_bilinear(bufplce[1], bufplce2[1], buftexturefracx[1], place = local_vplce[1], bits), light1, shade_constants), dest[1]); local_vplce[1] = place + local_vince[1];
+				dest[2] = alpha_blend(shade_bgra(sample_bilinear(bufplce[2], bufplce2[2], buftexturefracx[2], place = local_vplce[2], bits), light2, shade_constants), dest[2]); local_vplce[2] = place + local_vince[2];
+				dest[3] = alpha_blend(shade_bgra(sample_bilinear(bufplce[3], bufplce2[3], buftexturefracx[3], place = local_vplce[3], bits), light3, shade_constants), dest[3]); local_vplce[3] = place + local_vince[3];
+				dest += pitch;
+			} while (--count);
+		}
 	}
 };
 
@@ -3719,10 +3782,7 @@ void R_DrawSpan_rgba()
 #ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<DrawSpanRGBACommand>();
 #else
-	if (!r_bilinear)
-		DrawerCommandQueue::QueueCommand<DrawSpanRGBA_SSE_Command>();
-	else
-		DrawerCommandQueue::QueueCommand<DrawSpanRGBACommand>();
+	DrawerCommandQueue::QueueCommand<DrawSpanRGBA_SSE_Command>();
 #endif
 }
 
@@ -3776,10 +3836,7 @@ void vlinec4_rgba()
 #ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<Vlinec4RGBACommand>();
 #else
-	if (!r_bilinear)
-		DrawerCommandQueue::QueueCommand<Vlinec4RGBA_SSE_Command>();
-	else
-		DrawerCommandQueue::QueueCommand<Vlinec4RGBACommand>();
+	DrawerCommandQueue::QueueCommand<Vlinec4RGBA_SSE_Command>();
 #endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;

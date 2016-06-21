@@ -71,195 +71,284 @@ public:
 		uint32_t light = calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
-		if (_xbits == 6 && _ybits == 6)
+		fixed_t xmagnitude = abs((fixed_t)xstep) >> (32 - _xbits - FRACBITS);
+		fixed_t ymagnitude = abs((fixed_t)ystep) >> (32 - _ybits - FRACBITS);
+		fixed_t magnitude = xmagnitude + ymagnitude;
+
+		bool magnifying = !r_bilinear || magnitude >> (FRACBITS - 1) == 0;
+		if (magnifying)
 		{
-			// 64x64 is the most common case by far, so special case it.
-
-			int sse_count = count / 4;
-			count -= sse_count * 4;
-
-			if (shade_constants.simple_shade)
+			if (_xbits == 6 && _ybits == 6)
 			{
-				VEC_SHADE_SIMPLE_INIT(light);
+				// 64x64 is the most common case by far, so special case it.
 
-				while (sse_count--)
+				int sse_count = count / 4;
+				count -= sse_count * 4;
+
+				if (shade_constants.simple_shade)
+				{
+					VEC_SHADE_SIMPLE_INIT(light);
+
+					while (sse_count--)
+					{
+						// Current texture index in u,v.
+						spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+						uint32_t p0 = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+
+						spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+						uint32_t p1 = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+
+						spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+						uint32_t p2 = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+
+						spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+						uint32_t p3 = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+
+						// Lookup pixel from flat texture tile,
+						//  re-index using light/colormap.
+						__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
+						VEC_SHADE_SIMPLE(fg);
+						_mm_storeu_si128((__m128i*)dest, fg);
+
+						// Next step in u,v.
+						dest += 4;
+					}
+				}
+				else
+				{
+					VEC_SHADE_INIT(light, shade_constants);
+
+					while (sse_count--)
+					{
+						// Current texture index in u,v.
+						spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+						uint32_t p0 = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+
+						spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+						uint32_t p1 = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+
+						spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+						uint32_t p2 = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+
+						spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+						uint32_t p3 = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+
+						// Lookup pixel from flat texture tile,
+						//  re-index using light/colormap.
+						__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
+						VEC_SHADE(fg, shade_constants);
+						_mm_storeu_si128((__m128i*)dest, fg);
+
+						// Next step in u,v.
+						dest += 4;
+					}
+				}
+
+				if (count == 0)
+					return;
+
+				do
 				{
 					// Current texture index in u,v.
 					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t p0 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
 
-					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t p1 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t p2 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t p3 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					// Lookup pixel from flat texture tile,
-					//  re-index using light/colormap.
-					__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
-					VEC_SHADE_SIMPLE(fg);
-					_mm_storeu_si128((__m128i*)dest, fg);
+					// Lookup pixel from flat texture tile
+					*dest++ = shade_bgra(source[spot], light, shade_constants);
 
 					// Next step in u,v.
-					dest += 4;
-				}
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
 			}
 			else
 			{
-				VEC_SHADE_INIT(light, shade_constants);
+				BYTE yshift = 32 - _ybits;
+				BYTE xshift = yshift - _xbits;
+				int xmask = ((1 << _xbits) - 1) << _ybits;
 
-				while (sse_count--)
+				int sse_count = count / 4;
+				count -= sse_count * 4;
+
+				if (shade_constants.simple_shade)
+				{
+					VEC_SHADE_SIMPLE_INIT(light);
+
+					while (sse_count--)
+					{
+						spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+						uint32_t p0 = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+
+						spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+						uint32_t p1 = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+
+						spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+						uint32_t p2 = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+
+						spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+						uint32_t p3 = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+
+						// Lookup pixel from flat texture tile
+						__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
+						VEC_SHADE_SIMPLE(fg);
+						_mm_storeu_si128((__m128i*)dest, fg);
+						dest += 4;
+					}
+				}
+				else
+				{
+					VEC_SHADE_INIT(light, shade_constants);
+
+					while (sse_count--)
+					{
+						spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+						uint32_t p0 = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+
+						spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+						uint32_t p1 = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+
+						spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+						uint32_t p2 = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+
+						spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+						uint32_t p3 = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+
+						// Lookup pixel from flat texture tile
+						__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
+						VEC_SHADE(fg, shade_constants);
+						_mm_storeu_si128((__m128i*)dest, fg);
+						dest += 4;
+					}
+				}
+
+				if (count == 0)
+					return;
+
+				do
 				{
 					// Current texture index in u,v.
-					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t p0 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 
-					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t p1 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t p2 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t p3 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					// Lookup pixel from flat texture tile,
-					//  re-index using light/colormap.
-					__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
-					VEC_SHADE(fg, shade_constants);
-					_mm_storeu_si128((__m128i*)dest, fg);
+					// Lookup pixel from flat texture tile
+					*dest++ = shade_bgra(source[spot], light, shade_constants);
 
 					// Next step in u,v.
-					dest += 4;
-				}
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
 			}
-
-			if (count == 0)
-				return;
-
-			do
-			{
-				// Current texture index in u,v.
-				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-
-				// Lookup pixel from flat texture tile
-				*dest++ = shade_bgra(source[spot], light, shade_constants);
-
-				// Next step in u,v.
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
 		}
 		else
 		{
-			BYTE yshift = 32 - _ybits;
-			BYTE xshift = yshift - _xbits;
-			int xmask = ((1 << _xbits) - 1) << _ybits;
-
-			int sse_count = count / 4;
-			count -= sse_count * 4;
-
-			if (shade_constants.simple_shade)
+			if (_xbits == 6 && _ybits == 6)
 			{
-				VEC_SHADE_SIMPLE_INIT(light);
+				// 64x64 is the most common case by far, so special case it.
 
-				while (sse_count--)
+				int sse_count = count / 4;
+				count -= sse_count * 4;
+
+				if (shade_constants.simple_shade)
 				{
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t p0 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t p1 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t p2 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t p3 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					// Lookup pixel from flat texture tile
-					__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
-					VEC_SHADE_SIMPLE(fg);
-					_mm_storeu_si128((__m128i*)dest, fg);
-					dest += 4;
+					VEC_SHADE_SIMPLE_INIT(light);
+					while (sse_count--)
+					{
+						__m128i fg = sample_bilinear4_sse(source, xfrac, yfrac, xstep, ystep, 26, 26);
+						VEC_SHADE_SIMPLE(fg);
+						_mm_storeu_si128((__m128i*)dest, fg);
+						dest += 4;
+					}
 				}
+				else
+				{
+					VEC_SHADE_INIT(light, shade_constants);
+					while (sse_count--)
+					{
+						__m128i fg = sample_bilinear4_sse(source, xfrac, yfrac, xstep, ystep, 26, 26);
+						VEC_SHADE(fg, shade_constants);
+						_mm_storeu_si128((__m128i*)dest, fg);
+						dest += 4;
+					}
+				}
+
+				if (count == 0)
+					return;
+
+				do
+				{
+					*dest++ = shade_bgra(sample_bilinear(source, xfrac, yfrac, 26, 26), light, shade_constants);
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
 			}
 			else
 			{
-				VEC_SHADE_INIT(light, shade_constants);
+				int sse_count = count / 4;
+				count -= sse_count * 4;
 
-				while (sse_count--)
+				if (shade_constants.simple_shade)
 				{
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t p0 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t p1 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t p2 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t p3 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					// Lookup pixel from flat texture tile
-					__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
-					VEC_SHADE(fg, shade_constants);
-					_mm_storeu_si128((__m128i*)dest, fg);
-					dest += 4;
+					VEC_SHADE_SIMPLE_INIT(light);
+					while (sse_count--)
+					{
+						__m128i fg = sample_bilinear4_sse(source, xfrac, yfrac, xstep, ystep, 32 -_xbits, 32 - _ybits);
+						VEC_SHADE_SIMPLE(fg);
+						_mm_storeu_si128((__m128i*)dest, fg);
+						dest += 4;
+					}
 				}
+				else
+				{
+					VEC_SHADE_INIT(light, shade_constants);
+					while (sse_count--)
+					{
+						__m128i fg = sample_bilinear4_sse(source, xfrac, yfrac, xstep, ystep, 32 - _xbits, 32 - _ybits);
+						VEC_SHADE(fg, shade_constants);
+						_mm_storeu_si128((__m128i*)dest, fg);
+						dest += 4;
+					}
+				}
+
+				if (count == 0)
+					return;
+
+				do
+				{
+					*dest++ = shade_bgra(sample_bilinear(source, xfrac, yfrac, 32 - _xbits, 32 - _ybits), light, shade_constants);
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
 			}
-
-			if (count == 0)
-				return;
-
-			do
-			{
-				// Current texture index in u,v.
-				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-
-				// Lookup pixel from flat texture tile
-				*dest++ = shade_bgra(source[spot], light, shade_constants);
-
-				// Next step in u,v.
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
 		}
 	}
 };
@@ -275,6 +364,8 @@ class VecCommand(Vlinec4RGBA) : public DrawerCommand
 	DWORD vplce[4];
 	DWORD vince[4];
 	const uint32 * RESTRICT bufplce[4];
+	const uint32_t * RESTRICT bufplce2[4];
+	uint32_t buftexturefracx[4];
 
 public:
 	VecCommand(Vlinec4RGBA)()
@@ -290,6 +381,8 @@ public:
 			vplce[i] = ::vplce[i];
 			vince[i] = ::vince[i];
 			bufplce[i] = (const uint32 *)::bufplce[i];
+			bufplce2[i] = (const uint32_t *)::bufplce2[i];
+			buftexturefracx[i] = ::buftexturefracx[i];
 		}
 	}
 
@@ -319,57 +412,97 @@ public:
 			local_vince[i] *= thread->num_cores;
 		}
 
-		if (shade_constants.simple_shade)
+		if (bufplce2[0] == nullptr)
 		{
-			VEC_SHADE_SIMPLE_INIT4(light3, light2, light1, light0);
-			do
+			if (shade_constants.simple_shade)
 			{
-				DWORD place0 = local_vplce[0];
-				DWORD place1 = local_vplce[1];
-				DWORD place2 = local_vplce[2];
-				DWORD place3 = local_vplce[3];
+				VEC_SHADE_SIMPLE_INIT4(light3, light2, light1, light0);
+				do
+				{
+					DWORD place0 = local_vplce[0];
+					DWORD place1 = local_vplce[1];
+					DWORD place2 = local_vplce[2];
+					DWORD place3 = local_vplce[3];
 
-				uint32_t p0 = bufplce[0][place0 >> bits];
-				uint32_t p1 = bufplce[1][place1 >> bits];
-				uint32_t p2 = bufplce[2][place2 >> bits];
-				uint32_t p3 = bufplce[3][place3 >> bits];
+					uint32_t p0 = bufplce[0][place0 >> bits];
+					uint32_t p1 = bufplce[1][place1 >> bits];
+					uint32_t p2 = bufplce[2][place2 >> bits];
+					uint32_t p3 = bufplce[3][place3 >> bits];
 
-				local_vplce[0] = place0 + local_vince[0];
-				local_vplce[1] = place1 + local_vince[1];
-				local_vplce[2] = place2 + local_vince[2];
-				local_vplce[3] = place3 + local_vince[3];
+					local_vplce[0] = place0 + local_vince[0];
+					local_vplce[1] = place1 + local_vince[1];
+					local_vplce[2] = place2 + local_vince[2];
+					local_vplce[3] = place3 + local_vince[3];
 
-				__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
-				VEC_SHADE_SIMPLE(fg);
-				_mm_storeu_si128((__m128i*)dest, fg);
-				dest += pitch;
-			} while (--count);
+					__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
+					VEC_SHADE_SIMPLE(fg);
+					_mm_storeu_si128((__m128i*)dest, fg);
+					dest += pitch;
+				} while (--count);
+			}
+			else
+			{
+				VEC_SHADE_INIT4(light3, light2, light1, light0, shade_constants);
+				do
+				{
+					DWORD place0 = local_vplce[0];
+					DWORD place1 = local_vplce[1];
+					DWORD place2 = local_vplce[2];
+					DWORD place3 = local_vplce[3];
+
+					uint32_t p0 = bufplce[0][place0 >> bits];
+					uint32_t p1 = bufplce[1][place1 >> bits];
+					uint32_t p2 = bufplce[2][place2 >> bits];
+					uint32_t p3 = bufplce[3][place3 >> bits];
+
+					local_vplce[0] = place0 + local_vince[0];
+					local_vplce[1] = place1 + local_vince[1];
+					local_vplce[2] = place2 + local_vince[2];
+					local_vplce[3] = place3 + local_vince[3];
+
+					__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
+					VEC_SHADE(fg, shade_constants);
+					_mm_storeu_si128((__m128i*)dest, fg);
+					dest += pitch;
+				} while (--count);
+			}
 		}
 		else
 		{
-			VEC_SHADE_INIT4(light3, light2, light1, light0, shade_constants);
-			do
+			if (shade_constants.simple_shade)
 			{
-				DWORD place0 = local_vplce[0];
-				DWORD place1 = local_vplce[1];
-				DWORD place2 = local_vplce[2];
-				DWORD place3 = local_vplce[3];
+				VEC_SHADE_SIMPLE_INIT4(light3, light2, light1, light0);
+				do
+				{
+					__m128i fg = sample_bilinear4_sse(bufplce, bufplce2, buftexturefracx, local_vplce, bits);
 
-				uint32_t p0 = bufplce[0][place0 >> bits];
-				uint32_t p1 = bufplce[1][place1 >> bits];
-				uint32_t p2 = bufplce[2][place2 >> bits];
-				uint32_t p3 = bufplce[3][place3 >> bits];
+					local_vplce[0] = local_vplce[0] + local_vince[0];
+					local_vplce[1] = local_vplce[1] + local_vince[1];
+					local_vplce[2] = local_vplce[2] + local_vince[2];
+					local_vplce[3] = local_vplce[3] + local_vince[3];
 
-				local_vplce[0] = place0 + local_vince[0];
-				local_vplce[1] = place1 + local_vince[1];
-				local_vplce[2] = place2 + local_vince[2];
-				local_vplce[3] = place3 + local_vince[3];
+					VEC_SHADE_SIMPLE(fg);
+					_mm_storeu_si128((__m128i*)dest, fg);
+					dest += pitch;
+				} while (--count);
+			}
+			else
+			{
+				VEC_SHADE_INIT4(light3, light2, light1, light0, shade_constants);
+				do
+				{
+					__m128i fg = sample_bilinear4_sse(bufplce, bufplce2, buftexturefracx, local_vplce, bits);
 
-				__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
-				VEC_SHADE(fg, shade_constants);
-				_mm_storeu_si128((__m128i*)dest, fg);
-				dest += pitch;
-			} while (--count);
+					local_vplce[0] = local_vplce[0] + local_vince[0];
+					local_vplce[1] = local_vplce[1] + local_vince[1];
+					local_vplce[2] = local_vplce[2] + local_vince[2];
+					local_vplce[3] = local_vplce[3] + local_vince[3];
+
+					VEC_SHADE(fg, shade_constants);
+					_mm_storeu_si128((__m128i*)dest, fg);
+					dest += pitch;
+				} while (--count);
+			}
 		}
 	}
 };
@@ -385,6 +518,8 @@ class VecCommand(Mvlinec4RGBA) : public DrawerCommand
 	DWORD vplce[4];
 	DWORD vince[4];
 	const uint32 * RESTRICT bufplce[4];
+	const uint32 * RESTRICT bufplce2[4];
+	uint32_t buftexturefracx[4];
 
 public:
 	VecCommand(Mvlinec4RGBA)()
@@ -400,6 +535,8 @@ public:
 			vplce[i] = ::vplce[i];
 			vince[i] = ::vince[i];
 			bufplce[i] = (const uint32 *)::bufplce[i];
+			bufplce2[i] = (const uint32_t *)::bufplce2[i];
+			buftexturefracx[i] = ::buftexturefracx[i];
 		}
 	}
 
@@ -429,61 +566,105 @@ public:
 			local_vince[i] *= thread->num_cores;
 		}
 
-		if (shade_constants.simple_shade)
+		if (bufplce2[0] == nullptr)
 		{
-			VEC_SHADE_SIMPLE_INIT4(light3, light2, light1, light0);
-			do
+			if (shade_constants.simple_shade)
 			{
-				DWORD place0 = local_vplce[0];
-				DWORD place1 = local_vplce[1];
-				DWORD place2 = local_vplce[2];
-				DWORD place3 = local_vplce[3];
+				VEC_SHADE_SIMPLE_INIT4(light3, light2, light1, light0);
+				do
+				{
+					DWORD place0 = local_vplce[0];
+					DWORD place1 = local_vplce[1];
+					DWORD place2 = local_vplce[2];
+					DWORD place3 = local_vplce[3];
 
-				uint32_t pix0 = bufplce[0][place0 >> bits];
-				uint32_t pix1 = bufplce[1][place1 >> bits];
-				uint32_t pix2 = bufplce[2][place2 >> bits];
-				uint32_t pix3 = bufplce[3][place3 >> bits];
+					uint32_t pix0 = bufplce[0][place0 >> bits];
+					uint32_t pix1 = bufplce[1][place1 >> bits];
+					uint32_t pix2 = bufplce[2][place2 >> bits];
+					uint32_t pix3 = bufplce[3][place3 >> bits];
 
-				local_vplce[0] = place0 + local_vince[0];
-				local_vplce[1] = place1 + local_vince[1];
-				local_vplce[2] = place2 + local_vince[2];
-				local_vplce[3] = place3 + local_vince[3];
+					local_vplce[0] = place0 + local_vince[0];
+					local_vplce[1] = place1 + local_vince[1];
+					local_vplce[2] = place2 + local_vince[2];
+					local_vplce[3] = place3 + local_vince[3];
 
-				__m128i fg = _mm_set_epi32(pix3, pix2, pix1, pix0);
-				__m128i bg = _mm_loadu_si128((const __m128i*)dest);
-				VEC_SHADE_SIMPLE(fg);
-				VEC_ALPHA_BLEND(fg, bg);
-				_mm_storeu_si128((__m128i*)dest, fg);
-				dest += pitch;
-			} while (--count);
+					__m128i fg = _mm_set_epi32(pix3, pix2, pix1, pix0);
+					__m128i bg = _mm_loadu_si128((const __m128i*)dest);
+					VEC_SHADE_SIMPLE(fg);
+					VEC_ALPHA_BLEND(fg, bg);
+					_mm_storeu_si128((__m128i*)dest, fg);
+					dest += pitch;
+				} while (--count);
+			}
+			else
+			{
+				VEC_SHADE_INIT4(light3, light2, light1, light0, shade_constants);
+				do
+				{
+					DWORD place0 = local_vplce[0];
+					DWORD place1 = local_vplce[1];
+					DWORD place2 = local_vplce[2];
+					DWORD place3 = local_vplce[3];
+
+					uint32_t pix0 = bufplce[0][place0 >> bits];
+					uint32_t pix1 = bufplce[1][place1 >> bits];
+					uint32_t pix2 = bufplce[2][place2 >> bits];
+					uint32_t pix3 = bufplce[3][place3 >> bits];
+
+					local_vplce[0] = place0 + local_vince[0];
+					local_vplce[1] = place1 + local_vince[1];
+					local_vplce[2] = place2 + local_vince[2];
+					local_vplce[3] = place3 + local_vince[3];
+
+					__m128i fg = _mm_set_epi32(pix3, pix2, pix1, pix0);
+					__m128i bg = _mm_loadu_si128((const __m128i*)dest);
+					VEC_SHADE(fg, shade_constants);
+					VEC_ALPHA_BLEND(fg, bg);
+					_mm_storeu_si128((__m128i*)dest, fg);
+					dest += pitch;
+				} while (--count);
+			}
 		}
 		else
 		{
-			VEC_SHADE_INIT4(light3, light2, light1, light0, shade_constants);
-			do
+			if (shade_constants.simple_shade)
 			{
-				DWORD place0 = local_vplce[0];
-				DWORD place1 = local_vplce[1];
-				DWORD place2 = local_vplce[2];
-				DWORD place3 = local_vplce[3];
+				VEC_SHADE_SIMPLE_INIT4(light3, light2, light1, light0);
+				do
+				{
+					__m128i fg = sample_bilinear4_sse(bufplce, bufplce2, buftexturefracx, local_vplce, bits);
 
-				uint32_t pix0 = bufplce[0][place0 >> bits];
-				uint32_t pix1 = bufplce[1][place1 >> bits];
-				uint32_t pix2 = bufplce[2][place2 >> bits];
-				uint32_t pix3 = bufplce[3][place3 >> bits];
+					local_vplce[0] = local_vplce[0] + local_vince[0];
+					local_vplce[1] = local_vplce[1] + local_vince[1];
+					local_vplce[2] = local_vplce[2] + local_vince[2];
+					local_vplce[3] = local_vplce[3] + local_vince[3];
 
-				local_vplce[0] = place0 + local_vince[0];
-				local_vplce[1] = place1 + local_vince[1];
-				local_vplce[2] = place2 + local_vince[2];
-				local_vplce[3] = place3 + local_vince[3];
+					__m128i bg = _mm_loadu_si128((const __m128i*)dest);
+					VEC_SHADE_SIMPLE(fg);
+					VEC_ALPHA_BLEND(fg, bg);
+					_mm_storeu_si128((__m128i*)dest, fg);
+					dest += pitch;
+				} while (--count);
+			}
+			else
+			{
+				VEC_SHADE_INIT4(light3, light2, light1, light0, shade_constants);
+				do
+				{
+					__m128i fg = sample_bilinear4_sse(bufplce, bufplce2, buftexturefracx, local_vplce, bits);
 
-				__m128i fg = _mm_set_epi32(pix3, pix2, pix1, pix0);
-				__m128i bg = _mm_loadu_si128((const __m128i*)dest);
-				VEC_SHADE(fg, shade_constants);
-				VEC_ALPHA_BLEND(fg, bg);
-				_mm_storeu_si128((__m128i*)dest, fg);
-				dest += pitch;
-			} while (--count);
+					local_vplce[0] = local_vplce[0] + local_vince[0];
+					local_vplce[1] = local_vplce[1] + local_vince[1];
+					local_vplce[2] = local_vplce[2] + local_vince[2];
+					local_vplce[3] = local_vplce[3] + local_vince[3];
+
+					__m128i bg = _mm_loadu_si128((const __m128i*)dest);
+					VEC_SHADE(fg, shade_constants);
+					VEC_ALPHA_BLEND(fg, bg);
+					_mm_storeu_si128((__m128i*)dest, fg);
+					dest += pitch;
+				} while (--count);
+			}
 		}
 	}
 };

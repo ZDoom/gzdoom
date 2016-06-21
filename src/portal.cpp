@@ -272,14 +272,31 @@ static line_t *FindDestination(line_t *src, int tag)
 
 static void SetRotation(FLinePortal *port)
 {
-	if (port != NULL && port->mDestination != NULL)
+	if (port != nullptr && port->mDestination != nullptr)
 	{
-	line_t *dst = port->mDestination;
-	line_t *line = port->mOrigin;
-	DAngle angle = dst->Delta().Angle() - line->Delta().Angle() + 180.;
-	port->mSinRot = sindeg(angle.Degrees);	// Here precision matters so use the slower but more precise versions.
-	port->mCosRot = cosdeg(angle.Degrees);
-	port->mAngleDiff = angle;
+		if (port->mType != PORTT_LINKED)
+		{
+			line_t *dst = port->mDestination;
+			line_t *line = port->mOrigin;
+			DAngle angle = dst->Delta().Angle() - line->Delta().Angle() + 180.;
+			port->mSinRot = sindeg(angle.Degrees);	// Here precision matters so use the slower but more precise versions.
+			port->mCosRot = cosdeg(angle.Degrees);
+			port->mAngleDiff = angle;
+			if ((line->sidedef[0]->Flags & WALLF_POLYOBJ) || (dst->sidedef[0]->Flags & WALLF_POLYOBJ))
+			{
+				port->mFlags |= PORTF_POLYOBJ;
+			}
+			else
+			{
+				port->mFlags &= PORTF_POLYOBJ;
+			}
+		}
+		else
+		{
+			// Linked portals have no angular difference.
+			port->mSinRot = port->mCosRot = 0.;
+			port->mAngleDiff = 0.;
+		}
 	}
 }
 
@@ -325,11 +342,6 @@ void P_SpawnLinePortal(line_t* line)
 		{
 			port->mDefFlags = port->mType == PORTT_VISUAL ? PORTF_VISIBLE : port->mType == PORTT_TELEPORT ? PORTF_TYPETELEPORT : PORTF_TYPEINTERACTIVE;
 		}
-
-		// Get the angle between the two linedefs, for rotating
-		// orientation and velocity. Rotate 180 degrees, and flip
-		// the position across the exit linedef, if reversed.
-		SetRotation(port);
 	}
 	else if (line->args[2] == PORTT_LINKEDEE && line->args[0] == 0)
 	{
@@ -350,7 +362,6 @@ void P_SpawnLinePortal(line_t* line)
 				port->mType = PORTT_LINKED;
 				port->mAlign = PORG_ABSOLUTE;
 				port->mDefFlags = PORTF_TYPEINTERACTIVE;
-				SetRotation(port);
 
 				// we need to create the backlink here, too.
 				lines[i].portalindex = linePortals.Reserve(1);
@@ -362,8 +373,6 @@ void P_SpawnLinePortal(line_t* line)
 				port->mType = PORTT_LINKED;
 				port->mAlign = PORG_ABSOLUTE;
 				port->mDefFlags = PORTF_TYPEINTERACTIVE;
-
-				SetRotation(port);
 			}
 		}
 	}
@@ -413,6 +422,9 @@ void P_UpdatePortal(FLinePortal *port)
 			}
 		}
  	}
+
+	// Cache the angle between the two linedefs, for rotating.
+	SetRotation(port);
 }
 
 //============================================================================
@@ -593,6 +605,7 @@ void P_TranslatePortalXY(line_t* src, double& x, double& y)
 	if (!src) return;
 	FLinePortal *port = src->getPortal();
 	if (!port) return;
+	if (port->mFlags & PORTF_POLYOBJ) SetRotation(port);	// update the angle for polyportals.
 
 	// offsets from line
 	double nposx = x - src->v1->fX();
@@ -620,6 +633,7 @@ void P_TranslatePortalVXVY(line_t* src, double &velx, double &vely)
 	if (!src) return;
 	FLinePortal *port = src->getPortal();
 	if (!port) return;
+	if (port->mFlags & PORTF_POLYOBJ) SetRotation(port);	// update the angle for polyportals.
 
 	double orig_velx = velx;
 	double orig_vely = vely;
@@ -638,6 +652,7 @@ void P_TranslatePortalAngle(line_t* src, DAngle& angle)
 	if (!src) return;
 	FLinePortal *port = src->getPortal();
 	if (!port) return;
+	if (port->mFlags & PORTF_POLYOBJ) SetRotation(port);	// update the angle for polyportals.
 	angle = (angle + port->mAngleDiff).Normalized360();
 }
 

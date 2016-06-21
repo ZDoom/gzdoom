@@ -4190,31 +4190,6 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 	return tex == TexMan[secpic];
 }
 
-enum
-{
-	// These are the original inputs sent by the player.
-	INPUT_OLDBUTTONS,
-	INPUT_BUTTONS,
-	INPUT_PITCH,
-	INPUT_YAW,
-	INPUT_ROLL,
-	INPUT_FORWARDMOVE,
-	INPUT_SIDEMOVE,
-	INPUT_UPMOVE,
-
-	// These are the inputs, as modified by P_PlayerThink().
-	// Most of the time, these will match the original inputs, but
-	// they can be different if a player is frozen or using a
-	// chainsaw.
-	MODINPUT_OLDBUTTONS,
-	MODINPUT_BUTTONS,
-	MODINPUT_PITCH,
-	MODINPUT_YAW,
-	MODINPUT_ROLL,
-	MODINPUT_FORWARDMOVE,
-	MODINPUT_SIDEMOVE,
-	MODINPUT_UPMOVE
-};
 
 int DLevelScript::GetPlayerInput(int playernum, int inputnum)
 {
@@ -4241,28 +4216,7 @@ int DLevelScript::GetPlayerInput(int playernum, int inputnum)
 		return 0;
 	}
 
-	switch (inputnum)
-	{
-	case INPUT_OLDBUTTONS:		return p->original_oldbuttons;		break;
-	case INPUT_BUTTONS:			return p->original_cmd.buttons;		break;
-	case INPUT_PITCH:			return p->original_cmd.pitch;		break;
-	case INPUT_YAW:				return p->original_cmd.yaw;			break;
-	case INPUT_ROLL:			return p->original_cmd.roll;		break;
-	case INPUT_FORWARDMOVE:		return p->original_cmd.forwardmove;	break;
-	case INPUT_SIDEMOVE:		return p->original_cmd.sidemove;	break;
-	case INPUT_UPMOVE:			return p->original_cmd.upmove;		break;
-
-	case MODINPUT_OLDBUTTONS:	return p->oldbuttons;				break;
-	case MODINPUT_BUTTONS:		return p->cmd.ucmd.buttons;			break;
-	case MODINPUT_PITCH:		return p->cmd.ucmd.pitch;			break;
-	case MODINPUT_YAW:			return p->cmd.ucmd.yaw;				break;
-	case MODINPUT_ROLL:			return p->cmd.ucmd.roll;			break;
-	case MODINPUT_FORWARDMOVE:	return p->cmd.ucmd.forwardmove;		break;
-	case MODINPUT_SIDEMOVE:		return p->cmd.ucmd.sidemove;		break;
-	case MODINPUT_UPMOVE:		return p->cmd.ucmd.upmove;			break;
-
-	default:					return 0;							break;
-	}
+	return P_Thing_CheckInputNum(p, inputnum);
 }
 
 enum
@@ -8094,6 +8048,17 @@ scriptwait:
 			break;
 
 // [BC] Start ST PCD's
+		case PCD_ISNETWORKGAME:
+			PushToStack(netgame);
+			break;
+
+		case PCD_PLAYERTEAM:
+			if ( activator && activator->player )
+				PushToStack( activator->player->userinfo.GetTeam() );
+			else
+				PushToStack( 0 );
+			break;
+
 		case PCD_PLAYERHEALTH:
 			if (activator)
 				PushToStack (activator->health);
@@ -8130,7 +8095,7 @@ scriptwait:
 			break;
 
 		case PCD_SINGLEPLAYER:
-			PushToStack (!netgame);
+			PushToStack (!multiplayer);
 			break;
 // [BC] End ST PCD's
 
@@ -9574,8 +9539,12 @@ scriptwait:
 			break;
 
 		case PCD_CONSOLECOMMAND:
+		case PCD_CONSOLECOMMANDDIRECT:
 			Printf (TEXTCOLOR_RED GAMENAME " doesn't support execution of console commands from scripts\n");
-			sp -= 3;
+			if (pcd == PCD_CONSOLECOMMAND)
+				sp -= 3;
+			else
+				pc += 3;
 			break;
  		}
  	}

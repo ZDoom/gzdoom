@@ -666,7 +666,36 @@ void InitSpawnablesFromMapinfo()
 	InitClassMap(SpawnableThings, SpawnablesFromMapinfo);
 	InitClassMap(StrifeTypes, ConversationIDsFromMapinfo);
 }
+int P_Thing_CheckInputNum(player_t *p, int inputnum)
+{
+	int renum = 0;
+	if (p)
+	{
+		switch (inputnum)
+		{
+		case INPUT_OLDBUTTONS:		renum = p->original_oldbuttons;			break;
+		case INPUT_BUTTONS:			renum = p->original_cmd.buttons;		break;
+		case INPUT_PITCH:			renum = p->original_cmd.pitch;			break;
+		case INPUT_YAW:				renum = p->original_cmd.yaw;			break;
+		case INPUT_ROLL:			renum = p->original_cmd.roll;			break;
+		case INPUT_FORWARDMOVE:		renum = p->original_cmd.forwardmove;	break;
+		case INPUT_SIDEMOVE:		renum = p->original_cmd.sidemove;		break;
+		case INPUT_UPMOVE:			renum = p->original_cmd.upmove;			break;
 
+		case MODINPUT_OLDBUTTONS:	renum = p->oldbuttons;					break;
+		case MODINPUT_BUTTONS:		renum = p->cmd.ucmd.buttons;			break;
+		case MODINPUT_PITCH:		renum = p->cmd.ucmd.pitch;				break;
+		case MODINPUT_YAW:			renum = p->cmd.ucmd.yaw;				break;
+		case MODINPUT_ROLL:			renum = p->cmd.ucmd.roll;				break;
+		case MODINPUT_FORWARDMOVE:	renum = p->cmd.ucmd.forwardmove;		break;
+		case MODINPUT_SIDEMOVE:		renum = p->cmd.ucmd.sidemove;			break;
+		case MODINPUT_UPMOVE:		renum = p->cmd.ucmd.upmove;				break;
+
+		default:					renum = 0;								break;
+		}
+	}
+	return renum;
+}
 bool P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, int count, int flags, int ptr)
 {
 	AActor *ref = COPY_AAPTR(self, ptr);

@@ -1722,7 +1722,8 @@ public:
 				// 64x64 is the most common case by far, so special case it.
 				do
 				{
-					*dest++ = alpha_blend(shade_bgra(sample_bilinear(source, xfrac, yfrac, 26, 26), light, shade_constants), *dest);
+					*dest = alpha_blend(shade_bgra(sample_bilinear(source, xfrac, yfrac, 26, 26), light, shade_constants), *dest);
+					dest++;
 					xfrac += xstep;
 					yfrac += ystep;
 				} while (--count);
@@ -1734,7 +1735,8 @@ public:
 				int xmask = ((1 << _xbits) - 1) << _ybits;
 				do
 				{
-					*dest++ = alpha_blend(shade_bgra(sample_bilinear(source, xfrac, yfrac, 32 - _xbits, 32 - _ybits), light, shade_constants), *dest);
+					*dest = alpha_blend(shade_bgra(sample_bilinear(source, xfrac, yfrac, 32 - _xbits, 32 - _ybits), light, shade_constants), *dest);
+					dest++;
 					xfrac += xstep;
 					yfrac += ystep;
 				} while (--count);

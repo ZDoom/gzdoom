@@ -443,7 +443,7 @@ inline bool span_sampler_setup(const uint32_t * RESTRICT &source, int &xbits, in
 	// Is this a magfilter or minfilter?
 	fixed_t xmagnitude = abs(xstep) >> (32 - xbits - FRACBITS);
 	fixed_t ymagnitude = abs(ystep) >> (32 - ybits - FRACBITS);
-	fixed_t magnitude = (xmagnitude + ymagnitude) * 3 + (1 << (FRACBITS -1));
+	fixed_t magnitude = (xmagnitude + ymagnitude) * 2 + (1 << (FRACBITS -1));
 	if (magnitude >> FRACBITS == 0)
 		return false;
 

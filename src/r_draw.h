@@ -381,33 +381,4 @@ void R_SetTranslationMap(lighttable_t *translation);
 extern bool r_swtruecolor;
 EXTERN_CVAR(Bool, r_bilinear);
 
-// Texture sampler state needed for bilinear filtering
-struct SamplerSetup
-{
-	SamplerSetup() { }
-	SamplerSetup(fixed_t xoffset, bool magnifying, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x));
-
-	const BYTE *source;
-	const BYTE *source2;
-	uint32_t texturefracx;
-};
-
-inline SamplerSetup::SamplerSetup(fixed_t xoffset, bool magnifying, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x))
-{
-	// Only do bilinear filtering if enabled and not a magnifying filter
-	if (!r_swtruecolor || !r_bilinear || magnifying)
-	{
-		source = getcol(texture, xoffset >> FRACBITS);
-		source2 = nullptr;
-		texturefracx = 0;
-	}
-	else
-	{
-		int tx = (xoffset - FRACUNIT / 2) >> FRACBITS;
-		source = getcol(texture, tx);
-		source2 = getcol(texture, tx + 1);
-		texturefracx = ((xoffset + FRACUNIT / 2) >> (FRACBITS - 4)) & 15;
-	}
-}
-
 #endif

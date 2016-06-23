@@ -1169,8 +1169,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ClearOverlays)
 
 	int count = 0;
 	DPSprite *pspr = player->psprites;
+	int startID = (pspr != nullptr) ? pspr->GetID() : start;
+	bool first = true;
 	while (pspr != nullptr)
 	{
+		if (pspr->GetID() == startID)
+		{
+			if (first)
+				first = false;
+			else
+				break;
+		}
 		int id = pspr->GetID();
 
 		//Do not wipe out layer 0. Ever.

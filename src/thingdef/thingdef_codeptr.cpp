@@ -1690,7 +1690,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 			if (!puff)
 			{
 				temp = true;
-				puff = P_LineAttack(self, bangle, range, bslope, 0, NAME_Hitscan, pufftype, laflags | LAF_NOINTERACT);
+				puff = P_LineAttack(self, angle, range, slope, 0, NAME_Hitscan, pufftype, laflags | LAF_NOINTERACT);
 			}
 
 			if (puff && missile)
@@ -1970,7 +1970,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 			if (!puff)
 			{
 				temp = true;
-				puff = P_LineAttack(self, bangle, range, bslope, 0, NAME_Hitscan, pufftype, laflags | LAF_NOINTERACT);
+				puff = P_LineAttack(self, angle, range, slope, 0, NAME_Hitscan, pufftype, laflags | LAF_NOINTERACT);
 			}
 			FireBulletMissile(self, missile, puff, angle, Spawnheight, Spawnofs_xy, flags, temp);
 		}

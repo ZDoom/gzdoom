@@ -4096,7 +4096,7 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags, FTranslatedLineTarget*victim, int *actualdamage)
 {
-	bool nointeract = !!(flags && LAF_NOINTERACT);
+	bool nointeract = !!(flags & LAF_NOINTERACT);
 	DVector3 direction;
 	double shootz;
 	FTraceResults trace;

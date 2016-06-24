@@ -51,6 +51,9 @@
 extern int vlinebits;
 extern int mvlinebits;
 extern int tmvlinebits;
+extern uint32_t vlinemax;
+extern uint32_t mvlinemax;
+extern uint32_t tmvlinemax;
 
 extern "C" short spanend[MAXHEIGHT];
 extern float rw_light;
@@ -261,353 +264,520 @@ void DrawerCommandQueue::StopThreads()
 
 /////////////////////////////////////////////////////////////////////////////
 
-class DrawColumnRGBACommand : public DrawerCommand
+class DrawerColumnCommand : public DrawerCommand
 {
+public:
 	int _count;
 	BYTE * RESTRICT _dest;
-	DWORD _texturefrac;
-	DWORD _iscale;
-	fixed_t _light;
-	const BYTE * RESTRICT _source;
 	int _pitch;
+	DWORD _iscale;
+	DWORD _texturefrac;
+
+	DrawerColumnCommand()
+	{
+		_count = dc_count;
+		_dest = dc_dest;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_pitch = dc_pitch;
+	}
+
+	class LoopIterator
+	{
+	public:
+		int count;
+		uint32_t *dest;
+		int pitch;
+		fixed_t fracstep;
+		fixed_t frac;
+
+		LoopIterator(DrawerColumnCommand *command, DrawerThread *thread)
+		{
+			count = thread->count_for_thread(command->_dest_y, command->_count);
+			if (count <= 0)
+				return;
+
+			dest = thread->dest_for_thread(command->_dest_y, command->_pitch, (uint32_t*)command->_dest);
+			pitch = command->_pitch * thread->num_cores;
+
+			fracstep = command->_iscale * thread->num_cores;
+			frac = command->_texturefrac + command->_iscale * thread->skipped_by_thread(command->_dest_y);
+		}
+
+		uint32_t sample_index()
+		{
+			return frac >> FRACBITS;
+		}
+
+		explicit operator bool()
+		{
+			return count > 0;
+		}
+
+		bool next()
+		{
+			dest += pitch;
+			frac += fracstep;
+			return (--count) != 0;
+		}
+	};
+};
+
+class DrawColumnRGBACommand : public DrawerColumnCommand
+{
+	uint32_t _light;
+	const BYTE * RESTRICT _source;
 	ShadeConstants _shade_constants;
 	BYTE * RESTRICT _colormap;
 
 public:
 	DrawColumnRGBACommand()
 	{
-		_count = dc_count;
-		_dest = dc_dest;
-		_texturefrac = dc_texturefrac;
-		_iscale = dc_iscale;
-		_light = dc_light;
-		_source = dc_source;
-		_pitch = dc_pitch;
+		_light = LightBgra::calc_light_multiplier(dc_light);
 		_shade_constants = dc_shade_constants;
+		_source = dc_source;
 		_colormap = dc_colormap;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int 				count;
-		uint32_t*			dest;
-		fixed_t 			frac;
-		fixed_t 			fracstep;
-
-		count = thread->count_for_thread(_dest_y, _count);
-
-		// Zero length, column does not exceed a pixel.
-		if (count <= 0)
-			return;
-
-		// Framebuffer destination address.
-		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-
-		uint32_t light = calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		// Determine scaling,
-		//	which is the only mapping to be done.
-		fracstep = _iscale * thread->num_cores;
-		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
-
-		// [RH] Get local copies of these variables so that the compiler
-		//		has a better chance of optimizing this well.
-		const BYTE *source = _source;
-		int pitch = _pitch * thread->num_cores;
-		BYTE *colormap = _colormap;
-
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 		do
 		{
-			*dest = shade_pal_index(colormap[source[frac >> FRACBITS]], light, shade_constants);
-
-			dest += pitch;
-			frac += fracstep;
-
-		} while (--count);
+			uint32_t fg = LightBgra::shade_pal_index(_colormap[_source[loop.sample_index()]], _light, _shade_constants);
+			*loop.dest = BlendBgra::copy(fg);
+		} while (loop.next());
 	}
 };
 
-class FillColumnRGBACommand : public DrawerCommand
+class FillColumnRGBACommand : public DrawerColumnCommand
 {
-	int _count;
-	BYTE * RESTRICT _dest;
-	fixed_t _light;
-	int _pitch;
-	int _color;
+	uint32_t _color;
 
 public:
 	FillColumnRGBACommand()
 	{
-		_count = dc_count;
-		_dest = dc_dest;
-		_light = dc_light;
-		_pitch = dc_pitch;
-		_color = dc_color;
+		uint32_t light = LightBgra::calc_light_multiplier(dc_light);
+		_color = LightBgra::shade_pal_index_simple(dc_color, light);
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int 				count;
-		uint32_t*			dest;
-
-		count = thread->count_for_thread(_dest_y, _count);
-
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-
-		uint32_t light = calc_light_multiplier(_light);
-
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
 		{
-			int pitch = _pitch * thread->num_cores;
-			uint32_t color = shade_pal_index_simple(_color, light);
-
-			do
-			{
-				*dest = color;
-				dest += pitch;
-			} while (--count);
-		}
+			*loop.dest = BlendBgra::copy(_color);
+		} while (loop.next());
 	}
 };
 
-class FillAddColumnRGBACommand : public DrawerCommand
+class FillAddColumnRGBACommand : public DrawerColumnCommand
 {
-	int _count;
-	BYTE * RESTRICT _dest;
-	int _pitch;
 	uint32_t _srccolor;
 
 public:
 	FillAddColumnRGBACommand()
 	{
-		_count = dc_count;
-		_dest = dc_dest;
-		_pitch = dc_pitch;
 		_srccolor = dc_srccolor_bgra;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count;
-		uint32_t *dest;
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 
-		count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int pitch = _pitch * thread->num_cores;
-
-		uint32_t fg = _srccolor;
-		uint32_t fg_red = (fg >> 16) & 0xff;
-		uint32_t fg_green = (fg >> 8) & 0xff;
-		uint32_t fg_blue = fg & 0xff;
-		uint32_t fg_alpha = fg >> 24;
-		fg_alpha += fg_alpha >> 7;
-
-		fg_red *= fg_alpha;
-		fg_green *= fg_alpha;
-		fg_blue *= fg_alpha;
-
-		uint32_t inv_alpha = 256 - fg_alpha;
+		uint32_t alpha = APART(_srccolor);
+		alpha += alpha >> 7;
 
 		do
 		{
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = (fg_red + bg_red * inv_alpha) / 256;
-			uint32_t green = (fg_green + bg_green * inv_alpha) / 256;
-			uint32_t blue = (fg_blue + bg_blue * inv_alpha) / 256;
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			dest += pitch;
-		} while (--count);
+			*loop.dest = BlendBgra::add(_srccolor, *loop.dest, alpha, 256 - alpha);
+		} while (loop.next());
 	}
 };
 
-class FillAddClampColumnRGBACommand : public DrawerCommand
+class FillAddClampColumnRGBACommand : public DrawerColumnCommand
 {
-	int _count;
-	BYTE * RESTRICT _dest;
-	int _pitch;
 	int _color;
 	uint32_t _srccolor;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
+	uint32_t _srcalpha;
+	uint32_t _destalpha;
 
 public:
 	FillAddClampColumnRGBACommand()
 	{
-		_count = dc_count;
-		_dest = dc_dest;
-		_pitch = dc_pitch;
 		_color = dc_color;
 		_srccolor = dc_srccolor_bgra;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
+		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		_destalpha = dc_destalpha >> (FRACBITS - 8);
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count;
-		uint32_t *dest;
-
-		count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int pitch = _pitch * thread->num_cores;
-
-		uint32_t fg = _srccolor;
-		uint32_t fg_red = (fg >> 16) & 0xff;
-		uint32_t fg_green = (fg >> 8) & 0xff;
-		uint32_t fg_blue = fg & 0xff;
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-		fg_red *= fg_alpha;
-		fg_green *= fg_alpha;
-		fg_blue *= fg_alpha;
-
-		do {
-
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = clamp<uint32_t>((fg_red + bg_red * bg_alpha) / 256, 0, 255);
-			uint32_t green = clamp<uint32_t>((fg_green + bg_green * bg_alpha) / 256, 0, 255);
-			uint32_t blue = clamp<uint32_t>((fg_blue + bg_blue * bg_alpha) / 256, 0, 255);
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			dest += pitch;
-		} while (--count);
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			*loop.dest = BlendBgra::add(_srccolor, *loop.dest, _srcalpha, _destalpha);
+		} while (loop.next());
 	}
 };
 
-class FillSubClampColumnRGBACommand : public DrawerCommand
+class FillSubClampColumnRGBACommand : public DrawerColumnCommand
 {
-	int _count;
-	BYTE * RESTRICT _dest;
-	int _pitch;
-	int _color;
 	uint32_t _srccolor;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
+	uint32_t _srcalpha;
+	uint32_t _destalpha;
 
 public:
 	FillSubClampColumnRGBACommand()
 	{
-		_count = dc_count;
-		_dest = dc_dest;
-		_pitch = dc_pitch;
-		_color = dc_color;
 		_srccolor = dc_srccolor_bgra;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
+		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		_destalpha = dc_destalpha >> (FRACBITS - 8);
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count;
-		uint32_t *dest;
-
-		count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int pitch = _pitch * thread->num_cores;
-
-		uint32_t fg = _srccolor;
-		uint32_t fg_red = (fg >> 16) & 0xff;
-		uint32_t fg_green = (fg >> 8) & 0xff;
-		uint32_t fg_blue = fg & 0xff;
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-		fg_red *= fg_alpha;
-		fg_green *= fg_alpha;
-		fg_blue *= fg_alpha;
-
-		do {
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = clamp<uint32_t>((0x10000 - fg_red + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-			uint32_t green = clamp<uint32_t>((0x10000 - fg_green + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-			uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			dest += pitch;
-		} while (--count);
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			*loop.dest = BlendBgra::sub(_srccolor, *loop.dest, _srcalpha, _destalpha);
+		} while (loop.next());
 	}
 };
 
-class FillRevSubClampColumnRGBACommand : public DrawerCommand
+class FillRevSubClampColumnRGBACommand : public DrawerColumnCommand
 {
-	int _count;
-	BYTE * RESTRICT _dest;
-	int _pitch;
-	int _color;
 	uint32_t _srccolor;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
+	uint32_t _srcalpha;
+	uint32_t _destalpha;
 
 public:
 	FillRevSubClampColumnRGBACommand()
 	{
-		_count = dc_count;
-		_dest = dc_dest;
-		_pitch = dc_pitch;
-		_color = dc_color;
 		_srccolor = dc_srccolor_bgra;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
+		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		_destalpha = dc_destalpha >> (FRACBITS - 8);
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count;
-		uint32_t *dest;
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			*loop.dest = BlendBgra::revsub(_srccolor, *loop.dest, _srcalpha, _destalpha);
+		} while (loop.next());
+	}
+};
 
-		count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
+class DrawAddColumnRGBACommand : public DrawerColumnCommand
+{
+	const BYTE * RESTRICT _source;
+	uint32_t _light;
+	ShadeConstants _shade_constants;
+	uint32_t _srcalpha;
+	uint32_t _destalpha;
+	BYTE * RESTRICT _colormap;
 
-		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int pitch = _pitch * thread->num_cores;
+public:
+	DrawAddColumnRGBACommand()
+	{
+		_source = dc_source;
+		_light = LightBgra::calc_light_multiplier(dc_light);
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		_destalpha = dc_destalpha >> (FRACBITS - 8);
+		_colormap = dc_colormap;
+	}
 
-		uint32_t fg = _srccolor;
-		uint32_t fg_red = (fg >> 16) & 0xff;
-		uint32_t fg_green = (fg >> 8) & 0xff;
-		uint32_t fg_blue = fg & 0xff;
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			uint32_t fg = LightBgra::shade_pal_index(_colormap[_source[loop.sample_index()]], _light, _shade_constants);
+			*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
+		} while (loop.next());
+	}
+};
 
-		fg_red *= fg_alpha;
-		fg_green *= fg_alpha;
-		fg_blue *= fg_alpha;
+class DrawTranslatedColumnRGBACommand : public DrawerColumnCommand
+{
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	BYTE * RESTRICT _translation;
+	const BYTE * RESTRICT _source;
 
-		do {
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
+public:
+	DrawTranslatedColumnRGBACommand()
+	{
+		_light = LightBgra::calc_light_multiplier(dc_light);
+		_shade_constants = dc_shade_constants;
+		_translation = dc_translation;
+		_source = dc_source;
+	}
 
-			uint32_t red = clamp<uint32_t>((0x10000 + fg_red - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-			uint32_t green = clamp<uint32_t>((0x10000 + fg_green - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-			uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			uint32_t fg = LightBgra::shade_pal_index(_translation[_source[loop.sample_index()]], _light, _shade_constants);
+			*loop.dest = BlendBgra::copy(fg);
+		} while (loop.next());
+	}
+};
 
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			dest += pitch;
-		} while (--count);
+class DrawTlatedAddColumnRGBACommand : public DrawerColumnCommand
+{
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	BYTE * RESTRICT _translation;
+	const BYTE * RESTRICT _source;
+	uint32_t _srcalpha;
+	uint32_t _destalpha;
+
+public:
+	DrawTlatedAddColumnRGBACommand()
+	{
+		_light = LightBgra::calc_light_multiplier(dc_light);
+		_shade_constants = dc_shade_constants;
+		_translation = dc_translation;
+		_source = dc_source;
+		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		_destalpha = dc_destalpha >> (FRACBITS - 8);
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			uint32_t fg = LightBgra::shade_pal_index(_translation[_source[loop.sample_index()]], _light, _shade_constants);
+			*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
+		} while (loop.next());
+	}
+};
+
+class DrawShadedColumnRGBACommand : public DrawerColumnCommand
+{
+private:
+	const BYTE * RESTRICT _source;
+	lighttable_t * RESTRICT _colormap;
+	uint32_t _color;
+
+public:
+	DrawShadedColumnRGBACommand()
+	{
+		_source = dc_source;
+		_colormap = dc_colormap;
+		_color = LightBgra::shade_pal_index_simple(dc_color, LightBgra::calc_light_multiplier(dc_light));
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			uint32_t alpha = clamp<uint32_t>(_colormap[_source[loop.sample_index()]], 0, 64) * 4;
+			uint32_t inv_alpha = 256 - alpha;
+			*loop.dest = BlendBgra::add(_color, *loop.dest, alpha, inv_alpha);
+		} while (loop.next());
+	}
+};
+
+class DrawAddClampColumnRGBACommand : public DrawerColumnCommand
+{
+	const BYTE * RESTRICT _source;
+	uint32_t _light;
+	ShadeConstants _shade_constants;
+	uint32_t _srcalpha;
+	uint32_t _destalpha;
+
+public:
+	DrawAddClampColumnRGBACommand()
+	{
+		_source = dc_source;
+		_light = LightBgra::calc_light_multiplier(dc_light);
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		_destalpha = dc_destalpha >> (FRACBITS - 8);
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			uint32_t fg = LightBgra::shade_pal_index(_source[loop.sample_index()], _light, _shade_constants);
+			*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
+		} while (loop.next());
+	}
+};
+
+class DrawAddClampTranslatedColumnRGBACommand : public DrawerColumnCommand
+{
+	BYTE * RESTRICT _translation;
+	const BYTE * RESTRICT _source;
+	uint32_t _light;
+	ShadeConstants _shade_constants;
+	uint32_t _srcalpha;
+	uint32_t _destalpha;
+
+public:
+	DrawAddClampTranslatedColumnRGBACommand()
+	{
+		_translation = dc_translation;
+		_source = dc_source;
+		_light = LightBgra::calc_light_multiplier(dc_light);
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		_destalpha = dc_destalpha >> (FRACBITS - 8);
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			uint32_t fg = LightBgra::shade_pal_index(_translation[_source[loop.sample_index()]], _light, _shade_constants);
+			*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
+		} while (loop.next());
+	}
+};
+
+class DrawSubClampColumnRGBACommand : public DrawerColumnCommand
+{
+	const BYTE * RESTRICT _source;
+	uint32_t _light;
+	ShadeConstants _shade_constants;
+	uint32_t _srcalpha;
+	uint32_t _destalpha;
+
+public:
+	DrawSubClampColumnRGBACommand()
+	{
+		_source = dc_source;
+		_light = LightBgra::calc_light_multiplier(dc_light);
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		_destalpha = dc_destalpha >> (FRACBITS - 8);
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			uint32_t fg = LightBgra::shade_pal_index(_source[loop.sample_index()], _light, _shade_constants);
+			*loop.dest = BlendBgra::sub(fg, *loop.dest, _srcalpha, _destalpha);
+		} while (loop.next());
+	}
+};
+
+class DrawSubClampTranslatedColumnRGBACommand : public DrawerColumnCommand
+{
+	const BYTE * RESTRICT _source;
+	uint32_t _light;
+	ShadeConstants _shade_constants;
+	uint32_t _srcalpha;
+	uint32_t _destalpha;
+	BYTE * RESTRICT _translation;
+
+public:
+	DrawSubClampTranslatedColumnRGBACommand()
+	{
+		_source = dc_source;
+		_light = LightBgra::calc_light_multiplier(dc_light);
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		_destalpha = dc_destalpha >> (FRACBITS - 8);
+		_translation = dc_translation;
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			uint32_t fg = LightBgra::shade_pal_index(_translation[_source[loop.sample_index()]], _light, _shade_constants);
+			*loop.dest = BlendBgra::sub(fg, *loop.dest, _srcalpha, _destalpha);
+		} while (loop.next());
+	}
+};
+
+class DrawRevSubClampColumnRGBACommand : public DrawerColumnCommand
+{
+	const BYTE * RESTRICT _source;
+	uint32_t _light;
+	ShadeConstants _shade_constants;
+	uint32_t _srcalpha;
+	uint32_t _destalpha;
+
+public:
+	DrawRevSubClampColumnRGBACommand()
+	{
+		_source = dc_source;
+		_light = LightBgra::calc_light_multiplier(dc_light);
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		_destalpha = dc_destalpha >> (FRACBITS - 8);
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			uint32_t fg = LightBgra::shade_pal_index(_source[loop.sample_index()], _light, _shade_constants);
+			*loop.dest = BlendBgra::revsub(fg, *loop.dest, _srcalpha, _destalpha);
+		} while (loop.next());
+	}
+};
+
+class DrawRevSubClampTranslatedColumnRGBACommand : public DrawerColumnCommand
+{
+	const BYTE * RESTRICT _source;
+	uint32_t _light;
+	ShadeConstants _shade_constants;
+	uint32_t _srcalpha;
+	uint32_t _destalpha;
+	BYTE * RESTRICT _translation;
+
+public:
+	DrawRevSubClampTranslatedColumnRGBACommand()
+	{
+		_source = dc_source;
+		_light = LightBgra::calc_light_multiplier(dc_light);
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		_destalpha = dc_destalpha >> (FRACBITS - 8);
+		_translation = dc_translation;
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			uint32_t fg = LightBgra::shade_pal_index(_translation[_source[loop.sample_index()]], _light, _shade_constants);
+			*loop.dest = BlendBgra::revsub(fg, *loop.dest, _srcalpha, _destalpha);
+		} while (loop.next());
 	}
 };
 
@@ -635,19 +805,16 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count;
-		uint32_t *dest;
-
 		int yl = MAX(_yl, 1);
 		int yh = MIN(_yh, _fuzzviewheight);
 
-		count = thread->count_for_thread(yl, yh - yl + 1);
+		int count = thread->count_for_thread(yl, yh - yl + 1);
 
 		// Zero length.
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + _x + (uint32_t*)_destorg);
+		uint32_t *dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + _x + (uint32_t*)_destorg);
 
 		int pitch = _pitch * thread->num_cores;
 		int fuzzstep = thread->num_cores;
@@ -659,13 +826,10 @@ public:
 		if (yl < fuzzstep)
 		{
 			uint32_t bg = dest[fuzzoffset[fuzz] * fuzzstep + pitch];
-			uint32_t bg_red = (bg >> 16) & 0xff;
-			uint32_t bg_green = (bg >> 8) & 0xff;
-			uint32_t bg_blue = (bg) & 0xff;
 
-			uint32_t red = bg_red * 3 / 4;
-			uint32_t green = bg_green * 3 / 4;
-			uint32_t blue = bg_blue * 3 / 4;
+			uint32_t red = RPART(bg) * 3 / 4;
+			uint32_t green = GPART(bg) * 3 / 4;
+			uint32_t blue = BPART(bg) * 3 / 4;
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			dest += pitch;
@@ -694,13 +858,10 @@ public:
 			do
 			{
 				uint32_t bg = dest[fuzzoffset[fuzz] * fuzzstep];
-				uint32_t bg_red = (bg >> 16) & 0xff;
-				uint32_t bg_green = (bg >> 8) & 0xff;
-				uint32_t bg_blue = (bg) & 0xff;
 
-				uint32_t red = bg_red * 3 / 4;
-				uint32_t green = bg_green * 3 / 4;
-				uint32_t blue = bg_blue * 3 / 4;
+				uint32_t red = RPART(bg) * 3 / 4;
+				uint32_t green = GPART(bg) * 3 / 4;
+				uint32_t blue = BPART(bg) * 3 / 4;
 
 				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 				dest += pitch;
@@ -714,783 +875,21 @@ public:
 		if (lowerbounds)
 		{
 			uint32_t bg = dest[fuzzoffset[fuzz] * fuzzstep - pitch];
-			uint32_t bg_red = (bg >> 16) & 0xff;
-			uint32_t bg_green = (bg >> 8) & 0xff;
-			uint32_t bg_blue = (bg) & 0xff;
 
-			uint32_t red = bg_red * 3 / 4;
-			uint32_t green = bg_green * 3 / 4;
-			uint32_t blue = bg_blue * 3 / 4;
+			uint32_t red = RPART(bg) * 3 / 4;
+			uint32_t green = GPART(bg) * 3 / 4;
+			uint32_t blue = BPART(bg) * 3 / 4;
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 		}
 	}
 };
 
-class DrawAddColumnRGBACommand : public DrawerCommand
-{
-	int _count;
-	BYTE * RESTRICT _dest;
-	DWORD _iscale;
-	DWORD _texturefrac;
-	const BYTE * RESTRICT _source;
-	int _pitch;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-	BYTE * RESTRICT _colormap;
+/////////////////////////////////////////////////////////////////////////////
 
+class DrawerSpanCommand : public DrawerCommand
+{
 public:
-	DrawAddColumnRGBACommand()
-	{
-		_count = dc_count;
-		_dest = dc_dest;
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_source = dc_source;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-		_colormap = dc_colormap;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		int count;
-		uint32_t *dest;
-		fixed_t frac;
-		fixed_t fracstep;
-
-		count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-
-		fracstep = _iscale * thread->num_cores;
-		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
-
-		{
-			const BYTE *source = _source;
-			int pitch = _pitch * thread->num_cores;
-
-			uint32_t light = calc_light_multiplier(_light);
-			ShadeConstants shade_constants = _shade_constants;
-			BYTE *colormap = _colormap;
-
-			uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-			uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-			do
-			{
-				uint32_t fg = shade_pal_index(colormap[source[frac >> FRACBITS]], light, shade_constants);
-
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
-
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-				uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-				uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
-
-				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
-	}
-};
-
-class DrawTranslatedColumnRGBACommand : public DrawerCommand
-{
-	int _count;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	BYTE * RESTRICT _dest;
-	DWORD _iscale;
-	DWORD _texturefrac;
-	BYTE * RESTRICT _translation;
-	const BYTE * RESTRICT _source;
-	int _pitch;
-
-public:
-	DrawTranslatedColumnRGBACommand()
-	{
-		_count = dc_count;
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
-		_dest = dc_dest;
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_translation = dc_translation;
-		_source = dc_source;
-		_pitch = dc_pitch;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		int 				count;
-		uint32_t*			dest;
-		fixed_t 			frac;
-		fixed_t 			fracstep;
-
-		count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		uint32_t light = calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-
-		fracstep = _iscale * thread->num_cores;
-		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
-
-		{
-			// [RH] Local copies of global vars to improve compiler optimizations
-			BYTE *translation = _translation;
-			const BYTE *source = _source;
-			int pitch = _pitch * thread->num_cores;
-
-			do
-			{
-				*dest = shade_pal_index(translation[source[frac >> FRACBITS]], light, shade_constants);
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
-	}
-};
-
-class DrawTlatedAddColumnRGBACommand : public DrawerCommand
-{
-	int _count;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	BYTE * RESTRICT _dest;
-	DWORD _iscale;
-	DWORD _texturefrac;
-	BYTE * RESTRICT _translation;
-	const BYTE * RESTRICT _source;
-	int _pitch;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-
-public:
-	DrawTlatedAddColumnRGBACommand()
-	{
-		_count = dc_count;
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
-		_dest = dc_dest;
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_translation = dc_translation;
-		_source = dc_source;
-		_pitch = dc_pitch;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		int count;
-		uint32_t *dest;
-		fixed_t frac;
-		fixed_t fracstep;
-
-		count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		uint32_t light = calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-
-		fracstep = _iscale * thread->num_cores;
-		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
-
-		{
-			BYTE *translation = _translation;
-			const BYTE *source = _source;
-			int pitch = _pitch * thread->num_cores;
-
-			uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-			uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-			do
-			{
-				uint32_t fg = shade_pal_index(translation[source[frac >> FRACBITS]], light, shade_constants);
-
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
-
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-				uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-				uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
-
-				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
-	}
-};
-
-class DrawShadedColumnRGBACommand : public DrawerCommand
-{
-private:
-	int _count;
-	BYTE * RESTRICT _dest;
-	DWORD _iscale;
-	DWORD _texturefrac;
-	fixed_t _light;
-	const BYTE * RESTRICT _source;
-	lighttable_t * RESTRICT _colormap;
-	int _color;
-	int _pitch;
-
-public:
-	DrawShadedColumnRGBACommand()
-	{
-		_count = dc_count;
-		_dest = dc_dest;
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_light = dc_light;
-		_source = dc_source;
-		_colormap = dc_colormap;
-		_color = dc_color;
-		_pitch = dc_pitch;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		int  count;
-		uint32_t *dest;
-		fixed_t frac, fracstep;
-
-		count = thread->count_for_thread(_dest_y, _count);
-
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-
-		fracstep = _iscale * thread->num_cores;
-		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
-
-		uint32_t fg = shade_pal_index_simple(_color, calc_light_multiplier(_light));
-		uint32_t fg_red = (fg >> 16) & 0xff;
-		uint32_t fg_green = (fg >> 8) & 0xff;
-		uint32_t fg_blue = fg & 0xff;
-
-		{
-			const BYTE *source = _source;
-			BYTE *colormap = _colormap;
-			int pitch = _pitch * thread->num_cores;
-
-			do
-			{
-				DWORD alpha = clamp<DWORD>(colormap[source[frac >> FRACBITS]], 0, 64);
-				DWORD inv_alpha = 64 - alpha;
-
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
-
-				uint32_t red = (fg_red * alpha + bg_red * inv_alpha) / 64;
-				uint32_t green = (fg_green * alpha + bg_green * inv_alpha) / 64;
-				uint32_t blue = (fg_blue * alpha + bg_blue * inv_alpha) / 64;
-
-				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
-	}
-};
-
-class DrawAddClampColumnRGBACommand : public DrawerCommand
-{
-	int _count;
-	BYTE * RESTRICT _dest;
-	DWORD _iscale;
-	DWORD _texturefrac;
-	const BYTE * RESTRICT _source;
-	int _pitch;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-
-public:
-	DrawAddClampColumnRGBACommand()
-	{
-		_count = dc_count;
-		_dest = dc_dest;
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_source = dc_source;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		int count;
-		uint32_t *dest;
-		fixed_t frac;
-		fixed_t fracstep;
-
-		count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-
-		fracstep = _iscale * thread->num_cores;
-		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
-
-		{
-			const BYTE *source = _source;
-			int pitch = _pitch * thread->num_cores;
-			uint32_t light = calc_light_multiplier(_light);
-			ShadeConstants shade_constants = _shade_constants;
-
-			uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-			uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-			do
-			{
-				uint32_t fg = shade_pal_index(source[frac >> FRACBITS], light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
-
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-				uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-				uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
-
-				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
-	}
-};
-
-class DrawAddClampTranslatedColumnRGBACommand : public DrawerCommand
-{
-	int _count;
-	BYTE * RESTRICT _dest;
-	DWORD _iscale;
-	DWORD _texturefrac;
-	BYTE * RESTRICT _translation;
-	const BYTE * RESTRICT _source;
-	int _pitch;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-
-public:
-	DrawAddClampTranslatedColumnRGBACommand()
-	{
-		_count = dc_count;
-		_dest = dc_dest;
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_translation = dc_translation;
-		_source = dc_source;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		int count;
-		uint32_t *dest;
-		fixed_t frac;
-		fixed_t fracstep;
-
-		count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-
-		fracstep = _iscale * thread->num_cores;
-		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
-
-		{
-			BYTE *translation = _translation;
-			const BYTE *source = _source;
-			int pitch = _pitch * thread->num_cores;
-			uint32_t light = calc_light_multiplier(_light);
-			ShadeConstants shade_constants = _shade_constants;
-
-			uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-			uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-			do
-			{
-				uint32_t fg = shade_pal_index(translation[source[frac >> FRACBITS]], light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
-
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-				uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-				uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
-
-				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
-	}
-};
-
-class DrawSubClampColumnRGBACommand : public DrawerCommand
-{
-	int _count;
-	BYTE * RESTRICT _dest;
-	DWORD _iscale;
-	DWORD _texturefrac;
-	const BYTE * RESTRICT _source;
-	int _pitch;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-
-public:
-	DrawSubClampColumnRGBACommand()
-	{
-		_count = dc_count;
-		_dest = dc_dest;
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_source = dc_source;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		int count;
-		uint32_t *dest;
-		fixed_t frac;
-		fixed_t fracstep;
-
-		count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-
-		fracstep = _iscale * thread->num_cores;
-		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
-
-		{
-			const BYTE *source = _source;
-			int pitch = _pitch * thread->num_cores;
-			uint32_t light = calc_light_multiplier(_light);
-			ShadeConstants shade_constants = _shade_constants;
-
-			uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-			uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-			do
-			{
-				uint32_t fg = shade_pal_index(source[frac >> FRACBITS], light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
-
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((0x10000 - fg_red * fg_alpha + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t green = clamp<uint32_t>((0x10000 - fg_green * fg_alpha + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
-
-				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
-	}
-};
-
-class DrawSubClampTranslatedColumnRGBACommand : public DrawerCommand
-{
-	int _count;
-	BYTE * RESTRICT _dest;
-	DWORD _iscale;
-	DWORD _texturefrac;
-	const BYTE * RESTRICT _source;
-	int _pitch;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-	BYTE * RESTRICT _translation;
-
-public:
-	DrawSubClampTranslatedColumnRGBACommand()
-	{
-		_count = dc_count;
-		_dest = dc_dest;
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_source = dc_source;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-		_translation = dc_translation;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		int count;
-		uint32_t *dest;
-		fixed_t frac;
-		fixed_t fracstep;
-
-		count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-
-		fracstep = _iscale * thread->num_cores;
-		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
-
-		{
-			BYTE *translation = _translation;
-			const BYTE *source = _source;
-			int pitch = _pitch * thread->num_cores;
-			uint32_t light = calc_light_multiplier(_light);
-			ShadeConstants shade_constants = _shade_constants;
-
-			uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-			uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-			do
-			{
-				uint32_t fg = shade_pal_index(translation[source[frac >> FRACBITS]], light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
-
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((0x10000 - fg_red * fg_alpha + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t green = clamp<uint32_t>((0x10000 - fg_green * fg_alpha + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
-
-				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
-	}
-};
-
-class DrawRevSubClampColumnRGBACommand : public DrawerCommand
-{
-	int _count;
-	BYTE * RESTRICT _dest;
-	DWORD _iscale;
-	DWORD _texturefrac;
-	const BYTE * RESTRICT _source;
-	int _pitch;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-
-public:
-	DrawRevSubClampColumnRGBACommand()
-	{
-		_count = dc_count;
-		_dest = dc_dest;
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_source = dc_source;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		int count;
-		uint32_t *dest;
-		fixed_t frac;
-		fixed_t fracstep;
-
-		count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-
-		fracstep = _iscale * thread->num_cores;
-		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
-
-		{
-			const BYTE *source = _source;
-			int pitch = _pitch * thread->num_cores;
-			uint32_t light = calc_light_multiplier(_light);
-			ShadeConstants shade_constants = _shade_constants;
-			uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-			uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-			do
-			{
-				uint32_t fg = shade_pal_index(source[frac >> FRACBITS], light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
-
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((0x10000 + fg_red * fg_alpha - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t green = clamp<uint32_t>((0x10000 + fg_green * fg_alpha - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue * fg_alpha - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
-
-				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
-	}
-};
-
-class DrawRevSubClampTranslatedColumnRGBACommand : public DrawerCommand
-{
-	int _count;
-	BYTE * RESTRICT _dest;
-	DWORD _iscale;
-	DWORD _texturefrac;
-	const BYTE * RESTRICT _source;
-	int _pitch;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-	BYTE * RESTRICT _translation;
-
-public:
-	DrawRevSubClampTranslatedColumnRGBACommand()
-	{
-		_count = dc_count;
-		_dest = dc_dest;
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_source = dc_source;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-		_translation = dc_translation;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		int count;
-		uint32_t *dest;
-		fixed_t frac;
-		fixed_t fracstep;
-
-		count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-
-		fracstep = _iscale * thread->num_cores;
-		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
-
-		{
-			BYTE * RESTRICT translation = _translation;
-			const BYTE * RESTRICT source = _source;
-			int pitch = _pitch * thread->num_cores;
-			uint32_t light = calc_light_multiplier(_light);
-			ShadeConstants shade_constants = _shade_constants;
-
-			uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-			uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-			do
-			{
-				uint32_t fg = shade_pal_index(translation[source[frac >> FRACBITS]], light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
-
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((0x10000 + fg_red * fg_alpha - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t green = clamp<uint32_t>((0x10000 + fg_green * fg_alpha - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue * fg_alpha - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
-
-				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
-	}
-};
-
-class DrawSpanRGBACommand : public DrawerCommand
-{
-	const uint32_t * RESTRICT _source;
 	fixed_t _xfrac;
 	fixed_t _yfrac;
 	fixed_t _xstep;
@@ -1501,14 +900,17 @@ class DrawSpanRGBACommand : public DrawerCommand
 	int _xbits;
 	int _ybits;
 	BYTE * RESTRICT _destorg;
-	fixed_t _light;
+
+	const uint32_t * RESTRICT _source;
+	uint32_t _light;
 	ShadeConstants _shade_constants;
 	bool _magnifying;
 
-public:
-	DrawSpanRGBACommand()
+	uint32_t _srcalpha;
+	uint32_t _destalpha;
+
+	DrawerSpanCommand()
 	{
-		_source = (const uint32_t*)ds_source;
 		_xfrac = ds_xfrac;
 		_yfrac = ds_yfrac;
 		_xstep = ds_xstep;
@@ -1519,752 +921,270 @@ public:
 		_xbits = ds_xbits;
 		_ybits = ds_ybits;
 		_destorg = dc_destorg;
-		_light = ds_light;
+
+		_source = (const uint32_t*)ds_source;
+		_light = LightBgra::calc_light_multiplier(ds_light);
 		_shade_constants = ds_shade_constants;
-		_magnifying = !span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep);
+		_magnifying = !SampleBgra::span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep);
+
+		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		_destalpha = dc_destalpha >> (FRACBITS - 8);
 	}
 
+	class LoopIterator
+	{
+	public:
+		uint32_t *dest;
+		int count;
+		dsfixed_t xfrac;
+		dsfixed_t yfrac;
+		dsfixed_t xstep;
+		dsfixed_t ystep;
+		BYTE yshift;
+		BYTE xshift;
+		int xmask;
+		bool is_64x64;
+		bool skipped;
+
+		LoopIterator(DrawerSpanCommand *command, DrawerThread *thread)
+		{
+			dest = ylookup[command->_y] + command->_x1 + (uint32_t*)command->_destorg;
+			count = command->_x2 - command->_x1 + 1;
+			xfrac = command->_xfrac;
+			yfrac = command->_yfrac;
+			xstep = command->_xstep;
+			ystep = command->_ystep;
+			yshift = 32 - command->_ybits;
+			xshift = yshift - command->_xbits;
+			xmask = ((1 << command->_xbits) - 1) << command->_ybits;
+			is_64x64 = command->_xbits == 6 && command->_ybits == 6;
+			skipped = thread->line_skipped_by_thread(command->_y);
+		}
+
+		// 64x64 is the most common case by far, so special case it.
+		int spot64()
+		{
+			return ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+		}
+
+		int spot()
+		{
+			return ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+		}
+
+		explicit operator bool()
+		{
+			return !skipped && count > 0;
+		}
+
+		bool next()
+		{
+			dest++;
+			xfrac += xstep;
+			yfrac += ystep;
+			return (--count) != 0;
+		}
+	};
+};
+
+class DrawSpanRGBACommand : public DrawerSpanCommand
+{
+public:
 	void Execute(DrawerThread *thread) override
 	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
-
-		dsfixed_t			xfrac;
-		dsfixed_t			yfrac;
-		dsfixed_t			xstep;
-		dsfixed_t			ystep;
-		uint32_t*			dest;
-		const uint32_t*		source = _source;
-		int 				count;
-		int 				spot;
-
-		xfrac = _xfrac;
-		yfrac = _yfrac;
-
-		dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
-
-		count = _x2 - _x1 + 1;
-
-		xstep = _xstep;
-		ystep = _ystep;
-
-		uint32_t light = calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 
 		if (_magnifying)
 		{
-			if (_xbits == 6 && _ybits == 6)
+			if (loop.is_64x64)
 			{
-				// 64x64 is the most common case by far, so special case it.
-
 				do
 				{
-					// Current texture index in u,v.
-					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-
-					// Lookup pixel from flat texture tile
-					*dest++ = shade_bgra(source[spot], light, shade_constants);
-
-					// Next step in u,v.
-					xfrac += xstep;
-					yfrac += ystep;
-				} while (--count);
+					*loop.dest = LightBgra::shade_bgra(_source[loop.spot64()], _light, _shade_constants);
+				} while (loop.next());
 			}
 			else
 			{
-				BYTE yshift = 32 - _ybits;
-				BYTE xshift = yshift - _xbits;
-				int xmask = ((1 << _xbits) - 1) << _ybits;
-
 				do
 				{
-					// Current texture index in u,v.
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-
-					// Lookup pixel from flat texture tile
-					*dest++ = shade_bgra(source[spot], light, shade_constants);
-
-					// Next step in u,v.
-					xfrac += xstep;
-					yfrac += ystep;
-				} while (--count);
+					*loop.dest = LightBgra::shade_bgra(_source[loop.spot()], _light, _shade_constants);
+				} while (loop.next());
 			}
 		}
 		else
 		{
-			if (_xbits == 6 && _ybits == 6)
+			if (loop.is_64x64)
 			{
-				// 64x64 is the most common case by far, so special case it.
-
 				do
 				{
-					*dest++ = shade_bgra(sample_bilinear(source, xfrac, yfrac, 26, 26), light, shade_constants);
-					xfrac += xstep;
-					yfrac += ystep;
-				} while (--count);
+					*loop.dest = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, loop.xfrac, loop.yfrac, 26, 26), _light, _shade_constants);
+				} while (loop.next());
 			}
 			else
 			{
 				do
 				{
-					*dest++ = shade_bgra(sample_bilinear(source, xfrac, yfrac, 32 - _xbits, 32 - _ybits), light, shade_constants);
-					xfrac += xstep;
-					yfrac += ystep;
-				} while (--count);
+					*loop.dest = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, loop.xfrac, loop.yfrac, 32 - _xbits, 32 - _ybits), _light, _shade_constants);
+				} while (loop.next());
 			}
 		}
 	}
 };
 
-class DrawSpanMaskedRGBACommand : public DrawerCommand
+class DrawSpanMaskedRGBACommand : public DrawerSpanCommand
 {
-	const uint32_t * RESTRICT _source;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _xfrac;
-	fixed_t _yfrac;
-	BYTE * RESTRICT _destorg;
-	int _x1;
-	int _x2;
-	int _y1;
-	int _y;
-	fixed_t _xstep;
-	fixed_t _ystep;
-	int _xbits;
-	int _ybits;
-	bool _magnifying;
-
 public:
-	DrawSpanMaskedRGBACommand()
-	{
-		_source = (const uint32_t*)ds_source;
-		_light = ds_light;
-		_shade_constants = ds_shade_constants;
-		_xfrac = ds_xfrac;
-		_yfrac = ds_yfrac;
-		_destorg = dc_destorg;
-		_x1 = ds_x1;
-		_x2 = ds_x2;
-		_y = ds_y;
-		_xstep = ds_xstep;
-		_ystep = ds_ystep;
-		_xbits = ds_xbits;
-		_ybits = ds_ybits;
-		_magnifying = !span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep);
-	}
-
 	void Execute(DrawerThread *thread) override
 	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
-
-		dsfixed_t			xfrac;
-		dsfixed_t			yfrac;
-		dsfixed_t			xstep;
-		dsfixed_t			ystep;
-		uint32_t*			dest;
-		const uint32_t*		source = _source;
-		int 				count;
-		int 				spot;
-
-		uint32_t light = calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		xfrac = _xfrac;
-		yfrac = _yfrac;
-
-		dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
-
-		count = _x2 - _x1 + 1;
-
-		xstep = _xstep;
-		ystep = _ystep;
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 
 		if (_magnifying)
 		{
-			if (_xbits == 6 && _ybits == 6)
+			if (loop.is_64x64)
 			{
-				// 64x64 is the most common case by far, so special case it.
 				do
 				{
-					uint32_t texdata;
-
-					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					texdata = source[spot];
-					*dest = alpha_blend(shade_bgra(texdata, light, shade_constants), *dest);
-					dest++;
-					xfrac += xstep;
-					yfrac += ystep;
-				} while (--count);
+					uint32_t fg = LightBgra::shade_bgra(_source[loop.spot64()], _light, _shade_constants);
+					*loop.dest = BlendBgra::alpha_blend(fg, *loop.dest);
+				} while (loop.next());
 			}
 			else
 			{
-				BYTE yshift = 32 - _ybits;
-				BYTE xshift = yshift - _xbits;
-				int xmask = ((1 << _xbits) - 1) << _ybits;
 				do
 				{
-					uint32_t texdata;
-
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					texdata = source[spot];
-					*dest = alpha_blend(shade_bgra(texdata, light, shade_constants), *dest);
-					dest++;
-					xfrac += xstep;
-					yfrac += ystep;
-				} while (--count);
+					uint32_t fg = LightBgra::shade_bgra(_source[loop.spot()], _light, _shade_constants);
+					*loop.dest = BlendBgra::alpha_blend(fg, *loop.dest);
+				} while (loop.next());
 			}
 		}
 		else
 		{
-			if (_xbits == 6 && _ybits == 6)
+			if (loop.is_64x64)
 			{
-				// 64x64 is the most common case by far, so special case it.
 				do
 				{
-					*dest = alpha_blend(shade_bgra(sample_bilinear(source, xfrac, yfrac, 26, 26), light, shade_constants), *dest);
-					dest++;
-					xfrac += xstep;
-					yfrac += ystep;
-				} while (--count);
+					uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, loop.xfrac, loop.yfrac, 26, 26), _light, _shade_constants);
+					*loop.dest = BlendBgra::alpha_blend(fg, *loop.dest);
+				} while (loop.next());
 			}
 			else
 			{
-				BYTE yshift = 32 - _ybits;
-				BYTE xshift = yshift - _xbits;
-				int xmask = ((1 << _xbits) - 1) << _ybits;
 				do
 				{
-					*dest = alpha_blend(shade_bgra(sample_bilinear(source, xfrac, yfrac, 32 - _xbits, 32 - _ybits), light, shade_constants), *dest);
-					dest++;
-					xfrac += xstep;
-					yfrac += ystep;
-				} while (--count);
+					uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, loop.xfrac, loop.yfrac, 32 - _xbits, 32 - _ybits), _light, _shade_constants);
+					*loop.dest = BlendBgra::alpha_blend(fg, *loop.dest);
+				} while (loop.next());
 			}
 		}
 	}
 };
 
-class DrawSpanTranslucentRGBACommand : public DrawerCommand
+class DrawSpanTranslucentRGBACommand : public DrawerSpanCommand
 {
-	const uint32_t * RESTRICT _source;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _xfrac;
-	fixed_t _yfrac;
-	BYTE * RESTRICT _destorg;
-	int _x1;
-	int _x2;
-	int _y1;
-	int _y;
-	fixed_t _xstep;
-	fixed_t _ystep;
-	int _xbits;
-	int _ybits;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-
 public:
-	DrawSpanTranslucentRGBACommand()
-	{
-		_source = (const uint32_t *)ds_source;
-		_light = ds_light;
-		_shade_constants = ds_shade_constants;
-		_xfrac = ds_xfrac;
-		_yfrac = ds_yfrac;
-		_destorg = dc_destorg;
-		_x1 = ds_x1;
-		_x2 = ds_x2;
-		_y = ds_y;
-		_xstep = ds_xstep;
-		_ystep = ds_ystep;
-		_xbits = ds_xbits;
-		_ybits = ds_ybits;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-	}
-
 	void Execute(DrawerThread *thread) override
 	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 
-		dsfixed_t			xfrac;
-		dsfixed_t			yfrac;
-		dsfixed_t			xstep;
-		dsfixed_t			ystep;
-		uint32_t*			dest;
-		const uint32_t*		source = _source;
-		int 				count;
-		int 				spot;
-
-		xfrac = _xfrac;
-		yfrac = _yfrac;
-
-		dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
-
-		count = _x2 - _x1 + 1;
-
-		xstep = _xstep;
-		ystep = _ystep;
-
-		uint32_t light = calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-		if (_xbits == 6 && _ybits == 6)
+		if (loop.is_64x64)
 		{
-			// 64x64 is the most common case by far, so special case it.
 			do
 			{
-				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-
-				uint32_t fg = shade_bgra(source[spot], light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = (fg) & 0xff;
-
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
-
-				uint32_t red = (fg_red * fg_alpha + bg_red * bg_alpha) / 256;
-				uint32_t green = (fg_green * fg_alpha + bg_green * bg_alpha) / 256;
-				uint32_t blue = (fg_blue * fg_alpha + bg_blue * bg_alpha) / 256;
-
-				*dest++ = 0xff000000 | (red << 16) | (green << 8) | blue;
-
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+				uint32_t fg = LightBgra::shade_bgra(_source[loop.spot64()], _light, _shade_constants);
+				*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
+			} while (loop.next());
 		}
 		else
 		{
-			BYTE yshift = 32 - _ybits;
-			BYTE xshift = yshift - _xbits;
-			int xmask = ((1 << _xbits) - 1) << _ybits;
 			do
 			{
-				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-
-				uint32_t fg = shade_bgra(source[spot], light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = (fg) & 0xff;
-
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
-
-				uint32_t red = (fg_red * fg_alpha + bg_red * bg_alpha) / 256;
-				uint32_t green = (fg_green * fg_alpha + bg_green * bg_alpha) / 256;
-				uint32_t blue = (fg_blue * fg_alpha + bg_blue * bg_alpha) / 256;
-
-				*dest++ = 0xff000000 | (red << 16) | (green << 8) | blue;
-
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+				uint32_t fg = LightBgra::shade_bgra(_source[loop.spot()], _light, _shade_constants);
+				*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
+			} while (loop.next());
 		}
 	}
 };
 
-class DrawSpanMaskedTranslucentRGBACommand : public DrawerCommand
+class DrawSpanMaskedTranslucentRGBACommand : public DrawerSpanCommand
 {
-	const uint32_t * RESTRICT _source;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _xfrac;
-	fixed_t _yfrac;
-	BYTE * RESTRICT _destorg;
-	int _x1;
-	int _x2;
-	int _y1;
-	int _y;
-	fixed_t _xstep;
-	fixed_t _ystep;
-	int _xbits;
-	int _ybits;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-
 public:
-	DrawSpanMaskedTranslucentRGBACommand()
-	{
-		_source = (const uint32_t*)ds_source;
-		_light = ds_light;
-		_shade_constants = ds_shade_constants;
-		_xfrac = ds_xfrac;
-		_yfrac = ds_yfrac;
-		_destorg = dc_destorg;
-		_x1 = ds_x1;
-		_x2 = ds_x2;
-		_y = ds_y;
-		_xstep = ds_xstep;
-		_ystep = ds_ystep;
-		_xbits = ds_xbits;
-		_ybits = ds_ybits;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-	}
-
 	void Execute(DrawerThread *thread) override
 	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 
-		dsfixed_t			xfrac;
-		dsfixed_t			yfrac;
-		dsfixed_t			xstep;
-		dsfixed_t			ystep;
-		uint32_t*			dest;
-		const uint32_t*		source = _source;
-		int 				count;
-		int 				spot;
-
-		uint32_t light = calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-		xfrac = _xfrac;
-		yfrac = _yfrac;
-
-		dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
-
-		count = _x2 - _x1 + 1;
-
-		xstep = _xstep;
-		ystep = _ystep;
-
-		if (_xbits == 6 && _ybits == 6)
+		if (loop.is_64x64)
 		{
-			// 64x64 is the most common case by far, so special case it.
 			do
 			{
-				uint32_t texdata;
-
-				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-				texdata = source[spot];
-				if (texdata != 0)
-				{
-					uint32_t fg = shade_bgra(texdata, light, shade_constants);
-					uint32_t fg_red = (fg >> 16) & 0xff;
-					uint32_t fg_green = (fg >> 8) & 0xff;
-					uint32_t fg_blue = (fg) & 0xff;
-
-					uint32_t bg_red = (*dest >> 16) & 0xff;
-					uint32_t bg_green = (*dest >> 8) & 0xff;
-					uint32_t bg_blue = (*dest) & 0xff;
-
-					uint32_t red = (fg_red * fg_alpha + bg_red * bg_alpha) / 256;
-					uint32_t green = (fg_green * fg_alpha + bg_green * bg_alpha) / 256;
-					uint32_t blue = (fg_blue * fg_alpha + bg_blue * bg_alpha) / 256;
-
-					*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-				}
-				dest++;
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+				uint32_t fg = LightBgra::shade_bgra(_source[loop.spot64()], _light, _shade_constants);
+				*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
+			} while (loop.next());
 		}
 		else
 		{
-			BYTE yshift = 32 - _ybits;
-			BYTE xshift = yshift - _xbits;
-			int xmask = ((1 << _xbits) - 1) << _ybits;
 			do
 			{
-				uint32_t texdata;
-
-				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-				texdata = source[spot];
-				if (texdata != 0)
-				{
-					uint32_t fg = shade_bgra(texdata, light, shade_constants);
-					uint32_t fg_red = (fg >> 16) & 0xff;
-					uint32_t fg_green = (fg >> 8) & 0xff;
-					uint32_t fg_blue = (fg) & 0xff;
-
-					uint32_t bg_red = (*dest >> 16) & 0xff;
-					uint32_t bg_green = (*dest >> 8) & 0xff;
-					uint32_t bg_blue = (*dest) & 0xff;
-
-					uint32_t red = (fg_red * fg_alpha + bg_red * bg_alpha) / 256;
-					uint32_t green = (fg_green * fg_alpha + bg_green * bg_alpha) / 256;
-					uint32_t blue = (fg_blue * fg_alpha + bg_blue * bg_alpha) / 256;
-
-					*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-				}
-				dest++;
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+				uint32_t fg = LightBgra::shade_bgra(_source[loop.spot()], _light, _shade_constants);
+				*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
+			} while (loop.next());
 		}
 	}
 };
 
-class DrawSpanAddClampRGBACommand : public DrawerCommand
+class DrawSpanAddClampRGBACommand : public DrawerSpanCommand
 {
-	const uint32_t * RESTRICT _source;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _xfrac;
-	fixed_t _yfrac;
-	BYTE * RESTRICT _destorg;
-	int _x1;
-	int _x2;
-	int _y1;
-	int _y;
-	fixed_t _xstep;
-	fixed_t _ystep;
-	int _xbits;
-	int _ybits;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-
 public:
-	DrawSpanAddClampRGBACommand()
-	{
-		_source = (const uint32_t*)ds_source;
-		_light = ds_light;
-		_shade_constants = ds_shade_constants;
-		_xfrac = ds_xfrac;
-		_yfrac = ds_yfrac;
-		_destorg = dc_destorg;
-		_x1 = ds_x1;
-		_x2 = ds_x2;
-		_y = ds_y;
-		_xstep = ds_xstep;
-		_ystep = ds_ystep;
-		_xbits = ds_xbits;
-		_ybits = ds_ybits;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-	}
-
 	void Execute(DrawerThread *thread) override
 	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 
-		dsfixed_t			xfrac;
-		dsfixed_t			yfrac;
-		dsfixed_t			xstep;
-		dsfixed_t			ystep;
-		uint32_t*			dest;
-		const uint32_t*		source = _source;
-		int 				count;
-		int 				spot;
-
-		uint32_t light = calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-		xfrac = _xfrac;
-		yfrac = _yfrac;
-
-		dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
-
-		count = _x2 - _x1 + 1;
-
-		xstep = _xstep;
-		ystep = _ystep;
-
-		if (_xbits == 6 && _ybits == 6)
+		if (loop.is_64x64)
 		{
-			// 64x64 is the most common case by far, so special case it.
 			do
 			{
-				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-
-				uint32_t fg = shade_bgra(source[spot], light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = (fg) & 0xff;
-
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-				uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-				uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
-
-				*dest++ = 0xff000000 | (red << 16) | (green << 8) | blue;
-
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+				uint32_t fg = LightBgra::shade_bgra(_source[loop.spot64()], _light, _shade_constants);
+				*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
+			} while (loop.next());
 		}
 		else
 		{
-			BYTE yshift = 32 - _ybits;
-			BYTE xshift = yshift - _xbits;
-			int xmask = ((1 << _xbits) - 1) << _ybits;
 			do
 			{
-				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-
-				uint32_t fg = shade_bgra(source[spot], light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = (fg) & 0xff;
-
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-				uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-				uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
-
-				*dest++ = 0xff000000 | (red << 16) | (green << 8) | blue;
-
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+				uint32_t fg = LightBgra::shade_bgra(_source[loop.spot()], _light, _shade_constants);
+				*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
+			} while (loop.next());
 		}
 	}
 };
 
-class DrawSpanMaskedAddClampRGBACommand : public DrawerCommand
+class DrawSpanMaskedAddClampRGBACommand : public DrawerSpanCommand
 {
-	const uint32_t * RESTRICT _source;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _xfrac;
-	fixed_t _yfrac;
-	BYTE * RESTRICT _destorg;
-	int _x1;
-	int _x2;
-	int _y1;
-	int _y;
-	fixed_t _xstep;
-	fixed_t _ystep;
-	int _xbits;
-	int _ybits;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-
 public:
-	DrawSpanMaskedAddClampRGBACommand()
-	{
-		_source = (const uint32_t*)ds_source;
-		_light = ds_light;
-		_shade_constants = ds_shade_constants;
-		_xfrac = ds_xfrac;
-		_yfrac = ds_yfrac;
-		_destorg = dc_destorg;
-		_x1 = ds_x1;
-		_x2 = ds_x2;
-		_y = ds_y;
-		_xstep = ds_xstep;
-		_ystep = ds_ystep;
-		_xbits = ds_xbits;
-		_ybits = ds_ybits;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-	}
-
 	void Execute(DrawerThread *thread) override
 	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 
-		dsfixed_t			xfrac;
-		dsfixed_t			yfrac;
-		dsfixed_t			xstep;
-		dsfixed_t			ystep;
-		uint32_t*			dest;
-		const uint32_t*		source = _source;
-		int 				count;
-		int 				spot;
-
-		uint32_t light = calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-		xfrac = _xfrac;
-		yfrac = _yfrac;
-
-		dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
-
-		count = _x2 - _x1 + 1;
-
-		xstep = _xstep;
-		ystep = _ystep;
-
-		if (_xbits == 6 && _ybits == 6)
+		if (loop.is_64x64)
 		{
-			// 64x64 is the most common case by far, so special case it.
 			do
 			{
-				uint32_t texdata;
-
-				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-				texdata = source[spot];
-				if (texdata != 0)
-				{
-					uint32_t fg = shade_bgra(texdata, light, shade_constants);
-					uint32_t fg_red = (fg >> 16) & 0xff;
-					uint32_t fg_green = (fg >> 8) & 0xff;
-					uint32_t fg_blue = (fg) & 0xff;
-
-					uint32_t bg_red = (*dest >> 16) & 0xff;
-					uint32_t bg_green = (*dest >> 8) & 0xff;
-					uint32_t bg_blue = (*dest) & 0xff;
-
-					uint32_t red = (fg_red * fg_alpha + bg_red * bg_alpha) / 256;
-					uint32_t green = (fg_green * fg_alpha + bg_green * bg_alpha) / 256;
-					uint32_t blue = (fg_blue * fg_alpha + bg_blue * bg_alpha) / 256;
-
-					*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-				}
-				dest++;
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+				uint32_t fg = LightBgra::shade_bgra(_source[loop.spot64()], _light, _shade_constants);
+				*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
+			} while (loop.next());
 		}
 		else
 		{
-			BYTE yshift = 32 - _ybits;
-			BYTE xshift = yshift - _xbits;
-			int xmask = ((1 << _xbits) - 1) << _ybits;
 			do
 			{
-				uint32_t texdata;
-
-				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-				texdata = source[spot];
-				if (texdata != 0)
-				{
-					uint32_t fg = shade_bgra(texdata, light, shade_constants);
-					uint32_t fg_red = (fg >> 16) & 0xff;
-					uint32_t fg_green = (fg >> 8) & 0xff;
-					uint32_t fg_blue = (fg) & 0xff;
-
-					uint32_t bg_red = (*dest >> 16) & 0xff;
-					uint32_t bg_green = (*dest >> 8) & 0xff;
-					uint32_t bg_blue = (*dest) & 0xff;
-
-					uint32_t red = (fg_red * fg_alpha + bg_red * bg_alpha) / 256;
-					uint32_t green = (fg_green * fg_alpha + bg_green * bg_alpha) / 256;
-					uint32_t blue = (fg_blue * fg_alpha + bg_blue * bg_alpha) / 256;
-
-					*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-				}
-				dest++;
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+				uint32_t fg = LightBgra::shade_bgra(_source[loop.spot()], _light, _shade_constants);
+				*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
+			} while (loop.next());
 		}
 	}
 };
@@ -2296,12 +1216,14 @@ public:
 
 		uint32_t *dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
 		int count = (_x2 - _x1 + 1);
-		uint32_t light = calc_light_multiplier(_light);
-		uint32_t color = shade_pal_index_simple(_color, light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
+		uint32_t color = LightBgra::shade_pal_index_simple(_color, light);
 		for (int i = 0; i < count; i++)
 			dest[i] = color;
 	}
 };
+
+/////////////////////////////////////////////////////////////////////////////
 
 class DrawSlabRGBACommand : public DrawerCommand
 {
@@ -2344,7 +1266,7 @@ public:
 		uint32_t *p = _p;
 		ShadeConstants shade_constants = _shade_constants;
 		const BYTE *colormap = _colormap;
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		int pitch = _pitch;
 		int x;
 
@@ -2358,7 +1280,7 @@ public:
 		{
 			while (dy > 0)
 			{
-				*p = shade_pal_index(colormap[vptr[v >> FRACBITS]], light, shade_constants);
+				*p = LightBgra::shade_pal_index(colormap[vptr[v >> FRACBITS]], light, shade_constants);
 				p += pitch;
 				v += vi;
 				dy--;
@@ -2368,7 +1290,7 @@ public:
 		{
 			while (dy > 0)
 			{
-				uint32_t color = shade_pal_index(colormap[vptr[v >> FRACBITS]], light, shade_constants);
+				uint32_t color = LightBgra::shade_pal_index(colormap[vptr[v >> FRACBITS]], light, shade_constants);
 				p[0] = color;
 				p[1] = color;
 				p += pitch;
@@ -2380,7 +1302,7 @@ public:
 		{
 			while (dy > 0)
 			{
-				uint32_t color = shade_pal_index(colormap[vptr[v >> FRACBITS]], light, shade_constants);
+				uint32_t color = LightBgra::shade_pal_index(colormap[vptr[v >> FRACBITS]], light, shade_constants);
 				p[0] = color;
 				p[1] = color;
 				p[2] = color;
@@ -2393,7 +1315,7 @@ public:
 		{
 			while (dy > 0)
 			{
-				uint32_t color = shade_pal_index(colormap[vptr[v >> FRACBITS]], light, shade_constants);
+				uint32_t color = LightBgra::shade_pal_index(colormap[vptr[v >> FRACBITS]], light, shade_constants);
 				p[0] = color;
 				p[1] = color;
 				p[2] = color;
@@ -2405,7 +1327,7 @@ public:
 		}
 		else while (dy > 0)
 		{
-			uint32_t color = shade_pal_index(colormap[vptr[v >> FRACBITS]], light, shade_constants);
+			uint32_t color = LightBgra::shade_pal_index(colormap[vptr[v >> FRACBITS]], light, shade_constants);
 			// The optimizer will probably turn this into a memset call.
 			// Since dx is not likely to be large, I'm not sure that's a good thing,
 			// hence the alternatives above.
@@ -2420,999 +1342,483 @@ public:
 	}
 };
 
-class Vlinec1RGBACommand : public DrawerCommand
+/////////////////////////////////////////////////////////////////////////////
+
+class DrawerWall1Command : public DrawerCommand
 {
-	DWORD _iscale;
-	DWORD _texturefrac;
-	int _count;
-	const BYTE * RESTRICT _source;
-	const BYTE * RESTRICT _source2;
-	uint32_t _texturefracx;
+public:
 	BYTE * RESTRICT _dest;
-	int vlinebits;
 	int _pitch;
-	fixed_t _light;
+	int _count;
+	DWORD _texturefrac;
+	uint32_t _texturefracx;
+	DWORD _iscale;
+	int _vlinebits;
+	uint32_t _vlinemax;
+
+	const uint32 * RESTRICT _source;
+	const uint32 * RESTRICT _source2;
+	uint32_t _light;
 	ShadeConstants _shade_constants;
 
-public:
-	Vlinec1RGBACommand()
+	uint32_t _srcalpha;
+	uint32_t _destalpha;
+
+	DrawerWall1Command(int vlinebits, uint32_t vlinemax)
 	{
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_count = dc_count;
-		_source = dc_source;
-		_source2 = dc_source2;
-		_texturefracx = dc_texturefracx;
 		_dest = dc_dest;
-		vlinebits = ::vlinebits;
 		_pitch = dc_pitch;
-		_light = dc_light;
+		_count = dc_count;
+		_texturefrac = dc_texturefrac;
+		_texturefracx = dc_texturefracx;
+		_iscale = dc_iscale;
+		_vlinebits = vlinebits;
+		_vlinemax = vlinemax;
+
+		_source = (const uint32 *)dc_source;
+		_source2 = (const uint32 *)dc_source2;
+		_light = LightBgra::calc_light_multiplier(dc_light);
 		_shade_constants = dc_shade_constants;
+
+		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		_destalpha = dc_destalpha >> (FRACBITS - 8);
+	}
+
+	class LoopIterator
+	{
+	public:
+		uint32_t *dest;
+		int pitch;
+		int count;
+		uint32_t fracstep;
+		uint32_t frac;
+		uint32_t texturefracx;
+		int bits;
+
+		LoopIterator(DrawerWall1Command *command, DrawerThread *thread)
+		{
+			count = thread->count_for_thread(command->_dest_y, command->_count);
+			if (count <= 0)
+				return;
+
+			fracstep = command->_iscale * thread->num_cores;
+			frac = command->_texturefrac + command->_iscale * thread->skipped_by_thread(command->_dest_y);
+			texturefracx = command->_texturefracx;
+			dest = thread->dest_for_thread(command->_dest_y, command->_pitch, (uint32_t*)command->_dest);
+			bits = command->_vlinebits;
+			pitch = command->_pitch * thread->num_cores;
+		}
+
+		explicit operator bool()
+		{
+			return count > 0;
+		}
+
+		int sample_index()
+		{
+			return frac >> bits;
+		}
+
+		bool next()
+		{
+			frac += fracstep;
+			dest += pitch;
+			return (--count) != 0;
+		}
+	};
+};
+
+class DrawerWall4Command : public DrawerCommand
+{
+public:
+	BYTE * RESTRICT _dest;
+	int _count;
+	int _pitch;
+	int _vlinebits;
+	uint32_t _vlinemax;
+	ShadeConstants _shade_constants;
+	uint32_t _vplce[4];
+	uint32_t _vince[4];
+	uint32_t _buftexturefracx[4];
+	const uint32_t * RESTRICT _bufplce[4];
+	const uint32_t * RESTRICT _bufplce2[4];
+	uint32_t _light[4];
+
+	uint32_t _srcalpha;
+	uint32_t _destalpha;
+
+	DrawerWall4Command(int vlinebits, uint32_t vlinemax)
+	{
+		_dest = dc_dest;
+		_count = dc_count;
+		_pitch = dc_pitch;
+		_vlinebits = vlinebits;
+		_vlinemax = vlinemax;
+		_shade_constants = dc_shade_constants;
+		for (int i = 0; i < 4; i++)
+		{
+			_vplce[i] = vplce[i];
+			_vince[i] = vince[i];
+			_buftexturefracx[i] = buftexturefracx[i];
+			_bufplce[i] = (const uint32_t *)bufplce[i];
+			_bufplce2[i] = (const uint32_t *)bufplce2[i];
+			_light[i] = LightBgra::calc_light_multiplier(palookuplight[i]);
+		}
+		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		_destalpha = dc_destalpha >> (FRACBITS - 8);
+	}
+
+	class LoopIterator
+	{
+	public:
+		uint32_t *dest;
+		int pitch;
+		int count;
+		int bits;
+		uint32_t vplce[4];
+		uint32_t vince[4];
+
+		LoopIterator(DrawerWall4Command *command, DrawerThread *thread)
+		{
+			count = thread->count_for_thread(command->_dest_y, command->_count);
+			if (count <= 0)
+				return;
+
+			dest = thread->dest_for_thread(command->_dest_y, command->_pitch, (uint32_t*)command->_dest);
+			pitch = command->_pitch * thread->num_cores;
+			bits = command->_vlinebits;
+
+			int skipped = thread->skipped_by_thread(command->_dest_y);
+			for (int i = 0; i < 4; i++)
+			{
+				vplce[i] = command->_vplce[i] + command->_vince[i] * skipped;
+				vince[i] = command->_vince[i] * thread->num_cores;
+			}
+		}
+
+		explicit operator bool()
+		{
+			return count > 0;
+		}
+
+		int sample_index(int col)
+		{
+			return vplce[col] >> bits;
+		}
+
+		bool next()
+		{
+			vplce[0] += vince[0];
+			vplce[1] += vince[1];
+			vplce[2] += vince[2];
+			vplce[3] += vince[3];
+			dest += pitch;
+			return (--count) != 0;
+		}
+	};
+};
+
+class Vlinec1RGBACommand : public DrawerWall1Command
+{
+public:
+	Vlinec1RGBACommand() : DrawerWall1Command(vlinebits, vlinemax)
+	{
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		DWORD fracstep = _iscale * thread->num_cores;
-		DWORD frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
-		const uint32 *source = (const uint32 *)_source;
-		const uint32 *source2 = (const uint32 *)_source2;
-		uint32_t texturefracx = _texturefracx;
-		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int bits = vlinebits;
-		int pitch = _pitch * thread->num_cores;
-
-		uint32_t light = calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 
 		if (_source2 == nullptr)
 		{
 			do
 			{
-				*dest = shade_bgra(source[frac >> bits], light, shade_constants);
-				frac += fracstep;
-				dest += pitch;
-			} while (--count);
+				uint32_t fg = LightBgra::shade_bgra(_source[loop.sample_index()], _light, _shade_constants);
+				*loop.dest = BlendBgra::copy(fg);
+			} while (loop.next());
 		}
 		else
 		{
 			do
 			{
-				*dest = shade_bgra(sample_bilinear(source, source2, texturefracx, frac, bits), light, shade_constants);
-				frac += fracstep;
-				dest += pitch;
-			} while (--count);
+				uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, _source2, loop.texturefracx, loop.frac, loop.bits, _vlinemax), _light, _shade_constants);
+				*loop.dest = BlendBgra::copy(fg);
+			} while (loop.next());
 		}
 	}
 };
 
-class Vlinec4RGBACommand : public DrawerCommand
+class Vlinec4RGBACommand : public DrawerWall4Command
 {
-	BYTE * RESTRICT _dest;
-	int _count;
-	int _pitch;
-	ShadeConstants _shade_constants;
-	int vlinebits;
-	fixed_t palookuplight[4];
-	DWORD vplce[4];
-	DWORD vince[4];
-	const uint32_t * RESTRICT bufplce[4];
-	const uint32_t * RESTRICT bufplce2[4];
-	uint32_t buftexturefracx[4];
-
 public:
-	Vlinec4RGBACommand()
+	Vlinec4RGBACommand() : DrawerWall4Command(vlinebits, vlinemax)
 	{
-		_dest = dc_dest;
-		_count = dc_count;
-		_pitch = dc_pitch;
-		_shade_constants = dc_shade_constants;
-		vlinebits = ::vlinebits;
-		for (int i = 0; i < 4; i++)
-		{
-			palookuplight[i] = ::palookuplight[i];
-			vplce[i] = ::vplce[i];
-			vince[i] = ::vince[i];
-			bufplce[i] = (const uint32_t *)::bufplce[i];
-			bufplce2[i] = (const uint32_t *)::bufplce2[i];
-			buftexturefracx[i] = ::buftexturefracx[i];
-		}
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 
-		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int pitch = _pitch * thread->num_cores;
-		int bits = vlinebits;
-		DWORD place;
-
-		uint32_t light0 = calc_light_multiplier(palookuplight[0]);
-		uint32_t light1 = calc_light_multiplier(palookuplight[1]);
-		uint32_t light2 = calc_light_multiplier(palookuplight[2]);
-		uint32_t light3 = calc_light_multiplier(palookuplight[3]);
-
-		ShadeConstants shade_constants = _shade_constants;
-
-		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
-		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-		int skipped = thread->skipped_by_thread(_dest_y);
-		for (int i = 0; i < 4; i++)
-		{
-			local_vplce[i] += local_vince[i] * skipped;
-			local_vince[i] *= thread->num_cores;
-		}
-
-		if (bufplce2[0] == nullptr)
+		if (_bufplce2[0] == nullptr)
 		{
 			do
 			{
-				dest[0] = shade_bgra(bufplce[0][(place = local_vplce[0]) >> bits], light0, shade_constants); local_vplce[0] = place + local_vince[0];
-				dest[1] = shade_bgra(bufplce[1][(place = local_vplce[1]) >> bits], light1, shade_constants); local_vplce[1] = place + local_vince[1];
-				dest[2] = shade_bgra(bufplce[2][(place = local_vplce[2]) >> bits], light2, shade_constants); local_vplce[2] = place + local_vince[2];
-				dest[3] = shade_bgra(bufplce[3][(place = local_vplce[3]) >> bits], light3, shade_constants); local_vplce[3] = place + local_vince[3];
-				dest += pitch;
-			} while (--count);
+				for (int i = 0; i < 4; i++)
+				{
+					uint32_t fg = LightBgra::shade_bgra(_bufplce[i][loop.sample_index(i)], _light[i], _shade_constants);
+					loop.dest[i] = BlendBgra::copy(fg);
+				}
+			} while (loop.next());
 		}
 		else
 		{
 			do
 			{
-				dest[0] = shade_bgra(sample_bilinear(bufplce[0], bufplce2[0], buftexturefracx[0], place = local_vplce[0], bits), light0, shade_constants); local_vplce[0] = place + local_vince[0];
-				dest[1] = shade_bgra(sample_bilinear(bufplce[1], bufplce2[1], buftexturefracx[1], place = local_vplce[1], bits), light1, shade_constants); local_vplce[1] = place + local_vince[1];
-				dest[2] = shade_bgra(sample_bilinear(bufplce[2], bufplce2[2], buftexturefracx[2], place = local_vplce[2], bits), light2, shade_constants); local_vplce[2] = place + local_vince[2];
-				dest[3] = shade_bgra(sample_bilinear(bufplce[3], bufplce2[3], buftexturefracx[3], place = local_vplce[3], bits), light3, shade_constants); local_vplce[3] = place + local_vince[3];
-				dest += pitch;
-			} while (--count);
+				for (int i = 0; i < 4; i++)
+				{
+					uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_bufplce[i], _bufplce2[i], _buftexturefracx[i], loop.sample_index(i), loop.bits, _vlinemax), _light[i], _shade_constants);
+					loop.dest[i] = BlendBgra::copy(fg);
+				}
+			} while (loop.next());
 		}
 	}
 };
 
-class Mvlinec1RGBACommand : public DrawerCommand
+class Mvlinec1RGBACommand : public DrawerWall1Command
 {
-	DWORD _iscale;
-	DWORD _texturefrac;
-	int _count;
-	const BYTE * RESTRICT _source;
-	const BYTE * RESTRICT _source2;
-	uint32_t _texturefracx;
-	BYTE * RESTRICT _dest;
-	int mvlinebits;
-	int _pitch;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-
 public:
-	Mvlinec1RGBACommand()
+	Mvlinec1RGBACommand() : DrawerWall1Command(mvlinebits, mvlinemax)
 	{
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_count = dc_count;
-		_source = dc_source;
-		_source2 = dc_source2;
-		_texturefracx = dc_texturefracx;
-		_dest = dc_dest;
-		mvlinebits = ::mvlinebits;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		DWORD fracstep = _iscale * thread->num_cores;
-		DWORD frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
-		const uint32 *source = (const uint32 *)_source;
-		const uint32 *source2 = (const uint32 *)_source2;
-		uint32_t texturefracx = _texturefracx;
-		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int bits = mvlinebits;
-		int pitch = _pitch * thread->num_cores;
-
-		uint32_t light = calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 
 		if (_source2 == nullptr)
 		{
 			do
 			{
-				uint32_t pix = source[frac >> bits];
-				*dest = alpha_blend(shade_bgra(pix, light, shade_constants), *dest);
-				frac += fracstep;
-				dest += pitch;
-			} while (--count);
+				uint32_t fg = LightBgra::shade_bgra(_source[loop.sample_index()], _light, _shade_constants);
+				*loop.dest = BlendBgra::alpha_blend(fg, *loop.dest);
+			} while (loop.next());
 		}
 		else
 		{
 			do
 			{
-				*dest = alpha_blend(shade_bgra(sample_bilinear(source, source2, texturefracx, frac, bits), light, shade_constants), *dest);
-				frac += fracstep;
-				dest += pitch;
-			} while (--count);
+				uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, _source2, loop.texturefracx, loop.frac, loop.bits, _vlinemax), _light, _shade_constants);
+				*loop.dest = BlendBgra::alpha_blend(fg, *loop.dest);
+			} while (loop.next());
 		}
 	}
 };
 
-class Mvlinec4RGBACommand : public DrawerCommand
+class Mvlinec4RGBACommand : public DrawerWall4Command
 {
-	BYTE * RESTRICT _dest;
-	int _count;
-	int _pitch;
-	ShadeConstants _shade_constants;
-	int mvlinebits;
-	fixed_t palookuplight[4];
-	DWORD vplce[4];
-	DWORD vince[4];
-	const uint32 * RESTRICT bufplce[4];
-	const uint32 * RESTRICT bufplce2[4];
-	uint32_t buftexturefracx[4];
-
 public:
-	Mvlinec4RGBACommand()
+	Mvlinec4RGBACommand(): DrawerWall4Command(mvlinebits, mvlinemax)
 	{
-		_dest = dc_dest;
-		_count = dc_count;
-		_pitch = dc_pitch;
-		_shade_constants = dc_shade_constants;
-		mvlinebits = ::mvlinebits;
-		for (int i = 0; i < 4; i++)
-		{
-			palookuplight[i] = ::palookuplight[i];
-			vplce[i] = ::vplce[i];
-			vince[i] = ::vince[i];
-			bufplce[i] = (const uint32 *)::bufplce[i];
-			bufplce2[i] = (const uint32_t *)::bufplce2[i];
-			buftexturefracx[i] = ::buftexturefracx[i];
-		}
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 
-		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int pitch = _pitch * thread->num_cores;
-		int bits = mvlinebits;
-		DWORD place;
-
-		uint32_t light0 = calc_light_multiplier(palookuplight[0]);
-		uint32_t light1 = calc_light_multiplier(palookuplight[1]);
-		uint32_t light2 = calc_light_multiplier(palookuplight[2]);
-		uint32_t light3 = calc_light_multiplier(palookuplight[3]);
-
-		ShadeConstants shade_constants = _shade_constants;
-
-		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
-		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-		int skipped = thread->skipped_by_thread(_dest_y);
-		for (int i = 0; i < 4; i++)
-		{
-			local_vplce[i] += local_vince[i] * skipped;
-			local_vince[i] *= thread->num_cores;
-		}
-
-		if (bufplce2[0] == nullptr)
+		if (_bufplce2[0] == nullptr)
 		{
 			do
 			{
-				uint32_t pix;
-				pix = bufplce[0][(place = local_vplce[0]) >> bits]; dest[0] = alpha_blend(shade_bgra(pix, light0, shade_constants), dest[0]); local_vplce[0] = place + local_vince[0];
-				pix = bufplce[1][(place = local_vplce[1]) >> bits]; dest[1] = alpha_blend(shade_bgra(pix, light1, shade_constants), dest[1]); local_vplce[1] = place + local_vince[1];
-				pix = bufplce[2][(place = local_vplce[2]) >> bits]; dest[2] = alpha_blend(shade_bgra(pix, light2, shade_constants), dest[2]); local_vplce[2] = place + local_vince[2];
-				pix = bufplce[3][(place = local_vplce[3]) >> bits]; dest[3] = alpha_blend(shade_bgra(pix, light3, shade_constants), dest[3]); local_vplce[3] = place + local_vince[3];
-				dest += pitch;
-			} while (--count);
+				for (int i = 0; i < 4; i++)
+				{
+					uint32_t fg = LightBgra::shade_bgra(_bufplce[i][loop.sample_index(i)], _light[i], _shade_constants);
+					loop.dest[i] = BlendBgra::alpha_blend(fg, loop.dest[i]);
+				}
+			} while (loop.next());
 		}
 		else
 		{
 			do
 			{
-				dest[0] = alpha_blend(shade_bgra(sample_bilinear(bufplce[0], bufplce2[0], buftexturefracx[0], place = local_vplce[0], bits), light0, shade_constants), dest[0]); local_vplce[0] = place + local_vince[0];
-				dest[1] = alpha_blend(shade_bgra(sample_bilinear(bufplce[1], bufplce2[1], buftexturefracx[1], place = local_vplce[1], bits), light1, shade_constants), dest[1]); local_vplce[1] = place + local_vince[1];
-				dest[2] = alpha_blend(shade_bgra(sample_bilinear(bufplce[2], bufplce2[2], buftexturefracx[2], place = local_vplce[2], bits), light2, shade_constants), dest[2]); local_vplce[2] = place + local_vince[2];
-				dest[3] = alpha_blend(shade_bgra(sample_bilinear(bufplce[3], bufplce2[3], buftexturefracx[3], place = local_vplce[3], bits), light3, shade_constants), dest[3]); local_vplce[3] = place + local_vince[3];
-				dest += pitch;
-			} while (--count);
+				for (int i = 0; i < 4; i++)
+				{
+					uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_bufplce[i], _bufplce2[i], _buftexturefracx[i], loop.sample_index(i), loop.bits, _vlinemax), _light[i], _shade_constants);
+					loop.dest[i] = BlendBgra::alpha_blend(fg, loop.dest[i]);
+				}
+			} while (loop.next());
 		}
 	}
 };
 
-class Tmvline1AddRGBACommand : public DrawerCommand
+class Tmvline1AddRGBACommand : public DrawerWall1Command
 {
-	DWORD _iscale;
-	DWORD _texturefrac;
-	int _count;
-	const BYTE * RESTRICT _source;
-	BYTE * RESTRICT _dest;
-	int tmvlinebits;
-	int _pitch;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-
 public:
-	Tmvline1AddRGBACommand()
+	Tmvline1AddRGBACommand() : DrawerWall1Command(tmvlinebits, tmvlinemax)
 	{
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_count = dc_count;
-		_source = dc_source;
-		_dest = dc_dest;
-		tmvlinebits = ::tmvlinebits;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		DWORD fracstep = _iscale * thread->num_cores;
-		DWORD frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
-		const uint32 *source = (const uint32 *)_source;
-		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int bits = tmvlinebits;
-		int pitch = _pitch * thread->num_cores;
-
-		uint32_t light = calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t src_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t dest_alpha = _destalpha >> (FRACBITS - 8);
-
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 		do
 		{
-			uint32_t pix = source[frac >> bits];
-
-			uint32_t fg_alpha = src_alpha;
-			uint32_t bg_alpha = calc_blend_bgalpha(pix, dest_alpha);
-
-			uint32_t fg = shade_bgra(pix, light, shade_constants);
-			uint32_t fg_red = (fg >> 16) & 0xff;
-			uint32_t fg_green = (fg >> 8) & 0xff;
-			uint32_t fg_blue = fg & 0xff;
-
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-			uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-			uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-
-			frac += fracstep;
-			dest += pitch;
-		} while (--count);
+			uint32_t fg = LightBgra::shade_bgra(_source[loop.sample_index()], _light, _shade_constants);
+			*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
+		} while (loop.next());
 	}
 };
 
-class Tmvline4AddRGBACommand : public DrawerCommand
+class Tmvline4AddRGBACommand : public DrawerWall4Command
 {
-	BYTE * RESTRICT _dest;
-	int _count;
-	int _pitch;
-	ShadeConstants _shade_constants;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-	int tmvlinebits;
-	fixed_t palookuplight[4];
-	DWORD vplce[4];
-	DWORD vince[4];
-	const uint32 * RESTRICT bufplce[4];
-
 public:
-	Tmvline4AddRGBACommand()
+	Tmvline4AddRGBACommand() : DrawerWall4Command(tmvlinebits, tmvlinemax)
 	{
-		_dest = dc_dest;
-		_count = dc_count;
-		_pitch = dc_pitch;
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-		tmvlinebits = ::tmvlinebits;
-		for (int i = 0; i < 4; i++)
-		{
-			palookuplight[i] = ::palookuplight[i];
-			vplce[i] = ::vplce[i];
-			vince[i] = ::vince[i];
-			bufplce[i] = (const uint32 *)::bufplce[i];
-		}
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int pitch = _pitch * thread->num_cores;
-		int bits = tmvlinebits;
-
-		uint32_t light[4];
-		light[0] = calc_light_multiplier(palookuplight[0]);
-		light[1] = calc_light_multiplier(palookuplight[1]);
-		light[2] = calc_light_multiplier(palookuplight[2]);
-		light[3] = calc_light_multiplier(palookuplight[3]);
-
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t src_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t dest_alpha = _destalpha >> (FRACBITS - 8);
-
-		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
-		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-		int skipped = thread->skipped_by_thread(_dest_y);
-		for (int i = 0; i < 4; i++)
-		{
-			local_vplce[i] += local_vince[i] * skipped;
-			local_vince[i] *= thread->num_cores;
-		}
-
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 		do
 		{
-			for (int i = 0; i < 4; ++i)
+			for (int i = 0; i < 4; i++)
 			{
-				uint32_t pix = bufplce[i][local_vplce[i] >> bits];
-
-				uint32_t fg_alpha = src_alpha;
-				uint32_t bg_alpha = calc_blend_bgalpha(pix, dest_alpha);
-
-				uint32_t fg = shade_bgra(pix, light[i], shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
-
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-				uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-				uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
-
-				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
-
-				local_vplce[i] += local_vince[i];
+				uint32_t fg = LightBgra::shade_bgra(_bufplce[i][loop.sample_index(i)], _light[i], _shade_constants);
+				loop.dest[i] = BlendBgra::add(fg, loop.dest[i], _srcalpha, calc_blend_bgalpha(fg, _destalpha));
 			}
-			dest += pitch;
-		} while (--count);
+		} while (loop.next());
 	}
 };
 
-class Tmvline1AddClampRGBACommand : public DrawerCommand
+class Tmvline1AddClampRGBACommand : public DrawerWall1Command
 {
-	DWORD _iscale;
-	DWORD _texturefrac;
-	int _count;
-	const BYTE * RESTRICT _source;
-	BYTE * RESTRICT _dest;
-	int tmvlinebits;
-	int _pitch;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-
 public:
-	Tmvline1AddClampRGBACommand()
+	Tmvline1AddClampRGBACommand() : DrawerWall1Command(tmvlinebits, tmvlinemax)
 	{
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_count = dc_count;
-		_source = dc_source;
-		_dest = dc_dest;
-		tmvlinebits = ::tmvlinebits;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		DWORD fracstep = _iscale * thread->num_cores;
-		DWORD frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
-		const uint32 *source = (const uint32 *)_source;
-		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int bits = tmvlinebits;
-		int pitch = _pitch * thread->num_cores;
-
-		uint32_t light = calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t src_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t dest_alpha = _destalpha >> (FRACBITS - 8);
-
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 		do
 		{
-			uint32_t pix = source[frac >> bits];
-
-			uint32_t fg_alpha = src_alpha;
-			uint32_t bg_alpha = calc_blend_bgalpha(pix, dest_alpha);
-
-			uint32_t fg = shade_bgra(pix, light, shade_constants);
-			uint32_t fg_red = (fg >> 16) & 0xff;
-			uint32_t fg_green = (fg >> 8) & 0xff;
-			uint32_t fg_blue = fg & 0xff;
-
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-			uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-			uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-
-			frac += fracstep;
-			dest += pitch;
-		} while (--count);
+			uint32_t fg = LightBgra::shade_bgra(_source[loop.sample_index()], _light, _shade_constants);
+			*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
+		} while (loop.next());
 	}
 };
 
-class Tmvline4AddClampRGBACommand : public DrawerCommand
+class Tmvline4AddClampRGBACommand : public DrawerWall4Command
 {
-	BYTE * RESTRICT _dest;
-	int _count;
-	int _pitch;
-	ShadeConstants _shade_constants;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-	int tmvlinebits;
-	fixed_t palookuplight[4];
-	DWORD vplce[4];
-	DWORD vince[4];
-	const uint32 *RESTRICT bufplce[4];
-
 public:
-	Tmvline4AddClampRGBACommand()
+	Tmvline4AddClampRGBACommand() : DrawerWall4Command(tmvlinebits, tmvlinemax)
 	{
-		_dest = dc_dest;
-		_count = dc_count;
-		_pitch = dc_pitch;
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-		tmvlinebits = ::tmvlinebits;
-		for (int i = 0; i < 4; i++)
-		{
-			palookuplight[i] = ::palookuplight[i];
-			vplce[i] = ::vplce[i];
-			vince[i] = ::vince[i];
-			bufplce[i] = (const uint32 *)::bufplce[i];
-		}
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int pitch = _pitch * thread->num_cores;
-		int bits = tmvlinebits;
-
-		uint32_t light[4];
-		light[0] = calc_light_multiplier(palookuplight[0]);
-		light[1] = calc_light_multiplier(palookuplight[1]);
-		light[2] = calc_light_multiplier(palookuplight[2]);
-		light[3] = calc_light_multiplier(palookuplight[3]);
-
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t src_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t dest_alpha = _destalpha >> (FRACBITS - 8);
-
-		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
-		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-		int skipped = thread->skipped_by_thread(_dest_y);
-		for (int i = 0; i < 4; i++)
-		{
-			local_vplce[i] += local_vince[i] * skipped;
-			local_vince[i] *= thread->num_cores;
-		}
-
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 		do
 		{
-			for (int i = 0; i < 4; ++i)
+			for (int i = 0; i < 4; i++)
 			{
-				uint32_t pix = bufplce[i][local_vplce[i] >> bits];
-
-				uint32_t fg_alpha = src_alpha;
-				uint32_t bg_alpha = calc_blend_bgalpha(pix, dest_alpha);
-
-				uint32_t fg = shade_bgra(pix, light[i], shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
-
-				uint32_t bg_red = (dest[i] >> 16) & 0xff;
-				uint32_t bg_green = (dest[i] >> 8) & 0xff;
-				uint32_t bg_blue = (dest[i]) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-				uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-				uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
-
-				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
-
-				local_vplce[i] += local_vince[i];
+				uint32_t fg = LightBgra::shade_bgra(_bufplce[i][loop.sample_index(i)], _light[i], _shade_constants);
+				loop.dest[i] = BlendBgra::add(fg, loop.dest[i], _srcalpha, calc_blend_bgalpha(fg, _destalpha));
 			}
-			dest += pitch;
-		} while (--count);
+		} while (loop.next());
 	}
 };
 
-class Tmvline1SubClampRGBACommand : public DrawerCommand
+class Tmvline1SubClampRGBACommand : public DrawerWall1Command
 {
-	DWORD _iscale;
-	DWORD _texturefrac;
-	int _count;
-	const BYTE * RESTRICT _source;
-	BYTE * RESTRICT _dest;
-	int tmvlinebits;
-	int _pitch;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-
 public:
-	Tmvline1SubClampRGBACommand()
+	Tmvline1SubClampRGBACommand() : DrawerWall1Command(tmvlinebits, tmvlinemax)
 	{
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_count = dc_count;
-		_source = dc_source;
-		_dest = dc_dest;
-		tmvlinebits = ::tmvlinebits;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		DWORD fracstep = _iscale * thread->num_cores;
-		DWORD frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
-		const uint32 *source = (const uint32 *)_source;
-		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int bits = tmvlinebits;
-		int pitch = _pitch * thread->num_cores;
-
-		uint32_t light = calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t src_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t dest_alpha = _destalpha >> (FRACBITS - 8);
-
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 		do
 		{
-			uint32_t pix = source[frac >> bits];
-
-			uint32_t fg_alpha = src_alpha;
-			uint32_t bg_alpha = calc_blend_bgalpha(pix, dest_alpha);
-
-			uint32_t fg = shade_bgra(pix, light, shade_constants);
-			uint32_t fg_red = (fg >> 16) & 0xff;
-			uint32_t fg_green = (fg >> 8) & 0xff;
-			uint32_t fg_blue = fg & 0xff;
-
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = clamp<uint32_t>((0x10000 - fg_red * fg_alpha + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-			uint32_t green = clamp<uint32_t>((0x10000 - fg_green * fg_alpha + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-			uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-
-			frac += fracstep;
-			dest += pitch;
-		} while (--count);
+			uint32_t fg = LightBgra::shade_bgra(_source[loop.sample_index()], _light, _shade_constants);
+			*loop.dest = BlendBgra::sub(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
+		} while (loop.next());
 	}
 };
 
-class Tmvline4SubClampRGBACommand : public DrawerCommand
+class Tmvline4SubClampRGBACommand : public DrawerWall4Command
 {
-	BYTE * RESTRICT _dest;
-	int _count;
-	int _pitch;
-	ShadeConstants _shade_constants;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-	int tmvlinebits;
-	fixed_t palookuplight[4];
-	DWORD vplce[4];
-	DWORD vince[4];
-	const uint32 *RESTRICT bufplce[4];
-
 public:
-	Tmvline4SubClampRGBACommand()
+	Tmvline4SubClampRGBACommand() : DrawerWall4Command(tmvlinebits, tmvlinemax)
 	{
-		_dest = dc_dest;
-		_count = dc_count;
-		_pitch = dc_pitch;
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-		tmvlinebits = ::tmvlinebits;
-		for (int i = 0; i < 4; i++)
-		{
-			palookuplight[i] = ::palookuplight[i];
-			vplce[i] = ::vplce[i];
-			vince[i] = ::vince[i];
-			bufplce[i] = (const uint32 *)::bufplce[i];
-		}
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int pitch = _pitch * thread->num_cores;
-		int bits = tmvlinebits;
-
-		uint32_t light[4];
-		light[0] = calc_light_multiplier(palookuplight[0]);
-		light[1] = calc_light_multiplier(palookuplight[1]);
-		light[2] = calc_light_multiplier(palookuplight[2]);
-		light[3] = calc_light_multiplier(palookuplight[3]);
-
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t src_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t dest_alpha = _destalpha >> (FRACBITS - 8);
-
-		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
-		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-		int skipped = thread->skipped_by_thread(_dest_y);
-		for (int i = 0; i < 4; i++)
-		{
-			local_vplce[i] += local_vince[i] * skipped;
-			local_vince[i] *= thread->num_cores;
-		}
-
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 		do
 		{
-			for (int i = 0; i < 4; ++i)
+			for (int i = 0; i < 4; i++)
 			{
-				uint32_t pix = bufplce[i][local_vplce[i] >> bits];
-
-				uint32_t fg_alpha = src_alpha;
-				uint32_t bg_alpha = calc_blend_bgalpha(pix, dest_alpha);
-
-				uint32_t fg = shade_bgra(pix, light[i], shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
-
-				uint32_t bg_red = (dest[i] >> 16) & 0xff;
-				uint32_t bg_green = (dest[i] >> 8) & 0xff;
-				uint32_t bg_blue = (dest[i]) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((0x10000 - fg_red * fg_alpha + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t green = clamp<uint32_t>((0x10000 - fg_green * fg_alpha + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
-
-				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
-
-				local_vplce[i] += local_vince[i];
+				uint32_t fg = LightBgra::shade_bgra(_bufplce[i][loop.sample_index(i)], _light[i], _shade_constants);
+				loop.dest[i] = BlendBgra::sub(fg, loop.dest[i], _srcalpha, calc_blend_bgalpha(fg, _destalpha));
 			}
-			dest += pitch;
-		} while (--count);
+		} while (loop.next());
 	}
 };
 
-class Tmvline1RevSubClampRGBACommand : public DrawerCommand
+class Tmvline1RevSubClampRGBACommand : public DrawerWall1Command
 {
-	DWORD _iscale;
-	DWORD _texturefrac;
-	int _count;
-	const BYTE * RESTRICT _source;
-	BYTE * RESTRICT _dest;
-	int tmvlinebits;
-	int _pitch;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-
 public:
-	Tmvline1RevSubClampRGBACommand()
+	Tmvline1RevSubClampRGBACommand() : DrawerWall1Command(tmvlinebits, tmvlinemax)
 	{
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_count = dc_count;
-		_source = dc_source;
-		_dest = dc_dest;
-		tmvlinebits = ::tmvlinebits;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		DWORD fracstep = _iscale * thread->num_cores;
-		DWORD frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
-		const uint32 *source = (const uint32 *)_source;
-		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int bits = tmvlinebits;
-		int pitch = _pitch * thread->num_cores;
-
-		uint32_t light = calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t src_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t dest_alpha = _destalpha >> (FRACBITS - 8);
-
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 		do
 		{
-			uint32_t pix = source[frac >> bits];
-
-			uint32_t fg_alpha = src_alpha;
-			uint32_t bg_alpha = calc_blend_bgalpha(pix, dest_alpha);
-
-			uint32_t fg = shade_bgra(pix, light, shade_constants);
-			uint32_t fg_red = (fg >> 16) & 0xff;
-			uint32_t fg_green = (fg >> 8) & 0xff;
-			uint32_t fg_blue = fg & 0xff;
-
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = clamp<uint32_t>((0x10000 + fg_red * fg_alpha - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-			uint32_t green = clamp<uint32_t>((0x10000 + fg_green * fg_alpha - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-			uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue * fg_alpha - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-
-			frac += fracstep;
-			dest += pitch;
-		} while (--count);
+			uint32_t fg = LightBgra::shade_bgra(_source[loop.sample_index()], _light, _shade_constants);
+			*loop.dest = BlendBgra::revsub(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
+		} while (loop.next());
 	}
 };
 
-class Tmvline4RevSubClampRGBACommand : public DrawerCommand
+class Tmvline4RevSubClampRGBACommand : public DrawerWall4Command
 {
-	BYTE * RESTRICT _dest;
-	int _count;
-	int _pitch;
-	ShadeConstants _shade_constants;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-	int tmvlinebits;
-	fixed_t palookuplight[4];
-	DWORD vplce[4];
-	DWORD vince[4];
-	const uint32 *RESTRICT bufplce[4];
-
 public:
-	Tmvline4RevSubClampRGBACommand()
+	Tmvline4RevSubClampRGBACommand() : DrawerWall4Command(tmvlinebits, tmvlinemax)
 	{
-		_dest = dc_dest;
-		_count = dc_count;
-		_pitch = dc_pitch;
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-		tmvlinebits = ::tmvlinebits;
-		for (int i = 0; i < 4; i++)
-		{
-			palookuplight[i] = ::palookuplight[i];
-			vplce[i] = ::vplce[i];
-			vince[i] = ::vince[i];
-			bufplce[i] = (const uint32 *)::bufplce[i];
-		}
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int pitch = _pitch * thread->num_cores;
-		int bits = tmvlinebits;
-
-		uint32_t light[4];
-		light[0] = calc_light_multiplier(palookuplight[0]);
-		light[1] = calc_light_multiplier(palookuplight[1]);
-		light[2] = calc_light_multiplier(palookuplight[2]);
-		light[3] = calc_light_multiplier(palookuplight[3]);
-
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t src_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t dest_alpha = _destalpha >> (FRACBITS - 8);
-
-		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
-		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-		int skipped = thread->skipped_by_thread(_dest_y);
-		for (int i = 0; i < 4; i++)
-		{
-			local_vplce[i] += local_vince[i] * skipped;
-			local_vince[i] *= thread->num_cores;
-		}
-
+		LoopIterator loop(this, thread);
+		if (!loop) return;
 		do
 		{
-			for (int i = 0; i < 4; ++i)
+			for (int i = 0; i < 4; i++)
 			{
-				uint32_t pix = bufplce[i][local_vplce[i] >> bits];
-
-				uint32_t fg_alpha = src_alpha;
-				uint32_t bg_alpha = calc_blend_bgalpha(pix, dest_alpha);
-
-				uint32_t fg = shade_bgra(pix, light[i], shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
-
-				uint32_t bg_red = (dest[i] >> 16) & 0xff;
-				uint32_t bg_green = (dest[i] >> 8) & 0xff;
-				uint32_t bg_blue = (dest[i]) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((0x10000 + fg_red * fg_alpha - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t green = clamp<uint32_t>((0x10000 + fg_green * fg_alpha - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue * fg_alpha - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
-
-				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
-
-				local_vplce[i] += local_vince[i];
+				uint32_t fg = LightBgra::shade_bgra(_bufplce[i][loop.sample_index(i)], _light[i], _shade_constants);
+				loop.dest[i] = BlendBgra::revsub(fg, loop.dest[i], _srcalpha, calc_blend_bgalpha(fg, _destalpha));
 			}
-			dest += pitch;
-		} while (--count);
+		} while (loop.next());
 	}
 };
+
+/////////////////////////////////////////////////////////////////////////////
 
 class DrawFogBoundaryLineRGBACommand : public DrawerCommand
 {
@@ -3446,7 +1852,7 @@ public:
 
 		uint32_t *dest = ylookup[y] + (uint32_t*)_destorg;
 
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		ShadeConstants constants = _shade_constants;
 
 		do
@@ -3563,8 +1969,8 @@ public:
 
 		uint32_t *dest = ylookup[y] + x1 + (uint32_t*)_destorg;
 		int count = (x2 - x1 + 1);
-		uint32_t light = calc_light_multiplier(_light);
-		uint32_t color = shade_pal_index_simple(_color, light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
+		uint32_t color = LightBgra::shade_pal_index_simple(_color, light);
 		for (int i = 0; i < count; i++)
 			dest[i] = color;
 	}

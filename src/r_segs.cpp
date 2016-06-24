@@ -1276,7 +1276,7 @@ typedef void(*Draw4ColumnsFuncPtr)();
 void wallscan_any(
 	int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat,
 	const BYTE *(*getcol)(FTexture *tex, int x),
-	void(setupwallscan(int bits,Draw1ColumnFuncPtr &draw1, Draw4ColumnsFuncPtr &draw2)))
+	void(setupwallscan(int bits, int fracmax, Draw1ColumnFuncPtr &draw1, Draw4ColumnsFuncPtr &draw2)))
 {
 	if (rw_pic->UseType == FTexture::TEX_Null)
 		return;
@@ -1286,7 +1286,7 @@ void wallscan_any(
 
 	DWORD(*draw1column)();
 	void(*draw4columns)();
-	setupwallscan(32 - rw_pic->HeightBits, draw1column, draw4columns);
+	setupwallscan(32 - rw_pic->HeightBits, (rw_pic->GetHeight() - 1) << (32 - rw_pic->HeightBits), draw1column, draw4columns);
 
 	bool fixed = (fixedcolormap != NULL || fixedlightlev >= 0);
 	if (fixed)
@@ -1439,9 +1439,9 @@ void wallscan_any(
 
 void wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
 {
-	wallscan_any(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, [](int bits, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
+	wallscan_any(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, [](int bits, int fracmax, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
 	{
-		setupvline(bits);
+		setupvline(bits, fracmax);
 		line1 = dovline1;
 		line4 = dovline4;
 	});
@@ -1455,9 +1455,9 @@ void maskwallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t
 	}
 	else
 	{
-		wallscan_any(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, [](int bits, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
+		wallscan_any(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, [](int bits, int fracmax, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
 		{
-			setupmvline(bits);
+			setupmvline(bits, fracmax);
 			line1 = domvline1;
 			line4 = domvline4;
 		});
@@ -1475,9 +1475,9 @@ void transmaskwallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fi
 	}
 	else
 	{
-		wallscan_any(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, [](int bits, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
+		wallscan_any(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, [](int bits, int fracmax, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
 		{
-			setuptmvline(bits);
+			setuptmvline(bits, fracmax);
 			line1 = reinterpret_cast<DWORD(*)()>(tmvline1);
 			line4 = tmvline4;
 		});

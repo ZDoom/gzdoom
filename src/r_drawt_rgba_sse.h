@@ -48,7 +48,7 @@ public:
 			return;
 
 		ShadeConstants shade_constants = _shade_constants;
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
 
 		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
@@ -207,7 +207,7 @@ public:
 		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
 		BYTE *colormap = _colormap;
 
@@ -335,7 +335,7 @@ public:
 		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		__m128i fg = _mm_unpackhi_epi8(_mm_set1_epi32(shade_pal_index_simple(_color, calc_light_multiplier(_light))), _mm_setzero_si128());
+		__m128i fg = _mm_unpackhi_epi8(_mm_set1_epi32(LightBgra::shade_pal_index_simple(_color, LightBgra::calc_light_multiplier(_light))), _mm_setzero_si128());
 		__m128i alpha_one = _mm_set1_epi16(64);
 
 		do {
@@ -411,7 +411,7 @@ public:
 		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
 
 		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
@@ -538,7 +538,7 @@ public:
 		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
 		ShadeConstants shade_constants = _shade_constants;
 
@@ -664,7 +664,7 @@ public:
 		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
 		ShadeConstants shade_constants = _shade_constants;
 

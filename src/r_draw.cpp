@@ -1644,6 +1644,8 @@ extern "C" void R_DrawSlabC(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *v
 
 int vlinebits;
 int mvlinebits;
+uint32_t vlinemax;
+uint32_t mvlinemax;
 
 #ifndef X86_ASM
 static DWORD vlinec1 ();
@@ -1693,11 +1695,12 @@ DWORD (*domvline1)() = mvlineasm1;
 void (*domvline4)() = mvlineasm4;
 #endif
 
-void setupvline (int fracbits)
+void setupvline (int fracbits, int fracmax)
 {
 	if (r_swtruecolor)
 	{
 		vlinebits = fracbits;
+		vlinemax = fracmax;
 		return;
 	}
 
@@ -1777,7 +1780,7 @@ void vlinec4 ()
 }
 #endif
 
-void setupmvline (int fracbits)
+void setupmvline (int fracbits, int fracmax)
 {
 	if (!r_swtruecolor)
 	{
@@ -1792,6 +1795,7 @@ void setupmvline (int fracbits)
 	else
 	{
 		mvlinebits = fracbits;
+		mvlinemax = fracmax;
 	}
 }
 
@@ -1964,10 +1968,12 @@ void R_DrawFogBoundary_C (int x1, int x2, short *uclip, short *dclip)
 }
 
 int tmvlinebits;
+uint32_t tmvlinemax;
 
-void setuptmvline (int bits)
+void setuptmvline (int bits, int fracmax)
 {
 	tmvlinebits = bits;
+	tmvlinemax = fracmax;
 }
 
 fixed_t tmvline1_add_C ()

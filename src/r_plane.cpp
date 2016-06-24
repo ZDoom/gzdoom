@@ -514,8 +514,8 @@ void R_MapColoredPlane_rgba(int y, int x1)
 {
 	uint32_t *dest = ylookup[y] + x1 + (uint32_t*)dc_destorg;
 	int count = (spanend[y] - x1 + 1);
-	uint32_t light = calc_light_multiplier(ds_light);
-	uint32_t color = shade_pal_index_simple(ds_color, light);
+	uint32_t light = LightBgra::calc_light_multiplier(ds_light);
+	uint32_t color = LightBgra::shade_pal_index_simple(ds_color, light);
 	for (int i = 0; i < count; i++)
 		dest[i] = color;
 }

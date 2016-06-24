@@ -286,7 +286,7 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////
-// Pixel shading macros and inline functions:
+// Pixel shading inline functions:
 
 // Give the compiler a strong hint we want these functions inlined:
 #ifndef FORCEINLINE
@@ -310,220 +310,256 @@ public:
 #endif
 #endif
 
-// calculates the light constant passed to the shade_pal_index function
-FORCEINLINE uint32_t calc_light_multiplier(dsfixed_t light)
+class LightBgra
 {
-	return 256 - (light >> (FRACBITS - 8));
-}
-
-// Calculates a ARGB8 color for the given palette index and light multiplier
-FORCEINLINE uint32_t shade_pal_index_simple(uint32_t index, uint32_t light)
-{
-	const PalEntry &color = GPalette.BaseColors[index];
-	uint32_t red = color.r;
-	uint32_t green = color.g;
-	uint32_t blue = color.b;
-
-	red = red * light / 256;
-	green = green * light / 256;
-	blue = blue * light / 256;
-
-	return 0xff000000 | (red << 16) | (green << 8) | blue;
-}
-
-FORCEINLINE uint32_t shade_bgra_simple(uint32_t color, uint32_t light)
-{
-	uint32_t red = (color >> 16) & 0xff;
-	uint32_t green = (color >> 8) & 0xff;
-	uint32_t blue = color & 0xff;
-
-	red = red * light / 256;
-	green = green * light / 256;
-	blue = blue * light / 256;
-
-	return 0xff000000 | (red << 16) | (green << 8) | blue;
-}
-
-// Calculates a ARGB8 color for the given palette index, light multiplier and dynamic colormap
-FORCEINLINE uint32_t shade_pal_index(uint32_t index, uint32_t light, const ShadeConstants &constants)
-{
-	const PalEntry &color = GPalette.BaseColors[index];
-	uint32_t alpha = color.d & 0xff000000;
-	uint32_t red = color.r;
-	uint32_t green = color.g;
-	uint32_t blue = color.b;
-	if (constants.simple_shade)
+public:
+	// calculates the light constant passed to the shade_pal_index function
+	FORCEINLINE static uint32_t calc_light_multiplier(dsfixed_t light)
 	{
+		return 256 - (light >> (FRACBITS - 8));
+	}
+
+	// Calculates a ARGB8 color for the given palette index and light multiplier
+	FORCEINLINE static uint32_t shade_pal_index_simple(uint32_t index, uint32_t light)
+	{
+		const PalEntry &color = GPalette.BaseColors[index];
+		uint32_t red = color.r;
+		uint32_t green = color.g;
+		uint32_t blue = color.b;
+
 		red = red * light / 256;
 		green = green * light / 256;
 		blue = blue * light / 256;
+
+		return 0xff000000 | (red << 16) | (green << 8) | blue;
 	}
-	else
+
+	// Calculates a ARGB8 color for the given palette index, light multiplier and dynamic colormap
+	FORCEINLINE static uint32_t shade_pal_index(uint32_t index, uint32_t light, const ShadeConstants &constants)
 	{
-		uint32_t inv_light = 256 - light;
-		uint32_t inv_desaturate = 256 - constants.desaturate;
-
-		uint32_t intensity = ((red * 77 + green * 143 + blue * 37) >> 8) * constants.desaturate;
-
-		red = (red * inv_desaturate + intensity) / 256;
-		green = (green * inv_desaturate + intensity) / 256;
-		blue = (blue * inv_desaturate + intensity) / 256;
-
-		red = (constants.fade_red * inv_light + red * light) / 256;
-		green = (constants.fade_green * inv_light + green * light) / 256;
-		blue = (constants.fade_blue * inv_light + blue * light) / 256;
-
-		red = (red * constants.light_red) / 256;
-		green = (green * constants.light_green) / 256;
-		blue = (blue * constants.light_blue) / 256;
-	}
-	return alpha | (red << 16) | (green << 8) | blue;
-}
-
-FORCEINLINE uint32_t shade_bgra(uint32_t color, uint32_t light, const ShadeConstants &constants)
-{
-	uint32_t alpha = color & 0xff000000;
-	uint32_t red = (color >> 16) & 0xff;
-	uint32_t green = (color >> 8) & 0xff;
-	uint32_t blue = color & 0xff;
-	if (constants.simple_shade)
-	{
-		red = red * light / 256;
-		green = green * light / 256;
-		blue = blue * light / 256;
-	}
-	else
-	{
-		uint32_t inv_light = 256 - light;
-		uint32_t inv_desaturate = 256 - constants.desaturate;
-
-		uint32_t intensity = ((red * 77 + green * 143 + blue * 37) >> 8) * constants.desaturate;
-
-		red = (red * inv_desaturate + intensity) / 256;
-		green = (green * inv_desaturate + intensity) / 256;
-		blue = (blue * inv_desaturate + intensity) / 256;
-
-		red = (constants.fade_red * inv_light + red * light) / 256;
-		green = (constants.fade_green * inv_light + green * light) / 256;
-		blue = (constants.fade_blue * inv_light + blue * light) / 256;
-
-		red = (red * constants.light_red) / 256;
-		green = (green * constants.light_green) / 256;
-		blue = (blue * constants.light_blue) / 256;
-	}
-	return alpha | (red << 16) | (green << 8) | blue;
-}
-
-FORCEINLINE uint32_t alpha_blend(uint32_t fg, uint32_t bg)
-{
-	uint32_t fg_alpha = fg >> 24;
-	uint32_t fg_red = (fg >> 16) & 0xff;
-	uint32_t fg_green = (fg >> 8) & 0xff;
-	uint32_t fg_blue = fg & 0xff;
-
-	uint32_t alpha = fg_alpha + (fg_alpha >> 7); // 255 -> 256
-	uint32_t inv_alpha = 256 - alpha;
-
-	uint32_t bg_red = (bg >> 16) & 0xff;
-	uint32_t bg_green = (bg >> 8) & 0xff;
-	uint32_t bg_blue = bg & 0xff;
-
-	uint32_t red = clamp<uint32_t>(fg_red + (bg_red * inv_alpha) / 256, 0, 255);
-	uint32_t green = clamp<uint32_t>(fg_green + (bg_green * inv_alpha) / 256, 0, 255);
-	uint32_t blue = clamp<uint32_t>(fg_blue + (bg_blue * inv_alpha) / 256, 0, 255);
-
-	return 0xff000000 | (red << 16) | (green << 8) | blue;
-}
-
-inline bool span_sampler_setup(const uint32_t * RESTRICT &source, int &xbits, int &ybits, fixed_t xstep, fixed_t ystep)
-{
-	if (!r_bilinear)
-		return false;
-
-	// Is this a magfilter or minfilter?
-	fixed_t xmagnitude = abs(xstep) >> (32 - xbits - FRACBITS);
-	fixed_t ymagnitude = abs(ystep) >> (32 - ybits - FRACBITS);
-	fixed_t magnitude = (xmagnitude + ymagnitude) * 2 + (1 << (FRACBITS -1));
-	if (magnitude >> FRACBITS == 0)
-		return false;
-
-	if (r_mipmap)
-	{
-		int level = magnitude >> (FRACBITS + 1);
-		while (level != 0)
+		const PalEntry &color = GPalette.BaseColors[index];
+		uint32_t alpha = color.d & 0xff000000;
+		uint32_t red = color.r;
+		uint32_t green = color.g;
+		uint32_t blue = color.b;
+		if (constants.simple_shade)
 		{
-			if (xbits <= 2 || ybits <= 2)
-				break;
-
-			source += (1 << (xbits)) * (1 << (ybits));
-			xbits -= 1;
-			ybits -= 1;
-			level >>= 1;
+			red = red * light / 256;
+			green = green * light / 256;
+			blue = blue * light / 256;
 		}
+		else
+		{
+			uint32_t inv_light = 256 - light;
+			uint32_t inv_desaturate = 256 - constants.desaturate;
+
+			uint32_t intensity = ((red * 77 + green * 143 + blue * 37) >> 8) * constants.desaturate;
+
+			red = (red * inv_desaturate + intensity) / 256;
+			green = (green * inv_desaturate + intensity) / 256;
+			blue = (blue * inv_desaturate + intensity) / 256;
+
+			red = (constants.fade_red * inv_light + red * light) / 256;
+			green = (constants.fade_green * inv_light + green * light) / 256;
+			blue = (constants.fade_blue * inv_light + blue * light) / 256;
+
+			red = (red * constants.light_red) / 256;
+			green = (green * constants.light_green) / 256;
+			blue = (blue * constants.light_blue) / 256;
+		}
+		return alpha | (red << 16) | (green << 8) | blue;
 	}
-	return true;
-}
 
-FORCEINLINE uint32_t sample_bilinear(const uint32_t *col0, const uint32_t *col1, uint32_t texturefracx, uint32_t texturefracy, int ybits)
+	FORCEINLINE static uint32_t shade_bgra_simple(uint32_t color, uint32_t light)
+	{
+		uint32_t red = RPART(color) * light / 256;
+		uint32_t green = GPART(color) * light / 256;
+		uint32_t blue = BPART(color) * light / 256;
+		return 0xff000000 | (red << 16) | (green << 8) | blue;
+	}
+
+	FORCEINLINE static uint32_t shade_bgra(uint32_t color, uint32_t light, const ShadeConstants &constants)
+	{
+		uint32_t alpha = color & 0xff000000;
+		uint32_t red = (color >> 16) & 0xff;
+		uint32_t green = (color >> 8) & 0xff;
+		uint32_t blue = color & 0xff;
+		if (constants.simple_shade)
+		{
+			red = red * light / 256;
+			green = green * light / 256;
+			blue = blue * light / 256;
+		}
+		else
+		{
+			uint32_t inv_light = 256 - light;
+			uint32_t inv_desaturate = 256 - constants.desaturate;
+
+			uint32_t intensity = ((red * 77 + green * 143 + blue * 37) >> 8) * constants.desaturate;
+
+			red = (red * inv_desaturate + intensity) / 256;
+			green = (green * inv_desaturate + intensity) / 256;
+			blue = (blue * inv_desaturate + intensity) / 256;
+
+			red = (constants.fade_red * inv_light + red * light) / 256;
+			green = (constants.fade_green * inv_light + green * light) / 256;
+			blue = (constants.fade_blue * inv_light + blue * light) / 256;
+
+			red = (red * constants.light_red) / 256;
+			green = (green * constants.light_green) / 256;
+			blue = (blue * constants.light_blue) / 256;
+		}
+		return alpha | (red << 16) | (green << 8) | blue;
+	}
+};
+
+class BlendBgra
 {
-	uint32_t half = 1 << (ybits - 1);
-	uint32_t y = (texturefracy - half) >> ybits;
+public:
+	FORCEINLINE static uint32_t copy(uint32_t fg)
+	{
+		return fg;
+	}
 
-	uint32_t p00 = col0[y];
-	uint32_t p01 = col0[y + 1];
-	uint32_t p10 = col1[y];
-	uint32_t p11 = col1[y + 1];
+	FORCEINLINE static uint32_t add(uint32_t fg, uint32_t bg, uint32_t srcalpha, uint32_t destalpha)
+	{
+		uint32_t red = MIN<uint32_t>((RPART(fg) * srcalpha + RPART(bg) * destalpha) >> 8, 255);
+		uint32_t green = MIN<uint32_t>((GPART(fg) * srcalpha + GPART(bg) * destalpha) >> 8, 255);
+		uint32_t blue = MIN<uint32_t>((BPART(fg) * srcalpha + BPART(bg) * destalpha) >> 8, 255);
+		return 0xff000000 | (red << 16) | (green << 8) | blue;
+	}
 
-	uint32_t inv_b = texturefracx;
-	uint32_t inv_a = ((texturefracy + half) >> (ybits - 4)) & 15;
-	uint32_t a = 16 - inv_a;
-	uint32_t b = 16 - inv_b;
+	FORCEINLINE static uint32_t sub(uint32_t fg, uint32_t bg, uint32_t srcalpha, uint32_t destalpha)
+	{
+		uint32_t red = clamp<uint32_t>((0x10000 - RPART(fg) * srcalpha + RPART(bg) * destalpha) >> 8, 256, 256 + 255) - 256;
+		uint32_t green = clamp<uint32_t>((0x10000 - GPART(fg) * srcalpha + GPART(bg) * destalpha) >> 8, 256, 256 + 255) - 256;
+		uint32_t blue = clamp<uint32_t>((0x10000 - BPART(fg) * srcalpha + BPART(bg) * destalpha) >> 8, 256, 256 + 255) - 256;
+		return 0xff000000 | (red << 16) | (green << 8) | blue;
+	}
 
-	uint32_t red = (RPART(p00) * a * b + RPART(p01) * inv_a * b + RPART(p10) * a * inv_b + RPART(p11) * inv_a * inv_b + 127) >> 8;
-	uint32_t green = (GPART(p00) * a * b + GPART(p01) * inv_a * b + GPART(p10) * a * inv_b + GPART(p11) * inv_a * inv_b + 127) >> 8;
-	uint32_t blue = (BPART(p00) * a * b + BPART(p01) * inv_a * b + BPART(p10) * a * inv_b + BPART(p11) * inv_a * inv_b + 127) >> 8;
-	uint32_t alpha = (APART(p00) * a * b + APART(p01) * inv_a * b + APART(p10) * a * inv_b + APART(p11) * inv_a * inv_b + 127) >> 8;
+	FORCEINLINE static uint32_t revsub(uint32_t fg, uint32_t bg, uint32_t srcalpha, uint32_t destalpha)
+	{
+		uint32_t red = clamp<uint32_t>((0x10000 + RPART(fg) * srcalpha - RPART(bg) * destalpha) >> 8, 256, 256 + 255) - 256;
+		uint32_t green = clamp<uint32_t>((0x10000 + GPART(fg) * srcalpha - GPART(bg) * destalpha) >> 8, 256, 256 + 255) - 256;
+		uint32_t blue = clamp<uint32_t>((0x10000 + BPART(fg) * srcalpha - BPART(bg) * destalpha) >> 8, 256, 256 + 255) - 256;
+		return 0xff000000 | (red << 16) | (green << 8) | blue;
+	}
 
-	return (alpha << 24) | (red << 16) | (green << 8) | blue;
-}
+	FORCEINLINE static uint32_t alpha_blend(uint32_t fg, uint32_t bg)
+	{
+		uint32_t alpha = APART(fg) + (APART(fg) >> 7); // 255 -> 256
+		uint32_t inv_alpha = 256 - alpha;
+		uint32_t red = MIN<uint32_t>(RPART(fg) + (RPART(bg) * inv_alpha) / 256, 255);
+		uint32_t green = MIN<uint32_t>(GPART(fg) + (GPART(bg) * inv_alpha) / 256, 255);
+		uint32_t blue = MIN<uint32_t>(BPART(fg) + (BPART(bg) * inv_alpha) / 256, 255);
+		return 0xff000000 | (red << 16) | (green << 8) | blue;
+	}
+};
 
-FORCEINLINE uint32_t sample_bilinear(const uint32_t *texture, dsfixed_t xfrac, dsfixed_t yfrac, int xbits, int ybits)
+class SampleBgra
 {
-	int xshift = (32 - xbits);
-	int yshift = (32 - ybits);
-	int xmask = (1 << xshift) - 1;
-	int ymask = (1 << yshift) - 1;
-	uint32_t xhalf = 1 << (xbits - 1);
-	uint32_t yhalf = 1 << (ybits - 1);
-	uint32_t x = (xfrac - xhalf) >> xbits;
-	uint32_t y = (yfrac - yhalf) >> ybits;
+public:
+	inline static bool span_sampler_setup(const uint32_t * RESTRICT &source, int &xbits, int &ybits, fixed_t xstep, fixed_t ystep)
+	{
+		if (!r_bilinear)
+			return false;
 
-	uint32_t p00 = texture[(y & ymask)     + ((x & xmask) << yshift)];
-	uint32_t p01 = texture[((y + 1) & ymask) + ((x & xmask) << yshift)];
-	uint32_t p10 = texture[(y & ymask)     + (((x + 1) & xmask) << yshift)];
-	uint32_t p11 = texture[((y + 1) & ymask) + (((x + 1) & xmask) << yshift)];
+		// Is this a magfilter or minfilter?
+		fixed_t xmagnitude = abs(xstep) >> (32 - xbits - FRACBITS);
+		fixed_t ymagnitude = abs(ystep) >> (32 - ybits - FRACBITS);
+		fixed_t magnitude = (xmagnitude + ymagnitude) * 2 + (1 << (FRACBITS - 1));
+		if (magnitude >> FRACBITS == 0)
+			return false;
 
-	uint32_t inv_b = ((xfrac + xhalf) >> (xbits - 4)) & 15;
-	uint32_t inv_a = ((yfrac + yhalf) >> (ybits - 4)) & 15;
-	uint32_t a = 16 - inv_a;
-	uint32_t b = 16 - inv_b;
+		if (r_mipmap)
+		{
+			int level = magnitude >> (FRACBITS + 1);
+			while (level != 0)
+			{
+				if (xbits <= 2 || ybits <= 2)
+					break;
 
-	uint32_t red = (RPART(p00) * a * b + RPART(p01) * inv_a * b + RPART(p10) * a * inv_b + RPART(p11) * inv_a * inv_b + 127) >> 8;
-	uint32_t green = (GPART(p00) * a * b + GPART(p01) * inv_a * b + GPART(p10) * a * inv_b + GPART(p11) * inv_a * inv_b + 127) >> 8;
-	uint32_t blue = (BPART(p00) * a * b + BPART(p01) * inv_a * b + BPART(p10) * a * inv_b + BPART(p11) * inv_a * inv_b + 127) >> 8;
-	uint32_t alpha = (APART(p00) * a * b + APART(p01) * inv_a * b + APART(p10) * a * inv_b + APART(p11) * inv_a * inv_b + 127) >> 8;
+				source += (1 << (xbits)) * (1 << (ybits));
+				xbits -= 1;
+				ybits -= 1;
+				level >>= 1;
+			}
+		}
+		return true;
+	}
 
-	return (alpha << 24) | (red << 16) | (green << 8) | blue;
-}
+	FORCEINLINE static uint32_t sample_bilinear(const uint32_t *col0, const uint32_t *col1, uint32_t texturefracx, uint32_t texturefracy, int ybits, uint32_t ymax)
+	{
+		uint32_t half = 1 << (ybits - 1);
+		uint32_t y0 = (texturefracy - half) >> ybits;
+		if (y0 > ymax)
+			y0 = 0;
+		uint32_t y1 = y0 + 1;
+		if (y1 > ymax)
+			y1 = 0;
 
-#define VEC_SAMPLE_BILINEAR4_COLUMN(fg, col0, col1, texturefracx, texturefracy, ybits) { \
+		uint32_t p00 = col0[y0];
+		uint32_t p01 = col0[y1];
+		uint32_t p10 = col1[y0];
+		uint32_t p11 = col1[y1];
+
+		uint32_t inv_b = texturefracx;
+		uint32_t inv_a = ((texturefracy + half) >> (ybits - 4)) & 15;
+		uint32_t a = 16 - inv_a;
+		uint32_t b = 16 - inv_b;
+
+		uint32_t red = (RPART(p00) * a * b + RPART(p01) * inv_a * b + RPART(p10) * a * inv_b + RPART(p11) * inv_a * inv_b + 127) >> 8;
+		uint32_t green = (GPART(p00) * a * b + GPART(p01) * inv_a * b + GPART(p10) * a * inv_b + GPART(p11) * inv_a * inv_b + 127) >> 8;
+		uint32_t blue = (BPART(p00) * a * b + BPART(p01) * inv_a * b + BPART(p10) * a * inv_b + BPART(p11) * inv_a * inv_b + 127) >> 8;
+		uint32_t alpha = (APART(p00) * a * b + APART(p01) * inv_a * b + APART(p10) * a * inv_b + APART(p11) * inv_a * inv_b + 127) >> 8;
+
+		return (alpha << 24) | (red << 16) | (green << 8) | blue;
+	}
+
+	FORCEINLINE static uint32_t sample_bilinear(const uint32_t *texture, dsfixed_t xfrac, dsfixed_t yfrac, int xbits, int ybits)
+	{
+		int xshift = (32 - xbits);
+		int yshift = (32 - ybits);
+		int xmask = (1 << xshift) - 1;
+		int ymask = (1 << yshift) - 1;
+		uint32_t xhalf = 1 << (xbits - 1);
+		uint32_t yhalf = 1 << (ybits - 1);
+		uint32_t x = (xfrac - xhalf) >> xbits;
+		uint32_t y = (yfrac - yhalf) >> ybits;
+
+		uint32_t p00 = texture[(y & ymask) + ((x & xmask) << yshift)];
+		uint32_t p01 = texture[((y + 1) & ymask) + ((x & xmask) << yshift)];
+		uint32_t p10 = texture[(y & ymask) + (((x + 1) & xmask) << yshift)];
+		uint32_t p11 = texture[((y + 1) & ymask) + (((x + 1) & xmask) << yshift)];
+
+		uint32_t inv_b = ((xfrac + xhalf) >> (xbits - 4)) & 15;
+		uint32_t inv_a = ((yfrac + yhalf) >> (ybits - 4)) & 15;
+		uint32_t a = 16 - inv_a;
+		uint32_t b = 16 - inv_b;
+
+		uint32_t red = (RPART(p00) * a * b + RPART(p01) * inv_a * b + RPART(p10) * a * inv_b + RPART(p11) * inv_a * inv_b + 127) >> 8;
+		uint32_t green = (GPART(p00) * a * b + GPART(p01) * inv_a * b + GPART(p10) * a * inv_b + GPART(p11) * inv_a * inv_b + 127) >> 8;
+		uint32_t blue = (BPART(p00) * a * b + BPART(p01) * inv_a * b + BPART(p10) * a * inv_b + BPART(p11) * inv_a * inv_b + 127) >> 8;
+		uint32_t alpha = (APART(p00) * a * b + APART(p01) * inv_a * b + APART(p10) * a * inv_b + APART(p11) * inv_a * inv_b + 127) >> 8;
+
+		return (alpha << 24) | (red << 16) | (green << 8) | blue;
+	}
+};
+
+/////////////////////////////////////////////////////////////////////////////
+// SSE/AVX shading macros:
+
+#define VEC_SAMPLE_BILINEAR4_COLUMN(fg, col0, col1, texturefracx, texturefracy, ybits, ymax) { \
 	uint32_t half = 1 << (ybits - 1); \
 	 \
 	__m128i m127 = _mm_set1_epi16(127); \
 	fg = _mm_setzero_si128(); \
 	for (int i = 0; i < 4; i++) \
 	{ \
-		uint32_t y = (texturefracy[i] - half) >> ybits; \
+		uint32_t y0 = (texturefracy[i] - half) >> ybits; \
+		if (y0 > ymax) y0 = 0; \
+		uint32_t y1 = y0 + 1; \
+		if (y1 > ymax) y1 = 0; \
 		 \
 		uint32_t inv_b = texturefracx[i]; \
 		uint32_t inv_a = ((texturefracy[i] + half) >> (ybits - 4)) & 15; \
@@ -537,8 +573,8 @@ FORCEINLINE uint32_t sample_bilinear(const uint32_t *texture, dsfixed_t xfrac, d
 		__m128i ab_invab = _mm_set_epi16(invab, invab, invab, invab, ab, ab, ab, ab); \
 		__m128i ainvb_invainvb = _mm_set_epi16(invainvb, invainvb, invainvb, invainvb, ainvb, ainvb, ainvb, ainvb); \
 		 \
-		__m128i p0 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(col0[i] + y)), _mm_setzero_si128()); \
-		__m128i p1 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(col1[i] + y)), _mm_setzero_si128()); \
+		__m128i p0 = _mm_unpacklo_epi8(_mm_set_epi32(0, 0, col0[i][y1], col0[i][y0]), _mm_setzero_si128()); \
+		__m128i p1 = _mm_unpacklo_epi8(_mm_set_epi32(0, 0, col1[i][y1], col1[i][y0]), _mm_setzero_si128()); \
 		 \
 		__m128i tmp = _mm_adds_epu16(_mm_mullo_epi16(p0, ab_invab), _mm_mullo_epi16(p1, ainvb_invainvb)); \
 		__m128i color = _mm_srli_epi16(_mm_adds_epu16(_mm_adds_epu16(_mm_srli_si128(tmp, 8), tmp), m127), 8); \
@@ -758,12 +794,16 @@ FORCEINLINE uint32_t calc_blend_bgalpha(uint32_t fg, uint32_t dest_alpha)
 {
 	uint32_t alpha = fg >> 24;
 	alpha += alpha >> 7;
-	return 256 - alpha; // (dest_alpha * (256 - alpha)) >> 8;
+	uint32_t inv_alpha = 256 - alpha;
+	return (dest_alpha * alpha + 256 * inv_alpha + 128) >> 8;
 }
 
 #define VEC_CALC_BLEND_ALPHA_INIT(src_alpha, dest_alpha) \
 	__m128i msrc_alpha = _mm_set1_epi16(src_alpha); \
-	__m128i mdest_alpha = _mm_set1_epi16(dest_alpha);
+	__m128i mdest_alpha = _mm_set1_epi16(dest_alpha * 255 / 256); \
+	__m128i m256 = _mm_set1_epi16(256); \
+	__m128i m255 = _mm_set1_epi16(255); \
+	__m128i m128 = _mm_set1_epi16(128);
 
 // Calculates the final alpha values to be used when combined with the source texture alpha channel
 #define VEC_CALC_BLEND_ALPHA(fg) \
@@ -772,8 +812,10 @@ FORCEINLINE uint32_t calc_blend_bgalpha(uint32_t fg, uint32_t dest_alpha)
 		__m128i alpha_lo = _mm_shufflehi_epi16(_mm_shufflelo_epi16(_mm_unpacklo_epi8(fg, _mm_setzero_si128()), _MM_SHUFFLE(3, 3, 3, 3)), _MM_SHUFFLE(3, 3, 3, 3)); \
 		alpha_hi = _mm_add_epi16(alpha_hi, _mm_srli_epi16(alpha_hi, 7)); \
 		alpha_lo = _mm_add_epi16(alpha_lo, _mm_srli_epi16(alpha_lo, 7)); \
-		bg_alpha_hi = _mm_sub_epi16(_mm_set1_epi16(256), alpha_hi); /* _mm_srli_epi16(_mm_mullo_epi16(_mm_sub_epi16(_mm_set1_epi16(256), alpha_hi), mdest_alpha), 8);*/ \
-		bg_alpha_lo = _mm_sub_epi16(_mm_set1_epi16(256), alpha_lo); /* _mm_srli_epi16(_mm_mullo_epi16(_mm_sub_epi16(_mm_set1_epi16(256), alpha_lo), mdest_alpha), 8);*/ \
+		bg_alpha_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_adds_epu16(_mm_mullo_epi16(mdest_alpha, alpha_hi), _mm_mullo_epi16(m255, _mm_sub_epi16(m256, alpha_hi))), m128), 8); \
+		bg_alpha_hi = _mm_add_epi16(bg_alpha_hi, _mm_srli_epi16(bg_alpha_hi, 7)); \
+		bg_alpha_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_adds_epu16(_mm_mullo_epi16(mdest_alpha, alpha_lo), _mm_mullo_epi16(m255, _mm_sub_epi16(m256, alpha_lo))), m128), 8); \
+		bg_alpha_lo = _mm_add_epi16(bg_alpha_lo, _mm_srli_epi16(bg_alpha_lo, 7)); \
 		fg_alpha_hi = msrc_alpha; \
 		fg_alpha_lo = msrc_alpha; \
 	}

@@ -2732,7 +2732,7 @@ void R_DrawParticle_rgba(vissprite_t *vis)
 	
 	DrawerCommandQueue::WaitForWorkers();
 
-	uint32_t fg = shade_pal_index_simple(color, calc_light_multiplier(LIGHTSCALE(0, vis->Style.ColormapNum << FRACBITS)));
+	uint32_t fg = LightBgra::shade_pal_index_simple(color, LightBgra::calc_light_multiplier(LIGHTSCALE(0, vis->Style.ColormapNum << FRACBITS)));
 	uint32_t fg_red = (fg >> 16) & 0xff;
 	uint32_t fg_green = (fg >> 8) & 0xff;
 	uint32_t fg_blue = fg & 0xff;

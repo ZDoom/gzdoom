@@ -100,13 +100,13 @@ extern void (*R_DrawColumn)(void);
 extern DWORD (*dovline1) ();
 extern DWORD (*doprevline1) ();
 extern void (*dovline4) ();
-extern void setupvline (int);
+extern void setupvline (int,int);
 
 extern DWORD (*domvline1) ();
 extern void (*domvline4) ();
-extern void setupmvline (int);
+extern void setupmvline (int,int);
 
-extern void setuptmvline (int);
+extern void setuptmvline (int,int);
 
 // The Spectre/Invisibility effect.
 extern void (*R_DrawFuzzColumn)(void);

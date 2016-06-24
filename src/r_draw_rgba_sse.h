@@ -43,7 +43,7 @@ public:
 		_destorg = dc_destorg;
 		_light = ds_light;
 		_shade_constants = ds_shade_constants;
-		_magnifying = !span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep);
+		_magnifying = !SampleBgra::span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep);
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -70,7 +70,7 @@ public:
 		xstep = _xstep;
 		ystep = _ystep;
 
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
 		if (_magnifying)
@@ -166,7 +166,7 @@ public:
 					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 
 					// Lookup pixel from flat texture tile
-					*dest++ = shade_bgra(source[spot], light, shade_constants);
+					*dest++ = LightBgra::shade_bgra(source[spot], light, shade_constants);
 
 					// Next step in u,v.
 					xfrac += xstep;
@@ -258,7 +258,7 @@ public:
 					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 
 					// Lookup pixel from flat texture tile
-					*dest++ = shade_bgra(source[spot], light, shade_constants);
+					*dest++ = LightBgra::shade_bgra(source[spot], light, shade_constants);
 
 					// Next step in u,v.
 					xfrac += xstep;
@@ -305,7 +305,7 @@ public:
 
 				do
 				{
-					*dest++ = shade_bgra(sample_bilinear(source, xfrac, yfrac, 26, 26), light, shade_constants);
+					*dest++ = LightBgra::shade_bgra(SampleBgra::sample_bilinear(source, xfrac, yfrac, 26, 26), light, shade_constants);
 					xfrac += xstep;
 					yfrac += ystep;
 				} while (--count);
@@ -349,7 +349,7 @@ public:
 
 				do
 				{
-					*dest++ = shade_bgra(sample_bilinear(source, xfrac, yfrac, 32 - _xbits, 32 - _ybits), light, shade_constants);
+					*dest++ = LightBgra::shade_bgra(SampleBgra::sample_bilinear(source, xfrac, yfrac, 32 - _xbits, 32 - _ybits), light, shade_constants);
 					xfrac += xstep;
 					yfrac += ystep;
 				} while (--count);
@@ -364,7 +364,8 @@ class VecCommand(Vlinec4RGBA) : public DrawerCommand
 	int _count;
 	int _pitch;
 	ShadeConstants _shade_constants;
-	int vlinebits;
+	int _vlinebits;
+	uint32_t _vlinemax;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
@@ -379,7 +380,8 @@ public:
 		_count = dc_count;
 		_pitch = dc_pitch;
 		_shade_constants = dc_shade_constants;
-		vlinebits = ::vlinebits;
+		_vlinebits = vlinebits;
+		_vlinemax = vlinemax;
 		for (int i = 0; i < 4; i++)
 		{
 			palookuplight[i] = ::palookuplight[i];
@@ -398,13 +400,13 @@ public:
 			return;
 
 		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int bits = vlinebits;
+		int bits = _vlinebits;
 		int pitch = _pitch * thread->num_cores;
 
-		uint32_t light0 = calc_light_multiplier(palookuplight[0]);
-		uint32_t light1 = calc_light_multiplier(palookuplight[1]);
-		uint32_t light2 = calc_light_multiplier(palookuplight[2]);
-		uint32_t light3 = calc_light_multiplier(palookuplight[3]);
+		uint32_t light0 = LightBgra::calc_light_multiplier(palookuplight[0]);
+		uint32_t light1 = LightBgra::calc_light_multiplier(palookuplight[1]);
+		uint32_t light2 = LightBgra::calc_light_multiplier(palookuplight[2]);
+		uint32_t light3 = LightBgra::calc_light_multiplier(palookuplight[3]);
 
 		ShadeConstants shade_constants = _shade_constants;
 
@@ -480,7 +482,7 @@ public:
 				do
 				{
 					__m128i fg;
-					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, bits);
+					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, bits, _vlinemax);
 
 					local_vplce[0] = local_vplce[0] + local_vince[0];
 					local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -498,7 +500,7 @@ public:
 				do
 				{
 					__m128i fg;
-					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, bits);
+					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, bits, _vlinemax);
 
 					local_vplce[0] = local_vplce[0] + local_vince[0];
 					local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -520,7 +522,8 @@ class VecCommand(Mvlinec4RGBA) : public DrawerCommand
 	int _count;
 	int _pitch;
 	ShadeConstants _shade_constants;
-	int mvlinebits;
+	int _mvlinebits;
+	uint32_t _mvlinemax;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
@@ -535,7 +538,8 @@ public:
 		_count = dc_count;
 		_pitch = dc_pitch;
 		_shade_constants = dc_shade_constants;
-		mvlinebits = ::mvlinebits;
+		_mvlinebits = mvlinebits;
+		_mvlinemax = mvlinemax;
 		for (int i = 0; i < 4; i++)
 		{
 			palookuplight[i] = ::palookuplight[i];
@@ -555,12 +559,12 @@ public:
 
 		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int pitch = _pitch * thread->num_cores;
-		int bits = mvlinebits;
+		int bits = _mvlinebits;
 
-		uint32_t light0 = calc_light_multiplier(palookuplight[0]);
-		uint32_t light1 = calc_light_multiplier(palookuplight[1]);
-		uint32_t light2 = calc_light_multiplier(palookuplight[2]);
-		uint32_t light3 = calc_light_multiplier(palookuplight[3]);
+		uint32_t light0 = LightBgra::calc_light_multiplier(palookuplight[0]);
+		uint32_t light1 = LightBgra::calc_light_multiplier(palookuplight[1]);
+		uint32_t light2 = LightBgra::calc_light_multiplier(palookuplight[2]);
+		uint32_t light3 = LightBgra::calc_light_multiplier(palookuplight[3]);
 
 		ShadeConstants shade_constants = _shade_constants;
 
@@ -640,7 +644,7 @@ public:
 				do
 				{
 					__m128i fg;
-					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, bits);
+					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, bits, _mvlinemax);
 
 					local_vplce[0] = local_vplce[0] + local_vince[0];
 					local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -660,7 +664,7 @@ public:
 				do
 				{
 					__m128i fg;
-					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, bits);
+					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, bits, _mvlinemax);
 
 					local_vplce[0] = local_vplce[0] + local_vince[0];
 					local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -686,7 +690,8 @@ class VecCommand(Tmvline4AddRGBA) : public DrawerCommand
 	ShadeConstants _shade_constants;
 	fixed_t _srcalpha;
 	fixed_t _destalpha;
-	int tmvlinebits;
+	int _tmvlinebits;
+	uint32_t _tmvlinemax;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
@@ -701,7 +706,8 @@ public:
 		_shade_constants = dc_shade_constants;
 		_srcalpha = dc_srcalpha;
 		_destalpha = dc_destalpha;
-		tmvlinebits = ::tmvlinebits;
+		_tmvlinebits = tmvlinebits;
+		_tmvlinemax = tmvlinemax;
 		for (int i = 0; i < 4; i++)
 		{
 			palookuplight[i] = ::palookuplight[i];
@@ -719,13 +725,13 @@ public:
 
 		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int pitch = _pitch * thread->num_cores;
-		int bits = tmvlinebits;
+		int bits = _tmvlinebits;
 
 		uint32_t light[4];
-		light[0] = calc_light_multiplier(palookuplight[0]);
-		light[1] = calc_light_multiplier(palookuplight[1]);
-		light[2] = calc_light_multiplier(palookuplight[2]);
-		light[3] = calc_light_multiplier(palookuplight[3]);
+		light[0] = LightBgra::calc_light_multiplier(palookuplight[0]);
+		light[1] = LightBgra::calc_light_multiplier(palookuplight[1]);
+		light[2] = LightBgra::calc_light_multiplier(palookuplight[2]);
+		light[3] = LightBgra::calc_light_multiplier(palookuplight[3]);
 
 		ShadeConstants shade_constants = _shade_constants;
 
@@ -825,7 +831,8 @@ class VecCommand(Tmvline4AddClampRGBA) : public DrawerCommand
 	ShadeConstants _shade_constants;
 	fixed_t _srcalpha;
 	fixed_t _destalpha;
-	int tmvlinebits;
+	int _tmvlinebits;
+	uint32_t _tmvlinemax;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
@@ -840,7 +847,8 @@ public:
 		_shade_constants = dc_shade_constants;
 		_srcalpha = dc_srcalpha;
 		_destalpha = dc_destalpha;
-		tmvlinebits = ::tmvlinebits;
+		_tmvlinebits = tmvlinebits;
+		_tmvlinemax = tmvlinemax;
 		for (int i = 0; i < 4; i++)
 		{
 			palookuplight[i] = ::palookuplight[i];
@@ -858,13 +866,13 @@ public:
 
 		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int pitch = _pitch * thread->num_cores;
-		int bits = tmvlinebits;
+		int bits = _tmvlinebits;
 
 		uint32_t light[4];
-		light[0] = calc_light_multiplier(palookuplight[0]);
-		light[1] = calc_light_multiplier(palookuplight[1]);
-		light[2] = calc_light_multiplier(palookuplight[2]);
-		light[3] = calc_light_multiplier(palookuplight[3]);
+		light[0] = LightBgra::calc_light_multiplier(palookuplight[0]);
+		light[1] = LightBgra::calc_light_multiplier(palookuplight[1]);
+		light[2] = LightBgra::calc_light_multiplier(palookuplight[2]);
+		light[3] = LightBgra::calc_light_multiplier(palookuplight[3]);
 
 		ShadeConstants shade_constants = _shade_constants;
 
@@ -963,7 +971,8 @@ class VecCommand(Tmvline4SubClampRGBA) : public DrawerCommand
 	ShadeConstants _shade_constants;
 	fixed_t _srcalpha;
 	fixed_t _destalpha;
-	int tmvlinebits;
+	int _tmvlinebits;
+	uint32_t _tmvlinemax;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
@@ -978,7 +987,8 @@ public:
 		_shade_constants = dc_shade_constants;
 		_srcalpha = dc_srcalpha;
 		_destalpha = dc_destalpha;
-		tmvlinebits = ::tmvlinebits;
+		_tmvlinebits = tmvlinebits;
+		_tmvlinemax = tmvlinemax;
 		for (int i = 0; i < 4; i++)
 		{
 			palookuplight[i] = ::palookuplight[i];
@@ -996,13 +1006,13 @@ public:
 
 		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int pitch = _pitch * thread->num_cores;
-		int bits = tmvlinebits;
+		int bits = _tmvlinebits;
 
 		uint32_t light[4];
-		light[0] = calc_light_multiplier(palookuplight[0]);
-		light[1] = calc_light_multiplier(palookuplight[1]);
-		light[2] = calc_light_multiplier(palookuplight[2]);
-		light[3] = calc_light_multiplier(palookuplight[3]);
+		light[0] = LightBgra::calc_light_multiplier(palookuplight[0]);
+		light[1] = LightBgra::calc_light_multiplier(palookuplight[1]);
+		light[2] = LightBgra::calc_light_multiplier(palookuplight[2]);
+		light[3] = LightBgra::calc_light_multiplier(palookuplight[3]);
 
 		ShadeConstants shade_constants = _shade_constants;
 
@@ -1101,7 +1111,8 @@ class VecCommand(Tmvline4RevSubClampRGBA) : public DrawerCommand
 	ShadeConstants _shade_constants;
 	fixed_t _srcalpha;
 	fixed_t _destalpha;
-	int tmvlinebits;
+	int _tmvlinebits;
+	uint32_t _tmvlinemax;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
@@ -1116,7 +1127,8 @@ public:
 		_shade_constants = dc_shade_constants;
 		_srcalpha = dc_srcalpha;
 		_destalpha = dc_destalpha;
-		tmvlinebits = ::tmvlinebits;
+		_tmvlinebits = tmvlinebits;
+		_tmvlinemax = tmvlinemax;
 		for (int i = 0; i < 4; i++)
 		{
 			palookuplight[i] = ::palookuplight[i];
@@ -1134,13 +1146,13 @@ public:
 
 		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int pitch = _pitch * thread->num_cores;
-		int bits = tmvlinebits;
+		int bits = _tmvlinebits;
 
 		uint32_t light[4];
-		light[0] = calc_light_multiplier(palookuplight[0]);
-		light[1] = calc_light_multiplier(palookuplight[1]);
-		light[2] = calc_light_multiplier(palookuplight[2]);
-		light[3] = calc_light_multiplier(palookuplight[3]);
+		light[0] = LightBgra::calc_light_multiplier(palookuplight[0]);
+		light[1] = LightBgra::calc_light_multiplier(palookuplight[1]);
+		light[2] = LightBgra::calc_light_multiplier(palookuplight[2]);
+		light[3] = LightBgra::calc_light_multiplier(palookuplight[3]);
 
 		ShadeConstants shade_constants = _shade_constants;
 

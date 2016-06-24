@@ -185,7 +185,7 @@ public:
 		if (count <= 0)
 			return;
 
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
 		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
@@ -196,7 +196,7 @@ public:
 		BYTE *colormap = _colormap;
 
 		if (count & 1) {
-			*dest = shade_pal_index(colormap[*source], light, shade_constants);
+			*dest = LightBgra::shade_pal_index(colormap[*source], light, shade_constants);
 			source += sincr;
 			dest += pitch;
 		}
@@ -204,8 +204,8 @@ public:
 			return;
 
 		do {
-			dest[0] = shade_pal_index(colormap[source[0]], light, shade_constants);
-			dest[pitch] = shade_pal_index(colormap[source[sincr]], light, shade_constants);
+			dest[0] = LightBgra::shade_pal_index(colormap[source[0]], light, shade_constants);
+			dest[pitch] = LightBgra::shade_pal_index(colormap[source[sincr]], light, shade_constants);
 			source += sincr * 2;
 			dest += pitch * 2;
 		} while (--count);
@@ -249,7 +249,7 @@ public:
 		if (count <= 0)
 			return;
 
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
 		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
@@ -260,10 +260,10 @@ public:
 		BYTE *colormap = _colormap;
 
 		if (count & 1) {
-			dest[0] = shade_pal_index(colormap[source[0]], light, shade_constants);
-			dest[1] = shade_pal_index(colormap[source[1]], light, shade_constants);
-			dest[2] = shade_pal_index(colormap[source[2]], light, shade_constants);
-			dest[3] = shade_pal_index(colormap[source[3]], light, shade_constants);
+			dest[0] = LightBgra::shade_pal_index(colormap[source[0]], light, shade_constants);
+			dest[1] = LightBgra::shade_pal_index(colormap[source[1]], light, shade_constants);
+			dest[2] = LightBgra::shade_pal_index(colormap[source[2]], light, shade_constants);
+			dest[3] = LightBgra::shade_pal_index(colormap[source[3]], light, shade_constants);
 			source += sincr;
 			dest += pitch;
 		}
@@ -271,14 +271,14 @@ public:
 			return;
 
 		do {
-			dest[0] = shade_pal_index(colormap[source[0]], light, shade_constants);
-			dest[1] = shade_pal_index(colormap[source[1]], light, shade_constants);
-			dest[2] = shade_pal_index(colormap[source[2]], light, shade_constants);
-			dest[3] = shade_pal_index(colormap[source[3]], light, shade_constants);
-			dest[pitch] = shade_pal_index(colormap[source[sincr]], light, shade_constants);
-			dest[pitch + 1] = shade_pal_index(colormap[source[sincr + 1]], light, shade_constants);
-			dest[pitch + 2] = shade_pal_index(colormap[source[sincr + 2]], light, shade_constants);
-			dest[pitch + 3] = shade_pal_index(colormap[source[sincr + 3]], light, shade_constants);
+			dest[0] = LightBgra::shade_pal_index(colormap[source[0]], light, shade_constants);
+			dest[1] = LightBgra::shade_pal_index(colormap[source[1]], light, shade_constants);
+			dest[2] = LightBgra::shade_pal_index(colormap[source[2]], light, shade_constants);
+			dest[3] = LightBgra::shade_pal_index(colormap[source[3]], light, shade_constants);
+			dest[pitch] = LightBgra::shade_pal_index(colormap[source[sincr]], light, shade_constants);
+			dest[pitch + 1] = LightBgra::shade_pal_index(colormap[source[sincr + 1]], light, shade_constants);
+			dest[pitch + 2] = LightBgra::shade_pal_index(colormap[source[sincr + 2]], light, shade_constants);
+			dest[pitch + 3] = LightBgra::shade_pal_index(colormap[source[sincr + 3]], light, shade_constants);
 			source += sincr * 2;
 			dest += pitch * 2;
 		} while (--count);
@@ -453,7 +453,7 @@ public:
 		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 		BYTE *colormap = _colormap;
 
@@ -461,7 +461,7 @@ public:
 		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		do {
-			uint32_t fg = shade_pal_index(colormap[*source], light, shade_constants);
+			uint32_t fg = LightBgra::shade_pal_index(colormap[*source], light, shade_constants);
 			uint32_t fg_red = (fg >> 16) & 0xff;
 			uint32_t fg_green = (fg >> 8) & 0xff;
 			uint32_t fg_blue = fg & 0xff;
@@ -528,7 +528,7 @@ public:
 		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 		BYTE *colormap = _colormap;
 
@@ -538,7 +538,7 @@ public:
 		do {
 			for (int i = 0; i < 4; i++)
 			{
-				uint32_t fg = shade_pal_index(colormap[source[i]], light, shade_constants);
+				uint32_t fg = LightBgra::shade_pal_index(colormap[source[i]], light, shade_constants);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
 				uint32_t fg_blue = fg & 0xff;
@@ -606,7 +606,7 @@ public:
 		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t fg = shade_pal_index_simple(_color, calc_light_multiplier(_light));
+		uint32_t fg = LightBgra::shade_pal_index_simple(_color, LightBgra::calc_light_multiplier(_light));
 		uint32_t fg_red = (fg >> 16) & 0xff;
 		uint32_t fg_green = (fg >> 8) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
@@ -674,7 +674,7 @@ public:
 		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t fg = shade_pal_index_simple(_color, calc_light_multiplier(_light));
+		uint32_t fg = LightBgra::shade_pal_index_simple(_color, LightBgra::calc_light_multiplier(_light));
 		uint32_t fg_red = (fg >> 16) & 0xff;
 		uint32_t fg_green = (fg >> 8) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
@@ -747,14 +747,14 @@ public:
 		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
 		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
 		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		do {
-			uint32_t fg = shade_pal_index(*source, light, shade_constants);
+			uint32_t fg = LightBgra::shade_pal_index(*source, light, shade_constants);
 			uint32_t fg_red = (fg >> 16) & 0xff;
 			uint32_t fg_green = (fg >> 8) & 0xff;
 			uint32_t fg_blue = fg & 0xff;
@@ -818,7 +818,7 @@ public:
 		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
 		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
@@ -827,7 +827,7 @@ public:
 		do {
 			for (int i = 0; i < 4; i++)
 			{
-				uint32_t fg = shade_pal_index(source[i], light, shade_constants);
+				uint32_t fg = LightBgra::shade_pal_index(source[i], light, shade_constants);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
 				uint32_t fg_blue = fg & 0xff;
@@ -894,14 +894,14 @@ public:
 		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
 		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
 		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		do {
-			uint32_t fg = shade_pal_index(*source, light, shade_constants);
+			uint32_t fg = LightBgra::shade_pal_index(*source, light, shade_constants);
 			uint32_t fg_red = (fg >> 16) & 0xff;
 			uint32_t fg_green = (fg >> 8) & 0xff;
 			uint32_t fg_blue = fg & 0xff;
@@ -965,7 +965,7 @@ public:
 		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
 		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
@@ -974,7 +974,7 @@ public:
 		do {
 			for (int i = 0; i < 4; i++)
 			{
-				uint32_t fg = shade_pal_index(source[i], light, shade_constants);
+				uint32_t fg = LightBgra::shade_pal_index(source[i], light, shade_constants);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
 				uint32_t fg_blue = fg & 0xff;
@@ -1042,14 +1042,14 @@ public:
 		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
 		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
 		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		do {
-			uint32_t fg = shade_pal_index(*source, light, shade_constants);
+			uint32_t fg = LightBgra::shade_pal_index(*source, light, shade_constants);
 			uint32_t fg_red = (fg >> 16) & 0xff;
 			uint32_t fg_green = (fg >> 8) & 0xff;
 			uint32_t fg_blue = fg & 0xff;
@@ -1113,7 +1113,7 @@ public:
 		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(_light);
+		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
 		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
@@ -1122,7 +1122,7 @@ public:
 		do {
 			for (int i = 0; i < 4; i++)
 			{
-				uint32_t fg = shade_pal_index(source[i], light, shade_constants);
+				uint32_t fg = LightBgra::shade_pal_index(source[i], light, shade_constants);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
 				uint32_t fg_blue = fg & 0xff;

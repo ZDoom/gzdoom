@@ -379,6 +379,10 @@ void R_SetDSColorMapLight(FColormap *base_colormap, float light, int shade);
 void R_SetTranslationMap(lighttable_t *translation);
 
 extern bool r_swtruecolor;
-EXTERN_CVAR(Bool, r_bilinear);
+
+EXTERN_CVAR(Bool, r_multithreaded);
+EXTERN_CVAR(Bool, r_magfilter_linear);
+EXTERN_CVAR(Bool, r_minfilter_linear);
+EXTERN_CVAR(Bool, r_mipmap);
 
 #endif

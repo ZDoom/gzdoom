@@ -50,6 +50,7 @@
 #include "r_plane.h"
 #include "r_segs.h"
 #include "r_3dfloors.h"
+#include "r_draw.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 
@@ -57,8 +58,6 @@
 
 
 CVAR(Bool, r_np2, true, 0)
-
-EXTERN_CVAR(Bool, r_bilinear)
 
 //CVAR (Int, ty, 8, 0)
 //CVAR (Int, tx, 8, 0)
@@ -1104,8 +1103,7 @@ WallscanSampler::WallscanSampler(int y1, float swal, double yrepeat, fixed_t xof
 
 	bool magnifying = uv_step >> (uv_fracbits - 1) == 0;
 
-	// Only do bilinear filtering if enabled and not a magnifying filter
-	if (!r_swtruecolor || !r_bilinear || magnifying || getcol != R_GetColumn)
+	if (!r_swtruecolor || getcol != R_GetColumn)
 	{
 		source = getcol(texture, xoffset >> FRACBITS);
 		source2 = nullptr;
@@ -1138,13 +1136,26 @@ WallscanSampler::WallscanSampler(int y1, float swal, double yrepeat, fixed_t xof
 
 		const uint32_t *pixels = texture->GetPixelsBgra() + mipmap_offset;
 
-		int tx0 = ((xoffset - FRACUNIT / 2) >> FRACBITS) % mip_width;
-		if (tx0 < 0)
-			tx0 += mip_width;
-		int tx1 = (tx0 + 1) % mip_width;
-		source = (BYTE*)(pixels + tx0 * mip_height);
-		source2 = (BYTE*)(pixels + tx1 * mip_height);
-		texturefracx = ((xoffset + FRACUNIT / 2) >> (FRACBITS - 4)) & 15;
+		bool filter_nearest = (magnifying && !r_magfilter_linear) || (!magnifying && !r_minfilter_linear);
+		if (filter_nearest)
+		{
+			int tx = (xoffset >> FRACBITS) % mip_width;
+			if (tx < 0)
+				tx += mip_width;
+			source = (BYTE*)(pixels + tx * mip_height);
+			source2 = nullptr;
+			texturefracx = 0;
+		}
+		else
+		{
+			int tx0 = ((xoffset - FRACUNIT / 2) >> FRACBITS) % mip_width;
+			if (tx0 < 0)
+				tx0 += mip_width;
+			int tx1 = (tx0 + 1) % mip_width;
+			source = (BYTE*)(pixels + tx0 * mip_height);
+			source2 = (BYTE*)(pixels + tx1 * mip_height);
+			texturefracx = ((xoffset + FRACUNIT / 2) >> (FRACBITS - 4)) & 15;
+		}
 	}
 }
 

@@ -25,7 +25,7 @@ class VecCommand(DrawSpanRGBA) : public DrawerCommand
 	BYTE * RESTRICT _destorg;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
-	bool _magnifying;
+	bool _nearest_filter;
 
 public:
 	VecCommand(DrawSpanRGBA)()
@@ -43,7 +43,7 @@ public:
 		_destorg = dc_destorg;
 		_light = ds_light;
 		_shade_constants = ds_shade_constants;
-		_magnifying = !SampleBgra::span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep);
+		_nearest_filter = !SampleBgra::span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep);
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -73,7 +73,7 @@ public:
 		uint32_t light = LightBgra::calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
-		if (_magnifying)
+		if (_nearest_filter)
 		{
 			if (_xbits == 6 && _ybits == 6)
 			{

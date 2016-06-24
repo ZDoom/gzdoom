@@ -60,9 +60,10 @@ extern float rw_light;
 extern float rw_lightstep;
 extern int wallshade;
 
-CVAR(Bool, r_multithreaded, true, 0)
-CVAR(Bool, r_bilinear, true, 0)
-CVAR(Bool, r_mipmap, true, 0)
+CVAR(Bool, r_multithreaded, true, 0);
+CVAR(Bool, r_magfilter_linear, false, 0);
+CVAR(Bool, r_minfilter_linear, false, 0);
+CVAR(Bool, r_mipmap, true, 0);
 
 #ifndef NO_SSE
 
@@ -904,7 +905,7 @@ public:
 	const uint32_t * RESTRICT _source;
 	uint32_t _light;
 	ShadeConstants _shade_constants;
-	bool _magnifying;
+	bool _nearest_filter;
 
 	uint32_t _srcalpha;
 	uint32_t _destalpha;
@@ -925,7 +926,7 @@ public:
 		_source = (const uint32_t*)ds_source;
 		_light = LightBgra::calc_light_multiplier(ds_light);
 		_shade_constants = ds_shade_constants;
-		_magnifying = !SampleBgra::span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep);
+		_nearest_filter = !SampleBgra::span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep);
 
 		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
 		_destalpha = dc_destalpha >> (FRACBITS - 8);
@@ -995,7 +996,7 @@ public:
 		LoopIterator loop(this, thread);
 		if (!loop) return;
 
-		if (_magnifying)
+		if (_nearest_filter)
 		{
 			if (loop.is_64x64)
 			{
@@ -1040,7 +1041,7 @@ public:
 		LoopIterator loop(this, thread);
 		if (!loop) return;
 
-		if (_magnifying)
+		if (_nearest_filter)
 		{
 			if (loop.is_64x64)
 			{

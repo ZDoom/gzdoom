@@ -461,15 +461,11 @@ class SampleBgra
 public:
 	inline static bool span_sampler_setup(const uint32_t * RESTRICT &source, int &xbits, int &ybits, fixed_t xstep, fixed_t ystep)
 	{
-		if (!r_bilinear)
-			return false;
-
 		// Is this a magfilter or minfilter?
 		fixed_t xmagnitude = abs(xstep) >> (32 - xbits - FRACBITS);
 		fixed_t ymagnitude = abs(ystep) >> (32 - ybits - FRACBITS);
 		fixed_t magnitude = (xmagnitude + ymagnitude) * 2 + (1 << (FRACBITS - 1));
-		if (magnitude >> FRACBITS == 0)
-			return false;
+		bool magnifying = (magnitude >> FRACBITS == 0);
 
 		if (r_mipmap)
 		{
@@ -485,7 +481,8 @@ public:
 				level >>= 1;
 			}
 		}
-		return true;
+
+		return (magnifying && r_magfilter_linear) || (!magnifying && r_minfilter_linear);
 	}
 
 	FORCEINLINE static uint32_t sample_bilinear(const uint32_t *col0, const uint32_t *col1, uint32_t texturefracx, uint32_t texturefracy, int ybits, uint32_t ymax)

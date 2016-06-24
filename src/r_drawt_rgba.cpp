@@ -84,8 +84,9 @@ extern unsigned int *horizspan[4];
 
 /////////////////////////////////////////////////////////////////////////////
 
-class RtCopy1colRGBACommand : public DrawerCommand
+class DrawerRt1colCommand : public DrawerCommand
 {
+public:
 	int hx;
 	int sx;
 	int yl;
@@ -93,8 +94,14 @@ class RtCopy1colRGBACommand : public DrawerCommand
 	BYTE * RESTRICT _destorg;
 	int _pitch;
 
-public:
-	RtCopy1colRGBACommand(int hx, int sx, int yl, int yh)
+	uint32_t _light;
+	ShadeConstants _shade_constants;
+	BYTE * RESTRICT _colormap;
+
+	uint32_t _srcalpha;
+	uint32_t _destalpha;
+
+	DrawerRt1colCommand(int hx, int sx, int yl, int yh)
 	{
 		this->hx = hx;
 		this->sx = sx;
@@ -103,185 +110,384 @@ public:
 
 		_destorg = dc_destorg;
 		_pitch = dc_pitch;
+
+		_light = LightBgra::calc_light_multiplier(dc_light);
+		_shade_constants = dc_shade_constants;
+		_colormap = dc_colormap;
+
+		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		_destalpha = dc_destalpha >> (FRACBITS - 8);
 	}
 
-	void Execute(DrawerThread *thread) override
+	class LoopIterator
 	{
+	public:
 		uint32_t *source;
 		uint32_t *dest;
 		int count;
 		int pitch, sincr;
 
-		count = thread->count_for_thread(yl, (yh - yl + 1));
-		if (count <= 0)
-			return;
+		LoopIterator(DrawerRt1colCommand *command, DrawerThread *thread)
+		{
+			count = thread->count_for_thread(command->yl, (command->yh - command->yl + 1));
+			if (count <= 0)
+				return;
 
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
-		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
-		pitch = _pitch * thread->num_cores;
-		sincr = thread->num_cores * 4;
+			dest = thread->dest_for_thread(command->yl, command->_pitch, ylookup[command->yl] + command->sx + (uint32_t*)command->_destorg);
+			source = &thread->dc_temp_rgba[command->yl * 4 + command->hx] + thread->skipped_by_thread(command->yl) * 4;
+			pitch = command->_pitch * thread->num_cores;
+			sincr = thread->num_cores * 4;
+		}
 
-		if (count & 1) {
-			*dest = GPalette.BaseColors[*source];
-			source += sincr;
+		explicit operator bool()
+		{
+			return count > 0;
+		}
+
+		bool next()
+		{
 			dest += pitch;
+			source += sincr;
+			return (--count) != 0;
 		}
-		if (count & 2) {
-			dest[0] = GPalette.BaseColors[source[0]];
-			dest[pitch] = GPalette.BaseColors[source[sincr]];
-			source += sincr * 2;
-			dest += pitch * 2;
-		}
-		if (!(count >>= 2))
-			return;
-
-		do {
-			dest[0] = GPalette.BaseColors[source[0]];
-			dest[pitch] = GPalette.BaseColors[source[sincr]];
-			dest[pitch * 2] = GPalette.BaseColors[source[sincr * 2]];
-			dest[pitch * 3] = GPalette.BaseColors[source[sincr * 3]];
-			source += sincr * 4;
-			dest += pitch * 4;
-		} while (--count);
-	}
+	};
 };
 
-class RtMap1colRGBACommand : public DrawerCommand
+class DrawerRt4colsCommand : public DrawerCommand
 {
-	int hx;
+public:
 	int sx;
 	int yl;
 	int yh;
-	fixed_t _light;
+	uint32_t _light;
 	ShadeConstants _shade_constants;
 	BYTE * RESTRICT _destorg;
 	int _pitch;
 	BYTE * RESTRICT _colormap;
+	uint32_t _srcalpha;
+	uint32_t _destalpha;
 
-public:
-	RtMap1colRGBACommand(int hx, int sx, int yl, int yh)
+	DrawerRt4colsCommand(int sx, int yl, int yh)
 	{
-		this->hx = hx;
 		this->sx = sx;
 		this->yl = yl;
 		this->yh = yh;
 
-		_light = dc_light;
+		_light = LightBgra::calc_light_multiplier(dc_light);
 		_shade_constants = dc_shade_constants;
 		_destorg = dc_destorg;
 		_pitch = dc_pitch;
 		_colormap = dc_colormap;
+
+		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		_destalpha = dc_destalpha >> (FRACBITS - 8);
 	}
 
-	void Execute(DrawerThread *thread) override
+	class LoopIterator
 	{
+	public:
 		uint32_t *source;
 		uint32_t *dest;
 		int count;
 		int pitch;
 		int sincr;
 
-		count = thread->count_for_thread(yl, yh - yl + 1);
-		if (count <= 0)
-			return;
+		LoopIterator(DrawerRt4colsCommand *command, DrawerThread *thread)
+		{
+			count = thread->count_for_thread(command->yl, command->yh - command->yl + 1);
+			if (count <= 0)
+				return;
 
-		uint32_t light = LightBgra::calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
-		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
-		pitch = _pitch * thread->num_cores;
-		sincr = thread->num_cores * 4;
-		
-		BYTE *colormap = _colormap;
-
-		if (count & 1) {
-			*dest = LightBgra::shade_pal_index(colormap[*source], light, shade_constants);
-			source += sincr;
-			dest += pitch;
+			dest = thread->dest_for_thread(command->yl, command->_pitch, ylookup[command->yl] + command->sx + (uint32_t*)command->_destorg);
+			source = &thread->dc_temp_rgba[command->yl * 4] + thread->skipped_by_thread(command->yl) * 4;
+			pitch = command->_pitch * thread->num_cores;
+			sincr = thread->num_cores * 4;
 		}
-		if (!(count >>= 1))
-			return;
 
-		do {
-			dest[0] = LightBgra::shade_pal_index(colormap[source[0]], light, shade_constants);
-			dest[pitch] = LightBgra::shade_pal_index(colormap[source[sincr]], light, shade_constants);
-			source += sincr * 2;
-			dest += pitch * 2;
-		} while (--count);
-	}
+		explicit operator bool()
+		{
+			return count > 0;
+		}
+
+		bool next()
+		{
+			dest += pitch;
+			source += sincr;
+			return (--count) != 0;
+		}
+	};
 };
 
-class RtMap4colsRGBACommand : public DrawerCommand
+class RtCopy1colRGBACommand : public DrawerRt1colCommand
 {
-	int sx;
-	int yl;
-	int yh;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	BYTE * RESTRICT _destorg;
-	int _pitch;
-	BYTE * RESTRICT _colormap;
-
 public:
-	RtMap4colsRGBACommand(int sx, int yl, int yh)
+	RtCopy1colRGBACommand(int hx, int sx, int yl, int yh) : DrawerRt1colCommand(hx, sx, yl, yh)
 	{
-		this->sx = sx;
-		this->yl = yl;
-		this->yh = yh;
-
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
-		_destorg = dc_destorg;
-		_pitch = dc_pitch;
-		_colormap = dc_colormap;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		uint32_t *source;
-		uint32_t *dest;
-		int count;
-		int pitch;
-		int sincr;
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			uint32_t fg = GPalette.BaseColors[*loop.source];
+			*loop.dest = BlendBgra::copy(fg);
+		} while (loop.next());
+	}
+};
 
-		count = thread->count_for_thread(yl, yh - yl + 1);
-		if (count <= 0)
-			return;
+class RtMap1colRGBACommand : public DrawerRt1colCommand
+{
+public:
+	RtMap1colRGBACommand(int hx, int sx, int yl, int yh) : DrawerRt1colCommand(hx, sx, yl, yh)
+	{
+	}
 
-		uint32_t light = LightBgra::calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			uint32_t fg = LightBgra::shade_pal_index(_colormap[*loop.source], _light, _shade_constants);
+			*loop.dest = BlendBgra::copy(fg);
+		} while (loop.next());
+	}
+};
 
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
-		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = _pitch * thread->num_cores;
-		sincr = thread->num_cores * 4;
-		
-		BYTE *colormap = _colormap;
+class RtMap4colsRGBACommand : public DrawerRt4colsCommand
+{
+public:
+	RtMap4colsRGBACommand(int sx, int yl, int yh) : DrawerRt4colsCommand(sx, yl, yh)
+	{
+	}
 
-		if (count & 1) {
-			dest[0] = LightBgra::shade_pal_index(colormap[source[0]], light, shade_constants);
-			dest[1] = LightBgra::shade_pal_index(colormap[source[1]], light, shade_constants);
-			dest[2] = LightBgra::shade_pal_index(colormap[source[2]], light, shade_constants);
-			dest[3] = LightBgra::shade_pal_index(colormap[source[3]], light, shade_constants);
-			source += sincr;
-			dest += pitch;
-		}
-		if (!(count >>= 1))
-			return;
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				uint32_t fg = LightBgra::shade_pal_index(_colormap[loop.source[i]], _light, _shade_constants);
+				loop.dest[i] = BlendBgra::copy(fg);
+			}
+		} while (loop.next());
+	}
+};
 
-		do {
-			dest[0] = LightBgra::shade_pal_index(colormap[source[0]], light, shade_constants);
-			dest[1] = LightBgra::shade_pal_index(colormap[source[1]], light, shade_constants);
-			dest[2] = LightBgra::shade_pal_index(colormap[source[2]], light, shade_constants);
-			dest[3] = LightBgra::shade_pal_index(colormap[source[3]], light, shade_constants);
-			dest[pitch] = LightBgra::shade_pal_index(colormap[source[sincr]], light, shade_constants);
-			dest[pitch + 1] = LightBgra::shade_pal_index(colormap[source[sincr + 1]], light, shade_constants);
-			dest[pitch + 2] = LightBgra::shade_pal_index(colormap[source[sincr + 2]], light, shade_constants);
-			dest[pitch + 3] = LightBgra::shade_pal_index(colormap[source[sincr + 3]], light, shade_constants);
-			source += sincr * 2;
-			dest += pitch * 2;
-		} while (--count);
+class RtAdd1colRGBACommand : public DrawerRt1colCommand
+{
+public:
+	RtAdd1colRGBACommand(int hx, int sx, int yl, int yh) : DrawerRt1colCommand(hx, sx, yl, yh)
+	{
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			uint32_t fg = LightBgra::shade_pal_index(_colormap[*loop.source], _light, _shade_constants);
+			*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
+		} while (loop.next());
+	}
+};
+
+class RtAdd4colsRGBACommand : public DrawerRt4colsCommand
+{
+public:
+	RtAdd4colsRGBACommand(int sx, int yl, int yh) : DrawerRt4colsCommand(sx, yl, yh)
+	{
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				uint32_t fg = LightBgra::shade_pal_index(_colormap[loop.source[i]], _light, _shade_constants);
+				loop.dest[i] = BlendBgra::add(fg, loop.dest[i], _srcalpha, _destalpha);
+			}
+		} while (loop.next());
+	}
+};
+
+class RtShaded1colRGBACommand : public DrawerRt1colCommand
+{
+	uint32_t _color;
+
+public:
+	RtShaded1colRGBACommand(int hx, int sx, int yl, int yh) : DrawerRt1colCommand(hx, sx, yl, yh)
+	{
+		_color = LightBgra::shade_pal_index(dc_color, _light, _shade_constants);
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			uint32_t alpha = _colormap[*loop.source] * 4;
+			uint32_t inv_alpha = 256 - alpha;
+			*loop.dest = BlendBgra::add(_color, *loop.dest, alpha, inv_alpha);
+		} while (loop.next());
+	}
+};
+
+class RtShaded4colsRGBACommand : public DrawerRt4colsCommand
+{
+	uint32_t _color;
+
+public:
+	RtShaded4colsRGBACommand(int sx, int yl, int yh) : DrawerRt4colsCommand(sx, yl, yh)
+	{
+		_color = LightBgra::shade_pal_index(dc_color, _light, _shade_constants);
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				uint32_t alpha = _colormap[loop.source[i]] * 4;
+				uint32_t inv_alpha = 256 - alpha;
+				loop.dest[i] = BlendBgra::add(_color, loop.dest[i], alpha, inv_alpha);
+			}
+		} while (loop.next());
+	}
+};
+
+class RtAddClamp1colRGBACommand : public DrawerRt1colCommand
+{
+public:
+	RtAddClamp1colRGBACommand(int hx, int sx, int yl, int yh) : DrawerRt1colCommand(hx, sx, yl, yh)
+	{
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			uint32_t fg = LightBgra::shade_pal_index(*loop.source, _light, _shade_constants);
+			*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
+		} while (loop.next());
+	}
+};
+
+class RtAddClamp4colsRGBACommand : public DrawerRt4colsCommand
+{
+public:
+	RtAddClamp4colsRGBACommand(int sx, int yl, int yh) : DrawerRt4colsCommand(sx, yl, yh)
+	{
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				uint32_t fg = LightBgra::shade_pal_index(loop.source[i], _light, _shade_constants);
+				loop.dest[i] = BlendBgra::add(fg, loop.dest[i], _srcalpha, _destalpha);
+			}
+		} while (loop.next());
+	}
+};
+
+class RtSubClamp1colRGBACommand : public DrawerRt1colCommand
+{
+public:
+	RtSubClamp1colRGBACommand(int hx, int sx, int yl, int yh) : DrawerRt1colCommand(hx, sx, yl, yh)
+	{
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			uint32_t fg = LightBgra::shade_pal_index(*loop.source, _light, _shade_constants);
+			*loop.dest = BlendBgra::sub(fg, *loop.dest, _srcalpha, _destalpha);
+		} while (loop.next());
+	}
+};
+
+class RtSubClamp4colsRGBACommand : public DrawerRt4colsCommand
+{
+public:
+	RtSubClamp4colsRGBACommand(int sx, int yl, int yh) : DrawerRt4colsCommand(sx, yl, yh)
+	{
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				uint32_t fg = LightBgra::shade_pal_index(loop.source[i], _light, _shade_constants);
+				loop.dest[i] = BlendBgra::sub(fg, loop.dest[i], _srcalpha, _destalpha);
+			}
+		} while (loop.next());
+	}
+};
+
+class RtRevSubClamp1colRGBACommand : public DrawerRt1colCommand
+{
+public:
+	RtRevSubClamp1colRGBACommand(int hx, int sx, int yl, int yh) : DrawerRt1colCommand(hx, sx, yl, yh)
+	{
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			uint32_t fg = LightBgra::shade_pal_index(*loop.source, _light, _shade_constants);
+			*loop.dest = BlendBgra::revsub(fg, *loop.dest, _srcalpha, _destalpha);
+		} while (loop.next());
+	}
+};
+
+class RtRevSubClamp4colsRGBACommand : public DrawerRt4colsCommand
+{
+public:
+	RtRevSubClamp4colsRGBACommand(int sx, int yl, int yh) : DrawerRt4colsCommand(sx, yl, yh)
+	{
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		do
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				uint32_t fg = LightBgra::shade_pal_index(loop.source[i], _light, _shade_constants);
+				loop.dest[i] = BlendBgra::revsub(fg, loop.dest[i], _srcalpha, _destalpha);
+			}
+		} while (loop.next());
 	}
 };
 
@@ -402,745 +608,6 @@ public:
 			b0 = translation[c0];	b1 = translation[c1];
 			source[2] = b0;			source[3] = b1;
 		}
-	}
-};
-
-class RtAdd1colRGBACommand : public DrawerCommand
-{
-	int hx;
-	int sx;
-	int yl;
-	int yh;
-	BYTE * RESTRICT _destorg;
-	int _pitch;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-	BYTE * RESTRICT _colormap;
-
-public:
-	RtAdd1colRGBACommand(int hx, int sx, int yl, int yh)
-	{
-		this->hx = hx;
-		this->sx = sx;
-		this->yl = yl;
-		this->yh = yh;
-
-		_destorg = dc_destorg;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-		_colormap = dc_colormap;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		uint32_t *source;
-		uint32_t *dest;
-		int count;
-		int pitch;
-		int sincr;
-
-		count = thread->count_for_thread(yl, yh - yl + 1);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
-		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
-		pitch = _pitch * thread->num_cores;
-		sincr = 4 * thread->num_cores;
-
-		uint32_t light = LightBgra::calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-		BYTE *colormap = _colormap;
-
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-		do {
-			uint32_t fg = LightBgra::shade_pal_index(colormap[*source], light, shade_constants);
-			uint32_t fg_red = (fg >> 16) & 0xff;
-			uint32_t fg_green = (fg >> 8) & 0xff;
-			uint32_t fg_blue = fg & 0xff;
-
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-			uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-			uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-
-			source += sincr;
-			dest += pitch;
-		} while (--count);
-	}
-};
-
-class RtAdd4colsRGBACommand : public DrawerCommand
-{
-	int sx;
-	int yl;
-	int yh;
-	BYTE * RESTRICT _destorg;
-	int _pitch;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	BYTE * RESTRICT _colormap;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-
-public:
-	RtAdd4colsRGBACommand(int sx, int yl, int yh)
-	{
-		this->sx = sx;
-		this->yl = yl;
-		this->yh = yh;
-
-		_destorg = dc_destorg;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
-		_colormap = dc_colormap;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		uint32_t *source;
-		uint32_t *dest;
-		int count;
-		int pitch;
-		int sincr;
-
-		count = thread->count_for_thread(yl, yh - yl + 1);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
-		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = _pitch * thread->num_cores;
-		sincr = 4 * thread->num_cores;
-
-		uint32_t light = LightBgra::calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-		BYTE *colormap = _colormap;
-
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-		do {
-			for (int i = 0; i < 4; i++)
-			{
-				uint32_t fg = LightBgra::shade_pal_index(colormap[source[i]], light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
-
-				uint32_t bg_red = (dest[i] >> 16) & 0xff;
-				uint32_t bg_green = (dest[i] >> 8) & 0xff;
-				uint32_t bg_blue = (dest[i]) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-				uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-				uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
-
-				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
-			}
-
-			source += sincr;
-			dest += pitch;
-		} while (--count);
-	}
-};
-
-class RtShaded1colRGBACommand : public DrawerCommand
-{
-	int hx;
-	int sx;
-	int yl;
-	int yh;
-	lighttable_t * RESTRICT _colormap;
-	BYTE * RESTRICT _destorg;
-	int _pitch;
-	int _color;
-	fixed_t _light;
-
-public:
-	RtShaded1colRGBACommand(int hx, int sx, int yl, int yh)
-	{
-		this->hx = hx;
-		this->sx = sx;
-		this->yl = yl;
-		this->yh = yh;
-
-		_colormap = dc_colormap;
-		_destorg = dc_destorg;
-		_pitch = dc_pitch;
-		_color = dc_color;
-		_light = dc_light;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		BYTE *colormap;
-		uint32_t *source;
-		uint32_t *dest;
-		int count;
-		int pitch;
-		int sincr;
-
-		count = thread->count_for_thread(yl, yh - yl + 1);
-		if (count <= 0)
-			return;
-
-		colormap = _colormap;
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
-		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
-		pitch = _pitch * thread->num_cores;
-		sincr = 4 * thread->num_cores;
-
-		uint32_t fg = LightBgra::shade_pal_index_simple(_color, LightBgra::calc_light_multiplier(_light));
-		uint32_t fg_red = (fg >> 16) & 0xff;
-		uint32_t fg_green = (fg >> 8) & 0xff;
-		uint32_t fg_blue = fg & 0xff;
-
-		do {
-			uint32_t alpha = colormap[*source];
-			uint32_t inv_alpha = 64 - alpha;
-
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = (fg_red * alpha + bg_red * inv_alpha) / 64;
-			uint32_t green = (fg_green * alpha + bg_green * inv_alpha) / 64;
-			uint32_t blue = (fg_blue * alpha + bg_blue * inv_alpha) / 64;
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			source += sincr;
-			dest += pitch;
-		} while (--count);
-	}
-};
-
-class RtShaded4colsRGBACommand : public DrawerCommand
-{
-	int sx;
-	int yl;
-	int yh;
-	lighttable_t * RESTRICT _colormap;
-	int _color;
-	BYTE * RESTRICT _destorg;
-	int _pitch;
-	fixed_t _light;
-
-public:
-	RtShaded4colsRGBACommand(int sx, int yl, int yh)
-	{
-		this->sx = sx;
-		this->yl = yl;
-		this->yh = yh;
-
-		_colormap = dc_colormap;
-		_color = dc_color;
-		_destorg = dc_destorg;
-		_pitch = dc_pitch;
-		_light = dc_light;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		BYTE *colormap;
-		uint32_t *source;
-		uint32_t *dest;
-		int count;
-		int pitch;
-		int sincr;
-
-		count = thread->count_for_thread(yl, yh - yl + 1);
-		if (count <= 0)
-			return;
-
-		colormap = _colormap;
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
-		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = _pitch * thread->num_cores;
-		sincr = 4 * thread->num_cores;
-
-		uint32_t fg = LightBgra::shade_pal_index_simple(_color, LightBgra::calc_light_multiplier(_light));
-		uint32_t fg_red = (fg >> 16) & 0xff;
-		uint32_t fg_green = (fg >> 8) & 0xff;
-		uint32_t fg_blue = fg & 0xff;
-
-		do {
-			for (int i = 0; i < 4; i++)
-			{
-				uint32_t alpha = colormap[source[i]];
-				uint32_t inv_alpha = 64 - alpha;
-
-				uint32_t bg_red = (dest[i] >> 16) & 0xff;
-				uint32_t bg_green = (dest[i] >> 8) & 0xff;
-				uint32_t bg_blue = (dest[i]) & 0xff;
-
-				uint32_t red = (fg_red * alpha + bg_red * inv_alpha) / 64;
-				uint32_t green = (fg_green * alpha + bg_green * inv_alpha) / 64;
-				uint32_t blue = (fg_blue * alpha + bg_blue * inv_alpha) / 64;
-
-				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
-			}
-			source += sincr;
-			dest += pitch;
-		} while (--count);
-	}
-};
-
-class RtAddClamp1colRGBACommand : public DrawerCommand
-{
-	int hx;
-	int sx;
-	int yl;
-	int yh;
-	BYTE * RESTRICT _destorg;
-	int _pitch;
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-
-public:
-	RtAddClamp1colRGBACommand(int hx, int sx, int yl, int yh)
-	{
-		this->hx = hx;
-		this->sx = sx;
-		this->yl = yl;
-		this->yh = yh;
-
-		_destorg = dc_destorg;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		uint32_t *source;
-		uint32_t *dest;
-		int count;
-		int pitch;
-		int sincr;
-
-		count = thread->count_for_thread(yl, yh - yl + 1);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
-		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
-		pitch = _pitch * thread->num_cores;
-		sincr = 4 * thread->num_cores;
-
-		uint32_t light = LightBgra::calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-		do {
-			uint32_t fg = LightBgra::shade_pal_index(*source, light, shade_constants);
-			uint32_t fg_red = (fg >> 16) & 0xff;
-			uint32_t fg_green = (fg >> 8) & 0xff;
-			uint32_t fg_blue = fg & 0xff;
-
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-			uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-			uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			source += sincr;
-			dest += pitch;
-		} while (--count);
-	}
-};
-
-class RtAddClamp4colsRGBACommand : public DrawerCommand
-{
-	int sx;
-	int yl;
-	int yh;
-	BYTE * RESTRICT _destorg;
-	int _pitch;
-	fixed_t _light;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-	ShadeConstants _shade_constants;
-
-public:
-	RtAddClamp4colsRGBACommand(int sx, int yl, int yh)
-	{
-		this->sx = sx;
-		this->yl = yl;
-		this->yh = yh;
-
-		_destorg = dc_destorg;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-		_shade_constants = dc_shade_constants;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		uint32_t *source;
-		uint32_t *dest;
-		int count;
-		int pitch;
-		int sincr;
-
-		count = thread->count_for_thread(yl, yh - yl + 1);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
-		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = _pitch * thread->num_cores;
-		sincr = 4 * thread->num_cores;
-
-		uint32_t light = LightBgra::calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-		do {
-			for (int i = 0; i < 4; i++)
-			{
-				uint32_t fg = LightBgra::shade_pal_index(source[i], light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
-
-				uint32_t bg_red = (dest[i] >> 16) & 0xff;
-				uint32_t bg_green = (dest[i] >> 8) & 0xff;
-				uint32_t bg_blue = (dest[i]) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-				uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-				uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
-
-				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
-			}
-			source += sincr;
-			dest += pitch;
-		} while (--count);
-	}
-};
-
-class RtSubClamp1colRGBACommand : public DrawerCommand
-{
-	int hx;
-	int sx;
-	int yl;
-	int yh;
-	BYTE * RESTRICT _destorg;
-	int _pitch;
-	fixed_t _light;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-	ShadeConstants _shade_constants;
-
-public:
-	RtSubClamp1colRGBACommand(int hx, int sx, int yl, int yh)
-	{
-		this->hx = hx;
-		this->sx = sx;
-		this->yl = yl;
-		this->yh = yh;
-
-		_destorg = dc_destorg;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-		_shade_constants = dc_shade_constants;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		uint32_t *source;
-		uint32_t *dest;
-		int count;
-		int pitch;
-		int sincr;
-
-		count = thread->count_for_thread(yl, yh - yl + 1);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
-		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
-		pitch = _pitch * thread->num_cores;
-		sincr = 4 * thread->num_cores;
-
-		uint32_t light = LightBgra::calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-		do {
-			uint32_t fg = LightBgra::shade_pal_index(*source, light, shade_constants);
-			uint32_t fg_red = (fg >> 16) & 0xff;
-			uint32_t fg_green = (fg >> 8) & 0xff;
-			uint32_t fg_blue = fg & 0xff;
-
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = clamp<uint32_t>((0x10000 - fg_red * fg_alpha + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-			uint32_t green = clamp<uint32_t>((0x10000 - fg_green * fg_alpha + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-			uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			source += sincr;
-			dest += pitch;
-		} while (--count);
-	}
-};
-
-class RtSubClamp4colsRGBACommand : public DrawerCommand
-{
-	int sx;
-	int yl;
-	int yh;
-	BYTE * RESTRICT _destorg;
-	int _pitch;
-	fixed_t _light;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-	ShadeConstants _shade_constants;
-
-public:
-	RtSubClamp4colsRGBACommand(int sx, int yl, int yh)
-	{
-		this->sx = sx;
-		this->yl = yl;
-		this->yh = yh;
-
-		_destorg = dc_destorg;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-		_shade_constants = dc_shade_constants;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		uint32_t *source;
-		uint32_t *dest;
-		int count;
-		int pitch;
-		int sincr;
-
-		count = thread->count_for_thread(yl, yh - yl + 1);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
-		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = _pitch * thread->num_cores;
-		sincr = 4 * thread->num_cores;
-
-		uint32_t light = LightBgra::calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-		do {
-			for (int i = 0; i < 4; i++)
-			{
-				uint32_t fg = LightBgra::shade_pal_index(source[i], light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
-
-				uint32_t bg_red = (dest[i] >> 16) & 0xff;
-				uint32_t bg_green = (dest[i] >> 8) & 0xff;
-				uint32_t bg_blue = (dest[i]) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((0x10000 - fg_red * fg_alpha + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t green = clamp<uint32_t>((0x10000 - fg_green * fg_alpha + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
-
-				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
-			}
-
-			source += sincr;
-			dest += pitch;
-		} while (--count);
-	}
-};
-
-class RtRevSubClamp1colRGBACommand : public DrawerCommand
-{
-	int hx;
-	int sx;
-	int yl;
-	int yh;
-	BYTE * RESTRICT _destorg;
-	int _pitch;
-	fixed_t _light;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-	ShadeConstants _shade_constants;
-
-public:
-	RtRevSubClamp1colRGBACommand(int hx, int sx, int yl, int yh)
-	{
-		this->hx = hx;
-		this->sx = sx;
-		this->yl = yl;
-		this->yh = yh;
-
-		_destorg = dc_destorg;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-		_shade_constants = dc_shade_constants;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		uint32_t *source;
-		uint32_t *dest;
-		int count;
-		int pitch;
-		int sincr;
-
-		count = thread->count_for_thread(yl, yh - yl + 1);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
-		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
-		pitch = _pitch * thread->num_cores;
-		sincr = 4 * thread->num_cores;
-
-		uint32_t light = LightBgra::calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-		do {
-			uint32_t fg = LightBgra::shade_pal_index(*source, light, shade_constants);
-			uint32_t fg_red = (fg >> 16) & 0xff;
-			uint32_t fg_green = (fg >> 8) & 0xff;
-			uint32_t fg_blue = fg & 0xff;
-
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = clamp<uint32_t>((0x10000 + fg_red * fg_alpha - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-			uint32_t green = clamp<uint32_t>((0x10000 + fg_green * fg_alpha - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-			uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue * fg_alpha - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			source += sincr;
-			dest += pitch;
-		} while (--count);
-	}
-};
-
-class RtRevSubClamp4colsRGBACommand : public DrawerCommand
-{
-	int sx;
-	int yl;
-	int yh;
-	BYTE * RESTRICT _destorg;
-	int _pitch;
-	fixed_t _light;
-	fixed_t _srcalpha;
-	fixed_t _destalpha;
-	ShadeConstants _shade_constants;
-
-public:
-	RtRevSubClamp4colsRGBACommand(int sx, int yl, int yh)
-	{
-		this->sx = sx;
-		this->yl = yl;
-		this->yh = yh;
-
-		_destorg = dc_destorg;
-		_pitch = dc_pitch;
-		_light = dc_light;
-		_srcalpha = dc_srcalpha;
-		_destalpha = dc_destalpha;
-		_shade_constants = dc_shade_constants;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		uint32_t *source;
-		uint32_t *dest;
-		int count;
-		int pitch;
-		int sincr;
-
-		count = thread->count_for_thread(yl, yh - yl + 1);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
-		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = _pitch * thread->num_cores;
-		sincr = 4 * thread->num_cores;
-
-		uint32_t light = LightBgra::calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-		do {
-			for (int i = 0; i < 4; i++)
-			{
-				uint32_t fg = LightBgra::shade_pal_index(source[i], light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
-
-				uint32_t bg_red = (dest[i] >> 16) & 0xff;
-				uint32_t bg_green = (dest[i] >> 8) & 0xff;
-				uint32_t bg_blue = (dest[i]) & 0xff;
-
-				uint32_t red = clamp<uint32_t>((0x10000 + fg_red * fg_alpha - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t green = clamp<uint32_t>((0x10000 + fg_green * fg_alpha - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue * fg_alpha - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
-
-				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
-			}
-
-			source += sincr;
-			dest += pitch;
-		} while (--count);
 	}
 };
 

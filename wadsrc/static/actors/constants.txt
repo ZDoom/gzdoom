@@ -652,3 +652,9 @@ enum
 	BT_USER3		= 1<<23,
 	BT_USER4		= 1<<24,
 };
+// Flags for GetAngle
+enum
+{
+	GAF_RELATIVE =			1,
+	GAF_SWITCH =			1 << 1,
+};

@@ -108,3 +108,5 @@ CMPTMNU_SECTORSOUNDS = "Sector sounds use centre as source";
 OPTVAL_MAPDEFINEDCOLORSONLY = "Map defined colours only";
 C_GRAY = "\ccgrey";
 C_DARKGRAY = "\cudark grey";
+DSPLYMNU_MOVEBOB = "View bob ammount while moving";
+DSPLYMNU_STILLBOB = "View bob ammount while not moving";

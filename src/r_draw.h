@@ -61,6 +61,7 @@ extern "C" int			dc_yh;
 extern "C" fixed_t		dc_iscale;
 extern     double		dc_texturemid;
 extern "C" fixed_t		dc_texturefrac;
+extern "C" uint32_t		dc_textureheight;
 extern "C" int			dc_color;		// [RH] For flat colors (no texturing)
 extern "C" DWORD		dc_srccolor;
 extern "C" uint32_t		dc_srccolor_bgra;
@@ -84,6 +85,7 @@ extern "C" fixed_t		palookuplight[4];
 extern "C" const BYTE*	bufplce[4];
 extern "C" const BYTE*	bufplce2[4];
 extern "C" uint32_t		buftexturefracx[4];
+extern "C" uint32_t		bufheight[4];
 
 // [RH] Temporary buffer for column drawing
 extern "C" BYTE			*dc_temp;
@@ -100,13 +102,13 @@ extern void (*R_DrawColumn)(void);
 extern DWORD (*dovline1) ();
 extern DWORD (*doprevline1) ();
 extern void (*dovline4) ();
-extern void setupvline (int,int);
+extern void setupvline (int);
 
 extern DWORD (*domvline1) ();
 extern void (*domvline4) ();
-extern void setupmvline (int,int);
+extern void setupmvline (int);
 
-extern void setuptmvline (int,int);
+extern void setuptmvline (int);
 
 // The Spectre/Invisibility effect.
 extern void (*R_DrawFuzzColumn)(void);
@@ -316,6 +318,7 @@ extern "C" fixed_t			ds_alpha;
 
 // start of a 64*64 tile image
 extern "C" const BYTE*		ds_source;
+extern "C" bool				ds_source_mipmapped;
 
 extern "C" int				ds_color;		// [RH] For flat color (no texturing)
 
@@ -381,8 +384,8 @@ void R_SetTranslationMap(lighttable_t *translation);
 extern bool r_swtruecolor;
 
 EXTERN_CVAR(Bool, r_multithreaded);
-EXTERN_CVAR(Bool, r_magfilter_linear);
-EXTERN_CVAR(Bool, r_minfilter_linear);
+EXTERN_CVAR(Bool, r_magfilter);
+EXTERN_CVAR(Bool, r_minfilter);
 EXTERN_CVAR(Bool, r_mipmap);
 
 #endif

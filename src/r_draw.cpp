@@ -154,6 +154,7 @@ int 			dc_yl;
 int 			dc_yh; 
 fixed_t 		dc_iscale; 
 fixed_t			dc_texturefrac;
+uint32_t		dc_textureheight;
 int				dc_color;				// [RH] Color for column filler
 DWORD			dc_srccolor;
 uint32_t		dc_srccolor_bgra;
@@ -177,6 +178,7 @@ fixed_t			palookuplight[4];
 const BYTE*		bufplce[4];
 const BYTE*		bufplce2[4];
 uint32_t		buftexturefracx[4];
+uint32_t		bufheight[4];
 
 // just for profiling 
 int 			dccount;
@@ -1044,6 +1046,7 @@ int						ds_ybits;
 
 // start of a floor/ceiling tile image 
 const BYTE*				ds_source;
+bool					ds_source_mipmapped;
 
 // just for profiling
 int 					dscount;
@@ -1067,6 +1070,7 @@ extern "C" BYTE *ds_curcolormap, *ds_cursource, *ds_curtiltedsource;
 void R_SetSpanSource(FTexture *tex)
 {
 	ds_source = r_swtruecolor ? (const BYTE*)tex->GetPixelsBgra() : tex->GetPixels();
+	ds_source_mipmapped = tex->Mipmapped();
 #ifdef X86_ASM
 	if (!r_swtruecolor && ds_cursource != ds_source)
 	{
@@ -1644,8 +1648,6 @@ extern "C" void R_DrawSlabC(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *v
 
 int vlinebits;
 int mvlinebits;
-uint32_t vlinemax;
-uint32_t mvlinemax;
 
 #ifndef X86_ASM
 static DWORD vlinec1 ();
@@ -1695,12 +1697,11 @@ DWORD (*domvline1)() = mvlineasm1;
 void (*domvline4)() = mvlineasm4;
 #endif
 
-void setupvline (int fracbits, int fracmax)
+void setupvline (int fracbits)
 {
 	if (r_swtruecolor)
 	{
 		vlinebits = fracbits;
-		vlinemax = fracmax;
 		return;
 	}
 
@@ -1780,7 +1781,7 @@ void vlinec4 ()
 }
 #endif
 
-void setupmvline (int fracbits, int fracmax)
+void setupmvline (int fracbits)
 {
 	if (!r_swtruecolor)
 	{
@@ -1795,7 +1796,6 @@ void setupmvline (int fracbits, int fracmax)
 	else
 	{
 		mvlinebits = fracbits;
-		mvlinemax = fracmax;
 	}
 }
 
@@ -1968,12 +1968,10 @@ void R_DrawFogBoundary_C (int x1, int x2, short *uclip, short *dclip)
 }
 
 int tmvlinebits;
-uint32_t tmvlinemax;
 
-void setuptmvline (int bits, int fracmax)
+void setuptmvline (int bits)
 {
 	tmvlinebits = bits;
-	tmvlinemax = fracmax;
 }
 
 fixed_t tmvline1_add_C ()

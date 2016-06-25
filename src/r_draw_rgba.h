@@ -459,7 +459,7 @@ public:
 class SampleBgra
 {
 public:
-	inline static bool span_sampler_setup(const uint32_t * RESTRICT &source, int &xbits, int &ybits, fixed_t xstep, fixed_t ystep)
+	inline static bool span_sampler_setup(const uint32_t * RESTRICT &source, int &xbits, int &ybits, fixed_t xstep, fixed_t ystep, bool mipmapped)
 	{
 		// Is this a magfilter or minfilter?
 		fixed_t xmagnitude = abs(xstep) >> (32 - xbits - FRACBITS);
@@ -467,7 +467,7 @@ public:
 		fixed_t magnitude = (xmagnitude + ymagnitude) * 2 + (1 << (FRACBITS - 1));
 		bool magnifying = (magnitude >> FRACBITS == 0);
 
-		if (r_mipmap)
+		if (r_mipmap && mipmapped)
 		{
 			int level = magnitude >> (FRACBITS + 1);
 			while (level != 0)
@@ -482,18 +482,15 @@ public:
 			}
 		}
 
-		return (magnifying && r_magfilter_linear) || (!magnifying && r_minfilter_linear);
+		return (magnifying && r_magfilter) || (!magnifying && r_minfilter);
 	}
 
-	FORCEINLINE static uint32_t sample_bilinear(const uint32_t *col0, const uint32_t *col1, uint32_t texturefracx, uint32_t texturefracy, int ybits, uint32_t ymax)
+	FORCEINLINE static uint32_t sample_bilinear(const uint32_t *col0, const uint32_t *col1, uint32_t texturefracx, uint32_t texturefracy, uint32_t half, uint32_t height)
 	{
-		uint32_t half = 1 << (ybits - 1);
-		uint32_t y0 = (texturefracy - half) >> ybits;
-		if (y0 > ymax)
-			y0 = 0;
-		uint32_t y1 = y0 + 1;
-		if (y1 > ymax)
-			y1 = 0;
+		uint32_t frac_y0 = ((texturefracy - half) >> FRACBITS) * height;
+		uint32_t frac_y1 = ((texturefracy + half) >> FRACBITS) * height;
+		uint32_t y0 = frac_y0 >> FRACBITS;
+		uint32_t y1 = frac_y1 >> FRACBITS;
 
 		uint32_t p00 = col0[y0];
 		uint32_t p01 = col0[y1];
@@ -501,7 +498,7 @@ public:
 		uint32_t p11 = col1[y1];
 
 		uint32_t inv_b = texturefracx;
-		uint32_t inv_a = ((texturefracy + half) >> (ybits - 4)) & 15;
+		uint32_t inv_a = (frac_y1 >> (FRACBITS - 4)) & 15;
 		uint32_t a = 16 - inv_a;
 		uint32_t b = 16 - inv_b;
 
@@ -546,20 +543,18 @@ public:
 /////////////////////////////////////////////////////////////////////////////
 // SSE/AVX shading macros:
 
-#define VEC_SAMPLE_BILINEAR4_COLUMN(fg, col0, col1, texturefracx, texturefracy, ybits, ymax) { \
-	uint32_t half = 1 << (ybits - 1); \
-	 \
+#define VEC_SAMPLE_BILINEAR4_COLUMN(fg, col0, col1, texturefracx, texturefracy, half, height) { \
 	__m128i m127 = _mm_set1_epi16(127); \
 	fg = _mm_setzero_si128(); \
 	for (int i = 0; i < 4; i++) \
 	{ \
-		uint32_t y0 = (texturefracy[i] - half) >> ybits; \
-		if (y0 > ymax) y0 = 0; \
-		uint32_t y1 = y0 + 1; \
-		if (y1 > ymax) y1 = 0; \
+		uint32_t frac_y0 = ((texturefracy[i] - half[i]) >> FRACBITS) * height[i]; \
+		uint32_t frac_y1 = ((texturefracy[i] + half[i]) >> FRACBITS) * height[i]; \
+		uint32_t y0 = frac_y0 >> FRACBITS; \
+		uint32_t y1 = frac_y1 >> FRACBITS; \
 		 \
 		uint32_t inv_b = texturefracx[i]; \
-		uint32_t inv_a = ((texturefracy[i] + half) >> (ybits - 4)) & 15; \
+		uint32_t inv_a = (frac_y1 >> (FRACBITS - 4)) & 15; \
 		uint32_t a = 16 - inv_a; \
 		uint32_t b = 16 - inv_b; \
 		 \

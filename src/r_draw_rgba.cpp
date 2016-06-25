@@ -48,22 +48,22 @@
 #endif
 #include <vector>
 
-extern int vlinebits;
-extern int mvlinebits;
-extern int tmvlinebits;
-extern uint32_t vlinemax;
-extern uint32_t mvlinemax;
-extern uint32_t tmvlinemax;
-
 extern "C" short spanend[MAXHEIGHT];
 extern float rw_light;
 extern float rw_lightstep;
 extern int wallshade;
 
+// Use multiple threads when drawing
 CVAR(Bool, r_multithreaded, true, 0);
-CVAR(Bool, r_magfilter_linear, false, 0);
-CVAR(Bool, r_minfilter_linear, false, 0);
-CVAR(Bool, r_mipmap, true, 0);
+
+// Use linear filtering when scaling up
+CVAR(Bool, r_magfilter, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
+// Use linear filtering when scaling down
+CVAR(Bool, r_minfilter, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
+// Use mipmapped textures
+CVAR(Bool, r_mipmap, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 #ifndef NO_SSE
 
@@ -926,7 +926,7 @@ public:
 		_source = (const uint32_t*)ds_source;
 		_light = LightBgra::calc_light_multiplier(ds_light);
 		_shade_constants = ds_shade_constants;
-		_nearest_filter = !SampleBgra::span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep);
+		_nearest_filter = !SampleBgra::span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep, ds_source_mipmapped);
 
 		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
 		_destalpha = dc_destalpha >> (FRACBITS - 8);
@@ -1354,8 +1354,7 @@ public:
 	DWORD _texturefrac;
 	uint32_t _texturefracx;
 	DWORD _iscale;
-	int _vlinebits;
-	uint32_t _vlinemax;
+	uint32_t _textureheight;
 
 	const uint32 * RESTRICT _source;
 	const uint32 * RESTRICT _source2;
@@ -1365,7 +1364,7 @@ public:
 	uint32_t _srcalpha;
 	uint32_t _destalpha;
 
-	DrawerWall1Command(int vlinebits, uint32_t vlinemax)
+	DrawerWall1Command()
 	{
 		_dest = dc_dest;
 		_pitch = dc_pitch;
@@ -1373,8 +1372,7 @@ public:
 		_texturefrac = dc_texturefrac;
 		_texturefracx = dc_texturefracx;
 		_iscale = dc_iscale;
-		_vlinebits = vlinebits;
-		_vlinemax = vlinemax;
+		_textureheight = dc_textureheight;
 
 		_source = (const uint32 *)dc_source;
 		_source2 = (const uint32 *)dc_source2;
@@ -1394,7 +1392,8 @@ public:
 		uint32_t fracstep;
 		uint32_t frac;
 		uint32_t texturefracx;
-		int bits;
+		uint32_t height;
+		uint32_t half;
 
 		LoopIterator(DrawerWall1Command *command, DrawerThread *thread)
 		{
@@ -1406,8 +1405,10 @@ public:
 			frac = command->_texturefrac + command->_iscale * thread->skipped_by_thread(command->_dest_y);
 			texturefracx = command->_texturefracx;
 			dest = thread->dest_for_thread(command->_dest_y, command->_pitch, (uint32_t*)command->_dest);
-			bits = command->_vlinebits;
 			pitch = command->_pitch * thread->num_cores;
+
+			height = command->_textureheight;
+			half = (0x80000000 + height - 1) / height;
 		}
 
 		explicit operator bool()
@@ -1417,7 +1418,7 @@ public:
 
 		int sample_index()
 		{
-			return frac >> bits;
+			return ((frac >> FRACBITS) * height) >> FRACBITS;
 		}
 
 		bool next()
@@ -1435,12 +1436,11 @@ public:
 	BYTE * RESTRICT _dest;
 	int _count;
 	int _pitch;
-	int _vlinebits;
-	uint32_t _vlinemax;
 	ShadeConstants _shade_constants;
 	uint32_t _vplce[4];
 	uint32_t _vince[4];
 	uint32_t _buftexturefracx[4];
+	uint32_t _bufheight[4];
 	const uint32_t * RESTRICT _bufplce[4];
 	const uint32_t * RESTRICT _bufplce2[4];
 	uint32_t _light[4];
@@ -1448,19 +1448,18 @@ public:
 	uint32_t _srcalpha;
 	uint32_t _destalpha;
 
-	DrawerWall4Command(int vlinebits, uint32_t vlinemax)
+	DrawerWall4Command()
 	{
 		_dest = dc_dest;
 		_count = dc_count;
 		_pitch = dc_pitch;
-		_vlinebits = vlinebits;
-		_vlinemax = vlinemax;
 		_shade_constants = dc_shade_constants;
 		for (int i = 0; i < 4; i++)
 		{
 			_vplce[i] = vplce[i];
 			_vince[i] = vince[i];
 			_buftexturefracx[i] = buftexturefracx[i];
+			_bufheight[i] = bufheight[i];
 			_bufplce[i] = (const uint32_t *)bufplce[i];
 			_bufplce2[i] = (const uint32_t *)bufplce2[i];
 			_light[i] = LightBgra::calc_light_multiplier(palookuplight[i]);
@@ -1475,9 +1474,10 @@ public:
 		uint32_t *dest;
 		int pitch;
 		int count;
-		int bits;
 		uint32_t vplce[4];
 		uint32_t vince[4];
+		uint32_t height[4];
+		uint32_t half[4];
 
 		LoopIterator(DrawerWall4Command *command, DrawerThread *thread)
 		{
@@ -1487,13 +1487,14 @@ public:
 
 			dest = thread->dest_for_thread(command->_dest_y, command->_pitch, (uint32_t*)command->_dest);
 			pitch = command->_pitch * thread->num_cores;
-			bits = command->_vlinebits;
 
 			int skipped = thread->skipped_by_thread(command->_dest_y);
 			for (int i = 0; i < 4; i++)
 			{
 				vplce[i] = command->_vplce[i] + command->_vince[i] * skipped;
 				vince[i] = command->_vince[i] * thread->num_cores;
+				height[i] = command->_bufheight[i];
+				half[i] = (0x80000000 + height[i] - 1) / height[i];
 			}
 		}
 
@@ -1504,7 +1505,7 @@ public:
 
 		int sample_index(int col)
 		{
-			return vplce[col] >> bits;
+			return ((vplce[col] >> FRACBITS) * height[col]) >> FRACBITS;
 		}
 
 		bool next()
@@ -1522,10 +1523,6 @@ public:
 class Vlinec1RGBACommand : public DrawerWall1Command
 {
 public:
-	Vlinec1RGBACommand() : DrawerWall1Command(vlinebits, vlinemax)
-	{
-	}
-
 	void Execute(DrawerThread *thread) override
 	{
 		LoopIterator loop(this, thread);
@@ -1543,7 +1540,7 @@ public:
 		{
 			do
 			{
-				uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, _source2, loop.texturefracx, loop.frac, loop.bits, _vlinemax), _light, _shade_constants);
+				uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, _source2, loop.texturefracx, loop.frac, loop.half, loop.height), _light, _shade_constants);
 				*loop.dest = BlendBgra::copy(fg);
 			} while (loop.next());
 		}
@@ -1553,10 +1550,6 @@ public:
 class Vlinec4RGBACommand : public DrawerWall4Command
 {
 public:
-	Vlinec4RGBACommand() : DrawerWall4Command(vlinebits, vlinemax)
-	{
-	}
-
 	void Execute(DrawerThread *thread) override
 	{
 		LoopIterator loop(this, thread);
@@ -1579,7 +1572,7 @@ public:
 			{
 				for (int i = 0; i < 4; i++)
 				{
-					uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_bufplce[i], _bufplce2[i], _buftexturefracx[i], loop.sample_index(i), loop.bits, _vlinemax), _light[i], _shade_constants);
+					uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_bufplce[i], _bufplce2[i], _buftexturefracx[i], loop.sample_index(i), loop.half[i], loop.height[i]), _light[i], _shade_constants);
 					loop.dest[i] = BlendBgra::copy(fg);
 				}
 			} while (loop.next());
@@ -1590,10 +1583,6 @@ public:
 class Mvlinec1RGBACommand : public DrawerWall1Command
 {
 public:
-	Mvlinec1RGBACommand() : DrawerWall1Command(mvlinebits, mvlinemax)
-	{
-	}
-
 	void Execute(DrawerThread *thread) override
 	{
 		LoopIterator loop(this, thread);
@@ -1611,7 +1600,7 @@ public:
 		{
 			do
 			{
-				uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, _source2, loop.texturefracx, loop.frac, loop.bits, _vlinemax), _light, _shade_constants);
+				uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, _source2, loop.texturefracx, loop.frac, loop.half, loop.height), _light, _shade_constants);
 				*loop.dest = BlendBgra::alpha_blend(fg, *loop.dest);
 			} while (loop.next());
 		}
@@ -1621,10 +1610,6 @@ public:
 class Mvlinec4RGBACommand : public DrawerWall4Command
 {
 public:
-	Mvlinec4RGBACommand(): DrawerWall4Command(mvlinebits, mvlinemax)
-	{
-	}
-
 	void Execute(DrawerThread *thread) override
 	{
 		LoopIterator loop(this, thread);
@@ -1647,7 +1632,7 @@ public:
 			{
 				for (int i = 0; i < 4; i++)
 				{
-					uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_bufplce[i], _bufplce2[i], _buftexturefracx[i], loop.sample_index(i), loop.bits, _vlinemax), _light[i], _shade_constants);
+					uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_bufplce[i], _bufplce2[i], _buftexturefracx[i], loop.sample_index(i), loop.half[i], loop.height[i]), _light[i], _shade_constants);
 					loop.dest[i] = BlendBgra::alpha_blend(fg, loop.dest[i]);
 				}
 			} while (loop.next());
@@ -1658,10 +1643,6 @@ public:
 class Tmvline1AddRGBACommand : public DrawerWall1Command
 {
 public:
-	Tmvline1AddRGBACommand() : DrawerWall1Command(tmvlinebits, tmvlinemax)
-	{
-	}
-
 	void Execute(DrawerThread *thread) override
 	{
 		LoopIterator loop(this, thread);
@@ -1677,10 +1658,6 @@ public:
 class Tmvline4AddRGBACommand : public DrawerWall4Command
 {
 public:
-	Tmvline4AddRGBACommand() : DrawerWall4Command(tmvlinebits, tmvlinemax)
-	{
-	}
-
 	void Execute(DrawerThread *thread) override
 	{
 		LoopIterator loop(this, thread);
@@ -1699,10 +1676,6 @@ public:
 class Tmvline1AddClampRGBACommand : public DrawerWall1Command
 {
 public:
-	Tmvline1AddClampRGBACommand() : DrawerWall1Command(tmvlinebits, tmvlinemax)
-	{
-	}
-
 	void Execute(DrawerThread *thread) override
 	{
 		LoopIterator loop(this, thread);
@@ -1718,10 +1691,6 @@ public:
 class Tmvline4AddClampRGBACommand : public DrawerWall4Command
 {
 public:
-	Tmvline4AddClampRGBACommand() : DrawerWall4Command(tmvlinebits, tmvlinemax)
-	{
-	}
-
 	void Execute(DrawerThread *thread) override
 	{
 		LoopIterator loop(this, thread);
@@ -1740,10 +1709,6 @@ public:
 class Tmvline1SubClampRGBACommand : public DrawerWall1Command
 {
 public:
-	Tmvline1SubClampRGBACommand() : DrawerWall1Command(tmvlinebits, tmvlinemax)
-	{
-	}
-
 	void Execute(DrawerThread *thread) override
 	{
 		LoopIterator loop(this, thread);
@@ -1759,10 +1724,6 @@ public:
 class Tmvline4SubClampRGBACommand : public DrawerWall4Command
 {
 public:
-	Tmvline4SubClampRGBACommand() : DrawerWall4Command(tmvlinebits, tmvlinemax)
-	{
-	}
-
 	void Execute(DrawerThread *thread) override
 	{
 		LoopIterator loop(this, thread);
@@ -1781,10 +1742,6 @@ public:
 class Tmvline1RevSubClampRGBACommand : public DrawerWall1Command
 {
 public:
-	Tmvline1RevSubClampRGBACommand() : DrawerWall1Command(tmvlinebits, tmvlinemax)
-	{
-	}
-
 	void Execute(DrawerThread *thread) override
 	{
 		LoopIterator loop(this, thread);
@@ -1800,10 +1757,6 @@ public:
 class Tmvline4RevSubClampRGBACommand : public DrawerWall4Command
 {
 public:
-	Tmvline4RevSubClampRGBACommand() : DrawerWall4Command(tmvlinebits, tmvlinemax)
-	{
-	}
-
 	void Execute(DrawerThread *thread) override
 	{
 		LoopIterator loop(this, thread);
@@ -2362,17 +2315,8 @@ void R_DrawSlab_rgba(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BY
 	DrawerCommandQueue::QueueCommand<DrawSlabRGBACommand>(dx, v, dy, vi, vptr, p, slab_rgba_shade_constants, slab_rgba_colormap, slab_rgba_light);
 }
 
-//extern FTexture *rw_pic; // For the asserts below
-
 DWORD vlinec1_rgba()
 {
-	/*DWORD fracstep = dc_iscale;
-	DWORD frac = dc_texturefrac;
-	DWORD height = rw_pic->GetHeight();
-	assert((frac >> vlinebits) < height);
-	frac += (dc_count-1) * fracstep;
-	assert((frac >> vlinebits) <= height);*/
-
 	DrawerCommandQueue::QueueCommand<Vlinec1RGBACommand>();
 	return dc_texturefrac + dc_count * dc_iscale;
 }

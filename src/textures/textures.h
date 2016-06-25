@@ -185,6 +185,9 @@ public:
 	// Returns the whole texture, stored in column-major order, in BGRA8 format
 	virtual const uint32_t *GetPixelsBgra();
 
+	// Returns true if GetPixelsBgra includes mipmaps
+	virtual bool Mipmapped() { return true; }
+
 	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
 	int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, FRemapTable *remap, FCopyInfo *inf = NULL);
 	virtual bool UseBasePalette();
@@ -530,6 +533,7 @@ public:
 	void SetUpdated() { bNeedsUpdate = false; bDidUpdate = true; bFirstUpdate = false; }
 	DSimpleCanvas *GetCanvas() { return Canvas; }
 	DSimpleCanvas *GetCanvasBgra() { return CanvasBgra; }
+	bool Mipmapped() override { return false; }
 	void MakeTexture ();
 	void MakeTextureBgra ();
 

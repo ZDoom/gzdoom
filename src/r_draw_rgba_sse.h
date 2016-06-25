@@ -43,7 +43,7 @@ public:
 		_destorg = dc_destorg;
 		_light = ds_light;
 		_shade_constants = ds_shade_constants;
-		_nearest_filter = !SampleBgra::span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep);
+		_nearest_filter = !SampleBgra::span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep, ds_source_mipmapped);
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -364,14 +364,13 @@ class VecCommand(Vlinec4RGBA) : public DrawerCommand
 	int _count;
 	int _pitch;
 	ShadeConstants _shade_constants;
-	int _vlinebits;
-	uint32_t _vlinemax;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
 	const uint32 * RESTRICT bufplce[4];
 	const uint32_t * RESTRICT bufplce2[4];
 	uint32_t buftexturefracx[4];
+	uint32_t bufheight[4];
 
 public:
 	VecCommand(Vlinec4RGBA)()
@@ -380,8 +379,6 @@ public:
 		_count = dc_count;
 		_pitch = dc_pitch;
 		_shade_constants = dc_shade_constants;
-		_vlinebits = vlinebits;
-		_vlinemax = vlinemax;
 		for (int i = 0; i < 4; i++)
 		{
 			palookuplight[i] = ::palookuplight[i];
@@ -390,6 +387,7 @@ public:
 			bufplce[i] = (const uint32 *)::bufplce[i];
 			bufplce2[i] = (const uint32_t *)::bufplce2[i];
 			buftexturefracx[i] = ::buftexturefracx[i];
+			bufheight[i] = ::bufheight[i];
 		}
 	}
 
@@ -400,8 +398,15 @@ public:
 			return;
 
 		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int bits = _vlinebits;
 		int pitch = _pitch * thread->num_cores;
+
+		uint32_t height[4];
+		uint32_t half[4];
+		for (int i = 0; i < 4; i++)
+		{
+			height[i] = bufheight[i];
+			half[i] = (0x80000000 + height[i] - 1) / height[i];
+		}
 
 		uint32_t light0 = LightBgra::calc_light_multiplier(palookuplight[0]);
 		uint32_t light1 = LightBgra::calc_light_multiplier(palookuplight[1]);
@@ -431,10 +436,10 @@ public:
 					DWORD place2 = local_vplce[2];
 					DWORD place3 = local_vplce[3];
 
-					uint32_t p0 = bufplce[0][place0 >> bits];
-					uint32_t p1 = bufplce[1][place1 >> bits];
-					uint32_t p2 = bufplce[2][place2 >> bits];
-					uint32_t p3 = bufplce[3][place3 >> bits];
+					uint32_t p0 = bufplce[0][((place0 >> FRACBITS) * height[0]) >> FRACBITS];
+					uint32_t p1 = bufplce[1][((place1 >> FRACBITS) * height[1]) >> FRACBITS];
+					uint32_t p2 = bufplce[2][((place2 >> FRACBITS) * height[2]) >> FRACBITS];
+					uint32_t p3 = bufplce[3][((place3 >> FRACBITS) * height[3]) >> FRACBITS];
 
 					local_vplce[0] = place0 + local_vince[0];
 					local_vplce[1] = place1 + local_vince[1];
@@ -457,10 +462,10 @@ public:
 					DWORD place2 = local_vplce[2];
 					DWORD place3 = local_vplce[3];
 
-					uint32_t p0 = bufplce[0][place0 >> bits];
-					uint32_t p1 = bufplce[1][place1 >> bits];
-					uint32_t p2 = bufplce[2][place2 >> bits];
-					uint32_t p3 = bufplce[3][place3 >> bits];
+					uint32_t p0 = bufplce[0][((place0 >> FRACBITS) * height[0]) >> FRACBITS];
+					uint32_t p1 = bufplce[1][((place1 >> FRACBITS) * height[1]) >> FRACBITS];
+					uint32_t p2 = bufplce[2][((place2 >> FRACBITS) * height[2]) >> FRACBITS];
+					uint32_t p3 = bufplce[3][((place3 >> FRACBITS) * height[3]) >> FRACBITS];
 
 					local_vplce[0] = place0 + local_vince[0];
 					local_vplce[1] = place1 + local_vince[1];
@@ -482,7 +487,7 @@ public:
 				do
 				{
 					__m128i fg;
-					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, bits, _vlinemax);
+					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, half, height);
 
 					local_vplce[0] = local_vplce[0] + local_vince[0];
 					local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -500,7 +505,7 @@ public:
 				do
 				{
 					__m128i fg;
-					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, bits, _vlinemax);
+					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, half, height);
 
 					local_vplce[0] = local_vplce[0] + local_vince[0];
 					local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -522,7 +527,6 @@ class VecCommand(Mvlinec4RGBA) : public DrawerCommand
 	int _count;
 	int _pitch;
 	ShadeConstants _shade_constants;
-	int _mvlinebits;
 	uint32_t _mvlinemax;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
@@ -530,6 +534,7 @@ class VecCommand(Mvlinec4RGBA) : public DrawerCommand
 	const uint32 * RESTRICT bufplce[4];
 	const uint32 * RESTRICT bufplce2[4];
 	uint32_t buftexturefracx[4];
+	uint32_t bufheight[4];
 
 public:
 	VecCommand(Mvlinec4RGBA)()
@@ -538,8 +543,6 @@ public:
 		_count = dc_count;
 		_pitch = dc_pitch;
 		_shade_constants = dc_shade_constants;
-		_mvlinebits = mvlinebits;
-		_mvlinemax = mvlinemax;
 		for (int i = 0; i < 4; i++)
 		{
 			palookuplight[i] = ::palookuplight[i];
@@ -548,6 +551,7 @@ public:
 			bufplce[i] = (const uint32 *)::bufplce[i];
 			bufplce2[i] = (const uint32_t *)::bufplce2[i];
 			buftexturefracx[i] = ::buftexturefracx[i];
+			bufheight[i] = ::bufheight[i];
 		}
 	}
 
@@ -559,7 +563,13 @@ public:
 
 		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int pitch = _pitch * thread->num_cores;
-		int bits = _mvlinebits;
+		uint32_t height[4];
+		uint32_t half[4];
+		for (int i = 0; i < 4; i++)
+		{
+			height[i] = bufheight[i];
+			half[i] = (0x80000000 + height[i] - 1) / height[i];
+		}
 
 		uint32_t light0 = LightBgra::calc_light_multiplier(palookuplight[0]);
 		uint32_t light1 = LightBgra::calc_light_multiplier(palookuplight[1]);
@@ -589,10 +599,10 @@ public:
 					DWORD place2 = local_vplce[2];
 					DWORD place3 = local_vplce[3];
 
-					uint32_t pix0 = bufplce[0][place0 >> bits];
-					uint32_t pix1 = bufplce[1][place1 >> bits];
-					uint32_t pix2 = bufplce[2][place2 >> bits];
-					uint32_t pix3 = bufplce[3][place3 >> bits];
+					uint32_t pix0 = bufplce[0][((place0 >> FRACBITS) * height[0]) >> FRACBITS];
+					uint32_t pix1 = bufplce[1][((place1 >> FRACBITS) * height[1]) >> FRACBITS];
+					uint32_t pix2 = bufplce[2][((place2 >> FRACBITS) * height[2]) >> FRACBITS];
+					uint32_t pix3 = bufplce[3][((place3 >> FRACBITS) * height[3]) >> FRACBITS];
 
 					local_vplce[0] = place0 + local_vince[0];
 					local_vplce[1] = place1 + local_vince[1];
@@ -617,10 +627,10 @@ public:
 					DWORD place2 = local_vplce[2];
 					DWORD place3 = local_vplce[3];
 
-					uint32_t pix0 = bufplce[0][place0 >> bits];
-					uint32_t pix1 = bufplce[1][place1 >> bits];
-					uint32_t pix2 = bufplce[2][place2 >> bits];
-					uint32_t pix3 = bufplce[3][place3 >> bits];
+					uint32_t pix0 = bufplce[0][((place0 >> FRACBITS) * height[0]) >> FRACBITS];
+					uint32_t pix1 = bufplce[1][((place1 >> FRACBITS) * height[1]) >> FRACBITS];
+					uint32_t pix2 = bufplce[2][((place2 >> FRACBITS) * height[2]) >> FRACBITS];
+					uint32_t pix3 = bufplce[3][((place3 >> FRACBITS) * height[3]) >> FRACBITS];
 
 					local_vplce[0] = place0 + local_vince[0];
 					local_vplce[1] = place1 + local_vince[1];
@@ -644,7 +654,7 @@ public:
 				do
 				{
 					__m128i fg;
-					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, bits, _mvlinemax);
+					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, half, height);
 
 					local_vplce[0] = local_vplce[0] + local_vince[0];
 					local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -664,7 +674,7 @@ public:
 				do
 				{
 					__m128i fg;
-					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, bits, _mvlinemax);
+					VEC_SAMPLE_BILINEAR4_COLUMN(fg, bufplce, bufplce2, buftexturefracx, local_vplce, half, height);
 
 					local_vplce[0] = local_vplce[0] + local_vince[0];
 					local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -690,12 +700,11 @@ class VecCommand(Tmvline4AddRGBA) : public DrawerCommand
 	ShadeConstants _shade_constants;
 	fixed_t _srcalpha;
 	fixed_t _destalpha;
-	int _tmvlinebits;
-	uint32_t _tmvlinemax;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
 	const uint32 * RESTRICT bufplce[4];
+	uint32_t bufheight[4];
 
 public:
 	VecCommand(Tmvline4AddRGBA)()
@@ -706,14 +715,13 @@ public:
 		_shade_constants = dc_shade_constants;
 		_srcalpha = dc_srcalpha;
 		_destalpha = dc_destalpha;
-		_tmvlinebits = tmvlinebits;
-		_tmvlinemax = tmvlinemax;
 		for (int i = 0; i < 4; i++)
 		{
 			palookuplight[i] = ::palookuplight[i];
 			vplce[i] = ::vplce[i];
 			vince[i] = ::vince[i];
 			bufplce[i] = (const uint32 *)::bufplce[i];
+			bufheight[i] = ::bufheight[i];
 		}
 	}
 
@@ -725,7 +733,14 @@ public:
 
 		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int pitch = _pitch * thread->num_cores;
-		int bits = _tmvlinebits;
+
+		uint32_t height[4];
+		uint32_t half[4];
+		for (int i = 0; i < 4; i++)
+		{
+			height[i] = bufheight[i];
+			half[i] = (0x80000000 + height[i] - 1) / height[i];
+		}
 
 		uint32_t light[4];
 		light[0] = LightBgra::calc_light_multiplier(palookuplight[0]);
@@ -754,10 +769,10 @@ public:
 
 			do
 			{
-				uint32_t pix0 = bufplce[0][local_vplce[0] >> bits];
-				uint32_t pix1 = bufplce[1][local_vplce[1] >> bits];
-				uint32_t pix2 = bufplce[2][local_vplce[2] >> bits];
-				uint32_t pix3 = bufplce[3][local_vplce[3] >> bits];
+				uint32_t pix0 = bufplce[0][((local_vplce[0] >> FRACBITS) * height[0]) >> FRACBITS];
+				uint32_t pix1 = bufplce[1][((local_vplce[1] >> FRACBITS) * height[1]) >> FRACBITS];
+				uint32_t pix2 = bufplce[2][((local_vplce[2] >> FRACBITS) * height[2]) >> FRACBITS];
+				uint32_t pix3 = bufplce[3][((local_vplce[3] >> FRACBITS) * height[3]) >> FRACBITS];
 
 				local_vplce[0] = local_vplce[0] + local_vince[0];
 				local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -791,10 +806,10 @@ public:
 
 			do
 			{
-				uint32_t pix0 = bufplce[0][local_vplce[0] >> bits];
-				uint32_t pix1 = bufplce[1][local_vplce[1] >> bits];
-				uint32_t pix2 = bufplce[2][local_vplce[2] >> bits];
-				uint32_t pix3 = bufplce[3][local_vplce[3] >> bits];
+				uint32_t pix0 = bufplce[0][((local_vplce[0] >> FRACBITS) * height[0]) >> FRACBITS];
+				uint32_t pix1 = bufplce[1][((local_vplce[1] >> FRACBITS) * height[1]) >> FRACBITS];
+				uint32_t pix2 = bufplce[2][((local_vplce[2] >> FRACBITS) * height[2]) >> FRACBITS];
+				uint32_t pix3 = bufplce[3][((local_vplce[3] >> FRACBITS) * height[3]) >> FRACBITS];
 
 				local_vplce[0] = local_vplce[0] + local_vince[0];
 				local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -831,12 +846,11 @@ class VecCommand(Tmvline4AddClampRGBA) : public DrawerCommand
 	ShadeConstants _shade_constants;
 	fixed_t _srcalpha;
 	fixed_t _destalpha;
-	int _tmvlinebits;
-	uint32_t _tmvlinemax;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
 	const uint32 *RESTRICT bufplce[4];
+	uint32_t bufheight[4];
 
 public:
 	VecCommand(Tmvline4AddClampRGBA)()
@@ -847,14 +861,13 @@ public:
 		_shade_constants = dc_shade_constants;
 		_srcalpha = dc_srcalpha;
 		_destalpha = dc_destalpha;
-		_tmvlinebits = tmvlinebits;
-		_tmvlinemax = tmvlinemax;
 		for (int i = 0; i < 4; i++)
 		{
 			palookuplight[i] = ::palookuplight[i];
 			vplce[i] = ::vplce[i];
 			vince[i] = ::vince[i];
 			bufplce[i] = (const uint32 *)::bufplce[i];
+			bufheight[i] = ::bufheight[i];
 		}
 	}
 
@@ -866,7 +879,14 @@ public:
 
 		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int pitch = _pitch * thread->num_cores;
-		int bits = _tmvlinebits;
+
+		uint32_t height[4];
+		uint32_t half[4];
+		for (int i = 0; i < 4; i++)
+		{
+			height[i] = bufheight[i];
+			half[i] = (0x80000000 + height[i] - 1) / height[i];
+		}
 
 		uint32_t light[4];
 		light[0] = LightBgra::calc_light_multiplier(palookuplight[0]);
@@ -895,10 +915,10 @@ public:
 
 			do
 			{
-				uint32_t pix0 = bufplce[0][local_vplce[0] >> bits];
-				uint32_t pix1 = bufplce[1][local_vplce[1] >> bits];
-				uint32_t pix2 = bufplce[2][local_vplce[2] >> bits];
-				uint32_t pix3 = bufplce[3][local_vplce[3] >> bits];
+				uint32_t pix0 = bufplce[0][((local_vplce[0] >> FRACBITS) * height[0]) >> FRACBITS];
+				uint32_t pix1 = bufplce[1][((local_vplce[1] >> FRACBITS) * height[1]) >> FRACBITS];
+				uint32_t pix2 = bufplce[2][((local_vplce[2] >> FRACBITS) * height[2]) >> FRACBITS];
+				uint32_t pix3 = bufplce[3][((local_vplce[3] >> FRACBITS) * height[3]) >> FRACBITS];
 
 				local_vplce[0] = local_vplce[0] + local_vince[0];
 				local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -931,10 +951,10 @@ public:
 
 			do
 			{
-				uint32_t pix0 = bufplce[0][local_vplce[0] >> bits];
-				uint32_t pix1 = bufplce[1][local_vplce[1] >> bits];
-				uint32_t pix2 = bufplce[2][local_vplce[2] >> bits];
-				uint32_t pix3 = bufplce[3][local_vplce[3] >> bits];
+				uint32_t pix0 = bufplce[0][((local_vplce[0] >> FRACBITS) * height[0]) >> FRACBITS];
+				uint32_t pix1 = bufplce[1][((local_vplce[1] >> FRACBITS) * height[1]) >> FRACBITS];
+				uint32_t pix2 = bufplce[2][((local_vplce[2] >> FRACBITS) * height[2]) >> FRACBITS];
+				uint32_t pix3 = bufplce[3][((local_vplce[3] >> FRACBITS) * height[3]) >> FRACBITS];
 
 				local_vplce[0] = local_vplce[0] + local_vince[0];
 				local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -971,12 +991,11 @@ class VecCommand(Tmvline4SubClampRGBA) : public DrawerCommand
 	ShadeConstants _shade_constants;
 	fixed_t _srcalpha;
 	fixed_t _destalpha;
-	int _tmvlinebits;
-	uint32_t _tmvlinemax;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
 	const uint32 *RESTRICT bufplce[4];
+	uint32_t bufheight[4];
 
 public:
 	VecCommand(Tmvline4SubClampRGBA)()
@@ -987,14 +1006,13 @@ public:
 		_shade_constants = dc_shade_constants;
 		_srcalpha = dc_srcalpha;
 		_destalpha = dc_destalpha;
-		_tmvlinebits = tmvlinebits;
-		_tmvlinemax = tmvlinemax;
 		for (int i = 0; i < 4; i++)
 		{
 			palookuplight[i] = ::palookuplight[i];
 			vplce[i] = ::vplce[i];
 			vince[i] = ::vince[i];
 			bufplce[i] = (const uint32 *)::bufplce[i];
+			bufheight[i] = ::bufheight[i];
 		}
 	}
 
@@ -1006,7 +1024,14 @@ public:
 
 		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int pitch = _pitch * thread->num_cores;
-		int bits = _tmvlinebits;
+
+		uint32_t height[4];
+		uint32_t half[4];
+		for (int i = 0; i < 4; i++)
+		{
+			height[i] = bufheight[i];
+			half[i] = (0x80000000 + height[i] - 1) / height[i];
+		}
 
 		uint32_t light[4];
 		light[0] = LightBgra::calc_light_multiplier(palookuplight[0]);
@@ -1035,10 +1060,10 @@ public:
 
 			do
 			{
-				uint32_t pix0 = bufplce[0][local_vplce[0] >> bits];
-				uint32_t pix1 = bufplce[1][local_vplce[1] >> bits];
-				uint32_t pix2 = bufplce[2][local_vplce[2] >> bits];
-				uint32_t pix3 = bufplce[3][local_vplce[3] >> bits];
+				uint32_t pix0 = bufplce[0][((local_vplce[0] >> FRACBITS) * height[0]) >> FRACBITS];
+				uint32_t pix1 = bufplce[1][((local_vplce[1] >> FRACBITS) * height[1]) >> FRACBITS];
+				uint32_t pix2 = bufplce[2][((local_vplce[2] >> FRACBITS) * height[2]) >> FRACBITS];
+				uint32_t pix3 = bufplce[3][((local_vplce[3] >> FRACBITS) * height[3]) >> FRACBITS];
 
 				local_vplce[0] = local_vplce[0] + local_vince[0];
 				local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -1071,10 +1096,10 @@ public:
 
 			do
 			{
-				uint32_t pix0 = bufplce[0][local_vplce[0] >> bits];
-				uint32_t pix1 = bufplce[1][local_vplce[1] >> bits];
-				uint32_t pix2 = bufplce[2][local_vplce[2] >> bits];
-				uint32_t pix3 = bufplce[3][local_vplce[3] >> bits];
+				uint32_t pix0 = bufplce[0][((local_vplce[0] >> FRACBITS) * height[0]) >> FRACBITS];
+				uint32_t pix1 = bufplce[1][((local_vplce[1] >> FRACBITS) * height[1]) >> FRACBITS];
+				uint32_t pix2 = bufplce[2][((local_vplce[2] >> FRACBITS) * height[2]) >> FRACBITS];
+				uint32_t pix3 = bufplce[3][((local_vplce[3] >> FRACBITS) * height[3]) >> FRACBITS];
 
 				local_vplce[0] = local_vplce[0] + local_vince[0];
 				local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -1111,12 +1136,11 @@ class VecCommand(Tmvline4RevSubClampRGBA) : public DrawerCommand
 	ShadeConstants _shade_constants;
 	fixed_t _srcalpha;
 	fixed_t _destalpha;
-	int _tmvlinebits;
-	uint32_t _tmvlinemax;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
 	const uint32 *RESTRICT bufplce[4];
+	uint32_t bufheight[4];
 
 public:
 	VecCommand(Tmvline4RevSubClampRGBA)()
@@ -1127,14 +1151,13 @@ public:
 		_shade_constants = dc_shade_constants;
 		_srcalpha = dc_srcalpha;
 		_destalpha = dc_destalpha;
-		_tmvlinebits = tmvlinebits;
-		_tmvlinemax = tmvlinemax;
 		for (int i = 0; i < 4; i++)
 		{
 			palookuplight[i] = ::palookuplight[i];
 			vplce[i] = ::vplce[i];
 			vince[i] = ::vince[i];
 			bufplce[i] = (const uint32 *)::bufplce[i];
+			bufheight[i] = ::bufheight[4];
 		}
 	}
 
@@ -1146,7 +1169,14 @@ public:
 
 		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int pitch = _pitch * thread->num_cores;
-		int bits = _tmvlinebits;
+
+		uint32_t height[4];
+		uint32_t half[4];
+		for (int i = 0; i < 4; i++)
+		{
+			height[i] = bufheight[i];
+			half[i] = (0x80000000 + height[i] - 1) / height[i];
+		}
 
 		uint32_t light[4];
 		light[0] = LightBgra::calc_light_multiplier(palookuplight[0]);
@@ -1175,10 +1205,10 @@ public:
 
 			do
 			{
-				uint32_t pix0 = bufplce[0][local_vplce[0] >> bits];
-				uint32_t pix1 = bufplce[1][local_vplce[1] >> bits];
-				uint32_t pix2 = bufplce[2][local_vplce[2] >> bits];
-				uint32_t pix3 = bufplce[3][local_vplce[3] >> bits];
+				uint32_t pix0 = bufplce[0][((local_vplce[0] >> FRACBITS) * height[0]) >> FRACBITS];
+				uint32_t pix1 = bufplce[1][((local_vplce[1] >> FRACBITS) * height[1]) >> FRACBITS];
+				uint32_t pix2 = bufplce[2][((local_vplce[2] >> FRACBITS) * height[2]) >> FRACBITS];
+				uint32_t pix3 = bufplce[3][((local_vplce[3] >> FRACBITS) * height[3]) >> FRACBITS];
 
 				local_vplce[0] = local_vplce[0] + local_vince[0];
 				local_vplce[1] = local_vplce[1] + local_vince[1];
@@ -1211,10 +1241,10 @@ public:
 
 			do
 			{
-				uint32_t pix0 = bufplce[0][local_vplce[0] >> bits];
-				uint32_t pix1 = bufplce[1][local_vplce[1] >> bits];
-				uint32_t pix2 = bufplce[2][local_vplce[2] >> bits];
-				uint32_t pix3 = bufplce[3][local_vplce[3] >> bits];
+				uint32_t pix0 = bufplce[0][((local_vplce[0] >> FRACBITS) * height[0]) >> FRACBITS];
+				uint32_t pix1 = bufplce[1][((local_vplce[1] >> FRACBITS) * height[1]) >> FRACBITS];
+				uint32_t pix2 = bufplce[2][((local_vplce[2] >> FRACBITS) * height[2]) >> FRACBITS];
+				uint32_t pix3 = bufplce[3][((local_vplce[3] >> FRACBITS) * height[3]) >> FRACBITS];
 
 				local_vplce[0] = local_vplce[0] + local_vince[0];
 				local_vplce[1] = local_vplce[1] + local_vince[1];

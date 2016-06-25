@@ -276,6 +276,7 @@ protected:
 
 	void CreatePixelsBgraWithMipmaps();
 	void GenerateBgraMipmaps();
+	void GenerateBgraMipmapsFast();
 	int MipmapLevels() const;
 
 public:

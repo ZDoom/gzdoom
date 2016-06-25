@@ -45,6 +45,7 @@
 #include "v_video.h"
 #include "m_fixed.h"
 #include "textures/textures.h"
+#include "textures/bicubic_interpolation.h"
 #include "v_palette.h"
 
 typedef bool (*CheckFunc)(FileReader & file);
@@ -381,6 +382,24 @@ int FTexture::MipmapLevels() const
 }
 
 void FTexture::GenerateBgraMipmaps()
+{
+	BicubicInterpolation bicubic;
+
+	uint32_t *src = PixelsBgra.data();
+	uint32_t *dest = src + Width * Height;
+	int levels = MipmapLevels();
+	for (int i = 1; i < levels; i++)
+	{
+		int w = MAX(Width >> i, 1);
+		int h = MAX(Height >> i, 1);
+
+		bicubic.ScaleImage(dest, h, w, src, Height, Width);
+
+		dest += w * h;
+	}
+}
+
+void FTexture::GenerateBgraMipmapsFast()
 {
 	uint32_t *src = PixelsBgra.data();
 	uint32_t *dest = src + Width * Height;

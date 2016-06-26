@@ -286,6 +286,22 @@ public:
 	void Execute(DrawerThread *thread) override;
 };
 
+template<typename CommandType, typename BlendMode>
+class DrawerBlendCommand : public CommandType
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		LoopIterator loop(this, thread);
+		if (!loop) return;
+		BlendMode blend(*this, loop);
+		do
+		{
+			blend.Blend(*this, loop);
+		} while (loop.next());
+	}
+};
+
 /////////////////////////////////////////////////////////////////////////////
 // Pixel shading inline functions:
 
@@ -624,7 +640,7 @@ public:
 		__m128i ab_invab = _mm_load_si128(SampleBgra::samplertable + inv_b * 32 + inv_a * 2); \
 		__m128i ainvb_invainvb = _mm_load_si128(SampleBgra::samplertable + inv_b * 32 + inv_a * 2 + 1); \
 		 \
-		__m128i gather = _mm_set_epi32(col1[i][y1], col1[i][y0], col0[i][y1], col1[i][y0]); \
+		__m128i gather = _mm_set_epi32(col1[i][y1], col1[i][y0], col0[i][y1], col0[i][y0]); \
 		__m128i p0 = _mm_unpacklo_epi8(gather, _mm_setzero_si128()); \
 		__m128i p1 = _mm_unpackhi_epi8(gather, _mm_setzero_si128()); \
 		 \
@@ -633,6 +649,26 @@ public:
 		 \
 		fg = _mm_or_si128(_mm_srli_si128(fg, 4), _mm_slli_si128(_mm_packus_epi16(color, _mm_setzero_si128()), 12)); \
 	} \
+}
+
+#define VEC_SAMPLE_MIP_NEAREST4_COLUMN(fg, col0, col1, mipfrac, texturefracy, height0, height1) { \
+	uint32_t y0[4], y1[4]; \
+	for (int i = 0; i < 4; i++) \
+	{ \
+		 y0[i] = (texturefracy[i] >> FRACBITS) * height0[i]; \
+		 y1[i] = (texturefracy[i] >> FRACBITS) * height1[i]; \
+	} \
+	__m128i p0 = _mm_set_epi32(col0[y0[3]], col0[y0[2]], col0[y0[1]], col0[y0[0]]); \
+	__m128i p1 = _mm_set_epi32(col1[y1[3]], col1[y1[2]], col1[y1[1]], col1[y1[0]]); \
+	__m128i t = _mm_loadu_si128((const __m128i*)mipfrac); \
+	__m128i inv_t = _mm_sub_epi32(_mm_set1_epi32(256), mipfrac); \
+	__m128i p0_lo = _mm_unpacklo_epi8(p0, _mm_setzero_si128()); \
+	__m128i p0_hi = _mm_unpackhi_epi8(p0, _mm_setzero_si128()); \
+	__m128i p1_lo = _mm_unpacklo_epi8(p1, _mm_setzero_si128()); \
+	__m128i p1_hi = _mm_unpackhi_epi8(p1, _mm_setzero_si128()); \
+	__m128i fg_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(p0_lo, t), _mm_mullo_epi16(p1_lo, inv_t)), 8); \
+	__m128i fg_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(p0_hi, t), _mm_mullo_epi16(p1_hi, inv_t)), 8); \
+	fg = _mm_packus_epi16(fg_lo, fg_hi); \
 }
 
 #define VEC_SAMPLE_BILINEAR4_SPAN(fg, texture, xfrac, yfrac, xstep, ystep, xbits, ybits) { \
@@ -844,12 +880,14 @@ FORCEINLINE uint32_t calc_blend_bgalpha(uint32_t fg, uint32_t dest_alpha)
 	return (dest_alpha * alpha + 256 * inv_alpha + 128) >> 8;
 }
 
+#define VEC_CALC_BLEND_ALPHA_VARS() __m128i msrc_alpha, mdest_alpha, m256, m255, m128;
+
 #define VEC_CALC_BLEND_ALPHA_INIT(src_alpha, dest_alpha) \
-	__m128i msrc_alpha = _mm_set1_epi16(src_alpha); \
-	__m128i mdest_alpha = _mm_set1_epi16(dest_alpha * 255 / 256); \
-	__m128i m256 = _mm_set1_epi16(256); \
-	__m128i m255 = _mm_set1_epi16(255); \
-	__m128i m128 = _mm_set1_epi16(128);
+	msrc_alpha = _mm_set1_epi16(src_alpha); \
+	mdest_alpha = _mm_set1_epi16(dest_alpha * 255 / 256); \
+	m256 = _mm_set1_epi16(256); \
+	m255 = _mm_set1_epi16(255); \
+	m128 = _mm_set1_epi16(128);
 
 // Calculates the final alpha values to be used when combined with the source texture alpha channel
 #define VEC_CALC_BLEND_ALPHA(fg) \
@@ -866,15 +904,17 @@ FORCEINLINE uint32_t calc_blend_bgalpha(uint32_t fg, uint32_t dest_alpha)
 		fg_alpha_lo = msrc_alpha; \
 	}
 
+#define SSE_SHADE_VARS() __m128i mlight_hi, mlight_lo, color, fade, fade_amount_hi, fade_amount_lo, inv_desaturate;
+
 // Calculate constants for a simple shade
 #define SSE_SHADE_SIMPLE_INIT(light) \
-	__m128i mlight_hi = _mm_set_epi16(256, light, light, light, 256, light, light, light); \
-	__m128i mlight_lo = mlight_hi;
+	mlight_hi = _mm_set_epi16(256, light, light, light, 256, light, light, light); \
+	mlight_lo = mlight_hi;
 
 // Calculate constants for a simple shade with different light levels for each pixel
 #define SSE_SHADE_SIMPLE_INIT4(light3, light2, light1, light0) \
-	__m128i mlight_hi = _mm_set_epi16(256, light1, light1, light1, 256, light0, light0, light0); \
-	__m128i mlight_lo = _mm_set_epi16(256, light3, light3, light3, 256, light2, light2, light2);
+	mlight_hi = _mm_set_epi16(256, light1, light1, light1, 256, light0, light0, light0); \
+	mlight_lo = _mm_set_epi16(256, light3, light3, light3, 256, light2, light2, light2);
 
 // Simple shade 4 pixels
 #define SSE_SHADE_SIMPLE(fg) { \
@@ -889,31 +929,31 @@ FORCEINLINE uint32_t calc_blend_bgalpha(uint32_t fg, uint32_t dest_alpha)
 
 // Calculate constants for a complex shade
 #define SSE_SHADE_INIT(light, shade_constants) \
-	__m128i mlight_hi = _mm_set_epi16(256, light, light, light, 256, light, light, light); \
-	__m128i mlight_lo = mlight_hi; \
-	__m128i color = _mm_set_epi16( \
+	mlight_hi = _mm_set_epi16(256, light, light, light, 256, light, light, light); \
+	mlight_lo = mlight_hi; \
+	color = _mm_set_epi16( \
 		256, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
 		256, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue); \
-	__m128i fade = _mm_set_epi16( \
+	fade = _mm_set_epi16( \
 		0, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
 		0, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue); \
-	__m128i fade_amount_hi = _mm_mullo_epi16(fade, _mm_subs_epu16(_mm_set1_epi16(256), mlight_hi)); \
-	__m128i fade_amount_lo = fade_amount_hi; \
-	__m128i inv_desaturate = _mm_set1_epi16(256 - shade_constants.desaturate); \
+	fade_amount_hi = _mm_mullo_epi16(fade, _mm_subs_epu16(_mm_set1_epi16(256), mlight_hi)); \
+	fade_amount_lo = fade_amount_hi; \
+	inv_desaturate = _mm_set1_epi16(256 - shade_constants.desaturate); \
 
 // Calculate constants for a complex shade with different light levels for each pixel
 #define SSE_SHADE_INIT4(light3, light2, light1, light0, shade_constants) \
-	__m128i mlight_hi = _mm_set_epi16(256, light1, light1, light1, 256, light0, light0, light0); \
-	__m128i mlight_lo = _mm_set_epi16(256, light3, light3, light3, 256, light2, light2, light2); \
-	__m128i color = _mm_set_epi16( \
+	mlight_hi = _mm_set_epi16(256, light1, light1, light1, 256, light0, light0, light0); \
+	mlight_lo = _mm_set_epi16(256, light3, light3, light3, 256, light2, light2, light2); \
+	color = _mm_set_epi16( \
 		256, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
 		256, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue); \
-	__m128i fade = _mm_set_epi16( \
+	fade = _mm_set_epi16( \
 		0, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
 		0, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue); \
-	__m128i fade_amount_hi = _mm_mullo_epi16(fade, _mm_subs_epu16(_mm_set1_epi16(256), mlight_hi)); \
-	__m128i fade_amount_lo = _mm_mullo_epi16(fade, _mm_subs_epu16(_mm_set1_epi16(256), mlight_lo)); \
-	__m128i inv_desaturate = _mm_set1_epi16(256 - shade_constants.desaturate); \
+	fade_amount_hi = _mm_mullo_epi16(fade, _mm_subs_epu16(_mm_set1_epi16(256), mlight_hi)); \
+	fade_amount_lo = _mm_mullo_epi16(fade, _mm_subs_epu16(_mm_set1_epi16(256), mlight_lo)); \
+	inv_desaturate = _mm_set1_epi16(256 - shade_constants.desaturate); \
 
 // Complex shade 4 pixels
 #define SSE_SHADE(fg, shade_constants) { \

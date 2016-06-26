@@ -53,8 +53,13 @@ extern unsigned int *horizspan[4];
 
 #ifndef NO_SSE
 
+#ifdef _MSC_VER
+#pragma warning(disable: 4101) // warning C4101: unreferenced local variable
+#endif
+
 // Generate SSE drawers:
 #define VecCommand(name) name##_SSE_Command
+#define VEC_SHADE_VARS SSE_SHADE_VARS
 #define VEC_SHADE_SIMPLE_INIT SSE_SHADE_SIMPLE_INIT
 #define VEC_SHADE_SIMPLE_INIT4 SSE_SHADE_SIMPLE_INIT4
 #define VEC_SHADE_SIMPLE SSE_SHADE_SIMPLE

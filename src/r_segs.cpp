@@ -1146,15 +1146,16 @@ WallscanSampler::WallscanSampler(int y1, float swal, double yrepeat, fixed_t xof
 			int mip_height = texture->GetHeight();
 			if (r_mipmap && texture->Mipmapped())
 			{
+				uint32_t xpos = (uint32_t)((((uint64_t)xoffset) << FRACBITS) / mip_width);
 				int level = (int)MAX(magnitude - 1.0, 0.0);
 				while (level != 0)
 				{
 					mipmap_offset += mip_width * mip_height;
-					xoffset >>= 1;
 					level >>= 1;
 					mip_width = MAX(mip_width >> 1, 1);
 					mip_height = MAX(mip_height >> 1, 1);
 				}
+				xoffset = (xpos >> FRACBITS) * mip_width;
 			}
 
 			const uint32_t *pixels = texture->GetPixelsBgra() + mipmap_offset;

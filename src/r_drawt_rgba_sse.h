@@ -60,6 +60,7 @@ public:
 
 		if (shade_constants.simple_shade)
 		{
+			VEC_SHADE_VARS();
 			VEC_SHADE_SIMPLE_INIT(light);
 
 			if (count & 1) {
@@ -110,6 +111,7 @@ public:
 		}
 		else
 		{
+			VEC_SHADE_VARS();
 			VEC_SHADE_INIT(light, shade_constants);
 
 			if (count & 1) {
@@ -218,6 +220,7 @@ public:
 
 		if (shade_constants.simple_shade)
 		{
+			VEC_SHADE_VARS();
 			VEC_SHADE_SIMPLE_INIT(light);
 
 			__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
@@ -254,6 +257,7 @@ public:
 		}
 		else
 		{
+			VEC_SHADE_VARS();
 			VEC_SHADE_INIT(light, shade_constants);
 
 			__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
@@ -421,6 +425,7 @@ public:
 
 		if (shade_constants.simple_shade)
 		{
+			VEC_SHADE_VARS();
 			VEC_SHADE_SIMPLE_INIT(light);
 
 			__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
@@ -457,6 +462,7 @@ public:
 		}
 		else
 		{
+			VEC_SHADE_VARS();
 			VEC_SHADE_INIT(light, shade_constants);
 
 			__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
@@ -547,6 +553,7 @@ public:
 
 		if (shade_constants.simple_shade)
 		{
+			VEC_SHADE_VARS();
 			VEC_SHADE_SIMPLE_INIT(light);
 
 			__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
@@ -583,6 +590,7 @@ public:
 		}
 		else
 		{
+			VEC_SHADE_VARS();
 			VEC_SHADE_INIT(light, shade_constants);
 
 			__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
@@ -673,6 +681,7 @@ public:
 
 		if (shade_constants.simple_shade)
 		{
+			VEC_SHADE_VARS();
 			VEC_SHADE_SIMPLE_INIT(light);
 
 			__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
@@ -709,6 +718,7 @@ public:
 		}
 		else
 		{
+			VEC_SHADE_VARS();
 			VEC_SHADE_INIT(light, shade_constants);
 
 			__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);

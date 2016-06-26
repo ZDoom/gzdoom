@@ -67,8 +67,13 @@ CVAR(Bool, r_mipmap, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 #ifndef NO_SSE
 
+#ifdef _MSC_VER
+#pragma warning(disable: 4101) // warning C4101: unreferenced local variable
+#endif
+
 // Generate SSE drawers:
 #define VecCommand(name) name##_SSE_Command
+#define VEC_SHADE_VARS SSE_SHADE_VARS
 #define VEC_SHADE_SIMPLE_INIT SSE_SHADE_SIMPLE_INIT
 #define VEC_SHADE_SIMPLE_INIT4 SSE_SHADE_SIMPLE_INIT4
 #define VEC_SHADE_SIMPLE SSE_SHADE_SIMPLE
@@ -1552,7 +1557,445 @@ public:
 			return (--count) != 0;
 		}
 	};
+
+#ifdef NO_SSE
+	struct NearestSampler
+	{
+		FORCEINLINE static uint32_t Sample1(DrawerWall4Command &cmd, LoopIterator &loop, int index)
+		{
+			return cmd._bufplce[index][loop.sample_index(index)];
+		}
+	};
+	struct LinearSampler
+	{
+		FORCEINLINE static uint32_t Sample1(DrawerWall4Command &cmd, LoopIterator &loop, int index)
+		{
+			return SampleBgra::sample_bilinear(cmd._bufplce[index], cmd._bufplce2[index], cmd._buftexturefracx[index], loop.vplce[index], loop.half[index], loop.height[index]);
+		}
+	};
+#else
+	struct NearestSampler
+	{
+		FORCEINLINE static __m128i Sample4(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			return _mm_set_epi32(cmd._bufplce[3][loop.sample_index(3)], cmd._bufplce[2][loop.sample_index(2)], cmd._bufplce[1][loop.sample_index(1)], cmd._bufplce[0][loop.sample_index(0)]);
+		}
+	};
+
+	struct LinearSampler
+	{
+		FORCEINLINE static __m128i Sample4(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			__m128i fg;
+			VEC_SAMPLE_BILINEAR4_COLUMN(fg, cmd._bufplce, cmd._bufplce2, cmd._buftexturefracx, loop.vplce, loop.half, loop.height);
+			return fg;
+		}
+	};
+#endif
+
+#ifdef NO_SSE
+	template<typename Sampler>
+	struct Copy
+	{
+		Copy(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+		}
+		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				uint32_t fg = LightBgra::shade_bgra(Sampler::Sample1(cmd, loop, i), cmd._light[i], cmd._shade_constants);
+				loop.dest[i] = BlendBgra::copy(fg);
+			}
+		}
+	};
+
+	template<typename Sampler>
+	struct Mask
+	{
+		Mask(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+		}
+		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				uint32_t fg = LightBgra::shade_bgra(Sampler::Sample1(cmd, loop, i), cmd._light[i], cmd._shade_constants);
+				loop.dest[i] = BlendBgra::alpha_blend(fg, loop.dest[i]);
+			}
+		}
+	};
+
+	template<typename Sampler>
+	struct TMaskAdd
+	{
+		TMaskAdd(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+		}
+		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				uint32_t fg = LightBgra::shade_bgra(Sampler::Sample1(cmd, loop, i), cmd._light[i], cmd._shade_constants);
+				loop.dest[i] = BlendBgra::add(fg, loop.dest[i], cmd._srcalpha, calc_blend_bgalpha(fg, cmd._destalpha));
+			}
+		}
+	};
+
+	template<typename Sampler>
+	struct TMaskSub
+	{
+		TMaskSub(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+		}
+		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				uint32_t fg = LightBgra::shade_bgra(Sampler::Sample1(cmd, loop, i), cmd._light[i], cmd._shade_constants);
+				loop.dest[i] = BlendBgra::sub(fg, loop.dest[i], cmd._srcalpha, calc_blend_bgalpha(fg, cmd._destalpha));
+			}
+		}
+	};
+
+	template<typename Sampler>
+	struct TMaskRevSub
+	{
+		TMaskRevSub(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+		}
+		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				uint32_t fg = LightBgra::shade_bgra(Sampler::Sample1(cmd, loop, i), cmd._light[i], cmd._shade_constants);
+				loop.dest[i] = BlendBgra::revsub(fg, loop.dest[i], cmd._srcalpha, calc_blend_bgalpha(fg, cmd._destalpha));
+			}
+		}
+	};
+
+	typedef Copy<NearestSampler> CopyNearestSimple;
+	typedef Copy<LinearSampler> CopyLinearSimple;
+	typedef Copy<NearestSampler> CopyNearest;
+	typedef Copy<LinearSampler> CopyLinear;
+	typedef Mask<NearestSampler> MaskNearestSimple;
+	typedef Mask<LinearSampler> MaskLinearSimple;
+	typedef Mask<NearestSampler> MaskNearest;
+	typedef Mask<LinearSampler> MaskLinear;
+	typedef TMaskAdd<NearestSampler> TMaskAddNearestSimple;
+	typedef TMaskAdd<LinearSampler> TMaskAddLinearSimple;
+	typedef TMaskAdd<NearestSampler> TMaskAddNearest;
+	typedef TMaskAdd<LinearSampler> TMaskAddLinear;
+	typedef TMaskSub<NearestSampler> TMaskSubNearestSimple;
+	typedef TMaskSub<LinearSampler> TMaskSubLinearSimple;
+	typedef TMaskSub<NearestSampler> TMaskSubNearest;
+	typedef TMaskSub<LinearSampler> TMaskSubLinear;
+	typedef TMaskRevSub<NearestSampler> TMaskRevSubNearestSimple;
+	typedef TMaskRevSub<LinearSampler> TMaskRevSubLinearSimple;
+	typedef TMaskRevSub<NearestSampler> TMaskRevSubNearest;
+	typedef TMaskRevSub<LinearSampler> TMaskRevSubLinear;
+#else
+	template<typename Sampler>
+	struct CopySimple
+	{
+		VEC_SHADE_VARS();
+		CopySimple(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			VEC_SHADE_SIMPLE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0]);
+		}
+		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			__m128i fg = Sampler::Sample4(cmd, loop);
+			VEC_SHADE_SIMPLE(fg);
+			_mm_storeu_si128((__m128i*)loop.dest, fg);
+		}
+	};
+
+	template<typename Sampler>
+	struct Copy
+	{
+		VEC_SHADE_VARS();
+		Copy(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			VEC_SHADE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0], cmd._shade_constants);
+		}
+		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			__m128i fg = Sampler::Sample4(cmd, loop);
+			VEC_SHADE(fg, cmd._shade_constants);
+			_mm_storeu_si128((__m128i*)loop.dest, fg);
+		}
+	};
+
+	template<typename Sampler>
+	struct MaskSimple
+	{
+		VEC_SHADE_VARS();
+		MaskSimple(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			VEC_SHADE_SIMPLE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0]);
+		}
+		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			__m128i fg = Sampler::Sample4(cmd, loop);
+			__m128i bg = _mm_loadu_si128((const __m128i*)loop.dest);
+			VEC_SHADE_SIMPLE(fg);
+			VEC_ALPHA_BLEND(fg, bg);
+			_mm_storeu_si128((__m128i*)loop.dest, fg);
+		}
+	};
+
+	template<typename Sampler>
+	struct Mask
+	{
+		VEC_SHADE_VARS();
+		Mask(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			VEC_SHADE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0], cmd._shade_constants);
+		}
+		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			__m128i fg = Sampler::Sample4(cmd, loop);
+			__m128i bg = _mm_loadu_si128((const __m128i*)loop.dest);
+			VEC_SHADE(fg, cmd._shade_constants);
+			VEC_ALPHA_BLEND(fg, bg);
+			_mm_storeu_si128((__m128i*)loop.dest, fg);
+		}
+	};
+
+	template<typename Sampler>
+	struct TMaskAddSimple
+	{
+		VEC_SHADE_VARS();
+		VEC_CALC_BLEND_ALPHA_VARS();
+		TMaskAddSimple(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			VEC_SHADE_SIMPLE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0]);
+			VEC_CALC_BLEND_ALPHA_INIT(cmd._srcalpha, cmd._destalpha);
+		}
+		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			__m128i fg = Sampler::Sample4(cmd, loop);
+			__m128i bg = _mm_loadu_si128((const __m128i*)loop.dest);
+
+			VEC_CALC_BLEND_ALPHA(fg);
+			VEC_SHADE_SIMPLE(fg);
+
+			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+			__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
+			__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+
+			__m128i out_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_hi, fg_alpha_hi), _mm_mullo_epi16(bg_hi, bg_alpha_hi)), 8);
+			__m128i out_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_lo, fg_alpha_lo), _mm_mullo_epi16(bg_lo, bg_alpha_lo)), 8);
+			__m128i out = _mm_packus_epi16(out_lo, out_hi);
+
+			_mm_storeu_si128((__m128i*)loop.dest, out);
+		}
+	};
+
+	template<typename Sampler>
+	struct TMaskAdd
+	{
+		VEC_SHADE_VARS();
+		VEC_CALC_BLEND_ALPHA_VARS();
+		TMaskAdd(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			VEC_SHADE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0], cmd._shade_constants);
+			VEC_CALC_BLEND_ALPHA_INIT(cmd._srcalpha, cmd._destalpha);
+		}
+		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			__m128i fg = Sampler::Sample4(cmd, loop);
+			__m128i bg = _mm_loadu_si128((const __m128i*)loop.dest);
+
+			VEC_CALC_BLEND_ALPHA(fg);
+			VEC_SHADE_SIMPLE(fg);
+
+			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+			__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
+			__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+
+			__m128i out_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_hi, fg_alpha_hi), _mm_mullo_epi16(bg_hi, bg_alpha_hi)), 8);
+			__m128i out_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_lo, fg_alpha_lo), _mm_mullo_epi16(bg_lo, bg_alpha_lo)), 8);
+			__m128i out = _mm_packus_epi16(out_lo, out_hi);
+
+			_mm_storeu_si128((__m128i*)loop.dest, out);
+		}
+	};
+
+	template<typename Sampler>
+	struct TMaskSubSimple
+	{
+		VEC_SHADE_VARS();
+		VEC_CALC_BLEND_ALPHA_VARS();
+		TMaskSubSimple(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			VEC_SHADE_SIMPLE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0]);
+			VEC_CALC_BLEND_ALPHA_INIT(cmd._srcalpha, cmd._destalpha);
+		}
+		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			__m128i fg = Sampler::Sample4(cmd, loop);
+			__m128i bg = _mm_loadu_si128((const __m128i*)loop.dest);
+
+			VEC_CALC_BLEND_ALPHA(fg);
+			VEC_SHADE_SIMPLE(fg);
+
+			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+			__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
+			__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+
+			__m128i out_hi = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(bg_hi, bg_alpha_hi), _mm_mullo_epi16(fg_hi, fg_alpha_hi)), 8);
+			__m128i out_lo = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(bg_lo, bg_alpha_lo), _mm_mullo_epi16(fg_lo, fg_alpha_lo)), 8);
+			__m128i out = _mm_packus_epi16(out_lo, out_hi);
+
+			_mm_storeu_si128((__m128i*)loop.dest, out);
+		}
+	};
+
+	template<typename Sampler>
+	struct TMaskSub
+	{
+		VEC_SHADE_VARS();
+		VEC_CALC_BLEND_ALPHA_VARS();
+		TMaskSub(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			VEC_SHADE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0], cmd._shade_constants);
+			VEC_CALC_BLEND_ALPHA_INIT(cmd._srcalpha, cmd._destalpha);
+		}
+		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			__m128i fg = Sampler::Sample4(cmd, loop);
+			__m128i bg = _mm_loadu_si128((const __m128i*)loop.dest);
+
+			VEC_CALC_BLEND_ALPHA(fg);
+			VEC_SHADE_SIMPLE(fg);
+
+			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+			__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
+			__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+
+			__m128i out_hi = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(bg_hi, bg_alpha_hi), _mm_mullo_epi16(fg_hi, fg_alpha_hi)), 8);
+			__m128i out_lo = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(bg_lo, bg_alpha_lo), _mm_mullo_epi16(fg_lo, fg_alpha_lo)), 8);
+			__m128i out = _mm_packus_epi16(out_lo, out_hi);
+
+			_mm_storeu_si128((__m128i*)loop.dest, out);
+		}
+	};
+
+	template<typename Sampler>
+	struct TMaskRevSubSimple
+	{
+		VEC_SHADE_VARS();
+		VEC_CALC_BLEND_ALPHA_VARS();
+		TMaskRevSubSimple(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			VEC_SHADE_SIMPLE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0]);
+			VEC_CALC_BLEND_ALPHA_INIT(cmd._srcalpha, cmd._destalpha);
+		}
+		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			__m128i fg = Sampler::Sample4(cmd, loop);
+			__m128i bg = _mm_loadu_si128((const __m128i*)loop.dest);
+
+			VEC_CALC_BLEND_ALPHA(fg);
+			VEC_SHADE_SIMPLE(fg);
+
+			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+			__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
+			__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+
+			__m128i out_hi = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(fg_hi, fg_alpha_hi), _mm_mullo_epi16(bg_hi, bg_alpha_hi)), 8);
+			__m128i out_lo = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(fg_lo, fg_alpha_lo), _mm_mullo_epi16(bg_lo, bg_alpha_lo)), 8);
+			__m128i out = _mm_packus_epi16(out_lo, out_hi);
+
+			_mm_storeu_si128((__m128i*)loop.dest, out);
+		}
+	};
+
+	template<typename Sampler>
+	struct TMaskRevSub
+	{
+		VEC_SHADE_VARS();
+		VEC_CALC_BLEND_ALPHA_VARS();
+		TMaskRevSub(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			VEC_SHADE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0], cmd._shade_constants);
+			VEC_CALC_BLEND_ALPHA_INIT(cmd._srcalpha, cmd._destalpha);
+		}
+		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
+		{
+			__m128i fg = Sampler::Sample4(cmd, loop);
+			__m128i bg = _mm_loadu_si128((const __m128i*)loop.dest);
+
+			VEC_CALC_BLEND_ALPHA(fg);
+			VEC_SHADE_SIMPLE(fg);
+
+			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+			__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
+			__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+
+			__m128i out_hi = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(fg_hi, fg_alpha_hi), _mm_mullo_epi16(bg_hi, bg_alpha_hi)), 8);
+			__m128i out_lo = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(fg_lo, fg_alpha_lo), _mm_mullo_epi16(bg_lo, bg_alpha_lo)), 8);
+			__m128i out = _mm_packus_epi16(out_lo, out_hi);
+
+			_mm_storeu_si128((__m128i*)loop.dest, out);
+		}
+	};
+
+	typedef CopySimple<NearestSampler> CopyNearestSimple;
+	typedef CopySimple<LinearSampler> CopyLinearSimple;
+	typedef Copy<NearestSampler> CopyNearest;
+	typedef Copy<LinearSampler> CopyLinear;
+	typedef MaskSimple<NearestSampler> MaskNearestSimple;
+	typedef MaskSimple<LinearSampler> MaskLinearSimple;
+	typedef Mask<NearestSampler> MaskNearest;
+	typedef Mask<LinearSampler> MaskLinear;
+	typedef TMaskAddSimple<NearestSampler> TMaskAddNearestSimple;
+	typedef TMaskAddSimple<LinearSampler> TMaskAddLinearSimple;
+	typedef TMaskAdd<NearestSampler> TMaskAddNearest;
+	typedef TMaskAdd<LinearSampler> TMaskAddLinear;
+	typedef TMaskSubSimple<NearestSampler> TMaskSubNearestSimple;
+	typedef TMaskSubSimple<LinearSampler> TMaskSubLinearSimple;
+	typedef TMaskSub<NearestSampler> TMaskSubNearest;
+	typedef TMaskSub<LinearSampler> TMaskSubLinear;
+	typedef TMaskRevSubSimple<NearestSampler> TMaskRevSubNearestSimple;
+	typedef TMaskRevSubSimple<LinearSampler> TMaskRevSubLinearSimple;
+	typedef TMaskRevSub<NearestSampler> TMaskRevSubNearest;
+	typedef TMaskRevSub<LinearSampler> TMaskRevSubLinear;
+#endif
 };
+
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::CopyNearestSimple> Vlinec4NearestSimpleRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::CopyNearest> Vlinec4NearestRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::CopyLinearSimple> Vlinec4LinearSimpleRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::CopyLinear> Vlinec4LinearRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::MaskNearestSimple> Mvlinec4NearestSimpleRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::MaskNearest> Mvlinec4NearestRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::MaskLinearSimple> Mvlinec4LinearSimpleRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::MaskLinear> Mvlinec4LinearRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskAddNearestSimple> Tmvline4AddNearestSimpleRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskAddNearest> Tmvline4AddNearestRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskAddLinearSimple> Tmvline4AddLinearSimpleRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskAddLinear> Tmvline4AddLinearRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskAddNearestSimple> Tmvline4AddClampNearestSimpleRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskAddNearest> Tmvline4AddClampNearestRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskAddLinearSimple> Tmvline4AddClampLinearSimpleRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskAddLinear> Tmvline4AddClampLinearRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskSubNearestSimple> Tmvline4SubClampNearestSimpleRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskSubNearest> Tmvline4SubClampNearestRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskSubLinearSimple> Tmvline4SubClampLinearSimpleRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskSubLinear> Tmvline4SubClampLinearRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskRevSubNearestSimple> Tmvline4RevSubClampNearestSimpleRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskRevSubNearest> Tmvline4RevSubClampNearestRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskRevSubLinearSimple> Tmvline4RevSubClampLinearSimpleRGBACommand;
+typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskRevSubLinear> Tmvline4RevSubClampLinearRGBACommand;
 
 class Vlinec1RGBACommand : public DrawerWall1Command
 {
@@ -1576,39 +2019,6 @@ public:
 			{
 				uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, _source2, loop.texturefracx, loop.frac, loop.half, loop.height), _light, _shade_constants);
 				*loop.dest = BlendBgra::copy(fg);
-			} while (loop.next());
-		}
-	}
-};
-
-class Vlinec4RGBACommand : public DrawerWall4Command
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-
-		if (_bufplce2[0] == nullptr)
-		{
-			do
-			{
-				for (int i = 0; i < 4; i++)
-				{
-					uint32_t fg = LightBgra::shade_bgra(_bufplce[i][loop.sample_index(i)], _light[i], _shade_constants);
-					loop.dest[i] = BlendBgra::copy(fg);
-				}
-			} while (loop.next());
-		}
-		else
-		{
-			do
-			{
-				for (int i = 0; i < 4; i++)
-				{
-					uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_bufplce[i], _bufplce2[i], _buftexturefracx[i], loop.sample_index(i), loop.half[i], loop.height[i]), _light[i], _shade_constants);
-					loop.dest[i] = BlendBgra::copy(fg);
-				}
 			} while (loop.next());
 		}
 	}
@@ -1641,39 +2051,6 @@ public:
 	}
 };
 
-class Mvlinec4RGBACommand : public DrawerWall4Command
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-
-		if (_bufplce2[0] == nullptr)
-		{
-			do
-			{
-				for (int i = 0; i < 4; i++)
-				{
-					uint32_t fg = LightBgra::shade_bgra(_bufplce[i][loop.sample_index(i)], _light[i], _shade_constants);
-					loop.dest[i] = BlendBgra::alpha_blend(fg, loop.dest[i]);
-				}
-			} while (loop.next());
-		}
-		else
-		{
-			do
-			{
-				for (int i = 0; i < 4; i++)
-				{
-					uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_bufplce[i], _bufplce2[i], _buftexturefracx[i], loop.sample_index(i), loop.half[i], loop.height[i]), _light[i], _shade_constants);
-					loop.dest[i] = BlendBgra::alpha_blend(fg, loop.dest[i]);
-				}
-			} while (loop.next());
-		}
-	}
-};
-
 class Tmvline1AddRGBACommand : public DrawerWall1Command
 {
 public:
@@ -1685,24 +2062,6 @@ public:
 		{
 			uint32_t fg = LightBgra::shade_bgra(_source[loop.sample_index()], _light, _shade_constants);
 			*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
-		} while (loop.next());
-	}
-};
-
-class Tmvline4AddRGBACommand : public DrawerWall4Command
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				uint32_t fg = LightBgra::shade_bgra(_bufplce[i][loop.sample_index(i)], _light[i], _shade_constants);
-				loop.dest[i] = BlendBgra::add(fg, loop.dest[i], _srcalpha, calc_blend_bgalpha(fg, _destalpha));
-			}
 		} while (loop.next());
 	}
 };
@@ -1722,24 +2081,6 @@ public:
 	}
 };
 
-class Tmvline4AddClampRGBACommand : public DrawerWall4Command
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				uint32_t fg = LightBgra::shade_bgra(_bufplce[i][loop.sample_index(i)], _light[i], _shade_constants);
-				loop.dest[i] = BlendBgra::add(fg, loop.dest[i], _srcalpha, calc_blend_bgalpha(fg, _destalpha));
-			}
-		} while (loop.next());
-	}
-};
-
 class Tmvline1SubClampRGBACommand : public DrawerWall1Command
 {
 public:
@@ -1755,24 +2096,6 @@ public:
 	}
 };
 
-class Tmvline4SubClampRGBACommand : public DrawerWall4Command
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				uint32_t fg = LightBgra::shade_bgra(_bufplce[i][loop.sample_index(i)], _light[i], _shade_constants);
-				loop.dest[i] = BlendBgra::sub(fg, loop.dest[i], _srcalpha, calc_blend_bgalpha(fg, _destalpha));
-			}
-		} while (loop.next());
-	}
-};
-
 class Tmvline1RevSubClampRGBACommand : public DrawerWall1Command
 {
 public:
@@ -1784,24 +2107,6 @@ public:
 		{
 			uint32_t fg = LightBgra::shade_bgra(_source[loop.sample_index()], _light, _shade_constants);
 			*loop.dest = BlendBgra::revsub(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
-		} while (loop.next());
-	}
-};
-
-class Tmvline4RevSubClampRGBACommand : public DrawerWall4Command
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				uint32_t fg = LightBgra::shade_bgra(_bufplce[i][loop.sample_index(i)], _light[i], _shade_constants);
-				loop.dest[i] = BlendBgra::revsub(fg, loop.dest[i], _srcalpha, calc_blend_bgalpha(fg, _destalpha));
-			}
 		} while (loop.next());
 	}
 };
@@ -2355,13 +2660,22 @@ DWORD vlinec1_rgba()
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
+template<typename NearestSimple, typename Nearest, typename LinearSimple, typename Linear>
+void queue_wallcommand()
+{
+	if (bufplce2[0] == nullptr && dc_shade_constants.simple_shade)
+		DrawerCommandQueue::QueueCommand<NearestSimple>();
+	else if (bufplce2[0] == nullptr)
+		DrawerCommandQueue::QueueCommand<Nearest>();
+	else if (dc_shade_constants.simple_shade)
+		DrawerCommandQueue::QueueCommand<LinearSimple>();
+	else
+		DrawerCommandQueue::QueueCommand<Linear>();
+}
+
 void vlinec4_rgba()
 {
-#ifdef NO_SSE
-	DrawerCommandQueue::QueueCommand<Vlinec4RGBACommand>();
-#else
-	DrawerCommandQueue::QueueCommand<Vlinec4RGBA_SSE_Command>();
-#endif
+	queue_wallcommand<Vlinec4NearestSimpleRGBACommand, Vlinec4NearestRGBACommand, Vlinec4LinearSimpleRGBACommand, Vlinec4LinearRGBACommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
@@ -2374,11 +2688,7 @@ DWORD mvlinec1_rgba()
 
 void mvlinec4_rgba()
 {
-#ifdef NO_SSE
-	DrawerCommandQueue::QueueCommand<Mvlinec4RGBACommand>();
-#else
-	DrawerCommandQueue::QueueCommand<Mvlinec4RGBA_SSE_Command>();
-#endif
+	queue_wallcommand<Mvlinec4NearestSimpleRGBACommand, Mvlinec4NearestRGBACommand, Mvlinec4LinearSimpleRGBACommand, Mvlinec4LinearRGBACommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
@@ -2391,11 +2701,7 @@ fixed_t tmvline1_add_rgba()
 
 void tmvline4_add_rgba()
 {
-#ifdef NO_SSE
-	DrawerCommandQueue::QueueCommand<Tmvline4AddRGBACommand>();
-#else
-	DrawerCommandQueue::QueueCommand<Tmvline4AddRGBA_SSE_Command>();
-#endif
+	queue_wallcommand<Tmvline4AddNearestSimpleRGBACommand, Tmvline4AddNearestRGBACommand, Tmvline4AddLinearSimpleRGBACommand, Tmvline4AddLinearRGBACommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
@@ -2408,11 +2714,7 @@ fixed_t tmvline1_addclamp_rgba()
 
 void tmvline4_addclamp_rgba()
 {
-#ifdef NO_SSE
-	DrawerCommandQueue::QueueCommand<Tmvline4AddClampRGBACommand>();
-#else
-	DrawerCommandQueue::QueueCommand<Tmvline4AddClampRGBA_SSE_Command>();
-#endif
+	queue_wallcommand<Tmvline4AddClampNearestSimpleRGBACommand, Tmvline4AddClampNearestRGBACommand, Tmvline4AddClampLinearSimpleRGBACommand, Tmvline4AddClampLinearRGBACommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
@@ -2425,11 +2727,7 @@ fixed_t tmvline1_subclamp_rgba()
 
 void tmvline4_subclamp_rgba()
 {
-#ifdef NO_SSE
-	DrawerCommandQueue::QueueCommand<Tmvline4SubClampRGBACommand>();
-#else
-	DrawerCommandQueue::QueueCommand<Tmvline4SubClampRGBA_SSE_Command>();
-#endif
+	queue_wallcommand<Tmvline4SubClampNearestSimpleRGBACommand, Tmvline4SubClampNearestRGBACommand, Tmvline4SubClampLinearSimpleRGBACommand, Tmvline4SubClampLinearRGBACommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
@@ -2442,11 +2740,7 @@ fixed_t tmvline1_revsubclamp_rgba()
 
 void tmvline4_revsubclamp_rgba()
 {
-#ifdef NO_SSE
-	DrawerCommandQueue::QueueCommand<Tmvline4RevSubClampRGBACommand>();
-#else
-	DrawerCommandQueue::QueueCommand<Tmvline4RevSubClampRGBA_SSE_Command>();
-#endif
+	queue_wallcommand<Tmvline4RevSubClampNearestSimpleRGBACommand, Tmvline4RevSubClampNearestRGBACommand, Tmvline4RevSubClampLinearSimpleRGBACommand, Tmvline4RevSubClampLinearRGBACommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }

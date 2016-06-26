@@ -826,7 +826,10 @@ public:
 		// Handle the case where we would go out of bounds at the top:
 		if (yl < fuzzstep)
 		{
-			uint32_t bg = dest[fuzzoffset[fuzz] * fuzzstep + pitch];
+			uint32_t *srcdest = dest + fuzzoffset[fuzz] * fuzzstep + pitch;
+			//assert(static_cast<int>((srcdest - (uint32_t*)dc_destorg) / (_pitch)) < viewheight);
+
+			uint32_t bg = *srcdest;
 
 			uint32_t red = RPART(bg) * 3 / 4;
 			uint32_t green = GPART(bg) * 3 / 4;
@@ -842,7 +845,7 @@ public:
 				return;
 		}
 
-		bool lowerbounds = (yl + count * fuzzstep > _fuzzviewheight);
+		bool lowerbounds = (yl + (count + fuzzstep - 1) * fuzzstep > _fuzzviewheight);
 		if (lowerbounds)
 			count--;
 
@@ -858,7 +861,10 @@ public:
 			count -= cnt;
 			do
 			{
-				uint32_t bg = dest[fuzzoffset[fuzz] * fuzzstep];
+				uint32_t *srcdest = dest + fuzzoffset[fuzz] * fuzzstep;
+				//assert(static_cast<int>((srcdest - (uint32_t*)dc_destorg) / (_pitch)) < viewheight);
+
+				uint32_t bg = *srcdest;
 
 				uint32_t red = RPART(bg) * 3 / 4;
 				uint32_t green = GPART(bg) * 3 / 4;
@@ -875,7 +881,10 @@ public:
 		// Handle the case where we would go out of bounds at the bottom
 		if (lowerbounds)
 		{
-			uint32_t bg = dest[fuzzoffset[fuzz] * fuzzstep - pitch];
+			uint32_t *srcdest = dest + fuzzoffset[fuzz] * fuzzstep - pitch;
+			//assert(static_cast<int>((srcdest - (uint32_t*)dc_destorg) / (_pitch)) < viewheight);
+
+			uint32_t bg = *srcdest;
 
 			uint32_t red = RPART(bg) * 3 / 4;
 			uint32_t green = GPART(bg) * 3 / 4;

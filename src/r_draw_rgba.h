@@ -222,6 +222,7 @@ class DrawerCommandQueue
 
 	static DrawerCommandQueue *Instance();
 
+	DrawerCommandQueue();
 	~DrawerCommandQueue();
 
 public:
@@ -538,10 +539,74 @@ public:
 
 		return (alpha << 24) | (red << 16) | (green << 8) | blue;
 	}
+
+#ifndef NO_SSE
+	static __m128i samplertable[256 * 2];
+#endif
 };
 
 /////////////////////////////////////////////////////////////////////////////
 // SSE/AVX shading macros:
+
+#define AVX2_SAMPLE_BILINEAR4_COLUMN_INIT(col0, col1, half, height, texturefracx) \
+	const uint32_t *baseptr = col0[0]; \
+	__m128i coloffsets0 = _mm_setr_epi32(col0[0] - baseptr, col0[1] - baseptr, col0[2] - baseptr, col0[3] - baseptr); \
+	__m128i coloffsets1 = _mm_setr_epi32(col1[0] - baseptr, col1[1] - baseptr, col1[2] - baseptr, col1[3] - baseptr); \
+	__m128i mhalf = _mm_loadu_si128((const __m128i*)half); \
+	__m128i m127 = _mm_set1_epi16(127); \
+	__m128i m16 = _mm_set1_epi32(16); \
+	__m128i m15 = _mm_set1_epi32(15); \
+	__m128i mheight = _mm_loadu_si128((const __m128i*)height); \
+	__m128i mtexturefracx = _mm_loadu_si128((const __m128i*)texturefracx);
+
+#define AVX2_SAMPLE_BILINEAR4_COLUMN(fg, texturefracy) { \
+	__m128i mtexturefracy = _mm_loadu_si128((const __m128i*)texturefracy); \
+	__m128i multmp0 = _mm_srli_epi32(_mm_sub_epi32(mtexturefracy, mhalf), FRACBITS); \
+	__m128i multmp1 = _mm_srli_epi32(_mm_add_epi32(mtexturefracy, mhalf), FRACBITS); \
+	__m128i frac_y0 = _mm_or_si128(_mm_mul_epu32(multmp0, mheight), _mm_slli_si128(_mm_mul_epu32(_mm_srli_si128(multmp0, 4), _mm_srli_si128(mheight, 4)), 4)); \
+	__m128i frac_y1 = _mm_or_si128(_mm_mul_epu32(multmp1, mheight), _mm_slli_si128(_mm_mul_epu32(_mm_srli_si128(multmp1, 4), _mm_srli_si128(mheight, 4)), 4)); \
+	__m128i y0 = _mm_srli_epi32(frac_y0, FRACBITS); \
+	__m128i y1 = _mm_srli_epi32(frac_y1, FRACBITS); \
+	__m128i inv_b = mtexturefracx; \
+	__m128i inv_a = _mm_and_si128(_mm_srli_epi32(frac_y1, FRACBITS - 4), m15); \
+	__m128i a = _mm_sub_epi32(m16, inv_a); \
+	__m128i b = _mm_sub_epi32(m16, inv_b); \
+	__m128i ab = _mm_mullo_epi16(a, b); \
+	__m128i invab = _mm_mullo_epi16(inv_a, b); \
+	__m128i ainvb = _mm_mullo_epi16(a, inv_b); \
+	__m128i invainvb = _mm_mullo_epi16(inv_a, inv_b); \
+	__m128i ab_lo = _mm_shuffle_epi32(ab, _MM_SHUFFLE(1, 1, 0, 0)); \
+	__m128i ab_hi = _mm_shuffle_epi32(ab, _MM_SHUFFLE(3, 3, 2, 2)); \
+	__m128i invab_lo = _mm_shuffle_epi32(invab, _MM_SHUFFLE(1, 1, 0, 0)); \
+	__m128i invab_hi = _mm_shuffle_epi32(invab, _MM_SHUFFLE(3, 3, 2, 2)); \
+	__m128i ainvb_lo = _mm_shuffle_epi32(ainvb, _MM_SHUFFLE(1, 1, 0, 0)); \
+	__m128i ainvb_hi = _mm_shuffle_epi32(ainvb, _MM_SHUFFLE(3, 3, 2, 2)); \
+	__m128i invainvb_lo = _mm_shuffle_epi32(invainvb, _MM_SHUFFLE(1, 1, 0, 0)); \
+	__m128i invainvb_hi = _mm_shuffle_epi32(invainvb, _MM_SHUFFLE(3, 3, 2, 2)); \
+	ab_lo = _mm_or_si128(ab_lo, _mm_slli_epi32(ab_lo, 16)); \
+	ab_hi = _mm_or_si128(ab_hi, _mm_slli_epi32(ab_hi, 16)); \
+	invab_lo = _mm_or_si128(invab_lo, _mm_slli_epi32(invab_lo, 16)); \
+	invab_hi = _mm_or_si128(invab_hi, _mm_slli_epi32(invab_hi, 16)); \
+	ainvb_lo = _mm_or_si128(ainvb_lo, _mm_slli_epi32(ainvb_lo, 16)); \
+	ainvb_hi = _mm_or_si128(ainvb_hi, _mm_slli_epi32(ainvb_hi, 16)); \
+	invainvb_lo = _mm_or_si128(invainvb_lo, _mm_slli_epi32(invainvb_lo, 16)); \
+	invainvb_hi = _mm_or_si128(invainvb_hi, _mm_slli_epi32(invainvb_hi, 16)); \
+	__m128i p00 = _mm_i32gather_epi32((const int *)baseptr, _mm_add_epi32(y0, coloffsets0), 4); \
+	__m128i p01 = _mm_i32gather_epi32((const int *)baseptr, _mm_add_epi32(y1, coloffsets0), 4); \
+	__m128i p10 = _mm_i32gather_epi32((const int *)baseptr, _mm_add_epi32(y0, coloffsets1), 4); \
+	__m128i p11 = _mm_i32gather_epi32((const int *)baseptr, _mm_add_epi32(y1, coloffsets1), 4); \
+	__m128i p00_lo = _mm_mullo_epi16(_mm_unpacklo_epi8(p00, _mm_setzero_si128()), ab_lo); \
+	__m128i p01_lo = _mm_mullo_epi16(_mm_unpacklo_epi8(p01, _mm_setzero_si128()), invab_lo); \
+	__m128i p10_lo = _mm_mullo_epi16(_mm_unpacklo_epi8(p10, _mm_setzero_si128()), ainvb_lo); \
+	__m128i p11_lo = _mm_mullo_epi16(_mm_unpacklo_epi8(p11, _mm_setzero_si128()), invainvb_lo); \
+	__m128i p00_hi = _mm_mullo_epi16(_mm_unpackhi_epi8(p00, _mm_setzero_si128()), ab_hi); \
+	__m128i p01_hi = _mm_mullo_epi16(_mm_unpackhi_epi8(p01, _mm_setzero_si128()), invab_hi); \
+	__m128i p10_hi = _mm_mullo_epi16(_mm_unpackhi_epi8(p10, _mm_setzero_si128()), ainvb_hi); \
+	__m128i p11_hi = _mm_mullo_epi16(_mm_unpackhi_epi8(p11, _mm_setzero_si128()), invainvb_hi); \
+	__m128i fg_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_adds_epu16(_mm_adds_epu16(p00_lo, p01_lo), _mm_adds_epu16(p10_lo, p11_lo)), m127), 8); \
+	__m128i fg_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_adds_epu16(_mm_adds_epu16(p00_hi, p01_hi), _mm_adds_epu16(p10_hi, p11_hi)), m127), 8); \
+	fg = _mm_packus_epi16(fg_lo, fg_hi); \
+}
 
 #define VEC_SAMPLE_BILINEAR4_COLUMN(fg, col0, col1, texturefracx, texturefracy, half, height) { \
 	__m128i m127 = _mm_set1_epi16(127); \
@@ -550,23 +615,18 @@ public:
 	{ \
 		uint32_t frac_y0 = ((texturefracy[i] - half[i]) >> FRACBITS) * height[i]; \
 		uint32_t frac_y1 = ((texturefracy[i] + half[i]) >> FRACBITS) * height[i]; \
-		uint32_t y0 = frac_y0 >> FRACBITS; \
-		uint32_t y1 = frac_y1 >> FRACBITS; \
+		uint32_t y0 = (frac_y0 >> FRACBITS); \
+		uint32_t y1 = (frac_y1 >> FRACBITS); \
 		 \
 		uint32_t inv_b = texturefracx[i]; \
 		uint32_t inv_a = (frac_y1 >> (FRACBITS - 4)) & 15; \
-		uint32_t a = 16 - inv_a; \
-		uint32_t b = 16 - inv_b; \
 		 \
-		uint32_t ab = a * b; \
-		uint32_t invab = inv_a * b; \
-		uint32_t ainvb = a * inv_b; \
-		uint32_t invainvb = inv_a * inv_b; \
-		__m128i ab_invab = _mm_set_epi16(invab, invab, invab, invab, ab, ab, ab, ab); \
-		__m128i ainvb_invainvb = _mm_set_epi16(invainvb, invainvb, invainvb, invainvb, ainvb, ainvb, ainvb, ainvb); \
+		__m128i ab_invab = _mm_load_si128(SampleBgra::samplertable + inv_b * 32 + inv_a * 2); \
+		__m128i ainvb_invainvb = _mm_load_si128(SampleBgra::samplertable + inv_b * 32 + inv_a * 2 + 1); \
 		 \
-		__m128i p0 = _mm_unpacklo_epi8(_mm_set_epi32(0, 0, col0[i][y1], col0[i][y0]), _mm_setzero_si128()); \
-		__m128i p1 = _mm_unpacklo_epi8(_mm_set_epi32(0, 0, col1[i][y1], col1[i][y0]), _mm_setzero_si128()); \
+		__m128i gather = _mm_set_epi32(col1[i][y1], col1[i][y0], col0[i][y1], col1[i][y0]); \
+		__m128i p0 = _mm_unpacklo_epi8(gather, _mm_setzero_si128()); \
+		__m128i p1 = _mm_unpackhi_epi8(gather, _mm_setzero_si128()); \
 		 \
 		__m128i tmp = _mm_adds_epu16(_mm_mullo_epi16(p0, ab_invab), _mm_mullo_epi16(p1, ainvb_invainvb)); \
 		__m128i color = _mm_srli_epi16(_mm_adds_epu16(_mm_adds_epu16(_mm_srli_si128(tmp, 8), tmp), m127), 8); \
@@ -597,15 +657,9 @@ public:
 		 \
 		uint32_t inv_b = ((xfrac + xhalf) >> (xbits - 4)) & 15; \
 		uint32_t inv_a = ((yfrac + yhalf) >> (ybits - 4)) & 15; \
-		uint32_t a = 16 - inv_a; \
-		uint32_t b = 16 - inv_b; \
 		 \
-		uint32_t ab = a * b; \
-		uint32_t invab = inv_a * b; \
-		uint32_t ainvb = a * inv_b; \
-		uint32_t invainvb = inv_a * inv_b; \
-		__m128i ab_invab = _mm_set_epi16(invab, invab, invab, invab, ab, ab, ab, ab); \
-		__m128i ainvb_invainvb = _mm_set_epi16(invainvb, invainvb, invainvb, invainvb, ainvb, ainvb, ainvb, ainvb); \
+		__m128i ab_invab = _mm_load_si128(SampleBgra::samplertable + inv_b * 32 + inv_a * 2); \
+		__m128i ainvb_invainvb = _mm_load_si128(SampleBgra::samplertable + inv_b * 32 + inv_a * 2 + 1); \
 		 \
 		__m128i p0 = _mm_unpacklo_epi8(_mm_set_epi32(0, 0, p01, p00), _mm_setzero_si128()); \
 		__m128i p1 = _mm_unpacklo_epi8(_mm_set_epi32(0, 0, p11, p10), _mm_setzero_si128()); \

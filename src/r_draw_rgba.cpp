@@ -98,10 +98,35 @@ CVAR(Bool, r_mipmap, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 /////////////////////////////////////////////////////////////////////////////
 
+__m128i SampleBgra::samplertable[256 * 2];
+
 DrawerCommandQueue *DrawerCommandQueue::Instance()
 {
 	static DrawerCommandQueue queue;
 	return &queue;
+}
+
+DrawerCommandQueue::DrawerCommandQueue()
+{
+	for (int inv_b = 0; inv_b < 16; inv_b++)
+	{
+		for (int inv_a = 0; inv_a < 16; inv_a++)
+		{
+			int a = 16 - inv_a;
+			int b = 16 - inv_b;
+
+			int ab = a * b;
+			int invab = inv_a * b;
+			int ainvb = a * inv_b;
+			int invainvb = inv_a * inv_b;
+
+			__m128i ab_invab = _mm_set_epi16(invab, invab, invab, invab, ab, ab, ab, ab);
+			__m128i ainvb_invainvb = _mm_set_epi16(invainvb, invainvb, invainvb, invainvb, ainvb, ainvb, ainvb, ainvb);
+
+			_mm_store_si128(SampleBgra::samplertable + inv_b * 32 + inv_a * 2, ab_invab);
+			_mm_store_si128(SampleBgra::samplertable + inv_b * 32 + inv_a * 2 + 1, ainvb_invainvb);
+		}
+	}
 }
 
 DrawerCommandQueue::~DrawerCommandQueue()

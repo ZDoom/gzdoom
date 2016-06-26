@@ -673,7 +673,7 @@ void GLFlat::DrawLightsCompat(int pass)
 
 			while (node)
 			{
-				DrawSubsectorLights(sub, pass);
+				DrawSubsectorLights(node->sub, pass);
 				node = node->next;
 			}
 		}

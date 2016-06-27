@@ -1573,7 +1573,7 @@ void FParser::SF_FloorHeight(void)
 					sectors[i].floorplane.PointToDist (sectors[i].centerspot, dest),
 					crush? 10:-1, 
 					(dest > sectors[i].CenterFloor()) ? 1 : -1,
-					false) != EMoveResult::crushed)
+					false) == EMoveResult::crushed)
 				{
 					returnval = 0;
 				}
@@ -1662,7 +1662,7 @@ void FParser::SF_CeilingHeight(void)
 					sectors[i].ceilingplane.PointToDist (sectors[i].centerspot, dest), 
 					crush? 10:-1,
 					(dest > sectors[i].CenterCeiling()) ? 1 : -1,
-					false) != EMoveResult::crushed)
+					false) == EMoveResult::crushed)
 				{
 					returnval = 0;
 				}

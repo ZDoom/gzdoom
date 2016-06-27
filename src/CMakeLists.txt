@@ -1190,7 +1190,6 @@ set (PCH_SOURCES
 	textures/texturemanager.cpp
 	textures/tgatexture.cpp
 	textures/warptexture.cpp
-	textures/bicubic_interpolation.cpp
 	thingdef/olddecorations.cpp
 	thingdef/thingdef.cpp
 	thingdef/thingdef_codeptr.cpp

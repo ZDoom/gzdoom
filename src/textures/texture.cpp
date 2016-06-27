@@ -45,7 +45,6 @@
 #include "v_video.h"
 #include "m_fixed.h"
 #include "textures/textures.h"
-#include "textures/bicubic_interpolation.h"
 #include "v_palette.h"
 
 typedef bool (*CheckFunc)(FileReader & file);
@@ -383,19 +382,122 @@ int FTexture::MipmapLevels() const
 
 void FTexture::GenerateBgraMipmaps()
 {
-	BicubicInterpolation bicubic;
-
-	uint32_t *src = PixelsBgra.data();
-	uint32_t *dest = src + Width * Height;
-	int levels = MipmapLevels();
-	for (int i = 1; i < levels; i++)
+	struct Color4f
 	{
-		int w = MAX(Width >> i, 1);
-		int h = MAX(Height >> i, 1);
+		float a, r, g, b;
+		Color4f operator*(const Color4f &v) const { return Color4f{ a * v.a, r * v.r, g * v.g, b * v.b }; }
+		Color4f operator/(const Color4f &v) const { return Color4f{ a / v.a, r / v.r, g / v.g, b / v.b }; }
+		Color4f operator+(const Color4f &v) const { return Color4f{ a + v.a, r + v.r, g + v.g, b + v.b }; }
+		Color4f operator-(const Color4f &v) const { return Color4f{ a - v.a, r - v.r, g - v.g, b - v.b }; }
+		Color4f operator*(float s) const { return Color4f{ a * s, r * s, g * s, b * s }; }
+		Color4f operator/(float s) const { return Color4f{ a / s, r / s, g / s, b / s }; }
+		Color4f operator+(float s) const { return Color4f{ a + s, r + s, g + s, b + s }; }
+		Color4f operator-(float s) const { return Color4f{ a - s, r - s, g - s, b - s }; }
+	};
 
-		bicubic.ScaleImage(dest, h, w, src, Height, Width);
+	int levels = MipmapLevels();
+	std::vector<Color4f> image(PixelsBgra.size());
 
-		dest += w * h;
+	// Convert to normalized linear colorspace
+	{
+		for (int x = 0; x < Width; x++)
+		{
+			for (int y = 0; y < Height; y++)
+			{
+				uint32_t c8 = PixelsBgra[x * Height + y];
+				Color4f c;
+				c.a = std::pow(APART(c8) * (1.0f / 255.0f), 2.2f);
+				c.r = std::pow(RPART(c8) * (1.0f / 255.0f), 2.2f);
+				c.g = std::pow(GPART(c8) * (1.0f / 255.0f), 2.2f);
+				c.b = std::pow(BPART(c8) * (1.0f / 255.0f), 2.2f);
+				image[x * Height + y] = c;
+			}
+		}
+	}
+
+	// Generate mipmaps
+	{
+		std::vector<Color4f> smoothed(Width * Height);
+		Color4f *src = image.data();
+		Color4f *dest = src + Width * Height;
+		for (int i = 1; i < levels; i++)
+		{
+			int srcw = MAX(Width >> (i - 1), 1);
+			int srch = MAX(Height >> (i - 1), 1);
+			int w = MAX(Width >> i, 1);
+			int h = MAX(Height >> i, 1);
+
+			// Downscale
+			for (int x = 0; x < w; x++)
+			{
+				int sx0 = x * 2;
+				int sx1 = MIN((x + 1) * 2, srcw - 1);
+				for (int y = 0; y < h; y++)
+				{
+					int sy0 = y * 2;
+					int sy1 = MIN((y + 1) * 2, srch - 1);
+
+					Color4f src00 = src[sy0 + sx0 * srch];
+					Color4f src01 = src[sy1 + sx0 * srch];
+					Color4f src10 = src[sy0 + sx1 * srch];
+					Color4f src11 = src[sy1 + sx1 * srch];
+					Color4f c = (src00 + src01 + src10 + src11) * 0.25f;
+
+					dest[y + x * h] = src00;
+				}
+			}
+
+			// Sharpen filter with a 3x3 kernel:
+			for (int x = 0; x < w; x++)
+			{
+				for (int y = 0; y < h; y++)
+				{
+					Color4f c = { 0.0f, 0.0f, 0.0f, 0.0f };
+					for (int kx = -1; kx < 2; kx++)
+					{
+						for (int ky = -1; ky < 2; ky++)
+						{
+							int a = y + ky;
+							int b = x + kx;
+							if (a < 0) a = h - 1;
+							if (a == h) a = 0;
+							if (b < 0) b = w - 1;
+							if (b == h) b = 0;
+							c = c + dest[a + b * h];
+						}
+					}
+					c = c * (1.0f / 9.0f);
+					smoothed[y + x * h] = c;
+				}
+			}
+			float k = 0.04f;
+			for (int j = 0; j < w * h; j++)
+				dest[j] = dest[j] + (dest[j] - smoothed[j]) * k;
+
+			src = dest;
+			dest += w * h;
+		}
+	}
+
+	// Convert to bgra8 sRGB colorspace
+	{
+		Color4f *src = image.data() + Width * Height;
+		uint32_t *dest = PixelsBgra.data() + Width * Height;
+		for (int i = 1; i < levels; i++)
+		{
+			int w = MAX(Width >> i, 1);
+			int h = MAX(Height >> i, 1);
+			for (int j = 0; j < w * h; j++)
+			{
+				uint32_t a = (uint32_t)clamp(std::pow(src[j].a, 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t r = (uint32_t)clamp(std::pow(src[j].r, 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t g = (uint32_t)clamp(std::pow(src[j].g, 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t b = (uint32_t)clamp(std::pow(src[j].b, 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				dest[j] = (a << 24) | (r << 16) | (g << 8) | b;
+			}
+			src += w * h;
+			dest += w * h;
+		}
 	}
 }
 

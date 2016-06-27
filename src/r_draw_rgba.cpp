@@ -103,7 +103,9 @@ CVAR(Bool, r_mipmap, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 /////////////////////////////////////////////////////////////////////////////
 
+#ifndef NO_SSE
 __m128i SampleBgra::samplertable[256 * 2];
+#endif
 
 DrawerCommandQueue *DrawerCommandQueue::Instance()
 {
@@ -113,6 +115,7 @@ DrawerCommandQueue *DrawerCommandQueue::Instance()
 
 DrawerCommandQueue::DrawerCommandQueue()
 {
+#ifndef NO_SSE
 	for (int inv_b = 0; inv_b < 16; inv_b++)
 	{
 		for (int inv_a = 0; inv_a < 16; inv_a++)
@@ -132,6 +135,7 @@ DrawerCommandQueue::DrawerCommandQueue()
 			_mm_store_si128(SampleBgra::samplertable + inv_b * 32 + inv_a * 2 + 1, ainvb_invainvb);
 		}
 	}
+#endif
 }
 
 DrawerCommandQueue::~DrawerCommandQueue()

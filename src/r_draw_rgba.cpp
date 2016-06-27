@@ -1436,7 +1436,7 @@ public:
 		uint32_t frac;
 		uint32_t texturefracx;
 		uint32_t height;
-		uint32_t half;
+		uint32_t one;
 
 		LoopIterator(DrawerWall1Command *command, DrawerThread *thread)
 		{
@@ -1451,7 +1451,7 @@ public:
 			pitch = command->_pitch * thread->num_cores;
 
 			height = command->_textureheight;
-			half = (0x80000000 + height - 1) / height;
+			one = ((0x80000000 + height - 1) / height) * 2 + 1;
 		}
 
 		explicit operator bool()
@@ -1520,7 +1520,7 @@ public:
 		uint32_t vplce[4];
 		uint32_t vince[4];
 		uint32_t height[4];
-		uint32_t half[4];
+		uint32_t one[4];
 
 		LoopIterator(DrawerWall4Command *command, DrawerThread *thread)
 		{
@@ -1537,7 +1537,7 @@ public:
 				vplce[i] = command->_vplce[i] + command->_vince[i] * skipped;
 				vince[i] = command->_vince[i] * thread->num_cores;
 				height[i] = command->_bufheight[i];
-				half[i] = (0x80000000 + height[i] - 1) / height[i];
+				one[i] = ((0x80000000 + height[i] - 1) / height[i]) * 2 + 1;
 			}
 		}
 
@@ -1574,7 +1574,7 @@ public:
 	{
 		FORCEINLINE static uint32_t Sample1(DrawerWall4Command &cmd, LoopIterator &loop, int index)
 		{
-			return SampleBgra::sample_bilinear(cmd._bufplce[index], cmd._bufplce2[index], cmd._buftexturefracx[index], loop.vplce[index], loop.half[index], loop.height[index]);
+			return SampleBgra::sample_bilinear(cmd._bufplce[index], cmd._bufplce2[index], cmd._buftexturefracx[index], loop.vplce[index], loop.one[index], loop.height[index]);
 		}
 	};
 #else
@@ -1591,7 +1591,7 @@ public:
 		FORCEINLINE static __m128i Sample4(DrawerWall4Command &cmd, LoopIterator &loop)
 		{
 			__m128i fg;
-			VEC_SAMPLE_BILINEAR4_COLUMN(fg, cmd._bufplce, cmd._bufplce2, cmd._buftexturefracx, loop.vplce, loop.half, loop.height);
+			VEC_SAMPLE_BILINEAR4_COLUMN(fg, cmd._bufplce, cmd._bufplce2, cmd._buftexturefracx, loop.vplce, loop.one, loop.height);
 			return fg;
 		}
 	};
@@ -2021,7 +2021,7 @@ public:
 		{
 			do
 			{
-				uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, _source2, loop.texturefracx, loop.frac, loop.half, loop.height), _light, _shade_constants);
+				uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, _source2, loop.texturefracx, loop.frac, loop.one, loop.height), _light, _shade_constants);
 				*loop.dest = BlendBgra::copy(fg);
 			} while (loop.next());
 		}
@@ -2048,7 +2048,7 @@ public:
 		{
 			do
 			{
-				uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, _source2, loop.texturefracx, loop.frac, loop.half, loop.height), _light, _shade_constants);
+				uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, _source2, loop.texturefracx, loop.frac, loop.one, loop.height), _light, _shade_constants);
 				*loop.dest = BlendBgra::alpha_blend(fg, *loop.dest);
 			} while (loop.next());
 		}

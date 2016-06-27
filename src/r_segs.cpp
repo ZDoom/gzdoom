@@ -1173,14 +1173,14 @@ WallscanSampler::WallscanSampler(int y1, float swal, double yrepeat, fixed_t xof
 			}
 			else
 			{
-				int tx0 = ((xoffset - FRACUNIT / 2) >> FRACBITS) % mip_width;
+				int tx0 = (xoffset >> FRACBITS) % mip_width;
 				if (tx0 < 0)
 					tx0 += mip_width;
 				int tx1 = (tx0 + 1) % mip_width;
 				source = (BYTE*)(pixels + tx0 * mip_height);
 				source2 = (BYTE*)(pixels + tx1 * mip_height);
 				height = mip_height;
-				texturefracx = ((xoffset + FRACUNIT / 2) >> (FRACBITS - 4)) & 15;
+				texturefracx = (xoffset >> (FRACBITS - 4)) & 15;
 			}
 		}
 	}

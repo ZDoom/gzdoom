@@ -502,10 +502,10 @@ public:
 		return (magnifying && r_magfilter) || (!magnifying && r_minfilter);
 	}
 
-	FORCEINLINE static uint32_t sample_bilinear(const uint32_t *col0, const uint32_t *col1, uint32_t texturefracx, uint32_t texturefracy, uint32_t half, uint32_t height)
+	FORCEINLINE static uint32_t sample_bilinear(const uint32_t *col0, const uint32_t *col1, uint32_t texturefracx, uint32_t texturefracy, uint32_t one, uint32_t height)
 	{
-		uint32_t frac_y0 = ((texturefracy - half) >> FRACBITS) * height;
-		uint32_t frac_y1 = ((texturefracy + half) >> FRACBITS) * height;
+		uint32_t frac_y0 = (texturefracy >> FRACBITS) * height;
+		uint32_t frac_y1 = ((texturefracy + one) >> FRACBITS) * height;
 		uint32_t y0 = frac_y0 >> FRACBITS;
 		uint32_t y1 = frac_y1 >> FRACBITS;
 
@@ -533,18 +533,16 @@ public:
 		int yshift = (32 - ybits);
 		int xmask = (1 << xshift) - 1;
 		int ymask = (1 << yshift) - 1;
-		uint32_t xhalf = 1 << (xbits - 1);
-		uint32_t yhalf = 1 << (ybits - 1);
-		uint32_t x = (xfrac - xhalf) >> xbits;
-		uint32_t y = (yfrac - yhalf) >> ybits;
+		uint32_t x = xfrac >> xbits;
+		uint32_t y = yfrac >> ybits;
 
 		uint32_t p00 = texture[(y & ymask) + ((x & xmask) << yshift)];
 		uint32_t p01 = texture[((y + 1) & ymask) + ((x & xmask) << yshift)];
 		uint32_t p10 = texture[(y & ymask) + (((x + 1) & xmask) << yshift)];
 		uint32_t p11 = texture[((y + 1) & ymask) + (((x + 1) & xmask) << yshift)];
 
-		uint32_t inv_b = ((xfrac + xhalf) >> (xbits - 4)) & 15;
-		uint32_t inv_a = ((yfrac + yhalf) >> (ybits - 4)) & 15;
+		uint32_t inv_b = (xfrac >> (xbits - 4)) & 15;
+		uint32_t inv_a = (yfrac >> (ybits - 4)) & 15;
 		uint32_t a = 16 - inv_a;
 		uint32_t b = 16 - inv_b;
 
@@ -564,11 +562,11 @@ public:
 /////////////////////////////////////////////////////////////////////////////
 // SSE/AVX shading macros:
 
-#define AVX2_SAMPLE_BILINEAR4_COLUMN_INIT(col0, col1, half, height, texturefracx) \
+#define AVX2_SAMPLE_BILINEAR4_COLUMN_INIT(col0, col1, one, height, texturefracx) \
 	const uint32_t *baseptr = col0[0]; \
 	__m128i coloffsets0 = _mm_setr_epi32(col0[0] - baseptr, col0[1] - baseptr, col0[2] - baseptr, col0[3] - baseptr); \
 	__m128i coloffsets1 = _mm_setr_epi32(col1[0] - baseptr, col1[1] - baseptr, col1[2] - baseptr, col1[3] - baseptr); \
-	__m128i mhalf = _mm_loadu_si128((const __m128i*)half); \
+	__m128i mone = _mm_loadu_si128((const __m128i*)one); \
 	__m128i m127 = _mm_set1_epi16(127); \
 	__m128i m16 = _mm_set1_epi32(16); \
 	__m128i m15 = _mm_set1_epi32(15); \
@@ -577,8 +575,8 @@ public:
 
 #define AVX2_SAMPLE_BILINEAR4_COLUMN(fg, texturefracy) { \
 	__m128i mtexturefracy = _mm_loadu_si128((const __m128i*)texturefracy); \
-	__m128i multmp0 = _mm_srli_epi32(_mm_sub_epi32(mtexturefracy, mhalf), FRACBITS); \
-	__m128i multmp1 = _mm_srli_epi32(_mm_add_epi32(mtexturefracy, mhalf), FRACBITS); \
+	__m128i multmp0 = _mm_srli_epi32(mtexturefracy, FRACBITS); \
+	__m128i multmp1 = _mm_srli_epi32(_mm_add_epi32(mtexturefracy, mone), FRACBITS); \
 	__m128i frac_y0 = _mm_or_si128(_mm_mul_epu32(multmp0, mheight), _mm_slli_si128(_mm_mul_epu32(_mm_srli_si128(multmp0, 4), _mm_srli_si128(mheight, 4)), 4)); \
 	__m128i frac_y1 = _mm_or_si128(_mm_mul_epu32(multmp1, mheight), _mm_slli_si128(_mm_mul_epu32(_mm_srli_si128(multmp1, 4), _mm_srli_si128(mheight, 4)), 4)); \
 	__m128i y0 = _mm_srli_epi32(frac_y0, FRACBITS); \
@@ -624,13 +622,13 @@ public:
 	fg = _mm_packus_epi16(fg_lo, fg_hi); \
 }
 
-#define VEC_SAMPLE_BILINEAR4_COLUMN(fg, col0, col1, texturefracx, texturefracy, half, height) { \
+#define VEC_SAMPLE_BILINEAR4_COLUMN(fg, col0, col1, texturefracx, texturefracy, one, height) { \
 	__m128i m127 = _mm_set1_epi16(127); \
 	fg = _mm_setzero_si128(); \
 	for (int i = 0; i < 4; i++) \
 	{ \
-		uint32_t frac_y0 = ((texturefracy[i] - half[i]) >> FRACBITS) * height[i]; \
-		uint32_t frac_y1 = ((texturefracy[i] + half[i]) >> FRACBITS) * height[i]; \
+		uint32_t frac_y0 = (texturefracy[i] >> FRACBITS) * height[i]; \
+		uint32_t frac_y1 = ((texturefracy[i] + one[i]) >> FRACBITS) * height[i]; \
 		uint32_t y0 = (frac_y0 >> FRACBITS); \
 		uint32_t y1 = (frac_y1 >> FRACBITS); \
 		 \
@@ -676,23 +674,21 @@ public:
 	int yshift = (32 - ybits); \
 	int xmask = (1 << xshift) - 1; \
 	int ymask = (1 << yshift) - 1; \
-	uint32_t xhalf = 1 << (xbits - 1); \
-	uint32_t yhalf = 1 << (ybits - 1); \
 	 \
 	__m128i m127 = _mm_set1_epi16(127); \
 	fg = _mm_setzero_si128(); \
 	for (int i = 0; i < 4; i++) \
 	{ \
-		uint32_t x = (xfrac - xhalf) >> xbits; \
-		uint32_t y = (yfrac - yhalf) >> ybits; \
+		uint32_t x = xfrac >> xbits; \
+		uint32_t y = yfrac >> ybits; \
 		 \
 		uint32_t p00 = texture[(y & ymask) + ((x & xmask) << yshift)]; \
 		uint32_t p01 = texture[((y + 1) & ymask) + ((x & xmask) << yshift)]; \
 		uint32_t p10 = texture[(y & ymask) + (((x + 1) & xmask) << yshift)]; \
 		uint32_t p11 = texture[((y + 1) & ymask) + (((x + 1) & xmask) << yshift)]; \
 		 \
-		uint32_t inv_b = ((xfrac + xhalf) >> (xbits - 4)) & 15; \
-		uint32_t inv_a = ((yfrac + yhalf) >> (ybits - 4)) & 15; \
+		uint32_t inv_b = (xfrac >> (xbits - 4)) & 15; \
+		uint32_t inv_a = (yfrac >> (ybits - 4)) & 15; \
 		 \
 		__m128i ab_invab = _mm_load_si128(SampleBgra::samplertable + inv_b * 32 + inv_a * 2); \
 		__m128i ainvb_invainvb = _mm_load_si128(SampleBgra::samplertable + inv_b * 32 + inv_a * 2 + 1); \

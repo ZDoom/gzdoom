@@ -48,6 +48,7 @@ ACTOR Actor native //: Thinker
 	native int GetGibHealth();
 	native float GetCrouchFactor(int ptr = AAPTR_PLAYER1);
 	native float GetCVar(string cvar);
+	native int GetPlayerInput(int inputnum, int ptr = AAPTR_DEFAULT);
 
 	// Action functions
 	// Meh, MBF redundant functions. Only for DeHackEd support.
@@ -329,12 +330,13 @@ ACTOR Actor native //: Thinker
 	native state A_CheckSightOrRange(float distance, state label, bool two_dimension = false);
 	native state A_CheckRange(float distance, state label, bool two_dimension = false);
 	action native bool A_FaceMovementDirection(float offset = 0, float anglelimit = 0, float pitchlimit = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	action native int A_ClearOverlays(int sstart = 0, int sstop = 0, bool safety = true);
 
 	native void A_RearrangePointers(int newtarget, int newmaster = AAPTR_DEFAULT, int newtracer = AAPTR_DEFAULT, int flags=0);
 	native void A_TransferPointer(int ptr_source, int ptr_recepient, int sourcefield, int recepientfield=AAPTR_DEFAULT, int flags=0);
 	action native A_CopyFriendliness(int ptr_source = AAPTR_MASTER);
 
-	action native A_Overlay(int layer, state start = "");
+	action native bool A_Overlay(int layer, state start = "", bool nooverride = false);
 	action native A_WeaponOffset(float wx = 0, float wy = 32, int flags = 0);
 	action native A_OverlayOffset(int layer = PSP_WEAPON, float wx = 0, float wy = 32, int flags = 0);
 	action native A_OverlayFlags(int layer, int flags, bool set);

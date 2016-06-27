@@ -159,9 +159,35 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser);
 bool P_Thing_CanRaise(AActor *thing);
 PClassActor *P_GetSpawnableType(int spawnnum);
 void InitSpawnablesFromMapinfo();
+int P_Thing_CheckInputNum(player_t *p, int inputnum);
 int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, double zofs, DAngle angle, int flags, double heightoffset, double radiusoffset, DAngle pitch);
 bool P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, int count, int flags, int ptr);
 
+enum
+{
+	// These are the original inputs sent by the player.
+	INPUT_OLDBUTTONS,
+	INPUT_BUTTONS,
+	INPUT_PITCH,
+	INPUT_YAW,
+	INPUT_ROLL,
+	INPUT_FORWARDMOVE,
+	INPUT_SIDEMOVE,
+	INPUT_UPMOVE,
+
+	// These are the inputs, as modified by P_PlayerThink().
+	// Most of the time, these will match the original inputs, but
+	// they can be different if a player is frozen or using a
+	// chainsaw.
+	MODINPUT_OLDBUTTONS,
+	MODINPUT_BUTTONS,
+	MODINPUT_PITCH,
+	MODINPUT_YAW,
+	MODINPUT_ROLL,
+	MODINPUT_FORWARDMOVE,
+	MODINPUT_SIDEMOVE,
+	MODINPUT_UPMOVE
+};
 enum CPXF
 {
 	CPXF_ANCESTOR = 1 << 0,

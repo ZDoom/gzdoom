@@ -312,6 +312,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetDistance)
 			DVector3 diff = self->Vec3To(target);
 			if (checkz)
 				diff.Z += (target->Height - self->Height) / 2;
+			else
+				diff.Z = 0.;
 
 			ret->SetFloat(diff.Length());
 		}
@@ -537,6 +539,39 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetCVar)
 		else
 		{
 			ret->SetFloat(cvar->GetGenericRep(CVAR_Float).Float);
+		}
+		return 1;
+	}
+	return 0;
+}
+
+//==========================================================================
+//
+// GetPlayerInput
+//
+// NON-ACTION function that works like ACS's GetPlayerInput.
+// Takes a pointer as anyone may or may not be a player.
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetPlayerInput)
+{
+	if (numret > 0)
+	{
+		assert(ret != nullptr);
+		PARAM_SELF_PROLOGUE(AActor);
+		PARAM_INT		(inputnum);
+		PARAM_INT_OPT	(ptr)		{ ptr = AAPTR_DEFAULT; }
+
+		AActor *mobj = COPY_AAPTR(self, ptr);
+
+		//Need a player.
+		if (!mobj || !mobj->player)
+		{
+			ret->SetInt(0);
+		}
+		else
+		{
+			ret->SetInt(P_Thing_CheckInputNum(mobj->player, inputnum));
 		}
 		return 1;
 	}

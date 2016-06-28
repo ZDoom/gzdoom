@@ -484,7 +484,7 @@ bool GLWall::PutWallCompat(int passflag)
 	}
 	else if (sub)
 	{
-		if (sub->lighthead != nullptr) return false;
+		if (sub->lighthead == nullptr) return false;
 	}
 
 	bool foggy = !gl_isBlack(Colormap.FadeColor) || (level.flags&LEVEL_HASFADETABLE) || gl_lights_additive;

@@ -272,7 +272,7 @@ void GLWall::SplitWallComplex(sector_t * frontsector, bool translucent, float ma
 	if ((maplightbottomleft<ztop[0] && maplightbottomright>ztop[1]) ||
 		(maplightbottomleft>ztop[0] && maplightbottomright<ztop[1]))
 	{
-		float clen = MAX<float>(fabsf(glseg.x2 - glseg.x1), fabsf(glseg.y2 - glseg.y2));
+		float clen = MAX<float>(fabsf(glseg.x2 - glseg.x1), fabsf(glseg.y2 - glseg.y1));
 
 		float dch = ztop[1] - ztop[0];
 		float dfh = maplightbottomright - maplightbottomleft;
@@ -312,7 +312,7 @@ void GLWall::SplitWallComplex(sector_t * frontsector, bool translucent, float ma
 	if ((maplightbottomleft<zbottom[0] && maplightbottomright>zbottom[1]) ||
 		(maplightbottomleft>zbottom[0] && maplightbottomright<zbottom[1]))
 	{
-		float clen = MAX<float>(fabsf(glseg.x2 - glseg.x1), fabsf(glseg.y2 - glseg.y2));
+		float clen = MAX<float>(fabsf(glseg.x2 - glseg.x1), fabsf(glseg.y2 - glseg.y1));
 
 		float dch = zbottom[1] - zbottom[0];
 		float dfh = maplightbottomright - maplightbottomleft;

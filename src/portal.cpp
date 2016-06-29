@@ -288,7 +288,7 @@ static void SetRotation(FLinePortal *port)
 			}
 			else
 			{
-				port->mFlags &= PORTF_POLYOBJ;
+				port->mFlags &= ~PORTF_POLYOBJ;
 			}
 		}
 		else

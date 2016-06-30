@@ -46,15 +46,9 @@ inline int P_PointOnLineSidePrecise(const DVector2 &pt, const line_t *line)
 	return (pt.Y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - pt.X) * line->Delta().Y > EQUAL_EPSILON;
 }
 
-extern line_t *lines;
 inline int P_PointOnLineSide (double x, double y, const line_t *line)
 {
 	extern int P_VanillaPointOnLineSide(double x, double y, const line_t* line);
-	if (line - lines == 6180)
-	{
-		int a = 0;
-	}
-
 	return i_compatflags2 & COMPATF2_POINTONLINE
 		? P_VanillaPointOnLineSide(x, y, line) : P_PointOnLineSidePrecise(x, y, line);
 }

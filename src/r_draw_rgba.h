@@ -31,6 +31,10 @@
 #include <mutex>
 #include <condition_variable>
 
+#ifndef NO_SSE
+#include <immintrin.h>
+#endif
+
 /////////////////////////////////////////////////////////////////////////////
 // Drawer functions:
 

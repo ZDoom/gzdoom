@@ -406,10 +406,10 @@ void FTexture::GenerateBgraMipmaps()
 			{
 				uint32_t c8 = PixelsBgra[x * Height + y];
 				Color4f c;
-				c.a = std::pow(APART(c8) * (1.0f / 255.0f), 2.2f);
-				c.r = std::pow(RPART(c8) * (1.0f / 255.0f), 2.2f);
-				c.g = std::pow(GPART(c8) * (1.0f / 255.0f), 2.2f);
-				c.b = std::pow(BPART(c8) * (1.0f / 255.0f), 2.2f);
+				c.a = powf(APART(c8) * (1.0f / 255.0f), 2.2f);
+				c.r = powf(RPART(c8) * (1.0f / 255.0f), 2.2f);
+				c.g = powf(GPART(c8) * (1.0f / 255.0f), 2.2f);
+				c.b = powf(BPART(c8) * (1.0f / 255.0f), 2.2f);
 				image[x * Height + y] = c;
 			}
 		}
@@ -489,10 +489,10 @@ void FTexture::GenerateBgraMipmaps()
 			int h = MAX(Height >> i, 1);
 			for (int j = 0; j < w * h; j++)
 			{
-				uint32_t a = (uint32_t)clamp(std::pow(src[j].a, 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
-				uint32_t r = (uint32_t)clamp(std::pow(src[j].r, 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
-				uint32_t g = (uint32_t)clamp(std::pow(src[j].g, 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
-				uint32_t b = (uint32_t)clamp(std::pow(src[j].b, 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t a = (uint32_t)clamp(powf(src[j].a, 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t r = (uint32_t)clamp(powf(src[j].r, 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t g = (uint32_t)clamp(powf(src[j].g, 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t b = (uint32_t)clamp(powf(src[j].b, 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
 				dest[j] = (a << 24) | (r << 16) | (g << 8) | b;
 			}
 			src += w * h;

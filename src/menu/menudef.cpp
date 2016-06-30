@@ -306,7 +306,15 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			int y = sc.Number;
 			sc.MustGetStringName(",");
 			sc.MustGetString();
-			FListMenuItem *it = new FListMenuItemStaticText(x, y, sc.String, desc->mFont, desc->mFontColor, centered);
+			FString label = sc.String;
+			EColorRange cr = desc->mFontColor;
+			if (sc.CheckString(","))
+			{
+				sc.MustGetString();
+				cr = V_FindFontColor(sc.String);
+				if (cr == CR_UNTRANSLATED && !sc.Compare("untranslated")) cr = desc->mFontColor;
+			}
+			FListMenuItem *it = new FListMenuItemStaticText(x, y, label, desc->mFont, cr, centered);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("PatchItem"))
@@ -648,6 +656,21 @@ static void ParseOptionSettings(FScanner &sc)
 //
 //=============================================================================
 
+static EColorRange ParseOptionColor(FScanner &sc, FOptionMenuDescriptor *desc)
+{
+	EColorRange cr = OptionSettings.mFontColor;
+	if (sc.CheckString(","))
+	{
+		sc.MustGetString();
+		EColorRange cr = V_FindFontColor(sc.String);
+		if (cr == CR_UNTRANSLATED && !sc.Compare("untranslated") && isdigit(sc.String[0]))
+		{
+			if (strtol(sc.String, NULL, 0)) cr = OptionSettings.mFontColorHeader;
+		}
+	}
+	return cr;
+}
+
 static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 {
 	sc.MustGetStringName("{");
@@ -784,12 +807,7 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 		{
 			sc.MustGetString();
 			FString label = sc.String;
-			bool cr = false;
-			if (sc.CheckString(","))
-			{
-				sc.MustGetNumber();
-				cr = !!sc.Number;
-			}
+			EColorRange cr = ParseOptionColor(sc, desc);
 			FOptionMenuItem *it = new FOptionMenuItemStaticText(label, cr);
 			desc->mItems.Push(it);
 		}
@@ -803,12 +821,7 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 			sc.MustGetStringName(",");
 			sc.MustGetString();
 			FName action = sc.String;
-			bool cr = false;
-			if (sc.CheckString(","))
-			{
-				sc.MustGetNumber();
-				cr = !!sc.Number;
-			}
+			EColorRange cr = ParseOptionColor(sc, desc);
 			FOptionMenuItem *it = new FOptionMenuItemStaticTextSwitchable(label, label2, action, cr);
 			desc->mItems.Push(it);
 		}

@@ -296,7 +296,7 @@ class DrawerBlendCommand : public CommandType
 public:
 	void Execute(DrawerThread *thread) override
 	{
-		LoopIterator loop(this, thread);
+		typename CommandType::LoopIterator loop(this, thread);
 		if (!loop) return;
 		BlendMode blend(*this, loop);
 		do

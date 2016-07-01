@@ -510,7 +510,7 @@ void P_DropWeapon (player_t *player)
 	}
 	// Since the weapon is dropping, stop blocking switching.
 	player->WeaponState &= ~WF_DISABLESWITCH;
-	if (player->ReadyWeapon != nullptr)
+	if ((player->ReadyWeapon != nullptr) && (player->health > 0 || !(player->ReadyWeapon->WeaponFlags & WIF_NODEATHJUMP)))
 	{
 		P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->GetDownState());
 	}

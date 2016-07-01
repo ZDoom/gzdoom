@@ -363,6 +363,7 @@ static FFlagDef WeaponFlagDefs[] =
 	DEFINE_FLAG(WIF, AMMO_CHECKBOTH, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, NOAUTOAIM, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, NODEATHJUMP, AWeapon, WeaponFlags),
+	DEFINE_FLAG(WIF, NODEATHINPUT, AWeapon, WeaponFlags),
 	
 	DEFINE_DUMMY_FLAG(NOLMS),
 	DEFINE_FLAG(WIF, ALT_USES_BOTH, AWeapon, WeaponFlags),

@@ -1,6 +1,7 @@
+#library "strfhelp"
+
 #include "zcommon.acs"
 
-#library "strfhelp"
 
 #define VDOORSPEED  16
 #define VDOORWAIT   150
@@ -69,6 +70,7 @@ script << 0 >> (int type, int tag)
 	
 	case 230:
 		i = GetLineRowOffset() & 31;
+		if (i == 0) break;
 		if (CheckInventory (QuestItems[i]) || gametype() == GAME_NET_DEATHMATCH)
 		{
 			Door_Open (tag, VDOORSPEED);
@@ -78,6 +80,7 @@ script << 0 >> (int type, int tag)
 		
 	case 227:
 		i = GetLineRowOffset() & 31;
+		if (i == 0) break;
 		if (CheckInventory (QuestItems[i]) || gametype() == GAME_NET_DEATHMATCH)
 		{
 			Door_Close (tag, VDOORSPEED);
@@ -126,6 +129,7 @@ script << 0 >> (int type, int tag)
 
 	case 193:
 		i = GetLineRowOffset() & 31;
+		if (i == 0) break;
 		if (CheckInventory (QuestItems[i]) || gametype() == GAME_NET_DEATHMATCH)
 		{
 			Floor_LowerToLowest (tag, 8);
@@ -158,6 +162,7 @@ script << 0 >> (int type, int tag)
 
 	case 187:
 		i = GetLineRowOffset() & 31;
+		if (i == 0) break;
 		if (CheckInventory (QuestItems[i]) || gametype() == GAME_NET_DEATHMATCH)
 		{
 			ClearForceField (tag);
@@ -203,6 +208,7 @@ script << 0 >> (int type, int tag)
 	
 	case 216:
 		i = GetLineRowOffset() & 31;
+		if (i == 0) break;
 		if (CheckInventory (QuestItems[i]) || gametype() == GAME_NET_DEATHMATCH)
 		{
 			Door_Raise (tag, VDOORSPEED, VDOORWAIT);

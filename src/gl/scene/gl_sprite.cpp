@@ -689,25 +689,19 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	topclip = rendersector->PortalBlocksMovement(sector_t::ceiling) ? LARGE_VALUE : rendersector->GetPortalPlaneZ(sector_t::ceiling);
 	bottomclip = rendersector->PortalBlocksMovement(sector_t::floor) ? -LARGE_VALUE : rendersector->GetPortalPlaneZ(sector_t::floor);
 
+	DWORD spritetype = (thing->renderflags & RF_SPRITETYPEMASK);
 	x = thingpos.X;
+	z = thingpos.Z;
 	y = thingpos.Y;
+	if (spritetype == RF_FLATSPRITE) z -= thing->Floorclip;
 
-	DWORD spritetype = thing->renderflags & RF_SPRITETYPEMASK;
-
-	switch (spritetype)
+	// [RH] Make floatbobbing a renderer-only effect.
+	if (thing->flags2 & MF2_FLOATBOB)
 	{
-	case RF_FLATSPRITE:
-		z = thingpos.Z;
-	default:
-		z = thingpos.Z - thing->Floorclip;
-		// [RH] Make floatbobbing a renderer-only effect.
-		if (thing->flags2 & MF2_FLOATBOB)
-		{
-			float fz = thing->GetBobOffset(r_TicFracF);
-			z += fz;
-		}
-		break;
+		float fz = thing->GetBobOffset(r_TicFracF);
+		z += fz;
 	}
+
 	modelframe = gl_FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
 	if (!modelframe)
 	{

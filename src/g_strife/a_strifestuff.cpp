@@ -317,7 +317,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 			int anglespeed = tagManager.GetFirstSectorTag(sec) - 100;
 			double speed = (anglespeed % 10) / 16.;
 			DAngle an = (anglespeed / 10) * (360 / 8.);
-			self->VelFromAngle(an, speed);
+			self->Thrust(an, speed);
 		}
 	}
 	return 0;

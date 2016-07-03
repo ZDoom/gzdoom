@@ -688,7 +688,7 @@ void DAnimatedDoor::Tick ()
 //============================================================================
 
 DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay, FDoorAnimation *anim)
-	: DMovingCeiling (sec)
+	: DMovingCeiling (sec, false)
 {
 	double topdist;
 	FTextureID picnum;

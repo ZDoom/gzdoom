@@ -880,14 +880,34 @@ static DWORD lastskycol_bgra[4];
 static int skycolplace;
 static int skycolplace_bgra;
 
+// Treat sky as a cube rather than a cylinder
+CVAR(Bool, r_cubesky, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
 // Get a column of sky when there is only one sky texture.
 static const BYTE *R_GetOneSkyColumn (FTexture *fronttex, int x)
 {
-	angle_t column = (skyangle + xtoviewangle[x]) ^ skyflip;
-	if (!r_swtruecolor)
-		return fronttex->GetColumn((UMulScale16(column, frontcyl) + frontpos) >> FRACBITS, NULL);
+	int tx;
+	if (r_cubesky)
+	{
+		int tx0 = (UMulScale16((skyangle + xtoviewangle[0]) ^ skyflip, frontcyl) + frontpos) >> FRACBITS;
+		int tx1 = tx0 - ((UMulScale16(xtoviewangle[0], frontcyl) * 2) >> FRACBITS);
+		tx = (int)(tx0 + (tx1 - tx0) * x / viewwidth + 0.5);
+		tx %= fronttex->GetWidth();
+		if (tx < 0)
+			tx += fronttex->GetWidth();
+	}
 	else
-		return (const BYTE *)fronttex->GetColumnBgra((UMulScale16(column, frontcyl) + frontpos) >> FRACBITS, NULL);
+	{
+		angle_t column = (skyangle + xtoviewangle[x]) ^ skyflip;
+		tx = (UMulScale16(column, frontcyl) + frontpos) >> FRACBITS;
+	}
+
+	if (!r_swtruecolor)
+		return fronttex->GetColumn(tx, NULL);
+	else
+	{
+		return (const BYTE *)fronttex->GetColumnBgra(tx, NULL);
+	}
 }
 
 // Get a column of sky when there are two overlapping sky textures
@@ -1030,7 +1050,7 @@ static void R_DrawSky (visplane_t *pl)
 	{ // The texture does not tile nicely
 		frontyScale *= skyscale;
 		frontiScale = 1 / frontyScale;
-		R_DrawSkyStriped (pl);
+		//R_DrawSkyStriped (pl);
 	}
 }
 

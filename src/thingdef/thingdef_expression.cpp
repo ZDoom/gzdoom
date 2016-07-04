@@ -1838,6 +1838,7 @@ FxExpression *FxConditional::Resolve(FCompileContext& ctx)
 
 ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 {
+	size_t truejump, falsejump;
 	ExpEmit out;
 
 	// The true and false expressions ought to be assigned to the
@@ -1848,7 +1849,7 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 
 	// Test condition.
 	build->Emit(OP_EQ_K, 1, cond.RegNum, build->GetConstantInt(0));
-	size_t patchspot = build->Emit(OP_JMP, 0);
+	falsejump = build->Emit(OP_JMP, 0);
 
 	// Evaluate true expression.
 	if (truex->isConstant() && truex->ValueType->GetRegType() == REGT_INT)
@@ -1872,9 +1873,11 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 			out = trueop;
 		}
 	}
+	// Make sure to skip the false path.
+	truejump = build->Emit(OP_JMP, 0);
 
 	// Evaluate false expression.
-	build->BackpatchToHere(patchspot);
+	build->BackpatchToHere(falsejump);
 	if (falsex->isConstant() && falsex->ValueType->GetRegType() == REGT_INT)
 	{
 		build->EmitLoadInt(out.RegNum, static_cast<FxConstant *>(falsex)->GetValue().GetInt());
@@ -1904,6 +1907,7 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 			}
 		}
 	}
+	build->BackpatchToHere(truejump);
 
 	return out;
 }

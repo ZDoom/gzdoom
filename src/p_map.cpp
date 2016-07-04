@@ -5466,14 +5466,25 @@ bool P_AdjustFloorCeil(AActor *thing, FChangePosition *cpos)
 	}
 
 	bool isgood = P_CheckPosition(thing, thing->Pos(), tm);
-	thing->floorz = tm.floorz;
-	thing->ceilingz = tm.ceilingz;
-	thing->dropoffz = tm.dropoffz;		// killough 11/98: remember dropoffs
-	thing->floorpic = tm.floorpic;
-	thing->floorterrain = tm.floorterrain;
-	thing->floorsector = tm.floorsector;
-	thing->ceilingpic = tm.ceilingpic;
-	thing->ceilingsector = tm.ceilingsector;
+	if (!(thing->flags4 & MF4_ACTLIKEBRIDGE))
+	{
+		thing->floorz = tm.floorz;
+		thing->ceilingz = tm.ceilingz;
+		thing->dropoffz = tm.dropoffz;		// killough 11/98: remember dropoffs
+		thing->floorpic = tm.floorpic;
+		thing->floorterrain = tm.floorterrain;
+		thing->floorsector = tm.floorsector;
+		thing->ceilingpic = tm.ceilingpic;
+		thing->ceilingsector = tm.ceilingsector;
+	}
+	else
+	{
+		// Bridges only keep the info at their spawn position
+		// This is necessary to prevent moving sectors from altering the bridge's z-position.
+		// The bridge should remain at its current z, even if the sector change would cause
+		// floorz or ceilingz to be changed in a way that would make P_ZMovement adjust the bridge.
+		P_FindFloorCeiling(thing, FFCF_ONLYSPAWNPOS);
+	}
 
 	// restore the PASSMOBJ flag but leave the other flags alone.
 	thing->flags2 = (thing->flags2 & ~MF2_PASSMOBJ) | flags2;

@@ -412,6 +412,7 @@ enum ActorRenderFlag
 	RF_INVISIBLE		= 0x8000,	// Don't bother drawing this actor
 	RF_ROLLSPRITE		= 0x40000,	//[marrub]roll the sprite billboard
 	RF_DONTFLIP			= 0x80000,	// Don't flip it when viewed from behind.
+	RF_ROLLCENTER		= 0x100000, // Rotate from the center of sprite instead of offsets
 
 	RF_FORCEYBILLBOARD		= 0x10000,	// [BB] OpenGL only: draw with y axis billboard, i.e. anchored to the floor (overrides gl_billboard_mode setting)
 	RF_FORCEXYBILLBOARD		= 0x20000,	// [BB] OpenGL only: draw with xy axis billboard, i.e. unanchored (overrides gl_billboard_mode setting)

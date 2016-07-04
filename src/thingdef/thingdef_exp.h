@@ -203,7 +203,6 @@ protected:
 public:
 	virtual ~FxExpression() {}
 	virtual FxExpression *Resolve(FCompileContext &ctx);
-	FxExpression *ResolveAsBoolean(FCompileContext &ctx);
 	
 	virtual bool isConstant() const;
 	virtual void RequestAddress();
@@ -280,6 +279,13 @@ class FxConstant : public FxExpression
 	ExpVal value;
 
 public:
+	FxConstant(bool val, const FScriptPosition &pos) : FxExpression(pos)
+	{
+		ValueType = value.Type = TypeBool;
+		value.Int = val;
+		isresolved = true;
+	}
+
 	FxConstant(int val, const FScriptPosition &pos) : FxExpression(pos)
 	{
 		ValueType = value.Type = TypeSInt32;
@@ -358,6 +364,19 @@ public:
 //
 //==========================================================================
 
+class FxBoolCast : public FxExpression
+{
+	FxExpression *basex;
+
+public:
+
+	FxBoolCast(FxExpression *x);
+	~FxBoolCast();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
 class FxIntCast : public FxExpression
 {
 	FxExpression *basex;
@@ -379,18 +398,6 @@ public:
 
 	FxFloatCast(FxExpression *x);
 	~FxFloatCast();
-	FxExpression *Resolve(FCompileContext&);
-
-	ExpEmit Emit(VMFunctionBuilder *build);
-};
-
-class FxCastStateToBool : public FxExpression
-{
-	FxExpression *basex;
-
-public:
-	FxCastStateToBool(FxExpression *x);
-	~FxCastStateToBool();
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpEmit Emit(VMFunctionBuilder *build);

@@ -3440,6 +3440,30 @@ class CommandIfInvulnerable : public SBarInfoNegatableFlowControl
 
 ////////////////////////////////////////////////////////////////////////////////
 
+class CommandIfWaterLevel : public SBarInfoNegatableFlowControl
+{
+	public:
+		CommandIfWaterLevel(SBarInfo *script) : SBarInfoNegatableFlowControl(script)
+		{
+		}
+
+		void	ParseNegatable(FScanner &sc, bool fullScreenOffsets)
+		{
+			sc.MustGetToken(TK_IntConst);
+			value = sc.Number;
+		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoNegatableFlowControl::Tick(block, statusBar, hudChanged);
+
+			SetTruth(statusBar->CPlayer->mo->waterlevel >= value, block, statusBar);
+		}
+	protected:
+		int value;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
 static const char *SBarInfoCommandNames[] =
 {
 	"drawimage", "drawnumber", "drawswitchableimage",
@@ -3450,7 +3474,7 @@ static const char *SBarInfoCommandNames[] =
 	"isselected", "usesammo", "usessecondaryammo",
 	"hasweaponpiece", "inventorybarnotvisible",
 	"weaponammo", "ininventory", "alpha", "ifhealth",
-	"ifinvulnerable",
+	"ifinvulnerable", "ifwaterlevel",
 	NULL
 };
 
@@ -3464,7 +3488,7 @@ enum SBarInfoCommands
 	SBARINFO_ISSELECTED, SBARINFO_USESAMMO, SBARINFO_USESSECONDARYAMMO,
 	SBARINFO_HASWEAPONPIECE, SBARINFO_INVENTORYBARNOTVISIBLE,
 	SBARINFO_WEAPONAMMO, SBARINFO_ININVENTORY, SBARINFO_ALPHA, SBARINFO_IFHEALTH,
-	SBARINFO_IFINVULNERABLE,
+	SBARINFO_IFINVULNERABLE, SBARINFO_IFWATERLEVEL,
 };
 
 SBarInfoCommand *SBarInfoCommandFlowControl::NextCommand(FScanner &sc)
@@ -3499,6 +3523,7 @@ SBarInfoCommand *SBarInfoCommandFlowControl::NextCommand(FScanner &sc)
 			case SBARINFO_ALPHA: return new CommandAlpha(script);
 			case SBARINFO_IFHEALTH: return new CommandIfHealth(script);
 			case SBARINFO_IFINVULNERABLE: return new CommandIfInvulnerable(script);
+			case SBARINFO_IFWATERLEVEL: return new CommandIfWaterLevel(script);
 		}
 
 		sc.ScriptError("Unknown command '%s'.\n", sc.String);

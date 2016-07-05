@@ -77,7 +77,7 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool c
 		sc.MustGetString();
 		x = new FxConstant(FSoundID(sc.String), sc);
 	}
-	else if (type == TypeSInt32 || type == TypeFloat64)
+	else if (type == TypeBool || type == TypeSInt32 || type == TypeFloat64)
 	{
 		x = ParseExpression (sc, cls, constant);
 		if (constant && !x->isConstant())
@@ -85,8 +85,12 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool c
 			sc.ScriptMessage("Default parameter must be constant.");
 			FScriptPosition::ErrorCounter++;
 		}
-		// Do automatic coercion between ints and floats.
-		if (type == TypeSInt32)
+		// Do automatic coercion between bools, ints and floats.
+		if (type == TypeBool)
+		{
+			x = new FxBoolCast(x);
+		}
+		else if (type == TypeSInt32)
 		{
 			x = new FxIntCast(x);
 		}
@@ -306,6 +310,9 @@ static void ParseArgListDef(FScanner &sc, PClassActor *cls,
 			switch (sc.TokenType)
 			{
 			case TK_Bool:
+				type = TypeBool;
+				break;
+
 			case TK_Int:
 				type = TypeSInt32;
 				break;
@@ -477,8 +484,11 @@ static void ParseNativeFunction(FScanner &sc, PClassActor *cls)
 	sc.MustGetAnyToken();
 	switch (sc.TokenType)
 	{
-	case TK_Int:
 	case TK_Bool:
+		rets.Push(TypeBool);
+		break;
+
+	case TK_Int:
 		rets.Push(TypeSInt32);
 		break;
 
@@ -1064,7 +1074,11 @@ static void ParseActionDef (FScanner &sc, PClassActor *cls)
 	// check for a return value
 	do
 	{
-		if (sc.CheckToken(TK_Int) || sc.CheckToken(TK_Bool))
+		if (sc.CheckToken(TK_Bool))
+		{
+			rets.Push(TypeBool);
+		}
+		else if (sc.CheckToken(TK_Int))
 		{
 			rets.Push(TypeSInt32);
 		}

@@ -880,21 +880,17 @@ static DWORD lastskycol_bgra[4];
 static int skycolplace;
 static int skycolplace_bgra;
 
-// Treat sky as a cube rather than a cylinder
-CVAR(Bool, r_cubesky, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, r_linearsky, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 // Get a column of sky when there is only one sky texture.
 static const BYTE *R_GetOneSkyColumn (FTexture *fronttex, int x)
 {
 	int tx;
-	if (r_cubesky)
+	if (r_linearsky)
 	{
-		int tx0 = (UMulScale16((skyangle + xtoviewangle[0]) ^ skyflip, frontcyl) + frontpos) >> FRACBITS;
-		int tx1 = tx0 - ((UMulScale16(xtoviewangle[0], frontcyl) * 2) >> FRACBITS);
-		tx = (int)(tx0 + (tx1 - tx0) * x / viewwidth + 0.5);
-		tx %= fronttex->GetWidth();
-		if (tx < 0)
-			tx += fronttex->GetWidth();
+		angle_t xangle = (angle_t)((0.5 - x / (double)viewwidth) * FocalTangent * ANGLE_90);
+		angle_t column = (skyangle + xangle) ^ skyflip;
+		tx = (UMulScale16(column, frontcyl) + frontpos) >> FRACBITS;
 	}
 	else
 	{

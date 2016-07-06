@@ -302,7 +302,7 @@ void GLSprite::Draw(int pass)
 				mat.Translate(xcenter, zcenter, ycenter); // move to sprite center
 
 				// Order of rotations matters. Perform yaw rotation (Y, face camera) before pitch (X, tilt up/down).
-				if (drawBillboardFacingCamera) 
+				if (drawBillboardFacingCamera && !isFlatSprite) 
 				{
 					// [CMB] Rotate relative to camera XY position, not just camera direction,
 					// which is nicer in VR

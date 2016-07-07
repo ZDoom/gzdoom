@@ -728,13 +728,13 @@ void FArchive::WriteByte(BYTE val)
 
 void FArchive::WriteInt16(WORD val)
 {
-	WORD out = LittleShort(val);
+	WORD out = SWAP_WORD(val);
 	m_File->Write(&out, 2);
 }
 
 void FArchive::WriteInt32(DWORD val)
 {
-	int out = LittleLong(val);
+	int out = SWAP_DWORD(val);
 	m_File->Write(&out, 4);
 }
 

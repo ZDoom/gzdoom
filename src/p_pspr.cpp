@@ -220,7 +220,7 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 	pspr->Caller = newcaller;
 
 	if (newcaller != oldcaller)
-	{ // Only reset flags if this layer was created now or if it was being used before.
+	{ // Only reset stuff if this layer was created now or if it was being used before.
 		if (layer >= PSP_TARGETCENTER)
 		{ // The targeter layers were affected by those.
 			pspr->Flags = (PSPF_CVARFAST|PSPF_POWDOUBLE);
@@ -229,6 +229,9 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 		{
 			pspr->Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_CVARFAST|PSPF_POWDOUBLE);
 		}
+
+		pspr->oldx = pspr->x;
+		pspr->oldy = pspr->y;
 	}
 
 	return pspr;

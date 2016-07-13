@@ -231,7 +231,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	// Interpolate the main weapon layer once so as to be able to add it to other layers.
 	if ((weapon = camera->player->FindPSprite(PSP_WEAPON)) != nullptr)
 	{
-		if (weapon->firstTic)
+		if (true || weapon->firstTic)
 		{
 			wx = weapon->x;
 			wy = weapon->y;
@@ -433,9 +433,12 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				psp->oldy = psp->y;
 			}
 
-			float sx = psp->oldx + (psp->x - psp->oldx) * r_TicFracF;
-			float sy = psp->oldy + (psp->y - psp->oldy) * r_TicFracF;
+			//float sx = psp->oldx + (psp->x - psp->oldx) * r_TicFracF;
+			//float sy = psp->oldy + (psp->y - psp->oldy) * r_TicFracF;
 
+			float sx = psp->x;
+			float sy = psp->y;
+			
 			if (psp->Flags & PSPF_ADDBOB)
 			{
 				sx += bobx;

@@ -1325,6 +1325,9 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 		pspr->oldy = pspr->y;
 	}
 
+	// disable interpolation for now.
+	ticfrac = 1.;
+
 	sx = pspr->oldx + (pspr->x - pspr->oldx) * ticfrac;
 	sy = pspr->oldy + (pspr->y - pspr->oldy) * ticfrac;
 
@@ -1621,7 +1624,7 @@ void R_DrawPlayerSprites ()
 		// Interpolate the main weapon layer once so as to be able to add it to other layers.
 		if ((weapon = camera->player->FindPSprite(PSP_WEAPON)) != nullptr)
 		{
-			if (weapon->firstTic)
+			if (true || weapon->firstTic)
 			{
 				wx = weapon->x;
 				wy = weapon->y;

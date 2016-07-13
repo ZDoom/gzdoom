@@ -1627,6 +1627,8 @@ enum CBA_Flags
 	CBAF_PUFFTRACER = 128,
 };
 
+static void AimBulletMissile(AActor *proj, AActor *puff, int flags, bool temp, bool cba);
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -1705,20 +1707,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 					}
 					if (puff)
 					{			
-						// FAF_BOTTOM = 1
-						// Aim for the base of the puff as that's where blood puffs will spawn... roughly.
-
-						A_Face(proj, puff, 0., 0., 0., 0., 1);
-						proj->Vel3DFromAngle(-proj->Angles.Pitch, proj->Speed);
-
-						if (temp)
-							puff->Destroy();
-						else
-						{
-							if (flags & CBAF_PUFFTARGET)	proj->target = puff;
-							if (flags & CBAF_PUFFMASTER)	proj->master = puff;
-							if (flags & CBAF_PUFFTRACER)	proj->tracer = puff;
-						}
+						AimBulletMissile(proj, puff, flags, temp, true);
 					}
 				}
 			}
@@ -1855,7 +1844,7 @@ enum FB_Flags
 	FBF_PUFFTRACER = 256,
 };
 
-static void AimBulletMissile(AActor *proj, AActor *puff, int flags, bool temp)
+static void AimBulletMissile(AActor *proj, AActor *puff, int flags, bool temp, bool cba)
 {
 	if (proj && puff)
 	{
@@ -1869,9 +1858,18 @@ static void AimBulletMissile(AActor *proj, AActor *puff, int flags, bool temp)
 
 			if (!temp)
 			{
-				if (flags & FBF_PUFFTARGET)	proj->target = puff;
-				if (flags & FBF_PUFFMASTER)	proj->master = puff;
-				if (flags & FBF_PUFFTRACER)	proj->tracer = puff;
+				if (cba)
+				{
+					if (flags & CBAF_PUFFTARGET)	proj->target = puff;
+					if (flags & CBAF_PUFFMASTER)	proj->master = puff;
+					if (flags & CBAF_PUFFTRACER)	proj->tracer = puff;
+				}
+				else
+				{
+					if (flags & FBF_PUFFTARGET)	proj->target = puff;
+					if (flags & FBF_PUFFMASTER)	proj->master = puff;
+					if (flags & FBF_PUFFTRACER)	proj->tracer = puff;
+				}
 			}
 		}
 	}
@@ -1947,7 +1945,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 					temp = true;
 					puff = P_LineAttack(self, bangle, range, bslope, 0, NAME_Hitscan, pufftype, laflags | LAF_NOINTERACT);
 				}
-				AimBulletMissile(proj, puff, flags, temp);
+				AimBulletMissile(proj, puff, flags, temp, false);
 			}
 		}
 	}
@@ -1991,7 +1989,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 						temp = true;
 						puff = P_LineAttack(self, angle, range, slope, 0, NAME_Hitscan, pufftype, laflags | LAF_NOINTERACT);
 					}
-					AimBulletMissile(proj, puff, flags, temp);
+					AimBulletMissile(proj, puff, flags, temp, false);
 				}
 			}
 		}

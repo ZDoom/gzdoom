@@ -509,6 +509,9 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set( CMAKE_C_FLAGS "-Wno-unused-result ${CMAKE_C_FLAGS}" )
 		set( CMAKE_CXX_FLAGS "-Wno-unused-result ${CMAKE_CXX_FLAGS}" )
 	endif()
+	if(APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+		set( CMAKE_CXX_FLAGS "-Wno-inconsistent-missing-override ${CMAKE_CXX_FLAGS}" )
+	endif()
 	set( CMAKE_C_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers -ffp-contract=off ${CMAKE_C_FLAGS}" )
 	set( CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers -ffp-contract=off ${CMAKE_CXX_FLAGS}" )
 
@@ -534,6 +537,12 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 				endif ()
 			endif ()
 		endif ()
+	endif ()
+
+	# With standard Apple tools -stdlib=libc++ needs to be specified in order to get
+	# C++11 support using SDKs 10.7 and 10.8.
+	if ( APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
+		set( CMAKE_CXX_FLAGS "-stdlib=libc++ ${CMAKE_CXX_FLAGS}" )
 	endif ()
 
 	# Remove extra warnings when using the official DirectX headers.

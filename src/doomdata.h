@@ -334,7 +334,7 @@ struct mapthinghexen_t
 	SWORD		z;
 	SWORD		angle;
 	SWORD		type;
-	SWORD		flags;
+	WORD		flags;
 	BYTE		special;
 	BYTE		args[5];
 };

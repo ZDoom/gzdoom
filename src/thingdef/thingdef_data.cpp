@@ -270,6 +270,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(RF, FLATSPRITE, AActor, renderflags),
 	DEFINE_FLAG(RF, WALLSPRITE, AActor, renderflags),
 	DEFINE_FLAG(RF, DONTFLIP, AActor, renderflags),
+	DEFINE_FLAG(RF, ROLLCENTER, AActor, renderflags),
 
 	// Bounce flags
 	DEFINE_FLAG2(BOUNCE_Walls, BOUNCEONWALLS, AActor, BounceFlags),

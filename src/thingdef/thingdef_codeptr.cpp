@@ -5669,7 +5669,9 @@ enum RadiusGiveFlags
 						RGF_MONSTERS |
 						RGF_OBJECTS |
 						RGF_VOODOO |
-						RGF_CORPSES | RGF_MISSILES,
+						RGF_CORPSES | 
+						RGF_MISSILES |
+						RGF_ITEMS,
 };
 
 static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amount, double distance, int flags, PClassActor *filter, FName species, double mindist)
@@ -5681,7 +5683,7 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 		if (!(flags & RGF_GIVESELF))
 			return false;
 	}
-	else if (thing->flags & MF_MISSILE)
+	if (thing->flags & MF_MISSILE)
 	{
 		if (!missilePass)
 			return false;

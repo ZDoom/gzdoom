@@ -319,6 +319,11 @@ void FMD3Model::AddSkins(BYTE *hitlist)
 {
 	for (int i = 0; i < numSurfaces; i++)
 	{
+		if (curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
+		{
+			hitlist[curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].GetIndex()] |= FTexture::TEX_Flat;
+		}
+
 		MD3Surface * surf = &surfaces[i];
 		for (int j = 0; j < surf->numSkins; j++)
 		{
@@ -365,8 +370,15 @@ void FMD3Model::RenderFrame(FTexture * skin, int frameno, int frameno2, double i
 		FTexture *surfaceSkin = skin;
 		if (!surfaceSkin)
 		{
-			if (surf->numSkins==0 || !surf->skins[0].isValid()) return;
-			surfaceSkin = TexMan(surf->skins[0]);
+			if (curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
+			{
+				surfaceSkin = TexMan(curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i]);
+			}
+			else if(surf->numSkins > 0 && surf->skins[0].isValid())
+			{
+				surfaceSkin = TexMan(surf->skins[0]);
+			}
+
 			if (!surfaceSkin) return;
 		}
 

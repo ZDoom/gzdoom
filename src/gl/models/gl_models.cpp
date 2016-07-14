@@ -460,7 +460,7 @@ void gl_InitModels()
 {
 	int Lump, lastLump;
 	FString path;
-	int index;
+	int index, surface;
 	int i;
 
 	FSpriteModelFrame smf;
@@ -696,6 +696,39 @@ void gl_InitModels()
 							}
 						}
 					}
+					else if (sc.Compare("surfaceskin"))
+					{
+						sc.MustGetNumber();
+						index = sc.Number;
+						sc.MustGetNumber();
+						surface = sc.Number;
+
+						if (index<0 || index >= MAX_MODELS_PER_FRAME)
+						{
+							sc.ScriptError("Too many models in %s", smf.type->TypeName.GetChars());
+						}
+
+						if (surface<0 || index >= MD3_MAX_SURFACES)
+						{
+							sc.ScriptError("Invalid MD3 Surface %d in %s", MD3_MAX_SURFACES, smf.type->TypeName.GetChars());
+						}
+
+						sc.MustGetString();
+						FixPathSeperator(sc.String);
+						if (sc.Compare(""))
+						{
+							smf.surfaceskinIDs[index][surface] = FNullTextureID();
+						}
+						else
+						{
+							smf.surfaceskinIDs[index][surface] = LoadSkin("", sc.String);
+							if (!smf.surfaceskinIDs[index][surface].isValid())
+							{
+								Printf("Surface Skin '%s' not found in '%s'\n",
+									sc.String, smf.type->TypeName.GetChars());
+							}
+						}
+					}
 					else if (sc.Compare("frameindex") || sc.Compare("frame"))
 					{
 						bool isframe=!!sc.Compare("frame");
@@ -900,6 +933,8 @@ void gl_RenderFrameModels( const FSpriteModelFrame *smf,
 			FTexture *tex = smf->skinIDs[i].isValid()? TexMan(smf->skinIDs[i]) : nullptr;
 			mdl->BuildVertexBuffer();
 			gl_RenderState.SetVertexBuffer(mdl->mVBuf);
+
+			mdl->PushSpriteFrame(smf, i);
 
 			if ( smfNext && smf->modelframes[i] != smfNext->modelframes[i] )
 				mdl->RenderFrame(tex, smf->modelframes[i], smfNext->modelframes[i], inter, translation);

@@ -5683,7 +5683,7 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 		if (!(flags & RGF_GIVESELF))
 			return false;
 	}
-	if (thing->flags & MF_MISSILE)
+	else if (thing->flags & MF_MISSILE)
 	{
 		if (!missilePass)
 			return false;

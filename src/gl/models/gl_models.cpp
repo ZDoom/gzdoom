@@ -616,11 +616,19 @@ void gl_InitModels()
 					}
 					else if (sc.Compare("inheritactorpitch"))
 					{
-						smf.flags |= MDL_INHERITACTORPITCH;
+						smf.flags |= MDL_USEACTORPITCH | MDL_BADROTATION;
 					}
 					else if (sc.Compare("inheritactorroll"))
 					{
-						smf.flags |= MDL_INHERITACTORROLL;
+						smf.flags |= MDL_USEACTORROLL;
+					}
+					else if (sc.Compare("useactorpitch"))
+					{
+						smf.flags |= MDL_USEACTORPITCH;
+					}
+					else if (sc.Compare("useactorroll"))
+					{
+						smf.flags |= MDL_USEACTORROLL;
 					}
 					else if (sc.Compare("rotating"))
 					{
@@ -961,10 +969,15 @@ void gl_RenderModel(GLSprite * spr)
 		rotateOffset = float((time - xs_FloorToInt(time)) *360.f );
 	}
 
-	// Added MDL_INHERITACTORPITCH and MDL_INHERITACTORROLL flags processing.
-	// If both flags MDL_INHERITACTORPITCH and MDL_PITCHFROMMOMENTUM are set, the pitch sums up the actor pitch and the momentum vector pitch.
-	if(smf->flags & MDL_INHERITACTORPITCH) pitch -= spr->actor->Angles.Pitch.Degrees;
-	if(smf->flags & MDL_INHERITACTORROLL) roll += spr->actor->Angles.Roll.Degrees;
+	// Added MDL_USEACTORPITCH and MDL_USEACTORROLL flags processing.
+	// If both flags MDL_USEACTORPITCH and MDL_PITCHFROMMOMENTUM are set, the pitch sums up the actor pitch and the momentum vector pitch.
+	if (smf->flags & MDL_USEACTORPITCH)
+	{
+		double d = spr->actor->Angles.Pitch.Degrees;
+		if (smf->flags & MDL_BADROTATION) pitch -= d;
+		else pitch += d;
+	}
+	if(smf->flags & MDL_USEACTORROLL) roll += spr->actor->Angles.Roll.Degrees;
 
 	gl_RenderState.mModelMatrix.loadIdentity();
 

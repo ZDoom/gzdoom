@@ -700,7 +700,7 @@ void gl_InitModels()
 							sc.ScriptError("Too many models in %s", smf.type->TypeName.GetChars());
 						}
 
-						if (surface<0 || index >= MD3_MAX_SURFACES)
+						if (surface<0 || surface >= MD3_MAX_SURFACES)
 						{
 							sc.ScriptError("Invalid MD3 Surface %d in %s", MD3_MAX_SURFACES, smf.type->TypeName.GetChars());
 						}

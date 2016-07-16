@@ -518,6 +518,7 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	# C++11 support using SDKs 10.7 and 10.8.
 	if ( APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
 		set( CMAKE_CXX_FLAGS "-stdlib=libc++ ${CMAKE_CXX_FLAGS}" )
+		set( CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++ ${CMAKE_EXE_LINKER_FLAGS}" )
 	endif ()
 
 	# Remove extra warnings when using the official DirectX headers.

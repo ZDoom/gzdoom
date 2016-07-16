@@ -189,7 +189,7 @@ ACTOR Actor native //: Thinker
 	native void A_SeekerMissile(int threshold, int turnmax, int flags = 0, int chance = 50, int distance = 10);
 	native state A_Jump(int chance = 256, state label, ...);
 	native void A_CustomMissile(class<Actor> missiletype, float spawnheight = 32, float spawnofs_xy = 0, float angle = 0, int flags = 0, float pitch = 0, int ptr = AAPTR_TARGET);
-	native void A_CustomBulletAttack(float/*angle*/ spread_xy, float/*angle*/ spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", float range = 0, int flags = 0, int ptr = AAPTR_TARGET);
+	native void A_CustomBulletAttack(float/*angle*/ spread_xy, float/*angle*/ spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", float range = 0, int flags = 0, int ptr = AAPTR_TARGET, class<Actor> missile = "", float Spawnheight = 32, float Spawnofs_xy = 0);
 	native void A_CustomRailgun(int damage, int spawnofs_xy = 0, color color1 = "", color color2 = "", int flags = 0, int aim = 0, float maxdiff = 0, class<Actor> pufftype = "BulletPuff", float/*angle*/ spread_xy = 0, float/*angle*/ spread_z = 0, float range = 0, int duration = 0, float sparsity = 1.0, float driftspeed = 1.0, class<Actor> spawnclass = "none", float spawnofs_z = 0, int spiraloffset = 270, int limit = 0);
 	native state A_JumpIfHealthLower(int health, state label, int ptr_selector = AAPTR_DEFAULT);
 	native state A_JumpIfCloser(float distance, state label, bool noz = false);

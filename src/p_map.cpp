@@ -4096,6 +4096,7 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags, FTranslatedLineTarget*victim, int *actualdamage)
 {
+	bool nointeract = !!(flags & LAF_NOINTERACT);
 	DVector3 direction;
 	double shootz;
 	FTraceResults trace;
@@ -4185,26 +4186,32 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	}
 
 	int tflags;
-	if (puffDefaults != NULL && puffDefaults->flags6 & MF6_NOTRIGGER) tflags = TRACE_NoSky;
+	if (nointeract || (puffDefaults && puffDefaults->flags6 & MF6_NOTRIGGER)) tflags = TRACE_NoSky;
 	else tflags = TRACE_NoSky | TRACE_Impact;
 
 	if (!Trace(t1->PosAtZ(shootz), t1->Sector, direction, distance, MF_SHOOTABLE, 
 		ML_BLOCKEVERYTHING | ML_BLOCKHITSCAN, t1, trace, tflags, CheckForActor, &TData))
 	{ // hit nothing
-		if (puffDefaults == NULL)
-		{
-		}
-		else if (puffDefaults->ActiveSound)
+		if (!nointeract && puffDefaults && puffDefaults->ActiveSound)
 		{ // Play miss sound
 			S_Sound(t1, CHAN_WEAPON, puffDefaults->ActiveSound, 1, ATTN_NORM);
 		}
-		if (puffDefaults != NULL && puffDefaults->flags3 & MF3_ALWAYSPUFF)
+
+		// [MC] LAF_NOINTERACT guarantees puff spawning and returns it directly to the calling function.
+		// No damage caused, no sounds played, no blood splatters.
+
+		if (nointeract || (puffDefaults && puffDefaults->flags3 & MF3_ALWAYSPUFF))
 		{ // Spawn the puff anyway
 			puff = P_SpawnPuff(t1, pufftype, trace.HitPos, trace.SrcAngleFromTarget, trace.SrcAngleFromTarget, 2, puffFlags);
+
+			if (nointeract)
+			{
+				return puff;
+			}
 		}
 		else
 		{
-			return NULL;
+			return nullptr;
 		}
 	}
 	else
@@ -4212,12 +4219,17 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 		if (trace.HitType != TRACE_HitActor)
 		{
 			// position a bit closer for puffs
-			if (trace.HitType != TRACE_HitWall || ((trace.Line->special != Line_Horizon) || spawnSky))
+			if (nointeract || trace.HitType != TRACE_HitWall || ((trace.Line->special != Line_Horizon) || spawnSky))
 			{
 				DVector2 pos = P_GetOffsetPosition(trace.HitPos.X, trace.HitPos.Y, -trace.HitVector.X * 4, -trace.HitVector.Y * 4);
 				puff = P_SpawnPuff(t1, pufftype, DVector3(pos, trace.HitPos.Z - trace.HitVector.Z * 4), trace.SrcAngleFromTarget,
 					trace.SrcAngleFromTarget - 90, 0, puffFlags);
 				puff->radius = 1/65536.;
+
+				if (nointeract)
+				{
+					return puff;
+				}
 			}
 
 			// [RH] Spawn a decal
@@ -4255,14 +4267,6 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 		}
 		else
 		{
-			bool bloodsplatter = (t1->flags5 & MF5_BLOODSPLATTER) ||
-				(t1->player != NULL &&	t1->player->ReadyWeapon != NULL &&
-				(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
-
-			bool axeBlood = (t1->player != NULL &&
-				t1->player->ReadyWeapon != NULL &&
-				(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
-
 			// Hit a thing, so it could be either a puff or blood
 			DVector3 bleedpos = trace.HitPos;
 			// position a bit closer for puffs/blood if using compatibility mode.
@@ -4275,7 +4279,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			}
 
 			// Spawn bullet puffs or blood spots, depending on target type.
-			if ((puffDefaults != NULL && puffDefaults->flags3 & MF3_PUFFONACTORS) ||
+			if (nointeract || (puffDefaults && puffDefaults->flags3 & MF3_PUFFONACTORS) ||
 				(trace.Actor->flags & MF_NOBLOOD) ||
 				(trace.Actor->flags2 & (MF2_INVULNERABLE | MF2_DORMANT)))
 			{
@@ -4284,6 +4288,11 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 
 				// We must pass the unreplaced puff type here 
 				puff = P_SpawnPuff(t1, pufftype, bleedpos, trace.SrcAngleFromTarget, trace.SrcAngleFromTarget - 90, 2, puffFlags | PF_HITTHING, trace.Actor);
+
+				if (nointeract)
+				{
+					return puff;
+				}
 			}
 
 			// Allow puffs to inflict poison damage, so that hitscans can poison, too.
@@ -4320,6 +4329,14 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			}
 			if (!(puffDefaults != NULL && puffDefaults->flags3&MF3_BLOODLESSIMPACT))
 			{
+				bool bloodsplatter = (t1->flags5 & MF5_BLOODSPLATTER) ||
+					(t1->player != nullptr &&	t1->player->ReadyWeapon != nullptr &&
+						(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
+
+				bool axeBlood = (t1->player != nullptr &&
+					t1->player->ReadyWeapon != nullptr &&
+					(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
+
 				if (!bloodsplatter && !axeBlood &&
 					!(trace.Actor->flags & MF_NOBLOOD) &&
 					!(trace.Actor->flags2 & (MF2_INVULNERABLE | MF2_DORMANT)))

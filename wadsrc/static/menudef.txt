@@ -833,6 +833,12 @@ OptionValue "AltHUDLag"
 	2, "$OPTVAL_ALWAYS"
 }
 
+OptionValue "AltHUDAmmoOrder"
+{
+	0, "$OPTVAL_AMMOIMAGETEXT"
+	1, "$OPTVAL_AMMOTEXTIMAGE"
+}
+
 OptionMenu "AltHUDOptions"
 {
 	Title "$ALTHUDMNU_TITLE"
@@ -849,6 +855,7 @@ OptionMenu "AltHUDOptions"
 	Option "$ALTHUDMNU_SHOWTIME",				"hud_showtime", "AltHUDTime"
 	Option "$ALTHUDMNU_TIMECOLOR",				"hud_timecolor", "TextColors"
 	Option "$ALTHUDMNU_SHOWLAG",				"hud_showlag", "AltHUDLag"
+	Option "$ALTHUDMNU_AMMOORDER",				"hud_ammo_order", "AltHUDAmmoOrder"
 	Slider "$ALTHUDMNU_AMMORED",				"hud_ammo_red", 0, 100, 1, 0
 	Slider "$ALTHUDMNU_AMMOYELLOW",				"hud_ammo_yellow", 0, 100, 1, 0
 	Slider "$ALTHUDMNU_HEALTHRED",				"hud_health_red", 0, 100, 1, 0

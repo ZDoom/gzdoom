@@ -81,6 +81,7 @@ CVAR (Int ,  hud_showtime,		0,	    CVAR_ARCHIVE);	// Show time on HUD
 CVAR (Int ,  hud_timecolor,		CR_GOLD,CVAR_ARCHIVE);	// Color of in-game time on HUD
 CVAR (Int ,  hud_showlag,		0, CVAR_ARCHIVE);		// Show input latency (maketic - gametic difference)
 
+CVAR (Int, hud_ammo_order, 0, CVAR_ARCHIVE);				// ammo image and text order
 CVAR (Int, hud_ammo_red, 25, CVAR_ARCHIVE)					// ammo percent less than which status is red    
 CVAR (Int, hud_ammo_yellow, 50, CVAR_ARCHIVE)				// ammo percent less is yellow more green        
 CVAR (Int, hud_health_red, 25, CVAR_ARCHIVE)				// health amount less than which status is red   
@@ -586,8 +587,20 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 	// ok, we got all ammo types. Now draw the list back to front (bottom to top)
 
 	int def_width = ConFont->StringWidth("000/000");
-	x-=def_width;
 	int yadd = ConFont->GetHeight();
+
+	int xtext = x - def_width;
+	int ximage = x;
+
+	if (hud_ammo_order > 0)
+	{
+		xtext -= 24;
+		ximage -= 20;
+	}
+	else
+	{
+		ximage -= def_width + 20;
+	}
 
 	for(i=orderedammos.Size()-1;i>=0;i--)
 	{
@@ -613,8 +626,8 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 						 ammo < ( (maxammo * hud_ammo_red) / 100) ? CR_RED :   
 						 ammo < ( (maxammo * hud_ammo_yellow) / 100) ? CR_GOLD : CR_GREEN );
 
-		DrawHudText(ConFont, fontcolor, buf, x-tex_width, y+yadd, trans);
-		DrawImageToBox(TexMan[icon], x-20, y, 16, 8, trans);
+		DrawHudText(ConFont, fontcolor, buf, xtext-tex_width, y+yadd, trans);
+		DrawImageToBox(TexMan[icon], ximage, y, 16, 8, trans);
 		y-=10;
 	}
 	return y;

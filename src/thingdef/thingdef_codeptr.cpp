@@ -1622,7 +1622,12 @@ enum CBA_Flags
 	CBAF_EXPLICITANGLE = 4,
 	CBAF_NOPITCH = 8,
 	CBAF_NORANDOMPUFFZ = 16,
+	CBAF_PUFFTARGET = 32,
+	CBAF_PUFFMASTER = 64,
+	CBAF_PUFFTRACER = 128,
 };
+
+static void AimBulletMissile(AActor *proj, AActor *puff, int flags, bool temp, bool cba);
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 {
@@ -1635,6 +1640,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 	PARAM_FLOAT_OPT	(range)			   { range = 0; }
 	PARAM_INT_OPT	(flags)			   { flags = 0; }
 	PARAM_INT_OPT	(ptr)			   { ptr = AAPTR_TARGET; }
+	PARAM_CLASS_OPT (missile, AActor)	{ missile = nullptr; }
+	PARAM_FLOAT_OPT (Spawnheight)		{ Spawnheight = 32; }
+	PARAM_FLOAT_OPT (Spawnofs_xy)		{ Spawnofs_xy = 0; }
 
 	AActor *ref = COPY_AAPTR(self, ptr);
 
@@ -1679,7 +1687,30 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 			if (!(flags & CBAF_NORANDOM))
 				damage *= ((pr_cabullet()%3)+1);
 
-			P_LineAttack(self, angle, range, slope, damage, NAME_Hitscan, pufftype, laflags);
+			AActor *puff = P_LineAttack(self, angle, range, slope, damage, NAME_Hitscan, pufftype, laflags);
+			if (missile != nullptr && pufftype != nullptr)
+			{
+				double x = Spawnofs_xy * angle.Cos();
+				double y = Spawnofs_xy * angle.Sin();
+				
+				DVector3 pos = self->Pos();
+				self->SetXYZ(self->Vec3Offset(x, y, 0.));
+				AActor *proj = P_SpawnMissileAngleZSpeed(self, self->Z() + self->GetBobOffset() + Spawnheight, missile, self->Angles.Yaw, 0, GetDefaultByType(missile)->Speed, self, false);
+				self->SetXYZ(pos);
+				
+				if (proj)
+				{
+					bool temp = (puff == nullptr);
+					if (!puff)
+					{
+						puff = P_LineAttack(self, angle, range, slope, 0, NAME_Hitscan, pufftype, laflags | LAF_NOINTERACT);
+					}
+					if (puff)
+					{			
+						AimBulletMissile(proj, puff, flags, temp, true);
+					}
+				}
+			}
 		}
     }
 	return 0;
@@ -1808,7 +1839,45 @@ enum FB_Flags
 	FBF_NOPITCH = 8,
 	FBF_NOFLASH = 16,
 	FBF_NORANDOMPUFFZ = 32,
+	FBF_PUFFTARGET = 64,
+	FBF_PUFFMASTER = 128,
+	FBF_PUFFTRACER = 256,
 };
+
+static void AimBulletMissile(AActor *proj, AActor *puff, int flags, bool temp, bool cba)
+{
+	if (proj && puff)
+	{
+		if (proj)
+		{
+			// FAF_BOTTOM = 1
+			// Aim for the base of the puff as that's where blood puffs will spawn... roughly.
+
+			A_Face(proj, puff, 0., 0., 0., 0., 1);
+			proj->Vel3DFromAngle(-proj->Angles.Pitch, proj->Speed);
+
+			if (!temp)
+			{
+				if (cba)
+				{
+					if (flags & CBAF_PUFFTARGET)	proj->target = puff;
+					if (flags & CBAF_PUFFMASTER)	proj->master = puff;
+					if (flags & CBAF_PUFFTRACER)	proj->tracer = puff;
+				}
+				else
+				{
+					if (flags & FBF_PUFFTARGET)	proj->target = puff;
+					if (flags & FBF_PUFFMASTER)	proj->master = puff;
+					if (flags & FBF_PUFFTRACER)	proj->tracer = puff;
+				}
+			}
+		}
+	}
+	if (puff && temp)
+	{
+		puff->Destroy();
+	}
+}
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 {
@@ -1817,9 +1886,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 	PARAM_ANGLE		(spread_z);
 	PARAM_INT		(numbullets);
 	PARAM_INT		(damageperbullet);
-	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = NULL; }
+	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = nullptr; }
 	PARAM_INT_OPT	(flags)				{ flags = FBF_USEAMMO; }
 	PARAM_FLOAT_OPT	(range)				{ range = 0; }
+	PARAM_CLASS_OPT (missile, AActor)	{ missile = nullptr; }
+	PARAM_FLOAT_OPT (Spawnheight)		{ Spawnheight = 0; }
+	PARAM_FLOAT_OPT (Spawnofs_xy)		{ Spawnofs_xy = 0; }
 
 	if (!self->player) return 0;
 
@@ -1858,7 +1930,24 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 		if (!(flags & FBF_NORANDOM))
 			damage *= ((pr_cwbullet()%3)+1);
 
-		P_LineAttack(self, bangle, range, bslope, damage, NAME_Hitscan, pufftype, laflags);
+		AActor *puff = P_LineAttack(self, bangle, range, bslope, damage, NAME_Hitscan, pufftype, laflags);
+
+		if (missile != nullptr)
+		{
+			bool temp = false;
+			DAngle ang = self->Angles.Yaw - 90;
+			DVector2 ofs = ang.ToVector(Spawnofs_xy);
+			AActor *proj = P_SpawnPlayerMissile(self, ofs.X, ofs.Y, Spawnheight, missile, bangle, nullptr, nullptr, false, true);
+			if (proj)
+			{
+				if (!puff)
+				{
+					temp = true;
+					puff = P_LineAttack(self, bangle, range, bslope, 0, NAME_Hitscan, pufftype, laflags | LAF_NOINTERACT);
+				}
+				AimBulletMissile(proj, puff, flags, temp, false);
+			}
+		}
 	}
 	else 
 	{
@@ -1885,7 +1974,24 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 			if (!(flags & FBF_NORANDOM))
 				damage *= ((pr_cwbullet()%3)+1);
 
-			P_LineAttack(self, angle, range, slope, damage, NAME_Hitscan, pufftype, laflags);
+			AActor *puff = P_LineAttack(self, angle, range, slope, damage, NAME_Hitscan, pufftype, laflags);
+
+			if (missile != nullptr)
+			{
+				bool temp = false;
+				DAngle ang = self->Angles.Yaw - 90;
+				DVector2 ofs = ang.ToVector(Spawnofs_xy);
+				AActor *proj = P_SpawnPlayerMissile(self, ofs.X, ofs.Y, Spawnheight, missile, angle, nullptr, nullptr, false, true);
+				if (proj)
+				{
+					if (!puff)
+					{
+						temp = true;
+						puff = P_LineAttack(self, angle, range, slope, 0, NAME_Hitscan, pufftype, laflags | LAF_NOINTERACT);
+					}
+					AimBulletMissile(proj, puff, flags, temp, false);
+				}
+			}
 		}
 	}
 	return 0;

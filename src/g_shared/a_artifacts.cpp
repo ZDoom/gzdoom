@@ -1127,11 +1127,26 @@ void APowerWeaponLevel2::InitEffect ()
 
 	assert (sister->SisterWeapon == weapon);
 
-	Owner->player->ReadyWeapon = sister;
 
 	if (weapon->GetReadyState() != sister->GetReadyState())
 	{
+		Owner->player->ReadyWeapon = sister;
 		P_SetPsprite(Owner->player, PSP_WEAPON, sister->GetReadyState());
+	}
+	else
+	{
+		DPSprite *psp = Owner->player->FindPSprite(PSP_WEAPON);
+		if (psp != nullptr && psp->GetCaller() == Owner->player->ReadyWeapon)
+		{
+			// If the weapon changes but the state does not, we have to manually change the PSprite's caller here.
+			psp->SetCaller(sister);
+			Owner->player->ReadyWeapon = sister;
+		}
+		else
+		{
+			// Something went wrong. Initiate a regular weapon change.
+			Owner->player->PendingWeapon = sister;
+		}
 	}
 }
 

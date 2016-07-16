@@ -77,6 +77,7 @@ public:
 	FState*		GetState()	const { return State; }
 	DPSprite*	GetNext()	      { return Next; }
 	AActor*		GetCaller()	      { return Caller; }
+	void		SetCaller(AActor *newcaller) { Caller = newcaller; }
 
 	double x, y;
 	double oldx, oldy;

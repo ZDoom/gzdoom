@@ -642,7 +642,18 @@ void AWeapon::EndPowerup ()
 		}
 		else
 		{
-			Owner->player->ReadyWeapon = SisterWeapon;
+			DPSprite *psp = Owner->player->FindPSprite(PSP_WEAPON);
+			if (psp != nullptr && psp->GetCaller() == Owner->player->ReadyWeapon)
+			{
+				// If the weapon changes but the state does not, we have to manually change the PSprite's caller here.
+				psp->SetCaller(SisterWeapon);
+				Owner->player->ReadyWeapon = SisterWeapon;
+			}
+			else
+			{
+				// Something went wrong. Initiate a regular weapon change.
+				Owner->player->PendingWeapon = SisterWeapon;
+			}
 		}
 	}
 }

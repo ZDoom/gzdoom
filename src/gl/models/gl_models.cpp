@@ -934,7 +934,7 @@ void gl_RenderFrameModels( const FSpriteModelFrame *smf,
 			mdl->BuildVertexBuffer();
 			gl_RenderState.SetVertexBuffer(mdl->mVBuf);
 
-			mdl->PushSpriteFrame(smf, i);
+			mdl->PushSpriteMDLFrame(smf, i);
 
 			if ( smfNext && smf->modelframes[i] != smfNext->modelframes[i] )
 				mdl->RenderFrame(tex, smf->modelframes[i], smfNext->modelframes[i], inter, translation);

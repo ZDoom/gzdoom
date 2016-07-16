@@ -47,7 +47,7 @@ public:
 
 	const FSpriteModelFrame *curSpriteMDLFrame;
 	int curMDLIndex;
-	void PushSpriteFrame(const FSpriteModelFrame *smf, int index) { curSpriteMDLFrame = smf; curMDLIndex = index; };
+	void PushSpriteMDLFrame(const FSpriteModelFrame *smf, int index) { curSpriteMDLFrame = smf; curMDLIndex = index; };
 
 	FModelVertexBuffer *mVBuf;
 	FString mFileName;

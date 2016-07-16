@@ -380,9 +380,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	// now draw the different layers of the weapon
 	gl_RenderState.EnableBrightmap(true);
 	gl_RenderState.SetObjectColor(ThingColor);
-	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
-	gl_RenderState.BlendEquation(GL_FUNC_ADD);
 
 	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change
 	// light mode here to draw the weapon sprite.

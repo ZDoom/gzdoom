@@ -41,7 +41,7 @@ ACTOR Actor native //: Thinker
 	native bool IsPointerEqual(int ptr_select1, int ptr_select2);
 	native int	CountInv(class<Inventory> itemtype, int ptr_select = AAPTR_DEFAULT);
 	native float GetDistance(bool checkz, int ptr = AAPTR_DEFAULT);
-	native float GetAngle(bool relative, int ptr = AAPTR_DEFAULT);
+	native float GetAngle(int flags, int ptr = AAPTR_DEFAULT);
 	native float GetZAt(float px = 0, float py = 0, float angle = 0, int flags = 0, int pick_pointer = AAPTR_DEFAULT);
 	native int GetSpawnHealth();
 	native int GetGibHealth();

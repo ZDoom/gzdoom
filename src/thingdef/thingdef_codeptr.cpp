@@ -329,13 +329,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetDistance)
 // NON-ACTION function to get the angle in degrees (normalized to -180..180)
 //
 //==========================================================================
+enum GAFlags
+{
+	GAF_RELATIVE =			1,
+	GAF_SWITCH =			1 << 1,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetAngle)
 {
 	if (numret > 0)
 	{
 		assert(ret != NULL);
 		PARAM_SELF_PROLOGUE(AActor);
-		PARAM_BOOL(relative);
+		PARAM_INT(flags);
 		PARAM_INT_OPT(ptr) { ptr = AAPTR_TARGET; }
 
 		AActor *target = COPY_AAPTR(self, ptr);
@@ -346,9 +352,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetAngle)
 		}
 		else
 		{
-			DVector3 diff = self->Vec3To(target);
+			DVector3 diff = (flags & GAF_SWITCH) ? target->Vec3To(self) : self->Vec3To(target);
 			DAngle angto = diff.Angle();
-			if (relative) angto = deltaangle(self->Angles.Yaw, angto);
+			DAngle yaw = (flags & GAF_SWITCH) ? target->Angles.Yaw : self->Angles.Yaw;
+			if (flags & GAF_RELATIVE) angto = deltaangle(yaw, angto);
 			ret->SetFloat(angto.Degrees);
 		}
 		return 1;
@@ -5669,7 +5676,9 @@ enum RadiusGiveFlags
 						RGF_MONSTERS |
 						RGF_OBJECTS |
 						RGF_VOODOO |
-						RGF_CORPSES | RGF_MISSILES,
+						RGF_CORPSES | 
+						RGF_MISSILES |
+						RGF_ITEMS,
 };
 
 static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amount, double distance, int flags, PClassActor *filter, FName species, double mindist)

@@ -216,15 +216,29 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 	}
 
 	// Always update the caller here in case we switched weapon
-	// or if the layer was being used by an inventory item before.
+	// or if the layer was being used by something else before.
 	pspr->Caller = newcaller;
 
 	if (newcaller != oldcaller)
-	{ // Only change the flags if this layer was created now or if we updated the caller.
+	{ // Only reset stuff if this layer was created now or if it was being used before.
 		if (layer >= PSP_TARGETCENTER)
 		{ // The targeter layers were affected by those.
-			pspr->Flags |= (PSPF_CVARFAST|PSPF_POWDOUBLE);
+			pspr->Flags = (PSPF_CVARFAST|PSPF_POWDOUBLE);
 		}
+		else
+		{
+			pspr->Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_CVARFAST|PSPF_POWDOUBLE);
+		}
+		if (layer == PSP_STRIFEHANDS)
+		{
+			// Some of the old hacks rely on this layer coming from the FireHands state.
+			// This is the ONLY time a psprite's state is actually null.
+			pspr->State = nullptr;
+			pspr->y = WEAPONTOP;
+		}
+
+		pspr->oldx = pspr->x;
+		pspr->oldy = pspr->y;
 	}
 
 	return pspr;

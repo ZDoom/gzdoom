@@ -352,22 +352,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_ItBurnsItBurns)
 
 	if (self->player != nullptr && self->player->mo == self)
 	{
-		FState *firehands = self->FindState("FireHands");
-		if (firehands != NULL)
-		{
-			DPSprite *psp = self->player->GetPSprite(PSP_STRIFEHANDS);
-			if (psp != nullptr)
-			{
-				psp->SetState(firehands);
-				psp->Flags &= PSPF_ADDWEAPON | PSPF_ADDBOB;
-				psp->y = WEAPONTOP;
-			}
+		P_SetPsprite(self->player, PSP_STRIFEHANDS, self->FindState("FireHands"));
 
-			self->player->ReadyWeapon = nullptr;
-			self->player->PendingWeapon = WP_NOCHANGE;
-			self->player->playerstate = PST_LIVE;
-			self->player->extralight = 3;
-		}
+		self->player->ReadyWeapon = nullptr;
+		self->player->PendingWeapon = WP_NOCHANGE;
+		self->player->playerstate = PST_LIVE;
+		self->player->extralight = 3;
 	}
 	return 0;
 }
@@ -388,14 +378,22 @@ DEFINE_ACTION_FUNCTION(AActor, A_CrispyPlayer)
 
 	if (self->player != nullptr && self->player->mo == self)
 	{
-		self->player->playerstate = PST_DEAD;
-
 		DPSprite *psp;
 		psp = self->player->GetPSprite(PSP_STRIFEHANDS);
+
 		FState *firehandslower = self->FindState("FireHandsLower");
 		FState *firehands = self->FindState("FireHands");
-		if (firehandslower != NULL && firehands != NULL && firehands < firehandslower)
-			psp->SetState(psp->GetState() + (firehandslower - firehands));
+		FState *state = psp->GetState();
+
+		if (state != nullptr && firehandslower != nullptr && firehands != nullptr && firehands < firehandslower)
+		{
+			self->player->playerstate = PST_DEAD;
+			psp->SetState(state + (firehandslower - firehands));
+		}
+		else if (state == nullptr)
+		{
+			psp->SetState(nullptr);
+		}
 	}
 	return 0;
 }
@@ -407,13 +405,20 @@ DEFINE_ACTION_FUNCTION(AActor, A_HandLower)
 	if (self->player != nullptr)
 	{
 		DPSprite *psp = self->player->GetPSprite(PSP_STRIFEHANDS);
+
+		if (psp->GetState() == nullptr)
+		{
+			psp->SetState(nullptr);
+			return 0;
+		}
+
 		psp->y += 9;
 		if (psp->y > WEAPONBOTTOM*2)
 		{
 			psp->SetState(nullptr);
 		}
+
 		if (self->player->extralight > 0) self->player->extralight--;
 	}
 	return 0;
 }
-

@@ -1085,9 +1085,8 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
 	}
 	if (player->playerstate == PST_DEAD)
 	{ // Player is dead, so don't bring up a pending weapon
-		psp->y = WEAPONBOTTOM;
-	
 		// Player is dead, so keep the weapon off screen
+		P_SetPsprite(player, PSP_FLASH, nullptr);
 		psp->SetState(nullptr);
 		return 0;
 	}

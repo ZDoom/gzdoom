@@ -443,53 +443,48 @@ void gl_InitPortals()
 			tempindex[i] = glLinePortals.Size();
 			line_t *pSrcLine = linePortals[i].mOrigin;
 			line_t *pLine = linePortals[i].mDestination;
-			FGLLinePortal glport;
-			
-			glport.v1 = pLine->v1;
-			glport.v2 = pLine->v2;
-			glport.delta = { 0, 0 };
+			FGLLinePortal &glport = glLinePortals[glLinePortals.Reserve(1)];
 			glport.lines.Push(&linePortals[i]);
-			glLinePortals.Push(glport);
 
 			// We cannot do this grouping for non-linked portals because they can be changed at run time.
-			if (linePortals[i].mType == PORTT_LINKED)
-			do
+			if (linePortals[i].mType == PORTT_LINKED && pLine != nullptr)
 			{
-				// now collect all other colinear lines connected to this one. We run this loop as long as it still finds a match
-				gotsome = false;
-				for (unsigned j = 0; j < linePortals.Size(); j++)
+				glport.v1 = pLine->v1;
+				glport.v2 = pLine->v2;
+				do
 				{
-					if (tempindex[j] == -1)
+					// now collect all other colinear lines connected to this one. We run this loop as long as it still finds a match
+					gotsome = false;
+					for (unsigned j = 0; j < linePortals.Size(); j++)
 					{
-						line_t *pSrcLine2 = linePortals[j].mOrigin;
-						line_t *pLine2 = linePortals[j].mDestination;
-						// angular precision is intentionally reduced to 32 bit BAM to account for precision problems (otherwise many not perfectly horizontal or vertical portals aren't found here.)
-						unsigned srcang = pSrcLine->Delta().Angle().BAMs();
-						unsigned dstang = pLine->Delta().Angle().BAMs();
-						if ((pSrcLine->v2 == pSrcLine2->v1 && pLine->v1 == pLine2->v2) ||
-							(pSrcLine->v1 == pSrcLine2->v2 && pLine->v2 == pLine2->v1))
+						if (tempindex[j] == -1)
 						{
-							// The line connects, now check the translation
-							unsigned srcang2 = pSrcLine2->Delta().Angle().BAMs();
-							unsigned dstang2 = pLine2->Delta().Angle().BAMs();
-							if (srcang == srcang2 && dstang == dstang2)
+							line_t *pSrcLine2 = linePortals[j].mOrigin;
+							line_t *pLine2 = linePortals[j].mDestination;
+							// angular precision is intentionally reduced to 32 bit BAM to account for precision problems (otherwise many not perfectly horizontal or vertical portals aren't found here.)
+							unsigned srcang = pSrcLine->Delta().Angle().BAMs();
+							unsigned dstang = pLine->Delta().Angle().BAMs();
+							if ((pSrcLine->v2 == pSrcLine2->v1 && pLine->v1 == pLine2->v2) ||
+								(pSrcLine->v1 == pSrcLine2->v2 && pLine->v2 == pLine2->v1))
 							{
-								// The lines connect and  both source and destination are colinear, so this is a match
-								gotsome = true;
-								tempindex[j] = tempindex[i];
-								if (pLine->v1 == pLine2->v2) glLinePortals[tempindex[i]].v1 = pLine2->v1;
-								else glLinePortals[tempindex[i]].v2 = pLine2->v2;
-								glLinePortals[tempindex[i]].lines.Push(&linePortals[j]);
+								// The line connects, now check the translation
+								unsigned srcang2 = pSrcLine2->Delta().Angle().BAMs();
+								unsigned dstang2 = pLine2->Delta().Angle().BAMs();
+								if (srcang == srcang2 && dstang == dstang2)
+								{
+									// The lines connect and  both source and destination are colinear, so this is a match
+									gotsome = true;
+									tempindex[j] = tempindex[i];
+									if (pLine->v1 == pLine2->v2) glport.v1 = pLine2->v1;
+									else glport.v2 = pLine2->v2;
+									glport.lines.Push(&linePortals[j]);
+								}
 							}
 						}
 					}
-				}
-			} while (gotsome);
+				} while (gotsome);
+			}
 		}
-	}
-	for (auto glport : glLinePortals)
-	{
-		glport.delta = glport.v2->fPos() - glport.v1->fPos();
 	}
 	linePortalToGL.Resize(linePortals.Size());
 	for (unsigned i = 0; i < linePortals.Size(); i++)

@@ -195,7 +195,7 @@ struct GLLinePortal : public GLPortal
 
 	GLLinePortal(FGLLinePortal *line)
 	{
-		if (line->lines[0]->mType != PORTT_LINKED)
+		if (line->lines[0]->mType != PORTT_LINKED || line->v1 == nullptr)
 		{
 			// For non-linked portals we must check the actual linedef.
 			line_t *lline = line->lines[0]->mDestination;

@@ -56,9 +56,8 @@ struct FPortal
 
 struct FGLLinePortal
 {
-	// defines the complete span of this portal
-	vertex_t	*v1, *v2;	// vertices, from v1 to v2
-	DVector2 delta;		// precalculated v2 - v1 for side checking
+	// defines the complete span of this portal, if this is of type PORTT_LINKED.
+	vertex_t	*v1 = nullptr, *v2 = nullptr;	// vertices, from v1 to v2
 	TArray<FLinePortal *> lines;
 	int validcount = 0;
 };

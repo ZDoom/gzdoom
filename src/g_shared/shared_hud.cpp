@@ -539,6 +539,38 @@ static void AddAmmoToList(AWeapon * weapdef)
 	}
 }
 
+static int GetDigitCount(int value)
+{
+	int digits = 0;
+
+	do
+	{
+		value /= 10;
+		++digits;
+	}
+	while (0 != value);
+
+	return digits;
+}
+
+static void GetAmmoTextLengths(player_t *CPlayer, int& ammocur, int& ammomax)
+{
+	for (auto type : orderedammos)
+	{
+		AAmmo * ammoitem = static_cast<AAmmo*>(CPlayer->mo->FindInventory(type));
+		AAmmo * inv = nullptr == ammoitem
+			? static_cast<AAmmo*>(GetDefaultByType(type))
+			: ammoitem;
+		assert(nullptr != inv);
+
+		ammocur = MAX(ammocur, nullptr == ammoitem ? 0 : ammoitem->Amount);
+		ammomax = MAX(ammomax, inv->MaxAmount);
+	}
+
+	ammocur = GetDigitCount(ammocur);
+	ammomax = GetDigitCount(ammomax);
+}
+
 static int DrawAmmo(player_t *CPlayer, int x, int y)
 {
 
@@ -586,7 +618,13 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 
 	// ok, we got all ammo types. Now draw the list back to front (bottom to top)
 
-	int def_width = ConFont->StringWidth("000/000");
+	int ammocurlen = 0;
+	int ammomaxlen = 0;
+	GetAmmoTextLengths(CPlayer, ammocurlen, ammomaxlen);
+
+	mysnprintf(buf, countof(buf), "%0*d/%0*d", ammocurlen, 0, ammomaxlen, 0);
+
+	int def_width = ConFont->StringWidth(buf);
 	int yadd = ConFont->GetHeight();
 
 	int xtext = x - def_width;
@@ -618,7 +656,7 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 		int maxammo = inv->MaxAmount;
 		int ammo = ammoitem? ammoitem->Amount : 0;
 
-		mysnprintf(buf, countof(buf), "%3d/%3d", ammo, maxammo);
+		mysnprintf(buf, countof(buf), "%*d/%*d", ammocurlen, ammo, ammomaxlen, maxammo);
 
 		int tex_width= clamp<int>(ConFont->StringWidth(buf)-def_width, 0, 1000);
 

@@ -123,9 +123,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_Feathers)
 
 void P_UpdateBeak (AActor *self)
 {
-	if (self->player != nullptr)
+	DPSprite *pspr;
+	if (self->player != nullptr && (pspr = self->player->FindPSprite(PSP_WEAPON)) != nullptr)
 	{
-		self->player->GetPSprite(PSP_WEAPON)->y = WEAPONTOP + self->player->chickenPeck / 2;
+		pspr->y = WEAPONTOP + self->player->chickenPeck / 2;
 	}
 }
 

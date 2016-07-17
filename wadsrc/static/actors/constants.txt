@@ -38,6 +38,9 @@ const int CBAF_NORANDOM = 2;
 const int CBAF_EXPLICITANGLE = 4;
 const int CBAF_NOPITCH = 8;
 const int CBAF_NORANDOMPUFFZ = 16;
+const int CBAF_PUFFTARGET = 32;
+const int CBAF_PUFFMASTER = 64;
+const int CBAF_PUFFTRACER = 128;
 
 // Flags for A_GunFlash
 const int GFF_NOEXTCHANGE = 1;
@@ -210,6 +213,9 @@ const int CPF_STEALARMOR = 32;
 const int FPF_AIMATANGLE = 1;
 const int FPF_TRANSFERTRANSLATION = 2;
 const int FPF_NOAUTOAIM = 4;
+const int FBF_PUFFTARGET = 64;
+const int FBF_PUFFMASTER = 128;
+const int FBF_PUFFTRACER = 256;
 
 // Flags for A_Teleport
 enum
@@ -651,4 +657,10 @@ enum
 	BT_USER2		= 1<<22,
 	BT_USER3		= 1<<23,
 	BT_USER4		= 1<<24,
+};
+// Flags for GetAngle
+enum
+{
+	GAF_RELATIVE =			1,
+	GAF_SWITCH =			1 << 1,
 };

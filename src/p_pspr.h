@@ -42,7 +42,7 @@ class FArchive;
 // drawn directly on the view screen,
 // coordinates are given for a 320*200 view screen.
 //
-enum PSPLayers // These are all called by the owner's ReadyWeapon.
+enum PSPLayers
 {
 	PSP_STRIFEHANDS = -1,
 	PSP_WEAPON = 1,
@@ -76,6 +76,7 @@ public:
 	FState*		GetState()	const { return State; }
 	DPSprite*	GetNext()	      { return Next; }
 	AActor*		GetCaller()	      { return Caller; }
+	void		SetCaller(AActor *newcaller) { Caller = newcaller; }
 
 	double x, y;
 	double oldx, oldy;

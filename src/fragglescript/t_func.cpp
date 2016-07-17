@@ -1573,7 +1573,7 @@ void FParser::SF_FloorHeight(void)
 					sectors[i].floorplane.PointToDist (sectors[i].centerspot, dest),
 					crush? 10:-1, 
 					(dest > sectors[i].CenterFloor()) ? 1 : -1,
-					false) != EMoveResult::crushed)
+					false) == EMoveResult::crushed)
 				{
 					returnval = 0;
 				}
@@ -1662,7 +1662,7 @@ void FParser::SF_CeilingHeight(void)
 					sectors[i].ceilingplane.PointToDist (sectors[i].centerspot, dest), 
 					crush? 10:-1,
 					(dest > sectors[i].CenterCeiling()) ? 1 : -1,
-					false) != EMoveResult::crushed)
+					false) == EMoveResult::crushed)
 				{
 					returnval = 0;
 				}
@@ -3473,12 +3473,7 @@ void FParser::SF_Resurrect()
 		mo->SetState(state);
 		mo->Height = mo->GetDefault()->Height;
 		mo->radius = mo->GetDefault()->radius;
-		mo->flags =  mo->GetDefault()->flags;
-		mo->flags2 = mo->GetDefault()->flags2;
-		mo->flags3 = mo->GetDefault()->flags3;
-		mo->flags4 = mo->GetDefault()->flags4;
-		mo->flags5 = mo->GetDefault()->flags5;
-		mo->health = mo->GetDefault()->health;
+		mo->Revive();
 		mo->target = NULL;
 	}
 }
@@ -3768,30 +3763,6 @@ void FParser::SF_SetCorona(void)
 
 //==========================================================================
 //
-// new for GZDoom: Call a Hexen line special (deprecated, superseded by direct use)
-//
-//==========================================================================
-
-void FParser::SF_Ls()
-{
-	int args[5]={0,0,0,0,0};
-	int spc;
-
-	if (CheckArgs(1))
-	{
-		spc=intvalue(t_argv[0]);
-		for(int i=0;i<5;i++)
-		{
-			if (t_argc>=i+2) args[i]=intvalue(t_argv[i+1]);
-		}
-		if (spc>=0 && spc<256)
-			P_ExecuteSpecial(spc, NULL,Script->trigger,false, args[0],args[1],args[2],args[3],args[4]);
-	}
-}
-
-
-//==========================================================================
-//
 // new for GZDoom: Gets the levelnum
 //
 //==========================================================================
@@ -4026,17 +3997,6 @@ void  FParser::SF_KillInSector()
 
 //==========================================================================
 //
-// new for GZDoom: Sets a sector's type
-//
-//==========================================================================
-
-void FParser::SF_SectorType(void)
-{
-	// I don't think this was ever used publicly so I'm not going to bother fixing it.
-}
-
-//==========================================================================
-//
 // new for GZDoom: Sets a new line trigger type (Doom format!)
 // (Sure, this is not particularly useful. But having it made it possible
 //  to fix a few annoying bugs in some old maps ;) )
@@ -4066,30 +4026,6 @@ void FParser::SF_SetLineTrigger()
 
 		}
 	}
-}
-
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FParser::SF_ChangeTag()
-{
-	// Development garbage!
-}
-
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FParser::SF_WallGlow()
-{
-	// Development garbage!
 }
 
 
@@ -4510,13 +4446,10 @@ void init_functions(void)
 	// new for GZDoom
 	gscr->NewFunction("spawnshot2", &FParser::SF_SpawnShot2);
 	gscr->NewFunction("setcolor", &FParser::SF_SetColor);
-	gscr->NewFunction("sectortype", &FParser::SF_SectorType);
-	gscr->NewFunction("wallglow", &FParser::SF_WallGlow);
 	gscr->NewFunction("objradius", &FParser::SF_MobjRadius);
 	gscr->NewFunction("objheight", &FParser::SF_MobjHeight);
 	gscr->NewFunction("thingcount", &FParser::SF_ThingCount);
 	gscr->NewFunction("killinsector", &FParser::SF_KillInSector);
-	gscr->NewFunction("changetag", &FParser::SF_ChangeTag);
 	gscr->NewFunction("levelnum", &FParser::SF_LevelNum);
 
 	// new inventory
@@ -4524,8 +4457,6 @@ void init_functions(void)
 	gscr->NewFunction("takeinventory", &FParser::SF_TakeInventory);
 	gscr->NewFunction("checkinventory", &FParser::SF_CheckInventory);
 	gscr->NewFunction("setweapon", &FParser::SF_SetWeapon);
-
-	gscr->NewFunction("ls", &FParser::SF_Ls);	// execute Hexen type line special
 
 	// Dummies - shut up warnings
 	gscr->NewFunction("setcorona", &FParser::SF_SetCorona);

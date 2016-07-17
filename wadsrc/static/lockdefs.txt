@@ -5,6 +5,7 @@ ClearLocks
 
 Lock 1 Doom
 {
+	//$Title "Red key card"
 	RedCard
 	Message "$PD_REDC"
 	RemoteMessage "$PD_REDCO"
@@ -14,6 +15,7 @@ Lock 1 Doom
 
 Lock 2 Doom
 {
+	//$Title "Blue key card"
 	BlueCard
 	Message "$PD_BLUEC"
 	RemoteMessage "$PD_BLUECO"
@@ -23,6 +25,7 @@ Lock 2 Doom
 
 Lock 3 Doom
 {
+	//$Title "Yellow key card"
 	YellowCard
 	Message "$PD_YELLOWC"
 	RemoteMessage "$PD_YELLOWCO"
@@ -32,6 +35,7 @@ Lock 3 Doom
 
 Lock 4 Doom
 {
+	//$Title "Red skull"
 	RedSkull
 	Message "$PD_REDS"
 	RemoteMessage "$PD_REDSO"
@@ -41,6 +45,7 @@ Lock 4 Doom
 
 Lock 5 Doom
 {
+	//$Title "Blue skull"
 	BlueSkull
 	Message "$PD_BLUES"
 	RemoteMessage "$PD_BLUESO"
@@ -50,6 +55,7 @@ Lock 5 Doom
 
 Lock 6 Doom
 {
+	//$Title "Yellow skull"
 	YellowSkull
 	Message "$PD_YELLOWS"
 	RemoteMessage "$PD_YELLOWSO"
@@ -59,6 +65,7 @@ Lock 6 Doom
 
 Lock 129 Doom
 {
+	//$Title "Any red key"
 	Any { RedCard RedSkull KeyGreen }
 	Message "$PD_REDK"
 	RemoteMessage "$PD_REDO"
@@ -68,6 +75,7 @@ Lock 129 Doom
 
 Lock 130 Doom
 {
+	//$Title "Any blue key"
 	Any { BlueCard BlueSkull KeyBlue }
 	Message "$PD_BLUEK"
 	RemoteMessage "$PD_BLUEO"
@@ -77,6 +85,7 @@ Lock 130 Doom
 
 Lock 131 Doom
 {
+	//$Title "Any yellow key"
 	Any { YellowCard YellowSkull KeyYellow }
 	Message "$PD_YELLOWK"
 	RemoteMessage "$PD_YELLOWO"
@@ -86,6 +95,7 @@ Lock 131 Doom
 
 Lock 132 Doom
 {
+	//$Title "Red card or skull"
 	Any { RedCard RedSkull }
 	Message "$PD_REDK"
 	RemoteMessage "$PD_REDO"
@@ -95,6 +105,7 @@ Lock 132 Doom
 
 Lock 133 Doom
 {
+	//$Title "Blue card or skull"
 	Any { BlueCard BlueSkull }
 	Message "$PD_BLUEK"
 	RemoteMessage "$PD_BLUEO"
@@ -104,6 +115,7 @@ Lock 133 Doom
 
 Lock 134 Doom
 {
+	//$Title "Yellow card or skull"
 	Any { YellowCard YellowSkull }
 	Message "$PD_YELLOWK"
 	RemoteMessage "$PD_YELLOWO"
@@ -112,6 +124,7 @@ Lock 134 Doom
 
 Lock 100
 {
+	//$Title "Any key"
 	Message "$PD_ANY"
 	RemoteMessage "$PD_ANYOBJ"
 	Mapcolor 128 128 255
@@ -119,6 +132,7 @@ Lock 100
 
 Lock 228
 {
+	//$Title "Any key"
 	Message "$PD_ANY"
 	RemoteMessage "$PD_ANYOBJ"
 	Mapcolor 128 128 255
@@ -126,6 +140,7 @@ Lock 228
 
 Lock 229 Doom
 {
+	//$Title "One of each color"
 	Any { BlueCard BlueSkull KeyBlue}
 	Any { YellowCard YellowSkull KeyYellow}
 	Any { RedCard RedSkull KeyGreen}
@@ -135,6 +150,7 @@ Lock 229 Doom
 
 Lock 101 Doom
 {
+	//$Title "All keys"
 	BlueCard 
 	BlueSkull
 	YellowCard 
@@ -151,6 +167,7 @@ Lock 101 Doom
 
 Lock 1 Heretic
 {
+	//$Title "Green key"
 	KeyGreen
 	Message "$TXT_NEEDGREENKEY"
 	Mapcolor 0 255 0
@@ -159,6 +176,7 @@ Lock 1 Heretic
 
 Lock 2 Heretic
 {
+	//$Title "Blue key"
 	KeyBlue 
 	Message "$TXT_NEEDBLUEKEY"
 	Mapcolor 0 0 255
@@ -167,6 +185,7 @@ Lock 2 Heretic
 
 Lock 3 Heretic
 {
+	//$Title "Yellow key"
 	KeyYellow
 	Message "$TXT_NEEDYELLOWKEY"
 	Mapcolor 255 255 0
@@ -175,6 +194,7 @@ Lock 3 Heretic
 
 Lock 129 Heretic
 {
+	//$Title "Green key"
 	KeyGreen
 	Message "$TXT_NEEDGREENKEY"
 	Mapcolor 0 255 0
@@ -183,6 +203,7 @@ Lock 129 Heretic
 
 Lock 130 Heretic
 {
+	//$Title "Blue key"
 	KeyBlue 
 	Message "$TXT_NEEDBLUEKEY"
 	Mapcolor 0 0 255
@@ -191,6 +212,7 @@ Lock 130 Heretic
 
 Lock 131 Heretic
 {
+	//$Title "Yellow key"
 	KeyYellow
 	Message "$TXT_NEEDYELLOWKEY"
 	Mapcolor 255 255 0
@@ -199,6 +221,7 @@ Lock 131 Heretic
 
 Lock 229 Heretic
 {
+	//$Title "All keys"
 	KeyGreen 
 	KeyYellow 
 	KeyBlue
@@ -208,6 +231,7 @@ Lock 229 Heretic
 
 Lock 101 Heretic
 {
+	//$Title "All keys"
 	KeyGreen 
 	KeyYellow 
 	KeyBlue
@@ -222,6 +246,7 @@ Lock 101 Heretic
 
 Lock 1 Hexen
 {
+	//$Title "Steel key"
 	KeySteel
 	Message "$TXT_NEED_KEY_STEEL"
 	Mapcolor 150 150 150
@@ -230,6 +255,7 @@ Lock 1 Hexen
 
 Lock 2 Hexen
 {
+	//$Title "Cave key"
 	KeyCave
 	Message "$TXT_NEED_KEY_CAVE"
 	Mapcolor 255 218 0
@@ -238,6 +264,7 @@ Lock 2 Hexen
 
 Lock 3 Hexen
 {
+	//$Title "Axe key"
 	KeyAxe
 	Message "$TXT_NEED_KEY_AXE"
 	Mapcolor 64 64 255
@@ -246,6 +273,7 @@ Lock 3 Hexen
 
 Lock 4 Hexen
 {
+	//$Title "Fire key"
 	KeyFire
 	Message "$TXT_NEED_KEY_FIRE"
 	Mapcolor 255 128 0
@@ -254,6 +282,7 @@ Lock 4 Hexen
 
 Lock 5 Hexen
 {
+	//$Title "Emerald key"
 	KeyEmerald
 	Message "$TXT_NEED_KEY_EMERALD"
 	Mapcolor 0 255 0
@@ -262,6 +291,7 @@ Lock 5 Hexen
 
 Lock 6 Hexen
 {
+	//$Title "Dungeon key"
 	KeyDungeon
 	Message "$TXT_NEED_KEY_DUNGEON"
 	Mapcolor 47 151 255
@@ -270,6 +300,7 @@ Lock 6 Hexen
 
 Lock 7 Hexen
 {
+	//$Title "Silver key"
 	KeySilver
 	Message "$TXT_NEED_KEY_SILVER"
 	Mapcolor 154 152 188
@@ -278,6 +309,7 @@ Lock 7 Hexen
 
 Lock 8 Hexen
 {
+	//$Title "Rusted key"
 	KeyRusted
 	Message "$TXT_NEED_KEY_RUSTED"
 	Mapcolor 156 76 0
@@ -286,6 +318,7 @@ Lock 8 Hexen
 
 Lock 9 Hexen
 {
+	//$Title "Horn key"
 	KeyHorn
 	Message "$TXT_NEED_KEY_HORN"
 	Mapcolor 255 218 0
@@ -294,6 +327,7 @@ Lock 9 Hexen
 
 Lock 10 Hexen
 {
+	//$Title "Swamp key"
 	KeySwamp
 	Message "$TXT_NEED_KEY_SWAMP"
 	Mapcolor 64 255 64
@@ -302,6 +336,7 @@ Lock 10 Hexen
 
 Lock 11 Hexen
 {
+	//$Title "Castle key"
 	KeyCastle
 	Message "$TXT_NEED_KEY_CASTLE"
 	Mapcolor 255 64 64
@@ -310,6 +345,7 @@ Lock 11 Hexen
 
 Lock 101 Hexen
 {
+	//$Title "All keys"
 	KeySteel
 	KeyCave
 	KeyAxe
@@ -326,6 +362,7 @@ Lock 101 Hexen
 
 Lock 229 Hexen
 {
+	//$Title "All keys"
 	KeySteel
 	KeyCave
 	KeyAxe
@@ -345,14 +382,16 @@ Lock 229 Hexen
 
 Lock 1 Strife
 {
+	//$Title "Base key"
 	BaseKey
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 
 
 Lock 2 Strife
 {
+	//$Title "Governor's key"
 	GovsKey
 	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
@@ -361,6 +400,7 @@ Lock 2 Strife
 
 Lock 3 Strife
 {
+	//$Title "Travel passcard"
 	Passcard
 	RemoteMessage "$TXT_NEED_PASSCARD"
 	Message "$TXT_NEED_PASSCARD_DOOR"
@@ -370,6 +410,7 @@ Lock 3 Strife
 
 Lock 4 Strife
 {
+	//$Title "ID badge"
 	IDBadge
 	Message "$TXT_NEED_IDCARD"
 	Mapcolor 255 128 0
@@ -378,6 +419,7 @@ Lock 4 Strife
 
 Lock 5 Strife
 {
+	//$Title "Prison key"
 	PrisonKey
 	Message "$TXT_NEED_PRISONKEY"
 	Mapcolor 0 255 0
@@ -386,6 +428,7 @@ Lock 5 Strife
 
 Lock 6 Strife
 {
+	//$Title "Severed hand"
 	SeveredHand
 	Message "$TXT_NEED_HANDPRINT"
 	Mapcolor 255 151 100
@@ -394,6 +437,7 @@ Lock 6 Strife
 
 Lock 7 Strife
 {
+	//$Title "Power key 1"
 	Power1Key
 	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
@@ -402,6 +446,7 @@ Lock 7 Strife
 
 Lock 8 Strife
 {
+	//$Title "Power key 2"
 	Power2Key
 	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
@@ -410,6 +455,7 @@ Lock 8 Strife
 
 Lock 9 Strife
 {
+	//$Title "Power key 3"
 	Power3Key
 	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
@@ -418,6 +464,7 @@ Lock 9 Strife
 
 Lock 10 Strife
 {
+	//$Title "Gold key"
 	GoldKey
 	Message "$TXT_NEED_GOLDKEY"
 	Mapcolor 255 200 0
@@ -426,6 +473,7 @@ Lock 10 Strife
 
 Lock 11 Strife
 {
+	//$Title "ID card"
 	IDCard
 	RemoteMessage "$TXT_NEED_IDBADGE"
 	Message "$TXT_NEED_IDBADGE_DOOR"
@@ -434,6 +482,7 @@ Lock 11 Strife
 
 Lock 12 Strife
 {
+	//$Title "Silver key"
 	SilverKey
 	Message "$TXT_NEED_SILVERKEY"
 	Mapcolor 150 150 150
@@ -441,6 +490,7 @@ Lock 12 Strife
 
 Lock 13 Strife
 {
+	//$Title "Oracle key"
 	OracleKey
 	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
@@ -448,6 +498,7 @@ Lock 13 Strife
 
 Lock 14 Strife
 {
+	//$Title "Military key"
 	MilitaryID
 	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
@@ -455,6 +506,7 @@ Lock 14 Strife
 
 Lock 15 Strife
 {
+	//$Title "Order key"
 	OrderKey
 	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
@@ -462,6 +514,7 @@ Lock 15 Strife
 
 Lock 16 Strife
 {
+	//$Title "Warehouse key"
 	WarehouseKey
 	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
@@ -469,6 +522,7 @@ Lock 16 Strife
 
 Lock 17 Strife
 {
+	//$Title "Brass key"
 	BrassKey
 	Message "$TXT_NEED_BRASSKEY"
 	Mapcolor 150 75 0
@@ -476,6 +530,7 @@ Lock 17 Strife
 
 Lock 18 Strife
 {
+	//$Title "Red crystal key"
 	RedCrystalKey
 	Message "$TXT_NEED_REDCRYSTAL"
 	Mapcolor 150 150 150
@@ -483,6 +538,7 @@ Lock 18 Strife
 
 Lock 19 Strife
 {
+	//$Title "Blue crystal key"
 	BlueCrystalKey
 	Message "$TXT_NEED_BLUECRYSTAL"
 	Mapcolor 150 150 150
@@ -490,6 +546,7 @@ Lock 19 Strife
 
 Lock 20 Strife
 {
+	//$Title "Chapel key"
 	ChapelKey
 	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
@@ -497,6 +554,7 @@ Lock 20 Strife
 
 Lock 21 Strife
 {
+	//$Title "Catacomb key"
 	CatacombKey
 	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
@@ -504,6 +562,7 @@ Lock 21 Strife
 
 Lock 22 Strife
 {
+	//$Title "Security key"
 	SecurityKey
 	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
@@ -511,6 +570,7 @@ Lock 22 Strife
 
 Lock 23 Strife
 {
+	//$Title "Core key"
 	CoreKey
 	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
@@ -518,6 +578,7 @@ Lock 23 Strife
 
 Lock 24 Strife
 {
+	//$Title "Mauler key"
 	MaulerKey
 	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
@@ -525,6 +586,7 @@ Lock 24 Strife
 
 Lock 25 Strife
 {
+	//$Title "Factory key"
 	FactoryKey
 	Message "$TXT_NEEDKEY"
  	Mapcolor 150 150 150
@@ -532,6 +594,7 @@ Lock 25 Strife
 
 Lock 26 Strife
 {
+	//$Title "Mine key"
 	MineKey
 	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
@@ -539,6 +602,7 @@ Lock 26 Strife
 
 Lock 27 Strife
 {
+	//$Title "New key 5"
 	NewKey5
 	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
@@ -546,6 +610,7 @@ Lock 27 Strife
 
 Lock 50 Strife
 {
+	//$Title "Prison key"
 	PrisonPass
 	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
@@ -553,6 +618,7 @@ Lock 50 Strife
 
 Lock 51 Strife
 {
+	//$Title "Oracle pass"
 	OraclePass
 	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
@@ -564,6 +630,7 @@ Lock 51 Strife
 
 Lock 1 Chex
 {
+	//$Title "Red key card"
 	ChexRedCard
 	Message "$PD_REDC"
 	RemoteMessage "$PD_REDCO"
@@ -573,6 +640,7 @@ Lock 1 Chex
 
 Lock 2 Chex
 {
+	//$Title "Blue key card"
 	ChexBlueCard
 	Message "$PD_BLUEC"
 	RemoteMessage "$PD_BLUECO"
@@ -582,6 +650,7 @@ Lock 2 Chex
 
 Lock 3 Chex
 {
+	//$Title "Yellow key card"
 	ChexYellowCard
 	Message "$PD_YELLOWC"
 	RemoteMessage "$PD_YELLOWCO"
@@ -590,6 +659,7 @@ Lock 3 Chex
 
 Lock 129 Chex
 {
+	//$Title "Red key"
 	ChexRedCard
 	Message "$PD_REDK"
 	RemoteMessage "$PD_REDO"
@@ -599,6 +669,7 @@ Lock 129 Chex
 
 Lock 130 Chex
 {
+	//$Title "Blue key"
 	ChexBlueCard
 	Message "$PD_BLUEK"
 	RemoteMessage "$PD_BLUEO"
@@ -608,6 +679,7 @@ Lock 130 Chex
 
 Lock 131 Chex
 {
+	//$Title "Yellow key"
 	ChexYellowCard
 	Message "$PD_YELLOWK"
 	RemoteMessage "$PD_YELLOWO"

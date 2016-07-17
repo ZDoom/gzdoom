@@ -688,14 +688,11 @@ void DAnimatedDoor::Tick ()
 //============================================================================
 
 DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay, FDoorAnimation *anim)
-	: DMovingCeiling (sec)
+	: DMovingCeiling (sec, false)
 {
 	double topdist;
 	FTextureID picnum;
 
-	// The DMovingCeiling constructor automatically sets up an interpolation for us.
-	// Stop it, since the ceiling is moving instantly here.
-	StopInterpolation();
 	m_DoorAnim = anim;
 
 	m_Line1 = line;

@@ -147,7 +147,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 			{
 				spit->special2 = 0;
 			}
-			else if (fabs(spit->Vel.X) > fabs(spit->Vel.Y))
+			else if (fabs(spit->Vel.Y) > fabs(spit->Vel.X))
 			{
 				spit->special2 = int((targ->Y() - self->Y()) / spit->Vel.Y);
 			}

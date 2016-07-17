@@ -216,15 +216,29 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 	}
 
 	// Always update the caller here in case we switched weapon
-	// or if the layer was being used by an inventory item before.
+	// or if the layer was being used by something else before.
 	pspr->Caller = newcaller;
 
 	if (newcaller != oldcaller)
-	{ // Only change the flags if this layer was created now or if we updated the caller.
+	{ // Only reset stuff if this layer was created now or if it was being used before.
 		if (layer >= PSP_TARGETCENTER)
 		{ // The targeter layers were affected by those.
-			pspr->Flags |= (PSPF_CVARFAST|PSPF_POWDOUBLE);
+			pspr->Flags = (PSPF_CVARFAST|PSPF_POWDOUBLE);
 		}
+		else
+		{
+			pspr->Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_CVARFAST|PSPF_POWDOUBLE);
+		}
+		if (layer == PSP_STRIFEHANDS)
+		{
+			// Some of the old hacks rely on this layer coming from the FireHands state.
+			// This is the ONLY time a psprite's state is actually null.
+			pspr->State = nullptr;
+			pspr->y = WEAPONTOP;
+		}
+
+		pspr->oldx = pspr->x;
+		pspr->oldy = pspr->y;
 	}
 
 	return pspr;
@@ -1071,9 +1085,8 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
 	}
 	if (player->playerstate == PST_DEAD)
 	{ // Player is dead, so don't bring up a pending weapon
-		psp->y = WEAPONBOTTOM;
-	
 		// Player is dead, so keep the weapon off screen
+		P_SetPsprite(player, PSP_FLASH, nullptr);
 		psp->SetState(nullptr);
 		return 0;
 	}
@@ -1157,41 +1170,39 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ClearOverlays)
 	PARAM_INT_OPT(stop) { stop = 0; }
 	PARAM_BOOL_OPT(safety) { safety = true; }
 
-	if (!self->player)
+	if (self->player == nullptr)
 		ACTION_RETURN_INT(0);
 
-	player_t *player = self->player;
 	if (!start && !stop)
 	{
 		start = INT_MIN;
 		stop = safety ? PSP_TARGETCENTER - 1 : INT_MAX;
 	}
 
-	int count = 0;
-	DPSprite *pspr = player->psprites;
-	while (pspr != nullptr)
-	{
-		int id = pspr->GetID();
+	unsigned int count = 0;
+	int id;
 
-		//Do not wipe out layer 0. Ever.
-		if (!id || id < start)
+	for (DPSprite *pspr = self->player->psprites; pspr != nullptr; pspr = pspr->GetNext())
+	{
+		id = pspr->GetID();
+
+		if (id < start || id == 0)
 			continue;
-		if (id > stop)
+		else if (id > stop)
 			break;
 
 		if (safety)
 		{
 			if (id >= PSP_TARGETCENTER)
 				break;
-			else if ((id >= PSP_STRIFEHANDS && id <= PSP_WEAPON) || (id == PSP_FLASH))
+			else if (id == PSP_STRIFEHANDS || id == PSP_WEAPON || id == PSP_FLASH)
 				continue;
 		}
 
-		// [MC]Don't affect non-hardcoded layers unless it's really desired.
 		pspr->SetState(nullptr);
 		count++;
-		pspr = pspr->GetNext();
 	}
+
 	ACTION_RETURN_INT(count);
 }
 

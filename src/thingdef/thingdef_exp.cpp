@@ -331,11 +331,11 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 	}
 	else if (sc.CheckToken(TK_True))
 	{
-		return new FxConstant(1, scpos);
+		return new FxConstant(true, scpos);
 	}
 	else if (sc.CheckToken(TK_False))
 	{
-		return new FxConstant(0, scpos);
+		return new FxConstant(false, scpos);
 	}
 	else if (sc.CheckToken(TK_IntConst))
 	{

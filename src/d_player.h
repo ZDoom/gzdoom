@@ -532,7 +532,10 @@ public:
 	void TickPSprites();
 	void DestroyPSprites();
 	DPSprite *FindPSprite(int layer);
-	DPSprite *GetPSprite(PSPLayers layer); // Used ONLY for compatibility with the old hardcoded layers.
+	// Used ONLY for compatibility with the old hardcoded layers.
+	// Make sure that a state is properly set after calling this unless
+	// you are 100% sure the context already implies the layer exists.
+	DPSprite *GetPSprite(PSPLayers layer);
 };
 
 // Bookkeeping on players - state.

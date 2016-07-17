@@ -177,38 +177,6 @@ FxExpression *FxExpression::Resolve(FCompileContext &ctx)
 	return this;
 }
 
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FxExpression *FxExpression::ResolveAsBoolean(FCompileContext &ctx)
-{
-	///FIXME: Use an actual boolean type
-	FxExpression *x = Resolve(ctx);
-	if (x != NULL)
-	{
-		if (x->ValueType->GetRegType() == REGT_INT)
-		{
-			x->ValueType = TypeSInt32;
-		}
-		else if (x->ValueType == TypeState)
-		{
-			x = new FxCastStateToBool(x);
-			x = x->Resolve(ctx);
-		}
-		else
-		{
-			ScriptPosition.Message(MSG_ERROR, "Not an integral type");
-			delete this;
-			return NULL;
-		}
-	}
-	return x;
-}
-
 //==========================================================================
 //
 //
@@ -319,6 +287,104 @@ ExpEmit FxConstant::Emit(VMFunctionBuilder *build)
 		out.RegNum = 0;
 	}
 	return out;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxBoolCast::FxBoolCast(FxExpression *x)
+	: FxExpression(x->ScriptPosition)
+{
+	basex = x;
+	ValueType = TypeBool;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxBoolCast::~FxBoolCast()
+{
+	SAFE_DELETE(basex);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxBoolCast::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(basex, ctx);
+
+	if (basex->ValueType == TypeBool)
+	{
+		FxExpression *x = basex;
+		basex = nullptr;
+		delete this;
+		return x;
+	}
+	else if (basex->ValueType->GetRegType() == REGT_INT || basex->ValueType->GetRegType() == REGT_FLOAT || basex->ValueType->GetRegType() == REGT_POINTER)
+	{
+		if (basex->isConstant())
+		{
+			assert(basex->ValueType != TypeState && "We shouldn't be able to generate a constant state ref");
+
+			ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
+			FxExpression *x = new FxConstant(constval.GetBool(), ScriptPosition);
+			delete this;
+			return x;
+		}
+		return this;
+	}
+	ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+	delete this;
+	return nullptr;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxBoolCast::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit from = basex->Emit(build);
+	assert(!from.Konst);
+	assert(basex->ValueType->GetRegType() == REGT_INT || basex->ValueType->GetRegType() == REGT_FLOAT || basex->ValueType->GetRegType() == REGT_POINTER);
+	ExpEmit to(build, REGT_INT);
+	from.Free(build);
+
+	// Preload result with 0.
+	build->Emit(OP_LI, to.RegNum, 0);
+
+	// Check source against 0.
+	if (from.RegType == REGT_INT)
+	{
+		build->Emit(OP_EQ_R, 1, from.RegNum, to.RegNum);
+	}
+	else if (from.RegType == REGT_FLOAT)
+	{
+		build->Emit(OP_EQF_K, 1, from.RegNum, build->GetConstantFloat(0.));
+	}
+	else if (from.RegNum == REGT_POINTER)
+	{
+		build->Emit(OP_EQA_K, 1, from.RegNum, build->GetConstantAddress(nullptr, ATAG_GENERIC));
+	}
+	build->Emit(OP_JMP, 1);
+
+	// Reload result with 1 if the comparison fell through.
+	build->Emit(OP_LI, to.RegNum, 1);
+
+	return to;
 }
 
 //==========================================================================
@@ -495,67 +561,6 @@ ExpEmit FxFloatCast::Emit(VMFunctionBuilder *build)
 	from.Free(build);
 	ExpEmit to(build, REGT_FLOAT);
 	build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_I2F);
-	return to;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FxCastStateToBool::FxCastStateToBool(FxExpression *x)
-: FxExpression(x->ScriptPosition)
-{
-	basex = x;
-	ValueType = TypeSInt32;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FxCastStateToBool::~FxCastStateToBool()
-{
-	SAFE_DELETE(basex);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FxExpression *FxCastStateToBool::Resolve(FCompileContext &ctx)
-{
-	CHECKRESOLVED();
-	SAFE_RESOLVE(basex, ctx);
-
-	assert(basex->ValueType == TypeState);
-	assert(!basex->isConstant() && "We shouldn't be able to generate a constant state ref");
-	return this;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-ExpEmit FxCastStateToBool::Emit(VMFunctionBuilder *build)
-{
-	ExpEmit from = basex->Emit(build);
-	assert(from.RegType == REGT_POINTER);
-	from.Free(build);
-	ExpEmit to(build, REGT_INT);
-
-	// If from is NULL, produce 0. Otherwise, produce 1.
-	build->Emit(OP_LI, to.RegNum, 0);
-	build->Emit(OP_EQA_K, 1, from.RegNum, build->GetConstantAddress(NULL, ATAG_GENERIC));
-	build->Emit(OP_JMP, 1);
-	build->Emit(OP_LI, to.RegNum, 1);
 	return to;
 }
 
@@ -765,10 +770,9 @@ FxExpression *FxUnaryNotBitwise::Resolve(FCompileContext& ctx)
 
 ExpEmit FxUnaryNotBitwise::Emit(VMFunctionBuilder *build)
 {
-	assert(ValueType == Operand->ValueType);
-	assert(ValueType == TypeSInt32);
+	assert(Operand->ValueType->GetRegType() == REGT_INT);
 	ExpEmit from = Operand->Emit(build);
-	assert(from.Konst == 0);
+	assert(!from.Konst);
 	// Do it in-place.
 	build->Emit(OP_NOT, from.RegNum, from.RegNum, 0);
 	return from;
@@ -806,33 +810,23 @@ FxUnaryNotBoolean::~FxUnaryNotBoolean()
 FxExpression *FxUnaryNotBoolean::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
-	if (Operand)
+	SAFE_RESOLVE(Operand, ctx);
+
+	if (Operand->ValueType != TypeBool)
 	{
-		Operand = Operand->ResolveAsBoolean(ctx);
-	}
-	if (!Operand)
-	{
-		delete this;
-		return NULL;
+		Operand = new FxBoolCast(Operand);
+		SAFE_RESOLVE(Operand, ctx);
 	}
 
-	if (Operand->IsNumeric() || Operand->IsPointer())
+	if (Operand->isConstant())
 	{
-		if (Operand->isConstant())
-		{
-			bool result = !static_cast<FxConstant *>(Operand)->GetValue().GetBool();
-			FxExpression *e = new FxConstant(result, ScriptPosition);
-			delete this;
-			return e;
-		}
-	}
-	else
-	{
-		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		bool result = !static_cast<FxConstant *>(Operand)->GetValue().GetBool();
+		FxExpression *e = new FxConstant(result, ScriptPosition);
 		delete this;
-		return NULL;
+		return e;
 	}
-	ValueType = TypeSInt32;
+
+	ValueType = TypeBool;
 	return this;
 }
 
@@ -844,32 +838,14 @@ FxExpression *FxUnaryNotBoolean::Resolve(FCompileContext& ctx)
 
 ExpEmit FxUnaryNotBoolean::Emit(VMFunctionBuilder *build)
 {
+	assert(Operand->ValueType == ValueType);
+	assert(ValueType == TypeBool);
 	ExpEmit from = Operand->Emit(build);
 	assert(!from.Konst);
-	ExpEmit to(build, REGT_INT);
-	from.Free(build);
-
-	// Preload result with 0.
-	build->Emit(OP_LI, to.RegNum, 0, 0);
-
-	// Check source against 0.
-	if (from.RegType == REGT_INT)
-	{
-		build->Emit(OP_EQ_R, 0, from.RegNum, to.RegNum);
-	}
-	else if (from.RegType == REGT_FLOAT)
-	{
-		build->Emit(OP_EQF_K, 0, from.RegNum, build->GetConstantFloat(0));
-	}
-	else if (from.RegNum == REGT_POINTER)
-	{
-		build->Emit(OP_EQA_K, 0, from.RegNum, build->GetConstantAddress(NULL, ATAG_GENERIC));
-	}
-	build->Emit(OP_JMP, 1);
-
-	// Reload result with 1 if the comparison fell through.
-	build->Emit(OP_LI, to.RegNum, 1);
-	return to;
+	// ~x & 1
+	build->Emit(OP_NOT, from.RegNum, from.RegNum, 0);
+	build->Emit(OP_AND_RK, from.RegNum, from.RegNum, build->GetConstantInt(1));
+	return from;
 }
 
 //==========================================================================
@@ -914,6 +890,10 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 		return false;
 	}
 
+	if (left->ValueType == TypeBool && right->ValueType == TypeBool)
+	{
+		ValueType = TypeBool;
+	}
 	if (left->ValueType->GetRegType() == REGT_INT && right->ValueType->GetRegType() == REGT_INT)
 	{
 		ValueType = TypeSInt32;
@@ -1276,7 +1256,7 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 		return e;
 	}
 	Promote(ctx);
-	ValueType = TypeSInt32;
+	ValueType = TypeBool;
 	return this;
 }
 
@@ -1327,7 +1307,7 @@ ExpEmit FxCompareRel::Emit(VMFunctionBuilder *build)
 		op1.Free(build);
 	}
 
-	// See FxUnaryNotBoolean for comments, since it's the same thing.
+	// See FxBoolCast for comments, since it's the same thing.
 	build->Emit(OP_LI, to.RegNum, 0, 0);
 	build->Emit(instr, check, op1.RegNum, op2.RegNum);
 	build->Emit(OP_JMP, 1);
@@ -1392,7 +1372,7 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 		return e;
 	}
 	Promote(ctx);
-	ValueType = TypeSInt32;
+	ValueType = TypeBool;
 	return this;
 }
 
@@ -1600,7 +1580,7 @@ FxBinaryLogical::FxBinaryLogical(int o, FxExpression *l, FxExpression *r)
 	Operator=o;
 	left=l;
 	right=r;
-	ValueType = TypeSInt32;
+	ValueType = TypeBool;
 }
 
 //==========================================================================
@@ -1624,16 +1604,22 @@ FxBinaryLogical::~FxBinaryLogical()
 FxExpression *FxBinaryLogical::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
-	if (left) left = left->ResolveAsBoolean(ctx);
-	if (right) right = right->ResolveAsBoolean(ctx);
-	if (!left || !right)
+	RESOLVE(left, ctx);
+	RESOLVE(right, ctx);
+	ABORT(right && left);
+
+	if (left->ValueType != TypeBool)
 	{
-		delete this;
-		return NULL;
+		left = new FxBoolCast(left);
+		SAFE_RESOLVE(left, ctx);
+	}
+	if (right->ValueType != TypeBool)
+	{
+		right = new FxBoolCast(right);
+		SAFE_RESOLVE(right, ctx);
 	}
 
 	int b_left=-1, b_right=-1;
-
 	if (left->isConstant()) b_left = static_cast<FxConstant *>(left)->GetValue().GetBool();
 	if (right->isConstant()) b_right = static_cast<FxConstant *>(right)->GetValue().GetBool();
 
@@ -1643,13 +1629,13 @@ FxExpression *FxBinaryLogical::Resolve(FCompileContext& ctx)
 	{
 		if (b_left==0 || b_right==0)
 		{
-			FxExpression *x = new FxConstant(0, ScriptPosition);
+			FxExpression *x = new FxConstant(true, ScriptPosition);
 			delete this;
 			return x;
 		}
 		else if (b_left==1 && b_right==1)
 		{
-			FxExpression *x = new FxConstant(1, ScriptPosition);
+			FxExpression *x = new FxConstant(false, ScriptPosition);
 			delete this;
 			return x;
 		}
@@ -1672,13 +1658,13 @@ FxExpression *FxBinaryLogical::Resolve(FCompileContext& ctx)
 	{
 		if (b_left==1 || b_right==1)
 		{
-			FxExpression *x = new FxConstant(1, ScriptPosition);
+			FxExpression *x = new FxConstant(true, ScriptPosition);
 			delete this;
 			return x;
 		}
 		if (b_left==0 && b_right==0)
 		{
-			FxExpression *x = new FxConstant(0, ScriptPosition);
+			FxExpression *x = new FxConstant(false, ScriptPosition);
 			delete this;
 			return x;
 		}
@@ -1696,14 +1682,6 @@ FxExpression *FxBinaryLogical::Resolve(FCompileContext& ctx)
 			delete this;
 			return x;
 		}
-	}
-	if (left->ValueType->GetRegType() != REGT_INT)
-	{
-		left = new FxIntCast(left);
-	}
-	if (right->ValueType->GetRegType() != REGT_INT)
-	{
-		right = new FxIntCast(right);
 	}
 	return this;
 }
@@ -1804,16 +1782,24 @@ FxConditional::~FxConditional()
 FxExpression *FxConditional::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
-	if (condition) condition = condition->ResolveAsBoolean(ctx);
+	RESOLVE(condition, ctx);
 	RESOLVE(truex, ctx);
 	RESOLVE(falsex, ctx);
 	ABORT(condition && truex && falsex);
 
-	if (truex->ValueType->GetRegType() == REGT_INT && falsex->ValueType->GetRegType() == REGT_INT)
+	if (truex->ValueType == TypeBool && falsex->ValueType == TypeBool)
+		ValueType = TypeBool;
+	else if (truex->ValueType->GetRegType() == REGT_INT && falsex->ValueType->GetRegType() == REGT_INT)
 		ValueType = TypeSInt32;
 	else if (truex->IsNumeric() && falsex->IsNumeric())
 		ValueType = TypeFloat64;
 	//else if (truex->ValueType != falsex->ValueType)
+
+	if (condition->ValueType != TypeBool)
+	{
+		condition = new FxBoolCast(condition);
+		SAFE_RESOLVE(condition, ctx);
+	}
 
 	if (condition->isConstant())
 	{
@@ -1852,6 +1838,7 @@ FxExpression *FxConditional::Resolve(FCompileContext& ctx)
 
 ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 {
+	size_t truejump, falsejump;
 	ExpEmit out;
 
 	// The true and false expressions ought to be assigned to the
@@ -1862,7 +1849,7 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 
 	// Test condition.
 	build->Emit(OP_EQ_K, 1, cond.RegNum, build->GetConstantInt(0));
-	size_t patchspot = build->Emit(OP_JMP, 0);
+	falsejump = build->Emit(OP_JMP, 0);
 
 	// Evaluate true expression.
 	if (truex->isConstant() && truex->ValueType->GetRegType() == REGT_INT)
@@ -1886,9 +1873,11 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 			out = trueop;
 		}
 	}
+	// Make sure to skip the false path.
+	truejump = build->Emit(OP_JMP, 0);
 
 	// Evaluate false expression.
-	build->BackpatchToHere(patchspot);
+	build->BackpatchToHere(falsejump);
 	if (falsex->isConstant() && falsex->ValueType->GetRegType() == REGT_INT)
 	{
 		build->EmitLoadInt(out.RegNum, static_cast<FxConstant *>(falsex)->GetValue().GetInt());
@@ -1918,6 +1907,7 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 			}
 		}
 	}
+	build->BackpatchToHere(truejump);
 
 	return out;
 }
@@ -3735,23 +3725,32 @@ FxIfStatement::~FxIfStatement()
 FxExpression *FxIfStatement::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
-	if (WhenTrue == NULL && WhenFalse == NULL)
+
+	if (WhenTrue == nullptr && WhenFalse == nullptr)
 	{ // We don't do anything either way, so disappear
 		delete this;
-		return NULL;
+		return nullptr;
 	}
-	Condition = Condition->ResolveAsBoolean(ctx);
-	ABORT(Condition);
-	if (WhenTrue != NULL)
+
+	SAFE_RESOLVE(Condition, ctx);
+
+	if (Condition->ValueType != TypeBool)
+	{
+		Condition = new FxBoolCast(Condition);
+		SAFE_RESOLVE(Condition, ctx);
+	}
+
+	if (WhenTrue != nullptr)
 	{
 		WhenTrue = WhenTrue->Resolve(ctx);
 		ABORT(WhenTrue);
 	}
-	if (WhenFalse != NULL)
+	if (WhenFalse != nullptr)
 	{
 		WhenFalse = WhenFalse->Resolve(ctx);
 		ABORT(WhenFalse);
 	}
+
 	ValueType = TypeVoid;
 
 	if (Condition->isConstant())
@@ -3766,6 +3765,7 @@ FxExpression *FxIfStatement::Resolve(FCompileContext &ctx)
 		delete this;
 		return e;
 	}
+
 	return this;
 }
 

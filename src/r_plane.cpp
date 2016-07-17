@@ -1677,7 +1677,7 @@ void R_DrawTiltedPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 	// the textures a constant size across the surface's plane instead.
 	cosine = cos(planeang), sine = sin(planeang);
 	m[1] = pl->height.ZatPoint(ViewPos.X + yscale * sine, ViewPos.Y + yscale * cosine) - zeroheight;
-	n[1] = pl->height.ZatPoint(ViewPos.X - xscale * cosine, ViewPos.Y + xscale * sine) - zeroheight;
+	n[1] = -(pl->height.ZatPoint(ViewPos.X - xscale * cosine, ViewPos.Y + xscale * sine) - zeroheight);
 
 	plane_su = p ^ m;
 	plane_sv = p ^ n;

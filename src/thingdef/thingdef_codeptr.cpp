@@ -6145,7 +6145,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetDeathScriptArg)
 	PARAM_INT(value);
 
 	// Set the value of the specified arg
-	if (pos < 3)
+	if (pos < 4)
 	{
 		self->DeathScriptArgs[pos] = value;
 	}
@@ -6166,7 +6166,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetDefaultDeathScriptArg)
 	PARAM_BOOL(clear);
 
 	// Set the value of the specified arg
-	if (pos < 3)
+	if (pos < 4)
 	{
 		if (!clear)
 		{

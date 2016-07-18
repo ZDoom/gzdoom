@@ -174,7 +174,7 @@ struct gameinfo_t
 	FGIFont mStatscreenEnteringFont;
 	bool norandomplayerclass;
 	FName DefaultDeathScript;
-	int DefaultDeathScriptArgs[3];
+	int DefaultDeathScriptArgs[4];
 
 	const char *GetFinalePage(unsigned int num) const;
 };

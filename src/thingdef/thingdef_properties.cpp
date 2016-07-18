@@ -1548,12 +1548,13 @@ DEFINE_PROPERTY(distancecheck, S, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(deathscript, Siii, Actor)
+DEFINE_PROPERTY(deathscript, Siiii, Actor)
 {
 	PROP_STRING_PARM(sname, 0);
 	PROP_INT_PARM(arg1, 1);
 	PROP_INT_PARM(arg2, 2);
 	PROP_INT_PARM(arg3, 3);
+	PROP_INT_PARM(arg4, 4);
 	
 	if (!stricmp(sname, "none"))
 	{
@@ -1571,6 +1572,7 @@ DEFINE_PROPERTY(deathscript, Siii, Actor)
 		defaults->DeathScriptArgs[0] = arg1;
 		defaults->DeathScriptArgs[1] = arg2;
 		defaults->DeathScriptArgs[2] = arg3;
+		defaults->DeathScriptArgs[3] = arg4;
 		defaults->BlockDefaultDeathScript = true;
 	}
 }

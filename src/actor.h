@@ -1149,8 +1149,8 @@ public:
 	int RipLevelMax;
 
 	FNameNoInit DeathScript;
-	int DeathScriptArgs[3];
-	int DefaultDeathScriptArgOverrides[3][2];
+	int DeathScriptArgs[4];
+	int DefaultDeathScriptArgOverrides[4][2];
 	bool BlockDefaultDeathScript;
 
 	FState *SpawnState;

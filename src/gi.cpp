@@ -291,10 +291,10 @@ void FMapInfoParser::ParseGameInfo()
 		}
 		else if (nextKey.CompareNoCase("defaultdeathscript") == 0)
 		{
-			// defaultdeathscript = {script, arg1, arg2, arg3};
+			// defaultdeathscript = {script, arg1, arg2, arg3, arg4};
 			sc.MustGetToken(TK_StringConst);
 			gameinfo.DefaultDeathScript = sc.String;
-			for (int i = 0;i < 3;i++)
+			for (int i = 0;i < 4;i++)
 			{
 				sc.MustGetToken(',');
 				sc.MustGetToken(TK_IntConst);

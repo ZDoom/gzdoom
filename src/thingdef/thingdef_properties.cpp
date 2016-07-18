@@ -1569,11 +1569,27 @@ DEFINE_PROPERTY(deathscript, Siiii, Actor)
 	else
 	{
 		defaults->DeathScript = sname;
-		defaults->DeathScriptArgs[0] = arg1;
-		defaults->DeathScriptArgs[1] = arg2;
-		defaults->DeathScriptArgs[2] = arg3;
-		defaults->DeathScriptArgs[3] = arg4;
 		defaults->BlockDefaultDeathScript = true;
+
+		if (PROP_PARM_COUNT >= 2)
+		{
+			defaults->DeathScriptArgs[0] = arg1;
+		}
+		
+		if (PROP_PARM_COUNT >= 3)
+		{
+			defaults->DeathScriptArgs[1] = arg2;
+		}
+		
+		if (PROP_PARM_COUNT >= 4)
+		{
+			defaults->DeathScriptArgs[2] = arg3;
+		}
+
+		if (PROP_PARM_COUNT >= 5)
+		{
+			defaults->DeathScriptArgs[3] = arg4;
+		}
 	}
 }
 

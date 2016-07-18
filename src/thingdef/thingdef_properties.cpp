@@ -1547,6 +1547,36 @@ DEFINE_PROPERTY(distancecheck, S, Actor)
 
 //==========================================================================
 //
+//==========================================================================
+DEFINE_PROPERTY(deathscript, Siii, Actor)
+{
+	PROP_STRING_PARM(sname, 0);
+	PROP_INT_PARM(arg1, 1);
+	PROP_INT_PARM(arg2, 2);
+	PROP_INT_PARM(arg3, 3);
+	
+	if (!stricmp(sname, "none"))
+	{
+		defaults->DeathScript = NULL;
+		defaults->BlockDefaultDeathScript = true;
+	}
+	else if (!stricmp(sname, "default") || *sname == 0)
+	{
+		defaults->DeathScript = NULL;
+		defaults->BlockDefaultDeathScript = false;
+	}
+	else
+	{
+		defaults->DeathScript = sname;
+		defaults->DeathScriptArgs[0] = arg1;
+		defaults->DeathScriptArgs[1] = arg2;
+		defaults->DeathScriptArgs[2] = arg3;
+		defaults->BlockDefaultDeathScript = true;
+	}
+}
+
+//==========================================================================
+//
 // Special inventory properties
 //
 //==========================================================================

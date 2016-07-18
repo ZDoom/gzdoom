@@ -6104,6 +6104,85 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPainThreshold)
 
 //===========================================================================
 //
+// A_SetDeathScript
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetDeathScript)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(sname);
+
+	if (!stricmp(sname, "none"))
+	{
+		self->DeathScript = NULL;
+		self->BlockDefaultDeathScript = true;
+	}
+	else if (!stricmp(sname, "default") || *sname == 0)
+	{
+		self->DeathScript = NULL;
+		self->BlockDefaultDeathScript = false;
+	}
+	else
+	{
+		self->DeathScript = sname;
+		self->BlockDefaultDeathScript = true;
+	}
+
+	return 0;
+}
+
+//===========================================================================
+//
+// A_SetDeathScriptArg
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetDeathScriptArg)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(pos);
+	PARAM_INT(value);
+
+	// Set the value of the specified arg
+	if (pos < 3)
+	{
+		self->DeathScriptArgs[pos] = value;
+	}
+	return 0;
+}
+
+//===========================================================================
+//
+// A_SetDefaultDeathScriptArg
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetDefaultDeathScriptArg)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(pos);
+	PARAM_INT(value);
+	PARAM_BOOL(clear);
+
+	// Set the value of the specified arg
+	if (pos < 3)
+	{
+		if (!clear)
+		{
+			self->DefaultDeathScriptArgOverrides[pos][0] = value;
+			self->DefaultDeathScriptArgOverrides[pos][1] = 1;
+		}
+		else
+		{
+			self->DefaultDeathScriptArgOverrides[pos][1] = 0;
+		}
+	}
+	return 0;
+}
+
+//===========================================================================
+//
 // Common A_Damage handler
 //
 // A_Damage* (int amount, str damagetype, int flags, str filter, str species)

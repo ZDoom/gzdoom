@@ -422,6 +422,33 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 		P_ActivateThingSpecial(this, source, true); 
 	}
 
+	if (!player)
+	{
+		if (DeathScript) // [JM] If death script is defined, execute.
+		{
+			P_ExecuteSpecial(ACS_ExecuteAlways, NULL, this, false, -DeathScript, 0, DeathScriptArgs[0], DeathScriptArgs[1], DeathScriptArgs[2]);
+		}
+		
+		// [JM] If not blocked, or forced with a flag, fire the default death script.
+		if (((flags7 & MF7_BOTHDEATHSCRIPTS) || !BlockDefaultDeathScript) && gameinfo.DefaultDeathScript)
+		{
+			int DSArgs[3];
+			// [JM] Check if default args have been overridden by an actor.
+			for (int i = 0; i < 3; i++)
+			{
+				if (DefaultDeathScriptArgOverrides[i][1] != 0)
+				{
+					DSArgs[i] = DefaultDeathScriptArgOverrides[i][0];
+				}
+				else
+				{
+					DSArgs[i] = gameinfo.DefaultDeathScriptArgs[i];
+				}
+			}
+			P_ExecuteSpecial(ACS_ExecuteAlways, NULL, this, false, -gameinfo.DefaultDeathScript, 0, DSArgs[0], DSArgs[1], DSArgs[2]);
+		}
+	}
+
 	if (CountsAsKill())
 		level.killed_monsters++;
 		

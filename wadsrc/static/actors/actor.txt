@@ -339,6 +339,10 @@ ACTOR Actor native //: Thinker
 	action native A_WeaponOffset(float wx = 0, float wy = 32, int flags = 0);
 	action native A_OverlayOffset(int layer = PSP_WEAPON, float wx = 0, float wy = 32, int flags = 0);
 	action native A_OverlayFlags(int layer, int flags, bool set);
+	
+	native void A_SetDeathScript(name script);
+	native void A_SetDeathScriptArg(int pos, int value);
+	native void A_SetDefaultDeathScriptArg(int pos, int value, bool clear = false);
 
 	native int ACS_NamedExecute(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0);
 	native int ACS_NamedSuspend(name script, int mapnum=0);

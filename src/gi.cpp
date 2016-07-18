@@ -289,6 +289,18 @@ void FMapInfoParser::ParseGameInfo()
 			}
 			else gameinfo.mCheatMapArrow = "";
 		}
+		else if (nextKey.CompareNoCase("defaultdeathscript") == 0)
+		{
+			// defaultdeathscript = {script, arg1, arg2, arg3};
+			sc.MustGetToken(TK_StringConst);
+			gameinfo.DefaultDeathScript = sc.String;
+			for (int i = 0;i < 3;i++)
+			{
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_IntConst);
+				gameinfo.DefaultDeathScriptArgs[i] = sc.Number;
+			}
+		}
 		// Insert valid keys here.
 		GAMEINFOKEY_STRING(mCheatKey, "cheatKey")
 		GAMEINFOKEY_STRING(mEasyKey, "easyKey")

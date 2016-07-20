@@ -348,7 +348,7 @@ void cht_DoCheat (player_t *player, int cheat)
 					P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->GetUpState());
 				}
 
-				if (player->morphTics > 0)
+				if (player->morphTics)
 				{
 					P_UndoPlayerMorph(player, player);
 				}

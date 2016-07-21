@@ -270,7 +270,7 @@ void GLSprite::Draw(int pass)
 
 			const bool drawBillboardFacingCamera = gl_billboard_faces_camera;
 			// [Nash] has +ROLLSPRITE
-			const bool drawRollSpriteActor = (actor != NULL && actor->renderflags & RF_ROLLSPRITE);
+			const bool drawRollSpriteActor = (actor != nullptr && actor->renderflags & RF_ROLLSPRITE);
 			gl_RenderState.Apply();
 
 			FVector3 v1;
@@ -280,10 +280,10 @@ void GLSprite::Draw(int pass)
 
 			// [fgsfds] check sprite type mask
 			DWORD spritetype = (DWORD)-1;
-			if (actor != NULL) spritetype = actor->renderflags & RF_SPRITETYPEMASK;
+			if (actor != nullptr) spritetype = actor->renderflags & RF_SPRITETYPEMASK;
 			
 			// [Nash] is a flat sprite
-			const bool isFlatSprite = (actor != NULL) && (spritetype == RF_WALLSPRITE || spritetype == RF_FLATSPRITE);
+			const bool isFlatSprite = (actor != nullptr) && (spritetype == RF_WALLSPRITE || spritetype == RF_FLATSPRITE);
 			const bool dontFlip = (actor != nullptr) && (actor->renderflags & RF_DONTFLIP);
 			const bool useOffsets = (actor != nullptr) && !(actor->renderflags & RF_ROLLCENTER);
 			
@@ -295,8 +295,8 @@ void GLSprite::Draw(int pass)
 				float ycenter = (y1 + y2)*0.5;
 				float zcenter = (z1 + z2)*0.5;
 				float xx = -xcenter + x;
-				float yy = -zcenter + z;
-				float zz = -ycenter + y;
+				float zz = -zcenter + z;
+				float yy = -ycenter + y;
 				Matrix3x4 mat;
 				mat.MakeIdentity();
 				mat.Translate(xcenter, zcenter, ycenter); // move to sprite center
@@ -336,20 +336,22 @@ void GLSprite::Draw(int pass)
 				// Here we need some form of priority in order to work.
 				if (spritetype == RF_FLATSPRITE)
 				{
-					DVector3 diff = actor->Vec3To(GLRenderer->mViewActor);
+					float pitchDegrees = -actor->Angles.Pitch.Degrees;
+					DVector3 apos = { x, y, z };
+					DVector3 diff = ViewPos - apos;
 					DAngle angto = diff.Angle();
+
 					angto = deltaangle(actor->Angles.Yaw, angto);
 
-					float pitchDegrees = -actor->Angles.Pitch.Degrees;
 					bool noFlipSprite = (!dontFlip || (fabs(angto) < 90.));
 					mat.Rotate(0, 1, 0, (noFlipSprite) ? 0 : 180);
 
 					mat.Rotate(-yawvecY, 0, yawvecX, (noFlipSprite) ? -pitchDegrees : pitchDegrees);
 					if (drawRollSpriteActor)
 					{
-						if (useOffsets)	mat.Translate(xx, yy, zz);
+						if (useOffsets)	mat.Translate(xx, zz, yy);
 						mat.Rotate(yawvecX, 0, yawvecY, (noFlipSprite) ? -rollDegrees : rollDegrees);
-						if (useOffsets) mat.Translate(-xx, -yy, -zz);
+						if (useOffsets) mat.Translate(-xx, -zz, -yy);
 					}
 				}
 				// [fgsfds] Rotate the sprite about the sight vector (roll) 
@@ -358,20 +360,20 @@ void GLSprite::Draw(int pass)
 					mat.Rotate(0, 1, 0, 0);
 					if (drawRollSpriteActor)
 					{
-						if (useOffsets)	mat.Translate(xx, yy, zz);
+						if (useOffsets)	mat.Translate(xx, zz, yy);
 						mat.Rotate(yawvecX, 0, yawvecY, rollDegrees);
-						if (useOffsets) mat.Translate(-xx, -yy, -zz);
+						if (useOffsets) mat.Translate(-xx, -zz, -yy);
 					}
 				}
 				else if (drawRollSpriteActor)
 				{
-					if (useOffsets) mat.Translate(xx, yy, zz);
+					if (useOffsets) mat.Translate(xx, zz, yy);
 					if (drawWithXYBillboard)
 					{
 						mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch.Degrees);
 					}
 					mat.Rotate(cos(angleRad), 0, sin(angleRad), rollDegrees);
-					if (useOffsets) mat.Translate(-xx, -yy, -zz);
+					if (useOffsets) mat.Translate(-xx, -zz, -yy);
 				}
 				
 				// apply the transform

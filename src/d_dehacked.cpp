@@ -921,7 +921,7 @@ static int PatchThing (int thingy)
 		{
 			if (stricmp (Line1, "Speed") == 0)
 			{
-				info->Speed = val;	// handle fixed point later.
+				info->Speed = (signed long)val;	// handle fixed point later.
 			}
 			else if (stricmp (Line1, "Width") == 0)
 			{

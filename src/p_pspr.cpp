@@ -1085,9 +1085,8 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
 	}
 	if (player->playerstate == PST_DEAD)
 	{ // Player is dead, so don't bring up a pending weapon
-		psp->y = WEAPONBOTTOM;
-	
 		// Player is dead, so keep the weapon off screen
+		P_SetPsprite(player, PSP_FLASH, nullptr);
 		psp->SetState(nullptr);
 		return 0;
 	}
@@ -1171,50 +1170,39 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ClearOverlays)
 	PARAM_INT_OPT(stop) { stop = 0; }
 	PARAM_BOOL_OPT(safety) { safety = true; }
 
-	if (!self->player)
+	if (self->player == nullptr)
 		ACTION_RETURN_INT(0);
 
-	player_t *player = self->player;
 	if (!start && !stop)
 	{
 		start = INT_MIN;
 		stop = safety ? PSP_TARGETCENTER - 1 : INT_MAX;
 	}
 
-	int count = 0;
-	DPSprite *pspr = player->psprites;
-	int startID = (pspr != nullptr) ? pspr->GetID() : start;
-	bool first = true;
-	while (pspr != nullptr)
-	{
-		if (pspr->GetID() == startID)
-		{
-			if (first)
-				first = false;
-			else
-				break;
-		}
-		int id = pspr->GetID();
+	unsigned int count = 0;
+	int id;
 
-		//Do not wipe out layer 0. Ever.
-		if (!id || id < start)
+	for (DPSprite *pspr = self->player->psprites; pspr != nullptr; pspr = pspr->GetNext())
+	{
+		id = pspr->GetID();
+
+		if (id < start || id == 0)
 			continue;
-		if (id > stop)
+		else if (id > stop)
 			break;
 
 		if (safety)
 		{
 			if (id >= PSP_TARGETCENTER)
 				break;
-			else if ((id >= PSP_STRIFEHANDS && id <= PSP_WEAPON) || (id == PSP_FLASH))
+			else if (id == PSP_STRIFEHANDS || id == PSP_WEAPON || id == PSP_FLASH)
 				continue;
 		}
 
-		// [MC]Don't affect non-hardcoded layers unless it's really desired.
 		pspr->SetState(nullptr);
 		count++;
-		pspr = pspr->GetNext();
 	}
+
 	ACTION_RETURN_INT(count);
 }
 

@@ -662,7 +662,7 @@ static EColorRange ParseOptionColor(FScanner &sc, FOptionMenuDescriptor *desc)
 	if (sc.CheckString(","))
 	{
 		sc.MustGetString();
-		EColorRange cr = V_FindFontColor(sc.String);
+		cr = V_FindFontColor(sc.String);
 		if (cr == CR_UNTRANSLATED && !sc.Compare("untranslated") && isdigit(sc.String[0]))
 		{
 			if (strtol(sc.String, NULL, 0)) cr = OptionSettings.mFontColorHeader;

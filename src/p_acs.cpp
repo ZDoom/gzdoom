@@ -3719,6 +3719,7 @@ enum
 	APROP_DamageMultiplier=43,
 	APROP_MaxStepHeight	= 44,
 	APROP_MaxDropOffHeight= 45,
+	APROP_DamageType	= 46,
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -3978,6 +3979,9 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->MaxDropOffHeight = ACSToDouble(value);
 		break;
 
+	case APROP_DamageType:
+		actor->DamageType = FBehavior::StaticLookupString(value);
+		break;
 
 	default:
 		// do nothing.
@@ -4081,6 +4085,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Friction:	return DoubleToACS(actor->Friction);
 	case APROP_MaxStepHeight: return DoubleToACS(actor->MaxStepHeight);
 	case APROP_MaxDropOffHeight: return DoubleToACS(actor->MaxDropOffHeight);
+	case APROP_DamageType:	return GlobalACSStrings.AddString(actor->DamageType);
 
 	default:				return 0;
 	}
@@ -4153,6 +4158,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_ActiveSound:	string = actor->ActiveSound; break; 
 		case APROP_Species:		string = actor->GetSpecies(); break;
 		case APROP_NameTag:		string = actor->GetTag(); break;
+		case APROP_DamageType:	string = actor->DamageType; break;
 	}
 	if (string == NULL) string = "";
 	return (!stricmp(string, FBehavior::StaticLookupString(value)));

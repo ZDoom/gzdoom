@@ -38,6 +38,9 @@ const int CBAF_NORANDOM = 2;
 const int CBAF_EXPLICITANGLE = 4;
 const int CBAF_NOPITCH = 8;
 const int CBAF_NORANDOMPUFFZ = 16;
+const int CBAF_PUFFTARGET = 32;
+const int CBAF_PUFFMASTER = 64;
+const int CBAF_PUFFTRACER = 128;
 
 // Flags for A_GunFlash
 const int GFF_NOEXTCHANGE = 1;
@@ -210,6 +213,9 @@ const int CPF_STEALARMOR = 32;
 const int FPF_AIMATANGLE = 1;
 const int FPF_TRANSFERTRANSLATION = 2;
 const int FPF_NOAUTOAIM = 4;
+const int FBF_PUFFTARGET = 64;
+const int FBF_PUFFMASTER = 128;
+const int FBF_PUFFTRACER = 256;
 
 // Flags for A_Teleport
 enum
@@ -460,6 +466,7 @@ enum
 	DMSS_EXFILTER =			0x00000040,
 	DMSS_EXSPECIES =		0x00000080,
 	DMSS_EITHER =			0x00000100,
+	DMSS_INFLICTORDMGTYPE =	0x00000200,
 };
 
 // Flags for A_AlertMonsters

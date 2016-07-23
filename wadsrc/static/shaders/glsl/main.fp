@@ -117,34 +117,35 @@ vec4 getTexel(vec2 st)
 
 //===========================================================================
 //
-// Doom lighting equation ripped from EDGE.
-// Big thanks to EDGE developers for making the only port
-// that actually replicates software renderer's lighting in OpenGL.
-// Float version.
-// Basically replace int with float and divide all constants by 31.
+// Doom lighting equation exactly as calculated by zdoom.
 //
 //===========================================================================
-
-float R_DoomLightingEquation(float light, float dist)
+float R_DoomLightingEquation(float light)
 {
-	// Changing this constant gives results very similar to changing r_visibility.
-	// Default is 232, it seems to give exactly the same light bands as software renderer.
-	#define DOOMLIGHTFACTOR 232.0
+	// Calculated from r_visibility. It differs between walls, floor and sprites.
+	//
+	// Wall: globVis = r_WallVisibility
+	// Floor: r_FloorVisibility / abs(plane.Zat0 - ViewPos.Z)
+	// Sprite: same as wall
+	// All are calculated in R_SetVisibility and seem to be decided by the
+	// aspect ratio amongst other things.
+	//
+	// 1706 is the value for walls on 1080p 16:9 displays.
+	float globVis = 1706.0;
 
-	/* L in the range 0 to 63 */
-	float L = light * 63.0/31.0;
+	/* L is the integer light level used in the game */
+	float L = light * 255.0;
 
-	float min_L = clamp(36.0/31.0 - L, 0.03, 1.0);
+	/* z is the depth in view/eye space, positive going into the screen */
+	float z = pixelpos.w;
 
-	// Fix objects getting totally black when close.
-	if (dist < 0.0001)
-		dist = 0.0001;
+	/* The zdoom light equation */
+	float vis = globVis / z;
+	float shade = 64.0 - (L + 12.0) * 32.0/128.0;
+	float lightscale = clamp((shade - min(24.0, vis)) / 32.0, 0.0, 31.0/32.0);
 
-	float scale = 1.0 / dist;
-	float index = (59.0/31.0 - L) - (scale * DOOMLIGHTFACTOR/31.0 - DOOMLIGHTFACTOR/31.0);
-
-	/* result is colormap index (0 bright .. 31 dark) */
-	return clamp(index, min_L, 1.0);
+	// Result is the normalized colormap index (0 bright .. 1 dark)
+	return lightscale;
 }
 
 //===========================================================================
@@ -167,7 +168,7 @@ vec4 getLightColor(float fogdist, float fogfactor)
 	
 	if (uLightLevel >= 0.0)
 	{
-		float newlightlevel = 1.0 - R_DoomLightingEquation(uLightLevel, gl_FragCoord.z);
+		float newlightlevel = 1.0 - R_DoomLightingEquation(uLightLevel);
 		color.rgb *= newlightlevel;
 	}
 	else if (uFogEnabled > 0)

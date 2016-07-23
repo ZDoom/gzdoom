@@ -2625,6 +2625,7 @@ OPTVAL_INFRAREDANDTORCH 	= "Infrared and torch";
 OPTVAL_ANYFIXEDCOLORMAP 	= "Any fixed colormap";
 OPTVAL_NONENEARESTMIPMAP 	= "None (nearest mipmap)";
 OPTVAL_NONELINEARMIPMAP 	= "None (linear mipmap)";
+OPTVAL_NONETRILINEAR		= "None (trilinear)";
 OPTVAL_BILINEAR 			= "Bilinear";
 OPTVAL_TRILINEAR 			= "Trilinear";
 OPTVAL_RGBA8 				= "RGBA8";

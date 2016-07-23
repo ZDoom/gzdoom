@@ -763,6 +763,7 @@ void GLSectorStackPortal::DrawContents()
 	if (!(gl_drawinfo->ss_renderflags[sub - ::subsectors] & SSRF_SEEN))
 	{
 		clipper.SafeAddClipRange(0, ANGLE_MAX);
+		clipper.SetBlocked(true);
 	}
 
 	GLRenderer->DrawScene(DM_PORTAL);

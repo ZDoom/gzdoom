@@ -270,6 +270,8 @@ enum
 	SCRIPT_Unloading	= 13,
 	SCRIPT_Disconnect	= 14,
 	SCRIPT_Return		= 15,
+	SCRIPT_Event		= 16, // [BB]
+	SCRIPT_Kill			= 17, // [JM]
 };
 
 // Script flags

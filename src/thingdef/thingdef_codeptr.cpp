@@ -7188,3 +7188,34 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMovementDirection)
 	ACTION_RETURN_BOOL(true);
 }
 
+//==========================================================================
+//
+// A_CopySpriteFrame(from, to, flags)
+//
+// Copies the sprite and/or frame from one pointer to another.
+//==========================================================================
+enum CPSFFlags
+{
+	CPSF_NOSPRITE =			1,
+	CPSF_NOFRAME =			1 << 1,
+};
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CopySpriteFrame)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(from);
+	PARAM_INT(to);
+	PARAM_INT_OPT(flags) { flags = 0; }
+
+	AActor *copyfrom = COPY_AAPTR(self, from);
+	AActor *copyto = COPY_AAPTR(self, to);
+
+	if (copyfrom == copyto || copyfrom == nullptr || copyto == nullptr || ((flags & CPSF_NOSPRITE) && (flags & CPSF_NOFRAME)))
+	{
+		ACTION_RETURN_BOOL(false);
+	}
+	
+	if (!(flags & CPSF_NOSPRITE))	copyto->sprite = copyfrom->sprite;
+	if (!(flags & CPSF_NOFRAME))	copyto->frame = copyfrom->frame;
+	ACTION_RETURN_BOOL(true);
+}

@@ -3859,6 +3859,107 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
+// FxWhileLoop
+//
+//==========================================================================
+
+FxWhileLoop::FxWhileLoop(FxExpression *condition, FxExpression *code, const FScriptPosition &pos)
+: FxExpression(pos), Condition(condition), Code(code)
+{
+	ValueType = TypeVoid;
+}
+
+FxWhileLoop::~FxWhileLoop()
+{
+	SAFE_DELETE(Condition);
+	SAFE_DELETE(Code);
+}
+
+FxExpression *FxWhileLoop::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(Condition, ctx);
+	SAFE_RESOLVE_OPT(Code, ctx);
+
+	ctx.HandleJumps(TK_Break, this);
+	ctx.HandleJumps(TK_Continue, this);
+
+	if (Condition->ValueType != TypeBool)
+	{
+		Condition = new FxBoolCast(Condition);
+		SAFE_RESOLVE(Condition, ctx);
+	}
+
+	if (Condition->isConstant())
+	{
+		if (static_cast<FxConstant *>(Condition)->GetValue().GetBool() == false)
+		{ // Nothing happens
+			FxExpression *nop = new FxNop(ScriptPosition);
+			delete this;
+			return nop;
+		}
+		else if (Code == nullptr)
+		{ // "while (true) { }"
+		  // Someone could be using this for testing.
+			ScriptPosition.Message(MSG_WARNING, "Infinite empty loop");
+		}
+	}
+
+	return this;
+}
+
+ExpEmit FxWhileLoop::Emit(VMFunctionBuilder *build)
+{
+	assert(Condition->ValueType == TypeBool);
+
+	size_t loopstart, loopend;
+	size_t jumpspot;
+
+	// Evaluate the condition and execute/break out of the loop.
+	loopstart = build->GetAddress();
+	if (!Condition->isConstant())
+	{
+		ExpEmit cond = Condition->Emit(build);
+		build->Emit(OP_TEST, cond.RegNum, 0);
+		jumpspot = build->Emit(OP_JMP, 0);
+		cond.Free(build);
+	}
+	else assert(static_cast<FxConstant *>(Condition)->GetValue().GetBool() == true);
+
+	// Execute the loop's content.
+	if (Code != nullptr)
+	{
+		ExpEmit code = Code->Emit(build);
+		code.Free(build);
+	}
+
+	// Loop back.
+	build->Backpatch(build->Emit(OP_JMP, 0), loopstart);
+	loopend = build->GetAddress();
+
+	if (!Condition->isConstant()) 
+	{
+		build->Backpatch(jumpspot, loopend);
+	}
+
+	// Give a proper address to any break/continue statement within this loop.
+	for (unsigned int i = 0; i < JumpAddresses.Size(); i++)
+	{
+		if (JumpAddresses[i]->Token == TK_Break)
+		{
+			build->Backpatch(JumpAddresses[i]->Address, loopend);
+		}
+		else
+		{ // Continue statement.
+			build->Backpatch(JumpAddresses[i]->Address, loopstart);
+		}
+	}
+
+	return ExpEmit();
+}
+
+//==========================================================================
+//
 // FxJumpStatement
 //
 //==========================================================================

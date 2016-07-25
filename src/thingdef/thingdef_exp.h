@@ -48,6 +48,7 @@
 #define RESOLVE(p,c) if (p!=NULL) p = p->Resolve(c)
 #define ABORT(p) if (!(p)) { delete this; return NULL; }
 #define SAFE_RESOLVE(p,c) RESOLVE(p,c); ABORT(p) 
+#define SAFE_RESOLVE_OPT(p,c) if (p!=NULL) { SAFE_RESOLVE(p,c) }
 
 class VMFunctionBuilder;
 class FxJumpStatement;
@@ -923,6 +924,24 @@ class FxIfStatement : public FxExpression
 public:
 	FxIfStatement(FxExpression *cond, FxExpression *true_part, FxExpression *false_part, const FScriptPosition &pos);
 	~FxIfStatement();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+// FxWhileLoop
+//
+//==========================================================================
+
+class FxWhileLoop : public FxExpression
+{
+	FxExpression *Condition;
+	FxExpression *Code;
+
+public:
+	FxWhileLoop(FxExpression *condition, FxExpression *code, const FScriptPosition &pos);
+	~FxWhileLoop();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

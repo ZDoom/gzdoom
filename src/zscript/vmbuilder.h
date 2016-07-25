@@ -34,6 +34,9 @@ public:
 	int GetConstantAddress(void *ptr, VM_ATAG tag);
 	int GetConstantString(FString str);
 
+	// Returns the address of the next instruction to be emitted.
+	size_t GetAddress();
+
 	// Returns the address of the newly-emitted instruction.
 	size_t Emit(int opcode, int opa, int opb, int opc);
 	size_t Emit(int opcode, int opa, VM_SHALF opbc);

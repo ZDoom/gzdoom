@@ -118,6 +118,8 @@ public:
 	void SwapBuffers();
 	void NewRefreshRate ();
 
+	int GetClientWidth();
+	int GetClientHeight();
 
 	int GetTrueHeight() { return static_cast<Win32GLVideo *>(Video)->GetTrueHeight(); }
 
@@ -136,6 +138,7 @@ public:
 protected:
 
 	bool CanUpdate();
+	void ResetGammaTable();
 	void SetGammaTable(WORD * tbl);
 
 	float m_Gamma, m_Brightness, m_Contrast;

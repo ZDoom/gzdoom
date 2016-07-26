@@ -62,13 +62,16 @@ public:
 	virtual bool IsFullscreen();
 	virtual void SetVSync(bool vsync);
 
+	int GetClientWidth();
+	int GetClientHeight();
+
 	int GetTrueHeight() { return GetHeight(); }
 
 protected:
 	int                 m_lock;
 	bool                m_isUpdatePending;
 
-	static const bool   m_supportsGamma = true;
+	static const bool   m_supportsGamma = false;
 
 	SDLGLFB();
 
@@ -78,6 +81,7 @@ protected:
 	void SwapBuffers();
 
 	void SetGammaTable(WORD* table);
+	void ResetGammaTable();
 };
 
 #endif // COCOA_SDLGLVIDEO_H_INCLUDED

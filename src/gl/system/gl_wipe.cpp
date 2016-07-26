@@ -52,7 +52,9 @@
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
+#include "gl/renderer/gl_renderbuffers.h"
 #include "gl/system/gl_framebuffer.h"
+#include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_translate.h"
 #include "gl/textures/gl_material.h"
@@ -153,11 +155,21 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 	GLRenderer->mSamplerManager->Bind(1, CLAMP_NONE, -1);
 	glFinish();
 	wipestartscreen->Bind(0, false, false);
-	GLint readbuffer = 0;
-	glGetIntegerv(GL_READ_BUFFER, &readbuffer);
-	glReadBuffer(GL_FRONT);
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, Width, Height);
-	glReadBuffer(readbuffer);
+
+	if (FGLRenderBuffers::IsSupported())
+	{
+		GLRenderer->mBuffers->BindSceneFB();
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, Width, Height);
+	}
+	else
+	{
+		GLint readbuffer = 0;
+		glGetIntegerv(GL_READ_BUFFER, &readbuffer);
+		glReadBuffer(GL_FRONT);
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, Width, Height);
+		glReadBuffer(readbuffer);
+	}
+
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
@@ -179,6 +191,10 @@ void OpenGLFrameBuffer::WipeEndScreen()
 	GLRenderer->mSamplerManager->Bind(0, CLAMP_NOFILTER, -1);
 	glFinish();
 	wipeendscreen->Bind(0, false, false);
+
+	if (FGLRenderBuffers::IsSupported())
+		GLRenderer->mBuffers->BindSceneFB();
+
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, Width, Height);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -213,6 +229,12 @@ bool OpenGLFrameBuffer::WipeDo(int ticks)
 	gl_RenderState.EnableFog(false);
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(false);
+
+	if (FGLRenderBuffers::IsSupported())
+	{
+		GLRenderer->mBuffers->BindSceneFB();
+		glViewport(0, 0, GLRenderer->mOutputViewport.width, GLRenderer->mOutputViewport.height);
+	}
 
 	bool done = ScreenWipe->Run(ticks, this);
 	glDepthMask(true);

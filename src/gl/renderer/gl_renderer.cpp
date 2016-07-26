@@ -49,6 +49,7 @@
 //#include "gl/gl_intern.h"
 #include "gl/gl_functions.h"
 #include "vectors.h"
+#include "doomstat.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
@@ -56,10 +57,12 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
+#include "gl/renderer/gl_renderbuffers.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/shaders/gl_shader.h"
+#include "gl/shaders/gl_presentshader.h"
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_translate.h"
 #include "gl/textures/gl_material.h"
@@ -68,6 +71,8 @@
 #include "gl/utility/gl_templates.h"
 #include "gl/models/gl_models.h"
 #include "gl/dynlights/gl_lightbuffer.h"
+
+EXTERN_CVAR(Int, screenblocks)
 
 //===========================================================================
 // 
@@ -104,6 +109,9 @@ void gl_FlushModels();
 
 void FGLRenderer::Initialize()
 {
+	mBuffers = new FGLRenderBuffers();
+	mPresentShader = new FPresentShader();
+
 	// Only needed for the core profile, because someone decided it was a good idea to remove the default VAO.
 	if (gl.version >= 4.0)
 	{
@@ -150,7 +158,57 @@ FGLRenderer::~FGLRenderer()
 		glBindVertexArray(0);
 		glDeleteVertexArrays(1, &mVAOID);
 	}
+	if (mBuffers) delete mBuffers;
+	if (mPresentShader) delete mPresentShader;
+}
 
+//==========================================================================
+//
+// Calculates the viewport values needed for 2D and 3D operations
+//
+//==========================================================================
+
+void FGLRenderer::SetOutputViewport(GL_IRECT *bounds)
+{
+	if (bounds)
+	{
+		mOutputViewport = *bounds;
+		mOutputViewportLB = *bounds;
+		return;
+	}
+
+	int height, width;
+
+	// Special handling so the view with a visible status bar displays properly
+
+	if (screenblocks >= 10)
+	{
+		height = framebuffer->GetHeight();
+		width = framebuffer->GetWidth();
+	}
+	else
+	{
+		height = (screenblocks*framebuffer->GetHeight() / 10) & ~7;
+		width = (screenblocks*framebuffer->GetWidth() / 10);
+	}
+
+	int trueheight = framebuffer->GetTrueHeight();	// ugh...
+	int bars = (trueheight - framebuffer->GetHeight()) / 2;
+
+	int vw = viewwidth;
+	int vh = viewheight;
+
+	// Letterboxed viewport for the main scene
+	mOutputViewportLB.left = viewwindowx;
+	mOutputViewportLB.top = trueheight - bars - (height + viewwindowy - ((height - vh) / 2));
+	mOutputViewportLB.width = vw;
+	mOutputViewportLB.height = height;
+
+	// Entire canvas for player sprites
+	mOutputViewport.left = 0;
+	mOutputViewport.top = (trueheight - framebuffer->GetHeight()) / 2;
+	mOutputViewport.width = framebuffer->GetWidth();
+	mOutputViewport.height = framebuffer->GetHeight();
 }
 
 //===========================================================================
@@ -166,6 +224,17 @@ void FGLRenderer::SetupLevel()
 
 void FGLRenderer::Begin2D()
 {
+	if (FGLRenderBuffers::IsSupported())
+	{
+		mBuffers->Setup(framebuffer->GetWidth(), framebuffer->GetHeight());
+		mBuffers->BindSceneFB();
+		glViewport(0, 0, mOutputViewport.width, mOutputViewport.height);
+	}
+	else
+	{
+		glViewport(mOutputViewport.left, mOutputViewport.top, mOutputViewport.width, mOutputViewport.height);
+	}
+
 	gl_RenderState.EnableFog(false);
 	gl_RenderState.Set2DMode(true);
 }

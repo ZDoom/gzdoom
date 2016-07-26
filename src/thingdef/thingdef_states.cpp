@@ -529,6 +529,18 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 			sc.MustGetString();
 			add = new FxReturnStatement(retexp, sc);
 		}
+		else if (sc.Compare("break"))
+		{
+			add = new FxJumpStatement(TK_Break, sc);
+			sc.MustGetStringName(";");
+			sc.MustGetString();
+		}
+		else if (sc.Compare("continue"))
+		{
+			add = new FxJumpStatement(TK_Continue, sc);
+			sc.MustGetStringName(";");
+			sc.MustGetString();
+		}
 		else
 		{ // Handle a regular action function call
 			add = ParseAction(sc, state, statestring, bag);

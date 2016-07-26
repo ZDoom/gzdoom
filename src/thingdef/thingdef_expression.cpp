@@ -85,6 +85,45 @@ static const FLOP FxFlops[] =
 	{ NAME_TanH,	FLOP_TANH,		[](double v) { return g_tanh(v); } },
 };
 
+//==========================================================================
+//
+// FCompileContext
+//
+//==========================================================================
+
+FCompileContext::FCompileContext(PClassActor *cls) : Class(cls)
+{
+}
+
+PSymbol *FCompileContext::FindInClass(FName identifier)
+{
+	return Class ? Class->Symbols.FindSymbol(identifier, true) : nullptr;
+}
+PSymbol *FCompileContext::FindGlobal(FName identifier)
+{
+	return GlobalSymbols.FindSymbol(identifier, true);
+}
+
+void FCompileContext::HandleJumps(int token, FxExpression *handler)
+{
+	for (unsigned int i = 0; i < Jumps.Size(); i++)
+	{
+		if (Jumps[i]->Token == token)
+		{
+			Jumps[i]->AddressResolver = handler;
+			handler->JumpAddresses.Push(Jumps[i]);
+			Jumps.Delete(i);
+			i--;
+		}
+	}
+}
+
+//==========================================================================
+//
+// ExpEmit
+//
+//==========================================================================
+
 ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)
 : RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false), Fixed(false)
 {
@@ -2838,14 +2877,14 @@ FxSelf::FxSelf(const FScriptPosition &pos)
 FxExpression *FxSelf::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
-	if (!ctx.cls)
+	if (!ctx.Class)
 	{
 		// can't really happen with DECORATE's expression evaluator.
 		ScriptPosition.Message(MSG_ERROR, "self used outside of a member function");
 		delete this;
 		return NULL;
 	}
-	ValueType = ctx.cls;
+	ValueType = ctx.Class;
 	ValueType = NewPointer(RUNTIME_CLASS(DObject));
 	return this;
 }  
@@ -3820,6 +3859,39 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
+// FxJumpStatement
+//
+//==========================================================================
+
+FxJumpStatement::FxJumpStatement(int token, const FScriptPosition &pos)
+: FxExpression(pos), Token(token), AddressResolver(nullptr)
+{
+	ValueType = TypeVoid;
+}
+
+FxExpression *FxJumpStatement::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+
+	ctx.Jumps.Push(this);
+
+	return this;
+}
+
+ExpEmit FxJumpStatement::Emit(VMFunctionBuilder *build)
+{
+	if (AddressResolver == nullptr)
+	{
+		ScriptPosition.Message(MSG_ERROR, "Jump statement %s has nowhere to go!", FScanner::TokenName(Token));
+	}
+
+	Address = build->Emit(OP_JMP, 0);
+
+	return ExpEmit();
+}
+
+//==========================================================================
+//
 //==========================================================================
 
 FxReturnStatement::FxReturnStatement(FxVMFunctionCall *call, const FScriptPosition &pos)
@@ -4008,19 +4080,19 @@ ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)
 FxExpression *FxStateByIndex::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
-	if (ctx.cls->NumOwnedStates == 0)
+	if (ctx.Class->NumOwnedStates == 0)
 	{
 		// This can't really happen
 		assert(false);
 	}
-	if (ctx.cls->NumOwnedStates <= index)
+	if (ctx.Class->NumOwnedStates <= index)
 	{
 		ScriptPosition.Message(MSG_ERROR, "%s: Attempt to jump to non existing state index %d", 
-			ctx.cls->TypeName.GetChars(), index);
+			ctx.Class->TypeName.GetChars(), index);
 		delete this;
 		return NULL;
 	}
-	FxExpression *x = new FxConstant(ctx.cls->OwnedStates + index, ScriptPosition);
+	FxExpression *x = new FxConstant(ctx.Class->OwnedStates + index, ScriptPosition);
 	delete this;
 	return x;
 }
@@ -4068,7 +4140,7 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 	}
 	else if (names[0] == NAME_Super)
 	{
-		scope = dyn_cast<PClassActor>(ctx.cls->ParentClass);
+		scope = dyn_cast<PClassActor>(ctx.Class->ParentClass);
 	}
 	else
 	{
@@ -4079,9 +4151,9 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 			delete this;
 			return NULL;
 		}
-		else if (!scope->IsDescendantOf(ctx.cls))
+		else if (!scope->IsDescendantOf(ctx.Class))
 		{
-			ScriptPosition.Message(MSG_ERROR, "'%s' is not an ancestor of '%s'", names[0].GetChars(),ctx.cls->TypeName.GetChars());
+			ScriptPosition.Message(MSG_ERROR, "'%s' is not an ancestor of '%s'", names[0].GetChars(),ctx.Class->TypeName.GetChars());
 			delete this;
 			return NULL;
 		}

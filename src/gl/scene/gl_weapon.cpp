@@ -338,6 +338,11 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			vis.RenderStyle.Flags |= STYLEF_InvertSource;
 		}
 	}
+	if (vis.RenderStyle.AsDWORD == 0)
+	{
+		// This is RenderStyle None.
+		return;
+	}
 
 	// Set the render parameters
 

@@ -171,6 +171,7 @@ const int RGF_NOPIERCING = 2;
 const int RGF_EXPLICITANGLE = 4;
 const int RGF_FULLBRIGHT = 8;
 const int RGF_CENTERZ = 16;
+const int RGF_NORANDOMPUFFZ = 32;
 
 // Flags for A_Mushroom
 const int MSF_Standard = 0;

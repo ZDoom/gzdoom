@@ -92,6 +92,7 @@ void Clipper::Clear()
 	ClipNode *node = cliphead;
 	ClipNode *temp;
 	
+	blocked = false;
 	while (node != NULL)
 	{
 		temp = node;

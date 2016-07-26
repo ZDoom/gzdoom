@@ -756,6 +756,16 @@ void GLSectorStackPortal::DrawContents()
 	SaveMapSection();
 	SetupCoverage();
 	ClearClipper();
+	
+	// If the viewpoint is not within the portal, we need to invalidate the entire clip area.
+	// The portal will re-validate the necessary parts when its subsectors get traversed.
+	subsector_t *sub = R_PointInSubsector(ViewPos);
+	if (!(gl_drawinfo->ss_renderflags[sub - ::subsectors] & SSRF_SEEN))
+	{
+		clipper.SafeAddClipRange(0, ANGLE_MAX);
+		clipper.SetBlocked(true);
+	}
+
 	GLRenderer->DrawScene(DM_PORTAL);
 	RestoreMapSection();
 

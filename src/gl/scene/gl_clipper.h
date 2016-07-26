@@ -54,6 +54,7 @@ class Clipper
 	ClipNode * clipnodes;
 	ClipNode * cliphead;
 	ClipNode * silhouette;	// will be preserved even when RemoveClipRange is called
+	bool blocked;
 
 	static angle_t AngleToPseudo(angle_t ang);
 	bool IsRangeVisible(angle_t startangle, angle_t endangle);
@@ -68,6 +69,7 @@ public:
 
 	Clipper()
 	{
+		blocked = false;
 		clipnodes=cliphead=NULL;
 	}
 
@@ -127,6 +129,16 @@ public:
 	void SafeRemoveClipRangeRealAngles(angle_t startangle, angle_t endangle)
 	{
 		SafeRemoveClipRange(AngleToPseudo(startangle), AngleToPseudo(endangle));
+	}
+
+	void SetBlocked(bool on)
+	{
+		blocked = on;
+	}
+
+	bool IsBlocked() const
+	{
+		return blocked;
 	}
 
 	bool CheckBox(const float *bspcoord);

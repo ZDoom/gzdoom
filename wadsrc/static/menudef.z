@@ -25,6 +25,13 @@ OptionValue "FilterModes"
 	4, "$OPTVAL_TRILINEAR"
 }
 
+OptionValue "HWGammaModes"
+{
+	0, "$OPTVAL_ON"
+	1, "$OPTVAL_OFF"
+	2, "$OPTVAL_FULLSCREENONLY"
+}
+
 OptionValue "TextureFormats"
 {
 	0, "$OPTVAL_RGBA8"

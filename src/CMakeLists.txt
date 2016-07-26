@@ -1060,6 +1060,7 @@ set( FASTMATH_SOURCES
 	gl/utility/gl_geometric.cpp
 	gl/renderer/gl_renderer.cpp
 	gl/renderer/gl_renderstate.cpp
+	gl/renderer/gl_renderbuffers.cpp
 	gl/renderer/gl_lightdata.cpp
 	gl/hqnx/init.cpp
 	gl/hqnx/hq2x.cpp
@@ -1103,6 +1104,8 @@ set( FASTMATH_SOURCES
 	gl/dynlights/gl_lightbuffer.cpp
 	gl/shaders/gl_shader.cpp
 	gl/shaders/gl_texshader.cpp
+	gl/shaders/gl_shaderprogram.cpp
+	gl/shaders/gl_presentshader.cpp
 	gl/system/gl_interface.cpp
 	gl/system/gl_framebuffer.cpp
 	gl/system/gl_menu.cpp

@@ -58,12 +58,16 @@ public:
 
 	friend class SDLGLVideo;
 
+	int GetClientWidth();
+	int GetClientHeight();
+
 //[C]
 	int GetTrueHeight() { return GetHeight();}
 
 protected:
 	bool CanUpdate();
 	void SetGammaTable(WORD *tbl);
+	void ResetGammaTable();
 	void InitializeState();
 
 	SDLGLFB () {}

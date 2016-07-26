@@ -78,6 +78,12 @@ void gl_LoadExtensions();
 void gl_PrintStartupLog();
 void gl_SetupMenu();
 
+CUSTOM_CVAR(Int, vid_hwgamma, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (self < 0 || self > 2) self = 2;
+	if (GLRenderer != NULL && GLRenderer->framebuffer != NULL) GLRenderer->framebuffer->DoSetGamma();
+}
+
 //==========================================================================
 //
 //
@@ -150,12 +156,13 @@ void OpenGLFrameBuffer::InitializeState()
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	int trueH = GetTrueHeight();
-	int h = GetHeight();
-	glViewport(0, (trueH - h)/2, GetWidth(), GetHeight()); 
+	//int trueH = GetTrueHeight();
+	//int h = GetHeight();
+	//glViewport(0, (trueH - h)/2, GetWidth(), GetHeight()); 
 
-	Begin2D(false);
 	GLRenderer->Initialize();
+	GLRenderer->SetOutputViewport(nullptr);
+	Begin2D(false);
 }
 
 //==========================================================================
@@ -230,10 +237,11 @@ void OpenGLFrameBuffer::Swap()
 
 void OpenGLFrameBuffer::DoSetGamma()
 {
-	WORD gammaTable[768];
-
-	if (m_supportsGamma)
+	bool useHWGamma = m_supportsGamma && ((vid_hwgamma == 0) || (vid_hwgamma == 2 && IsFullscreen()));
+	if (useHWGamma)
 	{
+		WORD gammaTable[768];
+
 		// This formula is taken from Doomsday
 		float gamma = clamp<float>(Gamma, 0.1f, 4.f);
 		float contrast = clamp<float>(vid_contrast, 0.1f, 3.f);
@@ -251,6 +259,13 @@ void OpenGLFrameBuffer::DoSetGamma()
 			gammaTable[i] = gammaTable[i + 256] = gammaTable[i + 512] = (WORD)clamp<double>(val*256, 0, 0xffff);
 		}
 		SetGammaTable(gammaTable);
+
+		HWGammaActive = true;
+	}
+	else if (HWGammaActive)
+	{
+		ResetGammaTable();
+		HWGammaActive = false;
 	}
 }
 

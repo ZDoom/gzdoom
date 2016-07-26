@@ -951,7 +951,7 @@ Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, in
 		style |= WS_POPUP;
 	else
 	{
-		style |= WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX;
+		style |= WS_OVERLAPPEDWINDOW;
 		exStyle |= WS_EX_WINDOWEDGE;
 	}
 
@@ -967,7 +967,13 @@ Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, in
 	}
 	else
 	{
-		MoveWindow(Window, r.left, r.top, width + (GetSystemMetrics(SM_CXSIZEFRAME) * 2), height + (GetSystemMetrics(SM_CYSIZEFRAME) * 2) + GetSystemMetrics(SM_CYCAPTION), FALSE);
+		RECT windowRect;
+		windowRect.left = r.left;
+		windowRect.top = r.top;
+		windowRect.right = windowRect.left + width;
+		windowRect.bottom = windowRect.top + height;
+		AdjustWindowRectEx(&windowRect, style, FALSE, exStyle);
+		MoveWindow(Window, windowRect.left, windowRect.top, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top, FALSE);
 
 		I_RestoreWindowedPos();
 	}
@@ -993,12 +999,7 @@ Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, in
 
 Win32GLFrameBuffer::~Win32GLFrameBuffer()
 {
-	if (m_supportsGamma) 
-	{
-		HDC hDC = GetDC(Window);
-		SetDeviceGammaRamp(hDC, (void *)m_origGamma);
-		ReleaseDC(Window, hDC);
-	}
+	ResetGammaTable();
 	I_SaveWindowedPos();
 
 	static_cast<Win32GLVideo *>(Video)->SetFullscreen(m_displayDeviceName, 0,0,0,0);
@@ -1041,11 +1042,24 @@ bool Win32GLFrameBuffer::CanUpdate()
 //
 //==========================================================================
 
+void Win32GLFrameBuffer::ResetGammaTable()
+{
+	if (m_supportsGamma)
+	{
+		HDC hDC = GetDC(Window);
+		SetDeviceGammaRamp(hDC, (void *)m_origGamma);
+		ReleaseDC(Window, hDC);
+	}
+}
+
 void Win32GLFrameBuffer::SetGammaTable(WORD *tbl)
 {
-	HDC hDC = GetDC(Window);
-	SetDeviceGammaRamp(hDC, (void *)tbl);
-	ReleaseDC(Window, hDC);
+	if (m_supportsGamma)
+	{
+		HDC hDC = GetDC(Window);
+		SetDeviceGammaRamp(hDC, (void *)tbl);
+		ReleaseDC(Window, hDC);
+	}
 }
 
 //==========================================================================
@@ -1152,6 +1166,19 @@ void Win32GLFrameBuffer::NewRefreshRate ()
 	}
 }
 
+int Win32GLFrameBuffer::GetClientWidth()
+{
+	RECT rect = { 0 };
+	GetClientRect(Window, &rect);
+	return rect.right - rect.left;
+}
+
+int Win32GLFrameBuffer::GetClientHeight()
+{
+	RECT rect = { 0 };
+	GetClientRect(Window, &rect);
+	return rect.bottom - rect.top;
+}
 
 IVideo *gl_CreateVideo()
 {

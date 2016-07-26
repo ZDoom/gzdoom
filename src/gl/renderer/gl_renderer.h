@@ -18,6 +18,8 @@ class GLPortal;
 class FLightBuffer;
 class FSamplerManager;
 class DPSprite;
+class FGLRenderBuffers;
+class FPresentShader;
 
 inline float DEG2RAD(float deg)
 {
@@ -79,6 +81,9 @@ public:
 	unsigned int mVAOID;
 	int mOldFBID;
 
+	FGLRenderBuffers *mBuffers;
+	FPresentShader *mPresentShader;
+
 	FTexture *gllight;
 	FTexture *glpart2;
 	FTexture *glpart;
@@ -93,14 +98,17 @@ public:
 	FSkyVertexBuffer *mSkyVBO;
 	FLightBuffer *mLights;
 
+	GL_IRECT mOutputViewportLB;
+	GL_IRECT mOutputViewport;
 
 	FGLRenderer(OpenGLFrameBuffer *fb);
 	~FGLRenderer() ;
 
 	angle_t FrustumAngle();
 	void SetViewArea();
-	void ResetViewport();
-	void SetViewport(GL_IRECT *bounds);
+	void SetOutputViewport(GL_IRECT *bounds);
+	void Set3DViewport();
+	void Reset3DViewport();
 	sector_t *RenderViewpoint (AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	void RenderView(player_t *player);
 	void SetViewAngle(DAngle viewangle);
@@ -139,7 +147,7 @@ public:
 	void SetFixedColormap (player_t *player);
 	void WriteSavePic (player_t *player, FILE *file, int width, int height);
 	void EndDrawScene(sector_t * viewsector);
-	void Flush() {}
+	void Flush();
 
 	void SetProjection(float fov, float ratio, float fovratio);
 	void SetProjection(VSMatrix matrix); // raw matrix input from stereo 3d modes

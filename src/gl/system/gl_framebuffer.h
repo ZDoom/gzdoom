@@ -77,7 +77,7 @@ public:
 	void WipeCleanup();
 	void Swap();
 	bool Is8BitMode() { return false; }
-
+	bool IsHWGammaActive() const { return HWGammaActive; }
 
 private:
 	PalEntry Flash;
@@ -106,6 +106,8 @@ private:
 	Wiper *ScreenWipe;
 	FHardwareTexture *wipestartscreen;
 	FHardwareTexture *wipeendscreen;
+
+	bool HWGammaActive = false;
 
 public:
 	AActor * LastCamera;

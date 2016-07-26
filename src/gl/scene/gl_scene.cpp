@@ -63,6 +63,7 @@
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
+#include "gl/renderer/gl_renderbuffers.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/dynlights/gl_dynlight.h"
@@ -71,6 +72,7 @@
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/shaders/gl_shader.h"
+#include "gl/shaders/gl_presentshader.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/stereo3d/scoped_view_shifter.h"
 #include "gl/textures/gl_translate.h"
@@ -91,9 +93,10 @@ CVAR(Float, gl_mask_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_mask_sprite_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, gl_sort_textures, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-EXTERN_CVAR (Int, screenblocks)
 EXTERN_CVAR (Bool, cl_capfps)
 EXTERN_CVAR (Bool, r_deathcamera)
+EXTERN_CVAR(Float, vid_brightness)
+EXTERN_CVAR(Float, vid_contrast)
 
 
 extern int viewpitch;
@@ -155,10 +158,12 @@ void FGLRenderer::SetViewArea()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::ResetViewport()
+void FGLRenderer::Reset3DViewport()
 {
-	int trueheight = static_cast<OpenGLFrameBuffer*>(screen)->GetTrueHeight();	// ugh...
-	glViewport(0, (trueheight-screen->GetHeight())/2, screen->GetWidth(), screen->GetHeight()); 
+	if (FGLRenderBuffers::IsSupported())
+		glViewport(0, 0, mOutputViewport.width, mOutputViewport.height);
+	else
+		glViewport(mOutputViewport.left, mOutputViewport.top, mOutputViewport.width, mOutputViewport.height);
 }
 
 //-----------------------------------------------------------------------------
@@ -167,38 +172,22 @@ void FGLRenderer::ResetViewport()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::SetViewport(GL_IRECT *bounds)
+void FGLRenderer::Set3DViewport()
 {
-	if (!bounds)
+	const auto &bounds = mOutputViewportLB;
+	if (FGLRenderBuffers::IsSupported())
 	{
-		int height, width;
-
-		// Special handling so the view with a visible status bar displays properly
-
-		if (screenblocks >= 10)
-		{
-			height = SCREENHEIGHT;
-			width  = SCREENWIDTH;
-		}
-		else
-		{
-			height = (screenblocks*SCREENHEIGHT/10) & ~7;
-			width = (screenblocks*SCREENWIDTH/10);
-		}
-
-		int trueheight = static_cast<OpenGLFrameBuffer*>(screen)->GetTrueHeight();	// ugh...
-		int bars = (trueheight-screen->GetHeight())/2; 
-
-		int vw = viewwidth;
-		int vh = viewheight;
-		glViewport(viewwindowx, trueheight-bars-(height+viewwindowy-((height-vh)/2)), vw, height);
-		glScissor(viewwindowx, trueheight-bars-(vh+viewwindowy), vw, vh);
+		mBuffers->Setup(mOutputViewport.width, mOutputViewport.height);
+		mBuffers->BindSceneFB();
+		glViewport(0, 0, bounds.width, bounds.height);
+		glScissor(0, 0, bounds.width, bounds.height);
 	}
 	else
 	{
-		glViewport(bounds->left, bounds->top, bounds->width, bounds->height);
-		glScissor(bounds->left, bounds->top, bounds->width, bounds->height);
+		glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
+		glScissor(bounds.left, bounds.top, bounds.width, bounds.height);
 	}
+
 	glEnable(GL_SCISSOR_TEST);
 	
 	#ifdef _DEBUG
@@ -213,6 +202,97 @@ void FGLRenderer::SetViewport(GL_IRECT *bounds)
 	glEnable(GL_STENCIL_TEST);
 	glStencilFunc(GL_ALWAYS,0,~0);	// default stencil
 	glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
+}
+
+//-----------------------------------------------------------------------------
+//
+// Run post processing steps and copy to frame buffer
+//
+//-----------------------------------------------------------------------------
+
+void FGLRenderer::Flush()
+{
+	if (FGLRenderBuffers::IsSupported())
+	{
+		glDisable(GL_MULTISAMPLE);
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_STENCIL_TEST);
+
+		mBuffers->BindOutputFB();
+
+		// Calculate letterbox
+		int clientWidth = framebuffer->GetClientWidth();
+		int clientHeight = framebuffer->GetClientHeight();
+		float scaleX = clientWidth / (float)mOutputViewport.width;
+		float scaleY = clientHeight / (float)mOutputViewport.height;
+		float scale = MIN(scaleX, scaleY);
+		int width = (int)round(mOutputViewport.width * scale);
+		int height = (int)round(mOutputViewport.height * scale);
+		int x = (clientWidth - width) / 2;
+		int y = (clientHeight - height) / 2;
+
+		// Black bars around the box:
+		glViewport(0, 0, clientWidth, clientHeight);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glEnable(GL_SCISSOR_TEST);
+		if (y > 0)
+		{
+			glScissor(0, 0, clientWidth, y);
+			glClear(GL_COLOR_BUFFER_BIT);
+		}
+		if (clientHeight - y - height > 0)
+		{
+			glScissor(0, y + height, clientWidth, clientHeight - y - height);
+			glClear(GL_COLOR_BUFFER_BIT);
+		}
+		if (x > 0)
+		{
+			glScissor(0, y, x, height);
+			glClear(GL_COLOR_BUFFER_BIT);
+		}
+		if (clientWidth - x - width > 0)
+		{
+			glScissor(x + width, y, clientWidth - x - width, height);
+			glClear(GL_COLOR_BUFFER_BIT);
+		}
+		glDisable(GL_SCISSOR_TEST);
+
+		// Present what was rendered:
+		glViewport(x, y, width, height);
+
+		GLboolean blendEnabled;
+		GLint currentProgram;
+		glGetBooleanv(GL_BLEND, &blendEnabled);
+		glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
+		glDisable(GL_BLEND);
+
+		mPresentShader->Bind();
+		mPresentShader->InputTexture.Set(0);
+		if (framebuffer->IsHWGammaActive())
+		{
+			mPresentShader->Gamma.Set(1.0f);
+			mPresentShader->Contrast.Set(1.0f);
+			mPresentShader->Brightness.Set(0.0f);
+		}
+		else
+		{
+			mPresentShader->Gamma.Set(clamp<float>(Gamma, 0.1f, 4.f));
+			mPresentShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
+			mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
+		}
+		mBuffers->BindSceneTexture(0);
+
+		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+		ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
+		ptr->Set(-1.0f, 1.0f, 0, 0.0f, 1.0f); ptr++;
+		ptr->Set(1.0f, -1.0f, 0, 1.0f, 0.0f); ptr++;
+		ptr->Set(1.0f, 1.0f, 0, 1.0f, 1.0f); ptr++;
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+
+		if (blendEnabled)
+			glEnable(GL_BLEND);
+		glUseProgram(currentProgram);
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -707,7 +787,7 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 
 	framebuffer->Begin2D(false);
 
-	ResetViewport();
+	Reset3DViewport();
 	// [BB] Only draw the sprites if we didn't render a HUD model before.
 	if ( renderHUDModel == false )
 	{
@@ -846,7 +926,8 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		const s3d::EyePose * eye = stereo3dMode.getEyePose(eye_ix);
 		eye->SetUp();
 		// TODO: stereo specific viewport - needed when implementing side-by-side modes etc.
-		SetViewport(bounds);
+		SetOutputViewport(bounds);
+		Set3DViewport();
 		mCurrentFoV = fov;
 		// Stereo mode specific perspective projection
 		SetProjection( eye->GetProjection(fov, ratio, fovratio) );
@@ -872,7 +953,6 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	interpolator.RestoreInterpolations ();
 	return retval;
 }
-
 
 //-----------------------------------------------------------------------------
 //

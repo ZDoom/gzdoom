@@ -925,6 +925,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, do
 			{
 				caller->AddZ(reference->GetBobOffset());
 			}
+			P_TryMove(caller, caller->Pos(), false);
 		}
 		return true;
 	}

@@ -2555,7 +2555,7 @@ FUNC(LS_Line_AlignFloor)
 FUNC(LS_Line_SetTextureOffset)
 // Line_SetTextureOffset (id, x, y, side, flags)
 {
-	const double NO_CHANGE = FLT_MAX;
+	const int NO_CHANGE = 32767 << 16;
 	double farg1 = arg1 / 65536.;
 	double farg2 = arg2 / 65536.;
 
@@ -2610,7 +2610,7 @@ FUNC(LS_Line_SetTextureOffset)
 FUNC(LS_Line_SetTextureScale)
 // Line_SetTextureScale (id, x, y, side, flags)
 {
-	const double NO_CHANGE = FLT_MAX;
+	const int NO_CHANGE = 32767 << 16;
 	double farg1 = arg1 / 65536.;
 	double farg2 = arg2 / 65536.;
 

@@ -781,7 +781,15 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 			FString label = sc.String;
 			sc.MustGetStringName(",");
 			sc.MustGetString();
-			FOptionMenuItem *it = new FOptionMenuItemSafeCommand(label, sc.String);
+			FString command = sc.String;
+			FString prompt;
+			// Check for optional custom prompt
+			if (sc.CheckString(","))
+			{
+				sc.MustGetString();
+				prompt = sc.String;
+			}
+			FOptionMenuItem *it = new FOptionMenuItemSafeCommand(label, command, prompt);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("Control") || sc.Compare("MapControl"))

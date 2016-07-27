@@ -103,10 +103,23 @@ public:
 class FOptionMenuItemSafeCommand : public FOptionMenuItemCommand
 {
 	// action is a CCMD
+protected:
+	char *mPrompt;
+
 public:
-	FOptionMenuItemSafeCommand(const char *label, const char *menu)
+	FOptionMenuItemSafeCommand(const char *label, const char *menu, const char *prompt)
 		: FOptionMenuItemCommand(label, menu)
+		, mPrompt(nullptr)
 	{
+		if (prompt && *prompt)
+		{
+			mPrompt = copystring(prompt);
+		}
+	}
+
+	~FOptionMenuItemSafeCommand()
+	{
+		if (mPrompt != NULL) delete[] mPrompt;
 	}
 
 	bool MenuEvent (int mkey, bool fromcontroller)
@@ -121,7 +134,11 @@ public:
 
 	bool Activate()
 	{
-		const char *msg = GStrings("SAFEMESSAGE");
+		const char *msg = mPrompt ? mPrompt : "$SAFEMESSAGE";
+		if (*msg == '$')
+		{
+			msg = GStrings(msg + 1);
+		}
 
 		const char *actionLabel = mLabel;
 		if (actionLabel != NULL)

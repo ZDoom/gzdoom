@@ -69,26 +69,34 @@ void InitGLRMapinfoData();
 // 
 //
 //==========================================================================
+static TArray<subsector_t *> MapSectionCollector;
 
 static void DoSetMapSection(subsector_t *sub, int num)
 {
+	MapSectionCollector.Resize(1);
+	MapSectionCollector[0] = sub;
 	sub->mapsection = num;
-
-	for(DWORD i=0;i<sub->numlines;i++)
+	for (unsigned a = 0; a < MapSectionCollector.Size(); a++)
 	{
-		seg_t * seg = sub->firstline + i;
-
-		if (seg->PartnerSeg)
+		sub = MapSectionCollector[a];
+		for (DWORD i = 0; i < sub->numlines; i++)
 		{
-			subsector_t * sub2 = seg->PartnerSeg->Subsector;
+			seg_t * seg = sub->firstline + i;
 
-			if (sub2->mapsection != num)
+			if (seg->PartnerSeg)
 			{
-				assert(sub2->mapsection == 0);
-				DoSetMapSection(sub2, num);
+				subsector_t * sub2 = seg->PartnerSeg->Subsector;
+
+				if (sub2->mapsection != num)
+				{
+					assert(sub2->mapsection == 0);
+					sub2->mapsection = num;
+					MapSectionCollector.Push(sub2);
+				}
 			}
 		}
 	}
+	MapSectionCollector.Clear();
 }
 
 //==========================================================================

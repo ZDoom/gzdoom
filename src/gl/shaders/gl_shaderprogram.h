@@ -16,6 +16,7 @@ public:
 	};
 
 	void Compile(ShaderType type, const char *lumpName);
+	void Compile(ShaderType type, const char *name, const FString &code);
 	void SetFragDataLocation(int index, const char *name);
 	void Link(const char *name);
 	void SetAttribLocation(int index, const char *name);

@@ -3,6 +3,17 @@
 
 #include "gl/shaders/gl_shader.h"
 
+class FGLBloomTextureLevel
+{
+public:
+	GLuint VTexture = 0;
+	GLuint VFramebuffer = 0;
+	GLuint HTexture = 0;
+	GLuint HFramebuffer = 0;
+	GLuint Width = 0;
+	GLuint Height = 0;
+};
+
 class FGLRenderBuffers
 {
 public:
@@ -16,7 +27,12 @@ public:
 
 	static bool IsSupported() { return gl.version >= 3.3f; }
 
+	enum { NumBloomLevels = 4 };
+	FGLBloomTextureLevel BloomLevels[NumBloomLevels];
+
 private:
+	void Clear();
+
 	int mWidth = 0;
 	int mHeight = 0;
 

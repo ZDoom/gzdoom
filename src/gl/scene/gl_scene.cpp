@@ -72,6 +72,8 @@
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/shaders/gl_shader.h"
+#include "gl/shaders/gl_bloomshader.h"
+#include "gl/shaders/gl_blurshader.h"
 #include "gl/shaders/gl_presentshader.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/stereo3d/scoped_view_shifter.h"
@@ -202,6 +204,130 @@ void FGLRenderer::Set3DViewport()
 	glEnable(GL_STENCIL_TEST);
 	glStencilFunc(GL_ALWAYS,0,~0);	// default stencil
 	glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
+}
+
+//-----------------------------------------------------------------------------
+//
+// Adds bloom contribution to scene texture
+//
+//-----------------------------------------------------------------------------
+
+void FGLRenderer::BloomScene()
+{
+	if (!FGLRenderBuffers::IsSupported())
+		return;
+
+	const float blurAmount = 4.0f;
+	int sampleCount = 5; // Note: must be uneven number 3 to 15
+	float exposure = 2.0f;
+
+	auto vbo = GLRenderer->mVBO;
+
+	// TODO: Need a better way to share state with other parts of the pipeline
+	GLboolean blendEnabled, scissorEnabled;
+	GLint currentProgram, blendEquationRgb, blendEquationAlpha, blendSrcRgb, blendSrcAlpha, blendDestRgb, blendDestAlpha;
+	glGetBooleanv(GL_BLEND, &blendEnabled);
+	glGetBooleanv(GL_SCISSOR_TEST, &scissorEnabled);
+	glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
+	glGetIntegerv(GL_BLEND_EQUATION_RGB, &blendEquationRgb);
+	glGetIntegerv(GL_BLEND_EQUATION_ALPHA, &blendEquationAlpha);
+	glGetIntegerv(GL_BLEND_SRC_RGB, &blendSrcRgb);
+	glGetIntegerv(GL_BLEND_SRC_ALPHA, &blendSrcAlpha);
+	glGetIntegerv(GL_BLEND_DST_RGB, &blendDestRgb);
+	glGetIntegerv(GL_BLEND_DST_ALPHA, &blendDestAlpha);
+
+	glDisable(GL_BLEND);
+	glDisable(GL_SCISSOR_TEST);
+
+	const auto &level0 = mBuffers->BloomLevels[0];
+
+	// Extract blooming pixels from scene texture:
+	glBindFramebuffer(GL_FRAMEBUFFER, level0.VFramebuffer);
+	glViewport(0, 0, level0.Width, level0.Height);
+	mBuffers->BindSceneTexture(0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	mBloomExtractShader->Bind();
+	mBloomExtractShader->SceneTexture.Set(0);
+	mBloomExtractShader->Exposure.Set(exposure);
+	{
+		FFlatVertex *ptr = vbo->GetBuffer();
+		ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
+		ptr->Set(-1.0f, 1.0f, 0, 0.0f, 1.0f); ptr++;
+		ptr->Set(1.0f, -1.0f, 0, 1.0f, 0.0f); ptr++;
+		ptr->Set(1.0f, 1.0f, 0, 1.0f, 1.0f); ptr++;
+		vbo->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+	}
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	// Blur and downscale:
+	for (int i = 0; i < FGLRenderBuffers::NumBloomLevels - 1; i++)
+	{
+		const auto &level = mBuffers->BloomLevels[i];
+		const auto &next = mBuffers->BloomLevels[i + 1];
+		mBlurShader->BlurHorizontal(vbo, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
+		mBlurShader->BlurVertical(vbo, blurAmount, sampleCount, level.HTexture, next.VFramebuffer, next.Width, next.Height);
+	}
+
+	// Blur and upscale:
+	for (int i = FGLRenderBuffers::NumBloomLevels - 1; i > 0; i--)
+	{
+		const auto &level = mBuffers->BloomLevels[i];
+		const auto &next = mBuffers->BloomLevels[i - 1];
+
+		mBlurShader->BlurHorizontal(vbo, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
+		mBlurShader->BlurVertical(vbo, blurAmount, sampleCount, level.HTexture, level.VFramebuffer, level.Width, level.Height);
+
+		// Linear upscale:
+		glBindFramebuffer(GL_FRAMEBUFFER, next.VFramebuffer);
+		glViewport(0, 0, next.Width, next.Height);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, level.VTexture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		mBloomCombineShader->Bind();
+		mBloomCombineShader->BloomTexture.Set(0);
+		{
+			FFlatVertex *ptr = vbo->GetBuffer();
+			ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
+			ptr->Set(-1.0f, 1.0f, 0, 0.0f, 1.0f); ptr++;
+			ptr->Set(1.0f, -1.0f, 0, 1.0f, 0.0f); ptr++;
+			ptr->Set(1.0f, 1.0f, 0, 1.0f, 1.0f); ptr++;
+			vbo->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+		}
+	}
+
+	mBlurShader->BlurHorizontal(vbo, blurAmount, sampleCount, level0.VTexture, level0.HFramebuffer, level0.Width, level0.Height);
+	mBlurShader->BlurVertical(vbo, blurAmount, sampleCount, level0.HTexture, level0.VFramebuffer, level0.Width, level0.Height);
+
+	// Add bloom back to scene texture:
+	mBuffers->BindSceneFB();
+	glViewport(0, 0, mOutputViewport.width, mOutputViewport.height);
+	glEnable(GL_BLEND);
+	glBlendEquation(GL_FUNC_ADD);
+	glBlendFunc(GL_ONE, GL_ONE);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, level0.VTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	mBloomCombineShader->Bind();
+	mBloomCombineShader->BloomTexture.Set(0);
+	{
+		FFlatVertex *ptr = vbo->GetBuffer();
+		ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
+		ptr->Set(-1.0f, 1.0f, 0, 0.0f, 1.0f); ptr++;
+		ptr->Set(1.0f, -1.0f, 0, 1.0f, 0.0f); ptr++;
+		ptr->Set(1.0f, 1.0f, 0, 1.0f, 1.0f); ptr++;
+		vbo->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+	}
+
+	if (blendEnabled)
+		glEnable(GL_BLEND);
+	if (scissorEnabled)
+		glEnable(GL_SCISSOR_TEST);
+	glBlendEquationSeparate(blendEquationRgb, blendEquationAlpha);
+	glBlendFuncSeparate(blendSrcRgb, blendDestRgb, blendSrcAlpha, blendDestAlpha);
 }
 
 //-----------------------------------------------------------------------------
@@ -810,6 +936,8 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	gl_RenderState.ResetColor();
 	gl_RenderState.EnableTexture(true);
 	glDisable(GL_SCISSOR_TEST);
+
+	BloomScene();
 }
 
 

@@ -95,13 +95,17 @@ void FShaderProgram::CreateShader(ShaderType type)
 
 void FShaderProgram::Compile(ShaderType type, const char *lumpName)
 {
-	CreateShader(type);
-
-	const auto &handle = mShaders[type];
-
 	int lump = Wads.CheckNumForFullName(lumpName);
 	if (lump == -1) I_Error("Unable to load '%s'", lumpName);
 	FString code = Wads.ReadLump(lump).GetString().GetChars();
+	Compile(type, lumpName, code);
+}
+
+void FShaderProgram::Compile(ShaderType type, const char *name, const FString &code)
+{
+	CreateShader(type);
+
+	const auto &handle = mShaders[type];
 
 	int lengths[1] = { (int)code.Len() };
 	const char *sources[1] = { code.GetChars() };
@@ -113,7 +117,7 @@ void FShaderProgram::Compile(ShaderType type, const char *lumpName)
 	glGetShaderiv(handle, GL_COMPILE_STATUS, &status);
 	if (status == GL_FALSE)
 	{
-		I_Error("Compile Shader '%s':\n%s\n", lumpName, GetShaderInfoLog(handle).GetChars());
+		I_Error("Compile Shader '%s':\n%s\n", name, GetShaderInfoLog(handle).GetChars());
 	}
 	else
 	{

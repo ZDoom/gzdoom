@@ -72,12 +72,37 @@ FGLRenderBuffers::FGLRenderBuffers()
 
 FGLRenderBuffers::~FGLRenderBuffers()
 {
+	Clear();
+}
+
+void FGLRenderBuffers::Clear()
+{
+	for (int i = 0; i < NumBloomLevels; i++)
+	{
+		auto &level = BloomLevels[i];
+		if (level.HFramebuffer != 0)
+			glDeleteFramebuffers(1, &level.HFramebuffer);
+		if (level.VFramebuffer != 0)
+			glDeleteFramebuffers(1, &level.VFramebuffer);
+		if (level.HTexture != 0)
+			glDeleteTextures(1, &level.HTexture);
+		if (level.VTexture != 0)
+			glDeleteTextures(1, &level.VTexture);
+		level = FGLBloomTextureLevel();
+	}
+
 	if (mSceneFB != 0)
 		glDeleteFramebuffers(1, &mSceneFB);
 	if (mSceneTexture != 0)
 		glDeleteTextures(1, &mSceneTexture);
 	if (mSceneDepthStencil != 0)
 		glDeleteRenderbuffers(1, &mSceneDepthStencil);
+
+	mSceneFB = 0;
+	mSceneTexture = 0;
+	mSceneDepthStencil = 0;
+	mWidth = 0;
+	mHeight = 0;
 }
 
 //==========================================================================
@@ -92,12 +117,9 @@ void FGLRenderBuffers::Setup(int width, int height)
 	if (width <= mWidth && height <= mHeight)
 		return;
 
-	if (mSceneFB != 0)
-		glDeleteFramebuffers(1, &mSceneFB);
-	if (mSceneTexture != 0)
-		glDeleteTextures(1, &mSceneTexture);
-	if (mSceneDepthStencil != 0)
-		glDeleteRenderbuffers(1, &mSceneDepthStencil);
+	Clear();
+
+	glActiveTexture(GL_TEXTURE0);
 
 	glGenFramebuffers(1, &mSceneFB);
 	glGenTextures(1, &mSceneTexture);
@@ -109,15 +131,49 @@ void FGLRenderBuffers::Setup(int width, int height)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glBindRenderbuffer(GL_RENDERBUFFER, mSceneDepthStencil);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, mSceneFB);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mSceneTexture, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mSceneDepthStencil);
+
+	int bloomWidth = MAX(width / 2, 1);
+	int bloomHeight = MAX(height / 2, 1);
+	for (int i = 0; i < NumBloomLevels; i++)
+	{
+		auto &level = BloomLevels[i];
+		level.Width = MAX(bloomWidth / 2, 1);
+		level.Height = MAX(bloomHeight / 2, 1);
+
+		glGenTextures(1, &level.VTexture);
+		glGenTextures(1, &level.HTexture);
+		glGenFramebuffers(1, &level.VFramebuffer);
+		glGenFramebuffers(1, &level.HFramebuffer);
+
+		glBindTexture(GL_TEXTURE_2D, level.VTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, level.Width, level.Height, 0, GL_RGBA, GL_FLOAT, nullptr);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		glBindTexture(GL_TEXTURE_2D, level.HTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, level.Width, level.Height, 0, GL_RGBA, GL_FLOAT, nullptr);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, level.VFramebuffer);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, level.VTexture, 0);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, level.HFramebuffer);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, level.HTexture, 0);
+
+		bloomWidth = level.Width;
+		bloomHeight = level.Height;
+	}
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, mOutputFB);
 
 	mWidth = width;
@@ -154,6 +210,6 @@ void FGLRenderBuffers::BindOutputFB()
 
 void FGLRenderBuffers::BindSceneTexture(int index)
 {
-	glActiveTexture(index);
+	glActiveTexture(GL_TEXTURE0 + index);
 	glBindTexture(GL_TEXTURE_2D, mSceneTexture);
 }

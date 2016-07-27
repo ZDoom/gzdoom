@@ -19,6 +19,9 @@ class FLightBuffer;
 class FSamplerManager;
 class DPSprite;
 class FGLRenderBuffers;
+class FBloomExtractShader;
+class FBloomCombineShader;
+class FBlurShader;
 class FPresentShader;
 
 inline float DEG2RAD(float deg)
@@ -82,6 +85,9 @@ public:
 	int mOldFBID;
 
 	FGLRenderBuffers *mBuffers;
+	FBloomExtractShader *mBloomExtractShader;
+	FBloomCombineShader *mBloomCombineShader;
+	FBlurShader *mBlurShader;
 	FPresentShader *mPresentShader;
 
 	FTexture *gllight;
@@ -147,6 +153,7 @@ public:
 	void SetFixedColormap (player_t *player);
 	void WriteSavePic (player_t *player, FILE *file, int width, int height);
 	void EndDrawScene(sector_t * viewsector);
+	void BloomScene();
 	void Flush();
 
 	void SetProjection(float fov, float ratio, float fovratio);

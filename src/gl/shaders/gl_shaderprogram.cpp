@@ -3,7 +3,7 @@
 ** GLSL shader program compile and link
 **
 **---------------------------------------------------------------------------
-** Copyright 2008 Christoph Oelckers
+** Copyright 2016 Magnus Norddahl
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

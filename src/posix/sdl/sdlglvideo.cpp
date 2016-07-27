@@ -466,5 +466,5 @@ int SDLGLFB::GetClientHeight()
 {
 	int height = 0;
 	SDL_GL_GetDrawableSize(Screen, nullptr, &height);
-	return width;
+	return height;
 }

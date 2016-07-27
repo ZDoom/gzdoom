@@ -948,6 +948,24 @@ public:
 
 //==========================================================================
 //
+// FxDoWhileLoop
+//
+//==========================================================================
+
+class FxDoWhileLoop : public FxExpression
+{
+	FxExpression *Condition;
+	FxExpression *Code;
+
+public:
+	FxDoWhileLoop(FxExpression *condition, FxExpression *code, const FScriptPosition &pos);
+	~FxDoWhileLoop();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
 // FxJumpStatement
 //
 //==========================================================================

@@ -501,6 +501,29 @@ static FxExpression *ParseWhile(FScanner &sc, FState state, FString statestring,
 	return new FxWhileLoop(cond, code, sc);
 }
 
+static FxExpression *ParseDoWhile(FScanner &sc, FState state, FString statestring, Baggage &bag,
+	PPrototype *&retproto, bool &lastwasret)
+{
+	FxExpression *cond, *code;
+	PPrototype *proto;
+	bool ret;
+
+	sc.MustGetStringName("{"); // Enforce braces like for if statements.
+	code = ParseActions(sc, state, statestring, bag, proto, ret);
+
+	sc.MustGetStringName("while");
+	sc.MustGetStringName("(");
+	cond = ParseExpression(sc, bag.Info);
+	sc.MustGetStringName(")");
+	sc.MustGetStringName(";");
+	sc.MustGetString();
+
+	retproto = ReturnCheck(retproto, proto, sc);
+	lastwasret = false;
+
+	return new FxDoWhileLoop(cond, code, sc);
+}
+
 FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag,
 						   PPrototype *&retproto, bool &endswithret)
 {
@@ -532,6 +555,10 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 		else if (sc.Compare("while"))
 		{ // Handle a while loop
 			add = ParseWhile(sc, state, statestring, bag, proto, lastwasret);
+		}
+		else if (sc.Compare("do"))
+		{ // Handle a do-while loop
+			add = ParseDoWhile(sc, state, statestring, bag, proto, lastwasret);
 		}
 		else if (sc.Compare("return"))
 		{ // Handle a return statement

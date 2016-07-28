@@ -104,22 +104,13 @@ class FOptionMenuItemSafeCommand : public FOptionMenuItemCommand
 {
 	// action is a CCMD
 protected:
-	char *mPrompt;
+	FString mPrompt;
 
 public:
 	FOptionMenuItemSafeCommand(const char *label, const char *menu, const char *prompt)
 		: FOptionMenuItemCommand(label, menu)
-		, mPrompt(nullptr)
+		, mPrompt(prompt)
 	{
-		if (prompt && *prompt)
-		{
-			mPrompt = copystring(prompt);
-		}
-	}
-
-	~FOptionMenuItemSafeCommand()
-	{
-		if (mPrompt != NULL) delete[] mPrompt;
 	}
 
 	bool MenuEvent (int mkey, bool fromcontroller)
@@ -134,7 +125,7 @@ public:
 
 	bool Activate()
 	{
-		const char *msg = mPrompt ? mPrompt : "$SAFEMESSAGE";
+		const char *msg = mPrompt.IsNotEmpty() ? mPrompt.GetChars() : "$SAFEMESSAGE";
 		if (*msg == '$')
 		{
 			msg = GStrings(msg + 1);

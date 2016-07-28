@@ -966,6 +966,26 @@ public:
 
 //==========================================================================
 //
+// FxForLoop
+//
+//==========================================================================
+
+class FxForLoop : public FxExpression
+{
+	FxExpression *Init;
+	FxExpression *Condition;
+	FxExpression *Iteration;
+	FxExpression *Code;
+
+public:
+	FxForLoop(FxExpression *init, FxExpression *condition, FxExpression *iteration, FxExpression *code, const FScriptPosition &pos);
+	~FxForLoop();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
 // FxJumpStatement
 //
 //==========================================================================

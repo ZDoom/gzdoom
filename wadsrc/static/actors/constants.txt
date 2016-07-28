@@ -667,3 +667,10 @@ enum
 	GAF_RELATIVE =			1,
 	GAF_SWITCH =			1 << 1,
 };
+
+//Flags for A_CopySpriteFrame
+enum
+{
+	CPSF_NOSPRITE =			1,
+	CPSF_NOFRAME =			1 << 1,
+};

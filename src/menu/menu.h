@@ -418,7 +418,7 @@ public:
 
 class FPlayerNameBox : public FListMenuItemSelectable
 {
-	const char *mText;
+	FString mText;
 	FFont *mFont;
 	EColorRange mFontColor;
 	int mFrameSize;
@@ -447,7 +447,7 @@ public:
 class FValueTextItem : public FListMenuItemSelectable
 {
 	TArray<FString> mSelections;
-	const char *mText;
+	FString mText;
 	int mSelection;
 	FFont *mFont;
 	EColorRange mFontColor;
@@ -472,7 +472,7 @@ public:
 
 class FSliderItem : public FListMenuItemSelectable
 {
-	const char *mText;
+	FString mText;
 	FFont *mFont;
 	EColorRange mFontColor;
 	int mMinrange, mMaxrange;
@@ -539,7 +539,7 @@ public:
 class FOptionMenuItem : public FListMenuItem
 {
 protected:
-	char *mLabel;
+	FString mLabel;
 	bool mCentered;
 
 	void drawLabel(int indent, int y, EColorRange color, bool grayed = false);
@@ -548,7 +548,7 @@ public:
 	FOptionMenuItem(const char *text, FName action = NAME_None, bool center = false)
 		: FListMenuItem(0, 0, action)
 	{
-		mLabel = copystring(text);
+		mLabel = text;
 		mCentered = center;
 	}
 

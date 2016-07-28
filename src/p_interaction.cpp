@@ -379,6 +379,12 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 		target = source;
 	}
 
+	// [JM] Fire KILL type scripts for actor. Not needed for players, since they have the "DEATH" script type.
+	if (!player && !(flags7 & MF7_NOKILLSCRIPTS) && ((flags7 & MF7_USEKILLSCRIPTS) || gameinfo.forcekillscripts))
+	{
+		FBehavior::StaticStartTypedScripts(SCRIPT_Kill, this, true, 0, true);
+	}
+
 	flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY);
 	if (!(flags4 & MF4_DONTFALL)) flags&=~MF_NOGRAVITY;
 	flags |= MF_DROPOFF;

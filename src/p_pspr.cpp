@@ -510,7 +510,7 @@ void P_DropWeapon (player_t *player)
 	}
 	// Since the weapon is dropping, stop blocking switching.
 	player->WeaponState &= ~WF_DISABLESWITCH;
-	if (player->ReadyWeapon != nullptr)
+	if ((player->ReadyWeapon != nullptr) && (player->health > 0 || !(player->ReadyWeapon->WeaponFlags & WIF_NODEATHDESELECT)))
 	{
 		P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->GetDownState());
 	}
@@ -1396,20 +1396,23 @@ void player_t::TickPSprites()
 		pspr = pspr->Next;
 	}
 
-	if (ReadyWeapon == nullptr && (health > 0 || mo->DamageType != NAME_Fire))
+	if ((health > 0) || (ReadyWeapon != nullptr && !(ReadyWeapon->WeaponFlags & WIF_NODEATHINPUT)))
 	{
-		if (PendingWeapon != WP_NOCHANGE)
-			P_BringUpWeapon(this);
-	}
-	else
-	{
-		P_CheckWeaponSwitch(this);
-		if (WeaponState & (WF_WEAPONREADY | WF_WEAPONREADYALT))
+		if (ReadyWeapon == nullptr)
 		{
-			P_CheckWeaponFire(this);
+			if (PendingWeapon != WP_NOCHANGE)
+				P_BringUpWeapon(this);
 		}
-		// Check custom buttons
-		P_CheckWeaponButtons(this);
+		else
+		{
+			P_CheckWeaponSwitch(this);
+			if (WeaponState & (WF_WEAPONREADY | WF_WEAPONREADYALT))
+			{
+				P_CheckWeaponFire(this);
+			}
+			// Check custom buttons
+			P_CheckWeaponButtons(this);
+		}
 	}
 }
 

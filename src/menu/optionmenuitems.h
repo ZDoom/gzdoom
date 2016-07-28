@@ -103,9 +103,13 @@ public:
 class FOptionMenuItemSafeCommand : public FOptionMenuItemCommand
 {
 	// action is a CCMD
+protected:
+	FString mPrompt;
+
 public:
-	FOptionMenuItemSafeCommand(const char *label, const char *menu)
+	FOptionMenuItemSafeCommand(const char *label, const char *menu, const char *prompt)
 		: FOptionMenuItemCommand(label, menu)
+		, mPrompt(prompt)
 	{
 	}
 
@@ -121,9 +125,13 @@ public:
 
 	bool Activate()
 	{
-		const char *msg = GStrings("SAFEMESSAGE");
+		const char *msg = mPrompt.IsNotEmpty() ? mPrompt.GetChars() : "$SAFEMESSAGE";
+		if (*msg == '$')
+		{
+			msg = GStrings(msg + 1);
+		}
 
-		const char *actionLabel = mLabel;
+		const char *actionLabel = mLabel.GetChars();
 		if (actionLabel != NULL)
 		{
 			if (*actionLabel == '$')
@@ -528,7 +536,7 @@ public:
 
 	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
-		const char *txt = mCurrent? mAltText.GetChars() : mLabel;
+		const char *txt = mCurrent? mAltText.GetChars() : mLabel.GetChars();
 		if (*txt == '$') txt = GStrings(txt + 1);
 		int w = SmallFont->StringWidth(txt) * CleanXfac_1;
 		int x = (screen->GetWidth() - w) / 2;

@@ -80,32 +80,29 @@ void FBlurShader::BlurHorizontal(FFlatVertexBuffer *vbo, float blurAmount, int s
 
 void FBlurShader::Blur(FFlatVertexBuffer *vbo, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height, bool vertical)
 {
-	int error = glGetError();
 	BlurSetup *setup = GetSetup(blurAmount, sampleCount);
-	error = glGetError();
 	if (vertical)
 		setup->VerticalShader->Bind();
 	else
 		setup->HorizontalShader->Bind();
-	error = glGetError();
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, inputTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	error = glGetError();
+
 	glBindFramebuffer(GL_FRAMEBUFFER, outputFrameBuffer);
 	glViewport(0, 0, width, height);
 	glDisable(GL_BLEND);
-	error = glGetError();
+
 	FFlatVertex *ptr = vbo->GetBuffer();
 	ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
 	ptr->Set(-1.0f, 1.0f, 0, 0.0f, 1.0f); ptr++;
 	ptr->Set(1.0f, -1.0f, 0, 1.0f, 0.0f); ptr++;
 	ptr->Set(1.0f, 1.0f, 0, 1.0f, 1.0f); ptr++;
 	vbo->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-	error = glGetError();
 }
 
 //==========================================================================
@@ -138,9 +135,7 @@ FBlurShader::BlurSetup *FBlurShader::GetSetup(float blurAmount, int sampleCount)
 	blurSetup.VerticalShader->SetAttribLocation(0, "PositionInProjection");
 	blurSetup.VerticalShader->Link("vertical blur");
 	blurSetup.VerticalShader->Bind();
-	int error = glGetError();
 	glUniform1i(glGetUniformLocation(*blurSetup.VerticalShader.get(), "SourceTexture"), 0);
-	error = glGetError();
 
 	blurSetup.HorizontalShader = std::make_shared<FShaderProgram>();
 	blurSetup.HorizontalShader->Compile(FShaderProgram::Vertex, "horizontal blur vertex shader", vertexCode);

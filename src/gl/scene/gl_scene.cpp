@@ -74,6 +74,7 @@
 #include "gl/shaders/gl_shader.h"
 #include "gl/shaders/gl_bloomshader.h"
 #include "gl/shaders/gl_blurshader.h"
+#include "gl/shaders/gl_tonemapshader.h"
 #include "gl/shaders/gl_presentshader.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/stereo3d/scoped_view_shifter.h"
@@ -219,11 +220,9 @@ void FGLRenderer::BloomScene()
 
 	const float blurAmount = 4.0f;
 	int sampleCount = 5; // Note: must be uneven number 3 to 15
-	float exposure = 2.0f;
+	float exposure = mCameraExposure;
 
-	auto vbo = GLRenderer->mVBO;
-
-	// TODO: Need a better way to share state with other parts of the pipeline
+	// TBD: Maybe need a better way to share state with other parts of the pipeline
 	GLboolean blendEnabled, scissorEnabled;
 	GLint currentProgram, blendEquationRgb, blendEquationAlpha, blendSrcRgb, blendSrcAlpha, blendDestRgb, blendDestAlpha;
 	glGetBooleanv(GL_BLEND, &blendEnabled);
@@ -251,12 +250,12 @@ void FGLRenderer::BloomScene()
 	mBloomExtractShader->SceneTexture.Set(0);
 	mBloomExtractShader->Exposure.Set(exposure);
 	{
-		FFlatVertex *ptr = vbo->GetBuffer();
+		FFlatVertex *ptr = mVBO->GetBuffer();
 		ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
 		ptr->Set(-1.0f, 1.0f, 0, 0.0f, 1.0f); ptr++;
 		ptr->Set(1.0f, -1.0f, 0, 1.0f, 0.0f); ptr++;
 		ptr->Set(1.0f, 1.0f, 0, 1.0f, 1.0f); ptr++;
-		vbo->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+		mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 	}
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -266,8 +265,8 @@ void FGLRenderer::BloomScene()
 	{
 		const auto &level = mBuffers->BloomLevels[i];
 		const auto &next = mBuffers->BloomLevels[i + 1];
-		mBlurShader->BlurHorizontal(vbo, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
-		mBlurShader->BlurVertical(vbo, blurAmount, sampleCount, level.HTexture, next.VFramebuffer, next.Width, next.Height);
+		mBlurShader->BlurHorizontal(mVBO, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
+		mBlurShader->BlurVertical(mVBO, blurAmount, sampleCount, level.HTexture, next.VFramebuffer, next.Width, next.Height);
 	}
 
 	// Blur and upscale:
@@ -276,8 +275,8 @@ void FGLRenderer::BloomScene()
 		const auto &level = mBuffers->BloomLevels[i];
 		const auto &next = mBuffers->BloomLevels[i - 1];
 
-		mBlurShader->BlurHorizontal(vbo, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
-		mBlurShader->BlurVertical(vbo, blurAmount, sampleCount, level.HTexture, level.VFramebuffer, level.Width, level.Height);
+		mBlurShader->BlurHorizontal(mVBO, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
+		mBlurShader->BlurVertical(mVBO, blurAmount, sampleCount, level.HTexture, level.VFramebuffer, level.Width, level.Height);
 
 		// Linear upscale:
 		glBindFramebuffer(GL_FRAMEBUFFER, next.VFramebuffer);
@@ -289,17 +288,17 @@ void FGLRenderer::BloomScene()
 		mBloomCombineShader->Bind();
 		mBloomCombineShader->BloomTexture.Set(0);
 		{
-			FFlatVertex *ptr = vbo->GetBuffer();
+			FFlatVertex *ptr = mVBO->GetBuffer();
 			ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
 			ptr->Set(-1.0f, 1.0f, 0, 0.0f, 1.0f); ptr++;
 			ptr->Set(1.0f, -1.0f, 0, 1.0f, 0.0f); ptr++;
 			ptr->Set(1.0f, 1.0f, 0, 1.0f, 1.0f); ptr++;
-			vbo->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+			mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 		}
 	}
 
-	mBlurShader->BlurHorizontal(vbo, blurAmount, sampleCount, level0.VTexture, level0.HFramebuffer, level0.Width, level0.Height);
-	mBlurShader->BlurVertical(vbo, blurAmount, sampleCount, level0.HTexture, level0.VFramebuffer, level0.Width, level0.Height);
+	mBlurShader->BlurHorizontal(mVBO, blurAmount, sampleCount, level0.VTexture, level0.HFramebuffer, level0.Width, level0.Height);
+	mBlurShader->BlurVertical(mVBO, blurAmount, sampleCount, level0.HTexture, level0.VFramebuffer, level0.Width, level0.Height);
 
 	// Add bloom back to scene texture:
 	mBuffers->BindSceneFB();
@@ -314,12 +313,12 @@ void FGLRenderer::BloomScene()
 	mBloomCombineShader->Bind();
 	mBloomCombineShader->BloomTexture.Set(0);
 	{
-		FFlatVertex *ptr = vbo->GetBuffer();
+		FFlatVertex *ptr = mVBO->GetBuffer();
 		ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
 		ptr->Set(-1.0f, 1.0f, 0, 0.0f, 1.0f); ptr++;
 		ptr->Set(1.0f, -1.0f, 0, 1.0f, 0.0f); ptr++;
 		ptr->Set(1.0f, 1.0f, 0, 1.0f, 1.0f); ptr++;
-		vbo->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+		mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 	}
 
 	if (blendEnabled)
@@ -332,7 +331,41 @@ void FGLRenderer::BloomScene()
 
 //-----------------------------------------------------------------------------
 //
-// Run post processing steps and copy to frame buffer
+// Tonemap scene texture and place the result in the HUD/2D texture
+//
+//-----------------------------------------------------------------------------
+
+void FGLRenderer::TonemapScene()
+{
+	GLboolean blendEnabled, scissorEnabled;
+	glGetBooleanv(GL_BLEND, &blendEnabled);
+	glGetBooleanv(GL_SCISSOR_TEST, &scissorEnabled);
+
+	glDisable(GL_BLEND);
+	glDisable(GL_SCISSOR_TEST);
+
+	mBuffers->BindHudFB();
+	mBuffers->BindSceneTexture(0);
+	mTonemapShader->Bind();
+	mTonemapShader->SceneTexture.Set(0);
+	mTonemapShader->Exposure.Set(mCameraExposure);
+	
+	FFlatVertex *ptr = mVBO->GetBuffer();
+	ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
+	ptr->Set(-1.0f, 1.0f, 0, 0.0f, 1.0f); ptr++;
+	ptr->Set(1.0f, -1.0f, 0, 1.0f, 0.0f); ptr++;
+	ptr->Set(1.0f, 1.0f, 0, 1.0f, 1.0f); ptr++;
+	mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+
+	if (blendEnabled)
+		glEnable(GL_BLEND);
+	if (scissorEnabled)
+		glEnable(GL_SCISSOR_TEST);
+}
+
+//-----------------------------------------------------------------------------
+//
+// Gamma correct while copying to frame buffer
 //
 //-----------------------------------------------------------------------------
 
@@ -406,7 +439,7 @@ void FGLRenderer::Flush()
 			mPresentShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
 			mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
 		}
-		mBuffers->BindSceneTexture(0);
+		mBuffers->BindHudTexture(0);
 
 		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
 		ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
@@ -938,6 +971,7 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	glDisable(GL_SCISSOR_TEST);
 
 	BloomScene();
+	TonemapScene();
 }
 
 
@@ -1042,6 +1076,13 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		mViewActor=camera;
 	}
 
+	if (toscreen)
+	{
+		float light = viewsector->lightlevel / 255.0f;
+		float exposure = MAX(1.0f + (1.0f - light * light) * 1.5f, 0.5f);
+		mCameraExposure = mCameraExposure * 0.98f + exposure * 0.02f;
+	}
+
 	// 'viewsector' will not survive the rendering so it cannot be used anymore below.
 	retval = viewsector;
 
@@ -1056,6 +1097,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		// TODO: stereo specific viewport - needed when implementing side-by-side modes etc.
 		SetOutputViewport(bounds);
 		Set3DViewport();
+		mDrawingScene2D = true;
 		mCurrentFoV = fov;
 		// Stereo mode specific perspective projection
 		SetProjection( eye->GetProjection(fov, ratio, fovratio) );
@@ -1073,6 +1115,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 
 		ProcessScene(toscreen);
 		if (mainview) EndDrawScene(retval);	// do not call this for camera textures.
+		mDrawingScene2D = false;
 		eye->TearDown();
 	}
 	stereo3dMode.TearDown();

@@ -97,10 +97,16 @@ void FGLRenderBuffers::Clear()
 		glDeleteTextures(1, &mSceneTexture);
 	if (mSceneDepthStencil != 0)
 		glDeleteRenderbuffers(1, &mSceneDepthStencil);
+	if (mHudFB != 0)
+		glDeleteFramebuffers(1, &mHudFB);
+	if (mHudTexture != 0)
+		glDeleteTextures(1, &mHudTexture);
 
 	mSceneFB = 0;
 	mSceneTexture = 0;
 	mSceneDepthStencil = 0;
+	mHudFB = 0;
+	mHudTexture = 0;
 	mWidth = 0;
 	mHeight = 0;
 }
@@ -122,7 +128,9 @@ void FGLRenderBuffers::Setup(int width, int height)
 	glActiveTexture(GL_TEXTURE0);
 
 	glGenFramebuffers(1, &mSceneFB);
+	glGenFramebuffers(1, &mHudFB);
 	glGenTextures(1, &mSceneTexture);
+	glGenTextures(1, &mHudTexture);
 	glGenRenderbuffers(1, &mSceneDepthStencil);
 
 	glBindTexture(GL_TEXTURE_2D, mSceneTexture);
@@ -138,6 +146,16 @@ void FGLRenderBuffers::Setup(int width, int height)
 	glBindFramebuffer(GL_FRAMEBUFFER, mSceneFB);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mSceneTexture, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mSceneDepthStencil);
+
+	glBindTexture(GL_TEXTURE_2D, mHudTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, width, height, 0, GL_RGBA, GL_UNSIGNED_SHORT, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, mHudFB);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mHudTexture, 0);
 
 	int bloomWidth = MAX(width / 2, 1);
 	int bloomHeight = MAX(height / 2, 1);
@@ -193,6 +211,17 @@ void FGLRenderBuffers::BindSceneFB()
 
 //==========================================================================
 //
+// Makes the 2D/HUD frame buffer active 
+//
+//==========================================================================
+
+void FGLRenderBuffers::BindHudFB()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, mHudFB);
+}
+
+//==========================================================================
+//
 // Makes the screen frame buffer active
 //
 //==========================================================================
@@ -212,4 +241,16 @@ void FGLRenderBuffers::BindSceneTexture(int index)
 {
 	glActiveTexture(GL_TEXTURE0 + index);
 	glBindTexture(GL_TEXTURE_2D, mSceneTexture);
+}
+
+//==========================================================================
+//
+// Binds the 2D/HUD frame buffer texture to the specified texture unit
+//
+//==========================================================================
+
+void FGLRenderBuffers::BindHudTexture(int index)
+{
+	glActiveTexture(GL_TEXTURE0 + index);
+	glBindTexture(GL_TEXTURE_2D, mHudTexture);
 }

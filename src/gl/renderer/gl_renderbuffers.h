@@ -22,8 +22,10 @@ public:
 
 	void Setup(int width, int height);
 	void BindSceneFB();
+	void BindHudFB();
 	void BindOutputFB();
 	void BindSceneTexture(int index);
+	void BindHudTexture(int index);
 
 	static bool IsSupported() { return gl.version >= 3.3f; }
 
@@ -39,6 +41,8 @@ private:
 	GLuint mSceneTexture = 0;
 	GLuint mSceneDepthStencil = 0;
 	GLuint mSceneFB = 0;
+	GLuint mHudTexture = 0;
+	GLuint mHudFB = 0;
 	GLuint mOutputFB = 0;
 };
 

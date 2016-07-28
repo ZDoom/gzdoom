@@ -7202,7 +7202,7 @@ enum CPSFFlags
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CopySpriteFrame)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE;
 	PARAM_INT(from);
 	PARAM_INT(to);
 	PARAM_INT_OPT(flags) { flags = 0; }

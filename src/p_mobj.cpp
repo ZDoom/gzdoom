@@ -383,6 +383,11 @@ void AActor::Serialize(FArchive &arc)
 		<< RipLevelMin
 		<< RipLevelMax;
 	arc << DefThreshold;
+	if (SaveVersion >= 4549)
+	{
+		arc << SpriteAngle;
+		arc << SpriteRotation;
+	}
 
 	{
 		FString tagstr;

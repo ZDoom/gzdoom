@@ -35,6 +35,8 @@ ACTOR Actor native //: Thinker
 	BloodType "Blood", "BloodSplatter", "AxeBlood"
 	ExplosionDamage 128
 	MissileHeight 32	
+	SpriteAngle 0
+	SpriteRotation 0
 
 	// Functions
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
@@ -48,6 +50,8 @@ ACTOR Actor native //: Thinker
 	native float GetCrouchFactor(int ptr = AAPTR_PLAYER1);
 	native float GetCVar(string cvar);
 	native int GetPlayerInput(int inputnum, int ptr = AAPTR_DEFAULT);
+	native float GetSpriteAngle(int ptr = AAPTR_DEFAULT);
+	native float GetSpriteRotation(int ptr = AAPTR_DEFAULT);
 
 	// Action functions
 	// Meh, MBF redundant functions. Only for DeHackEd support.
@@ -331,6 +335,8 @@ ACTOR Actor native //: Thinker
 	action native bool A_FaceMovementDirection(float offset = 0, float anglelimit = 0, float pitchlimit = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	action native int A_ClearOverlays(int sstart = 0, int sstop = 0, bool safety = true);
 	action native bool A_CopySpriteFrame(int from, int to, int flags = 0);
+	action native bool A_SetSpriteAngle(float angle = 0, int ptr = AAPTR_DEFAULT);
+	action native bool A_SetSpriteRotation(float angle = 0, int ptr = AAPTR_DEFAULT);
 
 	native void A_RearrangePointers(int newtarget, int newmaster = AAPTR_DEFAULT, int newtracer = AAPTR_DEFAULT, int flags=0);
 	native void A_TransferPointer(int ptr_source, int ptr_recepient, int sourcefield, int recepientfield=AAPTR_DEFAULT, int flags=0);

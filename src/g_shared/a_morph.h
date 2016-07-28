@@ -25,6 +25,7 @@ enum
 	MORPH_UNDOBYDEATHSAVES	= 0x00000800,	// Actor (if unmorphed when killed) regains their health and doesn't die
 	MORPH_UNDOBYTIMEOUT		= 0x00001000,	// Player unmorphs once countdown expires
 	MORPH_UNDOALWAYS		= 0x00002000,	// Powerups must always unmorph, no matter what.
+	MORPH_TRANSFERTRANSLATION = 0x00004000,	// Transfer translation from the original actor to the morphed one
 
 	MORPH_STANDARDUNDOING	= MORPH_UNDOBYTOMEOFPOWER | MORPH_UNDOBYCHAOSDEVICE | MORPH_UNDOBYTIMEOUT,
 };

@@ -164,6 +164,7 @@ const int MRF_UNDOBYDEATH = 512;
 const int MRF_UNDOBYDEATHFORCED = 1024;
 const int MRF_UNDOBYDEATHSAVES = 2048;
 const int MRF_UNDOALWAYS = 4096;
+const int MRF_TRANSFERTRANSLATION = 8192;
 
 // Flags for A_RailAttack and A_CustomRailgun
 const int RGF_SILENT = 1;
@@ -171,6 +172,7 @@ const int RGF_NOPIERCING = 2;
 const int RGF_EXPLICITANGLE = 4;
 const int RGF_FULLBRIGHT = 8;
 const int RGF_CENTERZ = 16;
+const int RGF_NORANDOMPUFFZ = 32;
 
 // Flags for A_Mushroom
 const int MSF_Standard = 0;
@@ -466,6 +468,7 @@ enum
 	DMSS_EXFILTER =			0x00000040,
 	DMSS_EXSPECIES =		0x00000080,
 	DMSS_EITHER =			0x00000100,
+	DMSS_INFLICTORDMGTYPE =	0x00000200,
 };
 
 // Flags for A_AlertMonsters
@@ -663,4 +666,11 @@ enum
 {
 	GAF_RELATIVE =			1,
 	GAF_SWITCH =			1 << 1,
+};
+
+//Flags for A_CopySpriteFrame
+enum
+{
+	CPSF_NOSPRITE =			1,
+	CPSF_NOFRAME =			1 << 1,
 };

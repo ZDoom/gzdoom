@@ -6129,6 +6129,7 @@ enum DMSS
 	DMSS_EXFILTER			= 64,	//Changes filter into a blacklisted class instead of whitelisted.
 	DMSS_EXSPECIES			= 128,	// ^ but with species instead.
 	DMSS_EITHER				= 256,  //Allow either type or species to be affected.
+	DMSS_INFLICTORDMGTYPE	= 512,	//Ignore the passed damagetype and use the inflictor's instead.
 };
 
 static void DoDamage(AActor *dmgtarget, AActor *inflictor, AActor *source, int amount, FName DamageType, int flags, PClassActor *filter, FName species)
@@ -6153,6 +6154,9 @@ static void DoDamage(AActor *dmgtarget, AActor *inflictor, AActor *source, int a
 	
 		if (amount > 0)
 		{ //Should wind up passing them through just fine.
+			if (flags & DMSS_INFLICTORDMGTYPE)
+				DamageType = inflictor->DamageType;
+
 			P_DamageMobj(dmgtarget, inflictor, source, amount, DamageType, dmgFlags);
 		}
 		else if (amount < 0)
@@ -7184,3 +7188,34 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMovementDirection)
 	ACTION_RETURN_BOOL(true);
 }
 
+//==========================================================================
+//
+// A_CopySpriteFrame(from, to, flags)
+//
+// Copies the sprite and/or frame from one pointer to another.
+//==========================================================================
+enum CPSFFlags
+{
+	CPSF_NOSPRITE =			1,
+	CPSF_NOFRAME =			1 << 1,
+};
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CopySpriteFrame)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(from);
+	PARAM_INT(to);
+	PARAM_INT_OPT(flags) { flags = 0; }
+
+	AActor *copyfrom = COPY_AAPTR(self, from);
+	AActor *copyto = COPY_AAPTR(self, to);
+
+	if (copyfrom == copyto || copyfrom == nullptr || copyto == nullptr || ((flags & CPSF_NOSPRITE) && (flags & CPSF_NOFRAME)))
+	{
+		ACTION_RETURN_BOOL(false);
+	}
+	
+	if (!(flags & CPSF_NOSPRITE))	copyto->sprite = copyfrom->sprite;
+	if (!(flags & CPSF_NOFRAME))	copyto->frame = copyfrom->frame;
+	ACTION_RETURN_BOOL(true);
+}

@@ -372,6 +372,7 @@ enum	// P_RailAttack / A_RailAttack / A_CustomRailgun / P_DrawRailTrail flags
 	RAF_EXPLICITANGLE = 4,
 	RAF_FULLBRIGHT = 8,
 	RAF_CENTERZ = 16,
+	RAF_NORANDOMPUFFZ = 32,
 };
 
 

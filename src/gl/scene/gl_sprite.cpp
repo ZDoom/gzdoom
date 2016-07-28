@@ -722,7 +722,11 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	{
 		bool mirror;
 		DAngle ang = (thingpos - ViewPos).Angle();
-		FTextureID patch = gl_GetSpriteFrame(spritenum, thing->frame, -1, (ang - thing->Angles.Yaw).BAMs(), &mirror);
+		FTextureID patch;
+		if (thing->flags7 & MF7_SPRITEANGLE)
+			patch = gl_GetSpriteFrame(spritenum, thing->frame, -1, (thing->SpriteAngle).BAMs(), &mirror);
+		else
+			patch = gl_GetSpriteFrame(spritenum, thing->frame, -1, (ang - (thing->Angles.Yaw + thing->SpriteRotation)).BAMs(), &mirror);
 		if (!patch.isValid()) return;
 		int type = thing->renderflags & RF_SPRITETYPEMASK;
 		gltexture = FMaterial::ValidateTexture(patch, (type == RF_FACESPRITE), false);

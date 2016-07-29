@@ -96,6 +96,22 @@ CVAR(Float, gl_mask_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_mask_sprite_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, gl_sort_textures, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
+CVAR(Bool, gl_bloom, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR(Float, gl_bloom_amount, 1.4f, 0)
+CVAR(Float, gl_exposure, 0.0f, 0)
+
+CUSTOM_CVAR(Int, gl_tonemap, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 0 || self > 4)
+		self = 0;
+}
+
+CUSTOM_CVAR(Int, gl_bloom_kernel_size, 7, 0)
+{
+	if (self < 3 || self > 15 || self % 2 == 0)
+		self = 7;
+}
+
 EXTERN_CVAR (Bool, cl_capfps)
 EXTERN_CVAR (Bool, r_deathcamera)
 EXTERN_CVAR(Float, vid_brightness)
@@ -163,7 +179,7 @@ void FGLRenderer::SetViewArea()
 
 void FGLRenderer::Reset3DViewport()
 {
-	if (FGLRenderBuffers::IsSupported())
+	if (FGLRenderBuffers::IsEnabled())
 		glViewport(0, 0, mOutputViewport.width, mOutputViewport.height);
 	else
 		glViewport(mOutputViewport.left, mOutputViewport.top, mOutputViewport.width, mOutputViewport.height);
@@ -175,10 +191,10 @@ void FGLRenderer::Reset3DViewport()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::Set3DViewport()
+void FGLRenderer::Set3DViewport(bool toscreen)
 {
 	const auto &bounds = mOutputViewportLB;
-	if (FGLRenderBuffers::IsSupported())
+	if (toscreen && FGLRenderBuffers::IsEnabled())
 	{
 		mBuffers->Setup(mOutputViewport.width, mOutputViewport.height);
 		mBuffers->BindSceneFB();
@@ -215,12 +231,12 @@ void FGLRenderer::Set3DViewport()
 
 void FGLRenderer::BloomScene()
 {
-	if (!FGLRenderBuffers::IsSupported())
+	// Only bloom things if enabled and no special fixed light mode is active
+	if (!gl_bloom || !FGLRenderBuffers::IsEnabled() || gl_fixedcolormap != CM_DEFAULT)
 		return;
 
-	const float blurAmount = 4.0f;
-	int sampleCount = 5; // Note: must be uneven number 3 to 15
-	float exposure = mCameraExposure;
+	const float blurAmount = gl_bloom_amount;
+	int sampleCount = gl_bloom_kernel_size;
 
 	// TBD: Maybe need a better way to share state with other parts of the pipeline
 	GLboolean blendEnabled, scissorEnabled;
@@ -248,7 +264,7 @@ void FGLRenderer::BloomScene()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	mBloomExtractShader->Bind();
 	mBloomExtractShader->SceneTexture.Set(0);
-	mBloomExtractShader->Exposure.Set(exposure);
+	mBloomExtractShader->Exposure.Set(mCameraExposure);
 	{
 		FFlatVertex *ptr = mVBO->GetBuffer();
 		ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
@@ -327,6 +343,7 @@ void FGLRenderer::BloomScene()
 		glEnable(GL_SCISSOR_TEST);
 	glBlendEquationSeparate(blendEquationRgb, blendEquationAlpha);
 	glBlendFuncSeparate(blendSrcRgb, blendDestRgb, blendSrcAlpha, blendDestAlpha);
+	glUseProgram(currentProgram);
 }
 
 //-----------------------------------------------------------------------------
@@ -337,6 +354,9 @@ void FGLRenderer::BloomScene()
 
 void FGLRenderer::TonemapScene()
 {
+	if (gl_tonemap == 0)
+		return;
+
 	GLboolean blendEnabled, scissorEnabled;
 	glGetBooleanv(GL_BLEND, &blendEnabled);
 	glGetBooleanv(GL_SCISSOR_TEST, &scissorEnabled);
@@ -371,7 +391,7 @@ void FGLRenderer::TonemapScene()
 
 void FGLRenderer::Flush()
 {
-	if (FGLRenderBuffers::IsSupported())
+	if (FGLRenderBuffers::IsEnabled())
 	{
 		glDisable(GL_MULTISAMPLE);
 		glDisable(GL_DEPTH_TEST);
@@ -969,9 +989,6 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	gl_RenderState.ResetColor();
 	gl_RenderState.EnableTexture(true);
 	glDisable(GL_SCISSOR_TEST);
-
-	BloomScene();
-	TonemapScene();
 }
 
 
@@ -1078,9 +1095,16 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 
 	if (toscreen)
 	{
-		float light = viewsector->lightlevel / 255.0f;
-		float exposure = MAX(1.0f + (1.0f - light * light) * 1.5f, 0.5f);
-		mCameraExposure = mCameraExposure * 0.98f + exposure * 0.02f;
+		if (gl_exposure == 0.0f)
+		{
+			float light = viewsector->lightlevel / 255.0f;
+			float exposure = MAX(1.0f + (1.0f - light * light) * 0.9f, 0.5f);
+			mCameraExposure = mCameraExposure * 0.995f + exposure * 0.005f;
+		}
+		else
+		{
+			mCameraExposure = gl_exposure;
+		}
 	}
 
 	// 'viewsector' will not survive the rendering so it cannot be used anymore below.
@@ -1096,7 +1120,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		eye->SetUp();
 		// TODO: stereo specific viewport - needed when implementing side-by-side modes etc.
 		SetOutputViewport(bounds);
-		Set3DViewport();
+		Set3DViewport(toscreen);
 		mDrawingScene2D = true;
 		mCurrentFoV = fov;
 		// Stereo mode specific perspective projection
@@ -1115,6 +1139,11 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 
 		ProcessScene(toscreen);
 		if (mainview) EndDrawScene(retval);	// do not call this for camera textures.
+		if (toscreen)
+		{
+			BloomScene();
+			TonemapScene();
+		}
 		mDrawingScene2D = false;
 		eye->TearDown();
 	}

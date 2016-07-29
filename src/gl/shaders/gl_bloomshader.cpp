@@ -53,8 +53,8 @@ void FBloomExtractShader::Bind()
 {
 	if (!mShader)
 	{
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/bloomextract.vp");
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/bloomextract.fp");
+		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/bloomextract.vp", "", 330);
+		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/bloomextract.fp", "", 330);
 		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/bloomextract");
 		mShader.SetAttribLocation(0, "PositionInProjection");
@@ -68,8 +68,8 @@ void FBloomCombineShader::Bind()
 {
 	if (!mShader)
 	{
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/bloomcombine.vp");
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/bloomcombine.fp");
+		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/bloomcombine.vp", "", 330);
+		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/bloomcombine.fp", "", 330);
 		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/bloomcombine");
 		mShader.SetAttribLocation(0, "PositionInProjection");

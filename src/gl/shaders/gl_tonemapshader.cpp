@@ -51,15 +51,28 @@
 
 void FTonemapShader::Bind()
 {
-	if (!mShader)
+	auto &shader = mShader[gl_tonemap];
+	if (!shader)
 	{
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/tonemap.vp");
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/tonemap.fp");
-		mShader.SetFragDataLocation(0, "FragColor");
-		mShader.Link("shaders/glsl/tonemap");
-		mShader.SetAttribLocation(0, "PositionInProjection");
-		SceneTexture.Init(mShader, "InputTexture");
-		Exposure.Init(mShader, "ExposureAdjustment");
+		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/tonemap.vp", "", 330);
+		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/tonemap.fp", GetDefines(gl_tonemap), 330);
+		shader.SetFragDataLocation(0, "FragColor");
+		shader.Link("shaders/glsl/tonemap");
+		shader.SetAttribLocation(0, "PositionInProjection");
+		SceneTexture.Init(shader, "InputTexture");
+		Exposure.Init(shader, "ExposureAdjustment");
 	}
-	mShader.Bind();
+	shader.Bind();
+}
+
+const char *FTonemapShader::GetDefines(int mode)
+{
+	switch (mode)
+	{
+	default:
+	case Linear:     return "#define LINEAR\n";
+	case Reinhard:   return "#define REINHARD\n";
+	case HejlDawson: return "#define HEJLDAWSON\n";
+	case Uncharted2: return "#define UNCHARTED2\n";
+	}
 }

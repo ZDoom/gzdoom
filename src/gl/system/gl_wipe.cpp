@@ -156,7 +156,7 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 	glFinish();
 	wipestartscreen->Bind(0, false, false);
 
-	if (FGLRenderBuffers::IsSupported())
+	if (FGLRenderBuffers::IsEnabled())
 	{
 		GLRenderer->mBuffers->BindHudFB();
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, Width, Height);
@@ -192,7 +192,7 @@ void OpenGLFrameBuffer::WipeEndScreen()
 	glFinish();
 	wipeendscreen->Bind(0, false, false);
 
-	if (FGLRenderBuffers::IsSupported())
+	if (FGLRenderBuffers::IsEnabled())
 		GLRenderer->mBuffers->BindHudFB();
 
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, Width, Height);
@@ -230,7 +230,7 @@ bool OpenGLFrameBuffer::WipeDo(int ticks)
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(false);
 
-	if (FGLRenderBuffers::IsSupported())
+	if (FGLRenderBuffers::IsEnabled())
 	{
 		GLRenderer->mBuffers->BindHudFB();
 		glViewport(0, 0, GLRenderer->mOutputViewport.width, GLRenderer->mOutputViewport.height);

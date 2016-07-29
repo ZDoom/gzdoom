@@ -129,8 +129,8 @@ FBlurShader::BlurSetup *FBlurShader::GetSetup(float blurAmount, int sampleCount)
 	FString verticalCode = FragmentShaderCode(blurAmount, sampleCount, true);
 
 	blurSetup.VerticalShader = std::make_shared<FShaderProgram>();
-	blurSetup.VerticalShader->Compile(FShaderProgram::Vertex, "vertical blur vertex shader", vertexCode);
-	blurSetup.VerticalShader->Compile(FShaderProgram::Fragment, "vertical blur fragment shader", verticalCode);
+	blurSetup.VerticalShader->Compile(FShaderProgram::Vertex, "vertical blur vertex shader", vertexCode, "", 330);
+	blurSetup.VerticalShader->Compile(FShaderProgram::Fragment, "vertical blur fragment shader", verticalCode, "", 330);
 	blurSetup.VerticalShader->SetFragDataLocation(0, "FragColor");
 	blurSetup.VerticalShader->SetAttribLocation(0, "PositionInProjection");
 	blurSetup.VerticalShader->Link("vertical blur");
@@ -138,8 +138,8 @@ FBlurShader::BlurSetup *FBlurShader::GetSetup(float blurAmount, int sampleCount)
 	glUniform1i(glGetUniformLocation(*blurSetup.VerticalShader.get(), "SourceTexture"), 0);
 
 	blurSetup.HorizontalShader = std::make_shared<FShaderProgram>();
-	blurSetup.HorizontalShader->Compile(FShaderProgram::Vertex, "horizontal blur vertex shader", vertexCode);
-	blurSetup.HorizontalShader->Compile(FShaderProgram::Fragment, "horizontal blur fragment shader", horizontalCode);
+	blurSetup.HorizontalShader->Compile(FShaderProgram::Vertex, "horizontal blur vertex shader", vertexCode, "", 330);
+	blurSetup.HorizontalShader->Compile(FShaderProgram::Fragment, "horizontal blur fragment shader", horizontalCode, "", 330);
 	blurSetup.HorizontalShader->SetFragDataLocation(0, "FragColor");
 	blurSetup.HorizontalShader->SetAttribLocation(0, "PositionInProjection");
 	blurSetup.HorizontalShader->Link("horizontal blur");
@@ -160,8 +160,6 @@ FBlurShader::BlurSetup *FBlurShader::GetSetup(float blurAmount, int sampleCount)
 FString FBlurShader::VertexShaderCode()
 {
 	return R"(
-		#version 330
-
 		in vec4 PositionInProjection;
 		out vec2 TexCoord;
 
@@ -187,7 +185,6 @@ FString FBlurShader::FragmentShaderCode(float blurAmount, int sampleCount, bool 
 
 	const char *fragmentShader =
 		R"(
-		#version 330
 		in vec2 TexCoord;
 		uniform sampler2D SourceTexture;
 		out vec4 FragColor;

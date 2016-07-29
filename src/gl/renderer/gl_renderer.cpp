@@ -235,7 +235,7 @@ void FGLRenderer::SetupLevel()
 
 void FGLRenderer::Begin2D()
 {
-	if (FGLRenderBuffers::IsSupported())
+	if (FGLRenderBuffers::IsEnabled())
 	{
 		mBuffers->Setup(framebuffer->GetWidth(), framebuffer->GetHeight());
 		if (mDrawingScene2D)

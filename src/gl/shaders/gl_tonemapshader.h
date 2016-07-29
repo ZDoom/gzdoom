@@ -12,7 +12,19 @@ public:
 	FBufferedUniform1f Exposure;
 
 private:
-	FShaderProgram mShader;
+	enum TonemapMode
+	{
+		None,
+		Uncharted2,
+		HejlDawson,
+		Reinhard,
+		Linear,
+		NumTonemapModes
+	};
+
+	static const char *GetDefines(int mode);
+
+	FShaderProgram mShader[NumTonemapModes];
 };
 
 #endif

@@ -643,6 +643,38 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetPlayerInput)
 	return 0;
 }
 
+//==========================================================================
+//
+// GetProximity
+//
+// NON-ACTION function of A_CheckProximity that returns how much it counts.
+// Takes a pointer as anyone may or may not be a player.
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetProximity)
+{
+	if (numret > 0)
+	{
+		PARAM_SELF_PROLOGUE(AActor);
+		PARAM_CLASS(classname, AActor);
+		PARAM_FLOAT(distance);
+		PARAM_INT_OPT(flags) { flags = 0; }
+		PARAM_INT_OPT(ptr) { ptr = AAPTR_DEFAULT; }
+
+		AActor *mobj = COPY_AAPTR(self, ptr);
+		if (mobj == nullptr)
+		{
+			ret->SetInt(0);
+		}
+		else
+		{
+			ret->SetInt(P_Thing_CheckProximity(self, classname, distance, 0, flags, ptr, true));
+		}
+		return 1;
+	}
+	return 0;
+}
+
 //===========================================================================
 //
 // __decorate_internal_state__

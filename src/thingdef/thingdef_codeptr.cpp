@@ -645,13 +645,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetPlayerInput)
 
 //==========================================================================
 //
-// GetProximity
+// CountProximity
 //
 // NON-ACTION function of A_CheckProximity that returns how much it counts.
 // Takes a pointer as anyone may or may not be a player.
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetProximity)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, CountProximity)
 {
 	if (numret > 0)
 	{

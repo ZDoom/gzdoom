@@ -50,7 +50,7 @@ ACTOR Actor native //: Thinker
 	native float GetCrouchFactor(int ptr = AAPTR_PLAYER1);
 	native float GetCVar(string cvar);
 	native int GetPlayerInput(int inputnum, int ptr = AAPTR_DEFAULT);
-	native int GetProximity(class<Actor> classname, float distance, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native int CountProximity(class<Actor> classname, float distance, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native float GetSpriteAngle(int ptr = AAPTR_DEFAULT);
 	native float GetSpriteRotation(int ptr = AAPTR_DEFAULT);
 

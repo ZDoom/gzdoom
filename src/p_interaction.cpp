@@ -44,6 +44,7 @@
 #include "p_lnspec.h"
 #include "p_effect.h"
 #include "p_acs.h"
+#include "p_spec.h"
 
 #include "b_bot.h"	//Added by MC:
 
@@ -420,6 +421,33 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 		&& !(activationtype & THINGSPEC_NoDeathSpecial))
 	{
 		P_ActivateThingSpecial(this, source, true); 
+	}
+
+	if (!player)
+	{
+		if (DeathScript) // [JM] If death script is defined, execute.
+		{
+			P_StartScript(this, NULL, -DeathScript, 0, DeathScriptArgs, 4, ACS_ALWAYS);
+		}
+		
+		// [JM] If not blocked, or forced with a flag, fire the default death script.
+		if (((flags7 & MF7_BOTHDEATHSCRIPTS) || !BlockDefaultDeathScript) && gameinfo.DefaultDeathScript)
+		{
+			int DSArgs[4];
+			// [JM] Check if default args have been overridden by an actor.
+			for (int i = 0; i < 4; i++)
+			{
+				if (DefaultDeathScriptArgOverrides[i][1] != 0)
+				{
+					DSArgs[i] = DefaultDeathScriptArgOverrides[i][0];
+				}
+				else
+				{
+					DSArgs[i] = gameinfo.DefaultDeathScriptArgs[i];
+				}
+			}
+			P_StartScript(this, NULL, -gameinfo.DefaultDeathScript, 0, DSArgs, 4, ACS_ALWAYS);
+		}
 	}
 
 	if (CountsAsKill())

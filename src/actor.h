@@ -380,6 +380,7 @@ enum ActorFlag7
 	MF7_LAXTELEFRAGDMG	= 0x00100000,	// [MC] Telefrag damage can be reduced.
 	MF7_ICESHATTER		= 0x00200000,	// [MC] Shatters ice corpses regardless of damagetype.
 	MF7_ALLOWTHRUFLAGS	= 0x00400000,	// [MC] Allow THRUACTORS and the likes on puffs to prevent mod breakage.
+	MF7_BOTHDEATHSCRIPTS = 0x00800000,	// [JM] Allow actor to fire the default death script alongside it's own.
 };
 
 // --- mobj.renderflags ---
@@ -1146,6 +1147,11 @@ public:
 	int RipperLevel;
 	int RipLevelMin;
 	int RipLevelMax;
+
+	FNameNoInit DeathScript;
+	int DeathScriptArgs[4];
+	int DefaultDeathScriptArgOverrides[4][2];
+	bool BlockDefaultDeathScript;
 
 	FState *SpawnState;
 	FState *SeeState;

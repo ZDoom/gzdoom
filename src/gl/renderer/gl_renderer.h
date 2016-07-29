@@ -19,6 +19,10 @@ class FLightBuffer;
 class FSamplerManager;
 class DPSprite;
 class FGLRenderBuffers;
+class FBloomExtractShader;
+class FBloomCombineShader;
+class FBlurShader;
+class FTonemapShader;
 class FPresentShader;
 
 inline float DEG2RAD(float deg)
@@ -82,6 +86,10 @@ public:
 	int mOldFBID;
 
 	FGLRenderBuffers *mBuffers;
+	FBloomExtractShader *mBloomExtractShader;
+	FBloomCombineShader *mBloomCombineShader;
+	FBlurShader *mBlurShader;
+	FTonemapShader *mTonemapShader;
 	FPresentShader *mPresentShader;
 
 	FTexture *gllight;
@@ -100,6 +108,8 @@ public:
 
 	GL_IRECT mOutputViewportLB;
 	GL_IRECT mOutputViewport;
+	bool mDrawingScene2D = false;
+	float mCameraExposure = 1.0f;
 
 	FGLRenderer(OpenGLFrameBuffer *fb);
 	~FGLRenderer() ;
@@ -107,7 +117,7 @@ public:
 	angle_t FrustumAngle();
 	void SetViewArea();
 	void SetOutputViewport(GL_IRECT *bounds);
-	void Set3DViewport();
+	void Set3DViewport(bool toscreen);
 	void Reset3DViewport();
 	sector_t *RenderViewpoint (AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	void RenderView(player_t *player);
@@ -147,6 +157,8 @@ public:
 	void SetFixedColormap (player_t *player);
 	void WriteSavePic (player_t *player, FILE *file, int width, int height);
 	void EndDrawScene(sector_t * viewsector);
+	void BloomScene();
+	void TonemapScene();
 	void Flush();
 
 	void SetProjection(float fov, float ratio, float fovratio);

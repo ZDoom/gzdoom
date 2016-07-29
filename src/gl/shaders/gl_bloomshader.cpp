@@ -1,6 +1,6 @@
 /*
-** gl_presentshader.cpp
-** Copy rendered texture to back buffer, possibly with gamma correction
+** gl_bloomshader.cpp
+** Shaders used to do bloom
 **
 **---------------------------------------------------------------------------
 ** Copyright 2016 Magnus Norddahl
@@ -47,21 +47,33 @@
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_cvars.h"
-#include "gl/shaders/gl_presentshader.h"
+#include "gl/shaders/gl_bloomshader.h"
 
-void FPresentShader::Bind()
+void FBloomExtractShader::Bind()
 {
 	if (!mShader)
 	{
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/present.vp", "", 330);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/present.fp", "", 330);
+		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/bloomextract.vp", "", 330);
+		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/bloomextract.fp", "", 330);
 		mShader.SetFragDataLocation(0, "FragColor");
-		mShader.Link("shaders/glsl/present");
+		mShader.Link("shaders/glsl/bloomextract");
 		mShader.SetAttribLocation(0, "PositionInProjection");
-		InputTexture.Init(mShader, "InputTexture");
-		Gamma.Init(mShader, "Gamma");
-		Contrast.Init(mShader, "Contrast");
-		Brightness.Init(mShader, "Brightness");
+		SceneTexture.Init(mShader, "SceneTexture");
+		Exposure.Init(mShader, "ExposureAdjustment");
+	}
+	mShader.Bind();
+}
+
+void FBloomCombineShader::Bind()
+{
+	if (!mShader)
+	{
+		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/bloomcombine.vp", "", 330);
+		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/bloomcombine.fp", "", 330);
+		mShader.SetFragDataLocation(0, "FragColor");
+		mShader.Link("shaders/glsl/bloomcombine");
+		mShader.SetAttribLocation(0, "PositionInProjection");
+		BloomTexture.Init(mShader, "Bloom");
 	}
 	mShader.Bind();
 }

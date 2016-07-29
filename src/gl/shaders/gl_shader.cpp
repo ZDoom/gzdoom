@@ -56,47 +56,9 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_shader.h"
+#include "gl/shaders/gl_shaderprogram.h"
 #include "gl/textures/gl_material.h"
 #include "gl/dynlights/gl_lightbuffer.h"
-
-//==========================================================================
-//
-// patch the shader source to work with 
-// GLSL 1.2 keywords and identifiers
-//
-//==========================================================================
-
-void PatchCommon(FString &code)
-{
-	code.Substitute("precision highp int;", "");
-	code.Substitute("precision highp float;", "");
-}
-
-void PatchVertShader(FString &code)
-{
-	PatchCommon(code);
-	code.Substitute("in vec", "attribute vec");
-	code.Substitute("out vec", "varying vec");
-	code.Substitute("gl_ClipDistance", "//");
-}
-
-void PatchFragShader(FString &code)
-{
-	PatchCommon(code);
-	code.Substitute("out vec4 FragColor;", "");
-	code.Substitute("FragColor", "gl_FragColor");
-	code.Substitute("in vec", "varying vec");
-	// this patches the switch statement to if's.
-	code.Substitute("break;", "");
-	code.Substitute("switch (uFixedColormap)", "int i = uFixedColormap;");
-	code.Substitute("case 0:", "if (i == 0)");
-	code.Substitute("case 1:", "else if (i == 1)");
-	code.Substitute("case 2:", "else if (i == 2)");
-	code.Substitute("case 3:", "else if (i == 3)");
-	code.Substitute("case 4:", "else if (i == 4)");
-	code.Substitute("case 5:", "else if (i == 5)");
-	code.Substitute("texture(", "texture2D(");
-}
 
 //==========================================================================
 //
@@ -204,8 +166,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	if (gl.glslversion < 1.3)
 	{
-		PatchVertShader(vp_comb);
-		PatchFragShader(fp_comb);
+		FShaderProgram::PatchVertShader(vp_comb);
+		FShaderProgram::PatchFragShader(fp_comb);
 	}
 
 	hVertProg = glCreateShader(GL_VERTEX_SHADER);

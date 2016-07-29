@@ -93,18 +93,23 @@ void FShaderProgram::CreateShader(ShaderType type)
 //
 //==========================================================================
 
-void FShaderProgram::Compile(ShaderType type, const char *lumpName)
+void FShaderProgram::Compile(ShaderType type, const char *lumpName, const char *defines, int maxGlslVersion)
+{
+	int lump = Wads.CheckNumForFullName(lumpName);
+	if (lump == -1) I_FatalError("Unable to load '%s'", lumpName);
+	FString code = Wads.ReadLump(lump).GetString().GetChars();
+	Compile(type, lumpName, code, defines, maxGlslVersion);
+}
+
+void FShaderProgram::Compile(ShaderType type, const char *name, const FString &code, const char *defines, int maxGlslVersion)
 {
 	CreateShader(type);
 
 	const auto &handle = mShaders[type];
 
-	int lump = Wads.CheckNumForFullName(lumpName);
-	if (lump == -1) I_Error("Unable to load '%s'", lumpName);
-	FString code = Wads.ReadLump(lump).GetString().GetChars();
-
-	int lengths[1] = { (int)code.Len() };
-	const char *sources[1] = { code.GetChars() };
+	FString patchedCode = PatchShader(type, code, defines, maxGlslVersion);
+	int lengths[1] = { (int)patchedCode.Len() };
+	const char *sources[1] = { patchedCode.GetChars() };
 	glShaderSource(handle, 1, sources, lengths);
 
 	glCompileShader(handle);
@@ -113,7 +118,7 @@ void FShaderProgram::Compile(ShaderType type, const char *lumpName)
 	glGetShaderiv(handle, GL_COMPILE_STATUS, &status);
 	if (status == GL_FALSE)
 	{
-		I_Error("Compile Shader '%s':\n%s\n", lumpName, GetShaderInfoLog(handle).GetChars());
+		I_FatalError("Compile Shader '%s':\n%s\n", name, GetShaderInfoLog(handle).GetChars());
 	}
 	else
 	{
@@ -148,7 +153,7 @@ void FShaderProgram::Link(const char *name)
 	glGetProgramiv(mProgram, GL_LINK_STATUS, &status);
 	if (status == GL_FALSE)
 	{
-		I_Error("Link Shader '%s':\n%s\n", name, GetProgramInfoLog(mProgram).GetChars());
+		I_FatalError("Link Shader '%s':\n%s\n", name, GetProgramInfoLog(mProgram).GetChars());
 	}
 }
 
@@ -202,4 +207,87 @@ FString FShaderProgram::GetProgramInfoLog(GLuint handle)
 	buffer[0] = 0;
 	glGetProgramInfoLog(handle, 10000, &length, buffer);
 	return FString(buffer);
+}
+
+//==========================================================================
+//
+// Patches a shader to be compatible with the version of OpenGL in use
+//
+//==========================================================================
+
+FString FShaderProgram::PatchShader(ShaderType type, const FString &code, const char *defines, int maxGlslVersion)
+{
+	FString patchedCode;
+
+	int shaderVersion = MIN((int)round(gl.glslversion * 10) * 10, maxGlslVersion);
+	patchedCode.AppendFormat("#version %d\n", shaderVersion);
+
+	// TODO: Find some way to add extension requirements to the patching
+	//
+	// #extension GL_ARB_uniform_buffer_object : require
+	// #extension GL_ARB_shader_storage_buffer_object : require
+
+	if (defines)
+		patchedCode << defines;
+
+	if (gl.glslversion >= 1.3)
+	{
+		// these settings are actually pointless but there seem to be some old ATI drivers that fail to compile the shader without setting the precision here.
+		patchedCode << "precision highp int;\n";
+		patchedCode << "precision highp float;\n";
+	}
+
+	patchedCode << "#line 1\n";
+	patchedCode << code;
+
+	if (gl.glslversion < 1.3)
+	{
+		if (type == Vertex)
+			PatchVertShader(patchedCode);
+		else if (type == Fragment)
+			PatchFragShader(patchedCode);
+	}
+
+	return patchedCode;
+}
+
+//==========================================================================
+//
+// patch the shader source to work with 
+// GLSL 1.2 keywords and identifiers
+//
+//==========================================================================
+
+void FShaderProgram::PatchCommon(FString &code)
+{
+	code.Substitute("precision highp int;", "");
+	code.Substitute("precision highp float;", "");
+}
+
+void FShaderProgram::PatchVertShader(FString &code)
+{
+	PatchCommon(code);
+	code.Substitute("in vec", "attribute vec");
+	code.Substitute("in float", "attribute float");
+	code.Substitute("out vec", "varying vec");
+	code.Substitute("out float", "varying float");
+	code.Substitute("gl_ClipDistance", "//");
+}
+
+void FShaderProgram::PatchFragShader(FString &code)
+{
+	PatchCommon(code);
+	code.Substitute("out vec4 FragColor;", "");
+	code.Substitute("FragColor", "gl_FragColor");
+	code.Substitute("in vec", "varying vec");
+	// this patches the switch statement to if's.
+	code.Substitute("break;", "");
+	code.Substitute("switch (uFixedColormap)", "int i = uFixedColormap;");
+	code.Substitute("case 0:", "if (i == 0)");
+	code.Substitute("case 1:", "else if (i == 1)");
+	code.Substitute("case 2:", "else if (i == 2)");
+	code.Substitute("case 3:", "else if (i == 3)");
+	code.Substitute("case 4:", "else if (i == 4)");
+	code.Substitute("case 5:", "else if (i == 5)");
+	code.Substitute("texture(", "texture2D(");
 }

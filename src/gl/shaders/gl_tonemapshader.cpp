@@ -1,6 +1,6 @@
 /*
-** gl_presentshader.cpp
-** Copy rendered texture to back buffer, possibly with gamma correction
+** gl_tonemapshader.cpp
+** Converts a HDR texture to 0-1 range by applying a tonemap operator
 **
 **---------------------------------------------------------------------------
 ** Copyright 2016 Magnus Norddahl
@@ -47,21 +47,32 @@
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_cvars.h"
-#include "gl/shaders/gl_presentshader.h"
+#include "gl/shaders/gl_tonemapshader.h"
 
-void FPresentShader::Bind()
+void FTonemapShader::Bind()
 {
-	if (!mShader)
+	auto &shader = mShader[gl_tonemap];
+	if (!shader)
 	{
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/present.vp", "", 330);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/present.fp", "", 330);
-		mShader.SetFragDataLocation(0, "FragColor");
-		mShader.Link("shaders/glsl/present");
-		mShader.SetAttribLocation(0, "PositionInProjection");
-		InputTexture.Init(mShader, "InputTexture");
-		Gamma.Init(mShader, "Gamma");
-		Contrast.Init(mShader, "Contrast");
-		Brightness.Init(mShader, "Brightness");
+		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/tonemap.vp", "", 330);
+		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/tonemap.fp", GetDefines(gl_tonemap), 330);
+		shader.SetFragDataLocation(0, "FragColor");
+		shader.Link("shaders/glsl/tonemap");
+		shader.SetAttribLocation(0, "PositionInProjection");
+		SceneTexture.Init(shader, "InputTexture");
+		Exposure.Init(shader, "ExposureAdjustment");
 	}
-	mShader.Bind();
+	shader.Bind();
+}
+
+const char *FTonemapShader::GetDefines(int mode)
+{
+	switch (mode)
+	{
+	default:
+	case Linear:     return "#define LINEAR\n";
+	case Reinhard:   return "#define REINHARD\n";
+	case HejlDawson: return "#define HEJLDAWSON\n";
+	case Uncharted2: return "#define UNCHARTED2\n";
+	}
 }

@@ -1062,6 +1062,7 @@ set( FASTMATH_SOURCES
 	gl/renderer/gl_renderstate.cpp
 	gl/renderer/gl_renderbuffers.cpp
 	gl/renderer/gl_lightdata.cpp
+	gl/renderer/gl_postprocess.cpp
 	gl/hqnx/init.cpp
 	gl/hqnx/hq2x.cpp
 	gl/hqnx/hq3x.cpp
@@ -1106,6 +1107,9 @@ set( FASTMATH_SOURCES
 	gl/shaders/gl_texshader.cpp
 	gl/shaders/gl_shaderprogram.cpp
 	gl/shaders/gl_presentshader.cpp
+	gl/shaders/gl_bloomshader.cpp
+	gl/shaders/gl_blurshader.cpp
+	gl/shaders/gl_tonemapshader.cpp
 	gl/system/gl_interface.cpp
 	gl/system/gl_framebuffer.cpp
 	gl/system/gl_menu.cpp

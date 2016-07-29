@@ -480,6 +480,93 @@ static FxExpression *ParseIf(FScanner &sc, FState state, FString statestring, Ba
 	return add;
 }
 
+static FxExpression *ParseWhile(FScanner &sc, FState state, FString statestring, Baggage &bag,
+	PPrototype *&retproto, bool &lastwasret)
+{
+	FxExpression *cond, *code;
+	PPrototype *proto;
+	bool ret;
+
+	sc.MustGetStringName("(");
+	cond = ParseExpression(sc, bag.Info);
+	sc.MustGetStringName(")");
+	sc.MustGetStringName("{"); // Enforce braces like for if statements.
+
+	code = ParseActions(sc, state, statestring, bag, proto, ret);
+	sc.MustGetString();
+
+	retproto = ReturnCheck(retproto, proto, sc);
+	lastwasret = false; // A while loop always jumps back.
+
+	return new FxWhileLoop(cond, code, sc);
+}
+
+static FxExpression *ParseDoWhile(FScanner &sc, FState state, FString statestring, Baggage &bag,
+	PPrototype *&retproto, bool &lastwasret)
+{
+	FxExpression *cond, *code;
+	PPrototype *proto;
+	bool ret;
+
+	sc.MustGetStringName("{"); // Enforce braces like for if statements.
+	code = ParseActions(sc, state, statestring, bag, proto, ret);
+
+	sc.MustGetStringName("while");
+	sc.MustGetStringName("(");
+	cond = ParseExpression(sc, bag.Info);
+	sc.MustGetStringName(")");
+	sc.MustGetStringName(";");
+	sc.MustGetString();
+
+	retproto = ReturnCheck(retproto, proto, sc);
+	lastwasret = false;
+
+	return new FxDoWhileLoop(cond, code, sc);
+}
+
+static FxExpression *ParseFor(FScanner &sc, FState state, FString statestring, Baggage &bag,
+	PPrototype *&retproto, bool &lastwasret)
+{
+	FxExpression *init = nullptr;
+	FxExpression *cond = nullptr;
+	FxExpression *iter = nullptr;
+	FxExpression *code = nullptr;
+	PPrototype *proto;
+	bool ret;
+
+	// Parse the statements.
+	sc.MustGetStringName("(");
+	sc.MustGetString();
+	if (!sc.Compare(";"))
+	{
+		init = ParseAction(sc, state, statestring, bag); // That's all DECORATE can handle for now.
+		sc.MustGetStringName(";");
+	}
+	sc.MustGetString();
+	if (!sc.Compare(";"))
+	{
+		sc.UnGet();
+		cond = ParseExpression(sc, bag.Info);
+		sc.MustGetStringName(";");
+	}
+	sc.MustGetString();
+	if (!sc.Compare(")"))
+	{
+		iter = ParseAction(sc, state, statestring, bag);
+		sc.MustGetStringName(")");
+	}
+
+	// Now parse the loop's content.
+	sc.MustGetStringName("{"); // Enforce braces like for if statements.
+	code = ParseActions(sc, state, statestring, bag, proto, ret);
+	sc.MustGetString();
+
+	retproto = ReturnCheck(retproto, proto, sc);
+	lastwasret = false;
+
+	return new FxForLoop(init, cond, iter, code, sc);
+}
+
 FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag,
 						   PPrototype *&retproto, bool &endswithret)
 {
@@ -505,8 +592,20 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 		FxExpression *add;
 		lastwasret = false;
 		if (sc.Compare("if"))
-		{ // Hangle an if statement
+		{ // Handle an if statement
 			add = ParseIf(sc, state, statestring, bag, proto, lastwasret);
+		}
+		else if (sc.Compare("while"))
+		{ // Handle a while loop
+			add = ParseWhile(sc, state, statestring, bag, proto, lastwasret);
+		}
+		else if (sc.Compare("do"))
+		{ // Handle a do-while loop
+			add = ParseDoWhile(sc, state, statestring, bag, proto, lastwasret);
+		}
+		else if (sc.Compare("for"))
+		{ // Handle a for loop
+			add = ParseFor(sc, state, statestring, bag, proto, lastwasret);
 		}
 		else if (sc.Compare("return"))
 		{ // Handle a return statement
@@ -528,6 +627,18 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 			proto = ReturnCheck(proto, retproto, sc);
 			sc.MustGetString();
 			add = new FxReturnStatement(retexp, sc);
+		}
+		else if (sc.Compare("break"))
+		{
+			add = new FxJumpStatement(TK_Break, sc);
+			sc.MustGetStringName(";");
+			sc.MustGetString();
+		}
+		else if (sc.Compare("continue"))
+		{
+			add = new FxJumpStatement(TK_Continue, sc);
+			sc.MustGetStringName(";");
+			sc.MustGetString();
 		}
 		else
 		{ // Handle a regular action function call

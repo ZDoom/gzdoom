@@ -397,6 +397,64 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetGibHealth)
 
 //==========================================================================
 //
+// GetSpriteAngle
+//
+// NON-ACTION function returns the sprite angle of a pointer.
+//==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetSpriteAngle)
+{
+	if (numret > 0)
+	{
+		assert(ret != NULL);
+		PARAM_SELF_PROLOGUE(AActor);
+		PARAM_INT_OPT(ptr) { ptr = AAPTR_DEFAULT; }
+
+		AActor *target = COPY_AAPTR(self, ptr);
+		if (target == nullptr)
+		{
+			ret->SetFloat(0.0);
+		}
+		else
+		{
+			const double ang = target->SpriteAngle.Degrees;
+			ret->SetFloat(ang);
+		}
+		return 1;
+	}
+	return 0;
+}
+
+//==========================================================================
+//
+// GetSpriteRotation
+//
+// NON-ACTION function returns the sprite rotation of a pointer.
+//==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetSpriteRotation)
+{
+	if (numret > 0)
+	{
+		assert(ret != NULL);
+		PARAM_SELF_PROLOGUE(AActor);
+		PARAM_INT_OPT(ptr) { ptr = AAPTR_DEFAULT; }
+
+		AActor *target = COPY_AAPTR(self, ptr);
+		if (target == nullptr)
+		{
+			ret->SetFloat(0.0);
+		}
+		else
+		{
+			const double ang = target->SpriteRotation.Degrees;
+			ret->SetFloat(ang);
+		}
+		return 1;
+	}
+	return 0;
+}
+
+//==========================================================================
+//
 // GetZAt
 //
 // NON-ACTION function to get the floor or ceiling z at (x, y) with 
@@ -579,6 +637,38 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetPlayerInput)
 		else
 		{
 			ret->SetInt(P_Thing_CheckInputNum(mobj->player, inputnum));
+		}
+		return 1;
+	}
+	return 0;
+}
+
+//==========================================================================
+//
+// CountProximity
+//
+// NON-ACTION function of A_CheckProximity that returns how much it counts.
+// Takes a pointer as anyone may or may not be a player.
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, CountProximity)
+{
+	if (numret > 0)
+	{
+		PARAM_SELF_PROLOGUE(AActor);
+		PARAM_CLASS(classname, AActor);
+		PARAM_FLOAT(distance);
+		PARAM_INT_OPT(flags) { flags = 0; }
+		PARAM_INT_OPT(ptr) { ptr = AAPTR_DEFAULT; }
+
+		AActor *mobj = COPY_AAPTR(self, ptr);
+		if (mobj == nullptr)
+		{
+			ret->SetInt(0);
+		}
+		else
+		{
+			ret->SetInt(P_Thing_CheckProximity(self, classname, distance, 0, flags, ptr, true));
 		}
 		return 1;
 	}
@@ -7202,7 +7292,7 @@ enum CPSFFlags
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CopySpriteFrame)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE;
 	PARAM_INT(from);
 	PARAM_INT(to);
 	PARAM_INT_OPT(flags) { flags = 0; }
@@ -7217,5 +7307,51 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CopySpriteFrame)
 	
 	if (!(flags & CPSF_NOSPRITE))	copyto->sprite = copyfrom->sprite;
 	if (!(flags & CPSF_NOFRAME))	copyto->frame = copyfrom->frame;
+	ACTION_RETURN_BOOL(true);
+}
+
+//==========================================================================
+//
+// A_SetSpriteAngle(angle, ptr)
+//
+// Specifies which angle the actor must always draw its sprite from.
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpriteAngle)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_FLOAT_OPT(angle)	{ angle = 0.; }
+	PARAM_INT_OPT(ptr)		{ ptr = AAPTR_DEFAULT; }
+
+	AActor *mobj = COPY_AAPTR(self, ptr);
+
+	if (mobj == nullptr)
+	{
+		ACTION_RETURN_BOOL(false);
+	}
+	mobj->SpriteAngle = angle;
+	ACTION_RETURN_BOOL(true);
+}
+
+//==========================================================================
+//
+// A_SetSpriteRotation(angle, ptr)
+//
+// Specifies how much to fake a sprite rotation.
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpriteRotation)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_ANGLE_OPT(angle) { angle = 0.; }
+	PARAM_INT_OPT(ptr) { ptr = AAPTR_DEFAULT; }
+
+	AActor *mobj = COPY_AAPTR(self, ptr);
+
+	if (mobj == nullptr)
+	{
+		ACTION_RETURN_BOOL(false);
+	}
+	mobj->SpriteRotation = angle;
 	ACTION_RETURN_BOOL(true);
 }

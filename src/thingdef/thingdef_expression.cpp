@@ -85,6 +85,45 @@ static const FLOP FxFlops[] =
 	{ NAME_TanH,	FLOP_TANH,		[](double v) { return g_tanh(v); } },
 };
 
+//==========================================================================
+//
+// FCompileContext
+//
+//==========================================================================
+
+FCompileContext::FCompileContext(PClassActor *cls) : Class(cls)
+{
+}
+
+PSymbol *FCompileContext::FindInClass(FName identifier)
+{
+	return Class ? Class->Symbols.FindSymbol(identifier, true) : nullptr;
+}
+PSymbol *FCompileContext::FindGlobal(FName identifier)
+{
+	return GlobalSymbols.FindSymbol(identifier, true);
+}
+
+void FCompileContext::HandleJumps(int token, FxExpression *handler)
+{
+	for (unsigned int i = 0; i < Jumps.Size(); i++)
+	{
+		if (Jumps[i]->Token == token)
+		{
+			Jumps[i]->AddressResolver = handler;
+			handler->JumpAddresses.Push(Jumps[i]);
+			Jumps.Delete(i);
+			i--;
+		}
+	}
+}
+
+//==========================================================================
+//
+// ExpEmit
+//
+//==========================================================================
+
 ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)
 : RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false), Fixed(false)
 {
@@ -2838,14 +2877,14 @@ FxSelf::FxSelf(const FScriptPosition &pos)
 FxExpression *FxSelf::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
-	if (!ctx.cls)
+	if (!ctx.Class)
 	{
 		// can't really happen with DECORATE's expression evaluator.
 		ScriptPosition.Message(MSG_ERROR, "self used outside of a member function");
 		delete this;
 		return NULL;
 	}
-	ValueType = ctx.cls;
+	ValueType = ctx.Class;
 	ValueType = NewPointer(RUNTIME_CLASS(DObject));
 	return this;
 }  
@@ -3820,6 +3859,369 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
+// FxWhileLoop
+//
+//==========================================================================
+
+FxWhileLoop::FxWhileLoop(FxExpression *condition, FxExpression *code, const FScriptPosition &pos)
+: FxExpression(pos), Condition(condition), Code(code)
+{
+	ValueType = TypeVoid;
+}
+
+FxWhileLoop::~FxWhileLoop()
+{
+	SAFE_DELETE(Condition);
+	SAFE_DELETE(Code);
+}
+
+FxExpression *FxWhileLoop::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(Condition, ctx);
+	SAFE_RESOLVE_OPT(Code, ctx);
+
+	ctx.HandleJumps(TK_Break, this);
+	ctx.HandleJumps(TK_Continue, this);
+
+	if (Condition->ValueType != TypeBool)
+	{
+		Condition = new FxBoolCast(Condition);
+		SAFE_RESOLVE(Condition, ctx);
+	}
+
+	if (Condition->isConstant())
+	{
+		if (static_cast<FxConstant *>(Condition)->GetValue().GetBool() == false)
+		{ // Nothing happens
+			FxExpression *nop = new FxNop(ScriptPosition);
+			delete this;
+			return nop;
+		}
+		else if (Code == nullptr)
+		{ // "while (true) { }"
+		  // Someone could be using this for testing.
+			ScriptPosition.Message(MSG_WARNING, "Infinite empty loop");
+		}
+	}
+
+	return this;
+}
+
+ExpEmit FxWhileLoop::Emit(VMFunctionBuilder *build)
+{
+	assert(Condition->ValueType == TypeBool);
+
+	size_t loopstart, loopend;
+	size_t jumpspot;
+
+	// Evaluate the condition and execute/break out of the loop.
+	loopstart = build->GetAddress();
+	if (!Condition->isConstant())
+	{
+		ExpEmit cond = Condition->Emit(build);
+		build->Emit(OP_TEST, cond.RegNum, 0);
+		jumpspot = build->Emit(OP_JMP, 0);
+		cond.Free(build);
+	}
+	else assert(static_cast<FxConstant *>(Condition)->GetValue().GetBool() == true);
+
+	// Execute the loop's content.
+	if (Code != nullptr)
+	{
+		ExpEmit code = Code->Emit(build);
+		code.Free(build);
+	}
+
+	// Loop back.
+	build->Backpatch(build->Emit(OP_JMP, 0), loopstart);
+	loopend = build->GetAddress();
+
+	if (!Condition->isConstant()) 
+	{
+		build->Backpatch(jumpspot, loopend);
+	}
+
+	// Give a proper address to any break/continue statement within this loop.
+	for (unsigned int i = 0; i < JumpAddresses.Size(); i++)
+	{
+		if (JumpAddresses[i]->Token == TK_Break)
+		{
+			build->Backpatch(JumpAddresses[i]->Address, loopend);
+		}
+		else
+		{ // Continue statement.
+			build->Backpatch(JumpAddresses[i]->Address, loopstart);
+		}
+	}
+
+	return ExpEmit();
+}
+
+//==========================================================================
+//
+// FxDoWhileLoop
+//
+//==========================================================================
+
+FxDoWhileLoop::FxDoWhileLoop(FxExpression *condition, FxExpression *code, const FScriptPosition &pos)
+: FxExpression(pos), Condition(condition), Code(code)
+{
+	ValueType = TypeVoid;
+}
+
+FxDoWhileLoop::~FxDoWhileLoop()
+{
+	SAFE_DELETE(Condition);
+	SAFE_DELETE(Code);
+}
+
+FxExpression *FxDoWhileLoop::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(Condition, ctx);
+	SAFE_RESOLVE_OPT(Code, ctx);
+
+	ctx.HandleJumps(TK_Break, this);
+	ctx.HandleJumps(TK_Continue, this);
+
+	if (Condition->ValueType != TypeBool)
+	{
+		Condition = new FxBoolCast(Condition);
+		SAFE_RESOLVE(Condition, ctx);
+	}
+
+	if (Condition->isConstant())
+	{
+		if (static_cast<FxConstant *>(Condition)->GetValue().GetBool() == false)
+		{ // The code executes once, if any.
+			if (JumpAddresses.Size() == 0)
+			{ // We would still have to handle the jumps however.
+				FxExpression *e = Code;
+				if (e == nullptr) e = new FxNop(ScriptPosition);
+				Code = nullptr;
+				delete this;
+				return e;
+			}
+		}
+		else if (Code == nullptr)
+		{ // "do { } while (true);"
+		  // Someone could be using this for testing.
+			ScriptPosition.Message(MSG_WARNING, "Infinite empty loop");
+		}
+	}
+
+	return this;
+}
+
+ExpEmit FxDoWhileLoop::Emit(VMFunctionBuilder *build)
+{
+	assert(Condition->ValueType == TypeBool);
+
+	size_t loopstart, loopend;
+	size_t codestart;
+
+	// Execute the loop's content.
+	codestart = build->GetAddress();
+	if (Code != nullptr)
+	{
+		ExpEmit code = Code->Emit(build);
+		code.Free(build);
+	}
+
+	// Evaluate the condition and execute/break out of the loop.
+	loopstart = build->GetAddress();
+	if (!Condition->isConstant())
+	{
+		ExpEmit cond = Condition->Emit(build);
+		build->Emit(OP_TEST, cond.RegNum, 1);
+		cond.Free(build);
+		build->Backpatch(build->Emit(OP_JMP, 0), codestart);
+	}
+	else if (static_cast<FxConstant *>(Condition)->GetValue().GetBool() == true)
+	{ // Always looping
+		build->Backpatch(build->Emit(OP_JMP, 0), codestart);
+	}
+	loopend = build->GetAddress();
+
+	// Give a proper address to any break/continue statement within this loop.
+	for (unsigned int i = 0; i < JumpAddresses.Size(); i++)
+	{
+		if (JumpAddresses[i]->Token == TK_Break)
+		{
+			build->Backpatch(JumpAddresses[i]->Address, loopend);
+		}
+		else
+		{ // Continue statement.
+			build->Backpatch(JumpAddresses[i]->Address, loopstart);
+		}
+	}
+
+	return ExpEmit();
+}
+
+//==========================================================================
+//
+// FxForLoop
+//
+//==========================================================================
+
+FxForLoop::FxForLoop(FxExpression *init, FxExpression *condition, FxExpression *iteration, FxExpression *code, const FScriptPosition &pos)
+: FxExpression(pos), Init(init), Condition(condition), Iteration(iteration), Code(code)
+{
+	ValueType = TypeVoid;
+}
+
+FxForLoop::~FxForLoop()
+{
+	SAFE_DELETE(Init);
+	SAFE_DELETE(Condition);
+	SAFE_DELETE(Iteration);
+	SAFE_DELETE(Code);
+}
+
+FxExpression *FxForLoop::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE_OPT(Init, ctx);
+	SAFE_RESOLVE_OPT(Condition, ctx);
+	SAFE_RESOLVE_OPT(Iteration, ctx);
+	SAFE_RESOLVE_OPT(Code, ctx);
+
+	ctx.HandleJumps(TK_Break, this);
+	ctx.HandleJumps(TK_Continue, this);
+
+	if (Condition != nullptr)
+	{
+		if (Condition->ValueType != TypeBool)
+		{
+			Condition = new FxBoolCast(Condition);
+			SAFE_RESOLVE(Condition, ctx);
+		}
+
+		if (Condition->isConstant())
+		{
+			if (static_cast<FxConstant *>(Condition)->GetValue().GetBool() == false)
+			{ // Nothing happens
+				FxExpression *nop = new FxNop(ScriptPosition);
+				delete this;
+				return nop;
+			}
+			else
+			{ // "for (..; true; ..)"
+				delete Condition;
+				Condition = nullptr;
+			}
+		}
+	}
+	if (Condition == nullptr && Code == nullptr)
+	{ // "for (..; ; ..) { }"
+	  // Someone could be using this for testing.
+		ScriptPosition.Message(MSG_WARNING, "Infinite empty loop");
+	}
+
+	return this;
+}
+
+ExpEmit FxForLoop::Emit(VMFunctionBuilder *build)
+{
+	assert((Condition && Condition->ValueType == TypeBool && !Condition->isConstant()) || Condition == nullptr);
+
+	size_t loopstart, loopend;
+	size_t codestart;
+	size_t jumpspot;
+
+	// Init statement.
+	if (Init != nullptr)
+	{
+		ExpEmit init = Init->Emit(build);
+		init.Free(build);
+	}
+
+	// Evaluate the condition and execute/break out of the loop.
+	codestart = build->GetAddress();
+	if (Condition != nullptr)
+	{
+		ExpEmit cond = Condition->Emit(build);
+		build->Emit(OP_TEST, cond.RegNum, 0);
+		cond.Free(build);
+		jumpspot = build->Emit(OP_JMP, 0);
+	}
+
+	// Execute the loop's content.
+	if (Code != nullptr)
+	{
+		ExpEmit code = Code->Emit(build);
+		code.Free(build);
+	}
+
+	// Iteration statement.
+	loopstart = build->GetAddress();
+	if (Iteration != nullptr)
+	{
+		ExpEmit iter = Iteration->Emit(build);
+		iter.Free(build);
+	}
+	build->Backpatch(build->Emit(OP_JMP, 0), codestart);
+
+	// End of loop.
+	loopend = build->GetAddress();
+	if (Condition != nullptr)
+	{
+		build->Backpatch(jumpspot, loopend);
+	}
+
+	// Give a proper address to any break/continue statement within this loop.
+	for (unsigned int i = 0; i < JumpAddresses.Size(); i++)
+	{
+		if (JumpAddresses[i]->Token == TK_Break)
+		{
+			build->Backpatch(JumpAddresses[i]->Address, loopend);
+		}
+		else
+		{ // Continue statement.
+			build->Backpatch(JumpAddresses[i]->Address, loopstart);
+		}
+	}
+
+	return ExpEmit();
+}
+
+//==========================================================================
+//
+// FxJumpStatement
+//
+//==========================================================================
+
+FxJumpStatement::FxJumpStatement(int token, const FScriptPosition &pos)
+: FxExpression(pos), Token(token), AddressResolver(nullptr)
+{
+	ValueType = TypeVoid;
+}
+
+FxExpression *FxJumpStatement::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+
+	ctx.Jumps.Push(this);
+
+	return this;
+}
+
+ExpEmit FxJumpStatement::Emit(VMFunctionBuilder *build)
+{
+	if (AddressResolver == nullptr)
+	{
+		ScriptPosition.Message(MSG_ERROR, "Jump statement %s has nowhere to go!", FScanner::TokenName(Token));
+	}
+
+	Address = build->Emit(OP_JMP, 0);
+
+	return ExpEmit();
+}
+
+//==========================================================================
+//
 //==========================================================================
 
 FxReturnStatement::FxReturnStatement(FxVMFunctionCall *call, const FScriptPosition &pos)
@@ -4008,19 +4410,19 @@ ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)
 FxExpression *FxStateByIndex::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
-	if (ctx.cls->NumOwnedStates == 0)
+	if (ctx.Class->NumOwnedStates == 0)
 	{
 		// This can't really happen
 		assert(false);
 	}
-	if (ctx.cls->NumOwnedStates <= index)
+	if (ctx.Class->NumOwnedStates <= index)
 	{
 		ScriptPosition.Message(MSG_ERROR, "%s: Attempt to jump to non existing state index %d", 
-			ctx.cls->TypeName.GetChars(), index);
+			ctx.Class->TypeName.GetChars(), index);
 		delete this;
 		return NULL;
 	}
-	FxExpression *x = new FxConstant(ctx.cls->OwnedStates + index, ScriptPosition);
+	FxExpression *x = new FxConstant(ctx.Class->OwnedStates + index, ScriptPosition);
 	delete this;
 	return x;
 }
@@ -4068,7 +4470,7 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 	}
 	else if (names[0] == NAME_Super)
 	{
-		scope = dyn_cast<PClassActor>(ctx.cls->ParentClass);
+		scope = dyn_cast<PClassActor>(ctx.Class->ParentClass);
 	}
 	else
 	{
@@ -4079,9 +4481,9 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 			delete this;
 			return NULL;
 		}
-		else if (!scope->IsDescendantOf(ctx.cls))
+		else if (!scope->IsDescendantOf(ctx.Class))
 		{
-			ScriptPosition.Message(MSG_ERROR, "'%s' is not an ancestor of '%s'", names[0].GetChars(),ctx.cls->TypeName.GetChars());
+			ScriptPosition.Message(MSG_ERROR, "'%s' is not an ancestor of '%s'", names[0].GetChars(),ctx.Class->TypeName.GetChars());
 			delete this;
 			return NULL;
 		}

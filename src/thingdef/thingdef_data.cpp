@@ -259,6 +259,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF7, ALLOWTHRUFLAGS, AActor, flags7),
 	DEFINE_FLAG(MF7, USEKILLSCRIPTS, AActor, flags7),
 	DEFINE_FLAG(MF7, NOKILLSCRIPTS, AActor, flags7),
+	DEFINE_FLAG(MF7, SPRITEANGLE, AActor, flags7),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),

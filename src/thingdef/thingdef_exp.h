@@ -48,8 +48,10 @@
 #define RESOLVE(p,c) if (p!=NULL) p = p->Resolve(c)
 #define ABORT(p) if (!(p)) { delete this; return NULL; }
 #define SAFE_RESOLVE(p,c) RESOLVE(p,c); ABORT(p) 
+#define SAFE_RESOLVE_OPT(p,c) if (p!=NULL) { SAFE_RESOLVE(p,c) }
 
 class VMFunctionBuilder;
+class FxJumpStatement;
 
 //==========================================================================
 //
@@ -59,21 +61,15 @@ class VMFunctionBuilder;
 
 struct FCompileContext
 {
-	PClassActor *cls;
+	TArray<FxJumpStatement *> Jumps;
+	PClassActor *Class;
 
-	FCompileContext(PClassActor *_cls = NULL)
-	{
-		cls = _cls;
-	}
+	FCompileContext(PClassActor *cls = nullptr);
 
-	PSymbol *FindInClass(FName identifier)
-	{
-		return cls ? cls->Symbols.FindSymbol(identifier, true) : NULL;
-	}
-	PSymbol *FindGlobal(FName identifier)
-	{
-		return GlobalSymbols.FindSymbol(identifier, true);
-	}
+	PSymbol *FindInClass(FName identifier);
+	PSymbol *FindGlobal(FName identifier);
+
+	void HandleJumps(int token, FxExpression *handler);
 };
 
 //==========================================================================
@@ -211,6 +207,8 @@ public:
 	bool IsPointer() const { return ValueType->GetRegType() == REGT_POINTER; }
 
 	virtual ExpEmit Emit(VMFunctionBuilder *build);
+
+	TArray<FxJumpStatement *> JumpAddresses;
 
 	FScriptPosition ScriptPosition;
 	PType *ValueType;
@@ -928,6 +926,80 @@ public:
 	~FxIfStatement();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+// FxWhileLoop
+//
+//==========================================================================
+
+class FxWhileLoop : public FxExpression
+{
+	FxExpression *Condition;
+	FxExpression *Code;
+
+public:
+	FxWhileLoop(FxExpression *condition, FxExpression *code, const FScriptPosition &pos);
+	~FxWhileLoop();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+// FxDoWhileLoop
+//
+//==========================================================================
+
+class FxDoWhileLoop : public FxExpression
+{
+	FxExpression *Condition;
+	FxExpression *Code;
+
+public:
+	FxDoWhileLoop(FxExpression *condition, FxExpression *code, const FScriptPosition &pos);
+	~FxDoWhileLoop();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+// FxForLoop
+//
+//==========================================================================
+
+class FxForLoop : public FxExpression
+{
+	FxExpression *Init;
+	FxExpression *Condition;
+	FxExpression *Iteration;
+	FxExpression *Code;
+
+public:
+	FxForLoop(FxExpression *init, FxExpression *condition, FxExpression *iteration, FxExpression *code, const FScriptPosition &pos);
+	~FxForLoop();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+// FxJumpStatement
+//
+//==========================================================================
+
+class FxJumpStatement : public FxExpression
+{
+public:
+	FxJumpStatement(int token, const FScriptPosition &pos);
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+
+	int Token;
+	size_t Address;
+	FxExpression *AddressResolver;
 };
 
 //==========================================================================

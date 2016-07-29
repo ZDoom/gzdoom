@@ -809,11 +809,17 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			angle_t rot;
 			if (sprframe->Texture[0] == sprframe->Texture[1])
 			{
-				rot = (ang - thing->Angles.Yaw + 45.0/2*9).BAMs() >> 28;
+				if (thing->flags7 & MF7_SPRITEANGLE)
+					rot = (thing->SpriteAngle + 45.0 / 2 * 9).BAMs() >> 28;
+				else
+					rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + 45.0 / 2 * 9).BAMs() >> 28;
 			}
 			else
 			{
-				rot = (ang - thing->Angles.Yaw + (45.0/2*9-180.0/16)).BAMs() >> 28;
+				if (thing->flags7 & MF7_SPRITEANGLE)
+					rot = (thing->SpriteAngle + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+				else
+					rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
 			}
 			picnum = sprframe->Texture[rot];
 			if (sprframe->Flip & (1 << rot))
@@ -848,11 +854,17 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			angle_t rot;
 			if (sprframe->Texture[0] == sprframe->Texture[1])
 			{
-				rot = (ang - thing->Angles.Yaw + 45.0 / 2 * 9).BAMs() >> 28;
+				if (thing->flags7 & MF7_SPRITEANGLE)
+					rot = (thing->SpriteAngle + 45.0 / 2 * 9).BAMs() >> 28;
+				else
+					rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + 45.0 / 2 * 9).BAMs() >> 28;
 			}
 			else
 			{
-				rot = (ang - thing->Angles.Yaw + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+				if (thing->flags7 & MF7_SPRITEANGLE)
+					rot = (thing->SpriteAngle + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+				else
+					rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
 			}
 			picnum = sprframe->Texture[rot];
 			if (sprframe->Flip & (1 << rot))

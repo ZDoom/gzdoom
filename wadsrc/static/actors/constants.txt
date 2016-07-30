@@ -150,6 +150,9 @@ const int WRF_ALLOWUSER2 = 256;
 const int WRF_ALLOWUSER3 = 512;
 const int WRF_ALLOWUSER4 = 1024;
 
+// Flags for A_SelectWeapon
+const int SWF_SELECTPRIORITY = 1;
+
 // Morph constants
 const int MRF_ADDSTAMINA = 1;
 const int MRF_FULLHEALTH = 2;

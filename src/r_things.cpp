@@ -2751,6 +2751,11 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 	// Also do some magic voodoo scaling to make them the right size.
 	daxscale = daxscale / (0xC000 >> 6);
 	dayscale = dayscale / (0xC000 >> 6);
+	if (daxscale <= 0 || dayscale <= 0)
+	{
+		// won't be visible.
+		return;
+	}
 
 	angle_t viewang = viewangle.BAMs();
 	cosang = FLOAT2FIXED(viewangle.Cos()) >> 2;

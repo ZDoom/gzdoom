@@ -1566,7 +1566,7 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 				tm.floorpic = *rover->top.texture;
 				tm.floorterrain = rover->model->GetTerrain(rover->top.isceiling);
 			}
-			if (ff_bottom < tm.ceilingz && abs(delta1) >= abs(delta2))
+			if (ff_bottom < tm.ceilingz && fabs(delta1) >= fabs(delta2))
 			{
 				tm.ceilingz = ff_bottom;
 				tm.ceilingpic = *rover->bottom.texture;

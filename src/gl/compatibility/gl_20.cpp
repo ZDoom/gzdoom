@@ -705,28 +705,25 @@ bool GLWall::PrepareLight(ADynamicLight * light, int pass)
 		return false;
 	}
 
-	if (tcs != NULL)
+	Vector t1;
+	int outcnt[4] = { 0,0,0,0 };
+
+	for (int i = 0; i<4; i++)
 	{
-		Vector t1;
-		int outcnt[4] = { 0,0,0,0 };
+		t1.Set(&vtx[i * 3]);
+		Vector nearToVert = t1 - nearPt;
+		tcs[i].u = (nearToVert.Dot(right) * scale) + 0.5f;
+		tcs[i].v = (nearToVert.Dot(up) * scale) + 0.5f;
 
-		for (int i = 0; i<4; i++)
-		{
-			t1.Set(&vtx[i * 3]);
-			Vector nearToVert = t1 - nearPt;
-			tcs[i].u = (nearToVert.Dot(right) * scale) + 0.5f;
-			tcs[i].v = (nearToVert.Dot(up) * scale) + 0.5f;
+		// quick check whether the light touches this polygon
+		if (tcs[i].u<0) outcnt[0]++;
+		if (tcs[i].u>1) outcnt[1]++;
+		if (tcs[i].v<0) outcnt[2]++;
+		if (tcs[i].v>1) outcnt[3]++;
 
-			// quick check whether the light touches this polygon
-			if (tcs[i].u<0) outcnt[0]++;
-			if (tcs[i].u>1) outcnt[1]++;
-			if (tcs[i].v<0) outcnt[2]++;
-			if (tcs[i].v>1) outcnt[3]++;
-
-		}
-		// The light doesn't touch this polygon
-		if (outcnt[0] == 4 || outcnt[1] == 4 || outcnt[2] == 4 || outcnt[3] == 4) return false;
 	}
+	// The light doesn't touch this polygon
+	if (outcnt[0] == 4 || outcnt[1] == 4 || outcnt[2] == 4 || outcnt[3] == 4) return false;
 
 	draw_dlight++;
 	return true;

@@ -63,6 +63,16 @@ OptionValue "Anisotropy"
 	16, "$OPTVAL_16X"
 }
 
+OptionValue "Multisample"
+{
+	1, "$OPTVAL_OFF"
+	2, "$OPTVAL_2X"
+	4, "$OPTVAL_4X"
+	8, "$OPTVAL_8X"
+	16, "$OPTVAL_16X"
+	32, "$OPTVAL_32X"
+}
+
 OptionValue "Colormaps"
 {
 	0, "$OPTVAL_USEASPALETTE"
@@ -207,6 +217,7 @@ OptionMenu "GLPrefOptions"
 	Option "$GLPREFMNU_RENDERQUALITY",			gl_render_precise,				"Precision"
 	Option "$GLPREFMNU_VRMODE",					vr_mode, 						"VRMode"
 	Option "$GLPREFMNU_VRQUADSTEREO",			vr_enable_quadbuffered,			"OnOff"
+	Option "$GLPREFMNU_MULTISAMPLE", 			gl_multisample,					"Multisample"
 	Option "$GLPREFMNU_TONEMAP", 				gl_tonemap,						"TonemapModes"
 	Option "$GLPREFMNU_BLOOM",		 			gl_bloom,						"OnOff"
 }

@@ -53,6 +53,7 @@
 #include "i_system.h"
 #include "doomerrors.h"
 
+CVAR(Int, gl_multisample, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(Bool, gl_renderbuffers, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
 //==========================================================================
@@ -74,10 +75,29 @@ FGLRenderBuffers::FGLRenderBuffers()
 
 FGLRenderBuffers::~FGLRenderBuffers()
 {
-	Clear();
+	ClearScene();
+	ClearHud();
+	ClearBloom();
 }
 
-void FGLRenderBuffers::Clear()
+void FGLRenderBuffers::ClearScene()
+{
+	DeleteFrameBuffer(mSceneFB);
+	DeleteFrameBuffer(mSceneTextureFB);
+	DeleteRenderBuffer(mSceneMultisample);
+	DeleteRenderBuffer(mSceneDepthStencil);
+	DeleteRenderBuffer(mSceneDepth);
+	DeleteRenderBuffer(mSceneStencil);
+	DeleteTexture(mSceneTexture);
+}
+
+void FGLRenderBuffers::ClearHud()
+{
+	DeleteFrameBuffer(mHudFB);
+	DeleteTexture(mHudTexture);
+}
+
+void FGLRenderBuffers::ClearBloom()
 {
 	for (int i = 0; i < NumBloomLevels; i++)
 	{
@@ -88,16 +108,6 @@ void FGLRenderBuffers::Clear()
 		DeleteTexture(level.VTexture);
 		level = FGLBloomTextureLevel();
 	}
-
-	DeleteFrameBuffer(mSceneFB);
-	DeleteTexture(mSceneTexture);
-	DeleteRenderBuffer(mSceneDepthStencil);
-	DeleteRenderBuffer(mSceneDepth);
-	DeleteRenderBuffer(mSceneStencil);
-	DeleteFrameBuffer(mHudFB);
-	DeleteTexture(mHudTexture);
-	mWidth = 0;
-	mHeight = 0;
 }
 
 void FGLRenderBuffers::DeleteTexture(GLuint &handle)
@@ -130,28 +140,80 @@ void FGLRenderBuffers::DeleteFrameBuffer(GLuint &handle)
 
 void FGLRenderBuffers::Setup(int width, int height)
 {
-	if (width <= mWidth && height <= mHeight)
-		return;
+	int samples = GetCvarSamples();
 
-	Clear();
+	if (width == mWidth && height == mHeight && mSamples != samples)
+	{
+		CreateScene(mWidth, mHeight, samples);
+		mSamples = samples;
+	}
+	else if (width > mWidth || height > mHeight)
+	{
+		CreateScene(width, height, samples);
+		CreateHud(width, height);
+		CreateBloom(width, height);
+		mWidth = width;
+		mHeight = height;
+		mSamples = samples;
+	}
 
-	GLuint hdrFormat = ((gl.flags & RFL_NO_RGBA16F) != 0) ? GL_RGBA8 : GL_RGBA16F;
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 
-	mSceneTexture = Create2DTexture(hdrFormat, width, height);
+//==========================================================================
+//
+// Creates the scene buffers
+//
+//==========================================================================
+
+void FGLRenderBuffers::CreateScene(int width, int height, int samples)
+{
+	ClearScene();
+
+	mSceneTexture = Create2DTexture(GetHdrFormat(), width, height);
+	mSceneTextureFB = CreateFrameBuffer(mSceneTexture);
+
+	if (samples > 1)
+		mSceneMultisample = CreateRenderBuffer(GetHdrFormat(), samples, width, height);
+
 	if ((gl.flags & RFL_NO_DEPTHSTENCIL) != 0)
 	{
-		mSceneDepth = CreateRenderBuffer(GL_DEPTH_COMPONENT24, width, height);
-		mSceneStencil = CreateRenderBuffer(GL_STENCIL_INDEX8, width, height);
-		mSceneFB = CreateFrameBuffer(mSceneTexture, mSceneDepth, mSceneStencil);
+		mSceneDepth = CreateRenderBuffer(GL_DEPTH_COMPONENT24, samples, width, height);
+		mSceneStencil = CreateRenderBuffer(GL_STENCIL_INDEX8, samples, width, height);
+		mSceneFB = CreateFrameBuffer(samples > 1 ? mSceneMultisample : mSceneTexture, mSceneDepth, mSceneStencil);
 	}
 	else
 	{
-		mSceneDepthStencil = CreateRenderBuffer(GL_DEPTH24_STENCIL8, width, height);
-		mSceneFB = CreateFrameBuffer(mSceneTexture, mSceneDepthStencil);
+		mSceneDepthStencil = CreateRenderBuffer(GL_DEPTH24_STENCIL8, samples, width, height);
+		mSceneFB = CreateFrameBuffer(samples > 1 ? mSceneMultisample : mSceneTexture, mSceneDepthStencil);
 	}
+}
 
-	mHudTexture = Create2DTexture(hdrFormat, width, height);
+//==========================================================================
+//
+// Creates the post-tonemapping-step buffers
+//
+//==========================================================================
+
+void FGLRenderBuffers::CreateHud(int width, int height)
+{
+	ClearHud();
+	mHudTexture = Create2DTexture(GetHdrFormat(), width, height);
 	mHudFB = CreateFrameBuffer(mHudTexture);
+}
+
+//==========================================================================
+//
+// Creates bloom pass working buffers
+//
+//==========================================================================
+
+void FGLRenderBuffers::CreateBloom(int width, int height)
+{
+	ClearBloom();
 
 	int bloomWidth = MAX(width / 2, 1);
 	int bloomHeight = MAX(height / 2, 1);
@@ -161,22 +223,44 @@ void FGLRenderBuffers::Setup(int width, int height)
 		level.Width = MAX(bloomWidth / 2, 1);
 		level.Height = MAX(bloomHeight / 2, 1);
 
-		level.VTexture = Create2DTexture(hdrFormat, level.Width, level.Height);
-		level.HTexture = Create2DTexture(hdrFormat, level.Width, level.Height);
+		level.VTexture = Create2DTexture(GetHdrFormat(), level.Width, level.Height);
+		level.HTexture = Create2DTexture(GetHdrFormat(), level.Width, level.Height);
 		level.VFramebuffer = CreateFrameBuffer(level.VTexture);
 		level.HFramebuffer = CreateFrameBuffer(level.HTexture);
 
 		bloomWidth = level.Width;
 		bloomHeight = level.Height;
 	}
+}
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
-	glBindFramebuffer(GL_FRAMEBUFFER, mOutputFB);
+//==========================================================================
+//
+// Fallback support for older OpenGL where RGBA16F might not be available
+//
+//==========================================================================
 
-	mWidth = width;
-	mHeight = height;
+GLuint FGLRenderBuffers::GetHdrFormat()
+{
+	return ((gl.flags & RFL_NO_RGBA16F) != 0) ? GL_RGBA8 : GL_RGBA16F;
+}
+
+//==========================================================================
+//
+// Converts the CVAR multisample value into a valid level for OpenGL
+//
+//==========================================================================
+
+int FGLRenderBuffers::GetCvarSamples()
+{
+	int maxSamples = 0;
+	glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
+
+	int samples = clamp((int)gl_multisample, 0, maxSamples);
+
+	int count;
+	for (count = 0; samples > 0; count++)
+		samples >>= 1;
+	return count;
 }
 
 //==========================================================================
@@ -215,6 +299,18 @@ GLuint FGLRenderBuffers::CreateRenderBuffer(GLuint format, int width, int height
 	return handle;
 }
 
+GLuint FGLRenderBuffers::CreateRenderBuffer(GLuint format, int samples, int width, int height)
+{
+	if (samples <= 1)
+		return CreateRenderBuffer(format, width, height);
+
+	GLuint handle = 0;
+	glGenRenderbuffers(1, &handle);
+	glBindRenderbuffer(GL_RENDERBUFFER, handle);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, format, width, height);
+	return handle;
+}
+
 //==========================================================================
 //
 // Creates a frame buffer
@@ -227,6 +323,7 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(GLuint colorbuffer)
 	glGenFramebuffers(1, &handle);
 	glBindFramebuffer(GL_FRAMEBUFFER, handle);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
+	CheckFrameBufferCompleteness();
 	return handle;
 }
 
@@ -237,6 +334,7 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(GLuint colorbuffer, GLuint depthstenc
 	glBindFramebuffer(GL_FRAMEBUFFER, handle);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthstencil);
+	CheckFrameBufferCompleteness();
 	return handle;
 }
 
@@ -248,18 +346,76 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(GLuint colorbuffer, GLuint depth, GLu
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencil);
+	CheckFrameBufferCompleteness();
 	return handle;
 }
 
 //==========================================================================
 //
-// Makes the scene frame buffer active 
+// Verifies that the frame buffer setup is valid
+//
+//==========================================================================
+
+void FGLRenderBuffers::CheckFrameBufferCompleteness()
+{
+	GLenum result = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (result == GL_FRAMEBUFFER_COMPLETE)
+		return;
+
+	FString error = "glCheckFramebufferStatus failed: ";
+	switch (result)
+	{
+	default: error.AppendFormat("error code %d", (int)result); break;
+	case GL_FRAMEBUFFER_UNDEFINED: error << "GL_FRAMEBUFFER_UNDEFINED"; break;
+	case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: error << "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT"; break;
+	case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: error << "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT"; break;
+	case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER: error << "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER"; break;
+	case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER: error << "GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER"; break;
+	case GL_FRAMEBUFFER_UNSUPPORTED: error << "GL_FRAMEBUFFER_UNSUPPORTED"; break;
+	case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE: error << "GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE"; break;
+	case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS: error << "GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS"; break;
+	}
+	I_FatalError(error);
+}
+
+//==========================================================================
+//
+// Resolves the multisample frame buffer by copying it to the scene texture
+//
+//==========================================================================
+
+void FGLRenderBuffers::BlitSceneToTexture()
+{
+	if (mSamples <= 1)
+		return;
+
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, mSceneFB);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mSceneTextureFB);
+	glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+}
+
+//==========================================================================
+//
+// Makes the scene frame buffer active (multisample, depth, stecil, etc.)
 //
 //==========================================================================
 
 void FGLRenderBuffers::BindSceneFB()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, mSceneFB);
+}
+
+//==========================================================================
+//
+// Makes the scene texture frame buffer active (final 2D texture only) 
+//
+//==========================================================================
+
+void FGLRenderBuffers::BindSceneTextureFB()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, mSceneTextureFB);
 }
 
 //==========================================================================
@@ -273,7 +429,7 @@ void FGLRenderBuffers::BindHudFB()
 	if (gl_tonemap != 0)
 		glBindFramebuffer(GL_FRAMEBUFFER, mHudFB);
 	else
-		glBindFramebuffer(GL_FRAMEBUFFER, mSceneFB);
+		glBindFramebuffer(GL_FRAMEBUFFER, mSceneTextureFB);
 }
 
 //==========================================================================

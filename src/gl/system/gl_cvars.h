@@ -41,9 +41,10 @@ EXTERN_CVAR(Bool, gl_seamless)
 EXTERN_CVAR(Float, gl_mask_threshold)
 EXTERN_CVAR(Float, gl_mask_sprite_threshold)
 
-EXTERN_CVAR(Bool, gl_renderbuffers);
+EXTERN_CVAR(Bool, gl_renderbuffers)
+EXTERN_CVAR(Int, gl_multisample)
 
-EXTERN_CVAR(Bool, gl_bloom);
+EXTERN_CVAR(Bool, gl_bloom)
 EXTERN_CVAR(Float, gl_bloom_amount)
 EXTERN_CVAR(Int, gl_bloom_kernel_size)
 EXTERN_CVAR(Int, gl_tonemap)

@@ -868,6 +868,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		if (mainview) EndDrawScene(retval);	// do not call this for camera textures.
 		if (toscreen)
 		{
+			if (FGLRenderBuffers::IsEnabled()) mBuffers->BlitSceneToTexture();
 			BloomScene();
 			TonemapScene();
 		}

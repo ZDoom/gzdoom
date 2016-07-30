@@ -4212,7 +4212,7 @@ ExpEmit FxJumpStatement::Emit(VMFunctionBuilder *build)
 {
 	if (AddressResolver == nullptr)
 	{
-		ScriptPosition.Message(MSG_ERROR, "Jump statement %s has nowhere to go!", FScanner::TokenName(Token));
+		ScriptPosition.Message(MSG_ERROR, "Jump statement %s has nowhere to go!", FScanner::TokenName(Token).GetChars());
 	}
 
 	Address = build->Emit(OP_JMP, 0);

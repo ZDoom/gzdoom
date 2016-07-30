@@ -110,6 +110,15 @@ void FGLRenderer::BloomScene()
 	int sampleCount = gl_bloom_kernel_size;
 
 	// TBD: Maybe need a better way to share state with other parts of the pipeline
+	GLint activeTex, textureBinding, samplerBinding;
+	glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTex);
+	glActiveTexture(GL_TEXTURE0);
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
+	if (gl.flags & RFL_SAMPLER_OBJECTS)
+	{
+		glGetIntegerv(GL_SAMPLER_BINDING, &samplerBinding);
+		glBindSampler(0, 0);
+	}
 	GLboolean blendEnabled, scissorEnabled;
 	GLint currentProgram, blendEquationRgb, blendEquationAlpha, blendSrcRgb, blendSrcAlpha, blendDestRgb, blendDestAlpha;
 	glGetBooleanv(GL_BLEND, &blendEnabled);
@@ -215,6 +224,10 @@ void FGLRenderer::BloomScene()
 	glBlendEquationSeparate(blendEquationRgb, blendEquationAlpha);
 	glBlendFuncSeparate(blendSrcRgb, blendDestRgb, blendSrcAlpha, blendDestAlpha);
 	glUseProgram(currentProgram);
+	glBindTexture(GL_TEXTURE_2D, textureBinding);
+	if (gl.flags & RFL_SAMPLER_OBJECTS)
+		glBindSampler(0, samplerBinding);
+	glActiveTexture(activeTex);
 }
 
 //-----------------------------------------------------------------------------
@@ -227,6 +240,16 @@ void FGLRenderer::TonemapScene()
 {
 	if (gl_tonemap == 0)
 		return;
+
+	GLint activeTex, textureBinding, samplerBinding;
+	glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTex);
+	glActiveTexture(GL_TEXTURE0);
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
+	if (gl.flags & RFL_SAMPLER_OBJECTS)
+	{
+		glGetIntegerv(GL_SAMPLER_BINDING, &samplerBinding);
+		glBindSampler(0, 0);
+	}
 
 	GLboolean blendEnabled, scissorEnabled;
 	glGetBooleanv(GL_BLEND, &blendEnabled);
@@ -252,6 +275,10 @@ void FGLRenderer::TonemapScene()
 		glEnable(GL_BLEND);
 	if (scissorEnabled)
 		glEnable(GL_SCISSOR_TEST);
+	glBindTexture(GL_TEXTURE_2D, textureBinding);
+	if (gl.flags & RFL_SAMPLER_OBJECTS)
+		glBindSampler(0, samplerBinding);
+	glActiveTexture(activeTex);
 }
 
 //-----------------------------------------------------------------------------
@@ -267,6 +294,20 @@ void FGLRenderer::Flush()
 		glDisable(GL_MULTISAMPLE);
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_STENCIL_TEST);
+
+		GLboolean blendEnabled;
+		GLint currentProgram;
+		GLint activeTex, textureBinding, samplerBinding;
+		glGetBooleanv(GL_BLEND, &blendEnabled);
+		glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
+		glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTex);
+		glActiveTexture(GL_TEXTURE0);
+		glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
+		if (gl.flags & RFL_SAMPLER_OBJECTS)
+		{
+			glGetIntegerv(GL_SAMPLER_BINDING, &samplerBinding);
+			glBindSampler(0, 0);
+		}
 
 		mBuffers->BindOutputFB();
 
@@ -309,11 +350,6 @@ void FGLRenderer::Flush()
 
 		// Present what was rendered:
 		glViewport(x, y, width, height);
-
-		GLboolean blendEnabled;
-		GLint currentProgram;
-		glGetBooleanv(GL_BLEND, &blendEnabled);
-		glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
 		glDisable(GL_BLEND);
 
 		mPresentShader->Bind();
@@ -342,5 +378,9 @@ void FGLRenderer::Flush()
 		if (blendEnabled)
 			glEnable(GL_BLEND);
 		glUseProgram(currentProgram);
+		glBindTexture(GL_TEXTURE_2D, textureBinding);
+		if (gl.flags & RFL_SAMPLER_OBJECTS)
+			glBindSampler(0, samplerBinding);
+		glActiveTexture(activeTex);
 	}
 }

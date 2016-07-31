@@ -160,8 +160,8 @@ public:
 	void EndDrawScene(sector_t * viewsector);
 	void BloomScene();
 	void TonemapScene();
-	void CopyToBackbuffer(const GL_IRECT *bounds);
-	void Flush() { CopyToBackbuffer(nullptr); }
+	void CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma);
+	void Flush() { CopyToBackbuffer(nullptr, true); }
 
 	void SetProjection(float fov, float ratio, float fovratio);
 	void SetProjection(VSMatrix matrix); // raw matrix input from stereo 3d modes

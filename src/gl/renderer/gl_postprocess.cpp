@@ -260,7 +260,7 @@ void FGLRenderer::TonemapScene()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds)
+void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 {
 	if (FGLRenderBuffers::IsEnabled())
 	{
@@ -338,7 +338,7 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds)
 
 		mPresentShader->Bind();
 		mPresentShader->InputTexture.Set(0);
-		if (framebuffer->IsHWGammaActive())
+		if (!applyGamma || framebuffer->IsHWGammaActive())
 		{
 			mPresentShader->Gamma.Set(1.0f);
 			mPresentShader->Contrast.Set(1.0f);

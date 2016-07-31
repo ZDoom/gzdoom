@@ -858,7 +858,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		clipper.SafeAddClipRangeRealAngles(ViewAngle.BAMs() + a1, ViewAngle.BAMs() - a1);
 
 		ProcessScene(toscreen);
-		if (mainview) EndDrawScene(retval);	// do not call this for camera textures.
+		if (mainview && toscreen) EndDrawScene(retval);	// do not call this for camera textures.
 		if (mainview)
 		{
 			if (FGLRenderBuffers::IsEnabled()) mBuffers->BlitSceneToTexture();
@@ -976,7 +976,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FILE *file, int width, int hei
 	gl_RenderState.SetSoftLightLevel(-1);
 	screen->Begin2D(false);
 	DrawBlend(viewsector);
-	CopyToBackbuffer(&bounds);
+	CopyToBackbuffer(&bounds, false);
 	glFlush();
 
 	byte * scr = (byte *)M_Malloc(width * height * 3);

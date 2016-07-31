@@ -86,6 +86,20 @@ void FBlurShader::Blur(FFlatVertexBuffer *vbo, float blurAmount, int sampleCount
 	else
 		setup->HorizontalShader->Bind();
 
+	if (gl.glslversion < 1.3)
+	{
+		if (vertical)
+		{
+			setup->VerticalScaleX.Set(1.0f / width);
+			setup->VerticalScaleY.Set(1.0f / height);
+		}
+		else
+		{
+			setup->HorizontalScaleX.Set(1.0f / width);
+			setup->HorizontalScaleY.Set(1.0f / height);
+		}
+	}
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, inputTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -145,6 +159,14 @@ FBlurShader::BlurSetup *FBlurShader::GetSetup(float blurAmount, int sampleCount)
 	blurSetup.HorizontalShader->Link("horizontal blur");
 	blurSetup.HorizontalShader->Bind();
 	glUniform1i(glGetUniformLocation(*blurSetup.HorizontalShader.get(), "SourceTexture"), 0);
+	
+	if (gl.glslversion < 1.3)
+	{
+		blurSetup.VerticalScaleX.Init(*blurSetup.VerticalShader.get(), "ScaleX");
+		blurSetup.VerticalScaleY.Init(*blurSetup.VerticalShader.get(), "ScaleY");
+		blurSetup.HorizontalScaleX.Init(*blurSetup.HorizontalShader.get(), "ScaleX");
+		blurSetup.HorizontalScaleY.Init(*blurSetup.HorizontalShader.get(), "ScaleY");
+	}
 
 	mBlurSetups.Push(blurSetup);
 
@@ -188,6 +210,14 @@ FString FBlurShader::FragmentShaderCode(float blurAmount, int sampleCount, bool 
 		in vec2 TexCoord;
 		uniform sampler2D SourceTexture;
 		out vec4 FragColor;
+		#if __VERSION__ < 130
+		uniform float ScaleX;
+		uniform float ScaleY;
+		vec4 textureOffset(sampler2D s, vec2 texCoord, ivec2 offset)
+		{
+			return texture2D(s, texCoord + vec2(ScaleX * float(offset.x), ScaleY * float(offset.y)));
+		}
+		#endif
 		void main()
 		{
 			FragColor = %s;

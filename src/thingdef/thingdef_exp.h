@@ -510,6 +510,27 @@ public:
 
 //==========================================================================
 //
+//	FxAssign
+//
+//==========================================================================
+
+class FxAssign : public FxExpression
+{
+	FxExpression *Base;
+	FxExpression *Right;
+	bool AddressRequested;
+	bool AddressWritable;
+
+public:
+	FxAssign(FxExpression *base, FxExpression *right);
+	~FxAssign();
+	FxExpression *Resolve(FCompileContext&);
+	bool RequestAddress();
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
 //	FxBinary
 //
 //==========================================================================

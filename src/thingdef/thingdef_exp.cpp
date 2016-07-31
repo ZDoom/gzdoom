@@ -96,18 +96,23 @@ FxExpression *ParseExpression (FScanner &sc, PClassActor *cls, bool mustresolve)
 
 static FxExpression *ParseExpressionM (FScanner &sc, PClassActor *cls)
 {
-	FxExpression *condition = ParseExpressionL (sc, cls);
+	FxExpression *base = ParseExpressionL (sc, cls);
 
 	if (sc.CheckToken('?'))
 	{
 		FxExpression *truex = ParseExpressionM (sc, cls);
 		sc.MustGetToken(':');
 		FxExpression *falsex = ParseExpressionM (sc, cls);
-		return new FxConditional(condition, truex, falsex);
+		return new FxConditional(base, truex, falsex);
+	}
+	else if (sc.CheckToken('='))
+	{
+		FxExpression *right = ParseExpressionM(sc, cls);
+		return new FxAssign(base, right);
 	}
 	else
 	{
-		return condition;
+		return base;
 	}
 }
 

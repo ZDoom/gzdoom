@@ -1050,6 +1050,100 @@ ExpEmit FxPostIncrDecr::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
+// FxAssign
+//
+//==========================================================================
+
+FxAssign::FxAssign(FxExpression *base, FxExpression *right)
+: FxExpression(base->ScriptPosition), Base(base), Right(right)
+{
+	AddressRequested = false;
+	AddressWritable = false;
+}
+
+FxAssign::~FxAssign()
+{
+	SAFE_DELETE(Base);
+	SAFE_DELETE(Right);
+}
+
+bool FxAssign::RequestAddress()
+{
+	AddressRequested = true;
+	return AddressWritable;
+}
+
+FxExpression *FxAssign::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(Base, ctx);
+	SAFE_RESOLVE(Right, ctx);
+
+	ValueType = Base->ValueType;
+
+	if (!Base->IsNumeric() || !Right->IsNumeric())
+	{
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		delete this;
+		return nullptr;
+	}
+	if (!(AddressWritable = Base->RequestAddress()))
+	{
+		ScriptPosition.Message(MSG_ERROR, "Expression must be a modifiable value");
+		delete this;
+		return nullptr;
+	}
+
+	if (Right->ValueType != ValueType)
+	{
+		if (ValueType == TypeBool)
+		{
+			Right = new FxBoolCast(Right);
+		}
+		else if (ValueType->GetRegType() == REGT_INT)
+		{
+			Right = new FxIntCast(Right);
+		}
+		else
+		{
+			Right = new FxFloatCast(Right);
+		}
+		SAFE_RESOLVE(Right, ctx);
+	}
+
+	return this;
+}
+
+ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
+{
+	assert(ValueType == Base->ValueType && IsNumeric());
+	assert(ValueType->GetRegType() == Right->ValueType->GetRegType());
+
+	ExpEmit pointer = Base->Emit(build);
+	ExpEmit result = Right->Emit(build);
+
+	if (result.Konst)
+	{
+		ExpEmit temp(build, result.RegType);
+		build->Emit(result.RegType == REGT_FLOAT ? OP_LKF : OP_LK, temp.RegNum, result.RegNum);
+		result.Free(build);
+		result = temp;
+	}
+
+	build->Emit(ValueType->GetStoreOp(), pointer.RegNum, result.RegNum, build->GetConstantInt(0));
+
+	if (AddressRequested)
+	{
+		result.Free(build);
+		return pointer;
+	}
+
+	pointer.Free(build);
+	return result;
+}
+
+//==========================================================================
+//
 //
 //
 //==========================================================================

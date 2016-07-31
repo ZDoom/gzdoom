@@ -237,8 +237,7 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 			pspr->y = WEAPONTOP;
 		}
 
-		pspr->oldx = pspr->x;
-		pspr->oldy = pspr->y;
+		pspr->firstTic = true;
 	}
 
 	return pspr;

@@ -916,7 +916,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	// too far off the side?
 	// if it's a voxel, it can be further off the side
 	if ((voxel == NULL && (fabs(tx / 64) > fabs(tz))) ||
-		(voxel != NULL && (fabs(tx / 128) > abs(tz))))
+		(voxel != NULL && (fabs(tx / 128) > fabs(tz))))
 	{
 		return;
 	}

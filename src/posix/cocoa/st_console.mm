@@ -248,9 +248,6 @@ void FConsoleWindow::AddText(const char* message)
 			AddText(color, buffer);
 		}
 
-#define CHECK_BUFFER_SPACE \
-	if (pos >= sizeof buffer - 3) { reset = true; continue; }
-
 		if (TEXTCOLOR_ESCAPE == *message)
 		{
 			const BYTE* colorID = reinterpret_cast<const BYTE*>(message) + 1;
@@ -268,42 +265,20 @@ void FConsoleWindow::AddText(const char* message)
 
 			message += 2;
 		}
-		else if (0x1d == *message) // Opening bar character
+		else if (0x1d == *message || 0x1f == *message) // Opening and closing bar characters
 		{
-			CHECK_BUFFER_SPACE;
-
-			// Insert BOX DRAWINGS LIGHT LEFT AND HEAVY RIGHT
-			buffer[pos++] = '\xe2';
-			buffer[pos++] = '\x95';
-			buffer[pos++] = '\xbc';
+			buffer[pos++] = '-';
 			++message;
 		}
 		else if (0x1e == *message) // Middle bar character
 		{
-			CHECK_BUFFER_SPACE;
-
-			// Insert BOX DRAWINGS HEAVY HORIZONTAL
-			buffer[pos++] = '\xe2';
-			buffer[pos++] = '\x94';
-			buffer[pos++] = '\x81';
-			++message;
-		}
-		else if (0x1f == *message) // Closing bar character
-		{
-			CHECK_BUFFER_SPACE;
-
-			// Insert BOX DRAWINGS HEAVY LEFT AND LIGHT RIGHT
-			buffer[pos++] = '\xe2';
-			buffer[pos++] = '\x95';
-			buffer[pos++] = '\xbe';
+			buffer[pos++] = '=';
 			++message;
 		}
 		else
 		{
 			buffer[pos++] = *message++;
 		}
-
-#undef CHECK_BUFFER_SPACE
 	}
 
 	if (0 != pos)

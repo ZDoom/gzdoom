@@ -233,7 +233,8 @@ bool OpenGLFrameBuffer::WipeDo(int ticks)
 	if (FGLRenderBuffers::IsEnabled())
 	{
 		GLRenderer->mBuffers->BindHudFB();
-		glViewport(0, 0, GLRenderer->mOutputViewport.width, GLRenderer->mOutputViewport.height);
+		const auto &bounds = GLRenderer->mScreenViewport;
+		glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
 	}
 
 	bool done = ScreenWipe->Run(ticks, this);

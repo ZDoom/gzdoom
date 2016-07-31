@@ -106,6 +106,7 @@ public:
 	FSkyVertexBuffer *mSkyVBO;
 	FLightBuffer *mLights;
 
+	GL_IRECT mScreenViewport;
 	GL_IRECT mOutputViewportLB;
 	GL_IRECT mOutputViewport;
 	bool mDrawingScene2D = false;

@@ -185,6 +185,7 @@ void FGLRenderer::SetOutputViewport(GL_IRECT *bounds)
 	{
 		mOutputViewport = *bounds;
 		mOutputViewportLB = *bounds;
+		mScreenViewport = *bounds;
 		return;
 	}
 
@@ -208,6 +209,12 @@ void FGLRenderer::SetOutputViewport(GL_IRECT *bounds)
 
 	int vw = viewwidth;
 	int vh = viewheight;
+
+	// The entire renderable area, including the 2D HUD
+	mScreenViewport.left = 0;
+	mScreenViewport.top = 0;
+	mScreenViewport.width = framebuffer->GetWidth();
+	mScreenViewport.height = framebuffer->GetHeight();
 
 	// Letterboxed viewport for the main scene
 	mOutputViewportLB.left = viewwindowx;
@@ -242,12 +249,8 @@ void FGLRenderer::Begin2D()
 			mBuffers->BindSceneFB();
 		else
 			mBuffers->BindHudFB();
-		glViewport(0, 0, mOutputViewport.width, mOutputViewport.height);
 	}
-	else
-	{
-		glViewport(mOutputViewport.left, mOutputViewport.top, mOutputViewport.width, mOutputViewport.height);
-	}
+	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 
 	gl_RenderState.EnableFog(false);
 	gl_RenderState.Set2DMode(true);

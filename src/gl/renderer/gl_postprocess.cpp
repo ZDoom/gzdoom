@@ -198,7 +198,7 @@ void FGLRenderer::BloomScene()
 
 	// Add bloom back to scene texture:
 	mBuffers->BindSceneTextureFB();
-	glViewport(0, 0, mOutputViewport.width, mOutputViewport.height);
+	glViewport(mOutputViewport.left, mOutputViewport.top, mOutputViewport.width, mOutputViewport.height);
 	glEnable(GL_BLEND);
 	glBlendEquation(GL_FUNC_ADD);
 	glBlendFunc(GL_ONE, GL_ONE);

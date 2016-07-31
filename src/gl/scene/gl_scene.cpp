@@ -157,10 +157,7 @@ void FGLRenderer::SetViewArea()
 
 void FGLRenderer::Reset3DViewport()
 {
-	if (FGLRenderBuffers::IsEnabled())
-		glViewport(0, 0, mOutputViewport.width, mOutputViewport.height);
-	else
-		glViewport(mOutputViewport.left, mOutputViewport.top, mOutputViewport.width, mOutputViewport.height);
+	glViewport(mOutputViewport.left, mOutputViewport.top, mOutputViewport.width, mOutputViewport.height);
 }
 
 //-----------------------------------------------------------------------------
@@ -171,19 +168,15 @@ void FGLRenderer::Reset3DViewport()
 
 void FGLRenderer::Set3DViewport(bool toscreen)
 {
-	const auto &bounds = mOutputViewportLB;
 	if (toscreen && FGLRenderBuffers::IsEnabled())
 	{
 		mBuffers->Setup(mOutputViewport.width, mOutputViewport.height);
 		mBuffers->BindSceneFB();
-		glViewport(0, 0, bounds.width, bounds.height);
-		glScissor(0, 0, bounds.width, bounds.height);
 	}
-	else
-	{
-		glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
-		glScissor(bounds.left, bounds.top, bounds.width, bounds.height);
-	}
+
+	const auto &bounds = mOutputViewportLB;
+	glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
+	glScissor(bounds.left, bounds.top, bounds.width, bounds.height);
 
 	glEnable(GL_SCISSOR_TEST);
 	

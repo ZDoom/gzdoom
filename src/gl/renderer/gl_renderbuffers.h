@@ -45,8 +45,8 @@ private:
 	GLuint CreateRenderBuffer(GLuint format, int width, int height);
 	GLuint CreateRenderBuffer(GLuint format, int samples, int width, int height);
 	GLuint CreateFrameBuffer(GLuint colorbuffer);
-	GLuint CreateFrameBuffer(GLuint colorbuffer, GLuint depthstencil);
-	GLuint CreateFrameBuffer(GLuint colorbuffer, GLuint depth, GLuint stencil);
+	GLuint CreateFrameBuffer(GLuint colorbuffer, GLuint depthstencil, bool colorIsARenderBuffer);
+	GLuint CreateFrameBuffer(GLuint colorbuffer, GLuint depth, GLuint stencil, bool colorIsARenderBuffer);
 	void CheckFrameBufferCompleteness();
 	void DeleteTexture(GLuint &handle);
 	void DeleteRenderBuffer(GLuint &handle);

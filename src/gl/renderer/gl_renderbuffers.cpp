@@ -183,12 +183,12 @@ void FGLRenderBuffers::CreateScene(int width, int height, int samples)
 	{
 		mSceneDepth = CreateRenderBuffer(GL_DEPTH_COMPONENT24, samples, width, height);
 		mSceneStencil = CreateRenderBuffer(GL_STENCIL_INDEX8, samples, width, height);
-		mSceneFB = CreateFrameBuffer(samples > 1 ? mSceneMultisample : mSceneTexture, mSceneDepth, mSceneStencil);
+		mSceneFB = CreateFrameBuffer(samples > 1 ? mSceneMultisample : mSceneTexture, mSceneDepth, mSceneStencil, samples > 1);
 	}
 	else
 	{
 		mSceneDepthStencil = CreateRenderBuffer(GL_DEPTH24_STENCIL8, samples, width, height);
-		mSceneFB = CreateFrameBuffer(samples > 1 ? mSceneMultisample : mSceneTexture, mSceneDepthStencil);
+		mSceneFB = CreateFrameBuffer(samples > 1 ? mSceneMultisample : mSceneTexture, mSceneDepthStencil, samples > 1);
 	}
 }
 
@@ -327,23 +327,29 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(GLuint colorbuffer)
 	return handle;
 }
 
-GLuint FGLRenderBuffers::CreateFrameBuffer(GLuint colorbuffer, GLuint depthstencil)
+GLuint FGLRenderBuffers::CreateFrameBuffer(GLuint colorbuffer, GLuint depthstencil, bool colorIsARenderBuffer)
 {
 	GLuint handle = 0;
 	glGenFramebuffers(1, &handle);
 	glBindFramebuffer(GL_FRAMEBUFFER, handle);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
+	if (colorIsARenderBuffer)
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorbuffer);
+	else
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthstencil);
 	CheckFrameBufferCompleteness();
 	return handle;
 }
 
-GLuint FGLRenderBuffers::CreateFrameBuffer(GLuint colorbuffer, GLuint depth, GLuint stencil)
+GLuint FGLRenderBuffers::CreateFrameBuffer(GLuint colorbuffer, GLuint depth, GLuint stencil, bool colorIsARenderBuffer)
 {
 	GLuint handle = 0;
 	glGenFramebuffers(1, &handle);
 	glBindFramebuffer(GL_FRAMEBUFFER, handle);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
+	if (colorIsARenderBuffer)
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorbuffer);
+	else
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencil);
 	CheckFrameBufferCompleteness();

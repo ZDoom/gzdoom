@@ -71,7 +71,12 @@ protected:
 	int                 m_lock;
 	bool                m_isUpdatePending;
 
-	static const bool   m_supportsGamma = false;
+	static const uint32_t GAMMA_CHANNEL_SIZE = 256;
+	static const uint32_t GAMMA_CHANNEL_COUNT = 3;
+	static const uint32_t GAMMA_TABLE_SIZE = GAMMA_CHANNEL_SIZE * GAMMA_CHANNEL_COUNT;
+
+	bool				m_supportsGamma;
+	WORD				m_originalGamma[GAMMA_TABLE_SIZE];
 
 	SDLGLFB();
 

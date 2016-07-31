@@ -1086,6 +1086,20 @@ SDLGLFB::SDLGLFB(void*, const int width, const int height, int, int, const bool 
 , m_lock(-1)
 , m_isUpdatePending(false)
 {
+	CGGammaValue gammaTable[GAMMA_TABLE_SIZE];
+	uint32_t actualChannelSize;
+
+	const CGError result = CGGetDisplayTransferByTable(kCGDirectMainDisplay, GAMMA_CHANNEL_SIZE,
+		gammaTable, &gammaTable[GAMMA_CHANNEL_SIZE], &gammaTable[GAMMA_CHANNEL_SIZE * 2], &actualChannelSize);
+	m_supportsGamma = kCGErrorSuccess == result && GAMMA_CHANNEL_SIZE == actualChannelSize;
+
+	if (m_supportsGamma)
+	{
+		for (uint32_t i = 0; i < GAMMA_TABLE_SIZE; ++i)
+		{
+			m_originalGamma[i] = static_cast<WORD>(gammaTable[i] * 65535.0f);
+		}
+	}
 }
 
 SDLGLFB::SDLGLFB()
@@ -1169,10 +1183,26 @@ void SDLGLFB::SwapBuffers()
 
 void SDLGLFB::SetGammaTable(WORD* table)
 {
+	if (m_supportsGamma)
+	{
+		CGGammaValue gammaTable[GAMMA_TABLE_SIZE];
+
+		for (uint32_t i = 0; i < GAMMA_TABLE_SIZE; ++i)
+		{
+			gammaTable[i] = static_cast<CGGammaValue>(table[i] / 65535.0f);
+		}
+
+		CGSetDisplayTransferByTable(kCGDirectMainDisplay, GAMMA_CHANNEL_SIZE,
+			gammaTable, &gammaTable[GAMMA_CHANNEL_SIZE], &gammaTable[GAMMA_CHANNEL_SIZE * 2]);
+	}
 }
 
 void SDLGLFB::ResetGammaTable()
 {
+	if (m_supportsGamma)
+	{
+		SetGammaTable(m_originalGamma);
+	}
 }
 
 int SDLGLFB::GetClientWidth()

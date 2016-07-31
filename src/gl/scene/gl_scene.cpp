@@ -166,9 +166,9 @@ void FGLRenderer::Reset3DViewport()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::Set3DViewport(bool toscreen)
+void FGLRenderer::Set3DViewport(bool mainview)
 {
-	if (toscreen && FGLRenderBuffers::IsEnabled())
+	if (mainview && FGLRenderBuffers::IsEnabled())
 	{
 		mBuffers->Setup(mOutputViewport.width, mOutputViewport.height);
 		mBuffers->BindSceneFB();
@@ -840,7 +840,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		eye->SetUp();
 		// TODO: stereo specific viewport - needed when implementing side-by-side modes etc.
 		SetOutputViewport(bounds);
-		Set3DViewport(toscreen);
+		Set3DViewport(mainview);
 		mDrawingScene2D = true;
 		mCurrentFoV = fov;
 		// Stereo mode specific perspective projection
@@ -859,7 +859,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 
 		ProcessScene(toscreen);
 		if (mainview) EndDrawScene(retval);	// do not call this for camera textures.
-		if (toscreen)
+		if (mainview)
 		{
 			if (FGLRenderBuffers::IsEnabled()) mBuffers->BlitSceneToTexture();
 			BloomScene();
@@ -976,6 +976,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FILE *file, int width, int hei
 	gl_RenderState.SetSoftLightLevel(-1);
 	screen->Begin2D(false);
 	DrawBlend(viewsector);
+	CopyToBackbuffer(&bounds);
 	glFlush();
 
 	byte * scr = (byte *)M_Malloc(width * height * 3);

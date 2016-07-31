@@ -145,14 +145,7 @@ void FGLRenderer::BloomScene()
 	mBloomExtractShader->Bind();
 	mBloomExtractShader->SceneTexture.Set(0);
 	mBloomExtractShader->Exposure.Set(mCameraExposure);
-	{
-		FFlatVertex *ptr = mVBO->GetBuffer();
-		ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
-		ptr->Set(-1.0f, 1.0f, 0, 0.0f, 1.0f); ptr++;
-		ptr->Set(1.0f, -1.0f, 0, 1.0f, 0.0f); ptr++;
-		ptr->Set(1.0f, 1.0f, 0, 1.0f, 1.0f); ptr++;
-		mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-	}
+	mVBO->RenderScreenQuad();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -183,14 +176,7 @@ void FGLRenderer::BloomScene()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		mBloomCombineShader->Bind();
 		mBloomCombineShader->BloomTexture.Set(0);
-		{
-			FFlatVertex *ptr = mVBO->GetBuffer();
-			ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
-			ptr->Set(-1.0f, 1.0f, 0, 0.0f, 1.0f); ptr++;
-			ptr->Set(1.0f, -1.0f, 0, 1.0f, 0.0f); ptr++;
-			ptr->Set(1.0f, 1.0f, 0, 1.0f, 1.0f); ptr++;
-			mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-		}
+		mVBO->RenderScreenQuad();
 	}
 
 	mBlurShader->BlurHorizontal(mVBO, blurAmount, sampleCount, level0.VTexture, level0.HFramebuffer, level0.Width, level0.Height);
@@ -208,14 +194,7 @@ void FGLRenderer::BloomScene()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	mBloomCombineShader->Bind();
 	mBloomCombineShader->BloomTexture.Set(0);
-	{
-		FFlatVertex *ptr = mVBO->GetBuffer();
-		ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
-		ptr->Set(-1.0f, 1.0f, 0, 0.0f, 1.0f); ptr++;
-		ptr->Set(1.0f, -1.0f, 0, 1.0f, 0.0f); ptr++;
-		ptr->Set(1.0f, 1.0f, 0, 1.0f, 1.0f); ptr++;
-		mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-	}
+	mVBO->RenderScreenQuad();
 
 	if (blendEnabled)
 		glEnable(GL_BLEND);
@@ -263,13 +242,7 @@ void FGLRenderer::TonemapScene()
 	mTonemapShader->Bind();
 	mTonemapShader->SceneTexture.Set(0);
 	mTonemapShader->Exposure.Set(mCameraExposure);
-	
-	FFlatVertex *ptr = mVBO->GetBuffer();
-	ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
-	ptr->Set(-1.0f, 1.0f, 0, 0.0f, 1.0f); ptr++;
-	ptr->Set(1.0f, -1.0f, 0, 1.0f, 0.0f); ptr++;
-	ptr->Set(1.0f, 1.0f, 0, 1.0f, 1.0f); ptr++;
-	mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+	mVBO->RenderScreenQuad();
 
 	if (blendEnabled)
 		glEnable(GL_BLEND);
@@ -287,7 +260,7 @@ void FGLRenderer::TonemapScene()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::Flush()
+void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds)
 {
 	if (FGLRenderBuffers::IsEnabled())
 	{
@@ -311,40 +284,51 @@ void FGLRenderer::Flush()
 
 		mBuffers->BindOutputFB();
 
-		// Calculate letterbox
-		int clientWidth = framebuffer->GetClientWidth();
-		int clientHeight = framebuffer->GetClientHeight();
-		float scaleX = clientWidth / (float)mOutputViewport.width;
-		float scaleY = clientHeight / (float)mOutputViewport.height;
-		float scale = MIN(scaleX, scaleY);
-		int width = (int)round(mOutputViewport.width * scale);
-		int height = (int)round(mOutputViewport.height * scale);
-		int x = (clientWidth - width) / 2;
-		int y = (clientHeight - height) / 2;
+		int x, y, width, height;
+		if (bounds)
+		{
+			x = bounds->left;
+			y = bounds->top;
+			width = bounds->width;
+			height = bounds->height;
+		}
+		else
+		{
+			// Calculate letterbox
+			int clientWidth = framebuffer->GetClientWidth();
+			int clientHeight = framebuffer->GetClientHeight();
+			float scaleX = clientWidth / (float)mScreenViewport.width;
+			float scaleY = clientHeight / (float)mScreenViewport.height;
+			float scale = MIN(scaleX, scaleY);
+			width = (int)round(mScreenViewport.width * scale);
+			height = (int)round(mScreenViewport.height * scale);
+			x = (clientWidth - width) / 2;
+			y = (clientHeight - height) / 2;
 
-		// Black bars around the box:
-		glViewport(0, 0, clientWidth, clientHeight);
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glEnable(GL_SCISSOR_TEST);
-		if (y > 0)
-		{
-			glScissor(0, 0, clientWidth, y);
-			glClear(GL_COLOR_BUFFER_BIT);
-		}
-		if (clientHeight - y - height > 0)
-		{
-			glScissor(0, y + height, clientWidth, clientHeight - y - height);
-			glClear(GL_COLOR_BUFFER_BIT);
-		}
-		if (x > 0)
-		{
-			glScissor(0, y, x, height);
-			glClear(GL_COLOR_BUFFER_BIT);
-		}
-		if (clientWidth - x - width > 0)
-		{
-			glScissor(x + width, y, clientWidth - x - width, height);
-			glClear(GL_COLOR_BUFFER_BIT);
+			// Black bars around the box:
+			glViewport(0, 0, clientWidth, clientHeight);
+			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			glEnable(GL_SCISSOR_TEST);
+			if (y > 0)
+			{
+				glScissor(0, 0, clientWidth, y);
+				glClear(GL_COLOR_BUFFER_BIT);
+			}
+			if (clientHeight - y - height > 0)
+			{
+				glScissor(0, y + height, clientWidth, clientHeight - y - height);
+				glClear(GL_COLOR_BUFFER_BIT);
+			}
+			if (x > 0)
+			{
+				glScissor(0, y, x, height);
+				glClear(GL_COLOR_BUFFER_BIT);
+			}
+			if (clientWidth - x - width > 0)
+			{
+				glScissor(x + width, y, clientWidth - x - width, height);
+				glClear(GL_COLOR_BUFFER_BIT);
+			}
 		}
 		glDisable(GL_SCISSOR_TEST);
 
@@ -367,13 +351,7 @@ void FGLRenderer::Flush()
 			mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
 		}
 		mBuffers->BindHudTexture(0);
-
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-		ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
-		ptr->Set(-1.0f, 1.0f, 0, 0.0f, 1.0f); ptr++;
-		ptr->Set(1.0f, -1.0f, 0, 1.0f, 0.0f); ptr++;
-		ptr->Set(1.0f, 1.0f, 0, 1.0f, 1.0f); ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+		mVBO->RenderScreenQuad(width / (float)mBuffers->GetWidth(), height / (float)mBuffers->GetHeight());
 
 		if (blendEnabled)
 			glEnable(GL_BLEND);

@@ -58,6 +58,7 @@ void FPresentShader::Bind()
 		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/present");
 		mShader.SetAttribLocation(0, "PositionInProjection");
+		mShader.SetAttribLocation(1, "UV");
 		InputTexture.Init(mShader, "InputTexture");
 		Gamma.Init(mShader, "Gamma");
 		Contrast.Init(mShader, "Contrast");

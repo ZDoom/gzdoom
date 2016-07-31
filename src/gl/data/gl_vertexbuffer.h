@@ -105,6 +105,16 @@ public:
 		if (pcount) *pcount = count;
 	}
 
+	void RenderScreenQuad(float maxU = 1.0f, float maxV = 1.0f)
+	{
+		FFlatVertex *ptr = GetBuffer();
+		ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
+		ptr->Set(-1.0f, 1.0f, 0, 0.0f, maxV); ptr++;
+		ptr->Set(1.0f, -1.0f, 0, maxU, 0.0f); ptr++;
+		ptr->Set(1.0f, 1.0f, 0, maxU, maxV); ptr++;
+		RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+	}
+
 #endif
 	void Reset()
 	{

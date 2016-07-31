@@ -34,6 +34,9 @@ public:
 
 	static bool IsEnabled();
 
+	int GetWidth() const { return mWidth; }
+	int GetHeight() const { return mHeight; }
+
 private:
 	void ClearScene();
 	void ClearHud();

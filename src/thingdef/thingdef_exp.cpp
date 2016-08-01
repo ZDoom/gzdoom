@@ -112,7 +112,67 @@ static FxExpression *ParseExpressionM (FScanner &sc, PClassActor *cls)
 	}
 	else
 	{
-		return base;
+		FxBinary *exp;
+		FxAssignSelf *left = new FxAssignSelf(sc);
+
+		sc.GetToken();
+		switch (sc.TokenType)
+		{
+		case TK_AddEq:
+			exp = new FxAddSub('+', left, nullptr);
+			break;
+
+		case TK_SubEq:
+			exp = new FxAddSub('-', left, nullptr);
+			break;
+
+		case TK_MulEq:
+			exp = new FxMulDiv('*', left, nullptr);
+			break;
+
+		case TK_DivEq:
+			exp = new FxMulDiv('/', left, nullptr);
+			break;
+
+		case TK_ModEq:
+			exp = new FxMulDiv('%', left, nullptr);
+			break;
+
+		case TK_LShiftEq:
+			exp = new FxBinaryInt(TK_LShift, left, nullptr);
+			break;
+
+		case TK_RShiftEq:
+			exp = new FxBinaryInt(TK_RShift, left, nullptr);
+			break;
+
+		case TK_URShiftEq:
+			exp = new FxBinaryInt(TK_URShift, left, nullptr);
+			break;
+
+		case TK_AndEq:
+			exp = new FxBinaryInt('&', left, nullptr);
+			break;
+
+		case TK_XorEq:
+			exp = new FxBinaryInt('^', left, nullptr);
+			break;
+
+		case TK_OrEq:
+			exp = new FxBinaryInt('|', left, nullptr);
+			break;
+
+		default:
+			sc.UnGet();
+			delete left;
+			return base;
+		}
+
+		exp->right = ParseExpressionM(sc, cls);
+
+		FxAssign *ret = new FxAssign(base, exp);
+		left->Assignment = ret;
+		return ret;
 	}
 }
 

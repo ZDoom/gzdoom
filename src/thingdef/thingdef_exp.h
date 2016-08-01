@@ -527,6 +527,24 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 	bool RequestAddress();
 	ExpEmit Emit(VMFunctionBuilder *build);
+
+	ExpEmit Address;
+};
+
+//==========================================================================
+//
+//	FxAssignSelf
+//
+//==========================================================================
+
+class FxAssignSelf : public FxExpression
+{
+public:
+	FxAssign *Assignment;
+
+	FxAssignSelf(const FScriptPosition &pos);
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================

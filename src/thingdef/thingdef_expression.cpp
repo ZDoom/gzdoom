@@ -1077,9 +1077,10 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(Base, ctx);
-	SAFE_RESOLVE(Right, ctx);
 
 	ValueType = Base->ValueType;
+
+	SAFE_RESOLVE(Right, ctx);
 
 	if (!Base->IsNumeric() || !Right->IsNumeric())
 	{
@@ -1120,8 +1121,10 @@ ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 	assert(ValueType->GetRegType() == Right->ValueType->GetRegType());
 
 	ExpEmit pointer = Base->Emit(build);
-	ExpEmit result = Right->Emit(build);
+	Address = pointer;
 
+	ExpEmit result = Right->Emit(build);
+	
 	if (result.Konst)
 	{
 		ExpEmit temp(build, result.RegType);
@@ -1140,6 +1143,39 @@ ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 
 	pointer.Free(build);
 	return result;
+}
+
+//==========================================================================
+//
+//	FxAssignSelf
+//
+//==========================================================================
+
+FxAssignSelf::FxAssignSelf(const FScriptPosition &pos)
+: FxExpression(pos)
+{
+	Assignment = nullptr;
+}
+
+FxExpression *FxAssignSelf::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+
+	// This should never happen if FxAssignSelf is used correctly
+	assert(Assignment != nullptr);
+
+	ValueType = Assignment->ValueType;
+
+	return this;
+}
+
+ExpEmit FxAssignSelf::Emit(VMFunctionBuilder *build)
+{
+	assert(ValueType = Assignment->ValueType);
+	ExpEmit pointer = Assignment->Address; // FxAssign should have already emitted it
+	ExpEmit out(build, ValueType->GetRegType());
+	build->Emit(ValueType->GetLoadOp(), out.RegNum, pointer.RegNum, build->GetConstantInt(0));
+	return out;
 }
 
 //==========================================================================

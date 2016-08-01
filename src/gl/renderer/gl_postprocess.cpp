@@ -76,7 +76,11 @@
 //
 //==========================================================================
 CVAR(Bool, gl_bloom, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Float, gl_bloom_amount, 1.4f, 0)
+CUSTOM_CVAR(Float, gl_bloom_amount, 1.4f, 0)
+{
+	if (self < 0.1f) self = 0.1f;
+}
+
 CVAR(Float, gl_exposure, 0.0f, 0)
 
 CUSTOM_CVAR(Int, gl_tonemap, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

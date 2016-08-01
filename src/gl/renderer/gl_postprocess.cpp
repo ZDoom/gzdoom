@@ -149,6 +149,7 @@ void FGLRenderer::BloomScene()
 	mBloomExtractShader->Bind();
 	mBloomExtractShader->SceneTexture.Set(0);
 	mBloomExtractShader->Exposure.Set(mCameraExposure);
+	mVBO->BindVBO();
 	mVBO->RenderScreenQuad();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -246,6 +247,7 @@ void FGLRenderer::TonemapScene()
 	mTonemapShader->Bind();
 	mTonemapShader->SceneTexture.Set(0);
 	mTonemapShader->Exposure.Set(mCameraExposure);
+	mVBO->BindVBO();
 	mVBO->RenderScreenQuad();
 
 	if (blendEnabled)
@@ -355,6 +357,7 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 			mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
 		}
 		mBuffers->BindHudTexture(0);
+		mVBO->BindVBO();
 		mVBO->RenderScreenQuad(width / (float)mBuffers->GetWidth(), height / (float)mBuffers->GetHeight());
 
 		if (blendEnabled)

@@ -62,14 +62,16 @@ class FxJumpStatement;
 struct FCompileContext
 {
 	TArray<FxJumpStatement *> Jumps;
+	PPrototype *ReturnProto;
 	PClassActor *Class;
 
-	FCompileContext(PClassActor *cls = nullptr);
+	FCompileContext(PClassActor *cls = nullptr, PPrototype *ret = nullptr);
 
 	PSymbol *FindInClass(FName identifier);
 	PSymbol *FindGlobal(FName identifier);
 
 	void HandleJumps(int token, FxExpression *handler);
+	void CheckReturn(PPrototype *proto, FScriptPosition &pos);
 };
 
 //==========================================================================
@@ -170,14 +172,14 @@ struct ExpVal
 
 struct ExpEmit
 {
-	ExpEmit() : RegNum(0), RegType(REGT_NIL), Konst(false), Fixed(false) {}
-	ExpEmit(int reg, int type) : RegNum(reg), RegType(type), Konst(false), Fixed(false) {}
-	ExpEmit(int reg, int type, bool konst)  : RegNum(reg), RegType(type), Konst(konst), Fixed(false) {}
+	ExpEmit() : RegNum(0), RegType(REGT_NIL), Konst(false), Fixed(false), Final(false) {}
+	ExpEmit(int reg, int type) : RegNum(reg), RegType(type), Konst(false), Fixed(false), Final(false) {}
+	ExpEmit(int reg, int type, bool konst)  : RegNum(reg), RegType(type), Konst(konst), Fixed(false), Final(false) {}
 	ExpEmit(VMFunctionBuilder *build, int type);
 	void Free(VMFunctionBuilder *build);
 	void Reuse(VMFunctionBuilder *build);
 
-	BYTE RegNum, RegType, Konst:1, Fixed:1;
+	BYTE RegNum, RegType, Konst:1, Fixed:1, Final:1;
 };
 
 //==========================================================================
@@ -202,6 +204,7 @@ public:
 	
 	virtual bool isConstant() const;
 	virtual bool RequestAddress();
+	virtual PPrototype *ReturnProto();
 	virtual VMFunction *GetDirectFunction();
 	bool IsNumeric() const { return ValueType != TypeName && (ValueType->GetRegType() == REGT_INT || ValueType->GetRegType() == REGT_FLOAT); }
 	bool IsPointer() const { return ValueType->GetRegType() == REGT_POINTER; }
@@ -748,6 +751,7 @@ public:
 class FxRandom : public FxExpression
 {
 protected:
+	bool EmitTail;
 	FRandom *rng;
 	FxExpression *min, *max;
 
@@ -756,7 +760,7 @@ public:
 	FxRandom(FRandom *, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos);
 	~FxRandom();
 	FxExpression *Resolve(FCompileContext&);
-
+	PPrototype *ReturnProto();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -802,6 +806,7 @@ public:
 
 class FxRandom2 : public FxExpression
 {
+	bool EmitTail;
 	FRandom * rng;
 	FxExpression *mask;
 
@@ -810,7 +815,7 @@ public:
 	FxRandom2(FRandom *, FxExpression *m, const FScriptPosition &pos);
 	~FxRandom2();
 	FxExpression *Resolve(FCompileContext&);
-
+	PPrototype *ReturnProto();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -915,8 +920,9 @@ public:
 
 class FxActionSpecialCall : public FxExpression
 {
-	FxExpression *Self;
 	int Special;
+	bool EmitTail;
+	FxExpression *Self;
 	FArgumentList *ArgList;
 
 public:
@@ -924,6 +930,7 @@ public:
 	FxActionSpecialCall(FxExpression *self, int special, FArgumentList *args, const FScriptPosition &pos);
 	~FxActionSpecialCall();
 	FxExpression *Resolve(FCompileContext&);
+	PPrototype *ReturnProto();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -954,6 +961,7 @@ public:
 
 class FxVMFunctionCall : public FxExpression
 {
+	bool EmitTail;
 	PFunction *Function;
 	FArgumentList *ArgList;
 
@@ -961,13 +969,10 @@ public:
 	FxVMFunctionCall(PFunction *func, FArgumentList *args, const FScriptPosition &pos);
 	~FxVMFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
+	PPrototype *ReturnProto();
+	VMFunction *GetDirectFunction();
 	ExpEmit Emit(VMFunctionBuilder *build);
-	ExpEmit Emit(VMFunctionBuilder *build, bool tailcall);
 	bool CheckEmitCast(VMFunctionBuilder *build, bool returnit, ExpEmit &reg);
-	unsigned GetArgCount() const { return ArgList == NULL ? 0 : ArgList->Size(); }
-	PFunction *GetFunction() const { return Function; }
-	VMFunction *GetVMFunction() const { return Function->Variants[0].Implementation; }
-	bool IsDirectFunction();
 };
 
 //==========================================================================
@@ -1089,10 +1094,10 @@ public:
 
 class FxReturnStatement : public FxExpression
 {
-	FxVMFunctionCall *Call;
+	FxExpression *Value;
 
 public:
-	FxReturnStatement(FxVMFunctionCall *call, const FScriptPosition &pos);
+	FxReturnStatement(FxExpression *value, const FScriptPosition &pos);
 	~FxReturnStatement();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
@@ -1146,12 +1151,14 @@ public:
 
 class FxRuntimeStateIndex : public FxExpression
 {
+	bool EmitTail;
 	FxExpression *Index;
 
 public:
 	FxRuntimeStateIndex(FxExpression *index);
 	~FxRuntimeStateIndex();
 	FxExpression *Resolve(FCompileContext&);
+	PPrototype *ReturnProto();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 

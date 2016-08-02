@@ -91,7 +91,7 @@ static const FLOP FxFlops[] =
 //
 //==========================================================================
 
-FCompileContext::FCompileContext(PClassActor *cls) : Class(cls)
+FCompileContext::FCompileContext(PClassActor *cls, PPrototype *ret) : Class(cls), ReturnProto(ret)
 {
 }
 
@@ -118,6 +118,50 @@ void FCompileContext::HandleJumps(int token, FxExpression *handler)
 	}
 }
 
+void FCompileContext::CheckReturn(PPrototype *proto, FScriptPosition &pos)
+{
+	assert(proto != nullptr);
+	bool fail = false;
+
+	if (ReturnProto == nullptr)
+	{
+		ReturnProto = proto;
+		return;
+	}
+
+	// A prototype that defines fewer return types can be compatible with
+	// one that defines more if the shorter one matches the initial types
+	// for the longer one.
+	if (ReturnProto->ReturnTypes.Size() < proto->ReturnTypes.Size())
+	{ // Make proto the shorter one to avoid code duplication below.
+		swapvalues(proto, ReturnProto);
+	}
+	// If one prototype returns nothing, they both must.
+	if (proto->ReturnTypes.Size() == 0)
+	{
+		if (ReturnProto->ReturnTypes.Size() != 0)
+		{
+			fail = true;
+		}
+	}
+	else
+	{
+		for (unsigned i = 0; i < proto->ReturnTypes.Size(); i++)
+		{
+			if (ReturnProto->ReturnTypes[i] != proto->ReturnTypes[i])
+			{ // Incompatible
+				fail = true;
+				break;
+			}
+		}
+	}
+
+	if (fail)
+	{
+		pos.Message(MSG_ERROR, "All return expressions must deduce to the same type");
+	}
+}
+
 //==========================================================================
 //
 // ExpEmit
@@ -125,7 +169,7 @@ void FCompileContext::HandleJumps(int token, FxExpression *handler)
 //==========================================================================
 
 ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)
-: RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false), Fixed(false)
+: RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false), Fixed(false), Final(false)
 {
 }
 
@@ -226,6 +270,26 @@ bool FxExpression::RequestAddress()
 {
 	ScriptPosition.Message(MSG_ERROR, "invalid dereference\n");
 	return false;
+}
+
+//==========================================================================
+//
+// Called by return statements.
+//
+//==========================================================================
+
+PPrototype *FxExpression::ReturnProto()
+{
+	assert(ValueType != nullptr);
+
+	TArray<PType *> ret(0);
+	TArray<PType *> none(0);
+	if (ValueType != TypeVoid)
+	{
+		ret.Push(ValueType);
+	}
+
+	return NewPrototype(ret, none);
 }
 
 //==========================================================================
@@ -2651,6 +2715,7 @@ ExpEmit FxMinMax::Emit(VMFunctionBuilder *build)
 FxRandom::FxRandom(FRandom * r, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos)
 : FxExpression(pos)
 {
+	EmitTail = false;
 	if (mi != NULL && ma != NULL)
 	{
 		min = new FxIntCast(mi);
@@ -2671,6 +2736,18 @@ FxRandom::~FxRandom()
 {
 	SAFE_DELETE(min);
 	SAFE_DELETE(max);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+PPrototype *FxRandom::ReturnProto()
+{
+	EmitTail = true;
+	return FxExpression::ReturnProto();
 }
 
 //==========================================================================
@@ -2706,12 +2783,12 @@ int DecoRandom(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret,
 	FRandom *rng = reinterpret_cast<FRandom *>(param[0].a);
 	if (numparam == 1)
 	{
-		ret->SetInt((*rng)());
+		ACTION_RETURN_INT((*rng)());
 	}
 	else if (numparam == 2)
 	{
 		int maskval = param[1].i;
-		ret->SetInt(rng->Random2(maskval));
+		ACTION_RETURN_INT(rng->Random2(maskval));
 	}
 	else if (numparam == 3)
 	{
@@ -2720,9 +2797,11 @@ int DecoRandom(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret,
 		{
 			swapvalues(max, min);
 		}
-		ret->SetInt((*rng)(max - min + 1) + min);
+		ACTION_RETURN_INT((*rng)(max - min + 1) + min);
 	}
-	return 1;
+
+	// Shouldn't happen
+	return 0;
 }
 
 ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
@@ -2735,17 +2814,27 @@ ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
+	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
+
 	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng, ATAG_RNG));
 	if (min != NULL && max != NULL)
 	{
 		EmitParameter(build, min, ScriptPosition);
 		EmitParameter(build, max, ScriptPosition);
-		build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
+		build->Emit(opcode, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
 	}
 	else
 	{
-		build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 1, 1);
+		build->Emit(opcode, build->GetConstantAddress(callfunc, ATAG_OBJECT), 1, 1);
 	}
+
+	if (EmitTail)
+	{
+		ExpEmit call;
+		call.Final = true;
+		return call;
+	}
+
 	ExpEmit out(build, REGT_INT);
 	build->Emit(OP_RESULT, 0, REGT_INT, out.RegNum);
 	return out;
@@ -2952,13 +3041,12 @@ int DecoFRandom(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret
 		{
 			swapvalues(max, min);
 		}
-		ret->SetFloat(frandom * (max - min) + min);
+		ACTION_RETURN_FLOAT(frandom * (max - min) + min);
 	}
 	else
 	{
-		ret->SetFloat(frandom);
+		ACTION_RETURN_FLOAT(frandom);
 	}
-	return 1;
 }
 
 ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
@@ -2971,17 +3059,27 @@ ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
+	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
+
 	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng, ATAG_RNG));
 	if (min != NULL && max != NULL)
 	{
 		EmitParameter(build, min, ScriptPosition);
 		EmitParameter(build, max, ScriptPosition);
-		build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
+		build->Emit(opcode, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
 	}
 	else
 	{
-		build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 1, 1);
+		build->Emit(opcode, build->GetConstantAddress(callfunc, ATAG_OBJECT), 1, 1);
 	}
+
+	if (EmitTail)
+	{
+		ExpEmit call;
+		call.Final = true;
+		return call;
+	}
+
 	ExpEmit out(build, REGT_FLOAT);
 	build->Emit(OP_RESULT, 0, REGT_FLOAT, out.RegNum);
 	return out;
@@ -2996,6 +3094,7 @@ ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
 FxRandom2::FxRandom2(FRandom *r, FxExpression *m, const FScriptPosition &pos)
 : FxExpression(pos)
 {
+	EmitTail = false;
 	rng = r;
 	if (m) mask = new FxIntCast(m);
 	else mask = new FxConstant(-1, pos);
@@ -3011,6 +3110,18 @@ FxRandom2::FxRandom2(FRandom *r, FxExpression *m, const FScriptPosition &pos)
 FxRandom2::~FxRandom2()
 {
 	SAFE_DELETE(mask);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+PPrototype *FxRandom2::ReturnProto()
+{
+	EmitTail = true;
+	return FxExpression::ReturnProto();
 }
 
 //==========================================================================
@@ -3042,9 +3153,19 @@ ExpEmit FxRandom2::Emit(VMFunctionBuilder *build)
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
+	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
+
 	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng, ATAG_RNG));
 	EmitParameter(build, mask, ScriptPosition);
-	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 2, 1);
+	build->Emit(opcode, build->GetConstantAddress(callfunc, ATAG_OBJECT), 2, 1);
+
+	if (EmitTail)
+	{
+		ExpEmit call;
+		call.Final = true;
+		return call;
+	}
+
 	ExpEmit out(build, REGT_INT);
 	build->Emit(OP_RESULT, 0, REGT_INT, out.RegNum);
 	return out;
@@ -3623,6 +3744,7 @@ FxActionSpecialCall::FxActionSpecialCall(FxExpression *self, int special, FArgum
 	Self = self;
 	Special = special;
 	ArgList = args;
+	EmitTail = false;
 }
 
 //==========================================================================
@@ -3635,6 +3757,18 @@ FxActionSpecialCall::~FxActionSpecialCall()
 {
 	SAFE_DELETE(Self);
 	SAFE_DELETE(ArgList);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+PPrototype *FxActionSpecialCall::ReturnProto()
+{
+	EmitTail = true;
+	return FxExpression::ReturnProto();
 }
 
 //==========================================================================
@@ -3695,7 +3829,6 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 int DecoCallLineSpecial(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam > 2 && numparam < 8);
-	assert(numret == 1);
 	assert(param[0].Type == REGT_INT);
 	assert(param[1].Type == REGT_POINTER);
 	int v[5] = { 0 };
@@ -3704,8 +3837,7 @@ int DecoCallLineSpecial(VMFrameStack *stack, VMValue *param, int numparam, VMRet
 	{
 		v[i - 2] = param[i].i;
 	}
-	ret->SetInt(P_ExecuteSpecial(param[0].i, NULL, reinterpret_cast<AActor*>(param[1].a), false, v[0], v[1], v[2], v[3], v[4]));
-	return 1;
+	ACTION_RETURN_INT(P_ExecuteSpecial(param[0].i, NULL, reinterpret_cast<AActor*>(param[1].a), false, v[0], v[1], v[2], v[3], v[4]));
 }
 
 ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
@@ -3750,6 +3882,14 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
+	if (EmitTail)
+	{
+		build->Emit(OP_TAIL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 2 + i, 0);
+		ExpEmit call;
+		call.Final = true;
+		return call;
+	}
+
 	ExpEmit dest(build, REGT_INT);
 	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 2 + i, 1);
 	build->Emit(OP_RESULT, 0, REGT_INT, dest.RegNum);
@@ -3767,6 +3907,7 @@ FxVMFunctionCall::FxVMFunctionCall(PFunction *func, FArgumentList *args, const F
 {
 	Function = func;
 	ArgList = args;
+	EmitTail = false;
 }
 
 //==========================================================================
@@ -3778,6 +3919,38 @@ FxVMFunctionCall::FxVMFunctionCall(PFunction *func, FArgumentList *args, const F
 FxVMFunctionCall::~FxVMFunctionCall()
 {
 	SAFE_DELETE(ArgList);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+PPrototype *FxVMFunctionCall::ReturnProto()
+{
+	EmitTail = true;
+	return Function->Variants[0].Implementation->Proto;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+VMFunction *FxVMFunctionCall::GetDirectFunction()
+{
+	// If this return statement calls a function with no arguments,
+	// then it can be a "direct" function. That is, the DECORATE
+	// definition can call that function directly without wrapping
+	// it inside VM code.
+	if (EmitTail && (ArgList ? ArgList->Size() : 0) == 0 && (Function->Flags & VARF_Action))
+	{
+		return Function->Variants[0].Implementation;
+	}
+	
+	return nullptr;
 }
 
 //==========================================================================
@@ -3809,6 +3982,11 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	{
 		ValueType = rets[0];
 	}
+	else
+	{
+		ValueType = TypeVoid;
+	}
+
 	return this;
 }
 
@@ -3822,18 +4000,13 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 
 ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 {
-	return Emit(build, false);
-}
-
-ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build, bool tailcall)
-{
 	assert(build->Registers[REGT_POINTER].GetMostUsed() >= 3);
-	int count = GetArgCount();
+	int count = (ArgList ? ArgList->Size() : 0);
 
 	if (count == 1)
 	{
 		ExpEmit reg;
-		if (CheckEmitCast(build, tailcall, reg))
+		if (CheckEmitCast(build, EmitTail, reg))
 		{
 			return reg;
 		}
@@ -3862,10 +4035,12 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build, bool tailcall)
 	VMFunction *vmfunc = Function->Variants[0].Implementation;
 	int funcaddr = build->GetConstantAddress(vmfunc, ATAG_OBJECT);
 	// Emit the call
-	if (tailcall)
+	if (EmitTail)
 	{ // Tail call
 		build->Emit(OP_TAIL_K, funcaddr, count, 0);
-		return ExpEmit();
+		ExpEmit call;
+		call.Final = true;
+		return call;
 	}
 	else if (vmfunc->Proto->ReturnTypes.Size() > 0)
 	{ // Call, expecting one result
@@ -3913,6 +4088,7 @@ bool FxVMFunctionCall::CheckEmitCast(VMFunctionBuilder *build, bool returnit, Ex
 				where.Free(build);
 			}
 			reg = ExpEmit();
+			reg.Final = true;
 		}
 		else
 		{
@@ -4540,54 +4716,77 @@ ExpEmit FxJumpStatement::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxReturnStatement::FxReturnStatement(FxVMFunctionCall *call, const FScriptPosition &pos)
-: FxExpression(pos), Call(call)
+FxReturnStatement::FxReturnStatement(FxExpression *value, const FScriptPosition &pos)
+: FxExpression(pos), Value(value)
 {
+	ValueType = TypeVoid;
 }
 
 FxReturnStatement::~FxReturnStatement()
 {
-	SAFE_DELETE(Call);
+	SAFE_DELETE(Value);
 }
 
 FxExpression *FxReturnStatement::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
-	if (Call != NULL)
+	SAFE_RESOLVE_OPT(Value, ctx);
+
+	PPrototype *retproto;
+	if (Value == nullptr)
 	{
-		Call = static_cast<FxVMFunctionCall *>(Call->Resolve(ctx));
-		ABORT(Call);
+		TArray<PType *> none(0);
+		retproto = NewPrototype(none, none);
 	}
+	else
+	{
+		retproto = Value->ReturnProto();
+	}
+
+	ctx.CheckReturn(retproto, ScriptPosition);
+
 	return this;
 }
 
 ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build)
 {
-	// If we return nothing, use a regular RET opcode. If we return
-	// something, use TAIL to call the function. Our return type
-	// should be compatible with the called function's return type.
-	if (Call == NULL)
+	// If we return nothing, use a regular RET opcode.
+	// Otherwise just return the value we're given.
+	if (Value == nullptr)
 	{
 		build->Emit(OP_RET, RET_FINAL, REGT_NIL, 0);
 	}
 	else
 	{
-		Call->Emit(build, true);
+		ExpEmit ret = Value->Emit(build);
+
+		// Check if it is a function call that simplified itself
+		// into a tail call in which case we don't emit anything.
+		if (!ret.Final)
+		{
+			if (Value->ValueType == TypeVoid)
+			{ // Nothing is returned.
+				build->Emit(OP_RET, RET_FINAL, REGT_NIL, 0);
+			}
+			else
+			{
+				build->Emit(OP_RET, RET_FINAL, ret.RegType | (ret.Konst ? REGT_KONST : 0), ret.RegNum);
+			}
+		}
 	}
-	return ExpEmit();
+
+	ExpEmit out;
+	out.Final = true;
+	return out;
 }
 
 VMFunction *FxReturnStatement::GetDirectFunction()
 {
-	// If this return statement calls a function with no arguments,
-	// then it can be a "direct" function. That is, the DECORATE
-	// definition can call that function directly without wrapping
-	// it inside VM code.
-	if (Call != NULL && Call->GetArgCount() == 0 && (Call->GetFunction()->Flags & VARF_Action))
+	if (Value != nullptr)
 	{
-		return Call->GetVMFunction();
+		return Value->GetDirectFunction();
 	}
-	return NULL;
+	return nullptr;
 }
 
 //==========================================================================
@@ -4754,12 +4953,19 @@ FxExpression *FxStateByIndex::Resolve(FCompileContext &ctx)
 FxRuntimeStateIndex::FxRuntimeStateIndex(FxExpression *index)
 : FxExpression(index->ScriptPosition), Index(index)
 {
+	EmitTail = false;
 	ValueType = TypeState;
 }
 
 FxRuntimeStateIndex::~FxRuntimeStateIndex()
 {
 	SAFE_DELETE(Index);
+}
+
+PPrototype *FxRuntimeStateIndex::ReturnProto()
+{
+	EmitTail = true;
+	return FxExpression::ReturnProto();
 }
 
 FxExpression *FxRuntimeStateIndex::Resolve(FCompileContext &ctx)
@@ -4794,14 +5000,12 @@ static int DecoHandleRuntimeState(VMFrameStack *stack, VMValue *param, int numpa
 		// Null is returned if the location was invalid which means that no jump will be performed
 		// if used as return value
 		// 0 always meant the same thing so we handle it here for compatibility
-		ret->SetPointer(nullptr, ATAG_STATE);
+		ACTION_RETURN_STATE(nullptr);
 	}
 	else
 	{
-		ret->SetPointer(stateinfo->mCallingState + index, ATAG_STATE);
+		ACTION_RETURN_STATE(stateinfo->mCallingState + index);
 	}
-
-	return 1;
 }
 
 ExpEmit FxRuntimeStateIndex::Emit(VMFunctionBuilder *build)
@@ -4823,8 +5027,16 @@ ExpEmit FxRuntimeStateIndex::Emit(VMFunctionBuilder *build)
 	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
-	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
-	build->Emit(OP_RESULT, 0, REGT_POINTER, out.RegNum);
+	if (EmitTail)
+	{
+		build->Emit(OP_TAIL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
+		out.Final = true;
+	}
+	else
+	{
+		build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
+		build->Emit(OP_RESULT, 0, REGT_POINTER, out.RegNum);
+	}
 
 	return out;
 }

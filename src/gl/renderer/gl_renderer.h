@@ -23,6 +23,7 @@ class FBloomExtractShader;
 class FBloomCombineShader;
 class FBlurShader;
 class FTonemapShader;
+class FLensShader;
 class FPresentShader;
 
 inline float DEG2RAD(float deg)
@@ -90,6 +91,7 @@ public:
 	FBloomCombineShader *mBloomCombineShader;
 	FBlurShader *mBlurShader;
 	FTonemapShader *mTonemapShader;
+	FLensShader *mLensShader;
 	FPresentShader *mPresentShader;
 
 	FTexture *gllight;
@@ -160,6 +162,7 @@ public:
 	void EndDrawScene(sector_t * viewsector);
 	void BloomScene();
 	void TonemapScene();
+	void LensDistortScene();
 	void CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma);
 	void Flush() { CopyToBackbuffer(nullptr, true); }
 

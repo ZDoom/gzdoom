@@ -432,7 +432,7 @@ void FGLRenderBuffers::BindSceneTextureFB()
 
 void FGLRenderBuffers::BindHudFB()
 {
-	if (gl_tonemap != 0)
+	if (gl_tonemap != 0 || gl_lens)
 		glBindFramebuffer(GL_FRAMEBUFFER, mHudFB);
 	else
 		glBindFramebuffer(GL_FRAMEBUFFER, mSceneTextureFB);
@@ -470,7 +470,7 @@ void FGLRenderBuffers::BindSceneTexture(int index)
 void FGLRenderBuffers::BindHudTexture(int index)
 {
 	glActiveTexture(GL_TEXTURE0 + index);
-	if (gl_tonemap != 0)
+	if (gl_tonemap != 0 || gl_lens)
 		glBindTexture(GL_TEXTURE_2D, mHudTexture);
 	else
 		glBindTexture(GL_TEXTURE_2D, mSceneTexture);

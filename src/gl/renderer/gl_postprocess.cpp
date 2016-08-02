@@ -358,7 +358,7 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 		}
 		mBuffers->BindHudTexture(0);
 		mVBO->BindVBO();
-		mVBO->RenderScreenQuad(width / (float)mBuffers->GetWidth(), height / (float)mBuffers->GetHeight());
+		mVBO->RenderScreenQuad(mScreenViewport.width / (float)mBuffers->GetWidth(), mScreenViewport.height / (float)mBuffers->GetHeight());
 
 		if (blendEnabled)
 			glEnable(GL_BLEND);

@@ -514,6 +514,17 @@ void P_Recalculate3DFloors(sector_t * sector)
 						clipped_bottom = pick_bottom;
 					}
 				}
+				else if (pick_bottom > height)	// do not allow inverted planes
+				{
+					F3DFloor * dyn = new F3DFloor;
+					*dyn = *pick;
+					pick->flags |= FF_CLIPPED;
+					pick->flags &= ~FF_EXISTS;
+					dyn->flags |= FF_DYNAMIC;
+					dyn->bottom.copyPlane(&pick->top);
+					ffloors.Push(pick);
+					ffloors.Push(dyn);
+				}
 				else
 				{
 					clipped = pick;

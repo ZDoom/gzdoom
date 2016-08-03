@@ -414,7 +414,7 @@ ExpEmit FxBoolCast::Emit(VMFunctionBuilder *build)
 	{
 		build->Emit(OP_EQF_K, 1, from.RegNum, build->GetConstantFloat(0.));
 	}
-	else if (from.RegNum == REGT_POINTER)
+	else if (from.RegType == REGT_POINTER)
 	{
 		build->Emit(OP_EQA_K, 1, from.RegNum, build->GetConstantAddress(nullptr, ATAG_GENERIC));
 	}

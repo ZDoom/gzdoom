@@ -4410,6 +4410,8 @@ ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)
 FxExpression *FxStateByIndex::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
+	ABORT(ctx.Class);
+
 	if (ctx.Class->NumOwnedStates == 0)
 	{
 		// This can't really happen
@@ -4464,6 +4466,8 @@ FxMultiNameState::FxMultiNameState(const char *_statestring, const FScriptPositi
 FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
+	ABORT(ctx.Class);
+
 	if (names[0] == NAME_None)
 	{
 		scope = NULL;

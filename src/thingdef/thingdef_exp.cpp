@@ -392,7 +392,7 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 				return ParseAtan2(sc, identifier, cls);
 			default:
 				args = new FArgumentList;
-				func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(identifier, true));
+				func = (cls == nullptr) ? nullptr : dyn_cast<PFunction>(cls->Symbols.FindSymbol(identifier, true));
 				try
 				{
 					// There is an action function ACS_NamedExecuteWithResult which must be ignored here for this to work.

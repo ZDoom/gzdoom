@@ -387,7 +387,7 @@ void GLWall::RenderTranslucentWall()
 {
 	if (gltexture)
 	{
-		if (gl_fixedcolormap == CM_DEFAULT && gl_lights && (gl.flags & RFL_BUFFER_STORAGE))
+		if (gl_fixedcolormap == CM_DEFAULT && gl_lights && gl.lightmethod == LM_DIRECT)
 		{
 			SetupLights();
 		}

@@ -322,7 +322,7 @@ static void PrepareTransparentDoors(sector_t * sector)
 	sector_t * nextsec=NULL;
 
 #ifdef _DEBUG
-	if (sector-sectors==2)
+	if (sector-sectors==34)
 	{
 		int a = 0;
 	}

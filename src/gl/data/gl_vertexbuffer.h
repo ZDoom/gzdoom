@@ -167,6 +167,10 @@ private:
 
 	int mRows, mColumns;
 
+	// indices for sky cubemap faces
+	int mFaceStart[7];
+	int mSideStart;
+
 	void SkyVertex(int r, int c, bool yflip);
 	void CreateSkyHemisphere(int hemi);
 	void CreateDome();
@@ -178,6 +182,11 @@ public:
 	virtual ~FSkyVertexBuffer();
 	void RenderDome(FMaterial *tex, int mode);
 	void BindVBO();
+	int FaceStart(int i)
+	{
+		if (i >= 0 && i < 7) return mFaceStart[i];
+		else return mSideStart;
+	}
 
 };
 

@@ -215,6 +215,72 @@ void FSkyVertexBuffer::CreateDome()
 	CreateSkyHemisphere(SKYHEMI_UPPER);
 	CreateSkyHemisphere(SKYHEMI_LOWER);
 	mPrimStart.Push(mVertices.Size());
+
+	mSideStart = mVertices.Size();
+	mFaceStart[0] = mSideStart + 10;
+	mFaceStart[1] = mFaceStart[0] + 4;
+	mFaceStart[2] = mFaceStart[1] + 4;
+	mFaceStart[3] = mFaceStart[2] + 4;
+	mFaceStart[4] = mFaceStart[3] + 4;
+	mFaceStart[5] = mFaceStart[4] + 4;
+	mFaceStart[6] = mFaceStart[5] + 4;
+	mVertices.Reserve(10 + 7*4);
+	FSkyVertex *ptr = &mVertices[mSideStart];
+
+	// all sides
+	ptr[0].Set(128.f, 128.f, -128.f, 0, 0);
+	ptr[1].Set(128.f, -128.f, -128.f, 0, 1);
+	ptr[2].Set(-128.f, 128.f, -128.f, 0.25f, 0);
+	ptr[3].Set(-128.f, -128.f, -128.f, 0.25f, 1);
+	ptr[4].Set(-128.f, 128.f, 128.f, 0.5f, 0);
+	ptr[5].Set(-128.f, -128.f, 128.f, 0.5f, 1);
+	ptr[6].Set(128.f, 128.f, 128.f, 0.75f, 0);
+	ptr[7].Set(128.f, -128.f, 128.f, 0.75f, 1);
+	ptr[8].Set(128.f, 128.f, -128.f, 1, 0);
+	ptr[9].Set(128.f, -128.f, -128.f, 1, 1);
+
+	// north face
+	ptr[10].Set(128.f, 128.f, -128.f, 0, 0);
+	ptr[11].Set(-128.f, 128.f, -128.f, 1, 0);
+	ptr[12].Set(128.f, -128.f, -128.f, 0, 1);
+	ptr[13].Set(-128.f, -128.f, -128.f, 1, 1);
+
+	// east face
+	ptr[14].Set(-128.f, 128.f, -128.f, 0, 0);
+	ptr[15].Set(-128.f, 128.f, 128.f, 1, 0);
+	ptr[16].Set(-128.f, -128.f, -128.f, 0, 1);
+	ptr[17].Set(-128.f, -128.f, 128.f, 1, 1);
+
+	// south face
+	ptr[18].Set(-128.f, 128.f, 128.f, 0, 0);
+	ptr[19].Set(128.f, 128.f, 128.f, 1, 0);
+	ptr[20].Set(-128.f, -128.f, 128.f, 0, 1);
+	ptr[21].Set(128.f, -128.f, 128.f, 1, 1);
+
+	// west face
+	ptr[22].Set(128.f, 128.f, 128.f, 0, 0);
+	ptr[23].Set(128.f, 128.f, -128.f, 1, 0);
+	ptr[24].Set(128.f, -128.f, 128.f, 0, 1);
+	ptr[25].Set(128.f, -128.f, -128.f, 1, 1);
+
+	// bottom face
+	ptr[26].Set(128.f, -128.f, -128.f, 0, 0);
+	ptr[27].Set(-128.f, -128.f, -128.f, 1, 0);
+	ptr[28].Set(128.f, -128.f, 128.f, 0, 1);
+	ptr[29].Set(-128.f, -128.f, 128.f, 1, 1);
+
+	// top face
+	ptr[30].Set(128.f, 128.f, -128.f, 0, 0);
+	ptr[31].Set(-128.f, 128.f, -128.f, 1, 0);
+	ptr[32].Set(128.f, 128.f, 128.f, 0, 1);
+	ptr[33].Set(-128.f, 128.f, 128.f, 1, 1);
+
+	// top face flipped
+	ptr[34].Set(128.f, 128.f, -128.f, 0, 1);
+	ptr[35].Set(-128.f, 128.f, -128.f, 1, 1);
+	ptr[36].Set(128.f, 128.f, 128.f, 0, 0);
+	ptr[37].Set(-128.f, 128.f, 128.f, 1, 0);
+
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 	glBufferData(GL_ARRAY_BUFFER, mVertices.Size() * sizeof(FSkyVertex), &mVertices[0], GL_STATIC_DRAW);
 }
@@ -327,7 +393,6 @@ void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, in
 
 	GLRenderer->mSkyVBO->RenderDome(tex, mode);
 	gl_RenderState.EnableTextureMatrix(false);
-	gl_RenderState.EnableModelMatrix(false);
 }
 
 
@@ -351,7 +416,6 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 	else
 		gl_RenderState.mModelMatrix.rotate(-180.0f+x_offset, glset.skyrotatevector2.X, glset.skyrotatevector2.Z, glset.skyrotatevector2.Y);
 
-	FFlatVertex *ptr;
 	if (sb->faces[5]) 
 	{
 		faces=4;
@@ -360,65 +424,25 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 		tex = FMaterial::ValidateTexture(sb->faces[0], false);
 		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
 		gl_RenderState.Apply();
-
-		ptr = GLRenderer->mVBO->GetBuffer();
-		ptr->Set(128.f, 128.f, -128.f, 0, 0);
-		ptr++;
-		ptr->Set(-128.f, 128.f, -128.f, 1, 0);
-		ptr++;
-		ptr->Set(128.f, -128.f, -128.f, 0, 1);
-		ptr++;
-		ptr->Set(-128.f, -128.f, -128.f, 1, 1);
-		ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(0), 4);
 
 		// east
 		tex = FMaterial::ValidateTexture(sb->faces[1], false);
 		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
 		gl_RenderState.Apply();
-
-		ptr = GLRenderer->mVBO->GetBuffer();
-		ptr->Set(-128.f, 128.f, -128.f, 0, 0);
-		ptr++;
-		ptr->Set(-128.f, 128.f, 128.f, 1, 0);
-		ptr++;
-		ptr->Set(-128.f, -128.f, -128.f, 0, 1);
-		ptr++;
-		ptr->Set(-128.f, -128.f, 128.f, 1, 1);
-		ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(1), 4);
 
 		// south
 		tex = FMaterial::ValidateTexture(sb->faces[2], false);
 		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
 		gl_RenderState.Apply();
-
-		ptr = GLRenderer->mVBO->GetBuffer();
-		ptr->Set(-128.f, 128.f, 128.f, 0, 0);
-		ptr++;
-		ptr->Set(128.f, 128.f, 128.f, 1, 0);
-		ptr++;
-		ptr->Set(-128.f, -128.f, 128.f, 0, 1);
-		ptr++;
-		ptr->Set(128.f, -128.f, 128.f, 1, 1);
-		ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(2), 4);
 
 		// west
 		tex = FMaterial::ValidateTexture(sb->faces[3], false);
 		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
 		gl_RenderState.Apply();
-
-		ptr = GLRenderer->mVBO->GetBuffer();
-		ptr->Set(128.f, 128.f, 128.f, 0, 0);
-		ptr++;
-		ptr->Set(128.f, 128.f, -128.f, 1, 0);
-		ptr++;
-		ptr->Set(128.f, -128.f, 128.f, 0, 1);
-		ptr++;
-		ptr->Set(128.f, -128.f, -128.f, 1, 1);
-		ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(3), 4);
 	}
 	else 
 	{
@@ -426,62 +450,21 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 		tex = FMaterial::ValidateTexture(sb->faces[0], false);
 		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
 		gl_RenderState.Apply();
-
-		ptr = GLRenderer->mVBO->GetBuffer();
-		ptr->Set(128.f, 128.f, -128.f, 0, 0);
-		ptr++;
-		ptr->Set(128.f, -128.f, -128.f, 0, 1);
-		ptr++;
-		ptr->Set(-128.f, 128.f, -128.f, 0.25f, 0);
-		ptr++;
-		ptr->Set(-128.f, -128.f, -128.f, 0.25f, 1);
-		ptr++;
-		ptr->Set(-128.f, 128.f, 128.f, 0.5f, 0);
-		ptr++;
-		ptr->Set(-128.f, -128.f, 128.f, 0.5f, 1);
-		ptr++;
-		ptr->Set(128.f, 128.f, 128.f, 0.75f, 0);
-		ptr++;
-		ptr->Set(128.f, -128.f, 128.f, 0.75f, 1);
-		ptr++;
-		ptr->Set(128.f, 128.f, -128.f, 1, 0);
-		ptr++;
-		ptr->Set(128.f, -128.f, -128.f, 1, 1);
-		ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+		glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(-1), 10);
 	}
 
 	// top
 	tex = FMaterial::ValidateTexture(sb->faces[faces], false);
 	gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
 	gl_RenderState.Apply();
-
-	ptr = GLRenderer->mVBO->GetBuffer();
-	ptr->Set(128.f, 128.f, -128.f, 0, sb->fliptop);
-	ptr++;
-	ptr->Set(-128.f, 128.f, -128.f, 1, sb->fliptop);
-	ptr++;
-	ptr->Set(128.f, 128.f, 128.f, 0, !sb->fliptop);
-	ptr++;
-	ptr->Set(-128.f, 128.f, 128.f, 1, !sb->fliptop);
-	ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+	glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(sb->fliptop? 6:5), 4);
 
 	// bottom
 	tex = FMaterial::ValidateTexture(sb->faces[faces+1], false);
 	gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
 	gl_RenderState.Apply();
+	glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(4), 4);
 
-	ptr = GLRenderer->mVBO->GetBuffer();
-	ptr->Set(128.f, -128.f, -128.f, 0, 0);
-	ptr++;
-	ptr->Set(-128.f, -128.f, -128.f, 1, 0);
-	ptr++;
-	ptr->Set(128.f, -128.f, 128.f, 0, 1);
-	ptr++;
-	ptr->Set(-128.f, -128.f, 128.f, 1, 1);
-	ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 	gl_RenderState.EnableModelMatrix(false);
 }
 
@@ -512,13 +495,13 @@ void GLSkyPortal::DrawContents()
 	gl_MatrixStack.Push(gl_RenderState.mViewMatrix);
 	GLRenderer->SetupView(0, 0, 0, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
+	gl_RenderState.SetVertexBuffer(GLRenderer->mSkyVBO);
 	if (origin->texture[0] && origin->texture[0]->tex->gl_info.bSkybox)
 	{
 		RenderBox(origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->sky2);
 	}
 	else
 	{
-		gl_RenderState.SetVertexBuffer(GLRenderer->mSkyVBO);
 		if (origin->texture[0]==origin->texture[1] && origin->doublesky) origin->doublesky=false;	
 
 		if (origin->texture[0])
@@ -547,11 +530,12 @@ void GLSkyPortal::DrawContents()
 			gl_RenderState.EnableTexture(true);
 			gl_RenderState.SetObjectColor(0xffffffff);
 		}
-		gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	}
+	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	gl_MatrixStack.Pop(gl_RenderState.mViewMatrix);
 	gl_RenderState.ApplyMatrices();
 	glset.lightmode = oldlightmode;
 	gl_RenderState.SetDepthClamp(oldClamp);
+	gl_RenderState.EnableModelMatrix(false);
 }
 

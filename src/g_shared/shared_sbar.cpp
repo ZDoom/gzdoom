@@ -108,7 +108,7 @@ CVAR (Int, crosshair, 0, CVAR_ARCHIVE)
 CVAR (Bool, crosshairforce, false, CVAR_ARCHIVE)
 CVAR (Color, crosshaircolor, 0xff0000, CVAR_ARCHIVE);
 CVAR (Bool, crosshairhealth, true, CVAR_ARCHIVE);
-CVAR (Bool, crosshairscale, false, CVAR_ARCHIVE);
+CVAR (Float, crosshairscale, 1.0, CVAR_ARCHIVE);
 CVAR (Bool, crosshairgrow, false, CVAR_ARCHIVE);
 CUSTOM_CVAR(Int, am_showmaplabel, 2, CVAR_ARCHIVE)
 {
@@ -1106,9 +1106,9 @@ void DBaseStatusBar::DrawCrosshair ()
 		return;
 	}
 
-	if (crosshairscale)
+	if (crosshairscale > 0.0f)
 	{
-		size = SCREENHEIGHT / 200.;
+		size = SCREENHEIGHT * crosshairscale / 200.;
 	}
 	else
 	{
@@ -1247,6 +1247,13 @@ void DBaseStatusBar::Draw (EHudState state)
 			xpos = vwidth - 80;
 			y = ::ST_Y - height;
 		}
+		else if (con_scaletext == 3)
+		{
+			vwidth = SCREENWIDTH/4;
+			vheight = SCREENHEIGHT/4;
+			xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
+			y = ::ST_Y/4 - height;
+		}
 		else
 		{
 			vwidth = SCREENWIDTH/2;
@@ -1259,6 +1266,8 @@ void DBaseStatusBar::Draw (EHudState state)
 		{
 			if (con_scaletext == 0)
 				y -= height * 4;
+			else if (con_scaletext == 3)
+				y -= height;
 			else
 				y -= height * 2;
 		}
@@ -1406,6 +1415,11 @@ void DBaseStatusBar::DrawLog ()
 		case 2:
 			hudwidth = SCREENWIDTH / 2;
 			hudheight = SCREENHEIGHT / 2;
+			break;
+
+		case 3:
+			hudwidth = SCREENWIDTH / 4;
+			hudheight = SCREENHEIGHT / 4;
 			break;
 		}
 

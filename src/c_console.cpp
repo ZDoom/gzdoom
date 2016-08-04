@@ -162,7 +162,7 @@ CVAR (Bool, con_centernotify, false, CVAR_ARCHIVE)
 CUSTOM_CVAR (Int, con_scaletext, 0, CVAR_ARCHIVE)		// Scale notify text at high resolutions?
 {
 	if (self < 0) self = 0;
-	if (self > 2) self = 2;
+	if (self > 3) self = 3;
 }
 
 CUSTOM_CVAR(Float, con_alpha, 0.75f, CVAR_ARCHIVE)
@@ -493,7 +493,14 @@ void C_AddNotifyString (int printlevel, const char *source)
 		return;
 	}
 
-	width = con_scaletext > 1 ? DisplayWidth/2 : con_scaletext == 1 ? DisplayWidth / CleanXfac : DisplayWidth;
+	switch (con_scaletext)
+	{
+	default:
+	case 0: width = DisplayWidth; break;
+	case 1: width = DisplayWidth / CleanXfac; break;
+	case 2: width = DisplayWidth / 2; break;
+	case 3: width = DisplayWidth / 4; break;
+	}
 
 	if (addtype == APPENDLINE && NotifyStrings[NUMNOTIFIES-1].PrintLevel == printlevel)
 	{
@@ -768,6 +775,23 @@ static void C_DrawNotifyText ()
 					screen->DrawText (SmallFont, color, (SCREENWIDTH -
 						SmallFont->StringWidth (NotifyStrings[i].Text))/2,
 						line, NotifyStrings[i].Text,
+						DTA_AlphaF, alpha, TAG_DONE);
+			}
+			else if (con_scaletext == 3)
+			{
+				if (!center)
+					screen->DrawText (SmallFont, color, 0, line, NotifyStrings[i].Text,
+						DTA_VirtualWidth, screen->GetWidth() / 4, 
+						DTA_VirtualHeight, screen->GetHeight() / 4,
+						DTA_KeepRatio, true,
+						DTA_AlphaF, alpha, TAG_DONE);
+				else
+					screen->DrawText (SmallFont, color, (screen->GetWidth() / 4 -
+						SmallFont->StringWidth (NotifyStrings[i].Text))/4,
+						line, NotifyStrings[i].Text,
+						DTA_VirtualWidth, screen->GetWidth() / 4, 
+						DTA_VirtualHeight, screen->GetHeight() / 4,
+						DTA_KeepRatio, true,
 						DTA_AlphaF, alpha, TAG_DONE);
 			}
 			else

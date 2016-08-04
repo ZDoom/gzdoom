@@ -191,7 +191,12 @@ static void ParseConstant (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 		FxExpression *expr = ParseExpression (sc, cls, true);
 		sc.MustGetToken(';');
 
-		if (!expr->isConstant())
+		if (expr == nullptr)
+		{
+			sc.ScriptMessage("Error while resolving constant definition");
+			FScriptPosition::ErrorCounter++;
+		}
+		else if (!expr->isConstant())
 		{
 			sc.ScriptMessage("Constant definition is not a constant");
 			FScriptPosition::ErrorCounter++;
@@ -247,16 +252,24 @@ static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 		if (sc.CheckToken('='))
 		{
 			FxExpression *expr = ParseExpression (sc, cls, true);
-			if (!expr->isConstant())
+			if (expr != nullptr)
 			{
-				sc.ScriptMessage("'%s' must be constant", symname.GetChars());
-				FScriptPosition::ErrorCounter++;
+				if (!expr->isConstant())
+				{
+					sc.ScriptMessage("'%s' must be constant", symname.GetChars());
+					FScriptPosition::ErrorCounter++;
+				}
+				else
+				{
+					currvalue = static_cast<FxConstant *>(expr)->GetValue().GetInt();
+				}
+				delete expr;
 			}
 			else
 			{
-				currvalue = static_cast<FxConstant *>(expr)->GetValue().GetInt();
+				sc.ScriptMessage("Error while resolving expression of '%s'", symname.GetChars());
+				FScriptPosition::ErrorCounter++;
 			}
-			delete expr;
 		}
 		PSymbolConstNumeric *sym = new PSymbolConstNumeric(symname, TypeSInt32);
 		sym->Value = currvalue;
@@ -568,7 +581,13 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cl
 	if (sc.CheckToken('['))
 	{
 		FxExpression *expr = ParseExpression(sc, cls, true);
-		if (!expr->isConstant())
+		if (expr == nullptr)
+		{
+			sc.ScriptMessage("Error while resolving array size");
+			FScriptPosition::ErrorCounter++;
+			maxelems = 1;
+		}
+		else if (!expr->isConstant())
 		{
 			sc.ScriptMessage("Array size must be a constant");
 			FScriptPosition::ErrorCounter++;

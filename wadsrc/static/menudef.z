@@ -220,4 +220,5 @@ OptionMenu "GLPrefOptions"
 	Option "$GLPREFMNU_MULTISAMPLE", 			gl_multisample,					"Multisample"
 	Option "$GLPREFMNU_TONEMAP", 				gl_tonemap,						"TonemapModes"
 	Option "$GLPREFMNU_BLOOM",		 			gl_bloom,						"OnOff"
+	Option "$GLPREFMNU_LENS",		 			gl_lens,						"OnOff"
 }

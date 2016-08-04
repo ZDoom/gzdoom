@@ -59,6 +59,8 @@ void FLensShader::Bind()
 		mShader.Link("shaders/glsl/lensdistortion");
 		mShader.SetAttribLocation(0, "PositionInProjection");
 		InputTexture.Init(mShader, "InputTexture");
+		AspectRatio.Init(mShader, "Aspect");
+		Scale.Init(mShader, "Scale");
 		LensDistortionCoefficient.Init(mShader, "k");
 		CubicDistortionValue.Init(mShader, "kcube");
 	}

@@ -98,9 +98,9 @@ CUSTOM_CVAR(Int, gl_bloom_kernel_size, 7, 0)
 
 CVAR(Bool, gl_lens, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
-CVAR(Float, gl_lens_k, -0.15f, 0)
-CVAR(Float, gl_lens_kcube, 0.15f, 0)
-CVAR(Float, gl_lens_chromatic, 1.2f, 0)
+CVAR(Float, gl_lens_k, -0.12f, 0)
+CVAR(Float, gl_lens_kcube, 0.1f, 0)
+CVAR(Float, gl_lens_chromatic, 1.12f, 0)
 
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
@@ -310,12 +310,24 @@ void FGLRenderer::LensDistortScene()
 		0.0f
 	};
 
+	float aspect = mOutputViewport.width / mOutputViewport.height;
+
+	// Scale factor to keep sampling within the input texture
+	float r2 = aspect * aspect * 0.25 + 0.25f;
+	float sqrt_r2 = sqrt(r2);
+	float f0 = 1.0f + MAX(r2 * (k[0] + kcube[0] * sqrt_r2), 0.0f);
+	float f2 = 1.0f + MAX(r2 * (k[2] + kcube[2] * sqrt_r2), 0.0f);
+	float f = MAX(f0, f2);
+	float scale = 1.0f / f;
+
 	mBuffers->BindHudFB();
 	mBuffers->BindSceneTexture(0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	mLensShader->Bind();
 	mLensShader->InputTexture.Set(0);
+	mLensShader->AspectRatio.Set(aspect);
+	mLensShader->Scale.Set(scale);
 	mLensShader->LensDistortionCoefficient.Set(k);
 	mLensShader->CubicDistortionValue.Set(kcube);
 	mVBO->BindVBO();

@@ -33,18 +33,21 @@ in vec2 TexCoord;
 out vec4 FragColor;
 
 uniform sampler2D InputTexture;
-uniform vec4 k;     // lens distortion coefficient 
-uniform vec4 kcube; // cubic distortion value
+uniform float Aspect; // image width/height
+uniform float Scale;  // 1/max(f)
+uniform vec4 k;       // lens distortion coefficient 
+uniform vec4 kcube;   // cubic distortion value
 
 void main()
 {
-	vec2 position = TexCoord - vec2(0.5);
+	vec2 position = (TexCoord - vec2(0.5));
 
-	float r2 = dot(position, position);
+	vec2 p = vec2(position.x * Aspect, position.y);
+	float r2 = dot(p, p);
 	vec3 f = vec3(1.0) + r2 * (k.rgb + kcube.rgb * sqrt(r2));
 
-	vec3 x = f * position.x + 0.5;
-	vec3 y = f * position.y + 0.5;
+	vec3 x = f * position.x * Scale + 0.5;
+	vec3 y = f * position.y * Scale + 0.5;
 
 	vec3 c;
 	c.r = texture(InputTexture, vec2(x.r, y.r)).r;

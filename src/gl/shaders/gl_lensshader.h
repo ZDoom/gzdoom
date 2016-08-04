@@ -9,6 +9,8 @@ public:
 	void Bind();
 
 	FBufferedUniform1i InputTexture;
+	FBufferedUniform1f AspectRatio;
+	FBufferedUniform1f Scale;
 	FBufferedUniform4f LensDistortionCoefficient;
 	FBufferedUniform4f CubicDistortionValue;
 

@@ -374,6 +374,29 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 		case NAME_Random2:
 			return ParseRandom2(sc, cls);
 		default:
+			if (cls != nullptr)
+			{
+				func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(identifier, true));
+
+				// There is an action function ACS_NamedExecuteWithResult which must be ignored here for this to work.
+				if (func != nullptr && identifier != NAME_ACS_NamedExecuteWithResult)
+				{
+					args = new FArgumentList;
+					if (sc.CheckToken('('))
+					{
+						sc.UnGet();
+						ParseFunctionParameters(sc, cls, *args, func, "", nullptr);
+					}
+					if (args->Size() == 0)
+					{
+						delete args;
+						args = nullptr;
+					}
+
+					return new FxVMFunctionCall(func, args, sc);
+				}
+			}
+
 			break;
 		}
 		if (sc.CheckToken('('))
@@ -392,17 +415,9 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 				return ParseAtan2(sc, identifier, cls);
 			default:
 				args = new FArgumentList;
-				func = (cls == nullptr) ? nullptr : dyn_cast<PFunction>(cls->Symbols.FindSymbol(identifier, true));
 				try
 				{
-					// There is an action function ACS_NamedExecuteWithResult which must be ignored here for this to work.
-					if (func != NULL && identifier != NAME_ACS_NamedExecuteWithResult)
-					{
-						sc.UnGet();
-						ParseFunctionParameters(sc, cls, *args, func, "", NULL);
-						return new FxVMFunctionCall(func, args, sc);
-					}
-					else if (!sc.CheckToken(')'))
+					if (!sc.CheckToken(')'))
 					{
 						do
 						{

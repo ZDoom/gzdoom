@@ -251,7 +251,7 @@ void FGLRenderer::Begin2D()
 		if (mDrawingScene2D)
 			mBuffers->BindSceneFB();
 		else
-			mBuffers->BindHudFB();
+			mBuffers->BindCurrentFB();
 	}
 	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 

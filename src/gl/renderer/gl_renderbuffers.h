@@ -21,13 +21,16 @@ public:
 	~FGLRenderBuffers();
 
 	void Setup(int width, int height);
-	void BlitSceneToTexture();
+
 	void BindSceneFB();
-	void BindSceneTextureFB();
-	void BindHudFB();
+	void BlitSceneToTexture();
+
+	void BindCurrentTexture(int index);
+	void BindCurrentFB();
+	void BindNextFB();
+	void NextTexture();
+
 	void BindOutputFB();
-	void BindSceneTexture(int index);
-	void BindHudTexture(int index);
 
 	enum { NumBloomLevels = 4 };
 	FGLBloomTextureLevel BloomLevels[NumBloomLevels];
@@ -39,10 +42,10 @@ public:
 
 private:
 	void ClearScene();
-	void ClearHud();
+	void ClearPipeline();
 	void ClearBloom();
 	void CreateScene(int width, int height, int samples);
-	void CreateHud(int width, int height);
+	void CreatePipeline(int width, int height);
 	void CreateBloom(int width, int height);
 	GLuint Create2DTexture(GLuint format, int width, int height);
 	GLuint CreateRenderBuffer(GLuint format, int width, int height);
@@ -62,15 +65,21 @@ private:
 	int mHeight = 0;
 	int mSamples = 0;
 
-	GLuint mSceneTexture = 0;
+	static const int NumPipelineTextures = 2;
+	int mCurrentPipelineTexture = 0;
+
+	// Buffers for the scene
 	GLuint mSceneMultisample = 0;
 	GLuint mSceneDepthStencil = 0;
 	GLuint mSceneDepth = 0;
 	GLuint mSceneStencil = 0;
 	GLuint mSceneFB = 0;
-	GLuint mSceneTextureFB = 0;
-	GLuint mHudTexture = 0;
-	GLuint mHudFB = 0;
+
+	// Effect/HUD buffers
+	GLuint mPipelineTexture[NumPipelineTextures];
+	GLuint mPipelineFB[NumPipelineTextures];
+
+	// Back buffer frame buffer
 	GLuint mOutputFB = 0;
 };
 

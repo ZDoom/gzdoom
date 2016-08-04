@@ -150,7 +150,7 @@ void FGLRenderer::BloomScene()
 	// Extract blooming pixels from scene texture:
 	glBindFramebuffer(GL_FRAMEBUFFER, level0.VFramebuffer);
 	glViewport(0, 0, level0.Width, level0.Height);
-	mBuffers->BindSceneTexture(0);
+	mBuffers->BindCurrentTexture(0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	mBloomExtractShader->Bind();
@@ -195,7 +195,7 @@ void FGLRenderer::BloomScene()
 	mBlurShader->BlurVertical(mVBO, blurAmount, sampleCount, level0.HTexture, level0.VFramebuffer, level0.Width, level0.Height);
 
 	// Add bloom back to scene texture:
-	mBuffers->BindSceneTextureFB();
+	mBuffers->BindCurrentFB();
 	glViewport(mOutputViewport.left, mOutputViewport.top, mOutputViewport.width, mOutputViewport.height);
 	glEnable(GL_BLEND);
 	glBlendEquation(GL_FUNC_ADD);
@@ -249,13 +249,14 @@ void FGLRenderer::TonemapScene()
 	glDisable(GL_BLEND);
 	glDisable(GL_SCISSOR_TEST);
 
-	mBuffers->BindHudFB();
-	mBuffers->BindSceneTexture(0);
+	mBuffers->BindNextFB();
+	mBuffers->BindCurrentTexture(0);
 	mTonemapShader->Bind();
 	mTonemapShader->SceneTexture.Set(0);
 	mTonemapShader->Exposure.Set(mCameraExposure);
 	mVBO->BindVBO();
 	mVBO->RenderScreenQuad();
+	mBuffers->NextTexture();
 
 	if (blendEnabled)
 		glEnable(GL_BLEND);
@@ -320,8 +321,8 @@ void FGLRenderer::LensDistortScene()
 	float f = MAX(f0, f2);
 	float scale = 1.0f / f;
 
-	mBuffers->BindHudFB();
-	mBuffers->BindSceneTexture(0);
+	mBuffers->BindNextFB();
+	mBuffers->BindCurrentTexture(0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	mLensShader->Bind();
@@ -332,6 +333,7 @@ void FGLRenderer::LensDistortScene()
 	mLensShader->CubicDistortionValue.Set(kcube);
 	mVBO->BindVBO();
 	mVBO->RenderScreenQuad();
+	mBuffers->NextTexture();
 
 	if (blendEnabled)
 		glEnable(GL_BLEND);
@@ -439,7 +441,7 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 			mPresentShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
 			mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
 		}
-		mBuffers->BindHudTexture(0);
+		mBuffers->BindCurrentTexture(0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		mVBO->BindVBO();

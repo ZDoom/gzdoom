@@ -49,5 +49,9 @@ EXTERN_CVAR(Float, gl_bloom_amount)
 EXTERN_CVAR(Int, gl_bloom_kernel_size)
 EXTERN_CVAR(Int, gl_tonemap)
 EXTERN_CVAR(Float, gl_exposure)
+EXTERN_CVAR(Bool, gl_lens)
+EXTERN_CVAR(Float, gl_lens_k)
+EXTERN_CVAR(Float, gl_lens_kcube)
+EXTERN_CVAR(Float, gl_lens_chromatic)
 
 #endif // _GL_INTERN_H

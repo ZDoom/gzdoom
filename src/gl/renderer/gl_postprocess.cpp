@@ -68,6 +68,7 @@
 #include "gl/shaders/gl_bloomshader.h"
 #include "gl/shaders/gl_blurshader.h"
 #include "gl/shaders/gl_tonemapshader.h"
+#include "gl/shaders/gl_lensshader.h"
 #include "gl/shaders/gl_presentshader.h"
 
 //==========================================================================
@@ -94,6 +95,12 @@ CUSTOM_CVAR(Int, gl_bloom_kernel_size, 7, 0)
 	if (self < 3 || self > 15 || self % 2 == 0)
 		self = 7;
 }
+
+CVAR(Bool, gl_lens, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+CVAR(Float, gl_lens_k, -0.12f, 0)
+CVAR(Float, gl_lens_kcube, 0.1f, 0)
+CVAR(Float, gl_lens_chromatic, 1.12f, 0)
 
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
@@ -143,7 +150,7 @@ void FGLRenderer::BloomScene()
 	// Extract blooming pixels from scene texture:
 	glBindFramebuffer(GL_FRAMEBUFFER, level0.VFramebuffer);
 	glViewport(0, 0, level0.Width, level0.Height);
-	mBuffers->BindSceneTexture(0);
+	mBuffers->BindCurrentTexture(0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	mBloomExtractShader->Bind();
@@ -188,7 +195,7 @@ void FGLRenderer::BloomScene()
 	mBlurShader->BlurVertical(mVBO, blurAmount, sampleCount, level0.HTexture, level0.VFramebuffer, level0.Width, level0.Height);
 
 	// Add bloom back to scene texture:
-	mBuffers->BindSceneTextureFB();
+	mBuffers->BindCurrentFB();
 	glViewport(mOutputViewport.left, mOutputViewport.top, mOutputViewport.width, mOutputViewport.height);
 	glEnable(GL_BLEND);
 	glBlendEquation(GL_FUNC_ADD);
@@ -242,13 +249,91 @@ void FGLRenderer::TonemapScene()
 	glDisable(GL_BLEND);
 	glDisable(GL_SCISSOR_TEST);
 
-	mBuffers->BindHudFB();
-	mBuffers->BindSceneTexture(0);
+	mBuffers->BindNextFB();
+	mBuffers->BindCurrentTexture(0);
 	mTonemapShader->Bind();
 	mTonemapShader->SceneTexture.Set(0);
 	mTonemapShader->Exposure.Set(mCameraExposure);
 	mVBO->BindVBO();
 	mVBO->RenderScreenQuad();
+	mBuffers->NextTexture();
+
+	if (blendEnabled)
+		glEnable(GL_BLEND);
+	if (scissorEnabled)
+		glEnable(GL_SCISSOR_TEST);
+	glBindTexture(GL_TEXTURE_2D, textureBinding);
+	if (gl.flags & RFL_SAMPLER_OBJECTS)
+		glBindSampler(0, samplerBinding);
+	glActiveTexture(activeTex);
+}
+
+//-----------------------------------------------------------------------------
+//
+// Apply lens distortion and place the result in the HUD/2D texture
+//
+//-----------------------------------------------------------------------------
+
+void FGLRenderer::LensDistortScene()
+{
+	if (gl_lens == 0)
+		return;
+
+	GLint activeTex, textureBinding, samplerBinding;
+	glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTex);
+	glActiveTexture(GL_TEXTURE0);
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
+	if (gl.flags & RFL_SAMPLER_OBJECTS)
+	{
+		glGetIntegerv(GL_SAMPLER_BINDING, &samplerBinding);
+		glBindSampler(0, 0);
+	}
+
+	GLboolean blendEnabled, scissorEnabled;
+	glGetBooleanv(GL_BLEND, &blendEnabled);
+	glGetBooleanv(GL_SCISSOR_TEST, &scissorEnabled);
+
+	glDisable(GL_BLEND);
+	glDisable(GL_SCISSOR_TEST);
+
+	float k[4] =
+	{
+		gl_lens_k,
+		gl_lens_k * gl_lens_chromatic,
+		gl_lens_k * gl_lens_chromatic * gl_lens_chromatic,
+		0.0f
+	};
+	float kcube[4] =
+	{
+		gl_lens_kcube,
+		gl_lens_kcube * gl_lens_chromatic,
+		gl_lens_kcube * gl_lens_chromatic * gl_lens_chromatic,
+		0.0f
+	};
+
+	float aspect = mOutputViewport.width / mOutputViewport.height;
+
+	// Scale factor to keep sampling within the input texture
+	float r2 = aspect * aspect * 0.25 + 0.25f;
+	float sqrt_r2 = sqrt(r2);
+	float f0 = 1.0f + MAX(r2 * (k[0] + kcube[0] * sqrt_r2), 0.0f);
+	float f2 = 1.0f + MAX(r2 * (k[2] + kcube[2] * sqrt_r2), 0.0f);
+	float f = MAX(f0, f2);
+	float scale = 1.0f / f;
+
+	mBuffers->BindNextFB();
+	mBuffers->BindCurrentTexture(0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	mLensShader->Bind();
+	mLensShader->InputTexture.Set(0);
+	mLensShader->AspectRatio.Set(aspect);
+	mLensShader->Scale.Set(scale);
+	mLensShader->LensDistortionCoefficient.Set(k);
+	mLensShader->CubicDistortionValue.Set(kcube);
+	mVBO->BindVBO();
+	mVBO->RenderScreenQuad();
+	mBuffers->NextTexture();
 
 	if (blendEnabled)
 		glEnable(GL_BLEND);
@@ -356,7 +441,9 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 			mPresentShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
 			mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
 		}
-		mBuffers->BindHudTexture(0);
+		mBuffers->BindCurrentTexture(0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		mVBO->BindVBO();
 		mVBO->RenderScreenQuad(mScreenViewport.width / (float)mBuffers->GetWidth(), mScreenViewport.height / (float)mBuffers->GetHeight());
 

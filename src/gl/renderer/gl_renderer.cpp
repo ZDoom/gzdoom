@@ -65,6 +65,7 @@
 #include "gl/shaders/gl_bloomshader.h"
 #include "gl/shaders/gl_blurshader.h"
 #include "gl/shaders/gl_tonemapshader.h"
+#include "gl/shaders/gl_lensshader.h"
 #include "gl/shaders/gl_presentshader.h"
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_translate.h"
@@ -117,6 +118,7 @@ void FGLRenderer::Initialize()
 	mBloomCombineShader = new FBloomCombineShader();
 	mBlurShader = new FBlurShader();
 	mTonemapShader = new FTonemapShader();
+	mLensShader = new FLensShader();
 	mPresentShader = new FPresentShader();
 
 	// Only needed for the core profile, because someone decided it was a good idea to remove the default VAO.
@@ -171,6 +173,7 @@ FGLRenderer::~FGLRenderer()
 	if (mBloomCombineShader) delete mBloomCombineShader;
 	if (mBlurShader) delete mBlurShader;
 	if (mTonemapShader) delete mTonemapShader;
+	if (mLensShader) delete mLensShader;
 }
 
 //==========================================================================
@@ -248,7 +251,7 @@ void FGLRenderer::Begin2D()
 		if (mDrawingScene2D)
 			mBuffers->BindSceneFB();
 		else
-			mBuffers->BindHudFB();
+			mBuffers->BindCurrentFB();
 	}
 	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 

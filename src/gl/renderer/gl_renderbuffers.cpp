@@ -76,25 +76,26 @@ FGLRenderBuffers::FGLRenderBuffers()
 FGLRenderBuffers::~FGLRenderBuffers()
 {
 	ClearScene();
-	ClearHud();
+	ClearPipeline();
 	ClearBloom();
 }
 
 void FGLRenderBuffers::ClearScene()
 {
 	DeleteFrameBuffer(mSceneFB);
-	DeleteFrameBuffer(mSceneTextureFB);
 	DeleteRenderBuffer(mSceneMultisample);
 	DeleteRenderBuffer(mSceneDepthStencil);
 	DeleteRenderBuffer(mSceneDepth);
 	DeleteRenderBuffer(mSceneStencil);
-	DeleteTexture(mSceneTexture);
 }
 
-void FGLRenderBuffers::ClearHud()
+void FGLRenderBuffers::ClearPipeline()
 {
-	DeleteFrameBuffer(mHudFB);
-	DeleteTexture(mHudTexture);
+	for (int i = 0; i < NumPipelineTextures; i++)
+	{
+		DeleteFrameBuffer(mPipelineFB[i]);
+		DeleteTexture(mPipelineTexture[i]);
+	}
 }
 
 void FGLRenderBuffers::ClearBloom()
@@ -149,8 +150,8 @@ void FGLRenderBuffers::Setup(int width, int height)
 	}
 	else if (width > mWidth || height > mHeight)
 	{
+		CreatePipeline(width, height);
 		CreateScene(width, height, samples);
-		CreateHud(width, height);
 		CreateBloom(width, height);
 		mWidth = width;
 		mHeight = height;
@@ -173,9 +174,6 @@ void FGLRenderBuffers::CreateScene(int width, int height, int samples)
 {
 	ClearScene();
 
-	mSceneTexture = Create2DTexture(GetHdrFormat(), width, height);
-	mSceneTextureFB = CreateFrameBuffer(mSceneTexture);
-
 	if (samples > 1)
 		mSceneMultisample = CreateRenderBuffer(GetHdrFormat(), samples, width, height);
 
@@ -183,26 +181,30 @@ void FGLRenderBuffers::CreateScene(int width, int height, int samples)
 	{
 		mSceneDepth = CreateRenderBuffer(GL_DEPTH_COMPONENT24, samples, width, height);
 		mSceneStencil = CreateRenderBuffer(GL_STENCIL_INDEX8, samples, width, height);
-		mSceneFB = CreateFrameBuffer(samples > 1 ? mSceneMultisample : mSceneTexture, mSceneDepth, mSceneStencil, samples > 1);
+		mSceneFB = CreateFrameBuffer(samples > 1 ? mSceneMultisample : mPipelineTexture[0], mSceneDepth, mSceneStencil, samples > 1);
 	}
 	else
 	{
 		mSceneDepthStencil = CreateRenderBuffer(GL_DEPTH24_STENCIL8, samples, width, height);
-		mSceneFB = CreateFrameBuffer(samples > 1 ? mSceneMultisample : mSceneTexture, mSceneDepthStencil, samples > 1);
+		mSceneFB = CreateFrameBuffer(samples > 1 ? mSceneMultisample : mPipelineTexture[0], mSceneDepthStencil, samples > 1);
 	}
 }
 
 //==========================================================================
 //
-// Creates the post-tonemapping-step buffers
+// Creates the buffers needed for post processing steps
 //
 //==========================================================================
 
-void FGLRenderBuffers::CreateHud(int width, int height)
+void FGLRenderBuffers::CreatePipeline(int width, int height)
 {
-	ClearHud();
-	mHudTexture = Create2DTexture(GetHdrFormat(), width, height);
-	mHudFB = CreateFrameBuffer(mHudTexture);
+	ClearPipeline();
+
+	for (int i = 0; i < NumPipelineTextures; i++)
+	{
+		mPipelineTexture[i] = Create2DTexture(GetHdrFormat(), width, height);
+		mPipelineFB[i] = CreateFrameBuffer(mPipelineTexture[i]);
+	}
 }
 
 //==========================================================================
@@ -392,11 +394,13 @@ void FGLRenderBuffers::CheckFrameBufferCompleteness()
 
 void FGLRenderBuffers::BlitSceneToTexture()
 {
+	mCurrentPipelineTexture = 0;
+
 	if (mSamples <= 1)
 		return;
 
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, mSceneFB);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mSceneTextureFB);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mPipelineFB[mCurrentPipelineTexture]);
 	glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -415,27 +419,48 @@ void FGLRenderBuffers::BindSceneFB()
 
 //==========================================================================
 //
-// Makes the scene texture frame buffer active (final 2D texture only) 
+// Binds the current scene/effect/hud texture to the specified texture unit
 //
 //==========================================================================
 
-void FGLRenderBuffers::BindSceneTextureFB()
+void FGLRenderBuffers::BindCurrentTexture(int index)
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, mSceneTextureFB);
+	glActiveTexture(GL_TEXTURE0 + index);
+	glBindTexture(GL_TEXTURE_2D, mPipelineFB[mCurrentPipelineTexture]);
 }
 
 //==========================================================================
 //
-// Makes the 2D/HUD frame buffer active 
+// Makes the frame buffer for the current texture active 
 //
 //==========================================================================
 
-void FGLRenderBuffers::BindHudFB()
+void FGLRenderBuffers::BindCurrentFB()
 {
-	if (gl_tonemap != 0)
-		glBindFramebuffer(GL_FRAMEBUFFER, mHudFB);
-	else
-		glBindFramebuffer(GL_FRAMEBUFFER, mSceneTextureFB);
+	glBindFramebuffer(GL_FRAMEBUFFER, mPipelineFB[mCurrentPipelineTexture]);
+}
+
+//==========================================================================
+//
+// Makes the frame buffer for the next texture active
+//
+//==========================================================================
+
+void FGLRenderBuffers::BindNextFB()
+{
+	int out = (mCurrentPipelineTexture + 1) % NumPipelineTextures;
+	glBindFramebuffer(GL_FRAMEBUFFER, mPipelineFB[out]);
+}
+
+//==========================================================================
+//
+// Next pipeline texture now contains the output
+//
+//==========================================================================
+
+void FGLRenderBuffers::NextTexture()
+{
+	mCurrentPipelineTexture = (mCurrentPipelineTexture + 1) % NumPipelineTextures;
 }
 
 //==========================================================================
@@ -447,33 +472,6 @@ void FGLRenderBuffers::BindHudFB()
 void FGLRenderBuffers::BindOutputFB()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, mOutputFB);
-}
-
-//==========================================================================
-//
-// Binds the scene frame buffer texture to the specified texture unit
-//
-//==========================================================================
-
-void FGLRenderBuffers::BindSceneTexture(int index)
-{
-	glActiveTexture(GL_TEXTURE0 + index);
-	glBindTexture(GL_TEXTURE_2D, mSceneTexture);
-}
-
-//==========================================================================
-//
-// Binds the 2D/HUD frame buffer texture to the specified texture unit
-//
-//==========================================================================
-
-void FGLRenderBuffers::BindHudTexture(int index)
-{
-	glActiveTexture(GL_TEXTURE0 + index);
-	if (gl_tonemap != 0)
-		glBindTexture(GL_TEXTURE_2D, mHudTexture);
-	else
-		glBindTexture(GL_TEXTURE_2D, mSceneTexture);
 }
 
 //==========================================================================

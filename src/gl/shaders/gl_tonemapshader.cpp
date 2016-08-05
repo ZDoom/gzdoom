@@ -54,7 +54,7 @@ void FTonemapShader::Bind()
 	auto &shader = mShader[gl_tonemap];
 	if (!shader)
 	{
-		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/tonemap.vp", "", 330);
+		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/tonemap.fp", GetDefines(gl_tonemap), 330);
 		shader.SetFragDataLocation(0, "FragColor");
 		shader.Link("shaders/glsl/tonemap");

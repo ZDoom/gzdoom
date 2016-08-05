@@ -260,7 +260,13 @@ FUNC(LS_Door_Raise)
 FUNC(LS_Door_LockedRaise)
 // Door_LockedRaise (tag, speed, delay, lock, lighttag)
 {
+#if 0
+	// In Hexen this originally created a thinker running for nearly 4 years.
+	// Let's not do this unless it becomes necessary because this can hang tagwait.
+	return EV_DoDoor (arg2 || (level.flags2 & LEVEL2_HEXENHACK) ? DDoor::doorRaise : DDoor::doorOpen, ln, it,
+#else
 	return EV_DoDoor (arg2 ? DDoor::doorRaise : DDoor::doorOpen, ln, it,
+#endif
 					  arg0, SPEED(arg1), TICS(arg2), arg3, arg4);
 }
 

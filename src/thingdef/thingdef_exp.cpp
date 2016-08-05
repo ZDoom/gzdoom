@@ -357,6 +357,49 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 		// a cheap way to get them working when people use "name" instead of 'name'.
 		return new FxConstant(FName(sc.String), scpos);
 	}
+	else if (sc.CheckToken(TK_Bool))
+	{
+		sc.MustGetToken('(');
+		FxExpression *exp = ParseExpressionM(sc, cls);
+		sc.MustGetToken(')');
+		return new FxBoolCast(exp);
+	}
+	else if (sc.CheckToken(TK_Int))
+	{
+		sc.MustGetToken('(');
+		FxExpression *exp = ParseExpressionM(sc, cls);
+		sc.MustGetToken(')');
+		return new FxIntCast(exp);
+	}
+	else if (sc.CheckToken(TK_Float))
+	{
+		sc.MustGetToken('(');
+		FxExpression *exp = ParseExpressionM(sc, cls);
+		sc.MustGetToken(')');
+		return new FxFloatCast(exp);
+	}
+	else if (sc.CheckToken(TK_State))
+	{
+		sc.MustGetToken('(');
+		FxExpression *exp;
+		if (sc.CheckToken(TK_StringConst))
+		{
+			if (sc.String[0] == 0 || sc.Compare("None"))
+			{
+				exp = new FxConstant((FState*)nullptr, sc);
+			}
+			else
+			{
+				exp = new FxMultiNameState(sc.String, sc);
+			}
+		}
+		else
+		{
+			exp = new FxRuntimeStateIndex(ParseExpressionM(sc, cls));
+		}
+		sc.MustGetToken(')');
+		return exp;
+	}
 	else if (sc.CheckToken(TK_Identifier))
 	{
 		FName identifier = FName(sc.String);

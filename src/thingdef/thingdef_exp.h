@@ -201,7 +201,7 @@ public:
 	virtual FxExpression *Resolve(FCompileContext &ctx);
 	
 	virtual bool isConstant() const;
-	virtual void RequestAddress();
+	virtual bool RequestAddress();
 	virtual VMFunction *GetDirectFunction();
 	bool IsNumeric() const { return ValueType != TypeName && (ValueType->GetRegType() == REGT_INT || ValueType->GetRegType() == REGT_FLOAT); }
 	bool IsPointer() const { return ValueType->GetRegType() == REGT_POINTER; }
@@ -465,6 +465,45 @@ class FxUnaryNotBoolean : public FxExpression
 public:
 	FxUnaryNotBoolean(FxExpression*);
 	~FxUnaryNotBoolean();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxPreIncrDecr
+//
+//==========================================================================
+
+class FxPreIncrDecr : public FxExpression
+{
+	int Token;
+	FxExpression *Base;
+	bool AddressRequested;
+	bool AddressWritable;
+
+public:
+	FxPreIncrDecr(FxExpression *base, int token);
+	~FxPreIncrDecr();
+	FxExpression *Resolve(FCompileContext&);
+	bool RequestAddress();
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxPostIncrDecr
+//
+//==========================================================================
+
+class FxPostIncrDecr : public FxExpression
+{
+	int Token;
+	FxExpression *Base;
+
+public:
+	FxPostIncrDecr(FxExpression *base, int token);
+	~FxPostIncrDecr();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
@@ -753,7 +792,7 @@ public:
 	FxClassMember(FxExpression*, PField*, const FScriptPosition&);
 	~FxClassMember();
 	FxExpression *Resolve(FCompileContext&);
-	void RequestAddress();
+	bool RequestAddress();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -796,12 +835,13 @@ class FxArrayElement : public FxExpression
 public:
 	FxExpression *Array;
 	FxExpression *index;
-	//bool AddressRequested;
+	bool AddressRequested;
+	bool AddressWritable;
 
 	FxArrayElement(FxExpression*, FxExpression*);
 	~FxArrayElement();
 	FxExpression *Resolve(FCompileContext&);
-	//void RequestAddress();
+	bool RequestAddress();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 

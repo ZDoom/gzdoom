@@ -218,13 +218,14 @@ FxExpression *FxExpression::Resolve(FCompileContext &ctx)
 
 //==========================================================================
 //
-//
+// Returns true if we can write to the address.
 //
 //==========================================================================
 
-void FxExpression::RequestAddress()
+bool FxExpression::RequestAddress()
 {
 	ScriptPosition.Message(MSG_ERROR, "invalid dereference\n");
+	return false;
 }
 
 //==========================================================================
@@ -885,6 +886,166 @@ ExpEmit FxUnaryNotBoolean::Emit(VMFunctionBuilder *build)
 	build->Emit(OP_NOT, from.RegNum, from.RegNum, 0);
 	build->Emit(OP_AND_RK, from.RegNum, from.RegNum, build->GetConstantInt(1));
 	return from;
+}
+
+//==========================================================================
+//
+// FxPreIncrDecr
+//
+//==========================================================================
+
+FxPreIncrDecr::FxPreIncrDecr(FxExpression *base, int token)
+: FxExpression(base->ScriptPosition), Base(base), Token(token)
+{
+	AddressRequested = false;
+	AddressWritable = false;
+}
+
+FxPreIncrDecr::~FxPreIncrDecr()
+{
+	SAFE_DELETE(Base);
+}
+
+bool FxPreIncrDecr::RequestAddress()
+{
+	AddressRequested = true;
+	return AddressWritable;
+}
+
+FxExpression *FxPreIncrDecr::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(Base, ctx);
+
+	ValueType = Base->ValueType;
+
+	if (!Base->IsNumeric())
+	{
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		delete this;
+		return nullptr;
+	}
+	else if (Base->ValueType == TypeBool)
+	{
+		ScriptPosition.Message(MSG_ERROR, "%s is not allowed on type bool", FScanner::TokenName(Token).GetChars());
+		delete this;
+		return nullptr;
+	}
+	if (!(AddressWritable = Base->RequestAddress()))
+	{
+		ScriptPosition.Message(MSG_ERROR, "Expression must be a modifiable value");
+		delete this;
+		return nullptr;
+	}
+
+	return this;
+}
+
+ExpEmit FxPreIncrDecr::Emit(VMFunctionBuilder *build)
+{
+	assert(Token == TK_Incr || Token == TK_Decr);
+	assert(ValueType == Base->ValueType && IsNumeric());
+
+	int zero = build->GetConstantInt(0);
+	int regtype = ValueType->GetRegType();
+	ExpEmit pointer = Base->Emit(build);
+
+	ExpEmit value(build, regtype);
+	build->Emit(ValueType->GetLoadOp(), value.RegNum, pointer.RegNum, zero);
+
+	if (regtype == REGT_INT)
+	{
+		build->Emit((Token == TK_Incr) ? OP_ADD_RK : OP_SUB_RK, value.RegNum, value.RegNum, build->GetConstantInt(1));
+	}
+	else
+	{
+		build->Emit((Token == TK_Incr) ? OP_ADDF_RK : OP_SUBF_RK, value.RegNum, value.RegNum, build->GetConstantFloat(1.));
+	}
+
+	build->Emit(ValueType->GetStoreOp(), pointer.RegNum, value.RegNum, zero);
+
+	if (AddressRequested)
+	{
+		value.Free(build);
+		return pointer;
+	}
+
+	pointer.Free(build);
+	return value;
+}
+
+//==========================================================================
+//
+// FxPostIncrDecr
+//
+//==========================================================================
+
+FxPostIncrDecr::FxPostIncrDecr(FxExpression *base, int token)
+: FxExpression(base->ScriptPosition), Base(base), Token(token)
+{
+}
+
+FxPostIncrDecr::~FxPostIncrDecr()
+{
+	SAFE_DELETE(Base);
+}
+
+FxExpression *FxPostIncrDecr::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(Base, ctx);
+
+	ValueType = Base->ValueType;
+
+	if (!Base->IsNumeric())
+	{
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		delete this;
+		return nullptr;
+	}
+	else if (Base->ValueType == TypeBool)
+	{
+		ScriptPosition.Message(MSG_ERROR, "%s is not allowed on type bool", FScanner::TokenName(Token).GetChars());
+		delete this;
+		return nullptr;
+	}
+	if (!Base->RequestAddress())
+	{
+		ScriptPosition.Message(MSG_ERROR, "Expression must be a modifiable value");
+		delete this;
+		return nullptr;
+	}
+
+	return this;
+}
+
+ExpEmit FxPostIncrDecr::Emit(VMFunctionBuilder *build)
+{
+	assert(Token == TK_Incr || Token == TK_Decr);
+	assert(ValueType == Base->ValueType && IsNumeric());
+
+	int zero = build->GetConstantInt(0);
+	int regtype = ValueType->GetRegType();
+	ExpEmit pointer = Base->Emit(build);
+
+	ExpEmit out(build, regtype);
+	build->Emit(ValueType->GetLoadOp(), out.RegNum, pointer.RegNum, zero);
+
+	ExpEmit assign(build, regtype);
+	if (regtype == REGT_INT)
+	{
+		build->Emit((Token == TK_Incr) ? OP_ADD_RK : OP_SUB_RK, assign.RegNum, out.RegNum, build->GetConstantInt(1));
+	}
+	else
+	{
+		build->Emit((Token == TK_Incr) ? OP_ADDF_RK : OP_SUBF_RK, assign.RegNum, out.RegNum, build->GetConstantFloat(1.));
+	}
+
+	build->Emit(ValueType->GetStoreOp(), pointer.RegNum, assign.RegNum, zero);
+
+	pointer.Free(build);
+	assign.Free(build);
+	return out;
 }
 
 //==========================================================================
@@ -2995,9 +3156,10 @@ FxClassMember::~FxClassMember()
 //
 //==========================================================================
 
-void FxClassMember::RequestAddress()
+bool FxClassMember::RequestAddress()
 {
 	AddressRequested = true;
+	return !!(~membervar->Flags & VARF_ReadOnly);
 }
 
 //==========================================================================
@@ -3027,6 +3189,17 @@ ExpEmit FxClassMember::Emit(VMFunctionBuilder *build)
 	ExpEmit obj = classx->Emit(build);
 	assert(obj.RegType == REGT_POINTER);
 
+	if (obj.Konst)
+	{
+		// If the situation where we are dereferencing a constant
+		// pointer is common, then it would probably be worthwhile
+		// to add new opcodes for those. But as of right now, I
+		// don't expect it to be a particularly common case.
+		ExpEmit newobj(build, REGT_POINTER);
+		build->Emit(OP_LKP, newobj.RegNum, obj.RegNum);
+		obj = newobj;
+	}
+
 	if (AddressRequested)
 	{
 		if (membervar->Offset == 0)
@@ -3040,20 +3213,8 @@ ExpEmit FxClassMember::Emit(VMFunctionBuilder *build)
 	}
 
 	int offsetreg = build->GetConstantInt((int)membervar->Offset);
-	ExpEmit loc, tmp;
+	ExpEmit loc(build, membervar->Type->GetRegType());
 
-	if (obj.Konst)
-	{
-		// If the situation where we are dereferencing a constant
-		// pointer is common, then it would probably be worthwhile
-		// to add new opcodes for those. But as of right now, I
-		// don't expect it to be a particularly common case.
-		ExpEmit newobj(build, REGT_POINTER);
-		build->Emit(OP_LKP, newobj.RegNum, obj.RegNum);
-		obj = newobj;
-	}
-
-	loc = ExpEmit(build, membervar->Type->GetRegType());
 	build->Emit(membervar->Type->GetLoadOp(), loc.RegNum, obj.RegNum, offsetreg);
 	obj.Free(build);
 	return loc;
@@ -3071,7 +3232,8 @@ FxArrayElement::FxArrayElement(FxExpression *base, FxExpression *_index)
 {
 	Array=base;
 	index = _index;
-	//AddressRequested = false;
+	AddressRequested = false;
+	AddressWritable = false;
 }
 
 //==========================================================================
@@ -3092,12 +3254,11 @@ FxArrayElement::~FxArrayElement()
 //
 //==========================================================================
 
-/*
-void FxArrayElement::RequestAddress()
+bool FxArrayElement::RequestAddress()
 {
 	AddressRequested = true;
+	return AddressWritable;
 }
-*/
 
 //==========================================================================
 //
@@ -3145,7 +3306,7 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 		delete this;
 		return NULL;
 	}
-	Array->RequestAddress();
+	AddressWritable = Array->RequestAddress();
 	return this;
 }
 
@@ -3159,13 +3320,13 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit start = Array->Emit(build);
 	PArray *const arraytype = static_cast<PArray*>(Array->ValueType);
-	PType *const elementtype = arraytype->ElementType;
-	ExpEmit dest(build, elementtype->GetRegType());
+	ExpEmit dest(build, arraytype->ElementType->GetRegType());
 
 	if (start.Konst)
 	{
 		ExpEmit tmpstart(build, REGT_POINTER);
 		build->Emit(OP_LKP, tmpstart.RegNum, start.RegNum);
+		start.Free(build);
 		start = tmpstart;
 	}
 	if (index->isConstant())
@@ -3176,8 +3337,19 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 			I_Error("Array index out of bounds");
 		}
 		indexval *= arraytype->ElementSize;
-		build->Emit(arraytype->ElementType->GetLoadOp(), dest.RegNum,
-			start.RegNum, build->GetConstantInt(indexval));
+
+		if (AddressRequested)
+		{
+			if (indexval != 0)
+			{
+				build->Emit(OP_ADDA_RK, start.RegNum, start.RegNum, build->GetConstantInt(indexval));
+			}
+		}
+		else
+		{
+			build->Emit(arraytype->ElementType->GetLoadOp(), dest.RegNum,
+				start.RegNum, build->GetConstantInt(indexval));
+		}
 	}
 	else
 	{
@@ -3193,10 +3365,24 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 		{
 			build->Emit(OP_SLL_RI, indexv.RegNum, indexv.RegNum, shiftbits);
 		}
-		build->Emit(arraytype->ElementType->GetLoadOp() + 1,	// added 1 to use the *_R version that
-			dest.RegNum, start.RegNum, indexv.RegNum);			// takes the offset from a register
+
+		if (AddressRequested)
+		{
+			build->Emit(OP_ADDA_RR, start.RegNum, start.RegNum, indexv.RegNum);
+		}
+		else
+		{
+			build->Emit(arraytype->ElementType->GetLoadOp() + 1,	// added 1 to use the *_R version that
+				dest.RegNum, start.RegNum, indexv.RegNum);			// takes the offset from a register
+		}
 		indexv.Free(build);
 	}
+	if (AddressRequested)
+	{
+		dest.Free(build);
+		return start;
+	}
+	
 	start.Free(build);
 	return dest;
 }

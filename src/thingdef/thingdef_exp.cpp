@@ -63,6 +63,7 @@ static FxExpression *ParseClamp(FScanner &sc, PClassActor *cls);
 //
 // ParseExpression
 // [GRB] Parses an expression and stores it into Expression array
+// It's worth mentioning that this is using C++ operator precedence
 //
 
 static FxExpression *ParseExpressionM (FScanner &sc, PClassActor *cls);
@@ -257,6 +258,10 @@ static FxExpression *ParseExpressionB (FScanner &sc, PClassActor *cls)
 	case '+':
 		return new FxPlusSign(ParseExpressionA (sc, cls));
 
+	case TK_Incr:
+	case TK_Decr:
+		return new FxPreIncrDecr(ParseExpressionA(sc, cls), sc.TokenType);
+
 	default:
 		sc.UnGet();
 		return ParseExpressionA (sc, cls);
@@ -311,6 +316,14 @@ static FxExpression *ParseExpressionA (FScanner &sc, PClassActor *cls)
 			FxExpression *index = ParseExpressionM(sc, cls);
 			sc.MustGetToken(']');
 			base_expr = new FxArrayElement(base_expr, index);
+		}
+		else if (sc.CheckToken(TK_Incr))
+		{
+			return new FxPostIncrDecr(base_expr, TK_Incr);
+		}
+		else if (sc.CheckToken(TK_Decr))
+		{
+			return new FxPostIncrDecr(base_expr, TK_Decr);
 		}
 		else break;
 	} 
@@ -478,7 +491,7 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 				}
 				break;
 			}
-		}	
+		}
 		else
 		{
 			return new FxIdentifier(identifier, sc);

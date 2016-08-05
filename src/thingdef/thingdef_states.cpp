@@ -539,7 +539,8 @@ static FxExpression *ParseFor(FScanner &sc, FState state, FString statestring, B
 	sc.MustGetString();
 	if (!sc.Compare(";"))
 	{
-		init = ParseAction(sc, state, statestring, bag); // That's all DECORATE can handle for now.
+		sc.UnGet();
+		init = ParseExpression(sc, bag.Info);
 		sc.MustGetStringName(";");
 	}
 	sc.MustGetString();
@@ -552,7 +553,8 @@ static FxExpression *ParseFor(FScanner &sc, FState state, FString statestring, B
 	sc.MustGetString();
 	if (!sc.Compare(")"))
 	{
-		iter = ParseAction(sc, state, statestring, bag);
+		sc.UnGet();
+		iter = ParseExpression(sc, bag.Info);
 		sc.MustGetStringName(")");
 	}
 
@@ -641,8 +643,9 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 			sc.MustGetString();
 		}
 		else
-		{ // Handle a regular action function call
-			add = ParseAction(sc, state, statestring, bag);
+		{ // Handle a regular expression
+			sc.UnGet();
+			add = ParseExpression(sc, bag.Info);
 			sc.MustGetStringName(";");
 			sc.MustGetString();
 		}

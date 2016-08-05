@@ -1060,6 +1060,24 @@ public:
 
 //==========================================================================
 //
+// Same as above except for expressions which means it will have to be
+// evaluated at runtime
+//
+//==========================================================================
+
+class FxRuntimeStateIndex : public FxExpression
+{
+	FxExpression *Index;
+
+public:
+	FxRuntimeStateIndex(FxExpression *index);
+	~FxRuntimeStateIndex();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
 //
 //
 //==========================================================================

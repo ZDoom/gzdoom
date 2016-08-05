@@ -4428,7 +4428,90 @@ FxExpression *FxStateByIndex::Resolve(FCompileContext &ctx)
 	delete this;
 	return x;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxRuntimeStateIndex::FxRuntimeStateIndex(FxExpression *index)
+: FxExpression(index->ScriptPosition), Index(index)
+{
+	ValueType = TypeState;
+}
+
+FxRuntimeStateIndex::~FxRuntimeStateIndex()
+{
+	SAFE_DELETE(Index);
+}
+
+FxExpression *FxRuntimeStateIndex::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(Index, ctx);
+
+	if (!Index->IsNumeric())
+	{
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		delete this;
+		return nullptr;
+	}
+	else if (Index->ValueType->GetRegType() != REGT_INT)
+	{ // Float.
+		Index = new FxIntCast(Index);
+		SAFE_RESOLVE(Index, ctx);
+	}
+
+	return this;
+}
+
+static int DecoHandleRuntimeState(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(stateowner, AActor);
+	PARAM_POINTER(stateinfo, FStateParamInfo);
+	PARAM_INT(index);
+
+	if (index == 0 || !stateowner->GetClass()->OwnsState(stateinfo->mCallingState + index))
+	{
+		// Null is returned if the location was invalid which means that no jump will be performed
+		// if used as return value
+		// 0 always meant the same thing so we handle it here for compatibility
+		ret->SetPointer(nullptr, ATAG_STATE);
+	}
+	else
+	{
+		ret->SetPointer(stateinfo->mCallingState + index, ATAG_STATE);
+	}
+
+	return 1;
+}
+
+ExpEmit FxRuntimeStateIndex::Emit(VMFunctionBuilder *build)
+{
+	assert(build->Registers[REGT_POINTER].GetMostUsed() >= 3);
+
+	ExpEmit out(build, REGT_POINTER);
+
+	build->Emit(OP_PARAM, 0, REGT_POINTER, 1); // stateowner
+	build->Emit(OP_PARAM, 0, REGT_POINTER, 2); // stateinfo
+	ExpEmit id = Index->Emit(build);
+	build->Emit(OP_PARAM, 0, REGT_INT | (id.Konst ? REGT_KONST : 0), id.RegNum); // index
+
+	VMFunction *callfunc;
+	PSymbol *sym;
 	
+	sym = FindDecorateBuiltinFunction(NAME_DecoHandleRuntimeState, DecoHandleRuntimeState);
+	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
+	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
+	callfunc = ((PSymbolVMFunction *)sym)->Function;
+
+	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
+	build->Emit(OP_RESULT, 0, REGT_POINTER, out.RegNum);
+
+	return out;
+}
 
 //==========================================================================
 //

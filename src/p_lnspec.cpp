@@ -263,7 +263,13 @@ FUNC(LS_Door_Raise)
 FUNC(LS_Door_LockedRaise)
 // Door_LockedRaise (tag, speed, delay, lock, lighttag)
 {
+#if 0
+	// In Hexen this originally created a thinker running for nearly 4 years.
+	// Let's not do this unless it becomes necessary because this can hang tagwait.
+	return EV_DoDoor (arg2 || (level.flags2 & LEVEL2_HEXENHACK) ? DDoor::doorRaise : DDoor::doorOpen, ln, it,
+#else
 	return EV_DoDoor (arg2 ? DDoor::doorRaise : DDoor::doorOpen, ln, it,
+#endif
 					  arg0, SPEED(arg1), TICS(arg2), arg3, arg4);
 }
 
@@ -423,9 +429,9 @@ FUNC(LS_Floor_RaiseInstant)
 }
 
 FUNC(LS_Floor_ToCeilingInstant)
-// Floor_ToCeilingInstant (tag, change, crush)
+// Floor_ToCeilingInstant (tag, change, crush, gap)
 {
-	return EV_DoFloor (DFloor::floorLowerToCeiling, ln, arg0, 0, 0, CRUSH(arg2), CHANGE(arg1), true);
+	return EV_DoFloor (DFloor::floorLowerToCeiling, ln, arg0, 0, arg3, CRUSH(arg2), CHANGE(arg1), true);
 }
 
 FUNC(LS_Floor_MoveToValueTimes8)
@@ -451,7 +457,7 @@ FUNC(LS_Floor_RaiseToLowestCeiling)
 FUNC(LS_Floor_LowerToLowestCeiling)
 // Floor_LowerToLowestCeiling (tag, speed, change)
 {
-	return EV_DoFloor (DFloor::floorLowerToLowestCeiling, ln, arg0, SPEED(arg1), 0, -1, CHANGE(arg2), true);
+	return EV_DoFloor (DFloor::floorLowerToLowestCeiling, ln, arg0, SPEED(arg1), arg4, -1, CHANGE(arg2), true);
 }
 
 FUNC(LS_Floor_RaiseByTexture)
@@ -467,9 +473,9 @@ FUNC(LS_Floor_LowerByTexture)
 }
 
 FUNC(LS_Floor_RaiseToCeiling)
-// Floor_RaiseToCeiling (tag, speed, change, crush)
+// Floor_RaiseToCeiling (tag, speed, change, crush, gap)
 {
-	return EV_DoFloor (DFloor::floorRaiseToCeiling, ln, arg0, SPEED(arg1), 0, CRUSH(arg3), CHANGE(arg2), true);
+	return EV_DoFloor (DFloor::floorRaiseToCeiling, ln, arg0, SPEED(arg1), arg4, CRUSH(arg3), CHANGE(arg2), true);
 }
 
 FUNC(LS_Floor_RaiseByValueTxTy)
@@ -709,9 +715,9 @@ FUNC(LS_Ceiling_MoveToValue)
 }
 
 FUNC(LS_Ceiling_LowerToHighestFloor)
-// Ceiling_LowerToHighestFloor (tag, speed, change, crush)
+// Ceiling_LowerToHighestFloor (tag, speed, change, crush, gap)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerToHighestFloor, ln, arg0, SPEED(arg1), 0, 0, CRUSH(arg3), 0, CHANGE(arg2));
+	return EV_DoCeiling (DCeiling::ceilLowerToHighestFloor, ln, arg0, SPEED(arg1), 0, arg4, CRUSH(arg3), 0, CHANGE(arg2));
 }
 
 FUNC(LS_Ceiling_LowerInstant)
@@ -811,15 +817,15 @@ FUNC(LS_Ceiling_ToHighestInstant)
 }
 
 FUNC(LS_Ceiling_ToFloorInstant)
-// Ceiling_ToFloorInstant (tag, change, crush)
+// Ceiling_ToFloorInstant (tag, change, crush, gap)
 {
-	return EV_DoCeiling (DCeiling::ceilRaiseToFloor, ln, arg0, 2, 0, 0, CRUSH(arg2), 0, CHANGE(arg1));
+	return EV_DoCeiling (DCeiling::ceilRaiseToFloor, ln, arg0, 2, 0, arg3, CRUSH(arg2), 0, CHANGE(arg1));
 }
 
 FUNC(LS_Ceiling_LowerToFloor)
-// Ceiling_LowerToFloor (tag, speed, change, crush)
+// Ceiling_LowerToFloor (tag, speed, change, crush, gap)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerToFloor, ln, arg0, SPEED(arg1), 0, 0, CRUSH(arg3), 0, CHANGE(arg4));
+	return EV_DoCeiling (DCeiling::ceilLowerToFloor, ln, arg0, SPEED(arg1), 0, arg4, CRUSH(arg3), 0, CHANGE(arg4));
 }
 
 FUNC(LS_Ceiling_LowerByTexture)

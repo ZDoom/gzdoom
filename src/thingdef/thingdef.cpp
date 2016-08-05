@@ -361,16 +361,20 @@ static void FinishThingdef()
 			if (sfunc == NULL)
 			{
 				FCompileContext ctx(ti);
-				dmg->Resolve(ctx);
-				VMFunctionBuilder buildit;
-				buildit.Registers[REGT_POINTER].Get(1);		// The self pointer
-				dmg->Emit(&buildit);
-				sfunc = buildit.MakeFunction();
-				sfunc->NumArgs = 1;
-				sfunc->Proto = NULL;		///FIXME: Need a proper prototype here
-				// Save this function in case this damage value was reused
-				// (which happens quite easily with inheritance).
-				dmg->SetFunction(sfunc);
+				dmg = static_cast<FxDamageValue *>(dmg->Resolve(ctx));
+
+				if (dmg != nullptr)
+				{
+					VMFunctionBuilder buildit;
+					buildit.Registers[REGT_POINTER].Get(1);		// The self pointer
+					dmg->Emit(&buildit);
+					sfunc = buildit.MakeFunction();
+					sfunc->NumArgs = 1;
+					sfunc->Proto = NULL;		///FIXME: Need a proper prototype here
+					// Save this function in case this damage value was reused
+					// (which happens quite easily with inheritance).
+					dmg->SetFunction(sfunc);
+				}
 			}
 			def->Damage = sfunc;
 

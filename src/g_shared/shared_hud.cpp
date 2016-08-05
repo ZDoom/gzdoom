@@ -885,8 +885,25 @@ static void DrawCoordinates(player_t * CPlayer)
 		pos = DVector3(apos, z);
 	}
 
-	int vwidth = con_scaletext==0? SCREENWIDTH : SCREENWIDTH/2;
-	int vheight = con_scaletext==0? SCREENHEIGHT : SCREENHEIGHT/2;
+	int vwidth, vheight;
+	switch (con_scaletext)
+	{
+	default:
+	case 0:
+		vwidth = SCREENWIDTH;
+		vheight = SCREENWIDTH;
+		break;
+	case 1:
+	case 2:
+		vwidth = SCREENWIDTH/2;
+		vheight = SCREENWIDTH/2;
+		break;
+	case 3:
+		vwidth = SCREENWIDTH/4;
+		vheight = SCREENWIDTH/4;
+		break;
+	}
+
 	int xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
 	int ypos = 18;
 
@@ -1073,7 +1090,12 @@ void DrawHUD()
 	if (hud_althudscale && SCREENWIDTH>640) 
 	{
 		hudwidth=SCREENWIDTH/2;
-		if (hud_althudscale == 2) 
+		if (hud_althudscale == 3)
+		{
+			hudwidth = SCREENWIDTH / 4;
+			hudheight = SCREENHEIGHT / 4;
+		}
+		else if (hud_althudscale == 2)
 		{
 			// Optionally just double the pixels to reduce scaling artifacts.
 			hudheight=SCREENHEIGHT/2;

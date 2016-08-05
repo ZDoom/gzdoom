@@ -309,7 +309,7 @@ bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int t
 		break;
 
 	case DCeiling::ceilLowerToHighestFloor:
-		targheight = sec->FindHighestFloorSurrounding (&spot);
+		targheight = sec->FindHighestFloorSurrounding (&spot) + height;
 		ceiling->m_BottomHeight = sec->ceilingplane.PointToDist (spot, targheight);
 		ceiling->m_Direction = -1;
 		break;
@@ -359,13 +359,13 @@ bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int t
 		break;
 
 	case DCeiling::ceilLowerToFloor:
-		targheight = sec->FindHighestFloorPoint (&spot);
+		targheight = sec->FindHighestFloorPoint (&spot) + height;
 		ceiling->m_BottomHeight = sec->ceilingplane.PointToDist (spot, targheight);
 		ceiling->m_Direction = -1;
 		break;
 
 	case DCeiling::ceilRaiseToFloor:	// [RH] What's this for?
-		targheight = sec->FindHighestFloorPoint (&spot);
+		targheight = sec->FindHighestFloorPoint (&spot) + height;
 		ceiling->m_TopHeight = sec->ceilingplane.PointToDist (spot, targheight);
 		ceiling->m_Direction = 1;
 		break;

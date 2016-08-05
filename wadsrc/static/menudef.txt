@@ -773,7 +773,7 @@ OptionMenu "HUDOptions"
 	Option "$HUDMNU_GROWCROSSHAIR",			"crosshairgrow", "OnOff"
 	ColorPicker "$HUDMNU_CROSSHAIRCOLOR", 	"crosshaircolor"
 	Option "$HUDMNU_CROSSHAIRHEALTH",		"crosshairhealth", "OnOff"
-	Option "$HUDMNU_CROSSHAIRSCALE",		"crosshairscale", "OnOff"
+	Slider "$HUDMNU_CROSSHAIRSCALE",		"crosshairscale", 0.0, 2.0, 0.05, 2
 	StaticText " "
 	Option "$HUDMNU_NAMETAGS",				"displaynametags", "DisplayTagsTypes"
 	Option "$HUDMNU_NAMETAGCOLOR",			"nametagcolor", "TextColors", "displaynametags"
@@ -804,6 +804,7 @@ OptionValue "AltHUDScale"
 	0, "$OPTVAL_OFF"
 	1, "$OPTVAL_SCALETO640X400"
 	2, "$OPTVAL_PIXELDOUBLE"
+	3, "$OPTVAL_PIXELQUADRUPLE"
 }
 
 OptionValue "AltHUDAmmo"
@@ -1120,6 +1121,7 @@ OptionValue ScaleValues
 	0, "$OPTVAL_OFF"
 	1, "$OPTVAL_ON"
 	2, "$OPTVAL_DOUBLE"
+	3, "$OPTVAL_QUADRUPLE"
 }
 
 OptionValue MessageLevels

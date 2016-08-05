@@ -6404,6 +6404,7 @@ void AActor::Revive()
 	flags5 = info->flags5;
 	flags6 = info->flags6;
 	flags7 = info->flags7;
+	if (SpawnFlags & MTF_FRIENDLY) flags |= MF_FRIENDLY;
 	DamageType = info->DamageType;
 	health = SpawnHealth();
 	target = NULL;

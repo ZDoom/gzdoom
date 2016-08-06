@@ -41,7 +41,6 @@
 #include "bitmap.h"
 #include "v_palette.h"
 #include "textures/textures.h"
-#include <vector>
 
 //==========================================================================
 //
@@ -74,7 +73,6 @@ protected:
 	bool HaveTrans;
 	WORD NonPaletteTrans[3];
 
-	std::vector<BYTE> PngPalette;
 	BYTE *PaletteMap;
 	int PaletteSize;
 	DWORD StartOfIDAT;
@@ -267,12 +265,6 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 			if (PaletteSize * 3 != (int)len)
 			{
 				lump.Seek (len - PaletteSize * 3, SEEK_CUR);
-			}
-			for (i = 0; i < PaletteSize; i++)
-			{
-				PngPalette.push_back(p.pngpal[i][0]);
-				PngPalette.push_back(p.pngpal[i][1]);
-				PngPalette.push_back(p.pngpal[i][2]);
 			}
 			for (i = PaletteSize - 1; i >= 0; --i)
 			{

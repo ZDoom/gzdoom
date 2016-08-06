@@ -273,57 +273,12 @@ void OpenGLFrameBuffer::WipeCleanup()
 
 //==========================================================================
 //
-// The wiper vertex buffer
-//
-// Note that this will recreate the buffer each frame, although
-// only for melt its contents will change.
-//
-// But since this is no time critical code, ease of implementation
-// was chosen over maximum efficiency.
-//
-//==========================================================================
-
-class OpenGLFrameBuffer::Wiper::WipeVertexBuffer : public FVertexBuffer
-{
-public:
-	WipeVertexBuffer()
-	{
-	}
-	void BindVBO()
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-		if (gl.glslversion > 0)
-		{
-			glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->x);
-			glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->u);
-			glDisableVertexAttribArray(VATTR_COLOR);
-			glDisableVertexAttribArray(VATTR_VERTEX2);
-		}
-		else
-		{
-			glVertexPointer(3, GL_FLOAT, sizeof(FFlatVertex), &VTO->x);
-			glTexCoordPointer(2, GL_FLOAT, sizeof(FFlatVertex), &VTO->u);
-			glEnableClientState(GL_VERTEX_ARRAY);
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			glDisableClientState(GL_COLOR_ARRAY);
-		}
-	}
-	void set(FFlatVertex *verts, int count)
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-		gl_RenderState.SetVertexBuffer(this);
-		glBufferData(GL_ARRAY_BUFFER, count * sizeof(*verts), verts, GL_STREAM_DRAW);
-	}
-};
-
-//==========================================================================
-//
 // OpenGLFrameBuffer :: Wiper Constructor
 //
 //==========================================================================
 OpenGLFrameBuffer::Wiper::Wiper()
 {
-	mVertexBuf = new WipeVertexBuffer;
+	mVertexBuf = new FSimpleVertexBuffer;
 }
 
 OpenGLFrameBuffer::Wiper::~Wiper()

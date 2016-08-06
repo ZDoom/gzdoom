@@ -7,6 +7,7 @@
 #endif
 
 class FHardwareTexture;
+class FSimpleVertexBuffer;
 
 extern long gl_frameMS;
 extern long gl_frameCount;
@@ -94,10 +95,9 @@ private:
 
 	class Wiper
 	{
-		class WipeVertexBuffer;
 
 	protected:
-		WipeVertexBuffer *mVertexBuf;
+		FSimpleVertexBuffer *mVertexBuf;
 
 		void MakeVBO(OpenGLFrameBuffer *fb);
 

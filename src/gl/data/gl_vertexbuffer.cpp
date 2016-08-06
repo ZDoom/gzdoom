@@ -71,6 +71,34 @@ FVertexBuffer::~FVertexBuffer()
 	}
 }
 
+
+void FSimpleVertexBuffer::BindVBO()
+{
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+	if (gl.glslversion > 0)
+	{
+		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->x);
+		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->u);
+		glDisableVertexAttribArray(VATTR_COLOR);
+		glDisableVertexAttribArray(VATTR_VERTEX2);
+	}
+	else
+	{
+		glVertexPointer(3, GL_FLOAT, sizeof(FFlatVertex), &VTO->x);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(FFlatVertex), &VTO->u);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glDisableClientState(GL_COLOR_ARRAY);
+	}
+}
+
+void FSimpleVertexBuffer::set(FFlatVertex *verts, int count)
+{
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+	gl_RenderState.SetVertexBuffer(this);
+	glBufferData(GL_ARRAY_BUFFER, count * sizeof(*verts), verts, GL_STREAM_DRAW);
+}
+
 //==========================================================================
 //
 //

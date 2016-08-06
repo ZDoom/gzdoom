@@ -41,6 +41,16 @@ struct FFlatVertex
 
 #define VTO ((FFlatVertex*)NULL)
 
+class FSimpleVertexBuffer : public FVertexBuffer
+{
+	TArray<FFlatVertex> mBuffer;
+public:
+	FSimpleVertexBuffer()
+	{
+	}
+	void BindVBO();
+	void set(FFlatVertex *verts, int count);
+};
 
 class FFlatVertexBuffer : public FVertexBuffer
 {

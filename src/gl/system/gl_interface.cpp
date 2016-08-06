@@ -167,6 +167,7 @@ void gl_LoadExtensions()
 
 	gl.vendorstring = (char*)glGetString(GL_VENDOR);
 	gl.lightmethod = LM_SOFTWARE;
+	gl.buffermethod = BM_CLIENTARRAY;
 
 	if ((gl.version >= 3.3f || CheckExtension("GL_ARB_sampler_objects")) && !Args->CheckParm("-nosampler"))
 	{
@@ -177,6 +178,10 @@ void gl_LoadExtensions()
 	if (gl.version > 3.0f && (gl.version >= 3.3f || CheckExtension("GL_ARB_uniform_buffer_object")))
 	{
 		gl.lightmethod = LM_DEFERRED;
+		// Only Apple requires the core profile for GL 3.x+.
+		// #ifdef __APPLE__
+		// gl.buffermethod = BM_DEFERRED;
+		// #endif
 	}
 
 	if (CheckExtension("GL_ARB_texture_compression")) gl.flags |= RFL_TEXTURE_COMPRESSION;
@@ -222,6 +227,7 @@ void gl_LoadExtensions()
 			}
 			gl.flags |= RFL_BUFFER_STORAGE;
 			gl.lightmethod = LM_DIRECT;
+			gl.buffermethod = BM_PERSISTENT;
 		}
 		else
 		{
@@ -234,6 +240,13 @@ void gl_LoadExtensions()
 	{
 		if (!stricmp(lm, "deferred") && gl.lightmethod == LM_DIRECT) gl.lightmethod = LM_DEFERRED;	
 		if (!stricmp(lm, "textured")) gl.lightmethod = LM_SOFTWARE;
+	}
+
+	lm = Args->CheckValue("-buffermethod");
+	if (lm != NULL)
+	{
+		//if (!stricmp(lm, "deferred") && gl.buffermethod == BM_PERSISTENT) gl.buffermethod = BM_DEFERRED;
+		if (!stricmp(lm, "clientarray")) gl.buffermethod = BM_CLIENTARRAY;
 	}
 
 	int v;

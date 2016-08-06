@@ -54,8 +54,6 @@ class FFlatVertexBuffer : public FVertexBuffer
 	static const unsigned int BUFFER_SIZE = 2000000;
 	static const unsigned int BUFFER_SIZE_TO_USE = 1999500;
 
-	void ImmRenderBuffer(unsigned int primtype, unsigned int offset, unsigned int count);
-
 public:
 	TArray<FFlatVertex> vbo_shadowdata;	// this is kept around for updating the actual (non-readable) buffer and as stand-in for pre GL 4.x
 

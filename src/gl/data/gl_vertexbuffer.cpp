@@ -143,40 +143,6 @@ void FFlatVertexBuffer::BindVBO()
 
 //==========================================================================
 //
-// immediate mode fallback for drivers without GL_ARB_buffer_storage
-//
-// No single core method is performant enough  to handle this adequately
-// so we have to resort to immediate mode instead...
-//
-//==========================================================================
-
-void FFlatVertexBuffer::ImmRenderBuffer(unsigned int primtype, unsigned int offset, unsigned int count)
-{
-	// this will only get called if we can't acquire a persistently mapped buffer.
-#ifndef CORE_PROFILE
-	glBegin(primtype);
-	if (gl.glslversion > 0)
-	{
-		for (unsigned int i = 0; i < count; i++)
-		{
-			glVertexAttrib2fv(VATTR_TEXCOORD, &map[offset + i].u);
-			glVertexAttrib3fv(VATTR_VERTEX, &map[offset + i].x);
-		}
-	}
-	else	// no shader means no vertex attributes, so use the old stuff instead.
-	{
-		for (unsigned int i = 0; i < count; i++)
-		{
-			glTexCoord2fv(&map[offset + i].u);
-			glVertex3fv(&map[offset + i].x);
-		}
-	}
-	glEnd();
-#endif
-}
-
-//==========================================================================
-//
 // Initialize a single vertex
 //
 //==========================================================================

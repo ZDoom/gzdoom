@@ -1246,6 +1246,19 @@ void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uin
 
 //==========================================================================
 //
+// no-ops. This is so that renderer backends can better manage the
+// processing of the subsector drawing in the automap
+//
+//==========================================================================
+
+void DCanvas::StartSimplePolys()
+{}
+
+void DCanvas::FinishSimplePolys()
+{}
+
+//==========================================================================
+//
 // DCanvas :: FillSimplePoly
 //
 // Fills a simple polygon with a texture. Here, "simple" means that a

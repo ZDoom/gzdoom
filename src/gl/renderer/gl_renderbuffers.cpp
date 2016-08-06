@@ -141,6 +141,9 @@ void FGLRenderBuffers::DeleteFrameBuffer(GLuint &handle)
 
 void FGLRenderBuffers::Setup(int width, int height)
 {
+	if (!IsEnabled())
+		return;
+
 	int samples = GetCvarSamples();
 
 	if (width == mWidth && height == mHeight && mSamples != samples)

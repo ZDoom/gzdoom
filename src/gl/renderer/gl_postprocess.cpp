@@ -207,7 +207,7 @@ void FGLRenderer::BloomScene()
 
 void FGLRenderer::TonemapScene()
 {
-	if (gl_tonemap == 0)
+	if (gl_tonemap == 0 || !FGLRenderBuffers::IsEnabled())
 		return;
 
 	FGLPostProcessState savedState;
@@ -229,7 +229,7 @@ void FGLRenderer::TonemapScene()
 
 void FGLRenderer::LensDistortScene()
 {
-	if (gl_lens == 0)
+	if (gl_lens == 0 || !FGLRenderBuffers::IsEnabled())
 		return;
 
 	float k[4] =

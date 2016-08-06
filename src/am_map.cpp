@@ -1897,6 +1897,7 @@ void AM_drawSubsectors()
 	FDynamicColormap *colormap;
 	mpoint_t originpt;
 
+	screen->StartSimplePolys();
 	for (int i = 0; i < numsubsectors; ++i)
 	{
 		if (subsectors[i].flags & SSECF_POLYORG)
@@ -2049,6 +2050,7 @@ void AM_drawSubsectors()
 				);
 		}
 	}
+	screen->FinishSimplePolys();
 }
 
 //=============================================================================

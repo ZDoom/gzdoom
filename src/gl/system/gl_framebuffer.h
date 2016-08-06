@@ -94,7 +94,15 @@ private:
 
 	class Wiper
 	{
+		class WipeVertexBuffer;
+
+	protected:
+		WipeVertexBuffer *mVertexBuf;
+
+		void MakeVBO(OpenGLFrameBuffer *fb);
+
 	public:
+		Wiper();
 		virtual ~Wiper();
 		virtual bool Run(int ticks, OpenGLFrameBuffer *fb) = 0;
 	};

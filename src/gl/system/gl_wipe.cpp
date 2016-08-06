@@ -97,6 +97,7 @@ class OpenGLFrameBuffer::Wiper_Melt : public OpenGLFrameBuffer::Wiper
 {
 public:
 	Wiper_Melt();
+	int MakeVBO(int ticks, OpenGLFrameBuffer *fb, bool &done);
 	bool Run(int ticks, OpenGLFrameBuffer *fb);
 
 private:
@@ -217,29 +218,28 @@ void OpenGLFrameBuffer::WipeEndScreen()
 
 bool OpenGLFrameBuffer::WipeDo(int ticks)
 {
+	bool done = true;
 	// Sanity checks.
-	if (wipestartscreen == NULL || wipeendscreen == NULL)
+	if (wipestartscreen != nullptr && wipeendscreen != nullptr)
 	{
-		return true;
+		Lock(true);
+
+		gl_RenderState.EnableTexture(true);
+		gl_RenderState.EnableFog(false);
+		glDisable(GL_DEPTH_TEST);
+		glDepthMask(false);
+
+		if (FGLRenderBuffers::IsEnabled())
+		{
+			GLRenderer->mBuffers->BindCurrentFB();
+			const auto &bounds = GLRenderer->mScreenViewport;
+			glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
+		}
+
+		done = ScreenWipe->Run(ticks, this);
+		glDepthMask(true);
 	}
-
-	Lock(true);
-	
-	gl_RenderState.EnableTexture(true);
-	gl_RenderState.EnableFog(false);
-	glDisable(GL_DEPTH_TEST);
-	glDepthMask(false);
-
-	if (FGLRenderBuffers::IsEnabled())
-	{
-		GLRenderer->mBuffers->BindCurrentFB();
-		const auto &bounds = GLRenderer->mScreenViewport;
-		glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
-	}
-
-	bool done = ScreenWipe->Run(ticks, this);
-	glDepthMask(true);
-	//DrawLetterbox();
+	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	return done;
 }
 
@@ -273,12 +273,80 @@ void OpenGLFrameBuffer::WipeCleanup()
 
 //==========================================================================
 //
-// OpenGLFrameBuffer :: Wiper Constructor
+// The wiper vertex buffer
+//
+// Note that this will recreate the buffer each frame, although
+// only for melt its contents will change.
+//
+// But since this is no time critical code, ease of implementation
+// was chosen over maximum efficiency.
 //
 //==========================================================================
 
+class OpenGLFrameBuffer::Wiper::WipeVertexBuffer : public FVertexBuffer
+{
+public:
+	WipeVertexBuffer()
+	{
+	}
+	void BindVBO()
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		if (gl.glslversion > 0)
+		{
+			glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->x);
+			glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->u);
+			glDisableVertexAttribArray(VATTR_COLOR);
+			glDisableVertexAttribArray(VATTR_VERTEX2);
+		}
+		else
+		{
+			glVertexPointer(3, GL_FLOAT, sizeof(FFlatVertex), &VTO->x);
+			glTexCoordPointer(2, GL_FLOAT, sizeof(FFlatVertex), &VTO->u);
+			glEnableClientState(GL_VERTEX_ARRAY);
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			glDisableClientState(GL_COLOR_ARRAY);
+		}
+	}
+	void set(FFlatVertex *verts, int count)
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		gl_RenderState.SetVertexBuffer(this);
+		glBufferData(GL_ARRAY_BUFFER, count * sizeof(*verts), verts, GL_STREAM_DRAW);
+	}
+};
+
+//==========================================================================
+//
+// OpenGLFrameBuffer :: Wiper Constructor
+//
+//==========================================================================
+OpenGLFrameBuffer::Wiper::Wiper()
+{
+	mVertexBuf = new WipeVertexBuffer;
+}
+
 OpenGLFrameBuffer::Wiper::~Wiper()
 {
+	delete mVertexBuf;
+}
+
+void OpenGLFrameBuffer::Wiper::MakeVBO(OpenGLFrameBuffer *fb)
+{
+	FFlatVertex make[4];
+	FFlatVertex *ptr = make;
+
+	float ur = fb->GetWidth() / FHardwareTexture::GetTexDimension(fb->GetWidth());
+	float vb = fb->GetHeight() / FHardwareTexture::GetTexDimension(fb->GetHeight());
+
+	ptr->Set(0, 0, 0, 0, vb);
+	ptr++;
+	ptr->Set(0, fb->Height, 0, 0, 0);
+	ptr++;
+	ptr->Set(fb->Width, 0, 0, ur, vb);
+	ptr++;
+	ptr->Set(fb->Width, fb->Height, 0, ur, 0);
+	mVertexBuf->set(make, 4);
 }
 
 // WIPE: CROSSFADE ---------------------------------------------------------
@@ -306,32 +374,21 @@ bool OpenGLFrameBuffer::Wiper_Crossfade::Run(int ticks, OpenGLFrameBuffer *fb)
 {
 	Clock += ticks;
 
-	float ur = fb->GetWidth() / FHardwareTexture::GetTexDimension(fb->GetWidth());
-	float vb = fb->GetHeight() / FHardwareTexture::GetTexDimension(fb->GetHeight());
+	MakeVBO(fb);
 
 	gl_RenderState.SetTextureMode(TM_OPAQUE);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();
 	fb->wipestartscreen->Bind(0, 0, false);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-	FFlatVertex *ptr;
-	unsigned int offset, count;
-	ptr = GLRenderer->mVBO->GetBuffer();
-	ptr->Set(0, 0, 0, 0, vb);
-	ptr++;
-	ptr->Set(0, fb->Height, 0, 0, 0);
-	ptr++;
-	ptr->Set(fb->Width, 0, 0, ur, vb);
-	ptr++;
-	ptr->Set(fb->Width, fb->Height, 0, ur, 0);
-	ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP, &offset, &count);
-
-	fb->wipeendscreen->Bind(0, 0, false);
-	gl_RenderState.SetColorAlpha(0xffffff, clamp(Clock/32.f, 0.f, 1.f));
+	float a = clamp(Clock / 32.f, 0.f, 1.f);
+	Printf("%f\n", a);
+	gl_RenderState.SetColorAlpha(0xffffff, a);
 	gl_RenderState.Apply();
-	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, offset, count);
+	fb->wipeendscreen->Bind(0, 0, false);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.5f);
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 
@@ -366,18 +423,15 @@ OpenGLFrameBuffer::Wiper_Melt::Wiper_Melt()
 //
 //==========================================================================
 
-bool OpenGLFrameBuffer::Wiper_Melt::Run(int ticks, OpenGLFrameBuffer *fb)
+int OpenGLFrameBuffer::Wiper_Melt::MakeVBO(int ticks, OpenGLFrameBuffer *fb, bool &done)
 {
+	FFlatVertex *make = new FFlatVertex[321*4];
+	FFlatVertex *ptr = make;
+	int dy;
+
 	float ur = fb->GetWidth() / FHardwareTexture::GetTexDimension(fb->GetWidth());
 	float vb = fb->GetHeight() / FHardwareTexture::GetTexDimension(fb->GetHeight());
 
-	// Draw the new screen on the bottom.
-	gl_RenderState.SetTextureMode(TM_OPAQUE);
-	gl_RenderState.ResetColor();
-	gl_RenderState.Apply();
-	fb->wipeendscreen->Bind(0, 0, false);
-	FFlatVertex *ptr;
-	ptr = GLRenderer->mVBO->GetBuffer();
 	ptr->Set(0, 0, 0, 0, vb);
 	ptr++;
 	ptr->Set(0, fb->Height, 0, 0, 0);
@@ -386,31 +440,26 @@ bool OpenGLFrameBuffer::Wiper_Melt::Run(int ticks, OpenGLFrameBuffer *fb)
 	ptr++;
 	ptr->Set(fb->Width, fb->Height, 0, ur, 0);
 	ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 
-	int i, dy;
-	bool done = false;
-
-	fb->wipestartscreen->Bind(0, 0, false);
 	// Copy the old screen in vertical strips on top of the new one.
 	while (ticks--)
 	{
 		done = true;
-		for (i = 0; i < WIDTH; i++)
+		for (int i = 0; i < WIDTH; i++)
 		{
 			if (y[i] < 0)
 			{
 				y[i]++;
 				done = false;
-			} 
+			}
 			else if (y[i] < HEIGHT)
 			{
-				dy = (y[i] < 16) ? y[i]+1 : 8;
+				dy = (y[i] < 16) ? y[i] + 1 : 8;
 				y[i] = MIN(y[i] + dy, HEIGHT);
 				done = false;
 			}
 			if (ticks == 0)
-			{ 
+			{
 				// Only draw for the final tick.
 				// No need for optimization. Wipes won't ever be drawn with anything else.
 				RECT rect;
@@ -429,7 +478,6 @@ bool OpenGLFrameBuffer::Wiper_Melt::Run(int ticks, OpenGLFrameBuffer *fb)
 					rect.bottom = fb->Height - rect.bottom;
 					rect.top = fb->Height - rect.top;
 
-					ptr = GLRenderer->mVBO->GetBuffer();
 					ptr->Set(rect.left, rect.bottom, 0, rect.left / tw, rect.top / th);
 					ptr++;
 					ptr->Set(rect.left, rect.top, 0, rect.left / tw, rect.bottom / th);
@@ -438,12 +486,34 @@ bool OpenGLFrameBuffer::Wiper_Melt::Run(int ticks, OpenGLFrameBuffer *fb)
 					ptr++;
 					ptr->Set(rect.right, rect.top, 0, rect.right / tw, rect.bottom / th);
 					ptr++;
-					GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 				}
 			}
 		}
 	}
+	int numverts = int(ptr - make);
+	mVertexBuf->set(make, numverts);
+	delete[] make;
+	return numverts;
+}
+
+bool OpenGLFrameBuffer::Wiper_Melt::Run(int ticks, OpenGLFrameBuffer *fb)
+{
+	bool done = false;
+	int maxvert = MakeVBO(ticks, fb, done);
+
+	// Draw the new screen on the bottom.
+	gl_RenderState.SetTextureMode(TM_OPAQUE);
+	gl_RenderState.ResetColor();
+	gl_RenderState.Apply();
+	fb->wipeendscreen->Bind(0, 0, false);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+	fb->wipestartscreen->Bind(0, 0, false);
 	gl_RenderState.SetTextureMode(TM_MODULATE);
+	for (int i = 4; i < maxvert; i += 4)
+	{
+		glDrawArrays(GL_TRIANGLE_STRIP, i, 4);
+	}
 	return done;
 }
 
@@ -486,6 +556,8 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 {
 	bool done;
 
+	MakeVBO(fb);
+
 	BurnTime += ticks;
 	ticks *= 2;
 
@@ -524,18 +596,7 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();
 	fb->wipestartscreen->Bind(0, 0, false);
-	FFlatVertex *ptr;
-	unsigned int offset, count;
-	ptr = GLRenderer->mVBO->GetBuffer();
-	ptr->Set(0, 0, 0, 0, vb);
-	ptr++;
-	ptr->Set(0, fb->Height, 0, 0, 0);
-	ptr++;
-	ptr->Set(fb->Width, 0, 0, ur, vb);
-	ptr++;
-	ptr->Set(fb->Width, fb->Height, 0, ur, 0);
-	ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP, &offset, &count);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 	gl_RenderState.SetEffect(EFF_BURN);
@@ -547,7 +608,7 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 
 	BurnTexture->CreateTexture(rgb_buffer, WIDTH, HEIGHT, 1, true, 0);
 
-	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, offset, count);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	gl_RenderState.SetEffect(EFF_NONE);
 
 	// The fire may not always stabilize, so the wipe is forced to end

@@ -891,16 +891,16 @@ static void DrawCoordinates(player_t * CPlayer)
 	default:
 	case 0:
 		vwidth = SCREENWIDTH;
-		vheight = SCREENWIDTH;
+		vheight = SCREENHEIGHT;
 		break;
 	case 1:
 	case 2:
 		vwidth = SCREENWIDTH/2;
-		vheight = SCREENWIDTH/2;
+		vheight = SCREENHEIGHT/2;
 		break;
 	case 3:
 		vwidth = SCREENWIDTH/4;
-		vheight = SCREENWIDTH/4;
+		vheight = SCREENHEIGHT/4;
 		break;
 	}
 

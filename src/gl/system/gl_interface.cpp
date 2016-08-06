@@ -187,7 +187,7 @@ void gl_LoadExtensions()
 	if (CheckExtension("GL_ARB_texture_compression")) gl.flags |= RFL_TEXTURE_COMPRESSION;
 	if (CheckExtension("GL_EXT_texture_compression_s3tc")) gl.flags |= RFL_TEXTURE_COMPRESSION_S3TC;
 
-	if (Args->CheckParm("-noshader") || gl.glslversion < 1.2f)
+	if (Args->CheckParm("-noshader")/* || gl.glslversion < 1.2f*/)
 	{
 		gl.version = 2.11f;
 		gl.glslversion = 0;
@@ -195,8 +195,9 @@ void gl_LoadExtensions()
 	}
 	else if (gl.version < 3.0f)
 	{
-		if (CheckExtension("GL_NV_GPU_shader4") || CheckExtension("GL_EXT_GPU_shader4")) gl.glslversion = 1.21f;	// for pre-3.0 drivers that support capable hardware. Needed for Apple.
-		else gl.glslversion = 0;
+		//if (CheckExtension("GL_NV_GPU_shader4") || CheckExtension("GL_EXT_GPU_shader4")) gl.glslversion = 1.21f;	// for pre-3.0 drivers that support capable hardware. Needed for Apple.
+		//else gl.glslversion = 0;
+		gl.glslversion = 1.21f;
 
 		if (!CheckExtension("GL_EXT_packed_float")) gl.flags |= RFL_NO_RGBA16F;
 		if (!CheckExtension("GL_EXT_packed_depth_stencil")) gl.flags |= RFL_NO_DEPTHSTENCIL;

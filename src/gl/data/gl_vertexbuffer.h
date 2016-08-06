@@ -146,6 +146,16 @@ struct FSkyVertex
 		color = col;
 	}
 
+	void SetXYZ(float xx, float yy, float zz, float uu = 0, float vv = 0, PalEntry col = 0xffffffff)
+	{
+		x = xx;
+		y = yy;
+		z = zz;
+		u = uu;
+		v = vv;
+		color = col;
+	}
+
 };
 
 class FSkyVertexBuffer : public FVertexBuffer

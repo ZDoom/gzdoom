@@ -228,58 +228,58 @@ void FSkyVertexBuffer::CreateDome()
 	FSkyVertex *ptr = &mVertices[mSideStart];
 
 	// all sides
-	ptr[0].Set(128.f, 128.f, -128.f, 0, 0);
-	ptr[1].Set(128.f, -128.f, -128.f, 0, 1);
-	ptr[2].Set(-128.f, 128.f, -128.f, 0.25f, 0);
-	ptr[3].Set(-128.f, -128.f, -128.f, 0.25f, 1);
-	ptr[4].Set(-128.f, 128.f, 128.f, 0.5f, 0);
-	ptr[5].Set(-128.f, -128.f, 128.f, 0.5f, 1);
-	ptr[6].Set(128.f, 128.f, 128.f, 0.75f, 0);
-	ptr[7].Set(128.f, -128.f, 128.f, 0.75f, 1);
-	ptr[8].Set(128.f, 128.f, -128.f, 1, 0);
-	ptr[9].Set(128.f, -128.f, -128.f, 1, 1);
+	ptr[0].SetXYZ(128.f, 128.f, -128.f, 0, 0);
+	ptr[1].SetXYZ(128.f, -128.f, -128.f, 0, 1);
+	ptr[2].SetXYZ(-128.f, 128.f, -128.f, 0.25f, 0);
+	ptr[3].SetXYZ(-128.f, -128.f, -128.f, 0.25f, 1);
+	ptr[4].SetXYZ(-128.f, 128.f, 128.f, 0.5f, 0);
+	ptr[5].SetXYZ(-128.f, -128.f, 128.f, 0.5f, 1);
+	ptr[6].SetXYZ(128.f, 128.f, 128.f, 0.75f, 0);
+	ptr[7].SetXYZ(128.f, -128.f, 128.f, 0.75f, 1);
+	ptr[8].SetXYZ(128.f, 128.f, -128.f, 1, 0);
+	ptr[9].SetXYZ(128.f, -128.f, -128.f, 1, 1);
 
 	// north face
-	ptr[10].Set(128.f, 128.f, -128.f, 0, 0);
-	ptr[11].Set(-128.f, 128.f, -128.f, 1, 0);
-	ptr[12].Set(128.f, -128.f, -128.f, 0, 1);
-	ptr[13].Set(-128.f, -128.f, -128.f, 1, 1);
+	ptr[10].SetXYZ(128.f, 128.f, -128.f, 0, 0);
+	ptr[11].SetXYZ(-128.f, 128.f, -128.f, 1, 0);
+	ptr[12].SetXYZ(128.f, -128.f, -128.f, 0, 1);
+	ptr[13].SetXYZ(-128.f, -128.f, -128.f, 1, 1);
 
 	// east face
-	ptr[14].Set(-128.f, 128.f, -128.f, 0, 0);
-	ptr[15].Set(-128.f, 128.f, 128.f, 1, 0);
-	ptr[16].Set(-128.f, -128.f, -128.f, 0, 1);
-	ptr[17].Set(-128.f, -128.f, 128.f, 1, 1);
+	ptr[14].SetXYZ(-128.f, 128.f, -128.f, 0, 0);
+	ptr[15].SetXYZ(-128.f, 128.f, 128.f, 1, 0);
+	ptr[16].SetXYZ(-128.f, -128.f, -128.f, 0, 1);
+	ptr[17].SetXYZ(-128.f, -128.f, 128.f, 1, 1);
 
 	// south face
-	ptr[18].Set(-128.f, 128.f, 128.f, 0, 0);
-	ptr[19].Set(128.f, 128.f, 128.f, 1, 0);
-	ptr[20].Set(-128.f, -128.f, 128.f, 0, 1);
-	ptr[21].Set(128.f, -128.f, 128.f, 1, 1);
+	ptr[18].SetXYZ(-128.f, 128.f, 128.f, 0, 0);
+	ptr[19].SetXYZ(128.f, 128.f, 128.f, 1, 0);
+	ptr[20].SetXYZ(-128.f, -128.f, 128.f, 0, 1);
+	ptr[21].SetXYZ(128.f, -128.f, 128.f, 1, 1);
 
 	// west face
-	ptr[22].Set(128.f, 128.f, 128.f, 0, 0);
-	ptr[23].Set(128.f, 128.f, -128.f, 1, 0);
-	ptr[24].Set(128.f, -128.f, 128.f, 0, 1);
-	ptr[25].Set(128.f, -128.f, -128.f, 1, 1);
+	ptr[22].SetXYZ(128.f, 128.f, 128.f, 0, 0);
+	ptr[23].SetXYZ(128.f, 128.f, -128.f, 1, 0);
+	ptr[24].SetXYZ(128.f, -128.f, 128.f, 0, 1);
+	ptr[25].SetXYZ(128.f, -128.f, -128.f, 1, 1);
 
 	// bottom face
-	ptr[26].Set(128.f, -128.f, -128.f, 0, 0);
-	ptr[27].Set(-128.f, -128.f, -128.f, 1, 0);
-	ptr[28].Set(128.f, -128.f, 128.f, 0, 1);
-	ptr[29].Set(-128.f, -128.f, 128.f, 1, 1);
+	ptr[26].SetXYZ(128.f, -128.f, -128.f, 0, 0);
+	ptr[27].SetXYZ(-128.f, -128.f, -128.f, 1, 0);
+	ptr[28].SetXYZ(128.f, -128.f, 128.f, 0, 1);
+	ptr[29].SetXYZ(-128.f, -128.f, 128.f, 1, 1);
 
 	// top face
-	ptr[30].Set(128.f, 128.f, -128.f, 0, 0);
-	ptr[31].Set(-128.f, 128.f, -128.f, 1, 0);
-	ptr[32].Set(128.f, 128.f, 128.f, 0, 1);
-	ptr[33].Set(-128.f, 128.f, 128.f, 1, 1);
+	ptr[30].SetXYZ(128.f, 128.f, -128.f, 0, 0);
+	ptr[31].SetXYZ(-128.f, 128.f, -128.f, 1, 0);
+	ptr[32].SetXYZ(128.f, 128.f, 128.f, 0, 1);
+	ptr[33].SetXYZ(-128.f, 128.f, 128.f, 1, 1);
 
 	// top face flipped
-	ptr[34].Set(128.f, 128.f, -128.f, 0, 1);
-	ptr[35].Set(-128.f, 128.f, -128.f, 1, 1);
-	ptr[36].Set(128.f, 128.f, 128.f, 0, 0);
-	ptr[37].Set(-128.f, 128.f, 128.f, 1, 0);
+	ptr[34].SetXYZ(128.f, 128.f, -128.f, 0, 1);
+	ptr[35].SetXYZ(-128.f, 128.f, -128.f, 1, 1);
+	ptr[36].SetXYZ(128.f, 128.f, 128.f, 0, 0);
+	ptr[37].SetXYZ(-128.f, 128.f, 128.f, 1, 0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 	glBufferData(GL_ARRAY_BUFFER, mVertices.Size() * sizeof(FSkyVertex), &mVertices[0], GL_STATIC_DRAW);

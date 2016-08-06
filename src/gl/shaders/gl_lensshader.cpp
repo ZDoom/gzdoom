@@ -53,7 +53,7 @@ void FLensShader::Bind()
 {
 	if (!mShader)
 	{
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/lensdistortion.vp", "", 330);
+		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/lensdistortion.fp", "", 330);
 		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/lensdistortion");

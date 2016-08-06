@@ -234,9 +234,27 @@ void CT_Drawer (void)
 			scalex = 1;
 		}
 
-		int screen_width = con_scaletext > 1? SCREENWIDTH/2 : SCREENWIDTH;
-		int screen_height = con_scaletext > 1? SCREENHEIGHT/2 : SCREENHEIGHT;
-		int st_y = con_scaletext > 1?  ST_Y/2 : ST_Y;
+		int screen_width, screen_height, st_y;
+		switch (con_scaletext)
+		{
+		default:
+		case 0:
+		case 1:
+			screen_width = SCREENWIDTH;
+			screen_height = SCREENHEIGHT;
+			st_y = ST_Y;
+			break;
+		case 2:
+			screen_width = SCREENWIDTH / 2;
+			screen_height = SCREENHEIGHT / 2;
+			st_y = ST_Y / 2;
+			break;
+		case 3:
+			screen_width = SCREENWIDTH / 4;
+			screen_height = SCREENHEIGHT / 4;
+			st_y = ST_Y / 4;
+			break;
+		}
 
 		y += ((SCREENHEIGHT == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
 

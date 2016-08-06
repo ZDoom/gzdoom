@@ -438,6 +438,17 @@ bool VMFunctionBuilder::RegAvailability::Reuse(int reg)
 
 //==========================================================================
 //
+// VMFunctionBuilder :: GetAddress
+//
+//==========================================================================
+
+size_t VMFunctionBuilder::GetAddress()
+{
+	return Code.Size();
+}
+
+//==========================================================================
+//
 // VMFunctionBuilder :: Emit
 //
 // Just dumbly output an instruction. Returns instruction position, not

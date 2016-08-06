@@ -349,16 +349,14 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 		break;
 
 	case DFloor::floorRaiseAndCrushDoom:
+		height = 8;
 	case DFloor::floorRaiseToLowestCeiling:
 		floor->m_Direction = 1;
-		newheight = sec->FindLowestCeilingSurrounding(&spot);
-		if (floortype == DFloor::floorRaiseAndCrushDoom)
-			newheight -= 8;
+		newheight = sec->FindLowestCeilingSurrounding(&spot) - height;
 		ceilingheight = sec->FindLowestCeilingPoint(&spot2);
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, newheight);
 		if (sec->floorplane.ZatPointDist(spot2, floor->m_FloorDestDist) > ceilingheight)
-			floor->m_FloorDestDist = sec->floorplane.PointToDist(spot2,
-				floortype == DFloor::floorRaiseAndCrushDoom ? ceilingheight - 8 : ceilingheight);
+			floor->m_FloorDestDist = sec->floorplane.PointToDist(spot2,	floortype == ceilingheight - height);
 		break;
 
 	case DFloor::floorRaiseToHighest:
@@ -387,7 +385,7 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 
 	case DFloor::floorRaiseToCeiling:
 		floor->m_Direction = 1;
-		newheight = sec->FindLowestCeilingPoint(&spot);
+		newheight = sec->FindLowestCeilingPoint(&spot) - height;
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, newheight);
 		break;
 
@@ -406,7 +404,7 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 	case DFloor::floorLowerToCeiling:
 		// [RH] Essentially instantly raises the floor to the ceiling
 		floor->m_Direction = -1;
-		newheight = sec->FindLowestCeilingPoint(&spot);
+		newheight = sec->FindLowestCeilingPoint(&spot) - height;
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, newheight);
 		break;
 

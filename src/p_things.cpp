@@ -696,16 +696,16 @@ int P_Thing_CheckInputNum(player_t *p, int inputnum)
 	}
 	return renum;
 }
-bool P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, int count, int flags, int ptr)
+int P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, int count, int flags, int ptr, bool counting)
 {
 	AActor *ref = COPY_AAPTR(self, ptr);
 
 	// We need these to check out.
 	if (!ref || !classname || distance <= 0)
-		return false;
+		return 0;
 	
 	int counter = 0;
-	bool result = false;
+	int result = 0;
 	double closer = distance, farther = 0, current = distance;
 	const bool ptrWillChange = !!(flags & (CPXF_SETTARGET | CPXF_SETMASTER | CPXF_SETTRACER));
 	const bool ptrDistPref = !!(flags & (CPXF_CLOSEST | CPXF_FARTHEST));
@@ -740,7 +740,7 @@ bool P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, in
 		if ((ref->Distance2D(mo) < distance &&
 			((flags & CPXF_NOZ) ||
 			((ref->Z() > mo->Z() && ref->Z() - mo->Top() < distance) ||
-				(ref->Z() <= mo->Z() && mo->Z() - ref->Top() < distance)))))
+			(ref->Z() <= mo->Z() && mo->Z() - ref->Top() < distance)))))
 		{
 			if ((flags & CPXF_CHECKSIGHT) && !(P_CheckSight(mo, ref, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY)))
 				continue;
@@ -766,19 +766,19 @@ bool P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, in
 			{
 				if (!(flags & (CPXF_COUNTDEAD | CPXF_DEADONLY)))
 					continue;
-				counter++;
 			}
 			else
 			{
 				if (flags & CPXF_DEADONLY)
 					continue;
-				counter++;
 			}
+			counter++;
 
 			// Abort if the number of matching classes nearby is greater, we have obviously succeeded in our goal.
-			if (counter > count)
-			{
-				result = (flags & (CPXF_LESSOREQUAL | CPXF_EXACT)) ? false : true;
+			// Don't abort if calling the counting version CheckProximity non-action function.
+			if (!counting && counter > count)
+			{					
+				result = (flags & (CPXF_LESSOREQUAL | CPXF_EXACT)) ? 0 : 1;
 
 				// However, if we have one SET* flag and either the closest or farthest flags, keep the function going.
 				if (ptrWillChange && ptrDistPref)
@@ -805,12 +805,14 @@ bool P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, in
 		}
 	}
 
-	if (counter == count)
-		result = true;
-	else if (counter < count)
-		result = !!((flags & CPXF_LESSOREQUAL) && !(flags & CPXF_EXACT));
-
-	return result;
+	if (!counting)
+	{
+		if (counter == count)
+			result = 1;
+		else if (counter < count)
+			result = !!((flags & CPXF_LESSOREQUAL) && !(flags & CPXF_EXACT)) ? 1 : 0;
+	}
+	return counting ? counter : result;
 }
 
 int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, double zofs, DAngle angle, int flags, double heightoffset, double radiusoffset, DAngle pitch)

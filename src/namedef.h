@@ -214,6 +214,7 @@ xx(Brainexplode)
 // Weapon animator names.
 xx(Select)
 xx(Deselect)
+xx(DeadLowered)
 xx(Ready)
 xx(Fire)
 xx(Hold)

@@ -809,11 +809,17 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			angle_t rot;
 			if (sprframe->Texture[0] == sprframe->Texture[1])
 			{
-				rot = (ang - thing->Angles.Yaw + 45.0/2*9).BAMs() >> 28;
+				if (thing->flags7 & MF7_SPRITEANGLE)
+					rot = (thing->SpriteAngle + 45.0 / 2 * 9).BAMs() >> 28;
+				else
+					rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + 45.0 / 2 * 9).BAMs() >> 28;
 			}
 			else
 			{
-				rot = (ang - thing->Angles.Yaw + (45.0/2*9-180.0/16)).BAMs() >> 28;
+				if (thing->flags7 & MF7_SPRITEANGLE)
+					rot = (thing->SpriteAngle + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+				else
+					rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
 			}
 			picnum = sprframe->Texture[rot];
 			if (sprframe->Flip & (1 << rot))
@@ -848,11 +854,17 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			angle_t rot;
 			if (sprframe->Texture[0] == sprframe->Texture[1])
 			{
-				rot = (ang - thing->Angles.Yaw + 45.0 / 2 * 9).BAMs() >> 28;
+				if (thing->flags7 & MF7_SPRITEANGLE)
+					rot = (thing->SpriteAngle + 45.0 / 2 * 9).BAMs() >> 28;
+				else
+					rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + 45.0 / 2 * 9).BAMs() >> 28;
 			}
 			else
 			{
-				rot = (ang - thing->Angles.Yaw + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+				if (thing->flags7 & MF7_SPRITEANGLE)
+					rot = (thing->SpriteAngle + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+				else
+					rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
 			}
 			picnum = sprframe->Texture[rot];
 			if (sprframe->Flip & (1 << rot))
@@ -904,7 +916,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	// too far off the side?
 	// if it's a voxel, it can be further off the side
 	if ((voxel == NULL && (fabs(tx / 64) > fabs(tz))) ||
-		(voxel != NULL && (fabs(tx / 128) > abs(tz))))
+		(voxel != NULL && (fabs(tx / 128) > fabs(tz))))
 	{
 		return;
 	}
@@ -2805,6 +2817,11 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 	// Also do some magic voodoo scaling to make them the right size.
 	daxscale = daxscale / (0xC000 >> 6);
 	dayscale = dayscale / (0xC000 >> 6);
+	if (daxscale <= 0 || dayscale <= 0)
+	{
+		// won't be visible.
+		return;
+	}
 
 	angle_t viewang = viewangle.BAMs();
 	cosang = FLOAT2FIXED(viewangle.Cos()) >> 2;

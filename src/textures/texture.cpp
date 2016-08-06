@@ -194,21 +194,15 @@ const uint32_t *FTexture::GetColumnBgra(unsigned int column, const Span **spans_
 
 const uint32_t *FTexture::GetPixelsBgra()
 {
-	if (PixelsBgra.empty())
+	if (PixelsBgra.empty() || CheckModified())
 	{
-		GetColumn(0, nullptr);
-		const BYTE *indices = GetPixels();
-		if (indices == nullptr)
+		if (!GetColumn(0, nullptr))
 			return nullptr;
-		CreatePixelsBgraWithMipmaps();
-		for (int i = 0; i < Width * Height; i++)
-		{
-			if (indices[i] != 0)
-				PixelsBgra[i] = 0xff000000 | GPalette.BaseColors[indices[i]].d;
-			else
-				PixelsBgra[i] = 0;
-		}
-		GenerateBgraMipmaps();
+
+		FBitmap bitmap;
+		bitmap.Create(GetWidth(), GetHeight());
+		CopyTrueColorPixels(&bitmap, 0, 0);
+		GenerateBgraFromBitmap(bitmap);
 	}
 	return PixelsBgra.data();
 }
@@ -354,6 +348,32 @@ FTexture::Span **FTexture::CreateSpans (const BYTE *pixels) const
 void FTexture::FreeSpans (Span **spans) const
 {
 	M_Free (spans);
+}
+
+void FTexture::GenerateBgraFromBitmap(const FBitmap &bitmap)
+{
+	CreatePixelsBgraWithMipmaps();
+
+	// Transpose and premultiply alpha
+	const uint32_t *src = (const uint32_t *)bitmap.GetPixels();
+	uint32_t *dest = PixelsBgra.data();
+	for (int x = 0; x < Width; x++)
+	{
+		for (int y = 0; y < Height; y++)
+		{
+			uint32_t p = src[x + y * Width];
+			uint32_t red = RPART(p);
+			uint32_t green = GPART(p);
+			uint32_t blue = BPART(p);
+			uint32_t alpha = APART(p);
+			red = (red * alpha + 127) / 255;
+			green = (green * alpha + 127) / 255;
+			blue = (blue * alpha + 127) / 255;
+			dest[y + x * Height] = (alpha << 24) | (red << 16) | (green << 8) | blue;
+		}
+	}
+
+	GenerateBgraMipmaps();
 }
 
 void FTexture::CreatePixelsBgraWithMipmaps()

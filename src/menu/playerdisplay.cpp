@@ -78,7 +78,6 @@ public:
 
 	const BYTE *GetColumn(unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels();
-	const uint32_t *GetPixelsBgra() override;
 	bool CheckModified();
 
 protected:
@@ -245,16 +244,6 @@ const BYTE *FBackdropTexture::GetPixels()
 		Render();
 	}
 	return Pixels;
-}
-
-const uint32_t *FBackdropTexture::GetPixelsBgra()
-{
-	if (LastRenderTic != gametic)
-	{
-		Render();
-		PixelsBgra.clear();
-	}
-	return FTexture::GetPixelsBgra();
 }
 
 //=============================================================================

@@ -34,7 +34,6 @@ public:
 
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
-	const uint32_t *GetPixelsBgra() override;
 	bool CheckModified ();
 
 	void SetVial (int level);
@@ -114,16 +113,6 @@ const BYTE *FHealthBar::GetPixels ()
 		MakeTexture ();
 	}
 	return Pixels;
-}
-
-const uint32_t *FHealthBar::GetPixelsBgra()
-{
-	if (NeedRefresh)
-	{
-		MakeTexture();
-		PixelsBgra.clear();
-	}
-	return FTexture::GetPixelsBgra();
 }
 
 void FHealthBar::SetVial (int level)

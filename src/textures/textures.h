@@ -274,6 +274,7 @@ protected:
 
 	std::vector<uint32_t> PixelsBgra;
 
+	void GenerateBgraFromBitmap(const FBitmap &bitmap);
 	void CreatePixelsBgraWithMipmaps();
 	void GenerateBgraMipmaps();
 	void GenerateBgraMipmapsFast();

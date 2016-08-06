@@ -57,7 +57,6 @@ public:
 
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
-	const uint32_t *GetPixelsBgra ();
 	void Unload ();
 	FTextureFormat GetFormat ();
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
@@ -81,7 +80,6 @@ protected:
 	DWORD StartOfIDAT;
 
 	void MakeTexture ();
-	void MakeTextureBgra ();
 
 	friend class FTexture;
 };
@@ -454,15 +452,6 @@ const BYTE *FPNGTexture::GetPixels ()
 	return Pixels;
 }
 
-const uint32_t *FPNGTexture::GetPixelsBgra()
-{
-	if (PixelsBgra.empty())
-	{
-		MakeTextureBgra();
-	}
-	return PixelsBgra.data();
-}
-
 
 //==========================================================================
 //
@@ -618,146 +607,6 @@ void FPNGTexture::MakeTexture ()
 		}
 	}
 	delete lump;
-}
-
-void FPNGTexture::MakeTextureBgra ()
-{
-	FileReader *lump;
-
-	if (SourceLump >= 0)
-	{
-		lump = new FWadLump(Wads.OpenLumpNum(SourceLump));
-	}
-	else
-	{
-		lump = new FileReader(SourceFile.GetChars());
-	}
-
-	CreatePixelsBgraWithMipmaps();
-	if (StartOfIDAT != 0)
-	{
-		DWORD len, id;
-		lump->Seek (StartOfIDAT, SEEK_SET);
-		lump->Read(&len, 4);
-		lump->Read(&id, 4);
-
-		if (ColorType == 0 || ColorType == 3)	/* Grayscale and paletted */
-		{
-			std::vector<BYTE> src(Width*Height);
-			M_ReadIDAT (lump, src.data(), Width, Height, Width, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
-
-			if (!PngPalette.empty())
-			{
-				for (int x = 0; x < Width; x++)
-				{
-					for (int y = 0; y < Height; y++)
-					{
-						uint32_t r = PngPalette[src[x + y * Width] * 3 + 0];
-						uint32_t g = PngPalette[src[x + y * Width] * 3 + 1];
-						uint32_t b = PngPalette[src[x + y * Width] * 3 + 2];
-						PixelsBgra[x * Height + y] = 0xff000000 | (r << 16) | (g << 8) | b;
-					}
-				}
-			}
-			else
-			{
-				for (int x = 0; x < Width; x++)
-				{
-					for (int y = 0; y < Height; y++)
-					{
-						uint32_t gray = src[x + y * Width];
-						PixelsBgra[x * Height + y] = 0xff000000 | (gray << 16) | (gray << 8) | gray;
-					}
-				}
-			}
-		}
-		else		/* RGB and/or Alpha present */
-		{
-			int bytesPerPixel = ColorType == 2 ? 3 : ColorType == 4 ? 2 : 4;
-			BYTE *tempix = new BYTE[Width * Height * bytesPerPixel];
-			BYTE *in;
-			uint32_t *out;
-			int x, y, pitch, backstep;
-
-			M_ReadIDAT (lump, tempix, Width, Height, Width*bytesPerPixel, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
-			in = tempix;
-			out = PixelsBgra.data();
-
-			// Convert from source format to paletted, column-major.
-			// Formats with alpha maps are reduced to only 1 bit of alpha.
-			switch (ColorType)
-			{
-			case 2:		// RGB
-				pitch = Width * 3;
-				backstep = Height * pitch - 3;
-				for (x = Width; x > 0; --x)
-				{
-					for (y = Height; y > 0; --y)
-					{
-						if (!HaveTrans)
-						{
-							*out++ = 0xff000000 | (((uint32_t)in[0]) << 16) | (((uint32_t)in[1]) << 8) | ((uint32_t)in[2]);
-						}
-						else
-						{
-							if (in[0] == NonPaletteTrans[0] &&
-								in[1] == NonPaletteTrans[1] &&
-								in[2] == NonPaletteTrans[2])
-							{
-								*out++ = 0;
-							}
-							else
-							{
-								*out++ = 0xff000000 | (((uint32_t)in[0]) << 16) | (((uint32_t)in[1]) << 8) | ((uint32_t)in[2]);
-							}
-						}
-						in += pitch;
-					}
-					in -= backstep;
-				}
-				break;
-
-			case 4:		// Grayscale + Alpha
-				pitch = Width * 2;
-				backstep = Height * pitch - 2;
-				for (x = Width; x > 0; --x)
-				{
-					for (y = Height; y > 0; --y)
-					{
-						// output as premultiplied alpha
-						uint32_t alpha = in[1];
-						uint32_t gray = (in[0] * alpha + 127) / 255;
-						*out++ = (alpha << 24) | (gray << 16) | (gray << 8) | gray;
-						in += pitch;
-					}
-					in -= backstep;
-				}
-				break;
-
-			case 6:		// RGB + Alpha
-				pitch = Width * 4;
-				backstep = Height * pitch - 4;
-				for (x = Width; x > 0; --x)
-				{
-					for (y = Height; y > 0; --y)
-					{
-						// output as premultiplied alpha
-						uint32_t alpha = in[3];
-						uint32_t red = (in[0] * alpha + 127) / 255;
-						uint32_t green = (in[1] * alpha + 127) / 255;
-						uint32_t blue = (in[2] * alpha + 127) / 255;
-						*out++ = (alpha << 24) | (red << 16) | (green << 8) | blue;
-						in += pitch;
-					}
-					in -= backstep;
-				}
-				break;
-			}
-			delete[] tempix;
-		}
-	}
-	delete lump;
-	GenerateBgraMipmaps();
 }
 
 //===========================================================================

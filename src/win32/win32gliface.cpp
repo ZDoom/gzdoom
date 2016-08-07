@@ -1141,7 +1141,7 @@ void Win32GLFrameBuffer::ReleaseResources ()
 
 void Win32GLFrameBuffer::SetVSync (bool vsync)
 {
-	if (vsyncfunc != NULL) vsyncfunc(vsync);
+	if (vsyncfunc != NULL) vsyncfunc(vsync ? 1 : 0);
 }
 
 void Win32GLFrameBuffer::SwapBuffers()

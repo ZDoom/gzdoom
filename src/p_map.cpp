@@ -434,7 +434,8 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 
 		// If this teleport was caused by a move, P_TryMove() will handle the
 		// sector transition messages better than we can here.
-		if (!(thing->flags6 & MF6_INTRYMOVE))
+		// This needs to be compatibility optioned because some older maps exploited this missing feature.
+		if (!(thing->flags6 & MF6_INTRYMOVE) && !(i_compatflags2 & COMPATF2_TELEPORT))
 		{
 			thing->CheckSectorTransition(oldsec);
 		}

@@ -1341,6 +1341,7 @@ MapFlagHandlers[] =
 	{ "compat_soundcutoff",				MITYPE_COMPATFLAG, 0, COMPATF2_SOUNDCUTOFF },
 	{ "compat_pointonline",				MITYPE_COMPATFLAG, 0, COMPATF2_POINTONLINE },
 	{ "compat_multiexit",				MITYPE_COMPATFLAG, 0, COMPATF2_MULTIEXIT },
+	{ "compat_teleport",				MITYPE_COMPATFLAG, 0, COMPATF2_TELEPORT },
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },

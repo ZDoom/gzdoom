@@ -315,10 +315,10 @@ do_stop:
 				}
 
 				bool hasfinalret;
-				tcall->Code = ParseActions(sc, state, statestring, bag, tcall->Proto, hasfinalret);
-				if (!hasfinalret)
+				tcall->Code = ParseActions(sc, state, statestring, bag, hasfinalret);
+				if (!hasfinalret && tcall->Code != nullptr)
 				{
-					AddImplicitReturn(static_cast<FxSequence*>(tcall->Code), tcall->Proto, sc);
+					static_cast<FxSequence *>(tcall->Code)->Add(new FxReturnStatement(nullptr, sc));
 				}
 				goto endofstate;
 			}
@@ -353,123 +353,35 @@ endofstate:
 
 //==========================================================================
 //
-// AddImplicitReturn
-//
-// Adds an implied return; statement to the end of a code sequence.
-//
-//==========================================================================
-
-void AddImplicitReturn(FxSequence *code, const PPrototype *proto, FScanner &sc)
-{
-	if (code == NULL)
-	{
-		return;
-	}
-	if (proto == NULL || proto->ReturnTypes.Size() == 0)
-	{ // Returns nothing. Good. We can safely add an implied return.
-		code->Add(new FxReturnStatement(NULL, sc));
-	}
-	else
-	{ // Something was returned earlier in the sequence. Make it an error
-	  // instead of adding an implicit one.
-		sc.ScriptError("Not all paths return a value");
-	}
-}
-
-//==========================================================================
-//
-// ReturnCheck
-//
-// If proto1 is NULL, returns proto2. If proto2 is NULL, returns proto1.
-// If neither is null, checks if both prototypes define the same return
-// types. If not, an error is flagged.
-//
-//==========================================================================
-
-static PPrototype *ReturnCheck(PPrototype *proto1, PPrototype *proto2, FScanner &sc)
-{
-	if (proto1 == NULL)
-	{
-		return proto2;
-	}
-	if (proto2 == NULL)
-	{
-		return proto1;
-	}
-	// A prototype that defines fewer return types can be compatible with
-	// one that defines more if the shorter one matches the initial types
-	// for the longer one.
-	if (proto2->ReturnTypes.Size() < proto1->ReturnTypes.Size())
-	{ // Make proto1 the shorter one to avoid code duplication below.
-		swapvalues(proto1, proto2);
-	}
-	// If one prototype returns nothing, they both must.
-	if (proto1->ReturnTypes.Size() == 0)
-	{
-		if (proto2->ReturnTypes.Size() == 0)
-		{
-			return proto1;
-		}
-		proto1 = NULL;
-	}
-	else
-	{
-		for (unsigned i = 0; i < proto1->ReturnTypes.Size(); ++i)
-		{
-			if (proto1->ReturnTypes[i] != proto2->ReturnTypes[i])
-			{ // Incompatible
-				proto1 = NULL;
-				break;
-			}
-		}
-	}
-	if (proto1 == NULL)
-	{
-		sc.ScriptError("Return types are incompatible");
-	}
-	return proto1;
-}
-
-//==========================================================================
-//
 // ParseActions
 //
-// If this action block contains any return statements, the prototype for
-// one of them will be returned. This is used for deducing the return type
-// of anonymous functions. All called functions passed to return must have
-// matching return types.
-//
 //==========================================================================
 
-static FxExpression *ParseIf(FScanner &sc, FState state, FString statestring, Baggage &bag,
-	PPrototype *&retproto, bool &lastwasret)
+static FxExpression *ParseIf(FScanner &sc, FState state, FString statestring, Baggage &bag, bool &lastwasret)
 {
 	FxExpression *add, *cond;
-	FxExpression *true_part, *false_part = NULL;
-	PPrototype *true_proto, *false_proto = NULL;
+	FxExpression *true_part, *false_part = nullptr;
 	bool true_ret, false_ret = false;
 	sc.MustGetStringName("(");
 	cond = ParseExpression(sc, bag.Info);
 	sc.MustGetStringName(")");
 	sc.MustGetStringName("{");	// braces are mandatory
-	true_part = ParseActions(sc, state, statestring, bag, true_proto, true_ret);
+	true_part = ParseActions(sc, state, statestring, bag, true_ret);
 	sc.MustGetString();
 	if (sc.Compare("else"))
 	{
 		if (sc.CheckString("if"))
 		{
-			false_part = ParseIf(sc, state, statestring, bag, false_proto, false_ret);
+			false_part = ParseIf(sc, state, statestring, bag, false_ret);
 		}
 		else
 		{
 			sc.MustGetStringName("{");	// braces are still mandatory
-			false_part = ParseActions(sc, state, statestring, bag, false_proto, false_ret);
+			false_part = ParseActions(sc, state, statestring, bag, false_ret);
 			sc.MustGetString();
 		}
 	}
 	add = new FxIfStatement(cond, true_part, false_part, sc);
-	retproto = ReturnCheck(retproto, true_proto, sc);
-	retproto = ReturnCheck(retproto, false_proto, sc);
 	// If one side does not end with a return, we don't consider the if statement
 	// to end with a return. If the else case is missing, it can never be considered
 	// as ending with a return.
@@ -480,11 +392,9 @@ static FxExpression *ParseIf(FScanner &sc, FState state, FString statestring, Ba
 	return add;
 }
 
-static FxExpression *ParseWhile(FScanner &sc, FState state, FString statestring, Baggage &bag,
-	PPrototype *&retproto, bool &lastwasret)
+static FxExpression *ParseWhile(FScanner &sc, FState state, FString statestring, Baggage &bag, bool &lastwasret)
 {
 	FxExpression *cond, *code;
-	PPrototype *proto;
 	bool ret;
 
 	sc.MustGetStringName("(");
@@ -492,24 +402,21 @@ static FxExpression *ParseWhile(FScanner &sc, FState state, FString statestring,
 	sc.MustGetStringName(")");
 	sc.MustGetStringName("{"); // Enforce braces like for if statements.
 
-	code = ParseActions(sc, state, statestring, bag, proto, ret);
+	code = ParseActions(sc, state, statestring, bag, ret);
 	sc.MustGetString();
 
-	retproto = ReturnCheck(retproto, proto, sc);
 	lastwasret = false; // A while loop always jumps back.
 
 	return new FxWhileLoop(cond, code, sc);
 }
 
-static FxExpression *ParseDoWhile(FScanner &sc, FState state, FString statestring, Baggage &bag,
-	PPrototype *&retproto, bool &lastwasret)
+static FxExpression *ParseDoWhile(FScanner &sc, FState state, FString statestring, Baggage &bag, bool &lastwasret)
 {
 	FxExpression *cond, *code;
-	PPrototype *proto;
 	bool ret;
 
 	sc.MustGetStringName("{"); // Enforce braces like for if statements.
-	code = ParseActions(sc, state, statestring, bag, proto, ret);
+	code = ParseActions(sc, state, statestring, bag, ret);
 
 	sc.MustGetStringName("while");
 	sc.MustGetStringName("(");
@@ -518,20 +425,17 @@ static FxExpression *ParseDoWhile(FScanner &sc, FState state, FString statestrin
 	sc.MustGetStringName(";");
 	sc.MustGetString();
 
-	retproto = ReturnCheck(retproto, proto, sc);
 	lastwasret = false;
 
 	return new FxDoWhileLoop(cond, code, sc);
 }
 
-static FxExpression *ParseFor(FScanner &sc, FState state, FString statestring, Baggage &bag,
-	PPrototype *&retproto, bool &lastwasret)
+static FxExpression *ParseFor(FScanner &sc, FState state, FString statestring, Baggage &bag, bool &lastwasret)
 {
 	FxExpression *init = nullptr;
 	FxExpression *cond = nullptr;
 	FxExpression *iter = nullptr;
 	FxExpression *code = nullptr;
-	PPrototype *proto;
 	bool ret;
 
 	// Parse the statements.
@@ -539,7 +443,8 @@ static FxExpression *ParseFor(FScanner &sc, FState state, FString statestring, B
 	sc.MustGetString();
 	if (!sc.Compare(";"))
 	{
-		init = ParseAction(sc, state, statestring, bag); // That's all DECORATE can handle for now.
+		sc.UnGet();
+		init = ParseExpression(sc, bag.Info);
 		sc.MustGetStringName(";");
 	}
 	sc.MustGetString();
@@ -552,30 +457,28 @@ static FxExpression *ParseFor(FScanner &sc, FState state, FString statestring, B
 	sc.MustGetString();
 	if (!sc.Compare(")"))
 	{
-		iter = ParseAction(sc, state, statestring, bag);
+		sc.UnGet();
+		iter = ParseExpression(sc, bag.Info);
 		sc.MustGetStringName(")");
 	}
 
 	// Now parse the loop's content.
 	sc.MustGetStringName("{"); // Enforce braces like for if statements.
-	code = ParseActions(sc, state, statestring, bag, proto, ret);
+	code = ParseActions(sc, state, statestring, bag, ret);
 	sc.MustGetString();
 
-	retproto = ReturnCheck(retproto, proto, sc);
 	lastwasret = false;
 
 	return new FxForLoop(init, cond, iter, code, sc);
 }
 
-FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag,
-						   PPrototype *&retproto, bool &endswithret)
+FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag, bool &endswithret)
 {
 	// If it's not a '{', then it should be a single action.
 	// Otherwise, it's a sequence of actions.
 	if (!sc.Compare("{"))
 	{
 		FxVMFunctionCall *call = ParseAction(sc, state, statestring, bag);
-		retproto = call->GetVMFunction()->Proto;
 		endswithret = true;
 		return new FxReturnStatement(call, sc);
 	}
@@ -583,7 +486,6 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 	const FScriptPosition pos(sc);
 
 	FxSequence *seq = NULL;
-	PPrototype *proto = NULL;
 	bool lastwasret = false;
 
 	sc.MustGetString();
@@ -593,38 +495,31 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 		lastwasret = false;
 		if (sc.Compare("if"))
 		{ // Handle an if statement
-			add = ParseIf(sc, state, statestring, bag, proto, lastwasret);
+			add = ParseIf(sc, state, statestring, bag, lastwasret);
 		}
 		else if (sc.Compare("while"))
 		{ // Handle a while loop
-			add = ParseWhile(sc, state, statestring, bag, proto, lastwasret);
+			add = ParseWhile(sc, state, statestring, bag, lastwasret);
 		}
 		else if (sc.Compare("do"))
 		{ // Handle a do-while loop
-			add = ParseDoWhile(sc, state, statestring, bag, proto, lastwasret);
+			add = ParseDoWhile(sc, state, statestring, bag, lastwasret);
 		}
 		else if (sc.Compare("for"))
 		{ // Handle a for loop
-			add = ParseFor(sc, state, statestring, bag, proto, lastwasret);
+			add = ParseFor(sc, state, statestring, bag, lastwasret);
 		}
 		else if (sc.Compare("return"))
 		{ // Handle a return statement
 			lastwasret = true;
-			FxVMFunctionCall *retexp = NULL;
-			PPrototype *retproto;
+			FxExpression *retexp = nullptr;
 			sc.MustGetString();
 			if (!sc.Compare(";"))
 			{
-				retexp = ParseAction(sc, state, statestring, bag);
+				sc.UnGet();
+				retexp = ParseExpression(sc, bag.Info);
 				sc.MustGetStringName(";");
-				retproto = retexp->GetVMFunction()->Proto;
 			}
-			else
-			{ // Returning nothing; we still need a prototype for that.
-				TArray<PType *> notypes(0);
-				retproto = NewPrototype(notypes, notypes);
-			}
-			proto = ReturnCheck(proto, retproto, sc);
 			sc.MustGetString();
 			add = new FxReturnStatement(retexp, sc);
 		}
@@ -641,8 +536,9 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 			sc.MustGetString();
 		}
 		else
-		{ // Handle a regular action function call
-			add = ParseAction(sc, state, statestring, bag);
+		{ // Handle a regular expression
+			sc.UnGet();
+			add = ParseExpression(sc, bag.Info);
 			sc.MustGetStringName(";");
 			sc.MustGetString();
 		}
@@ -657,7 +553,6 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 		}
 	}
 	endswithret = lastwasret;
-	retproto = proto;
 	return seq;
 }
 

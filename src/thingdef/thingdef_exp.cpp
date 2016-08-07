@@ -63,6 +63,7 @@ static FxExpression *ParseClamp(FScanner &sc, PClassActor *cls);
 //
 // ParseExpression
 // [GRB] Parses an expression and stores it into Expression array
+// It's worth mentioning that this is using C++ operator precedence
 //
 
 static FxExpression *ParseExpressionM (FScanner &sc, PClassActor *cls);
@@ -95,18 +96,83 @@ FxExpression *ParseExpression (FScanner &sc, PClassActor *cls, bool mustresolve)
 
 static FxExpression *ParseExpressionM (FScanner &sc, PClassActor *cls)
 {
-	FxExpression *condition = ParseExpressionL (sc, cls);
+	FxExpression *base = ParseExpressionL (sc, cls);
 
 	if (sc.CheckToken('?'))
 	{
 		FxExpression *truex = ParseExpressionM (sc, cls);
 		sc.MustGetToken(':');
 		FxExpression *falsex = ParseExpressionM (sc, cls);
-		return new FxConditional(condition, truex, falsex);
+		return new FxConditional(base, truex, falsex);
+	}
+	else if (sc.CheckToken('='))
+	{
+		FxExpression *right = ParseExpressionM(sc, cls);
+		return new FxAssign(base, right);
 	}
 	else
 	{
-		return condition;
+		FxBinary *exp;
+		FxAssignSelf *left = new FxAssignSelf(sc);
+
+		sc.GetToken();
+		switch (sc.TokenType)
+		{
+		case TK_AddEq:
+			exp = new FxAddSub('+', left, nullptr);
+			break;
+
+		case TK_SubEq:
+			exp = new FxAddSub('-', left, nullptr);
+			break;
+
+		case TK_MulEq:
+			exp = new FxMulDiv('*', left, nullptr);
+			break;
+
+		case TK_DivEq:
+			exp = new FxMulDiv('/', left, nullptr);
+			break;
+
+		case TK_ModEq:
+			exp = new FxMulDiv('%', left, nullptr);
+			break;
+
+		case TK_LShiftEq:
+			exp = new FxBinaryInt(TK_LShift, left, nullptr);
+			break;
+
+		case TK_RShiftEq:
+			exp = new FxBinaryInt(TK_RShift, left, nullptr);
+			break;
+
+		case TK_URShiftEq:
+			exp = new FxBinaryInt(TK_URShift, left, nullptr);
+			break;
+
+		case TK_AndEq:
+			exp = new FxBinaryInt('&', left, nullptr);
+			break;
+
+		case TK_XorEq:
+			exp = new FxBinaryInt('^', left, nullptr);
+			break;
+
+		case TK_OrEq:
+			exp = new FxBinaryInt('|', left, nullptr);
+			break;
+
+		default:
+			sc.UnGet();
+			delete left;
+			return base;
+		}
+
+		exp->right = ParseExpressionM(sc, cls);
+
+		FxAssign *ret = new FxAssign(base, exp);
+		left->Assignment = ret;
+		return ret;
 	}
 }
 
@@ -257,6 +323,10 @@ static FxExpression *ParseExpressionB (FScanner &sc, PClassActor *cls)
 	case '+':
 		return new FxPlusSign(ParseExpressionA (sc, cls));
 
+	case TK_Incr:
+	case TK_Decr:
+		return new FxPreIncrDecr(ParseExpressionA(sc, cls), sc.TokenType);
+
 	default:
 		sc.UnGet();
 		return ParseExpressionA (sc, cls);
@@ -312,6 +382,14 @@ static FxExpression *ParseExpressionA (FScanner &sc, PClassActor *cls)
 			sc.MustGetToken(']');
 			base_expr = new FxArrayElement(base_expr, index);
 		}
+		else if (sc.CheckToken(TK_Incr))
+		{
+			return new FxPostIncrDecr(base_expr, TK_Incr);
+		}
+		else if (sc.CheckToken(TK_Decr))
+		{
+			return new FxPostIncrDecr(base_expr, TK_Decr);
+		}
 		else break;
 	} 
 
@@ -357,6 +435,49 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 		// a cheap way to get them working when people use "name" instead of 'name'.
 		return new FxConstant(FName(sc.String), scpos);
 	}
+	else if (sc.CheckToken(TK_Bool))
+	{
+		sc.MustGetToken('(');
+		FxExpression *exp = ParseExpressionM(sc, cls);
+		sc.MustGetToken(')');
+		return new FxBoolCast(exp);
+	}
+	else if (sc.CheckToken(TK_Int))
+	{
+		sc.MustGetToken('(');
+		FxExpression *exp = ParseExpressionM(sc, cls);
+		sc.MustGetToken(')');
+		return new FxIntCast(exp);
+	}
+	else if (sc.CheckToken(TK_Float))
+	{
+		sc.MustGetToken('(');
+		FxExpression *exp = ParseExpressionM(sc, cls);
+		sc.MustGetToken(')');
+		return new FxFloatCast(exp);
+	}
+	else if (sc.CheckToken(TK_State))
+	{
+		sc.MustGetToken('(');
+		FxExpression *exp;
+		if (sc.CheckToken(TK_StringConst))
+		{
+			if (sc.String[0] == 0 || sc.Compare("None"))
+			{
+				exp = new FxConstant((FState*)nullptr, sc);
+			}
+			else
+			{
+				exp = new FxMultiNameState(sc.String, sc);
+			}
+		}
+		else
+		{
+			exp = new FxRuntimeStateIndex(ParseExpressionM(sc, cls));
+		}
+		sc.MustGetToken(')');
+		return exp;
+	}
 	else if (sc.CheckToken(TK_Identifier))
 	{
 		FName identifier = FName(sc.String);
@@ -374,6 +495,29 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 		case NAME_Random2:
 			return ParseRandom2(sc, cls);
 		default:
+			if (cls != nullptr)
+			{
+				func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(identifier, true));
+
+				// There is an action function ACS_NamedExecuteWithResult which must be ignored here for this to work.
+				if (func != nullptr && identifier != NAME_ACS_NamedExecuteWithResult)
+				{
+					args = new FArgumentList;
+					if (sc.CheckToken('('))
+					{
+						sc.UnGet();
+						ParseFunctionParameters(sc, cls, *args, func, "", nullptr);
+					}
+					if (args->Size() == 0)
+					{
+						delete args;
+						args = nullptr;
+					}
+
+					return new FxVMFunctionCall(func, args, sc);
+				}
+			}
+
 			break;
 		}
 		if (sc.CheckToken('('))
@@ -392,17 +536,9 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 				return ParseAtan2(sc, identifier, cls);
 			default:
 				args = new FArgumentList;
-				func = (cls == nullptr) ? nullptr : dyn_cast<PFunction>(cls->Symbols.FindSymbol(identifier, true));
 				try
 				{
-					// There is an action function ACS_NamedExecuteWithResult which must be ignored here for this to work.
-					if (func != NULL && identifier != NAME_ACS_NamedExecuteWithResult)
-					{
-						sc.UnGet();
-						ParseFunctionParameters(sc, cls, *args, func, "", NULL);
-						return new FxVMFunctionCall(func, args, sc);
-					}
-					else if (!sc.CheckToken(')'))
+					if (!sc.CheckToken(')'))
 					{
 						do
 						{
@@ -420,7 +556,7 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 				}
 				break;
 			}
-		}	
+		}
 		else
 		{
 			return new FxIdentifier(identifier, sc);

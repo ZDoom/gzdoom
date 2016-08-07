@@ -147,6 +147,7 @@ static FCompatOption Options[] =
 	{ "soundcutoff",			COMPATF2_SOUNDCUTOFF, SLOT_COMPAT2 },
 	{ "pointonline",			COMPATF2_POINTONLINE, SLOT_COMPAT2 },
 	{ "multiexit",				COMPATF2_MULTIEXIT, SLOT_COMPAT2 },
+	{ "teleport",				COMPATF2_TELEPORT, SLOT_COMPAT2 },
 
 	{ NULL, 0, 0 }
 };

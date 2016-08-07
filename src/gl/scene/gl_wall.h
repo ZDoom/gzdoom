@@ -187,7 +187,7 @@ private:
 	void RenderLightsCompat(int pass);
 
 	void Put3DWall(lightlist_t * lightlist, bool translucent);
-	void SplitWallComplex(sector_t * frontsector, bool translucent, float maplightbottomleft, float maplightbottomright);
+	bool SplitWallComplex(sector_t * frontsector, bool translucent, float& maplightbottomleft, float& maplightbottomright);
 	void SplitWall(sector_t * frontsector, bool translucent);
 
 	void SetupLights();

@@ -264,7 +264,7 @@ void GLWall::Put3DWall(lightlist_t * lightlist, bool translucent)
 //
 //==========================================================================
 
-void GLWall::SplitWallComplex(sector_t * frontsector, bool translucent, float maplightbottomleft, float maplightbottomright)
+bool GLWall::SplitWallComplex(sector_t * frontsector, bool translucent, float& maplightbottomleft, float& maplightbottomright)
 {
 	GLWall copyWall1, copyWall2;
 
@@ -304,7 +304,7 @@ void GLWall::SplitWallComplex(sector_t * frontsector, bool translucent, float ma
 
 			copyWall1.SplitWall(frontsector, translucent);
 			copyWall2.SplitWall(frontsector, translucent);
-			return;
+			return true;
 		}
 	}
 
@@ -345,9 +345,11 @@ void GLWall::SplitWallComplex(sector_t * frontsector, bool translucent, float ma
 
 			copyWall1.SplitWall(frontsector, translucent);
 			copyWall2.SplitWall(frontsector, translucent);
-			return;
+			return true;
 		}
 	}
+
+	return false;
 }
 
 void GLWall::SplitWall(sector_t * frontsector, bool translucent)
@@ -406,14 +408,14 @@ void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 					// Use hardware clipping if this cannot be done cleanly.
 					this->lightlist = &lightlist;
 					PutWall(translucent);
-				}
-				else
-				{
-					// crappy fallback if no clip planes available
-					SplitWallComplex(frontsector, translucent, maplightbottomleft, maplightbottomright);
-				}
 
-				goto out;
+					goto out;
+				}
+				// crappy fallback if no clip planes available
+				else if (SplitWallComplex(frontsector, translucent, maplightbottomleft, maplightbottomright))
+				{
+					goto out;
+				}
 			}
 
 			// 3D floor is completely within this light

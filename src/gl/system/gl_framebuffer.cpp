@@ -94,6 +94,10 @@ CUSTOM_CVAR(Int, vid_hwgamma, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITC
 OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen) : 
 	Super(hMonitor, width, height, bits, refreshHz, fullscreen) 
 {
+	// SetVSync needs to be at the very top to workaround a bug in Nvidia's OpenGL driver.
+	// If wglSwapIntervalEXT is called after glBindFramebuffer in a frame the setting is not changed!
+	SetVSync(vid_vsync);
+
 	GLRenderer = new FGLRenderer(this);
 	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 	UpdatePalette ();
@@ -107,7 +111,6 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int 
 	needsetgamma = true;
 	swapped = false;
 	Accel2D = true;
-	SetVSync(vid_vsync);
 }
 
 OpenGLFrameBuffer::~OpenGLFrameBuffer()

@@ -109,7 +109,7 @@ void FSimpleVertexBuffer::set(FSimpleVertex *verts, int count)
 //
 //==========================================================================
 
-FFlatVertexBuffer::FFlatVertexBuffer()
+FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 : FVertexBuffer(gl.buffermethod == BM_PERSISTENT)
 {
 	if (gl.buffermethod == BM_PERSISTENT)
@@ -125,7 +125,22 @@ FFlatVertexBuffer::FFlatVertexBuffer()
 		vbo_shadowdata.Reserve(BUFFER_SIZE);
 		map = new FFlatVertex[BUFFER_SIZE];
 	}
-	mNumReserved = mIndex = mCurIndex = 0;
+	mIndex = mCurIndex = 0;
+	mNumReserved = 8;
+	vbo_shadowdata.Resize(mNumReserved);
+
+	// the first quad is reserved for handling coordinates through uniforms.
+	vbo_shadowdata[0].Set(1, 0, 0, 0, 0);
+	vbo_shadowdata[1].Set(2, 0, 0, 0, 0);
+	vbo_shadowdata[2].Set(3, 0, 0, 0, 0);
+	vbo_shadowdata[3].Set(4, 0, 0, 0, 0);
+
+	// and the second one for the fullscreen quad used for blend overlays.
+	vbo_shadowdata[4].Set(0, 0, 0, 0, 0);
+	vbo_shadowdata[5].Set(0, (float)height, 0, 0, 0);
+	vbo_shadowdata[6].Set((float)width, 0, 0, 0, 0);
+	vbo_shadowdata[7].Set((float)width, (float)height, 0, 0, 0);
+
 }
 
 FFlatVertexBuffer::~FFlatVertexBuffer()
@@ -350,7 +365,6 @@ void FFlatVertexBuffer::UpdatePlaneVertices(sector_t *sec, int plane)
 
 void FFlatVertexBuffer::CreateVBO()
 {
-	vbo_shadowdata.Resize(mNumReserved);
 	CreateFlatVBO();
 	mCurIndex = mIndex = vbo_shadowdata.Size();
 	memcpy(map, &vbo_shadowdata[0], vbo_shadowdata.Size() * sizeof(FFlatVertex));

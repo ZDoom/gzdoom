@@ -164,7 +164,7 @@ void OpenGLFrameBuffer::InitializeState()
 	//int h = GetHeight();
 	//glViewport(0, (trueH - h)/2, GetWidth(), GetHeight()); 
 
-	GLRenderer->Initialize();
+	GLRenderer->Initialize(GetWidth(), GetHeight());
 	GLRenderer->SetOutputViewport(nullptr);
 	Begin2D(false);
 }

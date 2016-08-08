@@ -113,7 +113,7 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 void gl_LoadModels();
 void gl_FlushModels();
 
-void FGLRenderer::Initialize()
+void FGLRenderer::Initialize(int width, int height)
 {
 	mBuffers = new FGLRenderBuffers();
 	mBloomExtractShader = new FBloomExtractShader();
@@ -137,7 +137,7 @@ void FGLRenderer::Initialize()
 	glpart = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/glpart.png"), FTexture::TEX_MiscPatch);
 	mirrortexture = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/mirror.png"), FTexture::TEX_MiscPatch);
 
-	mVBO = new FFlatVertexBuffer;
+	mVBO = new FFlatVertexBuffer(width, height);
 	mSkyVBO = new FSkyVertexBuffer;
 	if (gl.lightmethod != LM_SOFTWARE) mLights = new FLightBuffer();
 	else mLights = NULL;

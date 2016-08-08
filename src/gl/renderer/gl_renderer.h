@@ -129,7 +129,7 @@ public:
 	void SetViewAngle(DAngle viewangle);
 	void SetupView(float viewx, float viewy, float viewz, DAngle viewangle, bool mirror, bool planemirror);
 
-	void Initialize();
+	void Initialize(int width, int height);
 
 	void CreateScene();
 	void RenderMultipassStuff();

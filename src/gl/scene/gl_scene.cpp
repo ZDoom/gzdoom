@@ -525,16 +525,8 @@ void gl_FillScreen()
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.Apply();
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	ptr->Set(0, 0, 0, 0, 0);
-	ptr++;
-	ptr->Set(0, (float)SCREENHEIGHT, 0, 0, 0);
-	ptr++;
-	ptr->Set((float)SCREENWIDTH, 0, 0, 0, 0);
-	ptr++;
-	ptr->Set((float)SCREENWIDTH, (float)SCREENHEIGHT, 0, 0, 0);
-	ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+	// The fullscreen quad is stored at index 4 in the main vertex buffer.
+	glDrawArrays(GL_TRIANGLE_STRIP, 4, 4);
 }
 
 //==========================================================================

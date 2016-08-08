@@ -84,7 +84,7 @@ class FFlatVertexBuffer : public FVertexBuffer
 public:
 	TArray<FFlatVertex> vbo_shadowdata;	// this is kept around for updating the actual (non-readable) buffer and as stand-in for pre GL 4.x
 
-	FFlatVertexBuffer();
+	FFlatVertexBuffer(int width, int height);
 	~FFlatVertexBuffer();
 
 	void BindVBO();

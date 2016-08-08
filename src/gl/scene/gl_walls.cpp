@@ -403,7 +403,7 @@ void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 				(maplightbottomleft<zbottom[0] && maplightbottomright>zbottom[1]) ||
 				(maplightbottomleft > zbottom[0] && maplightbottomright < zbottom[1]))
 			{
-				if (gl.glslversion >= 1.3f)
+				if (!(gl.flags & RFL_NO_CLIP_PLANES))
 				{
 					// Use hardware clipping if this cannot be done cleanly.
 					this->lightlist = &lightlist;

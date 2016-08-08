@@ -237,7 +237,7 @@ public:
 
 	void EnableSplit(bool on)
 	{
-		if (gl.glslversion >= 1.3f)
+		if (!(gl.flags & RFL_NO_CLIP_PLANES))
 		{
 			mSplitEnabled = on;
 			if (on)
@@ -260,7 +260,7 @@ public:
 
 	void EnableClipLine(bool on)
 	{
-		if (gl.glslversion >= 1.3f)
+		if (!(gl.flags & RFL_NO_CLIP_PLANES))
 		{
 			mClipLineEnabled = on;
 			if (on)

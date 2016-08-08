@@ -192,6 +192,7 @@ void gl_LoadExtensions()
 		gl.version = 2.11f;
 		gl.glslversion = 0;
 		gl.lightmethod = LM_SOFTWARE;
+		gl.flags |= RFL_NO_CLIP_PLANES;
 	}
 	else if (gl.version < 3.0f)
 	{
@@ -200,17 +201,18 @@ void gl_LoadExtensions()
 
 		if (!CheckExtension("GL_EXT_packed_float")) gl.flags |= RFL_NO_RGBA16F;
 		if (!CheckExtension("GL_EXT_packed_depth_stencil")) gl.flags |= RFL_NO_DEPTHSTENCIL;
+		gl.flags |= RFL_NO_CLIP_PLANES;
 	}
 	else if (gl.version < 4.f)
 	{
+#ifdef _WIN32
 		if (strstr(gl.vendorstring, "ATI Tech")) 
 		{
-			gl.version = 2.11f;
-			gl.glslversion = 1.21f;
-			gl.lightmethod = LM_SOFTWARE;		// do not use uniform buffers with the fallback shader, it may cause problems.
+			gl.flags |= RFL_NO_CLIP_PLANES;	// gl_ClipDistance is horribly broken on ATI GL3 drivers for Windows.
 		}
+#endif
 	}
-	else
+	else if (gl.version < 4.5f)
 	{
 		// don't use GL 4.x features when running in GL 3 emulation mode.
 		if (CheckExtension("GL_ARB_buffer_storage"))
@@ -233,6 +235,13 @@ void gl_LoadExtensions()
 		{
 			gl.version = 3.3f;
 		}
+	}
+	else
+	{
+		// Assume that everything works without problems on GL 4.5 drivers where these things are core features.
+		gl.flags |= RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE;
+		gl.lightmethod = LM_DIRECT;
+		gl.buffermethod = BM_PERSISTENT;
 	}
 
 	const char *lm = Args->CheckValue("-lightmethod");

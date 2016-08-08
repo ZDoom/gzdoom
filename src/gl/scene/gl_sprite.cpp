@@ -972,7 +972,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	if (thing->Sector->e->XFloor.lightlist.Size() != 0 && gl_fixedcolormap == CM_DEFAULT && !fullbright &&
 		RenderStyle.BlendOp != STYLEOP_Shadow && RenderStyle.BlendOp != STYLEOP_RevSub)
 	{
-		if (gl.glslversion < 1.3)	// on old hardware we are rather limited...
+		if (gl.flags & RFL_NO_CLIP_PLANES)	// on old hardware we are rather limited...
 		{
 			lightlist = NULL;
 			if (!drawWithXYBillboard && !modelframe)

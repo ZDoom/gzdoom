@@ -482,7 +482,7 @@ void FTexture::GenerateBgraMipmaps()
 							if (a < 0) a = h - 1;
 							if (a == h) a = 0;
 							if (b < 0) b = w - 1;
-							if (b == h) b = 0;
+							if (b == w) b = 0;
 							c = c + dest[a + b * h];
 						}
 					}

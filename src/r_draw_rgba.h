@@ -94,6 +94,9 @@ void R_DrawSpanAddClamp_rgba();
 void R_DrawSpanMaskedAddClamp_rgba();
 void R_FillSpan_rgba();
 
+void R_DrawTiltedSpan_rgba(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy);
+void R_DrawColoredSpan_rgba(int y, int x1, int x2);
+
 void R_SetupDrawSlab_rgba(FColormap *base_colormap, float light, int shade);
 void R_DrawSlab_rgba(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p);
 

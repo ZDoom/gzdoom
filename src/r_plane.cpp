@@ -480,23 +480,7 @@ void R_MapTiltedPlane_C (int y, int x1)
 
 void R_MapTiltedPlane_rgba (int y, int x1)
 {
-	int x2 = spanend[y];
-
-	// Slopes are broken currently in master.
-	// Until R_DrawTiltedPlane is fixed we are just going to fill with a solid color.
-
-	uint32_t *source = (uint32_t*)ds_source;
-	int source_width = 1 << ds_xbits;
-	int source_height = 1 << ds_ybits;
-
-	uint32_t *dest = ylookup[y] + x1 + (uint32_t*)dc_destorg;
-
-	int count = x2 - x1 + 1;
-	while (count > 0)
-	{
-		*(dest++) = source[0];
-		count--;
-	}
+	R_DrawTiltedSpan_rgba(y, x1, spanend[y], plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
 }
 
 //==========================================================================
@@ -512,12 +496,7 @@ void R_MapColoredPlane_C (int y, int x1)
 
 void R_MapColoredPlane_rgba(int y, int x1)
 {
-	uint32_t *dest = ylookup[y] + x1 + (uint32_t*)dc_destorg;
-	int count = (spanend[y] - x1 + 1);
-	uint32_t light = LightBgra::calc_light_multiplier(ds_light);
-	uint32_t color = LightBgra::shade_pal_index_simple(ds_color, light);
-	for (int i = 0; i < count; i++)
-		dest[i] = color;
+	R_DrawColoredSpan_rgba(y, x1, spanend[y]);
 }
 
 //==========================================================================

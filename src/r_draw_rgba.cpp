@@ -2191,23 +2191,44 @@ public:
 
 class DrawTiltedSpanRGBACommand : public DrawerCommand
 {
-	int _y;
 	int _x1;
 	int _x2;
+	int _y;
 	BYTE * RESTRICT _destorg;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
-	const BYTE * RESTRICT _source;
+	FVector3 _plane_sz;
+	FVector3 _plane_su;
+	FVector3 _plane_sv;
+	bool _plane_shade;
+	int _planeshade;
+	float _planelightfloat;
+	fixed_t _pviewx;
+	fixed_t _pviewy;
+	int _xbits;
+	int _ybits;
+	const uint32_t * RESTRICT _source;
 
 public:
-	DrawTiltedSpanRGBACommand(int y, int x1, int x2)
+	DrawTiltedSpanRGBACommand(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy)
 	{
-		_y = y;
 		_x1 = x1;
 		_x2 = x2;
-
+		_y = y;
 		_destorg = dc_destorg;
-		_source = ds_source;
+		_light = ds_light;
+		_shade_constants = ds_shade_constants;
+		_plane_sz = plane_sz;
+		_plane_su = plane_su;
+		_plane_sv = plane_sv;
+		_plane_shade = plane_shade;
+		_planeshade = planeshade;
+		_planelightfloat = planelightfloat;
+		_pviewx = pviewx;
+		_pviewy = pviewy;
+		_source = (const uint32_t*)ds_source;
+		_xbits = ds_xbits;
+		_ybits = ds_ybits;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -2215,20 +2236,103 @@ public:
 		if (thread->line_skipped_by_thread(_y))
 			return;
 
-		int y = _y;
-		int x1 = _x1;
-		int x2 = _x2;
+		//#define SPANSIZE 32
+		//#define INVSPAN 0.03125f
+		//#define SPANSIZE 8
+		//#define INVSPAN 0.125f
+		#define SPANSIZE 16
+		#define INVSPAN	0.0625f
 
-		// Slopes are broken currently in master.
-		// Until R_DrawTiltedPlane is fixed we are just going to fill with a solid color.
+		int source_width = 1 << _xbits;
+		int source_height = 1 << _ybits;
 
-		uint32_t *source = (uint32_t*)_source;
-		uint32_t *dest = ylookup[y] + x1 + (uint32_t*)_destorg;
+		uint32_t *dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
+		int count = _x2 - _x1 + 1;
 
-		int count = x2 - x1 + 1;
+		// Depth (Z) change across the span
+		double iz = _plane_sz[2] + _plane_sz[1] * (centery - _y) + _plane_sz[0] * (_x1 - centerx);
+
+		// Light change across the span
+		fixed_t lightstart = _light;
+		fixed_t lightend = lightstart;
+		if (_plane_shade)
+		{
+			double vis_start = iz * _planelightfloat;
+			double vis_end = (iz + _plane_sz[0] * count) * _planelightfloat;
+
+			lightstart = LIGHTSCALE(vis_start, _planeshade);
+			lightend = LIGHTSCALE(vis_end, _planeshade);
+		}
+		fixed_t light = lightstart;
+		fixed_t steplight = (lightend - lightstart) / count;
+
+		// Texture coordinates
+		double uz = _plane_su[2] + _plane_su[1] * (centery - _y) + _plane_su[0] * (_x1 - centerx);
+		double vz = _plane_sv[2] + _plane_sv[1] * (centery - _y) + _plane_sv[0] * (_x1 - centerx);
+		double startz = 1.f / iz;
+		double startu = uz*startz;
+		double startv = vz*startz;
+		double izstep = _plane_sz[0] * SPANSIZE;
+		double uzstep = _plane_su[0] * SPANSIZE;
+		double vzstep = _plane_sv[0] * SPANSIZE;
+
+		// Linear interpolate in sizes of SPANSIZE to increase speed
+		while (count >= SPANSIZE)
+		{
+			iz += izstep;
+			uz += uzstep;
+			vz += vzstep;
+
+			double endz = 1.f / iz;
+			double endu = uz*endz;
+			double endv = vz*endz;
+			uint32_t stepu = (uint32_t)(SQWORD((endu - startu) * INVSPAN));
+			uint32_t stepv = (uint32_t)(SQWORD((endv - startv) * INVSPAN));
+			uint32_t u = (uint32_t)(SQWORD(startu) + _pviewx);
+			uint32_t v = (uint32_t)(SQWORD(startv) + _pviewy);
+
+			for (int i = 0; i < SPANSIZE; i++)
+			{
+				uint32_t sx = ((u >> 16) * source_width) >> 16;
+				uint32_t sy = ((v >> 16) * source_height) >> 16;
+				uint32_t fg = _source[sy + sx * source_height];
+
+				if (_shade_constants.simple_shade)
+					*(dest++) = LightBgra::shade_bgra_simple(fg, LightBgra::calc_light_multiplier(light));
+				else
+					*(dest++) = LightBgra::shade_bgra(fg, LightBgra::calc_light_multiplier(light), _shade_constants);
+
+				u += stepu;
+				v += stepv;
+				light += steplight;
+			}
+			startu = endu;
+			startv = endv;
+			count -= SPANSIZE;
+		}
+
+		// The last few pixels at the end
 		while (count > 0)
 		{
-			*(dest++) = source[0];
+			double endz = 1.f / iz;
+			startu = uz*endz;
+			startv = vz*endz;
+			uint32_t u = (uint32_t)(SQWORD(startu) + _pviewx);
+			uint32_t v = (uint32_t)(SQWORD(startv) + _pviewy);
+
+			uint32_t sx = ((u >> 16) * source_width) >> 16;
+			uint32_t sy = ((v >> 16) * source_height) >> 16;
+			uint32_t fg = _source[sy + sx * source_height];
+
+			if (_shade_constants.simple_shade)
+				*(dest++) = LightBgra::shade_bgra_simple(fg, LightBgra::calc_light_multiplier(light));
+			else
+				*(dest++) = LightBgra::shade_bgra(fg, LightBgra::calc_light_multiplier(light), _shade_constants);
+
+			iz += _plane_sz[0];
+			uz += _plane_su[0];
+			vz += _plane_sv[0];
+			light += steplight;
 			count--;
 		}
 	}
@@ -2631,6 +2735,16 @@ void R_DrawSpanMaskedAddClamp_rgba()
 void R_FillSpan_rgba()
 {
 	DrawerCommandQueue::QueueCommand<FillSpanRGBACommand>();
+}
+
+void R_DrawTiltedSpan_rgba(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy)
+{
+	DrawerCommandQueue::QueueCommand<DrawTiltedSpanRGBACommand>(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
+}
+
+void R_DrawColoredSpan_rgba(int y, int x1, int x2)
+{
+	DrawerCommandQueue::QueueCommand<DrawColoredSpanRGBACommand>(y, x1, x2);
 }
 
 static ShadeConstants slab_rgba_shade_constants;

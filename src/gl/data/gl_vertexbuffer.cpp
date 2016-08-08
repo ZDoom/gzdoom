@@ -77,22 +77,26 @@ void FSimpleVertexBuffer::BindVBO()
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 	if (gl.glslversion > 0)
 	{
-		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->x);
-		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->u);
-		glDisableVertexAttribArray(VATTR_COLOR);
+		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FSimpleVertex), &VSiO->x);
+		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FSimpleVertex), &VSiO->u);
+		glVertexAttribPointer(VATTR_COLOR, 4, GL_UNSIGNED_BYTE, true, sizeof(FSimpleVertex), &VSiO->color);
+		glEnableVertexAttribArray(VATTR_VERTEX);
+		glEnableVertexAttribArray(VATTR_TEXCOORD);
+		glEnableVertexAttribArray(VATTR_COLOR);
 		glDisableVertexAttribArray(VATTR_VERTEX2);
 	}
 	else
 	{
-		glVertexPointer(3, GL_FLOAT, sizeof(FFlatVertex), &VTO->x);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(FFlatVertex), &VTO->u);
+		glVertexPointer(3, GL_FLOAT, sizeof(FSimpleVertex), &VSiO->x);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(FSimpleVertex), &VSiO->u);
+		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(FSimpleVertex), &VSiO->color);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glDisableClientState(GL_COLOR_ARRAY);
+		glEnableClientState(GL_COLOR_ARRAY);
 	}
 }
 
-void FSimpleVertexBuffer::set(FFlatVertex *verts, int count)
+void FSimpleVertexBuffer::set(FSimpleVertex *verts, int count)
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 	gl_RenderState.SetVertexBuffer(this);

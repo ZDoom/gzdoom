@@ -36,20 +36,37 @@ struct FFlatVertex
 		u = uu;
 		v = vv;
 	}
-	void BindVBO();
+};
+
+struct FSimpleVertex
+{
+	float x, z, y;	// world position
+	float u, v;		// texture coordinates
+	PalEntry color;
+
+	void Set(float xx, float zz, float yy, float uu = 0, float vv = 0, PalEntry col = 0xffffffff)
+	{
+		x = xx;
+		z = zz;
+		y = yy;
+		u = uu;
+		v = vv;
+		color = col;
+	}
 };
 
 #define VTO ((FFlatVertex*)NULL)
+#define VSiO ((FSimpleVertex*)NULL)
 
 class FSimpleVertexBuffer : public FVertexBuffer
 {
-	TArray<FFlatVertex> mBuffer;
+	TArray<FSimpleVertex> mBuffer;
 public:
 	FSimpleVertexBuffer()
 	{
 	}
 	void BindVBO();
-	void set(FFlatVertex *verts, int count);
+	void set(FSimpleVertex *verts, int count);
 };
 
 class FFlatVertexBuffer : public FVertexBuffer

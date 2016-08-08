@@ -71,6 +71,7 @@
 #include "gl/shaders/gl_tonemapshader.h"
 #include "gl/shaders/gl_lensshader.h"
 #include "gl/shaders/gl_presentshader.h"
+#include "gl/renderer/gl_2ddrawer.h"
 
 //==========================================================================
 //
@@ -283,6 +284,7 @@ void FGLRenderer::LensDistortScene()
 
 void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 {
+	m2DDrawer->Flush();	// draw all pending 2D stuff before copying the buffer
 	if (FGLRenderBuffers::IsEnabled())
 	{
 		FGLPostProcessState savedState;

@@ -58,6 +58,7 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
+#include "gl/renderer/gl_2ddrawer.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
@@ -106,6 +107,7 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mShaderManager = NULL;
 	gllight = glpart2 = glpart = mirrortexture = NULL;
 	mLights = NULL;
+	m2DDrawer = nullptr;
 }
 
 void gl_LoadModels();
@@ -120,6 +122,7 @@ void FGLRenderer::Initialize()
 	mTonemapShader = new FTonemapShader();
 	mLensShader = new FLensShader();
 	mPresentShader = new FPresentShader();
+	m2DDrawer = new F2DDrawer;
 
 	// Only needed for the core profile, because someone decided it was a good idea to remove the default VAO.
 	if (gl.version >= 4.0)
@@ -153,6 +156,7 @@ FGLRenderer::~FGLRenderer()
 	gl_FlushModels();
 	gl_DeleteAllAttachedLights();
 	FMaterial::FlushAll();
+	if (m2DDrawer != nullptr) delete m2DDrawer;
 	if (mShaderManager != NULL) delete mShaderManager;
 	if (mSamplerManager != NULL) delete mSamplerManager;
 	if (mVBO != NULL) delete mVBO;
@@ -378,366 +382,13 @@ void FGLRenderer::ClearBorders()
 	int borderHeight = (trueHeight - height) / 2;
 
 	glViewport(0, 0, width, trueHeight);
-	gl_RenderState.mProjectionMatrix.loadIdentity();
-	gl_RenderState.mProjectionMatrix.ortho(0.0f, width * 1.0f, 0.0f, trueHeight, -1.0f, 1.0f);
-	gl_RenderState.SetColor(0.f ,0.f ,0.f ,1.f);
-	gl_RenderState.Set2DMode(true);
-	gl_RenderState.EnableTexture(false);
-	gl_RenderState.Apply();
-	gl_RenderState.ApplyMatrices(); 
-
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	ptr->Set(0, borderHeight, 0, 0, 0); ptr++;
-	ptr->Set(0, 0, 0, 0, 0); ptr++;
-	ptr->Set(width, 0, 0, 0, 0); ptr++;
-	ptr->Set(width, borderHeight, 0, 0, 0); ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-	ptr->Set(0, trueHeight, 0, 0, 0); ptr++;
-	ptr->Set(0, trueHeight - borderHeight, 0, 0, 0); ptr++;
-	ptr->Set(width, trueHeight - borderHeight, 0, 0, 0); ptr++;
-	ptr->Set(width, trueHeight, 0, 0, 0); ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-	gl_RenderState.EnableTexture(true);
-
-	glViewport(0, (trueHeight - height) / 2, width, height); 
-}
-
-//==========================================================================
-//
-// Draws a texture
-//
-//==========================================================================
-
-void FGLRenderer::DrawTexture(FTexture *img, DrawParms &parms)
-{
-	double xscale = parms.destwidth / parms.texwidth;
-	double yscale = parms.destheight / parms.texheight;
-	double x = parms.x - parms.left * xscale;
-	double y = parms.y - parms.top * yscale;
-	double w = parms.destwidth;
-	double h = parms.destheight;
-	float u1, v1, u2, v2;
-	int light = 255;
-
-	FMaterial * gltex = FMaterial::ValidateTexture(img, false);
-
-	if (parms.colorOverlay && (parms.colorOverlay & 0xffffff) == 0)
-	{
-		// Right now there's only black. Should be implemented properly later
-		light = 255 - APART(parms.colorOverlay);
-		parms.colorOverlay = 0;
-	}
-
-	gl_SetRenderStyle(parms.style, !parms.masked, false);
-	if (!img->bHasCanvas)
-	{
-		int translation = 0;
-		if (!parms.alphaChannel)
-		{
-			if (parms.remap != NULL && !parms.remap->Inactive)
-			{
-				GLTranslationPalette * pal = static_cast<GLTranslationPalette*>(parms.remap->GetNative());
-				if (pal) translation = -pal->GetIndex();
-			}
-		}
-		gl_RenderState.SetMaterial(gltex, CLAMP_XY_NOMIP, translation, -1, !!(parms.style.Flags & STYLEF_RedIsAlpha));
-
-		u1 = gltex->GetUL();
-		v1 = gltex->GetVT();
-		u2 = gltex->GetUR();
-		v2 = gltex->GetVB();
-
-	}
-	else
-	{
-		gl_RenderState.SetMaterial(gltex, CLAMP_XY_NOMIP, 0, -1, false);
-		u1 = 0.f;
-		v1 = 1.f;
-		u2 = 1.f;
-		v2 = 0.f;
-		gl_RenderState.SetTextureMode(TM_OPAQUE);
-	}
-	
-	if (parms.flipX)
-	{
-		float temp = u1;
-		u1 = u2;
-		u2 = temp;
-	}
-	
-
-	if (parms.windowleft > 0 || parms.windowright < parms.texwidth)
-	{
-		double wi = MIN(parms.windowright, parms.texwidth);
-		x += parms.windowleft * xscale;
-		w -= (parms.texwidth - wi + parms.windowleft) * xscale;
-
-		u1 = float(u1 + parms.windowleft / parms.texwidth);
-		u2 = float(u2 - (parms.texwidth - wi) / parms.texwidth);
-	}
-
-	PalEntry color;
-	if (parms.style.Flags & STYLEF_ColorIsFixed)
-	{
-		color = parms.fillcolor;
-	}
-	else
-	{
-		color = PalEntry(light, light, light);
-	}
-	color.a = (BYTE)(parms.Alpha * 255);
-
-	// scissor test doesn't use the current viewport for the coordinates, so use real screen coordinates
-	int btm = (SCREENHEIGHT - screen->GetHeight()) / 2;
-	btm = SCREENHEIGHT - btm;
-
+	glClearColor(0, 0, 0, 1);
 	glEnable(GL_SCISSOR_TEST);
-	int space = (static_cast<OpenGLFrameBuffer*>(screen)->GetTrueHeight()-screen->GetHeight())/2;
-	glScissor(parms.lclip, btm - parms.dclip + space, parms.rclip - parms.lclip, parms.dclip - parms.uclip);
-	
-	gl_RenderState.SetColor(color);
-	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
-	gl_RenderState.Apply();
-
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	ptr->Set(x, y, 0, u1, v1); ptr++;
-	ptr->Set(x, y + h, 0, u1, v2); ptr++;
-	ptr->Set(x + w, y, 0, u2, v1); ptr++;
-	ptr->Set(x + w, y + h, 0, u2, v2); ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-
-	if (parms.colorOverlay)
-	{
-		gl_RenderState.SetTextureMode(TM_MASK);
-		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		gl_RenderState.BlendEquation(GL_FUNC_ADD);
-		gl_RenderState.SetColor(PalEntry(parms.colorOverlay));
-		gl_RenderState.Apply();
-
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-		ptr->Set(x, y, 0, u1, v1); ptr++;
-		ptr->Set(x, y + h, 0, u1, v2); ptr++;
-		ptr->Set(x + w, y, 0, u2, v1); ptr++;
-		ptr->Set(x + w, y + h, 0, u2, v2); ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-	}
-
-	glScissor(0, 0, screen->GetWidth(), screen->GetHeight());
-	glDisable(GL_SCISSOR_TEST);
-	gl_RenderState.SetTextureMode(TM_MODULATE);
-	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	gl_RenderState.BlendEquation(GL_FUNC_ADD);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void FGLRenderer::DrawLine(int x1, int y1, int x2, int y2, int palcolor, uint32 color)
-{
-	PalEntry p = color? (PalEntry)color : GPalette.BaseColors[palcolor];
-	gl_RenderState.EnableTexture(false);
-	gl_RenderState.SetColorAlpha(p, 1.f);
-	gl_RenderState.Apply();
-
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	ptr->Set(x1, y1, 0, 0, 0); ptr++;
-	ptr->Set(x2, y2, 0, 0, 0); ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_LINES);
-	
-	gl_RenderState.EnableTexture(true);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void FGLRenderer::DrawPixel(int x1, int y1, int palcolor, uint32 color)
-{
-	PalEntry p = color? (PalEntry)color : GPalette.BaseColors[palcolor];
-	gl_RenderState.EnableTexture(false);
-	gl_RenderState.SetColorAlpha(p, 1.f);
-	gl_RenderState.Apply();
-
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	ptr->Set(x1, y1, 0, 0, 0); ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_POINTS);
-
-	gl_RenderState.EnableTexture(true);
-}
-
-//===========================================================================
-// 
-//
-//
-//===========================================================================
-
-void FGLRenderer::Dim(PalEntry color, float damount, int x1, int y1, int w, int h)
-{
-	gl_RenderState.EnableTexture(false);
-	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	gl_RenderState.AlphaFunc(GL_GREATER,0);
-	gl_RenderState.SetColorAlpha(color, damount);
-	gl_RenderState.Apply();
-	
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	ptr->Set(x1, y1, 0, 0, 0); ptr++;
-	ptr->Set(x1, y1+h, 0, 0, 0); ptr++;
-	ptr->Set(x1+w, y1+h, 0, 0, 0); ptr++;
-	ptr->Set(x1+w, y1, 0, 0, 0); ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
-
-	gl_RenderState.EnableTexture(true);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void FGLRenderer::FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin)
-{
-	float fU1,fU2,fV1,fV2;
-
-	FMaterial *gltexture=FMaterial::ValidateTexture(src, false);
-	
-	if (!gltexture) return;
-
-	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
-	
-	// scaling is not used here.
-	if (!local_origin)
-	{
-		fU1 = float(left) / src->GetWidth();
-		fV1 = float(top) / src->GetHeight();
-		fU2 = float(right) / src->GetWidth();
-		fV2 = float(bottom) / src->GetHeight();
-	}
-	else
-	{		
-		fU1 = 0;
-		fV1 = 0;
-		fU2 = float(right-left) / src->GetWidth();
-		fV2 = float(bottom-top) / src->GetHeight();
-	}
-	gl_RenderState.ResetColor();
-	gl_RenderState.Apply();
-
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	ptr->Set(left, top, 0, fU1, fV1); ptr++;
-	ptr->Set(left, bottom, 0, fU1, fV2); ptr++;
-	ptr->Set(right, top, 0, fU2, fV1); ptr++;
-	ptr->Set(right, bottom, 0, fU2, fV2); ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void FGLRenderer::Clear(int left, int top, int right, int bottom, int palcolor, uint32 color)
-{
-	int rt;
-	int offY = 0;
-	PalEntry p = palcolor==-1 || color != 0? (PalEntry)color : GPalette.BaseColors[palcolor];
-	int width = right-left;
-	int height= bottom-top;
-	
-	
-	rt = screen->GetHeight() - top;
-	
-	int space = (static_cast<OpenGLFrameBuffer*>(screen)->GetTrueHeight()-screen->GetHeight())/2;	// ugh...
-	rt += space;
-	/*
-	if (!m_windowed && (m_trueHeight != m_height))
-	{
-		offY = (m_trueHeight - m_height) / 2;
-		rt += offY;
-	}
-	*/
-	
-	glEnable(GL_SCISSOR_TEST);
-	glScissor(left, rt - height, width, height);
-	
-	glClearColor(p.r/255.0f, p.g/255.0f, p.b/255.0f, 0.f);
+	glScissor(0, 0, width, borderHeight);
 	glClear(GL_COLOR_BUFFER_BIT);
-	glClearColor(0.f, 0.f, 0.f, 0.f);
-	
+	glScissor(0, trueHeight-borderHeight, width, borderHeight);
+	glClear(GL_COLOR_BUFFER_BIT);
 	glDisable(GL_SCISSOR_TEST);
-}
-
-//==========================================================================
-//
-// D3DFB :: FillSimplePoly
-//
-// Here, "simple" means that a simple triangle fan can draw it.
-//
-//==========================================================================
-
-void FGLRenderer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
-	double originx, double originy, double scalex, double scaley,
-	DAngle rotation, FDynamicColormap *colormap, int lightlevel)
-{
-	if (npoints < 3)
-	{ // This is no polygon.
-		return;
-	}
-
-	FMaterial *gltexture = FMaterial::ValidateTexture(texture, false);
-
-	if (gltexture == NULL)
-	{
-		return;
-	}
-
-	FColormap cm;
-	cm = colormap;
-
-	// We cannot use the software light mode here because it doesn't properly calculate the light for 2D rendering.
-	SBYTE savedlightmode = glset.lightmode;
-	if (glset.lightmode == 8) glset.lightmode = 0;
-
-	gl_SetColor(lightlevel, 0, cm, 1.f);
-
-	glset.lightmode = savedlightmode;
-
-	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
-
-	int i;
-	bool dorotate = rotation != 0;
-
-	float cosrot = cos(rotation.Radians());
-	float sinrot = sin(rotation.Radians());
-
-	//float yoffs = GatheringWipeScreen ? 0 : LBOffset;
-	float uscale = float(1.f / (texture->GetScaledWidth() * scalex));
-	float vscale = float(1.f / (texture->GetScaledHeight() * scaley));
-	if (gltexture->tex->bHasCanvas)
-	{
-		vscale = 0 - vscale;
-	}
-	float ox = float(originx);
-	float oy = float(originy);
-
-	gl_RenderState.Apply();
-
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	for (i = 0; i < npoints; ++i)
-	{
-		float u = points[i].X - 0.5f - ox;
-		float v = points[i].Y - 0.5f - oy;
-		if (dorotate)
-		{
-			float t = u;
-			u = t * cosrot - v * sinrot;
-			v = v * cosrot + t * sinrot;
-		}
-		ptr->Set(points[i].X, points[i].Y, 0, u*uscale, v*vscale);
-		ptr++;
-	}
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
+	glViewport(0, (trueHeight - height) / 2, width, height); 
 }
 

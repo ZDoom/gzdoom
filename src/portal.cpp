@@ -294,7 +294,8 @@ static void SetRotation(FLinePortal *port)
 		else
 		{
 			// Linked portals have no angular difference.
-			port->mSinRot = port->mCosRot = 0.;
+			port->mSinRot = 0.;
+			port->mCosRot = 1.;
 			port->mAngleDiff = 0.;
 		}
 	}

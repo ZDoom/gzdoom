@@ -96,6 +96,33 @@ void FSimpleVertexBuffer::BindVBO()
 	}
 }
 
+void FSimpleVertexBuffer::EnableColorArray(bool on)
+{
+	if (on)
+	{
+		if (gl.glslversion > 0)
+		{
+			glEnableVertexAttribArray(VATTR_COLOR);
+		}
+		else
+		{
+			glEnableClientState(GL_COLOR_ARRAY);
+		}
+	}
+	else
+	{
+		if (gl.glslversion > 0)
+		{
+			glDisableVertexAttribArray(VATTR_COLOR);
+		}
+		else
+		{
+			glDisableClientState(GL_COLOR_ARRAY);
+		}
+	}
+}
+
+
 void FSimpleVertexBuffer::set(FSimpleVertex *verts, int count)
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);

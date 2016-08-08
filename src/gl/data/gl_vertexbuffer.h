@@ -67,6 +67,7 @@ public:
 	}
 	void BindVBO();
 	void set(FSimpleVertex *verts, int count);
+	void EnableColorArray(bool on);
 };
 
 class FFlatVertexBuffer : public FVertexBuffer

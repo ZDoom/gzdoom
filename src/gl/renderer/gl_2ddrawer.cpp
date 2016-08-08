@@ -384,6 +384,8 @@ void F2DDrawer::AddPixel(int x1, int y1, int palcolor, uint32 color)
 
 void F2DDrawer::Flush()
 {
+	F2DDrawer::EDrawType lasttype = DrawTypeTexture;
+
 	if (mData.Size() == 0) return;
 	SBYTE savedlightmode = glset.lightmode;
 	// lightmode is only relevant for automap subsectors,
@@ -394,6 +396,17 @@ void F2DDrawer::Flush()
 	for (unsigned i = 0; i < mData.Size();)
 	{
 		DataGeneric *dg = (DataGeneric *)&mData[i];
+		// DrawTypePoly may not use the color part of the vertex buffer because it needs to use gl_SetColor to produce proper output.
+		if (lasttype == DrawTypePoly && dg->mType != DrawTypePoly)
+		{
+			EnableColorArray(true);
+		}
+		else if (lasttype != DrawTypePoly && dg->mType == DrawTypePoly)
+		{
+			EnableColorArray(false);
+		}
+		lasttype = dg->mType;
+
 		switch (dg->mType)
 		{
 		default:

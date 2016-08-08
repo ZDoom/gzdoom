@@ -12,6 +12,7 @@ public:
 	FBufferedUniform1f Gamma;
 	FBufferedUniform1f Contrast;
 	FBufferedUniform1f Brightness;
+	FBufferedUniform2f Scale;
 
 private:
 	FShaderProgram mShader;

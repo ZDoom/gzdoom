@@ -153,7 +153,7 @@ public:
 	unsigned char *GetTextureBuffer(FTexture *tex, int &w, int &h);
 	void SetupLevel();
 
-	void RenderScreenQuad(float maxU = 1.0f, float maxV = 1.0f);
+	void RenderScreenQuad();
 	void SetFixedColormap (player_t *player);
 	void WriteSavePic (player_t *player, FILE *file, int width, int height);
 	void EndDrawScene(sector_t * viewsector);

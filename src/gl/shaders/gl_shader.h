@@ -123,6 +123,17 @@ public:
 			glUniform2fv(mIndex, 1, newvalue);
 		}
 	}
+
+	void Set(float f1, float f2)
+	{
+		if (mBuffer[0] != f1 || mBuffer[1] != f2)
+		{
+			mBuffer[0] = f1;
+			mBuffer[1] = f2;
+			glUniform2fv(mIndex, 1, mBuffer);
+		}
+	}
+
 };
 
 class FBufferedUniform4f

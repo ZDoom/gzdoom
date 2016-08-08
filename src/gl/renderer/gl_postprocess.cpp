@@ -108,16 +108,11 @@ EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
 
 
-void FGLRenderer::RenderScreenQuad(float maxU, float maxV)
+void FGLRenderer::RenderScreenQuad()
 {
-	FFlatVertex *ptr = mVBO->GetBuffer();
 	mVBO->BindVBO();
 	gl_RenderState.ResetVertexBuffer();
-	ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
-	ptr->Set(-1.0f, 1.0f, 0, 0.0f, maxV); ptr++;
-	ptr->Set(1.0f, -1.0f, 0, maxU, 0.0f); ptr++;
-	ptr->Set(1.0f, 1.0f, 0, maxU, maxV); ptr++;
-	mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+	glDrawArrays(GL_TRIANGLE_STRIP, 8, 4);
 }
 
 //-----------------------------------------------------------------------------
@@ -357,9 +352,10 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 			mPresentShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
 			mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
 		}
+		mPresentShader->Scale.Set(mScreenViewport.width / (float)mBuffers->GetWidth(), mScreenViewport.height / (float)mBuffers->GetHeight());
 		mBuffers->BindCurrentTexture(0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		RenderScreenQuad(mScreenViewport.width / (float)mBuffers->GetWidth(), mScreenViewport.height / (float)mBuffers->GetHeight());
+		RenderScreenQuad();
 	}
 }

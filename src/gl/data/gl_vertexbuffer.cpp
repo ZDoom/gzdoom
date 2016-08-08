@@ -126,7 +126,7 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 		map = new FFlatVertex[BUFFER_SIZE];
 	}
 	mIndex = mCurIndex = 0;
-	mNumReserved = 8;
+	mNumReserved = 12;
 	vbo_shadowdata.Resize(mNumReserved);
 
 	// the first quad is reserved for handling coordinates through uniforms.
@@ -140,6 +140,12 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 	vbo_shadowdata[5].Set(0, (float)height, 0, 0, 0);
 	vbo_shadowdata[6].Set((float)width, 0, 0, 0, 0);
 	vbo_shadowdata[7].Set((float)width, (float)height, 0, 0, 0);
+
+	// and this is for the postprocessing copy operation
+	vbo_shadowdata[8].Set(-1.0f, -1.0f, 0, 0.0f, 0.0f);
+	vbo_shadowdata[9].Set(-1.0f, 1.0f, 0, 0.0f, 1.f);
+	vbo_shadowdata[10].Set(1.0f, -1.0f, 0, 1.f, 0.0f);
+	vbo_shadowdata[11].Set(1.0f, 1.0f, 0, 1.f, 1.f);
 
 }
 

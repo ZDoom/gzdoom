@@ -1414,13 +1414,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 		}
 	}
 
-	P_RadiusAttack (self, self->target, damage, distance, self->DamageType, flags, fulldmgdistance);
+	int count = P_RadiusAttack (self, self->target, damage, distance, self->DamageType, flags, fulldmgdistance);
 	P_CheckSplash(self, distance);
 	if (alert && self->target != NULL && self->target->player != NULL)
 	{
 		P_NoiseAlert(self->target, self);
 	}
-	return 0;
+	ACTION_RETURN_INT(count);
 }
 
 //==========================================================================

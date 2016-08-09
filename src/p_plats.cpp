@@ -429,15 +429,21 @@ void DPlat::Stop ()
 	m_Status = in_stasis;
 }
 
-void EV_StopPlat (int tag)
+void EV_StopPlat (int tag, bool remove)
 {
 	DPlat *scan;
 	TThinkerIterator<DPlat> iterator;
 
-	while ( (scan = iterator.Next ()) )
+	scan = iterator.Next();
+	while (scan != nullptr)
 	{
+		DPlat *next = iterator.Next();
 		if (scan->m_Status != DPlat::in_stasis && scan->m_Tag == tag)
-			scan->Stop ();
+		{
+			if (!remove) scan->Stop();
+			else scan->Destroy();
+		}
+		scan = next;
 	}
 }
 

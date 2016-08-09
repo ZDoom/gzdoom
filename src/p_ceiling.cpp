@@ -552,21 +552,31 @@ void P_ActivateInStasisCeiling (int tag)
 //
 //============================================================================
 
-bool EV_CeilingCrushStop (int tag)
+bool EV_CeilingCrushStop (int tag, bool remove)
 {
 	bool rtn = false;
 	DCeiling *scan;
 	TThinkerIterator<DCeiling> iterator;
 
-	while ( (scan = iterator.Next ()) )
+	scan = iterator.Next();
+	while (scan != nullptr)
 	{
+		DCeiling *next = iterator.Next();
 		if (scan->m_Tag == tag && scan->m_Direction != 0)
 		{
-			SN_StopSequence (scan->m_Sector, CHAN_CEILING);
-			scan->m_OldDirection = scan->m_Direction;
-			scan->m_Direction = 0;		// in-stasis;
+			if (!remove)
+			{
+				SN_StopSequence(scan->m_Sector, CHAN_CEILING);
+				scan->m_OldDirection = scan->m_Direction;
+				scan->m_Direction = 0;		// in-stasis;
+			}
+			else
+			{
+				scan->Destroy();
+			}
 			rtn = true;
 		}
+		scan = next;
 	}
 
 	return rtn;

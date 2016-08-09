@@ -1912,7 +1912,7 @@ static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, DVector2 *
 {
 	if (line->special && !(mobj->flags6 & MF6_NOTRIGGER))
 	{
-		if (posforwindowcheck && !(ib_compatflags & BCOMPATF_NOWINDOWCHECK) && line->backsector != NULL)
+		if (posforwindowcheck && !(i_compatflags2 & COMPATF2_PUSHWINDOW) && line->backsector != NULL)
 		{ // Make sure this line actually blocks us and is not a window
 			// or similar construct we are standing inside of.
 			DVector3 pos = mobj->PosRelative(line);

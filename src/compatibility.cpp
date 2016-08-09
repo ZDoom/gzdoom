@@ -109,7 +109,6 @@ static FCompatOption Options[] =
 	{ "ignoreteleporttags",		BCOMPATF_BADTELEPORTERS, SLOT_BCOMPAT },
 	{ "rebuildnodes",			BCOMPATF_REBUILDNODES, SLOT_BCOMPAT },
 	{ "linkfrozenprops",		BCOMPATF_LINKFROZENPROPS, SLOT_BCOMPAT },
-	{ "disablepushwindowcheck",	BCOMPATF_NOWINDOWCHECK, SLOT_BCOMPAT },
 	{ "floatbob",				BCOMPATF_FLOATBOB, SLOT_BCOMPAT },
 	{ "noslopeid",				BCOMPATF_NOSLOPEID, SLOT_BCOMPAT },
 
@@ -149,6 +148,7 @@ static FCompatOption Options[] =
 	{ "pointonline",			COMPATF2_POINTONLINE, SLOT_COMPAT2 },
 	{ "multiexit",				COMPATF2_MULTIEXIT, SLOT_COMPAT2 },
 	{ "teleport",				COMPATF2_TELEPORT, SLOT_COMPAT2 },
+	{ "disablepushwindowcheck",	COMPATF2_PUSHWINDOW, SLOT_COMPAT2 },
 
 	{ NULL, 0, 0 }
 };

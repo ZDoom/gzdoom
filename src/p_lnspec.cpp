@@ -689,9 +689,22 @@ FUNC(LS_Ceiling_LowerAndCrushDist)
 }
 
 FUNC(LS_Ceiling_CrushStop)
-// Ceiling_CrushStop (tag)
+// Ceiling_CrushStop (tag, remove)
 {
-	return EV_CeilingCrushStop (arg0);
+	bool remove;
+	switch (arg3)
+	{
+	case 1:
+		remove = false;
+		break;
+	case 2:
+		remove = true;
+		break;
+	default:
+		remove = gameinfo.gametype == GAME_Hexen;
+		break;
+	}
+	return EV_CeilingCrushStop (arg0, remove);
 }
 
 FUNC(LS_Ceiling_CrushRaiseAndStay)
@@ -893,9 +906,22 @@ FUNC(LS_Plat_PerpetualRaiseLip)
 }
 
 FUNC(LS_Plat_Stop)
-// Plat_Stop (tag)
+// Plat_Stop (tag, remove?)
 {
-	EV_StopPlat (arg0);
+	bool remove;
+	switch (arg3)
+	{
+	case 1:
+		remove = false;
+		break;
+	case 2:
+		remove = true;
+		break;
+	default:
+		remove = gameinfo.gametype == GAME_Hexen;
+		break;
+	}
+	EV_StopPlat(arg0, remove);
 	return true;
 }
 

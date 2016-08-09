@@ -1327,6 +1327,17 @@ void FPolyObj::RecalcActorFloorCeil(FBoundingBox bounds) const
 
 	while ((actor = it.Next()) != NULL)
 	{
+		// skip everything outside the bounding box.
+		if (actor->X() + actor->radius <= bounds.Left() ||
+			actor->X() - actor->radius >= bounds.Right() ||
+			actor->Y() + actor->radius <= bounds.Bottom() ||
+			actor->Y() - actor->radius >= bounds.Top())
+		{
+			continue;
+		}
+		// Todo: Be a little more thorough with what gets altered here
+		// because this can dislocate a lot of items that were spawned on 
+		// the lower side of a sector boundary.
 		P_FindFloorCeiling(actor);
 	}
 }

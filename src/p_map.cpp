@@ -4439,6 +4439,9 @@ AActor *P_LinePickActor(AActor *t1, DAngle angle, double distance, DAngle pitch,
 	
 	TData.Caller = t1;
 	TData.hitGhosts = true;
+	TData.MThruSpecies = false;
+	TData.ThruActors = false;
+	TData.ThruSpecies = false;
 	
 	if (Trace(t1->PosAtZ(shootz), t1->Sector, direction, distance,
 		actorMask, wallMask, t1, trace, TRACE_NoSky | TRACE_PortalRestrict, CheckForActor, &TData))

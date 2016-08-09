@@ -5911,7 +5911,6 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 		doPass = true;
 	}
 	else if (((flags & RGF_ITEMS) && thing->IsKindOf(RUNTIME_CLASS(AInventory))) ||
-			((flags & RGF_MISSILES) && thing->flags & MF_MISSILE) ||
 			((flags & RGF_CORPSES) && thing->flags & MF_CORPSE) ||
 			((flags & RGF_KILLED) && thing->flags6 & MF6_KILLED))
 	{
@@ -5980,7 +5979,6 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 
 	if (doPass)
 	{
-
 		DVector3 diff = self->Vec3To(thing);
 		diff.Z += thing->Height *0.5;
 		if (flags & RGF_CUBE)

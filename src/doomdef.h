@@ -358,6 +358,7 @@ enum
 	BCOMPATF_LINKFROZENPROPS	= 1 << 6,	// Clearing PROP_TOTALLYFROZEN or PROP_FROZEN also clears the other
 	BCOMPATF_NOWINDOWCHECK		= 1 << 7,	// Disable the window check in CheckForPushSpecial()
 	BCOMPATF_FLOATBOB			= 1 << 8,	// Use Hexen's original method of preventing floatbobbing items from falling down
+	BCOMPATF_NOSLOPEID			= 1 << 9,	// disable line IDs on slopes.
 };
 
 // phares 3/20/98:

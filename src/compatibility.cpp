@@ -111,6 +111,7 @@ static FCompatOption Options[] =
 	{ "linkfrozenprops",		BCOMPATF_LINKFROZENPROPS, SLOT_BCOMPAT },
 	{ "disablepushwindowcheck",	BCOMPATF_NOWINDOWCHECK, SLOT_BCOMPAT },
 	{ "floatbob",				BCOMPATF_FLOATBOB, SLOT_BCOMPAT },
+	{ "noslopeid",				BCOMPATF_NOSLOPEID, SLOT_BCOMPAT },
 
 	// list copied from g_mapinfo.cpp
 	{ "shorttex",				COMPATF_SHORTTEX, SLOT_COMPAT },

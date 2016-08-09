@@ -448,6 +448,7 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 
 	case GLPASS_LIGHTTEX:
 	case GLPASS_LIGHTTEX_ADDITIVE:
+	case GLPASS_LIGHTTEX_FOGGY:
 		DrawLightsCompat(pass);
 		break;
 

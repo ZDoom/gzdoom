@@ -398,7 +398,7 @@ void FFlatVertexBuffer::UpdatePlaneVertices(sector_t *sec, int plane)
 
 void FFlatVertexBuffer::CreateVBO()
 {
-	vbo_shadowdata.Reserve(mNumReserved);
+	vbo_shadowdata.Resize(mNumReserved);
 	CreateFlatVBO();
 	mCurIndex = mIndex = vbo_shadowdata.Size();
 	memcpy(map, &vbo_shadowdata[0], vbo_shadowdata.Size() * sizeof(FFlatVertex));

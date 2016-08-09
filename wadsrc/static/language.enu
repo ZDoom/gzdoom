@@ -2069,6 +2069,8 @@ CMPTMNU_SILENTINSTANTFLOORS	= "Inst. moving floors are not silent";
 CMPTMNU_SECTORSOUNDS		= "Sector sounds use center as source";
 CMPTMNU_SOUNDCUTOFF			= "Sounds stop when actor vanishes";
 CMPTMNU_SOUNDTARGET			= "Use original sound target handling";
+CMPTMNU_TELEPORT			= "Scripted teleports don't trigger sector actions";
+CMPTMNU_PUSHWINDOW			= "Non-blocking lines can be pushed";
 
 // Sound Options
 SNDMNU_TITLE			= "SOUND OPTIONS";

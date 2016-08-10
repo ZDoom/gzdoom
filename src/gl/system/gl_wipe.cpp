@@ -341,7 +341,6 @@ bool OpenGLFrameBuffer::Wiper_Crossfade::Run(int ticks, OpenGLFrameBuffer *fb)
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 	float a = clamp(Clock / 32.f, 0.f, 1.f);
-	Printf("%f\n", a);
 	gl_RenderState.SetColorAlpha(0xffffff, a);
 	gl_RenderState.Apply();
 	fb->wipeendscreen->Bind(0, 0, false);

@@ -3593,6 +3593,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	if (index->isConstant())
 	{
 		unsigned indexval = static_cast<FxConstant *>(index)->GetValue().GetInt();
+		assert(indexval < arraytype->ElementCount && "Array index out of bounds");
 		indexval *= arraytype->ElementSize;
 
 		if (AddressRequested)

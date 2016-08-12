@@ -154,8 +154,8 @@ void FGLRenderer::BloomScene()
 	{
 		const auto &level = mBuffers->BloomLevels[i];
 		const auto &next = mBuffers->BloomLevels[i + 1];
-		mBlurShader->BlurHorizontal(mVBO, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
-		mBlurShader->BlurVertical(mVBO, blurAmount, sampleCount, level.HTexture, next.VFramebuffer, next.Width, next.Height);
+		mBlurShader->BlurHorizontal(this, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
+		mBlurShader->BlurVertical(this, blurAmount, sampleCount, level.HTexture, next.VFramebuffer, next.Width, next.Height);
 	}
 
 	// Blur and upscale:
@@ -164,8 +164,8 @@ void FGLRenderer::BloomScene()
 		const auto &level = mBuffers->BloomLevels[i];
 		const auto &next = mBuffers->BloomLevels[i - 1];
 
-		mBlurShader->BlurHorizontal(mVBO, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
-		mBlurShader->BlurVertical(mVBO, blurAmount, sampleCount, level.HTexture, level.VFramebuffer, level.Width, level.Height);
+		mBlurShader->BlurHorizontal(this, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
+		mBlurShader->BlurVertical(this, blurAmount, sampleCount, level.HTexture, level.VFramebuffer, level.Width, level.Height);
 
 		// Linear upscale:
 		glBindFramebuffer(GL_FRAMEBUFFER, next.VFramebuffer);
@@ -179,8 +179,8 @@ void FGLRenderer::BloomScene()
 		RenderScreenQuad();
 	}
 
-	mBlurShader->BlurHorizontal(mVBO, blurAmount, sampleCount, level0.VTexture, level0.HFramebuffer, level0.Width, level0.Height);
-	mBlurShader->BlurVertical(mVBO, blurAmount, sampleCount, level0.HTexture, level0.VFramebuffer, level0.Width, level0.Height);
+	mBlurShader->BlurHorizontal(this, blurAmount, sampleCount, level0.VTexture, level0.HFramebuffer, level0.Width, level0.Height);
+	mBlurShader->BlurVertical(this, blurAmount, sampleCount, level0.HTexture, level0.VFramebuffer, level0.Width, level0.Height);
 
 	// Add bloom back to scene texture:
 	mBuffers->BindCurrentFB();

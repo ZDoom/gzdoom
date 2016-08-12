@@ -4,16 +4,16 @@
 #include "gl_shaderprogram.h"
 #include <memory>
 
-class FFlatVertexBuffer;
+class FGLRenderer;
 
 class FBlurShader
 {
 public:
-	void BlurVertical(FFlatVertexBuffer *vbo, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height);
-	void BlurHorizontal(FFlatVertexBuffer *vbo, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height);
+	void BlurVertical(FGLRenderer *renderer, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height);
+	void BlurHorizontal(FGLRenderer *renderer, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height);
 
 private:
-	void Blur(FFlatVertexBuffer *vbo, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height, bool vertical);
+	void Blur(FGLRenderer *renderer, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height, bool vertical);
 
 	struct BlurSetup
 	{

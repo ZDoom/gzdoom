@@ -10,6 +10,8 @@ public:
 
 	FBufferedUniform1i SceneTexture;
 	FBufferedUniform1f Exposure;
+	FBufferedUniform2f Scale;
+	FBufferedUniform2f Offset;
 
 private:
 	FShaderProgram mShader;

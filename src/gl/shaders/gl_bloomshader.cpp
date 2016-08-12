@@ -60,6 +60,8 @@ void FBloomExtractShader::Bind()
 		mShader.SetAttribLocation(0, "PositionInProjection");
 		SceneTexture.Init(mShader, "SceneTexture");
 		Exposure.Init(mShader, "ExposureAdjustment");
+		Scale.Init(mShader, "Scale");
+		Offset.Init(mShader, "Offset");
 	}
 	mShader.Bind();
 }

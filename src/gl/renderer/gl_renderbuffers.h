@@ -20,7 +20,7 @@ public:
 	FGLRenderBuffers();
 	~FGLRenderBuffers();
 
-	void Setup(int width, int height);
+	void Setup(int width, int height, int sceneWidth, int sceneHeight);
 
 	void BindSceneFB();
 	void BlitSceneToTexture();
@@ -64,6 +64,8 @@ private:
 	int mWidth = 0;
 	int mHeight = 0;
 	int mSamples = 0;
+	int mBloomWidth = 0;
+	int mBloomHeight = 0;
 
 	static const int NumPipelineTextures = 2;
 	int mCurrentPipelineTexture = 0;

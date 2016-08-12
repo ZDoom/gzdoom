@@ -139,7 +139,7 @@ void FGLRenderBuffers::DeleteFrameBuffer(GLuint &handle)
 //
 //==========================================================================
 
-void FGLRenderBuffers::Setup(int width, int height)
+void FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHeight)
 {
 	if (!IsEnabled())
 		return;
@@ -151,14 +151,21 @@ void FGLRenderBuffers::Setup(int width, int height)
 		CreateScene(mWidth, mHeight, samples);
 		mSamples = samples;
 	}
-	else if (width > mWidth || height > mHeight)
+	else if (width != mWidth || height != mHeight)
 	{
 		CreatePipeline(width, height);
 		CreateScene(width, height, samples);
-		CreateBloom(width, height);
 		mWidth = width;
 		mHeight = height;
 		mSamples = samples;
+	}
+
+	// Bloom bluring buffers need to match the scene to avoid bloom bleeding artifacts
+	if (mBloomWidth != sceneWidth || mBloomHeight != sceneHeight)
+	{
+		CreateBloom(sceneWidth, sceneHeight);
+		mBloomWidth = sceneWidth;
+		mBloomHeight = sceneHeight;
 	}
 
 	glActiveTexture(GL_TEXTURE0);

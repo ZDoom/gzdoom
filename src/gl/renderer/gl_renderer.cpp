@@ -286,7 +286,7 @@ void FGLRenderer::Begin2D()
 {
 	if (FGLRenderBuffers::IsEnabled())
 	{
-		mBuffers->Setup(framebuffer->GetWidth(), framebuffer->GetHeight());
+		mBuffers->Setup(mScreenViewport.width, mScreenViewport.height, mSceneViewport.width, mSceneViewport.height);
 		if (mDrawingScene2D)
 			mBuffers->BindSceneFB();
 		else

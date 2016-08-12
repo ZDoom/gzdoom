@@ -3548,6 +3548,16 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 		delete this;
 		return NULL;
 	}
+	if (index->isConstant())
+	{
+		unsigned indexval = static_cast<FxConstant *>(index)->GetValue().GetInt();
+		if (indexval >= arraytype->ElementCount)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Array index out of bounds");
+			delete this;
+			return NULL;
+		}
+	}
 
 	ValueType = arraytype->ElementType;
 	if (ValueType->GetRegType() != REGT_INT && ValueType->GetRegType() != REGT_FLOAT)
@@ -3583,10 +3593,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	if (index->isConstant())
 	{
 		unsigned indexval = static_cast<FxConstant *>(index)->GetValue().GetInt();
-		if (indexval >= arraytype->ElementCount)
-		{
-			I_Error("Array index out of bounds");
-		}
+		assert(indexval < arraytype->ElementCount && "Array index out of bounds");
 		indexval *= arraytype->ElementSize;
 
 		if (AddressRequested)

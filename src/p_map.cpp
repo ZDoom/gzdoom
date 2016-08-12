@@ -5245,11 +5245,11 @@ CUSTOM_CVAR(Float, splashfactor, 1.f, CVAR_SERVERINFO)
 //
 //==========================================================================
 
-void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bombdistance, FName bombmod,
+int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bombdistance, FName bombmod,
 	int flags, int fulldamagedistance)
 {
 	if (bombdistance <= 0)
-		return;
+		return 0;
 	fulldamagedistance = clamp<int>(fulldamagedistance, 0, bombdistance - 1);
 
 	double bombdistancefloat = 1. / (double)(bombdistance - fulldamagedistance);
@@ -5264,6 +5264,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 		bombsource = bombspot;
 	}
 
+	int count = 0;
 	while ((it.Next(&cres)))
 	{
 		AActor *thing = cres.thing;
@@ -5359,7 +5360,12 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 				int newdam = damage;
 
 				if (!(flags & RADF_NODAMAGE))
+				{
+					//[MC] Don't count actors saved by buddha if already at 1 health.
+					int prehealth = thing->health;
 					newdam = P_DamageMobj(thing, bombspot, bombsource, damage, bombmod);
+					if (thing->health < prehealth)	count++;
+				}
 				else if (thing->player == NULL && (!(flags & RADF_NOIMPACTDAMAGE) && !(thing->flags7 & MF7_DONTTHRUST)))
 					thing->flags2 |= MF2_BLASTED;
 
@@ -5425,12 +5431,16 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 				damage = int(damage * factor);
 				if (damage > 0)
 				{
+					//[MC] Don't count actors saved by buddha if already at 1 health.
+					int prehealth = thing->health;
 					int newdam = P_DamageMobj(thing, bombspot, bombsource, damage, bombmod);
 					P_TraceBleed(newdam > 0 ? newdam : damage, thing, bombspot);
+					if (thing->health < prehealth)	count++;
 				}
 			}
 		}
 	}
+	return count;
 }
 
 //==========================================================================

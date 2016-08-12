@@ -392,7 +392,7 @@ enum
 	RADF_NODAMAGE = 8,
 	RADF_THRUSTZ = 16,
 };
-void	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, 
+int	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, 
 						FName damageType, int flags, int fulldamagedistance=0);
 
 void	P_DelSector_List();

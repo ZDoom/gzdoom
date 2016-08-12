@@ -1414,13 +1414,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 		}
 	}
 
-	P_RadiusAttack (self, self->target, damage, distance, self->DamageType, flags, fulldmgdistance);
+	int count = P_RadiusAttack (self, self->target, damage, distance, self->DamageType, flags, fulldmgdistance);
 	P_CheckSplash(self, distance);
 	if (alert && self->target != NULL && self->target->player != NULL)
 	{
 		P_NoiseAlert(self->target, self);
 	}
-	return 0;
+	ACTION_RETURN_INT(count);
 }
 
 //==========================================================================
@@ -5888,24 +5888,63 @@ enum RadiusGiveFlags
 						RGF_OBJECTS |
 						RGF_VOODOO |
 						RGF_CORPSES | 
+						RGF_KILLED |
 						RGF_MISSILES |
 						RGF_ITEMS,
 };
 
 static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amount, double distance, int flags, PClassActor *filter, FName species, double mindist)
 {
-	// [MC] We only want to make an exception for missiles here. Nothing else.
-	bool missilePass = !!((flags & RGF_MISSILES) && thing->flags & MF_MISSILE);
+	
+	bool doPass = false;
+	// Always allow self to give, no matter what other flags are specified. Otherwise, not at all.
 	if (thing == self)
 	{
 		if (!(flags & RGF_GIVESELF))
 			return false;
+		doPass = true;
 	}
 	else if (thing->flags & MF_MISSILE)
 	{
-		if (!missilePass)
+		if (!(flags & RGF_MISSILES))
 			return false;
+		doPass = true;
 	}
+	else if (((flags & RGF_ITEMS) && thing->IsKindOf(RUNTIME_CLASS(AInventory))) ||
+			((flags & RGF_CORPSES) && thing->flags & MF_CORPSE) ||
+			((flags & RGF_KILLED) && thing->flags6 & MF6_KILLED))
+	{
+		doPass = true;
+	}
+	else if ((flags & (RGF_MONSTERS | RGF_OBJECTS | RGF_PLAYERS | RGF_VOODOO)))
+	{
+		// Make sure it's alive as we're not looking for corpses or killed here.
+		if (!doPass && thing->health > 0)
+		{
+			if (thing->player != nullptr)
+			{
+				if (((flags & RGF_PLAYERS) && (thing->player->mo == thing)) ||
+					((flags & RGF_VOODOO) && (thing->player->mo != thing)))
+				{
+					doPass = true;
+				}
+			}
+			else
+			{
+				if (((flags & RGF_MONSTERS) && (thing->flags3 & MF3_ISMONSTER)) ||
+					((flags & RGF_OBJECTS) && (!(thing->flags3 & MF3_ISMONSTER)) &&
+					(thing->flags & MF_SHOOTABLE || thing->flags6 & MF6_VULNERABLE)))
+				{
+					doPass = true;
+				}
+			}
+		}
+	}
+
+	// Nothing matched up so don't bother with the rest.
+	if (!doPass)
+		return false;
+
 	//[MC] Check for a filter, species, and the related exfilter/expecies/either flag(s).
 	bool filterpass = DoCheckClass(thing, filter, !!(flags & RGF_EXFILTER)),
 		speciespass = DoCheckSpecies(thing, species, !!(flags & RGF_EXSPECIES));
@@ -5916,13 +5955,14 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 			return false;
 	}
 
-	//Check for target, master, and tracer flagging.
-	bool targetPass = true;
-	bool masterPass = true;
-	bool tracerPass = true;
-	bool ptrPass = false;
 	if ((thing != self) && (flags & (RGF_NOTARGET | RGF_NOMASTER | RGF_NOTRACER)))
 	{
+		//Check for target, master, and tracer flagging.
+		bool targetPass = true;
+		bool masterPass = true;
+		bool tracerPass = true;
+		bool ptrPass = false;
+
 		if ((thing == self->target) && (flags & RGF_NOTARGET))
 			targetPass = false;
 		if ((thing == self->master) && (flags & RGF_NOMASTER))
@@ -5937,35 +5977,8 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 			return false;
 	}
 
-	//Next, actor flag checking.
-	bool selfPass = !!((flags & RGF_GIVESELF) && thing == self);
-	bool corpsePass = !!((flags & RGF_CORPSES) && thing->flags & MF_CORPSE);
-	bool killedPass = !!((flags & RGF_KILLED) && thing->flags6 & MF6_KILLED);
-	bool monsterPass = !!((flags & RGF_MONSTERS) && thing->flags3 & MF3_ISMONSTER);
-	bool objectPass = !!((flags & RGF_OBJECTS) && (thing->player == NULL) && (!(thing->flags3 & MF3_ISMONSTER))
-		&& ((thing->flags & MF_SHOOTABLE) || (thing->flags6 & MF6_VULNERABLE)));
-	bool playerPass = !!((flags & RGF_PLAYERS) && (thing->player != NULL) && (thing->player->mo == thing));
-	bool voodooPass = !!((flags & RGF_VOODOO) && (thing->player != NULL) && (thing->player->mo != thing));
-	//Self calls priority over the rest of this.
-	if (!selfPass)
+	if (doPass)
 	{
-		//If it's specifically a monster/object/player/voodoo... Can be either or...
-		if (monsterPass || objectPass || playerPass || voodooPass)
-		{
-			//...and is dead, without desire to give to the dead...
-			if (((thing->health <= 0) && !(corpsePass || killedPass)))
-			{
-				//Skip!
-				return false;
-			}
-		}
-	}
-
-	bool itemPass = !!((flags & RGF_ITEMS) && thing->IsKindOf(RUNTIME_CLASS(AInventory)));
-
-	if (selfPass || monsterPass || corpsePass || killedPass || itemPass || objectPass || missilePass || playerPass || voodooPass)
-	{
-
 		DVector3 diff = self->Vec3To(thing);
 		diff.Z += thing->Height *0.5;
 		if (flags & RGF_CUBE)

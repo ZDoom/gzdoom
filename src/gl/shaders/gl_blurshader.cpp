@@ -49,6 +49,7 @@
 #include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_blurshader.h"
 #include "gl/data/gl_vertexbuffer.h"
+#include "gl/renderer/gl_renderer.h"
 
 //==========================================================================
 //
@@ -56,9 +57,9 @@
 //
 //==========================================================================
 
-void FBlurShader::BlurVertical(FFlatVertexBuffer *vbo, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height)
+void FBlurShader::BlurVertical(FGLRenderer *renderer, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height)
 {
-	Blur(vbo, blurAmount, sampleCount, inputTexture, outputFrameBuffer, width, height, true);
+	Blur(renderer, blurAmount, sampleCount, inputTexture, outputFrameBuffer, width, height, true);
 }
 
 //==========================================================================
@@ -67,9 +68,9 @@ void FBlurShader::BlurVertical(FFlatVertexBuffer *vbo, float blurAmount, int sam
 //
 //==========================================================================
 
-void FBlurShader::BlurHorizontal(FFlatVertexBuffer *vbo, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height)
+void FBlurShader::BlurHorizontal(FGLRenderer *renderer, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height)
 {
-	Blur(vbo, blurAmount, sampleCount, inputTexture, outputFrameBuffer, width, height, false);
+	Blur(renderer, blurAmount, sampleCount, inputTexture, outputFrameBuffer, width, height, false);
 }
 
 //==========================================================================
@@ -78,7 +79,7 @@ void FBlurShader::BlurHorizontal(FFlatVertexBuffer *vbo, float blurAmount, int s
 //
 //==========================================================================
 
-void FBlurShader::Blur(FFlatVertexBuffer *vbo, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height, bool vertical)
+void FBlurShader::Blur(FGLRenderer *renderer, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height, bool vertical)
 {
 	BlurSetup *setup = GetSetup(blurAmount, sampleCount);
 	if (vertical)
@@ -111,12 +112,7 @@ void FBlurShader::Blur(FFlatVertexBuffer *vbo, float blurAmount, int sampleCount
 	glViewport(0, 0, width, height);
 	glDisable(GL_BLEND);
 
-	FFlatVertex *ptr = vbo->GetBuffer();
-	ptr->Set(-1.0f, -1.0f, 0, 0.0f, 0.0f); ptr++;
-	ptr->Set(-1.0f, 1.0f, 0, 0.0f, 1.0f); ptr++;
-	ptr->Set(1.0f, -1.0f, 0, 1.0f, 0.0f); ptr++;
-	ptr->Set(1.0f, 1.0f, 0, 1.0f, 1.0f); ptr++;
-	vbo->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+	renderer->RenderScreenQuad();
 }
 
 //==========================================================================

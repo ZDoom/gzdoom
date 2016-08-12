@@ -61,9 +61,6 @@ public:
 	int GetClientWidth();
 	int GetClientHeight();
 
-//[C]
-	int GetTrueHeight() { return GetHeight();}
-
 protected:
 	bool CanUpdate();
 	void SetGammaTable(WORD *tbl);

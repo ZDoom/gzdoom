@@ -160,10 +160,6 @@ void OpenGLFrameBuffer::InitializeState()
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//int trueH = GetTrueHeight();
-	//int h = GetHeight();
-	//glViewport(0, (trueH - h)/2, GetWidth(), GetHeight()); 
-
 	GLRenderer->Initialize(GetWidth(), GetHeight());
 	GLRenderer->SetOutputViewport(nullptr);
 	Begin2D(false);
@@ -191,13 +187,6 @@ void OpenGLFrameBuffer::Update()
 	DrawRateStuff();
 	GLRenderer->Flush();
 
-	if (GetTrueHeight() != GetHeight())
-	{
-		if (GLRenderer != NULL) 
-			GLRenderer->ClearBorders();
-
-		Begin2D(false);
-	}
 	if (gl_draw_sync || !swapped)
 	{
 		Swap();
@@ -484,15 +473,41 @@ void OpenGLFrameBuffer::FillSimplePoly(FTexture *texture, FVector2 *points, int 
 
 void OpenGLFrameBuffer::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type)
 {
+	const auto &viewport = GLRenderer->mScreenViewport;
+
+	// Grab what is in the back buffer.
+	// We cannot rely on SCREENWIDTH/HEIGHT here because the output may have been scaled.
+	TArray<uint8_t> pixels;
+	pixels.Resize(viewport.width * viewport.height);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(viewport.left, viewport.top, viewport.width, viewport.height, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
+	glPixelStorei(GL_PACK_ALIGNMENT, 4);
+
+	// Copy to screenshot buffer:
 	int w = SCREENWIDTH;
 	int h = SCREENHEIGHT;
 
 	ReleaseScreenshotBuffer();
 	ScreenshotBuffer = new BYTE[w * h * 3];
 
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0,(GetTrueHeight() - GetHeight()) / 2,w,h,GL_RGB,GL_UNSIGNED_BYTE,ScreenshotBuffer);
-	glPixelStorei(GL_PACK_ALIGNMENT, 4);
+	float rcpWidth = 1.0f / viewport.width;
+	float rcpHeight = 1.0f / viewport.height;
+	for (int y = 0; y < h; y++)
+	{
+		for (int x = 0; x < w; x++)
+		{
+			float u = (x + 0.5f) * rcpWidth;
+			float v = (y + 0.5f) * rcpHeight;
+			int sx = u * viewport.width;
+			int sy = v * viewport.height;
+			int sindex = (sx + sy * w) * 3;
+			int dindex = (x + y * w) * 3;
+			ScreenshotBuffer[dindex] = pixels[sindex];
+			ScreenshotBuffer[dindex + 1] = pixels[sindex + 1];
+			ScreenshotBuffer[dindex + 2] = pixels[sindex + 2];
+		}
+	}
+
 	pitch = -w*3;
 	color_type = SS_RGB;
 	buffer = ScreenshotBuffer + w * 3 * (h - 1);

@@ -151,8 +151,9 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 		return false;
 	}
 
-	wipestartscreen = new FHardwareTexture(Width, Height, true);
-	wipestartscreen->CreateTexture(NULL, Width, Height, 0, false, 0);
+	const auto &viewport = GLRenderer->mScreenViewport;
+	wipestartscreen = new FHardwareTexture(viewport.width, viewport.height, true);
+	wipestartscreen->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0);
 	GLRenderer->mSamplerManager->Bind(0, CLAMP_NOFILTER, -1);
 	GLRenderer->mSamplerManager->Bind(1, CLAMP_NONE, -1);
 	glFinish();
@@ -161,14 +162,14 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 	if (FGLRenderBuffers::IsEnabled())
 	{
 		GLRenderer->mBuffers->BindCurrentFB();
-		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, Width, Height);
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
 	}
 	else
 	{
 		GLint readbuffer = 0;
 		glGetIntegerv(GL_READ_BUFFER, &readbuffer);
 		glReadBuffer(GL_FRONT);
-		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, Width, Height);
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
 		glReadBuffer(readbuffer);
 	}
 
@@ -189,8 +190,10 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 void OpenGLFrameBuffer::WipeEndScreen()
 {
 	GLRenderer->m2DDrawer->Flush();
-	wipeendscreen = new FHardwareTexture(Width, Height, true);
-	wipeendscreen->CreateTexture(NULL, Width, Height, 0, false, 0);
+
+	const auto &viewport = GLRenderer->mScreenViewport;
+	wipeendscreen = new FHardwareTexture(viewport.width, viewport.height, true);
+	wipeendscreen->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0);
 	GLRenderer->mSamplerManager->Bind(0, CLAMP_NOFILTER, -1);
 	glFinish();
 	wipeendscreen->Bind(0, false, false);
@@ -198,7 +201,7 @@ void OpenGLFrameBuffer::WipeEndScreen()
 	if (FGLRenderBuffers::IsEnabled())
 		GLRenderer->mBuffers->BindCurrentFB();
 
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, Width, Height);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

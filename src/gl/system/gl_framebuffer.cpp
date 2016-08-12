@@ -473,7 +473,7 @@ void OpenGLFrameBuffer::FillSimplePoly(FTexture *texture, FVector2 *points, int 
 
 void OpenGLFrameBuffer::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type)
 {
-	const auto &viewport = GLRenderer->mScreenViewport;
+	const auto &viewport = GLRenderer->mOutputLetterbox;
 
 	// Grab what is in the back buffer.
 	// We cannot rely on SCREENWIDTH/HEIGHT here because the output may have been scaled.

@@ -478,7 +478,7 @@ void OpenGLFrameBuffer::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESS
 	// Grab what is in the back buffer.
 	// We cannot rely on SCREENWIDTH/HEIGHT here because the output may have been scaled.
 	TArray<uint8_t> pixels;
-	pixels.Resize(viewport.width * viewport.height);
+	pixels.Resize(viewport.width * viewport.height * 3);
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glReadPixels(viewport.left, viewport.top, viewport.width, viewport.height, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
 	glPixelStorei(GL_PACK_ALIGNMENT, 4);
@@ -490,8 +490,8 @@ void OpenGLFrameBuffer::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESS
 	ReleaseScreenshotBuffer();
 	ScreenshotBuffer = new BYTE[w * h * 3];
 
-	float rcpWidth = 1.0f / viewport.width;
-	float rcpHeight = 1.0f / viewport.height;
+	float rcpWidth = 1.0f / w;
+	float rcpHeight = 1.0f / h;
 	for (int y = 0; y < h; y++)
 	{
 		for (int x = 0; x < w; x++)
@@ -500,7 +500,7 @@ void OpenGLFrameBuffer::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESS
 			float v = (y + 0.5f) * rcpHeight;
 			int sx = u * viewport.width;
 			int sy = v * viewport.height;
-			int sindex = (sx + sy * w) * 3;
+			int sindex = (sx + sy * viewport.width) * 3;
 			int dindex = (x + y * w) * 3;
 			ScreenshotBuffer[dindex] = pixels[sindex];
 			ScreenshotBuffer[dindex + 1] = pixels[sindex + 1];

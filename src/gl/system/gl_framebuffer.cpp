@@ -187,6 +187,8 @@ void OpenGLFrameBuffer::Update()
 	DrawRateStuff();
 	GLRenderer->Flush();
 
+	GLRenderer->SetOutputViewport(nullptr);
+
 	if (gl_draw_sync || !swapped)
 	{
 		Swap();

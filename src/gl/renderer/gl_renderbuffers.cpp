@@ -143,6 +143,9 @@ void FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 {
 	if (!IsEnabled())
 		return;
+		
+	if (width <= 0 || height <= 0)
+		I_FatalError("Requested invalid render buffer sizes: screen = %dx%d", width, height);
 
 	int samples = GetCvarSamples();
 
@@ -226,6 +229,10 @@ void FGLRenderBuffers::CreatePipeline(int width, int height)
 void FGLRenderBuffers::CreateBloom(int width, int height)
 {
 	ClearBloom();
+	
+	// No scene, no bloom!
+	if (width <= 0 || height <= 0)
+		return;
 
 	int bloomWidth = MAX(width / 2, 1);
 	int bloomHeight = MAX(height / 2, 1);

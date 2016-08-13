@@ -149,6 +149,12 @@ void FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 
 	int samples = GetCvarSamples();
 
+	GLint activeTex;
+	GLint textureBinding;
+	glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTex);
+	glActiveTexture(GL_TEXTURE0);
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
+
 	if (width == mWidth && height == mHeight && mSamples != samples)
 	{
 		CreateScene(mWidth, mHeight, samples);
@@ -171,8 +177,8 @@ void FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 		mBloomHeight = sceneHeight;
 	}
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(GL_TEXTURE_BINDING_2D, textureBinding);
+	glActiveTexture(activeTex);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -293,7 +299,6 @@ GLuint FGLRenderBuffers::Create2DTexture(GLuint format, int width, int height)
 	GLuint type = (format == GL_RGBA16F) ? GL_FLOAT : GL_UNSIGNED_BYTE;
 	GLuint handle = 0;
 	glGenTextures(1, &handle);
-	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, handle);
 	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, GL_RGBA, type, nullptr);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -414,9 +419,10 @@ void FGLRenderBuffers::CheckFrameBufferCompleteness()
 
 void FGLRenderBuffers::ClearFrameBuffer()
 {
-	GLint scissorEnabled, stencilValue;
+	GLboolean scissorEnabled;
+	GLint stencilValue;
 	GLdouble depthValue;
-	glGetIntegerv(GL_SCISSOR_TEST, &scissorEnabled);
+	glGetBooleanv(GL_SCISSOR_TEST, &scissorEnabled);
 	glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &stencilValue);
 	glGetDoublev(GL_DEPTH_CLEAR_VALUE, &depthValue);
 	glDisable(GL_SCISSOR_TEST);

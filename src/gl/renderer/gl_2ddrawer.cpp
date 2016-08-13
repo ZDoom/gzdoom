@@ -399,6 +399,7 @@ void F2DDrawer::Flush()
 		// DrawTypePoly may not use the color part of the vertex buffer because it needs to use gl_SetColor to produce proper output.
 		if (lasttype == DrawTypePoly && dg->mType != DrawTypePoly)
 		{
+			gl_RenderState.ResetColor();	// this is needed to reset the desaturation.
 			EnableColorArray(true);
 		}
 		else if (lasttype != DrawTypePoly && dg->mType == DrawTypePoly)

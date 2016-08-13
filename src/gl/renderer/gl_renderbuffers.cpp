@@ -336,6 +336,7 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(GLuint colorbuffer)
 	glBindFramebuffer(GL_FRAMEBUFFER, handle);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
 	CheckFrameBufferCompleteness();
+	ClearFrameBuffer();
 	return handle;
 }
 
@@ -350,6 +351,7 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(GLuint colorbuffer, GLuint depthstenc
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthstencil);
 	CheckFrameBufferCompleteness();
+	ClearFrameBuffer();
 	return handle;
 }
 
@@ -365,6 +367,7 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(GLuint colorbuffer, GLuint depth, GLu
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencil);
 	CheckFrameBufferCompleteness();
+	ClearFrameBuffer();
 	return handle;
 }
 
@@ -394,6 +397,30 @@ void FGLRenderBuffers::CheckFrameBufferCompleteness()
 	case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS: error << "GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS"; break;
 	}
 	I_FatalError(error);
+}
+
+//==========================================================================
+//
+// Clear frame buffer to make sure it never contains uninitialized data
+//
+//==========================================================================
+
+void FGLRenderBuffers::ClearFrameBuffer()
+{
+	GLint scissorEnabled, stencilValue;
+	GLdouble depthValue;
+	glGetIntegerv(GL_SCISSOR_TEST, &scissorEnabled);
+	glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &stencilValue);
+	glGetDoublev(GL_DEPTH_CLEAR_VALUE, &depthValue);
+	glDisable(GL_SCISSOR_TEST);
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glClearDepth(0.0);
+	glClearStencil(0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	glClearStencil(stencilValue);
+	glClearDepth(depthValue);
+	if (scissorEnabled)
+		glEnable(GL_SCISSOR_TEST);
 }
 
 //==========================================================================

@@ -286,6 +286,9 @@ void FGLRenderer::Begin2D()
 {
 	if (FGLRenderBuffers::IsEnabled())
 	{
+		if (!mDrawingScene2D) // For when there's no scene rendered (main menu and intermission)
+			SetOutputViewport(nullptr);
+			
 		mBuffers->Setup(mScreenViewport.width, mScreenViewport.height, mSceneViewport.width, mSceneViewport.height);
 		if (mDrawingScene2D)
 			mBuffers->BindSceneFB();

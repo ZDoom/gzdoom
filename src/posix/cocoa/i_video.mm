@@ -169,7 +169,7 @@ namespace
 	const NSInteger LEVEL_WINDOWED   = NSNormalWindowLevel;
 
 	const NSUInteger STYLE_MASK_FULLSCREEN = NSBorderlessWindowMask;
-	const NSUInteger STYLE_MASK_WINDOWED   = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask;
+	const NSUInteger STYLE_MASK_WINDOWED   = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
 }
 
 
@@ -1207,12 +1207,18 @@ void SDLGLFB::ResetGammaTable()
 
 int SDLGLFB::GetClientWidth()
 {
-	return static_cast<int>(rbOpts.width + 2.0f * rbOpts.shiftX);
+	NSView *view = [[NSOpenGLContext currentContext] view];
+	NSRect backingBounds = [view convertRectToBacking: [view bounds]];
+	int clientWidth = (int)backingBounds.size.width;
+	return clientWidth > 0 ? clientWidth : Width;
 }
 
 int SDLGLFB::GetClientHeight()
 {
-	return static_cast<int>(rbOpts.height + 2.0f * rbOpts.shiftY);
+	NSView *view = [[NSOpenGLContext currentContext] view];
+	NSRect backingBounds = [view convertRectToBacking: [view bounds]];
+	int clientHeight = (int)backingBounds.size.height;
+	return clientHeight > 0 ? clientHeight : Height;
 }
 
 

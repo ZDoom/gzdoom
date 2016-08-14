@@ -119,7 +119,7 @@ void FSkyVertexBuffer::SkyVertex(int r, int c, bool zflip)
 	static const FAngle maxSideAngle = 60.f;
 	static const float scale = 10000.;
 
-	FAngle topAngle= (c / (float)mColumns * 360.f);
+	FAngle topAngle = (c / (float)mColumns * 360.f);
 	FAngle sideAngle = maxSideAngle * (mRows - r) / mRows;
 	float height = sideAngle.Sin();
 	float realRadius = scale * sideAngle.Cos();
@@ -127,13 +127,13 @@ void FSkyVertexBuffer::SkyVertex(int r, int c, bool zflip)
 	float z = (!zflip) ? scale * height : -scale * height;
 
 	FSkyVertex vert;
-	
+
 	vert.color = r == 0 ? 0xffffff : 0xffffffff;
-		
+
 	// And the texture coordinates.
-	if(!zflip)	// Flipped Y is for the lower hemisphere.
+	if (!zflip)	// Flipped Y is for the lower hemisphere.
 	{
-		vert.u = (-c / (float)mColumns) ;
+		vert.u = (-c / (float)mColumns);
 		vert.v = (r / (float)mRows);
 	}
 	else
@@ -142,7 +142,7 @@ void FSkyVertexBuffer::SkyVertex(int r, int c, bool zflip)
 		vert.v = 1.0f + ((mRows - r) / (float)mRows);
 	}
 
-	if (r != 4) z+=300;
+	if (r != 4) z += 300;
 	// And finally the vertex.
 	vert.x = -pos.X;	// Doom mirrors the sky vertically!
 	vert.y = z - 1.f;
@@ -194,21 +194,21 @@ void FSkyVertexBuffer::CreateDome()
 	// the first thing we put into the buffer is the fog layer object which is just 4 triangles around the viewpoint.
 
 	mVertices.Reserve(12);
-	mVertices[0].Set( 1.0f,  1.0f, -1.0f);
-	mVertices[1].Set( 1.0f, -1.0f, -1.0f);
-	mVertices[2].Set(-1.0f,  0.0f, -1.0f);
+	mVertices[0].Set(1.0f, 1.0f, -1.0f);
+	mVertices[1].Set(1.0f, -1.0f, -1.0f);
+	mVertices[2].Set(-1.0f, 0.0f, -1.0f);
 
-	mVertices[3].Set( 1.0f,  1.0f, -1.0f);
-	mVertices[4].Set( 1.0f, -1.0f, -1.0f);
-	mVertices[5].Set( 0.0f,  0.0f,  1.0f);
+	mVertices[3].Set(1.0f, 1.0f, -1.0f);
+	mVertices[4].Set(1.0f, -1.0f, -1.0f);
+	mVertices[5].Set(0.0f, 0.0f, 1.0f);
 
 	mVertices[6].Set(-1.0f, 0.0f, -1.0f);
-	mVertices[7].Set( 1.0f, 1.0f, -1.0f);
-	mVertices[8].Set( 0.0f, 0.0f,  1.0f);
+	mVertices[7].Set(1.0f, 1.0f, -1.0f);
+	mVertices[8].Set(0.0f, 0.0f, 1.0f);
 
 	mVertices[9].Set(1.0f, -1.0f, -1.0f);
 	mVertices[10].Set(-1.0f, 0.0f, -1.0f);
-	mVertices[11].Set( 0.0f, 0.0f,  1.0f);
+	mVertices[11].Set(0.0f, 0.0f, 1.0f);
 
 	mColumns = 128;
 	mRows = 4;
@@ -358,7 +358,7 @@ void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, in
 		gl_RenderState.EnableModelMatrix(true);
 
 		gl_RenderState.mModelMatrix.loadIdentity();
-		gl_RenderState.mModelMatrix.rotate(-180.0f+x_offset, 0.f, 1.f, 0.f);
+		gl_RenderState.mModelMatrix.rotate(-180.0f + x_offset, 0.f, 1.f, 0.f);
 
 		float xscale = texw < 1024.f ? floor(1024.f / float(texw)) : 1.f;
 		float yscale = 1.f;
@@ -366,18 +366,18 @@ void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, in
 		{
 			// smaller sky textures must be tiled. We restrict it to 128 sky pixels, though
 			gl_RenderState.mModelMatrix.translate(0.f, -1250.f, 0.f);
-			gl_RenderState.mModelMatrix.scale(1.f, 128/230.f, 1.f);
+			gl_RenderState.mModelMatrix.scale(1.f, 128 / 230.f, 1.f);
 			yscale = 128 / texh;	// intentionally left as integer.
 		}
 		else if (texh < 200)
 		{
 			gl_RenderState.mModelMatrix.translate(0.f, -1250.f, 0.f);
-			gl_RenderState.mModelMatrix.scale(1.f, texh/230.f, 1.f);
+			gl_RenderState.mModelMatrix.scale(1.f, texh / 230.f, 1.f);
 		}
 		else if (texh <= 240)
 		{
 			gl_RenderState.mModelMatrix.translate(0.f, (200 - texh + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
-			gl_RenderState.mModelMatrix.scale(1.f, 1.f + ((texh-200.f)/200.f) * 1.17f, 1.f);
+			gl_RenderState.mModelMatrix.scale(1.f, 1.f + ((texh - 200.f) / 200.f) * 1.17f, 1.f);
 		}
 		else
 		{
@@ -387,12 +387,13 @@ void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, in
 		}
 		gl_RenderState.EnableTextureMatrix(true);
 		gl_RenderState.mTextureMatrix.loadIdentity();
-		gl_RenderState.mTextureMatrix.scale(mirror? -xscale : xscale, yscale, 1.f);
+		gl_RenderState.mTextureMatrix.scale(mirror ? -xscale : xscale, yscale, 1.f);
 		gl_RenderState.mTextureMatrix.translate(1.f, y_offset / texh, 1.f);
 	}
 
 	GLRenderer->mSkyVBO->RenderDome(tex, mode);
 	gl_RenderState.EnableTextureMatrix(false);
+	gl_RenderState.EnableModelMatrix(false);
 }
 
 
@@ -493,7 +494,7 @@ void GLSkyPortal::DrawContents()
 	bool oldClamp = gl_RenderState.SetDepthClamp(true);
 
 	gl_MatrixStack.Push(gl_RenderState.mViewMatrix);
-	GLRenderer->SetupView(0, 0, 0, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+	GLRenderer->SetupView(0, 0, 0, ViewAngle, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 
 	gl_RenderState.SetVertexBuffer(GLRenderer->mSkyVBO);
 	if (origin->texture[0] && origin->texture[0]->tex->gl_info.bSkybox)
@@ -536,6 +537,5 @@ void GLSkyPortal::DrawContents()
 	gl_RenderState.ApplyMatrices();
 	glset.lightmode = oldlightmode;
 	gl_RenderState.SetDepthClamp(oldClamp);
-	gl_RenderState.EnableModelMatrix(false);
 }
 

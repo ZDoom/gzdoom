@@ -223,7 +223,6 @@ void FGLRenderer::SetProjection(float fov, float ratio, float fovratio)
 
 	float fovy = 2 * RAD2DEG(atan(tan(DEG2RAD(fov) / 2) / fovratio));
 	gl_RenderState.mProjectionMatrix.perspective(fovy, ratio, 5.f, 65536.f);
-	gl_RenderState.Set2DMode(false);
 }
 
 // raw matrix input from stereo 3d modes
@@ -231,7 +230,6 @@ void FGLRenderer::SetProjection(VSMatrix matrix)
 {
 	gl_RenderState.mProjectionMatrix.loadIdentity();
 	gl_RenderState.mProjectionMatrix.multMatrix(matrix);
-	gl_RenderState.Set2DMode(false);
 }
 
 //-----------------------------------------------------------------------------

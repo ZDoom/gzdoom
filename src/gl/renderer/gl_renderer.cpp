@@ -296,7 +296,6 @@ void FGLRenderer::Begin2D()
 	glScissor(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 
 	gl_RenderState.EnableFog(false);
-	gl_RenderState.Set2DMode(true);
 }
 
 //===========================================================================

@@ -60,13 +60,12 @@ class FRenderState
 	int mSrcBlend, mDstBlend;
 	float mAlphaThreshold;
 	int mBlendEquation;
-	bool m2D;
 	bool mModelMatrixEnabled;
 	bool mTextureMatrixEnabled;
+	bool mLastDepthClamp;
 	float mInterpolationFactor;
 	float mClipHeight, mClipHeightDirection;
 	float mShaderTimer;
-	bool mLastDepthClamp;
 
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
 	FStateVec4 mColor;
@@ -426,11 +425,6 @@ public:
 		else glEnable(GL_DEPTH_CLAMP);
 		mLastDepthClamp = on;
 		return res;
-	}
-
-	void Set2DMode(bool on)
-	{
-		m2D = on;
 	}
 
 	void SetInterpolationFactor(float fac)

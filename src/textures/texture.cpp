@@ -354,22 +354,14 @@ void FTexture::GenerateBgraFromBitmap(const FBitmap &bitmap)
 {
 	CreatePixelsBgraWithMipmaps();
 
-	// Transpose and premultiply alpha
+	// Transpose
 	const uint32_t *src = (const uint32_t *)bitmap.GetPixels();
 	uint32_t *dest = PixelsBgra.data();
 	for (int x = 0; x < Width; x++)
 	{
 		for (int y = 0; y < Height; y++)
 		{
-			uint32_t p = src[x + y * Width];
-			uint32_t red = RPART(p);
-			uint32_t green = GPART(p);
-			uint32_t blue = BPART(p);
-			uint32_t alpha = APART(p);
-			red = (red * alpha + 127) / 255;
-			green = (green * alpha + 127) / 255;
-			blue = (blue * alpha + 127) / 255;
-			dest[y + x * Height] = (alpha << 24) | (red << 16) | (green << 8) | blue;
+			dest[y + x * Height] = src[x + y * Width];
 		}
 	}
 

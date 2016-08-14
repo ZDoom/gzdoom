@@ -473,9 +473,9 @@ public:
 	{
 		uint32_t alpha = APART(fg) + (APART(fg) >> 7); // 255 -> 256
 		uint32_t inv_alpha = 256 - alpha;
-		uint32_t red = MIN<uint32_t>(RPART(fg) + (RPART(bg) * inv_alpha) / 256, 255);
-		uint32_t green = MIN<uint32_t>(GPART(fg) + (GPART(bg) * inv_alpha) / 256, 255);
-		uint32_t blue = MIN<uint32_t>(BPART(fg) + (BPART(bg) * inv_alpha) / 256, 255);
+		uint32_t red = MIN<uint32_t>(RPART(fg) * alpha + (RPART(bg) * inv_alpha) / 256, 255);
+		uint32_t green = MIN<uint32_t>(GPART(fg) * alpha + (GPART(bg) * inv_alpha) / 256, 255);
+		uint32_t blue = MIN<uint32_t>(BPART(fg) * alpha + (BPART(bg) * inv_alpha) / 256, 255);
 		return 0xff000000 | (red << 16) | (green << 8) | blue;
 	}
 };
@@ -861,11 +861,18 @@ public:
 	__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128()); \
 	__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128()); \
 	__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128()); \
-	__m128i m255 = _mm_set1_epi16(255); \
-	__m128i inv_alpha_hi = _mm_sub_epi16(m255, _mm_shufflehi_epi16(_mm_shufflelo_epi16(fg_hi, _MM_SHUFFLE(3,3,3,3)), _MM_SHUFFLE(3,3,3,3))); \
-	__m128i inv_alpha_lo = _mm_sub_epi16(m255, _mm_shufflehi_epi16(_mm_shufflelo_epi16(fg_lo, _MM_SHUFFLE(3,3,3,3)), _MM_SHUFFLE(3,3,3,3))); \
-	inv_alpha_hi = _mm_add_epi16(inv_alpha_hi, _mm_srli_epi16(inv_alpha_hi, 7)); \
-	inv_alpha_lo = _mm_add_epi16(inv_alpha_lo, _mm_srli_epi16(inv_alpha_lo, 7)); \
+	__m128i m256 = _mm_set1_epi16(256); \
+	__m128i alpha_hi = _mm_shufflehi_epi16(_mm_shufflelo_epi16(fg_hi, _MM_SHUFFLE(3,3,3,3)), _MM_SHUFFLE(3,3,3,3)); \
+	__m128i alpha_lo = _mm_shufflehi_epi16(_mm_shufflelo_epi16(fg_lo, _MM_SHUFFLE(3,3,3,3)), _MM_SHUFFLE(3,3,3,3)); \
+	alpha_hi = _mm_add_epi16(alpha_hi, _mm_srli_epi16(alpha_hi, 7)); \
+	alpha_lo = _mm_add_epi16(alpha_lo, _mm_srli_epi16(alpha_lo, 7)); \
+	__m128i inv_alpha_hi = _mm_sub_epi16(m256, alpha_hi); \
+	__m128i inv_alpha_lo = _mm_sub_epi16(m256, alpha_lo); \
+	fg_hi = _mm_mullo_epi16(fg_hi, alpha_hi); \
+	fg_hi = _mm_srli_epi16(fg_hi, 8); \
+	fg_lo = _mm_mullo_epi16(fg_lo, alpha_lo); \
+	fg_lo = _mm_srli_epi16(fg_lo, 8); \
+	fg = _mm_packus_epi16(fg_lo, fg_hi); \
 	bg_hi = _mm_mullo_epi16(bg_hi, inv_alpha_hi); \
 	bg_hi = _mm_srli_epi16(bg_hi, 8); \
 	bg_lo = _mm_mullo_epi16(bg_lo, inv_alpha_lo); \

@@ -4757,6 +4757,8 @@ FxExpression *FxReturnStatement::Resolve(FCompileContext &ctx)
 
 ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build)
 {
+	ExpEmit out(0, REGT_NIL);
+
 	// If we return nothing, use a regular RET opcode.
 	// Otherwise just return the value we're given.
 	if (Value == nullptr)
@@ -4765,11 +4767,11 @@ ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build)
 	}
 	else
 	{
-		ExpEmit ret = Value->Emit(build);
+		out = Value->Emit(build);
 
 		// Check if it is a function call that simplified itself
 		// into a tail call in which case we don't emit anything.
-		if (!ret.Final)
+		if (!out.Final)
 		{
 			if (Value->ValueType == TypeVoid)
 			{ // Nothing is returned.
@@ -4777,12 +4779,11 @@ ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build)
 			}
 			else
 			{
-				build->Emit(OP_RET, RET_FINAL, ret.RegType | (ret.Konst ? REGT_KONST : 0), ret.RegNum);
+				build->Emit(OP_RET, RET_FINAL, out.RegType | (out.Konst ? REGT_KONST : 0), out.RegNum);
 			}
 		}
 	}
 
-	ExpEmit out;
 	out.Final = true;
 	return out;
 }

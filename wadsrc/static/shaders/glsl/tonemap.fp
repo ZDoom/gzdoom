@@ -7,12 +7,14 @@ uniform float ExposureAdjustment;
 
 vec3 Linear(vec3 c)
 {
+	//c = max(c, vec3(0.0));
 	//return pow(c, 2.2);
 	return c * c; // cheaper, but assuming gamma of 2.0 instead of 2.2
 }
 
 vec3 sRGB(vec3 c)
 {
+	c = max(c, vec3(0.0));
 	//return pow(c, vec3(1.0 / 2.2));
 	return sqrt(c); // cheaper, but assuming gamma of 2.0 instead of 2.2
 }
@@ -56,8 +58,7 @@ vec3 Uncharted2Tonemap(vec3 x)
 vec3 Tonemap(vec3 color)
 {
 	float W = 11.2;
-	float ExposureBias = 2.0;
-	vec3 curr = Uncharted2Tonemap(ExposureBias * color);
+	vec3 curr = Uncharted2Tonemap(color);
 	vec3 whiteScale = vec3(1) / Uncharted2Tonemap(vec3(W));
 	return sRGB(curr * whiteScale);
 }

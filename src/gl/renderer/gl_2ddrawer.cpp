@@ -157,8 +157,8 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 	// scissor test doesn't use the current viewport for the coordinates, so use real screen coordinates
 	dg.mScissor[0] = GLRenderer->ScreenToWindowX(parms.lclip);
 	dg.mScissor[1] = GLRenderer->ScreenToWindowY(parms.dclip);
-	dg.mScissor[2] = GLRenderer->ScreenToWindowX(parms.rclip) - GLRenderer->ScreenToWindowX(parms.lclip);
-	dg.mScissor[3] = GLRenderer->ScreenToWindowY(parms.dclip) - GLRenderer->ScreenToWindowY(parms.uclip);
+	dg.mScissor[2] = GLRenderer->ScreenToWindowX(parms.rclip) - dg.mScissor[0];
+	dg.mScissor[3] = GLRenderer->ScreenToWindowY(parms.uclip) - dg.mScissor[1];
 
 	FSimpleVertex *ptr = &mVertices[dg.mVertIndex];
 	ptr->Set(x, y, 0, u1, v1, color); ptr++;

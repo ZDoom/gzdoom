@@ -266,7 +266,7 @@ void FGLRenderBuffers::CreateBloom(int width, int height)
 
 GLuint FGLRenderBuffers::GetHdrFormat()
 {
-	return ((gl.flags & RFL_NO_RGBA16F) != 0) ? GL_RGBA8 : GL_RGBA16F;
+	return ((gl.flags & RFL_NO_RGBA16F) != 0) ? GL_RGBA8 : GL_RGBA16;
 }
 
 //==========================================================================
@@ -296,7 +296,7 @@ int FGLRenderBuffers::GetCvarSamples()
 
 GLuint FGLRenderBuffers::Create2DTexture(GLuint format, int width, int height)
 {
-	GLuint type = (format == GL_RGBA16F) ? GL_FLOAT : GL_UNSIGNED_BYTE;
+	GLuint type = (format == GL_RGBA16) ? GL_UNSIGNED_SHORT : GL_UNSIGNED_BYTE;
 	GLuint handle = 0;
 	glGenTextures(1, &handle);
 	glBindTexture(GL_TEXTURE_2D, handle);

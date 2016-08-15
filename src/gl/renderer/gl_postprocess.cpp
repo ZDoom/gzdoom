@@ -306,13 +306,13 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 		mPresentShader->InputTexture.Set(0);
 		if (!applyGamma || framebuffer->IsHWGammaActive())
 		{
-			mPresentShader->Gamma.Set(1.0f);
+			mPresentShader->InvGamma.Set(1.0f);
 			mPresentShader->Contrast.Set(1.0f);
 			mPresentShader->Brightness.Set(0.0f);
 		}
 		else
 		{
-			mPresentShader->Gamma.Set(clamp<float>(Gamma, 0.1f, 4.f));
+			mPresentShader->InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
 			mPresentShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
 			mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
 		}

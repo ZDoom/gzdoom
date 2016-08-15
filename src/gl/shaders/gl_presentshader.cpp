@@ -60,7 +60,7 @@ void FPresentShader::Bind()
 		mShader.SetAttribLocation(0, "PositionInProjection");
 		mShader.SetAttribLocation(1, "UV");
 		InputTexture.Init(mShader, "InputTexture");
-		Gamma.Init(mShader, "Gamma");
+		InvGamma.Init(mShader, "InvGamma");
 		Contrast.Init(mShader, "Contrast");
 		Brightness.Init(mShader, "Brightness");
 		Scale.Init(mShader, "UVScale");

@@ -1416,13 +1416,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 		}
 	}
 
-	int count = P_RadiusAttack (self, self->target, damage, distance, self->DamageType, flags, fulldmgdistance);
 	if (!(flags & XF_NOACTORTYPE) && damagetype == NAME_None)
 	{
 		damagetype = self->DamageType;
 	}
 
-	P_RadiusAttack (self, self->target, damage, distance, damagetype, flags, fulldmgdistance);
+	int count = P_RadiusAttack (self, self->target, damage, distance, damagetype, flags, fulldmgdistance);
 	P_CheckSplash(self, distance);
 	if (alert && self->target != NULL && self->target->player != NULL)
 	{

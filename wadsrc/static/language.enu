@@ -1800,6 +1800,8 @@ DSPLYMNU_QUAKEINTENSITY			= "Earthquake shake intensity";
 DSPLYMNU_NOMONSTERINTERPOLATION	= "Interpolate monster movement";
 DSPLYMNU_MENUDIM				= "Menu dim";
 DSPLYMNU_DIMCOLOR				= "Dim color";
+DSPLYMNU_MOVEBOB 				= "View bob amount while moving";
+DSPLYMNU_STILLBOB 				= "View bob amount while not moving";
 
 // HUD Options
 HUDMNU_TITLE					= "HUD Options";

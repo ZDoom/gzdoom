@@ -65,6 +65,52 @@ void FGLDebug::Update()
 
 //-----------------------------------------------------------------------------
 //
+// Label objects so they are referenced by name in debug messages and in
+// OpenGL debuggers (renderdoc)
+//
+//-----------------------------------------------------------------------------
+
+void FGLDebug::LabelObject(GLenum type, GLuint handle, const FString &name)
+{
+	if (gl_debug_level != 0)
+	{
+		glObjectLabel(type, handle, (GLsizei)name.Len(), name.GetChars());
+	}
+}
+
+void FGLDebug::LabelObjectPtr(void *ptr, const FString &name)
+{
+	if (gl_debug_level != 0)
+	{
+		glObjectPtrLabel(ptr, (GLsizei)name.Len(), name.GetChars());
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
+// Marks which render pass/group is executing commands so that debuggers can
+// display this information
+//
+//-----------------------------------------------------------------------------
+
+void FGLDebug::PushGroup(const FString &name)
+{
+	if (gl_debug_level != 0)
+	{
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, (GLsizei)name.Len(), name.GetChars());
+	}
+}
+
+void FGLDebug::PopGroup()
+{
+	if (gl_debug_level != 0)
+	{
+		glPopDebugGroup();
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
 // Turns on synchronous debugging on and off based on gl_debug_breakpoint
 //
 // Allows getting the debugger to break exactly at the OpenGL function emitting
@@ -160,6 +206,9 @@ void FGLDebug::OutputMessageLog()
 
 void FGLDebug::PrintMessage(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message)
 {
+	if (type == GL_DEBUG_TYPE_PUSH_GROUP || type == GL_DEBUG_TYPE_POP_GROUP)
+		return;
+
 	static int messagesPrinted = 0;
 	messagesPrinted++;
 	if (messagesPrinted == 50)

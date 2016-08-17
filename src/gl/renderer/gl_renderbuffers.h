@@ -47,12 +47,12 @@ private:
 	void CreateScene(int width, int height, int samples);
 	void CreatePipeline(int width, int height);
 	void CreateBloom(int width, int height);
-	GLuint Create2DTexture(GLuint format, int width, int height);
-	GLuint CreateRenderBuffer(GLuint format, int width, int height);
-	GLuint CreateRenderBuffer(GLuint format, int samples, int width, int height);
-	GLuint CreateFrameBuffer(GLuint colorbuffer);
-	GLuint CreateFrameBuffer(GLuint colorbuffer, GLuint depthstencil, bool colorIsARenderBuffer);
-	GLuint CreateFrameBuffer(GLuint colorbuffer, GLuint depth, GLuint stencil, bool colorIsARenderBuffer);
+	GLuint Create2DTexture(const FString &name, GLuint format, int width, int height);
+	GLuint CreateRenderBuffer(const FString &name, GLuint format, int width, int height);
+	GLuint CreateRenderBuffer(const FString &name, GLuint format, int samples, int width, int height);
+	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer);
+	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer, GLuint depthstencil, bool colorIsARenderBuffer);
+	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer, GLuint depth, GLuint stencil, bool colorIsARenderBuffer);
 	void CheckFrameBufferCompleteness();
 	void ClearFrameBuffer();
 	void DeleteTexture(GLuint &handle);

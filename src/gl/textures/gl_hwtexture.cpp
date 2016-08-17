@@ -48,6 +48,7 @@
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
+#include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/textures/gl_material.h"
 
@@ -184,7 +185,7 @@ void FHardwareTexture::Resize(int width, int height, unsigned char *src_data, un
 //
 //===========================================================================
 
-unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation)
+unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const FString &name)
 {
 	int rh,rw;
 	int texformat=TexFormat[gl_texture_format];
@@ -198,6 +199,7 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 	if (glTex->glTexID==0) glGenTextures(1,&glTex->glTexID);
 	if (texunit != 0) glActiveTexture(GL_TEXTURE0+texunit);
 	glBindTexture(GL_TEXTURE_2D, glTex->glTexID);
+	FGLDebug::LabelObject(GL_TEXTURE, glTex->glTexID, name);
 	lastbound[texunit] = glTex->glTexID;
 
 	if (!buffer)

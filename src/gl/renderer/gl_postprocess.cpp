@@ -59,6 +59,7 @@
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_cvars.h"
+#include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
@@ -126,6 +127,8 @@ void FGLRenderer::BloomScene()
 	// Only bloom things if enabled and no special fixed light mode is active
 	if (!gl_bloom || !FGLRenderBuffers::IsEnabled() || gl_fixedcolormap != CM_DEFAULT)
 		return;
+
+	FGLDebug::PushGroup("BloomScene");
 
 	FGLPostProcessState savedState;
 
@@ -196,6 +199,8 @@ void FGLRenderer::BloomScene()
 	mBloomCombineShader->BloomTexture.Set(0);
 	RenderScreenQuad();
 	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+
+	FGLDebug::PopGroup();
 }
 
 //-----------------------------------------------------------------------------
@@ -209,6 +214,8 @@ void FGLRenderer::TonemapScene()
 	if (gl_tonemap == 0 || !FGLRenderBuffers::IsEnabled())
 		return;
 
+	FGLDebug::PushGroup("TonemapScene");
+
 	FGLPostProcessState savedState;
 
 	mBuffers->BindNextFB();
@@ -218,6 +225,8 @@ void FGLRenderer::TonemapScene()
 	mTonemapShader->Exposure.Set(mCameraExposure);
 	RenderScreenQuad();
 	mBuffers->NextTexture();
+
+	FGLDebug::PopGroup();
 }
 
 //-----------------------------------------------------------------------------
@@ -230,6 +239,8 @@ void FGLRenderer::LensDistortScene()
 {
 	if (gl_lens == 0 || !FGLRenderBuffers::IsEnabled())
 		return;
+
+	FGLDebug::PushGroup("LensDistortScene");
 
 	float k[4] =
 	{
@@ -272,6 +283,8 @@ void FGLRenderer::LensDistortScene()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	mBuffers->NextTexture();
+
+	FGLDebug::PopGroup();
 }
 
 //-----------------------------------------------------------------------------
@@ -283,6 +296,7 @@ void FGLRenderer::LensDistortScene()
 void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 {
 	m2DDrawer->Flush();	// draw all pending 2D stuff before copying the buffer
+	FGLDebug::PushGroup("CopyToBackbuffer");
 	if (FGLRenderBuffers::IsEnabled())
 	{
 		FGLPostProcessState savedState;
@@ -327,6 +341,7 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 		FGLPostProcessState savedState;
 		ClearBorders();
 	}
+	FGLDebug::PopGroup();
 }
 
 //-----------------------------------------------------------------------------

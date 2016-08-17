@@ -46,6 +46,7 @@
 #include "vectors.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
+#include "gl/system/gl_debug.h"
 #include "gl/shaders/gl_shaderprogram.h"
 #include "w_wad.h"
 #include "i_system.h"
@@ -107,6 +108,8 @@ void FShaderProgram::Compile(ShaderType type, const char *name, const FString &c
 
 	const auto &handle = mShaders[type];
 
+	FGLDebug::LabelObject(GL_SHADER, handle, name);
+
 	FString patchedCode = PatchShader(type, code, defines, maxGlslVersion);
 	int lengths[1] = { (int)patchedCode.Len() };
 	const char *sources[1] = { patchedCode.GetChars() };
@@ -147,6 +150,7 @@ void FShaderProgram::SetFragDataLocation(int index, const char *name)
 
 void FShaderProgram::Link(const char *name)
 {
+	FGLDebug::LabelObject(GL_PROGRAM, mProgram, name);
 	glLinkProgram(mProgram);
 
 	GLint status = 0;

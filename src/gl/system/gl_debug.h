@@ -11,6 +11,12 @@ class FGLDebug
 public:
 	void Update();
 
+	static void LabelObject(GLenum type, GLuint handle, const FString &name);
+	static void LabelObjectPtr(void *ptr, const FString &name);
+
+	static void PushGroup(const FString &name);
+	static void PopGroup();
+
 private:
 	void SetupBreakpointMode();
 	void UpdateLoggingLevel();

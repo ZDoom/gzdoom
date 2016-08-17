@@ -54,7 +54,7 @@ private:
 	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer, GLuint depthstencil, bool colorIsARenderBuffer);
 	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer, GLuint depth, GLuint stencil, bool colorIsARenderBuffer);
 	void CheckFrameBufferCompleteness();
-	void ClearFrameBuffer();
+	void ClearFrameBuffer(bool stencil, bool depth);
 	void DeleteTexture(GLuint &handle);
 	void DeleteRenderBuffer(GLuint &handle);
 	void DeleteFrameBuffer(GLuint &handle);

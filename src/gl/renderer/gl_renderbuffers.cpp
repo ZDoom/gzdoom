@@ -335,7 +335,7 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuff
 	FGLDebug::LabelObject(GL_FRAMEBUFFER, handle, name);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
 	CheckFrameBufferCompleteness();
-	ClearFrameBuffer();
+	ClearFrameBuffer(false, false);
 	return handle;
 }
 
@@ -351,7 +351,7 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuff
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthstencil);
 	CheckFrameBufferCompleteness();
-	ClearFrameBuffer();
+	ClearFrameBuffer(true, true);
 	return handle;
 }
 
@@ -368,7 +368,7 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuff
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencil);
 	CheckFrameBufferCompleteness();
-	ClearFrameBuffer();
+	ClearFrameBuffer(true, true);
 	return handle;
 }
 
@@ -406,7 +406,7 @@ void FGLRenderBuffers::CheckFrameBufferCompleteness()
 //
 //==========================================================================
 
-void FGLRenderBuffers::ClearFrameBuffer()
+void FGLRenderBuffers::ClearFrameBuffer(bool stencil, bool depth)
 {
 	GLboolean scissorEnabled;
 	GLint stencilValue;
@@ -418,7 +418,12 @@ void FGLRenderBuffers::ClearFrameBuffer()
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClearDepth(0.0);
 	glClearStencil(0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	GLenum flags = GL_COLOR_BUFFER_BIT;
+	if (stencil)
+		flags |= GL_STENCIL_BUFFER_BIT;
+	if (depth)
+		flags |= GL_DEPTH_BUFFER_BIT;
+	glClear(flags);
 	glClearStencil(stencilValue);
 	glClearDepth(depthValue);
 	if (scissorEnabled)

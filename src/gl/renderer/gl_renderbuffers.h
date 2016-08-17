@@ -59,12 +59,12 @@ private:
 	void DeleteRenderBuffer(GLuint &handle);
 	void DeleteFrameBuffer(GLuint &handle);
 
-	int GetCvarSamples();
 	GLuint GetHdrFormat();
 
 	int mWidth = 0;
 	int mHeight = 0;
 	int mSamples = 0;
+	int mMaxSamples = 0;
 	int mBloomWidth = 0;
 	int mBloomHeight = 0;
 

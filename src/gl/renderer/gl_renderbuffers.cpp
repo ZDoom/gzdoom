@@ -65,6 +65,7 @@ CVAR(Bool, gl_renderbuffers, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 FGLRenderBuffers::FGLRenderBuffers()
 {
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&mOutputFB);
+	glGetIntegerv(GL_MAX_SAMPLES, &mMaxSamples);
 }
 
 //==========================================================================
@@ -147,7 +148,7 @@ void FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 	if (width <= 0 || height <= 0)
 		I_FatalError("Requested invalid render buffer sizes: screen = %dx%d", width, height);
 
-	int samples = GetCvarSamples();
+	int samples = clamp((int)gl_multisample, 0, mMaxSamples);
 
 	GLint activeTex;
 	GLint textureBinding;
@@ -267,20 +268,6 @@ void FGLRenderBuffers::CreateBloom(int width, int height)
 GLuint FGLRenderBuffers::GetHdrFormat()
 {
 	return ((gl.flags & RFL_NO_RGBA16F) != 0) ? GL_RGBA8 : GL_RGBA16;
-}
-
-//==========================================================================
-//
-// Converts the CVAR multisample value into a valid level for OpenGL
-//
-//==========================================================================
-
-int FGLRenderBuffers::GetCvarSamples()
-{
-	int maxSamples = 0;
-	glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
-
-	return clamp((int)gl_multisample, 0, maxSamples);
 }
 
 //==========================================================================

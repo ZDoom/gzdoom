@@ -42,6 +42,7 @@
 #include "gl/system/gl_system.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_debug.h"
+#include <set>
 
 #ifndef _MSC_VER
 #include <signal.h>
@@ -209,19 +210,33 @@ void FGLDebug::PrintMessage(GLenum source, GLenum type, GLuint id, GLenum severi
 	if (type == GL_DEBUG_TYPE_PUSH_GROUP || type == GL_DEBUG_TYPE_POP_GROUP)
 		return;
 
+	const int maxMessages = 50;
+
 	static int messagesPrinted = 0;
+	if (messagesPrinted > maxMessages)
+		return;
+
+	FString msg(message, length);
+
+	static std::set<std::string> seenMessages;
+	bool alreadySeen = !seenMessages.insert(msg.GetChars()).second;
+	if (alreadySeen)
+		return;
+
 	messagesPrinted++;
-	if (messagesPrinted == 50)
+	if (messagesPrinted == maxMessages)
 	{
 		Printf("Max OpenGL debug messages reached. Suppressing further output.\n");
 	}
-	else if (messagesPrinted < 50)
+	else if (messagesPrinted < maxMessages)
 	{
-		FString msg(message, length);
 		FString sourceStr = SourceToString(source);
 		FString typeStr = TypeToString(type);
 		FString severityStr = SeverityToString(severity);
-		Printf("%s [%s] %s: %s\n", severityStr.GetChars(), sourceStr.GetChars(), typeStr.GetChars(), msg.GetChars());
+		if (type != GL_DEBUG_TYPE_OTHER)
+			Printf("[%s] %s, %s: %s\n", sourceStr.GetChars(), severityStr.GetChars(), typeStr.GetChars(), msg.GetChars());
+		else
+			Printf("[%s] %s: %s\n", sourceStr.GetChars(), severityStr.GetChars(), msg.GetChars());
 	}
 }
 

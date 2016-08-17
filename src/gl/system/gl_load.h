@@ -153,32 +153,19 @@ typedef unsigned int GLhandleARB;
 extern "C" {
 #endif /*__cplusplus*/
 
-extern int ogl_ext_ARB_texture_compression;
-extern int ogl_ext_EXT_texture_compression_s3tc;
+extern int ogl_ext_APPLE_client_storage;
 extern int ogl_ext_ARB_buffer_storage;
 extern int ogl_ext_ARB_shader_storage_buffer_object;
-extern int ogl_ext_EXT_texture_sRGB;
-extern int ogl_ext_EXT_texture_filter_anisotropic;
-extern int ogl_ext_EXT_framebuffer_object;
-extern int ogl_ext_APPLE_client_storage;
+extern int ogl_ext_ARB_texture_compression;
 extern int ogl_ext_ARB_texture_rectangle;
+extern int ogl_ext_EXT_framebuffer_object;
+extern int ogl_ext_EXT_texture_compression_s3tc;
+extern int ogl_ext_EXT_texture_filter_anisotropic;
+extern int ogl_ext_EXT_texture_sRGB;
+extern int ogl_ext_KHR_debug;
+extern int ogl_ext_ARB_invalidate_subdata;
 
-#define GL_COMPRESSED_ALPHA_ARB 0x84E9
-#define GL_COMPRESSED_INTENSITY_ARB 0x84EC
-#define GL_COMPRESSED_LUMINANCE_ALPHA_ARB 0x84EB
-#define GL_COMPRESSED_LUMINANCE_ARB 0x84EA
-#define GL_COMPRESSED_RGBA_ARB 0x84EE
-#define GL_COMPRESSED_RGB_ARB 0x84ED
-#define GL_COMPRESSED_TEXTURE_FORMATS_ARB 0x86A3
-#define GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB 0x86A2
-#define GL_TEXTURE_COMPRESSED_ARB 0x86A1
-#define GL_TEXTURE_COMPRESSED_IMAGE_SIZE_ARB 0x86A0
-#define GL_TEXTURE_COMPRESSION_HINT_ARB 0x84EF
-
-#define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
-#define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
-#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
-#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT 0x83F0
+#define GL_UNPACK_CLIENT_STORAGE_APPLE 0x85B2
 
 #define GL_BUFFER_IMMUTABLE_STORAGE 0x821F
 #define GL_BUFFER_STORAGE_FLAGS 0x8220
@@ -208,25 +195,22 @@ extern int ogl_ext_ARB_texture_rectangle;
 #define GL_SHADER_STORAGE_BUFFER_SIZE 0x90D5
 #define GL_SHADER_STORAGE_BUFFER_START 0x90D4
 
-#define GL_COMPRESSED_SLUMINANCE_ALPHA_EXT 0x8C4B
-#define GL_COMPRESSED_SLUMINANCE_EXT 0x8C4A
-#define GL_COMPRESSED_SRGB_ALPHA_EXT 0x8C49
-#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT 0x8C4D
-#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT 0x8C4E
-#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT 0x8C4F
-#define GL_COMPRESSED_SRGB_EXT 0x8C48
-#define GL_COMPRESSED_SRGB_S3TC_DXT1_EXT 0x8C4C
-#define GL_SLUMINANCE8_ALPHA8_EXT 0x8C45
-#define GL_SLUMINANCE8_EXT 0x8C47
-#define GL_SLUMINANCE_ALPHA_EXT 0x8C44
-#define GL_SLUMINANCE_EXT 0x8C46
-#define GL_SRGB8_ALPHA8_EXT 0x8C43
-#define GL_SRGB8_EXT 0x8C41
-#define GL_SRGB_ALPHA_EXT 0x8C42
-#define GL_SRGB_EXT 0x8C40
+#define GL_COMPRESSED_ALPHA_ARB 0x84E9
+#define GL_COMPRESSED_INTENSITY_ARB 0x84EC
+#define GL_COMPRESSED_LUMINANCE_ALPHA_ARB 0x84EB
+#define GL_COMPRESSED_LUMINANCE_ARB 0x84EA
+#define GL_COMPRESSED_RGBA_ARB 0x84EE
+#define GL_COMPRESSED_RGB_ARB 0x84ED
+#define GL_COMPRESSED_TEXTURE_FORMATS_ARB 0x86A3
+#define GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB 0x86A2
+#define GL_TEXTURE_COMPRESSED_ARB 0x86A1
+#define GL_TEXTURE_COMPRESSED_IMAGE_SIZE_ARB 0x86A0
+#define GL_TEXTURE_COMPRESSION_HINT_ARB 0x84EF
 
-#define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
-#define GL_TEXTURE_MAX_ANISOTROPY_EXT 0x84FE
+#define GL_MAX_RECTANGLE_TEXTURE_SIZE_ARB 0x84F8
+#define GL_PROXY_TEXTURE_RECTANGLE_ARB 0x84F7
+#define GL_TEXTURE_BINDING_RECTANGLE_ARB 0x84F6
+#define GL_TEXTURE_RECTANGLE_ARB 0x84F5
 
 #define GL_COLOR_ATTACHMENT0_EXT 0x8CE0
 #define GL_COLOR_ATTACHMENT10_EXT 0x8CEA
@@ -280,12 +264,72 @@ extern int ogl_ext_ARB_texture_rectangle;
 #define GL_STENCIL_INDEX4_EXT 0x8D47
 #define GL_STENCIL_INDEX8_EXT 0x8D48
 
-#define GL_UNPACK_CLIENT_STORAGE_APPLE 0x85B2
+#define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
+#define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
+#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
+#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT 0x83F0
 
-#define GL_MAX_RECTANGLE_TEXTURE_SIZE_ARB 0x84F8
-#define GL_PROXY_TEXTURE_RECTANGLE_ARB 0x84F7
-#define GL_TEXTURE_BINDING_RECTANGLE_ARB 0x84F6
-#define GL_TEXTURE_RECTANGLE_ARB 0x84F5
+#define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
+#define GL_TEXTURE_MAX_ANISOTROPY_EXT 0x84FE
+
+#define GL_COMPRESSED_SLUMINANCE_ALPHA_EXT 0x8C4B
+#define GL_COMPRESSED_SLUMINANCE_EXT 0x8C4A
+#define GL_COMPRESSED_SRGB_ALPHA_EXT 0x8C49
+#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT 0x8C4D
+#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT 0x8C4E
+#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT 0x8C4F
+#define GL_COMPRESSED_SRGB_EXT 0x8C48
+#define GL_COMPRESSED_SRGB_S3TC_DXT1_EXT 0x8C4C
+#define GL_SLUMINANCE8_ALPHA8_EXT 0x8C45
+#define GL_SLUMINANCE8_EXT 0x8C47
+#define GL_SLUMINANCE_ALPHA_EXT 0x8C44
+#define GL_SLUMINANCE_EXT 0x8C46
+#define GL_SRGB8_ALPHA8_EXT 0x8C43
+#define GL_SRGB8_EXT 0x8C41
+#define GL_SRGB_ALPHA_EXT 0x8C42
+#define GL_SRGB_EXT 0x8C40
+
+#define GL_BUFFER 0x82E0
+#define GL_CONTEXT_FLAG_DEBUG_BIT 0x00000002
+#define GL_DEBUG_CALLBACK_FUNCTION 0x8244
+#define GL_DEBUG_CALLBACK_USER_PARAM 0x8245
+#define GL_DEBUG_GROUP_STACK_DEPTH 0x826D
+#define GL_DEBUG_LOGGED_MESSAGES 0x9145
+#define GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH 0x8243
+#define GL_DEBUG_OUTPUT 0x92E0
+#define GL_DEBUG_OUTPUT_SYNCHRONOUS 0x8242
+#define GL_DEBUG_SEVERITY_HIGH 0x9146
+#define GL_DEBUG_SEVERITY_LOW 0x9148
+#define GL_DEBUG_SEVERITY_MEDIUM 0x9147
+#define GL_DEBUG_SEVERITY_NOTIFICATION 0x826B
+#define GL_DEBUG_SOURCE_API 0x8246
+#define GL_DEBUG_SOURCE_APPLICATION 0x824A
+#define GL_DEBUG_SOURCE_OTHER 0x824B
+#define GL_DEBUG_SOURCE_SHADER_COMPILER 0x8248
+#define GL_DEBUG_SOURCE_THIRD_PARTY 0x8249
+#define GL_DEBUG_SOURCE_WINDOW_SYSTEM 0x8247
+#define GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR 0x824D
+#define GL_DEBUG_TYPE_ERROR 0x824C
+#define GL_DEBUG_TYPE_MARKER 0x8268
+#define GL_DEBUG_TYPE_OTHER 0x8251
+#define GL_DEBUG_TYPE_PERFORMANCE 0x8250
+#define GL_DEBUG_TYPE_POP_GROUP 0x826A
+#define GL_DEBUG_TYPE_PORTABILITY 0x824F
+#define GL_DEBUG_TYPE_PUSH_GROUP 0x8269
+#define GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR 0x824E
+#define GL_DISPLAY_LIST 0x82E7
+#define GL_MAX_DEBUG_GROUP_STACK_DEPTH 0x826C
+#define GL_MAX_DEBUG_LOGGED_MESSAGES 0x9144
+#define GL_MAX_DEBUG_MESSAGE_LENGTH 0x9143
+#define GL_MAX_LABEL_LENGTH 0x82E8
+#define GL_PROGRAM 0x82E2
+#define GL_PROGRAM_PIPELINE 0x82E4
+#define GL_QUERY 0x82E3
+#define GL_SAMPLER 0x82E6
+#define GL_SHADER 0x82E1
+#define GL_STACK_OVERFLOW 0x0503
+#define GL_STACK_UNDERFLOW 0x0504
+#define GL_VERTEX_ARRAY 0x8074
 
 #define GL_2D 0x0600
 #define GL_2_BYTES 0x1407
@@ -722,8 +766,8 @@ extern int ogl_ext_ARB_texture_rectangle;
 #define GL_SRC_ALPHA 0x0302
 #define GL_SRC_ALPHA_SATURATE 0x0308
 #define GL_SRC_COLOR 0x0300
-#define GL_STACK_OVERFLOW 0x0503
-#define GL_STACK_UNDERFLOW 0x0504
+/*Copied GL_STACK_OVERFLOW From: KHR_debug*/
+/*Copied GL_STACK_UNDERFLOW From: KHR_debug*/
 #define GL_STENCIL 0x1802
 #define GL_STENCIL_BITS 0x0D57
 #define GL_STENCIL_BUFFER_BIT 0x00000400
@@ -804,7 +848,7 @@ extern int ogl_ext_ARB_texture_rectangle;
 #define GL_V3F 0x2A21
 #define GL_VENDOR 0x1F00
 #define GL_VERSION 0x1F02
-#define GL_VERTEX_ARRAY 0x8074
+/*Copied GL_VERTEX_ARRAY From: KHR_debug*/
 #define GL_VERTEX_ARRAY_POINTER 0x808E
 #define GL_VERTEX_ARRAY_SIZE 0x807A
 #define GL_VERTEX_ARRAY_STRIDE 0x807C
@@ -1544,6 +1588,19 @@ extern int ogl_ext_ARB_texture_rectangle;
 #define GL_TIME_ELAPSED 0x88BF
 #define GL_VERTEX_ATTRIB_ARRAY_DIVISOR 0x88FE
 
+
+#ifndef GL_ARB_buffer_storage
+#define GL_ARB_buffer_storage 1
+extern void (CODEGEN_FUNCPTR *_ptrc_glBufferStorage)(GLenum target, GLsizeiptr size, const void * data, GLbitfield flags);
+#define glBufferStorage _ptrc_glBufferStorage
+#endif /*GL_ARB_buffer_storage*/ 
+
+#ifndef GL_ARB_shader_storage_buffer_object
+#define GL_ARB_shader_storage_buffer_object 1
+extern void (CODEGEN_FUNCPTR *_ptrc_glShaderStorageBlockBinding)(GLuint program, GLuint storageBlockIndex, GLuint storageBlockBinding);
+#define glShaderStorageBlockBinding _ptrc_glShaderStorageBlockBinding
+#endif /*GL_ARB_shader_storage_buffer_object*/ 
+
 #ifndef GL_ARB_texture_compression
 #define GL_ARB_texture_compression 1
 extern void (CODEGEN_FUNCPTR *_ptrc_glCompressedTexImage1DARB)(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const void * data);
@@ -1561,20 +1618,6 @@ extern void (CODEGEN_FUNCPTR *_ptrc_glCompressedTexSubImage3DARB)(GLenum target,
 extern void (CODEGEN_FUNCPTR *_ptrc_glGetCompressedTexImageARB)(GLenum target, GLint level, void * img);
 #define glGetCompressedTexImageARB _ptrc_glGetCompressedTexImageARB
 #endif /*GL_ARB_texture_compression*/ 
-
-
-#ifndef GL_ARB_buffer_storage
-#define GL_ARB_buffer_storage 1
-extern void (CODEGEN_FUNCPTR *_ptrc_glBufferStorage)(GLenum target, GLsizeiptr size, const void * data, GLbitfield flags);
-#define glBufferStorage _ptrc_glBufferStorage
-#endif /*GL_ARB_buffer_storage*/ 
-
-#ifndef GL_ARB_shader_storage_buffer_object
-#define GL_ARB_shader_storage_buffer_object 1
-extern void (CODEGEN_FUNCPTR *_ptrc_glShaderStorageBlockBinding)(GLuint program, GLuint storageBlockIndex, GLuint storageBlockBinding);
-#define glShaderStorageBlockBinding _ptrc_glShaderStorageBlockBinding
-#endif /*GL_ARB_shader_storage_buffer_object*/ 
-
 
 
 #ifndef GL_EXT_framebuffer_object
@@ -1616,6 +1659,49 @@ extern void (CODEGEN_FUNCPTR *_ptrc_glRenderbufferStorageEXT)(GLenum target, GLe
 #endif /*GL_EXT_framebuffer_object*/ 
 
 
+
+
+#ifndef GL_KHR_debug
+#define GL_KHR_debug 1
+extern void (CODEGEN_FUNCPTR *_ptrc_glDebugMessageCallback)(GLDEBUGPROC callback, const void * userParam);
+#define glDebugMessageCallback _ptrc_glDebugMessageCallback
+extern void (CODEGEN_FUNCPTR *_ptrc_glDebugMessageControl)(GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint * ids, GLboolean enabled);
+#define glDebugMessageControl _ptrc_glDebugMessageControl
+extern void (CODEGEN_FUNCPTR *_ptrc_glDebugMessageInsert)(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar * buf);
+#define glDebugMessageInsert _ptrc_glDebugMessageInsert
+extern GLuint (CODEGEN_FUNCPTR *_ptrc_glGetDebugMessageLog)(GLuint count, GLsizei bufSize, GLenum * sources, GLenum * types, GLuint * ids, GLenum * severities, GLsizei * lengths, GLchar * messageLog);
+#define glGetDebugMessageLog _ptrc_glGetDebugMessageLog
+extern void (CODEGEN_FUNCPTR *_ptrc_glGetObjectLabel)(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei * length, GLchar * label);
+#define glGetObjectLabel _ptrc_glGetObjectLabel
+extern void (CODEGEN_FUNCPTR *_ptrc_glGetObjectPtrLabel)(const void * ptr, GLsizei bufSize, GLsizei * length, GLchar * label);
+#define glGetObjectPtrLabel _ptrc_glGetObjectPtrLabel
+extern void (CODEGEN_FUNCPTR *_ptrc_glGetPointerv)(GLenum pname, void ** params);
+#define glGetPointerv _ptrc_glGetPointerv
+extern void (CODEGEN_FUNCPTR *_ptrc_glObjectLabel)(GLenum identifier, GLuint name, GLsizei length, const GLchar * label);
+#define glObjectLabel _ptrc_glObjectLabel
+extern void (CODEGEN_FUNCPTR *_ptrc_glObjectPtrLabel)(const void * ptr, GLsizei length, const GLchar * label);
+#define glObjectPtrLabel _ptrc_glObjectPtrLabel
+extern void (CODEGEN_FUNCPTR *_ptrc_glPopDebugGroup)(void);
+#define glPopDebugGroup _ptrc_glPopDebugGroup
+extern void (CODEGEN_FUNCPTR *_ptrc_glPushDebugGroup)(GLenum source, GLuint id, GLsizei length, const GLchar * message);
+#define glPushDebugGroup _ptrc_glPushDebugGroup
+#endif /*GL_KHR_debug*/ 
+
+#ifndef GL_ARB_invalidate_subdata
+#define GL_ARB_invalidate_subdata 1
+extern void (CODEGEN_FUNCPTR *_ptrc_glInvalidateBufferData)(GLuint buffer);
+#define glInvalidateBufferData _ptrc_glInvalidateBufferData
+extern void (CODEGEN_FUNCPTR *_ptrc_glInvalidateBufferSubData)(GLuint buffer, GLintptr offset, GLsizeiptr length);
+#define glInvalidateBufferSubData _ptrc_glInvalidateBufferSubData
+extern void (CODEGEN_FUNCPTR *_ptrc_glInvalidateFramebuffer)(GLenum target, GLsizei numAttachments, const GLenum * attachments);
+#define glInvalidateFramebuffer _ptrc_glInvalidateFramebuffer
+extern void (CODEGEN_FUNCPTR *_ptrc_glInvalidateSubFramebuffer)(GLenum target, GLsizei numAttachments, const GLenum * attachments, GLint x, GLint y, GLsizei width, GLsizei height);
+#define glInvalidateSubFramebuffer _ptrc_glInvalidateSubFramebuffer
+extern void (CODEGEN_FUNCPTR *_ptrc_glInvalidateTexImage)(GLuint texture, GLint level);
+#define glInvalidateTexImage _ptrc_glInvalidateTexImage
+extern void (CODEGEN_FUNCPTR *_ptrc_glInvalidateTexSubImage)(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth);
+#define glInvalidateTexSubImage _ptrc_glInvalidateTexSubImage
+#endif /*GL_ARB_invalidate_subdata*/ 
 
 extern void (CODEGEN_FUNCPTR *_ptrc_glAccum)(GLenum op, GLfloat value);
 #define glAccum _ptrc_glAccum

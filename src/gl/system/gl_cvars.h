@@ -54,4 +54,7 @@ EXTERN_CVAR(Float, gl_lens_k)
 EXTERN_CVAR(Float, gl_lens_kcube)
 EXTERN_CVAR(Float, gl_lens_chromatic)
 
+EXTERN_CVAR(Int, gl_debug_level)
+EXTERN_CVAR(Bool, gl_debug_breakpoint)
+
 #endif // _GL_INTERN_H

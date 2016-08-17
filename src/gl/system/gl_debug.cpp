@@ -186,11 +186,14 @@ void FGLDebug::DebugCallback(GLenum source, GLenum type, GLuint id, GLenum sever
 {
 	PrintMessage(source, type, id, severity, length, message);
 
+	if (severity != GL_DEBUG_SEVERITY_NOTIFICATION)
+	{
 #ifdef _MSC_VER
-	DebugBreak();
+		DebugBreak();
 #else
-	raise(SIGTRAP);
+		raise(SIGTRAP);
 #endif
+	}
 }
 
 //-----------------------------------------------------------------------------

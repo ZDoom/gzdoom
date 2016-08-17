@@ -178,7 +178,7 @@ void FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 		mBloomHeight = sceneHeight;
 	}
 
-	glBindTexture(GL_TEXTURE_BINDING_2D, textureBinding);
+	glBindTexture(GL_TEXTURE_2D, textureBinding);
 	glActiveTexture(activeTex);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

@@ -158,6 +158,26 @@ void FGLDebug::UpdateLoggingLevel()
 
 //-----------------------------------------------------------------------------
 //
+// The log may already contain entries for a debug level we are no longer
+// interested in..
+//
+//-----------------------------------------------------------------------------
+
+bool FGLDebug::IsFilteredByDebugLevel(GLenum severity)
+{
+	int severityLevel = 0;
+	switch (severity)
+	{
+	case GL_DEBUG_SEVERITY_LOW: severityLevel = 1; break;
+	case GL_DEBUG_SEVERITY_MEDIUM: severityLevel = 2; break;
+	case GL_DEBUG_SEVERITY_HIGH: severityLevel = 3; break;
+	case GL_DEBUG_SEVERITY_NOTIFICATION: severityLevel = 4; break;
+	}
+	return severityLevel >= (int)gl_debug_level;
+}
+
+//-----------------------------------------------------------------------------
+//
 // Prints all logged messages to the console
 //
 //-----------------------------------------------------------------------------
@@ -193,7 +213,8 @@ void FGLDebug::OutputMessageLog()
 		GLsizei offset = 0;
 		for (GLuint i = 0; i < numMessages; i++)
 		{
-			PrintMessage(sources[i], types[i], ids[i], severities[i], lengths[i], &messageLog[offset]);
+			if (!IsFilteredByDebugLevel(severities[i]))
+				PrintMessage(sources[i], types[i], ids[i], severities[i], lengths[i], &messageLog[offset]);
 			offset += lengths[i];
 		}
 	}
@@ -248,6 +269,9 @@ void FGLDebug::PrintMessage(GLenum source, GLenum type, GLuint id, GLenum severi
 
 void FGLDebug::DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
 {
+	if (IsFilteredByDebugLevel(severity))
+		return;
+
 	PrintMessage(source, type, id, severity, length, message);
 
 	if (severity != GL_DEBUG_SEVERITY_NOTIFICATION)

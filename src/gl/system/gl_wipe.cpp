@@ -347,6 +347,7 @@ bool OpenGLFrameBuffer::Wiper_Crossfade::Run(int ticks, OpenGLFrameBuffer *fb)
 	gl_RenderState.SetColorAlpha(0xffffff, a);
 	gl_RenderState.Apply();
 	fb->wipeendscreen->Bind(0, 0, false);
+	mVertexBuf->EnableColorArray(false);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.5f);
 	gl_RenderState.SetTextureMode(TM_MODULATE);

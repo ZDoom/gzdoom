@@ -173,7 +173,7 @@ bool FGLDebug::IsFilteredByDebugLevel(GLenum severity)
 	case GL_DEBUG_SEVERITY_LOW: severityLevel = 3; break;
 	case GL_DEBUG_SEVERITY_NOTIFICATION: severityLevel = 4; break;
 	}
-	return severityLevel >= (int)gl_debug_level;
+	return severityLevel > (int)gl_debug_level;
 }
 
 //-----------------------------------------------------------------------------

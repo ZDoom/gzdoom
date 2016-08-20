@@ -53,7 +53,7 @@ enum
 	STAT_BOSSTARGET,						// A boss brain target
 	STAT_LIGHTNING,							// The lightning thinker
 	STAT_DECALTHINKER,						// An object that thinks for a decal
-	STAT_INVENTORY,							// An inventory item
+	UNUSED_STAT_INVENTORY,							// An inventory item (value kept for savegame compatibility.)
 	STAT_LIGHT,								// A sector light effect
 	STAT_LIGHTTRANSFER,						// A sector light transfer. These must be ticked after the light effects!!!
 	STAT_EARTHQUAKE,						// Earthquake actors

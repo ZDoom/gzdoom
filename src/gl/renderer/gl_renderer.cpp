@@ -54,6 +54,7 @@
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_cvars.h"
+#include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
@@ -131,6 +132,7 @@ void FGLRenderer::Initialize(int width, int height)
 	{
 		glGenVertexArrays(1, &mVAOID);
 		glBindVertexArray(mVAOID);
+		FGLDebug::LabelObject(GL_VERTEX_ARRAY, mVAOID, "FGLRenderer.mVAOID");
 	}
 	else mVAOID = 0;
 
@@ -366,9 +368,13 @@ void FGLRenderer::FlushTextures()
 
 bool FGLRenderer::StartOffscreen()
 {
-	if (mFBID == 0) glGenFramebuffers(1, &mFBID);
+	bool firstBind = (mFBID == 0);
+	if (mFBID == 0)
+		glGenFramebuffers(1, &mFBID);
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &mOldFBID);
 	glBindFramebuffer(GL_FRAMEBUFFER, mFBID);
+	if (firstBind)
+		FGLDebug::LabelObject(GL_FRAMEBUFFER, mFBID, "OffscreenFB");
 	return true;
 }
 

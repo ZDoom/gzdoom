@@ -42,6 +42,7 @@
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
+#include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl_samplers.h"
 #include "gl_material.h"
@@ -67,6 +68,13 @@ FSamplerManager::FSamplerManager()
 		glSamplerParameteri(mSamplers[3], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glSamplerParameteri(mSamplers[4], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glSamplerParameteri(mSamplers[4], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		for (int i = 0; i < 7; i++)
+		{
+			FString name;
+			name.Format("mSamplers[%d]", i);
+			FGLDebug::LabelObject(GL_SAMPLER, mSamplers[i], name);
+		}
 	}
 
 }

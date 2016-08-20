@@ -50,6 +50,7 @@
 #include "cmdlib.h"
 
 #include "gl/system/gl_interface.h"
+#include "gl/system/gl_debug.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_matrix.h"
 #include "gl/renderer/gl_renderer.h"
@@ -179,6 +180,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	hVertProg = glCreateShader(GL_VERTEX_SHADER);
 	hFragProg = glCreateShader(GL_FRAGMENT_SHADER);	
 
+	FGLDebug::LabelObject(GL_SHADER, hVertProg, vert_prog_lump);
+	FGLDebug::LabelObject(GL_SHADER, hFragProg, frag_prog_lump);
 
 	int vp_size = (int)vp_comb.Len();
 	int fp_size = (int)fp_comb.Len();
@@ -193,6 +196,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	glCompileShader(hFragProg);
 
 	hShader = glCreateProgram();
+	FGLDebug::LabelObject(GL_PROGRAM, hShader, name);
 
 	glAttachShader(hShader, hVertProg);
 	glAttachShader(hShader, hFragProg);

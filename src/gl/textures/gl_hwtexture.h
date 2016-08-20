@@ -77,7 +77,7 @@ public:
 	void BindToFrameBuffer();
 
 	unsigned int Bind(int texunit, int translation, bool needmipmap);
-	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation);
+	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const FString &name);
 
 	void Clean(bool all);
 	void CleanUnused(SpriteHits &usedtranslations);

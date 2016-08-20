@@ -6,8 +6,11 @@
 #include "win32gliface.h"
 #endif
 
+#include <memory>
+
 class FHardwareTexture;
 class FSimpleVertexBuffer;
+class FGLDebug;
 
 extern long gl_frameMS;
 extern long gl_frameCount;
@@ -116,6 +119,8 @@ private:
 	FHardwareTexture *wipeendscreen;
 
 	bool HWGammaActive = false;
+
+	std::shared_ptr<FGLDebug> mDebug;
 
 public:
 	AActor * LastCamera;

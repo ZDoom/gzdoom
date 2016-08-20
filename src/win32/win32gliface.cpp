@@ -45,7 +45,10 @@ CUSTOM_CVAR(Int, gl_vid_multisample, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
 
-CVAR(Bool, gl_debug, false, 0)
+CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	Printf("This won't take effect until " GAMENAME " is restarted.\n");
+}
 
 EXTERN_CVAR(Bool, vr_enable_quadbuffered)
 EXTERN_CVAR(Int, vid_refreshrate)

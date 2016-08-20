@@ -87,15 +87,37 @@ static PROC WinGetProcAddress(const char *name)
 	#endif
 #endif
 
-int ogl_ext_ARB_texture_compression = ogl_LOAD_FAILED;
-int ogl_ext_EXT_texture_compression_s3tc = ogl_LOAD_FAILED;
+int ogl_ext_APPLE_client_storage = ogl_LOAD_FAILED;
 int ogl_ext_ARB_buffer_storage = ogl_LOAD_FAILED;
 int ogl_ext_ARB_shader_storage_buffer_object = ogl_LOAD_FAILED;
-int ogl_ext_EXT_texture_sRGB = ogl_LOAD_FAILED;
-int ogl_ext_EXT_texture_filter_anisotropic = ogl_LOAD_FAILED;
-int ogl_ext_EXT_framebuffer_object = ogl_LOAD_FAILED;
-int ogl_ext_APPLE_client_storage = ogl_LOAD_FAILED;
+int ogl_ext_ARB_texture_compression = ogl_LOAD_FAILED;
 int ogl_ext_ARB_texture_rectangle = ogl_LOAD_FAILED;
+int ogl_ext_EXT_framebuffer_object = ogl_LOAD_FAILED;
+int ogl_ext_EXT_texture_compression_s3tc = ogl_LOAD_FAILED;
+int ogl_ext_EXT_texture_filter_anisotropic = ogl_LOAD_FAILED;
+int ogl_ext_EXT_texture_sRGB = ogl_LOAD_FAILED;
+int ogl_ext_KHR_debug = ogl_LOAD_FAILED;
+int ogl_ext_ARB_invalidate_subdata = ogl_LOAD_FAILED;
+
+void (CODEGEN_FUNCPTR *_ptrc_glBufferStorage)(GLenum target, GLsizeiptr size, const void * data, GLbitfield flags) = NULL;
+
+static int Load_ARB_buffer_storage(void)
+{
+	int numFailed = 0;
+	_ptrc_glBufferStorage = (void (CODEGEN_FUNCPTR *)(GLenum, GLsizeiptr, const void *, GLbitfield))IntGetProcAddress("glBufferStorage");
+	if(!_ptrc_glBufferStorage) numFailed++;
+	return numFailed;
+}
+
+void (CODEGEN_FUNCPTR *_ptrc_glShaderStorageBlockBinding)(GLuint program, GLuint storageBlockIndex, GLuint storageBlockBinding) = NULL;
+
+static int Load_ARB_shader_storage_buffer_object(void)
+{
+	int numFailed = 0;
+	_ptrc_glShaderStorageBlockBinding = (void (CODEGEN_FUNCPTR *)(GLuint, GLuint, GLuint))IntGetProcAddress("glShaderStorageBlockBinding");
+	if(!_ptrc_glShaderStorageBlockBinding) numFailed++;
+	return numFailed;
+}
 
 void (CODEGEN_FUNCPTR *_ptrc_glCompressedTexImage1DARB)(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const void * data) = NULL;
 void (CODEGEN_FUNCPTR *_ptrc_glCompressedTexImage2DARB)(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void * data) = NULL;
@@ -122,26 +144,6 @@ static int Load_ARB_texture_compression(void)
 	if(!_ptrc_glCompressedTexSubImage3DARB) numFailed++;
 	_ptrc_glGetCompressedTexImageARB = (void (CODEGEN_FUNCPTR *)(GLenum, GLint, void *))IntGetProcAddress("glGetCompressedTexImageARB");
 	if(!_ptrc_glGetCompressedTexImageARB) numFailed++;
-	return numFailed;
-}
-
-void (CODEGEN_FUNCPTR *_ptrc_glBufferStorage)(GLenum target, GLsizeiptr size, const void * data, GLbitfield flags) = NULL;
-
-static int Load_ARB_buffer_storage(void)
-{
-	int numFailed = 0;
-	_ptrc_glBufferStorage = (void (CODEGEN_FUNCPTR *)(GLenum, GLsizeiptr, const void *, GLbitfield))IntGetProcAddress("glBufferStorage");
-	if(!_ptrc_glBufferStorage) numFailed++;
-	return numFailed;
-}
-
-void (CODEGEN_FUNCPTR *_ptrc_glShaderStorageBlockBinding)(GLuint program, GLuint storageBlockIndex, GLuint storageBlockBinding) = NULL;
-
-static int Load_ARB_shader_storage_buffer_object(void)
-{
-	int numFailed = 0;
-	_ptrc_glShaderStorageBlockBinding = (void (CODEGEN_FUNCPTR *)(GLuint, GLuint, GLuint))IntGetProcAddress("glShaderStorageBlockBinding");
-	if(!_ptrc_glShaderStorageBlockBinding) numFailed++;
 	return numFailed;
 }
 
@@ -200,6 +202,71 @@ static int Load_EXT_framebuffer_object(void)
 	if(!_ptrc_glIsRenderbufferEXT) numFailed++;
 	_ptrc_glRenderbufferStorageEXT = (void (CODEGEN_FUNCPTR *)(GLenum, GLenum, GLsizei, GLsizei))IntGetProcAddress("glRenderbufferStorageEXT");
 	if(!_ptrc_glRenderbufferStorageEXT) numFailed++;
+	return numFailed;
+}
+
+void (CODEGEN_FUNCPTR *_ptrc_glDebugMessageCallback)(GLDEBUGPROC callback, const void * userParam) = NULL;
+void (CODEGEN_FUNCPTR *_ptrc_glDebugMessageControl)(GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint * ids, GLboolean enabled) = NULL;
+void (CODEGEN_FUNCPTR *_ptrc_glDebugMessageInsert)(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar * buf) = NULL;
+GLuint (CODEGEN_FUNCPTR *_ptrc_glGetDebugMessageLog)(GLuint count, GLsizei bufSize, GLenum * sources, GLenum * types, GLuint * ids, GLenum * severities, GLsizei * lengths, GLchar * messageLog) = NULL;
+void (CODEGEN_FUNCPTR *_ptrc_glGetObjectLabel)(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei * length, GLchar * label) = NULL;
+void (CODEGEN_FUNCPTR *_ptrc_glGetObjectPtrLabel)(const void * ptr, GLsizei bufSize, GLsizei * length, GLchar * label) = NULL;
+void (CODEGEN_FUNCPTR *_ptrc_glGetPointerv)(GLenum pname, void ** params) = NULL;
+void (CODEGEN_FUNCPTR *_ptrc_glObjectLabel)(GLenum identifier, GLuint name, GLsizei length, const GLchar * label) = NULL;
+void (CODEGEN_FUNCPTR *_ptrc_glObjectPtrLabel)(const void * ptr, GLsizei length, const GLchar * label) = NULL;
+void (CODEGEN_FUNCPTR *_ptrc_glPopDebugGroup)(void) = NULL;
+void (CODEGEN_FUNCPTR *_ptrc_glPushDebugGroup)(GLenum source, GLuint id, GLsizei length, const GLchar * message) = NULL;
+
+static int Load_KHR_debug(void)
+{
+	int numFailed = 0;
+	_ptrc_glDebugMessageCallback = (void (CODEGEN_FUNCPTR *)(GLDEBUGPROC, const void *))IntGetProcAddress("glDebugMessageCallback");
+	if(!_ptrc_glDebugMessageCallback) numFailed++;
+	_ptrc_glDebugMessageControl = (void (CODEGEN_FUNCPTR *)(GLenum, GLenum, GLenum, GLsizei, const GLuint *, GLboolean))IntGetProcAddress("glDebugMessageControl");
+	if(!_ptrc_glDebugMessageControl) numFailed++;
+	_ptrc_glDebugMessageInsert = (void (CODEGEN_FUNCPTR *)(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar *))IntGetProcAddress("glDebugMessageInsert");
+	if(!_ptrc_glDebugMessageInsert) numFailed++;
+	_ptrc_glGetDebugMessageLog = (GLuint (CODEGEN_FUNCPTR *)(GLuint, GLsizei, GLenum *, GLenum *, GLuint *, GLenum *, GLsizei *, GLchar *))IntGetProcAddress("glGetDebugMessageLog");
+	if(!_ptrc_glGetDebugMessageLog) numFailed++;
+	_ptrc_glGetObjectLabel = (void (CODEGEN_FUNCPTR *)(GLenum, GLuint, GLsizei, GLsizei *, GLchar *))IntGetProcAddress("glGetObjectLabel");
+	if(!_ptrc_glGetObjectLabel) numFailed++;
+	_ptrc_glGetObjectPtrLabel = (void (CODEGEN_FUNCPTR *)(const void *, GLsizei, GLsizei *, GLchar *))IntGetProcAddress("glGetObjectPtrLabel");
+	if(!_ptrc_glGetObjectPtrLabel) numFailed++;
+	_ptrc_glGetPointerv = (void (CODEGEN_FUNCPTR *)(GLenum, void **))IntGetProcAddress("glGetPointerv");
+	if(!_ptrc_glGetPointerv) numFailed++;
+	_ptrc_glObjectLabel = (void (CODEGEN_FUNCPTR *)(GLenum, GLuint, GLsizei, const GLchar *))IntGetProcAddress("glObjectLabel");
+	if(!_ptrc_glObjectLabel) numFailed++;
+	_ptrc_glObjectPtrLabel = (void (CODEGEN_FUNCPTR *)(const void *, GLsizei, const GLchar *))IntGetProcAddress("glObjectPtrLabel");
+	if(!_ptrc_glObjectPtrLabel) numFailed++;
+	_ptrc_glPopDebugGroup = (void (CODEGEN_FUNCPTR *)(void))IntGetProcAddress("glPopDebugGroup");
+	if(!_ptrc_glPopDebugGroup) numFailed++;
+	_ptrc_glPushDebugGroup = (void (CODEGEN_FUNCPTR *)(GLenum, GLuint, GLsizei, const GLchar *))IntGetProcAddress("glPushDebugGroup");
+	if(!_ptrc_glPushDebugGroup) numFailed++;
+	return numFailed;
+}
+
+void (CODEGEN_FUNCPTR *_ptrc_glInvalidateBufferData)(GLuint buffer) = NULL;
+void (CODEGEN_FUNCPTR *_ptrc_glInvalidateBufferSubData)(GLuint buffer, GLintptr offset, GLsizeiptr length) = NULL;
+void (CODEGEN_FUNCPTR *_ptrc_glInvalidateFramebuffer)(GLenum target, GLsizei numAttachments, const GLenum * attachments) = NULL;
+void (CODEGEN_FUNCPTR *_ptrc_glInvalidateSubFramebuffer)(GLenum target, GLsizei numAttachments, const GLenum * attachments, GLint x, GLint y, GLsizei width, GLsizei height) = NULL;
+void (CODEGEN_FUNCPTR *_ptrc_glInvalidateTexImage)(GLuint texture, GLint level) = NULL;
+void (CODEGEN_FUNCPTR *_ptrc_glInvalidateTexSubImage)(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth) = NULL;
+
+static int Load_ARB_invalidate_subdata(void)
+{
+	int numFailed = 0;
+	_ptrc_glInvalidateBufferData = (void (CODEGEN_FUNCPTR *)(GLuint))IntGetProcAddress("glInvalidateBufferData");
+	if(!_ptrc_glInvalidateBufferData) numFailed++;
+	_ptrc_glInvalidateBufferSubData = (void (CODEGEN_FUNCPTR *)(GLuint, GLintptr, GLsizeiptr))IntGetProcAddress("glInvalidateBufferSubData");
+	if(!_ptrc_glInvalidateBufferSubData) numFailed++;
+	_ptrc_glInvalidateFramebuffer = (void (CODEGEN_FUNCPTR *)(GLenum, GLsizei, const GLenum *))IntGetProcAddress("glInvalidateFramebuffer");
+	if(!_ptrc_glInvalidateFramebuffer) numFailed++;
+	_ptrc_glInvalidateSubFramebuffer = (void (CODEGEN_FUNCPTR *)(GLenum, GLsizei, const GLenum *, GLint, GLint, GLsizei, GLsizei))IntGetProcAddress("glInvalidateSubFramebuffer");
+	if(!_ptrc_glInvalidateSubFramebuffer) numFailed++;
+	_ptrc_glInvalidateTexImage = (void (CODEGEN_FUNCPTR *)(GLuint, GLint))IntGetProcAddress("glInvalidateTexImage");
+	if(!_ptrc_glInvalidateTexImage) numFailed++;
+	_ptrc_glInvalidateTexSubImage = (void (CODEGEN_FUNCPTR *)(GLuint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei))IntGetProcAddress("glInvalidateTexSubImage");
+	if(!_ptrc_glInvalidateTexSubImage) numFailed++;
 	return numFailed;
 }
 
@@ -525,7 +592,6 @@ void (CODEGEN_FUNCPTR *_ptrc_glDrawElements)(GLenum mode, GLsizei count, GLenum 
 void (CODEGEN_FUNCPTR *_ptrc_glEdgeFlagPointer)(GLsizei stride, const void * pointer) = NULL;
 void (CODEGEN_FUNCPTR *_ptrc_glEnableClientState)(GLenum ren_array) = NULL;
 void (CODEGEN_FUNCPTR *_ptrc_glGenTextures)(GLsizei n, GLuint * textures) = NULL;
-void (CODEGEN_FUNCPTR *_ptrc_glGetPointerv)(GLenum pname, void ** params) = NULL;
 void (CODEGEN_FUNCPTR *_ptrc_glIndexPointer)(GLenum type, GLsizei stride, const void * pointer) = NULL;
 void (CODEGEN_FUNCPTR *_ptrc_glIndexub)(GLubyte c) = NULL;
 void (CODEGEN_FUNCPTR *_ptrc_glIndexubv)(const GLubyte * c) = NULL;
@@ -2311,19 +2377,21 @@ typedef struct ogl_StrToExtMap_s
 	PFN_LOADFUNCPOINTERS LoadExtension;
 } ogl_StrToExtMap;
 
-static ogl_StrToExtMap ExtensionMap[9] = {
-	{"GL_ARB_texture_compression", &ogl_ext_ARB_texture_compression, Load_ARB_texture_compression},
-	{"GL_EXT_texture_compression_s3tc", &ogl_ext_EXT_texture_compression_s3tc, NULL},
+static ogl_StrToExtMap ExtensionMap[11] = {
+	{"GL_APPLE_client_storage", &ogl_ext_APPLE_client_storage, NULL},
 	{"GL_ARB_buffer_storage", &ogl_ext_ARB_buffer_storage, Load_ARB_buffer_storage},
 	{"GL_ARB_shader_storage_buffer_object", &ogl_ext_ARB_shader_storage_buffer_object, Load_ARB_shader_storage_buffer_object},
-	{"GL_EXT_texture_sRGB", &ogl_ext_EXT_texture_sRGB, NULL},
-	{"GL_EXT_texture_filter_anisotropic", &ogl_ext_EXT_texture_filter_anisotropic, NULL},
-	{"GL_EXT_framebuffer_object", &ogl_ext_EXT_framebuffer_object, Load_EXT_framebuffer_object},
-	{"GL_APPLE_client_storage", &ogl_ext_APPLE_client_storage, NULL},
+	{"GL_ARB_texture_compression", &ogl_ext_ARB_texture_compression, Load_ARB_texture_compression},
 	{"GL_ARB_texture_rectangle", &ogl_ext_ARB_texture_rectangle, NULL},
+	{"GL_EXT_framebuffer_object", &ogl_ext_EXT_framebuffer_object, Load_EXT_framebuffer_object},
+	{"GL_EXT_texture_compression_s3tc", &ogl_ext_EXT_texture_compression_s3tc, NULL},
+	{"GL_EXT_texture_filter_anisotropic", &ogl_ext_EXT_texture_filter_anisotropic, NULL},
+	{"GL_EXT_texture_sRGB", &ogl_ext_EXT_texture_sRGB, NULL},
+	{"GL_KHR_debug", &ogl_ext_KHR_debug, Load_KHR_debug},
+	{"GL_ARB_invalidate_subdata", &ogl_ext_ARB_invalidate_subdata, Load_ARB_invalidate_subdata},
 };
 
-static int g_extensionMapSize = 9;
+static int g_extensionMapSize = 11;
 
 static ogl_StrToExtMap *FindExtEntry(const char *extensionName)
 {
@@ -2340,15 +2408,17 @@ static ogl_StrToExtMap *FindExtEntry(const char *extensionName)
 
 static void ClearExtensionVars(void)
 {
-	ogl_ext_ARB_texture_compression = ogl_LOAD_FAILED;
-	ogl_ext_EXT_texture_compression_s3tc = ogl_LOAD_FAILED;
+	ogl_ext_APPLE_client_storage = ogl_LOAD_FAILED;
 	ogl_ext_ARB_buffer_storage = ogl_LOAD_FAILED;
 	ogl_ext_ARB_shader_storage_buffer_object = ogl_LOAD_FAILED;
-	ogl_ext_EXT_texture_sRGB = ogl_LOAD_FAILED;
-	ogl_ext_EXT_texture_filter_anisotropic = ogl_LOAD_FAILED;
-	ogl_ext_EXT_framebuffer_object = ogl_LOAD_FAILED;
-	ogl_ext_APPLE_client_storage = ogl_LOAD_FAILED;
+	ogl_ext_ARB_texture_compression = ogl_LOAD_FAILED;
 	ogl_ext_ARB_texture_rectangle = ogl_LOAD_FAILED;
+	ogl_ext_EXT_framebuffer_object = ogl_LOAD_FAILED;
+	ogl_ext_EXT_texture_compression_s3tc = ogl_LOAD_FAILED;
+	ogl_ext_EXT_texture_filter_anisotropic = ogl_LOAD_FAILED;
+	ogl_ext_EXT_texture_sRGB = ogl_LOAD_FAILED;
+	ogl_ext_KHR_debug = ogl_LOAD_FAILED;
+	ogl_ext_ARB_invalidate_subdata = ogl_LOAD_FAILED;
 }
 
 
@@ -2377,47 +2447,11 @@ static void LoadExtByName(const char *extensionName)
 	}
 }
 
-static void ProcExtsFromExtString(const char *strExtList)
-{
-	size_t iExtListLen = strlen(strExtList);
-	const char *strExtListEnd = strExtList + iExtListLen;
-	const char *strCurrPos = strExtList;
-	char strWorkBuff[256];
 
-	while(*strCurrPos)
-	{
-		/*Get the extension at our position.*/
-		int iStrLen = 0;
-		const char *strEndStr = strchr(strCurrPos, ' ');
-		int iStop = 0;
-		if(strEndStr == NULL)
-		{
-			strEndStr = strExtListEnd;
-			iStop = 1;
-		}
-
-		iStrLen = (int)((ptrdiff_t)strEndStr - (ptrdiff_t)strCurrPos);
-
-		if(iStrLen > 255)
-			return;
-
-		strncpy(strWorkBuff, strCurrPos, iStrLen);
-		strWorkBuff[iStrLen] = '\0';
-
-		LoadExtByName(strWorkBuff);
-
-		strCurrPos = strEndStr + 1;
-		if(iStop) break;
-	}
-}
-
-static int ProcExtsFromExtList(void)
+static void ProcExtsFromExtList(void)
 {
 	GLint iLoop;
 	GLint iNumExtensions = 0;
-
-	if (_ptrc_glGetStringi == NULL) return 0;
-
 	_ptrc_glGetIntegerv(GL_NUM_EXTENSIONS, &iNumExtensions);
 
 	for(iLoop = 0; iLoop < iNumExtensions; iLoop++)
@@ -2425,8 +2459,6 @@ static int ProcExtsFromExtList(void)
 		const char *strExtensionName = (const char *)_ptrc_glGetStringi(GL_EXTENSIONS, iLoop);
 		LoadExtByName(strExtensionName);
 	}
-
-	return iNumExtensions;
 }
 
 int ogl_LoadFunctions()
@@ -2437,15 +2469,9 @@ int ogl_LoadFunctions()
 	_ptrc_glGetIntegerv = (void (CODEGEN_FUNCPTR *)(GLenum, GLint *))IntGetProcAddress("glGetIntegerv");
 	if(!_ptrc_glGetIntegerv) return ogl_LOAD_FAILED;
 	_ptrc_glGetStringi = (const GLubyte * (CODEGEN_FUNCPTR *)(GLenum, GLuint))IntGetProcAddress("glGetStringi");
+	if(!_ptrc_glGetStringi) return ogl_LOAD_FAILED;
 	
-	if (0 == ProcExtsFromExtList())
-	{
-		_ptrc_glGetString = (const GLubyte * (CODEGEN_FUNCPTR *)(GLenum))IntGetProcAddress("glGetString");
-		if(!_ptrc_glGetString) return ogl_LOAD_FAILED;
-
-		ProcExtsFromExtString((const char *)_ptrc_glGetString(GL_EXTENSIONS));
-	}
-
+	ProcExtsFromExtList();
 	numFailed = Load_Version_3_3();
 	
 	if(numFailed == 0)

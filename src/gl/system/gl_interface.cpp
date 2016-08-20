@@ -244,6 +244,8 @@ void gl_LoadExtensions()
 		gl.buffermethod = BM_PERSISTENT;
 	}
 
+	if (gl.version >= 4.3f || CheckExtension("GL_ARB_invalidate_subdata")) gl.flags |= RFL_INVALIDATE_BUFFER;
+
 	const char *lm = Args->CheckValue("-lightmethod");
 	if (lm != NULL)
 	{

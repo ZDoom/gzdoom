@@ -153,7 +153,7 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 
 	const auto &viewport = GLRenderer->mScreenViewport;
 	wipestartscreen = new FHardwareTexture(viewport.width, viewport.height, true);
-	wipestartscreen->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0);
+	wipestartscreen->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0, "WipeStartScreen");
 	GLRenderer->mSamplerManager->Bind(0, CLAMP_NOFILTER, -1);
 	GLRenderer->mSamplerManager->Bind(1, CLAMP_NONE, -1);
 	glFinish();
@@ -193,7 +193,7 @@ void OpenGLFrameBuffer::WipeEndScreen()
 
 	const auto &viewport = GLRenderer->mScreenViewport;
 	wipeendscreen = new FHardwareTexture(viewport.width, viewport.height, true);
-	wipeendscreen->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0);
+	wipeendscreen->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0, "WipeEndScreen");
 	GLRenderer->mSamplerManager->Bind(0, CLAMP_NOFILTER, -1);
 	glFinish();
 	wipeendscreen->Bind(0, false, false);
@@ -566,7 +566,7 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 	// Burn the new screen on top of it.
 	fb->wipeendscreen->Bind(0, 0, false);
 
-	BurnTexture->CreateTexture(rgb_buffer, WIDTH, HEIGHT, 1, true, 0);
+	BurnTexture->CreateTexture(rgb_buffer, WIDTH, HEIGHT, 1, true, 0, "BurnTexture");
 
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	gl_RenderState.SetEffect(EFF_NONE);

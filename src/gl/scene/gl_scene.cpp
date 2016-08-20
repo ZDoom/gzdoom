@@ -174,18 +174,18 @@ void FGLRenderer::Set3DViewport(bool mainview)
 		mBuffers->BindSceneFB();
 	}
 
+	// Always clear all buffers with scissor test disabled.
+	// This is faster on newer hardware because it allows the GPU to skip
+	// reading from slower memory where the full buffers are stored.
+	glDisable(GL_SCISSOR_TEST);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
 	const auto &bounds = mSceneViewport;
 	glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
 	glScissor(bounds.left, bounds.top, bounds.width, bounds.height);
 
 	glEnable(GL_SCISSOR_TEST);
-	
-	#ifdef _DEBUG
-		glClearColor(0.0f, 0.0f, 0.0f, 0.0f); 
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-	#else
-		glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-	#endif
 
 	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_DEPTH_TEST);

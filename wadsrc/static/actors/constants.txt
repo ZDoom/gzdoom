@@ -185,6 +185,7 @@ const int MSF_DontHurt = 2;
 // Flags for A_Explode
 const int XF_HURTSOURCE = 1;
 const int XF_NOTMISSILE = 4;
+const int XF_EXPLICITDAMAGETYPE = 1 << 3;
 
 // Flags for A_RadiusThrust
 const int RTF_AFFECTSOURCE = 1;

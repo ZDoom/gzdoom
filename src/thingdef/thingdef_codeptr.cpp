@@ -1373,8 +1373,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfArmorType)
 
 enum
 {
-	XF_HURTSOURCE = 1,
-	XF_NOTMISSILE = 4,
+	XF_HURTSOURCE =		1,
+	XF_NOTMISSILE =		4,
+	XF_NOACTORTYPE =	1 << 3,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
@@ -1388,6 +1389,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 	PARAM_INT_OPT	(nails)			   { nails = 0; }
 	PARAM_INT_OPT	(naildamage)	   { naildamage = 10; }
 	PARAM_CLASS_OPT	(pufftype, AActor) { pufftype = PClass::FindActor(NAME_BulletPuff); }
+	PARAM_NAME_OPT	(damagetype)		{ damagetype = NAME_None; }
 
 	if (damage < 0)	// get parameters from metadata
 	{
@@ -1414,7 +1416,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 		}
 	}
 
-	int count = P_RadiusAttack (self, self->target, damage, distance, self->DamageType, flags, fulldmgdistance);
+	if (!(flags & XF_NOACTORTYPE) && damagetype == NAME_None)
+	{
+		damagetype = self->DamageType;
+	}
+
+	int count = P_RadiusAttack (self, self->target, damage, distance, damagetype, flags, fulldmgdistance);
 	P_CheckSplash(self, distance);
 	if (alert && self->target != NULL && self->target->player != NULL)
 	{

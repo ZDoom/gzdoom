@@ -1452,7 +1452,8 @@ void FParser::SF_SetCamera(void)
 
 		newcamera->specialf1 = newcamera->Angles.Yaw.Degrees;
 		newcamera->specialf2 = newcamera->Z();
-		newcamera->SetZ(t_argc < 3 ? newcamera->Z() + 41 : floatvalue(t_argv[2]));
+		double z = t_argc < 3 ? newcamera->Sector->floorplane.ZatPoint(newcamera) + 41 : floatvalue(t_argv[2]);
+		newcamera->SetOrigin(newcamera->PosAtZ(z), false);
 		newcamera->Angles.Yaw = angle;
 		if (t_argc < 4) newcamera->Angles.Pitch = 0.;
 		else newcamera->Angles.Pitch = clamp(floatvalue(t_argv[3]), -50., 50.) * (20. / 32.);

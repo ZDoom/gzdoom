@@ -343,7 +343,7 @@ static void FinishThingdef()
 
 		if (!def)
 		{
-			Printf("No ActorInfo defined for class '%s'\n", ti->TypeName.GetChars());
+			Printf(TEXTCOLOR_RED "No ActorInfo defined for class '%s'\n", ti->TypeName.GetChars());
 			errorcount++;
 			continue;
 		}

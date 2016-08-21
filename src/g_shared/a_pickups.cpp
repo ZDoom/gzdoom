@@ -572,7 +572,6 @@ bool AInventory::ShouldRespawn ()
 void AInventory::BeginPlay ()
 {
 	Super::BeginPlay ();
-	ChangeStatNum (STAT_INVENTORY);
 	flags |= MF_DROPPED;	// [RH] Items are dropped by default
 }
 

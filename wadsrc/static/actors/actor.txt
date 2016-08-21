@@ -253,7 +253,7 @@ ACTOR Actor native //: Thinker
 	action native A_Blast(int flags = 0, float strength = 255, float radius = 255, float speed = 20, class<Actor> blasteffect = "BlastEffect", sound blastsound = "BlastRadius");
 	action native A_RadiusThrust(int force = 128, int distance = -1, int flags = RTF_AFFECTSOURCE, int fullthrustdistance = 0);
 	action native A_RadiusDamageSelf(int damage = 128, float distance = 128, int flags = 0, class<Actor> flashtype = "None");
-	action native int A_Explode(int damage = -1, int distance = -1, int flags = XF_HURTSOURCE, bool alert = false, int fulldamagedistance = 0, int nails = 0, int naildamage = 10, class<Actor> pufftype = "BulletPuff");
+	action native int A_Explode(int damage = -1, int distance = -1, int flags = XF_HURTSOURCE, bool alert = false, int fulldamagedistance = 0, int nails = 0, int naildamage = 10, class<Actor> pufftype = "BulletPuff", name damagetype = "none");
 	action native A_Stop();
 	action native A_Respawn(int flags = 1);
 	action native A_BarrelDestroy();

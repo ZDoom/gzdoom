@@ -116,6 +116,8 @@ public:
 	bool mDrawingScene2D = false;
 	float mCameraExposure = 1.0f;
 
+	float mSceneClearColor[3];
+
 	FGLRenderer(OpenGLFrameBuffer *fb);
 	~FGLRenderer() ;
 

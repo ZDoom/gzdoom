@@ -178,7 +178,7 @@ void FGLRenderer::Set3DViewport(bool mainview)
 	// This is faster on newer hardware because it allows the GPU to skip
 	// reading from slower memory where the full buffers are stored.
 	glDisable(GL_SCISSOR_TEST);
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClearColor(mSceneClearColor[0], mSceneClearColor[1], mSceneClearColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	const auto &bounds = mSceneViewport;
@@ -775,6 +775,9 @@ void FGLRenderer::SetFixedColormap (player_t *player)
 sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
 {       
 	sector_t * retval;
+	mSceneClearColor[0] = 0.0f;
+	mSceneClearColor[1] = 0.0f;
+	mSceneClearColor[2] = 0.0f;
 	R_SetupFrame (camera);
 	SetViewArea();
 
@@ -1251,8 +1254,9 @@ int FGLInterface::GetMaxViewPitch(bool down)
 void FGLInterface::ClearBuffer(int color)
 {
 	PalEntry pe = GPalette.BaseColors[color];
-	glClearColor(pe.r/255.f, pe.g/255.f, pe.b/255.f, 1.f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	GLRenderer->mSceneClearColor[0] = pe.r / 255.f;
+	GLRenderer->mSceneClearColor[1] = pe.g / 255.f;
+	GLRenderer->mSceneClearColor[2] = pe.b / 255.f;
 }
 
 //===========================================================================

@@ -157,7 +157,7 @@ void OpenGLFrameBuffer::InitializeState()
 	glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_CLAMP);
 	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_2D);
+	if (gl.glslversion == 0) glEnable(GL_TEXTURE_2D);
 	glDisable(GL_LINE_SMOOTH);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

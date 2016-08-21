@@ -43,6 +43,7 @@
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_debug.h"
 #include <set>
+#include <string>
 
 #ifndef _MSC_VER
 #include <signal.h>

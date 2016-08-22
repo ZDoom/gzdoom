@@ -4438,8 +4438,7 @@ enum EACSFunctions
 	ACSF_SpawnParticle,
 	ACSF_SetMusicVolume,
 	ACSF_CheckProximity,
-	// 1 more left...
-	
+	ACSF_CheckActorState,		// 99
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
 	-101 : PlayerIsSpectator(1),
@@ -6015,6 +6014,18 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			int flags = argCount >= 5 ? args[4] : 0;
 			int ptr = argCount >= 6 ? args[5] : AAPTR_DEFAULT;
 			return P_Thing_CheckProximity(actor, classname, distance, count, flags, ptr);
+		}
+
+		case ACSF_CheckActorState:
+		{
+			actor = SingleActorFromTID(args[0], activator);
+			const char *statename = FBehavior::StaticLookupString(args[1]);
+			bool exact = (argCount > 2) ? !!args[2] : false;
+			if (actor && statename)
+			{
+				return (actor->GetClass()->FindStateByString(statename, exact) != nullptr);
+			}
+			return false;
 		}
 
 		default:

@@ -7267,12 +7267,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMovementDirection)
 				{
 					current -= anglelimit + offset;
 				}
-				else // huh???
-				{
-					current = angle + 180. + offset;
-				}
 				mobj->SetAngle(current, !!(flags & FMDF_INTERPOLATE));
 			}
+			else
+				mobj->SetAngle(angle + offset, !!(flags & FMDF_INTERPOLATE));
 		}
 		else
 			mobj->SetAngle(angle + offset, !!(flags & FMDF_INTERPOLATE));

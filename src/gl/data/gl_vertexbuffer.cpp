@@ -137,9 +137,9 @@ void FSimpleVertexBuffer::set(FSimpleVertex *verts, int count)
 //==========================================================================
 
 FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
-: FVertexBuffer(gl.buffermethod == BM_PERSISTENT)
+: FVertexBuffer(gl.buffermethod != BM_CLIENTARRAY)
 {
-	if (gl.buffermethod == BM_PERSISTENT)
+	if (gl.buffermethod != BM_CLIENTARRAY)
 	{
 		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
@@ -157,10 +157,10 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 	vbo_shadowdata.Resize(mNumReserved);
 
 	// the first quad is reserved for handling coordinates through uniforms.
-	vbo_shadowdata[0].Set(1, 0, 0, 0, 0);
-	vbo_shadowdata[1].Set(2, 0, 0, 0, 0);
-	vbo_shadowdata[2].Set(3, 0, 0, 0, 0);
-	vbo_shadowdata[3].Set(4, 0, 0, 0, 0);
+	vbo_shadowdata[0].Set(0, 0, 0, 0, 0);
+	vbo_shadowdata[1].Set(1, 0, 0, 0, 0);
+	vbo_shadowdata[2].Set(2, 0, 0, 0, 0);
+	vbo_shadowdata[3].Set(3, 0, 0, 0, 0);
 
 	// and the second one for the fullscreen quad used for blend overlays.
 	vbo_shadowdata[4].Set(0, 0, 0, 0, 0);

@@ -15,6 +15,7 @@ void main()
 {
 	vec2 parmTexCoord;
 	vec4 parmPosition;
+	
 	#ifndef USE_QUAD_DRAWER
 		parmTexCoord = aTexCoord;
 		parmPosition = aPosition;
@@ -26,8 +27,8 @@ void main()
 		}
 		else
 		{
-			parmPosition = uQuadVertices[int(aPosition.x)].st;
-			parmTexCoord = uQuadTexCoords[int(aPosition.x)];
+			parmPosition = uQuadVertices[int(aPosition.x)];
+			parmTexCoord = uQuadTexCoords[int(aPosition.x)].st;
 		}
 	#endif
 	
@@ -67,13 +68,7 @@ void main()
 	#endif
 	
 	gl_Position = ProjectionMatrix * eyeCoordPos;
-	
-    #if defined __GLSL_CG_DATA_TYPES && defined GLSL12_COMPATIBILE
-		gl_ClipVertex = eyeCoordPos;
-	#endif
-	
-	
-	
+		
 	if (uClipHeightDirection != 0.0) // clip planes used for reflective flats
 	{
 		gl_ClipDistance[0] = (worldcoord.y - uClipHeight) * uClipHeightDirection;

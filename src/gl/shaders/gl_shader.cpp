@@ -125,6 +125,10 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			vp_comb = "#version 400 core\n#extension GL_ARB_shader_storage_buffer_object : require\n#define SHADER_STORAGE_LIGHTS\n";
 		}
 	}
+	//if (gl.buffermethod == BM_DEFERRED)
+	{
+		vp_comb << "#define USE_QUAD_DRAWER\n";
+	}
 
 	vp_comb << defines << i_data.GetString().GetChars();
 	FString fp_comb = vp_comb;
@@ -276,6 +280,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	}
 
 	glUseProgram(hShader);
+	if (quadmode_index > 0) glUniform1i(quadmode_index, 0);
 
 	// set up other texture units (if needed by the shader)
 	for (int i = 2; i<16; i++)

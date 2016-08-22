@@ -14,7 +14,7 @@ public:
 
 	FQuadDrawer()
 	{
-		if (gl.flags & RFL_QUADHACK)
+		if (gl.buffermethod == BM_DEFERRED)
 		{
 			p = buffer;
 		}
@@ -29,7 +29,7 @@ public:
 	}
 	void Render(int type)
 	{
-		if (gl.flags & RFL_QUADHACK)
+		if (gl.buffermethod == BM_DEFERRED)
 		{
 			DoRender(type);
 		}

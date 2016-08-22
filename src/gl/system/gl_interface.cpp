@@ -156,7 +156,15 @@ void gl_LoadExtensions()
 
 	gl.version = strtod(version, NULL) + 0.01f;
 
-	// Don't even start if it's lower than 3.0
+	bool iscore = false;
+	if (gl.version >= 3.2)
+	{
+		int v;
+		glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &v);
+		iscore = !!(v & GL_CONTEXT_CORE_PROFILE_BIT);
+	}
+
+	// Don't even start if it's lower than 2.0 or no framebuffers are available
 	if ((gl.version < 2.0 || !CheckExtension("GL_EXT_framebuffer_object")) && gl.version < 3.0)
 	{
 		I_FatalError("Unsupported OpenGL version.\nAt least OpenGL 2.0 with framebuffer support is required to run " GAMENAME ".\n");
@@ -178,10 +186,10 @@ void gl_LoadExtensions()
 	if (gl.version > 3.0f && (gl.version >= 3.3f || CheckExtension("GL_ARB_uniform_buffer_object")))
 	{
 		gl.lightmethod = LM_DEFERRED;
-		// Only Apple requires the core profile for GL 3.x+.
-		// #ifdef __APPLE__
-		// gl.buffermethod = BM_DEFERRED;
-		// #endif
+		if (iscore)
+		{
+			gl.buffermethod = BM_DEFERRED;
+		}
 	}
 
 	if (CheckExtension("GL_ARB_texture_compression")) gl.flags |= RFL_TEXTURE_COMPRESSION;
@@ -256,7 +264,7 @@ void gl_LoadExtensions()
 	lm = Args->CheckValue("-buffermethod");
 	if (lm != NULL)
 	{
-		//if (!stricmp(lm, "deferred") && gl.buffermethod == BM_PERSISTENT) gl.buffermethod = BM_DEFERRED;
+		if (!stricmp(lm, "deferred") && gl.buffermethod == BM_PERSISTENT) gl.buffermethod = BM_DEFERRED;
 		if (!stricmp(lm, "clientarray")) gl.buffermethod = BM_CLIENTARRAY;
 	}
 

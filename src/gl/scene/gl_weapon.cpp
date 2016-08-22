@@ -57,6 +57,7 @@
 #include "gl/models/gl_models.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_material.h"
+#include "gl/renderer/gl_quaddrawer.h"
 
 EXTERN_CVAR (Bool, r_drawplayersprites)
 EXTERN_CVAR(Float, transsouls)
@@ -161,16 +162,12 @@ void FGLRenderer::DrawPSprite (player_t * player,DPSprite *psp, float sx, float 
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	}
 	gl_RenderState.Apply();
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	ptr->Set(x1, y1, 0, fU1, fV1);
-	ptr++;
-	ptr->Set(x1, y2, 0, fU1, fV2);
-	ptr++;
-	ptr->Set(x2, y1, 0, fU2, fV1);
-	ptr++;
-	ptr->Set(x2, y2, 0, fU2, fV2);
-	ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+	FQuadDrawer qd;
+	qd.Set(0, x1, y1, 0, fU1, fV1);
+	qd.Set(1, x1, y2, 0, fU1, fV2);
+	qd.Set(2, x2, y1, 0, fU2, fV1);
+	qd.Set(3, x2, y2, 0, fU2, fV2);
+	qd.Render(GL_TRIANGLE_STRIP);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.5f);
 }
 

@@ -265,6 +265,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	viewmatrix_index = glGetUniformLocation(hShader, "ViewMatrix");
 	modelmatrix_index = glGetUniformLocation(hShader, "ModelMatrix");
 	texturematrix_index = glGetUniformLocation(hShader, "TextureMatrix");
+	vertexmatrix_index = glGetUniformLocation(hShader, "uQuadVertices");
+	texcoordmatrix_index = glGetUniformLocation(hShader, "uQuadTexCoords");
+	quadmode_index = glGetUniformLocation(hShader, "uQuadMode");
 
 	if (LM_SOFTWARE != gl.lightmethod && !(gl.flags & RFL_SHADER_STORAGE_BUFFER))
 	{

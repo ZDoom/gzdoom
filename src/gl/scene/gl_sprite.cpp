@@ -64,6 +64,7 @@
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/data/gl_vertexbuffer.h"
+#include "gl/renderer/gl_quaddrawer.h"
 
 CVAR(Bool, gl_usecolorblending, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, gl_spritebrightfog, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
@@ -400,17 +401,12 @@ void GLSprite::Draw(int pass)
 			}
 
 			FFlatVertex *ptr;
-			unsigned int offset, count;
-			ptr = GLRenderer->mVBO->GetBuffer();
-			ptr->Set(v1[0], v1[1], v1[2], ul, vt);
-			ptr++;
-			ptr->Set(v2[0], v2[1], v2[2], ur, vt);
-			ptr++;
-			ptr->Set(v3[0], v3[1], v3[2], ul, vb);
-			ptr++;
-			ptr->Set(v4[0], v4[1], v4[2], ur, vb);
-			ptr++;
-			GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP, &offset, &count);
+			FQuadDrawer qd;
+			qd.Set(0, v1[0], v1[1], v1[2], ul, vt);
+			qd.Set(1, v2[0], v2[1], v2[2], ur, vt);
+			qd.Set(2, v3[0], v3[1], v3[2], ul, vb);
+			qd.Set(3, v4[0], v4[1], v4[2], ur, vb);
+			qd.Render(GL_TRIANGLE_STRIP);
 
 			if (foglayer)
 			{
@@ -420,7 +416,7 @@ void GLSprite::Draw(int pass)
 				gl_RenderState.BlendEquation(GL_FUNC_ADD);
 				gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 				gl_RenderState.Apply();
-				GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, offset, count);
+				qd.Render(GL_TRIANGLE_STRIP);
 				gl_RenderState.SetFixedColormap(CM_DEFAULT);
 			}
 		}

@@ -45,6 +45,13 @@ uniform int uFogEnabled;
 // dynamic lights
 uniform int uLightIndex;
 
+// quad drawer stuff
+#ifdef USE_QUAD_DRAWER
+uniform mat4 uQuadVertices;
+uniform mat4 uQuadTexCoords;
+uniform int uQuadMode;
+#endif
+
 // matrices
 uniform mat4 ProjectionMatrix;
 uniform mat4 ViewMatrix;

@@ -57,6 +57,7 @@
 #include "gl/utility/gl_templates.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/stereo3d/scoped_color_mask.h"
+#include "gl/renderer/gl_quaddrawer.h"
 
 FDrawInfo * gl_drawinfo;
 
@@ -1079,17 +1080,12 @@ void FDrawInfo::SetupFloodStencil(wallseg * ws)
 		glDepthMask(true);
 
 		gl_RenderState.Apply();
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-		ptr->Set(ws->x1, ws->z1, ws->y1, 0, 0);
-		ptr++;
-		ptr->Set(ws->x1, ws->z2, ws->y1, 0, 0);
-		ptr++;
-		ptr->Set(ws->x2, ws->z2, ws->y2, 0, 0);
-		ptr++;
-		ptr->Set(ws->x2, ws->z1, ws->y2, 0, 0);
-		ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
-
+		FQuadDrawer qd;
+		qd.Set(0, ws->x1, ws->z1, ws->y1, 0, 0);
+		qd.Set(1, ws->x1, ws->z2, ws->y1, 0, 0);
+		qd.Set(2, ws->x2, ws->z2, ws->y2, 0, 0);
+		qd.Set(3, ws->x2, ws->z1, ws->y2, 0, 0);
+		qd.Render(GL_TRIANGLE_FAN);
 
 		glStencilFunc(GL_EQUAL, recursion + 1, ~0);		// draw sky into stencil
 		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);		// this stage doesn't modify the stencil
@@ -1112,16 +1108,12 @@ void FDrawInfo::ClearFloodStencil(wallseg * ws)
 		gl_RenderState.ResetColor();
 
 		gl_RenderState.Apply();
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-		ptr->Set(ws->x1, ws->z1, ws->y1, 0, 0);
-		ptr++;
-		ptr->Set(ws->x1, ws->z2, ws->y1, 0, 0);
-		ptr++;
-		ptr->Set(ws->x2, ws->z2, ws->y2, 0, 0);
-		ptr++;
-		ptr->Set(ws->x2, ws->z1, ws->y2, 0, 0);
-		ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
+		FQuadDrawer qd;
+		qd.Set(0, ws->x1, ws->z1, ws->y1, 0, 0);
+		qd.Set(1, ws->x1, ws->z2, ws->y1, 0, 0);
+		qd.Set(2, ws->x2, ws->z2, ws->y2, 0, 0);
+		qd.Set(3, ws->x2, ws->z1, ws->y2, 0, 0);
+		qd.Render(GL_TRIANGLE_FAN);
 
 		// restore old stencil op.
 		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
@@ -1192,16 +1184,12 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	float px4 = fviewx + prj_fac1 * (ws->x2-fviewx);
 	float py4 = fviewy + prj_fac1 * (ws->y2-fviewy);
 
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	ptr->Set(px1, planez, py1, px1 / 64, -py1 / 64);
-	ptr++;
-	ptr->Set(px2, planez, py2, px2 / 64, -py2 / 64);
-	ptr++;
-	ptr->Set(px3, planez, py3, px3 / 64, -py3 / 64);
-	ptr++;
-	ptr->Set(px4, planez, py4, px4 / 64, -py4 / 64);
-	ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
+	FQuadDrawer qd;
+	qd.Set(0, px1, planez, py1, px1 / 64, -py1 / 64);
+	qd.Set(1, px2, planez, py2, px2 / 64, -py2 / 64);
+	qd.Set(2, px3, planez, py3, px3 / 64, -py3 / 64);
+	qd.Set(3, px4, planez, py4, px4 / 64, -py4 / 64);
+	qd.Render(GL_TRIANGLE_FAN);
 
 	gl_RenderState.EnableTextureMatrix(false);
 }

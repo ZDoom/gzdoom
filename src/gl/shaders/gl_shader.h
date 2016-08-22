@@ -244,6 +244,9 @@ class FShader
 	int modelmatrix_index;
 	int texturematrix_index;
 public:
+	int vertexmatrix_index;
+	int texcoordmatrix_index;
+	int quadmode_index;
 	int fakevb_index;
 private:
 	int currentglowstate = 0;

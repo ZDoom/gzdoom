@@ -97,9 +97,17 @@ public:
 	{
 		return &map[mCurIndex];
 	}
+	FFlatVertex *Alloc(int num, int *poffset)
+	{
+		FFlatVertex *p = GetBuffer();
+		*poffset = mCurIndex;
+		mCurIndex += num;
+		if (mCurIndex >= BUFFER_SIZE_TO_USE) mCurIndex = mIndex;
+		return p;
+	}
+
 	unsigned int GetCount(FFlatVertex *newptr, unsigned int *poffset)
 	{
-
 		unsigned int newofs = (unsigned int)(newptr - map);
 		unsigned int diff = newofs - mCurIndex;
 		*poffset = mCurIndex;

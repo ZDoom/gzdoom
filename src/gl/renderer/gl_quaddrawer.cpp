@@ -72,9 +72,10 @@ void FQuadDrawer::DoRender(int type)
 		matV[i*4+0] = buffer[i].x;
 		matV[i*4+1] = buffer[i].z;
 		matV[i*4+2] = buffer[i].y;
+		matV[i*4+3] = 1;
 		matT[i*4+0] = buffer[i].u;
 		matT[i*4+1] = buffer[i].v;
-		matV[i*4+3] = matT[i*4+2] = matT[i*4+3] = 0;
+		matT[i*4+2] = matT[i*4+3] = 0;
 	}
 	FShader *shader = GLRenderer->mShaderManager->GetActiveShader();
 	glUniformMatrix4fv(shader->vertexmatrix_index, 1, false, matV);

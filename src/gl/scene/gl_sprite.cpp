@@ -400,7 +400,6 @@ void GLSprite::Draw(int pass)
 				v4 = FVector3(x2, z2, y2);
 			}
 
-			FFlatVertex *ptr;
 			FQuadDrawer qd;
 			qd.Set(0, v1[0], v1[1], v1[2], ul, vt);
 			qd.Set(1, v2[0], v2[1], v2[2], ur, vt);

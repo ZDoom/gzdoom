@@ -459,6 +459,13 @@ void SDLGLFB::NewRefreshRate ()
 
 void SDLGLFB::SwapBuffers()
 {
+#ifndef __APPLE__
+	if (vid_maxfps && !cl_capfps)
+	{
+		SEMAPHORE_WAIT(FPSLimitSemaphore)
+	}
+#endif
+
 	SDL_GL_SwapWindow (Screen);
 }
 

@@ -253,6 +253,7 @@ void gl_LoadExtensions()
 	}
 
 	if (gl.version >= 4.3f || CheckExtension("GL_ARB_invalidate_subdata")) gl.flags |= RFL_INVALIDATE_BUFFER;
+	if (gl.version >= 4.3f || CheckExtension("GL_KHR_debug")) gl.flags |= RFL_DEBUG;
 
 	const char *lm = Args->CheckValue("-lightmethod");
 	if (lm != NULL)

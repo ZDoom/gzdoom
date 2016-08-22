@@ -17,6 +17,8 @@ public:
 	static void PushGroup(const FString &name);
 	static void PopGroup();
 
+	static bool HasDebugApi() { return (gl.flags & RFL_DEBUG) != 0; }
+
 private:
 	void SetupBreakpointMode();
 	void UpdateLoggingLevel();

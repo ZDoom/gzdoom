@@ -39,6 +39,7 @@ OptionValue "TonemapModes"
 	2, "$OPTVAL_HEJLDAWSON"
 	3, "$OPTVAL_REINHARD"
 	4, "$OPTVAL_LINEAR"
+	5, "$OPTVAL_PALETTE"
 }
 
 OptionValue "TextureFormats"

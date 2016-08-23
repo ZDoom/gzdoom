@@ -55,6 +55,7 @@
 #include "r_utility.h"
 #include "a_hexenglobal.h"
 #include "p_local.h"
+#include "colormatcher.h"
 #include "gl/gl_functions.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
@@ -89,7 +90,7 @@ CVAR(Float, gl_exposure, 0.0f, 0)
 
 CUSTOM_CVAR(Int, gl_tonemap, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-	if (self < 0 || self > 4)
+	if (self < 0 || self > 5)
 		self = 0;
 }
 
@@ -222,11 +223,59 @@ void FGLRenderer::TonemapScene()
 	mBuffers->BindCurrentTexture(0);
 	mTonemapShader->Bind();
 	mTonemapShader->SceneTexture.Set(0);
-	mTonemapShader->Exposure.Set(mCameraExposure);
+
+	if (mTonemapShader->IsPaletteMode())
+	{
+		mTonemapShader->PaletteLUT.Set(1);
+		BindTonemapPalette(1);
+	}
+	else
+	{
+		mTonemapShader->Exposure.Set(mCameraExposure);
+	}
+
 	RenderScreenQuad();
 	mBuffers->NextTexture();
 
 	FGLDebug::PopGroup();
+}
+
+void FGLRenderer::BindTonemapPalette(int texunit)
+{
+	if (mTonemapPalette)
+	{
+		mTonemapPalette->Bind(texunit, 0, false);
+	}
+	else
+	{
+		TArray<unsigned char> lut;
+		lut.Resize(512 * 512 * 4);
+		for (int r = 0; r < 64; r++)
+		{
+			for (int g = 0; g < 64; g++)
+			{
+				for (int b = 0; b < 64; b++)
+				{
+					PalEntry color = GPalette.BaseColors[ColorMatcher.Pick((r << 2) | (r >> 1), (g << 2) | (g >> 1), (b << 2) | (b >> 1))];
+					int index = ((r * 64 + g) * 64 + b) * 4;
+					lut[index] = color.r;
+					lut[index + 1] = color.g;
+					lut[index + 2] = color.b;
+					lut[index + 3] = 255;
+				}
+			}
+		}
+
+		mTonemapPalette = new FHardwareTexture(512, 512, true);
+		mTonemapPalette->CreateTexture(&lut[0], 512, 512, texunit, false, 0, "mTonemapPalette");
+
+		glActiveTexture(GL_TEXTURE0 + texunit);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glActiveTexture(GL_TEXTURE0);
+	}
 }
 
 //-----------------------------------------------------------------------------

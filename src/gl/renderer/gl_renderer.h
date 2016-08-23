@@ -26,6 +26,7 @@ class FTonemapShader;
 class FLensShader;
 class FPresentShader;
 class F2DDrawer;
+class FHardwareTexture;
 
 inline float DEG2RAD(float deg)
 {
@@ -92,6 +93,7 @@ public:
 	FBloomCombineShader *mBloomCombineShader;
 	FBlurShader *mBlurShader;
 	FTonemapShader *mTonemapShader;
+	FHardwareTexture *mTonemapPalette;
 	FLensShader *mLensShader;
 	FPresentShader *mPresentShader;
 
@@ -164,6 +166,7 @@ public:
 	void EndDrawScene(sector_t * viewsector);
 	void BloomScene();
 	void TonemapScene();
+	void BindTonemapPalette(int texunit);
 	void LensDistortScene();
 	void CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma);
 	void Flush() { CopyToBackbuffer(nullptr, true); }

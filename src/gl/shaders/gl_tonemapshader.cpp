@@ -61,8 +61,14 @@ void FTonemapShader::Bind()
 		shader.SetAttribLocation(0, "PositionInProjection");
 		SceneTexture.Init(shader, "InputTexture");
 		Exposure.Init(shader, "ExposureAdjustment");
+		PaletteLUT.Init(shader, "PaletteLUT");
 	}
 	shader.Bind();
+}
+
+bool FTonemapShader::IsPaletteMode()
+{
+	return gl_tonemap == Palette;
 }
 
 const char *FTonemapShader::GetDefines(int mode)
@@ -74,5 +80,6 @@ const char *FTonemapShader::GetDefines(int mode)
 	case Reinhard:   return "#define REINHARD\n";
 	case HejlDawson: return "#define HEJLDAWSON\n";
 	case Uncharted2: return "#define UNCHARTED2\n";
+	case Palette:    return "#define PALETTE\n";
 	}
 }

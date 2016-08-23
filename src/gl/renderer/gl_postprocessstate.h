@@ -20,7 +20,7 @@ private:
 
 	GLint activeTex;
 	GLint textureBinding;
-	GLint samplerBinding;
+	GLint samplerBinding[2];
 	GLboolean blendEnabled;
 	GLboolean scissorEnabled;
 	GLboolean depthEnabled;

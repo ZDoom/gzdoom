@@ -10,6 +10,9 @@ public:
 
 	FBufferedUniform1i SceneTexture;
 	FBufferedUniform1f Exposure;
+	FBufferedUniform1i PaletteLUT;
+
+	static bool IsPaletteMode();
 
 private:
 	enum TonemapMode
@@ -19,6 +22,7 @@ private:
 		HejlDawson,
 		Reinhard,
 		Linear,
+		Palette,
 		NumTonemapModes
 	};
 

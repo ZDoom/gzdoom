@@ -123,6 +123,7 @@ void FGLRenderer::Initialize(int width, int height)
 	mBloomCombineShader = new FBloomCombineShader();
 	mBlurShader = new FBlurShader();
 	mTonemapShader = new FTonemapShader();
+	mTonemapPalette = nullptr;
 	mLensShader = new FLensShader();
 	mPresentShader = new FPresentShader();
 	m2DDrawer = new F2DDrawer;
@@ -181,6 +182,7 @@ FGLRenderer::~FGLRenderer()
 	if (mBloomCombineShader) delete mBloomCombineShader;
 	if (mBlurShader) delete mBlurShader;
 	if (mTonemapShader) delete mTonemapShader;
+	if (mTonemapPalette) delete mTonemapPalette;
 	if (mLensShader) delete mLensShader;
 }
 

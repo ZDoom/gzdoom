@@ -62,8 +62,12 @@ FGLPostProcessState::FGLPostProcessState()
 	glBindTexture(GL_TEXTURE_2D, 0);
 	if (gl.flags & RFL_SAMPLER_OBJECTS)
 	{
-		glGetIntegerv(GL_SAMPLER_BINDING, &samplerBinding);
+		glGetIntegerv(GL_SAMPLER_BINDING, &samplerBinding[0]);
 		glBindSampler(0, 0);
+		glActiveTexture(GL_TEXTURE0 + 1);
+		glGetIntegerv(GL_SAMPLER_BINDING, &samplerBinding[1]);
+		glBindSampler(1, 0);
+		glActiveTexture(GL_TEXTURE0);
 	}
 
 	glGetBooleanv(GL_BLEND, &blendEnabled);
@@ -120,7 +124,10 @@ FGLPostProcessState::~FGLPostProcessState()
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	if (gl.flags & RFL_SAMPLER_OBJECTS)
-		glBindSampler(0, samplerBinding);
+	{
+		glBindSampler(0, samplerBinding[0]);
+		glBindSampler(1, samplerBinding[1]);
+	}
 	glBindTexture(GL_TEXTURE_2D, textureBinding);
 	glActiveTexture(activeTex);
 }

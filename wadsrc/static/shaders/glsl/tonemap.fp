@@ -70,14 +70,17 @@ uniform sampler2D PaletteLUT;
 vec3 Tonemap(vec3 color)
 {
 	ivec3 c = ivec3(clamp(color.rgb, vec3(0.0), vec3(1.0)) * 255.0 + 0.5);
+#if __VERSION__ < 130
+	int index = (c.r / 4 * 64 + c.g / 4) * 64 + c.b / 4;
+	float tx = mod(index, 512) / 512.0;
+	float ty = float(index / 512) / 512.0;
+	return texture2D(PaletteLUT, vec2(tx, ty)).rgb;
+#else
 	int index = ((c.r >> 2) * 64 + (c.g >> 2)) * 64 + (c.b >> 2);
 	int tx = index % 512;
 	int ty = index / 512;
-	#if __VERSION__ < 130
-		return texture2D(PaletteLUT, vec2(float(tx) / 512.0, float(ty) / 512.0))).rgb;
-	#else
-		return texelFetch(PaletteLUT, ivec2(tx, ty), 0).rgb;
-	#endif
+	return texelFetch(PaletteLUT, ivec2(tx, ty), 0).rgb;
+#endif
 }
 
 #else

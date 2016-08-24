@@ -30,6 +30,7 @@ void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int in
 bool CheckDeprecatedFlags(const AActor *actor, PClassActor *info, int index);
 const char *GetFlagName(unsigned int flagnum, int flagoffset);
 void ModActorFlag(AActor *actor, FFlagDef *fd, bool set);
+bool ModActorFlag(AActor *actor, FString &flagname, bool set, bool printerror = true);
 INTBOOL CheckActorFlag(const AActor *actor, FFlagDef *fd);
 INTBOOL CheckActorFlag(const AActor *owner, const char *flagname, bool printerror = true);
 

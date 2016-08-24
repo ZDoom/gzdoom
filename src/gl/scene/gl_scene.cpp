@@ -411,6 +411,8 @@ void FGLRenderer::RenderScene(int recursion)
 	if (gl.lightmethod == LM_SOFTWARE)
 	{
 		// also process the render lists with walls and dynamic lights
+        gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawDecals();
+        gl_drawinfo->dldrawlists[GLLDL_WALLS_FOG].DrawDecals();
 	}
 
 	gl_RenderState.SetTextureMode(TM_MODULATE);

@@ -1467,6 +1467,8 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	// note: we always have a valid sidedef and linedef reference when getting here.
 
 	this->seg = seg;
+	vertindex = 0;
+	vertcount = 0;
 
 	if ((seg->sidedef->Flags & WALLF_POLYOBJ) && seg->backsector)
 	{
@@ -1760,6 +1762,9 @@ void GLWall::ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector_t * 
 
 	float ffh = frontsector->GetPlaneTexZ(sector_t::floor);
 	float bfh = backsector->GetPlaneTexZ(sector_t::floor);
+
+	vertindex = 0;
+	vertcount = 0;
 	if (bfh > ffh)
 	{
 		this->seg = seg;

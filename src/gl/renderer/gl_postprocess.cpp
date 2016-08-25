@@ -114,7 +114,7 @@ void FGLRenderer::RenderScreenQuad()
 {
 	mVBO->BindVBO();
 	gl_RenderState.ResetVertexBuffer();
-	glDrawArrays(GL_TRIANGLE_STRIP, 8, 4);
+	glDrawArrays(GL_TRIANGLE_STRIP, FFlatVertexBuffer::PRESENT_INDEX, 4);
 }
 
 //-----------------------------------------------------------------------------

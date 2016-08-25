@@ -83,6 +83,13 @@ class FFlatVertexBuffer : public FVertexBuffer
 	static const unsigned int BUFFER_SIZE_TO_USE = 1999500;
 
 public:
+	enum
+	{
+		QUAD_INDEX = 0,
+		FULLSCREEN_INDEX = 4,
+		PRESENT_INDEX = 8
+	};
+
 	TArray<FFlatVertex> vbo_shadowdata;	// this is kept around for updating the actual (non-readable) buffer and as stand-in for pre GL 4.x
 
 	FFlatVertexBuffer(int width, int height);

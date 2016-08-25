@@ -172,6 +172,9 @@ public:
 	float zceil[2];
 	float zfloor[2];
 
+	unsigned int vertindex;
+	unsigned int vertcount;
+
 public:
 	seg_t * seg;			// this gives the easiest access to all other structs involved
 	subsector_t * sub;		// For polyobjects

@@ -772,11 +772,13 @@ void GLWall::RenderLightsCompat(int pass)
 		}
 		if (PrepareLight(light, pass))
 		{
+			vertcount = 0;
 			RenderWall(RWF_TEXTURED, NULL);
 		}
 		node = node->nextLight;
 	}
 	memcpy(tcs, save, sizeof(tcs));
+	vertcount = 0;
 }
 
 //==========================================================================

@@ -43,7 +43,7 @@ void main()
 	vColor = aColor;
 
 	#ifndef SIMPLE
-		pixelpos.xyz = worldcoord.xyz;
+		pixelpos.xyz = eyeCoordPos.xyz;
 		pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;
 
 		glowdist.x = -((uGlowTopPlane.w + uGlowTopPlane.x * worldcoord.x + uGlowTopPlane.y * worldcoord.z) * uGlowTopPlane.z) - worldcoord.y;

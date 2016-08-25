@@ -221,6 +221,7 @@ class FShader
 	FUniform1i muFixedColormap;
 	FUniform4f muColormapStart;
 	FUniform4f muColormapRange;
+	FBufferedUniform1i muLightMath;
 	FBufferedUniform1i muLightIndex;
 	FBufferedUniformPE muFogColor;
 	FBufferedUniform4f muDynLightColor;

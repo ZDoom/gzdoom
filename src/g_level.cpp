@@ -1280,7 +1280,7 @@ void G_FinishTravel ()
 
 		for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
 		{
-			inv->ChangeStatNum (STAT_DEFAULT);
+			inv->ChangeStatNum (STAT_INVENTORY);
 			inv->LinkToWorld ();
 			inv->Travelled ();
 		}

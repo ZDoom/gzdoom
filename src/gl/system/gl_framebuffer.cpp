@@ -305,6 +305,9 @@ void OpenGLFrameBuffer::UpdatePalette()
 	bb>>=8;
 
 	palette_brightness = (rr*77 + gg*143 + bb*35)/255;
+
+	if (GLRenderer)
+		GLRenderer->ClearTonemapPalette();
 }
 
 void OpenGLFrameBuffer::GetFlashedPalette (PalEntry pal[256])

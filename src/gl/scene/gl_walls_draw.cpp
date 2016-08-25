@@ -167,6 +167,36 @@ void GLWall::SetupLights()
 	dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
 }
 
+//==========================================================================
+//
+// build the vertices for this wall
+//
+//==========================================================================
+
+void GLWall::MakeVertices(bool nosplit)
+{
+	if (vertcount == 0)
+	{
+		bool split = (gl_seamless && !nosplit && seg->sidedef != NULL && !(seg->sidedef->Flags & WALLF_POLYOBJ) && !(flags & GLWF_NOSPLIT));
+
+		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+
+		ptr->Set(glseg.x1, zbottom[0], glseg.y1, tcs[LOLFT].u, tcs[LOLFT].v);
+		ptr++;
+		if (split && glseg.fracleft == 0) SplitLeftEdge(ptr);
+		ptr->Set(glseg.x1, ztop[0], glseg.y1, tcs[UPLFT].u, tcs[UPLFT].v);
+		ptr++;
+		if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(ptr);
+		ptr->Set(glseg.x2, ztop[1], glseg.y2, tcs[UPRGT].u, tcs[UPRGT].v);
+		ptr++;
+		if (split && glseg.fracright == 1) SplitRightEdge(ptr);
+		ptr->Set(glseg.x2, zbottom[1], glseg.y2, tcs[LORGT].u, tcs[LORGT].v);
+		ptr++;
+		if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(ptr);
+		vertcount = GLRenderer->mVBO->GetCount(ptr, &vertindex);
+	}
+}
+
 
 //==========================================================================
 //
@@ -177,31 +207,18 @@ void GLWall::SetupLights()
 
 void GLWall::RenderWall(int textured, unsigned int *store)
 {
-	bool split = (gl_seamless && !(textured&RWF_NOSPLIT) && seg->sidedef != NULL && !(seg->sidedef->Flags & WALLF_POLYOBJ) && !(flags & GLWF_NOSPLIT));
-
 	if (!(textured & RWF_NORENDER))
 	{
 		gl_RenderState.Apply();
 		gl_RenderState.ApplyLightIndex(dynlightindex);
 	}
-
-	// the rest of the code is identical for textured rendering and lights
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	unsigned int count, offset;
-
-	ptr->Set(glseg.x1, zbottom[0], glseg.y1, tcs[LOLFT].u, tcs[LOLFT].v);
-	ptr++;
-	if (split && glseg.fracleft == 0) SplitLeftEdge(ptr);
-	ptr->Set(glseg.x1, ztop[0], glseg.y1, tcs[UPLFT].u, tcs[UPLFT].v);
-	ptr++;
-	if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(ptr);
-	ptr->Set(glseg.x2, ztop[1], glseg.y2, tcs[UPRGT].u, tcs[UPRGT].v);
-	ptr++;
-	if (split && glseg.fracright == 1) SplitRightEdge(ptr);
-	ptr->Set(glseg.x2, zbottom[1], glseg.y2, tcs[LORGT].u, tcs[LORGT].v);
-	ptr++;
-	if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(ptr);
-	count = GLRenderer->mVBO->GetCount(ptr, &offset);
+	
+	if (gl.buffermethod != BM_DEFERRED)
+	{
+		MakeVertices(!(textured&RWF_NOSPLIT));
+	}
+	
+	unsigned int count = vertcount, offset = vertindex;
 	if (!(textured & RWF_NORENDER))
 	{
 		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, offset, count);

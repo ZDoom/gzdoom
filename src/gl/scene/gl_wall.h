@@ -195,6 +195,7 @@ private:
 
 	void SetupLights();
 	bool PrepareLight(ADynamicLight * light, int pass);
+	void MakeVertices(bool nosplit);
 	void RenderWall(int textured, unsigned int *store = NULL);
 	void RenderTextured(int rflags);
 

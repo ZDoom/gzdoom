@@ -87,7 +87,11 @@ public:
 	{
 		QUAD_INDEX = 0,
 		FULLSCREEN_INDEX = 4,
-		PRESENT_INDEX = 8
+		PRESENT_INDEX = 8,
+		STENCILTOP_INDEX = 12,
+		STENCILBOTTOM_INDEX = 16,
+
+		NUM_RESERVED = 20
 	};
 
 	TArray<FFlatVertex> vbo_shadowdata;	// this is kept around for updating the actual (non-readable) buffer and as stand-in for pre GL 4.x

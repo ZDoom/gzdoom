@@ -153,7 +153,7 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 		map = new FFlatVertex[BUFFER_SIZE];
 	}
 	mIndex = mCurIndex = 0;
-	mNumReserved = 12;
+	mNumReserved = NUM_RESERVED;
 	vbo_shadowdata.Resize(mNumReserved);
 
 	// the first quad is reserved for handling coordinates through uniforms.
@@ -173,6 +173,17 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 	vbo_shadowdata[9].Set(-1.0f, 1.0f, 0, 0.0f, 1.f);
 	vbo_shadowdata[10].Set(1.0f, -1.0f, 0, 1.f, 0.0f);
 	vbo_shadowdata[11].Set(1.0f, 1.0f, 0, 1.f, 1.f);
+
+	// The next two are the stencil caps.
+	vbo_shadowdata[12].Set(-32767.0f, 32767.0f, -32767.0f, 0, 0);
+	vbo_shadowdata[13].Set(-32767.0f, 32767.0f, 32767.0f, 0, 0);
+	vbo_shadowdata[14].Set(32767.0f, 32767.0f, 32767.0f, 0, 0);
+	vbo_shadowdata[15].Set(32767.0f, 32767.0f, -32767.0f, 0, 0);
+
+	vbo_shadowdata[16].Set(-32767.0f, -32767.0f, -32767.0f, 0, 0);
+	vbo_shadowdata[17].Set(-32767.0f, -32767.0f, 32767.0f, 0, 0);
+	vbo_shadowdata[18].Set(32767.0f, -32767.0f, 32767.0f, 0, 0);
+	vbo_shadowdata[19].Set(32767.0f, -32767.0f, -32767.0f, 0, 0);
 
 }
 

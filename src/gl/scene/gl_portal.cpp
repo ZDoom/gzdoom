@@ -147,39 +147,24 @@ void GLPortal::DrawPortalStencil()
 {
 	if (mPrimIndices.Size() == 0)
 	{
-		bool cap = NeedCap() && lines.Size() > 1;
-		mPrimIndices.Resize(2 * lines.Size() + 4 * cap);
+		mPrimIndices.Resize(2 * lines.Size());
 
-		for (unsigned int i = 0; i<lines.Size(); i++)
+		for (unsigned int i = 0; i < lines.Size(); i++)
 		{
 			if (gl.buffermethod != BM_DEFERRED) lines[i].MakeVertices(false);
 			mPrimIndices[i * 2] = lines[i].vertindex;
 			mPrimIndices[i * 2 + 1] = lines[i].vertcount;
-		}
-
-		if (cap)
-		{
-			// Cap the stencil at the top and bottom
-			int n = lines.Size() * 2;
-			FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-			ptr[0].Set(-32767.0f, 32767.0f, -32767.0f, 0, 0);
-			ptr[1].Set(-32767.0f, 32767.0f, 32767.0f, 0, 0);
-			ptr[2].Set(32767.0f, 32767.0f, 32767.0f, 0, 0);
-			ptr[3].Set(32767.0f, 32767.0f, -32767.0f, 0, 0);
-			ptr += 4;
-			mPrimIndices[n + 1] = GLRenderer->mVBO->GetCount(ptr, &mPrimIndices[n]);
-			ptr[0].Set(-32767.0f, -32767.0f, -32767.0f, 0, 0);
-			ptr[1].Set(-32767.0f, -32767.0f, 32767.0f, 0, 0);
-			ptr[2].Set(32767.0f, -32767.0f, 32767.0f, 0, 0);
-			ptr[3].Set(32767.0f, -32767.0f, -32767.0f, 0, 0);
-			ptr += 4;
-			mPrimIndices[n + 3] = GLRenderer->mVBO->GetCount(ptr, &mPrimIndices[n + 2]);
 		}
 	}
 	gl_RenderState.Apply();
 	for (unsigned int i = 0; i < mPrimIndices.Size(); i += 2)
 	{
 		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, mPrimIndices[i], mPrimIndices[i + 1]);
+	}
+	if (NeedCap() && lines.Size() > 1)
+	{
+		glDrawArrays(GL_TRIANGLE_FAN, FFlatVertexBuffer::STENCILTOP_INDEX, 4);
+		glDrawArrays(GL_TRIANGLE_FAN, FFlatVertexBuffer::STENCILBOTTOM_INDEX, 4);
 	}
 }
 

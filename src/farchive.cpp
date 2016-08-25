@@ -1194,6 +1194,7 @@ FArchive &FArchive::ReadObject (DObject* &obj, PClass *wanttype)
 	const PClass *type;
 	BYTE playerNum;
 	DWORD index;
+	DObject *newobj;
 
 	operator<< (objHead);
 
@@ -1255,11 +1256,11 @@ FArchive &FArchive::ReadObject (DObject* &obj, PClass *wanttype)
 	case NEW_CLS_OBJ:
 		type = ReadClass (wanttype);
 //		Printf ("New class: %s (%u)\n", type->Name, m_File->Tell());
-		obj = type->CreateNew ();
+		newobj = obj = type->CreateNew ();
 		MapObject (obj);
-		obj->SerializeUserVars (*this);
-		obj->Serialize (*this);
-		obj->CheckIfSerialized ();
+		newobj->SerializeUserVars (*this);
+		newobj->Serialize (*this);
+		newobj->CheckIfSerialized ();
 		break;
 
 	case NEW_PLYR_OBJ:

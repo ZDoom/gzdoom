@@ -773,7 +773,7 @@ void GLWall::RenderLightsCompat(int pass)
 		if (PrepareLight(light, pass))
 		{
 			vertcount = 0;
-			RenderWall(RWF_TEXTURED, NULL);
+			RenderWall(RWF_TEXTURED);
 		}
 		node = node->nextLight;
 	}

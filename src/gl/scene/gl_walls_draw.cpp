@@ -205,30 +205,16 @@ void GLWall::MakeVertices(bool nosplit)
 //
 //==========================================================================
 
-void GLWall::RenderWall(int textured, unsigned int *store)
+void GLWall::RenderWall(int textured)
 {
-	if (!(textured & RWF_NORENDER))
-	{
-		gl_RenderState.Apply();
-		gl_RenderState.ApplyLightIndex(dynlightindex);
-	}
-	
+	gl_RenderState.Apply();
+	gl_RenderState.ApplyLightIndex(dynlightindex);
 	if (gl.buffermethod != BM_DEFERRED)
 	{
 		MakeVertices(!(textured&RWF_NOSPLIT));
 	}
-	
-	unsigned int count = vertcount, offset = vertindex;
-	if (!(textured & RWF_NORENDER))
-	{
-		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, offset, count);
-		vertexcount += count;
-	}
-	if (store != NULL)
-	{
-		store[0] = offset;
-		store[1] = count;
-	}
+	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, vertindex, vertcount);
+	vertexcount += vertcount;
 }
 
 //==========================================================================

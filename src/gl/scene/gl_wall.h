@@ -196,7 +196,7 @@ private:
 	void SetupLights();
 	bool PrepareLight(ADynamicLight * light, int pass);
 	void MakeVertices(bool nosplit);
-	void RenderWall(int textured, unsigned int *store = NULL);
+	void RenderWall(int textured);
 	void RenderTextured(int rflags);
 
 	void FloodPlane(int pass);

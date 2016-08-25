@@ -111,6 +111,7 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	gllight = glpart2 = glpart = mirrortexture = NULL;
 	mLights = NULL;
 	m2DDrawer = nullptr;
+	mTonemapPalette = nullptr;
 }
 
 void gl_LoadModels();

@@ -64,6 +64,7 @@
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_convert.h"
 #include "gl/utility/gl_templates.h"
+#include "gl/renderer/gl_quaddrawer.h"
 
 #ifdef _DEBUG
 CVAR(Int, gl_breaksec, -1, 0)
@@ -318,7 +319,6 @@ void GLFlat::DrawSubsectors(int pass, bool processlights, bool istrans)
 
 void GLFlat::DrawSkyboxSector(int pass, bool processlights)
 {
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
 
 	float minx = FLT_MAX, miny = FLT_MAX;
 	float maxx = -FLT_MAX, maxy = -FLT_MAX;
@@ -345,36 +345,13 @@ void GLFlat::DrawSkyboxSector(int pass, bool processlights)
 	static float vvals[] = { 1, 0, 0, 1 };
 	int rot = -xs_FloorToInt(plane.Angle / 90.f);
 
+	FQuadDrawer qd;
 
-	ptr->x = minx;
-	ptr->z = z;
-	ptr->y = miny;
-	ptr->u = uvals[rot & 3];
-	ptr->v = vvals[rot & 3];
-	ptr++;
-
-	ptr->x = minx;
-	ptr->z = z;
-	ptr->y = maxy;
-	ptr->u = uvals[(rot + 1) & 3];
-	ptr->v = vvals[(rot + 1) & 3];
-	ptr++;
-
-	ptr->x = maxx;
-	ptr->z = z;
-	ptr->y = maxy;
-	ptr->u = uvals[(rot + 2) & 3];
-	ptr->v = vvals[(rot + 2) & 3];
-	ptr++;
-
-	ptr->x = maxx;
-	ptr->z = z;
-	ptr->y = miny;
-	ptr->u = uvals[(rot + 3) & 3];
-	ptr->v = vvals[(rot + 3) & 3];
-	ptr++;
-
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
+	qd.Set(0, minx, z, miny, uvals[rot & 3], vvals[rot & 3]);
+	qd.Set(1, minx, z, maxy, uvals[(rot + 1) & 3], vvals[(rot + 1) & 3]);
+	qd.Set(2, maxx, z, maxy, uvals[(rot + 2) & 3], vvals[(rot + 2) & 3]);
+	qd.Set(3, maxx, z, miny, uvals[(rot + 3) & 3], vvals[(rot + 3) & 3]);
+	qd.Render(GL_TRIANGLE_FAN);
 
 	flatvertices += 4;
 	flatprimitives++;

@@ -60,6 +60,7 @@
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_templates.h"
+#include "gl/renderer/gl_quaddrawer.h"
 
 EXTERN_CVAR(Bool, gl_seamless)
 
@@ -212,6 +213,20 @@ void GLWall::RenderWall(int textured)
 	if (gl.buffermethod != BM_DEFERRED)
 	{
 		MakeVertices(!(textured&RWF_NOSPLIT));
+	}
+	else if (vertcount == 0)
+	{
+		// in case we get here without valid vertex data and no ability to create them now,
+		// use the quad drawer as fallback (without edge splitting.)
+		// This can only happen in one special situation, when a translucent line got split during sorting.
+		FQuadDrawer qd;
+		qd.Set(0, glseg.x1, zbottom[0], glseg.y1, tcs[LOLFT].u, tcs[LOLFT].v);
+		qd.Set(1, glseg.x1, ztop[0], glseg.y1, tcs[UPLFT].u, tcs[UPLFT].v);
+		qd.Set(2, glseg.x2, ztop[1], glseg.y2, tcs[UPRGT].u, tcs[UPRGT].v);
+		qd.Set(3, glseg.x2, zbottom[1], glseg.y2, tcs[LORGT].u, tcs[LORGT].v);
+		qd.Render(GL_TRIANGLE_FAN);
+		vertexcount += 4;
+		return;
 	}
 	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, vertindex, vertcount);
 	vertexcount += vertcount;

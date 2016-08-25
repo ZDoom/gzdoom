@@ -204,35 +204,27 @@ void GLFlat::ProcessLights(bool istrans)
 {
 	dynlightindex = GLRenderer->mLights->GetIndexPtr();
 
-	if (sub)
+	// Draw the subsectors belonging to this sector
+	for (int i=0; i<sector->subsectorcount; i++)
 	{
-		// This represents a single subsector
-		SetupSubsectorLights(GLPASS_LIGHTSONLY, sub);
-	}
-	else
-	{
-		// Draw the subsectors belonging to this sector
-		for (int i=0; i<sector->subsectorcount; i++)
+		subsector_t * sub = sector->subsectors[i];
+		if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
 		{
-			subsector_t * sub = sector->subsectors[i];
-			if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
-			{
-				SetupSubsectorLights(GLPASS_LIGHTSONLY, sub);
-			}
+			SetupSubsectorLights(GLPASS_LIGHTSONLY, sub);
 		}
+	}
 
-		// Draw the subsectors assigned to it due to missing textures
-		if (!(renderflags&SSRF_RENDER3DPLANES))
+	// Draw the subsectors assigned to it due to missing textures
+	if (!(renderflags&SSRF_RENDER3DPLANES))
+	{
+		gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR)?
+			gl_drawinfo->GetOtherFloorPlanes(sector->sectornum) :
+			gl_drawinfo->GetOtherCeilingPlanes(sector->sectornum);
+
+		while (node)
 		{
-			gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR)?
-				gl_drawinfo->GetOtherFloorPlanes(sector->sectornum) :
-				gl_drawinfo->GetOtherCeilingPlanes(sector->sectornum);
-
-			while (node)
-			{
-				SetupSubsectorLights(GLPASS_LIGHTSONLY, node->sub);
-				node = node->next;
-			}
+			SetupSubsectorLights(GLPASS_LIGHTSONLY, node->sub);
+			node = node->next;
 		}
 	}
 }
@@ -249,60 +241,51 @@ void GLFlat::DrawSubsectors(int pass, bool processlights, bool istrans)
 	int dli = dynlightindex;
 
 	gl_RenderState.Apply();
-	if (sub)
+	if (vboindex >= 0)
 	{
-		// This represents a single subsector
-		if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
-		DrawSubsector(sub);
-	}
-	else 
-	{
-		if (vboindex >= 0)
+		int index = vboindex;
+		for (int i=0; i<sector->subsectorcount; i++)
 		{
-			int index = vboindex;
-			for (int i=0; i<sector->subsectorcount; i++)
-			{
-				subsector_t * sub = sector->subsectors[i];
+			subsector_t * sub = sector->subsectors[i];
 				
-				if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
-				{
-					if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
-					drawcalls.Clock();
-					glDrawArrays(GL_TRIANGLE_FAN, index, sub->numlines);
-					drawcalls.Unclock();
-					flatvertices += sub->numlines;
-					flatprimitives++;
-				}
-				index += sub->numlines;
+			if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
+			{
+				if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
+				drawcalls.Clock();
+				glDrawArrays(GL_TRIANGLE_FAN, index, sub->numlines);
+				drawcalls.Unclock();
+				flatvertices += sub->numlines;
+				flatprimitives++;
+			}
+			index += sub->numlines;
+		}
+	}
+	else
+	{
+		// Draw the subsectors belonging to this sector
+		for (int i=0; i<sector->subsectorcount; i++)
+		{
+			subsector_t * sub = sector->subsectors[i];
+			if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
+			{
+				if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
+				DrawSubsector(sub);
 			}
 		}
-		else
-		{
-			// Draw the subsectors belonging to this sector
-			for (int i=0; i<sector->subsectorcount; i++)
-			{
-				subsector_t * sub = sector->subsectors[i];
-				if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
-				{
-					if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
-					DrawSubsector(sub);
-				}
-			}
-		}
+	}
 
-		// Draw the subsectors assigned to it due to missing textures
-		if (!(renderflags&SSRF_RENDER3DPLANES))
-		{
-			gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR)?
-				gl_drawinfo->GetOtherFloorPlanes(sector->sectornum) :
-				gl_drawinfo->GetOtherCeilingPlanes(sector->sectornum);
+	// Draw the subsectors assigned to it due to missing textures
+	if (!(renderflags&SSRF_RENDER3DPLANES))
+	{
+		gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR)?
+			gl_drawinfo->GetOtherFloorPlanes(sector->sectornum) :
+			gl_drawinfo->GetOtherCeilingPlanes(sector->sectornum);
 
-			while (node)
-			{
-				if (processlights) SetupSubsectorLights(GLPASS_ALL, node->sub, &dli);
-				DrawSubsector(node->sub);
-				node = node->next;
-			}
+		while (node)
+		{
+			if (processlights) SetupSubsectorLights(GLPASS_ALL, node->sub, &dli);
+			DrawSubsector(node->sub);
+			node = node->next;
 		}
 	}
 }
@@ -565,7 +548,6 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 	// Get the real sector for this one.
 	sector = &sectors[frontsector->sectornum];
 	extsector_t::xfloor &x = sector->e->XFloor;
-	this->sub = NULL;
 	dynlightindex = -1;
 
 	byte &srf = gl_drawinfo->sectorrenderflags[sector->sectornum];

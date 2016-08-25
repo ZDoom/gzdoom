@@ -135,6 +135,7 @@ void GLWall::PutWall(bool translucent)
 	if (translucent) // translucent walls
 	{
 		ViewDistance = (ViewPos - (seg->linedef->v1->fPos() + seg->linedef->Delta() / 2)).XY().LengthSquared();
+		if (gl.buffermethod == BM_DEFERRED) MakeVertices(true);
 		gl_drawinfo->drawlists[GLDL_TRANSLUCENT].AddWall(this);
 	}
 	else
@@ -157,16 +158,19 @@ void GLWall::PutWall(bool translucent)
 		{
 			list = masked ? GLDL_MASKEDWALLS : GLDL_PLAINWALLS;
 		}
+		if (gl.buffermethod == BM_DEFERRED) MakeVertices(false);
 		gl_drawinfo->drawlists[list].AddWall(this);
 
 	}
 	lightlist = NULL;
+	vertcount = 0;	// make sure that following parts of the same linedef do not get this one's vertex info.
 }
 
 void GLWall::PutPortal(int ptype)
 {
 	GLPortal * portal;
 
+	if (gl.buffermethod == BM_DEFERRED) MakeVertices(false);
 	switch (ptype)
 	{
 	// portals don't go into the draw list.
@@ -237,6 +241,7 @@ void GLWall::PutPortal(int ptype)
 		portal->AddLine(this);
 		break;
 	}
+	vertcount = 0;
 }
 //==========================================================================
 //

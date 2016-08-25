@@ -526,7 +526,7 @@ void gl_FillScreen()
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.Apply();
 	// The fullscreen quad is stored at index 4 in the main vertex buffer.
-	glDrawArrays(GL_TRIANGLE_STRIP, 4, 4);
+	glDrawArrays(GL_TRIANGLE_STRIP, FFlatVertexBuffer::FULLSCREEN_INDEX, 4);
 }
 
 //==========================================================================

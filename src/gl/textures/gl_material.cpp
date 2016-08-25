@@ -669,6 +669,12 @@ static FMaterial *last;
 static int lastclamp;
 static int lasttrans;
 
+void FMaterial::InitGlobalState()
+{
+	last = nullptr;
+	lastclamp = 0;
+	lasttrans = 0;
+}
 
 void FMaterial::Bind(int clampmode, int translation)
 {

@@ -48,10 +48,10 @@ private:
 public:
 
 	static unsigned int lastbound[MAX_TEXTURES];
-	static int lastactivetexture;
-	static int max_texturesize;
 
 	static int GetTexDimension(int value);
+
+	static void InitGlobalState() { for (int i = 0; i < MAX_TEXTURES; i++) lastbound[i] = 0; }
 
 private:
 

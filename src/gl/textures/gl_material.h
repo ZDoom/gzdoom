@@ -263,6 +263,7 @@ public:
 	static FMaterial *ValidateTexture(FTextureID no, bool expand, bool trans);
 	static void ClearLastTexture();
 
+	static void InitGlobalState();
 };
 
 #endif

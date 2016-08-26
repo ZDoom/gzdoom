@@ -47,6 +47,7 @@
 #include "doomstat.h"
 #include "d_player.h"
 #include "portal.h"
+#include "templates.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
@@ -176,18 +177,46 @@ void GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, int *dli)
 
 void GLFlat::DrawSubsector(subsector_t * sub)
 {
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	for (unsigned int k = 0; k < sub->numlines; k++)
+	if (gl.buffermethod != BM_DEFERRED)
 	{
-		vertex_t *vt = sub->firstline[k].v1;
-		ptr->x = vt->fX();
-		ptr->z = plane.plane.ZatPoint(vt) + dz;
-		ptr->y = vt->fY();
-		ptr->u = vt->fX() / 64.f;
-		ptr->v = -vt->fY() / 64.f;
-		ptr++;
+		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+		for (unsigned int k = 0; k < sub->numlines; k++)
+		{
+			vertex_t *vt = sub->firstline[k].v1;
+			ptr->x = vt->fX();
+			ptr->z = plane.plane.ZatPoint(vt) + dz;
+			ptr->y = vt->fY();
+			ptr->u = vt->fX() / 64.f;
+			ptr->v = -vt->fY() / 64.f;
+			ptr++;
+		}
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
 	}
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
+	else
+	{
+		// if we cannot access the buffer, use the quad drawer as fallback by splitting the subsector into quads.
+		// Trying to get this into the vertex buffer in the processing pass is too costly and this is only used for render hacks.
+		FQuadDrawer qd;
+		unsigned int vi[4];
+
+		vi[0] = 0;
+		for (unsigned int i = 1; i < sub->numlines; i += 2)
+		{
+			if (i < sub->numlines - 3)
+			{
+				for (unsigned int j = 1; j < 4; j++)
+				{
+					vi[j] = MIN(i + j, sub->numlines - 1);
+				}
+				for (unsigned int x = 0; x < 4; x++)
+				{
+					vertex_t *vt = sub->firstline[vi[x]].v1;
+					qd.Set(x, vt->fX(), plane.plane.ZatPoint(vt) + dz, vt->fY(), vt->fX() / 64.f, -vt->fY() / 64.f);
+				}
+				qd.Render(GL_TRIANGLE_FAN);
+			}
+		}
+	}
 
 	flatvertices += sub->numlines;
 	flatprimitives++;
@@ -263,6 +292,7 @@ void GLFlat::DrawSubsectors(int pass, bool processlights, bool istrans)
 	else
 	{
 		// Draw the subsectors belonging to this sector
+		// (can this case even happen?)
 		for (int i=0; i<sector->subsectorcount; i++)
 		{
 			subsector_t * sub = sector->subsectors[i];

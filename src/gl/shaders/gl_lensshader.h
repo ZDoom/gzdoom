@@ -8,7 +8,7 @@ class FLensShader
 public:
 	void Bind();
 
-	FBufferedUniform1i InputTexture;
+	FBufferedUniformSampler InputTexture;
 	FBufferedUniform1f AspectRatio;
 	FBufferedUniform1f Scale;
 	FBufferedUniform4f LensDistortionCoefficient;

@@ -8,7 +8,7 @@ class FBloomExtractShader
 public:
 	void Bind();
 
-	FBufferedUniform1i SceneTexture;
+	FBufferedUniformSampler SceneTexture;
 	FBufferedUniform1f Exposure;
 	FBufferedUniform2f Scale;
 	FBufferedUniform2f Offset;
@@ -22,7 +22,7 @@ class FBloomCombineShader
 public:
 	void Bind();
 
-	FBufferedUniform1i BloomTexture;
+	FBufferedUniformSampler BloomTexture;
 
 private:
 	FShaderProgram mShader;

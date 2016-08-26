@@ -79,8 +79,8 @@ public:
 	static void DestroyMostThinkers ();
 	static void DestroyThinkersInList(int statnum)
 	{
-		DestroyThinkersInList(Thinkers[STAT_TRAVELLING]);
-		DestroyThinkersInList(FreshThinkers[STAT_TRAVELLING]);
+		DestroyThinkersInList(Thinkers[statnum]);
+		DestroyThinkersInList(FreshThinkers[statnum]);
 	}
 	static void SerializeAll (FArchive &arc, bool keepPlayers);
 	static void MarkRoots();

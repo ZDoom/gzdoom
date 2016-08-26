@@ -1070,6 +1070,66 @@ void GLLineToLinePortal::RenderAttached()
 //
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
+
+GLHorizonPortal::GLHorizonPortal(GLHorizonInfo * pt, bool local)
+	: GLPortal(local)
+{
+	origin = pt;
+
+	// create the vertex data for this horizon portal.
+	GLSectorPlane * sp = &origin->plane;
+	const float vx = ViewPos.X;
+	const float vy = ViewPos.Y;
+	const float vz = ViewPos.Z;
+	const float z = sp->Texheight;
+	const float tz = (z - vz);
+
+	// Draw to some far away boundary
+	// This is not drawn as larger strips because it causes visual glitches.
+	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+	for (float x = -32768 + vx; x<32768 + vx; x += 4096)
+	{
+		for (float y = -32768 + vy; y<32768 + vy; y += 4096)
+		{
+			ptr->Set(x, z, y, x / 64, -y / 64);
+			ptr++;
+			ptr->Set(x + 4096, z, y, x / 64 + 64, -y / 64);
+			ptr++;
+			ptr->Set(x, z, y + 4096, x / 64, -y / 64 - 64);
+			ptr++;
+			ptr->Set(x + 4096, z, y + 4096, x / 64 + 64, -y / 64 - 64);
+			ptr++;
+		}
+	}
+
+	// fill the gap between the polygon and the true horizon
+	// Since I can't draw into infinity there can always be a
+	// small gap
+	ptr->Set(-32768 + vx, z, -32768 + vy, 512.f, 0);
+	ptr++;
+	ptr->Set(-32768 + vx, vz, -32768 + vy, 512.f, tz);
+	ptr++;
+	ptr->Set(-32768 + vx, z, 32768 + vy, -512.f, 0);
+	ptr++;
+	ptr->Set(-32768 + vx, vz, 32768 + vy, -512.f, tz);
+	ptr++;
+	ptr->Set(32768 + vx, z, 32768 + vy, 512.f, 0);
+	ptr++;
+	ptr->Set(32768 + vx, vz, 32768 + vy, 512.f, tz);
+	ptr++;
+	ptr->Set(32768 + vx, z, -32768 + vy, -512.f, 0);
+	ptr++;
+	ptr->Set(32768 + vx, vz, -32768 + vy, -512.f, tz);
+	ptr++;
+	ptr->Set(-32768 + vx, z, -32768 + vy, 512.f, 0);
+	ptr++;
+	ptr->Set(-32768 + vx, vz, -32768 + vy, 512.f, tz);
+	ptr++;
+
+	vcount = GLRenderer->mVBO->GetCount(ptr, &voffset) - 10;
+
+}
+
 //-----------------------------------------------------------------------------
 //
 // GLHorizonPortal::DrawContents
@@ -1079,11 +1139,10 @@ void GLHorizonPortal::DrawContents()
 {
 	PortalAll.Clock();
 
-	GLSectorPlane * sp=&origin->plane;
 	FMaterial * gltexture;
 	PalEntry color;
-	float z;
 	player_t * player=&players[consoleplayer];
+	GLSectorPlane * sp = &origin->plane;
 
 	gltexture=FMaterial::ValidateTexture(sp->texture, false, true);
 	if (!gltexture) 
@@ -1093,9 +1152,6 @@ void GLHorizonPortal::DrawContents()
 		return;
 	}
 	gl_RenderState.SetCameraPos(ViewPos.X, ViewPos.Y, ViewPos.Z);
-
-
-	z=sp->Texheight;
 
 
 	if (gltexture && gltexture->tex->isFullbright())
@@ -1120,58 +1176,11 @@ void GLHorizonPortal::DrawContents()
 	gl_RenderState.Apply();
 
 
-
-	float vx= ViewPos.X;
-	float vy= ViewPos.Y;
-
-	// Draw to some far away boundary
-	// This is not drawn as larher strips because it causes visual glitches.
-	for(float x=-32768+vx; x<32768+vx; x+=4096)
+	for (unsigned i = 0; i < vcount; i += 4)
 	{
-		for(float y=-32768+vy; y<32768+vy;y+=4096)
-		{
-			FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-			ptr->Set(x, z, y, x / 64, -y / 64);
-			ptr++;
-			ptr->Set(x + 4096, z, y, x / 64 + 64, -y / 64);
-			ptr++;
-			ptr->Set(x, z, y + 4096, x / 64, -y / 64 - 64);
-			ptr++;
-			ptr->Set(x + 4096, z, y + 4096, x / 64 + 64, -y / 64 - 64);
-			ptr++;
-			GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-		}
+		glDrawArrays(GL_TRIANGLE_STRIP, voffset + i, 4);
 	}
-
-	float vz= ViewPos.Z;
-	float tz=(z-vz);///64.0f;
-
-	// fill the gap between the polygon and the true horizon
-	// Since I can't draw into infinity there can always be a
-	// small gap
-
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	ptr->Set(-32768 + vx, z, -32768 + vy, 512.f, 0);
-	ptr++;
-	ptr->Set(-32768 + vx, vz, -32768 + vy, 512.f, tz);
-	ptr++;
-	ptr->Set(-32768 + vx, z, 32768 + vy, -512.f, 0);
-	ptr++;
-	ptr->Set(-32768 + vx, vz, 32768 + vy, -512.f, tz);
-	ptr++;
-	ptr->Set(32768 + vx, z, 32768 + vy, 512.f, 0);
-	ptr++;
-	ptr->Set(32768 + vx, vz, 32768 + vy, 512.f, tz);
-	ptr++;
-	ptr->Set(32768 + vx, z, -32768 + vy, -512.f, 0);
-	ptr++;
-	ptr->Set(32768 + vx, vz, -32768 + vy, -512.f, tz);
-	ptr++;
-	ptr->Set(-32768 + vx, z, -32768 + vy, 512.f, 0);
-	ptr++;
-	ptr->Set(-32768 + vx, vz, -32768 + vy, 512.f, tz);
-	ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+	glDrawArrays(GL_TRIANGLE_STRIP, voffset + vcount, 10);
 
 	gl_RenderState.EnableTextureMatrix(false);
 	PortalAll.Unclock();

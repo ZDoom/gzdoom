@@ -200,7 +200,7 @@ void GLFlat::DrawSubsector(subsector_t * sub)
 		unsigned int vi[4];
 
 		vi[0] = 0;
-		for (unsigned int i = 1; i < sub->numlines; i += 2)
+		for (unsigned int i = 1; i < sub->numlines-1; i += 2)
 		{
 			if (i < sub->numlines - 3)
 			{

@@ -365,6 +365,8 @@ public:
 struct GLHorizonPortal : public GLPortal
 {
 	GLHorizonInfo * origin;
+	unsigned int voffset;
+	unsigned int vcount;
 	friend struct GLEEHorizonPortal;
 
 protected:
@@ -376,12 +378,7 @@ protected:
 
 public:
 	
-	GLHorizonPortal(GLHorizonInfo * pt, bool local = false)
-		: GLPortal(local)
-	{
-		origin=pt;
-	}
-
+	GLHorizonPortal(GLHorizonInfo * pt, bool local = false);
 };
 
 struct GLEEHorizonPortal : public GLPortal

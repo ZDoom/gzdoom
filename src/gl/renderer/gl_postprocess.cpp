@@ -278,6 +278,12 @@ void FGLRenderer::BindTonemapPalette(int texunit)
 	}
 }
 
+void FGLRenderer::ClearTonemapPalette()
+{
+	delete mTonemapPalette;
+	mTonemapPalette = nullptr;
+}
+
 //-----------------------------------------------------------------------------
 //
 // Apply lens distortion and place the result in the HUD/2D texture

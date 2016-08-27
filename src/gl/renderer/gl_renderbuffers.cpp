@@ -65,6 +65,12 @@ CVAR(Bool, gl_renderbuffers, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
 FGLRenderBuffers::FGLRenderBuffers()
 {
+	for (int i = 0; i < NumPipelineTextures; i++)
+	{
+		mPipelineTexture[i] = 0;
+		mPipelineFB[i] = 0;
+	}
+
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&mOutputFB);
 	glGetIntegerv(GL_MAX_SAMPLES, &mMaxSamples);
 }
@@ -477,7 +483,7 @@ void FGLRenderBuffers::BindSceneFB()
 void FGLRenderBuffers::BindCurrentTexture(int index)
 {
 	glActiveTexture(GL_TEXTURE0 + index);
-	glBindTexture(GL_TEXTURE_2D, mPipelineFB[mCurrentPipelineTexture]);
+	glBindTexture(GL_TEXTURE_2D, mPipelineTexture[mCurrentPipelineTexture]);
 }
 
 //==========================================================================

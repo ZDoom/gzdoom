@@ -2134,7 +2134,7 @@ bool PArray::ReadValue(FArchive &ar, void *addr) const
 		}
 		if (i < ElementCount)
 		{
-			DPrintf("Array on disk (%u) is bigger than in memory (%u)\n",
+			DPrintf(DMSG_WARNING, "Array on disk (%u) is bigger than in memory (%u)\n",
 				count, ElementCount);
 			for (; i < ElementCount; ++i)
 			{
@@ -2501,13 +2501,13 @@ bool PStruct::ReadFields(FArchive &ar, void *addr) const
 		const PSymbol *sym = Symbols.FindSymbol(FName(label, true), true);
 		if (sym == NULL)
 		{
-			DPrintf("Cannot find field %s in %s\n",
+			DPrintf(DMSG_ERROR, "Cannot find field %s in %s\n",
 				label, TypeName.GetChars());
 			SkipValue(ar);
 		}
 		else if (!sym->IsKindOf(RUNTIME_CLASS(PField)))
 		{
-			DPrintf("Symbol %s in %s is not a field\n",
+			DPrintf(DMSG_ERROR, "Symbol %s in %s is not a field\n",
 				label, TypeName.GetChars());
 			SkipValue(ar);
 		}
@@ -2806,7 +2806,7 @@ bool PClass::ReadValue(FArchive &ar, void *addr) const
 			}
 			else
 			{
-				DPrintf("Unknown superclass %s of class %s\n",
+				DPrintf(DMSG_ERROR, "Unknown superclass %s of class %s\n",
 					type->TypeName.GetChars(), TypeName.GetChars());
 				SkipValue(ar, VAL_Struct);
 			}
@@ -3243,7 +3243,7 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 		{
 			I_Error("%s must inherit from %s but doesn't.", name.GetChars(), type->ParentClass->TypeName.GetChars());
 		}
-		DPrintf("Defining placeholder class %s\n", name.GetChars());
+		DPrintf(DMSG_SPAMMY, "Defining placeholder class %s\n", name.GetChars());
 		notnew = true;
 	}
 	else
@@ -3327,7 +3327,7 @@ PClass *PClass::FindClassTentative(FName name, bool fatal)
 		return static_cast<PClass *>(found);
 	}
 	PClass *type = static_cast<PClass *>(GetClass()->CreateNew());
-	DPrintf("Creating placeholder class %s : %s\n", name.GetChars(), TypeName.GetChars());
+	DPrintf(DMSG_SPAMMY, "Creating placeholder class %s : %s\n", name.GetChars(), TypeName.GetChars());
 
 	type->TypeName = name;
 	type->ParentClass = this;

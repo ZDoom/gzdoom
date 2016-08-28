@@ -1994,7 +1994,7 @@ FISoundChannel *FMODSoundRenderer::StartSound(SoundHandle sfx, float vol, int pi
 		return CommonChannelSetup(chan, reuse_chan);
 	}
 
-	//DPrintf ("Sound %s failed to play: %d\n", sfx->name.GetChars(), result);
+	//DPrintf (DMSG_WARNING, "Sound %s failed to play: %d\n", sfx->name.GetChars(), result);
 	return NULL;
 }
 
@@ -2142,7 +2142,7 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 	}
 
 	GRolloff = NULL;
-	//DPrintf ("Sound %s failed to play: %d\n", sfx->name.GetChars(), result);
+	//DPrintf (DMSG_WARNING, "Sound %s failed to play: %d\n", sfx->name.GetChars(), result);
 	return 0;
 }
 
@@ -2566,7 +2566,7 @@ void FMODSoundRenderer::UpdateListener(SoundListener *listener)
 	}
 	if (env != PrevEnvironment || env->Modified)
 	{
-		DPrintf ("Reverb Environment %s\n", env->Name);
+		DPrintf (DMSG_NOTIFY, "Reverb Environment %s\n", env->Name);
 		const_cast<ReverbContainer*>(env)->Modified = false;
 		SetSystemReverbProperties(&env->Properties);
 		PrevEnvironment = env;
@@ -2791,7 +2791,7 @@ std::pair<SoundHandle,bool> FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int l
 	result = Sys->createSound((char *)sfxdata, samplemode, &exinfo, &sample);
 	if (result != FMOD_OK)
 	{
-		DPrintf("Failed to allocate sample: Error %d\n", result);
+		DPrintf(DMSG_ERROR, "Failed to allocate sample: Error %d\n", result);
 		return std::make_pair(retval, true);
 	}
 
@@ -2829,7 +2829,7 @@ std::pair<SoundHandle,bool> FMODSoundRenderer::LoadSound(BYTE *sfxdata, int leng
 	result = Sys->createSound((char *)sfxdata, samplemode, &exinfo, &sample);
 	if (result != FMOD_OK)
 	{
-		DPrintf("Failed to allocate sample: Error %d\n", result);
+		DPrintf(DMSG_ERROR, "Failed to allocate sample: Error %d\n", result);
 		return std::make_pair(retval, true);
 	}
 	SetCustomLoopPts(sample);

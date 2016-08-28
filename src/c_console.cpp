@@ -612,12 +612,12 @@ int Printf (const char *format, ...)
 	return count;
 }
 
-int DPrintf (const char *format, ...)
+int DPrintf (int level, const char *format, ...)
 {
 	va_list argptr;
 	int count;
 
-	if (developer)
+	if (developer >= level)
 	{
 		va_start (argptr, format);
 		count = VPrintf (PRINT_HIGH, format, argptr);

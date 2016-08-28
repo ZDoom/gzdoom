@@ -498,12 +498,12 @@ int FluidSynthMIDIDevice::LoadPatchSets(const char *patches)
 		}
 		if (FLUID_FAILED != fluid_synth_sfload(FluidSynth, path, count == 0))
 		{
-			DPrintf("Loaded patch set %s.\n", tok);
+			DPrintf(DMSG_NOTIFY, "Loaded patch set %s.\n", tok);
 			count++;
 		}
 		else
 		{
-			DPrintf("Failed to load patch set %s.\n", tok);
+			DPrintf(DMSG_ERROR, "Failed to load patch set %s.\n", tok);
 		}
 		tok = strtok(NULL, delim);
 	}

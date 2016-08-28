@@ -907,11 +907,12 @@ void DFrameBuffer::DrawRateStuff ()
 		// Drawing it as a texture does and continues to show how
 		// well the PalTex shader is working.
 		static FPaletteTester palette;
+		int size = screen->GetHeight() < 800 ? 16 * 7 : 16 * 7 * 2;
 
 		palette.SetTranslation(vid_showpalette);
 		DrawTexture(&palette, 0, 0,
-			DTA_DestWidth, 16*7,
-			DTA_DestHeight, 16*7,
+			DTA_DestWidth, size,
+			DTA_DestHeight, size,
 			DTA_Masked, false,
 			TAG_DONE);
 	}

@@ -825,13 +825,13 @@ void ADecal::BeginPlay ()
 			// without effectively doing anything.
 			if (NULL == ShootDecal(tpl, this, Sector, X(), Y(), Z(), Angles.Yaw + 180, 64., true))
 			{
-				DPrintf ("Could not find a wall to stick decal to at (%f,%f)\n", X(), Y());
+				DPrintf (DMSG_WARNING, "Could not find a wall to stick decal to at (%f,%f)\n", X(), Y());
 			}
 		}
 	}
 	else
 	{
-		DPrintf ("Decal actor at (%f,%f) does not have a good template\n", X(), Y());
+		DPrintf (DMSG_ERROR, "Decal actor at (%f,%f) does not have a good template\n", X(), Y());
 	}
 	// This actor doesn't need to stick around anymore.
 	Destroy();

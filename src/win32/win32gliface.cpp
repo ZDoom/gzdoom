@@ -40,11 +40,6 @@ PFNWGLCREATECONTEXTATTRIBSARBPROC myWglCreateContextAttribsARB;
 PFNWGLSWAPINTERVALEXTPROC vsyncfunc;
 
 
-CUSTOM_CVAR(Int, gl_vid_multisample, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL )
-{
-	Printf("This won't take effect until " GAMENAME " is restarted.\n");
-}
-
 CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
@@ -911,10 +906,6 @@ IMPLEMENT_ABSTRACT_CLASS(Win32GLFrameBuffer)
 
 Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen) : BaseWinFB(width, height) 
 {
-	static int localmultisample=-1;
-	
-	if (localmultisample<0) localmultisample=gl_vid_multisample;
-
 	m_Width = width;
 	m_Height = height;
 	m_Bits = bits;
@@ -981,7 +972,7 @@ Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, in
 		I_RestoreWindowedPos();
 	}
 
-	if (!static_cast<Win32GLVideo *>(Video)->InitHardware(Window, localmultisample))
+	if (!static_cast<Win32GLVideo *>(Video)->InitHardware(Window, 0))
 	{
 		vid_renderer = 0;
 		return;

@@ -186,7 +186,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 		line->special = 0;
 	}
 // end of changed code
-	if (developer && buttonSuccess)
+	if (developer >= DMSG_SPAMMY && buttonSuccess)
 	{
 		Printf ("Line special %d activated on line %i\n", special, int(line - lines));
 	}
@@ -358,7 +358,7 @@ bool P_PredictLine(line_t *line, AActor *mo, int side, int activationType)
 	special = line->special;
 
 	// end of changed code
-	if (developer && buttonSuccess)
+	if (developer >= DMSG_SPAMMY && buttonSuccess)
 	{
 		Printf("Line special %d predicted on line %i\n", special, int(line - lines));
 	}

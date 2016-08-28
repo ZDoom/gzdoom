@@ -182,7 +182,7 @@ int FPlayList::SetPosition (int position)
 	{
 		Position = position;
 	}
-	DPrintf ("Playlist position set to %d\n", Position);
+	DPrintf (DMSG_NOTIFY, "Playlist position set to %d\n", Position);
 	return Position;
 }
 
@@ -197,7 +197,7 @@ int FPlayList::Advance ()
 	{
 		Position = 0;
 	}
-	DPrintf ("Playlist advanced to song %d\n", Position);
+	DPrintf (DMSG_NOTIFY, "Playlist advanced to song %d\n", Position);
 	return Position;
 }
 
@@ -207,7 +207,7 @@ int FPlayList::Backup ()
 	{
 		Position = Songs.Size() - 1;
 	}
-	DPrintf ("Playlist backed up to song %d\n", Position);
+	DPrintf (DMSG_NOTIFY, "Playlist backed up to song %d\n", Position);
 	return Position;
 }
 

@@ -1331,12 +1331,12 @@ static int CheckInventory (AActor *activator, const char *type, bool max)
 
 	if (info == NULL)
 	{
-		Printf ("ACS: I don't know what '%s' is.\n", type);
+		DPrintf (DMSG_ERROR, "ACS: '%s': Unknown actor class.\n", type);
 		return 0;
 	}
 	else if (!info->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 	{
-		Printf ("ACS: '%s' is not an inventory item.\n", type);
+		DPrintf(DMSG_ERROR, "ACS: '%s' is not an inventory item.\n", type);
 		return 0;
 	}
 
@@ -2237,7 +2237,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 		}
 	}
 
-	DPrintf ("Loaded %d scripts, %d functions\n", NumScripts, NumFunctions);
+	DPrintf (DMSG_NOTIFY, "Loaded %d scripts, %d functions\n", NumScripts, NumFunctions);
 	return true;
 }
 
@@ -2824,7 +2824,7 @@ void FBehavior::StaticStartTypedScripts (WORD type, AActor *activator, bool alwa
 		"Disconnect",
 		"Return"
 	};
-	DPrintf("Starting all scripts of type %d (%s)\n", type,
+	DPrintf(DMSG_NOTIFY, "Starting all scripts of type %d (%s)\n", type,
 		type < countof(TypeNames) ? TypeNames[type] : TypeNames[SCRIPT_Lightning - 1]);
 	for (unsigned int i = 0; i < StaticModules.Size(); ++i)
 	{
@@ -6209,7 +6209,7 @@ int DLevelScript::RunScript ()
 			activeBehavior = savedActiveBehavior;
 			// fall through
 		case PCD_TERMINATE:
-			DPrintf ("%s finished\n", ScriptPresentation(script).GetChars());
+			DPrintf (DMSG_NOTIFY, "%s finished\n", ScriptPresentation(script).GetChars());
 			state = SCRIPT_PleaseRemove;
 			break;
 
@@ -7646,7 +7646,7 @@ scriptwait:
 			if (activationline != NULL)
 			{
 				activationline->special = 0;
-				DPrintf("Cleared line special on line %d\n", (int)(activationline - lines));
+				DPrintf(DMSG_SPAMMY, "Cleared line special on line %d\n", (int)(activationline - lines));
 			}
 			break;
 
@@ -8285,7 +8285,7 @@ scriptwait:
 					line->args[2] = STACK(3);
 					line->args[3] = STACK(2);
 					line->args[4] = STACK(1);
-					DPrintf("Set special on line %d (id %d) to %d(%d,%d,%d,%d,%d)\n",
+					DPrintf(DMSG_SPAMMY, "Set special on line %d (id %d) to %d(%d,%d,%d,%d,%d)\n",
 						linenum, STACK(7), specnum, arg0, STACK(4), STACK(3), STACK(2), STACK(1));
 				}
 				sp -= 7;
@@ -9663,7 +9663,7 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr
 		PutLast();
 	}
 
-	DPrintf("%s started.\n", ScriptPresentation(num).GetChars());
+	DPrintf(DMSG_SPAMMY, "%s started.\n", ScriptPresentation(num).GetChars());
 }
 
 static void SetScriptState (int script, DLevelScript::EScriptState state)
@@ -9710,12 +9710,12 @@ void P_DoDeferedScripts ()
 
 		case acsdefered_t::defsuspend:
 			SetScriptState (def->script, DLevelScript::SCRIPT_Suspended);
-			DPrintf ("Deferred suspend of %s\n", ScriptPresentation(def->script).GetChars());
+			DPrintf (DMSG_SPAMMY, "Deferred suspend of %s\n", ScriptPresentation(def->script).GetChars());
 			break;
 
 		case acsdefered_t::defterminate:
 			SetScriptState (def->script, DLevelScript::SCRIPT_PleaseRemove);
-			DPrintf ("Deferred terminate of %s\n", ScriptPresentation(def->script).GetChars());
+			DPrintf (DMSG_SPAMMY, "Deferred terminate of %s\n", ScriptPresentation(def->script).GetChars());
 			break;
 		}
 		delete def;
@@ -9751,7 +9751,7 @@ static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, c
 			def->playernum = -1;
 		}
 		i->defered = def;
-		DPrintf ("%s on map %s deferred\n", ScriptPresentation(script).GetChars(), i->MapName.GetChars());
+		DPrintf (DMSG_SPAMMY, "%s on map %s deferred\n", ScriptPresentation(script).GetChars(), i->MapName.GetChars());
 	}
 }
 

@@ -361,7 +361,7 @@ bool AActor::FixMapthingPos()
 
 			if (distance < radius)
 			{
-				DPrintf("%s at (%f,%f) lies on %s line %td, distance = %f\n",
+				DPrintf(DMSG_NOTIFY, "%s at (%f,%f) lies on %s line %td, distance = %f\n",
 					this->GetClass()->TypeName.GetChars(), X(), Y(),
 					ldef->Delta().X == 0 ? "vertical" : ldef->Delta().Y == 0 ? "horizontal" : "diagonal",
 					ldef - lines, distance);

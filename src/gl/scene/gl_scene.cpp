@@ -168,9 +168,8 @@ void FGLRenderer::Reset3DViewport()
 
 void FGLRenderer::Set3DViewport(bool mainview)
 {
-	if (mainview && FGLRenderBuffers::IsEnabled())
+	if (mainview && mBuffers->Setup(mScreenViewport.width, mScreenViewport.height, mSceneViewport.width, mSceneViewport.height))
 	{
-		mBuffers->Setup(mScreenViewport.width, mScreenViewport.height, mSceneViewport.width, mSceneViewport.height);
 		mBuffers->BindSceneFB();
 	}
 

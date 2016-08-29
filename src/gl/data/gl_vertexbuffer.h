@@ -149,6 +149,9 @@ public:
 		mCurIndex = mIndex;
 	}
 
+	void Map();
+	void Unmap();
+
 private:
 	int CreateSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor);
 	int CreateSectorVertices(sector_t *sec, const secplane_t &plane, int floor);

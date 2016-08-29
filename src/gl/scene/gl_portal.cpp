@@ -163,8 +163,8 @@ void GLPortal::DrawPortalStencil()
 	}
 	if (NeedCap() && lines.Size() > 1)
 	{
-		glDrawArrays(GL_TRIANGLE_FAN, FFlatVertexBuffer::STENCILTOP_INDEX, 4);
-		glDrawArrays(GL_TRIANGLE_FAN, FFlatVertexBuffer::STENCILBOTTOM_INDEX, 4);
+		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, FFlatVertexBuffer::STENCILTOP_INDEX, 4);
+		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, FFlatVertexBuffer::STENCILBOTTOM_INDEX, 4);
 	}
 }
 
@@ -1178,9 +1178,9 @@ void GLHorizonPortal::DrawContents()
 
 	for (unsigned i = 0; i < vcount; i += 4)
 	{
-		glDrawArrays(GL_TRIANGLE_STRIP, voffset + i, 4);
+		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, voffset + i, 4);
 	}
-	glDrawArrays(GL_TRIANGLE_STRIP, voffset + vcount, 10);
+	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, voffset + vcount, 10);
 
 	gl_RenderState.EnableTextureMatrix(false);
 	PortalAll.Unclock();

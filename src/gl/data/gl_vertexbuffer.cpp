@@ -126,6 +126,7 @@ void FSimpleVertexBuffer::EnableColorArray(bool on)
 void FSimpleVertexBuffer::set(FSimpleVertex *verts, int count)
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+	gl_RenderState.ResetVertexBuffer();
 	gl_RenderState.SetVertexBuffer(this);
 	glBufferData(GL_ARRAY_BUFFER, count * sizeof(*verts), verts, GL_STREAM_DRAW);
 }
@@ -139,18 +140,32 @@ void FSimpleVertexBuffer::set(FSimpleVertex *verts, int count)
 FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 : FVertexBuffer(gl.buffermethod != BM_CLIENTARRAY)
 {
-	if (gl.buffermethod != BM_CLIENTARRAY)
+	switch (gl.buffermethod)
+	{
+	case BM_PERSISTENT:
 	{
 		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 		glBufferStorage(GL_ARRAY_BUFFER, bytesize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		map = (FFlatVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, bytesize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		break;
 	}
-	else
+
+	case BM_DEFERRED:
+	{
+		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		glBufferData(GL_ARRAY_BUFFER, bytesize, NULL, GL_STREAM_DRAW);
+		map = nullptr;
+		break;
+	}
+
+	case BM_CLIENTARRAY:
 	{
 		// The fallback path uses immediate mode rendering and does not set up an actual vertex buffer
-		vbo_shadowdata.Reserve(BUFFER_SIZE);
 		map = new FFlatVertex[BUFFER_SIZE];
+		break;
+	}
 	}
 	mIndex = mCurIndex = 0;
 	mNumReserved = NUM_RESERVED;
@@ -185,6 +200,13 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 	vbo_shadowdata[18].Set(32767.0f, -32767.0f, 32767.0f, 0, 0);
 	vbo_shadowdata[19].Set(32767.0f, -32767.0f, -32767.0f, 0, 0);
 
+	if (gl.buffermethod == BM_DEFERRED)
+	{
+		Map();
+		memcpy(map, &vbo_shadowdata[0], mNumReserved * sizeof(FFlatVertex));
+		Unmap();
+	}
+
 }
 
 FFlatVertexBuffer::~FFlatVertexBuffer()
@@ -195,7 +217,7 @@ FFlatVertexBuffer::~FFlatVertexBuffer()
 		glUnmapBuffer(GL_ARRAY_BUFFER);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
-	else
+	if (gl.buffermethod == BM_CLIENTARRAY)
 	{
 		delete[] map;
 	}
@@ -208,7 +230,7 @@ void FFlatVertexBuffer::BindVBO()
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 	if (gl.glslversion > 0)
 	{
-		if (vbo_id != 0)	// set this up only if there is an actual buffer.
+		if (gl.buffermethod != BM_CLIENTARRAY)
 		{
 			glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->x);
 			glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->u);
@@ -226,9 +248,34 @@ void FFlatVertexBuffer::BindVBO()
 	}
 	else
 	{
-		glDisableClientState(GL_VERTEX_ARRAY);
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		glVertexPointer(3, GL_FLOAT, sizeof(FFlatVertex), &map->x);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(FFlatVertex), &map->u);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glDisableClientState(GL_COLOR_ARRAY);
+	}
+}
+
+void FFlatVertexBuffer::Map()
+{
+	if (gl.buffermethod == BM_DEFERRED)
+	{
+		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		gl_RenderState.ResetVertexBuffer();
+		map = (FFlatVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, bytesize, GL_MAP_WRITE_BIT|GL_MAP_UNSYNCHRONIZED_BIT);
+	}
+}
+
+void FFlatVertexBuffer::Unmap()
+{
+	if (gl.buffermethod == BM_DEFERRED)
+	{
+		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		gl_RenderState.ResetVertexBuffer();
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+		map = nullptr;
 	}
 }
 
@@ -412,7 +459,9 @@ void FFlatVertexBuffer::CreateVBO()
 	vbo_shadowdata.Resize(mNumReserved);
 	CreateFlatVBO();
 	mCurIndex = mIndex = vbo_shadowdata.Size();
+	Map();
 	memcpy(map, &vbo_shadowdata[0], vbo_shadowdata.Size() * sizeof(FFlatVertex));
+	Unmap();
 }
 
 //==========================================================================

@@ -204,8 +204,12 @@ void gl_LoadExtensions()
 	}
 	else if (gl.version < 3.0f)
 	{
-		//if (CheckExtension("GL_NV_GPU_shader4") || CheckExtension("GL_EXT_GPU_shader4")) gl.glslversion = 1.21f;	// for pre-3.0 drivers that support capable hardware. Needed for Apple.
-		//else gl.glslversion = 0;
+		if (CheckExtension("GL_NV_GPU_shader4") || CheckExtension("GL_EXT_GPU_shader4")) gl.glslversion = 1.21f;	// for pre-3.0 drivers that support capable hardware. Needed for Apple.
+		else
+		{
+			gl.buffermethod = BM_CLIENTARRAY;
+			gl.glslversion = 0;
+		}
 
 		if (!CheckExtension("GL_EXT_packed_float")) gl.flags |= RFL_NO_RGBA16F;
 		if (!CheckExtension("GL_EXT_packed_depth_stencil")) gl.flags |= RFL_NO_DEPTHSTENCIL;

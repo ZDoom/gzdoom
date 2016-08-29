@@ -101,7 +101,7 @@ void FRenderState::Reset()
 	mLastDepthClamp = true;
 	mInterpolationFactor = 0.0f;
 
-	mColor.Set(0.0f, 0.0f, 0.0f, 0.0f);
+	mColor.Set(1.0f, 1.0f, 1.0f, 1.0f);
 	mCameraPos.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mGlowTop.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mGlowBottom.Set(0.0f, 0.0f, 0.0f, 0.0f);

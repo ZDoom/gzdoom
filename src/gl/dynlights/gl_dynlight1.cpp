@@ -139,9 +139,6 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, bo
 
 	if (gl_light_math != 0)
 	{
-		// Adjust light slightly to make the range better match plain attenuation
-		radius *= 1.5;
-
 		// Move light up because flasks/vials have their light source location at/below the floor.
 		//
 		// If the point is exactly on the wall plane it might cause some acne as some pixels could

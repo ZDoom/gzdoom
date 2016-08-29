@@ -272,6 +272,7 @@ enum
 	SCRIPT_Return		= 15,
 	SCRIPT_Event		= 16, // [BB]
 	SCRIPT_Kill			= 17, // [JM]
+	SCRIPT_Reopen		= 18, // [Nash]
 };
 
 // Script flags

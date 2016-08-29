@@ -209,7 +209,7 @@ void FGLRenderer::SetProjection(float fov, float ratio, float fovratio)
 {
 
 	float fovy = 2 * RAD2DEG(atan(tan(DEG2RAD(fov) / 2) / fovratio));
-	gl_RenderState.mProjectionMatrix.perspective(fovy, ratio, 5.f, 65536.f);
+	gl_RenderState.mProjectionMatrix.perspective(fovy, ratio, GetZNear(), GetZFar());
 }
 
 // raw matrix input from stereo 3d modes
@@ -826,12 +826,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		if (mainview && toscreen) EndDrawScene(lviewsector); // do not call this for camera textures.
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
-			mBuffers->BlitSceneToTexture();
-			UpdateCameraExposure();
-			BloomScene();
-			TonemapScene();
-			ColormapScene();
-			LensDistortScene();
+			PostProcessScene();
 
 			// This should be done after postprocessing, not before.
 			mBuffers->BindCurrentFB();

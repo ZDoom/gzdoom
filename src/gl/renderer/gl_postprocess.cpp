@@ -55,6 +55,7 @@
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
+#include "gl/shaders/gl_ambientshader.h"
 #include "gl/shaders/gl_bloomshader.h"
 #include "gl/shaders/gl_blurshader.h"
 #include "gl/shaders/gl_tonemapshader.h"
@@ -98,6 +99,20 @@ CVAR(Float, gl_lens_k, -0.12f, 0)
 CVAR(Float, gl_lens_kcube, 0.1f, 0)
 CVAR(Float, gl_lens_chromatic, 1.12f, 0)
 
+CVAR(Bool, gl_ssao, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, gl_ssao_debug, false, 0)
+CVAR(Float, gl_ssao_bias, 0.5f, 0)
+CVAR(Float, gl_ssao_radius, 100.0f, 0)
+CUSTOM_CVAR(Float, gl_ssao_blur_amount, 6.0f, 0)
+{
+	if (self < 0.1f) self = 0.1f;
+}
+CUSTOM_CVAR(Int, gl_ssao_blur_samples, 9, 0)
+{
+	if (self < 3 || self > 15 || self % 2 == 0)
+		self = 9;
+}
+
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
 
@@ -107,6 +122,96 @@ void FGLRenderer::RenderScreenQuad()
 	mVBO->BindVBO();
 	gl_RenderState.ResetVertexBuffer();
 	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, FFlatVertexBuffer::PRESENT_INDEX, 4);
+}
+
+void FGLRenderer::PostProcessScene()
+{
+	if (FGLRenderBuffers::IsEnabled()) mBuffers->BlitSceneToTexture();
+	AmbientOccludeScene();
+	UpdateCameraExposure();
+	BloomScene();
+	TonemapScene();
+	LensDistortScene();
+}
+
+//-----------------------------------------------------------------------------
+//
+// Adds ambient occlusion to the scene
+//
+//-----------------------------------------------------------------------------
+
+void FGLRenderer::AmbientOccludeScene()
+{
+	if (!gl_ssao || !FGLRenderBuffers::IsEnabled())
+		return;
+
+	FGLDebug::PushGroup("AmbientOccludeScene");
+
+	FGLPostProcessState savedState;
+
+	float bias = gl_ssao_bias;
+	float aoRadius = gl_ssao_radius;
+	const float blurAmount = gl_ssao_blur_amount;
+	int blurSampleCount = gl_ssao_blur_samples;
+
+	//float tanHalfFovy = tan(fovy * (M_PI / 360.0f));
+	float tanHalfFovy = 1.0f / 1.33333302f; //gl_RenderState.mProjectionMatrix.get()[5];
+	float invFocalLenX = tanHalfFovy * (mBuffers->AmbientWidth / (float)mBuffers->AmbientHeight);
+	float invFocalLenY = tanHalfFovy;
+	float nDotVBias = clamp(bias, 0.0f, 1.0f);
+	float r2 = aoRadius * aoRadius;
+
+	// Calculate linear depth values
+	glBindFramebuffer(GL_FRAMEBUFFER, mBuffers->AmbientFB0);
+	glViewport(0, 0, mBuffers->AmbientWidth, mBuffers->AmbientHeight);
+	mBuffers->BindSceneDepthTexture(0);
+	mLinearDepthShader->Bind();
+	mLinearDepthShader->DepthTexture.Set(0);
+	mLinearDepthShader->LinearizeDepthA.Set(1.0f / GetZFar() - 1.0f / GetZNear());
+	mLinearDepthShader->LinearizeDepthB.Set(MAX(1.0f / GetZNear(), 1.e-8f));
+	mLinearDepthShader->InverseDepthRangeA.Set(1.0f);
+	mLinearDepthShader->InverseDepthRangeB.Set(0.0f);
+	RenderScreenQuad();
+
+	// Apply ambient occlusion
+	glBindFramebuffer(GL_FRAMEBUFFER, mBuffers->AmbientFB1);
+	glBindTexture(GL_TEXTURE_2D, mBuffers->AmbientTexture0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	mSSAOShader->Bind();
+	mSSAOShader->DepthTexture.Set(0);
+	mSSAOShader->UVToViewA.Set(2.0f * invFocalLenX, -2.0f * invFocalLenY);
+	mSSAOShader->UVToViewB.Set(-invFocalLenX, invFocalLenY);
+	mSSAOShader->InvFullResolution.Set(1.0f / mBuffers->AmbientWidth, 1.0f / mBuffers->AmbientHeight);
+	mSSAOShader->NDotVBias.Set(nDotVBias);
+	mSSAOShader->NegInvR2.Set(-1.0f / r2);
+	mSSAOShader->RadiusToScreen.Set(aoRadius * 0.5 / tanHalfFovy * mBuffers->AmbientHeight);
+	mSSAOShader->AOMultiplier.Set(1.0f / (1.0f - nDotVBias));
+	RenderScreenQuad();
+
+	// Blur SSAO texture
+	mBlurShader->BlurHorizontal(this, blurAmount, blurSampleCount, mBuffers->AmbientTexture1, mBuffers->AmbientFB0, mBuffers->AmbientWidth, mBuffers->AmbientHeight);
+	mBlurShader->BlurVertical(this, blurAmount, blurSampleCount, mBuffers->AmbientTexture0, mBuffers->AmbientFB1, mBuffers->AmbientWidth, mBuffers->AmbientHeight);
+
+	// Add SSAO back to scene texture:
+	mBuffers->BindCurrentFB();
+	glViewport(mSceneViewport.left, mSceneViewport.top, mSceneViewport.width, mSceneViewport.height);
+	glEnable(GL_BLEND);
+	glBlendEquation(GL_FUNC_ADD);
+	if (gl_ssao_debug)
+		glBlendFunc(GL_ONE, GL_ZERO);
+	else
+		glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, mBuffers->AmbientTexture1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	mBloomCombineShader->Bind();
+	mBloomCombineShader->BloomTexture.Set(0);
+	RenderScreenQuad();
+	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+
+	FGLDebug::PopGroup();
 }
 
 //-----------------------------------------------------------------------------
@@ -190,7 +295,7 @@ void FGLRenderer::UpdateCameraExposure()
 void FGLRenderer::BloomScene()
 {
 	// Only bloom things if enabled and no special fixed light mode is active
-	if (!gl_bloom || gl_fixedcolormap != CM_DEFAULT)
+	if (!gl_bloom || gl_fixedcolormap != CM_DEFAULT || gl_ssao_debug)
 		return;
 
 	FGLDebug::PushGroup("BloomScene");

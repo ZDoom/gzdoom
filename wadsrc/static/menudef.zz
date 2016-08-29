@@ -226,4 +226,5 @@ OptionMenu "GLPrefOptions"
 	Option "$GLPREFMNU_TONEMAP", 				gl_tonemap,						"TonemapModes"
 	Option "$GLPREFMNU_BLOOM",		 			gl_bloom,						"OnOff"
 	Option "$GLPREFMNU_LENS",		 			gl_lens,						"OnOff"
+	Option "$GLPREFMNU_SSAO",		 			gl_ssao,						"OnOff"
 }

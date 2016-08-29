@@ -19,6 +19,8 @@ class FLightBuffer;
 class FSamplerManager;
 class DPSprite;
 class FGLRenderBuffers;
+class FLinearDepthShader;
+class FSSAOShader;
 class FBloomExtractShader;
 class FBloomCombineShader;
 class FExposureExtractShader;
@@ -93,6 +95,8 @@ public:
 	int mOldFBID;
 
 	FGLRenderBuffers *mBuffers;
+	FLinearDepthShader *mLinearDepthShader;
+	FSSAOShader *mSSAOShader;
 	FBloomExtractShader *mBloomExtractShader;
 	FBloomCombineShader *mBloomCombineShader;
 	FExposureExtractShader *mExposureExtractShader;
@@ -172,6 +176,8 @@ public:
 	void WriteSavePic (player_t *player, FileWriter *file, int width, int height);
 	void EndDrawScene(sector_t * viewsector);
 	void UpdateCameraExposure();
+	void PostProcessScene();
+	void AmbientOccludeScene();
 	void BloomScene();
 	void TonemapScene();
 	void ColormapScene();
@@ -198,6 +204,9 @@ public:
 		DAngle rotation, FDynamicColormap *colormap, int lightlevel);
 
 	int PTM_BestColor (const uint32 *pal_in, int r, int g, int b, int first, int num);
+
+	static float GetZNear() { return 5.f; }
+	static float GetZFar() { return 65536.f; }
 };
 
 // Global functions. Make them members of GLRenderer later?

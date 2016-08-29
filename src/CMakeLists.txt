@@ -1125,6 +1125,7 @@ set( FASTMATH_SOURCES
 	gl/shaders/gl_shaderprogram.cpp
 	gl/shaders/gl_presentshader.cpp
 	gl/shaders/gl_bloomshader.cpp
+	gl/shaders/gl_ambientshader.cpp
 	gl/shaders/gl_blurshader.cpp
 	gl/shaders/gl_colormapshader.cpp
 	gl/shaders/gl_tonemapshader.cpp

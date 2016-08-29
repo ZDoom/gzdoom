@@ -2633,6 +2633,7 @@ GLPREFMNU_MULTISAMPLE			= "Multisample";
 GLPREFMNU_TONEMAP				= "Tonemap Mode";
 GLPREFMNU_BLOOM					= "Bloom effect";
 GLPREFMNU_LENS					= "Lens distortion effect";
+GLPREFMNU_SSAO					= "Ambient occlusion";
 
 // Option Values
 OPTVAL_SMART 				= "Smart";

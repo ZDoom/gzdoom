@@ -11,14 +11,13 @@ uniform float NegInvR2;
 uniform float RadiusToScreen;
 uniform float AOMultiplier;
 
+uniform float AOStrength;
+
 uniform sampler2D DepthTexture;
 
-#if USE_RANDOM_TEXTURE
+#if defined(USE_RANDOM_TEXTURE)
 uniform sampler2D RandomTexture;
 #endif
-
-#define NUM_DIRECTIONS 8.0
-#define NUM_STEPS 4.0
 
 #define PI 3.14159265358979323846
 
@@ -54,13 +53,12 @@ vec2 RotateDirection(vec2 dir, vec2 cossin)
 
 vec4 GetJitter()
 {
-#if !USE_RANDOM_TEXTURE
+#if !defined(USE_RANDOM_TEXTURE)
     return vec4(1,0,1,1);
 	//vec3 rand = noise3(TexCoord.x + TexCoord.y);
 	//float angle = 2.0 * PI * rand.x / NUM_DIRECTIONS;
 	//return vec4(cos(angle), sin(angle), rand.y, rand.z);
 #else
-	#define RANDOM_TEXTURE_WIDTH 4.0
     return texture(RandomTexture, gl_FragCoord.xy / RANDOM_TEXTURE_WIDTH);
 #endif
 }
@@ -109,7 +107,11 @@ void main()
 {
     vec3 viewPosition = FetchViewPos(TexCoord);
     vec3 viewNormal = ReconstructNormal(viewPosition);
-	float occlusion = ComputeAO(viewPosition, viewNormal);
+	float occlusion = ComputeAO(viewPosition, viewNormal) * AOStrength + (1.0 - AOStrength);
+
+	// GZDoom does not use linear buffers at the moment, apply some gamma to get it closer to correct
+	occlusion = occlusion * occlusion;
+
 	//FragColor = vec4(viewPosition.x * 0.001 + 0.5, viewPosition.y * 0.001 + 0.5, viewPosition.z * 0.001, 1.0);
 	//FragColor = vec4(viewNormal.x * 0.5 + 0.5, viewNormal.y * 0.5 + 0.5, viewNormal.z * 0.5 + 0.5, 1.0);
 	//FragColor = vec4(occlusion, viewPosition.z, 0.0, 1.0);

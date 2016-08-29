@@ -53,6 +53,7 @@
 #include "w_wad.h"
 #include "i_system.h"
 #include "doomerrors.h"
+#include <random>
 
 CVAR(Int, gl_multisample, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(Bool, gl_renderbuffers, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
@@ -129,6 +130,7 @@ void FGLRenderBuffers::ClearAmbientOcclusion()
 	DeleteFrameBuffer(AmbientFB1);
 	DeleteTexture(AmbientTexture0);
 	DeleteTexture(AmbientTexture1);
+	DeleteTexture(AmbientRandomTexture);
 }
 
 void FGLRenderBuffers::DeleteTexture(GLuint &handle)
@@ -334,6 +336,26 @@ void FGLRenderBuffers::CreateAmbientOcclusion(int width, int height)
 	AmbientTexture1 = Create2DTexture("AmbientTexture1", GetHdrFormat(), AmbientWidth, AmbientHeight);
 	AmbientFB0 = CreateFrameBuffer("AmbientFB0", AmbientTexture0);
 	AmbientFB1 = CreateFrameBuffer("AmbientFB1", AmbientTexture1);
+
+	int16_t randomValues[16 * 4];
+	std::mt19937 generator(1337);
+	std::uniform_real_distribution<double> distribution(-1.0, 1.0);
+	for (int i = 0; i < 16; i++)
+	{
+		double num_directions = 8.0; // Must be same as the define in ssao.fp
+		double angle = 2.0 * M_PI * distribution(generator) / num_directions;
+		double x = cos(angle);
+		double y = sin(angle);
+		double z = distribution(generator);
+		double w = distribution(generator);
+
+		randomValues[i * 4 + 0] = (int16_t)clamp(x * 32768.0, -32767.0, 32768.0);
+		randomValues[i * 4 + 1] = (int16_t)clamp(y * 32768.0, -32767.0, 32768.0);
+		randomValues[i * 4 + 2] = (int16_t)clamp(z * 32768.0, -32767.0, 32768.0);
+		randomValues[i * 4 + 3] = (int16_t)clamp(w * 32768.0, -32767.0, 32768.0);
+	}
+
+	AmbientRandomTexture = Create2DTexture("AmbientRandomTexture", GL_RGBA16_SNORM, 4, 4, randomValues);
 }
 
 //==========================================================================
@@ -353,7 +375,7 @@ GLuint FGLRenderBuffers::GetHdrFormat()
 //
 //==========================================================================
 
-GLuint FGLRenderBuffers::Create2DTexture(const FString &name, GLuint format, int width, int height)
+GLuint FGLRenderBuffers::Create2DTexture(const FString &name, GLuint format, int width, int height, const void *data)
 {
 	GLuint handle = 0;
 	glGenTextures(1, &handle);
@@ -369,10 +391,11 @@ GLuint FGLRenderBuffers::Create2DTexture(const FString &name, GLuint format, int
 	case GL_DEPTH_COMPONENT24:	dataformat = GL_DEPTH_COMPONENT; datatype = GL_FLOAT; break;
 	case GL_STENCIL_INDEX8:		dataformat = GL_STENCIL_INDEX; datatype = GL_INT; break;
 	case GL_DEPTH24_STENCIL8:	dataformat = GL_DEPTH_STENCIL; datatype = GL_UNSIGNED_INT_24_8; break;
+	case GL_RGBA16_SNORM:		dataformat = GL_RGBA; datatype = GL_SHORT; break;
 	default: I_FatalError("Unknown format passed to FGLRenderBuffers.Create2DTexture");
 	}
 
-	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, dataformat, datatype, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, dataformat, datatype, data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

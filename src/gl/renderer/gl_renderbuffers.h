@@ -43,6 +43,7 @@ public:
 	GLuint AmbientFB1 = 0;
 	int AmbientWidth = 0;
 	int AmbientHeight = 0;
+	GLuint AmbientRandomTexture = 0;
 
 	static bool IsEnabled();
 
@@ -58,7 +59,7 @@ private:
 	void CreatePipeline(int width, int height);
 	void CreateBloom(int width, int height);
 	void CreateAmbientOcclusion(int width, int height);
-	GLuint Create2DTexture(const FString &name, GLuint format, int width, int height);
+	GLuint Create2DTexture(const FString &name, GLuint format, int width, int height, const void *data = nullptr);
 	GLuint CreateRenderBuffer(const FString &name, GLuint format, int width, int height);
 	GLuint CreateRenderBuffer(const FString &name, GLuint format, int samples, int width, int height);
 	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer);

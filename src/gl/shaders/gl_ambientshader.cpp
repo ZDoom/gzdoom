@@ -71,12 +71,20 @@ void FSSAOShader::Bind()
 {
 	if (!mShader)
 	{
+		const char *defines = R"(
+			#define USE_RANDOM_TEXTURE
+			#define RANDOM_TEXTURE_WIDTH 4.0
+			#define NUM_DIRECTIONS 8.0
+			#define NUM_STEPS 4.0
+		)";
+
 		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/ssao.fp", "", 330);
+		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/ssao.fp", defines, 330);
 		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/ssao");
 		mShader.SetAttribLocation(0, "PositionInProjection");
 		DepthTexture.Init(mShader, "DepthTexture");
+		RandomTexture.Init(mShader, "RandomTexture");
 		UVToViewA.Init(mShader, "UVToViewA");
 		UVToViewB.Init(mShader, "UVToViewB");
 		InvFullResolution.Init(mShader, "InvFullResolution");
@@ -84,6 +92,7 @@ void FSSAOShader::Bind()
 		NegInvR2.Init(mShader, "NegInvR2");
 		RadiusToScreen.Init(mShader, "RadiusToScreen");
 		AOMultiplier.Init(mShader, "AOMultiplier");
+		AOStrength.Init(mShader, "AOStrength");
 	}
 	mShader.Bind();
 }

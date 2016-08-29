@@ -58,7 +58,7 @@ FGLPostProcessState::FGLPostProcessState()
 {
 	glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTex);
 	glActiveTexture(GL_TEXTURE0);
-	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding[0]);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	if (gl.flags & RFL_SAMPLER_OBJECTS)
 	{
@@ -86,6 +86,15 @@ FGLPostProcessState::FGLPostProcessState()
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_SCISSOR_TEST);
 	glDisable(GL_BLEND);
+}
+
+void FGLPostProcessState::SaveTextureBinding1()
+{
+	glActiveTexture(GL_TEXTURE1);
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding[1]);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	textureBinding1Saved = true;
+	glActiveTexture(GL_TEXTURE0);
 }
 
 //-----------------------------------------------------------------------------
@@ -121,6 +130,12 @@ FGLPostProcessState::~FGLPostProcessState()
 
 	glUseProgram(currentProgram);
 
+	if (textureBinding1Saved)
+	{
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	if (gl.flags & RFL_SAMPLER_OBJECTS)
@@ -128,6 +143,13 @@ FGLPostProcessState::~FGLPostProcessState()
 		glBindSampler(0, samplerBinding[0]);
 		glBindSampler(1, samplerBinding[1]);
 	}
-	glBindTexture(GL_TEXTURE_2D, textureBinding);
+	glBindTexture(GL_TEXTURE_2D, textureBinding[0]);
+
+	if (textureBinding1Saved)
+	{
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, textureBinding[1]);
+	}
+
 	glActiveTexture(activeTex);
 }

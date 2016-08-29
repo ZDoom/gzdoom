@@ -24,6 +24,7 @@ public:
 	void Bind();
 
 	FBufferedUniformSampler DepthTexture;
+	FBufferedUniformSampler RandomTexture;
 	FBufferedUniform2f UVToViewA;
 	FBufferedUniform2f UVToViewB;
 	FBufferedUniform2f InvFullResolution;
@@ -31,6 +32,7 @@ public:
 	FBufferedUniform1f NegInvR2;
 	FBufferedUniform1f RadiusToScreen;
 	FBufferedUniform1f AOMultiplier;
+	FBufferedUniform1f AOStrength;
 
 private:
 	FShaderProgram mShader;

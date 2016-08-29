@@ -100,6 +100,7 @@ CVAR(Float, gl_lens_kcube, 0.1f, 0)
 CVAR(Float, gl_lens_chromatic, 1.12f, 0)
 
 CVAR(Bool, gl_ssao, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Float, gl_ssao_strength, 0.7, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, gl_ssao_debug, false, 0)
 CVAR(Float, gl_ssao_bias, 0.5f, 0)
 CVAR(Float, gl_ssao_radius, 100.0f, 0)
@@ -148,11 +149,13 @@ void FGLRenderer::AmbientOccludeScene()
 	FGLDebug::PushGroup("AmbientOccludeScene");
 
 	FGLPostProcessState savedState;
+	savedState.SaveTextureBinding1();
 
 	float bias = gl_ssao_bias;
 	float aoRadius = gl_ssao_radius;
 	const float blurAmount = gl_ssao_blur_amount;
 	int blurSampleCount = gl_ssao_blur_samples;
+	float aoStrength = gl_ssao_strength;
 
 	//float tanHalfFovy = tan(fovy * (M_PI / 360.0f));
 	float tanHalfFovy = 1.0f / 1.33333302f; //gl_RenderState.mProjectionMatrix.get()[5];
@@ -178,8 +181,14 @@ void FGLRenderer::AmbientOccludeScene()
 	glBindTexture(GL_TEXTURE_2D, mBuffers->AmbientTexture0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, mBuffers->AmbientRandomTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glActiveTexture(GL_TEXTURE0);
 	mSSAOShader->Bind();
 	mSSAOShader->DepthTexture.Set(0);
+	mSSAOShader->RandomTexture.Set(1);
 	mSSAOShader->UVToViewA.Set(2.0f * invFocalLenX, -2.0f * invFocalLenY);
 	mSSAOShader->UVToViewB.Set(-invFocalLenX, invFocalLenY);
 	mSSAOShader->InvFullResolution.Set(1.0f / mBuffers->AmbientWidth, 1.0f / mBuffers->AmbientHeight);
@@ -187,6 +196,7 @@ void FGLRenderer::AmbientOccludeScene()
 	mSSAOShader->NegInvR2.Set(-1.0f / r2);
 	mSSAOShader->RadiusToScreen.Set(aoRadius * 0.5 / tanHalfFovy * mBuffers->AmbientHeight);
 	mSSAOShader->AOMultiplier.Set(1.0f / (1.0f - nDotVBias));
+	mSSAOShader->AOStrength.Set(aoStrength);
 	RenderScreenQuad();
 
 	// Blur SSAO texture

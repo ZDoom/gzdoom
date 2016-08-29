@@ -148,6 +148,7 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 		glBufferStorage(GL_ARRAY_BUFFER, bytesize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		map = (FFlatVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, bytesize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		DPrintf(DMSG_NOTIFY, "Using persistent buffer\n");
 		break;
 	}
 
@@ -157,13 +158,14 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 		glBufferData(GL_ARRAY_BUFFER, bytesize, NULL, GL_STREAM_DRAW);
 		map = nullptr;
+		DPrintf(DMSG_NOTIFY, "Using deferred buffer\n");
 		break;
 	}
 
 	case BM_CLIENTARRAY:
 	{
-		// The fallback path uses immediate mode rendering and does not set up an actual vertex buffer
 		map = new FFlatVertex[BUFFER_SIZE];
+		DPrintf(DMSG_NOTIFY, "Using client array buffer\n");
 		break;
 	}
 	}

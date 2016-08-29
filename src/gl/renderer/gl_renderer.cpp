@@ -130,7 +130,7 @@ void FGLRenderer::Initialize(int width, int height)
 	m2DDrawer = new F2DDrawer;
 
 	// Only needed for the core profile, because someone decided it was a good idea to remove the default VAO.
-	if (gl.version >= 4.0)
+	if (gl.buffermethod != BM_CLIENTARRAY)
 	{
 		glGenVertexArrays(1, &mVAOID);
 		glBindVertexArray(mVAOID);

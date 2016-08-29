@@ -501,6 +501,12 @@ CocoaVideo::CocoaVideo(const int multisample)
 		attributes[i++] = NSOpenGLPixelFormatAttribute(multisample);
 	}
 
+	if (NSAppKitVersionNumber >= AppKit10_7)
+	{
+		attributes[i++] = NSOpenGLPFAOpenGLProfile;
+		attributes[i++] = NSOpenGLProfileVersion3_2Core;
+	}
+
 	attributes[i] = NSOpenGLPixelFormatAttribute(0);
 
 	// Create OpenGL context and view

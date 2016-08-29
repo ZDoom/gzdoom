@@ -480,7 +480,6 @@ void FGLRenderer::RenderTranslucent()
 // stencil, z-buffer and the projection matrix intact!
 //
 //-----------------------------------------------------------------------------
-EXTERN_CVAR(Bool, gl_draw_sync)
 
 void FGLRenderer::DrawScene(int drawmode)
 {
@@ -502,14 +501,6 @@ void FGLRenderer::DrawScene(int drawmode)
 	}
 	GLRenderer->mClipPortal = NULL;	// this must be reset before any portal recursion takes place.
 
-	// Up to this point in the main draw call no rendering is performed so we can wait
-	// with swapping the render buffer until now.
-	if (!gl_draw_sync && drawmode == DM_MAINVIEW)
-	{
-		All.Unclock();
-		static_cast<OpenGLFrameBuffer*>(screen)->Swap();
-		All.Clock();
-	}
 	RenderScene(recursion);
 
 	// Handle all portals after rendering the opaque objects but before

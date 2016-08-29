@@ -179,9 +179,6 @@ void OpenGLFrameBuffer::InitializeState()
 //
 //==========================================================================
 
-// Testing only for now. 
-CVAR(Bool, gl_draw_sync, true, 0) //false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-
 void OpenGLFrameBuffer::Update()
 {
 	if (!CanUpdate()) 
@@ -197,10 +194,7 @@ void OpenGLFrameBuffer::Update()
 
 	GLRenderer->SetOutputViewport(nullptr);
 
-	if (gl_draw_sync || !swapped)
-	{
-		Swap();
-	}
+	Swap();
 	swapped = false;
 	Unlock();
 	CheckBench();

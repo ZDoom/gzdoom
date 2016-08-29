@@ -19,6 +19,8 @@ class FLightBuffer;
 class FSamplerManager;
 class DPSprite;
 class FGLRenderBuffers;
+class FLinearDepthShader;
+class FSSAOShader;
 class FBloomExtractShader;
 class FBloomCombineShader;
 class FBlurShader;
@@ -89,6 +91,8 @@ public:
 	int mOldFBID;
 
 	FGLRenderBuffers *mBuffers;
+	FLinearDepthShader *mLinearDepthShader;
+	FSSAOShader *mSSAOShader;
 	FBloomExtractShader *mBloomExtractShader;
 	FBloomCombineShader *mBloomCombineShader;
 	FBlurShader *mBlurShader;
@@ -164,6 +168,8 @@ public:
 	void SetFixedColormap (player_t *player);
 	void WriteSavePic (player_t *player, FILE *file, int width, int height);
 	void EndDrawScene(sector_t * viewsector);
+	void PostProcessScene();
+	void AmbientOccludeScene();
 	void BloomScene();
 	void TonemapScene();
 	void BindTonemapPalette(int texunit);
@@ -186,6 +192,9 @@ public:
 	void FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, FDynamicColormap *colormap, int lightlevel);
+
+	static float GetZNear() { return 5.f; }
+	static float GetZFar() { return 65536.f; }
 };
 
 // Global functions. Make them members of GLRenderer later?

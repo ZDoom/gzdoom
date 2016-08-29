@@ -233,7 +233,7 @@ namespace
 class CocoaVideo : public IVideo
 {
 public:
-	explicit CocoaVideo(int multisample);
+	CocoaVideo();
 
 	virtual EDisplayType GetDisplayType() { return DISPLAY_Both; }
 	virtual void SetWindowedScale(float scale);
@@ -465,7 +465,7 @@ CocoaWindow* CreateCocoaWindow(const NSUInteger styleMask)
 // ---------------------------------------------------------------------------
 
 
-CocoaVideo::CocoaVideo(const int multisample)
+CocoaVideo::CocoaVideo()
 : m_window(CreateCocoaWindow(STYLE_MASK_WINDOWED))
 , m_width(-1)
 , m_height(-1)
@@ -490,15 +490,6 @@ CocoaVideo::CocoaVideo(const int multisample)
 	if (NSAppKitVersionNumber >= AppKit10_5 && !vid_autoswitch)
 	{
 		attributes[i++] = NSOpenGLPFAAllowOfflineRenderers;
-	}
-
-	if (multisample)
-	{
-		attributes[i++] = NSOpenGLPFAMultisample;
-		attributes[i++] = NSOpenGLPFASampleBuffers;
-		attributes[i++] = NSOpenGLPixelFormatAttribute(1);
-		attributes[i++] = NSOpenGLPFASamples;
-		attributes[i++] = NSOpenGLPixelFormatAttribute(multisample);
 	}
 
 	if (NSAppKitVersionNumber >= AppKit10_7)
@@ -1260,7 +1251,7 @@ void I_InitGraphics()
 	val.Bool = !!Args->CheckParm("-devparm");
 	ticker.SetGenericRepDefault(val, CVAR_Bool);
 
-	Video = new CocoaVideo(0);
+	Video = new CocoaVideo;
 	atterm(I_ShutdownGraphics);
 }
 

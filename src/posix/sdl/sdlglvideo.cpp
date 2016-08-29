@@ -54,11 +54,6 @@ EXTERN_CVAR (Bool, cl_capfps)
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-CUSTOM_CVAR(Int, gl_vid_multisample, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL )
-{
-	Printf("This won't take effect until " GAMENAME " is restarted.\n");
-}
-
 CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
@@ -322,17 +317,13 @@ bool SDLGLVideo::InitHardware (bool allowsoftware, int multisample)
 SDLGLFB::SDLGLFB (void *, int width, int height, int, int, bool fullscreen)
 	: DFrameBuffer (width, height)
 {
-	static int localmultisample=-1;
-
-	if (localmultisample<0) localmultisample=gl_vid_multisample;
-
 	int i;
 	
 	m_Lock=0;
 
 	UpdatePending = false;
 	
-	if (!static_cast<SDLGLVideo*>(Video)->InitHardware(false, localmultisample))
+	if (!static_cast<SDLGLVideo*>(Video)->InitHardware(false, 0))
 	{
 		vid_renderer = 0;
 		return;

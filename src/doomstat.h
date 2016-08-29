@@ -204,7 +204,7 @@ extern	int 			bodyqueslot;
 
 
 // ---- [RH] ----
-EXTERN_CVAR (Bool, developer)
+EXTERN_CVAR (Int, developer)
 
 extern bool ToggleFullscreen;
 

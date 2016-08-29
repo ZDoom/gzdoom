@@ -647,35 +647,27 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 void GLFlat::DrawLightsCompat(int pass)
 {
 	gl_RenderState.Apply();
-	if (sub)
+	// Draw the subsectors belonging to this sector
+	for (int i = 0; i<sector->subsectorcount; i++)
 	{
-		// This represents a single subsector
-		DrawSubsectorLights(sub, pass);
-	}
-	else
-	{
-		// Draw the subsectors belonging to this sector
-		for (int i = 0; i<sector->subsectorcount; i++)
+		subsector_t * sub = sector->subsectors[i];
+		if (gl_drawinfo->ss_renderflags[sub - subsectors] & renderflags)
 		{
-			subsector_t * sub = sector->subsectors[i];
-			if (gl_drawinfo->ss_renderflags[sub - subsectors] & renderflags)
-			{
-				DrawSubsectorLights(sub, pass);
-			}
+			DrawSubsectorLights(sub, pass);
 		}
+	}
 
-		// Draw the subsectors assigned to it due to missing textures
-		if (!(renderflags&SSRF_RENDER3DPLANES))
+	// Draw the subsectors assigned to it due to missing textures
+	if (!(renderflags&SSRF_RENDER3DPLANES))
+	{
+		gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR) ?
+			gl_drawinfo->GetOtherFloorPlanes(sector->sectornum) :
+			gl_drawinfo->GetOtherCeilingPlanes(sector->sectornum);
+
+		while (node)
 		{
-			gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR) ?
-				gl_drawinfo->GetOtherFloorPlanes(sector->sectornum) :
-				gl_drawinfo->GetOtherCeilingPlanes(sector->sectornum);
-
-			while (node)
-			{
-				DrawSubsectorLights(node->sub, pass);
-				node = node->next;
-			}
+			DrawSubsectorLights(node->sub, pass);
+			node = node->next;
 		}
 	}
 }
@@ -772,11 +764,13 @@ void GLWall::RenderLightsCompat(int pass)
 		}
 		if (PrepareLight(light, pass))
 		{
-			RenderWall(RWF_TEXTURED, NULL);
+			vertcount = 0;
+			RenderWall(RWF_TEXTURED);
 		}
 		node = node->nextLight;
 	}
 	memcpy(tcs, save, sizeof(tcs));
+	vertcount = 0;
 }
 
 //==========================================================================

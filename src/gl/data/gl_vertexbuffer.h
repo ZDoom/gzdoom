@@ -83,6 +83,17 @@ class FFlatVertexBuffer : public FVertexBuffer
 	static const unsigned int BUFFER_SIZE_TO_USE = 1999500;
 
 public:
+	enum
+	{
+		QUAD_INDEX = 0,
+		FULLSCREEN_INDEX = 4,
+		PRESENT_INDEX = 8,
+		STENCILTOP_INDEX = 12,
+		STENCILBOTTOM_INDEX = 16,
+
+		NUM_RESERVED = 20
+	};
+
 	TArray<FFlatVertex> vbo_shadowdata;	// this is kept around for updating the actual (non-readable) buffer and as stand-in for pre GL 4.x
 
 	FFlatVertexBuffer(int width, int height);
@@ -137,6 +148,9 @@ public:
 	{
 		mCurIndex = mIndex;
 	}
+
+	void Map();
+	void Unmap();
 
 private:
 	int CreateSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor);

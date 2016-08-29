@@ -8,7 +8,7 @@ class FPresentShader
 public:
 	void Bind();
 
-	FBufferedUniform1i InputTexture;
+	FBufferedUniformSampler InputTexture;
 	FBufferedUniform1f InvGamma;
 	FBufferedUniform1f Contrast;
 	FBufferedUniform1f Brightness;

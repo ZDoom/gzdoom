@@ -47,6 +47,7 @@
 #include "doomstat.h"
 #include "d_player.h"
 #include "portal.h"
+#include "templates.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
@@ -64,6 +65,7 @@
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_convert.h"
 #include "gl/utility/gl_templates.h"
+#include "gl/renderer/gl_quaddrawer.h"
 
 #ifdef _DEBUG
 CVAR(Int, gl_breaksec, -1, 0)
@@ -175,18 +177,46 @@ void GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, int *dli)
 
 void GLFlat::DrawSubsector(subsector_t * sub)
 {
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	for (unsigned int k = 0; k < sub->numlines; k++)
+	if (gl.buffermethod != BM_DEFERRED)
 	{
-		vertex_t *vt = sub->firstline[k].v1;
-		ptr->x = vt->fX();
-		ptr->z = plane.plane.ZatPoint(vt) + dz;
-		ptr->y = vt->fY();
-		ptr->u = vt->fX() / 64.f;
-		ptr->v = -vt->fY() / 64.f;
-		ptr++;
+		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+		for (unsigned int k = 0; k < sub->numlines; k++)
+		{
+			vertex_t *vt = sub->firstline[k].v1;
+			ptr->x = vt->fX();
+			ptr->z = plane.plane.ZatPoint(vt) + dz;
+			ptr->y = vt->fY();
+			ptr->u = vt->fX() / 64.f;
+			ptr->v = -vt->fY() / 64.f;
+			ptr++;
+		}
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
 	}
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
+	else
+	{
+		// if we cannot access the buffer, use the quad drawer as fallback by splitting the subsector into quads.
+		// Trying to get this into the vertex buffer in the processing pass is too costly and this is only used for render hacks.
+		FQuadDrawer qd;
+		unsigned int vi[4];
+
+		vi[0] = 0;
+		for (unsigned int i = 1; i < sub->numlines-1; i += 2)
+		{
+			if (i < sub->numlines - 3)
+			{
+				for (unsigned int j = 1; j < 4; j++)
+				{
+					vi[j] = MIN(i + j, sub->numlines - 1);
+				}
+				for (unsigned int x = 0; x < 4; x++)
+				{
+					vertex_t *vt = sub->firstline[vi[x]].v1;
+					qd.Set(x, vt->fX(), plane.plane.ZatPoint(vt) + dz, vt->fY(), vt->fX() / 64.f, -vt->fY() / 64.f);
+				}
+				qd.Render(GL_TRIANGLE_FAN);
+			}
+		}
+	}
 
 	flatvertices += sub->numlines;
 	flatprimitives++;
@@ -203,35 +233,27 @@ void GLFlat::ProcessLights(bool istrans)
 {
 	dynlightindex = GLRenderer->mLights->GetIndexPtr();
 
-	if (sub)
+	// Draw the subsectors belonging to this sector
+	for (int i=0; i<sector->subsectorcount; i++)
 	{
-		// This represents a single subsector
-		SetupSubsectorLights(GLPASS_LIGHTSONLY, sub);
-	}
-	else
-	{
-		// Draw the subsectors belonging to this sector
-		for (int i=0; i<sector->subsectorcount; i++)
+		subsector_t * sub = sector->subsectors[i];
+		if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
 		{
-			subsector_t * sub = sector->subsectors[i];
-			if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
-			{
-				SetupSubsectorLights(GLPASS_LIGHTSONLY, sub);
-			}
+			SetupSubsectorLights(GLPASS_LIGHTSONLY, sub);
 		}
+	}
 
-		// Draw the subsectors assigned to it due to missing textures
-		if (!(renderflags&SSRF_RENDER3DPLANES))
+	// Draw the subsectors assigned to it due to missing textures
+	if (!(renderflags&SSRF_RENDER3DPLANES))
+	{
+		gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR)?
+			gl_drawinfo->GetOtherFloorPlanes(sector->sectornum) :
+			gl_drawinfo->GetOtherCeilingPlanes(sector->sectornum);
+
+		while (node)
 		{
-			gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR)?
-				gl_drawinfo->GetOtherFloorPlanes(sector->sectornum) :
-				gl_drawinfo->GetOtherCeilingPlanes(sector->sectornum);
-
-			while (node)
-			{
-				SetupSubsectorLights(GLPASS_LIGHTSONLY, node->sub);
-				node = node->next;
-			}
+			SetupSubsectorLights(GLPASS_LIGHTSONLY, node->sub);
+			node = node->next;
 		}
 	}
 }
@@ -248,60 +270,52 @@ void GLFlat::DrawSubsectors(int pass, bool processlights, bool istrans)
 	int dli = dynlightindex;
 
 	gl_RenderState.Apply();
-	if (sub)
+	if (vboindex >= 0)
 	{
-		// This represents a single subsector
-		if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
-		DrawSubsector(sub);
-	}
-	else 
-	{
-		if (vboindex >= 0)
+		int index = vboindex;
+		for (int i=0; i<sector->subsectorcount; i++)
 		{
-			int index = vboindex;
-			for (int i=0; i<sector->subsectorcount; i++)
-			{
-				subsector_t * sub = sector->subsectors[i];
+			subsector_t * sub = sector->subsectors[i];
 				
-				if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
-				{
-					if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
-					drawcalls.Clock();
-					glDrawArrays(GL_TRIANGLE_FAN, index, sub->numlines);
-					drawcalls.Unclock();
-					flatvertices += sub->numlines;
-					flatprimitives++;
-				}
-				index += sub->numlines;
+			if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
+			{
+				if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
+				drawcalls.Clock();
+				glDrawArrays(GL_TRIANGLE_FAN, index, sub->numlines);
+				drawcalls.Unclock();
+				flatvertices += sub->numlines;
+				flatprimitives++;
+			}
+			index += sub->numlines;
+		}
+	}
+	else
+	{
+		// Draw the subsectors belonging to this sector
+		// (can this case even happen?)
+		for (int i=0; i<sector->subsectorcount; i++)
+		{
+			subsector_t * sub = sector->subsectors[i];
+			if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
+			{
+				if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
+				DrawSubsector(sub);
 			}
 		}
-		else
-		{
-			// Draw the subsectors belonging to this sector
-			for (int i=0; i<sector->subsectorcount; i++)
-			{
-				subsector_t * sub = sector->subsectors[i];
-				if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
-				{
-					if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
-					DrawSubsector(sub);
-				}
-			}
-		}
+	}
 
-		// Draw the subsectors assigned to it due to missing textures
-		if (!(renderflags&SSRF_RENDER3DPLANES))
-		{
-			gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR)?
-				gl_drawinfo->GetOtherFloorPlanes(sector->sectornum) :
-				gl_drawinfo->GetOtherCeilingPlanes(sector->sectornum);
+	// Draw the subsectors assigned to it due to missing textures
+	if (!(renderflags&SSRF_RENDER3DPLANES))
+	{
+		gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR)?
+			gl_drawinfo->GetOtherFloorPlanes(sector->sectornum) :
+			gl_drawinfo->GetOtherCeilingPlanes(sector->sectornum);
 
-			while (node)
-			{
-				if (processlights) SetupSubsectorLights(GLPASS_ALL, node->sub, &dli);
-				DrawSubsector(node->sub);
-				node = node->next;
-			}
+		while (node)
+		{
+			if (processlights) SetupSubsectorLights(GLPASS_ALL, node->sub, &dli);
+			DrawSubsector(node->sub);
+			node = node->next;
 		}
 	}
 }
@@ -318,7 +332,6 @@ void GLFlat::DrawSubsectors(int pass, bool processlights, bool istrans)
 
 void GLFlat::DrawSkyboxSector(int pass, bool processlights)
 {
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
 
 	float minx = FLT_MAX, miny = FLT_MAX;
 	float maxx = -FLT_MAX, maxy = -FLT_MAX;
@@ -345,36 +358,13 @@ void GLFlat::DrawSkyboxSector(int pass, bool processlights)
 	static float vvals[] = { 1, 0, 0, 1 };
 	int rot = -xs_FloorToInt(plane.Angle / 90.f);
 
+	FQuadDrawer qd;
 
-	ptr->x = minx;
-	ptr->z = z;
-	ptr->y = miny;
-	ptr->u = uvals[rot & 3];
-	ptr->v = vvals[rot & 3];
-	ptr++;
-
-	ptr->x = minx;
-	ptr->z = z;
-	ptr->y = maxy;
-	ptr->u = uvals[(rot + 1) & 3];
-	ptr->v = vvals[(rot + 1) & 3];
-	ptr++;
-
-	ptr->x = maxx;
-	ptr->z = z;
-	ptr->y = maxy;
-	ptr->u = uvals[(rot + 2) & 3];
-	ptr->v = vvals[(rot + 2) & 3];
-	ptr++;
-
-	ptr->x = maxx;
-	ptr->z = z;
-	ptr->y = miny;
-	ptr->u = uvals[(rot + 3) & 3];
-	ptr->v = vvals[(rot + 3) & 3];
-	ptr++;
-
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
+	qd.Set(0, minx, z, miny, uvals[rot & 3], vvals[rot & 3]);
+	qd.Set(1, minx, z, maxy, uvals[(rot + 1) & 3], vvals[(rot + 1) & 3]);
+	qd.Set(2, maxx, z, maxy, uvals[(rot + 2) & 3], vvals[(rot + 2) & 3]);
+	qd.Set(3, maxx, z, miny, uvals[(rot + 3) & 3], vvals[(rot + 3) & 3]);
+	qd.Render(GL_TRIANGLE_FAN);
 
 	flatvertices += 4;
 	flatprimitives++;
@@ -588,7 +578,6 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 	// Get the real sector for this one.
 	sector = &sectors[frontsector->sectornum];
 	extsector_t::xfloor &x = sector->e->XFloor;
-	this->sub = NULL;
 	dynlightindex = -1;
 
 	byte &srf = gl_drawinfo->sectorrenderflags[sector->sectornum];

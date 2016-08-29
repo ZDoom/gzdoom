@@ -294,7 +294,7 @@ static void PrepareSectorData()
 						seg[j].PartnerSeg!=NULL && 
 						subsectors[i].render_sector != seg[j].PartnerSeg->Subsector->render_sector)
 				{
-					DPrintf("Found hack: (%f,%f) (%f,%f)\n", seg[j].v1->fX(), seg[j].v1->fY(), seg[j].v2->fX(), seg[j].v2->fY());
+					DPrintf(DMSG_NOTIFY, "Found hack: (%f,%f) (%f,%f)\n", seg[j].v1->fX(), seg[j].v1->fY(), seg[j].v2->fX(), seg[j].v2->fY());
 					subsectors[i].hacked|=5;
 					SpreadHackedFlag(&subsectors[i]);
 				}

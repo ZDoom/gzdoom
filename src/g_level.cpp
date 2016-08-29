@@ -1280,7 +1280,7 @@ void G_FinishTravel ()
 
 		for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
 		{
-			inv->ChangeStatNum (STAT_DEFAULT);
+			inv->ChangeStatNum (STAT_INVENTORY);
 			inv->LinkToWorld ();
 			inv->Travelled ();
 		}
@@ -1295,6 +1295,11 @@ void G_FinishTravel ()
 	}
 
 	bglobal.FinishTravel ();
+
+	// make sure that, after travelling has completed, no travelling thinkers are left.
+	// Since this list is excluded from regular thinker cleaning, anything that may survive through here
+	// will endlessly multiply and severely break the following savegames or just simply crash on broken pointers.
+	DThinker::DestroyThinkersInList(STAT_TRAVELLING);
 }
  
 //==========================================================================

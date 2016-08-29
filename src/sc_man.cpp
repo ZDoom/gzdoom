@@ -1044,7 +1044,7 @@ void FScriptPosition::Message (int severity, const char *message, ...) const
 {
 	FString composed;
 
-	if ((severity == MSG_DEBUG || severity == MSG_DEBUGLOG) && !developer) return;
+	if ((severity == MSG_DEBUG || severity == MSG_DEBUGLOG) && developer < DMSG_NOTIFY) return;
 	if (severity == MSG_OPTERROR)
 	{
 		severity = strictdecorate ? MSG_ERROR : MSG_WARNING;

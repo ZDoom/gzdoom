@@ -114,7 +114,7 @@ void FGLRenderer::RenderScreenQuad()
 {
 	mVBO->BindVBO();
 	gl_RenderState.ResetVertexBuffer();
-	glDrawArrays(GL_TRIANGLE_STRIP, 8, 4);
+	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, FFlatVertexBuffer::PRESENT_INDEX, 4);
 }
 
 //-----------------------------------------------------------------------------
@@ -276,6 +276,12 @@ void FGLRenderer::BindTonemapPalette(int texunit)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glActiveTexture(GL_TEXTURE0);
 	}
+}
+
+void FGLRenderer::ClearTonemapPalette()
+{
+	delete mTonemapPalette;
+	mTonemapPalette = nullptr;
 }
 
 //-----------------------------------------------------------------------------

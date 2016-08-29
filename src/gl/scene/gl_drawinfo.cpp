@@ -325,6 +325,7 @@ void GLDrawList::SortWallIntoPlane(SortNode * head,SortNode * sort)
 		if (gl.glslversion < 1.3f)
 		{
 			GLWall * ws1;
+			ws->vertcount = 0;	// invalidate current vertices.
 			ws1=&walls[walls.Size()-1];
 			ws=&walls[drawitems[sort->itemindex].index];	// may have been reallocated!
 			float newtexv = ws->tcs[GLWall::UPLFT].v + ((ws->tcs[GLWall::LOLFT].v - ws->tcs[GLWall::UPLFT].v) / (ws->zbottom[0] - ws->ztop[0])) * (fh->z - ws->ztop[0]);
@@ -467,6 +468,7 @@ void GLDrawList::SortWallIntoWall(SortNode * head,SortNode * sort)
 		float izt=(float)(ws->ztop[0]+r*(ws->ztop[1]-ws->ztop[0]));
 		float izb=(float)(ws->zbottom[0]+r*(ws->zbottom[1]-ws->zbottom[0]));
 
+		ws->vertcount = 0;	// invalidate current vertices.
 		GLWall w=*ws;
 		AddWall(&w);
 		ws1=&walls[walls.Size()-1];

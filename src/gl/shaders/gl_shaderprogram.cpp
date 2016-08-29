@@ -52,6 +52,12 @@
 #include "i_system.h"
 #include "doomerrors.h"
 
+FShaderProgram::FShaderProgram()
+{
+	for (int i = 0; i < NumShaderTypes; i++)
+		mShaders[i] = 0;
+}
+
 //==========================================================================
 //
 // Free shader program resources

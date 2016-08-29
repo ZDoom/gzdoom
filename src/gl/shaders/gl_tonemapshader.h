@@ -8,9 +8,9 @@ class FTonemapShader
 public:
 	void Bind();
 
-	FBufferedUniform1i SceneTexture;
+	FBufferedUniformSampler SceneTexture;
 	FBufferedUniform1f Exposure;
-	FBufferedUniform1i PaletteLUT;
+	FBufferedUniformSampler PaletteLUT;
 
 	static bool IsPaletteMode();
 

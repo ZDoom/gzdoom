@@ -65,6 +65,12 @@ CVAR(Bool, gl_renderbuffers, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
 FGLRenderBuffers::FGLRenderBuffers()
 {
+	for (int i = 0; i < NumPipelineTextures; i++)
+	{
+		mPipelineTexture[i] = 0;
+		mPipelineFB[i] = 0;
+	}
+
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&mOutputFB);
 	glGetIntegerv(GL_MAX_SAMPLES, &mMaxSamples);
 }
@@ -141,10 +147,10 @@ void FGLRenderBuffers::DeleteFrameBuffer(GLuint &handle)
 //
 //==========================================================================
 
-void FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHeight)
+bool FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHeight)
 {
 	if (!IsEnabled())
-		return;
+		return false;
 		
 	if (width <= 0 || height <= 0)
 		I_FatalError("Requested invalid render buffer sizes: screen = %dx%d", width, height);
@@ -183,6 +189,20 @@ void FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 	glActiveTexture(activeTex);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	if (FailedCreate)
+	{
+		ClearScene();
+		ClearPipeline();
+		ClearBloom();
+		mWidth = 0;
+		mHeight = 0;
+		mSamples = 0;
+		mBloomWidth = 0;
+		mBloomHeight = 0;
+	}
+
+	return !FailedCreate;
 }
 
 //==========================================================================
@@ -268,7 +288,7 @@ void FGLRenderBuffers::CreateBloom(int width, int height)
 
 GLuint FGLRenderBuffers::GetHdrFormat()
 {
-	return ((gl.flags & RFL_NO_RGBA16F) != 0) ? GL_RGBA8 : GL_RGBA16;
+	return ((gl.flags & RFL_NO_RGBA16F) != 0) ? GL_RGBA8 : GL_RGBA16F;
 }
 
 //==========================================================================
@@ -279,7 +299,7 @@ GLuint FGLRenderBuffers::GetHdrFormat()
 
 GLuint FGLRenderBuffers::Create2DTexture(const FString &name, GLuint format, int width, int height)
 {
-	GLuint type = (format == GL_RGBA16) ? GL_UNSIGNED_SHORT : GL_UNSIGNED_BYTE;
+	GLuint type = (format == GL_RGBA16F) ? GL_FLOAT : GL_UNSIGNED_BYTE;
 	GLuint handle = 0;
 	glGenTextures(1, &handle);
 	glBindTexture(GL_TEXTURE_2D, handle);
@@ -334,8 +354,8 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuff
 	glBindFramebuffer(GL_FRAMEBUFFER, handle);
 	FGLDebug::LabelObject(GL_FRAMEBUFFER, handle, name);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
-	CheckFrameBufferCompleteness();
-	ClearFrameBuffer(false, false);
+	if (CheckFrameBufferCompleteness())
+		ClearFrameBuffer(false, false);
 	return handle;
 }
 
@@ -350,8 +370,8 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuff
 	else
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthstencil);
-	CheckFrameBufferCompleteness();
-	ClearFrameBuffer(true, true);
+	if (CheckFrameBufferCompleteness())
+		ClearFrameBuffer(true, true);
 	return handle;
 }
 
@@ -367,8 +387,8 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuff
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencil);
-	CheckFrameBufferCompleteness();
-	ClearFrameBuffer(true, true);
+	if (CheckFrameBufferCompleteness())
+		ClearFrameBuffer(true, true);
 	return handle;
 }
 
@@ -378,12 +398,15 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuff
 //
 //==========================================================================
 
-void FGLRenderBuffers::CheckFrameBufferCompleteness()
+bool FGLRenderBuffers::CheckFrameBufferCompleteness()
 {
 	GLenum result = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (result == GL_FRAMEBUFFER_COMPLETE)
-		return;
+		return true;
 
+	FailedCreate = true;
+
+#if 0
 	FString error = "glCheckFramebufferStatus failed: ";
 	switch (result)
 	{
@@ -398,6 +421,9 @@ void FGLRenderBuffers::CheckFrameBufferCompleteness()
 	case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS: error << "GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS"; break;
 	}
 	I_FatalError(error);
+#endif
+
+	return false;
 }
 
 //==========================================================================
@@ -477,7 +503,7 @@ void FGLRenderBuffers::BindSceneFB()
 void FGLRenderBuffers::BindCurrentTexture(int index)
 {
 	glActiveTexture(GL_TEXTURE0 + index);
-	glBindTexture(GL_TEXTURE_2D, mPipelineFB[mCurrentPipelineTexture]);
+	glBindTexture(GL_TEXTURE_2D, mPipelineTexture[mCurrentPipelineTexture]);
 }
 
 //==========================================================================
@@ -533,5 +559,7 @@ void FGLRenderBuffers::BindOutputFB()
 
 bool FGLRenderBuffers::IsEnabled()
 {
-	return gl_renderbuffers && gl.glslversion != 0;
+	return gl_renderbuffers && gl.glslversion != 0 && !FailedCreate;
 }
+
+bool FGLRenderBuffers::FailedCreate = false;

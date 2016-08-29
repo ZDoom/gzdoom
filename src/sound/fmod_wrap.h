@@ -611,5 +611,14 @@ namespace FMOD
 }
 
 #endif
+
+// FMOD Ex vs FMOD Studio
+#if FMOD_VERSION >= 0x00040000 && FMOD_VERSION <= 0x0004FFFF
+#define FMOD_STUDIO 0
+#else
+#define FMOD_STUDIO 1
+#define FMOD_SOFTWARE 0
+#endif
+
 #endif
 #endif

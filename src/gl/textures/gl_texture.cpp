@@ -166,7 +166,7 @@ void gl_GenerateGlobalBrightmapFromColormap()
 	for(int i=0;i<256;i++)
 	{
 		HasGlobalBrightmap |= GlobalBrightmap.Remap[i] == white;
-		if (GlobalBrightmap.Remap[i] == white) DPrintf("Marked color %d as fullbright\n",i);
+		if (GlobalBrightmap.Remap[i] == white) DPrintf(DMSG_NOTIFY, "Marked color %d as fullbright\n",i);
 	}
 }
 
@@ -290,7 +290,7 @@ void FTexture::CreateDefaultBrightmap()
 				if (GlobalBrightmap.Remap[texbuf[i]] == white)
 				{
 					// Create a brightmap
-					DPrintf("brightmap created for texture '%s'\n", Name.GetChars());
+					DPrintf(DMSG_NOTIFY, "brightmap created for texture '%s'\n", Name.GetChars());
 					gl_info.Brightmap = new FBrightmapTexture(this);
 					gl_info.bBrightmapChecked = 1;
 					TexMan.AddTexture(gl_info.Brightmap);
@@ -298,7 +298,7 @@ void FTexture::CreateDefaultBrightmap()
 				}
 			}
 			// No bright pixels found
-			DPrintf("No bright pixels found in texture '%s'\n", Name.GetChars());
+			DPrintf(DMSG_SPAMMY, "No bright pixels found in texture '%s'\n", Name.GetChars());
 			gl_info.bBrightmapChecked = 1;
 		}
 		else

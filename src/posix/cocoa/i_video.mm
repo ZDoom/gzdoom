@@ -149,11 +149,6 @@ CUSTOM_CVAR(Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINIT
 	}
 }
 
-CUSTOM_CVAR(Int, gl_vid_multisample, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	Printf("This won't take effect until " GAMENAME " is restarted.\n");
-}
-
 EXTERN_CVAR(Bool, gl_smooth_rendered)
 
 
@@ -1259,7 +1254,7 @@ void I_InitGraphics()
 	val.Bool = !!Args->CheckParm("-devparm");
 	ticker.SetGenericRepDefault(val, CVAR_Bool);
 
-	Video = new CocoaVideo(gl_vid_multisample);
+	Video = new CocoaVideo(0);
 	atterm(I_ShutdownGraphics);
 }
 

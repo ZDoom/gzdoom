@@ -125,7 +125,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			vp_comb = "#version 400 core\n#extension GL_ARB_shader_storage_buffer_object : require\n#define SHADER_STORAGE_LIGHTS\n";
 		}
 	}
-	//if (gl.buffermethod == BM_DEFERRED)
+	if (gl.buffermethod == BM_DEFERRED)
 	{
 		vp_comb << "#define USE_QUAD_DRAWER\n";
 	}

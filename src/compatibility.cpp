@@ -399,7 +399,7 @@ void CheckCompatibility(MapData *map)
 
 	flags = BCompatMap.CheckKey(md5);
 
-	if (developer)
+	if (developer >= DMSG_NOTIFY)
 	{
 		Printf("MD5 = ");
 		for (size_t j = 0; j < sizeof(md5.Bytes); ++j)

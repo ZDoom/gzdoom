@@ -60,6 +60,7 @@
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_templates.h"
+#include "gl/renderer/gl_quaddrawer.h"
 
 EXTERN_CVAR(Bool, gl_seamless)
 
@@ -167,6 +168,36 @@ void GLWall::SetupLights()
 	dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
 }
 
+//==========================================================================
+//
+// build the vertices for this wall
+//
+//==========================================================================
+
+void GLWall::MakeVertices(bool nosplit)
+{
+	if (vertcount == 0)
+	{
+		bool split = (gl_seamless && !nosplit && seg->sidedef != NULL && !(seg->sidedef->Flags & WALLF_POLYOBJ) && !(flags & GLWF_NOSPLIT));
+
+		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+
+		ptr->Set(glseg.x1, zbottom[0], glseg.y1, tcs[LOLFT].u, tcs[LOLFT].v);
+		ptr++;
+		if (split && glseg.fracleft == 0) SplitLeftEdge(ptr);
+		ptr->Set(glseg.x1, ztop[0], glseg.y1, tcs[UPLFT].u, tcs[UPLFT].v);
+		ptr++;
+		if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(ptr);
+		ptr->Set(glseg.x2, ztop[1], glseg.y2, tcs[UPRGT].u, tcs[UPRGT].v);
+		ptr++;
+		if (split && glseg.fracright == 1) SplitRightEdge(ptr);
+		ptr->Set(glseg.x2, zbottom[1], glseg.y2, tcs[LORGT].u, tcs[LORGT].v);
+		ptr++;
+		if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(ptr);
+		vertcount = GLRenderer->mVBO->GetCount(ptr, &vertindex);
+	}
+}
+
 
 //==========================================================================
 //
@@ -175,43 +206,30 @@ void GLWall::SetupLights()
 //
 //==========================================================================
 
-void GLWall::RenderWall(int textured, unsigned int *store)
+void GLWall::RenderWall(int textured)
 {
-	bool split = (gl_seamless && !(textured&RWF_NOSPLIT) && seg->sidedef != NULL && !(seg->sidedef->Flags & WALLF_POLYOBJ) && !(flags & GLWF_NOSPLIT));
-
-	if (!(textured & RWF_NORENDER))
+	gl_RenderState.Apply();
+	gl_RenderState.ApplyLightIndex(dynlightindex);
+	if (gl.buffermethod != BM_DEFERRED)
 	{
-		gl_RenderState.Apply();
-		gl_RenderState.ApplyLightIndex(dynlightindex);
+		MakeVertices(!(textured&RWF_NOSPLIT));
 	}
-
-	// the rest of the code is identical for textured rendering and lights
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	unsigned int count, offset;
-
-	ptr->Set(glseg.x1, zbottom[0], glseg.y1, tcs[LOLFT].u, tcs[LOLFT].v);
-	ptr++;
-	if (split && glseg.fracleft == 0) SplitLeftEdge(ptr);
-	ptr->Set(glseg.x1, ztop[0], glseg.y1, tcs[UPLFT].u, tcs[UPLFT].v);
-	ptr++;
-	if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(ptr);
-	ptr->Set(glseg.x2, ztop[1], glseg.y2, tcs[UPRGT].u, tcs[UPRGT].v);
-	ptr++;
-	if (split && glseg.fracright == 1) SplitRightEdge(ptr);
-	ptr->Set(glseg.x2, zbottom[1], glseg.y2, tcs[LORGT].u, tcs[LORGT].v);
-	ptr++;
-	if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(ptr);
-	count = GLRenderer->mVBO->GetCount(ptr, &offset);
-	if (!(textured & RWF_NORENDER))
+	else if (vertcount == 0)
 	{
-		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, offset, count);
-		vertexcount += count;
+		// in case we get here without valid vertex data and no ability to create them now,
+		// use the quad drawer as fallback (without edge splitting.)
+		// This can only happen in one special situation, when a translucent line got split during sorting.
+		FQuadDrawer qd;
+		qd.Set(0, glseg.x1, zbottom[0], glseg.y1, tcs[LOLFT].u, tcs[LOLFT].v);
+		qd.Set(1, glseg.x1, ztop[0], glseg.y1, tcs[UPLFT].u, tcs[UPLFT].v);
+		qd.Set(2, glseg.x2, ztop[1], glseg.y2, tcs[UPRGT].u, tcs[UPRGT].v);
+		qd.Set(3, glseg.x2, zbottom[1], glseg.y2, tcs[LORGT].u, tcs[LORGT].v);
+		qd.Render(GL_TRIANGLE_FAN);
+		vertexcount += 4;
+		return;
 	}
-	if (store != NULL)
-	{
-		store[0] = offset;
-		store[1] = count;
-	}
+	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, vertindex, vertcount);
+	vertexcount += vertcount;
 }
 
 //==========================================================================

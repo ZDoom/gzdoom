@@ -147,37 +147,24 @@ void GLPortal::DrawPortalStencil()
 {
 	if (mPrimIndices.Size() == 0)
 	{
-		bool cap = NeedCap() && lines.Size() > 1;
-		mPrimIndices.Resize(2 * lines.Size() + 4 * cap);
+		mPrimIndices.Resize(2 * lines.Size());
 
-		for (unsigned int i = 0; i<lines.Size(); i++)
+		for (unsigned int i = 0; i < lines.Size(); i++)
 		{
-			lines[i].RenderWall(GLWall::RWF_NORENDER, &mPrimIndices[i * 2]);
-		}
-
-		if (cap)
-		{
-			// Cap the stencil at the top and bottom
-			int n = lines.Size() * 2;
-			FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-			ptr[0].Set(-32767.0f, 32767.0f, -32767.0f, 0, 0);
-			ptr[1].Set(-32767.0f, 32767.0f, 32767.0f, 0, 0);
-			ptr[2].Set(32767.0f, 32767.0f, 32767.0f, 0, 0);
-			ptr[3].Set(32767.0f, 32767.0f, -32767.0f, 0, 0);
-			ptr += 4;
-			mPrimIndices[n + 1] = GLRenderer->mVBO->GetCount(ptr, &mPrimIndices[n]);
-			ptr[0].Set(-32767.0f, -32767.0f, -32767.0f, 0, 0);
-			ptr[1].Set(-32767.0f, -32767.0f, 32767.0f, 0, 0);
-			ptr[2].Set(32767.0f, -32767.0f, 32767.0f, 0, 0);
-			ptr[3].Set(32767.0f, -32767.0f, -32767.0f, 0, 0);
-			ptr += 4;
-			mPrimIndices[n + 3] = GLRenderer->mVBO->GetCount(ptr, &mPrimIndices[n + 2]);
+			if (gl.buffermethod != BM_DEFERRED) lines[i].MakeVertices(false);
+			mPrimIndices[i * 2] = lines[i].vertindex;
+			mPrimIndices[i * 2 + 1] = lines[i].vertcount;
 		}
 	}
 	gl_RenderState.Apply();
 	for (unsigned int i = 0; i < mPrimIndices.Size(); i += 2)
 	{
 		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, mPrimIndices[i], mPrimIndices[i + 1]);
+	}
+	if (NeedCap() && lines.Size() > 1)
+	{
+		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, FFlatVertexBuffer::STENCILTOP_INDEX, 4);
+		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, FFlatVertexBuffer::STENCILBOTTOM_INDEX, 4);
 	}
 }
 
@@ -1083,6 +1070,66 @@ void GLLineToLinePortal::RenderAttached()
 //
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
+
+GLHorizonPortal::GLHorizonPortal(GLHorizonInfo * pt, bool local)
+	: GLPortal(local)
+{
+	origin = pt;
+
+	// create the vertex data for this horizon portal.
+	GLSectorPlane * sp = &origin->plane;
+	const float vx = ViewPos.X;
+	const float vy = ViewPos.Y;
+	const float vz = ViewPos.Z;
+	const float z = sp->Texheight;
+	const float tz = (z - vz);
+
+	// Draw to some far away boundary
+	// This is not drawn as larger strips because it causes visual glitches.
+	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+	for (float x = -32768 + vx; x<32768 + vx; x += 4096)
+	{
+		for (float y = -32768 + vy; y<32768 + vy; y += 4096)
+		{
+			ptr->Set(x, z, y, x / 64, -y / 64);
+			ptr++;
+			ptr->Set(x + 4096, z, y, x / 64 + 64, -y / 64);
+			ptr++;
+			ptr->Set(x, z, y + 4096, x / 64, -y / 64 - 64);
+			ptr++;
+			ptr->Set(x + 4096, z, y + 4096, x / 64 + 64, -y / 64 - 64);
+			ptr++;
+		}
+	}
+
+	// fill the gap between the polygon and the true horizon
+	// Since I can't draw into infinity there can always be a
+	// small gap
+	ptr->Set(-32768 + vx, z, -32768 + vy, 512.f, 0);
+	ptr++;
+	ptr->Set(-32768 + vx, vz, -32768 + vy, 512.f, tz);
+	ptr++;
+	ptr->Set(-32768 + vx, z, 32768 + vy, -512.f, 0);
+	ptr++;
+	ptr->Set(-32768 + vx, vz, 32768 + vy, -512.f, tz);
+	ptr++;
+	ptr->Set(32768 + vx, z, 32768 + vy, 512.f, 0);
+	ptr++;
+	ptr->Set(32768 + vx, vz, 32768 + vy, 512.f, tz);
+	ptr++;
+	ptr->Set(32768 + vx, z, -32768 + vy, -512.f, 0);
+	ptr++;
+	ptr->Set(32768 + vx, vz, -32768 + vy, -512.f, tz);
+	ptr++;
+	ptr->Set(-32768 + vx, z, -32768 + vy, 512.f, 0);
+	ptr++;
+	ptr->Set(-32768 + vx, vz, -32768 + vy, 512.f, tz);
+	ptr++;
+
+	vcount = GLRenderer->mVBO->GetCount(ptr, &voffset) - 10;
+
+}
+
 //-----------------------------------------------------------------------------
 //
 // GLHorizonPortal::DrawContents
@@ -1092,11 +1139,10 @@ void GLHorizonPortal::DrawContents()
 {
 	PortalAll.Clock();
 
-	GLSectorPlane * sp=&origin->plane;
 	FMaterial * gltexture;
 	PalEntry color;
-	float z;
 	player_t * player=&players[consoleplayer];
+	GLSectorPlane * sp = &origin->plane;
 
 	gltexture=FMaterial::ValidateTexture(sp->texture, false, true);
 	if (!gltexture) 
@@ -1106,9 +1152,6 @@ void GLHorizonPortal::DrawContents()
 		return;
 	}
 	gl_RenderState.SetCameraPos(ViewPos.X, ViewPos.Y, ViewPos.Z);
-
-
-	z=sp->Texheight;
 
 
 	if (gltexture && gltexture->tex->isFullbright())
@@ -1133,58 +1176,11 @@ void GLHorizonPortal::DrawContents()
 	gl_RenderState.Apply();
 
 
-
-	float vx= ViewPos.X;
-	float vy= ViewPos.Y;
-
-	// Draw to some far away boundary
-	// This is not drawn as larher strips because it causes visual glitches.
-	for(float x=-32768+vx; x<32768+vx; x+=4096)
+	for (unsigned i = 0; i < vcount; i += 4)
 	{
-		for(float y=-32768+vy; y<32768+vy;y+=4096)
-		{
-			FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-			ptr->Set(x, z, y, x / 64, -y / 64);
-			ptr++;
-			ptr->Set(x + 4096, z, y, x / 64 + 64, -y / 64);
-			ptr++;
-			ptr->Set(x, z, y + 4096, x / 64, -y / 64 - 64);
-			ptr++;
-			ptr->Set(x + 4096, z, y + 4096, x / 64 + 64, -y / 64 - 64);
-			ptr++;
-			GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-		}
+		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, voffset + i, 4);
 	}
-
-	float vz= ViewPos.Z;
-	float tz=(z-vz);///64.0f;
-
-	// fill the gap between the polygon and the true horizon
-	// Since I can't draw into infinity there can always be a
-	// small gap
-
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	ptr->Set(-32768 + vx, z, -32768 + vy, 512.f, 0);
-	ptr++;
-	ptr->Set(-32768 + vx, vz, -32768 + vy, 512.f, tz);
-	ptr++;
-	ptr->Set(-32768 + vx, z, 32768 + vy, -512.f, 0);
-	ptr++;
-	ptr->Set(-32768 + vx, vz, 32768 + vy, -512.f, tz);
-	ptr++;
-	ptr->Set(32768 + vx, z, 32768 + vy, 512.f, 0);
-	ptr++;
-	ptr->Set(32768 + vx, vz, 32768 + vy, 512.f, tz);
-	ptr++;
-	ptr->Set(32768 + vx, z, -32768 + vy, -512.f, 0);
-	ptr++;
-	ptr->Set(32768 + vx, vz, -32768 + vy, -512.f, tz);
-	ptr++;
-	ptr->Set(-32768 + vx, z, -32768 + vy, 512.f, 0);
-	ptr++;
-	ptr->Set(-32768 + vx, vz, -32768 + vy, 512.f, tz);
-	ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, voffset + vcount, 10);
 
 	gl_RenderState.EnableTextureMatrix(false);
 	PortalAll.Unclock();

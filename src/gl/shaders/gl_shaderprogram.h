@@ -6,6 +6,7 @@
 class FShaderProgram
 {
 public:
+	FShaderProgram();
 	~FShaderProgram();
 
 	enum ShaderType
@@ -30,6 +31,9 @@ public:
 	static void PatchFragShader(FString &code);
 
 private:
+	FShaderProgram(const FShaderProgram &) = delete;
+	FShaderProgram &operator=(const FShaderProgram &) = delete;
+
 	static FString PatchShader(ShaderType type, const FString &code, const char *defines, int maxGlslVersion);
 	static void PatchCommon(FString &code);
 

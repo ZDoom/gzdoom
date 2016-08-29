@@ -172,6 +172,9 @@ public:
 	float zceil[2];
 	float zfloor[2];
 
+	unsigned int vertindex;
+	unsigned int vertcount;
+
 public:
 	seg_t * seg;			// this gives the easiest access to all other structs involved
 	subsector_t * sub;		// For polyobjects
@@ -192,7 +195,8 @@ private:
 
 	void SetupLights();
 	bool PrepareLight(ADynamicLight * light, int pass);
-	void RenderWall(int textured, unsigned int *store = NULL);
+	void MakeVertices(bool nosplit);
+	void RenderWall(int textured);
 	void RenderTextured(int rflags);
 
 	void FloodPlane(int pass);
@@ -284,7 +288,6 @@ public:
 	friend struct GLDrawList;
 
 	sector_t * sector;
-	subsector_t * sub;	// only used for translucent planes
 	float dz; // z offset for rendering hacks
 	float z; // the z position of the flat (only valid for non-sloped planes)
 	FMaterial *gltexture;

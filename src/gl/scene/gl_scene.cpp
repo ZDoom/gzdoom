@@ -168,9 +168,8 @@ void FGLRenderer::Reset3DViewport()
 
 void FGLRenderer::Set3DViewport(bool mainview)
 {
-	if (mainview && FGLRenderBuffers::IsEnabled())
+	if (mainview && mBuffers->Setup(mScreenViewport.width, mScreenViewport.height, mSceneViewport.width, mSceneViewport.height))
 	{
-		mBuffers->Setup(mScreenViewport.width, mScreenViewport.height, mSceneViewport.width, mSceneViewport.height);
 		mBuffers->BindSceneFB();
 	}
 
@@ -285,6 +284,7 @@ void FGLRenderer::CreateScene()
 	for(unsigned i=0;i<portals.Size(); i++) portals[i]->glportal = NULL;
 	gl_spriteindex=0;
 	Bsp.Clock();
+	GLRenderer->mVBO->Map();
 	R_SetView();
 	validcount++;	// used for processing sidedefs only once by the renderer.
 	gl_RenderBSPNode (nodes + numnodes - 1);
@@ -296,6 +296,7 @@ void FGLRenderer::CreateScene()
 	gl_drawinfo->HandleMissingTextures();	// Missing upper/lower textures
 	gl_drawinfo->HandleHackedSubsectors();	// open sector hacks for deep water
 	gl_drawinfo->ProcessSectorStacks();		// merge visplanes of sector stacks
+	GLRenderer->mVBO->Unmap();
 
 	ProcessAll.Unclock();
 
@@ -526,7 +527,7 @@ void gl_FillScreen()
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.Apply();
 	// The fullscreen quad is stored at index 4 in the main vertex buffer.
-	glDrawArrays(GL_TRIANGLE_STRIP, 4, 4);
+	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, FFlatVertexBuffer::FULLSCREEN_INDEX, 4);
 }
 
 //==========================================================================

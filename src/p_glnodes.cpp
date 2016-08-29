@@ -1013,7 +1013,7 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 				subsectors, numsubsectors,
 				vertexes, numvertexes);
 			endTime = I_FPSTime ();
-			DPrintf ("BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
+			DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
 			buildtime = endTime - startTime;
 		}
 	}
@@ -1026,12 +1026,12 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 #endif
 		if (level.maptype != MAPTYPE_BUILD && gl_cachenodes && buildtime/1000.f >= gl_cachetime)
 		{
-			DPrintf("Caching nodes\n");
+			DPrintf(DMSG_NOTIFY, "Caching nodes\n");
 			CreateCachedNodes(map);
 		}
 		else
 		{
-			DPrintf("Not caching nodes (time = %f)\n", buildtime/1000.f);
+			DPrintf(DMSG_NOTIFY, "Not caching nodes (time = %f)\n", buildtime/1000.f);
 		}
 	}
 

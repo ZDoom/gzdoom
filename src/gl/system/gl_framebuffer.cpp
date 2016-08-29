@@ -99,6 +99,11 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int 
 	// If wglSwapIntervalEXT is called after glBindFramebuffer in a frame the setting is not changed!
 	SetVSync(vid_vsync);
 
+	// Make sure all global variables tracking OpenGL context state are reset..
+	FHardwareTexture::InitGlobalState();
+	FMaterial::InitGlobalState();
+	gl_RenderState.Reset();
+
 	GLRenderer = new FGLRenderer(this);
 	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 	UpdatePalette ();
@@ -305,6 +310,9 @@ void OpenGLFrameBuffer::UpdatePalette()
 	bb>>=8;
 
 	palette_brightness = (rr*77 + gg*143 + bb*35)/255;
+
+	if (GLRenderer)
+		GLRenderer->ClearTonemapPalette();
 }
 
 void OpenGLFrameBuffer::GetFlashedPalette (PalEntry pal[256])

@@ -81,6 +81,6 @@ void FQuadDrawer::DoRender(int type)
 	glUniformMatrix4fv(shader->vertexmatrix_index, 1, false, matV);
 	glUniformMatrix4fv(shader->texcoordmatrix_index, 1, false, matT);
 	glUniform1i(shader->quadmode_index, 1);
-	GLRenderer->mVBO->RenderArray(type, 0, 4);
+	GLRenderer->mVBO->RenderArray(type, FFlatVertexBuffer::QUAD_INDEX, 4);
 	glUniform1i(shader->quadmode_index, 0);
 }

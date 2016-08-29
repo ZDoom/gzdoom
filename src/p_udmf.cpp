@@ -147,7 +147,7 @@ extern TArray<int>		linemap;
 
 void UDMFParserBase::Skip()
 {
-	if (developer) sc.ScriptMessage("Ignoring unknown key \"%s\".", sc.String);
+	if (developer >= DMSG_WARNING) sc.ScriptMessage("Ignoring unknown UDMF key \"%s\".", sc.String);
 	if(sc.CheckToken('{'))
 	{
 		int level = 1;

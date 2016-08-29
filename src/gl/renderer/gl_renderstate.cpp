@@ -80,19 +80,43 @@ void FRenderState::Reset()
 	mDstBlend = GL_ONE_MINUS_SRC_ALPHA;
 	mAlphaThreshold = 0.5f;
 	mBlendEquation = GL_FUNC_ADD;
+	mModelMatrixEnabled = false;
+	mTextureMatrixEnabled = false;
 	mObjectColor = 0xffffffff;
 	mVertexBuffer = mCurrentVertexBuffer = NULL;
 	mColormapState = CM_DEFAULT;
+	mSoftLight = 0;
+	mLightParms[0] = mLightParms[1] = mLightParms[2] = 0.0f;
 	mLightParms[3] = -1.f;
 	mSpecialEffect = EFF_NONE;
 	mClipHeight = 0.f;
 	mClipHeightDirection = 0.f;
+	mShaderTimer = 0.0f;
 	ClearClipSplit();
 
 	stSrcBlend = stDstBlend = -1;
 	stBlendEquation = -1;
 	stAlphaThreshold = -1.f;
+	stAlphaTest = 0;
 	mLastDepthClamp = true;
+	mInterpolationFactor = 0.0f;
+
+	mColor.Set(1.0f, 1.0f, 1.0f, 1.0f);
+	mCameraPos.Set(0.0f, 0.0f, 0.0f, 0.0f);
+	mGlowTop.Set(0.0f, 0.0f, 0.0f, 0.0f);
+	mGlowBottom.Set(0.0f, 0.0f, 0.0f, 0.0f);
+	mGlowTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
+	mGlowBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
+	mSplitTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
+	mSplitBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
+	mClipLine.Set(0.0f, 0.0f, 0.0f, 0.0f);
+	mDynColor.Set(0.0f, 0.0f, 0.0f, 0.0f);
+	mEffectState = 0;
+	activeShader = nullptr;
+	mProjectionMatrix.loadIdentity();
+	mViewMatrix.loadIdentity();
+	mModelMatrix.loadIdentity();
+	mTextureMatrix.loadIdentity();
 }
 
 //==========================================================================

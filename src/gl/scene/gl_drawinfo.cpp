@@ -476,6 +476,7 @@ void GLDrawList::SortWallIntoWall(SortNode * head,SortNode * sort)
 
 		ws1->glseg.x1=ws->glseg.x2=ix;
 		ws1->glseg.y1=ws->glseg.y2=iy;
+		ws1->glseg.fracleft = ws->glseg.fracright = ws->glseg.fracleft + r*(ws->glseg.fracright - ws->glseg.fracleft);
 		ws1->ztop[0]=ws->ztop[1]=izt;
 		ws1->zbottom[0]=ws->zbottom[1]=izb;
 		ws1->tcs[GLWall::LOLFT].u = ws1->tcs[GLWall::UPLFT].u = ws->tcs[GLWall::LORGT].u = ws->tcs[GLWall::UPRGT].u = iu;

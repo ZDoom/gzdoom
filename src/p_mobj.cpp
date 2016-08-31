@@ -1806,6 +1806,11 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 		mo->Vel.X *= fac;
 		mo->Vel.Y *= fac;
 	}
+	const double VELOCITY_THRESHOLD = 5000;	// don't let it move faster than this. Fixed point overflowed at 32768 but that's too much to make this safe.
+	if (mo->Vel.LengthSquared() >= VELOCITY_THRESHOLD*VELOCITY_THRESHOLD)
+	{
+		mo->Vel.MakeResize(VELOCITY_THRESHOLD);
+	}
 	move = mo->Vel;
 	// [RH] Carrying sectors didn't work with low speeds in BOOM. This is
 	// because BOOM relied on the speed being fast enough to accumulate

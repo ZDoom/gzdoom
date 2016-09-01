@@ -389,6 +389,11 @@ void AActor::Serialize(FArchive &arc)
 		arc << SpriteRotation;
 	}
 
+	if (SaveVersion >= 4550)
+	{
+		arc << alternative;
+	}
+
 	{
 		FString tagstr;
 		if (arc.IsStoring() && Tag != NULL && Tag->Len() > 0) tagstr = *Tag;

@@ -641,6 +641,8 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 		gl_RenderState.SetColor(blend[0], blend[1], blend[2], blend[3]);
 		gl_FillScreen();
 	}
+	gl_RenderState.ResetColor();
+	gl_RenderState.EnableTexture(true);
 }
 
 

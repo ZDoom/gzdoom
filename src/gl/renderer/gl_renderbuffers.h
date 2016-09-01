@@ -70,6 +70,9 @@ public:
 	int GetWidth() const { return mWidth; }
 	int GetHeight() const { return mHeight; }
 
+	int GetSceneWidth() const { return mSceneWidth; }
+	int GetSceneHeight() const { return mSceneHeight; }
+
 private:
 	void ClearScene();
 	void ClearPipeline();

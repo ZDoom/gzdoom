@@ -104,11 +104,11 @@ CVAR(Float, gl_ssao_strength, 0.7, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, gl_ssao_debug, false, 0)
 CVAR(Float, gl_ssao_bias, 0.5f, 0)
 CVAR(Float, gl_ssao_radius, 100.0f, 0)
-CUSTOM_CVAR(Float, gl_ssao_blur_amount, 6.0f, 0)
+CUSTOM_CVAR(Float, gl_ssao_blur_amount, 4.0f, 0)
 {
 	if (self < 0.1f) self = 0.1f;
 }
-CUSTOM_CVAR(Int, gl_ssao_blur_samples, 9, 0)
+CUSTOM_CVAR(Int, gl_ssao_blur_samples, 5, 0)
 {
 	if (self < 3 || self > 15 || self % 2 == 0)
 		self = 9;
@@ -158,8 +158,8 @@ void FGLRenderer::AmbientOccludeScene()
 	float aoStrength = gl_ssao_strength;
 
 	//float tanHalfFovy = tan(fovy * (M_PI / 360.0f));
-	float tanHalfFovy = 1.0f / 1.33333302f; //gl_RenderState.mProjectionMatrix.get()[5];
-	float invFocalLenX = tanHalfFovy * (mBuffers->AmbientWidth / (float)mBuffers->AmbientHeight);
+	float tanHalfFovy = 1.0f / 1.33333302f; // 1.0f / gl_RenderState.mProjectionMatrix.get()[5];
+	float invFocalLenX = tanHalfFovy * (mBuffers->GetSceneWidth() / (float)mBuffers->GetSceneHeight());
 	float invFocalLenY = tanHalfFovy;
 	float nDotVBias = clamp(bias, 0.0f, 1.0f);
 	float r2 = aoRadius * aoRadius;

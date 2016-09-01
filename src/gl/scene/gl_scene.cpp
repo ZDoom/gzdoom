@@ -635,9 +635,9 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 		V_AddBlend (player->BlendR, player->BlendG, player->BlendB, player->BlendA, blend);
 	}
 
+	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	if (blend[3]>0.0f)
 	{
-		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.SetColor(blend[0], blend[1], blend[2], blend[3]);
 		gl_FillScreen();
 	}
@@ -676,16 +676,19 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	{
 		DrawPlayerSprites (viewsector, false);
 	}
-	int cm = gl_RenderState.GetFixedColormap();
+	if (gl.legacyMode)
+	{
+		int cm = gl_RenderState.GetFixedColormap();
+		gl_RenderState.SetFixedColormap(cm);
+		gl_RenderState.DrawColormapOverlay();
+	}
+
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.SetSoftLightLevel(-1);
 	DrawTargeterSprites();
-	DrawBlend(viewsector);
-	if (gl.legacyMode)
+	if (FGLRenderBuffers::IsEnabled())
 	{
-		gl_RenderState.SetFixedColormap(cm);
-		gl_RenderState.DrawColormapOverlay();
-		gl_RenderState.SetFixedColormap(CM_DEFAULT);
+		DrawBlend(viewsector);
 	}
 
 	// Restore standard rendering state
@@ -851,7 +854,9 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 			mBuffers->BlitSceneToTexture();
 			BloomScene();
 			TonemapScene();
+			ColormapScene();
 			LensDistortScene();
+			DrawBlend(viewsector);	// This should be done after postprocessing, not before.
 		}
 		mDrawingScene2D = false;
 		eye->TearDown();

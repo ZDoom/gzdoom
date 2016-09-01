@@ -55,7 +55,14 @@
 #include "doomerrors.h"
 
 CVAR(Int, gl_multisample, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Bool, gl_renderbuffers, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CUSTOM_CVAR(Bool, gl_renderbuffers, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	// this CVAR alters some fixed colormap related settings
+	if (GLRenderer != nullptr && GLRenderer->mShaderManager != nullptr)
+	{
+		//GLRenderer->mShaderManager->ResetFixedColormap();
+	}
+}
 
 //==========================================================================
 //

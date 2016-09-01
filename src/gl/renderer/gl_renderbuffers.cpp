@@ -332,8 +332,8 @@ void FGLRenderBuffers::CreateAmbientOcclusion(int width, int height)
 
 	AmbientWidth = width / 2;
 	AmbientHeight = height / 2;
-	AmbientTexture0 = Create2DTexture("AmbientTexture0", GetHdrFormat(), AmbientWidth, AmbientHeight);
-	AmbientTexture1 = Create2DTexture("AmbientTexture1", GetHdrFormat(), AmbientWidth, AmbientHeight);
+	AmbientTexture0 = Create2DTexture("AmbientTexture0", GL_RGBA32F, AmbientWidth, AmbientHeight);
+	AmbientTexture1 = Create2DTexture("AmbientTexture1", GL_RGBA32F, AmbientWidth, AmbientHeight);
 	AmbientFB0 = CreateFrameBuffer("AmbientFB0", AmbientTexture0);
 	AmbientFB1 = CreateFrameBuffer("AmbientFB1", AmbientTexture1);
 
@@ -388,6 +388,7 @@ GLuint FGLRenderBuffers::Create2DTexture(const FString &name, GLuint format, int
 	case GL_RGBA8:				dataformat = GL_RGBA; datatype = GL_UNSIGNED_BYTE; break;
 	case GL_RGBA16:				dataformat = GL_RGBA; datatype = GL_UNSIGNED_SHORT; break;
 	case GL_RGBA16F:			dataformat = GL_RGBA; datatype = GL_FLOAT; break;
+	case GL_RGBA32F:			dataformat = GL_RGBA; datatype = GL_FLOAT; break;
 	case GL_DEPTH_COMPONENT24:	dataformat = GL_DEPTH_COMPONENT; datatype = GL_FLOAT; break;
 	case GL_STENCIL_INDEX8:		dataformat = GL_STENCIL_INDEX; datatype = GL_INT; break;
 	case GL_DEPTH24_STENCIL8:	dataformat = GL_DEPTH_STENCIL; datatype = GL_UNSIGNED_INT_24_8; break;

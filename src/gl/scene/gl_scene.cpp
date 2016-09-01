@@ -409,7 +409,7 @@ void FGLRenderer::RenderScene(int recursion)
 
 	// this is the only geometry type on which decals can possibly appear
 	gl_drawinfo->drawlists[GLDL_PLAINWALLS].DrawDecals();
-	if (gl.lightmethod == LM_SOFTWARE)
+	if (gl.legacyMode)
 	{
 		// also process the render lists with walls and dynamic lights
         gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawDecals();
@@ -681,7 +681,7 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	gl_RenderState.SetSoftLightLevel(-1);
 	DrawTargeterSprites();
 	DrawBlend(viewsector);
-	if (gl.glslversion == 0.0)
+	if (gl.legacyMode)
 	{
 		gl_RenderState.SetFixedColormap(cm);
 		gl_RenderState.DrawColormapOverlay();
@@ -846,9 +846,9 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 
 		ProcessScene(toscreen);
 		if (mainview && toscreen) EndDrawScene(retval);	// do not call this for camera textures.
-		if (mainview)
+		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
-			if (FGLRenderBuffers::IsEnabled()) mBuffers->BlitSceneToTexture();
+			mBuffers->BlitSceneToTexture();
 			BloomScene();
 			TonemapScene();
 			LensDistortScene();
@@ -896,7 +896,7 @@ void FGLRenderer::RenderView (player_t* player)
 
 	P_FindParticleSubsectors ();
 
-	if (gl.lightmethod != LM_SOFTWARE) GLRenderer->mLights->Clear();
+	if (!gl.legacyMode) GLRenderer->mLights->Clear();
 
 	// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
 	bool saved_niv = NoInterpolateView;
@@ -951,7 +951,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FILE *file, int width, int hei
 	SetFixedColormap(player);
 	gl_RenderState.SetVertexBuffer(mVBO);
 	GLRenderer->mVBO->Reset();
-	if (gl.lightmethod != LM_SOFTWARE) GLRenderer->mLights->Clear();
+	if (!gl.legacyMode) GLRenderer->mLights->Clear();
 
 	// Check if there's some lights. If not some code can be skipped.
 	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);

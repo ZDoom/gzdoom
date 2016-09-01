@@ -51,32 +51,6 @@ vec4 desaturate(vec4 texel)
 //
 //===========================================================================
 
-#ifdef GLSL12_COMPATIBLE
-vec4 getTexel(vec2 st)
-{
-	vec4 texel = texture(tex, st);
-	
-	//
-	// Apply texture modes
-	//
-	if (uTextureMode != 0)
-	{
-		if (uTextureMode == 1) texel.rgb = vec3(1.0,1.0,1.0);
-		else if (uTextureMode == 2) texel.a = 1.0;
-		else if (uTextureMode == 3) texel = vec4(1.0-texel.r, 1.0-texel.b, 1.0-texel.g, texel.a);
-		else if (uTextureMode == 4) texel = vec4(1.0, 1.0, 1.0, texel.r*texel.a);
-		else if (uTextureMode == 5)
-		{
-			if (st.t < 0.0 || st.t > 1.0)
-			{
-				texel.a = 0.0;
-			}
-		}
-	}
-	texel *= uObjectColor;
-	return desaturate(texel);
-}
-#else
 vec4 getTexel(vec2 st)
 {
 	vec4 texel = texture(tex, st);
@@ -113,7 +87,6 @@ vec4 getTexel(vec2 st)
 
 	return desaturate(texel);
 }
-#endif
 
 //===========================================================================
 //

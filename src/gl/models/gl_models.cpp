@@ -105,7 +105,7 @@ void gl_FlushModels()
 //===========================================================================
 
 FModelVertexBuffer::FModelVertexBuffer(bool needindex, bool singleframe)
-	: FVertexBuffer(singleframe || gl.glslversion > 0)
+	: FVertexBuffer(singleframe || !gl.legacyMode)
 {
 	vbo_ptr = nullptr;
 	ibo_id = 0;
@@ -125,7 +125,7 @@ void FModelVertexBuffer::BindVBO()
 {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	if (gl.glslversion > 0)
+	if (!gl.legacyMode)
 	{
 		glEnableVertexAttribArray(VATTR_VERTEX);
 		glEnableVertexAttribArray(VATTR_TEXCOORD);
@@ -170,7 +170,7 @@ FModelVertex *FModelVertexBuffer::LockVertexBuffer(unsigned int size)
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 		glBufferData(GL_ARRAY_BUFFER, size * sizeof(FModelVertex), nullptr, GL_STATIC_DRAW);
-		if (gl.version >= 3.0)
+		if (!gl.legacyMode)
 			return (FModelVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, size * sizeof(FModelVertex), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 		else
 			return (FModelVertex*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
@@ -211,7 +211,7 @@ unsigned int *FModelVertexBuffer::LockIndexBuffer(unsigned int size)
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, size * sizeof(unsigned int), NULL, GL_STATIC_DRAW);
-		if (gl.version >= 3.0)
+		if (!gl.legacyMode)
 			return (unsigned int*)glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, size * sizeof(unsigned int), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 		else
 			return (unsigned int*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
@@ -251,7 +251,7 @@ unsigned int FModelVertexBuffer::SetupFrame(unsigned int frame1, unsigned int fr
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 	if (vbo_id > 0)
 	{
-		if (gl.glslversion > 0)
+		if (!gl.legacyMode)
 		{
 			glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame1].x);
 			glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame1].u);

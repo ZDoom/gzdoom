@@ -113,7 +113,7 @@ public:
 		// Without shaders this translation must be applied to any texture.
 		if (alphatexture)
 		{
-			if (mat->tex->UseBasePalette() || gl.glslversion == 0) translation = TRANSLATION(TRANSLATION_Standard, 8);
+			if (mat->tex->UseBasePalette() || gl.legacyMode) translation = TRANSLATION(TRANSLATION_Standard, 8);
 		}
 		mEffectState = overrideshader >= 0? overrideshader : mat->mShaderIndex;
 		mShaderTimer = mat->tex->gl_info.shaderspeed;

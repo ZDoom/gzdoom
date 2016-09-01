@@ -240,23 +240,12 @@ FString FShaderProgram::PatchShader(ShaderType type, const FString &code, const 
 	if (defines)
 		patchedCode << defines;
 
-	if (gl.glslversion >= 1.3)
-	{
-		// these settings are actually pointless but there seem to be some old ATI drivers that fail to compile the shader without setting the precision here.
-		patchedCode << "precision highp int;\n";
-		patchedCode << "precision highp float;\n";
-	}
+	// these settings are actually pointless but there seem to be some old ATI drivers that fail to compile the shader without setting the precision here.
+	patchedCode << "precision highp int;\n";
+	patchedCode << "precision highp float;\n";
 
 	patchedCode << "#line 1\n";
 	patchedCode << code;
-
-	if (gl.glslversion < 1.3)
-	{
-		if (type == Vertex)
-			PatchVertShader(patchedCode);
-		else if (type == Fragment)
-			PatchFragShader(patchedCode);
-	}
 
 	return patchedCode;
 }
@@ -268,36 +257,3 @@ FString FShaderProgram::PatchShader(ShaderType type, const FString &code, const 
 //
 //==========================================================================
 
-void FShaderProgram::PatchCommon(FString &code)
-{
-	code.Substitute("precision highp int;", "");
-	code.Substitute("precision highp float;", "");
-}
-
-void FShaderProgram::PatchVertShader(FString &code)
-{
-	PatchCommon(code);
-	code.Substitute("in vec", "attribute vec");
-	code.Substitute("in float", "attribute float");
-	code.Substitute("out vec", "varying vec");
-	code.Substitute("out float", "varying float");
-	code.Substitute("gl_ClipDistance", "//");
-}
-
-void FShaderProgram::PatchFragShader(FString &code)
-{
-	PatchCommon(code);
-	code.Substitute("out vec4 FragColor;", "");
-	code.Substitute("FragColor", "gl_FragColor");
-	code.Substitute("in vec", "varying vec");
-	// this patches the switch statement to if's.
-	code.Substitute("break;", "");
-	code.Substitute("switch (uFixedColormap)", "int i = uFixedColormap;");
-	code.Substitute("case 0:", "if (i == 0)");
-	code.Substitute("case 1:", "else if (i == 1)");
-	code.Substitute("case 2:", "else if (i == 2)");
-	code.Substitute("case 3:", "else if (i == 3)");
-	code.Substitute("case 4:", "else if (i == 4)");
-	code.Substitute("case 5:", "else if (i == 5)");
-	code.Substitute("texture(", "texture2D(");
-}

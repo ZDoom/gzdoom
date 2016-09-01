@@ -87,7 +87,7 @@ FSkyVertexBuffer::~FSkyVertexBuffer()
 void FSkyVertexBuffer::BindVBO()
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	if (gl.glslversion > 0)
+	if (!gl.legacyMode)
 	{
 		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FSkyVertex), &VSO->x);
 		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FSkyVertex), &VSO->u);
@@ -321,7 +321,7 @@ void FSkyVertexBuffer::RenderDome(FMaterial *tex, int mode)
 		RenderRow(GL_TRIANGLE_FAN, rc);
 		gl_RenderState.EnableTexture(true);
 		// The color array can only be activated now if this is drawn without shader
-		if (gl.glslversion == 0)
+		if (gl.legacyMode)
 		{
 			glEnableClientState(GL_COLOR_ARRAY);
 		}

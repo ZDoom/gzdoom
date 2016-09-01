@@ -218,17 +218,8 @@ void FGLRenderBuffers::CreateScene(int width, int height, int samples)
 	if (samples > 1)
 		mSceneMultisample = CreateRenderBuffer("SceneMultisample", GetHdrFormat(), samples, width, height);
 
-	if ((gl.flags & RFL_NO_DEPTHSTENCIL) != 0)
-	{
-		mSceneDepth = CreateRenderBuffer("SceneDepth", GL_DEPTH_COMPONENT24, samples, width, height);
-		mSceneStencil = CreateRenderBuffer("SceneStencil", GL_STENCIL_INDEX8, samples, width, height);
-		mSceneFB = CreateFrameBuffer("SceneFB", samples > 1 ? mSceneMultisample : mPipelineTexture[0], mSceneDepth, mSceneStencil, samples > 1);
-	}
-	else
-	{
-		mSceneDepthStencil = CreateRenderBuffer("SceneDepthStencil", GL_DEPTH24_STENCIL8, samples, width, height);
-		mSceneFB = CreateFrameBuffer("SceneFB", samples > 1 ? mSceneMultisample : mPipelineTexture[0], mSceneDepthStencil, samples > 1);
-	}
+	mSceneDepthStencil = CreateRenderBuffer("SceneDepthStencil", GL_DEPTH24_STENCIL8, samples, width, height);
+	mSceneFB = CreateFrameBuffer("SceneFB", samples > 1 ? mSceneMultisample : mPipelineTexture[0], mSceneDepthStencil, samples > 1);
 }
 
 //==========================================================================
@@ -288,7 +279,7 @@ void FGLRenderBuffers::CreateBloom(int width, int height)
 
 GLuint FGLRenderBuffers::GetHdrFormat()
 {
-	return ((gl.flags & RFL_NO_RGBA16F) != 0) ? GL_RGBA8 : GL_RGBA16F;
+	return GL_RGBA16F;
 }
 
 //==========================================================================
@@ -559,7 +550,7 @@ void FGLRenderBuffers::BindOutputFB()
 
 bool FGLRenderBuffers::IsEnabled()
 {
-	return gl_renderbuffers && gl.glslversion != 0 && !FailedCreate;
+	return gl_renderbuffers && !gl.legacyMode && !FailedCreate;
 }
 
 bool FGLRenderBuffers::FailedCreate = false;

@@ -91,40 +91,27 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 //
 	FString vp_comb;
 
-	if (gl.lightmethod == LM_SOFTWARE)
+	assert(GLRenderer->mLights != NULL);
+	// On the shader side there is no difference between LM_DEFERRED and LM_DIRECT, it only decides how the buffer is initialized.
+	unsigned int lightbuffertype = GLRenderer->mLights->GetBufferType();
+	unsigned int lightbuffersize = GLRenderer->mLights->GetBlockSize();
+	if (lightbuffertype == GL_UNIFORM_BUFFER)
 	{
-		if (gl.glslversion >= 1.3)
+		// This differentiation is for some Intel drivers which fail on #extension, so use of #version 140 is necessary
+		if (gl.glslversion < 1.4f)
 		{
-			vp_comb = "#version 130\n";
+			vp_comb.Format("#version 130\n#extension GL_ARB_uniform_buffer_object : require\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
 		}
 		else
 		{
-			vp_comb = "#define GLSL12_COMPATIBLE\n";
+			vp_comb.Format("#version 140\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
 		}
 	}
 	else
 	{
-		assert(GLRenderer->mLights != NULL);
-		// On the shader side there is no difference between LM_DEFERRED and LM_DIRECT, it only matters which buffer type is used by the light buffer.
-		unsigned int lightbuffertype = GLRenderer->mLights->GetBufferType();
-		unsigned int lightbuffersize = GLRenderer->mLights->GetBlockSize();
-		if (lightbuffertype == GL_UNIFORM_BUFFER)
-		{
-			// This differentiation is for some Intel drivers which fail on #extension, so use of #version 140 is necessary
-			if (gl.glslversion < 1.4f || gl.version < 3.1f)
-			{
-				vp_comb.Format("#version 130\n#extension GL_ARB_uniform_buffer_object : require\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
-			}
-			else
-			{
-				vp_comb.Format("#version 140\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
-			}
-		}
-		else
-		{
-			vp_comb = "#version 400 core\n#extension GL_ARB_shader_storage_buffer_object : require\n#define SHADER_STORAGE_LIGHTS\n";
-		}
+		vp_comb = "#version 400 core\n#extension GL_ARB_shader_storage_buffer_object : require\n#define SHADER_STORAGE_LIGHTS\n";
 	}
+
 	if (gl.buffermethod == BM_DEFERRED)
 	{
 		vp_comb << "#define USE_QUAD_DRAWER\n";
@@ -169,12 +156,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		}
 	}
 
-	if (gl.glslversion < 1.3)
-	{
-		FShaderProgram::PatchVertShader(vp_comb);
-		FShaderProgram::PatchFragShader(fp_comb);
-	}
-	else if (gl.flags & RFL_NO_CLIP_PLANES)
+	if (gl.flags & RFL_NO_CLIP_PLANES)
 	{
 		// On ATI's GL3 drivers we have to disable gl_ClipDistance because it's hopelessly broken.
 		// This will cause some glitches and regressions but is the only way to avoid total display garbage.
@@ -273,7 +255,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	texcoordmatrix_index = glGetUniformLocation(hShader, "uQuadTexCoords");
 	quadmode_index = glGetUniformLocation(hShader, "uQuadMode");
 
-	if (LM_SOFTWARE != gl.lightmethod && !(gl.flags & RFL_SHADER_STORAGE_BUFFER))
+	if (!gl.legacyMode && !(gl.flags & RFL_SHADER_STORAGE_BUFFER))
 	{
 		int tempindex = glGetUniformBlockIndex(hShader, "LightBufferUBO");
 		if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, LIGHTBUF_BINDINGPOINT);
@@ -424,7 +406,7 @@ static const FEffectShader effectshaders[]=
 
 FShaderManager::FShaderManager()
 {
-	if (gl.glslversion > 0) CompileShaders();
+	if (!gl.legacyMode) CompileShaders();
 }
 
 //==========================================================================
@@ -435,7 +417,7 @@ FShaderManager::FShaderManager()
 
 FShaderManager::~FShaderManager()
 {
-	if (gl.glslversion > 0) Clean();
+	if (!gl.legacyMode) Clean();
 }
 
 //==========================================================================
@@ -577,7 +559,7 @@ EXTERN_CVAR(Int, gl_fuzztype)
 
 void FShaderManager::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
 {
-	if (gl.glslversion == 0)
+	if (gl.legacyMode)
 	{
 		glMatrixMode(GL_PROJECTION);
 		glLoadMatrixf(proj->get());

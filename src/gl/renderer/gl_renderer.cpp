@@ -129,8 +129,8 @@ void FGLRenderer::Initialize(int width, int height)
 	mPresentShader = new FPresentShader();
 	m2DDrawer = new F2DDrawer;
 
-	// Only needed for the core profile, because someone decided it was a good idea to remove the default VAO.
-	if (gl.buffermethod != BM_CLIENTARRAY)
+	// needed for the core profile, because someone decided it was a good idea to remove the default VAO.
+	if (!gl.legacyMode)
 	{
 		glGenVertexArrays(1, &mVAOID);
 		glBindVertexArray(mVAOID);
@@ -145,7 +145,7 @@ void FGLRenderer::Initialize(int width, int height)
 
 	mVBO = new FFlatVertexBuffer(width, height);
 	mSkyVBO = new FSkyVertexBuffer;
-	if (gl.lightmethod != LM_SOFTWARE) mLights = new FLightBuffer();
+	if (!gl.legacyMode) mLights = new FLightBuffer();
 	else mLights = NULL;
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mFBID = 0;

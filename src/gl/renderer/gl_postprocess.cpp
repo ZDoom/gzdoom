@@ -126,7 +126,7 @@ void FGLRenderer::RenderScreenQuad()
 void FGLRenderer::BloomScene()
 {
 	// Only bloom things if enabled and no special fixed light mode is active
-	if (!gl_bloom || !FGLRenderBuffers::IsEnabled() || gl_fixedcolormap != CM_DEFAULT)
+	if (!gl_bloom || gl_fixedcolormap != CM_DEFAULT)
 		return;
 
 	FGLDebug::PushGroup("BloomScene");
@@ -212,7 +212,7 @@ void FGLRenderer::BloomScene()
 
 void FGLRenderer::TonemapScene()
 {
-	if (gl_tonemap == 0 || !FGLRenderBuffers::IsEnabled())
+	if (gl_tonemap == 0)
 		return;
 
 	FGLDebug::PushGroup("TonemapScene");
@@ -292,7 +292,7 @@ void FGLRenderer::ClearTonemapPalette()
 
 void FGLRenderer::LensDistortScene()
 {
-	if (gl_lens == 0 || !FGLRenderBuffers::IsEnabled())
+	if (gl_lens == 0)
 		return;
 
 	FGLDebug::PushGroup("LensDistortScene");

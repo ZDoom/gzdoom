@@ -75,7 +75,7 @@ FVertexBuffer::~FVertexBuffer()
 void FSimpleVertexBuffer::BindVBO()
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	if (gl.glslversion > 0)
+	if (!gl.legacyMode)
 	{
 		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FSimpleVertex), &VSiO->x);
 		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FSimpleVertex), &VSiO->u);
@@ -100,7 +100,7 @@ void FSimpleVertexBuffer::EnableColorArray(bool on)
 {
 	if (on)
 	{
-		if (gl.glslversion > 0)
+		if (!gl.legacyMode)
 		{
 			glEnableVertexAttribArray(VATTR_COLOR);
 		}
@@ -111,7 +111,7 @@ void FSimpleVertexBuffer::EnableColorArray(bool on)
 	}
 	else
 	{
-		if (gl.glslversion > 0)
+		if (!gl.legacyMode)
 		{
 			glDisableVertexAttribArray(VATTR_COLOR);
 		}
@@ -138,7 +138,7 @@ void FSimpleVertexBuffer::set(FSimpleVertex *verts, int count)
 //==========================================================================
 
 FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
-: FVertexBuffer(gl.buffermethod != BM_CLIENTARRAY)
+: FVertexBuffer(!gl.legacyMode)
 {
 	switch (gl.buffermethod)
 	{
@@ -162,7 +162,7 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 		break;
 	}
 
-	case BM_CLIENTARRAY:
+	default:
 	{
 		map = new FFlatVertex[BUFFER_SIZE];
 		DPrintf(DMSG_NOTIFY, "Using client array buffer\n");
@@ -219,7 +219,7 @@ FFlatVertexBuffer::~FFlatVertexBuffer()
 		glUnmapBuffer(GL_ARRAY_BUFFER);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
-	if (gl.buffermethod == BM_CLIENTARRAY)
+	if (gl.legacyMode)
 	{
 		delete[] map;
 	}
@@ -230,19 +230,10 @@ FFlatVertexBuffer::~FFlatVertexBuffer()
 void FFlatVertexBuffer::BindVBO()
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	if (gl.glslversion > 0)
+	if (!gl.legacyMode)
 	{
-		if (gl.buffermethod != BM_CLIENTARRAY)
-		{
-			glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->x);
-			glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->u);
-		}
-		else
-		{
-			// If we cannot use a hardware buffer, use an old-style client array.
-			glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FFlatVertex), &map->x);
-			glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FFlatVertex), &map->u);
-		}
+		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->x);
+		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->u);
 		glEnableVertexAttribArray(VATTR_VERTEX);
 		glEnableVertexAttribArray(VATTR_TEXCOORD);
 		glDisableVertexAttribArray(VATTR_COLOR);

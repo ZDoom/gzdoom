@@ -296,7 +296,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 	if (translation <= 0) translation = -translation;
 	else
 	{
-		alphatrans = (gl.glslversion == 0 && translation == TRANSLATION(TRANSLATION_Standard, 8));
+		alphatrans = (gl.legacyMode && translation == TRANSLATION(TRANSLATION_Standard, 8));
 		translation = GLTranslationPalette::GetInternalTranslation(translation);
 	}
 
@@ -307,7 +307,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 	if (hwtex)
 	{
 		// Texture has become invalid
-		if ((!tex->bHasCanvas && (!tex->bWarped || gl.glslversion == 0)) && tex->CheckModified())
+		if ((!tex->bHasCanvas && (!tex->bWarped || gl.legacyMode)) && tex->CheckModified())
 		{
 			Clean(true);
 			hwtex = CreateHwTexture();
@@ -325,7 +325,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 			if (!tex->bHasCanvas)
 			{
 				buffer = CreateTexBuffer(translation, w, h, hirescheck, true, alphatrans);
-				if (tex->bWarped && gl.glslversion == 0 && w*h <= 256*256)	// do not software-warp larger textures, especially on the old systems that still need this fallback.
+				if (tex->bWarped && gl.legacyMode && w*h <= 256*256)	// do not software-warp larger textures, especially on the old systems that still need this fallback.
 				{
 					// need to do software warping
 					FWarpTexture *wt = static_cast<FWarpTexture*>(tex);
@@ -489,7 +489,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mSpriteU[0] = mSpriteV[0] = 0.f;
 	mSpriteU[1] = mSpriteV[1] = 1.f;
 
-	FTexture *basetex = (tx->bWarped && gl.glslversion == 0)? tx : tx->GetRedirect(false);
+	FTexture *basetex = (tx->bWarped && gl.legacyMode)? tx : tx->GetRedirect(false);
 	// allow the redirect only if the textute is not expanded or the scale matches.
 	if (!expanded || (tx->Scale.X == basetex->Scale.X && tx->Scale.Y == basetex->Scale.Y))
 	{

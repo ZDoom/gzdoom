@@ -26,16 +26,11 @@ public:
 	operator GLuint() const { return mProgram; }
 	explicit operator bool() const { return mProgram != 0; }
 
-	// Needed by FShader
-	static void PatchVertShader(FString &code);
-	static void PatchFragShader(FString &code);
-
 private:
 	FShaderProgram(const FShaderProgram &) = delete;
 	FShaderProgram &operator=(const FShaderProgram &) = delete;
 
 	static FString PatchShader(ShaderType type, const FString &code, const char *defines, int maxGlslVersion);
-	static void PatchCommon(FString &code);
 
 	void CreateShader(ShaderType type);
 	FString GetShaderInfoLog(GLuint handle);

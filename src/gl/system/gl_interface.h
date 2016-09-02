@@ -21,12 +21,10 @@ enum RenderFlags
 	RFL_BUFFER_STORAGE = 8,
 	RFL_SAMPLER_OBJECTS = 16,
 
-	RFL_NO_RGBA16F = 32,
-	RFL_NO_DEPTHSTENCIL = 64,
-	RFL_NO_CLIP_PLANES = 128,
+	RFL_NO_CLIP_PLANES = 32,
 
-	RFL_INVALIDATE_BUFFER = 256,
-	RFL_DEBUG = 512
+	RFL_INVALIDATE_BUFFER = 64,
+	RFL_DEBUG = 128
 };
 
 enum TexMode
@@ -43,15 +41,15 @@ enum TexMode
 
 enum ELightMethod
 {
-	LM_SOFTWARE = 0,	// multi-pass texturing
+	LM_LEGACY = 0,		// placeholder for legacy mode (textured lights), should not be checked anywhere in the code!
 	LM_DEFERRED = 1,	// calculate lights up front in a separate pass
 	LM_DIRECT = 2,		// calculate lights on the fly along with the render data
 };
 
 enum EBufferMethod
 {
-	BM_CLIENTARRAY = 0,	// use a client array instead of a hardware buffer
-	BM_DEFERRED = 1,	// use a temporarily mapped buffer (only necessary on GL 3.x core profile, i.e. Apple)
+	BM_LEGACY = 0,		// placeholder for legacy mode (client arrays), should not be checked anywhere in the code!
+	BM_DEFERRED = 1,	// use a temporarily mapped buffer, for GL 3.x core profile
 	BM_PERSISTENT = 2	// use a persistently mapped buffer
 };
 
@@ -64,10 +62,10 @@ struct RenderContext
 	unsigned int uniformblockalignment;
 	int lightmethod;
 	int buffermethod;
-	float version;
 	float glslversion;
 	int max_texturesize;
 	char * vendorstring;
+	bool legacyMode;
 
 	int MaxLights() const
 	{

@@ -30,11 +30,9 @@ enum DLDrawListType
 {
 	// These are organized so that the various multipass rendering modes have to be set as few times as possible
 	GLLDL_WALLS_PLAIN,			// dynamic lights on normal walls
-	GLLDL_WALLS_BRIGHT,			// dynamic lights on brightmapped walls
 	GLLDL_WALLS_MASKED,			// dynamic lights on masked midtextures
 
 	GLLDL_FLATS_PLAIN,			// dynamic lights on normal flats
-	GLLDL_FLATS_BRIGHT,			// dynamic lights on brightmapped flats
 	GLLDL_FLATS_MASKED,			// dynamic lights on masked flats
 
 	GLLDL_WALLS_FOG,			// lights on fogged walls

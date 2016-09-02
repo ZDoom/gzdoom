@@ -56,7 +56,14 @@
 #include <random>
 
 CVAR(Int, gl_multisample, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Bool, gl_renderbuffers, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CUSTOM_CVAR(Bool, gl_renderbuffers, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	// this CVAR alters some fixed colormap related settings
+	if (GLRenderer != nullptr && GLRenderer->mShaderManager != nullptr)
+	{
+		//GLRenderer->mShaderManager->ResetFixedColormap();
+	}
+}
 
 //==========================================================================
 //
@@ -95,7 +102,6 @@ void FGLRenderBuffers::ClearScene()
 	DeleteFrameBuffer(mSceneFB);
 	DeleteRenderBuffer(mSceneMSColor);
 	DeleteRenderBuffer(mSceneMSDepthStencil);
-	DeleteRenderBuffer(mSceneMSDepth);
 	DeleteRenderBuffer(mSceneMSStencil);
 }
 
@@ -107,7 +113,6 @@ void FGLRenderBuffers::ClearPipeline()
 		DeleteTexture(mPipelineTexture[i]);
 	}
 	DeleteTexture(mPipelineDepthStencil);
-	DeleteTexture(mPipelineDepth);
 	DeleteTexture(mPipelineStencil);
 }
 
@@ -233,25 +238,12 @@ void FGLRenderBuffers::CreateScene(int width, int height, int samples)
 	if (samples > 1)
 	{
 		mSceneMSColor = CreateRenderBuffer("SceneMSColor", GetHdrFormat(), samples, width, height);
-
-		if ((gl.flags & RFL_NO_DEPTHSTENCIL) != 0)
-		{
-			mSceneMSDepth = CreateRenderBuffer("SceneMSDepth", GL_DEPTH_COMPONENT24, samples, width, height);
-			mSceneMSStencil = CreateRenderBuffer("SceneMSStencil", GL_STENCIL_INDEX8, samples, width, height);
-			mSceneFB = CreateFrameBuffer("SceneFB", mSceneMSColor, mSceneMSDepth, mSceneMSStencil, true);
-		}
-		else
-		{
-			mSceneMSDepthStencil = CreateRenderBuffer("SceneMSDepthStencil", GL_DEPTH24_STENCIL8, samples, width, height);
-			mSceneFB = CreateFrameBuffer("SceneFB", mSceneMSColor, mSceneMSDepthStencil, true);
-		}
+		mSceneMSDepthStencil = CreateRenderBuffer("SceneMSDepthStencil", GL_DEPTH24_STENCIL8, samples, width, height);
+		mSceneFB = CreateFrameBuffer("SceneFB", mSceneMSColor, mSceneMSDepthStencil, true);
 	}
 	else
 	{
-		if ((gl.flags & RFL_NO_DEPTHSTENCIL) != 0)
-			mSceneFB = CreateFrameBuffer("SceneFB", mPipelineTexture[0], mPipelineDepth, mPipelineStencil, false);
-		else
-			mSceneFB = CreateFrameBuffer("SceneFB", mPipelineTexture[0], mPipelineDepthStencil, false);
+		mSceneFB = CreateFrameBuffer("SceneFB", mPipelineTexture[0], mPipelineDepthStencil, false);
 	}
 }
 
@@ -265,23 +257,12 @@ void FGLRenderBuffers::CreatePipeline(int width, int height)
 {
 	ClearPipeline();
 
-	if ((gl.flags & RFL_NO_DEPTHSTENCIL) != 0)
-	{
-		mPipelineDepth = Create2DTexture("PipelineDepth", GL_DEPTH_COMPONENT24, width, height);
-		mPipelineStencil = Create2DTexture("PipelineStencil", GL_STENCIL_INDEX8, width, height);
-	}
-	else
-	{
-		mPipelineDepthStencil = Create2DTexture("PipelineDepthStencil", GL_DEPTH24_STENCIL8, width, height);
-	}
+	mPipelineDepthStencil = Create2DTexture("PipelineDepthStencil", GL_DEPTH24_STENCIL8, width, height);
 
 	for (int i = 0; i < NumPipelineTextures; i++)
 	{
 		mPipelineTexture[i] = Create2DTexture("PipelineTexture", GetHdrFormat(), width, height);
-		if ((gl.flags & RFL_NO_DEPTHSTENCIL) != 0)
-			mPipelineFB[i] = CreateFrameBuffer("PipelineFB", mPipelineTexture[i], mPipelineDepth, mPipelineStencil, false);
-		else
-			mPipelineFB[i] = CreateFrameBuffer("PipelineFB", mPipelineTexture[i], mPipelineDepthStencil, false);
+		mPipelineFB[i] = CreateFrameBuffer("PipelineFB", mPipelineTexture[i], mPipelineDepthStencil, false);
 	}
 }
 
@@ -366,7 +347,7 @@ void FGLRenderBuffers::CreateAmbientOcclusion(int width, int height)
 
 GLuint FGLRenderBuffers::GetHdrFormat()
 {
-	return ((gl.flags & RFL_NO_RGBA16F) != 0) ? GL_RGBA8 : GL_RGBA16F;
+	return GL_RGBA16F;
 }
 
 //==========================================================================
@@ -606,10 +587,7 @@ void FGLRenderBuffers::BindSceneFB()
 void FGLRenderBuffers::BindSceneDepthTexture(int index)
 {
 	glActiveTexture(GL_TEXTURE0 + index);
-	if ((gl.flags & RFL_NO_DEPTHSTENCIL) != 0)
-		glBindTexture(GL_TEXTURE_2D, mPipelineDepth);
-	else
-		glBindTexture(GL_TEXTURE_2D, mPipelineDepthStencil);
+	glBindTexture(GL_TEXTURE_2D, mPipelineDepthStencil);
 }
 
 //==========================================================================
@@ -677,7 +655,7 @@ void FGLRenderBuffers::BindOutputFB()
 
 bool FGLRenderBuffers::IsEnabled()
 {
-	return gl_renderbuffers && gl.glslversion != 0 && !FailedCreate;
+	return gl_renderbuffers && !gl.legacyMode && !FailedCreate;
 }
 
 bool FGLRenderBuffers::FailedCreate = false;

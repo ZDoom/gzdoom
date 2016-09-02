@@ -430,7 +430,7 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 		{
 			gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 			gl_SetPlaneTextureRotation(&plane, gltexture);
-			DrawSubsectors(pass, gl.lightmethod != LM_SOFTWARE, true);
+			DrawSubsectors(pass, !gl.legacyMode, true);
 			gl_RenderState.EnableTextureMatrix(false);
 		}
 		if (renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -468,7 +468,7 @@ inline void GLFlat::PutFlat(bool fog)
 	{
 		Colormap.Clear();
 	}
-	if (gl.lightmethod == LM_SOFTWARE)
+	if (gl.legacyMode)
 	{
 		if (PutFlatCompat(fog)) return;
 	}

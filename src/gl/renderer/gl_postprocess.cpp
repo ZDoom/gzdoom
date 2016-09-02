@@ -72,6 +72,7 @@
 #include "gl/shaders/gl_bloomshader.h"
 #include "gl/shaders/gl_blurshader.h"
 #include "gl/shaders/gl_tonemapshader.h"
+#include "gl/shaders/gl_colormapshader.h"
 #include "gl/shaders/gl_lensshader.h"
 #include "gl/shaders/gl_presentshader.h"
 #include "gl/renderer/gl_2ddrawer.h"
@@ -135,10 +136,11 @@ void FGLRenderer::RenderScreenQuad()
 
 void FGLRenderer::PostProcessScene()
 {
-	if (FGLRenderBuffers::IsEnabled()) mBuffers->BlitSceneToTexture();
+	mBuffers->BlitSceneToTexture();
 	AmbientOccludeScene();
 	BloomScene();
 	TonemapScene();
+	ColormapScene();
 	LensDistortScene();
 }
 
@@ -240,7 +242,7 @@ void FGLRenderer::AmbientOccludeScene()
 void FGLRenderer::BloomScene()
 {
 	// Only bloom things if enabled and no special fixed light mode is active
-	if (!gl_bloom || !FGLRenderBuffers::IsEnabled() || gl_fixedcolormap != CM_DEFAULT || gl_ssao_debug)
+	if (!gl_bloom || gl_fixedcolormap != CM_DEFAULT || gl_ssao_debug)
 		return;
 
 	FGLDebug::PushGroup("BloomScene");
@@ -326,7 +328,7 @@ void FGLRenderer::BloomScene()
 
 void FGLRenderer::TonemapScene()
 {
-	if (gl_tonemap == 0 || !FGLRenderBuffers::IsEnabled())
+	if (gl_tonemap == 0)
 		return;
 
 	FGLDebug::PushGroup("TonemapScene");
@@ -400,13 +402,45 @@ void FGLRenderer::ClearTonemapPalette()
 
 //-----------------------------------------------------------------------------
 //
+// Colormap scene texture and place the result in the HUD/2D texture
+//
+//-----------------------------------------------------------------------------
+
+void FGLRenderer::ColormapScene()
+{
+	if (gl_fixedcolormap < CM_FIRSTSPECIALCOLORMAP || gl_fixedcolormap >= CM_MAXCOLORMAP)
+		return;
+
+	FGLDebug::PushGroup("ColormapScene");
+
+	FGLPostProcessState savedState;
+
+	mBuffers->BindNextFB();
+	mBuffers->BindCurrentTexture(0);
+	mColormapShader->Bind();
+	
+	FSpecialColormap *scm = &SpecialColormaps[gl_fixedcolormap - CM_FIRSTSPECIALCOLORMAP];
+	float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
+		scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
+
+	mColormapShader->MapStart.Set(scm->ColorizeStart[0], scm->ColorizeStart[1], scm->ColorizeStart[2], 0.f);
+	mColormapShader->MapRange.Set(m);
+
+	RenderScreenQuad();
+	mBuffers->NextTexture();
+
+	FGLDebug::PopGroup();
+}
+
+//-----------------------------------------------------------------------------
+//
 // Apply lens distortion and place the result in the HUD/2D texture
 //
 //-----------------------------------------------------------------------------
 
 void FGLRenderer::LensDistortScene()
 {
-	if (gl_lens == 0 || !FGLRenderBuffers::IsEnabled())
+	if (gl_lens == 0)
 		return;
 
 	FGLDebug::PushGroup("LensDistortScene");

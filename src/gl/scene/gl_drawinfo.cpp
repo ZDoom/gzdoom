@@ -322,7 +322,7 @@ void GLDrawList::SortWallIntoPlane(SortNode * head,SortNode * sort)
 		AddWall(&w);
 	
 		// Splitting is done in the shader with clip planes, if available
-		if (gl.glslversion < 1.3f)
+		if (gl.flags & RFL_NO_CLIP_PLANES)
 		{
 			GLWall * ws1;
 			ws->vertcount = 0;	// invalidate current vertices.
@@ -382,7 +382,7 @@ void GLDrawList::SortSpriteIntoPlane(SortNode * head,SortNode * sort)
 		AddSprite(&s);	// add a copy to avoid reallocation issues.
 	
 		// Splitting is done in the shader with clip planes, if available
-		if (gl.glslversion < 1.3f)
+		if (gl.flags & RFL_NO_CLIP_PLANES)
 		{
 			GLSprite * ss1;
 			ss1=&sprites[sprites.Size()-1];
@@ -476,9 +476,15 @@ void GLDrawList::SortWallIntoWall(SortNode * head,SortNode * sort)
 
 		ws1->glseg.x1=ws->glseg.x2=ix;
 		ws1->glseg.y1=ws->glseg.y2=iy;
+		ws1->glseg.fracleft = ws->glseg.fracright = ws->glseg.fracleft + r*(ws->glseg.fracright - ws->glseg.fracleft);
 		ws1->ztop[0]=ws->ztop[1]=izt;
 		ws1->zbottom[0]=ws->zbottom[1]=izb;
 		ws1->tcs[GLWall::LOLFT].u = ws1->tcs[GLWall::UPLFT].u = ws->tcs[GLWall::LORGT].u = ws->tcs[GLWall::UPRGT].u = iu;
+		if (gl.buffermethod == BM_DEFERRED)
+		{
+			ws->MakeVertices(false);
+			ws1->MakeVertices(false);
+		}
 
 		SortNode * sort2=SortNodes.GetNew();
 		memset(sort2,0,sizeof(SortNode));
@@ -805,17 +811,19 @@ void GLDrawList::DrawSorted()
 
 	if (!sorted)
 	{
+		GLRenderer->mVBO->Map();
 		MakeSortList();
 		sorted=DoSort(SortNodes[SortNodeStart]);
+		GLRenderer->mVBO->Unmap();
 	}
 	gl_RenderState.ClearClipSplit();
-	if (gl.glslversion >= 1.3f)
+	if (!(gl.flags & RFL_NO_CLIP_PLANES))
 	{
 		glEnable(GL_CLIP_DISTANCE1);
 		glEnable(GL_CLIP_DISTANCE2);
 	}
 	DoDrawSorted(sorted);
-	if (gl.glslversion >= 1.3f)
+	if (!(gl.flags & RFL_NO_CLIP_PLANES))
 	{
 		glDisable(GL_CLIP_DISTANCE1);
 		glDisable(GL_CLIP_DISTANCE2);
@@ -994,7 +1002,7 @@ static FDrawInfoList di_list;
 FDrawInfo::FDrawInfo()
 {
 	next = NULL;
-	if (gl.lightmethod == LM_SOFTWARE)
+	if (gl.legacyMode)
 	{
 		dldrawlists = new GLDrawList[GLLDL_TYPES];
 	}

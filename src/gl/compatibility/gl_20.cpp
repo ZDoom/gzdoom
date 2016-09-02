@@ -66,40 +66,39 @@
 
 void gl_PatchMenu()
 {
-	if (gl.glslversion == 0)
+	// Radial fog and Doom lighting are not available without full shader support.
+
+	FOptionValues **opt = OptionValues.CheckKey("LightingModes");
+	if (opt != NULL) 
 	{
-		// Radial fog and Doom lighting are not available without full shader support.
-
-		FOptionValues **opt = OptionValues.CheckKey("LightingModes");
-		if (opt != NULL) 
+		for(int i = (*opt)->mValues.Size()-1; i>=0; i--)
 		{
-			for(int i = (*opt)->mValues.Size()-1; i>=0; i--)
+			// Delete 'Doom' lighting mode
+			if ((*opt)->mValues[i].Value == 2.0 || (*opt)->mValues[i].Value == 8.0)
 			{
-				// Delete 'Doom' lighting mode
-				if ((*opt)->mValues[i].Value == 2.0 || (*opt)->mValues[i].Value == 8.0)
-				{
-					(*opt)->mValues.Delete(i);
-				}
+				(*opt)->mValues.Delete(i);
 			}
 		}
-
-		opt = OptionValues.CheckKey("FogMode");
-		if (opt != NULL) 
-		{
-			for(int i = (*opt)->mValues.Size()-1; i>=0; i--)
-			{
-				// Delete 'Radial' fog mode
-				if ((*opt)->mValues[i].Value == 2.0)
-				{
-					(*opt)->mValues.Delete(i);
-				}
-			}
-		}
-
-		// disable features that don't work without shaders.
-		if (gl_lightmode == 2 || gl_lightmode == 8) gl_lightmode = 3;
-		if (gl_fogmode == 2) gl_fogmode = 1;
 	}
+
+	opt = OptionValues.CheckKey("FogMode");
+	if (opt != NULL) 
+	{
+		for(int i = (*opt)->mValues.Size()-1; i>=0; i--)
+		{
+			// Delete 'Radial' fog mode
+			if ((*opt)->mValues[i].Value == 2.0)
+			{
+				(*opt)->mValues.Delete(i);
+			}
+		}
+	}
+
+	// disable features that don't work without shaders.
+	if (gl_lightmode == 2 || gl_lightmode == 8) gl_lightmode = 3;
+	if (gl_fogmode == 2) gl_fogmode = 1;
+
+	// todo: remove more unsupported stuff like postprocessing options.
 }
 
 
@@ -378,7 +377,7 @@ void FRenderState::DrawColormapOverlay()
 //==========================================================================
 
 bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, Vector & nearPt, Vector & up, Vector & right,
-	float & scale, int desaturation, bool checkside, bool additive)
+	float & scale, bool checkside, bool additive)
 {
 	Vector fn, pos;
 
@@ -434,14 +433,6 @@ bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, Vector & nearPt,
 	{
 		gl_RenderState.BlendEquation(GL_FUNC_ADD);
 	}
-	if (desaturation > 0 && gl.glslversion > 0)	// no-shader excluded because no desaturated textures.
-	{
-		float gray = (r * 77 + g * 143 + b * 37) / 257;
-
-		r = (r*(32 - desaturation) + gray*desaturation) / 32;
-		g = (g*(32 - desaturation) + gray*desaturation) / 32;
-		b = (b*(32 - desaturation) + gray*desaturation) / 32;
-	}
 	gl_RenderState.SetColor(r, g, b);
 	return true;
 }
@@ -491,11 +482,6 @@ bool GLWall::PutWallCompat(int passflag)
 	bool masked = passflag == 2 && gltexture->isMasked();
 
 	int list = list_indices[masked][foggy];
-	if (list == GLLDL_WALLS_PLAIN)
-	{
-		if (gltexture->tex->gl_info.Brightmap && gl.glslversion >= 0.f) list = GLLDL_WALLS_BRIGHT;
-		//if (flags & GLWF_GLOW) list = GLLDL_WALLS_BRIGHT;
-	}
 	gl_drawinfo->dldrawlists[list].AddWall(this);
 	return true;
 
@@ -520,10 +506,6 @@ bool GLFlat::PutFlatCompat(bool fog)
 
 	
 	int list = list_indices[masked][foggy];
-	if (list == GLLDL_FLATS_PLAIN)
-	{
-		if (gltexture->tex->gl_info.Brightmap && gl.glslversion >= 0.f) list = GLLDL_FLATS_BRIGHT;
-	}
 	gl_drawinfo->dldrawlists[list].AddFlat(this);
 	return true;
 }
@@ -612,7 +594,7 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 		}
 
 		p.Set(plane.plane);
-		if (!gl_SetupLight(sub->sector->PortalGroup, p, light, nearPt, up, right, scale, CM_DEFAULT, false, pass != GLPASS_LIGHTTEX))
+		if (!gl_SetupLight(sub->sector->PortalGroup, p, light, nearPt, up, right, scale, false, pass != GLPASS_LIGHTTEX))
 		{
 			node = node->nextLight;
 			continue;
@@ -692,7 +674,7 @@ bool GLWall::PrepareLight(ADynamicLight * light, int pass)
 		return false;
 	}
 
-	if (!gl_SetupLight(seg->frontsector->PortalGroup, p, light, nearPt, up, right, scale, CM_DEFAULT, true, pass != GLPASS_LIGHTTEX))
+	if (!gl_SetupLight(seg->frontsector->PortalGroup, p, light, nearPt, up, right, scale, true, pass != GLPASS_LIGHTTEX))
 	{
 		return false;
 	}
@@ -798,9 +780,7 @@ void FGLRenderer::RenderMultipassStuff()
 	gl_RenderState.SetTextureMode(TM_MASK);
 	gl_RenderState.EnableBrightmap(true);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
-	gl_drawinfo->dldrawlists[GLLDL_WALLS_BRIGHT].DrawWalls(GLPASS_PLAIN);
 	gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(GLPASS_PLAIN);
-	gl_drawinfo->dldrawlists[GLLDL_FLATS_BRIGHT].DrawFlats(GLPASS_PLAIN);
 	gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(GLPASS_PLAIN);
 
 	// Part 3: The base of fogged surfaces, including the texture
@@ -823,10 +803,8 @@ void FGLRenderer::RenderMultipassStuff()
 			glDepthFunc(GL_EQUAL);
 			if (glset.lightmode == 8) gl_RenderState.SetSoftLightLevel(255);
 			gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(GLPASS_LIGHTTEX);
-			gl_drawinfo->dldrawlists[GLLDL_WALLS_BRIGHT].DrawWalls(GLPASS_LIGHTTEX);
 			gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(GLPASS_LIGHTTEX);
 			gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(GLPASS_LIGHTTEX);
-			gl_drawinfo->dldrawlists[GLLDL_FLATS_BRIGHT].DrawFlats(GLPASS_LIGHTTEX);
 			gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(GLPASS_LIGHTTEX);
 			gl_RenderState.BlendEquation(GL_FUNC_ADD);
 		}
@@ -841,8 +819,6 @@ void FGLRenderer::RenderMultipassStuff()
 	glDepthFunc(GL_LEQUAL);
 	gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(GLPASS_TEXONLY);
 	gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(GLPASS_TEXONLY);
-	gl_drawinfo->dldrawlists[GLLDL_WALLS_BRIGHT].DrawWalls(GLPASS_TEXONLY);
-	gl_drawinfo->dldrawlists[GLLDL_FLATS_BRIGHT].DrawFlats(GLPASS_TEXONLY);
 	gl_RenderState.AlphaFunc(GL_GREATER, gl_mask_threshold);
 	gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(GLPASS_TEXONLY);
 	gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(GLPASS_TEXONLY);
@@ -854,10 +830,8 @@ void FGLRenderer::RenderMultipassStuff()
 	if (gl_SetupLightTexture())
 	{
 		gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(GLPASS_LIGHTTEX_ADDITIVE);
-		gl_drawinfo->dldrawlists[GLLDL_WALLS_BRIGHT].DrawWalls(GLPASS_LIGHTTEX_ADDITIVE);
 		gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(GLPASS_LIGHTTEX_ADDITIVE);
 		gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(GLPASS_LIGHTTEX_ADDITIVE);
-		gl_drawinfo->dldrawlists[GLLDL_FLATS_BRIGHT].DrawFlats(GLPASS_LIGHTTEX_ADDITIVE);
 		gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(GLPASS_LIGHTTEX_ADDITIVE);
 		gl_drawinfo->dldrawlists[GLLDL_WALLS_FOG].DrawWalls(GLPASS_LIGHTTEX_FOGGY);
 		gl_drawinfo->dldrawlists[GLLDL_WALLS_FOGMASKED].DrawWalls(GLPASS_LIGHTTEX_FOGGY);

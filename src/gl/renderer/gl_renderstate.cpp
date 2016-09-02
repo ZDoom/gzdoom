@@ -49,6 +49,7 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_colormap.h"
 #include "gl/dynlights//gl_lightbuffer.h"
+#include "gl/renderer/gl_renderbuffers.h"
 
 void gl_SetTextureMode(int type);
 
@@ -221,15 +222,24 @@ bool FRenderState::ApplyShader()
 		{
 			activeShader->muFixedColormap.Set(0);
 		}
-		else if (mColormapState < CM_MAXCOLORMAP)
+		else if (mColormapState > CM_DEFAULT && mColormapState < CM_MAXCOLORMAP)
 		{
-			FSpecialColormap *scm = &SpecialColormaps[gl_fixedcolormap - CM_FIRSTSPECIALCOLORMAP];
-			float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
-				scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
+			if (FGLRenderBuffers::IsEnabled())
+			{
+				// When using postprocessing to apply the colormap, we must render the image fullbright here.
+				activeShader->muFixedColormap.Set(2);
+				activeShader->muColormapStart.Set(1, 1, 1, 1.f);
+			}
+			else
+			{
+				FSpecialColormap *scm = &SpecialColormaps[gl_fixedcolormap - CM_FIRSTSPECIALCOLORMAP];
+				float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
+					scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
 
-			activeShader->muFixedColormap.Set(1);
-			activeShader->muColormapStart.Set(scm->ColorizeStart[0], scm->ColorizeStart[1], scm->ColorizeStart[2], 0.f);
-			activeShader->muColormapRange.Set(m);
+				activeShader->muFixedColormap.Set(1);
+				activeShader->muColormapStart.Set(scm->ColorizeStart[0], scm->ColorizeStart[1], scm->ColorizeStart[2], 0.f);
+				activeShader->muColormapRange.Set(m);
+			}
 		}
 		else if (mColormapState == CM_FOGLAYER)
 		{
@@ -315,7 +325,7 @@ void FRenderState::Apply()
 		else mVertexBuffer->BindVBO();
 		mCurrentVertexBuffer = mVertexBuffer;
 	}
-	if (gl.glslversion > 0) 
+	if (!gl.legacyMode) 
 	{
 		ApplyShader();
 	}
@@ -352,7 +362,7 @@ void FRenderState::ApplyMatrices()
 
 void FRenderState::ApplyLightIndex(int index)
 {
-	if (gl.lightmethod != LM_SOFTWARE)
+	if (!gl.legacyMode)
 	{
 		if (index > -1 && GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
 		{

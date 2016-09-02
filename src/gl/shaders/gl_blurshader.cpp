@@ -87,20 +87,6 @@ void FBlurShader::Blur(FGLRenderer *renderer, float blurAmount, int sampleCount,
 	else
 		setup->HorizontalShader->Bind();
 
-	if (gl.glslversion < 1.3)
-	{
-		if (vertical)
-		{
-			setup->VerticalScaleX.Set(1.0f / width);
-			setup->VerticalScaleY.Set(1.0f / height);
-		}
-		else
-		{
-			setup->HorizontalScaleX.Set(1.0f / width);
-			setup->HorizontalScaleY.Set(1.0f / height);
-		}
-	}
-
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, inputTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -156,14 +142,6 @@ FBlurShader::BlurSetup *FBlurShader::GetSetup(float blurAmount, int sampleCount)
 	blurSetup.HorizontalShader->Bind();
 	glUniform1i(glGetUniformLocation(*blurSetup.HorizontalShader.get(), "SourceTexture"), 0);
 	
-	if (gl.glslversion < 1.3)
-	{
-		blurSetup.VerticalScaleX.Init(*blurSetup.VerticalShader.get(), "ScaleX");
-		blurSetup.VerticalScaleY.Init(*blurSetup.VerticalShader.get(), "ScaleY");
-		blurSetup.HorizontalScaleX.Init(*blurSetup.HorizontalShader.get(), "ScaleX");
-		blurSetup.HorizontalScaleY.Init(*blurSetup.HorizontalShader.get(), "ScaleY");
-	}
-
 	mBlurSetups.Push(blurSetup);
 
 	return &mBlurSetups[mBlurSetups.Size() - 1];

@@ -89,7 +89,6 @@ private:
 	// Buffers for the scene
 	GLuint mSceneMSColor = 0;
 	GLuint mSceneMSDepthStencil = 0;
-	GLuint mSceneMSDepth = 0;
 	GLuint mSceneMSStencil = 0;
 	GLuint mSceneFB = 0;
 
@@ -97,7 +96,6 @@ private:
 	GLuint mPipelineTexture[NumPipelineTextures];
 	GLuint mPipelineFB[NumPipelineTextures];
 	GLuint mPipelineDepthStencil = 0;
-	GLuint mPipelineDepth = 0;
 	GLuint mPipelineStencil = 0;
 
 	// Back buffer frame buffer

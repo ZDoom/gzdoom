@@ -409,7 +409,7 @@ void FGLRenderer::RenderScene(int recursion)
 
 	// this is the only geometry type on which decals can possibly appear
 	gl_drawinfo->drawlists[GLDL_PLAINWALLS].DrawDecals();
-	if (gl.lightmethod == LM_SOFTWARE)
+	if (gl.legacyMode)
 	{
 		// also process the render lists with walls and dynamic lights
         gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawDecals();
@@ -480,7 +480,6 @@ void FGLRenderer::RenderTranslucent()
 // stencil, z-buffer and the projection matrix intact!
 //
 //-----------------------------------------------------------------------------
-EXTERN_CVAR(Bool, gl_draw_sync)
 
 void FGLRenderer::DrawScene(int drawmode)
 {
@@ -502,14 +501,6 @@ void FGLRenderer::DrawScene(int drawmode)
 	}
 	GLRenderer->mClipPortal = NULL;	// this must be reset before any portal recursion takes place.
 
-	// Up to this point in the main draw call no rendering is performed so we can wait
-	// with swapping the render buffer until now.
-	if (!gl_draw_sync && drawmode == DM_MAINVIEW)
-	{
-		All.Unclock();
-		static_cast<OpenGLFrameBuffer*>(screen)->Swap();
-		All.Clock();
-	}
 	RenderScene(recursion);
 
 	// Handle all portals after rendering the opaque objects but before
@@ -644,12 +635,14 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 		V_AddBlend (player->BlendR, player->BlendG, player->BlendB, player->BlendA, blend);
 	}
 
+	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	if (blend[3]>0.0f)
 	{
-		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.SetColor(blend[0], blend[1], blend[2], blend[3]);
 		gl_FillScreen();
 	}
+	gl_RenderState.ResetColor();
+	gl_RenderState.EnableTexture(true);
 }
 
 
@@ -685,16 +678,19 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	{
 		DrawPlayerSprites (viewsector, false);
 	}
-	int cm = gl_RenderState.GetFixedColormap();
+	if (gl.legacyMode)
+	{
+		int cm = gl_RenderState.GetFixedColormap();
+		gl_RenderState.SetFixedColormap(cm);
+		gl_RenderState.DrawColormapOverlay();
+	}
+
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.SetSoftLightLevel(-1);
 	DrawTargeterSprites();
-	DrawBlend(viewsector);
-	if (gl.glslversion == 0.0)
+	if (FGLRenderBuffers::IsEnabled())
 	{
-		gl_RenderState.SetFixedColormap(cm);
-		gl_RenderState.DrawColormapOverlay();
-		gl_RenderState.SetFixedColormap(CM_DEFAULT);
+		DrawBlend(viewsector);
 	}
 
 	// Restore standard rendering state
@@ -855,7 +851,11 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 
 		ProcessScene(toscreen);
 		if (mainview && toscreen) EndDrawScene(retval);	// do not call this for camera textures.
-		if (mainview) PostProcessScene();
+		if (mainview && FGLRenderBuffers::IsEnabled())
+		{
+			PostProcessScene();
+			DrawBlend(viewsector);	// This should be done after postprocessing, not before.
+		}
 		mDrawingScene2D = false;
 		eye->TearDown();
 	}
@@ -899,7 +899,7 @@ void FGLRenderer::RenderView (player_t* player)
 
 	P_FindParticleSubsectors ();
 
-	if (gl.lightmethod != LM_SOFTWARE) GLRenderer->mLights->Clear();
+	if (!gl.legacyMode) GLRenderer->mLights->Clear();
 
 	// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
 	bool saved_niv = NoInterpolateView;
@@ -954,7 +954,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FILE *file, int width, int hei
 	SetFixedColormap(player);
 	gl_RenderState.SetVertexBuffer(mVBO);
 	GLRenderer->mVBO->Reset();
-	if (gl.lightmethod != LM_SOFTWARE) GLRenderer->mLights->Clear();
+	if (!gl.legacyMode) GLRenderer->mLights->Clear();
 
 	// Check if there's some lights. If not some code can be skipped.
 	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);

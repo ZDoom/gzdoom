@@ -264,7 +264,7 @@ unsigned char *gl_CreateUpsampledTextureBuffer ( const FTexture *inputTexture, u
 		return inputBuffer;
 
 	// [BB] Don't upsample non-shader handled warped textures. Needs too much memory and time
-	if (gl.glslversion == 0 && inputTexture->bWarped)
+	if (gl.legacyMode && inputTexture->bWarped)
 		return inputBuffer;
 
 	// already scaled?

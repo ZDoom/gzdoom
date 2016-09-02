@@ -59,8 +59,6 @@ private:
 	void DeleteRenderBuffer(GLuint &handle);
 	void DeleteFrameBuffer(GLuint &handle);
 
-	GLuint GetHdrFormat();
-
 	int mWidth = 0;
 	int mHeight = 0;
 	int mSamples = 0;
@@ -86,6 +84,7 @@ private:
 	GLuint mOutputFB = 0;
 
 	static bool FailedCreate;
+	static bool BuffersActive;
 };
 
 #endif

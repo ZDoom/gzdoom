@@ -688,7 +688,7 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.SetSoftLightLevel(-1);
 	DrawTargeterSprites();
-	if (FGLRenderBuffers::IsEnabled())
+	if (!FGLRenderBuffers::IsEnabled())
 	{
 		DrawBlend(viewsector);
 	}
@@ -966,7 +966,10 @@ void FGLRenderer::WriteSavePic (player_t *player, FILE *file, int width, int hei
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.SetSoftLightLevel(-1);
 	screen->Begin2D(false);
-	DrawBlend(viewsector);
+	if (!FGLRenderBuffers::IsEnabled())
+	{
+		DrawBlend(viewsector);
+	}
 	CopyToBackbuffer(&bounds, false);
 	glFlush();
 

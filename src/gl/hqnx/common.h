@@ -23,7 +23,7 @@
 #define __HQX_COMMON_H_
 
 #include <stdlib.h>
-#include "mystdint.h"
+#include <stdint.h>
 
 #define MASK_2     0x0000FF00
 #define MASK_13    0x00FF00FF

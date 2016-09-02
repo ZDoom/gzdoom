@@ -4449,6 +4449,8 @@ enum EACSFunctions
 	-106 : KickFromGame(2),
 	*/
 
+	ACSF_CheckClass = 200,
+
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
 	ACSF_SetTeamScore,			// (int team, int value)
@@ -6026,6 +6028,12 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				return (actor->GetClass()->FindStateByString(statename, exact) != nullptr);
 			}
 			return false;
+		}
+
+		case ACSF_CheckClass:
+		{
+			const char *clsname = FBehavior::StaticLookupString(args[0]);
+			return !!PClass::FindActor(clsname);
 		}
 
 		default:

@@ -200,8 +200,22 @@ void FGLRenderer::AmbientOccludeScene()
 	RenderScreenQuad();
 
 	// Blur SSAO texture
-	mBlurShader->BlurHorizontal(this, blurAmount, blurSampleCount, mBuffers->AmbientTexture1, mBuffers->AmbientFB0, mBuffers->AmbientWidth, mBuffers->AmbientHeight);
-	mBlurShader->BlurVertical(this, blurAmount, blurSampleCount, mBuffers->AmbientTexture0, mBuffers->AmbientFB1, mBuffers->AmbientWidth, mBuffers->AmbientHeight);
+	glBindFramebuffer(GL_FRAMEBUFFER, mBuffers->AmbientFB0);
+	glBindTexture(GL_TEXTURE_2D, mBuffers->AmbientTexture1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	mDepthBlurShader->Bind(false);
+	mDepthBlurShader->BlurSharpness[false].Set(blurAmount);
+	mDepthBlurShader->InvFullResolution[false].Set(1.0f / mBuffers->AmbientWidth, 1.0f / mBuffers->AmbientHeight);
+	RenderScreenQuad();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, mBuffers->AmbientFB1);
+	glBindTexture(GL_TEXTURE_2D, mBuffers->AmbientTexture0);
+	mDepthBlurShader->Bind(true);
+	mDepthBlurShader->BlurSharpness[true].Set(blurAmount);
+	mDepthBlurShader->InvFullResolution[true].Set(1.0f / mBuffers->AmbientWidth, 1.0f / mBuffers->AmbientHeight);
+	mDepthBlurShader->PowExponent[true].Set(1.8f);
+	RenderScreenQuad();
 
 	// Add SSAO back to scene texture:
 	mBuffers->BindCurrentFB();
@@ -216,8 +230,8 @@ void FGLRenderer::AmbientOccludeScene()
 	glBindTexture(GL_TEXTURE_2D, mBuffers->AmbientTexture1);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	mBloomCombineShader->Bind();
-	mBloomCombineShader->BloomTexture.Set(0);
+	mSSAOCombineShader->Bind();
+	mSSAOCombineShader->AODepthTexture.Set(0);
 	RenderScreenQuad();
 	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 

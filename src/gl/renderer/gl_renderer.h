@@ -20,7 +20,9 @@ class FSamplerManager;
 class DPSprite;
 class FGLRenderBuffers;
 class FLinearDepthShader;
+class FDepthBlurShader;
 class FSSAOShader;
+class FSSAOCombineShader;
 class FBloomExtractShader;
 class FBloomCombineShader;
 class FExposureExtractShader;
@@ -97,6 +99,8 @@ public:
 	FGLRenderBuffers *mBuffers;
 	FLinearDepthShader *mLinearDepthShader;
 	FSSAOShader *mSSAOShader;
+	FDepthBlurShader *mDepthBlurShader;
+	FSSAOCombineShader *mSSAOCombineShader;
 	FBloomExtractShader *mBloomExtractShader;
 	FBloomCombineShader *mBloomCombineShader;
 	FExposureExtractShader *mExposureExtractShader;

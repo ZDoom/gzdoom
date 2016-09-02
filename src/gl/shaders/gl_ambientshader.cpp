@@ -96,3 +96,35 @@ void FSSAOShader::Bind()
 	}
 	mShader.Bind();
 }
+
+void FDepthBlurShader::Bind(bool vertical)
+{
+	auto &shader = mShader[vertical];
+	if (!shader)
+	{
+		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/depthblur.fp", vertical ? "#define BLUR_VERTICAL\n" : "#define BLUR_HORIZONTAL\n", 330);
+		shader.SetFragDataLocation(0, "FragColor");
+		shader.Link("shaders/glsl/depthblur");
+		shader.SetAttribLocation(0, "PositionInProjection");
+		AODepthTexture[vertical].Init(shader, "AODepthTexture");
+		BlurSharpness[vertical].Init(shader, "BlurSharpness");
+		InvFullResolution[vertical].Init(shader, "InvFullResolution");
+		PowExponent[vertical].Init(shader, "PowExponent");
+	}
+	shader.Bind();
+}
+
+void FSSAOCombineShader::Bind()
+{
+	if (!mShader)
+	{
+		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/ssaocombine.fp", "", 330);
+		mShader.SetFragDataLocation(0, "FragColor");
+		mShader.Link("shaders/glsl/ssaocombine");
+		mShader.SetAttribLocation(0, "PositionInProjection");
+		AODepthTexture.Init(mShader, "AODepthTexture");
+	}
+	mShader.Bind();
+}

@@ -123,6 +123,10 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mTonemapPalette = nullptr;
 	mColormapShader = nullptr;
 	mLensShader = nullptr;
+	mLinearDepthShader = nullptr;
+	mDepthBlurShader = nullptr;
+	mSSAOShader = nullptr;
+	mSSAOCombineShader = nullptr;
 }
 
 void gl_LoadModels();
@@ -132,7 +136,9 @@ void FGLRenderer::Initialize(int width, int height)
 {
 	mBuffers = new FGLRenderBuffers();
 	mLinearDepthShader = new FLinearDepthShader();
+	mDepthBlurShader = new FDepthBlurShader();
 	mSSAOShader = new FSSAOShader();
+	mSSAOCombineShader = new FSSAOCombineShader();
 	mBloomExtractShader = new FBloomExtractShader();
 	mBloomCombineShader = new FBloomCombineShader();
 	mBlurShader = new FBlurShader();
@@ -194,7 +200,9 @@ FGLRenderer::~FGLRenderer()
 	if (mBuffers) delete mBuffers;
 	if (mPresentShader) delete mPresentShader;
 	if (mLinearDepthShader) delete mLinearDepthShader;
+	if (mDepthBlurShader) delete mDepthBlurShader;
 	if (mSSAOShader) delete mSSAOShader;
+	if (mSSAOCombineShader) delete mSSAOCombineShader;
 	if (mBloomExtractShader) delete mBloomExtractShader;
 	if (mBloomCombineShader) delete mBloomCombineShader;
 	if (mBlurShader) delete mBlurShader;

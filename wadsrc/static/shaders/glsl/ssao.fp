@@ -108,12 +108,5 @@ void main()
     vec3 viewPosition = FetchViewPos(TexCoord);
     vec3 viewNormal = ReconstructNormal(viewPosition);
 	float occlusion = ComputeAO(viewPosition, viewNormal) * AOStrength + (1.0 - AOStrength);
-
-	// GZDoom does not use linear buffers at the moment, apply some gamma to get it closer to correct
-	occlusion = occlusion * occlusion;
-
-	//FragColor = vec4(viewPosition.x * 0.001 + 0.5, viewPosition.y * 0.001 + 0.5, viewPosition.z * 0.001, 1.0);
-	//FragColor = vec4(viewNormal.x * 0.5 + 0.5, viewNormal.y * 0.5 + 0.5, viewNormal.z * 0.5 + 0.5, 1.0);
-	//FragColor = vec4(occlusion, viewPosition.z, 0.0, 1.0);
-	FragColor = vec4(occlusion, occlusion, occlusion, 1.0);
+	FragColor = vec4(occlusion, viewPosition.z, 0.0, 1.0);
 }

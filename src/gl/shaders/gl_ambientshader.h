@@ -38,4 +38,29 @@ private:
 	FShaderProgram mShader;
 };
 
+class FDepthBlurShader
+{
+public:
+	void Bind(bool vertical);
+
+	FBufferedUniformSampler AODepthTexture[2];
+	FBufferedUniform1f BlurSharpness[2];
+	FBufferedUniform2f InvFullResolution[2];
+	FBufferedUniform1f PowExponent[2];
+
+private:
+	FShaderProgram mShader[2];
+};
+
+class FSSAOCombineShader
+{
+public:
+	void Bind();
+
+	FBufferedUniformSampler AODepthTexture;
+
+private:
+	FShaderProgram mShader;
+};
+
 #endif

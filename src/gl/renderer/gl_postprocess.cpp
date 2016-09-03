@@ -177,6 +177,8 @@ void FGLRenderer::AmbientOccludeScene()
 	mLinearDepthShader->LinearizeDepthB[multisample].Set(MAX(1.0f / GetZNear(), 1.e-8f));
 	mLinearDepthShader->InverseDepthRangeA[multisample].Set(1.0f);
 	mLinearDepthShader->InverseDepthRangeB[multisample].Set(0.0f);
+	mLinearDepthShader->Scale[multisample].Set(mSceneViewport.width / (float)mScreenViewport.width, mSceneViewport.height / (float)mScreenViewport.height);
+	mLinearDepthShader->Offset[multisample].Set(mSceneViewport.left / (float)mScreenViewport.width, mSceneViewport.top / (float)mScreenViewport.height);
 	RenderScreenQuad();
 
 	// Apply ambient occlusion
@@ -236,7 +238,6 @@ void FGLRenderer::AmbientOccludeScene()
 	mSSAOCombineShader->Bind();
 	mSSAOCombineShader->AODepthTexture.Set(0);
 	RenderScreenQuad();
-	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 
 	FGLDebug::PopGroup();
 }

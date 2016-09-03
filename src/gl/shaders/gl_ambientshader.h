@@ -14,6 +14,8 @@ public:
 	FBufferedUniform1f LinearizeDepthB[2];
 	FBufferedUniform1f InverseDepthRangeA[2];
 	FBufferedUniform1f InverseDepthRangeB[2];
+	FBufferedUniform2f Scale[2];
+	FBufferedUniform2f Offset[2];
 
 private:
 	FShaderProgram mShader[2];

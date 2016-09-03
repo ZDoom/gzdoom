@@ -491,6 +491,8 @@ void FGLRenderer::DrawScene(int drawmode)
 
 	RenderScene(recursion);
 
+	AmbientOccludeScene();
+
 	// Handle all portals after rendering the opaque objects but before
 	// doing all translucent stuff
 	recursion++;

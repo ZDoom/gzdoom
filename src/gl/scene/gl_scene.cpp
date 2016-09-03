@@ -822,7 +822,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 
 	// Render (potentially) multiple views for stereo 3d
 	float viewShift[3];
-	const s3d::Stereo3DMode& stereo3dMode = s3d::Stereo3DMode::getCurrentMode();
+	const s3d::Stereo3DMode& stereo3dMode = mainview && toscreen? s3d::Stereo3DMode::getCurrentMode() : s3d::Stereo3DMode::getMonoMode();
 	stereo3dMode.SetUp();
 	for (int eye_ix = 0; eye_ix < stereo3dMode.eye_count(); ++eye_ix)
 	{
@@ -1313,7 +1313,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 	gl_fixedcolormap=CM_DEFAULT;
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 
-	bool usefb = gl_usefb || gltex->GetWidth() > screen->GetWidth() || gltex->GetHeight() > screen->GetHeight();
+	bool usefb = !gl.legacyMode || gl_usefb || gltex->GetWidth() > screen->GetWidth() || gltex->GetHeight() > screen->GetHeight();
 	if (!usefb)
 	{
 		glFlush();

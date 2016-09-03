@@ -74,6 +74,7 @@ class Stereo3DMode
 public:
 	/* static methods for managing the selected stereoscopic view state */
 	static const Stereo3DMode& getCurrentMode();
+	static const Stereo3DMode& getMonoMode();
 
 	Stereo3DMode();
 	virtual ~Stereo3DMode();

@@ -127,8 +127,7 @@ void FGLRenderer::RenderScreenQuad()
 
 void FGLRenderer::PostProcessScene()
 {
-	if (FGLRenderBuffers::IsEnabled()) mBuffers->BlitSceneToTexture();
-	AmbientOccludeScene();
+	mBuffers->BlitSceneToTexture();
 	UpdateCameraExposure();
 	BloomScene();
 	TonemapScene();
@@ -156,6 +155,7 @@ void FGLRenderer::AmbientOccludeScene()
 	const float blurAmount = gl_ssao_blur_amount;
 	int blurSampleCount = gl_ssao_blur_samples;
 	float aoStrength = gl_ssao_strength;
+	bool multisample = gl_multisample > 1;
 
 	//float tanHalfFovy = tan(fovy * (M_PI / 360.0f));
 	float tanHalfFovy = 1.0f / 1.33333302f; // 1.0f / gl_RenderState.mProjectionMatrix.get()[5];
@@ -168,12 +168,15 @@ void FGLRenderer::AmbientOccludeScene()
 	glBindFramebuffer(GL_FRAMEBUFFER, mBuffers->AmbientFB0);
 	glViewport(0, 0, mBuffers->AmbientWidth, mBuffers->AmbientHeight);
 	mBuffers->BindSceneDepthTexture(0);
-	mLinearDepthShader->Bind();
-	mLinearDepthShader->DepthTexture.Set(0);
-	mLinearDepthShader->LinearizeDepthA.Set(1.0f / GetZFar() - 1.0f / GetZNear());
-	mLinearDepthShader->LinearizeDepthB.Set(MAX(1.0f / GetZNear(), 1.e-8f));
-	mLinearDepthShader->InverseDepthRangeA.Set(1.0f);
-	mLinearDepthShader->InverseDepthRangeB.Set(0.0f);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	mLinearDepthShader->Bind(multisample);
+	mLinearDepthShader->DepthTexture[multisample].Set(0);
+	if (multisample) mLinearDepthShader->SampleCount[multisample].Set(gl_multisample);
+	mLinearDepthShader->LinearizeDepthA[multisample].Set(1.0f / GetZFar() - 1.0f / GetZNear());
+	mLinearDepthShader->LinearizeDepthB[multisample].Set(MAX(1.0f / GetZNear(), 1.e-8f));
+	mLinearDepthShader->InverseDepthRangeA[multisample].Set(1.0f);
+	mLinearDepthShader->InverseDepthRangeB[multisample].Set(0.0f);
 	RenderScreenQuad();
 
 	// Apply ambient occlusion
@@ -218,7 +221,7 @@ void FGLRenderer::AmbientOccludeScene()
 	RenderScreenQuad();
 
 	// Add SSAO back to scene texture:
-	mBuffers->BindCurrentFB();
+	mBuffers->BindSceneFB();
 	glViewport(mSceneViewport.left, mSceneViewport.top, mSceneViewport.width, mSceneViewport.height);
 	glEnable(GL_BLEND);
 	glBlendEquation(GL_FUNC_ADD);

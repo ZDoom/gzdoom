@@ -36,6 +36,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "i_system.h"
+#include "cmdlib.h"
 
 #include "version.h"	// for GAMENAME
 

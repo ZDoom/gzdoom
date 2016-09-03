@@ -65,6 +65,8 @@ void FLinearDepthShader::Bind(bool multisample)
 		LinearizeDepthB[multisample].Init(shader, "LinearizeDepthB");
 		InverseDepthRangeA[multisample].Init(shader, "InverseDepthRangeA");
 		InverseDepthRangeB[multisample].Init(shader, "InverseDepthRangeB");
+		Scale[multisample].Init(shader, "Scale");
+		Offset[multisample].Init(shader, "Offset");
 	}
 	shader.Bind();
 }

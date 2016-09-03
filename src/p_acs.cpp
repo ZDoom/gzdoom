@@ -4450,7 +4450,7 @@ enum EACSFunctions
 	*/
 
 	ACSF_CheckClass = 200,
-	ACSF_Thing_Damage3, // [arookas]
+	ACSF_DamageActor, // [arookas]
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
@@ -6037,7 +6037,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			return !!PClass::FindActor(clsname);
 		}
 		
-		case ACSF_Thing_Damage3: // [arookas] wrapper around P_DamageMobj
+		case ACSF_DamageActor: // [arookas] wrapper around P_DamageMobj
 		{
 			// (target, ptr_select1, inflictor, ptr_select2, amount, damagetype)
 			AActor* target = COPY_AAPTR(SingleActorFromTID(args[0], activator), args[1]);

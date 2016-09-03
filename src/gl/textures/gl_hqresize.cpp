@@ -43,15 +43,21 @@
 #ifdef HAVE_MMX
 #include "gl/hqnx_asm/hqnx_asm.h"
 #endif
+#include "gl/xbr/xbrz.h"
+#include "gl/xbr/xbrz_old.h"
 
 CUSTOM_CVAR(Int, gl_texture_hqresize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-#ifdef HAVE_MMX
-	if (self < 0 || self > 9)
-#else
-	if (self < 0 || self > 6)
-#endif
+	if (self < 0 || self > 16)
+	{
 		self = 0;
+	}
+	#ifndef HAVE_MMX
+		// This is to allow the menu option to work properly so that these filters can be skipped while cycling through them.
+		if (self == 7) self = 10;
+		if (self == 8) self = 10;
+		if (self == 9) self = 6;
+	#endif
 	GLRenderer->FlushTextures();
 }
 
@@ -242,6 +248,42 @@ static unsigned char *hqNxHelper( void (*hqNxFunction) ( unsigned*, unsigned*, i
 }
 
 
+			
+static unsigned char *xbrzHelper( void (*xbrzFunction) ( size_t, const uint32_t*, uint32_t*, int, int, xbrz::ColorFormat, const xbrz::ScalerCfg&, int, int ),
+							  const int N,
+							  unsigned char *inputBuffer,
+							  const int inWidth,
+							  const int inHeight,
+							  int &outWidth,
+							  int &outHeight )
+{
+	outWidth = N * inWidth;
+	outHeight = N *inHeight;
+
+	unsigned char * newBuffer = new unsigned char[outWidth*outHeight*4];
+	xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer), inWidth, inHeight, xbrz::ARGB, xbrz::ScalerCfg(), 0, std::numeric_limits<int>::max());
+	delete[] inputBuffer;
+	return newBuffer;
+}
+
+static unsigned char *xbrzoldHelper( void (*xbrzFunction) ( size_t factor, const uint32_t* src, uint32_t* trg, int srcWidth, int srcHeight, const xbrz_old::ScalerCfg& cfg, int yFirst, int yLast ),
+							  const int N,
+							  unsigned char *inputBuffer,
+							  const int inWidth,
+							  const int inHeight,
+							  int &outWidth,
+							  int &outHeight )
+{
+	outWidth = N * inWidth;
+	outHeight = N *inHeight;
+
+	unsigned char * newBuffer = new unsigned char[outWidth*outHeight*4];
+	xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer), inWidth, inHeight, xbrz_old::ScalerCfg(), 0, std::numeric_limits<int>::max());
+	delete[] inputBuffer;
+	return newBuffer;
+}
+
+
 //===========================================================================
 // 
 // [BB] Upsamples the texture in inputBuffer, frees inputBuffer and returns
@@ -322,6 +364,16 @@ unsigned char *gl_CreateUpsampledTextureBuffer ( const FTexture *inputTexture, u
 		case 9:
 			return hqNxAsmHelper( &HQnX_asm::hq4x_32, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 #endif
+		case 10:
+		case 11:
+		case 12:
+			return xbrzHelper(xbrz::scale, type - 8, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			
+		case 13:
+		case 14:
+		case 15:
+			return xbrzoldHelper(xbrz_old::scale, type - 11, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			
 		}
 	}
 	return inputBuffer;

@@ -849,6 +849,7 @@ file( GLOB HEADER_FILES
 	gl/dynlights/*.h
 	gl/hqnx/*.h
 	gl/hqnx_asm/*.h
+	gl/xbr/*.h
 	gl/models/*.h
 	gl/renderer/*.h
 	gl/scene/*.h
@@ -1072,6 +1073,8 @@ set( FASTMATH_SOURCES
 	gl/hqnx/hq2x.cpp
 	gl/hqnx/hq3x.cpp
 	gl/hqnx/hq4x.cpp
+	gl/xbr/xbrz.cpp
+	gl/xbr/xbrz_old.cpp
 	gl/textures/gl_hwtexture.cpp
 	gl/textures/gl_texture.cpp
 	gl/textures/gl_material.cpp
@@ -1542,7 +1545,8 @@ source_group("OpenGL Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/
 source_group("OpenGL Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/data/.+")
 source_group("OpenGL Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/dynlights/.+")
 source_group("OpenGL Renderer\\HQ Resize" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/hqnx/.+")
-source_group("OpenGL Renderer\\HQ Resize Assembly version" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/hqnx_asm/.+")
+source_group("OpenGL Renderer\\HQ Resize MMX version" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/hqnx_asm/.+")
+source_group("OpenGL Renderer\\XBRZ" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/hqnx_asm/.+")
 source_group("OpenGL Renderer\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/models/.+")
 source_group("OpenGL Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/renderer/.+")
 source_group("OpenGL Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/scene/.+")

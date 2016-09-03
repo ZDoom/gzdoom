@@ -134,6 +134,12 @@ OptionValue "HqResizeModes"
    7, "$OPTVAL_HQ2XMMX"
    8, "$OPTVAL_HQ3XMMX"
    9, "$OPTVAL_HQ4XMMX"
+   10, "xBRZ 2x"
+   11, "xBRZ 3x"
+   12, "xBRZ 4x"
+   13, "xBRZ_old 2x"
+   14, "xBRZ_old 3x"
+   15, "xBRZ_old 4x"
 }
 
 OptionValue "FogMode"

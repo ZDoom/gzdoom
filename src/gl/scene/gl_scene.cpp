@@ -680,8 +680,6 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	}
 	if (gl.legacyMode)
 	{
-		int cm = gl_RenderState.GetFixedColormap();
-		gl_RenderState.SetFixedColormap(cm);
 		gl_RenderState.DrawColormapOverlay();
 	}
 

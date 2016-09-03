@@ -10,6 +10,15 @@ struct secplane_t;
 struct subsector_t;
 struct sector_t;
 
+enum
+{
+	VATTR_VERTEX_BIT,
+	VATTR_TEXCOORD_BIT,
+	VATTR_COLOR_BIT,
+	VATTR_VERTEX2_BIT,
+	VATTR_NORMAL_BIT
+};
+
 
 class FVertexBuffer
 {
@@ -20,6 +29,7 @@ public:
 	FVertexBuffer(bool wantbuffer = true);
 	virtual ~FVertexBuffer();
 	virtual void BindVBO() = 0;
+	void EnableBufferArrays(int enable, int disable);
 };
 
 struct FFlatVertex

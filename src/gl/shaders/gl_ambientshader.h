@@ -6,16 +6,17 @@
 class FLinearDepthShader
 {
 public:
-	void Bind();
+	void Bind(bool multisample);
 
-	FBufferedUniformSampler DepthTexture;
-	FBufferedUniform1f LinearizeDepthA;
-	FBufferedUniform1f LinearizeDepthB;
-	FBufferedUniform1f InverseDepthRangeA;
-	FBufferedUniform1f InverseDepthRangeB;
+	FBufferedUniformSampler DepthTexture[2];
+	FBufferedUniform1i SampleCount[2];
+	FBufferedUniform1f LinearizeDepthA[2];
+	FBufferedUniform1f LinearizeDepthB[2];
+	FBufferedUniform1f InverseDepthRangeA[2];
+	FBufferedUniform1f InverseDepthRangeB[2];
 
 private:
-	FShaderProgram mShader;
+	FShaderProgram mShader[2];
 };
 
 class FSSAOShader

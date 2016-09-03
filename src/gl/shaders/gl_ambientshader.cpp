@@ -49,22 +49,24 @@
 #include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_ambientshader.h"
 
-void FLinearDepthShader::Bind()
+void FLinearDepthShader::Bind(bool multisample)
 {
-	if (!mShader)
+	auto &shader = mShader[multisample];
+	if (!shader)
 	{
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/lineardepth.fp", "", 330);
-		mShader.SetFragDataLocation(0, "FragColor");
-		mShader.Link("shaders/glsl/lineardepth");
-		mShader.SetAttribLocation(0, "PositionInProjection");
-		DepthTexture.Init(mShader, "DepthTexture");
-		LinearizeDepthA.Init(mShader, "LinearizeDepthA");
-		LinearizeDepthB.Init(mShader, "LinearizeDepthB");
-		InverseDepthRangeA.Init(mShader, "InverseDepthRangeA");
-		InverseDepthRangeB.Init(mShader, "InverseDepthRangeB");
+		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/lineardepth.fp", multisample ? "#define MULTISAMPLE\n" : "", 330);
+		shader.SetFragDataLocation(0, "FragColor");
+		shader.Link("shaders/glsl/lineardepth");
+		shader.SetAttribLocation(0, "PositionInProjection");
+		DepthTexture[multisample].Init(shader, "DepthTexture");
+		SampleCount[multisample].Init(shader, "SampleCount");
+		LinearizeDepthA[multisample].Init(shader, "LinearizeDepthA");
+		LinearizeDepthB[multisample].Init(shader, "LinearizeDepthB");
+		InverseDepthRangeA[multisample].Init(shader, "InverseDepthRangeA");
+		InverseDepthRangeB[multisample].Init(shader, "InverseDepthRangeB");
 	}
-	mShader.Bind();
+	shader.Bind();
 }
 
 void FSSAOShader::Bind()

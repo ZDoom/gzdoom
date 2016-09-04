@@ -170,8 +170,13 @@ void FGLRenderer::AmbientOccludeScene()
 	mBuffers->BindSceneDepthTexture(0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	mBuffers->BindSceneColorTexture(1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glActiveTexture(GL_TEXTURE0);
 	mLinearDepthShader->Bind(multisample);
 	mLinearDepthShader->DepthTexture[multisample].Set(0);
+	mLinearDepthShader->ColorTexture[multisample].Set(1);
 	if (multisample) mLinearDepthShader->SampleCount[multisample].Set(gl_multisample);
 	mLinearDepthShader->LinearizeDepthA[multisample].Set(1.0f / GetZFar() - 1.0f / GetZNear());
 	mLinearDepthShader->LinearizeDepthB[multisample].Set(MAX(1.0f / GetZNear(), 1.e-8f));

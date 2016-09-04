@@ -856,7 +856,11 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 			TonemapScene();
 			ColormapScene();
 			LensDistortScene();
-			DrawBlend(viewsector);	// This should be done after postprocessing, not before.
+
+			// This should be done after postprocessing, not before.
+			mBuffers->BindCurrentFB();
+			glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+			DrawBlend(viewsector);
 		}
 		mDrawingScene2D = false;
 		eye->TearDown();

@@ -459,23 +459,14 @@ CocoaWindow* CreateCocoaWindow(const NSUInteger styleMask)
 	return window;
 }
 
-} // unnamed namespace
-
-
-// ---------------------------------------------------------------------------
-
-
-CocoaVideo::CocoaVideo()
-: m_window(CreateCocoaWindow(STYLE_MASK_WINDOWED))
-, m_width(-1)
-, m_height(-1)
-, m_fullscreen(false)
-, m_hiDPI(false)
+enum OpenGLProfile
 {
-	memset(&m_modeIterator, 0, sizeof m_modeIterator);
+	Core,
+	Legacy
+};
 
-	// Set attributes for OpenGL context
-
+NSOpenGLPixelFormat* CreatePixelFormat(const OpenGLProfile profile)
+{
 	NSOpenGLPixelFormatAttribute attributes[16];
 	size_t i = 0;
 
@@ -492,17 +483,59 @@ CocoaVideo::CocoaVideo()
 		attributes[i++] = NSOpenGLPFAAllowOfflineRenderers;
 	}
 
-	if (NSAppKitVersionNumber >= AppKit10_7)
+	if (NSAppKitVersionNumber >= AppKit10_7 && OpenGLProfile::Core == profile)
 	{
+		NSOpenGLPixelFormatAttribute profile = NSOpenGLProfileVersion3_2Core;
+		const char* const glversion = Args->CheckValue("-glversion");
+
+		if (nullptr != glversion)
+		{
+			const double version = strtod(glversion, nullptr) + 0.01;
+			if (version < 3.2)
+			{
+				profile = NSOpenGLProfileVersionLegacy;
+			}
+		}
+
 		attributes[i++] = NSOpenGLPFAOpenGLProfile;
-		attributes[i++] = NSOpenGLProfileVersion3_2Core;
+		attributes[i++] = profile;
 	}
 
 	attributes[i] = NSOpenGLPixelFormatAttribute(0);
 
-	// Create OpenGL context and view
+	return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
+}
 
-	NSOpenGLPixelFormat *pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
+} // unnamed namespace
+
+
+// ---------------------------------------------------------------------------
+
+
+CocoaVideo::CocoaVideo()
+: m_window(CreateCocoaWindow(STYLE_MASK_WINDOWED))
+, m_width(-1)
+, m_height(-1)
+, m_fullscreen(false)
+, m_hiDPI(false)
+{
+	memset(&m_modeIterator, 0, sizeof m_modeIterator);
+
+	// Create OpenGL pixel format
+
+	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat(OpenGLProfile::Core);
+
+	if (nil == pixelFormat)
+	{
+		pixelFormat = CreatePixelFormat(OpenGLProfile::Legacy);
+
+		if (nil == pixelFormat)
+		{
+			I_FatalError("Cannot OpenGL create pixel format, graphics hardware is not supported");
+		}
+	}
+
+	// Create OpenGL context and view
 
 	const NSRect contentRect = [m_window contentRectForFrameRect:[m_window frame]];
 	NSOpenGLView* glView = [[CocoaView alloc] initWithFrame:contentRect

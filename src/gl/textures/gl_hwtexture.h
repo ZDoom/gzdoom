@@ -10,6 +10,7 @@
 #define DIRECT_PALETTE -2
 
 #include "tarray.h"
+#include "gl/system/gl_interface.h"
 
 class FCanvasTexture;
 class AActor;
@@ -49,7 +50,11 @@ public:
 
 	static unsigned int lastbound[MAX_TEXTURES];
 
-	static int GetTexDimension(int value);
+	static int GetTexDimension(int value)
+	{
+		if (value > gl.max_texturesize) return gl.max_texturesize;
+		return value;
+	}
 
 	static void InitGlobalState() { for (int i = 0; i < MAX_TEXTURES; i++) lastbound[i] = 0; }
 

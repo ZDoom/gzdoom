@@ -61,8 +61,6 @@
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_convert.h"
 
-EXTERN_CVAR (Float, gl_lights_intensity);
-EXTERN_CVAR (Float, gl_lights_size);
 int ScriptDepth;
 void gl_InitGlow(FScanner &sc);
 void gl_ParseBrightmap(FScanner &sc, int);
@@ -175,7 +173,7 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 	light->Angles.Yaw.Degrees = m_Param;
 	light->SetOffset(m_Pos);
 	light->halo = m_halo;
-	for (int a = 0; a < 3; a++) light->args[a] = clamp<int>((int)(m_Args[a] * gl_lights_intensity), 0, 255);
+	for (int a = 0; a < 3; a++) light->args[a] = clamp<int>((int)(m_Args[a]), 0, 255);
 	light->m_Radius[0] = int(m_Args[LIGHT_INTENSITY]);
 	light->m_Radius[1] = int(m_Args[LIGHT_SECONDARY_INTENSITY]);
 	light->flags4 &= ~(MF4_ADDITIVE | MF4_SUBTRACTIVE | MF4_DONTLIGHTSELF);

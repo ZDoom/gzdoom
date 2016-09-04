@@ -57,7 +57,6 @@
 #include "gl/utility/gl_convert.h"
 #include "gl/utility/gl_templates.h"
 
-EXTERN_CVAR (Float, gl_lights_size);
 EXTERN_CVAR(Int, vid_renderer)
 
 
@@ -378,7 +377,7 @@ void ADynamicLight::UpdateLocation()
 		{
 			intensity = m_currentRadius;
 		}
-		radius = intensity * 2.0f * gl_lights_size;
+		radius = intensity * 2.0f;
 
 		if (X() != oldx || Y() != oldy || radius != oldradius)
 		{

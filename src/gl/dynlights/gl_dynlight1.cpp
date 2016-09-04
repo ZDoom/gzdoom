@@ -70,8 +70,6 @@ CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 
 CVAR (Bool, gl_attachedlights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_lights_checkside, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR (Float, gl_lights_intensity, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR (Float, gl_lights_size, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_sprites, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_particles, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
@@ -87,7 +85,7 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 	DVector3 pos = light->PosRelative(group);
 	
 	float dist = fabsf(p.DistToPoint(pos.X, pos.Z, pos.Y));
-	float radius = (light->GetRadius() * gl_lights_size);
+	float radius = (light->GetRadius());
 	
 	if (radius <= 0.f) return false;
 	if (dist > radius) return false;
@@ -108,9 +106,9 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 		cs = 1.0f;
 	}
 
-	float r = light->GetRed() / 255.0f * cs * gl_lights_intensity;
-	float g = light->GetGreen() / 255.0f * cs * gl_lights_intensity;
-	float b = light->GetBlue() / 255.0f * cs * gl_lights_intensity;
+	float r = light->GetRed() / 255.0f * cs;
+	float g = light->GetGreen() / 255.0f * cs;
+	float b = light->GetBlue() / 255.0f * cs;
 
 	if (light->IsSubtractive())
 	{

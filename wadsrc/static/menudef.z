@@ -198,8 +198,6 @@ OptionMenu "GLLightOptions"
 	Option "$GLLIGHTMNU_CLIPLIGHTS",		gl_lights_checkside,			"YesNo"
 	Option "$GLLIGHTMNU_LIGHTSPRITES",		gl_light_sprites,				"YesNo"
 	Option "$GLLIGHTMNU_LIGHTPARTICLES",	gl_light_particles,				"YesNo"
-	Slider "$GLLIGHTMNU_LIGHTINTENSITY",	gl_lights_intensity, 			0.0, 1.0, 0.1
-	Slider "$GLLIGHTMNU_LIGHTSIZE",			gl_lights_size,					0.0, 2.0, 0.1
 }
 
 OptionMenu "GLPrefOptions"

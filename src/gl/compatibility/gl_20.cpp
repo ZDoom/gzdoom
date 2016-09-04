@@ -386,7 +386,7 @@ bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, Vector & nearPt,
 	DVector3 lpos = light->PosRelative(group);
 
 	float dist = fabsf(p.DistToPoint(lpos.X, lpos.Z, lpos.Y));
-	float radius = (light->GetRadius() * gl_lights_size);
+	float radius = light->GetRadius();
 
 	if (radius <= 0.f) return false;
 	if (dist > radius) return false;
@@ -417,9 +417,9 @@ bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, Vector & nearPt,
 
 	float cs = 1.0f - (dist / radius);
 	if (additive) cs *= 0.2f;	// otherwise the light gets too strong.
-	float r = light->GetRed() / 255.0f * cs * gl_lights_intensity;
-	float g = light->GetGreen() / 255.0f * cs * gl_lights_intensity;
-	float b = light->GetBlue() / 255.0f * cs * gl_lights_intensity;
+	float r = light->GetRed() / 255.0f * cs;
+	float g = light->GetGreen() / 255.0f * cs;
+	float b = light->GetBlue() / 255.0f * cs;
 
 	if (light->IsSubtractive())
 	{

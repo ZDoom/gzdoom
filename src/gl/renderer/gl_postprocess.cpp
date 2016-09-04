@@ -444,6 +444,8 @@ void FGLRenderer::ClearBorders()
 
 	int clientWidth = framebuffer->GetClientWidth();
 	int clientHeight = framebuffer->GetClientHeight();
+	if (clientWidth == 0 || clientHeight == 0)
+		return;
 
 	glViewport(0, 0, clientWidth, clientHeight);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

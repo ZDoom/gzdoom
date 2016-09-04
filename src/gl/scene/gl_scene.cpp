@@ -1317,29 +1317,16 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 	gl_fixedcolormap=CM_DEFAULT;
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 
-	bool usefb = !gl.legacyMode || gl_usefb || gltex->GetWidth() > screen->GetWidth() || gltex->GetHeight() > screen->GetHeight();
-	if (!usefb)
+	if (gl.legacyMode)
 	{
+		// In legacy mode, fail if the requested texture is too large.
+		if (gltex->GetWidth() > screen->GetWidth() || gltex->GetHeight() > screen->GetHeight()) return;
 		glFlush();
 	}
 	else
 	{
-#if defined(_WIN32) && (defined(_MSC_VER) || defined(__INTEL_COMPILER))
-		__try
-#endif
-		{
-			GLRenderer->StartOffscreen();
-			gltex->BindToFrameBuffer();
-		}
-#if defined(_WIN32) && (defined(_MSC_VER) || defined(__INTEL_COMPILER))
-		__except(1)
-		{
-			usefb = false;
-			gl_usefb = false;
-			GLRenderer->EndOffscreen();
-			glFlush();
-		}
-#endif
+		GLRenderer->StartOffscreen();
+		gltex->BindToFrameBuffer();
 	}
 
 	GL_IRECT bounds;
@@ -1349,7 +1336,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 
 	GLRenderer->RenderViewpoint(Viewpoint, &bounds, FOV, (float)width/height, (float)width/height, false, false);
 
-	if (!usefb)
+	if (gl.legacyMode)
 	{
 		glFlush();
 		gl_RenderState.SetMaterial(gltex, 0, 0, -1, false);

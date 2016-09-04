@@ -2594,7 +2594,6 @@ GLTEXMNU_RESIZETEX 		= "Resize textures";
 GLTEXMNU_RESIZESPR 		= "Resize sprites";
 GLTEXMNU_RESIZEFNT 		= "Resize fonts";
 GLTEXMNU_PRECACHETEX 	= "Precache GL textures";
-GLTEXMNU_CAMTEXOFFSCR 	= "Camera textures offscreen";
 GLTEXMNU_TRIMSPREDGE	= "Trim sprite edges";
 GLTEXMNU_SORTDRAWLIST 	= "Sort draw lists by texture";
 
@@ -2605,9 +2604,6 @@ GLLIGHTMNU_LIGHTDEFS		= "Enable light definitions";
 GLLIGHTMNU_CLIPLIGHTS 		= "Clip lights";
 GLLIGHTMNU_LIGHTSPRITES 	= "Lights affect sprites";
 GLLIGHTMNU_LIGHTPARTICLES 	= "Lights affect particles";
-GLLIGHTMNU_FORCEADDITIVE 	= "Force additive lighting";
-GLLIGHTMNU_LIGHTINTENSITY	= "Light intensity";
-GLLIGHTMNU_LIGHTSIZE 		= "Light size";
 
 // OpenGL Preferences
 GLPREFMNU_TITLE 				= "OPENGL PREFERENCES";

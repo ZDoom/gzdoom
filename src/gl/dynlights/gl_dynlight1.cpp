@@ -74,18 +74,13 @@ CVAR (Float, gl_lights_intensity, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Float, gl_lights_size, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_sprites, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_particles, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CUSTOM_CVAR (Bool, gl_lights_additive, false,  CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	gl_DeleteAllAttachedLights();
-	gl_RecreateAllAttachedLights();
-}
 
 //==========================================================================
 //
 // Sets up the parameters to render one dynamic light onto one plane
 //
 //==========================================================================
-bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, bool forceadditive, FDynLightData &ldata)
+bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FDynLightData &ldata)
 {
 	int i = 0;
 
@@ -103,7 +98,7 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, bo
 
 
 	float cs;
-	if (gl_lights_additive || light->flags4&MF4_ADDITIVE || forceadditive) 
+	if (light->IsAdditive()) 
 	{
 		cs = 0.2f;
 		i = 2;

@@ -57,6 +57,8 @@
 #include "gl/data/gl_vertexbuffer.h"
 
 
+CVAR(Bool, gl_lights_additive, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
 //==========================================================================
 //
 // Do some tinkering with the menus so that certain options only appear
@@ -478,7 +480,7 @@ bool GLWall::PutWallCompat(int passflag)
 		if (sub->lighthead == nullptr) return false;
 	}
 
-	bool foggy = !gl_isBlack(Colormap.FadeColor) || (level.flags&LEVEL_HASFADETABLE) || gl_lights_additive;
+	bool foggy = gl_CheckFog(&Colormap, lightlevel) || (level.flags&LEVEL_HASFADETABLE) || gl_lights_additive;
 	bool masked = passflag == 2 && gltexture->isMasked();
 
 	int list = list_indices[masked][foggy];

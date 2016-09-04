@@ -76,6 +76,7 @@
 #include "d_player.h"
 #include "p_maputl.h"
 #include "p_spec.h"
+#include "templates.h"
 #include "math/cmath.h"
 
 AActor *SingleActorFromTID(int tid, AActor *defactor);
@@ -4501,7 +4502,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 		else { target = viewport; viewport = self; }
 	}
 
-	fov = MIN(fov, 360.);
+	fov = MIN<DAngle>(fov, 360.);
 
 	if (fov > 0)
 	{

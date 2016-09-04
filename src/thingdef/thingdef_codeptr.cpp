@@ -4501,7 +4501,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 		else { target = viewport; viewport = self; }
 	}
 
-	if (fov > 0 && (fov < 360.))
+	fov = MIN(fov, 360.);
+
+	if (fov > 0)
 	{
 		DAngle an = absangle(viewport->AngleTo(target), viewport->Angles.Yaw);
 

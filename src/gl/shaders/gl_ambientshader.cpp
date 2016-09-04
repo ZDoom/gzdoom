@@ -60,6 +60,7 @@ void FLinearDepthShader::Bind(bool multisample)
 		shader.Link("shaders/glsl/lineardepth");
 		shader.SetAttribLocation(0, "PositionInProjection");
 		DepthTexture[multisample].Init(shader, "DepthTexture");
+		ColorTexture[multisample].Init(shader, "ColorTexture");
 		SampleCount[multisample].Init(shader, "SampleCount");
 		LinearizeDepthA[multisample].Init(shader, "LinearizeDepthA");
 		LinearizeDepthB[multisample].Init(shader, "LinearizeDepthB");

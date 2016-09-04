@@ -557,6 +557,21 @@ void FGLRenderBuffers::BindSceneFB()
 
 //==========================================================================
 //
+// Binds the scene color texture to the specified texture unit
+//
+//==========================================================================
+
+void FGLRenderBuffers::BindSceneColorTexture(int index)
+{
+	glActiveTexture(GL_TEXTURE0 + index);
+	if (mSamples > 1)
+		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, mSceneMultisample);
+	else
+		glBindTexture(GL_TEXTURE_2D, mPipelineTexture[0]);
+}
+
+//==========================================================================
+//
 // Binds the depth texture to the specified texture unit
 //
 //==========================================================================

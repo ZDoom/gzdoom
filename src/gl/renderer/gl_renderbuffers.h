@@ -23,6 +23,7 @@ public:
 	bool Setup(int width, int height, int sceneWidth, int sceneHeight);
 
 	void BindSceneFB();
+	void BindSceneColorTexture(int index);
 	void BindSceneDepthTexture(int index);
 	void BlitSceneToTexture();
 

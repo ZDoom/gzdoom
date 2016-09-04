@@ -9,6 +9,7 @@ public:
 	void Bind(bool multisample);
 
 	FBufferedUniformSampler DepthTexture[2];
+	FBufferedUniformSampler ColorTexture[2];
 	FBufferedUniform1i SampleCount[2];
 	FBufferedUniform1f LinearizeDepthA[2];
 	FBufferedUniform1f LinearizeDepthB[2];

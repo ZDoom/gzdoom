@@ -338,13 +338,12 @@ void GLSprite::Draw(int pass)
 				if (spritetype == RF_FLATSPRITE)
 				{
 					float pitchDegrees = -actor->Angles.Pitch.Degrees;
-					DVector3 apos = { x, y, z };
-					DVector3 diff = ViewPos - apos;
-					DAngle angto = diff.Angle();
 
-					angto = deltaangle(actor->Angles.Yaw, angto);
+					float xrel = xcenter - ViewPos.X;
+					float yrel = ycenter - ViewPos.Y;
+					float absAngleDeg = RAD2DEG(atan2(-yrel, xrel));
 
-					bool noFlipSprite = (!dontFlip || (fabs(angto) < 90.));
+					bool noFlipSprite = (!dontFlip || ((fabs(absAngleDeg) < 90.) && (ViewPos.Z < zcenter)));
 					mat.Rotate(0, 1, 0, (noFlipSprite) ? 0 : 180);
 
 					mat.Rotate(-yawvecY, 0, yawvecX, (noFlipSprite) ? -pitchDegrees : pitchDegrees);

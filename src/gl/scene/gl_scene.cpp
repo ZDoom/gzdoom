@@ -771,7 +771,7 @@ void FGLRenderer::SetFixedColormap (player_t *player)
 
 sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
 {       
-	sector_t * retval;
+	sector_t * lviewsector;
 	mSceneClearColor[0] = 0.0f;
 	mSceneClearColor[1] = 0.0f;
 	mSceneClearColor[2] = 0.0f;
@@ -818,7 +818,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	}
 
 	// 'viewsector' will not survive the rendering so it cannot be used anymore below.
-	retval = viewsector;
+	lviewsector = viewsector;
 
 	// Render (potentially) multiple views for stereo 3d
 	float viewShift[3];
@@ -848,7 +848,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		clipper.SafeAddClipRangeRealAngles(ViewAngle.BAMs() + a1, ViewAngle.BAMs() - a1);
 
 		ProcessScene(toscreen);
-		if (mainview && toscreen) EndDrawScene(retval);	// do not call this for camera textures.
+		if (mainview && toscreen) EndDrawScene(lviewsector);	// do not call this for camera textures.
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
 			mBuffers->BlitSceneToTexture();
@@ -860,7 +860,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 			// This should be done after postprocessing, not before.
 			mBuffers->BindCurrentFB();
 			glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
-			DrawBlend(viewsector);
+			DrawBlend(lviewsector);
 		}
 		mDrawingScene2D = false;
 		eye->TearDown();
@@ -869,7 +869,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 
 	gl_frameCount++;	// This counter must be increased right before the interpolations are restored.
 	interpolator.RestoreInterpolations ();
-	return retval;
+	return lviewsector;
 }
 
 //-----------------------------------------------------------------------------

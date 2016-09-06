@@ -309,7 +309,8 @@ static FxExpression *ParseExpressionC (FScanner &sc, PClassActor *cls)
 static FxExpression *ParseExpressionB (FScanner &sc, PClassActor *cls)
 {
 	sc.GetToken();
-	switch(sc.TokenType)
+	int token = sc.TokenType;
+	switch(token)
 	{
 	case '~':
 		return new FxUnaryNotBitwise(ParseExpressionA (sc, cls));
@@ -325,7 +326,7 @@ static FxExpression *ParseExpressionB (FScanner &sc, PClassActor *cls)
 
 	case TK_Incr:
 	case TK_Decr:
-		return new FxPreIncrDecr(ParseExpressionA(sc, cls), sc.TokenType);
+		return new FxPreIncrDecr(ParseExpressionA(sc, cls), token);
 
 	default:
 		sc.UnGet();

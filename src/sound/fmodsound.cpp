@@ -971,6 +971,7 @@ bool FMODSoundRenderer::Init()
 
 #if FMOD_STUDIO
 	FMOD_ADVANCEDSETTINGS advSettings = {};
+	advSettings.cbSize = sizeof advSettings;
 	advSettings.resamplerMethod = resampler;
 	result = Sys->setAdvancedSettings(&advSettings);
 	if (result != FMOD_OK)

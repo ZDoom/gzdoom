@@ -137,12 +137,7 @@ void GLPortal::ClearScreen()
 	glDisable(GL_MULTISAMPLE);
 	glDisable(GL_DEPTH_TEST);
 
-	FQuadDrawer qd;
-	qd.Set(0, 0, 0, 0, 0, 0);
-	qd.Set(1, 0, SCREENHEIGHT, 0, 0, 0);
-	qd.Set(2, SCREENWIDTH, SCREENHEIGHT, 0, 0, 0);
-	qd.Set(3, SCREENWIDTH, 0, 0, 0, 0);
-	qd.Render(GL_TRIANGLE_FAN);
+	glDrawArrays(GL_TRIANGLE_STRIP, FFlatVertexBuffer::FULLSCREEN_INDEX, 4);
 
 	glEnable(GL_DEPTH_TEST);
 	gl_MatrixStack.Pop(gl_RenderState.mProjectionMatrix);

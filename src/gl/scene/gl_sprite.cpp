@@ -711,7 +711,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	x = thingpos.X;
 	z = thingpos.Z;
 	y = thingpos.Y;
-	if (spritetype == RF_FLATSPRITE) z -= thing->Floorclip;
+	if (spritetype != RF_FLATSPRITE) z -= thing->Floorclip;
 
 	// [RH] Make floatbobbing a renderer-only effect.
 	if (thing->flags2 & MF2_FLOATBOB)

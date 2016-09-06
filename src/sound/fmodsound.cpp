@@ -2758,6 +2758,16 @@ std::pair<SoundHandle,bool> FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int l
 	exinfo.defaultfrequency = frequency;
 	switch (bits)
 	{
+#if FMOD_STUDIO
+	case -8:
+		// Need to convert sample data from signed to unsigned.
+		for (int i = 0; i < length; i++)
+		{
+			sfxdata[i] ^= 0x80;
+		}
+
+	case 8:
+#else // !FMOD_STUDIO
 	case 8:
 		// Need to convert sample data from unsigned to signed.
 		for (int i = 0; i < length; ++i)
@@ -2766,6 +2776,7 @@ std::pair<SoundHandle,bool> FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int l
 		}
 
 	case -8:
+#endif // FMOD_STUDIO
 		exinfo.format = FMOD_SOUND_FORMAT_PCM8;
 		numsamples = length;
 		break;

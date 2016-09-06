@@ -226,8 +226,6 @@ void GLSprite::CalculateVertices(FVector3 *v)
 			mat.Rotate(cos(angleRad), 0, sin(angleRad), rollDegrees);
 			if (useOffsets) mat.Translate(-xx, -zz, -yy);
 		}
-
-		// apply the transform
 		else if (drawWithXYBillboard)
 		{
 			// Rotate the sprite about the vector starting at the center of the sprite
@@ -407,7 +405,6 @@ void GLSprite::Draw(int pass)
 			gl_RenderState.Apply();
 
 			FVector3 v[4];
-
 			CalculateVertices(v);
 
 

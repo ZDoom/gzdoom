@@ -110,16 +110,156 @@ CVAR(Bool, gl_nolayer, false, 0)
 
 static const float LARGE_VALUE = 1e19f;
 
+
 //==========================================================================
 //
 // 
 //
 //==========================================================================
+
+void GLSprite::CalculateVertices(FVector3 *v)
+{
+	// [BB] Billboard stuff
+	const bool drawWithXYBillboard = ((particle && gl_billboard_particles) || (!(actor && actor->renderflags & RF_FORCEYBILLBOARD)
+		//&& GLRenderer->mViewActor != NULL
+		&& (gl_billboard_mode == 1 || (actor && actor->renderflags & RF_FORCEXYBILLBOARD))));
+
+	const bool drawBillboardFacingCamera = gl_billboard_faces_camera;
+	// [Nash] has +ROLLSPRITE
+	const bool drawRollSpriteActor = (actor != nullptr && actor->renderflags & RF_ROLLSPRITE);
+
+
+	// [fgsfds] check sprite type mask
+	DWORD spritetype = (DWORD)-1;
+	if (actor != nullptr) spritetype = actor->renderflags & RF_SPRITETYPEMASK;
+
+	// [Nash] is a flat sprite
+	const bool isFlatSprite = (actor != nullptr) && (spritetype == RF_WALLSPRITE || spritetype == RF_FLATSPRITE);
+	const bool dontFlip = (actor != nullptr) && (actor->renderflags & RF_DONTFLIP);
+	const bool useOffsets = (actor != nullptr) && !(actor->renderflags & RF_ROLLCENTER);
+
+	// [Nash] check for special sprite drawing modes
+	if (drawWithXYBillboard || drawBillboardFacingCamera || drawRollSpriteActor || isFlatSprite)
+	{
+		// Compute center of sprite
+		float xcenter = (x1 + x2)*0.5;
+		float ycenter = (y1 + y2)*0.5;
+		float zcenter = (z1 + z2)*0.5;
+		float xx = -xcenter + x;
+		float zz = -zcenter + z;
+		float yy = -ycenter + y;
+		Matrix3x4 mat;
+		mat.MakeIdentity();
+		mat.Translate(xcenter, zcenter, ycenter); // move to sprite center
+
+												  // Order of rotations matters. Perform yaw rotation (Y, face camera) before pitch (X, tilt up/down).
+		if (drawBillboardFacingCamera && !isFlatSprite)
+		{
+			// [CMB] Rotate relative to camera XY position, not just camera direction,
+			// which is nicer in VR
+			float xrel = xcenter - ViewPos.X;
+			float yrel = ycenter - ViewPos.Y;
+			float absAngleDeg = RAD2DEG(atan2(-yrel, xrel));
+			float counterRotationDeg = 270. - GLRenderer->mAngles.Yaw.Degrees; // counteracts existing sprite rotation
+			float relAngleDeg = counterRotationDeg + absAngleDeg;
+
+			mat.Rotate(0, 1, 0, relAngleDeg);
+		}
+
+		// [fgsfds] calculate yaw vectors
+		float yawvecX = 0, yawvecY = 0, rollDegrees = 0;
+		float angleRad = (270. - GLRenderer->mAngles.Yaw).Radians();
+		if (actor)	rollDegrees = actor->Angles.Roll.Degrees;
+		if (isFlatSprite)
+		{
+			yawvecX = actor->Angles.Yaw.Cos();
+			yawvecY = actor->Angles.Yaw.Sin();
+		}
+
+		// [MC] This is the only thing that I changed in Nash's submission which 
+		// was constantly applying roll to everything. That was wrong. Flat sprites
+		// with roll literally look like paper thing space ships trying to swerve.
+		// However, it does well with wall sprites.
+		// Also, renamed FLOORSPRITE to FLATSPRITE because that's technically incorrect.
+		// I plan on adding proper FLOORSPRITEs which can actually curve along sloped
+		// 3D floors later... if possible.
+
+		// Here we need some form of priority in order to work.
+		if (spritetype == RF_FLATSPRITE)
+		{
+			float pitchDegrees = -actor->Angles.Pitch.Degrees;
+			DVector3 apos = { x, y, z };
+			DVector3 diff = ViewPos - apos;
+			DAngle angto = diff.Angle();
+
+			angto = deltaangle(actor->Angles.Yaw, angto);
+
+			bool noFlipSprite = (!dontFlip || (fabs(angto) < 90.));
+			mat.Rotate(0, 1, 0, (noFlipSprite) ? 0 : 180);
+
+			mat.Rotate(-yawvecY, 0, yawvecX, (noFlipSprite) ? -pitchDegrees : pitchDegrees);
+			if (drawRollSpriteActor)
+			{
+				if (useOffsets)	mat.Translate(xx, zz, yy);
+				mat.Rotate(yawvecX, 0, yawvecY, (noFlipSprite) ? -rollDegrees : rollDegrees);
+				if (useOffsets) mat.Translate(-xx, -zz, -yy);
+			}
+		}
+		// [fgsfds] Rotate the sprite about the sight vector (roll) 
+		else if (spritetype == RF_WALLSPRITE)
+		{
+			mat.Rotate(0, 1, 0, 0);
+			if (drawRollSpriteActor)
+			{
+				if (useOffsets)	mat.Translate(xx, zz, yy);
+				mat.Rotate(yawvecX, 0, yawvecY, rollDegrees);
+				if (useOffsets) mat.Translate(-xx, -zz, -yy);
+			}
+		}
+		else if (drawRollSpriteActor)
+		{
+			if (useOffsets) mat.Translate(xx, zz, yy);
+			if (drawWithXYBillboard)
+			{
+				mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch.Degrees);
+			}
+			mat.Rotate(cos(angleRad), 0, sin(angleRad), rollDegrees);
+			if (useOffsets) mat.Translate(-xx, -zz, -yy);
+		}
+
+		// apply the transform
+		else if (drawWithXYBillboard)
+		{
+			// Rotate the sprite about the vector starting at the center of the sprite
+			// triangle strip and with direction orthogonal to where the player is looking
+			// in the x/y plane.
+			mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch.Degrees);
+		}
+
+		mat.Translate(-xcenter, -zcenter, -ycenter); // retreat from sprite center
+		v[0] = mat * FVector3(x1, z1, y1);
+		v[1] = mat * FVector3(x2, z1, y2);
+		v[2] = mat * FVector3(x1, z2, y1);
+		v[3] = mat * FVector3(x2, z2, y2);
+	}
+	else // traditional "Y" billboard mode
+	{
+		v[0] = FVector3(x1, z1, y1);
+		v[1] = FVector3(x2, z1, y2);
+		v[2] = FVector3(x1, z2, y1);
+		v[3] = FVector3(x2, z2, y2);
+	}
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 void GLSprite::Draw(int pass)
 {
 	if (pass == GLPASS_DECALS || pass == GLPASS_LIGHTSONLY) return;
-
-
 
 	bool additivefog = false;
 	bool foglayer = false;
@@ -264,147 +404,18 @@ void GLSprite::Draw(int pass)
 
 		if (!modelframe)
 		{
-			// [BB] Billboard stuff
-			const bool drawWithXYBillboard = ((particle && gl_billboard_particles) || (!(actor && actor->renderflags & RF_FORCEYBILLBOARD)
-				//&& GLRenderer->mViewActor != NULL
-				&& (gl_billboard_mode == 1 || (actor && actor->renderflags & RF_FORCEXYBILLBOARD))));
-
-			const bool drawBillboardFacingCamera = gl_billboard_faces_camera;
-			// [Nash] has +ROLLSPRITE
-			const bool drawRollSpriteActor = (actor != nullptr && actor->renderflags & RF_ROLLSPRITE);
 			gl_RenderState.Apply();
 
-			FVector3 v1;
-			FVector3 v2;
-			FVector3 v3;
-			FVector3 v4;
+			FVector3 v[4];
 
-			// [fgsfds] check sprite type mask
-			DWORD spritetype = (DWORD)-1;
-			if (actor != nullptr) spritetype = actor->renderflags & RF_SPRITETYPEMASK;
-			
-			// [Nash] is a flat sprite
-			const bool isFlatSprite = (actor != nullptr) && (spritetype == RF_WALLSPRITE || spritetype == RF_FLATSPRITE);
-			const bool dontFlip = (actor != nullptr) && (actor->renderflags & RF_DONTFLIP);
-			const bool useOffsets = (actor != nullptr) && !(actor->renderflags & RF_ROLLCENTER);
-			
-			// [Nash] check for special sprite drawing modes
-			if (drawWithXYBillboard || drawBillboardFacingCamera || drawRollSpriteActor || isFlatSprite)
-			{
-				// Compute center of sprite
-				float xcenter = (x1 + x2)*0.5;
-				float ycenter = (y1 + y2)*0.5;
-				float zcenter = (z1 + z2)*0.5;
-				float xx = -xcenter + x;
-				float zz = -zcenter + z;
-				float yy = -ycenter + y;
-				Matrix3x4 mat;
-				mat.MakeIdentity();
-				mat.Translate(xcenter, zcenter, ycenter); // move to sprite center
+			CalculateVertices(v);
 
-				// Order of rotations matters. Perform yaw rotation (Y, face camera) before pitch (X, tilt up/down).
-				if (drawBillboardFacingCamera && !isFlatSprite) 
-				{
-					// [CMB] Rotate relative to camera XY position, not just camera direction,
-					// which is nicer in VR
-					float xrel = xcenter - ViewPos.X;
-					float yrel = ycenter - ViewPos.Y;
-					float absAngleDeg = RAD2DEG(atan2(-yrel, xrel));
-					float counterRotationDeg = 270. - GLRenderer->mAngles.Yaw.Degrees; // counteracts existing sprite rotation
-					float relAngleDeg = counterRotationDeg + absAngleDeg;
-
-					mat.Rotate(0, 1, 0, relAngleDeg);
-				}
-
-				// [fgsfds] calculate yaw vectors
-				float yawvecX = 0, yawvecY = 0, rollDegrees = 0;
-				float angleRad = (270. - GLRenderer->mAngles.Yaw).Radians();
-				if (actor)	rollDegrees = actor->Angles.Roll.Degrees;
-				if (isFlatSprite)
-				{
-					yawvecX = actor->Angles.Yaw.Cos();
-					yawvecY = actor->Angles.Yaw.Sin();
-				}
-
-				// [MC] This is the only thing that I changed in Nash's submission which 
-				// was constantly applying roll to everything. That was wrong. Flat sprites
-				// with roll literally look like paper thing space ships trying to swerve.
-				// However, it does well with wall sprites.
-				// Also, renamed FLOORSPRITE to FLATSPRITE because that's technically incorrect.
-				// I plan on adding proper FLOORSPRITEs which can actually curve along sloped
-				// 3D floors later... if possible.
-					
-				// Here we need some form of priority in order to work.
-				if (spritetype == RF_FLATSPRITE)
-				{
-					float pitchDegrees = -actor->Angles.Pitch.Degrees;
-					DVector3 apos = { x, y, z };
-					DVector3 diff = ViewPos - apos;
-					DAngle angto = diff.Angle();
-
-					angto = deltaangle(actor->Angles.Yaw, angto);
-
-					bool noFlipSprite = (!dontFlip || (fabs(angto) < 90.));
-					mat.Rotate(0, 1, 0, (noFlipSprite) ? 0 : 180);
-
-					mat.Rotate(-yawvecY, 0, yawvecX, (noFlipSprite) ? -pitchDegrees : pitchDegrees);
-					if (drawRollSpriteActor)
-					{
-						if (useOffsets)	mat.Translate(xx, zz, yy);
-						mat.Rotate(yawvecX, 0, yawvecY, (noFlipSprite) ? -rollDegrees : rollDegrees);
-						if (useOffsets) mat.Translate(-xx, -zz, -yy);
-					}
-				}
-				// [fgsfds] Rotate the sprite about the sight vector (roll) 
-				else if (spritetype == RF_WALLSPRITE)
-				{
-					mat.Rotate(0, 1, 0, 0);
-					if (drawRollSpriteActor)
-					{
-						if (useOffsets)	mat.Translate(xx, zz, yy);
-						mat.Rotate(yawvecX, 0, yawvecY, rollDegrees);
-						if (useOffsets) mat.Translate(-xx, -zz, -yy);
-					}
-				}
-				else if (drawRollSpriteActor)
-				{
-					if (useOffsets) mat.Translate(xx, zz, yy);
-					if (drawWithXYBillboard)
-					{
-						mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch.Degrees);
-					}
-					mat.Rotate(cos(angleRad), 0, sin(angleRad), rollDegrees);
-					if (useOffsets) mat.Translate(-xx, -zz, -yy);
-				}
-				
-				// apply the transform
-				else if (drawWithXYBillboard)
-				{
-					// Rotate the sprite about the vector starting at the center of the sprite
-					// triangle strip and with direction orthogonal to where the player is looking
-					// in the x/y plane.
-					mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch.Degrees);
-				}
-				
-				mat.Translate(-xcenter, -zcenter, -ycenter); // retreat from sprite center
-				v1 = mat * FVector3(x1, z1, y1);
-				v2 = mat * FVector3(x2, z1, y2);
-				v3 = mat * FVector3(x1, z2, y1);
-				v4 = mat * FVector3(x2, z2, y2);
-			}
-			else // traditional "Y" billboard mode
-			{
-				v1 = FVector3(x1, z1, y1);
-				v2 = FVector3(x2, z1, y2);
-				v3 = FVector3(x1, z2, y1);
-				v4 = FVector3(x2, z2, y2);
-			}
 
 			FQuadDrawer qd;
-			qd.Set(0, v1[0], v1[1], v1[2], ul, vt);
-			qd.Set(1, v2[0], v2[1], v2[2], ur, vt);
-			qd.Set(2, v3[0], v3[1], v3[2], ul, vb);
-			qd.Set(3, v4[0], v4[1], v4[2], ur, vb);
+			qd.Set(0, v[0][0], v[0][1], v[0][2], ul, vt);
+			qd.Set(1, v[1][0], v[1][1], v[1][2], ur, vt);
+			qd.Set(2, v[2][0], v[2][1], v[2][2], ul, vb);
+			qd.Set(3, v[3][0], v[3][1], v[3][2], ur, vb);
 			qd.Render(GL_TRIANGLE_STRIP);
 
 			if (foglayer)

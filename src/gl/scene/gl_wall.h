@@ -371,6 +371,7 @@ public:
 	void SplitSprite(sector_t * frontsector, bool translucent);
 	void SetLowerParam();
 	void PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, float spriteheight);
+	void CalculateVertices(FVector3 *v);
 
 public:
 

@@ -522,4 +522,6 @@ inline bool Is54Aspect(int ratio) {
     return ratio == 4;
 }
 
+EXTERN_CVAR(Int, uiscale);
+
 #endif // __V_VIDEO_H__

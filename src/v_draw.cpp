@@ -62,6 +62,14 @@
 #include "colormatcher.h"
 #include "r_data/colormaps.h"
 
+CUSTOM_CVAR(Int, uiscale, 2, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	if (StatusBar != NULL)
+	{
+		StatusBar->ScreenSizeChanged();
+	}
+}
+
 // [RH] Stretch values to make a 320x200 image best fit the screen
 // without using fractional steppings
 int CleanXfac, CleanYfac;
@@ -75,7 +83,7 @@ int CleanXfac_1, CleanYfac_1, CleanWidth_1, CleanHeight_1;
 // FillSimplePoly uses this
 extern "C" short spanend[MAXHEIGHT];
 
-CVAR (Bool, hud_scale, false, CVAR_ARCHIVE);
+CVAR (Bool, hud_scale, true, CVAR_ARCHIVE);
 
 // For routines that take RGB colors, cache the previous lookup in case there
 // are several repetitions with the same color.

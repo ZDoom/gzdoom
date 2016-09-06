@@ -1807,6 +1807,7 @@ DSPLYMNU_STILLBOB 				= "View bob amount while not moving";
 HUDMNU_TITLE					= "HUD Options";
 HUDMNU_ALTHUD					= "Alternative HUD";
 HUDMNU_MESSAGE					= "Message Options";
+HUDMNU_UISCALE					= "User interface scale";
 HUDMNU_CROSSHAIR				= "Default Crosshair";
 HUDMNU_FORCECROSSHAIR			= "Force default crosshair";
 HUDMNU_GROWCROSSHAIR			= "Grow crosshair when picking up items";

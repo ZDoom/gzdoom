@@ -74,6 +74,8 @@ EXTERN_CVAR (Bool, am_showtotaltime)
 EXTERN_CVAR (Bool, noisedebug)
 EXTERN_CVAR (Int, con_scaletext)
 
+int con_uiscale();
+
 DBaseStatusBar *StatusBar;
 
 extern int setblocks;
@@ -1240,17 +1242,17 @@ void DBaseStatusBar::Draw (EHudState state)
 		int xpos;
 		int y;
 
-		if (con_scaletext == 0)
+		if (con_uiscale() == 1)
 		{
 			vwidth = SCREENWIDTH;
 			vheight = SCREENHEIGHT;
 			xpos = vwidth - 80;
 			y = ::ST_Y - height;
 		}
-		else if (con_scaletext == 3)
+		else if (con_uiscale() > 1)
 		{
-			vwidth = SCREENWIDTH/4;
-			vheight = SCREENHEIGHT/4;
+			vwidth = SCREENWIDTH / con_uiscale();
+			vheight = SCREENHEIGHT / con_uiscale();
 			xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
 			y = ::ST_Y/4 - height;
 		}
@@ -1264,9 +1266,9 @@ void DBaseStatusBar::Draw (EHudState state)
 
 		if (gameinfo.gametype == GAME_Strife)
 		{
-			if (con_scaletext == 0)
+			if (con_uiscale() == 1)
 				y -= height * 4;
-			else if (con_scaletext == 3)
+			else if (con_uiscale() > 3)
 				y -= height;
 			else
 				y -= height * 2;
@@ -1400,27 +1402,15 @@ void DBaseStatusBar::DrawLog ()
 	if (CPlayer->LogText.IsNotEmpty())
 	{
 		// This uses the same scaling as regular HUD messages
-		switch (con_scaletext)
+		if (con_uiscale() == 0)
 		{
-		default:
-			hudwidth = SCREENWIDTH;
-			hudheight = SCREENHEIGHT;
-			break;
-
-		case 1:
 			hudwidth = SCREENWIDTH / CleanXfac;
 			hudheight = SCREENHEIGHT / CleanYfac;
-			break;
-
-		case 2:
-			hudwidth = SCREENWIDTH / 2;
-			hudheight = SCREENHEIGHT / 2;
-			break;
-
-		case 3:
-			hudwidth = SCREENWIDTH / 4;
-			hudheight = SCREENHEIGHT / 4;
-			break;
+		}
+		else
+		{
+			hudwidth = SCREENWIDTH / con_uiscale();
+			hudheight = SCREENHEIGHT / con_uiscale();
 		}
 
 		int linelen = hudwidth<640? Scale(hudwidth,9,10)-40 : 560;

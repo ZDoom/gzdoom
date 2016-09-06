@@ -846,9 +846,13 @@ void C_DrawConsole (bool hw2d)
 	static int oldbottom = 0;
 	int lines, left, offset;
 
+	int textScale = con_uiscale();
+	if (textScale == 0)
+		textScale = CleanXfac;
+
 	left = LEFTMARGIN;
-	lines = (ConBottom-ConFont->GetHeight()*2)/ConFont->GetHeight();
-	if (-ConFont->GetHeight() + lines*ConFont->GetHeight() > ConBottom - ConFont->GetHeight()*7/2)
+	lines = (ConBottom/textScale-ConFont->GetHeight()*2)/ConFont->GetHeight();
+	if (-ConFont->GetHeight() + lines*ConFont->GetHeight() > ConBottom/textScale - ConFont->GetHeight()*7/2)
 	{
 		offset = -ConFont->GetHeight()/2;
 		lines--;
@@ -894,16 +898,26 @@ void C_DrawConsole (bool hw2d)
 
 		if (ConBottom >= 12)
 		{
-			screen->DrawText (ConFont, CR_ORANGE, SCREENWIDTH - 8 -
-				ConFont->StringWidth (GetVersionString()),
-				ConBottom - ConFont->GetHeight() - 4,
-				GetVersionString(), TAG_DONE);
+			if (textScale == 1)
+				screen->DrawText (ConFont, CR_ORANGE, SCREENWIDTH - 8 -
+					ConFont->StringWidth (GetVersionString()),
+					ConBottom / textScale - ConFont->GetHeight() - 4,
+					GetVersionString(), TAG_DONE);
+			else
+				screen->DrawText(ConFont, CR_ORANGE, SCREENWIDTH / textScale - 8 -
+					ConFont->StringWidth(GetVersionString()),
+					ConBottom / textScale - ConFont->GetHeight() - 4,
+					GetVersionString(),
+					DTA_VirtualWidth, screen->GetWidth() / textScale,
+					DTA_VirtualHeight, screen->GetHeight() / textScale,
+					DTA_KeepRatio, true, TAG_DONE);
+
 			if (TickerMax)
 			{
 				char tickstr[256];
-				const int tickerY = ConBottom - ConFont->GetHeight() - 4;
+				const int tickerY = ConBottom / textScale - ConFont->GetHeight() - 4;
 				size_t i;
-				int tickend = ConCols - SCREENWIDTH / 90 - 6;
+				int tickend = ConCols / textScale - SCREENWIDTH / textScale / 90 - 6;
 				int tickbegin = 0;
 
 				if (TickerLabel)
@@ -926,11 +940,23 @@ void C_DrawConsole (bool hw2d)
 				{
 					tickstr[tickend+3] = 0;
 				}
-				screen->DrawText (ConFont, CR_BROWN, LEFTMARGIN, tickerY, tickstr, TAG_DONE);
+				if (textScale == 1)
+					screen->DrawText (ConFont, CR_BROWN, LEFTMARGIN, tickerY, tickstr, TAG_DONE);
+				else
+					screen->DrawText (ConFont, CR_BROWN, LEFTMARGIN, tickerY, tickstr,
+						DTA_VirtualWidth, screen->GetWidth() / textScale,
+						DTA_VirtualHeight, screen->GetHeight() / textScale,
+						DTA_KeepRatio, true, TAG_DONE);
 
 				// Draw the marker
 				i = LEFTMARGIN+5+tickbegin*8 + Scale (TickerAt, (SDWORD)(tickend - tickbegin)*8, TickerMax);
-				screen->DrawChar (ConFont, CR_ORANGE, (int)i, tickerY, 0x13, TAG_DONE);
+				if (textScale == 1)
+					screen->DrawChar (ConFont, CR_ORANGE, (int)i, tickerY, 0x13, TAG_DONE);
+				else
+					screen->DrawChar(ConFont, CR_ORANGE, (int)i, tickerY, 0x13,
+						DTA_VirtualWidth, screen->GetWidth() / textScale,
+						DTA_VirtualHeight, screen->GetHeight() / textScale,
+						DTA_KeepRatio, true, TAG_DONE);
 
 				TickerVisible = true;
 			}
@@ -966,18 +992,28 @@ void C_DrawConsole (bool hw2d)
 	if (lines > 0)
 	{
 		// No more enqueuing because adding new text to the console won't touch the actual print data.
-		conbuffer->FormatText(ConFont, ConWidth);
+		conbuffer->FormatText(ConFont, ConWidth / textScale);
 		unsigned int consolelines = conbuffer->GetFormattedLineCount();
 		FBrokenLines **blines = conbuffer->GetLines();
 		FBrokenLines **printline = blines + consolelines - 1 - RowAdjust;
 
-		int bottomline = ConBottom - ConFont->GetHeight()*2 - 4;
+		int bottomline = ConBottom / textScale - ConFont->GetHeight()*2 - 4;
 
 		ConsoleDrawing = true;
 
 		for(FBrokenLines **p = printline; p >= blines && lines > 0; p--, lines--)
 		{
-			screen->DrawText(ConFont, CR_TAN, LEFTMARGIN, offset + lines * ConFont->GetHeight(), (*p)->Text, TAG_DONE);
+			if (textScale == 1)
+			{
+				screen->DrawText(ConFont, CR_TAN, LEFTMARGIN, offset + lines * ConFont->GetHeight(), (*p)->Text, TAG_DONE);
+			}
+			else
+			{
+				screen->DrawText(ConFont, CR_TAN, LEFTMARGIN, offset + lines * ConFont->GetHeight(), (*p)->Text,
+					DTA_VirtualWidth, screen->GetWidth() / textScale,
+					DTA_VirtualHeight, screen->GetHeight() / textScale,
+					DTA_KeepRatio, true, TAG_DONE);
+			}
 		}
 
 		ConsoleDrawing = false;
@@ -992,21 +1028,52 @@ void C_DrawConsole (bool hw2d)
 				FString command((char *)&CmdLine[2+CmdLine[259]]);
 				int cursorpos = CmdLine[1] - CmdLine[259];
 
-				screen->DrawChar (ConFont, CR_ORANGE, left, bottomline, '\x1c', TAG_DONE);
-				screen->DrawText (ConFont, CR_ORANGE, left + ConFont->GetCharWidth(0x1c), bottomline,
-					command, TAG_DONE);
-
-				if (cursoron)
+				if (textScale == 1)
 				{
-					screen->DrawChar (ConFont, CR_YELLOW, left + ConFont->GetCharWidth(0x1c) + cursorpos * ConFont->GetCharWidth(0xb),
-						bottomline, '\xb', TAG_DONE);
+					screen->DrawChar(ConFont, CR_ORANGE, left, bottomline, '\x1c', TAG_DONE);
+					screen->DrawText(ConFont, CR_ORANGE, left + ConFont->GetCharWidth(0x1c), bottomline,
+						command, TAG_DONE);
+
+					if (cursoron)
+					{
+						screen->DrawChar(ConFont, CR_YELLOW, left + ConFont->GetCharWidth(0x1c) + cursorpos * ConFont->GetCharWidth(0xb),
+							bottomline, '\xb', TAG_DONE);
+					}
+				}
+				else
+				{
+					screen->DrawChar(ConFont, CR_ORANGE, left, bottomline, '\x1c',
+						DTA_VirtualWidth, screen->GetWidth() / textScale,
+						DTA_VirtualHeight, screen->GetHeight() / textScale,
+						DTA_KeepRatio, true, TAG_DONE);
+
+					screen->DrawText(ConFont, CR_ORANGE, left + ConFont->GetCharWidth(0x1c), bottomline,
+						command,
+						DTA_VirtualWidth, screen->GetWidth() / textScale,
+						DTA_VirtualHeight, screen->GetHeight() / textScale,
+						DTA_KeepRatio, true, TAG_DONE);
+
+					if (cursoron)
+					{
+						screen->DrawChar(ConFont, CR_YELLOW, left + ConFont->GetCharWidth(0x1c) + cursorpos * ConFont->GetCharWidth(0xb),
+							bottomline, '\xb',
+							DTA_VirtualWidth, screen->GetWidth() / textScale,
+							DTA_VirtualHeight, screen->GetHeight() / textScale,
+							DTA_KeepRatio, true, TAG_DONE);
+					}
 				}
 			}
 			if (RowAdjust && ConBottom >= ConFont->GetHeight()*7/2)
 			{
 				// Indicate that the view has been scrolled up (10)
 				// and if we can scroll no further (12)
-				screen->DrawChar (ConFont, CR_GREEN, 0, bottomline, RowAdjust == conbuffer->GetFormattedLineCount() ? 12 : 10, TAG_DONE);
+				if (textScale == 1)
+					screen->DrawChar (ConFont, CR_GREEN, 0, bottomline, RowAdjust == conbuffer->GetFormattedLineCount() ? 12 : 10, TAG_DONE);
+				else
+					screen->DrawChar(ConFont, CR_GREEN, 0, bottomline, RowAdjust == conbuffer->GetFormattedLineCount() ? 12 : 10,
+						DTA_VirtualWidth, screen->GetWidth() / textScale,
+						DTA_VirtualHeight, screen->GetHeight() / textScale,
+						DTA_KeepRatio, true, TAG_DONE);
 			}
 		}
 	}

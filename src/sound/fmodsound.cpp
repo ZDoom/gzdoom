@@ -1371,11 +1371,8 @@ void FMODSoundRenderer::PrintStatus()
 {
 	FMOD_OUTPUTTYPE output;
 	FMOD_SPEAKERMODE speakermode;
-	FMOD_SOUND_FORMAT format;
-	FMOD_DSP_RESAMPLER resampler;
 	int driver;
 	int samplerate;
-	int numoutputchannels;
 	unsigned int bufferlength;
 	int numbuffers;
 
@@ -1414,6 +1411,9 @@ void FMODSoundRenderer::PrintStatus()
 #endif
 	}
 #if !FMOD_STUDIO
+	FMOD_SOUND_FORMAT format;
+	FMOD_DSP_RESAMPLER resampler;
+	int numoutputchannels;
 	if (FMOD_OK == Sys->getSoftwareFormat(&samplerate, &format, &numoutputchannels, NULL, &resampler, NULL))
 	{
 		Printf (TEXTCOLOR_LIGHTBLUE "Software mixer sample rate: " TEXTCOLOR_GREEN "%d\n", samplerate);

@@ -61,6 +61,8 @@
 FPalette GPalette;
 FColorMatcher ColorMatcher;
 
+double *powtable; // [SP] powers table for color matcher
+
 /* Current color blending values */
 int		BlendR, BlendG, BlendB, BlendA;
 
@@ -106,33 +108,43 @@ CCMD (bumpgamma)
 /* Palette management stuff */
 /****************************/
 
-extern "C" BYTE BestColor_MMX (DWORD rgb, const DWORD *pal);
+/* extern "C" BYTE BestColor_MMX (DWORD rgb, const DWORD *pal); */
 
 int BestColor (const uint32 *pal_in, int r, int g, int b, int first, int num)
 {
-#ifdef X86_ASM
+/* #ifdef X86_ASM
 	if (CPU.bMMX)
 	{
 		int pre = 256 - num - first;
 		return BestColor_MMX (((first+pre)<<24)|(r<<16)|(g<<8)|b, pal_in-pre) - pre;
 	}
-#endif
+#endif */
 	const PalEntry *pal = (const PalEntry *)pal_in;
-	int bestcolor = first;
-	int bestdist = 257*257+257*257+257*257;
+	double fbestdist, fdist;
+	int bestcolor;
+
+	if (!powtable)
+	{
+		powtable = new double [256];
+		for (int x = 0; x < 256; x++)
+		{
+			//powtable[x] = (double)1-pow(1-(double)x/255,5.5)+pow((double)x/255,5.5);
+			powtable[x] = pow((double)x/255,1.2);
+		}
+	}
 
 	for (int color = first; color < num; color++)
 	{
-		int x = r - pal[color].r;
-		int y = g - pal[color].g;
-		int z = b - pal[color].b;
-		int dist = x*x + y*y + z*z;
-		if (dist < bestdist)
+		double x = powtable[abs(r-pal[color].r)];
+		double y = powtable[abs(g-pal[color].g)];
+		double z = powtable[abs(b-pal[color].b)];
+		fdist = x + y + z;
+		if (color == first || fdist < fbestdist)
 		{
-			if (dist == 0)
+			if (fdist == 0)
 				return color;
 
-			bestdist = dist;
+			fbestdist = fdist;
 			bestcolor = color;
 		}
 	}

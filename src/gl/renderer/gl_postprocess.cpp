@@ -75,6 +75,7 @@
 #include "gl/shaders/gl_lensshader.h"
 #include "gl/shaders/gl_presentshader.h"
 #include "gl/renderer/gl_2ddrawer.h"
+#include "gl/stereo3d/gl_stereo3d.h"
 
 //==========================================================================
 //
@@ -373,6 +374,38 @@ void FGLRenderer::LensDistortScene()
 	mBuffers->NextTexture();
 
 	FGLDebug::PopGroup();
+}
+
+//-----------------------------------------------------------------------------
+//
+// Copies the rendered screen to its final destination
+//
+//-----------------------------------------------------------------------------
+
+void FGLRenderer::Flush()
+{
+	const s3d::Stereo3DMode& stereo3dMode = s3d::Stereo3DMode::getCurrentMode();
+
+	if (stereo3dMode.IsMono() || !FGLRenderBuffers::IsEnabled())
+	{
+		CopyToBackbuffer(nullptr, true);
+	}
+	else
+	{
+		// Render 2D to eye textures
+		for (int eye_ix = 0; eye_ix < stereo3dMode.eye_count(); ++eye_ix)
+		{
+			FGLDebug::PushGroup("Eye2D");
+			mBuffers->BindEyeFB(eye_ix);
+			m2DDrawer->Flush(); // Draw the 2D
+			FGLDebug::PopGroup();
+		}
+
+		FGLPostProcessState savedState;
+		FGLDebug::PushGroup("PresentEyes");
+		stereo3dMode.Present();
+		FGLDebug::PopGroup();
+	}
 }
 
 //-----------------------------------------------------------------------------

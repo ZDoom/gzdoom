@@ -122,11 +122,11 @@ void FGLRenderBuffers::ClearBloom()
 
 void FGLRenderBuffers::ClearEyeBuffers()
 {
-	for (auto handle : mEyeTextures)
-		DeleteTexture(handle);
-
 	for (auto handle : mEyeFBs)
 		DeleteFrameBuffer(handle);
+
+	for (auto handle : mEyeTextures)
+		DeleteTexture(handle);
 
 	mEyeTextures.Clear();
 	mEyeFBs.Clear();
@@ -311,7 +311,7 @@ void FGLRenderBuffers::CreateEyeBuffers(int eye)
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &frameBufferBinding);
 
-	while (mEyeFBs.Size() < eye)
+	while (mEyeFBs.Size() <= eye)
 	{
 		GLuint texture = Create2DTexture("EyeTexture", GL_RGBA16F, mWidth, mHeight);
 		mEyeTextures.Push(texture);
@@ -546,10 +546,10 @@ void FGLRenderBuffers::BindEyeTexture(int eye, int texunit)
 	glBindTexture(GL_TEXTURE_2D, mEyeTextures[eye]);
 }
 
-void FGLRenderBuffers::BindEyeFB(int eye)
+void FGLRenderBuffers::BindEyeFB(int eye, bool readBuffer)
 {
 	CreateEyeBuffers(eye);
-	glBindFramebuffer(GL_FRAMEBUFFER, mEyeFBs[eye]);
+	glBindFramebuffer(readBuffer ? GL_READ_FRAMEBUFFER : GL_FRAMEBUFFER, mEyeFBs[eye]);
 }
 
 //==========================================================================

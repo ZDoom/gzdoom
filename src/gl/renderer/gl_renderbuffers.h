@@ -34,7 +34,7 @@ public:
 
 	void BlitToEyeTexture(int eye);
 	void BindEyeTexture(int eye, int texunit);
-	void BindEyeFB(int eye);
+	void BindEyeFB(int eye, bool readBuffer = false);
 
 	enum { NumBloomLevels = 4 };
 	FGLBloomTextureLevel BloomLevels[NumBloomLevels];

@@ -189,6 +189,8 @@ public:
 	void FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, FDynamicColormap *colormap, int lightlevel);
+
+	int PTM_BestColor (const uint32 *pal_in, int r, int g, int b, int first, int num);
 };
 
 // Global functions. Make them members of GLRenderer later?

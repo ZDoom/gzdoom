@@ -1422,7 +1422,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 		damagetype = self->DamageType;
 	}
 
-	int count = P_RadiusAttack (self, self->target, damage, distance, damagetype, flags, fulldmgdistance);
+	int pflags = 0;
+	if (flags & XF_HURTSOURCE)	pflags |= RADF_HURTSOURCE;
+	if (flags & XF_NOTMISSILE)	pflags |= RADF_SOURCEISSPOT;
+
+	int count = P_RadiusAttack (self, self->target, damage, distance, damagetype, pflags, fulldmgdistance);
 	P_CheckSplash(self, distance);
 	if (alert && self->target != NULL && self->target->player != NULL)
 	{

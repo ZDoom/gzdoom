@@ -283,7 +283,7 @@ enum ActorFlag4
 enum ActorFlag5
 {
 	MF5_DONTDRAIN		= 0x00000001,	// cannot be drained health from.
-	/*		FREE SLOT	  0x00000002*/
+	MF5_GETOWNER		= 0x00000002,
 	MF5_NODROPOFF		= 0x00000004,	// cannot drop off under any circumstances.
 	MF5_NOFORWARDFALL	= 0x00000008,	// Does not make any actor fall forward by being damaged by this
 	MF5_COUNTSECRET		= 0x00000010,	// From Doom 64: actor acts like a secret

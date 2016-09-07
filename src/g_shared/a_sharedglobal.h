@@ -153,7 +153,7 @@ struct FQuakeJiggers
 	DVector3 RelIntensity;
 	DVector3 Offset;
 	DVector3 RelOffset;
-	double Falloff, WFalloff, RFalloff, RWFalloff;
+	double Falloff;
 	double RollIntensity, RollWave;
 };
 
@@ -180,8 +180,7 @@ public:
 	int m_Highpoint, m_MiniCount;
 	double m_RollIntensity, m_RollWave;
 
-
-	double GetModIntensity(double intensity) const;
+	double GetModIntensity(double intensity, bool fake = false) const;
 	double GetModWave(double waveMultiplier) const;
 	double GetFalloff(double dist) const;
 

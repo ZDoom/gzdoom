@@ -1422,7 +1422,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 		damagetype = self->DamageType;
 	}
 
-	int count = P_RadiusAttack (self, self->target, damage, distance, damagetype, flags, fulldmgdistance);
+	int pflags = 0;
+	if (flags & XF_HURTSOURCE)	pflags |= RADF_HURTSOURCE;
+	if (flags & XF_NOTMISSILE)	pflags |= RADF_SOURCEISSPOT;
+
+	int count = P_RadiusAttack (self, self->target, damage, distance, damagetype, pflags, fulldmgdistance);
 	P_CheckSplash(self, distance);
 	if (alert && self->target != NULL && self->target->player != NULL)
 	{
@@ -4681,90 +4685,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 	PARAM_STRING	(flagname);
 	PARAM_BOOL		(value);
 
-	const char *dot = strchr(flagname, '.');
-	FFlagDef *fd;
-	PClassActor *cls = self->GetClass();
-
-	if (dot != NULL)
-	{
-		FString part1(flagname.GetChars(), dot - flagname);
-		fd = FindFlag(cls, part1, dot + 1);
-	}
-	else
-	{
-		fd = FindFlag(cls, flagname, NULL);
-	}
-
-	if (fd != NULL)
-	{
-		bool kill_before, kill_after;
-		INTBOOL item_before, item_after;
-		INTBOOL secret_before, secret_after;
-
-		kill_before = self->CountsAsKill();
-		item_before = self->flags & MF_COUNTITEM;
-		secret_before = self->flags5 & MF5_COUNTSECRET;
-
-		if (fd->structoffset == -1)
-		{
-			HandleDeprecatedFlags(self, cls, value, fd->flagbit);
-		}
-		else
-		{
-			ActorFlags *flagp = (ActorFlags*) (((char*)self) + fd->structoffset);
-
-			// If these 2 flags get changed we need to update the blockmap and sector links.
-			bool linkchange = flagp == &self->flags && (fd->flagbit == MF_NOBLOCKMAP || fd->flagbit == MF_NOSECTOR);
-
-			if (linkchange) self->UnlinkFromWorld();
-			ModActorFlag(self, fd, value);
-			if (linkchange) self->LinkToWorld();
-		}
-		kill_after = self->CountsAsKill();
-		item_after = self->flags & MF_COUNTITEM;
-		secret_after = self->flags5 & MF5_COUNTSECRET;
-		// Was this monster previously worth a kill but no longer is?
-		// Or vice versa?
-		if (kill_before != kill_after)
-		{
-			if (kill_after)
-			{ // It counts as a kill now.
-				level.total_monsters++;
-			}
-			else
-			{ // It no longer counts as a kill.
-				level.total_monsters--;
-			}
-		}
-		// same for items
-		if (item_before != item_after)
-		{
-			if (item_after)
-			{ // It counts as an item now.
-				level.total_items++;
-			}
-			else
-			{ // It no longer counts as an item
-				level.total_items--;
-			}
-		}
-		// and secretd
-		if (secret_before != secret_after)
-		{
-			if (secret_after)
-			{ // It counts as an secret now.
-				level.total_secrets++;
-			}
-			else
-			{ // It no longer counts as an secret
-				level.total_secrets--;
-			}
-		}
-	}
-	else
-	{
-		Printf("Unknown flag '%s' in '%s'\n", flagname.GetChars(), cls->TypeName.GetChars());
-	}
+	ModActorFlag(self, flagname, value);
 	return 0;
 }
 

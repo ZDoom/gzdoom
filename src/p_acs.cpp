@@ -4451,6 +4451,7 @@ enum EACSFunctions
 
 	ACSF_CheckClass = 200,
 	ACSF_DamageActor, // [arookas]
+	ACSF_SetActorFlag,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
@@ -6044,6 +6045,34 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			AActor* inflictor = COPY_AAPTR(SingleActorFromTID(args[2], activator), args[3]);
 			FName damagetype(FBehavior::StaticLookupString(args[5]));
 			return P_DamageMobj(target, inflictor, inflictor, args[4], damagetype);
+		}
+
+		case ACSF_SetActorFlag:
+		{
+			int tid = args[0];
+			FString flagname = FBehavior::StaticLookupString(args[1]);
+			bool flagvalue = !!args[2];
+			int count = 0; // Return value; number of actors affected
+			if (tid == 0)
+			{
+				if (ModActorFlag(activator, flagname, flagvalue))
+				{
+					++count;
+				}
+			}
+			else
+			{
+				FActorIterator it(tid);
+				while ((actor = it.Next()) != nullptr)
+				{
+					// Don't log errors when affecting many actors because things might share a TID but not share the flag
+					if (ModActorFlag(actor, flagname, flagvalue, false))
+					{
+						++count;
+					}
+				}
+			}
+			return count;
 		}
 
 		default:

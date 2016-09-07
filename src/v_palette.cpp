@@ -106,33 +106,33 @@ CCMD (bumpgamma)
 /* Palette management stuff */
 /****************************/
 
+extern "C" BYTE BestColor_MMX (DWORD rgb, const DWORD *pal);
+
 int BestColor (const uint32 *pal_in, int r, int g, int b, int first, int num)
 {
-	const PalEntry *pal = (const PalEntry *)pal_in;
-	static double powtable[256];
-	static bool firstTime = true;
-
-	double fbestdist, fdist;
-	int bestcolor;
-
-	if (firstTime)
+#ifdef X86_ASM
+	if (CPU.bMMX)
 	{
-		firstTime = false;
-		for (int x = 0; x < 256; x++) powtable[x] = pow((double)x/255,1.2);
+		int pre = 256 - num - first;
+		return BestColor_MMX (((first+pre)<<24)|(r<<16)|(g<<8)|b, pal_in-pre) - pre;
 	}
+#endif
+	const PalEntry *pal = (const PalEntry *)pal_in;
+	int bestcolor = first;
+	int bestdist = 257*257+257*257+257*257;
 
 	for (int color = first; color < num; color++)
 	{
-		double x = powtable[abs(r-pal[color].r)];
-		double y = powtable[abs(g-pal[color].g)];
-		double z = powtable[abs(b-pal[color].b)];
-		fdist = x + y + z;
-		if (color == first || fdist < fbestdist)
+		int x = r - pal[color].r;
+		int y = g - pal[color].g;
+		int z = b - pal[color].b;
+		int dist = x*x + y*y + z*z;
+		if (dist < bestdist)
 		{
-			if (fdist == 0)
+			if (dist == 0)
 				return color;
 
-			fbestdist = fdist;
+			bestdist = dist;
 			bestcolor = color;
 		}
 	}

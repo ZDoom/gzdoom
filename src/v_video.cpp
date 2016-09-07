@@ -65,7 +65,7 @@
 #include "menu/menu.h"
 #include "r_data/voxels.h"
 
-int con_uiscale();
+int active_con_scale();
 
 FRenderer *Renderer;
 
@@ -858,7 +858,7 @@ void DFrameBuffer::DrawRateStuff ()
 			int chars;
 			int rate_x;
 
-			int textScale = con_uiscale();
+			int textScale = active_con_scale();
 			if (textScale == 0)
 				textScale = CleanXfac;
 

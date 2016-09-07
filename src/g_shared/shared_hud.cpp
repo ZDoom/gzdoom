@@ -118,7 +118,7 @@ static int hudwidth, hudheight;				// current width/height for HUD display
 static int statspace;
 
 DVector2 AM_GetPosition();
-int con_uiscale();
+int active_con_scaletext();
 
 FTextureID GetHUDIcon(PClassInventory *cls)
 {
@@ -886,15 +886,15 @@ static void DrawCoordinates(player_t * CPlayer)
 	}
 
 	int vwidth, vheight;
-	if (con_uiscale() == 0)
+	if (active_con_scaletext() == 0)
 	{
 		vwidth = SCREENWIDTH / 2;
 		vheight = SCREENHEIGHT / 2;
 	}
 	else
 	{
-		vwidth = SCREENWIDTH / con_uiscale();
-		vheight = SCREENHEIGHT / con_uiscale();
+		vwidth = SCREENWIDTH / active_con_scaletext();
+		vheight = SCREENHEIGHT / active_con_scaletext();
 	}
 
 	int xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;

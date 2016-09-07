@@ -42,7 +42,7 @@
 #include "farchive.h"
 
 EXTERN_CVAR(Int, con_scaletext)
-int con_uiscale();
+int active_con_scaletext();
 
 IMPLEMENT_POINTY_CLASS (DHUDMessage)
  DECLARE_POINTER(Next)
@@ -261,10 +261,10 @@ void DHUDMessage::ResetText (const char *text)
 	}
 	else
 	{
-		switch (con_uiscale())
+		switch (active_con_scaletext())
 		{
 		case 0: width = SCREENWIDTH / CleanXfac; break;
-		default: width = SCREENWIDTH / con_uiscale(); break;
+		default: width = SCREENWIDTH / active_con_scaletext(); break;
 		}
 	}
 
@@ -330,7 +330,7 @@ void DHUDMessage::Draw (int bottom, int visibility)
 
 	int screen_width = SCREENWIDTH;
 	int screen_height = SCREENHEIGHT;
-	if (HUDWidth == 0 && con_uiscale() == 0)
+	if (HUDWidth == 0 && active_con_scaletext() == 0)
 	{
 		clean = true;
 		xscale = CleanXfac;
@@ -341,9 +341,9 @@ void DHUDMessage::Draw (int bottom, int visibility)
 		xscale = yscale = 1;
 		if (HUDWidth == 0)
 		{
-			screen_width /= con_uiscale();
-			screen_height /= con_uiscale();
-			bottom /= con_uiscale();
+			screen_width /= active_con_scaletext();
+			screen_height /= active_con_scaletext();
+			bottom /= active_con_scaletext();
 		}
 	}
 
@@ -445,7 +445,7 @@ void DHUDMessage::DoDraw (int linenum, int x, int y, bool clean, int hudheight)
 {
 	if (hudheight == 0)
 	{
-		if (con_uiscale() <= 1)
+		if (active_con_scaletext() <= 1)
 		{
 			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
 				DTA_CleanNoMove, clean,
@@ -456,8 +456,8 @@ void DHUDMessage::DoDraw (int linenum, int x, int y, bool clean, int hudheight)
 		else
 		{
 			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
-				DTA_VirtualWidth, SCREENWIDTH / con_uiscale(),
-				DTA_VirtualHeight, SCREENHEIGHT / con_uiscale(),
+				DTA_VirtualWidth, SCREENWIDTH / active_con_scaletext(),
+				DTA_VirtualHeight, SCREENHEIGHT / active_con_scaletext(),
 				DTA_AlphaF, Alpha,
 				DTA_RenderStyle, Style,
 				DTA_KeepRatio, true,
@@ -548,7 +548,7 @@ void DHUDMessageFadeOut::DoDraw (int linenum, int x, int y, bool clean, int hudh
 		float trans = float(Alpha * -(Tics - FadeOutTics) / FadeOutTics);
 		if (hudheight == 0)
 		{
-			if (con_uiscale() <= 1)
+			if (active_con_scaletext() <= 1)
 			{
 				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
 					DTA_CleanNoMove, clean,
@@ -559,8 +559,8 @@ void DHUDMessageFadeOut::DoDraw (int linenum, int x, int y, bool clean, int hudh
 			else
 			{
 				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
-					DTA_VirtualWidth, SCREENWIDTH / con_uiscale(),
-					DTA_VirtualHeight, SCREENHEIGHT / con_uiscale(),
+					DTA_VirtualWidth, SCREENWIDTH / active_con_scaletext(),
+					DTA_VirtualHeight, SCREENHEIGHT / active_con_scaletext(),
 					DTA_AlphaF, trans,
 					DTA_RenderStyle, Style,
 					DTA_KeepRatio, true,
@@ -648,7 +648,7 @@ void DHUDMessageFadeInOut::DoDraw (int linenum, int x, int y, bool clean, int hu
 		float trans = float(Alpha * Tics / FadeInTics);
 		if (hudheight == 0)
 		{
-			if (con_uiscale() <= 1)
+			if (active_con_scaletext() <= 1)
 			{
 				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
 					DTA_CleanNoMove, clean,
@@ -659,8 +659,8 @@ void DHUDMessageFadeInOut::DoDraw (int linenum, int x, int y, bool clean, int hu
 			else
 			{
 				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
-					DTA_VirtualWidth, SCREENWIDTH / con_uiscale(),
-					DTA_VirtualHeight, SCREENHEIGHT / con_uiscale(),
+					DTA_VirtualWidth, SCREENWIDTH / active_con_scaletext(),
+					DTA_VirtualHeight, SCREENHEIGHT / active_con_scaletext(),
 					DTA_AlphaF, trans,
 					DTA_RenderStyle, Style,
 					DTA_KeepRatio, true,
@@ -826,7 +826,7 @@ void DHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, bool clean, in
 		{
 			if (hudheight == 0)
 			{
-				if (con_uiscale() <= 1)
+				if (active_con_scaletext() <= 1)
 				{
 					screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
 						DTA_CleanNoMove, clean,
@@ -838,8 +838,8 @@ void DHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, bool clean, in
 				else
 				{
 					screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
-						DTA_VirtualWidth, SCREENWIDTH / con_uiscale(),
-						DTA_VirtualHeight, SCREENHEIGHT / con_uiscale(),
+						DTA_VirtualWidth, SCREENWIDTH / active_con_scaletext(),
+						DTA_VirtualHeight, SCREENHEIGHT / active_con_scaletext(),
 						DTA_KeepRatio, true,
 						DTA_TextLen, LineVisible,
 						DTA_AlphaF, Alpha,

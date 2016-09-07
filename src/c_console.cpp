@@ -165,7 +165,20 @@ CUSTOM_CVAR (Int, con_scaletext, 1, CVAR_ARCHIVE)		// Scale notify text at high 
 	if (self > 3) self = 3;
 }
 
-int con_uiscale()
+CUSTOM_CVAR(Int, con_scale, 0, CVAR_ARCHIVE)
+{
+	if (self < 0) self = 0;
+}
+
+int active_con_scale()
+{
+	if (con_scale == 0)
+		return uiscale;
+	else
+		return con_scale;
+}
+
+int active_con_scaletext()
 {
 	switch (con_scaletext)
 	{
@@ -505,13 +518,13 @@ void C_AddNotifyString (int printlevel, const char *source)
 		return;
 	}
 
-	if (con_uiscale() == 0)
+	if (active_con_scaletext() == 0)
 	{
 		width = DisplayWidth / CleanXfac;
 	}
 	else
 	{
-		width = DisplayWidth / con_uiscale();
+		width = DisplayWidth / active_con_scaletext();
 	}
 
 	if (addtype == APPENDLINE && NotifyStrings[NUMNOTIFIES-1].PrintLevel == printlevel)
@@ -733,7 +746,7 @@ static void C_DrawNotifyText ()
 	canskip = true;
 
 	lineadv = SmallFont->GetHeight ();
-	if (con_uiscale() == 0)
+	if (active_con_scaletext() == 0)
 	{
 		lineadv *= CleanYfac;
 	}
@@ -767,7 +780,7 @@ static void C_DrawNotifyText ()
 			else
 				color = PrintColors[NotifyStrings[i].PrintLevel];
 
-			if (con_uiscale() == 0)
+			if (active_con_scaletext() == 0)
 			{
 				if (!center)
 					screen->DrawText (SmallFont, color, 0, line, NotifyStrings[i].Text,
@@ -778,7 +791,7 @@ static void C_DrawNotifyText ()
 						line, NotifyStrings[i].Text, DTA_CleanNoMove, true,
 						DTA_AlphaF, alpha, TAG_DONE);
 			}
-			else if (con_uiscale() == 1)
+			else if (active_con_scaletext() == 1)
 			{
 				if (!center)
 					screen->DrawText (SmallFont, color, 0, line, NotifyStrings[i].Text,
@@ -793,16 +806,16 @@ static void C_DrawNotifyText ()
 			{
 				if (!center)
 					screen->DrawText (SmallFont, color, 0, line, NotifyStrings[i].Text,
-						DTA_VirtualWidth, screen->GetWidth() / con_uiscale(),
-						DTA_VirtualHeight, screen->GetHeight() / con_uiscale(),
+						DTA_VirtualWidth, screen->GetWidth() / active_con_scaletext(),
+						DTA_VirtualHeight, screen->GetHeight() / active_con_scaletext(),
 						DTA_KeepRatio, true,
 						DTA_AlphaF, alpha, TAG_DONE);
 				else
-					screen->DrawText (SmallFont, color, (screen->GetWidth() / con_uiscale() -
-						SmallFont->StringWidth (NotifyStrings[i].Text))/ con_uiscale(),
+					screen->DrawText (SmallFont, color, (screen->GetWidth() / active_con_scaletext() -
+						SmallFont->StringWidth (NotifyStrings[i].Text))/ active_con_scaletext(),
 						line, NotifyStrings[i].Text,
-						DTA_VirtualWidth, screen->GetWidth() / con_uiscale(),
-						DTA_VirtualHeight, screen->GetHeight() / con_uiscale(),
+						DTA_VirtualWidth, screen->GetWidth() / active_con_scaletext(),
+						DTA_VirtualHeight, screen->GetHeight() / active_con_scaletext(),
 						DTA_KeepRatio, true,
 						DTA_AlphaF, alpha, TAG_DONE);
 			}
@@ -846,7 +859,7 @@ void C_DrawConsole (bool hw2d)
 	static int oldbottom = 0;
 	int lines, left, offset;
 
-	int textScale = con_uiscale();
+	int textScale = active_con_scale();
 	if (textScale == 0)
 		textScale = CleanXfac;
 

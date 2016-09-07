@@ -46,7 +46,7 @@ EXTERN_CVAR (Bool, sb_cooperative_enable)
 EXTERN_CVAR (Bool, sb_deathmatch_enable)
 EXTERN_CVAR (Bool, sb_teamdeathmatch_enable)
 
-int con_uiscale();
+int active_con_scaletext();
 
 // Public data
 
@@ -226,7 +226,7 @@ void CT_Drawer (void)
 		int i, x, scalex, y, promptwidth;
 
 		y = (viewactive || gamestate != GS_LEVEL) ? -10 : -30;
-		if (con_uiscale() == 0)
+		if (active_con_scaletext() == 0)
 		{
 			scalex = CleanXfac;
 			y *= CleanYfac;
@@ -237,7 +237,7 @@ void CT_Drawer (void)
 		}
 
 		int screen_width, screen_height, st_y;
-		if (con_uiscale() == 0)
+		if (active_con_scaletext() == 0)
 		{
 			screen_width = SCREENWIDTH;
 			screen_height = SCREENHEIGHT;
@@ -245,9 +245,9 @@ void CT_Drawer (void)
 		}
 		else
 		{
-			screen_width = SCREENWIDTH / con_uiscale();
-			screen_height = SCREENHEIGHT / con_uiscale();
-			st_y = ST_Y / con_uiscale();
+			screen_width = SCREENWIDTH / active_con_scaletext();
+			screen_height = SCREENHEIGHT / active_con_scaletext();
+			st_y = ST_Y / active_con_scaletext();
 		}
 
 		y += ((SCREENHEIGHT == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
@@ -274,10 +274,10 @@ void CT_Drawer (void)
 		// draw the prompt, text, and cursor
 		ChatQueue[len] = SmallFont->GetCursor();
 		ChatQueue[len+1] = '\0';
-		if (con_uiscale() < 2)
+		if (active_con_scaletext() < 2)
 		{
-			screen->DrawText (SmallFont, CR_GREEN, 0, y, prompt, DTA_CleanNoMove, con_uiscale() == 0, TAG_DONE);
-			screen->DrawText (SmallFont, CR_GREY, promptwidth, y, (char *)(ChatQueue + i), DTA_CleanNoMove, con_uiscale() == 0, TAG_DONE);
+			screen->DrawText (SmallFont, CR_GREEN, 0, y, prompt, DTA_CleanNoMove, active_con_scaletext() == 0, TAG_DONE);
+			screen->DrawText (SmallFont, CR_GREY, promptwidth, y, (char *)(ChatQueue + i), DTA_CleanNoMove, active_con_scaletext() == 0, TAG_DONE);
 		}
 		else
 		{

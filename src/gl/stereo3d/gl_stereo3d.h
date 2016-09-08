@@ -86,7 +86,7 @@ public:
 	virtual void TearDown() const {};
 
 	virtual bool IsMono() const { return false; }
-	virtual void Present() const;
+	virtual void Present() const = 0;
 
 protected:
 	TArray<const EyePose *> eye_ptrs;
@@ -106,6 +106,7 @@ public:
 	static const MonoView& getInstance();
 
 	bool IsMono() const override { return true; }
+	void Present() const override { }
 
 protected:
 	MonoView() { eye_ptrs.Push(&centralEye); }

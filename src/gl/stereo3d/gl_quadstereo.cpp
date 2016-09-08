@@ -34,6 +34,8 @@
 */
 
 #include "gl_quadstereo.h"
+#include "gl/renderer/gl_renderer.h"
+#include "gl/renderer/gl_renderbuffers.h"
 
 namespace s3d {
 
@@ -46,7 +48,7 @@ QuadStereo::QuadStereo(double ipdMeters)
 	GLboolean supportsStereo, supportsBuffered;
 	glGetBooleanv(GL_STEREO, &supportsStereo);
 	glGetBooleanv(GL_DOUBLEBUFFER, &supportsBuffered);
-	bool bQuadStereoSupported = supportsStereo && supportsBuffered;
+	bQuadStereoSupported = supportsStereo && supportsBuffered;
 	leftEye.bQuadStereoSupported = bQuadStereoSupported;
 	rightEye.bQuadStereoSupported = bQuadStereoSupported;
 
@@ -54,6 +56,33 @@ QuadStereo::QuadStereo(double ipdMeters)
 	// If stereo is not supported, just draw scene once (left eye view only)
 	if (bQuadStereoSupported) {
 		eye_ptrs.Push(&rightEye);
+	}
+}
+
+void QuadStereo::Present() const
+{
+	if (bQuadStereoSupported)
+	{
+		GLRenderer->mBuffers->BindOutputFB();
+
+		glDrawBuffer(GL_BACK_LEFT);
+		GLRenderer->ClearBorders();
+		GLRenderer->mBuffers->BindEyeTexture(0, 0);
+		GLRenderer->DrawPresentTexture(GLRenderer->mOutputLetterbox, true);
+
+		glDrawBuffer(GL_BACK_RIGHT);
+		GLRenderer->ClearBorders();
+		GLRenderer->mBuffers->BindEyeTexture(1, 0);
+		GLRenderer->DrawPresentTexture(GLRenderer->mOutputLetterbox, true);
+
+		glDrawBuffer(GL_BACK);
+	}
+	else
+	{
+		GLRenderer->mBuffers->BindOutputFB();
+		GLRenderer->ClearBorders();
+		GLRenderer->mBuffers->BindEyeTexture(1, 0);
+		GLRenderer->DrawPresentTexture(GLRenderer->mOutputLetterbox, true);
 	}
 }
 

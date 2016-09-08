@@ -47,14 +47,6 @@ class QuadStereoLeftPose : public LeftEyePose
 {
 public:
 	QuadStereoLeftPose(float ipd) : LeftEyePose(ipd), bQuadStereoSupported(false) {}
-	virtual void SetUp() const {
-		if (bQuadStereoSupported)
-			glDrawBuffer(GL_BACK_LEFT);
-	}
-	virtual void TearDown() const { 
-		if (bQuadStereoSupported)
-			glDrawBuffer(GL_BACK);
-	}
 	bool bQuadStereoSupported;
 };
 
@@ -62,14 +54,6 @@ class QuadStereoRightPose : public RightEyePose
 {
 public:
 	QuadStereoRightPose(float ipd) : RightEyePose(ipd), bQuadStereoSupported(false){}
-	virtual void SetUp() const { 
-		if (bQuadStereoSupported)
-			glDrawBuffer(GL_BACK_RIGHT);
-	}
-	virtual void TearDown() const { 
-		if (bQuadStereoSupported)
-			glDrawBuffer(GL_BACK);
-	}
 	bool bQuadStereoSupported;
 };
 
@@ -84,10 +68,12 @@ class QuadStereo : public Stereo3DMode
 {
 public:
 	QuadStereo(double ipdMeters);
+	void Present() const override;
 	static const QuadStereo& getInstance(float ipd);
 private:
 	QuadStereoLeftPose leftEye;
 	QuadStereoRightPose rightEye;
+	bool bQuadStereoSupported;
 };
 
 

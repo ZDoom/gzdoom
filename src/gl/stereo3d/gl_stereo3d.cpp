@@ -36,7 +36,6 @@
 #include "gl/system/gl_system.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/renderer/gl_renderbuffers.h"
 #include "vectors.h" // RAD2DEG
 #include "doomtype.h" // M_PI
 
@@ -78,28 +77,6 @@ Stereo3DMode::Stereo3DMode()
 
 Stereo3DMode::~Stereo3DMode()
 {
-}
-
-void Stereo3DMode::Present() const
-{
-	// Example copying eye textures to the back buffer:
-
-	// The letterbox for the output destination.
-	// If stereo modes needs different dimensions then that needs to be added to FGLRenderer::SetOutputViewport.
-	const auto &box = GLRenderer->mOutputLetterbox;
-
-	GLRenderer->mBuffers->BindOutputFB();
-	glClearColor(0.0, 0.0, 0.0, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT);
-	for (int eye_ix = 0; eye_ix < eye_count(); ++eye_ix)
-	{
-		GLRenderer->mBuffers->BindEyeFB(eye_ix, true);
-		int width = GLRenderer->mBuffers->GetWidth();
-		int height = GLRenderer->mBuffers->GetHeight();
-		glBlitFramebuffer(0, 0, width, height, box.left + eye_ix * box.width / eye_count(), box.top, box.left + (eye_ix + 1) * box.width / eye_count(), box.height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-	}
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
 // Avoid static initialization order fiasco by declaring first Mode type (Mono) here in the

@@ -37,7 +37,10 @@
 #include "vectors.h" // RAD2DEG
 #include "doomtype.h" // M_PI
 #include "gl/system/gl_cvars.h"
+#include "gl/system/gl_system.h"
+#include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
+#include "gl/renderer/gl_renderbuffers.h"
 #include <cmath>
 
 EXTERN_CVAR(Float, vr_screendist)
@@ -89,6 +92,13 @@ const LeftEyeView& LeftEyeView::getInstance(float ipd)
 	return instance;
 }
 
+void LeftEyeView::Present() const
+{
+	GLRenderer->mBuffers->BindOutputFB();
+	GLRenderer->ClearBorders();
+	GLRenderer->mBuffers->BindEyeTexture(0, 0);
+	GLRenderer->DrawPresentTexture(GLRenderer->mOutputLetterbox, true);
+}
 
 /* static */
 const RightEyeView& RightEyeView::getInstance(float ipd)
@@ -96,6 +106,14 @@ const RightEyeView& RightEyeView::getInstance(float ipd)
 	static RightEyeView instance(ipd);
 	instance.setIpd(ipd);
 	return instance;
+}
+
+void RightEyeView::Present() const
+{
+	GLRenderer->mBuffers->BindOutputFB();
+	GLRenderer->ClearBorders();
+	GLRenderer->mBuffers->BindEyeTexture(0, 0);
+	GLRenderer->DrawPresentTexture(GLRenderer->mOutputLetterbox, true);
 }
 
 

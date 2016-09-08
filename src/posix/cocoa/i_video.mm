@@ -31,10 +31,11 @@
  **
  */
 
+#include "gl/system/gl_load.h"
+
 #include "i_common.h"
 
 #import <Carbon/Carbon.h>
-#import <OpenGL/gl.h>
 
 // Avoid collision between DObject class and Objective-C
 #define Class ObjectClass
@@ -45,6 +46,7 @@
 #include "hardware.h"
 #include "i_system.h"
 #include "m_argv.h"
+#include "m_png.h"
 #include "r_renderer.h"
 #include "r_swrenderer.h"
 #include "st_console.h"
@@ -55,6 +57,14 @@
 #include "v_text.h"
 #include "v_video.h"
 #include "version.h"
+
+#include "gl/system/gl_system.h"
+#include "gl/data/gl_vertexbuffer.h"
+#include "gl/renderer/gl_renderer.h"
+#include "gl/system/gl_framebuffer.h"
+#include "gl/system/gl_interface.h"
+#include "gl/textures/gl_samplers.h"
+#include "gl/utility/gl_clock.h"
 
 #undef Class
 
@@ -122,6 +132,36 @@ CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_
 	Printf("You must restart " GAMENAME " to apply graphics switching mode\n");
 }
 
+static int s_currentRenderer;
+
+CUSTOM_CVAR(Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	// 0: Software renderer
+	// 1: OpenGL renderer
+
+	if (self != s_currentRenderer)
+	{
+		switch (self)
+		{
+			case 0:
+				Printf("Switching to software renderer...\n");
+				break;
+			case 1:
+				Printf("Switching to OpenGL renderer...\n");
+				break;
+			default:
+				Printf("Unknown renderer (%d). Falling back to software renderer...\n",
+					static_cast<int>(vid_renderer));
+				self = 0;
+				break;
+		}
+
+		Printf("You must restart " GAMENAME " to switch the renderer\n");
+	}
+}
+
+EXTERN_CVAR(Bool, gl_smooth_rendered)
+
 
 RenderBufferOptions rbOpts;
 
@@ -135,7 +175,7 @@ namespace
 	const NSInteger LEVEL_WINDOWED   = NSNormalWindowLevel;
 
 	const NSUInteger STYLE_MASK_FULLSCREEN = NSBorderlessWindowMask;
-	const NSUInteger STYLE_MASK_WINDOWED   = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask;
+	const NSUInteger STYLE_MASK_WINDOWED   = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
 }
 
 
@@ -198,14 +238,13 @@ namespace
 @end
 
 
-
 // ---------------------------------------------------------------------------
 
 
 class CocoaVideo : public IVideo
 {
 public:
-	explicit CocoaVideo(int multisample);
+	CocoaVideo();
 
 	virtual EDisplayType GetDisplayType() { return DISPLAY_Both; }
 	virtual void SetWindowedScale(float scale);
@@ -244,6 +283,9 @@ private:
 
 	static CocoaVideo* GetInstance();
 };
+
+
+// ---------------------------------------------------------------------------
 
 
 class CocoaFrameBuffer : public DFrameBuffer
@@ -428,23 +470,14 @@ CocoaWindow* CreateCocoaWindow(const NSUInteger styleMask)
 	return window;
 }
 
-} // unnamed namespace
-
-
-// ---------------------------------------------------------------------------
-
-
-CocoaVideo::CocoaVideo(const int multisample)
-: m_window(CreateCocoaWindow(STYLE_MASK_WINDOWED))
-, m_width(-1)
-, m_height(-1)
-, m_fullscreen(false)
-, m_hiDPI(false)
+enum OpenGLProfile
 {
-	memset(&m_modeIterator, 0, sizeof m_modeIterator);
+	Core,
+	Legacy
+};
 
-	// Set attributes for OpenGL context
-
+NSOpenGLPixelFormat* CreatePixelFormat(const OpenGLProfile profile)
+{
 	NSOpenGLPixelFormatAttribute attributes[16];
 	size_t i = 0;
 
@@ -461,20 +494,59 @@ CocoaVideo::CocoaVideo(const int multisample)
 		attributes[i++] = NSOpenGLPFAAllowOfflineRenderers;
 	}
 
-	if (multisample)
+	if (NSAppKitVersionNumber >= AppKit10_7 && OpenGLProfile::Core == profile)
 	{
-		attributes[i++] = NSOpenGLPFAMultisample;
-		attributes[i++] = NSOpenGLPFASampleBuffers;
-		attributes[i++] = NSOpenGLPixelFormatAttribute(1);
-		attributes[i++] = NSOpenGLPFASamples;
-		attributes[i++] = NSOpenGLPixelFormatAttribute(multisample);
+		NSOpenGLPixelFormatAttribute profile = NSOpenGLProfileVersion3_2Core;
+		const char* const glversion = Args->CheckValue("-glversion");
+
+		if (nullptr != glversion)
+		{
+			const double version = strtod(glversion, nullptr) + 0.01;
+			if (version < 3.2)
+			{
+				profile = NSOpenGLProfileVersionLegacy;
+			}
+		}
+
+		attributes[i++] = NSOpenGLPFAOpenGLProfile;
+		attributes[i++] = profile;
 	}
 
 	attributes[i] = NSOpenGLPixelFormatAttribute(0);
 
-	// Create OpenGL context and view
+	return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
+}
 
-	NSOpenGLPixelFormat *pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
+} // unnamed namespace
+
+
+// ---------------------------------------------------------------------------
+
+
+CocoaVideo::CocoaVideo()
+: m_window(CreateCocoaWindow(STYLE_MASK_WINDOWED))
+, m_width(-1)
+, m_height(-1)
+, m_fullscreen(false)
+, m_hiDPI(false)
+{
+	memset(&m_modeIterator, 0, sizeof m_modeIterator);
+
+	// Create OpenGL pixel format
+
+	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat(OpenGLProfile::Core);
+
+	if (nil == pixelFormat)
+	{
+		pixelFormat = CreatePixelFormat(OpenGLProfile::Legacy);
+
+		if (nil == pixelFormat)
+		{
+			I_FatalError("Cannot OpenGL create pixel format, graphics hardware is not supported");
+		}
+	}
+
+	// Create OpenGL context and view
 
 	const NSRect contentRect = [m_window contentRectForFrameRect:[m_window frame]];
 	NSOpenGLView* glView = [[CocoaView alloc] initWithFrame:contentRect
@@ -553,7 +625,17 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
 		delete old;
 	}
 
-	CocoaFrameBuffer* fb = new CocoaFrameBuffer(width, height, bgra, fullscreen);
+	DFrameBuffer* fb = NULL;
+
+	if (1 == s_currentRenderer)
+ 	{
+		fb = new OpenGLFrameBuffer(NULL, width, height, 32, 60, fullscreen);
+	}
+	else
+	{
+		fb = new CocoaFrameBuffer(width, height, bgra, fullscreen);
+	}
+
 	fb->SetFlash(flashColor, flashAmount);
 
 	SetMode(width, height, fullscreen, vid_hidpi);
@@ -772,6 +854,9 @@ CocoaVideo* CocoaVideo::GetInstance()
 }
 
 
+// ---------------------------------------------------------------------------
+
+
 CocoaFrameBuffer::CocoaFrameBuffer(int width, int height, bool bgra, bool fullscreen)
 : DFrameBuffer(width, height, bgra)
 , m_needPaletteUpdate(false)
@@ -782,6 +867,14 @@ CocoaFrameBuffer::CocoaFrameBuffer(int width, int height, bool bgra, bool fullsc
 , m_pixelBuffer(new uint8_t[width * height * BYTES_PER_PIXEL])
 , m_texture(0)
 {
+	static bool isOpenGLInitialized;
+
+	if (!isOpenGLInitialized)
+	{
+		ogl_LoadFunctions();
+		isOpenGLInitialized = true;
+	}
+
 	glEnable(GL_TEXTURE_RECTANGLE_ARB);
 
 	glGenTextures(1, &m_texture);
@@ -1030,6 +1123,153 @@ void CocoaFrameBuffer::Flip()
 }
 
 
+// ---------------------------------------------------------------------------
+
+
+SDLGLFB::SDLGLFB(void*, const int width, const int height, int, int, const bool fullscreen)
+: DFrameBuffer(width, height)
+, m_lock(-1)
+, m_isUpdatePending(false)
+{
+	CGGammaValue gammaTable[GAMMA_TABLE_SIZE];
+	uint32_t actualChannelSize;
+
+	const CGError result = CGGetDisplayTransferByTable(kCGDirectMainDisplay, GAMMA_CHANNEL_SIZE,
+		gammaTable, &gammaTable[GAMMA_CHANNEL_SIZE], &gammaTable[GAMMA_CHANNEL_SIZE * 2], &actualChannelSize);
+	m_supportsGamma = kCGErrorSuccess == result && GAMMA_CHANNEL_SIZE == actualChannelSize;
+
+	if (m_supportsGamma)
+	{
+		for (uint32_t i = 0; i < GAMMA_TABLE_SIZE; ++i)
+		{
+			m_originalGamma[i] = static_cast<WORD>(gammaTable[i] * 65535.0f);
+		}
+	}
+}
+
+SDLGLFB::SDLGLFB()
+{
+}
+
+SDLGLFB::~SDLGLFB()
+{
+}
+
+
+bool SDLGLFB::Lock(bool buffered)
+{
+	m_lock++;
+
+	Buffer = MemBuffer;
+
+	return true;
+}
+
+void SDLGLFB::Unlock()
+{
+	if (m_isUpdatePending && 1 == m_lock)
+	{
+		Update();
+	}
+	else if (--m_lock <= 0)
+	{
+		m_lock = 0;
+	}
+}
+
+bool SDLGLFB::IsLocked()
+{
+	return m_lock > 0;
+}
+
+
+bool SDLGLFB::IsFullscreen()
+{
+	return CocoaVideo::IsFullscreen();
+}
+
+void SDLGLFB::SetVSync(bool vsync)
+{
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
+	const long value = vsync ? 1 : 0;
+#else // 10.5 or newer
+	const GLint value = vsync ? 1 : 0;
+#endif // prior to 10.5
+
+	[[NSOpenGLContext currentContext] setValues:&value
+								   forParameter:NSOpenGLCPSwapInterval];
+}
+
+
+void SDLGLFB::InitializeState()
+{
+}
+
+bool SDLGLFB::CanUpdate()
+{
+	if (m_lock != 1)
+	{
+		if (m_lock > 0)
+		{
+			m_isUpdatePending = true;
+			--m_lock;
+		}
+
+		return false;
+	}
+
+	return true;
+}
+
+void SDLGLFB::SwapBuffers()
+{
+	[[NSOpenGLContext currentContext] flushBuffer];
+}
+
+void SDLGLFB::SetGammaTable(WORD* table)
+{
+	if (m_supportsGamma)
+	{
+		CGGammaValue gammaTable[GAMMA_TABLE_SIZE];
+
+		for (uint32_t i = 0; i < GAMMA_TABLE_SIZE; ++i)
+		{
+			gammaTable[i] = static_cast<CGGammaValue>(table[i] / 65535.0f);
+		}
+
+		CGSetDisplayTransferByTable(kCGDirectMainDisplay, GAMMA_CHANNEL_SIZE,
+			gammaTable, &gammaTable[GAMMA_CHANNEL_SIZE], &gammaTable[GAMMA_CHANNEL_SIZE * 2]);
+	}
+}
+
+void SDLGLFB::ResetGammaTable()
+{
+	if (m_supportsGamma)
+	{
+		SetGammaTable(m_originalGamma);
+	}
+}
+
+int SDLGLFB::GetClientWidth()
+{
+	NSView *view = [[NSOpenGLContext currentContext] view];
+	NSRect backingBounds = [view convertRectToBacking: [view bounds]];
+	int clientWidth = (int)backingBounds.size.width;
+	return clientWidth > 0 ? clientWidth : Width;
+}
+
+int SDLGLFB::GetClientHeight()
+{
+	NSView *view = [[NSOpenGLContext currentContext] view];
+	NSRect backingBounds = [view convertRectToBacking: [view bounds]];
+	int clientHeight = (int)backingBounds.size.height;
+	return clientHeight > 0 ? clientHeight : Height;
+}
+
+
+// ---------------------------------------------------------------------------
+
+
 ADD_STAT(blit)
 {
 	FString result;
@@ -1039,6 +1279,9 @@ ADD_STAT(blit)
 
 
 IVideo* Video;
+
+
+// ---------------------------------------------------------------------------
 
 
 void I_ShutdownGraphics()
@@ -1061,7 +1304,7 @@ void I_InitGraphics()
 	val.Bool = !!Args->CheckParm("-devparm");
 	ticker.SetGenericRepDefault(val, CVAR_Bool);
 
-	Video = new CocoaVideo(0);
+	Video = new CocoaVideo;
 	atterm(I_ShutdownGraphics);
 }
 
@@ -1074,9 +1317,15 @@ static void I_DeleteRenderer()
 
 void I_CreateRenderer()
 {
+	s_currentRenderer = vid_renderer;
+
 	if (NULL == Renderer)
 	{
-		Renderer = new FSoftwareRenderer;
+		extern FRenderer* gl_CreateInterface();
+
+		Renderer = 1 == s_currentRenderer
+			? gl_CreateInterface()
+			: new FSoftwareRenderer;
 		atterm(I_DeleteRenderer);
 	}
 }
@@ -1148,6 +1397,9 @@ void I_ClosestResolution(int *width, int *height, int bits)
 }
 
 
+// ---------------------------------------------------------------------------
+
+
 EXTERN_CVAR(Int, vid_maxfps);
 EXTERN_CVAR(Bool, cl_capfps);
 
@@ -1184,6 +1436,9 @@ CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 		self = 0;
 	}
 }
+
+
+// ---------------------------------------------------------------------------
 
 
 CCMD(vid_listmodes)

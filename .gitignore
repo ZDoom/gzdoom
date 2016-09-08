@@ -8,6 +8,7 @@
 /Release
 /wadsrc_wad
 *.user
+/build
 /debug
 /release
 */debug
@@ -41,6 +42,7 @@
 /jpeg-6b/x64/
 /lzma/x64/
 /zlib/x64/
+/build_vc2013_64bit
 /build_vc2015
 /build_vc2015-32
 /build_vc2015-64

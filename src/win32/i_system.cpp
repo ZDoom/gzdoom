@@ -1427,11 +1427,11 @@ static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP 
 {
 	ICONINFO iconinfo =
 	{
-		FALSE,			// fIcon
+		FALSE,		// fIcon
 		(DWORD)xhot,	// xHotspot
 		(DWORD)yhot,	// yHotspot
-		and_mask,		// hbmMask
-		color_mask		// hbmColor
+		and_mask,	// hbmMask
+		color_mask	// hbmColor
 	};
 	HCURSOR cursor = CreateIconIndirect(&iconinfo);
 

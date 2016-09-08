@@ -1478,6 +1478,7 @@ void G_AirControlChanged ()
 //
 //
 //==========================================================================
+void gl_SerializeGlobals(FArchive &arc);
 
 void G_SerializeLevel (FArchive &arc, bool hubLoad)
 {
@@ -1485,6 +1486,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	
 	Renderer->StartSerialize(arc);
 	if (arc.IsLoading()) P_DestroyThinkers(hubLoad);
+	gl_SerializeGlobals(arc);
 
 	arc << level.flags
 		<< level.flags2

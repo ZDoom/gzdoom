@@ -11,6 +11,7 @@ include( CheckFunctionExists )
 include( CheckCXXCompilerFlag )
 include( CheckLibraryExists )
 include( FindPkgConfig )
+include( FindOpenGL )
 
 if( NOT APPLE )
 	option( NO_ASM "Disable assembly code" OFF )
@@ -235,6 +236,14 @@ else()
 	endif()
 endif()
 
+# Check if we have OpenGL
+
+if( NOT OPENGL_FOUND )
+	message( FATAL_ERROR "OpenGL is required for building." )
+endif( NOT OPENGL_FOUND )
+
+set( ZDOOM_LIBS ${ZDOOM_LIBS} ${OPENGL_LIBRARIES} )
+include_directories( ${OPENGL_INCLUDE_DIR} )
 
 if( NOT NO_OPENAL )
 	find_package( OpenAL )
@@ -471,6 +480,22 @@ else()
 	set( BACKPATCH 0 )
 endif()
 
+if( X64 )
+	set( HAVE_MMX 1 )
+else( X64 )
+	set( SAFE_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} )
+
+	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmmx")
+	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+
+	CHECK_CXX_SOURCE_COMPILES("#include <mmintrin.h>
+		int main(void) { __m64 v = _m_from_int(0); }"
+		HAVE_MMX)
+
+	set( CMAKE_CXX_FLAGS ${SAFE_CMAKE_CXX_FLAGS} )
+endif( X64 )
+
 # Set up flags for GCC
 
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
@@ -647,6 +672,7 @@ set( PLAT_WIN32_SOURCES
 	win32/i_system.cpp
 	win32/i_specialpaths.cpp
 	win32/st_start.cpp
+	win32/win32gliface.cpp
 	win32/win32video.cpp )
 set( PLAT_POSIX_SOURCES
 	posix/i_cd.cpp
@@ -662,6 +688,7 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/i_system.cpp
 	posix/sdl/i_timer.cpp
 	posix/sdl/sdlvideo.cpp
+	posix/sdl/sdlglvideo.cpp
 	posix/sdl/st_start.cpp )
 set( PLAT_UNIX_SOURCES
 	posix/unix/i_specialpaths.cpp )
@@ -717,6 +744,25 @@ else()
 	set( SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} ${PLAT_UNIX_SOURCES} )
 	set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_OSX_SOURCES} ${PLAT_COCOA_SOURCES} )
 endif()
+
+if( HAVE_MMX )
+	add_definitions( -DHAVE_MMX=1 )
+
+	set( SYSTEM_SOURCES ${SYSTEM_SOURCES}
+		gl/hqnx_asm/hq2x_asm.cpp
+		gl/hqnx_asm/hq3x_asm.cpp
+		gl/hqnx_asm/hq4x_asm.cpp
+		gl/hqnx_asm/hqnx_asm_Image.cpp)
+
+	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+		set_source_files_properties(
+			gl/hqnx_asm/hq2x_asm.cpp
+			gl/hqnx_asm/hq3x_asm.cpp
+			gl/hqnx_asm/hq4x_asm.cpp
+			gl/textures/gl_hqresize.cpp
+			PROPERTIES COMPILE_FLAGS "-mmmx" )
+	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+endif( HAVE_MMX )
 
 if( NOT ASM_SOURCES )
 	set( ASM_SOURCES "" )
@@ -811,6 +857,21 @@ file( GLOB HEADER_FILES
 	thingdef/*.h
 	xlat/*.h
 	zscript/*.h
+	gl/*.h
+	gl/api/*.h
+	gl/data/*.h
+	gl/dynlights/*.h
+	gl/hqnx/*.h
+	gl/hqnx_asm/*.h
+	gl/xbr/*.h
+	gl/models/*.h
+	gl/renderer/*.h
+	gl/scene/*.h
+	gl/stereo3d/*.h
+	gl/shaders/*.h
+	gl/system/*.h
+	gl/textures/*.h
+	gl/utility/*.h
 	*.h
 )
 
@@ -1006,6 +1067,85 @@ set( FASTMATH_SOURCES
 	sound/sndfile_decoder.cpp
 	sound/music_pseudo_mididevice.cpp
 	wildmidi/wildmidi_lib.cpp
+	gl/compatibility/gl_20.cpp
+	gl/data/gl_data.cpp
+	gl/data/gl_portaldata.cpp
+	gl/data/gl_setup.cpp
+	gl/data/gl_matrix.cpp
+	gl/data/gl_vertexbuffer.cpp
+	gl/dynlights/a_dynlight.cpp
+	gl/utility/gl_clock.cpp
+	gl/utility/gl_cycler.cpp
+	gl/utility/gl_geometric.cpp
+	gl/renderer/gl_2ddrawer.cpp
+	gl/renderer/gl_quaddrawer.cpp
+	gl/renderer/gl_renderer.cpp
+	gl/renderer/gl_renderstate.cpp
+	gl/renderer/gl_renderbuffers.cpp
+	gl/renderer/gl_lightdata.cpp
+	gl/renderer/gl_postprocess.cpp
+	gl/renderer/gl_postprocessstate.cpp
+	gl/hqnx/init.cpp
+	gl/hqnx/hq2x.cpp
+	gl/hqnx/hq3x.cpp
+	gl/hqnx/hq4x.cpp
+	gl/xbr/xbrz.cpp
+	gl/xbr/xbrz_old.cpp
+	gl/textures/gl_hwtexture.cpp
+	gl/textures/gl_texture.cpp
+	gl/textures/gl_material.cpp
+	gl/textures/gl_hirestex.cpp
+	gl/textures/gl_bitmap.cpp
+	gl/textures/gl_samplers.cpp
+	gl/textures/gl_translate.cpp
+	gl/textures/gl_hqresize.cpp
+	gl/textures/gl_skyboxtexture.cpp
+	gl/scene/gl_bsp.cpp
+	gl/scene/gl_fakeflat.cpp
+	gl/scene/gl_clipper.cpp
+	gl/scene/gl_decal.cpp
+	gl/scene/gl_drawinfo.cpp
+	gl/scene/gl_flats.cpp
+	gl/scene/gl_walls.cpp
+	gl/scene/gl_sprite.cpp
+	gl/scene/gl_skydome.cpp
+	gl/scene/gl_renderhacks.cpp
+	gl/scene/gl_weapon.cpp
+	gl/scene/gl_scene.cpp
+	gl/scene/gl_sky.cpp
+	gl/scene/gl_portal.cpp
+	gl/scene/gl_walls_draw.cpp
+	gl/scene/gl_vertex.cpp
+	gl/scene/gl_spritelight.cpp
+	gl/stereo3d/gl_stereo3d.cpp
+	gl/stereo3d/gl_stereo_cvars.cpp
+	gl/stereo3d/gl_stereo_leftright.cpp
+	gl/stereo3d/scoped_view_shifter.cpp
+	gl/stereo3d/gl_anaglyph.cpp
+	gl/stereo3d/gl_quadstereo.cpp
+	gl/dynlights/gl_dynlight.cpp
+	gl/dynlights/gl_glow.cpp
+	gl/dynlights/gl_dynlight1.cpp
+	gl/dynlights/gl_lightbuffer.cpp
+	gl/shaders/gl_shader.cpp
+	gl/shaders/gl_texshader.cpp
+	gl/shaders/gl_shaderprogram.cpp
+	gl/shaders/gl_presentshader.cpp
+	gl/shaders/gl_bloomshader.cpp
+	gl/shaders/gl_blurshader.cpp
+	gl/shaders/gl_colormapshader.cpp
+	gl/shaders/gl_tonemapshader.cpp
+	gl/shaders/gl_lensshader.cpp
+	gl/system/gl_interface.cpp
+	gl/system/gl_framebuffer.cpp
+	gl/system/gl_debug.cpp
+	gl/system/gl_menu.cpp
+	gl/system/gl_wipe.cpp
+	gl/system/gl_load.c
+	gl/models/gl_models_md3.cpp
+	gl/models/gl_models_md2.cpp
+	gl/models/gl_models.cpp
+	gl/models/gl_voxels.cpp
 )
 
 set (PCH_SOURCES
@@ -1099,6 +1239,7 @@ set (PCH_SOURCES
 	p_mobj.cpp
 	p_pillar.cpp
 	p_plats.cpp
+	p_portals.cpp
 	p_pspr.cpp
 	p_pusher.cpp
 	p_saveg.cpp
@@ -1123,7 +1264,7 @@ set (PCH_SOURCES
 	p_xlat.cpp
 	parsecontext.cpp
 	po_man.cpp
-	portal.cpp
+    portal.cpp
 	r_utility.cpp
 	sc_man.cpp
 	st_stuff.cpp
@@ -1415,6 +1556,20 @@ source_group("Games\\Strife Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DI
 source_group("Intermission" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/intermission/.+")
 source_group("Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/math/.+")
 source_group("Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/menu/.+")
+source_group("OpenGL Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/.+")
+source_group("OpenGL Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/data/.+")
+source_group("OpenGL Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/dynlights/.+")
+source_group("OpenGL Renderer\\HQ Resize" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/hqnx/.+")
+source_group("OpenGL Renderer\\HQ Resize MMX version" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/hqnx_asm/.+")
+source_group("OpenGL Renderer\\XBRZ" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/hqnx_asm/.+")
+source_group("OpenGL Renderer\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/models/.+")
+source_group("OpenGL Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/renderer/.+")
+source_group("OpenGL Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/scene/.+")
+source_group("OpenGL Renderer\\Stereo3D" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/stereo3d/.+")
+source_group("OpenGL Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/shaders/.+")
+source_group("OpenGL Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/system/.+")
+source_group("OpenGL Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/textures/.+")
+source_group("OpenGL Renderer\\Utilities" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/utility/.+")
 source_group("Render Core\\Render Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_.+\\.h$")
 source_group("Render Core\\Render Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_.+\\.cpp$")
 source_group("Render Data\\Resource Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+\\.h$")

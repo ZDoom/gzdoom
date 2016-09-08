@@ -863,7 +863,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 			DrawBlend(lviewsector);
 		}
 		mDrawingScene2D = false;
-		if (!stereo3dMode.IsMono())
+		if (!stereo3dMode.IsMono() && FGLRenderBuffers::IsEnabled())
 			mBuffers->BlitToEyeTexture(eye_ix);
 		eye->TearDown();
 	}

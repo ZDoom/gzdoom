@@ -378,7 +378,7 @@ void F2DDrawer::AddPixel(int x1, int y1, int palcolor, uint32 color)
 //
 //==========================================================================
 
-void F2DDrawer::Flush()
+void F2DDrawer::Draw()
 {
 	F2DDrawer::EDrawType lasttype = DrawTypeTexture;
 
@@ -490,10 +490,12 @@ void F2DDrawer::Flush()
 		}
 		i += dg->mLen;
 	}
-	mVertices.Clear();
-	mData.Clear();
 	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	glset.lightmode = savedlightmode;
 }
 
-
+void F2DDrawer::Clear()
+{
+	mVertices.Clear();
+	mData.Clear();
+}

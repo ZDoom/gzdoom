@@ -66,7 +66,8 @@ public:
 	void AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32 color);
 	void AddPixel(int x1, int y1, int palcolor, uint32 color);
 		
-	void Flush();
+	void Draw();
+	void Clear();
 };
 
 

@@ -1,18 +1,26 @@
 #ifndef __RES_CMAP_H
 #define __RES_CMAP_H
 
+struct FColormap;
+
 void R_InitColormaps ();
 void R_DeinitColormaps ();
 
 DWORD R_ColormapNumForName(const char *name);	// killough 4/4/98
 void R_SetDefaultColormap (const char *name);	// [RH] change normal fadetable
 DWORD R_BlendForColormap (DWORD map);			// [RH] return calculated blend for a colormap
-extern BYTE *realcolormaps;						// [RH] make the colormaps externally visible
+extern FColormap realcolormaps;					// [RH] make the colormaps externally visible
 extern size_t numfakecmaps;
 
+struct FColormap
+{
+	BYTE *Maps = nullptr;
+	PalEntry Color = 0xffffffff;
+	PalEntry Fade = 0xff000000;
+	int Desaturate = 0;
+};
 
-
-struct FDynamicColormap
+struct FDynamicColormap : FColormap
 {
 	void ChangeFade (PalEntry fadecolor);
 	void ChangeColor (PalEntry lightcolor, int desaturate);
@@ -20,10 +28,6 @@ struct FDynamicColormap
 	void BuildLights ();
 	static void RebuildAllLights();
 
-	BYTE *Maps;
-	PalEntry Color;
-	PalEntry Fade;
-	int Desaturate;
 	FDynamicColormap *Next;
 };
 
@@ -43,8 +47,13 @@ enum
 };
 
 
-struct FSpecialColormap
+struct FSpecialColormap : FColormap
 {
+	FSpecialColormap()
+	{
+		Maps = Colormap;
+	}
+
 	float ColorizeStart[3];
 	float ColorizeEnd[3];
 	BYTE Colormap[256];

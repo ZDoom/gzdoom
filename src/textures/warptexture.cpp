@@ -39,6 +39,7 @@
 #include "r_utility.h"
 #include "textures/textures.h"
 #include "warpbuffer.h"
+#include "v_palette.h"
 
 
 FWarpTexture::FWarpTexture (FTexture *source, int warptype)
@@ -74,6 +75,7 @@ void FWarpTexture::Unload ()
 		Spans = NULL;
 	}
 	SourcePic->Unload ();
+	FTexture::Unload();
 }
 
 bool FWarpTexture::CheckModified ()
@@ -90,6 +92,25 @@ const BYTE *FWarpTexture::GetPixels ()
 		MakeTexture (time);
 	}
 	return Pixels;
+}
+
+const uint32_t *FWarpTexture::GetPixelsBgra()
+{
+	DWORD time = r_FrameTime;
+	if (Pixels == NULL || time != GenTime)
+	{
+		MakeTexture(time);
+		CreatePixelsBgraWithMipmaps();
+		for (int i = 0; i < Width * Height; i++)
+		{
+			if (Pixels[i] != 0)
+				PixelsBgra[i] = 0xff000000 | GPalette.BaseColors[Pixels[i]].d;
+			else
+				PixelsBgra[i] = 0;
+		}
+		GenerateBgraMipmapsFast();
+	}
+	return PixelsBgra.data();
 }
 
 const BYTE *FWarpTexture::GetColumn (unsigned int column, const Span **spans_out)

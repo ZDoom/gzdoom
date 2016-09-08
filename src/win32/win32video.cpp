@@ -629,7 +629,7 @@ bool Win32Video::NextMode (int *width, int *height, bool *letterbox)
 	return false;
 }
 
-DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscreen, DFrameBuffer *old)
+DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool bgra, bool fullscreen, DFrameBuffer *old)
 {
 	static int retry = 0;
 	static int owidth, oheight;
@@ -645,7 +645,8 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 		BaseWinFB *fb = static_cast<BaseWinFB *> (old);
 		if (fb->Width == width &&
 			fb->Height == height &&
-			fb->Windowed == !fullscreen)
+			fb->Windowed == !fullscreen &&
+			fb->Bgra == bgra)
 		{
 			return old;
 		}
@@ -662,12 +663,13 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 
 	if (D3D != NULL)
 	{
-		fb = new D3DFB (m_Adapter, width, height, fullscreen);
+		fb = new D3DFB (m_Adapter, width, height, bgra, fullscreen);
 	}
 	else
 	{
 		fb = new DDrawFB (width, height, fullscreen);
 	}
+
 	LOG1 ("New fb created @ %p\n", fb);
 
 	// If we could not create the framebuffer, try again with slightly
@@ -726,7 +728,7 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 		}
 
 		++retry;
-		fb = static_cast<DDrawFB *>(CreateFrameBuffer (width, height, fullscreen, NULL));
+		fb = static_cast<DDrawFB *>(CreateFrameBuffer (width, height, bgra, fullscreen, NULL));
 	}
 	retry = 0;
 

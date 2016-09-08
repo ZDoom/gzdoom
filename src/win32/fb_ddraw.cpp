@@ -32,7 +32,6 @@
 **
 */
 
-
 // HEADER FILES ------------------------------------------------------------
 
 #define DIRECTDRAW_VERSION 0x0300
@@ -120,7 +119,7 @@ cycle_t BlitCycles;
 // CODE --------------------------------------------------------------------
 
 DDrawFB::DDrawFB (int width, int height, bool fullscreen)
-	: BaseWinFB (width, height)
+	: BaseWinFB (width, height, false)
 {
 	int i;
 

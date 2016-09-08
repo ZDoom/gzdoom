@@ -206,6 +206,7 @@ void FRawPageTexture::Unload ()
 		delete[] Pixels;
 		Pixels = NULL;
 	}
+	FTexture::Unload();
 }
 
 //==========================================================================

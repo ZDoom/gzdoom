@@ -889,11 +889,11 @@ void R_SetupFrame (AActor *actor)
 			BaseBlendG = GPART(newblend);
 			BaseBlendB = BPART(newblend);
 			BaseBlendA = APART(newblend) / 255.f;
-			NormalLight.Maps = realcolormaps;
+			NormalLight.Maps = realcolormaps.Maps;
 		}
 		else
 		{
-			NormalLight.Maps = realcolormaps + NUMCOLORMAPS*256*newblend;
+			NormalLight.Maps = realcolormaps.Maps + NUMCOLORMAPS*256*newblend;
 			BaseBlendR = BaseBlendG = BaseBlendB = 0;
 			BaseBlendA = 0.f;
 		}

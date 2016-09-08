@@ -295,11 +295,9 @@ FJPEGTexture::~FJPEGTexture ()
 
 void FJPEGTexture::Unload ()
 {
-	if (Pixels != NULL)
-	{
-		delete[] Pixels;
-		Pixels = NULL;
-	}
+	delete[] Pixels;
+	Pixels = NULL;
+	FTexture::Unload();
 }
 
 //==========================================================================

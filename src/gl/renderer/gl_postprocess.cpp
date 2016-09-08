@@ -397,9 +397,10 @@ void FGLRenderer::Flush()
 		{
 			FGLDebug::PushGroup("Eye2D");
 			mBuffers->BindEyeFB(eye_ix);
-			m2DDrawer->Flush(); // Draw the 2D
+			m2DDrawer->Draw();
 			FGLDebug::PopGroup();
 		}
+		m2DDrawer->Clear();
 
 		FGLPostProcessState savedState;
 		FGLDebug::PushGroup("PresentEyes");
@@ -416,7 +417,9 @@ void FGLRenderer::Flush()
 
 void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 {
-	m2DDrawer->Flush();	// draw all pending 2D stuff before copying the buffer
+	m2DDrawer->Draw();	// draw all pending 2D stuff before copying the buffer
+	m2DDrawer->Clear();
+
 	FGLDebug::PushGroup("CopyToBackbuffer");
 	if (FGLRenderBuffers::IsEnabled())
 	{

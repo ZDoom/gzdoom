@@ -61,14 +61,8 @@ class AnaglyphLeftPose : public LeftEyePose
 {
 public:
 	AnaglyphLeftPose(const ColorMask& colorMask, float ipd) : LeftEyePose(ipd), colorMask(colorMask) {}
-	virtual void SetUp() const { 
-		gl_RenderState.SetColorMask(colorMask.r, colorMask.g, colorMask.b, true);
-		gl_RenderState.ApplyColorMask();
-	}
-	virtual void TearDown() const { 
-		gl_RenderState.ResetColorMask();
-		gl_RenderState.ApplyColorMask();
-	}
+	ColorMask GetColorMask() const { return colorMask; }
+
 private:
 	ColorMask colorMask;
 };
@@ -77,14 +71,8 @@ class AnaglyphRightPose : public RightEyePose
 {
 public:
 	AnaglyphRightPose(const ColorMask& colorMask, float ipd) : RightEyePose(ipd), colorMask(colorMask) {}
-	virtual void SetUp() const { 
-		gl_RenderState.SetColorMask(colorMask.r, colorMask.g, colorMask.b, true);
-		gl_RenderState.ApplyColorMask();
-	}
-	virtual void TearDown() const { 
-		gl_RenderState.ResetColorMask();
-		gl_RenderState.ApplyColorMask();
-	}
+	ColorMask GetColorMask() const { return colorMask; }
+
 private:
 	ColorMask colorMask;
 };
@@ -93,6 +81,7 @@ class MaskAnaglyph : public Stereo3DMode
 {
 public:
 	MaskAnaglyph(const ColorMask& leftColorMask, double ipdMeters);
+	void Present() const override;
 private:
 	AnaglyphLeftPose leftEye;
 	AnaglyphRightPose rightEye;

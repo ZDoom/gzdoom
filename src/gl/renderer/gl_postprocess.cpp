@@ -397,6 +397,8 @@ void FGLRenderer::Flush()
 		{
 			FGLDebug::PushGroup("Eye2D");
 			mBuffers->BindEyeFB(eye_ix);
+			glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+			glScissor(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 			m2DDrawer->Draw();
 			FGLDebug::PopGroup();
 		}
@@ -437,28 +439,8 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 			box = mOutputLetterbox;
 		}
 
-		// Present what was rendered:
-		glViewport(box.left, box.top, box.width, box.height);
-
-		mPresentShader->Bind();
-		mPresentShader->InputTexture.Set(0);
-		if (!applyGamma || framebuffer->IsHWGammaActive())
-		{
-			mPresentShader->InvGamma.Set(1.0f);
-			mPresentShader->Contrast.Set(1.0f);
-			mPresentShader->Brightness.Set(0.0f);
-		}
-		else
-		{
-			mPresentShader->InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
-			mPresentShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
-			mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
-		}
-		mPresentShader->Scale.Set(mScreenViewport.width / (float)mBuffers->GetWidth(), mScreenViewport.height / (float)mBuffers->GetHeight());
 		mBuffers->BindCurrentTexture(0);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		RenderScreenQuad();
+		DrawPresentTexture(box, applyGamma);
 	}
 	else if (!bounds)
 	{
@@ -466,6 +448,32 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 		ClearBorders();
 	}
 	FGLDebug::PopGroup();
+}
+
+void FGLRenderer::DrawPresentTexture(const GL_IRECT &box, bool applyGamma)
+{
+	glViewport(box.left, box.top, box.width, box.height);
+
+	glActiveTexture(GL_TEXTURE0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	mPresentShader->Bind();
+	mPresentShader->InputTexture.Set(0);
+	if (!applyGamma || framebuffer->IsHWGammaActive())
+	{
+		mPresentShader->InvGamma.Set(1.0f);
+		mPresentShader->Contrast.Set(1.0f);
+		mPresentShader->Brightness.Set(0.0f);
+	}
+	else
+	{
+		mPresentShader->InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
+		mPresentShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
+		mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
+	}
+	mPresentShader->Scale.Set(mScreenViewport.width / (float)mBuffers->GetWidth(), mScreenViewport.height / (float)mBuffers->GetHeight());
+	RenderScreenQuad();
 }
 
 //-----------------------------------------------------------------------------

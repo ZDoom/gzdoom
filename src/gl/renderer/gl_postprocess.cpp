@@ -158,7 +158,7 @@ void FGLRenderer::AmbientOccludeScene()
 	bool multisample = gl_multisample > 1;
 
 	//float tanHalfFovy = tan(fovy * (M_PI / 360.0f));
-	float tanHalfFovy = 1.0f / 1.33333302f; // 1.0f / gl_RenderState.mProjectionMatrix.get()[5];
+	float tanHalfFovy = 1.0f / gl_RenderState.mProjectionMatrix.get()[5];
 	float invFocalLenX = tanHalfFovy * (mBuffers->GetSceneWidth() / (float)mBuffers->GetSceneHeight());
 	float invFocalLenY = tanHalfFovy;
 	float nDotVBias = clamp(bias, 0.0f, 1.0f);

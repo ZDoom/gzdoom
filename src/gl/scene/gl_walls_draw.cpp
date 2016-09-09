@@ -124,7 +124,7 @@ void GLWall::SetupLights()
 			float y = node->lightsource->Y();
 			float z = node->lightsource->Z();
 			float dist = fabsf(p.DistToPoint(x, z, y));
-			float radius = (node->lightsource->GetRadius() * gl_lights_size);
+			float radius = node->lightsource->GetRadius();
 			float scale = 1.0f / ((2.f * radius) - dist);
 
 			if (radius > 0.f && dist < radius)
@@ -158,7 +158,7 @@ void GLWall::SetupLights()
 				}
 				if (outcnt[0]!=4 && outcnt[1]!=4 && outcnt[2]!=4 && outcnt[3]!=4) 
 				{
-					gl_GetLight(seg->frontsector->PortalGroup, p, node->lightsource, true, false, lightdata);
+					gl_GetLight(seg->frontsector->PortalGroup, p, node->lightsource, true, lightdata);
 				}
 			}
 		}

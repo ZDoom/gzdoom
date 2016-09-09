@@ -76,6 +76,7 @@
 #include "gl/shaders/gl_lensshader.h"
 #include "gl/shaders/gl_presentshader.h"
 #include "gl/renderer/gl_2ddrawer.h"
+#include "gl/stereo3d/gl_stereo3d.h"
 
 //==========================================================================
 //
@@ -395,7 +396,7 @@ void FGLRenderer::BindTonemapPalette(int texunit)
 			{
 				for (int b = 0; b < 64; b++)
 				{
-					PalEntry color = GPalette.BaseColors[ColorMatcher.Pick((r << 2) | (r >> 1), (g << 2) | (g >> 1), (b << 2) | (b >> 1))];
+					PalEntry color = GPalette.BaseColors[(BYTE)PTM_BestColor((uint32 *)GPalette.BaseColors, (r << 2) | (r >> 4), (g << 2) | (g >> 4), (b << 2) | (b >> 4), 0, 256)];
 					int index = ((r * 64 + g) * 64 + b) * 4;
 					lut[index] = color.r;
 					lut[index + 1] = color.g;
@@ -515,13 +516,50 @@ void FGLRenderer::LensDistortScene()
 
 //-----------------------------------------------------------------------------
 //
+// Copies the rendered screen to its final destination
+//
+//-----------------------------------------------------------------------------
+
+void FGLRenderer::Flush()
+{
+	const s3d::Stereo3DMode& stereo3dMode = s3d::Stereo3DMode::getCurrentMode();
+
+	if (stereo3dMode.IsMono() || !FGLRenderBuffers::IsEnabled())
+	{
+		CopyToBackbuffer(nullptr, true);
+	}
+	else
+	{
+		// Render 2D to eye textures
+		for (int eye_ix = 0; eye_ix < stereo3dMode.eye_count(); ++eye_ix)
+		{
+			FGLDebug::PushGroup("Eye2D");
+			mBuffers->BindEyeFB(eye_ix);
+			glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+			glScissor(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+			m2DDrawer->Draw();
+			FGLDebug::PopGroup();
+		}
+		m2DDrawer->Clear();
+
+		FGLPostProcessState savedState;
+		FGLDebug::PushGroup("PresentEyes");
+		stereo3dMode.Present();
+		FGLDebug::PopGroup();
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
 // Gamma correct while copying to frame buffer
 //
 //-----------------------------------------------------------------------------
 
 void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 {
-	m2DDrawer->Flush();	// draw all pending 2D stuff before copying the buffer
+	m2DDrawer->Draw();	// draw all pending 2D stuff before copying the buffer
+	m2DDrawer->Clear();
+
 	FGLDebug::PushGroup("CopyToBackbuffer");
 	if (FGLRenderBuffers::IsEnabled())
 	{
@@ -539,28 +577,8 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 			box = mOutputLetterbox;
 		}
 
-		// Present what was rendered:
-		glViewport(box.left, box.top, box.width, box.height);
-
-		mPresentShader->Bind();
-		mPresentShader->InputTexture.Set(0);
-		if (!applyGamma || framebuffer->IsHWGammaActive())
-		{
-			mPresentShader->InvGamma.Set(1.0f);
-			mPresentShader->Contrast.Set(1.0f);
-			mPresentShader->Brightness.Set(0.0f);
-		}
-		else
-		{
-			mPresentShader->InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
-			mPresentShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
-			mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
-		}
-		mPresentShader->Scale.Set(mScreenViewport.width / (float)mBuffers->GetWidth(), mScreenViewport.height / (float)mBuffers->GetHeight());
 		mBuffers->BindCurrentTexture(0);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		RenderScreenQuad();
+		DrawPresentTexture(box, applyGamma);
 	}
 	else if (!bounds)
 	{
@@ -568,6 +586,32 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 		ClearBorders();
 	}
 	FGLDebug::PopGroup();
+}
+
+void FGLRenderer::DrawPresentTexture(const GL_IRECT &box, bool applyGamma)
+{
+	glViewport(box.left, box.top, box.width, box.height);
+
+	glActiveTexture(GL_TEXTURE0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	mPresentShader->Bind();
+	mPresentShader->InputTexture.Set(0);
+	if (!applyGamma || framebuffer->IsHWGammaActive())
+	{
+		mPresentShader->InvGamma.Set(1.0f);
+		mPresentShader->Contrast.Set(1.0f);
+		mPresentShader->Brightness.Set(0.0f);
+	}
+	else
+	{
+		mPresentShader->InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
+		mPresentShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
+		mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
+	}
+	mPresentShader->Scale.Set(mScreenViewport.width / (float)mBuffers->GetWidth(), mScreenViewport.height / (float)mBuffers->GetHeight());
+	RenderScreenQuad();
 }
 
 //-----------------------------------------------------------------------------
@@ -582,6 +626,8 @@ void FGLRenderer::ClearBorders()
 
 	int clientWidth = framebuffer->GetClientWidth();
 	int clientHeight = framebuffer->GetClientHeight();
+	if (clientWidth == 0 || clientHeight == 0)
+		return;
 
 	glViewport(0, 0, clientWidth, clientHeight);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -608,3 +654,40 @@ void FGLRenderer::ClearBorders()
 	}
 	glDisable(GL_SCISSOR_TEST);
 }
+
+
+// [SP] Re-implemented BestColor for more precision rather than speed. This function is only ever called once until the game palette is changed.
+
+int FGLRenderer::PTM_BestColor (const uint32 *pal_in, int r, int g, int b, int first, int num)
+{
+	const PalEntry *pal = (const PalEntry *)pal_in;
+	static double powtable[256];
+	static bool firstTime = true;
+
+	double fbestdist, fdist;
+	int bestcolor;
+
+	if (firstTime)
+	{
+		firstTime = false;
+		for (int x = 0; x < 256; x++) powtable[x] = pow((double)x/255,1.2);
+	}
+
+	for (int color = first; color < num; color++)
+	{
+		double x = powtable[abs(r-pal[color].r)];
+		double y = powtable[abs(g-pal[color].g)];
+		double z = powtable[abs(b-pal[color].b)];
+		fdist = x + y + z;
+		if (color == first || fdist < fbestdist)
+		{
+			if (fdist == 0)
+				return color;
+
+			fbestdist = fdist;
+			bestcolor = color;
+		}
+	}
+	return bestcolor;
+}
+

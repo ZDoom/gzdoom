@@ -184,7 +184,7 @@ struct FDynLightData
 
 
 
-bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, bool forceadditive, FDynLightData &data);
+bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FDynLightData &data);
 void gl_UploadLights(FDynLightData &data);
 
 

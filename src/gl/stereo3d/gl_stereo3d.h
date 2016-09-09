@@ -74,6 +74,7 @@ class Stereo3DMode
 public:
 	/* static methods for managing the selected stereoscopic view state */
 	static const Stereo3DMode& getCurrentMode();
+	static const Stereo3DMode& getMonoMode();
 
 	Stereo3DMode();
 	virtual ~Stereo3DMode();
@@ -83,6 +84,9 @@ public:
 	/* hooks for setup and cleanup operations for each stereo mode */
 	virtual void SetUp() const {};
 	virtual void TearDown() const {};
+
+	virtual bool IsMono() const { return false; }
+	virtual void Present() const = 0;
 
 protected:
 	TArray<const EyePose *> eye_ptrs;
@@ -100,6 +104,9 @@ class MonoView : public Stereo3DMode
 {
 public:
 	static const MonoView& getInstance();
+
+	bool IsMono() const override { return true; }
+	void Present() const override { }
 
 protected:
 	MonoView() { eye_ptrs.Push(&centralEye); }

@@ -244,6 +244,13 @@ void FGLRenderer::SetOutputViewport(GL_IRECT *bounds)
 	// Back buffer letterbox for the final output
 	int clientWidth = framebuffer->GetClientWidth();
 	int clientHeight = framebuffer->GetClientHeight();
+	if (clientWidth == 0 || clientHeight == 0)
+	{
+		// When window is minimized there may not be any client area.
+		// Pretend to the rest of the render code that we just have a very small window.
+		clientWidth = 160;
+		clientHeight = 120;
+	}
 	int screenWidth = framebuffer->GetWidth();
 	int screenHeight = framebuffer->GetHeight();
 	float scale = MIN(clientWidth / (float)screenWidth, clientHeight / (float)screenHeight);

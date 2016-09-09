@@ -56,6 +56,7 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
+#include "gl/renderer/gl_quaddrawer.h"
 #include "gl/dynlights/gl_glow.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
@@ -128,15 +129,22 @@ void GLPortal::ClearScreen()
 	bool multi = !!glIsEnabled(GL_MULTISAMPLE);
 	gl_MatrixStack.Push(gl_RenderState.mViewMatrix);
 	gl_MatrixStack.Push(gl_RenderState.mProjectionMatrix);
-	screen->Begin2D(false);
-	screen->Dim(0, 1.f, 0, 0, SCREENWIDTH, SCREENHEIGHT);
+
+	gl_RenderState.mViewMatrix.loadIdentity();
+	gl_RenderState.mProjectionMatrix.ortho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1.0f, 1.0f);
+	gl_RenderState.ApplyMatrices();
+
+	glDisable(GL_MULTISAMPLE);
+	glDisable(GL_DEPTH_TEST);
+
+	glDrawArrays(GL_TRIANGLE_STRIP, FFlatVertexBuffer::FULLSCREEN_INDEX, 4);
+
 	glEnable(GL_DEPTH_TEST);
 	gl_MatrixStack.Pop(gl_RenderState.mProjectionMatrix);
 	gl_MatrixStack.Pop(gl_RenderState.mViewMatrix);
 	gl_RenderState.ApplyMatrices();
 	if (multi) glEnable(GL_MULTISAMPLE);
 }
-
 
 //-----------------------------------------------------------------------------
 //

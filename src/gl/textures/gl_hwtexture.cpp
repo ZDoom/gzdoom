@@ -66,18 +66,6 @@ unsigned int FHardwareTexture::lastbound[FHardwareTexture::MAX_TEXTURES];
 
 //===========================================================================
 // 
-// STATIC - Gets the maximum size of hardware textures
-//
-//===========================================================================
-int FHardwareTexture::GetTexDimension(int value)
-{
-	if (value > gl.max_texturesize) return gl.max_texturesize;
-	return value;
-}
-
-
-//===========================================================================
-// 
 //	Quick'n dirty image rescaling.
 //
 // This will only be used when the source texture is larger than

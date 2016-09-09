@@ -70,15 +70,8 @@ CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 
 CVAR (Bool, gl_attachedlights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_lights_checkside, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR (Float, gl_lights_intensity, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR (Float, gl_lights_size, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_sprites, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_particles, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CUSTOM_CVAR (Bool, gl_lights_additive, false,  CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	gl_DeleteAllAttachedLights();
-	gl_RecreateAllAttachedLights();
-}
 
 CUSTOM_CVAR(Int, gl_light_math, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -90,14 +83,14 @@ CUSTOM_CVAR(Int, gl_light_math, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 // Sets up the parameters to render one dynamic light onto one plane
 //
 //==========================================================================
-bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, bool forceadditive, FDynLightData &ldata)
+bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FDynLightData &ldata)
 {
 	int i = 0;
 
 	DVector3 pos = light->PosRelative(group);
 	
 	float dist = fabsf(p.DistToPoint(pos.X, pos.Z, pos.Y));
-	float radius = (light->GetRadius() * gl_lights_size);
+	float radius = (light->GetRadius());
 	
 	if (radius <= 0.f) return false;
 	if (dist > radius) return false;
@@ -108,7 +101,7 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, bo
 
 
 	float cs;
-	if (gl_lights_additive || light->flags4&MF4_ADDITIVE || forceadditive) 
+	if (light->IsAdditive()) 
 	{
 		cs = 0.2f;
 		i = 2;
@@ -118,9 +111,9 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, bo
 		cs = 1.0f;
 	}
 
-	float r = light->GetRed() / 255.0f * cs * gl_lights_intensity;
-	float g = light->GetGreen() / 255.0f * cs * gl_lights_intensity;
-	float b = light->GetBlue() / 255.0f * cs * gl_lights_intensity;
+	float r = light->GetRed() / 255.0f * cs;
+	float g = light->GetGreen() / 255.0f * cs;
+	float b = light->GetBlue() / 255.0f * cs;
 
 	if (light->IsSubtractive())
 	{

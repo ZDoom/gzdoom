@@ -105,5 +105,12 @@ const Stereo3DMode& Stereo3DMode::getCurrentMode()
 	return *currentStereo3DMode;
 }
 
+const Stereo3DMode& Stereo3DMode::getMonoMode()
+{
+	setCurrentMode(MonoView::getInstance());
+	return *currentStereo3DMode;
+}
+
+
 } /* namespace s3d */
 

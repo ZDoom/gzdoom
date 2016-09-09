@@ -682,8 +682,6 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	}
 	if (gl.legacyMode)
 	{
-		int cm = gl_RenderState.GetFixedColormap();
-		gl_RenderState.SetFixedColormap(cm);
 		gl_RenderState.DrawColormapOverlay();
 	}
 
@@ -775,7 +773,7 @@ void FGLRenderer::SetFixedColormap (player_t *player)
 
 sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
 {       
-	sector_t * retval;
+	sector_t * lviewsector;
 	mSceneClearColor[0] = 0.0f;
 	mSceneClearColor[1] = 0.0f;
 	mSceneClearColor[2] = 0.0f;
@@ -822,11 +820,11 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	}
 
 	// 'viewsector' will not survive the rendering so it cannot be used anymore below.
-	retval = viewsector;
+	lviewsector = viewsector;
 
 	// Render (potentially) multiple views for stereo 3d
 	float viewShift[3];
-	const s3d::Stereo3DMode& stereo3dMode = s3d::Stereo3DMode::getCurrentMode();
+	const s3d::Stereo3DMode& stereo3dMode = mainview && toscreen? s3d::Stereo3DMode::getCurrentMode() : s3d::Stereo3DMode::getMonoMode();
 	stereo3dMode.SetUp();
 	for (int eye_ix = 0; eye_ix < stereo3dMode.eye_count(); ++eye_ix)
 	{
@@ -852,20 +850,26 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		clipper.SafeAddClipRangeRealAngles(ViewAngle.BAMs() + a1, ViewAngle.BAMs() - a1);
 
 		ProcessScene(toscreen);
-		if (mainview && toscreen) EndDrawScene(retval);	// do not call this for camera textures.
+		if (mainview && toscreen) EndDrawScene(lviewsector);	// do not call this for camera textures.
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
 			PostProcessScene();
-			DrawBlend(viewsector);	// This should be done after postprocessing, not before.
+
+			// This should be done after postprocessing, not before.
+			mBuffers->BindCurrentFB();
+			glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+			DrawBlend(lviewsector);
 		}
 		mDrawingScene2D = false;
+		if (!stereo3dMode.IsMono() && FGLRenderBuffers::IsEnabled())
+			mBuffers->BlitToEyeTexture(eye_ix);
 		eye->TearDown();
 	}
 	stereo3dMode.TearDown();
 
 	gl_frameCount++;	// This counter must be increased right before the interpolations are restored.
 	interpolator.RestoreInterpolations ();
-	return retval;
+	return lviewsector;
 }
 
 //-----------------------------------------------------------------------------
@@ -1313,29 +1317,16 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 	gl_fixedcolormap=CM_DEFAULT;
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 
-	bool usefb = gl_usefb || gltex->GetWidth() > screen->GetWidth() || gltex->GetHeight() > screen->GetHeight();
-	if (!usefb)
+	if (gl.legacyMode)
 	{
+		// In legacy mode, fail if the requested texture is too large.
+		if (gltex->GetWidth() > screen->GetWidth() || gltex->GetHeight() > screen->GetHeight()) return;
 		glFlush();
 	}
 	else
 	{
-#if defined(_WIN32) && (defined(_MSC_VER) || defined(__INTEL_COMPILER))
-		__try
-#endif
-		{
-			GLRenderer->StartOffscreen();
-			gltex->BindToFrameBuffer();
-		}
-#if defined(_WIN32) && (defined(_MSC_VER) || defined(__INTEL_COMPILER))
-		__except(1)
-		{
-			usefb = false;
-			gl_usefb = false;
-			GLRenderer->EndOffscreen();
-			glFlush();
-		}
-#endif
+		GLRenderer->StartOffscreen();
+		gltex->BindToFrameBuffer();
 	}
 
 	GL_IRECT bounds;
@@ -1345,7 +1336,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 
 	GLRenderer->RenderViewpoint(Viewpoint, &bounds, FOV, (float)width/height, (float)width/height, false, false);
 
-	if (!usefb)
+	if (gl.legacyMode)
 	{
 		glFlush();
 		gl_RenderState.SetMaterial(gltex, 0, 0, -1, false);

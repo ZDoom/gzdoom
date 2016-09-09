@@ -183,7 +183,8 @@ public:
 	void ClearTonemapPalette();
 	void LensDistortScene();
 	void CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma);
-	void Flush() { CopyToBackbuffer(nullptr, true); }
+	void DrawPresentTexture(const GL_IRECT &box, bool applyGamma);
+	void Flush();
 
 	void SetProjection(float fov, float ratio, float fovratio);
 	void SetProjection(VSMatrix matrix); // raw matrix input from stereo 3d modes
@@ -199,6 +200,8 @@ public:
 	void FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, FDynamicColormap *colormap, int lightlevel);
+
+	int PTM_BestColor (const uint32 *pal_in, int r, int g, int b, int first, int num);
 
 	static float GetZNear() { return 5.f; }
 	static float GetZFar() { return 65536.f; }

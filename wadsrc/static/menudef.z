@@ -141,6 +141,12 @@ OptionValue "HqResizeModes"
    7, "$OPTVAL_HQ2XMMX"
    8, "$OPTVAL_HQ3XMMX"
    9, "$OPTVAL_HQ4XMMX"
+   10, "xBRZ 2x"
+   11, "xBRZ 3x"
+   12, "xBRZ 4x"
+   13, "xBRZ_old 2x"
+   14, "xBRZ_old 3x"
+   15, "xBRZ_old 4x"
 }
 
 OptionValue "FogMode"
@@ -186,7 +192,6 @@ OptionMenu "GLTextureGLOptions"
 	Option "$GLTEXMNU_RESIZESPR",		gl_texture_hqresize_sprites,	"OnOff"
 	Option "$GLTEXMNU_RESIZEFNT",		gl_texture_hqresize_fonts,		"OnOff"
 	Option "$GLTEXMNU_PRECACHETEX",		gl_precache,					"YesNo"
-	Option "$GLTEXMNU_CAMTEXOFFSCR",	gl_usefb,						"OnOff"
 	Option "$GLTEXMNU_TRIMSPREDGE",		gl_trimsprites,					"OnOff"
 	Option "$GLTEXMNU_SORTDRAWLIST", 	gl_sort_textures,				"YesNo"
 }
@@ -199,10 +204,7 @@ OptionMenu "GLLightOptions"
 	Option "$GLLIGHTMNU_CLIPLIGHTS",		gl_lights_checkside,			"YesNo"
 	Option "$GLLIGHTMNU_LIGHTSPRITES",		gl_light_sprites,				"YesNo"
 	Option "$GLLIGHTMNU_LIGHTPARTICLES",	gl_light_particles,				"YesNo"
-	Option "$GLLIGHTMNU_FORCEADDITIVE",		gl_lights_additive,				"YesNo"
 	Option "$GLLIGHTMNU_LIGHTMATH",			gl_light_math,					"LightMathModes"
-	Slider "$GLLIGHTMNU_LIGHTINTENSITY",	gl_lights_intensity, 			0.0, 1.0, 0.1
-	Slider "$GLLIGHTMNU_LIGHTSIZE",			gl_lights_size,					0.0, 2.0, 0.1
 }
 
 OptionMenu "GLPrefOptions"

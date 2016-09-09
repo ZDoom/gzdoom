@@ -182,7 +182,7 @@ void FGLRenderer::AmbientOccludeScene()
 	mLinearDepthShader->LinearizeDepthB[multisample].Set(MAX(1.0f / GetZNear(), 1.e-8f));
 	mLinearDepthShader->InverseDepthRangeA[multisample].Set(1.0f);
 	mLinearDepthShader->InverseDepthRangeB[multisample].Set(0.0f);
-	mLinearDepthShader->Scale[multisample].Set(mSceneViewport.width / (float)mScreenViewport.width, mSceneViewport.height / (float)mScreenViewport.height);
+	mLinearDepthShader->Scale[multisample].Set(mBuffers->AmbientWidth * 2.0f / (float)mScreenViewport.width, mBuffers->AmbientHeight * 2.0f / (float)mScreenViewport.height);
 	mLinearDepthShader->Offset[multisample].Set(mSceneViewport.left / (float)mScreenViewport.width, mSceneViewport.top / (float)mScreenViewport.height);
 	RenderScreenQuad();
 

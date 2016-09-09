@@ -24,18 +24,21 @@ void main()
 
 #if defined(MULTISAMPLE)
 	ivec2 texSize = textureSize(DepthTexture);
-	ivec2 ipos = ivec2(uv * vec2(texSize));
+#else
+	ivec2 texSize = textureSize(DepthTexture, 0);
+#endif
+
+	// Use floor here because as we downscale the sampling error has to remain uniform to prevent
+	// noise in the depth values.
+	ivec2 ipos = ivec2(max(floor(uv * vec2(texSize) - 0.75), vec2(0.0)));
+
+#if defined(MULTISAMPLE)
 	float depth = 0.0;
 	for (int i = 0; i < SampleCount; i++)
 		depth += texelFetch(ColorTexture, ipos, i).a != 0.0 ? texelFetch(DepthTexture, ipos, i).x : 1.0;
 	depth /= float(SampleCount);
 #else
-	/*ivec2 texSize = textureSize(DepthTexture, 0);
-	ivec2 ipos = ivec2(uv * vec2(texSize));
-	if (ipos.x < 0) ipos.x += texSize.x;
-	if (ipos.y < 0) ipos.y += texSize.y;
-	float depth = texelFetch(ColorTexture, ipos, 0).a != 0.0 ? texelFetch(DepthTexture, ipos, 0).x : 1.0;*/
-	float depth = texture(ColorTexture, uv).a != 0.0 ? texture(DepthTexture, uv).x : 1.0;
+	float depth = texelFetch(ColorTexture, ipos, 0).a != 0.0 ? texelFetch(DepthTexture, ipos, 0).x : 1.0;
 #endif
 
 	float normalizedDepth = clamp(InverseDepthRangeA * depth + InverseDepthRangeB, 0.0, 1.0);

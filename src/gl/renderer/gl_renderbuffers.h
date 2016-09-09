@@ -32,6 +32,10 @@ public:
 
 	void BindOutputFB();
 
+	void BlitToEyeTexture(int eye);
+	void BindEyeTexture(int eye, int texunit);
+	void BindEyeFB(int eye, bool readBuffer = false);
+
 	enum { NumBloomLevels = 4 };
 	FGLBloomTextureLevel BloomLevels[NumBloomLevels];
 
@@ -43,10 +47,12 @@ public:
 private:
 	void ClearScene();
 	void ClearPipeline();
+	void ClearEyeBuffers();
 	void ClearBloom();
 	void CreateScene(int width, int height, int samples);
 	void CreatePipeline(int width, int height);
 	void CreateBloom(int width, int height);
+	void CreateEyeBuffers(int eye);
 	GLuint Create2DTexture(const FString &name, GLuint format, int width, int height);
 	GLuint CreateRenderBuffer(const FString &name, GLuint format, int width, int height);
 	GLuint CreateRenderBuffer(const FString &name, GLuint format, int samples, int width, int height);
@@ -82,6 +88,10 @@ private:
 
 	// Back buffer frame buffer
 	GLuint mOutputFB = 0;
+
+	// Eye buffers
+	TArray<GLuint> mEyeTextures;
+	TArray<GLuint> mEyeFBs;
 
 	static bool FailedCreate;
 	static bool BuffersActive;

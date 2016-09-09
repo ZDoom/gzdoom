@@ -75,6 +75,7 @@
 #include "gl/shaders/gl_lensshader.h"
 #include "gl/shaders/gl_presentshader.h"
 #include "gl/renderer/gl_2ddrawer.h"
+#include "gl/stereo3d/gl_stereo3d.h"
 
 //==========================================================================
 //
@@ -377,13 +378,50 @@ void FGLRenderer::LensDistortScene()
 
 //-----------------------------------------------------------------------------
 //
+// Copies the rendered screen to its final destination
+//
+//-----------------------------------------------------------------------------
+
+void FGLRenderer::Flush()
+{
+	const s3d::Stereo3DMode& stereo3dMode = s3d::Stereo3DMode::getCurrentMode();
+
+	if (stereo3dMode.IsMono() || !FGLRenderBuffers::IsEnabled())
+	{
+		CopyToBackbuffer(nullptr, true);
+	}
+	else
+	{
+		// Render 2D to eye textures
+		for (int eye_ix = 0; eye_ix < stereo3dMode.eye_count(); ++eye_ix)
+		{
+			FGLDebug::PushGroup("Eye2D");
+			mBuffers->BindEyeFB(eye_ix);
+			glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+			glScissor(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+			m2DDrawer->Draw();
+			FGLDebug::PopGroup();
+		}
+		m2DDrawer->Clear();
+
+		FGLPostProcessState savedState;
+		FGLDebug::PushGroup("PresentEyes");
+		stereo3dMode.Present();
+		FGLDebug::PopGroup();
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
 // Gamma correct while copying to frame buffer
 //
 //-----------------------------------------------------------------------------
 
 void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 {
-	m2DDrawer->Flush();	// draw all pending 2D stuff before copying the buffer
+	m2DDrawer->Draw();	// draw all pending 2D stuff before copying the buffer
+	m2DDrawer->Clear();
+
 	FGLDebug::PushGroup("CopyToBackbuffer");
 	if (FGLRenderBuffers::IsEnabled())
 	{
@@ -401,28 +439,8 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 			box = mOutputLetterbox;
 		}
 
-		// Present what was rendered:
-		glViewport(box.left, box.top, box.width, box.height);
-
-		mPresentShader->Bind();
-		mPresentShader->InputTexture.Set(0);
-		if (!applyGamma || framebuffer->IsHWGammaActive())
-		{
-			mPresentShader->InvGamma.Set(1.0f);
-			mPresentShader->Contrast.Set(1.0f);
-			mPresentShader->Brightness.Set(0.0f);
-		}
-		else
-		{
-			mPresentShader->InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
-			mPresentShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
-			mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
-		}
-		mPresentShader->Scale.Set(mScreenViewport.width / (float)mBuffers->GetWidth(), mScreenViewport.height / (float)mBuffers->GetHeight());
 		mBuffers->BindCurrentTexture(0);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		RenderScreenQuad();
+		DrawPresentTexture(box, applyGamma);
 	}
 	else if (!bounds)
 	{
@@ -430,6 +448,32 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 		ClearBorders();
 	}
 	FGLDebug::PopGroup();
+}
+
+void FGLRenderer::DrawPresentTexture(const GL_IRECT &box, bool applyGamma)
+{
+	glViewport(box.left, box.top, box.width, box.height);
+
+	glActiveTexture(GL_TEXTURE0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	mPresentShader->Bind();
+	mPresentShader->InputTexture.Set(0);
+	if (!applyGamma || framebuffer->IsHWGammaActive())
+	{
+		mPresentShader->InvGamma.Set(1.0f);
+		mPresentShader->Contrast.Set(1.0f);
+		mPresentShader->Brightness.Set(0.0f);
+	}
+	else
+	{
+		mPresentShader->InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
+		mPresentShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
+		mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
+	}
+	mPresentShader->Scale.Set(mScreenViewport.width / (float)mBuffers->GetWidth(), mScreenViewport.height / (float)mBuffers->GetHeight());
+	RenderScreenQuad();
 }
 
 //-----------------------------------------------------------------------------

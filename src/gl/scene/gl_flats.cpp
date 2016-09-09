@@ -419,15 +419,17 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 		if (renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
 		gl_SetColor(lightlevel, rel, Colormap, alpha);
 		gl_SetFog(lightlevel, rel, &Colormap, false);
-		gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
 		if (!gltexture)	
 		{
+			gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 			gl_RenderState.EnableTexture(false);
 			DrawSubsectors(pass, false, true);
 			gl_RenderState.EnableTexture(true);
 		}
 		else 
 		{
+			if (!gltexture->GetTransparent()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
+			else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 			gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 			gl_SetPlaneTextureRotation(&plane, gltexture);
 			DrawSubsectors(pass, !gl.legacyMode, true);
@@ -476,6 +478,21 @@ inline void GLFlat::PutFlat(bool fog)
 	{
 		// translucent 3D floors go into the regular translucent list, translucent portals go into the translucent border list.
 		list = (renderflags&SSRF_RENDER3DPLANES) ? GLDL_TRANSLUCENT : GLDL_TRANSLUCENTBORDER;
+	}
+	else if (gltexture->GetTransparent())
+	{
+		if (stack)
+		{
+			list = GLDL_TRANSLUCENTBORDER;
+		}
+		else if ((renderflags&SSRF_RENDER3DPLANES) && !plane.plane.isSlope())
+		{
+			list = GLDL_TRANSLUCENT;
+		} 
+		else 
+		{
+			list = GLDL_PLAINFLATS;
+		}
 	}
 	else
 	{

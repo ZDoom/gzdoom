@@ -85,6 +85,9 @@ public:
 	virtual void SetUp() const {};
 	virtual void TearDown() const {};
 
+	virtual bool IsMono() const { return false; }
+	virtual void Present() const = 0;
+
 protected:
 	TArray<const EyePose *> eye_ptrs;
 
@@ -101,6 +104,9 @@ class MonoView : public Stereo3DMode
 {
 public:
 	static const MonoView& getInstance();
+
+	bool IsMono() const override { return true; }
+	void Present() const override { }
 
 protected:
 	MonoView() { eye_ptrs.Push(&centralEye); }

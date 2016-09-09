@@ -83,6 +83,7 @@ public:
 	LeftEyeView(float ipd) : eye(ipd) { eye_ptrs.Push(&eye); }
 	float getIpd() const { return eye.getIpd(); }
 	void setIpd(float ipd) { eye.setIpd(ipd); }
+	void Present() const override;
 protected:
 	LeftEyePose eye;
 };
@@ -96,6 +97,7 @@ public:
 	RightEyeView(float ipd) : eye(ipd) { eye_ptrs.Push(&eye); }
 	float getIpd() const { return eye.getIpd(); }
 	void setIpd(float ipd) { eye.setIpd(ipd); }
+	void Present() const override;
 protected:
 	RightEyePose eye;
 };

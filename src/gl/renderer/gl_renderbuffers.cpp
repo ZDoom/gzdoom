@@ -85,6 +85,7 @@ FGLRenderBuffers::~FGLRenderBuffers()
 {
 	ClearScene();
 	ClearPipeline();
+	ClearEyeBuffers();
 	ClearBloom();
 }
 
@@ -117,6 +118,18 @@ void FGLRenderBuffers::ClearBloom()
 		DeleteTexture(level.VTexture);
 		level = FGLBloomTextureLevel();
 	}
+}
+
+void FGLRenderBuffers::ClearEyeBuffers()
+{
+	for (auto handle : mEyeFBs)
+		DeleteFrameBuffer(handle);
+
+	for (auto handle : mEyeTextures)
+		DeleteTexture(handle);
+
+	mEyeTextures.Clear();
+	mEyeFBs.Clear();
 }
 
 void FGLRenderBuffers::DeleteTexture(GLuint &handle)
@@ -202,6 +215,7 @@ bool FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 	{
 		ClearScene();
 		ClearPipeline();
+		ClearEyeBuffers();
 		ClearBloom();
 		mWidth = 0;
 		mHeight = 0;
@@ -239,6 +253,7 @@ void FGLRenderBuffers::CreateScene(int width, int height, int samples)
 void FGLRenderBuffers::CreatePipeline(int width, int height)
 {
 	ClearPipeline();
+	ClearEyeBuffers();
 
 	for (int i = 0; i < NumPipelineTextures; i++)
 	{
@@ -277,6 +292,35 @@ void FGLRenderBuffers::CreateBloom(int width, int height)
 		bloomWidth = level.Width;
 		bloomHeight = level.Height;
 	}
+}
+
+//==========================================================================
+//
+// Creates eye buffers if needed
+//
+//==========================================================================
+
+void FGLRenderBuffers::CreateEyeBuffers(int eye)
+{
+	if (mEyeFBs.Size() > eye)
+		return;
+
+	GLint activeTex, textureBinding, frameBufferBinding;
+	glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTex);
+	glActiveTexture(GL_TEXTURE0);
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &frameBufferBinding);
+
+	while (mEyeFBs.Size() <= eye)
+	{
+		GLuint texture = Create2DTexture("EyeTexture", GL_RGBA16F, mWidth, mHeight);
+		mEyeTextures.Push(texture);
+		mEyeFBs.Push(CreateFrameBuffer("EyeFB", texture));
+	}
+
+	glBindTexture(GL_TEXTURE_2D, textureBinding);
+	glActiveTexture(activeTex);
+	glBindFramebuffer(GL_FRAMEBUFFER, frameBufferBinding);
 }
 
 //==========================================================================
@@ -469,6 +513,43 @@ void FGLRenderBuffers::BlitSceneToTexture()
 
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+}
+
+//==========================================================================
+//
+// Eye textures and their frame buffers
+//
+//==========================================================================
+
+void FGLRenderBuffers::BlitToEyeTexture(int eye)
+{
+	CreateEyeBuffers(eye);
+
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, mPipelineFB[mCurrentPipelineTexture]);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mEyeFBs[eye]);
+	glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+	if ((gl.flags & RFL_INVALIDATE_BUFFER) != 0)
+	{
+		GLenum attachments[2] = { GL_COLOR_ATTACHMENT0, GL_DEPTH_STENCIL_ATTACHMENT };
+		glInvalidateFramebuffer(GL_READ_FRAMEBUFFER, 2, attachments);
+	}
+
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+}
+
+void FGLRenderBuffers::BindEyeTexture(int eye, int texunit)
+{
+	CreateEyeBuffers(eye);
+	glActiveTexture(GL_TEXTURE0 + texunit);
+	glBindTexture(GL_TEXTURE_2D, mEyeTextures[eye]);
+}
+
+void FGLRenderBuffers::BindEyeFB(int eye, bool readBuffer)
+{
+	CreateEyeBuffers(eye);
+	glBindFramebuffer(readBuffer ? GL_READ_FRAMEBUFFER : GL_FRAMEBUFFER, mEyeFBs[eye]);
 }
 
 //==========================================================================

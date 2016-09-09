@@ -34,6 +34,8 @@
 */
 
 #include "gl_anaglyph.h"
+#include "gl/renderer/gl_renderer.h"
+#include "gl/renderer/gl_renderbuffers.h"
 
 namespace s3d {
 
@@ -42,6 +44,25 @@ MaskAnaglyph::MaskAnaglyph(const ColorMask& leftColorMask, double ipdMeters)
 {
 	eye_ptrs.Push(&leftEye);
 	eye_ptrs.Push(&rightEye);
+}
+
+void MaskAnaglyph::Present() const
+{
+	GLRenderer->mBuffers->BindOutputFB();
+	GLRenderer->ClearBorders();
+
+	gl_RenderState.SetColorMask(leftEye.GetColorMask().r, leftEye.GetColorMask().g, leftEye.GetColorMask().b, true);
+	gl_RenderState.ApplyColorMask();
+	GLRenderer->mBuffers->BindEyeTexture(0, 0);
+	GLRenderer->DrawPresentTexture(GLRenderer->mOutputLetterbox, true);
+
+	gl_RenderState.SetColorMask(rightEye.GetColorMask().r, rightEye.GetColorMask().g, rightEye.GetColorMask().b, true);
+	gl_RenderState.ApplyColorMask();
+	GLRenderer->mBuffers->BindEyeTexture(1, 0);
+	GLRenderer->DrawPresentTexture(GLRenderer->mOutputLetterbox, true);
+
+	gl_RenderState.ResetColorMask();
+	gl_RenderState.ApplyColorMask();
 }
 
 

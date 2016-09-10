@@ -108,11 +108,6 @@ CUSTOM_CVAR(Float, gl_ssao_blur_amount, 4.0f, 0)
 {
 	if (self < 0.1f) self = 0.1f;
 }
-CUSTOM_CVAR(Int, gl_ssao_blur_samples, 5, 0)
-{
-	if (self < 3 || self > 15 || self % 2 == 0)
-		self = 9;
-}
 
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
@@ -153,7 +148,6 @@ void FGLRenderer::AmbientOccludeScene()
 	float bias = gl_ssao_bias;
 	float aoRadius = gl_ssao_radius;
 	const float blurAmount = gl_ssao_blur_amount;
-	int blurSampleCount = gl_ssao_blur_samples;
 	float aoStrength = gl_ssao_strength;
 	bool multisample = gl_multisample > 1;
 
@@ -163,6 +157,8 @@ void FGLRenderer::AmbientOccludeScene()
 	float invFocalLenY = tanHalfFovy;
 	float nDotVBias = clamp(bias, 0.0f, 1.0f);
 	float r2 = aoRadius * aoRadius;
+
+	float blurSharpness = 1.0f / blurAmount;
 
 	// Calculate linear depth values
 	glBindFramebuffer(GL_FRAMEBUFFER, mBuffers->AmbientFB0);
@@ -215,14 +211,14 @@ void FGLRenderer::AmbientOccludeScene()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	mDepthBlurShader->Bind(false);
-	mDepthBlurShader->BlurSharpness[false].Set(blurAmount);
+	mDepthBlurShader->BlurSharpness[false].Set(blurSharpness);
 	mDepthBlurShader->InvFullResolution[false].Set(1.0f / mBuffers->AmbientWidth, 1.0f / mBuffers->AmbientHeight);
 	RenderScreenQuad();
 
 	glBindFramebuffer(GL_FRAMEBUFFER, mBuffers->AmbientFB1);
 	glBindTexture(GL_TEXTURE_2D, mBuffers->AmbientTexture0);
 	mDepthBlurShader->Bind(true);
-	mDepthBlurShader->BlurSharpness[true].Set(blurAmount);
+	mDepthBlurShader->BlurSharpness[true].Set(blurSharpness);
 	mDepthBlurShader->InvFullResolution[true].Set(1.0f / mBuffers->AmbientWidth, 1.0f / mBuffers->AmbientHeight);
 	mDepthBlurShader->PowExponent[true].Set(1.8f);
 	RenderScreenQuad();

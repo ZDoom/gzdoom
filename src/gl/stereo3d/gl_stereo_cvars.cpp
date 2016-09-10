@@ -29,6 +29,7 @@
 #include "gl/stereo3d/gl_stereo_leftright.h"
 #include "gl/stereo3d/gl_anaglyph.h"
 #include "gl/stereo3d/gl_quadstereo.h"
+#include "gl/stereo3d/gl_sidebyside3d.h"
 #include "gl/system/gl_cvars.h"
 
 // Set up 3D-specific console variables:
@@ -71,7 +72,10 @@ const Stereo3DMode& Stereo3DMode::getCurrentMode()
 	case 2:
 		setCurrentMode(RedCyan::getInstance(vr_ipd));
 		break;
-	// TODO: missing indices 3, 4 for not-yet-implemented side-by-side modes, to match values from GZ3Doom
+	// TODO: missing index 3 for not-yet-implemented side-by-side mode, to match values from GZ3Doom
+	case 4:
+		setCurrentMode(SideBySideSquished::getInstance(vr_ipd));
+		break;
 	case 5:
 		setCurrentMode(LeftEyeView::getInstance(vr_ipd));
 		break;

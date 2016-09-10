@@ -1115,6 +1115,7 @@ set( FASTMATH_SOURCES
 	gl/stereo3d/scoped_view_shifter.cpp
 	gl/stereo3d/gl_anaglyph.cpp
 	gl/stereo3d/gl_quadstereo.cpp
+	gl/stereo3d/gl_sidebyside3d.cpp
 	gl/dynlights/gl_dynlight.cpp
 	gl/dynlights/gl_glow.cpp
 	gl/dynlights/gl_dynlight1.cpp

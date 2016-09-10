@@ -899,8 +899,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		// This is a non-translucent sprite (i.e. STYLE_Normal or equivalent)
 		trans=1.f;
 		
-
-		if (!gl_sprite_blend || modelframe)
+		if (!gl_sprite_blend || modelframe || (thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 		{
 			RenderStyle.SrcAlpha = STYLEALPHA_One;
 			RenderStyle.DestAlpha = STYLEALPHA_Zero;

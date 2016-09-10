@@ -375,8 +375,24 @@ void GLSprite::Draw(int pass)
 			gl_RenderState.Apply();
 
 			FVector3 v[4];
-			if ((actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
+			if (actor != nullptr)
 			{
+				DWORD spritetype = (DWORD)-1;
+				spritetype = actor->renderflags & RF_SPRITETYPEMASK;
+				if (spritetype == RF_FLATSPRITE)
+				{
+					Matrix3x4 mat;
+					mat.MakeIdentity();
+					//mat.Rotate(0, 0, 0, 0);
+					v[0] = mat * FVector3(x1, z1, y1);
+					v[1] = mat * FVector3(x2, z1, y2);
+					v[2] = mat * FVector3(x1, z2, y1);
+					v[3] = mat * FVector3(x2, z2, y2);
+				}
+				else
+				{
+					CalculateVertices(v);
+				}
 			}
 			else
 			{
@@ -714,6 +730,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		{
 			// Flat sprites cannot rotate in a predictable manner.
 			patch = gl_GetSpriteFrame(spritenum, thing->frame, 0, 0, &mirror);
+			//patch = gl_GetSpriteFrame(spritenum, thing->frame, -1, (ang - (thing->Angles.Yaw + thing->SpriteRotation)).BAMs(), &mirror);
 		}
 
 		if (!patch.isValid()) return;
@@ -756,6 +773,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		float viewvecY;
 		switch (spritetype)
 		{
+		//case RF_FLATSPRITE:
 		case RF_FACESPRITE:
 			viewvecX = GLRenderer->mViewVector.X;
 			viewvecY = GLRenderer->mViewVector.Y;
@@ -765,11 +783,23 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			y1 = y + viewvecX*leftfac;
 			y2 = y + viewvecX*rightfac;
 			break;
-
+			
 		case RF_FLATSPRITE:
-			// needs careful rethinking
-			return;
-
+		
+		{	//needs careful rethinking
+			viewvecX = thing->Angles.Yaw.Cos();
+			viewvecY = thing->Angles.Yaw.Sin();
+			float vvz1 = thing->Angles.Pitch.Sin();
+			float vvz2 = thing->Angles.Pitch.Cos();
+			z1 = z + ((viewvecX*leftfac*vvz1));
+			z2 = z + ((viewvecY*rightfac*vvz1));
+			x1 = x + viewvecY*leftfac*vvz2;
+			x2 = x + viewvecY*rightfac*vvz2;
+			y1 = y - viewvecX*leftfac;
+			y2 = y - viewvecX*rightfac;
+			break;
+		}
+		
 		case RF_WALLSPRITE:
 			viewvecX = thing->Angles.Yaw.Cos();
 			viewvecY = thing->Angles.Yaw.Sin();

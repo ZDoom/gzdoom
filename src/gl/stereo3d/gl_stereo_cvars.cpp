@@ -72,7 +72,9 @@ const Stereo3DMode& Stereo3DMode::getCurrentMode()
 	case 2:
 		setCurrentMode(RedCyan::getInstance(vr_ipd));
 		break;
-	// TODO: missing index 3 for not-yet-implemented side-by-side mode, to match values from GZ3Doom
+	case 3:
+		setCurrentMode(SideBySideFull::getInstance(vr_ipd));
+		break;
 	case 4:
 		setCurrentMode(SideBySideSquished::getInstance(vr_ipd));
 		break;
@@ -93,7 +95,9 @@ const Stereo3DMode& Stereo3DMode::getCurrentMode()
 	// TODO: 8: Oculus Rift
 	case 9:
 		setCurrentMode(AmberBlue::getInstance(vr_ipd));
-		break;	case 0:
+		break;	
+	// TODO: 10: HTC Vive/OpenVR
+	case 0:
 	default:
 		setCurrentMode(MonoView::getInstance());
 		break;

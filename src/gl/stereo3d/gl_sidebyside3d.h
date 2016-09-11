@@ -44,16 +44,47 @@
 
 namespace s3d {
 
-class SideBySideSquished : public Stereo3DMode
+class SideBySideBase : public Stereo3DMode
+{
+public:
+	void Present() const override;
+	virtual void AdjustViewports() const override;
+};
+
+class SideBySideSquished : public SideBySideBase
 {
 public:
 	static const SideBySideSquished& getInstance(float ipd);
-
 	SideBySideSquished(double ipdMeters);
-	void Present() const override;
 private:
 	LeftEyePose leftEye;
 	RightEyePose rightEye;
+};
+
+class SBSFLeftEyePose : public LeftEyePose {
+public:
+	SBSFLeftEyePose(double ipdMeters) : LeftEyePose(ipdMeters) {}
+	virtual VSMatrix GetProjection(float fov, float aspectRatio, float fovRatio) const override {
+		return LeftEyePose::GetProjection(fov, 0.5f * aspectRatio, fovRatio);
+	}
+};
+
+class SBSFRightEyePose : public RightEyePose {
+public:
+	SBSFRightEyePose(double ipdMeters) : RightEyePose(ipdMeters) {}
+	virtual VSMatrix GetProjection(float fov, float aspectRatio, float fovRatio) const override {
+		return RightEyePose::GetProjection(fov, 0.5f * aspectRatio, fovRatio);
+	}
+};
+
+class SideBySideFull : public SideBySideBase
+{
+public:
+	static const SideBySideFull& getInstance(float ipd);
+	SideBySideFull(double ipdMeters);
+private:
+	SBSFLeftEyePose leftEye;
+	SBSFRightEyePose rightEye;
 };
 
 

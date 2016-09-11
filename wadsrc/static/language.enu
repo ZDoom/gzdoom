@@ -2701,6 +2701,7 @@ OPTVAL_REDCYAN 				= "Red/Cyan";
 OPTVAL_AMBERBLUE 			= "Amber/Blue";
 OPTVAL_LEFTEYE 				= "Left Eye";
 OPTVAL_RIGHTEYE 			= "Right Eye";
+OPTVAL_SBSFULL		    	= "Side-by-side Full";
 OPTVAL_SBSNARROW			= "Side-by-side Narrow";
 OPTVAL_QUADBUFFERED 		= "Quad-buffered";
 OPTVAL_UNCHARTED2			= "Uncharted 2";

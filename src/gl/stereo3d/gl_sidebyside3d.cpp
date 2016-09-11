@@ -39,6 +39,36 @@
 
 namespace s3d {
 
+void SideBySideBase::Present() const
+{
+	GLRenderer->mBuffers->BindOutputFB();
+	GLRenderer->ClearBorders();
+
+	// Compute screen regions to use for left and right eye views
+	int leftWidth = GLRenderer->mOutputLetterbox.width / 2;
+	int rightWidth = GLRenderer->mOutputLetterbox.width - leftWidth;
+	GL_IRECT leftHalfScreen = GLRenderer->mOutputLetterbox;
+	leftHalfScreen.width = leftWidth;
+	GL_IRECT rightHalfScreen = GLRenderer->mOutputLetterbox;
+	rightHalfScreen.width = rightWidth;
+	rightHalfScreen.left += leftWidth;
+
+	GLRenderer->mBuffers->BindEyeTexture(0, 0);
+	GLRenderer->DrawPresentTexture(leftHalfScreen, true);
+
+	GLRenderer->mBuffers->BindEyeTexture(1, 0);
+	GLRenderer->DrawPresentTexture(rightHalfScreen, true);
+}
+
+// AdjustViewports() is called from within FLGRenderer::SetOutputViewport(...)
+void SideBySideBase::AdjustViewports() const
+{
+	// Change size of renderbuffer, and align to screen
+	GLRenderer->mSceneViewport.width /= 2;
+	GLRenderer->mSceneViewport.left /= 2;
+	GLRenderer->mScreenViewport.width /= 2;
+	GLRenderer->mScreenViewport.left /= 2;
+}
 
 /* static */
 const SideBySideSquished& SideBySideSquished::getInstance(float ipd)
@@ -54,26 +84,18 @@ SideBySideSquished::SideBySideSquished(double ipdMeters)
 	eye_ptrs.Push(&rightEye);
 }
 
-void SideBySideSquished::Present() const
+/* static */
+const SideBySideFull& SideBySideFull::getInstance(float ipd)
 {
-	GLRenderer->mBuffers->BindOutputFB();
-	GLRenderer->ClearBorders();
-
-	// Compute screen regions to use for left and right eye views
-	int leftWidth = GLRenderer->mOutputLetterbox.width/2;
-	int rightWidth = GLRenderer->mOutputLetterbox.width - leftWidth;
-	GL_IRECT leftHalfScreen = GLRenderer->mOutputLetterbox;
-	leftHalfScreen.width = leftWidth;
-	GL_IRECT rightHalfScreen = GLRenderer->mOutputLetterbox;
-	rightHalfScreen.width = rightWidth;
-	rightHalfScreen.left += leftWidth;
-
-	GLRenderer->mBuffers->BindEyeTexture(0, 0);
-	GLRenderer->DrawPresentTexture(leftHalfScreen, true);
-
-	GLRenderer->mBuffers->BindEyeTexture(1, 0);
-	GLRenderer->DrawPresentTexture(rightHalfScreen, true);
+	static SideBySideFull instance(ipd);
+	return instance;
 }
 
+SideBySideFull::SideBySideFull(double ipdMeters)
+	: leftEye(ipdMeters), rightEye(ipdMeters)
+{
+	eye_ptrs.Push(&leftEye);
+	eye_ptrs.Push(&rightEye);
+}
 
 } /* namespace s3d */

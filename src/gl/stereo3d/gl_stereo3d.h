@@ -31,6 +31,7 @@
 #include <cstring> // needed for memcpy on linux, which is needed by VSMatrix copy ctor
 #include "tarray.h"
 #include "gl/data/gl_matrix.h"
+#include "gl/renderer/gl_renderer.h"
 
 
 /* stereoscopic 3D API */
@@ -78,6 +79,7 @@ public:
 	virtual void TearDown() const {};
 
 	virtual bool IsMono() const { return false; }
+	virtual void AdjustViewports() const {};
 	virtual void Present() const = 0;
 
 protected:

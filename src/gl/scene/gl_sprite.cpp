@@ -383,11 +383,14 @@ void GLSprite::Draw(int pass)
 				{
 					Matrix3x4 mat;
 					mat.MakeIdentity();
-					//mat.Rotate(0, 0, 0, 0);
+					//mat.Rotate(1, 1, 1, 0);
+					//mat.Rotate(yawvecX, 0, yawvecY, -pitch);
+					//mat.Rotate(yawvecX, 0, yawvecY, rollDegrees);
 					v[0] = mat * FVector3(x1, z1, y1);
 					v[1] = mat * FVector3(x2, z1, y2);
 					v[2] = mat * FVector3(x1, z2, y1);
 					v[3] = mat * FVector3(x2, z2, y2);
+					
 				}
 				else
 				{
@@ -787,19 +790,20 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		case RF_FLATSPRITE:
 		
 		{	//needs careful rethinking
+			//pos = self->Vec2Offset(xofs * c + yofs * s, xofs * s - yofs*c);
 			viewvecX = thing->Angles.Yaw.Cos();
 			viewvecY = thing->Angles.Yaw.Sin();
 			float vvz1 = thing->Angles.Pitch.Sin();
 			float vvz2 = thing->Angles.Pitch.Cos();
 			z1 = z + ((viewvecX*leftfac*vvz1));
 			z2 = z + ((viewvecY*rightfac*vvz1));
-			x1 = x + viewvecY*leftfac*vvz2;
-			x2 = x + viewvecY*rightfac*vvz2;
-			y1 = y - viewvecX*leftfac;
-			y2 = y - viewvecX*rightfac;
-			break;
+			x1 = x + (viewvecY*leftfac - viewvecX*leftfac)*vvz2;
+			x2 = x + (viewvecY*rightfac + viewvecX*rightfac)*vvz2;
+			y1 = y - (viewvecX*leftfac + viewvecY*leftfac);
+			y2 = y - (viewvecX*rightfac - viewvecY*rightfac);
+			
 		}
-		
+		break;
 		case RF_WALLSPRITE:
 			viewvecX = thing->Angles.Yaw.Cos();
 			viewvecY = thing->Angles.Yaw.Sin();

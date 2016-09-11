@@ -678,7 +678,7 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 			ViewPos.X = (x1 + r * dx)*2 - x;
 			ViewPos.Y = (y1 + r * dy)*2 - y;
 		}
-		ViewAngle = pds->src->Delta().Angle() - startang;
+		ViewAngle = pds->src->Delta().Angle() * 2 - startang;
 	}
 	else
 	{

@@ -45,17 +45,38 @@ QuadStereo::QuadStereo(double ipdMeters)
 	// Check whether quad-buffered stereo is supported in the current context
 	// We are assuming the OpenGL context is already current at this point,
 	// i.e. this constructor is called "just in time".
-	GLboolean supportsStereo, supportsBuffered;
-	glGetBooleanv(GL_STEREO, &supportsStereo);
-	glGetBooleanv(GL_DOUBLEBUFFER, &supportsBuffered);
-	bQuadStereoSupported = supportsStereo && supportsBuffered;
-	leftEye.bQuadStereoSupported = bQuadStereoSupported;
-	rightEye.bQuadStereoSupported = bQuadStereoSupported;
 
-	eye_ptrs.Push(&leftEye);
-	// If stereo is not supported, just draw scene once (left eye view only)
-	if (bQuadStereoSupported) {
-		eye_ptrs.Push(&rightEye);
+	// First initialize to mono-ish initial state
+	bQuadStereoSupported = leftEye.bQuadStereoSupported = rightEye.bQuadStereoSupported = false;
+	eye_ptrs.Push(&leftEye); // We ALWAYS want to show at least this one view...
+	// We will possibly advance to true stereo mode in the Setup() method...
+}
+
+// Sometimes the stereo render context is not ready immediately at start up
+/* private */
+void QuadStereo::checkInitialRenderContextState()
+{
+	// Keep trying until we see at least one good OpenGL context to render to
+	static bool bDecentContextWasFound = false;
+	if (!bDecentContextWasFound) {
+		// I'm using a "random" OpenGL call (glGetFramebufferAttachmentParameteriv)
+		// that appears to correlate with whether the context is ready 
+		GLint attachmentType = GL_NONE;
+		glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_FRONT_LEFT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &attachmentType);
+		if (attachmentType != GL_NONE) // Finally, a useful OpenGL context
+		{
+			// This block will be executed exactly ONCE during a game run
+			bDecentContextWasFound = true; // now we can stop checking every frame...
+			// Now check whether this context supports hardware stereo
+			GLboolean supportsStereo, supportsBuffered;
+			glGetBooleanv(GL_STEREO, &supportsStereo);
+			glGetBooleanv(GL_DOUBLEBUFFER, &supportsBuffered);
+			bQuadStereoSupported = supportsStereo && supportsBuffered;
+			leftEye.bQuadStereoSupported = bQuadStereoSupported;
+			rightEye.bQuadStereoSupported = bQuadStereoSupported;
+			if (bQuadStereoSupported)
+				eye_ptrs.Push(&rightEye); // Use the other eye too, if we can do stereo
+		}
 	}
 }
 
@@ -81,9 +102,16 @@ void QuadStereo::Present() const
 	{
 		GLRenderer->mBuffers->BindOutputFB();
 		GLRenderer->ClearBorders();
-		GLRenderer->mBuffers->BindEyeTexture(1, 0);
+		GLRenderer->mBuffers->BindEyeTexture(0, 0);
 		GLRenderer->DrawPresentTexture(GLRenderer->mOutputLetterbox, true);
 	}
+}
+
+void QuadStereo::SetUp() const
+{
+	Stereo3DMode::SetUp();
+	// Maybe advance to true stereo mode (ONCE), after the stereo context is finally ready
+	const_cast<QuadStereo*>(this)->checkInitialRenderContextState();
 }
 
 /* static */

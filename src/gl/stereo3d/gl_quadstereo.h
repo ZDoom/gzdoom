@@ -69,11 +69,13 @@ class QuadStereo : public Stereo3DMode
 public:
 	QuadStereo(double ipdMeters);
 	void Present() const override;
+	void SetUp() const override;
 	static const QuadStereo& getInstance(float ipd);
 private:
 	QuadStereoLeftPose leftEye;
 	QuadStereoRightPose rightEye;
 	bool bQuadStereoSupported;
+	void checkInitialRenderContextState();
 };
 
 

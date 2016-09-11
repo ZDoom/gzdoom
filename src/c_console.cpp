@@ -811,8 +811,8 @@ static void C_DrawNotifyText ()
 						DTA_KeepRatio, true,
 						DTA_AlphaF, alpha, TAG_DONE);
 				else
-					screen->DrawText (SmallFont, color, (screen->GetWidth() / active_con_scaletext() -
-						SmallFont->StringWidth (NotifyStrings[i].Text))/ active_con_scaletext(),
+					screen->DrawText (SmallFont, color, (screen->GetWidth() -
+						SmallFont->StringWidth (NotifyStrings[i].Text) * active_con_scaletext()) / 2 / active_con_scaletext(),
 						line, NotifyStrings[i].Text,
 						DTA_VirtualWidth, screen->GetWidth() / active_con_scaletext(),
 						DTA_VirtualHeight, screen->GetHeight() / active_con_scaletext(),

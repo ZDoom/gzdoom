@@ -342,10 +342,10 @@ void FGLRenderBuffers::CreateAmbientOcclusion(int width, int height)
 		double z = distribution(generator);
 		double w = distribution(generator);
 
-		randomValues[i * 4 + 0] = (int16_t)clamp(x * 32768.0, -32767.0, 32768.0);
-		randomValues[i * 4 + 1] = (int16_t)clamp(y * 32768.0, -32767.0, 32768.0);
-		randomValues[i * 4 + 2] = (int16_t)clamp(z * 32768.0, -32767.0, 32768.0);
-		randomValues[i * 4 + 3] = (int16_t)clamp(w * 32768.0, -32767.0, 32768.0);
+		randomValues[i * 4 + 0] = (int16_t)clamp(x * 32767.0, -32768.0, 32767.0);
+		randomValues[i * 4 + 1] = (int16_t)clamp(y * 32767.0, -32768.0, 32767.0);
+		randomValues[i * 4 + 2] = (int16_t)clamp(z * 32767.0, -32768.0, 32767.0);
+		randomValues[i * 4 + 3] = (int16_t)clamp(w * 32767.0, -32768.0, 32767.0);
 	}
 
 	AmbientRandomTexture = Create2DTexture("AmbientRandomTexture", GL_RGBA16_SNORM, 4, 4, randomValues);

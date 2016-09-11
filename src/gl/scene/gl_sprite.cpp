@@ -381,16 +381,11 @@ void GLSprite::Draw(int pass)
 				spritetype = actor->renderflags & RF_SPRITETYPEMASK;
 				if (spritetype == RF_FLATSPRITE)
 				{
-					Matrix3x4 mat;
-					mat.MakeIdentity();
-					//mat.Rotate(1, 1, 1, 0);
-					//mat.Rotate(yawvecX, 0, yawvecY, -pitch);
-					//mat.Rotate(yawvecX, 0, yawvecY, rollDegrees);
-					v[0] = mat * FVector3(x1, z1, y1);
-					v[1] = mat * FVector3(x2, z1, y2);
-					v[2] = mat * FVector3(x1, z2, y1);
-					v[3] = mat * FVector3(x2, z2, y2);
-					
+					// I wonder if this is even correct...
+					v[0] = FVector3(x1, z1, y1);
+					v[1] = FVector3(x1, z2, y2);
+					v[2] = FVector3(x2, z1, y1);
+					v[3] = FVector3(x2, z2, y2);
 				}
 				else
 				{
@@ -795,13 +790,13 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			viewvecY = thing->Angles.Yaw.Sin();
 			float vvz1 = thing->Angles.Pitch.Sin();
 			float vvz2 = thing->Angles.Pitch.Cos();
-			z1 = z + ((viewvecX*leftfac*vvz1));
-			z2 = z + ((viewvecY*rightfac*vvz1));
-			x1 = x + (viewvecY*leftfac - viewvecX*leftfac)*vvz2;
-			x2 = x + (viewvecY*rightfac + viewvecX*rightfac)*vvz2;
-			y1 = y - (viewvecX*leftfac + viewvecY*leftfac);
-			y2 = y - (viewvecX*rightfac - viewvecY*rightfac);
 			
+			z1 = z + (leftfac*vvz1);
+			z2 = z + (rightfac*vvz1);
+			x1 = x + (viewvecX*leftfac + viewvecY*leftfac);
+			x2 = x + (viewvecX*rightfac + viewvecY*rightfac);
+			y1 = y - (viewvecY*leftfac + viewvecX*leftfac);
+			y2 = y - (viewvecX*rightfac + viewvecY*rightfac);
 		}
 		break;
 		case RF_WALLSPRITE:

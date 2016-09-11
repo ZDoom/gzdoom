@@ -1,6 +1,6 @@
 /*
 ** gl_sidebyside3d.h
-** Color mask based stereoscopic 3D modes for GZDoom
+** Mosaic image stereoscopic 3D modes for GZDoom
 **
 **---------------------------------------------------------------------------
 ** Copyright 2016 Christopher Bruns

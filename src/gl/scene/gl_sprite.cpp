@@ -135,7 +135,6 @@ void GLSprite::CalculateVertices(FVector3 *v)
 
 	// [Nash] is a flat sprite
 	const bool isFlatSprite = (actor != nullptr) && (spritetype == RF_WALLSPRITE || spritetype == RF_FLATSPRITE);
-	const bool dontFlip = (actor != nullptr) && (actor->renderflags & RF_DONTFLIP);
 	const bool useOffsets = (actor != nullptr) && !(actor->renderflags & RF_ROLLCENTER);
 
 	// [Nash] check for special sprite drawing modes
@@ -176,37 +175,8 @@ void GLSprite::CalculateVertices(FVector3 *v)
 			yawvecY = actor->Angles.Yaw.Sin();
 		}
 
-		// [MC] This is the only thing that I changed in Nash's submission which 
-		// was constantly applying roll to everything. That was wrong. Flat sprites
-		// with roll literally look like paper thing space ships trying to swerve.
-		// However, it does well with wall sprites.
-		// Also, renamed FLOORSPRITE to FLATSPRITE because that's technically incorrect.
-		// I plan on adding proper FLOORSPRITEs which can actually curve along sloped
-		// 3D floors later... if possible.
-
-		// Here we need some form of priority in order to work.
-		if (spritetype == RF_FLATSPRITE)
-		{
-			float pitchDegrees = -actor->Angles.Pitch.Degrees;
-			DVector3 apos = { x, y, z };
-			DVector3 diff = ViewPos - apos;
-			DAngle angto = diff.Angle();
-
-			angto = deltaangle(actor->Angles.Yaw, angto);
-
-			bool noFlipSprite = (!dontFlip || (fabs(angto) < 90.));
-			mat.Rotate(0, 1, 0, (noFlipSprite) ? 0 : 180);
-
-			mat.Rotate(-yawvecY, 0, yawvecX, (noFlipSprite) ? -pitchDegrees : pitchDegrees);
-			if (drawRollSpriteActor)
-			{
-				if (useOffsets)	mat.Translate(xx, zz, yy);
-				mat.Rotate(yawvecX, 0, yawvecY, (noFlipSprite) ? -rollDegrees : rollDegrees);
-				if (useOffsets) mat.Translate(-xx, -zz, -yy);
-			}
-		}
 		// [fgsfds] Rotate the sprite about the sight vector (roll) 
-		else if (spritetype == RF_WALLSPRITE)
+		if (spritetype == RF_WALLSPRITE)
 		{
 			mat.Rotate(0, 1, 0, 0);
 			if (drawRollSpriteActor)
@@ -405,7 +375,13 @@ void GLSprite::Draw(int pass)
 			gl_RenderState.Apply();
 
 			FVector3 v[4];
-			CalculateVertices(v);
+			if ((actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
+			{
+			}
+			else
+			{
+				CalculateVertices(v);
+			}
 
 
 			FQuadDrawer qd;
@@ -461,7 +437,7 @@ inline void GLSprite::PutSprite(bool translucent)
 {
 	int list;
 	// [BB] Allow models to be drawn in the GLDL_TRANSLUCENT pass.
-	if (translucent || !modelframe)
+	if (translucent || (!modelframe && (actor->renderflags & RF_SPRITETYPEMASK) != RF_WALLSPRITE))
 	{
 		list = GLDL_TRANSLUCENT;
 	}
@@ -711,7 +687,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	x = thingpos.X;
 	z = thingpos.Z;
 	y = thingpos.Y;
-	if (spritetype != RF_FLATSPRITE) z -= thing->Floorclip;
+	if (spritetype == RF_FACESPRITE) z -= thing->Floorclip; // wall and flat sprites are to be considered level geometry so this may not apply.
 
 	// [RH] Make floatbobbing a renderer-only effect.
 	if (thing->flags2 & MF2_FLOATBOB)
@@ -727,9 +703,19 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		DAngle ang = (thingpos - ViewPos).Angle();
 		FTextureID patch;
 		if (thing->flags7 & MF7_SPRITEANGLE)
+		{
 			patch = gl_GetSpriteFrame(spritenum, thing->frame, -1, (thing->SpriteAngle).BAMs(), &mirror);
-		else
+		}
+		else if (!(thing->renderflags & RF_FLATSPRITE))
+		{
 			patch = gl_GetSpriteFrame(spritenum, thing->frame, -1, (ang - (thing->Angles.Yaw + thing->SpriteRotation)).BAMs(), &mirror);
+		}
+		else
+		{
+			// Flat sprites cannot rotate in a predictable manner.
+			patch = gl_GetSpriteFrame(spritenum, thing->frame, 0, 0, &mirror);
+		}
+
 		if (!patch.isValid()) return;
 		int type = thing->renderflags & RF_SPRITETYPEMASK;
 		gltexture = FMaterial::ValidateTexture(patch, (type == RF_FACESPRITE), false);
@@ -781,6 +767,9 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			break;
 
 		case RF_FLATSPRITE:
+			// needs careful rethinking
+			return;
+
 		case RF_WALLSPRITE:
 			viewvecX = thing->Angles.Yaw.Cos();
 			viewvecY = thing->Angles.Yaw.Sin();
@@ -910,8 +899,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		// This is a non-translucent sprite (i.e. STYLE_Normal or equivalent)
 		trans=1.f;
 		
-
-		if (!gl_sprite_blend || modelframe)
+		if (!gl_sprite_blend || modelframe || (thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 		{
 			RenderStyle.SrcAlpha = STYLEALPHA_One;
 			RenderStyle.DestAlpha = STYLEALPHA_Zero;

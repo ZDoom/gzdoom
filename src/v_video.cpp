@@ -1356,20 +1356,20 @@ void V_OutputResized (int width, int height)
 
 void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany, int *_cx1, int *_cx2)
 {
-	int ratio;
+	float ratio;
 	int cwidth;
 	int cheight;
 	int cx1, cy1, cx2, cy2;
 
-	ratio = CheckRatio(realwidth, realheight);
-	if (Is54Aspect(ratio))
+	ratio = ActiveRatio(realwidth, realheight);
+	if (ratio < 1.3f)
 	{
 		cwidth = realwidth;
-		cheight = realheight * BaseRatioSizes[ratio][3] / 48;
+		cheight = realheight * AspectMultiplier(ratio) / 48;
 	}
 	else
 	{
-		cwidth = realwidth * BaseRatioSizes[ratio][3] / 48;
+		cwidth = realwidth * AspectMultiplier(ratio) / 48;
 		cheight = realheight;
 	}
 	// Use whichever pair of cwidth/cheight or width/height that produces less difference
@@ -1700,26 +1700,6 @@ int CheckRatio (int width, int height, int *trueratio)
 		*trueratio = ratio;
 	return fakeratio;
 }
-
-// First column: Base width
-// Second column: Base height (used for wall visibility multiplier)
-// Third column: Psprite offset (needed for "tallscreen" modes)
-// Fourth column: Width or height multiplier
-
-// For widescreen aspect ratio x:y ...
-//     base_width = 240 * x / y
-//     multiplier = 320 / base_width
-//     base_height = 200 * multiplier
-const int BaseRatioSizes[7][4] =
-{
-	{  960, 600, 0,                   48 },			//  4:3   320,      200,      multiplied by three
-	{ 1280, 450, 0,                   48*3/4 },		// 16:9   426.6667, 150,      multiplied by three
-	{ 1152, 500, 0,                   48*5/6 },		// 16:10  386,      166.6667, multiplied by three
-	{ 1224, 471, 0,                   48*40/51 },	// 17:10  408,		156.8627, multiplied by three
-	{  960, 640, (int)(6.5*FRACUNIT), 48*15/16 },   //  5:4   320,      213.3333, multiplied by three
-	{ 1224, 471, 0,                   48*40/51 },	// 17:10  408,		156.8627, multiplied by three (REDUNDANT)
-	{ 1707, 338, 0,                   48*9/16 }     	// 21:9   568.8889, 337.5,    multiplied by three
-};
 
 int AspectBaseWidth(float aspect)
 {

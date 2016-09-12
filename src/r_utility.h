@@ -33,7 +33,7 @@ extern int				validcount;
 extern angle_t			LocalViewAngle;			// [RH] Added to consoleplayer's angle
 extern int				LocalViewPitch;			// [RH] Used directly instead of consoleplayer's pitch
 extern bool				LocalKeyboardTurner;	// [RH] The local player used the keyboard to turn, so interpolate
-extern int				WidescreenRatio;
+extern float			WidescreenRatio;
 
 extern double			r_TicFracF;
 extern DWORD			r_FrameTime;

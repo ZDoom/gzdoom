@@ -1108,13 +1108,13 @@ void DrawHUD()
 		}
 		else 
 		{
-			if (WidescreenRatio == 4)
+			if (CheckRatio(SCREENWIDTH, SCREENHEIGHT) == 4)
 			{
-				hudheight = hudwidth * 30 / BaseRatioSizes[WidescreenRatio][3];	// BaseRatioSizes is inverted for this mode
+				hudheight = hudwidth * 30 / AspectMultiplier(WidescreenRatio);	// BaseRatioSizes is inverted for this mode
 			}
 			else
 			{
-				hudheight = hudwidth * 30 / (48*48/BaseRatioSizes[WidescreenRatio][3]);
+				hudheight = hudwidth * 30 / (48*48/AspectMultiplier(WidescreenRatio));
 			}
 		}
 	}

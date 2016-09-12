@@ -299,14 +299,15 @@ void DBaseStatusBar::SetScaled (bool scale, bool force)
 	{
 		ST_X = 0;
 		ST_Y = VirticalResolution - RelTop;
-		if (CheckRatio(SCREENWIDTH, SCREENHEIGHT) != 4)
+		float aspect = ActiveRatio(SCREENWIDTH, SCREENHEIGHT);
+		if (aspect >= 1.3f)
 		{ // Normal resolution
 			::ST_Y = Scale (ST_Y, SCREENHEIGHT, VirticalResolution);
 		}
 		else
 		{ // 5:4 resolution
-			::ST_Y = Scale(ST_Y - VirticalResolution/2, SCREENHEIGHT*3, Scale(VirticalResolution, BaseRatioSizes[4][1], 200)) + SCREENHEIGHT/2
-				+ (SCREENHEIGHT - SCREENHEIGHT * BaseRatioSizes[4][3] / 48) / 2;
+			::ST_Y = Scale(ST_Y - VirticalResolution/2, SCREENHEIGHT*3, Scale(VirticalResolution, AspectBaseHeight(aspect), 200)) + SCREENHEIGHT/2
+				+ (SCREENHEIGHT - SCREENHEIGHT * AspectMultiplier(aspect) / 48) / 2;
 		}
 		Displacement = 0;
 	}
@@ -1035,10 +1036,10 @@ void DBaseStatusBar::DrSmallNumberOuter (int val, int x, int y, bool center) con
 
 void DBaseStatusBar::RefreshBackground () const
 {
-	int x, x2, y, ratio;
+	int x, x2, y;
 
-	ratio = CheckRatio (SCREENWIDTH, SCREENHEIGHT);
-	x = (!IsRatioWidescreen(ratio) || !Scaled) ? ST_X : SCREENWIDTH*(48-BaseRatioSizes[ratio][3])/(48*2);
+	float ratio = ActiveRatio (SCREENWIDTH, SCREENHEIGHT);
+	x = (ratio < 1.5f || !Scaled) ? ST_X : SCREENWIDTH*(48-AspectMultiplier(ratio))/(48*2);
 	y = x == ST_X && x > 0 ? ST_Y : ::ST_Y;
 
 	if(!CompleteBorder)
@@ -1058,8 +1059,8 @@ void DBaseStatusBar::RefreshBackground () const
 	{
 		if(!CompleteBorder)
 		{
-			x2 = !IsRatioWidescreen(ratio) || !Scaled ? ST_X+HorizontalResolution :
-				SCREENWIDTH - (SCREENWIDTH*(48-BaseRatioSizes[ratio][3])+48*2-1)/(48*2);
+			x2 = ratio < 1.5f || !Scaled ? ST_X+HorizontalResolution :
+				SCREENWIDTH - (SCREENWIDTH*(48-AspectMultiplier(ratio))+48*2-1)/(48*2);
 		}
 		else
 		{

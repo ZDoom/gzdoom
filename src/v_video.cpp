@@ -1721,6 +1721,26 @@ const int BaseRatioSizes[7][4] =
 	{ 1707, 338, 0,                   48*9/16 }     	// 21:9   568.8889, 337.5,    multiplied by three
 };
 
+int AspectBaseWidth(float aspect)
+{
+	return (int)round(240.0f * aspect * 3.0f);
+}
+
+int AspectBaseHeight(float aspect)
+{
+	return (int)round(200.0f * (320.0f / (240.0f * aspect)) * 3.0f);
+}
+
+int AspectPspriteOffset(float aspect)
+{
+	return aspect < 1.3f ? (int)(6.5*FRACUNIT) : 0;
+}
+
+int AspectMultiplier(float aspect)
+{
+	return (int)round(320.0f / (240.0f * aspect) * 48.0f);
+}
+
 void IVideo::DumpAdapters ()
 {
 	Printf("Multi-monitor support unavailable.\n");

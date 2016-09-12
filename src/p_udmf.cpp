@@ -309,6 +309,11 @@ void FUDMFKeys::Sort()
 
 FUDMFKey *FUDMFKeys::Find(FName key)
 {
+	if (!mSorted)
+	{
+		mSorted = true;
+		Sort();
+	}
 	int min = 0, max = Size()-1;
 
 	while (min <= max)

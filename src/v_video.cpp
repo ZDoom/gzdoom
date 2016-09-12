@@ -725,6 +725,21 @@ void DCanvas::CalcGamma (float gamma, BYTE gammalookup[256])
 DSimpleCanvas::DSimpleCanvas (int width, int height)
 	: DCanvas (width, height)
 {
+	MemBuffer = nullptr;
+	Resize(width, height);
+}
+
+void DSimpleCanvas::Resize(int width, int height)
+{
+	Width = width;
+	Height = height;
+
+	if (MemBuffer != NULL)
+	{
+		delete[] MemBuffer;
+		MemBuffer = NULL;
+	}
+
 	// Making the pitch a power of 2 is very bad for performance
 	// Try to maximize the number of cache lines that can be filled
 	// for each column drawing operation by making the pitch slightly
@@ -761,7 +776,7 @@ DSimpleCanvas::DSimpleCanvas (int width, int height)
 		}
 	}
 	MemBuffer = new BYTE[Pitch * height];
-	memset (MemBuffer, 0, Pitch * height);
+	memset(MemBuffer, 0, Pitch * height);
 }
 
 //==========================================================================
@@ -1259,7 +1274,6 @@ CCMD(clean)
 bool V_DoModeSetup (int width, int height, int bits)
 {
 	DFrameBuffer *buff = I_SetMode (width, height, screen);
-	int cx1, cx2;
 
 	if (buff == NULL)
 	{
@@ -1274,6 +1288,17 @@ bool V_DoModeSetup (int width, int height, int bits)
 	// if D3DFB is being used for the display.
 	FFont::StaticPreloadFonts();
 
+	DisplayBits = bits;
+	V_UpdateModeSize(width, height);
+
+	M_RefreshModesList ();
+
+	return true;
+}
+
+void V_UpdateModeSize (int width, int height)
+{
+	int cx1, cx2;
 	V_CalcCleanFacs(320, 200, width, height, &CleanXfac, &CleanYfac, &cx1, &cx2);
 
 	CleanWidth = width / CleanXfac;
@@ -1314,14 +1339,19 @@ bool V_DoModeSetup (int width, int height, int bits)
 
 	DisplayWidth = width;
 	DisplayHeight = height;
-	DisplayBits = bits;
 
 	R_OldBlend = ~0;
 	Renderer->OnModeSet();
-	
-	M_RefreshModesList ();
+}
 
-	return true;
+void V_OutputResized (int width, int height)
+{
+	V_UpdateModeSize(width, height);
+	setsizeneeded = true;
+	if (StatusBar != NULL)
+	{
+		StatusBar->ScreenSizeChanged();
+	}
 }
 
 void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany, int *_cx1, int *_cx2)

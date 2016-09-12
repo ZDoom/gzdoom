@@ -232,7 +232,7 @@ void R_SetVisibility(double vis)
 	else
 		r_WallVisibility = r_BaseVisibility;
 
-	r_WallVisibility = (InvZtoScale * SCREENWIDTH*BaseRatioSizes[WidescreenRatio][1] /
+	r_WallVisibility = (InvZtoScale * SCREENWIDTH*AspectBaseHeight(WidescreenRatio) /
 		(viewwidth*SCREENHEIGHT*3)) * (r_WallVisibility * FocalTangent);
 
 	// Prevent overflow on floors/ceilings. Note that the calculation of
@@ -295,7 +295,7 @@ CCMD (r_visibility)
 //
 //==========================================================================
 
-void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight, int trueratio)
+void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio)
 {
 	int virtheight, virtwidth, virtwidth2, virtheight2;
 
@@ -318,22 +318,22 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 	virtwidth = virtwidth2 = fullWidth;
 	virtheight = virtheight2 = fullHeight;
 
-	if (Is54Aspect(trueratio))
+	if (trueratio < 1.3f)
 	{
-		virtheight2 = virtheight2 * BaseRatioSizes[trueratio][3] / 48;
+		virtheight2 = virtheight2 * AspectMultiplier(trueratio) / 48;
 	}
 	else
 	{
-		virtwidth2 = virtwidth2 * BaseRatioSizes[trueratio][3] / 48;
+		virtwidth2 = virtwidth2 * AspectMultiplier(trueratio) / 48;
 	}
 
-	if (Is54Aspect(WidescreenRatio))
+	if (WidescreenRatio < 1.3f)
 	{
-		virtheight = virtheight * BaseRatioSizes[WidescreenRatio][3] / 48;
+		virtheight = virtheight * AspectMultiplier(WidescreenRatio) / 48;
 	}
 	else
 	{
-		virtwidth = virtwidth * BaseRatioSizes[WidescreenRatio][3] / 48;
+		virtwidth = virtwidth * AspectMultiplier(WidescreenRatio) / 48;
 	}
 
 	BaseYaspectMul = 320.0 * virtheight2 / (r_Yaspect * virtwidth2);

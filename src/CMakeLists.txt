@@ -281,6 +281,10 @@ if( NOT NO_FMOD )
 	if( FMOD_INCLUDE_DIR )
 		message( STATUS "FMOD include files found at ${FMOD_INCLUDE_DIR}" )
 		include_directories( "${FMOD_INCLUDE_DIR}" )
+		
+		if( EXISTS "${FMOD_INCLUDE_DIR}/fmod_common.h" )
+			set( FMOD_STUDIO YES )
+		endif()
 	else()
 		message( STATUS "Could not find FMOD include files" )
 		set( NO_FMOD ON )
@@ -1480,7 +1484,16 @@ endif()
 
 if( MSVC )
 	option( ZDOOM_GENERATE_MAPFILE "Generate .map file for debugging." OFF )
-	set( LINKERSTUFF "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\"" )
+	set( LINKERSTUFF "/MANIFEST:NO" )
+
+	if( NOT NO_FMOD )
+		if( FMOD_STUDIO )
+			set( LINKERSTUFF "${LINKERSTUFF} /DELAYLOAD:\"fmod${X64}.dll\"" )
+		else()
+			set( LINKERSTUFF "${LINKERSTUFF} /DELAYLOAD:\"fmodex${X64}.dll\"" )
+		endif()
+	endif()
+
 	if( ZDOOM_GENERATE_MAPFILE )
 		set( LINKERSTUFF "${LINKERSTUFF} /MAP" )
 	endif()
@@ -1520,17 +1533,23 @@ if( APPLE )
 		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zdoom-info.plist" )
 
 	if( NOT NO_FMOD )
+		if( FMOD_STUDIO )
+			set( FMOD_DYLIB libfmod.dylib )
+		else()
+			set( FMOD_DYLIB libfmodex.dylib )
+		endif()
+
 		# Fix fmod link so that it can be found in the app bundle.
 		find_program( OTOOL otool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
 		find_program( INSTALL_NAME_TOOL install_name_tool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
 		execute_process( COMMAND "${OTOOL}" -L "${FMOD_LIBRARY}"
-			COMMAND grep "libfmodex.dylib (compat"
+			COMMAND grep "${FMOD_DYLIB} (compat"
 			COMMAND head -n1
 			COMMAND awk "{print $1}"
 			OUTPUT_VARIABLE FMOD_LINK
 			OUTPUT_STRIP_TRAILING_WHITESPACE )
 		add_custom_command( TARGET zdoom POST_BUILD
-			COMMAND "${INSTALL_NAME_TOOL}" -change "${FMOD_LINK}" @executable_path/../Frameworks/libfmodex.dylib "$<TARGET_FILE:zdoom>"
+			COMMAND "${INSTALL_NAME_TOOL}" -change "${FMOD_LINK}" @executable_path/../Frameworks/${FMOD_DYLIB} "$<TARGET_FILE:zdoom>"
 			COMMENT "Relinking FMOD Ex" )
 	endif()
 endif()

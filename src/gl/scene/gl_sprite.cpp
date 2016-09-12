@@ -375,7 +375,7 @@ void GLSprite::Draw(int pass)
 			gl_RenderState.Apply();
 
 			FVector3 v[4];
-			if ((actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
+			if (actor != nullptr && (actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
 			{
 			}
 			else

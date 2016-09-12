@@ -382,10 +382,10 @@ void GLSprite::Draw(int pass)
 				if (spritetype == RF_FLATSPRITE)
 				{
 					// I wonder if this is even correct...
-					v[0] = FVector3(x1, z1, y1);
+					v[0] = FVector3(x1, z2, y1);
 					v[1] = FVector3(x1, z2, y2);
 					v[2] = FVector3(x2, z1, y1);
-					v[3] = FVector3(x2, z2, y2);
+					v[3] = FVector3(x2, z1, y2);
 				}
 				else
 				{
@@ -788,15 +788,19 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			//pos = self->Vec2Offset(xofs * c + yofs * s, xofs * s - yofs*c);
 			viewvecX = thing->Angles.Yaw.Cos();
 			viewvecY = thing->Angles.Yaw.Sin();
-			float vvz1 = thing->Angles.Pitch.Sin();
-			float vvz2 = thing->Angles.Pitch.Cos();
+			FAngle pitch = (float)thing->Angles.Pitch.Degrees;
+			float s1 = pitch.Sin();
+			float c1 = pitch.Cos();
+			pitch = (pitch + 180.).Normalized180();
+			float s2 = pitch.Sin();
+			float c2 = pitch.Cos();
 			
-			z1 = z + (leftfac*vvz1);
-			z2 = z + (rightfac*vvz1);
-			x1 = x + (viewvecX*leftfac + viewvecY*leftfac);
-			x2 = x + (viewvecX*rightfac + viewvecY*rightfac);
-			y1 = y - (viewvecY*leftfac + viewvecX*leftfac);
-			y2 = y - (viewvecX*rightfac + viewvecY*rightfac);
+			z1 = z + (leftfac*s1);
+			z2 = z - (rightfac*s2);
+			y1 = y - leftfac;
+			y2 = y - rightfac;
+			x1 = x + (leftfac*c1);
+			x2 = x - (rightfac*c2);			
 		}
 		break;
 		case RF_WALLSPRITE:

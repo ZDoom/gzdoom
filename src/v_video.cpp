@@ -1603,6 +1603,59 @@ CUSTOM_CVAR (Int, vid_aspect, 0, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 	}
 }
 
+// Helper for ActiveRatio and CheckRatio. Returns the forced ratio type, or -1 if none.
+int ActiveFakeRatio(int width, int height)
+{
+	int fakeratio = -1;
+	if ((vid_aspect >= 1) && (vid_aspect <= 6))
+	{
+		// [SP] User wants to force aspect ratio; let them.
+		fakeratio = int(vid_aspect);
+		if (fakeratio == 3)
+		{
+			fakeratio = 0;
+		}
+		else if (fakeratio == 5)
+		{
+			fakeratio = 3;
+		}
+	}
+	if (vid_nowidescreen)
+	{
+		if (!vid_tft)
+		{
+			fakeratio = 0;
+		}
+		else
+		{
+			fakeratio = (height * 5 / 4 == width) ? 4 : 0;
+		}
+	}
+	return fakeratio;
+}
+
+// Active screen ratio based on cvars and size
+float ActiveRatio(int width, int height, float *trueratio)
+{
+	static float forcedRatioTypes[] =
+	{
+		4 / 3.0f,
+		16 / 9.0f,
+		16 / 10.0f,
+		17 / 10.0f,
+		5 / 4.0f,
+		17 / 10.0f,
+		21 / 9.0f
+	};
+
+	float ratio = width / (float)height;
+	int fakeratio = ActiveFakeRatio(width, height);
+
+	if (trueratio)
+		*trueratio = ratio;
+	return (fakeratio != -1) ? forcedRatioTypes[fakeratio] : ratio;
+}
+
 // Tries to guess the physical dimensions of the screen based on the
 // screen's pixel dimensions. Can return:
 // 0: 4:3
@@ -1639,31 +1692,9 @@ int CheckRatio (int width, int height, int *trueratio)
 		}
 	}
 
-	int fakeratio = ratio;
-	if ((vid_aspect >= 1) && (vid_aspect <= 6))
-	{
-		// [SP] User wants to force aspect ratio; let them.
-		fakeratio = int(vid_aspect);
-		if (fakeratio == 3)
-		{
-			fakeratio = 0;
-		}
-		else if (fakeratio == 5)
-		{
-			fakeratio = 3;
-		}
-	}
-	if (vid_nowidescreen)
-	{
-		if (!vid_tft)
-		{
-			fakeratio = 0;
-		}
-		else
-		{
-			fakeratio = (height * 5 / 4 == width) ? 4 : 0;
-		}
-	}
+	int fakeratio = ActiveFakeRatio(width, height);
+	if (fakeratio == -1)
+		fakeratio = ratio;
 
 	if (trueratio)
 		*trueratio = ratio;

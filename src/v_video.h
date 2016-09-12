@@ -516,6 +516,8 @@ extern "C" void ASM_PatchPitch (void);
 
 int CheckRatio (int width, int height, int *trueratio=NULL);
 static inline int CheckRatio (double width, double height) { return CheckRatio(int(width), int(height)); }
+float ActiveRatio (int width, int height, float *trueratio = NULL);
+static inline double ActiveRatio (double width, double height) { return ActiveRatio(int(width), int(height)); }
 extern const int BaseRatioSizes[7][4];
 
 inline bool IsRatioWidescreen(int ratio) {

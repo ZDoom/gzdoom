@@ -1681,10 +1681,10 @@ int CheckRatio (int width, int height, int *trueratio)
 	};
 
 	int ratio = ratioTypes[0].second;
-	float distance = abs(ratioTypes[0].first - aspect);
+	float distance = fabs(ratioTypes[0].first - aspect);
 	for (int i = 1; ratioTypes[i].first != 0.0f; i++)
 	{
-		float d = abs(ratioTypes[i].first - aspect);
+		float d = fabs(ratioTypes[i].first - aspect);
 		if (d < distance)
 		{
 			ratio = ratioTypes[i].second;

@@ -1914,7 +1914,7 @@ class CommandAspectRatio : public SBarInfoCommandFlowControl
 		{
 			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
 
-			SetTruth(ratioMap[CheckRatio(screen->GetWidth(), screen->GetHeight())] == ratio, block, statusBar);
+			SetTruth(ratioMap[FindRatio()] == ratio, block, statusBar);
 		}
 	protected:
 		enum Ratio
@@ -1931,6 +1931,37 @@ class CommandAspectRatio : public SBarInfoCommandFlowControl
 		static Ratio	ratioMap[5];
 
 		Ratio			ratio;
+
+	private:
+		int FindRatio()
+		{
+			float aspect = ActiveRatio(screen->GetWidth(), screen->GetHeight());
+
+			static std::pair<float, int> ratioTypes[] =
+			{
+				{ 21 / 9.0f , ASPECTRATIO_16_9 },
+				{ 16 / 9.0f , ASPECTRATIO_16_9 },
+				{ 17 / 10.0f , ASPECTRATIO_17_10 },
+				{ 16 / 10.0f , ASPECTRATIO_16_10 },
+				{ 4 / 3.0f , ASPECTRATIO_4_3 },
+				{ 5 / 4.0f , ASPECTRATIO_5_4 },
+				{ 0.0f, 0 }
+			};
+
+			int ratio = ratioTypes[0].second;
+			float distance = fabs(ratioTypes[0].first - aspect);
+			for (int i = 1; ratioTypes[i].first != 0.0f; i++)
+			{
+				float d = fabs(ratioTypes[i].first - aspect);
+				if (d < distance)
+				{
+					ratio = ratioTypes[i].second;
+					distance = d;
+				}
+			}
+
+			return ratio;
+		}
 };
 CommandAspectRatio::Ratio CommandAspectRatio::ratioMap[5] = {ASPECTRATIO_4_3,ASPECTRATIO_16_9,ASPECTRATIO_16_10,ASPECTRATIO_16_10,ASPECTRATIO_5_4};
 

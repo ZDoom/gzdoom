@@ -30,7 +30,7 @@ struct FSoftwareRenderer : public FRenderer
 	void ErrorCleanup ();
 	void ClearBuffer(int color);
 	void Init();
-	void SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, int trueratio);
+	void SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio);
 	void SetupFrame(player_t *player);
 	void CopyStackedViewParameters();
 	void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov);

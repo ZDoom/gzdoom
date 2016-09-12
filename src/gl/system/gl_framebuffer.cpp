@@ -192,12 +192,23 @@ void OpenGLFrameBuffer::Update()
 	DrawRateStuff();
 	GLRenderer->Flush();
 
-	GLRenderer->SetOutputViewport(nullptr);
-
 	Swap();
 	swapped = false;
 	Unlock();
 	CheckBench();
+
+	if (Windowed)
+	{
+		int clientWidth = GetClientWidth();
+		int clientHeight = GetClientHeight();
+		if (clientWidth > 0 && clientHeight > 0 && (Width != clientWidth || Height != clientHeight))
+		{
+			Resize(clientWidth, clientHeight);
+			V_OutputResized(Width, Height);
+		}
+	}
+
+	GLRenderer->SetOutputViewport(nullptr);
 }
 
 

@@ -1610,13 +1610,36 @@ CUSTOM_CVAR (Int, vid_aspect, 0, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 // 2: 16:10
 // 3: 17:10
 // 4: 5:4
-// 5: 17:10 (redundant)
+// 5: 17:10 (redundant, never returned)
 // 6: 21:9
 int CheckRatio (int width, int height, int *trueratio)
 {
-	int fakeratio = -1;
-	int ratio;
+	float aspect = width / (float)height;
 
+	static std::pair<float, int> ratioTypes[] =
+	{
+		{ 21 / 9.0f , 6 },
+		{ 16 / 9.0f , 1 },
+		{ 17 / 10.0f , 3 },
+		{ 16 / 10.0f , 2 },
+		{ 4 / 3.0f , 0 },
+		{ 5 / 4.0f , 4 },
+		{ 0.0f, 0 }
+	};
+
+	int ratio = ratioTypes[0].second;
+	float distance = abs(ratioTypes[0].first - aspect);
+	for (int i = 1; ratioTypes[i].first != 0.0f; i++)
+	{
+		float d = abs(ratioTypes[i].first - aspect);
+		if (d < distance)
+		{
+			ratio = ratioTypes[i].second;
+			distance = d;
+		}
+	}
+
+	int fakeratio = ratio;
 	if ((vid_aspect >= 1) && (vid_aspect <= 6))
 	{
 		// [SP] User wants to force aspect ratio; let them.
@@ -1628,7 +1651,7 @@ int CheckRatio (int width, int height, int *trueratio)
 		else if (fakeratio == 5)
 		{
 			fakeratio = 3;
-		}        
+		}
 	}
 	if (vid_nowidescreen)
 	{
@@ -1638,53 +1661,13 @@ int CheckRatio (int width, int height, int *trueratio)
 		}
 		else
 		{
-			fakeratio = (height * 5/4 == width) ? 4 : 0;
+			fakeratio = (height * 5 / 4 == width) ? 4 : 0;
 		}
-	}
-	// If the size is approximately 16:9, consider it so.
-	if (abs (height * 16/9 - width) < 10)
-	{
-		ratio = 1;
-	}
-	// Consider 17:10 as well.
-	else if (abs (height * 17/10 - width) < 10)
-	{
-		ratio = 3;
-	}
-	// 16:10 has more variance in the pixel dimensions. Grr.
-	else if (abs (height * 16/10 - width) < 60)
-	{
-		// 320x200 and 640x400 are always 4:3, not 16:10
-		if ((width == 320 && height == 200) || (width == 640 && height == 400))
-		{
-			ratio = 0;
-		}
-		else
-		{
-			ratio = 2;
-		}
-	}
-	// Unless vid_tft is set, 1280x1024 is 4:3, not 5:4.
-	else if (height * 5/4 == width && vid_tft)
-	{
-		ratio = 4;
-	}
-    // test for 21:9 (actually 64:27, 21:9 is a semi-accurate ratio used in marketing)
-    else if (abs (height * 64/27 - width) < 30)
-    {
-        ratio = 6;
-    }
-	// Assume anything else is 4:3. (Which is probably wrong these days...)
-	else
-	{
-		ratio = 0;
 	}
 
-	if (trueratio != NULL)
-	{
+	if (trueratio)
 		*trueratio = ratio;
-	}
-	return (fakeratio >= 0) ? fakeratio : ratio;
+	return fakeratio;
 }
 
 // First column: Base width

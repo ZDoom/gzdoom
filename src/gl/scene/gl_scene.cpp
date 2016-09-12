@@ -120,7 +120,7 @@ angle_t FGLRenderer::FrustumAngle()
 
 	// ok, this is a gross hack that barely works...
 	// but at least it doesn't overestimate too much...
-	double floatangle=2.0+(45.0+((tilt/1.9)))*mCurrentFoV*48.0/BaseRatioSizes[WidescreenRatio][3]/90.0;
+	double floatangle=2.0+(45.0+((tilt/1.9)))*mCurrentFoV*48.0/AspectMultiplier(WidescreenRatio)/90.0;
 	angle_t a1 = DAngle(floatangle).BAMs();
 	if (a1>=ANGLE_180) return 0xffffffff;
 	return a1;
@@ -917,14 +917,10 @@ void FGLRenderer::RenderView (player_t* player)
 	NoInterpolateView = saved_niv;
 
 
-	// I stopped using BaseRatioSizes here because the information there wasn't well presented.
-	//							4:3				16:9		16:10		17:10		5:4
-	static float ratios[]={1.333333f, 1.777777f, 1.6f, 1.7f, 1.25f, 1.7f, 2.333333f};
-
 	// now render the main view
 	float fovratio;
-	float ratio = ratios[WidescreenRatio];
-	if (! Is54Aspect(WidescreenRatio))
+	float ratio = WidescreenRatio;
+	if (WidescreenRatio >= 1.3f)
 	{
 		fovratio = 1.333333f;
 	}

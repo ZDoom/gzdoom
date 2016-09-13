@@ -1362,7 +1362,7 @@ void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int real
 	int cx1, cy1, cx2, cy2;
 
 	ratio = ActiveRatio(realwidth, realheight);
-	if (Is54Aspect(ratio))
+	if (AspectTallerThanWide(ratio))
 	{
 		cwidth = realwidth;
 		cheight = realheight * AspectMultiplier(ratio) / 48;
@@ -1703,29 +1703,36 @@ int CheckRatio (int width, int height, int *trueratio)
 
 int AspectBaseWidth(float aspect)
 {
-	return !Is54Aspect(aspect) ? (int)round(240.0f * aspect * 3.0f) : 960;
+	return (int)round(240.0f * aspect * 3.0f);
 }
 
 int AspectBaseHeight(float aspect)
 {
-	return !Is54Aspect(aspect) ? (int)round(200.0f * (320.0f / (240.0f * aspect)) * 3.0f) : 640;
+	if (!AspectTallerThanWide(aspect))
+		return (int)round(200.0f * (320.0f / (AspectBaseWidth(aspect) / 3.0f)) * 3.0f);
+	else
+		return (int)round((200.0f * (4.0f / 3.0f)) / aspect * 3.0f);
 }
 
 double AspectPspriteOffset(float aspect)
 {
-	return !Is54Aspect(aspect) ? 0.0 : 6.5;
+	if (!AspectTallerThanWide(aspect))
+		return 0.0;
+	else
+		return ((4.0 / 3.0) / aspect - 1.0) * 97.5;
 }
 
 int AspectMultiplier(float aspect)
 {
-	return !Is54Aspect(aspect) ? (int)round(320.0f / (240.0f * aspect) * 48.0f) : 48 * 15 / 16;
+	if (!AspectTallerThanWide(aspect))
+		return (int)round(320.0f / (AspectBaseWidth(aspect) / 3.0f) * 48.0f);
+	else
+		return (int)round(200.0f / (AspectBaseHeight(aspect) / 3.0f) * 48.0f);
 }
 
-bool Is54Aspect(float aspect)
+bool AspectTallerThanWide(float aspect)
 {
-	// The 5:4 aspect ratio redefined all the values to mean something else..
-	// Limit the range this is active to try prevent square cam textures inheriting this madness.
-	return aspect > 1.1f && aspect < 1.3f;
+	return aspect < 1.333f;
 }
 
 void IVideo::DumpAdapters ()

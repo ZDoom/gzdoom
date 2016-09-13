@@ -525,7 +525,7 @@ int AspectBaseWidth(float aspect);
 int AspectBaseHeight(float aspect);
 double AspectPspriteOffset(float aspect);
 int AspectMultiplier(float aspect);
-bool Is54Aspect(float aspect);
+bool AspectTallerThanWide(float aspect);
 
 EXTERN_CVAR(Int, uiscale);
 

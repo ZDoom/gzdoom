@@ -381,11 +381,15 @@ void GLSprite::Draw(int pass)
 				spritetype = actor->renderflags & RF_SPRITETYPEMASK;
 				if (spritetype == RF_FLATSPRITE)
 				{
+					Matrix3x4 mat;
+					mat.MakeIdentity();
+
+					//mat.Rotate(0, 1, 0, actor->Angles.Yaw.Radians());
 					// I wonder if this is even correct...
-					v[0] = FVector3(x1, z2, y1);
-					v[1] = FVector3(x1, z2, y2);
-					v[2] = FVector3(x2, z1, y1);
-					v[3] = FVector3(x2, z1, y2);
+					v[0] = mat * FVector3(x1, z2, y1);
+					v[1] = mat * FVector3(x1, z2, y2);
+					v[2] = mat * FVector3(x2, z1, y1);
+					v[3] = mat * FVector3(x2, z1, y2);
 				}
 				else
 				{
@@ -771,7 +775,6 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		float viewvecY;
 		switch (spritetype)
 		{
-		//case RF_FLATSPRITE:
 		case RF_FACESPRITE:
 			viewvecX = GLRenderer->mViewVector.X;
 			viewvecY = GLRenderer->mViewVector.Y;
@@ -785,22 +788,45 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		case RF_FLATSPRITE:
 		
 		{	//needs careful rethinking
-			//pos = self->Vec2Offset(xofs * c + yofs * s, xofs * s - yofs*c);
-			viewvecX = thing->Angles.Yaw.Cos();
-			viewvecY = thing->Angles.Yaw.Sin();
+			
+			float tcos1, tsin1, tcos2, tsin2, tcos3, tcos4, tsin3, tsin4;
+			DVector3 apos = { ViewPos.X - x, ViewPos.Y - y, ViewPos.Z - z };
+			DAngle diff = apos.Angle();
+			tcos1 = diff.Cos();
+			tsin1 = diff.Sin();
+			diff = (diff + 180.).Normalized180();
+			tcos2 = diff.Cos();
+			tsin2 = diff.Sin();
+
+			FAngle ang = (float)thing->Angles.Yaw.Degrees;
+			tcos3 = ang.Cos();
+			tsin3 = ang.Sin();
+			ang = (ang + 180.).Normalized180();
+			tcos4 = ang.Cos();
+			tsin4 = ang.Sin();
+
 			FAngle pitch = (float)thing->Angles.Pitch.Degrees;
+			//DAngle pitch = apos.Pitch();
 			float s1 = pitch.Sin();
 			float c1 = pitch.Cos();
 			pitch = (pitch + 180.).Normalized180();
 			float s2 = pitch.Sin();
 			float c2 = pitch.Cos();
+
+			DAngle pitch2 = apos.Pitch();
+			float s3 = pitch2.Sin();
+			float c3 = pitch2.Cos();
+			pitch2 = (pitch2 + 180.).Normalized180();
+			float s4 = pitch2.Sin();
+			float c4 = pitch2.Cos();
 			
 			z1 = z + (leftfac*s1);
 			z2 = z - (rightfac*s2);
-			y1 = y - leftfac;
-			y2 = y - rightfac;
-			x1 = x + (leftfac*c1);
-			x2 = x - (rightfac*c2);			
+			y1 = y + (leftfac*tcos3 + leftfac * s3);
+			y2 = y - (rightfac*tcos4 + rightfac * s4);
+			x1 = x + (leftfac * tsin3 + leftfac*c1);
+			x2 = x - (rightfac * tsin4 + rightfac*c2);
+
 		}
 		break;
 		case RF_WALLSPRITE:

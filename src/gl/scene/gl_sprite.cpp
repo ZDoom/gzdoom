@@ -383,11 +383,37 @@ void GLSprite::Draw(int pass)
 				{
 					Matrix3x4 mat;
 					mat.MakeIdentity();
-					mat.Translate(x, z, y);
+					float nx, ny, nz;
+					if (spritetype == RF_ROLLCENTER)
+					{
+						nx = (x1 + x2) * 0.5;
+						ny = (y1 + y2) * 0.5;
+						nz = (z1 + z2) * 0.5;
+					}
+					else
+					{
+						nx = x;
+						ny = y;
+						nz = z;
+					}
+					mat.Translate(nx, nz, ny);
+
+					float yawvecX = actor->Angles.Yaw.Cos();
+					float yawvecY = actor->Angles.Yaw.Sin();
+					float pitchvecx = actor->Angles.Pitch.Cos();
+					float pitchvecy = actor->Angles.Pitch.Sin();
 					
 					mat.Rotate(0, 1, 0, actor->Angles.Yaw.Degrees);
+					//mat.Rotate(0, 0, pitchvecy, actor->Angles.Pitch.Degrees);
 
-					mat.Translate(-x, -z, -y);
+					mat.Rotate(pitchvecy, pitchvecx, 0, actor->Angles.Roll.Degrees);
+
+					// This interestingly gives a nice drilling rotation effect but
+					// at the same time this can be achieved through the use of sine
+					// and cosine with pitch and angle.
+					//mat.Rotate(pitchvecx, -pitchvecy, 0, actor->Angles.Roll.Degrees);
+
+					mat.Translate(-nx, -nz, -ny);
 					v[0] = mat * FVector3(x1, z2, y1);
 					v[1] = mat * FVector3(x1, z2, y2);
 					v[2] = mat * FVector3(x2, z1, y1);
@@ -627,7 +653,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	sector_t * rendersector;
 
 	// Don't waste time projecting sprites that are definitely not visible.
-	if (thing == NULL || thing->sprite == 0 || !thing->IsVisibleToPlayer())
+	if (thing == nullptr || thing->sprite == 0 || !thing->IsVisibleToPlayer())
 	{
 		return;
 	}
@@ -789,13 +815,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			break;
 			
 		case RF_FLATSPRITE:
-		
 		{	//needs careful rethinking
-			FAngle angle = (float)thing->Angles.Yaw.Degrees;
-			angle.Normalized180();
-			float angs1 = angle.Sin();
-			float angc1 = angle.Cos();
-
 			FAngle pitch = (float)thing->Angles.Pitch.Degrees;
 			float s1 = pitch.Sin();
 			float c1 = pitch.Cos();
@@ -804,8 +824,8 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			x2 = x + (rightfac * c1);
 			y1 = y - (leftfac);
 			y2 = y - (rightfac);
-			z1 = z + (leftfac*s1);
-			z2 = z + (rightfac*s1);
+			z1 = z + (leftfac * s1);
+			z2 = z + (rightfac * s1);
 		}
 		break;
 		case RF_WALLSPRITE:

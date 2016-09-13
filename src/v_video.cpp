@@ -1362,7 +1362,7 @@ void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int real
 	int cx1, cy1, cx2, cy2;
 
 	ratio = ActiveRatio(realwidth, realheight);
-	if (ratio < 1.3f)
+	if (Is54Aspect(ratio))
 	{
 		cwidth = realwidth;
 		cheight = realheight * AspectMultiplier(ratio) / 48;
@@ -1703,22 +1703,29 @@ int CheckRatio (int width, int height, int *trueratio)
 
 int AspectBaseWidth(float aspect)
 {
-	return (int)round(240.0f * aspect * 3.0f);
+	return !Is54Aspect(aspect) ? (int)round(240.0f * aspect * 3.0f) : 960;
 }
 
 int AspectBaseHeight(float aspect)
 {
-	return (int)round(200.0f * (320.0f / (240.0f * aspect)) * 3.0f);
+	return !Is54Aspect(aspect) ? (int)round(200.0f * (320.0f / (240.0f * aspect)) * 3.0f) : 640;
 }
 
-int AspectPspriteOffset(float aspect)
+double AspectPspriteOffset(float aspect)
 {
-	return aspect < 1.3f ? (int)(6.5*FRACUNIT) : 0;
+	return !Is54Aspect(aspect) ? 0.0 : 6.5;
 }
 
 int AspectMultiplier(float aspect)
 {
-	return (int)round(320.0f / (240.0f * aspect) * 48.0f);
+	return !Is54Aspect(aspect) ? (int)round(320.0f / (240.0f * aspect) * 48.0f) : 48 * 15 / 16;
+}
+
+bool Is54Aspect(float aspect)
+{
+	// The 5:4 aspect ratio redefined all the values to mean something else..
+	// Limit the range this is active to try prevent square cam textures inheriting this madness.
+	return aspect > 1.1f && aspect < 1.3f;
 }
 
 void IVideo::DumpAdapters ()

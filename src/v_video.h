@@ -523,8 +523,9 @@ static inline double ActiveRatio (double width, double height) { return ActiveRa
 
 int AspectBaseWidth(float aspect);
 int AspectBaseHeight(float aspect);
-int AspectPspriteOffset(float aspect);
+double AspectPspriteOffset(float aspect);
 int AspectMultiplier(float aspect);
+bool Is54Aspect(float aspect);
 
 EXTERN_CVAR(Int, uiscale);
 

@@ -375,7 +375,7 @@ void GLSprite::Draw(int pass)
 			gl_RenderState.Apply();
 
 			FVector3 v[4];
-			if ((actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
+			if (actor != nullptr && (actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
 			{
 			}
 			else
@@ -437,7 +437,7 @@ inline void GLSprite::PutSprite(bool translucent)
 {
 	int list;
 	// [BB] Allow models to be drawn in the GLDL_TRANSLUCENT pass.
-	if (translucent || (!modelframe && (actor->renderflags & RF_SPRITETYPEMASK) != RF_WALLSPRITE))
+	if (translucent || actor == nullptr || (!modelframe && (actor->renderflags & RF_SPRITETYPEMASK) != RF_WALLSPRITE))
 	{
 		list = GLDL_TRANSLUCENT;
 	}

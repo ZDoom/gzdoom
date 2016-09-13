@@ -437,7 +437,7 @@ inline void GLSprite::PutSprite(bool translucent)
 {
 	int list;
 	// [BB] Allow models to be drawn in the GLDL_TRANSLUCENT pass.
-	if (translucent || (!modelframe && (actor->renderflags & RF_SPRITETYPEMASK) != RF_WALLSPRITE))
+	if (translucent || actor == nullptr || (!modelframe && (actor->renderflags & RF_SPRITETYPEMASK) != RF_WALLSPRITE))
 	{
 		list = GLDL_TRANSLUCENT;
 	}

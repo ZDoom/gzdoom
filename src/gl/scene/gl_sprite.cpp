@@ -381,11 +381,17 @@ void GLSprite::Draw(int pass)
 				spritetype = actor->renderflags & RF_SPRITETYPEMASK;
 				if (spritetype == RF_FLATSPRITE)
 				{
-					// I wonder if this is even correct...
-					v[0] = FVector3(x1, z2, y1);
-					v[1] = FVector3(x1, z2, y2);
-					v[2] = FVector3(x2, z1, y1);
-					v[3] = FVector3(x2, z1, y2);
+					Matrix3x4 mat;
+					mat.MakeIdentity();
+					mat.Translate(x, z, y);
+					
+					mat.Rotate(0, 1, 0, actor->Angles.Yaw.Degrees);
+
+					mat.Translate(-x, -z, -y);
+					v[0] = mat * FVector3(x1, z2, y1);
+					v[1] = mat * FVector3(x1, z2, y2);
+					v[2] = mat * FVector3(x2, z1, y1);
+					v[3] = mat * FVector3(x2, z1, y2);
 				}
 				else
 				{
@@ -785,22 +791,21 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		case RF_FLATSPRITE:
 		
 		{	//needs careful rethinking
-			//pos = self->Vec2Offset(xofs * c + yofs * s, xofs * s - yofs*c);
-			viewvecX = thing->Angles.Yaw.Cos();
-			viewvecY = thing->Angles.Yaw.Sin();
+			FAngle angle = (float)thing->Angles.Yaw.Degrees;
+			angle.Normalized180();
+			float angs1 = angle.Sin();
+			float angc1 = angle.Cos();
+
 			FAngle pitch = (float)thing->Angles.Pitch.Degrees;
 			float s1 = pitch.Sin();
 			float c1 = pitch.Cos();
-			pitch = (pitch + 180.).Normalized180();
-			float s2 = pitch.Sin();
-			float c2 = pitch.Cos();
 			
+			x1 = x + (leftfac * c1);
+			x2 = x + (rightfac * c1);
+			y1 = y - (leftfac);
+			y2 = y - (rightfac);
 			z1 = z + (leftfac*s1);
-			z2 = z - (rightfac*s2);
-			y1 = y - leftfac;
-			y2 = y - rightfac;
-			x1 = x + (leftfac*c1);
-			x2 = x - (rightfac*c2);			
+			z2 = z + (rightfac*s1);
 		}
 		break;
 		case RF_WALLSPRITE:

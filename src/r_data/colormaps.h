@@ -1,7 +1,7 @@
 #ifndef __RES_CMAP_H
 #define __RES_CMAP_H
 
-struct FColormap;
+struct FSWColormap;
 
 void R_InitColormaps ();
 void R_DeinitColormaps ();

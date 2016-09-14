@@ -1516,6 +1516,7 @@ struct visstyle_t
 {
 	int				ColormapNum;	// Which colormap is rendered
 	FSWColormap		*BaseColormap;	// Base colormap used together with ColormapNum
+	lighttable_t	*colormap;	// [SP] Restored from GZDoom - will this work?
 	float			Alpha;
 	FRenderStyle	RenderStyle;
 };

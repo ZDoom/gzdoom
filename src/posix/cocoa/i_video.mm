@@ -494,7 +494,7 @@ NSOpenGLPixelFormat* CreatePixelFormat(const OpenGLProfile profile)
 		attributes[i++] = NSOpenGLPFAAllowOfflineRenderers;
 	}
 
-	if (NSAppKitVersionNumber >= AppKit10_7 && OpenGLProfile::Core == profile)
+	if (NSAppKitVersionNumber >= AppKit10_7 && OpenGLProfile::Core == profile && 1 == vid_renderer)
 	{
 		NSOpenGLPixelFormatAttribute profile = NSOpenGLProfileVersion3_2Core;
 		const char* const glversion = Args->CheckValue("-glversion");

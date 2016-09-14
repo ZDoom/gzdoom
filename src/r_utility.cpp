@@ -198,7 +198,7 @@ void R_SetViewSize (int blocks)
 //
 //==========================================================================
 
-void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
+void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, bool renderingToCanvas)
 {
 	float trueratio;
 
@@ -220,7 +220,15 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 		freelookviewheight = ((setblocks*fullHeight)/10)&~7;
 	}
 
-	WidescreenRatio = ActiveRatio (fullWidth, fullHeight, &trueratio);
+	if (renderingToCanvas)
+	{
+		WidescreenRatio = fullWidth / (float)fullHeight;
+		trueratio = WidescreenRatio;
+	}
+	else
+	{
+		WidescreenRatio = ActiveRatio(fullWidth, fullHeight, &trueratio);
+	}
 
 	DrawFSHUD = (windowSize == 11);
 	
@@ -229,7 +237,7 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 
 	centery = viewheight/2;
 	centerx = viewwidth/2;
-	if (WidescreenRatio < 1.3f)
+	if (AspectTallerThanWide(WidescreenRatio))
 	{
 		centerxwide = centerx;
 	}

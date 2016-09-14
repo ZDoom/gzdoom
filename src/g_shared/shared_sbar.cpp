@@ -300,7 +300,7 @@ void DBaseStatusBar::SetScaled (bool scale, bool force)
 		ST_X = 0;
 		ST_Y = VirticalResolution - RelTop;
 		float aspect = ActiveRatio(SCREENWIDTH, SCREENHEIGHT);
-		if (aspect >= 1.3f)
+		if (!AspectTallerThanWide(aspect))
 		{ // Normal resolution
 			::ST_Y = Scale (ST_Y, SCREENHEIGHT, VirticalResolution);
 		}

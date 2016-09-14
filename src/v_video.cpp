@@ -1362,7 +1362,7 @@ void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int real
 	int cx1, cy1, cx2, cy2;
 
 	ratio = ActiveRatio(realwidth, realheight);
-	if (ratio < 1.3f)
+	if (AspectTallerThanWide(ratio))
 	{
 		cwidth = realwidth;
 		cheight = realheight * AspectMultiplier(ratio) / 48;
@@ -1708,17 +1708,31 @@ int AspectBaseWidth(float aspect)
 
 int AspectBaseHeight(float aspect)
 {
-	return (int)round(200.0f * (320.0f / (240.0f * aspect)) * 3.0f);
+	if (!AspectTallerThanWide(aspect))
+		return (int)round(200.0f * (320.0f / (AspectBaseWidth(aspect) / 3.0f)) * 3.0f);
+	else
+		return (int)round((200.0f * (4.0f / 3.0f)) / aspect * 3.0f);
 }
 
-int AspectPspriteOffset(float aspect)
+double AspectPspriteOffset(float aspect)
 {
-	return aspect < 1.3f ? (int)(6.5*FRACUNIT) : 0;
+	if (!AspectTallerThanWide(aspect))
+		return 0.0;
+	else
+		return ((4.0 / 3.0) / aspect - 1.0) * 97.5;
 }
 
 int AspectMultiplier(float aspect)
 {
-	return (int)round(320.0f / (240.0f * aspect) * 48.0f);
+	if (!AspectTallerThanWide(aspect))
+		return (int)round(320.0f / (AspectBaseWidth(aspect) / 3.0f) * 48.0f);
+	else
+		return (int)round(200.0f / (AspectBaseHeight(aspect) / 3.0f) * 48.0f);
+}
+
+bool AspectTallerThanWide(float aspect)
+{
+	return aspect < 1.333f;
 }
 
 void IVideo::DumpAdapters ()

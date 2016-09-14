@@ -95,7 +95,7 @@ void R_ExecuteSetViewSize (void);
 
 // Called by M_Responder.
 void R_SetViewSize (int blocks);
-void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight);
+void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, bool renderingToCanvas = false);
 
 
 extern void R_FreePastViewers ();

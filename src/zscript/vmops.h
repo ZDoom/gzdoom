@@ -83,7 +83,8 @@ xx(RETI,	reti,	I8I16),		// Copy immediate from BC to return value A, possibly re
 xx(TRY,		try,	I24),		// When an exception is thrown, start searching for a handler at pc + ABC
 xx(UNTRY,	untry,	I8),		// Pop A entries off the exception stack
 xx(THROW,	throw,	THROW),		// A == 0: Throw exception object pB
-								// A != 0: Throw exception object pkB
+								// A == 1: Throw exception object pkB
+								// A >= 2: Throw VM exception of type BC
 xx(CATCH,	catch,	CATCH),		// A == 0: continue search on next try
 								// A == 1: continue execution at instruction immediately following CATCH (catches any exception)
 								// A == 2: (pB == <type of exception thrown>) then pc++ ; next instruction must JMP to another CATCH

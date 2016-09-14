@@ -318,7 +318,7 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 	virtwidth = virtwidth2 = fullWidth;
 	virtheight = virtheight2 = fullHeight;
 
-	if (trueratio < 1.3f)
+	if (AspectTallerThanWide(trueratio))
 	{
 		virtheight2 = virtheight2 * AspectMultiplier(trueratio) / 48;
 	}
@@ -327,7 +327,7 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 		virtwidth2 = virtwidth2 * AspectMultiplier(trueratio) / 48;
 	}
 
-	if (WidescreenRatio < 1.3f)
+	if (AspectTallerThanWide(WidescreenRatio))
 	{
 		virtheight = virtheight * AspectMultiplier(WidescreenRatio) / 48;
 	}
@@ -948,7 +948,7 @@ void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas,
 	RenderTarget = canvas;
 	bRenderingToCanvas = true;
 
-	R_SetWindow (12, width, height, height);
+	R_SetWindow (12, width, height, height, true);
 	viewwindowx = x;
 	viewwindowy = y;
 	viewactive = true;

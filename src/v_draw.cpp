@@ -874,7 +874,7 @@ void DCanvas::VirtualToRealCoords(double &x, double &y, double &w, double &h,
 	double right = x + w;
 	double bottom = y + h;
 
-	if (myratio > 1.4f)
+	if (myratio > 1.334f)
 	{ // The target surface is either 16:9 or 16:10, so expand the
 	  // specified virtual size to avoid undesired stretching of the
 	  // image. Does not handle non-4:3 virtual sizes. I'll worry about
@@ -887,7 +887,7 @@ void DCanvas::VirtualToRealCoords(double &x, double &y, double &w, double &h,
 		x = x * Width / vwidth;
 		w = right * Width / vwidth - x;
 	}
-	if (myratio < 1.3f)
+	if (AspectTallerThanWide(myratio))
 	{ // The target surface is 5:4
 		y = (y - vheight * 0.5) * Height * 600 / (vheight * AspectBaseHeight(myratio)) + Height * 0.5;
 		h = (bottom - vheight * 0.5) * Height * 600 / (vheight * AspectBaseHeight(myratio)) + Height * 0.5 - y;
@@ -950,7 +950,7 @@ void DCanvas::FillBorder (FTexture *img)
 		return;
 	}
 	int bordtop, bordbottom, bordleft, bordright, bord;
-	if (myratio < 1.3f)
+	if (AspectTallerThanWide(myratio))
 	{ // Screen is taller than it is wide
 		bordleft = bordright = 0;
 		bord = Height - Height * AspectMultiplier(myratio) / 48;

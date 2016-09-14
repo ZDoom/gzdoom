@@ -106,7 +106,7 @@ EXTERN_CVAR(Bool, ticker   )
 EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Bool, vid_hidpi)
 
-CUSTOM_CVAR(Bool, swtruecolor, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Bool, swtruecolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	// Strictly speaking this doesn't require a mode switch, but it is the easiest
 	// way to force a CreateFramebuffer call without a lot of refactoring.

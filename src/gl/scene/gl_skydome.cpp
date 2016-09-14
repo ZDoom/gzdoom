@@ -1,11 +1,31 @@
+// 
+//---------------------------------------------------------------------------
+//
+// Copyright(C) 2003-2016 Christoph Oelckers
+// All rights reserved.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//--------------------------------------------------------------------------
+//
 /*
-** gl_sky.cpp
 **
 ** Draws the sky.  Loosely based on the JDoom sky and the ZDoomGL 0.66.2 sky.
 **
+** for FSkyVertexBuffer::SkyVertex only:
 **---------------------------------------------------------------------------
 ** Copyright 2003 Tim Stump
-** Copyright 2005 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -19,8 +39,6 @@
 **    documentation and/or other materials provided with the distribution.
 ** 3. The name of the author may not be used to endorse or promote products
 **    derived from this software without specific prior written permission.
-** 4. Full disclosure of the entire project's source code, except for third
-**    party libraries is mandatory. (NOTE: This clause is non-negotiable!)
 **
 ** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 ** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES

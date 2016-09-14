@@ -55,7 +55,7 @@ struct FRenderer
 	virtual void ErrorCleanup () {}
 	virtual void ClearBuffer(int color) = 0;
 	virtual void Init() = 0;
-	virtual void SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, int trueratio) {}
+	virtual void SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio) {}
 	virtual void SetupFrame(player_t *player) {}
 	virtual void CopyStackedViewParameters() {}
 	virtual void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov) = 0;

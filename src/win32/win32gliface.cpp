@@ -346,7 +346,8 @@ bool Win32GLVideo::GoFullscreen(bool yes)
 //
 //==========================================================================
 
-DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool fs, DFrameBuffer *old)
+
+DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool bgra, bool fs, DFrameBuffer *old)
 {
 	Win32GLFrameBuffer *fb;
 
@@ -860,7 +861,7 @@ IMPLEMENT_ABSTRACT_CLASS(Win32GLFrameBuffer)
 //
 //==========================================================================
 
-Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen) : BaseWinFB(width, height) 
+Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen) : BaseWinFB(width, height, false) 
 {
 	m_Width = width;
 	m_Height = height;

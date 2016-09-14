@@ -106,7 +106,7 @@ extern double			r_SpriteVisibility;
 extern int				r_actualextralight;
 extern bool				foggy;
 extern int				fixedlightlev;
-extern FColormap*		fixedcolormap;
+extern FSWColormap*		fixedcolormap;
 extern FSpecialColormap*realfixedcolormap;
 
 

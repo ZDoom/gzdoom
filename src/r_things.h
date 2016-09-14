@@ -144,7 +144,7 @@ enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4 };
 void R_DrawVoxel(const FVector3 &viewpos, FAngle viewangle,
 	const FVector3 &sprpos, DAngle dasprang,
 	fixed_t daxscale, fixed_t dayscale, struct FVoxel *voxobj,
-	FColormap *colormap, int colormapnum, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags);
+	FSWColormap *colormap, int colormapnum, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags);
 
 void R_ClipVisSprite (vissprite_t *vis, int xl, int xh);
 

@@ -31,7 +31,7 @@ extern "C" int 	fuzzoffset[FUZZTABLE + 1];	// [RH] +1 for the assembly routine
 extern "C" int 	fuzzpos;
 extern "C" int	fuzzviewheight;
 
-struct FColormap;
+struct FSWColormap;
 
 struct ShadeConstants
 {
@@ -52,7 +52,7 @@ extern "C" int			ylookup[MAXHEIGHT];
 extern "C" int			dc_pitch;		// [RH] Distance between rows
 
 extern "C" lighttable_t*dc_colormap;
-extern "C" FColormap	*dc_fcolormap;
+extern "C" FSWColormap	*dc_fcolormap;
 extern "C" ShadeConstants dc_shade_constants;
 extern "C" fixed_t		dc_light;
 extern "C" int			dc_x;
@@ -288,7 +288,7 @@ void	R_FillColumnP_C (void);
 void	R_FillColumnHorizP_C (void);
 void	R_FillSpan_C (void);
 
-extern void(*R_SetupDrawSlab)(FColormap *base_colormap, float light, int shade);
+extern void(*R_SetupDrawSlab)(FSWColormap *base_colormap, float light, int shade);
 extern void(*R_DrawSlab)(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p);
 
 #ifdef X86_ASM
@@ -303,7 +303,7 @@ extern "C" int				ds_y;
 extern "C" int				ds_x1;
 extern "C" int				ds_x2;
 
-extern "C" FColormap*		ds_fcolormap;
+extern "C" FSWColormap*		ds_fcolormap;
 extern "C" lighttable_t*	ds_colormap;
 extern "C" ShadeConstants	ds_shade_constants;
 extern "C" dsfixed_t		ds_light;
@@ -374,10 +374,10 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);
 
 // Sets dc_colormap and dc_light to their appropriate values depending on the output format (pal vs true color)
-void R_SetColorMapLight(FColormap *base_colormap, float light, int shade);
+void R_SetColorMapLight(FSWColormap *base_colormap, float light, int shade);
 
 // Same as R_SetColorMapLight, but for ds_colormap and ds_light
-void R_SetDSColorMapLight(FColormap *base_colormap, float light, int shade);
+void R_SetDSColorMapLight(FSWColormap *base_colormap, float light, int shade);
 
 void R_SetTranslationMap(lighttable_t *translation);
 

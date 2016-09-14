@@ -2751,7 +2751,7 @@ static ShadeConstants slab_rgba_shade_constants;
 static const BYTE *slab_rgba_colormap;
 static fixed_t slab_rgba_light;
 
-void R_SetupDrawSlab_rgba(FColormap *base_colormap, float light, int shade)
+void R_SetupDrawSlab_rgba(FSWColormap *base_colormap, float light, int shade)
 {
 	slab_rgba_shade_constants.light_red = base_colormap->Color.r * 256 / 255;
 	slab_rgba_shade_constants.light_green = base_colormap->Color.g * 256 / 255;

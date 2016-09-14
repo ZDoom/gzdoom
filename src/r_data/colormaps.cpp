@@ -71,7 +71,7 @@ struct FakeCmap
 };
 
 TArray<FakeCmap> fakecmaps;
-FColormap realcolormaps;
+FSWColormap realcolormaps;
 size_t numfakecmaps;
 
 

@@ -340,7 +340,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 
 	// curse Doom's overuse of global variables in the renderer.
 	// These get clobbered by rendering to a camera texture but they need to be preserved so the final rendering can be done with the correct palette.
-	FColormap *savecolormap = fixedcolormap;
+	FSWColormap *savecolormap = fixedcolormap;
 	FSpecialColormap *savecm = realfixedcolormap;
 
 	DAngle savedfov = FieldOfView;

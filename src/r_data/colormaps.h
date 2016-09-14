@@ -9,10 +9,10 @@ void R_DeinitColormaps ();
 DWORD R_ColormapNumForName(const char *name);	// killough 4/4/98
 void R_SetDefaultColormap (const char *name);	// [RH] change normal fadetable
 DWORD R_BlendForColormap (DWORD map);			// [RH] return calculated blend for a colormap
-extern FColormap realcolormaps;					// [RH] make the colormaps externally visible
+extern FSWColormap realcolormaps;					// [RH] make the colormaps externally visible
 extern size_t numfakecmaps;
 
-struct FColormap
+struct FSWColormap
 {
 	BYTE *Maps = nullptr;
 	PalEntry Color = 0xffffffff;
@@ -20,7 +20,7 @@ struct FColormap
 	int Desaturate = 0;
 };
 
-struct FDynamicColormap : FColormap
+struct FDynamicColormap : FSWColormap
 {
 	void ChangeFade (PalEntry fadecolor);
 	void ChangeColor (PalEntry lightcolor, int desaturate);
@@ -47,7 +47,7 @@ enum
 };
 
 
-struct FSpecialColormap : FColormap
+struct FSpecialColormap : FSWColormap
 {
 	FSpecialColormap()
 	{

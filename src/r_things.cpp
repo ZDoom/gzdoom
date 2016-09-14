@@ -1481,7 +1481,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 		if (camera->Inventory != nullptr)
 		{
 			BYTE oldcolormapnum = vis->Style.ColormapNum;
-			FColormap *oldcolormap = vis->Style.BaseColormap;
+			FSWColormap *oldcolormap = vis->Style.BaseColormap;
 			camera->Inventory->AlterWeaponSprite (&vis->Style);
 			if (vis->Style.BaseColormap != oldcolormap || vis->Style.ColormapNum != oldcolormapnum)
 			{
@@ -1960,7 +1960,7 @@ void R_DrawSprite (vissprite_t *spr)
 	int r1, r2;
 	short topclip, botclip;
 	short *clip1, *clip2;
-	FColormap *colormap = spr->Style.BaseColormap;
+	FSWColormap *colormap = spr->Style.BaseColormap;
 	int colormapnum = spr->Style.ColormapNum;
 	F3DFloor *rover;
 	FDynamicColormap *mybasecolormap;
@@ -2486,7 +2486,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	int 				x1, x2, y1, y2;
 	vissprite_t*		vis;
 	sector_t*			heightsec = NULL;
-	FColormap*			map;
+	FSWColormap*			map;
 
 	// [ZZ] Particle not visible through the portal plane
 	if (CurrentPortal && !!P_PointOnLineSide(particle->Pos, CurrentPortal->dst))
@@ -2785,7 +2785,7 @@ extern double BaseYaspectMul;;
 void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 	const FVector3 &dasprpos, DAngle dasprang,
 	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
-	FColormap *colormap, int colormapnum, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags)
+	FSWColormap *colormap, int colormapnum, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags)
 {
 	int i, j, k, x, y, syoff, ggxstart, ggystart, nxoff;
 	fixed_t cosang, sinang, sprcosang, sprsinang;

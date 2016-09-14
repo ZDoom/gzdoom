@@ -100,7 +100,7 @@ void (*R_DrawFogBoundary)(int x1, int x2, short *uclip, short *dclip);
 void (*R_MapTiltedPlane)(int y, int x1);
 void (*R_MapColoredPlane)(int y, int x1);
 void (*R_DrawParticle)(vissprite_t *);
-void (*R_SetupDrawSlab)(FColormap *base_colormap, float light, int shade);
+void (*R_SetupDrawSlab)(FSWColormap *base_colormap, float light, int shade);
 void (*R_DrawSlab)(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p);
 fixed_t (*tmvline1_add)();
 void (*tmvline4_add)();
@@ -146,7 +146,7 @@ extern "C" {
 int				dc_pitch=0xABadCafe;	// [RH] Distance between rows
 
 lighttable_t*	dc_colormap; 
-FColormap		*dc_fcolormap;
+FSWColormap		*dc_fcolormap;
 ShadeConstants	dc_shade_constants;
 fixed_t			dc_light;
 int 			dc_x; 
@@ -1032,7 +1032,7 @@ int 					ds_y;
 int 					ds_x1;
 int 					ds_x2;
 
-FColormap*				ds_fcolormap;
+FSWColormap*				ds_fcolormap;
 lighttable_t*			ds_colormap;
 ShadeConstants			ds_shade_constants;
 dsfixed_t				ds_light;
@@ -2413,10 +2413,10 @@ void R_InitColumnDrawers ()
 		R_DrawParticle				= R_DrawParticle_C;
 
 #ifdef X86_ASM
-		R_SetupDrawSlab				= [](FColormap *colormap, float light, int shade) { R_SetupDrawSlabA(colormap->Maps + (GETPALOOKUP(light, shade) << COLORMAPSHIFT)); };
+		R_SetupDrawSlab				= [](FSWColormap *colormap, float light, int shade) { R_SetupDrawSlabA(colormap->Maps + (GETPALOOKUP(light, shade) << COLORMAPSHIFT)); };
 		R_DrawSlab					= R_DrawSlabA;
 #else
-		R_SetupDrawSlab				= [](FColormap *colormap, float light, int shade) { R_SetupDrawSlabC(colormap->Maps + (GETPALOOKUP(light, shade) << COLORMAPSHIFT)); };
+		R_SetupDrawSlab				= [](FSWColormap *colormap, float light, int shade) { R_SetupDrawSlabC(colormap->Maps + (GETPALOOKUP(light, shade) << COLORMAPSHIFT)); };
 		R_DrawSlab					= R_DrawSlabC;
 #endif
 
@@ -2806,7 +2806,7 @@ void R_SetTranslationMap(lighttable_t *translation)
 	}
 }
 
-void R_SetColorMapLight(FColormap *base_colormap, float light, int shade)
+void R_SetColorMapLight(FSWColormap *base_colormap, float light, int shade)
 {
 	dc_fcolormap = base_colormap;
 	if (r_swtruecolor)
@@ -2830,7 +2830,7 @@ void R_SetColorMapLight(FColormap *base_colormap, float light, int shade)
 	}
 }
 
-void R_SetDSColorMapLight(FColormap *base_colormap, float light, int shade)
+void R_SetDSColorMapLight(FSWColormap *base_colormap, float light, int shade)
 {
 	ds_fcolormap = base_colormap;
 	if (r_swtruecolor)

@@ -436,6 +436,10 @@ int VMFrameStack::Call(VMFunction *func, VMValue *params, int numparams, VMRetur
 		case X_ARRAY_OUT_OF_BOUNDS:
 			Printf("array access out of bounds.");
 			break;
+
+		case X_DIVISION_BY_ZERO:
+			Printf("division by zero.");
+			break;
 		}
 		Printf("\n");
 

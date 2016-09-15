@@ -381,20 +381,24 @@ void GLSprite::Draw(int pass)
 				{
 					Matrix3x4 mat;
 					mat.MakeIdentity();
-					mat.Translate(x, z, y);
+					float cz = (z1 + z2) * 0.5;
+					float cy = (y1 + y2) * 0.5;
+					float cx = (x1 + x2) * 0.5;
+					cx = x;
+					cy = y;
+					cz = z;
+					mat.Translate(cx, cz, cy);
 
 					if (!(actor->renderflags & RF_ROLLCENTER))
 					{
-						float cz = (-z + (z1 + z2) * 0.5) + (z2 - z1) * 0.5;
-						float cy = -y + (y1 + y2) * 0.5;
-						float cx = -x + (x1 + x2) * 0.5;
-						mat.Translate(cx, cz, cy);
+						
+						
 						mat.Rotate(0, 1, 0, actor->Angles.Yaw.Degrees);
-						//mat.Translate(-cx, -cz, -cy);
+						
 						mat.Rotate(0, 0, 1, -actor->Angles.Pitch.Degrees);
-						//mat.Translate(cx, cz, cy);
+						
 						mat.Rotate(0, 1, 0, actor->Angles.Roll.Degrees);
-						mat.Translate(-cx, -cz, -cy);
+						
 					}
 					else
 					{
@@ -403,7 +407,7 @@ void GLSprite::Draw(int pass)
 						mat.Rotate(0, 1, 0, actor->Angles.Roll.Degrees);
 					}
 
-					mat.Translate(-x, -z, -y);
+					mat.Translate(-cx, -cz, -cy);
 					
 					v[0] = mat * FVector3(x1, z, y1);
 					v[1] = mat * FVector3(x1, z, y2);
@@ -779,7 +783,8 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 
 		float rightfac = -r.left;
 		float leftfac = rightfac - r.width;
-
+		float bottomfac = -r.top;
+		float topfac = bottomfac - r.height;
 		z1 = z - r.top;
 		z2 = z1 - r.height;
 
@@ -807,10 +812,12 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			
 		case RF_FLATSPRITE:
 		{	//needs careful rethinking
-			x1 = x + leftfac;
-			x2 = x + rightfac;
-			y1 = y - leftfac;
-			y2 = y - rightfac;
+			viewvecX = thing->Angles.Yaw.Cos();
+			viewvecY = thing->Angles.Yaw.Sin();
+			x1 = x - leftfac;
+			x2 = x - rightfac;
+			y1 = y + topfac;
+			y2 = y + bottomfac;
 		}
 		break;
 		case RF_WALLSPRITE:

@@ -377,35 +377,33 @@ void GLSprite::Draw(int pass)
 			FVector3 v[4];
 			if (actor != nullptr)
 			{
-				DWORD spritetype = (DWORD)-1;
-				spritetype = actor->renderflags & RF_SPRITETYPEMASK;
-				if (spritetype == RF_FLATSPRITE)
+				if ((actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
 				{
 					Matrix3x4 mat;
 					mat.MakeIdentity();
-					bool useOffsets = !(actor->renderflags & RF_ROLLCENTER);
-					float nx, ny, nz;
+					mat.Translate(x, z, y);
 
-					if (useOffsets)
+					if (!(actor->renderflags & RF_ROLLCENTER))
 					{
-						nx = x;
-						ny = y;
-						nz = z;
+						float cz = (-z + (z1 + z2) * 0.5) + (z2 - z1) * 0.5;
+						float cy = -y + (y1 + y2) * 0.5;
+						float cx = -x + (x1 + x2) * 0.5;
+						mat.Translate(cx, cz, cy);
+						mat.Rotate(0, 1, 0, actor->Angles.Yaw.Degrees);
+						//mat.Translate(-cx, -cz, -cy);
+						mat.Rotate(0, 0, 1, -actor->Angles.Pitch.Degrees);
+						//mat.Translate(cx, cz, cy);
+						mat.Rotate(0, 1, 0, actor->Angles.Roll.Degrees);
+						mat.Translate(-cx, -cz, -cy);
 					}
 					else
 					{
-						nx = (x1 + x2) * 0.5;
-						ny = (y1 + y2) * 0.5;
-						nz = (z1 + z2) * 0.5;
+						mat.Rotate(0, 1, 0, actor->Angles.Yaw.Degrees);
+						mat.Rotate(0, 0, 1, -actor->Angles.Pitch.Degrees);
+						mat.Rotate(0, 1, 0, actor->Angles.Roll.Degrees);
 					}
 
-					mat.Translate(nx, nz, ny);
-
-					mat.Rotate(0, 1, 0, actor->Angles.Yaw.Degrees);
-					mat.Rotate(0, 0, 1, -actor->Angles.Pitch.Degrees);
-					mat.Rotate(0, 1, 0, actor->Angles.Roll.Degrees);
-
-					mat.Translate(-nx, -nz, -ny);
+					mat.Translate(-x, -z, -y);
 					
 					v[0] = mat * FVector3(x1, z, y1);
 					v[1] = mat * FVector3(x1, z, y2);

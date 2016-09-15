@@ -383,41 +383,35 @@ void GLSprite::Draw(int pass)
 				{
 					Matrix3x4 mat;
 					mat.MakeIdentity();
+					bool useOffsets = !(actor->renderflags & RF_ROLLCENTER);
 					float nx, ny, nz;
-					if (spritetype == RF_ROLLCENTER)
-					{
-						nx = (x1 + x2) * 0.5;
-						ny = (y1 + y2) * 0.5;
-						nz = (z1 + z2) * 0.5;
-					}
-					else
+
+					if (useOffsets)
 					{
 						nx = x;
 						ny = y;
 						nz = z;
 					}
+					else
+					{
+						nx = (x1 + x2) * 0.5;
+						ny = (y1 + y2) * 0.5;
+						nz = (z1 + z2) * 0.5;
+					}
+
 					mat.Translate(nx, nz, ny);
 
-					float yawvecX = actor->Angles.Yaw.Cos();
-					float yawvecY = actor->Angles.Yaw.Sin();
-					float pitchvecx = actor->Angles.Pitch.Cos();
-					float pitchvecy = actor->Angles.Pitch.Sin();
-					
 					mat.Rotate(0, 1, 0, actor->Angles.Yaw.Degrees);
-					//mat.Rotate(0, 0, pitchvecy, actor->Angles.Pitch.Degrees);
-
-					mat.Rotate(pitchvecy, pitchvecx, 0, actor->Angles.Roll.Degrees);
-
-					// This interestingly gives a nice drilling rotation effect but
-					// at the same time this can be achieved through the use of sine
-					// and cosine with pitch and angle.
-					//mat.Rotate(pitchvecx, -pitchvecy, 0, actor->Angles.Roll.Degrees);
+					mat.Rotate(0, 0, 1, -actor->Angles.Pitch.Degrees);
+					mat.Rotate(0, 1, 0, actor->Angles.Roll.Degrees);
 
 					mat.Translate(-nx, -nz, -ny);
-					v[0] = mat * FVector3(x1, z2, y1);
-					v[1] = mat * FVector3(x1, z2, y2);
-					v[2] = mat * FVector3(x2, z1, y1);
-					v[3] = mat * FVector3(x2, z1, y2);
+					
+					v[0] = mat * FVector3(x1, z, y1);
+					v[1] = mat * FVector3(x1, z, y2);
+					v[2] = mat * FVector3(x2, z, y1);
+					v[3] = mat * FVector3(x2, z, y2);
+					
 				}
 				else
 				{
@@ -803,7 +797,6 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		float viewvecY;
 		switch (spritetype)
 		{
-		//case RF_FLATSPRITE:
 		case RF_FACESPRITE:
 			viewvecX = GLRenderer->mViewVector.X;
 			viewvecY = GLRenderer->mViewVector.Y;
@@ -816,16 +809,10 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			
 		case RF_FLATSPRITE:
 		{	//needs careful rethinking
-			FAngle pitch = (float)thing->Angles.Pitch.Degrees;
-			float s1 = pitch.Sin();
-			float c1 = pitch.Cos();
-			
-			x1 = x + (leftfac * c1);
-			x2 = x + (rightfac * c1);
-			y1 = y - (leftfac);
-			y2 = y - (rightfac);
-			z1 = z + (leftfac * s1);
-			z2 = z + (rightfac * s1);
+			x1 = x + leftfac;
+			x2 = x + rightfac;
+			y1 = y - leftfac;
+			y2 = y - rightfac;
 		}
 		break;
 		case RF_WALLSPRITE:

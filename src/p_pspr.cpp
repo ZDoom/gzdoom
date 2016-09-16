@@ -528,9 +528,6 @@ void P_DropWeapon (player_t *player)
 //
 //============================================================================
 
-// [SP] Changes how quickly the weapon bobs
-EXTERN_CVAR(Float, wbobspeed)
-
 void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac)
 {
 	static float curbob;
@@ -555,8 +552,9 @@ void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac)
 
 	for (int i = 0; i < 2; i++)
 	{
-		// Bob the weapon based on movement speed.
-		FAngle angle = (BobSpeed * wbobspeed * 35 / TICRATE*(level.time - 1 + i)) * (360.f / 8192.f);
+		// Bob the weapon based on movement speed. ([SP] And user's bob speed setting)
+		FAngle angle = (BobSpeed * player->userinfo.GetWBobSpeed() * 35 /
+			TICRATE*(level.time - 1 + i)) * (360.f / 8192.f);
 
 		// [RH] Smooth transitions between bobbing and not-bobbing frames.
 		// This also fixes the bug where you can "stick" a weapon off-center by

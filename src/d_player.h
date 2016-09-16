@@ -337,6 +337,10 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 	{
 		return *static_cast<FFloatCVar *>(*CheckKey(NAME_StillBob));
 	}
+	double GetWBobSpeed() const
+	{
+		return *static_cast<FFloatCVar *>(*CheckKey(NAME_WBobSpeed));
+	}
 	int GetPlayerClassNum() const
 	{
 		return *static_cast<FIntCVar *>(*CheckKey(NAME_PlayerClass));

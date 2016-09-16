@@ -524,8 +524,12 @@ void P_DropWeapon (player_t *player)
 // A_WeaponReady every tic, and it looks bad if they don't bob smoothly.
 //
 // [XA] Added new bob styles and exposed bob properties. Thanks, Ryan Cordell!
+// [SP] Added new user option for bob speed
 //
 //============================================================================
+
+// [SP] Changes how quickly the weapon bobs
+EXTERN_CVAR(Float, wbobspeed)
 
 void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac)
 {
@@ -552,7 +556,7 @@ void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac)
 	for (int i = 0; i < 2; i++)
 	{
 		// Bob the weapon based on movement speed.
-		FAngle angle = (BobSpeed * 35 / TICRATE*(level.time - 1 + i)) * (360.f / 8192.f);
+		FAngle angle = (BobSpeed * wbobspeed * 35 / TICRATE*(level.time - 1 + i)) * (360.f / 8192.f);
 
 		// [RH] Smooth transitions between bobbing and not-bobbing frames.
 		// This also fixes the bug where you can "stick" a weapon off-center by

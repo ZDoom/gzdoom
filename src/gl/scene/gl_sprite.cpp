@@ -107,6 +107,43 @@ static const float LARGE_VALUE = 1e19f;
 
 void GLSprite::CalculateVertices(FVector3 *v)
 {
+	if (actor != nullptr && (actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
+	{
+		Matrix3x4 mat;
+		mat.MakeIdentity();
+
+		float cx, cy, cz = z;
+		if ((actor->renderflags & RF_ROLLCENTER))
+		{
+			cx = (x1 + x2) * 0.5;
+			cy = (y1 + y2) * 0.5;
+		}
+		else
+		{
+			cx = x;
+			cy = y;
+		}
+
+		// [MC] Rotate around the center or offsets given to the sprites.
+		// Counteract any existing rotations, then rotate the angle.
+		// Tilt the actor up or down based on pitch (increase 'somersaults' forward).
+		// Then counteract the roll and DO A BARREL ROLL.
+
+		FAngle pitch = (float)-actor->Angles.Pitch.Degrees;
+		pitch.Normalized180();
+
+		mat.Translate(cx, cz, cy);
+		mat.Rotate(0, 1, 0, 270. - actor->Angles.Yaw.Degrees + 90);
+		mat.Rotate(0, 0, 1, pitch.Degrees);
+		mat.Rotate(0, 1, 0, 270. - actor->Angles.Roll.Degrees);
+		mat.Translate(-cx, -cz, -cy);
+		v[0] = mat * FVector3(x1, z, y2);
+		v[1] = mat * FVector3(x2, z, y2);
+		v[2] = mat * FVector3(x1, z, y1);
+		v[3] = mat * FVector3(x2, z, y1);
+		return;
+	}
+	
 	// [BB] Billboard stuff
 	const bool drawWithXYBillboard = ((particle && gl_billboard_particles) || (!(actor && actor->renderflags & RF_FORCEYBILLBOARD)
 		//&& GLRenderer->mViewActor != NULL
@@ -363,55 +400,8 @@ void GLSprite::Draw(int pass)
 			gl_RenderState.Apply();
 
 			FVector3 v[4];
-			if (actor != nullptr)
-			{
-				if ((actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
-				{
-					Matrix3x4 mat;
-					mat.MakeIdentity();
-
-					float cx, cy, cz = z;
-					if ((actor->renderflags & RF_ROLLCENTER))
-					{
-						cx = (x1 + x2) * 0.5;
-						cy = (y1 + y2) * 0.5;
-					}
-					else
-					{
-						cx = x;
-						cy = y;
-					}
-
-					// [MC] Rotate around the center or offsets given to the sprites.
-					// Counteract any existing rotations, then rotate the angle.
-					// Tilt the actor up or down based on pitch (increase 'somersaults' forward).
-					// Then counteract the roll and DO A BARREL ROLL.
-
-					FAngle pitch = (float)-actor->Angles.Pitch.Degrees;
-					pitch.Normalized180();
-
-					mat.Translate(cx, cz, cy);
-					mat.Rotate(0, 1, 0, 270. - actor->Angles.Yaw.Degrees + 90);
-					mat.Rotate(0, 0, 1, pitch.Degrees);
-					mat.Rotate(0, 1, 0, 270. - actor->Angles.Roll.Degrees);
-					mat.Translate(-cx, -cz, -cy);
-					v[0] = mat * FVector3(x1, z, y2);
-					v[1] = mat * FVector3(x2, z, y2);
-					v[2] = mat * FVector3(x1, z, y1);
-					v[3] = mat * FVector3(x2, z, y1);
-					
-				}
-				else
-				{
-					CalculateVertices(v);
-				}
-			}
-			else
-			{
-				CalculateVertices(v);
-			}
-
-
+			CalculateVertices(v);
+			
 			FQuadDrawer qd;
 			qd.Set(0, v[0][0], v[0][1], v[0][2], ul, vt);
 			qd.Set(1, v[1][0], v[1][1], v[1][2], ur, vt);

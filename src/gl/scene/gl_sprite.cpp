@@ -363,8 +363,48 @@ void GLSprite::Draw(int pass)
 			gl_RenderState.Apply();
 
 			FVector3 v[4];
-			if (actor != nullptr && (actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
+			if (actor != nullptr)
 			{
+				if ((actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
+				{
+					Matrix3x4 mat;
+					mat.MakeIdentity();
+
+					float cx, cy, cz = z;
+					if ((actor->renderflags & RF_ROLLCENTER))
+					{
+						cx = (x1 + x2) * 0.5;
+						cy = (y1 + y2) * 0.5;
+					}
+					else
+					{
+						cx = x;
+						cy = y;
+					}
+
+					// [MC] Rotate around the center or offsets given to the sprites.
+					// Counteract any existing rotations, then rotate the angle.
+					// Tilt the actor up or down based on pitch (increase 'somersaults' forward).
+					// Then counteract the roll and DO A BARREL ROLL.
+
+					FAngle pitch = (float)-actor->Angles.Pitch.Degrees;
+					pitch.Normalized180();
+
+					mat.Translate(cx, cz, cy);
+					mat.Rotate(0, 1, 0, 270. - actor->Angles.Yaw.Degrees + 90);
+					mat.Rotate(0, 0, 1, pitch.Degrees);
+					mat.Rotate(0, 1, 0, 270. - actor->Angles.Roll.Degrees);
+					mat.Translate(-cx, -cz, -cy);
+					v[0] = mat * FVector3(x1, z, y2);
+					v[1] = mat * FVector3(x2, z, y2);
+					v[2] = mat * FVector3(x1, z, y1);
+					v[3] = mat * FVector3(x2, z, y1);
+					
+				}
+				else
+				{
+					CalculateVertices(v);
+				}
 			}
 			else
 			{
@@ -595,7 +635,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	sector_t * rendersector;
 
 	// Don't waste time projecting sprites that are definitely not visible.
-	if (thing == NULL || thing->sprite == 0 || !thing->IsVisibleToPlayer())
+	if (thing == nullptr || thing->sprite == 0 || !thing->IsVisibleToPlayer())
 	{
 		return;
 	}
@@ -728,7 +768,8 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 
 		float rightfac = -r.left;
 		float leftfac = rightfac - r.width;
-
+		float bottomfac = -r.top;
+		float topfac = bottomfac - r.height;
 		z1 = z - r.top;
 		z2 = z1 - r.height;
 
@@ -753,11 +794,15 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			y1 = y + viewvecX*leftfac;
 			y2 = y + viewvecX*rightfac;
 			break;
-
+			
 		case RF_FLATSPRITE:
-			// needs careful rethinking
-			return;
-
+		{	
+			x1 = x + leftfac;
+			x2 = x + rightfac;
+			y1 = y - topfac;
+			y2 = y - bottomfac;
+		}
+		break;
 		case RF_WALLSPRITE:
 			viewvecX = thing->Angles.Yaw.Cos();
 			viewvecY = thing->Angles.Yaw.Sin();

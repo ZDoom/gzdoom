@@ -192,6 +192,7 @@ void OpenGLFrameBuffer::Update()
 		{
 			Resize(clientWidth, clientHeight);
 			V_OutputResized(Width, Height);
+			GLRenderer->mVBO->OutputResized(Width, Height);
 		}
 	}
 

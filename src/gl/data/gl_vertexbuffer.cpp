@@ -213,6 +213,20 @@ FFlatVertexBuffer::~FFlatVertexBuffer()
 	map = nullptr;
 }
 
+void FFlatVertexBuffer::OutputResized(int width, int height)
+{
+	vbo_shadowdata[4].Set(0, 0, 0, 0, 0);
+	vbo_shadowdata[5].Set(0, (float)height, 0, 0, 0);
+	vbo_shadowdata[6].Set((float)width, 0, 0, 0, 0);
+	vbo_shadowdata[7].Set((float)width, (float)height, 0, 0, 0);
+	
+	if (gl.buffermethod == BM_DEFERRED)
+	{
+		Map();
+		memcpy(map, &vbo_shadowdata[0], mNumReserved * sizeof(FFlatVertex));
+		Unmap();
+	}
+}
 
 void FFlatVertexBuffer::BindVBO()
 {

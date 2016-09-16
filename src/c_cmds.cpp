@@ -926,7 +926,10 @@ static bool IsActorACountItem(AActor *mo)
 // [SP] for all actors
 static bool IsActor(AActor *mo)
 {
-	return true;
+	if (mo->IsKindOf(RUNTIME_CLASS(AInventory)))
+		return static_cast<AInventory *>(mo)->Owner == NULL; // [SP] Exclude inventory-owned items
+	else
+		return true;
 }
 
 // [SP] modified - now allows showing count only, new arg must be passed. Also now still counts regardless, if lists are printed.

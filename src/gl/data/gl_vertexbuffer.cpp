@@ -220,12 +220,9 @@ void FFlatVertexBuffer::OutputResized(int width, int height)
 	vbo_shadowdata[6].Set((float)width, 0, 0, 0, 0);
 	vbo_shadowdata[7].Set((float)width, (float)height, 0, 0, 0);
 	
-	if (gl.buffermethod == BM_DEFERRED)
-	{
-		Map();
-		memcpy(map, &vbo_shadowdata[0], mNumReserved * sizeof(FFlatVertex));
-		Unmap();
-	}
+	Map();
+	memcpy(map, &vbo_shadowdata[4], 4 * sizeof(FFlatVertex));
+	Unmap();
 }
 
 void FFlatVertexBuffer::BindVBO()

@@ -59,7 +59,11 @@
 #else
 #include <dlfcn.h>
 
+#ifdef __APPLE__
+#define FLUIDSYNTHLIB	"libfluidsynth.1.dylib"
+#else // !__APPLE__
 #define FLUIDSYNTHLIB	"libfluidsynth.so.1"
+#endif // __APPLE__
 #endif
 
 #define FLUID_REVERB_DEFAULT_ROOMSIZE 0.2f

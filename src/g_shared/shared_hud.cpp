@@ -1108,7 +1108,7 @@ void DrawHUD()
 		}
 		else 
 		{
-			if (CheckRatio(SCREENWIDTH, SCREENHEIGHT) == 4)
+			if (AspectTallerThanWide(WidescreenRatio))
 			{
 				hudheight = hudwidth * 30 / AspectMultiplier(WidescreenRatio);	// BaseRatioSizes is inverted for this mode
 			}

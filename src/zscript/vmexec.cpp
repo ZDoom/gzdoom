@@ -44,7 +44,7 @@
 #define ASSERTKA(x)		assert(sfunc != NULL && (unsigned)(x) < sfunc->NumKonstA)
 #define ASSERTKS(x)		assert(sfunc != NULL && (unsigned)(x) < sfunc->NumKonstS)
 
-#define THROW(x)
+#define THROW(x)		throw(EVMAbortException(x))
 
 #define CMPJMP(test) \
 	if ((test) == (a & CMP_CHECK)) { \
@@ -53,14 +53,6 @@
 	} else { \
 		pc += 1; \
 	}
-
-enum
-{
-	X_READ_NIL,
-	X_WRITE_NIL,
-	X_TOO_MANY_TRIES,
-	X_ARRAY_OUT_OF_BOUNDS
-};
 
 #define GETADDR(a,o,x) \
 	if (a == NULL) { THROW(x); } \

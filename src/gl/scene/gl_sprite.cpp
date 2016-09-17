@@ -122,7 +122,7 @@ void GLSprite::CalculateVertices(FVector3 *v)
 
 		mat.Translate(x, z, y);
 		mat.Rotate(0, 1, 0, 270. - actor->Angles.Yaw.Degrees);
-		mat.Rotate(0, 0, 1, pitch.Degrees);
+		mat.Rotate(1, 0, 0, pitch.Degrees);
 
 		if (actor->renderflags & RF_ROLLCENTER)
 		{

@@ -112,18 +112,6 @@ void GLSprite::CalculateVertices(FVector3 *v)
 		Matrix3x4 mat;
 		mat.MakeIdentity();
 
-		float cx, cy, cz = z;
-		if ((actor->renderflags & RF_ROLLCENTER))
-		{
-			cx = (x1 + x2) * 0.5;
-			cy = (y1 + y2) * 0.5;
-		}
-		else
-		{
-			cx = x;
-			cy = y;
-		}
-
 		// [MC] Rotate around the center or offsets given to the sprites.
 		// Counteract any existing rotations, then rotate the angle.
 		// Tilt the actor up or down based on pitch (increase 'somersaults' forward).
@@ -132,11 +120,24 @@ void GLSprite::CalculateVertices(FVector3 *v)
 		FAngle pitch = (float)-actor->Angles.Pitch.Degrees;
 		pitch.Normalized180();
 
-		mat.Translate(cx, cz, cy);
-		mat.Rotate(0, 1, 0, 270. - actor->Angles.Yaw.Degrees + 90);
+		mat.Translate(x, z, y);
+		mat.Rotate(0, 1, 0, 270. - actor->Angles.Yaw.Degrees);
 		mat.Rotate(0, 0, 1, pitch.Degrees);
-		mat.Rotate(0, 1, 0, 270. - actor->Angles.Roll.Degrees);
-		mat.Translate(-cx, -cz, -cy);
+
+		if (actor->renderflags & RF_ROLLCENTER)
+		{
+			float cx = (x1 + x2) * 0.5;
+			float cy = (y1 + y2) * 0.5;
+
+			mat.Translate(cx - x, 0, cy - y);
+			mat.Rotate(0, 1, 0, - actor->Angles.Roll.Degrees);
+			mat.Translate(-cx, -z, -cy);
+		}
+		else
+		{
+			mat.Rotate(0, 1, 0, - actor->Angles.Roll.Degrees);
+			mat.Translate(-x, -z, -y);
+		}
 		v[0] = mat * FVector3(x1, z, y2);
 		v[1] = mat * FVector3(x2, z, y2);
 		v[2] = mat * FVector3(x1, z, y1);

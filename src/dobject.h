@@ -40,6 +40,7 @@
 class PClass;
 
 class FArchive;
+class FSerializer;
 
 class   DObject;
 /*
@@ -465,6 +466,10 @@ public:
 
 	void SerializeUserVars(FArchive &arc);
 	virtual void Serialize (FArchive &arc);
+
+	void SerializeUserVars(FSerializer &arc);
+	virtual void Serialize(FSerializer &arc);
+
 	void ClearClass()
 	{
 		Class = NULL;

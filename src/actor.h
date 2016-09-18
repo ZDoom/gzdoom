@@ -582,7 +582,8 @@ public:
 	~AActor ();
 
 	void Serialize (FArchive &arc);
-	
+	void Serialize(FSerializer &arc);
+
 	static AActor *StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t allowreplacement, bool SpawningMapThing = false);
 
 	inline AActor *GetDefault () const
@@ -1179,8 +1180,9 @@ public:
 private:
 	static AActor *TIDHash[128];
 	static inline int TIDHASH (int key) { return key & 127; }
+public:
 	static FSharedStringArena mStringPropertyData;
-
+private:
 	friend class FActorIterator;
 	friend bool P_IsTIDUsed(int tid);
 

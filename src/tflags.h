@@ -98,6 +98,7 @@ private:
 	template<typename X> Self operator& (X value) const { return Self::FromInt (Value & value); }
 	template<typename X> Self operator^ (X value) const { return Self::FromInt (Value ^ value); }
 
+public:	// to be removed.
 	TT Value;
 };
 

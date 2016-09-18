@@ -43,6 +43,7 @@ class player_t;
 struct pspdef_s;
 struct FState;
 class DThinker;
+class FSerializer;
 
 class FThinkerIterator;
 
@@ -83,6 +84,7 @@ public:
 		DestroyThinkersInList(FreshThinkers[statnum]);
 	}
 	static void SerializeAll (FArchive &arc, bool keepPlayers);
+	static void SerializeThinkers(FSerializer &arc, bool keepPlayers);
 	static void MarkRoots();
 
 	static DThinker *FirstThinker (int statnum);
@@ -94,6 +96,7 @@ private:
 	static void DestroyMostThinkersInList (FThinkerList &list, int stat);
 	static int TickThinkers (FThinkerList *list, FThinkerList *dest);	// Returns: # of thinkers ticked
 	static void SaveList(FArchive &arc, DThinker *node);
+	static void SaveList(FSerializer &arc, DThinker *node);
 	void Remove();
 
 	static FThinkerList Thinkers[MAX_STATNUM+2];		// Current thinkers

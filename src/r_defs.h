@@ -275,7 +275,7 @@ struct secplane_t
 	// the plane is defined as a*x + b*y + c*z + d = 0
 	// ic is 1/c, for faster Z calculations
 
-private:
+//private: // restore when JSON serializer is done.
 	DVector3 normal;
 	double  D, negiC;	// negative iC because that also saves a negation in all methods using this.
 public:
@@ -1205,8 +1205,8 @@ struct line_t
 private:
 	DVector2	delta;		// precalculated v2 - v1 for side checking
 public:
-	DWORD		flags;
-	DWORD		activation;	// activation type
+	uint32_t	flags;
+	uint32_t	activation;	// activation type
 	int			special;
 	int			args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
 	double		alpha;		// <--- translucency (0=invisibile, FRACUNIT=opaque)

@@ -1482,6 +1482,8 @@ void G_AirControlChanged ()
 void G_SerializeLevel (FArchive &arc, bool hubLoad)
 {
 	int i = level.totaltime;
+
+	unsigned tm = I_MSTime();
 	
 	Renderer->StartSerialize(arc);
 	if (arc.IsLoading()) P_DestroyThinkers(hubLoad);
@@ -1599,6 +1601,8 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 		}
 	}
 	Renderer->EndSerialize(arc);
+	unsigned tt = I_MSTime();
+	Printf("Serialization took %d ms\n", tt - tm);
 }
 
 //==========================================================================

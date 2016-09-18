@@ -137,8 +137,7 @@ line_t* 		lines;
 int 			numsides;
 side_t* 		sides;
 
-int				numzones;
-zone_t*			zones;
+TArray<zone_t>	Zones;
 
 node_t * 		gamenodes;
 int 			numgamenodes;
@@ -816,8 +815,7 @@ void P_FloodZones ()
 			P_FloodZone (&sectors[i], z++);
 		}
 	}
-	numzones = z;
-	zones = new zone_t[z];
+	Zones.Resize(z);
 	reverb = S_FindEnvironment(level.DefaultEnvironment);
 	if (reverb == NULL)
 	{
@@ -826,7 +824,7 @@ void P_FloodZones ()
 	}
 	for (i = 0; i < z; ++i)
 	{
-		zones[i].Environment = reverb;
+		Zones[i].Environment = reverb;
 	}
 }
 
@@ -3549,12 +3547,7 @@ void P_FreeLevelData ()
 		polyobjs = NULL;
 	}
 	po_NumPolyobjs = 0;
-	if (zones != NULL)
-	{
-		delete[] zones;
-		zones = NULL;
-	}
-	numzones = 0;
+	Zones.Clear();
 	P_FreeStrifeConversations ();
 	if (level.Scrolls != NULL)
 	{

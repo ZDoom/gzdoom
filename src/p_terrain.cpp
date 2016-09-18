@@ -713,19 +713,24 @@ int P_FindTerrain (FName name)
 	return -1;
 }
 
+FName P_GetTerrainName(int terrainnum)
+{
+	if (terrainnum < 0 || terrainnum >= (int)Terrains.Size())
+	{
+		return NAME_Null;
+	}
+	else
+	{
+		return Terrains[terrainnum].Name;
+	}
+}
+
 void P_SerializeTerrain(FArchive &arc, int &terrainnum)
 {
 	FName val;
 	if (arc.IsStoring())
 	{
-		if (terrainnum < 0 || terrainnum >= (int)Terrains.Size())
-		{
-			val = NAME_Null;
-		}
-		else
-		{
-			val = Terrains[terrainnum].Name;
-		}
+		val = P_GetTerrainName(terrainnum);
 		arc << val;
 	}
 	else

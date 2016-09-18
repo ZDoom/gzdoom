@@ -125,5 +125,6 @@ extern TArray<FTerrainDef> Terrains;
 class FArchive;
 int P_FindTerrain(FName name);
 void P_SerializeTerrain(FArchive &arc, int &terrainnum);
+FName P_GetTerrainName(int terrainnum);
 
 #endif //__P_TERRAIN_H__

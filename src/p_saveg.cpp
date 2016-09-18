@@ -440,18 +440,15 @@ void P_SerializeWorld (FArchive &arc)
 	}
 
 	// do zones
+	unsigned numzones = Zones.Size();
 	arc << numzones;
 
 	if (arc.IsLoading())
 	{
-		if (zones != NULL)
-		{
-			delete[] zones;
-		}
-		zones = new zone_t[numzones];
+		Zones.Resize(numzones);
 	}
 
-	for (i = 0, zn = zones; i < numzones; ++i, ++zn)
+	for (i = 0, zn = &Zones[0]; i < numzones; ++i, ++zn)
 	{
 		arc << zn->Environment;
 	}

@@ -1007,6 +1007,7 @@ set( FASTMATH_SOURCES
 )
 
 set (PCH_SOURCES
+	json.cpp
 	actorptrselect.cpp
 	am_map.cpp
 	b_bot.cpp

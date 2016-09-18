@@ -75,6 +75,7 @@ FGLRenderBuffers::~FGLRenderBuffers()
 	ClearPipeline();
 	ClearEyeBuffers();
 	ClearBloom();
+	ClearExposureLevels();
 	ClearAmbientOcclusion();
 }
 
@@ -107,13 +108,16 @@ void FGLRenderBuffers::ClearBloom()
 	}
 }
 
-void FGLRenderBuffers::ClearAmbientOcclusion()
+void FGLRenderBuffers::ClearExposureLevels()
 {
-	DeleteFrameBuffer(AmbientFB0);
-	DeleteFrameBuffer(AmbientFB1);
-	DeleteTexture(AmbientTexture0);
-	DeleteTexture(AmbientTexture1);
-	DeleteTexture(AmbientRandomTexture);
+	for (auto &level : ExposureLevels)
+	{
+		DeleteTexture(level.Texture);
+		DeleteFrameBuffer(level.Framebuffer);
+	}
+	ExposureLevels.Clear();
+	DeleteTexture(ExposureTexture);
+	DeleteFrameBuffer(ExposureFB);
 }
 
 void FGLRenderBuffers::ClearEyeBuffers()
@@ -126,6 +130,15 @@ void FGLRenderBuffers::ClearEyeBuffers()
 
 	mEyeTextures.Clear();
 	mEyeFBs.Clear();
+}
+
+void FGLRenderBuffers::ClearAmbientOcclusion()
+{
+	DeleteFrameBuffer(AmbientFB0);
+	DeleteFrameBuffer(AmbientFB1);
+	DeleteTexture(AmbientTexture0);
+	DeleteTexture(AmbientTexture1);
+	DeleteTexture(AmbientRandomTexture);
 }
 
 void FGLRenderBuffers::DeleteTexture(GLuint &handle)
@@ -198,6 +211,7 @@ bool FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 	if (mSceneWidth != sceneWidth || mSceneHeight != sceneHeight)
 	{
 		CreateBloom(sceneWidth, sceneHeight);
+		CreateExposureLevels(sceneWidth, sceneHeight);
 		CreateAmbientOcclusion(sceneWidth, sceneHeight);
 		mSceneWidth = sceneWidth;
 		mSceneHeight = sceneHeight;
@@ -214,6 +228,7 @@ bool FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 		ClearPipeline();
 		ClearEyeBuffers();
 		ClearBloom();
+		ClearExposureLevels();
 		mWidth = 0;
 		mHeight = 0;
 		mSamples = 0;
@@ -336,6 +351,41 @@ void FGLRenderBuffers::CreateAmbientOcclusion(int width, int height)
 	}
 
 	AmbientRandomTexture = Create2DTexture("AmbientRandomTexture", GL_RGBA16_SNORM, 4, 4, randomValues);
+}
+
+//==========================================================================
+//
+// Creates camera exposure level buffers
+//
+//==========================================================================
+
+void FGLRenderBuffers::CreateExposureLevels(int width, int height)
+{
+	ClearExposureLevels();
+
+	int i = 0;
+	do
+	{
+		width = MAX(width / 2, 1);
+		height = MAX(height / 2, 1);
+
+		FString textureName, fbName;
+		textureName.Format("Exposure.Texture%d", i);
+		fbName.Format("Exposure.Framebuffer%d", i);
+		i++;
+
+		FGLExposureTextureLevel level;
+		level.Width = width;
+		level.Height = height;
+		level.Texture = Create2DTexture(textureName, GL_R32F, level.Width, level.Height);
+		level.Framebuffer = CreateFrameBuffer(fbName, level.Texture);
+		ExposureLevels.Push(level);
+	} while (width > 1 || height > 1);
+
+	ExposureTexture = Create2DTexture("Exposure.CameraTexture", GL_R32F, 1, 1);
+	ExposureFB = CreateFrameBuffer("Exposure.CameraFB", ExposureTexture);
+
+	FirstExposureFrame = true;
 }
 
 //==========================================================================

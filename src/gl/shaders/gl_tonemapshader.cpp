@@ -47,7 +47,7 @@ void FTonemapShader::Bind()
 		shader.Link("shaders/glsl/tonemap");
 		shader.SetAttribLocation(0, "PositionInProjection");
 		SceneTexture.Init(shader, "InputTexture");
-		Exposure.Init(shader, "ExposureAdjustment");
+		ExposureTexture.Init(shader, "ExposureTexture");
 		PaletteLUT.Init(shader, "PaletteLUT");
 	}
 	shader.Bind();
@@ -69,4 +69,52 @@ const char *FTonemapShader::GetDefines(int mode)
 	case Uncharted2: return "#define UNCHARTED2\n";
 	case Palette:    return "#define PALETTE\n";
 	}
+}
+
+void FExposureExtractShader::Bind()
+{
+	if (!mShader)
+	{
+		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/exposureextract.fp", "", 330);
+		mShader.SetFragDataLocation(0, "FragColor");
+		mShader.Link("shaders/glsl/exposureextract");
+		mShader.SetAttribLocation(0, "PositionInProjection");
+		SceneTexture.Init(mShader, "SceneTexture");
+		Scale.Init(mShader, "Scale");
+		Offset.Init(mShader, "Offset");
+	}
+	mShader.Bind();
+}
+
+void FExposureAverageShader::Bind()
+{
+	if (!mShader)
+	{
+		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 400);
+		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/exposureaverage.fp", "", 400);
+		mShader.SetFragDataLocation(0, "FragColor");
+		mShader.Link("shaders/glsl/exposureaverage");
+		mShader.SetAttribLocation(0, "PositionInProjection");
+		ExposureTexture.Init(mShader, "ExposureTexture");
+	}
+	mShader.Bind();
+}
+
+void FExposureCombineShader::Bind()
+{
+	if (!mShader)
+	{
+		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/exposurecombine.fp", "", 330);
+		mShader.SetFragDataLocation(0, "FragColor");
+		mShader.Link("shaders/glsl/exposurecombine");
+		mShader.SetAttribLocation(0, "PositionInProjection");
+		ExposureTexture.Init(mShader, "ExposureTexture");
+		ExposureBase.Init(mShader, "ExposureBase");
+		ExposureMin.Init(mShader, "ExposureMin");
+		ExposureScale.Init(mShader, "ExposureScale");
+		ExposureSpeed.Init(mShader, "ExposureSpeed");
+	}
+	mShader.Bind();
 }

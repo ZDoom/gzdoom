@@ -792,20 +792,6 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		mViewActor=camera;
 	}
 
-	if (toscreen)
-	{
-		if (gl_exposure == 0.0f)
-		{
-			float light = viewsector->lightlevel / 255.0f;
-			float exposure = MAX(1.0f + (1.0f - light * light) * 0.9f, 0.5f);
-			mCameraExposure = mCameraExposure * 0.995f + exposure * 0.005f;
-		}
-		else
-		{
-			mCameraExposure = gl_exposure;
-		}
-	}
-
 	// 'viewsector' will not survive the rendering so it cannot be used anymore below.
 	lviewsector = viewsector;
 

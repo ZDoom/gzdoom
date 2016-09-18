@@ -427,7 +427,7 @@ void GLPortal::End(bool usestencil)
 			gl_RenderState.SetEffect(EFF_STENCIL);
 			gl_RenderState.EnableTexture(false);
 			gl_RenderState.BlendFunc(GL_ONE, GL_ZERO);
-			gl_RenderState.BlendEquation(GL_ADD);
+			gl_RenderState.BlendEquation(GL_FUNC_ADD);
 			gl_RenderState.Apply();
 			DrawPortalStencil();
 			gl_RenderState.SetEffect(EFF_NONE);

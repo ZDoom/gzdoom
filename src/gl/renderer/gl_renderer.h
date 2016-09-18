@@ -25,6 +25,9 @@ class FSSAOShader;
 class FSSAOCombineShader;
 class FBloomExtractShader;
 class FBloomCombineShader;
+class FExposureExtractShader;
+class FExposureAverageShader;
+class FExposureCombineShader;
 class FBlurShader;
 class FTonemapShader;
 class FColormapShader;
@@ -100,6 +103,9 @@ public:
 	FSSAOCombineShader *mSSAOCombineShader;
 	FBloomExtractShader *mBloomExtractShader;
 	FBloomCombineShader *mBloomCombineShader;
+	FExposureExtractShader *mExposureExtractShader;
+	FExposureAverageShader *mExposureAverageShader;
+	FExposureCombineShader *mExposureCombineShader;
 	FBlurShader *mBlurShader;
 	FTonemapShader *mTonemapShader;
 	FColormapShader *mColormapShader;
@@ -126,7 +132,6 @@ public:
 	GL_IRECT mSceneViewport;
 	GL_IRECT mOutputLetterbox;
 	bool mDrawingScene2D = false;
-	float mCameraExposure = 1.0f;
 
 	float mSceneClearColor[3];
 
@@ -176,6 +181,7 @@ public:
 	void EndDrawScene(sector_t * viewsector);
 	void PostProcessScene();
 	void AmbientOccludeScene();
+	void UpdateCameraExposure();
 	void BloomScene();
 	void TonemapScene();
 	void ColormapScene();

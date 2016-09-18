@@ -497,6 +497,10 @@ void GLDrawList::SortWallIntoWall(SortNode * head,SortNode * sort)
 // 
 //
 //==========================================================================
+EXTERN_CVAR(Int, gl_billboard_mode)
+EXTERN_CVAR(Bool, gl_billboard_faces_camera)
+EXTERN_CVAR(Bool, gl_billboard_particles)
+
 void GLDrawList::SortSpriteIntoWall(SortNode * head,SortNode * sort)
 {
 	GLWall * wh=&walls[drawitems[head->itemindex].index];
@@ -527,6 +531,27 @@ void GLDrawList::SortSpriteIntoWall(SortNode * head,SortNode * sort)
 	}
 	else
 	{
+		const bool drawWithXYBillboard = ((ss->particle && gl_billboard_particles) || (!(ss->actor && ss->actor->renderflags & RF_FORCEYBILLBOARD)
+			&& (gl_billboard_mode == 1 || (ss->actor && ss->actor->renderflags & RF_FORCEXYBILLBOARD))));
+
+		const bool drawBillboardFacingCamera = gl_billboard_faces_camera;
+		// [Nash] has +ROLLSPRITE
+		const bool rotated = (ss->actor != nullptr && ss->actor->renderflags & RF_ROLLSPRITE | RF_WALLSPRITE | RF_FLATSPRITE);
+
+		// cannot sort them at the moment. This requires more complex splitting.
+		if (drawWithXYBillboard || drawBillboardFacingCamera || rotated)
+		{
+			float v1 = wh->PointOnSide(ss->x, ss->y);
+			if (v1 < 0)
+			{
+				head->AddToLeft(sort);
+			}
+			else
+			{
+				head->AddToRight(sort);
+			}
+			return;
+		}
 		double r=ss->CalcIntersectionVertex(wh);
 
 		float ix=(float)(ss->x1 + r * (ss->x2-ss->x1));

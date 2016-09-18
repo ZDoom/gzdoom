@@ -220,7 +220,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, subsector_t *&ss, subs
 	{
 		if (hasglnodes)
 		{
-			TArray<char> encoded((numsubsectors + 5) / 6);
+			TArray<char> encoded(1 + (numsubsectors + 5) / 6);
 			int p = 0;
 			for (int i = 0; i < numsubsectors; i += 6)
 			{

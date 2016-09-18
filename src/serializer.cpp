@@ -71,9 +71,12 @@ struct FWriter
 	TArray<DObject *> mDObjects;
 	TMap<DObject *, int> mObjectMap;
 	
+	FWriter() : mWriter(mOutString)
+	{}
+
 	bool inObject() const
 	{
-		return mInObject.Size() > 0 && inObject();
+		return mInObject.Size() > 0 && mInObject.Last();
 	}
 };
 
@@ -127,7 +130,7 @@ struct FReader
 
 bool FSerializer::OpenWriter()
 {
-	if (w != nullptr || r == nullptr) return false;
+	if (w != nullptr || r != nullptr) return false;
 	w = new FWriter;
 
 	return true;
@@ -141,7 +144,7 @@ bool FSerializer::OpenWriter()
 
 bool FSerializer::OpenReader(const char *buffer, size_t length)
 {
-	if (w != nullptr || r == nullptr) return false;
+	if (w != nullptr || r != nullptr) return false;
 	r = new FReader(buffer, length);
 	return true;
 }
@@ -321,7 +324,7 @@ void FSerializer::EndArray()
 {
 	if (isWriting())
 	{
-		if (w->inObject())
+		if (!w->inObject())
 		{
 			w->mWriter.EndArray();
 			w->mInObject.Pop();
@@ -859,7 +862,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 			arc.w->mWriter.StartArray();
 			arc.w->mWriter.String(name);
 			arc.w->mWriter.Int(pic->UseType);
-			arc.w->mWriter.EndObject();
+			arc.w->mWriter.EndArray();
 		}
 	}
 	else

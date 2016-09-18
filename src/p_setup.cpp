@@ -124,6 +124,7 @@ glsegextra_t*	glsegextras;
 
 int 			numsectors;
 sector_t*		sectors;
+TArray<sector_t>	loadsectors;
 
 int 			numsubsectors;
 subsector_t*	subsectors;
@@ -133,9 +134,11 @@ node_t* 		nodes;
 
 int 			numlines;
 line_t* 		lines;
+TArray<line_t>	loadlines;
 
 int 			numsides;
 side_t* 		sides;
+TArray<side_t>	loadsides;
 
 TArray<zone_t>	Zones;
 
@@ -4194,6 +4197,13 @@ void P_SetupLevel (const char *lumpname, int position)
 	MapThingsConverted.Clear();
 	MapThingsUserDataIndex.Clear();
 	MapThingsUserData.Clear();
+
+	loadsectors.Resize(numsectors);
+	memcpy(&loadsectors[0], sectors, numsectors * sizeof(sector_t));
+	loadlines.Resize(numlines);
+	memcpy(&loadlines[0], lines, numlines * sizeof(line_t));
+	loadsides.Resize(numsides);
+	memcpy(&loadsides[0], sides, numsides * sizeof(side_t));
 
 	if (glsegextras != NULL)
 	{

@@ -23,6 +23,10 @@
 #include "r_data/r_interpolate.h"
 #include "g_shared/a_sharedglobal.h"
 
+TArray<sector_t>	loadsectors;
+TArray<line_t>	loadlines;
+TArray<side_t>	loadsides;
+
 //==========================================================================
 //
 //
@@ -192,7 +196,7 @@ public:
 		return *this;
 	}
 
-	FSerializer &BeginArray(const char *name)
+	bool BeginArray(const char *name)
 	{
 		if (isWriting())
 		{
@@ -216,10 +220,10 @@ public:
 			}
 			else
 			{
-				I_Error("'%s' not found", name);
+				return false;
 			}
 		}
-		return *this;
+		return true;
 	}
 
 	FSerializer &EndArray()
@@ -303,14 +307,24 @@ public:
 	}
 
 	template<class T>
+	FSerializer &operator()(const char *key, T &obj, T & def)
+	{
+		if (isWriting() && !memcmp(&obj, &def, sizeof(T))) return *this;
+		return Serialize(*this, key, obj);
+	}
+
+	template<class T>
 	FSerializer &Array(const char *key, T *obj, int count)
 	{
-		BeginArray(key);
-		for (int i = 0; i < count; i++)
+		if (BeginArray(key))
 		{
-			Serialize(*this, nullptr, obj[i]);
+			for (int i = 0; i < count; i++)
+			{
+				Serialize(*this, nullptr, obj[i]);
+			}
+			EndArray();
 		}
-		return EndArray();
+		return *this;
 	}
 
 	FSerializer &Terrain(const char *key, int &terrain)
@@ -720,9 +734,9 @@ FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value)
 {
 	if (arc.isWriting())
 	{
-		int ndx = -1;
 		if (value != nullptr)
 		{
+			int ndx;
 			int *pndx = arc.mObjectMap.CheckKey(value);
 			if (pndx != nullptr) ndx = *pndx;
 			else
@@ -730,11 +744,19 @@ FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value)
 				ndx = arc.mDObjects.Push(value);
 				arc.mObjectMap[value] = ndx;
 			}
+			Serialize(arc, key, ndx);
 		}
-		Serialize(arc, key, ndx);
 	}
 	else
 	{
+		auto val = arc.FindKey(key);
+		if (val != nullptr)
+		{
+		}
+		else
+		{
+			value = nullptr;
+		}
 	}
 	return arc;
 }
@@ -760,9 +782,18 @@ FSerializer &Serialize(FSerializer &arc, const char *key, TObjPtr<T> &value)
 template<class T, class TT>
 FSerializer &Serialize(FSerializer &arc, const char *key, TArray<T, TT> &value)
 {
-	arc.BeginArray(key);
+	if (arc.isWriting())
+	{
+		if (value.Size() == 0) return arc;	// do not save empty arrays
+	}
+	bool res = arc.BeginArray(key);
 	if (arc.isReading())
 	{
+		if (!res)
+		{
+			value.Clear();
+			return arc;
+		}
 		value.Resize(arc.ArraySize());
 	}
 	for (unsigned i = 0; i < value.Size(); i++)
@@ -833,7 +864,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, line_t &line)
 		("alpha", line.alpha)
 		.Args("args", line.args, line.special)
 		("portalindex", line.portalindex)
-		.Array("sides", line.sidedef, 2)
+		//.Array("sides", line.sidedef, 2)
 		.EndObject();
 
 	// no need to store the sidedef references. Unless the map loader is changed they will not change between map loads.
@@ -869,9 +900,9 @@ FSerializer &Serialize(FSerializer &arc, const char *key, side_t &side)
 		.Array("textures", side.textures, 3)
 		("light", side.Light)
 		("flags", side.Flags)
-		("leftside", side.LeftSide)
-		("rightside", side.RightSide)
-		("index", side.Index)
+		//("leftside", side.LeftSide)
+		//("rightside", side.RightSide)
+		//("index", side.Index)
 		("attacheddecals", side.AttachedDecals)
 		.EndObject();
 }
@@ -926,14 +957,11 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FDynamicColormap *&cm)
 	if (arc.isWriting())
 	{
 		arc.WriteKey(key);
-		arc.mWriter->StartObject();
-		arc.mWriter->Key("color");
+		arc.mWriter->StartArray();
 		arc.mWriter->Uint(cm->Color);
-		arc.mWriter->Key("fade");
 		arc.mWriter->Uint(cm->Fade);
-		arc.mWriter->Key("desat");
 		arc.mWriter->Uint(cm->Desaturate);
-		arc.mWriter->EndObject();
+		arc.mWriter->EndArray();
 	}
 	else
 	{
@@ -942,9 +970,9 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FDynamicColormap *&cm)
 		{
 			if (val->IsObject())
 			{
-				const rapidjson::Value &colorval = (*val)["color"];
-				const rapidjson::Value &fadeval = (*val)["fade"];
-				const rapidjson::Value &desatval = (*val)["desat"];
+				const rapidjson::Value &colorval = (*val)[0];
+				const rapidjson::Value &fadeval = (*val)[1];
+				const rapidjson::Value &desatval = (*val)[2];
 				if (colorval.IsUint() && fadeval.IsUint() && desatval.IsUint())
 				{
 					cm = GetSpecialLights(colorval.GetUint(), fadeval.GetUint(), desatval.GetUint());
@@ -980,10 +1008,10 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p)
 		("prevsec", p.prevsec)
 		("nextsec", p.nextsec)
 		.Array("planes", p.planes, 2)
-		("heightsec", p.heightsec)
-		("bottommap", p.bottommap)
-		("midmap", p.midmap)
-		("topmap", p.topmap)
+		//("heightsec", p.heightsec)
+		//("bottommap", p.bottommap)
+		//("midmap", p.midmap)
+		//("topmap", p.topmap)
 		("damageamount", p.damageamount)
 		("damageinterval", p.damageinterval)
 		("leakydamage", p.leakydamage)
@@ -1017,34 +1045,37 @@ FSerializer &Serialize(FSerializer &arc, const char *key, subsector_t *&ss)
 {
 	BYTE by;
 
-	if (arc.isWriting() && hasglnodes)
+	if (arc.isWriting())
 	{
-		TArray<char> encoded((numsubsectors + 5) / 6);
-		int p = 0;
-		for (int i = 0; i < numsubsectors; i += 6)
+		if (hasglnodes)
 		{
-			by = 0;
-			for (int j = 0; j < 6; j++)
+			TArray<char> encoded((numsubsectors + 5) / 6);
+			int p = 0;
+			for (int i = 0; i < numsubsectors; i += 6)
 			{
-				if (i + j < numsubsectors && (subsectors[i + j].flags & SSECF_DRAWN))
+				by = 0;
+				for (int j = 0; j < 6; j++)
 				{
-					by |= (1 << j);
+					if (i + j < numsubsectors && (subsectors[i + j].flags & SSECF_DRAWN))
+					{
+						by |= (1 << j);
+					}
 				}
+				if (by < 10) by += '0';
+				else if (by < 36) by += 'A' - 10;
+				else if (by < 62) by += 'a' - 36;
+				else if (by == 62) by = '-';
+				else if (by == 63) by = '+';
+				encoded[p++] = by;
 			}
-			if (by < 10) by += '0';
-			else if (by < 36) by += 'A' - 10;
-			else if (by < 62) by += 'a' - 36;
-			else if (by == 62) by = '-';
-			else if (by == 63) by = '+';
-			encoded[p++] = by;
+			arc.mWriter->Key(key);
+			arc.mWriter->StartArray();
+			arc.mWriter->Int(numvertexes);
+			arc.mWriter->Int(numsubsectors);
+			arc.mWriter->Int(numnodes);
+			arc.mWriter->String(&encoded[0], (numsubsectors + 5) / 6);
+			arc.mWriter->EndArray();
 		}
-		arc.mWriter->Key(key);
-		arc.mWriter->StartArray();
-		arc.mWriter->Int(numvertexes);
-		arc.mWriter->Int(numsubsectors);
-		arc.mWriter->Int(numnodes);
-		arc.mWriter->String(&encoded[0], (numsubsectors + 5) / 6);
-		arc.mWriter->EndArray();
 	}
 	else
 	{
@@ -1403,154 +1434,157 @@ void SerializeObjects(FSerializer &arc)
 //
 //==========================================================================
 
+#define A(a,b) ((a), (b), def->b)
+
 void AActor::Serialize(FSerializer &arc)
 {
 	int damage = 0;	// just a placeholder until the insanity surrounding the damage property can be fixed
+	AActor *def = GetDefault();
 
 	Super::Serialize(arc);
 
 	arc
 		.Sprite("sprite", sprite)
-		("pos", __Pos)
-		("angles", Angles)
-		("frame", frame)
-		("scale", Scale)
-		("renderstyle", RenderStyle)
-		("renderflags", renderflags)
-		("picnum", picnum)
-		("floorpic", floorpic)
-		("ceilingpic", ceilingpic)
-		("tidtohate", TIDtoHate)
-		("lastlookpn", LastLookPlayerNumber)
+		A("pos", __Pos)
+		A("angles", Angles)
+		A("frame", frame)
+		A("scale", Scale)
+		A("renderstyle", RenderStyle)
+		A("renderflags", renderflags)
+		A("picnum", picnum)
+		A("floorpic", floorpic)
+		A("ceilingpic", ceilingpic)
+		A("tidtohate", TIDtoHate)
+		A("lastlookpn", LastLookPlayerNumber)
 		("lastlookactor", LastLookActor)
-		("effects", effects)
-		("alpha", Alpha)
-		("fillcolor", fillcolor)
-		("sector", Sector)
-		("floorz", floorz)
-		("ceilingz", ceilingz)
-		("dropoffz", dropoffz)
-		("floorsector", floorsector)
-		("ceilingsector", ceilingsector)
-		("radius", radius)
-		("height", Height)
-		("ppassheight", projectilepassheight)
-		("vel", Vel)
-		("tics", tics)
+		A("effects", effects)
+		A("alpha", Alpha)
+		A("fillcolor", fillcolor)
+		A("sector", Sector)
+		A("floorz", floorz)
+		A("ceilingz", ceilingz)
+		A("dropoffz", dropoffz)
+		A("floorsector", floorsector)
+		A("ceilingsector", ceilingsector)
+		A("radius", radius)
+		A("height", Height)
+		A("ppassheight", projectilepassheight)
+		A("vel", Vel)
+		A("tics", tics)
 		("state", state)
 		("damage", damage)
 		.Terrain("floorterrain", floorterrain)
-		("projectilekickback", projectileKickback)
-		("flags", flags)
-		("flags2", flags2)
-		("flags3", flags3)
-		("flags4", flags4)
-		("flags5", flags5)
-		("flags6", flags6)
-		("flags7", flags7)
-		("weaponspecial", weaponspecial)
-		("special1", special1)
-		("special2", special2)
-		("specialf1", specialf1)
-		("specialf2", specialf2)
-		("health", health)
-		("movedir", movedir)
-		("visdir", visdir)
-		("movecount", movecount)
-		("strafecount", strafecount)
+		A("projectilekickback", projectileKickback)
+		A("flags", flags)
+		A("flags2", flags2)
+		A("flags3", flags3)
+		A("flags4", flags4)
+		A("flags5", flags5)
+		A("flags6", flags6)
+		A("flags7", flags7)
+		A("weaponspecial", weaponspecial)
+		A("special1", special1)
+		A("special2", special2)
+		A("specialf1", specialf1)
+		A("specialf2", specialf2)
+		A("health", health)
+		A("movedir", movedir)
+		A("visdir", visdir)
+		A("movecount", movecount)
+		A("strafecount", strafecount)
 		("target", target)
 		("lastenemy", lastenemy)
 		("lastheard", LastHeard)
-		("reactiontime", reactiontime)
-		("threshold", threshold)
-		("player", player)
-		("spawnpoint", SpawnPoint)
-		("spawnangle", SpawnAngle)
-		("starthealth", StartHealth)
-		("skillrespawncount", skillrespawncount)
+		A("reactiontime", reactiontime)
+		A("threshold", threshold)
+		A("player", player)
+		A("spawnpoint", SpawnPoint)
+		A("spawnangle", SpawnAngle)
+		A("starthealth", StartHealth)
+		A("skillrespawncount", skillrespawncount)
 		("tracer", tracer)
-		("floorclip", Floorclip)
-		("tid", tid)
-		("special", special)
+		A("floorclip", Floorclip)
+		A("tid", tid)
+		A("special", special)
 		.Args("args", args, special)
-		("accuracy", accuracy)
-		("stamina", stamina)
+		A("accuracy", accuracy)
+		A("stamina", stamina)
 		("goal", goal)
-		("waterlevel", waterlevel)
-		("minmissilechance", MinMissileChance)
-		("spawnflags", SpawnFlags)
+		A("waterlevel", waterlevel)
+		A("minmissilechance", MinMissileChance)
+		A("spawnflags", SpawnFlags)
 		("inventory", Inventory)
-		("inventoryid", InventoryID)
-		("floatbobphase", FloatBobPhase)
-		("translation", Translation)
-		("seesound", SeeSound)
-		("attacksound", AttackSound)
-		("paimsound", PainSound)
-		("deathsound", DeathSound)
-		("activesound", ActiveSound)
-		("usesound", UseSound)
-		("bouncesound", BounceSound)
-		("wallbouncesound", WallBounceSound)
-		("crushpainsound", CrushPainSound)
-		("speed", Speed)
-		("floatspeed", FloatSpeed)
-		("mass", Mass)
-		("painchance", PainChance)
-		("spawnstate", SpawnState)
-		("seestate", SeeState)
-		("meleestate", MeleeState)
-		("missilestate", MissileState)
-		("maxdropoffheight", MaxDropOffHeight)
-		("maxstepheight", MaxStepHeight)
-		("bounceflags", BounceFlags)
-		("bouncefactor", bouncefactor)
-		("wallbouncefactor", wallbouncefactor)
-		("bouncecount", bouncecount)
-		("maxtargetrange", maxtargetrange)
-		("meleethreshold", meleethreshold)
-		("meleerange", meleerange)
-		("damagetype", DamageType)
-		("damagetypereceived", DamageTypeReceived)
-		("paintype", PainType)
-		("deathtype", DeathType)
-		("gravity", Gravity)
-		("fastchasestrafecount", FastChaseStrafeCount)
+		A("inventoryid", InventoryID)
+		A("floatbobphase", FloatBobPhase)
+		A("translation", Translation)
+		A("seesound", SeeSound)
+		A("attacksound", AttackSound)
+		A("paimsound", PainSound)
+		A("deathsound", DeathSound)
+		A("activesound", ActiveSound)
+		A("usesound", UseSound)
+		A("bouncesound", BounceSound)
+		A("wallbouncesound", WallBounceSound)
+		A("crushpainsound", CrushPainSound)
+		A("speed", Speed)
+		A("floatspeed", FloatSpeed)
+		A("mass", Mass)
+		A("painchance", PainChance)
+		A("spawnstate", SpawnState)
+		A("seestate", SeeState)
+		A("meleestate", MeleeState)
+		A("missilestate", MissileState)
+		A("maxdropoffheight", MaxDropOffHeight)
+		A("maxstepheight", MaxStepHeight)
+		A("bounceflags", BounceFlags)
+		A("bouncefactor", bouncefactor)
+		A("wallbouncefactor", wallbouncefactor)
+		A("bouncecount", bouncecount)
+		A("maxtargetrange", maxtargetrange)
+		A("meleethreshold", meleethreshold)
+		A("meleerange", meleerange)
+		A("damagetype", DamageType)
+		A("damagetypereceived", DamageTypeReceived)
+		A("paintype", PainType)
+		A("deathtype", DeathType)
+		A("gravity", Gravity)
+		A("fastchasestrafecount", FastChaseStrafeCount)
 		("master", master)
-		("smokecounter", smokecounter)
+		A("smokecounter", smokecounter)
 		("blockingmobj", BlockingMobj)
-		("blockingline", BlockingLine)
-		("visibletoteam", VisibleToTeam)
-		("pushfactor", pushfactor)
-		("species", Species)
-		("score", Score)
-		("designatedteam", DesignatedTeam)
-		("lastpush", lastpush)
-		("lastbump", lastbump)
-		("painthreshold", PainThreshold)
-		("damagefactor", DamageFactor)
-		("damagemultiply", DamageMultiply)
-		("waveindexxy", WeaveIndexXY)
-		("weaveindexz", WeaveIndexZ)
-		("pdmgreceived", PoisonDamageReceived)
-		("pdurreceived", PoisonDurationReceived)
-		("ppreceived", PoisonPeriodReceived)
-		("poisoner", Poisoner)
-		("posiondamage", PoisonDamage)
-		("poisonduration", PoisonDuration)
-		("poisonperiod", PoisonPeriod)
-		("poisondamagetype", PoisonDamageType)
-		("poisondmgtypereceived", PoisonDamageTypeReceived)
-		("conversationroot", ConversationRoot)
-		("conversation", Conversation)
-		("friendplayer", FriendPlayer)
-		("telefogsourcetype", TeleFogSourceType)
-		("telefogdesttype", TeleFogDestType)
-		("ripperlevel", RipperLevel)
-		("riplevelmin", RipLevelMin)
-		("riplevelmax", RipLevelMax)
-		("devthreshold", DefThreshold)
-		("spriteangle", SpriteAngle)
-		("spriterotation", SpriteRotation)
+		A("blockingline", BlockingLine)
+		A("visibletoteam", VisibleToTeam)
+		A("pushfactor", pushfactor)
+		A("species", Species)
+		A("score", Score)
+		A("designatedteam", DesignatedTeam)
+		A("lastpush", lastpush)
+		A("lastbump", lastbump)
+		A("painthreshold", PainThreshold)
+		A("damagefactor", DamageFactor)
+		A("damagemultiply", DamageMultiply)
+		A("waveindexxy", WeaveIndexXY)
+		A("weaveindexz", WeaveIndexZ)
+		A("pdmgreceived", PoisonDamageReceived)
+		A("pdurreceived", PoisonDurationReceived)
+		A("ppreceived", PoisonPeriodReceived)
+		A("poisoner", Poisoner)
+		A("posiondamage", PoisonDamage)
+		A("poisonduration", PoisonDuration)
+		A("poisonperiod", PoisonPeriod)
+		A("poisondamagetype", PoisonDamageType)
+		A("poisondmgtypereceived", PoisonDamageTypeReceived)
+		A("conversationroot", ConversationRoot)
+		A("conversation", Conversation)
+		A("friendplayer", FriendPlayer)
+		A("telefogsourcetype", TeleFogSourceType)
+		A("telefogdesttype", TeleFogDestType)
+		A("ripperlevel", RipperLevel)
+		A("riplevelmin", RipLevelMin)
+		A("riplevelmax", RipLevelMax)
+		A("devthreshold", DefThreshold)
+		A("spriteangle", SpriteAngle)
+		A("spriterotation", SpriteRotation)
 		("alternative", alternative)
 		("tag", Tag);
 

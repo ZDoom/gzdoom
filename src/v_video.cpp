@@ -850,6 +850,9 @@ DFrameBuffer::DFrameBuffer (int width, int height)
 {
 	LastMS = LastSec = FrameCount = LastCount = LastTic = 0;
 	Accel2D = false;
+
+	VideoWidth = width;
+	VideoHeight = height;
 }
 
 //==========================================================================
@@ -1352,6 +1355,7 @@ void V_OutputResized (int width, int height)
 	{
 		StatusBar->ScreenSizeChanged();
 	}
+	C_NewModeAdjust();
 }
 
 void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany, int *_cx1, int *_cx2)

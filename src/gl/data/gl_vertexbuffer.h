@@ -131,6 +131,8 @@ public:
 	FFlatVertexBuffer(int width, int height);
 	~FFlatVertexBuffer();
 
+	void OutputResized(int width, int height);
+
 	void BindVBO();
 
 	void CreateVBO();

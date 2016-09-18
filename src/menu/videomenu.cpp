@@ -95,7 +95,7 @@ CUSTOM_CVAR (Int, menu_screenratios, -1, CVAR_ARCHIVE)
 	}
 	else
 	{
-		BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
+		BuildModesList (screen->VideoWidth, screen->VideoHeight, DisplayBits);
 	}
 }
 
@@ -139,7 +139,7 @@ public:
 
 	DVideoModeMenu()
 	{
-		SetModesMenu (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
+		SetModesMenu (screen->VideoWidth, screen->VideoHeight, DisplayBits);
 	}
 
 	bool MenuEvent(int mkey, bool fromcontroller)
@@ -163,13 +163,13 @@ public:
 		{
 			if (!GetSelectedSize (&NewWidth, &NewHeight))
 			{
-				NewWidth = SCREENWIDTH;
-				NewHeight = SCREENHEIGHT;
+				NewWidth = screen->VideoWidth;
+				NewHeight = screen->VideoHeight;
 			}
 			else
 			{
-				OldWidth = SCREENWIDTH;
-				OldHeight = SCREENHEIGHT;
+				OldWidth = screen->VideoWidth;
+				OldHeight = screen->VideoHeight;
 				OldBits = DisplayBits;
 				NewBits = BitTranslate[DummyDepthCvar];
 				setmodeneeded = true;
@@ -297,11 +297,11 @@ void M_RestoreMode ()
 void M_SetDefaultMode ()
 {
 	// Make current resolution the default
-	vid_defwidth = SCREENWIDTH;
-	vid_defheight = SCREENHEIGHT;
+	vid_defwidth = screen->VideoWidth;
+	vid_defheight = screen->VideoHeight;
 	vid_defbits = DisplayBits;
 	testingmode = 0;
-	SetModesMenu (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
+	SetModesMenu (screen->VideoWidth, screen->VideoHeight, DisplayBits);
 }
 
 
@@ -314,7 +314,7 @@ void M_SetDefaultMode ()
 
 void M_RefreshModesList ()
 {
-	BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
+	BuildModesList (screen->VideoWidth, screen->VideoHeight, DisplayBits);
 }
 
 void M_InitVideoModesMenu ()
@@ -385,8 +385,8 @@ void M_SetVideoMode()
 {
 	if (!GetSelectedSize (&NewWidth, &NewHeight))
 	{
-		NewWidth = SCREENWIDTH;
-		NewHeight = SCREENHEIGHT;
+		NewWidth = screen->VideoWidth;
+		NewHeight = screen->VideoHeight;
 	}
 	else
 	{

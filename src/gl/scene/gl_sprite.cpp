@@ -107,6 +107,44 @@ static const float LARGE_VALUE = 1e19f;
 
 void GLSprite::CalculateVertices(FVector3 *v)
 {
+	if (actor != nullptr && (actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
+	{
+		Matrix3x4 mat;
+		mat.MakeIdentity();
+
+		// [MC] Rotate around the center or offsets given to the sprites.
+		// Counteract any existing rotations, then rotate the angle.
+		// Tilt the actor up or down based on pitch (increase 'somersaults' forward).
+		// Then counteract the roll and DO A BARREL ROLL.
+
+		FAngle pitch = (float)-actor->Angles.Pitch.Degrees;
+		pitch.Normalized180();
+
+		mat.Translate(x, z, y);
+		mat.Rotate(0, 1, 0, 270. - actor->Angles.Yaw.Degrees);
+		mat.Rotate(1, 0, 0, pitch.Degrees);
+
+		if (actor->renderflags & RF_ROLLCENTER)
+		{
+			float cx = (x1 + x2) * 0.5;
+			float cy = (y1 + y2) * 0.5;
+
+			mat.Translate(cx - x, 0, cy - y);
+			mat.Rotate(0, 1, 0, - actor->Angles.Roll.Degrees);
+			mat.Translate(-cx, -z, -cy);
+		}
+		else
+		{
+			mat.Rotate(0, 1, 0, - actor->Angles.Roll.Degrees);
+			mat.Translate(-x, -z, -y);
+		}
+		v[0] = mat * FVector3(x1, z, y2);
+		v[1] = mat * FVector3(x2, z, y2);
+		v[2] = mat * FVector3(x1, z, y1);
+		v[3] = mat * FVector3(x2, z, y1);
+		return;
+	}
+	
 	// [BB] Billboard stuff
 	const bool drawWithXYBillboard = ((particle && gl_billboard_particles) || (!(actor && actor->renderflags & RF_FORCEYBILLBOARD)
 		//&& GLRenderer->mViewActor != NULL
@@ -363,15 +401,8 @@ void GLSprite::Draw(int pass)
 			gl_RenderState.Apply();
 
 			FVector3 v[4];
-			if (actor != nullptr && (actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
-			{
-			}
-			else
-			{
-				CalculateVertices(v);
-			}
-
-
+			CalculateVertices(v);
+			
 			FQuadDrawer qd;
 			qd.Set(0, v[0][0], v[0][1], v[0][2], ul, vt);
 			qd.Set(1, v[1][0], v[1][1], v[1][2], ur, vt);
@@ -595,7 +626,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	sector_t * rendersector;
 
 	// Don't waste time projecting sprites that are definitely not visible.
-	if (thing == NULL || thing->sprite == 0 || !thing->IsVisibleToPlayer())
+	if (thing == nullptr || thing->sprite == 0 || !thing->IsVisibleToPlayer())
 	{
 		return;
 	}
@@ -728,7 +759,8 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 
 		float rightfac = -r.left;
 		float leftfac = rightfac - r.width;
-
+		float bottomfac = -r.top;
+		float topfac = bottomfac - r.height;
 		z1 = z - r.top;
 		z2 = z1 - r.height;
 
@@ -753,11 +785,15 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			y1 = y + viewvecX*leftfac;
 			y2 = y + viewvecX*rightfac;
 			break;
-
+			
 		case RF_FLATSPRITE:
-			// needs careful rethinking
-			return;
-
+		{	
+			x1 = x + leftfac;
+			x2 = x + rightfac;
+			y1 = y - topfac;
+			y2 = y - bottomfac;
+		}
+		break;
 		case RF_WALLSPRITE:
 			viewvecX = thing->Angles.Yaw.Cos();
 			viewvecY = thing->Angles.Yaw.Sin();

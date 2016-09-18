@@ -75,7 +75,7 @@ CUSTOM_CVAR(Float, gl_bloom_amount, 1.4f, 0)
 	if (self < 0.1f) self = 0.1f;
 }
 
-CVAR(Float, gl_exposure_scale, 0.75f, 0)
+CVAR(Float, gl_exposure_scale, 1.3f, 0)
 CVAR(Float, gl_exposure_min, 0.35f, 0)
 CVAR(Float, gl_exposure_base, 0.35f, 0)
 CVAR(Float, gl_exposure_speed, 0.05f, 0)

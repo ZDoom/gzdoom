@@ -306,7 +306,11 @@ void AActor::Serialize(FSerializer &arc)
 		A("spriteangle", SpriteAngle)
 		A("spriterotation", SpriteRotation)
 		("alternative", alternative)
-		A("tag", Tag);
+		A("tag", Tag)
+		A("visiblestartangle",VisibleStartAngle)
+		A("visibleendangle",VisibleEndAngle)
+		A("visiblestartpitch",VisibleStartPitch)
+		A("visibleendpitch",VisibleEndPitch);
 }
 
 #undef A
@@ -1017,6 +1021,69 @@ bool AActor::CheckLocalView (int playernum) const
 		return true;
 	}
 	return false;
+}
+
+//============================================================================
+//
+// AActor :: IsInsideVisibleAngles
+//
+// Returns true if this actor is within viewing angle/pitch visibility. 
+//
+//============================================================================
+
+bool AActor::IsInsideVisibleAngles() const
+{
+	// Don't bother masking if not wanted.
+	if (!(renderflags & RF_MASKROTATION))
+		return true;
+
+	if (players[consoleplayer].camera == nullptr)
+		return true;
+	
+	DAngle anglestart = VisibleStartAngle.Normalized180();
+	DAngle angleend = VisibleEndAngle.Normalized180();
+	DAngle pitchstart = VisibleStartPitch.Normalized180();
+	DAngle pitchend = VisibleEndPitch.Normalized180();
+
+	if (anglestart > angleend)
+	{
+		DAngle temp = anglestart;
+		anglestart = angleend;
+		angleend = temp;
+	}
+
+	if (pitchstart > angleend)
+	{
+		DAngle temp = pitchstart;
+		pitchstart = pitchend;
+		pitchend = temp;
+	}
+
+	player_t* pPlayer = players[consoleplayer].camera->player;
+
+	if (pPlayer && pPlayer->mo)
+	{
+		AActor *mo = pPlayer->mo;
+		DVector3 diffang = Vec3To(mo);
+		DAngle to = diffang.Angle();
+
+		if (!(renderflags & RF_ABSMASKANGLE)) 
+			to = deltaangle(Angles.Yaw, to);
+
+		// Note that this check is inversed due to only being able to vectorize
+		// from one way (this actor to the player). It still means to pass
+		// if the player is within the visible angles.
+		if ((to <= anglestart || to >= angleend))
+		{
+			to = diffang.Pitch();
+			if (!(renderflags & RF_ABSMASKPITCH))
+				to = deltaangle(Angles.Pitch, to);
+
+			return !!(to >= pitchstart && to <= pitchend);
+		}
+		else return false;
+	}
+	return true;
 }
 
 //============================================================================

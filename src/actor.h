@@ -417,7 +417,10 @@ enum ActorRenderFlag
 	RF_INVISIBLE		= 0x8000,	// Don't bother drawing this actor
 	RF_ROLLSPRITE		= 0x40000,	//[marrub]roll the sprite billboard
 	RF_DONTFLIP			= 0x80000,	// Don't flip it when viewed from behind.
-	RF_ROLLCENTER		= 0x100000, // Rotate from the center of sprite instead of offsets
+	RF_ROLLCENTER		= 0x00100000, // Rotate from the center of sprite instead of offsets
+	RF_MASKROTATION		= 0x00200000, // [MC] Only draw the actor when viewed from a certain angle range.
+	RF_ABSMASKANGLE		= 0x00400000, // [MC] The mask rotation does not offset by the actor's angle.
+	RF_ABSMASKPITCH		= 0x00800000, // [MC] The mask rotation does not offset by the actor's pitch.
 
 	RF_FORCEYBILLBOARD		= 0x10000,	// [BB] OpenGL only: draw with y axis billboard, i.e. anchored to the floor (overrides gl_billboard_mode setting)
 	RF_FORCEXYBILLBOARD		= 0x20000,	// [BB] OpenGL only: draw with xy axis billboard, i.e. unanchored (overrides gl_billboard_mode setting)
@@ -959,6 +962,7 @@ public:
 	inline void SetFriendPlayer(player_t *player);
 
 	bool IsVisibleToPlayer() const;
+	bool IsInsideVisibleAngles() const;
 
 	// Calculate amount of missile damage
 	virtual int GetMissileDamage(int mask, int add);
@@ -984,6 +988,10 @@ public:
 
 	DAngle			SpriteAngle;
 	DAngle			SpriteRotation;
+	DAngle			VisibleStartAngle;
+	DAngle			VisibleStartPitch;
+	DAngle			VisibleEndAngle;
+	DAngle			VisibleEndPitch;
 	DRotator		Angles;
 	DVector3		Vel;
 	double			Speed;

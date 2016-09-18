@@ -126,6 +126,14 @@ public:
 		ID = S_FindSound(name.GetChars());
 		return *this;
 	}
+	bool operator !=(FSoundID other) const
+	{
+		return ID != other.ID;
+	}
+	bool operator !=(int other) const
+	{
+		return ID != other;
+	}
 	operator int() const
 	{
 		return ID;

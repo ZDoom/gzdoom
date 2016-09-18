@@ -2174,7 +2174,7 @@ void AAmbientSound::Tick ()
 		loop = CHAN_LOOP;
 	}
 
-	if (ambient->sound != 0)
+	if (ambient->sound != FSoundID(0))
 	{
 		// The second argument scales the ambient sound's volume.
 		// 0 and 100 are normal volume. The maximum volume level

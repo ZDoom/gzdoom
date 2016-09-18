@@ -3021,7 +3021,7 @@ CCMD (cachesound)
 	for (int i = 1; i < argv.argc(); ++i)
 	{
 		FSoundID sfxnum = argv[i];
-		if (sfxnum != 0)
+		if (sfxnum != FSoundID(0))
 		{
 			S_CacheSound (&S_sfx[sfxnum]);
 		}

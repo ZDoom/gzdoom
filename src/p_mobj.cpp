@@ -4118,7 +4118,6 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	actor->touching_sectorlist = NULL;	// NULL head of sector list // phares 3/13/98
 	if (G_SkillProperty(SKILLP_FastMonsters) && actor->GetClass()->FastSpeed >= 0)
 	actor->Speed = actor->GetClass()->FastSpeed;
-	actor->DamageMultiply = 1.;
 
 	// set subsector and/or block links
 	actor->LinkToWorld (SpawningMapThing);

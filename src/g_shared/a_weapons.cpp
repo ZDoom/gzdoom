@@ -222,6 +222,10 @@ bool AWeapon::HandlePickup (AInventory *item)
 		{
 			item->ItemFlags |= IF_PICKUPGOOD;
 		}
+		if (MaxAmount > 1) //[SP] If amount<maxamount do another pickup test of the weapon itself!
+		{
+			return Super::HandlePickup (item);
+		}
 		return true;
 	}
 	if (Inventory != NULL)

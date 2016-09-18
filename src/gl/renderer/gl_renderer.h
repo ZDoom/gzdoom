@@ -21,6 +21,9 @@ class DPSprite;
 class FGLRenderBuffers;
 class FBloomExtractShader;
 class FBloomCombineShader;
+class FExposureExtractShader;
+class FExposureAverageShader;
+class FExposureCombineShader;
 class FBlurShader;
 class FTonemapShader;
 class FColormapShader;
@@ -92,6 +95,9 @@ public:
 	FGLRenderBuffers *mBuffers;
 	FBloomExtractShader *mBloomExtractShader;
 	FBloomCombineShader *mBloomCombineShader;
+	FExposureExtractShader *mExposureExtractShader;
+	FExposureAverageShader *mExposureAverageShader;
+	FExposureCombineShader *mExposureCombineShader;
 	FBlurShader *mBlurShader;
 	FTonemapShader *mTonemapShader;
 	FColormapShader *mColormapShader;
@@ -118,7 +124,6 @@ public:
 	GL_IRECT mSceneViewport;
 	GL_IRECT mOutputLetterbox;
 	bool mDrawingScene2D = false;
-	float mCameraExposure = 1.0f;
 
 	float mSceneClearColor[3];
 
@@ -166,6 +171,7 @@ public:
 	void SetFixedColormap (player_t *player);
 	void WriteSavePic (player_t *player, FILE *file, int width, int height);
 	void EndDrawScene(sector_t * viewsector);
+	void UpdateCameraExposure();
 	void BloomScene();
 	void TonemapScene();
 	void ColormapScene();

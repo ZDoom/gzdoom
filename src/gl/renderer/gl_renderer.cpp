@@ -104,6 +104,9 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mPresentShader = nullptr;
 	mBloomExtractShader = nullptr;
 	mBloomCombineShader = nullptr;
+	mExposureExtractShader = nullptr;
+	mExposureAverageShader = nullptr;
+	mExposureCombineShader = nullptr;
 	mBlurShader = nullptr;
 	mTonemapShader = nullptr;
 	mTonemapPalette = nullptr;
@@ -119,6 +122,9 @@ void FGLRenderer::Initialize(int width, int height)
 	mBuffers = new FGLRenderBuffers();
 	mBloomExtractShader = new FBloomExtractShader();
 	mBloomCombineShader = new FBloomCombineShader();
+	mExposureExtractShader = new FExposureExtractShader();
+	mExposureAverageShader = new FExposureAverageShader();
+	mExposureCombineShader = new FExposureCombineShader();
 	mBlurShader = new FBlurShader();
 	mTonemapShader = new FTonemapShader();
 	mColormapShader = new FColormapShader();
@@ -179,6 +185,9 @@ FGLRenderer::~FGLRenderer()
 	if (mPresentShader) delete mPresentShader;
 	if (mBloomExtractShader) delete mBloomExtractShader;
 	if (mBloomCombineShader) delete mBloomCombineShader;
+	if (mExposureExtractShader) delete mExposureExtractShader;
+	if (mExposureAverageShader) delete mExposureAverageShader;
+	if (mExposureCombineShader) delete mExposureCombineShader;
 	if (mBlurShader) delete mBlurShader;
 	if (mTonemapShader) delete mTonemapShader;
 	if (mTonemapPalette) delete mTonemapPalette;

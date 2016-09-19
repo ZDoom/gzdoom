@@ -183,7 +183,7 @@ void P_SerializeWorldActors(FArchive &arc)
 		{
 			if (line->sidedef[s] != NULL)
 			{
-				DBaseDecal::SerializeChain(arc, &line->sidedef[s]->AttachedDecals);
+				//DBaseDecal::SerializeChain(arc, &line->sidedef[s]->AttachedDecals);
 			}
 		}
 	}
@@ -394,173 +394,6 @@ void AActor::Serialize(FArchive &arc)
 {
 	Super::Serialize(arc);
 
-	if (arc.IsStoring())
-	{
-		arc.WriteSprite(sprite);
-	}
-	else
-	{
-		sprite = arc.ReadSprite();
-	}
-
-	arc << __Pos
-		<< Angles.Yaw
-		<< Angles.Pitch
-		<< Angles.Roll
-		<< frame
-		<< Scale
-		<< RenderStyle
-		<< renderflags
-		<< picnum
-		<< floorpic
-		<< ceilingpic
-		<< TIDtoHate
-		<< LastLookPlayerNumber
-		<< LastLookActor
-		<< effects
-		<< Alpha
-		<< fillcolor
-		<< Sector
-		<< floorz
-		<< ceilingz
-		<< dropoffz
-		<< floorsector
-		<< ceilingsector
-		<< radius
-		<< Height
-		<< projectilepassheight
-		<< Vel
-		<< tics
-		<< state
-		<< DamageVal;
-	if (DamageVal == 0x40000000 || DamageVal == -1)
-	{
-		DamageVal = -1;
-		DamageFunc = GetDefault()->DamageFunc;
-	}
-	else
-	{
-		DamageFunc = nullptr;
-	}
-	P_SerializeTerrain(arc, floorterrain);
-	arc	<< projectileKickback
-		<< flags
-		<< flags2
-		<< flags3
-		<< flags4
-		<< flags5
-		<< flags6
-		<< flags7
-		<< weaponspecial
-		<< special1
-		<< special2
-		<< specialf1
-		<< specialf2
-		<< health
-		<< movedir
-		<< visdir
-		<< movecount
-		<< strafecount
-		<< target
-		<< lastenemy
-		<< LastHeard
-		<< reactiontime
-		<< threshold
-		<< player
-		<< SpawnPoint
-		<< SpawnAngle
-		<< StartHealth
-		<< skillrespawncount
-		<< tracer
-		<< Floorclip
-		<< tid
-		<< special;
-	if (P_IsACSSpecial(special))
-	{
-		P_SerializeACSScriptNumber(arc, args[0], false);
-	}
-	else
-	{
-		arc << args[0];
-	}
-	arc << args[1] << args[2] << args[3] << args[4];
-	arc << accuracy << stamina;
-	arc << goal
-		<< waterlevel
-		<< MinMissileChance
-		<< SpawnFlags
-		<< Inventory
-		<< InventoryID;
-	arc << FloatBobPhase
-		<< Translation
-		<< SeeSound
-		<< AttackSound
-		<< PainSound
-		<< DeathSound
-		<< ActiveSound
-		<< UseSound
-		<< BounceSound
-		<< WallBounceSound
-		<< CrushPainSound
-		<< Speed
-		<< FloatSpeed
-		<< Mass
-		<< PainChance
-		<< SpawnState
-		<< SeeState
-		<< MeleeState
-		<< MissileState
-		<< MaxDropOffHeight
-		<< MaxStepHeight
-		<< BounceFlags
-		<< bouncefactor
-		<< wallbouncefactor
-		<< bouncecount
-		<< maxtargetrange
-		<< meleethreshold
-		<< meleerange
-		<< DamageType;
-	arc << DamageTypeReceived;
-	arc << PainType
-		<< DeathType;
-	arc	<< Gravity
-		<< FastChaseStrafeCount
-		<< master
-		<< smokecounter
-		<< BlockingMobj
-		<< BlockingLine
-		<< VisibleToTeam // [BB]
-		<< pushfactor
-		<< Species
-		<< Score;
-	arc << DesignatedTeam;
-	arc << lastpush << lastbump
-		<< PainThreshold
-		<< DamageFactor;
-	arc << DamageMultiply;
-	arc << WeaveIndexXY << WeaveIndexZ
-		<< PoisonDamageReceived << PoisonDurationReceived << PoisonPeriodReceived << Poisoner
-		<< PoisonDamage << PoisonDuration << PoisonPeriod;
-	arc << PoisonDamageType << PoisonDamageTypeReceived;
-	arc << ConversationRoot << Conversation;
-	arc << FriendPlayer;
-	arc << TeleFogSourceType
-		<< TeleFogDestType;
-	arc << RipperLevel
-		<< RipLevelMin
-		<< RipLevelMax;
-	arc << DefThreshold;
-	if (SaveVersion >= 4549)
-	{
-		arc << SpriteAngle;
-		arc << SpriteRotation;
-	}
-
-	if (SaveVersion >= 4550)
-	{
-		arc << alternative;
-	}
-
 	{
 		FString tagstr;
 		if (arc.IsStoring() && Tag != NULL && Tag->Len() > 0) tagstr = *Tag;
@@ -714,5 +547,55 @@ FArchive &operator<< (FArchive &arc, secplane_t &plane)
 		plane.negiC = -1 / plane.normal.Z;
 	}
 	return arc;
+}
+
+FArchive &operator<< (FArchive &arc, botskill_t &skill)
+{
+	return arc << skill.aiming << skill.perfection << skill.reaction << skill.isp;
+}
+
+void DBot::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+
+	arc << player
+		<< Angle
+		<< dest
+		<< prev
+		<< enemy
+		<< missile
+		<< mate
+		<< last_mate
+		<< skill
+		<< t_active
+		<< t_respawn
+		<< t_strafe
+		<< t_react
+		<< t_fight
+		<< t_roam
+		<< t_rocket
+		<< first_shot
+		<< sleft
+		<< allround
+		<< increase
+		<< old;
+}
+void P_SerializeACSScriptNumber(FArchive &arc, int &scriptnum, bool was2byte)
+{
+	arc << scriptnum;
+	// If the script number is negative, then it's really a name.
+	// So read/store the name after it.
+	if (scriptnum < 0)
+	{
+		if (arc.IsStoring())
+		{
+			arc.WriteName(FName(ENamedName(-scriptnum)).GetChars());
+		}
+		else
+		{
+			const char *nam = arc.ReadName();
+			scriptnum = -FName(nam);
+		}
+	}
 }
 

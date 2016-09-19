@@ -48,7 +48,7 @@
 #include "g_level.h"
 #include "colormatcher.h"
 #include "b_bot.h"
-#include "farchive.h"
+#include "serializer.h"
 
 FDecalLib DecalLibrary;
 
@@ -113,7 +113,7 @@ struct DDecalThinker : public DThinker
 	HAS_OBJECT_POINTERS
 public:
 	DDecalThinker (DBaseDecal *decal) : DThinker (STAT_DECALTHINKER), TheDecal (decal) {}
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	TObjPtr<DBaseDecal> TheDecal;
 protected:
 	DDecalThinker () : DThinker (STAT_DECALTHINKER) {}
@@ -123,10 +123,10 @@ IMPLEMENT_POINTY_CLASS (DDecalThinker)
  DECLARE_POINTER (TheDecal)
 END_POINTERS
 
-void DDecalThinker::Serialize(FArchive &arc)
+void DDecalThinker::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << TheDecal;
+	arc("thedecal", TheDecal);
 }
 
 struct FDecalFaderAnim : public FDecalAnimator
@@ -143,7 +143,7 @@ class DDecalFader : public DDecalThinker
 	DECLARE_CLASS (DDecalFader, DDecalThinker)
 public:
 	DDecalFader (DBaseDecal *decal) : DDecalThinker (decal) {}
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Tick ();
 
 	int TimeToStartDecay;
@@ -168,7 +168,7 @@ class DDecalColorer : public DDecalThinker
 	DECLARE_CLASS (DDecalColorer, DDecalThinker)
 public:
 	DDecalColorer (DBaseDecal *decal) : DDecalThinker (decal) {}
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Tick ();
 
 	int TimeToStartDecay;
@@ -194,7 +194,7 @@ class DDecalStretcher : public DDecalThinker
 	DECLARE_CLASS (DDecalStretcher, DDecalThinker)
 public:
 	DDecalStretcher (DBaseDecal *decal) : DDecalThinker (decal) {}
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Tick ();
 
 	int TimeToStart;
@@ -225,7 +225,7 @@ class DDecalSlider : public DDecalThinker
 	DECLARE_CLASS (DDecalSlider, DDecalThinker)
 public:
 	DDecalSlider (DBaseDecal *decal) : DDecalThinker (decal) {}
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Tick ();
 
 	int TimeToStart;
@@ -1153,10 +1153,12 @@ FDecalAnimator::~FDecalAnimator ()
 
 IMPLEMENT_CLASS (DDecalFader)
 
-void DDecalFader::Serialize(FArchive &arc)
+void DDecalFader::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << TimeToStartDecay << TimeToEndDecay << StartTrans;
+	arc("starttime", TimeToStartDecay)
+		("endtime", TimeToEndDecay)
+		("starttrans", StartTrans);
 }
 
 void DDecalFader::Tick ()
@@ -1200,18 +1202,18 @@ DThinker *FDecalFaderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 
 IMPLEMENT_CLASS (DDecalStretcher)
 
-void DDecalStretcher::Serialize(FArchive &arc)
+void DDecalStretcher::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << TimeToStart
-		<< TimeToStop
-		<< GoalX
-		<< StartX
-		<< bStretchX
-		<< GoalY
-		<< StartY
-		<< bStretchY
-		<< bStarted;
+	arc("starttime", TimeToStart)
+		("endtime", TimeToStop)
+		("goalx", GoalX)
+		("startx", StartX)
+		("stretchx", bStretchX)
+		("goaly", GoalY)
+		("starty", StartY)
+		("stretchy", bStretchY)
+		("started", bStarted);
 }
 
 DThinker *FDecalStretcherAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
@@ -1288,16 +1290,14 @@ void DDecalStretcher::Tick ()
 
 IMPLEMENT_CLASS (DDecalSlider)
 
-void DDecalSlider::Serialize(FArchive &arc)
+void DDecalSlider::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << TimeToStart
-		<< TimeToStop
-		/*<< DistX*/
-		<< DistY
-		/*<< StartX*/
-		<< StartY
-		<< bStarted;
+	arc("starttime", TimeToStart)
+		("endtime", TimeToStop)
+		("disty", DistY)
+		("starty", StartY)
+		("started", bStarted);
 }
 
 DThinker *FDecalSliderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
@@ -1371,10 +1371,13 @@ FDecalAnimator *FDecalLib::FindAnimator (const char *name)
 
 IMPLEMENT_CLASS (DDecalColorer)
 
-void DDecalColorer::Serialize(FArchive &arc)
+void DDecalColorer::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << TimeToStartDecay << TimeToEndDecay << StartColor << GoalColor;
+	arc("starttime", TimeToStartDecay)
+		("endtime", TimeToEndDecay)
+		("startcolor", StartColor)
+		("goalcolor", GoalColor);
 }
 
 void DDecalColorer::Tick ()

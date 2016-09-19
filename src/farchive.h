@@ -294,13 +294,6 @@ inline FArchive &operator<< (FArchive &arc, T* &object)
 	return arc.SerializeObject ((DObject*&)object, RUNTIME_TEMPLATE_CLASS(T));
 }
 
-class FFont;
-FArchive &SerializeFFontPtr (FArchive &arc, FFont* &font);
-template<> inline FArchive &operator<< <FFont> (FArchive &arc, FFont* &font)
-{
-	return SerializeFFontPtr (arc, font);
-}
-
 struct FStrifeDialogueNode;
 struct FSwitchDef;
 struct FDoorAnimation;

@@ -75,6 +75,7 @@
 #include "po_man.h"
 #include "actorptrselect.h"
 #include "farchive.h"
+#include "serializer.h"
 #include "decallib.h"
 #include "p_terrain.h"
 #include "version.h"
@@ -82,6 +83,7 @@
 #include "r_utility.h"
 #include "a_morph.h"
 #include "i_music.h"
+#include "serializer.h"
 
 #include "g_shared/a_pickups.h"
 
@@ -1367,11 +1369,12 @@ public:
 		int tag, int height, int special,
 		int arg0, int arg1, int arg2, int arg3, int arg4);
 	void Tick ();
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 private:
 	sector_t *Sector;
 	double WatchD, LastD;
-	int Special, Arg0, Arg1, Arg2, Arg3, Arg4;
+	int Special;
+	int Args[5];
 	TObjPtr<AActor> Activator;
 	line_t *Line;
 	bool LineSide;
@@ -1387,11 +1390,16 @@ END_POINTERS
 DPlaneWatcher::DPlaneWatcher (AActor *it, line_t *line, int lineSide, bool ceiling,
 	int tag, int height, int special,
 	int arg0, int arg1, int arg2, int arg3, int arg4)
-	: Special (special), Arg0 (arg0), Arg1 (arg1), Arg2 (arg2), Arg3 (arg3), Arg4 (arg4),
+	: Special (special),
 	  Activator (it), Line (line), LineSide (!!lineSide), bCeiling (ceiling)
 {
 	int secnum;
 
+	Args[0] = arg0;
+	Args[1] = arg1;
+	Args[2] = arg2;
+	Args[3] = arg3;
+	Args[4] = arg4;
 	secnum = P_FindFirstSectorFromTag (tag);
 	if (secnum >= 0)
 	{
@@ -1417,13 +1425,19 @@ DPlaneWatcher::DPlaneWatcher (AActor *it, line_t *line, int lineSide, bool ceili
 	}
 }
 
-void DPlaneWatcher::Serialize(FArchive &arc)
+void DPlaneWatcher::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
+	arc("special", Special)
+		.Args("args", Args, nullptr, Special)
+		("sector", Sector)
+		("ceiling", bCeiling)
+		("watchd", WatchD)
+		("lastd", LastD)
+		("activator", Activator)
+		("line", Line)
+		("lineside", LineSide);
 
-	arc << Special << Arg0 << Arg1 << Arg2 << Arg3 << Arg4
-		<< Sector << bCeiling << WatchD << LastD << Activator
-		<< Line << LineSide << bCeiling;
 }
 
 void DPlaneWatcher::Tick ()
@@ -1448,7 +1462,7 @@ void DPlaneWatcher::Tick ()
 	if ((LastD < WatchD && newd >= WatchD) ||
 		(LastD > WatchD && newd <= WatchD))
 	{
-		P_ExecuteSpecial(Special, Line, Activator, LineSide, Arg0, Arg1, Arg2, Arg3, Arg4);
+		P_ExecuteSpecial(Special, Line, Activator, LineSide, Args[0], Args[1], Args[2], Args[3], Args[4]);
 		Destroy ();
 	}
 
@@ -2868,33 +2882,6 @@ void FBehavior::StaticStopMyScripts (AActor *actor)
 	}
 }
 
-//==========================================================================
-//
-// P_SerializeACSScriptNumber
-//
-// Serializes a script number. If it's negative, it's really a name, so
-// that will get serialized after it.
-//
-//==========================================================================
-
-void P_SerializeACSScriptNumber(FArchive &arc, int &scriptnum, bool was2byte)
-{
-	arc << scriptnum;
-	// If the script number is negative, then it's really a name.
-	// So read/store the name after it.
-	if (scriptnum < 0)
-	{
-		if (arc.IsStoring())
-		{
-			arc.WriteName(FName(ENamedName(-scriptnum)).GetChars());
-		}
-		else
-		{
-			const char *nam = arc.ReadName();
-			scriptnum = -FName(nam);
-		}
-	}
-}
 
 //---- The ACS Interpreter ----//
 
@@ -2927,81 +2914,63 @@ DACSThinker::~DACSThinker ()
 	ActiveThinker = NULL;
 }
 
-void DACSThinker::Serialize(FArchive &arc)
+//==========================================================================
+//
+// helper class for the runningscripts serializer
+//
+//==========================================================================
+
+struct SavingRunningscript
 {
 	int scriptnum;
-	int scriptcount = 0;
+	DLevelScript *lscript;
+};
 
-	Super::Serialize (arc);
-	if (arc.IsStoring())
+FSerializer &Serialize(FSerializer &arc, const char *key, SavingRunningscript &rs, SavingRunningscript *def)
+{
+	if (arc.BeginObject(key))
 	{
-		DLevelScript *script;
-		script = Scripts;
-		while (script)
-		{
-			scriptcount++;
-
-			// We want to store this list backwards, so we can't loose the last pointer
-			if (script->next == NULL)
-				break;
-			script = script->next;
-		}
-		arc << scriptcount;
-
-		while (script)
-		{
-			arc << script;
-			script = script->prev;
-		}
+		arc.ScriptNum("num", rs.scriptnum)
+			("script", rs.lscript)
+			.EndObject();
 	}
-	else
+	return arc;
+}
+
+void DACSThinker::Serialize(FSerializer &arc)
+{
+	arc("scripts", Scripts);
+
+	if (arc.isWriting())
 	{
-		// We are running through this list backwards, so the next entry is the last processed
-		DLevelScript *next = NULL;
-		arc << scriptcount;
-		Scripts = NULL;
-		LastScript = NULL;
-		for (int i = 0; i < scriptcount; i++)
+		if (RunningScripts.CountUsed())
 		{
-			arc << Scripts;
+			ScriptMap::Iterator it(RunningScripts);
+			ScriptMap::Pair *pair;
 
-			Scripts->next = next;
-			Scripts->prev = NULL;
-			if (next != NULL)
-				next->prev = Scripts;
-
-			next = Scripts;
-
-			if (i == 0)
-				LastScript = Scripts;
+			arc.BeginArray("runningscripts");
+			while (it.NextPair(pair))
+			{
+				assert(pair->Value != nullptr);
+				SavingRunningscript srs = { pair->Key, pair->Value };
+				arc(nullptr, srs);
+			}
+			arc.EndArray();
 		}
-	}
-	if (arc.IsStoring ())
-	{
-		ScriptMap::Iterator it(RunningScripts);
-		ScriptMap::Pair *pair;
-
-		while (it.NextPair(pair))
-		{
-			assert(pair->Value != NULL);
-			arc << pair->Value;
-			scriptnum = pair->Key;
-			P_SerializeACSScriptNumber(arc, scriptnum, true);
-		}
-		DLevelScript *nilptr = NULL;
-		arc << nilptr;
 	}
 	else // Loading
 	{
-		DLevelScript *script = NULL;
+		DLevelScript *script = nullptr;
 		RunningScripts.Clear();
-
-		arc << script;
-		while (script)
+		if (arc.BeginArray("runniongscripts"))
 		{
-			P_SerializeACSScriptNumber(arc, scriptnum, true);
-			RunningScripts[scriptnum] = script;
-			arc << script;
+			auto cnt = arc.ArraySize();
+			for (int i = 0; i < cnt; i++)
+			{
+				SavingRunningscript srs;
+				arc(nullptr, srs);
+				RunningScripts[srs.scriptnum] = srs.lscript;
+			}
 		}
 	}
 }
@@ -3048,58 +3017,74 @@ IMPLEMENT_POINTY_CLASS (DLevelScript)
  DECLARE_POINTER(activator)
 END_POINTERS
 
-inline FArchive &operator<< (FArchive &arc, DLevelScript::EScriptState &state)
+//==========================================================================
+//
+// SerializeFFontPtr
+//
+//==========================================================================
+
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&font, FFont **def)
 {
-	BYTE val = (BYTE)state;
-	arc << val;
-	state = (DLevelScript::EScriptState)val;
-	return arc;
-}
-
-void DLevelScript::Serialize(FArchive &arc)
-{
-	DWORD i;
-
-	Super::Serialize (arc);
-
-	P_SerializeACSScriptNumber(arc, script, false);
-
-	arc	<< state
-		<< statedata
-		<< activator
-		<< activationline
-		<< backSide
-		<< numlocalvars;
-
-	if (arc.IsLoading())
+	if (arc.isWriting())
 	{
-		localvars = new SDWORD[numlocalvars];
-	}
-	for (i = 0; i < (DWORD)numlocalvars; i++)
-	{
-		arc << localvars[i];
-	}
-
-	if (arc.IsStoring ())
-	{
-		WORD lib = activeBehavior->GetLibraryID() >> LIBRARYID_SHIFT;
-		arc << lib;
-		i = activeBehavior->PC2Ofs (pc);
-		arc << i;
+		const char *n = font->GetName();
+		return arc.StringPtr(key, n);
 	}
 	else
 	{
-		WORD lib;
-		arc << lib << i;
-		activeBehavior = FBehavior::StaticGetModule (lib);
-		pc = activeBehavior->Ofs2PC (i);
+		const char *n;
+		arc.StringPtr(key, n);
+		font = V_GetFont(n);
+		if (font == NULL)
+		{
+			Printf("Could not load font %s\n", n);
+			font = SmallFont;
+		}
+		return arc;
 	}
 
-	arc << activefont
-		<< hudwidth << hudheight;
-	arc << ClipRectLeft << ClipRectTop << ClipRectWidth << ClipRectHeight
-		<< WrapWidth;
-	arc << InModuleScriptNumber;
+}
+
+
+void DLevelScript::Serialize(FSerializer &arc)
+{
+	Super::Serialize(arc);
+
+	uint32_t pcofs;
+	uint16_t lib;
+
+	if (arc.isWriting())
+	{
+		lib = activeBehavior->GetLibraryID() >> LIBRARYID_SHIFT;
+		pcofs = activeBehavior->PC2Ofs(pc);
+	}
+
+	arc.ScriptNum("scriptnum", script)
+		("next", next)
+		("prev", prev)
+		.Enum("state", state)
+		("statedata", statedata)
+		("activator", activator)
+		("activationline", activationline)
+		("backside", backSide)
+		("localvars", Localvars)
+		("lib", lib)
+		("pc", pcofs)
+		("activefont", activefont)
+		("hudwidth", hudwidth)
+		("hudheight", hudheight)
+		("cliprectleft", ClipRectLeft)
+		("cliprectop", ClipRectTop)
+		("cliprectwidth", ClipRectWidth)
+		("cliprectheight", ClipRectHeight)
+		("wrapwidth", WrapWidth)
+		("inmodulescriptnum", InModuleScriptNumber);
+
+	if (arc.isReading())
+	{
+		activeBehavior = FBehavior::StaticGetModule(lib);
+		pc = activeBehavior->Ofs2PC(pcofs);
+	}
 }
 
 DLevelScript::DLevelScript ()
@@ -3108,14 +3093,10 @@ DLevelScript::DLevelScript ()
 	if (DACSThinker::ActiveThinker == NULL)
 		new DACSThinker;
 	activefont = SmallFont;
-	localvars = NULL;
 }
 
 DLevelScript::~DLevelScript ()
 {
-	if (localvars != NULL)
-		delete[] localvars;
-	localvars = NULL;
 }
 
 void DLevelScript::Unlink ()
@@ -6140,7 +6121,7 @@ static bool CharArrayParms(int &capacity, int &offset, int &a, int *Stack, int &
 int DLevelScript::RunScript ()
 {
 	DACSThinker *controller = DACSThinker::ActiveThinker;
-	SDWORD *locals = localvars;
+	SDWORD *locals = &Localvars[0];
 	ACSLocalArrays noarrays;
 	ACSLocalArrays *localarrays = &noarrays;
 	ScriptFunction *activeFunction = NULL;
@@ -9676,12 +9657,11 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr
 
 	script = num;
 	assert(code->VarCount >= code->ArgCount);
-	numlocalvars = code->VarCount;
-	localvars = new SDWORD[code->VarCount];
-	memset(localvars, 0, code->VarCount * sizeof(SDWORD));
+	Localvars.Resize(code->VarCount);
+	memset(&Localvars[0], 0, code->VarCount * sizeof(SDWORD));
 	for (int i = 0; i < MIN<int>(argcount, code->ArgCount); ++i)
 	{
-		localvars[i] = args[i];
+		Localvars[i] = args[i];
 	}
 	pc = module->GetScriptAddress(code);
 	InModuleScriptNumber = module->GetScriptIndex(code);

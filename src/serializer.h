@@ -44,7 +44,8 @@ public:
 	FSerializer &Args(const char *key, int *args, int *defargs, int special);
 	FSerializer &Terrain(const char *key, int &terrain, int *def = nullptr);
 	FSerializer &Sprite(const char *key, int32_t &spritenum, int32_t *def);
-	FSerializer &StringPtr(const char *key, const char *&charptr);	// This only retrieves the address but creates no permanent copy of the string.
+	FSerializer &StringPtr(const char *key, const char *&charptr);	// This only retrieves the address but creates no permanent copy of the string unlike the regular char* serializer.
+	FSerializer &ScriptNum(const char *key, int &num);
 	bool isReading() const
 	{
 		return r != nullptr;
@@ -131,6 +132,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObject ** /*defval*/);
 FSerializer &Serialize(FSerializer &arc, const char *key, FName &value, FName *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundID *def);
+FSerializer &Serialize(FSerializer &arc, const char *key, FString &sid, FString *def);
 
 template<class T>
 FSerializer &Serialize(FSerializer &arc, const char *key, T *&value, T **)
@@ -185,6 +187,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FState *&st
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDialogueNode *&node, FStrifeDialogueNode **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FString *&pstr, FString **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDoorAnimation *&pstr, FDoorAnimation **def);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr, char **def);
 
 
 inline FSerializer &Serialize(FSerializer &arc, const char *key, DVector3 &p, DVector3 *def)

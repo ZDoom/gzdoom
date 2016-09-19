@@ -409,6 +409,49 @@ FSerializer &FSerializer::Args(const char *key, int *args, int *defargs, int spe
 
 //==========================================================================
 //
+// Special handler for script numbers
+//
+//==========================================================================
+
+FSerializer &FSerializer::ScriptNum(const char *key, int &num)
+{
+	if (isWriting())
+	{
+		WriteKey(key);
+		if (num < 0)
+		{
+			w->mWriter.String(FName(ENamedName(-num)).GetChars());
+		}
+		else
+		{
+			w->mWriter.Int(num);
+		}
+		w->mWriter.EndArray();
+	}
+	else
+	{
+		auto val = r->FindKey(key);
+		if (val != nullptr)
+		{
+			if (val->IsInt())
+			{
+				num = val->GetInt();
+			}
+			else if (val->IsString())
+			{
+				num = -FName(val->GetString());
+			}
+			else
+			{
+				I_Error("Integer expected for '%s'", key);
+			}
+		}
+	}
+	return *this;
+}
+
+//==========================================================================
+//
 //
 //
 //==========================================================================
@@ -1047,7 +1090,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 {
 	if (arc.isWriting())
 	{
-		if (arc.w->inObject() && def != nullptr && sid != *def)
+		if (!arc.w->inObject() || def == nullptr || sid != *def)
 		{
 			arc.WriteKey(key);
 			const char *sn = (const char*)sid;
@@ -1088,7 +1131,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClassActor
 {
 	if (arc.isWriting())
 	{
-		if (arc.w->inObject() && def != nullptr && clst != *def)
+		if (!arc.w->inObject() || def == nullptr || clst != *def)
 		{
 			arc.WriteKey(key);
 			arc.w->mWriter.String(clst->TypeName.GetChars());
@@ -1123,7 +1166,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FState *&st
 {
 	if (arc.isWriting())
 	{
-		if (arc.w->inObject() && def != nullptr && state != *def)
+		if (!arc.w->inObject() || def == nullptr || state != *def)
 		{
 			arc.WriteKey(key);
 			if (state == nullptr)
@@ -1192,7 +1235,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDial
 {
 	if (arc.isWriting())
 	{
-		if (arc.w->inObject() && def != nullptr && node != *def)
+		if (!arc.w->inObject() || def == nullptr || node != *def)
 		{
 			arc.WriteKey(key);
 			if (node == nullptr)
@@ -1245,7 +1288,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FString *&p
 {
 	if (arc.isWriting())
 	{
-		if (arc.w->inObject() && def != nullptr && pstr != *def)
+		if (!arc.w->inObject() || def == nullptr || pstr != *def)
 		{
 			arc.WriteKey(key);
 			if (pstr == nullptr)
@@ -1281,3 +1324,86 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FString *&p
 
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FSerializer &Serialize(FSerializer &arc, const char *key, FString &pstr, FString *def)
+{
+	if (arc.isWriting())
+	{
+		if (!arc.w->inObject() || def == nullptr || pstr.Compare(*def) != 0)
+		{
+			arc.WriteKey(key);
+			arc.w->mWriter.String(pstr.GetChars());
+		}
+	}
+	else
+	{
+		auto val = arc.r->FindKey(key);
+		if (val != nullptr)
+		{
+			if (val->IsNull())
+			{
+				pstr = "";
+			}
+			else if (val->IsString())
+			{
+				pstr = val->GetString();
+			}
+			else
+			{
+				I_Error("string expected for '%s'", key);
+			}
+		}
+	}
+	return arc;
+
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr, char **def)
+{
+	if (arc.isWriting())
+	{
+		if (!arc.w->inObject() || def == nullptr || strcmp(pstr, *def))
+		{
+			arc.WriteKey(key);
+			if (pstr == nullptr)
+			{
+				arc.w->mWriter.Null();
+			}
+			else
+			{
+				arc.w->mWriter.String(pstr);
+			}
+		}
+	}
+	else
+	{
+		auto val = arc.r->FindKey(key);
+		if (val != nullptr)
+		{
+			if (val->IsNull())
+			{
+				pstr = nullptr;
+			}
+			else if (val->IsString())
+			{
+				pstr = copystring(val->GetString());
+			}
+			else
+			{
+				I_Error("string expected for '%s'", key);
+			}
+		}
+	}
+	return arc;
+}

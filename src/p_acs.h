@@ -859,7 +859,7 @@ public:
 		const int *args, int argcount, int flags);
 	~DLevelScript ();
 
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	int RunScript ();
 
 	inline void SetState (EScriptState newstate) { state = newstate; }
@@ -869,22 +869,21 @@ public:
 
 	void MarkLocalVarStrings() const
 	{
-		GlobalACSStrings.MarkStringArray(localvars, numlocalvars);
+		GlobalACSStrings.MarkStringArray(&Localvars[0], Localvars.Size());
 	}
 	void LockLocalVarStrings() const
 	{
-		GlobalACSStrings.LockStringArray(localvars, numlocalvars);
+		GlobalACSStrings.LockStringArray(&Localvars[0], Localvars.Size());
 	}
 	void UnlockLocalVarStrings() const
 	{
-		GlobalACSStrings.UnlockStringArray(localvars, numlocalvars);
+		GlobalACSStrings.UnlockStringArray(&Localvars[0], Localvars.Size());
 	}
 
 protected:
 	DLevelScript	*next, *prev;
 	int				script;
-	SDWORD			*localvars;
-	int				numlocalvars;
+	TArray<int32_t>	Localvars;
 	int				*pc;
 	EScriptState	state;
 	int				statedata;
@@ -944,7 +943,7 @@ public:
 	DACSThinker ();
 	~DACSThinker ();
 
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Tick ();
 
 	typedef TMap<int, DLevelScript *> ScriptMap;

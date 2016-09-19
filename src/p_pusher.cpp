@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include "actor.h"
 #include "p_spec.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "p_lnspec.h"
 #include "c_cvars.h"
 #include "p_maputl.h"
@@ -52,7 +52,7 @@ public:
 
 	DPusher ();
 	DPusher (EPusher type, line_t *l, int magnitude, int angle, AActor *source, int affectee);
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	int CheckForSectorMatch (EPusher type, int tag);
 	void ChangeValues (int magnitude, int angle)
 	{
@@ -83,23 +83,15 @@ DPusher::DPusher ()
 {
 }
 
-inline FArchive &operator<< (FArchive &arc, DPusher::EPusher &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DPusher::EPusher)val;
-	return arc;
-}
-
-void DPusher::Serialize(FArchive &arc)
+void DPusher::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << m_Type
-		<< m_Source
-		<< m_PushVec
-		<< m_Magnitude
-		<< m_Radius
-		<< m_Affectee;
+	arc.Enum("type", m_Type)
+		("source", m_Source)
+		("pushvec", m_PushVec)
+		("magnitude", m_Magnitude)
+		("radius", m_Radius)
+		("affectee", m_Affectee);
 }
 
 

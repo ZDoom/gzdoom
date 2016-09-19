@@ -142,7 +142,8 @@ public:
 	DBot ();
 
 	void Clear ();
-	void Serialize(FArchive &arc);
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc);
 	void Tick ();
 
 	//(b_think.cpp)

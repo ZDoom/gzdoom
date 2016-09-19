@@ -340,33 +340,6 @@ FFont *V_GetFont(const char *name)
 	}
 	return font;
 }
-//==========================================================================
-//
-// SerializeFFontPtr
-//
-//==========================================================================
-
-FArchive &SerializeFFontPtr (FArchive &arc, FFont* &font)
-{
-	if (arc.IsStoring ())
-	{
-		arc << font->Name;
-	}
-	else
-	{
-		char *name = NULL;
-
-		arc << name;
-		font = V_GetFont(name);
-		if (font == NULL)
-		{
-			Printf ("Could not load font %s\n", name);
-			font = SmallFont;
-		}
-		delete[] name;
-	}
-	return arc;
-}
 
 //==========================================================================
 //

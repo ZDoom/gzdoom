@@ -398,24 +398,3 @@ FSwitchDef *FTextureManager::FindSwitch (FTextureID texture)
 	return NULL;
 }
 
-//==========================================================================
-//
-// operator<<
-//
-//==========================================================================
-
-template<> FArchive &operator<< (FArchive &arc, FSwitchDef* &Switch)
-{
-	if (arc.IsStoring())
-	{
-		arc << Switch->PreTexture;
-	}
-	else
-	{
-		FTextureID tex;
-		arc << tex;
-		Switch = TexMan.FindSwitch(tex);
-	}
-	return arc;
-}
-

@@ -46,7 +46,7 @@
 #include "w_wad.h"
 #include "tarray.h"
 #include "cmdlib.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "p_maputl.h"
 #include "p_spec.h"
 
@@ -61,7 +61,7 @@ public:
 	DActiveButton ();
 	DActiveButton (side_t *, int, FSwitchDef *, const DVector2 &pos, bool flippable);
 
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Tick ();
 
 	side_t			*m_Side;
@@ -350,14 +350,43 @@ DActiveButton::DActiveButton (side_t *side, int Where, FSwitchDef *Switch,
 
 //==========================================================================
 //
+// operator<<
+//
+//==========================================================================
+
+template<> FSerializer &Serialize (FSerializer &arc, const char *key, FSwitchDef* &Switch, FSwitchDef **def)
+{
+	if (arc.isWriting())
+	{
+		Serialize(arc, key, Switch->PreTexture, nullptr);
+	}
+	else
+	{
+		FTextureID tex;
+		tex.SetInvalid();
+		Serialize(arc, key, tex, nullptr);
+		Switch = TexMan.FindSwitch(tex);
+	}
+	return arc;
+}
+
+//==========================================================================
+//
 //
 //
 //==========================================================================
 
-void DActiveButton::Serialize(FArchive &arc)
+void DActiveButton::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << m_Side << m_Part << m_SwitchDef << m_Frame << m_Timer << bFlippable << m_Pos << bReturning;
+	arc("side", m_Side)
+		("part", m_Part)
+		("switchdef", m_SwitchDef)
+		("frame", m_Frame)
+		("timer", m_Timer)
+		("fippable", bFlippable)
+		("pos", m_Pos)
+		("returning", bReturning);
 }
 
 //==========================================================================

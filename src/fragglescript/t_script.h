@@ -189,7 +189,7 @@ public:
 
 	void GetValue(svalue_t &result);
 	void SetValue(const svalue_t &newvalue);
-	void Serialize(FArchive &ar);
+	void Serialize(FSerializer &ar);
 };
 
 //==========================================================================
@@ -238,7 +238,7 @@ public:
 		next = NULL;
 	}
 
-	void Serialize(FArchive &ar);
+	void Serialize(FSerializer &ar);
 };
 
 
@@ -337,7 +337,7 @@ public:
 
 	DFsScript();
 	void Destroy();
-	void Serialize(FArchive &ar);
+	void Serialize(FSerializer &ar);
 
 	DFsVariable *NewVariable(const char *name, int vtype);
 	void NewFunction(const char *name, void (FParser::*handler)());
@@ -652,7 +652,7 @@ class DRunningScript : public DObject
 public:
 	DRunningScript(AActor *trigger=NULL, DFsScript *owner = NULL, int index = 0) ;
 	void Destroy();
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 
 	TObjPtr<DFsScript> script;
 	
@@ -689,7 +689,7 @@ public:
 	void Destroy();
 
 
-	void Serialize(FArchive & arc);
+	void Serialize(FSerializer & arc);
 	void Tick();
 	size_t PropagateMark();
 	size_t PointerSubstitution (DObject *old, DObject *notOld);

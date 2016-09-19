@@ -24,7 +24,7 @@ public:
 	DBaseDecal (const AActor *actor);
 	DBaseDecal (const DBaseDecal *basis);
 
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Destroy ();
 	FTextureID StickToWall(side_t *wall, double x, double y, F3DFloor * ffloor);
 	double GetRealZ (const side_t *wall) const;
@@ -33,9 +33,7 @@ public:
 	void Spread (const FDecalTemplate *tpl, side_t *wall, double x, double y, double z, F3DFloor * ffloor);
 	void GetXY (side_t *side, double &x, double &y) const;
 
-	static void SerializeChain (FArchive &arc, DBaseDecal **firstptr);
-
-	DBaseDecal *WallNext, **WallPrev;
+	DBaseDecal *WallNext, *WallPrev;
 
 	double LeftDistance;
 	double Z;
@@ -46,7 +44,8 @@ public:
 	FTextureID PicNum;
 	DWORD RenderFlags;
 	FRenderStyle RenderStyle;
-	sector_t * Sector;	// required for 3D floors
+	side_t *Side;
+	sector_t *Sector;
 
 protected:
 	virtual DBaseDecal *CloneSelf(const FDecalTemplate *tpl, double x, double y, double z, side_t *wall, F3DFloor * ffloor) const;
@@ -69,9 +68,6 @@ public:
 
 	void BeginPlay ();
 	void Destroy ();
-
-	void Serialize(FArchive &arc);
-	static void SerializeTime (FArchive &arc);
 
 protected:
 	DBaseDecal *CloneSelf(const FDecalTemplate *tpl, double x, double y, double z, side_t *wall, F3DFloor * ffloor) const;

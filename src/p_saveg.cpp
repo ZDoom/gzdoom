@@ -358,7 +358,7 @@ static void SpawnExtraPlayers ()
 void P_SerializeThinkers (FArchive &arc, bool hubLoad)
 {
 	arc.EnableThinkers();
-	DImpactDecal::SerializeTime (arc);
+	//DImpactDecal::Im ::SerializeTime (arc);
 	DThinker::SerializeAll (arc, hubLoad);
 }
 

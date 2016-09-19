@@ -1055,12 +1055,16 @@ double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, doub
 
  FSerializer &Serialize(FSerializer &arc, const char *key, secspecial_t &spec, secspecial_t *def)
  {
-	 arc("special", spec.special)
-		 ("damageamount", spec.damageamount)
-		 ("damagetype", spec.damagetype)
-		 ("damageinterval", spec.damageinterval)
-		 ("leakydamage", spec.leakydamage)
-		 ("flags", spec.Flags);
+	 if (arc.BeginObject(key))
+	 {
+		 arc("special", spec.special)
+			 ("damageamount", spec.damageamount)
+			 ("damagetype", spec.damagetype)
+			 ("damageinterval", spec.damageinterval)
+			 ("leakydamage", spec.leakydamage)
+			 ("flags", spec.Flags)
+			 .EndObject();
+	 }
 	return arc;
 }
 

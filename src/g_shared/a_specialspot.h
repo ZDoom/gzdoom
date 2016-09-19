@@ -22,7 +22,7 @@ class DSpotState : public DThinker
 {
 	DECLARE_CLASS(DSpotState, DThinker)
 	static TObjPtr<DSpotState> SpotState;
-	TArray<FSpotList *> SpotLists;
+	TArray<FSpotList> SpotLists;
 
 public:
 
@@ -31,13 +31,13 @@ public:
 	void Destroy ();
 	void Tick ();
 	static DSpotState *GetSpotState(bool create = true);
-	FSpotList *FindSpotList(const PClass *type);
+	FSpotList *FindSpotList(PClassActor *type);
 	bool AddSpot(ASpecialSpot *spot);
 	bool RemoveSpot(ASpecialSpot *spot);
-	void Serialize(FArchive &arc);
-	ASpecialSpot *GetNextInList(const PClass *type, int skipcounter);
-	ASpecialSpot *GetSpotWithMinMaxDistance(const PClass *type, double x, double y, double mindist, double maxdist);
-	ASpecialSpot *GetRandomSpot(const PClass *type, bool onlyonce = false);
+	void Serialize(FSerializer &arc);
+	ASpecialSpot *GetNextInList(PClassActor *type, int skipcounter);
+	ASpecialSpot *GetSpotWithMinMaxDistance(PClassActor *type, double x, double y, double mindist, double maxdist);
+	ASpecialSpot *GetRandomSpot(PClassActor *type, bool onlyonce = false);
 };
 
 

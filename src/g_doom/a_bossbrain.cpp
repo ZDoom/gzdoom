@@ -120,7 +120,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 	bool isdefault = false;
 
 	// shoot a cube at current target
-	targ = state->GetNextInList(PClass::FindClass("BossTarget"), G_SkillProperty(SKILLP_EasyBossBrain));
+	targ = state->GetNextInList(PClass::FindActor("BossTarget"), G_SkillProperty(SKILLP_EasyBossBrain));
 
 	if (targ != NULL)
 	{

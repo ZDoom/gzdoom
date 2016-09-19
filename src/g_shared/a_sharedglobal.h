@@ -122,7 +122,7 @@ public:
 				 float r2, float g2, float b2, float a2,
 				 float time, AActor *who);
 	void Destroy ();
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Tick ();
 	AActor *WhoFor() { return ForWho; }
 	void Cancel ();
@@ -165,7 +165,7 @@ public:
 		int damrad, int tremrad, FSoundID quakesfx, int flags, 
 		double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, double rollIntensity, double rollWave);
 
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Tick ();
 	TObjPtr<AActor> m_Spot;
 	double m_TremorRadius, m_DamageRadius;

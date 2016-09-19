@@ -50,7 +50,7 @@
 #include "d_netinf.h"
 #include "i_system.h"
 #include "d_player.h"
-#include "farchive.h"
+#include "serializer.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -2102,7 +2102,8 @@ class AAmbientSound : public AActor
 {
 	DECLARE_CLASS (AAmbientSound, AActor)
 public:
-	void Serialize(FArchive &arc);
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc);
 
 	void MarkPrecacheSounds () const;
 	void BeginPlay ();
@@ -2125,10 +2126,11 @@ IMPLEMENT_CLASS (AAmbientSound)
 //
 //==========================================================================
 
-void AAmbientSound::Serialize(FArchive &arc)
+void AAmbientSound::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << bActive << NextCheck;
+	arc("active", bActive)
+		("nextcheck", NextCheck);
 }
 
 //==========================================================================

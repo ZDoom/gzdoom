@@ -31,10 +31,11 @@ class ACWeapWraithverge : public AClericWeapon
 {
 	DECLARE_CLASS (ACWeapWraithverge, AClericWeapon)
 public:
-	void Serialize(FArchive &arc)
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc)
 	{
 		Super::Serialize (arc);
-		arc << CHolyCount;
+		arc("cholycount", CHolyCount);
 	}
 	PalEntry GetBlend ()
 	{

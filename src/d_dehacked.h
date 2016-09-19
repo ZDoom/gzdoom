@@ -48,7 +48,8 @@ public:
 	bool TryPickup (AActor *&toucher);
 	void PlayPickupSound (AActor *toucher);
 	void DoPickupSpecial (AActor *toucher);
-	void Serialize(FArchive &arc);
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc);
 private:
 	PClassActor *DetermineType ();
 	AInventory *RealPickup;

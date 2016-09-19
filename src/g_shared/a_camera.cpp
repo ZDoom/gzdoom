@@ -36,7 +36,7 @@
 #include "info.h"
 #include "a_sharedglobal.h"
 #include "p_local.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "math/cmath.h"
 
 /*
@@ -55,7 +55,8 @@ public:
 	void PostBeginPlay ();
 	void Tick ();
 
-	void Serialize(FArchive &arc);
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc);
 protected:
 	DAngle Center;
 	DAngle Acc;
@@ -65,10 +66,13 @@ protected:
 
 IMPLEMENT_CLASS (ASecurityCamera)
 
-void ASecurityCamera::Serialize(FArchive &arc)
+void ASecurityCamera::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << Center << Acc << Delta << Range;
+	arc("center", Center)
+		("acc", Acc)
+		("delta", Delta)
+		("range", Range);
 }
 
 void ASecurityCamera::PostBeginPlay ()
@@ -114,17 +118,18 @@ public:
 	void PostBeginPlay ();
 	void Tick ();
 
-	void Serialize(FArchive &arc);
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc);
 protected:
 	DAngle MaxPitchChange;
 };
 
 IMPLEMENT_CLASS (AAimingCamera)
 
-void AAimingCamera::Serialize(FArchive &arc)
+void AAimingCamera::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << MaxPitchChange;
+	arc("maxpitchchange", MaxPitchChange);
 }
 
 void AAimingCamera::PostBeginPlay ()

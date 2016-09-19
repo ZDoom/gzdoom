@@ -37,7 +37,7 @@
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "doomstat.h"
-#include "farchive.h"
+#include "serializer.h"
 
 /*
 == InterpolationPoint: node along a camera's path
@@ -60,7 +60,8 @@ public:
 	AInterpolationPoint *ScanForLoop ();
 	void FormChain ();
 
-	void Serialize(FArchive &arc);
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc);
 
 	TObjPtr<AInterpolationPoint> Next;
 };
@@ -69,10 +70,10 @@ IMPLEMENT_POINTY_CLASS (AInterpolationPoint)
  DECLARE_POINTER (Next)
 END_POINTERS
 
-void AInterpolationPoint::Serialize(FArchive &arc)
+void AInterpolationPoint::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << Next;
+	arc("next", Next);
 }
 
 void AInterpolationPoint::BeginPlay ()
@@ -166,7 +167,8 @@ protected:
 	virtual bool Interpolate ();
 	virtual void NewNode ();
 
-	void Serialize(FArchive &arc);
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc);
 
 	bool bActive, bJustStepped;
 	TObjPtr<AInterpolationPoint> PrevNode, CurrNode;
@@ -179,10 +181,15 @@ IMPLEMENT_POINTY_CLASS (APathFollower)
  DECLARE_POINTER (CurrNode)
 END_POINTERS
 
-void APathFollower::Serialize(FArchive &arc)
+void APathFollower::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << bActive << bJustStepped << PrevNode << CurrNode << Time << HoldTime;
+	arc("active", bActive)
+		("juststepped", bJustStepped)
+		("prevnode", PrevNode)
+		("currnode", CurrNode)
+		("time", Time)
+		("holdtime", HoldTime);
 }
 
 // Interpolate between p2 and p3 along a Catmull-Rom spline
@@ -577,7 +584,8 @@ class AMovingCamera : public APathFollower
 public:
 	void PostBeginPlay ();
 
-	void Serialize(FArchive &arc);
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc);
 protected:
 	bool Interpolate ();
 
@@ -588,10 +596,10 @@ IMPLEMENT_POINTY_CLASS (AMovingCamera)
  DECLARE_POINTER (Activator)
 END_POINTERS
 
-void AMovingCamera::Serialize(FArchive &arc)
+void AMovingCamera::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << Activator;
+	arc("activator", Activator);
 }
 
 void AMovingCamera::PostBeginPlay ()

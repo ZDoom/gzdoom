@@ -29,10 +29,11 @@ class AMWeapBloodscourge : public AMageWeapon
 {
 	DECLARE_CLASS (AMWeapBloodscourge, AMageWeapon)
 public:
-	void Serialize(FArchive &arc)
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc)
 	{
 		Super::Serialize (arc);
-		arc << MStaffCount;
+		arc("mstaffcount", MStaffCount);
 	}
 	PalEntry GetBlend ()
 	{

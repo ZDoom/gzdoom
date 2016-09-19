@@ -65,7 +65,7 @@
 #include "s_sound.h"
 #include "m_random.h"
 #include "s_sndseq.h"
-#include "farchive.h"
+#include "serializer.h"
 
 // SoundSequenceSlot --------------------------------------------------------
 
@@ -74,7 +74,8 @@ class ASoundSequenceSlot : public AActor
 	DECLARE_CLASS (ASoundSequenceSlot, AActor)
 	HAS_OBJECT_POINTERS
 public:
-	void Serialize(FArchive &arc);
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc);
 
 	TObjPtr<DSeqNode> Sequence;
 };
@@ -89,10 +90,10 @@ END_POINTERS
 //
 //==========================================================================
 
-void ASoundSequenceSlot::Serialize(FArchive &arc)
+void ASoundSequenceSlot::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << Sequence;
+	arc("sequence", Sequence);
 }
 
 // SoundSequence ------------------------------------------------------------

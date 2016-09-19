@@ -194,7 +194,8 @@ class AMorphProjectile : public AActor
 	DECLARE_CLASS (AMorphProjectile, AActor)
 public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
-	void Serialize(FArchive &arc);
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc);
 
 	FNameNoInit	PlayerClass, MonsterClass, MorphFlash, UnMorphFlash;
 	int Duration, MorphStyle;
@@ -206,7 +207,8 @@ class AMorphedMonster : public AActor
 	HAS_OBJECT_POINTERS
 public:
 	void Tick ();
-	void Serialize(FArchive &arc);
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc);
 	void Die (AActor *source, AActor *inflictor, int dmgflags);
 	void Destroy ();
 

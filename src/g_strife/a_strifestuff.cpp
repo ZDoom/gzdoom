@@ -18,7 +18,7 @@
 #include "templates.h"
 #include "d_event.h"
 #include "v_font.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "p_spec.h"
 #include "portal.h"
 

@@ -102,7 +102,8 @@ class APlayerPawn : public AActor
 	DECLARE_CLASS_WITH_META(APlayerPawn, AActor, PClassPlayerPawn)
 	HAS_OBJECT_POINTERS
 public:
-	virtual void Serialize(FArchive &arc);
+	DECLARE_OLD_SERIAL
+	virtual void Serialize(FSerializer &arc);
 
 	virtual void PostBeginPlay();
 	virtual void Tick();

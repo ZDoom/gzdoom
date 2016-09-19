@@ -55,7 +55,8 @@ class ASigil : public AWeapon
 public:
 	bool HandlePickup (AInventory *item);
 	AInventory *CreateCopy (AActor *other);
-	void Serialize(FArchive &arc);
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc);
 	bool SpecialDropAction (AActor *dropper);
 	static int GiveSigilPiece (AActor *daPlayer);
 	void BeginPlay();

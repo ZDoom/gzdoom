@@ -1,8 +1,11 @@
 #ifdef COMMON_STUFF
 
 #include "a_doomglobal.h"
+#include "a_hexenglobal.h"
+#include "a_strifeglobal.h"
 #include "ravenshared.h"
 #include "a_weaponpiece.h"
+#include "d_dehacked.h"
 
 // For NULL states, which aren't owned by any actor, the owner
 // is recorded as AActor with the following state. AActor should
@@ -1037,6 +1040,304 @@ void AWeaponPiece::Serialize(FArchive &arc)
 	arc << WeaponClass << FullWeapon << PieceValue;
 }
 
+void DSectorEffect::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << m_Sector;
+}
+
+void DMover::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << interpolation;
+}
+
+class AAmbientSound : public AActor
+{
+	DECLARE_CLASS(AAmbientSound, AActor)
+public:
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc);
+
+	void MarkPrecacheSounds() const;
+	void BeginPlay();
+	void Tick();
+	void Activate(AActor *activator);
+	void Deactivate(AActor *activator);
+
+protected:
+	bool bActive;
+private:
+	void SetTicker(struct FAmbientSound *ambient);
+	int NextCheck;
+};
+
+void AAmbientSound::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << bActive << NextCheck;
+}
+
+class AInterpolationPoint : public AActor
+{
+	DECLARE_CLASS(AInterpolationPoint, AActor)
+	HAS_OBJECT_POINTERS
+public:
+	void BeginPlay();
+	void HandleSpawnFlags();
+	void Tick() {}		// Nodes do no thinking
+	AInterpolationPoint *ScanForLoop();
+	void FormChain();
+
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc);
+
+	TObjPtr<AInterpolationPoint> Next;
+};
+
+class APathFollower : public AActor
+{
+	DECLARE_CLASS(APathFollower, AActor)
+	HAS_OBJECT_POINTERS
+public:
+	void BeginPlay();
+	void PostBeginPlay();
+	void Tick();
+	void Activate(AActor *activator);
+	void Deactivate(AActor *activator);
+protected:
+	double Splerp(double p1, double p2, double p3, double p4);
+	double Lerp(double p1, double p2);
+	virtual bool Interpolate();
+	virtual void NewNode();
+
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc);
+
+	bool bActive, bJustStepped;
+	TObjPtr<AInterpolationPoint> PrevNode, CurrNode;
+	float Time;		// Runs from 0.0 to 1.0 between CurrNode and CurrNode->Next
+	int HoldTime;
+};
+
+void AInterpolationPoint::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << Next;
+}
+
+void APathFollower::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << bActive << bJustStepped << PrevNode << CurrNode << Time << HoldTime;
+}
+
+class AMovingCamera : public APathFollower
+{
+	DECLARE_CLASS(AMovingCamera, APathFollower)
+	HAS_OBJECT_POINTERS
+public:
+	void PostBeginPlay();
+
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc);
+protected:
+	bool Interpolate();
+
+	TObjPtr<AActor> Activator;
+};
+
+void AMovingCamera::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << Activator;
+}
+
+void AMorphProjectile::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << PlayerClass << MonsterClass << Duration << MorphStyle << MorphFlash << UnMorphFlash;
+}
+
+void AMorphedMonster::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << UnmorphedMe << UnmorphTime << MorphStyle << MorphExitFlash << FlagsSave;
+}
+
+void ADehackedPickup::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << droppedbymonster;
+}
+
+class ASoundSequenceSlot : public AActor
+{
+	DECLARE_CLASS(ASoundSequenceSlot, AActor)
+	HAS_OBJECT_POINTERS
+public:
+	DECLARE_OLD_SERIAL
+
+	TObjPtr<DSeqNode> Sequence;
+};
+
+void ASoundSequenceSlot::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << Sequence;
+}
+
+void APlayerPawn::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+
+	arc << JumpZ
+		<< MaxHealth
+		<< RunHealth
+		<< SpawnMask
+		<< ForwardMove1
+		<< ForwardMove2
+		<< SideMove1
+		<< SideMove2
+		<< ScoreIcon
+		<< InvFirst
+		<< InvSel
+		<< MorphWeapon
+		<< DamageFade
+		<< PlayerFlags
+		<< FlechetteType;
+	arc << GruntSpeed << FallingScreamMinSpeed << FallingScreamMaxSpeed;
+	arc << UseRange;
+	arc << AirCapacity;
+	arc << ViewHeight;
+}
+
+class APhoenixRod : public AWeapon
+{
+	DECLARE_CLASS(APhoenixRod, AWeapon)
+public:
+	DECLARE_OLD_SERIAL
+	int FlameCount;		// for flamethrower duration
+};
+
+void APhoenixRod::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << FlameCount;
+}
+
+class ACWeapWraithverge : public AClericWeapon
+{
+	DECLARE_CLASS(ACWeapWraithverge, AClericWeapon)
+public:
+	void Serialize(FArchive &arc);
+	BYTE CHolyCount;
+};
+
+void ACWeapWraithverge::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << CHolyCount;
+}
+
+class AMWeapBloodscourge : public AMageWeapon
+{
+	DECLARE_CLASS(AMWeapBloodscourge, AMageWeapon)
+public:
+	void Serialize(FArchive &arc);
+	BYTE MStaffCount;
+};
+
+void AMWeapBloodscourge::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << MStaffCount;
+}
+
+void ASigil::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << NumPieces << DownPieces;
+}
+
+class ASecurityCamera : public AActor
+{
+	DECLARE_CLASS(ASecurityCamera, AActor)
+public:
+	void PostBeginPlay();
+	void Tick();
+
+	void Serialize(FArchive &arc);
+protected:
+	DAngle Center;
+	DAngle Acc;
+	DAngle Delta;
+	DAngle Range;
+};
+
+void ASecurityCamera::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << Center << Acc << Delta << Range;
+}
+
+
+class AAimingCamera : public ASecurityCamera
+{
+	DECLARE_CLASS(AAimingCamera, ASecurityCamera)
+public:
+	void PostBeginPlay();
+	void Tick();
+
+	void Serialize(FArchive &arc);
+protected:
+	DAngle MaxPitchChange;
+};
+
+void AAimingCamera::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << MaxPitchChange;
+}
+
+void APowerupGiver::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << PowerupType;
+	arc << EffectTics << BlendColor << Mode;
+	arc << Strength;
+}
+void APowerup::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << EffectTics << BlendColor << Mode;
+	arc << Strength;
+}
+
+void APowerTorch::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << NewTorch << NewTorchDelta;
+}
+
+void APowerFlight::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << HitCenterFrame;
+}
+
+void APowerSpeed::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << SpeedFlags;
+}
+
+void APowerMorph::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << PlayerClass << MorphStyle << MorphFlash << UnMorphFlash;
+	arc << Player;
+}
 
 
 #endif

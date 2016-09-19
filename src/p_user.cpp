@@ -53,6 +53,7 @@
 #include "d_net.h"
 #include "gstrings.h"
 #include "farchive.h"
+#include "serializer.h"
 #include "r_renderer.h"
 #include "d_player.h"
 #include "r_utility.h"
@@ -631,29 +632,32 @@ END_POINTERS
 
 IMPLEMENT_CLASS (APlayerChunk)
 
-void APlayerPawn::Serialize(FArchive &arc)
+void APlayerPawn::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
+	auto def = (APlayerPawn*)GetDefault();
 
-	arc << JumpZ
-		<< MaxHealth
-		<< RunHealth
-		<< SpawnMask
-		<< ForwardMove1
-		<< ForwardMove2
-		<< SideMove1
-		<< SideMove2
-		<< ScoreIcon
-		<< InvFirst
-		<< InvSel
-		<< MorphWeapon
-		<< DamageFade
-		<< PlayerFlags
-		<< FlechetteType;
-	arc << GruntSpeed << FallingScreamMinSpeed << FallingScreamMaxSpeed;
-	arc << UseRange;
-	arc << AirCapacity;
-	arc << ViewHeight;
+	arc("jumpz", JumpZ, def->JumpZ)
+		("maxhealth", MaxHealth, def->MaxHealth)
+		("runhealth", RunHealth, def->RunHealth)
+		("spawnmask", SpawnMask, def->SpawnMask)
+		("forwardmove1", ForwardMove1, def->ForwardMove1)
+		("forwardmove2", ForwardMove2, def->ForwardMove2)
+		("sidemove1", SideMove1, def->SideMove1)
+		("sidemove2", SideMove2, def->SideMove2)
+		("scoreicon", ScoreIcon, def->ScoreIcon)
+		("invfirst", InvFirst)
+		("invsel", InvSel)
+		("morphweapon", MorphWeapon, def->MorphWeapon)
+		("damagefade", DamageFade, def->DamageFade)
+		("playerflags", PlayerFlags, def->PlayerFlags)
+		("flechettetype", FlechetteType, def->FlechetteType)
+		("gruntspeed", GruntSpeed, def->GruntSpeed)
+		("fallingscreammin", FallingScreamMinSpeed, def->FallingScreamMinSpeed)
+		("fallingscreammaxn", FallingScreamMaxSpeed, def->FallingScreamMaxSpeed)
+		("userange", UseRange, def->UseRange)
+		("aircapacity", AirCapacity, def->AirCapacity)
+		("viewheight", ViewHeight, def->ViewHeight);
 }
 
 //===========================================================================

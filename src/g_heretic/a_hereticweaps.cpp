@@ -1142,10 +1142,11 @@ class APhoenixRod : public AWeapon
 {
 	DECLARE_CLASS (APhoenixRod, AWeapon)
 public:
-	void Serialize(FArchive &arc)
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc)
 	{
 		Super::Serialize (arc);
-		arc << FlameCount;
+		arc("flamecount", FlameCount);
 	}
 	int FlameCount;		// for flamethrower duration
 };

@@ -1220,7 +1220,6 @@ set (PCH_SOURCES
 	thingdef/thingdef_properties.cpp
 	thingdef/thingdef_states.cpp
 	xlat/parse_xlat.cpp
-	fragglescript/t_fspic.cpp
 	fragglescript/t_func.cpp
 	fragglescript/t_load.cpp
 	fragglescript/t_oper.cpp

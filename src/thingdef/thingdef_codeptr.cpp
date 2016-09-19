@@ -76,6 +76,7 @@
 #include "d_player.h"
 #include "p_maputl.h"
 #include "p_spec.h"
+#include "templates.h"
 #include "math/cmath.h"
 
 AActor *SingleActorFromTID(int tid, AActor *defactor);
@@ -224,6 +225,38 @@ DEFINE_ACTION_FUNCTION(AActor, CheckClass)
 		else
 		{
 			ret->SetInt(self->GetClass() == checktype);
+		}
+		return 1;
+	}
+	return 0;
+}
+
+//==========================================================================
+//
+// CheckClass
+//
+// NON-ACTION function to calculate missile damage for the given actor
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(AActor, GetMissileDamage)
+{
+	if (numret > 0)
+	{
+		assert(ret != NULL);
+		PARAM_SELF_PROLOGUE(AActor);
+		PARAM_INT(mask);
+		PARAM_INT(add)
+		PARAM_INT_OPT(pick_pointer) { pick_pointer = AAPTR_DEFAULT; }
+
+		self = COPY_AAPTR(self, pick_pointer);
+		if (self == NULL)
+		{
+			ret->SetInt(0);
+		}
+		else
+		{
+			ret->SetInt(self->GetMissileDamage(mask, add));
 		}
 		return 1;
 	}
@@ -1373,8 +1406,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfArmorType)
 
 enum
 {
-	XF_HURTSOURCE = 1,
-	XF_NOTMISSILE = 4,
+	XF_HURTSOURCE =		1,
+	XF_NOTMISSILE =		4,
+	XF_NOACTORTYPE =	1 << 3,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
@@ -1388,6 +1422,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 	PARAM_INT_OPT	(nails)			   { nails = 0; }
 	PARAM_INT_OPT	(naildamage)	   { naildamage = 10; }
 	PARAM_CLASS_OPT	(pufftype, AActor) { pufftype = PClass::FindActor(NAME_BulletPuff); }
+	PARAM_NAME_OPT	(damagetype)		{ damagetype = NAME_None; }
 
 	if (damage < 0)	// get parameters from metadata
 	{
@@ -1414,13 +1449,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 		}
 	}
 
-	P_RadiusAttack (self, self->target, damage, distance, self->DamageType, flags, fulldmgdistance);
+	if (!(flags & XF_NOACTORTYPE) && damagetype == NAME_None)
+	{
+		damagetype = self->DamageType;
+	}
+
+	int pflags = 0;
+	if (flags & XF_HURTSOURCE)	pflags |= RADF_HURTSOURCE;
+	if (flags & XF_NOTMISSILE)	pflags |= RADF_SOURCEISSPOT;
+
+	int count = P_RadiusAttack (self, self->target, damage, distance, damagetype, pflags, fulldmgdistance);
 	P_CheckSplash(self, distance);
 	if (alert && self->target != NULL && self->target->player != NULL)
 	{
 		P_NoiseAlert(self->target, self);
 	}
-	return 0;
+	ACTION_RETURN_INT(count);
 }
 
 //==========================================================================
@@ -4494,7 +4538,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 		else { target = viewport; viewport = self; }
 	}
 
-	if (fov > 0 && (fov < 360.))
+	fov = MIN<DAngle>(fov, 360.);
+
+	if (fov > 0)
 	{
 		DAngle an = absangle(viewport->AngleTo(target), viewport->Angles.Yaw);
 
@@ -4671,90 +4717,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 	PARAM_STRING	(flagname);
 	PARAM_BOOL		(value);
 
-	const char *dot = strchr(flagname, '.');
-	FFlagDef *fd;
-	PClassActor *cls = self->GetClass();
-
-	if (dot != NULL)
-	{
-		FString part1(flagname.GetChars(), dot - flagname);
-		fd = FindFlag(cls, part1, dot + 1);
-	}
-	else
-	{
-		fd = FindFlag(cls, flagname, NULL);
-	}
-
-	if (fd != NULL)
-	{
-		bool kill_before, kill_after;
-		INTBOOL item_before, item_after;
-		INTBOOL secret_before, secret_after;
-
-		kill_before = self->CountsAsKill();
-		item_before = self->flags & MF_COUNTITEM;
-		secret_before = self->flags5 & MF5_COUNTSECRET;
-
-		if (fd->structoffset == -1)
-		{
-			HandleDeprecatedFlags(self, cls, value, fd->flagbit);
-		}
-		else
-		{
-			ActorFlags *flagp = (ActorFlags*) (((char*)self) + fd->structoffset);
-
-			// If these 2 flags get changed we need to update the blockmap and sector links.
-			bool linkchange = flagp == &self->flags && (fd->flagbit == MF_NOBLOCKMAP || fd->flagbit == MF_NOSECTOR);
-
-			if (linkchange) self->UnlinkFromWorld();
-			ModActorFlag(self, fd, value);
-			if (linkchange) self->LinkToWorld();
-		}
-		kill_after = self->CountsAsKill();
-		item_after = self->flags & MF_COUNTITEM;
-		secret_after = self->flags5 & MF5_COUNTSECRET;
-		// Was this monster previously worth a kill but no longer is?
-		// Or vice versa?
-		if (kill_before != kill_after)
-		{
-			if (kill_after)
-			{ // It counts as a kill now.
-				level.total_monsters++;
-			}
-			else
-			{ // It no longer counts as a kill.
-				level.total_monsters--;
-			}
-		}
-		// same for items
-		if (item_before != item_after)
-		{
-			if (item_after)
-			{ // It counts as an item now.
-				level.total_items++;
-			}
-			else
-			{ // It no longer counts as an item
-				level.total_items--;
-			}
-		}
-		// and secretd
-		if (secret_before != secret_after)
-		{
-			if (secret_after)
-			{ // It counts as an secret now.
-				level.total_secrets++;
-			}
-			else
-			{ // It no longer counts as an secret
-				level.total_secrets--;
-			}
-		}
-	}
-	else
-	{
-		Printf("Unknown flag '%s' in '%s'\n", flagname.GetChars(), cls->TypeName.GetChars());
-	}
+	ModActorFlag(self, flagname, value);
 	return 0;
 }
 
@@ -5888,24 +5851,63 @@ enum RadiusGiveFlags
 						RGF_OBJECTS |
 						RGF_VOODOO |
 						RGF_CORPSES | 
+						RGF_KILLED |
 						RGF_MISSILES |
 						RGF_ITEMS,
 };
 
 static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amount, double distance, int flags, PClassActor *filter, FName species, double mindist)
 {
-	// [MC] We only want to make an exception for missiles here. Nothing else.
-	bool missilePass = !!((flags & RGF_MISSILES) && thing->flags & MF_MISSILE);
+	
+	bool doPass = false;
+	// Always allow self to give, no matter what other flags are specified. Otherwise, not at all.
 	if (thing == self)
 	{
 		if (!(flags & RGF_GIVESELF))
 			return false;
+		doPass = true;
 	}
 	else if (thing->flags & MF_MISSILE)
 	{
-		if (!missilePass)
+		if (!(flags & RGF_MISSILES))
 			return false;
+		doPass = true;
 	}
+	else if (((flags & RGF_ITEMS) && thing->IsKindOf(RUNTIME_CLASS(AInventory))) ||
+			((flags & RGF_CORPSES) && thing->flags & MF_CORPSE) ||
+			((flags & RGF_KILLED) && thing->flags6 & MF6_KILLED))
+	{
+		doPass = true;
+	}
+	else if ((flags & (RGF_MONSTERS | RGF_OBJECTS | RGF_PLAYERS | RGF_VOODOO)))
+	{
+		// Make sure it's alive as we're not looking for corpses or killed here.
+		if (!doPass && thing->health > 0)
+		{
+			if (thing->player != nullptr)
+			{
+				if (((flags & RGF_PLAYERS) && (thing->player->mo == thing)) ||
+					((flags & RGF_VOODOO) && (thing->player->mo != thing)))
+				{
+					doPass = true;
+				}
+			}
+			else
+			{
+				if (((flags & RGF_MONSTERS) && (thing->flags3 & MF3_ISMONSTER)) ||
+					((flags & RGF_OBJECTS) && (!(thing->flags3 & MF3_ISMONSTER)) &&
+					(thing->flags & MF_SHOOTABLE || thing->flags6 & MF6_VULNERABLE)))
+				{
+					doPass = true;
+				}
+			}
+		}
+	}
+
+	// Nothing matched up so don't bother with the rest.
+	if (!doPass)
+		return false;
+
 	//[MC] Check for a filter, species, and the related exfilter/expecies/either flag(s).
 	bool filterpass = DoCheckClass(thing, filter, !!(flags & RGF_EXFILTER)),
 		speciespass = DoCheckSpecies(thing, species, !!(flags & RGF_EXSPECIES));
@@ -5916,13 +5918,14 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 			return false;
 	}
 
-	//Check for target, master, and tracer flagging.
-	bool targetPass = true;
-	bool masterPass = true;
-	bool tracerPass = true;
-	bool ptrPass = false;
 	if ((thing != self) && (flags & (RGF_NOTARGET | RGF_NOMASTER | RGF_NOTRACER)))
 	{
+		//Check for target, master, and tracer flagging.
+		bool targetPass = true;
+		bool masterPass = true;
+		bool tracerPass = true;
+		bool ptrPass = false;
+
 		if ((thing == self->target) && (flags & RGF_NOTARGET))
 			targetPass = false;
 		if ((thing == self->master) && (flags & RGF_NOMASTER))
@@ -5937,35 +5940,8 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 			return false;
 	}
 
-	//Next, actor flag checking.
-	bool selfPass = !!((flags & RGF_GIVESELF) && thing == self);
-	bool corpsePass = !!((flags & RGF_CORPSES) && thing->flags & MF_CORPSE);
-	bool killedPass = !!((flags & RGF_KILLED) && thing->flags6 & MF6_KILLED);
-	bool monsterPass = !!((flags & RGF_MONSTERS) && thing->flags3 & MF3_ISMONSTER);
-	bool objectPass = !!((flags & RGF_OBJECTS) && (thing->player == NULL) && (!(thing->flags3 & MF3_ISMONSTER))
-		&& ((thing->flags & MF_SHOOTABLE) || (thing->flags6 & MF6_VULNERABLE)));
-	bool playerPass = !!((flags & RGF_PLAYERS) && (thing->player != NULL) && (thing->player->mo == thing));
-	bool voodooPass = !!((flags & RGF_VOODOO) && (thing->player != NULL) && (thing->player->mo != thing));
-	//Self calls priority over the rest of this.
-	if (!selfPass)
+	if (doPass)
 	{
-		//If it's specifically a monster/object/player/voodoo... Can be either or...
-		if (monsterPass || objectPass || playerPass || voodooPass)
-		{
-			//...and is dead, without desire to give to the dead...
-			if (((thing->health <= 0) && !(corpsePass || killedPass)))
-			{
-				//Skip!
-				return false;
-			}
-		}
-	}
-
-	bool itemPass = !!((flags & RGF_ITEMS) && thing->IsKindOf(RUNTIME_CLASS(AInventory)));
-
-	if (selfPass || monsterPass || corpsePass || killedPass || itemPass || objectPass || missilePass || playerPass || voodooPass)
-	{
-
 		DVector3 diff = self->Vec3To(thing);
 		diff.Z += thing->Height *0.5;
 		if (flags & RGF_CUBE)
@@ -7247,12 +7223,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMovementDirection)
 				{
 					current -= anglelimit + offset;
 				}
-				else // huh???
-				{
-					current = angle + 180. + offset;
-				}
 				mobj->SetAngle(current, !!(flags & FMDF_INTERPOLATE));
 			}
+			else
+				mobj->SetAngle(angle + offset, !!(flags & FMDF_INTERPOLATE));
 		}
 		else
 			mobj->SetAngle(angle + offset, !!(flags & FMDF_INTERPOLATE));

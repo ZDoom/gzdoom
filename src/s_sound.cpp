@@ -552,7 +552,7 @@ void S_UnloadSound (sfxinfo_t *sfx)
 		GSnd->UnloadSound(sfx->data);
 		sfx->data.Clear();
         sfx->data3d.Clear();
-		DPrintf("Unloaded sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
+		DPrintf(DMSG_NOTIFY, "Unloaded sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
 	}
 }
 
@@ -1327,7 +1327,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 		{
 			if (S_sfx[i].data.isValid() && S_sfx[i].link == sfxinfo_t::NO_LINK && S_sfx[i].lumpnum == sfx->lumpnum)
 			{
-				DPrintf ("Linked %s to %s (%d)\n", sfx->name.GetChars(), S_sfx[i].name.GetChars(), i);
+				DPrintf (DMSG_NOTIFY, "Linked %s to %s (%d)\n", sfx->name.GetChars(), S_sfx[i].name.GetChars(), i);
 				sfx->link = i;
 				// This is necessary to avoid using the rolloff settings of the linked sound if its
 				// settings are different.
@@ -1336,7 +1336,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 			}
 		}
 
-		DPrintf("Loading sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
+		DPrintf(DMSG_NOTIFY, "Loading sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
 
 		int size = Wads.LumpLength(sfx->lumpnum);
 		if (size > 0)
@@ -1396,7 +1396,7 @@ static void S_LoadSound3D(sfxinfo_t *sfx)
     if(sfx->data3d.isValid())
         return;
 
-    DPrintf("Loading monoized sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
+    DPrintf(DMSG_NOTIFY, "Loading monoized sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
 
     int size = Wads.LumpLength(sfx->lumpnum);
     if(size <= 0) return;

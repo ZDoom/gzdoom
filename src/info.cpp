@@ -344,7 +344,7 @@ size_t PClassActor::PropagateMark()
 	// Mark damage function
 	if (Defaults != NULL)
 	{
-		GC::Mark(((AActor *)Defaults)->Damage);
+		GC::Mark(((AActor *)Defaults)->DamageFunc);
 	}
 
 //	marked += ActorInfo->NumOwnedStates * sizeof(FState);

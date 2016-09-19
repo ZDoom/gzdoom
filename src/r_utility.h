@@ -33,7 +33,7 @@ extern int				validcount;
 extern angle_t			LocalViewAngle;			// [RH] Added to consoleplayer's angle
 extern int				LocalViewPitch;			// [RH] Used directly instead of consoleplayer's pitch
 extern bool				LocalKeyboardTurner;	// [RH] The local player used the keyboard to turn, so interpolate
-extern int				WidescreenRatio;
+extern float			WidescreenRatio;
 
 extern double			r_TicFracF;
 extern DWORD			r_FrameTime;
@@ -95,7 +95,7 @@ void R_ExecuteSetViewSize (void);
 
 // Called by M_Responder.
 void R_SetViewSize (int blocks);
-void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight);
+void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, bool renderingToCanvas = false);
 
 
 extern void R_FreePastViewers ();

@@ -138,7 +138,7 @@ angle_t			LocalViewAngle;
 int				LocalViewPitch;
 bool			LocalKeyboardTurner;
 
-int				WidescreenRatio;
+float			WidescreenRatio;
 int				setblocks;
 int				extralight;
 bool			setsizeneeded;
@@ -198,9 +198,9 @@ void R_SetViewSize (int blocks)
 //
 //==========================================================================
 
-void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
+void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, bool renderingToCanvas)
 {
-	int trueratio;
+	float trueratio;
 
 	if (windowSize >= 11)
 	{
@@ -220,8 +220,15 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 		freelookviewheight = ((setblocks*fullHeight)/10)&~7;
 	}
 
-	// If the screen is approximately 16:9 or 16:10, consider it widescreen.
-	WidescreenRatio = CheckRatio (fullWidth, fullHeight, &trueratio);
+	if (renderingToCanvas)
+	{
+		WidescreenRatio = fullWidth / (float)fullHeight;
+		trueratio = WidescreenRatio;
+	}
+	else
+	{
+		WidescreenRatio = ActiveRatio(fullWidth, fullHeight, &trueratio);
+	}
 
 	DrawFSHUD = (windowSize == 11);
 	
@@ -230,13 +237,13 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 
 	centery = viewheight/2;
 	centerx = viewwidth/2;
-	if (Is54Aspect(WidescreenRatio))
+	if (AspectTallerThanWide(WidescreenRatio))
 	{
 		centerxwide = centerx;
 	}
 	else
 	{
-		centerxwide = centerx * BaseRatioSizes[WidescreenRatio][3] / 48;
+		centerxwide = centerx * AspectMultiplier(WidescreenRatio) / 48;
 	}
 
 
@@ -656,7 +663,7 @@ void R_AddInterpolationPoint(const DVector3a &vec)
 //
 //==========================================================================
 
-static double QuakePower(double factor, double intensity, double offset, double falloff, double wfalloff)
+static double QuakePower(double factor, double intensity, double offset)
 { 
 	double randumb;
 	if (intensity == 0)
@@ -667,7 +674,7 @@ static double QuakePower(double factor, double intensity, double offset, double 
 	{
 		randumb = pr_torchflicker.GenRand_Real2() * (intensity * 2) - intensity;
 	}
-	return factor * (wfalloff * offset + falloff * randumb);
+	return factor * (offset + randumb);
 }
 
 //==========================================================================
@@ -797,36 +804,36 @@ void R_SetupFrame (AActor *actor)
 
 			if (jiggers.RollIntensity != 0 || jiggers.RollWave != 0)
 			{
-				ViewRoll += QuakePower(quakefactor, jiggers.RollIntensity, jiggers.RollWave, jiggers.RFalloff, jiggers.RWFalloff);
+				ViewRoll += QuakePower(quakefactor, jiggers.RollIntensity, jiggers.RollWave);
 			}
 			if (jiggers.RelIntensity.X != 0 || jiggers.RelOffset.X != 0)
 			{
 				an = camera->Angles.Yaw;
-				double power = QuakePower(quakefactor, jiggers.RelIntensity.X, jiggers.RelOffset.X, jiggers.Falloff, jiggers.WFalloff);
+				double power = QuakePower(quakefactor, jiggers.RelIntensity.X, jiggers.RelOffset.X);
 				ViewPos += an.ToVector(power);
 			}
 			if (jiggers.RelIntensity.Y != 0 || jiggers.RelOffset.Y != 0)
 			{
 				an = camera->Angles.Yaw + 90;
-				double power = QuakePower(quakefactor, jiggers.RelIntensity.Y, jiggers.RelOffset.Y, jiggers.Falloff, jiggers.WFalloff);
+				double power = QuakePower(quakefactor, jiggers.RelIntensity.Y, jiggers.RelOffset.Y);
 				ViewPos += an.ToVector(power);
 			}
 			// FIXME: Relative Z is not relative
 			if (jiggers.RelIntensity.Z != 0 || jiggers.RelOffset.Z != 0)
 			{
-				ViewPos.Z += QuakePower(quakefactor, jiggers.RelIntensity.Z, jiggers.RelOffset.Z, jiggers.Falloff, jiggers.WFalloff);
+				ViewPos.Z += QuakePower(quakefactor, jiggers.RelIntensity.Z, jiggers.RelOffset.Z);
 			}
 			if (jiggers.Intensity.X != 0 || jiggers.Offset.X != 0)
 			{
-				ViewPos.X += QuakePower(quakefactor, jiggers.Intensity.X, jiggers.Offset.X, jiggers.Falloff, jiggers.WFalloff);
+				ViewPos.X += QuakePower(quakefactor, jiggers.Intensity.X, jiggers.Offset.X);
 			}
 			if (jiggers.Intensity.Y != 0 || jiggers.Offset.Y != 0)
 			{
-				ViewPos.Y += QuakePower(quakefactor, jiggers.Intensity.Y, jiggers.Offset.Y, jiggers.Falloff, jiggers.WFalloff);
+				ViewPos.Y += QuakePower(quakefactor, jiggers.Intensity.Y, jiggers.Offset.Y);
 			}
 			if (jiggers.Intensity.Z != 0 || jiggers.Offset.Z != 0)
 			{
-				ViewPos.Z += QuakePower(quakefactor, jiggers.Intensity.Z, jiggers.Offset.Z, jiggers.Falloff, jiggers.WFalloff);
+				ViewPos.Z += QuakePower(quakefactor, jiggers.Intensity.Z, jiggers.Offset.Z);
 			}
 		}
 	}

@@ -270,22 +270,27 @@ static void FinishThingdef()
 	for (i = 0; i < StateTempCalls.Size(); ++i)
 	{
 		FStateTempCall *tcall = StateTempCalls[i];
-		VMFunction *func;
+		VMFunction *func = nullptr;
 
 		assert(tcall->Code != NULL);
 
-		// Can we call this function directly without wrapping it in an
-		// anonymous function? e.g. Are we passing any parameters to it?
-		func = tcall->Code->GetDirectFunction();
-		if (func == NULL)
-		{
-			FCompileContext ctx(tcall->ActorClass);
-			tcall->Code = tcall->Code->Resolve(ctx);
+		// We don't know the return type in advance for anonymous functions.
+		FCompileContext ctx(tcall->ActorClass, nullptr);
+		tcall->Code = tcall->Code->Resolve(ctx);
+		tcall->Proto = ctx.ReturnProto;
 
-			// Make sure resolving it didn't obliterate it.
-			if (tcall->Code != NULL)
+		// Make sure resolving it didn't obliterate it.
+		if (tcall->Code != nullptr)
+		{
+			// Can we call this function directly without wrapping it in an
+			// anonymous function? e.g. Are we passing any parameters to it?
+			func = tcall->Code->GetDirectFunction();
+
+			if (func == nullptr)
 			{
 				VMFunctionBuilder buildit;
+
+				assert(tcall->Proto != nullptr);
 
 				// Allocate registers used to pass parameters in.
 				// self, stateowner, state (all are pointers)
@@ -300,15 +305,7 @@ static void FinishThingdef()
 				// Generate prototype for this anonymous function
 				TArray<PType *> args(3);
 				SetImplicitArgs(&args, NULL, tcall->ActorClass, VARF_Method | VARF_Action);
-				if (tcall->Proto != NULL)
-				{
-					sfunc->Proto = NewPrototype(tcall->Proto->ReturnTypes, args);
-				}
-				else
-				{
-					TArray<PType *> norets(0);
-					sfunc->Proto = NewPrototype(norets, args);
-				}
+				sfunc->Proto = NewPrototype(tcall->Proto->ReturnTypes, args);
 
 				func = sfunc;
 
@@ -321,11 +318,9 @@ static void FinishThingdef()
 					codesize += sfunc->CodeSize;
 				}
 			}
-		}
-		if (tcall->Code != NULL)
-		{
+
 			delete tcall->Code;
-			tcall->Code = NULL;
+			tcall->Code = nullptr;
 			for (int k = 0; k < tcall->NumStates; ++k)
 			{
 				tcall->ActorClass->OwnedStates[tcall->FirstState + k].SetAction(func);
@@ -348,17 +343,17 @@ static void FinishThingdef()
 
 		if (!def)
 		{
-			Printf("No ActorInfo defined for class '%s'\n", ti->TypeName.GetChars());
+			Printf(TEXTCOLOR_RED "No ActorInfo defined for class '%s'\n", ti->TypeName.GetChars());
 			errorcount++;
 			continue;
 		}
 
-		if (def->Damage != NULL)
+		if (def->DamageFunc != nullptr)
 		{
-			FxDamageValue *dmg = (FxDamageValue *)ActorDamageFuncs[(uintptr_t)def->Damage - 1];
+			FxDamageValue *dmg = (FxDamageValue *)ActorDamageFuncs[(uintptr_t)def->DamageFunc - 1];
 			VMScriptFunction *sfunc;
 			sfunc = dmg->GetFunction();
-			if (sfunc == NULL)
+			if (sfunc == nullptr)
 			{
 				FCompileContext ctx(ti);
 				dmg = static_cast<FxDamageValue *>(dmg->Resolve(ctx));
@@ -370,15 +365,15 @@ static void FinishThingdef()
 					dmg->Emit(&buildit);
 					sfunc = buildit.MakeFunction();
 					sfunc->NumArgs = 1;
-					sfunc->Proto = NULL;		///FIXME: Need a proper prototype here
+					sfunc->Proto = nullptr;		///FIXME: Need a proper prototype here
 					// Save this function in case this damage value was reused
 					// (which happens quite easily with inheritance).
 					dmg->SetFunction(sfunc);
 				}
 			}
-			def->Damage = sfunc;
+			def->DamageFunc = sfunc;
 
-			if (dump != NULL && sfunc != NULL)
+			if (dump != nullptr && sfunc != nullptr)
 			{
 				char label[64];
 				int labellen = mysnprintf(label, countof(label), "Function %s.Damage",

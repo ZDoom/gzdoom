@@ -109,8 +109,8 @@ static FCompatOption Options[] =
 	{ "ignoreteleporttags",		BCOMPATF_BADTELEPORTERS, SLOT_BCOMPAT },
 	{ "rebuildnodes",			BCOMPATF_REBUILDNODES, SLOT_BCOMPAT },
 	{ "linkfrozenprops",		BCOMPATF_LINKFROZENPROPS, SLOT_BCOMPAT },
-	{ "disablepushwindowcheck",	BCOMPATF_NOWINDOWCHECK, SLOT_BCOMPAT },
 	{ "floatbob",				BCOMPATF_FLOATBOB, SLOT_BCOMPAT },
+	{ "noslopeid",				BCOMPATF_NOSLOPEID, SLOT_BCOMPAT },
 
 	// list copied from g_mapinfo.cpp
 	{ "shorttex",				COMPATF_SHORTTEX, SLOT_COMPAT },
@@ -147,6 +147,8 @@ static FCompatOption Options[] =
 	{ "soundcutoff",			COMPATF2_SOUNDCUTOFF, SLOT_COMPAT2 },
 	{ "pointonline",			COMPATF2_POINTONLINE, SLOT_COMPAT2 },
 	{ "multiexit",				COMPATF2_MULTIEXIT, SLOT_COMPAT2 },
+	{ "teleport",				COMPATF2_TELEPORT, SLOT_COMPAT2 },
+	{ "disablepushwindowcheck",	COMPATF2_PUSHWINDOW, SLOT_COMPAT2 },
 
 	{ NULL, 0, 0 }
 };
@@ -397,7 +399,7 @@ void CheckCompatibility(MapData *map)
 
 	flags = BCompatMap.CheckKey(md5);
 
-	if (developer)
+	if (developer >= DMSG_NOTIFY)
 	{
 		Printf("MD5 = ");
 		for (size_t j = 0; j < sizeof(md5.Bytes); ++j)

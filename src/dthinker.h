@@ -77,6 +77,11 @@ public:
 	static void RunThinkers (int statnum);
 	static void DestroyAllThinkers ();
 	static void DestroyMostThinkers ();
+	static void DestroyThinkersInList(int statnum)
+	{
+		DestroyThinkersInList(Thinkers[statnum]);
+		DestroyThinkersInList(FreshThinkers[statnum]);
+	}
 	static void SerializeAll (FArchive &arc, bool keepPlayers);
 	static void MarkRoots();
 

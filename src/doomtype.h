@@ -152,7 +152,7 @@ int Printf (int printlevel, const char *, ...) GCCPRINTF(2,3);
 int Printf (const char *, ...) GCCPRINTF(1,2);
 
 // [RH] Same here:
-int DPrintf (const char *, ...) GCCPRINTF(1,2);
+int DPrintf (int level, const char *, ...) GCCPRINTF(2,3);
 
 extern "C" int mysnprintf(char *buffer, size_t count, const char *format, ...) GCCPRINTF(3,4);
 extern "C" int myvsnprintf(char *buffer, size_t count, const char *format, va_list argptr) GCCFORMAT(3);
@@ -165,15 +165,19 @@ enum
 	PRINT_MEDIUM,	// death messages
 	PRINT_HIGH,		// critical messages
 	PRINT_CHAT,		// chat messages
-	PRINT_TEAMCHAT	// chat messages from a teammate
+	PRINT_TEAMCHAT,	// chat messages from a teammate
+	PRINT_LOG,		// only to logfile
+	PRINT_BOLD = 200				// What Printf_Bold used
 };
-#define PRINT_LOW				0				// pickup messages
-#define PRINT_MEDIUM			1				// death messages
-#define PRINT_HIGH				2				// critical messages
-#define PRINT_CHAT				3				// chat messages
-#define PRINT_TEAMCHAT			4				// chat messages from a teammate
-#define PRINT_LOG				5				// only to logfile
-#define PRINT_BOLD				200				// What Printf_Bold used
+
+enum
+{
+	DMSG_OFF,		// no developer messages.
+	DMSG_ERROR,		// general notification messages
+	DMSG_WARNING,	// warnings
+	DMSG_NOTIFY,	// general notification messages
+	DMSG_SPAMMY,	// for those who want to see everything, regardless of its usefulness.
+};
 
 struct PalEntry
 {

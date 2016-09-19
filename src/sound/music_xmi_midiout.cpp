@@ -143,7 +143,7 @@ XMISong::XMISong (FileReader &reader, EMidiDevice type, const char *args)
 	memset(Songs, 0, sizeof(*Songs) * NumSongs);
 	FindXMIDforms(MusHeader, SongLen, Songs);
 	CurrSong = Songs;
-	DPrintf("XMI song count: %d\n", NumSongs);
+	DPrintf(DMSG_SPAMMY, "XMI song count: %d\n", NumSongs);
 }
 
 //==========================================================================

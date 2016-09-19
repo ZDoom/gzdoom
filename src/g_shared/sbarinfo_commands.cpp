@@ -1914,7 +1914,7 @@ class CommandAspectRatio : public SBarInfoCommandFlowControl
 		{
 			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
 
-			SetTruth(ratioMap[CheckRatio(screen->GetWidth(), screen->GetHeight())] == ratio, block, statusBar);
+			SetTruth(ratioMap[FindRatio()] == ratio, block, statusBar);
 		}
 	protected:
 		enum Ratio
@@ -1931,6 +1931,37 @@ class CommandAspectRatio : public SBarInfoCommandFlowControl
 		static Ratio	ratioMap[5];
 
 		Ratio			ratio;
+
+	private:
+		int FindRatio()
+		{
+			float aspect = ActiveRatio(screen->GetWidth(), screen->GetHeight());
+
+			static std::pair<float, int> ratioTypes[] =
+			{
+				{ 21 / 9.0f , ASPECTRATIO_16_9 },
+				{ 16 / 9.0f , ASPECTRATIO_16_9 },
+				{ 17 / 10.0f , ASPECTRATIO_17_10 },
+				{ 16 / 10.0f , ASPECTRATIO_16_10 },
+				{ 4 / 3.0f , ASPECTRATIO_4_3 },
+				{ 5 / 4.0f , ASPECTRATIO_5_4 },
+				{ 0.0f, 0 }
+			};
+
+			int ratio = ratioTypes[0].second;
+			float distance = fabs(ratioTypes[0].first - aspect);
+			for (int i = 1; ratioTypes[i].first != 0.0f; i++)
+			{
+				float d = fabs(ratioTypes[i].first - aspect);
+				if (d < distance)
+				{
+					ratio = ratioTypes[i].second;
+					distance = d;
+				}
+			}
+
+			return ratio;
+		}
 };
 CommandAspectRatio::Ratio CommandAspectRatio::ratioMap[5] = {ASPECTRATIO_4_3,ASPECTRATIO_16_9,ASPECTRATIO_16_10,ASPECTRATIO_16_10,ASPECTRATIO_5_4};
 
@@ -3464,6 +3495,78 @@ class CommandIfWaterLevel : public SBarInfoNegatableFlowControl
 
 ////////////////////////////////////////////////////////////////////////////////
 
+class CommandIfCVarInt : public SBarInfoNegatableFlowControl
+{
+	public:
+		CommandIfCVarInt(SBarInfo *script) : SBarInfoNegatableFlowControl(script),
+			equalcomp(false)
+		{
+		}
+
+		void	ParseNegatable(FScanner &sc, bool fullScreenOffsets)
+		{
+			if(!sc.CheckToken(TK_StringConst))
+			{
+				sc.MustGetToken(TK_Identifier);
+			}
+
+			cvarname = sc.String;
+			cvar = FindCVar(cvarname, nullptr);
+
+			if (cvar != nullptr)
+			{
+				ECVarType cvartype = cvar->GetRealType();
+
+				if (cvartype == CVAR_Bool || cvartype == CVAR_Int)
+				{
+					sc.MustGetToken(',');
+					sc.MustGetToken(TK_IntConst);
+					value = sc.Number;
+
+					if (sc.CheckToken(','))
+					{
+						sc.MustGetToken(TK_Identifier);
+
+						if(sc.Compare("equal"))
+						{
+							equalcomp = true;
+						}
+					}
+				}
+				else
+				{
+					sc.ScriptError("Type mismatch: console variable '%s' is not of type 'bool' or 'int'.", cvarname.GetChars());
+				}
+			}
+			else
+			{
+				sc.ScriptError("Unknown console variable '%s'.", cvarname.GetChars());
+			}
+		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoNegatableFlowControl::Tick(block, statusBar, hudChanged);
+
+			bool result = false;
+			cvar = GetCVar(statusBar->CPlayer->mo, cvarname);
+
+			if (cvar != nullptr)
+			{
+				int cvarvalue = cvar->GetGenericRep(CVAR_Int).Int;
+				result = equalcomp ? cvarvalue == value : cvarvalue >= value;
+			}
+
+			SetTruth(result, block, statusBar);
+		}
+	protected:
+		FString		cvarname;
+		FBaseCVar	*cvar;
+		int			value;
+		bool		equalcomp;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
 static const char *SBarInfoCommandNames[] =
 {
 	"drawimage", "drawnumber", "drawswitchableimage",
@@ -3474,7 +3577,7 @@ static const char *SBarInfoCommandNames[] =
 	"isselected", "usesammo", "usessecondaryammo",
 	"hasweaponpiece", "inventorybarnotvisible",
 	"weaponammo", "ininventory", "alpha", "ifhealth",
-	"ifinvulnerable", "ifwaterlevel",
+	"ifinvulnerable", "ifwaterlevel", "ifcvarint",
 	NULL
 };
 
@@ -3488,7 +3591,7 @@ enum SBarInfoCommands
 	SBARINFO_ISSELECTED, SBARINFO_USESAMMO, SBARINFO_USESSECONDARYAMMO,
 	SBARINFO_HASWEAPONPIECE, SBARINFO_INVENTORYBARNOTVISIBLE,
 	SBARINFO_WEAPONAMMO, SBARINFO_ININVENTORY, SBARINFO_ALPHA, SBARINFO_IFHEALTH,
-	SBARINFO_IFINVULNERABLE, SBARINFO_IFWATERLEVEL,
+	SBARINFO_IFINVULNERABLE, SBARINFO_IFWATERLEVEL, SBARINFO_IFCVARINT,
 };
 
 SBarInfoCommand *SBarInfoCommandFlowControl::NextCommand(FScanner &sc)
@@ -3524,6 +3627,7 @@ SBarInfoCommand *SBarInfoCommandFlowControl::NextCommand(FScanner &sc)
 			case SBARINFO_IFHEALTH: return new CommandIfHealth(script);
 			case SBARINFO_IFINVULNERABLE: return new CommandIfInvulnerable(script);
 			case SBARINFO_IFWATERLEVEL: return new CommandIfWaterLevel(script);
+			case SBARINFO_IFCVARINT: return new CommandIfCVarInt(script);
 		}
 
 		sc.ScriptError("Unknown command '%s'.\n", sc.String);

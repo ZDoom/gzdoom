@@ -747,8 +747,8 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     ALCint major=0, minor=0;
     alcGetIntegerv(Device, ALC_MAJOR_VERSION, 1, &major);
     alcGetIntegerv(Device, ALC_MINOR_VERSION, 1, &minor);
-    DPrintf("  ALC Version: " TEXTCOLOR_BLUE"%d.%d\n", major, minor);
-    DPrintf("  ALC Extensions: " TEXTCOLOR_ORANGE"%s\n", alcGetString(Device, ALC_EXTENSIONS));
+    DPrintf(DMSG_SPAMMY, "  ALC Version: " TEXTCOLOR_BLUE"%d.%d\n", major, minor);
+    DPrintf(DMSG_SPAMMY, "  ALC Extensions: " TEXTCOLOR_ORANGE"%s\n", alcGetString(Device, ALC_EXTENSIONS));
 
     TArray<ALCint> attribs;
     if(*snd_samplerate > 0)
@@ -778,10 +778,10 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     }
     attribs.Clear();
 
-    DPrintf("  Vendor: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VENDOR));
-    DPrintf("  Renderer: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_RENDERER));
-    DPrintf("  Version: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VERSION));
-    DPrintf("  Extensions: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_EXTENSIONS));
+    DPrintf(DMSG_SPAMMY, "  Vendor: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VENDOR));
+    DPrintf(DMSG_SPAMMY, "  Renderer: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_RENDERER));
+    DPrintf(DMSG_SPAMMY, "  Version: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VERSION));
+    DPrintf(DMSG_SPAMMY, "  Extensions: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_EXTENSIONS));
 
     ALC.EXT_EFX = !!alcIsExtensionPresent(Device, "ALC_EXT_EFX");
     ALC.EXT_disconnect = !!alcIsExtensionPresent(Device, "ALC_EXT_disconnect");
@@ -864,7 +864,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
         return;
     }
     FreeSfx = Sources;
-    DPrintf("  Allocated " TEXTCOLOR_BLUE"%u" TEXTCOLOR_NORMAL" sources\n", Sources.Size());
+    DPrintf(DMSG_NOTIFY, "  Allocated " TEXTCOLOR_BLUE"%u" TEXTCOLOR_NORMAL" sources\n", Sources.Size());
 
     WasInWater = false;
     if(*snd_efx && ALC.EXT_EFX)
@@ -913,10 +913,10 @@ OpenALSoundRenderer::OpenALSoundRenderer()
             {
                 alEffecti(envReverb, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
                 if(alGetError() == AL_NO_ERROR)
-                    DPrintf("  EAX Reverb found\n");
+                    DPrintf(DMSG_SPAMMY, "  EAX Reverb found\n");
                 alEffecti(envReverb, AL_EFFECT_TYPE, AL_EFFECT_REVERB);
                 if(alGetError() == AL_NO_ERROR)
-                    DPrintf("  Standard Reverb found\n");
+                    DPrintf(DMSG_SPAMMY, "  Standard Reverb found\n");
 
                 alDeleteEffects(1, &envReverb);
                 getALError();
@@ -929,7 +929,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
                 alFilteri(EnvFilters[0], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
                 alFilteri(EnvFilters[1], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
                 if(getALError() == AL_NO_ERROR)
-                    DPrintf("  Lowpass found\n");
+                    DPrintf(DMSG_SPAMMY, "  Lowpass found\n");
                 else
                 {
                     alDeleteFilters(2, EnvFilters);
@@ -1194,7 +1194,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int
             loopend = length / (channels*bits/8);
 
         ALint loops[2] = { loopstart, loopend };
-        DPrintf("Setting loop points %d -> %d\n", loops[0], loops[1]);
+        DPrintf(DMSG_NOTIFY, "Setting loop points %d -> %d\n", loops[0], loops[1]);
         alBufferiv(buffer, AL_LOOP_POINTS_SOFT, loops);
         getALError();
     }
@@ -1202,7 +1202,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int
     {
         static bool warned = false;
         if(!warned)
-            Printf("Loop points not supported!\n");
+            Printf(DMSG_WARNING, "Loop points not supported!\n");
         warned = true;
     }
 
@@ -1867,7 +1867,7 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
     if(env != PrevEnvironment || env->Modified)
     {
         PrevEnvironment = env;
-        DPrintf("Reverb Environment %s\n", env->Name);
+        DPrintf(DMSG_NOTIFY, "Reverb Environment %s\n", env->Name);
 
         if(EnvSlot != 0)
             LoadReverb(env);

@@ -243,18 +243,18 @@ void I_SetFPSLimit(int limit)
 	}
 	if (limit == 0)
 	{ // no limit
-		DPrintf("FPS timer disabled\n");
+		DPrintf(DMSG_NOTIFY, "FPS timer disabled\n");
 	}
 	else
 	{
 		FPSLimitTimerEnabled = true;
 		if(timer_create(CLOCK_REALTIME, &FPSLimitEvent, &FPSLimitTimer) == -1)
-			Printf("Failed to create FPS limitter event\n");
+			Printf(DMSG_WARNING, "Failed to create FPS limitter event\n");
 		itimerspec period = { {0, 0}, {0, 0} };
 		period.it_value.tv_nsec = period.it_interval.tv_nsec = 1000000000 / limit;
 		if(timer_settime(FPSLimitTimer, 0, &period, NULL) == -1)
-			Printf("Failed to set FPS limitter timer\n");
-		DPrintf("FPS timer set to %u ms\n", (unsigned int) period.it_interval.tv_nsec / 1000000);
+			Printf(DMSG_WARNING, "Failed to set FPS limitter timer\n");
+		DPrintf(DMSG_NOTIFY, "FPS timer set to %u ms\n", (unsigned int) period.it_interval.tv_nsec / 1000000);
 	}
 }
 #else

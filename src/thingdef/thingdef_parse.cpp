@@ -138,23 +138,30 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool c
 	else if (type == TypeState)
 	{
 		// This forces quotation marks around the state name.
-		sc.MustGetToken(TK_StringConst);
-		if (sc.String[0] == 0 || sc.Compare("None"))
+		if (sc.CheckToken(TK_StringConst))
 		{
-			x = new FxConstant((FState*)NULL, sc);
-		}
-		else if (sc.Compare("*"))
-		{
-			if (constant) 
+			if (sc.String[0] == 0 || sc.Compare("None"))
 			{
-				x = new FxConstant((FState*)(intptr_t)-1, sc);
+				x = new FxConstant((FState*)NULL, sc);
 			}
-			else sc.ScriptError("Invalid state name '*'");
+			else if (sc.Compare("*"))
+			{
+				if (constant)
+				{
+					x = new FxConstant((FState*)(intptr_t)-1, sc);
+				}
+				else sc.ScriptError("Invalid state name '*'");
+			}
+			else
+			{
+				x = new FxMultiNameState(sc.String, sc);
+			}
 		}
-		else
+		else if (!constant)
 		{
-			x = new FxMultiNameState(sc.String, sc);
+			x = new FxRuntimeStateIndex(ParseExpression(sc, cls));
 		}
+		else sc.MustGetToken(TK_StringConst); // This is for the error.
 	}
 	else if (type->GetClass() == RUNTIME_CLASS(PClassPointer))
 	{	// Actor name
@@ -858,19 +865,21 @@ static bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defau
 
 					if (sc.CheckString ("("))
 					{
-						x = new FxDamageValue(new FxIntCast(ParseExpression(sc, bag.Info)), true);
+						conv.i = -1;
+						params.Push(conv);
+						x = new FxDamageValue(new FxIntCast(ParseExpression(sc, bag.Info)));
 						sc.MustGetStringName(")");
+						conv.exp = x;
+						params.Push(conv);
+
 					}
 					else
 					{
 						sc.MustGetNumber();
-						if (sc.Number != 0)
-						{
-							x = new FxDamageValue(new FxConstant(sc.Number, bag.ScriptPosition), false);
-						}
+						conv.i = sc.Number;
+						params.Push(conv);
+						conv.exp = nullptr;
 					}
-					conv.exp = x;
-					params.Push(conv);
 				}
 				break;
 

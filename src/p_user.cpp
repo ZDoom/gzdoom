@@ -2441,7 +2441,7 @@ void P_PlayerThink (player_t *player)
 					S_ChangeMusic("*");
 				}
 			}
-			DPrintf("MUSINFO change for player %d to %d\n", (int)(player - players), player->MUSINFOactor->args[0]);
+			DPrintf(DMSG_NOTIFY, "MUSINFO change for player %d to %d\n", (int)(player - players), player->MUSINFOactor->args[0]);
 		}
 	}
 
@@ -2828,9 +2828,9 @@ void P_PredictPlayer (player_t *player)
 			DoLerp = (int)PredictionLast.pos.X != (int)player->mo->X() || (int)PredictionLast.pos.Y != (int)player->mo->Y();
 
 			// Aditional Debug information
-			if (developer && DoLerp)
+			if (developer >= DMSG_NOTIFY && DoLerp)
 			{
-				DPrintf("Lerp! Ltic (%d) && Ptic (%d) | Lx (%f) && Px (%f) | Ly (%f) && Py (%f)\n",
+				DPrintf(DMSG_NOTIFY, "Lerp! Ltic (%d) && Ptic (%d) | Lx (%f) && Px (%f) | Ly (%f) && Py (%f)\n",
 					PredictionLast.gametic, i,
 					(PredictionLast.pos.X), (player->mo->X()),
 					(PredictionLast.pos.Y), (player->mo->Y()));

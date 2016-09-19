@@ -494,7 +494,7 @@ bool FCajunMaster::LoadBots ()
 	tmp = M_GetCajunPath(BOTFILENAME);
 	if (tmp.IsEmpty())
 	{
-		DPrintf ("No " BOTFILENAME ", so no bots\n");
+		DPrintf (DMSG_ERROR, "No " BOTFILENAME ", so no bots\n");
 		return false;
 	}
 	try

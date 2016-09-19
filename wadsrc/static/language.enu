@@ -1804,11 +1804,14 @@ DSPLYMNU_QUAKEINTENSITY			= "Earthquake shake intensity";
 DSPLYMNU_NOMONSTERINTERPOLATION	= "Interpolate monster movement";
 DSPLYMNU_MENUDIM				= "Menu dim";
 DSPLYMNU_DIMCOLOR				= "Dim color";
+DSPLYMNU_MOVEBOB 				= "View bob amount while moving";
+DSPLYMNU_STILLBOB 				= "View bob amount while not moving";
 
 // HUD Options
 HUDMNU_TITLE					= "HUD Options";
 HUDMNU_ALTHUD					= "Alternative HUD";
 HUDMNU_MESSAGE					= "Message Options";
+HUDMNU_UISCALE					= "User interface scale";
 HUDMNU_CROSSHAIR				= "Default Crosshair";
 HUDMNU_FORCECROSSHAIR			= "Force default crosshair";
 HUDMNU_GROWCROSSHAIR			= "Grow crosshair when picking up items";
@@ -1948,6 +1951,7 @@ MSGMNU_SHOWMESSAGES			= "Show messages";
 MSGMNU_SHOWOBITUARIES		= "Show obituaries";
 MSGMNU_SHOWSECRETS			= "Show secret notifications";
 MSGMNU_SCALETEXT			= "Scale text in high res";
+MSGMNU_SCALECONSOLE			= "Scale console";
 MSGMNU_MESSAGELEVEL			= "Minimum message level";
 MSGMNU_CENTERMESSAGES		= "Center messages";
 MSGMNU_MESSAGECOLORS		= "Message Colors";
@@ -1959,6 +1963,7 @@ MSGMNU_TEAMMESSAGES			= "Team Messages";
 MSGMNU_CENTEREDMESSAGES		= "Centered Messages";
 MSGMNU_SCREENSHOTMESSAGES	= "Screenshot messages";
 MSGMNU_LONGSAVEMESSAGES		= "Detailed save messages";
+MSGMNU_DEVELOPER			= "Developer message mode";
 
 // Scoreboard Options
 SCRBRDMNU_TITLE				= "SCOREBOARD OPTIONS";
@@ -2073,6 +2078,8 @@ CMPTMNU_SILENTINSTANTFLOORS	= "Inst. moving floors are not silent";
 CMPTMNU_SECTORSOUNDS		= "Sector sounds use center as source";
 CMPTMNU_SOUNDCUTOFF			= "Sounds stop when actor vanishes";
 CMPTMNU_SOUNDTARGET			= "Use original sound target handling";
+CMPTMNU_TELEPORT			= "Scripted teleports don't trigger sector actions";
+CMPTMNU_PUSHWINDOW			= "Non-blocking lines can be pushed";
 
 // Sound Options
 SNDMNU_TITLE			= "SOUND OPTIONS";
@@ -2236,6 +2243,7 @@ OPTVAL_ANIMATED				= "Animated";
 OPTVAL_ROTATED				= "Rotated";
 OPTVAL_MAPDEFINEDCOLORSONLY = "Map defined colors only";
 OPTVAL_DOUBLE				= "Double";
+OPTVAL_TRIPLE				= "Triple";
 OPTVAL_QUADRUPLE			= "Quadruple";
 OPTVAL_ITEMPICKUP			= "Item Pickup";
 OPTVAL_OBITUARIES			= "Obituaries";
@@ -2287,6 +2295,10 @@ OPTVAL_SINC					= "Sinc";
 OPTVAL_NOTEONOFFONLY		= "Note on/off only";
 OPTVAL_FULLRAMPING			= "Full ramping";
 OPTVAL_ALLUNACKNOWLEDGED	= "All unacknowledged";
+OPTVAL_ERRORS				= "Errors";
+OPTVAL_WARNINGS				= "Warnings";
+OPTVAL_NOTIFICATIONS		= "Notifications";
+OPTVAL_EVERYTHING			= "Everything";
 // Colors
 C_BRICK					= "\cabrick";
 C_TAN					= "\cbtan";

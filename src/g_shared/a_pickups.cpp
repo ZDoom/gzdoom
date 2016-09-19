@@ -572,7 +572,6 @@ bool AInventory::ShouldRespawn ()
 void AInventory::BeginPlay ()
 {
 	Super::BeginPlay ();
-	ChangeStatNum (STAT_INVENTORY);
 	flags |= MF_DROPPED;	// [RH] Items are dropped by default
 }
 
@@ -822,6 +821,7 @@ void AInventory::BecomeItem ()
 	}
 	RemoveFromHash ();
 	flags &= ~MF_SPECIAL;
+	ChangeStatNum(STAT_INVENTORY);
 	SetState (FindState("Held"));
 }
 
@@ -848,6 +848,7 @@ void AInventory::BecomePickup ()
 	}
 	flags = (GetDefault()->flags | MF_DROPPED) & ~MF_COUNTITEM;
 	renderflags &= ~RF_INVISIBLE;
+	ChangeStatNum(STAT_DEFAULT);
 	SetState (SpawnState);
 }
 

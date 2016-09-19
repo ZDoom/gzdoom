@@ -111,6 +111,8 @@ struct FPortalGroupArray;
 // Any questions?
 //
 
+
+
 // --- mobj.flags ---
 enum ActorFlag
 {
@@ -283,7 +285,7 @@ enum ActorFlag4
 enum ActorFlag5
 {
 	MF5_DONTDRAIN		= 0x00000001,	// cannot be drained health from.
-	/*		FREE SLOT	  0x00000002*/
+	MF5_GETOWNER		= 0x00000002,
 	MF5_NODROPOFF		= 0x00000004,	// cannot drop off under any circumstances.
 	MF5_NOFORWARDFALL	= 0x00000008,	// Does not make any actor fall forward by being damaged by this
 	MF5_COUNTSECRET		= 0x00000010,	// From Doom 64: actor acts like a secret
@@ -1014,7 +1016,9 @@ public:
 	
 	SDWORD			tics;				// state tic counter
 	FState			*state;
-	VMFunction		*Damage;			// For missiles and monster railgun
+	//VMFunction		*Damage;			// For missiles and monster railgun
+	int				DamageVal;
+	VMFunction		*DamageFunc;
 	int				projectileKickback;
 	ActorFlags		flags;
 	ActorFlags2		flags2;			// Heretic flags
@@ -1057,6 +1061,7 @@ public:
 	int				skillrespawncount;
 	int				TIDtoHate;			// TID of things to hate (0 if none)
 	FNameNoInit		Species;		// For monster families
+	TObjPtr<AActor>	alternative;	// (Un)Morphed actors stored here. Those with the MF_UNMORPHED flag are the originals.
 	TObjPtr<AActor>	tracer;			// Thing being chased/attacked for tracers
 	TObjPtr<AActor>	master;			// Thing which spawned this one (prevents mutual attacks)
 	double			Floorclip;		// value to use for floor clipping
@@ -1199,6 +1204,23 @@ public:
 	void ClearCounters();
 	FState *GetRaiseState();
 	void Revive();
+
+	void SetDamage(int dmg)
+	{
+		DamageVal = dmg;
+		DamageFunc = nullptr;
+	}
+
+	bool IsZeroDamage() const
+	{
+		return DamageVal == 0 && DamageFunc == nullptr;
+	}
+
+	void RestoreDamage()
+	{
+		DamageVal = GetDefault()->DamageVal;
+		DamageFunc = GetDefault()->DamageFunc;
+	}
 
 	FState *FindState (FName label) const
 	{

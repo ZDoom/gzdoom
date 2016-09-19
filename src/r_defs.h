@@ -220,6 +220,7 @@ struct FUDMFKey
 
 class FUDMFKeys : public TArray<FUDMFKey>
 {
+	bool mSorted = false;
 public:
 	void Sort();
 	FUDMFKey *Find(FName key);

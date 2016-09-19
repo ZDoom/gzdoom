@@ -74,6 +74,8 @@ EXTERN_CVAR (Bool, am_showtotaltime)
 EXTERN_CVAR (Bool, noisedebug)
 EXTERN_CVAR (Int, con_scaletext)
 
+int active_con_scaletext();
+
 DBaseStatusBar *StatusBar;
 
 extern int setblocks;
@@ -297,14 +299,15 @@ void DBaseStatusBar::SetScaled (bool scale, bool force)
 	{
 		ST_X = 0;
 		ST_Y = VirticalResolution - RelTop;
-		if (CheckRatio(SCREENWIDTH, SCREENHEIGHT) != 4)
+		float aspect = ActiveRatio(SCREENWIDTH, SCREENHEIGHT);
+		if (!AspectTallerThanWide(aspect))
 		{ // Normal resolution
 			::ST_Y = Scale (ST_Y, SCREENHEIGHT, VirticalResolution);
 		}
 		else
 		{ // 5:4 resolution
-			::ST_Y = Scale(ST_Y - VirticalResolution/2, SCREENHEIGHT*3, Scale(VirticalResolution, BaseRatioSizes[4][1], 200)) + SCREENHEIGHT/2
-				+ (SCREENHEIGHT - SCREENHEIGHT * BaseRatioSizes[4][3] / 48) / 2;
+			::ST_Y = Scale(ST_Y - VirticalResolution/2, SCREENHEIGHT*3, Scale(VirticalResolution, AspectBaseHeight(aspect), 200)) + SCREENHEIGHT/2
+				+ (SCREENHEIGHT - SCREENHEIGHT * AspectMultiplier(aspect) / 48) / 2;
 		}
 		Displacement = 0;
 	}
@@ -1033,10 +1036,10 @@ void DBaseStatusBar::DrSmallNumberOuter (int val, int x, int y, bool center) con
 
 void DBaseStatusBar::RefreshBackground () const
 {
-	int x, x2, y, ratio;
+	int x, x2, y;
 
-	ratio = CheckRatio (SCREENWIDTH, SCREENHEIGHT);
-	x = (!IsRatioWidescreen(ratio) || !Scaled) ? ST_X : SCREENWIDTH*(48-BaseRatioSizes[ratio][3])/(48*2);
+	float ratio = ActiveRatio (SCREENWIDTH, SCREENHEIGHT);
+	x = (ratio < 1.5f || !Scaled) ? ST_X : SCREENWIDTH*(48-AspectMultiplier(ratio))/(48*2);
 	y = x == ST_X && x > 0 ? ST_Y : ::ST_Y;
 
 	if(!CompleteBorder)
@@ -1056,8 +1059,8 @@ void DBaseStatusBar::RefreshBackground () const
 	{
 		if(!CompleteBorder)
 		{
-			x2 = !IsRatioWidescreen(ratio) || !Scaled ? ST_X+HorizontalResolution :
-				SCREENWIDTH - (SCREENWIDTH*(48-BaseRatioSizes[ratio][3])+48*2-1)/(48*2);
+			x2 = ratio < 1.5f || !Scaled ? ST_X+HorizontalResolution :
+				SCREENWIDTH - (SCREENWIDTH*(48-AspectMultiplier(ratio))+48*2-1)/(48*2);
 		}
 		else
 		{
@@ -1240,17 +1243,17 @@ void DBaseStatusBar::Draw (EHudState state)
 		int xpos;
 		int y;
 
-		if (con_scaletext == 0)
+		if (active_con_scaletext() == 1)
 		{
 			vwidth = SCREENWIDTH;
 			vheight = SCREENHEIGHT;
 			xpos = vwidth - 80;
 			y = ::ST_Y - height;
 		}
-		else if (con_scaletext == 3)
+		else if (active_con_scaletext() > 1)
 		{
-			vwidth = SCREENWIDTH/4;
-			vheight = SCREENHEIGHT/4;
+			vwidth = SCREENWIDTH / active_con_scaletext();
+			vheight = SCREENHEIGHT / active_con_scaletext();
 			xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
 			y = ::ST_Y/4 - height;
 		}
@@ -1264,9 +1267,9 @@ void DBaseStatusBar::Draw (EHudState state)
 
 		if (gameinfo.gametype == GAME_Strife)
 		{
-			if (con_scaletext == 0)
+			if (active_con_scaletext() == 1)
 				y -= height * 4;
-			else if (con_scaletext == 3)
+			else if (active_con_scaletext() > 3)
 				y -= height;
 			else
 				y -= height * 2;
@@ -1400,27 +1403,15 @@ void DBaseStatusBar::DrawLog ()
 	if (CPlayer->LogText.IsNotEmpty())
 	{
 		// This uses the same scaling as regular HUD messages
-		switch (con_scaletext)
+		if (active_con_scaletext() == 0)
 		{
-		default:
-			hudwidth = SCREENWIDTH;
-			hudheight = SCREENHEIGHT;
-			break;
-
-		case 1:
 			hudwidth = SCREENWIDTH / CleanXfac;
 			hudheight = SCREENHEIGHT / CleanYfac;
-			break;
-
-		case 2:
-			hudwidth = SCREENWIDTH / 2;
-			hudheight = SCREENHEIGHT / 2;
-			break;
-
-		case 3:
-			hudwidth = SCREENWIDTH / 4;
-			hudheight = SCREENHEIGHT / 4;
-			break;
+		}
+		else
+		{
+			hudwidth = SCREENWIDTH / active_con_scaletext();
+			hudheight = SCREENHEIGHT / active_con_scaletext();
 		}
 
 		int linelen = hudwidth<640? Scale(hudwidth,9,10)-40 : 560;

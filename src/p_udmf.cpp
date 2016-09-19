@@ -147,7 +147,7 @@ extern TArray<int>		linemap;
 
 void UDMFParserBase::Skip()
 {
-	if (developer) sc.ScriptMessage("Ignoring unknown key \"%s\".", sc.String);
+	if (developer >= DMSG_WARNING) sc.ScriptMessage("Ignoring unknown UDMF key \"%s\".", sc.String);
 	if(sc.CheckToken('{'))
 	{
 		int level = 1;
@@ -309,6 +309,11 @@ void FUDMFKeys::Sort()
 
 FUDMFKey *FUDMFKeys::Find(FName key)
 {
+	if (!mSorted)
+	{
+		mSorted = true;
+		Sort();
+	}
 	int min = 0, max = Size()-1;
 
 	while (min <= max)

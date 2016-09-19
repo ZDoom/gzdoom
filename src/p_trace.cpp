@@ -303,9 +303,13 @@ void FTraceInfo::Setup3DFloors()
 			{
 				if (Check3DFloorPlane(rover, false))
 				{
-					Results->Crossed3DWater = rover;
-					Results->Crossed3DWaterPos = Results->HitPos;
-					Results->Distance = 0;
+					// only consider if the plane is above the actual floor.
+					if (rover->top.plane->ZatPoint(Results->HitPos) > bf)
+					{
+						Results->Crossed3DWater = rover;
+						Results->Crossed3DWaterPos = Results->HitPos;
+						Results->Distance = 0;
+					}
 				}
 			}
 
@@ -766,9 +770,13 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 				{
 					if (Check3DFloorPlane(rover, false))
 					{
-						Results->Crossed3DWater = rover;
-						Results->Crossed3DWaterPos = Results->HitPos;
-						Results->Distance = 0;
+						// only consider if the plane is above the actual floor.
+						if (rover->top.plane->ZatPoint(Results->HitPos) > CurSector->floorplane.ZatPoint(Results->HitPos))
+						{
+							Results->Crossed3DWater = rover;
+							Results->Crossed3DWaterPos = Results->HitPos;
+							Results->Distance = 0;
+						}
 					}
 				}
 			}

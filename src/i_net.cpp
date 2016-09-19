@@ -322,7 +322,7 @@ void PacketGet (void)
 		// Don't show the message for disconnect notifications.
 		if (c != 2 || TransmitBuffer[0] != PRE_FAKE || TransmitBuffer[1] != PRE_DISCONNECT)
 		{
-			DPrintf("Dropped packet: Unknown host (%s:%d)\n", inet_ntoa(fromaddress.sin_addr), fromaddress.sin_port);
+			DPrintf(DMSG_WARNING, "Dropped packet: Unknown host (%s:%d)\n", inet_ntoa(fromaddress.sin_addr), fromaddress.sin_port);
 		}
 		doomcom.remotenode = -1;
 		return;

@@ -231,7 +231,7 @@ static struct TicSpecial
 
 		specialsize = MAX(specialsize * 2, needed + 30);
 
-		DPrintf ("Expanding special size to %zu\n", specialsize);
+		DPrintf (DMSG_NOTIFY, "Expanding special size to %zu\n", specialsize);
 
 		for (i = 0; i < BACKUPTICS; i++)
 			streams[i] = (BYTE *)M_Realloc (streams[i], specialsize);

@@ -376,7 +376,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 		return false;
 	}
 
-	DPrintf ("cmd: \x1cG%s\n", CommandLine.GetChars());
+	DPrintf (DMSG_NOTIFY, "cmd: \x1cG%s\n", CommandLine.GetChars());
 
 #ifdef _WIN32
 	STARTUPINFO startup = { sizeof(startup), };

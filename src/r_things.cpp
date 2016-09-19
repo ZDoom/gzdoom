@@ -223,7 +223,7 @@ vissprite_t *R_NewVisSprite (void)
 		lastvissprite = &vissprites[MaxVisSprites];
 		firstvissprite = &vissprites[firstvisspritenum];
 		vissprite_p = &vissprites[prevvisspritenum];
-		DPrintf ("MaxVisSprites increased to %d\n", MaxVisSprites);
+		DPrintf (DMSG_NOTIFY, "MaxVisSprites increased to %d\n", MaxVisSprites);
 
 		// Allocate sprites from the new pile
 		for (vissprite_t **p = vissprite_p; p < lastvissprite; ++p)
@@ -832,13 +832,11 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	else
 	{
 		// decide which texture to use for the sprite
-#ifdef RANGECHECK
-		if (spritenum >= (signed)sprites.Size () || spritenum < 0)
+		if ((unsigned)spritenum >= sprites.Size ())
 		{
-			DPrintf ("R_ProjectSprite: invalid sprite number %u\n", spritenum);
+			DPrintf (DMSG_ERROR, "R_ProjectSprite: invalid sprite number %u\n", spritenum);
 			return;
 		}
-#endif
 		spritedef_t *sprdef = &sprites[spritenum];
 		if (thing->frame >= sprdef->numframes)
 		{
@@ -1314,13 +1312,13 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	// decide which patch to use
 	if ((unsigned)pspr->GetSprite() >= (unsigned)sprites.Size())
 	{
-		DPrintf("R_DrawPSprite: invalid sprite number %i\n", pspr->GetSprite());
+		DPrintf(DMSG_ERROR, "R_DrawPSprite: invalid sprite number %i\n", pspr->GetSprite());
 		return;
 	}
 	sprdef = &sprites[pspr->GetSprite()];
 	if (pspr->GetFrame() >= sprdef->numframes)
 	{
-		DPrintf("R_DrawPSprite: invalid sprite frame %i : %i\n", pspr->GetSprite(), pspr->GetFrame());
+		DPrintf(DMSG_ERROR, "R_DrawPSprite: invalid sprite frame %i : %i\n", pspr->GetSprite(), pspr->GetFrame());
 		return;
 	}
 	sprframe = &SpriteFrames[sprdef->spriteframes + pspr->GetFrame()];
@@ -1397,7 +1395,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	}
 	if (pspr->GetID() < PSP_TARGETCENTER)
 	{ // Move the weapon down for 1280x1024.
-		vis->texturemid -= BaseRatioSizes[WidescreenRatio][2];
+		vis->texturemid -= AspectPspriteOffset(WidescreenRatio);
 	}
 	vis->x1 = x1 < 0 ? 0 : x1;
 	vis->x2 = x2 >= viewwidth ? viewwidth : x2;

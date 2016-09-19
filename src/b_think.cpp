@@ -259,7 +259,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 				r = pr_botmove();
 				if (r < 128)
 				{
-					TThinkerIterator<AInventory> it (STAT_INVENTORY, bglobal.firstthing);
+					TThinkerIterator<AInventory> it (MAX_STATNUM+1, bglobal.firstthing);
 					AInventory *item = it.Next();
 
 					if (item != NULL || (item = it.Next()) != NULL)

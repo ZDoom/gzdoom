@@ -795,7 +795,7 @@ void I_SetFPSLimit(int limit)
 			CloseHandle(FPSLimitEvent);
 			FPSLimitEvent = NULL;
 		}
-		DPrintf("FPS timer disabled\n");
+		DPrintf(DMSG_NOTIFY, "FPS timer disabled\n");
 	}
 	else
 	{
@@ -804,7 +804,7 @@ void I_SetFPSLimit(int limit)
 			FPSLimitEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
 			if (FPSLimitEvent == NULL)
 			{ // Could not create event, so cannot use timer.
-				Printf("Failed to create FPS limitter event\n");
+				Printf(DMSG_WARNING, "Failed to create FPS limitter event\n");
 				return;
 			}
 		}
@@ -819,7 +819,7 @@ void I_SetFPSLimit(int limit)
 			Printf("Failed to create FPS limitter timer\n");
 			return;
 		}
-		DPrintf("FPS timer set to %u ms\n", period);
+		DPrintf(DMSG_NOTIFY, "FPS timer set to %u ms\n", period);
 	}
 }
 

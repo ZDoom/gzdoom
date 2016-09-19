@@ -164,6 +164,71 @@ void ModActorFlag(AActor *actor, FFlagDef *fd, bool set)
 
 //==========================================================================
 //
+// Finds a flag by name and sets or clears it
+//
+// Returns true if the flag was found for the actor; else returns false
+//
+//==========================================================================
+
+bool ModActorFlag(AActor *actor, FString &flagname, bool set, bool printerror)
+{
+	bool found = false;
+
+	if (actor != NULL)
+	{
+		const char *dot = strchr(flagname, '.');
+		FFlagDef *fd;
+		PClassActor *cls = actor->GetClass();
+
+		if (dot != NULL)
+		{
+			FString part1(flagname.GetChars(), dot - flagname);
+			fd = FindFlag(cls, part1, dot + 1);
+		}
+		else
+		{
+			fd = FindFlag(cls, flagname, NULL);
+		}
+
+		if (fd != NULL)
+		{
+			found = true;
+
+			if (actor->CountsAsKill() && actor->health > 0) --level.total_monsters;
+			if (actor->flags & MF_COUNTITEM) --level.total_items;
+			if (actor->flags5 & MF5_COUNTSECRET) --level.total_secrets;
+
+			if (fd->structoffset == -1)
+			{
+				HandleDeprecatedFlags(actor, cls, set, fd->flagbit);
+			}
+			else
+			{
+				ActorFlags *flagp = (ActorFlags*)(((char*)actor) + fd->structoffset);
+
+				// If these 2 flags get changed we need to update the blockmap and sector links.
+				bool linkchange = flagp == &actor->flags && (fd->flagbit == MF_NOBLOCKMAP || fd->flagbit == MF_NOSECTOR);
+
+				if (linkchange) actor->UnlinkFromWorld();
+				ModActorFlag(actor, fd, set);
+				if (linkchange) actor->LinkToWorld();
+			}
+
+			if (actor->CountsAsKill() && actor->health > 0) ++level.total_monsters;
+			if (actor->flags & MF_COUNTITEM) ++level.total_items;
+			if (actor->flags5 & MF5_COUNTSECRET) ++level.total_secrets;
+		}
+		else if (printerror)
+		{
+			DPrintf(DMSG_ERROR, "ACS/DECORATE: '%s' is not a flag in '%s'\n", flagname.GetChars(), cls->TypeName.GetChars());
+		}
+	}
+
+	return found;
+}
+
+//==========================================================================
+//
 // Returns whether an actor flag is true or not.
 //
 //==========================================================================
@@ -571,7 +636,8 @@ DEFINE_PROPERTY(threshold, I, Actor)
 //==========================================================================
 DEFINE_PROPERTY(damage, X, Actor)
 {
-	PROP_EXP_PARM(id, 0);
+	PROP_INT_PARM(dmgval, 0);
+	PROP_EXP_PARM(id, 1);
 
 	// Damage can either be a single number, in which case it is subject
 	// to the original damage calculation rules. Or, it can be an expression
@@ -581,13 +647,15 @@ DEFINE_PROPERTY(damage, X, Actor)
 
 	// Store this expression here for now. It will be converted to a function
 	// later once all actors have been processed.
-	if (id == NULL)
+	defaults->DamageVal = dmgval;
+
+	if (id == nullptr)
 	{
-		defaults->Damage = NULL;
+		defaults->DamageFunc = nullptr;
 	}
 	else
 	{
-		defaults->Damage = (VMFunction *)(uintptr_t)(ActorDamageFuncs.Push(id) + 1);
+		defaults->DamageFunc = (VMFunction *)(uintptr_t)(ActorDamageFuncs.Push(id) + 1);
 	}
 }
 

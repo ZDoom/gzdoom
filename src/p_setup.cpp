@@ -1689,7 +1689,7 @@ static void SetMapThingUserData(AActor *actor, unsigned udi)
 
 		if (var == NULL || (var->Flags & VARF_Native) || !var->Type->IsKindOf(RUNTIME_CLASS(PBasicType)))
 		{
-			DPrintf("%s is not a user variable in class %s\n", varname.GetChars(),
+			DPrintf(DMSG_WARNING, "%s is not a user variable in class %s\n", varname.GetChars(),
 				actor->GetClass()->TypeName.GetChars());
 		}
 		else
@@ -1959,7 +1959,7 @@ void P_SetLineID (int i, line_t *ld)
 			break;
 			
 		case Plane_Align:
-			setid = ld->args[2];
+			if (!(ib_compatflags & BCOMPATF_NOSLOPEID)) setid = ld->args[2];
 			break;
 			
 		case Static_Init:
@@ -2477,7 +2477,7 @@ int P_DetermineTranslucency (int lumpnum)
 	if (newcolor2.r == 255)	// if black on white results in white it's either
 							// fully transparent or additive
 	{
-		if (developer)
+		if (developer >= DMSG_NOTIFY)
 		{
 			char lumpname[9];
 			lumpname[8] = 0;
@@ -2488,7 +2488,7 @@ int P_DetermineTranslucency (int lumpnum)
 		return -newcolor.r;
 	}
 
-	if (developer)
+	if (developer >= DMSG_NOTIFY)
 	{
 		char lumpname[9];
 		lumpname[8] = 0;
@@ -3028,7 +3028,7 @@ void P_LoadBlockMap (MapData * map)
 		Args->CheckParm("-blockmap")
 		)
 	{
-		DPrintf ("Generating BLOCKMAP\n");
+		DPrintf (DMSG_SPAMMY, "Generating BLOCKMAP\n");
 		P_CreateBlockMap ();
 	}
 	else
@@ -3060,7 +3060,7 @@ void P_LoadBlockMap (MapData * map)
 
 		if (!P_VerifyBlockMap(count))
 		{
-			DPrintf ("Generating BLOCKMAP\n");
+			DPrintf (DMSG_SPAMMY, "Generating BLOCKMAP\n");
 			P_CreateBlockMap();
 		}
 
@@ -3957,7 +3957,7 @@ void P_SetupLevel (const char *lumpname, int position)
 			subsectors, numsubsectors,
 			vertexes, numvertexes);
 		endTime = I_FPSTime ();
-		DPrintf ("BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
+		DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
 		oldvertextable = builder.GetOldVertexTable();
 		reloop = true;
 	}

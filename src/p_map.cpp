@@ -434,7 +434,8 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 
 		// If this teleport was caused by a move, P_TryMove() will handle the
 		// sector transition messages better than we can here.
-		if (!(thing->flags6 & MF6_INTRYMOVE))
+		// This needs to be compatibility optioned because some older maps exploited this missing feature.
+		if (!(thing->flags6 & MF6_INTRYMOVE) && !(i_compatflags2 & COMPATF2_TELEPORT))
 		{
 			thing->CheckSectorTransition(oldsec);
 		}
@@ -1319,7 +1320,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		// [RH] What is the point of this check, again? In Hexen, it is unconditional,
 		// but here we only do it if the missile's damage is 0.
 		// MBF bouncer might have a non-0 damage value, but they must not deal damage on impact either.
-		if ((tm.thing->BounceFlags & BOUNCE_Actors) && (tm.thing->Damage == 0 || !(tm.thing->flags & MF_MISSILE)))
+		if ((tm.thing->BounceFlags & BOUNCE_Actors) && (tm.thing->IsZeroDamage() || !(tm.thing->flags & MF_MISSILE)))
 		{
 			return (tm.thing->target == thing || !(thing->flags & MF_SOLID));
 		}
@@ -1911,7 +1912,7 @@ static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, DVector2 *
 {
 	if (line->special && !(mobj->flags6 & MF6_NOTRIGGER))
 	{
-		if (posforwindowcheck && !(ib_compatflags & BCOMPATF_NOWINDOWCHECK) && line->backsector != NULL)
+		if (posforwindowcheck && !(i_compatflags2 & COMPATF2_PUSHWINDOW) && line->backsector != NULL)
 		{ // Make sure this line actually blocks us and is not a window
 			// or similar construct we are standing inside of.
 			DVector3 pos = mobj->PosRelative(line);
@@ -4438,6 +4439,9 @@ AActor *P_LinePickActor(AActor *t1, DAngle angle, double distance, DAngle pitch,
 	
 	TData.Caller = t1;
 	TData.hitGhosts = true;
+	TData.MThruSpecies = false;
+	TData.ThruActors = false;
+	TData.ThruSpecies = false;
 	
 	if (Trace(t1->PosAtZ(shootz), t1->Sector, direction, distance,
 		actorMask, wallMask, t1, trace, TRACE_NoSky | TRACE_PortalRestrict, CheckForActor, &TData))
@@ -5241,11 +5245,11 @@ CUSTOM_CVAR(Float, splashfactor, 1.f, CVAR_SERVERINFO)
 //
 //==========================================================================
 
-void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bombdistance, FName bombmod,
+int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bombdistance, FName bombmod,
 	int flags, int fulldamagedistance)
 {
 	if (bombdistance <= 0)
-		return;
+		return 0;
 	fulldamagedistance = clamp<int>(fulldamagedistance, 0, bombdistance - 1);
 
 	double bombdistancefloat = 1. / (double)(bombdistance - fulldamagedistance);
@@ -5260,6 +5264,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 		bombsource = bombspot;
 	}
 
+	int count = 0;
 	while ((it.Next(&cres)))
 	{
 		AActor *thing = cres.thing;
@@ -5355,7 +5360,12 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 				int newdam = damage;
 
 				if (!(flags & RADF_NODAMAGE))
+				{
+					//[MC] Don't count actors saved by buddha if already at 1 health.
+					int prehealth = thing->health;
 					newdam = P_DamageMobj(thing, bombspot, bombsource, damage, bombmod);
+					if (thing->health < prehealth)	count++;
+				}
 				else if (thing->player == NULL && (!(flags & RADF_NOIMPACTDAMAGE) && !(thing->flags7 & MF7_DONTTHRUST)))
 					thing->flags2 |= MF2_BLASTED;
 
@@ -5421,12 +5431,16 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 				damage = int(damage * factor);
 				if (damage > 0)
 				{
+					//[MC] Don't count actors saved by buddha if already at 1 health.
+					int prehealth = thing->health;
 					int newdam = P_DamageMobj(thing, bombspot, bombsource, damage, bombmod);
 					P_TraceBleed(newdam > 0 ? newdam : damage, thing, bombspot);
+					if (thing->health < prehealth)	count++;
 				}
 			}
 		}
 	}
+	return count;
 }
 
 //==========================================================================

@@ -354,12 +354,12 @@ void FCompressedFile::Implode ()
 		// If the data could not be compressed, store it as-is.
 		if (r != Z_OK || outlen >= len)
 		{
-			DPrintf ("cfile could not be compressed\n");
+			DPrintf (DMSG_SPAMMY, "cfile could not be compressed\n");
 			outlen = 0;
 		}
 		else
 		{
-			DPrintf ("cfile shrank from %lu to %lu bytes\n", len, outlen);
+			DPrintf (DMSG_SPAMMY, "cfile shrank from %lu to %lu bytes\n", len, outlen);
 		}
 	}
 	else
@@ -717,7 +717,7 @@ void FArchive::Close ()
 	{
 		m_File->Close ();
 		m_File = NULL;
-		DPrintf ("Processed %u objects\n", ArchiveToObject.Size());
+		DPrintf (DMSG_SPAMMY, "Processed %u objects\n", ArchiveToObject.Size());
 	}
 }
 
@@ -1194,6 +1194,7 @@ FArchive &FArchive::ReadObject (DObject* &obj, PClass *wanttype)
 	const PClass *type;
 	BYTE playerNum;
 	DWORD index;
+	DObject *newobj;
 
 	operator<< (objHead);
 
@@ -1255,11 +1256,11 @@ FArchive &FArchive::ReadObject (DObject* &obj, PClass *wanttype)
 	case NEW_CLS_OBJ:
 		type = ReadClass (wanttype);
 //		Printf ("New class: %s (%u)\n", type->Name, m_File->Tell());
-		obj = type->CreateNew ();
+		newobj = obj = type->CreateNew ();
 		MapObject (obj);
-		obj->SerializeUserVars (*this);
-		obj->Serialize (*this);
-		obj->CheckIfSerialized ();
+		newobj->SerializeUserVars (*this);
+		newobj->Serialize (*this);
+		newobj->CheckIfSerialized ();
 		break;
 
 	case NEW_PLYR_OBJ:

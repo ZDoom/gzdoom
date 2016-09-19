@@ -66,7 +66,7 @@ EXTERN_CVAR (Int, screenblocks)
 EXTERN_CVAR (Bool, am_showtime)
 EXTERN_CVAR (Bool, am_showtotaltime)
 
-CVAR(Int,hud_althudscale, 2, CVAR_ARCHIVE)				// Scale the hud to 640x400?
+CVAR(Int,hud_althudscale, 4, CVAR_ARCHIVE)				// Scale the hud to 640x400?
 CVAR(Bool,hud_althud, false, CVAR_ARCHIVE)				// Enable/Disable the alternate HUD
 
 														// These are intentionally not the same as in the automap!
@@ -118,7 +118,7 @@ static int hudwidth, hudheight;				// current width/height for HUD display
 static int statspace;
 
 DVector2 AM_GetPosition();
-
+int active_con_scaletext();
 
 FTextureID GetHUDIcon(PClassInventory *cls)
 {
@@ -886,22 +886,15 @@ static void DrawCoordinates(player_t * CPlayer)
 	}
 
 	int vwidth, vheight;
-	switch (con_scaletext)
+	if (active_con_scaletext() == 0)
 	{
-	default:
-	case 0:
-		vwidth = SCREENWIDTH;
-		vheight = SCREENWIDTH;
-		break;
-	case 1:
-	case 2:
-		vwidth = SCREENWIDTH/2;
-		vheight = SCREENWIDTH/2;
-		break;
-	case 3:
-		vwidth = SCREENWIDTH/4;
-		vheight = SCREENWIDTH/4;
-		break;
+		vwidth = SCREENWIDTH / 2;
+		vheight = SCREENHEIGHT / 2;
+	}
+	else
+	{
+		vwidth = SCREENWIDTH / active_con_scaletext();
+		vheight = SCREENHEIGHT / active_con_scaletext();
 	}
 
 	int xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
@@ -1090,7 +1083,20 @@ void DrawHUD()
 	if (hud_althudscale && SCREENWIDTH>640) 
 	{
 		hudwidth=SCREENWIDTH/2;
-		if (hud_althudscale == 3)
+		if (hud_althudscale == 4)
+		{
+			if (uiscale == 0)
+			{
+				hudwidth = CleanWidth;
+				hudheight = CleanHeight;
+			}
+			else
+			{
+				hudwidth = SCREENWIDTH / uiscale;
+				hudheight = SCREENHEIGHT / uiscale;
+			}
+		}
+		else if (hud_althudscale == 3)
 		{
 			hudwidth = SCREENWIDTH / 4;
 			hudheight = SCREENHEIGHT / 4;
@@ -1102,13 +1108,13 @@ void DrawHUD()
 		}
 		else 
 		{
-			if (WidescreenRatio == 4)
+			if (AspectTallerThanWide(WidescreenRatio))
 			{
-				hudheight = hudwidth * 30 / BaseRatioSizes[WidescreenRatio][3];	// BaseRatioSizes is inverted for this mode
+				hudheight = hudwidth * 30 / AspectMultiplier(WidescreenRatio);	// BaseRatioSizes is inverted for this mode
 			}
 			else
 			{
-				hudheight = hudwidth * 30 / (48*48/BaseRatioSizes[WidescreenRatio][3]);
+				hudheight = hudwidth * 30 / (48*48/AspectMultiplier(WidescreenRatio));
 			}
 		}
 	}

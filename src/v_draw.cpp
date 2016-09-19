@@ -63,6 +63,14 @@
 #include "colormatcher.h"
 #include "r_data/colormaps.h"
 
+CUSTOM_CVAR(Int, uiscale, 2, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	if (StatusBar != NULL)
+	{
+		StatusBar->ScreenSizeChanged();
+	}
+}
+
 // [RH] Stretch values to make a 320x200 image best fit the screen
 // without using fractional steppings
 int CleanXfac, CleanYfac;
@@ -76,7 +84,7 @@ int CleanXfac_1, CleanYfac_1, CleanWidth_1, CleanHeight_1;
 // FillSimplePoly uses this
 extern "C" short spanend[MAXHEIGHT];
 
-CVAR (Bool, hud_scale, false, CVAR_ARCHIVE);
+CVAR (Bool, hud_scale, true, CVAR_ARCHIVE);
 
 // For routines that take RGB colors, cache the previous lookup in case there
 // are several repetitions with the same color.
@@ -862,37 +870,37 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 void DCanvas::VirtualToRealCoords(double &x, double &y, double &w, double &h,
 	double vwidth, double vheight, bool vbottom, bool handleaspect) const
 {
-	int myratio = handleaspect ? CheckRatio (Width, Height) : 0;
+	float myratio = handleaspect ? ActiveRatio (Width, Height) : (4.0f / 3.0f);
 
     // if 21:9 AR, map to 16:9 for all callers.
     // this allows for black bars and stops the stretching of fullscreen images
-    if (myratio == 6) {
-        myratio = 2;
+    if (myratio > 1.7f) {
+        myratio = 16.0f / 9.0f;
     }
 
 	double right = x + w;
 	double bottom = y + h;
 
-	if (myratio != 0 && myratio != 4)
+	if (myratio > 1.334f)
 	{ // The target surface is either 16:9 or 16:10, so expand the
 	  // specified virtual size to avoid undesired stretching of the
 	  // image. Does not handle non-4:3 virtual sizes. I'll worry about
 	  // those if somebody expresses a desire to use them.
-		x = (x - vwidth * 0.5) * Width * 960 / (vwidth * BaseRatioSizes[myratio][0]) + Width * 0.5;
-		w = (right - vwidth * 0.5) * Width * 960 / (vwidth * BaseRatioSizes[myratio][0]) + Width * 0.5 - x;
+		x = (x - vwidth * 0.5) * Width * 960 / (vwidth * AspectBaseWidth(myratio)) + Width * 0.5;
+		w = (right - vwidth * 0.5) * Width * 960 / (vwidth * AspectBaseWidth(myratio)) + Width * 0.5 - x;
 	}
 	else
 	{
 		x = x * Width / vwidth;
 		w = right * Width / vwidth - x;
 	}
-	if (myratio == 4)
+	if (AspectTallerThanWide(myratio))
 	{ // The target surface is 5:4
-		y = (y - vheight * 0.5) * Height * 600 / (vheight * BaseRatioSizes[myratio][1]) + Height * 0.5;
-		h = (bottom - vheight * 0.5) * Height * 600 / (vheight * BaseRatioSizes[myratio][1]) + Height * 0.5 - y;
+		y = (y - vheight * 0.5) * Height * 600 / (vheight * AspectBaseHeight(myratio)) + Height * 0.5;
+		h = (bottom - vheight * 0.5) * Height * 600 / (vheight * AspectBaseHeight(myratio)) + Height * 0.5 - y;
 		if (vbottom)
 		{
-			y += (Height - Height * BaseRatioSizes[myratio][3] / 48.0) * 0.5;
+			y += (Height - Height * AspectMultiplier(myratio) / 48.0) * 0.5;
 		}
 	}
 	else
@@ -936,30 +944,30 @@ void DCanvas::VirtualToRealCoordsInt(int &x, int &y, int &w, int &h,
 
 void DCanvas::FillBorder (FTexture *img)
 {
-	int myratio = CheckRatio (Width, Height);
+	float myratio = ActiveRatio (Width, Height);
 
     // if 21:9 AR, fill borders akin to 16:9, since all fullscreen
     // images are being drawn to that scale.
-    if (myratio == 6) {
-        myratio = 2;
+    if (myratio > 1.7f) {
+        myratio = 16 / 9.0f;
     }
 
-	if (myratio == 0)
+	if (myratio >= 1.3f && myratio <= 1.4f)
 	{ // This is a 4:3 display, so no border to show
 		return;
 	}
 	int bordtop, bordbottom, bordleft, bordright, bord;
-	if (Is54Aspect(myratio))
+	if (AspectTallerThanWide(myratio))
 	{ // Screen is taller than it is wide
 		bordleft = bordright = 0;
-		bord = Height - Height * BaseRatioSizes[myratio][3] / 48;
+		bord = Height - Height * AspectMultiplier(myratio) / 48;
 		bordtop = bord / 2;
 		bordbottom = bord - bordtop;
 	}
 	else
 	{ // Screen is wider than it is tall
 		bordtop = bordbottom = 0;
-		bord = Width - Width * BaseRatioSizes[myratio][3] / 48;
+		bord = Width - Width * AspectMultiplier(myratio) / 48;
 		bordleft = bord / 2;
 		bordright = bord - bordleft;
 	}

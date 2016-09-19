@@ -1,0 +1,71 @@
+BUILD SOURCE CODE LICENSE TERMS:                             06/20/2000
+
+[1] I give you permission to make modifications to my Build source and
+       distribute it, BUT:
+
+[2] Any derivative works based on my Build source may be distributed ONLY
+       through the INTERNET.
+
+[3] Distribution of any derivative works MUST be done completely FREE of
+       charge - no commercial exploitation whatsoever.
+
+[4] Anything you distribute which uses a part of my Build Engine source
+       code MUST include:
+
+   [A] The following message somewhere in the archive:
+
+       // "Build Engine & Tools" Copyright (c) 1993-1997 Ken Silverman
+       // Ken Silverman's official web site: "http://www.advsys.net/ken"
+       // See the included license file "BUILDLIC.TXT" for license info.
+
+   [B] This text file "BUILDLIC.TXT" along with it.
+
+   [C] Any source files that you modify must include this message as well:
+
+       // This file has been modified from Ken Silverman's original release
+
+[5] The use of the Build Engine for commercial purposes will require an
+       appropriate license arrangement with me. Contact information is
+       on my web site.
+
+[6] I take no responsibility for damage to your system.
+
+[7] Technical support: Before contacting me with questions, please read
+       and do ALL of the following!
+
+   [A] Look though ALL of my text files. There are 7 of them (including this
+          one). I like to think that I wrote them for a reason. You will find
+          many of your answers in the history section of BUILD.TXT and
+          BUILD2.TXT (they're located inside SRC.ZIP).
+
+   [B] If that doesn't satisfy you, then try going to:
+
+             "http://www.advsys.net/ken/buildsrc"
+
+          where I will maintain a Build Source Code FAQ (or perhaps I might
+          just provide a link to a good FAQ).
+
+   [C] I am willing to respond to questions, but ONLY if they come at a rate
+          that I can handle.
+
+             PLEASE TRY TO AVOID ASKING DUPLICATE QUESTIONS!
+
+          As my line of defense, I will post my current policy about
+          answering Build source questions (right below the E-mail address
+          on my web site.) You can check there to see if I'm getting
+          overloaded with questions or not.
+
+          If I'm too busy, it might say something like this:
+
+               I'm too busy to answer Build source questions right now.
+               Sorry, but don't expect a reply from me any time soon.
+
+          If I'm open for Build source questions, please state your question
+             clearly and don't include any unsolicited attachments unless
+             they're really small (like less than 50k). Assume that I have
+             a 28.8k modem. Also, don't leave out important details just
+             to make your question appear shorter - making me guess what
+             you're asking doesn't save me time!
+
+----------------------------------------------------------------------------
+-Ken S. (official web site: http://www.advsys.net/ken)

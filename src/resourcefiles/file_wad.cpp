@@ -471,7 +471,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 				{
 					// We can't add this to the flats namespace but 
 					// it needs to be flagged for the texture manager.
-					DPrintf("Marking %s as potential flat\n", Lumps[i].Name);
+					DPrintf(DMSG_NOTIFY, "Marking %s as potential flat\n", Lumps[i].Name);
 					Lumps[i].Flags |= LUMPF_MAYBEFLAT;
 				}
 			}
@@ -517,7 +517,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 		}
 
 		// we found a marked block
-		DPrintf("Found %s block at (%d-%d)\n", startmarker, markers[start].index, end);
+		DPrintf(DMSG_NOTIFY, "Found %s block at (%d-%d)\n", startmarker, markers[start].index, end);
 		for(int j = markers[start].index + 1; j < end; j++)
 		{
 			if (Lumps[j].Namespace != ns_global)
@@ -534,7 +534,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 				// ignore sprite lumps smaller than 8 bytes (the smallest possible)
 				// in size -- this was used by some dmadds wads
 				// as an 'empty' graphics resource
-				DPrintf(" Skipped empty sprite %s (lump %d)\n", Lumps[j].Name, j);
+				DPrintf(DMSG_WARNING, " Skipped empty sprite %s (lump %d)\n", Lumps[j].Name, j);
 			}
 			else
 			{

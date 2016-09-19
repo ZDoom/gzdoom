@@ -2311,7 +2311,7 @@ void R_CheckDrawSegs ()
 		firstdrawseg = drawsegs + firstofs;
 		ds_p = drawsegs + MaxDrawSegs;
 		MaxDrawSegs = newdrawsegs;
-		DPrintf ("MaxDrawSegs increased to %zu\n", MaxDrawSegs);
+		DPrintf (DMSG_NOTIFY, "MaxDrawSegs increased to %zu\n", MaxDrawSegs);
 	}
 }
 
@@ -2330,7 +2330,7 @@ ptrdiff_t R_NewOpening (ptrdiff_t len)
 			maxopenings = maxopenings ? maxopenings*2 : 16384;
 		while ((size_t)lastopening > maxopenings);
 		openings = (short *)M_Realloc (openings, maxopenings * sizeof(*openings));
-		DPrintf ("MaxOpenings increased to %zu\n", maxopenings);
+		DPrintf (DMSG_NOTIFY, "MaxOpenings increased to %zu\n", maxopenings);
 	}
 	return res;
 }

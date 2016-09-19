@@ -759,6 +759,8 @@ OptionMenu "HUDOptions"
 	Submenu "$HUDMNU_ALTHUD",				"AltHudOptions"
 	Submenu "$HUDMNU_MESSAGE", 				"MessageOptions"
 	StaticText " "
+	Slider "$HUDMNU_UISCALE",				"uiscale", 0.0, 8.0, 1.0, 0
+	StaticText " "
 	Option "$HUDMNU_CROSSHAIR",				"crosshair", "Crosshairs"
 	Option "$HUDMNU_FORCECROSSHAIR",		"crosshairforce", "OnOff"
 	Option "$HUDMNU_GROWCROSSHAIR",			"crosshairgrow", "OnOff"
@@ -793,6 +795,7 @@ OptionValue "AMCoordinates"
 OptionValue "AltHUDScale"
 {
 	0, "$OPTVAL_OFF"
+	4, "$OPTVAL_ON"
 	1, "$OPTVAL_SCALETO640X400"
 	2, "$OPTVAL_PIXELDOUBLE"
 	3, "$OPTVAL_PIXELQUADRUPLE"
@@ -1115,11 +1118,29 @@ OptionValue ScaleValues
 	3, "$OPTVAL_QUADRUPLE"
 }
 
+OptionValue ConsoleScaleValues
+{
+	1, "$OPTVAL_OFF"
+	0, "$OPTVAL_ON"
+	2, "$OPTVAL_DOUBLE"
+	3, "$OPTVAL_TRIPLE"
+	4, "$OPTVAL_QUADRUPLE"
+}
+
 OptionValue MessageLevels
 {
 	0.0, "$OPTVAL_ITEMPICKUP"
 	1.0, "$OPTVAL_OBITUARIES"
 	2.0, "$OPTVAL_CRITICALMESSAGES"
+}
+
+OptionValue DevMessageLevels
+{
+	0, "$OPTVAL_OFF"
+	1, "$OPTVAL_ERRORS"
+	2, "$OPTVAL_WARNINGS"
+	3, "$OPTVAL_NOTIFICATIONS"
+	4, "$OPTVAL_EVERYTHING"
 }
 
 OptionMenu MessageOptions
@@ -1129,7 +1150,9 @@ OptionMenu MessageOptions
 	Option "$MSGMNU_SHOWOBITUARIES",			"show_obituaries", "OnOff"
 	Option "$MSGMNU_SHOWSECRETS",				"cl_showsecretmessage", "OnOff"
 	Option "$MSGMNU_SCALETEXT", 				"con_scaletext", "ScaleValues"
+	Option "$MSGMNU_SCALECONSOLE", 				"con_scale", "ConsoleScaleValues"
 	Option "$MSGMNU_MESSAGELEVEL", 				"msg", "MessageLevels"
+	Option "$MSGMNU_DEVELOPER", 				"developer", "DevMessageLevels"
 	Option "$MSGMNU_CENTERMESSAGES",			"con_centernotify", "OnOff"
 	StaticText " "
 	StaticText "$MSGMNU_MESSAGECOLORS", 1
@@ -1324,6 +1347,8 @@ OptionMenu "CompatibilityOptions"
 	Option "$CMPTMNU_FLOORMOVE",					"compat_floormove", "YesNo"
 	Option "$CMPTMNU_POINTONLINE",					"compat_pointonline", "YesNo"
 	Option "$CMPTMNU_MULTIEXIT",					"compat_multiexit", "YesNo"
+	Option "$CMPTMNU_TELEPORT",						"compat_teleport", "YesNo"
+	Option "$CMPTMNU_PUSHWINDOW",					"compat_pushwindow", "YesNo"
 	
 	StaticText " "
 	StaticText "$CMPTMNU_PHYSICSBEHAVIOR",1

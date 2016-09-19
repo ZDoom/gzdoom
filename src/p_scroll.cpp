@@ -147,8 +147,8 @@ static void RotationComp(const sector_t *sec, int which, double dx, double dy, d
 	}
 	else
 	{
-		double ca = an.Cos();
-		double sa = an.Sin();
+		double ca = -an.Cos();
+		double sa = -an.Sin();
 		tdx = dx*ca - dy*sa;
 		tdy = dy*ca + dx*sa;
 	}
@@ -349,8 +349,8 @@ DScroller::DScroller (double dx, double dy, const line_t *l,
 	if (y > x) d = x, x = y, y = d;
 
 	d = x / g_sin(g_atan2(y, x) + M_PI / 2);
-	x = (-dy * l->Delta().Y + dx * l->Delta().X) / d;
-	y = (-dx * l->Delta().Y - dy * l->Delta().Y) / d;
+	x = -(dy * l->Delta().Y + dx * l->Delta().X) / d;
+	y = -(dx * l->Delta().Y - dy * l->Delta().X) / d;
 
 	m_Type = EScroll::sc_side;
 	m_dx = x;

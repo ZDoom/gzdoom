@@ -261,6 +261,10 @@ void DThinker::PostBeginPlay ()
 {
 }
 
+void DThinker::PostSerialize()
+{
+}
+
 DThinker *DThinker::FirstThinker (int statnum)
 {
 	DThinker *node;

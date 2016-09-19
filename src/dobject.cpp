@@ -48,6 +48,7 @@
 #include "a_sharedglobal.h"
 #include "dsectoreffect.h"
 #include "farchive.h"
+#include "serializer.h"
 
 ClassReg DObject::RegistrationInfo =
 {
@@ -479,7 +480,7 @@ void DObject::SerializeUserVars(FArchive &arc)
 	}
 }
 
-void DObject::Serialize (FArchive &arc)
+void DObject::Serialize(FSerializer &arc)
 {
 	ObjectFlags |= OF_SerialSuccess;
 }

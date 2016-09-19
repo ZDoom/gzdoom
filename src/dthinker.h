@@ -70,6 +70,7 @@ public:
 	virtual ~DThinker ();
 	virtual void Tick ();
 	virtual void PostBeginPlay ();	// Called just before the first tick
+	virtual void PostSerialize();
 	size_t PropagateMark();
 	
 	void ChangeStatNum (int statnum);

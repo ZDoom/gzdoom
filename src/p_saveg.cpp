@@ -3,7 +3,8 @@
 ** Code for serializing the world state in an archive
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2016 Randy Heit
+** Copyright 2005-2016 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -55,17 +56,21 @@
 #include "p_lnspec.h"
 #include "p_acs.h"
 #include "p_terrain.h"
+#include "am_map.h"
+#include "r_data/r_translate.h"
+#include "sbar.h"
+#include "r_utility.h"
+#include "r_sky.h"
+#include "r_renderer.h"
+#include "serializer.h"
+
+// just the stuff that already got converted to FSerializer so that it can be seen as 'done' when searching.
+#include "zzz_old.cpp"
 
 void CopyPlayer (player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer (FArchive &arc, bool skipload);
 static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNow, bool skipload);
 static void SpawnExtraPlayers ();
-
-inline FArchive &operator<< (FArchive &arc, FLinkedSector &link)
-{
-	arc << link.Sector << link.Type;
-	return arc;
-}
 
 //
 // P_ArchivePlayers
@@ -339,179 +344,6 @@ static void SpawnExtraPlayers ()
 	}
 }
 
-//
-// P_ArchiveWorld
-//
-void P_SerializeWorld (FArchive &arc)
-{
-	int i, j;
-	sector_t *sec;
-	line_t *li;
-	zone_t *zn;
-
-	// do sectors
-	for (i = 0, sec = sectors; i < numsectors; i++, sec++)
-	{
-		arc << sec->floorplane
-			<< sec->ceilingplane;
-		arc << sec->lightlevel;
-		arc << sec->special;
-		arc << sec->soundtraversed
-			<< sec->seqType
-			<< sec->friction
-			<< sec->movefactor
-			<< sec->stairlock
-			<< sec->prevsec
-			<< sec->nextsec
-			<< sec->planes[sector_t::floor]
-			<< sec->planes[sector_t::ceiling]
-			<< sec->heightsec
-			<< sec->bottommap << sec->midmap << sec->topmap
-			<< sec->gravity;
-		P_SerializeTerrain(arc, sec->terrainnum[0]);
-		P_SerializeTerrain(arc, sec->terrainnum[1]);
-		arc << sec->damageamount;
-		arc << sec->damageinterval
-			<< sec->leakydamage
-			<< sec->damagetype
-			<< sec->sky
-			<< sec->MoreFlags
-			<< sec->Flags
-			<< sec->Portals[sector_t::floor] << sec->Portals[sector_t::ceiling]
-			<< sec->ZoneNumber;
-		arc	<< sec->interpolations[0]
-			<< sec->interpolations[1]
-			<< sec->interpolations[2]
-			<< sec->interpolations[3]
-			<< sec->SeqName;
-
-		sec->e->Serialize(arc);
-		if (arc.IsStoring ())
-		{
-			arc << sec->ColorMap->Color
-				<< sec->ColorMap->Fade;
-			BYTE sat = sec->ColorMap->Desaturate;
-			arc << sat;
-		}
-		else
-		{
-			PalEntry color, fade;
-			BYTE desaturate;
-			arc << color << fade
-				<< desaturate;
-			sec->ColorMap = GetSpecialLights (color, fade, desaturate);
-		}
-	}
-
-	// do lines
-	for (i = 0, li = lines; i < numlines; i++, li++)
-	{
-		arc << li->flags
-			<< li->activation
-			<< li->special
-			<< li->alpha;
-
-		if (P_IsACSSpecial(li->special))
-		{
-			P_SerializeACSScriptNumber(arc, li->args[0], false);
-		}
-		else
-		{
-			arc << li->args[0];
-		}
-		arc << li->args[1] << li->args[2] << li->args[3] << li->args[4];
-
-		arc << li->portalindex;
-		for (j = 0; j < 2; j++)
-		{
-			if (li->sidedef[j] == NULL)
-				continue;
-
-			side_t *si = li->sidedef[j];
-			arc << si->textures[side_t::top]
-				<< si->textures[side_t::mid]
-				<< si->textures[side_t::bottom]
-				<< si->Light
-				<< si->Flags
-				<< si->LeftSide
-				<< si->RightSide
-				<< si->Index;
-		}
-	}
-
-	// do zones
-	unsigned numzones = Zones.Size();
-	arc << numzones;
-
-	if (arc.IsLoading())
-	{
-		Zones.Resize(numzones);
-	}
-
-	for (i = 0, zn = &Zones[0]; i < numzones; ++i, ++zn)
-	{
-		arc << zn->Environment;
-	}
-
-	arc << linePortals << sectorPortals;
-	P_CollectLinkedPortals();
-}
-
-void P_SerializeWorldActors(FArchive &arc)
-{
-	int i;
-	sector_t *sec;
-	line_t *line;
-
-	for (i = 0, sec = sectors; i < numsectors; i++, sec++)
-	{
-		arc << sec->SoundTarget
-			<< sec->SecActTarget
-			<< sec->floordata
-			<< sec->ceilingdata
-			<< sec->lightingdata;
-	}
-	for (auto &s : sectorPortals)
-	{
-		arc << s.mSkybox;
-	}
-	for (i = 0, line = lines; i < numlines; i++, line++)
-	{
-		for (int s = 0; s < 2; s++)
-		{
-			if (line->sidedef[s] != NULL)
-			{
-				DBaseDecal::SerializeChain(arc, &line->sidedef[s]->AttachedDecals);
-			}
-		}
-	}
-}
-
-void extsector_t::Serialize(FArchive &arc)
-{
-	arc << FakeFloor.Sectors
-		<< Midtex.Floor.AttachedLines 
-		<< Midtex.Floor.AttachedSectors
-		<< Midtex.Ceiling.AttachedLines
-		<< Midtex.Ceiling.AttachedSectors
-		<< Linked.Floor.Sectors
-		<< Linked.Ceiling.Sectors;
-}
-
-FArchive &operator<< (FArchive &arc, side_t::part &p)
-{
-	arc << p.xOffset << p.yOffset << p.interpolation << p.texture 
-		<< p.xScale << p.yScale;// << p.Light;
-	return arc;
-}
-
-FArchive &operator<< (FArchive &arc, sector_t::splane &p)
-{
-	arc << p.xform.xOffs << p.xform.yOffs << p.xform.xScale << p.xform.yScale 
-		<< p.xform.Angle << p.xform.baseyOffs << p.xform.baseAngle
-		<< p.Flags << p.Light << p.Texture << p.TexZ << p.alpha;
-	return arc;
-}
 
 
 //
@@ -536,6 +368,411 @@ void P_DestroyThinkers(bool hubLoad)
 	else
 		DThinker::DestroyAllThinkers();
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FSerializer &Serialize(FSerializer &arc, const char *key, line_t &line, line_t *def)
+{
+	if (arc.BeginObject(key))
+	{
+		arc("flags", line.flags, def->flags)
+			("activation", line.activation, def->activation)
+			("special", line.special, def->special)
+			("alpha", line.alpha, def->alpha)
+			.Args("args", line.args, def->args, line.special)
+			("portalindex", line.portalindex, def->portalindex)
+			// Unless the map loader is changed the sidedef references will not change between map loads so there's no need to save them.
+			//.Array("sides", line.sidedef, 2)
+			.EndObject();
+	}
+	return arc;
+
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FSerializer &Serialize(FSerializer &arc, const char *key, side_t::part &part, side_t::part *def)
+{
+	if (arc.canSkip() && def != nullptr && !memcmp(&part, def, sizeof(part)))
+	{
+		return arc;
+	}
+
+	if (arc.BeginObject(key))
+	{
+		arc("xoffset", part.xOffset, def->xOffset)
+			("yoffset", part.yOffset, def->yOffset)
+			("xscale", part.xScale, def->xScale)
+			("yscale", part.yScale, def->yScale)
+			("texture", part.texture, def->texture)
+			("interpolation", part.interpolation)
+			.EndObject();
+	}
+	return arc;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FSerializer &Serialize(FSerializer &arc, const char *key, side_t &side, side_t *def)
+{
+	if (arc.BeginObject(key))
+	{
+		arc.Array("textures", side.textures, def->textures, 3, true)
+			("light", side.Light, def->Light)
+			("flags", side.Flags, def->Flags)
+			// These also remain identical across map loads
+			//("leftside", side.LeftSide)
+			//("rightside", side.RightSide)
+			//("index", side.Index)
+			("attacheddecals", side.AttachedDecals)
+			.EndObject();
+	}
+	return arc;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FSerializer &Serialize(FSerializer &arc, const char *key, FLinkedSector &ls, FLinkedSector *def)
+{
+	if (arc.BeginObject(key))
+	{
+		arc("sector", ls.Sector)
+			("type", ls.Type)
+			.EndObject();
+	}
+	return arc;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FSerializer &Serialize(FSerializer &arc, const char *key, sector_t::splane &p, sector_t::splane *def)
+{
+	if (arc.canSkip() && def != nullptr && !memcmp(&p, def, sizeof(p)))
+	{
+		return arc;
+	}
+
+	if (arc.BeginObject(key))
+	{
+		arc("xoffs", p.xform.xOffs, def->xform.xOffs)
+			("yoffs", p.xform.yOffs, def->xform.yOffs)
+			("xscale", p.xform.xScale, def->xform.xScale)
+			("yscale", p.xform.yScale, def->xform.yScale)
+			("angle", p.xform.Angle, def->xform.Angle)
+			("baseyoffs", p.xform.baseyOffs, def->xform.baseyOffs)
+			("baseangle", p.xform.baseAngle, def->xform.baseAngle)
+			("flags", p.Flags, def->Flags)
+			("light", p.Light, def->Light)
+			("texture", p.Texture, def->Texture)
+			("texz", p.TexZ, def->TexZ)
+			("alpha", p.alpha, def->alpha)
+			.EndObject();
+	}
+	return arc;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FSerializer &Serialize(FSerializer &arc, const char *key, secplane_t &p, secplane_t *def)
+{
+	if (arc.canSkip() && def != nullptr && !memcmp(&p, def, sizeof(p)))
+	{
+		return arc;
+	}
+
+	if (arc.BeginObject(key))
+	{
+		arc("normal", p.normal, def->normal)
+			("d", p.D, def->D)
+			.EndObject();
+
+		if (arc.isReading() && p.normal.Z != 0)
+		{
+			p.negiC = 1 / p.normal.Z;
+		}
+	}
+	return arc;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t *def)
+{
+	if (arc.BeginObject(key))
+	{
+		arc("floorplane", p.floorplane, def->floorplane)
+			("ceilingplane", p.ceilingplane, def->ceilingplane)
+			("lightlevel", p.lightlevel, def->lightlevel)
+			("special", p.special, def->special)
+			("soundtraversed", p.soundtraversed, def->soundtraversed)
+			("seqtype", p.seqType, def->seqType)
+			("seqname", p.SeqName, def->SeqName)
+			("friction", p.friction, def->friction)
+			("movefactor", p.movefactor, def->movefactor)
+			("stairlock", p.stairlock, def->stairlock)
+			("prevsec", p.prevsec, def->prevsec)
+			("nextsec", p.nextsec, def->nextsec)
+			.Array("planes", p.planes, def->planes, 2, true)
+			// These cannot change during play.
+			//("heightsec", p.heightsec)
+			//("bottommap", p.bottommap)
+			//("midmap", p.midmap)
+			//("topmap", p.topmap)
+			("damageamount", p.damageamount, def->damageamount)
+			("damageinterval", p.damageinterval, def->damageinterval)
+			("leakydamage", p.leakydamage, def->leakydamage)
+			("damagetype", p.damagetype, def->damagetype)
+			("sky", p.sky, def->sky)
+			("moreflags", p.MoreFlags, def->MoreFlags)
+			("flags", p.Flags, def->Flags)
+			.Array("portals", p.Portals, def->Portals, 2, true)
+			("zonenumber", p.ZoneNumber, def->ZoneNumber)
+			.Array("interpolations", p.interpolations, 4, true)
+			("soundtarget", p.SoundTarget)
+			("secacttarget", p.SecActTarget)
+			("floordata", p.floordata)
+			("ceilingdata", p.ceilingdata)
+			("lightingdata", p.lightingdata)
+			("fakefloor_sectors", p.e->FakeFloor.Sectors)
+			("midtexf_lines", p.e->Midtex.Floor.AttachedLines)
+			("midtexf_sectors", p.e->Midtex.Floor.AttachedSectors)
+			("midtexc_lines", p.e->Midtex.Ceiling.AttachedLines)
+			("midtexc_sectors", p.e->Midtex.Ceiling.AttachedSectors)
+			("linked_floor", p.e->Linked.Floor.Sectors)
+			("linked_ceiling", p.e->Linked.Ceiling.Sectors)
+			("colormap", p.ColorMap, def->ColorMap)
+			.Terrain("floorterrain", p.terrainnum[0], &def->terrainnum[0])
+			.Terrain("ceilingterrain", p.terrainnum[1], &def->terrainnum[1])
+			.EndObject();
+	}
+	return arc;
+}
+
+//==========================================================================
+//
+// RecalculateDrawnSubsectors
+//
+// In case the subsector data is unusable this function tries to reconstruct
+// if from the linedefs' ML_MAPPED info.
+//
+//==========================================================================
+
+void RecalculateDrawnSubsectors()
+{
+	for (int i = 0; i<numsubsectors; i++)
+	{
+		subsector_t *sub = &subsectors[i];
+		for (unsigned int j = 0; j<sub->numlines; j++)
+		{
+			if (sub->firstline[j].linedef != NULL &&
+				(sub->firstline[j].linedef->flags & ML_MAPPED))
+			{
+				sub->flags |= SSECF_DRAWN;
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FSerializer &Serialize(FSerializer &arc, const char *key, subsector_t *&ss, subsector_t **)
+{
+	BYTE by;
+	const char *str;
+
+	if (arc.isWriting())
+	{
+		if (hasglnodes)
+		{
+			TArray<char> encoded(1 + (numsubsectors + 5) / 6);
+			int p = 0;
+			for (int i = 0; i < numsubsectors; i += 6)
+			{
+				by = 0;
+				for (int j = 0; j < 6; j++)
+				{
+					if (i + j < numsubsectors && (subsectors[i + j].flags & SSECF_DRAWN))
+					{
+						by |= (1 << j);
+					}
+				}
+				if (by < 10) by += '0';
+				else if (by < 36) by += 'A' - 10;
+				else if (by < 62) by += 'a' - 36;
+				else if (by == 62) by = '-';
+				else if (by == 63) by = '+';
+				encoded[p++] = by;
+			}
+			encoded[p] = 0;
+			str = &encoded[0];
+			if (arc.BeginArray(key))
+			{
+				arc(nullptr, numvertexes)
+					(nullptr, numsubsectors)
+					.StringPtr(nullptr, str)
+					.EndArray();
+			}
+		}
+	}
+	else
+	{
+		int num_verts, num_subs;
+		bool success = false;
+		if (arc.BeginArray(key))
+		{
+			arc(nullptr, num_verts)
+				(nullptr, num_subs)
+				.StringPtr(nullptr, str)
+				.EndArray();
+
+			if (num_verts == numvertexes && num_subs == numsubsectors && hasglnodes)
+			{
+				success = true;
+				for (int i = 0; str[i] != 0; i++)
+				{
+					by = str[i];
+					if (by >= '0' && by <= '9') by -= '0';
+					else if (by >= 'A' && by <= 'Z') by -= 'A' - 10;
+					else if (by >= 'a' && by <= 'z') by -= 'a' - 36;
+					else if (by == '-') by = 62;
+					else if (by == '+') by = 63;
+					else
+					{
+						success = false;
+						break;
+					}
+				}
+			}
+			if (hasglnodes && !success)
+			{
+				RecalculateDrawnSubsectors();
+			}
+		}
+
+	}
+	return arc;
+}
+
+//============================================================================
+//
+// Save a line portal for savegames.
+//
+//============================================================================
+
+FSerializer &Serialize(FSerializer &arc, const char *key, FLinePortal &port, FLinePortal *def)
+{
+	if (arc.BeginObject(key))
+	{
+		arc("origin", port.mOrigin)
+			("destination", port.mDestination)
+			("displacement", port.mDisplacement)
+			("type", port.mType)
+			("flags", port.mFlags)
+			("defflags", port.mDefFlags)
+			("align", port.mAlign)
+			.EndObject();
+	}
+	return arc;
+}
+
+//============================================================================
+//
+// Save a sector portal for savegames.
+//
+//============================================================================
+
+FSerializer &Serialize(FSerializer &arc, const char *key, FSectorPortal &port, FSectorPortal *def)
+{
+	if (arc.BeginObject(key))
+	{
+		arc("type", port.mType)
+			("flags", port.mFlags)
+			("partner", port.mPartner)
+			("plane", port.mPlane)
+			("origin", port.mOrigin)
+			("destination", port.mDestination)
+			("displacement", port.mDisplacement)
+			("planez", port.mPlaneZ)
+			("skybox", port.mSkybox)
+			.EndObject();
+	}
+	return arc;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FSerializer &Serialize(FSerializer &arc, const char *key, ReverbContainer *&c, ReverbContainer **def)
+{
+	int id = (arc.isReading() || c == nullptr) ? 0 : c->ID;
+	Serialize(arc, key, id, nullptr);
+	if (arc.isReading())
+	{
+		c = S_FindEnvironment(id);
+	}
+	return arc;
+}
+
+FSerializer &Serialize(FSerializer &arc, const char *key, zone_t &z, zone_t *def)
+{
+	return Serialize(arc, key, z.Environment, nullptr);
+}
+
+//============================================================================
+//
+//
+//
+//============================================================================
+
+void SerializeWorld(FSerializer &arc)
+{
+	// fixme: This needs to ensure it reads from the correct place. Should be one once there's enough of this code converted to JSON
+	arc.Array("linedefs", lines, &loadlines[0], numlines)
+		.Array("sidedefs", sides, &loadsides[0], numsides)
+		.Array("sectors", sectors, &loadsectors[0], numsectors)
+		("subsectors", subsectors)
+		("zones", Zones)
+		("lineportals", linePortals)
+		("sectorportals", sectorPortals);
+
+	if (arc.isReading()) P_CollectLinkedPortals();
+}
+
 
 //==========================================================================
 //
@@ -625,96 +862,132 @@ void P_SerializePolyobjs (FArchive &arc)
 
 //==========================================================================
 //
-// RecalculateDrawnSubsectors
-//
-// In case the subsector data is unusable this function tries to reconstruct
-// if from the linedefs' ML_MAPPED info.
 //
 //==========================================================================
 
-void RecalculateDrawnSubsectors()
+void G_SerializeLevel(FArchive &arc, bool hubLoad)
 {
-	for(int i=0;i<numsubsectors;i++)
+	int i = level.totaltime;
+
+	unsigned tm = I_MSTime();
+
+	Renderer->StartSerialize(arc);
+	if (arc.IsLoading()) P_DestroyThinkers(hubLoad);
+
+	arc << level.flags
+		<< level.flags2
+		<< level.fadeto
+		<< level.found_secrets
+		<< level.found_items
+		<< level.killed_monsters
+		<< level.gravity
+		<< level.aircontrol
+		<< level.teamdamage
+		<< level.maptime
+		<< i;
+
+	// Hub transitions must keep the current total time
+	if (!hubLoad)
+		level.totaltime = i;
+
+	arc << level.skytexture1 << level.skytexture2;
+	if (arc.IsLoading())
 	{
-		subsector_t *sub = &subsectors[i];
-		for(unsigned int j=0;j<sub->numlines;j++)
-		{
-			if (sub->firstline[j].linedef != NULL && 
-				(sub->firstline[j].linedef->flags & ML_MAPPED))
-			{
-				sub->flags |= SSECF_DRAWN;
-			}
-		}
+		sky1texture = level.skytexture1;
+		sky2texture = level.skytexture2;
+		R_InitSkyMap();
 	}
-}
 
-//==========================================================================
-//
-// ArchiveSubsectors
-//
-//==========================================================================
+	G_AirControlChanged();
 
-void P_SerializeSubsectors(FArchive &arc)
-{
-	int num_verts, num_subs, num_nodes;	
-	BYTE by;
+	BYTE t;
 
+	// Does this level have scrollers?
 	if (arc.IsStoring())
 	{
-		if (hasglnodes)
-		{
-			arc << numvertexes << numsubsectors << numnodes;	// These are only for verification
-			for(int i=0;i<numsubsectors;i+=8)
-			{
-				by = 0;
-				for(int j=0;j<8;j++)
-				{
-					if (i+j<numsubsectors && (subsectors[i+j].flags & SSECF_DRAWN))
-					{
-						by |= (1<<j);
-					}
-				}
-				arc << by;
-			}
-		}
-		else
-		{
-			int v = 0;
-			arc << v << v << v;
-		}
+		t = level.Scrolls ? 1 : 0;
+		arc << t;
 	}
 	else
 	{
-		arc << num_verts << num_subs << num_nodes;
-		if (num_verts != numvertexes ||
-			num_subs != numsubsectors ||
-			num_nodes != numnodes)
+		arc << t;
+		if (level.Scrolls)
 		{
-			// Nodes don't match - we can't use this info
-			for(int i=0;i<num_subs;i+=8)
-			{
-				// Skip the subsector info.
-				arc << by;
-			}
-			if (hasglnodes)
-			{
-				RecalculateDrawnSubsectors();
-			}
-			return;
+			delete[] level.Scrolls;
+			level.Scrolls = NULL;
 		}
-		else
+		if (t)
 		{
-			for(int i=0;i<numsubsectors;i+=8)
+			level.Scrolls = new FSectorScrollValues[numsectors];
+			memset(level.Scrolls, 0, sizeof(level.Scrolls)*numsectors);
+		}
+	}
+
+	FBehavior::StaticSerializeModuleStates(arc);
+	if (arc.IsLoading()) interpolator.ClearInterpolations();
+	P_SerializeWorld(arc);
+	P_SerializeThinkers(arc, hubLoad);
+	P_SerializeWorldActors(arc);	// serializing actor pointers in the world data must be done after SerializeWorld has restored the entire sector state, otherwise LinkToWorld may fail.
+	P_SerializePolyobjs(arc);
+	P_SerializeSubsectors(arc);
+	StatusBar->Serialize(arc);
+
+	arc << level.total_monsters << level.total_items << level.total_secrets;
+
+	// Does this level have custom translations?
+	FRemapTable *trans;
+	WORD w;
+	if (arc.IsStoring())
+	{
+		for (unsigned int i = 0; i < translationtables[TRANSLATION_LevelScripted].Size(); ++i)
+		{
+			trans = translationtables[TRANSLATION_LevelScripted][i];
+			if (trans != NULL && !trans->IsIdentity())
 			{
-				arc << by;
-				for(int j=0;j<8;j++)
-				{
-					if ((by & (1<<j)) && i+j<numsubsectors)
-					{
-						subsectors[i+j].flags |= SSECF_DRAWN;
-					}
-				}
+				w = WORD(i);
+				arc << w;
+				trans->Serialize(arc);
+			}
+		}
+		w = 0xffff;
+		arc << w;
+	}
+	else
+	{
+		while (arc << w, w != 0xffff)
+		{
+			trans = translationtables[TRANSLATION_LevelScripted].GetVal(w);
+			if (trans == NULL)
+			{
+				trans = new FRemapTable;
+				translationtables[TRANSLATION_LevelScripted].SetVal(w, trans);
+			}
+			trans->Serialize(arc);
+		}
+	}
+
+	// This must be saved, too, of course!
+	FCanvasTextureInfo::Serialize(arc);
+	AM_SerializeMarkers(arc);
+
+	P_SerializePlayers(arc, hubLoad);
+	P_SerializeSounds(arc);
+	if (arc.IsLoading())
+	{
+		for (i = 0; i < numsectors; i++)
+		{
+			P_Recalculate3DFloors(&sectors[i]);
+		}
+		for (i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i] && players[i].mo != NULL)
+			{
+				players[i].mo->SetupWeaponSlots();
 			}
 		}
 	}
+	Renderer->EndSerialize(arc);
+	unsigned tt = I_MSTime();
+	Printf("Serialization took %d ms\n", tt - tm);
 }
+

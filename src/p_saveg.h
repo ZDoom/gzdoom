@@ -52,4 +52,6 @@ void P_SerializeSounds (FArchive &arc);
 void P_ReadACSDefereds (PNGHandle *png);
 void P_WriteACSDefereds (FILE *file);
 
+void G_SerializeLevel(FArchive &arc, bool hubLoad);
+
 #endif // __P_SAVEG_H__

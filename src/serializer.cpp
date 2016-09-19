@@ -504,7 +504,9 @@ void FSerializer::WriteObjects()
 			BeginObject(nullptr);
 			WriteKey("classtype");
 			w->mWriter.String(w->mDObjects[i]->GetClass()->TypeName.GetChars());
+			w->mDObjects[i]->SerializeUserVars(*this);
 			w->mDObjects[i]->Serialize(*this);
+			w->mDObjects[i]->CheckIfSerialized();
 			EndObject();
 		}
 		EndArray();
@@ -1144,8 +1146,18 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState
 			}
 			else if (val->IsArray())
 			{
-				//rapidjson::Value cls = (*val)[0];
-				//rapidjson::Value ndx = (*val)[1];
+				const rapidjson::Value &cls = (*val)[0];
+				const rapidjson::Value &ndx = (*val)[1];
+
+				state = nullptr;
+				if (cls.IsString() && ndx.IsInt())
+				{
+					PClassActor *clas = PClass::FindActor(cls.GetString());
+					if (clas)
+					{
+						state = clas->OwnedStates + ndx.GetInt();
+					}
+				}
 			}
 			else
 			{

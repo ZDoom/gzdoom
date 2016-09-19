@@ -1781,7 +1781,7 @@ public:
 
 	DLightLevel(sector_t * s,int destlevel,int speed);
 	void	Serialize(FArchive &arc);
-	void	Serialize(FArchive &arc);
+	//void	Serialize(FArchive &arc);
 	void		Tick ();
 	void		Destroy() { Super::Destroy(); m_Sector->lightingdata=NULL; }
 };

@@ -438,6 +438,8 @@ template<class T> inline void GC::Mark(TObjPtr<T> &obj)
 	GC::Mark(&obj.o);
 }
 
+#define DECLARE_OLD_SERIAL virtual void Serialize(FArchive &arc);
+
 class DObject
 {
 public:
@@ -467,7 +469,7 @@ public:
 	inline bool IsA (const PClass *type) const;
 
 	void SerializeUserVars(FArchive &arc);
-	virtual void Serialize(FArchive &arc);
+	DECLARE_OLD_SERIAL
 
 	void SerializeUserVars(FSerializer &arc);
 	virtual void Serialize(FSerializer &arc);

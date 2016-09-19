@@ -14,6 +14,7 @@
 #include "farchive.h"
 #include "a_pickups.h"
 #include "d_player.h"
+#include "serializer.h"
 
 #define MAULATORTICS (25*35)
 
@@ -79,10 +80,10 @@ void AMinotaurFriend::BeginPlay ()
 	StartTime = -1;
 }
 
-void AMinotaurFriend::Serialize(FArchive &arc)
+void AMinotaurFriend::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << StartTime;
+	arc("starttime", StartTime);
 }
 
 void AMinotaurFriend::Die (AActor *source, AActor *inflictor, int dmgflags)

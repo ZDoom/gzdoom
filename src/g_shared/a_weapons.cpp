@@ -18,6 +18,7 @@
 #include "g_level.h"
 #include "d_net.h"
 #include "farchive.h"
+#include "serializer.h"
 
 #define BONUSADD 6
 
@@ -73,28 +74,45 @@ void PClassWeapon::ReplaceClassRef(PClass *oldclass, PClass *newclass)
 //
 //===========================================================================
 
-void AWeapon::Serialize(FArchive &arc)
+void AWeapon::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << WeaponFlags
-		<< AmmoType1 << AmmoType2
-		<< AmmoGive1 << AmmoGive2
-		<< MinAmmo1 << MinAmmo2
-		<< AmmoUse1 << AmmoUse2
-		<< Kickback
-		<< YAdjust
-		<< UpSound << ReadySound
-		<< SisterWeaponType
-		<< ProjectileType << AltProjectileType
-		<< SelectionOrder
-		<< MoveCombatDist
-		<< Ammo1 << Ammo2 << SisterWeapon << GivenAsMorphWeapon
-		<< bAltFire
-		<< ReloadCounter
-		<< BobStyle << BobSpeed << BobRangeX << BobRangeY
-		<< FOVScale
-		<< Crosshair
-		<< MinSelAmmo1 << MinSelAmmo2;
+	auto def = (AWeapon*)GetDefault();
+	arc("weaponflags", WeaponFlags, def->WeaponFlags)
+		("ammogive1", AmmoGive1, def->AmmoGive1)
+		("ammogive2", AmmoGive2, def->AmmoGive2)
+		("minammo1", MinAmmo1, def->MinAmmo1)
+		("minammo2", MinAmmo2, def->MinAmmo2)
+		("ammouse1", AmmoUse1, def->AmmoUse1)
+		("ammouse2", AmmoUse2, def->AmmoUse2)
+		("kickback", Kickback, Kickback)
+		("yadjust", YAdjust, def->YAdjust)
+		("upsound", UpSound, def->UpSound)
+		("readysound", ReadySound, def->ReadySound)
+		("selectionorder", SelectionOrder, def->SelectionOrder)
+		("ammo1", Ammo1)
+		("ammo2", Ammo2)
+		("sisterweapon", SisterWeapon)
+		("givenasmorphweapon", GivenAsMorphWeapon, def->GivenAsMorphWeapon)
+		("altfire", bAltFire, def->bAltFire)
+		("reloadcounter", ReloadCounter, def->ReloadCounter)
+		("bobstyle", BobStyle, def->BobStyle)
+		("bobspeed", BobSpeed, def->BobSpeed)
+		("bobrangex", BobRangeX, def->BobRangeX)
+		("bobrangey", BobRangeY, def->BobRangeY)
+		("fovscale", FOVScale, def->FOVScale)
+		("crosshair", Crosshair, def->Crosshair)
+		("minselammo1", MinSelAmmo1, def->MinSelAmmo1)
+		("minselammo2", MinSelAmmo2, def->MinSelAmmo2);
+		/* these can never change
+		("ammotype1", AmmoType1, def->AmmoType1)
+		("ammotype2", AmmoType2, def->AmmoType2)
+		("sisterweapontype", SisterWeaponType, def->SisterWeaponType)
+		("projectiletype", ProjectileType, def->ProjectileType)
+		("altprojectiletype", AltProjectileType, def->AltProjectileType)
+		("movecombatdist", MoveCombatDist, def->MoveCombatDist)
+		*/
+
 }
 
 //===========================================================================
@@ -737,10 +755,11 @@ FState *AWeapon::GetStateForButtonName (FName button)
 
 IMPLEMENT_CLASS(AWeaponGiver)
 
-void AWeaponGiver::Serialize(FArchive &arc)
+void AWeaponGiver::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
-	arc << DropAmmoFactor;
+	auto def = (AWeaponGiver *)GetDefault();
+	arc("dropammofactor", DropAmmoFactor, def->DropAmmoFactor);
 }
 
 bool AWeaponGiver::TryPickup(AActor *&toucher)

@@ -21,6 +21,7 @@
 #include "farchive.h"
 #include "d_player.h"
 #include "p_spec.h"
+#include "serializer.h"
 
 static FRandom pr_restore ("RestorePos");
 
@@ -89,10 +90,12 @@ IMPLEMENT_CLASS (AAmmo)
 //
 //===========================================================================
 
-void AAmmo::Serialize(FArchive &arc)
+void AAmmo::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << BackpackAmount << BackpackMaxAmount;
+	auto def = (AAmmo*)GetDefault();
+	arc("backpackamount", BackpackAmount, def->BackpackAmount)
+		("backpackmaxamount", BackpackMaxAmount, def->BackpackMaxAmount);
 }
 
 //===========================================================================
@@ -514,10 +517,21 @@ void AInventory::Tick ()
 //
 //===========================================================================
 
-void AInventory::Serialize(FArchive &arc)
+void AInventory::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << Owner << Amount << MaxAmount << RespawnTics << ItemFlags << Icon << PickupSound << SpawnPointClass;
+
+	auto def = (AInventory*)GetDefault();
+	arc("owner", Owner)
+		("amount", Amount, def->Amount)
+		("maxamount", MaxAmount, def->MaxAmount)
+		("interhubamount", InterHubAmount, def->InterHubAmount)
+		("respawntics", RespawnTics, def->RespawnTics)
+		("itemflags", ItemFlags, def->ItemFlags)
+		("icon", Icon, def->Icon)
+		("pickupsound", PickupSound, def->PickupSound)
+		("spawnpointclass", SpawnPointClass, def->SpawnPointClass)
+		("droptime", DropTime, def->DropTime);
 }
 
 //===========================================================================
@@ -1809,10 +1823,11 @@ bool AHealthPickup::Use (bool pickup)
 //
 //===========================================================================
 
-void AHealthPickup::Serialize(FArchive &arc)
+void AHealthPickup::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
-	arc << autousemode;
+	auto def = (AHealthPickup*)GetDefault();
+	arc("autousemode", autousemode, def->autousemode);
 }
 
 // Backpack -----------------------------------------------------------------
@@ -1823,10 +1838,11 @@ void AHealthPickup::Serialize(FArchive &arc)
 //
 //===========================================================================
 
-void ABackpackItem::Serialize(FArchive &arc)
+void ABackpackItem::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << bDepleted;
+	auto def = (ABackpackItem*)GetDefault();
+	arc("bdepleted", bDepleted, def->bDepleted);
 }
 
 //===========================================================================

@@ -38,7 +38,7 @@ public:
 	const char *GetOutput(unsigned *len = nullptr);
 	FSerializer &Args(const char *key, int *args, int *defargs, int special);
 	FSerializer &Terrain(const char *key, int &terrain, int *def = nullptr);
-	FSerializer &Sprite(const char *key, uint16_t &spritenum, uint16_t *def);
+	FSerializer &Sprite(const char *key, int32_t &spritenum, int32_t *def);
 	FSerializer &StringPtr(const char *key, const char *&charptr);	// This only retrieves the address but creates no permanent copy of the string.
 	bool isReading() const
 	{

@@ -1,5 +1,8 @@
 #ifdef COMMON_STUFF
 
+#include "a_doomglobal.h"
+#include "ravenshared.h"
+
 // For NULL states, which aren't owned by any actor, the owner
 // is recorded as AActor with the following state. AActor should
 // never actually have this many states of its own, so this
@@ -699,29 +702,178 @@ void DObject::Serialize(FArchive &arc)
 }
 
 
-class DLightLevel : public DLighting
-{
-	DECLARE_CLASS(DLightLevel, DLighting)
-
-	unsigned char destlevel;
-	unsigned char speed;
-
-	DLightLevel() {}
-
-public:
-
-	DLightLevel(sector_t * s, int destlevel, int speed);
-	void	Serialize(FArchive &arc);
-	void	Serialize(FSerializer &arc);
-	void		Tick();
-	void		Destroy() { Super::Destroy(); m_Sector->lightingdata = NULL; }
-};
-
-void DLightLevel::Serialize(FArchive &arc)
+void AScriptedMarine::Serialize(FArchive &arc)
 {
 	Super::Serialize(arc);
-	arc << destlevel << speed;
-	if (arc.IsLoading()) m_Sector->lightingdata = this;
+
+	if (arc.IsStoring())
+	{
+		arc.WriteSprite(SpriteOverride);
+	}
+	else
+	{
+		SpriteOverride = arc.ReadSprite();
+	}
+	arc << CurrentWeapon;
 }
+
+
+class AHeresiarch : public AActor
+{
+	DECLARE_CLASS(AHeresiarch, AActor)
+public:
+	PClassActor *StopBall;
+	DAngle BallAngle;
+
+	DECLARE_OLD_SERIAL
+};
+
+void AHeresiarch::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << StopBall << BallAngle;
+}
+
+class ASorcBall : public AActor
+{
+	DECLARE_CLASS(ASorcBall, AActor)
+public:
+	DAngle AngleOffset;
+	DAngle OldAngle;
+
+	DECLARE_OLD_SERIAL
+};
+
+void ASorcBall::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << AngleOffset << OldAngle;
+}
+
+class AThrustFloor : public AActor
+{
+	DECLARE_CLASS(AThrustFloor, AActor)
+public:
+	DECLARE_OLD_SERIAL
+
+	TObjPtr<AActor> DirtClump;
+};
+
+void AThrustFloor::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << DirtClump;
+}
+
+void AMinotaurFriend::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << StartTime;
+}
+
+class ARainTracker : public AInventory
+{
+	DECLARE_CLASS(ARainTracker, AInventory)
+public:
+	DECLARE_OLD_SERIAL
+	TObjPtr<AActor> Rain1, Rain2;
+};
+
+void ARainTracker::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << Rain1 << Rain2;
+}
+
+void AInventory::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << Owner << Amount << MaxAmount << RespawnTics << ItemFlags << Icon << PickupSound << SpawnPointClass;
+}
+
+void AHealthPickup::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << autousemode;
+}
+
+void AAmmo::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << BackpackAmount << BackpackMaxAmount;
+}
+
+void AWeapon::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << WeaponFlags
+		<< AmmoType1 << AmmoType2
+		<< AmmoGive1 << AmmoGive2
+		<< MinAmmo1 << MinAmmo2
+		<< AmmoUse1 << AmmoUse2
+		<< Kickback
+		<< YAdjust
+		<< UpSound << ReadySound
+		<< SisterWeaponType
+		<< ProjectileType << AltProjectileType
+		<< SelectionOrder
+		<< MoveCombatDist
+		<< Ammo1 << Ammo2 << SisterWeapon << GivenAsMorphWeapon
+		<< bAltFire
+		<< ReloadCounter
+		<< BobStyle << BobSpeed << BobRangeX << BobRangeY
+		<< FOVScale
+		<< Crosshair
+		<< MinSelAmmo1 << MinSelAmmo2;
+}
+
+void ABackpackItem::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << bDepleted;
+}
+
+void AWeaponGiver::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << DropAmmoFactor;
+}
+
+void ABasicArmor::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << SavePercent << BonusCount << MaxAbsorb << MaxFullAbsorb << AbsorbCount << ArmorType << ActualSaveAmount;
+}
+
+void ABasicArmorPickup::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << SavePercent << SaveAmount << MaxAbsorb << MaxFullAbsorb;
+	arc << DropTime;// in inventory!
+}
+
+void ABasicArmorBonus::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << SavePercent << SaveAmount << MaxSaveAmount << BonusCount << BonusMax
+		<< MaxAbsorb << MaxFullAbsorb;
+}
+
+void AHexenArmor::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << Slots[0] << Slots[1] << Slots[2] << Slots[3]
+		<< Slots[4]
+		<< SlotsIncrement[0] << SlotsIncrement[1] << SlotsIncrement[2]
+		<< SlotsIncrement[3];
+}
+
+void APuzzleItem::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << PuzzleItemNumber;
+}
+
+
 
 #endif

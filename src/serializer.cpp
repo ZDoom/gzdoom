@@ -431,7 +431,7 @@ FSerializer &FSerializer::Terrain(const char *key, int &terrain, int *def)
 //
 //==========================================================================
 
-FSerializer &FSerializer::Sprite(const char *key, uint16_t &spritenum, uint16_t *def)
+FSerializer &FSerializer::Sprite(const char *key, int32_t &spritenum, int32_t *def)
 {
 	if (isWriting())
 	{

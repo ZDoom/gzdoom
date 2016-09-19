@@ -24,6 +24,7 @@
 #include "r_utility.h"
 #include "p_maputl.h"
 #include "p_spec.h"
+#include "serializer.h"
 
 // Include all the Hexen stuff here to reduce compile time
 #include "a_bats.cpp"

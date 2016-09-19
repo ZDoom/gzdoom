@@ -583,7 +583,7 @@ public:
 	void Destroy ();
 	~AActor ();
 
-	void Serialize(FArchive &arc);
+	DECLARE_OLD_SERIAL
 	void Serialize(FSerializer &arc);
 	void PostSerialize();
 
@@ -990,7 +990,7 @@ public:
 	double			Speed;
 	double			FloatSpeed;
 
-	WORD			sprite;				// used to find patch_t and flip value
+	int				sprite;				// used to find patch_t and flip value
 	BYTE			frame;				// sprite frame to draw
 	DVector2		Scale;				// Scaling values; 1 is normal size
 	FRenderStyle	RenderStyle;		// Style to draw this actor with

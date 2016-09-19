@@ -866,16 +866,18 @@ class ARainTracker : public AInventory
 {
 	DECLARE_CLASS (ARainTracker, AInventory)
 public:
-	void Serialize(FArchive &arc);
-	AActor *Rain1, *Rain2;
+	DECLARE_OLD_SERIAL
+	void Serialize(FSerializer &arc);
+	TObjPtr<AActor> Rain1, Rain2;
 };
 
 IMPLEMENT_CLASS (ARainTracker)
 	
-void ARainTracker::Serialize(FArchive &arc)
+void ARainTracker::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << Rain1 << Rain2;
+	arc("rain1", Rain1)
+		("rain2", Rain2);
 }
 
 //----------------------------------------------------------------------------

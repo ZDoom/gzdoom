@@ -20,12 +20,6 @@ void PClassPuzzleItem::DeriveData(PClass *newclass)
 
 IMPLEMENT_CLASS(APuzzleItem)
 
-void APuzzleItem::Serialize(FArchive &arc)
-{
-	Super::Serialize (arc);
-	arc << PuzzleItemNumber;
-}
-
 bool APuzzleItem::HandlePickup (AInventory *item)
 {
 	// Can't carry more than 1 of each puzzle item in coop netplay

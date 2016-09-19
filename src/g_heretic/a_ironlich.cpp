@@ -115,7 +115,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 				fire->target = baseFire->target;
 				fire->Angles.Yaw = baseFire->Angles.Yaw;
 				fire->Vel = baseFire->Vel;
-				fire->Damage = NULL;
+				fire->SetDamage(0);
 				fire->health = (i+1) * 2;
 				P_CheckMissileSpawn (fire, self->radius);
 			}
@@ -205,7 +205,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichFireGrow)
 	self->AddZ(9.);
 	if (self->health == 0)
 	{
-		self->Damage = self->GetDefault()->Damage;
+		self->RestoreDamage();
 		self->SetState (self->FindState("NoGrow"));
 	}
 	return 0;

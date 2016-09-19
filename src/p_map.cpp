@@ -1320,7 +1320,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		// [RH] What is the point of this check, again? In Hexen, it is unconditional,
 		// but here we only do it if the missile's damage is 0.
 		// MBF bouncer might have a non-0 damage value, but they must not deal damage on impact either.
-		if ((tm.thing->BounceFlags & BOUNCE_Actors) && (tm.thing->Damage == 0 || !(tm.thing->flags & MF_MISSILE)))
+		if ((tm.thing->BounceFlags & BOUNCE_Actors) && (tm.thing->IsZeroDamage() || !(tm.thing->flags & MF_MISSILE)))
 		{
 			return (tm.thing->target == thing || !(thing->flags & MF_SOLID));
 		}

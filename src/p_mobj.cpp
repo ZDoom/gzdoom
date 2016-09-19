@@ -139,80 +139,14 @@ IMPLEMENT_POINTY_CLASS (AActor)
  DECLARE_POINTER (LastHeard)
  DECLARE_POINTER (master)
  DECLARE_POINTER (Poisoner)
- DECLARE_POINTER (Damage)
+ DECLARE_POINTER (DamageFunc)
+ DECLARE_POINTER (alternative)
 END_POINTERS
 
 AActor::~AActor ()
 {
 	// Please avoid calling the destructor directly (or through delete)!
 	// Use Destroy() instead.
-}
-
-//==========================================================================
-//
-// CalcDamageValue
-//
-// Given a script function, returns an integer to represent it in a
-// savegame. This encoding is compatible with previous incarnations
-// where damage was an integer.
-//
-//             0 : use null function
-//    0x40000000 : use default function
-// anything else : use function that returns this number
-//
-//==========================================================================
-
-static int CalcDamageValue(VMFunction *func)
-{
-	if (func == NULL)
-	{
-		return 0;
-	}
-	VMScriptFunction *sfunc = dyn_cast<VMScriptFunction>(func);
-	if (sfunc == NULL)
-	{
-		return 0x40000000;
-	}
-	VMOP *op = sfunc->Code;
-	// If the function was created by CreateDamageFunction(), extract
-	// the value used to create it and return that. Otherwise, return
-	// indicating to use the default function.
-	if (op->op == OP_RETI && op->a == 0)
-	{
-		return op->i16;
-	}
-	if (op->op == OP_RET && op->a == 0 && op->b == (REGT_INT | REGT_KONST))
-	{
-		return sfunc->KonstD[op->c];
-	}
-	return 0x40000000;
-}
-
-//==========================================================================
-//
-// UncalcDamageValue
-//
-// Given a damage integer, returns a script function for it.
-//
-//==========================================================================
-
-static VMFunction *UncalcDamageValue(int dmg, VMFunction *def)
-{
-	if (dmg == 0)
-	{
-		return NULL;
-	}
-	if ((dmg & 0xC0000000) == 0x40000000)
-	{
-		return def;
-	}
-	// Does the default version return this? If so, use it. Otherwise,
-	// create a new function.
-	if (CalcDamageValue(def) == dmg)
-	{
-		return def;
-	}
-	return CreateDamageFunction(dmg);
 }
 
 //==========================================================================
@@ -262,18 +196,16 @@ void AActor::Serialize(FArchive &arc)
 		<< projectilepassheight
 		<< Vel
 		<< tics
-		<< state;
-	if (arc.IsStoring())
+		<< state
+		<< DamageVal;
+	if (DamageVal == 0x40000000 || DamageVal == -1)
 	{
-		int dmg;
-		dmg = CalcDamageValue(Damage);
-		arc << dmg;
+		DamageVal = -1;
+		DamageFunc = GetDefault()->DamageFunc;
 	}
 	else
 	{
-		int dmg;
-		arc << dmg;
-		Damage = UncalcDamageValue(dmg, GetDefault()->Damage);
+		DamageFunc = nullptr;
 	}
 	P_SerializeTerrain(arc, floorterrain);
 	arc	<< projectileKickback
@@ -2974,8 +2906,21 @@ CCMD(utid)
 
 int AActor::GetMissileDamage (int mask, int add)
 {
-	if (Damage == NULL)
+	if (DamageVal >= 0)
 	{
+		if (mask == 0)
+		{
+			return add * DamageVal;
+		}
+		else
+		{
+			return ((pr_missiledamage() & mask) + add) * DamageVal;
+		}
+	}
+	if (DamageFunc == nullptr)
+	{
+		// This should never happen
+		assert(false && "No damage function found");
 		return 0;
 	}
 	VMFrameStack stack;
@@ -2987,22 +2932,11 @@ int AActor::GetMissileDamage (int mask, int add)
 	results[0].IntAt(&amount);
 	results[1].IntAt(&calculated);
 
-	if (stack.Call(Damage, &param, 1, results, 2) < 1)
+	if (stack.Call(DamageFunc, &param, 1, results, 2) < 1)
 	{ // No results
 		return 0;
 	}
-	if (calculated)
-	{
-		return amount;
-	}
-	else if (mask == 0)
-	{
-		return add * amount;
-	}
-	else
-	{
-		return ((pr_missiledamage() & mask) + add) * amount;
-	}
+	return amount;
 }
 
 void AActor::Howl ()
@@ -3694,7 +3628,7 @@ void AActor::Tick ()
 		// still have missiles that go straight up and down through actors without
 		// damaging anything.
 		// (for backwards compatibility this must check for lack of damage function, not for zero damage!)
-		if ((flags & MF_MISSILE) && Vel.X == 0 && Vel.Y == 0 && Damage != NULL)
+		if ((flags & MF_MISSILE) && Vel.X == 0 && Vel.Y == 0 && !IsZeroDamage())
 		{
 			Vel.X = MinVel;
 		}

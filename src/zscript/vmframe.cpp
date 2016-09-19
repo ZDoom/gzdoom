@@ -407,6 +407,44 @@ int VMFrameStack::Call(VMFunction *func, VMValue *params, int numparams, VMRetur
 		}
 		throw;
 	}
+	catch (EVMAbortException exception)
+	{
+		if (allocated)
+		{
+			PopFrame();
+		}
+		if (trap != nullptr)
+		{
+			*trap = nullptr;
+		}
+
+		Printf("VM execution aborted: ");
+		switch (exception)
+		{
+		case X_READ_NIL:
+			Printf("tried to read from address zero.");
+			break;
+
+		case X_WRITE_NIL:
+			Printf("tried to write to address zero.");
+			break;
+
+		case X_TOO_MANY_TRIES:
+			Printf("too many try-catch blocks.");
+			break;
+
+		case X_ARRAY_OUT_OF_BOUNDS:
+			Printf("array access out of bounds.");
+			break;
+
+		case X_DIVISION_BY_ZERO:
+			Printf("division by zero.");
+			break;
+		}
+		Printf("\n");
+
+		return -1;
+	}
 	catch (...)
 	{
 		if (allocated)

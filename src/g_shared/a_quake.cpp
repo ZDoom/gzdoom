@@ -291,10 +291,9 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim, FQuakeJiggers &jigger
 
 				if (!(quake->m_Flags & QF_WAVE))
 				{
-					jiggers.Falloff = MAX(falloff, jiggers.Falloff);
-					jiggers.RollIntensity = MAX(r, jiggers.RollIntensity) * jiggers.Falloff;
+					jiggers.RollIntensity = MAX(r, jiggers.RollIntensity) * falloff;
 
-					intensity *= jiggers.Falloff;
+					intensity *= falloff;
 					if (quake->m_Flags & QF_RELATIVE)
 					{
 						jiggers.RelIntensity.X = MAX(intensity.X, jiggers.RelIntensity.X);
@@ -310,14 +309,13 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim, FQuakeJiggers &jigger
 				}
 				else
 				{
-					jiggers.Falloff = MAX(falloff, jiggers.Falloff);
-					jiggers.RollWave = r * quake->GetModWave(quake->m_RollWave) * jiggers.Falloff * strength;
+					jiggers.RollWave = r * quake->GetModWave(quake->m_RollWave) * falloff * strength;
 
 					
 					intensity.X *= quake->GetModWave(quake->m_WaveSpeed.X);
 					intensity.Y *= quake->GetModWave(quake->m_WaveSpeed.Y);
 					intensity.Z *= quake->GetModWave(quake->m_WaveSpeed.Z);
-					intensity *= strength * jiggers.Falloff;
+					intensity *= strength * falloff;
 
 					// [RH] This only gives effect to the last sine quake. I would
 					// prefer if some way was found to make multiples coexist

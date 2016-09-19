@@ -1220,6 +1220,24 @@ void D3DFB::Flip()
 		CurrRenderTexture ^= RenderTextureToggle;
 		TempRenderTexture = RenderTexture[CurrRenderTexture];
 	}
+
+	if (Windowed)
+	{
+		RECT box;
+		GetClientRect(Window, &box);
+		if (box.right > 0 && box.right > 0 && (Width != box.right || Height != box.bottom))
+		{
+			Resize(box.right, box.bottom);
+
+			TrueHeight = Height;
+			PixelDoubling = 0;
+			LBOffsetI = 0;
+			LBOffset = 0.0f;
+			Reset();
+
+			V_OutputResized(Width, Height);
+		}
+	}
 }
 
 //==========================================================================

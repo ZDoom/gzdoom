@@ -3,7 +3,9 @@
 #define RAPIDJSON_HAS_CXX11_RANGE_FOR 1
 #define RAPIDJSON_PARSE_DEFAULT_FLAGS kParseFullPrecisionFlag
 
-//#define PRETTY
+#ifdef _DEBUG
+#define PRETTY
+#endif
 
 #include "rapidjson/rapidjson.h"
 #include "rapidjson/writer.h"
@@ -26,6 +28,7 @@
 #include "d_player.h"
 #include "r_data/r_interpolate.h"
 #include "g_shared/a_sharedglobal.h"
+#include "po_man.h"
 
 char nulspace[1024 * 1024 * 4];
 
@@ -800,6 +803,11 @@ FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **
 		value = vv < 0 ? nullptr : base + vv;
 	}
 	return arc;
+}
+
+FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj *&value, FPolyObj **defval)
+{
+	return SerializePointer(arc, key, value, defval, polyobjs);
 }
 
 FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&value, side_t **defval)

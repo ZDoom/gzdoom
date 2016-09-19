@@ -2,6 +2,7 @@
 
 #include "a_doomglobal.h"
 #include "ravenshared.h"
+#include "a_weaponpiece.h"
 
 // For NULL states, which aren't owned by any actor, the owner
 // is recorded as AActor with the following state. AActor should
@@ -872,6 +873,168 @@ void APuzzleItem::Serialize(FArchive &arc)
 {
 	Super::Serialize(arc);
 	arc << PuzzleItemNumber;
+}
+
+class DSectorPlaneInterpolation : public DInterpolation
+{
+	DECLARE_CLASS(DSectorPlaneInterpolation, DInterpolation)
+
+	sector_t *sector;
+	double oldheight, oldtexz;
+	double bakheight, baktexz;
+	bool ceiling;
+	TArray<DInterpolation *> attached;
+
+
+public:
+
+	DSectorPlaneInterpolation() {}
+	DSectorPlaneInterpolation(sector_t *sector, bool plane, bool attach);
+	void Destroy();
+	void UpdateInterpolation();
+	void Restore();
+	void Interpolate(double smoothratio);
+	DECLARE_OLD_SERIAL
+	virtual void Serialize(FSerializer &arc);
+	size_t PointerSubstitution(DObject *old, DObject *notOld);
+	size_t PropagateMark();
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class DSectorScrollInterpolation : public DInterpolation
+{
+	DECLARE_CLASS(DSectorScrollInterpolation, DInterpolation)
+
+	sector_t *sector;
+	double oldx, oldy;
+	double bakx, baky;
+	bool ceiling;
+
+public:
+
+	DSectorScrollInterpolation() {}
+	DSectorScrollInterpolation(sector_t *sector, bool plane);
+	void Destroy();
+	void UpdateInterpolation();
+	void Restore();
+	void Interpolate(double smoothratio);
+	DECLARE_OLD_SERIAL
+	virtual void Serialize(FSerializer &arc);
+};
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class DWallScrollInterpolation : public DInterpolation
+{
+	DECLARE_CLASS(DWallScrollInterpolation, DInterpolation)
+
+	side_t *side;
+	int part;
+	double oldx, oldy;
+	double bakx, baky;
+
+public:
+
+	DWallScrollInterpolation() {}
+	DWallScrollInterpolation(side_t *side, int part);
+	void Destroy();
+	void UpdateInterpolation();
+	void Restore();
+	void Interpolate(double smoothratio);
+	DECLARE_OLD_SERIAL
+	virtual void Serialize(FSerializer &arc);
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class DPolyobjInterpolation : public DInterpolation
+{
+	DECLARE_CLASS(DPolyobjInterpolation, DInterpolation)
+
+	FPolyObj *poly;
+	TArray<double> oldverts, bakverts;
+	double oldcx, oldcy;
+	double bakcx, bakcy;
+
+public:
+
+	DPolyobjInterpolation() {}
+	DPolyobjInterpolation(FPolyObj *poly);
+	void Destroy();
+	void UpdateInterpolation();
+	void Restore();
+	void Interpolate(double smoothratio);
+	DECLARE_OLD_SERIAL
+	virtual void Serialize(FSerializer &arc);
+};
+
+void DInterpolation::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << refcount;
+	if (arc.IsLoading())
+	{
+		interpolator.AddInterpolation(this);
+	}
+}
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DSectorPlaneInterpolation::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << sector << ceiling << oldheight << oldtexz << attached;
+}
+
+void DSectorScrollInterpolation::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << sector << ceiling << oldx << oldy;
+}
+void DWallScrollInterpolation::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << side << part << oldx << oldy;
+}
+
+void DPolyobjInterpolation::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	int po = int(poly - polyobjs);
+	arc << po << oldverts;
+	poly = polyobjs + po;
+
+	arc << oldcx << oldcy;
+	if (arc.IsLoading()) bakverts.Resize(oldverts.Size());
+}
+
+void AWeaponHolder::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << PieceMask << PieceWeapon;
+}
+
+void AWeaponPiece::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << WeaponClass << FullWeapon << PieceValue;
 }
 
 

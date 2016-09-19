@@ -26,6 +26,10 @@ public:
 
 public:
 
+	~FSerializer()
+	{
+		Close();
+	}
 	bool OpenWriter();
 	bool OpenReader(const char *buffer, size_t length);
 	void Close();
@@ -114,6 +118,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, uint16_t &value, uint1
 FSerializer &Serialize(FSerializer &arc, const char *key, double &value, double *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, float &value, float *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&value, side_t **defval);
+FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj *&value, FPolyObj **defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, sector_t *&value, sector_t **defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, player_t *&value, player_t **defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, line_t *&value, line_t **defval);

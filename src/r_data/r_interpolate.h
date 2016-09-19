@@ -31,7 +31,8 @@ public:
 	virtual void UpdateInterpolation() = 0;
 	virtual void Restore() = 0;
 	virtual void Interpolate(double smoothratio) = 0;
-	virtual void Serialize(FArchive &arc);
+	DECLARE_OLD_SERIAL
+	virtual void Serialize(FSerializer &arc);
 };
 
 //==========================================================================

@@ -65,7 +65,7 @@
 #include "v_palette.h"
 #include "v_font.h"
 #include "r_data/colormaps.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "p_setup.h"
 #include "p_spec.h"
 #include "r_utility.h"
@@ -1780,8 +1780,7 @@ class DLightLevel : public DLighting
 public:
 
 	DLightLevel(sector_t * s,int destlevel,int speed);
-	void	Serialize(FArchive &arc);
-	//void	Serialize(FArchive &arc);
+	void	Serialize(FSerializer &arc);
 	void		Tick ();
 	void		Destroy() { Super::Destroy(); m_Sector->lightingdata=NULL; }
 };
@@ -1790,11 +1789,11 @@ public:
 
 IMPLEMENT_CLASS (DLightLevel)
 
-void DLightLevel::Serialize(FArchive &arc)
+void DLightLevel::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << destlevel << speed;
-	if (arc.IsLoading()) m_Sector->lightingdata=this;
+	arc("destlevel", destlevel)
+		("speed", speed);
 }
 
 

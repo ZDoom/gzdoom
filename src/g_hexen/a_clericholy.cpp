@@ -31,7 +31,7 @@ class ACWeapWraithverge : public AClericWeapon
 {
 	DECLARE_CLASS (ACWeapWraithverge, AClericWeapon)
 public:
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc)
 	{
 		Super::Serialize (arc);

@@ -60,7 +60,7 @@ public:
 	AInterpolationPoint *ScanForLoop ();
 	void FormChain ();
 
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc);
 
 	TObjPtr<AInterpolationPoint> Next;
@@ -167,7 +167,7 @@ protected:
 	virtual bool Interpolate ();
 	virtual void NewNode ();
 
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc);
 
 	bool bActive, bJustStepped;
@@ -584,7 +584,7 @@ class AMovingCamera : public APathFollower
 public:
 	void PostBeginPlay ();
 
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc);
 protected:
 	bool Interpolate ();

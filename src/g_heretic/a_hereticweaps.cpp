@@ -866,7 +866,7 @@ class ARainTracker : public AInventory
 {
 	DECLARE_CLASS (ARainTracker, AInventory)
 public:
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc);
 	TObjPtr<AActor> Rain1, Rain2;
 };
@@ -1142,7 +1142,7 @@ class APhoenixRod : public AWeapon
 {
 	DECLARE_CLASS (APhoenixRod, AWeapon)
 public:
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc)
 	{
 		Super::Serialize (arc);

@@ -29,7 +29,7 @@ class AMWeapBloodscourge : public AMageWeapon
 {
 	DECLARE_CLASS (AMWeapBloodscourge, AMageWeapon)
 public:
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc)
 	{
 		Super::Serialize (arc);

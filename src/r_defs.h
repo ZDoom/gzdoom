@@ -591,7 +591,7 @@ struct secspecial_t
 	}
 };
 
-FArchive &operator<< (FArchive &arc, secspecial_t &p);
+FSerializer &Serialize(FSerializer &arc, const char *key, secspecial_t &spec, secspecial_t *def);
 
 enum class EMoveResult { ok, crushed, pastdest };
 

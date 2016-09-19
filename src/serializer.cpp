@@ -805,29 +805,34 @@ FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **
 	return arc;
 }
 
-FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj *&value, FPolyObj **defval)
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj *&value, FPolyObj **defval)
 {
 	return SerializePointer(arc, key, value, defval, polyobjs);
 }
 
-FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&value, side_t **defval)
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&value, side_t **defval)
 {
 	return SerializePointer(arc, key, value, defval, sides);
 }
 
-FSerializer &Serialize(FSerializer &arc, const char *key, sector_t *&value, sector_t **defval)
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, sector_t *&value, sector_t **defval)
 {
 	return SerializePointer(arc, key, value, defval, sectors);
 }
 
-FSerializer &Serialize(FSerializer &arc, const char *key, player_t *&value, player_t **defval)
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, player_t *&value, player_t **defval)
 {
 	return SerializePointer(arc, key, value, defval, players);
 }
 
-FSerializer &Serialize(FSerializer &arc, const char *key, line_t *&value, line_t **defval)
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, line_t *&value, line_t **defval)
 {
 	return SerializePointer(arc, key, value, defval, lines);
+}
+
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, vertex_t *&value, vertex_t **defval)
+{
+	return SerializePointer(arc, key, value, defval, vertexes);
 }
 
 //==========================================================================
@@ -988,7 +993,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FName &value, FName *d
 //
 //==========================================================================
 
-FSerializer &Serialize(FSerializer &arc, const char *key, FDynamicColormap *&cm, FDynamicColormap **def)
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDynamicColormap *&cm, FDynamicColormap **def)
 {
 	if (arc.isWriting())
 	{
@@ -1079,7 +1084,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 //
 //==========================================================================
 
-FSerializer &Serialize(FSerializer &arc, const char *key, PClassActor *&clst, PClassActor **def)
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClassActor *&clst, PClassActor **def)
 {
 	if (arc.isWriting())
 	{
@@ -1114,7 +1119,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, PClassActor *&clst, PC
 //
 //==========================================================================
 
-FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def)
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def)
 {
 	if (arc.isWriting())
 	{
@@ -1183,7 +1188,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState
 //
 //==========================================================================
 
-FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDialogueNode *&node, FStrifeDialogueNode **def)
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDialogueNode *&node, FStrifeDialogueNode **def)
 {
 	if (arc.isWriting())
 	{
@@ -1236,7 +1241,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDialogueNode *&
 //
 //==========================================================================
 
-FSerializer &Serialize(FSerializer &arc, const char *key, FString *&pstr, FString **def)
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FString *&pstr, FString **def)
 {
 	if (arc.isWriting())
 	{

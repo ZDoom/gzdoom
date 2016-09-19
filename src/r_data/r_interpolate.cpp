@@ -66,7 +66,7 @@ public:
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
-	DECLARE_OLD_SERIAL
+	
 	virtual void Serialize(FSerializer &arc);
 	size_t PointerSubstitution (DObject *old, DObject *notOld);
 	size_t PropagateMark();
@@ -95,7 +95,7 @@ public:
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
-	DECLARE_OLD_SERIAL
+	
 	virtual void Serialize(FSerializer &arc);
 };
 
@@ -123,7 +123,7 @@ public:
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
-	DECLARE_OLD_SERIAL
+	
 	virtual void Serialize(FSerializer &arc);
 };
 
@@ -150,7 +150,7 @@ public:
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
-	DECLARE_OLD_SERIAL
+	
 	virtual void Serialize(FSerializer &arc);
 };
 

@@ -67,7 +67,7 @@ public:
 	PClassActor *StopBall;
 	DAngle BallAngle;
 
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc);
 	void Die (AActor *source, AActor *inflictor, int dmgflags);
 };
@@ -107,7 +107,7 @@ public:
 	DAngle AngleOffset;
 	DAngle OldAngle;
 
-	DECLARE_OLD_SERIAL
+	
 
 	void Serialize(FSerializer &arc)
 	{

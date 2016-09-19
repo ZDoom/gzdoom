@@ -2102,7 +2102,7 @@ class AAmbientSound : public AActor
 {
 	DECLARE_CLASS (AAmbientSound, AActor)
 public:
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc);
 
 	void MarkPrecacheSounds () const;

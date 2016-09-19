@@ -2,6 +2,7 @@
 #define __SERIALIZER_H
 
 #include <stdint.h>
+#include <type_traits>
 #include "tarray.h"
 #include "r_defs.h"
 
@@ -104,6 +105,15 @@ public:
 		}
 		return *this;
 	}
+
+	template<class T>
+	FSerializer &Enum(const char *key, T &obj)
+	{
+		auto val = (std::underlying_type<T>::type)obj;
+		Serialize(*this, key, val, nullptr);
+		obj = (T)val;
+		return *this;
+	}
 };
 
 FSerializer &Serialize(FSerializer &arc, const char *key, bool &value, bool *defval);
@@ -117,21 +127,10 @@ FSerializer &Serialize(FSerializer &arc, const char *key, int16_t &value, int16_
 FSerializer &Serialize(FSerializer &arc, const char *key, uint16_t &value, uint16_t *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, double &value, double *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, float &value, float *defval);
-FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&value, side_t **defval);
-FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj *&value, FPolyObj **defval);
-FSerializer &Serialize(FSerializer &arc, const char *key, sector_t *&value, sector_t **defval);
-FSerializer &Serialize(FSerializer &arc, const char *key, player_t *&value, player_t **defval);
-FSerializer &Serialize(FSerializer &arc, const char *key, line_t *&value, line_t **defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTextureID *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObject ** /*defval*/);
 FSerializer &Serialize(FSerializer &arc, const char *key, FName &value, FName *defval);
-FSerializer &Serialize(FSerializer &arc, const char *key, FDynamicColormap *&cm, FDynamicColormap **def);
 FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundID *def);
-FSerializer &Serialize(FSerializer &arc, const char *key, PClassActor *&clst, PClassActor **def);
-FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def);
-FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDialogueNode *&node, FStrifeDialogueNode **def);
-FSerializer &Serialize(FSerializer &arc, const char *key, FString *&pstr, FString **def);
-
 
 template<class T>
 FSerializer &Serialize(FSerializer &arc, const char *key, T *&value, T **)
@@ -173,6 +172,20 @@ FSerializer &Serialize(FSerializer &arc, const char *key, TArray<T, TT> &value, 
 	arc.EndArray();
 	return arc;
 }
+
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj *&value, FPolyObj **defval);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, sector_t *&value, sector_t **defval);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, player_t *&value, player_t **defval);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, line_t *&value, line_t **defval);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&value, side_t **defval);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, vertex_t *&value, vertex_t **defval);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDynamicColormap *&cm, FDynamicColormap **def);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClassActor *&clst, PClassActor **def);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDialogueNode *&node, FStrifeDialogueNode **def);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FString *&pstr, FString **def);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDoorAnimation *&pstr, FDoorAnimation **def);
+
 
 inline FSerializer &Serialize(FSerializer &arc, const char *key, DVector3 &p, DVector3 *def)
 {

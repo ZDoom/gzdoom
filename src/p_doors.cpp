@@ -35,7 +35,7 @@
 #include "i_system.h"
 #include "sc_man.h"
 #include "cmdlib.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "d_player.h"
 #include "p_spec.h"
 
@@ -47,29 +47,23 @@
 
 IMPLEMENT_CLASS (DDoor)
 
-inline FArchive &operator<< (FArchive &arc, DDoor::EVlDoor &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DDoor::EVlDoor)val;
-	return arc;
-}
-
 DDoor::DDoor ()
 {
 }
 
-void DDoor::Serialize(FArchive &arc)
+void DDoor::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << m_Type
-		<< m_TopDist
-		<< m_BotSpot << m_BotDist << m_OldFloorDist
-		<< m_Speed
-		<< m_Direction
-		<< m_TopWait
-		<< m_TopCountdown
-		<< m_LightTag;
+	arc.Enum("type", m_Type)
+		("topdist", m_TopDist)
+		("botspot", m_BotSpot)
+		("botdist", m_BotDist)
+		("oldfloordist", m_OldFloorDist)
+		("speed", m_Speed)
+		("direction", m_Direction)
+		("topwait", m_TopWait)
+		("topcountdown", m_TopCountdown)
+		("lighttag", m_LightTag);
 }
 
 //============================================================================
@@ -530,19 +524,21 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec)
 {
 }
 
-void DAnimatedDoor::Serialize(FArchive &arc)
+void DAnimatedDoor::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
 	
-	arc << m_Line1 << m_Line2
-		<< m_Frame
-		<< m_Timer
-		<< m_BotDist
-		<< m_Status
-		<< m_Speed
-		<< m_Delay
-		<< m_DoorAnim
-		<< m_SetBlocking1 << m_SetBlocking2;
+	arc("line1", m_Line1)
+		("line2", m_Line2)
+		("frame", m_Frame)
+		("timer", m_Timer)
+		("botdist", m_BotDist)
+		("status", m_Status)
+		("speed", m_Speed)
+		("delay", m_Delay)
+		("dooranim", m_DoorAnim)
+		("setblock1", m_SetBlocking1)
+		("setblock2", m_SetBlocking2);
 }
 
 //============================================================================

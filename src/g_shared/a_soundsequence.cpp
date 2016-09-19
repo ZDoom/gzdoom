@@ -74,7 +74,7 @@ class ASoundSequenceSlot : public AActor
 	DECLARE_CLASS (ASoundSequenceSlot, AActor)
 	HAS_OBJECT_POINTERS
 public:
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc);
 
 	TObjPtr<DSeqNode> Sequence;

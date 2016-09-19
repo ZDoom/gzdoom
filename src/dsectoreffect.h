@@ -10,7 +10,7 @@ class DSectorEffect : public DThinker
 public:
 	DSectorEffect (sector_t *sector);
 
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc);
 	void Destroy();
 
@@ -33,7 +33,7 @@ protected:
 private:
 protected:
 	DMover ();
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc);
 	void Destroy();
 };

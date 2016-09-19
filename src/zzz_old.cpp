@@ -705,3 +705,14 @@ void DObject::Serialize(FArchive &arc)
 }
 
 
+FArchive &operator<< (FArchive &arc, secplane_t &plane)
+{
+	arc << plane.normal << plane.D;
+	if (plane.normal.Z != 0)
+	{	// plane.c should always be non-0. Otherwise, the plane
+		// would be perfectly vertical. (But then, don't let this crash on a broken savegame...)
+		plane.negiC = -1 / plane.normal.Z;
+	}
+	return arc;
+}
+

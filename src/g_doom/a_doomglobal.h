@@ -29,7 +29,7 @@ public:
 	void Tick ();
 	void SetWeapon (EMarineWeapon);
 	void SetSprite (PClassActor *source);
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc);
 
 	int CurrentWeapon;

@@ -15,7 +15,7 @@ class AWeaponPiece : public AInventory
 protected:
 	bool PrivateShouldStay ();
 public:
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc);
 	bool TryPickup (AActor *&toucher);
 	bool TryPickupRestricted (AActor *&toucher);
@@ -38,6 +38,6 @@ public:
 	int PieceMask;
 	PClassActor * PieceWeapon;
 
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc);
 };

@@ -2239,7 +2239,7 @@ static FArchive &operator<<(FArchive &arc, FSoundChan &chan)
 	case SOURCE_None:								break;
 	case SOURCE_Actor:		arc << chan.Actor;		break;
 	case SOURCE_Sector:		arc << chan.Sector;		break;
-	case SOURCE_Polyobj:	arc << chan.Poly;		break;
+	case SOURCE_Polyobj:	/*arc << chan.Poly;*/		break;
 	case SOURCE_Unattached:	arc << chan.Point[0] << chan.Point[1] << chan.Point[2];	break;
 	default:				I_Error("Unknown sound source type %d\n", chan.SourceType);	break;
 	}

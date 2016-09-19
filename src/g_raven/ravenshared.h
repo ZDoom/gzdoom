@@ -23,7 +23,7 @@ public:
 	void Die (AActor *source, AActor *inflictor, int dmgflags);
 	bool OkayToSwitchTarget (AActor *other);
 	void BeginPlay ();
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc);
 };
 

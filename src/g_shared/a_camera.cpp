@@ -55,7 +55,7 @@ public:
 	void PostBeginPlay ();
 	void Tick ();
 
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc);
 protected:
 	DAngle Center;
@@ -118,7 +118,7 @@ public:
 	void PostBeginPlay ();
 	void Tick ();
 
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc);
 protected:
 	DAngle MaxPitchChange;

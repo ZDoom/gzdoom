@@ -16,7 +16,7 @@ public:
 	virtual bool HandlePickup (AInventory *item);
 	virtual AInventory *CreateCopy (AActor *other);
 	virtual AInventory *CreateTossable ();
-	DECLARE_OLD_SERIAL
+	
 	virtual void Serialize(FSerializer &arc);
 	virtual void OwnerDied ();
 	virtual bool GetNoTeleportFreeze();
@@ -52,7 +52,7 @@ class APowerupGiver : public AInventory
 	DECLARE_CLASS_WITH_META (APowerupGiver, AInventory, PClassPowerupGiver)
 public:
 	virtual bool Use (bool pickup);
-	DECLARE_OLD_SERIAL
+	
 	virtual void Serialize(FSerializer &arc);
 
 
@@ -123,7 +123,7 @@ class APowerTorch : public APowerLightAmp
 {
 	DECLARE_CLASS (APowerTorch, APowerLightAmp)
 public:
-	DECLARE_OLD_SERIAL
+	
 	virtual void Serialize(FSerializer &arc);
 protected:
 	void DoEffect ();
@@ -135,7 +135,7 @@ class APowerFlight : public APowerup
 	DECLARE_CLASS (APowerFlight, APowerup)
 public:
 	bool DrawPowerup (int x, int y);
-	DECLARE_OLD_SERIAL
+	
 	virtual void Serialize(FSerializer &arc);
 
 protected:
@@ -159,7 +159,7 @@ class APowerSpeed : public APowerup
 	DECLARE_CLASS (APowerSpeed, APowerup)
 protected:
 	void DoEffect ();
-	DECLARE_OLD_SERIAL
+	
 	virtual void Serialize(FSerializer &arc);
 	double GetSpeedFactor();
 public:
@@ -277,7 +277,7 @@ class APowerMorph : public APowerup
 {
 	DECLARE_CLASS( APowerMorph, APowerup )
 public:
-	DECLARE_OLD_SERIAL
+	
 	virtual void Serialize(FSerializer &arc);
 	void SetNoCallUndoMorph() { bNoCallUndoMorph = true; }
 

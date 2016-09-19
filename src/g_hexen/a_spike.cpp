@@ -22,7 +22,7 @@ class AThrustFloor : public AActor
 	DECLARE_CLASS (AThrustFloor, AActor)
 	HAS_OBJECT_POINTERS
 public:
-	DECLARE_OLD_SERIAL
+	
 	void Serialize(FSerializer &arc);
 
 	void Activate (AActor *activator);

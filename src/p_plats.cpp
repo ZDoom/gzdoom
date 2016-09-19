@@ -30,45 +30,30 @@
 #include "doomstat.h"
 #include "r_state.h"
 #include "gi.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "p_spec.h"
 
 static FRandom pr_doplat ("DoPlat");
 
 IMPLEMENT_CLASS (DPlat)
 
-inline FArchive &operator<< (FArchive &arc, DPlat::EPlatType &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DPlat::EPlatType)val;
-	return arc;
-}
-inline FArchive &operator<< (FArchive &arc, DPlat::EPlatState &state)
-{
-	BYTE val = (BYTE)state;
-	arc << val;
-	state = (DPlat::EPlatState)val;
-	return arc;
-}
-
 DPlat::DPlat ()
 {
 }
 
-void DPlat::Serialize(FArchive &arc)
+void DPlat::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << m_Speed
-		<< m_Low
-		<< m_High
-		<< m_Wait
-		<< m_Count
-		<< m_Status
-		<< m_OldStatus
-		<< m_Crush
-		<< m_Tag
-		<< m_Type;
+	arc.Enum("type", m_Type)
+		("speed", m_Speed)
+		("low", m_Low)
+		("high", m_High)
+		("wait", m_Wait)
+		("count", m_Count)
+		.Enum("status", m_Status)
+		.Enum("oldstatus", m_OldStatus)
+		("crush", m_Crush)
+		("tag", m_Tag);
 }
 
 void DPlat::PlayPlatSound (const char *sound)

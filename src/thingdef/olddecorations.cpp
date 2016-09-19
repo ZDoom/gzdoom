@@ -496,8 +496,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (def == DEF_Projectile && sc.Compare ("Damage"))
 		{
 			sc.MustGetNumber ();
-			FxDamageValue *x = new FxDamageValue(new FxConstant(sc.Number, sc), false);
-			defaults->Damage = (VMFunction *)(uintptr_t)(ActorDamageFuncs.Push(x) + 1);
+			defaults->SetDamage(sc.Number);
 		}
 		else if (def == DEF_Projectile && sc.Compare ("DamageType"))
 		{

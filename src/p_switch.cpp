@@ -61,7 +61,7 @@ public:
 	DActiveButton ();
 	DActiveButton (side_t *, int, FSwitchDef *, const DVector2 &pos, bool flippable);
 
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	void Tick ();
 
 	side_t			*m_Side;
@@ -354,7 +354,7 @@ DActiveButton::DActiveButton (side_t *side, int Where, FSwitchDef *Switch,
 //
 //==========================================================================
 
-void DActiveButton::Serialize (FArchive &arc)
+void DActiveButton::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Side << m_Part << m_SwitchDef << m_Frame << m_Timer << bFlippable << m_Pos << bReturning;

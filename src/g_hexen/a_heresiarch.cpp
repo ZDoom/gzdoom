@@ -67,13 +67,13 @@ public:
 	const PClass *StopBall;
 	DAngle BallAngle;
 
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	void Die (AActor *source, AActor *inflictor, int dmgflags);
 };
 
 IMPLEMENT_CLASS (AHeresiarch)
 
-void AHeresiarch::Serialize (FArchive &arc)
+void AHeresiarch::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << StopBall << BallAngle;
@@ -105,7 +105,7 @@ public:
 	DAngle AngleOffset;
 	DAngle OldAngle;
 
-	void Serialize (FArchive &arc)
+	void Serialize(FArchive &arc)
 	{
 		Super::Serialize (arc);
 		arc << AngleOffset << OldAngle;

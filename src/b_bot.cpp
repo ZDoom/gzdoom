@@ -55,7 +55,7 @@ void DBot::Clear ()
 	old = { 0, 0 };
 }
 
-void DBot::Serialize (FArchive &arc)
+void DBot::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 

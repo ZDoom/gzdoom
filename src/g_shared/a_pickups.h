@@ -153,7 +153,7 @@ class AInventory : public AActor
 	HAS_OBJECT_POINTERS
 public:
 	virtual void Touch (AActor *toucher);
-	virtual void Serialize (FArchive &arc);
+	virtual void Serialize(FArchive &arc);
 
 	virtual void MarkPrecacheSounds() const;
 	virtual void BeginPlay ();
@@ -254,7 +254,7 @@ class AAmmo : public AInventory
 {
 	DECLARE_CLASS_WITH_META(AAmmo, AInventory, PClassAmmo)
 public:
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	AInventory *CreateCopy (AActor *other);
 	bool HandlePickup (AInventory *item);
 	PClassActor *GetParentAmmo () const;
@@ -311,7 +311,7 @@ public:
 	bool bAltFire;	// Set when this weapon's alternate fire is used.
 
 	virtual void MarkPrecacheSounds() const;
-	virtual void Serialize (FArchive &arc);
+	virtual void Serialize(FArchive &arc);
 	virtual bool ShouldStay ();
 	virtual void AttachToOwner (AActor *other);
 	virtual bool HandlePickup (AInventory *item);
@@ -431,7 +431,7 @@ class AHealthPickup : public AInventory
 public:
 	int autousemode;
 
-	virtual void Serialize (FArchive &arc);
+	virtual void Serialize(FArchive &arc);
 	virtual AInventory *CreateCopy (AActor *other);
 	virtual AInventory *CreateTossable ();
 	virtual bool HandlePickup (AInventory *item);
@@ -451,7 +451,7 @@ class ABasicArmor : public AArmor
 {
 	DECLARE_CLASS (ABasicArmor, AArmor)
 public:
-	virtual void Serialize (FArchive &arc);
+	virtual void Serialize(FArchive &arc);
 	virtual void Tick ();
 	virtual AInventory *CreateCopy (AActor *other);
 	virtual bool HandlePickup (AInventory *item);
@@ -471,7 +471,7 @@ class ABasicArmorPickup : public AArmor
 {
 	DECLARE_CLASS (ABasicArmorPickup, AArmor)
 public:
-	virtual void Serialize (FArchive &arc);
+	virtual void Serialize(FArchive &arc);
 	virtual AInventory *CreateCopy (AActor *other);
 	virtual bool Use (bool pickup);
 
@@ -486,7 +486,7 @@ class ABasicArmorBonus : public AArmor
 {
 	DECLARE_CLASS (ABasicArmorBonus, AArmor)
 public:
-	virtual void Serialize (FArchive &arc);
+	virtual void Serialize(FArchive &arc);
 	virtual AInventory *CreateCopy (AActor *other);
 	virtual bool Use (bool pickup);
 
@@ -505,7 +505,7 @@ class AHexenArmor : public AArmor
 {
 	DECLARE_CLASS (AHexenArmor, AArmor)
 public:
-	virtual void Serialize (FArchive &arc);
+	virtual void Serialize(FArchive &arc);
 	virtual AInventory *CreateCopy (AActor *other);
 	virtual AInventory *CreateTossable ();
 	virtual bool HandlePickup (AInventory *item);
@@ -533,7 +533,7 @@ class APuzzleItem : public AInventory
 {
 	DECLARE_CLASS_WITH_META(APuzzleItem, AInventory, PClassPuzzleItem)
 public:
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	bool ShouldStay ();
 	bool Use (bool pickup);
 	bool HandlePickup (AInventory *item);
@@ -555,7 +555,7 @@ class ABackpackItem : public AInventory
 {
 	DECLARE_CLASS (ABackpackItem, AInventory)
 public:
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	bool HandlePickup (AInventory *item);
 	AInventory *CreateCopy (AActor *other);
 	AInventory *CreateTossable ();

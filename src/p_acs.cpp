@@ -1367,7 +1367,7 @@ public:
 		int tag, int height, int special,
 		int arg0, int arg1, int arg2, int arg3, int arg4);
 	void Tick ();
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 private:
 	sector_t *Sector;
 	double WatchD, LastD;
@@ -1417,7 +1417,7 @@ DPlaneWatcher::DPlaneWatcher (AActor *it, line_t *line, int lineSide, bool ceili
 	}
 }
 
-void DPlaneWatcher::Serialize (FArchive &arc)
+void DPlaneWatcher::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 
@@ -2927,7 +2927,7 @@ DACSThinker::~DACSThinker ()
 	ActiveThinker = NULL;
 }
 
-void DACSThinker::Serialize (FArchive &arc)
+void DACSThinker::Serialize(FArchive &arc)
 {
 	int scriptnum;
 	int scriptcount = 0;
@@ -3056,7 +3056,7 @@ inline FArchive &operator<< (FArchive &arc, DLevelScript::EScriptState &state)
 	return arc;
 }
 
-void DLevelScript::Serialize (FArchive &arc)
+void DLevelScript::Serialize(FArchive &arc)
 {
 	DWORD i;
 

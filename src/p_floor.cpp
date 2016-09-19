@@ -84,7 +84,7 @@ DFloor::DFloor ()
 {
 }
 
-void DFloor::Serialize (FArchive &arc)
+void DFloor::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Type
@@ -855,7 +855,7 @@ DElevator::DElevator (sector_t *sec)
 	m_Interp_Ceiling = sec->SetInterpolation(sector_t::CeilingMove, true);
 }
 
-void DElevator::Serialize (FArchive &arc)
+void DElevator::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Type
@@ -1136,7 +1136,7 @@ DWaggleBase::DWaggleBase ()
 {
 }
 
-void DWaggleBase::Serialize (FArchive &arc)
+void DWaggleBase::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_OriginalDist

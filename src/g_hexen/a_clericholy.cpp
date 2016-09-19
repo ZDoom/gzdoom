@@ -31,7 +31,7 @@ class ACWeapWraithverge : public AClericWeapon
 {
 	DECLARE_CLASS (ACWeapWraithverge, AClericWeapon)
 public:
-	void Serialize (FArchive &arc)
+	void Serialize(FArchive &arc)
 	{
 		Super::Serialize (arc);
 		arc << CHolyCount;

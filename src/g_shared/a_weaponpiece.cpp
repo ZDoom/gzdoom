@@ -17,7 +17,7 @@ void PClassWeaponPiece::ReplaceClassRef(PClass *oldclass, PClass *newclass)
 }
 
 
-void AWeaponHolder::Serialize (FArchive &arc)
+void AWeaponHolder::Serialize(FArchive &arc)
 {
 	Super::Serialize(arc);
 	arc << PieceMask << PieceWeapon;
@@ -29,7 +29,7 @@ IMPLEMENT_POINTY_CLASS (AWeaponPiece)
 END_POINTERS
 
 
-void AWeaponPiece::Serialize (FArchive &arc)
+void AWeaponPiece::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << WeaponClass << FullWeapon << PieceValue;

@@ -361,7 +361,7 @@ class DCorpsePointer : public DThinker
 public:
 	DCorpsePointer (AActor *ptr);
 	void Destroy ();
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	TObjPtr<AActor> Corpse;
 	DWORD Count;	// Only the first corpse pointer's count is valid.
 private:
@@ -435,7 +435,7 @@ void DCorpsePointer::Destroy ()
 	Super::Destroy ();
 }
 
-void DCorpsePointer::Serialize (FArchive &arc)
+void DCorpsePointer::Serialize(FArchive &arc)
 {
 	Super::Serialize(arc);
 	arc << Corpse << Count;

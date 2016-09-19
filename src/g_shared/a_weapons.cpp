@@ -73,7 +73,7 @@ void PClassWeapon::ReplaceClassRef(PClass *oldclass, PClass *newclass)
 //
 //===========================================================================
 
-void AWeapon::Serialize (FArchive &arc)
+void AWeapon::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << WeaponFlags

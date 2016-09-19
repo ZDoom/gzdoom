@@ -1,3 +1,5 @@
+#ifdef COMMON_STUFF
+
 // For NULL states, which aren't owned by any actor, the owner
 // is recorded as AActor with the following state. AActor should
 // never actually have this many states of its own, so this
@@ -691,7 +693,35 @@ FArchive &operator<< (FArchive &arc, FState *&state)
 	return arc;
 }
 
-void DObject::Serialize (FArchive &arc)
+void DObject::Serialize(FArchive &arc)
 {
 	ObjectFlags |= OF_SerialSuccess;
 }
+
+
+class DLightLevel : public DLighting
+{
+	DECLARE_CLASS(DLightLevel, DLighting)
+
+	unsigned char destlevel;
+	unsigned char speed;
+
+	DLightLevel() {}
+
+public:
+
+	DLightLevel(sector_t * s, int destlevel, int speed);
+	void	Serialize(FArchive &arc);
+	void	Serialize(FSerializer &arc);
+	void		Tick();
+	void		Destroy() { Super::Destroy(); m_Sector->lightingdata = NULL; }
+};
+
+void DLightLevel::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << destlevel << speed;
+	if (arc.IsLoading()) m_Sector->lightingdata = this;
+}
+
+#endif

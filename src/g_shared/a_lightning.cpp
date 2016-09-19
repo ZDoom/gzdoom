@@ -35,7 +35,7 @@ DLightningThinker::~DLightningThinker ()
 	}
 }
 
-void DLightningThinker::Serialize (FArchive &arc)
+void DLightningThinker::Serialize(FArchive &arc)
 {
 	int i;
 	short *lights;

@@ -298,7 +298,7 @@ DSeqNode::DSeqNode ()
 	m_Next = m_Prev = m_ChildSeqNode = m_ParentSeqNode = NULL;
 }
 
-void DSeqNode::Serialize (FArchive &arc)
+void DSeqNode::Serialize(FArchive &arc)
 {
 	int seqOffset;
 	unsigned int i;
@@ -425,7 +425,7 @@ IMPLEMENT_POINTY_CLASS (DSeqActorNode)
  DECLARE_POINTER (m_Actor)
 END_POINTERS
 
-void DSeqActorNode::Serialize (FArchive &arc)
+void DSeqActorNode::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Actor;
@@ -433,7 +433,7 @@ void DSeqActorNode::Serialize (FArchive &arc)
 
 IMPLEMENT_CLASS (DSeqPolyNode)
 
-void DSeqPolyNode::Serialize (FArchive &arc)
+void DSeqPolyNode::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Poly;
@@ -441,7 +441,7 @@ void DSeqPolyNode::Serialize (FArchive &arc)
 
 IMPLEMENT_CLASS (DSeqSectorNode)
 
-void DSeqSectorNode::Serialize (FArchive &arc)
+void DSeqSectorNode::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Sector << Channel;

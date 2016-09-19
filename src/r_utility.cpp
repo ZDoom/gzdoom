@@ -1041,7 +1041,7 @@ void FCanvasTextureInfo::EmptyList ()
 //
 //==========================================================================
 
-void FCanvasTextureInfo::Serialize (FArchive &arc)
+void FCanvasTextureInfo::Serialize(FArchive &arc)
 {
 	if (arc.IsStoring ())
 	{

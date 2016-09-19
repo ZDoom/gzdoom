@@ -83,7 +83,7 @@ public:
 	operator TT() const { return Value; }
 
 	// Serialize to FArchive
-	FArchive& Serialize (FArchive& arc)
+	FArchive& Serialize(FArchive& arc)
 	{
 		arc << Value;
 		return arc;

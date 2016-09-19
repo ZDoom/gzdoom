@@ -101,7 +101,7 @@ bool APowerupGiver::Use (bool pickup)
 //
 //===========================================================================
 
-void APowerupGiver::Serialize (FArchive &arc)
+void APowerupGiver::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << PowerupType;
@@ -136,7 +136,7 @@ void APowerup::Tick ()
 //
 //===========================================================================
 
-void APowerup::Serialize (FArchive &arc)
+void APowerup::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << EffectTics << BlendColor << Mode;
@@ -901,7 +901,7 @@ IMPLEMENT_CLASS (APowerTorch)
 //
 //===========================================================================
 
-void APowerTorch::Serialize (FArchive &arc)
+void APowerTorch::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << NewTorch << NewTorchDelta;
@@ -963,7 +963,7 @@ IMPLEMENT_CLASS (APowerFlight)
 //
 //===========================================================================
 
-void APowerFlight::Serialize (FArchive &arc)
+void APowerFlight::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << HitCenterFrame;
@@ -1899,7 +1899,7 @@ IMPLEMENT_CLASS(APowerMorph)
 //
 //===========================================================================
 
-void APowerMorph::Serialize (FArchive &arc)
+void APowerMorph::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << PlayerClass << MorphStyle << MorphFlash << UnMorphFlash;

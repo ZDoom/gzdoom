@@ -21,7 +21,7 @@ IMPLEMENT_CLASS (AHexenArmor)
 //
 //===========================================================================
 
-void ABasicArmor::Serialize (FArchive &arc)
+void ABasicArmor::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << SavePercent << BonusCount << MaxAbsorb << MaxFullAbsorb << AbsorbCount << ArmorType << ActualSaveAmount;
@@ -192,7 +192,7 @@ void ABasicArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 //
 //===========================================================================
 
-void ABasicArmorPickup::Serialize (FArchive &arc)
+void ABasicArmorPickup::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << SavePercent << SaveAmount << MaxAbsorb << MaxFullAbsorb;
@@ -274,7 +274,7 @@ bool ABasicArmorPickup::Use (bool pickup)
 //
 //===========================================================================
 
-void ABasicArmorBonus::Serialize (FArchive &arc)
+void ABasicArmorBonus::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << SavePercent << SaveAmount << MaxSaveAmount << BonusCount << BonusMax
@@ -371,7 +371,7 @@ bool ABasicArmorBonus::Use (bool pickup)
 //
 //===========================================================================
 
-void AHexenArmor::Serialize (FArchive &arc)
+void AHexenArmor::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << Slots[0] << Slots[1] << Slots[2] << Slots[3]

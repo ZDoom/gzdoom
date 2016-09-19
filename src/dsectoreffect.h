@@ -10,7 +10,7 @@ class DSectorEffect : public DThinker
 public:
 	DSectorEffect (sector_t *sector);
 
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	void Destroy();
 
 	sector_t *GetSector() const { return m_Sector; }
@@ -32,7 +32,7 @@ protected:
 private:
 protected:
 	DMover ();
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	void Destroy();
 };
 

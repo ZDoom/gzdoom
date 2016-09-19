@@ -122,7 +122,7 @@ void DBaseDecal::Remove ()
 	WallNext = NULL;
 }
 
-void DBaseDecal::Serialize (FArchive &arc)
+void DBaseDecal::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << LeftDistance
@@ -609,7 +609,7 @@ void DImpactDecal::SerializeTime (FArchive &arc)
 	}
 }
 
-void DImpactDecal::Serialize (FArchive &arc)
+void DImpactDecal::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 }

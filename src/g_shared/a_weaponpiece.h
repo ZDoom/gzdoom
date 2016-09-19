@@ -15,7 +15,7 @@ class AWeaponPiece : public AInventory
 protected:
 	bool PrivateShouldStay ();
 public:
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	bool TryPickup (AActor *&toucher);
 	bool TryPickupRestricted (AActor *&toucher);
 	bool ShouldStay ();
@@ -37,5 +37,5 @@ public:
 	int PieceMask;
 	const PClass * PieceWeapon;
 
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 };

@@ -65,7 +65,7 @@ class DWaitingCommand : public DThinker
 public:
 	DWaitingCommand (const char *cmd, int tics);
 	~DWaitingCommand ();
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	void Tick ();
 
 private:
@@ -189,7 +189,7 @@ static const char *KeyConfCommands[] =
 
 IMPLEMENT_CLASS (DWaitingCommand)
 
-void DWaitingCommand::Serialize (FArchive &arc)
+void DWaitingCommand::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << Command << TicsLeft;

@@ -87,7 +87,7 @@ class DMovePoly : public DPolyAction
 	DECLARE_CLASS (DMovePoly, DPolyAction)
 public:
 	DMovePoly (int polyNum);
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	void Tick ();
 protected:
 	DMovePoly ();
@@ -118,7 +118,7 @@ class DPolyDoor : public DMovePoly
 	DECLARE_CLASS (DPolyDoor, DMovePoly)
 public:
 	DPolyDoor (int polyNum, podoortype_t type);
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	void Tick ();
 protected:
 	DAngle m_Direction;
@@ -199,7 +199,7 @@ DPolyAction::DPolyAction ()
 {
 }
 
-void DPolyAction::Serialize (FArchive &arc)
+void DPolyAction::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_PolyObj << m_Speed << m_Dist << m_Interpolation;
@@ -277,7 +277,7 @@ DMovePoly::DMovePoly ()
 {
 }
 
-void DMovePoly::Serialize (FArchive &arc)
+void DMovePoly::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Angle << m_Speed;
@@ -331,7 +331,7 @@ DPolyDoor::DPolyDoor ()
 {
 }
 
-void DPolyDoor::Serialize (FArchive &arc)
+void DPolyDoor::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Direction << m_TotalDist << m_Tics << m_WaitTics << m_Type << m_Close;

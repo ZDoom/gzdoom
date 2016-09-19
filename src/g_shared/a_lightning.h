@@ -13,7 +13,7 @@ class DLightningThinker : public DThinker
 public:
 	DLightningThinker ();
 	~DLightningThinker ();
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	void Tick ();
 	void ForceLightning (int mode);
 	void TerminateLightning();

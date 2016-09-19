@@ -60,7 +60,7 @@ public:
 	AInterpolationPoint *ScanForLoop ();
 	void FormChain ();
 
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 
 	TObjPtr<AInterpolationPoint> Next;
 };
@@ -69,7 +69,7 @@ IMPLEMENT_POINTY_CLASS (AInterpolationPoint)
  DECLARE_POINTER (Next)
 END_POINTERS
 
-void AInterpolationPoint::Serialize (FArchive &arc)
+void AInterpolationPoint::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << Next;
@@ -166,7 +166,7 @@ protected:
 	virtual bool Interpolate ();
 	virtual void NewNode ();
 
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 
 	bool bActive, bJustStepped;
 	TObjPtr<AInterpolationPoint> PrevNode, CurrNode;
@@ -179,7 +179,7 @@ IMPLEMENT_POINTY_CLASS (APathFollower)
  DECLARE_POINTER (CurrNode)
 END_POINTERS
 
-void APathFollower::Serialize (FArchive &arc)
+void APathFollower::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << bActive << bJustStepped << PrevNode << CurrNode << Time << HoldTime;
@@ -577,7 +577,7 @@ class AMovingCamera : public APathFollower
 public:
 	void PostBeginPlay ();
 
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 protected:
 	bool Interpolate ();
 
@@ -588,7 +588,7 @@ IMPLEMENT_POINTY_CLASS (AMovingCamera)
  DECLARE_POINTER (Activator)
 END_POINTERS
 
-void AMovingCamera::Serialize (FArchive &arc)
+void AMovingCamera::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << Activator;

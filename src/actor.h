@@ -583,7 +583,7 @@ public:
 	void Destroy ();
 	~AActor ();
 
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	void Serialize(FSerializer &arc);
 	void PostSerialize();
 

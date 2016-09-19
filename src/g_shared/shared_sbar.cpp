@@ -1654,7 +1654,7 @@ void DBaseStatusBar::ReceivedWeapon (AWeapon *weapon)
 {
 }
 
-void DBaseStatusBar::Serialize (FArchive &arc)
+void DBaseStatusBar::Serialize(FArchive &arc)
 {
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{

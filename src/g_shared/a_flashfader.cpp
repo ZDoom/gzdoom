@@ -26,7 +26,7 @@ void DFlashFader::Destroy ()
 	Super::Destroy();
 }
 
-void DFlashFader::Serialize (FArchive &arc)
+void DFlashFader::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << TotalTics << StartTic << ForWho;

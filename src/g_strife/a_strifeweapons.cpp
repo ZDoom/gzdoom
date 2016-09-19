@@ -753,7 +753,7 @@ void ASigil::BeginPlay()
 //
 //============================================================================
 
-void ASigil::Serialize (FArchive &arc)
+void ASigil::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << NumPieces << DownPieces;

@@ -20,7 +20,7 @@ void PClassPuzzleItem::DeriveData(PClass *newclass)
 
 IMPLEMENT_CLASS(APuzzleItem)
 
-void APuzzleItem::Serialize (FArchive &arc)
+void APuzzleItem::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << PuzzleItemNumber;

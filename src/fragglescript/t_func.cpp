@@ -1780,7 +1780,8 @@ class DLightLevel : public DLighting
 public:
 
 	DLightLevel(sector_t * s,int destlevel,int speed);
-	void	Serialize (FArchive &arc);
+	void	Serialize(FArchive &arc);
+	void	Serialize(FArchive &arc);
 	void		Tick ();
 	void		Destroy() { Super::Destroy(); m_Sector->lightingdata=NULL; }
 };
@@ -1789,7 +1790,7 @@ public:
 
 IMPLEMENT_CLASS (DLightLevel)
 
-void DLightLevel::Serialize (FArchive &arc)
+void DLightLevel::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << destlevel << speed;

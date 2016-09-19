@@ -504,7 +504,7 @@ DHUDMessageFadeOut::DHUDMessageFadeOut (FFont *font, const char *text, float x, 
 //
 //============================================================================
 
-void DHUDMessageFadeOut::Serialize (FArchive &arc)
+void DHUDMessageFadeOut::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << FadeOutTics;
@@ -609,7 +609,7 @@ DHUDMessageFadeInOut::DHUDMessageFadeInOut (FFont *font, const char *text, float
 //
 //============================================================================
 
-void DHUDMessageFadeInOut::Serialize (FArchive &arc)
+void DHUDMessageFadeInOut::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << FadeInTics;
@@ -718,7 +718,7 @@ DHUDMessageTypeOnFadeOut::DHUDMessageTypeOnFadeOut (FFont *font, const char *tex
 //
 //============================================================================
 
-void DHUDMessageTypeOnFadeOut::Serialize (FArchive &arc)
+void DHUDMessageTypeOnFadeOut::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << TypeOnTime << CurrLine << LineVisible << LineLen;

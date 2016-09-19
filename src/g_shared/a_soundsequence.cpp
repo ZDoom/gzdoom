@@ -74,7 +74,7 @@ class ASoundSequenceSlot : public AActor
 	DECLARE_CLASS (ASoundSequenceSlot, AActor)
 	HAS_OBJECT_POINTERS
 public:
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 
 	TObjPtr<DSeqNode> Sequence;
 };
@@ -89,7 +89,7 @@ END_POINTERS
 //
 //==========================================================================
 
-void ASoundSequenceSlot::Serialize (FArchive &arc)
+void ASoundSequenceSlot::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << Sequence;

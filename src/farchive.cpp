@@ -526,7 +526,7 @@ void FCompressedMemFile::Close ()
 	}
 }
 
-void FCompressedMemFile::Serialize (FArchive &arc)
+void FCompressedMemFile::Serialize(FArchive &arc)
 {
 	if (arc.IsStoring ())
 	{

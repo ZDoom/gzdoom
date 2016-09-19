@@ -113,7 +113,7 @@ struct FCanvasTextureInfo
 	static void Add (AActor *viewpoint, FTextureID picnum, int fov);
 	static void UpdateAll ();
 	static void EmptyList ();
-	static void Serialize (FArchive &arc);
+	static void Serialize(FArchive &arc);
 	static void Mark();
 
 private:

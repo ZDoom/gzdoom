@@ -648,7 +648,7 @@ class DLightTransfer : public DThinker
 	DLightTransfer() {}
 public:
 	DLightTransfer (sector_t *srcSec, int target, bool copyFloor);
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	void Tick ();
 
 protected:
@@ -662,7 +662,7 @@ protected:
 
 IMPLEMENT_CLASS (DLightTransfer)
 
-void DLightTransfer::Serialize (FArchive &arc)
+void DLightTransfer::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << LastLight;
@@ -736,7 +736,7 @@ class DWallLightTransfer : public DThinker
 	DWallLightTransfer() {}
 public:
 	DWallLightTransfer (sector_t *srcSec, int target, BYTE flags);
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	void Tick ();
 
 protected:
@@ -750,7 +750,7 @@ protected:
 
 IMPLEMENT_CLASS (DWallLightTransfer)
 
-void DWallLightTransfer::Serialize (FArchive &arc)
+void DWallLightTransfer::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << LastLight;

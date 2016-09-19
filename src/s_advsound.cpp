@@ -2102,7 +2102,7 @@ class AAmbientSound : public AActor
 {
 	DECLARE_CLASS (AAmbientSound, AActor)
 public:
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 
 	void MarkPrecacheSounds () const;
 	void BeginPlay ();
@@ -2125,7 +2125,7 @@ IMPLEMENT_CLASS (AAmbientSound)
 //
 //==========================================================================
 
-void AAmbientSound::Serialize (FArchive &arc)
+void AAmbientSound::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << bActive << NextCheck;

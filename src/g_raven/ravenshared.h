@@ -23,7 +23,7 @@ public:
 	void Die (AActor *source, AActor *inflictor, int dmgflags);
 	bool OkayToSwitchTarget (AActor *other);
 	void BeginPlay ();
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 };
 
 #endif //__RAVENSHARED_H__

@@ -89,7 +89,7 @@ IMPLEMENT_CLASS (AAmmo)
 //
 //===========================================================================
 
-void AAmmo::Serialize (FArchive &arc)
+void AAmmo::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << BackpackAmount << BackpackMaxAmount;
@@ -514,7 +514,7 @@ void AInventory::Tick ()
 //
 //===========================================================================
 
-void AInventory::Serialize (FArchive &arc)
+void AInventory::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << Owner << Amount << MaxAmount << RespawnTics << ItemFlags << Icon << PickupSound << SpawnPointClass;
@@ -1809,7 +1809,7 @@ bool AHealthPickup::Use (bool pickup)
 //
 //===========================================================================
 
-void AHealthPickup::Serialize (FArchive &arc)
+void AHealthPickup::Serialize(FArchive &arc)
 {
 	Super::Serialize(arc);
 	arc << autousemode;
@@ -1823,7 +1823,7 @@ void AHealthPickup::Serialize (FArchive &arc)
 //
 //===========================================================================
 
-void ABackpackItem::Serialize (FArchive &arc)
+void ABackpackItem::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << bDepleted;

@@ -79,7 +79,7 @@ void AMinotaurFriend::BeginPlay ()
 	StartTime = -1;
 }
 
-void AMinotaurFriend::Serialize (FArchive &arc)
+void AMinotaurFriend::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << StartTime;

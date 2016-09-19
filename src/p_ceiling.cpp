@@ -72,7 +72,7 @@ DCeiling::DCeiling ()
 //
 //============================================================================
 
-void DCeiling::Serialize (FArchive &arc)
+void DCeiling::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Type

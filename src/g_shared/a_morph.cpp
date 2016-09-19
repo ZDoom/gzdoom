@@ -634,7 +634,7 @@ int AMorphProjectile::DoSpecialDamage (AActor *target, int damage, FName damaget
 	return -1;
 }
 
-void AMorphProjectile::Serialize (FArchive &arc)
+void AMorphProjectile::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << PlayerClass << MonsterClass << Duration << MorphStyle << MorphFlash << UnMorphFlash;
@@ -647,7 +647,7 @@ IMPLEMENT_POINTY_CLASS (AMorphedMonster)
  DECLARE_POINTER (UnmorphedMe)
 END_POINTERS
 
-void AMorphedMonster::Serialize (FArchive &arc)
+void AMorphedMonster::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << UnmorphedMe << UnmorphTime << MorphStyle << MorphExitFlash << FlagsSave;

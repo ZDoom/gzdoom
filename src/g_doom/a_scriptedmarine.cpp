@@ -21,7 +21,7 @@ static FRandom pr_m_fireshotgun2 ("SMarineFireSSG");
 
 IMPLEMENT_CLASS (AScriptedMarine)
 
-void AScriptedMarine::Serialize (FArchive &arc)
+void AScriptedMarine::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 

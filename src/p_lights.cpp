@@ -197,7 +197,7 @@ DFireFlicker::DFireFlicker ()
 {
 }
 
-void DFireFlicker::Serialize (FArchive &arc)
+void DFireFlicker::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Count << m_MaxLight << m_MinLight;
@@ -262,7 +262,7 @@ DFlicker::DFlicker ()
 {
 }
 
-void DFlicker::Serialize (FArchive &arc)
+void DFlicker::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Count << m_MaxLight << m_MinLight;
@@ -336,7 +336,7 @@ DLightFlash::DLightFlash ()
 {
 }
 
-void DLightFlash::Serialize (FArchive &arc)
+void DLightFlash::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Count << m_MaxLight << m_MaxTime << m_MinLight << m_MinTime;
@@ -407,7 +407,7 @@ DStrobe::DStrobe ()
 {
 }
 
-void DStrobe::Serialize (FArchive &arc)
+void DStrobe::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Count << m_MaxLight << m_MinLight << m_DarkTime << m_BrightTime;
@@ -661,7 +661,7 @@ DGlow::DGlow ()
 {
 }
 
-void DGlow::Serialize (FArchive &arc)
+void DGlow::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Direction << m_MaxLight << m_MinLight;
@@ -728,7 +728,7 @@ DGlow2::DGlow2 ()
 {
 }
 
-void DGlow2::Serialize (FArchive &arc)
+void DGlow2::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_End << m_MaxTics << m_OneShot << m_Start << m_Tics;
@@ -857,7 +857,7 @@ DPhased::DPhased ()
 {
 }
 
-void DPhased::Serialize (FArchive &arc)
+void DPhased::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_BaseLevel << m_Phase;

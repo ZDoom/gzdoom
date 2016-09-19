@@ -55,7 +55,7 @@ public:
 	void PostBeginPlay ();
 	void Tick ();
 
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 protected:
 	DAngle Center;
 	DAngle Acc;
@@ -65,7 +65,7 @@ protected:
 
 IMPLEMENT_CLASS (ASecurityCamera)
 
-void ASecurityCamera::Serialize (FArchive &arc)
+void ASecurityCamera::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << Center << Acc << Delta << Range;
@@ -114,14 +114,14 @@ public:
 	void PostBeginPlay ();
 	void Tick ();
 
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 protected:
 	DAngle MaxPitchChange;
 };
 
 IMPLEMENT_CLASS (AAimingCamera)
 
-void AAimingCamera::Serialize (FArchive &arc)
+void AAimingCamera::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << MaxPitchChange;

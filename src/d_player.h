@@ -102,7 +102,7 @@ class APlayerPawn : public AActor
 	DECLARE_CLASS_WITH_META(APlayerPawn, AActor, PClassPlayerPawn)
 	HAS_OBJECT_POINTERS
 public:
-	virtual void Serialize (FArchive &arc);
+	virtual void Serialize(FArchive &arc);
 
 	virtual void PostBeginPlay();
 	virtual void Tick();
@@ -383,7 +383,7 @@ public:
 	~player_t();
 	player_t &operator= (const player_t &p);
 
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	size_t FixPointers (const DObject *obj, DObject *replacement);
 	size_t PropagateMark();
 

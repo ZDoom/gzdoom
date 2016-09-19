@@ -56,7 +56,7 @@ DPlat::DPlat ()
 {
 }
 
-void DPlat::Serialize (FArchive &arc)
+void DPlat::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Speed

@@ -59,7 +59,7 @@ DDoor::DDoor ()
 {
 }
 
-void DDoor::Serialize (FArchive &arc)
+void DDoor::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Type
@@ -530,7 +530,7 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec)
 {
 }
 
-void DAnimatedDoor::Serialize (FArchive &arc)
+void DAnimatedDoor::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	

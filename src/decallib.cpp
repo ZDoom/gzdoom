@@ -113,7 +113,7 @@ struct DDecalThinker : public DThinker
 	HAS_OBJECT_POINTERS
 public:
 	DDecalThinker (DBaseDecal *decal) : DThinker (STAT_DECALTHINKER), TheDecal (decal) {}
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	TObjPtr<DBaseDecal> TheDecal;
 protected:
 	DDecalThinker () : DThinker (STAT_DECALTHINKER) {}
@@ -123,7 +123,7 @@ IMPLEMENT_POINTY_CLASS (DDecalThinker)
  DECLARE_POINTER (TheDecal)
 END_POINTERS
 
-void DDecalThinker::Serialize (FArchive &arc)
+void DDecalThinker::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << TheDecal;
@@ -143,7 +143,7 @@ class DDecalFader : public DDecalThinker
 	DECLARE_CLASS (DDecalFader, DDecalThinker)
 public:
 	DDecalFader (DBaseDecal *decal) : DDecalThinker (decal) {}
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	void Tick ();
 
 	int TimeToStartDecay;
@@ -168,7 +168,7 @@ class DDecalColorer : public DDecalThinker
 	DECLARE_CLASS (DDecalColorer, DDecalThinker)
 public:
 	DDecalColorer (DBaseDecal *decal) : DDecalThinker (decal) {}
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	void Tick ();
 
 	int TimeToStartDecay;
@@ -194,7 +194,7 @@ class DDecalStretcher : public DDecalThinker
 	DECLARE_CLASS (DDecalStretcher, DDecalThinker)
 public:
 	DDecalStretcher (DBaseDecal *decal) : DDecalThinker (decal) {}
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	void Tick ();
 
 	int TimeToStart;
@@ -225,7 +225,7 @@ class DDecalSlider : public DDecalThinker
 	DECLARE_CLASS (DDecalSlider, DDecalThinker)
 public:
 	DDecalSlider (DBaseDecal *decal) : DDecalThinker (decal) {}
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	void Tick ();
 
 	int TimeToStart;
@@ -1153,7 +1153,7 @@ FDecalAnimator::~FDecalAnimator ()
 
 IMPLEMENT_CLASS (DDecalFader)
 
-void DDecalFader::Serialize (FArchive &arc)
+void DDecalFader::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << TimeToStartDecay << TimeToEndDecay << StartTrans;
@@ -1200,7 +1200,7 @@ DThinker *FDecalFaderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 
 IMPLEMENT_CLASS (DDecalStretcher)
 
-void DDecalStretcher::Serialize (FArchive &arc)
+void DDecalStretcher::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << TimeToStart
@@ -1288,7 +1288,7 @@ void DDecalStretcher::Tick ()
 
 IMPLEMENT_CLASS (DDecalSlider)
 
-void DDecalSlider::Serialize (FArchive &arc)
+void DDecalSlider::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << TimeToStart
@@ -1371,7 +1371,7 @@ FDecalAnimator *FDecalLib::FindAnimator (const char *name)
 
 IMPLEMENT_CLASS (DDecalColorer)
 
-void DDecalColorer::Serialize (FArchive &arc)
+void DDecalColorer::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << TimeToStartDecay << TimeToEndDecay << StartColor << GoalColor;

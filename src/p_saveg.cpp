@@ -65,6 +65,7 @@
 #include "serializer.h"
 
 // just the stuff that already got converted to FSerializer so that it can be seen as 'done' when searching.
+#define COMMON_STUFF
 #include "zzz_old.cpp"
 
 void CopyPlayer (player_t *dst, player_t *src, const char *name);

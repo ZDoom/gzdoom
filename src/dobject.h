@@ -467,7 +467,7 @@ public:
 	inline bool IsA (const PClass *type) const;
 
 	void SerializeUserVars(FArchive &arc);
-	virtual void Serialize (FArchive &arc);
+	virtual void Serialize(FArchive &arc);
 
 	void SerializeUserVars(FSerializer &arc);
 	virtual void Serialize(FSerializer &arc);

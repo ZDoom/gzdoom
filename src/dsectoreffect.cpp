@@ -64,7 +64,7 @@ DSectorEffect::DSectorEffect (sector_t *sector)
 	m_Sector = sector;
 }
 
-void DSectorEffect::Serialize (FArchive &arc)
+void DSectorEffect::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Sector;
@@ -90,7 +90,7 @@ void DMover::Destroy()
 	Super::Destroy();
 }
 
-void DMover::Serialize (FArchive &arc)
+void DMover::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << interpolation;

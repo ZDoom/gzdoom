@@ -72,7 +72,7 @@ void DPillar::Destroy()
 	Super::Destroy();
 }
 
-void DPillar::Serialize (FArchive &arc)
+void DPillar::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Type

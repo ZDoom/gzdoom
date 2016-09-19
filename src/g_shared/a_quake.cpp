@@ -64,7 +64,7 @@ DEarthquake::DEarthquake(AActor *center, int intensityX, int intensityY, int int
 //
 //==========================================================================
 
-void DEarthquake::Serialize (FArchive &arc)
+void DEarthquake::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Spot << m_Intensity << m_Countdown

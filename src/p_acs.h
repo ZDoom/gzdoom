@@ -859,7 +859,7 @@ public:
 		const int *args, int argcount, int flags);
 	~DLevelScript ();
 
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	int RunScript ();
 
 	inline void SetState (EScriptState newstate) { state = newstate; }
@@ -944,7 +944,7 @@ public:
 	DACSThinker ();
 	~DACSThinker ();
 
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	void Tick ();
 
 	typedef TMap<int, DLevelScript *> ScriptMap;

@@ -20,7 +20,7 @@ class DSeqNode : public DObject
 	DECLARE_CLASS (DSeqNode, DObject)
 	HAS_OBJECT_POINTERS
 public:
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 	void StopAndDestroy ();
 	void Destroy ();
 	void Tick ();

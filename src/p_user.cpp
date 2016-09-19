@@ -631,7 +631,7 @@ END_POINTERS
 
 IMPLEMENT_CLASS (APlayerChunk)
 
-void APlayerPawn::Serialize (FArchive &arc)
+void APlayerPawn::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 
@@ -3001,7 +3001,7 @@ void P_UnPredictPlayer ()
 	}
 }
 
-void player_t::Serialize (FArchive &arc)
+void player_t::Serialize(FArchive &arc)
 {
 	int i;
 	FString skinname;

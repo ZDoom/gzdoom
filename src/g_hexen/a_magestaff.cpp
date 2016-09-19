@@ -29,7 +29,7 @@ class AMWeapBloodscourge : public AMageWeapon
 {
 	DECLARE_CLASS (AMWeapBloodscourge, AMageWeapon)
 public:
-	void Serialize (FArchive &arc)
+	void Serialize(FArchive &arc)
 	{
 		Super::Serialize (arc);
 		arc << MStaffCount;

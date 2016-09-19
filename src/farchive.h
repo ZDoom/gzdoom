@@ -127,7 +127,7 @@ public:
 	bool IsOpen () const;
 	void GetSizes(unsigned int &one, unsigned int &two) const;
 
-	void Serialize (FArchive &arc);
+	void Serialize(FArchive &arc);
 
 protected:
 	bool FreeOnExplode () { return !m_SourceFromMem; }

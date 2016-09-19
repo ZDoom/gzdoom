@@ -53,6 +53,7 @@ ACTOR Actor native //: Thinker
 	native int CountProximity(class<Actor> classname, float distance, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native float GetSpriteAngle(int ptr = AAPTR_DEFAULT);
 	native float GetSpriteRotation(int ptr = AAPTR_DEFAULT);
+	native int GetMissileDamage(int mask, int add, int ptr = AAPTR_DEFAULT);
 
 	// Action functions
 	// Meh, MBF redundant functions. Only for DeHackEd support.

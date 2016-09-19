@@ -348,12 +348,12 @@ static void FinishThingdef()
 			continue;
 		}
 
-		if (def->Damage != NULL)
+		if (def->DamageFunc != nullptr)
 		{
-			FxDamageValue *dmg = (FxDamageValue *)ActorDamageFuncs[(uintptr_t)def->Damage - 1];
+			FxDamageValue *dmg = (FxDamageValue *)ActorDamageFuncs[(uintptr_t)def->DamageFunc - 1];
 			VMScriptFunction *sfunc;
 			sfunc = dmg->GetFunction();
-			if (sfunc == NULL)
+			if (sfunc == nullptr)
 			{
 				FCompileContext ctx(ti);
 				dmg = static_cast<FxDamageValue *>(dmg->Resolve(ctx));
@@ -365,15 +365,15 @@ static void FinishThingdef()
 					dmg->Emit(&buildit);
 					sfunc = buildit.MakeFunction();
 					sfunc->NumArgs = 1;
-					sfunc->Proto = NULL;		///FIXME: Need a proper prototype here
+					sfunc->Proto = nullptr;		///FIXME: Need a proper prototype here
 					// Save this function in case this damage value was reused
 					// (which happens quite easily with inheritance).
 					dmg->SetFunction(sfunc);
 				}
 			}
-			def->Damage = sfunc;
+			def->DamageFunc = sfunc;
 
-			if (dump != NULL && sfunc != NULL)
+			if (dump != nullptr && sfunc != nullptr)
 			{
 				char label[64];
 				int labellen = mysnprintf(label, countof(label), "Function %s.Damage",

@@ -915,7 +915,7 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 14 && stricmp (Line1, "Missile damage") == 0)
 		{
-			info->Damage = CreateDamageFunction(val);
+			info->SetDamage(val);
 		}
 		else if (linelen == 5)
 		{

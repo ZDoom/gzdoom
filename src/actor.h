@@ -583,7 +583,6 @@ public:
 	void Destroy ();
 	~AActor ();
 
-	DECLARE_OLD_SERIAL
 	void Serialize(FSerializer &arc);
 	void PostSerialize();
 

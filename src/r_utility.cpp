@@ -1043,6 +1043,7 @@ void FCanvasTextureInfo::EmptyList ()
 
 void FCanvasTextureInfo::Serialize(FArchive &arc)
 {
+#if 0
 	if (arc.IsStoring ())
 	{
 		FCanvasTextureInfo *probe;
@@ -1070,6 +1071,7 @@ void FCanvasTextureInfo::Serialize(FArchive &arc)
 			Add (viewpoint, picnum, fov);
 		}
 	}
+#endif
 }
 
 //==========================================================================

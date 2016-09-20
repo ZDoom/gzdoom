@@ -29,6 +29,7 @@
 #include "g_level.h"
 #include "farchive.h"
 #include "d_player.h"
+#include "serializer.h"
 
 
 // MACROS ------------------------------------------------------------------
@@ -1446,13 +1447,23 @@ void DPSprite::Tick()
 //
 //------------------------------------------------------------------------
 
-void DPSprite::Serialize(FArchive &arc)
+void DPSprite::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
 
-	arc << Next << Caller << Owner << Flags
-		<< State << Tics << Sprite << Frame
-		<< ID << x << y << oldx << oldy;
+	arc("next", Next)
+		("caller", Caller)
+		("owner", Owner)
+		("flags", Flags)
+		("state", State)
+		("tics", Tics)
+		.Sprite("sprite", Sprite, nullptr)
+		("frame", Frame)
+		("id", ID)
+		("x", x)
+		("y", y)
+		("oldx", oldx)
+		("oldy", oldy);
 }
 
 //------------------------------------------------------------------------

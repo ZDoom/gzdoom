@@ -3007,6 +3007,7 @@ void P_UnPredictPlayer ()
 
 void player_t::Serialize(FArchive &arc)
 {
+#if 0
 	int i;
 	FString skinname;
 
@@ -3079,54 +3080,6 @@ void player_t::Serialize(FArchive &arc)
 	for (i = 0; i < MAXPLAYERS; i++)
 		arc << frags[i];
 
-	if (SaveVersion < 4547)
-	{
-		int layer = PSP_WEAPON;
-		for (i = 0; i < 5; i++)
-		{
-			FState *state;
-			int tics;
-			double sx, sy;
-			int sprite;
-			int frame;
-
-			arc << state << tics
-				<< sx << sy
-				<< sprite << frame;
-
-			if (state != nullptr &&
-			   ((layer < PSP_TARGETCENTER && ReadyWeapon != nullptr) ||
-			   (layer >= PSP_TARGETCENTER && mo->FindInventory(RUNTIME_CLASS(APowerTargeter), true))))
-			{
-				DPSprite *pspr;
-				pspr = GetPSprite(PSPLayers(layer));
-				pspr->State = state;
-				pspr->Tics = tics;
-				pspr->Sprite = sprite;
-				pspr->Frame = frame;
-				pspr->Owner = this;
-
-				if (layer == PSP_FLASH)
-				{
-					pspr->x = 0;
-					pspr->y = 0;
-				}
-				else
-				{
-					pspr->x = sx;
-					pspr->y = sy;
-				}
-			}
-
-			if (layer == PSP_WEAPON)
-				layer = PSP_FLASH;
-			else if (layer == PSP_FLASH)
-				layer = PSP_TARGETCENTER;
-			else
-				layer++;
-		}
-	}
-	else
 		arc << psprites;
 
 	arc << CurrentPlayerClass;
@@ -3154,6 +3107,7 @@ void player_t::Serialize(FArchive &arc)
 		userinfo.SkinChanged(skinname, CurrentPlayerClass);
 	}
 	arc << MUSINFOactor << MUSINFOtics;
+#endif
 }
 
 bool P_IsPlayerTotallyFrozen(const player_t *player)

@@ -1087,6 +1087,7 @@ FArchive &FArchive::SerializeObject (DObject *&object, PClass *type)
 
 FArchive &FArchive::ReadObject (DObject* &obj, PClass *wanttype)
 {
+#if 0
 	BYTE objHead;
 	const PClass *type;
 	BYTE playerNum;
@@ -1203,6 +1204,7 @@ FArchive &FArchive::ReadObject (DObject* &obj, PClass *wanttype)
 	default:
 		I_Error ("Unknown object code (%d) in archive\n", objHead);
 	}
+#endif
 	return *this;
 }
 

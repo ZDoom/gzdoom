@@ -863,7 +863,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	arc.Array("sectors", sectors, &loadsectors[0], numsectors);
 	arc.Array("polyobjs", polyobjs, po_NumPolyobjs);
 	arc("subsectors", subsectors);
-	//StatusBar->Serialize(arc);
+	StatusBar->SerializeMessages(arc);
 	arc("zones", Zones);
 	arc("lineportals", linePortals);
 	arc("sectorportals", sectorPortals);
@@ -882,7 +882,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 void P_SerializeSounds (FArchive &arc)
 {
 	S_SerializeSounds (arc);
-	DSeqNode::SerializeSequences (arc);
+	//DSeqNode::SerializeSequences (arc);
 	char *name = NULL;
 	BYTE order;
 
@@ -898,40 +898,6 @@ void P_SerializeSounds (FArchive &arc)
 				S_ChangeMusic (level.Music, level.musicorder);
 	}
 	delete[] name;
-}
-
-//==========================================================================
-//
-// ArchivePolyobjs
-//
-//==========================================================================
-#define ASEG_POLYOBJS	104
-
-void P_SerializePolyobjs (FArchive &arc)
-{
-	int i;
-	FPolyObj *po;
-
-	if (arc.IsStoring ())
-	{
-		int seg = ASEG_POLYOBJS;
-		arc << seg << po_NumPolyobjs;
-		for(i = 0, po = polyobjs; i < po_NumPolyobjs; i++, po++)
-		{
-			arc << po->tag << po->Angle << po->StartSpot.pos << po->interpolation << po->bBlocked << po->bHasPortals;
-			arc << po->specialdata;
-  		}
-	}
-	else
-	{
-		int data;
-		DAngle angle;
-		DVector2 delta;
-
-		for (i = 0, po = polyobjs; i < po_NumPolyobjs; i++, po++)
-		{
-		}
-	}
 }
 
 //==========================================================================
@@ -976,7 +942,6 @@ void G_SerializeLevel(FArchive &arc, bool hubLoad)
 
 	// This must be saved, too, of course!
 	FCanvasTextureInfo::Serialize(arc);
-	//AM_SerializeMarkers(arc);
 
 	P_SerializePlayers(arc, hubLoad);
 	P_SerializeSounds(arc);

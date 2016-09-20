@@ -33,21 +33,6 @@ void DObject::SerializeUserVars(FSerializer &arc)
 //
 //==========================================================================
 
-void DThinker::SaveList(FSerializer &arc, DThinker *node)
-{
-	if (node != NULL)
-	{
-		while (!(node->ObjectFlags & OF_Sentinel))
-		{
-			assert(node->NextThinker != NULL && !(node->NextThinker->ObjectFlags & OF_EuthanizeMe));
-			//node->SerializeUserVars(arc);
-			::Serialize<DThinker>(arc, nullptr, node, nullptr);
-			node->CheckIfSerialized();
-			node = node->NextThinker;
-		}
-	}
-}
-
 
 void DThinker::SerializeThinkers(FSerializer &arc, bool hubLoad)
 {

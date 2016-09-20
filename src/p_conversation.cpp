@@ -57,7 +57,6 @@
 #include "doomstat.h"
 #include "c_console.h"
 #include "sbar.h"
-#include "farchive.h"
 #include "p_lnspec.h"
 #include "r_utility.h"
 #include "p_local.h"
@@ -1470,25 +1469,3 @@ static void TerminalResponse (const char *str)
 	}
 }
 
-
-template<> FArchive &operator<< (FArchive &arc, FStrifeDialogueNode *&node)
-{
-	DWORD convnum;
-	if (arc.IsStoring())
-	{
-		arc.WriteCount (node == NULL? ~0u : node->ThisNodeNum);
-	}
-	else 
-	{
-		convnum = arc.ReadCount();
-		if (convnum >= StrifeDialogues.Size())
-		{
-			node = NULL;
-		}
-		else
-		{
-			node = StrifeDialogues[convnum];
-		}
-	}
-	return arc;
-}

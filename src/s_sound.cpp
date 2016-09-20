@@ -2237,7 +2237,7 @@ static FArchive &operator<<(FArchive &arc, FSoundChan &chan)
 	switch (chan.SourceType)
 	{
 	case SOURCE_None:								break;
-	case SOURCE_Actor:		arc << chan.Actor;		break;
+	//case SOURCE_Actor:		arc << chan.Actor;		break;
 	case SOURCE_Sector:		arc << chan.Sector;		break;
 	case SOURCE_Polyobj:	/*arc << chan.Poly;*/		break;
 	case SOURCE_Unattached:	arc << chan.Point[0] << chan.Point[1] << chan.Point[2];	break;
@@ -2324,7 +2324,7 @@ void S_SerializeSounds(FArchive &arc)
 		// sounds might be heard briefly before pausing for the wipe.
 		RestartEvictionsAt = level.time + 2;
 	}
-	DSeqNode::SerializeSequences(arc);
+	//DSeqNode::SerializeSequences(arc);
 	GSnd->Sync(false);
 	GSnd->UpdateSounds();
 }

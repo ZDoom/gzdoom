@@ -142,7 +142,6 @@ public:
 	DBot ();
 
 	void Clear ();
-	DECLARE_OLD_SERIAL
 	void Serialize(FSerializer &arc);
 	void Tick ();
 

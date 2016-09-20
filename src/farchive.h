@@ -288,19 +288,10 @@ inline FArchive &operator<< (FArchive &arc, PalEntry &p)
 	return arc << p.a << p.r << p.g << p.b;
 }
 
-template<class T>
-inline FArchive &operator<< (FArchive &arc, T* &object)
-{
-	return arc.SerializeObject ((DObject*&)object, RUNTIME_TEMPLATE_CLASS(T));
-}
-
 struct FStrifeDialogueNode;
 struct FSwitchDef;
 struct FDoorAnimation;
 struct FLinePortal;
-template<> FArchive &operator<< (FArchive &arc, FStrifeDialogueNode *&node);
-template<> FArchive &operator<< (FArchive &arc, FSwitchDef* &sw);
-template<> FArchive &operator<< (FArchive &arc, FDoorAnimation* &da);
 FArchive &operator<< (FArchive &arc, FLinePortal &da);
 FArchive &operator<< (FArchive &arc, FSectorPortal &da);
 

@@ -87,7 +87,7 @@ public:
 private:
 	DPSprite () {}
 
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Tick();
 	void Destroy();
 

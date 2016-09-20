@@ -39,6 +39,7 @@
 #include "i_system.h"
 #include "doomerrors.h"
 #include "farchive.h"
+#include "serializer.h"
 #include "d_player.h"
 
 
@@ -103,14 +104,14 @@ bool FThinkerList::IsEmpty() const
 	return Sentinel == NULL || Sentinel->NextThinker == NULL;
 }
 
-void DThinker::SaveList(FArchive &arc, DThinker *node)
+void DThinker::SaveList(FSerializer &arc, DThinker *node)
 {
 	if (node != NULL)
 	{
 		while (!(node->ObjectFlags & OF_Sentinel))
 		{
 			assert(node->NextThinker != NULL && !(node->NextThinker->ObjectFlags & OF_EuthanizeMe));
-			arc << node;
+			::Serialize<DThinker>(arc, nullptr, node, nullptr);
 			node = node->NextThinker;
 		}
 	}
@@ -118,6 +119,7 @@ void DThinker::SaveList(FArchive &arc, DThinker *node)
 
 void DThinker::SerializeAll(FArchive &arc, bool hubLoad)
 {
+#if 0
 	DThinker *thinker;
 	BYTE stat;
 	int statcount;
@@ -197,6 +199,7 @@ void DThinker::SerializeAll(FArchive &arc, bool hubLoad)
 		}
 		bSerialOverride = false;
 	}
+#endif
 }
 
 DThinker::DThinker (int statnum) throw()

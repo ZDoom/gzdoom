@@ -194,6 +194,7 @@ bool FRemapTable::operator==(const FRemapTable &o)
 
 void FRemapTable::Serialize(FArchive &arc)
 {
+#if 0
 	int n = NumEntries;
 
 	arc << NumEntries;
@@ -214,6 +215,7 @@ void FRemapTable::Serialize(FArchive &arc)
 	{
 		arc << Palette[j];
 	}
+#endif
 }
 
 //----------------------------------------------------------------------------

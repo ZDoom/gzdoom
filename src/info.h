@@ -168,10 +168,6 @@ struct FStateLabels
 	void Destroy();	// intentionally not a destructor!
 };
 
-
-
-FArchive &operator<< (FArchive &arc, FState *&state);
-
 #include "gametype.h"
 
 struct DmgFactors : public TMap<FName, double>

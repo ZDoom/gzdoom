@@ -238,11 +238,6 @@ CCMD (playerclasses)
 // 16 pixels of bob
 #define MAXBOB			16.
 
-FArchive &operator<< (FArchive &arc, player_t *&p)
-{
-	return arc.SerializePointer (players, (BYTE **)&p, sizeof(*players));
-}
-
 // The player_t constructor. Since LogText is not a POD, we cannot just
 // memset it all to 0.
 player_t::player_t()

@@ -36,223 +36,6 @@
 #define OLD_SPRITE			((BYTE)12)	// Reference to an old sprite name follows
 
 
-FArchive &FArchive::WriteObject (DObject *obj)
-{
-#if 0
-	player_t *player;
-	BYTE id[2];
-
-	if (obj == NULL)
-	{
-		id[0] = NULL_OBJ;
-		Write (id, 1);
-	}
-	else if (obj == (DObject*)~0)
-	{
-		id[0] = M1_OBJ;
-		Write (id, 1);
-	}
-	else if (obj->ObjectFlags & OF_EuthanizeMe)
-	{
-		// Objects that want to die are not saved to the archive, but
-		// we leave the pointers to them alone.
-		id[0] = NULL_OBJ;
-		Write (id, 1);
-	}
-	else
-	{
-		PClass *type = obj->GetClass();
-		DWORD *classarcid;
-
-		if (type == RUNTIME_CLASS(DObject))
-		{
-			//I_Error ("Tried to save an instance of DObject.\n"
-			//		 "This should not happen.\n");
-			id[0] = NULL_OBJ;
-			Write (id, 1);
-		}
-		else if (NULL == (classarcid = ClassToArchive.CheckKey(type)))
-		{
-			// No instances of this class have been written out yet.
-			// Write out the class, then write out the object. If this
-			// is an actor controlled by a player, make note of that
-			// so that it can be overridden when moving around in a hub.
-			if (obj->IsKindOf (RUNTIME_CLASS (AActor)) &&
-				(player = static_cast<AActor *>(obj)->player) &&
-				player->mo == obj)
-			{
-				id[0] = NEW_PLYR_CLS_OBJ;
-				id[1] = (BYTE)(player - players);
-				Write (id, 2);
-			}
-			else
-			{
-				id[0] = NEW_CLS_OBJ;
-				Write (id, 1);
-			}
-			WriteClass (type);
-//			Printf ("Make class %s (%u)\n", type->Name, m_File->Tell());
-			MapObject (obj);
-			obj->SerializeUserVars (*this);
-			obj->Serialize (*this);
-			obj->CheckIfSerialized ();
-		}
-		else
-		{
-			// An instance of this class has already been saved. If
-			// this object has already been written, save a reference
-			// to the saved object. Otherwise, save a reference to the
-			// class, then save the object. Again, if this is a player-
-			// controlled actor, remember that.
-			DWORD *objarcid = ObjectToArchive.CheckKey(obj);
-
-			if (objarcid == NULL)
-			{
-
-				if (obj->IsKindOf (RUNTIME_CLASS (AActor)) &&
-					(player = static_cast<AActor *>(obj)->player) &&
-					player->mo == obj)
-				{
-					id[0] = NEW_PLYR_OBJ;
-					id[1] = (BYTE)(player - players);
-					Write (id, 2);
-				}
-				else
-				{
-					id[0] = NEW_OBJ;
-					Write (id, 1);
-				}
-				WriteCount (*classarcid);
-//				Printf ("Reuse class %s (%u)\n", type->Name, m_File->Tell());
-				MapObject (obj);
-				obj->SerializeUserVars (*this);
-				obj->Serialize (*this);
-				obj->CheckIfSerialized ();
-			}
-			else
-			{
-				id[0] = OLD_OBJ;
-				Write (id, 1);
-				WriteCount (*objarcid);
-			}
-		}
-	}
-#endif
-	return *this;
-}
-
-
-FArchive &operator<< (FArchive &arc, sector_t *&sec)
-{
-	return arc.SerializePointer (sectors, (BYTE **)&sec, sizeof(*sectors));
-}
-
-FArchive &operator<< (FArchive &arc, const sector_t *&sec)
-{
-	return arc.SerializePointer (sectors, (BYTE **)&sec, sizeof(*sectors));
-}
-
-FArchive &operator<< (FArchive &arc, line_t *&line)
-{
-	return arc.SerializePointer (lines, (BYTE **)&line, sizeof(*lines));
-}
-
-FArchive &operator<< (FArchive &arc, vertex_t *&vert)
-{
-	return arc.SerializePointer (vertexes, (BYTE **)&vert, sizeof(*vertexes));
-}
-
-FArchive &operator<< (FArchive &arc, side_t *&side)
-{
-	return arc.SerializePointer (sides, (BYTE **)&side, sizeof(*sides));
-}
-
-FArchive &operator<<(FArchive &arc, DAngle &ang)
-{
-	arc << ang.Degrees;
-	return arc;
-}
-
-FArchive &operator<<(FArchive &arc, DVector3 &vec)
-{
-	arc << vec.X << vec.Y << vec.Z;
-	return arc;
-}
-
-FArchive &operator<<(FArchive &arc, DVector2 &vec)
-{
-	arc << vec.X << vec.Y;
-	return arc;
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-FArchive &operator<< (FArchive &arc, FState *&state)
-{
-	PClassActor *info;
-
-	if (arc.IsStoring ())
-	{
-		if (state == NULL)
-		{
-			arc.UserWriteClass (RUNTIME_CLASS(AActor));
-			arc.WriteCount (NULL_STATE_INDEX);
-			return arc;
-		}
-
-		info = FState::StaticFindStateOwner (state);
-
-		if (info != NULL)
-		{
-			arc.UserWriteClass (info);
-			arc.WriteCount ((DWORD)(state - info->OwnedStates));
-		}
-		else
-		{
-			/* this was never working as intended.
-			I_Error ("Cannot find owner for state %p:\n"
-					 "%s %c%c %3d [%p] -> %p", state,
-					 sprites[state->sprite].name,
-					 state->GetFrame() + 'A',
-					 state->GetFullbright() ? '*' : ' ',
-					 state->GetTics(),
-					 state->GetAction(),
-					 state->GetNextState());
-			*/
-		}
-	}
-	else
-	{
-		PClassActor *info;
-		DWORD ofs;
-
-		arc.UserReadClass<PClassActor>(info);
-		ofs = arc.ReadCount ();
-		if (ofs == NULL_STATE_INDEX && info == RUNTIME_CLASS(AActor))
-		{
-			state = NULL;
-		}
-		else
-		{
-			state = info->OwnedStates + ofs;
-		}
-	}
-	return arc;
-}
-
-FArchive &operator<< (FArchive &arc, secplane_t &plane)
-{
-	arc << plane.normal << plane.D;
-	if (plane.normal.Z != 0)
-	{	// plane.c should always be non-0. Otherwise, the plane
-		// would be perfectly vertical. (But then, don't let this crash on a broken savegame...)
-		plane.negiC = -1 / plane.normal.Z;
-	}
-	return arc;
-}
 
 void P_SerializeACSScriptNumber(FArchive &arc, int &scriptnum, bool was2byte)
 {
@@ -272,3 +55,129 @@ void P_SerializeACSScriptNumber(FArchive &arc, int &scriptnum, bool was2byte)
 		}
 	}
 }
+
+
+#if 0
+// still needed as reference.
+FArchive &FArchive::ReadObject(DObject* &obj, PClass *wanttype)
+{
+	BYTE objHead;
+	const PClass *type;
+	BYTE playerNum;
+	DWORD index;
+	DObject *newobj;
+
+	operator<< (objHead);
+
+	switch (objHead)
+	{
+	case NULL_OBJ:
+		obj = NULL;
+		break;
+
+	case M1_OBJ:
+		obj = (DObject *)~0;
+		break;
+
+	case OLD_OBJ:
+		index = ReadCount();
+		if (index >= ArchiveToObject.Size())
+		{
+			I_Error("Object reference too high (%u; max is %u)\n", index, ArchiveToObject.Size());
+		}
+		obj = ArchiveToObject[index];
+		break;
+
+	case NEW_PLYR_CLS_OBJ:
+		operator<< (playerNum);
+		if (m_HubTravel)
+		{
+			// If travelling inside a hub, use the existing player actor
+			type = ReadClass(wanttype);
+			//			Printf ("New player class: %s (%u)\n", type->Name, m_File->Tell());
+			obj = players[playerNum].mo;
+
+			// But also create a new one so that we can get past the one
+			// stored in the archive.
+			AActor *tempobj = static_cast<AActor *>(type->CreateNew());
+			MapObject(obj != NULL ? obj : tempobj);
+			tempobj->SerializeUserVars(*this);
+			tempobj->Serialize(*this);
+			tempobj->CheckIfSerialized();
+			// If this player is not present anymore, keep the new body
+			// around just so that the load will succeed.
+			if (obj != NULL)
+			{
+				// When the temporary player's inventory items were loaded,
+				// they became owned by the real player. Undo that now.
+				for (AInventory *item = tempobj->Inventory; item != NULL; item = item->Inventory)
+				{
+					item->Owner = tempobj;
+				}
+				tempobj->Destroy();
+			}
+			else
+			{
+				obj = tempobj;
+				players[playerNum].mo = static_cast<APlayerPawn *>(obj);
+			}
+			break;
+		}
+		/* fallthrough when not travelling to a previous level */
+	case NEW_CLS_OBJ:
+		type = ReadClass(wanttype);
+		//		Printf ("New class: %s (%u)\n", type->Name, m_File->Tell());
+		newobj = obj = type->CreateNew();
+		MapObject(obj);
+		newobj->SerializeUserVars(*this);
+		newobj->Serialize(*this);
+		newobj->CheckIfSerialized();
+		break;
+
+	case NEW_PLYR_OBJ:
+		operator<< (playerNum);
+		if (m_HubTravel)
+		{
+			type = ReadStoredClass(wanttype);
+			//			Printf ("Use player class: %s (%u)\n", type->Name, m_File->Tell());
+			obj = players[playerNum].mo;
+
+			AActor *tempobj = static_cast<AActor *>(type->CreateNew());
+			MapObject(obj != NULL ? obj : tempobj);
+			tempobj->SerializeUserVars(*this);
+			tempobj->Serialize(*this);
+			tempobj->CheckIfSerialized();
+			if (obj != NULL)
+			{
+				for (AInventory *item = tempobj->Inventory;
+					item != NULL; item = item->Inventory)
+				{
+					item->Owner = tempobj;
+				}
+				tempobj->Destroy();
+			}
+			else
+			{
+				obj = tempobj;
+				players[playerNum].mo = static_cast<APlayerPawn *>(obj);
+			}
+			break;
+		}
+		/* fallthrough when not travelling to a previous level */
+	case NEW_OBJ:
+		type = ReadStoredClass(wanttype);
+		//		Printf ("Use class: %s (%u)\n", type->Name, m_File->Tell());
+		obj = type->CreateNew();
+		MapObject(obj);
+		obj->SerializeUserVars(*this);
+		obj->Serialize(*this);
+		obj->CheckIfSerialized();
+		break;
+
+	default:
+		I_Error("Unknown object code (%d) in archive\n", objHead);
+	}
+	return *this;
+}
+#endif
+

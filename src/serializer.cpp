@@ -560,14 +560,27 @@ void FSerializer::WriteObjects()
 	if (isWriting())
 	{
 		BeginArray("objects");
+		// we cannot use the C++11 shorthand syntax here because the array may grow while being processed.
 		for (unsigned i = 0; i < w->mDObjects.Size(); i++)
 		{
+			auto obj = w->mDObjects[i];
+			player_t *player;
+
 			BeginObject(nullptr);
-			WriteKey("classtype");
-			w->mWriter.String(w->mDObjects[i]->GetClass()->TypeName.GetChars());
-			w->mDObjects[i]->SerializeUserVars(*this);
-			w->mDObjects[i]->Serialize(*this);
-			w->mDObjects[i]->CheckIfSerialized();
+			w->mWriter.Key("classtype");
+			w->mWriter.String(obj->GetClass()->TypeName.GetChars());
+
+			if (obj->IsKindOf(RUNTIME_CLASS(AActor)) &&
+				(player = static_cast<AActor *>(obj)->player) &&
+				player->mo == obj)
+			{
+				w->mWriter.Key("playerindex");
+				w->mWriter.Int(int(player - players));
+			}
+
+			obj->SerializeUserVars(*this);
+			obj->Serialize(*this);
+			obj->CheckIfSerialized();
 			EndObject();
 		}
 		EndArray();

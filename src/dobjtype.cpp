@@ -453,14 +453,18 @@ void PType::SkipValue(FArchive &ar, int tag)
 
 	case VAL_Object:
 	{
+#if 0
 		DObject *skipper;
 		ar << skipper;
+#endif
 		break;
 	}
 	case VAL_State:
 	{
+#if 0
 		FState *skipper;
 		ar << skipper;
+#endif
 		break;
 	}
 	case VAL_String:
@@ -1739,7 +1743,7 @@ int PStatePointer::GetRegType() const
 void PStatePointer::WriteValue(FArchive &ar, const void *addr) const
 {
 	ar.WriteByte(VAL_State);
-	ar << *(FState **)addr;
+	//ar << *(FState **)addr;
 }
 
 //==========================================================================
@@ -1754,7 +1758,7 @@ bool PStatePointer::ReadValue(FArchive &ar, void *addr) const
 	ar << tag;
 	if (tag == VAL_State)
 	{
-		ar << *(FState **)addr;
+		//ar << *(FState **)addr;
 		return true;
 	}
 	SkipValue(ar, tag);
@@ -1856,6 +1860,7 @@ void PPointer::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 
 void PPointer::WriteValue(FArchive &ar, const void *addr) const
 {
+#if 0
 	if (PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
 	{
 		ar.WriteByte(VAL_Object);
@@ -1866,6 +1871,7 @@ void PPointer::WriteValue(FArchive &ar, const void *addr) const
 		assert(0 && "Pointer points to a type we don't handle");
 		I_Error("Attempt to save pointer to unhandled type");
 	}
+#endif
 }
 
 //==========================================================================
@@ -1876,6 +1882,7 @@ void PPointer::WriteValue(FArchive &ar, const void *addr) const
 
 bool PPointer::ReadValue(FArchive &ar, void *addr) const
 {
+#if 0
 	BYTE tag;
 	ar << tag;
 	if (tag == VAL_Object && PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
@@ -1884,6 +1891,7 @@ bool PPointer::ReadValue(FArchive &ar, void *addr) const
 		return true;
 	}
 	SkipValue(ar, tag);
+#endif
 	return false;
 }
 

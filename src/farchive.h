@@ -196,16 +196,10 @@ virtual void Read (void *mem, unsigned int len);
 		FArchive& operator<< (char *&str);
 		FArchive& operator<< (FName &n);
 		FArchive& operator<< (FString &str);
-		FArchive& SerializePointer (void *ptrbase, BYTE **ptr, DWORD elemSize);
-		FArchive& SerializeObject (DObject *&object, PClass *type);
-		FArchive& WriteObject (DObject *obj);
-		FArchive& ReadObject (DObject *&obj, PClass *wanttype);
 
 		void WriteName (const char *name);
 		const char *ReadName ();	// The returned name disappears with the archive, unlike strings
 
-		void WriteSprite (int spritenum);
-		int ReadSprite ();
 
 inline	FArchive& operator<< (SBYTE &c) { return operator<< ((BYTE &)c); }
 inline	FArchive& operator<< (SWORD &s) { return operator<< ((WORD &)s); }
@@ -214,7 +208,6 @@ inline	FArchive& operator<< (SQWORD &i) { return operator<< ((QWORD &)i); }
 inline	FArchive& operator<< (unsigned char *&str) { return operator<< ((char *&)str); }
 inline	FArchive& operator<< (signed char *&str) { return operator<< ((char *&)str); }
 inline	FArchive& operator<< (bool &b) { return operator<< ((BYTE &)b); }
-inline  FArchive& operator<< (DObject* &object) { return ReadObject (object, RUNTIME_CLASS(DObject)); }
 
 	void EnableThinkers()
 	{
@@ -229,7 +222,6 @@ inline  FArchive& operator<< (DObject* &object) { return ReadObject (object, RUN
 protected:
 		enum { EObjectHashSize = 137 };
 
-		DWORD MapObject (DObject *obj);
 		DWORD WriteClass (PClass *info);
 		PClass *ReadClass ();
 		PClass *ReadClass (const PClass *wanttype);
@@ -283,60 +275,5 @@ public:
 	FPNGChunkFile Chunk;
 };
 
-inline FArchive &operator<< (FArchive &arc, PalEntry &p)
-{
-	return arc << p.a << p.r << p.g << p.b;
-}
-
-struct FStrifeDialogueNode;
-struct FSwitchDef;
-struct FDoorAnimation;
-struct FLinePortal;
-FArchive &operator<< (FArchive &arc, FLinePortal &da);
-FArchive &operator<< (FArchive &arc, FSectorPortal &da);
-
-
-
-template<class T,class TT>
-inline FArchive &operator<< (FArchive &arc, TArray<T,TT> &self)
-{
-	if (arc.IsStoring())
-	{
-		arc.WriteCount(self.Count);
-	}
-	else
-	{
-		DWORD numStored = arc.ReadCount();
-		self.Resize(numStored);
-	}
-	for (unsigned int i = 0; i < self.Count; ++i)
-	{
-		arc << self.Array[i];
-	}
-	return arc;
-}
-
-struct sector_t;
-struct line_t;
-struct vertex_t;
-struct side_t;
-
-FArchive &operator<< (FArchive &arc, sector_t *&sec);
-FArchive &operator<< (FArchive &arc, const sector_t *&sec);
-FArchive &operator<< (FArchive &arc, line_t *&line);
-FArchive &operator<< (FArchive &arc, vertex_t *&vert);
-FArchive &operator<< (FArchive &arc, side_t *&side);
-
-FArchive &operator<<(FArchive &arc, DAngle &ang);
-FArchive &operator<<(FArchive &arc, DVector3 &vec);
-FArchive &operator<<(FArchive &arc, DVector2 &vec);
-
-
-
-template<typename T, typename TT>
-FArchive& operator<< (FArchive& arc, TFlags<T, TT>& flag)
-{
-	return flag.Serialize (arc);
-}
 
 #endif //__FARCHIVE_H__

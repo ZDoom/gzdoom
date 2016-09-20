@@ -673,6 +673,9 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	framebuffer->Begin2D(false);
 
 	Reset3DViewport();
+
+	s3d::Stereo3DMode::getCurrentMode().AdjustPlayerSprites();
+
 	// [BB] Only draw the sprites if we didn't render a HUD model before.
 	if ( renderHUDModel == false )
 	{
@@ -847,7 +850,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		clipper.SafeAddClipRangeRealAngles(ViewAngle.BAMs() + a1, ViewAngle.BAMs() - a1);
 
 		ProcessScene(toscreen);
-		if (mainview && toscreen) EndDrawScene(lviewsector);	// do not call this for camera textures.
+		if (mainview && toscreen) EndDrawScene(lviewsector); // do not call this for camera textures.
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
 			mBuffers->BlitSceneToTexture();

@@ -675,6 +675,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, subsector_t *&ss, subs
 			if (num_verts == numvertexes && num_subs == numsubsectors && hasglnodes)
 			{
 				success = true;
+				int sub = 0;
 				for (int i = 0; str[i] != 0; i++)
 				{
 					by = str[i];
@@ -688,6 +689,14 @@ FSerializer &Serialize(FSerializer &arc, const char *key, subsector_t *&ss, subs
 						success = false;
 						break;
 					}
+					for (int s = 0; s < 6; s++)
+					{
+						if (sub + s < numsubsectors && (by & (1 << s)))
+						{
+							subsectors[sub + s].flags |= SSECF_DRAWN;
+						}
+					}
+					sub += 6;
 				}
 			}
 			if (hasglnodes && !success)

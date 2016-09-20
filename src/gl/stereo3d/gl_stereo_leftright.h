@@ -37,11 +37,14 @@ class ShiftedEyePose : public EyePose
 {
 public:
 	ShiftedEyePose(float shift) : shift(shift) {};
-	float getShift() const { return shift; }
-	void setShift(float shift) { this->shift = shift; }
+	float getShift() const;
 	virtual VSMatrix GetProjection(float fov, float aspectRatio, float fovRatio) const;
 	virtual void GetViewShift(float yaw, float outViewShift[3]) const;
+
 protected:
+	void setShift(float shift) { this->shift = shift; }
+
+private:
 	float shift;
 };
 
@@ -50,7 +53,7 @@ class LeftEyePose : public ShiftedEyePose
 {
 public:
 	LeftEyePose(float ipd) : ShiftedEyePose( float(-0.5) * ipd) {}
-	float getIpd() const { return float(-2.0)*getShift(); }
+	float getIpd() const { return float(fabs(2.0f*getShift())); }
 	void setIpd(float ipd) { setShift(float(-0.5)*ipd); }
 };
 
@@ -59,7 +62,7 @@ class RightEyePose : public ShiftedEyePose
 {
 public:
 	RightEyePose(float ipd) : ShiftedEyePose(float(+0.5)*ipd) {}
-	float getIpd() const { return float(+2.0)*shift; }
+	float getIpd() const { return float(fabs(2.0f*getShift())); }
 	void setIpd(float ipd) { setShift(float(+0.5)*ipd); }
 };
 

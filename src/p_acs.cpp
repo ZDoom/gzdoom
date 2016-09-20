@@ -1646,7 +1646,7 @@ void FBehavior::StaticSerializeModuleStates (FSerializer &arc)
 			if (arc.BeginArray("modules"))
 			{
 				FBehavior *module = StaticModules[modnum];
-				const char *modname;
+				const char *modname = module->ModuleName;
 				int ModSize = module->GetDataSize();
 
 				if (arc.BeginObject(nullptr))
@@ -1693,50 +1693,54 @@ void FBehavior::SerializeVarSet (FSerializer &arc, SDWORD *vars, int max)
 	SDWORD count;
 	SDWORD first, last;
 
-	if (arc.isWriting ())
+	if (arc.BeginObject(nullptr))
 	{
-		// Find first non-zero variable
-		for (first = 0; first < max; ++first)
+		if (arc.isWriting())
 		{
-			if (vars[first] != 0)
+			// Find first non-zero variable
+			for (first = 0; first < max; ++first)
 			{
-				break;
+				if (vars[first] != 0)
+				{
+					break;
+				}
+			}
+
+			// Find last non-zero variable
+			for (last = max - 1; last >= first; --last)
+			{
+				if (vars[last] != 0)
+				{
+					break;
+				}
+			}
+
+			if (last < first)
+			{ // no non-zero variables
+				count = 0;
+				arc("count", count);
+			}
+			else
+			{
+				count = last - first + 1;
+				arc("count", count);
+				arc("first", first);
+				arc.Array("values", &vars[first], count);
 			}
 		}
-
-		// Find last non-zero variable
-		for (last = max - 1; last >= first; --last)
+		else
 		{
-			if (vars[last] != 0)
-			{
-				break;
-			}
-		}
-
-		if (last < first)
-		{ // no non-zero variables
-			count = 0;
+			memset(vars, 0, max * sizeof(*vars));
 			arc("count", count);
-			return;
-		}
 
-		count = last - first + 1;
-		arc("count", count);
-		arc("first", first);
-		arc.Array("values", &vars[first], count);
-	}
-	else
-	{
-		memset (vars, 0, max*sizeof(*vars));
-		arc("count", count);
-
-		if (count == 0)
-		{
-			return;
+			if (count != 0)
+			{
+				arc("first", first);
+				if (first + count > max) count = max - first;
+				arc.Array("values", &vars[first], count);
+			}
 		}
-		arc("first", first);
-		if (first + count > max) count = max - first;
-		arc.Array("values", &vars[first], count);
+		arc.EndObject();
 	}
 }
 
@@ -2923,6 +2927,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, SavingRunningscript &r
 
 void DACSThinker::Serialize(FSerializer &arc)
 {
+	Super::Serialize(arc);
 	arc("scripts", Scripts);
 
 	if (arc.isWriting())
@@ -3006,29 +3011,6 @@ END_POINTERS
 // SerializeFFontPtr
 //
 //==========================================================================
-
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&font, FFont **def)
-{
-	if (arc.isWriting())
-	{
-		const char *n = font->GetName();
-		return arc.StringPtr(key, n);
-	}
-	else
-	{
-		const char *n;
-		arc.StringPtr(key, n);
-		font = V_GetFont(n);
-		if (font == NULL)
-		{
-			Printf("Could not load font %s\n", n);
-			font = SmallFont;
-		}
-		return arc;
-	}
-
-}
-
 
 void DLevelScript::Serialize(FSerializer &arc)
 {

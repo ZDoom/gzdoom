@@ -527,13 +527,17 @@ FSerializer &Serialize(FSerializer &arc, const char *key, secplane_t &p, secplan
 
 FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t *def)
 {
+	// save the Scroll data here because it's a lot easier to handle a default.
+	// Just writing out the full array can massively inflate the archive for no gain.
+	DVector2 scroll = { 0,0 }, nul = { 0,0 };
+	if (arc.isWriting() && level.Scrolls.Size() > 0) scroll = level.Scrolls[p.sectornum];
+
 	if (arc.BeginObject(key))
 	{
 		arc("floorplane", p.floorplane, def->floorplane)
 			("ceilingplane", p.ceilingplane, def->ceilingplane)
 			("lightlevel", p.lightlevel, def->lightlevel)
 			("special", p.special, def->special)
-			("soundtraversed", p.soundtraversed, def->soundtraversed)
 			("seqtype", p.seqType, def->seqType)
 			("seqname", p.SeqName, def->SeqName)
 			("friction", p.friction, def->friction)
@@ -572,7 +576,17 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 			("colormap", p.ColorMap, def->ColorMap)
 			.Terrain("floorterrain", p.terrainnum[0], &def->terrainnum[0])
 			.Terrain("ceilingterrain", p.terrainnum[1], &def->terrainnum[1])
+			("scrolls", scroll, nul)
 			.EndObject();
+
+		if (!scroll.isZero())
+		{
+			if (level.Scrolls.Size() == 0)
+			{
+				level.Scrolls.Resize(numsectors);
+				memset(&level.Scrolls[0], 0, sizeof(level.Scrolls[0])*level.Scrolls.Size());
+			}
+		}
 	}
 	return arc;
 }
@@ -837,8 +851,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		("level.maptime", level.maptime)
 		("level.totaltime", i)
 		("level.skytexture1", level.skytexture1)
-		("level.skytexture2", level.skytexture2)
-		("level.scrolls", level.Scrolls);
+		("level.skytexture2", level.skytexture2);
 
 	// Hub transitions must keep the current total time
 	if (!hubload)
@@ -852,23 +865,26 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		interpolator.ClearInterpolations();
 	}
 
+
 	G_AirControlChanged();
 
 	// fixme: This needs to ensure it reads from the correct place. Should be one once there's enough of this code converted to JSON
-	AM_SerializeMarkers(arc);
 
 	FBehavior::StaticSerializeModuleStates(arc);
+	// The order here is important: First world state, then portal state, then thinkers, and last polyobjects.
 	arc.Array("linedefs", lines, &loadlines[0], numlines);
 	arc.Array("sidedefs", sides, &loadsides[0], numsides);
 	arc.Array("sectors", sectors, &loadsectors[0], numsectors);
-	arc.Array("polyobjs", polyobjs, po_NumPolyobjs);
-	arc("subsectors", subsectors);
-	StatusBar->SerializeMessages(arc);
 	arc("zones", Zones);
 	arc("lineportals", linePortals);
 	arc("sectorportals", sectorPortals);
-
 	if (arc.isReading()) P_CollectLinkedPortals();
+	DThinker::SerializeThinkers(arc, !hubload);
+	arc.Array("polyobjs", polyobjs, po_NumPolyobjs);
+	arc("subsectors", subsectors);
+	StatusBar->SerializeMessages(arc);
+	AM_SerializeMarkers(arc);
+
 }
 
 

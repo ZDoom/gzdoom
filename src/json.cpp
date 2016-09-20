@@ -71,7 +71,6 @@ CCMD(writejson)
 	FSerializer arc;
 	arc.OpenWriter();
 	arc.BeginObject(nullptr);
-	DThinker::SerializeThinkers(arc, false);
 	G_SerializeLevel(arc, false);
 	arc.WriteObjects();
 	arc.EndObject();

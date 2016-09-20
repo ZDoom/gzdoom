@@ -29,6 +29,7 @@
 #include "r_data/r_interpolate.h"
 #include "g_shared/a_sharedglobal.h"
 #include "po_man.h"
+#include "v_font.h"
 
 char nulspace[1024 * 1024 * 4];
 
@@ -211,6 +212,7 @@ void FSerializer::WriteKey(const char *key)
 {
 	if (isWriting() && w->inObject())
 	{
+		assert(key != nullptr);
 		if (key == nullptr)
 		{
 			I_Error("missing element name");
@@ -426,7 +428,6 @@ FSerializer &FSerializer::ScriptNum(const char *key, int &num)
 		{
 			w->mWriter.Int(num);
 		}
-		w->mWriter.EndArray();
 	}
 	else
 	{
@@ -1435,3 +1436,32 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr
 	}
 	return arc;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&font, FFont **def)
+{
+	if (arc.isWriting())
+	{
+		const char *n = font->GetName();
+		return arc.StringPtr(key, n);
+	}
+	else
+	{
+		const char *n;
+		arc.StringPtr(key, n);
+		font = V_GetFont(n);
+		if (font == NULL)
+		{
+			Printf("Could not load font %s\n", n);
+			font = SmallFont;
+		}
+		return arc;
+	}
+
+}
+

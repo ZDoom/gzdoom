@@ -189,6 +189,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDial
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FString *&pstr, FString **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDoorAnimation *&pstr, FDoorAnimation **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr, char **def);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&font, FFont **def);
 
 
 inline FSerializer &Serialize(FSerializer &arc, const char *key, DVector3 &p, DVector3 *def)

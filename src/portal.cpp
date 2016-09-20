@@ -199,48 +199,6 @@ void FLinePortalTraverse::AddLineIntercepts(int bx, int by)
 
 //============================================================================
 //
-// Save a line portal for savegames.
-//
-//============================================================================
-
-FArchive &operator<< (FArchive &arc, FLinePortal &port)
-{
-	arc << port.mOrigin
-		<< port.mDestination
-		<< port.mDisplacement
-		<< port.mType
-		<< port.mFlags
-		<< port.mDefFlags
-		<< port.mAlign;
-	return arc;
-}
-
-//============================================================================
-//
-// Save a sector portal for savegames.
-//
-//============================================================================
-
-FArchive &operator<< (FArchive &arc, FSectorPortal &port)
-{
-	arc << port.mType
-		<< port.mFlags
-		<< port.mPartner
-		<< port.mPlane
-		<< port.mOrigin
-		<< port.mDestination
-		<< port.mDisplacement
-		<< port.mPlaneZ;
-	if (arc.IsLoading())
-	{
-		port.mSkybox = nullptr;
-	}
-	return arc;
-}
-
-
-//============================================================================
-//
 // finds the destination for a line portal for spawning
 //
 //============================================================================

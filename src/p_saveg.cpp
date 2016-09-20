@@ -732,6 +732,36 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSectorPortal &port, F
 	return arc;
 }
 
+//============================================================================
+//
+// one polyobject.
+//
+//============================================================================
+
+FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj &poly, FPolyObj *def)
+{
+	if (arc.BeginObject(key))
+	{
+		DAngle angle = poly.Angle;
+		DVector2 delta = poly.StartSpot.pos;
+		arc("angle", angle)
+			("pos", delta)
+			("interpolation", poly.interpolation)
+			("blocked", poly.bBlocked)
+			("hasportals", poly.bHasPortals)
+			("specialdata", poly.specialdata)
+			.EndObject();
+
+		if (arc.isReading())
+		{
+			poly.RotatePolyobj(angle, true);
+			delta -= poly.StartSpot.pos;
+			poly.MovePolyobj(delta, true);
+		}
+	}
+	return arc;
+}
+
 //==========================================================================
 //
 //
@@ -760,19 +790,87 @@ FSerializer &Serialize(FSerializer &arc, const char *key, zone_t &z, zone_t *def
 //
 //============================================================================
 
-void SerializeWorld(FSerializer &arc)
+void G_SerializeLevel(FSerializer &arc, bool hubload)
 {
+	int i = level.totaltime;
+
+	if (arc.isWriting())
+	{
+		arc.Array("checksum", level.md5, 16);
+	}
+	else
+	{
+		// prevent bad things from happening by doing a check on the size of level arrays and the map's entire checksum.
+		// The old code happily tried to load savegames with any mismatch here, often causing meaningless errors
+		// deep down in the deserializer or just a crash if the few insufficient safeguards were not triggered.
+		BYTE chk[16] = { 0 };
+		arc.Array("checksum", chk, 16);
+		if (arc.GetSize("linedefs") != numlines ||
+			arc.GetSize("sidedefs") != numsides ||
+			arc.GetSize("sectors") != numsectors ||
+			arc.GetSize("polyobjs") != po_NumPolyobjs ||
+			memcmp(chk, level.md5, 16))
+		{
+			I_Error("Savegame is from a different level");
+		}
+	}
+
+	//Renderer->StartSerialize(arc);
+	if (arc.isReading())
+	{
+		P_DestroyThinkers(hubload);
+		// ReadObjects
+	}
+
+	arc("level.flags", level.flags)
+		("level.flags2", level.flags2)
+		("level.fadeto", level.fadeto)
+		("level.found_secrets", level.found_secrets)
+		("level.found_items", level.found_items)
+		("level.killed_monsters", level.killed_monsters)
+		("level.total_secrets", level.total_secrets)
+		("level.total_items", level.total_items)
+		("level.total_monsters", level.total_monsters)
+		("level.gravity", level.gravity)
+		("level.aircontrol", level.aircontrol)
+		("level.teamdamage", level.teamdamage)
+		("level.maptime", level.maptime)
+		("level.totaltime", i)
+		("level.skytexture1", level.skytexture1)
+		("level.skytexture2", level.skytexture2)
+		("level.scrolls", level.Scrolls);
+
+	// Hub transitions must keep the current total time
+	if (!hubload)
+		level.totaltime = i;
+
+	if (arc.isReading())
+	{
+		sky1texture = level.skytexture1;
+		sky2texture = level.skytexture2;
+		R_InitSkyMap();
+		interpolator.ClearInterpolations();
+	}
+
+	G_AirControlChanged();
+
 	// fixme: This needs to ensure it reads from the correct place. Should be one once there's enough of this code converted to JSON
-	arc.Array("linedefs", lines, &loadlines[0], numlines)
-		.Array("sidedefs", sides, &loadsides[0], numsides)
-		.Array("sectors", sectors, &loadsectors[0], numsectors)
-		("subsectors", subsectors)
-		("zones", Zones)
-		("lineportals", linePortals)
-		("sectorportals", sectorPortals);
+	AM_SerializeMarkers(arc);
+
+	//FBehavior::StaticSerializeModuleStates(arc);
+	arc.Array("linedefs", lines, &loadlines[0], numlines);
+	arc.Array("sidedefs", sides, &loadsides[0], numsides);
+	arc.Array("sectors", sectors, &loadsectors[0], numsectors);
+	arc.Array("polyobjs", polyobjs, po_NumPolyobjs);
+	arc("subsectors", subsectors);
+	//StatusBar->Serialize(arc);
+	arc("zones", Zones);
+	arc("lineportals", linePortals);
+	arc("sectorportals", sectorPortals);
 
 	if (arc.isReading()) P_CollectLinkedPortals();
 }
+
 
 
 //==========================================================================
@@ -830,33 +928,8 @@ void P_SerializePolyobjs (FArchive &arc)
 		DAngle angle;
 		DVector2 delta;
 
-		arc << data;
-		if (data != ASEG_POLYOBJS)
-			I_Error ("Polyobject marker missing");
-
-		arc << data;
-		if (data != po_NumPolyobjs)
-		{
-			I_Error ("UnarchivePolyobjs: Bad polyobj count");
-		}
 		for (i = 0, po = polyobjs; i < po_NumPolyobjs; i++, po++)
 		{
-			arc << data;
-			if (data != po->tag)
-			{
-				I_Error ("UnarchivePolyobjs: Invalid polyobj tag");
-			}
-			arc << angle << delta << po->interpolation;
-			arc << po->bBlocked;
-			arc << po->bHasPortals;
-			if (SaveVersion >= 4548)
-			{
-				arc << po->specialdata;
-			}
-
-			po->RotatePolyobj (angle, true);
-			delta -= po->StartSpot.pos;
-			po->MovePolyobj (delta, true);
 		}
 	}
 }
@@ -868,73 +941,7 @@ void P_SerializePolyobjs (FArchive &arc)
 
 void G_SerializeLevel(FArchive &arc, bool hubLoad)
 {
-	int i = level.totaltime;
-
-	unsigned tm = I_MSTime();
-
-	Renderer->StartSerialize(arc);
-	if (arc.IsLoading()) P_DestroyThinkers(hubLoad);
-
-	arc << level.flags
-		<< level.flags2
-		<< level.fadeto
-		<< level.found_secrets
-		<< level.found_items
-		<< level.killed_monsters
-		<< level.gravity
-		<< level.aircontrol
-		<< level.teamdamage
-		<< level.maptime
-		<< i;
-
-	// Hub transitions must keep the current total time
-	if (!hubLoad)
-		level.totaltime = i;
-
-	arc << level.skytexture1 << level.skytexture2;
-	if (arc.IsLoading())
-	{
-		sky1texture = level.skytexture1;
-		sky2texture = level.skytexture2;
-		R_InitSkyMap();
-	}
-
-	G_AirControlChanged();
-
-	BYTE t;
-
-	// Does this level have scrollers?
-	if (arc.IsStoring())
-	{
-		t = level.Scrolls ? 1 : 0;
-		arc << t;
-	}
-	else
-	{
-		arc << t;
-		if (level.Scrolls)
-		{
-			delete[] level.Scrolls;
-			level.Scrolls = NULL;
-		}
-		if (t)
-		{
-			level.Scrolls = new FSectorScrollValues[numsectors];
-			memset(level.Scrolls, 0, sizeof(level.Scrolls)*numsectors);
-		}
-	}
-
-	FBehavior::StaticSerializeModuleStates(arc);
-	if (arc.IsLoading()) interpolator.ClearInterpolations();
-	P_SerializeWorld(arc);
-	P_SerializeThinkers(arc, hubLoad);
-	P_SerializeWorldActors(arc);	// serializing actor pointers in the world data must be done after SerializeWorld has restored the entire sector state, otherwise LinkToWorld may fail.
-	P_SerializePolyobjs(arc);
-	P_SerializeSubsectors(arc);
-	StatusBar->Serialize(arc);
-
-	arc << level.total_monsters << level.total_items << level.total_secrets;
-
+#if 0
 	// Does this level have custom translations?
 	FRemapTable *trans;
 	WORD w;
@@ -969,17 +976,17 @@ void G_SerializeLevel(FArchive &arc, bool hubLoad)
 
 	// This must be saved, too, of course!
 	FCanvasTextureInfo::Serialize(arc);
-	AM_SerializeMarkers(arc);
+	//AM_SerializeMarkers(arc);
 
 	P_SerializePlayers(arc, hubLoad);
 	P_SerializeSounds(arc);
 	if (arc.IsLoading())
 	{
-		for (i = 0; i < numsectors; i++)
+		for (int i = 0; i < numsectors; i++)
 		{
 			P_Recalculate3DFloors(&sectors[i]);
 		}
-		for (i = 0; i < MAXPLAYERS; ++i)
+		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (playeringame[i] && players[i].mo != NULL)
 			{
@@ -988,7 +995,6 @@ void G_SerializeLevel(FArchive &arc, bool hubLoad)
 		}
 	}
 	Renderer->EndSerialize(arc);
-	unsigned tt = I_MSTime();
-	Printf("Serialization took %d ms\n", tt - tm);
+#endif
 }
 

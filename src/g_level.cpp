@@ -1815,9 +1815,9 @@ void P_ReadACSDefereds (PNGHandle *png)
 void FLevelLocals::Tick ()
 {
 	// Reset carry sectors
-	if (Scrolls != NULL)
+	if (Scrolls.Size() > 0)
 	{
-		memset (Scrolls, 0, sizeof(*Scrolls)*numsectors);
+		memset (&Scrolls[0], 0, sizeof(Scrolls[0])*Scrolls.Size());
 	}
 }
 
@@ -1832,10 +1832,10 @@ void FLevelLocals::AddScroller (int secnum)
 	{
 		return;
 	}
-	if (Scrolls == NULL)
+	if (Scrolls.Size() == 0)
 	{
-		Scrolls = new FSectorScrollValues[numsectors];
-		memset (Scrolls, 0, sizeof(*Scrolls)*numsectors);
+		Scrolls.Resize(numsectors);
+		memset (&Scrolls[0], 0, sizeof(Scrolls[0])*numsectors);
 	}
 }
 

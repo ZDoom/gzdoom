@@ -536,6 +536,21 @@ FSerializer &FSerializer::StringPtr(const char *key, const char *&charptr)
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+unsigned FSerializer::GetSize(const char *group)
+{
+	if (isWriting()) return -1;	// we do not know this when writing.
+
+	const rapidjson::Value &val = r->mDocObj[group];
+	if (!val.IsArray()) return -1;
+	return val.Size();
+}
+
+//==========================================================================
+//
 // Writes out all collected objects
 //
 //==========================================================================

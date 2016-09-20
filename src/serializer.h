@@ -40,6 +40,7 @@ public:
 	bool BeginArray(const char *name);
 	void EndArray();
 	void WriteObjects();
+	unsigned GetSize(const char *group);
 	const char *GetOutput(unsigned *len = nullptr);
 	FSerializer &Args(const char *key, int *args, int *defargs, int special);
 	FSerializer &Terrain(const char *key, int &terrain, int *def = nullptr);

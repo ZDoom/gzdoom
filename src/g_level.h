@@ -375,17 +375,12 @@ struct level_info_t
 	}
 };
 
-// [RH] These get zeroed every tic and are updated by thinkers.
-struct FSectorScrollValues
-{
-	DVector2 Scroll;
-};
-
 struct FLevelLocals
 {
 	void Tick ();
 	void AddScroller (int secnum);
 
+	BYTE		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
 	int			time;			// time in the hub
 	int			maptime;		// time in the map
 	int			totaltime;		// time in the game
@@ -436,7 +431,7 @@ struct FLevelLocals
 	int			airsupply;
 	int			DefaultEnvironment;		// Default sound environment.
 
-	FSectorScrollValues	*Scrolls;		// NULL if no DScrollers in this level
+	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level
 
 	SBYTE		WallVertLight;			// Light diffs for vert/horiz walls
 	SBYTE		WallHorizLight;

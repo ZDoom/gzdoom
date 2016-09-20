@@ -5,6 +5,28 @@
 #include "i_system.h"
 #include "a_sharedglobal.h"
 
+
+
+void DObject::SerializeUserVars(FSerializer &arc)
+{
+	PSymbolTable *symt;
+	FName varname;
+	//DWORD count, j;
+	int *varloc = NULL;
+
+	symt = &GetClass()->Symbols;
+
+	if (arc.isWriting())
+	{
+		// Write all fields that aren't serialized by native code.
+		//GetClass()->WriteValue(arc, this);
+	}
+	else
+	{
+		//GetClass()->ReadValue(arc, this);
+	}
+}
+
 //==========================================================================
 //
 //
@@ -18,11 +40,14 @@ void DThinker::SaveList(FSerializer &arc, DThinker *node)
 		while (!(node->ObjectFlags & OF_Sentinel))
 		{
 			assert(node->NextThinker != NULL && !(node->NextThinker->ObjectFlags & OF_EuthanizeMe));
+			//node->SerializeUserVars(arc);
 			::Serialize<DThinker>(arc, nullptr, node, nullptr);
+			node->CheckIfSerialized();
 			node = node->NextThinker;
 		}
 	}
 }
+
 
 void DThinker::SerializeThinkers(FSerializer &arc, bool hubLoad)
 {
@@ -50,29 +75,10 @@ void DThinker::SerializeThinkers(FSerializer &arc, bool hubLoad)
 
 
 
-void DObject::SerializeUserVars(FSerializer &arc)
-{
-	PSymbolTable *symt;
-	FName varname;
-	//DWORD count, j;
-	int *varloc = NULL;
-
-	symt = &GetClass()->Symbols;
-
-	if (arc.isWriting())
-	{
-		// Write all fields that aren't serialized by native code.
-		//GetClass()->WriteValue(arc, this);
-	}
-	else 
-	{
-		//GetClass()->ReadValue(arc, this);
-	}
-}
 
 
 
-void SerializeWorld(FSerializer &arc);
+void G_SerializeLevel(FSerializer &arc, bool);
 
 CCMD(writejson)
 {
@@ -81,7 +87,7 @@ CCMD(writejson)
 	arc.OpenWriter();
 	arc.BeginObject(nullptr);
 	DThinker::SerializeThinkers(arc, false);
-	SerializeWorld(arc);
+	G_SerializeLevel(arc, false);
 	arc.WriteObjects();
 	arc.EndObject();
 	DWORD tt = I_MSTime();

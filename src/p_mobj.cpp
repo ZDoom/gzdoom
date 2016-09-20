@@ -3432,7 +3432,7 @@ void AActor::Tick ()
 
 		// [RH] Consider carrying sectors here
 		DVector2 cumm(0, 0);
-		if ((level.Scrolls != NULL || player != NULL) && !(flags & MF_NOCLIP) && !(flags & MF_NOSECTOR))
+		if ((level.Scrolls.Size() != 0 || player != NULL) && !(flags & MF_NOCLIP) && !(flags & MF_NOSECTOR))
 		{
 			double height, waterheight;	// killough 4/4/98: add waterheight
 			const msecnode_t *node;
@@ -3453,10 +3453,9 @@ void AActor::Tick ()
 				sector_t *sec = node->m_sector;
 				DVector2 scrollv;
 
-				if (level.Scrolls != NULL)
+				if (level.Scrolls.Size() > (sec-sectors))
 				{
-					const FSectorScrollValues *scroll = &level.Scrolls[sec - sectors];
-					scrollv = scroll->Scroll;
+					scrollv = level.Scrolls[sec - sectors];
 				}
 				else
 				{

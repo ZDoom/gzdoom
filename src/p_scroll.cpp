@@ -220,8 +220,8 @@ void DScroller::Tick ()
 
 		// [RH] Don't actually carry anything here. That happens later.
 		case EScroll::sc_carry:
-			level.Scrolls[m_Affectee].Scroll.X += dx;
-			level.Scrolls[m_Affectee].Scroll.Y += dy;
+			level.Scrolls[m_Affectee].X += dx;
+			level.Scrolls[m_Affectee].Y += dy;
 			break;
 
 		case EScroll::sc_carry_ceiling:       // to be added later

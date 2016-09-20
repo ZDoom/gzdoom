@@ -3552,11 +3552,7 @@ void P_FreeLevelData ()
 	po_NumPolyobjs = 0;
 	Zones.Clear();
 	P_FreeStrifeConversations ();
-	if (level.Scrolls != NULL)
-	{
-		delete[] level.Scrolls;
-		level.Scrolls = NULL;
-	}
+	level.Scrolls.Clear();
 	P_ClearUDMFKeys();
 }
 
@@ -3668,6 +3664,8 @@ void P_SetupLevel (const char *lumpname, int position)
 		I_Error("Unable to open map '%s'\n", lumpname);
 	}
 
+	// generate a checksum for the level, to be included and checked with savegames.
+	map->GetChecksum(level.md5);
 	// find map num
 	level.lumpnum = map->lumpnum;
 	hasglnodes = false;

@@ -1668,7 +1668,7 @@ void APowerDamage::ModifyDamage(int damage, FName damageType, int &newdamage, bo
 			newdam = damage * 4;
 		}
 		if (Owner != NULL && newdam > damage) S_Sound(Owner, 5, ActiveSound, 1.0f, ATTN_NONE);
-		newdamage = newdam;
+		newdamage = damage = newdam;
 	}
 	if (Inventory != NULL) Inventory->ModifyDamage(damage, damageType, newdamage, passive);
 }
@@ -1743,7 +1743,7 @@ void APowerProtection::ModifyDamage(int damage, FName damageType, int &newdamage
 			newdam = damage / 4;
 		}
 		if (Owner != NULL && newdam < damage) S_Sound(Owner, CHAN_AUTO, ActiveSound, 1.0f, ATTN_NONE);
-		newdamage = newdam;
+		newdamage = damage = newdam;
 	}
 	if (Inventory != NULL)
 	{

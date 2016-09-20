@@ -65,286 +65,7 @@
 #include "serializer.h"
 
 // just the stuff that already got converted to FSerializer so that it can be seen as 'done' when searching.
-#define COMMON_STUFF
 #include "zzz_old.cpp"
-
-void CopyPlayer (player_t *dst, player_t *src, const char *name);
-static void ReadOnePlayer (FArchive &arc, bool skipload);
-static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNow, bool skipload);
-static void SpawnExtraPlayers ();
-
-//
-// P_ArchivePlayers
-//
-void P_SerializePlayers (FArchive &arc, bool skipload)
-{
-	BYTE numPlayers, numPlayersNow;
-	int i;
-
-	// Count the number of players present right now.
-	for (numPlayersNow = 0, i = 0; i < MAXPLAYERS; ++i)
-	{
-		if (playeringame[i])
-		{
-			++numPlayersNow;
-		}
-	}
-
-	if (arc.IsStoring())
-	{
-		// Record the number of players in this save.
-		arc << numPlayersNow;
-
-		// Record each player's name, followed by their data.
-		for (i = 0; i < MAXPLAYERS; ++i)
-		{
-			if (playeringame[i])
-			{
-				arc.WriteString (players[i].userinfo.GetName());
-				players[i].Serialize (arc);
-			}
-		}
-	}
-	else
-	{
-		arc << numPlayers;
-
-		// If there is only one player in the game, they go to the
-		// first player present, no matter what their name.
-		if (numPlayers == 1)
-		{
-			ReadOnePlayer (arc, skipload);
-		}
-		else
-		{
-			ReadMultiplePlayers (arc, numPlayers, numPlayersNow, skipload);
-		}
-		if (!skipload && numPlayersNow > numPlayers)
-		{
-			SpawnExtraPlayers ();
-		}
-		// Redo pitch limits, since the spawned player has them at 0.
-		players[consoleplayer].SendPitchLimits();
-	}
-}
-
-static void ReadOnePlayer (FArchive &arc, bool skipload)
-{
-	int i;
-	char *name = NULL;
-	bool didIt = false;
-
-	arc << name;
-
-	for (i = 0; i < MAXPLAYERS; ++i)
-	{
-		if (playeringame[i])
-		{
-			if (!didIt)
-			{
-				didIt = true;
-				player_t playerTemp;
-				playerTemp.Serialize (arc);
-				if (!skipload)
-				{
-					CopyPlayer (&players[i], &playerTemp, name);
-				}
-			}
-			else
-			{
-				if (players[i].mo != NULL)
-				{
-					players[i].mo->Destroy();
-					players[i].mo = NULL;
-				}
-			}
-		}
-	}
-	delete[] name;
-}
-
-static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNow, bool skipload)
-{
-	// For two or more players, read each player into a temporary array.
-	int i, j;
-	char **nametemp = new char *[numPlayers];
-	player_t *playertemp = new player_t[numPlayers];
-	BYTE *tempPlayerUsed = new BYTE[numPlayers];
-	BYTE playerUsed[MAXPLAYERS];
-
-	for (i = 0; i < numPlayers; ++i)
-	{
-		nametemp[i] = NULL;
-		arc << nametemp[i];
-		playertemp[i].Serialize (arc);
-		tempPlayerUsed[i] = 0;
-	}
-	for (i = 0; i < MAXPLAYERS; ++i)
-	{
-		playerUsed[i] = playeringame[i] ? 0 : 2;
-	}
-
-	if (!skipload)
-	{
-		// Now try to match players from the savegame with players present
-		// based on their names. If two players in the savegame have the
-		// same name, then they are assigned to players in the current game
-		// on a first-come, first-served basis.
-		for (i = 0; i < numPlayers; ++i)
-		{
-			for (j = 0; j < MAXPLAYERS; ++j)
-			{
-				if (playerUsed[j] == 0 && stricmp(players[j].userinfo.GetName(), nametemp[i]) == 0)
-				{ // Found a match, so copy our temp player to the real player
-					Printf ("Found player %d (%s) at %d\n", i, nametemp[i], j);
-					CopyPlayer (&players[j], &playertemp[i], nametemp[i]);
-					playerUsed[j] = 1;
-					tempPlayerUsed[i] = 1;
-					break;
-				}
-			}
-		}
-
-		// Any players that didn't have matching names are assigned to existing
-		// players on a first-come, first-served basis.
-		for (i = 0; i < numPlayers; ++i)
-		{
-			if (tempPlayerUsed[i] == 0)
-			{
-				for (j = 0; j < MAXPLAYERS; ++j)
-				{
-					if (playerUsed[j] == 0)
-					{
-						Printf ("Assigned player %d (%s) to %d (%s)\n", i, nametemp[i], j, players[j].userinfo.GetName());
-						CopyPlayer (&players[j], &playertemp[i], nametemp[i]);
-						playerUsed[j] = 1;
-						tempPlayerUsed[i] = 1;
-						break;
-					}
-				}
-			}
-		}
-
-		// Make sure any extra players don't have actors spawned yet. Happens if the players
-		// present now got the same slots as they had in the save, but there are not as many
-		// as there were in the save.
-		for (j = 0; j < MAXPLAYERS; ++j)
-		{
-			if (playerUsed[j] == 0)
-			{
-				if (players[j].mo != NULL)
-				{
-					players[j].mo->Destroy();
-					players[j].mo = NULL;
-				}
-			}
-		}
-
-		// Remove any temp players that were not used. Happens if there are fewer players
-		// than there were in the save, and they got shuffled.
-		for (i = 0; i < numPlayers; ++i)
-		{
-			if (tempPlayerUsed[i] == 0)
-			{
-				playertemp[i].mo->Destroy();
-				playertemp[i].mo = NULL;
-			}
-		}
-	}
-
-	delete[] tempPlayerUsed;
-	delete[] playertemp;
-	for (i = 0; i < numPlayers; ++i)
-	{
-		delete[] nametemp[i];
-	}
-	delete[] nametemp;
-}
-
-void CopyPlayer (player_t *dst, player_t *src, const char *name)
-{
-	// The userinfo needs to be saved for real players, but it
-	// needs to come from the save for bots.
-	userinfo_t uibackup;
-	userinfo_t uibackup2;
-
-	uibackup.TransferFrom(dst->userinfo);
-	uibackup2.TransferFrom(src->userinfo);
-
-	int chasecam = dst->cheats & CF_CHASECAM;	// Remember the chasecam setting
-	bool attackdown = dst->attackdown;
-	bool usedown = dst->usedown;
-
-	
-	*dst = *src;		// To avoid memory leaks at this point the userinfo in src must be empty which is taken care of by the TransferFrom call above.
-
-	dst->cheats |= chasecam;
-
-	if (dst->Bot != nullptr)
-	{
-		botinfo_t *thebot = bglobal.botinfo;
-		while (thebot && stricmp (name, thebot->name))
-		{
-			thebot = thebot->next;
-		}
-		if (thebot)
-		{
-			thebot->inuse = BOTINUSE_Yes;
-		}
-		bglobal.botnum++;
-		dst->userinfo.TransferFrom(uibackup2);
-	}
-	else
-	{
-		dst->userinfo.TransferFrom(uibackup);
-	}
-	// Validate the skin
-	dst->userinfo.SkinNumChanged(R_FindSkin(skins[dst->userinfo.GetSkin()].name, dst->CurrentPlayerClass));
-
-	// Make sure the player pawn points to the proper player struct.
-	if (dst->mo != nullptr)
-	{
-		dst->mo->player = dst;
-	}
-
-	// Same for the psprites.
-	DPSprite *pspr = dst->psprites;
-	while (pspr)
-	{
-		pspr->Owner = dst;
-
-		pspr = pspr->Next;
-	}
-
-	// Don't let the psprites be destroyed when src is destroyed.
-	src->psprites = nullptr;
-
-	// These 2 variables may not be overwritten.
-	dst->attackdown = attackdown;
-	dst->usedown = usedown;
-}
-
-static void SpawnExtraPlayers ()
-{
-	// If there are more players now than there were in the savegame,
-	// be sure to spawn the extra players.
-	int i;
-
-	if (deathmatch)
-	{
-		return;
-	}
-
-	for (i = 0; i < MAXPLAYERS; ++i)
-	{
-		if (playeringame[i] && players[i].mo == NULL)
-		{
-			players[i].playerstate = PST_ENTER;
-			P_SpawnPlayer(&playerstarts[i], i, (level.flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
-		}
-	}
-}
-
 
 
 //
@@ -807,6 +528,351 @@ FSerializer &Serialize(FSerializer &arc, const char *key, zone_t &z, zone_t *def
 	return Serialize(arc, key, z.Environment, nullptr);
 }
 
+//==========================================================================
+//
+// ArchiveSounds
+//
+//==========================================================================
+
+void P_SerializeSounds(FSerializer &arc)
+{
+	S_SerializeSounds(arc);
+	DSeqNode::SerializeSequences (arc);
+	char *name = NULL;
+	BYTE order;
+
+	if (arc.isWriting())
+	{
+		order = S_GetMusic(&name);
+	}
+	arc("musicname", name)
+		("musicorder", order);
+
+	if (arc.isReading())
+	{
+		if (!S_ChangeMusic(name, order))
+			if (level.cdtrack == 0 || !S_ChangeCDMusic(level.cdtrack, level.cdid))
+				S_ChangeMusic(level.Music, level.musicorder);
+	}
+	delete[] name;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void CopyPlayer(player_t *dst, player_t *src, const char *name);
+static void ReadOnePlayer(FSerializer &arc, bool skipload);
+static void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayersNow, bool skipload);
+static void SpawnExtraPlayers();
+
+//==========================================================================
+//
+// P_ArchivePlayers
+//
+//==========================================================================
+
+void P_SerializePlayers(FSerializer &arc, bool skipload)
+{
+	BYTE numPlayers, numPlayersNow;
+	int i;
+
+	// Count the number of players present right now.
+	for (numPlayersNow = 0, i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[i])
+		{
+			++numPlayersNow;
+		}
+	}
+
+#if 0
+	if (arc.isWriting())
+	{
+		// Record the number of players in this save.
+		arc << numPlayersNow;
+
+		// Record each player's name, followed by their data.
+		for (i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i])
+			{
+				arc.WriteString(players[i].userinfo.GetName());
+				players[i].Serialize(arc);
+			}
+		}
+	}
+	else
+	{
+		arc << numPlayers;
+
+		// If there is only one player in the game, they go to the
+		// first player present, no matter what their name.
+		if (numPlayers == 1)
+		{
+			ReadOnePlayer(arc, skipload);
+		}
+		else
+		{
+			ReadMultiplePlayers(arc, numPlayers, numPlayersNow, skipload);
+		}
+		if (!skipload && numPlayersNow > numPlayers)
+		{
+			SpawnExtraPlayers();
+		}
+		// Redo pitch limits, since the spawned player has them at 0.
+		players[consoleplayer].SendPitchLimits();
+	}
+#endif
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+static void ReadOnePlayer(FSerializer &arc, bool skipload)
+{
+#if 0
+	int i;
+	char *name = NULL;
+	bool didIt = false;
+
+	arc << name;
+
+	for (i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[i])
+		{
+			if (!didIt)
+			{
+				didIt = true;
+				player_t playerTemp;
+				playerTemp.Serialize(arc);
+				if (!skipload)
+				{
+					CopyPlayer(&players[i], &playerTemp, name);
+				}
+			}
+			else
+			{
+				if (players[i].mo != NULL)
+				{
+					players[i].mo->Destroy();
+					players[i].mo = NULL;
+				}
+			}
+		}
+	}
+	delete[] name;
+#endif
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+static void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayersNow, bool skipload)
+{
+#if 0
+	// For two or more players, read each player into a temporary array.
+	int i, j;
+	char **nametemp = new char *[numPlayers];
+	player_t *playertemp = new player_t[numPlayers];
+	BYTE *tempPlayerUsed = new BYTE[numPlayers];
+	BYTE playerUsed[MAXPLAYERS];
+
+	for (i = 0; i < numPlayers; ++i)
+	{
+		nametemp[i] = NULL;
+		arc << nametemp[i];
+		playertemp[i].Serialize(arc);
+		tempPlayerUsed[i] = 0;
+	}
+	for (i = 0; i < MAXPLAYERS; ++i)
+	{
+		playerUsed[i] = playeringame[i] ? 0 : 2;
+	}
+
+	if (!skipload)
+	{
+		// Now try to match players from the savegame with players present
+		// based on their names. If two players in the savegame have the
+		// same name, then they are assigned to players in the current game
+		// on a first-come, first-served basis.
+		for (i = 0; i < numPlayers; ++i)
+		{
+			for (j = 0; j < MAXPLAYERS; ++j)
+			{
+				if (playerUsed[j] == 0 && stricmp(players[j].userinfo.GetName(), nametemp[i]) == 0)
+				{ // Found a match, so copy our temp player to the real player
+					Printf("Found player %d (%s) at %d\n", i, nametemp[i], j);
+					CopyPlayer(&players[j], &playertemp[i], nametemp[i]);
+					playerUsed[j] = 1;
+					tempPlayerUsed[i] = 1;
+					break;
+				}
+			}
+		}
+
+		// Any players that didn't have matching names are assigned to existing
+		// players on a first-come, first-served basis.
+		for (i = 0; i < numPlayers; ++i)
+		{
+			if (tempPlayerUsed[i] == 0)
+			{
+				for (j = 0; j < MAXPLAYERS; ++j)
+				{
+					if (playerUsed[j] == 0)
+					{
+						Printf("Assigned player %d (%s) to %d (%s)\n", i, nametemp[i], j, players[j].userinfo.GetName());
+						CopyPlayer(&players[j], &playertemp[i], nametemp[i]);
+						playerUsed[j] = 1;
+						tempPlayerUsed[i] = 1;
+						break;
+					}
+				}
+			}
+		}
+
+		// Make sure any extra players don't have actors spawned yet. Happens if the players
+		// present now got the same slots as they had in the save, but there are not as many
+		// as there were in the save.
+		for (j = 0; j < MAXPLAYERS; ++j)
+		{
+			if (playerUsed[j] == 0)
+			{
+				if (players[j].mo != NULL)
+				{
+					players[j].mo->Destroy();
+					players[j].mo = NULL;
+				}
+			}
+		}
+
+		// Remove any temp players that were not used. Happens if there are fewer players
+		// than there were in the save, and they got shuffled.
+		for (i = 0; i < numPlayers; ++i)
+		{
+			if (tempPlayerUsed[i] == 0)
+			{
+				playertemp[i].mo->Destroy();
+				playertemp[i].mo = NULL;
+			}
+		}
+	}
+
+	delete[] tempPlayerUsed;
+	delete[] playertemp;
+	for (i = 0; i < numPlayers; ++i)
+	{
+		delete[] nametemp[i];
+	}
+	delete[] nametemp;
+#endif
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void CopyPlayer(player_t *dst, player_t *src, const char *name)
+{
+	// The userinfo needs to be saved for real players, but it
+	// needs to come from the save for bots.
+	userinfo_t uibackup;
+	userinfo_t uibackup2;
+
+	uibackup.TransferFrom(dst->userinfo);
+	uibackup2.TransferFrom(src->userinfo);
+
+	int chasecam = dst->cheats & CF_CHASECAM;	// Remember the chasecam setting
+	bool attackdown = dst->attackdown;
+	bool usedown = dst->usedown;
+
+
+	*dst = *src;		// To avoid memory leaks at this point the userinfo in src must be empty which is taken care of by the TransferFrom call above.
+
+	dst->cheats |= chasecam;
+
+	if (dst->Bot != nullptr)
+	{
+		botinfo_t *thebot = bglobal.botinfo;
+		while (thebot && stricmp(name, thebot->name))
+		{
+			thebot = thebot->next;
+		}
+		if (thebot)
+		{
+			thebot->inuse = BOTINUSE_Yes;
+		}
+		bglobal.botnum++;
+		dst->userinfo.TransferFrom(uibackup2);
+	}
+	else
+	{
+		dst->userinfo.TransferFrom(uibackup);
+	}
+	// Validate the skin
+	dst->userinfo.SkinNumChanged(R_FindSkin(skins[dst->userinfo.GetSkin()].name, dst->CurrentPlayerClass));
+
+	// Make sure the player pawn points to the proper player struct.
+	if (dst->mo != nullptr)
+	{
+		dst->mo->player = dst;
+	}
+
+	// Same for the psprites.
+	DPSprite *pspr = dst->psprites;
+	while (pspr)
+	{
+		pspr->Owner = dst;
+
+		pspr = pspr->Next;
+	}
+
+	// Don't let the psprites be destroyed when src is destroyed.
+	src->psprites = nullptr;
+
+	// These 2 variables may not be overwritten.
+	dst->attackdown = attackdown;
+	dst->usedown = usedown;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+static void SpawnExtraPlayers()
+{
+	// If there are more players now than there were in the savegame,
+	// be sure to spawn the extra players.
+	int i;
+
+	if (deathmatch)
+	{
+		return;
+	}
+
+	for (i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[i] && players[i].mo == NULL)
+		{
+			players[i].playerstate = PST_ENTER;
+			P_SpawnPlayer(&playerstarts[i], i, (level.flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
+		}
+	}
+}
+
 //============================================================================
 //
 //
@@ -838,7 +904,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		}
 	}
 
-	//Renderer->StartSerialize(arc);
+	Renderer->StartSerialize(arc);
 	if (arc.isReading())
 	{
 		P_DestroyThinkers(hubload);
@@ -894,53 +960,10 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	StatusBar->SerializeMessages(arc);
 	AM_SerializeMarkers(arc);
 	FRemapTable::StaticSerializeTranslations(arc);
-
-}
-
-
-
-//==========================================================================
-//
-// ArchiveSounds
-//
-//==========================================================================
-
-void P_SerializeSounds (FArchive &arc)
-{
-	S_SerializeSounds (arc);
-	//DSeqNode::SerializeSequences (arc);
-	char *name = NULL;
-	BYTE order;
-
-	if (arc.IsStoring ())
-	{
-		order = S_GetMusic (&name);
-	}
-	arc << name << order;
-	if (arc.IsLoading ())
-	{
-		if (!S_ChangeMusic (name, order))
-			if (level.cdtrack == 0 || !S_ChangeCDMusic (level.cdtrack, level.cdid))
-				S_ChangeMusic (level.Music, level.musicorder);
-	}
-	delete[] name;
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-void G_SerializeLevel(FArchive &arc, bool hubLoad)
-{
-#if 0
-
-	// This must be saved, too, of course!
 	FCanvasTextureInfo::Serialize(arc);
-
-	P_SerializePlayers(arc, hubLoad);
+	//P_SerializePlayers(arc, hubLoad);
 	P_SerializeSounds(arc);
-	if (arc.IsLoading())
+	if (arc.isReading())
 	{
 		for (int i = 0; i < numsectors; i++)
 		{
@@ -955,6 +978,16 @@ void G_SerializeLevel(FArchive &arc, bool hubLoad)
 		}
 	}
 	Renderer->EndSerialize(arc);
-#endif
+
+}
+
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void G_SerializeLevel(FArchive &arc, bool hubLoad)
+{
 }
 

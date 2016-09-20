@@ -5,6 +5,7 @@
 #include <type_traits>
 #include "tarray.h"
 #include "r_defs.h"
+#include "resourcefiles/file_zip.h"
 
 struct FWriter;
 struct FReader;
@@ -38,7 +39,6 @@ struct NumericValue
 };
 
 
-
 class FSerializer
 {
 
@@ -57,6 +57,7 @@ public:
 	}
 	bool OpenWriter();
 	bool OpenReader(const char *buffer, size_t length);
+	bool OpenReader(FCompressedBuffer *input);
 	void Close();
 	bool BeginObject(const char *name, bool randomaccess = false);
 	void EndObject();
@@ -66,6 +67,7 @@ public:
 	unsigned GetSize(const char *group);
 	const char *GetKey();
 	const char *GetOutput(unsigned *len = nullptr);
+	FCompressedBuffer GetCompressedOutput();
 	FSerializer &Args(const char *key, int *args, int *defargs, int special);
 	FSerializer &Terrain(const char *key, int &terrain, int *def = nullptr);
 	FSerializer &Sprite(const char *key, int32_t &spritenum, int32_t *def);
@@ -203,6 +205,8 @@ FSerializer &Serialize(FSerializer &arc, const char *key, TArray<T, TT> &value, 
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj *&value, FPolyObj **defval);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, sector_t *&value, sector_t **defval);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, const FPolyObj *&value, const FPolyObj **defval);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, const sector_t *&value, const sector_t **defval);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, player_t *&value, player_t **defval);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, line_t *&value, line_t **defval);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&value, side_t **defval);
@@ -215,6 +219,9 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FString *&p
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDoorAnimation *&pstr, FDoorAnimation **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr, char **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&font, FFont **def);
+
+
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, sector_t *&value, sector_t **defval);
 
 FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def, bool *retcode);
 template<> inline FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def)
@@ -250,7 +257,7 @@ inline FSerializer &Serialize(FSerializer &arc, const char *key, PalEntry &pe, P
 
 inline FSerializer &Serialize(FSerializer &arc, const char *key, FRenderStyle &style, FRenderStyle *def)
 {
-	return Serialize(arc, key, style.AsDWORD, def ? &def->AsDWORD : nullptr);
+	return arc.Array(key, &style.BlendOp, def ? &def->BlendOp : nullptr, 4);
 }
 
 template<class T, class TT>

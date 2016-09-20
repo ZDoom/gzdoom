@@ -33,7 +33,7 @@
 **
 */
 
-#include "resourcefile.h"
+#include "file_zip.h"
 #include "cmdlib.h"
 #include "templates.h"
 #include "v_text.h"
@@ -43,6 +43,69 @@
 #include "ancientzip.h"
 
 #define BUFREADCOMMENT (0x400)
+
+//==========================================================================
+//
+// Decompression subroutine
+//
+//==========================================================================
+
+static bool UncompressZipLump(char *Cache, FileReader *Reader, int Method, int LumpSize, int CompressedSize, int GPFlags)
+{
+	switch (Method)
+	{
+	case METHOD_STORED:
+	{
+		Reader->Read(Cache, LumpSize);
+		break;
+	}
+
+	case METHOD_DEFLATE:
+	{
+		FileReaderZ frz(*Reader, true);
+		frz.Read(Cache, LumpSize);
+		break;
+	}
+
+	case METHOD_BZIP2:
+	{
+		FileReaderBZ2 frz(*Reader);
+		frz.Read(Cache, LumpSize);
+		break;
+	}
+
+	case METHOD_LZMA:
+	{
+		FileReaderLZMA frz(*Reader, LumpSize, true);
+		frz.Read(Cache, LumpSize);
+		break;
+	}
+
+	case METHOD_IMPLODE:
+	{
+		FZipExploder exploder;
+		exploder.Explode((unsigned char *)Cache, LumpSize, Reader, CompressedSize, GPFlags);
+		break;
+	}
+
+	case METHOD_SHRINK:
+	{
+		ShrinkLoop((unsigned char *)Cache, LumpSize, Reader, CompressedSize);
+		break;
+	}
+
+	default:
+		assert(0);
+		return false;
+	}
+	return true;
+}
+
+bool FCompressedBuffer::Decompress(char *destbuffer)
+{
+	MemoryReader mr(mBuffer, mCompressedSize);
+	return UncompressZipLump(destbuffer, &mr, mMethod, mSize, mCompressedSize, mZipFlags);
+}
 
 //-----------------------------------------------------------------------
 //
@@ -95,56 +158,6 @@ static DWORD Zip_FindCentralDir(FileReader * fin)
 	}
 	return uPosFound;
 }
-
-
-enum
-{
-	LUMPFZIP_NEEDFILESTART = 128
-};
-
-//==========================================================================
-//
-// Zip Lump
-//
-//==========================================================================
-
-struct FZipLump : public FResourceLump
-{
-	WORD	GPFlags;
-	BYTE	Method;
-	int		CompressedSize;
-	int		Position;
-
-	virtual FileReader *GetReader();
-	virtual int FillCache();
-
-private:
-	void SetLumpAddress();
-	virtual int GetFileOffset() 
-	{ 
-		if (Method != METHOD_STORED) return -1;
-		if (Flags & LUMPFZIP_NEEDFILESTART) SetLumpAddress(); return Position; 
-	}
-};
-
-
-//==========================================================================
-//
-// Zip file
-//
-//==========================================================================
-
-class FZipFile : public FResourceFile
-{
-	FZipLump *Lumps;
-
-public:
-	FZipFile(const char * filename, FileReader *file);
-	virtual ~FZipFile();
-	bool Open(bool quiet);
-	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
-};
-
 
 //==========================================================================
 //
@@ -287,6 +300,24 @@ FZipFile::~FZipFile()
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+FCompressedBuffer FZipFile::GetRawLump(int lumpnum)
+{
+	if ((unsigned)lumpnum >= NumLumps)
+	{
+		return{ 0,0,0,0,nullptr };
+	}
+	FZipLump *lmp = &Lumps[lumpnum];
+	FCompressedBuffer cbuf = { (unsigned)lmp->LumpSize, (unsigned)lmp->CompressedSize, lmp->Method, lmp->GPFlags, new char[lmp->CompressedSize] };
+	Reader->Seek(lmp->Position, SEEK_SET);
+	Reader->Read(cbuf.mBuffer, lmp->CompressedSize);
+}
+
+//==========================================================================
+//
 // SetLumpAddress
 //
 //==========================================================================
@@ -348,56 +379,22 @@ int FZipLump::FillCache()
 
 	Owner->Reader->Seek(Position, SEEK_SET);
 	Cache = new char[LumpSize];
-	switch (Method)
-	{
-		case METHOD_STORED:
-		{
-			Owner->Reader->Read(Cache, LumpSize);
-			break;
-		}
-
-		case METHOD_DEFLATE:
-		{
-			FileReaderZ frz(*Owner->Reader, true);
-			frz.Read(Cache, LumpSize);
-			break;
-		}
-
-		case METHOD_BZIP2:
-		{
-			FileReaderBZ2 frz(*Owner->Reader);
-			frz.Read(Cache, LumpSize);
-			break;
-		}
-
-		case METHOD_LZMA:
-		{
-			FileReaderLZMA frz(*Owner->Reader, LumpSize, true);
-			frz.Read(Cache, LumpSize);
-			break;
-		}
-
-		case METHOD_IMPLODE:
-		{
-			FZipExploder exploder;
-			exploder.Explode((unsigned char *)Cache, LumpSize, Owner->Reader, CompressedSize, GPFlags);
-			break;
-		}
-
-		case METHOD_SHRINK:
-		{
-			ShrinkLoop((unsigned char *)Cache, LumpSize, Owner->Reader, CompressedSize);
-			break;
-		}
-
-		default:
-			assert(0);
-			return 0;
-	}
+	UncompressZipLump(Cache, Owner->Reader, Method, LumpSize, CompressedSize, GPFlags);
 	RefCount = 1;
 	return 1;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+int FZipLump::GetFileOffset()
+{
+	if (Method != METHOD_STORED) return -1;
+	if (Flags & LUMPFZIP_NEEDFILESTART) SetLumpAddress(); return Position;
+}
 
 //==========================================================================
 //

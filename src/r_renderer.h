@@ -5,7 +5,7 @@
 
 struct FRenderer;
 extern FRenderer *Renderer;
-class FArchive;
+class FSerializer;
 class FTexture;
 class AActor;
 class player_t;
@@ -46,8 +46,8 @@ struct FRenderer
 	virtual void StateChanged(AActor *actor) {}
 
 	// notify the renderer that serialization of the curent level is about to start/end
-	virtual void StartSerialize(FArchive &arc) {}
-	virtual void EndSerialize(FArchive &arc) {}
+	virtual void StartSerialize(FSerializer &arc) {}
+	virtual void EndSerialize(FSerializer &arc) {}
 
 	virtual int GetMaxViewPitch(bool down) = 0;	// return value is in plain degrees
 

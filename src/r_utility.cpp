@@ -53,7 +53,7 @@
 #include "v_font.h"
 #include "r_renderer.h"
 #include "r_data/colormaps.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "r_utility.h"
 #include "d_player.h"
 #include "p_local.h"
@@ -1041,37 +1041,49 @@ void FCanvasTextureInfo::EmptyList ()
 //
 //==========================================================================
 
-void FCanvasTextureInfo::Serialize(FArchive &arc)
+void FCanvasTextureInfo::Serialize(FSerializer &arc)
 {
-#if 0
-	if (arc.IsStoring ())
+	if (arc.isWriting())
 	{
-		FCanvasTextureInfo *probe;
-
-		for (probe = List; probe != NULL; probe = probe->Next)
+		if (List != nullptr)
 		{
-			if (probe->Texture != NULL && probe->Viewpoint != NULL)
+			if (arc.BeginArray("canvastextures"))
 			{
-				arc << probe->Viewpoint << probe->FOV << probe->PicNum;
+				FCanvasTextureInfo *probe;
+
+				for (probe = List; probe != nullptr; probe = probe->Next)
+				{
+					if (probe->Texture != nullptr && probe->Viewpoint != nullptr)
+					{
+						if (arc.BeginObject(nullptr))
+						{
+							arc("viewpoint", probe->Viewpoint)
+								("fov", probe->FOV)
+								("texture", probe->PicNum)
+								.EndObject();
+						}
+					}
+				}
 			}
 		}
-		AActor *nullactor = NULL;
-		arc << nullactor;
 	}
 	else
 	{
-		AActor *viewpoint;
-		int fov;
-		FTextureID picnum;
-		
-		EmptyList ();
-		while (arc << viewpoint, viewpoint != NULL)
+		if (arc.BeginArray("canvastextures"))
 		{
-			arc << fov << picnum;
-			Add (viewpoint, picnum, fov);
+			AActor *viewpoint;
+			int fov;
+			FTextureID picnum;
+			while (arc.BeginObject(nullptr))
+			{
+				arc("viewpoint", viewpoint)
+					("fov", fov)
+					("texture", picnum)
+					.EndObject();
+				Add(viewpoint, picnum, fov);
+			}
 		}
 	}
-#endif
 }
 
 //==========================================================================

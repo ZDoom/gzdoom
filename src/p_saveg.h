@@ -40,9 +40,7 @@ struct PNGHandle;
 // Persistent storage/archiving.
 // These are the load / save game routines.
 // Also see farchive.(h|cpp)
-void P_SerializePlayers (FArchive &arc, bool fakeload);
 void P_DestroyThinkers(bool hubLoad);
-void P_SerializeSounds (FArchive &arc);
 
 void P_ReadACSDefereds (PNGHandle *png);
 void P_WriteACSDefereds (FILE *file);

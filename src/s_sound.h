@@ -321,7 +321,7 @@ bool S_ChangeSoundVolume(AActor *actor, int channel, float volume);
 void S_RelinkSound (AActor *from, AActor *to);
 
 // Stores/retrieves playing channel information in an archive.
-void S_SerializeSounds(FArchive &arc);
+void S_SerializeSounds(FSerializer &arc);
 
 // Start music using <music_name>
 bool S_StartMusic (const char *music_name);

@@ -30,6 +30,7 @@
 #include "g_shared/a_sharedglobal.h"
 #include "po_man.h"
 #include "v_font.h"
+#include "w_zip.h"
 
 char nulspace[1024 * 1024 * 4];
 
@@ -133,7 +134,7 @@ struct FReader
 				return &it->value;
 			}
 		}
-		else if (obj.mObject->IsArray() && obj.mIndex < obj.mObject->Size())
+		else if (obj.mObject->IsArray() && (unsigned)obj.mIndex < obj.mObject->Size())
 		{
 			return &(*obj.mObject)[obj.mIndex++];
 		}
@@ -175,8 +176,33 @@ bool FSerializer::OpenReader(const char *buffer, size_t length)
 //
 //==========================================================================
 
-void FSerializer::Close()
+bool FSerializer::OpenReader(FCompressedBuffer *input)
 {
+	if (input->mSize <= 0 || input->mBuffer == nullptr) return false;
+	if (w != nullptr || r != nullptr) return false;
+
+	if (input->mMethod == METHOD_STORED)
+	{
+		r = new FReader((char*)input->mBuffer, input->mSize);
+		return true;
+	}
+	else
+	{
+		char *unpacked = new char[input->mSize];
+		input->Decompress(unpacked);
+		r = new FReader(unpacked, input->mSize);
+		return true;
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FSerializer::Close()
+{	
 	if (w != nullptr)
 	{
 		delete w;
@@ -622,13 +648,77 @@ void FSerializer::WriteObjects()
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 const char *FSerializer::GetOutput(unsigned *len)
 {
+	if (isReading()) return nullptr;
 	if (len != nullptr)
 	{
 		*len = (unsigned)w->mOutString.GetSize();
 	}
 	return w->mOutString.GetString();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FCompressedBuffer FSerializer::GetCompressedOutput()
+{
+	if (isReading()) return{ 0,0,0,0,nullptr };
+	FCompressedBuffer buff;
+	buff.mSize = (unsigned)w->mOutString.GetSize();
+	buff.mZipFlags = 0;
+
+	uint8_t *compressbuf = new uint8_t[buff.mSize+1];
+
+	z_stream stream;
+	int err;
+
+	stream.next_in = (Bytef *)w->mOutString.GetString();
+	stream.avail_in = buff.mSize;
+	stream.next_out = (Bytef*)compressbuf;
+	stream.avail_out = buff.mSize;
+	stream.zalloc = (alloc_func)0;
+	stream.zfree = (free_func)0;
+	stream.opaque = (voidpf)0;
+
+	// create output in zip-compatible form as required by FCompressedBuffer
+	err = deflateInit2(&stream, 8, Z_DEFLATED, -15, 9, Z_DEFAULT_STRATEGY);
+	if (err != Z_OK)
+	{
+		goto error;
+	}
+
+	err = deflate(&stream, Z_FINISH);
+	if (err != Z_STREAM_END) 
+	{
+		deflateEnd(&stream);
+		goto error;
+	}
+	buff.mCompressedSize = stream.total_out;
+
+	err = deflateEnd(&stream);
+	if (err == Z_OK)
+	{
+		buff.mBuffer = new char[buff.mCompressedSize];
+		buff.mMethod = METHOD_DEFLATE;
+		memcpy(buff.mBuffer, compressbuf, buff.mCompressedSize);
+		delete[] compressbuf;
+	}
+
+error:
+	memcpy(compressbuf, w->mOutString.GetString(), buff.mSize + 1);
+	buff.mCompressedSize = buff.mSize;
+	buff.mMethod = METHOD_STORED;
+	return buff;
 }
 
 //==========================================================================
@@ -916,6 +1006,11 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj *&
 	return SerializePointer(arc, key, value, defval, polyobjs);
 }
 
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, const FPolyObj *&value, const FPolyObj **defval)
+{
+	return SerializePointer<const FPolyObj>(arc, key, value, defval, polyobjs);
+}
+
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&value, side_t **defval)
 {
 	return SerializePointer(arc, key, value, defval, sides);
@@ -924,6 +1019,11 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&va
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, sector_t *&value, sector_t **defval)
 {
 	return SerializePointer(arc, key, value, defval, sectors);
+}
+
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, const sector_t *&value, const sector_t **defval)
+{
+	return SerializePointer<const sector_t>(arc, key, value, defval, sectors);
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, player_t *&value, player_t **defval)

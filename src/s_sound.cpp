@@ -50,8 +50,9 @@
 #include "timidity/timidity.h"
 #include "g_level.h"
 #include "po_man.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "d_player.h"
+#include "r_state.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -2208,58 +2209,41 @@ void S_StopChannel(FSoundChan *chan)
 
 //==========================================================================
 //
-// (FArchive &) << (FSoundID &)
+// 
 //
 //==========================================================================
 
-FArchive &operator<<(FArchive &arc, FSoundID &sid)
+static FSerializer &Serialize(FSerializer &arc, const char *key, FSoundChan &chan, FSoundChan *def)
 {
-	if (arc.IsStoring())
+	if (arc.BeginObject(key))
 	{
-		arc.WriteName((const char *)sid);
-	}
-	else
-	{
-		sid = arc.ReadName();
-	}
-	return arc;
-}
+		arc("sourcetype", chan.SourceType)
+			("soundid", chan.SoundID)
+			("orgid", chan.OrgID)
+			("volume", chan.Volume)
+			("distancescale", chan.DistanceScale)
+			("pitch", chan.Pitch)
+			("chanflags", chan.ChanFlags)
+			("entchannel", chan.EntChannel)
+			("priority", chan.Priority)
+			("nearlimit", chan.NearLimit)
+			("starttime", chan.StartTime.AsOne)
+			("rolloftype", chan.Rolloff.RolloffType)
+			("rolloffmin", chan.Rolloff.MinDistance)
+			("rolloffmax", chan.Rolloff.MaxDistance)
+			("limitrange", chan.LimitRange);
 
-//==========================================================================
-//
-// (FArchive &) << (FSoundChan &)
-//
-//==========================================================================
-
-static FArchive &operator<<(FArchive &arc, FSoundChan &chan)
-{
-	arc << chan.SourceType;
-#if 0
-	switch (chan.SourceType)
-	{
-	case SOURCE_None:								break;
-	case SOURCE_Actor:		arc << chan.Actor;		break;
-	case SOURCE_Sector:		arc << chan.Sector;		break;
-	case SOURCE_Polyobj:	/*arc << chan.Poly;*/		break;
-	case SOURCE_Unattached:	arc << chan.Point[0] << chan.Point[1] << chan.Point[2];	break;
-	default:				I_Error("Unknown sound source type %d\n", chan.SourceType);	break;
+		switch (chan.SourceType)
+		{
+		case SOURCE_None:										break;
+		case SOURCE_Actor:		arc("actor", chan.Actor);		break;
+		case SOURCE_Sector:		arc("sector", chan.Sector);		break;
+		case SOURCE_Polyobj:	arc("poly", chan.Poly);			break;
+		case SOURCE_Unattached:	arc.Array("point", chan.Point, 3); break;
+		default:				I_Error("Unknown sound source type %d\n", chan.SourceType);	break;
+		}
+		arc.EndObject();
 	}
-#endif
-	arc << chan.SoundID
-		<< chan.OrgID
-		<< chan.Volume
-		<< chan.DistanceScale
-		<< chan.Pitch
-		<< chan.ChanFlags
-		<< chan.EntChannel
-		<< chan.Priority
-		<< chan.NearLimit
-		<< chan.StartTime
-		<< chan.Rolloff.RolloffType
-		<< chan.Rolloff.MinDistance
-		<< chan.Rolloff.MaxDistance
-		<< chan.LimitRange;
-
 	return arc;
 }
 
@@ -2269,13 +2253,13 @@ static FArchive &operator<<(FArchive &arc, FSoundChan &chan)
 //
 //==========================================================================
 
-void S_SerializeSounds(FArchive &arc)
+void S_SerializeSounds(FSerializer &arc)
 {
 	FSoundChan *chan;
 
 	GSnd->Sync(true);
 
-	if (arc.IsStoring())
+	if (arc.isWriting())
 	{
 		TArray<FSoundChan *> chans;
 
@@ -2292,16 +2276,17 @@ void S_SerializeSounds(FArchive &arc)
 				chans.Push(chan);
 			}
 		}
-
-		arc.WriteCount(chans.Size());
-
-		for (unsigned int i = chans.Size(); i-- != 0; )
+		if (chans.Size() > 0 && arc.BeginArray("sounds"))
 		{
-			// Replace start time with sample position.
-			QWORD start = chans[i]->StartTime.AsOne;
-			chans[i]->StartTime.AsOne = GSnd ? GSnd->GetPosition(chans[i]) : 0;
-			arc << *chans[i];
-			chans[i]->StartTime.AsOne = start;
+			for (unsigned int i = chans.Size(); i-- != 0; )
+			{
+				// Replace start time with sample position.
+				QWORD start = chans[i]->StartTime.AsOne;
+				chans[i]->StartTime.AsOne = GSnd ? GSnd->GetPosition(chans[i]) : 0;
+				arc(nullptr, *chans[i]);
+				chans[i]->StartTime.AsOne = start;
+			}
+			arc.EndArray();
 		}
 	}
 	else
@@ -2309,13 +2294,17 @@ void S_SerializeSounds(FArchive &arc)
 		unsigned int count;
 
 		S_StopAllChannels();
-		count = arc.ReadCount();
-		for (unsigned int i = 0; i < count; ++i)
+		if (arc.BeginArray("sounds"))
 		{
-			chan = (FSoundChan*)S_GetChannel(NULL);
-			arc << *chan;
-			// Sounds always start out evicted when restored from a save.
-			chan->ChanFlags |= CHAN_EVICTED | CHAN_ABSTIME;
+			count = arc.ArraySize();
+			for (unsigned int i = 0; i < count; ++i)
+			{
+				chan = (FSoundChan*)S_GetChannel(NULL);
+				arc(nullptr, *chan);
+				// Sounds always start out evicted when restored from a save.
+				chan->ChanFlags |= CHAN_EVICTED | CHAN_ABSTIME;
+			}
+			arc.EndArray();
 		}
 		// The two tic delay is to make sure any screenwipes have finished.
 		// This needs to be two because the game is run for one tic before
@@ -2326,7 +2315,6 @@ void S_SerializeSounds(FArchive &arc)
 		// sounds might be heard briefly before pausing for the wipe.
 		RestartEvictionsAt = level.time + 2;
 	}
-	//DSeqNode::SerializeSequences(arc);
 	GSnd->Sync(false);
 	GSnd->UpdateSounds();
 }

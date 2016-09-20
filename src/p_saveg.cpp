@@ -857,7 +857,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	// fixme: This needs to ensure it reads from the correct place. Should be one once there's enough of this code converted to JSON
 	AM_SerializeMarkers(arc);
 
-	//FBehavior::StaticSerializeModuleStates(arc);
+	FBehavior::StaticSerializeModuleStates(arc);
 	arc.Array("linedefs", lines, &loadlines[0], numlines);
 	arc.Array("sidedefs", sides, &loadsides[0], numsides);
 	arc.Array("sectors", sectors, &loadsectors[0], numsectors);

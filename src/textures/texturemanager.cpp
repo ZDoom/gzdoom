@@ -1229,25 +1229,6 @@ int FTextureManager::CountLumpTextures (int lumpnum)
 
 //==========================================================================
 //
-// operator<<
-//
-//==========================================================================
-
-FArchive &operator<< (FArchive &arc, FTextureID &tex)
-{
-	if (arc.IsStoring())
-	{
-		TexMan.WriteTexture(arc, tex.texnum);
-	}
-	else
-	{
-		tex.texnum = TexMan.ReadTexture(arc);
-	}
-	return arc;
-}
-
-//==========================================================================
-//
 // FTextureID::operator+
 // Does not return invalid texture IDs
 //

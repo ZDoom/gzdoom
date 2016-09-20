@@ -99,12 +99,6 @@ static struct LegacyInit
 
 #endif
 
-FArchive &operator<< (FArchive &arc, FRenderStyle &style)
-{
-	arc << style.BlendOp << style.SrcAlpha << style.DestAlpha << style.Flags;
-	return arc;
-}
-
 double GetAlpha(int type, double alpha)
 {
 	switch (type)

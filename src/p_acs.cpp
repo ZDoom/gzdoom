@@ -1628,64 +1628,72 @@ void FBehavior::UnlockMapVarStrings() const
 	}
 }
 
-void FBehavior::StaticSerializeModuleStates (FArchive &arc)
+void FBehavior::StaticSerializeModuleStates (FSerializer &arc)
 {
-	DWORD modnum;
+	auto modnum = StaticModules.Size();
 
-	modnum = StaticModules.Size();
-	arc << modnum;
-
-	if (modnum != StaticModules.Size())
+	if (arc.BeginObject("acsmodules"))
 	{
-		I_Error("Level was saved with a different number of ACS modules. (Have %d, save has %d)", StaticModules.Size(), modnum);
-	}
+		arc("count", modnum);
 
-	for (modnum = 0; modnum < StaticModules.Size(); ++modnum)
-	{
-		FBehavior *module = StaticModules[modnum];
-		int ModSize = module->GetDataSize();
+		if (modnum != StaticModules.Size())
+		{
+			I_Error("Level was saved with a different number of ACS modules. (Have %d, save has %d)", StaticModules.Size(), modnum);
+		}
 
-		if (arc.IsStoring())
+		for (modnum = 0; modnum < StaticModules.Size(); ++modnum)
 		{
-			arc.WriteString (module->ModuleName);
-			arc << ModSize;
-		}
-		else
-		{
-			char *modname = NULL;
-			arc << modname;
-			arc << ModSize;
-			if (stricmp (modname, module->ModuleName) != 0)
+			if (arc.BeginArray("modules"))
 			{
-				delete[] modname;
-				I_Error("Level was saved with a different set or order of ACS modules. (Have %s, save has %s)", module->ModuleName, modname);
+				FBehavior *module = StaticModules[modnum];
+				const char *modname;
+				int ModSize = module->GetDataSize();
+
+				if (arc.BeginObject(nullptr))
+				{
+					arc.StringPtr("modname", modname)
+						("modsize", ModSize);
+
+					if (arc.isReading())
+					{
+						if (stricmp(modname, module->ModuleName) != 0)
+						{
+							I_Error("Level was saved with a different set or order of ACS modules. (Have %s, save has %s)", module->ModuleName, modname);
+						}
+						else if (ModSize != module->GetDataSize())
+						{
+							I_Error("ACS module %s has changed from what was saved. (Have %d bytes, save has %d bytes)", module->ModuleName, module->GetDataSize(), ModSize);
+						}
+					}
+					module->SerializeVars(arc);
+					arc.EndObject();
+				}
+				arc.EndArray();
 			}
-			else if (ModSize != module->GetDataSize())
-			{
-				delete[] modname;
-				I_Error("ACS module %s has changed from what was saved. (Have %d bytes, save has %d bytes)", module->ModuleName, module->GetDataSize(), ModSize);
-			}
-			delete[] modname;
 		}
-		module->SerializeVars (arc);
+		arc.EndObject();
 	}
 }
 
-void FBehavior::SerializeVars (FArchive &arc)
+void FBehavior::SerializeVars (FSerializer &arc)
 {
-	SerializeVarSet (arc, MapVarStore, NUM_MAPVARS);
-	for (int i = 0; i < NumArrays; ++i)
+	if (arc.BeginArray("variables"))
 	{
-		SerializeVarSet (arc, ArrayStore[i].Elements, ArrayStore[i].ArraySize);
+		SerializeVarSet(arc, MapVarStore, NUM_MAPVARS);
+		for (int i = 0; i < NumArrays; ++i)
+		{
+			SerializeVarSet(arc, ArrayStore[i].Elements, ArrayStore[i].ArraySize);
+		}
+		arc.EndArray();
 	}
 }
 
-void FBehavior::SerializeVarSet (FArchive &arc, SDWORD *vars, int max)
+void FBehavior::SerializeVarSet (FSerializer &arc, SDWORD *vars, int max)
 {
-	SDWORD arcval;
+	SDWORD count;
 	SDWORD first, last;
 
-	if (arc.IsStoring ())
+	if (arc.isWriting ())
 	{
 		// Find first non-zero variable
 		for (first = 0; first < max; ++first)
@@ -1707,52 +1715,28 @@ void FBehavior::SerializeVarSet (FArchive &arc, SDWORD *vars, int max)
 
 		if (last < first)
 		{ // no non-zero variables
-			arcval = 0;
-			arc << arcval;
+			count = 0;
+			arc("count", count);
 			return;
 		}
 
-		arcval = last - first + 1;
-		arc << arcval;
-		arcval = first;
-		arc << arcval;
-
-		while (first <= last)
-		{
-			arc << vars[first];
-			++first;
-		}
+		count = last - first + 1;
+		arc("count", count);
+		arc("first", first);
+		arc.Array("values", &vars[first], count);
 	}
 	else
 	{
-		SDWORD truelast;
-
 		memset (vars, 0, max*sizeof(*vars));
+		arc("count", count);
 
-		arc << last;
-		if (last == 0)
+		if (count == 0)
 		{
 			return;
 		}
-		arc << first;
-		last += first;
-		truelast = last;
-
-		if (last > max)
-		{
-			last = max;
-		}
-
-		while (first < last)
-		{
-			arc << vars[first];
-			++first;
-		}
-		while (first < truelast)
-		{
-			arc << arcval;
-			++first;
-		}
+		arc("first", first);
+		if (first + count > max) count = max - first;
+		arc.Array("values", &vars[first], count);
 	}
 }
 

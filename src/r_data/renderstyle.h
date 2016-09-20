@@ -162,8 +162,4 @@ inline FRenderStyle &FRenderStyle::operator= (ERenderStyle legacy)
 	return *this;
 }
 
-class FArchive;
-
-FArchive &operator<< (FArchive &arc, FRenderStyle &style);
-
 #endif

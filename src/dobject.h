@@ -414,17 +414,11 @@ public:
 		return GC::ReadBarrier(p) == u;
 	}
 
-	template<class U> friend inline FArchive &operator<<(FArchive &arc, TObjPtr<U> &o);
 	template<class U> friend inline void GC::Mark(TObjPtr<U> &obj);
 	template<class U> friend FSerializer &Serialize(FSerializer &arc, const char *key, TObjPtr<U> &value, TObjPtr<U> *);
 
 	friend class DObject;
 };
-
-template<class T> inline FArchive &operator<<(FArchive &arc, TObjPtr<T> &o)
-{
-	return arc << o.p;
-}
 
 // Use barrier_cast instead of static_cast when you need to cast
 // the contents of a TObjPtr to a related type.

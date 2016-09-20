@@ -324,7 +324,7 @@ public:
 	static void StaticUnloadModules ();
 	static bool StaticCheckAllGood ();
 	static FBehavior *StaticGetModule (int lib);
-	static void StaticSerializeModuleStates (FArchive &arc);
+	static void StaticSerializeModuleStates (FSerializer &arc);
 	static void StaticMarkLevelVarStrings();
 	static void StaticLockLevelVarStrings();
 	static void StaticUnlockLevelVarStrings();
@@ -368,8 +368,8 @@ private:
 	void UnescapeStringTable(BYTE *chunkstart, BYTE *datastart, bool haspadding);
 	int FindStringInChunk (DWORD *chunk, const char *varname) const;
 
-	void SerializeVars (FArchive &arc);
-	void SerializeVarSet (FArchive &arc, SDWORD *vars, int max);
+	void SerializeVars (FSerializer &arc);
+	void SerializeVarSet (FSerializer &arc, SDWORD *vars, int max);
 
 	void MarkMapVarStrings() const;
 	void LockMapVarStrings() const;

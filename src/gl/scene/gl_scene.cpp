@@ -661,8 +661,6 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 
 	Reset3DViewport();
 
-	s3d::Stereo3DMode::getCurrentMode().AdjustPlayerSprites();
-
 	// [BB] Only draw the sprites if we didn't render a HUD model before.
 	if ( renderHUDModel == false )
 	{

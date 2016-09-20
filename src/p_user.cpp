@@ -3000,18 +3000,17 @@ void P_UnPredictPlayer ()
 	}
 }
 
-void player_t::Serialize(FArchive &arc)
+void player_t::Serialize(FSerializer &arc)
 {
-#if 0
-	int i;
 	FString skinname;
 
-	arc << cls
-		<< mo
-		<< camera
-		<< playerstate
-		<< cmd;
-	if (arc.IsLoading())
+	arc("class", cls)
+		("mo", mo)
+		("camera", camera)
+		("playerstate", playerstate)
+		("cmd", cmd);
+
+	if (arc.isReading())
 	{
 		ReadUserInfo(arc, userinfo, skinname);
 	}
@@ -3019,78 +3018,80 @@ void player_t::Serialize(FArchive &arc)
 	{
 		WriteUserInfo(arc, userinfo);
 	}
-	arc << DesiredFOV << FOV
-		<< viewz
-		<< viewheight
-		<< deltaviewheight
-		<< bob
-		<< Vel
-		<< centering
-		<< health
-		<< inventorytics;
-	arc << fragcount
-		<< spreecount
-		<< multicount
-		<< lastkilltime
-		<< ReadyWeapon << PendingWeapon
-		<< cheats
-		<< refire
-		<< inconsistant
-		<< killcount
-		<< itemcount
-		<< secretcount
-		<< damagecount
-		<< bonuscount
-		<< hazardcount
-		<< poisoncount
-		<< poisoner
-		<< attacker
-		<< extralight
-		<< fixedcolormap << fixedlightlevel
-		<< morphTics
-		<< MorphedPlayerClass
-		<< MorphStyle
-		<< MorphExitFlash
-		<< PremorphWeapon
-		<< chickenPeck
-		<< jumpTics
-		<< respawn_time
-		<< air_finished
-		<< turnticks
-		<< oldbuttons;
-	arc << hazardtype
-		<< hazardinterval;
-	arc << Bot;
-	arc << BlendR
-		<< BlendG
-		<< BlendB
-		<< BlendA;
-	arc << WeaponState;
-	arc << LogText
-		<< ConversationNPC
-		<< ConversationPC
-		<< ConversationNPCAngle.Degrees
-		<< ConversationFaceTalker;
 
-	for (i = 0; i < MAXPLAYERS; i++)
-		arc << frags[i];
+	arc("desiredfov", DesiredFOV)
+		("fov", FOV)
+		("viewz", viewz)
+		("viewheight", viewheight)
+		("deltaviewheight", deltaviewheight)
+		("bob", bob)
+		("vel", Vel)
+		("centering", centering)
+		("health", health)
+		("inventorytics", inventorytics)
+		("fragcount", fragcount)
+		("spreecount", spreecount)
+		("multicount", multicount)
+		("lastkilltime", lastkilltime)
+		("readyweapon", ReadyWeapon)
+		("pendingweapon", PendingWeapon)
+		("cheats", cheats)
+		("refire", refire)
+		("inconsistant", inconsistant)
+		("killcount", killcount)
+		("itemcount", itemcount)
+		("secretcount", secretcount)
+		("damagecount", damagecount)
+		("bonuscount", bonuscount)
+		("hazardcount", hazardcount)
+		("poisoncount", poisoncount)
+		("poisoner", poisoner)
+		("attacker", attacker)
+		("extralight", extralight)
+		("fixedcolormap", fixedcolormap)
+		("fixedlightlevel", fixedlightlevel)
+		("morphTics", morphTics)
+		("morphedplayerclass", MorphedPlayerClass)
+		("morphstyle", MorphStyle)
+		("morphexitflash", MorphExitFlash)
+		("premorphweapon", PremorphWeapon)
+		("chickenpeck", chickenPeck)
+		("jumptics", jumpTics)
+		("respawntime", respawn_time)
+		("airfinished", air_finished)
+		("turnticks", turnticks)
+		("oldbuttons", oldbuttons)
+		("hazardtype", hazardtype)
+		("hazardinterval", hazardinterval)
+		("bot", Bot)
+		("blendr", BlendR)
+		("blendg", BlendG)
+		("blendb", BlendB)
+		("blenda", BlendA)
+		("weaponstate", WeaponState)
+		("logtext", LogText)
+		("conversionnpc", ConversationNPC)
+		("conversionpc", ConversationPC)
+		("conversionnpcangle", ConversationNPCAngle)
+		("conversionfacetalker", ConversationFaceTalker)
+		.Array("frags", frags, MAXPLAYERS)
+		("psprites", psprites)
+		("currentplayerclass", CurrentPlayerClass)
+		("crouchfactor", crouchfactor)
+		("crouching", crouching)
+		("crouchdir", crouchdir)
+		("crouchviewdelta", crouchviewdelta)
+		("original_cmd", original_cmd)
+		("original_oldbuttons", original_oldbuttons)
+		("poisontype", poisontype)
+		("poisonpaintype", poisonpaintype)
+		("timefreezer", timefreezer)
+		("settings_controller", settings_controller)
+		("onground", onground)
+		("musinfoactor", MUSINFOactor)
+		("musinfotics", MUSINFOtics);
 
-		arc << psprites;
-
-	arc << CurrentPlayerClass;
-
-	arc << crouchfactor
-		<< crouching 
-		<< crouchdir
-		<< crouchviewdelta
-		<< original_cmd
-		<< original_oldbuttons;
-	arc << poisontype << poisonpaintype;
-	arc << timefreezer;
-	arc << settings_controller;
-	arc << onground;
-
-	if (arc.IsLoading ())
+	if (arc.isWriting ())
 	{
 		// If the player reloaded because they pressed +use after dying, we
 		// don't want +use to still be down after the game is loaded.
@@ -3101,8 +3102,6 @@ void player_t::Serialize(FArchive &arc)
 	{
 		userinfo.SkinChanged(skinname, CurrentPlayerClass);
 	}
-	arc << MUSINFOactor << MUSINFOtics;
-#endif
 }
 
 bool P_IsPlayerTotallyFrozen(const player_t *player)

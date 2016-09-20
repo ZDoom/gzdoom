@@ -7,6 +7,9 @@
 #include "r_defs.h"
 #include "resourcefiles/file_zip.h"
 
+struct ticcmd_t;
+struct usercmd_t;
+
 struct FWriter;
 struct FReader;
 
@@ -161,6 +164,8 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FName &value, FName *d
 FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundID *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, FString &sid, FString *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, NumericValue &sid, NumericValue *def);
+FSerializer &Serialize(FSerializer &arc, const char *key, ticcmd_t &sid, ticcmd_t *def);
+FSerializer &Serialize(FSerializer &arc, const char *key, usercmd_t &cmd, usercmd_t *def);
 
 template<class T>
 FSerializer &Serialize(FSerializer &arc, const char *key, T *&value, T **)
@@ -220,8 +225,10 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDoorAnimat
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr, char **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&font, FFont **def);
 
-
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, sector_t *&value, sector_t **defval);
+template<> inline FSerializer &Serialize(FSerializer &arc, const char *key, PClassPlayerPawn *&clst, PClassPlayerPawn **def)
+{
+	return Serialize(arc, key, (PClassActor *&)clst, (PClassActor **)def);
+}
 
 FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def, bool *retcode);
 template<> inline FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def)

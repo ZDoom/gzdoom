@@ -576,7 +576,7 @@ static void SpawnExtraPlayers();
 
 void P_SerializePlayers(FSerializer &arc, bool skipload)
 {
-	BYTE numPlayers, numPlayersNow;
+	int numPlayers, numPlayersNow;
 	int i;
 
 	// Count the number of players present right now.
@@ -588,35 +588,45 @@ void P_SerializePlayers(FSerializer &arc, bool skipload)
 		}
 	}
 
-#if 0
 	if (arc.isWriting())
 	{
 		// Record the number of players in this save.
-		arc << numPlayersNow;
-
-		// Record each player's name, followed by their data.
-		for (i = 0; i < MAXPLAYERS; ++i)
+		arc("numplayers", numPlayersNow);
+		if (arc.BeginArray("players"))
 		{
-			if (playeringame[i])
+			// Record each player's name, followed by their data.
+			for (i = 0; i < MAXPLAYERS; ++i)
 			{
-				arc.WriteString(players[i].userinfo.GetName());
-				players[i].Serialize(arc);
+				if (playeringame[i])
+				{
+					if (arc.BeginObject(nullptr))
+					{
+						const char *n = players[i].userinfo.GetName();
+						arc.StringPtr("playername", n);
+						players[i].Serialize(arc);
+						arc.EndObject();
+					}
+				}
 			}
+			arc.EndArray();
 		}
 	}
 	else
 	{
-		arc << numPlayers;
+		arc("numplayers", numPlayers);
 
-		// If there is only one player in the game, they go to the
-		// first player present, no matter what their name.
-		if (numPlayers == 1)
+		if (arc.BeginArray("players"))
 		{
-			ReadOnePlayer(arc, skipload);
-		}
-		else
-		{
-			ReadMultiplePlayers(arc, numPlayers, numPlayersNow, skipload);
+			// If there is only one player in the game, they go to the
+			// first player present, no matter what their name.
+			if (numPlayers == 1)
+			{
+				ReadOnePlayer(arc, skipload);
+			}
+			else
+			{
+				ReadMultiplePlayers(arc, numPlayers, numPlayersNow, skipload);
+			}
 		}
 		if (!skipload && numPlayersNow > numPlayers)
 		{
@@ -625,7 +635,6 @@ void P_SerializePlayers(FSerializer &arc, bool skipload)
 		// Redo pitch limits, since the spawned player has them at 0.
 		players[consoleplayer].SendPitchLimits();
 	}
-#endif
 }
 
 //==========================================================================
@@ -636,39 +645,39 @@ void P_SerializePlayers(FSerializer &arc, bool skipload)
 
 static void ReadOnePlayer(FSerializer &arc, bool skipload)
 {
-#if 0
 	int i;
-	char *name = NULL;
+	const char *name = NULL;
 	bool didIt = false;
 
-	arc << name;
-
-	for (i = 0; i < MAXPLAYERS; ++i)
+	if (arc.BeginObject(nullptr))
 	{
-		if (playeringame[i])
+		arc.StringPtr("playername", name);
+
+		for (i = 0; i < MAXPLAYERS; ++i)
 		{
-			if (!didIt)
+			if (playeringame[i])
 			{
-				didIt = true;
-				player_t playerTemp;
-				playerTemp.Serialize(arc);
-				if (!skipload)
+				if (!didIt)
 				{
-					CopyPlayer(&players[i], &playerTemp, name);
+					didIt = true;
+					player_t playerTemp;
+					playerTemp.Serialize(arc);
+					if (!skipload)
+					{
+						CopyPlayer(&players[i], &playerTemp, name);
+					}
 				}
-			}
-			else
-			{
-				if (players[i].mo != NULL)
+				else
 				{
-					players[i].mo->Destroy();
-					players[i].mo = NULL;
+					if (players[i].mo != NULL)
+					{
+						players[i].mo->Destroy();
+						players[i].mo = NULL;
+					}
 				}
 			}
 		}
 	}
-	delete[] name;
-#endif
 }
 
 //==========================================================================
@@ -679,10 +688,9 @@ static void ReadOnePlayer(FSerializer &arc, bool skipload)
 
 static void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayersNow, bool skipload)
 {
-#if 0
 	// For two or more players, read each player into a temporary array.
 	int i, j;
-	char **nametemp = new char *[numPlayers];
+	const char **nametemp = new const char *[numPlayers];
 	player_t *playertemp = new player_t[numPlayers];
 	BYTE *tempPlayerUsed = new BYTE[numPlayers];
 	BYTE playerUsed[MAXPLAYERS];
@@ -690,8 +698,11 @@ static void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayers
 	for (i = 0; i < numPlayers; ++i)
 	{
 		nametemp[i] = NULL;
-		arc << nametemp[i];
-		playertemp[i].Serialize(arc);
+		if (arc.BeginObject(nullptr))
+		{
+			arc.StringPtr("playername", nametemp[i]);
+			playertemp[i].Serialize(arc);
+		}
 		tempPlayerUsed[i] = 0;
 	}
 	for (i = 0; i < MAXPLAYERS; ++i)
@@ -769,12 +780,7 @@ static void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayers
 
 	delete[] tempPlayerUsed;
 	delete[] playertemp;
-	for (i = 0; i < numPlayers; ++i)
-	{
-		delete[] nametemp[i];
-	}
 	delete[] nametemp;
-#endif
 }
 
 //==========================================================================
@@ -961,7 +967,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	AM_SerializeMarkers(arc);
 	FRemapTable::StaticSerializeTranslations(arc);
 	FCanvasTextureInfo::Serialize(arc);
-	//P_SerializePlayers(arc, hubLoad);
+	P_SerializePlayers(arc, hubload);
 	P_SerializeSounds(arc);
 	if (arc.isReading())
 	{

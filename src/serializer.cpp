@@ -1136,12 +1136,22 @@ FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObje
 		if (value != nullptr)
 		{
 			int ndx;
-			int *pndx = arc.w->mObjectMap.CheckKey(value);
-			if (pndx != nullptr) ndx = *pndx;
+			if (value == WP_NOCHANGE)
+			{
+				ndx = -1;
+			}
 			else
 			{
-				ndx = arc.w->mDObjects.Push(value);
-				arc.w->mObjectMap[value] = ndx;
+				int *pndx = arc.w->mObjectMap.CheckKey(value);
+				if (pndx != nullptr)
+				{
+					ndx = *pndx;
+				}
+				else
+				{
+					ndx = arc.w->mDObjects.Push(value);
+					arc.w->mObjectMap[value] = ndx;
+				}
 			}
 			Serialize(arc, key, ndx, nullptr);
 		}
@@ -1149,8 +1159,15 @@ FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObje
 	else
 	{
 		auto val = arc.r->FindKey(key);
-		if (val != nullptr)
+		if (val != nullptr && val->IsInt())
 		{
+			if (val->GetInt() == -1)
+			{
+				value = WP_NOCHANGE;
+			}
+			else
+			{
+			}
 		}
 		else if (!retcode)
 		{
@@ -1302,7 +1319,14 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClassActor
 		if (!arc.w->inObject() || def == nullptr || clst != *def)
 		{
 			arc.WriteKey(key);
-			arc.w->mWriter.String(clst->TypeName.GetChars());
+			if (clst == nullptr)
+			{
+				arc.w->mWriter.Null();
+			}
+			else
+			{
+				arc.w->mWriter.String(clst->TypeName.GetChars());
+			}
 		}
 	}
 	else
@@ -1313,6 +1337,10 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClassActor
 			if (val->IsString())
 			{
 				clst = PClass::FindActor(val->GetString());
+			}
+			else if (val->IsNull())
+			{
+				clst = nullptr;
 			}
 			else
 			{
@@ -1337,7 +1365,14 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClass *&cl
 		if (!arc.w->inObject() || def == nullptr || clst != *def)
 		{
 			arc.WriteKey(key);
-			arc.w->mWriter.String(clst->TypeName.GetChars());
+			if (clst == nullptr)
+			{
+				arc.w->mWriter.Null();
+			}
+			else
+			{
+				arc.w->mWriter.String(clst->TypeName.GetChars());
+			}
 		}
 	}
 	else
@@ -1348,6 +1383,10 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClass *&cl
 			if (val->IsString())
 			{
 				clst = PClass::FindClass(val->GetString());
+			}
+			else if (val->IsNull())
+			{
+				clst = nullptr;
 			}
 			else
 			{

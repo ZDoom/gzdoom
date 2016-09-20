@@ -371,8 +371,8 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 	int ColorSetChanged(int setnum);
 };
 
-void ReadUserInfo(FArchive &arc, userinfo_t &info, FString &skin);
-void WriteUserInfo(FArchive &arc, userinfo_t &info);
+void ReadUserInfo(FSerializer &arc, userinfo_t &info, FString &skin);
+void WriteUserInfo(FSerializer &arc, userinfo_t &info);
 
 //
 // Extended player object info: player_t
@@ -384,7 +384,7 @@ public:
 	~player_t();
 	player_t &operator= (const player_t &p);
 
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	size_t FixPointers (const DObject *obj, DObject *replacement);
 	size_t PropagateMark();
 
@@ -541,8 +541,6 @@ public:
 
 // Bookkeeping on players - state.
 extern player_t players[MAXPLAYERS];
-
-FArchive &operator<< (FArchive &arc, player_t *&p);
 
 void P_CheckPlayerSprite(AActor *mo, int &spritenum, DVector2 &scale);
 

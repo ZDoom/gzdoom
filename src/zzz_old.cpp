@@ -59,7 +59,7 @@ void P_SerializeACSScriptNumber(FArchive &arc, int &scriptnum, bool was2byte)
 
 #if 0
 // still needed as reference.
-FArchive &FArchive::ReadObject(DObject* &obj, PClass *wanttype)
+FCrap &FCrap::ReadObject(DObject* &obj, PClass *wanttype)
 {
 	BYTE objHead;
 	const PClass *type;

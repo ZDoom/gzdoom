@@ -72,10 +72,6 @@ struct usercmd_t
 	short	upmove;
 };
 
-class FArchive;
-
-FArchive &operator<< (FArchive &arc, usercmd_t &cmd);
-
 // When transmitted, the above message is preceded by a byte
 // indicating which fields are actually present in the message.
 enum

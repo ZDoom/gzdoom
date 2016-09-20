@@ -314,6 +314,7 @@ FCompressedBuffer FZipFile::GetRawLump(int lumpnum)
 	FCompressedBuffer cbuf = { (unsigned)lmp->LumpSize, (unsigned)lmp->CompressedSize, lmp->Method, lmp->GPFlags, new char[lmp->CompressedSize] };
 	Reader->Seek(lmp->Position, SEEK_SET);
 	Reader->Read(cbuf.mBuffer, lmp->CompressedSize);
+	return cbuf;
 }
 
 //==========================================================================

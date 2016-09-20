@@ -196,7 +196,7 @@ void G_ClearSnapshots (void)
 {
 	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 	{
-		wadlevelinfos[i].ClearSnapshot();
+		wadlevelinfos[i].Snapshot.Clean();
 	}
 	// Since strings are only locked when snapshotting a level, unlock them
 	// all now, since we got rid of all the snapshots that cared about them.
@@ -248,7 +248,7 @@ void level_info_t::Reset()
 	WallVertLight = +8;
 	F1Pic = "";
 	musicorder = 0;
-	snapshot = NULL;
+	Snapshot = { 0,0,0,0,nullptr };
 	snapshotVer = 0;
 	defered = 0;
 	skyspeed1 = skyspeed2 = 0.f;
@@ -333,17 +333,6 @@ FString level_info_t::LookupLevelName()
 	else return LevelName;
 }
 
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-void level_info_t::ClearSnapshot()
-{
-	if (snapshot != NULL) delete snapshot;
-	snapshot = NULL;
-}
 
 //==========================================================================
 //

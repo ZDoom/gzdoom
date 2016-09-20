@@ -1970,11 +1970,7 @@ void G_DoLoadGame ()
 		NextSkill = next;
 	}
 
-	if (level.info->snapshot != NULL)
-	{
-		delete level.info->snapshot;
-		level.info->snapshot = NULL;
-	}
+	level.info->Snapshot.Clean();
 
 	BackupSaveName = savename;
 
@@ -2263,11 +2259,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	BackupSaveName = filename;
 
 	// We don't need the snapshot any longer.
-	if (level.info->snapshot != NULL)
-	{
-		delete level.info->snapshot;
-		level.info->snapshot = NULL;
-	}
+	level.info->Snapshot.Clean();
 		
 	insave = false;
 	I_FreezeTime(false);

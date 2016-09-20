@@ -39,6 +39,7 @@
 #include "sc_man.h"
 #include "s_sound.h"
 #include "textures/textures.h"
+#include "resourcefiles/file_zip.h"
 
 struct level_info_t;
 struct cluster_info_t;
@@ -232,7 +233,6 @@ struct FSpecialAction
 	int Args[5];				// must allow 16 bit tags for 666 & 667!
 };
 
-class FCompressedMemFile;
 class DScroller;
 
 class FScanner;
@@ -295,7 +295,7 @@ struct level_info_t
 	FString		LevelName;
 	SBYTE		WallVertLight, WallHorizLight;
 	int			musicorder;
-	FCompressedMemFile	*snapshot;
+	FCompressedBuffer	Snapshot;
 	DWORD		snapshotVer;
 	struct acsdefered_t *defered;
 	float		skyspeed1;
@@ -346,13 +346,12 @@ struct level_info_t
 	}
 	~level_info_t()
 	{
-		ClearSnapshot(); 
+		Snapshot.Clean();
 		ClearDefered();
 	}
 	void Reset();
 	bool isValid();
 	FString LookupLevelName ();
-	void ClearSnapshot();
 	void ClearDefered();
 	level_info_t *CheckLevelRedirect ();
 

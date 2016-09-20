@@ -112,31 +112,6 @@ private:
 	void BeEmpty ();
 };
 
-class FCompressedMemFile : public FCompressedFile
-{
-public:
-	FCompressedMemFile ();
-	FCompressedMemFile (FILE *file);	// Create for reading
-	~FCompressedMemFile ();
-
-	bool Open (const char *name, EOpenMode mode);	// Works for reading only
-	bool Open (void *memblock);	// Open for reading only
-	bool Open ();	// Open for writing only
-	bool Reopen ();	// Re-opens imploded file for reading only
-	void Close ();
-	bool IsOpen () const;
-	void GetSizes(unsigned int &one, unsigned int &two) const;
-
-	void Serialize(FArchive &arc);
-
-protected:
-	bool FreeOnExplode () { return !m_SourceFromMem; }
-
-private:
-	bool m_SourceFromMem;
-	unsigned char *m_ImplodedBuffer;
-};
-
 class FPNGChunkFile : public FCompressedFile
 {
 public:

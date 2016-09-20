@@ -988,12 +988,3 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 }
 
 
-//==========================================================================
-//
-//
-//==========================================================================
-
-void G_SerializeLevel(FArchive &arc, bool hubLoad)
-{
-}
-

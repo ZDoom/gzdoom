@@ -85,6 +85,7 @@
 #include "r_renderer.h"
 #include "r_utility.h"
 #include "p_spec.h"
+#include "serializer.h"
 
 #include "gi.h"
 
@@ -822,7 +823,7 @@ void G_DoCompleted (void)
 		}
 		else
 		{ // Make sure we don't have a snapshot lying around from before.
-			level.info->ClearSnapshot();
+			level.info->Snapshot.Clean();
 		}
 	}
 	else
@@ -1482,19 +1483,20 @@ void G_AirControlChanged ()
 
 void G_SnapshotLevel ()
 {
-	if (level.info->snapshot)
-		delete level.info->snapshot;
+	level.info->Snapshot.Clean();
 
 	if (level.info->isValid())
 	{
 		level.info->snapshotVer = SAVEVER;
-		level.info->snapshot = new FCompressedMemFile;
-		level.info->snapshot->Open ();
 
-		FArchive arc (*level.info->snapshot);
+		FSerializer arc;
 
-		SaveVersion = SAVEVER;
-		G_SerializeLevel (arc, false);
+		if (arc.OpenWriter())
+		{
+			SaveVersion = SAVEVER;
+			G_SerializeLevel(arc, false);
+			level.info->Snapshot = arc.GetCompressedOutput();
+		}
 	}
 }
 
@@ -1507,18 +1509,18 @@ void G_SnapshotLevel ()
 
 void G_UnSnapshotLevel (bool hubLoad)
 {
-	if (level.info->snapshot == NULL)
+	if (level.info->Snapshot.mBuffer == nullptr)
 		return;
 
 	if (level.info->isValid())
 	{
 		SaveVersion = level.info->snapshotVer;
-		level.info->snapshot->Reopen ();
-		FArchive arc (*level.info->snapshot);
-		if (hubLoad)
-			arc.SetHubTravel ();
+		FSerializer arc;
+		if (!arc.OpenReader(&level.info->Snapshot)) return;
+
+		//if (hubLoad) arc.SetHubTravel (); // no idea if this is still needed.
+
 		G_SerializeLevel (arc, hubLoad);
-		arc.Close ();
 		level.FromSnapshot = true;
 
 		TThinkerIterator<APlayerPawn> it;
@@ -1548,7 +1550,7 @@ void G_UnSnapshotLevel (bool hubLoad)
 		}
 	}
 	// No reason to keep the snapshot around once the level's been entered.
-	level.info->ClearSnapshot();
+	level.info->Snapshot.Clean();
 	if (hubLoad)
 	{
 		// Unlock ACS global strings that were locked when the snapshot was made.
@@ -1564,7 +1566,7 @@ void G_UnSnapshotLevel (bool hubLoad)
 static void writeSnapShot (FArchive &arc, level_info_t *i)
 {
 	arc << i->snapshotVer << i->MapName;
-	i->snapshot->Serialize (arc);
+	//i->snapshot->Serialize (arc);
 }
 
 //==========================================================================
@@ -1576,6 +1578,7 @@ void G_WriteSnapshots (FILE *file)
 {
 	unsigned int i;
 
+#if 0
 	for (i = 0; i < wadlevelinfos.Size(); i++)
 	{
 		if (wadlevelinfos[i].snapshot)
@@ -1589,6 +1592,7 @@ void G_WriteSnapshots (FILE *file)
 		FPNGChunkArchive arc (file, DSNP_ID);
 		writeSnapShot(arc, &TheDefaultLevelInfo);
 	}
+#endif
 
 	FPNGChunkArchive *arc = NULL;
 	
@@ -1662,8 +1666,10 @@ void G_ReadSnapshots (PNGHandle *png)
 		arc << MapName;
 		i = FindLevelInfo (MapName);
 		i->snapshotVer = snapver;
+#if 0
 		i->snapshot = new FCompressedMemFile;
 		i->snapshot->Serialize (arc);
+#endif
 		chunkLen = (DWORD)M_NextPNGChunk (png, SNAP_ID);
 	}
 
@@ -1676,8 +1682,10 @@ void G_ReadSnapshots (PNGHandle *png)
 		arc << snapver;
 		arc << MapName;
 		TheDefaultLevelInfo.snapshotVer = snapver;
+#if 0
 		TheDefaultLevelInfo.snapshot = new FCompressedMemFile;
 		TheDefaultLevelInfo.snapshot->Serialize (arc);
+#endif
 	}
 
 	chunkLen = (DWORD)M_FindPNGChunk (png, VIST_ID);
@@ -1727,12 +1735,10 @@ CCMD(listsnapshots)
 {
 	for (unsigned i = 0; i < wadlevelinfos.Size(); ++i)
 	{
-		FCompressedMemFile *snapshot = wadlevelinfos[i].snapshot;
-		if (snapshot != NULL)
+		FCompressedBuffer *snapshot = &wadlevelinfos[i].Snapshot;
+		if (snapshot->mBuffer != nullptr)
 		{
-			unsigned int comp, uncomp;
-			snapshot->GetSizes(comp, uncomp);
-			Printf("%s (%u -> %u bytes)\n", wadlevelinfos[i].MapName.GetChars(), comp, uncomp);
+			Printf("%s (%u -> %u bytes)\n", wadlevelinfos[i].MapName.GetChars(), snapshot->mCompressedSize, snapshot->mSize);
 		}
 	}
 }

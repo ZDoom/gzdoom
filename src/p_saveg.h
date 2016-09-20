@@ -45,6 +45,6 @@ void P_DestroyThinkers(bool hubLoad);
 void P_ReadACSDefereds (PNGHandle *png);
 void P_WriteACSDefereds (FILE *file);
 
-void G_SerializeLevel(FArchive &arc, bool hubLoad);
+void G_SerializeLevel(FSerializer &arc, bool hubLoad);
 
 #endif // __P_SAVEG_H__

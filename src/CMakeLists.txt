@@ -115,59 +115,49 @@ if( WIN32 )
 	set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 	set( NASM_NAMES nasmw nasm )
 	
-	if( NOT MSVC )
-		find_path( D3D_INCLUDE_DIR d3d9.h
-			PATHS ENV DXSDK_DIR
-			PATH_SUFFIXES Include )
-		if( NOT D3D_INCLUDE_DIR )
-			message( SEND_ERROR "Could not find DirectX 9 header files" )
-		else()
-			include_directories( ${D3D_INCLUDE_DIR} )
-		endif()
-	
-		find_path( XINPUT_INCLUDE_DIR xinput.h
-			PATHS ENV DXSDK_DIR
-			PATH_SUFFIXES Include )
-		if( NOT XINPUT_INCLUDE_DIR )
-			message( WARNING "Could not find xinput.h. XInput will be disabled." )
-			add_definitions( -DNO_XINPUT )
-		else()
-			include_directories( ${XINPUT_INCLUDE_DIR} )
-		endif()
-
-		find_library( DX_dxguid_LIBRARY dxguid
-			PATHS ENV DXSDK_DIR
-			PATH_SUFFIXES Lib Lib/${XBITS} )
-		find_library( DX_dinput8_LIBRARY dinput8
-			PATHS ENV DXSDK_DIR
-			PATH_SUFFIXES Lib Lib/${XBITS} )
-
-		set( DX_LIBS_FOUND YES )
-		if( NOT DX_dxguid_LIBRARY )
-			set( DX_LIBS_FOUND NO )
-		endif()
-		if( NOT DX_dinput8_LIBRARY )
-			set( DX_LIBS_FOUND NO )
-		endif()
-
-		if( NOT DX_LIBS_FOUND )
-			message( FATAL_ERROR "Could not find DirectX 9 libraries" )
-		endif()
-		
-		set( DX_LIBS
-			"${DX_dxguid_LIBRARY}"
-			"${DX_dinput8_LIBRARY}"
-		)
+	find_path( D3D_INCLUDE_DIR d3d9.h
+		PATHS ENV DXSDK_DIR
+		PATH_SUFFIXES Include )
+	if( NOT D3D_INCLUDE_DIR )
+		message( SEND_ERROR "Could not find DirectX 9 header files" )
 	else()
-		set( DX_LIBS
-			dxguid
-			dinput8
-		)
+		include_directories( ${D3D_INCLUDE_DIR} )
+	endif()
+	
+	find_path( XINPUT_INCLUDE_DIR xinput.h
+		PATHS ENV DXSDK_DIR
+		PATH_SUFFIXES Include )
+	if( NOT XINPUT_INCLUDE_DIR )
+		message( WARNING "Could not find xinput.h. XInput will be disabled." )
+		add_definitions( -DNO_XINPUT )
+	else()
+		include_directories( ${XINPUT_INCLUDE_DIR} )
 	endif()
 
-	set( ZDOOM_LIBS ${DX_LIBS}
+	find_library( DX_dxguid_LIBRARY dxguid
+		PATHS ENV DXSDK_DIR
+		PATH_SUFFIXES Lib Lib/${XBITS} )
+	find_library( DX_dinput8_LIBRARY dinput8
+		PATHS ENV DXSDK_DIR
+		PATH_SUFFIXES Lib Lib/${XBITS} )
+
+	set( DX_LIBS_FOUND YES )
+	if( NOT DX_dxguid_LIBRARY )
+		set( DX_LIBS_FOUND NO )
+	endif()
+	if( NOT DX_dinput8_LIBRARY )
+		set( DX_LIBS_FOUND NO )
+	endif()
+
+	if( NOT DX_LIBS_FOUND )
+		message( FATAL_ERROR "Could not find DirectX 9 libraries" )
+	endif()
+
+	set( ZDOOM_LIBS
 		wsock32
 		winmm
+		"${DX_dxguid_LIBRARY}"
+		"${DX_dinput8_LIBRARY}"
 		ole32
 		user32
 		gdi32
@@ -281,6 +271,10 @@ if( NOT NO_FMOD )
 	if( FMOD_INCLUDE_DIR )
 		message( STATUS "FMOD include files found at ${FMOD_INCLUDE_DIR}" )
 		include_directories( "${FMOD_INCLUDE_DIR}" )
+		
+		if( EXISTS "${FMOD_INCLUDE_DIR}/fmod_common.h" )
+			set( FMOD_STUDIO YES )
+		endif()
 	else()
 		message( STATUS "Could not find FMOD include files" )
 		set( NO_FMOD ON )
@@ -1481,7 +1475,16 @@ endif()
 
 if( MSVC )
 	option( ZDOOM_GENERATE_MAPFILE "Generate .map file for debugging." OFF )
-	set( LINKERSTUFF "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\"" )
+	set( LINKERSTUFF "/MANIFEST:NO" )
+
+	if( NOT NO_FMOD )
+		if( FMOD_STUDIO )
+			set( LINKERSTUFF "${LINKERSTUFF} /DELAYLOAD:\"fmod${X64}.dll\"" )
+		else()
+			set( LINKERSTUFF "${LINKERSTUFF} /DELAYLOAD:\"fmodex${X64}.dll\"" )
+		endif()
+	endif()
+
 	if( ZDOOM_GENERATE_MAPFILE )
 		set( LINKERSTUFF "${LINKERSTUFF} /MAP" )
 	endif()
@@ -1521,17 +1524,23 @@ if( APPLE )
 		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zdoom-info.plist" )
 
 	if( NOT NO_FMOD )
+		if( FMOD_STUDIO )
+			set( FMOD_DYLIB libfmod.dylib )
+		else()
+			set( FMOD_DYLIB libfmodex.dylib )
+		endif()
+
 		# Fix fmod link so that it can be found in the app bundle.
 		find_program( OTOOL otool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
 		find_program( INSTALL_NAME_TOOL install_name_tool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
 		execute_process( COMMAND "${OTOOL}" -L "${FMOD_LIBRARY}"
-			COMMAND grep "libfmodex.dylib (compat"
+			COMMAND grep "${FMOD_DYLIB} (compat"
 			COMMAND head -n1
 			COMMAND awk "{print $1}"
 			OUTPUT_VARIABLE FMOD_LINK
 			OUTPUT_STRIP_TRAILING_WHITESPACE )
 		add_custom_command( TARGET zdoom POST_BUILD
-			COMMAND "${INSTALL_NAME_TOOL}" -change "${FMOD_LINK}" @executable_path/../Frameworks/libfmodex.dylib "$<TARGET_FILE:zdoom>"
+			COMMAND "${INSTALL_NAME_TOOL}" -change "${FMOD_LINK}" @executable_path/../Frameworks/${FMOD_DYLIB} "$<TARGET_FILE:zdoom>"
 			COMMENT "Relinking FMOD Ex" )
 	endif()
 endif()

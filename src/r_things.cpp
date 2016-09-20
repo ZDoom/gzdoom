@@ -1393,7 +1393,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	}
 	if (pspr->GetID() < PSP_TARGETCENTER)
 	{ // Move the weapon down for 1280x1024.
-		vis->texturemid -= BaseRatioSizes[WidescreenRatio][2];
+		vis->texturemid -= AspectPspriteOffset(WidescreenRatio);
 	}
 	vis->x1 = x1 < 0 ? 0 : x1;
 	vis->x2 = x2 >= viewwidth ? viewwidth : x2;

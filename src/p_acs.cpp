@@ -3791,7 +3791,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_Damage:
-		actor->Damage = CreateDamageFunction(value);
+		actor->SetDamage(value);
 		break;
 
 	case APROP_Alpha:

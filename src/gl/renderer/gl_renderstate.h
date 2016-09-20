@@ -63,6 +63,13 @@ enum EEffect
 	MAX_EFFECTS
 };
 
+enum EPassType
+{
+	NORMAL_PASS,
+	GBUFFER_PASS,
+	MAX_PASS_TYPES
+};
+
 class FRenderState
 {
 	bool mTextureEnabled;
@@ -110,6 +117,8 @@ class FRenderState
 	int stBlendEquation;
 
 	FShader *activeShader;
+
+	EPassType mPassType = NORMAL_PASS;
 
 	bool ApplyShader();
 
@@ -457,6 +466,16 @@ public:
 	float GetInterpolationFactor()
 	{
 		return mInterpolationFactor;
+	}
+
+	void SetPassType(EPassType passType)
+	{
+		mPassType = passType;
+	}
+
+	EPassType GetPassType()
+	{
+		return mPassType;
 	}
 
 	// Backwards compatibility crap follows

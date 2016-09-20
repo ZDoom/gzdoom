@@ -5,6 +5,9 @@ in vec4 vTexCoord;
 in vec4 vColor;
 
 out vec4 FragColor;
+#ifdef GBUFFER_PASS
+out vec4 FragData;
+#endif
 
 #ifdef SHADER_STORAGE_LIGHTS
 	layout(std430, binding = 1) buffer LightBufferSSO
@@ -433,5 +436,8 @@ void main()
 		}
 	}
 	FragColor = frag;
+#ifdef GBUFFER_PASS
+	FragData = vec4(uFogColor.rgb, 1.0);
+#endif
 }
 

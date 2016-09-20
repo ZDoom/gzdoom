@@ -39,7 +39,6 @@
 class DCanvas;
 struct FRemapTable;
 class FTexture;
-class FArchive;
 
 enum EColorRange
 {

@@ -380,9 +380,6 @@ public:
 
 	int NumTextures () const { return (int)Textures.Size(); }
 
-	void WriteTexture (FArchive &arc, int picnum);
-	int ReadTexture (FArchive &arc);
-
 	void UpdateAnimations (DWORD mstime);
 	int GuesstimateNumTextures ();
 
@@ -498,7 +495,6 @@ protected:
 // A texture that can be drawn to.
 class DSimpleCanvas;
 class AActor;
-class FArchive;
 
 class FCanvasTexture : public FTexture
 {

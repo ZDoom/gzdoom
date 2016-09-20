@@ -41,12 +41,7 @@ struct PNGHandle;
 // These are the load / save game routines.
 // Also see farchive.(h|cpp)
 void P_SerializePlayers (FArchive &arc, bool fakeload);
-void P_SerializeWorldActors(FArchive &arc);
-void P_SerializeWorld (FArchive &arc);
 void P_DestroyThinkers(bool hubLoad);
-void P_SerializeThinkers (FArchive &arc, bool);
-void P_SerializePolyobjs (FArchive &arc);
-void P_SerializeSubsectors(FArchive &arc);
 void P_SerializeSounds (FArchive &arc);
 
 void P_ReadACSDefereds (PNGHandle *png);

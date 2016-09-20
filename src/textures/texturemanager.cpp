@@ -1074,61 +1074,6 @@ FTextureID FTextureManager::PalCheck(FTextureID tex)
 	return *newtex;
 }
 
-//==========================================================================
-//
-// FTextureManager :: WriteTexture
-//
-//==========================================================================
-
-void FTextureManager::WriteTexture (FArchive &arc, int picnum)
-{
-	FTexture *pic;
-
-	if (picnum < 0)
-	{
-		arc.WriteName(NULL);
-		return;
-	}
-	else if ((size_t)picnum >= Textures.Size())
-	{
-		pic = Textures[0].Texture;
-	}
-	else
-	{
-		pic = Textures[picnum].Texture;
-	}
-
-	if (Wads.GetLinkedTexture(pic->SourceLump) == pic)
-	{
-		arc.WriteName(Wads.GetLumpFullName(pic->SourceLump));
-	}
-	else
-	{
-		arc.WriteName(pic->Name);
-	}
-	arc.WriteCount(pic->UseType);
-}
-
-//==========================================================================
-//
-// FTextureManager :: ReadTexture
-//
-//==========================================================================
-
-int FTextureManager::ReadTexture (FArchive &arc)
-{
-	int usetype;
-	const char *name;
-
-	name = arc.ReadName ();
-	if (name != NULL)
-	{
-		usetype = arc.ReadCount ();
-		return GetTexture (name, usetype).GetIndex();
-	}
-	else return -1;
-}
-
 //===========================================================================
 //
 // R_GuesstimateNumTextures

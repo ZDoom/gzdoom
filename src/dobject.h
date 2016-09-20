@@ -39,7 +39,6 @@
 
 class PClass;
 
-class FArchive;
 class FSerializer;
 
 class   DObject;

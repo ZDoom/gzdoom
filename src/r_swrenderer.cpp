@@ -44,7 +44,6 @@
 #include "r_data/voxels.h"
 
 
-class FArchive;
 void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio);
 void R_SetupColormap(player_t *);
 void R_SetupFreelook();

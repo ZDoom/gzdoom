@@ -1873,10 +1873,10 @@ bool PArray::ReadValue(FSerializer &ar, const char *key, void *addr) const
 		BYTE *addrb = (BYTE *)addr;
 		for(unsigned i=0;i<loop;i++)
 		{
-			readsomething |= ElementType->ReadValue(ar, key, addrb);
+			readsomething |= ElementType->ReadValue(ar, nullptr, addrb);
 			addrb += ElementSize;
 		}
-		if (loop < ElementCount)
+		if (loop < count)
 		{
 			DPrintf(DMSG_WARNING, "Array on disk (%u) is bigger than in memory (%u)\n",
 				count, ElementCount);

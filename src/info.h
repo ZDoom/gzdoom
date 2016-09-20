@@ -52,7 +52,6 @@
 struct Baggage;
 class FScanner;
 struct FActorInfo;
-class FArchive;
 class FIntCVar;
 
 enum EStateType

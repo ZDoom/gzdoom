@@ -893,6 +893,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	arc("subsectors", subsectors);
 	StatusBar->SerializeMessages(arc);
 	AM_SerializeMarkers(arc);
+	FRemapTable::StaticSerializeTranslations(arc);
 
 }
 
@@ -933,37 +934,6 @@ void P_SerializeSounds (FArchive &arc)
 void G_SerializeLevel(FArchive &arc, bool hubLoad)
 {
 #if 0
-	// Does this level have custom translations?
-	FRemapTable *trans;
-	WORD w;
-	if (arc.IsStoring())
-	{
-		for (unsigned int i = 0; i < translationtables[TRANSLATION_LevelScripted].Size(); ++i)
-		{
-			trans = translationtables[TRANSLATION_LevelScripted][i];
-			if (trans != NULL && !trans->IsIdentity())
-			{
-				w = WORD(i);
-				arc << w;
-				trans->Serialize(arc);
-			}
-		}
-		w = 0xffff;
-		arc << w;
-	}
-	else
-	{
-		while (arc << w, w != 0xffff)
-		{
-			trans = translationtables[TRANSLATION_LevelScripted].GetVal(w);
-			if (trans == NULL)
-			{
-				trans = new FRemapTable;
-				translationtables[TRANSLATION_LevelScripted].SetVal(w, trans);
-			}
-			trans->Serialize(arc);
-		}
-	}
 
 	// This must be saved, too, of course!
 	FCanvasTextureInfo::Serialize(arc);

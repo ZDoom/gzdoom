@@ -387,9 +387,6 @@ void S_NoiseDebug ();
 extern ReverbContainer *Environments;
 extern ReverbContainer *DefaultEnvironments[26];
 
-class FArchive;
-FArchive &operator<< (FArchive &arc, ReverbContainer *&env);
-
 void S_SetEnvironment (const ReverbContainer *settings);
 ReverbContainer *S_FindEnvironment (const char *name);
 ReverbContainer *S_FindEnvironment (int id);

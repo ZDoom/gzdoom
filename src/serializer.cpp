@@ -133,9 +133,9 @@ struct FReader
 				return &it->value;
 			}
 		}
-		else if (obj.mObject->IsArray())
+		else if (obj.mObject->IsArray() && obj.mIndex < obj.mObject->Size())
 		{
-			return &obj.mObject[obj.mIndex++];
+			return &(*obj.mObject)[obj.mIndex++];
 		}
 		return nullptr;
 	}

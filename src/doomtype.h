@@ -206,7 +206,6 @@ struct PalEntry
 #endif
 };
 
-class FArchive;
 class PClassInventory;
 
 class FTextureID

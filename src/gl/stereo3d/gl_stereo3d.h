@@ -58,7 +58,6 @@ public:
 	virtual void GetViewShift(float yaw, float outViewShift[3]) const;
 	virtual void SetUp() const {};
 	virtual void TearDown() const {};
-	// virtual void EndDrawScene(sector_t * viewsector) const {GLRenderer->EndDrawScene(viewsector);};
 };
 
 

@@ -7,26 +7,6 @@
 
 
 
-void DObject::SerializeUserVars(FSerializer &arc)
-{
-	PSymbolTable *symt;
-	FName varname;
-	//DWORD count, j;
-	int *varloc = NULL;
-
-	symt = &GetClass()->Symbols;
-
-	if (arc.isWriting())
-	{
-		// Write all fields that aren't serialized by native code.
-		//GetClass()->WriteValue(arc, this);
-	}
-	else
-	{
-		//GetClass()->ReadValue(arc, this);
-	}
-}
-
 //==========================================================================
 //
 //

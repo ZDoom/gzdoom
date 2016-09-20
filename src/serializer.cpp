@@ -44,12 +44,18 @@ struct FJSONObject
 	rapidjson::Value *mObject;
 	rapidjson::Value::MemberIterator mIterator;
 	int mIndex;
+	bool mRandomAccess;
 
-	FJSONObject(rapidjson::Value *v)
+	FJSONObject(rapidjson::Value *v, bool randomaccess = false)
 	{
 		mObject = v;
+		mRandomAccess = randomaccess;
 		if (v->IsObject()) mIterator = v->MemberBegin();
-		else if (v->IsArray()) mIndex = 0;
+		else if (v->IsArray())
+		{
+			mIndex = 0;
+			mIterator = v->MemberEnd();
+		}
 	}
 };
 
@@ -100,7 +106,7 @@ struct FReader
 		rapidjson::Document doc;
 		doc.Parse(buffer, length);
 		mDocObj = doc.GetObject();
-		mObjects.Push(FJSONObject(&mDocObj));
+		mObjects.Push(FJSONObject(&mDocObj)); // Todo: Decide if this should be made random access...
 	}
 	
 	rapidjson::Value *FindKey(const char *key)
@@ -109,12 +115,22 @@ struct FReader
 		
 		if (obj.mObject->IsObject())
 		{
-			if (obj.mIterator != obj.mObject->MemberEnd())
+			if (!obj.mRandomAccess)
 			{
-				if (!strcmp(key, obj.mIterator->name.GetString()))
+				if (obj.mIterator != obj.mObject->MemberEnd())
 				{
-					return &(obj.mIterator++)->value;
+					if (!strcmp(key, obj.mIterator->name.GetString()))
+					{
+						return &(obj.mIterator++)->value;
+					}
 				}
+			}
+			else
+			{
+				// for unordered searches. This is slower but will not rely on sequential order of items.
+				auto it = obj.mObject->FindMember(key);
+				if (it == obj.mObject->MemberEnd()) return nullptr;
+				return &it->value;
 			}
 		}
 		else if (obj.mObject->IsArray())
@@ -227,7 +243,7 @@ void FSerializer::WriteKey(const char *key)
 //
 //==========================================================================
 
-bool FSerializer::BeginObject(const char *name)
+bool FSerializer::BeginObject(const char *name, bool randomaccess)
 {
 	if (isWriting())
 	{
@@ -242,7 +258,7 @@ bool FSerializer::BeginObject(const char *name)
 		{
 			if (val->IsObject())
 			{
-				r->mObjects.Push(FJSONObject(val));
+				r->mObjects.Push(FJSONObject(val, randomaccess));
 			}
 			else
 			{
@@ -530,6 +546,10 @@ FSerializer &FSerializer::StringPtr(const char *key, const char *&charptr)
 			{
 				charptr = val->GetString();
 			}
+			else
+			{
+				charptr = nullptr;
+			}
 		}
 	}
 	return *this;
@@ -548,6 +568,20 @@ unsigned FSerializer::GetSize(const char *group)
 	const rapidjson::Value &val = r->mDocObj[group];
 	if (!val.IsArray()) return -1;
 	return val.Size();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+const char *FSerializer::GetKey()
+{
+	if (isWriting()) return nullptr;	// we do not know this when writing.
+	auto &it = r->mObjects.Last().mIterator;
+	if (it == r->mObjects.Last().mObject->MemberEnd()) return nullptr;
+	return it->name.GetString();
 }
 
 //==========================================================================
@@ -994,8 +1028,9 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 //
 //==========================================================================
 
-FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObject ** /*defval*/)
+FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObject ** /*defval*/, bool *retcode)
 {
+	if (retcode) *retcode = true;
 	if (arc.isWriting())
 	{
 		if (value != nullptr)
@@ -1017,9 +1052,13 @@ FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObje
 		if (val != nullptr)
 		{
 		}
-		else
+		else if (!retcode)
 		{
 			value = nullptr;
+		}
+		else
+		{
+			*retcode = false;
 		}
 	}
 	return arc;
@@ -1187,16 +1226,53 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClassActor
 
 //==========================================================================
 //
+// almost, but not quite the same as the above.
+//
+//==========================================================================
+
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClass *&clst, PClass **def)
+{
+	if (arc.isWriting())
+	{
+		if (!arc.w->inObject() || def == nullptr || clst != *def)
+		{
+			arc.WriteKey(key);
+			arc.w->mWriter.String(clst->TypeName.GetChars());
+		}
+	}
+	else
+	{
+		auto val = arc.r->FindKey(key);
+		if (val != nullptr)
+		{
+			if (val->IsString())
+			{
+				clst = PClass::FindClass(val->GetString());
+			}
+			else
+			{
+				I_Error("string type expected for '%s'", key);
+			}
+		}
+	}
+	return arc;
+
+}
+
+//==========================================================================
+//
 //
 //
 //==========================================================================
 
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def)
+FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def, bool *retcode)
 {
+	if (retcode) *retcode = false;
 	if (arc.isWriting())
 	{
 		if (!arc.w->inObject() || def == nullptr || state != *def)
 		{
+			if (retcode) *retcode = true;
 			arc.WriteKey(key);
 			if (state == nullptr)
 			{
@@ -1227,10 +1303,12 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FState *&st
 		{
 			if (val->IsNull())
 			{
+				if (retcode) *retcode = true;
 				state = nullptr;
 			}
 			else if (val->IsArray())
 			{
+				if (retcode) *retcode = true;
 				const rapidjson::Value &cls = (*val)[0];
 				const rapidjson::Value &ndx = (*val)[1];
 
@@ -1244,7 +1322,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FState *&st
 					}
 				}
 			}
-			else
+			else if (!retcode)
 			{
 				I_Error("array type expected for '%s'", key);
 			}
@@ -1455,7 +1533,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&fon
 		const char *n;
 		arc.StringPtr(key, n);
 		font = V_GetFont(n);
-		if (font == NULL)
+		if (font == nullptr)
 		{
 			Printf("Could not load font %s\n", n);
 			font = SmallFont;
@@ -1465,3 +1543,59 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&fon
 
 }
 
+//==========================================================================
+//
+// Handler to retrieve a numeric value of any kind.
+//
+//==========================================================================
+
+FSerializer &Serialize(FSerializer &arc, const char *key, NumericValue &value, NumericValue *defval)
+{
+	if (arc.isWriting())
+	{
+		if (!arc.w->inObject() || defval == nullptr || value != *defval)
+		{
+			arc.WriteKey(key);
+			switch (value.type)
+			{
+			case NumericValue::NM_signed:
+				arc.w->mWriter.Int64(value.signedval);
+				break;
+			case NumericValue::NM_unsigned:
+				arc.w->mWriter.Uint64(value.unsignedval);
+				break;
+			case NumericValue::NM_float:
+				arc.w->mWriter.Double(value.floatval);
+				break;
+			default:
+				arc.w->mWriter.Null();
+				break;
+			}
+		}
+	}
+	else
+	{
+		auto val = arc.r->FindKey(key);
+		value.signedval = 0;
+		value.type = NumericValue::NM_invalid;
+		if (val != nullptr)
+		{
+			if (val->IsUint64())
+			{
+				value.unsignedval = val->GetUint64();
+				value.type = NumericValue::NM_unsigned;
+			}
+			else if (val->IsInt64())
+			{
+				value.signedval = val->GetInt64();
+				value.type = NumericValue::NM_signed;
+			}
+			else if (val->IsDouble())
+			{
+				value.floatval = val->GetDouble();
+				value.type = NumericValue::NM_float;
+			}
+		}
+	}
+	return arc;
+}

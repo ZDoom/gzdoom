@@ -14,6 +14,29 @@ extern TArray<line_t>	loadlines;
 extern TArray<side_t>	loadsides;
 extern char nulspace[];
 
+struct NumericValue
+{
+	enum EType
+	{
+		NM_invalid,
+		NM_signed,
+		NM_unsigned,
+		NM_float
+	} type;
+
+	union
+	{
+		int64_t signedval;
+		uint64_t unsignedval;
+		double floatval;
+	};
+
+	bool operator !=(const NumericValue &other)
+	{
+		return type != other.type || signedval != other.signedval;
+	}
+};
+
 
 
 class FSerializer
@@ -24,6 +47,7 @@ public:
 	FReader *r = nullptr;
 
 	int ArraySize();
+	void WriteKey(const char *key);
 
 public:
 
@@ -34,13 +58,13 @@ public:
 	bool OpenWriter();
 	bool OpenReader(const char *buffer, size_t length);
 	void Close();
-	void WriteKey(const char *key);
-	bool BeginObject(const char *name);
+	bool BeginObject(const char *name, bool randomaccess = false);
 	void EndObject();
 	bool BeginArray(const char *name);
 	void EndArray();
 	void WriteObjects();
 	unsigned GetSize(const char *group);
+	const char *GetKey();
 	const char *GetOutput(unsigned *len = nullptr);
 	FSerializer &Args(const char *key, int *args, int *defargs, int special);
 	FSerializer &Terrain(const char *key, int &terrain, int *def = nullptr);
@@ -130,10 +154,11 @@ FSerializer &Serialize(FSerializer &arc, const char *key, uint16_t &value, uint1
 FSerializer &Serialize(FSerializer &arc, const char *key, double &value, double *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, float &value, float *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTextureID *defval);
-FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObject ** /*defval*/);
+FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObject ** /*defval*/, bool *retcode = nullptr);
 FSerializer &Serialize(FSerializer &arc, const char *key, FName &value, FName *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundID *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, FString &sid, FString *def);
+FSerializer &Serialize(FSerializer &arc, const char *key, NumericValue &sid, NumericValue *def);
 
 template<class T>
 FSerializer &Serialize(FSerializer &arc, const char *key, T *&value, T **)
@@ -184,12 +209,18 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&va
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, vertex_t *&value, vertex_t **defval);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDynamicColormap *&cm, FDynamicColormap **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClassActor *&clst, PClassActor **def);
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClass *&clst, PClass **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDialogueNode *&node, FStrifeDialogueNode **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FString *&pstr, FString **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDoorAnimation *&pstr, FDoorAnimation **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr, char **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&font, FFont **def);
+
+FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def, bool *retcode);
+template<> inline FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def)
+{
+	return Serialize(arc, key, state, def, nullptr);
+}
 
 
 inline FSerializer &Serialize(FSerializer &arc, const char *key, DVector3 &p, DVector3 *def)

@@ -58,8 +58,6 @@ struct botskill_t
 	int isp;        //Instincts of Self Preservation. Personality
 };
 
-FArchive &operator<< (FArchive &arc, botskill_t &skill);
-
 enum
 {
 	BOTINUSE_No,

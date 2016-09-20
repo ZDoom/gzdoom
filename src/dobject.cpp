@@ -478,67 +478,19 @@ size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld)
 //
 //==========================================================================
 
-void DObject::SerializeUserVars(FArchive &arc)
+void DObject::SerializeUserVars(FSerializer &arc)
 {
-	PSymbolTable *symt;
-	FName varname;
-	DWORD count, j;
-	int *varloc = NULL;
-
-	symt = &GetClass()->Symbols;
-
-	if (arc.IsStoring())
+	if (arc.isWriting())
 	{
 		// Write all fields that aren't serialized by native code.
-		GetClass()->WriteValue(arc, this);
-	}
-	else if (SaveVersion >= 4535)
-	{
-		GetClass()->ReadValue(arc, this);
+		GetClass()->WriteAllFields(arc, this);
 	}
 	else
-	{ // Old version that only deals with ints
-		// Read user variables until 'None' is encountered.
-		arc << varname;
-		while (varname != NAME_None)
-		{
-			PField *var = dyn_cast<PField>(symt->FindSymbol(varname, true));
-			DWORD wanted = 0;
-
-			if (var != NULL && !(var->Flags & VARF_Native))
-			{
-				PType *type = var->Type;
-				PArray *arraytype = dyn_cast<PArray>(type);
-				if (arraytype != NULL)
-				{
-					wanted = arraytype->ElementCount;
-					type = arraytype->ElementType;
-				}
-				else
-				{
-					wanted = 1;
-				}
-				assert(type == TypeSInt32);
-				varloc = (int *)(reinterpret_cast<BYTE *>(this) + var->Offset);
-			}
-			count = arc.ReadCount();
-			for (j = 0; j < MIN(wanted, count); ++j)
-			{
-				arc << varloc[j];
-			}
-			if (wanted < count)
-			{
-				// Ignore remaining values from archive.
-				for (; j < count; ++j)
-				{
-					int foo;
-					arc << foo;
-				}
-			}
-			arc << varname;
-		}
+	{
+		GetClass()->ReadAllFields(arc, this);
 	}
 }
+
 
 //==========================================================================
 //

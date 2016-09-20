@@ -98,4 +98,14 @@ SideBySideFull::SideBySideFull(double ipdMeters)
 	eye_ptrs.Push(&rightEye);
 }
 
+/* virtual */
+void SideBySideFull::AdjustPlayerSprites() const /* override */ 
+{
+	// Show weapon at double width, so it would appear normal width after rescaling
+	int w = GLRenderer->mScreenViewport.width;
+	int h = GLRenderer->mScreenViewport.height;
+	gl_RenderState.mProjectionMatrix.ortho(w/2, w + w/2, h, 0, -1.0f, 1.0f);
+	gl_RenderState.ApplyMatrices();
+}
+
 } /* namespace s3d */

@@ -422,6 +422,10 @@ public:
 	virtual bool Is8BitMode() = 0;
 #endif
 
+	// The original size of the framebuffer as selected in the video menu.
+	int VideoWidth = 0;
+	int VideoHeight = 0;
+
 protected:
 	void DrawRateStuff ();
 	void CopyFromBuff (BYTE *src, int srcPitch, int width, int height, BYTE *dest);
@@ -523,8 +527,9 @@ static inline double ActiveRatio (double width, double height) { return ActiveRa
 
 int AspectBaseWidth(float aspect);
 int AspectBaseHeight(float aspect);
-int AspectPspriteOffset(float aspect);
+double AspectPspriteOffset(float aspect);
 int AspectMultiplier(float aspect);
+bool AspectTallerThanWide(float aspect);
 
 EXTERN_CVAR(Int, uiscale);
 

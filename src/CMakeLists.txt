@@ -115,59 +115,49 @@ if( WIN32 )
 	set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 	set( NASM_NAMES nasmw nasm )
 	
-	if( NOT MSVC )
-		find_path( D3D_INCLUDE_DIR d3d9.h
-			PATHS ENV DXSDK_DIR
-			PATH_SUFFIXES Include )
-		if( NOT D3D_INCLUDE_DIR )
-			message( SEND_ERROR "Could not find DirectX 9 header files" )
-		else()
-			include_directories( ${D3D_INCLUDE_DIR} )
-		endif()
-	
-		find_path( XINPUT_INCLUDE_DIR xinput.h
-			PATHS ENV DXSDK_DIR
-			PATH_SUFFIXES Include )
-		if( NOT XINPUT_INCLUDE_DIR )
-			message( WARNING "Could not find xinput.h. XInput will be disabled." )
-			add_definitions( -DNO_XINPUT )
-		else()
-			include_directories( ${XINPUT_INCLUDE_DIR} )
-		endif()
-
-		find_library( DX_dxguid_LIBRARY dxguid
-			PATHS ENV DXSDK_DIR
-			PATH_SUFFIXES Lib Lib/${XBITS} )
-		find_library( DX_dinput8_LIBRARY dinput8
-			PATHS ENV DXSDK_DIR
-			PATH_SUFFIXES Lib Lib/${XBITS} )
-
-		set( DX_LIBS_FOUND YES )
-		if( NOT DX_dxguid_LIBRARY )
-			set( DX_LIBS_FOUND NO )
-		endif()
-		if( NOT DX_dinput8_LIBRARY )
-			set( DX_LIBS_FOUND NO )
-		endif()
-
-		if( NOT DX_LIBS_FOUND )
-			message( FATAL_ERROR "Could not find DirectX 9 libraries" )
-		endif()
-		
-		set( DX_LIBS
-			"${DX_dxguid_LIBRARY}"
-			"${DX_dinput8_LIBRARY}"
-		)
+	find_path( D3D_INCLUDE_DIR d3d9.h
+		PATHS ENV DXSDK_DIR
+		PATH_SUFFIXES Include )
+	if( NOT D3D_INCLUDE_DIR )
+		message( SEND_ERROR "Could not find DirectX 9 header files" )
 	else()
-		set( DX_LIBS
-			dxguid
-			dinput8
-		)
+		include_directories( ${D3D_INCLUDE_DIR} )
+	endif()
+	
+	find_path( XINPUT_INCLUDE_DIR xinput.h
+		PATHS ENV DXSDK_DIR
+		PATH_SUFFIXES Include )
+	if( NOT XINPUT_INCLUDE_DIR )
+		message( WARNING "Could not find xinput.h. XInput will be disabled." )
+		add_definitions( -DNO_XINPUT )
+	else()
+		include_directories( ${XINPUT_INCLUDE_DIR} )
 	endif()
 
-	set( ZDOOM_LIBS ${DX_LIBS}
+	find_library( DX_dxguid_LIBRARY dxguid
+		PATHS ENV DXSDK_DIR
+		PATH_SUFFIXES Lib Lib/${XBITS} )
+	find_library( DX_dinput8_LIBRARY dinput8
+		PATHS ENV DXSDK_DIR
+		PATH_SUFFIXES Lib Lib/${XBITS} )
+
+	set( DX_LIBS_FOUND YES )
+	if( NOT DX_dxguid_LIBRARY )
+		set( DX_LIBS_FOUND NO )
+	endif()
+	if( NOT DX_dinput8_LIBRARY )
+		set( DX_LIBS_FOUND NO )
+	endif()
+
+	if( NOT DX_LIBS_FOUND )
+		message( FATAL_ERROR "Could not find DirectX 9 libraries" )
+	endif()
+
+	set( ZDOOM_LIBS
 		wsock32
 		winmm
+		"${DX_dxguid_LIBRARY}"
+		"${DX_dinput8_LIBRARY}"
 		ole32
 		user32
 		gdi32

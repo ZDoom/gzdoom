@@ -1,42 +1,30 @@
+// 
+//---------------------------------------------------------------------------
+//
+// Copyright(C) 2002-2016 Christoph Oelckers
+// All rights reserved.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//--------------------------------------------------------------------------
+//
 /*
 ** gl_sprite.cpp
 ** Sprite/Particle rendering
 **
-**---------------------------------------------------------------------------
-** Copyright 2002-2005 Christoph Oelckers
-** All rights reserved.
-**
-** Redistribution and use in source and binary forms, with or without
-** modification, are permitted provided that the following conditions
-** are met:
-**
-** 1. Redistributions of source code must retain the above copyright
-**    notice, this list of conditions and the following disclaimer.
-** 2. Redistributions in binary form must reproduce the above copyright
-**    notice, this list of conditions and the following disclaimer in the
-**    documentation and/or other materials provided with the distribution.
-** 3. The name of the author may not be used to endorse or promote products
-**    derived from this software without specific prior written permission.
-** 4. When not used as part of GZDoom or a GZDoom derivative, this code will be
-**    covered by the terms of the GNU Lesser General Public License as published
-**    by the Free Software Foundation; either version 2.1 of the License, or (at
-**    your option) any later version.
-** 5. Full disclosure of the entire project's source code, except for third
-**    party libraries is mandatory. (NOTE: This clause is non-negotiable!)
-**
-** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-**---------------------------------------------------------------------------
-**
 */
+
 #include "gl/system/gl_system.h"
 #include "p_local.h"
 #include "p_effect.h"
@@ -119,6 +107,44 @@ static const float LARGE_VALUE = 1e19f;
 
 void GLSprite::CalculateVertices(FVector3 *v)
 {
+	if (actor != nullptr && (actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
+	{
+		Matrix3x4 mat;
+		mat.MakeIdentity();
+
+		// [MC] Rotate around the center or offsets given to the sprites.
+		// Counteract any existing rotations, then rotate the angle.
+		// Tilt the actor up or down based on pitch (increase 'somersaults' forward).
+		// Then counteract the roll and DO A BARREL ROLL.
+
+		FAngle pitch = (float)-actor->Angles.Pitch.Degrees;
+		pitch.Normalized180();
+
+		mat.Translate(x, z, y);
+		mat.Rotate(0, 1, 0, 270. - actor->Angles.Yaw.Degrees);
+		mat.Rotate(1, 0, 0, pitch.Degrees);
+
+		if (actor->renderflags & RF_ROLLCENTER)
+		{
+			float cx = (x1 + x2) * 0.5;
+			float cy = (y1 + y2) * 0.5;
+
+			mat.Translate(cx - x, 0, cy - y);
+			mat.Rotate(0, 1, 0, - actor->Angles.Roll.Degrees);
+			mat.Translate(-cx, -z, -cy);
+		}
+		else
+		{
+			mat.Rotate(0, 1, 0, - actor->Angles.Roll.Degrees);
+			mat.Translate(-x, -z, -y);
+		}
+		v[0] = mat * FVector3(x1, z, y2);
+		v[1] = mat * FVector3(x2, z, y2);
+		v[2] = mat * FVector3(x1, z, y1);
+		v[3] = mat * FVector3(x2, z, y1);
+		return;
+	}
+	
 	// [BB] Billboard stuff
 	const bool drawWithXYBillboard = ((particle && gl_billboard_particles) || (!(actor && actor->renderflags & RF_FORCEYBILLBOARD)
 		//&& GLRenderer->mViewActor != NULL
@@ -375,15 +401,8 @@ void GLSprite::Draw(int pass)
 			gl_RenderState.Apply();
 
 			FVector3 v[4];
-			if (actor != nullptr && (actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
-			{
-			}
-			else
-			{
-				CalculateVertices(v);
-			}
-
-
+			CalculateVertices(v);
+			
 			FQuadDrawer qd;
 			qd.Set(0, v[0][0], v[0][1], v[0][2], ul, vt);
 			qd.Set(1, v[1][0], v[1][1], v[1][2], ur, vt);
@@ -437,7 +456,7 @@ inline void GLSprite::PutSprite(bool translucent)
 {
 	int list;
 	// [BB] Allow models to be drawn in the GLDL_TRANSLUCENT pass.
-	if (translucent || (!modelframe && (actor->renderflags & RF_SPRITETYPEMASK) != RF_WALLSPRITE))
+	if (translucent || actor == nullptr || (!modelframe && (actor->renderflags & RF_SPRITETYPEMASK) != RF_WALLSPRITE))
 	{
 		list = GLDL_TRANSLUCENT;
 	}
@@ -607,7 +626,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	sector_t * rendersector;
 
 	// Don't waste time projecting sprites that are definitely not visible.
-	if (thing == NULL || thing->sprite == 0 || !thing->IsVisibleToPlayer())
+	if (thing == nullptr || thing->sprite == 0 || !thing->IsVisibleToPlayer())
 	{
 		return;
 	}
@@ -740,7 +759,8 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 
 		float rightfac = -r.left;
 		float leftfac = rightfac - r.width;
-
+		float bottomfac = -r.top;
+		float topfac = bottomfac - r.height;
 		z1 = z - r.top;
 		z2 = z1 - r.height;
 
@@ -765,11 +785,15 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			y1 = y + viewvecX*leftfac;
 			y2 = y + viewvecX*rightfac;
 			break;
-
+			
 		case RF_FLATSPRITE:
-			// needs careful rethinking
-			return;
-
+		{	
+			x1 = x + leftfac;
+			x2 = x + rightfac;
+			y1 = y - topfac;
+			y2 = y - bottomfac;
+		}
+		break;
 		case RF_WALLSPRITE:
 			viewvecX = thing->Angles.Yaw.Cos();
 			viewvecY = thing->Angles.Yaw.Sin();
@@ -899,7 +923,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		// This is a non-translucent sprite (i.e. STYLE_Normal or equivalent)
 		trans=1.f;
 		
-		if (!gl_sprite_blend || modelframe || (thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
+		if (!gl_sprite_blend || modelframe || (thing->renderflags & (RF_FLATSPRITE|RF_WALLSPRITE)) || gl_billboard_faces_camera)
 		{
 			RenderStyle.SrcAlpha = STYLEALPHA_One;
 			RenderStyle.DestAlpha = STYLEALPHA_Zero;
@@ -910,8 +934,6 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			RenderStyle.SrcAlpha = STYLEALPHA_Src;
 			RenderStyle.DestAlpha = STYLEALPHA_InvSrc;
 		}
-
-
 	}
 	if ((gltexture && gltexture->GetTransparent()) || (RenderStyle.Flags & STYLEF_RedIsAlpha))
 	{

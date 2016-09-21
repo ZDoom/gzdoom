@@ -1,6 +1,6 @@
 
-#ifndef __GL_TEXTURE_H
-#define __GL_TEXTURE_H
+#ifndef __GL_MATERIAL_H
+#define __GL_MATERIAL_H
 
 #include "m_fixed.h"
 #include "textures/textures.h"

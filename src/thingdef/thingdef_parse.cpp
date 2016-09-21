@@ -865,19 +865,21 @@ static bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defau
 
 					if (sc.CheckString ("("))
 					{
-						x = new FxDamageValue(new FxIntCast(ParseExpression(sc, bag.Info)), true);
+						conv.i = -1;
+						params.Push(conv);
+						x = new FxDamageValue(new FxIntCast(ParseExpression(sc, bag.Info)));
 						sc.MustGetStringName(")");
+						conv.exp = x;
+						params.Push(conv);
+
 					}
 					else
 					{
 						sc.MustGetNumber();
-						if (sc.Number != 0)
-						{
-							x = new FxDamageValue(new FxConstant(sc.Number, bag.ScriptPosition), false);
-						}
+						conv.i = sc.Number;
+						params.Push(conv);
+						conv.exp = nullptr;
 					}
-					conv.exp = x;
-					params.Push(conv);
 				}
 				break;
 

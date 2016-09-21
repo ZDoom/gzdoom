@@ -666,4 +666,5 @@ void InitThingdef()
 	symt.AddSymbol(new PField(NAME_Speed,			TypeFloat64,	VARF_Native,				myoffsetof(AActor, Speed)));
 	symt.AddSymbol(new PField(NAME_Threshold,		TypeSInt32,		VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, threshold)));
 	symt.AddSymbol(new PField(NAME_DefThreshold,	TypeSInt32,		VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, DefThreshold)));
+	symt.AddSymbol(new PField(NAME_Damage,			TypeSInt32,		VARF_Native|VARF_ReadOnly,  myoffsetof(AActor, DamageVal)));
 }

@@ -156,6 +156,15 @@ enum
 	ATAG_RNG,				// pointer to FRandom
 };
 
+enum EVMAbortException
+{
+	X_READ_NIL,
+	X_WRITE_NIL,
+	X_TOO_MANY_TRIES,
+	X_ARRAY_OUT_OF_BOUNDS,
+	X_DIVISION_BY_ZERO,
+};
+
 class VMFunction : public DObject
 {
 	DECLARE_ABSTRACT_CLASS(VMFunction, DObject);

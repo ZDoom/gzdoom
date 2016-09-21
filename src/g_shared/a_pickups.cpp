@@ -18,7 +18,6 @@
 #include "g_level.h"
 #include "g_game.h"
 #include "doomstat.h"
-#include "farchive.h"
 #include "d_player.h"
 #include "p_spec.h"
 #include "serializer.h"

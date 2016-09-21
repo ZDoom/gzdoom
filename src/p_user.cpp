@@ -52,7 +52,6 @@
 #include "g_level.h"
 #include "d_net.h"
 #include "gstrings.h"
-#include "farchive.h"
 #include "serializer.h"
 #include "r_renderer.h"
 #include "d_player.h"

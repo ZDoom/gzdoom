@@ -1038,7 +1038,6 @@ set (PCH_SOURCES
 	dthinker.cpp
 	edata.cpp
 	f_wipe.cpp
-	farchive.cpp
 	files.cpp
 	g_doomedmap.cpp
 	g_game.cpp

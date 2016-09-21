@@ -34,7 +34,6 @@
 **
 */
 #include "actor.h"
-#include "farchive.h"
 #include "templates.h"
 #include "cmdlib.h"
 #include "i_system.h"

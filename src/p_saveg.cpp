@@ -52,7 +52,6 @@
 #include "po_man.h"
 #include "p_setup.h"
 #include "r_data/colormaps.h"
-#include "farchive.h"
 #include "p_lnspec.h"
 #include "p_acs.h"
 #include "p_terrain.h"

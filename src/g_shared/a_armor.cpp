@@ -6,7 +6,6 @@
 #include "templates.h"
 #include "g_level.h"
 #include "d_player.h"
-#include "farchive.h"
 #include "serializer.h"
 
 

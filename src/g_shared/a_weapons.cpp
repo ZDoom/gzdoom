@@ -17,7 +17,6 @@
 #include "doomstat.h"
 #include "g_level.h"
 #include "d_net.h"
-#include "farchive.h"
 #include "serializer.h"
 
 #define BONUSADD 6

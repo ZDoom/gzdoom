@@ -64,7 +64,6 @@
 #include "v_palette.h"
 #include "p_enemy.h"
 #include "gstrings.h"
-#include "farchive.h"
 #include "r_data/colormaps.h"
 #include "r_renderer.h"
 #include "po_man.h"

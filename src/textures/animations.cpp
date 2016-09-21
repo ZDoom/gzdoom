@@ -43,7 +43,6 @@
 #include "templates.h"
 #include "w_wad.h"
 #include "g_level.h"
-#include "farchive.h"
 #include "serializer.h"
 
 // MACROS ------------------------------------------------------------------

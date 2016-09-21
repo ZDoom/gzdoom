@@ -38,7 +38,6 @@
 #include "statnums.h"
 #include "i_system.h"
 #include "doomerrors.h"
-#include "farchive.h"
 #include "serializer.h"
 #include "d_player.h"
 

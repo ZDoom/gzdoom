@@ -81,7 +81,6 @@
 #include "a_sharedglobal.h"
 #include "a_strifeglobal.h"
 #include "r_data/colormaps.h"
-#include "farchive.h"
 #include "r_renderer.h"
 #include "r_utility.h"
 #include "p_spec.h"

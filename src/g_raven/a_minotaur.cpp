@@ -11,7 +11,6 @@
 #include "thingdef/thingdef.h"
 #include "g_level.h"
 #include "doomstat.h"
-#include "farchive.h"
 #include "a_pickups.h"
 #include "d_player.h"
 #include "serializer.h"

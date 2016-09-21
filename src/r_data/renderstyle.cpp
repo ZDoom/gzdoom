@@ -32,7 +32,6 @@
 **
 */
 
-#include "farchive.h"
 #include "templates.h"
 #include "renderstyle.h"
 #include "c_cvars.h"

@@ -45,7 +45,6 @@
 #include "c_cvars.h"
 #include "m_bbox.h"
 #include "p_tags.h"
-#include "farchive.h"
 #include "v_text.h"
 #include "a_sharedglobal.h"
 #include "i_system.h"

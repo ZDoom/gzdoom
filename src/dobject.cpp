@@ -47,7 +47,6 @@
 #include "stats.h"
 #include "a_sharedglobal.h"
 #include "dsectoreffect.h"
-#include "farchive.h"
 #include "serializer.h"
 
 //==========================================================================

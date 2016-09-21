@@ -74,7 +74,6 @@
 #include "p_setup.h"
 #include "po_man.h"
 #include "actorptrselect.h"
-#include "farchive.h"
 #include "serializer.h"
 #include "decallib.h"
 #include "p_terrain.h"
@@ -726,7 +725,7 @@ void ACSStringPool::ReadStrings(FSerializer &file, const char *key)
 {
 	Clear();
 
-	int32_t i, j, poolsize;
+	int poolsize;
 
 	file("poolsize", poolsize);
 	Pool.Resize(poolsize);
@@ -737,22 +736,22 @@ void ACSStringPool::ReadStrings(FSerializer &file, const char *key)
 	}
 	if (file.BeginArray("pool"))
 	{
-		j = file.ArraySize();
+		int j = file.ArraySize();
 		for (int i = 0; i < j; i++)
 		{
 			if (file.BeginObject(nullptr))
 			{
-				i = -1;
-				file("index", i);
-				if (i >= 0 && i < Pool.Size())
+				unsigned ii = UINT_MAX;
+				file("index", ii);
+				if (ii < Pool.Size())
 				{
-					file("string", Pool[i].Str)
-						("lockcount", Pool[i].LockCount);
+					file("string", Pool[ii].Str)
+						("lockcount", Pool[ii].LockCount);
 
-					unsigned h = SuperFastHash(Pool[i].Str, Pool[i].Str.Len());
+					unsigned h = SuperFastHash(Pool[ii].Str, Pool[ii].Str.Len());
 					unsigned bucketnum = h % NUM_BUCKETS;
-					Pool[i].Hash = h;
-					Pool[i].Next = PoolBuckets[bucketnum];
+					Pool[ii].Hash = h;
+					Pool[ii].Next = PoolBuckets[bucketnum];
 					PoolBuckets[bucketnum] = i;
 				}
 				file.EndObject();
@@ -980,7 +979,7 @@ static void WriteVars (FSerializer &file, SDWORD *vars, size_t count, const char
 static void ReadVars (FSerializer &arc, SDWORD *vars, size_t count, const char *key)
 {
 	memset(&vars[0], 0, count * 4);
-	arc.Array(key, vars, count);
+	arc.Array(key, vars, (int)count);
 }
 
 //============================================================================
@@ -1038,7 +1037,7 @@ static void WriteArrayVars (FSerializer &file, FWorldGlobalArray *vars, unsigned
 
 static void ReadArrayVars (FSerializer &file, FWorldGlobalArray *vars, size_t count, const char *key)
 {
-	for (i = 0; i < count; ++i)
+	for (size_t i = 0; i < count; ++i)
 	{
 		vars[i].Clear();
 	}

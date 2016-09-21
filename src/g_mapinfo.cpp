@@ -45,7 +45,6 @@
 #include "i_system.h"
 #include "gi.h"
 #include "gstrings.h"
-#include "farchive.h"
 #include "p_acs.h"
 #include "doomstat.h"
 #include "d_player.h"

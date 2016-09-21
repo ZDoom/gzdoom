@@ -330,7 +330,7 @@ void FRandom::StaticReadRNGState(FSerializer &arc)
 {
 	FRandom *rng;
 
-	arc("rngseed", rng);
+	arc("rngseed", rngseed);
 	if (arc.BeginArray("rngs"))
 	{
 		int count = arc.ArraySize();

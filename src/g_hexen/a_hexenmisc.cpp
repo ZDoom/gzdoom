@@ -17,7 +17,6 @@
 #include "p_terrain.h"
 #include "m_bbox.h"
 #include "ravenshared.h"
-#include "farchive.h"
 #include "v_palette.h"
 #include "g_game.h"
 #include "p_blockmap.h"

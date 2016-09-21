@@ -176,8 +176,6 @@ public:
 	}
 };
 
-FArchive &operator<<(FArchive &arc, FSoundID &sid);
-
 extern FRolloffInfo S_Rolloff;
 extern BYTE *S_SoundCurve;
 extern int S_SoundCurveSize;

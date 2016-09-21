@@ -770,11 +770,11 @@ void ACSStringPool::ReadStrings(PNGHandle *png, DWORD id)
 //
 // ACSStringPool :: WriteStrings
 //
-// Writes strings to a PNG chunk.
+// Writes strings to a serializer
 //
 //============================================================================
 
-void ACSStringPool::WriteStrings(FILE *file, DWORD id) const
+void ACSStringPool::WriteStrings(FSerializer &file, const char *key) const
 {
 	int32_t i, poolsize = (int32_t)Pool.Size();
 	
@@ -782,20 +782,29 @@ void ACSStringPool::WriteStrings(FILE *file, DWORD id) const
 	{ // No need to write if we don't have anything.
 		return;
 	}
-	FPNGChunkArchive arc(file, id);
-
-	arc << poolsize;
-	for (i = 0; i < poolsize; ++i)
+	if (file.BeginObject(key))
 	{
-		PoolEntry *entry = &Pool[i];
-		if (entry->Next != FREE_ENTRY)
+		file("poolsize", poolsize);
+		if (file.BeginArray("pool"))
 		{
-			arc.WriteCount(i);
-			arc.WriteString(entry->Str);
-			arc.WriteCount(entry->LockCount);
+			for (i = 0; i < poolsize; ++i)
+			{
+				PoolEntry *entry = &Pool[i];
+				if (entry->Next != FREE_ENTRY)
+				{
+					if (file.BeginObject(nullptr))
+					{
+						file("index", i)
+							("string", entry->Str)
+							("lockcount", entry->LockCount)
+							.EndObject();
+					}
+				}
+			}
+			file.EndArray();
 		}
+		file.EndObject();
 	}
-	arc.WriteCount(-1);
 }
 
 //============================================================================
@@ -945,7 +954,7 @@ void P_ClearACSVars(bool alsoglobal)
 //
 //============================================================================
 
-static void WriteVars (FILE *file, SDWORD *vars, size_t count, DWORD id)
+static void WriteVars (FSerializer &file, SDWORD *vars, size_t count, const char *key)
 {
 	size_t i, j;
 
@@ -963,12 +972,7 @@ static void WriteVars (FILE *file, SDWORD *vars, size_t count, DWORD id)
 			if (vars[j] != 0)
 				break;
 		}
-		FPNGChunkArchive arc (file, id);
-		for (i = 0; i <= j; ++i)
-		{
-			DWORD var = vars[i];
-			arc << var;
-		}
+		file.Array(key, vars, int(j+1));
 	}
 }
 
@@ -1009,9 +1013,9 @@ static void ReadVars (PNGHandle *png, SDWORD *vars, size_t count, DWORD id)
 //
 //============================================================================
 
-static void WriteArrayVars (FILE *file, FWorldGlobalArray *vars, unsigned int count, DWORD id)
+static void WriteArrayVars (FSerializer &file, FWorldGlobalArray *vars, unsigned int count, const char *key)
 {
-	unsigned int i, j;
+	unsigned int i;
 
 	// Find the first non-empty array.
 	for (i = 0; i < count; ++i)
@@ -1021,28 +1025,31 @@ static void WriteArrayVars (FILE *file, FWorldGlobalArray *vars, unsigned int co
 	}
 	if (i < count)
 	{
-		// Find last non-empty array. Anything beyond the last stored array
-		// will be emptied at load time.
-		for (j = count-1; j > i; --j)
+		if (file.BeginObject(key))
 		{
-			if (vars[j].CountUsed() != 0)
-				break;
-		}
-		FPNGChunkArchive arc (file, id);
-		arc.WriteCount (i);
-		arc.WriteCount (j);
-		for (; i <= j; ++i)
-		{
-			arc.WriteCount (vars[i].CountUsed());
-
-			FWorldGlobalArray::ConstIterator it(vars[i]);
-			const FWorldGlobalArray::Pair *pair;
-
-			while (it.NextPair (pair))
+			for(;i<count;i++)
 			{
-				arc.WriteCount (pair->Key);
-				arc.WriteCount (pair->Value);
+				if (vars[i].CountUsed())
+				{
+					FString arraykey;
+
+					arraykey.Format("%d", i);
+					if (file.BeginObject(arraykey))
+					{
+						FWorldGlobalArray::ConstIterator it(vars[i]);
+						const FWorldGlobalArray::Pair *pair;
+
+						while (it.NextPair(pair))
+						{
+							arraykey.Format("%d", pair->Key);
+							int v = pair->Value;
+							file(arraykey.GetChars(), v);
+						}
+						file.EndObject();
+					}
+				}
 			}
+			file.EndObject();
 		}
 	}
 }
@@ -1108,13 +1115,13 @@ void P_ReadACSVars(PNGHandle *png)
 //
 //============================================================================
 
-void P_WriteACSVars(FILE *stdfile)
+void P_WriteACSVars(FSerializer &arc)
 {
-	WriteVars (stdfile, ACS_WorldVars, NUM_WORLDVARS, MAKE_ID('w','v','A','r'));
-	WriteVars (stdfile, ACS_GlobalVars, NUM_GLOBALVARS, MAKE_ID('g','v','A','r'));
-	WriteArrayVars (stdfile, ACS_WorldArrays, NUM_WORLDVARS, MAKE_ID('w','a','R','r'));
-	WriteArrayVars (stdfile, ACS_GlobalArrays, NUM_GLOBALVARS, MAKE_ID('g','a','R','r'));
-	GlobalACSStrings.WriteStrings(stdfile, MAKE_ID('a','s','T','r'));
+	WriteVars (arc, ACS_WorldVars, NUM_WORLDVARS, "acsworldvars");
+	WriteVars (arc, ACS_GlobalVars, NUM_GLOBALVARS, "acsglobalvars");
+	WriteArrayVars (arc, ACS_WorldArrays, NUM_WORLDVARS, "acsworldarrays");
+	WriteArrayVars (arc, ACS_GlobalArrays, NUM_GLOBALVARS, "acsglobalarrays");
+	GlobalACSStrings.WriteStrings(arc, "acsglobalstrings");
 }
 
 //---- Inventory functions --------------------------------------//
@@ -9672,15 +9679,13 @@ static void SetScriptState (int script, DLevelScript::EScriptState state)
 
 void P_DoDeferedScripts ()
 {
-	acsdefered_t *def;
 	const ScriptPtr *scriptdata;
 	FBehavior *module;
 
 	// Handle defered scripts in this step, too
-	def = level.info->defered;
-	while (def)
+	for(int i = level.info->deferred.Size()-1; i>=0; i--)
 	{
-		acsdefered_t *next = def->next;
+		acsdefered_t *def = &level.info->deferred[i];
 		switch (def->type)
 		{
 		case acsdefered_t::defexecute:
@@ -9711,39 +9716,35 @@ void P_DoDeferedScripts ()
 			DPrintf (DMSG_SPAMMY, "Deferred terminate of %s\n", ScriptPresentation(def->script).GetChars());
 			break;
 		}
-		delete def;
-		def = next;
 	}
-	level.info->defered = NULL;
+	level.info->deferred.Clear();
 }
 
 static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, const int *args, int argcount, AActor *who)
 {
 	if (i)
 	{
-		acsdefered_t *def = new acsdefered_t;
+		acsdefered_t &def = i->deferred[i->deferred.Reserve(1)];
 		int j;
 
-		def->next = i->defered;
-		def->type = type;
-		def->script = script;
-		for (j = 0; (size_t)j < countof(def->args) && j < argcount; ++j)
+		def.type = type;
+		def.script = script;
+		for (j = 0; (size_t)j < countof(def.args) && j < argcount; ++j)
 		{
-			def->args[j] = args[j];
+			def.args[j] = args[j];
 		}
-		while ((size_t)j < countof(def->args))
+		while ((size_t)j < countof(def.args))
 		{
-			def->args[j++] = 0;
+			def.args[j++] = 0;
 		}
 		if (who != NULL && who->player != NULL)
 		{
-			def->playernum = int(who->player - players);
+			def.playernum = int(who->player - players);
 		}
 		else
 		{
-			def->playernum = -1;
+			def.playernum = -1;
 		}
-		i->defered = def;
 		DPrintf (DMSG_SPAMMY, "%s on map %s deferred\n", ScriptPresentation(script).GetChars(), i->MapName.GetChars());
 	}
 }
@@ -9821,43 +9822,15 @@ void P_TerminateScript (int script, const char *map)
 		SetScriptState (script, DLevelScript::SCRIPT_PleaseRemove);
 }
 
-FArchive &operator<< (FArchive &arc, acsdefered_t *&defertop)
+FSerializer &Serialize(FSerializer &arc, const char *key, acsdefered_t &defer, acsdefered_t *def)
 {
-	BYTE more;
-
-	if (arc.IsStoring ())
+	if (arc.BeginObject(key))
 	{
-		acsdefered_t *defer = defertop;
-		more = 1;
-		while (defer)
-		{
-			BYTE type;
-			arc << more;
-			type = (BYTE)defer->type;
-			arc << type;
-			P_SerializeACSScriptNumber(arc, defer->script, false);
-			arc << defer->playernum << defer->args[0] << defer->args[1] << defer->args[2];
-			defer = defer->next;
-		}
-		more = 0;
-		arc << more;
-	}
-	else
-	{
-		acsdefered_t **defer = &defertop;
-
-		arc << more;
-		while (more)
-		{
-			*defer = new acsdefered_t;
-			arc << more;
-			(*defer)->type = (acsdefered_t::EType)more;
-			P_SerializeACSScriptNumber(arc, (*defer)->script, false);
-			arc << (*defer)->playernum << (*defer)->args[0] << (*defer)->args[1] << (*defer)->args[2];
-			defer = &((*defer)->next);
-			arc << more;
-		}
-		*defer = NULL;
+		arc.Enum("type", defer.type)
+			.ScriptNum("script", defer.script)
+			.Array("args", defer.args, 3)
+			("player", defer.playernum)
+			.EndObject();
 	}
 	return arc;
 }

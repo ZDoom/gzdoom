@@ -213,7 +213,7 @@ void DLoadSaveMenu::ReadSaveStrings ()
 
 		LastSaved = LastAccessed = -1;
 		quickSaveSlot = NULL;
-		filter = G_BuildSaveName ("*.zds", -1);
+		filter = G_BuildSaveName ("*." SAVEGAME_EXT, -1);
 		filefirst = I_FindFirst (filter.GetChars(), &c_file);
 		if (filefirst != ((void *)(-1)))
 		{

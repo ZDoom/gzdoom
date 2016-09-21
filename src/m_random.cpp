@@ -61,7 +61,7 @@
 
 #include "doomstat.h"
 #include "m_random.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "b_bot.h"
 #include "m_png.h"
 #include "m_crc32.h"
@@ -291,24 +291,29 @@ DWORD FRandom::StaticSumSeeds ()
 //
 //==========================================================================
 
-void FRandom::StaticWriteRNGState (FILE *file)
+void FRandom::StaticWriteRNGState (FSerializer &arc)
 {
 	FRandom *rng;
-	FPNGChunkArchive arc (file, RAND_ID);
 
-	arc << rngseed;
+	arc("rngseed", rngseed);
 
-	for (rng = FRandom::RNGList; rng != NULL; rng = rng->Next)
+	if (arc.BeginArray("rngs"))
 	{
-		// Only write those RNGs that have names
-		if (rng->NameCRC != 0)
+		for (rng = FRandom::RNGList; rng != NULL; rng = rng->Next)
 		{
-			arc << rng->NameCRC << rng->idx;
-			for (int i = 0; i < SFMT::N32; ++i)
+			// Only write those RNGs that have names
+			if (rng->NameCRC != 0)
 			{
-				arc << rng->sfmt.u[i];
+				if (arc.BeginObject(nullptr))
+				{
+					arc("crc", rng->NameCRC)
+						("index", rng->idx)
+						.Array("u", rng->sfmt.u, SFMT::N32)
+						.EndObject();
+				}
 			}
 		}
+		arc.EndArray();
 	}
 }
 
@@ -323,6 +328,7 @@ void FRandom::StaticWriteRNGState (FILE *file)
 
 void FRandom::StaticReadRNGState (PNGHandle *png)
 {
+#if 0
 	FRandom *rng;
 
 	size_t len = M_FindPNGChunk (png, RAND_ID);
@@ -367,6 +373,7 @@ void FRandom::StaticReadRNGState (PNGHandle *png)
 		}
 		png->File->ResetFilePtr();
 	}
+#endif
 }
 
 //==========================================================================

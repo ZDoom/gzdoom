@@ -250,7 +250,7 @@ void level_info_t::Reset()
 	musicorder = 0;
 	Snapshot = { 0,0,0,0,nullptr };
 	snapshotVer = 0;
-	defered = 0;
+	deferred.Clear();
 	skyspeed1 = skyspeed2 = 0.f;
 	fadeto = 0;
 	outsidefog = 0xff000000;
@@ -333,23 +333,6 @@ FString level_info_t::LookupLevelName()
 	else return LevelName;
 }
 
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-void level_info_t::ClearDefered()
-{
-	acsdefered_t *def = defered;
-	while (def)
-	{
-		acsdefered_t *next = def->next;
-		delete def;
-		def = next;
-	}
-	defered = NULL;
-}
 
 //==========================================================================
 //

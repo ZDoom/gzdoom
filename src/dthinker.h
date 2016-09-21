@@ -84,7 +84,6 @@ public:
 		DestroyThinkersInList(Thinkers[statnum]);
 		DestroyThinkersInList(FreshThinkers[statnum]);
 	}
-	static void SerializeAll (FArchive &arc, bool keepPlayers);
 	static void SerializeThinkers(FSerializer &arc, bool keepPlayers);
 	static void MarkRoots();
 

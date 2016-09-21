@@ -811,7 +811,7 @@ CCMD (load)
 		return;
 	}
 	FString fname = argv[1];
-	DefaultExtension (fname, ".zds");
+	DefaultExtension (fname, "." SAVEGAME_EXT);
     G_LoadGame (fname);
 }
 
@@ -831,7 +831,7 @@ CCMD (save)
         return;
     }
     FString fname = argv[1];
-	DefaultExtension (fname, ".zds");
+	DefaultExtension (fname, "." SAVEGAME_EXT);
 	G_SaveGame (fname, argv.argc() > 2 ? argv[2] : argv[1]);
 }
 

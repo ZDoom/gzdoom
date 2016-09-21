@@ -84,6 +84,7 @@
 #include "a_morph.h"
 #include "p_spec.h"
 #include "r_data/colormaps.h"
+#include "serializer.h"
 
 #include <zlib.h>
 
@@ -110,8 +111,7 @@ void	G_DoWorldDone (void);
 void	G_DoSaveGame (bool okForQuicksave, FString filename, const char *description);
 void	G_DoAutoSave ();
 
-void STAT_Write(FILE *file);
-void STAT_Read(PNGHandle *png);
+void STAT_Serialize(FSerializer &file);
 
 FIntCVar gameskill ("skill", 2, CVAR_SERVERINFO|CVAR_LATCH);
 CVAR (Int, deathmatch, 0, CVAR_SERVERINFO|CVAR_LATCH);
@@ -2045,7 +2045,7 @@ FString G_BuildSaveName (const char *prefix, int slot)
 	name << prefix;
 	if (slot >= 0)
 	{
-		name.AppendFormat("%d.zds", slot);
+		name.AppendFormat("%d.zds" SAVEGAME_EXT, slot);
 	}
 	return name;
 }
@@ -2102,27 +2102,24 @@ void G_DoAutoSave ()
 }
 
 
-static void PutSaveWads (FILE *file)
+static void PutSaveWads (FSerializer &arc)
 {
-#if 0 // SAVEGAME
 	const char *name;
 
 	// Name of IWAD
 	name = Wads.GetWadName (FWadCollection::IWAD_FILENUM);
-	M_AppendPNGText (file, "Game WAD", name);
+	arc.AddString("Game WAD", name);
 
 	// Name of wad the map resides in
 	if (Wads.GetLumpFile (level.lumpnum) > 1)
 	{
 		name = Wads.GetWadName (Wads.GetLumpFile (level.lumpnum));
-		M_AppendPNGText (file, "Map WAD", name);
+		arc.AddString("Map WAD", name);
 	}
-#endif
 }
 
-static void PutSaveComment (FILE *file)
+static void PutSaveComment (FSerializer &arc)
 {
-#if 0 // SAVEGAME
 	char comment[256];
 	const char *readableTime;
 	WORD len;
@@ -2136,7 +2133,7 @@ static void PutSaveComment (FILE *file)
 	strncpy (comment+15, readableTime+10, 9);
 	comment[24] = 0;
 
-	M_AppendPNGText (file, "Creation Time", comment);
+	arc.AddString("Creation Time", comment);
 
 	// Get level name
 	//strcpy (comment, level.level_name);
@@ -2151,8 +2148,7 @@ static void PutSaveComment (FILE *file)
 	comment[len+16] = 0;
 
 	// Write out the comment
-	M_AppendPNGText (file, "Comment", comment);
-#endif
+	arc.AddString("Comment", comment);
 }
 
 static void PutSavePic (FileWriter *file, int width, int height)
@@ -2169,6 +2165,8 @@ static void PutSavePic (FileWriter *file, int width, int height)
 
 void G_DoSaveGame (bool okForQuicksave, FString filename, const char *description)
 {
+	TArray<FCompressedBuffer> savegame_content;
+
 	char buf[100];
 
 	// Do not even try, if we're not in a level. (Can happen after
@@ -2180,7 +2178,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	if (demoplayback)
 	{
-		filename = G_BuildSaveName ("demosave.zds", -1);
+		filename = G_BuildSaveName ("demosave." SAVEGAME_EXT, -1);
 	}
 
 	if (cl_waitforsave)
@@ -2189,74 +2187,63 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	insave = true;
 	G_SnapshotLevel ();
 
-	FILE *stdfile = fopen (filename, "wb");
+	BufferWriter savepic;
+	FSerializer savegameinfo;		// this is for displayable info about the savegame
+	FSerializer savegameglobals;	// and this for non-level related info that must be saved.
 
-	if (stdfile == NULL)
-	{
-		Printf ("Could not create savegame '%s'\n", filename.GetChars());
-		insave = false;
-		I_FreezeTime(false);
-		return;
-	}
+	savegameinfo.OpenWriter();
+	savegameglobals.OpenWriter();
 
 	SaveVersion = SAVEVER;
-#if 0 // SAVEGAME
-	PutSavePic (stdfile, SAVEPICWIDTH, SAVEPICHEIGHT);
+	PutSavePic(&savepic, SAVEPICWIDTH, SAVEPICHEIGHT);
 	mysnprintf(buf, countof(buf), GAMENAME " %s", GetVersionString());
-	M_AppendPNGText (stdfile, "Software", buf);
-	M_AppendPNGText (stdfile, "Engine", GAMESIG);
-	M_AppendPNGText (stdfile, "ZDoom Save Version", SAVESIG);
-	M_AppendPNGText (stdfile, "Title", description);
-	M_AppendPNGText (stdfile, "Current Map", level.MapName);
-	PutSaveWads (stdfile);
-	PutSaveComment (stdfile);
+	// put some basic info into the PNG so that this isn't lost when the image gets extracted.
+	M_AppendPNGText(&savepic, "Software", buf);
+	M_AppendPNGText(&savepic, "Title", description);
+	M_AppendPNGText(&savepic, "Current Map", level.MapName);
+	M_FinishPNG(&savepic);
+
+	savegameinfo.AddString("Software", buf)
+		.AddString("Engine", GAMESIG)
+		.AddString("Save Version", SAVESIG)
+		.AddString("Title", description)
+		.AddString("Current Map", level.MapName);
+
+
+	PutSaveWads (savegameinfo);
+	PutSaveComment (savegameinfo);
 
 	// Intermission stats for hubs
-	G_WriteHubInfo(stdfile);
+	G_SerializeHub(savegameglobals);
 
 	{
 		FString vars = C_GetMassCVarString(CVAR_SERVERINFO);
-		M_AppendPNGText (stdfile, "Important CVARs", vars.GetChars());
+		savegameglobals.AddString("importantcvars", vars.GetChars());
 	}
 
 	if (level.time != 0 || level.maptime != 0)
 	{
-		DWORD time[2] = { DWORD(BigLong(TICRATE)), DWORD(BigLong(level.time)) };
-		M_AppendPNGChunk (stdfile, MAKE_ID('p','t','I','c'), (BYTE *)&time, 8);
+		int tic = TICRATE;
+		savegameglobals("ticrate", tic);
+		savegameglobals("leveltime", level.time);
 	}
 
-	G_WriteSnapshots (stdfile);
-	STAT_Write(stdfile);
-	FRandom::StaticWriteRNGState (stdfile);
-	P_WriteACSDefereds (stdfile);
-
-	P_WriteACSVars(stdfile);
+	STAT_Serialize(savegameglobals);
+	FRandom::StaticWriteRNGState(savegameglobals);
+	P_WriteACSDefereds(savegameglobals);
+	P_WriteACSVars(savegameglobals);
 
 	if (NextSkill != -1)
 	{
-		BYTE next = NextSkill;
-		M_AppendPNGChunk (stdfile, MAKE_ID('s','n','X','t'), &next, 1);
+		savegameglobals("nextskill", NextSkill);
 	}
 
-	M_FinishPNG (stdfile);
-	fclose (stdfile);
+	//G_WriteSnapshots (stdfile);
+	
 
 	M_NotifyNewSave (filename.GetChars(), description, okForQuicksave);
 
-	// Check whether the file is ok.
-	bool success = false;
-	stdfile = fopen (filename.GetChars(), "rb");
-	if (stdfile != NULL)
-	{
-		PNGHandle *pngh = M_VerifyPNG(stdfile);
-		if (pngh != NULL)
-		{
-			success = true;
-			delete pngh;
-		}
-		fclose(stdfile);
-	}
-#endif
+	// Check whether the file is ok. (todo when new format is ready)
 	bool success = true;
 	if (success)
 	{

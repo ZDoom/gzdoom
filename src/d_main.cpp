@@ -2580,7 +2580,7 @@ void D_DoomMain (void)
 			{
 				FString file(v);
 				FixPathSeperator (file);
-				DefaultExtension (file, ".zds");
+				DefaultExtension (file, ".zds" SAVEGAME_EXT);
 				G_LoadGame (file);
 			}
 

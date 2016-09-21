@@ -449,7 +449,7 @@ struct pcx_t
 };
 
 
-inline void putc(char chr, FileWriter *file)
+inline void putc(unsigned char chr, FileWriter *file)
 {
 	file->Write(&chr, 1);
 }

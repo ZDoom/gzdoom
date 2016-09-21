@@ -72,17 +72,6 @@
 // Thinkers
 //
 
-//
-// P_ArchiveThinkers
-//
-
-void P_SerializeThinkers (FArchive &arc, bool hubLoad)
-{
-	arc.EnableThinkers();
-	//DImpactDecal::Im ::SerializeTime (arc);
-	DThinker::SerializeAll (arc, hubLoad);
-}
-
 void P_DestroyThinkers(bool hubLoad)
 {
 	if (hubLoad)

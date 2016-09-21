@@ -9,7 +9,6 @@ struct FRemapTable;
 struct FCopyInfo;
 class FScanner;
 class PClassInventory;
-class FArchive;
 
 // Texture IDs
 class FTextureManager;
@@ -20,8 +19,6 @@ class FNullTextureID : public FTextureID
 public:
 	FNullTextureID() : FTextureID(0) {}
 };
-
-FArchive &operator<< (FArchive &arc, FTextureID &tex);
 
 //
 // Animating textures and planes

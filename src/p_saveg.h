@@ -34,8 +34,8 @@
 #ifndef __P_SAVEG_H__
 #define __P_SAVEG_H__
 
-class FArchive;
 struct PNGHandle;
+class FSerializer;
 
 // Persistent storage/archiving.
 // These are the load / save game routines.
@@ -43,7 +43,7 @@ struct PNGHandle;
 void P_DestroyThinkers(bool hubLoad);
 
 void P_ReadACSDefereds (PNGHandle *png);
-void P_WriteACSDefereds (FILE *file);
+void P_WriteACSDefereds (FSerializer &);
 
 void G_SerializeLevel(FSerializer &arc, bool hubLoad);
 

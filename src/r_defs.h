@@ -159,7 +159,6 @@ class FScanner;
 class FBitmap;
 struct FCopyInfo;
 class DInterpolation;
-class FArchive;
 
 enum
 {

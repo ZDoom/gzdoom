@@ -50,10 +50,8 @@ CCMD(writejson)
 	DWORD t = I_MSTime();
 	FSerializer arc;
 	arc.OpenWriter();
-	arc.BeginObject(nullptr);
 	G_SerializeLevel(arc, false);
 	arc.WriteObjects();
-	arc.EndObject();
 	DWORD tt = I_MSTime();
 	Printf("JSON generation took %d ms\n", tt - t);
 	FILE *f = fopen("out.json", "wb");

@@ -149,11 +149,12 @@ struct FReader
 //
 //==========================================================================
 
-bool FSerializer::OpenWriter()
+bool FSerializer::OpenWriter(bool randomaccess)
 {
 	if (w != nullptr || r != nullptr) return false;
 	w = new FWriter;
 
+	BeginObject(nullptr, randomaccess);
 	return true;
 }
 
@@ -587,6 +588,22 @@ FSerializer &FSerializer::StringPtr(const char *key, const char *&charptr)
 //
 //==========================================================================
 
+FSerializer &FSerializer::AddString(const char *key, const char *charptr)
+{
+	if (isWriting())
+	{
+		WriteKey(key);
+		w->mWriter.String(charptr);
+	}
+	return *this;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 unsigned FSerializer::GetSize(const char *group)
 {
 	if (isWriting()) return -1;	// we do not know this when writing.
@@ -657,6 +674,7 @@ void FSerializer::WriteObjects()
 const char *FSerializer::GetOutput(unsigned *len)
 {
 	if (isReading()) return nullptr;
+	EndObject();
 	if (len != nullptr)
 	{
 		*len = (unsigned)w->mOutString.GetSize();
@@ -674,6 +692,7 @@ FCompressedBuffer FSerializer::GetCompressedOutput()
 {
 	if (isReading()) return{ 0,0,0,0,nullptr };
 	FCompressedBuffer buff;
+	EndObject();
 	buff.mSize = (unsigned)w->mOutString.GetSize();
 	buff.mZipFlags = 0;
 

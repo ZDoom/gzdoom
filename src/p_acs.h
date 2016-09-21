@@ -44,6 +44,8 @@
 
 class FFont;
 class FileReader;
+struct line_t;
+struct PNGHandle;
 
 
 enum
@@ -95,7 +97,7 @@ public:
 	void Clear();
 	void Dump() const;
 	void ReadStrings(PNGHandle *png, DWORD id);
-	void WriteStrings(FILE *file, DWORD id) const;
+	void WriteStrings(FSerializer &file, const char *key) const;
 
 private:
 	int FindString(const char *str, size_t len, unsigned int h, unsigned int bucketnum);
@@ -121,9 +123,8 @@ extern ACSStringPool GlobalACSStrings;
 
 void P_CollectACSGlobalStrings();
 void P_ReadACSVars(PNGHandle *);
-void P_WriteACSVars(FILE*);
+void P_WriteACSVars(FSerializer &);
 void P_ClearACSVars(bool);
-void P_SerializeACSScriptNumber(FArchive &arc, int &scriptnum, bool was2byte);
 
 struct ACSProfileInfo
 {
@@ -964,8 +965,6 @@ private:
 // The structure used to control scripts between maps
 struct acsdefered_t
 {
-	struct acsdefered_t *next;
-
 	enum EType
 	{
 		defexecute,
@@ -978,6 +977,6 @@ struct acsdefered_t
 	int playernum;
 };
 
-FArchive &operator<< (FArchive &arc, acsdefered_t *&defer);
+FSerializer &Serialize(FSerializer &arc, const char *key, acsdefered_t &defer, acsdefered_t *def);
 
 #endif //__P_ACS_H__

@@ -1748,38 +1748,33 @@ CCMD(listsnapshots)
 //
 //==========================================================================
 
-static void writeDefereds (FArchive &arc, level_info_t *i)
+void P_WriteACSDefereds (FSerializer &arc)
 {
-	arc << i->MapName << i->defered;
-}
+	bool found = false;
 
-//==========================================================================
-//
-//
-//==========================================================================
-
-void P_WriteACSDefereds (FILE *file)
-{
-	FPNGChunkArchive *arc = NULL;
-
-	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
+	// only write this stuff if needed
+	for (auto &wi : wadlevelinfos)
 	{
-		if (wadlevelinfos[i].defered)
+		if (wi.deferred.Size() > 0)
 		{
-			if (arc == NULL)
-			{
-				arc = new FPNGChunkArchive (file, ACSD_ID);
-			}
-			writeDefereds (*arc, (level_info_t *)&wadlevelinfos[i]);
+			found = true;
+			break;
 		}
 	}
-
-	if (arc != NULL)
+	if (found && arc.BeginObject("deferred"))
 	{
-		// Signal end of defereds
-		FString empty = "";
-		(*arc) << empty;
-		delete arc;
+		for (auto &wi : wadlevelinfos)
+		{
+			if (wi.deferred.Size() > 0)
+			{
+				if (wi.deferred.Size() > 0 && arc.BeginObject(nullptr))
+				{
+					arc(wi.MapName, wi.deferred)
+						.EndObject();
+				}
+			}
+		}
+		arc.EndObject();
 	}
 }
 
@@ -1790,6 +1785,7 @@ void P_WriteACSDefereds (FILE *file)
 
 void P_ReadACSDefereds (PNGHandle *png)
 {
+#if 0
 	FString MapName;
 	size_t chunklen;
 
@@ -1806,10 +1802,11 @@ void P_ReadACSDefereds (PNGHandle *png)
 			{
 				I_Error("Unknown map '%s' in savegame", MapName.GetChars());
 			}
-			arc << i->defered;
+			arc << i->deferred;
 		}
 	}
 	png->File->ResetFilePtr();
+#endif
 }
 
 

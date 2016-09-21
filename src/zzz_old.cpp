@@ -37,26 +37,6 @@
 
 
 
-void P_SerializeACSScriptNumber(FArchive &arc, int &scriptnum, bool was2byte)
-{
-	arc << scriptnum;
-	// If the script number is negative, then it's really a name.
-	// So read/store the name after it.
-	if (scriptnum < 0)
-	{
-		if (arc.IsStoring())
-		{
-			arc.WriteName(FName(ENamedName(-scriptnum)).GetChars());
-		}
-		else
-		{
-			const char *nam = arc.ReadName();
-			scriptnum = -FName(nam);
-		}
-	}
-}
-
-
 #if 0
 // still needed as reference.
 FCrap &FCrap::ReadObject(DObject* &obj, PClass *wanttype)
@@ -181,3 +161,63 @@ FCrap &FCrap::ReadObject(DObject* &obj, PClass *wanttype)
 }
 #endif
 
+#if 0
+void DThinker::SerializeAll(FArchive &arc, bool hubLoad)
+{
+	DThinker *thinker;
+	BYTE stat;
+	int statcount;
+	int i;
+
+	if (arc.IsStoring())
+	{
+	}
+	else
+	{
+		// Prevent the constructor from inserting thinkers into a list.
+		bSerialOverride = true;
+
+		try
+		{
+			arc << statcount;
+			while (statcount > 0)
+			{
+				arc << stat << thinker;
+				while (thinker != NULL)
+				{
+					// This may be a player stored in their ancillary list. Remove
+					// them first before inserting them into the new list.
+					if (thinker->NextThinker != NULL)
+					{
+						thinker->Remove();
+					}
+					// Thinkers with the OF_JustSpawned flag set go in the FreshThinkers
+					// list. Anything else goes in the regular Thinkers list.
+					if (thinker->ObjectFlags & OF_EuthanizeMe)
+					{
+						// This thinker was destroyed during the loading process. Do
+						// not link it in to any list.
+					}
+					else if (thinker->ObjectFlags & OF_JustSpawned)
+					{
+						FreshThinkers[stat].AddTail(thinker);
+					}
+					else
+					{
+						Thinkers[stat].AddTail(thinker);
+					}
+					arc << thinker;
+				}
+				statcount--;
+			}
+		}
+		catch (class CDoomError &)
+		{
+			bSerialOverride = false;
+			DestroyAllThinkers();
+			throw;
+		}
+		bSerialOverride = false;
+	}
+}
+#endif

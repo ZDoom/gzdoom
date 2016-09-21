@@ -38,6 +38,7 @@
 #include "doomdef.h"
 #include "sc_man.h"
 #include "s_sound.h"
+#include "p_acs.h"
 #include "textures/textures.h"
 #include "resourcefiles/file_zip.h"
 
@@ -224,8 +225,6 @@ enum ELevelFlags : unsigned int
 };
 
 
-struct acsdefered_t;
-
 struct FSpecialAction
 {
 	FName Type;					// this is initialized before the actors...
@@ -297,7 +296,7 @@ struct level_info_t
 	int			musicorder;
 	FCompressedBuffer	Snapshot;
 	DWORD		snapshotVer;
-	struct acsdefered_t *defered;
+	TArray<acsdefered_t> deferred;
 	float		skyspeed1;
 	float		skyspeed2;
 	DWORD		fadeto;
@@ -352,7 +351,10 @@ struct level_info_t
 	void Reset();
 	bool isValid();
 	FString LookupLevelName ();
-	void ClearDefered();
+	void ClearDefered()
+	{
+		deferred.Clear();
+	}
 	level_info_t *CheckLevelRedirect ();
 
 	template<class T>

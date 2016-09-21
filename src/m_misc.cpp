@@ -449,10 +449,15 @@ struct pcx_t
 };
 
 
+inline void putc(char chr, FileWriter *file)
+{
+	file->Write(&chr, 1);
+}
+
 //
 // WritePCXfile
 //
-void WritePCXfile (FILE *file, const BYTE *buffer, const PalEntry *palette,
+void WritePCXfile (FileWriter *file, const BYTE *buffer, const PalEntry *palette,
 				   ESSType color_type, int width, int height, int pitch)
 {
 	BYTE temprow[MAXWIDTH * 3];
@@ -480,7 +485,7 @@ void WritePCXfile (FILE *file, const BYTE *buffer, const PalEntry *palette,
 	pcx.palette_type = 1;				// not a grey scale
 	memset (pcx.filler, 0, sizeof(pcx.filler));
 
-	fwrite (&pcx, 128, 1, file);
+	file->Write(&pcx, 128);
 
 	bytes_per_row_minus_one = ((color_type == SS_PAL) ? width : width * 3) - 1;
 
@@ -593,7 +598,7 @@ void WritePCXfile (FILE *file, const BYTE *buffer, const PalEntry *palette,
 //
 // WritePNGfile
 //
-void WritePNGfile (FILE *file, const BYTE *buffer, const PalEntry *palette,
+void WritePNGfile (FileWriter *file, const BYTE *buffer, const PalEntry *palette,
 				   ESSType color_type, int width, int height, int pitch)
 {
 	char software[100];
@@ -655,7 +660,7 @@ static bool FindFreeName (FString &fullname, const char *extension)
 
 void M_ScreenShot (const char *filename)
 {
-	FILE *file;
+	FileWriter *file;
 	FString autoname;
 	bool writepcx = (stricmp (screenshot_type, "pcx") == 0);	// PNG is the default
 
@@ -709,7 +714,7 @@ void M_ScreenShot (const char *filename)
 		{
 			screen->GetFlashedPalette(palette);
 		}
-		file = fopen (autoname, "wb");
+		file = FileWriter::Open(autoname);
 		if (file == NULL)
 		{
 			Printf ("Could not open %s\n", autoname.GetChars());
@@ -726,7 +731,7 @@ void M_ScreenShot (const char *filename)
 			WritePNGfile(file, buffer, palette, color_type,
 				screen->GetWidth(), screen->GetHeight(), pitch);
 		}
-		fclose(file);
+		delete file;
 		screen->ReleaseScreenshotBuffer();
 
 		if (!screenshot_quiet)

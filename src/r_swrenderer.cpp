@@ -179,7 +179,7 @@ void FSoftwareRenderer::RemapVoxels()
 //
 //===========================================================================
 
-void FSoftwareRenderer::WriteSavePic (player_t *player, FILE *file, int width, int height)
+void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
 {
 	DCanvas *pic = new DSimpleCanvas (width, height);
 	PalEntry palette[256];

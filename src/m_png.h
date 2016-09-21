@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include "doomtype.h"
 #include "v_video.h"
+#include "files.h"
 
 // PNG Writing --------------------------------------------------------------
 
@@ -43,22 +44,22 @@
 // The passed file should be a newly created file.
 // This function writes the PNG signature and the IHDR, gAMA, PLTE, and IDAT
 // chunks.
-bool M_CreatePNG (FILE *file, const BYTE *buffer, const PalEntry *pal,
+bool M_CreatePNG (FileWriter *file, const BYTE *buffer, const PalEntry *pal,
 				  ESSType color_type, int width, int height, int pitch);
 
 // Creates a grayscale 1x1 PNG file. Used for savegames without savepics.
-bool M_CreateDummyPNG (FILE *file);
+bool M_CreateDummyPNG (FileWriter *file);
 
 // Appends any chunk to a PNG file started with M_CreatePNG.
-bool M_AppendPNGChunk (FILE *file, DWORD chunkID, const BYTE *chunkData, DWORD len);
+bool M_AppendPNGChunk (FileWriter *file, DWORD chunkID, const BYTE *chunkData, DWORD len);
 
 // Adds a tEXt chunk to a PNG file started with M_CreatePNG.
-bool M_AppendPNGText (FILE *file, const char *keyword, const char *text);
+bool M_AppendPNGText (FileWriter *file, const char *keyword, const char *text);
 
 // Appends the IEND chunk to a PNG file.
-bool M_FinishPNG (FILE *file);
+bool M_FinishPNG (FileWriter *file);
 
-bool M_SaveBitmap(const BYTE *from, ESSType color_type, int width, int height, int pitch, FILE *file);
+bool M_SaveBitmap(const BYTE *from, ESSType color_type, int width, int height, int pitch, FileWriter *file);
 
 // PNG Reading --------------------------------------------------------------
 

@@ -1828,6 +1828,7 @@ bool G_CheckSaveGameWads (PNGHandle *png, bool printwarn)
 
 void G_DoLoadGame ()
 {
+#if 0 // SAVEGAME
 	char sigcheck[20];
 	char *text = NULL;
 	char *map;
@@ -1981,6 +1982,7 @@ void G_DoLoadGame ()
 	// amount of memory in use, so bring it down now by starting a
 	// collection.
 	GC::StartCollection();
+#endif
 }
 
 
@@ -2102,6 +2104,7 @@ void G_DoAutoSave ()
 
 static void PutSaveWads (FILE *file)
 {
+#if 0 // SAVEGAME
 	const char *name;
 
 	// Name of IWAD
@@ -2114,10 +2117,12 @@ static void PutSaveWads (FILE *file)
 		name = Wads.GetWadName (Wads.GetLumpFile (level.lumpnum));
 		M_AppendPNGText (file, "Map WAD", name);
 	}
+#endif
 }
 
 static void PutSaveComment (FILE *file)
 {
+#if 0 // SAVEGAME
 	char comment[256];
 	const char *readableTime;
 	WORD len;
@@ -2147,9 +2152,10 @@ static void PutSaveComment (FILE *file)
 
 	// Write out the comment
 	M_AppendPNGText (file, "Comment", comment);
+#endif
 }
 
-static void PutSavePic (FILE *file, int width, int height)
+static void PutSavePic (FileWriter *file, int width, int height)
 {
 	if (width <= 0 || height <= 0 || !storesavepic)
 	{
@@ -2194,6 +2200,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	}
 
 	SaveVersion = SAVEVER;
+#if 0 // SAVEGAME
 	PutSavePic (stdfile, SAVEPICWIDTH, SAVEPICHEIGHT);
 	mysnprintf(buf, countof(buf), GAMENAME " %s", GetVersionString());
 	M_AppendPNGText (stdfile, "Software", buf);
@@ -2249,7 +2256,9 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 		}
 		fclose(stdfile);
 	}
-	if (success) 
+#endif
+	bool success = true;
+	if (success)
 	{
 		if (longsavemessages) Printf ("%s (%s)\n", GStrings("GGSAVED"), filename.GetChars());
 		else Printf ("%s\n", GStrings("GGSAVED"));

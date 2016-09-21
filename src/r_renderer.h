@@ -11,6 +11,7 @@ class AActor;
 class player_t;
 struct sector_t;
 class FCanvasTexture;
+class FileWriter;
 
 struct FRenderer
 {
@@ -37,7 +38,7 @@ struct FRenderer
 	virtual void RemapVoxels() {}
 
 	// renders view to a savegame picture
-	virtual void WriteSavePic (player_t *player, FILE *file, int width, int height) = 0;
+	virtual void WriteSavePic (player_t *player, FileWriter *file, int width, int height) = 0;
 
 	// draws player sprites with hardware acceleration (only useful for software rendering)
 	virtual void DrawRemainingPlayerSprites() {}

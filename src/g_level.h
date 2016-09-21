@@ -536,6 +536,7 @@ struct PNGHandle;
 void G_ReadSnapshots (PNGHandle *png);
 void G_WriteSnapshots (TArray<FString> &, TArray<FCompressedBuffer> &);
 void G_WriteVisited(FSerializer &arc);
+void G_ReadVisited(FSerializer &arc);
 void G_ClearHubInfo();
 
 enum ESkillProperty

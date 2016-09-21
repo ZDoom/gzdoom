@@ -96,7 +96,7 @@ public:
 	void PurgeStrings();
 	void Clear();
 	void Dump() const;
-	void ReadStrings(PNGHandle *png, DWORD id);
+	void ReadStrings(FSerializer &file, const char *key);
 	void WriteStrings(FSerializer &file, const char *key) const;
 
 private:
@@ -122,7 +122,7 @@ private:
 extern ACSStringPool GlobalACSStrings;
 
 void P_CollectACSGlobalStrings();
-void P_ReadACSVars(PNGHandle *);
+void P_ReadACSVars(FSerializer &);
 void P_WriteACSVars(FSerializer &);
 void P_ClearACSVars(bool);
 

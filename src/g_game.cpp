@@ -1830,10 +1830,6 @@ bool G_CheckSaveGameWads (FSerializer &arc, bool printwarn)
 
 void G_DoLoadGame ()
 {
-#if 0 // SAVEGAME
-	char sigcheck[20];
-	char *text = NULL;
-	char *map;
 	bool hidecon;
 
 	if (gameaction != ga_autoloadgame)
@@ -1843,76 +1839,82 @@ void G_DoLoadGame ()
 	hidecon = gameaction == ga_loadgamehidecon;
 	gameaction = ga_nothing;
 
-	FILE *stdfile = fopen (savename.GetChars(), "rb");
-	if (stdfile == NULL)
+	FResourceFile *resfile = FResourceFile::OpenResourceFile(savename.GetChars(), nullptr, true, true);
+	if (resfile == nullptr)
 	{
 		Printf ("Could not read savegame '%s'\n", savename.GetChars());
 		return;
 	}
 
-	PNGHandle *png = M_VerifyPNG (stdfile);
-	if (png == NULL)
+	FResourceLump *info = resfile->FindLump("info.json");
+	if (info == nullptr)
 	{
-		fclose (stdfile);
-		Printf ("'%s' is not a valid (PNG) savegame\n", savename.GetChars());
+		delete resfile;
+		Printf ("'%s' is not a valid savegame: Missing 'info.json'.\n", savename.GetChars());
 		return;
 	}
 
 	SaveVersion = 0;
 
+	void *data = info->CacheLump();
+	FSerializer arc;
+	if (!arc.OpenReader((const char *)data, info->LumpSize, true))
+	{
+		Printf("Failed to access savegame info\n");
+		delete resfile;
+		return;
+	}
+
 	// Check whether this savegame actually has been created by a compatible engine.
 	// Since there are ZDoom derivates using the exact same savegame format but
 	// with mutual incompatibilities this check simplifies things significantly.
-	char *engine = M_GetPNGText (png, "Engine");
-	if (engine == NULL || 0 != strcmp (engine, GAMESIG))
+	FString savever, engine, map;
+	arc("Save Version", SaveVersion);
+	arc("Engine", engine);
+	arc("Current Map", map);
+
+	if (engine.CompareNoCase(GAMESIG) != 0)
 	{
 		// Make a special case for the message printed for old savegames that don't
 		// have this information.
-		if (engine == NULL)
+		if (engine.IsEmpty())
 		{
 			Printf ("Savegame is from an incompatible version\n");
 		}
 		else
 		{
 			Printf ("Savegame is from another ZDoom-based engine: %s\n", engine);
-			delete[] engine;
 		}
-		delete png;
-		fclose (stdfile);
+		delete resfile;
 		return;
 	}
-	if (engine != NULL)
-	{
-		delete[] engine;
-	}
 
-	SaveVersion = 0;
-	if (!M_GetPNGText (png, "ZDoom Save Version", sigcheck, 20) ||
-		0 != strncmp (sigcheck, "SAVEVER", 9) ||		// ZDOOMSAVE is the first 9 chars
-		(SaveVersion = atoi (sigcheck+9)) < MINSAVEVER)
+	if (SaveVersion < MINSAVEVER || SaveVersion > SAVEVER)
 	{
-		delete png;
-		fclose (stdfile);
+		delete resfile;
 		Printf ("Savegame is from an incompatible version");
-		if (SaveVersion != 0)
+		if (SaveVersion < MINSAVEVER)
 		{
 			Printf(": %d (%d is the oldest supported)", SaveVersion, MINSAVEVER);
+		}
+		else
+		{
+			Printf(": %d (%d is the highest supported)", SaveVersion, SAVEVER);
 		}
 		Printf("\n");
 		return;
 	}
 
-	if (!G_CheckSaveGameWads (png, true))
+	if (!G_CheckSaveGameWads (arc, true))
 	{
-		fclose (stdfile);
+		delete resfile;
 		return;
 	}
 
-	map = M_GetPNGText (png, "Current Map");
-	if (map == NULL)
+	if (map.IsEmpty())
 	{
 		Printf ("Savegame is missing the current map\n");
-		fclose (stdfile);
+		delete resfile;
 		return;
 	}
 
@@ -1922,35 +1924,46 @@ void G_DoLoadGame ()
 	{
 		gamestate = GS_HIDECONSOLE;
 	}
+	// we are done with info.json.
+	arc.Close();
+
+	info = resfile->FindLump("global.json");
+	if (info == nullptr)
+	{
+		delete resfile;
+		Printf("'%s' is not a valid savegame: Missing 'global.json'.\n", savename.GetChars());
+		return;
+	}
+
+	data = info->CacheLump();
+	if (!arc.OpenReader((const char *)data, info->LumpSize, true))
+	{
+		Printf("Failed to access savegame info\n");
+		delete resfile;
+		return;
+	}
+
 
 	// Read intermission data for hubs
-	G_ReadHubInfo(png);
+	G_SerializeHub(arc);
 
 	bglobal.RemoveAllBots (true);
 
-	text = M_GetPNGText (png, "Important CVARs");
-	if (text != NULL)
+	arc("importantcvars", map);
+	if (!map.IsEmpty())
 	{
-		BYTE *vars_p = (BYTE *)text;
+		BYTE *vars_p = (BYTE *)map.GetChars();
 		C_ReadCVars (&vars_p);
-		delete[] text;
 	}
 
+	DWORD time[2] = { 0,1 };
+
+	arc("ticrate", time[0])
+		("leveltime", time[1]);
 	// dearchive all the modifications
-	if (M_FindPNGChunk (png, MAKE_ID('p','t','I','c')) == 8)
-	{
-		DWORD time[2];
-		fread (&time, 8, 1, stdfile);
-		time[0] = BigLong((unsigned int)time[0]);
-		time[1] = BigLong((unsigned int)time[1]);
-		level.time = Scale (time[1], TICRATE, time[0]);
-	}
-	else
-	{ // No ptIc chunk so we don't know how long the user was playing
-		level.time = 0;
-	}
+	level.time = Scale (time[1], TICRATE, time[0]);
 
-	G_ReadSnapshots (png);
+	//G_ReadSnapshots(png);
 
 	// load a base level
 	savegamerestore = true;		// Use the player actors in the savegame
@@ -1960,31 +1973,24 @@ void G_DoLoadGame ()
 	delete[] map;
 	savegamerestore = false;
 
-	STAT_Read(png);
-	FRandom::StaticReadRNGState(png);
-	P_ReadACSDefereds(png);
-	P_ReadACSVars(png);
+	STAT_Serialize(arc);
+	FRandom::StaticReadRNGState(arc);
+	P_ReadACSDefereds(arc);
+	P_ReadACSVars(arc);
 
 	NextSkill = -1;
-	if (M_FindPNGChunk (png, MAKE_ID('s','n','X','t')) == 1)
-	{
-		BYTE next;
-		fread (&next, 1, 1, stdfile);
-		NextSkill = next;
-	}
+	arc("nextskill", NextSkill);
 
 	level.info->Snapshot.Clean();
 
 	BackupSaveName = savename;
 
-	delete png;
-	fclose (stdfile);
+	delete resfile;
 
 	// At this point, the GC threshold is likely a lot higher than the
 	// amount of memory in use, so bring it down now by starting a
 	// collection.
 	GC::StartCollection();
-#endif
 }
 
 

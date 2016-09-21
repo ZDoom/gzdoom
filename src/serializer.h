@@ -111,6 +111,8 @@ public:
 
 		if (BeginArray(key))
 		{
+			int max = ArraySize();
+			if (max < count) count = max;
 			for (int i = 0; i < count; i++)
 			{
 				Serialize(*this, nullptr, obj[i], (T*)nullptr);

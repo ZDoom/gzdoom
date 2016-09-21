@@ -14,7 +14,6 @@
 #include "a_specialspot.h"
 #include "templates.h"
 #include "m_bbox.h"
-#include "farchive.h"
 #include "portal.h"
 #include "d_player.h"
 #include "p_maputl.h"

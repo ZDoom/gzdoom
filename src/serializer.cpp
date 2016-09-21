@@ -730,7 +730,7 @@ const char *FSerializer::GetKey()
 
 void FSerializer::WriteObjects()
 {
-	if (isWriting())
+	if (isWriting() && w->mDObjects.Size())
 	{
 		BeginArray("objects");
 		// we cannot use the C++11 shorthand syntax here because the array may grow while being processed.
@@ -769,6 +769,7 @@ void FSerializer::WriteObjects()
 const char *FSerializer::GetOutput(unsigned *len)
 {
 	if (isReading()) return nullptr;
+	WriteObjects();
 	EndObject();
 	if (len != nullptr)
 	{
@@ -787,6 +788,7 @@ FCompressedBuffer FSerializer::GetCompressedOutput()
 {
 	if (isReading()) return{ 0,0,0,0,0,nullptr };
 	FCompressedBuffer buff;
+	WriteObjects();
 	EndObject();
 	buff.mSize = (unsigned)w->mOutString.GetSize();
 	buff.mZipFlags = 0;

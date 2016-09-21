@@ -1630,83 +1630,71 @@ void G_WriteVisited(FSerializer &arc)
 //
 //==========================================================================
 
-void G_ReadSnapshots (PNGHandle *png)
+void G_ReadSnapshots(PNGHandle *png)
 {
 	DWORD chunkLen;
 	FString MapName;
 	level_info_t *i;
 
-	G_ClearSnapshots ();
+	G_ClearSnapshots();
 
-	chunkLen = (DWORD)M_FindPNGChunk (png, SNAP_ID);
+	chunkLen = (DWORD)M_FindPNGChunk(png, SNAP_ID);
 	while (chunkLen != 0)
 	{
-		FPNGChunkArchive arc (png->File->GetFile(), SNAP_ID, chunkLen);
+#if 0
+		FPNGChunkArchive arc(png->File->GetFile(), SNAP_ID, chunkLen);
 		DWORD snapver;
 
 		arc << snapver;
 		arc << MapName;
-		i = FindLevelInfo (MapName);
-#if 0
+		i = FindLevelInfo(MapName);
 		i->snapshot = new FCompressedMemFile;
-		i->snapshot->Serialize (arc);
+		i->snapshot->Serialize(arc);
+		chunkLen = (DWORD)M_NextPNGChunk(png, SNAP_ID);
 #endif
-		chunkLen = (DWORD)M_NextPNGChunk (png, SNAP_ID);
 	}
 
-	chunkLen = (DWORD)M_FindPNGChunk (png, DSNP_ID);
+	chunkLen = (DWORD)M_FindPNGChunk(png, DSNP_ID);
 	if (chunkLen != 0)
 	{
-		FPNGChunkArchive arc (png->File->GetFile(), DSNP_ID, chunkLen);
+#if 0
+		FPNGChunkArchive arc(png->File->GetFile(), DSNP_ID, chunkLen);
 		DWORD snapver;
 
 		arc << snapver;
 		arc << MapName;
-#if 0
 		TheDefaultLevelInfo.snapshot = new FCompressedMemFile;
-		TheDefaultLevelInfo.snapshot->Serialize (arc);
+		TheDefaultLevelInfo.snapshot->Serialize(arc);
 #endif
 	}
+}
 
-	chunkLen = (DWORD)M_FindPNGChunk (png, VIST_ID);
-	if (chunkLen != 0)
+void G_ReadVisited(FSerializer &arc)
+{
+	if (arc.BeginArray("visited"))
 	{
-		FPNGChunkArchive arc (png->File->GetFile(), VIST_ID, chunkLen);
-
-		while (arc << MapName, MapName.Len() > 0)
+		for (int s = arc.ArraySize(); s > 0; s--)
 		{
-			i = FindLevelInfo(MapName);
-			i->flags |= LEVEL_VISITED;
+			FString str;
+			arc(nullptr, str);
+			auto i = FindLevelInfo(str);
+			if (i != nullptr) i->flags |= LEVEL_VISITED;
 		}
+		arc.EndArray();
 	}
 
-	chunkLen = (DWORD)M_FindPNGChunk (png, RCLS_ID);
-	if (chunkLen != 0)
+	arc.Array("randomclasses", SinglePlayerClass, MAXPLAYERS);
+
+	if (arc.BeginObject("playerclasses"))
 	{
-		FPNGChunkArchive arc (png->File->GetFile(), PCLS_ID, chunkLen);
-		SBYTE cnum;
-
-		for (DWORD j = 0; j < chunkLen; ++j)
+		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
-			arc << cnum;
-			SinglePlayerClass[j] = cnum;
+			FString key;
+			key.Format("%d", i);
+			arc(key, players[i].cls);
 		}
+		arc.EndObject();
 	}
-
-	chunkLen = (DWORD)M_FindPNGChunk (png, PCLS_ID);
-	if (chunkLen != 0)
-	{
-		FPNGChunkArchive arc (png->File->GetFile(), RCLS_ID, chunkLen);
-		BYTE pnum;
-
-		arc << pnum;
-		while (pnum != 255)
-		{
-			arc.UserReadClass (players[pnum].cls);
-			arc << pnum;
-		}
-	}
-	png->File->ResetFilePtr();
 }
 
 //==========================================================================
@@ -1749,8 +1737,7 @@ void P_WriteACSDefereds (FSerializer &arc)
 			{
 				if (wi.deferred.Size() > 0 && arc.BeginObject(nullptr))
 				{
-					arc(wi.MapName, wi.deferred)
-						.EndObject();
+					arc(wi.MapName, wi.deferred);
 				}
 			}
 		}
@@ -1763,30 +1750,28 @@ void P_WriteACSDefereds (FSerializer &arc)
 //
 //==========================================================================
 
-void P_ReadACSDefereds (PNGHandle *png)
+void P_ReadACSDefereds (FSerializer &arc)
 {
-#if 0
 	FString MapName;
 	size_t chunklen;
 
 	P_RemoveDefereds ();
 
-	if ((chunklen = M_FindPNGChunk (png, ACSD_ID)) != 0)
+	if (arc.BeginObject("deferred"))
 	{
-		FPNGChunkArchive arc (png->File->GetFile(), ACSD_ID, chunklen);
+		const char *key;
 
-		while (arc << MapName, MapName.Len() > 0)
+		while ((key = arc.GetKey()))
 		{
-			level_info_t *i = FindLevelInfo(MapName);
+			level_info_t *i = FindLevelInfo(key);
 			if (i == NULL)
 			{
-				I_Error("Unknown map '%s' in savegame", MapName.GetChars());
+				I_Error("Unknown map '%s' in savegame", key);
 			}
-			arc << i->deferred;
+			arc(key, i->deferred);
 		}
+		arc.EndObject();
 	}
-	png->File->ResetFilePtr();
-#endif
 }
 
 

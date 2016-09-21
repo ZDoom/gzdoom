@@ -42,7 +42,7 @@ class FSerializer;
 // Also see farchive.(h|cpp)
 void P_DestroyThinkers(bool hubLoad);
 
-void P_ReadACSDefereds (PNGHandle *png);
+void P_ReadACSDefereds (FSerializer &);
 void P_WriteACSDefereds (FSerializer &);
 
 void G_SerializeLevel(FSerializer &arc, bool hubLoad);

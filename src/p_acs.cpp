@@ -722,47 +722,42 @@ void ACSStringPool::FindFirstFreeEntry(unsigned base)
 //
 //============================================================================
 
-void ACSStringPool::ReadStrings(PNGHandle *png, DWORD id)
+void ACSStringPool::ReadStrings(FSerializer &file, const char *key)
 {
 	Clear();
 
-	size_t len = M_FindPNGChunk(png, id);
-	if (len != 0)
+	int32_t i, j, poolsize;
+
+	file("poolsize", poolsize);
+	Pool.Resize(poolsize);
+	for (auto &p : Pool)
 	{
-		FPNGChunkArchive arc(png->File->GetFile(), id, len);
-		int32_t i, j, poolsize;
-		unsigned int h, bucketnum;
-		char *str = NULL;
-
-		arc << poolsize;
-
-		Pool.Resize(poolsize);
-		i = 0;
-		j = arc.ReadCount();
-		while (j >= 0)
+		p.Next = FREE_ENTRY;
+		p.LockCount = 0;
+	}
+	if (file.BeginArray("pool"))
+	{
+		j = file.ArraySize();
+		for (int i = 0; i < j; i++)
 		{
-			// Mark skipped entries as free
-			for (; i < j; ++i)
+			if (file.BeginObject(nullptr))
 			{
-				Pool[i].Next = FREE_ENTRY;
-				Pool[i].LockCount = 0;
+				i = -1;
+				file("index", i);
+				if (i >= 0 && i < Pool.Size())
+				{
+					file("string", Pool[i].Str)
+						("lockcount", Pool[i].LockCount);
+
+					unsigned h = SuperFastHash(Pool[i].Str, Pool[i].Str.Len());
+					unsigned bucketnum = h % NUM_BUCKETS;
+					Pool[i].Hash = h;
+					Pool[i].Next = PoolBuckets[bucketnum];
+					PoolBuckets[bucketnum] = i;
+				}
+				file.EndObject();
 			}
-			arc << str;
-			h = SuperFastHash(str, strlen(str));
-			bucketnum = h % NUM_BUCKETS;
-			Pool[i].Str = str;
-			Pool[i].Hash = h;
-			Pool[i].LockCount = arc.ReadCount();
-			Pool[i].Next = PoolBuckets[bucketnum];
-			PoolBuckets[bucketnum] = i;
-			i++;
-			j = arc.ReadCount();
 		}
-		if (str != NULL)
-		{
-			delete[] str;
-		}
-		FindFirstFreeEntry(0);
 	}
 }
 
@@ -982,29 +977,10 @@ static void WriteVars (FSerializer &file, SDWORD *vars, size_t count, const char
 //
 //============================================================================
 
-static void ReadVars (PNGHandle *png, SDWORD *vars, size_t count, DWORD id)
+static void ReadVars (FSerializer &arc, SDWORD *vars, size_t count, const char *key)
 {
-	size_t len = M_FindPNGChunk (png, id);
-	size_t used = 0;
-
-	if (len != 0)
-	{
-		DWORD var;
-		size_t i;
-		FPNGChunkArchive arc (png->File->GetFile(), id, len);
-		used = len / 4;
-
-		for (i = 0; i < used; ++i)
-		{
-			arc << var;
-			vars[i] = var;
-		}
-		png->File->ResetFilePtr();
-	}
-	if (used < count)
-	{
-		memset (&vars[used], 0, (count-used)*4);
-	}
+	memset(&vars[0], 0, count * 4);
+	arc.Array(key, vars, count);
 }
 
 //============================================================================
@@ -1060,37 +1036,32 @@ static void WriteArrayVars (FSerializer &file, FWorldGlobalArray *vars, unsigned
 //
 //============================================================================
 
-static void ReadArrayVars (PNGHandle *png, FWorldGlobalArray *vars, size_t count, DWORD id)
+static void ReadArrayVars (FSerializer &file, FWorldGlobalArray *vars, size_t count, const char *key)
 {
-	size_t len = M_FindPNGChunk (png, id);
-	unsigned int i, k;
-
 	for (i = 0; i < count; ++i)
 	{
-		vars[i].Clear ();
+		vars[i].Clear();
 	}
 
-	if (len != 0)
+	if (file.BeginObject(key))
 	{
-		DWORD max, size;
-		FPNGChunkArchive arc (png->File->GetFile(), id, len);
-
-		i = arc.ReadCount ();
-		max = arc.ReadCount ();
-
-		for (; i <= max; ++i)
+		const char *arraykey;
+		while ((arraykey = file.GetKey()))
 		{
-			size = arc.ReadCount ();
-			for (k = 0; k < size; ++k)
+			int i = (int)strtol(arraykey, nullptr, 10);
+			if (file.BeginObject(arraykey))
 			{
-				SDWORD key, val;
-				key = arc.ReadCount();
-
-				val = arc.ReadCount();
-				vars[i].Insert (key, val);
+				while ((arraykey = file.GetKey()))
+				{
+					int k = (int)strtol(arraykey, nullptr, 10);
+					int val;
+					file(arraykey, val);
+					vars[i].Insert(k, val);
+				}
+				file.EndObject();
 			}
 		}
-		png->File->ResetFilePtr();
+		file.EndObject();
 	}
 }
 
@@ -1100,13 +1071,13 @@ static void ReadArrayVars (PNGHandle *png, FWorldGlobalArray *vars, size_t count
 //
 //============================================================================
 
-void P_ReadACSVars(PNGHandle *png)
+void P_ReadACSVars(FSerializer &arc)
 {
-	ReadVars (png, ACS_WorldVars, NUM_WORLDVARS, MAKE_ID('w','v','A','r'));
-	ReadVars (png, ACS_GlobalVars, NUM_GLOBALVARS, MAKE_ID('g','v','A','r'));
-	ReadArrayVars (png, ACS_WorldArrays, NUM_WORLDVARS, MAKE_ID('w','a','R','r'));
-	ReadArrayVars (png, ACS_GlobalArrays, NUM_GLOBALVARS, MAKE_ID('g','a','R','r'));
-	GlobalACSStrings.ReadStrings(png, MAKE_ID('a','s','T','r'));
+	ReadVars (arc, ACS_WorldVars, NUM_WORLDVARS, "acsworldvars");
+	ReadVars (arc, ACS_GlobalVars, NUM_GLOBALVARS, "acsglobalvars");
+	ReadArrayVars (arc, ACS_WorldArrays, NUM_WORLDVARS, "acsworldarrays");
+	ReadArrayVars (arc, ACS_GlobalArrays, NUM_GLOBALVARS, "acsglobalarrays");
+	GlobalACSStrings.ReadStrings(arc, "acsglobalstrings");
 }
 
 //============================================================================

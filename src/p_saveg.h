@@ -34,7 +34,6 @@
 #ifndef __P_SAVEG_H__
 #define __P_SAVEG_H__
 
-struct PNGHandle;
 class FSerializer;
 
 // Persistent storage/archiving.

@@ -306,17 +306,12 @@ FZipFile::~FZipFile()
 //
 //==========================================================================
 
-FCompressedBuffer FZipFile::GetRawLump(int lumpnum)
+FCompressedBuffer FZipLump::GetRawData()
 {
-	if ((unsigned)lumpnum >= NumLumps)
-	{
-		return{ 0,0,0,0,0,nullptr };
-	}
-	FZipLump *lmp = &Lumps[lumpnum];
-
-	FCompressedBuffer cbuf = { (unsigned)lmp->LumpSize, (unsigned)lmp->CompressedSize, lmp->Method, lmp->GPFlags, lmp->CRC32, new char[lmp->CompressedSize] };
-	Reader->Seek(lmp->Position, SEEK_SET);
-	Reader->Read(cbuf.mBuffer, lmp->CompressedSize);
+	FCompressedBuffer cbuf = { (unsigned)LumpSize, (unsigned)CompressedSize, Method, GPFlags, CRC32, new char[CompressedSize] };
+	if (Flags & LUMPFZIP_NEEDFILESTART) SetLumpAddress();
+	Owner->Reader->Seek(Position, SEEK_SET);
+	Owner->Reader->Read(cbuf.mBuffer, CompressedSize);
 	return cbuf;
 }
 

@@ -3,28 +3,6 @@
 
 #include "resourcefile.h"
 
-// This holds a compresed Zip entry with all needed info to decompress it.
-struct FCompressedBuffer
-{
-	unsigned mSize;
-	unsigned mCompressedSize;
-	int mMethod;
-	int mZipFlags;
-	unsigned mCRC32;
-	char *mBuffer;
-	
-	bool Decompress(char *destbuffer);
-	void Clean()
-	{
-		mSize = mCompressedSize = 0;
-		if (mBuffer != nullptr)
-		{
-			delete[] mBuffer;
-			mBuffer = nullptr;
-		}
-	}
-};
-
 enum
 {
 	LUMPFZIP_NEEDFILESTART = 128
@@ -50,6 +28,7 @@ struct FZipLump : public FResourceLump
 private:
 	void SetLumpAddress();
 	virtual int GetFileOffset();
+	FCompressedBuffer GetRawData();
 };
 
 
@@ -68,7 +47,6 @@ public:
 	virtual ~FZipFile();
 	bool Open(bool quiet);
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
-	FCompressedBuffer GetRawLump(int lumpnum);
 };
 
 

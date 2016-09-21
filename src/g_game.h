@@ -24,7 +24,6 @@
 #define __G_GAME__
 
 struct event_t;
-struct PNGHandle;
 
 
 //

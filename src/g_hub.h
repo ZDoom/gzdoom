@@ -1,7 +1,6 @@
 #ifndef __G_HUB_H
 #define __G_HUB_H
 
-struct PNGHandle;
 struct cluster_info_t;
 struct wbstartstruct_t;
 class FSerializer;

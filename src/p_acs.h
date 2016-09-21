@@ -45,7 +45,6 @@
 class FFont;
 class FileReader;
 struct line_t;
-struct PNGHandle;
 
 
 enum

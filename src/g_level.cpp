@@ -1568,7 +1568,7 @@ void G_WriteSnapshots(TArray<FString> &filenames, TArray<FCompressedBuffer> &buf
 	{
 		if (wadlevelinfos[i].Snapshot.mCompressedSize > 0)
 		{
-			filename << wadlevelinfos[i].MapName << ".json";
+			filename << wadlevelinfos[i].MapName << ".map.json";
 			filename.ToLower();
 			filenames.Push(filename);
 			buffers.Push(wadlevelinfos[i].Snapshot);
@@ -1576,7 +1576,7 @@ void G_WriteSnapshots(TArray<FString> &filenames, TArray<FCompressedBuffer> &buf
 	}
 	if (TheDefaultLevelInfo.Snapshot.mCompressedSize > 0)
 	{
-		filename << TheDefaultLevelInfo.MapName << ".json";
+		filename << TheDefaultLevelInfo.MapName << ".mapd.json";
 		filename.ToLower();
 		filenames.Push(filename);
 		buffers.Push(TheDefaultLevelInfo.Snapshot);
@@ -1629,44 +1629,47 @@ void G_WriteVisited(FSerializer &arc)
 //
 //==========================================================================
 
-void G_ReadSnapshots(PNGHandle *png)
+void G_ReadSnapshots(FResourceFile *resf)
 {
-	DWORD chunkLen;
 	FString MapName;
 	level_info_t *i;
 
 	G_ClearSnapshots();
 
-	chunkLen = (DWORD)M_FindPNGChunk(png, SNAP_ID);
-	while (chunkLen != 0)
+	for (unsigned j = 0; j < resf->LumpCount(); j++)
 	{
-#if 0
-		FPNGChunkArchive arc(png->File->GetFile(), SNAP_ID, chunkLen);
-		DWORD snapver;
-
-		arc << snapver;
-		arc << MapName;
-		i = FindLevelInfo(MapName);
-		i->snapshot = new FCompressedMemFile;
-		i->snapshot->Serialize(arc);
-		chunkLen = (DWORD)M_NextPNGChunk(png, SNAP_ID);
-#endif
-	}
-
-	chunkLen = (DWORD)M_FindPNGChunk(png, DSNP_ID);
-	if (chunkLen != 0)
-	{
-#if 0
-		FPNGChunkArchive arc(png->File->GetFile(), DSNP_ID, chunkLen);
-		DWORD snapver;
-
-		arc << snapver;
-		arc << MapName;
-		TheDefaultLevelInfo.snapshot = new FCompressedMemFile;
-		TheDefaultLevelInfo.snapshot->Serialize(arc);
-#endif
+		FResourceLump * resl = resf->GetLump(j);
+		if (resl != nullptr)
+		{
+			auto ptr = strstr(resl->FullName, ".map.json");
+			if (ptr != nullptr)
+			{
+				ptrdiff_t maplen = ptr - resl->FullName.GetChars();
+				FString mapname(resl->FullName.GetChars(), (size_t)maplen);
+				i = FindLevelInfo(mapname);
+				if (i != nullptr)
+				{
+					i->Snapshot = resl->GetRawData();
+				}
+			}
+			else
+			{
+				auto ptr = strstr(resl->FullName, ".mapd.json");
+				if (ptr != nullptr)
+				{
+					ptrdiff_t maplen = ptr - resl->FullName.GetChars();
+					FString mapname(resl->FullName.GetChars(), (size_t)maplen);
+					TheDefaultLevelInfo.Snapshot = resl->GetRawData();
+				}
+			}
+		}
 	}
 }
+
+//==========================================================================
+//
+//
+//==========================================================================
 
 void G_ReadVisited(FSerializer &arc)
 {
@@ -1696,6 +1699,9 @@ void G_ReadVisited(FSerializer &arc)
 	}
 }
 
+//==========================================================================
+//
+//
 //==========================================================================
 
 CCMD(listsnapshots)
@@ -1752,8 +1758,7 @@ void P_WriteACSDefereds (FSerializer &arc)
 void P_ReadACSDefereds (FSerializer &arc)
 {
 	FString MapName;
-	size_t chunklen;
-
+	
 	P_RemoveDefereds ();
 
 	if (arc.BeginObject("deferred"))

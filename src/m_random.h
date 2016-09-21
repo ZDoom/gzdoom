@@ -39,7 +39,6 @@
 #include "basictypes.h"
 #include "sfmt/SFMT.h"
 
-struct PNGHandle;
 class FSerializer;
 
 class FRandom

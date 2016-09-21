@@ -1962,7 +1962,8 @@ void G_DoLoadGame ()
 	// dearchive all the modifications
 	level.time = Scale (time[1], TICRATE, time[0]);
 
-	//G_ReadSnapshots(png);
+	G_ReadSnapshots(resfile);
+	G_ReadVisited(arc);
 
 	// load a base level
 	savegamerestore = true;		// Use the player actors in the savegame
@@ -2268,8 +2269,8 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	// delete the JSON buffers we created just above. Everything else will
 	// either still be needed or taken care of automatically.
-	delete[] savegame_content[1].mBuffer;
-	delete[] savegame_content[2].mBuffer;
+	savegame_content[1].Clean();
+	savegame_content[2].Clean();
 
 	// Check whether the file is ok by trying to open it.
 	FResourceFile *test = FResourceFile::OpenResourceFile(filename, nullptr, true);

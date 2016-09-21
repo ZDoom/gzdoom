@@ -8,6 +8,28 @@
 class FResourceFile;
 class FTexture;
 
+// This holds a compresed Zip entry with all needed info to decompress it.
+struct FCompressedBuffer
+{
+	unsigned mSize;
+	unsigned mCompressedSize;
+	int mMethod;
+	int mZipFlags;
+	unsigned mCRC32;
+	char *mBuffer;
+
+	bool Decompress(char *destbuffer);
+	void Clean()
+	{
+		mSize = mCompressedSize = 0;
+		if (mBuffer != nullptr)
+		{
+			delete[] mBuffer;
+			mBuffer = nullptr;
+		}
+	}
+};
+
 struct FResourceLump
 {
 	friend class FResourceFile;
@@ -46,6 +68,7 @@ struct FResourceLump
 	virtual int GetIndexNum() const { return 0; }
 	void LumpNameSetup(FString iname);
 	void CheckEmbedded();
+	virtual FCompressedBuffer GetRawData();
 
 	void *CacheLump();
 	int ReleaseCache();

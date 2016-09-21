@@ -40,6 +40,7 @@
 #include "doomerrors.h"
 #include "gi.h"
 #include "doomstat.h"
+#include "w_zip.h"
 
 
 //==========================================================================
@@ -188,6 +189,23 @@ void FResourceLump::CheckEmbedded()
 	}
 	*/
 
+}
+
+
+//==========================================================================
+//
+// this is just for completeness. For non-Zips only an uncompressed lump can
+// be returned.
+//
+//==========================================================================
+
+FCompressedBuffer FResourceLump::GetRawData()
+{
+	FCompressedBuffer cbuf = { (unsigned)LumpSize, (unsigned)LumpSize, METHOD_STORED, 0, 0, new char[LumpSize] };
+	memcpy(cbuf.mBuffer, CacheLump(), LumpSize);
+	cbuf.mCRC32 = crc32(0, (BYTE*)cbuf.mBuffer, LumpSize);
+	ReleaseCache();
+	return cbuf;
 }
 
 

@@ -31,8 +31,9 @@ public:
 
 	bool Setup(int width, int height, int sceneWidth, int sceneHeight);
 
-	void BindSceneFB();
+	void BindSceneFB(bool sceneData);
 	void BindSceneColorTexture(int index);
+	void BindSceneDataTexture(int index);
 	void BindSceneDepthTexture(int index);
 	void BlitSceneToTexture();
 
@@ -90,7 +91,7 @@ private:
 	GLuint CreateRenderBuffer(const FString &name, GLuint format, int width, int height);
 	GLuint CreateRenderBuffer(const FString &name, GLuint format, int samples, int width, int height);
 	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer);
-	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer, GLuint depthstencil, bool multisample);
+	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer0, GLuint colorbuffer1, GLuint depthstencil, bool multisample);
 	bool CheckFrameBufferCompleteness();
 	void ClearFrameBuffer(bool stencil, bool depth);
 	void DeleteTexture(GLuint &handle);
@@ -110,7 +111,9 @@ private:
 	// Buffers for the scene
 	GLuint mSceneMultisample = 0;
 	GLuint mSceneDepthStencil = 0;
+	GLuint mSceneData = 0;
 	GLuint mSceneFB = 0;
+	GLuint mSceneDataFB = 0;
 
 	// Effect/HUD buffers
 	GLuint mPipelineTexture[NumPipelineTextures];

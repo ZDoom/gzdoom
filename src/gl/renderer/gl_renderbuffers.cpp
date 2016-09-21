@@ -82,7 +82,9 @@ FGLRenderBuffers::~FGLRenderBuffers()
 void FGLRenderBuffers::ClearScene()
 {
 	DeleteFrameBuffer(mSceneFB);
+	DeleteFrameBuffer(mSceneDataFB);
 	DeleteTexture(mSceneMultisample);
+	DeleteTexture(mSceneData);
 	DeleteTexture(mSceneDepthStencil);
 }
 
@@ -253,13 +255,16 @@ void FGLRenderBuffers::CreateScene(int width, int height, int samples)
 	{
 		mSceneMultisample = Create2DMultisampleTexture("SceneMultisample", GL_RGBA16F, width, height, samples, false);
 		mSceneDepthStencil = Create2DMultisampleTexture("SceneDepthStencil", GL_DEPTH24_STENCIL8, width, height, samples, false);
+		mSceneData = Create2DMultisampleTexture("SceneSSAOData", GL_RGBA8, width, height, samples, false);
 	}
 	else
 	{
 		mSceneDepthStencil = Create2DTexture("SceneDepthStencil", GL_DEPTH24_STENCIL8, width, height);
+		mSceneData = Create2DTexture("SceneSSAOData", GL_RGBA8, width, height);
 	}
 
-	mSceneFB = CreateFrameBuffer("SceneFB", samples > 1 ? mSceneMultisample : mPipelineTexture[0], mSceneDepthStencil, samples > 1);
+	mSceneFB = CreateFrameBuffer("SceneFB", samples > 1 ? mSceneMultisample : mPipelineTexture[0], 0, mSceneDepthStencil, samples > 1);
+	mSceneDataFB = CreateFrameBuffer("SSAOSceneFB", samples > 1 ? mSceneMultisample : mPipelineTexture[0], mSceneData, mSceneDepthStencil, samples > 1);
 }
 
 //==========================================================================
@@ -512,7 +517,7 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuff
 	return handle;
 }
 
-GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuffer, GLuint depthstencil, bool multisample)
+GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuffer0, GLuint colorbuffer1, GLuint depthstencil, bool multisample)
 {
 	GLuint handle = 0;
 	glGenFramebuffers(1, &handle);
@@ -520,12 +525,16 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuff
 	FGLDebug::LabelObject(GL_FRAMEBUFFER, handle, name);
 	if (multisample)
 	{
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, colorbuffer, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, colorbuffer0, 0);
+		if (colorbuffer1 != 0)
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D_MULTISAMPLE, colorbuffer1, 0);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, depthstencil, 0);
 	}
 	else
 	{
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer0, 0);
+		if (colorbuffer1 != 0)
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, colorbuffer1, 0);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthstencil, 0);
 	}
 	if (CheckFrameBufferCompleteness())
@@ -668,9 +677,9 @@ void FGLRenderBuffers::BindEyeFB(int eye, bool readBuffer)
 //
 //==========================================================================
 
-void FGLRenderBuffers::BindSceneFB()
+void FGLRenderBuffers::BindSceneFB(bool sceneData)
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, mSceneFB);
+	glBindFramebuffer(GL_FRAMEBUFFER, sceneData ? mSceneDataFB : mSceneFB);
 }
 
 //==========================================================================
@@ -686,6 +695,21 @@ void FGLRenderBuffers::BindSceneColorTexture(int index)
 		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, mSceneMultisample);
 	else
 		glBindTexture(GL_TEXTURE_2D, mPipelineTexture[0]);
+}
+
+//==========================================================================
+//
+// Binds the scene data texture to the specified texture unit
+//
+//==========================================================================
+
+void FGLRenderBuffers::BindSceneDataTexture(int index)
+{
+	glActiveTexture(GL_TEXTURE0 + index);
+	if (mSamples > 1)
+		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, mSceneData);
+	else
+		glBindTexture(GL_TEXTURE_2D, mSceneData);
 }
 
 //==========================================================================

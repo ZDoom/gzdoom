@@ -59,12 +59,16 @@ private:
 class FSSAOCombineShader
 {
 public:
-	void Bind();
+	void Bind(bool multisample);
 
-	FBufferedUniformSampler AODepthTexture;
+	FBufferedUniformSampler AODepthTexture[2];
+	FBufferedUniformSampler SceneDataTexture[2];
+	FBufferedUniform1i SampleCount[2];
+	FBufferedUniform2f Scale[2];
+	FBufferedUniform2f Offset[2];
 
 private:
-	FShaderProgram mShader;
+	FShaderProgram mShader[2];
 };
 
 #endif

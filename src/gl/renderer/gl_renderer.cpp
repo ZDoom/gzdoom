@@ -320,7 +320,7 @@ void FGLRenderer::Begin2D()
 	if (mBuffers->Setup(mScreenViewport.width, mScreenViewport.height, mSceneViewport.width, mSceneViewport.height))
 	{
 		if (mDrawingScene2D)
-			mBuffers->BindSceneFB();
+			mBuffers->BindSceneFB(false);
 		else
 			mBuffers->BindCurrentFB();
 	}

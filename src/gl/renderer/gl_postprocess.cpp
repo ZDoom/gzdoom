@@ -138,9 +138,6 @@ void FGLRenderer::PostProcessScene()
 
 void FGLRenderer::AmbientOccludeScene()
 {
-	if (!gl_ssao || !FGLRenderBuffers::IsEnabled())
-		return;
-
 	FGLDebug::PushGroup("AmbientOccludeScene");
 
 	FGLPostProcessState savedState;
@@ -227,20 +224,27 @@ void FGLRenderer::AmbientOccludeScene()
 	RenderScreenQuad();
 
 	// Add SSAO back to scene texture:
-	mBuffers->BindSceneFB();
+	mBuffers->BindSceneFB(false);
+	GLenum buffers[] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, buffers);
 	glViewport(mSceneViewport.left, mSceneViewport.top, mSceneViewport.width, mSceneViewport.height);
 	glEnable(GL_BLEND);
 	glBlendEquation(GL_FUNC_ADD);
 	if (gl_ssao_debug)
 		glBlendFunc(GL_ONE, GL_ZERO);
 	else
-		glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, mBuffers->AmbientTexture1);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	mSSAOCombineShader->Bind();
-	mSSAOCombineShader->AODepthTexture.Set(0);
+	mBuffers->BindSceneDataTexture(1);
+	mSSAOCombineShader->Bind(multisample);
+	mSSAOCombineShader->AODepthTexture[multisample].Set(0);
+	mSSAOCombineShader->SceneDataTexture[multisample].Set(1);
+	if (multisample) mSSAOCombineShader->SampleCount[multisample].Set(gl_multisample);
+	mSSAOCombineShader->Scale[multisample].Set(mBuffers->AmbientWidth * 2.0f / (float)mScreenViewport.width, mBuffers->AmbientHeight * 2.0f / (float)mScreenViewport.height);
+	mSSAOCombineShader->Offset[multisample].Set(mSceneViewport.left / (float)mScreenViewport.width, mSceneViewport.top / (float)mScreenViewport.height);
 	RenderScreenQuad();
 
 	FGLDebug::PopGroup();

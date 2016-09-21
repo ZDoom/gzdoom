@@ -157,7 +157,11 @@ void FGLRenderer::Set3DViewport(bool mainview)
 {
 	if (mainview && mBuffers->Setup(mScreenViewport.width, mScreenViewport.height, mSceneViewport.width, mSceneViewport.height))
 	{
-		mBuffers->BindSceneFB();
+		mBuffers->BindSceneFB(gl_ssao);
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+		glDrawBuffers(gl_ssao ? 2 : 1, buffers);
+		gl_RenderState.SetPassType(gl_ssao ? GBUFFER_PASS : NORMAL_PASS);
+		gl_RenderState.Apply();
 	}
 
 	// Always clear all buffers with scissor test disabled.
@@ -490,7 +494,13 @@ void FGLRenderer::DrawScene(int drawmode)
 
 	RenderScene(recursion);
 
-	AmbientOccludeScene();
+	bool applySSAO = gl_ssao && FGLRenderBuffers::IsEnabled() && drawmode != DM_PORTAL;
+	if (applySSAO)
+	{
+		AmbientOccludeScene();
+		gl_RenderState.SetPassType(GBUFFER_PASS);
+		gl_RenderState.Apply();
+	}
 
 	// Handle all portals after rendering the opaque objects but before
 	// doing all translucent stuff
@@ -498,6 +508,15 @@ void FGLRenderer::DrawScene(int drawmode)
 	GLPortal::EndFrame();
 	recursion--;
 	RenderTranslucent();
+
+	if (applySSAO)
+	{
+		mBuffers->BindSceneFB(true);
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+		glDrawBuffers(2, buffers);
+		gl_RenderState.SetPassType(NORMAL_PASS);
+		gl_RenderState.Apply();
+	}
 }
 
 

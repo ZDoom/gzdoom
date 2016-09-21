@@ -120,16 +120,21 @@ void FDepthBlurShader::Bind(bool vertical)
 	shader.Bind();
 }
 
-void FSSAOCombineShader::Bind()
+void FSSAOCombineShader::Bind(bool multisample)
 {
-	if (!mShader)
+	auto &shader = mShader[multisample];
+	if (!shader)
 	{
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/ssaocombine.fp", "", 330);
-		mShader.SetFragDataLocation(0, "FragColor");
-		mShader.Link("shaders/glsl/ssaocombine");
-		mShader.SetAttribLocation(0, "PositionInProjection");
-		AODepthTexture.Init(mShader, "AODepthTexture");
+		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/ssaocombine.fp", multisample ? "#define MULTISAMPLE\n" : "", 330);
+		shader.SetFragDataLocation(0, "FragColor");
+		shader.Link("shaders/glsl/ssaocombine");
+		shader.SetAttribLocation(0, "PositionInProjection");
+		AODepthTexture[multisample].Init(shader, "AODepthTexture");
+		SceneDataTexture[multisample].Init(shader, "SceneDataTexture");
+		SampleCount[multisample].Init(shader, "SampleCount");
+		Scale[multisample].Init(shader, "Scale");
+		Offset[multisample].Init(shader, "Offset");
 	}
-	mShader.Bind();
+	shader.Bind();
 }

@@ -71,6 +71,9 @@ const char *GetVersionString();
 // Note that SAVEVER is not directly comparable to VERSION.
 // SAVESIG should match SAVEVER.
 
+// extension for savegames
+#define SAVEGAME_EXT "zds"
+
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
 #define MINSAVEVER	4545
 

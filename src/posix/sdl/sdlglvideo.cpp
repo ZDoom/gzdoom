@@ -163,7 +163,7 @@ bool SDLGLVideo::NextMode (int *width, int *height, bool *letterbox)
 	return false;
 }
 
-DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool fullscreen, DFrameBuffer *old)
+DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, bool fullscreen, DFrameBuffer *old)
 {
 	static int retry = 0;
 	static int owidth, oheight;
@@ -315,7 +315,7 @@ bool SDLGLVideo::InitHardware (bool allowsoftware, int multisample)
 // FrameBuffer implementation -----------------------------------------------
 
 SDLGLFB::SDLGLFB (void *, int width, int height, int, int, bool fullscreen)
-	: DFrameBuffer (width, height)
+	: DFrameBuffer (width, height, false)
 {
 	int i;
 	

@@ -527,6 +527,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, OneLevel &l, OneLevel 
 			("levelname", l.Levelname)
 			.EndObject();
 	}
+	return arc;
 }
 
 void STAT_Serialize(FSerializer &arc)

@@ -898,6 +898,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 			I_Error("Savegame is from a different level");
 		}
 	}
+	arc("saveversion", SaveVersion);
 
 	Renderer->StartSerialize(arc);
 	if (arc.isReading())

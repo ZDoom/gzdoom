@@ -295,7 +295,6 @@ struct level_info_t
 	SBYTE		WallVertLight, WallHorizLight;
 	int			musicorder;
 	FCompressedBuffer	Snapshot;
-	DWORD		snapshotVer;
 	TArray<acsdefered_t> deferred;
 	float		skyspeed1;
 	float		skyspeed2;
@@ -535,7 +534,8 @@ void G_SnapshotLevel (void);
 void G_UnSnapshotLevel (bool keepPlayers);
 struct PNGHandle;
 void G_ReadSnapshots (PNGHandle *png);
-void G_WriteSnapshots (FILE *file);
+void G_WriteSnapshots (TArray<FString> &, TArray<FCompressedBuffer> &);
+void G_WriteVisited(FSerializer &arc);
 void G_ClearHubInfo();
 
 enum ESkillProperty

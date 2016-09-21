@@ -58,7 +58,7 @@ public:
 	{
 		Close();
 	}
-	bool OpenWriter();
+	bool OpenWriter(bool randomaccess = true);
 	bool OpenReader(const char *buffer, size_t length);
 	bool OpenReader(FCompressedBuffer *input);
 	void Close();

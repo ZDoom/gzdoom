@@ -33,6 +33,7 @@
 **
 */
 
+#include <time.h>
 #include "file_zip.h"
 #include "cmdlib.h"
 #include "templates.h"
@@ -265,6 +266,7 @@ bool FZipFile::Open(bool quiet)
 		lump_p->Flags = LUMPF_ZIPFILE | LUMPFZIP_NEEDFILESTART;
 		lump_p->Method = BYTE(zip_fh->Method);
 		lump_p->GPFlags = zip_fh->Flags;
+		lump_p->CRC32 = zip_fh->CRC32;
 		lump_p->CompressedSize = LittleLong(zip_fh->CompressedSize);
 		lump_p->Position = LittleLong(zip_fh->LocalHeaderOffset);
 		lump_p->CheckEmbedded();
@@ -308,10 +310,11 @@ FCompressedBuffer FZipFile::GetRawLump(int lumpnum)
 {
 	if ((unsigned)lumpnum >= NumLumps)
 	{
-		return{ 0,0,0,0,nullptr };
+		return{ 0,0,0,0,0,nullptr };
 	}
 	FZipLump *lmp = &Lumps[lumpnum];
-	FCompressedBuffer cbuf = { (unsigned)lmp->LumpSize, (unsigned)lmp->CompressedSize, lmp->Method, lmp->GPFlags, new char[lmp->CompressedSize] };
+
+	FCompressedBuffer cbuf = { (unsigned)lmp->LumpSize, (unsigned)lmp->CompressedSize, lmp->Method, lmp->GPFlags, lmp->CRC32, new char[lmp->CompressedSize] };
 	Reader->Seek(lmp->Position, SEEK_SET);
 	Reader->Read(cbuf.mBuffer, lmp->CompressedSize);
 	return cbuf;
@@ -426,3 +429,169 @@ FResourceFile *CheckZip(const char *filename, FileReader *file, bool quiet)
 
 
 
+//==========================================================================
+//
+// time_to_dos
+//
+// Converts time from struct tm to the DOS format used by zip files.
+//
+//==========================================================================
+
+static void time_to_dos(struct tm *time, unsigned short *dosdate, unsigned short *dostime)
+{
+	if (time == NULL || time->tm_year < 80)
+	{
+		*dosdate = *dostime = 0;
+	}
+	else
+	{
+		*dosdate = LittleShort((time->tm_year - 80) * 512 + (time->tm_mon + 1) * 32 + time->tm_mday);
+		*dostime = LittleShort(time->tm_hour * 2048 + time->tm_min * 32 + time->tm_sec / 2);
+	}
+}
+
+//==========================================================================
+//
+// append_to_zip
+//
+// Write a given file to the zipFile.
+// 
+// zipfile: zip object to be written to
+// 
+// returns: position = success, -1 = error
+//
+//==========================================================================
+
+int AppendToZip(FILE *zip_file, const char *filename, FCompressedBuffer &content, uint16_t date, uint16_t time)
+{
+	FZipLocalFileHeader local;
+	int position;
+
+	local.Magic = ZIP_LOCALFILE;
+	local.VersionToExtract[0] = 20;
+	local.VersionToExtract[1] = 0;
+	local.Flags = content.mMethod == METHOD_DEFLATE ? LittleShort(2) : LittleShort((uint16_t)content.mZipFlags);
+	local.Method = LittleShort(content.mMethod);
+	local.ModDate = date;
+	local.ModTime = time;
+	local.CRC32 = content.mCRC32;
+	local.UncompressedSize = LittleLong(content.mSize);
+	local.CompressedSize = LittleLong(content.mCompressedSize);
+	local.NameLength = LittleShort((unsigned short)strlen(filename));
+	local.ExtraLength = 0;
+
+	// Fill in local directory header.
+
+	position = (int)ftell(zip_file);
+
+	// Write out the header, file name, and file data.
+	if (fwrite(&local, sizeof(local), 1, zip_file) != 1 ||
+		fwrite(filename, strlen(filename), 1, zip_file) != 1 ||
+		fwrite(content.mBuffer, 1, content.mCompressedSize, zip_file) != content.mCompressedSize)
+	{
+		return -1;
+	}
+	return position;
+}
+
+
+//==========================================================================
+//
+// write_central_dir
+//
+// Writes the central directory entry for a file.
+//
+//==========================================================================
+
+int AppendCentralDirectory(FILE *zip_file, const char *filename, FCompressedBuffer &content, uint16_t date, uint16_t time, int position)
+{
+	FZipCentralDirectoryInfo dir;
+
+	dir.Magic = ZIP_CENTRALFILE;
+	dir.VersionMadeBy[0] = 20;
+	dir.VersionMadeBy[1] = 0;
+	dir.VersionToExtract[0] = 20;
+	dir.VersionToExtract[1] = 0;
+	dir.Flags = content.mMethod == METHOD_DEFLATE ? LittleShort(2) : LittleShort((uint16_t)content.mZipFlags);
+	dir.Method = LittleShort(content.mMethod);
+	dir.ModTime = time;
+	dir.ModDate = date;
+	dir.CRC32 = content.mCRC32;
+	dir.CompressedSize = LittleLong(content.mCompressedSize);
+	dir.UncompressedSize = LittleLong(content.mSize);
+	dir.NameLength = LittleShort((unsigned short)strlen(filename));
+	dir.ExtraLength = 0;
+	dir.CommentLength = 0;
+	dir.StartingDiskNumber = 0;
+	dir.InternalAttributes = 0;
+	dir.ExternalAttributes = 0;
+	dir.LocalHeaderOffset = LittleLong(position);
+
+	if (fwrite(&dir, sizeof(dir), 1, zip_file) != 1 ||
+		fwrite(filename,  strlen(filename), 1, zip_file) != 1)
+	{
+		return -1;
+	}
+	return 0;
+}
+
+bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompressedBuffer> &content)
+{
+	// try to determine local time
+	struct tm *ltime;
+	time_t ttime;
+	uint16_t mydate, mytime;
+	ttime = time(nullptr);
+	ltime = localtime(&ttime);
+	time_to_dos(ltime, &mydate, &mytime);
+
+	TArray<int> positions;
+
+	if (filenames.Size() != content.Size()) return false;
+
+	FILE *f = fopen(filename, "wb");
+	if (f != nullptr)
+	{
+		for (unsigned i = 0; i < filenames.Size(); i++)
+		{
+			int pos = AppendToZip(f, filenames[i], content[i], mydate, mytime);
+			if (pos == -1)
+			{
+				fclose(f);
+				remove(filename);
+				return false;
+			}
+			positions.Push(pos);
+		}
+
+		int dirofs = (int)ftell(f);
+		for (unsigned i = 0; i < filenames.Size(); i++)
+		{
+			if (AppendCentralDirectory(f, filenames[i], content[i], mydate, mytime, positions[i]) < 0)
+			{
+				fclose(f);
+				remove(filename);
+				return false;
+			}
+		}
+
+		// Write the directory terminator.
+		FZipEndOfCentralDirectory dirend;
+		dirend.Magic = ZIP_ENDOFDIR;
+		dirend.DiskNumber = 0;
+		dirend.FirstDisk = 0;
+		dirend.NumEntriesOnAllDisks = dirend.NumEntries = LittleShort(filenames.Size());
+		dirend.DirectoryOffset = dirofs;
+		dirend.DirectorySize = LittleLong(ftell(f) - dirofs);
+		dirend.ZipCommentLength = 0;
+		if (fwrite(&dirend, sizeof(dirend), 1, f) != 1)
+		{
+			fclose(f);
+			remove(filename);
+			return false;
+		}
+		fclose(f);
+		return true;
+	}
+	return false;
+}

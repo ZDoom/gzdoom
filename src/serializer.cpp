@@ -690,11 +690,12 @@ const char *FSerializer::GetOutput(unsigned *len)
 
 FCompressedBuffer FSerializer::GetCompressedOutput()
 {
-	if (isReading()) return{ 0,0,0,0,nullptr };
+	if (isReading()) return{ 0,0,0,0,0,nullptr };
 	FCompressedBuffer buff;
 	EndObject();
 	buff.mSize = (unsigned)w->mOutString.GetSize();
 	buff.mZipFlags = 0;
+	buff.mCRC32 = crc32(0, (const Bytef*)w->mOutString.GetString(), buff.mSize);
 
 	uint8_t *compressbuf = new uint8_t[buff.mSize+1];
 
@@ -731,6 +732,7 @@ FCompressedBuffer FSerializer::GetCompressedOutput()
 		buff.mMethod = METHOD_DEFLATE;
 		memcpy(buff.mBuffer, compressbuf, buff.mCompressedSize);
 		delete[] compressbuf;
+		return buff;
 	}
 
 error:

@@ -152,7 +152,6 @@ virtual void Read (void *mem, unsigned int len);
 		void WriteCount (DWORD count);
 		DWORD ReadCount ();
 
-		void UserWriteClass (PClass *info);
 		void UserReadClass (PClass *&info);
 		template<typename T> void UserReadClass(T *&info)
 		{

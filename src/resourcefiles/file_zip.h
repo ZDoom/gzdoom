@@ -10,6 +10,7 @@ struct FCompressedBuffer
 	unsigned mCompressedSize;
 	int mMethod;
 	int mZipFlags;
+	unsigned mCRC32;
 	char *mBuffer;
 	
 	bool Decompress(char *destbuffer);
@@ -41,6 +42,7 @@ struct FZipLump : public FResourceLump
 	BYTE	Method;
 	int		CompressedSize;
 	int		Position;
+	unsigned CRC32;
 
 	virtual FileReader *GetReader();
 	virtual int FillCache();

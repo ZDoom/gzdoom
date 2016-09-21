@@ -1487,8 +1487,6 @@ void G_SnapshotLevel ()
 
 	if (level.info->isValid())
 	{
-		level.info->snapshotVer = SAVEVER;
-
 		FSerializer arc;
 
 		if (arc.OpenWriter())
@@ -1514,7 +1512,6 @@ void G_UnSnapshotLevel (bool hubLoad)
 
 	if (level.info->isValid())
 	{
-		SaveVersion = level.info->snapshotVer;
 		FSerializer arc;
 		if (!arc.OpenReader(&level.info->Snapshot)) return;
 
@@ -1563,10 +1560,28 @@ void G_UnSnapshotLevel (bool hubLoad)
 //
 //==========================================================================
 
-static void writeSnapShot (FArchive &arc, level_info_t *i)
+void G_WriteSnapshots(TArray<FString> &filenames, TArray<FCompressedBuffer> &buffers)
 {
-	arc << i->snapshotVer << i->MapName;
-	//i->snapshot->Serialize (arc);
+	unsigned int i;
+	FString filename;
+
+	for (i = 0; i < wadlevelinfos.Size(); i++)
+	{
+		if (wadlevelinfos[i].Snapshot.mCompressedSize > 0)
+		{
+			filename << wadlevelinfos[i].MapName << ".json";
+			filename.ToLower();
+			filenames.Push(filename);
+			buffers.Push(wadlevelinfos[i].Snapshot);
+		}
+	}
+	if (TheDefaultLevelInfo.Snapshot.mCompressedSize > 0)
+	{
+		filename << TheDefaultLevelInfo.MapName << ".json";
+		filename.ToLower();
+		filenames.Push(filename);
+		buffers.Push(TheDefaultLevelInfo.Snapshot);
+	}
 }
 
 //==========================================================================
@@ -1574,72 +1589,39 @@ static void writeSnapShot (FArchive &arc, level_info_t *i)
 //
 //==========================================================================
 
-void G_WriteSnapshots (FILE *file)
+void G_WriteVisited(FSerializer &arc)
 {
-	unsigned int i;
-
-#if 0
-	for (i = 0; i < wadlevelinfos.Size(); i++)
+	if (arc.BeginArray("visited"))
 	{
-		if (wadlevelinfos[i].snapshot)
+		// Write out which levels have been visited
+		for (auto & wi : wadlevelinfos)
 		{
-			FPNGChunkArchive arc (file, SNAP_ID);
-			writeSnapShot (arc, (level_info_t *)&wadlevelinfos[i]);
-		}
-	}
-	if (TheDefaultLevelInfo.snapshot != NULL)
-	{
-		FPNGChunkArchive arc (file, DSNP_ID);
-		writeSnapShot(arc, &TheDefaultLevelInfo);
-	}
-#endif
-
-	FPNGChunkArchive *arc = NULL;
-	
-	// Write out which levels have been visited
-	for (i = 0; i < wadlevelinfos.Size(); ++i)
-	{
-		if (wadlevelinfos[i].flags & LEVEL_VISITED)
-		{
-			if (arc == NULL)
+			if (wi.flags & LEVEL_VISITED)
 			{
-				arc = new FPNGChunkArchive (file, VIST_ID);
+				arc.AddString(nullptr, wi.MapName);
 			}
-			(*arc) << wadlevelinfos[i].MapName;
 		}
-	}
-
-	if (arc != NULL)
-	{
-		FString empty = "";
-		(*arc) << empty;
-		delete arc;
+		arc.EndArray();
 	}
 
 	// Store player classes to be used when spawning a random class
 	if (multiplayer)
 	{
-		FPNGChunkArchive arc2 (file, RCLS_ID);
-		for (i = 0; i < MAXPLAYERS; ++i)
-		{
-			SBYTE cnum = SinglePlayerClass[i];
-			arc2 << cnum;
-		}
+		arc.Array("randomclasses", SinglePlayerClass, MAXPLAYERS);
 	}
 
-	// Store player classes that are currently in use
-	FPNGChunkArchive arc3 (file, PCLS_ID);
-	for (i = 0; i < MAXPLAYERS; ++i)
+	if (arc.BeginObject("playerclasses"))
 	{
-		BYTE pnum;
-		if (playeringame[i])
+		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
-			pnum = i;
-			arc3 << pnum;
-			arc3.UserWriteClass (players[i].cls);
+			if (playeringame[i])
+			{
+				FString key;
+				key.Format("%d", i);
+				arc(key, players[i].cls);
+			}
 		}
-		pnum = 255;
-		arc3 << pnum;
+		arc.EndObject();
 	}
 }
 
@@ -1665,7 +1647,6 @@ void G_ReadSnapshots (PNGHandle *png)
 		arc << snapver;
 		arc << MapName;
 		i = FindLevelInfo (MapName);
-		i->snapshotVer = snapver;
 #if 0
 		i->snapshot = new FCompressedMemFile;
 		i->snapshot->Serialize (arc);
@@ -1681,7 +1662,6 @@ void G_ReadSnapshots (PNGHandle *png)
 
 		arc << snapver;
 		arc << MapName;
-		TheDefaultLevelInfo.snapshotVer = snapver;
 #if 0
 		TheDefaultLevelInfo.snapshot = new FCompressedMemFile;
 		TheDefaultLevelInfo.snapshot->Serialize (arc);

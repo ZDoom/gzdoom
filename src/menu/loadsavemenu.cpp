@@ -241,7 +241,7 @@ void DLoadSaveMenu::ReadSaveStrings ()
 
 					title[SAVESTRINGSIZE] = 0;
 
-					if (NULL != (png = M_VerifyPNG (file)))
+					if (false)//NULL != (png = M_VerifyPNG (file)))
 					{
 						char *ver = M_GetPNGText (png, "ZDoom Save Version");
 						char *engine = M_GetPNGText (png, "Engine");
@@ -251,7 +251,7 @@ void DLoadSaveMenu::ReadSaveStrings ()
 							{
 								strncpy (title, I_FindName(&c_file), SAVESTRINGSIZE);
 							}
-							if (strncmp (ver, SAVESIG, 9) == 0 &&
+							if (strncmp (ver, "SAVESIG", 9) == 0 &&
 								atoi (ver+9) >= MINSAVEVER &&
 								engine != NULL)
 							{

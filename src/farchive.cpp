@@ -962,32 +962,6 @@ PClass *FArchive::ReadStoredClass (const PClass *wanttype)
 	return type;
 }
 
-void FArchive::UserWriteClass (PClass *type)
-{
-	BYTE id;
-
-	if (type == NULL)
-	{
-		id = 2;
-		Write (&id, 1);
-	}
-	else
-	{
-		DWORD *arcid;
-		if (NULL == (arcid = ClassToArchive.CheckKey(type)))
-		{
-			id = 1;
-			Write (&id, 1);
-			WriteClass (type);
-		}
-		else
-		{
-			id = 0;
-			Write (&id, 1);
-			WriteCount (*arcid);
-		}
-	}
-}
 
 void FArchive::UserReadClass (PClass *&type)
 {

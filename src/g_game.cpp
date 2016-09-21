@@ -85,6 +85,8 @@
 #include "p_spec.h"
 #include "r_data/colormaps.h"
 #include "serializer.h"
+#include "w_zip.h"
+#include "resourcefiles/resourcefile.h"
 
 #include <zlib.h>
 
@@ -112,6 +114,7 @@ void	G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 void	G_DoAutoSave ();
 
 void STAT_Serialize(FSerializer &file);
+bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompressedBuffer> &content);
 
 FIntCVar gameskill ("skill", 2, CVAR_SERVERINFO|CVAR_LATCH);
 CVAR (Int, deathmatch, 0, CVAR_SERVERINFO|CVAR_LATCH);
@@ -1886,7 +1889,7 @@ void G_DoLoadGame ()
 
 	SaveVersion = 0;
 	if (!M_GetPNGText (png, "ZDoom Save Version", sigcheck, 20) ||
-		0 != strncmp (sigcheck, SAVESIG, 9) ||		// ZDOOMSAVE is the first 9 chars
+		0 != strncmp (sigcheck, "SAVEVER", 9) ||		// ZDOOMSAVE is the first 9 chars
 		(SaveVersion = atoi (sigcheck+9)) < MINSAVEVER)
 	{
 		delete png;
@@ -2045,7 +2048,7 @@ FString G_BuildSaveName (const char *prefix, int slot)
 	name << prefix;
 	if (slot >= 0)
 	{
-		name.AppendFormat("%d.zds" SAVEGAME_EXT, slot);
+		name.AppendFormat("%d." SAVEGAME_EXT, slot);
 	}
 	return name;
 }
@@ -2166,6 +2169,7 @@ static void PutSavePic (FileWriter *file, int width, int height)
 void G_DoSaveGame (bool okForQuicksave, FString filename, const char *description)
 {
 	TArray<FCompressedBuffer> savegame_content;
+	TArray<FString> savegame_filenames;
 
 	char buf[100];
 
@@ -2203,9 +2207,10 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	M_AppendPNGText(&savepic, "Current Map", level.MapName);
 	M_FinishPNG(&savepic);
 
+	int ver = SAVEVER;
 	savegameinfo.AddString("Software", buf)
 		.AddString("Engine", GAMESIG)
-		.AddString("Save Version", SAVESIG)
+		("Save Version", ver)
 		.AddString("Title", description)
 		.AddString("Current Map", level.MapName);
 
@@ -2232,16 +2237,35 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	FRandom::StaticWriteRNGState(savegameglobals);
 	P_WriteACSDefereds(savegameglobals);
 	P_WriteACSVars(savegameglobals);
+	G_WriteVisited(savegameglobals);
+
 
 	if (NextSkill != -1)
 	{
 		savegameglobals("nextskill", NextSkill);
 	}
 
-	//G_WriteSnapshots (stdfile);
+	auto picdata = savepic.GetBuffer();
+	FCompressedBuffer bufpng = { picdata->Size(), picdata->Size(), METHOD_STORED, 0, crc32(0, &(*picdata)[0], picdata->Size()), (char*)&(*picdata)[0] };
+
+	savegame_content.Push(bufpng);
+	savegame_filenames.Push("savepic.png");
+	savegame_content.Push(savegameinfo.GetCompressedOutput());
+	savegame_filenames.Push("info.json");
+	savegame_content.Push(savegameglobals.GetCompressedOutput());
+	savegame_filenames.Push("globals.json");
+
+	G_WriteSnapshots (savegame_filenames, savegame_content);
 	
 
+	WriteZip(filename, savegame_filenames, savegame_content);
+
 	M_NotifyNewSave (filename.GetChars(), description, okForQuicksave);
+
+	// delete the JSON buffers we created just above. Everything else will
+	// either still be needed or taken care of automatically.
+	delete[] savegame_content[1].mBuffer;
+	delete[] savegame_content[2].mBuffer;
 
 	// Check whether the file is ok. (todo when new format is ready)
 	bool success = true;
@@ -2251,6 +2275,8 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 		else Printf ("%s\n", GStrings("GGSAVED"));
 	}
 	else Printf(PRINT_HIGH, "Save failed\n");
+
+	FResourceFile *test = FResourceFile::OpenResourceFile(filename, nullptr);
 
 	BackupSaveName = filename;
 

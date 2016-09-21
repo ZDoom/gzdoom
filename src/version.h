@@ -81,10 +81,6 @@ const char *GetVersionString();
 // SVN revision ever got.
 #define SAVEVER 4550
 
-#define SAVEVERSTRINGIFY2(x) #x
-#define SAVEVERSTRINGIFY(x) SAVEVERSTRINGIFY2(x)
-#define SAVESIG "ZDOOMSAVE" SAVEVERSTRINGIFY(SAVEVER)
-
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
 #define GAMESIG "ZDOOM"
 #define BASEWAD "zdoom.pk3"

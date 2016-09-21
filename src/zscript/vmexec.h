@@ -786,27 +786,51 @@ begin:
 
 	OP(DIV_RR):
 		ASSERTD(a); ASSERTD(B); ASSERTD(C);
+		if (reg.d[C] == 0)
+		{
+			THROW(X_DIVISION_BY_ZERO);
+		}
 		reg.d[a] = reg.d[B] / reg.d[C];
 		NEXTOP;
 	OP(DIV_RK):
 		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
+		if (konstd[C] == 0)
+		{
+			THROW(X_DIVISION_BY_ZERO);
+		}
 		reg.d[a] = reg.d[B] / konstd[C];
 		NEXTOP;
 	OP(DIV_KR):
 		ASSERTD(a); ASSERTKD(B); ASSERTD(C);
+		if (reg.d[C] == 0)
+		{
+			THROW(X_DIVISION_BY_ZERO);
+		}
 		reg.d[a] = konstd[B] / reg.d[C];
 		NEXTOP;
 
 	OP(MOD_RR):
 		ASSERTD(a); ASSERTD(B); ASSERTD(C);
+		if (reg.d[C] == 0)
+		{
+			THROW(X_DIVISION_BY_ZERO);
+		}
 		reg.d[a] = reg.d[B] % reg.d[C];
 		NEXTOP;
 	OP(MOD_RK):
 		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
+		if (konstd[C] == 0)
+		{
+			THROW(X_DIVISION_BY_ZERO);
+		}
 		reg.d[a] = reg.d[B] % konstd[C];
 		NEXTOP;
 	OP(MOD_KR):
 		ASSERTD(a); ASSERTKD(B); ASSERTD(C);
+		if (reg.d[C] == 0)
+		{
+			THROW(X_DIVISION_BY_ZERO);
+		}
 		reg.d[a] = konstd[B] % reg.d[C];
 		NEXTOP;
 
@@ -981,14 +1005,26 @@ begin:
 
 	OP(DIVF_RR):
 		ASSERTF(a); ASSERTF(B); ASSERTF(C);
+		if (reg.f[C] == 0.)
+		{
+			THROW(X_DIVISION_BY_ZERO);
+		}
 		reg.f[a] = reg.f[B] / reg.f[C];
 		NEXTOP;
 	OP(DIVF_RK):
 		ASSERTF(a); ASSERTF(B); ASSERTKF(C);
+		if (konstf[C] == 0.)
+		{
+			THROW(X_DIVISION_BY_ZERO);
+		}
 		reg.f[a] = reg.f[B] / konstf[C];
 		NEXTOP;
 	OP(DIVF_KR):
 		ASSERTF(a); ASSERTKF(B); ASSERTF(C);
+		if (reg.f[C] == 0.)
+		{
+			THROW(X_DIVISION_BY_ZERO);
+		}
 		reg.f[a] = konstf[B] / reg.f[C];
 		NEXTOP;
 
@@ -996,6 +1032,10 @@ begin:
 		ASSERTF(a); ASSERTF(B); ASSERTF(C);
 		fb = reg.f[B]; fc = reg.f[C];
 	Do_MODF:
+		if (fc == 0.)
+		{
+			THROW(X_DIVISION_BY_ZERO);
+		}
 		reg.f[a] = luai_nummod(fb, fc);
 		NEXTOP;
 	OP(MODF_RK):

@@ -233,6 +233,38 @@ DEFINE_ACTION_FUNCTION(AActor, CheckClass)
 
 //==========================================================================
 //
+// CheckClass
+//
+// NON-ACTION function to calculate missile damage for the given actor
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(AActor, GetMissileDamage)
+{
+	if (numret > 0)
+	{
+		assert(ret != NULL);
+		PARAM_SELF_PROLOGUE(AActor);
+		PARAM_INT(mask);
+		PARAM_INT(add)
+		PARAM_INT_OPT(pick_pointer) { pick_pointer = AAPTR_DEFAULT; }
+
+		self = COPY_AAPTR(self, pick_pointer);
+		if (self == NULL)
+		{
+			ret->SetInt(0);
+		}
+		else
+		{
+			ret->SetInt(self->GetMissileDamage(mask, add));
+		}
+		return 1;
+	}
+	return 0;
+}
+
+//==========================================================================
+//
 // IsPointerEqual
 //
 // NON-ACTION function to check if two pointers are equal.

@@ -117,6 +117,7 @@ void STAT_Serialize(FSerializer &file);
 bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompressedBuffer> &content);
 
 FIntCVar gameskill ("skill", 2, CVAR_SERVERINFO|CVAR_LATCH);
+CVAR(Bool, save_formatted, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)	// use formatted JSON for saves (more readable but a larger files and a bit slower.
 CVAR (Int, deathmatch, 0, CVAR_SERVERINFO|CVAR_LATCH);
 CVAR (Bool, chasedemo, false, 0);
 CVAR (Bool, storesavepic, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -1778,7 +1779,7 @@ void G_LoadGame (const char* name, bool hidecon)
 	}
 }
 
-static bool CheckSingleWad (char *name, bool &printRequires, bool printwarn)
+static bool CheckSingleWad (const char *name, bool &printRequires, bool printwarn)
 {
 	if (name == NULL)
 	{
@@ -1798,22 +1799,20 @@ static bool CheckSingleWad (char *name, bool &printRequires, bool printwarn)
 			}
 		}
 		printRequires = true;
-		delete[] name;
 		return false;
 	}
-	delete[] name;
 	return true;
 }
 
 // Return false if not all the needed wads have been loaded.
-bool G_CheckSaveGameWads (PNGHandle *png, bool printwarn)
+bool G_CheckSaveGameWads (FSerializer &arc, bool printwarn)
 {
-	char *text;
 	bool printRequires = false;
+	FString text;
 
-	text = M_GetPNGText (png, "Game WAD");
+	arc("Game WAD", text);
 	CheckSingleWad (text, printRequires, printwarn);
-	text = M_GetPNGText (png, "Map WAD");
+	arc("Map WAD", text);
 	CheckSingleWad (text, printRequires, printwarn);
 
 	if (printRequires)
@@ -2195,8 +2194,8 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	FSerializer savegameinfo;		// this is for displayable info about the savegame
 	FSerializer savegameglobals;	// and this for non-level related info that must be saved.
 
-	savegameinfo.OpenWriter();
-	savegameglobals.OpenWriter();
+	savegameinfo.OpenWriter(true);
+	savegameglobals.OpenWriter(save_formatted);
 
 	SaveVersion = SAVEVER;
 	PutSavePic(&savepic, SAVEPICWIDTH, SAVEPICHEIGHT);
@@ -2267,16 +2266,16 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	delete[] savegame_content[1].mBuffer;
 	delete[] savegame_content[2].mBuffer;
 
-	// Check whether the file is ok. (todo when new format is ready)
-	bool success = true;
-	if (success)
+	// Check whether the file is ok by trying to open it.
+	FResourceFile *test = FResourceFile::OpenResourceFile(filename, nullptr, true);
+	if (test != nullptr)
 	{
+		delete test;
 		if (longsavemessages) Printf ("%s (%s)\n", GStrings("GGSAVED"), filename.GetChars());
 		else Printf ("%s\n", GStrings("GGSAVED"));
 	}
 	else Printf(PRINT_HIGH, "Save failed\n");
 
-	FResourceFile *test = FResourceFile::OpenResourceFile(filename, nullptr);
 
 	BackupSaveName = filename;
 

@@ -80,7 +80,7 @@ struct PNGHandle
 	unsigned int	ChunkPt;
 
 	PNGHandle(FILE *file);
-	PNGHandle(FileReader *file);
+	PNGHandle(FileReader *file, bool takereader = false);
 	~PNGHandle();
 };
 
@@ -88,7 +88,7 @@ struct PNGHandle
 // the signature, but also checking for the IEND chunk. CRC checking of
 // each chunk is not done. If it is valid, you get a PNGHandle to pass to
 // the following functions.
-PNGHandle *M_VerifyPNG (FileReader *file);
+PNGHandle *M_VerifyPNG (FileReader *file, bool takereader = false);
 PNGHandle *M_VerifyPNG (FILE *file);
 
 // Finds a chunk in a PNG file. The file pointer will be positioned at the

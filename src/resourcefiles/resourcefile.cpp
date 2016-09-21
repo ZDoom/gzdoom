@@ -270,7 +270,7 @@ FResourceFile *CheckDir(const char *filename, FileReader *file, bool quiet);
 
 static CheckFunc funcs[] = { CheckWad, CheckZip, Check7Z, CheckPak, CheckGRP, CheckRFF, CheckLump };
 
-FResourceFile *FResourceFile::OpenResourceFile(const char *filename, FileReader *file, bool quiet)
+FResourceFile *FResourceFile::OpenResourceFile(const char *filename, FileReader *file, bool quiet, bool containeronly)
 {
 	if (file == NULL)
 	{
@@ -283,7 +283,7 @@ FResourceFile *FResourceFile::OpenResourceFile(const char *filename, FileReader 
 			return NULL;
 		}
 	}
-	for(size_t i = 0; i < countof(funcs); i++)
+	for(size_t i = 0; i < countof(funcs) - containeronly; i++)
 	{
 		FResourceFile *resfile = funcs[i](filename, file, quiet);
 		if (resfile != NULL) return resfile;
@@ -560,6 +560,24 @@ void FResourceFile::FindStrifeTeaserVoices ()
 {
 }
 
+//==========================================================================
+//
+// Finds a lump by a given name. Used for savegames
+//
+//==========================================================================
+
+FResourceLump *FResourceFile::FindLump(const char *name)
+{
+	for (unsigned i = 0; i < NumLumps; i++)
+	{
+		FResourceLump *lump = GetLump(i);
+		if (!stricmp(name, lump->FullName))
+		{
+			return lump;
+		}
+	}
+	return nullptr;
+}
 
 //==========================================================================
 //

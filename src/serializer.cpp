@@ -3,10 +3,6 @@
 #define RAPIDJSON_HAS_CXX11_RANGE_FOR 1
 #define RAPIDJSON_PARSE_DEFAULT_FLAGS kParseFullPrecisionFlag
 
-#ifdef _DEBUG
-#define PRETTY
-#endif
-
 #include "rapidjson/rapidjson.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
@@ -69,26 +65,126 @@ struct FJSONObject
 
 struct FWriter
 {
-	// Since this is done by template parameters, we'd have to template the entire serializer to allow this switch at run time. Argh!
-#ifndef PRETTY
 	typedef rapidjson::Writer<rapidjson::StringBuffer, rapidjson::ASCII<> > Writer;
-#else
-	typedef rapidjson::PrettyWriter<rapidjson::StringBuffer, rapidjson::ASCII<> > Writer;
-#endif
+	typedef rapidjson::PrettyWriter<rapidjson::StringBuffer, rapidjson::ASCII<> > PrettyWriter;
 
-	Writer mWriter;
+	Writer *mWriter1;
+	PrettyWriter *mWriter2;
 	TArray<bool> mInObject;
 	rapidjson::StringBuffer mOutString;
 	TArray<DObject *> mDObjects;
 	TMap<DObject *, int> mObjectMap;
 	
-	FWriter() : mWriter(mOutString)
-	{}
+	FWriter(bool pretty)
+	{
+		if (!pretty)
+		{
+			mWriter1 = new Writer(mOutString);
+			mWriter2 = nullptr;
+		}
+		else
+		{
+			mWriter1 = nullptr;
+			mWriter2 = new PrettyWriter(mOutString);
+		}
+	}
+
+	~FWriter()
+	{
+		if (mWriter1) delete mWriter1;
+		if (mWriter2) delete mWriter2;
+	}
+
 
 	bool inObject() const
 	{
 		return mInObject.Size() > 0 && mInObject.Last();
 	}
+
+	void StartObject()
+	{
+		if (mWriter1) mWriter1->StartObject();
+		else if (mWriter2) mWriter2->StartObject();
+	}
+
+	void EndObject()
+	{
+		if (mWriter1) mWriter1->EndObject();
+		else if (mWriter2) mWriter2->EndObject();
+	}
+
+	void StartArray()
+	{
+		if (mWriter1) mWriter1->StartArray();
+		else if (mWriter2) mWriter2->StartArray();
+	}
+
+	void EndArray()
+	{
+		if (mWriter1) mWriter1->EndArray();
+		else if (mWriter2) mWriter2->EndArray();
+	}
+
+	void Key(const char *k)
+	{
+		if (mWriter1) mWriter1->Key(k);
+		else if (mWriter2) mWriter2->Key(k);
+	}
+
+	void Null()
+	{
+		if (mWriter1) mWriter1->Null();
+		else if (mWriter2) mWriter2->Null();
+	}
+
+	void String(const char *k)
+	{
+		if (mWriter1) mWriter1->String(k);
+		else if (mWriter2) mWriter2->String(k);
+	}
+
+	void String(const char *k, int size)
+	{
+		if (mWriter1) mWriter1->String(k, size);
+		else if (mWriter2) mWriter2->String(k, size);
+	}
+
+	void Bool(bool k)
+	{
+		if (mWriter1) mWriter1->Bool(k);
+		else if (mWriter2) mWriter2->Bool(k);
+	}
+
+	void Int(int32_t k)
+	{
+		if (mWriter1) mWriter1->Int(k);
+		else if (mWriter2) mWriter2->Int(k);
+	}
+
+	void Int64(int64_t k)
+	{
+		if (mWriter1) mWriter1->Int64(k);
+		else if (mWriter2) mWriter2->Int64(k);
+	}
+
+	void Uint(uint32_t k)
+	{
+		if (mWriter1) mWriter1->Uint(k);
+		else if (mWriter2) mWriter2->Uint(k);
+	}
+
+	void Uint64(int64_t k)
+	{
+		if (mWriter1) mWriter1->Uint64(k);
+		else if (mWriter2) mWriter2->Uint64(k);
+	}
+
+	void Double(double k)
+	{
+		if (mWriter1) mWriter1->Double(k);
+		else if (mWriter2) mWriter2->Double(k);
+	}
+
 };
 
 //==========================================================================
@@ -100,14 +196,13 @@ struct FWriter
 struct FReader
 {
 	TArray<FJSONObject> mObjects;
-	rapidjson::Value mDocObj;	// just because RapidJSON is stupid and does not allow direct access to what's in the document.
+	rapidjson::Document mDoc;
 
-	FReader(const char *buffer, size_t length)
+	FReader(const char *buffer, size_t length, bool randomaccess)
 	{
 		rapidjson::Document doc;
-		doc.Parse(buffer, length);
-		mDocObj = doc.GetObject();
-		mObjects.Push(FJSONObject(&mDocObj)); // Todo: Decide if this should be made random access...
+		mDoc.Parse(buffer, length);
+		mObjects.Push(FJSONObject(&mDoc, randomaccess));
 	}
 	
 	rapidjson::Value *FindKey(const char *key)
@@ -149,12 +244,12 @@ struct FReader
 //
 //==========================================================================
 
-bool FSerializer::OpenWriter(bool randomaccess)
+bool FSerializer::OpenWriter(bool pretty)
 {
 	if (w != nullptr || r != nullptr) return false;
-	w = new FWriter;
+	w = new FWriter(pretty);
 
-	BeginObject(nullptr, randomaccess);
+	BeginObject(nullptr);
 	return true;
 }
 
@@ -164,10 +259,10 @@ bool FSerializer::OpenWriter(bool randomaccess)
 //
 //==========================================================================
 
-bool FSerializer::OpenReader(const char *buffer, size_t length)
+bool FSerializer::OpenReader(const char *buffer, size_t length, bool randomaccess)
 {
 	if (w != nullptr || r != nullptr) return false;
-	r = new FReader(buffer, length);
+	r = new FReader(buffer, length, randomaccess);
 	return true;
 }
 
@@ -177,21 +272,21 @@ bool FSerializer::OpenReader(const char *buffer, size_t length)
 //
 //==========================================================================
 
-bool FSerializer::OpenReader(FCompressedBuffer *input)
+bool FSerializer::OpenReader(FCompressedBuffer *input, bool randomaccess)
 {
 	if (input->mSize <= 0 || input->mBuffer == nullptr) return false;
 	if (w != nullptr || r != nullptr) return false;
 
 	if (input->mMethod == METHOD_STORED)
 	{
-		r = new FReader((char*)input->mBuffer, input->mSize);
+		r = new FReader((char*)input->mBuffer, input->mSize, randomaccess);
 		return true;
 	}
 	else
 	{
 		char *unpacked = new char[input->mSize];
 		input->Decompress(unpacked);
-		r = new FReader(unpacked, input->mSize);
+		r = new FReader(unpacked, input->mSize, randomaccess);
 		return true;
 	}
 }
@@ -260,7 +355,7 @@ void FSerializer::WriteKey(const char *key)
 		{
 			I_Error("missing element name");
 		}
-		w->mWriter.Key(key);
+		w->Key(key);
 	}
 }
 
@@ -275,7 +370,7 @@ bool FSerializer::BeginObject(const char *name, bool randomaccess)
 	if (isWriting())
 	{
 		WriteKey(name);
-		w->mWriter.StartObject();
+		w->StartObject();
 		w->mInObject.Push(true);
 	}
 	else
@@ -312,7 +407,7 @@ void FSerializer::EndObject()
 	{
 		if (w->inObject())
 		{
-			w->mWriter.EndObject();
+			w->EndObject();
 			w->mInObject.Pop();
 		}
 		else
@@ -337,7 +432,7 @@ bool FSerializer::BeginArray(const char *name)
 	if (isWriting())
 	{
 		WriteKey(name);
-		w->mWriter.StartArray();
+		w->StartArray();
 		w->mInObject.Push(false);
 	}
 	else
@@ -374,7 +469,7 @@ void FSerializer::EndArray()
 	{
 		if (!w->inObject())
 		{
-			w->mWriter.EndArray();
+			w->EndArray();
 			w->mInObject.Pop();
 		}
 		else
@@ -404,19 +499,19 @@ FSerializer &FSerializer::Args(const char *key, int *args, int *defargs, int spe
 		}
 
 		WriteKey(key);
-		w->mWriter.StartArray();
+		w->StartArray();
 		for (int i = 0; i < 5; i++)
 		{
 			if (i == 0 && args[i] < 0 && P_IsACSSpecial(special))
 			{
-				w->mWriter.String(FName(ENamedName(-args[i])).GetChars());
+				w->String(FName(ENamedName(-args[i])).GetChars());
 			}
 			else
 			{
-				w->mWriter.Int(args[i]);
+				w->Int(args[i]);
 			}
 		}
-		w->mWriter.EndArray();
+		w->EndArray();
 	}
 	else
 	{
@@ -465,11 +560,11 @@ FSerializer &FSerializer::ScriptNum(const char *key, int &num)
 		WriteKey(key);
 		if (num < 0)
 		{
-			w->mWriter.String(FName(ENamedName(-num)).GetChars());
+			w->String(FName(ENamedName(-num)).GetChars());
 		}
 		else
 		{
-			w->mWriter.Int(num);
+			w->Int(num);
 		}
 	}
 	else
@@ -527,7 +622,7 @@ FSerializer &FSerializer::Sprite(const char *key, int32_t &spritenum, int32_t *d
 	{
 		if (w->inObject() && def != nullptr && *def == spritenum) return *this;
 		WriteKey(key);
-		w->mWriter.String(sprites[spritenum].name, 4);
+		w->String(sprites[spritenum].name, 4);
 	}
 	else
 	{
@@ -562,7 +657,7 @@ FSerializer &FSerializer::StringPtr(const char *key, const char *&charptr)
 	if (isWriting())
 	{
 		WriteKey(key);
-		w->mWriter.String(charptr);
+		w->String(charptr);
 	}
 	else
 	{
@@ -593,7 +688,7 @@ FSerializer &FSerializer::AddString(const char *key, const char *charptr)
 	if (isWriting())
 	{
 		WriteKey(key);
-		w->mWriter.String(charptr);
+		w->String(charptr);
 	}
 	return *this;
 }
@@ -608,7 +703,7 @@ unsigned FSerializer::GetSize(const char *group)
 {
 	if (isWriting()) return -1;	// we do not know this when writing.
 
-	const rapidjson::Value &val = r->mDocObj[group];
+	const rapidjson::Value &val = r->mDoc[group];
 	if (!val.IsArray()) return -1;
 	return val.Size();
 }
@@ -645,15 +740,15 @@ void FSerializer::WriteObjects()
 			player_t *player;
 
 			BeginObject(nullptr);
-			w->mWriter.Key("classtype");
-			w->mWriter.String(obj->GetClass()->TypeName.GetChars());
+			w->Key("classtype");
+			w->String(obj->GetClass()->TypeName.GetChars());
 
 			if (obj->IsKindOf(RUNTIME_CLASS(AActor)) &&
 				(player = static_cast<AActor *>(obj)->player) &&
 				player->mo == obj)
 			{
-				w->mWriter.Key("playerindex");
-				w->mWriter.Int(int(player - players));
+				w->Key("playerindex");
+				w->Int(int(player - players));
 			}
 
 			obj->SerializeUserVars(*this);
@@ -755,7 +850,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, bool &value, bool *def
 		if (!arc.w->inObject() || defval == nullptr || value != *defval)
 		{
 			arc.WriteKey(key);
-			arc.w->mWriter.Bool(value);
+			arc.w->Bool(value);
 		}
 	}
 	else
@@ -789,7 +884,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, int64_t &value, int64_
 		if (!arc.w->inObject() || defval == nullptr || value != *defval)
 		{
 			arc.WriteKey(key);
-			arc.w->mWriter.Int64(value);
+			arc.w->Int64(value);
 		}
 	}
 	else
@@ -823,7 +918,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, uint64_t &value, uint6
 		if (!arc.w->inObject() || defval == nullptr || value != *defval)
 		{
 			arc.WriteKey(key);
-			arc.w->mWriter.Uint64(value);
+			arc.w->Uint64(value);
 		}
 	}
 	else
@@ -858,7 +953,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, int32_t &value, int32_
 		if (!arc.w->inObject() || defval == nullptr || value != *defval)
 		{
 			arc.WriteKey(key);
-			arc.w->mWriter.Int(value);
+			arc.w->Int(value);
 		}
 	}
 	else
@@ -892,7 +987,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, uint32_t &value, uint3
 		if (!arc.w->inObject() || defval == nullptr || value != *defval)
 		{
 			arc.WriteKey(key);
-			arc.w->mWriter.Uint(value);
+			arc.w->Uint(value);
 		}
 	}
 	else
@@ -968,7 +1063,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, double &value, double 
 		if (!arc.w->inObject() || defval == nullptr || value != *defval)
 		{
 			arc.WriteKey(key);
-			arc.w->mWriter.Double(value);
+			arc.w->Double(value);
 		}
 	}
 	else
@@ -1077,14 +1172,14 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 			if (!value.Exists())
 			{
 				arc.WriteKey(key);
-				arc.w->mWriter.Null();
+				arc.w->Null();
 				return arc;
 			}
 			if (value.isNull())
 			{
 				// save 'no texture' in a more space saving way
 				arc.WriteKey(key);
-				arc.w->mWriter.Int(0);
+				arc.w->Int(0);
 				return arc;
 			}
 			FTextureID chk = value;
@@ -1101,10 +1196,10 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 				name = pic->Name;
 			}
 			arc.WriteKey(key);
-			arc.w->mWriter.StartArray();
-			arc.w->mWriter.String(name);
-			arc.w->mWriter.Int(pic->UseType);
-			arc.w->mWriter.EndArray();
+			arc.w->StartArray();
+			arc.w->String(name);
+			arc.w->Int(pic->UseType);
+			arc.w->EndArray();
 		}
 	}
 	else
@@ -1215,7 +1310,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FName &value, FName *d
 		if (!arc.w->inObject() || defval == nullptr || value != *defval)
 		{
 			arc.WriteKey(key);
-			arc.w->mWriter.String(value.GetChars());
+			arc.w->String(value.GetChars());
 		}
 	}
 	else
@@ -1252,11 +1347,11 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDynamicCol
 		}
 
 		arc.WriteKey(key);
-		arc.w->mWriter.StartArray();
-		arc.w->mWriter.Uint(cm->Color);
-		arc.w->mWriter.Uint(cm->Fade);
-		arc.w->mWriter.Uint(cm->Desaturate);
-		arc.w->mWriter.EndArray();
+		arc.w->StartArray();
+		arc.w->Uint(cm->Color);
+		arc.w->Uint(cm->Fade);
+		arc.w->Uint(cm->Desaturate);
+		arc.w->EndArray();
 	}
 	else
 	{
@@ -1300,8 +1395,8 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 		{
 			arc.WriteKey(key);
 			const char *sn = (const char*)sid;
-			if (sn != nullptr) arc.w->mWriter.String(sn);
-			else arc.w->mWriter.Null();
+			if (sn != nullptr) arc.w->String(sn);
+			else arc.w->Null();
 		}
 	}
 	else
@@ -1342,11 +1437,11 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClassActor
 			arc.WriteKey(key);
 			if (clst == nullptr)
 			{
-				arc.w->mWriter.Null();
+				arc.w->Null();
 			}
 			else
 			{
-				arc.w->mWriter.String(clst->TypeName.GetChars());
+				arc.w->String(clst->TypeName.GetChars());
 			}
 		}
 	}
@@ -1388,11 +1483,11 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClass *&cl
 			arc.WriteKey(key);
 			if (clst == nullptr)
 			{
-				arc.w->mWriter.Null();
+				arc.w->Null();
 			}
 			else
 			{
-				arc.w->mWriter.String(clst->TypeName.GetChars());
+				arc.w->String(clst->TypeName.GetChars());
 			}
 		}
 	}
@@ -1436,7 +1531,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState
 			arc.WriteKey(key);
 			if (state == nullptr)
 			{
-				arc.w->mWriter.Null();
+				arc.w->Null();
 			}
 			else
 			{
@@ -1444,14 +1539,14 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState
 
 				if (info != NULL)
 				{
-					arc.w->mWriter.StartArray();
-					arc.w->mWriter.String(info->TypeName.GetChars());
-					arc.w->mWriter.Uint((uint32_t)(state - info->OwnedStates));
-					arc.w->mWriter.EndArray();
+					arc.w->StartArray();
+					arc.w->String(info->TypeName.GetChars());
+					arc.w->Uint((uint32_t)(state - info->OwnedStates));
+					arc.w->EndArray();
 				}
 				else
 				{
-					arc.w->mWriter.Null();
+					arc.w->Null();
 				}
 			}
 		}
@@ -1507,11 +1602,11 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDial
 			arc.WriteKey(key);
 			if (node == nullptr)
 			{
-				arc.w->mWriter.Null();
+				arc.w->Null();
 			}
 			else
 			{
-				arc.w->mWriter.Uint(node->ThisNodeNum);
+				arc.w->Uint(node->ThisNodeNum);
 			}
 		}
 	}
@@ -1560,11 +1655,11 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FString *&p
 			arc.WriteKey(key);
 			if (pstr == nullptr)
 			{
-				arc.w->mWriter.Null();
+				arc.w->Null();
 			}
 			else
 			{
-				arc.w->mWriter.String(pstr->GetChars());
+				arc.w->String(pstr->GetChars());
 			}
 		}
 	}
@@ -1604,7 +1699,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FString &pstr, FString
 		if (!arc.w->inObject() || def == nullptr || pstr.Compare(*def) != 0)
 		{
 			arc.WriteKey(key);
-			arc.w->mWriter.String(pstr.GetChars());
+			arc.w->String(pstr.GetChars());
 		}
 	}
 	else
@@ -1645,11 +1740,11 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr
 			arc.WriteKey(key);
 			if (pstr == nullptr)
 			{
-				arc.w->mWriter.Null();
+				arc.w->Null();
 			}
 			else
 			{
-				arc.w->mWriter.String(pstr);
+				arc.w->String(pstr);
 			}
 		}
 	}
@@ -1719,16 +1814,16 @@ FSerializer &Serialize(FSerializer &arc, const char *key, NumericValue &value, N
 			switch (value.type)
 			{
 			case NumericValue::NM_signed:
-				arc.w->mWriter.Int64(value.signedval);
+				arc.w->Int64(value.signedval);
 				break;
 			case NumericValue::NM_unsigned:
-				arc.w->mWriter.Uint64(value.unsignedval);
+				arc.w->Uint64(value.unsignedval);
 				break;
 			case NumericValue::NM_float:
-				arc.w->mWriter.Double(value.floatval);
+				arc.w->Double(value.floatval);
 				break;
 			default:
-				arc.w->mWriter.Null();
+				arc.w->Null();
 				break;
 			}
 		}

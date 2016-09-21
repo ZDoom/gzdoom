@@ -37,33 +37,3 @@ void DThinker::SerializeThinkers(FSerializer &arc, bool hubLoad)
 	{
 	}
 }
-
-
-
-
-
-
-void G_SerializeLevel(FSerializer &arc, bool);
-
-CCMD(writejson)
-{
-	DWORD t = I_MSTime();
-	FSerializer arc;
-	arc.OpenWriter();
-	G_SerializeLevel(arc, false);
-	arc.WriteObjects();
-	DWORD tt = I_MSTime();
-	Printf("JSON generation took %d ms\n", tt - t);
-	FILE *f = fopen("out.json", "wb");
-	unsigned siz;
-	const char *str = arc.GetOutput(&siz);
-	fwrite(str, 1, siz, f);
-	fclose(f);
-	/*
-	DWORD ttt = I_MSTime();
-	Printf("JSON save took %d ms\n", ttt - tt);
-	FDocument doc(arc.w->mOutString.GetString(), arc.w->mOutString.GetSize());
-	DWORD tttt = I_MSTime();
-	Printf("JSON parse took %d ms\n", tttt - ttt);
-	*/
-}

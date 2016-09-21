@@ -58,9 +58,9 @@ public:
 	{
 		Close();
 	}
-	bool OpenWriter(bool randomaccess = true);
-	bool OpenReader(const char *buffer, size_t length);
-	bool OpenReader(FCompressedBuffer *input);
+	bool OpenWriter(bool pretty = true);
+	bool OpenReader(const char *buffer, size_t length, bool randomaccess = false);
+	bool OpenReader(FCompressedBuffer *input, bool randomaccess = false);
 	void Close();
 	bool BeginObject(const char *name, bool randomaccess = false);
 	void EndObject();

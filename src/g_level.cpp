@@ -94,7 +94,7 @@
 void STAT_StartNewGame(const char *lev);
 void STAT_ChangeLevel(const char *newl);
 
-
+EXTERN_CVAR(Bool, save_formatted)
 EXTERN_CVAR (Float, sv_gravity)
 EXTERN_CVAR (Float, sv_aircontrol)
 EXTERN_CVAR (Int, disableautosave)
@@ -1489,7 +1489,7 @@ void G_SnapshotLevel ()
 	{
 		FSerializer arc;
 
-		if (arc.OpenWriter())
+		if (arc.OpenWriter(save_formatted))
 		{
 			SaveVersion = SAVEVER;
 			G_SerializeLevel(arc, false);

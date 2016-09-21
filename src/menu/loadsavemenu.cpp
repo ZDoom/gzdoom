@@ -46,6 +46,8 @@
 #include "doomstat.h"
 #include "gi.h"
 #include "d_gui.h"
+#include "serializer.h"
+#include "resourcefiles/resourcefile.h"
 
 
 
@@ -85,6 +87,10 @@ protected:
 	int commentHeight;
 	int commentRight;
 	int commentBottom;
+
+	// this needs to be kept in memory so that the texture can access it when it needs to.
+	FileReader *currentSavePic;
+	TArray<char> SavePicData;
 
 
 	static int InsertSaveNode (FSaveGameNode *node);
@@ -221,103 +227,135 @@ void DLoadSaveMenu::ReadSaveStrings ()
 			{
 				// I_FindName only returns the file's name and not its full path
 				FString filepath = G_BuildSaveName (I_FindName(&c_file), -1);
-				FILE *file = fopen (filepath, "rb");
 
-				if (file != NULL)
+				FResourceFile *savegame = FResourceFile::OpenResourceFile(filepath, nullptr, true, true);
+				if (savegame != nullptr)
 				{
-					PNGHandle *png;
-					char sig[16];
-					char title[SAVESTRINGSIZE+1];
-					bool oldVer = true;
-					bool addIt = false;
+					bool oldVer = false;
 					bool missing = false;
-
-					// ZDoom 1.23 betas 21-33 have the savesig first.
-					// Earlier versions have the savesig second.
-					// Later versions have the savegame encapsulated inside a PNG.
-					//
-					// Old savegame versions are always added to the menu so
-					// the user can easily delete them if desired.
-
-					title[SAVESTRINGSIZE] = 0;
-
-					if (false)//NULL != (png = M_VerifyPNG (file)))
+					FResourceLump *info = savegame->FindLump("info.json");
+					if (info == nullptr)
 					{
-						char *ver = M_GetPNGText (png, "ZDoom Save Version");
-						char *engine = M_GetPNGText (png, "Engine");
-						if (ver != NULL)
-						{
-							if (!M_GetPNGText (png, "Title", title, SAVESTRINGSIZE))
-							{
-								strncpy (title, I_FindName(&c_file), SAVESTRINGSIZE);
-							}
-							if (strncmp (ver, "SAVESIG", 9) == 0 &&
-								atoi (ver+9) >= MINSAVEVER &&
-								engine != NULL)
-							{
-								// Was saved with a compatible ZDoom version,
-								// so check if it's for the current game.
-								// If it is, add it. Otherwise, ignore it.
-								char *iwad = M_GetPNGText (png, "Game WAD");
-								if (iwad != NULL)
-								{
-									if (stricmp (iwad, Wads.GetWadName (FWadCollection::IWAD_FILENUM)) == 0)
-									{
-										addIt = true;
-										oldVer = false;
-										missing = !G_CheckSaveGameWads (png, false);
-									}
-									delete[] iwad;
-								}
-							}
-							else
-							{ // An old version
-								addIt = true;
-							}
-							delete[] ver;
-						}
-						if (engine != NULL)
-						{
-							delete[] engine;
-						}
-						delete png;
+						// savegame info not found. This is not a savegame so leave it alone.
+						delete savegame;
+						continue;
 					}
-					else
+					void *data = info->CacheLump();
+					FSerializer arc;
+					if (arc.OpenReader((const char *)data, info->LumpSize, true))
 					{
-						fseek (file, 0, SEEK_SET);
-						if (fread (sig, 1, 16, file) == 16)
+						int savever = 0;
+						FString engine;
+						FString iwad;
+						FString title;
+
+						arc("Save Version", savever);
+						arc("Engine", engine);
+						arc("Game WAD", iwad);
+						arc("Title", title);
+
+						if (engine.Compare(GAMESIG) != 0 || savever > SAVEVER)
 						{
-
-							if (strncmp (sig, "ZDOOMSAVE", 9) == 0)
-							{
-								if (fread (title, 1, SAVESTRINGSIZE, file) == SAVESTRINGSIZE)
-								{
-									addIt = true;
-								}
-							}
-							else
-							{
-								memcpy (title, sig, 16);
-								if (fread (title + 16, 1, SAVESTRINGSIZE-16, file) == SAVESTRINGSIZE-16 &&
-									fread (sig, 1, 16, file) == 16 &&
-									strncmp (sig, "ZDOOMSAVE", 9) == 0)
-								{
-									addIt = true;
-								}
-							}
+							// different engine or newer version:
+							// not our business. Leave it alone.
+							delete savegame;
+							continue;
 						}
-					}
 
-					if (addIt)
-					{
+						if (savever < MINSAVEVER)
+						{
+							// old, incompatible savegame. List as not usable.
+							oldVer = true;
+						}
+						else if (iwad.CompareNoCase(Wads.GetWadName(FWadCollection::IWAD_FILENUM)) == 0)
+						{
+							missing = !G_CheckSaveGameWads(arc, false);
+						}
+
 						FSaveGameNode *node = new FSaveGameNode;
 						node->Filename = filepath;
 						node->bOldVersion = oldVer;
 						node->bMissingWads = missing;
-						memcpy (node->Title, title, SAVESTRINGSIZE);
-						InsertSaveNode (node);
+						strncpy(node->Title, title.GetChars(), SAVESTRINGSIZE);
+						InsertSaveNode(node);
+						delete savegame;
 					}
-					fclose (file);
+
+				}
+				else // check for old formats.
+				{
+					FILE *file = fopen (filepath, "rb");
+					if (file != NULL)
+					{
+						PNGHandle *png;
+						char sig[16];
+						char title[SAVESTRINGSIZE+1];
+						bool oldVer = true;
+						bool addIt = false;
+						bool missing = false;
+
+						// ZDoom 1.23 betas 21-33 have the savesig first.
+						// Earlier versions have the savesig second.
+						// Later versions have the savegame encapsulated inside a PNG.
+						//
+						// Old savegame versions are always added to the menu so
+						// the user can easily delete them if desired.
+
+						title[SAVESTRINGSIZE] = 0;
+
+
+						if (NULL != (png = M_VerifyPNG (file)))
+						{
+							char *ver = M_GetPNGText (png, "ZDoom Save Version");
+							if (ver != NULL)
+							{
+								// An old version
+								if (!M_GetPNGText(png, "Title", title, SAVESTRINGSIZE))
+								{
+									strncpy(title, I_FindName(&c_file), SAVESTRINGSIZE);
+								}
+								addIt = true;
+								delete[] ver;
+							}
+							delete png;
+						}
+						else
+						{
+							fseek (file, 0, SEEK_SET);
+							if (fread (sig, 1, 16, file) == 16)
+							{
+
+								if (strncmp (sig, "ZDOOMSAVE", 9) == 0)
+								{
+									if (fread (title, 1, SAVESTRINGSIZE, file) == SAVESTRINGSIZE)
+									{
+										addIt = true;
+									}
+								}
+								else
+								{
+									memcpy (title, sig, 16);
+									if (fread (title + 16, 1, SAVESTRINGSIZE-16, file) == SAVESTRINGSIZE-16 &&
+										fread (sig, 1, 16, file) == 16 &&
+										strncmp (sig, "ZDOOMSAVE", 9) == 0)
+									{
+										addIt = true;
+									}
+								}
+							}
+						}
+
+						if (addIt)
+						{
+							FSaveGameNode *node = new FSaveGameNode;
+							node->Filename = filepath;
+							node->bOldVersion = true;
+							node->bMissingWads = false;
+							memcpy (node->Title, title, SAVESTRINGSIZE);
+							InsertSaveNode (node);
+						}
+						fclose (file);
+					}
 				}
 			} while (I_FindNext (filefirst, &c_file) == 0);
 			I_FindClose (filefirst);
@@ -407,6 +445,7 @@ DLoadSaveMenu::DLoadSaveMenu(DMenu *parent, FListMenuDescriptor *desc)
 	listboxHeight = listboxRows * rowHeight + 1;
 	listboxRight = listboxLeft + listboxWidth;
 	listboxBottom = listboxTop + listboxHeight;
+	currentSavePic = nullptr;
 
 	commentLeft = savepicLeft;
 	commentTop = savepicTop + savepicHeight + 16;
@@ -418,6 +457,8 @@ DLoadSaveMenu::DLoadSaveMenu(DMenu *parent, FListMenuDescriptor *desc)
 
 void DLoadSaveMenu::Destroy()
 {
+	if (currentSavePic != nullptr) delete currentSavePic;
+	currentSavePic = nullptr;
 	ClearSaveStuff ();
 }
 
@@ -429,17 +470,23 @@ void DLoadSaveMenu::Destroy()
 
 void DLoadSaveMenu::UnloadSaveData ()
 {
-	if (SavePic != NULL)
+	if (SavePic != nullptr)
 	{
 		delete SavePic;
 	}
-	if (SaveComment != NULL)
+	if (SaveComment != nullptr)
 	{
 		V_FreeBrokenLines (SaveComment);
 	}
+	if (currentSavePic != nullptr)
+	{
+		delete currentSavePic;
+	}
 
-	SavePic = NULL;
-	SaveComment = NULL;
+	SavePic = nullptr;
+	SaveComment = nullptr;
+	currentSavePic = nullptr;
+	SavePicData.Clear();
 }
 
 //=============================================================================
@@ -465,8 +512,7 @@ void DLoadSaveMenu::ClearSaveStuff ()
 
 void DLoadSaveMenu::ExtractSaveData (int index)
 {
-	FILE *file;
-	PNGHandle *png;
+	FResourceFile *resf;
 	FSaveGameNode *node;
 
 	UnloadSaveData ();
@@ -475,66 +521,61 @@ void DLoadSaveMenu::ExtractSaveData (int index)
 		(node = SaveGames[index]) &&
 		!node->Filename.IsEmpty() &&
 		!node->bOldVersion &&
-		(file = fopen (node->Filename.GetChars(), "rb")) != NULL)
+		(resf = FResourceFile::OpenResourceFile(node->Filename.GetChars(), nullptr, true)) != nullptr)
 	{
-		if (NULL != (png = M_VerifyPNG (file)))
+		FResourceLump *info = resf->FindLump("info.json");
+		if (info == nullptr)
 		{
-			char *time, *pcomment, *comment;
-			size_t commentlen, totallen, timelen;
+			// this should not happen because the file has already been verified.
+			return;
+		}
+		void *data = info->CacheLump();
+		FSerializer arc;
+		if (arc.OpenReader((const char *)data, info->LumpSize, true))
+		{
+			FString time, pcomment, comment;
 
-			// Extract comment
-			time = M_GetPNGText (png, "Creation Time");
-			pcomment = M_GetPNGText (png, "Comment");
-			if (pcomment != NULL)
-			{
-				commentlen = strlen (pcomment);
-			}
-			else
-			{
-				commentlen = 0;
-			}
-			if (time != NULL)
-			{
-				timelen = strlen (time);
-				totallen = timelen + commentlen + 3;
-			}
-			else
-			{
-				timelen = 0;
-				totallen = commentlen + 1;
-			}
-			if (totallen != 0)
-			{
-				comment = new char[totallen];
+			arc("Creation Time", time);
+			arc("Comment", pcomment);
 
-				if (timelen)
-				{
-					memcpy (comment, time, timelen);
-					comment[timelen] = '\n';
-					comment[timelen+1] = '\n';
-					timelen += 2;
-				}
-				if (commentlen)
-				{
-					memcpy (comment + timelen, pcomment, commentlen);
-				}
-				comment[timelen+commentlen] = 0;
-				SaveComment = V_BreakLines (SmallFont, 216*screen->GetWidth()/640/CleanXfac, comment);
-				delete[] comment;
-				delete[] time;
-				delete[] pcomment;
-			}
+			comment = time;
+			if (time.Len() > 0) comment += "\n\n";
+			comment += pcomment;
+			
+			SaveComment = V_BreakLines (SmallFont, 216*screen->GetWidth()/640/CleanXfac, comment.GetChars());
 
 			// Extract pic
-			SavePic = PNGTexture_CreateFromFile(png, node->Filename);
-			delete png;
-			if (SavePic->GetWidth() == 1 && SavePic->GetHeight() == 1)
+			FResourceLump *pic = resf->FindLump("savepic.png");
+			if (pic != nullptr)
 			{
-				delete SavePic;
-				SavePic = NULL;
+				FileReader *reader = pic->NewReader();
+				if (reader != nullptr)
+				{
+					// copy to a memory buffer which gets accessed through a memory reader and PNGHandle.
+					// We cannot use the actual lump as backing for the texture because that requires keeping the
+					// savegame file open.
+					SavePicData.Resize(pic->LumpSize);
+					reader->Read(&SavePicData[0], pic->LumpSize);
+					reader = new MemoryReader(&SavePicData[0], SavePicData.Size());
+					PNGHandle *png = M_VerifyPNG(reader);
+					if (png != nullptr)
+					{
+						SavePic = PNGTexture_CreateFromFile(png, node->Filename);
+						currentSavePic = reader;	// must be kept so that the texture can read from it.
+						delete png;
+						if (SavePic->GetWidth() == 1 && SavePic->GetHeight() == 1)
+						{
+							delete SavePic;
+							SavePic = nullptr;
+							delete currentSavePic;
+							currentSavePic = nullptr;
+							SavePicData.Clear();
+						}
+					}
+				}
 			}
 		}
-		fclose (file);
+		delete resf;
 	}
 }
 

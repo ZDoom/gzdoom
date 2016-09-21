@@ -77,7 +77,7 @@ private:
 	void JunkLeftoverFilters(void *lumps, size_t lumpsize, DWORD max);
 
 public:
-	static FResourceFile *OpenResourceFile(const char *filename, FileReader *file, bool quiet = false);
+	static FResourceFile *OpenResourceFile(const char *filename, FileReader *file, bool quiet = false, bool containeronly = false);
 	static FResourceFile *OpenDirectory(const char *filename, bool quiet = false);
 	virtual ~FResourceFile();
 	FileReader *GetReader() const { return Reader; }
@@ -88,6 +88,7 @@ public:
 	virtual void FindStrifeTeaserVoices ();
 	virtual bool Open(bool quiet) = 0;
 	virtual FResourceLump *GetLump(int no) = 0;
+	FResourceLump *FindLump(const char *name);
 };
 
 struct FUncompressedLump : public FResourceLump

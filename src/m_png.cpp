@@ -80,7 +80,7 @@ PNGHandle::PNGHandle (FILE *file) : File(0), bDeleteFilePtr(true), ChunkPt(0)
 	File = new FileReader(file);
 }
 
-PNGHandle::PNGHandle (FileReader *file) : File(file), bDeleteFilePtr(false), ChunkPt(0) {}
+PNGHandle::PNGHandle (FileReader *file, bool takereader) : File(file), bDeleteFilePtr(takereader), ChunkPt(0) {}
 PNGHandle::~PNGHandle ()
 {
 	for (unsigned int i = 0; i < TextChunks.Size(); ++i)
@@ -374,15 +374,14 @@ bool M_GetPNGText (PNGHandle *png, const char *keyword, char *buffer, size_t buf
 //
 //==========================================================================
 
-PNGHandle *M_VerifyPNG (FILE *file)
+PNGHandle *M_VerifyPNG (FileReader *filer, bool takereader)
 {
 	PNGHandle::Chunk chunk;
-	FileReader *filer;
 	PNGHandle *png;
 	DWORD data[2];
 	bool sawIDAT = false;
 
-	if (fread (&data, 1, 8, file) != 8)
+	if (filer->Read(&data, 8) != 8)
 	{
 		return NULL;
 	}
@@ -390,7 +389,7 @@ PNGHandle *M_VerifyPNG (FILE *file)
 	{ // Does not have PNG signature
 		return NULL;
 	}
-	if (fread (&data, 1, 8, file) != 8)
+	if (filer->Read (&data, 8) != 8)
 	{
 		return NULL;
 	}
@@ -400,8 +399,7 @@ PNGHandle *M_VerifyPNG (FILE *file)
 	}
 
 	// It looks like a PNG so far, so start creating a PNGHandle for it
-	png = new PNGHandle (file);
-	filer = png->File;
+	png = new PNGHandle (filer, takereader);
 	chunk.ID = data[1];
 	chunk.Offset = 16;
 	chunk.Size = BigLong((unsigned int)data[0]);
@@ -430,7 +428,7 @@ PNGHandle *M_VerifyPNG (FILE *file)
 			sawIDAT = true;
 		}
 		chunk.ID = data[1];
-		chunk.Offset = ftell (file);
+		chunk.Offset = filer->Tell();
 		chunk.Size = BigLong((unsigned int)data[0]);
 		png->Chunks.Push (chunk);
 
@@ -452,6 +450,12 @@ PNGHandle *M_VerifyPNG (FILE *file)
 
 	delete png;
 	return NULL;
+}
+
+PNGHandle *M_VerifyPNG(FILE *file)
+{
+	FileReader *fr = new FileReader(file);
+	return M_VerifyPNG(fr, true);
 }
 
 //==========================================================================

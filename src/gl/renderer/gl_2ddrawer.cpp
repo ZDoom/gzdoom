@@ -160,6 +160,7 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 		ptr->Set(x, y + h, 0, u1, v2, color); ptr++;
 		ptr->Set(x + w, y, 0, u2, v1, color); ptr++;
 		ptr->Set(x + w, y + h, 0, u2, v2, color); ptr++;
+		dg.mVertCount = 8;
 	}
 	AddData(&dg);
 }

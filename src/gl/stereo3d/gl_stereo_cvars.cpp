@@ -29,10 +29,14 @@
 #include "gl/stereo3d/gl_stereo_leftright.h"
 #include "gl/stereo3d/gl_anaglyph.h"
 #include "gl/stereo3d/gl_quadstereo.h"
+#include "gl/stereo3d/gl_sidebyside3d.h"
 #include "gl/system/gl_cvars.h"
 
 // Set up 3D-specific console variables:
 CVAR(Int, vr_mode, 0, CVAR_GLOBALCONFIG)
+
+// switch left and right eye views
+CVAR(Bool, vr_swap_eyes, false, CVAR_GLOBALCONFIG)
 
 // For broadest GL compatibility, require user to explicitly enable quad-buffered stereo mode.
 // Setting vr_enable_quadbuffered_stereo does not automatically invoke quad-buffered stereo,
@@ -71,7 +75,12 @@ const Stereo3DMode& Stereo3DMode::getCurrentMode()
 	case 2:
 		setCurrentMode(RedCyan::getInstance(vr_ipd));
 		break;
-	// TODO: missing indices 3, 4 for not-yet-implemented side-by-side modes, to match values from GZ3Doom
+	case 3:
+		setCurrentMode(SideBySideFull::getInstance(vr_ipd));
+		break;
+	case 4:
+		setCurrentMode(SideBySideSquished::getInstance(vr_ipd));
+		break;
 	case 5:
 		setCurrentMode(LeftEyeView::getInstance(vr_ipd));
 		break;
@@ -89,7 +98,9 @@ const Stereo3DMode& Stereo3DMode::getCurrentMode()
 	// TODO: 8: Oculus Rift
 	case 9:
 		setCurrentMode(AmberBlue::getInstance(vr_ipd));
-		break;	case 0:
+		break;	
+	// TODO: 10: HTC Vive/OpenVR
+	case 0:
 	default:
 		setCurrentMode(MonoView::getInstance());
 		break;

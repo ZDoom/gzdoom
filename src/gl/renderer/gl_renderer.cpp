@@ -57,6 +57,7 @@
 #include "gl/shaders/gl_colormapshader.h"
 #include "gl/shaders/gl_lensshader.h"
 #include "gl/shaders/gl_presentshader.h"
+#include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_translate.h"
 #include "gl/textures/gl_material.h"
@@ -264,6 +265,8 @@ void FGLRenderer::SetOutputViewport(GL_IRECT *bounds)
 			mSceneViewport.top += mOutputLetterbox.top;
 		}
 	}
+
+	s3d::Stereo3DMode::getCurrentMode().AdjustViewports();
 }
 
 //===========================================================================

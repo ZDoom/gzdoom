@@ -660,6 +660,7 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	framebuffer->Begin2D(false);
 
 	Reset3DViewport();
+
 	// [BB] Only draw the sprites if we didn't render a HUD model before.
 	if ( renderHUDModel == false )
 	{
@@ -815,7 +816,6 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	{
 		const s3d::EyePose * eye = stereo3dMode.getEyePose(eye_ix);
 		eye->SetUp();
-		// TODO: stereo specific viewport - needed when implementing side-by-side modes etc.
 		SetOutputViewport(bounds);
 		Set3DViewport(mainview);
 		mDrawingScene2D = true;
@@ -835,7 +835,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		clipper.SafeAddClipRangeRealAngles(ViewAngle.BAMs() + a1, ViewAngle.BAMs() - a1);
 
 		ProcessScene(toscreen);
-		if (mainview && toscreen) EndDrawScene(lviewsector);	// do not call this for camera textures.
+		if (mainview && toscreen) EndDrawScene(lviewsector); // do not call this for camera textures.
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
 			mBuffers->BlitSceneToTexture();

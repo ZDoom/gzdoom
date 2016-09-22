@@ -275,8 +275,8 @@ void FVoxelModel::AddFace(int x1, int y1, int z1, int x2, int y2, int z2, int x3
 	mIndices.Push(indx[1]);
 	mIndices.Push(indx[3]);
 	mIndices.Push(indx[1]);
-	mIndices.Push(indx[3]);
 	mIndices.Push(indx[2]);
+	mIndices.Push(indx[3]);
 }
 
 //===========================================================================

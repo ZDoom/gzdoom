@@ -725,36 +725,39 @@ void ACSStringPool::ReadStrings(FSerializer &file, const char *key)
 {
 	Clear();
 
-	int poolsize;
+	if (file.BeginObject(key))
+	{
+		int poolsize = 0;
 
-	file("poolsize", poolsize);
-	Pool.Resize(poolsize);
-	for (auto &p : Pool)
-	{
-		p.Next = FREE_ENTRY;
-		p.LockCount = 0;
-	}
-	if (file.BeginArray("pool"))
-	{
-		int j = file.ArraySize();
-		for (int i = 0; i < j; i++)
+		file("poolsize", poolsize);
+		Pool.Resize(poolsize);
+		for (auto &p : Pool)
 		{
-			if (file.BeginObject(nullptr))
+			p.Next = FREE_ENTRY;
+			p.LockCount = 0;
+		}
+		if (file.BeginArray("pool"))
+		{
+			int j = file.ArraySize();
+			for (int i = 0; i < j; i++)
 			{
-				unsigned ii = UINT_MAX;
-				file("index", ii);
-				if (ii < Pool.Size())
+				if (file.BeginObject(nullptr))
 				{
-					file("string", Pool[ii].Str)
-						("lockcount", Pool[ii].LockCount);
+					unsigned ii = UINT_MAX;
+					file("index", ii);
+					if (ii < Pool.Size())
+					{
+						file("string", Pool[ii].Str)
+							("lockcount", Pool[ii].LockCount);
 
-					unsigned h = SuperFastHash(Pool[ii].Str, Pool[ii].Str.Len());
-					unsigned bucketnum = h % NUM_BUCKETS;
-					Pool[ii].Hash = h;
-					Pool[ii].Next = PoolBuckets[bucketnum];
-					PoolBuckets[bucketnum] = i;
+						unsigned h = SuperFastHash(Pool[ii].Str, Pool[ii].Str.Len());
+						unsigned bucketnum = h % NUM_BUCKETS;
+						Pool[ii].Hash = h;
+						Pool[ii].Next = PoolBuckets[bucketnum];
+						PoolBuckets[bucketnum] = i;
+					}
+					file.EndObject();
 				}
-				file.EndObject();
 			}
 		}
 	}

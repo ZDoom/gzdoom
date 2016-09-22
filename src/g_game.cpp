@@ -1926,11 +1926,11 @@ void G_DoLoadGame ()
 	// we are done with info.json.
 	arc.Close();
 
-	info = resfile->FindLump("global.json");
+	info = resfile->FindLump("globals.json");
 	if (info == nullptr)
 	{
 		delete resfile;
-		Printf("'%s' is not a valid savegame: Missing 'global.json'.\n", savename.GetChars());
+		Printf("'%s' is not a valid savegame: Missing 'globals.json'.\n", savename.GetChars());
 		return;
 	}
 
@@ -1948,14 +1948,15 @@ void G_DoLoadGame ()
 
 	bglobal.RemoveAllBots (true);
 
-	arc("importantcvars", map);
-	if (!map.IsEmpty())
+	FString cvar;
+	arc("importantcvars",cvar);
+	if (!cvar.IsEmpty())
 	{
-		BYTE *vars_p = (BYTE *)map.GetChars();
+		BYTE *vars_p = (BYTE *)cvar.GetChars();
 		C_ReadCVars (&vars_p);
 	}
 
-	DWORD time[2] = { 0,1 };
+	DWORD time[2] = { 1,0 };
 
 	arc("ticrate", time[0])
 		("leveltime", time[1]);
@@ -1970,7 +1971,6 @@ void G_DoLoadGame ()
 	bool demoplaybacksave = demoplayback;
 	G_InitNew (map, false);
 	demoplayback = demoplaybacksave;
-	delete[] map;
 	savegamerestore = false;
 
 	STAT_Serialize(arc);
@@ -1981,7 +1981,8 @@ void G_DoLoadGame ()
 	NextSkill = -1;
 	arc("nextskill", NextSkill);
 
-	level.info->Snapshot.Clean();
+	if (level.info != nullptr)
+		level.info->Snapshot.Clean();
 
 	BackupSaveName = savename;
 

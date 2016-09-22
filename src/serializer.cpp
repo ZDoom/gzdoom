@@ -51,7 +51,6 @@ struct FJSONObject
 		else if (v->IsArray())
 		{
 			mIndex = 0;
-			mIterator = v->MemberEnd();
 		}
 	}
 };
@@ -717,6 +716,7 @@ unsigned FSerializer::GetSize(const char *group)
 const char *FSerializer::GetKey()
 {
 	if (isWriting()) return nullptr;	// we do not know this when writing.
+	if (!r->mObjects.Last().mObject->IsObject()) return nullptr;	// non-objects do not have keys.
 	auto &it = r->mObjects.Last().mIterator;
 	if (it == r->mObjects.Last().mObject->MemberEnd()) return nullptr;
 	return it->name.GetString();

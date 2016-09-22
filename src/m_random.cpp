@@ -353,8 +353,8 @@ void FRandom::StaticReadRNGState(FSerializer &arc)
 				}
 				arc.EndObject();
 			}
-			arc.EndArray();
 		}
+		arc.EndArray();
 	}
 }
 

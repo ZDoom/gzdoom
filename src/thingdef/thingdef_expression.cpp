@@ -3373,6 +3373,19 @@ FxExpression *FxClassMember::Resolve(FCompileContext &ctx)
 
 ExpEmit FxClassMember::Emit(VMFunctionBuilder *build)
 {
+	if (~membervar->Flags & VARF_Native)
+	{	// Check if this is a user-defined variable.
+		// As of right now, FxClassMember is only ever used with FxSelf.
+		// This very user variable was defined in stateowner so if
+		// self (a0) != stateowner (a1) then the offset is most likely
+		// going to end up being totally wrong even if the variable was
+		// redefined in self which means we have to abort to avoid reading
+		// or writing to a random address and possibly crash.
+		build->Emit(OP_EQA_R, 1, 0, 1);
+		build->Emit(OP_JMP, 1);
+		build->Emit(OP_THROW, 2, X_BAD_SELF);
+	}
+
 	ExpEmit obj = classx->Emit(build);
 	assert(obj.RegType == REGT_POINTER);
 

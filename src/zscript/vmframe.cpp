@@ -440,6 +440,10 @@ int VMFrameStack::Call(VMFunction *func, VMValue *params, int numparams, VMRetur
 		case X_DIVISION_BY_ZERO:
 			Printf("division by zero.");
 			break;
+
+		case X_BAD_SELF:
+			Printf("invalid self pointer.");
+			break;
 		}
 		Printf("\n");
 

@@ -690,6 +690,7 @@ OptionMenu "VideoOptions"
 	ColorPicker "$DSPLYMNU_DIMCOLOR",			"dimcolor"
 	Slider "$DSPLYMNU_MOVEBOB",			"movebob", 0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_STILLBOB",		"stillbob", 0, 1.0, 0.05, 2
+	Slider "$DSPLYMNU_BOBSPEED",				"wbobspeed", 0, 2.0, 0.1, 2
 }
 
 //-------------------------------------------------------------------------------------------

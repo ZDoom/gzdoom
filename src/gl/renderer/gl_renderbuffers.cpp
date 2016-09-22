@@ -74,6 +74,7 @@ FGLRenderBuffers::~FGLRenderBuffers()
 	ClearPipeline();
 	ClearEyeBuffers();
 	ClearBloom();
+	ClearExposureLevels();
 }
 
 void FGLRenderBuffers::ClearScene()
@@ -105,6 +106,18 @@ void FGLRenderBuffers::ClearBloom()
 		DeleteTexture(level.VTexture);
 		level = FGLBloomTextureLevel();
 	}
+}
+
+void FGLRenderBuffers::ClearExposureLevels()
+{
+	for (auto &level : ExposureLevels)
+	{
+		DeleteTexture(level.Texture);
+		DeleteFrameBuffer(level.Framebuffer);
+	}
+	ExposureLevels.Clear();
+	DeleteTexture(ExposureTexture);
+	DeleteFrameBuffer(ExposureFB);
 }
 
 void FGLRenderBuffers::ClearEyeBuffers()
@@ -186,11 +199,12 @@ bool FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 	}
 
 	// Bloom bluring buffers need to match the scene to avoid bloom bleeding artifacts
-	if (mBloomWidth != sceneWidth || mBloomHeight != sceneHeight)
+	if (mSceneWidth != sceneWidth || mSceneHeight != sceneHeight)
 	{
 		CreateBloom(sceneWidth, sceneHeight);
-		mBloomWidth = sceneWidth;
-		mBloomHeight = sceneHeight;
+		CreateExposureLevels(sceneWidth, sceneHeight);
+		mSceneWidth = sceneWidth;
+		mSceneHeight = sceneHeight;
 	}
 
 	glBindTexture(GL_TEXTURE_2D, textureBinding);
@@ -204,11 +218,12 @@ bool FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 		ClearPipeline();
 		ClearEyeBuffers();
 		ClearBloom();
+		ClearExposureLevels();
 		mWidth = 0;
 		mHeight = 0;
 		mSamples = 0;
-		mBloomWidth = 0;
-		mBloomHeight = 0;
+		mSceneWidth = 0;
+		mSceneHeight = 0;
 	}
 
 	return !FailedCreate;
@@ -283,6 +298,41 @@ void FGLRenderBuffers::CreateBloom(int width, int height)
 
 //==========================================================================
 //
+// Creates camera exposure level buffers
+//
+//==========================================================================
+
+void FGLRenderBuffers::CreateExposureLevels(int width, int height)
+{
+	ClearExposureLevels();
+
+	int i = 0;
+	do
+	{
+		width = MAX(width / 2, 1);
+		height = MAX(height / 2, 1);
+
+		FString textureName, fbName;
+		textureName.Format("Exposure.Texture%d", i);
+		fbName.Format("Exposure.Framebuffer%d", i);
+		i++;
+
+		FGLExposureTextureLevel level;
+		level.Width = width;
+		level.Height = height;
+		level.Texture = Create2DTexture(textureName, GL_R32F, level.Width, level.Height);
+		level.Framebuffer = CreateFrameBuffer(fbName, level.Texture);
+		ExposureLevels.Push(level);
+	} while (width > 1 || height > 1);
+
+	ExposureTexture = Create2DTexture("Exposure.CameraTexture", GL_R32F, 1, 1);
+	ExposureFB = CreateFrameBuffer("Exposure.CameraFB", ExposureTexture);
+
+	FirstExposureFrame = true;
+}
+
+//==========================================================================
+//
 // Creates eye buffers if needed
 //
 //==========================================================================
@@ -316,14 +366,14 @@ void FGLRenderBuffers::CreateEyeBuffers(int eye)
 //
 //==========================================================================
 
-GLuint FGLRenderBuffers::Create2DTexture(const FString &name, GLuint format, int width, int height)
+GLuint FGLRenderBuffers::Create2DTexture(const FString &name, GLuint format, int width, int height, const void *data)
 {
-	GLuint type = (format == GL_RGBA16F) ? GL_FLOAT : GL_UNSIGNED_BYTE;
+	GLuint type = (format == GL_RGBA16F || format == GL_R32F) ? GL_FLOAT : GL_UNSIGNED_BYTE;
 	GLuint handle = 0;
 	glGenTextures(1, &handle);
 	glBindTexture(GL_TEXTURE_2D, handle);
 	FGLDebug::LabelObject(GL_TEXTURE, handle, name);
-	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, GL_RGBA, type, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format != GL_R32F ? GL_RGBA : GL_RED, type, data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

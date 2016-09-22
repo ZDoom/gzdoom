@@ -14,12 +14,14 @@ public:
 	FGLPostProcessState();
 	~FGLPostProcessState();
 
+	void SaveTextureBinding1();
+
 private:
 	FGLPostProcessState(const FGLPostProcessState &) = delete;
 	FGLPostProcessState &operator=(const FGLPostProcessState &) = delete;
 
 	GLint activeTex;
-	GLint textureBinding;
+	GLint textureBinding[2];
 	GLint samplerBinding[2];
 	GLboolean blendEnabled;
 	GLboolean scissorEnabled;
@@ -32,6 +34,7 @@ private:
 	GLint blendSrcAlpha;
 	GLint blendDestRgb;
 	GLint blendDestAlpha;
+	bool textureBinding1Saved = false;
 };
 
 #endif

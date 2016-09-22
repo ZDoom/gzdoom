@@ -46,7 +46,7 @@ void FBloomExtractShader::Bind()
 		mShader.Link("shaders/glsl/bloomextract");
 		mShader.SetAttribLocation(0, "PositionInProjection");
 		SceneTexture.Init(mShader, "SceneTexture");
-		Exposure.Init(mShader, "ExposureAdjustment");
+		ExposureTexture.Init(mShader, "ExposureTexture");
 		Scale.Init(mShader, "Scale");
 		Offset.Init(mShader, "Offset");
 	}

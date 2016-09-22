@@ -163,6 +163,7 @@ enum EVMAbortException
 	X_TOO_MANY_TRIES,
 	X_ARRAY_OUT_OF_BOUNDS,
 	X_DIVISION_BY_ZERO,
+	X_BAD_SELF,
 };
 
 class VMFunction : public DObject

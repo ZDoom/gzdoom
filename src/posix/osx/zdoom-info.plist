@@ -44,6 +44,6 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
-	<string>YES</string>
+	<true/>
 </dict>
 </plist>

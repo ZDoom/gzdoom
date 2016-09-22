@@ -310,6 +310,11 @@ void GLSprite::Draw(int pass)
 			additivefog = true;
 		}
 	}
+	else if (modelframe == nullptr)
+	{
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(-1.0f, -128.0f);
+	}
 	if (RenderStyle.BlendOp!=STYLEOP_Shadow)
 	{
 		if (gl_lights && GLRenderer->mLightCount && !gl_fixedcolormap && !fullbright)
@@ -439,6 +444,11 @@ void GLSprite::Draw(int pass)
 		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.BlendEquation(GL_FUNC_ADD);
 		gl_RenderState.SetTextureMode(TM_MODULATE);
+	}
+	else if (modelframe == nullptr)
+	{
+		glPolygonOffset(0.0f, 0.0f);
+		glDisable(GL_POLYGON_OFFSET_FILL);
 	}
 
 	gl_RenderState.SetObjectColor(0xffffffff);

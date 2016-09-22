@@ -250,8 +250,8 @@ void OpenGLFrameBuffer::DoSetGamma()
 		for (int i = 0; i < 256; i++)
 		{
 			double val = i * contrast - (contrast - 1) * 127;
-			if(gamma != 1) val = pow(val, invgamma) / norm;
 			val += bright * 128;
+			if(gamma != 1) val = pow(val, invgamma) / norm;
 
 			gammaTable[i] = gammaTable[i + 256] = gammaTable[i + 512] = (WORD)clamp<double>(val*256, 0, 0xffff);
 		}

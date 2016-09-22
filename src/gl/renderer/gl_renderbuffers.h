@@ -14,6 +14,15 @@ public:
 	GLuint Height = 0;
 };
 
+class FGLExposureTextureLevel
+{
+public:
+	GLuint Texture = 0;
+	GLuint Framebuffer = 0;
+	GLuint Width = 0;
+	GLuint Height = 0;
+};
+
 class FGLRenderBuffers
 {
 public:
@@ -39,6 +48,11 @@ public:
 	enum { NumBloomLevels = 4 };
 	FGLBloomTextureLevel BloomLevels[NumBloomLevels];
 
+	TArray<FGLExposureTextureLevel> ExposureLevels;
+	GLuint ExposureTexture = 0;
+	GLuint ExposureFB = 0;
+	bool FirstExposureFrame = true;
+
 	static bool IsEnabled();
 
 	int GetWidth() const { return mWidth; }
@@ -49,11 +63,13 @@ private:
 	void ClearPipeline();
 	void ClearEyeBuffers();
 	void ClearBloom();
+	void ClearExposureLevels();
 	void CreateScene(int width, int height, int samples);
 	void CreatePipeline(int width, int height);
 	void CreateBloom(int width, int height);
+	void CreateExposureLevels(int width, int height);
 	void CreateEyeBuffers(int eye);
-	GLuint Create2DTexture(const FString &name, GLuint format, int width, int height);
+	GLuint Create2DTexture(const FString &name, GLuint format, int width, int height, const void *data = nullptr);
 	GLuint CreateRenderBuffer(const FString &name, GLuint format, int width, int height);
 	GLuint CreateRenderBuffer(const FString &name, GLuint format, int samples, int width, int height);
 	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer);
@@ -69,8 +85,8 @@ private:
 	int mHeight = 0;
 	int mSamples = 0;
 	int mMaxSamples = 0;
-	int mBloomWidth = 0;
-	int mBloomHeight = 0;
+	int mSceneWidth = 0;
+	int mSceneHeight = 0;
 
 	static const int NumPipelineTextures = 2;
 	int mCurrentPipelineTexture = 0;

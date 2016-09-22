@@ -1291,6 +1291,9 @@ void G_FinishTravel ()
 		if (level.FromSnapshot)
 		{
 			FBehavior::StaticStartTypedScripts (SCRIPT_Return, pawn, true);
+
+			// [Nash] run REOPEN scripts upon map re-entry
+			FBehavior::StaticStartTypedScripts(SCRIPT_Reopen, NULL, false);
 		}
 	}
 

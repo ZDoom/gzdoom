@@ -622,6 +622,7 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 		V_AddBlend (player->BlendR, player->BlendG, player->BlendB, player->BlendA, blend);
 	}
 
+	gl_RenderState.SetTextureMode(TM_MODULATE);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	if (blend[3]>0.0f)
 	{
@@ -660,6 +661,7 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	framebuffer->Begin2D(false);
 
 	Reset3DViewport();
+
 	// [BB] Only draw the sprites if we didn't render a HUD model before.
 	if ( renderHUDModel == false )
 	{
@@ -790,20 +792,6 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		mViewActor=camera;
 	}
 
-	if (toscreen)
-	{
-		if (gl_exposure == 0.0f)
-		{
-			float light = viewsector->lightlevel / 255.0f;
-			float exposure = MAX(1.0f + (1.0f - light * light) * 0.9f, 0.5f);
-			mCameraExposure = mCameraExposure * 0.995f + exposure * 0.005f;
-		}
-		else
-		{
-			mCameraExposure = gl_exposure;
-		}
-	}
-
 	// 'viewsector' will not survive the rendering so it cannot be used anymore below.
 	lviewsector = viewsector;
 
@@ -815,7 +803,6 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	{
 		const s3d::EyePose * eye = stereo3dMode.getEyePose(eye_ix);
 		eye->SetUp();
-		// TODO: stereo specific viewport - needed when implementing side-by-side modes etc.
 		SetOutputViewport(bounds);
 		Set3DViewport(mainview);
 		mDrawingScene2D = true;
@@ -835,10 +822,11 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		clipper.SafeAddClipRangeRealAngles(ViewAngle.BAMs() + a1, ViewAngle.BAMs() - a1);
 
 		ProcessScene(toscreen);
-		if (mainview && toscreen) EndDrawScene(lviewsector);	// do not call this for camera textures.
+		if (mainview && toscreen) EndDrawScene(lviewsector); // do not call this for camera textures.
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
 			mBuffers->BlitSceneToTexture();
+			UpdateCameraExposure();
 			BloomScene();
 			TonemapScene();
 			ColormapScene();
@@ -979,25 +967,25 @@ void FGLRenderer::WriteSavePic (player_t *player, FILE *file, int width, int hei
 
 struct FGLInterface : public FRenderer
 {
-	bool UsesColormap() const;
+	bool UsesColormap() const override;
 	void PrecacheTexture(FTexture *tex, int cache);
 	void PrecacheSprite(FTexture *tex, SpriteHits &hits);
-	void Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhitlist);
-	void RenderView(player_t *player);
-	void WriteSavePic (player_t *player, FILE *file, int width, int height);
-	void StateChanged(AActor *actor);
-	void StartSerialize(FArchive &arc);
-	void EndSerialize(FArchive &arc);
-	void RenderTextureView (FCanvasTexture *self, AActor *viewpoint, int fov);
-	sector_t *FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel, bool back);
-	void SetFogParams(int _fogdensity, PalEntry _outsidefogcolor, int _outsidefogdensity, int _skyfog);
-	void PreprocessLevel();
-	void CleanLevelData();
-	bool RequireGLNodes();
+	void Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhitlist) override;
+	void RenderView(player_t *player) override;
+	void WriteSavePic (player_t *player, FILE *file, int width, int height) override;
+	void StateChanged(AActor *actor) override;
+	void StartSerialize(FArchive &arc) override;
+	void EndSerialize(FArchive &arc) override;
+	void RenderTextureView (FCanvasTexture *self, AActor *viewpoint, int fov) override;
+	sector_t *FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel, bool back) override;
+	void SetFogParams(int _fogdensity, PalEntry _outsidefogcolor, int _outsidefogdensity, int _skyfog) override;
+	void PreprocessLevel() override;
+	void CleanLevelData() override;
+	bool RequireGLNodes() override;
 
-	int GetMaxViewPitch(bool down);
-	void ClearBuffer(int color);
-	void Init();
+	int GetMaxViewPitch(bool down) override;
+	void ClearBuffer(int color) override;
+	void Init() override;
 };
 
 //===========================================================================

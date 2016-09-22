@@ -9,7 +9,7 @@ public:
 	void Bind();
 
 	FBufferedUniformSampler SceneTexture;
-	FBufferedUniform1f Exposure;
+	FBufferedUniformSampler ExposureTexture;
 	FBufferedUniform2f Scale;
 	FBufferedUniform2f Offset;
 

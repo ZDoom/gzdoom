@@ -616,11 +616,15 @@ begin:
 			ASSERTA(B);
 			throw((VMException *)reg.a[B]);
 		}
-		else
+		else if (a == 1)
 		{
 			ASSERTKA(B);
 			assert(konstatag[B] == ATAG_OBJECT);
 			throw((VMException *)konsta[B].o);
+		}
+		else
+		{
+			THROW(BC);
 		}
 		NEXTOP;
 	OP(CATCH):

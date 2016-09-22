@@ -499,6 +499,13 @@ void DObject::SerializeUserVars(FSerializer &arc)
 
 void DObject::Serialize(FSerializer &arc)
 {
+	int fresh = ObjectFlags & OF_JustSpawned;
+	int freshdef = 0;
+	arc("justspawned", fresh, freshdef);
+	if (arc.isReading())
+	{
+		ObjectFlags |= fresh;
+	}
 	ObjectFlags |= OF_SerialSuccess;
 }
 

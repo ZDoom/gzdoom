@@ -288,12 +288,13 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 			("scrolls", scroll, nul)
 			.EndObject();
 
-		if (!scroll.isZero())
+		if (arc.isReading() && !scroll.isZero())
 		{
 			if (level.Scrolls.Size() == 0)
 			{
 				level.Scrolls.Resize(numsectors);
 				memset(&level.Scrolls[0], 0, sizeof(level.Scrolls[0])*level.Scrolls.Size());
+				level.Scrolls[p.sectornum] = scroll;
 			}
 		}
 	}

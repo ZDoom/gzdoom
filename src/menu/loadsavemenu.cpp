@@ -271,6 +271,12 @@ void DLoadSaveMenu::ReadSaveStrings ()
 						{
 							missing = !G_CheckSaveGameWads(arc, false);
 						}
+						else
+						{
+							// different game. Skip this.
+							delete savegame;
+							continue;
+						}
 
 						FSaveGameNode *node = new FSaveGameNode;
 						node->Filename = filepath;

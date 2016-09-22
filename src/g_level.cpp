@@ -1517,8 +1517,6 @@ void G_UnSnapshotLevel (bool hubLoad)
 		FSerializer arc;
 		if (!arc.OpenReader(&level.info->Snapshot)) return;
 
-		//if (hubLoad) arc.SetHubTravel (); // no idea if this is still needed.
-
 		G_SerializeLevel (arc, hubLoad);
 		level.FromSnapshot = true;
 

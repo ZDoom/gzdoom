@@ -27,6 +27,7 @@
 #include "po_man.h"
 #include "v_font.h"
 #include "w_zip.h"
+#include "doomerrors.h"
 
 char nulspace[1024 * 1024 * 4];
 
@@ -196,12 +197,15 @@ struct FReader
 {
 	TArray<FJSONObject> mObjects;
 	rapidjson::Document mDoc;
+	TArray<DObject *> mDObjects;
+	int mPlayers[MAXPLAYERS];
 
 	FReader(const char *buffer, size_t length, bool randomaccess)
 	{
 		rapidjson::Document doc;
 		mDoc.Parse(buffer, length);
 		mObjects.Push(FJSONObject(&mDoc, randomaccess));
+		memset(mPlayers, 0, sizeof(mPlayers));
 	}
 	
 	rapidjson::Value *FindKey(const char *key)
@@ -258,10 +262,11 @@ bool FSerializer::OpenWriter(bool pretty)
 //
 //==========================================================================
 
-bool FSerializer::OpenReader(const char *buffer, size_t length, bool randomaccess)
+bool FSerializer::OpenReader(const char *buffer, size_t length)
 {
 	if (w != nullptr || r != nullptr) return false;
-	r = new FReader(buffer, length, randomaccess);
+	r = new FReader(buffer, length, true);
+	ReadObjects();
 	return true;
 }
 
@@ -271,23 +276,23 @@ bool FSerializer::OpenReader(const char *buffer, size_t length, bool randomacces
 //
 //==========================================================================
 
-bool FSerializer::OpenReader(FCompressedBuffer *input, bool randomaccess)
+bool FSerializer::OpenReader(FCompressedBuffer *input)
 {
 	if (input->mSize <= 0 || input->mBuffer == nullptr) return false;
 	if (w != nullptr || r != nullptr) return false;
 
 	if (input->mMethod == METHOD_STORED)
 	{
-		r = new FReader((char*)input->mBuffer, input->mSize, randomaccess);
-		return true;
+		r = new FReader((char*)input->mBuffer, input->mSize, true);
 	}
 	else
 	{
 		char *unpacked = new char[input->mSize];
 		input->Decompress(unpacked);
-		r = new FReader(unpacked, input->mSize, randomaccess);
-		return true;
+		r = new FReader(unpacked, input->mSize, true);
 	}
+	ReadObjects();
+	return true;
 }
 
 //==========================================================================
@@ -400,7 +405,7 @@ bool FSerializer::BeginObject(const char *name, bool randomaccess)
 //
 //==========================================================================
 
-void FSerializer::EndObject()
+void FSerializer::EndObject(bool endwarning)
 {
 	if (isWriting())
 	{
@@ -416,6 +421,13 @@ void FSerializer::EndObject()
 	}
 	else
 	{
+		if (endwarning && !r->mObjects.Last().mRandomAccess)
+		{
+			if (r->mObjects.Last().mIterator != r->mObjects.Last().mObject->MemberEnd())
+			{
+				I_Error("Incomplete read of sequential object");
+			}
+		}
 		r->mObjects.Pop();
 	}
 }
@@ -480,6 +492,22 @@ void FSerializer::EndArray()
 	{
 		r->mObjects.Pop();
 	}
+}
+
+//==========================================================================
+//
+// Discards an entry (only needed for sequential access)
+//
+//==========================================================================
+
+FSerializer &FSerializer::Discard(const char *key)
+{
+	if (isReading())
+	{
+		// just get the key and advance the iterator, if present
+		if (!r->mObjects.Last().mRandomAccess) r->FindKey(key);
+	}
+	return *this;
 }
 
 //==========================================================================
@@ -757,6 +785,94 @@ void FSerializer::WriteObjects()
 			EndObject();
 		}
 		EndArray();
+	}
+}
+
+//==========================================================================
+//
+// Writes out all collected objects
+//
+//==========================================================================
+
+void FSerializer::ReadObjects()
+{
+	bool founderrors = false;
+
+	if (isReading() && BeginArray("objects"))
+	{
+		// Do not link any thinker that's being created here. This will be done by deserializing the thinker list later.
+		try
+		{
+			DThinker::bSerialOverride = true;
+			r->mDObjects.Resize(ArraySize());
+			// First create all the objects
+			for (unsigned i = 0; i < r->mDObjects.Size(); i++)
+			{
+				if (BeginObject(nullptr))
+				{
+					FString clsname;	// do not deserialize the class type directly so that we can print appropriate errors.
+
+					Serialize(*this, "classtype", clsname, nullptr);
+					PClass *cls = PClass::FindClass(clsname);
+					if (cls == nullptr)
+					{
+						Printf("Unknown object class '%d' in savegame", clsname.GetChars());
+						founderrors = true;
+					}
+					else
+					{
+						r->mDObjects[i] = cls->CreateNew();
+					}
+					EndObject();
+				}
+			}
+			// Now that everything has been created and we can retrieve the pointers we can deserialize it.
+
+			if (!founderrors)
+			{
+				// Reset to start;
+				r->mObjects.Last().mIndex = 0;
+
+				for (unsigned i = 0; i < r->mDObjects.Size(); i++)
+				{
+					if (BeginObject(nullptr))
+					{
+						Discard("classtype");
+
+						int pindex = -1;
+						Serialize(*this, "playerindex", pindex, nullptr);
+						auto obj = r->mDObjects[i];
+						if (pindex >= 0 && pindex < MAXPLAYERS)
+						{
+							obj->ObjectFlags |= OF_LoadedPlayer;
+							r->mPlayers[pindex] = int(i);
+						}
+						obj->SerializeUserVars(*this);
+						obj->Serialize(*this);
+						try
+						{
+							EndObject(true);
+						}
+						catch (CRecoverableError &err)
+						{
+							I_Error("%s\n while restoring %s", err.GetMessage(), obj->GetClass()->TypeName.GetChars());
+						}
+					}
+				}
+			}
+			EndArray();
+			DThinker::bSerialOverride = false;
+		}
+		catch(...)
+		{
+			// make sure this flag gets unset, even if something in here throws an error.
+			DThinker::bSerialOverride = false;
+			throw;
+		}
+	}
+	if (founderrors)
+	{
+		I_Error("Failed to restore all objects in savegame");
 	}
 }
 
@@ -1209,7 +1325,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 		auto val = arc.r->FindKey(key);
 		if (val != nullptr)
 		{
-			if (val->IsObject())
+			if (val->IsArray())
 			{
 				const rapidjson::Value &nameval = (*val)[0];
 				const rapidjson::Value &typeval = (*val)[1];
@@ -1251,7 +1367,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObje
 	if (retcode) *retcode = true;
 	if (arc.isWriting())
 	{
-		if (value != nullptr)
+		if (value != nullptr && !(value->ObjectFlags & OF_EuthanizeMe))
 		{
 			int ndx;
 			if (value == WP_NOCHANGE)

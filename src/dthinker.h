@@ -88,6 +88,7 @@ public:
 	static void MarkRoots();
 
 	static DThinker *FirstThinker (int statnum);
+	static bool bSerialOverride;
 
 private:
 	enum no_link_type { NO_LINK };
@@ -100,7 +101,6 @@ private:
 
 	static FThinkerList Thinkers[MAX_STATNUM+2];		// Current thinkers
 	static FThinkerList FreshThinkers[MAX_STATNUM+1];	// Newly created thinkers
-	static bool bSerialOverride;
 
 	friend struct FThinkerList;
 	friend class FThinkerIterator;

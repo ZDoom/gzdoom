@@ -174,9 +174,6 @@ void DThinker::SerializeAll(FArchive &arc, bool hubLoad)
 	}
 	else
 	{
-		// Prevent the constructor from inserting thinkers into a list.
-		bSerialOverride = true;
-
 		try
 		{
 			arc << statcount;
@@ -213,11 +210,9 @@ void DThinker::SerializeAll(FArchive &arc, bool hubLoad)
 		}
 		catch (class CDoomError &)
 		{
-			bSerialOverride = false;
 			DestroyAllThinkers();
 			throw;
 		}
-		bSerialOverride = false;
 	}
 }
 #endif

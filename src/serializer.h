@@ -16,7 +16,16 @@ struct FReader;
 extern TArray<sector_t>	loadsectors;
 extern TArray<line_t>	loadlines;
 extern TArray<side_t>	loadsides;
-extern char nulspace[];
+
+inline bool nullcmp(const void *buffer, size_t length)
+{
+	const char *p = (const char *)buffer;
+	for (; length > 0; length--)
+	{
+		if (*p++ != 0) return false;
+	}
+	return true;
+}
 
 struct NumericValue
 {
@@ -51,6 +60,8 @@ public:
 
 	int ArraySize();
 	void WriteKey(const char *key);
+	void WriteObjects();
+	void ReadObjects();
 
 public:
 
@@ -59,18 +70,18 @@ public:
 		Close();
 	}
 	bool OpenWriter(bool pretty = true);
-	bool OpenReader(const char *buffer, size_t length, bool randomaccess = false);
-	bool OpenReader(FCompressedBuffer *input, bool randomaccess = false);
+	bool OpenReader(const char *buffer, size_t length);
+	bool OpenReader(FCompressedBuffer *input);
 	void Close();
 	bool BeginObject(const char *name, bool randomaccess = false);
-	void EndObject();
+	void EndObject(bool endwarning = false);
 	bool BeginArray(const char *name);
 	void EndArray();
-	void WriteObjects();
 	unsigned GetSize(const char *group);
 	const char *GetKey();
 	const char *GetOutput(unsigned *len = nullptr);
 	FCompressedBuffer GetCompressedOutput();
+	FSerializer &Discard(const char *key);
 	FSerializer &Args(const char *key, int *args, int *defargs, int special);
 	FSerializer &Terrain(const char *key, int &terrain, int *def = nullptr);
 	FSerializer &Sprite(const char *key, int32_t &spritenum, int32_t *def);
@@ -104,7 +115,7 @@ public:
 	template<class T>
 	FSerializer &Array(const char *key, T *obj, int count, bool fullcompare = false)
 	{
-		if (fullcompare && isWriting() && !memcmp(obj, nulspace, count * sizeof(T)))
+		if (fullcompare && isWriting() && nullcmp(obj, count * sizeof(T)))
 		{
 			return *this;
 		}

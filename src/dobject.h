@@ -209,6 +209,7 @@ enum EObjectFlags
 	OF_JustSpawned		= 1 << 8,		// Thinker was spawned this tic
 	OF_SerialSuccess	= 1 << 9,		// For debugging Serialize() calls
 	OF_Sentinel			= 1 << 10,		// Object is serving as the sentinel in a ring list
+	OF_LoadedPlayer		= 1 << 11,		// this gets flagged during deserialization so that the player checks in there can be simplified.
 };
 
 template<class T> class TObjPtr;

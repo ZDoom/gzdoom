@@ -242,7 +242,7 @@ void DLoadSaveMenu::ReadSaveStrings ()
 					}
 					void *data = info->CacheLump();
 					FSerializer arc;
-					if (arc.OpenReader((const char *)data, info->LumpSize, true))
+					if (arc.OpenReader((const char *)data, info->LumpSize))
 					{
 						int savever = 0;
 						FString engine;
@@ -537,7 +537,7 @@ void DLoadSaveMenu::ExtractSaveData (int index)
 		}
 		void *data = info->CacheLump();
 		FSerializer arc;
-		if (arc.OpenReader((const char *)data, info->LumpSize, true))
+		if (arc.OpenReader((const char *)data, info->LumpSize))
 		{
 			FString time, pcomment, comment;
 

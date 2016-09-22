@@ -1857,7 +1857,7 @@ void G_DoLoadGame ()
 
 	void *data = info->CacheLump();
 	FSerializer arc;
-	if (!arc.OpenReader((const char *)data, info->LumpSize, true))
+	if (!arc.OpenReader((const char *)data, info->LumpSize))
 	{
 		Printf("Failed to access savegame info\n");
 		delete resfile;
@@ -1935,7 +1935,7 @@ void G_DoLoadGame ()
 	}
 
 	data = info->CacheLump();
-	if (!arc.OpenReader((const char *)data, info->LumpSize, true))
+	if (!arc.OpenReader((const char *)data, info->LumpSize))
 	{
 		Printf("Failed to access savegame info\n");
 		delete resfile;

@@ -1743,7 +1743,7 @@ void P_WriteACSDefereds (FSerializer &arc)
 		{
 			if (wi.deferred.Size() > 0)
 			{
-				if (wi.deferred.Size() > 0 && arc.BeginObject(nullptr))
+				if (wi.deferred.Size() > 0)
 				{
 					arc(wi.MapName, wi.deferred);
 				}

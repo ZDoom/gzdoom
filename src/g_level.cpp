@@ -1571,7 +1571,7 @@ void G_WriteSnapshots(TArray<FString> &filenames, TArray<FCompressedBuffer> &buf
 	{
 		if (wadlevelinfos[i].Snapshot.mCompressedSize > 0)
 		{
-			filename << wadlevelinfos[i].MapName << ".map.json";
+			filename.Format("%s.map.json", wadlevelinfos[i].MapName.GetChars());
 			filename.ToLower();
 			filenames.Push(filename);
 			buffers.Push(wadlevelinfos[i].Snapshot);
@@ -1579,7 +1579,7 @@ void G_WriteSnapshots(TArray<FString> &filenames, TArray<FCompressedBuffer> &buf
 	}
 	if (TheDefaultLevelInfo.Snapshot.mCompressedSize > 0)
 	{
-		filename << TheDefaultLevelInfo.MapName << ".mapd.json";
+		filename.Format("%s.mapd.json", TheDefaultLevelInfo.MapName.GetChars());
 		filename.ToLower();
 		filenames.Push(filename);
 		buffers.Push(TheDefaultLevelInfo.Snapshot);

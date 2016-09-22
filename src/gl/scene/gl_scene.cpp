@@ -493,14 +493,29 @@ void FGLRenderer::DrawScene(int drawmode)
 	}
 	GLRenderer->mClipPortal = NULL;	// this must be reset before any portal recursion takes place.
 
-	RenderScene(recursion);
-
-	bool applySSAO = gl_ssao && FGLRenderBuffers::IsEnabled() && drawmode != DM_PORTAL;
+	// If SSAO is active, switch to gbuffer shaders and use the gbuffer framebuffer
+	bool applySSAO = gl_ssao && FGLRenderBuffers::IsEnabled() && drawmode == DM_MAINVIEW;
 	if (applySSAO)
 	{
-		AmbientOccludeScene();
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+		glDrawBuffers(2, buffers);
 		gl_RenderState.SetPassType(GBUFFER_PASS);
 		gl_RenderState.Apply();
+		gl_RenderState.ApplyMatrices();
+	}
+
+	RenderScene(recursion);
+
+	// Apply ambient occlusion and switch back to shaders without gbuffer output
+	if (applySSAO)
+	{
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0 };
+		glDrawBuffers(1, buffers);
+		AmbientOccludeScene();
+		mBuffers->BindSceneFB(true);
+		gl_RenderState.SetPassType(NORMAL_PASS);
+		gl_RenderState.Apply();
+		gl_RenderState.ApplyMatrices();
 	}
 
 	// Handle all portals after rendering the opaque objects but before
@@ -509,15 +524,6 @@ void FGLRenderer::DrawScene(int drawmode)
 	GLPortal::EndFrame();
 	recursion--;
 	RenderTranslucent();
-
-	if (applySSAO)
-	{
-		mBuffers->BindSceneFB(true);
-		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-		glDrawBuffers(2, buffers);
-		gl_RenderState.SetPassType(NORMAL_PASS);
-		gl_RenderState.Apply();
-	}
 }
 
 

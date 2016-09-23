@@ -63,17 +63,6 @@
 #include "r_renderer.h"
 #include "serializer.h"
 
-//
-// Thinkers
-//
-
-void P_DestroyThinkers(bool hubLoad)
-{
-	if (hubLoad)
-		DThinker::DestroyMostThinkers();
-	else
-		DThinker::DestroyAllThinkers();
-}
 
 //==========================================================================
 //
@@ -901,7 +890,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	Renderer->StartSerialize(arc);
 	if (arc.isReading())
 	{
-		P_DestroyThinkers(hubload);
+		DThinker::DestroyAllThinkers();
 		interpolator.ClearInterpolations();
 		arc.ReadObjects(hubload);
 	}

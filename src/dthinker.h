@@ -78,7 +78,6 @@ public:
 	static void RunThinkers ();
 	static void RunThinkers (int statnum);
 	static void DestroyAllThinkers ();
-	static void DestroyMostThinkers ();
 	static void DestroyThinkersInList(int statnum)
 	{
 		DestroyThinkersInList(Thinkers[statnum]);
@@ -94,7 +93,6 @@ private:
 	enum no_link_type { NO_LINK };
 	DThinker(no_link_type) throw();
 	static void DestroyThinkersInList (FThinkerList &list);
-	static void DestroyMostThinkersInList (FThinkerList &list, int stat);
 	static int TickThinkers (FThinkerList *list, FThinkerList *dest);	// Returns: # of thinkers ticked
 	static void SaveList(FSerializer &arc, DThinker *node);
 	void Remove();

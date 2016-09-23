@@ -332,24 +332,6 @@ void DThinker::DestroyAllThinkers ()
 	GC::FullGC();
 }
 
-// Destroy all thinkers except for player-controlled actors
-// Players are simply removed from the list of thinkers and
-// will be added back after serialization is complete.
-void DThinker::DestroyMostThinkers ()
-{
-	int i;
-
-	for (i = 0; i <= MAX_STATNUM; i++)
-	{
-		if (i != STAT_TRAVELLING)
-		{
-			DestroyMostThinkersInList (Thinkers[i], i);
-			DestroyMostThinkersInList (FreshThinkers[i], i);
-		}
-	}
-	GC::FullGC();
-}
-
 void DThinker::DestroyThinkersInList (FThinkerList &list)
 {
 	if (list.Sentinel != NULL)
@@ -361,39 +343,6 @@ void DThinker::DestroyThinkersInList (FThinkerList &list)
 		}
 		list.Sentinel->Destroy();
 		list.Sentinel = NULL;
-	}
-}
-
-void DThinker::DestroyMostThinkersInList (FThinkerList &list, int stat)
-{
-	if (stat != STAT_PLAYER)
-	{
-		DestroyThinkersInList (list);
-	}
-	else if (list.Sentinel != NULL)
-	{ // If it's a voodoo doll, destroy it. Otherwise, simply remove
-	  // it from the list. G_FinishTravel() will find it later from
-	  // a players[].mo link and destroy it then, after copying various
-	  // information to a new player.
-		for (DThinker *probe = list.Sentinel->NextThinker; probe != list.Sentinel; probe = list.Sentinel->NextThinker)
-		{
-			if (!probe->IsKindOf(RUNTIME_CLASS(APlayerPawn)) ||		// <- should not happen
-				static_cast<AActor *>(probe)->player == NULL ||
-				static_cast<AActor *>(probe)->player->mo != probe)
-			{
-				probe->Destroy();
-			}
-			else
-			{
-				probe->Remove();
-				// Technically, this doesn't need to be in any list now, since
-				// it's only going to be found later and destroyed before ever
-				// needing to tick again, but by moving it to a separate list,
-				// I can keep my debug assertions that all thinkers are either
-				// euthanizing or in a list.
-				Thinkers[MAX_STATNUM+1].AddTail(probe);
-			}
-		}
 	}
 }
 

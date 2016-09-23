@@ -144,7 +144,7 @@ void DBaseDecal::Serialize(FSerializer &arc)
 		("renderflags", RenderFlags)
 		("renderstyle", RenderStyle)
 		("side", Side)
-		("sectpr", Sector);
+		("sector", Sector);
 }
 
 void DBaseDecal::GetXY (side_t *wall, double &ox, double &oy) const

@@ -2932,7 +2932,7 @@ void DACSThinker::Serialize(FSerializer &arc)
 	{
 		DLevelScript *script = nullptr;
 		RunningScripts.Clear();
-		if (arc.BeginArray("runniongscripts"))
+		if (arc.BeginArray("runningscripts"))
 		{
 			auto cnt = arc.ArraySize();
 			for (int i = 0; i < cnt; i++)

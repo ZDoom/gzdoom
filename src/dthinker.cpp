@@ -116,6 +116,85 @@ void DThinker::SaveList(FSerializer &arc, DThinker *node)
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DThinker::SerializeThinkers(FSerializer &arc, bool hubLoad)
+{
+	//DThinker *thinker;
+	//BYTE stat;
+	//int statcount;
+	int i;
+
+	if (arc.isWriting())
+	{
+		arc.BeginArray("thinkers");
+		for (i = 0; i <= MAX_STATNUM; i++)
+		{
+			arc.BeginArray(nullptr);
+			SaveList(arc, Thinkers[i].GetHead());
+			SaveList(arc, FreshThinkers[i].GetHead());
+			arc.EndArray();
+		}
+		arc.EndArray();
+	}
+	else
+	{
+		if (arc.BeginArray("thinkers"))
+		{
+			for (i = 0; i <= MAX_STATNUM; i++)
+			{
+				if (arc.BeginArray(nullptr))
+				{
+					int size = arc.ArraySize();
+					for (int j = 0; j < size; j++)
+					{
+						DThinker *thinker;
+						arc(nullptr, thinker);
+						if (thinker != nullptr)
+						{
+							// This may be a player stored in their ancillary list. Remove
+							// them first before inserting them into the new list.
+							if (thinker->NextThinker != nullptr)
+							{
+								thinker->Remove();
+							}
+							// Thinkers with the OF_JustSpawned flag set go in the FreshThinkers
+							// list. Anything else goes in the regular Thinkers list.
+							if (thinker->ObjectFlags & OF_EuthanizeMe)
+							{
+								// This thinker was destroyed during the loading process. Do
+								// not link it into any list.
+							}
+							else if (thinker->ObjectFlags & OF_JustSpawned)
+							{
+								FreshThinkers[i].AddTail(thinker);
+								thinker->PostSerialize();
+							}
+							else
+							{
+								Thinkers[i].AddTail(thinker);
+								thinker->PostSerialize();
+							}
+						}
+					}
+					arc.EndArray();
+				}
+			}
+			arc.EndArray();
+		}
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 DThinker::DThinker (int statnum) throw()
 {
 	NextThinker = NULL;

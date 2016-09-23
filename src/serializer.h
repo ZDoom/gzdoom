@@ -7,6 +7,8 @@
 #include "r_defs.h"
 #include "resourcefiles/file_zip.h"
 
+extern bool save_full;
+
 struct ticcmd_t;
 struct usercmd_t;
 
@@ -72,7 +74,7 @@ public:
 	bool OpenReader(const char *buffer, size_t length);
 	bool OpenReader(FCompressedBuffer *input);
 	void Close();
-	void ReadObjects();
+	void ReadObjects(bool hubtravel);
 	bool BeginObject(const char *name);
 	void EndObject();
 	bool BeginArray(const char *name);
@@ -108,13 +110,13 @@ public:
 	template<class T>
 	FSerializer &operator()(const char *key, T &obj, T &def)
 	{
-		return Serialize(*this, key, obj, &def);
+		return Serialize(*this, key, obj, save_full? nullptr : &def);
 	}
 
 	template<class T>
 	FSerializer &Array(const char *key, T *obj, int count, bool fullcompare = false)
 	{
-		if (fullcompare && isWriting() && nullcmp(obj, count * sizeof(T)))
+		if (!save_full && fullcompare && isWriting() && nullcmp(obj, count * sizeof(T)))
 		{
 			return *this;
 		}
@@ -138,7 +140,7 @@ public:
 	template<class T>
 	FSerializer &Array(const char *key, T *obj, T *def, int count, bool fullcompare = false)
 	{
-		if (fullcompare && isWriting() && def != nullptr && !memcmp(obj, def, count * sizeof(T)))
+		if (!save_full && fullcompare && isWriting() && def != nullptr && !memcmp(obj, def, count * sizeof(T)))
 		{
 			return *this;
 		}

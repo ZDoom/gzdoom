@@ -31,6 +31,7 @@
 #include "v_text.h"
 
 char nulspace[1024 * 1024 * 4];
+bool save_full = false;	// for testing. Should be removed afterward.
 
 //==========================================================================
 //
@@ -206,7 +207,7 @@ struct FReader
 		rapidjson::Document doc;
 		mDoc.Parse(buffer, length);
 		mObjects.Push(FJSONObject(&mDoc));
-		memset(mPlayers, 0, sizeof(mPlayers));
+		memset(mPlayers, -1, sizeof(mPlayers));
 	}
 
 	rapidjson::Value *FindKey(const char *key)
@@ -806,7 +807,7 @@ void FSerializer::WriteObjects()
 //
 //==========================================================================
 
-void FSerializer::ReadObjects()
+void FSerializer::ReadObjects(bool hubtravel)
 {
 	bool founderrors = false;
 	
@@ -823,6 +824,7 @@ void FSerializer::ReadObjects()
 				if (BeginObject(nullptr))
 				{
 					FString clsname;	// do not deserialize the class type directly so that we can print appropriate errors.
+					int pindex = -1;
 
 					Serialize(*this, "classtype", clsname, nullptr);
 					PClass *cls = PClass::FindClass(clsname);
@@ -830,6 +832,7 @@ void FSerializer::ReadObjects()
 					{
 						Printf("Unknown object class '%d' in savegame", clsname.GetChars());
 						founderrors = true;
+						r->mDObjects[i] = RUNTIME_CLASS(AActor)->CreateNew();	// make sure we got at least a valid pointer for the duration of the loading process.
 					}
 					else
 					{
@@ -849,33 +852,60 @@ void FSerializer::ReadObjects()
 				for (unsigned i = 0; i < r->mDObjects.Size(); i++)
 				{
 					auto obj = r->mDObjects[i];
-					try
+					if (BeginObject(nullptr))
 					{
-						if (BeginObject(nullptr))
+						if (obj != nullptr)
 						{
 							int pindex = -1;
-							Serialize(*this, "playerindex", pindex, nullptr);
-							if (obj != nullptr)
+							if (hubtravel)
 							{
-								if (pindex >= 0 && pindex < MAXPLAYERS)
+								// mark this as a hub travelling player. This needs to be taken care of later and be replaced with the real travelling player,
+								// but that's better done at the end of this loop so that inventory ownership is not getting messed up.
+								Serialize(*this, "playerindex", pindex, nullptr);
+								if (hubtravel && pindex >= 0 && pindex < MAXPLAYERS)
 								{
-									obj->ObjectFlags |= OF_LoadedPlayer;
 									r->mPlayers[pindex] = int(i);
 								}
+							}
+							try
+							{
 								obj->SerializeUserVars(*this);
 								obj->Serialize(*this);
 							}
-							EndObject();
+							catch (CRecoverableError &err)
+							{
+								// In case something in here throws an error, let's continue and deal with it later.
+								Printf(TEXTCOLOR_RED "'%s'\n while restoring %s", err.GetMessage(), obj ? obj->GetClass()->TypeName.GetChars() : "invalid object");
+								mErrors++;
+							}
 						}
-					}
-					catch (CRecoverableError &err)
-					{
-						Printf(TEXTCOLOR_RED "'%s'\n while restoring %s", err.GetMessage(),obj? obj->GetClass()->TypeName.GetChars() : "invalid object");
-						mErrors++;
+						EndObject();
 					}
 				}
 			}
 			EndArray();
+
+			if (hubtravel)
+			{
+				for (int i = 0; i < MAXPLAYERS; i++)
+				{
+					int pindex = r->mPlayers[i];
+					if (pindex != -1)
+					{
+						if (players[i].mo != nullptr)
+						{
+							r->mDObjects[pindex]->Destroy();
+							DObject::StaticPointerSubstitution(r->mDObjects[pindex], players[i].mo);
+							r->mDObjects[pindex] = players[i].mo;
+						}
+						else
+						{
+							players[i].mo = static_cast<APlayerPawn*>(r->mDObjects[pindex]);
+						}
+					}
+				}
+			}
+
 			DThinker::bSerialOverride = false;
 			assert(!founderrors);
 			if (founderrors)

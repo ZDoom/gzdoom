@@ -63,10 +63,6 @@
 #include "r_renderer.h"
 #include "serializer.h"
 
-// just the stuff that already got converted to FSerializer so that it can be seen as 'done' when searching.
-#include "zzz_old.cpp"
-
-
 //
 // Thinkers
 //
@@ -905,7 +901,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	{
 		P_DestroyThinkers(hubload);
 		interpolator.ClearInterpolations();
-		arc.ReadObjects();
+		arc.ReadObjects(hubload);
 	}
 
 	arc("level.flags", level.flags)

@@ -36,7 +36,6 @@
 #include "vectors.h"
 #include "v_palette.h"
 #include "templates.h"
-#include "farchive.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"

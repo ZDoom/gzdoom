@@ -336,6 +336,7 @@ public:
 	// true or false
 
 	DFsScript();
+	~DFsScript();
 	void Destroy();
 	void Serialize(FSerializer &ar);
 

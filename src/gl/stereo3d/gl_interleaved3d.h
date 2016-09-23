@@ -1,6 +1,6 @@
 /*
-** gl_sidebyside3d.h
-** Mosaic image stereoscopic 3D modes for GZDoom
+** gl_interleaved3d.h
+** Interleaved stereoscopic 3D modes for GZDoom
 **
 **---------------------------------------------------------------------------
 ** Copyright 2016 Christopher Bruns
@@ -33,71 +33,26 @@
 **
 */
 
-#ifndef GL_SIDEBYSIDE3D_H_
-#define GL_SIDEBYSIDE3D_H_
+#ifndef GL_INTERLEAVED3D_H_
+#define GL_INTERLEAVED3D_H_
 
 #include "gl_stereo3d.h"
 #include "gl_stereo_leftright.h"
+#include "gl_sidebyside3d.h"
 #include "gl/system/gl_system.h"
 #include "gl/renderer/gl_renderstate.h"
 
-
 namespace s3d {
 
-class SideBySideBase : public Stereo3DMode
+class RowInterleaved3D : public TopBottom3D
 {
 public:
+	static const RowInterleaved3D& getInstance(float ipd);
+	RowInterleaved3D(double ipdMeters) : TopBottom3D(ipdMeters) {}
 	void Present() const override;
-	virtual void AdjustViewports() const override;
-};
-
-class SideBySideSquished : public SideBySideBase
-{
-public:
-	static const SideBySideSquished& getInstance(float ipd);
-	SideBySideSquished(double ipdMeters);
-private:
-	LeftEyePose leftEye;
-	RightEyePose rightEye;
-};
-
-class SBSFLeftEyePose : public LeftEyePose {
-public:
-	SBSFLeftEyePose(double ipdMeters) : LeftEyePose(ipdMeters) {}
-	virtual VSMatrix GetProjection(float fov, float aspectRatio, float fovRatio) const override {
-		return LeftEyePose::GetProjection(fov, 0.5f * aspectRatio, fovRatio);
-	}
-};
-
-class SBSFRightEyePose : public RightEyePose {
-public:
-	SBSFRightEyePose(double ipdMeters) : RightEyePose(ipdMeters) {}
-	virtual VSMatrix GetProjection(float fov, float aspectRatio, float fovRatio) const override {
-		return RightEyePose::GetProjection(fov, 0.5f * aspectRatio, fovRatio);
-	}
-};
-
-class SideBySideFull : public SideBySideBase
-{
-public:
-	static const SideBySideFull& getInstance(float ipd);
-	SideBySideFull(double ipdMeters);
-	virtual void AdjustPlayerSprites() const override;
-private:
-	SBSFLeftEyePose leftEye;
-	SBSFRightEyePose rightEye;
-};
-
-class TopBottom3D : public SideBySideSquished
-{
-public:
-	static const TopBottom3D& getInstance(float ipd);
-	TopBottom3D(double ipdMeters) : SideBySideSquished(ipdMeters) {}
-	void Present() const override;
-	virtual void AdjustViewports() const override;
 };
 
 } /* namespace s3d */
 
 
-#endif /* GL_SIDEBYSIDE3D_H_ */
+#endif /* GL_INTERLEAVED3D_H_ */

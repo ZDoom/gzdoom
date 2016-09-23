@@ -108,4 +108,42 @@ void SideBySideFull::AdjustPlayerSprites() const /* override */
 	gl_RenderState.ApplyMatrices();
 }
 
+/* static */
+const TopBottom3D& TopBottom3D::getInstance(float ipd)
+{
+	static TopBottom3D instance(ipd);
+	return instance;
+}
+
+void TopBottom3D::Present() const
+{
+	GLRenderer->mBuffers->BindOutputFB();
+	GLRenderer->ClearBorders();
+
+	// Compute screen regions to use for left and right eye views
+	int topHeight = GLRenderer->mOutputLetterbox.height / 2;
+	int bottomHeight = GLRenderer->mOutputLetterbox.height - topHeight;
+	GL_IRECT topHalfScreen = GLRenderer->mOutputLetterbox;
+	topHalfScreen.height = topHeight;
+	GL_IRECT bottomHalfScreen = GLRenderer->mOutputLetterbox;
+	bottomHalfScreen.height = bottomHeight;
+	bottomHalfScreen.top += topHeight;
+
+	GLRenderer->mBuffers->BindEyeTexture(0, 0);
+	GLRenderer->DrawPresentTexture(topHalfScreen, true);
+
+	GLRenderer->mBuffers->BindEyeTexture(1, 0);
+	GLRenderer->DrawPresentTexture(bottomHalfScreen, true);
+}
+
+// AdjustViewports() is called from within FLGRenderer::SetOutputViewport(...)
+void TopBottom3D::AdjustViewports() const
+{
+	// Change size of renderbuffer, and align to screen
+	GLRenderer->mSceneViewport.height /= 2;
+	GLRenderer->mSceneViewport.top /= 2;
+	GLRenderer->mScreenViewport.height /= 2;
+	GLRenderer->mScreenViewport.top /= 2;
+}
+
 } /* namespace s3d */

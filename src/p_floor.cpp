@@ -1103,9 +1103,7 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag)
 //
 //==========================================================================
 
-IMPLEMENT_POINTY_CLASS (DWaggleBase)
-	DECLARE_POINTER(m_Interpolation)
-END_POINTERS
+IMPLEMENT_CLASS (DWaggleBase)
 
 IMPLEMENT_CLASS (DFloorWaggle)
 IMPLEMENT_CLASS (DCeilingWaggle)
@@ -1124,8 +1122,7 @@ void DWaggleBase::Serialize(FSerializer &arc)
 		("scale", m_Scale)
 		("scaledelta", m_ScaleDelta)
 		("ticker", m_Ticker)
-		("state", m_State)
-		("interpolation", m_Interpolation);
+		("state", m_State);
 }
 
 //==========================================================================
@@ -1145,11 +1142,6 @@ DWaggleBase::DWaggleBase (sector_t *sec)
 
 void DWaggleBase::Destroy()
 {
-	if (m_Interpolation != NULL)
-	{
-		m_Interpolation->DelRef();
-		m_Interpolation = NULL;
-	}
 	Super::Destroy();
 }
 
@@ -1244,7 +1236,7 @@ DFloorWaggle::DFloorWaggle (sector_t *sec)
 	: Super (sec)
 {
 	sec->floordata = this;
-	m_Interpolation = sec->SetInterpolation(sector_t::FloorMove, true);
+	interpolation = sec->SetInterpolation(sector_t::FloorMove, true);
 }
 
 void DFloorWaggle::Tick ()
@@ -1266,7 +1258,7 @@ DCeilingWaggle::DCeilingWaggle (sector_t *sec)
 	: Super (sec)
 {
 	sec->ceilingdata = this;
-	m_Interpolation = sec->SetInterpolation(sector_t::CeilingMove, true);
+	interpolation = sec->SetInterpolation(sector_t::CeilingMove, true);
 }
 
 void DCeilingWaggle::Tick ()

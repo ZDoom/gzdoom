@@ -1614,10 +1614,13 @@ void FBehavior::StaticSerializeModuleStates (FSerializer &arc)
 
 	if (arc.BeginArray("acsmodules"))
 	{
-		int modnum = arc.ArraySize();
-		if (modnum != StaticModules.Size())
+		if (arc.isReading())
 		{
-			I_Error("Level was saved with a different number of ACS modules. (Have %d, save has %d)", StaticModules.Size(), modnum);
+			int modnum = arc.ArraySize();
+			if (modnum != StaticModules.Size())
+			{
+				I_Error("Level was saved with a different number of ACS modules. (Have %d, save has %d)", StaticModules.Size(), modnum);
+			}
 		}
 
 		for (modnum = 0; modnum < StaticModules.Size(); ++modnum)

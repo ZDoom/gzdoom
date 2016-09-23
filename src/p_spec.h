@@ -612,7 +612,6 @@ protected:
 	double m_ScaleDelta;
 	int m_Ticker;
 	int m_State;
-	TObjPtr<DInterpolation> m_Interpolation;
 
 	friend bool EV_StartWaggle (int tag, line_t *line, int height, int speed,
 		int offset, int timer, bool ceiling);

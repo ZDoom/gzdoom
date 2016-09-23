@@ -904,7 +904,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	if (arc.isReading())
 	{
 		P_DestroyThinkers(hubload);
-		// ReadObjects
+		arc.ReadObjects();
 	}
 
 	arc("level.flags", level.flags)

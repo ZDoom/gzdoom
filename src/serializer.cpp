@@ -199,6 +199,7 @@ struct FReader
 	rapidjson::Document mDoc;
 	TArray<DObject *> mDObjects;
 	int mPlayers[MAXPLAYERS];
+	bool mObjectsRead;
 
 	FReader(const char *buffer, size_t length, bool randomaccess)
 	{
@@ -206,6 +207,7 @@ struct FReader
 		mDoc.Parse(buffer, length);
 		mObjects.Push(FJSONObject(&mDoc, randomaccess));
 		memset(mPlayers, 0, sizeof(mPlayers));
+		mObjectsRead = false;
 	}
 	
 	rapidjson::Value *FindKey(const char *key)
@@ -266,7 +268,6 @@ bool FSerializer::OpenReader(const char *buffer, size_t length)
 {
 	if (w != nullptr || r != nullptr) return false;
 	r = new FReader(buffer, length, true);
-	ReadObjects();
 	return true;
 }
 
@@ -291,7 +292,6 @@ bool FSerializer::OpenReader(FCompressedBuffer *input)
 		input->Decompress(unpacked);
 		r = new FReader(unpacked, input->mSize, true);
 	}
-	ReadObjects();
 	return true;
 }
 
@@ -416,6 +416,7 @@ void FSerializer::EndObject(bool endwarning)
 		}
 		else
 		{
+			assert(false && "EndObject call not inside an object");
 			I_Error("EndObject call not inside an object");
 		}
 	}
@@ -425,6 +426,7 @@ void FSerializer::EndObject(bool endwarning)
 		{
 			if (r->mObjects.Last().mIterator != r->mObjects.Last().mObject->MemberEnd())
 			{
+				assert(false && "Incomplete read of sequential object");
 				I_Error("Incomplete read of sequential object");
 			}
 		}
@@ -797,6 +799,7 @@ void FSerializer::WriteObjects()
 void FSerializer::ReadObjects()
 {
 	bool founderrors = false;
+	unsigned i;
 
 	if (isReading() && BeginArray("objects"))
 	{
@@ -827,6 +830,7 @@ void FSerializer::ReadObjects()
 				}
 			}
 			// Now that everything has been created and we can retrieve the pointers we can deserialize it.
+			r->mObjectsRead = true;
 
 			if (!founderrors)
 			{
@@ -835,44 +839,53 @@ void FSerializer::ReadObjects()
 
 				for (unsigned i = 0; i < r->mDObjects.Size(); i++)
 				{
-					if (BeginObject(nullptr))
+					auto obj = r->mDObjects[i];
+					try
 					{
-						Discard("classtype");
-
-						int pindex = -1;
-						Serialize(*this, "playerindex", pindex, nullptr);
-						auto obj = r->mDObjects[i];
-						if (pindex >= 0 && pindex < MAXPLAYERS)
+						if (BeginObject(nullptr))
 						{
-							obj->ObjectFlags |= OF_LoadedPlayer;
-							r->mPlayers[pindex] = int(i);
-						}
-						obj->SerializeUserVars(*this);
-						obj->Serialize(*this);
-						try
-						{
+							int pindex = -1;
+							Discard("classtype");
+							Serialize(*this, "playerindex", pindex, nullptr);
+							if (obj != nullptr)
+							{
+								if (pindex >= 0 && pindex < MAXPLAYERS)
+								{
+									obj->ObjectFlags |= OF_LoadedPlayer;
+									r->mPlayers[pindex] = int(i);
+								}
+								obj->SerializeUserVars(*this);
+								obj->Serialize(*this);
+							}
 							EndObject(true);
 						}
-						catch (CRecoverableError &err)
-						{
-							I_Error("%s\n while restoring %s", err.GetMessage(), obj->GetClass()->TypeName.GetChars());
-						}
+					}
+					catch (CRecoverableError &err)
+					{
+						I_Error("%s\n while restoring %s", err.GetMessage(),obj? obj->GetClass()->TypeName.GetChars() : "invalid object");
 					}
 				}
 			}
 			EndArray();
 			DThinker::bSerialOverride = false;
+			if (founderrors)
+			{
+				I_Error("Failed to restore all objects in savegame");
+			}
 		}
 		catch(...)
 		{
+			// nuke all objects we created here.
+			for (auto obj : r->mDObjects)
+			{
+				obj->Destroy();
+			}
+			r->mDObjects.Clear();
+
 			// make sure this flag gets unset, even if something in here throws an error.
 			DThinker::bSerialOverride = false;
 			throw;
 		}
-	}
-	if (founderrors)
-	{
-		I_Error("Failed to restore all objects in savegame");
 	}
 }
 
@@ -1367,12 +1380,16 @@ FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObje
 	if (retcode) *retcode = true;
 	if (arc.isWriting())
 	{
-		if (value != nullptr && !(value->ObjectFlags & OF_EuthanizeMe))
+		if (value != nullptr)
 		{
 			int ndx;
 			if (value == WP_NOCHANGE)
 			{
 				ndx = -1;
+			}
+			else if (value->ObjectFlags & OF_EuthanizeMe)
+			{
+				return arc;
 			}
 			else
 			{
@@ -1392,15 +1409,31 @@ FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObje
 	}
 	else
 	{
+		if (!arc.r->mObjectsRead)
+		{
+			// If you want to read objects, you MUST call ReadObjects first, even if there's only nullptr's.
+			assert(false && "Attempt to read object reference without calling ReadObjects first");
+			I_Error("Attempt to read object reference without calling ReadObjects first");
+		}
 		auto val = arc.r->FindKey(key);
 		if (val != nullptr && val->IsInt())
 		{
-			if (val->GetInt() == -1)
+			int index = val->GetInt();
+			if (index == -1)
 			{
 				value = WP_NOCHANGE;
 			}
 			else
 			{
+				assert(index >= 0 && index < (int)arc.r->mDObjects.Size());
+				if (index >= 0 && index < (int)arc.r->mDObjects.Size())
+				{
+					value = arc.r->mDObjects[index];
+				}
+				else
+				{
+					I_Error("Invalid object reference for '%s'", key);
+				}
 			}
 		}
 		else if (!retcode)

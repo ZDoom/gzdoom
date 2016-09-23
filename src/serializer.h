@@ -61,7 +61,6 @@ public:
 	int ArraySize();
 	void WriteKey(const char *key);
 	void WriteObjects();
-	void ReadObjects();
 
 public:
 
@@ -73,6 +72,7 @@ public:
 	bool OpenReader(const char *buffer, size_t length);
 	bool OpenReader(FCompressedBuffer *input);
 	void Close();
+	void ReadObjects();
 	bool BeginObject(const char *name, bool randomaccess = false);
 	void EndObject(bool endwarning = false);
 	bool BeginArray(const char *name);

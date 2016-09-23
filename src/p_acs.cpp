@@ -2941,6 +2941,7 @@ void DACSThinker::Serialize(FSerializer &arc)
 				arc(nullptr, srs);
 				RunningScripts[srs.scriptnum] = srs.lscript;
 			}
+			arc.EndArray();
 		}
 	}
 }

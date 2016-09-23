@@ -1514,6 +1514,10 @@ FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObje
 			}
 			Serialize(arc, key, ndx, nullptr);
 		}
+		else if (!arc.w->inObject())
+		{
+			arc.w->Null();
+		}
 	}
 	else
 	{
@@ -1524,30 +1528,40 @@ FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObje
 			I_Error("Attempt to read object reference without calling ReadObjects first");
 		}
 		auto val = arc.r->FindKey(key);
-		if (val != nullptr && val->IsInt())
+		if (val != nullptr)
 		{
-			int index = val->GetInt();
-			if (index == -1)
+			if (val->IsNull())
 			{
-				value = WP_NOCHANGE;
+				value = nullptr;
+				return arc;
 			}
-			else
+			else if (val->IsInt())
 			{
-				assert(index >= 0 && index < (int)arc.r->mDObjects.Size());
-				if (index >= 0 && index < (int)arc.r->mDObjects.Size())
+				int index = val->GetInt();
+				if (index == -1)
 				{
-					value = arc.r->mDObjects[index];
+					value = WP_NOCHANGE;
 				}
 				else
 				{
-					assert(false && "invalid object reference");
-					Printf(TEXTCOLOR_RED "Invalid object reference for '%s'", key);
-					value = nullptr;
-					arc.mErrors++;
+					assert(index >= 0 && index < (int)arc.r->mDObjects.Size());
+					if (index >= 0 && index < (int)arc.r->mDObjects.Size())
+					{
+						value = arc.r->mDObjects[index];
+					}
+					else
+					{
+						assert(false && "invalid object reference");
+						Printf(TEXTCOLOR_RED "Invalid object reference for '%s'", key);
+						value = nullptr;
+						arc.mErrors++;
+						if (retcode) *retcode = false;
+					}
 				}
+				return arc;
 			}
 		}
-		else if (!retcode)
+		if (!retcode)
 		{
 			value = nullptr;
 		}

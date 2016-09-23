@@ -528,7 +528,7 @@ void P_SerializeSounds(FSerializer &arc)
 
 	if (arc.isWriting())
 	{
-		order = S_GetMusic((char **)&name);
+		order = S_GetMusic(&name);
 	}
 	arc.StringPtr("musicname", name)
 		("musicorder", order);
@@ -539,7 +539,6 @@ void P_SerializeSounds(FSerializer &arc)
 			if (level.cdtrack == 0 || !S_ChangeCDMusic(level.cdtrack, level.cdid))
 				S_ChangeMusic(level.Music, level.musicorder);
 	}
-	delete[] name;
 }
 
 //==========================================================================

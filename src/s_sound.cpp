@@ -2608,13 +2608,13 @@ void S_MIDIDeviceChanged()
 //
 //==========================================================================
 
-int S_GetMusic (char **name)
+int S_GetMusic (const char **name)
 {
 	int order;
 
 	if (mus_playing.name.IsNotEmpty())
 	{
-		*name = copystring (mus_playing.name);
+		*name = mus_playing.name;
 		order = mus_playing.baseorder;
 	}
 	else

@@ -695,7 +695,10 @@ FSerializer &FSerializer::StringPtr(const char *key, const char *&charptr)
 	if (isWriting())
 	{
 		WriteKey(key);
-		w->String(charptr);
+		if (charptr != nullptr)
+			w->String(charptr);
+		else
+			w->Null();
 	}
 	else
 	{
@@ -894,7 +897,7 @@ void FSerializer::ReadObjects(bool hubtravel)
 			// can occur afterward. At this point everything has been loaded and the substitution is a simple matter of
 			// calling DObject::StaticPointerSubstitution.
 
-			// If no corresponding player can be founded among the freshly spawned ones, the one from the snapshot is kept.
+			// If no corresponding player can be found among the freshly spawned ones, the one from the snapshot is kept.
 			if (hubtravel)
 			{
 				for (int i = 0; i < MAXPLAYERS; i++)
@@ -904,6 +907,7 @@ void FSerializer::ReadObjects(bool hubtravel)
 					{
 						if (players[i].mo != nullptr)
 						{
+							// Destroy the old pawn before substituting the pointer so that its inventory also gets properly destroyed.
 							r->mDObjects[pindex]->Destroy();
 							DObject::StaticPointerSubstitution(r->mDObjects[pindex], players[i].mo);
 							r->mDObjects[pindex] = players[i].mo;

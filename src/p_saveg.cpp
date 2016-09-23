@@ -523,14 +523,14 @@ void P_SerializeSounds(FSerializer &arc)
 {
 	S_SerializeSounds(arc);
 	DSeqNode::SerializeSequences (arc);
-	char *name = NULL;
+	const char *name = NULL;
 	BYTE order;
 
 	if (arc.isWriting())
 	{
-		order = S_GetMusic(&name);
+		order = S_GetMusic((char **)&name);
 	}
-	arc("musicname", name)
+	arc.StringPtr("musicname", name)
 		("musicorder", order);
 
 	if (arc.isReading())
@@ -612,6 +612,7 @@ void P_SerializePlayers(FSerializer &arc, bool skipload)
 			{
 				ReadMultiplePlayers(arc, numPlayers, numPlayersNow, skipload);
 			}
+			arc.EndArray();
 		}
 		if (!skipload && numPlayersNow > numPlayers)
 		{
@@ -662,6 +663,7 @@ static void ReadOnePlayer(FSerializer &arc, bool skipload)
 				}
 			}
 		}
+		arc.EndObject();
 	}
 }
 
@@ -687,6 +689,7 @@ static void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayers
 		{
 			arc.StringPtr("playername", nametemp[i]);
 			playertemp[i].Serialize(arc);
+			arc.EndObject();
 		}
 		tempPlayerUsed[i] = 0;
 	}

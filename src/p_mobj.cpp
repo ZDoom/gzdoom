@@ -323,7 +323,6 @@ void AActor::PostSerialize()
 	LinkToWorld(false, Sector);
 
 	AddToHash();
-	SetShade(fillcolor);
 	if (player)
 	{
 		if (playeringame[player - players] &&

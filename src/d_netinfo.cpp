@@ -948,6 +948,7 @@ void ReadUserInfo(FSerializer &arc, userinfo_t &info, FString &skin)
 				}
 			}
 		}
+		arc.EndObject();
 	}
 }
 

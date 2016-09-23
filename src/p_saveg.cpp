@@ -941,7 +941,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 
 	// fixme: This needs to ensure it reads from the correct place. Should be one once there's enough of this code converted to JSON
 
-//FBehavior::StaticSerializeModuleStates(arc);
+	FBehavior::StaticSerializeModuleStates(arc);
 	// The order here is important: First world state, then portal state, then thinkers, and last polyobjects.
 	arc.Array("linedefs", lines, &loadlines[0], numlines);
 	arc.Array("sidedefs", sides, &loadsides[0], numsides);
@@ -951,7 +951,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	arc("sectorportals", sectorPortals);
 	if (arc.isReading()) P_CollectLinkedPortals();
 
-//	DThinker::SerializeThinkers(arc, !hubload);
+	DThinker::SerializeThinkers(arc, !hubload);
 	arc.Array("polyobjs", polyobjs, po_NumPolyobjs);
 	arc("subsectors", subsectors);
 	StatusBar->SerializeMessages(arc);

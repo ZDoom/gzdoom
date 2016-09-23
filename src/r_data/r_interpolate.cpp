@@ -418,15 +418,18 @@ DSectorPlaneInterpolation::DSectorPlaneInterpolation(sector_t *_sector, bool _pl
 
 void DSectorPlaneInterpolation::Destroy()
 {
-	if (ceiling) 
+	if (sector != nullptr)
 	{
-		sector->interpolations[sector_t::CeilingMove] = NULL;
+		if (ceiling)
+		{
+			sector->interpolations[sector_t::CeilingMove] = nullptr;
+		}
+		else
+		{
+			sector->interpolations[sector_t::FloorMove] = nullptr;
+		}
+		sector = nullptr;
 	}
-	else 
-	{
-		sector->interpolations[sector_t::FloorMove] = NULL;
-	}
-
 	for(unsigned i=0; i<attached.Size(); i++)
 	{
 		attached[i]->DelRef();
@@ -593,13 +596,17 @@ DSectorScrollInterpolation::DSectorScrollInterpolation(sector_t *_sector, bool _
 
 void DSectorScrollInterpolation::Destroy()
 {
-	if (ceiling) 
+	if (sector != nullptr)
 	{
-		sector->interpolations[sector_t::CeilingScroll] = NULL;
-	}
-	else 
-	{
-		sector->interpolations[sector_t::FloorScroll] = NULL;
+		if (ceiling)
+		{
+			sector->interpolations[sector_t::CeilingScroll] = nullptr;
+		}
+		else
+		{
+			sector->interpolations[sector_t::FloorScroll] = nullptr;
+		}
+		sector = nullptr;
 	}
 	Super::Destroy();
 }
@@ -694,7 +701,11 @@ DWallScrollInterpolation::DWallScrollInterpolation(side_t *_side, int _part)
 
 void DWallScrollInterpolation::Destroy()
 {
-	side->textures[part].interpolation = NULL;
+	if (side != nullptr)
+	{
+		side->textures[part].interpolation = nullptr;
+		side = nullptr;
+	}
 	Super::Destroy();
 }
 
@@ -788,7 +799,10 @@ DPolyobjInterpolation::DPolyobjInterpolation(FPolyObj *po)
 
 void DPolyobjInterpolation::Destroy()
 {
-	poly->interpolation = NULL;
+	if (poly != nullptr)
+	{
+		poly->interpolation = nullptr;
+	}
 	Super::Destroy();
 }
 

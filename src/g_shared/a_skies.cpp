@@ -170,7 +170,10 @@ void ASectorSilencer::BeginPlay ()
 
 void ASectorSilencer::Destroy ()
 {
-	Sector->Flags &= ~SECF_SILENT;
+	if (Sector != nullptr)
+	{
+		Sector->Flags &= ~SECF_SILENT;
+	}
 	Super::Destroy ();
 }
 

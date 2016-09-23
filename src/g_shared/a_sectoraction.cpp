@@ -49,23 +49,26 @@ bool ASectorAction::IsActivatedByUse() const
 
 void ASectorAction::Destroy ()
 {
-	// Remove ourself from this sector's list of actions
-	AActor *probe = Sector->SecActTarget;
-	union
+	if (Sector != nullptr)
 	{
-		AActor **act;
-		ASectorAction **secact;
-	} prev;
-	prev.secact = &Sector->SecActTarget;
+		// Remove ourself from this sector's list of actions
+		AActor *probe = Sector->SecActTarget;
+		union
+		{
+			AActor **act;
+			ASectorAction **secact;
+		} prev;
+		prev.secact = &Sector->SecActTarget;
 
-	while (probe && probe != this)
-	{
-		prev.act = &probe->tracer;
-		probe = probe->tracer;
-	}
-	if (probe != NULL)
-	{
-		*prev.act = probe->tracer;
+		while (probe && probe != this)
+		{
+			prev.act = &probe->tracer;
+			probe = probe->tracer;
+		}
+		if (probe != nullptr)
+		{
+			*prev.act = probe->tracer;
+		}
 	}
 
 	Super::Destroy ();

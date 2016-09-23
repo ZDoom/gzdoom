@@ -116,13 +116,16 @@ void DBaseDecal::Destroy ()
 
 void DBaseDecal::Remove ()
 {
-	if (WallPrev == nullptr) Side->AttachedDecals = WallNext;
+	if (WallPrev == nullptr)
+	{
+		if (Side != nullptr) Side->AttachedDecals = WallNext;
+	}
 	else WallPrev->WallNext = WallNext;
 
 	if (WallNext != nullptr) WallNext->WallPrev = WallPrev;
 
-	WallPrev = NULL;
-	WallNext = NULL;
+	WallPrev = nullptr;
+	WallNext = nullptr;
 }
 
 void DBaseDecal::Serialize(FSerializer &arc)

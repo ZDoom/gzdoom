@@ -797,6 +797,7 @@ void I_FatalError(const char *error, ...)
 		va_start(argptr, error);
 		myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
 		va_end(argptr);
+		OutputDebugString(errortext);
 
 		// Record error to log (if logging)
 		if (Logfile)
@@ -832,6 +833,7 @@ void I_Error(const char *error, ...)
 	va_start(argptr, error);
 	myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
 	va_end(argptr);
+	OutputDebugString(errortext);
 
 	throw CRecoverableError(errortext);
 }

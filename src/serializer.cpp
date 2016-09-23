@@ -818,7 +818,7 @@ void FSerializer::ReadObjects(bool hubtravel)
 		{
 			DThinker::bSerialOverride = true;
 			r->mDObjects.Resize(ArraySize());
-			// First create all the objects
+			// First iteration: create all the objects but do nothing with them yet.
 			for (unsigned i = 0; i < r->mDObjects.Size(); i++)
 			{
 				if (BeginObject(nullptr))
@@ -833,6 +833,7 @@ void FSerializer::ReadObjects(bool hubtravel)
 						Printf("Unknown object class '%d' in savegame", clsname.GetChars());
 						founderrors = true;
 						r->mDObjects[i] = RUNTIME_CLASS(AActor)->CreateNew();	// make sure we got at least a valid pointer for the duration of the loading process.
+						r->mDObjects[i]->Destroy();								// but we do not want to keep this around, so destroy it right away.
 					}
 					else
 					{
@@ -859,8 +860,7 @@ void FSerializer::ReadObjects(bool hubtravel)
 							int pindex = -1;
 							if (hubtravel)
 							{
-								// mark this as a hub travelling player. This needs to be taken care of later and be replaced with the real travelling player,
-								// but that's better done at the end of this loop so that inventory ownership is not getting messed up.
+								// mark this as a hub travelling player. This needs to be substituted later, but that's better done when all objects have been loaded.
 								Serialize(*this, "playerindex", pindex, nullptr);
 								if (hubtravel && pindex >= 0 && pindex < MAXPLAYERS)
 								{
@@ -885,6 +885,16 @@ void FSerializer::ReadObjects(bool hubtravel)
 			}
 			EndArray();
 
+			// Special treatment for hub travel: We do not want the player pawn which exited the level when this snapshot was made
+			// but the one that got freshly created when the map was loaded in P_SetupLevel.
+			// The loop above marked all objects that represent a player, so now we go through them, and if a corresponding
+			// player had been spawned on map load it gets substituted here.
+
+			// The substitution does not take place inside the above loop to ensure that no changes to the loaded objects
+			// can occur afterward. At this point everything has been loaded and the substitution is a simple matter of
+			// calling DObject::StaticPointerSubstitution.
+
+			// If no corresponding player can be founded among the freshly spawned ones, the one from the snapshot is kept.
 			if (hubtravel)
 			{
 				for (int i = 0; i < MAXPLAYERS; i++)

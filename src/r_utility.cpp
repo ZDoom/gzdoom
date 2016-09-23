@@ -1064,6 +1064,7 @@ void FCanvasTextureInfo::Serialize(FSerializer &arc)
 						}
 					}
 				}
+				arc.EndArray();
 			}
 		}
 	}
@@ -1082,6 +1083,7 @@ void FCanvasTextureInfo::Serialize(FSerializer &arc)
 					.EndObject();
 				Add(viewpoint, picnum, fov);
 			}
+			arc.EndArray();
 		}
 	}
 }

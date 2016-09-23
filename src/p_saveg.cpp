@@ -201,13 +201,13 @@ FSerializer &Serialize(FSerializer &arc, const char *key, secplane_t &p, secplan
 
 	if (arc.BeginObject(key))
 	{
-		arc("normal", p.normal, def->normal)
-			("d", p.D, def->D)
-			.EndObject();
+		Serialize(arc, "normal", p.normal, def ? &def->normal : nullptr);
+		Serialize(arc, "d", p.D, def ? &def->D : nullptr);
+		arc.EndObject();
 
 		if (arc.isReading() && p.normal.Z != 0)
 		{
-			p.negiC = 1 / p.normal.Z;
+			p.negiC = -1 / p.normal.Z;
 		}
 	}
 	return arc;

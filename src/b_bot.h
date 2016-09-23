@@ -58,8 +58,6 @@ struct botskill_t
 	int isp;        //Instincts of Self Preservation. Personality
 };
 
-FArchive &operator<< (FArchive &arc, botskill_t &skill);
-
 enum
 {
 	BOTINUSE_No,
@@ -142,7 +140,7 @@ public:
 	DBot ();
 
 	void Clear ();
-	void Serialize (FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Tick ();
 
 	//(b_think.cpp)

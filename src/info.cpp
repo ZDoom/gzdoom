@@ -375,6 +375,9 @@ void PClassActor::InitializeNativeDefaults()
 	else
 	{
 		memset (Defaults, 0, Size);
+		// Non-DECORATE properties that must be set.
+		((AActor*)Defaults)->DamageMultiply = 1.;	// fixme: Make this a DECORATE property.
+		((AActor*)Defaults)->ConversationRoot = -1;
 	}
 }
 

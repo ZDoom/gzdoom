@@ -38,7 +38,7 @@
 #include "statnums.h"
 #include "i_system.h"
 #include "doomerrors.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "d_player.h"
 
 
@@ -103,101 +103,97 @@ bool FThinkerList::IsEmpty() const
 	return Sentinel == NULL || Sentinel->NextThinker == NULL;
 }
 
-void DThinker::SaveList(FArchive &arc, DThinker *node)
+void DThinker::SaveList(FSerializer &arc, DThinker *node)
 {
 	if (node != NULL)
 	{
 		while (!(node->ObjectFlags & OF_Sentinel))
 		{
 			assert(node->NextThinker != NULL && !(node->NextThinker->ObjectFlags & OF_EuthanizeMe));
-			arc << node;
+			::Serialize<DThinker>(arc, nullptr, node, nullptr);
 			node = node->NextThinker;
 		}
 	}
 }
 
-void DThinker::SerializeAll(FArchive &arc, bool hubLoad)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DThinker::SerializeThinkers(FSerializer &arc, bool hubLoad)
 {
-	DThinker *thinker;
-	BYTE stat;
-	int statcount;
+	//DThinker *thinker;
+	//BYTE stat;
+	//int statcount;
 	int i;
 
-	// Save lists of thinkers, but not by storing the first one and letting
-	// the archiver catch the rest. (Which leads to buttloads of recursion
-	// and makes the file larger.) Instead, we explicitly save each thinker
-	// in sequence. When restoring an archive, we also have to maintain
-	// the thinker lists here instead of relying on the archiver to do it
-	// for us.
-
-	if (arc.IsStoring())
+	if (arc.isWriting())
 	{
-		for (statcount = i = 0; i <= MAX_STATNUM; i++)
-		{
-			statcount += (!Thinkers[i].IsEmpty() || !FreshThinkers[i].IsEmpty());
-		}
-		arc << statcount;
+		arc.BeginArray("thinkers");
 		for (i = 0; i <= MAX_STATNUM; i++)
 		{
-			if (!Thinkers[i].IsEmpty() || !FreshThinkers[i].IsEmpty())
-			{
-				stat = i;
-				arc << stat;
-				SaveList(arc, Thinkers[i].GetHead());
-				SaveList(arc, FreshThinkers[i].GetHead());
-				thinker = NULL;
-				arc << thinker;		// Save a final NULL for this list
-			}
+			arc.BeginArray(nullptr);
+			SaveList(arc, Thinkers[i].GetHead());
+			SaveList(arc, FreshThinkers[i].GetHead());
+			arc.EndArray();
 		}
+		arc.EndArray();
 	}
 	else
 	{
-		// Prevent the constructor from inserting thinkers into a list.
-		bSerialOverride = true;
-
-		try
+		if (arc.BeginArray("thinkers"))
 		{
-			arc << statcount;
-			while (statcount > 0)
+			for (i = 0; i <= MAX_STATNUM; i++)
 			{
-				arc << stat << thinker;
-				while (thinker != NULL)
+				if (arc.BeginArray(nullptr))
 				{
-					// This may be a player stored in their ancillary list. Remove
-					// them first before inserting them into the new list.
-					if (thinker->NextThinker != NULL)
+					int size = arc.ArraySize();
+					for (int j = 0; j < size; j++)
 					{
-						thinker->Remove();
+						DThinker *thinker;
+						arc(nullptr, thinker);
+						if (thinker != nullptr)
+						{
+							// This may be a player stored in their ancillary list. Remove
+							// them first before inserting them into the new list.
+							if (thinker->NextThinker != nullptr)
+							{
+								thinker->Remove();
+							}
+							// Thinkers with the OF_JustSpawned flag set go in the FreshThinkers
+							// list. Anything else goes in the regular Thinkers list.
+							if (thinker->ObjectFlags & OF_EuthanizeMe)
+							{
+								// This thinker was destroyed during the loading process. Do
+								// not link it into any list.
+							}
+							else if (thinker->ObjectFlags & OF_JustSpawned)
+							{
+								FreshThinkers[i].AddTail(thinker);
+								thinker->PostSerialize();
+							}
+							else
+							{
+								Thinkers[i].AddTail(thinker);
+								thinker->PostSerialize();
+							}
+						}
 					}
-					// Thinkers with the OF_JustSpawned flag set go in the FreshThinkers
-					// list. Anything else goes in the regular Thinkers list.
-					if (thinker->ObjectFlags & OF_EuthanizeMe)
-					{
-						// This thinker was destroyed during the loading process. Do
-						// not link it in to any list.
-					}
-					else if (thinker->ObjectFlags & OF_JustSpawned)
-					{
-						FreshThinkers[stat].AddTail(thinker);
-					}
-					else
-					{
-						Thinkers[stat].AddTail(thinker);
-					}
-					arc << thinker;
+					arc.EndArray();
 				}
-				statcount--;
 			}
+			arc.EndArray();
 		}
-		catch (class CDoomError &)
-		{
-			bSerialOverride = false;
-			DestroyAllThinkers();
-			throw;
-		}
-		bSerialOverride = false;
 	}
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 DThinker::DThinker (int statnum) throw()
 {
@@ -258,6 +254,10 @@ void DThinker::Remove()
 }
 
 void DThinker::PostBeginPlay ()
+{
+}
+
+void DThinker::PostSerialize()
 {
 }
 
@@ -332,24 +332,6 @@ void DThinker::DestroyAllThinkers ()
 	GC::FullGC();
 }
 
-// Destroy all thinkers except for player-controlled actors
-// Players are simply removed from the list of thinkers and
-// will be added back after serialization is complete.
-void DThinker::DestroyMostThinkers ()
-{
-	int i;
-
-	for (i = 0; i <= MAX_STATNUM; i++)
-	{
-		if (i != STAT_TRAVELLING)
-		{
-			DestroyMostThinkersInList (Thinkers[i], i);
-			DestroyMostThinkersInList (FreshThinkers[i], i);
-		}
-	}
-	GC::FullGC();
-}
-
 void DThinker::DestroyThinkersInList (FThinkerList &list)
 {
 	if (list.Sentinel != NULL)
@@ -361,39 +343,6 @@ void DThinker::DestroyThinkersInList (FThinkerList &list)
 		}
 		list.Sentinel->Destroy();
 		list.Sentinel = NULL;
-	}
-}
-
-void DThinker::DestroyMostThinkersInList (FThinkerList &list, int stat)
-{
-	if (stat != STAT_PLAYER)
-	{
-		DestroyThinkersInList (list);
-	}
-	else if (list.Sentinel != NULL)
-	{ // If it's a voodoo doll, destroy it. Otherwise, simply remove
-	  // it from the list. G_FinishTravel() will find it later from
-	  // a players[].mo link and destroy it then, after copying various
-	  // information to a new player.
-		for (DThinker *probe = list.Sentinel->NextThinker; probe != list.Sentinel; probe = list.Sentinel->NextThinker)
-		{
-			if (!probe->IsKindOf(RUNTIME_CLASS(APlayerPawn)) ||		// <- should not happen
-				static_cast<AActor *>(probe)->player == NULL ||
-				static_cast<AActor *>(probe)->player->mo != probe)
-			{
-				probe->Destroy();
-			}
-			else
-			{
-				probe->Remove();
-				// Technically, this doesn't need to be in any list now, since
-				// it's only going to be found later and destroyed before ever
-				// needing to tick again, but by moving it to a separate list,
-				// I can keep my debug assertions that all thinkers are either
-				// euthanizing or in a list.
-				Thinkers[MAX_STATNUM+1].AddTail(probe);
-			}
-		}
 	}
 }
 
@@ -473,8 +422,12 @@ void DThinker::Tick ()
 
 size_t DThinker::PropagateMark()
 {
-	assert(NextThinker != NULL && !(NextThinker->ObjectFlags & OF_EuthanizeMe));
-	assert(PrevThinker != NULL && !(PrevThinker->ObjectFlags & OF_EuthanizeMe));
+	// Do not choke on partially initialized objects (as happens when loading a savegame fails)
+	if (NextThinker != nullptr || PrevThinker != nullptr)
+	{
+		assert(NextThinker != nullptr && !(NextThinker->ObjectFlags & OF_EuthanizeMe));
+		assert(PrevThinker != nullptr && !(PrevThinker->ObjectFlags & OF_EuthanizeMe));
+	}
 	GC::Mark(NextThinker);
 	GC::Mark(PrevThinker);
 	return Super::PropagateMark();

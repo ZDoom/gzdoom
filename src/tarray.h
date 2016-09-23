@@ -49,9 +49,6 @@
 
 #include "m_alloc.h"
 
-class FArchive;
-
-
 template<typename T> class TIterator
 {
 public:
@@ -83,8 +80,6 @@ struct FArray
 template <class T, class TT=T>
 class TArray
 {
-	template<class U, class UU> friend FArchive &operator<< (FArchive &arc, TArray<U,UU> &self);
-
 public:
 
     typedef TIterator<T>                       iterator;

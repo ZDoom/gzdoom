@@ -45,7 +45,7 @@
 #include "d_net.h"
 #include "d_dehacked.h"
 #include "gi.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "r_utility.h"
 #include "a_morph.h"
 
@@ -1026,10 +1026,10 @@ public:
 	}
 	// You'll probably never be able to catch this in a save game, but
 	// just in case, add a proper serializer.
-	void Serialize(FArchive &arc)
+	void Serialize(FSerializer &arc)
 	{ 
 		Super::Serialize(arc);
-		arc << Pawn;
+		arc("pawn", Pawn);
 	}
 };
 

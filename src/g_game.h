@@ -24,7 +24,6 @@
 #define __G_GAME__
 
 struct event_t;
-struct PNGHandle;
 
 
 //
@@ -68,8 +67,8 @@ void G_ScreenShot (char *filename);
 
 FString G_BuildSaveName (const char *prefix, int slot);
 
-struct PNGHandle;
-bool G_CheckSaveGameWads (PNGHandle *png, bool printwarn);
+class FSerializer;
+bool G_CheckSaveGameWads (FSerializer &arc, bool printwarn);
 
 enum EFinishLevelType
 {

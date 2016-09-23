@@ -28,7 +28,7 @@
 #include "nodebuild.h"
 #include "p_terrain.h"
 #include "po_man.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "r_utility.h"
 #include "a_sharedglobal.h"
 #include "p_local.h"
@@ -1053,14 +1053,18 @@ double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, doub
 //
 //===========================================================================
 
-FArchive &operator<< (FArchive &arc, secspecial_t &p)
-{
-	arc << p.special
-		<< p.damageamount
-		<< p.damagetype
-		<< p.damageinterval
-		<< p.leakydamage
-		<< p.Flags;
+ FSerializer &Serialize(FSerializer &arc, const char *key, secspecial_t &spec, secspecial_t *def)
+ {
+	 if (arc.BeginObject(key))
+	 {
+		 arc("special", spec.special)
+			 ("damageamount", spec.damageamount)
+			 ("damagetype", spec.damagetype)
+			 ("damageinterval", spec.damageinterval)
+			 ("leakydamage", spec.leakydamage)
+			 ("flags", spec.Flags)
+			 .EndObject();
+	 }
 	return arc;
 }
 
@@ -1099,17 +1103,6 @@ bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) cons
 	}
 
 	return copy;
-}
-
-FArchive &operator<< (FArchive &arc, secplane_t &plane)
-{
-	arc << plane.normal << plane.D;
-	if (plane.normal.Z != 0)
-	{	// plane.c should always be non-0. Otherwise, the plane
-		// would be perfectly vertical. (But then, don't let this crash on a broken savegame...)
-		plane.negiC = -1 / plane.normal.Z;
-	}
-	return arc;
 }
 
 //==========================================================================

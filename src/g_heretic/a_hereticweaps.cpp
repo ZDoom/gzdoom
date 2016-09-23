@@ -866,16 +866,18 @@ class ARainTracker : public AInventory
 {
 	DECLARE_CLASS (ARainTracker, AInventory)
 public:
-	void Serialize (FArchive &arc);
-	AActor *Rain1, *Rain2;
+	
+	void Serialize(FSerializer &arc);
+	TObjPtr<AActor> Rain1, Rain2;
 };
 
 IMPLEMENT_CLASS (ARainTracker)
 	
-void ARainTracker::Serialize (FArchive &arc)
+void ARainTracker::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << Rain1 << Rain2;
+	arc("rain1", Rain1)
+		("rain2", Rain2);
 }
 
 //----------------------------------------------------------------------------
@@ -1140,10 +1142,11 @@ class APhoenixRod : public AWeapon
 {
 	DECLARE_CLASS (APhoenixRod, AWeapon)
 public:
-	void Serialize (FArchive &arc)
+	
+	void Serialize(FSerializer &arc)
 	{
 		Super::Serialize (arc);
-		arc << FlameCount;
+		arc("flamecount", FlameCount);
 	}
 	int FlameCount;		// for flamethrower duration
 };

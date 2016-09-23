@@ -56,7 +56,7 @@
 #include "t_script.h"
 #include "i_system.h"
 #include "w_wad.h"
-#include "farchive.h"
+#include "serializer.h"
 
 
 //==========================================================================
@@ -81,10 +81,14 @@ END_POINTERS
 //
 //==========================================================================
 
-void DFsSection::Serialize(FArchive &ar)
+void DFsSection::Serialize(FSerializer &arc)
 {
-	Super::Serialize(ar);
-	ar << type << start_index << end_index << loop_index << next;
+	Super::Serialize(arc);
+	arc("type", type)
+		("start_index", start_index)
+		("end_index", end_index)
+		("loop_index", loop_index)
+		("next", next);
 }
 
 //==========================================================================

@@ -6,7 +6,7 @@
 #include "templates.h"
 #include "g_level.h"
 #include "d_player.h"
-#include "farchive.h"
+#include "serializer.h"
 
 
 IMPLEMENT_CLASS (AArmor)
@@ -21,10 +21,17 @@ IMPLEMENT_CLASS (AHexenArmor)
 //
 //===========================================================================
 
-void ABasicArmor::Serialize (FArchive &arc)
+void ABasicArmor::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << SavePercent << BonusCount << MaxAbsorb << MaxFullAbsorb << AbsorbCount << ArmorType << ActualSaveAmount;
+	auto def = (ABasicArmor *)GetDefault();
+	arc("savepercent", SavePercent, def->SavePercent)
+		("bonuscount", BonusCount, def->BonusCount)
+		("maxabsorb", MaxAbsorb, def->MaxAbsorb)
+		("maxfullabsorb", MaxFullAbsorb, def->MaxFullAbsorb)
+		("absorbcount", AbsorbCount, def->AbsorbCount)
+		("armortype", ArmorType, def->ArmorType)
+		("actualsaveamount", ActualSaveAmount, def->ActualSaveAmount);
 }
 
 //===========================================================================
@@ -192,11 +199,15 @@ void ABasicArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 //
 //===========================================================================
 
-void ABasicArmorPickup::Serialize (FArchive &arc)
+void ABasicArmorPickup::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << SavePercent << SaveAmount << MaxAbsorb << MaxFullAbsorb;
-	arc << DropTime;
+
+	auto def = (ABasicArmorPickup *)GetDefault();
+	arc("savepercent", SavePercent, def->SavePercent)
+		("saveamount", SaveAmount, def->SaveAmount)
+		("maxabsorb", MaxAbsorb, def->MaxAbsorb)
+		("maxfullabsorb", MaxFullAbsorb, def->MaxFullAbsorb);
 }
 
 //===========================================================================
@@ -274,11 +285,17 @@ bool ABasicArmorPickup::Use (bool pickup)
 //
 //===========================================================================
 
-void ABasicArmorBonus::Serialize (FArchive &arc)
+void ABasicArmorBonus::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << SavePercent << SaveAmount << MaxSaveAmount << BonusCount << BonusMax
-		 << MaxAbsorb << MaxFullAbsorb;
+	auto def = (ABasicArmorBonus *)GetDefault();
+	arc("savepercent", SavePercent, def->SavePercent)
+		("saveamount", SaveAmount, def->SaveAmount)
+		("maxsaveamount", MaxSaveAmount, def->MaxSaveAmount)
+		("bonuscount", BonusCount, def->BonusCount)
+		("bonusmax", BonusMax, def->BonusMax)
+		("maxabsorb", MaxAbsorb, def->MaxAbsorb)
+		("maxfullabsorb", MaxFullAbsorb, def->MaxFullAbsorb);
 }
 
 //===========================================================================
@@ -371,13 +388,12 @@ bool ABasicArmorBonus::Use (bool pickup)
 //
 //===========================================================================
 
-void AHexenArmor::Serialize (FArchive &arc)
+void AHexenArmor::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << Slots[0] << Slots[1] << Slots[2] << Slots[3]
-		<< Slots[4]
-		<< SlotsIncrement[0] << SlotsIncrement[1] << SlotsIncrement[2]
-		<< SlotsIncrement[3];
+	auto def = (AHexenArmor *)GetDefault();
+	arc.Array("slots", Slots, def->Slots, 5, true)
+		.Array("slotsincrement", SlotsIncrement, def->SlotsIncrement, 4);
 }
 
 //===========================================================================

@@ -39,7 +39,7 @@
 #include "basictypes.h"
 #include "sfmt/SFMT.h"
 
-struct PNGHandle;
+class FSerializer;
 
 class FRandom
 {
@@ -174,8 +174,8 @@ public:
 	// Static interface
 	static void StaticClearRandom ();
 	static DWORD StaticSumSeeds ();
-	static void StaticReadRNGState (PNGHandle *png);
-	static void StaticWriteRNGState (FILE *file);
+	static void StaticReadRNGState (FSerializer &arc);
+	static void StaticWriteRNGState (FSerializer &file);
 	static FRandom *StaticFindRNG(const char *name);
 
 #ifndef NDEBUG

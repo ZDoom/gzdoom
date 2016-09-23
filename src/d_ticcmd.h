@@ -35,7 +35,4 @@ struct ticcmd_t
 	SWORD		consistancy;	// checks for net game
 };
 
-
-FArchive &operator<< (FArchive &arc, ticcmd_t &cmd);
-
 #endif	// __D_TICCMD_H__

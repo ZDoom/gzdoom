@@ -65,8 +65,7 @@ extern line_t*			lines;
 extern int				numsides;
 extern side_t*			sides;
 
-extern int				numzones;
-extern zone_t*			zones;
+extern TArray<zone_t>	Zones;
 
 extern node_t * 		gamenodes;
 extern int 				numgamenodes;

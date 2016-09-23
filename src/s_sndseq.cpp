@@ -27,7 +27,7 @@
 #include "templates.h"
 #include "c_dispatch.h"
 #include "g_level.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "d_player.h"
 
 // MACROS ------------------------------------------------------------------
@@ -106,7 +106,7 @@ class DSeqActorNode : public DSeqNode
 public:
 	DSeqActorNode(AActor *actor, int sequence, int modenum);
 	void Destroy();
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
 		S_Sound(m_Actor, CHAN_BODY|loop, id, clamp(m_Volume, 0.f, 1.f), m_Atten);
@@ -134,7 +134,7 @@ class DSeqPolyNode : public DSeqNode
 public:
 	DSeqPolyNode(FPolyObj *poly, int sequence, int modenum);
 	void Destroy();
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
 		S_Sound (m_Poly, CHAN_BODY|loop, id, clamp(m_Volume, 0.f, 1.f), m_Atten);
@@ -162,7 +162,7 @@ class DSeqSectorNode : public DSeqNode
 public:
 	DSeqSectorNode(sector_t *sec, int chan, int sequence, int modenum);
 	void Destroy();
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
 		Channel = (Channel & 7) | CHAN_AREA | loop;
@@ -280,9 +280,9 @@ static FRandom pr_sndseq ("SndSeq");
 
 // CODE --------------------------------------------------------------------
 
-void DSeqNode::SerializeSequences (FArchive &arc)
+void DSeqNode::SerializeSequences (FSerializer &arc)
 {
-	arc << SequenceListHead;
+	arc("sndseqlisthead", SequenceListHead);
 }
 
 IMPLEMENT_POINTY_CLASS (DSeqNode)
@@ -298,55 +298,58 @@ DSeqNode::DSeqNode ()
 	m_Next = m_Prev = m_ChildSeqNode = m_ParentSeqNode = NULL;
 }
 
-void DSeqNode::Serialize (FArchive &arc)
+void DSeqNode::Serialize(FSerializer &arc)
 {
 	int seqOffset;
 	unsigned int i;
+	FName seqName;
+	int delayTics = 0;
+	FSoundID id;
+	float volume;
+	float atten = ATTN_NORM;
+	int seqnum;
+	unsigned int numchoices;
 
-	Super::Serialize (arc);
-	if (arc.IsStoring ())
+	// copy these to local variables so that the actual serialization code does not need to be duplicated for saving and loading.
+	if (arc.isWriting())
 	{
-		seqOffset = (int)SN_GetSequenceOffset (m_Sequence, m_SequencePtr);
-		arc << seqOffset
-			<< m_DelayUntilTic
-			<< m_Volume
-			<< m_Atten
-			<< m_ModeNum
-			<< m_Next
-			<< m_Prev
-			<< m_ChildSeqNode
-			<< m_ParentSeqNode
-			<< m_CurrentSoundID
-			<< Sequences[m_Sequence]->SeqName;
+		seqOffset = (int)SN_GetSequenceOffset(m_Sequence, m_SequencePtr);
+		delayTics = m_DelayUntilTic;
+		volume = m_Volume;
+		atten = m_Atten;
+		id = m_CurrentSoundID;
+		seqName = Sequences[m_Sequence]->SeqName;
+		numchoices = m_SequenceChoices.Size();
+	}
+	Super::Serialize(arc);
 
-		arc.WriteCount (m_SequenceChoices.Size());
-		for (i = 0; i < m_SequenceChoices.Size(); ++i)
+	arc("seqoffset", seqOffset)
+		("delaytics", delayTics)
+		("volume", volume)
+		("atten", atten)
+		("modelnum", m_ModeNum)
+		("next", m_Next)
+		("prev", m_Prev)
+		("childseqnode", m_ChildSeqNode)
+		("parentseqnode", m_ParentSeqNode)
+		("id", id)
+		("seqname", seqName)
+		("numchoices", numchoices);
+
+	// The way this is saved makes it hard to encapsulate so just do it the hard way...
+	if (arc.isWriting())
+	{
+		if (numchoices > 0 && arc.BeginArray("choices"))
 		{
-			arc << Sequences[m_SequenceChoices[i]]->SeqName;
+			for (i = 0; i < m_SequenceChoices.Size(); ++i)
+			{
+				arc(nullptr, Sequences[m_SequenceChoices[i]]->SeqName);
+			}
+			arc.EndArray();
 		}
 	}
 	else
 	{
-		FName seqName;
-		int delayTics = 0;
-		FSoundID id;
-		float volume;
-		float atten = ATTN_NORM;
-		int seqnum;
-		unsigned int numchoices;
-
-		arc << seqOffset
-			<< delayTics
-			<< volume
-			<< atten
-			<< m_ModeNum
-			<< m_Next
-			<< m_Prev
-			<< m_ChildSeqNode
-			<< m_ParentSeqNode
-			<< id
-			<< seqName;
-
 		seqnum = FindSequence (seqName);
 		if (seqnum >= 0)
 		{
@@ -360,12 +363,15 @@ void DSeqNode::Serialize (FArchive &arc)
 
 		ChangeData (seqOffset, delayTics - TIME_REFERENCE, volume, id);
 
-		numchoices = arc.ReadCount();
 		m_SequenceChoices.Resize(numchoices);
-		for (i = 0; i < numchoices; ++i)
+		if (numchoices > 0 && arc.BeginArray("choices"))
 		{
-			arc << seqName;
-			m_SequenceChoices[i] = FindSequence (seqName);
+			for (i = 0; i < numchoices; ++i)
+			{
+				arc(nullptr, seqName);
+				m_SequenceChoices[i] = FindSequence(seqName);
+			}
+			arc.EndArray();
 		}
 	}
 }
@@ -425,26 +431,27 @@ IMPLEMENT_POINTY_CLASS (DSeqActorNode)
  DECLARE_POINTER (m_Actor)
 END_POINTERS
 
-void DSeqActorNode::Serialize (FArchive &arc)
+void DSeqActorNode::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << m_Actor;
+	arc("actor", m_Actor);
 }
 
 IMPLEMENT_CLASS (DSeqPolyNode)
 
-void DSeqPolyNode::Serialize (FArchive &arc)
+void DSeqPolyNode::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << m_Poly;
+	//arc << m_Poly;
 }
 
 IMPLEMENT_CLASS (DSeqSectorNode)
 
-void DSeqSectorNode::Serialize (FArchive &arc)
+void DSeqSectorNode::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << m_Sector << Channel;
+	arc("sector",m_Sector)
+		("channel", Channel);
 }
 
 //==========================================================================

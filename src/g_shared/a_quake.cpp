@@ -8,7 +8,7 @@
 #include "s_sound.h"
 #include "a_sharedglobal.h"
 #include "statnums.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "d_player.h"
 #include "r_utility.h"
 
@@ -64,15 +64,23 @@ DEarthquake::DEarthquake(AActor *center, int intensityX, int intensityY, int int
 //
 //==========================================================================
 
-void DEarthquake::Serialize (FArchive &arc)
+void DEarthquake::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << m_Spot << m_Intensity << m_Countdown
-		<< m_TremorRadius << m_DamageRadius
-		<< m_QuakeSFX << m_Flags << m_CountdownStart
-		<< m_WaveSpeed
-		<< m_Falloff << m_Highpoint << m_MiniCount
-		<< m_RollIntensity << m_RollWave;
+	arc("spot", m_Spot)
+		("intensity", m_Intensity)
+		("countdown", m_Countdown)
+		("tremorradius", m_TremorRadius)
+		("damageradius", m_DamageRadius)
+		("quakesfx", m_QuakeSFX)
+		("quakeflags", m_Flags)
+		("countdownstart", m_CountdownStart)
+		("wavespeed", m_WaveSpeed)
+		("falloff", m_Falloff)
+		("highpoint", m_Highpoint)
+		("minicount", m_MiniCount)
+		("rollintensity", m_RollIntensity)
+		("rollwave", m_RollWave);
 }
 
 //==========================================================================

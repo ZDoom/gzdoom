@@ -39,7 +39,7 @@
 
 #include "dobject.h"
 #include "i_system.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "actor.h"
 #include "templates.h"
 #include "autosegs.h"
@@ -47,6 +47,7 @@
 #include "a_pickups.h"
 #include "a_weaponpiece.h"
 #include "d_player.h"
+#include "doomerrors.h"
 #include "fragglescript/t_fs.h"
 
 // MACROS ------------------------------------------------------------------
@@ -390,7 +391,7 @@ bool PType::VisitedNodeSet::Check(const PType *node)
 //
 //==========================================================================
 
-void PType::WriteValue(FArchive &ar, const void *addr) const
+void PType::WriteValue(FSerializer &ar, const char *key,const void *addr) const
 {
 	assert(0 && "Cannot write value for this type");
 }
@@ -401,102 +402,10 @@ void PType::WriteValue(FArchive &ar, const void *addr) const
 //
 //==========================================================================
 
-bool PType::ReadValue(FArchive &ar, void *addr) const
+bool PType::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
 	assert(0 && "Cannot read value for this type");
-	SkipValue(ar);
 	return false;
-}
-
-//==========================================================================
-//
-// PType :: SkipValue												STATIC
-//
-//==========================================================================
-
-void PType::SkipValue(FArchive &ar)
-{
-	BYTE tag;
-	ar << tag;
-	SkipValue(ar, tag);
-}
-
-void PType::SkipValue(FArchive &ar, int tag)
-{
-	assert(ar.IsLoading() && "SkipValue passed an archive that is writing");
-	BYTE buff[8];
-
-	switch (tag)
-	{
-	case VAL_Zero: case VAL_One:
-		break;
-
-	case VAL_Int8: case VAL_UInt8:
-		ar.Read(buff, 1);
-		break;
-
-	case VAL_Int16: case VAL_UInt16:
-		ar.Read(buff, 2);
-		break;
-
-	case VAL_Int32: case VAL_UInt32: case VAL_Float32:
-		ar.Read(buff, 4);
-		break;
-
-	case VAL_Int64: case VAL_UInt64: case VAL_Float64:
-		ar.Read(buff, 8);
-		break;
-
-	case VAL_Name:
-		ar.ReadName();
-		break;
-
-	case VAL_Object:
-	{
-		DObject *skipper;
-		ar << skipper;
-		break;
-	}
-	case VAL_State:
-	{
-		FState *skipper;
-		ar << skipper;
-		break;
-	}
-	case VAL_String:
-	{
-		FString skipper;
-		ar << skipper;
-		break;
-	}
-	case VAL_Array:
-	{
-		DWORD count = ar.ReadCount();
-		while (count-- > 0)
-		{
-			SkipValue(ar);
-		}
-		break;
-	}
-	case VAL_Struct:
-	{
-		const char *label;
-		for (label = ar.ReadName(); label != NULL; label = ar.ReadName())
-		{
-			SkipValue(ar);
-		}
-		break;
-	}
-	case VAL_Class:
-	{
-		PClass *type;
-		for (ar.UserReadClass(type); type != NULL; ar.UserReadClass(type))
-		{
-			SkipValue(ar, VAL_Struct);
-		}
-		break;
-	}
-	}
 }
 
 //==========================================================================
@@ -805,116 +714,41 @@ PInt::PInt(unsigned int size, bool unsign)
 //
 // PInt :: WriteValue
 //
-// Write the value using the minimum byte size needed to represent it. This
-// means that the value as written is not necessarily of the same type as
-// stored, but the signedness information is preserved.
-//
 //==========================================================================
 
-void PInt::WriteValue(FArchive &ar, const void *addr) const
+void PInt::WriteValue(FSerializer &ar, const char *key,const void *addr) const
 {
-	BYTE bval;
-
-	// The process for bytes is the same whether signed or unsigned, since
-	// they can't be compacted into a representation with fewer bytes.
-	if (Size == 1)
+	if (Size == 8 && Unsigned)
 	{
-		bval = *(BYTE *)addr;
-	}
-	else if (Unsigned)
-	{
-		unsigned val;
-		if (Size == 8)
-		{
-			QWORD qval = *(QWORD *)addr;
-			if (qval & 0xFFFFFFFF00000000llu)
-			{ // Value needs 64 bits
-				ar.WriteByte(VAL_UInt64);
-				ar.WriteInt64(qval);
-				return;
-			}
-			// Value can fit in 32 bits or less
-			val = (unsigned)qval;
-			goto check_u32;
-		}
-		else if (Size == 4)
-		{
-			val = *(DWORD *)addr;
-check_u32:	if (val & 0xFFFF0000u)
-			{ // Value needs 32 bits
-				ar.WriteByte(VAL_UInt32);
-				ar.WriteInt32(val);
-				return;
-			}
-			// Value can fit in 16 bits or less
-			goto check_u16;
-		}
-		else// if (Size == 2)
-		{
-			val = *(WORD *)addr;
-check_u16:	if (val & 0xFFFFFF00u)
-			{ // Value needs 16 bits
-				ar.WriteByte(VAL_UInt16);
-				ar.WriteInt16(val);
-				return;
-			}
-			// Value can fit in 8 bits
-			bval = (BYTE)val;
-		}
-	}
-	else // Signed
-	{
-		int val;
-		if (Size == 8)
-		{
-			SQWORD qval = *(SQWORD *)addr;
-			INT_MIN;
-			if (qval < (-0x7FFFFFFF - 1) || qval > 0x7FFFFFFF)
-			{ // Value needs 64 bits
-				ar.WriteByte(VAL_Int64);
-				ar.WriteInt64(qval);
-				return;
-			}
-			// Value can fit in 32 bits or less
-			val = (int)qval;
-			goto check_s32;
-		}
-		else if (Size == 4)
-		{
-			val = *(SDWORD *)addr;
-check_s32:	if (val < -0x8000 || val > 0x7FFF)
-			{ // Value needs 32 bits
-				ar.WriteByte(VAL_Int32);
-				ar.WriteInt32(val);
-				return;
-			}
-			// Value can fit in 16 bits or less
-			goto check_s16;
-		}
-		else// if (Size == 2)
-		{
-			val = *(SWORD *)addr;
-check_s16:	if (val < -0x80 || val > 0x7F)
-			{ // Value needs 16 bits
-				ar.WriteByte(VAL_Int16);
-				ar.WriteInt16(val);
-				return;
-			}
-			// Value can fit in 8 bits
-			bval = (BYTE)val;
-		}
-	}
-	// If we get here, the value fits in a byte. Values of 0 and 1 are
-	// optimized away into the tag so they don't require any extra space
-	// to store.
-	if (bval & 0xFE)
-	{
-		BYTE out[2] = { Unsigned ? VAL_UInt8 : VAL_Int8, bval };
-		ar.Write(out, 2);
+		// this is a special case that cannot be represented by an int64_t.
+		uint64_t val = *(uint64_t*)addr;
+		ar(key, val);
 	}
 	else
 	{
-		ar.WriteByte(VAL_Zero + bval);
+		int64_t val;
+		switch (Size)
+		{
+		case 1:
+			val = Unsigned ? *(uint8_t*)addr : *(int8_t*)addr;
+			break;
+
+		case 2:
+			val = Unsigned ? *(uint16_t*)addr : *(int16_t*)addr;
+			break;
+
+		case 4:
+			val = Unsigned ? *(uint32_t*)addr : *(int32_t*)addr;
+			break;
+
+		case 8:
+			val = *(int64_t*)addr;
+			break;
+
+		default:
+			return;	// something invalid
+		}
+		ar(key, val);
 	}
 }
 
@@ -924,47 +758,37 @@ check_s16:	if (val < -0x80 || val > 0x7F)
 //
 //==========================================================================
 
-bool PInt::ReadValue(FArchive &ar, void *addr) const
+bool PInt::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
-	union
-	{
-		QWORD uval;
-		SQWORD sval;
-	};
-	BYTE tag;
-	union
-	{
-		BYTE val8;
-		WORD val16;
-		DWORD val32;
-		float single;
-		double dbl;
-	};
+	NumericValue val;
 
-	ar << tag;
-	switch (tag)
-	{
-	case VAL_Zero:		uval = 0; break;
-	case VAL_One:		uval = 1; break;
-	case VAL_Int8:		ar << val8;	sval = (SBYTE)val8;	break;
-	case VAL_UInt8:		ar << val8; uval = val8; break;
-	case VAL_Int16:		ar << val16; sval = (SWORD)val16; break;
-	case VAL_UInt16:	ar << val16; uval = val16; break;
-	case VAL_Int32:		ar << val32; sval = (SDWORD)val32; break;
-	case VAL_UInt32:	ar << val32; uval = val32; break;
-	case VAL_Int64:		ar << sval; break;
-	case VAL_UInt64:	ar << uval; break;
-	case VAL_Float32:	ar << single; sval = (SQWORD)single; break;
-	case VAL_Float64:	ar << dbl; sval = (SQWORD)dbl; break;
-	default:			SkipValue(ar, tag); return false;		// Incompatible type
-	}
+	ar(key, val);
+	if (val.type == NumericValue::NM_invalid) return false;	// not found or usable
+	if (val.type == NumericValue::NM_float) val.signedval = (int64_t)val.floatval;
+
+	// No need to check the unsigned state here. Downcasting to smaller types will yield the same result for both.
 	switch (Size)
 	{
-	case 1:	*(BYTE *)addr = (BYTE)uval; break;
-	case 2: *(WORD *)addr = (WORD)uval; break;
-	case 4: *(DWORD *)addr = (DWORD)uval; break;
-	case 8: *(QWORD *)addr = uval; break;
+	case 1:
+		*(uint8_t*)addr = (uint8_t)val.signedval;
+		break;
+
+	case 2:
+		*(uint16_t*)addr = (uint16_t)val.signedval;
+		break;
+
+	case 4:
+		*(uint32_t*)addr = (uint32_t)val.signedval;
+		break;
+
+	case 8:
+		*(uint64_t*)addr = (uint64_t)val.signedval;
+		break;
+
+	default:
+		return false;	// something invalid
 	}
+
 	return true;
 }
 
@@ -1259,28 +1083,16 @@ void PFloat::SetSymbols(const PFloat::SymbolInitI *sym, size_t count)
 //
 //==========================================================================
 
-void PFloat::WriteValue(FArchive &ar, const void *addr) const
+void PFloat::WriteValue(FSerializer &ar, const char *key,const void *addr) const
 {
-	float singleprecision;
 	if (Size == 8)
 	{
-		// If it can be written as single precision without information
-		// loss, then prefer that over writing a full-sized double.
-		double doubleprecision = *(double *)addr;
-		singleprecision = (float)doubleprecision;
-		if (singleprecision != doubleprecision)
-		{
-			ar.WriteByte(VAL_Float64);
-			ar << doubleprecision;
-			return;
-		}
+		ar(key, *(double*)addr);
 	}
 	else
 	{
-		singleprecision = *(float *)addr;
+		ar(key, *(float*)addr);
 	}
-	ar.WriteByte(VAL_Float32);
-	ar << singleprecision;
 }
 
 //==========================================================================
@@ -1289,58 +1101,24 @@ void PFloat::WriteValue(FArchive &ar, const void *addr) const
 //
 //==========================================================================
 
-static bool ReadValueDbl(FArchive &ar, double *addr, unsigned tag)
+bool PFloat::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
-	double val;
-	union
-	{
-		BYTE val8;
-		WORD val16;
-		DWORD val32;
-		QWORD val64;
-		fixed_t fix;
-		float single;
-		angle_t ang;
-	};
+	NumericValue val;
 
-	switch (tag)
+	ar(key, val);
+	if (val.type == NumericValue::NM_invalid) return false;	// not found or usable
+	else if (val.type == NumericValue::NM_signed) val.floatval = (double)val.signedval;
+	else if (val.type == NumericValue::NM_unsigned) val.floatval = (double)val.unsignedval;
+
+	if (Size == 8)
 	{
-	case VAL_Zero:		val = 0; break;
-	case VAL_One:		val = 1; break;
-	case VAL_Int8:		ar << val8;	val = (SBYTE)val8;	break;
-	case VAL_UInt8:		ar << val8; val = val8; break;
-	case VAL_Int16:		ar << val16; val = (SWORD)val16; break;
-	case VAL_UInt16:	ar << val16; val = val16; break;
-	case VAL_Int32:		ar << val32; val = (SDWORD)val32; break;
-	case VAL_UInt32:	ar << val32; val = val32; break;
-	case VAL_Int64:		ar << val64; val = (double)(SQWORD)val64; break;
-	case VAL_UInt64:	ar << val64; val = (double)val64; break;
-	case VAL_Float32:	ar << single; val = single; break;
-	case VAL_Float64:	ar << val; break;
-	default:			PType::SkipValue(ar, tag); return false;	// Incompatible type
+		*(double*)addr = val.floatval;
 	}
-	*(double *)addr = val;
+	else
+	{
+		*(float*)addr = (float)val.floatval;
+	}
 	return true;
-}
-
-bool PFloat::ReadValue(FArchive &ar, void *addr) const
-{
-	BYTE tag;
-	ar << tag;
-	double val;
-	if (ReadValueDbl(ar, &val, tag))
-	{
-		if (Size == 4)
-		{
-			*(float *)addr = (float)val;
-		}
-		else
-		{
-			*(double *)addr = val;
-		}
-		return true;
-	}
-	return false;
 }
 
 //==========================================================================
@@ -1482,10 +1260,9 @@ int PString::GetRegType() const
 //
 //==========================================================================
 
-void PString::WriteValue(FArchive &ar, const void *addr) const
+void PString::WriteValue(FSerializer &ar, const char *key,const void *addr) const
 {
-	ar.WriteByte(VAL_String);
-	ar.WriteString(*(const FString *)addr);
+	ar(key, *(FString*)addr);
 }
 
 //==========================================================================
@@ -1494,25 +1271,19 @@ void PString::WriteValue(FArchive &ar, const void *addr) const
 //
 //==========================================================================
 
-bool PString::ReadValue(FArchive &ar, void *addr) const
+bool PString::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
-	BYTE tag;
-	ar << tag;
-	if (tag == VAL_String)
+	const char *cptr;
+	ar.StringPtr(key, cptr);
+	if (cptr == nullptr)
 	{
-		ar << *(FString *)addr;
-	}
-	else if (tag == VAL_Name)
-	{
-		const char *str = ar.ReadName();
-		*(FString *)addr = str;
+		return false;
 	}
 	else
 	{
-		SkipValue(ar, tag);
-		return false;
+		*(FString*)addr = cptr;
+		return true;
 	}
-	return true;
 }
 
 //==========================================================================
@@ -1574,10 +1345,10 @@ PName::PName()
 //
 //==========================================================================
 
-void PName::WriteValue(FArchive &ar, const void *addr) const
+void PName::WriteValue(FSerializer &ar, const char *key,const void *addr) const
 {
-	ar.WriteByte(VAL_Name);
-	ar.WriteName(((const FName *)addr)->GetChars());
+	const char *cptr = ((const FName*)addr)->GetChars();
+	ar.StringPtr(key, cptr);
 }
 
 //==========================================================================
@@ -1586,26 +1357,19 @@ void PName::WriteValue(FArchive &ar, const void *addr) const
 //
 //==========================================================================
 
-bool PName::ReadValue(FArchive &ar, void *addr) const
+bool PName::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
-	BYTE tag;
-	ar << tag;
-	if (tag == VAL_Name)
+	const char *cptr;
+	ar.StringPtr(key, cptr);
+	if (cptr == nullptr)
 	{
-		*(FName *)addr = FName(ar.ReadName());
-	}
-	else if (tag == VAL_String)
-	{
-		FString str;
-		ar << str;
-		*(FName *)addr = FName(str);
+		return false;
 	}
 	else
 	{
-		SkipValue(ar, tag);
-		return false;
+		*(FName*)addr = FName(cptr);
+		return true;
 	}
-	return true;
 }
 
 /* PSound *****************************************************************/
@@ -1630,10 +1394,10 @@ PSound::PSound()
 //
 //==========================================================================
 
-void PSound::WriteValue(FArchive &ar, const void *addr) const
+void PSound::WriteValue(FSerializer &ar, const char *key,const void *addr) const
 {
-	ar.WriteByte(VAL_Name);
-	ar.WriteName(*(const FSoundID *)addr);
+	const char *cptr = *(const FSoundID *)addr;
+	ar.StringPtr(key, cptr);
 }
 
 //==========================================================================
@@ -1642,28 +1406,19 @@ void PSound::WriteValue(FArchive &ar, const void *addr) const
 //
 //==========================================================================
 
-bool PSound::ReadValue(FArchive &ar, void *addr) const
+bool PSound::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
-	BYTE tag;
-
-	ar << tag;
-	if (tag == VAL_Name)
+	const char *cptr;
+	ar.StringPtr(key, cptr);
+	if (cptr == nullptr)
 	{
-		const char *str = ar.ReadName();
-		*(FSoundID *)addr = FSoundID(str);
-	}
-	else if (tag == VAL_String)
-	{
-		FString str;
-		ar << str;
-		*(FSoundID *)addr = FSoundID(str);
+		return false;
 	}
 	else
 	{
-		SkipValue(ar, tag);
-		return false;
+		*(FSoundID *)addr = FSoundID(cptr);
+		return true;
 	}
-	return true;
 }
 
 /* PColor *****************************************************************/
@@ -1736,10 +1491,9 @@ int PStatePointer::GetRegType() const
 //
 //==========================================================================
 
-void PStatePointer::WriteValue(FArchive &ar, const void *addr) const
+void PStatePointer::WriteValue(FSerializer &ar, const char *key,const void *addr) const
 {
-	ar.WriteByte(VAL_State);
-	ar << *(FState **)addr;
+	ar(key, *(FState **)addr);
 }
 
 //==========================================================================
@@ -1748,17 +1502,11 @@ void PStatePointer::WriteValue(FArchive &ar, const void *addr) const
 //
 //==========================================================================
 
-bool PStatePointer::ReadValue(FArchive &ar, void *addr) const
+bool PStatePointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
-	BYTE tag;
-	ar << tag;
-	if (tag == VAL_State)
-	{
-		ar << *(FState **)addr;
-		return true;
-	}
-	SkipValue(ar, tag);
-	return false;
+	bool res = false;
+	::Serialize(ar, key, *(FState **)addr, nullptr, &res);
+	return res;
 }
 
 /* PPointer ***************************************************************/
@@ -1854,12 +1602,11 @@ void PPointer::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 //
 //==========================================================================
 
-void PPointer::WriteValue(FArchive &ar, const void *addr) const
+void PPointer::WriteValue(FSerializer &ar, const char *key,const void *addr) const
 {
 	if (PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
 	{
-		ar.WriteByte(VAL_Object);
-		ar << *(DObject **)addr;
+		ar(key, *(DObject **)addr);
 	}
 	else
 	{
@@ -1874,16 +1621,14 @@ void PPointer::WriteValue(FArchive &ar, const void *addr) const
 //
 //==========================================================================
 
-bool PPointer::ReadValue(FArchive &ar, void *addr) const
+bool PPointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
-	BYTE tag;
-	ar << tag;
-	if (tag == VAL_Object && PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
+	if (PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
 	{
-		ar << *(DObject **)addr;
-		return true;
+		bool res = false;
+		::Serialize(ar, key, *(DObject **)addr, nullptr, &res);
+		return res;
 	}
-	SkipValue(ar, tag);
 	return false;
 }
 
@@ -2098,15 +1843,17 @@ void PArray::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 //
 //==========================================================================
 
-void PArray::WriteValue(FArchive &ar, const void *addr) const
+void PArray::WriteValue(FSerializer &ar, const char *key,const void *addr) const
 {
-	ar.WriteByte(VAL_Array);
-	ar.WriteCount(ElementCount);
-	const BYTE *addrb = (const BYTE *)addr;
-	for (unsigned i = 0; i < ElementCount; ++i)
+	if (ar.BeginArray(key))
 	{
-		ElementType->WriteValue(ar, addrb);
-		addrb += ElementSize;
+		const BYTE *addrb = (const BYTE *)addr;
+		for (unsigned i = 0; i < ElementCount; ++i)
+		{
+			ElementType->WriteValue(ar, nullptr, addrb);
+			addrb += ElementSize;
+		}
+		ar.EndArray();
 	}
 }
 
@@ -2116,34 +1863,27 @@ void PArray::WriteValue(FArchive &ar, const void *addr) const
 //
 //==========================================================================
 
-bool PArray::ReadValue(FArchive &ar, void *addr) const
+bool PArray::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
-	bool readsomething = false;
-	BYTE tag;
-
-	ar << tag;
-	if (tag == VAL_Array)
+	if (ar.BeginArray(key))
 	{
-		unsigned count = ar.ReadCount();
-		unsigned i;
+		bool readsomething = false;
+		unsigned count = ar.ArraySize();
+		unsigned loop = MIN(count, ElementCount);
 		BYTE *addrb = (BYTE *)addr;
-		for (i = 0; i < MIN(count, ElementCount); ++i)
+		for(unsigned i=0;i<loop;i++)
 		{
-			readsomething |= ElementType->ReadValue(ar, addrb);
+			readsomething |= ElementType->ReadValue(ar, nullptr, addrb);
 			addrb += ElementSize;
 		}
-		if (i < ElementCount)
+		if (loop < count)
 		{
 			DPrintf(DMSG_WARNING, "Array on disk (%u) is bigger than in memory (%u)\n",
 				count, ElementCount);
-			for (; i < ElementCount; ++i)
-			{
-				SkipValue(ar);
-			}
 		}
+		ar.EndArray();
 		return readsomething;
 	}
-	SkipValue(ar, tag);
 	return false;
 }
 
@@ -2437,10 +2177,13 @@ void PStruct::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset
 //
 //==========================================================================
 
-void PStruct::WriteValue(FArchive &ar, const void *addr) const
+void PStruct::WriteValue(FSerializer &ar, const char *key,const void *addr) const
 {
-	ar.WriteByte(VAL_Struct);
-	WriteFields(ar, addr, Fields);
+	if (ar.BeginObject(key))
+	{
+		WriteFields(ar, addr, Fields);
+		ar.EndObject();
+	}
 }
 
 //==========================================================================
@@ -2449,16 +2192,15 @@ void PStruct::WriteValue(FArchive &ar, const void *addr) const
 //
 //==========================================================================
 
-bool PStruct::ReadValue(FArchive &ar, void *addr) const
+bool PStruct::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
-	BYTE tag;
-	ar << tag;
-	if (tag == VAL_Struct)
+	if (ar.BeginObject(key))
 	{
-		return ReadFields(ar, addr);
+		bool ret = ReadFields(ar, addr);
+		ar.EndObject();
+		return ret;
 	}
-	SkipValue(ar, tag);
-	return true;
+	return false;
 }
 
 //==========================================================================
@@ -2467,7 +2209,7 @@ bool PStruct::ReadValue(FArchive &ar, void *addr) const
 //
 //==========================================================================
 
-void PStruct::WriteFields(FArchive &ar, const void *addr, const TArray<PField *> &fields)
+void PStruct::WriteFields(FSerializer &ar, const void *addr, const TArray<PField *> &fields)
 {
 	for (unsigned i = 0; i < fields.Size(); ++i)
 	{
@@ -2475,11 +2217,9 @@ void PStruct::WriteFields(FArchive &ar, const void *addr, const TArray<PField *>
 		// Skip fields with native serialization
 		if (!(field->Flags & VARF_Native))
 		{
-			ar.WriteName(field->SymbolName);
-			field->Type->WriteValue(ar, (const BYTE *)addr + field->Offset);
+			field->Type->WriteValue(ar, field->SymbolName.GetChars(), (const BYTE *)addr + field->Offset);
 		}
 	}
-	ar.WriteName(NULL);
 }
 
 //==========================================================================
@@ -2488,36 +2228,33 @@ void PStruct::WriteFields(FArchive &ar, const void *addr, const TArray<PField *>
 //
 //==========================================================================
 
-bool PStruct::ReadFields(FArchive &ar, void *addr) const
+bool PStruct::ReadFields(FSerializer &ar, void *addr) const
 {
 	bool readsomething = false;
-	const char *label = ar.ReadName();
-	if (label == NULL)
-	{ // If there is nothing to restore, we count it as success.
-		return true;
-	}
-	for (; label != NULL; label = ar.ReadName())
+	bool foundsomething = false;
+	const char *label;
+	while ((label = ar.GetKey()))
 	{
+		foundsomething = true;
+
 		const PSymbol *sym = Symbols.FindSymbol(FName(label, true), true);
 		if (sym == NULL)
 		{
 			DPrintf(DMSG_ERROR, "Cannot find field %s in %s\n",
 				label, TypeName.GetChars());
-			SkipValue(ar);
 		}
 		else if (!sym->IsKindOf(RUNTIME_CLASS(PField)))
 		{
 			DPrintf(DMSG_ERROR, "Symbol %s in %s is not a field\n",
 				label, TypeName.GetChars());
-			SkipValue(ar);
 		}
 		else
 		{
-			readsomething |= static_cast<const PField *>(sym)->Type->ReadValue(ar,
+			readsomething |= static_cast<const PField *>(sym)->Type->ReadValue(ar, nullptr,
 				(BYTE *)addr + static_cast<const PField *>(sym)->Offset);
 		}
 	}
-	return readsomething;
+	return readsomething || !foundsomething;
 }
 
 //==========================================================================
@@ -2741,7 +2478,7 @@ END_POINTERS
 //
 //==========================================================================
 
-static void RecurseWriteFields(const PClass *type, FArchive &ar, const void *addr)
+static void RecurseWriteFields(const PClass *type, FSerializer &ar, const void *addr)
 {
 	if (type != NULL)
 	{
@@ -2755,19 +2492,33 @@ static void RecurseWriteFields(const PClass *type, FArchive &ar, const void *add
 				// a more-derived class has variables that shadow a less-
 				// derived class. Whether or not that is a language feature
 				// that will actually be allowed remains to be seen.
-				ar.UserWriteClass(const_cast<PClass *>(type));
-				PStruct::WriteFields(ar, addr, type->Fields);
+				FString key;
+				key.Format("class:%s", type->TypeName.GetChars());
+				if (ar.BeginObject(key.GetChars()))
+				{
+					PStruct::WriteFields(ar, addr, type->Fields);
+					ar.EndObject();
+				}
 				break;
 			}
 		}
 	}
 }
 
-void PClass::WriteValue(FArchive &ar, const void *addr) const
+void PClass::WriteValue(FSerializer &ar, const char *key,const void *addr) const
 {
-	ar.WriteByte(VAL_Class);
+	if (ar.BeginObject(key))
+	{
+		RecurseWriteFields(this, ar, addr);
+		ar.EndObject();
+	}
+}
+
+// Same as WriteValue, but does not create a new object in the serializer
+// This is so that user variables do not contain unnecessary subblocks.
+void PClass::WriteAllFields(FSerializer &ar, const void *addr) const
+{
 	RecurseWriteFields(this, ar, addr);
-	ar.UserWriteClass(NULL);
 }
 
 //==========================================================================
@@ -2776,20 +2527,40 @@ void PClass::WriteValue(FArchive &ar, const void *addr) const
 //
 //==========================================================================
 
-bool PClass::ReadValue(FArchive &ar, void *addr) const
+bool PClass::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
-	BYTE tag;
-	ar << tag;
-	if (tag != VAL_Class)
+	if (ar.BeginObject(key))
 	{
-		SkipValue(ar, tag);
+		bool ret = ReadAllFields(ar, addr);
+		ar.EndObject();
+		return ret;
+	}
+	return true;
+}
+
+bool PClass::ReadAllFields(FSerializer &ar, void *addr) const
+{
+	bool readsomething = false;
+	bool foundsomething = false;
+	const char *key;
+	key = ar.GetKey();
+	if (strcmp(key, "classtype"))
+	{
+		// this does not represent a DObject
+		Printf(TEXTCOLOR_RED "trying to read user variables but got a non-object (first key is '%s')", key);
+		ar.mErrors++;
 		return false;
 	}
-	else
+	while ((key = ar.GetKey()))
 	{
-		bool readsomething = false;
-		PClass *type;
-		for (ar.UserReadClass(type); type != NULL; ar.UserReadClass(type))
+		if (strncmp(key, "class:", 6))
+		{
+			// We have read all user variable blocks.
+			break;
+		}
+		foundsomething = true;
+		PClass *type = PClass::FindClass(key + 6);
+		if (type != nullptr)
 		{
 			// Only read it if the type is related to this one.
 			const PClass *parent;
@@ -2800,19 +2571,27 @@ bool PClass::ReadValue(FArchive &ar, void *addr) const
 					break;
 				}
 			}
-			if (parent != NULL)
+			if (parent != nullptr)
 			{
-				readsomething |= type->ReadFields(ar, addr);
+				if (ar.BeginObject(nullptr))
+				{
+					readsomething |= type->ReadFields(ar, addr);
+					ar.EndObject();
+				}
 			}
 			else
 			{
 				DPrintf(DMSG_ERROR, "Unknown superclass %s of class %s\n",
 					type->TypeName.GetChars(), TypeName.GetChars());
-				SkipValue(ar, VAL_Struct);
 			}
 		}
-		return readsomething;
+		else
+		{
+			DPrintf(DMSG_ERROR, "Unknown superclass %s of class %s\n",
+				key+6, TypeName.GetChars());
+		}
 	}
+	return readsomething || !foundsomething;
 }
 
 //==========================================================================

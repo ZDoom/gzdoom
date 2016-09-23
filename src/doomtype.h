@@ -206,13 +206,11 @@ struct PalEntry
 #endif
 };
 
-class FArchive;
 class PClassInventory;
 
 class FTextureID
 {
 	friend class FTextureManager;
-	friend FArchive &operator<< (FArchive &arc, FTextureID &tex);
 	friend FTextureID GetHUDIcon(PClassInventory *cls);
 	friend void R_InitSpriteDefs();
 

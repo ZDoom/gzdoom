@@ -39,7 +39,7 @@
 #include "v_video.h"
 #include "cmdlib.h"
 #include "doomstat.h"
-#include "farchive.h"
+#include "serializer.h"
 
 EXTERN_CVAR(Int, con_scaletext)
 int active_con_scaletext();
@@ -55,14 +55,6 @@ IMPLEMENT_CLASS (DHUDMessageTypeOnFadeOut)
 /*************************************************************************
  * Basic HUD message. Appears and disappears without any special effects *
  *************************************************************************/
-
-inline FArchive &operator<< (FArchive &arc, EColorRange &i)
-{
-	BYTE val = (BYTE)i;
-	arc << val;
-	i = (EColorRange)val;
-	return arc;
-}
 
 //============================================================================
 //
@@ -180,20 +172,34 @@ DHUDMessage::~DHUDMessage ()
 //
 //============================================================================
 
-void DHUDMessage::Serialize(FArchive &arc)
+void DHUDMessage::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
-	arc << Left << Top << CenterX << HoldTics
-		<< Tics << State << TextColor
-		<< SBarID << SourceText << Font << Next
-		<< HUDWidth << HUDHeight
-		<< NoWrap
-		<< ClipX << ClipY << ClipWidth << ClipHeight
-		<< WrapWidth
-		<< HandleAspect
-		<< VisibilityFlags
-		<< Style << Alpha;
-	if (arc.IsLoading())
+	arc("left", Left)
+		("top", Top)
+		("centerx", CenterX)
+		("holdtics", HoldTics)
+		("tics", Tics)
+		("state", State)
+		.Enum("textcolor", TextColor)
+		("sbarid", SBarID)
+		("sourcetext", SourceText)
+		("font", Font)
+		("next", Next)
+		("hudwidth", HUDWidth)
+		("hudheight", HUDHeight)
+		("nowrap", NoWrap)
+		("clipx", ClipX)
+		("clipy", ClipY)
+		("clipwidth", ClipWidth)
+		("clipheight", ClipHeight)
+		("wrapwidth", WrapWidth)
+		("handleaspect", HandleAspect)
+		("visibilityflags", VisibilityFlags)
+		("style", Style)
+		("alpha", Alpha);
+
+	if (arc.isReading())
 	{
 		Lines = NULL;
 		ResetText(SourceText);
@@ -504,10 +510,10 @@ DHUDMessageFadeOut::DHUDMessageFadeOut (FFont *font, const char *text, float x, 
 //
 //============================================================================
 
-void DHUDMessageFadeOut::Serialize (FArchive &arc)
+void DHUDMessageFadeOut::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << FadeOutTics;
+	arc("fadeouttics", FadeOutTics);
 }
 
 //============================================================================
@@ -609,10 +615,10 @@ DHUDMessageFadeInOut::DHUDMessageFadeInOut (FFont *font, const char *text, float
 //
 //============================================================================
 
-void DHUDMessageFadeInOut::Serialize (FArchive &arc)
+void DHUDMessageFadeInOut::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << FadeInTics;
+	arc("fadeintics", FadeInTics);
 }
 
 //============================================================================
@@ -718,10 +724,13 @@ DHUDMessageTypeOnFadeOut::DHUDMessageTypeOnFadeOut (FFont *font, const char *tex
 //
 //============================================================================
 
-void DHUDMessageTypeOnFadeOut::Serialize (FArchive &arc)
+void DHUDMessageTypeOnFadeOut::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << TypeOnTime << CurrLine << LineVisible << LineLen;
+	arc("typeontime", TypeOnTime)
+		("currline", CurrLine)
+		("linevisible", LineVisible)
+		("linelen", LineLen);
 }
 
 //============================================================================

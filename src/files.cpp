@@ -600,3 +600,58 @@ char *MemoryArrayReader::Gets(char *strbuf, int len)
 {
     return GetsFromBuffer((char*)&buf[0], strbuf, len);
 }
+
+//==========================================================================
+//
+// FileWriter (the motivation here is to have a buffer writing subclass)
+//
+//==========================================================================
+
+bool FileWriter::OpenDirect(const char *filename)
+{
+	File = fopen(filename, "wb");
+	return (File != NULL);
+}
+
+FileWriter *FileWriter::Open(const char *filename)
+{
+	FileWriter *fwrit = new FileWriter();
+	if (fwrit->OpenDirect(filename))
+	{
+		return fwrit;
+	}
+	delete fwrit;
+	return NULL;
+}
+
+size_t FileWriter::Write(const void *buffer, size_t len)
+{
+	if (File != NULL)
+	{
+		return fwrite(buffer, 1, len, File);
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+
+size_t FileWriter::Printf(const char *fmt, ...)
+{
+	va_list ap;
+	FString out;
+
+	va_start(ap, fmt);
+	out.VFormat(fmt, ap);
+	va_end(ap);
+	return Write(out.GetChars(), out.Len());
+}
+
+size_t BufferWriter::Write(const void *buffer, size_t len)
+{
+	unsigned int ofs = mBuffer.Reserve((unsigned)len);
+	memcpy(&mBuffer[ofs], buffer, len);
+	return len;
+}
+

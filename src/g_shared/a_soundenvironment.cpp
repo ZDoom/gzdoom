@@ -59,7 +59,7 @@ void ASoundEnvironment::PostBeginPlay ()
 
 void ASoundEnvironment::Activate (AActor *activator)
 {
-	zones[Sector->ZoneNumber].Environment = S_FindEnvironment ((args[0]<<8) | (args[1]));
+	Zones[Sector->ZoneNumber].Environment = S_FindEnvironment ((args[0]<<8) | (args[1]));
 }
 
 // Deactivate just exists so that you can flag the thing as dormant in an editor

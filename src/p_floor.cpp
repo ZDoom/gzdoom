@@ -28,24 +28,10 @@
 #include "s_sndseq.h"
 #include "doomstat.h"
 #include "r_state.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "p_3dmidtex.h"
 #include "p_spec.h"
 #include "r_data/r_interpolate.h"
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-inline FArchive &operator<< (FArchive &arc, DFloor::EFloor &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DFloor::EFloor)val;
-	return arc;
-}
 
 //==========================================================================
 //
@@ -84,23 +70,23 @@ DFloor::DFloor ()
 {
 }
 
-void DFloor::Serialize (FArchive &arc)
+void DFloor::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << m_Type
-		<< m_Crush
-		<< m_Direction
-		<< m_NewSpecial
-		<< m_Texture
-		<< m_FloorDestDist
-		<< m_Speed
-		<< m_ResetCount
-		<< m_OrgDist
-		<< m_Delay
-		<< m_PauseTime
-		<< m_StepTime
-		<< m_PerStepTime
-		<< m_Hexencrush;
+	arc.Enum("type", m_Type)
+		("crush", m_Crush)
+		("direction", m_Direction)
+		("newspecial", m_NewSpecial)
+		("texture", m_Texture)
+		("floordestdist", m_FloorDestDist)
+		("speed", m_Speed)
+		("resetcount", m_ResetCount)
+		("orgdist", m_OrgDist)
+		("delay", m_Delay)
+		("pausetime", m_PauseTime)
+		("steptime", m_StepTime)
+		("persteptime", m_PerStepTime)
+		("crushmode", m_Hexencrush);
 }
 
 //==========================================================================
@@ -834,14 +820,6 @@ IMPLEMENT_POINTY_CLASS (DElevator)
 	DECLARE_POINTER(m_Interp_Ceiling)
 END_POINTERS
 
-inline FArchive &operator<< (FArchive &arc, DElevator::EElevator &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DElevator::EElevator)val;
-	return arc;
-}
-
 DElevator::DElevator ()
 {
 }
@@ -855,16 +833,16 @@ DElevator::DElevator (sector_t *sec)
 	m_Interp_Ceiling = sec->SetInterpolation(sector_t::CeilingMove, true);
 }
 
-void DElevator::Serialize (FArchive &arc)
+void DElevator::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << m_Type
-		<< m_Direction
-		<< m_FloorDestDist
-		<< m_CeilingDestDist
-		<< m_Speed
-		<< m_Interp_Floor
-		<< m_Interp_Ceiling;
+	arc.Enum("type", m_Type)
+		("direction", m_Direction)
+		("floordestdist", m_FloorDestDist)
+		("ceilingdestdist", m_CeilingDestDist)
+		("speed", m_Speed)
+		("interp_floor", m_Interp_Floor)
+		("interp_ceiling", m_Interp_Ceiling);
 }
 
 //==========================================================================
@@ -1125,9 +1103,7 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag)
 //
 //==========================================================================
 
-IMPLEMENT_POINTY_CLASS (DWaggleBase)
-	DECLARE_POINTER(m_Interpolation)
-END_POINTERS
+IMPLEMENT_CLASS (DWaggleBase)
 
 IMPLEMENT_CLASS (DFloorWaggle)
 IMPLEMENT_CLASS (DCeilingWaggle)
@@ -1136,18 +1112,17 @@ DWaggleBase::DWaggleBase ()
 {
 }
 
-void DWaggleBase::Serialize (FArchive &arc)
+void DWaggleBase::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << m_OriginalDist
-		<< m_Accumulator
-		<< m_AccDelta
-		<< m_TargetScale
-		<< m_Scale
-		<< m_ScaleDelta
-		<< m_Ticker
-		<< m_State
-		<< m_Interpolation;
+	arc("originaldist", m_OriginalDist)
+		("accumulator", m_Accumulator)
+		("accdelta", m_AccDelta)
+		("targetscale", m_TargetScale)
+		("scale", m_Scale)
+		("scaledelta", m_ScaleDelta)
+		("ticker", m_Ticker)
+		("state", m_State);
 }
 
 //==========================================================================
@@ -1167,11 +1142,6 @@ DWaggleBase::DWaggleBase (sector_t *sec)
 
 void DWaggleBase::Destroy()
 {
-	if (m_Interpolation != NULL)
-	{
-		m_Interpolation->DelRef();
-		m_Interpolation = NULL;
-	}
 	Super::Destroy();
 }
 
@@ -1266,7 +1236,7 @@ DFloorWaggle::DFloorWaggle (sector_t *sec)
 	: Super (sec)
 {
 	sec->floordata = this;
-	m_Interpolation = sec->SetInterpolation(sector_t::FloorMove, true);
+	interpolation = sec->SetInterpolation(sector_t::FloorMove, true);
 }
 
 void DFloorWaggle::Tick ()
@@ -1288,7 +1258,7 @@ DCeilingWaggle::DCeilingWaggle (sector_t *sec)
 	: Super (sec)
 {
 	sec->ceilingdata = this;
-	m_Interpolation = sec->SetInterpolation(sector_t::CeilingMove, true);
+	interpolation = sec->SetInterpolation(sector_t::CeilingMove, true);
 }
 
 void DCeilingWaggle::Tick ()

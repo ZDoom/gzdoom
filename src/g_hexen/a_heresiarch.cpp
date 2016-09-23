@@ -64,19 +64,21 @@ class AHeresiarch : public AActor
 {
 	DECLARE_CLASS (AHeresiarch, AActor)
 public:
-	const PClass *StopBall;
+	PClassActor *StopBall;
 	DAngle BallAngle;
 
-	void Serialize (FArchive &arc);
+	
+	void Serialize(FSerializer &arc);
 	void Die (AActor *source, AActor *inflictor, int dmgflags);
 };
 
 IMPLEMENT_CLASS (AHeresiarch)
 
-void AHeresiarch::Serialize (FArchive &arc)
+void AHeresiarch::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << StopBall << BallAngle;
+	arc("stopball", StopBall)
+		("ballangle", BallAngle);
 }
 
 void AHeresiarch::Die (AActor *source, AActor *inflictor, int dmgflags)
@@ -105,10 +107,13 @@ public:
 	DAngle AngleOffset;
 	DAngle OldAngle;
 
-	void Serialize (FArchive &arc)
+	
+
+	void Serialize(FSerializer &arc)
 	{
 		Super::Serialize (arc);
-		arc << AngleOffset << OldAngle;
+		arc("angleoffset", AngleOffset)
+			("oldangle", OldAngle);
 	}
 
 	bool SpecialBlastHandling (AActor *source, double strength)

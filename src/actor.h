@@ -583,8 +583,9 @@ public:
 	void Destroy ();
 	~AActor ();
 
-	void Serialize (FArchive &arc);
-	
+	void Serialize(FSerializer &arc);
+	void PostSerialize();
+
 	static AActor *StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t allowreplacement, bool SpawningMapThing = false);
 
 	inline AActor *GetDefault () const
@@ -988,7 +989,7 @@ public:
 	double			Speed;
 	double			FloatSpeed;
 
-	WORD			sprite;				// used to find patch_t and flip value
+	int				sprite;				// used to find patch_t and flip value
 	BYTE			frame;				// sprite frame to draw
 	DVector2		Scale;				// Scaling values; 1 is normal size
 	FRenderStyle	RenderStyle;		// Style to draw this actor with
@@ -1183,8 +1184,9 @@ public:
 private:
 	static AActor *TIDHash[128];
 	static inline int TIDHASH (int key) { return key & 127; }
+public:
 	static FSharedStringArena mStringPropertyData;
-
+private:
 	friend class FActorIterator;
 	friend bool P_IsTIDUsed(int tid);
 

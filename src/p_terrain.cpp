@@ -46,7 +46,6 @@
 #include "s_sound.h"
 #include "p_local.h"
 #include "templates.h"
-#include "farchive.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -713,25 +712,15 @@ int P_FindTerrain (FName name)
 	return -1;
 }
 
-void P_SerializeTerrain(FArchive &arc, int &terrainnum)
+FName P_GetTerrainName(int terrainnum)
 {
-	FName val;
-	if (arc.IsStoring())
+	if (terrainnum < 0 || terrainnum >= (int)Terrains.Size())
 	{
-		if (terrainnum < 0 || terrainnum >= (int)Terrains.Size())
-		{
-			val = NAME_Null;
-		}
-		else
-		{
-			val = Terrains[terrainnum].Name;
-		}
-		arc << val;
+		return NAME_Null;
 	}
 	else
 	{
-		arc << val;
-		terrainnum = P_FindTerrain(val);
-
+		return Terrains[terrainnum].Name;
 	}
 }
+

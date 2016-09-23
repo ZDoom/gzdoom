@@ -62,7 +62,7 @@
 #include "g_level.h"
 #include "v_font.h"
 #include "a_sharedglobal.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "a_keys.h"
 #include "c_dispatch.h"
 #include "r_sky.h"
@@ -648,7 +648,7 @@ class DLightTransfer : public DThinker
 	DLightTransfer() {}
 public:
 	DLightTransfer (sector_t *srcSec, int target, bool copyFloor);
-	void Serialize (FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Tick ();
 
 protected:
@@ -662,11 +662,13 @@ protected:
 
 IMPLEMENT_CLASS (DLightTransfer)
 
-void DLightTransfer::Serialize (FArchive &arc)
+void DLightTransfer::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << LastLight;
-	arc << Source << TargetTag << CopyFloor;
+	arc("lastlight", LastLight)
+		("source", Source)
+		("targettag", TargetTag)
+		("copyfloor", CopyFloor);
 }
 
 DLightTransfer::DLightTransfer (sector_t *srcSec, int target, bool copyFloor)
@@ -736,7 +738,7 @@ class DWallLightTransfer : public DThinker
 	DWallLightTransfer() {}
 public:
 	DWallLightTransfer (sector_t *srcSec, int target, BYTE flags);
-	void Serialize (FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Tick ();
 
 protected:
@@ -750,11 +752,13 @@ protected:
 
 IMPLEMENT_CLASS (DWallLightTransfer)
 
-void DWallLightTransfer::Serialize (FArchive &arc)
+void DWallLightTransfer::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << LastLight;
-	arc << Source << TargetID << Flags;
+	arc("lastlight", LastLight)
+		("source", Source)
+		("targetid", TargetID)
+		("flags", Flags);
 }
 
 DWallLightTransfer::DWallLightTransfer (sector_t *srcSec, int target, BYTE flags)

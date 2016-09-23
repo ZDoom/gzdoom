@@ -52,7 +52,6 @@
 struct Baggage;
 class FScanner;
 struct FActorInfo;
-class FArchive;
 class FIntCVar;
 
 enum EStateType
@@ -167,10 +166,6 @@ struct FStateLabels
 
 	void Destroy();	// intentionally not a destructor!
 };
-
-
-
-FArchive &operator<< (FArchive &arc, FState *&state);
 
 #include "gametype.h"
 

@@ -24,7 +24,7 @@ public:
 	DBaseDecal (const AActor *actor);
 	DBaseDecal (const DBaseDecal *basis);
 
-	void Serialize (FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Destroy ();
 	FTextureID StickToWall(side_t *wall, double x, double y, F3DFloor * ffloor);
 	double GetRealZ (const side_t *wall) const;
@@ -33,9 +33,7 @@ public:
 	void Spread (const FDecalTemplate *tpl, side_t *wall, double x, double y, double z, F3DFloor * ffloor);
 	void GetXY (side_t *side, double &x, double &y) const;
 
-	static void SerializeChain (FArchive &arc, DBaseDecal **firstptr);
-
-	DBaseDecal *WallNext, **WallPrev;
+	DBaseDecal *WallNext, *WallPrev;
 
 	double LeftDistance;
 	double Z;
@@ -46,7 +44,8 @@ public:
 	FTextureID PicNum;
 	DWORD RenderFlags;
 	FRenderStyle RenderStyle;
-	sector_t * Sector;	// required for 3D floors
+	side_t *Side;
+	sector_t *Sector;
 
 protected:
 	virtual DBaseDecal *CloneSelf(const FDecalTemplate *tpl, double x, double y, double z, side_t *wall, F3DFloor * ffloor) const;
@@ -69,9 +68,6 @@ public:
 
 	void BeginPlay ();
 	void Destroy ();
-
-	void Serialize (FArchive &arc);
-	static void SerializeTime (FArchive &arc);
 
 protected:
 	DBaseDecal *CloneSelf(const FDecalTemplate *tpl, double x, double y, double z, side_t *wall, F3DFloor * ffloor) const;
@@ -122,7 +118,7 @@ public:
 				 float r2, float g2, float b2, float a2,
 				 float time, AActor *who);
 	void Destroy ();
-	void Serialize (FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Tick ();
 	AActor *WhoFor() { return ForWho; }
 	void Cancel ();
@@ -165,7 +161,7 @@ public:
 		int damrad, int tremrad, FSoundID quakesfx, int flags, 
 		double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, double rollIntensity, double rollWave);
 
-	void Serialize (FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Tick ();
 	TObjPtr<AActor> m_Spot;
 	double m_TremorRadius, m_DamageRadius;
@@ -194,7 +190,8 @@ class AMorphProjectile : public AActor
 	DECLARE_CLASS (AMorphProjectile, AActor)
 public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
-	void Serialize (FArchive &arc);
+	
+	void Serialize(FSerializer &arc);
 
 	FNameNoInit	PlayerClass, MonsterClass, MorphFlash, UnMorphFlash;
 	int Duration, MorphStyle;
@@ -206,7 +203,8 @@ class AMorphedMonster : public AActor
 	HAS_OBJECT_POINTERS
 public:
 	void Tick ();
-	void Serialize (FArchive &arc);
+	
+	void Serialize(FSerializer &arc);
 	void Die (AActor *source, AActor *inflictor, int dmgflags);
 	void Destroy ();
 

@@ -394,8 +394,12 @@ void DThinker::Tick ()
 
 size_t DThinker::PropagateMark()
 {
-	assert(NextThinker != NULL && !(NextThinker->ObjectFlags & OF_EuthanizeMe));
-	assert(PrevThinker != NULL && !(PrevThinker->ObjectFlags & OF_EuthanizeMe));
+	// Do not choke on partially initialized objects (as happens when loading a savegame fails)
+	if (NextThinker != nullptr || PrevThinker != nullptr)
+	{
+		assert(NextThinker != nullptr && !(NextThinker->ObjectFlags & OF_EuthanizeMe));
+		assert(PrevThinker != nullptr && !(PrevThinker->ObjectFlags & OF_EuthanizeMe));
+	}
 	GC::Mark(NextThinker);
 	GC::Mark(PrevThinker);
 	return Super::PropagateMark();

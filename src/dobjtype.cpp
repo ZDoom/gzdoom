@@ -2250,7 +2250,7 @@ bool PStruct::ReadFields(FSerializer &ar, void *addr) const
 		}
 		else
 		{
-			readsomething |= static_cast<const PField *>(sym)->Type->ReadValue(ar, label,
+			readsomething |= static_cast<const PField *>(sym)->Type->ReadValue(ar, nullptr,
 				(BYTE *)addr + static_cast<const PField *>(sym)->Offset);
 		}
 	}
@@ -2543,11 +2543,19 @@ bool PClass::ReadAllFields(FSerializer &ar, void *addr) const
 	bool readsomething = false;
 	bool foundsomething = false;
 	const char *key;
+	key = ar.GetKey();
+	if (strcmp(key, "classtype"))
+	{
+		// this does not represent a DObject
+		Printf(TEXTCOLOR_RED "trying to read user variables but got a non-object (first key is '%s')", key);
+		ar.mErrors++;
+		return false;
+	}
 	while ((key = ar.GetKey()))
 	{
 		if (strncmp(key, "class:", 6))
 		{
-			// This key does not represent any class fields anymore
+			// We have read all user variable blocks.
 			break;
 		}
 		foundsomething = true;
@@ -2565,7 +2573,11 @@ bool PClass::ReadAllFields(FSerializer &ar, void *addr) const
 			}
 			if (parent != nullptr)
 			{
-				readsomething |= type->ReadFields(ar, addr);
+				if (ar.BeginObject(nullptr))
+				{
+					readsomething |= type->ReadFields(ar, addr);
+					ar.EndObject();
+				}
 			}
 			else
 			{

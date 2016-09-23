@@ -105,6 +105,7 @@ private:
 	friend struct FThinkerList;
 	friend class FThinkerIterator;
 	friend class DObject;
+	friend class FSerializer;
 
 	DThinker *NextThinker, *PrevThinker;
 };

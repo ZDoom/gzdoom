@@ -904,6 +904,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	if (arc.isReading())
 	{
 		P_DestroyThinkers(hubload);
+		interpolator.ClearInterpolations();
 		arc.ReadObjects();
 	}
 
@@ -933,15 +934,14 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		sky1texture = level.skytexture1;
 		sky2texture = level.skytexture2;
 		R_InitSkyMap();
-		interpolator.ClearInterpolations();
+		G_AirControlChanged();
 	}
 
 
-	G_AirControlChanged();
 
 	// fixme: This needs to ensure it reads from the correct place. Should be one once there's enough of this code converted to JSON
 
-	FBehavior::StaticSerializeModuleStates(arc);
+//FBehavior::StaticSerializeModuleStates(arc);
 	// The order here is important: First world state, then portal state, then thinkers, and last polyobjects.
 	arc.Array("linedefs", lines, &loadlines[0], numlines);
 	arc.Array("sidedefs", sides, &loadsides[0], numsides);
@@ -950,7 +950,8 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	arc("lineportals", linePortals);
 	arc("sectorportals", sectorPortals);
 	if (arc.isReading()) P_CollectLinkedPortals();
-	DThinker::SerializeThinkers(arc, !hubload);
+
+//	DThinker::SerializeThinkers(arc, !hubload);
 	arc.Array("polyobjs", polyobjs, po_NumPolyobjs);
 	arc("subsectors", subsectors);
 	StatusBar->SerializeMessages(arc);
@@ -959,6 +960,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	FCanvasTextureInfo::Serialize(arc);
 	P_SerializePlayers(arc, hubload);
 	P_SerializeSounds(arc);
+
 	if (arc.isReading())
 	{
 		for (int i = 0; i < numsectors; i++)

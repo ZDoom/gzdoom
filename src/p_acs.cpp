@@ -1051,13 +1051,13 @@ static void ReadArrayVars (FSerializer &file, FWorldGlobalArray *vars, size_t co
 		while ((arraykey = file.GetKey()))
 		{
 			int i = (int)strtol(arraykey, nullptr, 10);
-			if (file.BeginObject(arraykey))
+			if (file.BeginObject(nullptr))
 			{
 				while ((arraykey = file.GetKey()))
 				{
 					int k = (int)strtol(arraykey, nullptr, 10);
 					int val;
-					file(arraykey, val);
+					file(nullptr, val);
 					vars[i].Insert(k, val);
 				}
 				file.EndObject();
@@ -1612,10 +1612,9 @@ void FBehavior::StaticSerializeModuleStates (FSerializer &arc)
 {
 	auto modnum = StaticModules.Size();
 
-	if (arc.BeginObject("acsmodules"))
+	if (arc.BeginArray("acsmodules"))
 	{
-		arc("count", modnum);
-
+		int modnum = arc.ArraySize();
 		if (modnum != StaticModules.Size())
 		{
 			I_Error("Level was saved with a different number of ACS modules. (Have %d, save has %d)", StaticModules.Size(), modnum);
@@ -1623,35 +1622,31 @@ void FBehavior::StaticSerializeModuleStates (FSerializer &arc)
 
 		for (modnum = 0; modnum < StaticModules.Size(); ++modnum)
 		{
-			if (arc.BeginArray("modules"))
+			FBehavior *module = StaticModules[modnum];
+			const char *modname = module->ModuleName;
+			int ModSize = module->GetDataSize();
+
+			if (arc.BeginObject(nullptr))
 			{
-				FBehavior *module = StaticModules[modnum];
-				const char *modname = module->ModuleName;
-				int ModSize = module->GetDataSize();
+				arc.StringPtr("modname", modname)
+					("modsize", ModSize);
 
-				if (arc.BeginObject(nullptr))
+				if (arc.isReading())
 				{
-					arc.StringPtr("modname", modname)
-						("modsize", ModSize);
-
-					if (arc.isReading())
+					if (stricmp(modname, module->ModuleName) != 0)
 					{
-						if (stricmp(modname, module->ModuleName) != 0)
-						{
-							I_Error("Level was saved with a different set or order of ACS modules. (Have %s, save has %s)", module->ModuleName, modname);
-						}
-						else if (ModSize != module->GetDataSize())
-						{
-							I_Error("ACS module %s has changed from what was saved. (Have %d bytes, save has %d bytes)", module->ModuleName, module->GetDataSize(), ModSize);
-						}
+						I_Error("Level was saved with a different set or order of ACS modules. (Have %s, save has %s)", module->ModuleName, modname);
 					}
-					module->SerializeVars(arc);
-					arc.EndObject();
+					else if (ModSize != module->GetDataSize())
+					{
+						I_Error("ACS module %s has changed from what was saved. (Have %d bytes, save has %d bytes)", module->ModuleName, module->GetDataSize(), ModSize);
+					}
 				}
-				arc.EndArray();
+				module->SerializeVars(arc);
+				arc.EndObject();
 			}
 		}
-		arc.EndObject();
+		arc.EndArray();
 	}
 }
 

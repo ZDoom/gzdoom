@@ -69,6 +69,7 @@ void ASectorAction::Destroy ()
 		{
 			*prev.act = probe->tracer;
 		}
+		Sector = nullptr;
 	}
 
 	Super::Destroy ();

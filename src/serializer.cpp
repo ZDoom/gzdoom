@@ -28,6 +28,7 @@
 #include "v_font.h"
 #include "w_zip.h"
 #include "doomerrors.h"
+#include "v_text.h"
 
 char nulspace[1024 * 1024 * 4];
 
@@ -42,12 +43,10 @@ struct FJSONObject
 	rapidjson::Value *mObject;
 	rapidjson::Value::MemberIterator mIterator;
 	int mIndex;
-	bool mRandomAccess;
 
-	FJSONObject(rapidjson::Value *v, bool randomaccess = false)
+	FJSONObject(rapidjson::Value *v)
 	{
 		mObject = v;
-		mRandomAccess = randomaccess;
 		if (v->IsObject()) mIterator = v->MemberBegin();
 		else if (v->IsArray())
 		{
@@ -198,37 +197,34 @@ struct FReader
 	TArray<FJSONObject> mObjects;
 	rapidjson::Document mDoc;
 	TArray<DObject *> mDObjects;
+	rapidjson::Value *mKeyValue = nullptr;
 	int mPlayers[MAXPLAYERS];
-	bool mObjectsRead;
+	bool mObjectsRead = false;
 
-	FReader(const char *buffer, size_t length, bool randomaccess)
+	FReader(const char *buffer, size_t length)
 	{
 		rapidjson::Document doc;
 		mDoc.Parse(buffer, length);
-		mObjects.Push(FJSONObject(&mDoc, randomaccess));
+		mObjects.Push(FJSONObject(&mDoc));
 		memset(mPlayers, 0, sizeof(mPlayers));
-		mObjectsRead = false;
 	}
-	
+
 	rapidjson::Value *FindKey(const char *key)
 	{
 		FJSONObject &obj = mObjects.Last();
 		
 		if (obj.mObject->IsObject())
 		{
-			if (!obj.mRandomAccess)
+			if (key == nullptr)
 			{
-				if (obj.mIterator != obj.mObject->MemberEnd())
-				{
-					if (!strcmp(key, obj.mIterator->name.GetString()))
-					{
-						return &(obj.mIterator++)->value;
-					}
-				}
+				// we are performing an iteration of the object through GetKey.
+				auto p = mKeyValue;
+				mKeyValue = nullptr;
+				return p;
 			}
 			else
 			{
-				// for unordered searches. This is slower but will not rely on sequential order of items.
+				// Find the given key by name;
 				auto it = obj.mObject->FindMember(key);
 				if (it == obj.mObject->MemberEnd()) return nullptr;
 				return &it->value;
@@ -252,8 +248,9 @@ struct FReader
 bool FSerializer::OpenWriter(bool pretty)
 {
 	if (w != nullptr || r != nullptr) return false;
-	w = new FWriter(pretty);
 
+	mErrors = 0;
+	w = new FWriter(pretty);
 	BeginObject(nullptr);
 	return true;
 }
@@ -267,7 +264,9 @@ bool FSerializer::OpenWriter(bool pretty)
 bool FSerializer::OpenReader(const char *buffer, size_t length)
 {
 	if (w != nullptr || r != nullptr) return false;
-	r = new FReader(buffer, length, true);
+
+	mErrors = 0;
+	r = new FReader(buffer, length);
 	return true;
 }
 
@@ -282,15 +281,17 @@ bool FSerializer::OpenReader(FCompressedBuffer *input)
 	if (input->mSize <= 0 || input->mBuffer == nullptr) return false;
 	if (w != nullptr || r != nullptr) return false;
 
+	mErrors = 0;
 	if (input->mMethod == METHOD_STORED)
 	{
-		r = new FReader((char*)input->mBuffer, input->mSize, true);
+		r = new FReader((char*)input->mBuffer, input->mSize);
 	}
 	else
 	{
 		char *unpacked = new char[input->mSize];
 		input->Decompress(unpacked);
-		r = new FReader(unpacked, input->mSize, true);
+		r = new FReader(unpacked, input->mSize);
+		delete[] unpacked;
 	}
 	return true;
 }
@@ -310,8 +311,26 @@ void FSerializer::Close()
 	}
 	if (r != nullptr)
 	{
+		// we must explicitly delete all thinkers in the array which did not get linked into the thinker lists.
+		// Otherwise these objects may survive a level deletion and point to incorrect data.
+		for (auto &obj : r->mDObjects)
+		{
+			auto think = dyn_cast<DThinker>(obj);
+			if (think != nullptr)
+			{
+				if (think->NextThinker == nullptr || think->PrevThinker == nullptr)
+				{
+					think->Destroy();
+				}
+			}
+		}
+
 		delete r;
 		r = nullptr;
+	}
+	if (mErrors > 0)
+	{
+		I_Error("%d errors parsing JSON", mErrors);
 	}
 }
 
@@ -369,7 +388,7 @@ void FSerializer::WriteKey(const char *key)
 //
 //==========================================================================
 
-bool FSerializer::BeginObject(const char *name, bool randomaccess)
+bool FSerializer::BeginObject(const char *name)
 {
 	if (isWriting())
 	{
@@ -382,13 +401,16 @@ bool FSerializer::BeginObject(const char *name, bool randomaccess)
 		auto val = r->FindKey(name);
 		if (val != nullptr)
 		{
+			assert(val->IsObject());
 			if (val->IsObject())
 			{
-				r->mObjects.Push(FJSONObject(val, randomaccess));
+				r->mObjects.Push(FJSONObject(val));
 			}
 			else
 			{
-				I_Error("Object expected for '%s'", name);
+				Printf(TEXTCOLOR_RED "Object expected for '%s'", name);
+				mErrors++;
+				return false;
 			}
 		}
 		else
@@ -405,7 +427,7 @@ bool FSerializer::BeginObject(const char *name, bool randomaccess)
 //
 //==========================================================================
 
-void FSerializer::EndObject(bool endwarning)
+void FSerializer::EndObject()
 {
 	if (isWriting())
 	{
@@ -422,14 +444,6 @@ void FSerializer::EndObject(bool endwarning)
 	}
 	else
 	{
-		if (endwarning && !r->mObjects.Last().mRandomAccess)
-		{
-			if (r->mObjects.Last().mIterator != r->mObjects.Last().mObject->MemberEnd())
-			{
-				assert(false && "Incomplete read of sequential object");
-				I_Error("Incomplete read of sequential object");
-			}
-		}
 		r->mObjects.Pop();
 	}
 }
@@ -453,13 +467,16 @@ bool FSerializer::BeginArray(const char *name)
 		auto val = r->FindKey(name);
 		if (val != nullptr)
 		{
+			assert(val->IsArray());
 			if (val->IsArray())
 			{
 				r->mObjects.Push(FJSONObject(val));
 			}
 			else
 			{
-				I_Error("Array expected for '%s'", name);
+				Printf(TEXTCOLOR_RED "Array expected for '%s'", name);
+				mErrors++;
+				return false;
 			}
 		}
 		else
@@ -487,6 +504,7 @@ void FSerializer::EndArray()
 		}
 		else
 		{
+			assert(false && "EndArray call not inside an array");
 			I_Error("EndArray call not inside an array");
 		}
 	}
@@ -494,22 +512,6 @@ void FSerializer::EndArray()
 	{
 		r->mObjects.Pop();
 	}
-}
-
-//==========================================================================
-//
-// Discards an entry (only needed for sequential access)
-//
-//==========================================================================
-
-FSerializer &FSerializer::Discard(const char *key)
-{
-	if (isReading())
-	{
-		// just get the key and advance the iterator, if present
-		if (!r->mObjects.Last().mRandomAccess) r->FindKey(key);
-	}
-	return *this;
 }
 
 //==========================================================================
@@ -563,13 +565,17 @@ FSerializer &FSerializer::Args(const char *key, int *args, int *defargs, int spe
 					}
 					else
 					{
-						I_Error("Integer expected for '%s[%d]'", key, i);
+						assert(false && "Integer expected");
+						Printf(TEXTCOLOR_RED "Integer expected for '%s[%d]'", key, i);
+						mErrors++;
 					}
 				}
 			}
 			else
 			{
-				I_Error("array expected for '%s'", key);
+				assert(false && "array expected");
+				Printf(TEXTCOLOR_RED "array expected for '%s'", key);
+				mErrors++;
 			}
 		}
 	}
@@ -611,7 +617,9 @@ FSerializer &FSerializer::ScriptNum(const char *key, int &num)
 			}
 			else
 			{
-				I_Error("Integer expected for '%s'", key);
+				assert(false && "Integer expected");
+				Printf(TEXTCOLOR_RED "Integer expected for '%s'", key);
+				mErrors++;
 			}
 		}
 	}
@@ -739,7 +747,8 @@ unsigned FSerializer::GetSize(const char *group)
 
 //==========================================================================
 //
-//
+// gets the key pointed to by the iterator, caches its value
+// and returns the key string.
 //
 //==========================================================================
 
@@ -749,7 +758,8 @@ const char *FSerializer::GetKey()
 	if (!r->mObjects.Last().mObject->IsObject()) return nullptr;	// non-objects do not have keys.
 	auto &it = r->mObjects.Last().mIterator;
 	if (it == r->mObjects.Last().mObject->MemberEnd()) return nullptr;
-	return it->name.GetString();
+	r->mKeyValue = &it->value;
+	return (it++)->name.GetString();
 }
 
 //==========================================================================
@@ -773,6 +783,9 @@ void FSerializer::WriteObjects()
 			w->Key("classtype");
 			w->String(obj->GetClass()->TypeName.GetChars());
 
+			obj->SerializeUserVars(*this);
+			obj->Serialize(*this);
+			obj->CheckIfSerialized();
 			if (obj->IsKindOf(RUNTIME_CLASS(AActor)) &&
 				(player = static_cast<AActor *>(obj)->player) &&
 				player->mo == obj)
@@ -781,9 +794,6 @@ void FSerializer::WriteObjects()
 				w->Int(int(player - players));
 			}
 
-			obj->SerializeUserVars(*this);
-			obj->Serialize(*this);
-			obj->CheckIfSerialized();
 			EndObject();
 		}
 		EndArray();
@@ -799,8 +809,7 @@ void FSerializer::WriteObjects()
 void FSerializer::ReadObjects()
 {
 	bool founderrors = false;
-	unsigned i;
-
+	
 	if (isReading() && BeginArray("objects"))
 	{
 		// Do not link any thinker that's being created here. This will be done by deserializing the thinker list later.
@@ -845,7 +854,6 @@ void FSerializer::ReadObjects()
 						if (BeginObject(nullptr))
 						{
 							int pindex = -1;
-							Discard("classtype");
 							Serialize(*this, "playerindex", pindex, nullptr);
 							if (obj != nullptr)
 							{
@@ -857,20 +865,23 @@ void FSerializer::ReadObjects()
 								obj->SerializeUserVars(*this);
 								obj->Serialize(*this);
 							}
-							EndObject(true);
+							EndObject();
 						}
 					}
 					catch (CRecoverableError &err)
 					{
-						I_Error("%s\n while restoring %s", err.GetMessage(),obj? obj->GetClass()->TypeName.GetChars() : "invalid object");
+						Printf(TEXTCOLOR_RED "'%s'\n while restoring %s", err.GetMessage(),obj? obj->GetClass()->TypeName.GetChars() : "invalid object");
+						mErrors++;
 					}
 				}
 			}
 			EndArray();
 			DThinker::bSerialOverride = false;
+			assert(!founderrors);
 			if (founderrors)
 			{
-				I_Error("Failed to restore all objects in savegame");
+				Printf(TEXTCOLOR_RED "Failed to restore all objects in savegame");
+				mErrors++;
 			}
 		}
 		catch(...)
@@ -989,13 +1000,15 @@ FSerializer &Serialize(FSerializer &arc, const char *key, bool &value, bool *def
 		auto val = arc.r->FindKey(key);
 		if (val != nullptr)
 		{
+			assert(val->IsBool());
 			if (val->IsBool())
 			{
 				value = val->GetBool();
 			}
 			else
 			{
-				I_Error("boolean type expected for '%s'", key);
+				Printf(TEXTCOLOR_RED "boolean type expected for '%s'", key);
+				arc.mErrors++;
 			}
 		}
 	}
@@ -1023,13 +1036,15 @@ FSerializer &Serialize(FSerializer &arc, const char *key, int64_t &value, int64_
 		auto val = arc.r->FindKey(key);
 		if (val != nullptr)
 		{
+			assert(val->IsInt64());
 			if (val->IsInt64())
 			{
 				value = val->GetInt64();
 			}
 			else
 			{
-				I_Error("integer type expected for '%s'", key);
+				Printf(TEXTCOLOR_RED "integer type expected for '%s'", key);
+				arc.mErrors++;
 			}
 		}
 	}
@@ -1057,13 +1072,15 @@ FSerializer &Serialize(FSerializer &arc, const char *key, uint64_t &value, uint6
 		auto val = arc.r->FindKey(key);
 		if (val != nullptr)
 		{
+			assert(val->IsUint64());
 			if (val->IsUint64())
 			{
 				value = val->GetUint64();
 			}
 			else
 			{
-				I_Error("integer type expected for '%s'", key);
+				Printf(TEXTCOLOR_RED "integer type expected for '%s'", key);
+				arc.mErrors++;
 			}
 		}
 	}
@@ -1092,13 +1109,15 @@ FSerializer &Serialize(FSerializer &arc, const char *key, int32_t &value, int32_
 		auto val = arc.r->FindKey(key);
 		if (val != nullptr)
 		{
+			assert(val->IsInt());
 			if (val->IsInt())
 			{
 				value = val->GetInt();
 			}
 			else
 			{
-				I_Error("integer type expected for '%s'", key);
+				Printf(TEXTCOLOR_RED "integer type expected for '%s'", key);
+				arc.mErrors++;
 			}
 		}
 	}
@@ -1126,13 +1145,15 @@ FSerializer &Serialize(FSerializer &arc, const char *key, uint32_t &value, uint3
 		auto val = arc.r->FindKey(key);
 		if (val != nullptr)
 		{
+			assert(val->IsUint());
 			if (val->IsUint())
 			{
 				value = val->GetUint();
 			}
 			else
 			{
-				I_Error("integer type expected for '%s'", key);
+				Printf(TEXTCOLOR_RED "integer type expected for '%s'", key);
+				arc.mErrors++;
 			}
 		}
 	}
@@ -1202,13 +1223,15 @@ FSerializer &Serialize(FSerializer &arc, const char *key, double &value, double 
 		auto val = arc.r->FindKey(key);
 		if (val != nullptr)
 		{
+			assert(val->IsDouble());
 			if (val->IsDouble())
 			{
 				value = val->GetDouble();
 			}
 			else
 			{
-				I_Error("float type expected for '%s'", key);
+				Printf(TEXTCOLOR_RED "float type expected for '%s'", key);
+				arc.mErrors++;
 			}
 		}
 	}
@@ -1239,6 +1262,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, float &value, float *d
 template<class T>
 FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **defval, T *base)
 {
+	assert(base != nullptr);
 	if (arc.isReading() || !arc.w->inObject() || defval == nullptr || value != *defval)
 	{
 		ptrdiff_t vv = value == nullptr ? -1 : value - base;
@@ -1342,13 +1366,16 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 			{
 				const rapidjson::Value &nameval = (*val)[0];
 				const rapidjson::Value &typeval = (*val)[1];
+				assert(nameval.IsString() && typeval.IsInt());
 				if (nameval.IsString() && typeval.IsInt())
 				{
 					value = TexMan.GetTexture(nameval.GetString(), typeval.GetInt());
 				}
 				else
 				{
-					I_Error("object does not represent a texture for '%s'", key);
+					Printf(TEXTCOLOR_RED "object does not represent a texture for '%s'", key);
+					value.SetNull();
+					arc.mErrors++;
 				}
 			}
 			else if (val->IsNull())
@@ -1361,7 +1388,10 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 			}
 			else
 			{
-				I_Error("object does not represent a texture for '%s'", key);
+				assert(false && "not a texture");
+				Printf(TEXTCOLOR_RED "object does not represent a texture for '%s'", key);
+				value.SetNull();
+				arc.mErrors++;
 			}
 		}
 	}
@@ -1432,7 +1462,10 @@ FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObje
 				}
 				else
 				{
-					I_Error("Invalid object reference for '%s'", key);
+					assert(false && "invalid object reference");
+					Printf(TEXTCOLOR_RED "Invalid object reference for '%s'", key);
+					value = nullptr;
+					arc.mErrors++;
 				}
 			}
 		}
@@ -1469,13 +1502,16 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FName &value, FName *d
 		auto val = arc.r->FindKey(key);
 		if (val != nullptr)
 		{
+			assert(val->IsString());
 			if (val->IsString())
 			{
 				value = val->GetString();
 			}
 			else
 			{
-				I_Error("String expected for '%s'", key);
+				Printf(TEXTCOLOR_RED "String expected for '%s'", key);
+				arc.mErrors++;
+				value = NAME_None;
 			}
 		}
 	}
@@ -1509,7 +1545,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDynamicCol
 		auto val = arc.r->FindKey(key);
 		if (val != nullptr)
 		{
-			if (val->IsObject())
+			if (val->IsArray())
 			{
 				const rapidjson::Value &colorval = (*val)[0];
 				const rapidjson::Value &fadeval = (*val)[1];
@@ -1517,16 +1553,12 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDynamicCol
 				if (colorval.IsUint() && fadeval.IsUint() && desatval.IsUint())
 				{
 					cm = GetSpecialLights(colorval.GetUint(), fadeval.GetUint(), desatval.GetUint());
-				}
-				else
-				{
-					I_Error("object does not represent a colormap for '%s'", key);
+					return arc;
 				}
 			}
-			else
-			{
-				I_Error("object does not represent a colormap for '%s'", key);
-			}
+			assert(false && "not a colormap");
+			Printf(TEXTCOLOR_RED "object does not represent a colormap for '%s'", key);
+			cm = &NormalLight;
 		}
 	}
 	return arc;
@@ -1555,6 +1587,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 		auto val = arc.r->FindKey(key);
 		if (val != nullptr)
 		{
+			assert(val->IsString() || val->IsNull());
 			if (val->IsString())
 			{
 				sid = val->GetString();
@@ -1565,7 +1598,9 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 			}
 			else
 			{
-				I_Error("string type expected for '%s'", key);
+				Printf(TEXTCOLOR_RED "string type expected for '%s'", key);
+				sid = 0;
+				arc.mErrors++;
 			}
 		}
 	}
@@ -1601,6 +1636,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClassActor
 		auto val = arc.r->FindKey(key);
 		if (val != nullptr)
 		{
+			assert(val->IsString() || val->IsNull());
 			if (val->IsString())
 			{
 				clst = PClass::FindActor(val->GetString());
@@ -1611,7 +1647,9 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClassActor
 			}
 			else
 			{
-				I_Error("string type expected for '%s'", key);
+				Printf(TEXTCOLOR_RED "string type expected for '%s'", key);
+				clst = nullptr;
+				arc.mErrors++;
 			}
 		}
 	}
@@ -1657,7 +1695,9 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClass *&cl
 			}
 			else
 			{
-				I_Error("string type expected for '%s'", key);
+				Printf(TEXTCOLOR_RED "string type expected for '%s'", key);
+				clst = nullptr;
+				arc.mErrors++;
 			}
 		}
 	}
@@ -1719,18 +1759,33 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState
 				const rapidjson::Value &ndx = (*val)[1];
 
 				state = nullptr;
-				if (cls.IsString() && ndx.IsInt())
+				assert(cls.IsString() && ndx.IsUint());
+				if (cls.IsString() && ndx.IsUint())
 				{
 					PClassActor *clas = PClass::FindActor(cls.GetString());
-					if (clas)
+					if (clas && ndx.GetUint() < (unsigned)clas->NumOwnedStates)
 					{
-						state = clas->OwnedStates + ndx.GetInt();
+						state = clas->OwnedStates + ndx.GetUint();
 					}
+					else
+					{
+						// this can actually happen by changing the DECORATE so treat it as a warning, not an error.
+						state = nullptr;
+						Printf(TEXTCOLOR_ORANGE "Invalid state '%s+%d' for '%s'", cls.GetString(), ndx.GetInt(), key);
+					}
+				}
+				else
+				{
+					assert(false && "not a state");
+					Printf(TEXTCOLOR_RED "data does not represent a state for '%s'", key);
+					arc.mErrors++;
 				}
 			}
 			else if (!retcode)
 			{
-				I_Error("array type expected for '%s'", key);
+				assert(false && "not an array");
+				Printf(TEXTCOLOR_RED "array type expected for '%s'", key);
+				arc.mErrors++;
 			}
 		}
 	}
@@ -1766,6 +1821,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDial
 		auto val = arc.r->FindKey(key);
 		if (val != nullptr)
 		{
+			assert(val->IsUint() || val->IsNull());
 			if (val->IsNull())
 			{
 				node = nullptr;
@@ -1774,7 +1830,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDial
 			{
 				if (val->GetUint() >= StrifeDialogues.Size())
 				{
-					node = NULL;
+					node = nullptr;
 				}
 				else
 				{
@@ -1783,7 +1839,9 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDial
 			}
 			else
 			{
-				I_Error("integer expected for '%s'", key);
+				Printf(TEXTCOLOR_RED "integer expected for '%s'", key);
+				arc.mErrors++;
+				node = nullptr;
 			}
 		}
 	}
@@ -1819,6 +1877,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FString *&p
 		auto val = arc.r->FindKey(key);
 		if (val != nullptr)
 		{
+			assert(val->IsNull() || val->IsString());
 			if (val->IsNull())
 			{
 				pstr = nullptr;
@@ -1829,7 +1888,9 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FString *&p
 			}
 			else
 			{
-				I_Error("string expected for '%s'", key);
+				Printf(TEXTCOLOR_RED "string expected for '%s'", key);
+				pstr = nullptr;
+				arc.mErrors++;
 			}
 		}
 	}
@@ -1858,6 +1919,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FString &pstr, FString
 		auto val = arc.r->FindKey(key);
 		if (val != nullptr)
 		{
+			assert(val->IsNull() || val->IsString());
 			if (val->IsNull())
 			{
 				pstr = "";
@@ -1868,7 +1930,9 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FString &pstr, FString
 			}
 			else
 			{
-				I_Error("string expected for '%s'", key);
+				Printf(TEXTCOLOR_RED "string expected for '%s'", key);
+				pstr = "";
+				arc.mErrors++;
 			}
 		}
 	}
@@ -1904,6 +1968,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr
 		auto val = arc.r->FindKey(key);
 		if (val != nullptr)
 		{
+			assert(val->IsNull() || val->IsString());
 			if (val->IsNull())
 			{
 				pstr = nullptr;
@@ -1914,7 +1979,9 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr
 			}
 			else
 			{
-				I_Error("string expected for '%s'", key);
+				Printf(TEXTCOLOR_RED "string expected for '%s'", key);
+				pstr = nullptr;
+				arc.mErrors++;
 			}
 		}
 	}
@@ -1941,7 +2008,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&fon
 		font = V_GetFont(n);
 		if (font == nullptr)
 		{
-			Printf("Could not load font %s\n", n);
+			Printf(TEXTCOLOR_ORANGE "Could not load font %s\n", n);
 			font = SmallFont;
 		}
 		return arc;

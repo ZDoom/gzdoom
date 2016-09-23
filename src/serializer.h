@@ -73,15 +73,14 @@ public:
 	bool OpenReader(FCompressedBuffer *input);
 	void Close();
 	void ReadObjects();
-	bool BeginObject(const char *name, bool randomaccess = false);
-	void EndObject(bool endwarning = false);
+	bool BeginObject(const char *name);
+	void EndObject();
 	bool BeginArray(const char *name);
 	void EndArray();
 	unsigned GetSize(const char *group);
 	const char *GetKey();
 	const char *GetOutput(unsigned *len = nullptr);
 	FCompressedBuffer GetCompressedOutput();
-	FSerializer &Discard(const char *key);
 	FSerializer &Args(const char *key, int *args, int *defargs, int special);
 	FSerializer &Terrain(const char *key, int &terrain, int *def = nullptr);
 	FSerializer &Sprite(const char *key, int32_t &spritenum, int32_t *def);
@@ -167,6 +166,8 @@ public:
 		obj = (T)val;
 		return *this;
 	}
+
+	int mErrors = 0;
 };
 
 FSerializer &Serialize(FSerializer &arc, const char *key, bool &value, bool *defval);

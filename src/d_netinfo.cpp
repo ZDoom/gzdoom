@@ -931,7 +931,7 @@ void ReadUserInfo(FSerializer &arc, userinfo_t &info, FString &skin)
 	{
 		while ((key = arc.GetKey()))
 		{
-			arc.StringPtr(key, str);
+			arc.StringPtr(nullptr, str);
 			name = key;
 			cvar = info.CheckKey(name);
 			if (cvar != NULL && *cvar != NULL)

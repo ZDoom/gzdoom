@@ -1773,7 +1773,7 @@ void P_ReadACSDefereds (FSerializer &arc)
 			{
 				I_Error("Unknown map '%s' in savegame", key);
 			}
-			arc(key, i->deferred);
+			arc(nullptr, i->deferred);
 		}
 		arc.EndObject();
 	}

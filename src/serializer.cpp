@@ -859,7 +859,7 @@ void FSerializer::ReadObjects(bool hubtravel)
 					PClass *cls = PClass::FindClass(clsname);
 					if (cls == nullptr)
 					{
-						Printf("Unknown object class '%d' in savegame", clsname.GetChars());
+						Printf("Unknown object class '%s' in savegame", clsname.GetChars());
 						founderrors = true;
 						r->mDObjects[i] = RUNTIME_CLASS(AActor)->CreateNew();	// make sure we got at least a valid pointer for the duration of the loading process.
 						r->mDObjects[i]->Destroy();								// but we do not want to keep this around, so destroy it right away.

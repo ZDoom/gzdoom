@@ -71,6 +71,7 @@ FRenderer *Renderer;
 
 IMPLEMENT_ABSTRACT_CLASS (DCanvas)
 IMPLEMENT_ABSTRACT_CLASS (DFrameBuffer)
+EXTERN_CVAR (Bool, swtruecolor)
 
 #if defined(_DEBUG) && defined(_M_IX86)
 #define DBGBREAK	{ __asm int 3 }
@@ -83,7 +84,7 @@ class DDummyFrameBuffer : public DFrameBuffer
 	DECLARE_CLASS (DDummyFrameBuffer, DFrameBuffer);
 public:
 	DDummyFrameBuffer (int width, int height)
-		: DFrameBuffer (0, 0)
+		: DFrameBuffer (0, 0, false)
 	{
 		Width = width;
 		Height = height;
@@ -119,7 +120,6 @@ public:
 
 	const BYTE *GetColumn(unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels();
-	void Unload();
 	bool CheckModified();
 	void SetTranslation(int num);
 
@@ -208,13 +208,14 @@ DCanvas *DCanvas::CanvasChain = NULL;
 //
 //==========================================================================
 
-DCanvas::DCanvas (int _width, int _height)
+DCanvas::DCanvas (int _width, int _height, bool _bgra)
 {
 	// Init member vars
 	Buffer = NULL;
 	LockCount = 0;
 	Width = _width;
 	Height = _height;
+	Bgra = _bgra;
 
 	// Add to list of active canvases
 	Next = CanvasChain;
@@ -344,10 +345,7 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 	if (damount == 0.f)
 		return;
 
-	DWORD *bg2rgb;
-	DWORD fg;
 	int gap;
-	BYTE *spot;
 	int x, y;
 
 	if (x1 >= Width || y1 >= Height)
@@ -367,31 +365,73 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 		return;
 	}
 
-	{
-		int amount;
-
-		amount = (int)(damount * 64);
-		bg2rgb = Col2RGB8[64-amount];
-
-		fg = (((color.r * amount) >> 4) << 20) |
-			  ((color.g * amount) >> 4) |
-			 (((color.b * amount) >> 4) << 10);
-	}
-
-	spot = Buffer + x1 + y1*Pitch;
 	gap = Pitch - w;
-	for (y = h; y != 0; y--)
-	{
-		for (x = w; x != 0; x--)
-		{
-			DWORD bg;
 
-			bg = bg2rgb[(*spot)&0xff];
-			bg = (fg+bg) | 0x1f07c1f;
-			*spot = RGB32k.All[bg&(bg>>15)];
-			spot++;
+	if (IsBgra())
+	{
+		uint32_t *spot = (uint32_t*)Buffer + x1 + y1*Pitch;
+
+		uint32_t fg = color.d;
+		uint32_t fg_red = (fg >> 16) & 0xff;
+		uint32_t fg_green = (fg >> 8) & 0xff;
+		uint32_t fg_blue = fg & 0xff;
+
+		uint32_t alpha = (uint32_t)clamp(damount * 256 + 0.5f, 0.0f, 256.0f);
+		uint32_t inv_alpha = 256 - alpha;
+
+		fg_red *= alpha;
+		fg_green *= alpha;
+		fg_blue *= alpha;
+
+		for (y = h; y != 0; y--)
+		{
+			for (x = w; x != 0; x--)
+			{
+				uint32_t bg_red = (*spot >> 16) & 0xff;
+				uint32_t bg_green = (*spot >> 8) & 0xff;
+				uint32_t bg_blue = (*spot) & 0xff;
+
+				uint32_t red = (fg_red + bg_red * inv_alpha) / 256;
+				uint32_t green = (fg_green + bg_green * inv_alpha) / 256;
+				uint32_t blue = (fg_blue + bg_blue * inv_alpha) / 256;
+
+				*spot = 0xff000000 | (red << 16) | (green << 8) | blue;
+				spot++;
+			}
+			spot += gap;
 		}
-		spot += gap;
+	}
+	else
+	{
+		BYTE *spot = Buffer + x1 + y1*Pitch;
+
+		DWORD *bg2rgb;
+		DWORD fg;
+
+		{
+			int amount;
+
+			amount = (int)(damount * 64);
+			bg2rgb = Col2RGB8[64-amount];
+
+			fg = (((color.r * amount) >> 4) << 20) |
+				  ((color.g * amount) >> 4) |
+				 (((color.b * amount) >> 4) << 10);
+		}
+
+		for (y = h; y != 0; y--)
+		{
+			for (x = w; x != 0; x--)
+			{
+				DWORD bg;
+
+				bg = bg2rgb[(*spot)&0xff];
+				bg = (fg+bg) | 0x1f07c1f;
+				*spot = RGB32k.All[bg&(bg>>15)];
+				spot++;
+			}
+			spot += gap;
+		}
 	}
 }
 
@@ -408,8 +448,8 @@ void DCanvas::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &colo
 {
 	Lock(true);
 	buffer = GetBuffer();
-	pitch = GetPitch();
-	color_type = SS_PAL;
+	pitch = IsBgra() ? GetPitch() * 4 : GetPitch();
+	color_type = IsBgra() ? SS_BGRA : SS_PAL;
 }
 
 //==========================================================================
@@ -704,13 +744,12 @@ void DCanvas::CalcGamma (float gamma, BYTE gammalookup[256])
 	// I found this formula on the web at
 	// <http://panda.mostang.com/sane/sane-gamma.html>,
 	// but that page no longer exits.
-
 	double invgamma = 1.f / gamma;
 	int i;
 
 	for (i = 0; i < 256; i++)
 	{
-		gammalookup[i] = (BYTE)(255.0 * pow (i / 255.0, invgamma));
+		gammalookup[i] = (BYTE)(255.0 * pow (i / 255.0, invgamma) + 0.5);
 	}
 }
 
@@ -722,8 +761,8 @@ void DCanvas::CalcGamma (float gamma, BYTE gammalookup[256])
 //
 //==========================================================================
 
-DSimpleCanvas::DSimpleCanvas (int width, int height)
-	: DCanvas (width, height)
+DSimpleCanvas::DSimpleCanvas (int width, int height, bool bgra)
+	: DCanvas (width, height, bgra)
 {
 	MemBuffer = nullptr;
 	Resize(width, height);
@@ -775,8 +814,9 @@ void DSimpleCanvas::Resize(int width, int height)
 			Pitch = width + MAX(0, CPU.DataL1LineSize - 8);
 		}
 	}
-	MemBuffer = new BYTE[Pitch * height];
-	memset(MemBuffer, 0, Pitch * height);
+	int bytes_per_pixel = swtruecolor ? 4 : 1;
+	MemBuffer = new BYTE[Pitch * height * bytes_per_pixel];
+	memset (MemBuffer, 0, Pitch * height * bytes_per_pixel);
 }
 
 //==========================================================================
@@ -845,8 +885,8 @@ void DSimpleCanvas::Unlock ()
 //
 //==========================================================================
 
-DFrameBuffer::DFrameBuffer (int width, int height)
-	: DSimpleCanvas (width, height)
+DFrameBuffer::DFrameBuffer (int width, int height, bool bgra)
+	: DSimpleCanvas (width, height, bgra)
 {
 	LastMS = LastSec = FrameCount = LastCount = LastTic = 0;
 	Accel2D = false;
@@ -854,6 +894,70 @@ DFrameBuffer::DFrameBuffer (int width, int height)
 	VideoWidth = width;
 	VideoHeight = height;
 }
+
+//==========================================================================
+//
+// DFrameBuffer :: PostprocessBgra
+//
+// Copies data to destination buffer while performing gamma and flash.
+// This is only needed if a target cannot do this with shaders.
+//
+//==========================================================================
+
+void DFrameBuffer::CopyWithGammaBgra(void *output, int pitch, const BYTE *gammared, const BYTE *gammagreen, const BYTE *gammablue, PalEntry flash, int flash_amount)
+{
+	const BYTE *gammatables[3] = { gammared, gammagreen, gammablue };
+
+	if (flash_amount > 0)
+	{
+		uint16_t inv_flash_amount = 256 - flash_amount;
+		uint16_t flash_red = flash.r * flash_amount;
+		uint16_t flash_green = flash.g * flash_amount;
+		uint16_t flash_blue = flash.b * flash_amount;
+		
+		for (int y = 0; y < Height; y++)
+		{
+			BYTE *dest = (BYTE*)output + y * pitch;
+			BYTE *src = MemBuffer + y * Pitch * 4;
+			for (int x = 0;  x < Width; x++)
+			{
+				uint16_t fg_red = src[2];
+				uint16_t fg_green = src[1];
+				uint16_t fg_blue = src[0];
+				uint16_t red = (fg_red * inv_flash_amount + flash_red) >> 8;
+				uint16_t green = (fg_green * inv_flash_amount + flash_green) >> 8;
+				uint16_t blue = (fg_blue * inv_flash_amount + flash_blue) >> 8;
+
+				dest[0] = gammatables[2][blue];
+				dest[1] = gammatables[1][green];
+				dest[2] = gammatables[0][red];
+				dest[3] = 0xff;
+
+				dest += 4;
+				src += 4;
+			}
+		}
+	}
+	else
+	{
+		for (int y = 0; y < Height; y++)
+		{
+			BYTE *dest = (BYTE*)output + y * pitch;
+			BYTE *src = MemBuffer + y * Pitch * 4;
+			for (int x = 0;  x < Width; x++)
+			{
+				dest[0] = gammatables[2][src[0]];
+				dest[1] = gammatables[1][src[1]];
+				dest[2] = gammatables[0][src[2]];
+				dest[3] = 0xff;
+
+				dest += 4;
+				src += 4;
+			}
+		}
+	}
+}
+
 
 //==========================================================================
 //
@@ -916,10 +1020,21 @@ void DFrameBuffer::DrawRateStuff ()
 		// Buffer can be NULL if we're doing hardware accelerated 2D
 		if (buffer != NULL)
 		{
-			buffer += (GetHeight()-1) * GetPitch();
-			
-			for (i = 0; i < tics*2; i += 2)		buffer[i] = 0xff;
-			for ( ; i < 20*2; i += 2)			buffer[i] = 0x00;
+			if (IsBgra())
+			{
+				uint32_t *buffer32 = (uint32_t*)buffer;
+				buffer32 += (GetHeight() - 1) * GetPitch();
+
+				for (i = 0; i < tics * 2; i += 2)	buffer32[i] = 0xffffffff;
+				for (; i < 20 * 2; i += 2)			buffer32[i] = 0xff000000;
+			}
+			else
+			{
+				buffer += (GetHeight() - 1) * GetPitch();
+
+				for (i = 0; i < tics * 2; i += 2)	buffer[i] = 0xff;
+				for (; i < 20 * 2; i += 2)			buffer[i] = 0x00;
+			}
 		}
 		else
 		{
@@ -990,16 +1105,6 @@ void FPaletteTester::SetTranslation(int num)
 	{
 		WantTranslation = num;
 	}
-}
-
-//==========================================================================
-//
-// FPaletteTester :: Unload
-//
-//==========================================================================
-
-void FPaletteTester::Unload()
-{
 }
 
 //==========================================================================

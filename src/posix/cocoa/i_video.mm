@@ -106,6 +106,17 @@ EXTERN_CVAR(Bool, ticker   )
 EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Bool, vid_hidpi)
 
+CUSTOM_CVAR(Bool, swtruecolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	// Strictly speaking this doesn't require a mode switch, but it is the easiest
+	// way to force a CreateFramebuffer call without a lot of refactoring.
+	extern int NewWidth, NewHeight, NewBits, DisplayBits;
+	NewWidth      = screen->GetWidth();
+	NewHeight     = screen->GetHeight();
+	NewBits       = DisplayBits;
+	setmodeneeded = true;
+}
+
 CUSTOM_CVAR(Bool, fullscreen, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	extern int NewWidth, NewHeight, NewBits, DisplayBits;
@@ -123,7 +134,7 @@ CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_
 
 static int s_currentRenderer;
 
-CUSTOM_CVAR(Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Int, vid_renderer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	// 0: Software renderer
 	// 1: OpenGL renderer
@@ -238,7 +249,7 @@ public:
 	virtual EDisplayType GetDisplayType() { return DISPLAY_Both; }
 	virtual void SetWindowedScale(float scale);
 
-	virtual DFrameBuffer* CreateFrameBuffer(int width, int height, bool fs, DFrameBuffer* old);
+	virtual DFrameBuffer* CreateFrameBuffer(int width, int height, bool bgra, bool fs, DFrameBuffer* old);
 
 	virtual void StartModeIterator(int bits, bool fullscreen);
 	virtual bool NextMode(int* width, int* height, bool* letterbox);
@@ -280,7 +291,7 @@ private:
 class CocoaFrameBuffer : public DFrameBuffer
 {
 public:
-	CocoaFrameBuffer(int width, int height, bool fullscreen);
+	CocoaFrameBuffer(int width, int height, bool bgra, bool fullscreen);
 	~CocoaFrameBuffer();
 
 	virtual bool Lock(bool buffer);
@@ -590,14 +601,14 @@ bool CocoaVideo::NextMode(int* const width, int* const height, bool* const lette
 	return false;
 }
 
-DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, const bool fullscreen, DFrameBuffer* const old)
+DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, const bool bgra, const bool fullscreen, DFrameBuffer* const old)
 {
 	PalEntry flashColor  = 0;
 	int      flashAmount = 0;
 
 	if (NULL != old)
 	{
-		if (width == m_width && height == m_height)
+		if (width == m_width && height == m_height && bgra == old->IsBgra())
 		{
 			SetMode(width, height, fullscreen, vid_hidpi);
 			return old;
@@ -622,7 +633,7 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
 	}
 	else
 	{
-		fb = new CocoaFrameBuffer(width, height, fullscreen);
+		fb = new CocoaFrameBuffer(width, height, bgra, fullscreen);
 	}
 
 	fb->SetFlash(flashColor, flashAmount);
@@ -846,8 +857,8 @@ CocoaVideo* CocoaVideo::GetInstance()
 // ---------------------------------------------------------------------------
 
 
-CocoaFrameBuffer::CocoaFrameBuffer(int width, int height, bool fullscreen)
-: DFrameBuffer(width, height)
+CocoaFrameBuffer::CocoaFrameBuffer(int width, int height, bool bgra, bool fullscreen)
+: DFrameBuffer(width, height, bgra)
 , m_needPaletteUpdate(false)
 , m_gamma(0.0f)
 , m_needGammaUpdate(false)
@@ -949,8 +960,15 @@ void CocoaFrameBuffer::Update()
 	FlipCycles.Reset();
 	BlitCycles.Clock();
 
-	GPfx.Convert(MemBuffer, Pitch, m_pixelBuffer, Width * BYTES_PER_PIXEL,
-		Width, Height, FRACUNIT, FRACUNIT, 0, 0);
+	if (IsBgra())
+	{
+		CopyWithGammaBgra(m_pixelBuffer, Width * BYTES_PER_PIXEL, m_gammaTable[0], m_gammaTable[1], m_gammaTable[2], m_flashColor, m_flashAmount);
+	}
+	else
+	{
+		GPfx.Convert(MemBuffer, Pitch, m_pixelBuffer, Width * BYTES_PER_PIXEL,
+			Width, Height, FRACUNIT, FRACUNIT, 0, 0);
+	}
 
 	FlipCycles.Clock();
 	Flip();
@@ -1082,8 +1100,10 @@ void CocoaFrameBuffer::Flip()
 	static const GLenum format = GL_ABGR_EXT;
 #endif // __LITTLE_ENDIAN__
 
-	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8,
-		Width, Height, 0, format, GL_UNSIGNED_BYTE, m_pixelBuffer);
+	if (IsBgra())
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, Width, Height, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, m_pixelBuffer);
+	else
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, Width, Height, 0, format, GL_UNSIGNED_BYTE, m_pixelBuffer);
 
 	glBegin(GL_QUADS);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1313,7 +1333,7 @@ void I_CreateRenderer()
 
 DFrameBuffer* I_SetMode(int &width, int &height, DFrameBuffer* old)
 {
-	return Video->CreateFrameBuffer(width, height, fullscreen, old);
+	return Video->CreateFrameBuffer(width, height, swtruecolor, fullscreen, old);
 }
 
 bool I_CheckResolution(const int width, const int height, const int bits)

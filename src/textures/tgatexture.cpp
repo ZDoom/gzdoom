@@ -181,6 +181,7 @@ void FTGATexture::Unload ()
 		delete[] Pixels;
 		Pixels = NULL;
 	}
+	FTexture::Unload();
 }
 
 //==========================================================================

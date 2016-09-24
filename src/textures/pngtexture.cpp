@@ -372,11 +372,9 @@ FPNGTexture::~FPNGTexture ()
 
 void FPNGTexture::Unload ()
 {
-	if (Pixels != NULL)
-	{
-		delete[] Pixels;
-		Pixels = NULL;
-	}
+	delete[] Pixels;
+	Pixels = NULL;
+	FTexture::Unload();
 }
 
 //==========================================================================
@@ -448,6 +446,7 @@ const BYTE *FPNGTexture::GetPixels ()
 	}
 	return Pixels;
 }
+
 
 //==========================================================================
 //

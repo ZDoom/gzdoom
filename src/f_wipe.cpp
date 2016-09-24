@@ -382,6 +382,9 @@ static bool (*wipes[])(int) =
 // Returns true if the wipe should be performed.
 bool wipe_StartScreen (int type)
 {
+	if (screen->IsBgra())
+		return false;
+
 	CurrentWipeType = clamp(type, 0, wipe_NUMWIPES - 1);
 
 	if (CurrentWipeType)
@@ -395,11 +398,15 @@ bool wipe_StartScreen (int type)
 
 void wipe_EndScreen (void)
 {
+	if (screen->IsBgra())
+		return;
+
 	if (CurrentWipeType)
 	{
 		wipe_scr_end = new short[SCREENWIDTH * SCREENHEIGHT / 2];
 		screen->GetBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_end);
 		screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_start); // restore start scr.
+
 		// Initialize the wipe
 		(*wipes[(CurrentWipeType-1)*3])(0);
 	}
@@ -409,6 +416,9 @@ void wipe_EndScreen (void)
 bool wipe_ScreenWipe (int ticks)
 {
 	bool rc;
+
+	if (screen->IsBgra())
+		return true;
 
 	if (CurrentWipeType == wipe_None)
 		return true;
@@ -423,6 +433,9 @@ bool wipe_ScreenWipe (int ticks)
 // Final things for the wipe
 void wipe_Cleanup()
 {
+	if (screen->IsBgra())
+		return;
+
 	if (wipe_scr_start != NULL)
 	{
 		delete[] wipe_scr_start;

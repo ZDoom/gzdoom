@@ -75,5 +75,4 @@ struct FColormap
 };
 
 
-
 #endif

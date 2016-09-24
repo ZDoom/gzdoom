@@ -674,6 +674,10 @@ OptionMenu "VideoOptions"
 
 	Option "$DSPLYMNU_VSYNC",					"vid_vsync", "OnOff"
 	Option "$DSPLYMNU_CAPFPS",					"cl_capfps", "OffOn"
+	Option "$DSPLYMNU_TRUECOLOR",				"swtruecolor", "OnOff"
+	Option "$DSPLYMNU_MINFILTER",				"r_minfilter", "OnOff"
+	Option "$DSPLYMNU_MAGFILTER",				"r_magfilter", "OnOff"
+	Option "$DSPLYMNU_MIPMAP",					"r_mipmap", "OnOff"
 
 	StaticText " "
 	Option "$DSPLYMNU_WIPETYPE",				"wipetype", "Wipes"

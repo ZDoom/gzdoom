@@ -25,6 +25,13 @@ OptionValue "FilterModes"
 	4, "$OPTVAL_TRILINEAR"
 }
 
+OptionValue "LightMathModes"
+{
+	0, "$OPTVAL_LOW"
+	1, "$OPTVAL_MEDIUM"
+	2, "$OPTVAL_HIGH"
+}
+
 OptionValue "HWGammaModes"
 {
 	0, "$OPTVAL_ON"
@@ -40,6 +47,14 @@ OptionValue "TonemapModes"
 	3, "$OPTVAL_REINHARD"
 	4, "$OPTVAL_LINEAR"
 	5, "$OPTVAL_PALETTE"
+}
+
+OptionValue "SSAOModes"
+{
+	0, "$OPTVAL_OFF"
+	1, "$OPTVAL_LOW"
+	2, "$OPTVAL_MEDIUM"
+	3, "$OPTVAL_HIGH"
 }
 
 OptionValue "TextureFormats"
@@ -199,6 +214,7 @@ OptionMenu "GLLightOptions"
 	Option "$GLLIGHTMNU_CLIPLIGHTS",		gl_lights_checkside,			"YesNo"
 	Option "$GLLIGHTMNU_LIGHTSPRITES",		gl_light_sprites,				"YesNo"
 	Option "$GLLIGHTMNU_LIGHTPARTICLES",	gl_light_particles,				"YesNo"
+	Option "$GLLIGHTMNU_LIGHTMATH",			gl_light_math,					"LightMathModes"
 }
 
 OptionMenu "GLPrefOptions"
@@ -226,4 +242,6 @@ OptionMenu "GLPrefOptions"
 	Option "$GLPREFMNU_TONEMAP", 				gl_tonemap,						"TonemapModes"
 	Option "$GLPREFMNU_BLOOM",		 			gl_bloom,						"OnOff"
 	Option "$GLPREFMNU_LENS",		 			gl_lens,						"OnOff"
+	Option "$GLPREFMNU_SSAO",		 			gl_ssao,						"SSAOModes"
+	Slider "$GLPREFMNU_SSAO_PORTALS",			gl_ssao_portals,				0.0, 4.0, 1.0, 0
 }

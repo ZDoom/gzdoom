@@ -2608,6 +2608,7 @@ GLLIGHTMNU_LIGHTDEFS		= "Enable light definitions";
 GLLIGHTMNU_CLIPLIGHTS 		= "Clip lights";
 GLLIGHTMNU_LIGHTSPRITES 	= "Lights affect sprites";
 GLLIGHTMNU_LIGHTPARTICLES 	= "Lights affect particles";
+GLLIGHTMNU_LIGHTMATH 		= "Light quality";
 
 // OpenGL Preferences
 GLPREFMNU_TITLE 				= "OPENGL PREFERENCES";
@@ -2633,6 +2634,8 @@ GLPREFMNU_MULTISAMPLE			= "Multisample";
 GLPREFMNU_TONEMAP				= "Tonemap Mode";
 GLPREFMNU_BLOOM					= "Bloom effect";
 GLPREFMNU_LENS					= "Lens distortion effect";
+GLPREFMNU_SSAO					= "Ambient occlusion quality";
+GLPREFMNU_SSAO_PORTALS			= "Portals with AO";
 
 // Option Values
 OPTVAL_SMART 				= "Smart";
@@ -2708,3 +2711,6 @@ OPTVAL_UNCHARTED2			= "Uncharted 2";
 OPTVAL_HEJLDAWSON			= "Hejl Dawson";
 OPTVAL_REINHARD				= "Reinhard";
 OPTVAL_PALETTE				= "Palette";
+OPTVAL_LOW					= "Low";
+OPTVAL_MEDIUM				= "Medium";
+OPTVAL_HIGH					= "High";

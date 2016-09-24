@@ -1207,28 +1207,22 @@ void G_FinishTravel ()
 		pnum = int(pawn->player - players);
 		pawn->ChangeStatNum (STAT_PLAYER);
 		pawndup = pawn->player->mo;
-		start = NULL;
 		assert (pawn != pawndup);
-		if (pawndup == NULL)
-		{ // Oh no! there was no start for this player!
-			start = G_PickPlayerStart(pnum, PPS_FORCERANDOM); 
-			if (start != NULL) pawndup = P_SpawnPlayer(start, pnum, (level.flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
-			if (pawndup == NULL)
-			{
-				pawn->flags |= MF_NOSECTOR | MF_NOBLOCKMAP;
-				pawn->Destroy();
-				continue;
-			}
-		}
 
+		start = G_PickPlayerStart(pnum, 0);
 		if (start == NULL)
 		{
-			start = G_PickPlayerStart(pnum, 0);
-			if (start == NULL)
+			if (pawndup != nullptr)
 			{
 				Printf(TEXTCOLOR_RED "No player %d start to travel to!\n", pnum + 1);
 				// Move to the coordinates this player had when they left the level.
 				pawn->SetXYZ(pawndup->Pos());
+			}
+			else
+			{
+				// Could not find a start for this player at all. This really should never happen but if it does, let's better abort.
+				DThinker::DestroyThinkersInList(STAT_TRAVELLING);
+				I_Error ("No player %d start to travel to!\n", pnum + 1);
 			}
 		}
 		oldpawn = pawndup;
@@ -1266,8 +1260,11 @@ void G_FinishTravel ()
 		pawn->player->camera = pawn;
 		pawn->player->viewheight = pawn->ViewHeight;
 		pawn->flags2 &= ~MF2_BLASTED;
-		DObject::StaticPointerSubstitution (oldpawn, pawn);
-		oldpawn->Destroy();
+		if (oldpawn != nullptr)
+		{
+			DObject::StaticPointerSubstitution (oldpawn, pawn);
+			oldpawn->Destroy();
+		}
 		if (pawndup != NULL)
 		{
 			pawndup->Destroy();

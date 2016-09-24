@@ -163,7 +163,7 @@ public:
 	template<class T>
 	FSerializer &Enum(const char *key, T &obj)
 	{
-		auto val = (std::underlying_type<T>::type)obj;
+		auto val = (typename std::underlying_type<T>::type)obj;
 		Serialize(*this, key, val, nullptr);
 		obj = (T)val;
 		return *this;

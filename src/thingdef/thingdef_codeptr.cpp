@@ -7344,3 +7344,55 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpriteRotation)
 	mobj->SpriteRotation = angle;
 	ACTION_RETURN_BOOL(true);
 }
+
+//==========================================================================
+//
+// A_SetMaskRotation(anglestart, angleend, pitchstart, pitchend, flags, ptr)
+//
+// Specifies how much to fake a sprite rotation.
+//==========================================================================
+
+enum VRFFlags
+{
+	VRF_NOANGLESTART =		1,
+	VRF_NOANGLEEND =		1 << 1,
+	VRF_NOPITCHSTART =		1 << 2,
+	VRF_NOPITCHEND =		1 << 3,
+};
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetVisibleRotation)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_ANGLE_OPT(anglestart) { anglestart = 0.;	}
+	PARAM_ANGLE_OPT(angleend)	{ angleend = 0.;	}
+	PARAM_ANGLE_OPT(pitchstart) { pitchstart = 0.;	}
+	PARAM_ANGLE_OPT(pitchend)	{ pitchend = 0.;	}
+	PARAM_INT_OPT(flags)		{ flags = 0; }
+	PARAM_INT_OPT(ptr)			{ ptr = AAPTR_DEFAULT; }
+
+	AActor *mobj = COPY_AAPTR(self, ptr);
+
+	if (mobj == nullptr)
+	{
+		ACTION_RETURN_BOOL(false);
+	}
+		
+	if (!(flags & VRF_NOANGLESTART))
+	{
+		mobj->VisibleStartAngle = anglestart;
+	}
+	if (!(flags & VRF_NOANGLEEND))
+	{
+		mobj->VisibleEndAngle = angleend;
+	}
+	if (!(flags & VRF_NOPITCHSTART))
+	{
+		mobj->VisibleStartPitch = pitchstart;
+	}
+	if (!(flags & VRF_NOPITCHEND))
+	{
+		mobj->VisibleEndPitch = pitchend;
+	}
+
+	ACTION_RETURN_BOOL(true);
+}

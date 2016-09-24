@@ -48,12 +48,14 @@ function( add_pk3 PK3_NAME PK3_DIR )
 			COMMAND zipdir -udf ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} ${PK3_DIR}
 			DEPENDS zipdir )
 	endif()
-
-		# Touch the zipdir executable here so that the pk3s are forced to
-		# rebuild each time since their dependecy has "changed."
-		add_custom_target( ${PK3_TARGET} ALL
-			COMMAND ${CMAKE_COMMAND} -E touch $<TARGET_FILE:zipdir>
-			DEPENDS ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} )
+	# Grab a list of top-level PK3 folder files, so we can conveniently see them in the IDE
+	file(GLOB PK3_SRCS ${PK3_DIR}/*)
+	# Touch the zipdir executable here so that the pk3s are forced to
+	# rebuild each time since their dependecy has "changed."
+	add_custom_target( ${PK3_TARGET} ALL
+		COMMAND ${CMAKE_COMMAND} -E touch $<TARGET_FILE:zipdir>
+		DEPENDS ${ZDOOM_OUTPUT_DIR}/${PK3_NAME}
+		SOURCES "${PK3_SRCS}")
 endfunction()
 
 # Macro for building libraries without debugging information

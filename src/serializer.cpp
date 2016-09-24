@@ -1294,7 +1294,7 @@ FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **
 	assert(base != nullptr);
 	if (arc.isReading() || !arc.w->inObject() || defval == nullptr || value != *defval)
 	{
-		ptrdiff_t vv = value == nullptr ? -1 : value - base;
+		int64_t vv = value == nullptr ? -1 : value - base;
 		Serialize(arc, key, vv, nullptr);
 		value = vv < 0 ? nullptr : base + vv;
 	}

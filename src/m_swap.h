@@ -46,6 +46,11 @@ inline short LittleShort(int x)
 	return OSSwapLittleToHostInt16((uint16_t)x);
 }
 
+inline unsigned short LittleShort(unsigned int x)
+{
+	return OSSwapLittleToHostInt16((uint16_t)x);
+}
+
 inline int LittleLong(int x)
 {
 	return OSSwapLittleToHostInt32((uint32_t)x);
@@ -54,6 +59,16 @@ inline int LittleLong(int x)
 inline unsigned int LittleLong(unsigned int x)
 {
 	return OSSwapLittleToHostInt32(x);
+}
+
+inline int LittleLong(long x)
+{
+	return OSSwapLittleToHostInt32((uint32_t)x);
+}
+
+inline unsigned int LittleLong(unsigned long x)
+{
+	return OSSwapLittleToHostInt32((uint32_t)x);
 }
 
 inline short BigShort(short x)

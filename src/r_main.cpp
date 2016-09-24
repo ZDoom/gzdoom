@@ -60,6 +60,9 @@
 #include "r_data/colormaps.h"
 #include "farchive.h"
 #include "p_maputl.h"
+#include "r_swrenderer2.h"
+
+CVAR(Bool, r_newrenderer, 0, 0);
 
 // MACROS ------------------------------------------------------------------
 
@@ -897,7 +900,15 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
 	PO_LinkToSubsectors();
 	InSubsector = NULL;
-	R_RenderBSPNode (nodes + numnodes - 1);	// The head node is the last node output.
+	if (!r_newrenderer || !r_swtruecolor)
+	{
+		R_RenderBSPNode(nodes + numnodes - 1);	// The head node is the last node output.
+	}
+	else
+	{
+		RenderBsp bsp;
+		bsp.Render();
+	}
 	R_3D_ResetClip(); // reset clips (floor/ceiling)
 	camera->renderflags = savedflags;
 	WallCycles.Unclock();
@@ -907,8 +918,11 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	if (viewactive)
 	{
 		PlaneCycles.Clock();
-		R_DrawPlanes ();
-		R_DrawPortals ();
+		if (!r_newrenderer || !r_swtruecolor)
+		{
+			R_DrawPlanes();
+			R_DrawPortals();
+		}
 		PlaneCycles.Unclock();
 
 		// [RH] Walk through mirrors
@@ -925,7 +939,8 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 		NetUpdate ();
 		
 		MaskedCycles.Clock();
-		R_DrawMasked ();
+		if (!r_newrenderer || !r_swtruecolor)
+			R_DrawMasked ();
 		MaskedCycles.Unclock();
 
 		NetUpdate ();

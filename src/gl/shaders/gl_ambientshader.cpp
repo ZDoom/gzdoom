@@ -74,32 +74,47 @@ void FLinearDepthShader::Bind(bool multisample)
 
 void FSSAOShader::Bind()
 {
-	if (!mShader)
+	auto &shader = mShader[gl_ssao];
+	if (!shader)
 	{
-		const char *defines = R"(
-			#define USE_RANDOM_TEXTURE
-			#define RANDOM_TEXTURE_WIDTH 4.0
-			#define NUM_DIRECTIONS 8.0
-			#define NUM_STEPS 4.0
-		)";
-
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/ssao.fp", defines, 330);
-		mShader.SetFragDataLocation(0, "FragColor");
-		mShader.Link("shaders/glsl/ssao");
-		mShader.SetAttribLocation(0, "PositionInProjection");
-		DepthTexture.Init(mShader, "DepthTexture");
-		RandomTexture.Init(mShader, "RandomTexture");
-		UVToViewA.Init(mShader, "UVToViewA");
-		UVToViewB.Init(mShader, "UVToViewB");
-		InvFullResolution.Init(mShader, "InvFullResolution");
-		NDotVBias.Init(mShader, "NDotVBias");
-		NegInvR2.Init(mShader, "NegInvR2");
-		RadiusToScreen.Init(mShader, "RadiusToScreen");
-		AOMultiplier.Init(mShader, "AOMultiplier");
-		AOStrength.Init(mShader, "AOStrength");
+		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/ssao.fp", GetDefines(gl_ssao), 330);
+		shader.SetFragDataLocation(0, "FragColor");
+		shader.Link("shaders/glsl/ssao");
+		shader.SetAttribLocation(0, "PositionInProjection");
+		DepthTexture.Init(shader, "DepthTexture");
+		RandomTexture.Init(shader, "RandomTexture");
+		UVToViewA.Init(shader, "UVToViewA");
+		UVToViewB.Init(shader, "UVToViewB");
+		InvFullResolution.Init(shader, "InvFullResolution");
+		NDotVBias.Init(shader, "NDotVBias");
+		NegInvR2.Init(shader, "NegInvR2");
+		RadiusToScreen.Init(shader, "RadiusToScreen");
+		AOMultiplier.Init(shader, "AOMultiplier");
+		AOStrength.Init(shader, "AOStrength");
 	}
-	mShader.Bind();
+	shader.Bind();
+}
+
+FString FSSAOShader::GetDefines(int mode)
+{
+	int numDirections, numSteps;
+	switch (gl_ssao)
+	{
+	default:
+	case LowQuality:    numDirections = 2; numSteps = 4; break;
+	case MediumQuality: numDirections = 4; numSteps = 4; break;
+	case HighQuality:   numDirections = 8; numSteps = 4; break;
+	}
+
+	FString defines;
+	defines.Format(R"(
+		#define USE_RANDOM_TEXTURE
+		#define RANDOM_TEXTURE_WIDTH 4.0
+		#define NUM_DIRECTIONS %d.0
+		#define NUM_STEPS %d.0
+	)", numDirections, numSteps);
+	return defines;
 }
 
 void FDepthBlurShader::Bind(bool vertical)

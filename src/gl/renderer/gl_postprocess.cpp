@@ -99,7 +99,12 @@ CVAR(Float, gl_lens_k, -0.12f, 0)
 CVAR(Float, gl_lens_kcube, 0.1f, 0)
 CVAR(Float, gl_lens_chromatic, 1.12f, 0)
 
-CVAR(Bool, gl_ssao, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, gl_ssao, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0 || self > 3)
+		self = 0;
+}
+
 CVAR(Float, gl_ssao_strength, 0.7, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, gl_ssao_debug, false, 0)
 CVAR(Float, gl_ssao_bias, 0.5f, 0)

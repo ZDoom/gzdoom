@@ -34,7 +34,6 @@
 **
 */
 #include "actor.h"
-#include "farchive.h"
 #include "templates.h"
 #include "cmdlib.h"
 #include "i_system.h"
@@ -46,71 +45,6 @@
 // states, but a single state cannot be owned by more than one
 // actor. States are archived by recording the actor they belong
 // to and the index into that actor's list of states.
-
-// For NULL states, which aren't owned by any actor, the owner
-// is recorded as AActor with the following state. AActor should
-// never actually have this many states of its own, so this
-// is (relatively) safe.
-
-#define NULL_STATE_INDEX	127
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-FArchive &operator<< (FArchive &arc, FState *&state)
-{
-	PClassActor *info;
-
-	if (arc.IsStoring ())
-	{
-		if (state == NULL)
-		{
-			arc.UserWriteClass (RUNTIME_CLASS(AActor));
-			arc.WriteCount (NULL_STATE_INDEX);
-			return arc;
-		}
-
-		info = FState::StaticFindStateOwner (state);
-
-		if (info != NULL)
-		{
-			arc.UserWriteClass (info);
-			arc.WriteCount ((DWORD)(state - info->OwnedStates));
-		}
-		else
-		{
-			/* this was never working as intended.
-			I_Error ("Cannot find owner for state %p:\n"
-					 "%s %c%c %3d [%p] -> %p", state,
-					 sprites[state->sprite].name,
-					 state->GetFrame() + 'A',
-					 state->GetFullbright() ? '*' : ' ',
-					 state->GetTics(),
-					 state->GetAction(),
-					 state->GetNextState());
-			*/
-		}
-	}
-	else
-	{
-		PClassActor *info;
-		DWORD ofs;
-
-		arc.UserReadClass<PClassActor>(info);
-		ofs = arc.ReadCount ();
-		if (ofs == NULL_STATE_INDEX && info == RUNTIME_CLASS(AActor))
-		{
-			state = NULL;
-		}
-		else
-		{
-			state = info->OwnedStates + ofs;
-		}
-	}
-	return arc;
-}
 
 //==========================================================================
 //

@@ -59,7 +59,11 @@
 #else
 #include <dlfcn.h>
 
+#ifdef __APPLE__
+#define FLUIDSYNTHLIB	"libfluidsynth.1.dylib"
+#else // !__APPLE__
 #define FLUIDSYNTHLIB	"libfluidsynth.so.1"
+#endif // __APPLE__
 #endif
 
 #define FLUID_REVERB_DEFAULT_ROOMSIZE 0.2f
@@ -91,6 +95,8 @@
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+CVAR(String, fluid_lib, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CVAR(String, fluid_patchset, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -689,22 +695,54 @@ bool FluidSynthMIDIDevice::LoadFluidSynth()
 	const char *libname;
 
 #ifdef _WIN32
-	FluidSynthDLL = LoadLibrary((libname = FLUIDSYNTHLIB1));
-	if (FluidSynthDLL == NULL)
+	if (strlen(fluid_lib) > 0)
 	{
-		FluidSynthDLL = LoadLibrary((libname = FLUIDSYNTHLIB2));
-		if (FluidSynthDLL == NULL)
+		FluidSynthDLL = LoadLibrary(libname = fluid_lib);
+		if (nullptr == FluidSynthDLL)
 		{
-			Printf(TEXTCOLOR_RED"Could not load " FLUIDSYNTHLIB1 " or " FLUIDSYNTHLIB2 "\n");
-			return false;
+			Printf(TEXTCOLOR_RED "Could not load %s\n", libname);
+		}
+	}
+	else
+	{
+		FluidSynthDLL = nullptr;
+	}
+	
+	if (nullptr == FluidSynthDLL)
+	{
+		FluidSynthDLL = LoadLibrary(libname = FLUIDSYNTHLIB1);
+		if (nullptr == FluidSynthDLL)
+		{
+			FluidSynthDLL = LoadLibrary(libname = FLUIDSYNTHLIB2);
+			if (nullptr == FluidSynthDLL)
+			{
+				Printf(TEXTCOLOR_RED "Could not load " FLUIDSYNTHLIB1 " or " FLUIDSYNTHLIB2 "\n");
+				return false;
+			}
 		}
 	}
 #else
-	FluidSynthSO = dlopen((libname = FLUIDSYNTHLIB), RTLD_LAZY);
-	if (FluidSynthSO == NULL)
+	if (strlen(fluid_lib) > 0)
 	{
-		Printf(TEXTCOLOR_RED"Could not load " FLUIDSYNTHLIB ": %s\n", dlerror());
-		return false;
+		FluidSynthSO = dlopen(libname = fluid_lib, RTLD_LAZY);
+		if (nullptr == FluidSynthSO)
+		{
+			Printf(TEXTCOLOR_RED "Could not load %s: %s\n", libname, dlerror());
+		}
+	}
+	else
+	{
+		FluidSynthSO = nullptr;
+	}
+
+	if (nullptr == FluidSynthSO)
+	{
+		FluidSynthSO = dlopen(libname = FLUIDSYNTHLIB, RTLD_LAZY);
+		if (nullptr == FluidSynthSO)
+		{
+			Printf(TEXTCOLOR_RED "Could not load " FLUIDSYNTHLIB ": %s\n", dlerror());
+			return false;
+		}
 	}
 #endif
 

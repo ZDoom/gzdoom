@@ -644,6 +644,7 @@ xx(ColorSet)
 xx(NeverSwitchOnPickup)
 xx(MoveBob)
 xx(StillBob)
+xx(WBobSpeed)
 xx(PlayerClass)
 xx(Wi_NoAutostartMap)
 

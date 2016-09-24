@@ -47,7 +47,13 @@
 #include "stats.h"
 #include "a_sharedglobal.h"
 #include "dsectoreffect.h"
-#include "farchive.h"
+#include "serializer.h"
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 ClassReg DObject::RegistrationInfo =
 {
@@ -60,6 +66,12 @@ ClassReg DObject::RegistrationInfo =
 	CLASSREG_PClass,				// MetaClassNum
 };
 _DECLARE_TI(DObject)
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 CCMD (dumpactors)
 {
@@ -94,6 +106,12 @@ CCMD (dumpactors)
 		}
 	}
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 CCMD (dumpclasses)
 {
@@ -234,6 +252,12 @@ CCMD (dumpclasses)
 	Printf ("%d classes shown, %d omitted\n", shown, omitted);
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void DObject::InPlaceConstructor (void *mem)
 {
 	new ((EInPlace *)mem) DObject;
@@ -254,6 +278,12 @@ DObject::DObject (PClass *inClass)
 	ObjNext = GC::Root;
 	GC::Root = this;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 DObject::~DObject ()
 {
@@ -304,10 +334,22 @@ DObject::~DObject ()
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void DObject::Destroy ()
 {
 	ObjectFlags = (ObjectFlags & ~OF_Fixed) | OF_EuthanizeMe;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 size_t DObject::PropagateMark()
 {
@@ -330,6 +372,12 @@ size_t DObject::PropagateMark()
 	return 0;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
 {
 	const PClass *info = GetClass();
@@ -351,6 +399,12 @@ size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
 	}
 	return changed;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld)
 {
@@ -417,70 +471,41 @@ size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld)
 	return changed;
 }
 
-void DObject::SerializeUserVars(FArchive &arc)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DObject::SerializeUserVars(FSerializer &arc)
 {
-	PSymbolTable *symt;
-	FName varname;
-	DWORD count, j;
-	int *varloc = NULL;
-
-	symt = &GetClass()->Symbols;
-
-	if (arc.IsStoring())
+	if (arc.isWriting())
 	{
 		// Write all fields that aren't serialized by native code.
-		GetClass()->WriteValue(arc, this);
-	}
-	else if (SaveVersion >= 4535)
-	{
-		GetClass()->ReadValue(arc, this);
+		GetClass()->WriteAllFields(arc, this);
 	}
 	else
-	{ // Old version that only deals with ints
-		// Read user variables until 'None' is encountered.
-		arc << varname;
-		while (varname != NAME_None)
-		{
-			PField *var = dyn_cast<PField>(symt->FindSymbol(varname, true));
-			DWORD wanted = 0;
-
-			if (var != NULL && !(var->Flags & VARF_Native))
-			{
-				PType *type = var->Type;
-				PArray *arraytype = dyn_cast<PArray>(type);
-				if (arraytype != NULL)
-				{
-					wanted = arraytype->ElementCount;
-					type = arraytype->ElementType;
-				}
-				else
-				{
-					wanted = 1;
-				}
-				assert(type == TypeSInt32);
-				varloc = (int *)(reinterpret_cast<BYTE *>(this) + var->Offset);
-			}
-			count = arc.ReadCount();
-			for (j = 0; j < MIN(wanted, count); ++j)
-			{
-				arc << varloc[j];
-			}
-			if (wanted < count)
-			{
-				// Ignore remaining values from archive.
-				for (; j < count; ++j)
-				{
-					int foo;
-					arc << foo;
-				}
-			}
-			arc << varname;
-		}
+	{
+		GetClass()->ReadAllFields(arc, this);
 	}
 }
 
-void DObject::Serialize (FArchive &arc)
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DObject::Serialize(FSerializer &arc)
 {
+	int fresh = ObjectFlags & OF_JustSpawned;
+	int freshdef = 0;
+	arc("justspawned", fresh, freshdef);
+	if (arc.isReading())
+	{
+		ObjectFlags |= fresh;
+	}
 	ObjectFlags |= OF_SerialSuccess;
 }
 

@@ -124,6 +124,7 @@ glsegextra_t*	glsegextras;
 
 int 			numsectors;
 sector_t*		sectors;
+TArray<sector_t>	loadsectors;
 
 int 			numsubsectors;
 subsector_t*	subsectors;
@@ -133,12 +134,13 @@ node_t* 		nodes;
 
 int 			numlines;
 line_t* 		lines;
+TArray<line_t>	loadlines;
 
 int 			numsides;
 side_t* 		sides;
+TArray<side_t>	loadsides;
 
-int				numzones;
-zone_t*			zones;
+TArray<zone_t>	Zones;
 
 node_t * 		gamenodes;
 int 			numgamenodes;
@@ -816,8 +818,7 @@ void P_FloodZones ()
 			P_FloodZone (&sectors[i], z++);
 		}
 	}
-	numzones = z;
-	zones = new zone_t[z];
+	Zones.Resize(z);
 	reverb = S_FindEnvironment(level.DefaultEnvironment);
 	if (reverb == NULL)
 	{
@@ -826,7 +827,7 @@ void P_FloodZones ()
 	}
 	for (i = 0; i < z; ++i)
 	{
-		zones[i].Environment = reverb;
+		Zones[i].Environment = reverb;
 	}
 }
 
@@ -3549,18 +3550,9 @@ void P_FreeLevelData ()
 		polyobjs = NULL;
 	}
 	po_NumPolyobjs = 0;
-	if (zones != NULL)
-	{
-		delete[] zones;
-		zones = NULL;
-	}
-	numzones = 0;
+	Zones.Clear();
 	P_FreeStrifeConversations ();
-	if (level.Scrolls != NULL)
-	{
-		delete[] level.Scrolls;
-		level.Scrolls = NULL;
-	}
+	level.Scrolls.Clear();
 	P_ClearUDMFKeys();
 }
 
@@ -3672,6 +3664,8 @@ void P_SetupLevel (const char *lumpname, int position)
 		I_Error("Unable to open map '%s'\n", lumpname);
 	}
 
+	// generate a checksum for the level, to be included and checked with savegames.
+	map->GetChecksum(level.md5);
 	// find map num
 	level.lumpnum = map->lumpnum;
 	hasglnodes = false;
@@ -4201,6 +4195,13 @@ void P_SetupLevel (const char *lumpname, int position)
 	MapThingsConverted.Clear();
 	MapThingsUserDataIndex.Clear();
 	MapThingsUserData.Clear();
+
+	loadsectors.Resize(numsectors);
+	memcpy(&loadsectors[0], sectors, numsectors * sizeof(sector_t));
+	loadlines.Resize(numlines);
+	memcpy(&loadlines[0], lines, numlines * sizeof(line_t));
+	loadsides.Resize(numsides);
+	memcpy(&loadsides[0], sides, numsides * sizeof(side_t));
 
 	if (glsegextras != NULL)
 	{

@@ -46,6 +46,7 @@
 #include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_material.h"
 #include "gl/renderer/gl_quaddrawer.h"
+#include "gl/stereo3d/gl_stereo3d.h"
 
 EXTERN_CVAR (Bool, r_drawplayersprites)
 EXTERN_CVAR(Float, transsouls)
@@ -198,6 +199,8 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	AActor * playermo=players[consoleplayer].camera;
 	player_t * player=playermo->player;
 	
+	s3d::Stereo3DMode::getCurrentMode().AdjustPlayerSprites();
+
 	// this is the same as the software renderer
 	if (!player ||
 		!r_drawplayersprites ||

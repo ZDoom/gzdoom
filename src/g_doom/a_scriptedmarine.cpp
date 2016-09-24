@@ -21,19 +21,14 @@ static FRandom pr_m_fireshotgun2 ("SMarineFireSSG");
 
 IMPLEMENT_CLASS (AScriptedMarine)
 
-void AScriptedMarine::Serialize (FArchive &arc)
+void AScriptedMarine::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
 
-	if (arc.IsStoring ())
-	{
-		arc.WriteSprite (SpriteOverride);
-	}
-	else
-	{
-		SpriteOverride = arc.ReadSprite ();
-	}
-	arc << CurrentWeapon;
+	auto def = (AScriptedMarine*)GetDefault();
+
+	arc.Sprite("spriteoverride", SpriteOverride, &def->SpriteOverride)
+		("currentweapon", CurrentWeapon, def->CurrentWeapon);
 }
 
 void AScriptedMarine::Activate (AActor *activator)

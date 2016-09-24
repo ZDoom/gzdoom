@@ -71,7 +71,7 @@ public:
 		EColorRange textColor, float holdTime);
 	virtual ~DHUDMessage ();
 
-	virtual void Serialize (FArchive &arc);
+	virtual void Serialize(FSerializer &arc);
 
 	void Draw (int bottom, int visibility);
 	virtual void ResetText (const char *text);
@@ -157,7 +157,7 @@ public:
 	DHUDMessageFadeOut (FFont *font, const char *text, float x, float y, int hudwidth, int hudheight,
 		EColorRange textColor, float holdTime, float fadeOutTime);
 
-	virtual void Serialize (FArchive &arc);
+	virtual void Serialize(FSerializer &arc);
 	virtual void DoDraw (int linenum, int x, int y, bool clean, int hudheight);
 	virtual bool Tick ();
 
@@ -176,7 +176,7 @@ public:
 	DHUDMessageFadeInOut (FFont *font, const char *text, float x, float y, int hudwidth, int hudheight,
 		EColorRange textColor, float holdTime, float fadeInTime, float fadeOutTime);
 
-	virtual void Serialize (FArchive &arc);
+	virtual void Serialize(FSerializer &arc);
 	virtual void DoDraw (int linenum, int x, int y, bool clean, int hudheight);
 	virtual bool Tick ();
 
@@ -195,7 +195,7 @@ public:
 	DHUDMessageTypeOnFadeOut (FFont *font, const char *text, float x, float y, int hudwidth, int hudheight,
 		EColorRange textColor, float typeTime, float holdTime, float fadeOutTime);
 
-	virtual void Serialize (FArchive &arc);
+	virtual void Serialize(FSerializer &arc);
 	virtual void DoDraw (int linenum, int x, int y, bool clean, int hudheight);
 	virtual bool Tick ();
 	virtual void ScreenSizeChanged ();
@@ -355,7 +355,8 @@ public:
 
 	static void AddBlend (float r, float g, float b, float a, float v_blend[4]);
 
-	virtual void Serialize (FArchive &arc);
+	// do not make this a DObject Serialize function because it's not used like one!
+	void SerializeMessages(FSerializer &arc);
 
 	virtual void Tick ();
 	virtual void Draw (EHudState state);

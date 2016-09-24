@@ -61,7 +61,7 @@
 
 #include "doomstat.h"
 #include "m_random.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "b_bot.h"
 #include "m_png.h"
 #include "m_crc32.h"
@@ -291,24 +291,29 @@ DWORD FRandom::StaticSumSeeds ()
 //
 //==========================================================================
 
-void FRandom::StaticWriteRNGState (FILE *file)
+void FRandom::StaticWriteRNGState (FSerializer &arc)
 {
 	FRandom *rng;
-	FPNGChunkArchive arc (file, RAND_ID);
 
-	arc << rngseed;
+	arc("rngseed", rngseed);
 
-	for (rng = FRandom::RNGList; rng != NULL; rng = rng->Next)
+	if (arc.BeginArray("rngs"))
 	{
-		// Only write those RNGs that have names
-		if (rng->NameCRC != 0)
+		for (rng = FRandom::RNGList; rng != NULL; rng = rng->Next)
 		{
-			arc << rng->NameCRC << rng->idx;
-			for (int i = 0; i < SFMT::N32; ++i)
+			// Only write those RNGs that have names
+			if (rng->NameCRC != 0)
 			{
-				arc << rng->sfmt.u[i];
+				if (arc.BeginObject(nullptr))
+				{
+					arc("crc", rng->NameCRC)
+						("index", rng->idx)
+						.Array("u", rng->sfmt.u, SFMT::N32)
+						.EndObject();
+				}
 			}
 		}
+		arc.EndArray();
 	}
 }
 
@@ -321,51 +326,35 @@ void FRandom::StaticWriteRNGState (FILE *file)
 //
 //==========================================================================
 
-void FRandom::StaticReadRNGState (PNGHandle *png)
+void FRandom::StaticReadRNGState(FSerializer &arc)
 {
 	FRandom *rng;
 
-	size_t len = M_FindPNGChunk (png, RAND_ID);
-
-	if (len != 0)
+	arc("rngseed", rngseed);
+	if (arc.BeginArray("rngs"))
 	{
-		const size_t sizeof_rng = sizeof(rng->NameCRC) + sizeof(rng->idx) + sizeof(rng->sfmt.u);
-		const int rngcount = (int)((len-4) / sizeof_rng);
-		int i;
-		DWORD crc;
+		int count = arc.ArraySize();
 
-		FPNGChunkArchive arc (png->File->GetFile(), RAND_ID, len);
-
-		arc << rngseed;
-		FRandom::StaticClearRandom ();
-
-		for (i = rngcount; i; --i)
+		for (int i = 0; i < count; i++)
 		{
-			arc << crc;
-			for (rng = FRandom::RNGList; rng != NULL; rng = rng->Next)
+			if (arc.BeginObject(nullptr))
 			{
-				if (rng->NameCRC == crc)
+				uint32_t crc;
+				arc("crc", crc);
+
+				for (rng = FRandom::RNGList; rng != NULL; rng = rng->Next)
 				{
-					arc << rng->idx;
-					for (int i = 0; i < SFMT::N32; ++i)
+					if (rng->NameCRC == crc)
 					{
-						arc << rng->sfmt.u[i];
+						arc("index", rng->idx)
+							.Array("u", rng->sfmt.u, SFMT::N32);
+						break;
 					}
-					break;
 				}
-			}
-			if (rng == NULL)
-			{ // The RNG was removed. Skip it.
-				int idx;
-				DWORD sfmt;
-				arc << idx;
-				for (int i = 0; i < SFMT::N32; ++i)
-				{
-					arc << sfmt;
-				}
+				arc.EndObject();
 			}
 		}
-		png->File->ResetFilePtr();
+		arc.EndArray();
 	}
 }
 

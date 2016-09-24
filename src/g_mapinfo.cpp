@@ -45,7 +45,6 @@
 #include "i_system.h"
 #include "gi.h"
 #include "gstrings.h"
-#include "farchive.h"
 #include "p_acs.h"
 #include "doomstat.h"
 #include "d_player.h"
@@ -196,7 +195,7 @@ void G_ClearSnapshots (void)
 {
 	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 	{
-		wadlevelinfos[i].ClearSnapshot();
+		wadlevelinfos[i].Snapshot.Clean();
 	}
 	// Since strings are only locked when snapshotting a level, unlock them
 	// all now, since we got rid of all the snapshots that cared about them.
@@ -248,9 +247,8 @@ void level_info_t::Reset()
 	WallVertLight = +8;
 	F1Pic = "";
 	musicorder = 0;
-	snapshot = NULL;
-	snapshotVer = 0;
-	defered = 0;
+	Snapshot = { 0,0,0,0,0,nullptr };
+	deferred.Clear();
 	skyspeed1 = skyspeed2 = 0.f;
 	fadeto = 0;
 	outsidefog = 0xff000000;
@@ -333,34 +331,6 @@ FString level_info_t::LookupLevelName()
 	else return LevelName;
 }
 
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-void level_info_t::ClearSnapshot()
-{
-	if (snapshot != NULL) delete snapshot;
-	snapshot = NULL;
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-void level_info_t::ClearDefered()
-{
-	acsdefered_t *def = defered;
-	while (def)
-	{
-		acsdefered_t *next = def->next;
-		delete def;
-		def = next;
-	}
-	defered = NULL;
-}
 
 //==========================================================================
 //

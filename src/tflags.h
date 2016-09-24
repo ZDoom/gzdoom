@@ -82,13 +82,6 @@ public:
 	TT GetValue() const { return Value; }
 	operator TT() const { return Value; }
 
-	// Serialize to FArchive
-	FArchive& Serialize (FArchive& arc)
-	{
-		arc << Value;
-		return arc;
-	}
-
 	// Set the value of the flagset manually with an integer.
 	// Please think twice before using this.
 	static Self FromInt (TT value) { return Self (static_cast<T> (value)); }
@@ -98,6 +91,7 @@ private:
 	template<typename X> Self operator& (X value) const { return Self::FromInt (Value & value); }
 	template<typename X> Self operator^ (X value) const { return Self::FromInt (Value ^ value); }
 
+public:	// to be removed.
 	TT Value;
 };
 

@@ -43,7 +43,7 @@
 #include "templates.h"
 #include "w_wad.h"
 #include "g_level.h"
-#include "farchive.h"
+#include "serializer.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -990,17 +990,13 @@ void FTextureManager::UpdateAnimations (DWORD mstime)
 //
 //==========================================================================
 
-template<> FArchive &operator<< (FArchive &arc, FDoorAnimation* &Doorani)
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDoorAnimation *&p, FDoorAnimation **def)
 {
-	if (arc.IsStoring())
+	FTextureID tex = p->BaseTexture;
+	Serialize(arc, key, tex, def ? &(*def)->BaseTexture : nullptr);
+	if (arc.isReading())
 	{
-		arc << Doorani->BaseTexture;
-	}
-	else
-	{
-		FTextureID tex;
-		arc << tex;
-		Doorani = TexMan.FindAnimatedDoor(tex);
+		p = TexMan.FindAnimatedDoor(tex);
 	}
 	return arc;
 }

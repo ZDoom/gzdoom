@@ -36,8 +36,8 @@
 #include "a_sharedglobal.h"
 #include "p_local.h"
 #include "p_lnspec.h"
-#include "farchive.h"
 #include "r_sky.h"
+#include "r_state.h"
 #include "portal.h"
 
 // arg0 = Visibility*4 for this skybox
@@ -170,7 +170,10 @@ void ASectorSilencer::BeginPlay ()
 
 void ASectorSilencer::Destroy ()
 {
-	Sector->Flags &= ~SECF_SILENT;
+	if (Sector != nullptr)
+	{
+		Sector->Flags &= ~SECF_SILENT;
+	}
 	Super::Destroy ();
 }
 

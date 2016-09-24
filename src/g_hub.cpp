@@ -43,7 +43,7 @@
 #include "m_png.h"
 #include "gstrings.h"
 #include "wi_stuff.h"
-#include "farchive.h"
+#include "serializer.h"
 
 
 //==========================================================================
@@ -54,7 +54,7 @@
 
 struct FHubInfo
 {
-	int			finished_ep;
+	int			levelnum;
 	
 	int			maxkills;
 	int			maxitems;
@@ -65,7 +65,7 @@ struct FHubInfo
 
 	FHubInfo &operator=(const wbstartstruct_t &wbs)
 	{
-		finished_ep = wbs.finished_ep;
+		levelnum = wbs.finished_ep;
 		maxkills = wbs.maxkills;
 		maxsecret= wbs.maxsecret;
 		maxitems = wbs.maxitems;
@@ -80,54 +80,54 @@ static TArray<FHubInfo> hubdata;
 
 void G_LeavingHub(int mode, cluster_info_t * cluster, wbstartstruct_t * wbs)
 {
-	unsigned int i,j;
+	unsigned int i, j;
 
 	if (cluster->flags & CLUSTER_HUB)
 	{
-		for(i=0;i<hubdata.Size();i++)
+		for (i = 0; i < hubdata.Size(); i++)
 		{
-			if (hubdata[i].finished_ep==level.levelnum)
+			if (hubdata[i].levelnum == level.levelnum)
 			{
-				hubdata[i]=*wbs;
+				hubdata[i] = *wbs;
 				break;
 			}
 		}
-		if (i==hubdata.Size())
+		if (i == hubdata.Size())
 		{
 			hubdata[hubdata.Reserve(1)] = *wbs;
 		}
 
-		hubdata[i].finished_ep=level.levelnum;
+		hubdata[i].levelnum = level.levelnum;
 		if (!multiplayer && !deathmatch)
 		{
 			// The player counters don't work in hubs
-			hubdata[i].plyr[0].skills=level.killed_monsters;
-			hubdata[i].plyr[0].sitems=level.found_items;
-			hubdata[i].plyr[0].ssecret=level.found_secrets;
+			hubdata[i].plyr[0].skills = level.killed_monsters;
+			hubdata[i].plyr[0].sitems = level.found_items;
+			hubdata[i].plyr[0].ssecret = level.found_secrets;
 		}
 
 
-		if (mode!=FINISH_SameHub)
+		if (mode != FINISH_SameHub)
 		{
-			wbs->maxkills=wbs->maxitems=wbs->maxsecret=0;
-			for(i=0;i<MAXPLAYERS;i++)
+			wbs->maxkills = wbs->maxitems = wbs->maxsecret = 0;
+			for (i = 0; i < MAXPLAYERS; i++)
 			{
-				wbs->plyr[i].sitems=wbs->plyr[i].skills=wbs->plyr[i].ssecret=0;
+				wbs->plyr[i].sitems = wbs->plyr[i].skills = wbs->plyr[i].ssecret = 0;
 			}
 
-			for(i=0;i<hubdata.Size();i++)
+			for (i = 0; i < hubdata.Size(); i++)
 			{
 				wbs->maxkills += hubdata[i].maxkills;
 				wbs->maxitems += hubdata[i].maxitems;
 				wbs->maxsecret += hubdata[i].maxsecret;
-				for(j=0;j<MAXPLAYERS;j++)
+				for (j = 0; j < MAXPLAYERS; j++)
 				{
 					wbs->plyr[j].sitems += hubdata[i].plyr[j].sitems;
 					wbs->plyr[j].skills += hubdata[i].plyr[j].skills;
 					wbs->plyr[j].ssecret += hubdata[i].plyr[j].ssecret;
 				}
 			}
-			if (cluster->ClusterName.IsNotEmpty()) 
+			if (cluster->ClusterName.IsNotEmpty())
 			{
 				if (cluster->flags & CLUSTER_LOOKUPNAME)
 				{
@@ -140,7 +140,7 @@ void G_LeavingHub(int mode, cluster_info_t * cluster, wbstartstruct_t * wbs)
 			}
 		}
 	}
-	if (mode!=FINISH_SameHub) hubdata.Clear();
+	if (mode != FINISH_SameHub) hubdata.Clear();
 }
 
 //==========================================================================
@@ -148,39 +148,41 @@ void G_LeavingHub(int mode, cluster_info_t * cluster, wbstartstruct_t * wbs)
 // Serialize intermission info for hubs
 //
 //==========================================================================
-#define HUBS_ID MAKE_ID('h','u','B','s')
 
-static void G_SerializeHub(FArchive & arc)
+FSerializer &Serialize(FSerializer &arc, const char *key, wbplayerstruct_t &h, wbplayerstruct_t *def)
 {
-	int i=hubdata.Size();
-	arc << i;
-	if (i>0)
+	if (arc.BeginObject(key))
 	{
-		if (arc.IsStoring()) arc.Write(&hubdata[0], i * sizeof(FHubInfo));
-		else 
-		{
-			hubdata.Resize(i);
-			arc.Read(&hubdata[0], i * sizeof(FHubInfo));
-		}
+		arc("in", h.in)
+			("kills", h.skills)
+			("items", h.sitems)
+			("secrets", h.ssecret)
+			("time", h.stime)
+			("fragcount", h.fragcount)
+			.Array("frags", h.frags, MAXPLAYERS)
+			.EndObject();
 	}
-	else hubdata.Clear();
+	return arc;
 }
 
-void G_WriteHubInfo (FILE *file)
+FSerializer &Serialize(FSerializer &arc, const char *key, FHubInfo &h, FHubInfo *def)
 {
-	FPNGChunkArchive arc(file, HUBS_ID);
-	G_SerializeHub(arc);
+	if (arc.BeginObject(key))
+	{
+		arc("levelnum", h.levelnum)
+			("maxkills", h.maxkills)
+			("maxitems", h.maxitems)
+			("maxsecret", h.maxsecret)
+			("maxfrags", h.maxfrags)
+			.Array("players", h.plyr, MAXPLAYERS)
+			.EndObject();
+	}
+	return arc;
 }
 
-void G_ReadHubInfo (PNGHandle *png)
+void G_SerializeHub(FSerializer &arc)
 {
-	int chunklen;
-
-	if ((chunklen = M_FindPNGChunk (png, HUBS_ID)) != 0)
-	{
-		FPNGChunkArchive arc (png->File->GetFile(), HUBS_ID, chunklen);
-		G_SerializeHub(arc);
-	}
+	arc("hubinfo", hubdata);
 }
 
 void G_ClearHubInfo()

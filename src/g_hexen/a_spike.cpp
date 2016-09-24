@@ -22,7 +22,8 @@ class AThrustFloor : public AActor
 	DECLARE_CLASS (AThrustFloor, AActor)
 	HAS_OBJECT_POINTERS
 public:
-	void Serialize (FArchive &arc);
+	
+	void Serialize(FSerializer &arc);
 
 	void Activate (AActor *activator);
 	void Deactivate (AActor *activator);
@@ -34,10 +35,10 @@ IMPLEMENT_POINTY_CLASS (AThrustFloor)
  DECLARE_POINTER (DirtClump)
 END_POINTERS
 
-void AThrustFloor::Serialize (FArchive &arc)
+void AThrustFloor::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << DirtClump;
+	arc("dirtclump", DirtClump);
 }
 
 void AThrustFloor::Activate (AActor *activator)

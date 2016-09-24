@@ -41,12 +41,12 @@ const char *GetVersionString();
 
 /** Lots of different version numbers **/
 
-#define VERSIONSTR "2.2pre"
+#define VERSIONSTR "2.3pre"
 
 // The version as seen in the Windows resource
-#define RC_FILEVERSION 2,1,9999,0
-#define RC_PRODUCTVERSION 2,1,9999,0
-#define RC_PRODUCTVERSION2 "2.2pre"
+#define RC_FILEVERSION 2,3,9999,0
+#define RC_PRODUCTVERSION 2,3,9999,0
+#define RC_PRODUCTVERSION2 "2.3pre"
 
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you
@@ -71,16 +71,15 @@ const char *GetVersionString();
 // Note that SAVEVER is not directly comparable to VERSION.
 // SAVESIG should match SAVEVER.
 
+// extension for savegames
+#define SAVEGAME_EXT "zds"
+
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
 #define MINSAVEVER	4545
 
 // Use 4500 as the base git save version, since it's higher than the
 // SVN revision ever got.
 #define SAVEVER 4550
-
-#define SAVEVERSTRINGIFY2(x) #x
-#define SAVEVERSTRINGIFY(x) SAVEVERSTRINGIFY2(x)
-#define SAVESIG "ZDOOMSAVE" SAVEVERSTRINGIFY(SAVEVER)
 
 #define DYNLIGHT
 

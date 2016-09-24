@@ -14,10 +14,10 @@
 #include "a_specialspot.h"
 #include "templates.h"
 #include "m_bbox.h"
-#include "farchive.h"
 #include "portal.h"
 #include "d_player.h"
 #include "p_maputl.h"
+#include "serializer.h"
 #include "g_shared/a_pickups.h"
 
 // Include all the other Doom stuff here to reduce compile time

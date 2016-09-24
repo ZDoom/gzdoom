@@ -44,8 +44,9 @@
 #include "d_net.h"
 #include "colormatcher.h"
 #include "v_palette.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "doomdata.h"
+#include "r_state.h"
 
 static double DecalWidth, DecalLeft, DecalRight;
 static double SpreadZ;
@@ -58,7 +59,8 @@ static int ImpactCount;
 CVAR (Bool, cl_spreaddecals, true, CVAR_ARCHIVE)
 
 IMPLEMENT_POINTY_CLASS (DBaseDecal)
- DECLARE_POINTER(WallNext)
+	DECLARE_POINTER(WallPrev)
+	DECLARE_POINTER(WallNext)
 END_POINTERS
 
 IMPLEMENT_CLASS (DImpactDecal)
@@ -75,7 +77,7 @@ DBaseDecal::DBaseDecal ()
 DBaseDecal::DBaseDecal (double z)
 : DThinker(STAT_DECAL),
   WallNext(0), WallPrev(0), LeftDistance(0), Z(z), ScaleX(1.), ScaleY(1.), Alpha(1.),
-  AlphaColor(0), Translation(0), RenderFlags(0)
+  AlphaColor(0), Translation(0), RenderFlags(0), Side(nullptr), Sector(nullptr)
 {
 	RenderStyle = STYLE_None;
 	PicNum.SetInvalid();
@@ -83,8 +85,8 @@ DBaseDecal::DBaseDecal (double z)
 
 DBaseDecal::DBaseDecal (int statnum, double z)
 : DThinker(statnum),
-  WallNext(0), WallPrev(0), LeftDistance(0), Z(z), ScaleX(1.), ScaleY(1.), Alpha(1.),
-  AlphaColor(0), Translation(0), RenderFlags(0)
+	WallNext(nullptr), WallPrev(nullptr), LeftDistance(0), Z(z), ScaleX(1.), ScaleY(1.), Alpha(1.),
+	AlphaColor(0), Translation(0), RenderFlags(0), Side(nullptr), Sector(nullptr)
 {
 	RenderStyle = STYLE_None;
 	PicNum.SetInvalid();
@@ -92,17 +94,17 @@ DBaseDecal::DBaseDecal (int statnum, double z)
 
 DBaseDecal::DBaseDecal (const AActor *basis)
 : DThinker(STAT_DECAL),
-  WallNext(0), WallPrev(0), LeftDistance(0), Z(basis->Z()), ScaleX(basis->Scale.X), ScaleY(basis->Scale.Y),
+	WallNext(nullptr), WallPrev(nullptr), LeftDistance(0), Z(basis->Z()), ScaleX(basis->Scale.X), ScaleY(basis->Scale.Y),
 	Alpha(basis->Alpha), AlphaColor(basis->fillcolor), Translation(basis->Translation), PicNum(basis->picnum),
-  RenderFlags(basis->renderflags), RenderStyle(basis->RenderStyle)
+	RenderFlags(basis->renderflags), RenderStyle(basis->RenderStyle), Side(nullptr), Sector(nullptr)
 {
 }
 
 DBaseDecal::DBaseDecal (const DBaseDecal *basis)
 : DThinker(STAT_DECAL),
-  WallNext(0), WallPrev(0), LeftDistance(basis->LeftDistance), Z(basis->Z), ScaleX(basis->ScaleX),
+	WallNext(nullptr), WallPrev(nullptr), LeftDistance(basis->LeftDistance), Z(basis->Z), ScaleX(basis->ScaleX),
 	ScaleY(basis->ScaleY), Alpha(basis->Alpha), AlphaColor(basis->AlphaColor), Translation(basis->Translation),
-  PicNum(basis->PicNum), RenderFlags(basis->RenderFlags), RenderStyle(basis->RenderStyle)
+	PicNum(basis->PicNum), RenderFlags(basis->RenderFlags), RenderStyle(basis->RenderStyle), Side(nullptr), Sector(nullptr)
 {
 }
 
@@ -114,64 +116,35 @@ void DBaseDecal::Destroy ()
 
 void DBaseDecal::Remove ()
 {
-	DBaseDecal **prev = WallPrev;
-	DBaseDecal *next = WallNext;
-	if (prev && (*prev = next))
-		next->WallPrev = prev;
-	WallPrev = NULL;
-	WallNext = NULL;
+	if (WallPrev == nullptr)
+	{
+		if (Side != nullptr) Side->AttachedDecals = WallNext;
+	}
+	else WallPrev->WallNext = WallNext;
+
+	if (WallNext != nullptr) WallNext->WallPrev = WallPrev;
+
+	WallPrev = nullptr;
+	WallNext = nullptr;
 }
 
-void DBaseDecal::Serialize (FArchive &arc)
+void DBaseDecal::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << LeftDistance
-		<< Z
-		<< ScaleX << ScaleY
-		<< Alpha
-		<< AlphaColor
-		<< Translation
-		<< PicNum
-		<< RenderFlags
-		<< RenderStyle
-		<< Sector;
-}
-
-void DBaseDecal::SerializeChain (FArchive &arc, DBaseDecal **first)
-{
-	DWORD numInChain;
-	DBaseDecal *fresh;
-	DBaseDecal **firstptr = first;
-
-	if (arc.IsLoading ())
-	{
-		numInChain = arc.ReadCount ();
-		
-		while (numInChain--)
-		{
-			arc << fresh;
-			*firstptr = fresh;
-			fresh->WallPrev = firstptr;
-			firstptr = &fresh->WallNext;
-		}
-	}
-	else
-	{
-		numInChain = 0;
-		fresh = *firstptr;
-		while (fresh != NULL)
-		{
-			fresh = fresh->WallNext;
-			++numInChain;
-		}
-		arc.WriteCount (numInChain);
-		fresh = *firstptr;
-		while (numInChain--)
-		{
-			arc << fresh;
-			fresh = fresh->WallNext;
-		}
-	}
+	arc("wallprev", WallPrev)
+		("wallnext", WallNext)
+		("leftdistance", LeftDistance)
+		("z", Z)
+		("scalex", ScaleX)
+		("scaley", ScaleY)
+		("alpha", Alpha)
+		("alphacolor", AlphaColor)
+		("translation", Translation)
+		("picnum", PicNum)
+		("renderflags", RenderFlags)
+		("renderstyle", RenderStyle)
+		("side", Side)
+		("sector", Sector);
 }
 
 void DBaseDecal::GetXY (side_t *wall, double &ox, double &oy) const
@@ -211,26 +184,18 @@ void DBaseDecal::SetShade (int r, int g, int b)
 // Returns the texture the decal stuck to.
 FTextureID DBaseDecal::StickToWall (side_t *wall, double x, double y, F3DFloor *ffloor)
 {
-	// Stick the decal at the end of the chain so it appears on top
-	DBaseDecal *next, **prev;
+	Side = wall;
+	WallPrev = wall->AttachedDecals;
 
-	prev = &wall->AttachedDecals;
-	while (*prev != NULL)
+	while (WallPrev != nullptr && WallPrev->WallNext != nullptr)
 	{
-		next = *prev;
-		prev = &next->WallNext;
+		WallPrev = WallPrev->WallNext;
 	}
+	if (WallPrev != nullptr) WallPrev->WallNext = this;
+	else wall->AttachedDecals = this;
+	WallNext = nullptr;
 
-	*prev = this;
-	WallNext = NULL;
-	WallPrev = prev;
-/*
-	WallNext = wall->AttachedDecals;
-	WallPrev = &wall->AttachedDecals;
-	if (WallNext)
-		WallNext->WallPrev = &WallNext;
-	wall->AttachedDecals = this;
-*/
+
 	sector_t *front, *back;
 	line_t *line;
 	FTextureID tex;
@@ -590,28 +555,6 @@ CUSTOM_CVAR (Int, cl_maxdecals, 1024, CVAR_ARCHIVE)
 			}
 		}
 	}
-}
-
-// Uses: target points to previous impact decal
-//		 tracer points to next impact decal
-//
-// Note that this means we can't simply serialize an impact decal as-is
-// because doing so when many are present in a level could result in
-// a lot of recursion and we would run out of stack. Not nice. So instead,
-// the save game code calls DImpactDecal::SerializeAll to serialize a
-// list of impact decals.
-
-void DImpactDecal::SerializeTime (FArchive &arc)
-{
-	if (arc.IsLoading ())
-	{
-		ImpactCount = 0;
-	}
-}
-
-void DImpactDecal::Serialize (FArchive &arc)
-{
-	Super::Serialize (arc);
 }
 
 DImpactDecal::DImpactDecal ()

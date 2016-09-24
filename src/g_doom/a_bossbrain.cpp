@@ -47,7 +47,7 @@ static void BrainishExplosion (const DVector3 &pos)
 				boom->SetState (state);
 		}
 		boom->effects = 0;
-		boom->Damage = NULL;	// disables collision detection which is not wanted here
+		boom->SetDamage(0);	// disables collision detection which is not wanted here
 		boom->tics -= pr_brainscream() & 7;
 		if (boom->tics < 1)
 			boom->tics = 1;
@@ -120,7 +120,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 	bool isdefault = false;
 
 	// shoot a cube at current target
-	targ = state->GetNextInList(PClass::FindClass("BossTarget"), G_SkillProperty(SKILLP_EasyBossBrain));
+	targ = state->GetNextInList(PClass::FindActor("BossTarget"), G_SkillProperty(SKILLP_EasyBossBrain));
 
 	if (targ != NULL)
 	{

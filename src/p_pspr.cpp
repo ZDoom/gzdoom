@@ -27,8 +27,8 @@
 #include "templates.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"
-#include "farchive.h"
 #include "d_player.h"
+#include "serializer.h"
 
 
 // MACROS ------------------------------------------------------------------
@@ -524,6 +524,7 @@ void P_DropWeapon (player_t *player)
 // A_WeaponReady every tic, and it looks bad if they don't bob smoothly.
 //
 // [XA] Added new bob styles and exposed bob properties. Thanks, Ryan Cordell!
+// [SP] Added new user option for bob speed
 //
 //============================================================================
 
@@ -551,8 +552,9 @@ void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac)
 
 	for (int i = 0; i < 2; i++)
 	{
-		// Bob the weapon based on movement speed.
-		FAngle angle = (BobSpeed * 35 / TICRATE*(level.time - 1 + i)) * (360.f / 8192.f);
+		// Bob the weapon based on movement speed. ([SP] And user's bob speed setting)
+		FAngle angle = (BobSpeed * player->userinfo.GetWBobSpeed() * 35 /
+			TICRATE*(level.time - 1 + i)) * (360.f / 8192.f);
 
 		// [RH] Smooth transitions between bobbing and not-bobbing frames.
 		// This also fixes the bug where you can "stick" a weapon off-center by
@@ -1446,13 +1448,23 @@ void DPSprite::Tick()
 //
 //------------------------------------------------------------------------
 
-void DPSprite::Serialize(FArchive &arc)
+void DPSprite::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
 
-	arc << Next << Caller << Owner << Flags
-		<< State << Tics << Sprite << Frame
-		<< ID << x << y << oldx << oldy;
+	arc("next", Next)
+		("caller", Caller)
+		("owner", Owner)
+		("flags", Flags)
+		("state", State)
+		("tics", Tics)
+		.Sprite("sprite", Sprite, nullptr)
+		("frame", Frame)
+		("id", ID)
+		("x", x)
+		("y", y)
+		("oldx", oldx)
+		("oldy", oldy);
 }
 
 //------------------------------------------------------------------------

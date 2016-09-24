@@ -90,7 +90,6 @@ The FON2 header is followed by variable length data:
 #include "cmdlib.h"
 #include "sc_man.h"
 #include "hu_stuff.h"
-#include "farchive.h"
 #include "textures/textures.h"
 #include "r_data/r_translate.h"
 #include "colormatcher.h"
@@ -339,33 +338,6 @@ FFont *V_GetFont(const char *name)
 		}
 	}
 	return font;
-}
-//==========================================================================
-//
-// SerializeFFontPtr
-//
-//==========================================================================
-
-FArchive &SerializeFFontPtr (FArchive &arc, FFont* &font)
-{
-	if (arc.IsStoring ())
-	{
-		arc << font->Name;
-	}
-	else
-	{
-		char *name = NULL;
-
-		arc << name;
-		font = V_GetFont(name);
-		if (font == NULL)
-		{
-			Printf ("Could not load font %s\n", name);
-			font = SmallFont;
-		}
-		delete[] name;
-	}
-	return arc;
 }
 
 //==========================================================================

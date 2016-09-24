@@ -371,7 +371,18 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			col = print_reg(out, 0, a, (mode & MODE_ATYPE) >> MODE_ASHIFT, 24, func);
 			if ((mode & MODE_BCTYPE) == MODE_BCTHROW)
 			{
-				mode = (code[i].a == 0) ? (MODE_BP | MODE_CUNUSED) : (MODE_BKP | MODE_CUNUSED);
+				if (code[i].a == 0)
+				{
+					mode = (MODE_BP | MODE_CUNUSED);
+				}
+				else if (code[i].a == 1)
+				{
+					mode = (MODE_BKP | MODE_CUNUSED);
+				}
+				else
+				{
+					mode = (MODE_BCJOINT | MODE_BCIMMS);
+				}
 			}
 			else if ((mode & MODE_BCTYPE) == MODE_BCCATCH)
 			{

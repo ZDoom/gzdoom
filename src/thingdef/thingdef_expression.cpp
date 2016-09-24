@@ -3218,11 +3218,6 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			ScriptPosition.Message(MSG_ERROR, "Invalid member identifier '%s'\n", Identifier.GetChars());
 		}
 	}
-	// the damage property needs special handling
-	else if (Identifier == NAME_Damage)
-	{
-		newex = new FxDamage(ScriptPosition);
-	}
 	// now check the global identifiers.
 	else if ((sym = ctx.FindGlobal(Identifier)) != NULL)
 	{
@@ -3322,65 +3317,6 @@ ExpEmit FxSelf::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxDamage::FxDamage(const FScriptPosition &pos)
-: FxExpression(pos)
-{
-}
-
-//==========================================================================
-//
-// FxDamage :: Resolve
-//
-//==========================================================================
-
-FxExpression *FxDamage::Resolve(FCompileContext& ctx)
-{
-	CHECKRESOLVED();
-	ValueType = TypeSInt32;
-	return this;
-}
-
-//==========================================================================
-//
-// FxDamage :: Emit
-//
-// Call this actor's damage function, if it has one
-//
-//==========================================================================
-
-ExpEmit FxDamage::Emit(VMFunctionBuilder *build)
-{
-	ExpEmit dmgval(build, REGT_INT);
-
-	// Get damage function
-	ExpEmit dmgfunc(build, REGT_POINTER);
-	build->Emit(OP_LO, dmgfunc.RegNum, 0/*self*/, build->GetConstantInt(myoffsetof(AActor, Damage)));
-
-	// If it's non-null...
-	build->Emit(OP_EQA_K, 1, dmgfunc.RegNum, build->GetConstantAddress(nullptr, ATAG_GENERIC));
-	size_t nulljump = build->Emit(OP_JMP, 0);
-
-	// ...call it
-	build->Emit(OP_PARAM, 0, REGT_POINTER, 0/*self*/);
-	build->Emit(OP_CALL, dmgfunc.RegNum, 1, 1);
-	build->Emit(OP_RESULT, 0, REGT_INT, dmgval.RegNum);
-	size_t notnulljump = build->Emit(OP_JMP, 0);
-
-	// Otherwise, use 0
-	build->BackpatchToHere(nulljump);
-	build->EmitLoadInt(dmgval.RegNum, 0);
-	build->BackpatchToHere(notnulljump);
-
-	return dmgval;
-}
-
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 FxClassMember::FxClassMember(FxExpression *x, PField* mem, const FScriptPosition &pos)
 : FxExpression(pos)
 {
@@ -3437,6 +3373,19 @@ FxExpression *FxClassMember::Resolve(FCompileContext &ctx)
 
 ExpEmit FxClassMember::Emit(VMFunctionBuilder *build)
 {
+	if (~membervar->Flags & VARF_Native)
+	{	// Check if this is a user-defined variable.
+		// As of right now, FxClassMember is only ever used with FxSelf.
+		// This very user variable was defined in stateowner so if
+		// self (a0) != stateowner (a1) then the offset is most likely
+		// going to end up being totally wrong even if the variable was
+		// redefined in self which means we have to abort to avoid reading
+		// or writing to a random address and possibly crash.
+		build->Emit(OP_EQA_R, 1, 0, 1);
+		build->Emit(OP_JMP, 1);
+		build->Emit(OP_THROW, 2, X_BAD_SELF);
+	}
+
 	ExpEmit obj = classx->Emit(build);
 	assert(obj.RegType == REGT_POINTER);
 
@@ -5225,18 +5174,12 @@ ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxDamageValue::FxDamageValue(FxExpression *v, bool calc)
+FxDamageValue::FxDamageValue(FxExpression *v)
 : FxExpression(v->ScriptPosition)
 {
 	val = v;
 	ValueType = TypeVoid;
-	Calculated = calc;
 	MyFunction = NULL;
-
-	if (!calc)
-	{
-		assert(v->isConstant() && "Non-calculated damage must be constant");
-	}
 }
 
 FxDamageValue::~FxDamageValue()
@@ -5272,7 +5215,7 @@ ExpEmit FxDamageValue::Emit(VMFunctionBuilder *build)
 		assert(emitval.RegType == REGT_INT);
 		build->Emit(OP_RET, 0, REGT_INT | (emitval.Konst ? REGT_KONST : 0), emitval.RegNum);
 	}
-	build->Emit(OP_RETI, 1 | RET_FINAL, Calculated);
+	build->Emit(OP_RETI, 1 | RET_FINAL, true);
 
 	return ExpEmit();
 }

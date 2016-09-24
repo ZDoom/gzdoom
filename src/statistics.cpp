@@ -70,7 +70,7 @@
 #include "r_sky.h"
 #include "p_lnspec.h"
 #include "m_crc32.h"
-#include "farchive.h"
+#include "serializer.h"
 
 CVAR(Int, savestatistics, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(String, statfile, "zdoomstat.txt", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -87,7 +87,7 @@ struct OneLevel
 	int totalkills, killcount;
 	int totalsecrets, secretcount;
 	int leveltime;
-	char levelname[9];
+	FString Levelname;
 };
 
 // Current game's statistics
@@ -408,13 +408,12 @@ static void StoreLevelStats()
 	{
 		for(i=0;i<LevelData.Size();i++)
 		{
-			if (!stricmp(LevelData[i].levelname, level.MapName)) break;
+			if (!LevelData[i].Levelname.CompareNoCase(level.MapName)) break;
 		}
 		if (i==LevelData.Size())
 		{
 			LevelData.Reserve(1);
-			strncpy(LevelData[i].levelname, level.MapName, 8);
-			LevelData[i].levelname[8] = 0;
+			LevelData[i].Levelname = level.MapName;
 		}
 		LevelData[i].totalkills = level.total_monsters;
 		LevelData[i].killcount = level.killed_monsters;
@@ -494,7 +493,7 @@ void STAT_ChangeLevel(const char *newl)
 
 			for(unsigned i = 0; i < LevelData.Size(); i++)
 			{
-				FString lsection = LevelData[i].levelname;
+				FString lsection = LevelData[i].Levelname;
 				lsection.ToUpper();
 				infostring.Format("%4d/%4d, %3d/%3d",
 					 LevelData[i].killcount, LevelData[i].totalkills, LevelData[i].secretcount, LevelData[i].totalsecrets);
@@ -516,64 +515,52 @@ void STAT_ChangeLevel(const char *newl)
 //
 //==========================================================================
 
-static void SerializeStatistics(FArchive &arc)
+FSerializer &Serialize(FSerializer &arc, const char *key, OneLevel &l, OneLevel *def)
+{
+	if (arc.BeginObject(key))
+	{
+		arc("totalkills", l.totalkills)
+			("killcount", l.killcount)
+			("totalsecrets", l.totalsecrets)
+			("secretcount", l.secretcount)
+			("leveltime", l.leveltime)
+			("levelname", l.Levelname)
+			.EndObject();
+	}
+	return arc;
+}
+
+void STAT_Serialize(FSerializer &arc)
 {
 	FString startlevel;
 	int i = LevelData.Size();
 
-	arc << i;
-
-	if (arc.IsLoading()) 
+	if (arc.BeginObject("statistics"))
 	{
-		arc << startlevel;
-		StartEpisode = NULL;
-		for(unsigned int j=0;j<AllEpisodes.Size();j++)
+		if (arc.isReading())
 		{
-			if (!AllEpisodes[j].mEpisodeMap.CompareNoCase(startlevel))
+			arc("startlevel", startlevel);
+			StartEpisode = NULL;
+			for (unsigned int j = 0; j < AllEpisodes.Size(); j++)
 			{
-				StartEpisode = &AllEpisodes[j];
-				break;
+				if (!AllEpisodes[j].mEpisodeMap.CompareNoCase(startlevel))
+				{
+					StartEpisode = &AllEpisodes[j];
+					break;
+				}
 			}
+			LevelData.Resize(i);
 		}
-		LevelData.Resize(i);
-	}
-	else
-	{
-		if (StartEpisode != NULL) startlevel = StartEpisode->mEpisodeMap;
-		arc << startlevel;
-	}
-	for(int j = 0; j < i; j++)
-	{
-		OneLevel &l = LevelData[j];
-
-		arc << l.totalkills 
-			<< l.killcount  
-			<< l.totalsecrets
-			<< l.secretcount
-			<< l.leveltime;
-
-		if (arc.IsStoring()) arc.WriteName(l.levelname);
-		else strcpy(l.levelname, arc.ReadName());
+		else
+		{
+			if (StartEpisode != NULL) startlevel = StartEpisode->mEpisodeMap;
+			arc("startlevel", startlevel);
+		}
+		arc("levels", LevelData);
+		arc.EndObject();
 	}
 }
 
-#define STAT_ID			MAKE_ID('s','T','a','t')
-
-void STAT_Write(FILE *file)
-{
-	FPNGChunkArchive arc (file, STAT_ID);
-	SerializeStatistics(arc);
-}
-
-void STAT_Read(PNGHandle *png)
-{
-	DWORD chunkLen = (DWORD)M_FindPNGChunk (png, STAT_ID);
-	if (chunkLen != 0)
-	{
-		FPNGChunkArchive arc (png->File->GetFile(), STAT_ID, chunkLen);
-		SerializeStatistics(arc);
-	}
-}
 
 //==========================================================================
 //
@@ -588,7 +575,7 @@ FString GetStatString()
 	{
 		OneLevel *l = &LevelData[i];
 		compose.AppendFormat("Level %s - Kills: %d/%d - Secrets: %d/%d - Time: %d:%02d\n", 
-			l->levelname, l->killcount, l->totalkills, l->secretcount, l->totalsecrets,
+			l->Levelname.GetChars(), l->killcount, l->totalkills, l->secretcount, l->totalsecrets,
 			l->leveltime/(60*TICRATE), (l->leveltime/TICRATE)%60);
 	}
 	return compose;

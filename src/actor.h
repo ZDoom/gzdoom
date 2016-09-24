@@ -111,6 +111,8 @@ struct FPortalGroupArray;
 // Any questions?
 //
 
+
+
 // --- mobj.flags ---
 enum ActorFlag
 {
@@ -581,8 +583,9 @@ public:
 	void Destroy ();
 	~AActor ();
 
-	void Serialize (FArchive &arc);
-	
+	void Serialize(FSerializer &arc);
+	void PostSerialize();
+
 	static AActor *StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t allowreplacement, bool SpawningMapThing = false);
 
 	inline AActor *GetDefault () const
@@ -986,7 +989,7 @@ public:
 	double			Speed;
 	double			FloatSpeed;
 
-	WORD			sprite;				// used to find patch_t and flip value
+	int				sprite;				// used to find patch_t and flip value
 	BYTE			frame;				// sprite frame to draw
 	DVector2		Scale;				// Scaling values; 1 is normal size
 	FRenderStyle	RenderStyle;		// Style to draw this actor with
@@ -1014,7 +1017,9 @@ public:
 	
 	SDWORD			tics;				// state tic counter
 	FState			*state;
-	VMFunction		*Damage;			// For missiles and monster railgun
+	//VMFunction		*Damage;			// For missiles and monster railgun
+	int				DamageVal;
+	VMFunction		*DamageFunc;
 	int				projectileKickback;
 	ActorFlags		flags;
 	ActorFlags2		flags2;			// Heretic flags
@@ -1179,8 +1184,9 @@ public:
 private:
 	static AActor *TIDHash[128];
 	static inline int TIDHASH (int key) { return key & 127; }
+public:
 	static FSharedStringArena mStringPropertyData;
-
+private:
 	friend class FActorIterator;
 	friend bool P_IsTIDUsed(int tid);
 
@@ -1200,6 +1206,23 @@ public:
 	void ClearCounters();
 	FState *GetRaiseState();
 	void Revive();
+
+	void SetDamage(int dmg)
+	{
+		DamageVal = dmg;
+		DamageFunc = nullptr;
+	}
+
+	bool IsZeroDamage() const
+	{
+		return DamageVal == 0 && DamageFunc == nullptr;
+	}
+
+	void RestoreDamage()
+	{
+		DamageVal = GetDefault()->DamageVal;
+		DamageFunc = GetDefault()->DamageFunc;
+	}
 
 	FState *FindState (FName label) const
 	{

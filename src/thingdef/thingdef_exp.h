@@ -856,20 +856,6 @@ public:
 
 //==========================================================================
 //
-//	FxDamage
-//
-//==========================================================================
-
-class FxDamage : public FxExpression
-{
-public:
-	FxDamage(const FScriptPosition&);
-	FxExpression *Resolve(FCompileContext&);
-	ExpEmit Emit(VMFunctionBuilder *build);
-};
-
-//==========================================================================
-//
 //	FxArrayElement
 //
 //==========================================================================
@@ -1188,12 +1174,11 @@ public:
 class FxDamageValue : public FxExpression
 {
 	FxExpression *val;
-	bool Calculated;
 	VMScriptFunction *MyFunction;
 
 public:
 
-	FxDamageValue(FxExpression *v, bool calc);
+	FxDamageValue(FxExpression *v);
 	~FxDamageValue();
 	FxExpression *Resolve(FCompileContext&);
 

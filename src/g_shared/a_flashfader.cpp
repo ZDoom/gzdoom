@@ -1,7 +1,7 @@
 #include "a_sharedglobal.h"
 #include "g_level.h"
 #include "d_player.h"
-#include "farchive.h"
+#include "serializer.h"
 
 IMPLEMENT_POINTY_CLASS (DFlashFader)
  DECLARE_POINTER (ForWho)
@@ -26,13 +26,13 @@ void DFlashFader::Destroy ()
 	Super::Destroy();
 }
 
-void DFlashFader::Serialize (FArchive &arc)
+void DFlashFader::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << TotalTics << StartTic << ForWho;
-	for (int i = 1; i >= 0; --i)
-		for (int j = 3; j >= 0; --j)
-			arc << Blends[i][j];
+	arc("totaltics", TotalTics)
+		("starttic", StartTic)
+		("forwho", ForWho)
+		.Array("blends", Blends[0], 8);
 }
 
 void DFlashFader::Tick ()

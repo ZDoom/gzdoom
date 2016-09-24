@@ -126,6 +126,14 @@ public:
 		ID = S_FindSound(name.GetChars());
 		return *this;
 	}
+	bool operator !=(FSoundID other) const
+	{
+		return ID != other.ID;
+	}
+	bool operator !=(int other) const
+	{
+		return ID != other;
+	}
 	operator int() const
 	{
 		return ID;
@@ -167,8 +175,6 @@ public:
 		return FSoundID::operator=(name);
 	}
 };
-
-FArchive &operator<<(FArchive &arc, FSoundID &sid);
 
 extern FRolloffInfo S_Rolloff;
 extern BYTE *S_SoundCurve;
@@ -313,7 +319,7 @@ bool S_ChangeSoundVolume(AActor *actor, int channel, float volume);
 void S_RelinkSound (AActor *from, AActor *to);
 
 // Stores/retrieves playing channel information in an archive.
-void S_SerializeSounds(FArchive &arc);
+void S_SerializeSounds(FSerializer &arc);
 
 // Start music using <music_name>
 bool S_StartMusic (const char *music_name);
@@ -328,7 +334,7 @@ void S_RestartMusic ();
 
 void S_MIDIDeviceChanged();
 
-int S_GetMusic (char **name);
+int S_GetMusic (const char **name);
 
 // Stops the music for sure.
 void S_StopMusic (bool force);
@@ -378,9 +384,6 @@ void S_NoiseDebug ();
 
 extern ReverbContainer *Environments;
 extern ReverbContainer *DefaultEnvironments[26];
-
-class FArchive;
-FArchive &operator<< (FArchive &arc, ReverbContainer *&env);
 
 void S_SetEnvironment (const ReverbContainer *settings);
 ReverbContainer *S_FindEnvironment (const char *name);

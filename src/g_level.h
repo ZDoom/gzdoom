@@ -38,7 +38,9 @@
 #include "doomdef.h"
 #include "sc_man.h"
 #include "s_sound.h"
+#include "p_acs.h"
 #include "textures/textures.h"
+#include "resourcefiles/file_zip.h"
 
 struct level_info_t;
 struct cluster_info_t;
@@ -223,8 +225,6 @@ enum ELevelFlags : unsigned int
 };
 
 
-struct acsdefered_t;
-
 struct FSpecialAction
 {
 	FName Type;					// this is initialized before the actors...
@@ -232,7 +232,6 @@ struct FSpecialAction
 	int Args[5];				// must allow 16 bit tags for 666 & 667!
 };
 
-class FCompressedMemFile;
 class DScroller;
 
 class FScanner;
@@ -295,9 +294,8 @@ struct level_info_t
 	FString		LevelName;
 	SBYTE		WallVertLight, WallHorizLight;
 	int			musicorder;
-	FCompressedMemFile	*snapshot;
-	DWORD		snapshotVer;
-	struct acsdefered_t *defered;
+	FCompressedBuffer	Snapshot;
+	TArray<acsdefered_t> deferred;
 	float		skyspeed1;
 	float		skyspeed2;
 	DWORD		fadeto;
@@ -346,14 +344,16 @@ struct level_info_t
 	}
 	~level_info_t()
 	{
-		ClearSnapshot(); 
+		Snapshot.Clean();
 		ClearDefered();
 	}
 	void Reset();
 	bool isValid();
 	FString LookupLevelName ();
-	void ClearSnapshot();
-	void ClearDefered();
+	void ClearDefered()
+	{
+		deferred.Clear();
+	}
 	level_info_t *CheckLevelRedirect ();
 
 	template<class T>
@@ -375,17 +375,12 @@ struct level_info_t
 	}
 };
 
-// [RH] These get zeroed every tic and are updated by thinkers.
-struct FSectorScrollValues
-{
-	DVector2 Scroll;
-};
-
 struct FLevelLocals
 {
 	void Tick ();
 	void AddScroller (int secnum);
 
+	BYTE		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
 	int			time;			// time in the hub
 	int			maptime;		// time in the map
 	int			totaltime;		// time in the game
@@ -436,7 +431,7 @@ struct FLevelLocals
 	int			airsupply;
 	int			DefaultEnvironment;		// Default sound environment.
 
-	FSectorScrollValues	*Scrolls;		// NULL if no DScrollers in this level
+	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level
 
 	SBYTE		WallVertLight;			// Light diffs for vert/horiz walls
 	SBYTE		WallHorizLight;
@@ -537,9 +532,10 @@ void G_ClearSnapshots (void);
 void P_RemoveDefereds ();
 void G_SnapshotLevel (void);
 void G_UnSnapshotLevel (bool keepPlayers);
-struct PNGHandle;
-void G_ReadSnapshots (PNGHandle *png);
-void G_WriteSnapshots (FILE *file);
+void G_ReadSnapshots (FResourceFile *);
+void G_WriteSnapshots (TArray<FString> &, TArray<FCompressedBuffer> &);
+void G_WriteVisited(FSerializer &arc);
+void G_ReadVisited(FSerializer &arc);
 void G_ClearHubInfo();
 
 enum ESkillProperty

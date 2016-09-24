@@ -3,6 +3,8 @@
 
 #include "r_state.h"
 #include "vectors.h"
+
+class FSerializer;
 //
 // Stuff from r_main.h that's needed outside the rendering code.
 
@@ -113,7 +115,7 @@ struct FCanvasTextureInfo
 	static void Add (AActor *viewpoint, FTextureID picnum, int fov);
 	static void UpdateAll ();
 	static void EmptyList ();
-	static void Serialize (FArchive &arc);
+	static void Serialize(FSerializer &arc);
 	static void Mark();
 
 private:

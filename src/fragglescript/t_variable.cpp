@@ -54,7 +54,7 @@
 
 #include "t_script.h"
 #include "a_pickups.h"
-#include "farchive.h"
+#include "serializer.h"
 
 
 //==========================================================================
@@ -306,10 +306,15 @@ void DFsVariable::SetValue(const svalue_t &newvalue)
 //
 //==========================================================================
 
-void DFsVariable::Serialize(FArchive & ar)
+void DFsVariable::Serialize(FSerializer & ar)
 {
 	Super::Serialize(ar);
-	ar << Name << type << string << actor << value.i << next;
+	ar("name", Name)
+		("type", type)
+		("string", string)
+		("actor", actor)
+		("value", value.i)
+		("next", next);
 }
 
 

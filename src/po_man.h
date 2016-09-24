@@ -11,7 +11,7 @@ class DPolyAction : public DThinker
 	HAS_OBJECT_POINTERS
 public:
 	DPolyAction(int polyNum);
-	void Serialize(FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Destroy();
 	void Stop();
 	double GetSpeed() const { return m_Speed; }
@@ -126,8 +126,6 @@ struct polyblock_t
 
 
 void PO_LinkToSubsectors();
-FArchive &operator<< (FArchive &arc, FPolyObj *&poly);
-FArchive &operator<< (FArchive &arc, const FPolyObj *&poly);
 
 
 // ===== PO_MAN =====

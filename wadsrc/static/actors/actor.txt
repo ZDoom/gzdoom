@@ -37,6 +37,7 @@ ACTOR Actor native //: Thinker
 	MissileHeight 32	
 	SpriteAngle 0
 	SpriteRotation 0
+	StencilColor "00 00 00"
 
 	// Functions
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
@@ -53,6 +54,7 @@ ACTOR Actor native //: Thinker
 	native int CountProximity(class<Actor> classname, float distance, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native float GetSpriteAngle(int ptr = AAPTR_DEFAULT);
 	native float GetSpriteRotation(int ptr = AAPTR_DEFAULT);
+	native int GetMissileDamage(int mask, int add, int ptr = AAPTR_DEFAULT);
 
 	// Action functions
 	// Meh, MBF redundant functions. Only for DeHackEd support.

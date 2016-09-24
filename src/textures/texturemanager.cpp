@@ -40,6 +40,7 @@
 #include "templates.h"
 #include "i_system.h"
 #include "r_data/r_translate.h"
+#include "r_data/sprites.h"
 #include "c_dispatch.h"
 #include "v_text.h"
 #include "sc_man.h"
@@ -48,7 +49,6 @@
 #include "cmdlib.h"
 #include "g_level.h"
 #include "m_fixed.h"
-#include "farchive.h"
 #include "v_video.h"
 #include "r_renderer.h"
 #include "r_sky.h"
@@ -1074,61 +1074,6 @@ FTextureID FTextureManager::PalCheck(FTextureID tex)
 	return *newtex;
 }
 
-//==========================================================================
-//
-// FTextureManager :: WriteTexture
-//
-//==========================================================================
-
-void FTextureManager::WriteTexture (FArchive &arc, int picnum)
-{
-	FTexture *pic;
-
-	if (picnum < 0)
-	{
-		arc.WriteName(NULL);
-		return;
-	}
-	else if ((size_t)picnum >= Textures.Size())
-	{
-		pic = Textures[0].Texture;
-	}
-	else
-	{
-		pic = Textures[picnum].Texture;
-	}
-
-	if (Wads.GetLinkedTexture(pic->SourceLump) == pic)
-	{
-		arc.WriteName(Wads.GetLumpFullName(pic->SourceLump));
-	}
-	else
-	{
-		arc.WriteName(pic->Name);
-	}
-	arc.WriteCount(pic->UseType);
-}
-
-//==========================================================================
-//
-// FTextureManager :: ReadTexture
-//
-//==========================================================================
-
-int FTextureManager::ReadTexture (FArchive &arc)
-{
-	int usetype;
-	const char *name;
-
-	name = arc.ReadName ();
-	if (name != NULL)
-	{
-		usetype = arc.ReadCount ();
-		return GetTexture (name, usetype).GetIndex();
-	}
-	else return -1;
-}
-
 //===========================================================================
 //
 // R_GuesstimateNumTextures
@@ -1226,25 +1171,6 @@ int FTextureManager::CountLumpTextures (int lumpnum)
 	return 0;
 }
 
-
-//==========================================================================
-//
-// operator<<
-//
-//==========================================================================
-
-FArchive &operator<< (FArchive &arc, FTextureID &tex)
-{
-	if (arc.IsStoring())
-	{
-		TexMan.WriteTexture(arc, tex.texnum);
-	}
-	else
-	{
-		tex.texnum = TexMan.ReadTexture(arc);
-	}
-	return arc;
-}
 
 //==========================================================================
 //

@@ -310,6 +310,11 @@ void GLSprite::Draw(int pass)
 			additivefog = true;
 		}
 	}
+	else if (modelframe == nullptr)
+	{
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(-1.0f, -128.0f);
+	}
 	if (RenderStyle.BlendOp!=STYLEOP_Shadow)
 	{
 		if (gl_lights && GLRenderer->mLightCount && !gl_fixedcolormap && !fullbright)
@@ -439,6 +444,11 @@ void GLSprite::Draw(int pass)
 		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.BlendEquation(GL_FUNC_ADD);
 		gl_RenderState.SetTextureMode(TM_MODULATE);
+	}
+	else if (modelframe == nullptr)
+	{
+		glPolygonOffset(0.0f, 0.0f);
+		glDisable(GL_POLYGON_OFFSET_FILL);
 	}
 
 	gl_RenderState.SetObjectColor(0xffffffff);
@@ -923,7 +933,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		// This is a non-translucent sprite (i.e. STYLE_Normal or equivalent)
 		trans=1.f;
 		
-		if (!gl_sprite_blend || modelframe || (thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
+		if (!gl_sprite_blend || modelframe || (thing->renderflags & (RF_FLATSPRITE|RF_WALLSPRITE)) || gl_billboard_faces_camera)
 		{
 			RenderStyle.SrcAlpha = STYLEALPHA_One;
 			RenderStyle.DestAlpha = STYLEALPHA_Zero;
@@ -934,8 +944,6 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			RenderStyle.SrcAlpha = STYLEALPHA_Src;
 			RenderStyle.DestAlpha = STYLEALPHA_InvSrc;
 		}
-
-
 	}
 	if ((gltexture && gltexture->GetTransparent()) || (RenderStyle.Flags & STYLEF_RedIsAlpha))
 	{

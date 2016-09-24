@@ -56,7 +56,7 @@
 #include "r_data/r_translate.h"
 #include "templates.h"
 #include "cmdlib.h"
-#include "farchive.h"
+#include "serializer.h"
 
 static FRandom pr_pickteam ("PickRandomTeam");
 
@@ -70,6 +70,7 @@ CVAR (String,	gender,					"male",		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Bool,		neverswitchonpickup,	false,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Float,	movebob,				0.25f,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Float,	stillbob,				0.f,		CVAR_USERINFO | CVAR_ARCHIVE);
+CVAR (Float,	wbobspeed,				1.f,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (String,	playerclass,			"Fighter",	CVAR_USERINFO | CVAR_ARCHIVE);
 
 enum
@@ -83,6 +84,7 @@ enum
 	INFO_NeverSwitchOnPickup,
 	INFO_MoveBob,
 	INFO_StillBob,
+	INFO_WBobSpeed,
 	INFO_PlayerClass,
 	INFO_ColorSet,
 };
@@ -878,69 +880,75 @@ void D_ReadUserInfoStrings (int pnum, BYTE **stream, bool update)
 	*stream += strlen (*((char **)stream)) + 1;
 }
 
-void WriteUserInfo(FArchive &arc, userinfo_t &info)
+void WriteUserInfo(FSerializer &arc, userinfo_t &info)
 {
-	TMapIterator<FName, FBaseCVar *> it(info);
-	TMap<FName, FBaseCVar *>::Pair *pair;
-	FName name;
-	UCVarValue val;
-	int i;
-
-	while (it.NextPair(pair))
+	if (arc.BeginObject("userinfo"))
 	{
-		name = pair->Key;
-		arc << name;
-		switch (name.GetIndex())
+		TMapIterator<FName, FBaseCVar *> it(info);
+		TMap<FName, FBaseCVar *>::Pair *pair;
+		FString name;
+		const char *string;
+		UCVarValue val;
+		int i;
+
+		while (it.NextPair(pair))
 		{
-		case NAME_Skin:
-			arc.WriteString(skins[info.GetSkin()].name);
-			break;
+			name = pair->Key;
+			name.ToLower();
+			switch (pair->Key.GetIndex())
+			{
+			case NAME_Skin:
+				string = skins[info.GetSkin()].name;
+				break;
 
-		case NAME_PlayerClass:
-			i = info.GetPlayerClassNum();
-			arc.WriteString(i == -1 ? "Random" : PlayerClasses[i].Type->DisplayName.GetChars());
-			break;
+			case NAME_PlayerClass:
+				i = info.GetPlayerClassNum();
+				string = (i == -1 ? "Random" : PlayerClasses[i].Type->DisplayName.GetChars());
+				break;
 
-		default:
-			val = pair->Value->GetGenericRep(CVAR_String);
-			arc.WriteString(val.String);
-			break;
+			default:
+				val = pair->Value->GetGenericRep(CVAR_String);
+				string = val.String;
+				break;
+			}
+			arc.StringPtr(name, string);
 		}
+		arc.EndObject();
 	}
-	name = NAME_None;
-	arc << name;
 }
 
-void ReadUserInfo(FArchive &arc, userinfo_t &info, FString &skin)
+void ReadUserInfo(FSerializer &arc, userinfo_t &info, FString &skin)
 {
 	FName name;
 	FBaseCVar **cvar;
-	char *str = NULL;
 	UCVarValue val;
+	const char *key;
+	const char *str;
 
 	info.Reset();
 	skin = NULL;
-	for (arc << name; name != NAME_None; arc << name)
+	if (arc.BeginObject("userinfo"))
 	{
-		cvar = info.CheckKey(name);
-		arc << str;
-		if (cvar != NULL && *cvar != NULL)
+		while ((key = arc.GetKey()))
 		{
-			switch (name)
+			arc.StringPtr(nullptr, str);
+			name = key;
+			cvar = info.CheckKey(name);
+			if (cvar != NULL && *cvar != NULL)
 			{
-			case NAME_Team:			info.TeamChanged(atoi(str)); break;
-			case NAME_Skin:			skin = str; break;	// Caller must call SkinChanged() once current calss is known
-			case NAME_PlayerClass:	info.PlayerClassChanged(str); break;
-			default:
-				val.String = str;
-				(*cvar)->SetGenericRep(val, CVAR_String);
-				break;
+				switch (name)
+				{
+				case NAME_Team:			info.TeamChanged(atoi(str)); break;
+				case NAME_Skin:			skin = str; break;	// Caller must call SkinChanged() once current calss is known
+				case NAME_PlayerClass:	info.PlayerClassChanged(str); break;
+				default:
+					val.String = str;
+					(*cvar)->SetGenericRep(val, CVAR_String);
+					break;
+				}
 			}
 		}
-	}
-	if (str != NULL)
-	{
-		delete[] str;
+		arc.EndObject();
 	}
 }
 

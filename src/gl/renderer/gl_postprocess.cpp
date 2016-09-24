@@ -324,6 +324,78 @@ void FGLRenderer::UpdateCameraExposure()
 
 //-----------------------------------------------------------------------------
 //
+// Extracts light average from the scene and updates the camera exposure texture
+//
+//-----------------------------------------------------------------------------
+
+void FGLRenderer::UpdateCameraExposure()
+{
+	if (!gl_bloom && gl_tonemap == 0)
+		return;
+
+	FGLDebug::PushGroup("UpdateCameraExposure");
+
+	FGLPostProcessState savedState;
+	savedState.SaveTextureBinding1();
+
+	// Extract light level from scene texture:
+	const auto &level0 = mBuffers->ExposureLevels[0];
+	glBindFramebuffer(GL_FRAMEBUFFER, level0.Framebuffer);
+	glViewport(0, 0, level0.Width, level0.Height);
+	mBuffers->BindCurrentTexture(0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	mExposureExtractShader->Bind();
+	mExposureExtractShader->SceneTexture.Set(0);
+	mExposureExtractShader->Scale.Set(mSceneViewport.width / (float)mScreenViewport.width, mSceneViewport.height / (float)mScreenViewport.height);
+	mExposureExtractShader->Offset.Set(mSceneViewport.left / (float)mScreenViewport.width, mSceneViewport.top / (float)mScreenViewport.height);
+	RenderScreenQuad();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	// Find the average value:
+	for (int i = 0; i + 1 < mBuffers->ExposureLevels.Size(); i++)
+	{
+		const auto &level = mBuffers->ExposureLevels[i];
+		const auto &next = mBuffers->ExposureLevels[i + 1];
+
+		glBindFramebuffer(GL_FRAMEBUFFER, next.Framebuffer);
+		glViewport(0, 0, next.Width, next.Height);
+		glBindTexture(GL_TEXTURE_2D, level.Texture);
+		mExposureAverageShader->Bind();
+		mExposureAverageShader->ExposureTexture.Set(0);
+		RenderScreenQuad();
+	}
+
+	// Combine average value with current camera exposure:
+	glBindFramebuffer(GL_FRAMEBUFFER, mBuffers->ExposureFB);
+	glViewport(0, 0, 1, 1);
+	if (!mBuffers->FirstExposureFrame)
+	{
+		glEnable(GL_BLEND);
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+	else
+	{
+		mBuffers->FirstExposureFrame = false;
+	}
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, mBuffers->ExposureLevels.Last().Texture);
+	mExposureCombineShader->Bind();
+	mExposureCombineShader->ExposureTexture.Set(0);
+	mExposureCombineShader->ExposureBase.Set(gl_exposure_base);
+	mExposureCombineShader->ExposureMin.Set(gl_exposure_min);
+	mExposureCombineShader->ExposureScale.Set(gl_exposure_scale);
+	mExposureCombineShader->ExposureSpeed.Set(gl_exposure_speed);
+	RenderScreenQuad();
+	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+
+	FGLDebug::PopGroup();
+}
+
+//-----------------------------------------------------------------------------
+//
 // Adds bloom contribution to scene texture
 //
 //-----------------------------------------------------------------------------

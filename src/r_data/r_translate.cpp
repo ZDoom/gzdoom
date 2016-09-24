@@ -46,8 +46,10 @@
 #include "i_system.h"
 #include "w_wad.h"
 #include "r_data/colormaps.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "d_player.h"
+#include "r_data/sprites.h"
+#include "r_state.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -192,27 +194,62 @@ bool FRemapTable::operator==(const FRemapTable &o)
 //
 //----------------------------------------------------------------------------
 
-void FRemapTable::Serialize(FArchive &arc)
+void FRemapTable::Serialize(FSerializer &arc)
 {
 	int n = NumEntries;
 
-	arc << NumEntries;
-	if (arc.IsStoring())
-	{
-		arc.Write (Remap, NumEntries);
-	}
-	else
+	arc("numentries", NumEntries);
+	if (arc.isReading())
 	{
 		if (n != NumEntries)
 		{
 			Free();
 			Alloc(NumEntries);
 		}
-		arc.Read (Remap, NumEntries);
 	}
-	for (int j = 0; j < NumEntries; ++j)
+	arc.Array("remap", Remap, NumEntries);
+	arc.Array("palette", Palette, NumEntries);
+}
+
+void FRemapTable::StaticSerializeTranslations(FSerializer &arc)
+{
+	if (arc.BeginArray("translations"))
 	{
-		arc << Palette[j];
+		// Does this level have custom translations?
+		FRemapTable *trans;
+		int w;
+		if (arc.isWriting())
+		{
+			for (unsigned int i = 0; i < translationtables[TRANSLATION_LevelScripted].Size(); ++i)
+			{
+				trans = translationtables[TRANSLATION_LevelScripted][i];
+				if (trans != NULL && !trans->IsIdentity())
+				{
+					if (arc.BeginObject(nullptr))
+					{
+						arc("index", i);
+						trans->Serialize(arc);
+						arc.EndObject();
+					}
+				}
+			}
+		}
+		else
+		{
+			while (arc.BeginObject(nullptr))
+			{
+				arc("index", w);
+				trans = translationtables[TRANSLATION_LevelScripted].GetVal(w);
+				if (trans == NULL)
+				{
+					trans = new FRemapTable;
+					translationtables[TRANSLATION_LevelScripted].SetVal(w, trans);
+				}
+				trans->Serialize(arc);
+				arc.EndObject();
+			}
+		}
+		arc.EndArray();
 	}
 }
 

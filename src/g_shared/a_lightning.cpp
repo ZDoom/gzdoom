@@ -9,7 +9,7 @@
 #include "r_sky.h"
 #include "g_level.h"
 #include "r_state.h"
-#include "farchive.h"
+#include "serializer.h"
 
 static FRandom pr_lightning ("Lightning");
 
@@ -19,44 +19,24 @@ DLightningThinker::DLightningThinker ()
 	: DThinker (STAT_LIGHTNING)
 {
 	Stopped = false;
-	LightningLightLevels = NULL;
 	LightningFlashCount = 0;
 	NextLightningFlash = ((pr_lightning()&15)+5)*35; // don't flash at level start
 
-	LightningLightLevels = new short[numsectors];
-	clearbufshort(LightningLightLevels, numsectors, SHRT_MAX);
+	LightningLightLevels.Resize(numsectors);
+	clearbufshort(&LightningLightLevels[0], numsectors, SHRT_MAX);
 }
 
 DLightningThinker::~DLightningThinker ()
 {
-	if (LightningLightLevels != NULL)
-	{
-		delete[] LightningLightLevels;
-	}
 }
 
-void DLightningThinker::Serialize (FArchive &arc)
+void DLightningThinker::Serialize(FSerializer &arc)
 {
-	int i;
-	short *lights;
-
 	Super::Serialize (arc);
-
-	arc << Stopped << NextLightningFlash << LightningFlashCount;
-
-	if (arc.IsLoading ())
-	{
-		if (LightningLightLevels != NULL)
-		{
-			delete[] LightningLightLevels;
-		}
-		LightningLightLevels = new short[numsectors];
-	}
-	lights = LightningLightLevels;
-	for (i = numsectors; i > 0; ++lights, --i)
-	{
-		arc << *lights;
-	}
+	arc("stopped", Stopped)
+		("next", NextLightningFlash)
+		("count", LightningFlashCount)
+		("levels", LightningLightLevels);
 }
 
 void DLightningThinker::Tick ()
@@ -107,7 +87,7 @@ void DLightningThinker::LightningFlash ()
 					tempSec->SetLightLevel(LightningLightLevels[j]);
 				}
 			}
-			clearbufshort(LightningLightLevels, numsectors, SHRT_MAX);
+			clearbufshort(&LightningLightLevels[0], numsectors, SHRT_MAX);
 			level.flags &= ~LEVEL_SWAPSKIES;
 		}
 		return;

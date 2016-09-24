@@ -37,6 +37,7 @@ ACTOR Actor native //: Thinker
 	MissileHeight 32	
 	SpriteAngle 0
 	SpriteRotation 0
+	StencilColor "00 00 00"
 
 	// Functions
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);

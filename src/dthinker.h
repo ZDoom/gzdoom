@@ -43,6 +43,7 @@ class player_t;
 struct pspdef_s;
 struct FState;
 class DThinker;
+class FSerializer;
 
 class FThinkerIterator;
 
@@ -69,6 +70,7 @@ public:
 	virtual ~DThinker ();
 	virtual void Tick ();
 	virtual void PostBeginPlay ();	// Called just before the first tick
+	virtual void PostSerialize();
 	size_t PropagateMark();
 	
 	void ChangeStatNum (int statnum);
@@ -76,33 +78,32 @@ public:
 	static void RunThinkers ();
 	static void RunThinkers (int statnum);
 	static void DestroyAllThinkers ();
-	static void DestroyMostThinkers ();
 	static void DestroyThinkersInList(int statnum)
 	{
 		DestroyThinkersInList(Thinkers[statnum]);
 		DestroyThinkersInList(FreshThinkers[statnum]);
 	}
-	static void SerializeAll (FArchive &arc, bool keepPlayers);
+	static void SerializeThinkers(FSerializer &arc, bool keepPlayers);
 	static void MarkRoots();
 
 	static DThinker *FirstThinker (int statnum);
+	static bool bSerialOverride;
 
 private:
 	enum no_link_type { NO_LINK };
 	DThinker(no_link_type) throw();
 	static void DestroyThinkersInList (FThinkerList &list);
-	static void DestroyMostThinkersInList (FThinkerList &list, int stat);
 	static int TickThinkers (FThinkerList *list, FThinkerList *dest);	// Returns: # of thinkers ticked
-	static void SaveList(FArchive &arc, DThinker *node);
+	static void SaveList(FSerializer &arc, DThinker *node);
 	void Remove();
 
 	static FThinkerList Thinkers[MAX_STATNUM+2];		// Current thinkers
 	static FThinkerList FreshThinkers[MAX_STATNUM+1];	// Newly created thinkers
-	static bool bSerialOverride;
 
 	friend struct FThinkerList;
 	friend class FThinkerIterator;
 	friend class DObject;
+	friend class FSerializer;
 
 	DThinker *NextThinker, *PrevThinker;
 };

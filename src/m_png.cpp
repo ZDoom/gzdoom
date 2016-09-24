@@ -80,7 +80,7 @@ PNGHandle::PNGHandle (FILE *file) : File(0), bDeleteFilePtr(true), ChunkPt(0)
 	File = new FileReader(file);
 }
 
-PNGHandle::PNGHandle (FileReader *file) : File(file), bDeleteFilePtr(false), ChunkPt(0) {}
+PNGHandle::PNGHandle (FileReader *file, bool takereader) : File(file), bDeleteFilePtr(takereader), ChunkPt(0) {}
 PNGHandle::~PNGHandle ()
 {
 	for (unsigned int i = 0; i < TextChunks.Size(); ++i)
@@ -101,7 +101,7 @@ PNGHandle::~PNGHandle ()
 
 static inline void MakeChunk (void *where, DWORD type, size_t len);
 static inline void StuffPalette (const PalEntry *from, BYTE *to);
-static bool WriteIDAT (FILE *file, const BYTE *data, int len);
+static bool WriteIDAT (FileWriter *file, const BYTE *data, int len);
 static void UnfilterRow (int width, BYTE *dest, BYTE *stream, BYTE *prev, int bpp);
 static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const BYTE *rowin, BYTE *rowout, bool grayscale);
 
@@ -131,7 +131,7 @@ CVAR(Float, png_gamma, 0.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-bool M_CreatePNG (FILE *file, const BYTE *buffer, const PalEntry *palette,
+bool M_CreatePNG (FileWriter *file, const BYTE *buffer, const PalEntry *palette,
 				  ESSType color_type, int width, int height, int pitch)
 {
 	BYTE work[8 +				// signature
@@ -171,7 +171,7 @@ bool M_CreatePNG (FILE *file, const BYTE *buffer, const PalEntry *palette,
 		work_len = sizeof(work) - (12+256*3);
 	}
 
-	if (fwrite (work, 1, work_len, file) != work_len)
+	if (file->Write (work, work_len) != work_len)
 		return false;
 
 	return M_SaveBitmap (buffer, color_type, width, height, pitch, file);
@@ -185,7 +185,7 @@ bool M_CreatePNG (FILE *file, const BYTE *buffer, const PalEntry *palette,
 //
 //==========================================================================
 
-bool M_CreateDummyPNG (FILE *file)
+bool M_CreateDummyPNG (FileWriter *file)
 {
 	static const BYTE dummyPNG[] =
 	{
@@ -195,7 +195,7 @@ bool M_CreateDummyPNG (FILE *file)
 		0,0,0,10,'I','D','A','T',
 		104,222,99,96,0,0,0,2,0,1,0x9f,0x65,0x0e,0x18
 	};
-	return fwrite (dummyPNG, 1, sizeof(dummyPNG), file) == sizeof(dummyPNG);
+	return file->Write (dummyPNG, sizeof(dummyPNG)) == sizeof(dummyPNG);
 }
 
 
@@ -207,10 +207,10 @@ bool M_CreateDummyPNG (FILE *file)
 //
 //==========================================================================
 
-bool M_FinishPNG (FILE *file)
+bool M_FinishPNG (FileWriter *file)
 {
 	static const BYTE iend[12] = { 0,0,0,0,73,69,78,68,174,66,96,130 };
-	return fwrite (iend, 1, 12, file) == 12;
+	return file->Write (iend, 12) == 12;
 }
 
 //==========================================================================
@@ -221,13 +221,13 @@ bool M_FinishPNG (FILE *file)
 //
 //==========================================================================
 
-bool M_AppendPNGChunk (FILE *file, DWORD chunkID, const BYTE *chunkData, DWORD len)
+bool M_AppendPNGChunk (FileWriter *file, DWORD chunkID, const BYTE *chunkData, DWORD len)
 {
 	DWORD head[2] = { BigLong((unsigned int)len), chunkID };
 	DWORD crc;
 
-	if (fwrite (head, 1, 8, file) == 8 &&
-		(len == 0 || fwrite (chunkData, 1, len, file) == len))
+	if (file->Write (head, 8) == 8 &&
+		(len == 0 || file->Write (chunkData, len) == len))
 	{
 		crc = CalcCRC32 ((BYTE *)&head[1], 4);
 		if (len != 0)
@@ -235,7 +235,7 @@ bool M_AppendPNGChunk (FILE *file, DWORD chunkID, const BYTE *chunkData, DWORD l
 			crc = AddCRC32 (crc, chunkData, len);
 		}
 		crc = BigLong((unsigned int)crc);
-		return fwrite (&crc, 1, 4, file) == 4;
+		return file->Write (&crc, 4) == 4;
 	}
 	return false;
 }
@@ -248,7 +248,7 @@ bool M_AppendPNGChunk (FILE *file, DWORD chunkID, const BYTE *chunkData, DWORD l
 //
 //==========================================================================
 
-bool M_AppendPNGText (FILE *file, const char *keyword, const char *text)
+bool M_AppendPNGText (FileWriter *file, const char *keyword, const char *text)
 {
 	struct { DWORD len, id; char key[80]; } head;
 	int len = (int)strlen (text);
@@ -261,8 +261,8 @@ bool M_AppendPNGText (FILE *file, const char *keyword, const char *text)
 	strncpy (head.key, keyword, keylen);
 	head.key[keylen] = 0;
 
-	if ((int)fwrite (&head, 1, keylen + 9, file) == keylen + 9 &&
-		(int)fwrite (text, 1, len, file) == len)
+	if ((int)file->Write (&head, keylen + 9) == keylen + 9 &&
+		(int)file->Write (text, len) == len)
 	{
 		crc = CalcCRC32 ((BYTE *)&head+4, keylen + 5);
 		if (len != 0)
@@ -270,7 +270,7 @@ bool M_AppendPNGText (FILE *file, const char *keyword, const char *text)
 			crc = AddCRC32 (crc, (BYTE *)text, len);
 		}
 		crc = BigLong((unsigned int)crc);
-		return fwrite (&crc, 1, 4, file) == 4;
+		return file->Write (&crc, 4) == 4;
 	}
 	return false;
 }
@@ -374,15 +374,14 @@ bool M_GetPNGText (PNGHandle *png, const char *keyword, char *buffer, size_t buf
 //
 //==========================================================================
 
-PNGHandle *M_VerifyPNG (FILE *file)
+PNGHandle *M_VerifyPNG (FileReader *filer, bool takereader)
 {
 	PNGHandle::Chunk chunk;
-	FileReader *filer;
 	PNGHandle *png;
 	DWORD data[2];
 	bool sawIDAT = false;
 
-	if (fread (&data, 1, 8, file) != 8)
+	if (filer->Read(&data, 8) != 8)
 	{
 		return NULL;
 	}
@@ -390,7 +389,7 @@ PNGHandle *M_VerifyPNG (FILE *file)
 	{ // Does not have PNG signature
 		return NULL;
 	}
-	if (fread (&data, 1, 8, file) != 8)
+	if (filer->Read (&data, 8) != 8)
 	{
 		return NULL;
 	}
@@ -400,8 +399,7 @@ PNGHandle *M_VerifyPNG (FILE *file)
 	}
 
 	// It looks like a PNG so far, so start creating a PNGHandle for it
-	png = new PNGHandle (file);
-	filer = png->File;
+	png = new PNGHandle (filer, takereader);
 	chunk.ID = data[1];
 	chunk.Offset = 16;
 	chunk.Size = BigLong((unsigned int)data[0]);
@@ -430,7 +428,7 @@ PNGHandle *M_VerifyPNG (FILE *file)
 			sawIDAT = true;
 		}
 		chunk.ID = data[1];
-		chunk.Offset = ftell (file);
+		chunk.Offset = filer->Tell();
 		chunk.Size = BigLong((unsigned int)data[0]);
 		png->Chunks.Push (chunk);
 
@@ -452,6 +450,12 @@ PNGHandle *M_VerifyPNG (FILE *file)
 
 	delete png;
 	return NULL;
+}
+
+PNGHandle *M_VerifyPNG(FILE *file)
+{
+	FileReader *fr = new FileReader(file);
+	return M_VerifyPNG(fr, true);
 }
 
 //==========================================================================
@@ -900,7 +904,7 @@ static int SelectFilter(Byte row[5][1 + MAXWIDTH*3], Byte prior[MAXWIDTH*3], int
 //
 //==========================================================================
 
-bool M_SaveBitmap(const BYTE *from, ESSType color_type, int width, int height, int pitch, FILE *file)
+bool M_SaveBitmap(const BYTE *from, ESSType color_type, int width, int height, int pitch, FileWriter *file)
 {
 #if USE_FILTER_HEURISTIC
 	Byte prior[MAXWIDTH*3];
@@ -1040,7 +1044,7 @@ bool M_SaveBitmap(const BYTE *from, ESSType color_type, int width, int height, i
 //
 //==========================================================================
 
-static bool WriteIDAT (FILE *file, const BYTE *data, int len)
+static bool WriteIDAT (FileWriter *file, const BYTE *data, int len)
 {
 	DWORD foo[2], crc;
 
@@ -1049,9 +1053,9 @@ static bool WriteIDAT (FILE *file, const BYTE *data, int len)
 	crc = CalcCRC32 ((BYTE *)&foo[1], 4);
 	crc = BigLong ((unsigned int)AddCRC32 (crc, data, len));
 
-	if (fwrite (foo, 1, 8, file) != 8 ||
-		fwrite (data, 1, len, file) != (size_t)len ||
-		fwrite (&crc, 1, 4, file) != 4)
+	if (file->Write (foo, 8) != 8 ||
+		file->Write (data, len) != (size_t)len ||
+		file->Write (&crc, 4) != 4)
 	{
 		return false;
 	}

@@ -32,7 +32,6 @@
 **
 */
 
-#include "farchive.h"
 #include "templates.h"
 #include "renderstyle.h"
 #include "c_cvars.h"
@@ -98,12 +97,6 @@ static struct LegacyInit
 } DoLegacyInit;
 
 #endif
-
-FArchive &operator<< (FArchive &arc, FRenderStyle &style)
-{
-	arc << style.BlendOp << style.SrcAlpha << style.DestAlpha << style.Flags;
-	return arc;
-}
 
 double GetAlpha(int type, double alpha)
 {

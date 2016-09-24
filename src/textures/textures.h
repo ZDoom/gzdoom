@@ -31,7 +31,6 @@ struct FRemapTable;
 struct FCopyInfo;
 class FScanner;
 class PClassInventory;
-class FArchive;
 
 // Texture IDs
 class FTextureManager;
@@ -44,8 +43,6 @@ class FNullTextureID : public FTextureID
 public:
 	FNullTextureID() : FTextureID(0) {}
 };
-
-FArchive &operator<< (FArchive &arc, FTextureID &tex);
 
 //
 // Animating textures and planes
@@ -466,9 +463,6 @@ public:
 
 	int NumTextures () const { return (int)Textures.Size(); }
 
-	void WriteTexture (FArchive &arc, int picnum);
-	int ReadTexture (FArchive &arc);
-
 	void UpdateAnimations (DWORD mstime);
 	int GuesstimateNumTextures ();
 
@@ -584,7 +578,6 @@ protected:
 // A texture that can be drawn to.
 class DSimpleCanvas;
 class AActor;
-class FArchive;
 
 class FCanvasTexture : public FTexture
 {

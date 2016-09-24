@@ -54,7 +54,7 @@
 #include "i_system.h"
 #include "doomerrors.h"
 #include "doomstat.h"
-#include "farchive.h"
+#include "serializer.h"
 
 //==========================================================================
 //
@@ -164,6 +164,19 @@ DFsScript::DFsScript()
 
 //==========================================================================
 //
+// This is here to delete the locally allocated buffer in case this
+// gets forcibly destroyed
+//
+//==========================================================================
+
+DFsScript::~DFsScript()
+{
+	if (data != NULL) delete[] data;
+	data = NULL;
+}
+
+//==========================================================================
+//
 //
 //
 //==========================================================================
@@ -187,18 +200,23 @@ void DFsScript::Destroy()
 //
 //==========================================================================
 
-void DFsScript::Serialize(FArchive &arc)
+void DFsScript::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
 	// don't save a reference to the global script
-	if (parent == global_script) parent = NULL;
+	if (parent == global_script) parent = nullptr;
 
-	arc << data << scriptnum << len << parent << trigger << lastiftrue;
-	for(int i=0; i< SECTIONSLOTS; i++) arc << sections[i];
-	for(int i=0; i< VARIABLESLOTS; i++) arc << variables[i];
-	for(int i=0; i< MAXSCRIPTS; i++) arc << children[i];
+	arc("data", data)
+		("scriptnum", scriptnum)
+		("len", len)
+		("parent", parent)
+		("trigger", trigger)
+		("lastiftrue", lastiftrue)
+		.Array("sections", sections, SECTIONSLOTS)
+		.Array("variables", variables, VARIABLESLOTS)
+		.Array("children", children, MAXSCRIPTS);
 
-	if (parent == NULL) parent = global_script;
+	if (parent == nullptr) parent = global_script;
 }
 
 //==========================================================================
@@ -338,12 +356,17 @@ void DRunningScript::Destroy()
 //
 //==========================================================================
 
-void DRunningScript::Serialize(FArchive &arc)
+void DRunningScript::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
-
-	arc << script << save_point << wait_type << wait_data << prev << next << trigger;
-	for(int i=0; i< VARIABLESLOTS; i++) arc << variables[i];
+	arc("script", script)
+		("save_point", save_point)
+		("wait_type", wait_type)
+		("wait_data", wait_data)
+		("prev", prev)
+		("next", next)
+		("trigger", trigger)
+		.Array("variables", variables, VARIABLESLOTS);
 }
 
 
@@ -416,10 +439,13 @@ void DFraggleThinker::Destroy()
 //
 //==========================================================================
 
-void DFraggleThinker::Serialize(FArchive &arc)
+void DFraggleThinker::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
-	arc << LevelScript << RunningScripts << SpawnedThings << nocheckposition;
+	arc("levelscript", LevelScript)
+		("runningscripts", RunningScripts)
+		("spawnedthings", SpawnedThings)
+		("nocheckposition", nocheckposition);
 }
 
 //==========================================================================

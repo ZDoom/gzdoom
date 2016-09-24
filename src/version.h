@@ -71,16 +71,15 @@ const char *GetVersionString();
 // Note that SAVEVER is not directly comparable to VERSION.
 // SAVESIG should match SAVEVER.
 
+// extension for savegames
+#define SAVEGAME_EXT "zds"
+
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
 #define MINSAVEVER	4545
 
 // Use 4500 as the base git save version, since it's higher than the
 // SVN revision ever got.
 #define SAVEVER 4550
-
-#define SAVEVERSTRINGIFY2(x) #x
-#define SAVEVERSTRINGIFY(x) SAVEVERSTRINGIFY2(x)
-#define SAVESIG "ZDOOMSAVE" SAVEVERSTRINGIFY(SAVEVER)
 
 #define DYNLIGHT
 

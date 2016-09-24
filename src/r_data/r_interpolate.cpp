@@ -39,7 +39,7 @@
 #include "p_local.h"
 #include "i_system.h"
 #include "po_man.h"
-#include "farchive.h"
+#include "serializer.h"
 
 //==========================================================================
 //
@@ -66,7 +66,8 @@ public:
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
-	void Serialize(FArchive &arc);
+	
+	virtual void Serialize(FSerializer &arc);
 	size_t PointerSubstitution (DObject *old, DObject *notOld);
 	size_t PropagateMark();
 };
@@ -94,7 +95,8 @@ public:
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
-	void Serialize(FArchive &arc);
+	
+	virtual void Serialize(FSerializer &arc);
 };
 
 
@@ -121,7 +123,8 @@ public:
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
-	void Serialize(FArchive &arc);
+	
+	virtual void Serialize(FSerializer &arc);
 };
 
 //==========================================================================
@@ -147,7 +150,8 @@ public:
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
-	void Serialize(FArchive &arc);
+	
+	virtual void Serialize(FSerializer &arc);
 };
 
 
@@ -370,11 +374,11 @@ void DInterpolation::Destroy()
 //
 //==========================================================================
 
-void DInterpolation::Serialize(FArchive &arc)
+void DInterpolation::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
-	arc << refcount;
-	if (arc.IsLoading())
+	arc("refcount", refcount);
+	if (arc.isReading())
 	{
 		interpolator.AddInterpolation(this);
 	}
@@ -414,15 +418,18 @@ DSectorPlaneInterpolation::DSectorPlaneInterpolation(sector_t *_sector, bool _pl
 
 void DSectorPlaneInterpolation::Destroy()
 {
-	if (ceiling) 
+	if (sector != nullptr)
 	{
-		sector->interpolations[sector_t::CeilingMove] = NULL;
+		if (ceiling)
+		{
+			sector->interpolations[sector_t::CeilingMove] = nullptr;
+		}
+		else
+		{
+			sector->interpolations[sector_t::FloorMove] = nullptr;
+		}
+		sector = nullptr;
 	}
-	else 
-	{
-		sector->interpolations[sector_t::FloorMove] = NULL;
-	}
-
 	for(unsigned i=0; i<attached.Size(); i++)
 	{
 		attached[i]->DelRef();
@@ -516,10 +523,14 @@ void DSectorPlaneInterpolation::Interpolate(double smoothratio)
 //
 //==========================================================================
 
-void DSectorPlaneInterpolation::Serialize(FArchive &arc)
+void DSectorPlaneInterpolation::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
-	arc << sector << ceiling << oldheight << oldtexz << attached;
+	arc("sector", sector)
+		("ceiling", ceiling)
+		("oldheight", oldheight)
+		("oldtexz", oldtexz)
+		("attached", attached);
 }
 
 //==========================================================================
@@ -585,13 +596,17 @@ DSectorScrollInterpolation::DSectorScrollInterpolation(sector_t *_sector, bool _
 
 void DSectorScrollInterpolation::Destroy()
 {
-	if (ceiling) 
+	if (sector != nullptr)
 	{
-		sector->interpolations[sector_t::CeilingScroll] = NULL;
-	}
-	else 
-	{
-		sector->interpolations[sector_t::FloorScroll] = NULL;
+		if (ceiling)
+		{
+			sector->interpolations[sector_t::CeilingScroll] = nullptr;
+		}
+		else
+		{
+			sector->interpolations[sector_t::FloorScroll] = nullptr;
+		}
+		sector = nullptr;
 	}
 	Super::Destroy();
 }
@@ -648,10 +663,13 @@ void DSectorScrollInterpolation::Interpolate(double smoothratio)
 //
 //==========================================================================
 
-void DSectorScrollInterpolation::Serialize(FArchive &arc)
+void DSectorScrollInterpolation::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
-	arc << sector << ceiling << oldx << oldy;
+	arc("sector", sector)
+		("ceiling", ceiling)
+		("oldx", oldx)
+		("oldy", oldy);
 }
 
 
@@ -683,7 +701,11 @@ DWallScrollInterpolation::DWallScrollInterpolation(side_t *_side, int _part)
 
 void DWallScrollInterpolation::Destroy()
 {
-	side->textures[part].interpolation = NULL;
+	if (side != nullptr)
+	{
+		side->textures[part].interpolation = nullptr;
+		side = nullptr;
+	}
 	Super::Destroy();
 }
 
@@ -739,10 +761,13 @@ void DWallScrollInterpolation::Interpolate(double smoothratio)
 //
 //==========================================================================
 
-void DWallScrollInterpolation::Serialize(FArchive &arc)
+void DWallScrollInterpolation::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
-	arc << side << part << oldx << oldy;
+	arc("side", side)
+		("part", part)
+		("oldx", oldx)
+		("oldy", oldy);
 }
 
 //==========================================================================
@@ -774,7 +799,10 @@ DPolyobjInterpolation::DPolyobjInterpolation(FPolyObj *po)
 
 void DPolyobjInterpolation::Destroy()
 {
-	poly->interpolation = NULL;
+	if (poly != nullptr)
+	{
+		poly->interpolation = nullptr;
+	}
 	Super::Destroy();
 }
 
@@ -855,15 +883,14 @@ void DPolyobjInterpolation::Interpolate(double smoothratio)
 //
 //==========================================================================
 
-void DPolyobjInterpolation::Serialize(FArchive &arc)
+void DPolyobjInterpolation::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
-	int po = int(poly - polyobjs);
-	arc << po << oldverts;
-	poly = polyobjs + po;
-
-	arc << oldcx << oldcy;
-	if (arc.IsLoading()) bakverts.Resize(oldverts.Size());
+	arc("poly", poly)
+		("oldverts", oldverts)
+		("oldcx", oldcx)
+		("oldcy", oldcy);
+	if (arc.isReading()) bakverts.Resize(oldverts.Size());
 }
 
 

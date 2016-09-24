@@ -39,7 +39,7 @@
 #include "i_system.h"
 #include "thingdef/thingdef.h"
 #include "doomstat.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "a_pickups.h"
 
 static FRandom pr_spot ("SpecialSpot");
@@ -58,7 +58,7 @@ TObjPtr<DSpotState> DSpotState::SpotState;
 
 struct FSpotList
 {
-	const PClass *Type;
+	PClassActor *Type;
 	TArray<ASpecialSpot*> Spots;
 	unsigned Index;
 	int SkipCount;
@@ -68,23 +68,12 @@ struct FSpotList
 	{
 	}
 
-	FSpotList(const PClass *type)
+	FSpotList(PClassActor *type)
 	{
 		Type = type;
 		Index = 0;
 		SkipCount = 0;
 		numcalls = 0;
-	}
-
-	//----------------------------------------------------------------------------
-	//
-	// 
-	//
-	//----------------------------------------------------------------------------
-
-	void Serialize(FArchive &arc)
-	{
-		arc << Type << Spots << Index << SkipCount << numcalls;
 	}
 
 	//----------------------------------------------------------------------------
@@ -194,6 +183,26 @@ struct FSpotList
 //
 //----------------------------------------------------------------------------
 
+FSerializer &Serialize(FSerializer &arc, const char *key, FSpotList &list, FSpotList *def)
+{
+	if (arc.BeginObject(key))
+	{
+		arc("type", list.Type)
+			("spots", list.Spots)
+			("index", list.Index)
+			("skipcount", list.SkipCount)
+			("numcalls", list.numcalls)
+			.EndObject();
+	}
+	return arc;
+}
+
+//----------------------------------------------------------------------------
+//
+// 
+//
+//----------------------------------------------------------------------------
+
 DSpotState::DSpotState ()
 : DThinker (STAT_INFO)
 {
@@ -215,10 +224,6 @@ DSpotState::DSpotState ()
 
 void DSpotState::Destroy ()
 {
-	for(unsigned i = 0; i < SpotLists.Size(); i++)
-	{
-		delete SpotLists[i];
-	}
 	SpotLists.Clear();
 	SpotLists.ShrinkToFit();
 
@@ -254,13 +259,13 @@ DSpotState *DSpotState::GetSpotState(bool create)
 //
 //----------------------------------------------------------------------------
 
-FSpotList *DSpotState::FindSpotList(const PClass *type)
+FSpotList *DSpotState::FindSpotList(PClassActor *type)
 {
 	for(unsigned i = 0; i < SpotLists.Size(); i++)
 	{
-		if (SpotLists[i]->Type == type) return SpotLists[i];
+		if (SpotLists[i].Type == type) return &SpotLists[i];
 	}
-	return SpotLists[SpotLists.Push(new FSpotList(type))];
+	return &SpotLists[SpotLists.Push(FSpotList(type))];
 }
 
 //----------------------------------------------------------------------------
@@ -295,27 +300,10 @@ bool DSpotState::RemoveSpot(ASpecialSpot *spot)
 //
 //----------------------------------------------------------------------------
 
-void DSpotState::Serialize(FArchive &arc)
+void DSpotState::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
-	if (arc.IsStoring())
-	{
-		arc.WriteCount(SpotLists.Size());
-		for(unsigned i = 0; i < SpotLists.Size(); i++)
-		{
-			SpotLists[i]->Serialize(arc);
-		}
-	}
-	else
-	{
-		unsigned c = arc.ReadCount();
-		SpotLists.Resize(c);
-		for(unsigned i = 0; i < SpotLists.Size(); i++)
-		{
-			SpotLists[i] = new FSpotList;
-			SpotLists[i]->Serialize(arc);
-		}
-	}
+	arc("spots", SpotLists);
 }
 
 //----------------------------------------------------------------------------
@@ -324,7 +312,7 @@ void DSpotState::Serialize(FArchive &arc)
 //
 //----------------------------------------------------------------------------
 
-ASpecialSpot *DSpotState::GetNextInList(const PClass *type, int skipcounter)
+ASpecialSpot *DSpotState::GetNextInList(PClassActor *type, int skipcounter)
 {
 	FSpotList *list = FindSpotList(type);
 	if (list != NULL) return list->GetNextInList(skipcounter);
@@ -337,7 +325,7 @@ ASpecialSpot *DSpotState::GetNextInList(const PClass *type, int skipcounter)
 //
 //----------------------------------------------------------------------------
 
-ASpecialSpot *DSpotState::GetSpotWithMinMaxDistance(const PClass *type, double x, double y, double mindist, double maxdist)
+ASpecialSpot *DSpotState::GetSpotWithMinMaxDistance(PClassActor *type, double x, double y, double mindist, double maxdist)
 {
 	FSpotList *list = FindSpotList(type);
 	if (list != NULL) return list->GetSpotWithMinMaxDistance(x, y, mindist, maxdist);
@@ -350,7 +338,7 @@ ASpecialSpot *DSpotState::GetSpotWithMinMaxDistance(const PClass *type, double x
 //
 //----------------------------------------------------------------------------
 
-ASpecialSpot *DSpotState::GetRandomSpot(const PClass *type, bool onlyonce)
+ASpecialSpot *DSpotState::GetRandomSpot(PClassActor *type, bool onlyonce)
 {
 	FSpotList *list = FindSpotList(type);
 	if (list != NULL) return list->GetRandomSpot(onlyonce);

@@ -19,7 +19,7 @@
 #include "g_level.h"
 #include "doomstat.h"
 #include "v_palette.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "r_utility.h"
 
 #include "r_data/colormaps.h"
@@ -101,12 +101,15 @@ bool APowerupGiver::Use (bool pickup)
 //
 //===========================================================================
 
-void APowerupGiver::Serialize (FArchive &arc)
+void APowerupGiver::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << PowerupType;
-	arc << EffectTics << BlendColor << Mode;
-	arc << Strength;
+	auto def = (APowerupGiver*)GetDefault();
+	arc("poweruptype", PowerupType, def->PowerupType)
+		("effecttics", EffectTics, def->EffectTics)
+		("blendcolor", BlendColor, def->BlendColor)
+		("mode", Mode, def->Mode)
+		("strength", Strength, def->Strength);
 }
 
 // Powerup -------------------------------------------------------------------
@@ -136,11 +139,14 @@ void APowerup::Tick ()
 //
 //===========================================================================
 
-void APowerup::Serialize (FArchive &arc)
+void APowerup::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << EffectTics << BlendColor << Mode;
-	arc << Strength;
+	auto def = (APowerup*)GetDefault();
+	arc("effecttics", EffectTics, def->EffectTics)
+		("blendcolor", BlendColor, def->BlendColor)
+		("mode", Mode, def->Mode)
+		("strength", Strength, def->Strength);
 }
 
 //===========================================================================
@@ -902,10 +908,11 @@ IMPLEMENT_CLASS (APowerTorch)
 //
 //===========================================================================
 
-void APowerTorch::Serialize (FArchive &arc)
+void APowerTorch::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << NewTorch << NewTorchDelta;
+	arc("newtorch", NewTorch)
+		("newtorchdelta", NewTorchDelta);
 }
 
 //===========================================================================
@@ -964,10 +971,10 @@ IMPLEMENT_CLASS (APowerFlight)
 //
 //===========================================================================
 
-void APowerFlight::Serialize (FArchive &arc)
+void APowerFlight::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << HitCenterFrame;
+	arc("hitcenterframe", HitCenterFrame);
 }
 
 //===========================================================================
@@ -1218,10 +1225,10 @@ IMPLEMENT_CLASS (APowerSpeed)
 //
 //===========================================================================
 
-void APowerSpeed::Serialize(FArchive &arc)
+void APowerSpeed::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << SpeedFlags;
+	arc("speedflags", SpeedFlags);
 }
 
 //===========================================================================
@@ -1900,11 +1907,14 @@ IMPLEMENT_CLASS(APowerMorph)
 //
 //===========================================================================
 
-void APowerMorph::Serialize (FArchive &arc)
+void APowerMorph::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << PlayerClass << MorphStyle << MorphFlash << UnMorphFlash;
-	arc << Player;
+	arc("playerclass", PlayerClass)
+		("morphstyle", MorphStyle)
+		("morphflash", MorphFlash)
+		("unmorphflash", UnMorphFlash)
+		("player", Player);
 }
 
 //===========================================================================

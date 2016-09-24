@@ -65,7 +65,7 @@
 #include "v_palette.h"
 #include "v_font.h"
 #include "r_data/colormaps.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "p_setup.h"
 #include "p_spec.h"
 #include "r_utility.h"
@@ -1780,7 +1780,7 @@ class DLightLevel : public DLighting
 public:
 
 	DLightLevel(sector_t * s,int destlevel,int speed);
-	void	Serialize (FArchive &arc);
+	void	Serialize(FSerializer &arc);
 	void		Tick ();
 	void		Destroy() { Super::Destroy(); m_Sector->lightingdata=NULL; }
 };
@@ -1789,11 +1789,11 @@ public:
 
 IMPLEMENT_CLASS (DLightLevel)
 
-void DLightLevel::Serialize (FArchive &arc)
+void DLightLevel::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << destlevel << speed;
-	if (arc.IsLoading()) m_Sector->lightingdata=this;
+	arc("destlevel", destlevel)
+		("speed", speed);
 }
 
 
@@ -3647,58 +3647,24 @@ void FParser::SF_Pow()
 //==========================================================================
 
 
-int HU_GetFSPic(FTextureID lumpnum, int xpos, int ypos);
-int HU_DeleteFSPic(unsigned int handle);
-int HU_ModifyFSPic(unsigned int handle, FTextureID lumpnum, int xpos, int ypos);
-int HU_FSDisplay(unsigned int handle, bool newval);
-
 void FParser::SF_NewHUPic()
 {
-	if (CheckArgs(3))
-	{
-		t_return.type = svt_int;
-		t_return.value.i = HU_GetFSPic(
-			TexMan.GetTexture(stringvalue(t_argv[0]), FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny), 
-			intvalue(t_argv[1]), intvalue(t_argv[2]));
-	}
+	// disabled because it was never used and never tested
 }
 
 void FParser::SF_DeleteHUPic()
 {
-	if (CheckArgs(1))
-	{
-		if (HU_DeleteFSPic(intvalue(t_argv[0])) == -1)
-			script_error("deletehupic: Invalid sfpic handle: %i\n", intvalue(t_argv[0]));
-	}
+	// disabled because it was never used and never tested
 }
 
 void FParser::SF_ModifyHUPic()
 {
-	if (t_argc != 4)
-	{
-		script_error("modifyhupic: invalid number of arguments\n");
-		return;
-	}
-
-	if (HU_ModifyFSPic(intvalue(t_argv[0]), 
-			TexMan.GetTexture(stringvalue(t_argv[0]), FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny),
-			intvalue(t_argv[2]), intvalue(t_argv[3])) == -1)
-	{
-		script_error("modifyhypic: invalid sfpic handle %i\n", intvalue(t_argv[0]));
-	}
-	return;
+	// disabled because it was never used and never tested
 }
 
 void FParser::SF_SetHUPicDisplay()
 {
-	if (t_argc != 2)
-	{
-		script_error("sethupicdisplay: invalud number of arguments\n");
-		return;
-	}
-
-	if (HU_FSDisplay(intvalue(t_argv[0]), intvalue(t_argv[1]) > 0 ? 1 : 0) == -1)
-		script_error("sethupicdisplay: invalid pic handle %i\n", intvalue(t_argv[0]));
+	// disabled because it was never used and never tested
 }
 
 

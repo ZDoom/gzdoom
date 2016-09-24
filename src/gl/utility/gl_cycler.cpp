@@ -34,19 +34,30 @@
 */
 
 #include <math.h>
+#include "serializer.h"
 #include "gl/utility/gl_cycler.h"
 
 //==========================================================================
 //
-// 
+// This will never be called with a null-def, so don't bother with that case.
 //
 //==========================================================================
 
-void FCycler::Serialize(FArchive & arc)
+FSerializer &Serialize(FSerializer &arc, const char *key, FCycler &c, FCycler *def)
 {
-	arc << m_start << m_end << m_current 
-		<< m_time << m_cycle << m_increment << m_shouldCycle
-		<< m_cycleType;
+	if (arc.BeginObject(key))
+	{
+		arc("start", c.m_start, def->m_start)
+			("end", c.m_end, def->m_end)
+			("current", c.m_current, def->m_current)
+			("time", c.m_time, def->m_time)
+			("cycle", c.m_cycle, def->m_cycle)
+			("increment", c.m_increment, def->m_increment)
+			("shouldcycle", c.m_shouldCycle, def->m_shouldCycle)
+			.Enum("type", c.m_cycleType)
+			.EndObject();
+	}
+	return arc;
 }
 
 //==========================================================================

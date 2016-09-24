@@ -1181,7 +1181,6 @@ set (PCH_SOURCES
 	dthinker.cpp
 	edata.cpp
 	f_wipe.cpp
-	farchive.cpp
 	files.cpp
 	g_doomedmap.cpp
 	g_game.cpp
@@ -1260,8 +1259,9 @@ set (PCH_SOURCES
 	p_xlat.cpp
 	parsecontext.cpp
 	po_man.cpp
-    portal.cpp
+	portal.cpp
 	r_utility.cpp
+	serializer.cpp
 	sc_man.cpp
 	st_stuff.cpp
 	statistics.cpp
@@ -1363,7 +1363,6 @@ set (PCH_SOURCES
 	thingdef/thingdef_properties.cpp
 	thingdef/thingdef_states.cpp
 	xlat/parse_xlat.cpp
-	fragglescript/t_fspic.cpp
 	fragglescript/t_func.cpp
 	fragglescript/t_load.cpp
 	fragglescript/t_oper.cpp
@@ -1567,6 +1566,7 @@ source_group("Games\\Strife Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DI
 source_group("Intermission" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/intermission/.+")
 source_group("Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/math/.+")
 source_group("Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/menu/.+")
+source_group("RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rapidjson/.+")
 source_group("OpenGL Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/.+")
 source_group("OpenGL Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/data/.+")
 source_group("OpenGL Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/dynlights/.+")

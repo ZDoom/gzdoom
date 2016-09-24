@@ -51,8 +51,9 @@
 #include "colormatcher.h"
 #include "v_palette.h"
 #include "d_player.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "gstrings.h"
+#include "r_utility.h"
 
 #include "../version.h"
 
@@ -1654,12 +1655,9 @@ void DBaseStatusBar::ReceivedWeapon (AWeapon *weapon)
 {
 }
 
-void DBaseStatusBar::Serialize (FArchive &arc)
+void DBaseStatusBar::SerializeMessages(FSerializer &arc)
 {
-	for (size_t i = 0; i < countof(Messages); ++i)
-	{
-		arc << Messages[i];
-	}
+	arc.Array("hudmessages", Messages, 3, true);
 }
 
 void DBaseStatusBar::ScreenSizeChanged ()

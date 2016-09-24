@@ -20,7 +20,7 @@ class DSeqNode : public DObject
 	DECLARE_CLASS (DSeqNode, DObject)
 	HAS_OBJECT_POINTERS
 public:
-	void Serialize (FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void StopAndDestroy ();
 	void Destroy ();
 	void Tick ();
@@ -38,7 +38,7 @@ public:
 	inline static DSeqNode *FirstSequence() { return SequenceListHead; }
 	inline DSeqNode *NextSequence() const { return m_Next; }
 
-	static void SerializeSequences (FArchive &arc);
+	static void SerializeSequences (FSerializer &arc);
 
 protected:
 	DSeqNode ();

@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <time.h>
+#include <memory>
 #ifdef __APPLE__
 #include <CoreServices/CoreServices.h>
 #endif
@@ -78,12 +79,14 @@
 #include "p_acs.h"
 #include "p_effect.h"
 #include "m_joy.h"
-#include "farchive.h"
 #include "r_renderer.h"
 #include "r_utility.h"
 #include "a_morph.h"
 #include "p_spec.h"
 #include "r_data/colormaps.h"
+#include "serializer.h"
+#include "w_zip.h"
+#include "resourcefiles/resourcefile.h"
 
 #include <zlib.h>
 
@@ -110,10 +113,11 @@ void	G_DoWorldDone (void);
 void	G_DoSaveGame (bool okForQuicksave, FString filename, const char *description);
 void	G_DoAutoSave ();
 
-void STAT_Write(FILE *file);
-void STAT_Read(PNGHandle *png);
+void STAT_Serialize(FSerializer &file);
+bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompressedBuffer> &content);
 
 FIntCVar gameskill ("skill", 2, CVAR_SERVERINFO|CVAR_LATCH);
+CVAR(Bool, save_formatted, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)	// use formatted JSON for saves (more readable but a larger files and a bit slower.
 CVAR (Int, deathmatch, 0, CVAR_SERVERINFO|CVAR_LATCH);
 CVAR (Bool, chasedemo, false, 0);
 CVAR (Bool, storesavepic, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -1775,7 +1779,7 @@ void G_LoadGame (const char* name, bool hidecon)
 	}
 }
 
-static bool CheckSingleWad (char *name, bool &printRequires, bool printwarn)
+static bool CheckSingleWad (const char *name, bool &printRequires, bool printwarn)
 {
 	if (name == NULL)
 	{
@@ -1795,22 +1799,20 @@ static bool CheckSingleWad (char *name, bool &printRequires, bool printwarn)
 			}
 		}
 		printRequires = true;
-		delete[] name;
 		return false;
 	}
-	delete[] name;
 	return true;
 }
 
 // Return false if not all the needed wads have been loaded.
-bool G_CheckSaveGameWads (PNGHandle *png, bool printwarn)
+bool G_CheckSaveGameWads (FSerializer &arc, bool printwarn)
 {
-	char *text;
 	bool printRequires = false;
+	FString text;
 
-	text = M_GetPNGText (png, "Game WAD");
+	arc("Game WAD", text);
 	CheckSingleWad (text, printRequires, printwarn);
-	text = M_GetPNGText (png, "Map WAD");
+	arc("Map WAD", text);
 	CheckSingleWad (text, printRequires, printwarn);
 
 	if (printRequires)
@@ -1828,9 +1830,6 @@ bool G_CheckSaveGameWads (PNGHandle *png, bool printwarn)
 
 void G_DoLoadGame ()
 {
-	char sigcheck[20];
-	char *text = NULL;
-	char *map;
 	bool hidecon;
 
 	if (gameaction != ga_autoloadgame)
@@ -1840,151 +1839,168 @@ void G_DoLoadGame ()
 	hidecon = gameaction == ga_loadgamehidecon;
 	gameaction = ga_nothing;
 
-	FILE *stdfile = fopen (savename.GetChars(), "rb");
-	if (stdfile == NULL)
+	FResourceFile *resfile = FResourceFile::OpenResourceFile(savename.GetChars(), nullptr, true, true);
+	if (resfile == nullptr)
 	{
 		Printf ("Could not read savegame '%s'\n", savename.GetChars());
 		return;
 	}
-
-	PNGHandle *png = M_VerifyPNG (stdfile);
-	if (png == NULL)
+	try
 	{
-		fclose (stdfile);
-		Printf ("'%s' is not a valid (PNG) savegame\n", savename.GetChars());
-		return;
-	}
-
-	SaveVersion = 0;
-
-	// Check whether this savegame actually has been created by a compatible engine.
-	// Since there are ZDoom derivates using the exact same savegame format but
-	// with mutual incompatibilities this check simplifies things significantly.
-	char *engine = M_GetPNGText (png, "Engine");
-	if (engine == NULL || 0 != strcmp (engine, GAMESIG))
-	{
-		// Make a special case for the message printed for old savegames that don't
-		// have this information.
-		if (engine == NULL)
+		FResourceLump *info = resfile->FindLump("info.json");
+		if (info == nullptr)
 		{
-			Printf ("Savegame is from an incompatible version\n");
+			delete resfile;
+			Printf("'%s' is not a valid savegame: Missing 'info.json'.\n", savename.GetChars());
+			return;
 		}
-		else
+
+		SaveVersion = 0;
+
+		void *data = info->CacheLump();
+		FSerializer arc;
+		if (!arc.OpenReader((const char *)data, info->LumpSize))
 		{
-			Printf ("Savegame is from another ZDoom-based engine: %s\n", engine);
-			delete[] engine;
+			Printf("Failed to access savegame info\n");
+			delete resfile;
+			return;
 		}
-		delete png;
-		fclose (stdfile);
-		return;
-	}
-	if (engine != NULL)
-	{
-		delete[] engine;
-	}
 
-	SaveVersion = 0;
-	if (!M_GetPNGText (png, "ZDoom Save Version", sigcheck, 20) ||
-		0 != strncmp (sigcheck, SAVESIG, 9) ||		// ZDOOMSAVE is the first 9 chars
-		(SaveVersion = atoi (sigcheck+9)) < MINSAVEVER)
-	{
-		delete png;
-		fclose (stdfile);
-		Printf ("Savegame is from an incompatible version");
-		if (SaveVersion != 0)
+		// Check whether this savegame actually has been created by a compatible engine.
+		// Since there are ZDoom derivates using the exact same savegame format but
+		// with mutual incompatibilities this check simplifies things significantly.
+		FString savever, engine, map;
+		arc("Save Version", SaveVersion);
+		arc("Engine", engine);
+		arc("Current Map", map);
+
+		if (engine.CompareNoCase(GAMESIG) != 0)
 		{
-			Printf(": %d (%d is the oldest supported)", SaveVersion, MINSAVEVER);
+			// Make a special case for the message printed for old savegames that don't
+			// have this information.
+			if (engine.IsEmpty())
+			{
+				Printf("Savegame is from an incompatible version\n");
+			}
+			else
+			{
+				Printf("Savegame is from another ZDoom-based engine: %s\n", engine);
+			}
+			delete resfile;
+			return;
 		}
-		Printf("\n");
+
+		if (SaveVersion < MINSAVEVER || SaveVersion > SAVEVER)
+		{
+			delete resfile;
+			Printf("Savegame is from an incompatible version");
+			if (SaveVersion < MINSAVEVER)
+			{
+				Printf(": %d (%d is the oldest supported)", SaveVersion, MINSAVEVER);
+			}
+			else
+			{
+				Printf(": %d (%d is the highest supported)", SaveVersion, SAVEVER);
+			}
+			Printf("\n");
+			return;
+		}
+
+		if (!G_CheckSaveGameWads(arc, true))
+		{
+			delete resfile;
+			return;
+		}
+
+		if (map.IsEmpty())
+		{
+			Printf("Savegame is missing the current map\n");
+			delete resfile;
+			return;
+		}
+
+		// Now that it looks like we can load this save, hide the fullscreen console if it was up
+		// when the game was selected from the menu.
+		if (hidecon && gamestate == GS_FULLCONSOLE)
+		{
+			gamestate = GS_HIDECONSOLE;
+		}
+		// we are done with info.json.
+		arc.Close();
+
+		info = resfile->FindLump("globals.json");
+		if (info == nullptr)
+		{
+			delete resfile;
+			Printf("'%s' is not a valid savegame: Missing 'globals.json'.\n", savename.GetChars());
+			return;
+		}
+
+		data = info->CacheLump();
+		if (!arc.OpenReader((const char *)data, info->LumpSize))
+		{
+			Printf("Failed to access savegame info\n");
+			delete resfile;
+			return;
+		}
+
+
+		// Read intermission data for hubs
+		G_SerializeHub(arc);
+
+		bglobal.RemoveAllBots(true);
+
+		FString cvar;
+		arc("importantcvars", cvar);
+		if (!cvar.IsEmpty())
+		{
+			BYTE *vars_p = (BYTE *)cvar.GetChars();
+			C_ReadCVars(&vars_p);
+		}
+
+		DWORD time[2] = { 1,0 };
+
+		arc("ticrate", time[0])
+			("leveltime", time[1]);
+		// dearchive all the modifications
+		level.time = Scale(time[1], TICRATE, time[0]);
+
+		G_ReadSnapshots(resfile);
+		delete resfile;	// we no longer need the resource file below this point
+		resfile = nullptr;
+		G_ReadVisited(arc);
+
+		// load a base level
+		savegamerestore = true;		// Use the player actors in the savegame
+		bool demoplaybacksave = demoplayback;
+		G_InitNew(map, false);
+		demoplayback = demoplaybacksave;
+		savegamerestore = false;
+
+		STAT_Serialize(arc);
+		FRandom::StaticReadRNGState(arc);
+		P_ReadACSDefereds(arc);
+		P_ReadACSVars(arc);
+
+		NextSkill = -1;
+		arc("nextskill", NextSkill);
+
+		if (level.info != nullptr)
+			level.info->Snapshot.Clean();
+
+		BackupSaveName = savename;
+
+		// At this point, the GC threshold is likely a lot higher than the
+		// amount of memory in use, so bring it down now by starting a
+		// collection.
+		GC::StartCollection();
+	}
+	catch (...)
+	{
+		// delete the resource file if anything goes wrong in here.
+		if (resfile != nullptr) delete resfile;
 		return;
 	}
-
-	if (!G_CheckSaveGameWads (png, true))
-	{
-		fclose (stdfile);
-		return;
-	}
-
-	map = M_GetPNGText (png, "Current Map");
-	if (map == NULL)
-	{
-		Printf ("Savegame is missing the current map\n");
-		fclose (stdfile);
-		return;
-	}
-
-	// Now that it looks like we can load this save, hide the fullscreen console if it was up
-	// when the game was selected from the menu.
-	if (hidecon && gamestate == GS_FULLCONSOLE)
-	{
-		gamestate = GS_HIDECONSOLE;
-	}
-
-	// Read intermission data for hubs
-	G_ReadHubInfo(png);
-
-	bglobal.RemoveAllBots (true);
-
-	text = M_GetPNGText (png, "Important CVARs");
-	if (text != NULL)
-	{
-		BYTE *vars_p = (BYTE *)text;
-		C_ReadCVars (&vars_p);
-		delete[] text;
-	}
-
-	// dearchive all the modifications
-	if (M_FindPNGChunk (png, MAKE_ID('p','t','I','c')) == 8)
-	{
-		DWORD time[2];
-		fread (&time, 8, 1, stdfile);
-		time[0] = BigLong((unsigned int)time[0]);
-		time[1] = BigLong((unsigned int)time[1]);
-		level.time = Scale (time[1], TICRATE, time[0]);
-	}
-	else
-	{ // No ptIc chunk so we don't know how long the user was playing
-		level.time = 0;
-	}
-
-	G_ReadSnapshots (png);
-
-	// load a base level
-	savegamerestore = true;		// Use the player actors in the savegame
-	bool demoplaybacksave = demoplayback;
-	G_InitNew (map, false);
-	demoplayback = demoplaybacksave;
-	delete[] map;
-	savegamerestore = false;
-
-	STAT_Read(png);
-	FRandom::StaticReadRNGState(png);
-	P_ReadACSDefereds(png);
-	P_ReadACSVars(png);
-
-	NextSkill = -1;
-	if (M_FindPNGChunk (png, MAKE_ID('s','n','X','t')) == 1)
-	{
-		BYTE next;
-		fread (&next, 1, 1, stdfile);
-		NextSkill = next;
-	}
-
-	if (level.info->snapshot != NULL)
-	{
-		delete level.info->snapshot;
-		level.info->snapshot = NULL;
-	}
-
-	BackupSaveName = savename;
-
-	delete png;
-	fclose (stdfile);
-
-	// At this point, the GC threshold is likely a lot higher than the
-	// amount of memory in use, so bring it down now by starting a
-	// collection.
-	GC::StartCollection();
 }
 
 
@@ -2047,7 +2063,7 @@ FString G_BuildSaveName (const char *prefix, int slot)
 	name << prefix;
 	if (slot >= 0)
 	{
-		name.AppendFormat("%d.zds", slot);
+		name.AppendFormat("%d." SAVEGAME_EXT, slot);
 	}
 	return name;
 }
@@ -2104,23 +2120,23 @@ void G_DoAutoSave ()
 }
 
 
-static void PutSaveWads (FILE *file)
+static void PutSaveWads (FSerializer &arc)
 {
 	const char *name;
 
 	// Name of IWAD
 	name = Wads.GetWadName (FWadCollection::IWAD_FILENUM);
-	M_AppendPNGText (file, "Game WAD", name);
+	arc.AddString("Game WAD", name);
 
 	// Name of wad the map resides in
 	if (Wads.GetLumpFile (level.lumpnum) > 1)
 	{
 		name = Wads.GetWadName (Wads.GetLumpFile (level.lumpnum));
-		M_AppendPNGText (file, "Map WAD", name);
+		arc.AddString("Map WAD", name);
 	}
 }
 
-static void PutSaveComment (FILE *file)
+static void PutSaveComment (FSerializer &arc)
 {
 	char comment[256];
 	const char *readableTime;
@@ -2135,7 +2151,7 @@ static void PutSaveComment (FILE *file)
 	strncpy (comment+15, readableTime+10, 9);
 	comment[24] = 0;
 
-	M_AppendPNGText (file, "Creation Time", comment);
+	arc.AddString("Creation Time", comment);
 
 	// Get level name
 	//strcpy (comment, level.level_name);
@@ -2150,10 +2166,10 @@ static void PutSaveComment (FILE *file)
 	comment[len+16] = 0;
 
 	// Write out the comment
-	M_AppendPNGText (file, "Comment", comment);
+	arc.AddString("Comment", comment);
 }
 
-static void PutSavePic (FILE *file, int width, int height)
+static void PutSavePic (FileWriter *file, int width, int height)
 {
 	if (width <= 0 || height <= 0 || !storesavepic)
 	{
@@ -2167,6 +2183,9 @@ static void PutSavePic (FILE *file, int width, int height)
 
 void G_DoSaveGame (bool okForQuicksave, FString filename, const char *description)
 {
+	TArray<FCompressedBuffer> savegame_content;
+	TArray<FString> savegame_filenames;
+
 	char buf[100];
 
 	// Do not even try, if we're not in a level. (Can happen after
@@ -2178,7 +2197,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	if (demoplayback)
 	{
-		filename = G_BuildSaveName ("demosave.zds", -1);
+		filename = G_BuildSaveName ("demosave." SAVEGAME_EXT, -1);
 	}
 
 	if (cl_waitforsave)
@@ -2187,87 +2206,97 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	insave = true;
 	G_SnapshotLevel ();
 
-	FILE *stdfile = fopen (filename, "wb");
+	BufferWriter savepic;
+	FSerializer savegameinfo;		// this is for displayable info about the savegame
+	FSerializer savegameglobals;	// and this for non-level related info that must be saved.
 
-	if (stdfile == NULL)
-	{
-		Printf ("Could not create savegame '%s'\n", filename.GetChars());
-		insave = false;
-		I_FreezeTime(false);
-		return;
-	}
+	savegameinfo.OpenWriter(true);
+	savegameglobals.OpenWriter(save_formatted);
 
 	SaveVersion = SAVEVER;
-	PutSavePic (stdfile, SAVEPICWIDTH, SAVEPICHEIGHT);
+	PutSavePic(&savepic, SAVEPICWIDTH, SAVEPICHEIGHT);
 	mysnprintf(buf, countof(buf), GAMENAME " %s", GetVersionString());
-	M_AppendPNGText (stdfile, "Software", buf);
-	M_AppendPNGText (stdfile, "Engine", GAMESIG);
-	M_AppendPNGText (stdfile, "ZDoom Save Version", SAVESIG);
-	M_AppendPNGText (stdfile, "Title", description);
-	M_AppendPNGText (stdfile, "Current Map", level.MapName);
-	PutSaveWads (stdfile);
-	PutSaveComment (stdfile);
+	// put some basic info into the PNG so that this isn't lost when the image gets extracted.
+	M_AppendPNGText(&savepic, "Software", buf);
+	M_AppendPNGText(&savepic, "Title", description);
+	M_AppendPNGText(&savepic, "Current Map", level.MapName);
+	M_FinishPNG(&savepic);
+
+	int ver = SAVEVER;
+	savegameinfo.AddString("Software", buf)
+		.AddString("Engine", GAMESIG)
+		("Save Version", ver)
+		.AddString("Title", description)
+		.AddString("Current Map", level.MapName);
+
+
+	PutSaveWads (savegameinfo);
+	PutSaveComment (savegameinfo);
 
 	// Intermission stats for hubs
-	G_WriteHubInfo(stdfile);
+	G_SerializeHub(savegameglobals);
 
 	{
 		FString vars = C_GetMassCVarString(CVAR_SERVERINFO);
-		M_AppendPNGText (stdfile, "Important CVARs", vars.GetChars());
+		savegameglobals.AddString("importantcvars", vars.GetChars());
 	}
 
 	if (level.time != 0 || level.maptime != 0)
 	{
-		DWORD time[2] = { DWORD(BigLong(TICRATE)), DWORD(BigLong(level.time)) };
-		M_AppendPNGChunk (stdfile, MAKE_ID('p','t','I','c'), (BYTE *)&time, 8);
+		int tic = TICRATE;
+		savegameglobals("ticrate", tic);
+		savegameglobals("leveltime", level.time);
 	}
 
-	G_WriteSnapshots (stdfile);
-	STAT_Write(stdfile);
-	FRandom::StaticWriteRNGState (stdfile);
-	P_WriteACSDefereds (stdfile);
+	STAT_Serialize(savegameglobals);
+	FRandom::StaticWriteRNGState(savegameglobals);
+	P_WriteACSDefereds(savegameglobals);
+	P_WriteACSVars(savegameglobals);
+	G_WriteVisited(savegameglobals);
 
-	P_WriteACSVars(stdfile);
 
 	if (NextSkill != -1)
 	{
-		BYTE next = NextSkill;
-		M_AppendPNGChunk (stdfile, MAKE_ID('s','n','X','t'), &next, 1);
+		savegameglobals("nextskill", NextSkill);
 	}
 
-	M_FinishPNG (stdfile);
-	fclose (stdfile);
+	auto picdata = savepic.GetBuffer();
+	FCompressedBuffer bufpng = { picdata->Size(), picdata->Size(), METHOD_STORED, 0, crc32(0, &(*picdata)[0], picdata->Size()), (char*)&(*picdata)[0] };
+
+	savegame_content.Push(bufpng);
+	savegame_filenames.Push("savepic.png");
+	savegame_content.Push(savegameinfo.GetCompressedOutput());
+	savegame_filenames.Push("info.json");
+	savegame_content.Push(savegameglobals.GetCompressedOutput());
+	savegame_filenames.Push("globals.json");
+
+	G_WriteSnapshots (savegame_filenames, savegame_content);
+	
+
+	WriteZip(filename, savegame_filenames, savegame_content);
 
 	M_NotifyNewSave (filename.GetChars(), description, okForQuicksave);
 
-	// Check whether the file is ok.
-	bool success = false;
-	stdfile = fopen (filename.GetChars(), "rb");
-	if (stdfile != NULL)
+	// delete the JSON buffers we created just above. Everything else will
+	// either still be needed or taken care of automatically.
+	savegame_content[1].Clean();
+	savegame_content[2].Clean();
+
+	// Check whether the file is ok by trying to open it.
+	FResourceFile *test = FResourceFile::OpenResourceFile(filename, nullptr, true);
+	if (test != nullptr)
 	{
-		PNGHandle *pngh = M_VerifyPNG(stdfile);
-		if (pngh != NULL)
-		{
-			success = true;
-			delete pngh;
-		}
-		fclose(stdfile);
-	}
-	if (success) 
-	{
+		delete test;
 		if (longsavemessages) Printf ("%s (%s)\n", GStrings("GGSAVED"), filename.GetChars());
 		else Printf ("%s\n", GStrings("GGSAVED"));
 	}
 	else Printf(PRINT_HIGH, "Save failed\n");
 
+
 	BackupSaveName = filename;
 
 	// We don't need the snapshot any longer.
-	if (level.info->snapshot != NULL)
-	{
-		delete level.info->snapshot;
-		level.info->snapshot = NULL;
-	}
+	level.info->Snapshot.Clean();
 		
 	insave = false;
 	I_FreezeTime(false);

@@ -66,6 +66,7 @@ protected:
 	FString SourceFile;
 	BYTE *Pixels;
 	Span **Spans;
+	FileReader *fr;
 
 	BYTE BitDepth;
 	BYTE ColorType;
@@ -208,6 +209,8 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 	BYTE trans[256];
 	DWORD len, id;
 	int i;
+
+	if (lumpnum == -1) fr = &lump;
 
 	UseType = TEX_MiscPatch;
 	LeftOffset = 0;
@@ -461,7 +464,7 @@ void FPNGTexture::MakeTexture ()
 	}
 	else
 	{
-		lump = new FileReader(SourceFile.GetChars());
+		lump = fr;// new FileReader(SourceFile.GetChars());
 	}
 
 	Pixels = new BYTE[Width*Height];
@@ -598,7 +601,7 @@ void FPNGTexture::MakeTexture ()
 			delete[] tempix;
 		}
 	}
-	delete lump;
+	if (lump != fr) delete lump;
 }
 
 //===========================================================================
@@ -623,7 +626,7 @@ int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 	}
 	else
 	{
-		lump = new FileReader(SourceFile.GetChars());
+		lump = fr;// new FileReader(SourceFile.GetChars());
 	}
 
 	lump->Seek(33, SEEK_SET);
@@ -682,7 +685,7 @@ int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 	lump->Read(&len, 4);
 	lump->Read(&id, 4);
 	M_ReadIDAT (lump, Pixels, Width, Height, pixwidth, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
-	delete lump;
+	if (lump != fr) delete lump;
 
 	switch (ColorType)
 	{

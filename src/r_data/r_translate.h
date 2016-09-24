@@ -5,7 +5,7 @@
 #include "tarray.h"
 
 class FNativePalette;
-class FArchive;
+class FSerializer;
 
 enum
 {
@@ -36,7 +36,8 @@ struct FRemapTable
 	void UpdateNative();
 	FNativePalette *GetNative();
 	bool IsIdentity() const;
-	void Serialize(FArchive &ar);
+	void Serialize(FSerializer &arc);
+	static void StaticSerializeTranslations(FSerializer &arc);
 	void AddIndexRange(int start, int end, int pal1, int pal2);
 	void AddColorRange(int start, int end, int r1,int g1, int b1, int r2, int g2, int b2);
 	void AddDesaturation(int start, int end, double r1, double g1, double b1, double r2, double g2, double b2);

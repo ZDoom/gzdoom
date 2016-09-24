@@ -11,9 +11,10 @@
 #include "a_morph.h"
 #include "doomstat.h"
 #include "g_level.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "p_enemy.h"
 #include "d_player.h"
+#include "r_data/sprites.h"
 
 static FRandom pr_morphmonst ("MorphMonster");
 
@@ -634,10 +635,16 @@ int AMorphProjectile::DoSpecialDamage (AActor *target, int damage, FName damaget
 	return -1;
 }
 
-void AMorphProjectile::Serialize (FArchive &arc)
+void AMorphProjectile::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << PlayerClass << MonsterClass << Duration << MorphStyle << MorphFlash << UnMorphFlash;
+	auto def = (AMorphProjectile*)GetDefault();
+	arc("playerclass", PlayerClass, def->PlayerClass)
+		("monsterclass", MonsterClass, def->MonsterClass)
+		("duration", Duration, def->Duration)
+		("morphstyle", MorphStyle, def->MorphStyle)
+		("morphflash", MorphFlash, def->MorphFlash)
+		("unmorphflash", UnMorphFlash, def->UnMorphFlash);
 }
 
 
@@ -647,10 +654,14 @@ IMPLEMENT_POINTY_CLASS (AMorphedMonster)
  DECLARE_POINTER (UnmorphedMe)
 END_POINTERS
 
-void AMorphedMonster::Serialize (FArchive &arc)
+void AMorphedMonster::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << UnmorphedMe << UnmorphTime << MorphStyle << MorphExitFlash << FlagsSave;
+	arc("unmorphedme", UnmorphedMe)
+		("unmorphtime", UnmorphTime)
+		("morphstyle", MorphStyle)
+		("morphexitflash", MorphExitFlash)
+		("flagsave", FlagsSave);
 }
 
 void AMorphedMonster::Destroy ()

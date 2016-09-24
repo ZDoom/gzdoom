@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include "actor.h"
 #include "p_spec.h"
-#include "farchive.h"
+#include "serializer.h"
 #include "p_lnspec.h"
 #include "r_data/r_interpolate.h"
 
@@ -46,7 +46,7 @@ public:
 	DScroller (double dx, double dy, const line_t *l, int control, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
 	void Destroy();
 
-	void Serialize (FArchive &arc);
+	void Serialize(FSerializer &arc);
 	void Tick ();
 
 	bool AffectsWall (int wallnum) const { return m_Type == EScroll::sc_side && m_Affectee == wallnum; }
@@ -87,22 +87,6 @@ END_POINTERS
 //
 //-----------------------------------------------------------------------------
 
-inline FArchive &operator<< (FArchive &arc, EScroll &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (EScroll)val;
-	return arc;
-}
-
-inline FArchive &operator<< (FArchive &arc, EScrollPos &type)
-{
-	int val = (int)type;
-	arc << val;
-	type = (EScrollPos)val;
-	return arc;
-}
-
 EScrollPos operator &(EScrollPos one, EScrollPos two)
 {
 	return EScrollPos(int(one) & int(two));
@@ -114,20 +98,20 @@ EScrollPos operator &(EScrollPos one, EScrollPos two)
 //
 //-----------------------------------------------------------------------------
 
-void DScroller::Serialize (FArchive &arc)
+void DScroller::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	arc << m_Type
-		<< m_dx << m_dy
-		<< m_Affectee
-		<< m_Control
-		<< m_LastHeight
-		<< m_vdx << m_vdy
-		<< m_Accel
-		<< m_Parts
-		<< m_Interpolations[0]
-		<< m_Interpolations[1]
-		<< m_Interpolations[2];
+	arc.Enum("type", m_Type)
+		("dx", m_dx)
+		("dy", m_dy)
+		("affectee", m_Affectee)
+		("control", m_Control)
+		("lastheight", m_LastHeight)
+		("vdx", m_vdx)
+		("vdy", m_vdy)
+		("accel", m_Accel)
+		.Enum("parts", m_Parts)
+		.Array("interpolations", m_Interpolations, 3);
 }
 
 //-----------------------------------------------------------------------------
@@ -236,8 +220,8 @@ void DScroller::Tick ()
 
 		// [RH] Don't actually carry anything here. That happens later.
 		case EScroll::sc_carry:
-			level.Scrolls[m_Affectee].Scroll.X += dx;
-			level.Scrolls[m_Affectee].Scroll.Y += dy;
+			level.Scrolls[m_Affectee].X += dx;
+			level.Scrolls[m_Affectee].Y += dy;
 			break;
 
 		case EScroll::sc_carry_ceiling:       // to be added later

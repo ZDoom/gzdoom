@@ -39,7 +39,7 @@
 
 class PClass;
 
-class FArchive;
+class FSerializer;
 
 class   DObject;
 /*
@@ -413,15 +413,11 @@ public:
 		return GC::ReadBarrier(p) == u;
 	}
 
-	template<class U> friend inline FArchive &operator<<(FArchive &arc, TObjPtr<U> &o);
 	template<class U> friend inline void GC::Mark(TObjPtr<U> &obj);
+	template<class U> friend FSerializer &Serialize(FSerializer &arc, const char *key, TObjPtr<U> &value, TObjPtr<U> *);
+
 	friend class DObject;
 };
-
-template<class T> inline FArchive &operator<<(FArchive &arc, TObjPtr<T> &o)
-{
-	return arc << o.p;
-}
 
 // Use barrier_cast instead of static_cast when you need to cast
 // the contents of a TObjPtr to a related type.
@@ -463,8 +459,9 @@ public:
 	inline bool IsKindOf (const PClass *base) const;
 	inline bool IsA (const PClass *type) const;
 
-	void SerializeUserVars(FArchive &arc);
-	virtual void Serialize (FArchive &arc);
+	void SerializeUserVars(FSerializer &arc);
+	virtual void Serialize(FSerializer &arc);
+
 	void ClearClass()
 	{
 		Class = NULL;

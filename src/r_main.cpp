@@ -58,7 +58,6 @@
 #include "st_start.h"
 #include "v_font.h"
 #include "r_data/colormaps.h"
-#include "farchive.h"
 #include "p_maputl.h"
 #include "r_swrenderer2.h"
 

@@ -15,7 +15,8 @@ class AWeaponPiece : public AInventory
 protected:
 	bool PrivateShouldStay ();
 public:
-	void Serialize (FArchive &arc);
+	
+	void Serialize(FSerializer &arc);
 	bool TryPickup (AActor *&toucher);
 	bool TryPickupRestricted (AActor *&toucher);
 	bool ShouldStay ();
@@ -23,7 +24,7 @@ public:
 	virtual void PlayPickupSound (AActor *toucher);
 
 	int PieceValue;
-	PClassWeapon *WeaponClass;
+	PClassActor *WeaponClass;
 	TObjPtr<AWeapon> FullWeapon;
 };
 
@@ -35,7 +36,8 @@ class AWeaponHolder : public AInventory
 
 public:
 	int PieceMask;
-	const PClass * PieceWeapon;
+	PClassActor * PieceWeapon;
 
-	void Serialize (FArchive &arc);
+	
+	void Serialize(FSerializer &arc);
 };

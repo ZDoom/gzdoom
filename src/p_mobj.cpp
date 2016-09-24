@@ -70,6 +70,7 @@
 #include "p_spec.h"
 #include "p_checkposition.h"
 #include "serializer.h"
+#include "r_utility.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1040,11 +1041,11 @@ bool AActor::IsInsideVisibleAngles() const
 	if (players[consoleplayer].camera == nullptr)
 		return true;
 	
-	DAngle anglestart = VisibleStartAngle.Normalized180();
-	DAngle angleend = VisibleEndAngle.Normalized180();
-	DAngle pitchstart = VisibleStartPitch.Normalized180();
-	DAngle pitchend = VisibleEndPitch.Normalized180();
-
+	DAngle anglestart = VisibleStartAngle;
+	DAngle angleend = VisibleEndAngle;
+	DAngle pitchstart = VisibleStartPitch;
+	DAngle pitchend = VisibleEndPitch;
+	
 	if (anglestart > angleend)
 	{
 		DAngle temp = anglestart;
@@ -1052,28 +1053,26 @@ bool AActor::IsInsideVisibleAngles() const
 		angleend = temp;
 	}
 
-	if (pitchstart > angleend)
+	if (pitchstart > pitchend)
 	{
 		DAngle temp = pitchstart;
 		pitchstart = pitchend;
 		pitchend = temp;
 	}
+	
 
-	player_t* pPlayer = players[consoleplayer].camera->player;
+	AActor *mo = players[consoleplayer].camera;
 
-	if (pPlayer && pPlayer->mo)
+	if (mo != nullptr)
 	{
-		AActor *mo = pPlayer->mo;
-		DVector3 diffang = Vec3To(mo);
+		
+		DVector3 diffang = ViewPos - Pos();
 		DAngle to = diffang.Angle();
 
 		if (!(renderflags & RF_ABSMASKANGLE)) 
 			to = deltaangle(Angles.Yaw, to);
 
-		// Note that this check is inversed due to only being able to vectorize
-		// from one way (this actor to the player). It still means to pass
-		// if the player is within the visible angles.
-		if ((to <= anglestart || to >= angleend))
+		if ((to >= anglestart && to <= angleend))
 		{
 			to = diffang.Pitch();
 			if (!(renderflags & RF_ABSMASKPITCH))

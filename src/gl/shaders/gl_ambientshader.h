@@ -39,7 +39,18 @@ public:
 	FBufferedUniform1f AOStrength;
 
 private:
-	FShaderProgram mShader;
+	enum Quality
+	{
+		Off,
+		LowQuality,
+		MediumQuality,
+		HighQuality,
+		NumQualityModes
+	};
+
+	FString GetDefines(int mode);
+
+	FShaderProgram mShader[NumQualityModes];
 };
 
 class FDepthBlurShader

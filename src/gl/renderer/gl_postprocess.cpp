@@ -137,6 +137,7 @@ void FGLRenderer::PostProcessScene()
 	UpdateCameraExposure();
 	BloomScene();
 	TonemapScene();
+	ColormapScene();
 	LensDistortScene();
 }
 

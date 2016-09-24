@@ -1052,7 +1052,7 @@ bool AActor::IsInsideVisibleAngles() const
 		angleend = temp;
 	}
 
-	if (pitchstart > angleend)
+	if (pitchstart > pitchend)
 	{
 		DAngle temp = pitchstart;
 		pitchstart = pitchend;

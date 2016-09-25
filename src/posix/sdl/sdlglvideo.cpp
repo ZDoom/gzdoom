@@ -237,7 +237,7 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 		}
 
 		++retry;
-		fb = static_cast<SDLGLFB *>(CreateFrameBuffer (width, height, fullscreen, NULL));
+		fb = static_cast<SDLGLFB *>(CreateFrameBuffer (width, height, false, fullscreen, NULL));
 	}
 
 //	fb->SetFlash (flashColor, flashAmount);

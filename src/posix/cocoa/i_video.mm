@@ -1101,7 +1101,7 @@ void CocoaFrameBuffer::Flip()
 #endif // __LITTLE_ENDIAN__
 
 	if (IsBgra())
-		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, Width, Height, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, m_pixelBuffer);
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, Width, Height, 0, GL_BGRA, GL_UNSIGNED_BYTE, m_pixelBuffer);
 	else
 		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, Width, Height, 0, format, GL_UNSIGNED_BYTE, m_pixelBuffer);
 
@@ -1127,7 +1127,7 @@ void CocoaFrameBuffer::Flip()
 
 
 SDLGLFB::SDLGLFB(void*, const int width, const int height, int, int, const bool fullscreen)
-: DFrameBuffer(width, height)
+: DFrameBuffer(width, height, false)
 , m_lock(-1)
 , m_isUpdatePending(false)
 {

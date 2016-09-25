@@ -209,13 +209,13 @@ void OpenGLFrameBuffer::Swap()
 {
 	Finish.Reset();
 	Finish.Clock();
-	glFinish();
 	if (needsetgamma) 
 	{
 		//DoSetGamma();
 		needsetgamma = false;
 	}
 	SwapBuffers();
+	glFinish();
 	Finish.Unclock();
 	swapped = true;
 	FHardwareTexture::UnbindAll();

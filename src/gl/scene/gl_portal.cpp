@@ -176,12 +176,12 @@ void GLPortal::DrawPortalStencil()
 bool GLPortal::Start(bool usestencil, bool doquery)
 {
 	rendered_portals++;
-	PortalAll.Clock();
+//	PortalAll.Clock();
 	if (usestencil)
 	{
 		if (!gl_portals) 
 		{
-			PortalAll.Unclock();
+//			PortalAll.Unclock();
 			return false;
 		}
 	
@@ -297,7 +297,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 	GLRenderer->mCurrentPortal = this;
 
 	if (PrevPortal != NULL) PrevPortal->PushState();
-	PortalAll.Unclock();
+//	PortalAll.Unclock();
 	return true;
 }
 

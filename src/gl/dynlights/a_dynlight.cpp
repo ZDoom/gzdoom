@@ -163,7 +163,7 @@ void ADynamicLight::Serialize(FSerializer &arc)
 		("lighttype", lighttype, def->lighttype)
 		("tickcount", m_tickCount, def->m_tickCount)
 		("currentradius", m_currentRadius, def->m_currentRadius)
-		.Array("radius", m_Radius, def->m_Radius, 2);
+		.Array("lightradius", m_Radius, def->m_Radius, 2);
 
 	if (lighttype == PulseLight)
 		arc("lastupdate", m_lastUpdate, def->m_lastUpdate)

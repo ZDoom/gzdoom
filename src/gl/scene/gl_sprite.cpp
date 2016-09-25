@@ -636,7 +636,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	sector_t * rendersector;
 
 	// Don't waste time projecting sprites that are definitely not visible.
-	if (thing == nullptr || thing->sprite == 0 || !thing->IsVisibleToPlayer())
+	if (thing == nullptr || thing->sprite == 0 || !thing->IsVisibleToPlayer() || !thing->IsInsideVisibleAngles())
 	{
 		return;
 	}

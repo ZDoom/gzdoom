@@ -761,7 +761,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	if (thing == NULL ||
 		(thing->renderflags & RF_INVISIBLE) ||
 		!thing->RenderStyle.IsVisible(thing->Alpha) ||
-		!thing->IsVisibleToPlayer())
+		!thing->IsVisibleToPlayer() ||
+		!thing->IsInsideVisibleAngles())
 	{
 		return;
 	}

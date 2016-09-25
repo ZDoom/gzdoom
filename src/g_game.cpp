@@ -1884,7 +1884,7 @@ void G_DoLoadGame ()
 			}
 			else
 			{
-				Printf("Savegame is from another ZDoom-based engine: %s\n", engine);
+				Printf("Savegame is from another ZDoom-based engine: %s\n", engine.GetChars());
 			}
 			delete resfile;
 			return;
@@ -2261,7 +2261,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	}
 
 	auto picdata = savepic.GetBuffer();
-	FCompressedBuffer bufpng = { picdata->Size(), picdata->Size(), METHOD_STORED, 0, crc32(0, &(*picdata)[0], picdata->Size()), (char*)&(*picdata)[0] };
+	FCompressedBuffer bufpng = { picdata->Size(), picdata->Size(), METHOD_STORED, 0, static_cast<unsigned int>(crc32(0, &(*picdata)[0], picdata->Size())), (char*)&(*picdata)[0] };
 
 	savegame_content.Push(bufpng);
 	savegame_filenames.Push("savepic.png");

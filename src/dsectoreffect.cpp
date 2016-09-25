@@ -60,6 +60,7 @@ void DSectorEffect::Destroy()
 }
 
 DSectorEffect::DSectorEffect (sector_t *sector)
+	: DThinker(STAT_SECTOREFFECT)
 {
 	m_Sector = sector;
 }

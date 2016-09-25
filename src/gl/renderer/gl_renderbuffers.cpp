@@ -40,6 +40,7 @@
 #include "w_wad.h"
 #include "i_system.h"
 #include "doomerrors.h"
+#include <random>
 
 CVAR(Int, gl_multisample, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(Bool, gl_renderbuffers, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -75,15 +76,16 @@ FGLRenderBuffers::~FGLRenderBuffers()
 	ClearEyeBuffers();
 	ClearBloom();
 	ClearExposureLevels();
+	ClearAmbientOcclusion();
 }
 
 void FGLRenderBuffers::ClearScene()
 {
 	DeleteFrameBuffer(mSceneFB);
-	DeleteRenderBuffer(mSceneMultisample);
-	DeleteRenderBuffer(mSceneDepthStencil);
-	DeleteRenderBuffer(mSceneDepth);
-	DeleteRenderBuffer(mSceneStencil);
+	DeleteFrameBuffer(mSceneDataFB);
+	DeleteTexture(mSceneMultisample);
+	DeleteTexture(mSceneData);
+	DeleteTexture(mSceneDepthStencil);
 }
 
 void FGLRenderBuffers::ClearPipeline()
@@ -130,6 +132,15 @@ void FGLRenderBuffers::ClearEyeBuffers()
 
 	mEyeTextures.Clear();
 	mEyeFBs.Clear();
+}
+
+void FGLRenderBuffers::ClearAmbientOcclusion()
+{
+	DeleteFrameBuffer(AmbientFB0);
+	DeleteFrameBuffer(AmbientFB1);
+	DeleteTexture(AmbientTexture0);
+	DeleteTexture(AmbientTexture1);
+	DeleteTexture(AmbientRandomTexture);
 }
 
 void FGLRenderBuffers::DeleteTexture(GLuint &handle)
@@ -203,6 +214,7 @@ bool FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 	{
 		CreateBloom(sceneWidth, sceneHeight);
 		CreateExposureLevels(sceneWidth, sceneHeight);
+		CreateAmbientOcclusion(sceneWidth, sceneHeight);
 		mSceneWidth = sceneWidth;
 		mSceneHeight = sceneHeight;
 	}
@@ -240,10 +252,19 @@ void FGLRenderBuffers::CreateScene(int width, int height, int samples)
 	ClearScene();
 
 	if (samples > 1)
-		mSceneMultisample = CreateRenderBuffer("SceneMultisample", GL_RGBA16F, samples, width, height);
+	{
+		mSceneMultisample = Create2DMultisampleTexture("SceneMultisample", GL_RGBA16F, width, height, samples, false);
+		mSceneDepthStencil = Create2DMultisampleTexture("SceneDepthStencil", GL_DEPTH24_STENCIL8, width, height, samples, false);
+		mSceneData = Create2DMultisampleTexture("SceneSSAOData", GL_RGBA8, width, height, samples, false);
+	}
+	else
+	{
+		mSceneDepthStencil = Create2DTexture("SceneDepthStencil", GL_DEPTH24_STENCIL8, width, height);
+		mSceneData = Create2DTexture("SceneSSAOData", GL_RGBA8, width, height);
+	}
 
-	mSceneDepthStencil = CreateRenderBuffer("SceneDepthStencil", GL_DEPTH24_STENCIL8, samples, width, height);
-	mSceneFB = CreateFrameBuffer("SceneFB", samples > 1 ? mSceneMultisample : mPipelineTexture[0], mSceneDepthStencil, samples > 1);
+	mSceneFB = CreateFrameBuffer("SceneFB", samples > 1 ? mSceneMultisample : mPipelineTexture[0], 0, mSceneDepthStencil, samples > 1);
+	mSceneDataFB = CreateFrameBuffer("SSAOSceneFB", samples > 1 ? mSceneMultisample : mPipelineTexture[0], mSceneData, mSceneDepthStencil, samples > 1);
 }
 
 //==========================================================================
@@ -294,6 +315,47 @@ void FGLRenderBuffers::CreateBloom(int width, int height)
 		bloomWidth = level.Width;
 		bloomHeight = level.Height;
 	}
+}
+
+//==========================================================================
+//
+// Creates ambient occlusion working buffers
+//
+//==========================================================================
+
+void FGLRenderBuffers::CreateAmbientOcclusion(int width, int height)
+{
+	ClearAmbientOcclusion();
+
+	if (width <= 0 || height <= 0)
+		return;
+
+	AmbientWidth = width / 2;
+	AmbientHeight = height / 2;
+	AmbientTexture0 = Create2DTexture("AmbientTexture0", GL_RG32F, AmbientWidth, AmbientHeight);
+	AmbientTexture1 = Create2DTexture("AmbientTexture1", GL_RG32F, AmbientWidth, AmbientHeight);
+	AmbientFB0 = CreateFrameBuffer("AmbientFB0", AmbientTexture0);
+	AmbientFB1 = CreateFrameBuffer("AmbientFB1", AmbientTexture1);
+
+	int16_t randomValues[16 * 4];
+	std::mt19937 generator(1337);
+	std::uniform_real_distribution<double> distribution(-1.0, 1.0);
+	for (int i = 0; i < 16; i++)
+	{
+		double num_directions = 8.0; // Must be same as the define in ssao.fp
+		double angle = 2.0 * M_PI * distribution(generator) / num_directions;
+		double x = cos(angle);
+		double y = sin(angle);
+		double z = distribution(generator);
+		double w = distribution(generator);
+
+		randomValues[i * 4 + 0] = (int16_t)clamp(x * 32767.0, -32768.0, 32767.0);
+		randomValues[i * 4 + 1] = (int16_t)clamp(y * 32767.0, -32768.0, 32767.0);
+		randomValues[i * 4 + 2] = (int16_t)clamp(z * 32767.0, -32768.0, 32767.0);
+		randomValues[i * 4 + 3] = (int16_t)clamp(w * 32767.0, -32768.0, 32767.0);
+	}
+
+	AmbientRandomTexture = Create2DTexture("AmbientRandomTexture", GL_RGBA16_SNORM, 4, 4, randomValues);
 }
 
 //==========================================================================
@@ -368,16 +430,43 @@ void FGLRenderBuffers::CreateEyeBuffers(int eye)
 
 GLuint FGLRenderBuffers::Create2DTexture(const FString &name, GLuint format, int width, int height, const void *data)
 {
-	GLuint type = (format == GL_RGBA16F || format == GL_R32F) ? GL_FLOAT : GL_UNSIGNED_BYTE;
 	GLuint handle = 0;
 	glGenTextures(1, &handle);
 	glBindTexture(GL_TEXTURE_2D, handle);
 	FGLDebug::LabelObject(GL_TEXTURE, handle, name);
-	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format != GL_R32F ? GL_RGBA : GL_RED, type, data);
+
+	GLenum dataformat, datatype;
+	switch (format)
+	{
+	case GL_RGBA8:				dataformat = GL_RGBA; datatype = GL_UNSIGNED_BYTE; break;
+	case GL_RGBA16:				dataformat = GL_RGBA; datatype = GL_UNSIGNED_SHORT; break;
+	case GL_RGBA16F:			dataformat = GL_RGBA; datatype = GL_FLOAT; break;
+	case GL_RGBA32F:			dataformat = GL_RGBA; datatype = GL_FLOAT; break;
+	case GL_R32F:				dataformat = GL_RED; datatype = GL_FLOAT; break;
+	case GL_RG32F:				dataformat = GL_RG; datatype = GL_FLOAT; break;
+	case GL_DEPTH_COMPONENT24:	dataformat = GL_DEPTH_COMPONENT; datatype = GL_FLOAT; break;
+	case GL_STENCIL_INDEX8:		dataformat = GL_STENCIL_INDEX; datatype = GL_INT; break;
+	case GL_DEPTH24_STENCIL8:	dataformat = GL_DEPTH_STENCIL; datatype = GL_UNSIGNED_INT_24_8; break;
+	case GL_RGBA16_SNORM:		dataformat = GL_RGBA; datatype = GL_SHORT; break;
+	default: I_FatalError("Unknown format passed to FGLRenderBuffers.Create2DTexture");
+	}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, dataformat, datatype, data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	return handle;
+}
+
+GLuint FGLRenderBuffers::Create2DMultisampleTexture(const FString &name, GLuint format, int width, int height, int samples, bool fixedSampleLocations)
+{
+	GLuint handle = 0;
+	glGenTextures(1, &handle);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, handle);
+	FGLDebug::LabelObject(GL_TEXTURE, handle, name);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, format, width, height, fixedSampleLocations);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 	return handle;
 }
 
@@ -428,34 +517,26 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuff
 	return handle;
 }
 
-GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuffer, GLuint depthstencil, bool colorIsARenderBuffer)
+GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuffer0, GLuint colorbuffer1, GLuint depthstencil, bool multisample)
 {
 	GLuint handle = 0;
 	glGenFramebuffers(1, &handle);
 	glBindFramebuffer(GL_FRAMEBUFFER, handle);
 	FGLDebug::LabelObject(GL_FRAMEBUFFER, handle, name);
-	if (colorIsARenderBuffer)
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorbuffer);
+	if (multisample)
+	{
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, colorbuffer0, 0);
+		if (colorbuffer1 != 0)
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D_MULTISAMPLE, colorbuffer1, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, depthstencil, 0);
+	}
 	else
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthstencil);
-	if (CheckFrameBufferCompleteness())
-		ClearFrameBuffer(true, true);
-	return handle;
-}
-
-GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuffer, GLuint depth, GLuint stencil, bool colorIsARenderBuffer)
-{
-	GLuint handle = 0;
-	glGenFramebuffers(1, &handle);
-	glBindFramebuffer(GL_FRAMEBUFFER, handle);
-	FGLDebug::LabelObject(GL_FRAMEBUFFER, handle, name);
-	if (colorIsARenderBuffer)
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorbuffer);
-	else
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencil);
+	{
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer0, 0);
+		if (colorbuffer1 != 0)
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, colorbuffer1, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthstencil, 0);
+	}
 	if (CheckFrameBufferCompleteness())
 		ClearFrameBuffer(true, true);
 	return handle;
@@ -475,22 +556,23 @@ bool FGLRenderBuffers::CheckFrameBufferCompleteness()
 
 	FailedCreate = true;
 
-#if 0
-	FString error = "glCheckFramebufferStatus failed: ";
-	switch (result)
+	if (gl_debug_level > 0)
 	{
-	default: error.AppendFormat("error code %d", (int)result); break;
-	case GL_FRAMEBUFFER_UNDEFINED: error << "GL_FRAMEBUFFER_UNDEFINED"; break;
-	case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: error << "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT"; break;
-	case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: error << "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT"; break;
-	case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER: error << "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER"; break;
-	case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER: error << "GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER"; break;
-	case GL_FRAMEBUFFER_UNSUPPORTED: error << "GL_FRAMEBUFFER_UNSUPPORTED"; break;
-	case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE: error << "GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE"; break;
-	case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS: error << "GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS"; break;
+		FString error = "glCheckFramebufferStatus failed: ";
+		switch (result)
+		{
+		default: error.AppendFormat("error code %d", (int)result); break;
+		case GL_FRAMEBUFFER_UNDEFINED: error << "GL_FRAMEBUFFER_UNDEFINED"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: error << "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: error << "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER: error << "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER: error << "GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER"; break;
+		case GL_FRAMEBUFFER_UNSUPPORTED: error << "GL_FRAMEBUFFER_UNSUPPORTED"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE: error << "GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS: error << "GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS"; break;
+		}
+		Printf("%s\n", error.GetChars());
 	}
-	I_FatalError(error);
-#endif
 
 	return false;
 }
@@ -595,9 +677,54 @@ void FGLRenderBuffers::BindEyeFB(int eye, bool readBuffer)
 //
 //==========================================================================
 
-void FGLRenderBuffers::BindSceneFB()
+void FGLRenderBuffers::BindSceneFB(bool sceneData)
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, mSceneFB);
+	glBindFramebuffer(GL_FRAMEBUFFER, sceneData ? mSceneDataFB : mSceneFB);
+}
+
+//==========================================================================
+//
+// Binds the scene color texture to the specified texture unit
+//
+//==========================================================================
+
+void FGLRenderBuffers::BindSceneColorTexture(int index)
+{
+	glActiveTexture(GL_TEXTURE0 + index);
+	if (mSamples > 1)
+		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, mSceneMultisample);
+	else
+		glBindTexture(GL_TEXTURE_2D, mPipelineTexture[0]);
+}
+
+//==========================================================================
+//
+// Binds the scene data texture to the specified texture unit
+//
+//==========================================================================
+
+void FGLRenderBuffers::BindSceneDataTexture(int index)
+{
+	glActiveTexture(GL_TEXTURE0 + index);
+	if (mSamples > 1)
+		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, mSceneData);
+	else
+		glBindTexture(GL_TEXTURE_2D, mSceneData);
+}
+
+//==========================================================================
+//
+// Binds the depth texture to the specified texture unit
+//
+//==========================================================================
+
+void FGLRenderBuffers::BindSceneDepthTexture(int index)
+{
+	glActiveTexture(GL_TEXTURE0 + index);
+	if (mSamples > 1)
+		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, mSceneDepthStencil);
+	else
+		glBindTexture(GL_TEXTURE_2D, mSceneDepthStencil);
 }
 
 //==========================================================================

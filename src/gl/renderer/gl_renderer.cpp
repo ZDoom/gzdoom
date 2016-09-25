@@ -51,6 +51,7 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/shaders/gl_shader.h"
+#include "gl/shaders/gl_ambientshader.h"
 #include "gl/shaders/gl_bloomshader.h"
 #include "gl/shaders/gl_blurshader.h"
 #include "gl/shaders/gl_tonemapshader.h"
@@ -113,6 +114,10 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mTonemapPalette = nullptr;
 	mColormapShader = nullptr;
 	mLensShader = nullptr;
+	mLinearDepthShader = nullptr;
+	mDepthBlurShader = nullptr;
+	mSSAOShader = nullptr;
+	mSSAOCombineShader = nullptr;
 }
 
 void gl_LoadModels();
@@ -121,6 +126,10 @@ void gl_FlushModels();
 void FGLRenderer::Initialize(int width, int height)
 {
 	mBuffers = new FGLRenderBuffers();
+	mLinearDepthShader = new FLinearDepthShader();
+	mDepthBlurShader = new FDepthBlurShader();
+	mSSAOShader = new FSSAOShader();
+	mSSAOCombineShader = new FSSAOCombineShader();
 	mBloomExtractShader = new FBloomExtractShader();
 	mBloomCombineShader = new FBloomCombineShader();
 	mExposureExtractShader = new FExposureExtractShader();
@@ -184,6 +193,10 @@ FGLRenderer::~FGLRenderer()
 	}
 	if (mBuffers) delete mBuffers;
 	if (mPresentShader) delete mPresentShader;
+	if (mLinearDepthShader) delete mLinearDepthShader;
+	if (mDepthBlurShader) delete mDepthBlurShader;
+	if (mSSAOShader) delete mSSAOShader;
+	if (mSSAOCombineShader) delete mSSAOCombineShader;
 	if (mBloomExtractShader) delete mBloomExtractShader;
 	if (mBloomCombineShader) delete mBloomCombineShader;
 	if (mExposureExtractShader) delete mExposureExtractShader;
@@ -310,7 +323,7 @@ void FGLRenderer::Begin2D()
 	if (mBuffers->Setup(mScreenViewport.width, mScreenViewport.height, mSceneViewport.width, mSceneViewport.height))
 	{
 		if (mDrawingScene2D)
-			mBuffers->BindSceneFB();
+			mBuffers->BindSceneFB(false);
 		else
 			mBuffers->BindCurrentFB();
 	}

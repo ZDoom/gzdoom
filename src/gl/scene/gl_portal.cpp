@@ -423,14 +423,16 @@ void GLPortal::End(bool usestencil)
 		glDepthFunc(GL_LEQUAL);
 		glDepthRange(0, 1);
 		{
-			ScopedColorMask colorMask(0, 0, 0, 0); 
-			// glColorMask(0,0,0,0);						// no graphics
+			ScopedColorMask colorMask(0, 0, 0, 1); // mark portal in alpha channel but don't touch color
 			gl_RenderState.SetEffect(EFF_STENCIL);
 			gl_RenderState.EnableTexture(false);
+			gl_RenderState.BlendFunc(GL_ONE, GL_ZERO);
+			gl_RenderState.BlendEquation(GL_FUNC_ADD);
+			gl_RenderState.Apply();
 			DrawPortalStencil();
 			gl_RenderState.SetEffect(EFF_NONE);
 			gl_RenderState.EnableTexture(true);
-		} // glColorMask(1, 1, 1, 1);
+		}
 		glDepthFunc(GL_LESS);
 	}
 	PortalAll.Unclock();

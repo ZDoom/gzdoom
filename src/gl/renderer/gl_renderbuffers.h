@@ -31,7 +31,10 @@ public:
 
 	bool Setup(int width, int height, int sceneWidth, int sceneHeight);
 
-	void BindSceneFB();
+	void BindSceneFB(bool sceneData);
+	void BindSceneColorTexture(int index);
+	void BindSceneDataTexture(int index);
+	void BindSceneDepthTexture(int index);
 	void BlitSceneToTexture();
 
 	void BindCurrentTexture(int index);
@@ -53,10 +56,22 @@ public:
 	GLuint ExposureFB = 0;
 	bool FirstExposureFrame = true;
 
+	// Ambient occlusion buffers
+	GLuint AmbientTexture0 = 0;
+	GLuint AmbientTexture1 = 0;
+	GLuint AmbientFB0 = 0;
+	GLuint AmbientFB1 = 0;
+	int AmbientWidth = 0;
+	int AmbientHeight = 0;
+	GLuint AmbientRandomTexture = 0;
+
 	static bool IsEnabled();
 
 	int GetWidth() const { return mWidth; }
 	int GetHeight() const { return mHeight; }
+
+	int GetSceneWidth() const { return mSceneWidth; }
+	int GetSceneHeight() const { return mSceneHeight; }
 
 private:
 	void ClearScene();
@@ -64,17 +79,19 @@ private:
 	void ClearEyeBuffers();
 	void ClearBloom();
 	void ClearExposureLevels();
+	void ClearAmbientOcclusion();
 	void CreateScene(int width, int height, int samples);
 	void CreatePipeline(int width, int height);
 	void CreateBloom(int width, int height);
 	void CreateExposureLevels(int width, int height);
 	void CreateEyeBuffers(int eye);
+	void CreateAmbientOcclusion(int width, int height);
 	GLuint Create2DTexture(const FString &name, GLuint format, int width, int height, const void *data = nullptr);
+	GLuint Create2DMultisampleTexture(const FString &name, GLuint format, int width, int height, int samples, bool fixedSampleLocations);
 	GLuint CreateRenderBuffer(const FString &name, GLuint format, int width, int height);
 	GLuint CreateRenderBuffer(const FString &name, GLuint format, int samples, int width, int height);
 	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer);
-	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer, GLuint depthstencil, bool colorIsARenderBuffer);
-	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer, GLuint depth, GLuint stencil, bool colorIsARenderBuffer);
+	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer0, GLuint colorbuffer1, GLuint depthstencil, bool multisample);
 	bool CheckFrameBufferCompleteness();
 	void ClearFrameBuffer(bool stencil, bool depth);
 	void DeleteTexture(GLuint &handle);
@@ -94,9 +111,9 @@ private:
 	// Buffers for the scene
 	GLuint mSceneMultisample = 0;
 	GLuint mSceneDepthStencil = 0;
-	GLuint mSceneDepth = 0;
-	GLuint mSceneStencil = 0;
+	GLuint mSceneData = 0;
 	GLuint mSceneFB = 0;
+	GLuint mSceneDataFB = 0;
 
 	// Effect/HUD buffers
 	GLuint mPipelineTexture[NumPipelineTextures];

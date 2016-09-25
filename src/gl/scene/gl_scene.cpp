@@ -158,7 +158,12 @@ void FGLRenderer::Set3DViewport(bool mainview)
 {
 	if (mainview && mBuffers->Setup(mScreenViewport.width, mScreenViewport.height, mSceneViewport.width, mSceneViewport.height))
 	{
-		mBuffers->BindSceneFB();
+		bool useSSAO = (gl_ssao != 0);
+		mBuffers->BindSceneFB(useSSAO);
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+		glDrawBuffers(useSSAO ? 2 : 1, buffers);
+		gl_RenderState.SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
+		gl_RenderState.Apply();
 	}
 
 	// Always clear all buffers with scissor test disabled.
@@ -209,7 +214,7 @@ void FGLRenderer::SetProjection(float fov, float ratio, float fovratio)
 {
 
 	float fovy = 2 * RAD2DEG(atan(tan(DEG2RAD(fov) / 2) / fovratio));
-	gl_RenderState.mProjectionMatrix.perspective(fovy, ratio, 5.f, 65536.f);
+	gl_RenderState.mProjectionMatrix.perspective(fovy, ratio, GetZNear(), GetZFar());
 }
 
 // raw matrix input from stereo 3d modes
@@ -472,6 +477,7 @@ void FGLRenderer::RenderTranslucent()
 void FGLRenderer::DrawScene(int drawmode)
 {
 	static int recursion=0;
+	static int ssao_portals_available = 0;
 
 	if (camera != nullptr)
 	{
@@ -489,7 +495,38 @@ void FGLRenderer::DrawScene(int drawmode)
 	}
 	GLRenderer->mClipPortal = NULL;	// this must be reset before any portal recursion takes place.
 
+	// Decide if we need to do ssao for this scene
+	bool applySSAO = gl_ssao != 0 && FGLRenderBuffers::IsEnabled();
+	switch (drawmode)
+	{
+	case DM_MAINVIEW: ssao_portals_available = gl_ssao_portals; break;
+	case DM_OFFSCREEN: ssao_portals_available = 0; applySSAO = false; break;
+	case DM_PORTAL: applySSAO = applySSAO && (ssao_portals_available > 0); ssao_portals_available--; break;
+	}
+
+	// If SSAO is active, switch to gbuffer shaders and use the framebuffer with gbuffers
+	if (applySSAO)
+	{
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+		glDrawBuffers(2, buffers);
+		gl_RenderState.SetPassType(GBUFFER_PASS);
+		gl_RenderState.Apply();
+		gl_RenderState.ApplyMatrices();
+	}
+
 	RenderScene(recursion);
+
+	// Apply ambient occlusion and switch back to shaders without gbuffer output
+	if (applySSAO)
+	{
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0 };
+		glDrawBuffers(1, buffers);
+		AmbientOccludeScene();
+		mBuffers->BindSceneFB(true);
+		gl_RenderState.SetPassType(NORMAL_PASS);
+		gl_RenderState.Apply();
+		gl_RenderState.ApplyMatrices();
+	}
 
 	// Handle all portals after rendering the opaque objects but before
 	// doing all translucent stuff
@@ -826,12 +863,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		if (mainview && toscreen) EndDrawScene(lviewsector); // do not call this for camera textures.
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
-			mBuffers->BlitSceneToTexture();
-			UpdateCameraExposure();
-			BloomScene();
-			TonemapScene();
-			ColormapScene();
-			LensDistortScene();
+			PostProcessScene();
 
 			// This should be done after postprocessing, not before.
 			mBuffers->BindCurrentFB();

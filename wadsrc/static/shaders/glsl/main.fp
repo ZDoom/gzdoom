@@ -5,6 +5,9 @@ in vec4 vTexCoord;
 in vec4 vColor;
 
 out vec4 FragColor;
+#ifdef GBUFFER_PASS
+out vec4 FragData;
+#endif
 
 #ifdef SHADER_STORAGE_LIGHTS
 	layout(std430, binding = 1) buffer LightBufferSSO
@@ -230,6 +233,32 @@ vec4 applyFog(vec4 frag, float fogfactor)
 	return vec4(mix(uFogColor.rgb, frag.rgb, fogfactor), frag.a);
 }
 
+//===========================================================================
+//
+// The color of the fragment if it is fully occluded by ambient lighting
+//
+//===========================================================================
+
+vec3 AmbientOcclusionColor()
+{
+	float fogdist;
+	float fogfactor;
+			
+	//
+	// calculate fog factor
+	//
+	if (uFogEnabled == -1) 
+	{
+		fogdist = pixelpos.w;
+	}
+	else 
+	{
+		fogdist = max(16.0, length(pixelpos.xyz));
+	}
+	fogfactor = exp2 (uFogDensity * fogdist);
+			
+	return mix(uFogColor.rgb, vec3(0.0), fogfactor);
+}
 
 //===========================================================================
 //
@@ -345,5 +374,8 @@ void main()
 		}
 	}
 	FragColor = frag;
+#ifdef GBUFFER_PASS
+	FragData = vec4(AmbientOcclusionColor(), 1.0);
+#endif
 }
 

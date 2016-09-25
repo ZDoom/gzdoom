@@ -55,7 +55,7 @@ function( add_pk3 PK3_NAME PK3_DIR )
 	add_custom_target( ${PK3_TARGET} ALL
 		COMMAND ${CMAKE_COMMAND} -E touch $<TARGET_FILE:zipdir>
 		DEPENDS ${ZDOOM_OUTPUT_DIR}/${PK3_NAME}
-		SOURCES "${PK3_SRCS}")
+		SOURCES ${PK3_SRCS})
 endfunction()
 
 # Macro for building libraries without debugging information

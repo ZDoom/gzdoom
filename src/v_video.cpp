@@ -814,7 +814,7 @@ void DSimpleCanvas::Resize(int width, int height)
 			Pitch = width + MAX(0, CPU.DataL1LineSize - 8);
 		}
 	}
-	int bytes_per_pixel = swtruecolor ? 4 : 1;
+	int bytes_per_pixel = Bgra ? 4 : 1;
 	MemBuffer = new BYTE[Pitch * height * bytes_per_pixel];
 	memset (MemBuffer, 0, Pitch * height * bytes_per_pixel);
 }

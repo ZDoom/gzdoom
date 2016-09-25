@@ -539,7 +539,7 @@ void P_SerializeSounds(FSerializer &arc)
 //==========================================================================
 
 void CopyPlayer(player_t *dst, player_t *src, const char *name);
-static void ReadOnePlayer(FSerializer &arc);
+static void ReadOnePlayer(FSerializer &arc, bool skipload);
 static void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayersNow, bool skipload);
 static void SpawnExtraPlayers();
 
@@ -596,7 +596,7 @@ void P_SerializePlayers(FSerializer &arc, bool skipload)
 			// first player present, no matter what their name.
 			if (numPlayers == 1)
 			{
-				ReadOnePlayer(arc);
+				ReadOnePlayer(arc, skipload);
 			}
 			else
 			{
@@ -619,7 +619,7 @@ void P_SerializePlayers(FSerializer &arc, bool skipload)
 //
 //==========================================================================
 
-static void ReadOnePlayer(FSerializer &arc)
+static void ReadOnePlayer(FSerializer &arc, bool skipload)
 {
 	int i;
 	const char *name = NULL;
@@ -638,7 +638,15 @@ static void ReadOnePlayer(FSerializer &arc)
 					didIt = true;
 					player_t playerTemp;
 					playerTemp.Serialize(arc);
-					CopyPlayer(&players[i], &playerTemp, name);
+					if (!skipload)
+					{
+						CopyPlayer(&players[i], &playerTemp, name);
+					}
+					else
+					{
+						// we need the player actor, so that G_FinishTravel can destroy it later.
+						players[i].mo = playerTemp.mo;
+					}
 				}
 				else
 				{
@@ -750,6 +758,13 @@ static void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayers
 				playertemp[i].mo->Destroy();
 				playertemp[i].mo = NULL;
 			}
+		}
+	}
+	else
+	{
+		for (i = 0; i < MAXPLAYERS; ++i)
+		{
+			players[i].mo = playertemp[i].mo;
 		}
 	}
 

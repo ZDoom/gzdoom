@@ -539,7 +539,7 @@ void P_SerializeSounds(FSerializer &arc)
 //==========================================================================
 
 void CopyPlayer(player_t *dst, player_t *src, const char *name);
-static void ReadOnePlayer(FSerializer &arc, bool skipload);
+static void ReadOnePlayer(FSerializer &arc);
 static void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayersNow, bool skipload);
 static void SpawnExtraPlayers();
 
@@ -596,7 +596,7 @@ void P_SerializePlayers(FSerializer &arc, bool skipload)
 			// first player present, no matter what their name.
 			if (numPlayers == 1)
 			{
-				ReadOnePlayer(arc, skipload);
+				ReadOnePlayer(arc);
 			}
 			else
 			{
@@ -619,7 +619,7 @@ void P_SerializePlayers(FSerializer &arc, bool skipload)
 //
 //==========================================================================
 
-static void ReadOnePlayer(FSerializer &arc, bool skipload)
+static void ReadOnePlayer(FSerializer &arc)
 {
 	int i;
 	const char *name = NULL;
@@ -638,10 +638,7 @@ static void ReadOnePlayer(FSerializer &arc, bool skipload)
 					didIt = true;
 					player_t playerTemp;
 					playerTemp.Serialize(arc);
-					if (!skipload)
-					{
-						CopyPlayer(&players[i], &playerTemp, name);
-					}
+					CopyPlayer(&players[i], &playerTemp, name);
 				}
 				else
 				{

@@ -1437,7 +1437,7 @@ DEFINE_PROPERTY(spriterotation, F, Actor)
 DEFINE_PROPERTY(visibleangles, Ff, Actor)
 {
 	PROP_DOUBLE_PARM(visstart, 0);
-	PROP_DOUBLE_PARM(visend, 0);
+	PROP_DOUBLE_PARM(visend, 1);
 	defaults->VisibleStartAngle = visstart;
 	defaults->VisibleEndAngle = visend;
 }
@@ -1448,7 +1448,7 @@ DEFINE_PROPERTY(visibleangles, Ff, Actor)
 DEFINE_PROPERTY(visiblepitch, Ff, Actor)
 {
 	PROP_DOUBLE_PARM(visstart, 0);
-	PROP_DOUBLE_PARM(visend, 0);
+	PROP_DOUBLE_PARM(visend, 1);
 	defaults->VisibleStartPitch = visstart;
 	defaults->VisibleEndPitch = visend;
 }

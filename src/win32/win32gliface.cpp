@@ -37,7 +37,9 @@ extern int NewWidth, NewHeight, NewBits, DisplayBits;
 // these get used before GLEW is initialized so we have to use separate pointers with different names
 PFNWGLCHOOSEPIXELFORMATARBPROC myWglChoosePixelFormatARB; // = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
 PFNWGLCREATECONTEXTATTRIBSARBPROC myWglCreateContextAttribsARB;
-PFNWGLSWAPINTERVALEXTPROC vsyncfunc;
+PFNWGLSWAPINTERVALEXTPROC myWglSwapIntervalExtProc;
+
+
 
 
 CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -933,10 +935,32 @@ Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, in
 		vid_renderer = 0;
 		return;
 	}
-
-	vsyncfunc = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-
 	HDC hDC = GetDC(Window);
+	const char *wglext = nullptr;
+
+	myWglSwapIntervalExtProc = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+	auto myWglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
+	if (myWglGetExtensionsStringARB)
+	{
+		wglext = myWglGetExtensionsStringARB(hDC);
+	}
+	else
+	{
+		auto myWglGetExtensionsStringEXT = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)wglGetProcAddress("wglGetExtensionsStringEXT");
+		if (myWglGetExtensionsStringEXT)
+		{
+			wglext = myWglGetExtensionsStringEXT();
+		}
+	}
+	SwapInterval = 1; 
+	if (wglext != nullptr)
+	{
+		if (strstr(wglext, "WGL_EXT_swap_control_tear"))
+		{
+			SwapInterval = -1;
+		}
+	}
+
 	m_supportsGamma = !!GetDeviceGammaRamp(hDC, (void *)m_origGamma);
 	ReleaseDC(Window, hDC);
 }
@@ -1091,7 +1115,7 @@ void Win32GLFrameBuffer::ReleaseResources ()
 
 void Win32GLFrameBuffer::SetVSync (bool vsync)
 {
-	if (vsyncfunc != NULL) vsyncfunc(vsync ? 1 : 0);
+	if (myWglSwapIntervalExtProc != NULL) myWglSwapIntervalExtProc(vsync ? SwapInterval : 0);
 }
 
 void Win32GLFrameBuffer::SwapBuffers()

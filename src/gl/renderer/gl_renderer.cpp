@@ -56,6 +56,7 @@
 #include "gl/shaders/gl_tonemapshader.h"
 #include "gl/shaders/gl_colormapshader.h"
 #include "gl/shaders/gl_lensshader.h"
+#include "gl/shaders/gl_fxaashader.h"
 #include "gl/shaders/gl_presentshader.h"
 #include "gl/shaders/gl_present3dRowshader.h"
 #include "gl/stereo3d/gl_stereo3d.h"
@@ -115,6 +116,8 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mTonemapPalette = nullptr;
 	mColormapShader = nullptr;
 	mLensShader = nullptr;
+	mFXAAShader = nullptr;
+	mFXAALumaShader = nullptr;
 }
 
 void gl_LoadModels();
@@ -133,6 +136,8 @@ void FGLRenderer::Initialize(int width, int height)
 	mColormapShader = new FColormapShader();
 	mTonemapPalette = nullptr;
 	mLensShader = new FLensShader();
+	mFXAAShader = new FFXAAShader;
+	mFXAALumaShader = new FFXAALumaShader;
 	mPresentShader = new FPresentShader();
 	mPresent3dRowShader = new FPresent3DRowShader();
 	m2DDrawer = new F2DDrawer;
@@ -198,6 +203,8 @@ FGLRenderer::~FGLRenderer()
 	if (mTonemapPalette) delete mTonemapPalette;
 	if (mColormapShader) delete mColormapShader;
 	if (mLensShader) delete mLensShader;
+	delete mFXAAShader;
+	delete mFXAALumaShader;
 }
 
 //==========================================================================

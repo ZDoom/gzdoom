@@ -28,6 +28,8 @@ class FBlurShader;
 class FTonemapShader;
 class FColormapShader;
 class FLensShader;
+class FFXAALumaShader;
+class FFXAAShader;
 class FPresentShader;
 class FPresent3DRowShader;
 class F2DDrawer;
@@ -104,6 +106,8 @@ public:
 	FColormapShader *mColormapShader;
 	FHardwareTexture *mTonemapPalette;
 	FLensShader *mLensShader;
+	FFXAALumaShader *mFXAALumaShader;
+	FFXAAShader *mFXAAShader;
 	FPresentShader *mPresentShader;
 	FPresent3DRowShader *mPresent3dRowShader;
 
@@ -180,6 +184,7 @@ public:
 	void BindTonemapPalette(int texunit);
 	void ClearTonemapPalette();
 	void LensDistortScene();
+	void ApplyFXAA();
 	void CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma);
 	void DrawPresentTexture(const GL_IRECT &box, bool applyGamma);
 	void Flush();

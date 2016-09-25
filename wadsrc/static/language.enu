@@ -2633,6 +2633,7 @@ GLPREFMNU_MULTISAMPLE			= "Multisample";
 GLPREFMNU_TONEMAP				= "Tonemap Mode";
 GLPREFMNU_BLOOM					= "Bloom effect";
 GLPREFMNU_LENS					= "Lens distortion effect";
+GLPREFMNU_FXAA					= "FXAA Quality";
 
 // Option Values
 OPTVAL_SMART 				= "Smart";
@@ -2710,3 +2711,7 @@ OPTVAL_UNCHARTED2			= "Uncharted 2";
 OPTVAL_HEJLDAWSON			= "Hejl Dawson";
 OPTVAL_REINHARD				= "Reinhard";
 OPTVAL_PALETTE				= "Palette";
+OPTVAL_LOW					= "Low";
+OPTVAL_MEDIUM				= "Medium";
+OPTVAL_HIGH					= "High";
+OPTVAL_EXTREME				= "Extreme";

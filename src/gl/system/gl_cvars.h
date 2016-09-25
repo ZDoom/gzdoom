@@ -26,6 +26,7 @@ EXTERN_CVAR (Bool, gl_attachedlights);
 EXTERN_CVAR (Bool, gl_lights_checkside);
 EXTERN_CVAR (Bool, gl_light_sprites);
 EXTERN_CVAR (Bool, gl_light_particles);
+EXTERN_CVAR (Int, gl_light_math);
 
 EXTERN_CVAR(Int, gl_fogmode)
 EXTERN_CVAR(Int, gl_lightmode)
@@ -50,6 +51,12 @@ EXTERN_CVAR(Bool, gl_lens)
 EXTERN_CVAR(Float, gl_lens_k)
 EXTERN_CVAR(Float, gl_lens_kcube)
 EXTERN_CVAR(Float, gl_lens_chromatic)
+EXTERN_CVAR(Bool, gl_ssao)
+EXTERN_CVAR(Float, gl_ssao_strength)
+EXTERN_CVAR(Bool, gl_ssao_debug)
+EXTERN_CVAR(Float, gl_ssao_bias)
+EXTERN_CVAR(Float, gl_ssao_radius)
+EXTERN_CVAR(Float, gl_ssao_blur_amount)
 
 EXTERN_CVAR(Int, gl_debug_level)
 EXTERN_CVAR(Bool, gl_debug_breakpoint)

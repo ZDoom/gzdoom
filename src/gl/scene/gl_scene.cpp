@@ -158,7 +158,11 @@ void FGLRenderer::Set3DViewport(bool mainview)
 {
 	if (mainview && mBuffers->Setup(mScreenViewport.width, mScreenViewport.height, mSceneViewport.width, mSceneViewport.height))
 	{
-		mBuffers->BindSceneFB();
+		mBuffers->BindSceneFB(gl_ssao);
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+		glDrawBuffers(gl_ssao ? 2 : 1, buffers);
+		gl_RenderState.SetPassType(gl_ssao ? GBUFFER_PASS : NORMAL_PASS);
+		gl_RenderState.Apply();
 	}
 
 	// Always clear all buffers with scissor test disabled.
@@ -209,7 +213,7 @@ void FGLRenderer::SetProjection(float fov, float ratio, float fovratio)
 {
 
 	float fovy = 2 * RAD2DEG(atan(tan(DEG2RAD(fov) / 2) / fovratio));
-	gl_RenderState.mProjectionMatrix.perspective(fovy, ratio, 5.f, 65536.f);
+	gl_RenderState.mProjectionMatrix.perspective(fovy, ratio, GetZNear(), GetZFar());
 }
 
 // raw matrix input from stereo 3d modes
@@ -489,7 +493,30 @@ void FGLRenderer::DrawScene(int drawmode)
 	}
 	GLRenderer->mClipPortal = NULL;	// this must be reset before any portal recursion takes place.
 
+	// If SSAO is active, switch to gbuffer shaders and use the gbuffer framebuffer
+	bool applySSAO = gl_ssao && FGLRenderBuffers::IsEnabled() && drawmode == DM_MAINVIEW;
+	if (applySSAO)
+	{
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+		glDrawBuffers(2, buffers);
+		gl_RenderState.SetPassType(GBUFFER_PASS);
+		gl_RenderState.Apply();
+		gl_RenderState.ApplyMatrices();
+	}
+
 	RenderScene(recursion);
+
+	// Apply ambient occlusion and switch back to shaders without gbuffer output
+	if (applySSAO)
+	{
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0 };
+		glDrawBuffers(1, buffers);
+		AmbientOccludeScene();
+		mBuffers->BindSceneFB(true);
+		gl_RenderState.SetPassType(NORMAL_PASS);
+		gl_RenderState.Apply();
+		gl_RenderState.ApplyMatrices();
+	}
 
 	// Handle all portals after rendering the opaque objects but before
 	// doing all translucent stuff
@@ -826,12 +853,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		if (mainview && toscreen) EndDrawScene(lviewsector); // do not call this for camera textures.
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
-			mBuffers->BlitSceneToTexture();
-			UpdateCameraExposure();
-			BloomScene();
-			TonemapScene();
-			ColormapScene();
-			LensDistortScene();
+			PostProcessScene();
 
 			// This should be done after postprocessing, not before.
 			mBuffers->BindCurrentFB();

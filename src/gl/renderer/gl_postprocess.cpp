@@ -55,6 +55,7 @@
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
+#include "gl/shaders/gl_ambientshader.h"
 #include "gl/shaders/gl_bloomshader.h"
 #include "gl/shaders/gl_blurshader.h"
 #include "gl/shaders/gl_tonemapshader.h"
@@ -98,6 +99,16 @@ CVAR(Float, gl_lens_k, -0.12f, 0)
 CVAR(Float, gl_lens_kcube, 0.1f, 0)
 CVAR(Float, gl_lens_chromatic, 1.12f, 0)
 
+CVAR(Bool, gl_ssao, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Float, gl_ssao_strength, 0.7, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, gl_ssao_debug, false, 0)
+CVAR(Float, gl_ssao_bias, 0.5f, 0)
+CVAR(Float, gl_ssao_radius, 100.0f, 0)
+CUSTOM_CVAR(Float, gl_ssao_blur_amount, 4.0f, 0)
+{
+	if (self < 0.1f) self = 0.1f;
+}
+
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
 
@@ -107,6 +118,136 @@ void FGLRenderer::RenderScreenQuad()
 	mVBO->BindVBO();
 	gl_RenderState.ResetVertexBuffer();
 	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, FFlatVertexBuffer::PRESENT_INDEX, 4);
+}
+
+void FGLRenderer::PostProcessScene()
+{
+	mBuffers->BlitSceneToTexture();
+	UpdateCameraExposure();
+	BloomScene();
+	TonemapScene();
+	ColormapScene();
+	LensDistortScene();
+}
+
+//-----------------------------------------------------------------------------
+//
+// Adds ambient occlusion to the scene
+//
+//-----------------------------------------------------------------------------
+
+void FGLRenderer::AmbientOccludeScene()
+{
+	FGLDebug::PushGroup("AmbientOccludeScene");
+
+	FGLPostProcessState savedState;
+	savedState.SaveTextureBinding1();
+
+	float bias = gl_ssao_bias;
+	float aoRadius = gl_ssao_radius;
+	const float blurAmount = gl_ssao_blur_amount;
+	float aoStrength = gl_ssao_strength;
+	bool multisample = gl_multisample > 1;
+
+	//float tanHalfFovy = tan(fovy * (M_PI / 360.0f));
+	float tanHalfFovy = 1.0f / gl_RenderState.mProjectionMatrix.get()[5];
+	float invFocalLenX = tanHalfFovy * (mBuffers->GetSceneWidth() / (float)mBuffers->GetSceneHeight());
+	float invFocalLenY = tanHalfFovy;
+	float nDotVBias = clamp(bias, 0.0f, 1.0f);
+	float r2 = aoRadius * aoRadius;
+
+	float blurSharpness = 1.0f / blurAmount;
+
+	// Calculate linear depth values
+	glBindFramebuffer(GL_FRAMEBUFFER, mBuffers->AmbientFB0);
+	glViewport(0, 0, mBuffers->AmbientWidth, mBuffers->AmbientHeight);
+	mBuffers->BindSceneDepthTexture(0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	mBuffers->BindSceneColorTexture(1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glActiveTexture(GL_TEXTURE0);
+	mLinearDepthShader->Bind(multisample);
+	mLinearDepthShader->DepthTexture[multisample].Set(0);
+	mLinearDepthShader->ColorTexture[multisample].Set(1);
+	if (multisample) mLinearDepthShader->SampleCount[multisample].Set(gl_multisample);
+	mLinearDepthShader->LinearizeDepthA[multisample].Set(1.0f / GetZFar() - 1.0f / GetZNear());
+	mLinearDepthShader->LinearizeDepthB[multisample].Set(MAX(1.0f / GetZNear(), 1.e-8f));
+	mLinearDepthShader->InverseDepthRangeA[multisample].Set(1.0f);
+	mLinearDepthShader->InverseDepthRangeB[multisample].Set(0.0f);
+	mLinearDepthShader->Scale[multisample].Set(mBuffers->AmbientWidth * 2.0f / (float)mScreenViewport.width, mBuffers->AmbientHeight * 2.0f / (float)mScreenViewport.height);
+	mLinearDepthShader->Offset[multisample].Set(mSceneViewport.left / (float)mScreenViewport.width, mSceneViewport.top / (float)mScreenViewport.height);
+	RenderScreenQuad();
+
+	// Apply ambient occlusion
+	glBindFramebuffer(GL_FRAMEBUFFER, mBuffers->AmbientFB1);
+	glBindTexture(GL_TEXTURE_2D, mBuffers->AmbientTexture0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, mBuffers->AmbientRandomTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glActiveTexture(GL_TEXTURE0);
+	mSSAOShader->Bind();
+	mSSAOShader->DepthTexture.Set(0);
+	mSSAOShader->RandomTexture.Set(1);
+	mSSAOShader->UVToViewA.Set(2.0f * invFocalLenX, -2.0f * invFocalLenY);
+	mSSAOShader->UVToViewB.Set(-invFocalLenX, invFocalLenY);
+	mSSAOShader->InvFullResolution.Set(1.0f / mBuffers->AmbientWidth, 1.0f / mBuffers->AmbientHeight);
+	mSSAOShader->NDotVBias.Set(nDotVBias);
+	mSSAOShader->NegInvR2.Set(-1.0f / r2);
+	mSSAOShader->RadiusToScreen.Set(aoRadius * 0.5 / tanHalfFovy * mBuffers->AmbientHeight);
+	mSSAOShader->AOMultiplier.Set(1.0f / (1.0f - nDotVBias));
+	mSSAOShader->AOStrength.Set(aoStrength);
+	RenderScreenQuad();
+
+	// Blur SSAO texture
+	glBindFramebuffer(GL_FRAMEBUFFER, mBuffers->AmbientFB0);
+	glBindTexture(GL_TEXTURE_2D, mBuffers->AmbientTexture1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	mDepthBlurShader->Bind(false);
+	mDepthBlurShader->BlurSharpness[false].Set(blurSharpness);
+	mDepthBlurShader->InvFullResolution[false].Set(1.0f / mBuffers->AmbientWidth, 1.0f / mBuffers->AmbientHeight);
+	RenderScreenQuad();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, mBuffers->AmbientFB1);
+	glBindTexture(GL_TEXTURE_2D, mBuffers->AmbientTexture0);
+	mDepthBlurShader->Bind(true);
+	mDepthBlurShader->BlurSharpness[true].Set(blurSharpness);
+	mDepthBlurShader->InvFullResolution[true].Set(1.0f / mBuffers->AmbientWidth, 1.0f / mBuffers->AmbientHeight);
+	mDepthBlurShader->PowExponent[true].Set(1.8f);
+	RenderScreenQuad();
+
+	// Add SSAO back to scene texture:
+	mBuffers->BindSceneFB(false);
+	GLenum buffers[] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, buffers);
+	glViewport(mSceneViewport.left, mSceneViewport.top, mSceneViewport.width, mSceneViewport.height);
+	glEnable(GL_BLEND);
+	glBlendEquation(GL_FUNC_ADD);
+	if (gl_ssao_debug)
+		glBlendFunc(GL_ONE, GL_ZERO);
+	else
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, mBuffers->AmbientTexture1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	mBuffers->BindSceneDataTexture(1);
+	mSSAOCombineShader->Bind(multisample);
+	mSSAOCombineShader->AODepthTexture[multisample].Set(0);
+	mSSAOCombineShader->SceneDataTexture[multisample].Set(1);
+	if (multisample) mSSAOCombineShader->SampleCount[multisample].Set(gl_multisample);
+	mSSAOCombineShader->Scale[multisample].Set(mBuffers->AmbientWidth * 2.0f / (float)mScreenViewport.width, mBuffers->AmbientHeight * 2.0f / (float)mScreenViewport.height);
+	mSSAOCombineShader->Offset[multisample].Set(mSceneViewport.left / (float)mScreenViewport.width, mSceneViewport.top / (float)mScreenViewport.height);
+	RenderScreenQuad();
+
+	FGLDebug::PopGroup();
 }
 
 //-----------------------------------------------------------------------------
@@ -190,7 +331,7 @@ void FGLRenderer::UpdateCameraExposure()
 void FGLRenderer::BloomScene()
 {
 	// Only bloom things if enabled and no special fixed light mode is active
-	if (!gl_bloom || gl_fixedcolormap != CM_DEFAULT)
+	if (!gl_bloom || gl_fixedcolormap != CM_DEFAULT || gl_ssao_debug)
 		return;
 
 	FGLDebug::PushGroup("BloomScene");

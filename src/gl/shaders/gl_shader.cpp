@@ -180,6 +180,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	glBindAttribLocation(hShader, VATTR_COLOR, "aColor");
 	glBindAttribLocation(hShader, VATTR_VERTEX2, "aVertex2");
 
+	glBindFragDataLocation(hShader, 0, "FragColor");
+	glBindFragDataLocation(hShader, 1, "FragData");
+
 	glLinkProgram(hShader);
 
 	glGetShaderInfoLog(hVertProg, 10000, NULL, buffer);
@@ -216,6 +219,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muColormapStart.Init(hShader, "uFixedColormapStart");
 	muColormapRange.Init(hShader, "uFixedColormapRange");
 	muLightIndex.Init(hShader, "uLightIndex");
+	muLightMath.Init(hShader, "uLightMath");
 	muFogColor.Init(hShader, "uFogColor");
 	muDynLightColor.Init(hShader, "uDynLightColor");
 	muObjectColor.Init(hShader, "uObjectColor");
@@ -297,12 +301,13 @@ bool FShader::Bind()
 //
 //==========================================================================
 
-FShader *FShaderManager::Compile (const char *ShaderName, const char *ShaderPath, bool usediscard)
+FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderPath, bool usediscard, EPassType passType)
 {
 	FString defines;
 	// this can't be in the shader code due to ATI strangeness.
 	if (gl.MaxLights() == 128) defines += "#define MAXLIGHTS128\n";
 	if (!usediscard) defines += "#define NO_ALPHATEST\n";
+	if (passType == GBUFFER_PASS) defines += "#define GBUFFER_PASS\n";
 
 	FShader *shader = NULL;
 	try
@@ -385,27 +390,75 @@ static const FEffectShader effectshaders[]=
 	{ "stencil", "shaders/glsl/main.vp", "shaders/glsl/stencil.fp", NULL, "#define SIMPLE\n#define NO_ALPHATEST\n" },
 };
 
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 FShaderManager::FShaderManager()
 {
-	if (!gl.legacyMode) CompileShaders();
+	if (!gl.legacyMode)
+	{
+		for (int passType = 0; passType < MAX_PASS_TYPES; passType++)
+			mPassShaders.Push(new FShaderCollection((EPassType)passType));
+	}
 }
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
 
 FShaderManager::~FShaderManager()
 {
-	if (!gl.legacyMode) Clean();
+	if (!gl.legacyMode)
+	{
+		glUseProgram(0);
+		mActiveShader = NULL;
+
+		for (auto collection : mPassShaders)
+			delete collection;
+	}
+}
+
+void FShaderManager::SetActiveShader(FShader *sh)
+{
+	if (mActiveShader != sh)
+	{
+		glUseProgram(sh!= NULL? sh->GetHandle() : 0);
+		mActiveShader = sh;
+	}
+}
+
+FShader *FShaderManager::BindEffect(int effect, EPassType passType)
+{
+	if (passType < mPassShaders.Size())
+		return mPassShaders[passType]->BindEffect(effect);
+	else
+		return nullptr;
+}
+
+FShader *FShaderManager::Get(unsigned int eff, bool alphateston, EPassType passType)
+{
+	if (passType < mPassShaders.Size())
+		return mPassShaders[passType]->Get(eff, alphateston);
+	else
+		return nullptr;
+}
+
+void FShaderManager::ApplyMatrices(VSMatrix *proj, VSMatrix *view, EPassType passType)
+{
+	if (gl.legacyMode)
+	{
+		glMatrixMode(GL_PROJECTION);
+		glLoadMatrixf(proj->get());
+		glMatrixMode(GL_MODELVIEW);
+		glLoadMatrixf(view->get());
+	}
+	else
+	{
+		if (passType < mPassShaders.Size())
+			mPassShaders[passType]->ApplyMatrices(proj, view);
+
+		if (mActiveShader)
+			mActiveShader->Bind();
+	}
+}
+
+void FShaderManager::ResetFixedColormap()
+{
+	for (auto &collection : mPassShaders)
+		collection->ResetFixedColormap();
 }
 
 //==========================================================================
@@ -414,10 +467,30 @@ FShaderManager::~FShaderManager()
 //
 //==========================================================================
 
-void FShaderManager::CompileShaders()
+FShaderCollection::FShaderCollection(EPassType passType)
 {
-	mActiveShader = NULL;
+	CompileShaders(passType);
+}
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FShaderCollection::~FShaderCollection()
+{
+	Clean();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FShaderCollection::CompileShaders(EPassType passType)
+{
 	mTextureEffects.Clear();
 	mTextureEffectsNAT.Clear();
 	for (int i = 0; i < MAX_EFFECTS; i++)
@@ -427,11 +500,11 @@ void FShaderManager::CompileShaders()
 
 	for(int i=0;defaultshaders[i].ShaderName != NULL;i++)
 	{
-		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, true);
+		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, true, passType);
 		mTextureEffects.Push(shc);
 		if (i <= 3)
 		{
-			FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, false);
+			FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, false, passType);
 			mTextureEffectsNAT.Push(shc);
 		}
 	}
@@ -441,7 +514,7 @@ void FShaderManager::CompileShaders()
 		FString name = ExtractFileBase(usershaders[i]);
 		FName sfn = name;
 
-		FShader *shc = Compile(sfn, usershaders[i], true);
+		FShader *shc = Compile(sfn, usershaders[i], true, passType);
 		mTextureEffects.Push(shc);
 	}
 
@@ -463,11 +536,8 @@ void FShaderManager::CompileShaders()
 //
 //==========================================================================
 
-void FShaderManager::Clean()
+void FShaderCollection::Clean()
 {
-	glUseProgram(0);
-	mActiveShader = NULL;
-
 	for (unsigned int i = 0; i < mTextureEffectsNAT.Size(); i++)
 	{
 		if (mTextureEffectsNAT[i] != NULL) delete mTextureEffectsNAT[i];
@@ -491,7 +561,7 @@ void FShaderManager::Clean()
 //
 //==========================================================================
 
-int FShaderManager::Find(const char * shn)
+int FShaderCollection::Find(const char * shn)
 {
 	FName sfn = shn;
 
@@ -505,21 +575,6 @@ int FShaderManager::Find(const char * shn)
 	return -1;
 }
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FShaderManager::SetActiveShader(FShader *sh)
-{
-	if (mActiveShader != sh)
-	{
-		glUseProgram(sh!= NULL? sh->GetHandle() : 0);
-		mActiveShader = sh;
-	}
-}
-
 
 //==========================================================================
 //
@@ -527,7 +582,7 @@ void FShaderManager::SetActiveShader(FShader *sh)
 //
 //==========================================================================
 
-FShader *FShaderManager::BindEffect(int effect)
+FShader *FShaderCollection::BindEffect(int effect)
 {
 	if (effect >= 0 && effect < MAX_EFFECTS && mEffectShaders[effect] != NULL)
 	{
@@ -545,36 +600,25 @@ FShader *FShaderManager::BindEffect(int effect)
 //==========================================================================
 EXTERN_CVAR(Int, gl_fuzztype)
 
-void FShaderManager::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
+void FShaderCollection::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
 {
-	if (gl.legacyMode)
+	for (int i = 0; i < 4; i++)
 	{
-		glMatrixMode(GL_PROJECTION);
-		glLoadMatrixf(proj->get());
-		glMatrixMode(GL_MODELVIEW);
-		glLoadMatrixf(view->get());
+		mTextureEffects[i]->ApplyMatrices(proj, view);
+		mTextureEffectsNAT[i]->ApplyMatrices(proj, view);
 	}
-	else
+	mTextureEffects[4]->ApplyMatrices(proj, view);
+	if (gl_fuzztype != 0)
 	{
-		for (int i = 0; i < 4; i++)
-		{
-			mTextureEffects[i]->ApplyMatrices(proj, view);
-			mTextureEffectsNAT[i]->ApplyMatrices(proj, view);
-		}
-		mTextureEffects[4]->ApplyMatrices(proj, view);
-		if (gl_fuzztype != 0)
-		{
-			mTextureEffects[4 + gl_fuzztype]->ApplyMatrices(proj, view);
-		}
-		for (unsigned i = 12; i < mTextureEffects.Size(); i++)
-		{
-			mTextureEffects[i]->ApplyMatrices(proj, view);
-		}
-		for (int i = 0; i < MAX_EFFECTS; i++)
-		{
-			mEffectShaders[i]->ApplyMatrices(proj, view);
-		}
-		if (mActiveShader != NULL) mActiveShader->Bind();
+		mTextureEffects[4 + gl_fuzztype]->ApplyMatrices(proj, view);
+	}
+	for (unsigned i = 12; i < mTextureEffects.Size(); i++)
+	{
+		mTextureEffects[i]->ApplyMatrices(proj, view);
+	}
+	for (int i = 0; i < MAX_EFFECTS; i++)
+	{
+		mEffectShaders[i]->ApplyMatrices(proj, view);
 	}
 }
 

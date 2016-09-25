@@ -60,6 +60,7 @@
 #include "gl/shaders/gl_tonemapshader.h"
 #include "gl/shaders/gl_colormapshader.h"
 #include "gl/shaders/gl_lensshader.h"
+#include "gl/shaders/gl_fxaashader.h"
 #include "gl/shaders/gl_presentshader.h"
 #include "gl/renderer/gl_2ddrawer.h"
 #include "gl/stereo3d/gl_stereo3d.h"
@@ -97,6 +98,14 @@ CVAR(Bool, gl_lens, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Float, gl_lens_k, -0.12f, 0)
 CVAR(Float, gl_lens_kcube, 0.1f, 0)
 CVAR(Float, gl_lens_chromatic, 1.12f, 0)
+
+CUSTOM_CVAR(Int, gl_fxaa, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0 || self >= FFXAAShader::Count)
+	{
+		self = 0;
+	}
+}
 
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
@@ -439,6 +448,51 @@ void FGLRenderer::LensDistortScene()
 	mLensShader->Scale.Set(scale);
 	mLensShader->LensDistortionCoefficient.Set(k);
 	mLensShader->CubicDistortionValue.Set(kcube);
+	RenderScreenQuad();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	mBuffers->NextTexture();
+
+	FGLDebug::PopGroup();
+}
+
+//-----------------------------------------------------------------------------
+//
+// Apply FXAA and place the result in the HUD/2D texture
+//
+//-----------------------------------------------------------------------------
+
+void FGLRenderer::ApplyFXAA()
+{
+	if (0 == gl_fxaa)
+	{
+		return;
+	}
+
+	FGLDebug::PushGroup("ApplyFXAA");
+
+	const GLfloat rpcRes[2] =
+	{
+		1.0f / mBuffers->GetWidth(),
+		1.0f / mBuffers->GetHeight()
+	};
+
+	FGLPostProcessState savedState;
+
+	mBuffers->BindNextFB();
+	mBuffers->BindCurrentTexture(0);
+	mFXAALumaShader->Bind();
+	mFXAALumaShader->InputTexture.Set(0);
+	RenderScreenQuad();
+	mBuffers->NextTexture();
+
+	mBuffers->BindNextFB();
+	mBuffers->BindCurrentTexture(0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	mFXAAShader->Bind();
+	mFXAAShader->InputTexture.Set(0);
+	mFXAAShader->ReciprocalResolution.Set(rpcRes);
 	RenderScreenQuad();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

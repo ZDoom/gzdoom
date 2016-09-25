@@ -42,6 +42,15 @@ OptionValue "TonemapModes"
 	5, "$OPTVAL_PALETTE"
 }
 
+OptionValue "FXAAQuality"
+{
+	0, "$OPTVAL_OFF"
+	1, "$OPTVAL_LOW"
+	2, "$OPTVAL_MEDIUM"
+	3, "$OPTVAL_HIGH"
+	4, "$OPTVAL_EXTREME"
+}
+
 OptionValue "TextureFormats"
 {
 	0, "$OPTVAL_RGBA8"
@@ -226,4 +235,5 @@ OptionMenu "GLPrefOptions"
 	Option "$GLPREFMNU_TONEMAP", 				gl_tonemap,						"TonemapModes"
 	Option "$GLPREFMNU_BLOOM",		 			gl_bloom,						"OnOff"
 	Option "$GLPREFMNU_LENS",		 			gl_lens,						"OnOff"
+	Option "$GLPREFMNU_FXAA",		 			gl_fxaa,						"FXAAQuality"
 }

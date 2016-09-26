@@ -104,6 +104,15 @@ if( WIN32 )
 	endif()
 	
 	add_definitions( -D_WIN32 )
+
+	set( FMOD_SEARCH_PATHS
+		"C:/Program Files/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api"
+		"C:/Program Files (x86)/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api"
+		# This next one is for Randy.
+		"E:/Software/Dev/FMOD/${WIN_TYPE}/api" 
+		)
+	set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
+	set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 	
 	set( FMOD_SEARCH_PATHS
 		"C:/Program Files/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api"
@@ -254,6 +263,57 @@ if( NOT NO_OPENAL )
 		set( NO_OPENAL ON )
 	endif()
 endif()
+
+# C:/Development/Environment/Src/llvm-3.9.0/build/lib/cmake/llvm
+find_package(LLVM REQUIRED CONFIG)
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+llvm_map_components_to_libnames(llvm_libs
+	analysis
+	asmparser
+	asmprinter
+	bitreader
+	bitwriter
+	codegen
+	core
+	executionengine
+	globalisel
+	instcombine
+	ipo
+	irreader
+	linker
+	lto
+	mc
+	mcdisassembler
+	mcjit
+	mcparser
+	mirparser
+	object
+	objectyaml
+	orcjit
+	passes
+	scalaropts
+	selectiondag
+	support
+	symbolize
+	tablegen
+	target
+	transformutils
+	vectorize
+	x86asmparser
+	x86asmprinter
+	x86codegen
+	x86desc
+	x86info
+	x86utils
+	aarch64asmparser
+	aarch64asmprinter
+	aarch64codegen
+	aarch64desc
+	aarch64info
+	aarch64utils)
+include_directories(${LLVM_INCLUDE_DIRS})
+set( ZDOOM_LIBS ${ZDOOM_LIBS} ${llvm_libs} )
 
 if( NOT NO_FMOD )
 	# Search for FMOD include files
@@ -843,6 +903,9 @@ file( GLOB HEADER_FILES
 	posix/*.h
 	posix/cocoa/*.h
 	posix/sdl/*.h
+	r_compiler/*.h
+	r_compiler/ssa/*.h
+	r_compiler/fixedfunction/*.h
 	r_data/*.h
 	resourcefiles/*.h
 	sfmt/*.h
@@ -1372,6 +1435,26 @@ set (PCH_SOURCES
 	fragglescript/t_spec.cpp
 	fragglescript/t_variable.cpp
 	fragglescript/t_cmd.cpp
+	r_compiler/ssa/ssa_bool.cpp
+	r_compiler/ssa/ssa_float.cpp
+	r_compiler/ssa/ssa_float_ptr.cpp
+	r_compiler/ssa/ssa_for_block.cpp
+	r_compiler/ssa/ssa_function.cpp
+	r_compiler/ssa/ssa_if_block.cpp
+	r_compiler/ssa/ssa_int.cpp
+	r_compiler/ssa/ssa_int_ptr.cpp
+	r_compiler/ssa/ssa_scope.cpp
+	r_compiler/ssa/ssa_struct_type.cpp
+	r_compiler/ssa/ssa_ubyte.cpp
+	r_compiler/ssa/ssa_ubyte_ptr.cpp
+	r_compiler/ssa/ssa_value.cpp
+	r_compiler/ssa/ssa_vec4f.cpp
+	r_compiler/ssa/ssa_vec4f_ptr.cpp
+	r_compiler/ssa/ssa_vec4i.cpp
+	r_compiler/ssa/ssa_vec4i_ptr.cpp
+	r_compiler/ssa/ssa_vec8s.cpp
+	r_compiler/ssa/ssa_vec16ub.cpp
+	r_compiler/fixedfunction/fixedfunction.cpp
 	r_data/sprites.cpp
 	r_data/voxels.cpp
 	r_data/renderstyle.cpp
@@ -1587,6 +1670,9 @@ source_group("Render Data\\Resource Headers" REGULAR_EXPRESSION "^${CMAKE_CURREN
 source_group("Render Data\\Resource Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+\\.cpp$")
 source_group("Render Data\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/textures/.+")
 source_group("Render Interface" FILES r_defs.h r_renderer.h r_sky.cpp r_sky.h r_state.h r_utility.cpp r_utility.h)
+source_group("Render Compiler" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_compiler/.+")
+source_group("Render Compiler\\SSA" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_compiler/ssa/.+")
+source_group("Render Compiler\\Fixed Function" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_compiler/fixedfunction/.+")
 source_group("Resource Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/resourcefiles/.+")
 source_group("POSIX Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix/.+")
 source_group("Cocoa Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix/cocoa/.+")

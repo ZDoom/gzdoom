@@ -38,6 +38,7 @@
 #include "r_data/colormaps.h"
 #include "r_plane.h"
 #include "r_draw_rgba.h"
+#include "r_compiler/fixedfunction/fixedfunction.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -296,6 +297,68 @@ void DrawerCommandQueue::StopThreads()
 	lock.lock();
 	shutdown_flag = false;
 }
+
+/////////////////////////////////////////////////////////////////////////////
+
+class DrawSpanFFCommand : public DrawerCommand
+{
+	fixed_t _xfrac;
+	fixed_t _yfrac;
+	fixed_t _xstep;
+	fixed_t _ystep;
+	int _x1;
+	int _x2;
+	int _y;
+	int _xbits;
+	int _ybits;
+	BYTE * RESTRICT _destorg;
+
+	const uint32_t * RESTRICT _source;
+	uint32_t _light;
+	ShadeConstants _shade_constants;
+	bool _nearest_filter;
+
+	uint32_t _srcalpha;
+	uint32_t _destalpha;
+
+	FixedFunction *_ff;
+
+public:
+	DrawSpanFFCommand()
+	{
+		_xfrac = ds_xfrac;
+		_yfrac = ds_yfrac;
+		_xstep = ds_xstep;
+		_ystep = ds_ystep;
+		_x1 = ds_x1;
+		_x2 = ds_x2;
+		_y = ds_y;
+		_xbits = ds_xbits;
+		_ybits = ds_ybits;
+		_destorg = dc_destorg;
+
+		_source = (const uint32_t*)ds_source;
+		_light = LightBgra::calc_light_multiplier(ds_light);
+		_shade_constants = ds_shade_constants;
+		_nearest_filter = !SampleBgra::span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep, ds_source_mipmapped);
+
+		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		_destalpha = dc_destalpha >> (FRACBITS - 8);
+
+		static FixedFunction ff;
+		_ff = &ff;
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		if (thread->skipped_by_thread(_y))
+			return;
+
+		uint32_t *dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
+		int count = _x2 - _x1 + 1;
+		_ff->DrawSpan(count, dest);
+	}
+};
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -2700,11 +2763,14 @@ void R_DrawRevSubClampTranslatedColumn_rgba()
 
 void R_DrawSpan_rgba()
 {
+	DrawerCommandQueue::QueueCommand<DrawSpanFFCommand>();
+/*
 #ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<DrawSpanRGBACommand>();
 #else
 	DrawerCommandQueue::QueueCommand<DrawSpanRGBA_SSE_Command>();
 #endif
+*/
 }
 
 void R_DrawSpanMasked_rgba()

@@ -6,6 +6,7 @@
 #include "r_compiler/ssa/ssa_vec8s.h"
 #include "r_compiler/ssa/ssa_vec16ub.h"
 #include "r_compiler/ssa/ssa_int.h"
+#include "r_compiler/ssa/ssa_short.h"
 #include "r_compiler/ssa/ssa_ubyte_ptr.h"
 #include "r_compiler/ssa/ssa_vec4f_ptr.h"
 #include "r_compiler/ssa/ssa_vec4i_ptr.h"
@@ -39,15 +40,38 @@ private:
 	std::unique_ptr<llvm::legacy::FunctionPassManager> mFunctionPassManager;
 };
 
+struct RenderArgs
+{
+	uint32_t *destorg;
+	const uint32_t *source;
+	int32_t destpitch;
+	int32_t xfrac;
+	int32_t yfrac;
+	int32_t xstep;
+	int32_t ystep;
+	int32_t x1;
+	int32_t x2;
+	int32_t y;
+	int32_t xbits;
+	int32_t ybits;
+	uint32_t light;
+	uint32_t srcalpha;
+	uint32_t destalpha;
+	//ShadeConstants _shade_constants;
+	//int32_t nearest_filter;
+};
+
 class FixedFunction
 {
 public:
 	FixedFunction();
 
-	void(*DrawSpan)(int, uint32_t *) = nullptr;
+	void(*DrawSpan)(const RenderArgs *) = nullptr;
 
 private:
 	void CodegenDrawSpan();
+
+	static llvm::Type *GetRenderArgsStruct(llvm::LLVMContext &context);
 
 	RenderProgram mProgram;
 };

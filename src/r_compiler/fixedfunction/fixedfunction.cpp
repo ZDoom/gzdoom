@@ -38,8 +38,8 @@ RenderProgram::RenderProgram()
 		cpuFeaturesStr += it.getKey();
 	}
 
-	Printf("LLVM target triple: %s\n", targetTriple.c_str());
-	Printf("LLVM CPU and features: %s, %s\n", cpuName.c_str(), cpuFeaturesStr.c_str());
+	//Printf("LLVM target triple: %s\n", targetTriple.c_str());
+	//Printf("LLVM CPU and features: %s, %s\n", cpuName.c_str(), cpuFeaturesStr.c_str());
 
 	const Target *target = TargetRegistry::lookupTarget(targetTriple, errorstring);
 	if (!target)
@@ -98,7 +98,7 @@ FixedFunction::FixedFunction()
 	mProgram.engine()->finalizeObject();
 	mProgram.modulePassManager()->run(*mProgram.module());
 
-	DrawSpan = mProgram.GetProcAddress<void(int, uint32_t *)>("DrawSpan");
+	DrawSpan = mProgram.GetProcAddress<void(const RenderArgs *)>("DrawSpan");
 }
 
 void FixedFunction::CodegenDrawSpan()
@@ -107,29 +107,90 @@ void FixedFunction::CodegenDrawSpan()
 	SSAScope ssa_scope(&mProgram.context(), mProgram.module(), &builder);
 
 	SSAFunction function("DrawSpan");
-	function.add_parameter(SSAInt::llvm_type());
-	function.add_parameter(SSAUBytePtr::llvm_type());
+	function.add_parameter(GetRenderArgsStruct(mProgram.context()));
 	function.create_public();
 
-	SSAInt count = function.parameter(0);
-	SSAUBytePtr data = function.parameter(1);
-	SSAStack<SSAInt> stack_index;
+	SSAStack<SSAInt> stack_index, stack_xfrac, stack_yfrac;
 
+	SSAValue args = function.parameter(0);
+	SSAUBytePtr destorg = args[0][0].load();
+	SSAUBytePtr source = args[0][1].load();
+	SSAInt destpitch = args[0][2].load();
+	stack_xfrac.store(args[0][3].load());
+	stack_yfrac.store(args[0][4].load());
+	SSAInt xstep = args[0][5].load();
+	SSAInt ystep = args[0][6].load();
+	SSAInt x1 = args[0][7].load();
+	SSAInt x2 = args[0][8].load();
+	SSAInt y = args[0][9].load();
+	SSAInt xbits = args[0][10].load();
+	SSAInt ybits = args[0][11].load();
+	SSAInt light = args[0][12].load();
+	SSAInt srcalpha = args[0][13].load();
+	SSAInt destalpha = args[0][14].load();
+
+	SSAInt count = x2 - x1 + 1;
+	SSAUBytePtr data = destorg[(x1 + y * destpitch) * 4];
+
+	SSAInt yshift = 32 - ybits;
+	SSAInt xshift = yshift - xbits;
+	SSAInt xmask = ((SSAInt(1) << xbits) - 1) << ybits;
+	//is_64x64 = xbits == 6 && ybits == 6;
+
+	SSAInt sseLength = count / 4;
 	stack_index.store(0);
-	SSAForBlock loop;
 	{
+		SSAForBlock loop;
+		SSAInt index = stack_index.load();
+		loop.loop_block(index < sseLength);
+
+		SSAVec4i colors[4];
+		for (int i = 0; i < 4; i++)
+		{
+			SSAInt xfrac = stack_xfrac.load();
+			SSAInt yfrac = stack_yfrac.load();
+
+			// 64x64 is the most common case by far, so special case it.
+			SSAInt spot64 = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+			//SSAInt spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+
+			//*loop.dest = LightBgra::shade_bgra(_source[loop.spot64()], _light, _shade_constants);
+			colors[i] = source[spot64 * 4].load_vec4ub() * light / 256;
+
+			stack_xfrac.store(xfrac + xstep);
+			stack_yfrac.store(yfrac + ystep);
+		}
+
+		SSAVec16ub ssecolors(SSAVec8s(colors[0], colors[1]), SSAVec8s(colors[2], colors[3]));
+		data[index * 16].store_unaligned_vec16ub(ssecolors);
+
+		stack_index.store(index + 1);
+		loop.end_block();
+	}
+
+	stack_index.store(sseLength * 4);
+	{
+		SSAForBlock loop;
 		SSAInt index = stack_index.load();
 		loop.loop_block(index < count);
 
-		SSAVec4i color(0, 128, 255, 255);
+		SSAInt xfrac = stack_xfrac.load();
+		SSAInt yfrac = stack_yfrac.load();
+
+		// 64x64 is the most common case by far, so special case it.
+		SSAInt spot64 = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+		//SSAInt spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+
+		//*loop.dest = LightBgra::shade_bgra(_source[loop.spot64()], _light, _shade_constants);
+		SSAVec4i color = source[spot64 * 4].load_vec4ub();
+		color = color * light / 256;
 		data[index * 4].store_vec4ub(color);
-		/*data[index * 4].store(0);
-		data[index * 4 + 1].store(128);
-		data[index * 4 + 2].store(255);
-		data[index * 4 + 3].store(255);*/
+
 		stack_index.store(index + 1);
+		stack_xfrac.store(xfrac + xstep);
+		stack_yfrac.store(yfrac + ystep);
+		loop.end_block();
 	}
-	loop.end_block();
 
 	builder.CreateRetVoid();
 
@@ -137,6 +198,27 @@ void FixedFunction::CodegenDrawSpan()
 		I_FatalError("verifyFunction failed for " __FUNCTION__);
 
 	mProgram.functionPassManager()->run(*function.func);
+}
+
+llvm::Type *FixedFunction::GetRenderArgsStruct(llvm::LLVMContext &context)
+{
+	std::vector<llvm::Type *> elements;
+	elements.push_back(llvm::Type::getInt8PtrTy(context)); // uint8_t *destorg;
+	elements.push_back(llvm::Type::getInt8PtrTy(context)); // const uint8_t *source;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t destpitch;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t xfrac;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t yfrac;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t xstep;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t ystep;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t x1;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t x2;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t y;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t xbits;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t ybits;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t light;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t srcalpha;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t destalpha;
+	return llvm::StructType::get(context, elements, false)->getPointerTo();
 }
 
 #if 0

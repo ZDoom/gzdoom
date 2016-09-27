@@ -354,9 +354,23 @@ public:
 		if (thread->skipped_by_thread(_y))
 			return;
 
-		uint32_t *dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
-		int count = _x2 - _x1 + 1;
-		_ff->DrawSpan(count, dest);
+		RenderArgs args;
+		args.destorg = (uint32_t *)_destorg;
+		args.source = _source;
+		args.destpitch = dc_pitch;
+		args.xfrac = _xfrac;
+		args.yfrac = _yfrac;
+		args.xstep = _xstep;
+		args.ystep = _ystep;
+		args.x1 = _x1;
+		args.x2 = _x2;
+		args.y = _y;
+		args.xbits = _xbits;
+		args.ybits = _ybits;
+		args.light = _light;
+		args.srcalpha = _srcalpha;
+		args.destalpha = _destalpha;
+		_ff->DrawSpan(&args);
 	}
 };
 

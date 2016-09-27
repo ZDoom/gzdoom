@@ -35,16 +35,10 @@ SSAVec4f SSAVec4fPtr::load_unaligned() const
 
 void SSAVec4fPtr::store(const SSAVec4f &new_value)
 {
-	SSAScope::builder().CreateAlignedStore(new_value.v, v, 16, false);
+	SSAScope::builder().CreateStore(new_value.v, v, false);
 }
 
 void SSAVec4fPtr::store_unaligned(const SSAVec4f &new_value)
 {
-	/*llvm::Value *values[2] =
-	{
-		SSAScope::builder().CreateBitCast(v, llvm::Type::getFloatPtrTy(SSAScope::context())),
-		new_value.v
-	};
-	SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse_storeu_ps), values);*/
-	SSAScope::builder().CreateStore(new_value.v, v, false);
+	SSAScope::builder().CreateAlignedStore(new_value.v, v, 4, false);
 }

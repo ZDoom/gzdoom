@@ -48,11 +48,11 @@ void SSAIntPtr::store(const SSAInt &new_value)
 void SSAIntPtr::store_vec4i(const SSAVec4i &new_value)
 {
 	llvm::PointerType *m4xint32typeptr = llvm::VectorType::get(llvm::Type::getInt32Ty(SSAScope::context()), 4)->getPointerTo();
-	SSAScope::builder().CreateAlignedStore(new_value.v, SSAScope::builder().CreateBitCast(v, m4xint32typeptr, SSAScope::hint()), 16);
+	SSAScope::builder().CreateStore(new_value.v, SSAScope::builder().CreateBitCast(v, m4xint32typeptr, SSAScope::hint()));
 }
 
 void SSAIntPtr::store_unaligned_vec4i(const SSAVec4i &new_value)
 {
 	llvm::PointerType *m4xint32typeptr = llvm::VectorType::get(llvm::Type::getInt32Ty(SSAScope::context()), 4)->getPointerTo();
-	SSAScope::builder().CreateStore(new_value.v, SSAScope::builder().CreateBitCast(v, m4xint32typeptr, SSAScope::hint()));
+	SSAScope::builder().CreateAlignedStore(new_value.v, SSAScope::builder().CreateBitCast(v, m4xint32typeptr, SSAScope::hint()), 4);
 }

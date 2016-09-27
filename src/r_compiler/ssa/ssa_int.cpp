@@ -115,3 +115,33 @@ SSAInt operator>>(const SSAInt &a, int bits)
 {
 	return SSAInt::from_llvm(SSAScope::builder().CreateLShr(a.v, bits, SSAScope::hint()));
 }
+
+SSAInt operator<<(const SSAInt &a, const SSAInt &bits)
+{
+	return SSAInt::from_llvm(SSAScope::builder().CreateShl(a.v, bits.v, SSAScope::hint()));
+}
+
+SSAInt operator>>(const SSAInt &a, const SSAInt &bits)
+{
+	return SSAInt::from_llvm(SSAScope::builder().CreateLShr(a.v, bits.v, SSAScope::hint()));
+}
+
+SSAInt operator&(const SSAInt &a, int b)
+{
+	return SSAInt::from_llvm(SSAScope::builder().CreateAnd(a.v, b, SSAScope::hint()));
+}
+
+SSAInt operator&(const SSAInt &a, const SSAInt &b)
+{
+	return SSAInt::from_llvm(SSAScope::builder().CreateAnd(a.v, b.v, SSAScope::hint()));
+}
+
+SSAInt operator|(const SSAInt &a, int b)
+{
+	return SSAInt::from_llvm(SSAScope::builder().CreateOr(a.v, b, SSAScope::hint()));
+}
+
+SSAInt operator|(const SSAInt &a, const SSAInt &b)
+{
+	return SSAInt::from_llvm(SSAScope::builder().CreateOr(a.v, b.v, SSAScope::hint()));
+}

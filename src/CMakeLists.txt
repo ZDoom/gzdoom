@@ -1434,6 +1434,7 @@ set (PCH_SOURCES
 	r_compiler/ssa/ssa_if_block.cpp
 	r_compiler/ssa/ssa_int.cpp
 	r_compiler/ssa/ssa_int_ptr.cpp
+	r_compiler/ssa/ssa_short.cpp
 	r_compiler/ssa/ssa_scope.cpp
 	r_compiler/ssa/ssa_struct_type.cpp
 	r_compiler/ssa/ssa_ubyte.cpp

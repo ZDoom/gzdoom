@@ -20,19 +20,22 @@
 #pragma warning(disable: 4291) // warning C4291: 'void *llvm::User::operator new(std::size_t,unsigned int,unsigned int)': no matching operator delete found; memory will not be freed if initialization throws an exception
 
 #include <llvm/IR/DerivedTypes.h>
-#include <llvm/ExecutionEngine/ExecutionEngine.h>
-#include <llvm/ExecutionEngine/MCJIT.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Attributes.h>
 #include <llvm/IR/Verifier.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Intrinsics.h>
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+#include <llvm/ExecutionEngine/MCJIT.h>
 #include <llvm/Analysis/Passes.h>
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/Transforms/IPO.h>
 #include <llvm/Transforms/IPO/PassManagerBuilder.h>
 #include <llvm/Support/TargetSelect.h>
-#include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/Intrinsics.h>
+#include <llvm/Support/TargetRegistry.h>
 #include <llvm/CodeGen/AsmPrinter.h>
 #include <llvm/MC/MCAsmInfo.h>
 

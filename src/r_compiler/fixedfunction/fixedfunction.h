@@ -26,6 +26,8 @@ public:
 	llvm::LLVMContext &context() { return *mContext; }
 	llvm::Module *module() { return mModule; }
 	llvm::ExecutionEngine *engine() { return mEngine.get(); }
+	llvm::legacy::PassManager *modulePassManager() { return mModulePassManager.get(); }
+	llvm::legacy::FunctionPassManager *functionPassManager() { return mFunctionPassManager.get(); }
 
 private:
 	void *PointerToFunction(const char *name);
@@ -33,6 +35,8 @@ private:
 	std::unique_ptr<llvm::LLVMContext> mContext;
 	llvm::Module *mModule;
 	std::unique_ptr<llvm::ExecutionEngine> mEngine;
+	std::unique_ptr<llvm::legacy::PassManager> mModulePassManager;
+	std::unique_ptr<llvm::legacy::FunctionPassManager> mFunctionPassManager;
 };
 
 class FixedFunction

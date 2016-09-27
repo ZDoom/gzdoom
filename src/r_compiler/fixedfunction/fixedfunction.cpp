@@ -13,36 +13,75 @@
 
 RenderProgram::RenderProgram()
 {
-	llvm::install_fatal_error_handler([](void *user_data, const std::string& reason, bool gen_crash_diag) {
-		I_FatalError(reason.c_str());
+	using namespace llvm;
+
+	install_fatal_error_handler([](void *user_data, const std::string& reason, bool gen_crash_diag) {
+		I_FatalError("LLVM fatal error: %s", reason.c_str());
 	});
 
-	//llvm::llvm_start_multithreaded();
-	llvm::InitializeNativeTarget();
-	llvm::InitializeNativeTargetAsmPrinter();
-	llvm::InitializeNativeTargetAsmParser();
-
-	mContext = std::make_unique<llvm::LLVMContext>();
-
-	auto moduleOwner = std::make_unique<llvm::Module>("render", context());
-	mModule = moduleOwner.get();
+	InitializeNativeTarget();
+	InitializeNativeTargetAsmPrinter();
+	InitializeNativeTargetAsmParser();
 
 	std::string errorstring;
-	llvm::EngineBuilder engineBuilder(std::move(moduleOwner));
+
+	std::string targetTriple = sys::getProcessTriple();
+	std::string cpuName = sys::getHostCPUName();
+	StringMap<bool> cpuFeatures;
+	sys::getHostCPUFeatures(cpuFeatures);
+	std::string cpuFeaturesStr;
+	for (const auto &it : cpuFeatures)
+	{
+		if (!cpuFeaturesStr.empty())
+			cpuFeaturesStr.push_back(' ');
+		cpuFeaturesStr.push_back(it.getValue() ? '+' : '-');
+		cpuFeaturesStr += it.getKey();
+	}
+
+	Printf("LLVM target triple: %s\n", targetTriple.c_str());
+	Printf("LLVM CPU and features: %s, %s\n", cpuName.c_str(), cpuFeaturesStr.c_str());
+
+	const Target *target = TargetRegistry::lookupTarget(targetTriple, errorstring);
+	if (!target)
+		I_FatalError("Could not find LLVM target: %s", errorstring.c_str());
+
+	TargetOptions opt;
+	auto relocModel = Optional<Reloc::Model>(Reloc::Static);
+	TargetMachine *machine = target->createTargetMachine(targetTriple, cpuName, cpuFeaturesStr, opt, relocModel, CodeModel::Default, CodeGenOpt::Aggressive);
+	if (!machine)
+		I_FatalError("Could not create LLVM target machine");
+
+	mContext = std::make_unique<LLVMContext>();
+
+	auto moduleOwner = std::make_unique<Module>("render", context());
+	mModule = moduleOwner.get();
+	mModule->setTargetTriple(targetTriple);
+	mModule->setDataLayout(machine->createDataLayout());
+
+	EngineBuilder engineBuilder(std::move(moduleOwner));
 	engineBuilder.setErrorStr(&errorstring);
-	engineBuilder.setOptLevel(llvm::CodeGenOpt::Aggressive);
-	engineBuilder.setRelocationModel(llvm::Reloc::Static);
-	engineBuilder.setEngineKind(llvm::EngineKind::JIT);
-	mEngine.reset(engineBuilder.create());
+	engineBuilder.setOptLevel(CodeGenOpt::Aggressive);
+	engineBuilder.setRelocationModel(Reloc::Static);
+	engineBuilder.setEngineKind(EngineKind::JIT);
+	mEngine.reset(engineBuilder.create(machine));
 	if (!mEngine)
-		I_FatalError(errorstring.c_str());
+		I_FatalError("Could not create LLVM execution engine: %s", errorstring.c_str());
+
+	mModulePassManager = std::make_unique<legacy::PassManager>();
+	mFunctionPassManager = std::make_unique<legacy::FunctionPassManager>(mModule);
+
+	PassManagerBuilder passManagerBuilder;
+	passManagerBuilder.OptLevel = 3;
+	passManagerBuilder.SizeLevel = 0;
+	passManagerBuilder.Inliner = createFunctionInliningPass();
+	passManagerBuilder.populateModulePassManager(*mModulePassManager.get());
+	passManagerBuilder.populateFunctionPassManager(*mFunctionPassManager.get());
 }
 
 RenderProgram::~RenderProgram()
 {
 	mEngine.reset();
 	mContext.reset();
-	//llvm::llvm_stop_multithreaded();
 }
 
 void *RenderProgram::PointerToFunction(const char *name)
@@ -57,6 +96,7 @@ FixedFunction::FixedFunction()
 {
 	CodegenDrawSpan();
 	mProgram.engine()->finalizeObject();
+	mProgram.modulePassManager()->run(*mProgram.module());
 
 	DrawSpan = mProgram.GetProcAddress<void(int, uint32_t *)>("DrawSpan");
 }
@@ -81,12 +121,12 @@ void FixedFunction::CodegenDrawSpan()
 		SSAInt index = stack_index.load();
 		loop.loop_block(index < count);
 
-		//SSAVec4i color(255, 255, 0, 255);
-		//data[index * 4].store_vec4ub(color);
-		data[index * 4].store(0);
+		SSAVec4i color(0, 128, 255, 255);
+		data[index * 4].store_vec4ub(color);
+		/*data[index * 4].store(0);
 		data[index * 4 + 1].store(128);
 		data[index * 4 + 2].store(255);
-		data[index * 4 + 3].store(255);
+		data[index * 4 + 3].store(255);*/
 		stack_index.store(index + 1);
 	}
 	loop.end_block();
@@ -95,6 +135,8 @@ void FixedFunction::CodegenDrawSpan()
 
 	if (llvm::verifyFunction(*function.func))
 		I_FatalError("verifyFunction failed for " __FUNCTION__);
+
+	mProgram.functionPassManager()->run(*function.func);
 }
 
 #if 0

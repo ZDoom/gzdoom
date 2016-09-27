@@ -289,7 +289,12 @@ void FSoftwareRenderer::ErrorCleanup ()
 
 void FSoftwareRenderer::ClearBuffer(int color)
 {
-	memset(RenderTarget->GetBuffer(), color, RenderTarget->GetPitch() * RenderTarget->GetHeight());
+	// [SP] For now, for truecolor, this just outputs black. We'll figure out how to get something more meaningful
+	// later when this actually matters more. This is just to clear HOMs for now.
+	if (!r_swtruecolor)
+		memset(RenderTarget->GetBuffer(), color, RenderTarget->GetPitch() * RenderTarget->GetHeight());
+	else
+		memset(RenderTarget->GetBuffer(), 0, RenderTarget->GetPitch() * RenderTarget->GetHeight() * 4);
 }
 
 //===========================================================================

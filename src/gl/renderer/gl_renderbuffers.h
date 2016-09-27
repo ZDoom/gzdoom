@@ -2,6 +2,7 @@
 #define __GL_RENDERBUFFERS_H
 
 #include "gl/shaders/gl_shader.h"
+#include "gl/renderer/gl_renderer.h"
 
 class FGLBloomTextureLevel
 {
@@ -42,6 +43,7 @@ public:
 	void BindOutputFB();
 
 	void BlitToEyeTexture(int eye);
+	void BlitFromEyeTexture(int eye, GL_IRECT* box);
 	void BindEyeTexture(int eye, int texunit);
 	void BindEyeFB(int eye, bool readBuffer = false);
 

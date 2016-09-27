@@ -53,18 +53,15 @@ void RowInterleaved3D::Present() const
 
 	// Compute screen regions to use for left and right eye views
 	int topHeight = GLRenderer->mOutputLetterbox.height / 2;
-	int bottomHeight = GLRenderer->mOutputLetterbox.height - topHeight;
 	GL_IRECT topHalfScreen = GLRenderer->mOutputLetterbox;
 	topHalfScreen.height = topHeight;
+	topHalfScreen.top = topHeight;
 	GL_IRECT bottomHalfScreen = GLRenderer->mOutputLetterbox;
-	bottomHalfScreen.height = bottomHeight;
-	bottomHalfScreen.top += topHeight;
+	bottomHalfScreen.height = topHeight;
+	bottomHalfScreen.top = 0;
 
-	GLRenderer->mBuffers->BindEyeTexture(0, 0);
-	GLRenderer->DrawPresentTexture(topHalfScreen, true);
-
-	GLRenderer->mBuffers->BindEyeTexture(1, 0);
-	GLRenderer->DrawPresentTexture(bottomHalfScreen, true);
+	GLRenderer->mBuffers->BlitFromEyeTexture(0, &topHalfScreen);
+	GLRenderer->mBuffers->BlitFromEyeTexture(1, &bottomHalfScreen);
 }
 
 

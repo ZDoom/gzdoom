@@ -1,0 +1,5 @@
+:Platform
+	playuntildone   plats/pt1_strt
+	playrepeat		plats/pt2_mid
+	stopsound		plats/pt1_stop
+end

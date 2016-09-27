@@ -151,6 +151,7 @@ $alias switches/exitbutn	switches/normbutn // Heretic has no special exit button
 plats/pt1_strt			pstart
 plats/pt1_stop			pstop
 plats/pt1_mid			dormov
+plats/pt2_mid			stnmov
 
 //
 // Door Sounds

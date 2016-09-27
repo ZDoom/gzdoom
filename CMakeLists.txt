@@ -32,6 +32,7 @@ endif()
 
 # Simplify pk3 building, add_pk3(filename srcdirectory)
 function( add_pk3 PK3_NAME PK3_DIR )
+	# message(STATUS "Creating build rule for PK3 ${PK3_NAME} ${PK3_DIR}")
 	# Generate target name. Just use "pk3" for main pk3 target.
 	string( REPLACE "." "_" PK3_TARGET ${PK3_NAME} )
 	if( ${PK3_TARGET} STREQUAL "zdoom_pk3" )
@@ -48,8 +49,19 @@ function( add_pk3 PK3_NAME PK3_DIR )
 			COMMAND zipdir -udf ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} ${PK3_DIR}
 			DEPENDS zipdir )
 	endif()
-	# Grab a list of top-level PK3 folder files, so we can conveniently see them in the IDE
-	file(GLOB PK3_SRCS ${PK3_DIR}/*)
+	file(GLOB_RECURSE PK3_SRCS ${PK3_DIR}/*)
+	# We're specifically avoiding some gzdoom .png files with brackets in the
+	# file names here, because they confuse CMake.
+	# This only affects the list of source files shown in the IDE.
+	# It does not actually remove the files from the PK3 archive.
+	string(REPLACE "[" confusing_bracket PK3_SRCS "${PK3_SRCS}")
+	string(REPLACE "]" confusing_bracket PK3_SRCS "${PK3_SRCS}")
+	foreach(PK3_SRC ${PK3_SRCS})
+		if(${PK3_SRC} MATCHES confusing_bracket)
+			# message(STATUS "Ignoring PK3 file name containing brackets "${PK3_SRC})
+			list(REMOVE_ITEM PK3_SRCS ${PK3_SRC})
+		endif()
+	endforeach()
 	# Touch the zipdir executable here so that the pk3s are forced to
 	# rebuild each time since their dependecy has "changed."
 	add_custom_target( ${PK3_TARGET} ALL

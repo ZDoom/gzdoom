@@ -717,7 +717,11 @@ void M_Drawer (void)
 
 	if (DMenu::CurrentMenu != NULL && menuactive != MENU_Off) 
 	{
-		if (DMenu::CurrentMenu->DimAllowed()) screen->Dim(fade);
+		if (DMenu::CurrentMenu->DimAllowed())
+		{
+			screen->Dim(fade);
+			V_SetBorderNeedRefresh();
+		}
 		DMenu::CurrentMenu->Drawer();
 	}
 }

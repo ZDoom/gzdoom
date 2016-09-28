@@ -154,8 +154,7 @@ void FixedFunction::CodegenDrawSpan()
 			SSAInt spot64 = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 			//SSAInt spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 
-			//*loop.dest = LightBgra::shade_bgra(_source[loop.spot64()], _light, _shade_constants);
-			colors[i] = source[spot64 * 4].load_vec4ub() * light / 256;
+			colors[i] = shade_bgra_simple(source[spot64 * 4].load_vec4ub(), light);
 
 			stack_xfrac.store(xfrac + xstep);
 			stack_yfrac.store(yfrac + ystep);
@@ -181,9 +180,7 @@ void FixedFunction::CodegenDrawSpan()
 		SSAInt spot64 = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 		//SSAInt spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 
-		//*loop.dest = LightBgra::shade_bgra(_source[loop.spot64()], _light, _shade_constants);
-		SSAVec4i color = source[spot64 * 4].load_vec4ub();
-		color = color * light / 256;
+		SSAVec4i color = shade_bgra_simple(source[spot64 * 4].load_vec4ub(), light);
 		data[index * 4].store_vec4ub(color);
 
 		stack_index.store(index + 1);
@@ -198,6 +195,122 @@ void FixedFunction::CodegenDrawSpan()
 		I_FatalError("verifyFunction failed for " __FUNCTION__);
 
 	mProgram.functionPassManager()->run(*function.func);
+}
+
+SSAInt FixedFunction::calc_light_multiplier(SSAInt light)
+{
+	return 256 - (light >> (FRACBITS - 8));
+}
+
+SSAVec4i FixedFunction::shade_pal_index_simple(SSAInt index, SSAInt light, SSAUBytePtr basecolors)
+{
+	SSAVec4i color = basecolors[index * 4].load_vec4ub(); // = GPalette.BaseColors[index];
+	return shade_bgra_simple(color, light);
+}
+
+SSAVec4i FixedFunction::shade_pal_index_advanced(SSAInt index, SSAInt light, const SSAShadeConstants &constants, SSAUBytePtr basecolors)
+{
+	SSAVec4i color = basecolors[index * 4].load_vec4ub(); // = GPalette.BaseColors[index];
+	return shade_bgra_advanced(color, light, constants);
+}
+
+SSAVec4i FixedFunction::shade_bgra_simple(SSAVec4i color, SSAInt light)
+{
+	color = color * light / 256;
+	return color.insert(3, 255);
+}
+
+SSAVec4i FixedFunction::shade_bgra_advanced(SSAVec4i color, SSAInt light, const SSAShadeConstants &constants)
+{
+	SSAInt blue = color[0];
+	SSAInt green = color[1];
+	SSAInt red = color[2];
+	SSAInt alpha = color[3];
+
+	SSAInt intensity = ((red * 77 + green * 143 + blue * 37) >> 8) * constants.desaturate;
+
+	SSAVec4i inv_light = 256 - light;
+	SSAVec4i inv_desaturate = 256 - constants.desaturate;
+
+	color = (color * inv_desaturate + intensity) / 256;
+	color = (constants.fade * inv_light + color * light) / 256;
+	color = (color * constants.light) / 256;
+
+	return color.insert(3, alpha);
+}
+
+SSAVec4i FixedFunction::blend_copy(SSAVec4i fg)
+{
+	return fg;
+}
+
+SSAVec4i FixedFunction::blend_add(SSAVec4i fg, SSAVec4i bg, SSAInt srcalpha, SSAInt destalpha)
+{
+	SSAVec4i color = (fg * srcalpha + bg * destalpha) / 256;
+	return color.insert(3, 255);
+}
+
+SSAVec4i FixedFunction::blend_sub(SSAVec4i fg, SSAVec4i bg, SSAInt srcalpha, SSAInt destalpha)
+{
+	SSAVec4i color = (bg * destalpha - fg * srcalpha) / 256;
+	return color.insert(3, 255);
+}
+
+SSAVec4i FixedFunction::blend_revsub(SSAVec4i fg, SSAVec4i bg, SSAInt srcalpha, SSAInt destalpha)
+{
+	SSAVec4i color = (fg * srcalpha - bg * destalpha) / 256;
+	return color.insert(3, 255);
+}
+
+SSAVec4i FixedFunction::blend_alpha_blend(SSAVec4i fg, SSAVec4i bg)
+{
+	SSAInt alpha = fg[3];
+	alpha = alpha + (alpha >> 7); // // 255 -> 256
+	SSAInt inv_alpha = 256 - alpha;
+	SSAVec4i color = (fg * alpha + bg * inv_alpha) / 256;
+	return color.insert(3, 255);
+}
+
+SSAVec4i FixedFunction::sample_linear(SSAUBytePtr col0, SSAUBytePtr col1, SSAInt texturefracx, SSAInt texturefracy, SSAInt one, SSAInt height)
+{
+	SSAInt frac_y0 = (texturefracy >> FRACBITS) * height;
+	SSAInt frac_y1 = ((texturefracy + one) >> FRACBITS) * height;
+	SSAInt y0 = frac_y0 >> FRACBITS;
+	SSAInt y1 = frac_y1 >> FRACBITS;
+
+	SSAVec4i p00 = col0[y0].load_vec4ub();
+	SSAVec4i p01 = col0[y1].load_vec4ub();
+	SSAVec4i p10 = col1[y0].load_vec4ub();
+	SSAVec4i p11 = col1[y1].load_vec4ub();
+
+	SSAInt inv_b = texturefracx;
+	SSAInt inv_a = (frac_y1 >> (FRACBITS - 4)) & 15;
+	SSAInt a = 16 - inv_a;
+	SSAInt b = 16 - inv_b;
+
+	return (p00 * (a * b) + p01 * (inv_a * b) + p10 * (a * inv_b) + p11 * (inv_a * inv_b) + 127) >> 8;
+}
+
+SSAVec4i FixedFunction::sample_linear(SSAUBytePtr texture, SSAInt xfrac, SSAInt yfrac, SSAInt xbits, SSAInt ybits)
+{
+	SSAInt xshift = (32 - xbits);
+	SSAInt yshift = (32 - ybits);
+	SSAInt xmask = (SSAInt(1) << xshift) - 1;
+	SSAInt ymask = (SSAInt(1) << yshift) - 1;
+	SSAInt x = xfrac >> xbits;
+	SSAInt y = yfrac >> ybits;
+
+	SSAVec4i p00 = texture[(y & ymask) + ((x & xmask) << yshift)].load_vec4ub();
+	SSAVec4i p01 = texture[((y + 1) & ymask) + ((x & xmask) << yshift)].load_vec4ub();
+	SSAVec4i p10 = texture[(y & ymask) + (((x + 1) & xmask) << yshift)].load_vec4ub();
+	SSAVec4i p11 = texture[((y + 1) & ymask) + (((x + 1) & xmask) << yshift)].load_vec4ub();
+
+	SSAInt inv_b = (xfrac >> (xbits - 4)) & 15;
+	SSAInt inv_a = (yfrac >> (ybits - 4)) & 15;
+	SSAInt a = 16 - inv_a;
+	SSAInt b = 16 - inv_b;
+
+	return (p00 * (a * b) + p01 * (inv_a * b) + p10 * (a * inv_b) + p11 * (inv_a * inv_b) + 127) >> 8;
 }
 
 llvm::Type *FixedFunction::GetRenderArgsStruct(llvm::LLVMContext &context)

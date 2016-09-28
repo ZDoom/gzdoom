@@ -6,6 +6,7 @@
 #include "r_compiler/ssa/ssa_vec8s.h"
 #include "r_compiler/ssa/ssa_vec16ub.h"
 #include "r_compiler/ssa/ssa_int.h"
+#include "r_compiler/ssa/ssa_int_ptr.h"
 #include "r_compiler/ssa/ssa_short.h"
 #include "r_compiler/ssa/ssa_ubyte_ptr.h"
 #include "r_compiler/ssa/ssa_vec4f_ptr.h"
@@ -57,8 +58,30 @@ struct RenderArgs
 	uint32_t light;
 	uint32_t srcalpha;
 	uint32_t destalpha;
-	//ShadeConstants _shade_constants;
-	//int32_t nearest_filter;
+
+	uint16_t light_alpha;
+	uint16_t light_red;
+	uint16_t light_green;
+	uint16_t light_blue;
+	uint16_t fade_alpha;
+	uint16_t fade_red;
+	uint16_t fade_green;
+	uint16_t fade_blue;
+	uint16_t desaturate;
+	uint32_t flags;
+	enum Flags
+	{
+		simple_shade = 1,
+		nearest_filter = 2
+	};
+};
+
+class SSAShadeConstants
+{
+public:
+	SSAVec4i light;
+	SSAVec4i fade;
+	SSAInt desaturate;
 };
 
 class FixedFunction
@@ -70,6 +93,24 @@ public:
 
 private:
 	void CodegenDrawSpan();
+
+	// LightBgra
+	SSAInt calc_light_multiplier(SSAInt light);
+	SSAVec4i shade_pal_index_simple(SSAInt index, SSAInt light, SSAUBytePtr basecolors);
+	SSAVec4i shade_pal_index_advanced(SSAInt index, SSAInt light, const SSAShadeConstants &constants, SSAUBytePtr basecolors);
+	SSAVec4i shade_bgra_simple(SSAVec4i color, SSAInt light);
+	SSAVec4i shade_bgra_advanced(SSAVec4i color, SSAInt light, const SSAShadeConstants &constants);
+
+	// BlendBgra
+	SSAVec4i blend_copy(SSAVec4i fg);
+	SSAVec4i blend_add(SSAVec4i fg, SSAVec4i bg, SSAInt srcalpha, SSAInt destalpha);
+	SSAVec4i blend_sub(SSAVec4i fg, SSAVec4i bg, SSAInt srcalpha, SSAInt destalpha);
+	SSAVec4i blend_revsub(SSAVec4i fg, SSAVec4i bg, SSAInt srcalpha, SSAInt destalpha);
+	SSAVec4i blend_alpha_blend(SSAVec4i fg, SSAVec4i bg);
+
+	// SampleBgra
+	SSAVec4i sample_linear(SSAUBytePtr col0, SSAUBytePtr col1, SSAInt texturefracx, SSAInt texturefracy, SSAInt one, SSAInt height);
+	SSAVec4i sample_linear(SSAUBytePtr texture, SSAInt xfrac, SSAInt yfrac, SSAInt xbits, SSAInt ybits);
 
 	static llvm::Type *GetRenderArgsStruct(llvm::LLVMContext &context);
 

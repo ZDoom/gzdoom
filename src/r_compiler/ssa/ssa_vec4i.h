@@ -19,6 +19,8 @@ public:
 	explicit SSAVec4i(llvm::Value *v);
 	SSAVec4i(SSAVec4f f32);
 	SSAInt operator[](SSAInt index);
+	SSAVec4i insert(SSAInt index, SSAInt value);
+	SSAVec4i insert(int index, SSAInt value);
 	static SSAVec4i bitcast(SSAVec4f f32);
 	static SSAVec4i bitcast(SSAVec8s i16);
 	static SSAVec4i shuffle(const SSAVec4i &f0, int index0, int index1, int index2, int index3);

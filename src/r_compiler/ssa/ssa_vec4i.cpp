@@ -60,6 +60,16 @@ SSAInt SSAVec4i::operator[](SSAInt index)
 	return SSAInt::from_llvm(SSAScope::builder().CreateExtractElement(v, index.v, SSAScope::hint()));
 }
 
+SSAVec4i SSAVec4i::insert(SSAInt index, SSAInt value)
+{
+	return SSAVec4i::from_llvm(SSAScope::builder().CreateInsertElement(v, value.v, index.v, SSAScope::hint()));
+}
+
+SSAVec4i SSAVec4i::insert(int index, SSAInt value)
+{
+	return SSAVec4i::from_llvm(SSAScope::builder().CreateInsertElement(v, value.v, index, SSAScope::hint()));
+}
+
 llvm::Type *SSAVec4i::llvm_type()
 {
 	return llvm::VectorType::get(llvm::Type::getInt32Ty(SSAScope::context()), 4);

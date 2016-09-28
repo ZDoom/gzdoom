@@ -753,8 +753,8 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 		if (type == SOURCE_Actor && actor != NULL)
 		{
 			vel->X = float(actor->Vel.X * TICRATE);
-			vel->Y = float(actor->Vel.Y * TICRATE);
-			vel->Z = float(actor->Vel.Z * TICRATE);
+			vel->Y = float(actor->Vel.Z * TICRATE);
+			vel->Z = float(actor->Vel.Y * TICRATE);
 		}
 		else
 		{

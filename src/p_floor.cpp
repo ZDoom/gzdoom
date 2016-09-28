@@ -342,7 +342,7 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 		ceilingheight = sec->FindLowestCeilingPoint(&spot2);
 		floor->m_FloorDestDist = sec->floorplane.PointToDist(spot, newheight);
 		if (sec->floorplane.ZatPointDist(spot2, floor->m_FloorDestDist) > ceilingheight)
-			floor->m_FloorDestDist = sec->floorplane.PointToDist(spot2,	floortype == ceilingheight - height);
+			floor->m_FloorDestDist = sec->floorplane.PointToDist(spot2,	ceilingheight - height);
 		break;
 
 	case DFloor::floorRaiseToHighest:

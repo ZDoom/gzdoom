@@ -32,6 +32,11 @@ llvm::Type *SSAShort::llvm_type()
 	return llvm::Type::getInt16Ty(SSAScope::context());
 }
 
+SSAInt SSAShort::zext_int()
+{
+	return SSAInt::from_llvm(SSAScope::builder().CreateZExt(v, SSAInt::llvm_type(), SSAScope::hint()));
+}
+
 SSAShort operator+(const SSAShort &a, const SSAShort &b)
 {
 	return SSAShort::from_llvm(SSAScope::builder().CreateAdd(a.v, b.v, SSAScope::hint()));

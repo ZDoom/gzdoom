@@ -16,6 +16,7 @@ public:
 	SSAVec4i(int constant);
 	SSAVec4i(int constant0, int constant1, int constant2, int constant3);
 	SSAVec4i(SSAInt i);
+	SSAVec4i(SSAInt i0, SSAInt i1, SSAInt i2, SSAInt i3);
 	explicit SSAVec4i(llvm::Value *v);
 	SSAVec4i(SSAVec4f f32);
 	SSAInt operator[](SSAInt index);

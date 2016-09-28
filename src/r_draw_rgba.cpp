@@ -300,50 +300,43 @@ void DrawerCommandQueue::StopThreads()
 
 /////////////////////////////////////////////////////////////////////////////
 
-class DrawSpanFFCommand : public DrawerCommand
+class DrawSpanLLVMCommand : public DrawerCommand
 {
-	fixed_t _xfrac;
-	fixed_t _yfrac;
-	fixed_t _xstep;
-	fixed_t _ystep;
-	int _x1;
-	int _x2;
-	int _y;
-	int _xbits;
-	int _ybits;
-	BYTE * RESTRICT _destorg;
-
-	const uint32_t * RESTRICT _source;
-	uint32_t _light;
-	ShadeConstants _shade_constants;
-	bool _nearest_filter;
-
-	uint32_t _srcalpha;
-	uint32_t _destalpha;
-
+	RenderArgs args;
 	FixedFunction *_ff;
 
 public:
-	DrawSpanFFCommand()
+	DrawSpanLLVMCommand()
 	{
-		_xfrac = ds_xfrac;
-		_yfrac = ds_yfrac;
-		_xstep = ds_xstep;
-		_ystep = ds_ystep;
-		_x1 = ds_x1;
-		_x2 = ds_x2;
-		_y = ds_y;
-		_xbits = ds_xbits;
-		_ybits = ds_ybits;
-		_destorg = dc_destorg;
-
-		_source = (const uint32_t*)ds_source;
-		_light = LightBgra::calc_light_multiplier(ds_light);
-		_shade_constants = ds_shade_constants;
-		_nearest_filter = !SampleBgra::span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep, ds_source_mipmapped);
-
-		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
-		_destalpha = dc_destalpha >> (FRACBITS - 8);
+		args.xfrac = ds_xfrac;
+		args.yfrac = ds_yfrac;
+		args.xstep = ds_xstep;
+		args.ystep = ds_ystep;
+		args.x1 = ds_x1;
+		args.x2 = ds_x2;
+		args.y = ds_y;
+		args.xbits = ds_xbits;
+		args.ybits = ds_ybits;
+		args.destorg = (uint32_t*)dc_destorg;
+		args.destpitch = dc_pitch;
+		args.source = (const uint32_t*)ds_source;
+		args.light = LightBgra::calc_light_multiplier(ds_light);
+		args.light_red = ds_shade_constants.light_red;
+		args.light_green = ds_shade_constants.light_green;
+		args.light_blue = ds_shade_constants.light_blue;
+		args.light_alpha = ds_shade_constants.light_alpha;
+		args.fade_red = ds_shade_constants.fade_red;
+		args.fade_green = ds_shade_constants.fade_green;
+		args.fade_blue = ds_shade_constants.fade_blue;
+		args.fade_alpha = ds_shade_constants.fade_alpha;
+		args.desaturate = ds_shade_constants.desaturate;
+		args.srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		args.destalpha = dc_destalpha >> (FRACBITS - 8);
+		args.flags = 0;
+		if (ds_shade_constants.simple_shade)
+			args.flags |= RenderArgs::simple_shade;
+		if (!SampleBgra::span_sampler_setup(args.source, args.xbits, args.ybits, args.xstep, args.ystep, ds_source_mipmapped))
+			args.flags |= RenderArgs::nearest_filter;
 
 		static FixedFunction ff;
 		_ff = &ff;
@@ -351,25 +344,8 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
-		if (thread->skipped_by_thread(_y))
+		if (thread->skipped_by_thread(args.y))
 			return;
-
-		RenderArgs args;
-		args.destorg = (uint32_t *)_destorg;
-		args.source = _source;
-		args.destpitch = dc_pitch;
-		args.xfrac = _xfrac;
-		args.yfrac = _yfrac;
-		args.xstep = _xstep;
-		args.ystep = _ystep;
-		args.x1 = _x1;
-		args.x2 = _x2;
-		args.y = _y;
-		args.xbits = _xbits;
-		args.ybits = _ybits;
-		args.light = _light;
-		args.srcalpha = _srcalpha;
-		args.destalpha = _destalpha;
 		_ff->DrawSpan(&args);
 	}
 };
@@ -2777,7 +2753,7 @@ void R_DrawRevSubClampTranslatedColumn_rgba()
 
 void R_DrawSpan_rgba()
 {
-	DrawerCommandQueue::QueueCommand<DrawSpanFFCommand>();
+	DrawerCommandQueue::QueueCommand<DrawSpanLLVMCommand>();
 /*
 #ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<DrawSpanRGBACommand>();

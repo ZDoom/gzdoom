@@ -49,6 +49,18 @@ SSAVec4i::SSAVec4i(SSAInt i)
 	v = SSAScope::builder().CreateShuffleVector(SSAScope::builder().CreateBitCast(i.v, m1xi32type, SSAScope::hint()), llvm::UndefValue::get(m1xi32type), mask, SSAScope::hint());
 }
 
+SSAVec4i::SSAVec4i(SSAInt i0, SSAInt i1, SSAInt i2, SSAInt i3)
+: v(0)
+{
+	std::vector<llvm::Constant*> constants;
+	constants.resize(4, llvm::ConstantInt::get(SSAScope::context(), llvm::APInt(32, 0, true)));
+	v = llvm::ConstantVector::get(constants);
+	v = SSAScope::builder().CreateInsertElement(v, i0.v, (uint64_t)0, SSAScope::hint());
+	v = SSAScope::builder().CreateInsertElement(v, i1.v, (uint64_t)1, SSAScope::hint());
+	v = SSAScope::builder().CreateInsertElement(v, i2.v, (uint64_t)2, SSAScope::hint());
+	v = SSAScope::builder().CreateInsertElement(v, i3.v, (uint64_t)3, SSAScope::hint());
+}
+
 SSAVec4i::SSAVec4i(SSAVec4f f32)
 : v(0)
 {

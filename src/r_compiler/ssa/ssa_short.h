@@ -17,6 +17,8 @@ public:
 	static SSAShort from_llvm(llvm::Value *v) { return SSAShort(v); }
 	static llvm::Type *llvm_type();
 
+	SSAInt zext_int();
+
 	llvm::Value *v;
 };
 

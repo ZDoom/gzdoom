@@ -754,7 +754,7 @@ void ACSStringPool::ReadStrings(FSerializer &file, const char *key)
 						unsigned bucketnum = h % NUM_BUCKETS;
 						Pool[ii].Hash = h;
 						Pool[ii].Next = PoolBuckets[bucketnum];
-						PoolBuckets[bucketnum] = i;
+						PoolBuckets[bucketnum] = ii;
 					}
 					file.EndObject();
 				}

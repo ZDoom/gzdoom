@@ -221,7 +221,7 @@ void FFlatVertexBuffer::OutputResized(int width, int height)
 	vbo_shadowdata[7].Set((float)width, (float)height, 0, 0, 0);
 	
 	Map();
-	memcpy(map, &vbo_shadowdata[4], 4 * sizeof(FFlatVertex));
+	memcpy(&map[4], &vbo_shadowdata[4], 4 * sizeof(FFlatVertex));
 	Unmap();
 }
 

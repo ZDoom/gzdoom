@@ -59,6 +59,9 @@ ACTOR Actor native //: Thinker
 	native int GetMissileDamage(int mask, int add, int ptr = AAPTR_DEFAULT);
 	action native int OverlayID();
 
+	// Overlay Functions
+	native float OverlayAlpha(int layer);
+
 	// Action functions
 	// Meh, MBF redundant functions. Only for DeHackEd support.
 	action native A_Turn(float angle = 0);
@@ -340,7 +343,6 @@ ACTOR Actor native //: Thinker
 	native state A_CheckSightOrRange(float distance, state label, bool two_dimension = false);
 	native state A_CheckRange(float distance, state label, bool two_dimension = false);
 	action native bool A_FaceMovementDirection(float offset = 0, float anglelimit = 0, float pitchlimit = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
-	action native int A_ClearOverlays(int sstart = 0, int sstop = 0, bool safety = true);
 	action native bool A_CopySpriteFrame(int from, int to, int flags = 0);
 	action native bool A_SetSpriteAngle(float angle = 0, int ptr = AAPTR_DEFAULT);
 	action native bool A_SetSpriteRotation(float angle = 0, int ptr = AAPTR_DEFAULT);
@@ -352,9 +354,12 @@ ACTOR Actor native //: Thinker
 	action native A_CopyFriendliness(int ptr_source = AAPTR_MASTER);
 
 	action native bool A_Overlay(int layer, state start = "", bool nooverride = false);
+	action native int A_ClearOverlays(int sstart = 0, int sstop = 0, bool safety = true);
 	action native A_WeaponOffset(float wx = 0, float wy = 32, int flags = 0);
 	action native A_OverlayOffset(int layer = PSP_WEAPON, float wx = 0, float wy = 32, int flags = 0);
 	action native A_OverlayFlags(int layer, int flags, bool set);
+	action native A_OverlayAlpha(int layer, float alphaset);
+	action native A_OverlayRenderStyle(int layer, int style);
 
 	native int ACS_NamedExecute(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0);
 	native int ACS_NamedSuspend(name script, int mapnum=0);

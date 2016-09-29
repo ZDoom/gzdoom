@@ -1290,7 +1290,7 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 //
 // R_DrawPSprite
 //
-void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac)
+void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, double alpha)
 {
 	double 				tx;
 	int 				x1;
@@ -1326,7 +1326,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	flip = sprframe->Flip & 1;
 	tex = TexMan(picnum);
 
-	if (tex->UseType == FTexture::TEX_Null)
+	if (tex->UseType == FTexture::TEX_Null || pspr->RenderStyle == STYLE_None)
 		return;
 
 	if (pspr->firstTic)
@@ -1363,10 +1363,10 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 
 	tx += tex->GetScaledWidth();
 	x2 = xs_RoundToInt(CenterX + tx * pspritexscale);
-
+	
 	// off the left side
 	if (x2 <= 0)
-		return;
+		return;	
 
 	// store information in a vissprite
 	vis = &avis[vispspindex];
@@ -1404,7 +1404,9 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	vis->pic = tex;
 	vis->ColormapNum = 0;
 
-	if (flip)
+	// If flip is used, provided that it's not already flipped (that would just invert itself)
+	// (It's an XOR...)
+	if (!(flip) != !(pspr->Flags & PSPF_FLIP))
 	{
 		vis->xiscale = -FLOAT2FIXED(pspritexiscale * tex->Scale.X);
 		vis->startfrac = (tex->GetWidth() << FRACBITS) - 1;
@@ -1422,8 +1424,26 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	FDynamicColormap *colormap_to_use = nullptr;
 	if (pspr->GetID() < PSP_TARGETCENTER)
 	{
-		vis->Style.Alpha = float(owner->Alpha);
-		vis->Style.RenderStyle = owner->RenderStyle;
+		// Set the alpha based on if using the overlay's own or not.
+		vis->Style.Alpha = (pspr->Flags & PSPF_ALPHA) ? float(alpha) : float(owner->Alpha);		
+
+		// Set the render style 
+		if (pspr->Flags & PSPF_RENDERSTYLE)
+		{
+			const int rs = clamp<int>(pspr->RenderStyle, 0, STYLE_Count);
+			
+			if (rs == STYLE_Normal && vis->Style.Alpha < 1.0)
+				vis->Style.RenderStyle = LegacyRenderStyles[STYLE_Translucent];
+			else
+				vis->Style.RenderStyle = LegacyRenderStyles[rs];
+		}
+ 		else
+ 		{
+			if (owner->RenderStyle == LegacyRenderStyles[STYLE_Normal] && vis->Style.Alpha < 1.0)
+				vis->Style.RenderStyle = LegacyRenderStyles[STYLE_Translucent];
+			else
+				vis->Style.RenderStyle = owner->RenderStyle;
+ 		}
 
 		// The software renderer cannot invert the source without inverting the overlay
 		// too. That means if the source is inverted, we need to do the reverse of what
@@ -1657,9 +1677,10 @@ void R_DrawPlayerSprites ()
 			// It's possible this psprite's caller is now null but the layer itself hasn't been destroyed
 			// because it didn't tick yet (if we typed 'take all' while in the console for example).
 			// In this case let's simply not draw it to avoid crashing.
+
 			if ((psp->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr) && psp->GetCaller() != nullptr)
 			{
-				R_DrawPSprite(psp, camera, bobx, boby, wx, wy, r_TicFracF);
+				R_DrawPSprite(psp, camera, bobx, boby, wx, wy, r_TicFracF, psp->alpha);
 			}
 
 			psp = psp->GetNext();

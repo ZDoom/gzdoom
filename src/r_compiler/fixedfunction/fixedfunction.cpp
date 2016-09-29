@@ -256,10 +256,10 @@ SSAVec4i DrawerCodegen::sample_linear(SSAUBytePtr col0, SSAUBytePtr col1, SSAInt
 	SSAInt y0 = frac_y0 >> FRACBITS;
 	SSAInt y1 = frac_y1 >> FRACBITS;
 
-	SSAVec4i p00 = col0[y0].load_vec4ub();
-	SSAVec4i p01 = col0[y1].load_vec4ub();
-	SSAVec4i p10 = col1[y0].load_vec4ub();
-	SSAVec4i p11 = col1[y1].load_vec4ub();
+	SSAVec4i p00 = col0[y0 * 4].load_vec4ub();
+	SSAVec4i p01 = col0[y1 * 4].load_vec4ub();
+	SSAVec4i p10 = col1[y0 * 4].load_vec4ub();
+	SSAVec4i p11 = col1[y1 * 4].load_vec4ub();
 
 	SSAInt inv_b = texturefracx;
 	SSAInt inv_a = (frac_y1 >> (FRACBITS - 4)) & 15;
@@ -278,10 +278,10 @@ SSAVec4i DrawerCodegen::sample_linear(SSAUBytePtr texture, SSAInt xfrac, SSAInt 
 	SSAInt x = xfrac >> xbits;
 	SSAInt y = yfrac >> ybits;
 
-	SSAVec4i p00 = texture[(y & ymask) + ((x & xmask) << yshift)].load_vec4ub();
-	SSAVec4i p01 = texture[((y + 1) & ymask) + ((x & xmask) << yshift)].load_vec4ub();
-	SSAVec4i p10 = texture[(y & ymask) + (((x + 1) & xmask) << yshift)].load_vec4ub();
-	SSAVec4i p11 = texture[((y + 1) & ymask) + (((x + 1) & xmask) << yshift)].load_vec4ub();
+	SSAVec4i p00 = texture[((y & ymask) + ((x & xmask) << yshift)) * 4].load_vec4ub();
+	SSAVec4i p01 = texture[(((y + 1) & ymask) + ((x & xmask) << yshift)) * 4].load_vec4ub();
+	SSAVec4i p10 = texture[((y & ymask) + (((x + 1) & xmask) << yshift)) * 4].load_vec4ub();
+	SSAVec4i p11 = texture[(((y + 1) & ymask) + (((x + 1) & xmask) << yshift)) * 4].load_vec4ub();
 
 	SSAInt inv_b = (xfrac >> (xbits - 4)) & 15;
 	SSAInt inv_a = (yfrac >> (ybits - 4)) & 15;

@@ -5,22 +5,45 @@
 
 enum class DrawWallVariant
 {
-	Opaque1, // vlinec1
-	Opaque4, // vlinec4
-	Masked1, // mvlinec1
-	Masked4, // mvlinec4
-	Add1, // tmvline1_add
-	Add4, // tmvline4_add
-	AddClamp1, // tmvline1_addclamp
-	AddClamp4, // tmvline4_addclamp
-	SubClamp1, // tmvline1_subclamp
-	SubClamp4, // tmvline4_subclamp
-	RevSubClamp1, // tmvline1_revsubclamp
-	RevSubClamp4, // tmvline4_revsubclamp
+	Opaque,
+	Masked,
+	Add,
+	AddClamp,
+	SubClamp,
+	RevSubClamp
 };
 
 class DrawWallCodegen : public DrawerCodegen
 {
 public:
-	void Generate(DrawWallVariant variant, SSAValue args);
+	void Generate(DrawWallVariant variant, bool fourColumns, SSAValue args);
+
+private:
+	void LoopShade(DrawWallVariant variant, bool fourColumns, bool isSimpleShade);
+	void Loop(DrawWallVariant variant, bool fourColumns, bool isSimpleShade, bool isNearestFilter);
+	SSAVec4i Sample(SSAInt frac, bool isNearestFilter);
+	SSAVec4i Shade(SSAVec4i fg, int index, bool isSimpleShade);
+	SSAVec4i Blend(SSAVec4i fg, SSAVec4i bg, DrawWallVariant variant);
+
+	SSAStack<SSAInt> stack_index, stack_frac[4];
+
+	SSAUBytePtr dest;
+	SSAUBytePtr source[4];
+	SSAUBytePtr source2[4];
+	SSAInt pitch;
+	SSAInt count;
+	SSAInt dest_y;
+	SSAInt texturefrac[4];
+	SSAInt texturefracx[4];
+	SSAInt iscale[4];
+	SSAInt textureheight[4];
+	SSAInt light[4];
+	SSAInt srcalpha;
+	SSAInt destalpha;
+	SSABool is_simple_shade;
+	SSABool is_nearest_filter;
+	SSAShadeConstants shade_constants;
+
+	SSAInt fracstep[4];
+	SSAInt one[4];
 };

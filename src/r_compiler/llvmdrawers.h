@@ -1,6 +1,39 @@
 
 #pragma once
 
+struct DrawWallArgs
+{
+	uint32_t *dest;
+	const uint32_t *source[4];
+	const uint32_t *source2[4];
+	int32_t pitch;
+	int32_t count;
+	int32_t dest_y;
+	uint32_t texturefrac[4];
+	uint32_t texturefracx[4];
+	uint32_t iscale[4];
+	uint32_t textureheight[4];
+	uint32_t light[4];
+	uint32_t srcalpha;
+	uint32_t destalpha;
+
+	uint16_t light_alpha;
+	uint16_t light_red;
+	uint16_t light_green;
+	uint16_t light_blue;
+	uint16_t fade_alpha;
+	uint16_t fade_red;
+	uint16_t fade_green;
+	uint16_t fade_blue;
+	uint16_t desaturate;
+	uint32_t flags;
+	enum Flags
+	{
+		simple_shade = 1,
+		nearest_filter = 2
+	};
+};
+
 struct DrawSpanArgs
 {
 	uint32_t *destorg;
@@ -51,6 +84,19 @@ public:
 	void(*DrawSpanMaskedTranslucent)(const DrawSpanArgs *) = nullptr;
 	void(*DrawSpanAddClamp)(const DrawSpanArgs *) = nullptr;
 	void(*DrawSpanMaskedAddClamp)(const DrawSpanArgs *) = nullptr;
+
+	void(*vlinec1)(const DrawWallArgs *) = nullptr;
+	void(*vlinec4)(const DrawWallArgs *) = nullptr;
+	void(*mvlinec1)(const DrawWallArgs *) = nullptr;
+	void(*mvlinec4)(const DrawWallArgs *) = nullptr;
+	void(*tmvline1_add)(const DrawWallArgs *) = nullptr;
+	void(*tmvline4_add)(const DrawWallArgs *) = nullptr;
+	void(*tmvline1_addclamp)(const DrawWallArgs *) = nullptr;
+	void(*tmvline4_addclamp)(const DrawWallArgs *) = nullptr;
+	void(*tmvline1_subclamp)(const DrawWallArgs *) = nullptr;
+	void(*tmvline4_subclamp)(const DrawWallArgs *) = nullptr;
+	void(*tmvline1_revsubclamp)(const DrawWallArgs *) = nullptr;
+	void(*tmvline4_revsubclamp)(const DrawWallArgs *) = nullptr;
 
 private:
 	static LLVMDrawers *Singleton;

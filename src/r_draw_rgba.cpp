@@ -302,7 +302,8 @@ void DrawerCommandQueue::StopThreads()
 
 class DrawSpanLLVMCommand : public DrawerCommand
 {
-	RenderArgs args;
+protected:
+	DrawSpanArgs args;
 
 public:
 	DrawSpanLLVMCommand()
@@ -333,9 +334,9 @@ public:
 		args.destalpha = dc_destalpha >> (FRACBITS - 8);
 		args.flags = 0;
 		if (ds_shade_constants.simple_shade)
-			args.flags |= RenderArgs::simple_shade;
+			args.flags |= DrawSpanArgs::simple_shade;
 		if (!SampleBgra::span_sampler_setup(args.source, args.xbits, args.ybits, args.xstep, args.ystep, ds_source_mipmapped))
-			args.flags |= RenderArgs::nearest_filter;
+			args.flags |= DrawSpanArgs::nearest_filter;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -343,6 +344,61 @@ public:
 		if (thread->skipped_by_thread(args.y))
 			return;
 		LLVMDrawers::Instance()->DrawSpan(&args);
+	}
+};
+
+class DrawSpanMaskedLLVMCommand : public DrawSpanLLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		if (thread->skipped_by_thread(args.y))
+			return;
+		LLVMDrawers::Instance()->DrawSpanMasked(&args);
+	}
+};
+
+class DrawSpanTranslucentLLVMCommand : public DrawSpanLLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		if (thread->skipped_by_thread(args.y))
+			return;
+		LLVMDrawers::Instance()->DrawSpanTranslucent(&args);
+	}
+};
+
+class DrawSpanMaskedTranslucentLLVMCommand : public DrawSpanLLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		if (thread->skipped_by_thread(args.y))
+			return;
+		LLVMDrawers::Instance()->DrawSpanMaskedTranslucent(&args);
+	}
+};
+
+class DrawSpanAddClampLLVMCommand : public DrawSpanLLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		if (thread->skipped_by_thread(args.y))
+			return;
+		LLVMDrawers::Instance()->DrawSpanAddClamp(&args);
+	}
+};
+
+class DrawSpanMaskedAddClampLLVMCommand : public DrawSpanLLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		if (thread->skipped_by_thread(args.y))
+			return;
+		LLVMDrawers::Instance()->DrawSpanMaskedAddClamp(&args);
 	}
 };
 
@@ -2749,39 +2805,58 @@ void R_DrawRevSubClampTranslatedColumn_rgba()
 
 void R_DrawSpan_rgba()
 {
+#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawSpanLLVMCommand>();
-/*
-#ifdef NO_SSE
+#elif defined(NO_SSE)
 	DrawerCommandQueue::QueueCommand<DrawSpanRGBACommand>();
 #else
 	DrawerCommandQueue::QueueCommand<DrawSpanRGBA_SSE_Command>();
 #endif
-*/
 }
 
 void R_DrawSpanMasked_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawSpanMaskedLLVMCommand>();
+#else
 	DrawerCommandQueue::QueueCommand<DrawSpanMaskedRGBACommand>();
+#endif
 }
 
 void R_DrawSpanTranslucent_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawSpanTranslucentLLVMCommand>();
+#else
 	DrawerCommandQueue::QueueCommand<DrawSpanTranslucentRGBACommand>();
+#endif
 }
 
 void R_DrawSpanMaskedTranslucent_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawSpanMaskedTranslucentLLVMCommand>();
+#else
 	DrawerCommandQueue::QueueCommand<DrawSpanMaskedTranslucentRGBACommand>();
+#endif
 }
 
 void R_DrawSpanAddClamp_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawSpanAddClampLLVMCommand>();
+#else
 	DrawerCommandQueue::QueueCommand<DrawSpanAddClampRGBACommand>();
+#endif
 }
 
 void R_DrawSpanMaskedAddClamp_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampLLVMCommand>();
+#else
 	DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampRGBACommand>();
+#endif
 }
 
 void R_FillSpan_rgba()

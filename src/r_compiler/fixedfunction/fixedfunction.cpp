@@ -11,7 +11,7 @@
 #include "r_compiler/ssa/ssa_value.h"
 #include "r_compiler/ssa/ssa_barycentric_weight.h"
 
-void DrawSpanCodegen::Generate(SSAValue args)
+void DrawSpanCodegen::Generate(DrawSpanVariant variant, SSAValue args)
 {
 	destorg = args[0][0].load();
 	source = args[0][1].load();
@@ -51,44 +51,44 @@ void DrawSpanCodegen::Generate(SSAValue args)
 
 	// 64x64 is the most common case by far, so special case it.
 	is_64x64 = xbits == 6 && ybits == 6;
-	is_simple_shade = (flags & RenderArgs::simple_shade) == RenderArgs::simple_shade;
-	is_nearest_filter = (flags & RenderArgs::nearest_filter) == RenderArgs::nearest_filter;
+	is_simple_shade = (flags & DrawSpanArgs::simple_shade) == DrawSpanArgs::simple_shade;
+	is_nearest_filter = (flags & DrawSpanArgs::nearest_filter) == DrawSpanArgs::nearest_filter;
 
 	SSAIfBlock branch;
 	branch.if_block(is_simple_shade);
-	LoopShade(true);
+	LoopShade(variant, true);
 	branch.else_block();
-	LoopShade(false);
+	LoopShade(variant, false);
 	branch.end_block();
 }
 
-void DrawSpanCodegen::LoopShade(bool isSimpleShade)
+void DrawSpanCodegen::LoopShade(DrawSpanVariant variant, bool isSimpleShade)
 {
 	SSAIfBlock branch;
 	branch.if_block(is_nearest_filter);
-	LoopFilter(isSimpleShade, true);
+	LoopFilter(variant, isSimpleShade, true);
 	branch.else_block();
-	LoopFilter(isSimpleShade, false);
+	LoopFilter(variant, isSimpleShade, false);
 	branch.end_block();
 }
 
-void DrawSpanCodegen::LoopFilter(bool isSimpleShade, bool isNearestFilter)
+void DrawSpanCodegen::LoopFilter(DrawSpanVariant variant, bool isSimpleShade, bool isNearestFilter)
 {
 	SSAIfBlock branch;
 	branch.if_block(is_64x64);
 	{
-		SSAInt sseLength = Loop4x(isSimpleShade, isNearestFilter, true);
-		Loop(sseLength * 4, isSimpleShade, isNearestFilter, true);
+		SSAInt sseLength = Loop4x(variant, isSimpleShade, isNearestFilter, true);
+		Loop(sseLength * 4, variant, isSimpleShade, isNearestFilter, true);
 	}
 	branch.else_block();
 	{
-		SSAInt sseLength = Loop4x(isSimpleShade, isNearestFilter, false);
-		Loop(sseLength * 4, isSimpleShade, isNearestFilter, false);
+		SSAInt sseLength = Loop4x(variant, isSimpleShade, isNearestFilter, false);
+		Loop(sseLength * 4, variant, isSimpleShade, isNearestFilter, false);
 	}
 	branch.end_block();
 }
 
-SSAInt DrawSpanCodegen::Loop4x(bool isSimpleShade, bool isNearestFilter, bool is64x64)
+SSAInt DrawSpanCodegen::Loop4x(DrawSpanVariant variant, bool isSimpleShade, bool isNearestFilter, bool is64x64)
 {
 	SSAInt sseLength = count / 4;
 	stack_index.store(0);
@@ -97,24 +97,31 @@ SSAInt DrawSpanCodegen::Loop4x(bool isSimpleShade, bool isNearestFilter, bool is
 		SSAInt index = stack_index.load();
 		loop.loop_block(index < sseLength);
 
+		SSAVec16ub bg = data[index * 16].load_unaligned_vec16ub();
+		SSAVec8s bg0 = SSAVec8s::extendlo(bg);
+		SSAVec8s bg1 = SSAVec8s::extendhi(bg);
+		SSAVec4i bgcolors[4] =
+		{
+			SSAVec4i::extendlo(bg0),
+			SSAVec4i::extendhi(bg0),
+			SSAVec4i::extendlo(bg1),
+			SSAVec4i::extendhi(bg1)
+		};
+
 		SSAVec4i colors[4];
 		for (int i = 0; i < 4; i++)
 		{
 			SSAInt xfrac = stack_xfrac.load();
 			SSAInt yfrac = stack_yfrac.load();
 
-			SSAVec4i fg = Sample(xfrac, yfrac, isNearestFilter, is64x64);
-			if (isSimpleShade)
-				colors[i] = shade_bgra_simple(fg, light);
-			else
-				colors[i] = shade_bgra_advanced(fg, light, shade_constants);
+			colors[i] = Blend(Shade(Sample(xfrac, yfrac, isNearestFilter, is64x64), isSimpleShade), bgcolors[i], variant);
 
 			stack_xfrac.store(xfrac + xstep);
 			stack_yfrac.store(yfrac + ystep);
 		}
 
-		SSAVec16ub ssecolors(SSAVec8s(colors[0], colors[1]), SSAVec8s(colors[2], colors[3]));
-		data[index * 16].store_unaligned_vec16ub(ssecolors);
+		SSAVec16ub color(SSAVec8s(colors[0], colors[1]), SSAVec8s(colors[2], colors[3]));
+		data[index * 16].store_unaligned_vec16ub(color);
 
 		stack_index.store(index + 1);
 		loop.end_block();
@@ -122,7 +129,7 @@ SSAInt DrawSpanCodegen::Loop4x(bool isSimpleShade, bool isNearestFilter, bool is
 	return sseLength;
 }
 
-void DrawSpanCodegen::Loop(SSAInt start, bool isSimpleShade, bool isNearestFilter, bool is64x64)
+void DrawSpanCodegen::Loop(SSAInt start, DrawSpanVariant variant, bool isSimpleShade, bool isNearestFilter, bool is64x64)
 {
 	stack_index.store(start);
 	{
@@ -133,13 +140,8 @@ void DrawSpanCodegen::Loop(SSAInt start, bool isSimpleShade, bool isNearestFilte
 		SSAInt xfrac = stack_xfrac.load();
 		SSAInt yfrac = stack_yfrac.load();
 
-		SSAVec4i fg = Sample(xfrac, yfrac, isNearestFilter, is64x64);
-		SSAVec4i color;
-		if (isSimpleShade)
-			color = shade_bgra_simple(fg, light);
-		else
-			color = shade_bgra_advanced(fg, light, shade_constants);
-
+		SSAVec4i bgcolor = data[index * 4].load_vec4ub();
+		SSAVec4i color = Blend(Shade(Sample(xfrac, yfrac, isNearestFilter, is64x64), isSimpleShade), bgcolor, variant);
 		data[index * 4].store_vec4ub(color);
 
 		stack_index.store(index + 1);
@@ -170,6 +172,32 @@ SSAVec4i DrawSpanCodegen::Sample(SSAInt xfrac, SSAInt yfrac, bool isNearestFilte
 		{
 			return sample_linear(source, xfrac, yfrac, 32 - xbits, 32 - ybits);
 		}
+	}
+}
+
+SSAVec4i DrawSpanCodegen::Shade(SSAVec4i fg, bool isSimpleShade)
+{
+	if (isSimpleShade)
+		return shade_bgra_simple(fg, light);
+	else
+		return shade_bgra_advanced(fg, light, shade_constants);
+}
+
+SSAVec4i DrawSpanCodegen::Blend(SSAVec4i fg, SSAVec4i bg, DrawSpanVariant variant)
+{
+	switch (variant)
+	{
+	default:
+	case DrawSpanVariant::Opaque:
+		return blend_copy(fg);
+	case DrawSpanVariant::Masked:
+		return blend_alpha_blend(fg, bg);
+	case DrawSpanVariant::Translucent:
+	case DrawSpanVariant::AddClamp:
+		return blend_add(fg, bg, srcalpha, destalpha);
+	case DrawSpanVariant::MaskedTranslucent:
+	case DrawSpanVariant::MaskedAddClamp:
+		return blend_add(fg, bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 	}
 }
 
@@ -247,6 +275,14 @@ SSAVec4i DrawerCodegen::blend_alpha_blend(SSAVec4i fg, SSAVec4i bg)
 	SSAInt inv_alpha = 256 - alpha;
 	SSAVec4i color = (fg * alpha + bg * inv_alpha) / 256;
 	return color.insert(3, 255);
+}
+
+SSAInt DrawerCodegen::calc_blend_bgalpha(SSAVec4i fg, SSAInt destalpha)
+{
+	SSAInt alpha = fg[3];
+	alpha = alpha + (alpha >> 7);
+	SSAInt inv_alpha = 256 - alpha;
+	return (destalpha * alpha + 256 * inv_alpha + 128) >> 8;
 }
 
 SSAVec4i DrawerCodegen::sample_linear(SSAUBytePtr col0, SSAUBytePtr col1, SSAInt texturefracx, SSAInt texturefracy, SSAInt one, SSAInt height)

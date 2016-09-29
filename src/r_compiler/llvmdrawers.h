@@ -1,7 +1,7 @@
 
 #pragma once
 
-struct RenderArgs
+struct DrawSpanArgs
 {
 	uint32_t *destorg;
 	const uint32_t *source;
@@ -45,7 +45,12 @@ public:
 	static void Destroy();
 	static LLVMDrawers *Instance();
 
-	void(*DrawSpan)(const RenderArgs *) = nullptr;
+	void(*DrawSpan)(const DrawSpanArgs *) = nullptr;
+	void(*DrawSpanMasked)(const DrawSpanArgs *) = nullptr;
+	void(*DrawSpanTranslucent)(const DrawSpanArgs *) = nullptr;
+	void(*DrawSpanMaskedTranslucent)(const DrawSpanArgs *) = nullptr;
+	void(*DrawSpanAddClamp)(const DrawSpanArgs *) = nullptr;
+	void(*DrawSpanMaskedAddClamp)(const DrawSpanArgs *) = nullptr;
 
 private:
 	static LLVMDrawers *Singleton;

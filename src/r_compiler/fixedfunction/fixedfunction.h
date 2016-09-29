@@ -43,22 +43,37 @@ public:
 	SSAVec4i blend_revsub(SSAVec4i fg, SSAVec4i bg, SSAInt srcalpha, SSAInt destalpha);
 	SSAVec4i blend_alpha_blend(SSAVec4i fg, SSAVec4i bg);
 
+	// Calculates the final alpha values to be used when combined with the source texture alpha channel
+	SSAInt calc_blend_bgalpha(SSAVec4i fg, SSAInt destalpha);
+
 	// SampleBgra
 	SSAVec4i sample_linear(SSAUBytePtr col0, SSAUBytePtr col1, SSAInt texturefracx, SSAInt texturefracy, SSAInt one, SSAInt height);
 	SSAVec4i sample_linear(SSAUBytePtr texture, SSAInt xfrac, SSAInt yfrac, SSAInt xbits, SSAInt ybits);
 };
 
+enum class DrawSpanVariant
+{
+	Opaque,
+	Masked,
+	Translucent,
+	MaskedTranslucent,
+	AddClamp,
+	MaskedAddClamp
+};
+
 class DrawSpanCodegen : public DrawerCodegen
 {
 public:
-	void Generate(SSAValue args);
+	void Generate(DrawSpanVariant variant, SSAValue args);
 
 private:
-	void LoopShade(bool isSimpleShade);
-	void LoopFilter(bool isSimpleShade, bool isNearestFilter);
-	SSAInt Loop4x(bool isSimpleShade, bool isNearestFilter, bool is64x64);
-	void Loop(SSAInt start, bool isSimpleShade, bool isNearestFilter, bool is64x64);
+	void LoopShade(DrawSpanVariant variant, bool isSimpleShade);
+	void LoopFilter(DrawSpanVariant variant, bool isSimpleShade, bool isNearestFilter);
+	SSAInt Loop4x(DrawSpanVariant variant, bool isSimpleShade, bool isNearestFilter, bool is64x64);
+	void Loop(SSAInt start, DrawSpanVariant variant, bool isSimpleShade, bool isNearestFilter, bool is64x64);
 	SSAVec4i Sample(SSAInt xfrac, SSAInt yfrac, bool isNearestFilter, bool is64x64);
+	SSAVec4i Shade(SSAVec4i fg, bool isSimpleShade);
+	SSAVec4i Blend(SSAVec4i fg, SSAVec4i bg, DrawSpanVariant variant);
 
 	SSAStack<SSAInt> stack_index, stack_xfrac, stack_yfrac;
 

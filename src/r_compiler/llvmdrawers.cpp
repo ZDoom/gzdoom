@@ -44,8 +44,8 @@ public:
 	LLVMDrawersImpl();
 
 private:
-	void CodegenDrawSpan();
-	static llvm::Type *GetRenderArgsStruct(llvm::LLVMContext &context);
+	void CodegenDrawSpan(const char *name, DrawSpanVariant variant);
+	static llvm::Type *GetDrawSpanArgsStruct(llvm::LLVMContext &context);
 
 	LLVMProgram mProgram;
 };
@@ -75,26 +75,37 @@ LLVMDrawers *LLVMDrawers::Instance()
 
 LLVMDrawersImpl::LLVMDrawersImpl()
 {
-	CodegenDrawSpan();
+	CodegenDrawSpan("DrawSpan", DrawSpanVariant::Opaque);
+	CodegenDrawSpan("DrawSpanMasked", DrawSpanVariant::Masked);
+	CodegenDrawSpan("DrawSpanTranslucent", DrawSpanVariant::Translucent);
+	CodegenDrawSpan("DrawSpanMaskedTranslucent", DrawSpanVariant::MaskedTranslucent);
+	CodegenDrawSpan("DrawSpanAddClamp", DrawSpanVariant::AddClamp);
+	CodegenDrawSpan("DrawSpanMaskedAddClamp", DrawSpanVariant::MaskedAddClamp);
+
 	mProgram.engine()->finalizeObject();
 	mProgram.modulePassManager()->run(*mProgram.module());
 
-	DrawSpan = mProgram.GetProcAddress<void(const RenderArgs *)>("DrawSpan");
+	DrawSpan = mProgram.GetProcAddress<void(const DrawSpanArgs *)>("DrawSpan");
+	DrawSpanMasked = mProgram.GetProcAddress<void(const DrawSpanArgs *)>("DrawSpanMasked");
+	DrawSpanTranslucent = mProgram.GetProcAddress<void(const DrawSpanArgs *)>("DrawSpanTranslucent");
+	DrawSpanMaskedTranslucent = mProgram.GetProcAddress<void(const DrawSpanArgs *)>("DrawSpanMaskedTranslucent");
+	DrawSpanAddClamp = mProgram.GetProcAddress<void(const DrawSpanArgs *)>("DrawSpanAddClamp");
+	DrawSpanMaskedAddClamp = mProgram.GetProcAddress<void(const DrawSpanArgs *)>("DrawSpanMaskedAddClamp");
 
 	mProgram.StopLogFatalErrors();
 }
 
-void LLVMDrawersImpl::CodegenDrawSpan()
+void LLVMDrawersImpl::CodegenDrawSpan(const char *name, DrawSpanVariant variant)
 {
 	llvm::IRBuilder<> builder(mProgram.context());
 	SSAScope ssa_scope(&mProgram.context(), mProgram.module(), &builder);
 
-	SSAFunction function("DrawSpan");
-	function.add_parameter(GetRenderArgsStruct(mProgram.context()));
+	SSAFunction function(name);
+	function.add_parameter(GetDrawSpanArgsStruct(mProgram.context()));
 	function.create_public();
 
 	DrawSpanCodegen codegen;
-	codegen.Generate(function.parameter(0));
+	codegen.Generate(variant, function.parameter(0));
 
 	builder.CreateRetVoid();
 
@@ -104,7 +115,7 @@ void LLVMDrawersImpl::CodegenDrawSpan()
 	mProgram.functionPassManager()->run(*function.func);
 }
 
-llvm::Type *LLVMDrawersImpl::GetRenderArgsStruct(llvm::LLVMContext &context)
+llvm::Type *LLVMDrawersImpl::GetDrawSpanArgsStruct(llvm::LLVMContext &context)
 {
 	std::vector<llvm::Type *> elements;
 	elements.push_back(llvm::Type::getInt8PtrTy(context)); // uint8_t *destorg;

@@ -60,6 +60,8 @@ enum PSPFlags
 	PSPF_ALPHA			= 1 << 4,
 	PSPF_RENDERSTYLE	= 1 << 5,
 	PSPF_FLIP			= 1 << 6,
+	PSPF_FORCEALPHA		= 1 << 7,
+	PSPF_FORCESTYLE		= 1 << 8,
 };
 
 class DPSprite : public DObject

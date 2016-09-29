@@ -196,6 +196,7 @@ public:
 
 EXTERN_CVAR(Bool, r_multithreaded)
 EXTERN_CVAR(Bool, r_mipmap)
+EXTERN_CVAR(Int, r_multithreadedmax)
 
 // Manages queueing up commands and executing them on worker threads
 class DrawerCommandQueue
@@ -248,6 +249,14 @@ public:
 		}
 		else
 		{
+			// [SP] Note: I've put in a hack here to throttle the speed of the rendering if
+			// the thread queue gets to big. This is one way to prevent too many commands
+			// going into the thread queue, which is causing crashes when there are too
+			// many threads (of which, there can be only as many as there are columns on
+			// the screen - guess what happens when you're too full of sprites!)
+			if (queue->commands.size() > r_multithreadedmax)
+				R_EndDrawerCommands();
+
 			void *ptr = AllocMemory(sizeof(T));
 			if (!ptr) // Out of memory - render what we got
 			{

@@ -1011,7 +1011,7 @@ static void R_DrawSky (visplane_t *pl)
 	{ // The texture does not tile nicely
 		frontyScale *= skyscale;
 		frontiScale = 1 / frontyScale;
-		//R_DrawSkyStriped (pl);
+		R_DrawSkyStriped (pl);
 	}
 }
 

@@ -1426,6 +1426,7 @@ set (PCH_SOURCES
 	fragglescript/t_spec.cpp
 	fragglescript/t_variable.cpp
 	fragglescript/t_cmd.cpp
+	r_compiler/llvmdrawers.cpp
 	r_compiler/ssa/ssa_bool.cpp
 	r_compiler/ssa/ssa_float.cpp
 	r_compiler/ssa/ssa_float_ptr.cpp

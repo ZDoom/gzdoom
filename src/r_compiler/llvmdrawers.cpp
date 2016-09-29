@@ -1,0 +1,232 @@
+
+#include "i_system.h"
+#include "r_compiler/fixedfunction/fixedfunction.h"
+#include "r_compiler/ssa/ssa_function.h"
+#include "r_compiler/ssa/ssa_scope.h"
+#include "r_compiler/ssa/ssa_for_block.h"
+#include "r_compiler/ssa/ssa_if_block.h"
+#include "r_compiler/ssa/ssa_stack.h"
+#include "r_compiler/ssa/ssa_function.h"
+#include "r_compiler/ssa/ssa_struct_type.h"
+#include "r_compiler/ssa/ssa_value.h"
+#include "r_compiler/ssa/ssa_barycentric_weight.h"
+
+class LLVMProgram
+{
+public:
+	LLVMProgram();
+	~LLVMProgram();
+
+	void StopLogFatalErrors();
+
+	template<typename Func>
+	Func *GetProcAddress(const char *name) { return reinterpret_cast<Func*>(PointerToFunction(name)); }
+
+	llvm::LLVMContext &context() { return *mContext; }
+	llvm::Module *module() { return mModule; }
+	llvm::ExecutionEngine *engine() { return mEngine.get(); }
+	llvm::legacy::PassManager *modulePassManager() { return mModulePassManager.get(); }
+	llvm::legacy::FunctionPassManager *functionPassManager() { return mFunctionPassManager.get(); }
+
+private:
+	void *PointerToFunction(const char *name);
+
+	std::unique_ptr<llvm::LLVMContext> mContext;
+	llvm::Module *mModule;
+	std::unique_ptr<llvm::ExecutionEngine> mEngine;
+	std::unique_ptr<llvm::legacy::PassManager> mModulePassManager;
+	std::unique_ptr<llvm::legacy::FunctionPassManager> mFunctionPassManager;
+};
+
+class LLVMDrawersImpl : public LLVMDrawers
+{
+public:
+	LLVMDrawersImpl();
+
+private:
+	void CodegenDrawSpan();
+	static llvm::Type *GetRenderArgsStruct(llvm::LLVMContext &context);
+
+	LLVMProgram mProgram;
+};
+
+/////////////////////////////////////////////////////////////////////////////
+
+LLVMDrawers *LLVMDrawers::Singleton = nullptr;
+
+void LLVMDrawers::Create()
+{
+	if (!Singleton)
+		Singleton = new LLVMDrawersImpl();
+}
+
+void LLVMDrawers::Destroy()
+{
+	delete Singleton;
+	Singleton = nullptr;
+}
+
+LLVMDrawers *LLVMDrawers::Instance()
+{
+	return Singleton;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+LLVMDrawersImpl::LLVMDrawersImpl()
+{
+	CodegenDrawSpan();
+	mProgram.engine()->finalizeObject();
+	mProgram.modulePassManager()->run(*mProgram.module());
+
+	DrawSpan = mProgram.GetProcAddress<void(const RenderArgs *)>("DrawSpan");
+
+	mProgram.StopLogFatalErrors();
+}
+
+void LLVMDrawersImpl::CodegenDrawSpan()
+{
+	llvm::IRBuilder<> builder(mProgram.context());
+	SSAScope ssa_scope(&mProgram.context(), mProgram.module(), &builder);
+
+	SSAFunction function("DrawSpan");
+	function.add_parameter(GetRenderArgsStruct(mProgram.context()));
+	function.create_public();
+
+	DrawSpanCodegen codegen;
+	codegen.Generate(function.parameter(0));
+
+	builder.CreateRetVoid();
+
+	if (llvm::verifyFunction(*function.func))
+		I_FatalError("verifyFunction failed for " __FUNCTION__);
+
+	mProgram.functionPassManager()->run(*function.func);
+}
+
+llvm::Type *LLVMDrawersImpl::GetRenderArgsStruct(llvm::LLVMContext &context)
+{
+	std::vector<llvm::Type *> elements;
+	elements.push_back(llvm::Type::getInt8PtrTy(context)); // uint8_t *destorg;
+	elements.push_back(llvm::Type::getInt8PtrTy(context)); // const uint8_t *source;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t destpitch;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t xfrac;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t yfrac;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t xstep;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t ystep;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t x1;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t x2;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t y;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t xbits;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t ybits;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t light;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t srcalpha;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t destalpha;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t light_alpha;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t light_red;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t light_green;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t light_blue;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_alpha;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_red;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_green;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_blue;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t desaturate;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t flags;
+	return llvm::StructType::get(context, elements, false)->getPointerTo();
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+namespace { static bool LogFatalErrors = false; }
+
+LLVMProgram::LLVMProgram()
+{
+	using namespace llvm;
+
+	// We have to extra careful about this because both LLVM and ZDoom made
+	// the very unwise decision to hook atexit. To top it off, LLVM decided
+	// to log something in the atexit handler..
+	LogFatalErrors = true;
+
+	install_fatal_error_handler([](void *user_data, const std::string& reason, bool gen_crash_diag) {
+		if (LogFatalErrors)
+			I_FatalError("LLVM fatal error: %s", reason.c_str());
+	});
+
+	InitializeNativeTarget();
+	InitializeNativeTargetAsmPrinter();
+	InitializeNativeTargetAsmParser();
+
+	std::string errorstring;
+
+	std::string targetTriple = sys::getProcessTriple();
+	std::string cpuName = sys::getHostCPUName();
+	StringMap<bool> cpuFeatures;
+	sys::getHostCPUFeatures(cpuFeatures);
+	std::string cpuFeaturesStr;
+	for (const auto &it : cpuFeatures)
+	{
+		if (!cpuFeaturesStr.empty())
+			cpuFeaturesStr.push_back(' ');
+		cpuFeaturesStr.push_back(it.getValue() ? '+' : '-');
+		cpuFeaturesStr += it.getKey();
+	}
+
+	//Printf("LLVM target triple: %s\n", targetTriple.c_str());
+	//Printf("LLVM CPU and features: %s, %s\n", cpuName.c_str(), cpuFeaturesStr.c_str());
+
+	const Target *target = TargetRegistry::lookupTarget(targetTriple, errorstring);
+	if (!target)
+		I_FatalError("Could not find LLVM target: %s", errorstring.c_str());
+
+	TargetOptions opt;
+	auto relocModel = Optional<Reloc::Model>(Reloc::Static);
+	TargetMachine *machine = target->createTargetMachine(targetTriple, cpuName, cpuFeaturesStr, opt, relocModel, CodeModel::Default, CodeGenOpt::Aggressive);
+	if (!machine)
+		I_FatalError("Could not create LLVM target machine");
+
+	mContext = std::make_unique<LLVMContext>();
+
+	auto moduleOwner = std::make_unique<Module>("render", context());
+	mModule = moduleOwner.get();
+	mModule->setTargetTriple(targetTriple);
+	mModule->setDataLayout(machine->createDataLayout());
+
+	EngineBuilder engineBuilder(std::move(moduleOwner));
+	engineBuilder.setErrorStr(&errorstring);
+	engineBuilder.setOptLevel(CodeGenOpt::Aggressive);
+	engineBuilder.setRelocationModel(Reloc::Static);
+	engineBuilder.setEngineKind(EngineKind::JIT);
+	mEngine.reset(engineBuilder.create(machine));
+	if (!mEngine)
+		I_FatalError("Could not create LLVM execution engine: %s", errorstring.c_str());
+
+	mModulePassManager = std::make_unique<legacy::PassManager>();
+	mFunctionPassManager = std::make_unique<legacy::FunctionPassManager>(mModule);
+
+	PassManagerBuilder passManagerBuilder;
+	passManagerBuilder.OptLevel = 3;
+	passManagerBuilder.SizeLevel = 0;
+	passManagerBuilder.Inliner = createFunctionInliningPass();
+	passManagerBuilder.populateModulePassManager(*mModulePassManager.get());
+	passManagerBuilder.populateFunctionPassManager(*mFunctionPassManager.get());
+}
+
+LLVMProgram::~LLVMProgram()
+{
+	mEngine.reset();
+	mContext.reset();
+}
+
+void *LLVMProgram::PointerToFunction(const char *name)
+{
+	llvm::Function *function = mModule->getFunction(name);
+	if (!function)
+		return nullptr;
+	return mEngine->getPointerToFunction(function);
+}
+
+void LLVMProgram::StopLogFatalErrors()
+{
+	LogFatalErrors = false;
+}

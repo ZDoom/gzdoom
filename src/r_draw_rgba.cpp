@@ -38,7 +38,7 @@
 #include "r_data/colormaps.h"
 #include "r_plane.h"
 #include "r_draw_rgba.h"
-#include "r_compiler/fixedfunction/fixedfunction.h"
+#include "r_compiler/llvmdrawers.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -303,7 +303,6 @@ void DrawerCommandQueue::StopThreads()
 class DrawSpanLLVMCommand : public DrawerCommand
 {
 	RenderArgs args;
-	FixedFunction *_ff;
 
 public:
 	DrawSpanLLVMCommand()
@@ -337,16 +336,13 @@ public:
 			args.flags |= RenderArgs::simple_shade;
 		if (!SampleBgra::span_sampler_setup(args.source, args.xbits, args.ybits, args.xstep, args.ystep, ds_source_mipmapped))
 			args.flags |= RenderArgs::nearest_filter;
-
-		static FixedFunction ff;
-		_ff = &ff;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
 		if (thread->skipped_by_thread(args.y))
 			return;
-		_ff->DrawSpan(&args);
+		LLVMDrawers::Instance()->DrawSpan(&args);
 	}
 };
 

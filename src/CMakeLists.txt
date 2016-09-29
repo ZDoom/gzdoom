@@ -1447,7 +1447,10 @@ set (PCH_SOURCES
 	r_compiler/ssa/ssa_vec4i_ptr.cpp
 	r_compiler/ssa/ssa_vec8s.cpp
 	r_compiler/ssa/ssa_vec16ub.cpp
-	r_compiler/fixedfunction/fixedfunction.cpp
+	r_compiler/fixedfunction/drawercodegen.cpp
+	r_compiler/fixedfunction/drawspancodegen.cpp
+	r_compiler/fixedfunction/drawwallcodegen.cpp
+	r_compiler/fixedfunction/drawcolumncodegen.cpp
 	r_data/sprites.cpp
 	r_data/voxels.cpp
 	r_data/renderstyle.cpp

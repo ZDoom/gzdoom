@@ -1,6 +1,8 @@
 
 #include "i_system.h"
-#include "r_compiler/fixedfunction/fixedfunction.h"
+#include "r_compiler/fixedfunction/drawspancodegen.h"
+#include "r_compiler/fixedfunction/drawwallcodegen.h"
+#include "r_compiler/fixedfunction/drawcolumncodegen.h"
 #include "r_compiler/ssa/ssa_function.h"
 #include "r_compiler/ssa/ssa_scope.h"
 #include "r_compiler/ssa/ssa_for_block.h"

@@ -54,7 +54,7 @@ extern float rw_lightstep;
 extern int wallshade;
 
 // Use multiple threads when drawing
-CVAR(Bool, r_multithreaded, true, 0);
+CVAR(Bool, r_multithreaded, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 // [SP] Set Max Threads to a sane amount
 CVAR(Int, r_multithreadedmax, 1024, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 

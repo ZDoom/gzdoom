@@ -1340,6 +1340,7 @@ void G_InitLevelLocals ()
 		R_SetDefaultColormap (info->FadeTable);
 		if (strnicmp (info->FadeTable, "COLORMAP", 8) != 0)
 		{
+			//level.fadeto = 0xff939393; //[SP] Hexen True-color compatibility, just use gray.
 			level.flags |= LEVEL_HASFADETABLE;
 		}
 		/*

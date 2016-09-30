@@ -522,18 +522,19 @@ void S_CacheSound (sfxinfo_t *sfx)
 		{
 			return;
 		}
-		else if (sfx->bRandomHeader)
+		sfxinfo_t *orig = sfx;
+		while (!sfx->bRandomHeader && sfx->link != sfxinfo_t::NO_LINK)
 		{
-			S_CacheRandomSound (sfx);
+			sfx = &S_sfx[sfx->link];
+		}
+		if (sfx->bRandomHeader)
+		{
+			S_CacheRandomSound(sfx);
 		}
 		else
 		{
-			while (sfx->link != sfxinfo_t::NO_LINK)
-			{
-				sfx = &S_sfx[sfx->link];
-			}
+			S_LoadSound(sfx);
 			sfx->bUsed = true;
-			S_LoadSound (sfx);
 		}
 	}
 }

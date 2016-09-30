@@ -1,6 +1,7 @@
 
 #include "ssa_int.h"
 #include "ssa_float.h"
+#include "ssa_bool.h"
 #include "ssa_scope.h"
 #include "r_compiler/llvm_include.h"
 
@@ -29,6 +30,16 @@ SSAInt::SSAInt(llvm::Value *v)
 llvm::Type *SSAInt::llvm_type()
 {
 	return llvm::Type::getInt32Ty(SSAScope::context());
+}
+
+SSAInt SSAInt::MIN(SSAInt a, SSAInt b)
+{
+	return SSAInt::from_llvm(SSAScope::builder().CreateSelect((a < b).v, a.v, b.v, SSAScope::hint()));
+}
+
+SSAInt SSAInt::MAX(SSAInt a, SSAInt b)
+{
+	return SSAInt::from_llvm(SSAScope::builder().CreateSelect((a > b).v, a.v, b.v, SSAScope::hint()));
 }
 
 SSAInt operator+(const SSAInt &a, const SSAInt &b)

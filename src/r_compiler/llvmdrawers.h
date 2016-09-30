@@ -1,6 +1,14 @@
 
 #pragma once
 
+struct WorkerThreadData
+{
+	int32_t core;
+	int32_t num_cores;
+	int32_t pass_start_y;
+	int32_t pass_end_y;
+};
+
 struct DrawWallArgs
 {
 	uint32_t *dest;
@@ -85,18 +93,18 @@ public:
 	void(*DrawSpanAddClamp)(const DrawSpanArgs *) = nullptr;
 	void(*DrawSpanMaskedAddClamp)(const DrawSpanArgs *) = nullptr;
 
-	void(*vlinec1)(const DrawWallArgs *) = nullptr;
-	void(*vlinec4)(const DrawWallArgs *) = nullptr;
-	void(*mvlinec1)(const DrawWallArgs *) = nullptr;
-	void(*mvlinec4)(const DrawWallArgs *) = nullptr;
-	void(*tmvline1_add)(const DrawWallArgs *) = nullptr;
-	void(*tmvline4_add)(const DrawWallArgs *) = nullptr;
-	void(*tmvline1_addclamp)(const DrawWallArgs *) = nullptr;
-	void(*tmvline4_addclamp)(const DrawWallArgs *) = nullptr;
-	void(*tmvline1_subclamp)(const DrawWallArgs *) = nullptr;
-	void(*tmvline4_subclamp)(const DrawWallArgs *) = nullptr;
-	void(*tmvline1_revsubclamp)(const DrawWallArgs *) = nullptr;
-	void(*tmvline4_revsubclamp)(const DrawWallArgs *) = nullptr;
+	void(*vlinec1)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
+	void(*vlinec4)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
+	void(*mvlinec1)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
+	void(*mvlinec4)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
+	void(*tmvline1_add)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
+	void(*tmvline4_add)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
+	void(*tmvline1_addclamp)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
+	void(*tmvline4_addclamp)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
+	void(*tmvline1_subclamp)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
+	void(*tmvline4_subclamp)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
+	void(*tmvline1_revsubclamp)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
+	void(*tmvline4_revsubclamp)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
 
 private:
 	static LLVMDrawers *Singleton;

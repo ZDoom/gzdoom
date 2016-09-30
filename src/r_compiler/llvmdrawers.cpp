@@ -51,6 +51,7 @@ private:
 
 	static llvm::Type *GetDrawSpanArgsStruct(llvm::LLVMContext &context);
 	static llvm::Type *GetDrawWallArgsStruct(llvm::LLVMContext &context);
+	static llvm::Type *GetWorkerThreadDataStruct(llvm::LLVMContext &context);
 
 	LLVMProgram mProgram;
 };
@@ -108,18 +109,18 @@ LLVMDrawersImpl::LLVMDrawersImpl()
 	DrawSpanMaskedTranslucent = mProgram.GetProcAddress<void(const DrawSpanArgs *)>("DrawSpanMaskedTranslucent");
 	DrawSpanAddClamp = mProgram.GetProcAddress<void(const DrawSpanArgs *)>("DrawSpanAddClamp");
 	DrawSpanMaskedAddClamp = mProgram.GetProcAddress<void(const DrawSpanArgs *)>("DrawSpanMaskedAddClamp");
-	vlinec1 = mProgram.GetProcAddress<void(const DrawWallArgs *)>("vlinec1");
-	vlinec4 = mProgram.GetProcAddress<void(const DrawWallArgs *)>("vlinec4");
-	mvlinec1 = mProgram.GetProcAddress<void(const DrawWallArgs *)>("mvlinec1");
-	mvlinec4 = mProgram.GetProcAddress<void(const DrawWallArgs *)>("mvlinec4");
-	tmvline1_add = mProgram.GetProcAddress<void(const DrawWallArgs *)>("tmvline1_add");
-	tmvline4_add = mProgram.GetProcAddress<void(const DrawWallArgs *)>("tmvline4_add");
-	tmvline1_addclamp = mProgram.GetProcAddress<void(const DrawWallArgs *)>("tmvline1_addclamp");
-	tmvline4_addclamp = mProgram.GetProcAddress<void(const DrawWallArgs *)>("tmvline4_addclamp");
-	tmvline1_subclamp = mProgram.GetProcAddress<void(const DrawWallArgs *)>("tmvline1_subclamp");
-	tmvline4_subclamp = mProgram.GetProcAddress<void(const DrawWallArgs *)>("tmvline4_subclamp");
-	tmvline1_revsubclamp = mProgram.GetProcAddress<void(const DrawWallArgs *)>("tmvline1_revsubclamp");
-	tmvline4_revsubclamp = mProgram.GetProcAddress<void(const DrawWallArgs *)>("tmvline4_revsubclamp");
+	vlinec1 = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("vlinec1");
+	vlinec4 = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("vlinec4");
+	mvlinec1 = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("mvlinec1");
+	mvlinec4 = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("mvlinec4");
+	tmvline1_add = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("tmvline1_add");
+	tmvline4_add = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("tmvline4_add");
+	tmvline1_addclamp = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("tmvline1_addclamp");
+	tmvline4_addclamp = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("tmvline4_addclamp");
+	tmvline1_subclamp = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("tmvline1_subclamp");
+	tmvline4_subclamp = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("tmvline4_subclamp");
+	tmvline1_revsubclamp = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("tmvline1_revsubclamp");
+	tmvline4_revsubclamp = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("tmvline4_revsubclamp");
 
 	mProgram.StopLogFatalErrors();
 }
@@ -151,10 +152,11 @@ void LLVMDrawersImpl::CodegenDrawWall(const char *name, DrawWallVariant variant,
 
 	SSAFunction function(name);
 	function.add_parameter(GetDrawWallArgsStruct(mProgram.context()));
+	function.add_parameter(GetWorkerThreadDataStruct(mProgram.context()));
 	function.create_public();
 
 	DrawWallCodegen codegen;
-	codegen.Generate(variant, columns == 4, function.parameter(0));
+	codegen.Generate(variant, columns == 4, function.parameter(0), function.parameter(1));
 
 	builder.CreateRetVoid();
 
@@ -213,6 +215,14 @@ llvm::Type *LLVMDrawersImpl::GetDrawWallArgsStruct(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_blue;
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t desaturate;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t flags;
+	return llvm::StructType::get(context, elements, false)->getPointerTo();
+}
+
+llvm::Type *LLVMDrawersImpl::GetWorkerThreadDataStruct(llvm::LLVMContext &context)
+{
+	std::vector<llvm::Type *> elements;
+	for (int i = 0; i < 4; i++)
+		elements.push_back(llvm::Type::getInt32Ty(context));
 	return llvm::StructType::get(context, elements, false)->getPointerTo();
 }
 

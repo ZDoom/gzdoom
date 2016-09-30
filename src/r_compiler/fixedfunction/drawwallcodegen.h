@@ -16,12 +16,12 @@ enum class DrawWallVariant
 class DrawWallCodegen : public DrawerCodegen
 {
 public:
-	void Generate(DrawWallVariant variant, bool fourColumns, SSAValue args);
+	void Generate(DrawWallVariant variant, bool fourColumns, SSAValue args, SSAValue thread_data);
 
 private:
 	void LoopShade(DrawWallVariant variant, bool fourColumns, bool isSimpleShade);
 	void Loop(DrawWallVariant variant, bool fourColumns, bool isSimpleShade, bool isNearestFilter);
-	SSAVec4i Sample(SSAInt frac, bool isNearestFilter);
+	SSAVec4i Sample(SSAInt frac, int index, bool isNearestFilter);
 	SSAVec4i Shade(SSAVec4i fg, int index, bool isSimpleShade);
 	SSAVec4i Blend(SSAVec4i fg, SSAVec4i bg, DrawWallVariant variant);
 
@@ -43,6 +43,7 @@ private:
 	SSABool is_simple_shade;
 	SSABool is_nearest_filter;
 	SSAShadeConstants shade_constants;
+	SSAWorkerThread thread;
 
 	SSAInt fracstep[4];
 	SSAInt one[4];

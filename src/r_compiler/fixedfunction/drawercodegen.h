@@ -18,6 +18,15 @@
 #include "r_compiler/ssa/ssa_barycentric_weight.h"
 #include "r_compiler/llvm_include.h"
 
+class SSAWorkerThread
+{
+public:
+	SSAInt core;
+	SSAInt num_cores;
+	SSAInt pass_start_y;
+	SSAInt pass_end_y;
+};
+
 class SSAShadeConstants
 {
 public:
@@ -29,6 +38,18 @@ public:
 class DrawerCodegen
 {
 public:
+	// Checks if a line is rendered by this thread
+	SSABool line_skipped_by_thread(SSAInt line, SSAWorkerThread thread);
+
+	// The number of lines to skip to reach the first line to be rendered by this thread
+	SSAInt skipped_by_thread(SSAInt first_line, SSAWorkerThread thread);
+
+	// The number of lines to be rendered by this thread
+	SSAInt count_for_thread(SSAInt first_line, SSAInt count, SSAWorkerThread thread);
+
+	// Calculate the dest address for the first line to be rendered by this thread
+	SSAUBytePtr dest_for_thread(SSAInt first_line, SSAInt pitch, SSAUBytePtr dest, SSAWorkerThread thread);
+
 	// LightBgra
 	SSAInt calc_light_multiplier(SSAInt light);
 	SSAVec4i shade_pal_index_simple(SSAInt index, SSAInt light, SSAUBytePtr basecolors);

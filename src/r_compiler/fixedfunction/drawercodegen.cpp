@@ -10,6 +10,31 @@
 #include "r_compiler/ssa/ssa_struct_type.h"
 #include "r_compiler/ssa/ssa_value.h"
 
+SSABool DrawerCodegen::line_skipped_by_thread(SSAInt line, SSAWorkerThread thread)
+{
+	return line < thread.pass_start_y || line >= thread.pass_end_y || !(line % thread.num_cores == thread.core);
+}
+
+SSAInt DrawerCodegen::skipped_by_thread(SSAInt first_line, SSAWorkerThread thread)
+{
+	SSAInt pass_skip = SSAInt::MAX(thread.pass_start_y - first_line, 0);
+	SSAInt core_skip = (thread.num_cores - (first_line + pass_skip - thread.core) % thread.num_cores) % thread.num_cores;
+	return pass_skip + core_skip;
+}
+
+SSAInt DrawerCodegen::count_for_thread(SSAInt first_line, SSAInt count, SSAWorkerThread thread)
+{
+	SSAInt lines_until_pass_end = SSAInt::MAX(thread.pass_end_y - first_line, 0);
+	count = SSAInt::MIN(count, lines_until_pass_end);
+	SSAInt c = (count - skipped_by_thread(first_line, thread) + thread.num_cores - 1) / thread.num_cores;
+	return SSAInt::MAX(c, 0);
+}
+
+SSAUBytePtr DrawerCodegen::dest_for_thread(SSAInt first_line, SSAInt pitch, SSAUBytePtr dest, SSAWorkerThread thread)
+{
+	return dest[skipped_by_thread(first_line, thread) * pitch * 4];
+}
+
 SSAInt DrawerCodegen::calc_light_multiplier(SSAInt light)
 {
 	return 256 - (light >> (FRACBITS - 8));
@@ -105,8 +130,8 @@ SSAVec4i DrawerCodegen::sample_linear(SSAUBytePtr col0, SSAUBytePtr col1, SSAInt
 	SSAVec4i p11 = col1[y1 * 4].load_vec4ub();
 
 	SSAInt inv_b = texturefracx;
-	SSAInt inv_a = (frac_y1 >> (FRACBITS - 4)) & 15;
-	SSAInt a = 16 - inv_a;
+	SSAInt a = (frac_y1 >> (FRACBITS - 4)) & 15;
+	SSAInt inv_a = 16 - a;
 	SSAInt b = 16 - inv_b;
 
 	return (p00 * (a * b) + p01 * (inv_a * b) + p10 * (a * inv_b) + p11 * (inv_a * inv_b) + 127) >> 8;

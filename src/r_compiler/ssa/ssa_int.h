@@ -16,6 +16,9 @@ public:
 	static SSAInt from_llvm(llvm::Value *v) { return SSAInt(v); }
 	static llvm::Type *llvm_type();
 
+	static SSAInt MIN(SSAInt a, SSAInt b);
+	static SSAInt MAX(SSAInt a, SSAInt b);
+
 	llvm::Value *v;
 };
 

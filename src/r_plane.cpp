@@ -920,7 +920,7 @@ static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 	}
 	else
 	{
-		return R_GetOneSkyColumn(fronttex, x);
+		//return R_GetOneSkyColumn(fronttex, x);
 		for (i = 0; i < 4; ++i)
 		{
 			if (lastskycol_bgra[i] == skycol)
@@ -939,11 +939,14 @@ static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 		const uint32_t *front = (const uint32_t *)fronttex->GetColumnBgra(angle1, NULL);
 		const uint32_t *back = (const uint32_t *)backskytex->GetColumnBgra(angle2, NULL);
 
+		//[SP] Paletted version is used for comparison only
+		const BYTE *frontcompare = fronttex->GetColumn(angle1, NULL);
+
 		int count = MIN<int>(512, MIN(backskytex->GetHeight(), fronttex->GetHeight()));
 		i = 0;
 		do
 		{
-			if (front[i])
+			if (frontcompare[i])
 			{
 				composite[i] = front[i];
 			}

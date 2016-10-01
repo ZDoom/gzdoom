@@ -1323,6 +1323,9 @@ bool AActor::Massacre ()
 
 	if (health > 0)
 	{
+		auto f = flags;
+		auto f2 = flags2;
+
 		flags |= MF_SHOOTABLE;
 		flags2 &= ~(MF2_DORMANT|MF2_INVULNERABLE);
 		do
@@ -1331,6 +1334,12 @@ bool AActor::Massacre ()
 			P_DamageMobj (this, NULL, NULL, TELEFRAG_DAMAGE, NAME_Massacre);
 		}
 		while (health != prevhealth && health > 0);	//abort if the actor wasn't hurt.
+		if (health > 0)
+		{
+			// restore flags if this did not kill the monster.
+			flags = f;
+			flags2 = f2;
+		}
 		return health <= 0;
 	}
 	return false;

@@ -361,11 +361,11 @@ static bool S_CheckSound(sfxinfo_t *startsfx, sfxinfo_t *sfx, TArray<sfxinfo_t *
 			auto rsfx = &S_sfx[list->Sounds[i]];
 			if (rsfx == startsfx)
 			{
-				Printf(TEXTCOLOR_RED "recursive sound $random found for %s:\n", startsfx->name);
+				Printf(TEXTCOLOR_RED "recursive sound $random found for %s:\n", startsfx->name.GetChars());
 				success = false;
 				for (unsigned i = 1; i<chain.Size(); i++)
 				{
-					Printf(TEXTCOLOR_ORANGE "    -> %s\n", chain[i]->name);
+					Printf(TEXTCOLOR_ORANGE "    -> %s\n", chain[i]->name.GetChars());
 				}
 			}
 			else
@@ -379,11 +379,11 @@ static bool S_CheckSound(sfxinfo_t *startsfx, sfxinfo_t *sfx, TArray<sfxinfo_t *
 		me = &S_sfx[me->link];
 		if (me == startsfx)
 		{
-			Printf(TEXTCOLOR_RED "recursive sound $alias found for %s:\n", startsfx->name);
+			Printf(TEXTCOLOR_RED "recursive sound $alias found for %s:\n", startsfx->name.GetChars());
 			success = false;
 			for (unsigned i = 1; i<chain.Size(); i++)
 			{
-				Printf(TEXTCOLOR_ORANGE "    -> %s\n", chain[i]->name);
+				Printf(TEXTCOLOR_ORANGE "    -> %s\n", chain[i]->name.GetChars());
 			}
 			chain.Resize(siz);
 		}
@@ -413,7 +413,7 @@ void S_CheckIntegrity()
 		if (broken[i])
 		{
 			auto &sfx = S_sfx[i];
-			Printf(TEXTCOLOR_RED "Sound %s has been disabled\n", sfx.name);
+			Printf(TEXTCOLOR_RED "Sound %s has been disabled\n", sfx.name.GetChars());
 			sfx.bRandomHeader = false;
 			sfx.link = 0;	// link to the empty sound.
 		}

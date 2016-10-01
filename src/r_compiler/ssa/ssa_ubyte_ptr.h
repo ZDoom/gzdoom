@@ -18,6 +18,7 @@ public:
 	static SSAUBytePtr from_llvm(llvm::Value *v) { return SSAUBytePtr(v); }
 	static llvm::Type *llvm_type();
 	SSAUBytePtr operator[](SSAInt index) const;
+	SSAUBytePtr operator[](int index) const { return (*this)[SSAInt(index)]; }
 	SSAUByte load() const;
 	SSAVec4i load_vec4ub() const;
 	SSAVec8s load_vec8s() const;

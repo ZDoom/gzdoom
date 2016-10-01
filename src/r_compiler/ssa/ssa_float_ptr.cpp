@@ -1,7 +1,7 @@
 
+#include "r_compiler/llvm_include.h"
 #include "ssa_float_ptr.h"
 #include "ssa_scope.h"
-#include "r_compiler/llvm_include.h"
 
 SSAFloatPtr::SSAFloatPtr()
 : v(0)

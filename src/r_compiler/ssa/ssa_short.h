@@ -11,7 +11,7 @@ class SSAShort
 {
 public:
 	SSAShort();
-	SSAShort(int constant);
+	explicit SSAShort(int constant);
 	SSAShort(SSAFloat f);
 	explicit SSAShort(llvm::Value *v);
 	static SSAShort from_llvm(llvm::Value *v) { return SSAShort(v); }

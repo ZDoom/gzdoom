@@ -1,5 +1,6 @@
 
 #include "i_system.h"
+#include "r_compiler/llvm_include.h"
 #include "r_compiler/fixedfunction/drawcolumncodegen.h"
 #include "r_compiler/ssa/ssa_function.h"
 #include "r_compiler/ssa/ssa_scope.h"

@@ -12,13 +12,14 @@ class SSAVec4f
 {
 public:
 	SSAVec4f();
-	SSAVec4f(float constant);
-	SSAVec4f(float constant0, float constant1, float constant2, float constant3);
+	explicit SSAVec4f(float constant);
+	explicit SSAVec4f(float constant0, float constant1, float constant2, float constant3);
 	SSAVec4f(SSAFloat f);
 	SSAVec4f(SSAFloat f0, SSAFloat f1, SSAFloat f2, SSAFloat f3);
 	explicit SSAVec4f(llvm::Value *v);
 	SSAVec4f(SSAVec4i i32);
 	SSAFloat operator[](SSAInt index) const;
+	SSAFloat operator[](int index) const;
 	static SSAVec4f insert_element(SSAVec4f vec4f, SSAFloat value, int index);
 	static SSAVec4f bitcast(SSAVec4i i32);
 	static SSAVec4f sqrt(SSAVec4f f);

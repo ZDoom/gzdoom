@@ -1,8 +1,8 @@
 
+#include "r_compiler/llvm_include.h"
 #include "ssa_value.h"
 #include "ssa_int.h"
 #include "ssa_scope.h"
-#include "r_compiler/llvm_include.h"
 
 SSAValue SSAValue::load()
 {

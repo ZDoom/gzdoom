@@ -1,5 +1,6 @@
 
 #include "i_system.h"
+#include "r_compiler/llvm_include.h"
 #include "r_compiler/fixedfunction/drawercodegen.h"
 #include "r_compiler/ssa/ssa_function.h"
 #include "r_compiler/ssa/ssa_scope.h"
@@ -17,17 +18,17 @@ SSABool DrawerCodegen::line_skipped_by_thread(SSAInt line, SSAWorkerThread threa
 
 SSAInt DrawerCodegen::skipped_by_thread(SSAInt first_line, SSAWorkerThread thread)
 {
-	SSAInt pass_skip = SSAInt::MAX(thread.pass_start_y - first_line, 0);
+	SSAInt pass_skip = SSAInt::MAX(thread.pass_start_y - first_line, SSAInt(0));
 	SSAInt core_skip = (thread.num_cores - (first_line + pass_skip - thread.core) % thread.num_cores) % thread.num_cores;
 	return pass_skip + core_skip;
 }
 
 SSAInt DrawerCodegen::count_for_thread(SSAInt first_line, SSAInt count, SSAWorkerThread thread)
 {
-	SSAInt lines_until_pass_end = SSAInt::MAX(thread.pass_end_y - first_line, 0);
+	SSAInt lines_until_pass_end = SSAInt::MAX(thread.pass_end_y - first_line, SSAInt(0));
 	count = SSAInt::MIN(count, lines_until_pass_end);
 	SSAInt c = (count - skipped_by_thread(first_line, thread) + thread.num_cores - 1) / thread.num_cores;
-	return SSAInt::MAX(c, 0);
+	return SSAInt::MAX(c, SSAInt(0));
 }
 
 SSAUBytePtr DrawerCodegen::dest_for_thread(SSAInt first_line, SSAInt pitch, SSAUBytePtr dest, SSAWorkerThread thread)

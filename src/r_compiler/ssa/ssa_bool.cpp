@@ -1,7 +1,7 @@
 
+#include "r_compiler/llvm_include.h"
 #include "ssa_bool.h"
 #include "ssa_scope.h"
-#include "r_compiler/llvm_include.h"
 
 SSABool::SSABool()
 : v(0)

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#ifdef _MSC_VER
+
 #if defined(min)
 #define llvm_min_bug min
 #undef min
@@ -18,6 +20,10 @@
 #pragma warning(disable: 4244) // warning C4244: 'return' : conversion from 'uint64_t' to 'unsigned int', possible loss of data
 #pragma warning(disable: 4141) // warning C4141: 'inline': used more than once
 #pragma warning(disable: 4291) // warning C4291: 'void *llvm::User::operator new(std::size_t,unsigned int,unsigned int)': no matching operator delete found; memory will not be freed if initialization throws an exception
+#pragma warning(disable: 4267) // warning C4267: 'return': conversion from 'size_t' to 'unsigned int', possible loss of data
+#pragma warning(disable: 4244) // warning C4244: 'initializing': conversion from '__int64' to 'unsigned int', possible loss of data
+
+#endif
 
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/LLVMContext.h>
@@ -39,6 +45,8 @@
 #include <llvm/CodeGen/AsmPrinter.h>
 #include <llvm/MC/MCAsmInfo.h>
 
+#ifdef _MSC_VER
+
 #if defined(llvm_min_bug)
 #define min llvm_min_bug
 #undef llvm_min_bug
@@ -46,4 +54,6 @@
 #if defined(llvm_max_bug)
 #define max llvm_max_bug
 #undef llvm_max_bug
+#endif
+
 #endif

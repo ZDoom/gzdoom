@@ -1,10 +1,10 @@
 
+#include "r_compiler/llvm_include.h"
 #include "ssa_vec4f.h"
 #include "ssa_vec4i.h"
 #include "ssa_float.h"
 #include "ssa_int.h"
 #include "ssa_scope.h"
-#include "r_compiler/llvm_include.h"
 
 SSAVec4f::SSAVec4f()
 : v(0)
@@ -73,6 +73,11 @@ llvm::Type *SSAVec4f::llvm_type()
 SSAFloat SSAVec4f::operator[](SSAInt index) const
 {
 	return SSAFloat::from_llvm(SSAScope::builder().CreateExtractElement(v, index.v, SSAScope::hint()));
+}
+
+SSAFloat SSAVec4f::operator[](int index) const
+{
+	return (*this)[SSAInt(index)];
 }
 
 SSAVec4f SSAVec4f::insert_element(SSAVec4f vec4f, SSAFloat value, int index)

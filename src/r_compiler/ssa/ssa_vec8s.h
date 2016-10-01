@@ -11,8 +11,8 @@ class SSAVec8s
 {
 public:
 	SSAVec8s();
-	SSAVec8s(short constant);
-	SSAVec8s(short constant0, short constant1, short constant2, short constant3, short constant4, short constant5, short constant6, short constant7);
+	explicit SSAVec8s(short constant);
+	explicit SSAVec8s(short constant0, short constant1, short constant2, short constant3, short constant4, short constant5, short constant6, short constant7);
 	explicit SSAVec8s(llvm::Value *v);
 	SSAVec8s(SSAVec4i i0, SSAVec4i i1);
 	static SSAVec8s bitcast(SSAVec16ub i8);

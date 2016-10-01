@@ -1,9 +1,9 @@
 
+#include "r_compiler/llvm_include.h"
 #include "ssa_function.h"
 #include "ssa_int.h"
 #include "ssa_scope.h"
 #include "ssa_value.h"
-#include "r_compiler/llvm_include.h"
 
 SSAFunction::SSAFunction(const std::string name)
 : name(name), return_type(llvm::Type::getVoidTy(SSAScope::context())), func()

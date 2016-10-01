@@ -1,7 +1,7 @@
 
+#include "r_compiler/llvm_include.h"
 #include "ssa_ubyte_ptr.h"
 #include "ssa_scope.h"
-#include "r_compiler/llvm_include.h"
 
 SSAUBytePtr::SSAUBytePtr()
 : v(0)
@@ -38,7 +38,7 @@ SSAVec4i SSAUBytePtr::load_vec4ub() const
 	v = SSAScope::builder().CreateInsertElement(v, SSAInt(0).v, SSAInt(3).v, SSAScope::hint());
 	SSAVec4i v4i = SSAVec4i::from_llvm(v);
 
-	SSAVec8s low = SSAVec8s::bitcast(SSAVec16ub::shuffle(SSAVec16ub::bitcast(v4i), 0, 0, 16+0, 1, 16+1, 2, 16+2, 3, 16+3, 4, 16+4, 5, 16+5, 6, 16+6, 7, 16+7)); // _mm_unpacklo_epi8
+	SSAVec8s low = SSAVec8s::bitcast(SSAVec16ub::shuffle(SSAVec16ub::bitcast(v4i), SSAVec16ub((unsigned char)0), 0, 16+0, 1, 16+1, 2, 16+2, 3, 16+3, 4, 16+4, 5, 16+5, 6, 16+6, 7, 16+7)); // _mm_unpacklo_epi8
 	return SSAVec4i::extendlo(low); // _mm_unpacklo_epi16
 /*
 	llvm::PointerType *m4xint8typeptr = llvm::VectorType::get(llvm::Type::getInt8Ty(SSAScope::context()), 4)->getPointerTo();

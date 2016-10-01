@@ -15,6 +15,7 @@ public:
 	static SSAVec4iPtr from_llvm(llvm::Value *v) { return SSAVec4iPtr(v); }
 	static llvm::Type *llvm_type();
 	SSAVec4iPtr operator[](SSAInt index) const;
+	SSAVec4iPtr operator[](int index) const { return (*this)[SSAInt(index)]; }
 	SSAVec4i load() const;
 	SSAVec4i load_unaligned() const;
 	void store(const SSAVec4i &new_value);

@@ -10,7 +10,7 @@ class SSAInt
 {
 public:
 	SSAInt();
-	SSAInt(int constant);
+	explicit SSAInt(int constant);
 	SSAInt(SSAFloat f);
 	explicit SSAInt(llvm::Value *v);
 	static SSAInt from_llvm(llvm::Value *v) { return SSAInt(v); }

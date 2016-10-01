@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include "r_compiler/llvm_include.h"
-
 class SSAInt;
 
 class SSAScope

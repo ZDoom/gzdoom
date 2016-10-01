@@ -1,7 +1,7 @@
 
+#include "r_compiler/llvm_include.h"
 #include "ssa_vec4f_ptr.h"
 #include "ssa_scope.h"
-#include "r_compiler/llvm_include.h"
 
 SSAVec4fPtr::SSAVec4fPtr()
 : v(0)

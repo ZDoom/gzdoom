@@ -1,5 +1,6 @@
 
 #include "i_system.h"
+#include "r_compiler/llvm_include.h"
 #include "r_compiler/fixedfunction/drawspancodegen.h"
 #include "r_compiler/fixedfunction/drawwallcodegen.h"
 #include "r_compiler/fixedfunction/drawcolumncodegen.h"

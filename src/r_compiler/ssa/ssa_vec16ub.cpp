@@ -1,9 +1,9 @@
 
+#include "r_compiler/llvm_include.h"
 #include "ssa_vec16ub.h"
 #include "ssa_vec8s.h"
 #include "ssa_vec4i.h"
 #include "ssa_scope.h"
-#include "r_compiler/llvm_include.h"
 
 SSAVec16ub::SSAVec16ub()
 : v(0)

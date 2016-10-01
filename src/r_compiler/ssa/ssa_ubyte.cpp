@@ -1,7 +1,7 @@
 
+#include "r_compiler/llvm_include.h"
 #include "ssa_ubyte.h"
 #include "ssa_scope.h"
-#include "r_compiler/llvm_include.h"
 
 SSAUByte::SSAUByte()
 : v(0)

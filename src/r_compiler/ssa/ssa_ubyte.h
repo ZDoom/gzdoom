@@ -8,7 +8,7 @@ class SSAUByte
 {
 public:
 	SSAUByte();
-	SSAUByte(unsigned char constant);
+	explicit SSAUByte(unsigned char constant);
 	explicit SSAUByte(llvm::Value *v);
 	static SSAUByte from_llvm(llvm::Value *v) { return SSAUByte(v); }
 	static llvm::Type *llvm_type();

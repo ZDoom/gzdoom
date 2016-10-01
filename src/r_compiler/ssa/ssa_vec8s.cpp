@@ -1,9 +1,9 @@
 
+#include "r_compiler/llvm_include.h"
 #include "ssa_vec8s.h"
 #include "ssa_vec4i.h"
 #include "ssa_vec16ub.h"
 #include "ssa_scope.h"
-#include "r_compiler/llvm_include.h"
 
 SSAVec8s::SSAVec8s()
 : v(0)
@@ -77,12 +77,12 @@ SSAVec8s SSAVec8s::shuffle(const SSAVec8s &i0, const SSAVec8s &i1, int index0, i
 
 SSAVec8s SSAVec8s::extendhi(SSAVec16ub a)
 {
-	return SSAVec8s::bitcast(SSAVec16ub::shuffle(a, 0, 8, 16+8, 9, 16+9, 10, 16+10, 11, 16+11, 12, 16+12, 13, 16+13, 14, 16+14, 15, 16+15)); // _mm_unpackhi_epi8
+	return SSAVec8s::bitcast(SSAVec16ub::shuffle(a, SSAVec16ub((unsigned char)0), 8, 16+8, 9, 16+9, 10, 16+10, 11, 16+11, 12, 16+12, 13, 16+13, 14, 16+14, 15, 16+15)); // _mm_unpackhi_epi8
 }
 
 SSAVec8s SSAVec8s::extendlo(SSAVec16ub a)
 {
-	return SSAVec8s::bitcast(SSAVec16ub::shuffle(a, 0, 0, 16+0, 1, 16+1, 2, 16+2, 3, 16+3, 4, 16+4, 5, 16+5, 6, 16+6, 7, 16+7)); // _mm_unpacklo_epi8
+	return SSAVec8s::bitcast(SSAVec16ub::shuffle(a, SSAVec16ub((unsigned char)0), 0, 16+0, 1, 16+1, 2, 16+2, 3, 16+3, 4, 16+4, 5, 16+5, 6, 16+6, 7, 16+7)); // _mm_unpacklo_epi8
 }
 
 /*

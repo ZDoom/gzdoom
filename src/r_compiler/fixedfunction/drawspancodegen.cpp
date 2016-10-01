@@ -1,5 +1,6 @@
 
 #include "i_system.h"
+#include "r_compiler/llvm_include.h"
 #include "r_compiler/fixedfunction/drawspancodegen.h"
 #include "r_compiler/ssa/ssa_function.h"
 #include "r_compiler/ssa/ssa_scope.h"
@@ -49,9 +50,9 @@ void DrawSpanCodegen::Generate(DrawSpanVariant variant, SSAValue args)
 	xmask = ((SSAInt(1) << xbits) - 1) << ybits;
 
 	// 64x64 is the most common case by far, so special case it.
-	is_64x64 = xbits == 6 && ybits == 6;
-	is_simple_shade = (flags & DrawSpanArgs::simple_shade) == DrawSpanArgs::simple_shade;
-	is_nearest_filter = (flags & DrawSpanArgs::nearest_filter) == DrawSpanArgs::nearest_filter;
+	is_64x64 = xbits == SSAInt(6) && ybits == SSAInt(6);
+	is_simple_shade = (flags & DrawSpanArgs::simple_shade) == SSAInt(DrawSpanArgs::simple_shade);
+	is_nearest_filter = (flags & DrawSpanArgs::nearest_filter) == SSAInt(DrawSpanArgs::nearest_filter);
 
 	SSAIfBlock branch;
 	branch.if_block(is_simple_shade);
@@ -90,7 +91,7 @@ void DrawSpanCodegen::LoopFilter(DrawSpanVariant variant, bool isSimpleShade, bo
 SSAInt DrawSpanCodegen::Loop4x(DrawSpanVariant variant, bool isSimpleShade, bool isNearestFilter, bool is64x64)
 {
 	SSAInt sseLength = count / 4;
-	stack_index.store(0);
+	stack_index.store(SSAInt(0));
 	{
 		SSAForBlock loop;
 		SSAInt index = stack_index.load();
@@ -165,7 +166,7 @@ SSAVec4i DrawSpanCodegen::Sample(SSAInt xfrac, SSAInt yfrac, bool isNearestFilte
 	{
 		if (is64x64)
 		{
-			return sample_linear(source, xfrac, yfrac, 26, 26);
+			return sample_linear(source, xfrac, yfrac, SSAInt(26), SSAInt(26));
 		}
 		else
 		{

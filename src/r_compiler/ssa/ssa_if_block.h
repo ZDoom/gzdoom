@@ -3,7 +3,6 @@
 
 #include "ssa_bool.h"
 #include "ssa_phi.h"
-#include "r_compiler/llvm_include.h"
 
 class SSAIfBlock
 {

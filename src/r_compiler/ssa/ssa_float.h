@@ -11,7 +11,7 @@ class SSAFloat
 public:
 	SSAFloat();
 	SSAFloat(SSAInt i);
-	SSAFloat(float constant);
+	explicit SSAFloat(float constant);
 	explicit SSAFloat(llvm::Value *v);
 	static SSAFloat from_llvm(llvm::Value *v) { return SSAFloat(v); }
 	static llvm::Type *llvm_type();

@@ -11,8 +11,8 @@ class SSAVec16ub
 {
 public:
 	SSAVec16ub();
-	SSAVec16ub(unsigned char constant);
-	SSAVec16ub(
+	explicit SSAVec16ub(unsigned char constant);
+	explicit SSAVec16ub(
 		unsigned char constant0, unsigned char constant1, unsigned char constant2, unsigned char constant3, unsigned char constant4, unsigned char constant5, unsigned char constant6, unsigned char constant7,
 		unsigned char constant8, unsigned char constant9, unsigned char constant10, unsigned char constant11, unsigned char constant12, unsigned char constant13, unsigned char constant14, unsigned char constant15);
 	explicit SSAVec16ub(llvm::Value *v);

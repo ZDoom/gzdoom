@@ -1,5 +1,6 @@
 
 #include "i_system.h"
+#include "r_compiler/llvm_include.h"
 #include "r_compiler/fixedfunction/drawwallcodegen.h"
 #include "r_compiler/ssa/ssa_function.h"
 #include "r_compiler/ssa/ssa_scope.h"
@@ -65,8 +66,8 @@ void DrawWallCodegen::Generate(DrawWallVariant variant, bool fourColumns, SSAVal
 	thread.pass_start_y = thread_data[0][2].load();
 	thread.pass_end_y = thread_data[0][3].load();
 
-	is_simple_shade = (flags & DrawWallArgs::simple_shade) == DrawWallArgs::simple_shade;
-	is_nearest_filter = (flags & DrawWallArgs::nearest_filter) == DrawWallArgs::nearest_filter;
+	is_simple_shade = (flags & DrawWallArgs::simple_shade) == SSAInt(DrawWallArgs::simple_shade);
+	is_nearest_filter = (flags & DrawWallArgs::nearest_filter) == SSAInt(DrawWallArgs::nearest_filter);
 
 	count = count_for_thread(dest_y, count, thread);
 	dest = dest_for_thread(dest_y, pitch, dest, thread);
@@ -103,7 +104,7 @@ void DrawWallCodegen::Loop(DrawWallVariant variant, bool fourColumns, bool isSim
 {
 	int numColumns = fourColumns ? 4 : 1;
 
-	stack_index.store(0);
+	stack_index.store(SSAInt(0));
 	{
 		SSAForBlock loop;
 		SSAInt index = stack_index.load();

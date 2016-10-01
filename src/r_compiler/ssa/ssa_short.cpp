@@ -1,9 +1,9 @@
 
+#include "r_compiler/llvm_include.h"
 #include "ssa_short.h"
 #include "ssa_float.h"
 #include "ssa_int.h"
 #include "ssa_scope.h"
-#include "r_compiler/llvm_include.h"
 
 SSAShort::SSAShort()
 : v(0)

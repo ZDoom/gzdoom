@@ -1,11 +1,11 @@
 
+#include "r_compiler/llvm_include.h"
 #include "ssa_vec4i.h"
 #include "ssa_vec4f.h"
 #include "ssa_vec8s.h"
 #include "ssa_vec16ub.h"
 #include "ssa_int.h"
 #include "ssa_scope.h"
-#include "r_compiler/llvm_include.h"
 
 SSAVec4i::SSAVec4i()
 : v(0)
@@ -67,9 +67,14 @@ SSAVec4i::SSAVec4i(SSAVec4f f32)
 	v = SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse2_cvttps2dq), f32.v, SSAScope::hint());
 }
 
-SSAInt SSAVec4i::operator[](SSAInt index)
+SSAInt SSAVec4i::operator[](SSAInt index) const
 {
 	return SSAInt::from_llvm(SSAScope::builder().CreateExtractElement(v, index.v, SSAScope::hint()));
+}
+
+SSAInt SSAVec4i::operator[](int index) const
+{
+	return (*this)[SSAInt(index)];
 }
 
 SSAVec4i SSAVec4i::insert(SSAInt index, SSAInt value)
@@ -80,6 +85,11 @@ SSAVec4i SSAVec4i::insert(SSAInt index, SSAInt value)
 SSAVec4i SSAVec4i::insert(int index, SSAInt value)
 {
 	return SSAVec4i::from_llvm(SSAScope::builder().CreateInsertElement(v, value.v, index, SSAScope::hint()));
+}
+
+SSAVec4i SSAVec4i::insert(int index, int value)
+{
+	return insert(index, SSAInt(value));
 }
 
 llvm::Type *SSAVec4i::llvm_type()
@@ -125,12 +135,12 @@ void SSAVec4i::extend(SSAVec16ub a, SSAVec4i &out0, SSAVec4i &out1, SSAVec4i &ou
 
 SSAVec4i SSAVec4i::extendhi(SSAVec8s i16)
 {
-	return SSAVec4i::bitcast(SSAVec8s::shuffle(i16, 0, 4, 8+4, 5, 8+5, 6, 8+6, 7, 8+7)); // _mm_unpackhi_epi16
+	return SSAVec4i::bitcast(SSAVec8s::shuffle(i16, SSAVec8s((short)0), 4, 8+4, 5, 8+5, 6, 8+6, 7, 8+7)); // _mm_unpackhi_epi16
 }
 
 SSAVec4i SSAVec4i::extendlo(SSAVec8s i16)
 {
-	return SSAVec4i::bitcast(SSAVec8s::shuffle(i16, 0, 0, 8+0, 1, 8+1, 2, 8+2, 3, 8+3)); // _mm_unpacklo_epi16
+	return SSAVec4i::bitcast(SSAVec8s::shuffle(i16, SSAVec8s((short)0), 0, 8+0, 1, 8+1, 2, 8+2, 3, 8+3)); // _mm_unpacklo_epi16
 }
 
 SSAVec4i SSAVec4i::combinehi(SSAVec8s a, SSAVec8s b)

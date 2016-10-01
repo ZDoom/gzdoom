@@ -258,9 +258,7 @@ endif()
 set( LLVM_COMPONENTS core support asmparser asmprinter bitreader codegen passes ipo
 	irreader transformutils instrumentation profiledata debuginfocodeview runtimedyld
 	object instcombine linker analysis selectiondag scalaropts vectorize executionengine
-	mc mcdisassembler mcparser mcjit target )
-set( LLVM_COMPONENTS_X86 x86asmprinter x86info x86desc x86utils x86codegen )
-set( LLVM_COMPONENTS_X64 aarch64asmprinter aarch64info aarch64desc aarch64utils aarch64codegen )
+	mc mcdisassembler mcparser mcjit target x86asmprinter x86info x86desc x86utils x86codegen )
 
 # Path where it looks for the LLVM compiled files on Windows
 set( LLVM_PRECOMPILED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../llvm" )
@@ -270,24 +268,22 @@ if( NOT WIN32 )
 	find_package(LLVM REQUIRED CONFIG)
 	message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 	message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-	llvm_map_components_to_libnames( llvm_libs ${LLVM_COMPONENTS} ${LLVM_COMPONENTS_X86} ${LLVM_COMPONENTS_X64} )
+	llvm_map_components_to_libnames( llvm_libs ${LLVM_COMPONENTS} )
 	include_directories( ${LLVM_INCLUDE_DIRS} )
 	set( ZDOOM_LIBS ${ZDOOM_LIBS} ${llvm_libs} )
 else()
 	include_directories( "${LLVM_PRECOMPILED_DIR}/include" )
 	if( X64 )
-		include_directories( "${LLVM_PRECOMPILED_DIR}/64bit/include" )
-		set( llvm_libs_base "${LLVM_PRECOMPILED_DIR}/llvm/64bit" )
-		set( LLVM_ALL_COMPONENTS ${LLVM_COMPONENTS} ${LLVM_COMPONENTS_X64} )
+		include_directories( "${LLVM_PRECOMPILED_DIR}/64bit-include" )
+		set( llvm_libs_base "${LLVM_PRECOMPILED_DIR}/64bit-" )
 	else()
-		include_directories( "${LLVM_PRECOMPILED_DIR}/32bit/include" )
-		set( llvm_libs_base "${LLVM_PRECOMPILED_DIR}/32bit" )
-		set( LLVM_ALL_COMPONENTS ${LLVM_COMPONENTS} ${LLVM_COMPONENTS_X86} )
+		include_directories( "${LLVM_PRECOMPILED_DIR}/32bit-include" )
+		set( llvm_libs_base "${LLVM_PRECOMPILED_DIR}/32bit-" )
 	endif()
 	foreach(buildtype IN ITEMS RELEASE DEBUG)
-		set( llvm_libs_${buildtype} "${llvm_libs_base}/${buildtype}" )
+		set( llvm_libs_${buildtype} "${llvm_libs_base}${buildtype}" )
 		set( LLVM_${buildtype}_LIBS "" )
-		foreach( llvm_module ${LLVM_ALL_COMPONENTS} )
+		foreach( llvm_module ${LLVM_COMPONENTS} )
 			find_library( LLVM_${llvm_module}_LIBRARY_${buildtype} LLVM${llvm_module} PATHS ${llvm_libs_${buildtype}} )
 			set( LLVM_${buildtype}_LIBS ${LLVM_${buildtype}_LIBS} ${LLVM_${llvm_module}_LIBRARY_${buildtype}} )
 		endforeach( llvm_module )
@@ -1492,6 +1488,10 @@ set_source_files_properties( sc_man.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRE
 set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE_ONLY TRUE )
 if ( WIN32 )
 	set_source_files_properties( win32/fb_d3d9.cpp win32/fb_d3d9_wipe.cpp PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
+
+	# Supress C4244: 'initializing': conversion from '__int64' to 'unsigned int', possible loss of data
+	# For some reason using #pragma warning(disable: 4244) is not working..
+	set_source_files_properties( ${PCH_SOURCES} PROPERTIES COMPILE_FLAGS /wd4244 )
 endif()
 
 

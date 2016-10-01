@@ -1,7 +1,7 @@
 
+#include "r_compiler/llvm_include.h"
 #include "ssa_int_ptr.h"
 #include "ssa_scope.h"
-#include "r_compiler/llvm_include.h"
 
 SSAIntPtr::SSAIntPtr()
 : v(0)

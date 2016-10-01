@@ -3526,7 +3526,7 @@ void AActor::Tick ()
 				sector_t *sec = node->m_sector;
 				DVector2 scrollv;
 
-				if (level.Scrolls.Size() > (sec-sectors))
+				if (level.Scrolls.Size() > unsigned(sec-sectors))
 				{
 					scrollv = level.Scrolls[sec - sectors];
 				}

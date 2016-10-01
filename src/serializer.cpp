@@ -821,7 +821,6 @@ void FSerializer::WriteObjects()
 		for (unsigned i = 0; i < w->mDObjects.Size(); i++)
 		{
 			auto obj = w->mDObjects[i];
-			player_t *player;
 
 			BeginObject(nullptr);
 			w->Key("classtype");

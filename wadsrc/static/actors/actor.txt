@@ -218,6 +218,7 @@ ACTOR Actor native //: Thinker
 	native void A_LogInt(int whattoprint);
 	native void A_LogFloat(float whattoprint);
 	native void A_SetTranslucent(float alpha, int style = 0);
+	native void A_SetRenderStyle(float alpha, int style);
 	action native A_FadeIn(float reduce = 0.1, int flags = 0);
 	action native A_FadeOut(float reduce = 0.1, int flags = 1); //bool remove == true
 	native void A_FadeTo(float target, float amount = 0.1, int flags = 0);

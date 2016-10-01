@@ -690,3 +690,21 @@ enum
 	VRF_NOANGLE = VRF_NOANGLESTART|VRF_NOANGLEEND,
 	VRF_NOPITCH = VRF_NOPITCHSTART|VRF_NOPITCHEND,
 };
+
+enum
+{
+	STYLE_None,
+	STYLE_Normal,
+	STYLE_Fuzzy,
+	STYLE_SoulTrans,
+	STYLE_OptFuzzy,
+	STYLE_Stencil,
+	STYLE_Translucent,
+	STYLE_Add,
+	STYLE_Shaded,
+	STYLE_TranslucentStencil,
+	STYLE_Shadow,
+	STYLE_Subtract,
+	STYLE_AddStencil,
+	STYLE_AddShaded,
+};

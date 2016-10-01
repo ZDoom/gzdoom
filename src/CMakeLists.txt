@@ -255,56 +255,44 @@ if( NOT NO_OPENAL )
 	endif()
 endif()
 
-# C:/Development/Environment/Src/llvm-3.9.0/build/lib/cmake/llvm
-find_package(LLVM REQUIRED CONFIG)
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-llvm_map_components_to_libnames(llvm_libs
-	analysis
-	asmparser
-	asmprinter
-	bitreader
-	bitwriter
-	codegen
-	core
-	executionengine
-	globalisel
-	instcombine
-	ipo
-	irreader
-	linker
-	lto
-	mc
-	mcdisassembler
-	mcjit
-	mcparser
-	mirparser
-	object
-	objectyaml
-	orcjit
-	passes
-	scalaropts
-	selectiondag
-	support
-	symbolize
-	tablegen
-	target
-	transformutils
-	vectorize
-	x86asmparser
-	x86asmprinter
-	x86codegen
-	x86desc
-	x86info
-	x86utils
-	aarch64asmparser
-	aarch64asmprinter
-	aarch64codegen
-	aarch64desc
-	aarch64info
-	aarch64utils)
-include_directories(${LLVM_INCLUDE_DIRS})
-set( ZDOOM_LIBS ${ZDOOM_LIBS} ${llvm_libs} )
+set( LLVM_COMPONENTS core support asmparser asmprinter bitreader codegen passes ipo
+	irreader transformutils instrumentation profiledata debuginfocodeview runtimedyld
+	object instcombine linker analysis selectiondag scalaropts vectorize executionengine
+	mc mcdisassembler mcparser mcjit target )
+set( LLVM_COMPONENTS_X86 x86asmprinter x86info x86desc x86utils x86codegen )
+set( LLVM_COMPONENTS_X64 aarch64asmprinter aarch64info aarch64desc aarch64utils aarch64codegen )
+
+# Path where it looks for the LLVM compiled files on Windows
+set( LLVM_PRECOMPILED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../llvm" )
+
+if( NOT WIN32 )
+	# Example LLVM_DIR folder: C:/Development/Environment/Src/llvm-3.9.0/build/lib/cmake/llvm
+	find_package(LLVM REQUIRED CONFIG)
+	message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+	message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+	llvm_map_components_to_libnames( llvm_libs ${LLVM_COMPONENTS} ${LLVM_COMPONENTS_X86} ${LLVM_COMPONENTS_X64} )
+	include_directories( ${LLVM_INCLUDE_DIRS} )
+	set( ZDOOM_LIBS ${ZDOOM_LIBS} ${llvm_libs} )
+else()
+	include_directories( "${LLVM_PRECOMPILED_DIR}/include" )
+	if( X64 )
+		include_directories( "${LLVM_PRECOMPILED_DIR}/64bit/include" )
+		set( llvm_libs_base "${LLVM_PRECOMPILED_DIR}/llvm/64bit" )
+		set( LLVM_ALL_COMPONENTS ${LLVM_COMPONENTS} ${LLVM_COMPONENTS_X64} )
+	else()
+		include_directories( "${LLVM_PRECOMPILED_DIR}/32bit/include" )
+		set( llvm_libs_base "${LLVM_PRECOMPILED_DIR}/32bit" )
+		set( LLVM_ALL_COMPONENTS ${LLVM_COMPONENTS} ${LLVM_COMPONENTS_X86} )
+	endif()
+	foreach(buildtype IN ITEMS RELEASE DEBUG)
+		set( llvm_libs_${buildtype} "${llvm_libs_base}/${buildtype}" )
+		set( LLVM_${buildtype}_LIBS "" )
+		foreach( llvm_module ${LLVM_ALL_COMPONENTS} )
+			find_library( LLVM_${llvm_module}_LIBRARY_${buildtype} LLVM${llvm_module} PATHS ${llvm_libs_${buildtype}} )
+			set( LLVM_${buildtype}_LIBS ${LLVM_${buildtype}_LIBS} ${LLVM_${llvm_module}_LIBRARY_${buildtype}} )
+		endforeach( llvm_module )
+	endforeach(buildtype)
+endif()
 
 if( NOT NO_FMOD )
 	# Search for FMOD include files
@@ -1513,6 +1501,16 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 endif()
 
 target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
+
+if( WIN32 )
+	foreach(debuglib ${LLVM_DEBUG_LIBS})
+		target_link_libraries( zdoom debug ${debuglib} )
+	endforeach(debuglib)
+	foreach(releaselib ${LLVM_RELEASE_LIBS})
+		target_link_libraries( zdoom optimized ${releaselib} )
+	endforeach(releaselib)
+endif()
+
 include_directories( .
 	g_doom
 	g_heretic

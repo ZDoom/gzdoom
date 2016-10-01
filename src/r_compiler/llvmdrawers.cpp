@@ -246,7 +246,6 @@ LLVMProgram::LLVMProgram()
 
 	InitializeNativeTarget();
 	InitializeNativeTargetAsmPrinter();
-	InitializeNativeTargetAsmParser();
 
 	std::string errorstring;
 
@@ -263,8 +262,8 @@ LLVMProgram::LLVMProgram()
 		cpuFeaturesStr += it.getKey();
 	}
 
-	//Printf("LLVM target triple: %s\n", targetTriple.c_str());
-	//Printf("LLVM CPU and features: %s, %s\n", cpuName.c_str(), cpuFeaturesStr.c_str());
+	DPrintf(DMSG_SPAMMY, "LLVM target triple: %s\n", targetTriple.c_str());
+	DPrintf(DMSG_SPAMMY, "LLVM CPU and features: %s, %s\n", cpuName.c_str(), cpuFeaturesStr.c_str());
 
 	const Target *target = TargetRegistry::lookupTarget(targetTriple, errorstring);
 	if (!target)

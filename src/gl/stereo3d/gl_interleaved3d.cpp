@@ -42,6 +42,8 @@
 
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
+EXTERN_CVAR(Bool, fullscreen)
+EXTERN_CVAR(Int, win_y) // pixel position of top of display window
 
 namespace s3d {
 
@@ -99,8 +101,16 @@ void RowInterleaved3D::Present() const
 		GLRenderer->mScreenViewport.width / (float)GLRenderer->mBuffers->GetWidth(),
 		GLRenderer->mScreenViewport.height / (float)GLRenderer->mBuffers->GetHeight());
 
+	// Compute absolute offset from top of screen to top of current display window
+	// because we need screen-relative, not window-relative, scan line parity
+	int windowVOffset = 0;
+	if (! fullscreen) {
+		I_SaveWindowedPos(); // update win_y CVAR
+		windowVOffset = win_y;
+	}
+
 	GLRenderer->mPresent3dRowShader->VerticalPixelOffset.Set(
-		0 // fixme: vary with window location
+		windowVOffset // fixme: vary with window location
 		+ box.height % 2 // because we want the top pixel offset, but gl_FragCoord.y is the bottom pixel offset
 	);
 

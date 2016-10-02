@@ -99,8 +99,6 @@ void RowInterleaved3D::Present() const
 		GLRenderer->mScreenViewport.width / (float)GLRenderer->mBuffers->GetWidth(),
 		GLRenderer->mScreenViewport.height / (float)GLRenderer->mBuffers->GetHeight());
 
-	GLRenderer->mPresent3dRowShader->WindowHeight.Set(0);
-
 	GLRenderer->mPresent3dRowShader->VerticalPixelOffset.Set(0); // fixme: vary with window location
 
 	GLRenderer->RenderScreenQuad();

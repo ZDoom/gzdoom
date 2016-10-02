@@ -41,7 +41,6 @@ public:
 	FBufferedUniform1f Contrast;
 	FBufferedUniform1f Brightness;
 	FBufferedUniform2f Scale;
-	FBufferedUniform1i WindowHeight;
 	FBufferedUniform1i VerticalPixelOffset;
 
 private:

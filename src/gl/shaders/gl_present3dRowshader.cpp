@@ -54,7 +54,6 @@ void FPresent3DRowShader::Bind()
 		Contrast.Init(mShader, "Contrast");
 		Brightness.Init(mShader, "Brightness");
 		Scale.Init(mShader, "UVScale");
-		WindowHeight.Init(mShader, "WindowHeight");
 		VerticalPixelOffset.Init(mShader, "VerticalPixelOffset");
 	}
 	mShader.Bind();

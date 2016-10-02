@@ -61,14 +61,6 @@ void RowInterleaved3D::Present() const
 	GLRenderer->mBuffers->BindOutputFB();
 	GLRenderer->ClearBorders();
 
-	// Compute screen regions to use for left and right eye views
-	int topHeight = GLRenderer->mOutputLetterbox.height / 2;
-	GL_IRECT topHalfScreen = GLRenderer->mOutputLetterbox;
-	topHalfScreen.height = topHeight;
-	topHalfScreen.top = topHeight;
-	GL_IRECT bottomHalfScreen = GLRenderer->mOutputLetterbox;
-	bottomHalfScreen.height = topHeight;
-	bottomHalfScreen.top = 0;
 
 	// Bind each eye texture, for composition in the shader
 	GLRenderer->mBuffers->BindEyeTexture(0, 0);
@@ -90,6 +82,7 @@ void RowInterleaved3D::Present() const
 	GLRenderer->mPresent3dRowShader->Bind();
 	GLRenderer->mPresent3dRowShader->LeftEyeTexture.Set(0);
 	GLRenderer->mPresent3dRowShader->RightEyeTexture.Set(1);
+
 	if (!applyGamma || GLRenderer->framebuffer->IsHWGammaActive())
 	{
 		GLRenderer->mPresent3dRowShader->InvGamma.Set(1.0f);
@@ -105,7 +98,11 @@ void RowInterleaved3D::Present() const
 	GLRenderer->mPresent3dRowShader->Scale.Set(
 		GLRenderer->mScreenViewport.width / (float)GLRenderer->mBuffers->GetWidth(),
 		GLRenderer->mScreenViewport.height / (float)GLRenderer->mBuffers->GetHeight());
+
+	GLRenderer->mPresent3dRowShader->WindowHeight.Set(0);
+
 	GLRenderer->mPresent3dRowShader->VerticalPixelOffset.Set(0); // fixme: vary with window location
+
 	GLRenderer->RenderScreenQuad();
 }
 

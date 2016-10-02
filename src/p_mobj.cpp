@@ -3526,7 +3526,7 @@ void AActor::Tick ()
 				sector_t *sec = node->m_sector;
 				DVector2 scrollv;
 
-				if (level.Scrolls.Size() > (sec-sectors))
+				if (level.Scrolls.Size() > unsigned(sec-sectors))
 				{
 					scrollv = level.Scrolls[sec - sectors];
 				}
@@ -6524,6 +6524,23 @@ int AActor::ApplyDamageFactor(FName damagetype, int damage) const
 	return damage;
 }
 
+
+void AActor::SetTranslation(const char *trname)
+{
+	if (*trname == 0)
+	{
+		// an empty string resets to the default
+		Translation = GetDefault()->Translation;
+		return;
+	}
+
+	int tnum = R_FindCustomTranslation(trname);
+	if (tnum >= 0)
+	{
+		Translation = tnum;
+	}
+	// silently ignore if the name does not exist, this would create some insane message spam otherwise.
+}
 
 //----------------------------------------------------------------------------
 //

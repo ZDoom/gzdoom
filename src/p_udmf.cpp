@@ -1568,6 +1568,60 @@ public:
 					tagstring = CheckString(key);
 					break;
 
+				case NAME_portal_ceil_alpha:
+					sec->planes[sector_t::ceiling].alpha = CheckFloat(key);
+					break;
+
+				case NAME_portal_ceil_blocksound:
+					Flag(sec->planes[sector_t::ceiling].Flags, PLANEF_BLOCKSOUND, key);
+					break;
+
+				case NAME_portal_ceil_disabled:
+					Flag(sec->planes[sector_t::ceiling].Flags, PLANEF_DISABLED, key);
+					break;
+
+				case NAME_portal_ceil_nopass:
+					Flag(sec->planes[sector_t::ceiling].Flags, PLANEF_NOPASS, key);
+					break;
+
+				case NAME_portal_ceil_norender:
+					Flag(sec->planes[sector_t::ceiling].Flags, PLANEF_NORENDER, key);
+					break;
+
+				case NAME_portal_ceil_overlaytype:
+					if (!stricmp(CheckString(key), "translucent")) sec->planes[sector_t::ceiling].Flags &= ~PLANEF_ADDITIVE;
+					else if (!stricmp(CheckString(key), "additive")) sec->planes[sector_t::ceiling].Flags |= PLANEF_ADDITIVE;
+					break;
+				
+				case NAME_portal_floor_alpha:
+					sec->planes[sector_t::floor].alpha = CheckFloat(key);
+					break;
+
+				case NAME_portal_floor_blocksound:
+					Flag(sec->planes[sector_t::floor].Flags, PLANEF_BLOCKSOUND, key);
+					break;
+
+				case NAME_portal_floor_disabled:
+					Flag(sec->planes[sector_t::floor].Flags, PLANEF_DISABLED, key);
+					break;
+
+				case NAME_portal_floor_nopass:
+					Flag(sec->planes[sector_t::floor].Flags, PLANEF_NOPASS, key);
+					break;
+
+				case NAME_portal_floor_norender:
+					Flag(sec->planes[sector_t::floor].Flags, PLANEF_NORENDER, key);
+					break;
+
+				case NAME_portal_floor_overlaytype:
+					if (!stricmp(CheckString(key), "translucent")) sec->planes[sector_t::floor].Flags &= ~PLANEF_ADDITIVE;
+					else if (!stricmp(CheckString(key), "additive")) sec->planes[sector_t::floor].Flags |= PLANEF_ADDITIVE;
+					break;
+
+				// These two are used by Eternity for something I do not understand.
+				//case NAME_portal_ceil_useglobaltex:
+				//case NAME_portal_floor_useglobaltex:
+					
 				default:
 					break;
 			}

@@ -755,6 +755,9 @@ public:
 	// What species am I?
 	virtual FName GetSpecies();
 
+	// set translation
+	void SetTranslation(const char *trname);
+
 	double GetBobOffset(double ticfrac = 0) const
 	{
 		if (!(flags2 & MF2_FLOATBOB))

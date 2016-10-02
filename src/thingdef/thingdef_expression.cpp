@@ -4978,7 +4978,8 @@ static int DecoHandleRuntimeState(VMFrameStack *stack, VMValue *param, int numpa
 
 ExpEmit FxRuntimeStateIndex::Emit(VMFunctionBuilder *build)
 {
-	assert(build->Registers[REGT_POINTER].GetMostUsed() >= 3);
+	assert(build->IsActionFunc && build->Registers[REGT_POINTER].GetMostUsed() >= 3 &&
+		"FxRuntimeStateIndex is only valid inside action functions");
 
 	ExpEmit out(build, REGT_POINTER);
 
@@ -5150,7 +5151,14 @@ int DecoFindSingleNameState(VMFrameStack *stack, VMValue *param, int numparam, V
 ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit dest(build, REGT_POINTER);
-	build->Emit(OP_PARAM, 0, REGT_POINTER, 1);		// pass stateowner
+	if (build->IsActionFunc)
+	{
+		build->Emit(OP_PARAM, 0, REGT_POINTER, 1);		// pass stateowner
+	}
+	else
+	{
+		build->Emit(OP_PARAM, 0, REGT_POINTER, 0);		// pass self
+	}
 	for (unsigned i = 0; i < names.Size(); ++i)
 	{
 		build->EmitParamInt(names[i]);

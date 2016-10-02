@@ -217,11 +217,11 @@ struct FWriter
 	{
 		if (mWriter1)
 		{
-			if (!mWriter1->Double(k)) mWriter1->Double(0);
+			mWriter1->Double(k);
 		}
 		else if (mWriter2)
 		{
-			if (!mWriter2->Double(k)) mWriter2->Double(0);
+			mWriter2->Double(k);
 		}
 	}
 

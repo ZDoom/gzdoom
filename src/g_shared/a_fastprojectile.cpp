@@ -130,7 +130,7 @@ void AFastProjectile::Tick ()
 				P_ExplodeMissile (this, NULL, NULL);
 				return;
 			}
-			if (changexy && ripcount <= 0) 
+			if (!frac.isZero() && ripcount <= 0) 
 			{
 				ripcount = count >> 3;
 				Effect();

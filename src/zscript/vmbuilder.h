@@ -23,7 +23,7 @@ public:
 		friend class VMFunctionBuilder;
 	};
 
-	VMFunctionBuilder();
+	VMFunctionBuilder(bool checkself = false);
 	~VMFunctionBuilder();
 
 	VMScriptFunction *MakeFunction();
@@ -59,6 +59,9 @@ public:
 
 	// Track available registers.
 	RegAvailability Registers[4];
+
+	// For use by DECORATE's self/stateowner sanitizer.
+	bool IsActionFunc;
 
 private:
 	struct AddrKonst

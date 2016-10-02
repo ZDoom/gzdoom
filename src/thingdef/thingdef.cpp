@@ -288,7 +288,7 @@ static void FinishThingdef()
 
 			if (func == nullptr)
 			{
-				VMFunctionBuilder buildit;
+				VMFunctionBuilder buildit(true);
 
 				assert(tcall->Proto != nullptr);
 

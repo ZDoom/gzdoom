@@ -3373,7 +3373,7 @@ FxExpression *FxClassMember::Resolve(FCompileContext &ctx)
 
 ExpEmit FxClassMember::Emit(VMFunctionBuilder *build)
 {
-	if (~membervar->Flags & VARF_Native)
+	if (build->IsActionFunc && ~membervar->Flags & VARF_Native)
 	{	// Check if this is a user-defined variable.
 		// As of right now, FxClassMember is only ever used with FxSelf.
 		// This very user variable was defined in stateowner so if

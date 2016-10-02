@@ -7412,3 +7412,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetVisibleRotation)
 
 	ACTION_RETURN_BOOL(true);
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTranslation)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_STRING(trname);
+
+	self->SetTranslation(trname);
+	return 0;
+}

@@ -9,6 +9,8 @@ endif()
 include( CheckCXXSourceCompiles )
 include( CheckFunctionExists )
 include( CheckCXXCompilerFlag )
+include( CheckIncludeFile )
+include( CheckIncludeFiles )
 include( CheckLibraryExists )
 include( FindPkgConfig )
 
@@ -118,7 +120,13 @@ if( WIN32 )
 		PATHS ENV DXSDK_DIR
 		PATH_SUFFIXES Include )
 	if( NOT D3D_INCLUDE_DIR )
-		message( SEND_ERROR "Could not find DirectX 9 header files" )
+		# Modern versions of the Windows SDK include d3d9.h. Unfortunately,
+		# CMake cannot find this file via find_path, so we check for it using
+		# CHECK_INCLUDE_FILE.
+		CHECK_INCLUDE_FILE( d3d9.h D3D9_H_FOUND )
+		if ( NOT D3D9_H_FOUND )
+			message( SEND_ERROR "Could not find DirectX 9 header files" )
+		endif()
 	else()
 		include_directories( ${D3D_INCLUDE_DIR} )
 	endif()
@@ -127,35 +135,41 @@ if( WIN32 )
 		PATHS ENV DXSDK_DIR
 		PATH_SUFFIXES Include )
 	if( NOT XINPUT_INCLUDE_DIR )
-		message( WARNING "Could not find xinput.h. XInput will be disabled." )
-		add_definitions( -DNO_XINPUT )
+		# Modern versions of the Windows SDK include xinput.h. Unfortunately,
+		# CMake cannot find this file via find_path, so we check for it using
+		# CHECK_INCLUDE_FILES. windows.h must be included before xinput.h.
+		CHECK_INCLUDE_FILES( "windows.h;xinput.h" XINPUT_H_FOUND )
+		if( NOT XINPUT_H_FOUND )
+			message( WARNING "Could not find xinput.h. XInput will be disabled." )
+			add_definitions( -DNO_XINPUT )
+		endif()
 	else()
 		include_directories( ${XINPUT_INCLUDE_DIR} )
 	endif()
 
-	find_library( DX_dxguid_LIBRARY dxguid
-		PATHS ENV DXSDK_DIR
-		PATH_SUFFIXES Lib Lib/${XBITS} )
 	find_library( DX_dinput8_LIBRARY dinput8
 		PATHS ENV DXSDK_DIR
 		PATH_SUFFIXES Lib Lib/${XBITS} )
+	find_library( DX_dxguid_LIBRARY dxguid
+		PATHS ENV DXSDK_DIR
+		PATH_SUFFIXES Lib Lib/${XBITS} )
 
-	set( DX_LIBS_FOUND YES )
-	if( NOT DX_dxguid_LIBRARY )
-		set( DX_LIBS_FOUND NO )
-	endif()
+	# Modern versions of the Windows SDK include dinput8.lib. Unfortunately,
+	# CMake cannot find these libraries via find_library.
 	if( NOT DX_dinput8_LIBRARY )
-		set( DX_LIBS_FOUND NO )
+		# If we got this far, assume dinput8.lib is in the system library path.
+		set( DX_dinput8_LIBRARY dinput8 )
 	endif()
 
-	if( NOT DX_LIBS_FOUND )
-		message( FATAL_ERROR "Could not find DirectX 9 libraries" )
+	# Modern versions of the Windows SDK do NOT include dxguid.lib. Its contents
+	# were moved to dinput8.lib.
+	if( NOT DX_dxguid_LIBRARY )
+		message( STATUS "Could not find dxguid.lib. Build may fail on old Windows SDKs.")
 	endif()
 
 	set( ZDOOM_LIBS
 		wsock32
 		winmm
-		"${DX_dxguid_LIBRARY}"
 		"${DX_dinput8_LIBRARY}"
 		ole32
 		user32
@@ -166,6 +180,9 @@ if( WIN32 )
 		setupapi
 		oleaut32 
 		DelayImp )
+	if( DX_dxguid_LIBRARY )
+		list( APPEND ZDOOM_LIBS "${DX_dxguid_LIBRARY}" )
+	endif()
 else()
 	if( APPLE )
 		set( FMOD_SEARCH_PATHS "/Developer/FMOD Programmers API Mac/api" )

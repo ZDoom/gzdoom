@@ -321,8 +321,8 @@ protected:
     }
 
     bool WriteDouble(double d) {
-        if (internal::Double(d).IsNanOrInf()) {
-			bool ret = true;
+		bool ret = true;
+		if (internal::Double(d).IsNanOrInf()) {
 			if (!(writeFlags & kWriteNanAndInfFlag))
 			{
 				// if we abort here, the writer is left in a broken state, unable to recover, so better write a 0 in addition to returning an error.

@@ -54,6 +54,12 @@ void AFastProjectile::Tick ()
 	// Handle movement
 	if (!Vel.isZero() || (Z() != floorz))
 	{
+		// force some lateral movement so that collision detection works as intended.
+		if ((flags & MF_MISSILE) && Vel.X == 0 && Vel.Y == 0 && !IsZeroDamage())
+		{
+			Vel.X = MinVel;
+		}
+
 		frac = Vel / count;
 		changexy = frac.X != 0 || frac.Y != 0;
 		int ripcount = count / 8;

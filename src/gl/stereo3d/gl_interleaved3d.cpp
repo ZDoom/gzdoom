@@ -99,7 +99,10 @@ void RowInterleaved3D::Present() const
 		GLRenderer->mScreenViewport.width / (float)GLRenderer->mBuffers->GetWidth(),
 		GLRenderer->mScreenViewport.height / (float)GLRenderer->mBuffers->GetHeight());
 
-	GLRenderer->mPresent3dRowShader->VerticalPixelOffset.Set(0); // fixme: vary with window location
+	GLRenderer->mPresent3dRowShader->VerticalPixelOffset.Set(
+		0 // fixme: vary with window location
+		+ box.height % 2 // because we want the top pixel offset, but gl_FragCoord.y is the bottom pixel offset
+	);
 
 	GLRenderer->RenderScreenQuad();
 }

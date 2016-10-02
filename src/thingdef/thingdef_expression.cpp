@@ -3948,15 +3948,16 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 
 //==========================================================================
 //
-// Assumption: This call is being made to generate code inside an action
-// method, so the first three address registers are all set up for such a
-// function. (self, stateowner, callingstate)
+// Assumption: This call is being generated inside a function whose a0
+// register is a self pointer. For action functions, a1 maps to stateowner
+// and a2 maps to callingstate. (self, stateowner, callingstate)
 //
 //==========================================================================
 
 ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 {
-	assert(build->Registers[REGT_POINTER].GetMostUsed() >= 3);
+	assert((build->IsActionFunc && build->Registers[REGT_POINTER].GetMostUsed() >= NAP) ||
+		   (!build->IsActionFunc && build->Registers[REGT_POINTER].GetMostUsed() >= 1));
 	int count = (ArgList ? ArgList->Size() : 0);
 
 	if (count == 1)
@@ -3975,8 +3976,18 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	}
 	if (Function->Flags & VARF_Action)
 	{
-		build->Emit(OP_PARAM, 0, REGT_POINTER, 1);
-		build->Emit(OP_PARAM, 0, REGT_POINTER, 2);
+		static_assert(NAP == 3, "This code needs to be updated if NAP changes");
+		if (build->IsActionFunc)
+		{
+			build->Emit(OP_PARAM, 0, REGT_POINTER, 1);
+			build->Emit(OP_PARAM, 0, REGT_POINTER, 2);
+		}
+		else
+		{
+			int null = build->GetConstantAddress(nullptr, ATAG_GENERIC);
+			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
+			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
+		}
 		count += 2;
 	}
 	// Emit code to pass explicit parameters

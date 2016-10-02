@@ -36,6 +36,12 @@
 #include "gl_interleaved3d.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
+#include "gl/renderer/gl_renderer.h"
+#include "gl/system/gl_framebuffer.h"
+#include "gl/shaders/gl_present3dRowshader.h"
+
+EXTERN_CVAR(Float, vid_brightness)
+EXTERN_CVAR(Float, vid_contrast)
 
 namespace s3d {
 
@@ -45,6 +51,10 @@ const RowInterleaved3D& RowInterleaved3D::getInstance(float ipd)
 	static RowInterleaved3D instance(ipd);
 	return instance;
 }
+
+RowInterleaved3D::RowInterleaved3D(double ipdMeters) 
+	: TopBottom3D(ipdMeters)
+{}
 
 void RowInterleaved3D::Present() const
 {
@@ -60,8 +70,43 @@ void RowInterleaved3D::Present() const
 	bottomHalfScreen.height = topHeight;
 	bottomHalfScreen.top = 0;
 
-	GLRenderer->mBuffers->BlitFromEyeTexture(0, &topHalfScreen);
-	GLRenderer->mBuffers->BlitFromEyeTexture(1, &bottomHalfScreen);
+	// Bind each eye texture, for composition in the shader
+	GLRenderer->mBuffers->BindEyeTexture(0, 0);
+	GLRenderer->mBuffers->BindEyeTexture(1, 1);
+
+	glActiveTexture(GL_TEXTURE0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glActiveTexture(GL_TEXTURE1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	const GL_IRECT& box = GLRenderer->mOutputLetterbox;
+	glViewport(box.left, box.top, box.width, box.height);
+
+	bool applyGamma = true;
+
+	GLRenderer->mPresent3dRowShader->Bind();
+	GLRenderer->mPresent3dRowShader->LeftEyeTexture.Set(0);
+	GLRenderer->mPresent3dRowShader->RightEyeTexture.Set(1);
+	if (!applyGamma || GLRenderer->framebuffer->IsHWGammaActive())
+	{
+		GLRenderer->mPresent3dRowShader->InvGamma.Set(1.0f);
+		GLRenderer->mPresent3dRowShader->Contrast.Set(1.0f);
+		GLRenderer->mPresent3dRowShader->Brightness.Set(0.0f);
+	}
+	else
+	{
+		GLRenderer->mPresent3dRowShader->InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
+		GLRenderer->mPresent3dRowShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
+		GLRenderer->mPresent3dRowShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
+	}
+	GLRenderer->mPresent3dRowShader->Scale.Set(
+		GLRenderer->mScreenViewport.width / (float)GLRenderer->mBuffers->GetWidth(),
+		GLRenderer->mScreenViewport.height / (float)GLRenderer->mBuffers->GetHeight());
+	GLRenderer->mPresent3dRowShader->VerticalPixelOffset.Set(0); // fixme: vary with window location
+	GLRenderer->RenderScreenQuad();
 }
 
 

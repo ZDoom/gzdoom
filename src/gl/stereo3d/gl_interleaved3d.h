@@ -42,13 +42,15 @@
 #include "gl/system/gl_system.h"
 #include "gl/renderer/gl_renderstate.h"
 
+class FPresent3DRowShader;
+
 namespace s3d {
 
 class RowInterleaved3D : public TopBottom3D
 {
 public:
 	static const RowInterleaved3D& getInstance(float ipd);
-	RowInterleaved3D(double ipdMeters) : TopBottom3D(ipdMeters) {}
+	RowInterleaved3D(double ipdMeters);
 	void Present() const override;
 };
 

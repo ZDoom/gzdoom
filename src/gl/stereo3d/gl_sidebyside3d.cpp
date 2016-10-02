@@ -125,9 +125,10 @@ void TopBottom3D::Present() const
 	int bottomHeight = GLRenderer->mOutputLetterbox.height - topHeight;
 	GL_IRECT topHalfScreen = GLRenderer->mOutputLetterbox;
 	topHalfScreen.height = topHeight;
+	topHalfScreen.top = topHeight;
 	GL_IRECT bottomHalfScreen = GLRenderer->mOutputLetterbox;
 	bottomHalfScreen.height = bottomHeight;
-	bottomHalfScreen.top += topHeight;
+	bottomHalfScreen.top = 0;
 
 	GLRenderer->mBuffers->BindEyeTexture(0, 0);
 	GLRenderer->DrawPresentTexture(topHalfScreen, true);

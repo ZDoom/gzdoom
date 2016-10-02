@@ -29,6 +29,7 @@ class FTonemapShader;
 class FColormapShader;
 class FLensShader;
 class FPresentShader;
+class FPresent3DRowShader;
 class F2DDrawer;
 class FHardwareTexture;
 
@@ -104,6 +105,7 @@ public:
 	FHardwareTexture *mTonemapPalette;
 	FLensShader *mLensShader;
 	FPresentShader *mPresentShader;
+	FPresent3DRowShader *mPresent3dRowShader;
 
 	FTexture *gllight;
 	FTexture *glpart2;

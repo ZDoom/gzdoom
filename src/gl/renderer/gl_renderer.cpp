@@ -57,6 +57,7 @@
 #include "gl/shaders/gl_colormapshader.h"
 #include "gl/shaders/gl_lensshader.h"
 #include "gl/shaders/gl_presentshader.h"
+#include "gl/shaders/gl_present3dRowshader.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_translate.h"
@@ -103,6 +104,7 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mTonemapPalette = nullptr;
 	mBuffers = nullptr;
 	mPresentShader = nullptr;
+	mPresent3dRowShader = nullptr;
 	mBloomExtractShader = nullptr;
 	mBloomCombineShader = nullptr;
 	mExposureExtractShader = nullptr;
@@ -132,6 +134,7 @@ void FGLRenderer::Initialize(int width, int height)
 	mTonemapPalette = nullptr;
 	mLensShader = new FLensShader();
 	mPresentShader = new FPresentShader();
+	mPresent3dRowShader = new FPresent3DRowShader();
 	m2DDrawer = new F2DDrawer;
 
 	// needed for the core profile, because someone decided it was a good idea to remove the default VAO.
@@ -184,6 +187,7 @@ FGLRenderer::~FGLRenderer()
 	}
 	if (mBuffers) delete mBuffers;
 	if (mPresentShader) delete mPresentShader;
+	if (mPresent3dRowShader) delete mPresent3dRowShader;
 	if (mBloomExtractShader) delete mBloomExtractShader;
 	if (mBloomCombineShader) delete mBloomCombineShader;
 	if (mExposureExtractShader) delete mExposureExtractShader;

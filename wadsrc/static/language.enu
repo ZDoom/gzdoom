@@ -2638,6 +2638,7 @@ GLPREFMNU_MULTISAMPLE			= "Multisample";
 GLPREFMNU_TONEMAP				= "Tonemap Mode";
 GLPREFMNU_BLOOM					= "Bloom effect";
 GLPREFMNU_LENS					= "Lens distortion effect";
+GLPREFMNU_FXAA					= "FXAA Quality";
 GLPREFMNU_SSAO					= "Ambient occlusion";
 
 // Option Values
@@ -2709,6 +2710,8 @@ OPTVAL_LEFTEYE 				= "Left Eye";
 OPTVAL_RIGHTEYE 			= "Right Eye";
 OPTVAL_SBSFULL		    	= "Side-by-side Full";
 OPTVAL_SBSNARROW			= "Side-by-side Narrow";
+OPTVAL_TOPBOTTOM			= "Top/Bottom";
+OPTVAL_ROWINTERLEAVED		= "Row Interleaved";
 OPTVAL_QUADBUFFERED 		= "Quad-buffered";
 OPTVAL_UNCHARTED2			= "Uncharted 2";
 OPTVAL_HEJLDAWSON			= "Hejl Dawson";
@@ -2717,3 +2720,4 @@ OPTVAL_PALETTE				= "Palette";
 OPTVAL_LOW					= "Low";
 OPTVAL_MEDIUM				= "Medium";
 OPTVAL_HIGH					= "High";
+OPTVAL_EXTREME				= "Extreme";

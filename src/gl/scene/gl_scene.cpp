@@ -854,6 +854,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
 			PostProcessScene();
+			ApplyFXAA();
 
 			// This should be done after postprocessing, not before.
 			mBuffers->BindCurrentFB();

@@ -2,6 +2,7 @@
 #define __GL_RENDERBUFFERS_H
 
 #include "gl/shaders/gl_shader.h"
+#include "gl/renderer/gl_renderer.h"
 
 class FGLBloomTextureLevel
 {

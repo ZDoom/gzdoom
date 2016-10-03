@@ -57,7 +57,9 @@
 #include "gl/shaders/gl_tonemapshader.h"
 #include "gl/shaders/gl_colormapshader.h"
 #include "gl/shaders/gl_lensshader.h"
+#include "gl/shaders/gl_fxaashader.h"
 #include "gl/shaders/gl_presentshader.h"
+#include "gl/shaders/gl_present3dRowshader.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_translate.h"
@@ -104,6 +106,7 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mTonemapPalette = nullptr;
 	mBuffers = nullptr;
 	mPresentShader = nullptr;
+	mPresent3dRowShader = nullptr;
 	mBloomExtractShader = nullptr;
 	mBloomCombineShader = nullptr;
 	mExposureExtractShader = nullptr;
@@ -114,10 +117,13 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mTonemapPalette = nullptr;
 	mColormapShader = nullptr;
 	mLensShader = nullptr;
+	mFXAAShader = nullptr;
+	mFXAALumaShader = nullptr;
 	mLinearDepthShader = nullptr;
 	mDepthBlurShader = nullptr;
 	mSSAOShader = nullptr;
 	mSSAOCombineShader = nullptr;
+
 }
 
 void gl_LoadModels();
@@ -140,7 +146,10 @@ void FGLRenderer::Initialize(int width, int height)
 	mColormapShader = new FColormapShader();
 	mTonemapPalette = nullptr;
 	mLensShader = new FLensShader();
+	mFXAAShader = new FFXAAShader;
+	mFXAALumaShader = new FFXAALumaShader;
 	mPresentShader = new FPresentShader();
+	mPresent3dRowShader = new FPresent3DRowShader();
 	m2DDrawer = new F2DDrawer;
 
 	// needed for the core profile, because someone decided it was a good idea to remove the default VAO.
@@ -193,6 +202,7 @@ FGLRenderer::~FGLRenderer()
 	}
 	if (mBuffers) delete mBuffers;
 	if (mPresentShader) delete mPresentShader;
+	if (mPresent3dRowShader) delete mPresent3dRowShader;
 	if (mLinearDepthShader) delete mLinearDepthShader;
 	if (mDepthBlurShader) delete mDepthBlurShader;
 	if (mSSAOShader) delete mSSAOShader;
@@ -207,6 +217,8 @@ FGLRenderer::~FGLRenderer()
 	if (mTonemapPalette) delete mTonemapPalette;
 	if (mColormapShader) delete mColormapShader;
 	if (mLensShader) delete mLensShader;
+	delete mFXAAShader;
+	delete mFXAALumaShader;
 }
 
 //==========================================================================

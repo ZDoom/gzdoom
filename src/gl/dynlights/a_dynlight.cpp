@@ -391,6 +391,16 @@ void ADynamicLight::UpdateLocation()
 			Prev = target->Pos();
 			subsector = R_PointInSubsector(Prev);
 			Sector = subsector->sector;
+
+			// Some z-coordinate fudging to prevent the light from getting too close to the floor or ceiling planes. With proper attenuation this would render them invisible.
+			// A distance of 5 is needed so that the light's effect doesn't become too small.
+			if (Z() < target->floorz + 5.) 	SetZ(target->floorz + 5.);
+			else if (Z() > target->ceilingz - 5.) 	SetZ(target->ceilingz - 5.);
+		}
+		else
+		{
+			if (Z() < floorz + 5.) 	SetZ(floorz + 5.);
+			else if (Z() > ceilingz - 5.) 	SetZ(ceilingz - 5.);
 		}
 
 

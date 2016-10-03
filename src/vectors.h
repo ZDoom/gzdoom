@@ -556,17 +556,29 @@ struct TVector3
 	// Resizes this vector to be the specified length (if it is not 0)
 	TVector3 &MakeResize(double len)
 	{
-		double scale = len / Length();
-		X = vec_t(X * scale);
-		Y = vec_t(Y * scale);
-		Z = vec_t(Z * scale);
+		double vlen = Length();
+		if (vlen != 0.)
+		{
+			double scale = len / vlen;
+			X = vec_t(X * scale);
+			Y = vec_t(Y * scale);
+			Z = vec_t(Z * scale);
+		}
 		return *this;
 	}
 
 	TVector3 Resized(double len)
 	{
-		double scale = len / Length();
-		return{ vec_t(X * scale), vec_t(Y * scale), vec_t(Z * scale) };
+		double vlen = Length();
+		if (vlen != 0.)
+		{
+			double scale = len / vlen;
+			return{ vec_t(X * scale), vec_t(Y * scale), vec_t(Z * scale) };
+		}
+		else
+		{
+			return *this;
+		}
 	}
 
 	// Dot product

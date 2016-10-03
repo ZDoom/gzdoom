@@ -1290,7 +1290,7 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 //
 // R_DrawPSprite
 //
-void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, double alpha)
+void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac)
 {
 	double 				tx;
 	int 				x1;
@@ -1303,6 +1303,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	FTexture*			tex;
 	vissprite_t*		vis;
 	bool				noaccel;
+	double				alpha = owner->Alpha;
 	static TArray<vissprite_t> avis;
 
 	if (avis.Size() < vispspindex + 1)
@@ -1432,14 +1433,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 
 			if (pspr->Flags & PSPF_FORCESTYLE)
 			{
-				if (rs == STYLE_Normal && vis->Style.Alpha < 1.0)
-				{
-					vis->Style.RenderStyle = LegacyRenderStyles[STYLE_Translucent];
-				}
-				else
-				{
-					vis->Style.RenderStyle = LegacyRenderStyles[rs];
-				}
+				vis->Style.RenderStyle = LegacyRenderStyles[rs];
 			}
 			else if (owner->RenderStyle == LegacyRenderStyles[STYLE_Fuzzy])
 			{
@@ -1468,13 +1462,9 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 		// and override the alpha if not forced.
 		if (pspr->Flags & PSPF_ALPHA)
 		{
-			if (pspr->Flags & PSPF_FORCEALPHA)
+			if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Fuzzy])
 			{
-				vis->Style.Alpha = float(alpha);
-			}
-			else if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Fuzzy])
-			{
-				vis->Style.Alpha = float(owner->Alpha);
+				alpha = owner->Alpha;
 			}
 			else if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy])
 			{
@@ -1483,18 +1473,18 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 				switch (style.BlendOp)
 				{
 				default:
-					vis->Style.Alpha = float(alpha * owner->Alpha);
+					alpha = pspr->alpha * owner->Alpha;
 					break;
 				case STYLEOP_Fuzz:
 				case STYLEOP_Sub:
-					vis->Style.Alpha = float(owner->Alpha);
+					alpha = owner->Alpha;
 					break;
 				}
 
 			}
 			else if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Subtract])
 			{
-				vis->Style.Alpha = float(owner->Alpha);
+				alpha = owner->Alpha;
 			}
 			else if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Add] ||
 					vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Translucent] ||
@@ -1502,11 +1492,11 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 					vis->Style.RenderStyle == LegacyRenderStyles[STYLE_AddStencil] || 
 					vis->Style.RenderStyle == LegacyRenderStyles[STYLE_AddShaded])
 			{
-				vis->Style.Alpha = float(alpha * owner->Alpha);
+				alpha = owner->Alpha * pspr->alpha;
 			}
 			else
 			{
-				vis->Style.Alpha = float(owner->Alpha);
+				alpha = owner->Alpha;
 			}
 		}
 
@@ -1517,8 +1507,30 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 			vis->Style.Alpha < 1.0)
 		{
 			vis->Style.RenderStyle = LegacyRenderStyles[STYLE_Translucent];
-			vis->Style.Alpha = (pspr->Flags & PSPF_FORCEALPHA) ? float(alpha) : float(alpha * owner->Alpha);
+			alpha = owner->Alpha * pspr->alpha;
 		}
+
+		// ALWAYS take priority if asked for, except fuzz. Fuzz does absolutely nothing
+		// no matter what way it's changed.
+		if (pspr->Flags & PSPF_FORCEALPHA)
+		{
+			//Due to lack of != operators...
+			if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Fuzzy] ||
+				vis->Style.RenderStyle == LegacyRenderStyles[STYLE_SoulTrans] ||
+				vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Stencil])
+			{	}
+			else
+			{
+				alpha = pspr->alpha;
+				vis->Style.RenderStyle.Flags |= STYLEF_ForceAlpha;
+			}
+		}
+		vis->Style.Alpha = clamp<float>(float(alpha), 0.f, 1.f);
+
+		// Due to how some of the effects are handled, going to 0 or less causes some
+		// weirdness to display. There's no point rendering it anyway if it's 0.
+		if (vis->Style.Alpha <= 0.)
+			return;
 
 		//-----------------------------------------------------------------------------
 
@@ -1619,7 +1631,6 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	{
 		colormap_to_use = basecolormap;
 		vis->Style.colormap = basecolormap->Maps;
-		vis->Style.RenderStyle = STYLE_Normal;
 	}
 
 	// Check for hardware-assisted 2D. If it's available, and this sprite is not
@@ -1640,6 +1651,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 			return;
 		}
 	}
+
 	R_DrawVisSprite(vis);
 }
 
@@ -1757,7 +1769,7 @@ void R_DrawPlayerSprites ()
 
 			if ((psp->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr) && psp->GetCaller() != nullptr)
 			{
-				R_DrawPSprite(psp, camera, bobx, boby, wx, wy, r_TicFracF, psp->alpha);
+				R_DrawPSprite(psp, camera, bobx, boby, wx, wy, r_TicFracF);
 			}
 
 			psp = psp->GetNext();

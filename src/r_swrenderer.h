@@ -5,6 +5,9 @@
 
 struct FSoftwareRenderer : public FRenderer
 {
+	FSoftwareRenderer();
+	~FSoftwareRenderer();
+
 	// Can be overridden so that the colormaps for sector color/fade won't be built.
 	virtual bool UsesColormap() const override;
 

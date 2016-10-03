@@ -38,6 +38,7 @@
 #include "r_data/colormaps.h"
 #include "r_plane.h"
 #include "r_draw_rgba.h"
+#include "r_compiler/llvmdrawers.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -298,6 +299,323 @@ void DrawerCommandQueue::StopThreads()
 	lock.lock();
 	shutdown_flag = false;
 }
+
+/////////////////////////////////////////////////////////////////////////////
+
+class DrawSpanLLVMCommand : public DrawerCommand
+{
+protected:
+	DrawSpanArgs args;
+
+public:
+	DrawSpanLLVMCommand()
+	{
+		args.xfrac = ds_xfrac;
+		args.yfrac = ds_yfrac;
+		args.xstep = ds_xstep;
+		args.ystep = ds_ystep;
+		args.x1 = ds_x1;
+		args.x2 = ds_x2;
+		args.y = ds_y;
+		args.xbits = ds_xbits;
+		args.ybits = ds_ybits;
+		args.destorg = (uint32_t*)dc_destorg;
+		args.destpitch = dc_pitch;
+		args.source = (const uint32_t*)ds_source;
+		args.light = LightBgra::calc_light_multiplier(ds_light);
+		args.light_red = ds_shade_constants.light_red;
+		args.light_green = ds_shade_constants.light_green;
+		args.light_blue = ds_shade_constants.light_blue;
+		args.light_alpha = ds_shade_constants.light_alpha;
+		args.fade_red = ds_shade_constants.fade_red;
+		args.fade_green = ds_shade_constants.fade_green;
+		args.fade_blue = ds_shade_constants.fade_blue;
+		args.fade_alpha = ds_shade_constants.fade_alpha;
+		args.desaturate = ds_shade_constants.desaturate;
+		args.srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		args.destalpha = dc_destalpha >> (FRACBITS - 8);
+		args.flags = 0;
+		if (ds_shade_constants.simple_shade)
+			args.flags |= DrawSpanArgs::simple_shade;
+		if (!SampleBgra::span_sampler_setup(args.source, args.xbits, args.ybits, args.xstep, args.ystep, ds_source_mipmapped))
+			args.flags |= DrawSpanArgs::nearest_filter;
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		if (thread->skipped_by_thread(args.y))
+			return;
+		LLVMDrawers::Instance()->DrawSpan(&args);
+	}
+};
+
+class DrawSpanMaskedLLVMCommand : public DrawSpanLLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		if (thread->skipped_by_thread(args.y))
+			return;
+		LLVMDrawers::Instance()->DrawSpanMasked(&args);
+	}
+};
+
+class DrawSpanTranslucentLLVMCommand : public DrawSpanLLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		if (thread->skipped_by_thread(args.y))
+			return;
+		LLVMDrawers::Instance()->DrawSpanTranslucent(&args);
+	}
+};
+
+class DrawSpanMaskedTranslucentLLVMCommand : public DrawSpanLLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		if (thread->skipped_by_thread(args.y))
+			return;
+		LLVMDrawers::Instance()->DrawSpanMaskedTranslucent(&args);
+	}
+};
+
+class DrawSpanAddClampLLVMCommand : public DrawSpanLLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		if (thread->skipped_by_thread(args.y))
+			return;
+		LLVMDrawers::Instance()->DrawSpanAddClamp(&args);
+	}
+};
+
+class DrawSpanMaskedAddClampLLVMCommand : public DrawSpanLLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		if (thread->skipped_by_thread(args.y))
+			return;
+		LLVMDrawers::Instance()->DrawSpanMaskedAddClamp(&args);
+	}
+};
+
+/////////////////////////////////////////////////////////////////////////////
+
+class DrawWall4LLVMCommand : public DrawerCommand
+{
+protected:
+	DrawWallArgs args;
+
+	WorkerThreadData ThreadData(DrawerThread *thread)
+	{
+		WorkerThreadData d;
+		d.core = thread->core;
+		d.num_cores = thread->num_cores;
+		d.pass_start_y = thread->pass_start_y;
+		d.pass_end_y = thread->pass_end_y;
+		return d;
+	}
+
+public:
+	DrawWall4LLVMCommand()
+	{
+		args.dest = (uint32_t*)dc_dest;
+		args.dest_y = _dest_y;
+		args.count = dc_count;
+		args.pitch = dc_pitch;
+		args.light_red = dc_shade_constants.light_red;
+		args.light_green = dc_shade_constants.light_green;
+		args.light_blue = dc_shade_constants.light_blue;
+		args.light_alpha = dc_shade_constants.light_alpha;
+		args.fade_red = dc_shade_constants.fade_red;
+		args.fade_green = dc_shade_constants.fade_green;
+		args.fade_blue = dc_shade_constants.fade_blue;
+		args.fade_alpha = dc_shade_constants.fade_alpha;
+		args.desaturate = dc_shade_constants.desaturate;
+		for (int i = 0; i < 4; i++)
+		{
+			args.texturefrac[i] = vplce[i];
+			args.iscale[i] = vince[i];
+			args.texturefracx[i] = buftexturefracx[i];
+			args.textureheight[i] = bufheight[i];
+			args.source[i] = (const uint32_t *)bufplce[i];
+			args.source2[i] = (const uint32_t *)bufplce2[i];
+			args.light[i] = LightBgra::calc_light_multiplier(palookuplight[i]);
+		}
+		args.srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		args.destalpha = dc_destalpha >> (FRACBITS - 8);
+		args.flags = 0;
+		if (dc_shade_constants.simple_shade)
+			args.flags |= DrawWallArgs::simple_shade;
+		if (args.source2[0] == nullptr)
+			args.flags |= DrawWallArgs::nearest_filter;
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		WorkerThreadData d = ThreadData(thread);
+		LLVMDrawers::Instance()->vlinec4(&args, &d);
+	}
+};
+
+class DrawWallMasked4LLVMCommand : public DrawWall4LLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		WorkerThreadData d = ThreadData(thread);
+		LLVMDrawers::Instance()->mvlinec4(&args, &d);
+	}
+};
+
+class DrawWallAdd4LLVMCommand : public DrawWall4LLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		WorkerThreadData d = ThreadData(thread);
+		LLVMDrawers::Instance()->tmvline4_add(&args, &d);
+	}
+};
+
+class DrawWallAddClamp4LLVMCommand : public DrawWall4LLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		WorkerThreadData d = ThreadData(thread);
+		LLVMDrawers::Instance()->tmvline4_addclamp(&args, &d);
+	}
+};
+
+class DrawWallSubClamp4LLVMCommand : public DrawWall4LLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		WorkerThreadData d = ThreadData(thread);
+		LLVMDrawers::Instance()->tmvline4_subclamp(&args, &d);
+	}
+};
+
+class DrawWallRevSubClamp4LLVMCommand : public DrawWall4LLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		WorkerThreadData d = ThreadData(thread);
+		LLVMDrawers::Instance()->tmvline4_revsubclamp(&args, &d);
+	}
+};
+
+class DrawWall1LLVMCommand : public DrawerCommand
+{
+protected:
+	DrawWallArgs args;
+
+	WorkerThreadData ThreadData(DrawerThread *thread)
+	{
+		WorkerThreadData d;
+		d.core = thread->core;
+		d.num_cores = thread->num_cores;
+		d.pass_start_y = thread->pass_start_y;
+		d.pass_end_y = thread->pass_end_y;
+		return d;
+	}
+
+public:
+	DrawWall1LLVMCommand()
+	{
+		args.dest = (uint32_t*)dc_dest;
+		args.dest_y = _dest_y;
+		args.pitch = dc_pitch;
+		args.count = dc_count;
+		args.texturefrac[0] = dc_texturefrac;
+		args.texturefracx[0] = dc_texturefracx;
+		args.iscale[0] = dc_iscale;
+		args.textureheight[0] = dc_textureheight;
+		args.source[0] = (const uint32 *)dc_source;
+		args.source2[0] = (const uint32 *)dc_source2;
+		args.light[0] = LightBgra::calc_light_multiplier(dc_light);
+		args.light_red = dc_shade_constants.light_red;
+		args.light_green = dc_shade_constants.light_green;
+		args.light_blue = dc_shade_constants.light_blue;
+		args.light_alpha = dc_shade_constants.light_alpha;
+		args.fade_red = dc_shade_constants.fade_red;
+		args.fade_green = dc_shade_constants.fade_green;
+		args.fade_blue = dc_shade_constants.fade_blue;
+		args.fade_alpha = dc_shade_constants.fade_alpha;
+		args.desaturate = dc_shade_constants.desaturate;
+		args.srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		args.destalpha = dc_destalpha >> (FRACBITS - 8);
+		args.flags = 0;
+		if (dc_shade_constants.simple_shade)
+			args.flags |= DrawWallArgs::simple_shade;
+		if (args.source2[0] == nullptr)
+			args.flags |= DrawWallArgs::nearest_filter;
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		WorkerThreadData d = ThreadData(thread);
+		LLVMDrawers::Instance()->vlinec1(&args, &d);
+	}
+};
+
+class DrawWallMasked1LLVMCommand : public DrawWall1LLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		WorkerThreadData d = ThreadData(thread);
+		LLVMDrawers::Instance()->mvlinec1(&args, &d);
+	}
+};
+
+class DrawWallAdd1LLVMCommand : public DrawWall1LLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		WorkerThreadData d = ThreadData(thread);
+		LLVMDrawers::Instance()->tmvline1_add(&args, &d);
+	}
+};
+
+class DrawWallAddClamp1LLVMCommand : public DrawWall1LLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		WorkerThreadData d = ThreadData(thread);
+		LLVMDrawers::Instance()->tmvline1_addclamp(&args, &d);
+	}
+};
+
+class DrawWallSubClamp1LLVMCommand : public DrawWall1LLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		WorkerThreadData d = ThreadData(thread);
+		LLVMDrawers::Instance()->tmvline1_subclamp(&args, &d);
+	}
+};
+
+class DrawWallRevSubClamp1LLVMCommand : public DrawWall1LLVMCommand
+{
+public:
+	void Execute(DrawerThread *thread) override
+	{
+		WorkerThreadData d = ThreadData(thread);
+		LLVMDrawers::Instance()->tmvline1_revsubclamp(&args, &d);
+	}
+};
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -2702,7 +3020,9 @@ void R_DrawRevSubClampTranslatedColumn_rgba()
 
 void R_DrawSpan_rgba()
 {
-#ifdef NO_SSE
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawSpanLLVMCommand>();
+#elif defined(NO_SSE)
 	DrawerCommandQueue::QueueCommand<DrawSpanRGBACommand>();
 #else
 	DrawerCommandQueue::QueueCommand<DrawSpanRGBA_SSE_Command>();
@@ -2711,27 +3031,47 @@ void R_DrawSpan_rgba()
 
 void R_DrawSpanMasked_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawSpanMaskedLLVMCommand>();
+#else
 	DrawerCommandQueue::QueueCommand<DrawSpanMaskedRGBACommand>();
+#endif
 }
 
 void R_DrawSpanTranslucent_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawSpanTranslucentLLVMCommand>();
+#else
 	DrawerCommandQueue::QueueCommand<DrawSpanTranslucentRGBACommand>();
+#endif
 }
 
 void R_DrawSpanMaskedTranslucent_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawSpanMaskedTranslucentLLVMCommand>();
+#else
 	DrawerCommandQueue::QueueCommand<DrawSpanMaskedTranslucentRGBACommand>();
+#endif
 }
 
 void R_DrawSpanAddClamp_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawSpanAddClampLLVMCommand>();
+#else
 	DrawerCommandQueue::QueueCommand<DrawSpanAddClampRGBACommand>();
+#endif
 }
 
 void R_DrawSpanMaskedAddClamp_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampLLVMCommand>();
+#else
 	DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampRGBACommand>();
+#endif
 }
 
 void R_FillSpan_rgba()
@@ -2776,7 +3116,11 @@ void R_DrawSlab_rgba(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BY
 
 DWORD vlinec1_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawWall1LLVMCommand>();
+#else
 	DrawerCommandQueue::QueueCommand<Vlinec1RGBACommand>();
+#endif
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
@@ -2795,72 +3139,116 @@ void queue_wallcommand()
 
 void vlinec4_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawWall4LLVMCommand>();
+#else
 	queue_wallcommand<Vlinec4NearestSimpleRGBACommand, Vlinec4NearestRGBACommand, Vlinec4LinearSimpleRGBACommand, Vlinec4LinearRGBACommand>();
+#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
 
 DWORD mvlinec1_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawWallMasked1LLVMCommand>();
+#else
 	DrawerCommandQueue::QueueCommand<Mvlinec1RGBACommand>();
+#endif
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
 void mvlinec4_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawWallMasked4LLVMCommand>();
+#else
 	queue_wallcommand<Mvlinec4NearestSimpleRGBACommand, Mvlinec4NearestRGBACommand, Mvlinec4LinearSimpleRGBACommand, Mvlinec4LinearRGBACommand>();
+#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
 
 fixed_t tmvline1_add_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawWallAdd1LLVMCommand>();
+#else
 	DrawerCommandQueue::QueueCommand<Tmvline1AddRGBACommand>();
+#endif
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
 void tmvline4_add_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawWallAdd4LLVMCommand>();
+#else
 	queue_wallcommand<Tmvline4AddNearestSimpleRGBACommand, Tmvline4AddNearestRGBACommand, Tmvline4AddLinearSimpleRGBACommand, Tmvline4AddLinearRGBACommand>();
+#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
 
 fixed_t tmvline1_addclamp_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawWallAddClamp1LLVMCommand>();
+#else
 	DrawerCommandQueue::QueueCommand<Tmvline1AddClampRGBACommand>();
+#endif
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
 void tmvline4_addclamp_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawWallAddClamp4LLVMCommand>();
+#else
 	queue_wallcommand<Tmvline4AddClampNearestSimpleRGBACommand, Tmvline4AddClampNearestRGBACommand, Tmvline4AddClampLinearSimpleRGBACommand, Tmvline4AddClampLinearRGBACommand>();
+#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
 
 fixed_t tmvline1_subclamp_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawWallSubClamp1LLVMCommand>();
+#else
 	DrawerCommandQueue::QueueCommand<Tmvline1SubClampRGBACommand>();
+#endif
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
 void tmvline4_subclamp_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawWallSubClamp4LLVMCommand>();
+#else
 	queue_wallcommand<Tmvline4SubClampNearestSimpleRGBACommand, Tmvline4SubClampNearestRGBACommand, Tmvline4SubClampLinearSimpleRGBACommand, Tmvline4SubClampLinearRGBACommand>();
+#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
 
 fixed_t tmvline1_revsubclamp_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1LLVMCommand>();
+#else
 	DrawerCommandQueue::QueueCommand<Tmvline1RevSubClampRGBACommand>();
+#endif
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
 void tmvline4_revsubclamp_rgba()
 {
+#if !defined(NO_LLVM)
+	DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp4LLVMCommand>();
+#else
 	queue_wallcommand<Tmvline4RevSubClampNearestSimpleRGBACommand, Tmvline4RevSubClampNearestRGBACommand, Tmvline4RevSubClampLinearSimpleRGBACommand, Tmvline4RevSubClampLinearRGBACommand>();
+#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }

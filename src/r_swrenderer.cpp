@@ -43,6 +43,7 @@
 #include "textures/textures.h"
 #include "r_data/voxels.h"
 #include "r_draw_rgba.h"
+#include "r_compiler/llvmdrawers.h"
 
 EXTERN_CVAR(Bool, r_shadercolormaps)
 
@@ -50,6 +51,16 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 void R_SetupColormap(player_t *);
 void R_SetupFreelook();
 void R_InitRenderer();
+
+FSoftwareRenderer::FSoftwareRenderer()
+{
+	LLVMDrawers::Create();
+}
+
+FSoftwareRenderer::~FSoftwareRenderer()
+{
+	LLVMDrawers::Destroy();
+}
 
 //==========================================================================
 //

@@ -248,6 +248,7 @@ void FVoxelModel::AddFace(int x1, int y1, int z1, int x2, int y2, int z2, int x3
 	FModelVertex vert;
 	unsigned int indx[4];
 
+	vert.packedNormal = 0;	// currently this is not being used for voxels.
 	vert.u = (((col & 15) * 255 / 16) + 7) / 255.f;
 	vert.v = (((col / 16) * 255 / 16) + 7) / 255.f;
 
@@ -270,6 +271,7 @@ void FVoxelModel::AddFace(int x1, int y1, int z1, int x2, int y2, int z2, int x3
 	vert.z = -y3 + PivotY;
 	vert.y = -z3 + PivotZ;
 	indx[3] = AddVertex(vert, check);
+
 
 	mIndices.Push(indx[0]);
 	mIndices.Push(indx[1]);

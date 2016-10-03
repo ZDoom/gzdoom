@@ -70,6 +70,7 @@
 #include "p_spec.h"
 #include "p_checkposition.h"
 #include "serializer.h"
+#include "r_utility.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1040,11 +1041,11 @@ bool AActor::IsInsideVisibleAngles() const
 	if (players[consoleplayer].camera == nullptr)
 		return true;
 	
-	DAngle anglestart = VisibleStartAngle.Normalized180();
-	DAngle angleend = VisibleEndAngle.Normalized180();
-	DAngle pitchstart = VisibleStartPitch.Normalized180();
-	DAngle pitchend = VisibleEndPitch.Normalized180();
-
+	DAngle anglestart = VisibleStartAngle;
+	DAngle angleend = VisibleEndAngle;
+	DAngle pitchstart = VisibleStartPitch;
+	DAngle pitchend = VisibleEndPitch;
+	
 	if (anglestart > angleend)
 	{
 		DAngle temp = anglestart;
@@ -1052,28 +1053,26 @@ bool AActor::IsInsideVisibleAngles() const
 		angleend = temp;
 	}
 
-	if (pitchstart > angleend)
+	if (pitchstart > pitchend)
 	{
 		DAngle temp = pitchstart;
 		pitchstart = pitchend;
 		pitchend = temp;
 	}
+	
 
-	player_t* pPlayer = players[consoleplayer].camera->player;
+	AActor *mo = players[consoleplayer].camera;
 
-	if (pPlayer && pPlayer->mo)
+	if (mo != nullptr)
 	{
-		AActor *mo = pPlayer->mo;
-		DVector3 diffang = Vec3To(mo);
+		
+		DVector3 diffang = ViewPos - Pos();
 		DAngle to = diffang.Angle();
 
 		if (!(renderflags & RF_ABSMASKANGLE)) 
 			to = deltaangle(Angles.Yaw, to);
 
-		// Note that this check is inversed due to only being able to vectorize
-		// from one way (this actor to the player). It still means to pass
-		// if the player is within the visible angles.
-		if ((to <= anglestart || to >= angleend))
+		if ((to >= anglestart && to <= angleend))
 		{
 			to = diffang.Pitch();
 			if (!(renderflags & RF_ABSMASKPITCH))
@@ -1324,6 +1323,9 @@ bool AActor::Massacre ()
 
 	if (health > 0)
 	{
+		auto f = flags;
+		auto f2 = flags2;
+
 		flags |= MF_SHOOTABLE;
 		flags2 &= ~(MF2_DORMANT|MF2_INVULNERABLE);
 		do
@@ -1332,6 +1334,12 @@ bool AActor::Massacre ()
 			P_DamageMobj (this, NULL, NULL, TELEFRAG_DAMAGE, NAME_Massacre);
 		}
 		while (health != prevhealth && health > 0);	//abort if the actor wasn't hurt.
+		if (health > 0)
+		{
+			// restore flags if this did not kill the monster.
+			flags = f;
+			flags2 = f2;
+		}
 		return health <= 0;
 	}
 	return false;
@@ -3518,7 +3526,7 @@ void AActor::Tick ()
 				sector_t *sec = node->m_sector;
 				DVector2 scrollv;
 
-				if (level.Scrolls.Size() > (sec-sectors))
+				if (level.Scrolls.Size() > unsigned(sec-sectors))
 				{
 					scrollv = level.Scrolls[sec - sectors];
 				}
@@ -6516,6 +6524,23 @@ int AActor::ApplyDamageFactor(FName damagetype, int damage) const
 	return damage;
 }
 
+
+void AActor::SetTranslation(const char *trname)
+{
+	if (*trname == 0)
+	{
+		// an empty string resets to the default
+		Translation = GetDefault()->Translation;
+		return;
+	}
+
+	int tnum = R_FindCustomTranslation(trname);
+	if (tnum >= 0)
+	{
+		Translation = tnum;
+	}
+	// silently ignore if the name does not exist, this would create some insane message spam otherwise.
+}
 
 //----------------------------------------------------------------------------
 //

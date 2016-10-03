@@ -56,5 +56,7 @@ uniform int uQuadMode;
 uniform mat4 ProjectionMatrix;
 uniform mat4 ViewMatrix;
 uniform mat4 ModelMatrix;
+uniform mat4 NormalViewMatrix;
+uniform mat4 NormalModelMatrix;
 uniform mat4 TextureMatrix;
 

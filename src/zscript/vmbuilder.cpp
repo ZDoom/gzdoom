@@ -6,7 +6,7 @@
 //
 //==========================================================================
 
-VMFunctionBuilder::VMFunctionBuilder()
+VMFunctionBuilder::VMFunctionBuilder(bool selfcheck)
 {
 	NumIntConstants = 0;
 	NumFloatConstants = 0;
@@ -14,6 +14,7 @@ VMFunctionBuilder::VMFunctionBuilder()
 	NumStringConstants = 0;
 	MaxParam = 0;
 	ActiveParam = 0;
+	IsActionFunc = selfcheck;
 }
 
 //==========================================================================

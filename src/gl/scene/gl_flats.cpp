@@ -374,6 +374,7 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 	}
 #endif
 
+	gl_RenderState.SetNormal(plane.plane.Normal().X, plane.plane.Normal().Z, plane.plane.Normal().Y);
 
 	switch (pass)
 	{
@@ -502,6 +503,11 @@ inline void GLFlat::PutFlat(bool fog)
 void GLFlat::Process(sector_t * model, int whichplane, bool fog)
 {
 	plane.GetFromSector(model, whichplane);
+	if (whichplane != int(ceiling))
+	{
+		// Flip the normal if the source plane has a different orientation than what we are about to render.
+		plane.plane.FlipVert();
+	}
 
 	if (!fog)
 	{
@@ -641,7 +647,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 				Colormap.CopyFrom3DLight(light);
 			}
 			renderstyle = STYLE_Translucent;
-			Process(frontsector, false, false);
+			Process(frontsector, sector_t::floor, false);
 		}
 	}
 
@@ -700,7 +706,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 				Colormap.CopyFrom3DLight(light);
 			}
 			renderstyle = STYLE_Translucent;
-			Process(frontsector, true, false);
+			Process(frontsector, sector_t::ceiling, false);
 		}
 	}
 

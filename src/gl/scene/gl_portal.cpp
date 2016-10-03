@@ -176,12 +176,12 @@ void GLPortal::DrawPortalStencil()
 bool GLPortal::Start(bool usestencil, bool doquery)
 {
 	rendered_portals++;
-	PortalAll.Clock();
+//	PortalAll.Clock();
 	if (usestencil)
 	{
 		if (!gl_portals) 
 		{
-			PortalAll.Unclock();
+//			PortalAll.Unclock();
 			return false;
 		}
 	
@@ -297,7 +297,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 	GLRenderer->mCurrentPortal = this;
 
 	if (PrevPortal != NULL) PrevPortal->PushState();
-	PortalAll.Unclock();
+//	PortalAll.Unclock();
 	return true;
 }
 
@@ -1219,7 +1219,7 @@ void GLEEHorizonPortal::DrawContents()
 	if (sector->GetTexture(sector_t::ceiling) != skyflatnum)
 	{
 		GLHorizonInfo horz;
-		horz.plane.GetFromSector(sector, true);
+		horz.plane.GetFromSector(sector, sector_t::ceiling);
 		horz.lightlevel = gl_ClampLight(sector->GetCeilingLight());
 		horz.colormap = sector->ColorMap;
 		if (portal->mType == PORTS_PLANE)
@@ -1232,7 +1232,7 @@ void GLEEHorizonPortal::DrawContents()
 	if (sector->GetTexture(sector_t::floor) != skyflatnum)
 	{
 		GLHorizonInfo horz;
-		horz.plane.GetFromSector(sector, false);
+		horz.plane.GetFromSector(sector, sector_t::floor);
 		horz.lightlevel = gl_ClampLight(sector->GetFloorLight());
 		horz.colormap = sector->ColorMap;
 		if (portal->mType == PORTS_PLANE)

@@ -215,8 +215,14 @@ struct FWriter
 
 	void Double(double k)
 	{
-		if (mWriter1) mWriter1->Double(k);
-		else if (mWriter2) mWriter2->Double(k);
+		if (mWriter1)
+		{
+			mWriter1->Double(k);
+		}
+		else if (mWriter2)
+		{
+			mWriter2->Double(k);
+		}
 	}
 
 };
@@ -815,7 +821,6 @@ void FSerializer::WriteObjects()
 		for (unsigned i = 0; i < w->mDObjects.Size(); i++)
 		{
 			auto obj = w->mDObjects[i];
-			player_t *player;
 
 			BeginObject(nullptr);
 			w->Key("classtype");
@@ -1294,7 +1299,7 @@ FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **
 	assert(base != nullptr);
 	if (arc.isReading() || !arc.w->inObject() || defval == nullptr || value != *defval)
 	{
-		ptrdiff_t vv = value == nullptr ? -1 : value - base;
+		int64_t vv = value == nullptr ? -1 : value - base;
 		Serialize(arc, key, vv, nullptr);
 		value = vv < 0 ? nullptr : base + vv;
 	}

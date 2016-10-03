@@ -321,23 +321,31 @@ protected:
     }
 
     bool WriteDouble(double d) {
-        if (internal::Double(d).IsNanOrInf()) {
-            if (!(writeFlags & kWriteNanAndInfFlag))
-                return false;
-            if (internal::Double(d).IsNan()) {
-                PutReserve(*os_, 3);
-                PutUnsafe(*os_, 'N'); PutUnsafe(*os_, 'a'); PutUnsafe(*os_, 'N');
-                return true;
-            }
-            if (internal::Double(d).Sign()) {
-                PutReserve(*os_, 9);
-                PutUnsafe(*os_, '-');
-            }
-            else
-                PutReserve(*os_, 8);
-            PutUnsafe(*os_, 'I'); PutUnsafe(*os_, 'n'); PutUnsafe(*os_, 'f');
-            PutUnsafe(*os_, 'i'); PutUnsafe(*os_, 'n'); PutUnsafe(*os_, 'i'); PutUnsafe(*os_, 't'); PutUnsafe(*os_, 'y');
-            return true;
+		bool ret = true;
+		if (internal::Double(d).IsNanOrInf()) {
+			if (!(writeFlags & kWriteNanAndInfFlag))
+			{
+				// if we abort here, the writer is left in a broken state, unable to recover, so better write a 0 in addition to returning an error.
+				ret = false;
+				d = 0;
+			}
+			else
+			{
+				if (internal::Double(d).IsNan()) {
+					PutReserve(*os_, 3);
+					PutUnsafe(*os_, 'N'); PutUnsafe(*os_, 'a'); PutUnsafe(*os_, 'N');
+					return true;
+				}
+				if (internal::Double(d).Sign()) {
+					PutReserve(*os_, 9);
+					PutUnsafe(*os_, '-');
+				}
+				else
+					PutReserve(*os_, 8);
+				PutUnsafe(*os_, 'I'); PutUnsafe(*os_, 'n'); PutUnsafe(*os_, 'f');
+				PutUnsafe(*os_, 'i'); PutUnsafe(*os_, 'n'); PutUnsafe(*os_, 'i'); PutUnsafe(*os_, 't'); PutUnsafe(*os_, 'y');
+				return true;
+			}
         }
 
         char buffer[25];
@@ -345,7 +353,7 @@ protected:
         PutReserve(*os_, static_cast<size_t>(end - buffer));
         for (char* p = buffer; p != end; ++p)
             PutUnsafe(*os_, static_cast<typename TargetEncoding::Ch>(*p));
-        return true;
+        return ret;
     }
 
     bool WriteString(const Ch* str, SizeType length)  {

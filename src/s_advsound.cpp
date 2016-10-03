@@ -51,6 +51,7 @@
 #include "i_system.h"
 #include "d_player.h"
 #include "serializer.h"
+#include "v_text.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -328,19 +329,111 @@ void S_HashSounds ()
 
 //==========================================================================
 //
+// S_CheckIntegrity
+//
+// Scans the entire sound list and looks for recursive definitions.
+//==========================================================================
+
+static bool S_CheckSound(sfxinfo_t *startsfx, sfxinfo_t *sfx, TArray<sfxinfo_t *> &chain)
+{
+	sfxinfo_t *me = sfx;
+	bool success = true;
+	unsigned siz = chain.Size();
+
+	if (sfx->bPlayerReserve)
+	{
+		return true;
+	}
+
+	// There is a bad link in here, but let's report it only for the sound that contains the broken definition.
+	// Once that sound has been disabled this one will work again.
+	if (chain.Find(sfx) < chain.Size())
+	{
+		return true;
+	}
+	chain.Push(sfx);
+
+	if (me->bRandomHeader)
+	{
+		const FRandomSoundList *list = &S_rnd[me->link];
+		for (int i = 0; i < list->NumSounds; ++i)
+		{
+			auto rsfx = &S_sfx[list->Sounds[i]];
+			if (rsfx == startsfx)
+			{
+				Printf(TEXTCOLOR_RED "recursive sound $random found for %s:\n", startsfx->name.GetChars());
+				success = false;
+				for (unsigned i = 1; i<chain.Size(); i++)
+				{
+					Printf(TEXTCOLOR_ORANGE "    -> %s\n", chain[i]->name.GetChars());
+				}
+			}
+			else
+			{
+				success &= S_CheckSound(startsfx, rsfx, chain);
+			}
+		}
+	}
+	else if (me->link != sfxinfo_t::NO_LINK)
+	{
+		me = &S_sfx[me->link];
+		if (me == startsfx)
+		{
+			Printf(TEXTCOLOR_RED "recursive sound $alias found for %s:\n", startsfx->name.GetChars());
+			success = false;
+			for (unsigned i = 1; i<chain.Size(); i++)
+			{
+				Printf(TEXTCOLOR_ORANGE "    -> %s\n", chain[i]->name.GetChars());
+			}
+			chain.Resize(siz);
+		}
+		else
+		{
+			success &= S_CheckSound(startsfx, me, chain);
+		}
+	}
+	chain.Pop();
+	return success;
+}
+
+void S_CheckIntegrity()
+{
+	TArray<sfxinfo_t *> chain;
+	TArray<bool> broken;
+
+	broken.Resize(S_sfx.Size());
+	memset(&broken[0], 0, sizeof(bool)*S_sfx.Size());
+	for (unsigned i = 0; i < S_sfx.Size(); i++)
+	{
+		auto &sfx = S_sfx[i];
+		broken[i] = !S_CheckSound(&sfx, &sfx, chain);
+	}
+	for (unsigned i = 0; i < S_sfx.Size(); i++)
+	{
+		if (broken[i])
+		{
+			auto &sfx = S_sfx[i];
+			Printf(TEXTCOLOR_RED "Sound %s has been disabled\n", sfx.name.GetChars());
+			sfx.bRandomHeader = false;
+			sfx.link = 0;	// link to the empty sound.
+		}
+	}
+}
+
+//==========================================================================
+//
 // S_PickReplacement
 //
 // Picks a replacement sound from the associated random list. If this sound
 // is not the head of a random list, then the sound passed is returned.
 //==========================================================================
 
-int S_PickReplacement (int refid)
+int S_PickReplacement(int refid)
 {
-	if (S_sfx[refid].bRandomHeader)
+	while (S_sfx[refid].bRandomHeader)
 	{
 		const FRandomSoundList *list = &S_rnd[S_sfx[refid].link];
-
-		return list->Sounds[pr_randsound() % list->NumSounds];
+		refid = list->Sounds[pr_randsound() % list->NumSounds];
 	}
 	return refid;
 }
@@ -941,6 +1034,7 @@ void S_ParseSndInfo (bool redefine)
 	S_ShrinkPlayerSoundLists ();
 
 	sfx_empty = Wads.CheckNumForName ("dsempty", ns_sounds);
+	S_CheckIntegrity();
 }
 
 //==========================================================================
@@ -961,6 +1055,7 @@ void S_AddLocalSndInfo(int lump)
 	}
 
 	S_ShrinkPlayerSoundLists ();
+	S_CheckIntegrity();
 }
 
 //==========================================================================

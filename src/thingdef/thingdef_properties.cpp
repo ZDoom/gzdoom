@@ -1100,9 +1100,10 @@ DEFINE_PROPERTY(translation, L, Actor)
 		for(int i = 1; i < PROP_PARM_COUNT; i++)
 		{
 			PROP_STRING_PARM(str, i);
-			if (i== 1 && PROP_PARM_COUNT == 2 && !stricmp(str, "Ice"))
+			int tnum;
+			if (i== 1 && PROP_PARM_COUNT == 2 && (tnum = R_FindCustomTranslation(str)) != -1)
 			{
-				defaults->Translation = TRANSLATION(TRANSLATION_Standard, 7);
+				defaults->Translation = tnum;
 				return;
 			}
 			else
@@ -1110,7 +1111,7 @@ DEFINE_PROPERTY(translation, L, Actor)
 				CurrentTranslation.AddToTranslation(str);
 			}
 		}
-		defaults->Translation = CurrentTranslation.StoreTranslation ();
+		defaults->Translation = CurrentTranslation.StoreTranslation (TRANSLATION_Decorate);
 	}
 }
 
@@ -1437,7 +1438,7 @@ DEFINE_PROPERTY(spriterotation, F, Actor)
 DEFINE_PROPERTY(visibleangles, Ff, Actor)
 {
 	PROP_DOUBLE_PARM(visstart, 0);
-	PROP_DOUBLE_PARM(visend, 0);
+	PROP_DOUBLE_PARM(visend, 1);
 	defaults->VisibleStartAngle = visstart;
 	defaults->VisibleEndAngle = visend;
 }
@@ -1448,7 +1449,7 @@ DEFINE_PROPERTY(visibleangles, Ff, Actor)
 DEFINE_PROPERTY(visiblepitch, Ff, Actor)
 {
 	PROP_DOUBLE_PARM(visstart, 0);
-	PROP_DOUBLE_PARM(visend, 0);
+	PROP_DOUBLE_PARM(visend, 1);
 	defaults->VisibleStartPitch = visstart;
 	defaults->VisibleEndPitch = visend;
 }

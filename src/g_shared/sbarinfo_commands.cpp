@@ -1021,7 +1021,7 @@ class CommandDrawNumber : public CommandDrawString
 			usePrefix(false), interpolationSpeed(0), drawValue(0), length(3),
 			lowValue(-1), lowTranslation(CR_UNTRANSLATED), highValue(-1),
 			highTranslation(CR_UNTRANSLATED), value(CONSTANT),
-			inventoryItem(NULL)
+			inventoryItem(NULL), cvarName(nullptr)
 		{
 		}
 
@@ -1165,6 +1165,37 @@ class CommandDrawNumber : public CommandDrawString
 						}
 
 						if(parenthesized) sc.MustGetToken(')');
+					}
+					else if (sc.Compare("intcvar"))
+					{
+						bool parenthesized = sc.CheckToken('(');
+
+						value = INTCVAR;
+
+						if (!parenthesized || !sc.CheckToken(TK_StringConst))
+							sc.MustGetToken(TK_Identifier);
+						
+						cvarName = sc.String;
+
+						// We have a name, but make sure it exists. If not, send notification so modders
+						// are aware of the situation.
+						FBaseCVar *CVar = FindCVar(cvarName, nullptr);
+
+						if (CVar != nullptr)
+						{
+							ECVarType cvartype = CVar->GetRealType();
+
+							if (!(cvartype == CVAR_Bool || cvartype == CVAR_Int))
+							{
+								sc.ScriptMessage("CVar '%s' is not an int or bool", cvarName.GetChars());
+							}
+						}
+						else
+						{
+							sc.ScriptMessage("CVar '%s' does not exist", cvarName.GetChars());
+						}
+						
+						if (parenthesized) sc.MustGetToken(')');
 					}
 				}
 				if(value == INVENTORY)
@@ -1444,6 +1475,24 @@ class CommandDrawNumber : public CommandDrawString
 							num++;
 					}
 					break;
+				case INTCVAR:
+				{
+					FBaseCVar *CVar = GetCVar(statusBar->CPlayer->mo, cvarName);
+					if (CVar != nullptr)
+					{
+						ECVarType cvartype = CVar->GetRealType();
+
+						if (cvartype == CVAR_Bool || cvartype == CVAR_Int)
+						{
+							num = CVar->GetGenericRep(CVAR_Int).Int;
+							break;
+						}
+					}
+
+					// Fallback in case of bad cvar/type. Unset can remove a cvar at will.
+					num = 0;
+					break;
+				}
 				default: break;
 			}
 			if(interpolationSpeed != 0 && (!hudChanged || level.time == 1))
@@ -1522,6 +1571,7 @@ class CommandDrawNumber : public CommandDrawString
 			ACCURACY,
 			STAMINA,
 			KEYS,
+			INTCVAR,
 
 			CONSTANT
 		};
@@ -1544,6 +1594,7 @@ class CommandDrawNumber : public CommandDrawString
 		PClassActor			*inventoryItem;
 
 		FString				prefixPadding;
+		FString				cvarName;
 
 		friend class CommandDrawInventoryBar;
 };

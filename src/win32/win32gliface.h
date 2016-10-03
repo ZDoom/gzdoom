@@ -148,6 +148,7 @@ protected:
 	int m_Lock;
 	char m_displayDeviceNameBuffer[CCHDEVICENAME];
 	char *m_displayDeviceName;
+	int SwapInterval;
 
 	friend class Win32GLVideo;
 

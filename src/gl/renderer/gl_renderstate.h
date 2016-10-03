@@ -97,6 +97,7 @@ class FRenderState
 	float mShaderTimer;
 
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
+	FStateVec4 mNormal;
 	FStateVec4 mColor;
 	FStateVec4 mCameraPos;
 	FStateVec4 mGlowTop, mGlowBottom;
@@ -128,6 +129,8 @@ public:
 	VSMatrix mViewMatrix;
 	VSMatrix mModelMatrix;
 	VSMatrix mTextureMatrix;
+	VSMatrix mNormalViewMatrix;
+	VSMatrix mNormalModelMatrix;
 
 	FRenderState()
 	{
@@ -188,6 +191,16 @@ public:
 	}
 
 	void SetClipHeight(float height, float direction);
+
+	void SetNormal(FVector3 norm)
+	{
+		mNormal.Set(norm.X, norm.Y, norm.Z, 0.f);
+	}
+
+	void SetNormal(float x, float y, float z)
+	{
+		mNormal.Set(x, y, z, 0.f);
+	}
 
 	void SetColor(float r, float g, float b, float a = 1.f, int desat = 0)
 	{

@@ -3324,6 +3324,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTranslucent)
 
 //===========================================================================
 //
+// A_SetRenderStyle
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRenderStyle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(alpha);
+	PARAM_INT_OPT(mode) { mode = 0; }
+
+	self->Alpha = clamp(alpha, 0., 1.);
+	self->RenderStyle = ERenderStyle(mode);
+	return 0;
+}
+
+//===========================================================================
+//
 // A_FadeIn
 //
 // Fades the actor in
@@ -7395,4 +7411,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetVisibleRotation)
 	}
 
 	ACTION_RETURN_BOOL(true);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTranslation)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_STRING(trname);
+
+	self->SetTranslation(trname);
+	return 0;
 }

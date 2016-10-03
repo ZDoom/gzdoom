@@ -158,7 +158,6 @@ bool FRenderState::ApplyShader()
 	activeShader->muTimer.Set(gl_frameMS * mShaderTimer / 1000.f);
 	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
 	activeShader->muLightIndex.Set(mLightIndex);	// will always be -1 for now
-	activeShader->muLightMath.Set(gl_light_math);
 	activeShader->muClipSplit.Set(mClipSplit);
 
 	if (mGlowEnabled)

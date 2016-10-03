@@ -25,13 +25,6 @@ OptionValue "FilterModes"
 	4, "$OPTVAL_TRILINEAR"
 }
 
-OptionValue "LightMathModes"
-{
-	0, "$OPTVAL_LOW"
-	1, "$OPTVAL_MEDIUM"
-	2, "$OPTVAL_HIGH"
-}
-
 OptionValue "HWGammaModes"
 {
 	0, "$OPTVAL_ON"
@@ -225,7 +218,6 @@ OptionMenu "GLLightOptions"
 	Option "$GLLIGHTMNU_CLIPLIGHTS",		gl_lights_checkside,			"YesNo"
 	Option "$GLLIGHTMNU_LIGHTSPRITES",		gl_light_sprites,				"YesNo"
 	Option "$GLLIGHTMNU_LIGHTPARTICLES",	gl_light_particles,				"YesNo"
-	Option "$GLLIGHTMNU_LIGHTMATH",			gl_light_math,					"LightMathModes"
 }
 
 OptionMenu "GLPrefOptions"

@@ -60,11 +60,6 @@ CVAR (Bool, gl_lights_checkside, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_sprites, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_particles, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
-CUSTOM_CVAR(Int, gl_light_math, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self < 0 || self > 2) self = 0;
-}
-
 //==========================================================================
 //
 // Sets up the parameters to render one dynamic light onto one plane
@@ -113,25 +108,10 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 		i = 1;
 	}
 
-	float worldPos[4] = { (float)pos.X, (float)pos.Z, (float)pos.Y, 1.0f };
-	float eyePos[4];
-	gl_RenderState.mViewMatrix.multMatrixPoint(worldPos, eyePos);
-
-	if (gl_light_math != 0)
-	{
-		// Move light up because flasks/vials have their light source location at/below the floor.
-		//
-		// If the point is exactly on the wall plane it might cause some acne as some pixels could
-		// be in front and some behind. Move light just a tiny bit to avoid this.
-		eyePos[0] += 0.01f;
-		eyePos[1] += 5.01f;
-		eyePos[2] += 0.01f;
-	}
-
 	float *data = &ldata.arrays[i][ldata.arrays[i].Reserve(8)];
-	data[0] = eyePos[0];
-	data[1] = eyePos[1];
-	data[2] = eyePos[2];
+	data[0] = pos.X;
+	data[1] = pos.Z;
+	data[2] = pos.Y;
 	data[3] = radius;
 	data[4] = r;
 	data[5] = g;

@@ -220,7 +220,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muColormapStart.Init(hShader, "uFixedColormapStart");
 	muColormapRange.Init(hShader, "uFixedColormapRange");
 	muLightIndex.Init(hShader, "uLightIndex");
-	muLightMath.Init(hShader, "uLightMath");
 	muFogColor.Init(hShader, "uFogColor");
 	muDynLightColor.Init(hShader, "uDynLightColor");
 	muObjectColor.Init(hShader, "uObjectColor");

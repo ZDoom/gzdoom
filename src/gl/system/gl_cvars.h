@@ -26,7 +26,6 @@ EXTERN_CVAR (Bool, gl_attachedlights);
 EXTERN_CVAR (Bool, gl_lights_checkside);
 EXTERN_CVAR (Bool, gl_light_sprites);
 EXTERN_CVAR (Bool, gl_light_particles);
-EXTERN_CVAR (Int, gl_light_math);
 
 EXTERN_CVAR(Int, gl_fogmode)
 EXTERN_CVAR(Int, gl_lightmode)

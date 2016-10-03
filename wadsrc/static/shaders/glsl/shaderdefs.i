@@ -44,7 +44,6 @@ uniform int uFogEnabled;
 
 // dynamic lights
 uniform int uLightIndex;
-uniform int uLightMath;				// 0, when using only attenuation, 1 for diffuse light, 2 for blinn specular light
 
 // quad drawer stuff
 #ifdef USE_QUAD_DRAWER

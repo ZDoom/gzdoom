@@ -104,10 +104,13 @@ void RowInterleaved3D::Present() const
 	// Compute absolute offset from top of screen to top of current display window
 	// because we need screen-relative, not window-relative, scan line parity
 	int windowVOffset = 0;
+	
+#ifdef _WIN32
 	if (! fullscreen) {
 		I_SaveWindowedPos(); // update win_y CVAR
 		windowVOffset = win_y;
 	}
+#endif // _WIN32
 
 	GLRenderer->mPresent3dRowShader->VerticalPixelOffset.Set(
 		windowVOffset // fixme: vary with window location

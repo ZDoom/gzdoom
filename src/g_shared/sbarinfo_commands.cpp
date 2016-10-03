@@ -1187,12 +1187,12 @@ class CommandDrawNumber : public CommandDrawString
 
 							if (!(cvartype == CVAR_Bool || cvartype == CVAR_Int))
 							{
-								sc.ScriptMessage("CVar '%s' is not an int or bool", cvarName);
+								sc.ScriptMessage("CVar '%s' is not an int or bool", cvarName.GetChars());
 							}
 						}
 						else
 						{
-							sc.ScriptMessage("CVar '%s' does not exist", cvarName);
+							sc.ScriptMessage("CVar '%s' does not exist", cvarName.GetChars());
 						}
 						
 						if (parenthesized) sc.MustGetToken(')');

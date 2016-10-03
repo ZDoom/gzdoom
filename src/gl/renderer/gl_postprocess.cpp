@@ -137,6 +137,7 @@ void FGLRenderer::PostProcessScene()
 	TonemapScene();
 	ColormapScene();
 	LensDistortScene();
+	ApplyFXAA();
 }
 
 //-----------------------------------------------------------------------------

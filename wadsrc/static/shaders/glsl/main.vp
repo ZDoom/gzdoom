@@ -4,8 +4,12 @@ in vec2 aTexCoord;
 in vec4 aColor;
 #ifndef SIMPLE	// we do not need these for simple shaders
 in vec4 aVertex2;
+in vec4 aNormal;
 out vec4 pixelpos;
 out vec2 glowdist;
+
+out vec4 vWorldNormal;
+out vec4 vEyeNormal;
 #endif
 
 out vec4 vTexCoord;
@@ -54,6 +58,9 @@ void main()
 			gl_ClipDistance[3] = -((uSplitTopPlane.w + uSplitTopPlane.x * worldcoord.x + uSplitTopPlane.y * worldcoord.z) * uSplitTopPlane.z) - worldcoord.y;
 			gl_ClipDistance[4] = worldcoord.y + ((uSplitBottomPlane.w + uSplitBottomPlane.x * worldcoord.x + uSplitBottomPlane.y * worldcoord.z) * uSplitBottomPlane.z);
 		}
+
+		vWorldNormal = NormalModelMatrix * aNormal;
+		vEyeNormal = NormalViewMatrix * vWorldNormal;
 	#endif
 	
 	#ifdef SPHEREMAP

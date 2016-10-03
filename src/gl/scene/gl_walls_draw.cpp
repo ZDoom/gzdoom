@@ -254,14 +254,13 @@ void GLWall::RenderMirrorSurface()
 	if (GLRenderer->mirrortexture == NULL) return;
 
 	// For the sphere map effect we need a normal of the mirror surface,
-	Vector v(glseg.y2-glseg.y1, 0 ,-glseg.x2+glseg.x1);
-	v.Normalize();
+	FVector3 v = glseg.Normal();
 
 	if (!gl.legacyMode)
 	{
 		// we use texture coordinates and texture matrix to pass the normal stuff to the shader so that the default vertex buffer format can be used as is.
-		tcs[LOLFT].u = tcs[LORGT].u = tcs[UPLFT].u = tcs[UPRGT].u = v.X();
-		tcs[LOLFT].v = tcs[LORGT].v = tcs[UPLFT].v = tcs[UPRGT].v = v.Z();
+		tcs[LOLFT].u = tcs[LORGT].u = tcs[UPLFT].u = tcs[UPRGT].u = v.X;
+		tcs[LOLFT].v = tcs[LORGT].v = tcs[UPLFT].v = tcs[UPRGT].v = v.Z;
 
 		gl_RenderState.EnableTextureMatrix(true);
 		gl_RenderState.mTextureMatrix.computeNormalMatrix(gl_RenderState.mViewMatrix);
@@ -414,6 +413,7 @@ void GLWall::RenderTranslucentWall()
 //==========================================================================
 void GLWall::Draw(int pass)
 {
+	gl_RenderState.SetNormal(glseg.Normal());
 	switch (pass)
 	{
 	case GLPASS_LIGHTSONLY:

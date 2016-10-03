@@ -579,7 +579,7 @@ void FGLRenderer::LensDistortScene()
 		0.0f
 	};
 
-	float aspect = mSceneViewport.width / mSceneViewport.height;
+	float aspect = mSceneViewport.width / (float)mSceneViewport.height;
 
 	// Scale factor to keep sampling within the input texture
 	float r2 = aspect * aspect * 0.25 + 0.25f;

@@ -43,10 +43,6 @@
 #include "gi.h"
 #include "stats.h"
 #include "x86.h"
-#ifndef NO_SSE
-#include <emmintrin.h>
-#include <immintrin.h>
-#endif
 #include <vector>
 
 extern "C" short spanend[MAXHEIGHT];
@@ -55,9 +51,7 @@ extern float rw_lightstep;
 extern int wallshade;
 
 // Use multiple threads when drawing
-CVAR(Bool, r_multithreaded, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-// [SP] Set Max Threads to a sane amount
-CVAR(Int, r_multithreadedmax, 1024, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, r_multithreaded, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 // Use linear filtering when scaling up
 CVAR(Bool, r_magfilter, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
@@ -68,47 +62,7 @@ CVAR(Bool, r_minfilter, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 // Use mipmapped textures
 CVAR(Bool, r_mipmap, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
-#ifndef NO_SSE
-
-#ifdef _MSC_VER
-#pragma warning(disable: 4101) // warning C4101: unreferenced local variable
-#endif
-
-// Generate SSE drawers:
-#define VecCommand(name) name##_SSE_Command
-#define VEC_SHADE_VARS SSE_SHADE_VARS
-#define VEC_SHADE_SIMPLE_INIT SSE_SHADE_SIMPLE_INIT
-#define VEC_SHADE_SIMPLE_INIT4 SSE_SHADE_SIMPLE_INIT4
-#define VEC_SHADE_SIMPLE SSE_SHADE_SIMPLE
-#define VEC_SHADE_INIT SSE_SHADE_INIT
-#define VEC_SHADE_INIT4 SSE_SHADE_INIT4
-#define VEC_SHADE SSE_SHADE
-#include "r_draw_rgba_sse.h"
-/*
-// Generate AVX drawers:
-#undef VecCommand
-#undef VEC_SHADE_SIMPLE_INIT
-#undef VEC_SHADE_SIMPLE_INIT4
-#undef VEC_SHADE_SIMPLE
-#undef VEC_SHADE_INIT
-#undef VEC_SHADE_INIT4
-#undef VEC_SHADE
-#define VecCommand(name) name##_AVX_Command
-#define VEC_SHADE_SIMPLE_INIT AVX_LINEAR_SHADE_SIMPLE_INIT
-#define VEC_SHADE_SIMPLE_INIT4 AVX_LINEAR_SHADE_SIMPLE_INIT4
-#define VEC_SHADE_SIMPLE AVX_LINEAR_SHADE_SIMPLE
-#define VEC_SHADE_INIT AVX_LINEAR_SHADE_INIT
-#define VEC_SHADE_INIT4 AVX_LINEAR_SHADE_INIT4
-#define VEC_SHADE AVX_LINEAR_SHADE
-#include "r_draw_rgba_sse.h"
-*/
-#endif
-
 /////////////////////////////////////////////////////////////////////////////
-
-#ifndef NO_SSE
-__m128i SampleBgra::samplertable[256 * 2];
-#endif
 
 DrawerCommandQueue *DrawerCommandQueue::Instance()
 {
@@ -118,27 +72,6 @@ DrawerCommandQueue *DrawerCommandQueue::Instance()
 
 DrawerCommandQueue::DrawerCommandQueue()
 {
-#ifndef NO_SSE
-	for (int inv_b = 0; inv_b < 16; inv_b++)
-	{
-		for (int inv_a = 0; inv_a < 16; inv_a++)
-		{
-			int a = 16 - inv_a;
-			int b = 16 - inv_b;
-
-			int ab = a * b;
-			int invab = inv_a * b;
-			int ainvb = a * inv_b;
-			int invainvb = inv_a * inv_b;
-
-			__m128i ab_invab = _mm_set_epi16(invab, invab, invab, invab, ab, ab, ab, ab);
-			__m128i ainvb_invainvb = _mm_set_epi16(invainvb, invainvb, invainvb, invainvb, ainvb, ainvb, ainvb, ainvb);
-
-			_mm_store_si128(SampleBgra::samplertable + inv_b * 32 + inv_a * 2, ab_invab);
-			_mm_store_si128(SampleBgra::samplertable + inv_b * 32 + inv_a * 2 + 1, ainvb_invainvb);
-		}
-	}
-#endif
 }
 
 DrawerCommandQueue::~DrawerCommandQueue()
@@ -200,7 +133,7 @@ void DrawerCommandQueue::Finish()
 
 	DrawerThread thread;
 	thread.core = 0;
-	thread.num_cores = queue->threads.size() + 1;
+	thread.num_cores = (int)(queue->threads.size() + 1);
 
 	for (int pass = 0; pass < queue->num_passes; pass++)
 	{
@@ -1249,310 +1182,6 @@ public:
 	}
 };
 
-/////////////////////////////////////////////////////////////////////////////
-
-class DrawerSpanCommand : public DrawerCommand
-{
-public:
-	fixed_t _xfrac;
-	fixed_t _yfrac;
-	fixed_t _xstep;
-	fixed_t _ystep;
-	int _x1;
-	int _x2;
-	int _y;
-	int _xbits;
-	int _ybits;
-	BYTE * RESTRICT _destorg;
-
-	const uint32_t * RESTRICT _source;
-	uint32_t _light;
-	ShadeConstants _shade_constants;
-	bool _nearest_filter;
-
-	uint32_t _srcalpha;
-	uint32_t _destalpha;
-
-	DrawerSpanCommand()
-	{
-		_xfrac = ds_xfrac;
-		_yfrac = ds_yfrac;
-		_xstep = ds_xstep;
-		_ystep = ds_ystep;
-		_x1 = ds_x1;
-		_x2 = ds_x2;
-		_y = ds_y;
-		_xbits = ds_xbits;
-		_ybits = ds_ybits;
-		_destorg = dc_destorg;
-
-		_source = (const uint32_t*)ds_source;
-		_light = LightBgra::calc_light_multiplier(ds_light);
-		_shade_constants = ds_shade_constants;
-		_nearest_filter = !SampleBgra::span_sampler_setup(_source, _xbits, _ybits, _xstep, _ystep, ds_source_mipmapped);
-
-		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
-		_destalpha = dc_destalpha >> (FRACBITS - 8);
-	}
-
-	class LoopIterator
-	{
-	public:
-		uint32_t *dest;
-		int count;
-		dsfixed_t xfrac;
-		dsfixed_t yfrac;
-		dsfixed_t xstep;
-		dsfixed_t ystep;
-		BYTE yshift;
-		BYTE xshift;
-		int xmask;
-		bool is_64x64;
-		bool skipped;
-
-		LoopIterator(DrawerSpanCommand *command, DrawerThread *thread)
-		{
-			dest = ylookup[command->_y] + command->_x1 + (uint32_t*)command->_destorg;
-			count = command->_x2 - command->_x1 + 1;
-			xfrac = command->_xfrac;
-			yfrac = command->_yfrac;
-			xstep = command->_xstep;
-			ystep = command->_ystep;
-			yshift = 32 - command->_ybits;
-			xshift = yshift - command->_xbits;
-			xmask = ((1 << command->_xbits) - 1) << command->_ybits;
-			is_64x64 = command->_xbits == 6 && command->_ybits == 6;
-			skipped = thread->line_skipped_by_thread(command->_y);
-		}
-
-		// 64x64 is the most common case by far, so special case it.
-		int spot64()
-		{
-			return ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-		}
-
-		int spot()
-		{
-			return ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-		}
-
-		explicit operator bool()
-		{
-			return !skipped && count > 0;
-		}
-
-		bool next()
-		{
-			dest++;
-			xfrac += xstep;
-			yfrac += ystep;
-			return (--count) != 0;
-		}
-	};
-};
-
-class DrawSpanRGBACommand : public DrawerSpanCommand
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-
-		if (_nearest_filter)
-		{
-			if (loop.is_64x64)
-			{
-				do
-				{
-					*loop.dest = LightBgra::shade_bgra(_source[loop.spot64()], _light, _shade_constants);
-				} while (loop.next());
-			}
-			else
-			{
-				do
-				{
-					*loop.dest = LightBgra::shade_bgra(_source[loop.spot()], _light, _shade_constants);
-				} while (loop.next());
-			}
-		}
-		else
-		{
-			if (loop.is_64x64)
-			{
-				do
-				{
-					*loop.dest = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, loop.xfrac, loop.yfrac, 26, 26), _light, _shade_constants);
-				} while (loop.next());
-			}
-			else
-			{
-				do
-				{
-					*loop.dest = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, loop.xfrac, loop.yfrac, 32 - _xbits, 32 - _ybits), _light, _shade_constants);
-				} while (loop.next());
-			}
-		}
-	}
-};
-
-class DrawSpanMaskedRGBACommand : public DrawerSpanCommand
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-
-		if (_nearest_filter)
-		{
-			if (loop.is_64x64)
-			{
-				do
-				{
-					uint32_t fg = LightBgra::shade_bgra(_source[loop.spot64()], _light, _shade_constants);
-					*loop.dest = BlendBgra::alpha_blend(fg, *loop.dest);
-				} while (loop.next());
-			}
-			else
-			{
-				do
-				{
-					uint32_t fg = LightBgra::shade_bgra(_source[loop.spot()], _light, _shade_constants);
-					*loop.dest = BlendBgra::alpha_blend(fg, *loop.dest);
-				} while (loop.next());
-			}
-		}
-		else
-		{
-			if (loop.is_64x64)
-			{
-				do
-				{
-					uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, loop.xfrac, loop.yfrac, 26, 26), _light, _shade_constants);
-					*loop.dest = BlendBgra::alpha_blend(fg, *loop.dest);
-				} while (loop.next());
-			}
-			else
-			{
-				do
-				{
-					uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, loop.xfrac, loop.yfrac, 32 - _xbits, 32 - _ybits), _light, _shade_constants);
-					*loop.dest = BlendBgra::alpha_blend(fg, *loop.dest);
-				} while (loop.next());
-			}
-		}
-	}
-};
-
-class DrawSpanTranslucentRGBACommand : public DrawerSpanCommand
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-
-		if (loop.is_64x64)
-		{
-			do
-			{
-				uint32_t fg = LightBgra::shade_bgra(_source[loop.spot64()], _light, _shade_constants);
-				*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
-			} while (loop.next());
-		}
-		else
-		{
-			do
-			{
-				uint32_t fg = LightBgra::shade_bgra(_source[loop.spot()], _light, _shade_constants);
-				*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
-			} while (loop.next());
-		}
-	}
-};
-
-class DrawSpanMaskedTranslucentRGBACommand : public DrawerSpanCommand
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-
-		if (loop.is_64x64)
-		{
-			do
-			{
-				uint32_t fg = LightBgra::shade_bgra(_source[loop.spot64()], _light, _shade_constants);
-				*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
-			} while (loop.next());
-		}
-		else
-		{
-			do
-			{
-				uint32_t fg = LightBgra::shade_bgra(_source[loop.spot()], _light, _shade_constants);
-				*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
-			} while (loop.next());
-		}
-	}
-};
-
-class DrawSpanAddClampRGBACommand : public DrawerSpanCommand
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-
-		if (loop.is_64x64)
-		{
-			do
-			{
-				uint32_t fg = LightBgra::shade_bgra(_source[loop.spot64()], _light, _shade_constants);
-				*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
-			} while (loop.next());
-		}
-		else
-		{
-			do
-			{
-				uint32_t fg = LightBgra::shade_bgra(_source[loop.spot()], _light, _shade_constants);
-				*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
-			} while (loop.next());
-		}
-	}
-};
-
-class DrawSpanMaskedAddClampRGBACommand : public DrawerSpanCommand
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-
-		if (loop.is_64x64)
-		{
-			do
-			{
-				uint32_t fg = LightBgra::shade_bgra(_source[loop.spot64()], _light, _shade_constants);
-				*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
-			} while (loop.next());
-		}
-		else
-		{
-			do
-			{
-				uint32_t fg = LightBgra::shade_bgra(_source[loop.spot()], _light, _shade_constants);
-				*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
-			} while (loop.next());
-		}
-	}
-};
-
 class FillSpanRGBACommand : public DrawerCommand
 {
 	int _x1;
@@ -1703,735 +1332,6 @@ public:
 			v += vi;
 			dy--;
 		}
-	}
-};
-
-/////////////////////////////////////////////////////////////////////////////
-
-class DrawerWall1Command : public DrawerCommand
-{
-public:
-	BYTE * RESTRICT _dest;
-	int _pitch;
-	int _count;
-	DWORD _texturefrac;
-	uint32_t _texturefracx;
-	DWORD _iscale;
-	uint32_t _textureheight;
-
-	const uint32 * RESTRICT _source;
-	const uint32 * RESTRICT _source2;
-	uint32_t _light;
-	ShadeConstants _shade_constants;
-
-	uint32_t _srcalpha;
-	uint32_t _destalpha;
-
-	DrawerWall1Command()
-	{
-		_dest = dc_dest;
-		_pitch = dc_pitch;
-		_count = dc_count;
-		_texturefrac = dc_texturefrac;
-		_texturefracx = dc_texturefracx;
-		_iscale = dc_iscale;
-		_textureheight = dc_textureheight;
-
-		_source = (const uint32 *)dc_source;
-		_source2 = (const uint32 *)dc_source2;
-		_light = LightBgra::calc_light_multiplier(dc_light);
-		_shade_constants = dc_shade_constants;
-
-		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
-		_destalpha = dc_destalpha >> (FRACBITS - 8);
-	}
-
-	class LoopIterator
-	{
-	public:
-		uint32_t *dest;
-		int pitch;
-		int count;
-		uint32_t fracstep;
-		uint32_t frac;
-		uint32_t texturefracx;
-		uint32_t height;
-		uint32_t one;
-
-		LoopIterator(DrawerWall1Command *command, DrawerThread *thread)
-		{
-			count = thread->count_for_thread(command->_dest_y, command->_count);
-			if (count <= 0)
-				return;
-
-			fracstep = command->_iscale * thread->num_cores;
-			frac = command->_texturefrac + command->_iscale * thread->skipped_by_thread(command->_dest_y);
-			texturefracx = command->_texturefracx;
-			dest = thread->dest_for_thread(command->_dest_y, command->_pitch, (uint32_t*)command->_dest);
-			pitch = command->_pitch * thread->num_cores;
-
-			height = command->_textureheight;
-			one = ((0x80000000 + height - 1) / height) * 2 + 1;
-		}
-
-		explicit operator bool()
-		{
-			return count > 0;
-		}
-
-		int sample_index()
-		{
-			return ((frac >> FRACBITS) * height) >> FRACBITS;
-		}
-
-		bool next()
-		{
-			frac += fracstep;
-			dest += pitch;
-			return (--count) != 0;
-		}
-	};
-};
-
-class DrawerWall4Command : public DrawerCommand
-{
-public:
-	BYTE * RESTRICT _dest;
-	int _count;
-	int _pitch;
-	ShadeConstants _shade_constants;
-	uint32_t _vplce[4];
-	uint32_t _vince[4];
-	uint32_t _buftexturefracx[4];
-	uint32_t _bufheight[4];
-	const uint32_t * RESTRICT _bufplce[4];
-	const uint32_t * RESTRICT _bufplce2[4];
-	uint32_t _light[4];
-
-	uint32_t _srcalpha;
-	uint32_t _destalpha;
-
-	DrawerWall4Command()
-	{
-		_dest = dc_dest;
-		_count = dc_count;
-		_pitch = dc_pitch;
-		_shade_constants = dc_shade_constants;
-		for (int i = 0; i < 4; i++)
-		{
-			_vplce[i] = vplce[i];
-			_vince[i] = vince[i];
-			_buftexturefracx[i] = buftexturefracx[i];
-			_bufheight[i] = bufheight[i];
-			_bufplce[i] = (const uint32_t *)bufplce[i];
-			_bufplce2[i] = (const uint32_t *)bufplce2[i];
-			_light[i] = LightBgra::calc_light_multiplier(palookuplight[i]);
-		}
-		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
-		_destalpha = dc_destalpha >> (FRACBITS - 8);
-	}
-
-	class LoopIterator
-	{
-	public:
-		uint32_t *dest;
-		int pitch;
-		int count;
-		uint32_t vplce[4];
-		uint32_t vince[4];
-		uint32_t height[4];
-		uint32_t one[4];
-
-		LoopIterator(DrawerWall4Command *command, DrawerThread *thread)
-		{
-			count = thread->count_for_thread(command->_dest_y, command->_count);
-			if (count <= 0)
-				return;
-
-			dest = thread->dest_for_thread(command->_dest_y, command->_pitch, (uint32_t*)command->_dest);
-			pitch = command->_pitch * thread->num_cores;
-
-			int skipped = thread->skipped_by_thread(command->_dest_y);
-			for (int i = 0; i < 4; i++)
-			{
-				vplce[i] = command->_vplce[i] + command->_vince[i] * skipped;
-				vince[i] = command->_vince[i] * thread->num_cores;
-				height[i] = command->_bufheight[i];
-				one[i] = ((0x80000000 + height[i] - 1) / height[i]) * 2 + 1;
-			}
-		}
-
-		explicit operator bool()
-		{
-			return count > 0;
-		}
-
-		int sample_index(int col)
-		{
-			return ((vplce[col] >> FRACBITS) * height[col]) >> FRACBITS;
-		}
-
-		bool next()
-		{
-			vplce[0] += vince[0];
-			vplce[1] += vince[1];
-			vplce[2] += vince[2];
-			vplce[3] += vince[3];
-			dest += pitch;
-			return (--count) != 0;
-		}
-	};
-
-#ifdef NO_SSE
-	struct NearestSampler
-	{
-		FORCEINLINE static uint32_t Sample1(DrawerWall4Command &cmd, LoopIterator &loop, int index)
-		{
-			return cmd._bufplce[index][loop.sample_index(index)];
-		}
-	};
-	struct LinearSampler
-	{
-		FORCEINLINE static uint32_t Sample1(DrawerWall4Command &cmd, LoopIterator &loop, int index)
-		{
-			return SampleBgra::sample_bilinear(cmd._bufplce[index], cmd._bufplce2[index], cmd._buftexturefracx[index], loop.vplce[index], loop.one[index], loop.height[index]);
-		}
-	};
-#else
-	struct NearestSampler
-	{
-		FORCEINLINE static __m128i Sample4(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			return _mm_set_epi32(cmd._bufplce[3][loop.sample_index(3)], cmd._bufplce[2][loop.sample_index(2)], cmd._bufplce[1][loop.sample_index(1)], cmd._bufplce[0][loop.sample_index(0)]);
-		}
-	};
-
-	struct LinearSampler
-	{
-		FORCEINLINE static __m128i Sample4(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			__m128i fg;
-			VEC_SAMPLE_BILINEAR4_COLUMN(fg, cmd._bufplce, cmd._bufplce2, cmd._buftexturefracx, loop.vplce, loop.one, loop.height);
-			return fg;
-		}
-	};
-#endif
-
-#ifdef NO_SSE
-	template<typename Sampler>
-	struct Copy
-	{
-		Copy(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-		}
-		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				uint32_t fg = LightBgra::shade_bgra(Sampler::Sample1(cmd, loop, i), cmd._light[i], cmd._shade_constants);
-				loop.dest[i] = BlendBgra::copy(fg);
-			}
-		}
-	};
-
-	template<typename Sampler>
-	struct Mask
-	{
-		Mask(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-		}
-		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				uint32_t fg = LightBgra::shade_bgra(Sampler::Sample1(cmd, loop, i), cmd._light[i], cmd._shade_constants);
-				loop.dest[i] = BlendBgra::alpha_blend(fg, loop.dest[i]);
-			}
-		}
-	};
-
-	template<typename Sampler>
-	struct TMaskAdd
-	{
-		TMaskAdd(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-		}
-		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				uint32_t fg = LightBgra::shade_bgra(Sampler::Sample1(cmd, loop, i), cmd._light[i], cmd._shade_constants);
-				loop.dest[i] = BlendBgra::add(fg, loop.dest[i], cmd._srcalpha, calc_blend_bgalpha(fg, cmd._destalpha));
-			}
-		}
-	};
-
-	template<typename Sampler>
-	struct TMaskSub
-	{
-		TMaskSub(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-		}
-		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				uint32_t fg = LightBgra::shade_bgra(Sampler::Sample1(cmd, loop, i), cmd._light[i], cmd._shade_constants);
-				loop.dest[i] = BlendBgra::sub(fg, loop.dest[i], cmd._srcalpha, calc_blend_bgalpha(fg, cmd._destalpha));
-			}
-		}
-	};
-
-	template<typename Sampler>
-	struct TMaskRevSub
-	{
-		TMaskRevSub(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-		}
-		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				uint32_t fg = LightBgra::shade_bgra(Sampler::Sample1(cmd, loop, i), cmd._light[i], cmd._shade_constants);
-				loop.dest[i] = BlendBgra::revsub(fg, loop.dest[i], cmd._srcalpha, calc_blend_bgalpha(fg, cmd._destalpha));
-			}
-		}
-	};
-
-	typedef Copy<NearestSampler> CopyNearestSimple;
-	typedef Copy<LinearSampler> CopyLinearSimple;
-	typedef Copy<NearestSampler> CopyNearest;
-	typedef Copy<LinearSampler> CopyLinear;
-	typedef Mask<NearestSampler> MaskNearestSimple;
-	typedef Mask<LinearSampler> MaskLinearSimple;
-	typedef Mask<NearestSampler> MaskNearest;
-	typedef Mask<LinearSampler> MaskLinear;
-	typedef TMaskAdd<NearestSampler> TMaskAddNearestSimple;
-	typedef TMaskAdd<LinearSampler> TMaskAddLinearSimple;
-	typedef TMaskAdd<NearestSampler> TMaskAddNearest;
-	typedef TMaskAdd<LinearSampler> TMaskAddLinear;
-	typedef TMaskSub<NearestSampler> TMaskSubNearestSimple;
-	typedef TMaskSub<LinearSampler> TMaskSubLinearSimple;
-	typedef TMaskSub<NearestSampler> TMaskSubNearest;
-	typedef TMaskSub<LinearSampler> TMaskSubLinear;
-	typedef TMaskRevSub<NearestSampler> TMaskRevSubNearestSimple;
-	typedef TMaskRevSub<LinearSampler> TMaskRevSubLinearSimple;
-	typedef TMaskRevSub<NearestSampler> TMaskRevSubNearest;
-	typedef TMaskRevSub<LinearSampler> TMaskRevSubLinear;
-#else
-	template<typename Sampler>
-	struct CopySimple
-	{
-		VEC_SHADE_VARS();
-		CopySimple(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			VEC_SHADE_SIMPLE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0]);
-		}
-		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			__m128i fg = Sampler::Sample4(cmd, loop);
-			VEC_SHADE_SIMPLE(fg);
-			_mm_storeu_si128((__m128i*)loop.dest, fg);
-		}
-	};
-
-	template<typename Sampler>
-	struct Copy
-	{
-		VEC_SHADE_VARS();
-		Copy(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			VEC_SHADE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0], cmd._shade_constants);
-		}
-		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			__m128i fg = Sampler::Sample4(cmd, loop);
-			VEC_SHADE(fg, cmd._shade_constants);
-			_mm_storeu_si128((__m128i*)loop.dest, fg);
-		}
-	};
-
-	template<typename Sampler>
-	struct MaskSimple
-	{
-		VEC_SHADE_VARS();
-		MaskSimple(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			VEC_SHADE_SIMPLE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0]);
-		}
-		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			__m128i fg = Sampler::Sample4(cmd, loop);
-			__m128i bg = _mm_loadu_si128((const __m128i*)loop.dest);
-			VEC_SHADE_SIMPLE(fg);
-			VEC_ALPHA_BLEND(fg, bg);
-			_mm_storeu_si128((__m128i*)loop.dest, fg);
-		}
-	};
-
-	template<typename Sampler>
-	struct Mask
-	{
-		VEC_SHADE_VARS();
-		Mask(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			VEC_SHADE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0], cmd._shade_constants);
-		}
-		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			__m128i fg = Sampler::Sample4(cmd, loop);
-			__m128i bg = _mm_loadu_si128((const __m128i*)loop.dest);
-			VEC_SHADE(fg, cmd._shade_constants);
-			VEC_ALPHA_BLEND(fg, bg);
-			_mm_storeu_si128((__m128i*)loop.dest, fg);
-		}
-	};
-
-	template<typename Sampler>
-	struct TMaskAddSimple
-	{
-		VEC_SHADE_VARS();
-		VEC_CALC_BLEND_ALPHA_VARS();
-		TMaskAddSimple(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			VEC_SHADE_SIMPLE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0]);
-			VEC_CALC_BLEND_ALPHA_INIT(cmd._srcalpha, cmd._destalpha);
-		}
-		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			__m128i fg = Sampler::Sample4(cmd, loop);
-			__m128i bg = _mm_loadu_si128((const __m128i*)loop.dest);
-
-			VEC_CALC_BLEND_ALPHA(fg);
-			VEC_SHADE_SIMPLE(fg);
-
-			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
-			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
-			__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
-			__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
-
-			__m128i out_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_hi, fg_alpha_hi), _mm_mullo_epi16(bg_hi, bg_alpha_hi)), 8);
-			__m128i out_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_lo, fg_alpha_lo), _mm_mullo_epi16(bg_lo, bg_alpha_lo)), 8);
-			__m128i out = _mm_packus_epi16(out_lo, out_hi);
-
-			_mm_storeu_si128((__m128i*)loop.dest, out);
-		}
-	};
-
-	template<typename Sampler>
-	struct TMaskAdd
-	{
-		VEC_SHADE_VARS();
-		VEC_CALC_BLEND_ALPHA_VARS();
-		TMaskAdd(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			VEC_SHADE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0], cmd._shade_constants);
-			VEC_CALC_BLEND_ALPHA_INIT(cmd._srcalpha, cmd._destalpha);
-		}
-		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			__m128i fg = Sampler::Sample4(cmd, loop);
-			__m128i bg = _mm_loadu_si128((const __m128i*)loop.dest);
-
-			VEC_CALC_BLEND_ALPHA(fg);
-			VEC_SHADE_SIMPLE(fg);
-
-			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
-			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
-			__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
-			__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
-
-			__m128i out_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_hi, fg_alpha_hi), _mm_mullo_epi16(bg_hi, bg_alpha_hi)), 8);
-			__m128i out_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_lo, fg_alpha_lo), _mm_mullo_epi16(bg_lo, bg_alpha_lo)), 8);
-			__m128i out = _mm_packus_epi16(out_lo, out_hi);
-
-			_mm_storeu_si128((__m128i*)loop.dest, out);
-		}
-	};
-
-	template<typename Sampler>
-	struct TMaskSubSimple
-	{
-		VEC_SHADE_VARS();
-		VEC_CALC_BLEND_ALPHA_VARS();
-		TMaskSubSimple(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			VEC_SHADE_SIMPLE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0]);
-			VEC_CALC_BLEND_ALPHA_INIT(cmd._srcalpha, cmd._destalpha);
-		}
-		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			__m128i fg = Sampler::Sample4(cmd, loop);
-			__m128i bg = _mm_loadu_si128((const __m128i*)loop.dest);
-
-			VEC_CALC_BLEND_ALPHA(fg);
-			VEC_SHADE_SIMPLE(fg);
-
-			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
-			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
-			__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
-			__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
-
-			__m128i out_hi = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(bg_hi, bg_alpha_hi), _mm_mullo_epi16(fg_hi, fg_alpha_hi)), 8);
-			__m128i out_lo = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(bg_lo, bg_alpha_lo), _mm_mullo_epi16(fg_lo, fg_alpha_lo)), 8);
-			__m128i out = _mm_packus_epi16(out_lo, out_hi);
-
-			_mm_storeu_si128((__m128i*)loop.dest, out);
-		}
-	};
-
-	template<typename Sampler>
-	struct TMaskSub
-	{
-		VEC_SHADE_VARS();
-		VEC_CALC_BLEND_ALPHA_VARS();
-		TMaskSub(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			VEC_SHADE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0], cmd._shade_constants);
-			VEC_CALC_BLEND_ALPHA_INIT(cmd._srcalpha, cmd._destalpha);
-		}
-		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			__m128i fg = Sampler::Sample4(cmd, loop);
-			__m128i bg = _mm_loadu_si128((const __m128i*)loop.dest);
-
-			VEC_CALC_BLEND_ALPHA(fg);
-			VEC_SHADE_SIMPLE(fg);
-
-			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
-			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
-			__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
-			__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
-
-			__m128i out_hi = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(bg_hi, bg_alpha_hi), _mm_mullo_epi16(fg_hi, fg_alpha_hi)), 8);
-			__m128i out_lo = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(bg_lo, bg_alpha_lo), _mm_mullo_epi16(fg_lo, fg_alpha_lo)), 8);
-			__m128i out = _mm_packus_epi16(out_lo, out_hi);
-
-			_mm_storeu_si128((__m128i*)loop.dest, out);
-		}
-	};
-
-	template<typename Sampler>
-	struct TMaskRevSubSimple
-	{
-		VEC_SHADE_VARS();
-		VEC_CALC_BLEND_ALPHA_VARS();
-		TMaskRevSubSimple(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			VEC_SHADE_SIMPLE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0]);
-			VEC_CALC_BLEND_ALPHA_INIT(cmd._srcalpha, cmd._destalpha);
-		}
-		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			__m128i fg = Sampler::Sample4(cmd, loop);
-			__m128i bg = _mm_loadu_si128((const __m128i*)loop.dest);
-
-			VEC_CALC_BLEND_ALPHA(fg);
-			VEC_SHADE_SIMPLE(fg);
-
-			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
-			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
-			__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
-			__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
-
-			__m128i out_hi = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(fg_hi, fg_alpha_hi), _mm_mullo_epi16(bg_hi, bg_alpha_hi)), 8);
-			__m128i out_lo = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(fg_lo, fg_alpha_lo), _mm_mullo_epi16(bg_lo, bg_alpha_lo)), 8);
-			__m128i out = _mm_packus_epi16(out_lo, out_hi);
-
-			_mm_storeu_si128((__m128i*)loop.dest, out);
-		}
-	};
-
-	template<typename Sampler>
-	struct TMaskRevSub
-	{
-		VEC_SHADE_VARS();
-		VEC_CALC_BLEND_ALPHA_VARS();
-		TMaskRevSub(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			VEC_SHADE_INIT4(cmd._light[3], cmd._light[2], cmd._light[1], cmd._light[0], cmd._shade_constants);
-			VEC_CALC_BLEND_ALPHA_INIT(cmd._srcalpha, cmd._destalpha);
-		}
-		void Blend(DrawerWall4Command &cmd, LoopIterator &loop)
-		{
-			__m128i fg = Sampler::Sample4(cmd, loop);
-			__m128i bg = _mm_loadu_si128((const __m128i*)loop.dest);
-
-			VEC_CALC_BLEND_ALPHA(fg);
-			VEC_SHADE_SIMPLE(fg);
-
-			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
-			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
-			__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
-			__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
-
-			__m128i out_hi = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(fg_hi, fg_alpha_hi), _mm_mullo_epi16(bg_hi, bg_alpha_hi)), 8);
-			__m128i out_lo = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(fg_lo, fg_alpha_lo), _mm_mullo_epi16(bg_lo, bg_alpha_lo)), 8);
-			__m128i out = _mm_packus_epi16(out_lo, out_hi);
-
-			_mm_storeu_si128((__m128i*)loop.dest, out);
-		}
-	};
-
-	typedef CopySimple<NearestSampler> CopyNearestSimple;
-	typedef CopySimple<LinearSampler> CopyLinearSimple;
-	typedef Copy<NearestSampler> CopyNearest;
-	typedef Copy<LinearSampler> CopyLinear;
-	typedef MaskSimple<NearestSampler> MaskNearestSimple;
-	typedef MaskSimple<LinearSampler> MaskLinearSimple;
-	typedef Mask<NearestSampler> MaskNearest;
-	typedef Mask<LinearSampler> MaskLinear;
-	typedef TMaskAddSimple<NearestSampler> TMaskAddNearestSimple;
-	typedef TMaskAddSimple<LinearSampler> TMaskAddLinearSimple;
-	typedef TMaskAdd<NearestSampler> TMaskAddNearest;
-	typedef TMaskAdd<LinearSampler> TMaskAddLinear;
-	typedef TMaskSubSimple<NearestSampler> TMaskSubNearestSimple;
-	typedef TMaskSubSimple<LinearSampler> TMaskSubLinearSimple;
-	typedef TMaskSub<NearestSampler> TMaskSubNearest;
-	typedef TMaskSub<LinearSampler> TMaskSubLinear;
-	typedef TMaskRevSubSimple<NearestSampler> TMaskRevSubNearestSimple;
-	typedef TMaskRevSubSimple<LinearSampler> TMaskRevSubLinearSimple;
-	typedef TMaskRevSub<NearestSampler> TMaskRevSubNearest;
-	typedef TMaskRevSub<LinearSampler> TMaskRevSubLinear;
-#endif
-};
-
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::CopyNearestSimple> Vlinec4NearestSimpleRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::CopyNearest> Vlinec4NearestRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::CopyLinearSimple> Vlinec4LinearSimpleRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::CopyLinear> Vlinec4LinearRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::MaskNearestSimple> Mvlinec4NearestSimpleRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::MaskNearest> Mvlinec4NearestRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::MaskLinearSimple> Mvlinec4LinearSimpleRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::MaskLinear> Mvlinec4LinearRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskAddNearestSimple> Tmvline4AddNearestSimpleRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskAddNearest> Tmvline4AddNearestRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskAddLinearSimple> Tmvline4AddLinearSimpleRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskAddLinear> Tmvline4AddLinearRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskAddNearestSimple> Tmvline4AddClampNearestSimpleRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskAddNearest> Tmvline4AddClampNearestRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskAddLinearSimple> Tmvline4AddClampLinearSimpleRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskAddLinear> Tmvline4AddClampLinearRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskSubNearestSimple> Tmvline4SubClampNearestSimpleRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskSubNearest> Tmvline4SubClampNearestRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskSubLinearSimple> Tmvline4SubClampLinearSimpleRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskSubLinear> Tmvline4SubClampLinearRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskRevSubNearestSimple> Tmvline4RevSubClampNearestSimpleRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskRevSubNearest> Tmvline4RevSubClampNearestRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskRevSubLinearSimple> Tmvline4RevSubClampLinearSimpleRGBACommand;
-typedef DrawerBlendCommand<DrawerWall4Command, DrawerWall4Command::TMaskRevSubLinear> Tmvline4RevSubClampLinearRGBACommand;
-
-class Vlinec1RGBACommand : public DrawerWall1Command
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-
-		if (_source2 == nullptr)
-		{
-			do
-			{
-				uint32_t fg = LightBgra::shade_bgra(_source[loop.sample_index()], _light, _shade_constants);
-				*loop.dest = BlendBgra::copy(fg);
-			} while (loop.next());
-		}
-		else
-		{
-			do
-			{
-				uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, _source2, loop.texturefracx, loop.frac, loop.one, loop.height), _light, _shade_constants);
-				*loop.dest = BlendBgra::copy(fg);
-			} while (loop.next());
-		}
-	}
-};
-
-class Mvlinec1RGBACommand : public DrawerWall1Command
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-
-		if (_source2 == nullptr)
-		{
-			do
-			{
-				uint32_t fg = LightBgra::shade_bgra(_source[loop.sample_index()], _light, _shade_constants);
-				*loop.dest = BlendBgra::alpha_blend(fg, *loop.dest);
-			} while (loop.next());
-		}
-		else
-		{
-			do
-			{
-				uint32_t fg = LightBgra::shade_bgra(SampleBgra::sample_bilinear(_source, _source2, loop.texturefracx, loop.frac, loop.one, loop.height), _light, _shade_constants);
-				*loop.dest = BlendBgra::alpha_blend(fg, *loop.dest);
-			} while (loop.next());
-		}
-	}
-};
-
-class Tmvline1AddRGBACommand : public DrawerWall1Command
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			uint32_t fg = LightBgra::shade_bgra(_source[loop.sample_index()], _light, _shade_constants);
-			*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
-		} while (loop.next());
-	}
-};
-
-class Tmvline1AddClampRGBACommand : public DrawerWall1Command
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			uint32_t fg = LightBgra::shade_bgra(_source[loop.sample_index()], _light, _shade_constants);
-			*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
-		} while (loop.next());
-	}
-};
-
-class Tmvline1SubClampRGBACommand : public DrawerWall1Command
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			uint32_t fg = LightBgra::shade_bgra(_source[loop.sample_index()], _light, _shade_constants);
-			*loop.dest = BlendBgra::sub(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
-		} while (loop.next());
-	}
-};
-
-class Tmvline1RevSubClampRGBACommand : public DrawerWall1Command
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			uint32_t fg = LightBgra::shade_bgra(_source[loop.sample_index()], _light, _shade_constants);
-			*loop.dest = BlendBgra::revsub(fg, *loop.dest, _srcalpha, calc_blend_bgalpha(fg, _destalpha));
-		} while (loop.next());
 	}
 };
 
@@ -3020,58 +1920,32 @@ void R_DrawRevSubClampTranslatedColumn_rgba()
 
 void R_DrawSpan_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawSpanLLVMCommand>();
-#elif defined(NO_SSE)
-	DrawerCommandQueue::QueueCommand<DrawSpanRGBACommand>();
-#else
-	DrawerCommandQueue::QueueCommand<DrawSpanRGBA_SSE_Command>();
-#endif
 }
 
 void R_DrawSpanMasked_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawSpanMaskedLLVMCommand>();
-#else
-	DrawerCommandQueue::QueueCommand<DrawSpanMaskedRGBACommand>();
-#endif
 }
 
 void R_DrawSpanTranslucent_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawSpanTranslucentLLVMCommand>();
-#else
-	DrawerCommandQueue::QueueCommand<DrawSpanTranslucentRGBACommand>();
-#endif
 }
 
 void R_DrawSpanMaskedTranslucent_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawSpanMaskedTranslucentLLVMCommand>();
-#else
-	DrawerCommandQueue::QueueCommand<DrawSpanMaskedTranslucentRGBACommand>();
-#endif
 }
 
 void R_DrawSpanAddClamp_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawSpanAddClampLLVMCommand>();
-#else
-	DrawerCommandQueue::QueueCommand<DrawSpanAddClampRGBACommand>();
-#endif
 }
 
 void R_DrawSpanMaskedAddClamp_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampLLVMCommand>();
-#else
-	DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampRGBACommand>();
-#endif
 }
 
 void R_FillSpan_rgba()
@@ -3116,11 +1990,7 @@ void R_DrawSlab_rgba(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BY
 
 DWORD vlinec1_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawWall1LLVMCommand>();
-#else
-	DrawerCommandQueue::QueueCommand<Vlinec1RGBACommand>();
-#endif
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
@@ -3139,116 +2009,72 @@ void queue_wallcommand()
 
 void vlinec4_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawWall4LLVMCommand>();
-#else
-	queue_wallcommand<Vlinec4NearestSimpleRGBACommand, Vlinec4NearestRGBACommand, Vlinec4LinearSimpleRGBACommand, Vlinec4LinearRGBACommand>();
-#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
 
 DWORD mvlinec1_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawWallMasked1LLVMCommand>();
-#else
-	DrawerCommandQueue::QueueCommand<Mvlinec1RGBACommand>();
-#endif
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
 void mvlinec4_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawWallMasked4LLVMCommand>();
-#else
-	queue_wallcommand<Mvlinec4NearestSimpleRGBACommand, Mvlinec4NearestRGBACommand, Mvlinec4LinearSimpleRGBACommand, Mvlinec4LinearRGBACommand>();
-#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
 
 fixed_t tmvline1_add_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawWallAdd1LLVMCommand>();
-#else
-	DrawerCommandQueue::QueueCommand<Tmvline1AddRGBACommand>();
-#endif
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
 void tmvline4_add_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawWallAdd4LLVMCommand>();
-#else
-	queue_wallcommand<Tmvline4AddNearestSimpleRGBACommand, Tmvline4AddNearestRGBACommand, Tmvline4AddLinearSimpleRGBACommand, Tmvline4AddLinearRGBACommand>();
-#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
 
 fixed_t tmvline1_addclamp_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawWallAddClamp1LLVMCommand>();
-#else
-	DrawerCommandQueue::QueueCommand<Tmvline1AddClampRGBACommand>();
-#endif
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
 void tmvline4_addclamp_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawWallAddClamp4LLVMCommand>();
-#else
-	queue_wallcommand<Tmvline4AddClampNearestSimpleRGBACommand, Tmvline4AddClampNearestRGBACommand, Tmvline4AddClampLinearSimpleRGBACommand, Tmvline4AddClampLinearRGBACommand>();
-#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
 
 fixed_t tmvline1_subclamp_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawWallSubClamp1LLVMCommand>();
-#else
-	DrawerCommandQueue::QueueCommand<Tmvline1SubClampRGBACommand>();
-#endif
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
 void tmvline4_subclamp_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawWallSubClamp4LLVMCommand>();
-#else
-	queue_wallcommand<Tmvline4SubClampNearestSimpleRGBACommand, Tmvline4SubClampNearestRGBACommand, Tmvline4SubClampLinearSimpleRGBACommand, Tmvline4SubClampLinearRGBACommand>();
-#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
 
 fixed_t tmvline1_revsubclamp_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1LLVMCommand>();
-#else
-	DrawerCommandQueue::QueueCommand<Tmvline1RevSubClampRGBACommand>();
-#endif
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
 void tmvline4_revsubclamp_rgba()
 {
-#if !defined(NO_LLVM)
 	DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp4LLVMCommand>();
-#else
-	queue_wallcommand<Tmvline4RevSubClampNearestSimpleRGBACommand, Tmvline4RevSubClampNearestRGBACommand, Tmvline4RevSubClampLinearSimpleRGBACommand, Tmvline4RevSubClampLinearRGBACommand>();
-#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }

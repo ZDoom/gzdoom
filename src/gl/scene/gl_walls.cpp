@@ -470,7 +470,7 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 		}
 		else
 		{
-			hi.plane.GetFromSector(fs, true);
+			hi.plane.GetFromSector(fs, sector_t::ceiling);
 			hi.lightlevel = gl_ClampLight(fs->GetCeilingLight());
 			hi.colormap = fs->ColorMap;
 
@@ -498,7 +498,7 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 		}
 		else
 		{
-			hi.plane.GetFromSector(fs, false);
+			hi.plane.GetFromSector(fs, sector_t::floor);
 			hi.lightlevel = gl_ClampLight(fs->GetFloorLight());
 			hi.colormap = fs->ColorMap;
 

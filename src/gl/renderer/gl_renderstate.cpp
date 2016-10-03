@@ -141,6 +141,7 @@ bool FRenderState::ApplyShader()
 	}
 
 	glVertexAttrib4fv(VATTR_COLOR, mColor.vec);
+	glVertexAttrib4fv(VATTR_NORMAL, mNormal.vec);
 
 	activeShader->muDesaturation.Set(mDesaturation / 255.f);
 	activeShader->muFogEnabled.Set(fogset);
@@ -269,12 +270,16 @@ bool FRenderState::ApplyShader()
 	if (mModelMatrixEnabled)
 	{
 		mModelMatrix.matrixToGL(activeShader->modelmatrix_index);
+		VSMatrix norm;
+		norm.computeNormalMatrix(mModelMatrix);
+		mNormalModelMatrix.matrixToGL(activeShader->normalmodelmatrix_index);
 		activeShader->currentModelMatrixState = true;
 	}
 	else if (activeShader->currentModelMatrixState)
 	{
 		activeShader->currentModelMatrixState = false;
 		identityMatrix.matrixToGL(activeShader->modelmatrix_index);
+		identityMatrix.matrixToGL(activeShader->normalmodelmatrix_index);
 	}
 	return true;
 }

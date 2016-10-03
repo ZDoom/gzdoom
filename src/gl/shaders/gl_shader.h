@@ -285,7 +285,9 @@ class FShader
 	int lights_index;
 	int projectionmatrix_index;
 	int viewmatrix_index;
+	int normalviewmatrix_index;
 	int modelmatrix_index;
+	int normalmodelmatrix_index;
 	int texturematrix_index;
 public:
 	int vertexmatrix_index;
@@ -318,7 +320,7 @@ public:
 	bool Bind();
 	unsigned int GetHandle() const { return hShader; }
 
-	void ApplyMatrices(VSMatrix *proj, VSMatrix *view);
+	void ApplyMatrices(VSMatrix *proj, VSMatrix *view, VSMatrix *norm);
 
 };
 

@@ -179,6 +179,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	glBindAttribLocation(hShader, VATTR_TEXCOORD, "aTexCoord");
 	glBindAttribLocation(hShader, VATTR_COLOR, "aColor");
 	glBindAttribLocation(hShader, VATTR_VERTEX2, "aVertex2");
+	glBindAttribLocation(hShader, VATTR_NORMAL, "aNormal");
 
 	glLinkProgram(hShader);
 
@@ -241,6 +242,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	texturematrix_index = glGetUniformLocation(hShader, "TextureMatrix");
 	vertexmatrix_index = glGetUniformLocation(hShader, "uQuadVertices");
 	texcoordmatrix_index = glGetUniformLocation(hShader, "uQuadTexCoords");
+	normalviewmatrix_index = glGetUniformLocation(hShader, "NormalViewMatrix");
+	normalmodelmatrix_index = glGetUniformLocation(hShader, "NormalModelMatrix");
 	quadmode_index = glGetUniformLocation(hShader, "uQuadMode");
 
 	if (!gl.legacyMode && !(gl.flags & RFL_SHADER_STORAGE_BUFFER))
@@ -328,13 +331,13 @@ FShader *FShaderManager::Compile (const char *ShaderName, const char *ShaderPath
 //
 //==========================================================================
 
-void FShader::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
+void FShader::ApplyMatrices(VSMatrix *proj, VSMatrix *view, VSMatrix *norm)
 {
 	Bind();
 	glUniformMatrix4fv(projectionmatrix_index, 1, false, proj->get());
 	glUniformMatrix4fv(viewmatrix_index, 1, false, view->get());
+	glUniformMatrix4fv(normalviewmatrix_index, 1, false, norm->get());
 }
-
 
 //==========================================================================
 //
@@ -556,23 +559,26 @@ void FShaderManager::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
 	}
 	else
 	{
+		VSMatrix norm;
+		norm.computeNormalMatrix(*view);
+
 		for (int i = 0; i < 4; i++)
 		{
-			mTextureEffects[i]->ApplyMatrices(proj, view);
-			mTextureEffectsNAT[i]->ApplyMatrices(proj, view);
+			mTextureEffects[i]->ApplyMatrices(proj, view, &norm);
+			mTextureEffectsNAT[i]->ApplyMatrices(proj, view, &norm);
 		}
-		mTextureEffects[4]->ApplyMatrices(proj, view);
+		mTextureEffects[4]->ApplyMatrices(proj, view, &norm);
 		if (gl_fuzztype != 0)
 		{
-			mTextureEffects[4 + gl_fuzztype]->ApplyMatrices(proj, view);
+			mTextureEffects[4 + gl_fuzztype]->ApplyMatrices(proj, view, &norm);
 		}
 		for (unsigned i = 12; i < mTextureEffects.Size(); i++)
 		{
-			mTextureEffects[i]->ApplyMatrices(proj, view);
+			mTextureEffects[i]->ApplyMatrices(proj, view, &norm);
 		}
 		for (int i = 0; i < MAX_EFFECTS; i++)
 		{
-			mEffectShaders[i]->ApplyMatrices(proj, view);
+			mEffectShaders[i]->ApplyMatrices(proj, view, &norm);
 		}
 		if (mActiveShader != NULL) mActiveShader->Bind();
 	}

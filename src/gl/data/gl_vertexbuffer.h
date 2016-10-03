@@ -271,6 +271,7 @@ struct FModelVertex
 {
 	float x, y, z;	// world position
 	float u, v;		// texture coordinates
+	unsigned packedNormal;	// normal vector as GL_INT_2_10_10_10_REV.
 
 	void Set(float xx, float yy, float zz, float uu, float vv)
 	{
@@ -283,7 +284,13 @@ struct FModelVertex
 
 	void SetNormal(float nx, float ny, float nz)
 	{
-		// GZDoom currently doesn't use normals. This function is so that the high level code can pretend it does.
+	/*
+		int inx = int(nx * 512);
+		int iny = int(ny * 512);
+		int inz = int(nz * 512);
+		packedNormal = 0x40000000 | ((inx & 1023) << 20) | ((iny & 1023) << 10) | (inz & 1023);
+	*/
+		packedNormal = 0;	// Per-pixel lighting for models isn't implemented yet so leave this at 0 for now.
 	}
 };
 

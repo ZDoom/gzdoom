@@ -57,6 +57,7 @@ ACTOR Actor native //: Thinker
 	native float GetSpriteAngle(int ptr = AAPTR_DEFAULT);
 	native float GetSpriteRotation(int ptr = AAPTR_DEFAULT);
 	native int GetMissileDamage(int mask, int add, int ptr = AAPTR_DEFAULT);
+	action native int OverlayID();
 
 	// Action functions
 	// Meh, MBF redundant functions. Only for DeHackEd support.
@@ -344,6 +345,7 @@ ACTOR Actor native //: Thinker
 	action native bool A_SetSpriteAngle(float angle = 0, int ptr = AAPTR_DEFAULT);
 	action native bool A_SetSpriteRotation(float angle = 0, int ptr = AAPTR_DEFAULT);
 	action native bool A_SetVisibleRotation(float anglestart = 0, float angleend = 0, float pitchstart = 0, float pitchend = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void A_SetTranslation(string transname);
 
 	native void A_RearrangePointers(int newtarget, int newmaster = AAPTR_DEFAULT, int newtracer = AAPTR_DEFAULT, int flags=0);
 	native void A_TransferPointer(int ptr_source, int ptr_recepient, int sourcefield, int recepientfield=AAPTR_DEFAULT, int flags=0);

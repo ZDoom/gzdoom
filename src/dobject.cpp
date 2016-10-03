@@ -330,7 +330,11 @@ DObject::~DObject ()
 				}
 			}
 		}
-		type->DestroySpecials(this);
+		
+		if (nullptr != type)
+		{
+			type->DestroySpecials(this);
+		}
 	}
 }
 

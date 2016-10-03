@@ -4379,10 +4379,11 @@ enum EACSFunctions
 	ACSF_CheckClass = 200,
 	ACSF_DamageActor, // [arookas]
 	ACSF_SetActorFlag,
+	ACSF_SetTranslation,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
-	ACSF_SetTeamScore,			// (int team, int value)
+	ACSF_SetTeamScore,			// (int team, int value
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -6000,6 +6001,26 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				}
 			}
 			return count;
+		}
+
+		case ACSF_SetTranslation:
+		{
+			int tid = args[0];
+			const char *trname = FBehavior::StaticLookupString(args[1]);
+			if (tid == 0)
+			{
+				if (activator != nullptr)
+					activator->SetTranslation(trname);
+			}
+			else
+			{
+				FActorIterator it(tid);
+				while ((actor = it.Next()) != nullptr)
+				{
+					actor->SetTranslation(trname);
+				}
+			}
+			return 1;
 		}
 
 		default:

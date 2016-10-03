@@ -158,10 +158,11 @@ void FGLRenderer::Set3DViewport(bool mainview)
 {
 	if (mainview && mBuffers->Setup(mScreenViewport.width, mScreenViewport.height, mSceneViewport.width, mSceneViewport.height))
 	{
-		mBuffers->BindSceneFB(gl_ssao);
+		bool useSSAO = (gl_ssao != 0);
+		mBuffers->BindSceneFB(useSSAO);
 		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-		glDrawBuffers(gl_ssao ? 2 : 1, buffers);
-		gl_RenderState.SetPassType(gl_ssao ? GBUFFER_PASS : NORMAL_PASS);
+		glDrawBuffers(useSSAO ? 2 : 1, buffers);
+		gl_RenderState.SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
 		gl_RenderState.Apply();
 	}
 
@@ -476,6 +477,7 @@ void FGLRenderer::RenderTranslucent()
 void FGLRenderer::DrawScene(int drawmode)
 {
 	static int recursion=0;
+	static int ssao_portals_available = 0;
 
 	if (camera != nullptr)
 	{
@@ -493,8 +495,16 @@ void FGLRenderer::DrawScene(int drawmode)
 	}
 	GLRenderer->mClipPortal = NULL;	// this must be reset before any portal recursion takes place.
 
-	// If SSAO is active, switch to gbuffer shaders and use the gbuffer framebuffer
-	bool applySSAO = gl_ssao && FGLRenderBuffers::IsEnabled() && drawmode == DM_MAINVIEW;
+	// Decide if we need to do ssao for this scene
+	bool applySSAO = gl_ssao != 0 && FGLRenderBuffers::IsEnabled();
+	switch (drawmode)
+	{
+	case DM_MAINVIEW: ssao_portals_available = gl_ssao_portals; break;
+	case DM_OFFSCREEN: ssao_portals_available = 0; applySSAO = false; break;
+	case DM_PORTAL: applySSAO = applySSAO && (ssao_portals_available > 0); ssao_portals_available--; break;
+	}
+
+	// If SSAO is active, switch to gbuffer shaders and use the framebuffer with gbuffers
 	if (applySSAO)
 	{
 		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };

@@ -123,7 +123,6 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mDepthBlurShader = nullptr;
 	mSSAOShader = nullptr;
 	mSSAOCombineShader = nullptr;
-
 }
 
 void gl_LoadModels();

@@ -58,6 +58,14 @@ OptionValue "FXAAQuality"
 	4, "$OPTVAL_EXTREME"
 }
 
+OptionValue "SSAOModes"
+{
+	0, "$OPTVAL_OFF"
+	1, "$OPTVAL_LOW"
+	2, "$OPTVAL_MEDIUM"
+	3, "$OPTVAL_HIGH"
+}
+
 OptionValue "TextureFormats"
 {
 	0, "$OPTVAL_RGBA8"
@@ -246,5 +254,6 @@ OptionMenu "GLPrefOptions"
 	Option "$GLPREFMNU_BLOOM",		 			gl_bloom,						"OnOff"
 	Option "$GLPREFMNU_LENS",		 			gl_lens,						"OnOff"
 	Option "$GLPREFMNU_FXAA",		 			gl_fxaa,						"FXAAQuality"
-	Option "$GLPREFMNU_SSAO",		 			gl_ssao,						"OnOff"
+	Option "$GLPREFMNU_SSAO",		 			gl_ssao,						"SSAOModes"
+	Slider "$GLPREFMNU_SSAO_PORTALS",			gl_ssao_portals,				0.0, 4.0, 1.0, 0
 }

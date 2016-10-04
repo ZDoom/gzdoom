@@ -859,16 +859,30 @@ static DWORD lastskycol_bgra[4];
 static int skycolplace;
 static int skycolplace_bgra;
 
+CVAR(Bool, r_linearsky, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
 // Get a column of sky when there is only one sky texture.
 static const BYTE *R_GetOneSkyColumn (FTexture *fronttex, int x)
 {
-	angle_t column = (skyangle + xtoviewangle[x]) ^ skyflip;
-	int tx = (UMulScale16(column, frontcyl) + frontpos) >> FRACBITS;
+	int tx;
+	if (r_linearsky)
+	{
+		angle_t xangle = (angle_t)((0.5 - x / (double)viewwidth) * FocalTangent * ANGLE_90);
+		angle_t column = (skyangle + xangle) ^ skyflip;
+		tx = (UMulScale16(column, frontcyl) + frontpos) >> FRACBITS;
+	}
+	else
+	{
+		angle_t column = (skyangle + xtoviewangle[x]) ^ skyflip;
+		tx = (UMulScale16(column, frontcyl) + frontpos) >> FRACBITS;
+	}
 
 	if (!r_swtruecolor)
 		return fronttex->GetColumn(tx, NULL);
 	else
+	{
 		return (const BYTE *)fronttex->GetColumnBgra(tx, NULL);
+	}
 }
 
 // Get a column of sky when there are two overlapping sky textures

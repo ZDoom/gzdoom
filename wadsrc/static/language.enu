@@ -1789,6 +1789,7 @@ DSPLYMNU_SHOWENDOOM				= "Show ENDOOM screen";
 DSPLYMNU_PALLETEHACK			= "DirectDraw palette hack"; // Not used
 DSPLYMNU_ATTACHEDSURFACES		= "Use attached surfaces"; // Not used
 DSPLYMNU_STRETCHSKY				= "Stretch short skies";
+DSPLYMNU_LINEARSKY				= "Linear skies";
 DSPLYMNU_DRAWFUZZ				= "Use fuzz effect";
 DSPLYMNU_TRANSSOUL				= "Lost Soul translucency";
 DSPLYMNU_FAKECONTRAST			= "Use fake contrast";

@@ -4956,6 +4956,25 @@ FxExpression *FxRuntimeStateIndex::Resolve(FCompileContext &ctx)
 	return this;
 }
 
+static bool VerifyJumpTarget(AActor *stateowner, FStateParamInfo *stateinfo, int index)
+{
+	PClassActor *cls = stateowner->GetClass();
+
+	while (cls != RUNTIME_CLASS(AActor))
+	{
+		// both calling and target state need to belong to the same class.
+		if (cls->OwnsState(stateinfo->mCallingState))
+		{
+			return cls->OwnsState(stateinfo->mCallingState + index);
+		}
+
+		// We can safely assume the ParentClass is of type PClassActor
+		// since we stop when we see the Actor base class.
+		cls = static_cast<PClassActor *>(cls->ParentClass);
+	}
+	return false;
+}
+
 static int DecoHandleRuntimeState(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
 {
 	PARAM_PROLOGUE;
@@ -4963,7 +4982,7 @@ static int DecoHandleRuntimeState(VMFrameStack *stack, VMValue *param, int numpa
 	PARAM_POINTER(stateinfo, FStateParamInfo);
 	PARAM_INT(index);
 
-	if (index == 0 || !stateowner->GetClass()->OwnsState(stateinfo->mCallingState + index))
+	if (index == 0 || !VerifyJumpTarget(stateowner, stateinfo, index))
 	{
 		// Null is returned if the location was invalid which means that no jump will be performed
 		// if used as return value

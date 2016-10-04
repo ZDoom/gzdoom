@@ -2105,7 +2105,7 @@ void R_DrawSprite (vissprite_t *spr)
 			{ // seen below floor: clip top
 				if (!spr->bIsVoxel && h > topclip)
 				{
-					topclip = MIN<short> (h, viewheight);
+					topclip = short(MIN(h, viewheight));
 				}
 				hzt = MIN(hzt, hz);
 			}
@@ -2135,7 +2135,7 @@ void R_DrawSprite (vissprite_t *spr)
 			{ // seen in the middle: clip top
 				if (!spr->bIsVoxel && h > topclip)
 				{
-					topclip = MIN<short> (h, viewheight);
+					topclip = MIN(h, viewheight);
 				}
 				hzt = MIN(hzt, hz);
 			}
@@ -2189,7 +2189,7 @@ void R_DrawSprite (vissprite_t *spr)
 			int h = xs_RoundToInt(CenterY - (hz - ViewPos.Z) * scale);
 			if (h > topclip)
 			{
-				topclip = MIN<short>(h, viewheight);
+				topclip = short(MIN(h, viewheight));
 			}
 		}
 		hzt = MIN(hzt, sclipTop);
@@ -2212,7 +2212,7 @@ void R_DrawSprite (vissprite_t *spr)
 		h = (centeryfrac - FixedMul (h-viewz, scale)) >> FRACBITS;
 		if (h > topclip)
 		{
-			topclip = MIN<short> (h, viewheight);
+			topclip = short(MIN(h, viewheight));
 		}
 	}
 #endif

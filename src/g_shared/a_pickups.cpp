@@ -23,6 +23,8 @@
 #include "serializer.h"
 
 static FRandom pr_restore ("RestorePos");
+CVAR(Bool, r_pickupflash, true, CVAR_ARCHIVE);
+
 
 IMPLEMENT_CLASS(PClassInventory)
 
@@ -1089,7 +1091,7 @@ void AInventory::Touch (AActor *toucher)
 		if (player != NULL)
 		{
 			PlayPickupSound (player->mo);
-			if (!(ItemFlags & IF_NOSCREENFLASH))
+			if (!(ItemFlags & IF_NOSCREENFLASH) && r_pickupflash)
 			{
 				player->bonuscount = BONUSADD;
 			}

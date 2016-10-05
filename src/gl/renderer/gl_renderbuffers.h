@@ -81,7 +81,7 @@ private:
 	void ClearBloom();
 	void ClearExposureLevels();
 	void ClearAmbientOcclusion();
-	void CreateScene(int width, int height, int samples);
+	void CreateScene(int width, int height, int samples, bool needsSceneTextures);
 	void CreatePipeline(int width, int height);
 	void CreateBloom(int width, int height);
 	void CreateExposureLevels(int width, int height);
@@ -92,6 +92,7 @@ private:
 	GLuint CreateRenderBuffer(const FString &name, GLuint format, int width, int height);
 	GLuint CreateRenderBuffer(const FString &name, GLuint format, int samples, int width, int height);
 	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer);
+	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer, GLuint depthstencil, bool colorIsARenderBuffer);
 	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer0, GLuint colorbuffer1, GLuint depthstencil, bool multisample);
 	bool CheckFrameBufferCompleteness();
 	void ClearFrameBuffer(bool stencil, bool depth);
@@ -115,6 +116,7 @@ private:
 	GLuint mSceneData = 0;
 	GLuint mSceneFB = 0;
 	GLuint mSceneDataFB = 0;
+	bool mSceneUsesTextures = false;
 
 	// Effect/HUD buffers
 	GLuint mPipelineTexture[NumPipelineTextures];

@@ -45,17 +45,7 @@ FGLPostProcessState::FGLPostProcessState()
 {
 	glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTex);
 	glActiveTexture(GL_TEXTURE0);
-	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding[0]);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	if (gl.flags & RFL_SAMPLER_OBJECTS)
-	{
-		glGetIntegerv(GL_SAMPLER_BINDING, &samplerBinding[0]);
-		glBindSampler(0, 0);
-		glActiveTexture(GL_TEXTURE0 + 1);
-		glGetIntegerv(GL_SAMPLER_BINDING, &samplerBinding[1]);
-		glBindSampler(1, 0);
-		glActiveTexture(GL_TEXTURE0);
-	}
+	SaveTextureBindings(1);
 
 	glGetBooleanv(GL_BLEND, &blendEnabled);
 	glGetBooleanv(GL_SCISSOR_TEST, &scissorEnabled);
@@ -75,12 +65,26 @@ FGLPostProcessState::FGLPostProcessState()
 	glDisable(GL_BLEND);
 }
 
-void FGLPostProcessState::SaveTextureBinding1()
+void FGLPostProcessState::SaveTextureBindings(unsigned int numUnits)
 {
-	glActiveTexture(GL_TEXTURE1);
-	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding[1]);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	textureBinding1Saved = true;
+	while (textureBinding.Size() < numUnits)
+	{
+		unsigned int i = textureBinding.Size();
+
+		GLint texture;
+		glActiveTexture(GL_TEXTURE0 + i);
+		glGetIntegerv(GL_TEXTURE_BINDING_2D, &texture);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		textureBinding.Push(texture);
+
+		if (gl.flags & RFL_SAMPLER_OBJECTS)
+		{
+			GLint sampler;
+			glGetIntegerv(GL_SAMPLER_BINDING, &sampler);
+			glBindSampler(i, 0);
+			samplerBinding.Push(sampler);
+		}
+	}
 	glActiveTexture(GL_TEXTURE0);
 }
 
@@ -117,25 +121,22 @@ FGLPostProcessState::~FGLPostProcessState()
 
 	glUseProgram(currentProgram);
 
-	if (textureBinding1Saved)
+	// Fully unbind to avoid incomplete texture warnings from Nvidia's driver when gl_debug_level 4 is active
+	for (unsigned int i = 0; i < textureBinding.Size(); i++)
 	{
-		glActiveTexture(GL_TEXTURE1);
+		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	if (gl.flags & RFL_SAMPLER_OBJECTS)
+	for (unsigned int i = 0; i < samplerBinding.Size(); i++)
 	{
-		glBindSampler(0, samplerBinding[0]);
-		glBindSampler(1, samplerBinding[1]);
+		glBindSampler(i, samplerBinding[i]);
 	}
-	glBindTexture(GL_TEXTURE_2D, textureBinding[0]);
 
-	if (textureBinding1Saved)
+	for (unsigned int i = 0; i < textureBinding.Size(); i++)
 	{
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, textureBinding[1]);
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D, textureBinding[i]);
 	}
 
 	glActiveTexture(activeTex);

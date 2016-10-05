@@ -182,7 +182,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	glBindAttribLocation(hShader, VATTR_NORMAL, "aNormal");
 
 	glBindFragDataLocation(hShader, 0, "FragColor");
-	glBindFragDataLocation(hShader, 1, "FragData");
+	glBindFragDataLocation(hShader, 1, "FragFog");
+	glBindFragDataLocation(hShader, 2, "FragNormal");
 
 	glLinkProgram(hShader);
 

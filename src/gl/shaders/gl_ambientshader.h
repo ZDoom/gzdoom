@@ -6,20 +6,21 @@
 class FLinearDepthShader
 {
 public:
-	void Bind(bool multisample);
+	void Bind();
 
-	FBufferedUniformSampler DepthTexture[2];
-	FBufferedUniformSampler ColorTexture[2];
-	FBufferedUniform1i SampleCount[2];
-	FBufferedUniform1f LinearizeDepthA[2];
-	FBufferedUniform1f LinearizeDepthB[2];
-	FBufferedUniform1f InverseDepthRangeA[2];
-	FBufferedUniform1f InverseDepthRangeB[2];
-	FBufferedUniform2f Scale[2];
-	FBufferedUniform2f Offset[2];
+	FBufferedUniformSampler DepthTexture;
+	FBufferedUniformSampler ColorTexture;
+	FBufferedUniform1i SampleCount;
+	FBufferedUniform1f LinearizeDepthA;
+	FBufferedUniform1f LinearizeDepthB;
+	FBufferedUniform1f InverseDepthRangeA;
+	FBufferedUniform1f InverseDepthRangeB;
+	FBufferedUniform2f Scale;
+	FBufferedUniform2f Offset;
 
 private:
-	FShaderProgram mShader[2];
+	std::unique_ptr<FShaderProgram> mShader;
+	bool mMultisample = false;
 };
 
 class FSSAOShader
@@ -28,6 +29,7 @@ public:
 	void Bind();
 
 	FBufferedUniformSampler DepthTexture;
+	FBufferedUniformSampler NormalTexture;
 	FBufferedUniformSampler RandomTexture;
 	FBufferedUniform2f UVToViewA;
 	FBufferedUniform2f UVToViewB;
@@ -48,9 +50,11 @@ private:
 		NumQualityModes
 	};
 
-	FString GetDefines(int mode);
+	FString GetDefines(int mode, bool multisample);
 
-	FShaderProgram mShader[NumQualityModes];
+	std::unique_ptr<FShaderProgram> mShader;
+	Quality mCurrentQuality = Off;
+	bool mMultisample = false;
 };
 
 class FDepthBlurShader
@@ -70,16 +74,17 @@ private:
 class FSSAOCombineShader
 {
 public:
-	void Bind(bool multisample);
+	void Bind();
 
-	FBufferedUniformSampler AODepthTexture[2];
-	FBufferedUniformSampler SceneDataTexture[2];
-	FBufferedUniform1i SampleCount[2];
-	FBufferedUniform2f Scale[2];
-	FBufferedUniform2f Offset[2];
+	FBufferedUniformSampler AODepthTexture;
+	FBufferedUniformSampler SceneFogTexture;
+	FBufferedUniform1i SampleCount;
+	FBufferedUniform2f Scale;
+	FBufferedUniform2f Offset;
 
 private:
-	FShaderProgram mShader[2];
+	std::unique_ptr<FShaderProgram> mShader;
+	bool mMultisample = false;
 };
 
 #endif

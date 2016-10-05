@@ -15,6 +15,12 @@ uniform float AOStrength;
 
 uniform sampler2D DepthTexture;
 
+#if defined(MULTISAMPLE)
+uniform sampler2DMS NormalTexture;
+#else
+uniform sampler2D NormalTexture;
+#endif
+
 #if defined(USE_RANDOM_TEXTURE)
 uniform sampler2D RandomTexture;
 #endif
@@ -27,6 +33,20 @@ vec3 FetchViewPos(vec2 uv)
     float z = texture(DepthTexture, uv).x;
     return vec3((UVToViewA * uv + UVToViewB) * z, z);
 }
+
+#if defined(MULTISAMPLE)
+vec3 FetchNormal(vec2 uv)
+{
+	ivec2 texSize = textureSize(NormalTexture);
+	ivec2 ipos = ivec2(uv * vec2(texSize));
+	return normalize(texelFetch(NormalTexture, ipos, 0).xyz * 2.0 - 1.0);
+}
+#else
+vec3 FetchNormal(vec2 uv)
+{
+	return normalize(texture(NormalTexture, uv).xyz * 2.0 - 1.0);
+}
+#endif
 
 vec3 MinDiff(vec3 p, vec3 pr, vec3 pl)
 {
@@ -106,7 +126,8 @@ float ComputeAO(vec3 viewPosition, vec3 viewNormal)
 void main()
 {
     vec3 viewPosition = FetchViewPos(TexCoord);
-    vec3 viewNormal = ReconstructNormal(viewPosition);
+    //vec3 viewNormal = ReconstructNormal(viewPosition);
+	vec3 viewNormal = FetchNormal(TexCoord);
 	float occlusion = ComputeAO(viewPosition, viewNormal) * AOStrength + (1.0 - AOStrength);
 	FragColor = vec4(occlusion, viewPosition.z, 0.0, 1.0);
 }

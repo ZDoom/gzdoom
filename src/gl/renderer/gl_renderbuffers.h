@@ -34,7 +34,8 @@ public:
 
 	void BindSceneFB(bool sceneData);
 	void BindSceneColorTexture(int index);
-	void BindSceneDataTexture(int index);
+	void BindSceneFogTexture(int index);
+	void BindSceneNormalTexture(int index);
 	void BindSceneDepthTexture(int index);
 	void BlitSceneToTexture();
 
@@ -93,7 +94,7 @@ private:
 	GLuint CreateRenderBuffer(const FString &name, GLuint format, int samples, int width, int height);
 	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer);
 	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer, GLuint depthstencil, bool colorIsARenderBuffer);
-	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer0, GLuint colorbuffer1, GLuint depthstencil, bool multisample);
+	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer0, GLuint colorbuffer1, GLuint colorbuffer2, GLuint depthstencil, bool multisample);
 	bool CheckFrameBufferCompleteness();
 	void ClearFrameBuffer(bool stencil, bool depth);
 	void DeleteTexture(GLuint &handle);
@@ -113,7 +114,8 @@ private:
 	// Buffers for the scene
 	GLuint mSceneMultisample = 0;
 	GLuint mSceneDepthStencil = 0;
-	GLuint mSceneData = 0;
+	GLuint mSceneFog = 0;
+	GLuint mSceneNormal = 0;
 	GLuint mSceneFB = 0;
 	GLuint mSceneDataFB = 0;
 	bool mSceneUsesTextures = false;

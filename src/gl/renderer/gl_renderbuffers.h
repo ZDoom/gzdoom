@@ -65,7 +65,8 @@ public:
 	GLuint AmbientFB1 = 0;
 	int AmbientWidth = 0;
 	int AmbientHeight = 0;
-	GLuint AmbientRandomTexture = 0;
+	enum { NumAmbientRandomTextures = 3 };
+	GLuint AmbientRandomTexture[NumAmbientRandomTextures];
 
 	static bool IsEnabled();
 

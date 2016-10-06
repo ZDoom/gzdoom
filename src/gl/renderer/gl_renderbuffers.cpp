@@ -59,6 +59,11 @@ FGLRenderBuffers::FGLRenderBuffers()
 		mPipelineFB[i] = 0;
 	}
 
+	for (int i = 0; i < NumAmbientRandomTextures; i++)
+	{
+		AmbientRandomTexture[i] = 0;
+	}
+
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&mOutputFB);
 	glGetIntegerv(GL_MAX_SAMPLES, &mMaxSamples);
 }
@@ -151,7 +156,8 @@ void FGLRenderBuffers::ClearAmbientOcclusion()
 	DeleteFrameBuffer(AmbientFB1);
 	DeleteTexture(AmbientTexture0);
 	DeleteTexture(AmbientTexture1);
-	DeleteTexture(AmbientRandomTexture);
+	for (int i = 0; i < NumAmbientRandomTextures; i++)
+		DeleteTexture(AmbientRandomTexture[i]);
 }
 
 void FGLRenderBuffers::DeleteTexture(GLuint &handle)
@@ -368,25 +374,31 @@ void FGLRenderBuffers::CreateAmbientOcclusion(int width, int height)
 	AmbientFB0 = CreateFrameBuffer("AmbientFB0", AmbientTexture0);
 	AmbientFB1 = CreateFrameBuffer("AmbientFB1", AmbientTexture1);
 
-	int16_t randomValues[16 * 4];
+	// Must match quality enum in FSSAOShader::GetDefines
+	double numDirections[NumAmbientRandomTextures] = { 2.0, 4.0, 8.0 };
+
 	std::mt19937 generator(1337);
-	std::uniform_real_distribution<double> distribution(-1.0, 1.0);
-	for (int i = 0; i < 16; i++)
+	std::uniform_real_distribution<double> distribution(0.0, 1.0);
+	for (int quality = 0; quality < NumAmbientRandomTextures; quality++)
 	{
-		double num_directions = 8.0; // Must be same as the define in ssao.fp
-		double angle = 2.0 * M_PI * distribution(generator) / num_directions;
-		double x = cos(angle);
-		double y = sin(angle);
-		double z = distribution(generator);
-		double w = distribution(generator);
+		int16_t randomValues[16 * 4];
 
-		randomValues[i * 4 + 0] = (int16_t)clamp(x * 32767.0, -32768.0, 32767.0);
-		randomValues[i * 4 + 1] = (int16_t)clamp(y * 32767.0, -32768.0, 32767.0);
-		randomValues[i * 4 + 2] = (int16_t)clamp(z * 32767.0, -32768.0, 32767.0);
-		randomValues[i * 4 + 3] = (int16_t)clamp(w * 32767.0, -32768.0, 32767.0);
+		for (int i = 0; i < 16; i++)
+		{
+			double angle = 2.0 * M_PI * distribution(generator) / numDirections[quality];
+			double x = cos(angle);
+			double y = sin(angle);
+			double z = distribution(generator);
+			double w = distribution(generator);
+
+			randomValues[i * 4 + 0] = (int16_t)clamp(x * 32767.0, -32768.0, 32767.0);
+			randomValues[i * 4 + 1] = (int16_t)clamp(y * 32767.0, -32768.0, 32767.0);
+			randomValues[i * 4 + 2] = (int16_t)clamp(z * 32767.0, -32768.0, 32767.0);
+			randomValues[i * 4 + 3] = (int16_t)clamp(w * 32767.0, -32768.0, 32767.0);
+		}
+
+		AmbientRandomTexture[quality] = Create2DTexture("AmbientRandomTexture", GL_RGBA16_SNORM, 4, 4, randomValues);
 	}
-
-	AmbientRandomTexture = Create2DTexture("AmbientRandomTexture", GL_RGBA16_SNORM, 4, 4, randomValues);
 }
 
 //==========================================================================

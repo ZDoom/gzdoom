@@ -39,6 +39,8 @@ public:
 	FBufferedUniform1f RadiusToScreen;
 	FBufferedUniform1f AOMultiplier;
 	FBufferedUniform1f AOStrength;
+	FBufferedUniform2f Scale;
+	FBufferedUniform2f Offset;
 
 private:
 	enum Quality

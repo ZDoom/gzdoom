@@ -84,6 +84,8 @@ void FSSAOShader::Bind()
 		RadiusToScreen.Init(*mShader, "RadiusToScreen");
 		AOMultiplier.Init(*mShader, "AOMultiplier");
 		AOStrength.Init(*mShader, "AOStrength");
+		Scale.Init(*mShader, "Scale");
+		Offset.Init(*mShader, "Offset");
 		mMultisample = multisample;
 	}
 	mShader->Bind();
@@ -91,6 +93,7 @@ void FSSAOShader::Bind()
 
 FString FSSAOShader::GetDefines(int mode, bool multisample)
 {
+	// Must match quality values in FGLRenderBuffers::CreateAmbientOcclusion
 	int numDirections, numSteps;
 	switch (gl_ssao)
 	{

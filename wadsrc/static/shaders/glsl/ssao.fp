@@ -13,6 +13,9 @@ uniform float AOMultiplier;
 
 uniform float AOStrength;
 
+uniform vec2 Scale;
+uniform vec2 Offset;
+
 uniform sampler2D DepthTexture;
 
 #if defined(MULTISAMPLE)
@@ -27,42 +30,42 @@ uniform sampler2D RandomTexture;
 
 #define PI 3.14159265358979323846
 
-// Calculate eye space position for the specified texture coordinate
-vec3 FetchViewPos(vec2 uv)
+// Calculate eye space position for the specified texture coordinate and depth
+vec3 FetchViewPos(vec2 uv, float z)
 {
-    float z = texture(DepthTexture, uv).x;
     return vec3((UVToViewA * uv + UVToViewB) * z, z);
 }
 
 #if defined(MULTISAMPLE)
-vec3 FetchNormal(vec2 uv)
+vec3 SampleNormal(vec2 uv, float samplerIndex)
 {
 	ivec2 texSize = textureSize(NormalTexture);
 	ivec2 ipos = ivec2(uv * vec2(texSize));
-	return normalize(texelFetch(NormalTexture, ipos, 0).xyz * 2.0 - 1.0);
+	return texelFetch(NormalTexture, ipos, int(samplerIndex)).xyz * 2.0 - 1.0;
 }
 #else
-vec3 FetchNormal(vec2 uv)
+vec3 SampleNormal(vec2 uv, float samplerIndex)
 {
-	return normalize(texture(NormalTexture, uv).xyz * 2.0 - 1.0);
+	ivec2 texSize = textureSize(NormalTexture, 0);
+	ivec2 ipos = ivec2(uv * vec2(texSize));
+	return texelFetch(NormalTexture, ipos, 0).xyz * 2.0 - 1.0;
 }
 #endif
 
-vec3 MinDiff(vec3 p, vec3 pr, vec3 pl)
+// Look up the eye space normal for the specified texture coordinate
+vec3 FetchNormal(vec2 uv, float samplerIndex)
 {
-    vec3 v1 = pr - p;
-    vec3 v2 = p - pl;
-    return (dot(v1, v1) < dot(v2, v2)) ? v1 : v2;
-}
-
-// Reconstruct eye space normal from nearest neighbors
-vec3 ReconstructNormal(vec3 p)
-{
-    vec3 pr = FetchViewPos(TexCoord + vec2(InvFullResolution.x, 0));
-    vec3 pl = FetchViewPos(TexCoord + vec2(-InvFullResolution.x, 0));
-    vec3 pt = FetchViewPos(TexCoord + vec2(0, InvFullResolution.y));
-    vec3 pb = FetchViewPos(TexCoord + vec2(0, -InvFullResolution.y));
-    return normalize(cross(MinDiff(p, pr, pl), MinDiff(p, pt, pb)));
+	vec3 normal = SampleNormal(Offset + uv * Scale, samplerIndex);
+	if (length(normal) > 0.1)
+	{
+		normal = normalize(normal);
+		normal.z = -normal.z;
+		return normal;
+	}
+	else
+	{
+		return vec3(0.0);
+	}
 }
 
 // Compute normalized 2D direction
@@ -113,7 +116,7 @@ float ComputeAO(vec3 viewPosition, vec3 viewNormal)
         for (float StepIndex = 0.0; StepIndex < NUM_STEPS; ++StepIndex)
         {
             vec2 sampleUV = round(rayPixels * direction) * InvFullResolution + TexCoord;
-            vec3 samplePos = FetchViewPos(sampleUV);
+            vec3 samplePos = FetchViewPos(sampleUV, texture(DepthTexture, sampleUV).x);
             ao += ComputeSampleAO(viewPosition, viewNormal, samplePos);
             rayPixels += stepSizePixels;
         }
@@ -125,9 +128,10 @@ float ComputeAO(vec3 viewPosition, vec3 viewNormal)
 
 void main()
 {
-    vec3 viewPosition = FetchViewPos(TexCoord);
-    //vec3 viewNormal = ReconstructNormal(viewPosition);
-	vec3 viewNormal = FetchNormal(TexCoord);
-	float occlusion = ComputeAO(viewPosition, viewNormal) * AOStrength + (1.0 - AOStrength);
+	vec2 depthData = texture(DepthTexture, TexCoord).xy;
+    vec3 viewPosition = FetchViewPos(TexCoord, depthData.x);
+	vec3 viewNormal = FetchNormal(TexCoord, depthData.y);
+	float occlusion = viewNormal != vec3(0.0) ? ComputeAO(viewPosition, viewNormal) * AOStrength + (1.0 - AOStrength) : 1.0;
+
 	FragColor = vec4(occlusion, viewPosition.z, 0.0, 1.0);
 }

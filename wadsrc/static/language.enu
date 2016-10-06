@@ -1808,6 +1808,7 @@ DSPLYMNU_DIMCOLOR				= "Dim color";
 DSPLYMNU_MOVEBOB 				= "View bob amount while moving";
 DSPLYMNU_STILLBOB 				= "View bob amount while not moving";
 DSPLYMNU_BOBSPEED				= "Weapon bob speed";
+DSPLYMNU_PIFLASH				= "Show pickup screen flash";
 
 // HUD Options
 HUDMNU_TITLE					= "HUD Options";

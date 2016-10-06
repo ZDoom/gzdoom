@@ -693,6 +693,7 @@ OptionMenu "VideoOptions"
 	Option "$DSPLYMNU_LINEARSKY",				"r_linearsky", "OnOff"
 	Option "$DSPLYMNU_DRAWFUZZ",				"r_drawfuzz", "Fuzziness"
 	Slider "$DSPLYMNU_TRANSSOUL",				"transsouls", 0.25, 1.0, 0.05, 2
+	Option "$DSPLYMNU_PIFLASH",					"r_pickupflash", "OnOff"
 	Option "$DSPLYMNU_FAKECONTRAST",			"r_fakecontrast", "Contrast"
 	Option "$DSPLYMNU_ROCKETTRAILS",			"cl_rockettrails", "RocketTrailTypes"
 	Option "$DSPLYMNU_BLOODTYPE",				"cl_bloodtype", "BloodTypes"

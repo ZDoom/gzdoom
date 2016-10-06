@@ -162,11 +162,11 @@ ZCC_OpProto *ZCC_OpInfoType::FindBestProto(
 		// [[float32 (op) int]] will choose the integer version instead of the floating point
 		// version, which we do not want.
 		int test_dist1 = dist1, test_dist2 = dist2;
-		if (routes[0][cur_route1][0]->ConvertConstant == FtoD)
+		if (test_dist1 > 0 && routes[0][cur_route1][0]->ConvertConstant == FtoD)
 		{
 			test_dist1--;
 		}
-		if (routes[1][cur_route2][0]->ConvertConstant == FtoD)
+		if (test_dist2 > 0 && routes[1][cur_route2][0]->ConvertConstant == FtoD)
 		{
 			test_dist2--;
 		}

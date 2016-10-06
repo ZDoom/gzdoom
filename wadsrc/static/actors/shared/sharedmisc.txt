@@ -75,12 +75,14 @@ ACTOR PointPusher
 {
 	+NOBLOCKMAP
 	+INVISIBLE
+	+NOCLIP
 }
 
 ACTOR PointPuller
 {
 	+NOBLOCKMAP
 	+INVISIBLE
+	+NOCLIP
 }
 
 // Bloody gibs -------------------------------------------------------------

@@ -657,7 +657,7 @@ DWORD *HMISong::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptrdi
 		if (event == MIDI_SYSEX || event == MIDI_SYSEXEND)
 		{
 			len = ReadVarLen(track);
-			if (len >= (MAX_EVENTS-1)*3*4)
+			if (len >= (MAX_EVENTS-1)*3*4 || DeviceType == MDEV_SNDSYS)
 			{ // This message will never fit. Throw it away.
 				track->TrackP += len;
 			}

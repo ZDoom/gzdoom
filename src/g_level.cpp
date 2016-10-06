@@ -1512,7 +1512,11 @@ void G_UnSnapshotLevel (bool hubLoad)
 	if (level.info->isValid())
 	{
 		FSerializer arc;
-		if (!arc.OpenReader(&level.info->Snapshot)) return;
+		if (!arc.OpenReader(&level.info->Snapshot))
+		{
+			I_Error("Failed to load savegame");
+			return;
+		}
 
 		G_SerializeLevel (arc, hubLoad);
 		level.FromSnapshot = true;

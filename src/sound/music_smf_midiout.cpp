@@ -598,7 +598,7 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 		if (event == MIDI_SYSEX || event == MIDI_SYSEXEND)
 		{
 			len = track->ReadVarLen();
-			if (len >= (MAX_EVENTS-1)*3*4)
+			if (len >= (MAX_EVENTS-1)*3*4 || DeviceType == MDEV_SNDSYS)
 			{ // This message will never fit. Throw it away.
 				track->TrackP += len;
 			}

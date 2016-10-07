@@ -674,6 +674,9 @@ OptionMenu "VideoOptions"
 
 	Option "$DSPLYMNU_VSYNC",					"vid_vsync", "OnOff"
 	Option "$DSPLYMNU_CAPFPS",					"cl_capfps", "OffOn"
+	Slider "$DSPLYMNU_BLOODFADE",				"blood_fade_scalar", 0.0, 1.0, 0.05, 1
+	Slider "$DSPLYMNU_PICKUPFADE",				"pickup_fade_scalar", 0.0, 1.0, 0.05, 1
+	Option "$DSPLYMNU_COLUMNMETHOD",			"r_columnmethod", "ColumnMethods"
 	Option "$DSPLYMNU_TRUECOLOR",				"swtruecolor", "OnOff"
 	Option "$DSPLYMNU_MINFILTER",				"r_minfilter", "OnOff"
 	Option "$DSPLYMNU_MAGFILTER",				"r_magfilter", "OnOff"
@@ -710,6 +713,7 @@ OptionMenu "VideoOptions"
 	Slider "$DSPLYMNU_MOVEBOB",			"movebob", 0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_STILLBOB",		"stillbob", 0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_BOBSPEED",				"wbobspeed", 0, 2.0, 0.1, 2
+
 }
 
 //-------------------------------------------------------------------------------------------

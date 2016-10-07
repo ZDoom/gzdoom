@@ -670,6 +670,20 @@ void PNamedType::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 	id2 = TypeName;
 }
 
+//==========================================================================
+//
+// PNamedType :: QualifiedName
+//
+//==========================================================================
+
+FString PNamedType::QualifiedName() const
+{
+	FString out;
+	if (Outer != nullptr) out = Outer->QualifiedName();
+	out << "::" << TypeName;
+	return out;
+}
+
 /* PInt *******************************************************************/
 
 IMPLEMENT_CLASS(PInt)
@@ -1752,7 +1766,7 @@ PEnum::PEnum()
 //
 //==========================================================================
 
-PEnum::PEnum(FName name, DObject *outer)
+PEnum::PEnum(FName name, PTypeBase *outer)
 : PNamedType(name, outer), ValueType(NULL)
 {
 }
@@ -1766,7 +1780,7 @@ PEnum::PEnum(FName name, DObject *outer)
 //
 //==========================================================================
 
-PEnum *NewEnum(FName name, DObject *outer)
+PEnum *NewEnum(FName name, PTypeBase *outer)
 {
 	size_t bucket;
 	PType *etype = TypeTable.FindType(RUNTIME_CLASS(PEnum), (intptr_t)outer, (intptr_t)name, &bucket);
@@ -2149,7 +2163,7 @@ PStruct::PStruct()
 //
 //==========================================================================
 
-PStruct::PStruct(FName name, DObject *outer)
+PStruct::PStruct(FName name, PTypeBase *outer)
 : PNamedType(name, outer)
 {
 }
@@ -2310,7 +2324,7 @@ size_t PStruct::PropagateMark()
 //
 //==========================================================================
 
-PStruct *NewStruct(FName name, DObject *outer)
+PStruct *NewStruct(FName name, PTypeBase *outer)
 {
 	size_t bucket;
 	PType *stype = TypeTable.FindType(RUNTIME_CLASS(PStruct), (intptr_t)outer, (intptr_t)name, &bucket);
@@ -3360,6 +3374,7 @@ CCMD(typetable)
 
 // Symbol tables ------------------------------------------------------------
 
+IMPLEMENT_ABSTRACT_CLASS(PTypeBase);
 IMPLEMENT_ABSTRACT_CLASS(PSymbol);
 IMPLEMENT_CLASS(PSymbolConst);
 IMPLEMENT_CLASS(PSymbolConstNumeric);

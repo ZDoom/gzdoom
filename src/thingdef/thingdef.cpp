@@ -445,6 +445,7 @@ static void FinishThingdef()
 // Called from FActor::StaticInit()
 //
 //==========================================================================
+void ParseScripts();
 
 void LoadActors ()
 {
@@ -456,19 +457,10 @@ void LoadActors ()
 	FScriptPosition::ResetErrorCounter();
 	InitThingdef();
 	lastlump = 0;
+	ParseScripts();
 	while ((lump = Wads.FindLump ("DECORATE", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
-
-		if (Wads.GetLumpFile(lump) == 0)
-		{
-			// define namespace 'zdoom'
-		}
-		else
-		{
-			// use namespace 'zdoom'
-		}
-
 		ParseDecorate (sc);
 	}
 	FinishThingdef();

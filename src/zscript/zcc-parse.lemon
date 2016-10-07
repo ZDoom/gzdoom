@@ -96,9 +96,9 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 			}
 		}
 	}
-	stat->sc.ScriptMessage("%s\n%s\n", unexpected.GetChars(), expecting.GetChars());
+	stat->sc->ScriptMessage("%s\n%s\n", unexpected.GetChars(), expecting.GetChars());
 }
-%parse_accept { stat->sc.ScriptMessage("input accepted\n"); }
+%parse_accept { DPrintf(DMSG_SPAMMY, "Input accepted\n"); }
 %parse_failure { /**failed = true;*/ }
 
 %nonassoc EQ MULEQ DIVEQ MODEQ ADDEQ SUBEQ LSHEQ RSHEQ ANDEQ OREQ XOREQ.
@@ -124,7 +124,7 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 %type opt_func_body {ZCC_CompoundStmt *}
 %type function_body {ZCC_CompoundStmt *}
 
-main ::= translation_unit(A). { stat->TopNode = A; stat->sc.ScriptMessage("Parse complete\n"); }
+main ::= translation_unit(A). { stat->TopNode = A; DPrintf(DMSG_SPAMMY, "Parse complete\n"); }
 
 %type translation_unit {ZCC_TreeNode *}
 translation_unit(X) ::= .												{ X = NULL; }
@@ -339,7 +339,7 @@ enum_def(X) ::= ENUM(T) IDENTIFIER(A) enum_type(B) LBRACE opt_enum_list(C) RBRAC
 	X = def;
 }
 
-enum_type(X) ::= .										{ X.Int = ZCC_IntAuto; X.SourceLoc = stat->sc.GetMessageLine(); }
+enum_type(X) ::= .										{ X.Int = ZCC_IntAuto; X.SourceLoc = stat->sc->GetMessageLine(); }
 enum_type(X) ::= COLON int_type(A).						{ X = A; /*X-overwrites-A*/ }
 
 enum_list(X) ::= error.									{ X = NULL; }
@@ -398,7 +398,7 @@ states_def(X) ::= STATES(T) scanner_mode LBRACE states_body(A) RBRACE.
  * set immediately after LBRACE is consumed, rather than immediately after
  * STATES is consumed.
  */
-scanner_mode ::= . { stat->sc.SetStateMode(true); }
+scanner_mode ::= . { stat->sc->SetStateMode(true); }
 
 states_body(X) ::= .								{ X = NULL; }
 states_body(X) ::= error.							{ X = NULL; }
@@ -538,7 +538,7 @@ type_name(X) ::= DOT dottable_id(A).
  * straight away.)
  */
 %token_class intconst INTCONST|UINTCONST.
-vector_size(X) ::= .						{ X.Int = ZCC_Vector3; X.SourceLoc = stat->sc.GetMessageLine(); }
+vector_size(X) ::= .						{ X.Int = ZCC_Vector3; X.SourceLoc = stat->sc->GetMessageLine(); }
 vector_size(X) ::= LT intconst(A) GT.
 {
 	if (A.Int >= 2 && A.Int <= 4)
@@ -548,7 +548,7 @@ vector_size(X) ::= LT intconst(A) GT.
 	else
 	{
 		X.Int = ZCC_Vector3;
-		stat->sc.ScriptMessage("Invalid vector size %d\n", A.Int);
+		stat->sc->ScriptMessage("Invalid vector size %d\n", A.Int);
 	}
 	X.SourceLoc = A.SourceLoc;
 }
@@ -656,11 +656,11 @@ declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
 	{ // An invalid
 		if (B == NULL)
 		{
-			stat->sc.ScriptMessage("Variables may not be of type void.\n");
+			stat->sc->ScriptMessage("Variables may not be of type void.\n");
 		}
 		else
 		{
-			stat->sc.ScriptMessage("Variables may be of only one type.\n");
+			stat->sc->ScriptMessage("Variables may be of only one type.\n");
 		}
 		X = NULL;
 	}
@@ -750,7 +750,7 @@ decl_flags(X) ::= decl_flags(A) ACTION(T).		{ X.Int = A.Int | ZCC_Action; X.Sour
 decl_flags(X) ::= decl_flags(A) READONLY(T).	{ X.Int = A.Int | ZCC_ReadOnly; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
 decl_flags(X) ::= decl_flags(A) DEPRECATED(T).	{ X.Int = A.Int | ZCC_Deprecated; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
 
-func_const(X) ::= .							{ X.Int = 0; X.SourceLoc = stat->sc.GetMessageLine(); }
+func_const(X) ::= .							{ X.Int = 0; X.SourceLoc = stat->sc->GetMessageLine(); }
 func_const(X) ::= CONST(T).					{ X.Int = ZCC_FuncConst; X.SourceLoc = T.SourceLoc; }
 
 opt_func_body(X) ::= SEMICOLON.				{ X = NULL; }

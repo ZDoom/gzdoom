@@ -5,6 +5,7 @@
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "m_alloc.h"
+#include "i_system.h"
 #include "zcc_parser.h"
 #include "zcc_compile.h"
 
@@ -161,44 +162,26 @@ static void InitTokenMap()
 #undef TOKENDEF
 #undef TOKENDEF2
 
-static void DoParse(const char *filename)
+static void ParseSingleFile(const char *filename, void *parser, ZCCParseState &state)
 {
-	if (TokenMap.CountUsed() == 0)
-	{
-		InitTokenMap();
-	}
-
-	FScanner sc;
-	void *parser;
 	int tokentype;
 	int lump;
-	bool failed;
+	//bool failed;
 	ZCCToken value;
+	FScanner sc;
 
 	lump = Wads.CheckNumForFullName(filename, true);
 	if (lump >= 0)
 	{
 		sc.OpenLumpNum(lump);
 	}
-	else if (FileExists(filename))
-	{
-		sc.OpenFile(filename);
-	}
 	else
 	{
 		Printf("Could not find script lump '%s'\n", filename);
 		return;
 	}
-	
-	parser = ZCCParseAlloc(malloc);
-	failed = false;
-#ifdef _DEBUG
-	FILE *f = fopen("trace.txt", "w");
-	char prompt = '\0';
-	ZCCParseTrace(f, &prompt);
-#endif
-	ZCCParseState state(sc);
 
+	state.sc = &sc;
 	while (sc.GetToken())
 	{
 		value.SourceLoc = sc.GetMessageLine();
@@ -241,7 +224,7 @@ static void DoParse(const char *filename)
 
 		default:
 			TokenMapEntry *zcctoken = TokenMap.CheckKey(sc.TokenType);
-			if (zcctoken != NULL)
+			if (zcctoken != nullptr)
 			{
 				tokentype = zcctoken->TokenType;
 				value.Int = zcctoken->TokenName;
@@ -254,20 +237,55 @@ static void DoParse(const char *filename)
 			break;
 		}
 		ZCCParse(parser, tokentype, value, &state);
-		if (failed)
-		{
-			sc.ScriptMessage("Parse failed\n");
-			goto parse_end;
-		}
 	}
 parse_end:
 	value.Int = -1;
 	ZCCParse(parser, ZCC_EOF, value, &state);
+	state.sc = nullptr;
+}
+
+static void DoParse(int lumpnum)
+{
+	if (TokenMap.CountUsed() == 0)
+	{
+		InitTokenMap();
+	}
+
+	FScanner sc;
+	void *parser;
+	ZCCToken value;
+
+	parser = ZCCParseAlloc(malloc);
+	ZCCParseState state;
+#ifdef _DEBUG
+	FILE *f = fopen("trace.txt", "w");
+	char prompt = '\0';
+	ZCCParseTrace(f, &prompt);
+#endif
+
+	sc.OpenLumpNum(lumpnum);
+	// parse all files from this list in one go.
+	while (sc.GetString())
+	{
+		if (Wads.GetLumpFile(sc.LumpNum) == 0)
+		{
+			int includefile = Wads.GetLumpFile(Wads.CheckNumForFullName(sc.String, true));
+			if (includefile != 0)
+			{
+				I_FatalError("File %s is overriding core lump %s.",
+					Wads.GetWadFullName(includefile), sc.String);
+			}
+		}
+
+		ParseSingleFile(sc.String, parser, state);
+	}
+
+	value.Int = -1;
+	value.SourceLoc = sc.GetMessageLine();
 	ZCCParse(parser, 0, value, &state);
 	ZCCParseFree(parser, free);
 
-	PSymbolTable symbols(&GlobalSymbols);
-	ZCCCompiler cc(state, NULL, symbols);
+	ZCCCompiler cc(state, NULL, GlobalSymbols);
 	cc.Compile();
 #ifdef _DEBUG
 	if (f != NULL)
@@ -275,6 +293,7 @@ parse_end:
 		fclose(f);
 	}
 	FString ast = ZCC_PrintAST(state.TopNode);
+	FString filename = Wads.GetLumpFullName(lumpnum);
 	FString astfile = ExtractFileBase(filename, false);
 	astfile << ".ast";
 	f = fopen(astfile, "w");
@@ -286,6 +305,16 @@ parse_end:
 #endif
 }
 
+void ParseScripts()
+{
+	int lump, lastlump = 0;
+	while ((lump = Wads.FindLump("ZSCRIPT", &lastlump)) != -1)
+	{
+		DoParse(lump);
+	}
+}
+
+/*
 CCMD(parse)
 {
 	if (argv.argc() == 2)
@@ -293,6 +322,7 @@ CCMD(parse)
 		DoParse(argv[1]);
 	}
 }
+*/
 
 static FString ZCCTokenName(int terminal)
 {
@@ -333,6 +363,6 @@ ZCC_TreeNode *ZCC_AST::InitNode(size_t size, EZCCTreeNodeType type, ZCC_TreeNode
 ZCC_TreeNode *ZCCParseState::InitNode(size_t size, EZCCTreeNodeType type)
 {
 	ZCC_TreeNode *node = ZCC_AST::InitNode(size, type, NULL);
-	node->SourceName = Strings.Alloc(sc.ScriptName);
+	node->SourceName = Strings.Alloc(sc->ScriptName);
 	return node;
 }

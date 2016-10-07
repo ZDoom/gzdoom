@@ -514,10 +514,10 @@ struct ZCC_AST
 
 struct ZCCParseState : public ZCC_AST
 {
-	ZCCParseState(FScanner &scanner) : sc(scanner) {}
+	ZCCParseState(FScanner *scanner = nullptr) : sc(scanner) {}
 	ZCC_TreeNode *InitNode(size_t size, EZCCTreeNodeType type);
 
-	FScanner &sc;
+	FScanner *sc;
 };
 
 #endif

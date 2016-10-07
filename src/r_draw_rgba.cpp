@@ -1314,19 +1314,6 @@ DWORD vlinec1_rgba()
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
-template<typename NearestSimple, typename Nearest, typename LinearSimple, typename Linear>
-void queue_wallcommand()
-{
-	if (bufplce2[0] == nullptr && dc_shade_constants.simple_shade)
-		DrawerCommandQueue::QueueCommand<NearestSimple>();
-	else if (bufplce2[0] == nullptr)
-		DrawerCommandQueue::QueueCommand<Nearest>();
-	else if (dc_shade_constants.simple_shade)
-		DrawerCommandQueue::QueueCommand<LinearSimple>();
-	else
-		DrawerCommandQueue::QueueCommand<Linear>();
-}
-
 void vlinec4_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawWall4LLVMCommand>();

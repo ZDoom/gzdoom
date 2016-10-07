@@ -1780,10 +1780,6 @@ DSPLYMNU_BRIGHTNESS				= "Brightness";
 DSPLYMNU_VSYNC					= "Vertical Sync";
 DSPLYMNU_CAPFPS					= "Rendering Interpolation";
 DSPLYMNU_COLUMNMETHOD			= "Column render mode";
-DSPLYMNU_TRUECOLOR				= "True color output";
-DSPLYMNU_MINFILTER				= "Linear filter when downscaling";
-DSPLYMNU_MAGFILTER				= "Linear filter when upscaling";
-DSPLYMNU_MIPMAP					= "Use mipmapped textures";
 DSPLYMNU_WIPETYPE				= "Screen wipe style";
 DSPLYMNU_SHOWENDOOM				= "Show ENDOOM screen";
 DSPLYMNU_BLOODFADE				= "Blood Flash Intensity";
@@ -2726,3 +2722,17 @@ OPTVAL_LOW					= "Low";
 OPTVAL_MEDIUM				= "Medium";
 OPTVAL_HIGH					= "High";
 OPTVAL_EXTREME				= "Extreme";
+
+// QZDoom exclusive:
+
+DSPLYMNU_TCOPT		= "TrueColor Options";
+
+TCMNU_TITLE		= "TRUECOLOR OPTIONS";
+
+
+TCMNU_MULTITHREADED		= "Multithreaded Drawing";
+TCMNU_TRUECOLOR				= "True color output";
+TCMNU_MINFILTER				= "Linear filter when downscaling";
+TCMNU_MAGFILTER				= "Linear filter when upscaling";
+TCMNU_MIPMAP					= "Use mipmapped textures";
+

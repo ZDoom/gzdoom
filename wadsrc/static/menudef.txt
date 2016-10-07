@@ -658,11 +658,23 @@ OptionMenu "OpenGLOptions"
 	Submenu "$GLMNU_PREFS", 				"GLPrefOptions"
 }
 
+OptionMenu "TrueColorOptions"
+{
+	Title "$TCMNU_TITLE"
+	Option "$TCMNU_MULTITHREADED",			"r_multithreaded", "OnOff"
+	StaticText " "
+	Option "$TCMNU_TRUECOLOR",				"swtruecolor", "OnOff"
+	Option "$TCMNU_MINFILTER",				"r_minfilter", "OnOff"
+	Option "$TCMNU_MAGFILTER",				"r_magfilter", "OnOff"
+	Option "$TCMNU_MIPMAP",					"r_mipmap", "OnOff"
+}
+
 OptionMenu "VideoOptions"
 {
 	Title "$DSPLYMNU_TITLE"
 	
 	Submenu "$DSPLYMNU_GLOPT", 			"OpenGLOptions"
+	Submenu "$DSPLYMNU_TCOPT",			"TrueColorOptions"
 	Submenu "$DSPLYMNU_SCOREBOARD", 			"ScoreboardOptions"
 	StaticText " "
 	Slider "$DSPLYMNU_SCREENSIZE",				"screenblocks", 3.0, 12.0, 1.0, 0
@@ -677,10 +689,6 @@ OptionMenu "VideoOptions"
 	Slider "$DSPLYMNU_BLOODFADE",				"blood_fade_scalar", 0.0, 1.0, 0.05, 1
 	Slider "$DSPLYMNU_PICKUPFADE",				"pickup_fade_scalar", 0.0, 1.0, 0.05, 1
 	Option "$DSPLYMNU_COLUMNMETHOD",			"r_columnmethod", "ColumnMethods"
-	Option "$DSPLYMNU_TRUECOLOR",				"swtruecolor", "OnOff"
-	Option "$DSPLYMNU_MINFILTER",				"r_minfilter", "OnOff"
-	Option "$DSPLYMNU_MAGFILTER",				"r_magfilter", "OnOff"
-	Option "$DSPLYMNU_MIPMAP",					"r_mipmap", "OnOff"
 
 	StaticText " "
 	Option "$DSPLYMNU_WIPETYPE",				"wipetype", "Wipes"

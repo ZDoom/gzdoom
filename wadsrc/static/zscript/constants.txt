@@ -1,92 +1,119 @@
 
 // Flags for A_PainAttack
-const int PAF_NOSKULLATTACK = 1;
-const int PAF_AIMFACING = 2;
-const int PAF_NOTARGET = 4;
+enum EPainAttackFlags
+{
+	PAF_NOSKULLATTACK = 1,
+	PAF_AIMFACING = 2,
+	PAF_NOTARGET = 4,
+};
 
 // Flags for A_VileAttack
-const int VAF_DMGTYPEAPPLYTODIRECT = 1;
+enum EVileAttackFlags
+{
+	VAF_DMGTYPEAPPLYTODIRECT = 1,
+};
 
 // Flags for A_Saw
-const int SF_NORANDOM = 1;
-const int SF_RANDOMLIGHTMISS = 2;
-const int SF_RANDOMLIGHTHIT = 4;
-const int SF_RANDOMLIGHTBOTH = 6;
-const int SF_NOUSEAMMOMISS = 8;
-const int SF_NOUSEAMMO = 16;
-const int SF_NOPULLIN = 32;
-const int SF_NOTURN = 64;
-const int SF_STEALARMOR = 128;
+enum ESawFlags
+{
+	SF_NORANDOM = 1,
+	SF_RANDOMLIGHTMISS = 2,
+	SF_RANDOMLIGHTHIT = 4,
+	SF_RANDOMLIGHTBOTH = 6,
+	SF_NOUSEAMMOMISS = 8,
+	SF_NOUSEAMMO = 16,
+	SF_NOPULLIN = 32,
+	SF_NOTURN = 64,
+	SF_STEALARMOR = 128,
+};
 
 // Flags for A_BFGSpray
-const int BFGF_HURTSOURCE = 1;
-const int BFGF_MISSILEORIGIN = 2;
+enum EBFGSprayFlags
+{
+	BFGF_HURTSOURCE = 1,
+	BFGF_MISSILEORIGIN = 2,
+};
 
 // Flags for A_CustomMissile
-const int CMF_AIMOFFSET = 1;
-const int CMF_AIMDIRECTION = 2;
-const int CMF_TRACKOWNER = 4;
-const int CMF_CHECKTARGETDEAD = 8;
-const int CMF_ABSOLUTEPITCH = 16;
-const int CMF_OFFSETPITCH = 32;
-const int CMF_SAVEPITCH = 64;
-const int CMF_ABSOLUTEANGLE = 128;
+enum ECustomMissileFlags
+{
+	CMF_AIMOFFSET = 1,
+	CMF_AIMDIRECTION = 2,
+	CMF_TRACKOWNER = 4,
+	CMF_CHECKTARGETDEAD = 8,
+	CMF_ABSOLUTEPITCH = 16,
+	CMF_OFFSETPITCH = 32,
+	CMF_SAVEPITCH = 64,
+	CMF_ABSOLUTEANGLE = 128,
+};
 
 // Flags for A_CustomBulletAttack
-const int CBAF_AIMFACING = 1;
-const int CBAF_NORANDOM = 2;
-const int CBAF_EXPLICITANGLE = 4;
-const int CBAF_NOPITCH = 8;
-const int CBAF_NORANDOMPUFFZ = 16;
-const int CBAF_PUFFTARGET = 32;
-const int CBAF_PUFFMASTER = 64;
-const int CBAF_PUFFTRACER = 128;
+enum ECustomBulletAttackFlags
+{
+	CBAF_AIMFACING = 1,
+	CBAF_NORANDOM = 2,
+	CBAF_EXPLICITANGLE = 4,
+	CBAF_NOPITCH = 8,
+	CBAF_NORANDOMPUFFZ = 16,
+	CBAF_PUFFTARGET = 32,
+	CBAF_PUFFMASTER = 64,
+	CBAF_PUFFTRACER = 128,
+};
 
 // Flags for A_GunFlash
-const int GFF_NOEXTCHANGE = 1;
+enum EGunFlashFlags
+{
+	GFF_NOEXTCHANGE = 1,
+};
 
 // Flags for A_FireBullets
-const int FBF_USEAMMO = 1;
-const int FBF_NORANDOM = 2;
-const int FBF_EXPLICITANGLE = 4;
-const int FBF_NOPITCH = 8;
-const int FBF_NOFLASH = 16;
-const int FBF_NORANDOMPUFFZ = 32;
+enum EFireBulletsFlags
+{
+	FBF_USEAMMO = 1,
+	FBF_NORANDOM = 2,
+	FBF_EXPLICITANGLE = 4,
+	FBF_NOPITCH = 8,
+	FBF_NOFLASH = 16,
+	FBF_NORANDOMPUFFZ = 32,
+};
 
 // Flags for A_SpawnItemEx
-const int SXF_TRANSFERTRANSLATION =		1 << 0;
-const int SXF_ABSOLUTEPOSITION =		1 << 1;
-const int SXF_ABSOLUTEANGLE =			1 << 2;
-const int SXF_ABSOLUTEMOMENTUM =		1 << 3;	//Since "momentum" is declared to be deprecated in the expressions, for compatibility
-const int SXF_ABSOLUTEVELOCITY =		1 << 3;	//purposes, this was made. It does the same thing though. Do not change the value.
-const int SXF_SETMASTER =				1 << 4;
-const int SXF_NOCHECKPOSITION =			1 << 5;
-const int SXF_TELEFRAG =				1 << 6;
-const int SXF_CLIENTSIDE =				1 << 7;	// only used by Skulltag
-const int SXF_TRANSFERAMBUSHFLAG =		1 << 8;
-const int SXF_TRANSFERPITCH =			1 << 9;
-const int SXF_TRANSFERPOINTERS =		1 << 10;
-const int SXF_USEBLOODCOLOR =			1 << 11;
-const int SXF_CLEARCALLERTID =			1 << 12;
-const int SXF_MULTIPLYSPEED =			1 << 13;
-const int SXF_TRANSFERSCALE =			1 << 14;
-const int SXF_TRANSFERSPECIAL =			1 << 15;
-const int SXF_CLEARCALLERSPECIAL =		1 << 16;
-const int SXF_TRANSFERSTENCILCOL =		1 << 17;
-const int SXF_TRANSFERALPHA =			1 << 18;
-const int SXF_TRANSFERRENDERSTYLE =		1 << 19;
-const int SXF_SETTARGET =				1 << 20;
-const int SXF_SETTRACER =				1 << 21;
-const int SXF_NOPOINTERS =				1 << 22;
-const int SXF_ORIGINATOR =				1 << 23;
-const int SXF_TRANSFERSPRITEFRAME	=	1 << 24;
-const int SXF_TRANSFERROLL =			1 << 25;
-const int SXF_ISTARGET				=	1 << 26;
-const int SXF_ISMASTER				=	1 << 27;
-const int SXF_ISTRACER				=	1 << 28;
+enum ESpawnItemFlags
+{
+	SXF_TRANSFERTRANSLATION =		1 << 0,
+	SXF_ABSOLUTEPOSITION =		1 << 1,
+	SXF_ABSOLUTEANGLE =			1 << 2,
+	SXF_ABSOLUTEMOMENTUM =		1 << 3,	//Since "momentum" is declared to be deprecated in the expressions, for compatibility
+	SXF_ABSOLUTEVELOCITY =		1 << 3,	//purposes, this was made. It does the same thing though. Do not change the value.
+	SXF_SETMASTER =				1 << 4,
+	SXF_NOCHECKPOSITION =			1 << 5,
+	SXF_TELEFRAG =				1 << 6,
+	SXF_CLIENTSIDE =				1 << 7,	// only used by Skulltag
+	SXF_TRANSFERAMBUSHFLAG =		1 << 8,
+	SXF_TRANSFERPITCH =			1 << 9,
+	SXF_TRANSFERPOINTERS =		1 << 10,
+	SXF_USEBLOODCOLOR =			1 << 11,
+	SXF_CLEARCALLERTID =			1 << 12,
+	SXF_MULTIPLYSPEED =			1 << 13,
+	SXF_TRANSFERSCALE =			1 << 14,
+	SXF_TRANSFERSPECIAL =			1 << 15,
+	SXF_CLEARCALLERSPECIAL =		1 << 16,
+	SXF_TRANSFERSTENCILCOL =		1 << 17,
+	SXF_TRANSFERALPHA =			1 << 18,
+	SXF_TRANSFERRENDERSTYLE =		1 << 19,
+	SXF_SETTARGET =				1 << 20,
+	SXF_SETTRACER =				1 << 21,
+	SXF_NOPOINTERS =				1 << 22,
+	SXF_ORIGINATOR =				1 << 23,
+	SXF_TRANSFERSPRITEFRAME	=	1 << 24,
+	SXF_TRANSFERROLL =			1 << 25,
+	SXF_ISTARGET				=	1 << 26,
+	SXF_ISMASTER				=	1 << 27,
+	SXF_ISTRACER				=	1 << 28,
+};
 
 // Flags for A_Chase
-enum
+enum EChaseFlags
 {
 	CHF_FASTCHASE =						1,
 	CHF_NOPLAYACTIVE =					2,
@@ -102,20 +129,26 @@ enum
 };
 
 // Flags for A_LookEx
-const int LOF_NOSIGHTCHECK = 1;
-const int LOF_NOSOUNDCHECK = 2;
-const int LOF_DONTCHASEGOAL = 4;
-const int LOF_NOSEESOUND = 8;
-const int LOF_FULLVOLSEESOUND = 16;
-const int LOF_NOJUMP = 32;
+enum ELookFlags
+{
+	LOF_NOSIGHTCHECK = 1,
+	LOF_NOSOUNDCHECK = 2,
+	LOF_DONTCHASEGOAL = 4,
+	LOF_NOSEESOUND = 8,
+	LOF_FULLVOLSEESOUND = 16,
+	LOF_NOJUMP = 32,
+};
 
 // Flags for A_Respawn
-const int RSF_FOG = 1;
-const int RSF_KEEPTARGET = 2;
-const int RSF_TELEFRAG = 4;
+enum ERespawnFlags
+{
+	RSF_FOG = 1,
+	RSF_KEEPTARGET = 2,
+	RSF_TELEFRAG = 4,
+};
 
 // Flags for A_JumpIfTargetInLOS and A_JumpIfInTargetLOS
-enum
+enum EJumpFlags
 {
 	JLOSF_PROJECTILE =		1,
 	JLOSF_NOSIGHT =			1 << 1,
@@ -133,98 +166,137 @@ enum
 };
 
 // Flags for A_ChangeVelocity
-const int CVF_RELATIVE = 1;
-const int CVF_REPLACE = 2;
+enum EChangeVelocityFlags
+{
+	CVF_RELATIVE = 1,
+	CVF_REPLACE = 2,
+};
 
 // Flags for A_WeaponReady
-const int WRF_NOBOB = 1;
-const int WRF_NOSWITCH = 2;
-const int WRF_NOPRIMARY = 4;
-const int WRF_NOSECONDARY = 8;
-const int WRF_NOFIRE = WRF_NOPRIMARY | WRF_NOSECONDARY;
-const int WRF_ALLOWRELOAD = 16;
-const int WRF_ALLOWZOOM = 32;
-const int WRF_DISABLESWITCH = 64;
-const int WRF_ALLOWUSER1 = 128;
-const int WRF_ALLOWUSER2 = 256;
-const int WRF_ALLOWUSER3 = 512;
-const int WRF_ALLOWUSER4 = 1024;
+enum EWeaponReadyFlags
+{ 
+	WRF_NOBOB = 1,
+	WRF_NOSWITCH = 2,
+	WRF_NOPRIMARY = 4,
+	WRF_NOSECONDARY = 8,
+	WRF_NOFIRE = WRF_NOPRIMARY | WRF_NOSECONDARY,
+	WRF_ALLOWRELOAD = 16,
+	WRF_ALLOWZOOM = 32,
+	WRF_DISABLESWITCH = 64,
+	WRF_ALLOWUSER1 = 128,
+	WRF_ALLOWUSER2 = 256,
+	WRF_ALLOWUSER3 = 512,
+	WRF_ALLOWUSER4 = 1024,
+};
 
 // Flags for A_SelectWeapon
-const int SWF_SELECTPRIORITY = 1;
+enum ESelectWeaponFlags
+{
+	SWF_SELECTPRIORITY = 1,
+};
 
 // Morph constants
-const int MRF_ADDSTAMINA = 1;
-const int MRF_FULLHEALTH = 2;
-const int MRF_UNDOBYTOMEOFPOWER = 4;
-const int MRF_UNDOBYCHAOSDEVICE = 8;
-const int MRF_FAILNOTELEFRAG = 16;
-const int MRF_FAILNOLAUGH = 32;
-const int MRF_WHENINVULNERABLE = 64;
-const int MRF_LOSEACTUALWEAPON = 128;
-const int MRF_NEWTIDBEHAVIOUR = 256;
-const int MRF_UNDOBYDEATH = 512;
-const int MRF_UNDOBYDEATHFORCED = 1024;
-const int MRF_UNDOBYDEATHSAVES = 2048;
-const int MRF_UNDOALWAYS = 4096;
-const int MRF_TRANSFERTRANSLATION = 8192;
+enum EMorphFlags
+{
+	MRF_ADDSTAMINA = 1,
+	MRF_FULLHEALTH = 2,
+	MRF_UNDOBYTOMEOFPOWER = 4,
+	MRF_UNDOBYCHAOSDEVICE = 8,
+	MRF_FAILNOTELEFRAG = 16,
+	MRF_FAILNOLAUGH = 32,
+	MRF_WHENINVULNERABLE = 64,
+	MRF_LOSEACTUALWEAPON = 128,
+	MRF_NEWTIDBEHAVIOUR = 256,
+	MRF_UNDOBYDEATH = 512,
+	MRF_UNDOBYDEATHFORCED = 1024,
+	MRF_UNDOBYDEATHSAVES = 2048,
+	MRF_UNDOALWAYS = 4096,
+	MRF_TRANSFERTRANSLATION = 8192,
+};
 
 // Flags for A_RailAttack and A_CustomRailgun
-const int RGF_SILENT = 1;
-const int RGF_NOPIERCING = 2;
-const int RGF_EXPLICITANGLE = 4;
-const int RGF_FULLBRIGHT = 8;
-const int RGF_CENTERZ = 16;
-const int RGF_NORANDOMPUFFZ = 32;
+enum ERailFlags
+{
+	RGF_SILENT = 1,
+	RGF_NOPIERCING = 2,
+	RGF_EXPLICITANGLE = 4,
+	RGF_FULLBRIGHT = 8,
+	RGF_CENTERZ = 16,
+	RGF_NORANDOMPUFFZ = 32,
+};
 
 // Flags for A_Mushroom
-const int MSF_Standard = 0;
-const int MSF_Classic = 1;
-const int MSF_DontHurt = 2;
+enum EMushroomFlags
+{
+	MSF_Standard = 0,
+	MSF_Classic = 1,
+	MSF_DontHurt = 2,
+};
 
 // Flags for A_Explode
-const int XF_HURTSOURCE = 1;
-const int XF_NOTMISSILE = 4;
-const int XF_EXPLICITDAMAGETYPE = 1 << 3;
+enum EExplodeFlags
+{
+	XF_HURTSOURCE = 1,
+	XF_NOTMISSILE = 4,
+	XF_EXPLICITDAMAGETYPE = 1 << 3,
+};
 
 // Flags for A_RadiusThrust
-const int RTF_AFFECTSOURCE = 1;
-const int RTF_NOIMPACTDAMAGE = 2;
-const int RTF_NOTMISSILE = 4;
-const int RTF_THRUSTZ = 16;
+enum ERadiusThrustFlags
+{
+	RTF_AFFECTSOURCE = 1,
+	RTF_NOIMPACTDAMAGE = 2,
+	RTF_NOTMISSILE = 4,
+	RTF_THRUSTZ = 16,
+};
 
 // Flags for A_RadiusDamageSelf
-const int RDSF_BFGDAMAGE = 1;
+enum ERadiusDamageSelfFlags
+{
+	RDSF_BFGDAMAGE = 1,
+};
 
 // Flags for A_Blast
-const int BF_USEAMMO = 1;
-const int BF_DONTWARN = 2;
-const int BF_AFFECTBOSSES = 4;
-const int BF_NOIMPACTDAMAGE = 8;
+enum EBlastFlags
+{
+	BF_USEAMMO = 1,
+	BF_DONTWARN = 2,
+	BF_AFFECTBOSSES = 4,
+	BF_NOIMPACTDAMAGE = 8,
+};
 
 // Flags for A_SeekerMissile
-const int SMF_LOOK = 1;
-const int SMF_PRECISE = 2;
-const int SMF_CURSPEED = 4;
+enum ESeekerMissileFlags
+{
+	SMF_LOOK = 1,
+	SMF_PRECISE = 2,
+	SMF_CURSPEED = 4,
+};
 
 // Flags for A_CustomPunch
-const int CPF_USEAMMO = 1;
-const int CPF_DAGGER = 2;
-const int CPF_PULLIN = 4;
-const int CPF_NORANDOMPUFFZ = 8;
-const int CPF_NOTURN = 16;
-const int CPF_STEALARMOR = 32;
+enum ECustomPunchFlags
+{
+	CPF_USEAMMO = 1,
+	CPF_DAGGER = 2,
+	CPF_PULLIN = 4,
+	CPF_NORANDOMPUFFZ = 8,
+	CPF_NOTURN = 16,
+	CPF_STEALARMOR = 32,
+};
 
 // Flags for A_CustomMissile
-const int FPF_AIMATANGLE = 1;
-const int FPF_TRANSFERTRANSLATION = 2;
-const int FPF_NOAUTOAIM = 4;
-const int FBF_PUFFTARGET = 64;
-const int FBF_PUFFMASTER = 128;
-const int FBF_PUFFTRACER = 256;
+enum ECustomMissileFlags
+{
+	FPF_AIMATANGLE = 1,
+	FPF_TRANSFERTRANSLATION = 2,
+	FPF_NOAUTOAIM = 4,
+	FBF_PUFFTARGET = 64,
+	FBF_PUFFMASTER = 128,
+	FBF_PUFFTRACER = 256,
+};
 
 // Flags for A_Teleport
-enum
+enum ETeleportFlags
 {
 	TF_TELEFRAG =		0x00000001, // Allow telefrag in order to teleport.
 	TF_RANDOMDECIDE =	0x00000002, // Randomly fail based on health. (A_Srcr2Decide)
@@ -244,11 +316,14 @@ enum
 };
 
 // Flags for A_WolfAttack
-const int WAF_NORANDOM = 1;
-const int WAF_USEPUFF = 2;
+enum EWolfAttackFlags
+{
+	WAF_NORANDOM = 1,
+	WAF_USEPUFF = 2
+};
 
 // Flags for A_RadiusGive
-enum
+enum ERadiusGiveFlags
 {
 	RGF_GIVESELF	=   1,
 	RGF_PLAYERS		=   1 << 1,
@@ -271,7 +346,7 @@ enum
 };
 
 // Activation flags
-enum
+enum EActivationFlags
 {
 	THINGSPEC_Default = 0,
 	THINGSPEC_ThingActs = 1,
@@ -282,23 +357,28 @@ enum
 	THINGSPEC_ClearSpecial = 32,
 	THINGSPEC_NoDeathSpecial = 64,
 	THINGSPEC_TriggerActs = 128,
+	
+	// Shorter aliases for same
+	AF_Default = 0,
+	AF_ThingActs = 1,
+	AF_ThingTargets = 2,
+	AF_TriggerTargets = 4,
+	AF_MonsterTrigger = 8,
+	AF_MissileTrigger = 16,
+	AF_ClearSpecial = 32,
+	AF_NoDeathSpecial = 64,
+	AF_TriggerActs = 128,
+	
 };
-// Shorter aliases for same
-const int AF_Default = 0;
-const int AF_ThingActs = 1;
-const int AF_ThingTargets = 2;
-const int AF_TriggerTargets = 4;
-const int AF_MonsterTrigger = 8;
-const int AF_MissileTrigger = 16;
-const int AF_ClearSpecial = 32;
-const int AF_NoDeathSpecial = 64;
-const int AF_TriggerActs = 128;
 
 // Flags for A_TakeInventory and A_TakeFromTarget
-const int TIF_NOTAKEINFINITE = 1;
+enum ETakeFlags
+{
+	TIF_NOTAKEINFINITE = 1
+};
 
 // constants for A_PlaySound
-enum
+enum ESoundFlags
 {
 	CHAN_AUTO = 0,
 	CHAN_WEAPON = 1,
@@ -317,96 +397,110 @@ enum
 };
 
 // sound attenuation values
-const float ATTN_NONE = 0;
-const float ATTN_NORM = 1;
-const float ATTN_IDLE = 1.001;
-const float ATTN_STATIC = 3;
+const ATTN_NONE = 0;
+const ATTN_NORM = 1;
+const ATTN_IDLE = 1.001;
+const ATTN_STATIC = 3;
 
 // For SetPlayerProprty action special
-Const Int PROP_FROZEN = 0;
-Const Int PROP_NOTARGET = 1;
-Const Int PROP_INSTANTWEAPONSWITCH = 2;
-Const Int PROP_FLY = 3;
-Const Int PROP_TOTALLYFROZEN = 4;
-Const Int PROP_INVULNERABILITY  = 5; // (Deprecated)
-Const Int PROP_STRENGTH = 6; // (Deprecated)
-Const Int PROP_INVISIBILITY = 7; // (Deprecated)
-Const Int PROP_RADIATIONSUIT = 8; // (Deprecated)
-Const Int PROP_ALLMAP = 9; // (Deprecated)
-Const Int PROP_INFRARED = 10; // (Deprecated)
-Const Int PROP_WEAPONLEVEL2 = 11; // (Deprecated)
-Const Int PROP_FLIGHT = 12; // (Deprecated)
-Const Int PROP_SPEED = 15; // (Deprecated)
-Const Int PROP_BUDDHA = 16;
+enum EPlayerProperties
+{
+	PROP_FROZEN = 0,
+	PROP_NOTARGET = 1,
+	PROP_INSTANTWEAPONSWITCH = 2,
+	PROP_FLY = 3,
+	PROP_TOTALLYFROZEN = 4,
+	PROP_INVULNERABILITY  = 5, // (Deprecated)
+	PROP_STRENGTH = 6, // (Deprecated)
+	PROP_INVISIBILITY = 7, // (Deprecated)
+	PROP_RADIATIONSUIT = 8, // (Deprecated)
+	PROP_ALLMAP = 9, // (Deprecated)
+	PROP_INFRARED = 10, // (Deprecated)
+	PROP_WEAPONLEVEL2 = 11, // (Deprecated)
+	PROP_FLIGHT = 12, // (Deprecated)
+	PROP_SPEED = 15, // (Deprecated)
+	PROP_BUDDHA = 16,
+}
 
 // Line_SetBlocking
-Const Int BLOCKF_CREATURES = 1;
-Const Int BLOCKF_MONSTERS = 2;
-Const Int BLOCKF_PLAYERS = 4;
-Const Int BLOCKF_FLOATERS = 8;
-Const Int BLOCKF_PROJECTILES = 16;
-Const Int BLOCKF_EVERYTHING = 32;
-Const Int BLOCKF_RAILING = 64;
-Const Int BLOCKF_USE = 128;
+enum EBlockFlags
+{
+	BLOCKF_CREATURES = 1,
+	BLOCKF_MONSTERS = 2,
+	BLOCKF_PLAYERS = 4,
+	BLOCKF_FLOATERS = 8,
+	BLOCKF_PROJECTILES = 16,
+	BLOCKF_EVERYTHING = 32,
+	BLOCKF_RAILING = 64,
+	BLOCKF_USE = 128,
+};
 
 // Pointer constants, bitfield-enabled
-
-Const Int AAPTR_DEFAULT = 0;
-Const Int AAPTR_NULL = 0x1;
-Const Int AAPTR_TARGET = 0x2;
-Const Int AAPTR_MASTER = 0x4;
-Const Int AAPTR_TRACER = 0x8;
-
-Const Int AAPTR_PLAYER_GETTARGET = 0x10;
-Const Int AAPTR_PLAYER_GETCONVERSATION = 0x20;
-
-Const Int AAPTR_PLAYER1 = 0x40;
-Const Int AAPTR_PLAYER2 = 0x80;
-Const Int AAPTR_PLAYER3 = 0x100;
-Const Int AAPTR_PLAYER4 = 0x200;
-Const Int AAPTR_PLAYER5 = 0x400;
-Const Int AAPTR_PLAYER6 = 0x800;
-Const Int AAPTR_PLAYER7 = 0x1000;
-Const Int AAPTR_PLAYER8 = 0x2000;
-
-Const Int AAPTR_FRIENDPLAYER = 0x4000;
-Const Int AAPTR_LINETARGET = 0x8000;
+enum EPointerFlags
+{
+	AAPTR_DEFAULT = 0,
+	AAPTR_NULL = 0x1,
+	AAPTR_TARGET = 0x2,
+	AAPTR_MASTER = 0x4,
+	AAPTR_TRACER = 0x8,
+	
+	AAPTR_PLAYER_GETTARGET = 0x10,
+	AAPTR_PLAYER_GETCONVERSATION = 0x20,
+	
+	AAPTR_PLAYER1 = 0x40,
+	AAPTR_PLAYER2 = 0x80,
+	AAPTR_PLAYER3 = 0x100,
+	AAPTR_PLAYER4 = 0x200,
+	AAPTR_PLAYER5 = 0x400,
+	AAPTR_PLAYER6 = 0x800,
+	AAPTR_PLAYER7 = 0x1000,
+	AAPTR_PLAYER8 = 0x2000,
+	AAPTR_FRIENDPLAYER = 0x4000,
+	AAPTR_LINETARGET = 0x8000,
+};
 
 // Pointer operation flags
 
-Const Int PTROP_UNSAFETARGET = 1;
-Const Int PTROP_UNSAFEMASTER = 2;
-Const Int PTROP_NOSAFEGUARDS = PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER;
-
+enum EPointerOperations
+{
+	PTROP_UNSAFETARGET = 1,
+	PTROP_UNSAFEMASTER = 2,
+	PTROP_NOSAFEGUARDS = PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER,
+};
 
 // Flags for A_Warp
 
-Const Int WARPF_ABSOLUTEOFFSET = 0x1;
-Const Int WARPF_ABSOLUTEANGLE = 0x2;
-Const Int WARPF_USECALLERANGLE = 0x4;
-Const Int WARPF_NOCHECKPOSITION = 0x8;
-Const Int WARPF_INTERPOLATE = 0x10;
-Const Int WARPF_WARPINTERPOLATION = 0x20;
-Const Int WARPF_COPYINTERPOLATION = 0x40;
-Const Int WARPF_STOP = 0x80;
-Const Int WARPF_TOFLOOR = 0x100;
-Const Int WARPF_TESTONLY = 0x200;
-Const Int WAPRF_ABSOLUTEPOSITION = 0x400;
-Const Int WARPF_ABSOLUTEPOSITION = 0x400;
-Const Int WARPF_BOB = 0x800;
-Const Int WARPF_MOVEPTR = 0x1000;
-Const Int WARPF_USETID = 0x2000;
-Const Int WARPF_COPYVELOCITY = 0x4000;
-Const Int WARPF_COPYPITCH = 0x8000;
+enum EWarpFlags
+{
+	WARPF_ABSOLUTEOFFSET = 0x1,
+	WARPF_ABSOLUTEANGLE = 0x2,
+	WARPF_USECALLERANGLE = 0x4,
+	WARPF_NOCHECKPOSITION = 0x8,
+	WARPF_INTERPOLATE = 0x10,
+	WARPF_WARPINTERPOLATION = 0x20,
+	WARPF_COPYINTERPOLATION = 0x40,
+	WARPF_STOP = 0x80,
+	WARPF_TOFLOOR = 0x100,
+	WARPF_TESTONLY = 0x200,
+	WAPRF_ABSOLUTEPOSITION = 0x400,
+	WARPF_ABSOLUTEPOSITION = 0x400,
+	WARPF_BOB = 0x800,
+	WARPF_MOVEPTR = 0x1000,
+	WARPF_USETID = 0x2000,
+	WARPF_COPYVELOCITY = 0x4000,
+	WARPF_COPYPITCH = 0x8000,
+};
 
 // flags for A_SetPitch/SetAngle/SetRoll
-const int SPF_FORCECLAMP = 1;
-const int SPF_INTERPOLATE = 2;
-
+enum EAngleFlags
+{
+	SPF_FORCECLAMP = 1,
+	SPF_INTERPOLATE = 2,
+};
 
 // flags for A_CheckLOF
 
-enum
+enum ELOFFlags
 {
 	CLOFF_NOAIM_VERT =			0x1,
 	CLOFF_NOAIM_HORZ =			0x2,
@@ -449,7 +543,7 @@ enum
 };
 
 // Flags for A_Kill (Master/Target/Tracer/Children/Siblings) series
-enum
+enum EKillFlags
 {
 	KILS_FOILINVUL =		0x00000001,
 	KILS_KILLMISSILES =		0x00000002,
@@ -461,7 +555,7 @@ enum
 };
 
 // Flags for A_Damage (Master/Target/Tracer/Children/Siblings/Self) series
-enum
+enum EDamageFlags
 {
 	DMSS_FOILINVUL =		0x00000001,
 	DMSS_AFFECTARMOR =		0x00000002,
@@ -476,12 +570,15 @@ enum
 };
 
 // Flags for A_AlertMonsters
-const int AMF_TARGETEMITTER = 1;
-const int AMF_TARGETNONPLAYER = 2;
-const int AMF_EMITFROMTARGET = 4;
+enum EAlertFlags
+{
+	AMF_TARGETEMITTER = 1,
+	AMF_TARGETNONPLAYER = 2,
+	AMF_EMITFROMTARGET = 4,
+}
 
 // Flags for A_Remove*
-enum
+enum ERemoveFlags
 {
 	RMVF_MISSILES =			0x00000001,
 	RMVF_NOMONSTERS =		0x00000002,
@@ -493,14 +590,14 @@ enum
 };
 
 // Flags for A_Fade*
-enum
+enum EFadeFlags
 {
 	FTF_REMOVE =	1 << 0,
 	FTF_CLAMP =		1 << 1,
 };
 
 // Flags for A_Face*
-enum
+enum EFaceFlags
 {
 	FAF_BOTTOM = 1,
 	FAF_MIDDLE = 2,
@@ -509,7 +606,7 @@ enum
 };
 
 // Flags for A_QuakeEx
-enum
+enum EQuakeFlags
 {
 	QF_RELATIVE =		1,
 	QF_SCALEDOWN =		1 << 1,
@@ -520,7 +617,7 @@ enum
 };
 
 // A_CheckProximity flags
-enum
+enum EProximityFlags
 {
 	CPXF_ANCESTOR			= 1,
 	CPXF_LESSOREQUAL		= 1 << 1,
@@ -539,7 +636,7 @@ enum
 
 // Flags for A_CheckBlock
 // These flags only affect the calling actor('s pointer), not the ones being searched.
-enum 
+enum ECheckBlockFlags
 {
 	CBF_NOLINES			= 1 << 0,	//Don't check actors.
 	CBF_SETTARGET		= 1 << 1,	//Sets the caller/pointer's target to the actor blocking it. Actors only.
@@ -552,7 +649,7 @@ enum
 	CBF_ABSOLUTEANGLE	= 1 << 8,	//Absolute angle for offsets.
 };
 
-enum
+enum EParticleFlags
 {
 	SPF_FULLBRIGHT =	1,
 	SPF_RELPOS =		1 << 1,
@@ -565,7 +662,7 @@ enum
 };
 
 //Flags for A_FaceMovementDirection
-enum
+enum EMovementFlags
 {
 	FMDF_NOPITCH =			1 << 0,
 	FMDF_INTERPOLATE =		1 << 1,
@@ -573,7 +670,7 @@ enum
 };
 
 // Flags for GetZAt
-enum
+enum EZFlags
 {
 	GZF_ABSOLUTEPOS =			1,			// Use the absolute position instead of an offsetted one.
 	GZF_ABSOLUTEANG =			1 << 1,		// Don't add the actor's angle to the parameter.
@@ -584,7 +681,7 @@ enum
 };
 
 // Flags for A_WeaponOffset
-enum
+enum EWeaponOffsetFlags
 {
 	WOF_KEEPX =		1,
 	WOF_KEEPY =		1 << 1,
@@ -592,7 +689,7 @@ enum
 };
 
 // Flags for psprite layers
-enum
+enum EPSpriteFlags
 {
 	PSPF_ADDWEAPON	= 1 << 0,
 	PSPF_ADDBOB		= 1 << 1,
@@ -601,13 +698,13 @@ enum
 };
 
 // Default psprite layers
-enum
+enum EPSPLayers
 {
 	PSP_WEAPON = 1,
 	PSP_FLASH = 1000,
 };
 
-enum
+enum EInputFlags
 {
 	// These are the original inputs sent by the player.
 	INPUT_OLDBUTTONS,
@@ -633,7 +730,7 @@ enum
 	MODINPUT_UPMOVE
 };
 
-enum
+enum EButtons
 {
 	BT_ATTACK		= 1<<0,	// Press "Fire".
 	BT_USE			= 1<<1,	// Use button, to open doors, activate switches.
@@ -665,22 +762,23 @@ enum
 	BT_USER3		= 1<<23,
 	BT_USER4		= 1<<24,
 };
+
 // Flags for GetAngle
-enum
+enum EGetAngleFlags
 {
 	GAF_RELATIVE =			1,
 	GAF_SWITCH =			1 << 1,
 };
 
 //Flags for A_CopySpriteFrame
-enum
+enum ECopySpriteFrameFlags
 {
 	CPSF_NOSPRITE =			1,
 	CPSF_NOFRAME =			1 << 1,
 };
 
 //Flags for A_SetMaskRotation
-enum
+enum EMaskRotationFlags
 {
 	VRF_NOANGLESTART =		1,
 	VRF_NOANGLEEND =		1 << 1,
@@ -691,7 +789,7 @@ enum
 	VRF_NOPITCH = VRF_NOPITCHSTART|VRF_NOPITCHEND,
 };
 
-enum
+enum ERenderStyles
 {
 	STYLE_None,
 	STYLE_Normal,

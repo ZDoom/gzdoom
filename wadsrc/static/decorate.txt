@@ -1,4 +1,3 @@
-#include "actors/constants.txt"
 #include "actors/actor.txt"
 
 #include "actors/shared/inventory.txt"

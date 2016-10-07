@@ -47,9 +47,11 @@ public:
 	LLVMDrawersImpl();
 
 private:
+	void CodegenDrawColumn(const char *name, DrawColumnVariant variant);
 	void CodegenDrawSpan(const char *name, DrawSpanVariant variant);
 	void CodegenDrawWall(const char *name, DrawWallVariant variant, int columns);
 
+	static llvm::Type *GetDrawColumnArgsStruct(llvm::LLVMContext &context);
 	static llvm::Type *GetDrawSpanArgsStruct(llvm::LLVMContext &context);
 	static llvm::Type *GetDrawWallArgsStruct(llvm::LLVMContext &context);
 	static llvm::Type *GetWorkerThreadDataStruct(llvm::LLVMContext &context);
@@ -82,6 +84,22 @@ LLVMDrawers *LLVMDrawers::Instance()
 
 LLVMDrawersImpl::LLVMDrawersImpl()
 {
+	CodegenDrawColumn("FillColumn", DrawColumnVariant::Fill);
+	CodegenDrawColumn("FillColumnAdd", DrawColumnVariant::FillAdd);
+	CodegenDrawColumn("FillColumnAddClamp", DrawColumnVariant::FillAddClamp);
+	CodegenDrawColumn("FillColumnSubClamp", DrawColumnVariant::FillSubClamp);
+	CodegenDrawColumn("FillColumnRevSubClamp", DrawColumnVariant::FillRevSubClamp);
+	CodegenDrawColumn("DrawColumn", DrawColumnVariant::Draw);
+	CodegenDrawColumn("DrawColumnAdd", DrawColumnVariant::DrawAdd);
+	CodegenDrawColumn("DrawColumnTranslated", DrawColumnVariant::DrawTranslated);
+	CodegenDrawColumn("DrawColumnTlatedAdd", DrawColumnVariant::DrawTlatedAdd);
+	CodegenDrawColumn("DrawColumnShaded", DrawColumnVariant::DrawShaded);
+	CodegenDrawColumn("DrawColumnAddClamp", DrawColumnVariant::DrawAddClamp);
+	CodegenDrawColumn("DrawColumnAddClampTranslated", DrawColumnVariant::DrawAddClampTranslated);
+	CodegenDrawColumn("DrawColumnSubClamp", DrawColumnVariant::DrawSubClamp);
+	CodegenDrawColumn("DrawColumnSubClampTranslated", DrawColumnVariant::DrawSubClampTranslated);
+	CodegenDrawColumn("DrawColumnRevSubClamp", DrawColumnVariant::DrawRevSubClamp);
+	CodegenDrawColumn("DrawColumnRevSubClampTranslated", DrawColumnVariant::DrawRevSubClampTranslated);
 	CodegenDrawSpan("DrawSpan", DrawSpanVariant::Opaque);
 	CodegenDrawSpan("DrawSpanMasked", DrawSpanVariant::Masked);
 	CodegenDrawSpan("DrawSpanTranslucent", DrawSpanVariant::Translucent);
@@ -104,6 +122,22 @@ LLVMDrawersImpl::LLVMDrawersImpl()
 	mProgram.engine()->finalizeObject();
 	mProgram.modulePassManager()->run(*mProgram.module());
 
+	FillColumn = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("FillColumn");
+	FillColumnAdd = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("FillColumnAdd");
+	FillColumnAddClamp = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("FillColumnAddClamp");
+	FillColumnSubClamp = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("FillColumnSubClamp");
+	FillColumnRevSubClamp = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("FillColumnRevSubClamp");
+	DrawColumn = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("DrawColumn");
+	DrawColumnAdd = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("DrawColumnAdd");
+	DrawColumnTranslated = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("DrawColumnTranslated");
+	DrawColumnTlatedAdd = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("DrawColumnTlatedAdd");
+	DrawColumnShaded = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("DrawColumnShaded");
+	DrawColumnAddClamp = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("DrawColumnAddClamp");
+	DrawColumnAddClampTranslated = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("DrawColumnAddClampTranslated");
+	DrawColumnSubClamp = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("DrawColumnSubClamp");
+	DrawColumnSubClampTranslated = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("DrawColumnSubClampTranslated");
+	DrawColumnRevSubClamp = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("DrawColumnRevSubClamp");
+	DrawColumnRevSubClampTranslated = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("DrawColumnRevSubClampTranslated");
 	DrawSpan = mProgram.GetProcAddress<void(const DrawSpanArgs *)>("DrawSpan");
 	DrawSpanMasked = mProgram.GetProcAddress<void(const DrawSpanArgs *)>("DrawSpanMasked");
 	DrawSpanTranslucent = mProgram.GetProcAddress<void(const DrawSpanArgs *)>("DrawSpanTranslucent");
@@ -124,6 +158,27 @@ LLVMDrawersImpl::LLVMDrawersImpl()
 	tmvline4_revsubclamp = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("tmvline4_revsubclamp");
 
 	mProgram.StopLogFatalErrors();
+}
+
+void LLVMDrawersImpl::CodegenDrawColumn(const char *name, DrawColumnVariant variant)
+{
+	llvm::IRBuilder<> builder(mProgram.context());
+	SSAScope ssa_scope(&mProgram.context(), mProgram.module(), &builder);
+
+	SSAFunction function(name);
+	function.add_parameter(GetDrawColumnArgsStruct(mProgram.context()));
+	function.add_parameter(GetWorkerThreadDataStruct(mProgram.context()));
+	function.create_public();
+
+	DrawColumnCodegen codegen;
+	codegen.Generate(variant, function.parameter(0), function.parameter(1));
+
+	builder.CreateRetVoid();
+
+	if (llvm::verifyFunction(*function.func))
+		I_FatalError("verifyFunction failed for " __FUNCTION__);
+
+	mProgram.functionPassManager()->run(*function.func);
 }
 
 void LLVMDrawersImpl::CodegenDrawSpan(const char *name, DrawSpanVariant variant)
@@ -165,6 +220,37 @@ void LLVMDrawersImpl::CodegenDrawWall(const char *name, DrawWallVariant variant,
 		I_FatalError("verifyFunction failed for " __FUNCTION__);
 
 	mProgram.functionPassManager()->run(*function.func);
+}
+
+llvm::Type *LLVMDrawersImpl::GetDrawColumnArgsStruct(llvm::LLVMContext &context)
+{
+	std::vector<llvm::Type *> elements;
+	elements.push_back(llvm::Type::getInt8PtrTy(context)); // uint32_t *dest;
+	elements.push_back(llvm::Type::getInt8PtrTy(context)); // const uint32_t *source;
+	elements.push_back(llvm::Type::getInt8PtrTy(context)); // uint8_t *colormap;
+	elements.push_back(llvm::Type::getInt8PtrTy(context)); // uint8_t *translation;
+	elements.push_back(llvm::Type::getInt8PtrTy(context)); // const uint32_t *basecolors;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t pitch;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t count;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t dest_y;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t iscale;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t texturefrac;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t light;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t color;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t srccolor;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t srcalpha;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t destalpha;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t light_alpha;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t light_red;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t light_green;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t light_blue;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_alpha;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_red;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_green;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_blue;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t desaturate;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t flags;
+	return llvm::StructType::get(context, elements, false)->getPointerTo();
 }
 
 llvm::Type *LLVMDrawersImpl::GetDrawSpanArgsStruct(llvm::LLVMContext &context)

@@ -396,56 +396,6 @@ public:
 	}
 };
 
-class DrawWallMasked4LLVMCommand : public DrawWall4LLVMCommand
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		WorkerThreadData d = ThreadData(thread);
-		LLVMDrawers::Instance()->mvlinec4(&args, &d);
-	}
-};
-
-class DrawWallAdd4LLVMCommand : public DrawWall4LLVMCommand
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		WorkerThreadData d = ThreadData(thread);
-		LLVMDrawers::Instance()->tmvline4_add(&args, &d);
-	}
-};
-
-class DrawWallAddClamp4LLVMCommand : public DrawWall4LLVMCommand
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		WorkerThreadData d = ThreadData(thread);
-		LLVMDrawers::Instance()->tmvline4_addclamp(&args, &d);
-	}
-};
-
-class DrawWallSubClamp4LLVMCommand : public DrawWall4LLVMCommand
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		WorkerThreadData d = ThreadData(thread);
-		LLVMDrawers::Instance()->tmvline4_subclamp(&args, &d);
-	}
-};
-
-class DrawWallRevSubClamp4LLVMCommand : public DrawWall4LLVMCommand
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		WorkerThreadData d = ThreadData(thread);
-		LLVMDrawers::Instance()->tmvline4_revsubclamp(&args, &d);
-	}
-};
-
 class DrawWall1LLVMCommand : public DrawerCommand
 {
 protected:
@@ -500,574 +450,100 @@ public:
 	}
 };
 
-class DrawWallMasked1LLVMCommand : public DrawWall1LLVMCommand
+class DrawColumnLLVMCommand : public DrawerCommand
 {
+protected:
+	DrawColumnArgs args;
+
+	WorkerThreadData ThreadData(DrawerThread *thread)
+	{
+		WorkerThreadData d;
+		d.core = thread->core;
+		d.num_cores = thread->num_cores;
+		d.pass_start_y = thread->pass_start_y;
+		d.pass_end_y = thread->pass_end_y;
+		return d;
+	}
+
 public:
+	DrawColumnLLVMCommand()
+	{
+		args.dest = (uint32_t*)dc_dest;
+		args.source = dc_source;
+		args.colormap = dc_colormap;
+		args.translation = dc_translation;
+		args.basecolors = (const uint32_t *)GPalette.BaseColors;
+		args.pitch = dc_pitch;
+		args.count = dc_count;
+		args.dest_y = _dest_y;
+		args.iscale = dc_iscale;
+		args.texturefrac = dc_texturefrac;
+		args.light = LightBgra::calc_light_multiplier(dc_light);
+		args.color = LightBgra::shade_pal_index_simple(dc_color, args.light);
+		args.srccolor = dc_srccolor_bgra;
+		args.srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		args.destalpha = dc_destalpha >> (FRACBITS - 8);
+		args.light_red = dc_shade_constants.light_red;
+		args.light_green = dc_shade_constants.light_green;
+		args.light_blue = dc_shade_constants.light_blue;
+		args.light_alpha = dc_shade_constants.light_alpha;
+		args.fade_red = dc_shade_constants.fade_red;
+		args.fade_green = dc_shade_constants.fade_green;
+		args.fade_blue = dc_shade_constants.fade_blue;
+		args.fade_alpha = dc_shade_constants.fade_alpha;
+		args.desaturate = dc_shade_constants.desaturate;
+		args.flags = 0;
+		if (dc_shade_constants.simple_shade)
+			args.flags |= DrawColumnArgs::simple_shade;
+	}
+
 	void Execute(DrawerThread *thread) override
 	{
 		WorkerThreadData d = ThreadData(thread);
-		LLVMDrawers::Instance()->mvlinec1(&args, &d);
+		LLVMDrawers::Instance()->DrawColumn(&args, &d);
 	}
 };
 
-class DrawWallAdd1LLVMCommand : public DrawWall1LLVMCommand
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		WorkerThreadData d = ThreadData(thread);
-		LLVMDrawers::Instance()->tmvline1_add(&args, &d);
-	}
+#define DECLARE_DRAW_COMMAND(name, func, base) \
+class name##LLVMCommand : public base \
+{ \
+public: \
+	void Execute(DrawerThread *thread) override \
+	{ \
+		WorkerThreadData d = ThreadData(thread); \
+		LLVMDrawers::Instance()->func(&args, &d); \
+	} \
 };
 
-class DrawWallAddClamp1LLVMCommand : public DrawWall1LLVMCommand
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		WorkerThreadData d = ThreadData(thread);
-		LLVMDrawers::Instance()->tmvline1_addclamp(&args, &d);
-	}
-};
+//DECLARE_DRAW_COMMAND(name, func, DrawSpanLLVMCommand);
 
-class DrawWallSubClamp1LLVMCommand : public DrawWall1LLVMCommand
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		WorkerThreadData d = ThreadData(thread);
-		LLVMDrawers::Instance()->tmvline1_subclamp(&args, &d);
-	}
-};
-
-class DrawWallRevSubClamp1LLVMCommand : public DrawWall1LLVMCommand
-{
-public:
-	void Execute(DrawerThread *thread) override
-	{
-		WorkerThreadData d = ThreadData(thread);
-		LLVMDrawers::Instance()->tmvline1_revsubclamp(&args, &d);
-	}
-};
+DECLARE_DRAW_COMMAND(DrawWallMasked4, mvlinec4, DrawWall4LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawWallAdd4, tmvline4_add, DrawWall4LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawWallAddClamp4, tmvline4_addclamp, DrawWall4LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawWallSubClamp4, tmvline4_subclamp, DrawWall4LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawWallRevSubClamp4, tmvline4_revsubclamp, DrawWall4LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawWallMasked1, mvlinec1, DrawWall1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawWallAdd1, tmvline1_add, DrawWall1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawWallAddClamp1, tmvline1_addclamp, DrawWall1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawWallSubClamp1, tmvline1_subclamp, DrawWall1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawWallRevSubClamp1, tmvline1_revsubclamp, DrawWall1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnAdd, DrawColumnAdd, DrawColumnLLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnTranslated, DrawColumnTranslated, DrawColumnLLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnTlatedAdd, DrawColumnTlatedAdd, DrawColumnLLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnShaded, DrawColumnShaded, DrawColumnLLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnAddClamp, DrawColumnAddClamp, DrawColumnLLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnAddClampTranslated, DrawColumnAddClampTranslated, DrawColumnLLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnSubClamp, DrawColumnSubClamp, DrawColumnLLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnSubClampTranslated, DrawColumnSubClampTranslated, DrawColumnLLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRevSubClamp, DrawColumnRevSubClamp, DrawColumnLLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRevSubClampTranslated, DrawColumnRevSubClampTranslated, DrawColumnLLVMCommand);
+DECLARE_DRAW_COMMAND(FillColumn, FillColumn, DrawColumnLLVMCommand);
+DECLARE_DRAW_COMMAND(FillColumnAdd, FillColumnAdd, DrawColumnLLVMCommand);
+DECLARE_DRAW_COMMAND(FillColumnAddClamp, FillColumnAddClamp, DrawColumnLLVMCommand);
+DECLARE_DRAW_COMMAND(FillColumnSubClamp, FillColumnSubClamp, DrawColumnLLVMCommand);
+DECLARE_DRAW_COMMAND(FillColumnRevSubClamp, FillColumnRevSubClamp, DrawColumnLLVMCommand);
 
 /////////////////////////////////////////////////////////////////////////////
-
-class DrawerColumnCommand : public DrawerCommand
-{
-public:
-	int _count;
-	BYTE * RESTRICT _dest;
-	int _pitch;
-	DWORD _iscale;
-	DWORD _texturefrac;
-
-	DrawerColumnCommand()
-	{
-		_count = dc_count;
-		_dest = dc_dest;
-		_iscale = dc_iscale;
-		_texturefrac = dc_texturefrac;
-		_pitch = dc_pitch;
-	}
-
-	class LoopIterator
-	{
-	public:
-		int count;
-		uint32_t *dest;
-		int pitch;
-		fixed_t fracstep;
-		fixed_t frac;
-
-		LoopIterator(DrawerColumnCommand *command, DrawerThread *thread)
-		{
-			count = thread->count_for_thread(command->_dest_y, command->_count);
-			if (count <= 0)
-				return;
-
-			dest = thread->dest_for_thread(command->_dest_y, command->_pitch, (uint32_t*)command->_dest);
-			pitch = command->_pitch * thread->num_cores;
-
-			fracstep = command->_iscale * thread->num_cores;
-			frac = command->_texturefrac + command->_iscale * thread->skipped_by_thread(command->_dest_y);
-		}
-
-		uint32_t sample_index()
-		{
-			return frac >> FRACBITS;
-		}
-
-		explicit operator bool()
-		{
-			return count > 0;
-		}
-
-		bool next()
-		{
-			dest += pitch;
-			frac += fracstep;
-			return (--count) != 0;
-		}
-	};
-};
-
-class DrawColumnRGBACommand : public DrawerColumnCommand
-{
-	uint32_t _light;
-	const BYTE * RESTRICT _source;
-	ShadeConstants _shade_constants;
-	BYTE * RESTRICT _colormap;
-
-public:
-	DrawColumnRGBACommand()
-	{
-		_light = LightBgra::calc_light_multiplier(dc_light);
-		_shade_constants = dc_shade_constants;
-		_source = dc_source;
-		_colormap = dc_colormap;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			uint32_t fg = LightBgra::shade_pal_index(_colormap[_source[loop.sample_index()]], _light, _shade_constants);
-			*loop.dest = BlendBgra::copy(fg);
-		} while (loop.next());
-	}
-};
-
-class FillColumnRGBACommand : public DrawerColumnCommand
-{
-	uint32_t _color;
-
-public:
-	FillColumnRGBACommand()
-	{
-		uint32_t light = LightBgra::calc_light_multiplier(dc_light);
-		_color = LightBgra::shade_pal_index_simple(dc_color, light);
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			*loop.dest = BlendBgra::copy(_color);
-		} while (loop.next());
-	}
-};
-
-class FillAddColumnRGBACommand : public DrawerColumnCommand
-{
-	uint32_t _srccolor;
-
-public:
-	FillAddColumnRGBACommand()
-	{
-		_srccolor = dc_srccolor_bgra;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-
-		uint32_t alpha = APART(_srccolor);
-		alpha += alpha >> 7;
-
-		do
-		{
-			*loop.dest = BlendBgra::add(_srccolor, *loop.dest, alpha, 256 - alpha);
-		} while (loop.next());
-	}
-};
-
-class FillAddClampColumnRGBACommand : public DrawerColumnCommand
-{
-	int _color;
-	uint32_t _srccolor;
-	uint32_t _srcalpha;
-	uint32_t _destalpha;
-
-public:
-	FillAddClampColumnRGBACommand()
-	{
-		_color = dc_color;
-		_srccolor = dc_srccolor_bgra;
-		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
-		_destalpha = dc_destalpha >> (FRACBITS - 8);
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			*loop.dest = BlendBgra::add(_srccolor, *loop.dest, _srcalpha, _destalpha);
-		} while (loop.next());
-	}
-};
-
-class FillSubClampColumnRGBACommand : public DrawerColumnCommand
-{
-	uint32_t _srccolor;
-	uint32_t _srcalpha;
-	uint32_t _destalpha;
-
-public:
-	FillSubClampColumnRGBACommand()
-	{
-		_srccolor = dc_srccolor_bgra;
-		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
-		_destalpha = dc_destalpha >> (FRACBITS - 8);
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			*loop.dest = BlendBgra::sub(_srccolor, *loop.dest, _srcalpha, _destalpha);
-		} while (loop.next());
-	}
-};
-
-class FillRevSubClampColumnRGBACommand : public DrawerColumnCommand
-{
-	uint32_t _srccolor;
-	uint32_t _srcalpha;
-	uint32_t _destalpha;
-
-public:
-	FillRevSubClampColumnRGBACommand()
-	{
-		_srccolor = dc_srccolor_bgra;
-		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
-		_destalpha = dc_destalpha >> (FRACBITS - 8);
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			*loop.dest = BlendBgra::revsub(_srccolor, *loop.dest, _srcalpha, _destalpha);
-		} while (loop.next());
-	}
-};
-
-class DrawAddColumnRGBACommand : public DrawerColumnCommand
-{
-	const BYTE * RESTRICT _source;
-	uint32_t _light;
-	ShadeConstants _shade_constants;
-	uint32_t _srcalpha;
-	uint32_t _destalpha;
-	BYTE * RESTRICT _colormap;
-
-public:
-	DrawAddColumnRGBACommand()
-	{
-		_source = dc_source;
-		_light = LightBgra::calc_light_multiplier(dc_light);
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
-		_destalpha = dc_destalpha >> (FRACBITS - 8);
-		_colormap = dc_colormap;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			uint32_t fg = LightBgra::shade_pal_index(_colormap[_source[loop.sample_index()]], _light, _shade_constants);
-			*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
-		} while (loop.next());
-	}
-};
-
-class DrawTranslatedColumnRGBACommand : public DrawerColumnCommand
-{
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	BYTE * RESTRICT _translation;
-	const BYTE * RESTRICT _source;
-
-public:
-	DrawTranslatedColumnRGBACommand()
-	{
-		_light = LightBgra::calc_light_multiplier(dc_light);
-		_shade_constants = dc_shade_constants;
-		_translation = dc_translation;
-		_source = dc_source;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			uint32_t fg = LightBgra::shade_pal_index(_translation[_source[loop.sample_index()]], _light, _shade_constants);
-			*loop.dest = BlendBgra::copy(fg);
-		} while (loop.next());
-	}
-};
-
-class DrawTlatedAddColumnRGBACommand : public DrawerColumnCommand
-{
-	fixed_t _light;
-	ShadeConstants _shade_constants;
-	BYTE * RESTRICT _translation;
-	const BYTE * RESTRICT _source;
-	uint32_t _srcalpha;
-	uint32_t _destalpha;
-
-public:
-	DrawTlatedAddColumnRGBACommand()
-	{
-		_light = LightBgra::calc_light_multiplier(dc_light);
-		_shade_constants = dc_shade_constants;
-		_translation = dc_translation;
-		_source = dc_source;
-		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
-		_destalpha = dc_destalpha >> (FRACBITS - 8);
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			uint32_t fg = LightBgra::shade_pal_index(_translation[_source[loop.sample_index()]], _light, _shade_constants);
-			*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
-		} while (loop.next());
-	}
-};
-
-class DrawShadedColumnRGBACommand : public DrawerColumnCommand
-{
-private:
-	const BYTE * RESTRICT _source;
-	lighttable_t * RESTRICT _colormap;
-	uint32_t _color;
-
-public:
-	DrawShadedColumnRGBACommand()
-	{
-		_source = dc_source;
-		_colormap = dc_colormap;
-		_color = LightBgra::shade_pal_index_simple(dc_color, LightBgra::calc_light_multiplier(dc_light));
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			uint32_t alpha = clamp<uint32_t>(_colormap[_source[loop.sample_index()]], 0, 64) * 4;
-			uint32_t inv_alpha = 256 - alpha;
-			*loop.dest = BlendBgra::add(_color, *loop.dest, alpha, inv_alpha);
-		} while (loop.next());
-	}
-};
-
-class DrawAddClampColumnRGBACommand : public DrawerColumnCommand
-{
-	const BYTE * RESTRICT _source;
-	uint32_t _light;
-	ShadeConstants _shade_constants;
-	uint32_t _srcalpha;
-	uint32_t _destalpha;
-
-public:
-	DrawAddClampColumnRGBACommand()
-	{
-		_source = dc_source;
-		_light = LightBgra::calc_light_multiplier(dc_light);
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
-		_destalpha = dc_destalpha >> (FRACBITS - 8);
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			uint32_t fg = LightBgra::shade_pal_index(_source[loop.sample_index()], _light, _shade_constants);
-			*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
-		} while (loop.next());
-	}
-};
-
-class DrawAddClampTranslatedColumnRGBACommand : public DrawerColumnCommand
-{
-	BYTE * RESTRICT _translation;
-	const BYTE * RESTRICT _source;
-	uint32_t _light;
-	ShadeConstants _shade_constants;
-	uint32_t _srcalpha;
-	uint32_t _destalpha;
-
-public:
-	DrawAddClampTranslatedColumnRGBACommand()
-	{
-		_translation = dc_translation;
-		_source = dc_source;
-		_light = LightBgra::calc_light_multiplier(dc_light);
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
-		_destalpha = dc_destalpha >> (FRACBITS - 8);
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			uint32_t fg = LightBgra::shade_pal_index(_translation[_source[loop.sample_index()]], _light, _shade_constants);
-			*loop.dest = BlendBgra::add(fg, *loop.dest, _srcalpha, _destalpha);
-		} while (loop.next());
-	}
-};
-
-class DrawSubClampColumnRGBACommand : public DrawerColumnCommand
-{
-	const BYTE * RESTRICT _source;
-	uint32_t _light;
-	ShadeConstants _shade_constants;
-	uint32_t _srcalpha;
-	uint32_t _destalpha;
-
-public:
-	DrawSubClampColumnRGBACommand()
-	{
-		_source = dc_source;
-		_light = LightBgra::calc_light_multiplier(dc_light);
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
-		_destalpha = dc_destalpha >> (FRACBITS - 8);
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			uint32_t fg = LightBgra::shade_pal_index(_source[loop.sample_index()], _light, _shade_constants);
-			*loop.dest = BlendBgra::sub(fg, *loop.dest, _srcalpha, _destalpha);
-		} while (loop.next());
-	}
-};
-
-class DrawSubClampTranslatedColumnRGBACommand : public DrawerColumnCommand
-{
-	const BYTE * RESTRICT _source;
-	uint32_t _light;
-	ShadeConstants _shade_constants;
-	uint32_t _srcalpha;
-	uint32_t _destalpha;
-	BYTE * RESTRICT _translation;
-
-public:
-	DrawSubClampTranslatedColumnRGBACommand()
-	{
-		_source = dc_source;
-		_light = LightBgra::calc_light_multiplier(dc_light);
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
-		_destalpha = dc_destalpha >> (FRACBITS - 8);
-		_translation = dc_translation;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			uint32_t fg = LightBgra::shade_pal_index(_translation[_source[loop.sample_index()]], _light, _shade_constants);
-			*loop.dest = BlendBgra::sub(fg, *loop.dest, _srcalpha, _destalpha);
-		} while (loop.next());
-	}
-};
-
-class DrawRevSubClampColumnRGBACommand : public DrawerColumnCommand
-{
-	const BYTE * RESTRICT _source;
-	uint32_t _light;
-	ShadeConstants _shade_constants;
-	uint32_t _srcalpha;
-	uint32_t _destalpha;
-
-public:
-	DrawRevSubClampColumnRGBACommand()
-	{
-		_source = dc_source;
-		_light = LightBgra::calc_light_multiplier(dc_light);
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
-		_destalpha = dc_destalpha >> (FRACBITS - 8);
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			uint32_t fg = LightBgra::shade_pal_index(_source[loop.sample_index()], _light, _shade_constants);
-			*loop.dest = BlendBgra::revsub(fg, *loop.dest, _srcalpha, _destalpha);
-		} while (loop.next());
-	}
-};
-
-class DrawRevSubClampTranslatedColumnRGBACommand : public DrawerColumnCommand
-{
-	const BYTE * RESTRICT _source;
-	uint32_t _light;
-	ShadeConstants _shade_constants;
-	uint32_t _srcalpha;
-	uint32_t _destalpha;
-	BYTE * RESTRICT _translation;
-
-public:
-	DrawRevSubClampTranslatedColumnRGBACommand()
-	{
-		_source = dc_source;
-		_light = LightBgra::calc_light_multiplier(dc_light);
-		_shade_constants = dc_shade_constants;
-		_srcalpha = dc_srcalpha >> (FRACBITS - 8);
-		_destalpha = dc_destalpha >> (FRACBITS - 8);
-		_translation = dc_translation;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		LoopIterator loop(this, thread);
-		if (!loop) return;
-		do
-		{
-			uint32_t fg = LightBgra::shade_pal_index(_translation[_source[loop.sample_index()]], _light, _shade_constants);
-			*loop.dest = BlendBgra::revsub(fg, *loop.dest, _srcalpha, _destalpha);
-		} while (loop.next());
-	}
-};
 
 class DrawFuzzColumnRGBACommand : public DrawerCommand
 {
@@ -1830,32 +1306,32 @@ void R_EndDrawerCommands()
 
 void R_DrawColumn_rgba()
 {
-	DrawerCommandQueue::QueueCommand<DrawColumnRGBACommand>();
+	DrawerCommandQueue::QueueCommand<DrawColumnLLVMCommand>();
 }
 
 void R_FillColumn_rgba()
 {
-	DrawerCommandQueue::QueueCommand<FillColumnRGBACommand>();
+	DrawerCommandQueue::QueueCommand<FillColumnLLVMCommand>();
 }
 
 void R_FillAddColumn_rgba()
 {
-	DrawerCommandQueue::QueueCommand<FillAddColumnRGBACommand>();
+	DrawerCommandQueue::QueueCommand<FillColumnAddLLVMCommand>();
 }
 
 void R_FillAddClampColumn_rgba()
 {
-	DrawerCommandQueue::QueueCommand<FillAddClampColumnRGBACommand>();
+	DrawerCommandQueue::QueueCommand<FillColumnAddClampLLVMCommand>();
 }
 
 void R_FillSubClampColumn_rgba()
 {
-	DrawerCommandQueue::QueueCommand<FillSubClampColumnRGBACommand>();
+	DrawerCommandQueue::QueueCommand<FillColumnSubClampLLVMCommand>();
 }
 
 void R_FillRevSubClampColumn_rgba()
 {
-	DrawerCommandQueue::QueueCommand<FillRevSubClampColumnRGBACommand>();
+	DrawerCommandQueue::QueueCommand<FillColumnRevSubClampLLVMCommand>();
 }
 
 void R_DrawFuzzColumn_rgba()
@@ -1870,52 +1346,52 @@ void R_DrawFuzzColumn_rgba()
 
 void R_DrawAddColumn_rgba()
 {
-	DrawerCommandQueue::QueueCommand<DrawAddColumnRGBACommand>();
+	DrawerCommandQueue::QueueCommand<DrawColumnAddLLVMCommand>();
 }
 
 void R_DrawTranslatedColumn_rgba()
 {
-	DrawerCommandQueue::QueueCommand<DrawTranslatedColumnRGBACommand>();
+	DrawerCommandQueue::QueueCommand<DrawColumnTranslatedLLVMCommand>();
 }
 
 void R_DrawTlatedAddColumn_rgba()
 {
-	DrawerCommandQueue::QueueCommand<DrawTlatedAddColumnRGBACommand>();
+	DrawerCommandQueue::QueueCommand<DrawColumnTlatedAddLLVMCommand>();
 }
 
 void R_DrawShadedColumn_rgba()
 {
-	DrawerCommandQueue::QueueCommand<DrawShadedColumnRGBACommand>();
+	DrawerCommandQueue::QueueCommand<DrawColumnShadedLLVMCommand>();
 }
 
 void R_DrawAddClampColumn_rgba()
 {
-	DrawerCommandQueue::QueueCommand<DrawAddClampColumnRGBACommand>();
+	DrawerCommandQueue::QueueCommand<DrawColumnAddClampLLVMCommand>();
 }
 
 void R_DrawAddClampTranslatedColumn_rgba()
 {
-	DrawerCommandQueue::QueueCommand<DrawAddClampTranslatedColumnRGBACommand>();
+	DrawerCommandQueue::QueueCommand<DrawColumnAddClampTranslatedLLVMCommand>();
 }
 
 void R_DrawSubClampColumn_rgba()
 {
-	DrawerCommandQueue::QueueCommand<DrawSubClampColumnRGBACommand>();
+	DrawerCommandQueue::QueueCommand<DrawColumnSubClampLLVMCommand>();
 }
 
 void R_DrawSubClampTranslatedColumn_rgba()
 {
-	DrawerCommandQueue::QueueCommand<DrawSubClampTranslatedColumnRGBACommand>();
+	DrawerCommandQueue::QueueCommand<DrawColumnSubClampTranslatedLLVMCommand>();
 }
 
 void R_DrawRevSubClampColumn_rgba()
 {
-	DrawerCommandQueue::QueueCommand<DrawRevSubClampColumnRGBACommand>();
+	DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampLLVMCommand>();
 }
 
 void R_DrawRevSubClampTranslatedColumn_rgba()
 {
-	DrawerCommandQueue::QueueCommand<DrawRevSubClampTranslatedColumnRGBACommand>();
+	DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampTranslatedLLVMCommand>();
 }
 
 void R_DrawSpan_rgba()

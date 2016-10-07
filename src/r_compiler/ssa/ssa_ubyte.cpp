@@ -1,6 +1,7 @@
 
 #include "r_compiler/llvm_include.h"
 #include "ssa_ubyte.h"
+#include "ssa_int.h"
 #include "ssa_scope.h"
 
 SSAUByte::SSAUByte()
@@ -22,6 +23,11 @@ SSAUByte::SSAUByte(llvm::Value *v)
 llvm::Type *SSAUByte::llvm_type()
 {
 	return llvm::Type::getInt8Ty(SSAScope::context());
+}
+
+SSAInt SSAUByte::zext_int()
+{
+	return SSAInt::from_llvm(SSAScope::builder().CreateZExt(v, SSAInt::llvm_type(), SSAScope::hint()));
 }
 
 SSAUByte operator+(const SSAUByte &a, const SSAUByte &b)

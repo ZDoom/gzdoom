@@ -97,6 +97,19 @@ llvm::Type *SSAVec4i::llvm_type()
 	return llvm::VectorType::get(llvm::Type::getInt32Ty(SSAScope::context()), 4);
 }
 
+SSAVec4i SSAVec4i::unpack(SSAInt i32)
+{
+	// _mm_cvtsi32_si128 as implemented by clang:
+	llvm::Value *v = SSAScope::builder().CreateInsertElement(llvm::UndefValue::get(SSAVec4i::llvm_type()), i32.v, SSAInt(0).v, SSAScope::hint());
+	v = SSAScope::builder().CreateInsertElement(v, SSAInt(0).v, SSAInt(1).v, SSAScope::hint());
+	v = SSAScope::builder().CreateInsertElement(v, SSAInt(0).v, SSAInt(2).v, SSAScope::hint());
+	v = SSAScope::builder().CreateInsertElement(v, SSAInt(0).v, SSAInt(3).v, SSAScope::hint());
+	SSAVec4i v4i = SSAVec4i::from_llvm(v);
+
+	SSAVec8s low = SSAVec8s::bitcast(SSAVec16ub::shuffle(SSAVec16ub::bitcast(v4i), SSAVec16ub((unsigned char)0), 0, 16 + 0, 1, 16 + 1, 2, 16 + 2, 3, 16 + 3, 4, 16 + 4, 5, 16 + 5, 6, 16 + 6, 7, 16 + 7)); // _mm_unpacklo_epi8
+	return SSAVec4i::extendlo(low); // _mm_unpacklo_epi16
+}
+
 SSAVec4i SSAVec4i::bitcast(SSAVec4f f32)
 {
 	return SSAVec4i::from_llvm(SSAScope::builder().CreateBitCast(f32.v, llvm_type(), SSAScope::hint()));

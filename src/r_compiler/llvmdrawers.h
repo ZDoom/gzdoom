@@ -77,6 +77,40 @@ struct DrawSpanArgs
 	};
 };
 
+struct DrawColumnArgs
+{
+	uint32_t *dest;
+	const uint8_t *source;
+	uint8_t *colormap;
+	uint8_t *translation;
+	const uint32_t *basecolors;
+	int32_t pitch;
+	int32_t count;
+	int32_t dest_y;
+	uint32_t iscale;
+	uint32_t texturefrac;
+	uint32_t light;
+	uint32_t color;
+	uint32_t srccolor;
+	uint32_t srcalpha;
+	uint32_t destalpha;
+
+	uint16_t light_alpha;
+	uint16_t light_red;
+	uint16_t light_green;
+	uint16_t light_blue;
+	uint16_t fade_alpha;
+	uint16_t fade_red;
+	uint16_t fade_green;
+	uint16_t fade_blue;
+	uint16_t desaturate;
+	uint32_t flags;
+	enum Flags
+	{
+		simple_shade = 1
+	};
+};
+
 class LLVMDrawers
 {
 public:
@@ -85,6 +119,23 @@ public:
 	static void Create();
 	static void Destroy();
 	static LLVMDrawers *Instance();
+
+	void(*DrawColumn)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnAdd)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnTranslated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnTlatedAdd)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnShaded)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnAddClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnAddClampTranslated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnSubClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnSubClampTranslated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRevSubClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRevSubClampTranslated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*FillColumn)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*FillColumnAdd)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*FillColumnAddClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*FillColumnSubClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*FillColumnRevSubClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 
 	void(*DrawSpan)(const DrawSpanArgs *) = nullptr;
 	void(*DrawSpanMasked)(const DrawSpanArgs *) = nullptr;

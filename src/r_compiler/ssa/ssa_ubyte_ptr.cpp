@@ -30,22 +30,8 @@ SSAUByte SSAUBytePtr::load() const
 
 SSAVec4i SSAUBytePtr::load_vec4ub() const
 {
-	// _mm_cvtsi32_si128 as implemented by clang:
 	SSAInt i32 = SSAInt::from_llvm(SSAScope::builder().CreateLoad(SSAScope::builder().CreateBitCast(v, llvm::Type::getInt32PtrTy(SSAScope::context()), SSAScope::hint()), false, SSAScope::hint()));
-	llvm::Value *v = SSAScope::builder().CreateInsertElement(llvm::UndefValue::get(SSAVec4i::llvm_type()), i32.v, SSAInt(0).v, SSAScope::hint());
-	v = SSAScope::builder().CreateInsertElement(v, SSAInt(0).v, SSAInt(1).v, SSAScope::hint());
-	v = SSAScope::builder().CreateInsertElement(v, SSAInt(0).v, SSAInt(2).v, SSAScope::hint());
-	v = SSAScope::builder().CreateInsertElement(v, SSAInt(0).v, SSAInt(3).v, SSAScope::hint());
-	SSAVec4i v4i = SSAVec4i::from_llvm(v);
-
-	SSAVec8s low = SSAVec8s::bitcast(SSAVec16ub::shuffle(SSAVec16ub::bitcast(v4i), SSAVec16ub((unsigned char)0), 0, 16+0, 1, 16+1, 2, 16+2, 3, 16+3, 4, 16+4, 5, 16+5, 6, 16+6, 7, 16+7)); // _mm_unpacklo_epi8
-	return SSAVec4i::extendlo(low); // _mm_unpacklo_epi16
-/*
-	llvm::PointerType *m4xint8typeptr = llvm::VectorType::get(llvm::Type::getInt8Ty(SSAScope::context()), 4)->getPointerTo();
-	llvm::Type *m4xint32type = llvm::VectorType::get(llvm::Type::getInt32Ty(SSAScope::context()), 4);
-	llvm::Value *v4ub = SSAScope::builder().CreateLoad(SSAScope::builder().CreateBitCast(v, m4xint8typeptr, SSAScope::hint()), false, SSAScope::hint());
-	return SSAVec4i::from_llvm(SSAScope::builder().CreateZExt(v4ub, m4xint32type));
-*/
+	return SSAVec4i::unpack(i32);
 }
 
 SSAVec16ub SSAUBytePtr::load_vec16ub() const

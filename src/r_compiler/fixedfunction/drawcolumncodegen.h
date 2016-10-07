@@ -39,9 +39,13 @@ public:
 private:
 	void Loop(DrawColumnVariant variant, DrawColumnMethod method, bool isSimpleShade);
 	SSAVec4i ProcessPixel(SSAInt sample_index, SSAVec4i bgcolor, DrawColumnVariant variant, bool isSimpleShade);
+	SSAVec4i ProcessPixelPal(SSAInt sample_index, SSAVec4i bgcolor, DrawColumnVariant variant, bool isSimpleShade);
+	SSAVec4i Sample(SSAInt frac);
 	SSAInt ColormapSample(SSAInt frac);
 	SSAInt TranslateSample(SSAInt frac);
-	SSAVec4i Shade(SSAInt palIndex, bool isSimpleShade);
+	SSAVec4i Shade(SSAVec4i fgcolor, bool isSimpleShade);
+	SSAVec4i ShadePal(SSAInt palIndex, bool isSimpleShade);
+	bool IsPaletteInput(DrawColumnVariant variant);
 
 	SSAStack<SSAInt> stack_index, stack_frac;
 

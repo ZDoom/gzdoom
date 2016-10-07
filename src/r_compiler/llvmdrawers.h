@@ -144,6 +144,11 @@ public:
 	void(*DrawColumnRt1AddClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawColumnRt1SubClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawColumnRt1RevSubClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt1Translated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt1TlatedAdd)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt1AddClampTranslated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt1SubClampTranslated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt1RevSubClampTranslated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawColumnRt4)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawColumnRt4Copy)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawColumnRt4Add)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
@@ -151,6 +156,11 @@ public:
 	void(*DrawColumnRt4AddClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawColumnRt4SubClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawColumnRt4RevSubClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt4Translated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt4TlatedAdd)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt4AddClampTranslated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt4SubClampTranslated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt4RevSubClampTranslated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 
 	void(*DrawSpan)(const DrawSpanArgs *) = nullptr;
 	void(*DrawSpanMasked)(const DrawSpanArgs *) = nullptr;

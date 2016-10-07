@@ -1121,6 +1121,7 @@ void R_FillColumnHorizP_C (void)
 void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *span)
 {
 	int pixelsize = r_swtruecolor ? 4 : 1;
+	int inputpixelsize = (r_swtruecolor && !drawer_needs_pal_input) ? 4 : 1;
 	const fixed_t texturemid = FLOAT2FIXED(dc_texturemid);
 	while (span->Length != 0)
 	{
@@ -1189,7 +1190,7 @@ void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *span)
 					endfrac -= dc_iscale;
 				}
 			}
-			dc_source = column + top;
+			dc_source = column + top * inputpixelsize;
 			dc_dest = (ylookup[dc_yl] + dc_x) * pixelsize + dc_destorg;
 			dc_count = dc_yh - dc_yl + 1;
 			hcolfunc_pre ();

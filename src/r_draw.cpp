@@ -191,6 +191,8 @@ FDynamicColormap ShadeFakeColormap[16];
 BYTE identitymap[256];
 FDynamicColormap identitycolormap;
 
+bool drawer_needs_pal_input;
+
 EXTERN_CVAR (Int, r_columnmethod)
 
 void R_InitShadeMaps()
@@ -2516,6 +2518,7 @@ static bool R_SetBlendFunc (int op, fixed_t fglevel, fixed_t bglevel, int flags)
 			colfunc = transcolfunc;
 			hcolfunc_post1 = rt_tlate1col;
 			hcolfunc_post4 = rt_tlate4cols;
+			drawer_needs_pal_input = true;
 		}
 		return true;
 	}
@@ -2566,6 +2569,7 @@ static bool R_SetBlendFunc (int op, fixed_t fglevel, fixed_t bglevel, int flags)
 				colfunc = R_DrawTlatedAddColumn;
 				hcolfunc_post1 = rt_tlateadd1col;
 				hcolfunc_post4 = rt_tlateadd4cols;
+				drawer_needs_pal_input = true;
 			}
 		}
 		else
@@ -2587,6 +2591,7 @@ static bool R_SetBlendFunc (int op, fixed_t fglevel, fixed_t bglevel, int flags)
 				colfunc = R_DrawAddClampTranslatedColumn;
 				hcolfunc_post1 = rt_tlateaddclamp1col;
 				hcolfunc_post4 = rt_tlateaddclamp4cols;
+				drawer_needs_pal_input = true;
 			}
 		}
 		return true;
@@ -2609,6 +2614,7 @@ static bool R_SetBlendFunc (int op, fixed_t fglevel, fixed_t bglevel, int flags)
 			colfunc = R_DrawSubClampTranslatedColumn;
 			hcolfunc_post1 = rt_tlatesubclamp1col;
 			hcolfunc_post4 = rt_tlatesubclamp4cols;
+			drawer_needs_pal_input = true;
 		}
 		return true;
 
@@ -2634,6 +2640,7 @@ static bool R_SetBlendFunc (int op, fixed_t fglevel, fixed_t bglevel, int flags)
 			colfunc = R_DrawRevSubClampTranslatedColumn;
 			hcolfunc_post1 = rt_tlaterevsubclamp1col;
 			hcolfunc_post4 = rt_tlaterevsubclamp4cols;
+			drawer_needs_pal_input = true;
 		}
 		return true;
 
@@ -2657,6 +2664,8 @@ static fixed_t GetAlpha(int type, fixed_t alpha)
 ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, DWORD color)
 {
 	fixed_t fglevel, bglevel;
+
+	drawer_needs_pal_input = false;
 
 	style.CheckFuzz();
 
@@ -2706,6 +2715,7 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 		colfunc = R_DrawShadedColumn;
 		hcolfunc_post1 = rt_shaded1col;
 		hcolfunc_post4 = rt_shaded4cols;
+		drawer_needs_pal_input = true;
 		dc_color = fixedcolormap ? fixedcolormap->Maps[APART(color)] : basecolormap->Maps[APART(color)];
 		basecolormap = &ShadeFakeColormap[16-alpha];
 		if (fixedlightlev >= 0 && fixedcolormap == NULL)

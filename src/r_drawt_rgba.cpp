@@ -124,6 +124,11 @@ DECLARE_DRAW_COMMAND(DrawColumnRt1Shaded, DrawColumnRt1Shaded, DrawColumnRt1LLVM
 DECLARE_DRAW_COMMAND(DrawColumnRt1AddClamp, DrawColumnRt1AddClamp, DrawColumnRt1LLVMCommand);
 DECLARE_DRAW_COMMAND(DrawColumnRt1SubClamp, DrawColumnRt1SubClamp, DrawColumnRt1LLVMCommand);
 DECLARE_DRAW_COMMAND(DrawColumnRt1RevSubClamp, DrawColumnRt1RevSubClamp, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt1Translated, DrawColumnRt1Translated, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt1TlatedAdd, DrawColumnRt1TlatedAdd, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt1AddClampTranslated, DrawColumnRt1AddClampTranslated, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt1SubClampTranslated, DrawColumnRt1SubClampTranslated, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt1RevSubClampTranslated, DrawColumnRt1RevSubClampTranslated, DrawColumnRt1LLVMCommand);
 DECLARE_DRAW_COMMAND(DrawColumnRt4, DrawColumnRt4, DrawColumnRt1LLVMCommand);
 DECLARE_DRAW_COMMAND(DrawColumnRt4Copy, DrawColumnRt4Copy, DrawColumnRt1LLVMCommand);
 DECLARE_DRAW_COMMAND(DrawColumnRt4Add, DrawColumnRt4Add, DrawColumnRt1LLVMCommand);
@@ -131,128 +136,13 @@ DECLARE_DRAW_COMMAND(DrawColumnRt4Shaded, DrawColumnRt4Shaded, DrawColumnRt1LLVM
 DECLARE_DRAW_COMMAND(DrawColumnRt4AddClamp, DrawColumnRt4AddClamp, DrawColumnRt1LLVMCommand);
 DECLARE_DRAW_COMMAND(DrawColumnRt4SubClamp, DrawColumnRt4SubClamp, DrawColumnRt1LLVMCommand);
 DECLARE_DRAW_COMMAND(DrawColumnRt4RevSubClamp, DrawColumnRt4RevSubClamp, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt4Translated, DrawColumnRt4Translated, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt4TlatedAdd, DrawColumnRt4TlatedAdd, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt4AddClampTranslated, DrawColumnRt4AddClampTranslated, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt4SubClampTranslated, DrawColumnRt4SubClampTranslated, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt4RevSubClampTranslated, DrawColumnRt4RevSubClampTranslated, DrawColumnRt1LLVMCommand);
 
 /////////////////////////////////////////////////////////////////////////////
-
-class RtTranslate1colRGBACommand : public DrawerCommand
-{
-	const BYTE * RESTRICT translation;
-	int hx;
-	int yl;
-	int yh;
-
-public:
-	RtTranslate1colRGBACommand(const BYTE *translation, int hx, int yl, int yh)
-	{
-		this->translation = translation;
-		this->hx = hx;
-		this->yl = yl;
-		this->yh = yh;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		int count = yh - yl + 1;
-		uint32_t *source = &thread->dc_temp_rgba[yl*4 + hx];
-
-		// Things we do to hit the compiler's optimizer with a clue bat:
-		// 1. Parallelism is explicitly spelled out by using a separate
-		//    C instruction for each assembly instruction. GCC lets me
-		//    have four temporaries, but VC++ spills to the stack with
-		//    more than two. Two is probably optimal, anyway.
-		// 2. The results of the translation lookups are explicitly
-		//    stored in byte-sized variables. This causes the VC++ code
-		//    to use byte mov instructions in most cases; for apparently
-		//    random reasons, it will use movzx for some places. GCC
-		//    ignores this and uses movzx always.
-
-		// Do 8 rows at a time.
-		for (int count8 = count >> 3; count8; --count8)
-		{
-			int c0, c1;
-			BYTE b0, b1;
-
-			c0 = source[0];			c1 = source[4];
-			b0 = translation[c0];	b1 = translation[c1];
-			source[0] = b0;			source[4] = b1;
-
-			c0 = source[8];			c1 = source[12];
-			b0 = translation[c0];	b1 = translation[c1];
-			source[8] = b0;			source[12] = b1;
-
-			c0 = source[16];		c1 = source[20];
-			b0 = translation[c0];	b1 = translation[c1];
-			source[16] = b0;		source[20] = b1;
-
-			c0 = source[24];		c1 = source[28];
-			b0 = translation[c0];	b1 = translation[c1];
-			source[24] = b0;		source[28] = b1;
-
-			source += 32;
-		}
-		// Finish by doing 1 row at a time.
-		for (count &= 7; count; --count, source += 4)
-		{
-			source[0] = translation[source[0]];
-		}
-	}
-};
-
-class RtTranslate4colsRGBACommand : public DrawerCommand
-{
-	const BYTE * RESTRICT translation;
-	int yl;
-	int yh;
-
-public:
-	RtTranslate4colsRGBACommand(const BYTE *translation, int yl, int yh)
-	{
-		this->translation = translation;
-		this->yl = yl;
-		this->yh = yh;
-	}
-
-	void Execute(DrawerThread *thread) override
-	{
-		int count = yh - yl + 1;
-		uint32_t *source = &thread->dc_temp_rgba[yl*4];
-		int c0, c1;
-		BYTE b0, b1;
-
-		// Do 2 rows at a time.
-		for (int count8 = count >> 1; count8; --count8)
-		{
-			c0 = source[0];			c1 = source[1];
-			b0 = translation[c0];	b1 = translation[c1];
-			source[0] = b0;			source[1] = b1;
-
-			c0 = source[2];			c1 = source[3];
-			b0 = translation[c0];	b1 = translation[c1];
-			source[2] = b0;			source[3] = b1;
-
-			c0 = source[4];			c1 = source[5];
-			b0 = translation[c0];	b1 = translation[c1];
-			source[4] = b0;			source[5] = b1;
-
-			c0 = source[6];			c1 = source[7];
-			b0 = translation[c0];	b1 = translation[c1];
-			source[6] = b0;			source[7] = b1;
-
-			source += 8;
-		}
-		// Do the final row if count was odd.
-		if (count & 1)
-		{
-			c0 = source[0];			c1 = source[1];
-			b0 = translation[c0];	b1 = translation[c1];
-			source[0] = b0;			source[1] = b1;
-
-			c0 = source[2];			c1 = source[3];
-			b0 = translation[c0];	b1 = translation[c1];
-			source[2] = b0;			source[3] = b1;
-		}
-	}
-};
 
 class RtInitColsRGBACommand : public DrawerCommand
 {
@@ -270,12 +160,13 @@ public:
 	}
 };
 
+template<typename InputPixelType>
 class DrawColumnHorizRGBACommand : public DrawerCommand
 {
 	int _count;
 	fixed_t _iscale;
 	fixed_t _texturefrac;
-	const BYTE * RESTRICT _source;
+	const InputPixelType * RESTRICT _source;
 	int _x;
 	int _yl;
 	int _yh;
@@ -286,7 +177,7 @@ public:
 		_count = dc_count;
 		_iscale = dc_iscale;
 		_texturefrac = dc_texturefrac;
-		_source = dc_source;
+		_source = (const InputPixelType *)dc_source;
 		_x = dc_x;
 		_yl = dc_yl;
 		_yh = dc_yh;
@@ -309,7 +200,7 @@ public:
 		fracstep = _iscale;
 		frac = _texturefrac;
 
-		const BYTE *source = _source;
+		const InputPixelType *source = _source;
 
 		if (count & 1) {
 			*dest = source[frac >> FRACBITS]; dest += 4; frac += fracstep;
@@ -419,28 +310,16 @@ void rt_map4cols_rgba (int sx, int yl, int yh)
 	DrawerCommandQueue::QueueCommand<DrawColumnRt4LLVMCommand>(0, sx, yl, yh);
 }
 
-void rt_Translate1col_rgba(const BYTE *translation, int hx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<RtTranslate1colRGBACommand>(translation, hx, yl, yh);
-}
-
-void rt_Translate4cols_rgba(const BYTE *translation, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<RtTranslate4colsRGBACommand>(translation, yl, yh);
-}
-
 // Translates one span at hx to the screen at sx.
 void rt_tlate1col_rgba (int hx, int sx, int yl, int yh)
 {
-	rt_Translate1col_rgba(dc_translation, hx, yl, yh);
-	rt_map1col(hx, sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedLLVMCommand>(hx, sx, yl, yh);
 }
 
 // Translates all four spans to the screen starting at sx.
 void rt_tlate4cols_rgba (int sx, int yl, int yh)
 {
-	rt_Translate4cols_rgba(dc_translation, yl, yh);
-	rt_map4cols(sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedLLVMCommand>(0, sx, yl, yh);
 }
 
 // Adds one span at hx to the screen at sx without clamping.
@@ -458,15 +337,13 @@ void rt_add4cols_rgba (int sx, int yl, int yh)
 // Translates and adds one span at hx to the screen at sx without clamping.
 void rt_tlateadd1col_rgba (int hx, int sx, int yl, int yh)
 {
-	rt_Translate1col_rgba(dc_translation, hx, yl, yh);
-	rt_add1col(hx, sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<DrawColumnRt1AddClampTranslatedLLVMCommand>(hx, sx, yl, yh);
 }
 
 // Translates and adds all four spans to the screen starting at sx without clamping.
 void rt_tlateadd4cols_rgba(int sx, int yl, int yh)
 {
-	rt_Translate4cols_rgba(dc_translation, yl, yh);
-	rt_add4cols(sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<DrawColumnRt4AddClampTranslatedLLVMCommand>(0, sx, yl, yh);
 }
 
 // Shades one span at hx to the screen at sx.
@@ -496,15 +373,13 @@ void rt_addclamp4cols_rgba (int sx, int yl, int yh)
 // Translates and adds one span at hx to the screen at sx with clamping.
 void rt_tlateaddclamp1col_rgba (int hx, int sx, int yl, int yh)
 {
-	rt_Translate1col_rgba(dc_translation, hx, yl, yh);
-	rt_addclamp1col_rgba(hx, sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<DrawColumnRt1AddClampTranslatedLLVMCommand>(hx, sx, yl, yh);
 }
 
 // Translates and adds all four spans to the screen starting at sx with clamping.
 void rt_tlateaddclamp4cols_rgba (int sx, int yl, int yh)
 {
-	rt_Translate4cols_rgba(dc_translation, yl, yh);
-	rt_addclamp4cols(sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<DrawColumnRt4AddClampTranslatedLLVMCommand>(0, sx, yl, yh);
 }
 
 // Subtracts one span at hx to the screen at sx with clamping.
@@ -522,15 +397,13 @@ void rt_subclamp4cols_rgba (int sx, int yl, int yh)
 // Translates and subtracts one span at hx to the screen at sx with clamping.
 void rt_tlatesubclamp1col_rgba (int hx, int sx, int yl, int yh)
 {
-	rt_Translate1col_rgba(dc_translation, hx, yl, yh);
-	rt_subclamp1col_rgba(hx, sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<DrawColumnRt1SubClampTranslatedLLVMCommand>(hx, sx, yl, yh);
 }
 
 // Translates and subtracts all four spans to the screen starting at sx with clamping.
 void rt_tlatesubclamp4cols_rgba (int sx, int yl, int yh)
 {
-	rt_Translate4cols_rgba(dc_translation, yl, yh);
-	rt_subclamp4cols_rgba(sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<DrawColumnRt4SubClampTranslatedLLVMCommand>(0, sx, yl, yh);
 }
 
 // Subtracts one span at hx from the screen at sx with clamping.
@@ -548,15 +421,13 @@ void rt_revsubclamp4cols_rgba (int sx, int yl, int yh)
 // Translates and subtracts one span at hx from the screen at sx with clamping.
 void rt_tlaterevsubclamp1col_rgba (int hx, int sx, int yl, int yh)
 {
-	rt_Translate1col_rgba(dc_translation, hx, yl, yh);
-	rt_revsubclamp1col_rgba(hx, sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<DrawColumnRt1RevSubClampTranslatedLLVMCommand>(hx, sx, yl, yh);
 }
 
 // Translates and subtracts all four spans from the screen starting at sx with clamping.
 void rt_tlaterevsubclamp4cols_rgba (int sx, int yl, int yh)
 {
-	rt_Translate4cols_rgba(dc_translation, yl, yh);
-	rt_revsubclamp4cols_rgba(sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<DrawColumnRt4RevSubClampTranslatedLLVMCommand>(0, sx, yl, yh);
 }
 
 // Before each pass through a rendering loop that uses these routines,
@@ -590,7 +461,10 @@ void R_DrawColumnHoriz_rgba (void)
 	(*span)[1] = dc_yh;
 	*span += 2;
 
-	DrawerCommandQueue::QueueCommand<DrawColumnHorizRGBACommand>();
+	if (drawer_needs_pal_input)
+		DrawerCommandQueue::QueueCommand<DrawColumnHorizRGBACommand<uint8_t>>();
+	else
+		DrawerCommandQueue::QueueCommand<DrawColumnHorizRGBACommand<uint32_t>>();
 }
 
 // [RH] Just fills a column with a given color

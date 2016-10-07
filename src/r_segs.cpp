@@ -197,7 +197,11 @@ static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FText
 
 	// draw the texture
 	const FTexture::Span *spans;
-	const BYTE *pixels = tex->GetColumn (maskedtexturecol[dc_x] >> FRACBITS, &spans);
+	const BYTE *pixels;
+	if (r_swtruecolor && !drawer_needs_pal_input)
+		pixels = (const BYTE *)tex->GetColumnBgra(maskedtexturecol[dc_x] >> FRACBITS, &spans);
+	else
+		pixels = tex->GetColumn(maskedtexturecol[dc_x] >> FRACBITS, &spans);
 	blastfunc (pixels, spans);
 	rw_light += rw_lightstep;
 	spryscale += rw_scalestep;

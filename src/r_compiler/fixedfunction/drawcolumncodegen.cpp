@@ -11,7 +11,7 @@
 #include "r_compiler/ssa/ssa_struct_type.h"
 #include "r_compiler/ssa/ssa_value.h"
 
-void DrawColumnCodegen::Generate(DrawColumnVariant variant, SSAValue args, SSAValue thread_data)
+void DrawColumnCodegen::Generate(DrawColumnVariant variant, DrawColumnMethod method, SSAValue args, SSAValue thread_data)
 {
 	dest = args[0][0].load();
 	source = args[0][1].load();
@@ -21,7 +21,8 @@ void DrawColumnCodegen::Generate(DrawColumnVariant variant, SSAValue args, SSAVa
 	pitch = args[0][5].load();
 	count = args[0][6].load();
 	dest_y = args[0][7].load();
-	iscale = args[0][8].load();
+	if (method == DrawColumnMethod::Normal)
+		iscale = args[0][8].load();
 	texturefrac = args[0][9].load();
 	light = args[0][10].load();
 	color = SSAVec4i::unpack(args[0][11].load());
@@ -46,109 +47,148 @@ void DrawColumnCodegen::Generate(DrawColumnVariant variant, SSAValue args, SSAVa
 	thread.num_cores = thread_data[0][1].load();
 	thread.pass_start_y = thread_data[0][2].load();
 	thread.pass_end_y = thread_data[0][3].load();
+	thread.temp = thread_data[0][4].load();
 
 	is_simple_shade = (flags & DrawColumnArgs::simple_shade) == SSAInt(DrawColumnArgs::simple_shade);
 
 	count = count_for_thread(dest_y, count, thread);
 	dest = dest_for_thread(dest_y, pitch, dest, thread);
 	pitch = pitch * thread.num_cores;
-	stack_frac.store(texturefrac + iscale * skipped_by_thread(dest_y, thread));
-	iscale = iscale * thread.num_cores;
+	if (method == DrawColumnMethod::Normal)
+	{
+		stack_frac.store(texturefrac + iscale * skipped_by_thread(dest_y, thread));
+		iscale = iscale * thread.num_cores;
+	}
+	else
+	{
+		source = thread.temp[((dest_y + skipped_by_thread(dest_y, thread)) * 4 + texturefrac) * 4];
+	}
 
 	SSAIfBlock branch;
 	branch.if_block(is_simple_shade);
-	Loop(variant, true);
+	Loop(variant, method, true);
 	branch.else_block();
-	Loop(variant, false);
+	Loop(variant, method, false);
 	branch.end_block();
 }
 
-void DrawColumnCodegen::Loop(DrawColumnVariant variant, bool isSimpleShade)
+void DrawColumnCodegen::Loop(DrawColumnVariant variant, DrawColumnMethod method, bool isSimpleShade)
 {
+	SSAInt sincr;
+	if (method != DrawColumnMethod::Normal)
+		sincr = thread.num_cores * 4;
+
 	stack_index.store(SSAInt(0));
 	{
 		SSAForBlock loop;
 		SSAInt index = stack_index.load();
 		loop.loop_block(index < count);
 
-		SSAInt frac = stack_frac.load();
-
-		SSAInt offset = index * pitch * 4;
-		SSAVec4i bgcolor = dest[offset].load_vec4ub();
-
-		SSAInt alpha, inv_alpha;
-		SSAVec4i outcolor;
-		switch (variant)
+		SSAInt sample_index, frac;
+		if (method == DrawColumnMethod::Normal)
 		{
-		default:
-		case DrawColumnVariant::Draw:
-			outcolor = blend_copy(Shade(ColormapSample(frac), isSimpleShade));
-			break;
-		case DrawColumnVariant::DrawAdd:
-		case DrawColumnVariant::DrawAddClamp:
-			outcolor = blend_add(Shade(ColormapSample(frac), isSimpleShade), bgcolor, srcalpha, destalpha);
-			break;
-		case DrawColumnVariant::DrawShaded:
-			alpha = SSAInt::MAX(SSAInt::MIN(ColormapSample(frac), SSAInt(64)), SSAInt(0)) * 4;
-			inv_alpha = 256 - alpha;
-			outcolor = blend_add(color, bgcolor, alpha, inv_alpha);
-			break;
-		case DrawColumnVariant::DrawSubClamp:
-			outcolor = blend_sub(Shade(ColormapSample(frac), isSimpleShade), bgcolor, srcalpha, destalpha);
-			break;
-		case DrawColumnVariant::DrawRevSubClamp:
-			outcolor = blend_revsub(Shade(ColormapSample(frac), isSimpleShade), bgcolor, srcalpha, destalpha);
-			break;
-		case DrawColumnVariant::DrawTranslated:
-			outcolor = blend_copy(Shade(TranslateSample(frac), isSimpleShade));
-			break;
-		case DrawColumnVariant::DrawTlatedAdd:
-		case DrawColumnVariant::DrawAddClampTranslated:
-			outcolor = blend_add(Shade(TranslateSample(frac), isSimpleShade), bgcolor, srcalpha, destalpha);
-			break;
-		case DrawColumnVariant::DrawSubClampTranslated:
-			outcolor = blend_sub(Shade(TranslateSample(frac), isSimpleShade), bgcolor, srcalpha, destalpha);
-			break;
-		case DrawColumnVariant::DrawRevSubClampTranslated:
-			outcolor = blend_revsub(Shade(TranslateSample(frac), isSimpleShade), bgcolor, srcalpha, destalpha);
-			break;
-		case DrawColumnVariant::Fill:
-			outcolor = blend_copy(color);
-			break;
-		case DrawColumnVariant::FillAdd:
-			alpha = srccolor[3];
-			alpha = alpha + (alpha >> 7);
-			inv_alpha = 256 - alpha;
-			outcolor = blend_add(srccolor, bgcolor, alpha, inv_alpha);
-			break;
-		case DrawColumnVariant::FillAddClamp:
-			outcolor = blend_add(srccolor, bgcolor, srcalpha, destalpha);
-			break;
-		case DrawColumnVariant::FillSubClamp:
-			outcolor = blend_sub(srccolor, bgcolor, srcalpha, destalpha);
-			break;
-		case DrawColumnVariant::FillRevSubClamp:
-			outcolor = blend_revsub(srccolor, bgcolor, srcalpha, destalpha);
-			break;
+			frac = stack_frac.load();
+			sample_index = frac >> FRACBITS;
+		}
+		else
+		{
+			sample_index = index * sincr * 4;
 		}
 
-		dest[offset].store_vec4ub(outcolor);
+		SSAInt offset = index * pitch * 4;
+		SSAVec4i bgcolor[4];
+
+		int numColumns = (method == DrawColumnMethod::Rt4) ? 4 : 1;
+
+		if (numColumns == 4)
+		{
+			SSAVec16ub bg = dest[offset].load_unaligned_vec16ub();
+			SSAVec8s bg0 = SSAVec8s::extendlo(bg);
+			SSAVec8s bg1 = SSAVec8s::extendhi(bg);
+			bgcolor[0] = SSAVec4i::extendlo(bg0);
+			bgcolor[1] = SSAVec4i::extendhi(bg0);
+			bgcolor[2] = SSAVec4i::extendlo(bg1);
+			bgcolor[3] = SSAVec4i::extendhi(bg1);
+		}
+		else
+		{
+			bgcolor[0] = dest[offset].load_vec4ub();
+		}
+
+		SSAVec4i outcolor[4];
+		for (int i = 0; i < numColumns; i++)
+			outcolor[i] = ProcessPixel(sample_index + i * 4, bgcolor[i], variant, isSimpleShade);
+
+		if (numColumns == 4)
+		{
+			SSAVec16ub packedcolor(SSAVec8s(outcolor[0], outcolor[1]), SSAVec8s(outcolor[2], outcolor[3]));
+			dest[offset].store_unaligned_vec16ub(packedcolor);
+		}
+		else
+		{
+			dest[offset].store_vec4ub(outcolor[0]);
+		}
 
 		stack_index.store(index + 1);
-		stack_frac.store(frac + iscale);
+		if (method == DrawColumnMethod::Normal)
+			stack_frac.store(frac + iscale);
 		loop.end_block();
 	}
 }
 
-SSAInt DrawColumnCodegen::ColormapSample(SSAInt frac)
+SSAVec4i DrawColumnCodegen::ProcessPixel(SSAInt sample_index, SSAVec4i bgcolor, DrawColumnVariant variant, bool isSimpleShade)
 {
-	SSAInt sample_index = frac >> FRACBITS;
+	SSAInt alpha, inv_alpha;
+	switch (variant)
+	{
+	default:
+	case DrawColumnVariant::DrawCopy:
+		return blend_copy(basecolors[ColormapSample(sample_index) * 4].load_vec4ub());
+	case DrawColumnVariant::Draw:
+		return blend_copy(Shade(ColormapSample(sample_index), isSimpleShade));
+	case DrawColumnVariant::DrawAdd:
+	case DrawColumnVariant::DrawAddClamp:
+		return blend_add(Shade(ColormapSample(sample_index), isSimpleShade), bgcolor, srcalpha, destalpha);
+	case DrawColumnVariant::DrawShaded:
+		alpha = SSAInt::MAX(SSAInt::MIN(ColormapSample(sample_index), SSAInt(64)), SSAInt(0)) * 4;
+		inv_alpha = 256 - alpha;
+		return blend_add(color, bgcolor, alpha, inv_alpha);
+	case DrawColumnVariant::DrawSubClamp:
+		return blend_sub(Shade(ColormapSample(sample_index), isSimpleShade), bgcolor, srcalpha, destalpha);
+	case DrawColumnVariant::DrawRevSubClamp:
+		return blend_revsub(Shade(ColormapSample(sample_index), isSimpleShade), bgcolor, srcalpha, destalpha);
+	case DrawColumnVariant::DrawTranslated:
+		return blend_copy(Shade(TranslateSample(sample_index), isSimpleShade));
+	case DrawColumnVariant::DrawTlatedAdd:
+	case DrawColumnVariant::DrawAddClampTranslated:
+		return blend_add(Shade(TranslateSample(sample_index), isSimpleShade), bgcolor, srcalpha, destalpha);
+	case DrawColumnVariant::DrawSubClampTranslated:
+		return blend_sub(Shade(TranslateSample(sample_index), isSimpleShade), bgcolor, srcalpha, destalpha);
+	case DrawColumnVariant::DrawRevSubClampTranslated:
+		return blend_revsub(Shade(TranslateSample(sample_index), isSimpleShade), bgcolor, srcalpha, destalpha);
+	case DrawColumnVariant::Fill:
+		return blend_copy(color);
+	case DrawColumnVariant::FillAdd:
+		alpha = srccolor[3];
+		alpha = alpha + (alpha >> 7);
+		inv_alpha = 256 - alpha;
+		return blend_add(srccolor, bgcolor, alpha, inv_alpha);
+	case DrawColumnVariant::FillAddClamp:
+		return blend_add(srccolor, bgcolor, srcalpha, destalpha);
+	case DrawColumnVariant::FillSubClamp:
+		return blend_sub(srccolor, bgcolor, srcalpha, destalpha);
+	case DrawColumnVariant::FillRevSubClamp:
+		return blend_revsub(srccolor, bgcolor, srcalpha, destalpha);
+	}
+}
+
+SSAInt DrawColumnCodegen::ColormapSample(SSAInt sample_index)
+{
 	return colormap[source[sample_index].load().zext_int()].load().zext_int();
 }
 
-SSAInt DrawColumnCodegen::TranslateSample(SSAInt frac)
+SSAInt DrawColumnCodegen::TranslateSample(SSAInt sample_index)
 {
-	SSAInt sample_index = frac >> FRACBITS;
 	return translation[source[sample_index].load().zext_int()].load().zext_int();
 }
 

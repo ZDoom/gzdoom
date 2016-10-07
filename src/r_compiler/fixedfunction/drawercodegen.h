@@ -25,6 +25,7 @@ public:
 	SSAInt num_cores;
 	SSAInt pass_start_y;
 	SSAInt pass_end_y;
+	SSAUBytePtr temp;
 };
 
 class SSAShadeConstants

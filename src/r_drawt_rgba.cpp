@@ -43,6 +43,7 @@
 #include "r_things.h"
 #include "v_video.h"
 #include "r_draw_rgba.h"
+#include "r_compiler/llvmdrawers.h"
 #ifndef NO_SSE
 #include <emmintrin.h>
 #endif
@@ -86,6 +87,89 @@ extern unsigned int *horizspan[4];
 #include "r_drawt_rgba_sse.h"
 */
 #endif
+
+/////////////////////////////////////////////////////////////////////////////
+
+class DrawColumnRt1LLVMCommand : public DrawerCommand
+{
+protected:
+	DrawColumnArgs args;
+
+	WorkerThreadData ThreadData(DrawerThread *thread)
+	{
+		WorkerThreadData d;
+		d.core = thread->core;
+		d.num_cores = thread->num_cores;
+		d.pass_start_y = thread->pass_start_y;
+		d.pass_end_y = thread->pass_end_y;
+		d.temp = thread->dc_temp_rgba;
+		return d;
+	}
+
+public:
+	DrawColumnRt1LLVMCommand(int hx, int sx, int yl, int yh)
+	{
+		args.dest = (uint32_t*)dc_destorg + ylookup[yl] + sx;
+		args.source = nullptr;
+		args.colormap = dc_colormap;
+		args.translation = dc_translation;
+		args.basecolors = (const uint32_t *)GPalette.BaseColors;
+		args.pitch = dc_pitch;
+		args.count = yh - yl + 1;
+		args.dest_y = yl;
+		args.iscale = dc_iscale;
+		args.texturefrac = hx;
+		args.light = LightBgra::calc_light_multiplier(dc_light);
+		args.color = LightBgra::shade_pal_index_simple(dc_color, args.light);
+		args.srccolor = dc_srccolor_bgra;
+		args.srcalpha = dc_srcalpha >> (FRACBITS - 8);
+		args.destalpha = dc_destalpha >> (FRACBITS - 8);
+		args.light_red = dc_shade_constants.light_red;
+		args.light_green = dc_shade_constants.light_green;
+		args.light_blue = dc_shade_constants.light_blue;
+		args.light_alpha = dc_shade_constants.light_alpha;
+		args.fade_red = dc_shade_constants.fade_red;
+		args.fade_green = dc_shade_constants.fade_green;
+		args.fade_blue = dc_shade_constants.fade_blue;
+		args.fade_alpha = dc_shade_constants.fade_alpha;
+		args.desaturate = dc_shade_constants.desaturate;
+		args.flags = 0;
+		if (dc_shade_constants.simple_shade)
+			args.flags |= DrawColumnArgs::simple_shade;
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		WorkerThreadData d = ThreadData(thread);
+		LLVMDrawers::Instance()->DrawColumnRt1(&args, &d);
+	}
+};
+
+#define DECLARE_DRAW_COMMAND(name, func, base) \
+class name##LLVMCommand : public base \
+{ \
+public: \
+	using base::base; \
+	void Execute(DrawerThread *thread) override \
+	{ \
+		WorkerThreadData d = ThreadData(thread); \
+		LLVMDrawers::Instance()->func(&args, &d); \
+	} \
+};
+
+DECLARE_DRAW_COMMAND(DrawColumnRt1Copy, DrawColumnRt1Copy, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt1Add, DrawColumnRt1Add, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt1Shaded, DrawColumnRt1Shaded, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt1AddClamp, DrawColumnRt1AddClamp, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt1SubClamp, DrawColumnRt1SubClamp, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt1RevSubClamp, DrawColumnRt1RevSubClamp, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt4, DrawColumnRt4, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt4Copy, DrawColumnRt4Copy, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt4Add, DrawColumnRt4Add, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt4Shaded, DrawColumnRt4Shaded, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt4AddClamp, DrawColumnRt4AddClamp, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt4SubClamp, DrawColumnRt4SubClamp, DrawColumnRt1LLVMCommand);
+DECLARE_DRAW_COMMAND(DrawColumnRt4RevSubClamp, DrawColumnRt4RevSubClamp, DrawColumnRt1LLVMCommand);
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -756,7 +840,7 @@ public:
 // Copies one span at hx to the screen at sx.
 void rt_copy1col_rgba (int hx, int sx, int yl, int yh)
 {
-	DrawerCommandQueue::QueueCommand<RtCopy1colRGBACommand>(hx, sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<DrawColumnRt1CopyLLVMCommand>(hx, sx, yl, yh);
 }
 
 // Copies all four spans to the screen starting at sx.
@@ -772,17 +856,13 @@ void rt_copy4cols_rgba (int sx, int yl, int yh)
 // Maps one span at hx to the screen at sx.
 void rt_map1col_rgba (int hx, int sx, int yl, int yh)
 {
-	DrawerCommandQueue::QueueCommand<RtMap1colRGBACommand>(hx, sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<DrawColumnRt1LLVMCommand>(hx, sx, yl, yh);
 }
 
 // Maps all four spans to the screen starting at sx.
 void rt_map4cols_rgba (int sx, int yl, int yh)
 {
-#ifdef NO_SSE
-	DrawerCommandQueue::QueueCommand<RtMap4colsRGBACommand>(sx, yl, yh);
-#else
-	DrawerCommandQueue::QueueCommand<RtMap4colsRGBA_SSE_Command>(sx, yl, yh);
-#endif
+	DrawerCommandQueue::QueueCommand<DrawColumnRt4LLVMCommand>(0, sx, yl, yh);
 }
 
 void rt_Translate1col_rgba(const BYTE *translation, int hx, int yl, int yh)
@@ -812,17 +892,13 @@ void rt_tlate4cols_rgba (int sx, int yl, int yh)
 // Adds one span at hx to the screen at sx without clamping.
 void rt_add1col_rgba (int hx, int sx, int yl, int yh)
 {
-	DrawerCommandQueue::QueueCommand<RtAdd1colRGBACommand>(hx, sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<DrawColumnRt1AddLLVMCommand>(hx, sx, yl, yh);
 }
 
 // Adds all four spans to the screen starting at sx without clamping.
 void rt_add4cols_rgba (int sx, int yl, int yh)
 {
-#ifdef NO_SSE
-	DrawerCommandQueue::QueueCommand<RtAdd4colsRGBACommand>(sx, yl, yh);
-#else
-	DrawerCommandQueue::QueueCommand<RtAdd4colsRGBA_SSE_Command>(sx, yl, yh);
-#endif
+	DrawerCommandQueue::QueueCommand<DrawColumnRt4AddLLVMCommand>(0, sx, yl, yh);
 }
 
 // Translates and adds one span at hx to the screen at sx without clamping.
@@ -842,33 +918,25 @@ void rt_tlateadd4cols_rgba(int sx, int yl, int yh)
 // Shades one span at hx to the screen at sx.
 void rt_shaded1col_rgba (int hx, int sx, int yl, int yh)
 {
-	DrawerCommandQueue::QueueCommand<RtShaded1colRGBACommand>(hx, sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<DrawColumnRt1ShadedLLVMCommand>(hx, sx, yl, yh);
 }
 
 // Shades all four spans to the screen starting at sx.
 void rt_shaded4cols_rgba (int sx, int yl, int yh)
 {
-#ifdef NO_SSE
-	DrawerCommandQueue::QueueCommand<RtShaded4colsRGBACommand>(sx, yl, yh);
-#else
-	DrawerCommandQueue::QueueCommand<RtShaded4colsRGBA_SSE_Command>(sx, yl, yh);
-#endif
+	DrawerCommandQueue::QueueCommand<DrawColumnRt4ShadedLLVMCommand>(0, sx, yl, yh);
 }
 
 // Adds one span at hx to the screen at sx with clamping.
 void rt_addclamp1col_rgba (int hx, int sx, int yl, int yh)
 {
-	DrawerCommandQueue::QueueCommand<RtAddClamp1colRGBACommand>(hx, sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<DrawColumnRt1AddClampLLVMCommand>(hx, sx, yl, yh);
 }
 
 // Adds all four spans to the screen starting at sx with clamping.
 void rt_addclamp4cols_rgba (int sx, int yl, int yh)
 {
-#ifdef NO_SSE
-	DrawerCommandQueue::QueueCommand<RtAddClamp4colsRGBACommand>(sx, yl, yh);
-#else
-	DrawerCommandQueue::QueueCommand<RtAddClamp4colsRGBA_SSE_Command>(sx, yl, yh);
-#endif
+	DrawerCommandQueue::QueueCommand<DrawColumnRt4AddClampLLVMCommand>(0, sx, yl, yh);
 }
 
 // Translates and adds one span at hx to the screen at sx with clamping.
@@ -888,17 +956,13 @@ void rt_tlateaddclamp4cols_rgba (int sx, int yl, int yh)
 // Subtracts one span at hx to the screen at sx with clamping.
 void rt_subclamp1col_rgba (int hx, int sx, int yl, int yh)
 {
-	DrawerCommandQueue::QueueCommand<RtSubClamp1colRGBACommand>(hx, sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<DrawColumnRt1SubClampLLVMCommand>(hx, sx, yl, yh);
 }
 
 // Subtracts all four spans to the screen starting at sx with clamping.
 void rt_subclamp4cols_rgba (int sx, int yl, int yh)
 {
-#ifdef NO_SSE
-	DrawerCommandQueue::QueueCommand<RtSubClamp4colsRGBACommand>(sx, yl, yh);
-#else
-	DrawerCommandQueue::QueueCommand<RtSubClamp4colsRGBA_SSE_Command>(sx, yl, yh);
-#endif
+	DrawerCommandQueue::QueueCommand<DrawColumnRt4SubClampLLVMCommand>(0, sx, yl, yh);
 }
 
 // Translates and subtracts one span at hx to the screen at sx with clamping.
@@ -918,17 +982,13 @@ void rt_tlatesubclamp4cols_rgba (int sx, int yl, int yh)
 // Subtracts one span at hx from the screen at sx with clamping.
 void rt_revsubclamp1col_rgba (int hx, int sx, int yl, int yh)
 {
-	DrawerCommandQueue::QueueCommand<RtRevSubClamp1colRGBACommand>(hx, sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<DrawColumnRt1RevSubClampLLVMCommand>(hx, sx, yl, yh);
 }
 
 // Subtracts all four spans from the screen starting at sx with clamping.
 void rt_revsubclamp4cols_rgba (int sx, int yl, int yh)
 {
-#ifdef NO_SSE
-	DrawerCommandQueue::QueueCommand<RtRevSubClamp4colsRGBACommand>(sx, yl, yh);
-#else
-	DrawerCommandQueue::QueueCommand<RtRevSubClamp4colsRGBA_SSE_Command>(sx, yl, yh);
-#endif
+	DrawerCommandQueue::QueueCommand<DrawColumnRt4SubClampLLVMCommand>(0, sx, yl, yh);
 }
 
 // Translates and subtracts one span at hx from the screen at sx with clamping.

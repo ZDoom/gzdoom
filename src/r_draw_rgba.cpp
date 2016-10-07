@@ -334,6 +334,7 @@ public:
 class name##LLVMCommand : public base \
 { \
 public: \
+	using base::base; \
 	void Execute(DrawerThread *thread) override \
 	{ \
 		WorkerThreadData d = ThreadData(thread); \

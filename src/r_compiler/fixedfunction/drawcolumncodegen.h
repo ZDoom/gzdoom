@@ -10,6 +10,7 @@ enum class DrawColumnVariant
 	FillAddClamp,
 	FillSubClamp,
 	FillRevSubClamp,
+	DrawCopy,
 	Draw,
 	DrawAdd,
 	DrawTranslated,
@@ -23,13 +24,21 @@ enum class DrawColumnVariant
 	DrawRevSubClampTranslated
 };
 
+enum class DrawColumnMethod
+{
+	Normal,
+	Rt1,
+	Rt4
+};
+
 class DrawColumnCodegen : public DrawerCodegen
 {
 public:
-	void Generate(DrawColumnVariant variant, SSAValue args, SSAValue thread_data);
+	void Generate(DrawColumnVariant variant, DrawColumnMethod method, SSAValue args, SSAValue thread_data);
 
 private:
-	void Loop(DrawColumnVariant variant, bool isSimpleShade);
+	void Loop(DrawColumnVariant variant, DrawColumnMethod method, bool isSimpleShade);
+	SSAVec4i ProcessPixel(SSAInt sample_index, SSAVec4i bgcolor, DrawColumnVariant variant, bool isSimpleShade);
 	SSAInt ColormapSample(SSAInt frac);
 	SSAInt TranslateSample(SSAInt frac);
 	SSAVec4i Shade(SSAInt palIndex, bool isSimpleShade);

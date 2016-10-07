@@ -7,6 +7,7 @@ struct WorkerThreadData
 	int32_t num_cores;
 	int32_t pass_start_y;
 	int32_t pass_end_y;
+	uint32_t *temp;
 };
 
 struct DrawWallArgs
@@ -122,20 +123,34 @@ public:
 
 	void(*DrawColumn)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawColumnAdd)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
-	void(*DrawColumnTranslated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
-	void(*DrawColumnTlatedAdd)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawColumnShaded)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawColumnAddClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
-	void(*DrawColumnAddClampTranslated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawColumnSubClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
-	void(*DrawColumnSubClampTranslated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawColumnRevSubClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnTranslated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnTlatedAdd)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnAddClampTranslated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnSubClampTranslated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawColumnRevSubClampTranslated)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*FillColumn)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*FillColumnAdd)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*FillColumnAddClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*FillColumnSubClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 	void(*FillColumnRevSubClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt1)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt1Copy)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt1Add)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt1Shaded)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt1AddClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt1SubClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt1RevSubClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt4)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt4Copy)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt4Add)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt4Shaded)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt4AddClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt4SubClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawColumnRt4RevSubClamp)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;
 
 	void(*DrawSpan)(const DrawSpanArgs *) = nullptr;
 	void(*DrawSpanMasked)(const DrawSpanArgs *) = nullptr;

@@ -1,4 +1,3 @@
-/*
 // Flags for A_PainAttack
 enum EPainAttackFlags
 {
@@ -806,4 +805,3 @@ enum ERenderStyles
 	STYLE_AddStencil,
 	STYLE_AddShaded,
 };
-*/

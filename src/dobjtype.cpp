@@ -2647,6 +2647,16 @@ void PClass::StaticInit ()
 	// Keep built-in classes in consistant order. I did this before, though
 	// I'm not sure if this is really necessary to maintain any sort of sync.
 	qsort(&AllClasses[0], AllClasses.Size(), sizeof(AllClasses[0]), cregcmp);
+
+	// Set all symbol table relations here so that they are valid right from the start.
+	for (auto c : AllClasses)
+	{
+		if (c->ParentClass != nullptr)
+		{
+			c->Symbols.SetParentTable(&c->ParentClass->Symbols);
+		}
+	}
+
 }
 
 //==========================================================================
@@ -3131,6 +3141,7 @@ PClass *PClass::FindClassTentative(FName name, bool fatal)
 	type->ParentClass = this;
 	type->Size = TentativeClass;
 	type->bRuntimeClass = true;
+	type->Symbols.SetParentTable(&Symbols);
 	TypeTable.AddType(type, RUNTIME_CLASS(PClass), (intptr_t)type->Outer, name, bucket);
 	return type;
 }

@@ -188,12 +188,14 @@ struct ZCC_Class : ZCC_NamedNode
 	VM_UWORD Flags;
 	ZCC_TreeNode *Body;
 	PClass *Type;
+	PSymbolType *Symbol;
 };
 
 struct ZCC_Struct : ZCC_NamedNode
 {
 	ZCC_TreeNode *Body;
 	PStruct *Type;
+	PSymbolType *Symbol;
 };
 
 struct ZCC_Enum : ZCC_NamedNode

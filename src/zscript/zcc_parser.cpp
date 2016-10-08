@@ -338,7 +338,8 @@ static void DoParse(int lumpnum)
 #endif
 	}
 
-	PSymbolTable symtable(&GlobalSymbols);
+	PSymbolTable symtable;
+	symtable.SetName("Global_Node");
 	ZCCCompiler cc(state, NULL, symtable, GlobalSymbols);
 	cc.Compile();
 	// ... and another one afterward so we can see what the compiler does with the data.

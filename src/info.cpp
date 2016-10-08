@@ -361,7 +361,6 @@ size_t PClassActor::PropagateMark()
 
 void PClassActor::InitializeNativeDefaults()
 {
-	Symbols.SetParentTable(&ParentClass->Symbols);
 	assert(Defaults == NULL);
 	Defaults = (BYTE *)M_Malloc(Size);
 	if (ParentClass->Defaults != NULL) 

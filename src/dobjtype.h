@@ -99,6 +99,10 @@ struct PSymbolTable
 	// Sets the table to use for searches if this one doesn't contain the
 	// requested symbol.
 	void SetParentTable (PSymbolTable *parent);
+	PSymbolTable *GetParentTable() const
+	{
+		return ParentSymbolTable;
+	}
 
 	// Finds a symbol in the table, optionally searching parent tables
 	// as well.
@@ -107,6 +111,7 @@ struct PSymbolTable
 	// Like FindSymbol with searchparents set true, but also returns the
 	// specific symbol table the symbol was found in.
 	PSymbol *FindSymbolInTable(FName symname, PSymbolTable *&symtable);
+
 
 	// Places the symbol in the table and returns a pointer to it or NULL if
 	// a symbol with the same name is already in the table. This symbol is
@@ -119,6 +124,15 @@ struct PSymbolTable
 
 	// Frees all symbols from this table.
 	void ReleaseSymbols();
+
+	// add a name to help debugging.
+#ifdef _DEBUG
+	FString name;
+	void SetName(const char *nm) { name = nm; }
+#else
+	void SetName(const char *) {}
+#endif
+
 
 private:
 	typedef TMap<FName, PSymbol *> MapType;
@@ -702,6 +716,7 @@ protected:
 	TArray<FTypeAndOffset> SpecialInits;
 	virtual void Derive(PClass *newclass);
 	void InitializeSpecials(void *addr) const;
+	void SetSuper();
 public:
 	typedef PClassClass MetaClass;
 	MetaClass *GetClass() const;

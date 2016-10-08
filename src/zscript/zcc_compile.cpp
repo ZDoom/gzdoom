@@ -3,6 +3,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright -2016 Randy Heit
+** Copyright 2016 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -41,6 +42,7 @@
 #include "zcc_parser.h"
 #include "zcc_compile.h"
 #include "v_text.h"
+#include "p_lnspec.h"
 #include "gdtoa.h"
 
 #define DEFINING_CONST ((PSymbolConst *)(void *)1)
@@ -155,7 +157,7 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 			case AST_Class:
 			case AST_Struct:
 			case AST_ConstantDef:
-				if ((tnode = AddNamedNode(static_cast<ZCC_NamedNode *>(node))))
+				if ((tnode = AddNamedNode(static_cast<ZCC_NamedNode *>(node), Symbols)))
 				{
 					switch (node->NodeType)
 					{
@@ -204,6 +206,9 @@ PSymbolTreeNode *ZCCCompiler::AddNamedNode(ZCC_NamedNode *node, PSymbolTable *pa
 	{
 		auto sy = new PSymbolTreeNode(name, node);
 		sy->Symbols.SetParentTable(parentsym);
+		FString name;
+		name << "nodes - " << FName(node->NodeName);
+		sy->Symbols.SetName(name);
 		Symbols->AddSymbol(sy);
 		return sy;
 	}
@@ -275,7 +280,7 @@ int ZCCCompiler::Compile()
 {
 	CreateClassTypes();
 	CreateStructTypes();
-	CompileConstants(Constants);
+	CompileAllConstants();
 	return ErrorCount;
 }
 
@@ -292,6 +297,9 @@ void ZCCCompiler::CreateStructTypes()
 	for(auto s : Structs)
 	{
 		s->Type = NewStruct(s->NodeName, nullptr);
+		s->Symbol = new PSymbolType(s->NodeName, s->Type);
+		s->Type->Symbols.SetName(FName(s->NodeName));
+		GlobalSymbols.AddSymbol(s->Symbol);
 	}
 }
 
@@ -366,6 +374,9 @@ void ZCCCompiler::CreateClassTypes()
 					// We will never get here if the name is a duplicate, so we can just do the assignment.
 					c->Type = parent->FindClassTentative(c->NodeName);
 				}
+				c->Symbol = new PSymbolType(c->NodeName, c->Type);
+				GlobalSymbols.AddSymbol(c->Symbol);
+				c->Type->Symbols.SetName(FName(c->NodeName).GetChars());
 				Classes.Push(c);
 				OrigClasses.Delete(i);
 				i--;
@@ -389,6 +400,9 @@ void ZCCCompiler::CreateClassTypes()
 					Error(c, "Class %s has unknown base class %s", FName(c->NodeName).GetChars(), FName(c->ParentName->Id).GetChars());
 					// create a placeholder so that the compiler can continue looking for errors.
 					c->Type = RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName);
+					c->Symbol = new PSymbolType(c->NodeName, c->Type);
+					GlobalSymbols.AddSymbol(c->Symbol);
+					c->Type->Symbols.SetName(FName(c->NodeName).GetChars());
 					Classes.Push(c);
 					OrigClasses.Delete(i);
 					donesomething = true;
@@ -403,27 +417,131 @@ void ZCCCompiler::CreateClassTypes()
 	{
 		Error(c, "Class %s has circular inheritance", FName(c->NodeName).GetChars());
 		c->Type = RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName);
+		c->Symbol = new PSymbolType(c->NodeName, c->Type);
+		c->Type->Symbols.SetName(FName(c->NodeName).GetChars());
+		GlobalSymbols.AddSymbol(c->Symbol);
 		Classes.Push(c);
 	}
 }
 
 //==========================================================================
 //
-// ZCCCompiler :: CompileConstants
+// ZCCCompiler :: AddConstants
 //
-// Make symbols from every constant defined at this level.
+// Helper for CompileAllConstants
 //
 //==========================================================================
 
-void ZCCCompiler::CompileConstants(const TArray<ZCC_ConstantDef *> &defs)
+void ZCCCompiler::AddConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PSymbolTable *nt, PSymbolTable *ot)
 {
-	for (unsigned i = 0; i < defs.Size(); ++i)
+	for (auto c : Constants)
 	{
-		ZCC_ConstantDef *def = defs[i];
-		if (def->Symbol == NULL)
+		dest.Push({ c, nt, ot });
+	}
+}
+
+//==========================================================================
+//
+// ZCCCompiler :: CompileAllConstants
+//
+// Make symbols from every constant defined at all levels.
+// Since constants may only depend on other constants this can be done
+// without any more involved processing of the AST as a first step.
+//
+//==========================================================================
+
+void ZCCCompiler::CompileAllConstants()
+{
+	// put all constants in one list to make resolving this easier.
+	TArray<ZCC_ConstantWork> constantwork;
+
+	AddConstants(constantwork, Constants, Symbols, OutputSymbols);
+	for (auto &c : Classes)
+	{
+		AddConstants(constantwork, c.Constants, &c.node->Symbols, &c->Type->Symbols);
+		for (auto &s : c.Structs)
 		{
-			PSymbolConst *sym = CompileConstant(def);
+			AddConstants(constantwork, s.Constants, &s.node->Symbols, &s->Type->Symbols);
 		}
+	}
+	for (auto &s : Structs)
+	{
+		AddConstants(constantwork, s.Constants, &s.node->Symbols, &s->Type->Symbols);
+	}
+
+	// Before starting to resolve the list, let's create symbols for all already resolved ones first (i.e. all literal constants), to reduce work.
+	for (unsigned i = 0; i<constantwork.Size(); i++)
+	{
+		if (constantwork[i].node->Value->NodeType == AST_ExprConstant)
+		{
+			AddConstant(constantwork[i]);
+			// Remove the constant from the list
+			constantwork.Delete(i);
+			i--;
+		}
+	}
+	bool donesomething = true;
+	// Now go through this list until no more constants can be resolved. The remaining ones will be non-constant values.
+	while (donesomething && constantwork.Size() > 0)
+	{
+		donesomething = false;
+		for (unsigned i = 0; i < constantwork.Size(); i++)
+		{
+			if (CompileConstant(constantwork[i].node, constantwork[i].outputtable))
+			{
+				AddConstant(constantwork[i]);
+				// Remove the constant from the list
+				constantwork.Delete(i);
+				i--;
+				donesomething = true;
+			}
+		}
+	}
+	for (unsigned i = 0; i < constantwork.Size(); i++)
+	{
+		Error(constantwork[i].node, "%s is not a constant", FName(constantwork[i].node->NodeName).GetChars());
+	}
+}
+
+//==========================================================================
+//
+// ZCCCompiler :: AddConstant
+//
+// Adds a constant to its assigned symbol table
+//
+//==========================================================================
+
+void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
+{
+	auto def = constant.node;
+	auto val = def->Value;
+	if (val->NodeType == AST_ExprConstant)
+	{
+		ZCC_ExprConstant *cval = static_cast<ZCC_ExprConstant *>(val);
+		if (cval->Type == TypeString)
+		{
+			def->Symbol = new PSymbolConstString(def->NodeName, *(cval->StringVal));
+		}
+		else if (cval->Type->IsA(RUNTIME_CLASS(PInt)))
+		{
+			def->Symbol = new PSymbolConstNumeric(def->NodeName, cval->Type, cval->IntVal);
+		}
+		else if (cval->Type->IsA(RUNTIME_CLASS(PFloat)))
+		{
+			def->Symbol = new PSymbolConstNumeric(def->NodeName, cval->Type, cval->DoubleVal);
+		}
+		else
+		{
+			Error(def->Value, "Bad type for constant definiton");
+			def->Symbol = nullptr;
+		}
+
+		if (def->Symbol == nullptr)
+		{
+			// Create a dummy constant so we don't make any undefined value warnings.
+			def->Symbol = new PSymbolConstNumeric(def->NodeName, TypeError, 0);
+		}
+		constant.outputtable->ReplaceSymbol(def->Symbol);
 	}
 }
 
@@ -432,51 +550,19 @@ void ZCCCompiler::CompileConstants(const TArray<ZCC_ConstantDef *> &defs)
 // ZCCCompiler :: CompileConstant
 //
 // For every constant definition, evaluate its value (which should result
-// in a constant), and create a symbol for it. Simplify() uses recursion
-// to resolve constants used before their declarations.
+// in a constant), and create a symbol for it.
 //
 //==========================================================================
 
-PSymbolConst *ZCCCompiler::CompileConstant(ZCC_ConstantDef *def)
+bool ZCCCompiler::CompileConstant(ZCC_ConstantDef *def, PSymbolTable *sym)
 {
-	assert(def->Symbol == NULL);
+	assert(def->Symbol == nullptr);
 
 	def->Symbol = DEFINING_CONST;	// avoid recursion
-	ZCC_Expression *val = Simplify(def->Value);
+	ZCC_Expression *val = Simplify(def->Value, sym);
 	def->Value = val;
-	PSymbolConst *sym = NULL;
-	if (val->NodeType == AST_ExprConstant)
-	{
-		ZCC_ExprConstant *cval = static_cast<ZCC_ExprConstant *>(val);
-		if (cval->Type == TypeString)
-		{
-			sym = new PSymbolConstString(def->NodeName, *(cval->StringVal));
-		}
-		else if (cval->Type->IsA(RUNTIME_CLASS(PInt)))
-		{
-			sym = new PSymbolConstNumeric(def->NodeName, cval->Type, cval->IntVal);
-		}
-		else if (cval->Type->IsA(RUNTIME_CLASS(PFloat)))
-		{
-			sym = new PSymbolConstNumeric(def->NodeName, cval->Type, cval->DoubleVal);
-		}
-		else
-		{
-			Error(def->Value, "Bad type for constant definiton");
-		}
-	}
-	else
-	{
-		Error(def->Value, "Constant definition requires a constant value");
-	}
-	if (sym == NULL)
-	{
-		// Create a dummy constant so we don't make any undefined value warnings.
-		sym = new PSymbolConstNumeric(def->NodeName, TypeError, 0);
-	}
-	def->Symbol = sym;
-	OutputSymbols->ReplaceSymbol(sym);
-	return sym;
+	if (def->Symbol == DEFINING_CONST) def->Symbol = nullptr;
+	return (val->NodeType == AST_ExprConstant);
 }
 
 
@@ -493,27 +579,27 @@ PSymbolConst *ZCCCompiler::CompileConstant(ZCC_ConstantDef *def)
 //
 //==========================================================================
 
-ZCC_Expression *ZCCCompiler::Simplify(ZCC_Expression *root)
+ZCC_Expression *ZCCCompiler::Simplify(ZCC_Expression *root, PSymbolTable *sym)
 {
 	if (root->NodeType == AST_ExprUnary)
 	{
-		return SimplifyUnary(static_cast<ZCC_ExprUnary *>(root));
+		return SimplifyUnary(static_cast<ZCC_ExprUnary *>(root), sym);
 	}
 	else if (root->NodeType == AST_ExprBinary)
 	{
-		return SimplifyBinary(static_cast<ZCC_ExprBinary *>(root));
+		return SimplifyBinary(static_cast<ZCC_ExprBinary *>(root), sym);
 	}
 	else if (root->Operation == PEX_ID)
 	{
-		return IdentifyIdentifier(static_cast<ZCC_ExprID *>(root));
+		return IdentifyIdentifier(static_cast<ZCC_ExprID *>(root), sym);
 	}
 	else if (root->Operation == PEX_MemberAccess)
 	{
-		return SimplifyMemberAccess(static_cast<ZCC_ExprMemberAccess *>(root));
+		return SimplifyMemberAccess(static_cast<ZCC_ExprMemberAccess *>(root), sym);
 	}
 	else if (root->Operation == PEX_FuncCall)
 	{
-		return SimplifyFunctionCall(static_cast<ZCC_ExprFuncCall *>(root));
+		return SimplifyFunctionCall(static_cast<ZCC_ExprFuncCall *>(root), sym);
 	}
 	return root;
 }
@@ -524,9 +610,13 @@ ZCC_Expression *ZCCCompiler::Simplify(ZCC_Expression *root)
 //
 //==========================================================================
 
-ZCC_Expression *ZCCCompiler::SimplifyUnary(ZCC_ExprUnary *unary)
+ZCC_Expression *ZCCCompiler::SimplifyUnary(ZCC_ExprUnary *unary, PSymbolTable *sym)
 {
-	unary->Operand = Simplify(unary->Operand);
+	unary->Operand = Simplify(unary->Operand, sym);
+	if (unary->Operand->Type == nullptr)
+	{
+		return unary;
+	}
 	ZCC_OpProto *op = PromoteUnary(unary->Operation, unary->Operand);
 	if (op == NULL)
 	{ // Oh, poo!
@@ -545,10 +635,15 @@ ZCC_Expression *ZCCCompiler::SimplifyUnary(ZCC_ExprUnary *unary)
 //
 //==========================================================================
 
-ZCC_Expression *ZCCCompiler::SimplifyBinary(ZCC_ExprBinary *binary)
+ZCC_Expression *ZCCCompiler::SimplifyBinary(ZCC_ExprBinary *binary, PSymbolTable *sym)
 {
-	binary->Left = Simplify(binary->Left);
-	binary->Right = Simplify(binary->Right);
+	binary->Left = Simplify(binary->Left, sym);
+	binary->Right = Simplify(binary->Right, sym);
+	if (binary->Left->Type == nullptr || binary->Right->Type == nullptr)
+	{
+		// We do not know yet what this is so we cannot promote it (yet.)
+		return binary;
+	}
 	ZCC_OpProto *op = PromoteBinary(binary->Operation, binary->Left, binary->Right);
 	if (op == NULL)
 	{
@@ -569,29 +664,38 @@ ZCC_Expression *ZCCCompiler::SimplifyBinary(ZCC_ExprBinary *binary)
 //
 //==========================================================================
 
-ZCC_Expression *ZCCCompiler::SimplifyMemberAccess(ZCC_ExprMemberAccess *dotop)
+ZCC_Expression *ZCCCompiler::SimplifyMemberAccess(ZCC_ExprMemberAccess *dotop, PSymbolTable *symt)
 {
-	dotop->Left = Simplify(dotop->Left);
+	PSymbolTable *symtable;
+
+	dotop->Left = Simplify(dotop->Left, symt);
 
 	if (dotop->Left->Operation == PEX_TypeRef)
 	{ // Type refs can be evaluated now.
 		PType *ref = static_cast<ZCC_ExprTypeRef *>(dotop->Left)->RefType;
-		PSymbolTable *symtable;
 		PSymbol *sym = ref->Symbols.FindSymbolInTable(dotop->Right, symtable);
-		if (sym == NULL)
-		{
-			Error(dotop, "'%s' is not a valid member", FName(dotop->Right).GetChars());
-		}
-		else
+		if (sym != nullptr)
 		{
 			ZCC_Expression *expr = NodeFromSymbol(sym, dotop, symtable);
-			if (expr == NULL)
-			{
-				Error(dotop, "Unhandled symbol type encountered");
-			}
-			else
+			if (expr != nullptr)
 			{
 				return expr;
+			}
+		}
+	}
+	else if (dotop->Left->Operation == PEX_Super)
+	{
+		symt = symt->GetParentTable();
+		if (symt != nullptr)
+		{
+			PSymbol *sym = symt->FindSymbolInTable(dotop->Right, symtable);
+			if (sym != nullptr)
+			{
+				ZCC_Expression *expr = NodeFromSymbol(sym, dotop, symtable);
+				if (expr != nullptr)
+				{
+					return expr;
+				}
 			}
 		}
 	}
@@ -607,12 +711,12 @@ ZCC_Expression *ZCCCompiler::SimplifyMemberAccess(ZCC_ExprMemberAccess *dotop)
 //
 //==========================================================================
 
-ZCC_Expression *ZCCCompiler::SimplifyFunctionCall(ZCC_ExprFuncCall *callop)
+ZCC_Expression *ZCCCompiler::SimplifyFunctionCall(ZCC_ExprFuncCall *callop, PSymbolTable *sym)
 {
 	ZCC_FuncParm *parm;
 	int parmcount = 0;
 
-	callop->Function = Simplify(callop->Function);
+	callop->Function = Simplify(callop->Function, sym);
 	parm = callop->Parameters;
 	if (parm != NULL)
 	{
@@ -620,7 +724,7 @@ ZCC_Expression *ZCCCompiler::SimplifyFunctionCall(ZCC_ExprFuncCall *callop)
 		{
 			parmcount++;
 			assert(parm->NodeType == AST_FuncParm);
-			parm->Value = Simplify(parm->Value);
+			parm->Value = Simplify(parm->Value, sym);
 			parm = static_cast<ZCC_FuncParm *>(parm->SiblingNext);
 		}
 		while (parm != callop->Parameters);
@@ -751,12 +855,14 @@ ZCC_Expression *ZCCCompiler::AddCastNode(PType *type, ZCC_Expression *expr)
 //
 //==========================================================================
 
-ZCC_Expression *ZCCCompiler::IdentifyIdentifier(ZCC_ExprID *idnode)
+ZCC_Expression *ZCCCompiler::IdentifyIdentifier(ZCC_ExprID *idnode, PSymbolTable *symt)
 {
 	// Check the symbol table for the identifier.
 	PSymbolTable *table;
-	PSymbol *sym = Symbols->FindSymbolInTable(idnode->Identifier, table);
-	if (sym != NULL)
+	PSymbol *sym = symt->FindSymbolInTable(idnode->Identifier, table);
+	// GlobalSymbols cannot be the parent of a class's symbol table so we have to look for global symbols explicitly.
+	if (sym == nullptr && symt != &GlobalSymbols) sym = GlobalSymbols.FindSymbolInTable(idnode->Identifier, table);
+	if (sym != nullptr)
 	{
 		ZCC_Expression *node = NodeFromSymbol(sym, idnode, table);
 		if (node != NULL)
@@ -766,44 +872,24 @@ ZCC_Expression *ZCCCompiler::IdentifyIdentifier(ZCC_ExprID *idnode)
 	}
 	else
 	{
+		// Also handle line specials.
+		// To call this like a function this needs to be done differently, but for resolving constants this is ok.
+		int spec = P_FindLineSpecial(FName(idnode->Identifier).GetChars());
+		if (spec != 0)
+		{
+			ZCC_ExprConstant *val = static_cast<ZCC_ExprConstant *>(AST.InitNode(sizeof(*val), AST_ExprConstant, idnode));
+			val->Operation = PEX_ConstValue;
+			val->Type = TypeSInt32;
+			val->IntVal = spec;
+			return val;
+		}
+		symt->DumpSymbolTable();
+		GlobalSymbols.DumpSymbolTable();
+
 		Error(idnode, "Unknown identifier '%s'", FName(idnode->Identifier).GetChars());
+		idnode->ToErrorNode();
 	}
-	// Identifier didn't refer to anything good, so type error it.
-	idnode->ToErrorNode();
 	return idnode;
-}
-
-//==========================================================================
-//
-// ZCCCompiler :: CompileNode
-//
-//==========================================================================
-
-PSymbol *ZCCCompiler::CompileNode(ZCC_NamedNode *node)
-{
-	assert(node != NULL);
-	if (node->NodeType == AST_ConstantDef)
-	{
-		ZCC_ConstantDef *def = static_cast<ZCC_ConstantDef *>(node);
-		PSymbolConst *sym = def->Symbol;
-
-		if (sym == DEFINING_CONST)
-		{
-			Error(node, "Definition of '%s' is infinitely recursive", FName(node->NodeName).GetChars());
-			sym = NULL;
-		}
-		else
-		{
-			assert(sym == NULL);
-			sym = CompileConstant(def);
-		}
-		return sym;
-	}
-	else if (node->NodeType == AST_Struct)
-	{
-
-	}
-	return NULL;
 }
 
 //==========================================================================
@@ -814,18 +900,8 @@ PSymbol *ZCCCompiler::CompileNode(ZCC_NamedNode *node)
 
 ZCC_Expression *ZCCCompiler::NodeFromSymbol(PSymbol *sym, ZCC_Expression *source, PSymbolTable *table)
 {
-	assert(sym != NULL);
-	if (sym->IsA(RUNTIME_CLASS(PSymbolTreeNode)))
-	{
-		PSymbolTable *prevtable = Symbols;
-		Symbols = table;
-		sym = CompileNode(static_cast<PSymbolTreeNode *>(sym)->Node);
-		Symbols = prevtable;
-		if (sym == NULL)
-		{
-			return NULL;
-		}
-	}
+	assert(sym != nullptr);
+
 	if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
 	{
 		return NodeFromSymbolConst(static_cast<PSymbolConst *>(sym), source);

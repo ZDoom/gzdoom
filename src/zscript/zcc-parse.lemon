@@ -176,6 +176,7 @@ class_head(X) ::= CLASS(T) IDENTIFIER(A) class_ancestry(B) class_flags(C).
 	head->Flags = C.Flags;
 	head->Replaces = C.Replaces;
 	head->Type = nullptr;
+	head->Symbol = nullptr;
 	X = head;
 }
 
@@ -249,6 +250,7 @@ struct_def(X) ::= STRUCT(T) IDENTIFIER(A) LBRACE opt_struct_body(B) RBRACE opt_s
 	def->NodeName = A.Name();
 	def->Body = B;
 	def->Type = nullptr;
+	def->Symbol = nullptr;
 	X = def;
 }
 

@@ -51,6 +51,13 @@ struct ZCC_ClassWork
 
 };
 
+struct ZCC_ConstantWork
+{
+	ZCC_ConstantDef *node;
+	PSymbolTable *nodetable;
+	PSymbolTable *outputtable;
+};
+
 class ZCCCompiler
 {
 public:
@@ -62,8 +69,11 @@ private:
 	void ProcessStruct(ZCC_Struct *node, PSymbolTreeNode *tnode);
 	void CreateStructTypes();
 	void CreateClassTypes();
-	void CompileConstants(const TArray<ZCC_ConstantDef *> &defs);
-	PSymbolConst *CompileConstant(ZCC_ConstantDef *def);
+	void AddConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PSymbolTable *nt, PSymbolTable *ot);
+	void CompileAllConstants();
+	void AddConstant(ZCC_ConstantWork &constant);
+	int CompileConstants(const TArray<ZCC_ConstantDef *> &defs, PSymbolTable *Nodes, PSymbolTable *Output);
+	bool CompileConstant(ZCC_ConstantDef *def, PSymbolTable *Symbols);
 
 	TArray<ZCC_ConstantDef *> Constants;
 	TArray<ZCC_StructWork> Structs;
@@ -71,11 +81,11 @@ private:
 
 	PSymbolTreeNode *AddNamedNode(ZCC_NamedNode *node, PSymbolTable *parentsym = nullptr);
 
-	ZCC_Expression *Simplify(ZCC_Expression *root);
-	ZCC_Expression *SimplifyUnary(ZCC_ExprUnary *unary);
-	ZCC_Expression *SimplifyBinary(ZCC_ExprBinary *binary);
-	ZCC_Expression *SimplifyMemberAccess(ZCC_ExprMemberAccess *dotop);
-	ZCC_Expression *SimplifyFunctionCall(ZCC_ExprFuncCall *callop);
+	ZCC_Expression *Simplify(ZCC_Expression *root, PSymbolTable *Symbols);
+	ZCC_Expression *SimplifyUnary(ZCC_ExprUnary *unary, PSymbolTable *Symbols);
+	ZCC_Expression *SimplifyBinary(ZCC_ExprBinary *binary, PSymbolTable *Symbols);
+	ZCC_Expression *SimplifyMemberAccess(ZCC_ExprMemberAccess *dotop, PSymbolTable *Symbols);
+	ZCC_Expression *SimplifyFunctionCall(ZCC_ExprFuncCall *callop, PSymbolTable *Symbols);
 	ZCC_OpProto *PromoteUnary(EZCCExprType op, ZCC_Expression *&expr);
 	ZCC_OpProto *PromoteBinary(EZCCExprType op, ZCC_Expression *&left, ZCC_Expression *&right);
 
@@ -87,11 +97,10 @@ private:
 	ZCC_Expression *ApplyConversion(ZCC_Expression *expr, const PType::Conversion **route, int routelen);
 	ZCC_Expression *AddCastNode(PType *type, ZCC_Expression *expr);
 
-	ZCC_Expression *IdentifyIdentifier(ZCC_ExprID *idnode);
+	ZCC_Expression *IdentifyIdentifier(ZCC_ExprID *idnode, PSymbolTable *sym);
 	ZCC_Expression *NodeFromSymbol(PSymbol *sym, ZCC_Expression *source, PSymbolTable *table);
 	ZCC_ExprConstant *NodeFromSymbolConst(PSymbolConst *sym, ZCC_Expression *idnode);
 	ZCC_ExprTypeRef *NodeFromSymbolType(PSymbolType *sym, ZCC_Expression *idnode);
-	PSymbol *CompileNode(ZCC_NamedNode *node);
 
 
 	void Warn(ZCC_TreeNode *node, const char *msg, ...);

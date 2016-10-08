@@ -629,6 +629,15 @@ static void PrintCompoundStmt(FLispString &out, ZCC_TreeNode *node)
 	out.Close();
 }
 
+static void PrintDefault(FLispString &out, ZCC_TreeNode *node)
+{
+	ZCC_Default *snode = (ZCC_Default *)node;
+	out.Break();
+	out.Open("default");
+	PrintNodes(out, snode->Content, false, true);
+	out.Close();
+}
+
 static void PrintContinueStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	out.Break();
@@ -853,7 +862,8 @@ void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *
 	PrintConstantDef,
 	PrintDeclarator,
 	PrintVarDeclarator,
-	PrintFuncDeclarator
+	PrintFuncDeclarator,
+	PrintDefault
 };
 
 FString ZCC_PrintAST(ZCC_TreeNode *root)

@@ -86,18 +86,6 @@ public:
 	PSymbolType() : PSymbol(NAME_None) {}
 };
 
-// A symbol for a compiler tree node ----------------------------------------
-
-class PSymbolTreeNode : public PSymbol
-{
-	DECLARE_CLASS(PSymbolTreeNode, PSymbol);
-public:
-	struct ZCC_NamedNode *Node;
-
-	PSymbolTreeNode(FName name, struct ZCC_NamedNode *node) : PSymbol(name), Node(node) {}
-	PSymbolTreeNode() : PSymbol(NAME_None) {}
-};
-
 // A symbol table -----------------------------------------------------------
 
 struct PSymbolTable
@@ -139,6 +127,19 @@ private:
 	MapType Symbols;
 
 	friend class DObject;
+};
+
+// A symbol for a compiler tree node ----------------------------------------
+
+class PSymbolTreeNode : public PSymbol
+{
+	DECLARE_CLASS(PSymbolTreeNode, PSymbol);
+public:
+	struct ZCC_NamedNode *Node;
+	PSymbolTable Symbols;
+
+	PSymbolTreeNode(FName name, struct ZCC_NamedNode *node) : PSymbol(name), Node(node) {}
+	PSymbolTreeNode() : PSymbol(NAME_None) {}
 };
 
 extern PSymbolTable		 GlobalSymbols;

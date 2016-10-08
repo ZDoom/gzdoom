@@ -1,6 +1,56 @@
 #ifndef ZCC_COMPILE_H
 #define ZCC_COMPILE_H
 
+struct ZCC_StructWork
+{
+	ZCC_Struct *strct;
+	PSymbolTreeNode *node;
+	TArray<ZCC_ConstantDef *> Constants;
+
+	ZCC_StructWork(ZCC_Struct * s, PSymbolTreeNode *n)
+	{
+		strct = s;
+		node = n;
+	};
+
+	ZCC_Struct *operator->()
+	{
+		return strct;
+	}
+
+	operator ZCC_Struct *()
+	{
+		return strct;
+	}
+
+
+};
+
+struct ZCC_ClassWork
+{
+	ZCC_Class *cls;
+	PSymbolTreeNode *node;
+	TArray<ZCC_ConstantDef *> Constants;
+	TArray<ZCC_StructWork> Structs;
+
+	ZCC_ClassWork(ZCC_Class * s, PSymbolTreeNode *n)
+	{
+		cls = s;
+		node = n;
+	};
+
+	ZCC_Class *operator->()
+	{
+		return cls;
+	}
+
+	operator ZCC_Class *()
+	{
+		return cls;
+	}
+
+};
+
 class ZCCCompiler
 {
 public:
@@ -8,16 +58,17 @@ public:
 	int Compile();
 
 private:
+	void ProcessClass(ZCC_Class *node, PSymbolTreeNode *tnode);
 	void CreateStructTypes();
 	void CreateClassTypes();
 	void CompileConstants(const TArray<ZCC_ConstantDef *> &defs);
 	PSymbolConst *CompileConstant(ZCC_ConstantDef *def);
 
 	TArray<ZCC_ConstantDef *> Constants;
-	TArray<ZCC_Struct *> Structs;
-	TArray<ZCC_Class *> Classes;
+	TArray<ZCC_StructWork> Structs;
+	TArray<ZCC_ClassWork> Classes;
 
-	bool AddNamedNode(ZCC_NamedNode *node);
+	PSymbolTreeNode *AddNamedNode(ZCC_NamedNode *node, PSymbolTable *parentsym = nullptr);
 
 	ZCC_Expression *Simplify(ZCC_Expression *root);
 	ZCC_Expression *SimplifyUnary(ZCC_ExprUnary *unary);

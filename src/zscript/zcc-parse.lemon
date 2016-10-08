@@ -491,7 +491,7 @@ state_call_params(X) ::= LPAREN func_expr_list(A) RPAREN.	{ X = A; /*X-overwrite
 
 /* Definition of a default class instance. */
 %type default_def {ZCC_CompoundStmt *}
-default_def(X) ::= DEFAULT compound_statement(A).			{ X = A; /*X-overwrites-A*/ }
+default_def(X) ::= DEFAULT compound_statement(A).			{ X = A; /*X-overwrites-A*/ X->NodeType = AST_Default; }
 
 /* Type names */
 %type type_name {ZCC_BasicType *}

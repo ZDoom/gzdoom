@@ -47,6 +47,50 @@
 
 //==========================================================================
 //
+// ZCCCompiler :: ProcessClass
+//
+//==========================================================================
+
+void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *tnode)
+{
+	Classes.Push(ZCC_ClassWork(static_cast<ZCC_Class *>(cnode), tnode));	
+	ZCC_ClassWork &cls = Classes.Last();
+
+	auto node = cnode->Body;
+
+	do
+	{
+		switch (node->NodeType)
+		{
+		case AST_Struct:
+		case AST_ConstantDef:
+			if ((tnode = AddNamedNode(static_cast<ZCC_NamedNode *>(node))))
+			{
+				switch (node->NodeType)
+				{
+				case AST_Struct:		cls.Structs.Push(ZCC_StructWork(static_cast<ZCC_Struct *>(node), tnode));		break;
+				case AST_ConstantDef:	cls.Constants.Push(static_cast<ZCC_ConstantDef *>(node));	break;
+				default: assert(0 && "Default case is just here to make GCC happy. It should never be reached");
+				}
+			}
+			break;
+
+		case AST_Enum:			break;
+		case AST_EnumTerminator:break;
+
+		// todo
+		case AST_States:
+		case AST_VarDeclarator:
+		case AST_FuncDeclarator:
+				break;
+		}
+		node = node->SiblingNext;
+	}
+	while (node != cnode->Body);
+}
+
+//==========================================================================
+//
 // ZCCCompiler Constructor
 //
 //==========================================================================
@@ -58,6 +102,7 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 	if (ast.TopNode != NULL)
 	{
 		ZCC_TreeNode *node = ast.TopNode;
+		PSymbolTreeNode *tnode;
 		do
 		{
 			switch (node->NodeType)
@@ -65,12 +110,12 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 			case AST_Class:
 			case AST_Struct:
 			case AST_ConstantDef:
-				if (AddNamedNode(static_cast<ZCC_NamedNode *>(node)))
+				if ((tnode = AddNamedNode(static_cast<ZCC_NamedNode *>(node))))
 				{
 					switch (node->NodeType)
 					{
-					case AST_Class:			Classes.Push(static_cast<ZCC_Class *>(node));			break;
-					case AST_Struct:		Structs.Push(static_cast<ZCC_Struct *>(node));			break;
+					case AST_Class:			ProcessClass(static_cast<ZCC_Class *>(node), tnode);			break;
+					case AST_Struct:		Structs.Push(ZCC_StructWork(static_cast<ZCC_Struct *>(node), tnode));		break;
 					case AST_ConstantDef:	Constants.Push(static_cast<ZCC_ConstantDef *>(node));	break;
 					default: assert(0 && "Default case is just here to make GCC happy. It should never be reached");
 					}
@@ -99,7 +144,7 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 //
 //==========================================================================
 
-bool ZCCCompiler::AddNamedNode(ZCC_NamedNode *node)
+PSymbolTreeNode *ZCCCompiler::AddNamedNode(ZCC_NamedNode *node, PSymbolTable *parentsym)
 {
 	FName name = node->NodeName;
 	PSymbol *check = Symbols->FindSymbol(name, false);
@@ -108,12 +153,14 @@ bool ZCCCompiler::AddNamedNode(ZCC_NamedNode *node)
 		assert(check->IsA(RUNTIME_CLASS(PSymbolTreeNode)));
 		Error(node, "Attempt to redefine '%s'", name.GetChars());
 		Error(static_cast<PSymbolTreeNode *>(check)->Node, " Original definition is here");
-		return false;
+		return nullptr;
 	}
 	else
 	{
-		Symbols->AddSymbol(new PSymbolTreeNode(name, node));
-		return true;
+		auto sy = new PSymbolTreeNode(name, node);
+		sy->Symbols.SetParentTable(parentsym);
+		Symbols->AddSymbol(sy);
+		return sy;
 	}
 }
 

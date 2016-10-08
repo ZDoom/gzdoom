@@ -19,11 +19,10 @@ public:
 	static llvm::Type *llvm_type();
 	SSAUBytePtr operator[](SSAInt index) const;
 	SSAUBytePtr operator[](int index) const { return (*this)[SSAInt(index)]; }
-	SSAUByte load() const;
-	SSAVec4i load_vec4ub() const;
-	SSAVec8s load_vec8s() const;
-	SSAVec16ub load_vec16ub() const;
-	SSAVec16ub load_unaligned_vec16ub() const;
+	SSAUByte load(bool constantScopeDomain) const;
+	SSAVec4i load_vec4ub(bool constantScopeDomain) const;
+	SSAVec16ub load_vec16ub(bool constantScopeDomain) const;
+	SSAVec16ub load_unaligned_vec16ub(bool constantScopeDomain) const;
 	void store(const SSAUByte &new_value);
 	void store_vec4ub(const SSAVec4i &new_value);
 	void store_vec16ub(const SSAVec16ub &new_value);

@@ -17,9 +17,9 @@ public:
 	static llvm::Type *llvm_type();
 	SSAIntPtr operator[](SSAInt index) const;
 	SSAIntPtr operator[](int index) const { return (*this)[SSAInt(index)]; }
-	SSAInt load() const;
-	SSAVec4i load_vec4i() const;
-	SSAVec4i load_unaligned_vec4i() const;
+	SSAInt load(bool constantScopeDomain) const;
+	SSAVec4i load_vec4i(bool constantScopeDomain) const;
+	SSAVec4i load_unaligned_vec4i(bool constantScopeDomain) const;
 	void store(const SSAInt &new_value);
 	void store_vec4i(const SSAVec4i &new_value);
 	void store_unaligned_vec4i(const SSAVec4i &new_value);

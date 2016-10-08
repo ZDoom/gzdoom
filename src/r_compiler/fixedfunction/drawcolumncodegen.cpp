@@ -13,41 +13,41 @@
 
 void DrawColumnCodegen::Generate(DrawColumnVariant variant, DrawColumnMethod method, SSAValue args, SSAValue thread_data)
 {
-	dest = args[0][0].load();
-	source = args[0][1].load();
-	colormap = args[0][2].load();
-	translation = args[0][3].load();
-	basecolors = args[0][4].load();
-	pitch = args[0][5].load();
-	count = args[0][6].load();
-	dest_y = args[0][7].load();
+	dest = args[0][0].load(true);
+	source = args[0][1].load(true);
+	colormap = args[0][2].load(true);
+	translation = args[0][3].load(true);
+	basecolors = args[0][4].load(true);
+	pitch = args[0][5].load(true);
+	count = args[0][6].load(true);
+	dest_y = args[0][7].load(true);
 	if (method == DrawColumnMethod::Normal)
-		iscale = args[0][8].load();
-	texturefrac = args[0][9].load();
-	light = args[0][10].load();
-	color = SSAVec4i::unpack(args[0][11].load());
-	srccolor = SSAVec4i::unpack(args[0][12].load());
-	srcalpha = args[0][13].load();
-	destalpha = args[0][14].load();
-	SSAShort light_alpha = args[0][15].load();
-	SSAShort light_red = args[0][16].load();
-	SSAShort light_green = args[0][17].load();
-	SSAShort light_blue = args[0][18].load();
-	SSAShort fade_alpha = args[0][19].load();
-	SSAShort fade_red = args[0][20].load();
-	SSAShort fade_green = args[0][21].load();
-	SSAShort fade_blue = args[0][22].load();
-	SSAShort desaturate = args[0][23].load();
-	SSAInt flags = args[0][24].load();
+		iscale = args[0][8].load(true);
+	texturefrac = args[0][9].load(true);
+	light = args[0][10].load(true);
+	color = SSAVec4i::unpack(args[0][11].load(true));
+	srccolor = SSAVec4i::unpack(args[0][12].load(true));
+	srcalpha = args[0][13].load(true);
+	destalpha = args[0][14].load(true);
+	SSAShort light_alpha = args[0][15].load(true);
+	SSAShort light_red = args[0][16].load(true);
+	SSAShort light_green = args[0][17].load(true);
+	SSAShort light_blue = args[0][18].load(true);
+	SSAShort fade_alpha = args[0][19].load(true);
+	SSAShort fade_red = args[0][20].load(true);
+	SSAShort fade_green = args[0][21].load(true);
+	SSAShort fade_blue = args[0][22].load(true);
+	SSAShort desaturate = args[0][23].load(true);
+	SSAInt flags = args[0][24].load(true);
 	shade_constants.light = SSAVec4i(light_blue.zext_int(), light_green.zext_int(), light_red.zext_int(), light_alpha.zext_int());
 	shade_constants.fade = SSAVec4i(fade_blue.zext_int(), fade_green.zext_int(), fade_red.zext_int(), fade_alpha.zext_int());
 	shade_constants.desaturate = desaturate.zext_int();
 
-	thread.core = thread_data[0][0].load();
-	thread.num_cores = thread_data[0][1].load();
-	thread.pass_start_y = thread_data[0][2].load();
-	thread.pass_end_y = thread_data[0][3].load();
-	thread.temp = thread_data[0][4].load();
+	thread.core = thread_data[0][0].load(true);
+	thread.num_cores = thread_data[0][1].load(true);
+	thread.pass_start_y = thread_data[0][2].load(true);
+	thread.pass_end_y = thread_data[0][3].load(true);
+	thread.temp = thread_data[0][4].load(true);
 
 	is_simple_shade = (flags & DrawColumnArgs::simple_shade) == SSAInt(DrawColumnArgs::simple_shade);
 
@@ -104,7 +104,7 @@ void DrawColumnCodegen::Loop(DrawColumnVariant variant, DrawColumnMethod method,
 
 		if (numColumns == 4)
 		{
-			SSAVec16ub bg = dest[offset].load_unaligned_vec16ub();
+			SSAVec16ub bg = dest[offset].load_unaligned_vec16ub(false);
 			SSAVec8s bg0 = SSAVec8s::extendlo(bg);
 			SSAVec8s bg1 = SSAVec8s::extendhi(bg);
 			bgcolor[0] = SSAVec4i::extendlo(bg0);
@@ -114,7 +114,7 @@ void DrawColumnCodegen::Loop(DrawColumnVariant variant, DrawColumnMethod method,
 		}
 		else
 		{
-			bgcolor[0] = dest[offset].load_vec4ub();
+			bgcolor[0] = dest[offset].load_vec4ub(false);
 		}
 
 		SSAVec4i outcolor[4];
@@ -131,7 +131,7 @@ void DrawColumnCodegen::Loop(DrawColumnVariant variant, DrawColumnMethod method,
 			dest[offset].store_vec4ub(outcolor[0]);
 		}
 
-		stack_index.store(index + 1);
+		stack_index.store(index.add(SSAInt(1), true, true));
 		if (method == DrawColumnMethod::Normal)
 			stack_frac.store(frac + iscale);
 		loop.end_block();
@@ -218,7 +218,7 @@ SSAVec4i DrawColumnCodegen::ProcessPixelPal(SSAInt sample_index, SSAVec4i bgcolo
 	{
 	default:
 	case DrawColumnVariant::DrawCopy:
-		return blend_copy(basecolors[ColormapSample(sample_index) * 4].load_vec4ub());
+		return blend_copy(basecolors[ColormapSample(sample_index) * 4].load_vec4ub(true));
 	case DrawColumnVariant::Draw:
 		return blend_copy(ShadePal(ColormapSample(sample_index), isSimpleShade));
 	case DrawColumnVariant::DrawAdd:
@@ -259,17 +259,17 @@ SSAVec4i DrawColumnCodegen::ProcessPixelPal(SSAInt sample_index, SSAVec4i bgcolo
 
 SSAVec4i DrawColumnCodegen::Sample(SSAInt sample_index)
 {
-	return source[sample_index].load_vec4ub();
+	return source[sample_index].load_vec4ub(true);
 }
 
 SSAInt DrawColumnCodegen::ColormapSample(SSAInt sample_index)
 {
-	return colormap[source[sample_index].load().zext_int()].load().zext_int();
+	return colormap[source[sample_index].load(true).zext_int()].load(true).zext_int();
 }
 
 SSAInt DrawColumnCodegen::TranslateSample(SSAInt sample_index)
 {
-	return translation[source[sample_index].load().zext_int()].load().zext_int();
+	return translation[source[sample_index].load(true).zext_int()].load(true).zext_int();
 }
 
 SSAVec4i DrawColumnCodegen::Shade(SSAVec4i fg, bool isSimpleShade)

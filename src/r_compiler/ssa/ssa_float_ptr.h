@@ -17,9 +17,9 @@ public:
 	static llvm::Type *llvm_type();
 	SSAFloatPtr operator[](SSAInt index) const;
 	SSAFloatPtr operator[](int index) const { return (*this)[SSAInt(index)]; }
-	SSAFloat load() const;
-	SSAVec4f load_vec4f() const;
-	SSAVec4f load_unaligned_vec4f() const;
+	SSAFloat load(bool constantScopeDomain) const;
+	SSAVec4f load_vec4f(bool constantScopeDomain) const;
+	SSAVec4f load_unaligned_vec4f(bool constantScopeDomain) const;
 	void store(const SSAFloat &new_value);
 	void store_vec4f(const SSAVec4f &new_value);
 	void store_unaligned_vec4f(const SSAVec4f &new_value);

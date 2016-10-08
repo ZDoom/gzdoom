@@ -15,7 +15,7 @@ public:
 
 	static SSAValue from_llvm(llvm::Value *v) { SSAValue val; val.v = v; return val; }
 
-	SSAValue load();
+	SSAValue load(bool constantScopeDomain);
 	void store(llvm::Value *v);
 
 	template<typename Type>
@@ -38,7 +38,7 @@ public:
 	llvm::Value *v;
 	std::vector<llvm::Value *> indexes;
 
-	SSAValue load() { SSAValue value = *this; return value.load(); }
+	SSAValue load(bool constantScopeDomain) { SSAValue value = *this; return value.load(constantScopeDomain); }
 	void store(llvm::Value *v) { SSAValue value = *this; return value.store(v); }
 
 	template<typename Type>

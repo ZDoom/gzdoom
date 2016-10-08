@@ -20,9 +20,9 @@ public:
 		out_pixel2 = SSAVec4f::shuffle(SSAVec4f(SSAVec4i::extendhi(p)) * (1.0f / 255.0f), 2, 1, 0, 3);
 	}
 */
-	SSAVec4f get4f(SSAInt index) const
+	SSAVec4f get4f(SSAInt index, bool constantScopeDomain) const
 	{
-		return SSAVec4f::shuffle(SSAVec4f(_pixels[index * 4].load_vec4ub()) * (1.0f / 255.0f), 2, 1, 0, 3);
+		return SSAVec4f::shuffle(SSAVec4f(_pixels[index * 4].load_vec4ub(constantScopeDomain)) * (1.0f / 255.0f), 2, 1, 0, 3);
 	}
 
 	void set4f(SSAInt index, const SSAVec4f &pixel)

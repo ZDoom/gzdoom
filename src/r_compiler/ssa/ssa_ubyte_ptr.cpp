@@ -23,32 +23,45 @@ SSAUBytePtr SSAUBytePtr::operator[](SSAInt index) const
 	return SSAUBytePtr::from_llvm(SSAScope::builder().CreateGEP(v, index.v, SSAScope::hint()));
 }
 
-SSAUByte SSAUBytePtr::load() const
+SSAUByte SSAUBytePtr::load(bool constantScopeDomain) const
 {
-	return SSAUByte::from_llvm(SSAScope::builder().CreateLoad(v, false, SSAScope::hint()));
+	auto loadInst = SSAScope::builder().CreateLoad(v, false, SSAScope::hint());
+	if (constantScopeDomain)
+		loadInst->setMetadata(llvm::LLVMContext::MD_alias_scope, SSAScope::constant_scope_list());
+	return SSAUByte::from_llvm(loadInst);
 }
 
-SSAVec4i SSAUBytePtr::load_vec4ub() const
+SSAVec4i SSAUBytePtr::load_vec4ub(bool constantScopeDomain) const
 {
-	SSAInt i32 = SSAInt::from_llvm(SSAScope::builder().CreateLoad(SSAScope::builder().CreateBitCast(v, llvm::Type::getInt32PtrTy(SSAScope::context()), SSAScope::hint()), false, SSAScope::hint()));
+	auto loadInst = SSAScope::builder().CreateLoad(SSAScope::builder().CreateBitCast(v, llvm::Type::getInt32PtrTy(SSAScope::context()), SSAScope::hint()), false, SSAScope::hint());
+	if (constantScopeDomain)
+		loadInst->setMetadata(llvm::LLVMContext::MD_alias_scope, SSAScope::constant_scope_list());
+	SSAInt i32 = SSAInt::from_llvm(loadInst);
 	return SSAVec4i::unpack(i32);
 }
 
-SSAVec16ub SSAUBytePtr::load_vec16ub() const
+SSAVec16ub SSAUBytePtr::load_vec16ub(bool constantScopeDomain) const
 {
 	llvm::PointerType *m16xint8typeptr = llvm::VectorType::get(llvm::Type::getInt8Ty(SSAScope::context()), 16)->getPointerTo();
-	return SSAVec16ub::from_llvm(SSAScope::builder().CreateLoad(SSAScope::builder().CreateBitCast(v, m16xint8typeptr, SSAScope::hint()), false, SSAScope::hint()));
+	auto loadInst = SSAScope::builder().CreateLoad(SSAScope::builder().CreateBitCast(v, m16xint8typeptr, SSAScope::hint()), false, SSAScope::hint());
+	if (constantScopeDomain)
+		loadInst->setMetadata(llvm::LLVMContext::MD_alias_scope, SSAScope::constant_scope_list());
+	return SSAVec16ub::from_llvm(loadInst);
 }
 
-SSAVec16ub SSAUBytePtr::load_unaligned_vec16ub() const
+SSAVec16ub SSAUBytePtr::load_unaligned_vec16ub(bool constantScopeDomain) const
 {
 	llvm::PointerType *m16xint8typeptr = llvm::VectorType::get(llvm::Type::getInt8Ty(SSAScope::context()), 16)->getPointerTo();
-	return SSAVec16ub::from_llvm(SSAScope::builder().Insert(new llvm::LoadInst(SSAScope::builder().CreateBitCast(v, m16xint8typeptr, SSAScope::hint()), SSAScope::hint(), false, 4), SSAScope::hint()));
+	auto loadInst = SSAScope::builder().CreateAlignedLoad(SSAScope::builder().CreateBitCast(v, m16xint8typeptr, SSAScope::hint()), 4, false, SSAScope::hint());
+	if (constantScopeDomain)
+		loadInst->setMetadata(llvm::LLVMContext::MD_alias_scope, SSAScope::constant_scope_list());
+	return SSAVec16ub::from_llvm(loadInst);
 }
 
 void SSAUBytePtr::store(const SSAUByte &new_value)
 {
-	SSAScope::builder().CreateStore(new_value.v, v, false);
+	auto inst = SSAScope::builder().CreateStore(new_value.v, v, false);
+	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
 }
 
 void SSAUBytePtr::store_vec4ub(const SSAVec4i &new_value)
@@ -66,13 +79,15 @@ void SSAUBytePtr::store_vec4ub(const SSAVec4i &new_value)
 	constants.push_back(llvm::ConstantInt::get(SSAScope::context(), llvm::APInt(32, 3)));
 	llvm::Value *mask = llvm::ConstantVector::get(constants);
 	llvm::Value *val_vector = SSAScope::builder().CreateShuffleVector(v16ub.v, llvm::UndefValue::get(m16xint8type), mask, SSAScope::hint());
-	SSAScope::builder().CreateStore(val_vector, SSAScope::builder().CreateBitCast(v, m4xint8typeptr, SSAScope::hint()), false);
+	llvm::StoreInst *inst = SSAScope::builder().CreateStore(val_vector, SSAScope::builder().CreateBitCast(v, m4xint8typeptr, SSAScope::hint()), false);
+	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
 }
 
 void SSAUBytePtr::store_vec16ub(const SSAVec16ub &new_value)
 {
 	llvm::PointerType *m16xint8typeptr = llvm::VectorType::get(llvm::Type::getInt8Ty(SSAScope::context()), 16)->getPointerTo();
 	llvm::StoreInst *inst = SSAScope::builder().CreateStore(new_value.v, SSAScope::builder().CreateBitCast(v, m16xint8typeptr, SSAScope::hint()));
+	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
 
 	// The following generates _mm_stream_si128, maybe!
 	// llvm::MDNode *node = llvm::MDNode::get(SSAScope::context(), SSAScope::builder().getInt32(1));
@@ -83,4 +98,5 @@ void SSAUBytePtr::store_unaligned_vec16ub(const SSAVec16ub &new_value)
 {
 	llvm::PointerType *m16xint8typeptr = llvm::VectorType::get(llvm::Type::getInt8Ty(SSAScope::context()), 16)->getPointerTo();
 	llvm::StoreInst *inst = SSAScope::builder().CreateAlignedStore(new_value.v, SSAScope::builder().CreateBitCast(v, m16xint8typeptr, SSAScope::hint()), 4);
+	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
 }

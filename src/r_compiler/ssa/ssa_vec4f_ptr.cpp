@@ -23,22 +23,30 @@ SSAVec4fPtr SSAVec4fPtr::operator[](SSAInt index) const
 	return SSAVec4fPtr::from_llvm(SSAScope::builder().CreateGEP(v, index.v, SSAScope::hint()));
 }
 
-SSAVec4f SSAVec4fPtr::load() const
+SSAVec4f SSAVec4fPtr::load(bool constantScopeDomain) const
 {
-	return SSAVec4f::from_llvm(SSAScope::builder().CreateLoad(v, false, SSAScope::hint()));
+	auto loadInst = SSAScope::builder().CreateLoad(v, false, SSAScope::hint());
+	if (constantScopeDomain)
+		loadInst->setMetadata(llvm::LLVMContext::MD_alias_scope, SSAScope::constant_scope_list());
+	return SSAVec4f::from_llvm(loadInst);
 }
 
-SSAVec4f SSAVec4fPtr::load_unaligned() const
+SSAVec4f SSAVec4fPtr::load_unaligned(bool constantScopeDomain) const
 {
-	return SSAVec4f::from_llvm(SSAScope::builder().Insert(new llvm::LoadInst(v, SSAScope::hint(), false, 4), SSAScope::hint()));
+	auto loadInst = SSAScope::builder().CreateAlignedLoad(v, 4, false, SSAScope::hint());
+	if (constantScopeDomain)
+		loadInst->setMetadata(llvm::LLVMContext::MD_alias_scope, SSAScope::constant_scope_list());
+	return SSAVec4f::from_llvm(loadInst);
 }
 
 void SSAVec4fPtr::store(const SSAVec4f &new_value)
 {
-	SSAScope::builder().CreateStore(new_value.v, v, false);
+	auto inst = SSAScope::builder().CreateStore(new_value.v, v, false);
+	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
 }
 
 void SSAVec4fPtr::store_unaligned(const SSAVec4f &new_value)
 {
-	SSAScope::builder().CreateAlignedStore(new_value.v, v, 4, false);
+	auto inst = SSAScope::builder().CreateAlignedStore(new_value.v, v, 4, false);
+	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
 }

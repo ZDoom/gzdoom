@@ -43,13 +43,13 @@ SSAInt DrawerCodegen::calc_light_multiplier(SSAInt light)
 
 SSAVec4i DrawerCodegen::shade_pal_index_simple(SSAInt index, SSAInt light, SSAUBytePtr basecolors)
 {
-	SSAVec4i color = basecolors[index * 4].load_vec4ub(); // = GPalette.BaseColors[index];
+	SSAVec4i color = basecolors[index * 4].load_vec4ub(true); // = GPalette.BaseColors[index];
 	return shade_bgra_simple(color, light);
 }
 
 SSAVec4i DrawerCodegen::shade_pal_index_advanced(SSAInt index, SSAInt light, const SSAShadeConstants &constants, SSAUBytePtr basecolors)
 {
-	SSAVec4i color = basecolors[index * 4].load_vec4ub(); // = GPalette.BaseColors[index];
+	SSAVec4i color = basecolors[index * 4].load_vec4ub(true); // = GPalette.BaseColors[index];
 	return shade_bgra_advanced(color, light, constants);
 }
 
@@ -125,10 +125,10 @@ SSAVec4i DrawerCodegen::sample_linear(SSAUBytePtr col0, SSAUBytePtr col1, SSAInt
 	SSAInt y0 = frac_y0 >> FRACBITS;
 	SSAInt y1 = frac_y1 >> FRACBITS;
 
-	SSAVec4i p00 = col0[y0 * 4].load_vec4ub();
-	SSAVec4i p01 = col0[y1 * 4].load_vec4ub();
-	SSAVec4i p10 = col1[y0 * 4].load_vec4ub();
-	SSAVec4i p11 = col1[y1 * 4].load_vec4ub();
+	SSAVec4i p00 = col0[y0 * 4].load_vec4ub(true);
+	SSAVec4i p01 = col0[y1 * 4].load_vec4ub(true);
+	SSAVec4i p10 = col1[y0 * 4].load_vec4ub(true);
+	SSAVec4i p11 = col1[y1 * 4].load_vec4ub(true);
 
 	SSAInt inv_b = texturefracx;
 	SSAInt a = (frac_y1 >> (FRACBITS - 4)) & 15;
@@ -147,10 +147,10 @@ SSAVec4i DrawerCodegen::sample_linear(SSAUBytePtr texture, SSAInt xfrac, SSAInt 
 	SSAInt x = xfrac >> xbits;
 	SSAInt y = yfrac >> ybits;
 
-	SSAVec4i p00 = texture[((y & ymask) + ((x & xmask) << yshift)) * 4].load_vec4ub();
-	SSAVec4i p01 = texture[(((y + 1) & ymask) + ((x & xmask) << yshift)) * 4].load_vec4ub();
-	SSAVec4i p10 = texture[((y & ymask) + (((x + 1) & xmask) << yshift)) * 4].load_vec4ub();
-	SSAVec4i p11 = texture[(((y + 1) & ymask) + (((x + 1) & xmask) << yshift)) * 4].load_vec4ub();
+	SSAVec4i p00 = texture[((y & ymask) + ((x & xmask) << yshift)) * 4].load_vec4ub(true);
+	SSAVec4i p01 = texture[(((y + 1) & ymask) + ((x & xmask) << yshift)) * 4].load_vec4ub(true);
+	SSAVec4i p10 = texture[((y & ymask) + (((x + 1) & xmask) << yshift)) * 4].load_vec4ub(true);
+	SSAVec4i p11 = texture[(((y + 1) & ymask) + (((x + 1) & xmask) << yshift)) * 4].load_vec4ub(true);
 
 	SSAInt inv_b = (xfrac >> (xbits - 4)) & 15;
 	SSAInt inv_a = (yfrac >> (ybits - 4)) & 15;

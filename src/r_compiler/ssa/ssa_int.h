@@ -19,6 +19,8 @@ public:
 	static SSAInt MIN(SSAInt a, SSAInt b);
 	static SSAInt MAX(SSAInt a, SSAInt b);
 
+	SSAInt add(SSAInt b, bool no_unsigned_wrap, bool no_signed_wrap);
+
 	llvm::Value *v;
 };
 

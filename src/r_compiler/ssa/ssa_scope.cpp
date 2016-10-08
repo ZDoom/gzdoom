@@ -7,6 +7,10 @@ SSAScope::SSAScope(llvm::LLVMContext *context, llvm::Module *module, llvm::IRBui
 : _context(context), _module(module), _builder(builder)
 {
 	instance = this;
+
+	_constant_scope_domain = llvm::MDNode::get(SSAScope::context(), { llvm::MDString::get(SSAScope::context(), "ConstantScopeDomain") });
+	_constant_scope = llvm::MDNode::getDistinct(SSAScope::context(), { _constant_scope_domain });
+	_constant_scope_list = llvm::MDNode::get(SSAScope::context(), { _constant_scope });
 }
 
 SSAScope::~SSAScope()
@@ -48,6 +52,11 @@ llvm::Value *SSAScope::alloca(llvm::Type *type, SSAInt size)
 	llvm::BasicBlock &entry = SSAScope::builder().GetInsertBlock()->getParent()->getEntryBlock();
 	llvm::IRBuilder<> alloca_builder(&entry, entry.begin());
 	return alloca_builder.CreateAlloca(type, size.v, hint());
+}
+
+llvm::MDNode *SSAScope::constant_scope_list()
+{
+	return instance->_constant_scope_list;
 }
 
 const std::string &SSAScope::hint()

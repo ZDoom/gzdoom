@@ -4,14 +4,18 @@
 #include "ssa_int.h"
 #include "ssa_scope.h"
 
-SSAValue SSAValue::load()
+SSAValue SSAValue::load(bool constantScopeDomain)
 {
-	return SSAValue::from_llvm(SSAScope::builder().CreateLoad(v, false));
+	auto loadInst = SSAScope::builder().CreateLoad(v, false);
+	if (constantScopeDomain)
+		loadInst->setMetadata(llvm::LLVMContext::MD_alias_scope, SSAScope::constant_scope_list());
+	return SSAValue::from_llvm(loadInst);
 }
 
 void SSAValue::store(llvm::Value *value)
 {
-	SSAScope::builder().CreateStore(value, v, false);
+	auto inst = SSAScope::builder().CreateStore(value, v, false);
+	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
 }
 
 SSAIndexLookup SSAValue::operator[](int index)

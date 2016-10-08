@@ -42,6 +42,11 @@ SSAInt SSAInt::MAX(SSAInt a, SSAInt b)
 	return SSAInt::from_llvm(SSAScope::builder().CreateSelect((a > b).v, a.v, b.v, SSAScope::hint()));
 }
 
+SSAInt SSAInt::add(SSAInt b, bool no_unsigned_wrap, bool no_signed_wrap)
+{
+	return SSAInt::from_llvm(SSAScope::builder().CreateAdd(v, b.v, SSAScope::hint(), no_unsigned_wrap, no_signed_wrap));
+}
+
 SSAInt operator+(const SSAInt &a, const SSAInt &b)
 {
 	return SSAInt::from_llvm(SSAScope::builder().CreateAdd(a.v, b.v, SSAScope::hint()));

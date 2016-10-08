@@ -13,9 +13,9 @@ public:
 	SSAUBytePtr pixels() { return _pixels; }
 	SSAUBytePtr pixels() const { return _pixels; }
 
-	SSAVec4f get4f(SSAInt index) const
+	SSAVec4f get4f(SSAInt index, bool constantScopeDomain) const
 	{
-		return SSAVec4f(_pixels[index * 4].load_vec4ub()) * (1.0f / 255.0f);
+		return SSAVec4f(_pixels[index * 4].load_vec4ub(constantScopeDomain)) * (1.0f / 255.0f);
 	}
 
 	void set4f(SSAInt index, const SSAVec4f &pixel)

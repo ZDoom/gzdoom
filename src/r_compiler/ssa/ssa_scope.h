@@ -14,6 +14,7 @@ public:
 	static llvm::Function *intrinsic(llvm::Intrinsic::ID id, llvm::ArrayRef<llvm::Type *> parameter_types = llvm::ArrayRef<llvm::Type*>());
 	static llvm::Value *alloca(llvm::Type *type);
 	static llvm::Value *alloca(llvm::Type *type, SSAInt size);
+	static llvm::MDNode *constant_scope_list();
 	static const std::string &hint();
 	static void set_hint(const std::string &hint);
 
@@ -22,6 +23,9 @@ private:
 	llvm::LLVMContext *_context;
 	llvm::Module *_module;
 	llvm::IRBuilder<> *_builder;
+	llvm::MDNode *_constant_scope_domain;
+	llvm::MDNode *_constant_scope;
+	llvm::MDNode *_constant_scope_list;
 	std::string _hint;
 };
 

@@ -13,31 +13,31 @@
 
 void DrawSpanCodegen::Generate(DrawSpanVariant variant, SSAValue args)
 {
-	destorg = args[0][0].load();
-	source = args[0][1].load();
-	destpitch = args[0][2].load();
-	stack_xfrac.store(args[0][3].load());
-	stack_yfrac.store(args[0][4].load());
-	xstep = args[0][5].load();
-	ystep = args[0][6].load();
-	x1 = args[0][7].load();
-	x2 = args[0][8].load();
-	y = args[0][9].load();
-	xbits = args[0][10].load();
-	ybits = args[0][11].load();
-	light = args[0][12].load();
-	srcalpha = args[0][13].load();
-	destalpha = args[0][14].load();
-	SSAShort light_alpha = args[0][15].load();
-	SSAShort light_red = args[0][16].load();
-	SSAShort light_green = args[0][17].load();
-	SSAShort light_blue = args[0][18].load();
-	SSAShort fade_alpha = args[0][19].load();
-	SSAShort fade_red = args[0][20].load();
-	SSAShort fade_green = args[0][21].load();
-	SSAShort fade_blue = args[0][22].load();
-	SSAShort desaturate = args[0][23].load();
-	SSAInt flags = args[0][24].load();
+	destorg = args[0][0].load(true);
+	source = args[0][1].load(true);
+	destpitch = args[0][2].load(true);
+	stack_xfrac.store(args[0][3].load(true));
+	stack_yfrac.store(args[0][4].load(true));
+	xstep = args[0][5].load(true);
+	ystep = args[0][6].load(true);
+	x1 = args[0][7].load(true);
+	x2 = args[0][8].load(true);
+	y = args[0][9].load(true);
+	xbits = args[0][10].load(true);
+	ybits = args[0][11].load(true);
+	light = args[0][12].load(true);
+	srcalpha = args[0][13].load(true);
+	destalpha = args[0][14].load(true);
+	SSAShort light_alpha = args[0][15].load(true);
+	SSAShort light_red = args[0][16].load(true);
+	SSAShort light_green = args[0][17].load(true);
+	SSAShort light_blue = args[0][18].load(true);
+	SSAShort fade_alpha = args[0][19].load(true);
+	SSAShort fade_red = args[0][20].load(true);
+	SSAShort fade_green = args[0][21].load(true);
+	SSAShort fade_blue = args[0][22].load(true);
+	SSAShort desaturate = args[0][23].load(true);
+	SSAInt flags = args[0][24].load(true);
 	shade_constants.light = SSAVec4i(light_blue.zext_int(), light_green.zext_int(), light_red.zext_int(), light_alpha.zext_int());
 	shade_constants.fade = SSAVec4i(fade_blue.zext_int(), fade_green.zext_int(), fade_red.zext_int(), fade_alpha.zext_int());
 	shade_constants.desaturate = desaturate.zext_int();
@@ -97,7 +97,7 @@ SSAInt DrawSpanCodegen::Loop4x(DrawSpanVariant variant, bool isSimpleShade, bool
 		SSAInt index = stack_index.load();
 		loop.loop_block(index < sseLength);
 
-		SSAVec16ub bg = data[index * 16].load_unaligned_vec16ub();
+		SSAVec16ub bg = data[index * 16].load_unaligned_vec16ub(false);
 		SSAVec8s bg0 = SSAVec8s::extendlo(bg);
 		SSAVec8s bg1 = SSAVec8s::extendhi(bg);
 		SSAVec4i bgcolors[4] =
@@ -123,7 +123,7 @@ SSAInt DrawSpanCodegen::Loop4x(DrawSpanVariant variant, bool isSimpleShade, bool
 		SSAVec16ub color(SSAVec8s(colors[0], colors[1]), SSAVec8s(colors[2], colors[3]));
 		data[index * 16].store_unaligned_vec16ub(color);
 
-		stack_index.store(index + 1);
+		stack_index.store(index.add(SSAInt(1), true, true));
 		loop.end_block();
 	}
 	return sseLength;
@@ -140,11 +140,11 @@ void DrawSpanCodegen::Loop(SSAInt start, DrawSpanVariant variant, bool isSimpleS
 		SSAInt xfrac = stack_xfrac.load();
 		SSAInt yfrac = stack_yfrac.load();
 
-		SSAVec4i bgcolor = data[index * 4].load_vec4ub();
+		SSAVec4i bgcolor = data[index * 4].load_vec4ub(false);
 		SSAVec4i color = Blend(Shade(Sample(xfrac, yfrac, isNearestFilter, is64x64), isSimpleShade), bgcolor, variant);
 		data[index * 4].store_vec4ub(color);
 
-		stack_index.store(index + 1);
+		stack_index.store(index.add(SSAInt(1), true, true));
 		stack_xfrac.store(xfrac + xstep);
 		stack_yfrac.store(yfrac + ystep);
 		loop.end_block();
@@ -160,7 +160,7 @@ SSAVec4i DrawSpanCodegen::Sample(SSAInt xfrac, SSAInt yfrac, bool isNearestFilte
 			spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 		else
 			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-		return source[spot * 4].load_vec4ub();
+		return source[spot * 4].load_vec4ub(true);
 	}
 	else
 	{

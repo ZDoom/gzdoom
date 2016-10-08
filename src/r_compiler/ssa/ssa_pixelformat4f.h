@@ -13,9 +13,9 @@ public:
 	SSAFloatPtr pixels() { return _pixels; }
 	SSAFloatPtr pixels() const { return _pixels; }
 
-	SSAVec4f get4f(SSAInt index) const
+	SSAVec4f get4f(SSAInt index, bool constantScopeDomain) const
 	{
-		return _pixels[index * 4].load_vec4f();
+		return _pixels[index * 4].load_vec4f(constantScopeDomain);
 	}
 
 	void set4f(SSAInt index, const SSAVec4f &pixel)

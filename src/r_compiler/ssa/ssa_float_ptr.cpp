@@ -23,36 +23,48 @@ SSAFloatPtr SSAFloatPtr::operator[](SSAInt index) const
 	return SSAFloatPtr::from_llvm(SSAScope::builder().CreateGEP(v, index.v, SSAScope::hint()));
 }
 
-SSAFloat SSAFloatPtr::load() const
+SSAFloat SSAFloatPtr::load(bool constantScopeDomain) const
 {
-	return SSAFloat::from_llvm(SSAScope::builder().CreateLoad(v, false, SSAScope::hint()));
+	auto loadInst = SSAScope::builder().CreateLoad(v, false, SSAScope::hint());
+	if (constantScopeDomain)
+		loadInst->setMetadata(llvm::LLVMContext::MD_alias_scope, SSAScope::constant_scope_list());
+	return SSAFloat::from_llvm(loadInst);
 }
 
-SSAVec4f SSAFloatPtr::load_vec4f() const
+SSAVec4f SSAFloatPtr::load_vec4f(bool constantScopeDomain) const
 {
 	llvm::PointerType *m4xfloattypeptr = llvm::VectorType::get(llvm::Type::getFloatTy(SSAScope::context()), 4)->getPointerTo();
-	return SSAVec4f::from_llvm(SSAScope::builder().CreateLoad(SSAScope::builder().CreateBitCast(v, m4xfloattypeptr, SSAScope::hint()), false, SSAScope::hint()));
+	auto loadInst = SSAScope::builder().CreateLoad(SSAScope::builder().CreateBitCast(v, m4xfloattypeptr, SSAScope::hint()), false, SSAScope::hint());
+	if (constantScopeDomain)
+		loadInst->setMetadata(llvm::LLVMContext::MD_alias_scope, SSAScope::constant_scope_list());
+	return SSAVec4f::from_llvm(loadInst);
 }
 
-SSAVec4f SSAFloatPtr::load_unaligned_vec4f() const
+SSAVec4f SSAFloatPtr::load_unaligned_vec4f(bool constantScopeDomain) const
 {
 	llvm::PointerType *m4xfloattypeptr = llvm::VectorType::get(llvm::Type::getFloatTy(SSAScope::context()), 4)->getPointerTo();
-	return SSAVec4f::from_llvm(SSAScope::builder().Insert(new llvm::LoadInst(SSAScope::builder().CreateBitCast(v, m4xfloattypeptr, SSAScope::hint()), SSAScope::hint(), false, 4), SSAScope::hint()));
+	auto loadInst = SSAScope::builder().CreateAlignedLoad(SSAScope::builder().CreateBitCast(v, m4xfloattypeptr, SSAScope::hint()), 4, false, SSAScope::hint());
+	if (constantScopeDomain)
+		loadInst->setMetadata(llvm::LLVMContext::MD_alias_scope, SSAScope::constant_scope_list());
+	return SSAVec4f::from_llvm(loadInst);
 }
 
 void SSAFloatPtr::store(const SSAFloat &new_value)
 {
-	SSAScope::builder().CreateStore(new_value.v, v, false);
+	auto inst = SSAScope::builder().CreateStore(new_value.v, v, false);
+	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
 }
 
 void SSAFloatPtr::store_vec4f(const SSAVec4f &new_value)
 {
 	llvm::PointerType *m4xfloattypeptr = llvm::VectorType::get(llvm::Type::getFloatTy(SSAScope::context()), 4)->getPointerTo();
-	SSAScope::builder().CreateStore(new_value.v, SSAScope::builder().CreateBitCast(v, m4xfloattypeptr, SSAScope::hint()));
+	auto inst = SSAScope::builder().CreateStore(new_value.v, SSAScope::builder().CreateBitCast(v, m4xfloattypeptr, SSAScope::hint()));
+	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
 }
 
 void SSAFloatPtr::store_unaligned_vec4f(const SSAVec4f &new_value)
 {
 	llvm::PointerType *m4xfloattypeptr = llvm::VectorType::get(llvm::Type::getFloatTy(SSAScope::context()), 4)->getPointerTo();
-	SSAScope::builder().CreateAlignedStore(new_value.v, SSAScope::builder().CreateBitCast(v, m4xfloattypeptr, SSAScope::hint()), 4);
+	auto inst = SSAScope::builder().CreateAlignedStore(new_value.v, SSAScope::builder().CreateBitCast(v, m4xfloattypeptr, SSAScope::hint()), 4);
+	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
 }

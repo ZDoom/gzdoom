@@ -4,11 +4,12 @@
 class ZCCCompiler
 {
 public:
-	ZCCCompiler(ZCC_AST &tree, DObject *outer, PSymbolTable &symbols);
+	ZCCCompiler(ZCC_AST &tree, DObject *outer, PSymbolTable &symbols, PSymbolTable &outsymbols);
 	int Compile();
 
 private:
-	void CreateClasses();
+	void CreateStructTypes();
+	void CreateClassTypes();
 	void CompileConstants(const TArray<ZCC_ConstantDef *> &defs);
 	PSymbolConst *CompileConstant(ZCC_ConstantDef *def);
 
@@ -47,6 +48,7 @@ private:
 
 	DObject *Outer;
 	PSymbolTable *Symbols;
+	PSymbolTable *OutputSymbols;
 	ZCC_AST &AST;
 	int ErrorCount;
 	int WarnCount;

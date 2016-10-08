@@ -51,8 +51,8 @@
 //
 //==========================================================================
 
-ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols)
-: Outer(_outer), Symbols(&_symbols), AST(ast), ErrorCount(0), WarnCount(0)
+ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, PSymbolTable &_outsymbols)
+: Outer(_outer), Symbols(&_symbols), OutputSymbols(&_outsymbols), AST(ast), ErrorCount(0), WarnCount(0)
 {
 	// Group top-level nodes by type
 	if (ast.TopNode != NULL)
@@ -181,9 +181,26 @@ void ZCCCompiler::MessageV(ZCC_TreeNode *node, const char *txtcolor, const char 
 
 int ZCCCompiler::Compile()
 {
-	CreateClasses();
+	CreateClassTypes();
+	CreateStructTypes();
 	CompileConstants(Constants);
 	return ErrorCount;
+}
+
+//==========================================================================
+//
+// ZCCCompiler :: CreateStructTypes
+//
+// Creates a PStruct for every struct.
+//
+//==========================================================================
+
+void ZCCCompiler::CreateStructTypes()
+{
+	for(auto s : Structs)
+	{
+		s->Type = NewStruct(s->NodeName, nullptr);
+	}
 }
 
 //==========================================================================
@@ -197,20 +214,20 @@ int ZCCCompiler::Compile()
 //
 //==========================================================================
 
-void ZCCCompiler::CreateClasses()
+void ZCCCompiler::CreateClassTypes()
 {
 	auto OrigClasses = std::move(Classes);
 	Classes.Clear();
 	bool donesomething = true;
 	while (donesomething)
 	{
-		for (unsigned i=0;i<OrigClasses.Size();i++)
+		donesomething = false;
+		for (unsigned i = 0; i<OrigClasses.Size(); i++)
 		{
-			donesomething = false;
 			auto c = OrigClasses[i];
 			// Check if we got the parent already defined.
 			PClass *parent;
-			
+
 			if (c->ParentName != nullptr && c->ParentName->SiblingNext == c->ParentName) parent = PClass::FindClass(c->ParentName->Id);
 			else if (c->ParentName == nullptr) parent = RUNTIME_CLASS(DObject);
 			else
@@ -235,12 +252,16 @@ void ZCCCompiler::CreateClasses()
 				// The parent exists, we may create a type for this class
 				if (c->Flags & ZCC_Native)
 				{
-					// If this is a native class, its own type must also already exist.
+					// If this is a native class, its own type must also already exist and not be a runtime class.
 					auto me = PClass::FindClass(c->NodeName);
 					if (me == nullptr)
 					{
 						Error(c, "Unknown native class %s", FName(c->NodeName).GetChars());
 						me = parent->FindClassTentative(c->NodeName);
+					}
+					else if (me->bRuntimeClass)
+					{
+						Error(c, "%s is not a native class", FName(c->NodeName).GetChars());
 					}
 					else
 					{
@@ -250,17 +271,8 @@ void ZCCCompiler::CreateClasses()
 				}
 				else
 				{
-					auto me = PClass::FindClass(c->NodeName);
-					if (me != nullptr)
-					{
-						Error(c, "Redefining class %s", FName(c->NodeName).GetChars());
-					}
-					else
-					{
-						me = parent->FindClassTentative(c->NodeName);
-						DPrintf(DMSG_SPAMMY, "Created %s with parent %s\n", me->TypeName.GetChars(), parent->TypeName.GetChars());
-					}
-					c->Type = me;
+					// We will never get here if the name is a duplicate, so we can just do the assignment.
+					c->Type = parent->FindClassTentative(c->NodeName);
 				}
 				Classes.Push(c);
 				OrigClasses.Delete(i);
@@ -371,7 +383,7 @@ PSymbolConst *ZCCCompiler::CompileConstant(ZCC_ConstantDef *def)
 		sym = new PSymbolConstNumeric(def->NodeName, TypeError, 0);
 	}
 	def->Symbol = sym;
-	Symbols->ReplaceSymbol(sym);
+	OutputSymbols->ReplaceSymbol(sym);
 	return sym;
 }
 

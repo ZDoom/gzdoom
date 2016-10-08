@@ -3197,7 +3197,7 @@ void PClass::BuildFlatPointers ()
 //
 // PClass :: NativeClass
 //
-// Finds the underlying native type underlying this class.
+// Finds the native type underlying this class.
 //
 //==========================================================================
 

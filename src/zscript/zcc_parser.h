@@ -192,6 +192,7 @@ struct ZCC_Class : ZCC_NamedNode
 struct ZCC_Struct : ZCC_NamedNode
 {
 	ZCC_TreeNode *Body;
+	PStruct *Type;
 };
 
 struct ZCC_Enum : ZCC_NamedNode

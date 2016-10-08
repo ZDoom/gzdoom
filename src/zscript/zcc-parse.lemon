@@ -248,6 +248,7 @@ struct_def(X) ::= STRUCT(T) IDENTIFIER(A) LBRACE opt_struct_body(B) RBRACE opt_s
 	NEW_AST_NODE(Struct,def,T);
 	def->NodeName = A.Name();
 	def->Body = B;
+	def->Type = nullptr;
 	X = def;
 }
 

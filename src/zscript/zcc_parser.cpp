@@ -338,7 +338,8 @@ static void DoParse(int lumpnum)
 #endif
 	}
 
-	ZCCCompiler cc(state, NULL, GlobalSymbols);
+	PSymbolTable symtable(&GlobalSymbols);
+	ZCCCompiler cc(state, NULL, symtable, GlobalSymbols);
 	cc.Compile();
 	// ... and another one afterward so we can see what the compiler does with the data.
 #ifdef _DEBUG

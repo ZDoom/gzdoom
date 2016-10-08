@@ -16,7 +16,7 @@ struct ZCCToken
 	ENamedName Name() { return ENamedName(Int); }
 };
 
-// Variable / Function modifiers
+// Variable / Function / Class modifiers
 enum
 {
 	ZCC_Native			= 1 << 0,
@@ -30,6 +30,7 @@ enum
 	ZCC_Deprecated		= 1 << 8,
 	ZCC_ReadOnly		= 1 << 9,
 	ZCC_FuncConst		= 1 << 10,
+	ZCC_Abstract		= 1 << 11,
 };
 
 // Function parameter modifiers
@@ -185,6 +186,7 @@ struct ZCC_Class : ZCC_NamedNode
 	ZCC_Identifier *Replaces;
 	VM_UWORD Flags;
 	ZCC_TreeNode *Body;
+	PClass *Type;
 };
 
 struct ZCC_Struct : ZCC_NamedNode

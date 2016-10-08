@@ -181,8 +181,126 @@ void ZCCCompiler::MessageV(ZCC_TreeNode *node, const char *txtcolor, const char 
 
 int ZCCCompiler::Compile()
 {
+	CreateClasses();
 	CompileConstants(Constants);
 	return ErrorCount;
+}
+
+//==========================================================================
+//
+// ZCCCompiler :: CreateClassTypes
+//
+// Creates a PClass for every class so that we get access to the symbol table
+// These will be created with unknown size because for that we need to
+// process all fields first, but to do that we need the PClass and some
+// other info depending on the PClass.
+//
+//==========================================================================
+
+void ZCCCompiler::CreateClasses()
+{
+	auto OrigClasses = std::move(Classes);
+	Classes.Clear();
+	bool donesomething = true;
+	while (donesomething)
+	{
+		for (unsigned i=0;i<OrigClasses.Size();i++)
+		{
+			donesomething = false;
+			auto c = OrigClasses[i];
+			// Check if we got the parent already defined.
+			PClass *parent;
+			
+			if (c->ParentName != nullptr && c->ParentName->SiblingNext == c->ParentName) parent = PClass::FindClass(c->ParentName->Id);
+			else if (c->ParentName == nullptr) parent = RUNTIME_CLASS(DObject);
+			else
+			{
+				// The parent is a dotted name which the type system currently does not handle.
+				// Once it does this needs to be implemented here.
+				auto p = c->ParentName;
+				FString build;
+
+				do
+				{
+					if (build.IsNotEmpty()) build += '.';
+					build += FName(p->Id);
+					p = static_cast<decltype(p)>(p->SiblingNext);
+				} while (p != c->ParentName);
+				Error(c, "Qualified name '%s' for base class not supported in '%s'", build.GetChars(), FName(c->NodeName).GetChars());
+				parent = RUNTIME_CLASS(DObject);
+			}
+
+			if (parent != nullptr)
+			{
+				// The parent exists, we may create a type for this class
+				if (c->Flags & ZCC_Native)
+				{
+					// If this is a native class, its own type must also already exist.
+					auto me = PClass::FindClass(c->NodeName);
+					if (me == nullptr)
+					{
+						Error(c, "Unknown native class %s", FName(c->NodeName).GetChars());
+						me = parent->FindClassTentative(c->NodeName);
+					}
+					else
+					{
+						DPrintf(DMSG_SPAMMY, "Registered %s as native with parent %s\n", me->TypeName.GetChars(), parent->TypeName.GetChars());
+					}
+					c->Type = me;
+				}
+				else
+				{
+					auto me = PClass::FindClass(c->NodeName);
+					if (me != nullptr)
+					{
+						Error(c, "Redefining class %s", FName(c->NodeName).GetChars());
+					}
+					else
+					{
+						me = parent->FindClassTentative(c->NodeName);
+						DPrintf(DMSG_SPAMMY, "Created %s with parent %s\n", me->TypeName.GetChars(), parent->TypeName.GetChars());
+					}
+					c->Type = me;
+				}
+				Classes.Push(c);
+				OrigClasses.Delete(i);
+				i--;
+				donesomething = true;
+			}
+			else
+			{
+				// No base class found. Now check if something in the unprocessed classes matches.
+				// If not, print an error. If something is found let's retry again in the next iteration.
+				bool found = false;
+				for (auto d : OrigClasses)
+				{
+					if (d->NodeName == c->ParentName->Id)
+					{
+						found = true;
+						break;
+					}
+				}
+				if (!found)
+				{
+					Error(c, "Class %s has unknown base class %s", FName(c->NodeName).GetChars(), FName(c->ParentName->Id).GetChars());
+					// create a placeholder so that the compiler can continue looking for errors.
+					c->Type = RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName);
+					Classes.Push(c);
+					OrigClasses.Delete(i);
+					donesomething = true;
+				}
+			}
+		}
+	}
+
+	// What's left refers to some other class in the list but could not be resolved.
+	// This normally means a circular reference.
+	for (auto c : OrigClasses)
+	{
+		Error(c, "Class %s has circular inheritance", FName(c->NodeName).GetChars());
+		c->Type = RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName);
+		Classes.Push(c);
+	}
 }
 
 //==========================================================================

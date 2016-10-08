@@ -318,8 +318,8 @@ static void DoParse(int lumpnum)
 	ZCCParse(parser, 0, value, &state);
 	ZCCParseFree(parser, free);
 
-	ZCCCompiler cc(state, NULL, GlobalSymbols);
-	cc.Compile();
+	{
+	// Make a dump of the AST before running the compiler for diagnostic purposes.
 #ifdef _DEBUG
 	if (f != NULL)
 	{
@@ -328,7 +328,28 @@ static void DoParse(int lumpnum)
 	FString ast = ZCC_PrintAST(state.TopNode);
 	FString filename = Wads.GetLumpFullName(lumpnum);
 	FString astfile = ExtractFileBase(filename, false);
-	astfile << ".ast";
+	astfile << "-before.ast";
+	f = fopen(astfile, "w");
+	if (f != NULL)
+	{
+		fputs(ast.GetChars(), f);
+		fclose(f);
+	}
+#endif
+	}
+
+	ZCCCompiler cc(state, NULL, GlobalSymbols);
+	cc.Compile();
+	// ... and another one afterward so we can see what the compiler does with the data.
+#ifdef _DEBUG
+	if (f != NULL)
+	{
+		fclose(f);
+	}
+	FString ast = ZCC_PrintAST(state.TopNode);
+	FString filename = Wads.GetLumpFullName(lumpnum);
+	FString astfile = ExtractFileBase(filename, false);
+	astfile << "-after.ast";
 	f = fopen(astfile, "w");
 	if (f != NULL)
 	{

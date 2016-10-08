@@ -8,6 +8,7 @@ public:
 	int Compile();
 
 private:
+	void CreateClasses();
 	void CompileConstants(const TArray<ZCC_ConstantDef *> &defs);
 	PSymbolConst *CompileConstant(ZCC_ConstantDef *def);
 

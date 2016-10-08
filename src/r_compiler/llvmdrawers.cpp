@@ -143,8 +143,8 @@ LLVMDrawersImpl::LLVMDrawersImpl()
 	CodegenDrawWall("tmvline1_revsubclamp", DrawWallVariant::RevSubClamp, 1);
 	CodegenDrawWall("tmvline4_revsubclamp", DrawWallVariant::RevSubClamp, 4);
 
-	mProgram.engine()->finalizeObject();
 	mProgram.modulePassManager()->run(*mProgram.module());
+	mProgram.engine()->finalizeObject();
 
 	FillColumn = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("FillColumn");
 	FillColumnAdd = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("FillColumnAdd");

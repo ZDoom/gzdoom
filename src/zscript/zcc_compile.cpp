@@ -883,8 +883,6 @@ ZCC_Expression *ZCCCompiler::IdentifyIdentifier(ZCC_ExprID *idnode, PSymbolTable
 			val->IntVal = spec;
 			return val;
 		}
-		symt->DumpSymbolTable();
-		GlobalSymbols.DumpSymbolTable();
 
 		Error(idnode, "Unknown identifier '%s'", FName(idnode->Identifier).GetChars());
 		idnode->ToErrorNode();

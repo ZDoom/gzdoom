@@ -2861,10 +2861,7 @@ void PClass::InsertIntoHash ()
 	found = TypeTable.FindType(RUNTIME_CLASS(PClass), (intptr_t)Outer, TypeName, &bucket);
 	if (found != NULL)
 	{ // This type has already been inserted
-	  // ... but there is no need whatsoever to make it a fatal error!
-		if (!strictdecorate) Printf (TEXTCOLOR_RED"Tried to register class '%s' more than once.\n", TypeName.GetChars());
-		else I_Error("Tried to register class '%s' more than once.\n", TypeName.GetChars());
-		TypeTable.ReplaceType(this, found, bucket);
+		I_Error("Tried to register class '%s' more than once.\n", TypeName.GetChars());
 	}
 	else
 	{
@@ -3029,15 +3026,23 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 	PClass *existclass = static_cast<PClass *>(TypeTable.FindType(RUNTIME_CLASS(PClass), /*FIXME:Outer*/0, name, &bucket));
 
 	// This is a placeholder so fill it in
-	if (existclass != NULL && (existclass->Size == TentativeClass))
+	if (existclass != nullptr)
 	{
-		type = const_cast<PClass*>(existclass);
-		if (!IsDescendantOf(type->ParentClass))
+		if (existclass->Size == TentativeClass)
 		{
-			I_Error("%s must inherit from %s but doesn't.", name.GetChars(), type->ParentClass->TypeName.GetChars());
+			type = const_cast<PClass*>(existclass);
+			if (!IsDescendantOf(type->ParentClass))
+			{
+				I_Error("%s must inherit from %s but doesn't.", name.GetChars(), type->ParentClass->TypeName.GetChars());
+			}
+			DPrintf(DMSG_SPAMMY, "Defining placeholder class %s\n", name.GetChars());
+			notnew = true;
 		}
-		DPrintf(DMSG_SPAMMY, "Defining placeholder class %s\n", name.GetChars());
-		notnew = true;
+		else
+		{
+			// a different class with the same name already exists. Let the calling code deal with this.
+			return nullptr;
+		}
 	}
 	else
 	{

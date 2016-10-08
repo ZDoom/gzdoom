@@ -82,10 +82,55 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *tnode)
 		case AST_States:
 		case AST_VarDeclarator:
 		case AST_FuncDeclarator:
+		case AST_Default:
 				break;
+
+		default:
+			assert(0 && "Unhandled AST node type");
+			break;
 		}
 		node = node->SiblingNext;
 	}
+	while (node != cnode->Body);
+}
+
+//==========================================================================
+//
+// ZCCCompiler :: ProcessClass
+//
+//==========================================================================
+
+void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *tnode)
+{
+	Structs.Push(ZCC_StructWork(static_cast<ZCC_Struct *>(cnode), tnode));
+	ZCC_StructWork &cls = Structs.Last();
+
+	auto node = cnode->Body;
+
+	do
+	{
+		switch (node->NodeType)
+		{
+		case AST_ConstantDef:
+			if ((tnode = AddNamedNode(static_cast<ZCC_NamedNode *>(node))))
+			{
+				cls.Constants.Push(static_cast<ZCC_ConstantDef *>(node));	break;
+			}
+			break;
+
+		case AST_Enum:			break;
+		case AST_EnumTerminator:break;
+
+			// todo
+		case AST_VarDeclarator:
+			break;
+
+		default:
+			assert(0 && "Unhandled AST node type");
+			break;
+		}
+		node = node->SiblingNext;
+	} 
 	while (node != cnode->Body);
 }
 
@@ -114,8 +159,8 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 				{
 					switch (node->NodeType)
 					{
-					case AST_Class:			ProcessClass(static_cast<ZCC_Class *>(node), tnode);			break;
-					case AST_Struct:		Structs.Push(ZCC_StructWork(static_cast<ZCC_Struct *>(node), tnode));		break;
+					case AST_Class:			ProcessClass(static_cast<ZCC_Class *>(node), tnode);	break;
+					case AST_Struct:		ProcessStruct(static_cast<ZCC_Struct *>(node), tnode);	break;
 					case AST_ConstantDef:	Constants.Push(static_cast<ZCC_ConstantDef *>(node));	break;
 					default: assert(0 && "Default case is just here to make GCC happy. It should never be reached");
 					}

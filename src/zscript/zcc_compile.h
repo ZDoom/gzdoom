@@ -59,6 +59,7 @@ public:
 
 private:
 	void ProcessClass(ZCC_Class *node, PSymbolTreeNode *tnode);
+	void ProcessStruct(ZCC_Struct *node, PSymbolTreeNode *tnode);
 	void CreateStructTypes();
 	void CreateClassTypes();
 	void CompileConstants(const TArray<ZCC_ConstantDef *> &defs);

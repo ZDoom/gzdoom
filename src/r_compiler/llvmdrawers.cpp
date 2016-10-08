@@ -434,6 +434,9 @@ LLVMProgram::LLVMProgram()
 	passManagerBuilder.OptLevel = 3;
 	passManagerBuilder.SizeLevel = 0;
 	passManagerBuilder.Inliner = createFunctionInliningPass();
+	passManagerBuilder.SLPVectorize = true;
+	passManagerBuilder.LoopVectorize = true;
+	passManagerBuilder.LoadCombine = true;
 	passManagerBuilder.populateModulePassManager(*mModulePassManager.get());
 	passManagerBuilder.populateFunctionPassManager(*mFunctionPassManager.get());
 }

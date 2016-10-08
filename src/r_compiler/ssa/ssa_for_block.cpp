@@ -13,9 +13,22 @@ SSAForBlock::SSAForBlock()
 	SSAScope::builder().SetInsertPoint(if_basic_block);
 }
 
-void SSAForBlock::loop_block(SSABool true_condition)
+void SSAForBlock::loop_block(SSABool true_condition, int unroll_count)
 {
-	SSAScope::builder().CreateCondBr(true_condition.v, loop_basic_block, end_basic_block);
+	auto branch = SSAScope::builder().CreateCondBr(true_condition.v, loop_basic_block, end_basic_block);
+	if (unroll_count > 0)
+	{
+		using namespace llvm;
+		auto md_unroll_enable = MDNode::get(SSAScope::context(), {
+			MDString::get(SSAScope::context(), "llvm.loop.unroll.enable")
+		});
+		auto md_unroll_count = MDNode::get(SSAScope::context(), {
+			MDString::get(SSAScope::context(), "llvm.loop.unroll.count"),
+			ConstantAsMetadata::get(ConstantInt::get(SSAScope::context(), APInt(32, unroll_count)))
+		});
+		auto md_loop = MDNode::getDistinct(SSAScope::context(), { md_unroll_enable, md_unroll_count });
+		branch->setMetadata(LLVMContext::MD_loop, md_loop);
+	}
 	SSAScope::builder().SetInsertPoint(loop_basic_block);
 }
 

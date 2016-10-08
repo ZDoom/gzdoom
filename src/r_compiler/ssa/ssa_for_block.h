@@ -7,7 +7,7 @@ class SSAForBlock
 {
 public:
 	SSAForBlock();
-	void loop_block(SSABool true_condition);
+	void loop_block(SSABool true_condition, int unroll_count = 8);
 	void end_block();
 
 private:

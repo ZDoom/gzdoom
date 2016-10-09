@@ -60,28 +60,47 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 
 	auto node = cnode->Body;
 	PSymbolTreeNode *childnode;
+	ZCC_Enum *enumType = nullptr;
 
-	do
+	// Need to check if the class actually has a body.
+	if (node != nullptr) do
 	{
 		switch (node->NodeType)
 		{
 		case AST_Struct:
 		case AST_ConstantDef:
-		case AST_VarDeclarator:
+		case AST_Enum:
 			if ((childnode = AddNamedNode(static_cast<ZCC_NamedNode *>(node), &treenode->TreeNodes)))
 			{
 				switch (node->NodeType)
 				{
-				case AST_Struct:		cls.Structs.Push(ZCC_StructWork(static_cast<ZCC_Struct *>(node), childnode));		break;
-				case AST_ConstantDef:	cls.Constants.Push(static_cast<ZCC_ConstantDef *>(node));	break;
-				case AST_VarDeclarator: cls.Fields.Push(static_cast<ZCC_VarDeclarator *>(node)); break;
-				default: assert(0 && "Default case is just here to make GCC happy. It should never be reached");
+				case AST_Enum:			
+					enumType = static_cast<ZCC_Enum *>(node);
+					cls.Enums.Push(enumType);
+					break;
+
+				case AST_Struct:		
+					ProcessStruct(static_cast<ZCC_Struct *>(node), childnode, cls.cls);	
+					break;
+
+				case AST_ConstantDef:	
+					cls.Constants.Push(static_cast<ZCC_ConstantDef *>(node));	
+					cls.Constants.Last()->Type = enumType;
+					break;
+
+				default: 
+					assert(0 && "Default case is just here to make GCC happy. It should never be reached");
 				}
 			}
 			break;
 
-		case AST_Enum:			break;
-		case AST_EnumTerminator:break;
+		case AST_VarDeclarator: 
+			cls.Fields.Push(static_cast<ZCC_VarDeclarator *>(node)); 
+			break;
+
+		case AST_EnumTerminator:
+			enumType = nullptr;
+			break;
 
 		// todo
 		case AST_States:
@@ -100,37 +119,53 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 
 //==========================================================================
 //
-// ZCCCompiler :: ProcessClass
+// ZCCCompiler :: ProcessStruct
 //
 //==========================================================================
 
-void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *treenode)
+void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *treenode, ZCC_Class *outer)
 {
-	Structs.Push(ZCC_StructWork(static_cast<ZCC_Struct *>(cnode), treenode));
+	Structs.Push(ZCC_StructWork(static_cast<ZCC_Struct *>(cnode), treenode, outer));
 	ZCC_StructWork &cls = Structs.Last();
 
 	auto node = cnode->Body;
 	PSymbolTreeNode *childnode;
+	ZCC_Enum *enumType = nullptr;
 
-	do
+	// Need to check if the struct actually has a body.
+	if (node != nullptr) do
 	{
 		switch (node->NodeType)
 		{
 		case AST_ConstantDef:
-		case AST_VarDeclarator:
+		case AST_Enum:
 			if ((childnode = AddNamedNode(static_cast<ZCC_NamedNode *>(node), &treenode->TreeNodes)))
 			{
 				switch (node->NodeType)
 				{
-				case AST_ConstantDef:	cls.Constants.Push(static_cast<ZCC_ConstantDef *>(node));	break;
-				case AST_VarDeclarator: cls.Fields.Push(static_cast<ZCC_VarDeclarator *>(node)); break;
-				default: assert(0 && "Default case is just here to make GCC happy. It should never be reached");
+				case AST_Enum:
+					enumType = static_cast<ZCC_Enum *>(node);
+					cls.Enums.Push(enumType);
+					break;
+
+				case AST_ConstantDef:
+					cls.Constants.Push(static_cast<ZCC_ConstantDef *>(node));
+					cls.Constants.Last()->Type = enumType;
+					break;
+
+				default:
+					assert(0 && "Default case is just here to make GCC happy. It should never be reached");
 				}
 			}
 			break;
 
-		case AST_Enum:			break;
-		case AST_EnumTerminator:break;
+		case AST_VarDeclarator: 
+			cls.Fields.Push(static_cast<ZCC_VarDeclarator *>(node)); 
+			break;
+
+		case AST_EnumTerminator:
+			enumType = nullptr;
+			break;
 
 		default:
 			assert(0 && "Unhandled AST node type");
@@ -148,13 +183,16 @@ void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *treenode)
 //==========================================================================
 
 ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, PSymbolTable &_outsymbols)
-: Outer(_outer), GlobalTreeNodes(&_symbols), OutputSymbols(&_outsymbols), AST(ast), ErrorCount(0), WarnCount(0)
+	: Outer(_outer), GlobalTreeNodes(&_symbols), OutputSymbols(&_outsymbols), AST(ast), ErrorCount(0), WarnCount(0)
 {
 	// Group top-level nodes by type
 	if (ast.TopNode != NULL)
 	{
 		ZCC_TreeNode *node = ast.TopNode;
 		PSymbolTreeNode *tnode;
+		PType *enumType = nullptr;
+		ZCC_Enum *zenumType = nullptr;
+
 		do
 		{
 			switch (node->NodeType)
@@ -162,28 +200,46 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 			case AST_Class:
 			case AST_Struct:
 			case AST_ConstantDef:
+			case AST_Enum:
 				if ((tnode = AddNamedNode(static_cast<ZCC_NamedNode *>(node), GlobalTreeNodes)))
 				{
 					switch (node->NodeType)
 					{
-					case AST_Class:			ProcessClass(static_cast<ZCC_Class *>(node), tnode);	break;
-					case AST_Struct:		ProcessStruct(static_cast<ZCC_Struct *>(node), tnode);	break;
-					case AST_ConstantDef:	Constants.Push(static_cast<ZCC_ConstantDef *>(node));	break;
-					default: assert(0 && "Default case is just here to make GCC happy. It should never be reached");
+					case AST_Enum:
+						zenumType = static_cast<ZCC_Enum *>(node);
+						enumType = NewEnum(zenumType->NodeName, nullptr);
+						GlobalSymbols.AddSymbol(new PSymbolType(zenumType->NodeName, enumType));
+						break;
+
+					case AST_Class:
+						ProcessClass(static_cast<ZCC_Class *>(node), tnode);
+						break;
+
+					case AST_Struct:
+						ProcessStruct(static_cast<ZCC_Struct *>(node), tnode, nullptr);
+						break;
+
+					case AST_ConstantDef:
+						Constants.Push(static_cast<ZCC_ConstantDef *>(node));
+						Constants.Last()->Type = zenumType;
+						break;
+
+					default:
+						assert(0 && "Default case is just here to make GCC happy. It should never be reached");
 					}
 				}
 				break;
 
-			case AST_Enum:			break;
-			case AST_EnumTerminator:break;
+			case AST_EnumTerminator:
+				zenumType = nullptr;
+				break;
 
 			default:
 				assert(0 && "Unhandled AST node type");
 				break;
 			}
 			node = node->SiblingNext;
-		}
-		while (node != ast.TopNode);
+		} while (node != ast.TopNode);
 	}
 }
 
@@ -285,7 +341,7 @@ int ZCCCompiler::Compile()
 	CreateClassTypes();
 	CreateStructTypes();
 	CompileAllConstants();
-	//CompileAllFields();
+	CompileAllFields();
 	return ErrorCount;
 }
 
@@ -301,10 +357,17 @@ void ZCCCompiler::CreateStructTypes()
 {
 	for(auto s : Structs)
 	{
-		s->Type = NewStruct(s->NodeName, nullptr);
+		s.Outer = s.OuterDef == nullptr? nullptr : s.OuterDef->Type;
+		s->Type = NewStruct(s->NodeName, s.Outer);
 		s->Symbol = new PSymbolType(s->NodeName, s->Type);
 		s->Type->Symbols.SetName(FName(s->NodeName));
 		GlobalSymbols.AddSymbol(s->Symbol);
+
+		for (auto e : s.Enums)
+		{
+			auto etype = NewEnum(e->NodeName, s->Type);
+			s->Type->Symbols.AddSymbol(new PSymbolType(e->NodeName, etype));
+		}
 	}
 }
 
@@ -427,6 +490,16 @@ void ZCCCompiler::CreateClassTypes()
 		GlobalSymbols.AddSymbol(c->Symbol);
 		Classes.Push(c);
 	}
+
+	// Last but not least: Now that all classes have been created, we can create the symbols for the internal enums
+	for (auto cd : Classes)
+	{
+		for (auto e : cd.Enums)
+		{
+			auto etype = NewEnum(e->NodeName, cd->Type);
+			cd->Type->Symbols.AddSymbol(new PSymbolType(e->NodeName, etype));
+		}
+	}
 }
 
 //==========================================================================
@@ -464,10 +537,6 @@ void ZCCCompiler::CompileAllConstants()
 	for (auto &c : Classes)
 	{
 		CopyConstants(constantwork, c.Constants, &c->Type->Symbols);
-		for (auto &s : c.Structs)
-		{
-			CopyConstants(constantwork, s.Constants, &s->Type->Symbols);
-		}
 	}
 	for (auto &s : Structs)
 	{
@@ -529,10 +598,16 @@ void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
 		}
 		else if (cval->Type->IsA(RUNTIME_CLASS(PInt)))
 		{
+			// How do we get an Enum type in here without screwing everything up???
+			//auto type = def->Type != nullptr ? def->Type : cval->Type;
 			def->Symbol = new PSymbolConstNumeric(def->NodeName, cval->Type, cval->IntVal);
 		}
 		else if (cval->Type->IsA(RUNTIME_CLASS(PFloat)))
 		{
+			if (def->Type != nullptr)
+			{
+				Error(def, "Enum members must be integer values");
+			}
 			def->Symbol = new PSymbolConstNumeric(def->NodeName, cval->Type, cval->DoubleVal);
 		}
 		else
@@ -973,4 +1048,369 @@ ZCC_ExprTypeRef *ZCCCompiler::NodeFromSymbolType(PSymbolType *sym, ZCC_Expressio
 	ref->RefType = sym->Type;
 	ref->Type = NewClassPointer(RUNTIME_CLASS(PType));
 	return ref;
+}
+
+//==========================================================================
+//
+// ZCCCompiler :: CompileAllFields
+//
+// builds the internal structure of all classes and structs
+//
+//==========================================================================
+
+void ZCCCompiler::CompileAllFields()
+{
+	// Create copies of the arrays which can be altered
+	auto Classes = this->Classes;
+	auto Structs = this->Structs;
+
+	// first step: Look for native classes with native children.
+	// These may not have any variables added to them because it'd clash with the native definitions.
+	for (unsigned i = 0; i < Classes.Size(); i++)
+	{
+		auto c = Classes[i];
+
+		if (c->Type->Size != TentativeClass && c.Fields.Size() > 0)
+		{
+			// We need to search the global class table here because not all children may have a scripted definition attached.
+			for (auto ac : PClass::AllClasses)
+			{
+				if (ac->ParentClass == c->Type && ac->Size != TentativeClass)
+				{
+					Error(c, "Trying to add fields to class '%s' with native children", c->Type->TypeName.GetChars());
+					Classes.Delete(i);
+					i--;
+					break;
+				}
+			}
+		}
+	}
+	bool donesomething = true;
+	while (donesomething && (Structs.Size() > 0 || Classes.Size() > 0))
+	{
+		donesomething = false;
+		for (unsigned i = 0; i < Structs.Size(); i++)
+		{
+			if (CompileFields(Structs[i]->Type, Structs[i].Fields, Structs[i].Outer, true))
+			{
+				// Remove from the list if all fields got compiled.
+				Structs.Delete(i);
+				i--;
+				donesomething = true;
+			}
+		}
+		for (unsigned i = 0; i < Classes.Size(); i++)
+		{
+			if (Classes[i]->Type->Size == TentativeClass)
+			{
+				if (Classes[i]->Type->ParentClass->Size == TentativeClass)
+				{
+					// we do not know the parent class's size yet, so skip this class for now.
+					continue;
+				}
+				else
+				{
+					// Inherit the size of the parent class
+					Classes[i]->Type->Size = Classes[i]->Type->ParentClass->Size;
+				}
+			}
+			if (CompileFields(Classes[i]->Type, Classes[i].Fields, nullptr, false))
+			{
+				// Remove from the list if all fields got compiled.
+				Classes.Delete(i);
+				i--;
+				donesomething = true;
+			}
+		}
+	}
+	// report all entries 
+	if (Structs.Size() > 0)
+	{
+	}
+	if (Classes.Size() > 0)
+	{
+	}
+}
+
+//==========================================================================
+//
+// ZCCCompiler :: CompileFields
+//
+// builds the internal structure of a single class or struct
+//
+//==========================================================================
+
+bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, bool forstruct)
+{
+	Printf("Adding fields to %s, original size is %d\n", type->TypeName.GetChars(), type->Size);
+	while (Fields.Size() > 0)
+	{
+		auto field = Fields[0];
+
+		PType *fieldtype = DetermineType(type, field, field->Type, true);
+
+		// For structs only allow 'deprecated', for classes exclude function qualifiers.
+		int notallowed = forstruct? ~ZCC_Deprecated : ZCC_Latent | ZCC_Final | ZCC_Action | ZCC_Static | ZCC_FuncConst | ZCC_Abstract; 
+
+		if (field->Flags & notallowed)
+		{
+			Error(field, "Invalid qualifiers for %s (%s not allowed)", FName(field->Names->Name).GetChars(), FlagsToString(field->Flags & notallowed));
+			field->Flags &= notallowed;
+		}
+		uint32_t varflags;
+
+		// These map directly to implementation flags.
+		if (field->Flags & ZCC_Private) varflags |= VARF_Private;
+		if (field->Flags & ZCC_Protected) varflags |= VARF_Protected;
+		if (field->Flags & ZCC_Deprecated) varflags |= VARF_Deprecated;
+		if (field->Flags & ZCC_ReadOnly) varflags |= VARF_ReadOnly;
+
+		if (field->Flags & ZCC_Native)
+		{
+			// todo: get the native address of this field.
+		}
+		if (field->Flags & ZCC_Meta)
+		{
+			varflags |= VARF_ReadOnly;	// metadata implies readonly
+			// todo: this needs to go into the metaclass and needs some handling
+		}
+
+		if (field->Type->ArraySize != nullptr)
+		{
+			fieldtype = ResolveArraySize(fieldtype, field->Type->ArraySize, &type->Symbols);
+		}
+
+		auto name = field->Names;
+		do
+		{
+			auto thisfieldtype = fieldtype;
+			if (name->ArraySize != nullptr)
+			{
+				thisfieldtype = ResolveArraySize(thisfieldtype, name->ArraySize, &type->Symbols);
+			}
+
+			type->AddField(name->Name, thisfieldtype, varflags);
+			Printf("Added field %s, new size is %d\n", FName(name->Name).GetChars(), type->Size);
+			name = static_cast<ZCC_VarName*>(name->SiblingNext);
+		} while (name != field->Names);
+		Fields.Delete(0);
+
+
+
+
+	}
+	if (Fields.Size() > 0)
+	{
+		Printf("%d fields unprocessed\n", Fields.Size());
+	}
+	return Fields.Size() == 0;
+}
+
+//==========================================================================
+//
+// ZCCCompiler :: FieldFlagsToString
+//
+// creates a string for a field's flags
+//
+//==========================================================================
+
+FString ZCCCompiler::FlagsToString(uint32_t flags)
+{
+	const char *flagnames[] = { "native", "static", "private", "protected", "latent", "final", "meta", "action", "deprecated", "readonly", "funcconst", "abstract" };
+	FString build;
+
+	for (int i = 0; i < 12; i++)
+	{
+		if (flags & (1 << i))
+		{
+			if (build.IsNotEmpty()) build += ", ";
+			build += flagnames[i];
+		}
+	}
+	return build;
+}
+
+//==========================================================================
+//
+// ZCCCompiler :: DetermineType
+//
+// retrieves the type for this field, for arrays the type of a single entry.
+//
+//==========================================================================
+
+PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_VarDeclarator *field, ZCC_Type *ztype, bool allowarraytypes)
+{
+	if (!allowarraytypes && ztype->ArraySize != nullptr)
+	{
+		Error(field, "%s: Array type not allowed", FName(field->Names->Name).GetChars());
+		return TypeError;
+	}
+	switch (ztype->NodeType)
+	{
+	case AST_BasicType:
+	{
+		auto btype = static_cast<ZCC_BasicType *>(ztype);
+		switch (btype->Type)
+		{
+		case ZCC_SInt8:
+			return TypeSInt8;
+
+		case ZCC_UInt8:
+			return TypeUInt8;
+
+		case ZCC_SInt16:
+			return TypeSInt16;
+
+		case ZCC_UInt16:
+			return TypeUInt16;
+
+		case ZCC_SInt32:
+		case ZCC_IntAuto: // todo: for enums, autoselect appropriately sized int
+			return TypeSInt32;
+
+		case ZCC_UInt32:
+			return TypeUInt32;
+
+		case ZCC_Bool:
+			return TypeBool;
+
+			// Do we really want to allow single precision floats, despite all the problems they cause?
+			// These are nearly guaranteed to desync between MSVC and GCC on x87, because GCC does not implement an IEEE compliant mode
+		case ZCC_Float32:
+		case ZCC_FloatAuto:
+			//return TypeFloat32;
+		case ZCC_Float64:
+			return TypeFloat64;
+
+		case ZCC_String:
+			return TypeString;
+
+		case ZCC_Name:
+			return TypeName;
+
+		case ZCC_Vector2:
+			return TypeVector2;
+
+		case ZCC_Vector3:
+			return TypeVector3;
+
+		case ZCC_Vector4:
+			// This has almost no use, so we really shouldn't bother.
+			Error(field, "vector<4> not implemented for %s", FName(field->Names->Name).GetChars());
+			return TypeError;
+
+		case ZCC_UserType:
+			return ResolveUserType(btype, &outertype->Symbols);
+			break;
+		}
+	}
+
+	case AST_MapType:
+		if (allowarraytypes)
+		{
+			Error(field, "%s: Map types not implemented yet", FName(field->Names->Name).GetChars());
+			// Todo: Decide what we allow here and if it makes sense to allow more complex constructs.
+			auto mtype = static_cast<ZCC_MapType *>(ztype);
+			return NewMap(DetermineType(outertype, field, mtype->KeyType, false), DetermineType(outertype, field, mtype->ValueType, false));
+		}
+		break;
+
+	case AST_DynArrayType:
+		if (allowarraytypes)
+		{
+			Error(field, "%s: Dynamic array types not implemented yet", FName(field->Names->Name).GetChars());
+			auto atype = static_cast<ZCC_DynArrayType *>(ztype);
+			return NewDynArray(DetermineType(outertype, field, atype->ElementType, false));
+		}
+		break;
+
+	case AST_ClassType:
+	{
+		auto ctype = static_cast<ZCC_ClassType *>(ztype);
+		if (ctype->Restriction == nullptr)
+		{
+			return NewClassPointer(RUNTIME_CLASS(DObject));
+		}
+		else
+		{
+			auto sym = outertype->Symbols.FindSymbol(ctype->Restriction->Id, true);
+			if (sym == nullptr) sym = GlobalSymbols.FindSymbol(ctype->Restriction->Id, false);
+			if (sym == nullptr)
+			{
+				Error(field, "%s: Unknown identifier", FName(ctype->Restriction->Id).GetChars());
+				return TypeError;
+			}
+			auto typesym = dyn_cast<PSymbolType>(sym);
+			if (typesym == nullptr || !typesym->Type->IsKindOf(RUNTIME_CLASS(PClass)))
+			{
+				Error(field, "%s does not represent a class type", FName(ctype->Restriction->Id).GetChars());
+				return TypeError;
+			}
+			return NewClassPointer(static_cast<PClass *>(typesym->Type));
+		}
+	}
+	}
+	return TypeError;
+}
+
+//==========================================================================
+//
+// ZCCCompiler :: ResolveUserType
+//
+// resolves a user type and returns a matching PType
+//
+//==========================================================================
+
+PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt)
+{
+	Printf("Resolving user type %s\n", FName(type->UserType->Id).GetChars());
+	// Check the symbol table for the identifier.
+	PSymbolTable *table;
+	PSymbol *sym = symt->FindSymbolInTable(type->UserType->Id, table);
+	// GlobalSymbols cannot be the parent of a class's symbol table so we have to look for global symbols explicitly.
+	if (sym == nullptr && symt != &GlobalSymbols) sym = GlobalSymbols.FindSymbolInTable(type->UserType->Id, table);
+	if (sym != nullptr && sym->IsKindOf(RUNTIME_CLASS(PSymbolType)))
+	{
+		auto type = static_cast<PSymbolType *>(sym)->Type;
+		if (type->IsKindOf(RUNTIME_CLASS(PEnum)))
+		{
+			return TypeSInt32;	// hack this to an integer until we can resolve the enum mess.
+		}
+		return type;
+	}
+	return TypeError;
+}
+
+
+//==========================================================================
+//
+// ZCCCompiler :: ResolveArraySize
+//
+// resolves the array size and returns a matching type.
+//
+//==========================================================================
+
+PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PSymbolTable *sym)
+{
+	// The duplicate Simplify call is necessary because if the head node gets replaced there is no way to detect the end of the list otherwise.
+	arraysize = Simplify(arraysize, sym);
+	ZCC_Expression *val;
+	do
+	{
+		val = Simplify(arraysize, sym);
+		if (val->Operation != PEX_ConstValue || !val->Type->IsA(RUNTIME_CLASS(PInt)))
+		{
+			Error(arraysize, "Array index must be an integer constant");
+			return TypeError;
+		}
+		int size = static_cast<ZCC_ExprConstant *>(val)->IntVal;
+		if (size < 1)
+		{
+			Error(arraysize, "Array size must be positive");
+			return TypeError;
+		}
+		baseType = NewArray(baseType, size);
+		val = static_cast<ZCC_Expression *>(val->SiblingNext);
+	} while (val != arraysize);
+	return baseType;
 }

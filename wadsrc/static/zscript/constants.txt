@@ -74,6 +74,9 @@ enum EFireBulletsFlags
 	FBF_NOPITCH = 8,
 	FBF_NOFLASH = 16,
 	FBF_NORANDOMPUFFZ = 32,
+	FBF_PUFFTARGET = 64,
+	FBF_PUFFMASTER = 128,
+	FBF_PUFFTRACER = 256,
 };
 
 // Flags for A_SpawnItemEx
@@ -283,15 +286,11 @@ enum ECustomPunchFlags
 	CPF_STEALARMOR = 32,
 };
 
-// Flags for A_CustomMissile
-enum ECustomMissileFlags
+enum EFireCustomMissileFlags
 {
 	FPF_AIMATANGLE = 1,
 	FPF_TRANSFERTRANSLATION = 2,
 	FPF_NOAUTOAIM = 4,
-	FBF_PUFFTARGET = 64,
-	FBF_PUFFMASTER = 128,
-	FBF_PUFFTRACER = 256,
 };
 
 // Flags for A_Teleport

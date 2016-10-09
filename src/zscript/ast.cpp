@@ -65,7 +65,7 @@ public:
 	FLispString()
 	{
 		NestDepth = Column = 0;
-		WrapWidth = 72;
+		WrapWidth = 200;
 		NeedSpace = false;
 		ConsecOpens = 0;
 	}

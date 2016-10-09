@@ -179,6 +179,7 @@ struct ZCC_Identifier : ZCC_TreeNode
 struct ZCC_NamedNode : ZCC_TreeNode
 {
 	ENamedName NodeName;
+	PSymbolType *Symbol;
 };
 
 struct ZCC_Class : ZCC_NamedNode
@@ -188,14 +189,12 @@ struct ZCC_Class : ZCC_NamedNode
 	VM_UWORD Flags;
 	ZCC_TreeNode *Body;
 	PClass *Type;
-	PSymbolType *Symbol;
 };
 
 struct ZCC_Struct : ZCC_NamedNode
 {
 	ZCC_TreeNode *Body;
 	PStruct *Type;
-	PSymbolType *Symbol;
 };
 
 struct ZCC_Enum : ZCC_NamedNode
@@ -444,6 +443,7 @@ struct ZCC_ConstantDef : ZCC_NamedNode
 {
 	ZCC_Expression *Value;
 	PSymbolConst *Symbol;
+	ZCC_Enum *Type;	// gets set when the constant originates from an enum.
 };
 
 struct ZCC_Declarator : ZCC_TreeNode

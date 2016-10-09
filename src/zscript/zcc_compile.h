@@ -4,14 +4,19 @@
 struct ZCC_StructWork
 {
 	ZCC_Struct *strct;
+	ZCC_Class *OuterDef;
+	PClass *Outer;
 	PSymbolTreeNode *node;
+	TArray<ZCC_Enum *> Enums;
 	TArray<ZCC_ConstantDef *> Constants;
 	TArray<ZCC_VarDeclarator *> Fields;
 
-	ZCC_StructWork(ZCC_Struct * s, PSymbolTreeNode *n)
+	ZCC_StructWork(ZCC_Struct * s, PSymbolTreeNode *n, ZCC_Class *outer)
 	{
 		strct = s;
 		node = n;
+		OuterDef = outer;
+		Outer = nullptr;
 	};
 
 	ZCC_Struct *operator->()
@@ -31,8 +36,8 @@ struct ZCC_ClassWork
 {
 	ZCC_Class *cls;
 	PSymbolTreeNode *node;
+	TArray<ZCC_Enum *> Enums;
 	TArray<ZCC_ConstantDef *> Constants;
-	TArray<ZCC_StructWork> Structs;
 	TArray<ZCC_VarDeclarator *> Fields;
 
 	ZCC_ClassWork(ZCC_Class * s, PSymbolTreeNode *n)
@@ -67,15 +72,21 @@ public:
 
 private:
 	void ProcessClass(ZCC_Class *node, PSymbolTreeNode *tnode);
-	void ProcessStruct(ZCC_Struct *node, PSymbolTreeNode *tnode);
+	void ProcessStruct(ZCC_Struct *node, PSymbolTreeNode *tnode, ZCC_Class *outer);
 	void CreateStructTypes();
 	void CreateClassTypes();
 	void CopyConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PSymbolTable *ot);
-	void CompileAllFields();
 	void CompileAllConstants();
 	void AddConstant(ZCC_ConstantWork &constant);
 	int CompileConstants(const TArray<ZCC_ConstantDef *> &defs, PSymbolTable *Output);
 	bool CompileConstant(ZCC_ConstantDef *def, PSymbolTable *Symbols);
+
+	void CompileAllFields();
+	bool CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, bool forstruct);
+	FString FlagsToString(uint32_t flags);
+	PType *DetermineType(PType *outertype, ZCC_VarDeclarator *field, ZCC_Type *ztype, bool allowarraytypes);
+	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PSymbolTable *sym);
+	PType *ResolveUserType(ZCC_BasicType *type, PSymbolTable *sym);
 
 	TArray<ZCC_ConstantDef *> Constants;
 	TArray<ZCC_StructWork> Structs;

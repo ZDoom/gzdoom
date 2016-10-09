@@ -697,6 +697,8 @@ xx(Array)
 xx(Sound)
 xx(State)
 xx(Fixed)
+xx(Vector2)
+xx(Vector3)
 
 xx(Min)
 xx(Max)

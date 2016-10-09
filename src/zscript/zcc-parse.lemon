@@ -290,6 +290,7 @@ enum_def(X) ::= ENUM(T) IDENTIFIER(A) enum_type(B) LBRACE opt_enum_list(C) RBRAC
 	def->NodeName = A.Name();
 	def->EnumType = (EZCCBuiltinType)B.Int;
 	def->Elements = C;
+	def->Symbol = nullptr;
 
 	// If the first element does not have an explicit value, make it 0.
 	if (C != NULL)

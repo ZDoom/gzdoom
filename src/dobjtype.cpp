@@ -82,6 +82,8 @@ PName *TypeName;
 PSound *TypeSound;
 PColor *TypeColor;
 PStatePointer *TypeState;
+PStruct *TypeVector2;
+PStruct *TypeVector3;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -590,6 +592,19 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeColor = new PColor);
 	TypeTable.AddType(TypeState = new PStatePointer);
 
+	TypeVector2 = new PStruct(NAME_Vector2, nullptr);
+	TypeVector2->AddField(NAME_X, TypeFloat64);
+	TypeVector2->AddField(NAME_Y, TypeFloat64);
+	TypeTable.AddType(TypeVector2);
+
+	TypeVector3 = new PStruct(NAME_Vector3, nullptr);
+	TypeVector3->AddField(NAME_X, TypeFloat64);
+	TypeVector3->AddField(NAME_Y, TypeFloat64);
+	TypeVector3->AddField(NAME_Z, TypeFloat64);
+	TypeTable.AddType(TypeVector3);
+
+
+
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_sByte, TypeSInt8));
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Byte, TypeUInt8));
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Short, TypeSInt16));
@@ -606,6 +621,8 @@ void PType::StaticInit()
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Sound, TypeSound));
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Color, TypeColor));
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_State, TypeState));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Vector2, TypeVector2));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Vector3, TypeVector3));
 }
 
 

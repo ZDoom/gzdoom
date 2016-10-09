@@ -14,11 +14,17 @@ typedef std::pair<const class PType *, unsigned> FTypeAndOffset;
 // Making all these different storage types use a common set of flags seems
 // like the simplest thing to do.
 
-#define VARF_Optional		(1<<0)	// func param is optional
-#define VARF_Method			(1<<1)	// func has an implied self parameter
-#define VARF_Action			(1<<2)	// func has implied owner and state parameters
-#define VARF_Native			(1<<3)	// func is native code/don't auto serialize field
-#define VARF_ReadOnly		(1<<4)	// field is read only, do not write to it
+enum
+{
+	VARF_Optional		= (1<<0),	// func param is optional
+	VARF_Method			= (1<<1),	// func has an implied self parameter
+	VARF_Action			= (1<<2),	// func has implied owner and state parameters
+	VARF_Native			= (1<<3),	// func is native code/don't auto serialize field
+	VARF_ReadOnly		= (1<<4),	// field is read only, do not write to it
+	VARF_Private		= (1<<5),	// field is private to containing class
+	VARF_Protected		= (1<<6),	// field is only accessible by containing class and children.
+	VARF_Deprecated		= (1<<7),	// Deprecated fields should output warnings when used.
+};
 
 // Symbol information -------------------------------------------------------
 
@@ -872,6 +878,8 @@ extern PString *TypeString;
 extern PName *TypeName;
 extern PSound *TypeSound;
 extern PColor *TypeColor;
+extern PStruct *TypeVector2;
+extern PStruct *TypeVector3;
 extern PStatePointer *TypeState;
 
 // A constant value ---------------------------------------------------------

@@ -1325,7 +1325,7 @@ bool PString::ReadValue(FSerializer &ar, const char *key, void *addr) const
 
 void PString::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) const
 {
-	new((BYTE *)base + offset) FString;
+	if (base != nullptr) new((BYTE *)base + offset) FString;
 	if (special != NULL)
 	{
 		special->Push(std::make_pair(this, offset));
@@ -1340,7 +1340,14 @@ void PString::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset
 
 void PString::InitializeValue(void *addr, const void *def) const
 {
-	new(addr) FString(*(FString *)def);
+	if (def != nullptr)
+	{
+		new(addr) FString(*(FString *)def);
+	}
+	else
+	{
+		new(addr) FString;
+	}
 }
 
 //==========================================================================
@@ -2982,7 +2989,7 @@ void PClass::InitializeSpecials(void *addr) const
 	ParentClass->InitializeSpecials(addr);
 	for (auto tao : SpecialInits)
 	{
-		tao.first->InitializeValue((BYTE*)addr + tao.second, Defaults + tao.second);
+		tao.first->InitializeValue((BYTE*)addr + tao.second, Defaults == nullptr? nullptr : Defaults + tao.second);
 	}
 }
 
@@ -3113,15 +3120,15 @@ PField *PClass::AddField(FName name, PType *type, DWORD flags)
 {
 	unsigned oldsize = Size;
 	PField *field = Super::AddField(name, type, flags);
-	if (field != NULL)
+
+	// Only initialize the defaults if they have already been created.
+	// For ZScript this is not the case, it will first define all fields before
+	// setting up any defaults for any class.
+	if (field != nullptr && !(flags & VARF_Native) && Defaults != nullptr)
 	{
-	Defaults = (BYTE *)M_Realloc(Defaults, Size);
-	memset(Defaults + oldsize, 0, Size - oldsize);
-		// If this is a native class, then we must not initialize and
-		// destroy any of its members. We do, however, initialize the
-		// default instance since it's not a normal instance of the class.
-		type->SetDefaultValue(Defaults, field->Offset,
-			bRuntimeClass ? &SpecialInits : NULL);
+		Defaults = (BYTE *)M_Realloc(Defaults, Size);
+		memset(Defaults + oldsize, 0, Size - oldsize);
+		type->SetDefaultValue(Defaults, field->Offset, &SpecialInits);
 	}
 	return field;
 }

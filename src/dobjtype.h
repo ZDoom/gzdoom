@@ -155,10 +155,9 @@ class PSymbolTreeNode : public PSymbol
 {
 	DECLARE_CLASS(PSymbolTreeNode, PSymbol);
 public:
-	struct ZCC_NamedNode *Node;
-	PSymbolTable TreeNodes;
+	struct ZCC_TreeNode *Node;
 
-	PSymbolTreeNode(FName name, struct ZCC_NamedNode *node) : PSymbol(name), Node(node) {}
+	PSymbolTreeNode(FName name, struct ZCC_TreeNode *node) : PSymbol(name), Node(node) {}
 	PSymbolTreeNode() : PSymbol(NAME_None) {}
 };
 

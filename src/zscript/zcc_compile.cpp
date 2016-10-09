@@ -55,12 +55,17 @@
 
 void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 {
-	Classes.Push(ZCC_ClassWork(static_cast<ZCC_Class *>(cnode), treenode));	
-	ZCC_ClassWork &cls = Classes.Last();
+	Classes.Push(new ZCC_ClassWork(static_cast<ZCC_Class *>(cnode), treenode));
+	auto cls = Classes.Last();
 
 	auto node = cnode->Body;
 	PSymbolTreeNode *childnode;
 	ZCC_Enum *enumType = nullptr;
+
+	FString name;
+	name << "nodes - " << FName(cnode->NodeName);
+	cls->TreeNodes.SetName(name);
+
 
 	// Need to check if the class actually has a body.
 	if (node != nullptr) do
@@ -70,22 +75,22 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 		case AST_Struct:
 		case AST_ConstantDef:
 		case AST_Enum:
-			if ((childnode = AddNamedNode(static_cast<ZCC_NamedNode *>(node), &treenode->TreeNodes)))
+			if ((childnode = AddTreeNode(static_cast<ZCC_NamedNode *>(node)->NodeName, node, &cls->TreeNodes)))
 			{
 				switch (node->NodeType)
 				{
 				case AST_Enum:			
 					enumType = static_cast<ZCC_Enum *>(node);
-					cls.Enums.Push(enumType);
+					cls->Enums.Push(enumType);
 					break;
 
 				case AST_Struct:		
-					ProcessStruct(static_cast<ZCC_Struct *>(node), childnode, cls.cls);	
+					ProcessStruct(static_cast<ZCC_Struct *>(node), childnode, cls->cls);	
 					break;
 
 				case AST_ConstantDef:	
-					cls.Constants.Push(static_cast<ZCC_ConstantDef *>(node));	
-					cls.Constants.Last()->Type = enumType;
+					cls->Constants.Push(static_cast<ZCC_ConstantDef *>(node));	
+					cls->Constants.Last()->Type = enumType;
 					break;
 
 				default: 
@@ -95,7 +100,7 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 			break;
 
 		case AST_VarDeclarator: 
-			cls.Fields.Push(static_cast<ZCC_VarDeclarator *>(node)); 
+			cls->Fields.Push(static_cast<ZCC_VarDeclarator *>(node)); 
 			break;
 
 		case AST_EnumTerminator:
@@ -125,8 +130,8 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 
 void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *treenode, ZCC_Class *outer)
 {
-	Structs.Push(ZCC_StructWork(static_cast<ZCC_Struct *>(cnode), treenode, outer));
-	ZCC_StructWork &cls = Structs.Last();
+	Structs.Push(new ZCC_StructWork(static_cast<ZCC_Struct *>(cnode), treenode, outer));
+	ZCC_StructWork *cls = Structs.Last();
 
 	auto node = cnode->Body;
 	PSymbolTreeNode *childnode;
@@ -139,18 +144,18 @@ void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *treenode, ZC
 		{
 		case AST_ConstantDef:
 		case AST_Enum:
-			if ((childnode = AddNamedNode(static_cast<ZCC_NamedNode *>(node), &treenode->TreeNodes)))
+			if ((childnode = AddTreeNode(static_cast<ZCC_NamedNode *>(node)->NodeName, node, &cls->TreeNodes)))
 			{
 				switch (node->NodeType)
 				{
 				case AST_Enum:
 					enumType = static_cast<ZCC_Enum *>(node);
-					cls.Enums.Push(enumType);
+					cls->Enums.Push(enumType);
 					break;
 
 				case AST_ConstantDef:
-					cls.Constants.Push(static_cast<ZCC_ConstantDef *>(node));
-					cls.Constants.Last()->Type = enumType;
+					cls->Constants.Push(static_cast<ZCC_ConstantDef *>(node));
+					cls->Constants.Last()->Type = enumType;
 					break;
 
 				default:
@@ -160,7 +165,7 @@ void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *treenode, ZC
 			break;
 
 		case AST_VarDeclarator: 
-			cls.Fields.Push(static_cast<ZCC_VarDeclarator *>(node)); 
+			cls->Fields.Push(static_cast<ZCC_VarDeclarator *>(node)); 
 			break;
 
 		case AST_EnumTerminator:
@@ -201,7 +206,7 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 			case AST_Struct:
 			case AST_ConstantDef:
 			case AST_Enum:
-				if ((tnode = AddNamedNode(static_cast<ZCC_NamedNode *>(node), GlobalTreeNodes)))
+				if ((tnode = AddTreeNode(static_cast<ZCC_NamedNode *>(node)->NodeName, node, GlobalTreeNodes)))
 				{
 					switch (node->NodeType)
 					{
@@ -243,19 +248,32 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 	}
 }
 
+ZCCCompiler::~ZCCCompiler()
+{
+	for (auto s : Structs)
+	{
+		delete s;
+	}
+	for (auto c : Classes)
+	{
+		delete c;
+	}
+	Structs.Clear();
+	Classes.Clear();
+}
+
 //==========================================================================
 //
-// ZCCCompiler :: AddNamedNode
+// ZCCCompiler :: AddTreeNode
 //
 // Keeps track of definition nodes by their names. Ensures that all names
 // in this scope are unique.
 //
 //==========================================================================
 
-PSymbolTreeNode *ZCCCompiler::AddNamedNode(ZCC_NamedNode *node, PSymbolTable *treenodes)
+PSymbolTreeNode *ZCCCompiler::AddTreeNode(FName name, ZCC_TreeNode *node, PSymbolTable *treenodes, bool searchparents)
 {
-	FName name = node->NodeName;
-	PSymbol *check = treenodes->FindSymbol(name, false);
+	PSymbol *check = treenodes->FindSymbol(name, searchparents);
 	if (check != NULL)
 	{
 		assert(check->IsA(RUNTIME_CLASS(PSymbolTreeNode)));
@@ -267,8 +285,6 @@ PSymbolTreeNode *ZCCCompiler::AddNamedNode(ZCC_NamedNode *node, PSymbolTable *tr
 	{
 		auto sy = new PSymbolTreeNode(name, node);
 		FString name;
-		name << "nodes - " << FName(node->NodeName);
-		sy->TreeNodes.SetName(name);
 		treenodes->AddSymbol(sy);
 		return sy;
 	}
@@ -357,16 +373,16 @@ void ZCCCompiler::CreateStructTypes()
 {
 	for(auto s : Structs)
 	{
-		s.Outer = s.OuterDef == nullptr? nullptr : s.OuterDef->Type;
-		s->Type = NewStruct(s->NodeName, s.Outer);
-		s->Symbol = new PSymbolType(s->NodeName, s->Type);
-		s->Type->Symbols.SetName(FName(s->NodeName));
-		GlobalSymbols.AddSymbol(s->Symbol);
+		s->Outer = s->OuterDef == nullptr? nullptr : s->OuterDef->Type;
+		s->strct->Type = NewStruct(s->NodeName(), s->Outer);
+		s->strct->Symbol = new PSymbolType(s->NodeName(), s->Type());
+		s->Type()->Symbols.SetName(FName(s->NodeName()));
+		GlobalSymbols.AddSymbol(s->strct->Symbol);
 
-		for (auto e : s.Enums)
+		for (auto e : s->Enums)
 		{
-			auto etype = NewEnum(e->NodeName, s->Type);
-			s->Type->Symbols.AddSymbol(new PSymbolType(e->NodeName, etype));
+			auto etype = NewEnum(e->NodeName, s->Type());
+			s->Type()->Symbols.AddSymbol(new PSymbolType(e->NodeName, etype));
 		}
 	}
 }
@@ -384,6 +400,8 @@ void ZCCCompiler::CreateStructTypes()
 
 void ZCCCompiler::CreateClassTypes()
 {
+	// we are going to sort the classes array so that entries are sorted in order of inheritance.
+
 	auto OrigClasses = std::move(Classes);
 	Classes.Clear();
 	bool donesomething = true;
@@ -395,14 +413,15 @@ void ZCCCompiler::CreateClassTypes()
 			auto c = OrigClasses[i];
 			// Check if we got the parent already defined.
 			PClass *parent;
+			auto ParentName = c->cls->ParentName;
 
-			if (c->ParentName != nullptr && c->ParentName->SiblingNext == c->ParentName) parent = PClass::FindClass(c->ParentName->Id);
-			else if (c->ParentName == nullptr) parent = RUNTIME_CLASS(DObject);
+			if (ParentName != nullptr && ParentName->SiblingNext == ParentName) parent = PClass::FindClass(ParentName->Id);
+			else if (ParentName == nullptr) parent = RUNTIME_CLASS(DObject);
 			else
 			{
 				// The parent is a dotted name which the type system currently does not handle.
 				// Once it does this needs to be implemented here.
-				auto p = c->ParentName;
+				auto p = ParentName;
 				FString build;
 
 				do
@@ -410,44 +429,43 @@ void ZCCCompiler::CreateClassTypes()
 					if (build.IsNotEmpty()) build += '.';
 					build += FName(p->Id);
 					p = static_cast<decltype(p)>(p->SiblingNext);
-				} while (p != c->ParentName);
-				Error(c, "Qualified name '%s' for base class not supported in '%s'", build.GetChars(), FName(c->NodeName).GetChars());
+				} while (p != ParentName);
+				Error(c->cls, "Qualified name '%s' for base class not supported in '%s'", build.GetChars(), FName(c->NodeName()).GetChars());
 				parent = RUNTIME_CLASS(DObject);
 			}
 
 			if (parent != nullptr)
 			{
 				// The parent exists, we may create a type for this class
-				if (c->Flags & ZCC_Native)
+				if (c->cls->Flags & ZCC_Native)
 				{
 					// If this is a native class, its own type must also already exist and not be a runtime class.
-					auto me = PClass::FindClass(c->NodeName);
+					auto me = PClass::FindClass(c->NodeName());
 					if (me == nullptr)
 					{
-						Error(c, "Unknown native class %s", FName(c->NodeName).GetChars());
-						me = parent->FindClassTentative(c->NodeName);
+						Error(c->cls, "Unknown native class %s", c->NodeName().GetChars());
+						me = parent->FindClassTentative(c->NodeName());
 					}
 					else if (me->bRuntimeClass)
 					{
-						Error(c, "%s is not a native class", FName(c->NodeName).GetChars());
+						Error(c->cls, "%s is not a native class", c->NodeName().GetChars());
 					}
 					else
 					{
 						DPrintf(DMSG_SPAMMY, "Registered %s as native with parent %s\n", me->TypeName.GetChars(), parent->TypeName.GetChars());
 					}
-					c->Type = me;
+					c->cls->Type = me;
 				}
 				else
 				{
 					// We will never get here if the name is a duplicate, so we can just do the assignment.
-					c->Type = parent->FindClassTentative(c->NodeName);
+					c->cls->Type = parent->FindClassTentative(c->NodeName());
 				}
-				c->Symbol = new PSymbolType(c->NodeName, c->Type);
-				GlobalSymbols.AddSymbol(c->Symbol);
-				c->Type->Symbols.SetName(FName(c->NodeName).GetChars());
+				c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
+				GlobalSymbols.AddSymbol(c->cls->Symbol);
+				c->Type()->Symbols.SetName(c->NodeName());
 				Classes.Push(c);
-				OrigClasses.Delete(i);
-				i--;
+				OrigClasses.Delete(i--);
 				donesomething = true;
 			}
 			else
@@ -457,7 +475,7 @@ void ZCCCompiler::CreateClassTypes()
 				bool found = false;
 				for (auto d : OrigClasses)
 				{
-					if (d->NodeName == c->ParentName->Id)
+					if (d->NodeName() == c->cls->ParentName->Id)
 					{
 						found = true;
 						break;
@@ -465,14 +483,14 @@ void ZCCCompiler::CreateClassTypes()
 				}
 				if (!found)
 				{
-					Error(c, "Class %s has unknown base class %s", FName(c->NodeName).GetChars(), FName(c->ParentName->Id).GetChars());
+					Error(c->cls, "Class %s has unknown base class %s", c->NodeName().GetChars(), FName(c->cls->ParentName->Id).GetChars());
 					// create a placeholder so that the compiler can continue looking for errors.
-					c->Type = RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName);
-					c->Symbol = new PSymbolType(c->NodeName, c->Type);
-					GlobalSymbols.AddSymbol(c->Symbol);
-					c->Type->Symbols.SetName(FName(c->NodeName).GetChars());
+					c->cls->Type = RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName());
+					c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
+					GlobalSymbols.AddSymbol(c->cls->Symbol);
+					c->Type()->Symbols.SetName(c->NodeName());
 					Classes.Push(c);
-					OrigClasses.Delete(i);
+					OrigClasses.Delete(i--);
 					donesomething = true;
 				}
 			}
@@ -483,21 +501,30 @@ void ZCCCompiler::CreateClassTypes()
 	// This normally means a circular reference.
 	for (auto c : OrigClasses)
 	{
-		Error(c, "Class %s has circular inheritance", FName(c->NodeName).GetChars());
-		c->Type = RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName);
-		c->Symbol = new PSymbolType(c->NodeName, c->Type);
-		c->Type->Symbols.SetName(FName(c->NodeName).GetChars());
-		GlobalSymbols.AddSymbol(c->Symbol);
+		Error(c->cls, "Class %s has circular inheritance", FName(c->NodeName()).GetChars());
+		c->cls->Type = RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName());
+		c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
+		c->Type()->Symbols.SetName(FName(c->NodeName()).GetChars());
+		GlobalSymbols.AddSymbol(c->cls->Symbol);
 		Classes.Push(c);
 	}
 
-	// Last but not least: Now that all classes have been created, we can create the symbols for the internal enums
+	// Last but not least: Now that all classes have been created, we can create the symbols for the internal enums and link the treenode symbol tables
 	for (auto cd : Classes)
 	{
-		for (auto e : cd.Enums)
+		for (auto e : cd->Enums)
 		{
-			auto etype = NewEnum(e->NodeName, cd->Type);
-			cd->Type->Symbols.AddSymbol(new PSymbolType(e->NodeName, etype));
+			auto etype = NewEnum(e->NodeName, cd->Type());
+			cd->Type()->Symbols.AddSymbol(new PSymbolType(e->NodeName, etype));
+		}
+		// Link the tree node tables. We only can do this after we know the class relations.
+		for (auto cc : Classes)
+		{
+			if (cc->Type() == cd->Type()->ParentClass)
+			{
+				cd->TreeNodes.SetParentTable(&cc->TreeNodes);
+				break;
+			}
 		}
 	}
 }
@@ -534,13 +561,13 @@ void ZCCCompiler::CompileAllConstants()
 	TArray<ZCC_ConstantWork> constantwork;
 
 	CopyConstants(constantwork, Constants, OutputSymbols);
-	for (auto &c : Classes)
+	for (auto c : Classes)
 	{
-		CopyConstants(constantwork, c.Constants, &c->Type->Symbols);
+		CopyConstants(constantwork, c->Constants, &c->Type()->Symbols);
 	}
-	for (auto &s : Structs)
+	for (auto s : Structs)
 	{
-		CopyConstants(constantwork, s.Constants, &s->Type->Symbols);
+		CopyConstants(constantwork, s->Constants, &s->Type()->Symbols);
 	}
 
 	// Before starting to resolve the list, let's create symbols for all already resolved ones first (i.e. all literal constants), to reduce work.
@@ -1070,16 +1097,15 @@ void ZCCCompiler::CompileAllFields()
 	{
 		auto c = Classes[i];
 
-		if (c->Type->Size != TentativeClass && c.Fields.Size() > 0)
+		if (c->Type()->Size != TentativeClass && c->Fields.Size() > 0)
 		{
 			// We need to search the global class table here because not all children may have a scripted definition attached.
 			for (auto ac : PClass::AllClasses)
 			{
-				if (ac->ParentClass == c->Type && ac->Size != TentativeClass)
+				if (ac->ParentClass == c->Type() && ac->Size != TentativeClass)
 				{
-					Error(c, "Trying to add fields to class '%s' with native children", c->Type->TypeName.GetChars());
-					Classes.Delete(i);
-					i--;
+					Error(c->cls, "Trying to add fields to class '%s' with native children", c->Type()->TypeName.GetChars());
+					Classes.Delete(i--);
 					break;
 				}
 			}
@@ -1091,19 +1117,19 @@ void ZCCCompiler::CompileAllFields()
 		donesomething = false;
 		for (unsigned i = 0; i < Structs.Size(); i++)
 		{
-			if (CompileFields(Structs[i]->Type, Structs[i].Fields, Structs[i].Outer, true))
+			if (CompileFields(Structs[i]->Type(), Structs[i]->Fields, Structs[i]->Outer, &Structs[i]->TreeNodes, true))
 			{
 				// Remove from the list if all fields got compiled.
-				Structs.Delete(i);
-				i--;
+				Structs.Delete(i--);
 				donesomething = true;
 			}
 		}
 		for (unsigned i = 0; i < Classes.Size(); i++)
 		{
-			if (Classes[i]->Type->Size == TentativeClass)
+			auto type = Classes[i]->Type();
+			if (type->Size == TentativeClass)
 			{
-				if (Classes[i]->Type->ParentClass->Size == TentativeClass)
+				if (type->ParentClass->Size == TentativeClass)
 				{
 					// we do not know the parent class's size yet, so skip this class for now.
 					continue;
@@ -1111,14 +1137,13 @@ void ZCCCompiler::CompileAllFields()
 				else
 				{
 					// Inherit the size of the parent class
-					Classes[i]->Type->Size = Classes[i]->Type->ParentClass->Size;
+					type->Size = Classes[i]->Type()->ParentClass->Size;
 				}
 			}
-			if (CompileFields(Classes[i]->Type, Classes[i].Fields, nullptr, false))
+			if (CompileFields(type, Classes[i]->Fields, nullptr, &Classes[i]->TreeNodes, false))
 			{
 				// Remove from the list if all fields got compiled.
-				Classes.Delete(i);
-				i--;
+				Classes.Delete(i--);
 				donesomething = true;
 			}
 		}
@@ -1126,11 +1151,11 @@ void ZCCCompiler::CompileAllFields()
 	// This really should never happen, but if it does, let's better print an error.
 	for (auto s : Structs)
 	{
-		Error(s.strct, "Unable to resolve all fields for struct %s", FName(s->NodeName).GetChars());
+		Error(s->strct, "Unable to resolve all fields for struct %s", FName(s->NodeName()).GetChars());
 	}
 	for (auto s : Classes)
 	{
-		Error(s.cls, "Unable to resolve all fields for class %s", FName(s->NodeName).GetChars());
+		Error(s->cls, "Unable to resolve all fields for class %s", FName(s->NodeName()).GetChars());
 	}
 }
 
@@ -1142,7 +1167,7 @@ void ZCCCompiler::CompileAllFields()
 //
 //==========================================================================
 
-bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, bool forstruct)
+bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, PSymbolTable *TreeNodes, bool forstruct)
 {
 	while (Fields.Size() > 0)
 	{
@@ -1158,7 +1183,7 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 			Error(field, "Invalid qualifiers for %s (%s not allowed)", FName(field->Names->Name).GetChars(), FlagsToString(field->Flags & notallowed));
 			field->Flags &= notallowed;
 		}
-		uint32_t varflags;
+		uint32_t varflags = 0;
 
 		// These map directly to implementation flags.
 		if (field->Flags & ZCC_Private) varflags |= VARF_Private;
@@ -1184,13 +1209,16 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 		auto name = field->Names;
 		do
 		{
-			auto thisfieldtype = fieldtype;
-			if (name->ArraySize != nullptr)
+			if (AddTreeNode(name->Name, name, TreeNodes, !forstruct))
 			{
-				thisfieldtype = ResolveArraySize(thisfieldtype, name->ArraySize, &type->Symbols);
-			}
+				auto thisfieldtype = fieldtype;
+				if (name->ArraySize != nullptr)
+				{
+					thisfieldtype = ResolveArraySize(thisfieldtype, name->ArraySize, &type->Symbols);
+				}
 
-			type->AddField(name->Name, thisfieldtype, varflags);
+				type->AddField(name->Name, thisfieldtype, varflags);
+			}
 			name = static_cast<ZCC_VarName*>(name->SiblingNext);
 		} while (name != field->Names);
 		Fields.Delete(0);

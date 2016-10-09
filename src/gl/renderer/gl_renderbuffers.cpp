@@ -152,8 +152,10 @@ void FGLRenderBuffers::ClearEyeBuffers()
 
 void FGLRenderBuffers::ClearAmbientOcclusion()
 {
+	DeleteFrameBuffer(LinearDepthFB);
 	DeleteFrameBuffer(AmbientFB0);
 	DeleteFrameBuffer(AmbientFB1);
+	DeleteTexture(LinearDepthTexture);
 	DeleteTexture(AmbientTexture0);
 	DeleteTexture(AmbientTexture1);
 	for (int i = 0; i < NumAmbientRandomTextures; i++)
@@ -336,13 +338,13 @@ void FGLRenderBuffers::CreateBloom(int width, int height)
 	if (width <= 0 || height <= 0)
 		return;
 
-	int bloomWidth = MAX(width / 2, 1);
-	int bloomHeight = MAX(height / 2, 1);
+	int bloomWidth = (width + 1) / 2;
+	int bloomHeight = (height + 1) / 2;
 	for (int i = 0; i < NumBloomLevels; i++)
 	{
 		auto &level = BloomLevels[i];
-		level.Width = MAX(bloomWidth / 2, 1);
-		level.Height = MAX(bloomHeight / 2, 1);
+		level.Width = (bloomWidth + 1) / 2;
+		level.Height = (bloomHeight + 1) / 2;
 
 		level.VTexture = Create2DTexture("Bloom.VTexture", GL_RGBA16F, level.Width, level.Height);
 		level.HTexture = Create2DTexture("Bloom.HTexture", GL_RGBA16F, level.Width, level.Height);
@@ -367,10 +369,12 @@ void FGLRenderBuffers::CreateAmbientOcclusion(int width, int height)
 	if (width <= 0 || height <= 0)
 		return;
 
-	AmbientWidth = width / 2;
-	AmbientHeight = height / 2;
-	AmbientTexture0 = Create2DTexture("AmbientTexture0", GL_RG32F, AmbientWidth, AmbientHeight);
-	AmbientTexture1 = Create2DTexture("AmbientTexture1", GL_RG32F, AmbientWidth, AmbientHeight);
+	AmbientWidth = (width + 1) / 2;
+	AmbientHeight = (height + 1) / 2;
+	LinearDepthTexture = Create2DTexture("LinearDepthTexture", GL_R32F, AmbientWidth, AmbientHeight);
+	AmbientTexture0 = Create2DTexture("AmbientTexture0", GL_RG16F, AmbientWidth, AmbientHeight);
+	AmbientTexture1 = Create2DTexture("AmbientTexture1", GL_RG16F, AmbientWidth, AmbientHeight);
+	LinearDepthFB = CreateFrameBuffer("LinearDepthFB", LinearDepthTexture);
 	AmbientFB0 = CreateFrameBuffer("AmbientFB0", AmbientTexture0);
 	AmbientFB1 = CreateFrameBuffer("AmbientFB1", AmbientTexture1);
 
@@ -485,13 +489,15 @@ GLuint FGLRenderBuffers::Create2DTexture(const FString &name, GLuint format, int
 	case GL_RGBA16:				dataformat = GL_RGBA; datatype = GL_UNSIGNED_SHORT; break;
 	case GL_RGBA16F:			dataformat = GL_RGBA; datatype = GL_FLOAT; break;
 	case GL_RGBA32F:			dataformat = GL_RGBA; datatype = GL_FLOAT; break;
+	case GL_RGBA16_SNORM:		dataformat = GL_RGBA; datatype = GL_SHORT; break;
 	case GL_R32F:				dataformat = GL_RED; datatype = GL_FLOAT; break;
+	case GL_R16F:				dataformat = GL_RED; datatype = GL_FLOAT; break;
 	case GL_RG32F:				dataformat = GL_RG; datatype = GL_FLOAT; break;
+	case GL_RG16F:				dataformat = GL_RG; datatype = GL_FLOAT; break;
 	case GL_RGB10_A2:			dataformat = GL_RGBA; datatype = GL_UNSIGNED_INT_10_10_10_2; break;
 	case GL_DEPTH_COMPONENT24:	dataformat = GL_DEPTH_COMPONENT; datatype = GL_FLOAT; break;
 	case GL_STENCIL_INDEX8:		dataformat = GL_STENCIL_INDEX; datatype = GL_INT; break;
 	case GL_DEPTH24_STENCIL8:	dataformat = GL_DEPTH_STENCIL; datatype = GL_UNSIGNED_INT_24_8; break;
-	case GL_RGBA16_SNORM:		dataformat = GL_RGBA; datatype = GL_SHORT; break;
 	default: I_FatalError("Unknown format passed to FGLRenderBuffers.Create2DTexture");
 	}
 
@@ -530,7 +536,7 @@ GLuint FGLRenderBuffers::CreateRenderBuffer(const FString &name, GLuint format, 
 	return handle;
 }
 
-GLuint FGLRenderBuffers::CreateRenderBuffer(const FString &name, GLuint format, int samples, int width, int height)
+GLuint FGLRenderBuffers::CreateRenderBuffer(const FString &name, GLuint format, int width, int height, int samples)
 {
 	if (samples <= 1)
 		return CreateRenderBuffer(name, format, width, height);

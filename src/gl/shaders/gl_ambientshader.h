@@ -10,7 +10,7 @@ public:
 
 	FBufferedUniformSampler DepthTexture;
 	FBufferedUniformSampler ColorTexture;
-	FBufferedUniform1i SampleCount;
+	FBufferedUniform1i SampleIndex;
 	FBufferedUniform1f LinearizeDepthA;
 	FBufferedUniform1f LinearizeDepthB;
 	FBufferedUniform1f InverseDepthRangeA;
@@ -41,6 +41,7 @@ public:
 	FBufferedUniform1f AOStrength;
 	FBufferedUniform2f Scale;
 	FBufferedUniform2f Offset;
+	FBufferedUniform1i SampleIndex;
 
 private:
 	enum Quality

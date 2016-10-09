@@ -47,7 +47,7 @@ void FLinearDepthShader::Bind()
 		mShader->SetAttribLocation(0, "PositionInProjection");
 		DepthTexture.Init(*mShader, "DepthTexture");
 		ColorTexture.Init(*mShader, "ColorTexture");
-		SampleCount.Init(*mShader, "SampleCount");
+		SampleIndex.Init(*mShader, "SampleIndex");
 		LinearizeDepthA.Init(*mShader, "LinearizeDepthA");
 		LinearizeDepthB.Init(*mShader, "LinearizeDepthB");
 		InverseDepthRangeA.Init(*mShader, "InverseDepthRangeA");
@@ -86,6 +86,7 @@ void FSSAOShader::Bind()
 		AOStrength.Init(*mShader, "AOStrength");
 		Scale.Init(*mShader, "Scale");
 		Offset.Init(*mShader, "Offset");
+		SampleIndex.Init(*mShader, "SampleIndex");
 		mMultisample = multisample;
 	}
 	mShader->Bind();

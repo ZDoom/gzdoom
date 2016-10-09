@@ -59,6 +59,8 @@ public:
 	bool FirstExposureFrame = true;
 
 	// Ambient occlusion buffers
+	GLuint LinearDepthTexture = 0;
+	GLuint LinearDepthFB = 0;
 	GLuint AmbientTexture0 = 0;
 	GLuint AmbientTexture1 = 0;
 	GLuint AmbientFB0 = 0;
@@ -92,7 +94,7 @@ private:
 	GLuint Create2DTexture(const FString &name, GLuint format, int width, int height, const void *data = nullptr);
 	GLuint Create2DMultisampleTexture(const FString &name, GLuint format, int width, int height, int samples, bool fixedSampleLocations);
 	GLuint CreateRenderBuffer(const FString &name, GLuint format, int width, int height);
-	GLuint CreateRenderBuffer(const FString &name, GLuint format, int samples, int width, int height);
+	GLuint CreateRenderBuffer(const FString &name, GLuint format, int width, int height, int samples);
 	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer);
 	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer, GLuint depthstencil, bool colorIsARenderBuffer);
 	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer0, GLuint colorbuffer1, GLuint colorbuffer2, GLuint depthstencil, bool multisample);

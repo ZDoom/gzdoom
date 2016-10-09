@@ -122,9 +122,14 @@ CUSTOM_CVAR(Int, gl_ssao_portals, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CVAR(Float, gl_ssao_strength, 0.7, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, gl_ssao_debug, 0, 0)
-CVAR(Float, gl_ssao_bias, 0.5f, 0)
-CVAR(Float, gl_ssao_radius, 100.0f, 0)
-CUSTOM_CVAR(Float, gl_ssao_blur_amount, 16.0f, 0)
+CVAR(Float, gl_ssao_bias, 0.2f, 0)
+CVAR(Float, gl_ssao_radius, 80.0f, 0)
+CUSTOM_CVAR(Float, gl_ssao_blur, 16.0f, 0)
+{
+	if (self < 0.1f) self = 0.1f;
+}
+
+CUSTOM_CVAR(Float, gl_ssao_exponent, 1.8f, 0)
 {
 	if (self < 0.1f) self = 0.1f;
 }
@@ -166,7 +171,7 @@ void FGLRenderer::AmbientOccludeScene()
 
 	float bias = gl_ssao_bias;
 	float aoRadius = gl_ssao_radius;
-	const float blurAmount = gl_ssao_blur_amount;
+	const float blurAmount = gl_ssao_blur;
 	float aoStrength = gl_ssao_strength;
 
 	//float tanHalfFovy = tan(fovy * (M_PI / 360.0f));
@@ -186,7 +191,7 @@ void FGLRenderer::AmbientOccludeScene()
 	int randomTexture = clamp(gl_ssao - 1, 0, FGLRenderBuffers::NumAmbientRandomTextures - 1);
 
 	// Calculate linear depth values
-	glBindFramebuffer(GL_FRAMEBUFFER, mBuffers->AmbientFB0);
+	glBindFramebuffer(GL_FRAMEBUFFER, mBuffers->LinearDepthFB);
 	glViewport(0, 0, mBuffers->AmbientWidth, mBuffers->AmbientHeight);
 	mBuffers->BindSceneDepthTexture(0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -198,7 +203,7 @@ void FGLRenderer::AmbientOccludeScene()
 	mLinearDepthShader->Bind();
 	mLinearDepthShader->DepthTexture.Set(0);
 	mLinearDepthShader->ColorTexture.Set(1);
-	if (gl_multisample > 1) mLinearDepthShader->SampleCount.Set(gl_multisample);
+	if (gl_multisample > 1) mLinearDepthShader->SampleIndex.Set(0);
 	mLinearDepthShader->LinearizeDepthA.Set(1.0f / GetZFar() - 1.0f / GetZNear());
 	mLinearDepthShader->LinearizeDepthB.Set(MAX(1.0f / GetZNear(), 1.e-8f));
 	mLinearDepthShader->InverseDepthRangeA.Set(1.0f);
@@ -209,7 +214,7 @@ void FGLRenderer::AmbientOccludeScene()
 
 	// Apply ambient occlusion
 	glBindFramebuffer(GL_FRAMEBUFFER, mBuffers->AmbientFB1);
-	glBindTexture(GL_TEXTURE_2D, mBuffers->AmbientTexture0);
+	glBindTexture(GL_TEXTURE_2D, mBuffers->LinearDepthTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glActiveTexture(GL_TEXTURE1);
@@ -226,6 +231,7 @@ void FGLRenderer::AmbientOccludeScene()
 	mSSAOShader->DepthTexture.Set(0);
 	mSSAOShader->RandomTexture.Set(1);
 	mSSAOShader->NormalTexture.Set(2);
+	if (gl_multisample > 1) mSSAOShader->SampleIndex.Set(0);
 	mSSAOShader->UVToViewA.Set(2.0f * invFocalLenX, 2.0f * invFocalLenY);
 	mSSAOShader->UVToViewB.Set(-invFocalLenX, -invFocalLenY);
 	mSSAOShader->InvFullResolution.Set(1.0f / mBuffers->AmbientWidth, 1.0f / mBuffers->AmbientHeight);
@@ -255,7 +261,7 @@ void FGLRenderer::AmbientOccludeScene()
 		mDepthBlurShader->Bind(true);
 		mDepthBlurShader->BlurSharpness[true].Set(blurSharpness);
 		mDepthBlurShader->InvFullResolution[true].Set(1.0f / mBuffers->AmbientWidth, 1.0f / mBuffers->AmbientHeight);
-		mDepthBlurShader->PowExponent[true].Set(1.8f);
+		mDepthBlurShader->PowExponent[true].Set(gl_ssao_exponent);
 		RenderScreenQuad();
 	}
 

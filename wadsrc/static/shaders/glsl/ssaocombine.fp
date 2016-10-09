@@ -17,12 +17,13 @@ uniform vec2 Offset;
 void main()
 {
 	vec2 uv = Offset + TexCoord * Scale;
+
 #if defined(MULTISAMPLE)
 	ivec2 texSize = textureSize(SceneFogTexture);
 #else
 	ivec2 texSize = textureSize(SceneFogTexture, 0);
 #endif
-	ivec2 ipos = ivec2(max(floor(uv * vec2(texSize) - 0.75), vec2(0.0)));
+	ivec2 ipos = ivec2(uv * vec2(texSize));
 
 #if defined(MULTISAMPLE)
 	vec3 fogColor = vec3(0.0);

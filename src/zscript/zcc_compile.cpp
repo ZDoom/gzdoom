@@ -1123,12 +1123,14 @@ void ZCCCompiler::CompileAllFields()
 			}
 		}
 	}
-	// report all entries 
-	if (Structs.Size() > 0)
+	// This really should never happen, but if it does, let's better print an error.
+	for (auto s : Structs)
 	{
+		Error(s.strct, "Unable to resolve all fields for struct %s", FName(s->NodeName).GetChars());
 	}
-	if (Classes.Size() > 0)
+	for (auto s : Classes)
 	{
+		Error(s.cls, "Unable to resolve all fields for class %s", FName(s->NodeName).GetChars());
 	}
 }
 
@@ -1142,7 +1144,6 @@ void ZCCCompiler::CompileAllFields()
 
 bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, bool forstruct)
 {
-	Printf("Adding fields to %s, original size is %d\n", type->TypeName.GetChars(), type->Size);
 	while (Fields.Size() > 0)
 	{
 		auto field = Fields[0];
@@ -1190,18 +1191,9 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 			}
 
 			type->AddField(name->Name, thisfieldtype, varflags);
-			Printf("Added field %s, new size is %d\n", FName(name->Name).GetChars(), type->Size);
 			name = static_cast<ZCC_VarName*>(name->SiblingNext);
 		} while (name != field->Names);
 		Fields.Delete(0);
-
-
-
-
-	}
-	if (Fields.Size() > 0)
-	{
-		Printf("%d fields unprocessed\n", Fields.Size());
 	}
 	return Fields.Size() == 0;
 }
@@ -1363,7 +1355,6 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_VarDeclarator *field, ZC
 
 PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt)
 {
-	Printf("Resolving user type %s\n", FName(type->UserType->Id).GetChars());
 	// Check the symbol table for the identifier.
 	PSymbolTable *table;
 	PSymbol *sym = symt->FindSymbolInTable(type->UserType->Id, table);

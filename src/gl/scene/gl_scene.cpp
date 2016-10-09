@@ -160,8 +160,8 @@ void FGLRenderer::Set3DViewport(bool mainview)
 	{
 		bool useSSAO = (gl_ssao != 0);
 		mBuffers->BindSceneFB(useSSAO);
-		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-		glDrawBuffers(useSSAO ? 2 : 1, buffers);
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+		glDrawBuffers(useSSAO ? 3 : 1, buffers);
 		gl_RenderState.SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
 		gl_RenderState.Apply();
 	}
@@ -507,8 +507,8 @@ void FGLRenderer::DrawScene(int drawmode)
 	// If SSAO is active, switch to gbuffer shaders and use the framebuffer with gbuffers
 	if (applySSAO)
 	{
-		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-		glDrawBuffers(2, buffers);
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+		glDrawBuffers(3, buffers);
 		gl_RenderState.SetPassType(GBUFFER_PASS);
 		gl_RenderState.Apply();
 		gl_RenderState.ApplyMatrices();

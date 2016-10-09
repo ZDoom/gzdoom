@@ -13,7 +13,17 @@ uniform float AOMultiplier;
 
 uniform float AOStrength;
 
+uniform vec2 Scale;
+uniform vec2 Offset;
+
 uniform sampler2D DepthTexture;
+
+#if defined(MULTISAMPLE)
+uniform sampler2DMS NormalTexture;
+uniform int SampleIndex;
+#else
+uniform sampler2D NormalTexture;
+#endif
 
 #if defined(USE_RANDOM_TEXTURE)
 uniform sampler2D RandomTexture;
@@ -24,25 +34,40 @@ uniform sampler2D RandomTexture;
 // Calculate eye space position for the specified texture coordinate
 vec3 FetchViewPos(vec2 uv)
 {
-    float z = texture(DepthTexture, uv).x;
+	float z = texture(DepthTexture, uv).x;
     return vec3((UVToViewA * uv + UVToViewB) * z, z);
 }
 
-vec3 MinDiff(vec3 p, vec3 pr, vec3 pl)
+#if defined(MULTISAMPLE)
+vec3 SampleNormal(vec2 uv)
 {
-    vec3 v1 = pr - p;
-    vec3 v2 = p - pl;
-    return (dot(v1, v1) < dot(v2, v2)) ? v1 : v2;
+	ivec2 texSize = textureSize(NormalTexture);
+	ivec2 ipos = ivec2(uv * vec2(texSize));
+	return texelFetch(NormalTexture, ipos, SampleIndex).xyz * 2.0 - 1.0;
 }
-
-// Reconstruct eye space normal from nearest neighbors
-vec3 ReconstructNormal(vec3 p)
+#else
+vec3 SampleNormal(vec2 uv)
 {
-    vec3 pr = FetchViewPos(TexCoord + vec2(InvFullResolution.x, 0));
-    vec3 pl = FetchViewPos(TexCoord + vec2(-InvFullResolution.x, 0));
-    vec3 pt = FetchViewPos(TexCoord + vec2(0, InvFullResolution.y));
-    vec3 pb = FetchViewPos(TexCoord + vec2(0, -InvFullResolution.y));
-    return normalize(cross(MinDiff(p, pr, pl), MinDiff(p, pt, pb)));
+	ivec2 texSize = textureSize(NormalTexture, 0);
+	ivec2 ipos = ivec2(uv * vec2(texSize));
+	return texelFetch(NormalTexture, ipos, 0).xyz * 2.0 - 1.0;
+}
+#endif
+
+// Look up the eye space normal for the specified texture coordinate
+vec3 FetchNormal(vec2 uv)
+{
+	vec3 normal = SampleNormal(Offset + uv * Scale);
+	if (length(normal) > 0.1)
+	{
+		normal = normalize(normal);
+		normal.z = -normal.z;
+		return normal;
+	}
+	else
+	{
+		return vec3(0.0);
+	}
 }
 
 // Compute normalized 2D direction
@@ -106,7 +131,8 @@ float ComputeAO(vec3 viewPosition, vec3 viewNormal)
 void main()
 {
     vec3 viewPosition = FetchViewPos(TexCoord);
-    vec3 viewNormal = ReconstructNormal(viewPosition);
-	float occlusion = ComputeAO(viewPosition, viewNormal) * AOStrength + (1.0 - AOStrength);
+	vec3 viewNormal = FetchNormal(TexCoord);
+	float occlusion = viewNormal != vec3(0.0) ? ComputeAO(viewPosition, viewNormal) * AOStrength + (1.0 - AOStrength) : 1.0;
+
 	FragColor = vec4(occlusion, viewPosition.z, 0.0, 1.0);
 }

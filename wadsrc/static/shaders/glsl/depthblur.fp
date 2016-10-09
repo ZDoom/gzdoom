@@ -7,7 +7,7 @@ uniform float BlurSharpness;
 uniform vec2 InvFullResolution;
 uniform float PowExponent;
 
-#define KERNEL_RADIUS 7.0
+#define KERNEL_RADIUS 3.0
 
 float CrossBilateralWeight(float r, float sampleDepth, float centerDepth)
 {

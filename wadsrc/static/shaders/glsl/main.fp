@@ -8,7 +8,8 @@ in vec4 vColor;
 
 out vec4 FragColor;
 #ifdef GBUFFER_PASS
-out vec4 FragData;
+out vec4 FragFog;
+out vec4 FragNormal;
 #endif
 
 #ifdef SHADER_STORAGE_LIGHTS
@@ -408,7 +409,8 @@ void main()
 	}
 	FragColor = frag;
 #ifdef GBUFFER_PASS
-	FragData = vec4(AmbientOcclusionColor(), 1.0);
+	FragFog = vec4(AmbientOcclusionColor(), 1.0);
+	FragNormal = vec4(vEyeNormal.xyz * 0.5 + 0.5, 1.0);
 #endif
 }
 

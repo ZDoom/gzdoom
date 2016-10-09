@@ -292,6 +292,7 @@ public:
 	static void FlipNonSquareBlockRemap (BYTE *blockto, const BYTE *blockfrom, int x, int y, int srcpitch, const BYTE *remap);
 
 	friend class D3DTex;
+	friend class OpenGLSWFrameBuffer;
 
 public:
 

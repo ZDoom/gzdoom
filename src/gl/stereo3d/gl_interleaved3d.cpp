@@ -43,9 +43,24 @@
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
 EXTERN_CVAR(Bool, fullscreen)
-EXTERN_CVAR(Int, win_y) // pixel position of top of display window
+EXTERN_CVAR(Int, win_x) // screen pixel position of left of display window
+EXTERN_CVAR(Int, win_y) // screen pixel position of top of display window
 
 namespace s3d {
+
+/* static */
+const CheckerInterleaved3D& CheckerInterleaved3D::getInstance(float ipd)
+{
+	static CheckerInterleaved3D instance(ipd);
+	return instance;
+}
+
+/* static */
+const ColumnInterleaved3D& ColumnInterleaved3D::getInstance(float ipd)
+{
+	static ColumnInterleaved3D instance(ipd);
+	return instance;
+}
 
 /* static */
 const RowInterleaved3D& RowInterleaved3D::getInstance(float ipd)
@@ -54,11 +69,7 @@ const RowInterleaved3D& RowInterleaved3D::getInstance(float ipd)
 	return instance;
 }
 
-RowInterleaved3D::RowInterleaved3D(double ipdMeters) 
-	: TopBottom3D(ipdMeters)
-{}
-
-void RowInterleaved3D::Present() const
+static void prepareInterleavedPresent(FPresentStereoShaderBase& shader)
 {
 	GLRenderer->mBuffers->BindOutputFB();
 	GLRenderer->ClearBorders();
@@ -79,27 +90,102 @@ void RowInterleaved3D::Present() const
 	const GL_IRECT& box = GLRenderer->mOutputLetterbox;
 	glViewport(box.left, box.top, box.width, box.height);
 
-	bool applyGamma = true;
+	shader.Bind();
+	shader.LeftEyeTexture.Set(0);
+	shader.RightEyeTexture.Set(1);
 
-	GLRenderer->mPresent3dRowShader->Bind();
-	GLRenderer->mPresent3dRowShader->LeftEyeTexture.Set(0);
-	GLRenderer->mPresent3dRowShader->RightEyeTexture.Set(1);
-
-	if (!applyGamma || GLRenderer->framebuffer->IsHWGammaActive())
+	if ( GLRenderer->framebuffer->IsHWGammaActive() )
 	{
-		GLRenderer->mPresent3dRowShader->InvGamma.Set(1.0f);
-		GLRenderer->mPresent3dRowShader->Contrast.Set(1.0f);
-		GLRenderer->mPresent3dRowShader->Brightness.Set(0.0f);
+		shader.InvGamma.Set(1.0f);
+		shader.Contrast.Set(1.0f);
+		shader.Brightness.Set(0.0f);
 	}
 	else
 	{
-		GLRenderer->mPresent3dRowShader->InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
-		GLRenderer->mPresent3dRowShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
-		GLRenderer->mPresent3dRowShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
+		shader.InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
+		shader.Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
+		shader.Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
 	}
-	GLRenderer->mPresent3dRowShader->Scale.Set(
+	shader.Scale.Set(
 		GLRenderer->mScreenViewport.width / (float)GLRenderer->mBuffers->GetWidth(),
 		GLRenderer->mScreenViewport.height / (float)GLRenderer->mBuffers->GetHeight());
+}
+
+// fixme: I don't know how to get absolute window position on Mac and Linux
+// fixme: I don't know how to get window border decoration size anywhere
+// So for now I'll hard code the border effect on my test machine.
+// Workaround for others is to fuss with vr_swap_eyes CVAR until it looks right.
+// Presumably the top/left window border on my test machine has an odd number of pixels
+//  in the horizontal direction, and an even number in the vertical direction.
+#define WINDOW_BORDER_HORIZONTAL_PARITY 1
+#define WINDOW_BORDER_VERTICAL_PARITY 0
+
+void CheckerInterleaved3D::Present() const
+{
+	prepareInterleavedPresent(*GLRenderer->mPresent3dCheckerShader);
+
+	// Compute absolute offset from top of screen to top of current display window
+	// because we need screen-relative, not window-relative, scan line parity
+	int windowVOffset = 0;
+	int windowHOffset = 0;
+
+#ifdef _WIN32
+	if (!fullscreen) {
+		I_SaveWindowedPos(); // update win_y CVAR
+		windowHOffset = (win_x + WINDOW_BORDER_HORIZONTAL_PARITY) % 2;
+		windowVOffset = (win_y + WINDOW_BORDER_VERTICAL_PARITY) % 2;
+	}
+#endif // _WIN32
+
+	GLRenderer->mPresent3dCheckerShader->WindowPositionParity.Set(
+		(windowVOffset
+			+ windowHOffset
+			+ GLRenderer->mOutputLetterbox.height + 1 // +1 because of origin at bottom
+		) % 2 // because we want the top pixel offset, but gl_FragCoord.y is the bottom pixel offset
+	);
+
+	GLRenderer->RenderScreenQuad();
+}
+
+void s3d::CheckerInterleaved3D::AdjustViewports() const
+{
+	// decrease the total pixel count by 2, but keep the same aspect ratio
+	const float sqrt2 = 1.41421356237f;
+	// Change size of renderbuffer, and align to screen
+	GLRenderer->mSceneViewport.height /= sqrt2;
+	GLRenderer->mSceneViewport.top /= sqrt2;
+	GLRenderer->mSceneViewport.width /= sqrt2;
+	GLRenderer->mSceneViewport.left /= sqrt2;
+
+	GLRenderer->mScreenViewport.height /= sqrt2;
+	GLRenderer->mScreenViewport.top /= sqrt2;
+	GLRenderer->mScreenViewport.width /= sqrt2;
+	GLRenderer->mScreenViewport.left /= sqrt2;
+}
+
+void ColumnInterleaved3D::Present() const
+{
+	prepareInterleavedPresent(*GLRenderer->mPresent3dColumnShader);
+
+	// Compute absolute offset from top of screen to top of current display window
+	// because we need screen-relative, not window-relative, scan line parity
+	int windowHOffset = 0;
+
+#ifdef _WIN32
+	if (!fullscreen) {
+		I_SaveWindowedPos(); // update win_y CVAR
+		windowHOffset = (win_x + WINDOW_BORDER_HORIZONTAL_PARITY) % 2;
+	}
+#endif // _WIN32
+
+	GLRenderer->mPresent3dColumnShader->WindowPositionParity.Set(windowHOffset);
+
+	GLRenderer->RenderScreenQuad();
+}
+
+void RowInterleaved3D::Present() const
+{
+	prepareInterleavedPresent(*GLRenderer->mPresent3dRowShader);
 
 	// Compute absolute offset from top of screen to top of current display window
 	// because we need screen-relative, not window-relative, scan line parity
@@ -108,13 +194,14 @@ void RowInterleaved3D::Present() const
 #ifdef _WIN32
 	if (! fullscreen) {
 		I_SaveWindowedPos(); // update win_y CVAR
-		windowVOffset = win_y;
+		windowVOffset = (win_y + WINDOW_BORDER_VERTICAL_PARITY) % 2;
 	}
 #endif // _WIN32
 
-	GLRenderer->mPresent3dRowShader->VerticalPixelOffset.Set(
-		windowVOffset // fixme: vary with window location
-		+ box.height % 2 // because we want the top pixel offset, but gl_FragCoord.y is the bottom pixel offset
+	GLRenderer->mPresent3dRowShader->WindowPositionParity.Set(
+		(windowVOffset
+			+ GLRenderer->mOutputLetterbox.height + 1 // +1 because of origin at bottom
+		) % 2
 	);
 
 	GLRenderer->RenderScreenQuad();

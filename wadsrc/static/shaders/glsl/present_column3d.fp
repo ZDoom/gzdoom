@@ -19,8 +19,8 @@ vec4 ApplyGamma(vec4 c)
 
 void main()
 {
-	int thisVerticalPixel = int(gl_FragCoord.y); // Bottom row is typically the right eye, when WindowHeight is even
-	bool isLeftEye = (thisVerticalPixel // because we want to alternate eye view on each row
+	int thisHorizontalPixel = int(gl_FragCoord.x); // zero-based column index from left
+	bool isLeftEye = (thisHorizontalPixel // because we want to alternate eye view on each column
 		 + WindowPositionParity // because the window might not be aligned to the screen
 		) % 2 == 0;
 	vec4 inputColor;

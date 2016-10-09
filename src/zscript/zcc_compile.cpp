@@ -53,12 +53,13 @@
 //
 //==========================================================================
 
-void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *tnode)
+void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 {
-	Classes.Push(ZCC_ClassWork(static_cast<ZCC_Class *>(cnode), tnode));	
+	Classes.Push(ZCC_ClassWork(static_cast<ZCC_Class *>(cnode), treenode));	
 	ZCC_ClassWork &cls = Classes.Last();
 
 	auto node = cnode->Body;
+	PSymbolTreeNode *childnode;
 
 	do
 	{
@@ -66,12 +67,14 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *tnode)
 		{
 		case AST_Struct:
 		case AST_ConstantDef:
-			if ((tnode = AddNamedNode(static_cast<ZCC_NamedNode *>(node))))
+		case AST_VarDeclarator:
+			if ((childnode = AddNamedNode(static_cast<ZCC_NamedNode *>(node), &treenode->TreeNodes)))
 			{
 				switch (node->NodeType)
 				{
-				case AST_Struct:		cls.Structs.Push(ZCC_StructWork(static_cast<ZCC_Struct *>(node), tnode));		break;
+				case AST_Struct:		cls.Structs.Push(ZCC_StructWork(static_cast<ZCC_Struct *>(node), childnode));		break;
 				case AST_ConstantDef:	cls.Constants.Push(static_cast<ZCC_ConstantDef *>(node));	break;
+				case AST_VarDeclarator: cls.Fields.Push(static_cast<ZCC_VarDeclarator *>(node)); break;
 				default: assert(0 && "Default case is just here to make GCC happy. It should never be reached");
 				}
 			}
@@ -82,7 +85,6 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *tnode)
 
 		// todo
 		case AST_States:
-		case AST_VarDeclarator:
 		case AST_FuncDeclarator:
 		case AST_Default:
 				break;
@@ -102,30 +104,33 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *tnode)
 //
 //==========================================================================
 
-void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *tnode)
+void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *treenode)
 {
-	Structs.Push(ZCC_StructWork(static_cast<ZCC_Struct *>(cnode), tnode));
+	Structs.Push(ZCC_StructWork(static_cast<ZCC_Struct *>(cnode), treenode));
 	ZCC_StructWork &cls = Structs.Last();
 
 	auto node = cnode->Body;
+	PSymbolTreeNode *childnode;
 
 	do
 	{
 		switch (node->NodeType)
 		{
 		case AST_ConstantDef:
-			if ((tnode = AddNamedNode(static_cast<ZCC_NamedNode *>(node))))
+		case AST_VarDeclarator:
+			if ((childnode = AddNamedNode(static_cast<ZCC_NamedNode *>(node), &treenode->TreeNodes)))
 			{
-				cls.Constants.Push(static_cast<ZCC_ConstantDef *>(node));	break;
+				switch (node->NodeType)
+				{
+				case AST_ConstantDef:	cls.Constants.Push(static_cast<ZCC_ConstantDef *>(node));	break;
+				case AST_VarDeclarator: cls.Fields.Push(static_cast<ZCC_VarDeclarator *>(node)); break;
+				default: assert(0 && "Default case is just here to make GCC happy. It should never be reached");
+				}
 			}
 			break;
 
 		case AST_Enum:			break;
 		case AST_EnumTerminator:break;
-
-			// todo
-		case AST_VarDeclarator:
-			break;
 
 		default:
 			assert(0 && "Unhandled AST node type");
@@ -143,7 +148,7 @@ void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *tnode)
 //==========================================================================
 
 ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, PSymbolTable &_outsymbols)
-: Outer(_outer), Symbols(&_symbols), OutputSymbols(&_outsymbols), AST(ast), ErrorCount(0), WarnCount(0)
+: Outer(_outer), GlobalTreeNodes(&_symbols), OutputSymbols(&_outsymbols), AST(ast), ErrorCount(0), WarnCount(0)
 {
 	// Group top-level nodes by type
 	if (ast.TopNode != NULL)
@@ -157,7 +162,7 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 			case AST_Class:
 			case AST_Struct:
 			case AST_ConstantDef:
-				if ((tnode = AddNamedNode(static_cast<ZCC_NamedNode *>(node), Symbols)))
+				if ((tnode = AddNamedNode(static_cast<ZCC_NamedNode *>(node), GlobalTreeNodes)))
 				{
 					switch (node->NodeType)
 					{
@@ -191,10 +196,10 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 //
 //==========================================================================
 
-PSymbolTreeNode *ZCCCompiler::AddNamedNode(ZCC_NamedNode *node, PSymbolTable *parentsym)
+PSymbolTreeNode *ZCCCompiler::AddNamedNode(ZCC_NamedNode *node, PSymbolTable *treenodes)
 {
 	FName name = node->NodeName;
-	PSymbol *check = Symbols->FindSymbol(name, false);
+	PSymbol *check = treenodes->FindSymbol(name, false);
 	if (check != NULL)
 	{
 		assert(check->IsA(RUNTIME_CLASS(PSymbolTreeNode)));
@@ -205,11 +210,10 @@ PSymbolTreeNode *ZCCCompiler::AddNamedNode(ZCC_NamedNode *node, PSymbolTable *pa
 	else
 	{
 		auto sy = new PSymbolTreeNode(name, node);
-		sy->Symbols.SetParentTable(parentsym);
 		FString name;
 		name << "nodes - " << FName(node->NodeName);
-		sy->Symbols.SetName(name);
-		Symbols->AddSymbol(sy);
+		sy->TreeNodes.SetName(name);
+		treenodes->AddSymbol(sy);
 		return sy;
 	}
 }
@@ -281,6 +285,7 @@ int ZCCCompiler::Compile()
 	CreateClassTypes();
 	CreateStructTypes();
 	CompileAllConstants();
+	//CompileAllFields();
 	return ErrorCount;
 }
 
@@ -432,11 +437,11 @@ void ZCCCompiler::CreateClassTypes()
 //
 //==========================================================================
 
-void ZCCCompiler::AddConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PSymbolTable *nt, PSymbolTable *ot)
+void ZCCCompiler::CopyConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PSymbolTable *ot)
 {
 	for (auto c : Constants)
 	{
-		dest.Push({ c, nt, ot });
+		dest.Push({ c, ot });
 	}
 }
 
@@ -455,18 +460,18 @@ void ZCCCompiler::CompileAllConstants()
 	// put all constants in one list to make resolving this easier.
 	TArray<ZCC_ConstantWork> constantwork;
 
-	AddConstants(constantwork, Constants, Symbols, OutputSymbols);
+	CopyConstants(constantwork, Constants, OutputSymbols);
 	for (auto &c : Classes)
 	{
-		AddConstants(constantwork, c.Constants, &c.node->Symbols, &c->Type->Symbols);
+		CopyConstants(constantwork, c.Constants, &c->Type->Symbols);
 		for (auto &s : c.Structs)
 		{
-			AddConstants(constantwork, s.Constants, &s.node->Symbols, &s->Type->Symbols);
+			CopyConstants(constantwork, s.Constants, &s->Type->Symbols);
 		}
 	}
 	for (auto &s : Structs)
 	{
-		AddConstants(constantwork, s.Constants, &s.node->Symbols, &s->Type->Symbols);
+		CopyConstants(constantwork, s.Constants, &s->Type->Symbols);
 	}
 
 	// Before starting to resolve the list, let's create symbols for all already resolved ones first (i.e. all literal constants), to reduce work.

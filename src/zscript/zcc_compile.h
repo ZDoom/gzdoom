@@ -6,6 +6,7 @@ struct ZCC_StructWork
 	ZCC_Struct *strct;
 	PSymbolTreeNode *node;
 	TArray<ZCC_ConstantDef *> Constants;
+	TArray<ZCC_VarDeclarator *> Fields;
 
 	ZCC_StructWork(ZCC_Struct * s, PSymbolTreeNode *n)
 	{
@@ -32,6 +33,7 @@ struct ZCC_ClassWork
 	PSymbolTreeNode *node;
 	TArray<ZCC_ConstantDef *> Constants;
 	TArray<ZCC_StructWork> Structs;
+	TArray<ZCC_VarDeclarator *> Fields;
 
 	ZCC_ClassWork(ZCC_Class * s, PSymbolTreeNode *n)
 	{
@@ -54,7 +56,6 @@ struct ZCC_ClassWork
 struct ZCC_ConstantWork
 {
 	ZCC_ConstantDef *node;
-	PSymbolTable *nodetable;
 	PSymbolTable *outputtable;
 };
 
@@ -69,10 +70,11 @@ private:
 	void ProcessStruct(ZCC_Struct *node, PSymbolTreeNode *tnode);
 	void CreateStructTypes();
 	void CreateClassTypes();
-	void AddConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PSymbolTable *nt, PSymbolTable *ot);
+	void CopyConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PSymbolTable *ot);
+	void CompileAllFields();
 	void CompileAllConstants();
 	void AddConstant(ZCC_ConstantWork &constant);
-	int CompileConstants(const TArray<ZCC_ConstantDef *> &defs, PSymbolTable *Nodes, PSymbolTable *Output);
+	int CompileConstants(const TArray<ZCC_ConstantDef *> &defs, PSymbolTable *Output);
 	bool CompileConstant(ZCC_ConstantDef *def, PSymbolTable *Symbols);
 
 	TArray<ZCC_ConstantDef *> Constants;
@@ -108,7 +110,7 @@ private:
 	void MessageV(ZCC_TreeNode *node, const char *txtcolor, const char *msg, va_list argptr);
 
 	DObject *Outer;
-	PSymbolTable *Symbols;
+	PSymbolTable *GlobalTreeNodes;
 	PSymbolTable *OutputSymbols;
 	ZCC_AST &AST;
 	int ErrorCount;

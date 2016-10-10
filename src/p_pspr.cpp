@@ -1006,7 +1006,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayOffset)
 	PARAM_FLOAT_OPT(wx)		{ wx = 0.; }
 	PARAM_FLOAT_OPT(wy)		{ wy = 32.; }
 	PARAM_INT_OPT(flags)	{ flags = 0; }
-	A_OverlayOffset(self, layer, wx, wy, flags);
+	A_OverlayOffset(self, ((layer != 0) ? layer : stateinfo->mPSPIndex), wx, wy, flags);
 	return 0;
 }
 
@@ -1033,10 +1033,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayFlags)
 	PARAM_INT(flags);
 	PARAM_BOOL(set);
 
-	if (self->player == nullptr)
+	if (!ACTION_CALL_FROM_PSPRITE())
 		return 0;
 
-	DPSprite *pspr = self->player->FindPSprite(layer);
+	DPSprite *pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
 
 	if (pspr == nullptr)
 		return 0;
@@ -1047,6 +1047,52 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayFlags)
 		pspr->Flags &= ~flags;
 
 	return 0;
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC OverlayX/Y
+// Action function to return the X/Y of an overlay.
+//---------------------------------------------------------------------------
+
+static double GetOverlayPosition(AActor *self, int layer, bool gety)
+{
+	if (layer)
+	{
+		DPSprite *pspr = self->player->FindPSprite(layer);
+
+		if (pspr != nullptr)
+		{
+			return gety ? (pspr->y) : (pspr->x);
+		}
+	}
+	return 0.;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, OverlayX)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT_OPT(layer) { layer = 0; }
+
+	if (ACTION_CALL_FROM_PSPRITE())
+	{
+		double res = GetOverlayPosition(self, ((layer != 0) ? layer : stateinfo->mPSPIndex), false);
+		ACTION_RETURN_FLOAT(res);	
+	}
+	ACTION_RETURN_FLOAT(0.);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, OverlayY)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT_OPT(layer) { layer = 0; }
+
+	if (ACTION_CALL_FROM_PSPRITE())
+	{
+		double res = GetOverlayPosition(self, ((layer != 0) ? layer : stateinfo->mPSPIndex), true);
+		ACTION_RETURN_FLOAT(res);
+	}
+	ACTION_RETURN_FLOAT(0.);
 }
 
 //---------------------------------------------------------------------------

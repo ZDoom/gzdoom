@@ -1782,6 +1782,8 @@ DSPLYMNU_CAPFPS					= "Rendering Interpolation";
 DSPLYMNU_COLUMNMETHOD			= "Column render mode";
 DSPLYMNU_WIPETYPE				= "Screen wipe style";
 DSPLYMNU_SHOWENDOOM				= "Show ENDOOM screen";
+DSPLYMNU_BLOODFADE				= "Blood Flash Intensity";
+DSPLYMNU_PICKUPFADE				= "Pickup Flash Intensity";
 DSPLYMNU_PALLETEHACK			= "DirectDraw palette hack"; // Not used
 DSPLYMNU_ATTACHEDSURFACES		= "Use attached surfaces"; // Not used
 DSPLYMNU_STRETCHSKY				= "Stretch short skies";
@@ -1803,7 +1805,6 @@ DSPLYMNU_DIMCOLOR				= "Dim color";
 DSPLYMNU_MOVEBOB 				= "View bob amount while moving";
 DSPLYMNU_STILLBOB 				= "View bob amount while not moving";
 DSPLYMNU_BOBSPEED				= "Weapon bob speed";
-DSPLYMNU_PIFLASH				= "Show pickup screen flash";
 
 // HUD Options
 HUDMNU_TITLE					= "HUD Options";

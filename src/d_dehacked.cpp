@@ -2985,9 +2985,11 @@ static bool LoadDehSupp ()
 void FinishDehPatch ()
 {
 	unsigned int touchedIndex;
+	unsigned int nameindex = 0;
 
 	for (touchedIndex = 0; touchedIndex < TouchedActors.Size(); ++touchedIndex)
 	{
+		PClassActor *subclass;
 		PClassActor *type = TouchedActors[touchedIndex];
 		AActor *defaults1 = GetDefaultByType (type);
 		if (!(defaults1->flags & MF_SPECIAL))
@@ -2997,9 +2999,16 @@ void FinishDehPatch ()
 
 		// Create a new class that will serve as the actual pickup
 		char typeNameBuilder[32];
-		mysnprintf (typeNameBuilder, countof(typeNameBuilder), "DehackedPickup%d", touchedIndex);
-		PClassActor *subclass = static_cast<PClassActor *>(RUNTIME_CLASS(ADehackedPickup)->
-			CreateDerivedClass(typeNameBuilder, sizeof(ADehackedPickup)));
+		// 
+		do
+		{
+			// Retry until we find a free name. This is unlikely to happen but not impossible.
+			mysnprintf(typeNameBuilder, countof(typeNameBuilder), "DehackedPickup%d", nameindex++);
+			subclass = static_cast<PClassActor *>(RUNTIME_CLASS(ADehackedPickup)->
+				CreateDerivedClass(typeNameBuilder, sizeof(ADehackedPickup)));
+		} 
+		while (subclass == nullptr);
+		
 		AActor *defaults2 = GetDefaultByType (subclass);
 		memcpy ((void *)defaults2, (void *)defaults1, sizeof(AActor));
 

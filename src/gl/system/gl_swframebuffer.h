@@ -110,7 +110,7 @@ private:
 		void UnlockRect() { }
 		bool GetSurfaceLevel(int level, HWSurface **outSurface) { *outSurface = nullptr; return false; }
 
-		int Handle = 0;
+		int Texture = 0;
 		int WrapS = 0;
 		int WrapT = 0;
 		int Format = 0;
@@ -119,44 +119,70 @@ private:
 	class HWVertexBuffer
 	{
 	public:
+		~HWVertexBuffer()
+		{
+			if (Buffer != 0) glDeleteVertexArrays(1, (GLuint*)&VertexArray);
+			if (Buffer != 0) glDeleteBuffers(1, (GLuint*)&Buffer);
+		}
+
 		FBVERTEX *Lock() { return nullptr; }
 		void Unlock() { }
+
+		int Buffer = 0;
+		int VertexArray = 0;
 	};
 
 	class HWIndexBuffer
 	{
 	public:
+		~HWIndexBuffer()
+		{
+			if (Buffer != 0) glDeleteBuffers(1, (GLuint*)&Buffer);
+		}
+
 		uint16_t *Lock() { return nullptr; }
 		void Unlock() { }
+
+		int Buffer = 0;
 	};
 
 	class HWPixelShader
 	{
 	public:
+		~HWPixelShader()
+		{
+			if (Program != 0) glDeleteProgram(Program);
+			if (VertexShader != 0) glDeleteShader(VertexShader);
+			if (FragmentShader != 0) glDeleteShader(FragmentShader);
+		}
+
+		int Program = 0;
+		int VertexShader = 0;
+		int FragmentShader = 0;
 	};
 
-	bool CreatePixelShader(const void *src, HWPixelShader **outShader) { *outShader = nullptr; return false; }
-	bool CreateVertexBuffer(int size, HWVertexBuffer **outVertexBuffer) { *outVertexBuffer = nullptr; return false; }
-	bool CreateIndexBuffer(int size, HWIndexBuffer **outIndexBuffer) { *outIndexBuffer = nullptr; return false; }
-	bool CreateOffscreenPlainSurface(int width, int height, int format, HWSurface **outSurface) { *outSurface = nullptr; return false; }
-	bool CreateTexture(int width, int height, int levels, int format, HWTexture **outTexture) { *outTexture = nullptr; return false; }
-	bool CreateRenderTarget(int width, int height, int format, HWSurface **outSurface) { *outSurface = nullptr; return false; }
-	bool GetBackBuffer(HWSurface **outSurface) { *outSurface = nullptr; return false; }
-	bool GetRenderTarget(int index, HWSurface **outSurface) { *outSurface = nullptr; return false;  }
-	void GetRenderTargetData(HWSurface *a, HWSurface *b) { }
-	void ColorFill(HWSurface *surface, float red, float green, float blue) { }
-	void StretchRect(HWSurface *src, const LTRBRect *srcrect, HWSurface *dest) { }
-	bool SetRenderTarget(int index, HWSurface *surface) { return true; }
-	void SetGammaRamp(const GammaRamp *ramp) { }
-	void SetPixelShaderConstantF(int uniformIndex, const float *data, int vec4fcount) { }
-	void SetHWPixelShader(HWPixelShader *shader) { }
-	void SetStreamSource(HWVertexBuffer *vertexBuffer) { }
-	void SetIndices(HWIndexBuffer *indexBuffer) { }
-	void DrawTriangleFans(int count, const FBVERTEX *vertices) { }
-	void DrawPoints(int count, const FBVERTEX *vertices) { }
-	void DrawLineList(int count) { }
-	void DrawTriangleList(int minIndex, int numVertices, int startIndex, int primitiveCount) { }
-	void Present() { }
+	bool CreatePixelShader(const void *vertexsrc, const void *fragmentsrc, HWPixelShader **outShader);
+	bool CreateVertexBuffer(int size, HWVertexBuffer **outVertexBuffer);
+	bool CreateIndexBuffer(int size, HWIndexBuffer **outIndexBuffer);
+	bool CreateOffscreenPlainSurface(int width, int height, int format, HWSurface **outSurface);
+	bool CreateTexture(int width, int height, int levels, int format, HWTexture **outTexture);
+	bool CreateRenderTarget(int width, int height, int format, HWSurface **outSurface);
+	bool GetBackBuffer(HWSurface **outSurface);
+	bool GetRenderTarget(int index, HWSurface **outSurface);
+	void GetRenderTargetData(HWSurface *a, HWSurface *b);
+	void ColorFill(HWSurface *surface, float red, float green, float blue);
+	void StretchRect(HWSurface *src, const LTRBRect *srcrect, HWSurface *dest);
+	bool SetRenderTarget(int index, HWSurface *surface);
+	void SetGammaRamp(const GammaRamp *ramp);
+	void SetPixelShaderConstantF(int uniformIndex, const float *data, int vec4fcount);
+	void SetHWPixelShader(HWPixelShader *shader);
+	void SetStreamSource(HWVertexBuffer *vertexBuffer);
+	void SetIndices(HWIndexBuffer *indexBuffer);
+	void DrawTriangleFans(int count, const FBVERTEX *vertices);
+	void DrawPoints(int count, const FBVERTEX *vertices);
+	void DrawLineList(int count);
+	void DrawTriangleList(int minIndex, int numVertices, int startIndex, int primitiveCount);
+	void Present();
 
 	static uint32_t ColorARGB(uint32_t a, uint32_t r, uint32_t g, uint32_t b) { return ((a & 0xff) << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | ((b) & 0xff); }
 	static uint32_t ColorRGBA(uint32_t a, uint32_t r, uint32_t g, uint32_t b) { return ColorARGB(a, r, g, b); }
@@ -346,7 +372,6 @@ private:
 	void CreateBlockSurfaces();
 	bool CreateFBTexture();
 	bool CreatePaletteTexture();
-	bool CreateGammaTexture();
 	bool CreateVertexes();
 	void UploadPalette();
 	void UpdateGammaTexture(float igamma);
@@ -385,6 +410,8 @@ private:
 	void SetPaletteTexture(HWTexture *texture, int count, uint32_t border_color);
 
 	template<typename T> static void SafeRelease(T &x) { if (x != nullptr) { delete x; x = nullptr; } }
+
+	std::unique_ptr<HWVertexBuffer> StreamVertexBuffer;
 
 	BOOL AlphaTestEnabled;
 	BOOL AlphaBlendEnabled;

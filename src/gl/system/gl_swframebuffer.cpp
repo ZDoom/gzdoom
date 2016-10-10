@@ -92,30 +92,30 @@ IMPLEMENT_CLASS(OpenGLSWFrameBuffer)
 
 const char *const OpenGLSWFrameBuffer::ShaderNames[OpenGLSWFrameBuffer::NUM_SHADERS] =
 {
-	"NormalColor.fp",
-	"NormalColorPal.fp",
-	"NormalColorInv.fp",
-	"NormalColorPalInv.fp",
+	"NormalColor",
+	"NormalColorPal",
+	"NormalColorInv",
+	"NormalColorPalInv",
 
-	"RedToAlpha.fp",
-	"RedToAlphaInv.fp",
+	"RedToAlpha",
+	"RedToAlphaInv",
 
-	"VertexColor.fp",
+	"VertexColor",
 
-	"SpecialColormap.fp",
-	"SpecialColorMapPal.fp",
+	"SpecialColormap",
+	"SpecialColorMapPal",
 
-	"InGameColormap.fp",
-	"InGameColormapDesat.fp",
-	"InGameColormapInv.fp",
-	"InGameColormapInvDesat.fp",
-	"InGameColormapPal.fp",
-	"InGameColormapPalDesat.fp",
-	"InGameColormapPalInv.fp",
-	"InGameColormapPalInvDesat.fp",
+	"InGameColormap",
+	"InGameColormapDesat",
+	"InGameColormapInv",
+	"InGameColormapInvDesat",
+	"InGameColormapPal",
+	"InGameColormapPalDesat",
+	"InGameColormapPalInv",
+	"InGameColormapPalInvDesat",
 
-	"BurnWipe.fp",
-	"GammaCorrection.fp",
+	"BurnWipe",
+	"GammaCorrection",
 };
 
 OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen) :
@@ -209,6 +209,256 @@ OpenGLSWFrameBuffer::~OpenGLSWFrameBuffer()
 	delete[] QuadExtra;
 }
 
+bool OpenGLSWFrameBuffer::CreatePixelShader(const void *vertexsrc, const void *fragmentsrc, HWPixelShader **outShader)
+{
+	auto shader = std::make_unique<HWPixelShader>();
+
+	shader->Program = glCreateProgram();
+	shader->VertexShader = glCreateShader(GL_VERTEX_SHADER);
+	shader->FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+
+	{
+		int lengths[1] = { (int)strlen((const char*)vertexsrc) };
+		const char *sources[1] = { (const char*)vertexsrc };
+		glShaderSource(shader->VertexShader, 1, sources, lengths);
+		glCompileShader(shader->VertexShader);
+	}
+
+	{
+		int lengths[1] = { (int)strlen((const char*)fragmentsrc) };
+		const char *sources[1] = { (const char*)fragmentsrc };
+		glShaderSource(shader->FragmentShader, 1, sources, lengths);
+		glCompileShader(shader->FragmentShader);
+	}
+
+	GLint status = 0;
+	glGetShaderiv(shader->VertexShader, GL_COMPILE_STATUS, &status);
+	if (status != GL_FALSE) glGetShaderiv(shader->FragmentShader, GL_COMPILE_STATUS, &status);
+	if (status == GL_FALSE)
+	{
+		*outShader = nullptr;
+		return false;
+	}
+
+	glAttachShader(shader->Program, shader->VertexShader);
+	glAttachShader(shader->Program, shader->FragmentShader);
+	glBindFragDataLocation(shader->Program, 0, "FragColor");
+	glLinkProgram(shader->Program);
+	glGetProgramiv(shader->Program, GL_LINK_STATUS, &status);
+	if (status == GL_FALSE)
+	{
+		*outShader = nullptr;
+		return false;
+	}
+	glBindAttribLocation(shader->Program, 0, "Position");
+	glBindAttribLocation(shader->Program, 1, "Color0");
+	glBindAttribLocation(shader->Program, 2, "Color1");
+	glBindAttribLocation(shader->Program, 3, "TexCoord");
+
+	*outShader = shader.release();
+	return true;
+}
+
+bool OpenGLSWFrameBuffer::CreateVertexBuffer(int size, HWVertexBuffer **outVertexBuffer)
+{
+	auto obj = std::make_unique<HWVertexBuffer>();
+
+	GLint oldBinding = 0;
+	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &oldBinding);
+
+	glGenVertexArrays(1, (GLuint*)&obj->VertexArray);
+	glGenBuffers(1, (GLuint*)&obj->Buffer);
+	glBindVertexArray(obj->VertexArray);
+	glBindBuffer(GL_ARRAY_BUFFER, obj->Buffer);
+	glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_STREAM_DRAW);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(FBVERTEX), (const GLvoid*)offsetof(FBVERTEX, x));
+	glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(FBVERTEX), (const GLvoid*)offsetof(FBVERTEX, color0));
+	glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(FBVERTEX), (const GLvoid*)offsetof(FBVERTEX, color1));
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(FBVERTEX), (const GLvoid*)offsetof(FBVERTEX, tu));
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(oldBinding);
+
+	*outVertexBuffer = obj.release();
+	return true;
+}
+
+bool OpenGLSWFrameBuffer::CreateIndexBuffer(int size, HWIndexBuffer **outIndexBuffer)
+{
+	auto obj = std::make_unique<HWIndexBuffer>();
+
+	GLint oldBinding = 0;
+	glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &oldBinding);
+
+	glGenBuffers(1, (GLuint*)&obj->Buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj->Buffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, nullptr, GL_STREAM_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, oldBinding);
+
+	*outIndexBuffer = obj.release();
+	return true;
+}
+
+bool OpenGLSWFrameBuffer::CreateTexture(int width, int height, int levels, int format, HWTexture **outTexture)
+{
+	auto obj = std::make_unique<HWTexture>();
+
+	GLint oldBinding = 0;
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
+
+	glGenTextures(1, (GLuint*)&obj->Texture);
+	glBindTexture(GL_TEXTURE_2D, obj->Texture);
+	GLenum srcformat;
+	switch (format)
+	{
+	case GL_R8: srcformat = GL_RED; break;
+	case GL_RGBA8: srcformat = GL_RGBA; break;
+	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT: srcformat = GL_RGB; break;
+	case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT: srcformat = GL_RGBA; break;
+	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT: srcformat = GL_RGBA; break;
+	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT: srcformat = GL_RGBA; break;
+	default:
+		I_FatalError("Unknown format passed to CreateTexture");
+		return false;
+	}
+	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, srcformat, GL_UNSIGNED_BYTE, nullptr);
+
+	glBindTexture(GL_TEXTURE_2D, oldBinding);
+
+	*outTexture = obj.release();
+	return true;
+}
+
+bool OpenGLSWFrameBuffer::CreateOffscreenPlainSurface(int width, int height, int format, HWSurface **outSurface) { *outSurface = nullptr; return false; }
+bool OpenGLSWFrameBuffer::CreateRenderTarget(int width, int height, int format, HWSurface **outSurface) { *outSurface = nullptr; return false; }
+bool OpenGLSWFrameBuffer::GetBackBuffer(HWSurface **outSurface) { *outSurface = nullptr; return false; }
+bool OpenGLSWFrameBuffer::GetRenderTarget(int index, HWSurface **outSurface) { *outSurface = nullptr; return false; }
+void OpenGLSWFrameBuffer::GetRenderTargetData(HWSurface *a, HWSurface *b) { }
+
+void OpenGLSWFrameBuffer::ColorFill(HWSurface *surface, float red, float green, float blue) { }
+void OpenGLSWFrameBuffer::StretchRect(HWSurface *src, const LTRBRect *srcrect, HWSurface *dest) { }
+bool OpenGLSWFrameBuffer::SetRenderTarget(int index, HWSurface *surface) { return true; }
+void OpenGLSWFrameBuffer::SetGammaRamp(const GammaRamp *ramp) { }
+
+void OpenGLSWFrameBuffer::SetPixelShaderConstantF(int uniformIndex, const float *data, int vec4fcount)
+{
+	glUniform4fv(uniformIndex, vec4fcount, data);
+}
+
+void OpenGLSWFrameBuffer::SetHWPixelShader(HWPixelShader *shader)
+{
+	if (shader)
+		glUseProgram(shader->Program);
+	else
+		glUseProgram(0);
+}
+
+void OpenGLSWFrameBuffer::SetStreamSource(HWVertexBuffer *vertexBuffer)
+{
+	if (vertexBuffer)
+		glBindVertexArray(vertexBuffer->VertexArray);
+	else
+		glBindVertexArray(0);
+}
+
+void OpenGLSWFrameBuffer::SetIndices(HWIndexBuffer *indexBuffer)
+{
+	if (indexBuffer)
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer->Buffer);
+	else
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void OpenGLSWFrameBuffer::DrawTriangleFans(int count, const FBVERTEX *vertices)
+{
+	GLint oldBinding = 0;
+	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &oldBinding);
+
+	if (!StreamVertexBuffer)
+	{
+		StreamVertexBuffer = std::make_unique<HWVertexBuffer>();
+		glGenVertexArrays(1, (GLuint*)&StreamVertexBuffer->VertexArray);
+		glGenBuffers(1, (GLuint*)&StreamVertexBuffer->Buffer);
+		glBindVertexArray(StreamVertexBuffer->VertexArray);
+		glBindBuffer(GL_ARRAY_BUFFER, StreamVertexBuffer->Buffer);
+		glBufferData(GL_ARRAY_BUFFER, count * sizeof(FBVERTEX), vertices, GL_STREAM_DRAW);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(FBVERTEX), (const GLvoid*)offsetof(FBVERTEX, x));
+		glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(FBVERTEX), (const GLvoid*)offsetof(FBVERTEX, color0));
+		glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(FBVERTEX), (const GLvoid*)offsetof(FBVERTEX, color1));
+		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(FBVERTEX), (const GLvoid*)offsetof(FBVERTEX, tu));
+	}
+	else
+	{
+		glBindVertexArray(StreamVertexBuffer->VertexArray);
+		glBindBuffer(GL_ARRAY_BUFFER, StreamVertexBuffer->Buffer);
+		glBufferData(GL_ARRAY_BUFFER, count * sizeof(FBVERTEX), vertices, GL_STREAM_DRAW);
+	}
+
+	glDrawArrays(GL_TRIANGLE_FAN, 0, count);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(oldBinding);
+}
+
+void OpenGLSWFrameBuffer::DrawPoints(int count, const FBVERTEX *vertices)
+{
+	GLint oldBinding = 0;
+	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &oldBinding);
+
+	if (!StreamVertexBuffer)
+	{
+		StreamVertexBuffer = std::make_unique<HWVertexBuffer>();
+		glGenVertexArrays(1, (GLuint*)&StreamVertexBuffer->VertexArray);
+		glGenBuffers(1, (GLuint*)&StreamVertexBuffer->Buffer);
+		glBindVertexArray(StreamVertexBuffer->VertexArray);
+		glBindBuffer(GL_ARRAY_BUFFER, StreamVertexBuffer->Buffer);
+		glBufferData(GL_ARRAY_BUFFER, count * sizeof(FBVERTEX), vertices, GL_STREAM_DRAW);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(FBVERTEX), (const GLvoid*)offsetof(FBVERTEX, x));
+		glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(FBVERTEX), (const GLvoid*)offsetof(FBVERTEX, color0));
+		glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(FBVERTEX), (const GLvoid*)offsetof(FBVERTEX, color1));
+		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(FBVERTEX), (const GLvoid*)offsetof(FBVERTEX, tu));
+	}
+	else
+	{
+		glBindVertexArray(StreamVertexBuffer->VertexArray);
+		glBindBuffer(GL_ARRAY_BUFFER, StreamVertexBuffer->Buffer);
+		glBufferData(GL_ARRAY_BUFFER, count * sizeof(FBVERTEX), vertices, GL_STREAM_DRAW);
+	}
+
+	glDrawArrays(GL_POINTS, 0, count);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(oldBinding);
+}
+
+void OpenGLSWFrameBuffer::DrawLineList(int count)
+{
+	glDrawArrays(GL_LINES, 0, count);
+}
+
+void OpenGLSWFrameBuffer::DrawTriangleList(int minIndex, int numVertices, int startIndex, int primitiveCount)
+{
+	glDrawRangeElements(GL_TRIANGLES, minIndex, minIndex + numVertices - 1, primitiveCount * 3, GL_UNSIGNED_SHORT, (const void*)(startIndex * sizeof(uint16_t)));
+}
+
+void OpenGLSWFrameBuffer::Present()
+{
+	SwapBuffers();
+}
+
 //==========================================================================
 //
 // OpenGLSWFrameBuffer :: SetInitialState
@@ -274,7 +524,6 @@ bool OpenGLSWFrameBuffer::CreateResources()
 	{
 		return false;
 	}
-	CreateGammaTexture();
 	CreateBlockSurfaces();
 	return true;
 }
@@ -293,7 +542,7 @@ bool OpenGLSWFrameBuffer::LoadShaders()
 	static const char models[][4] = { "30/", "20/", "14/" };
 	FString shaderdir, shaderpath;
 	unsigned model, i;
-	int lump;
+	int lump, lumpvert;
 
 	// We determine the best available model simply by trying them all in
 	// order of decreasing preference.
@@ -304,12 +553,13 @@ bool OpenGLSWFrameBuffer::LoadShaders()
 		for (i = 0; i < NUM_SHADERS; ++i)
 		{
 			shaderpath = shaderdir;
-			shaderpath += ShaderNames[i];
-			lump = Wads.CheckNumForFullName(shaderpath);
-			if (lump >= 0)
+			lump = Wads.CheckNumForFullName(shaderpath + ShaderNames[i] + ".fp");
+			lumpvert = Wads.CheckNumForFullName(shaderpath + ShaderNames[i] + ".vp");
+			if (lump >= 0 && lumpvert >= 0)
 			{
 				FMemLump data = Wads.ReadLump(lump);
-				if (!CreatePixelShader((uint32_t *)data.GetMem(), &Shaders[i]) && i < SHADER_BurnWipe)
+				FMemLump datavert = Wads.ReadLump(lumpvert);
+				if (!CreatePixelShader(datavert.GetMem(), data.GetMem(), &Shaders[i]) && i < SHADER_BurnWipe)
 				{
 					break;
 				}
@@ -531,17 +781,6 @@ bool OpenGLSWFrameBuffer::CreatePaletteTexture()
 		return false;
 	}
 	return true;
-}
-
-//==========================================================================
-//
-// OpenGLSWFrameBuffer :: CreateGammaTexture
-//
-//==========================================================================
-
-bool OpenGLSWFrameBuffer::CreateGammaTexture()
-{
-	return false;
 }
 
 //==========================================================================
@@ -3293,7 +3532,7 @@ void OpenGLSWFrameBuffer::SetTexture(int tnum, HWTexture *texture)
 		{
 			Texture[tnum] = texture;
 			glActiveTexture(GL_TEXTURE0 + tnum);
-			glBindTexture(GL_TEXTURE_2D, texture->Handle);
+			glBindTexture(GL_TEXTURE_2D, texture->Texture);
 			if (Texture[tnum]->WrapS != SamplerWrapS[tnum])
 			{
 				Texture[tnum]->WrapS = SamplerWrapS[tnum];

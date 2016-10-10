@@ -493,8 +493,72 @@ state_call_params(X) ::= .									{ X = NULL; }
 state_call_params(X) ::= LPAREN func_expr_list(A) RPAREN.	{ X = A; /*X-overwrites-A*/ }
 
 /* Definition of a default class instance. */
-%type default_def {ZCC_CompoundStmt *}
-default_def(X) ::= DEFAULT compound_statement(A).			{ X = A; /*X-overwrites-A*/ X->NodeType = AST_Default; }
+%type default_def {ZCC_Default *}
+%type default_statement_list{ZCC_Statement *}
+%type default_statement{ZCC_Statement *}
+
+default_def(X) ::= DEFAULT LBRACE(T) RBRACE.
+{
+	NEW_AST_NODE(Default,stmt,T);
+	stmt->Content = NULL;
+	X = stmt;
+}
+default_def(X) ::= DEFAULT LBRACE(T) default_statement_list(A) RBRACE.
+{
+	NEW_AST_NODE(Default,stmt,T);
+	stmt->Content = A;
+	X = stmt;
+}
+default_def(X) ::= DEFAULT LBRACE(T) error RBRACE.
+{
+	NEW_AST_NODE(Default,stmt,T);
+	stmt->Content = NULL;
+	X = stmt;
+}
+
+default_statement_list(X) ::= default_statement(A).
+{
+	X = A; /*X-overwrites-A*/
+}
+default_statement_list(X) ::= default_statement_list(X) default_statement(B).
+{
+	SAFE_APPEND(X,B);
+}
+
+
+default_statement(X) ::= SEMICOLON.							{ X = NULL; }
+//default_statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
+default_statement(X) ::= property_statement(A) SEMICOLON.	{ X = A; /*X-overwrites-A*/ }
+default_statement(X) ::= flag_statement(A).					{ X = A; /*X-overwrites-A*/ }
+
+%type flag_statement { ZCC_FlagStmt *}
+
+flag_statement(X) ::= ADD dottable_id(A).
+{
+	NEW_AST_NODE(FlagStmt, type, A);
+	type->set = true;
+	type->name = A;
+	X = type;
+}
+flag_statement(X) ::= SUB dottable_id(A).
+{
+	NEW_AST_NODE(FlagStmt, type, A);
+	type->set = false;
+	type->name = A;
+	X = type;
+}
+
+%type property_statement{ZCC_PropertyStmt *}
+
+property_statement(X) ::= dottable_id(A) expr_list(B).
+{
+	NEW_AST_NODE(PropertyStmt,stmt,A);
+	stmt->Prop = A;
+	stmt->Values = B;
+	X = stmt;
+}
+
+
 
 /* Type names */
 %type type_name {ZCC_BasicType *}

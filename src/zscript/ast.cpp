@@ -814,6 +814,26 @@ static void PrintFuncDeclarator(FLispString &out, ZCC_TreeNode *node)
 	out.Close();
 }
 
+static void PrintFlagStmt(FLispString &out, ZCC_TreeNode *node)
+{
+	auto dnode = (ZCC_FlagStmt *)node;
+	out.Break();
+	out.Open("flag-stmt");
+	PrintNodes(out, dnode->name, false);
+	out.AddInt(dnode->set);
+	out.Close();
+}
+
+static void PrintPropertyStmt(FLispString &out, ZCC_TreeNode *node)
+{
+	auto dnode = (ZCC_PropertyStmt *)node;
+	out.Break();
+	out.Open("property-stmt");
+	PrintNodes(out, dnode->Prop, false);
+	PrintNodes(out, dnode->Values, false);
+	out.Close();
+}
+
 void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *) =
 {
 	PrintIdentifier,
@@ -863,7 +883,9 @@ void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *
 	PrintDeclarator,
 	PrintVarDeclarator,
 	PrintFuncDeclarator,
-	PrintDefault
+	PrintDefault,
+	PrintFlagStmt,
+	PrintPropertyStmt
 };
 
 FString ZCC_PrintAST(ZCC_TreeNode *root)

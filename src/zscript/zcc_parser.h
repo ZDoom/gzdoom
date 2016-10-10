@@ -94,6 +94,8 @@ enum EZCCTreeNodeType
 	AST_VarDeclarator,
 	AST_FuncDeclarator,
 	AST_Default,
+	AST_FlagStmt,
+	AST_PropertyStmt,
 
 	NUM_AST_NODE_TYPES
 };
@@ -468,6 +470,19 @@ struct ZCC_FuncDeclarator : ZCC_Declarator
 
 struct ZCC_Default : ZCC_CompoundStmt
 {
+};
+
+struct ZCC_PropertyStmt : ZCC_Statement
+{
+	ZCC_Identifier *Prop;
+	ZCC_Expression *Values;
+};
+
+
+struct ZCC_FlagStmt : ZCC_Statement
+{
+	ZCC_Identifier *name;
+	bool set;
 };
 
 typedef ZCC_ExprConstant *(*EvalConst1op)(ZCC_ExprConstant *);

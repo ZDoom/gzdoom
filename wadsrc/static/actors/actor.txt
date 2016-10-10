@@ -58,6 +58,8 @@ ACTOR Actor native //: Thinker
 	native float GetSpriteRotation(int ptr = AAPTR_DEFAULT);
 	native int GetMissileDamage(int mask, int add, int ptr = AAPTR_DEFAULT);
 	action native int OverlayID();
+	action native float OverlayX(int layer = 0);
+	action native float OverlayY(int layer = 0);
 
 	// Action functions
 	// Meh, MBF redundant functions. Only for DeHackEd support.

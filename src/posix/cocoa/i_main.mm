@@ -130,6 +130,53 @@ void Mac_I_FatalError(const char* const message)
 }
 
 
+static void I_DetectOS()
+{
+	SInt32 majorVersion = 0;
+	Gestalt(gestaltSystemVersionMajor, &majorVersion);
+	
+	SInt32 minorVersion = 0;
+	Gestalt(gestaltSystemVersionMinor, &minorVersion);
+	
+	SInt32 bugFixVersion = 0;
+	Gestalt(gestaltSystemVersionBugFix, &bugFixVersion);
+	
+	const char* name = "Unknown version";
+	
+	if (10 == majorVersion) switch (minorVersion)
+	{
+		case  4: name = "Mac OS X Tiger";        break;
+		case  5: name = "Mac OS X Leopard";      break;
+		case  6: name = "Mac OS X Snow Leopard"; break;
+		case  7: name = "Mac OS X Lion";         break;
+		case  8: name = "OS X Mountain Lion";    break;
+		case  9: name = "OS X Mavericks";        break;
+		case 10: name = "OS X Yosemite";         break;
+		case 11: name = "OS X El Capitan";       break;
+		case 12: name = "macOS Sierra";          break;
+	}
+
+	char release[16] = {};
+	size_t size = sizeof release - 1;
+	sysctlbyname("kern.osversion", release, &size, nullptr, 0);
+	
+	const char* const architecture =
+#ifdef __i386__
+		"32-bit Intel";
+#elif defined __x86_64__
+		"64-bit Intel";
+#elif defined __ppc__
+		"32-bit PowerPC";
+#elif defined __ppc64__
+		"64-bit PowerPC";
+#else
+		"Unknown";
+#endif
+	
+	Printf("OS: %s %d.%d.%d (%s) %s\n", name, majorVersion, minorVersion, bugFixVersion, release, architecture);
+}
+
+
 DArgs* Args; // command line arguments
 
 
@@ -165,6 +212,8 @@ void OriginalMainTry(int argc, char** argv)
 	progdir += "/";
 
 	C_InitConsole(80 * 8, 25 * 8, false);
+	
+	I_DetectOS();
 	D_DoomMain();
 }
 

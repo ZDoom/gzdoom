@@ -1436,7 +1436,7 @@ DEFINE_PROPERTY(spriterotation, F, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(visibleangles, Ff, Actor)
+DEFINE_PROPERTY(visibleangles, FF, Actor)
 {
 	PROP_DOUBLE_PARM(visstart, 0);
 	PROP_DOUBLE_PARM(visend, 1);
@@ -1447,7 +1447,7 @@ DEFINE_PROPERTY(visibleangles, Ff, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(visiblepitch, Ff, Actor)
+DEFINE_PROPERTY(visiblepitch, FF, Actor)
 {
 	PROP_DOUBLE_PARM(visstart, 0);
 	PROP_DOUBLE_PARM(visend, 1);

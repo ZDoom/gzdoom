@@ -85,32 +85,18 @@ private:
 		uint16_t red[256], green[256], blue[256];
 	};
 
-	struct LockedRect
-	{
-		int Pitch;
-		void *pBits;
-	};
-
 	struct LTRBRect
 	{
 		int left, top, right, bottom;
 	};
 
-	class HWSurface
-	{
-	public:
-		bool LockRect(LockedRect *outRect, LTRBRect *srcRect, bool discard) { outRect->Pitch = 0; outRect->pBits = nullptr; return false; }
-		void UnlockRect() { }
-	};
-
 	class HWTexture
 	{
 	public:
-		bool LockRect(LockedRect *outRect, LTRBRect *srcRect, bool discard) { outRect->Pitch = 0; outRect->pBits = nullptr; return false; }
-		void UnlockRect() { }
-		bool GetSurfaceLevel(int level, HWSurface **outSurface) { *outSurface = nullptr; return false; }
+		~HWTexture();
 
 		int Texture = 0;
+		int Buffer = 0;
 		int WrapS = 0;
 		int WrapT = 0;
 		int Format = 0;
@@ -119,60 +105,43 @@ private:
 	class HWVertexBuffer
 	{
 	public:
-		~HWVertexBuffer()
-		{
-			if (Buffer != 0) glDeleteVertexArrays(1, (GLuint*)&VertexArray);
-			if (Buffer != 0) glDeleteBuffers(1, (GLuint*)&Buffer);
-		}
+		~HWVertexBuffer();
 
-		FBVERTEX *Lock() { return nullptr; }
-		void Unlock() { }
+		FBVERTEX *Lock();
+		void Unlock();
 
-		int Buffer = 0;
 		int VertexArray = 0;
+		int Buffer = 0;
 	};
 
 	class HWIndexBuffer
 	{
 	public:
-		~HWIndexBuffer()
-		{
-			if (Buffer != 0) glDeleteBuffers(1, (GLuint*)&Buffer);
-		}
+		~HWIndexBuffer();
 
-		uint16_t *Lock() { return nullptr; }
-		void Unlock() { }
+		uint16_t *Lock();
+		void Unlock();
 
 		int Buffer = 0;
+
+	private:
+		int LockedOldBinding = 0;
 	};
 
 	class HWPixelShader
 	{
 	public:
-		~HWPixelShader()
-		{
-			if (Program != 0) glDeleteProgram(Program);
-			if (VertexShader != 0) glDeleteShader(VertexShader);
-			if (FragmentShader != 0) glDeleteShader(FragmentShader);
-		}
+		~HWPixelShader();
 
 		int Program = 0;
 		int VertexShader = 0;
 		int FragmentShader = 0;
 	};
 
-	bool CreatePixelShader(const void *vertexsrc, const void *fragmentsrc, HWPixelShader **outShader);
+	bool CreatePixelShader(FString vertexsrc, FString fragmentsrc, const FString &defines, HWPixelShader **outShader);
 	bool CreateVertexBuffer(int size, HWVertexBuffer **outVertexBuffer);
 	bool CreateIndexBuffer(int size, HWIndexBuffer **outIndexBuffer);
-	bool CreateOffscreenPlainSurface(int width, int height, int format, HWSurface **outSurface);
 	bool CreateTexture(int width, int height, int levels, int format, HWTexture **outTexture);
-	bool CreateRenderTarget(int width, int height, int format, HWSurface **outSurface);
-	bool GetBackBuffer(HWSurface **outSurface);
-	bool GetRenderTarget(int index, HWSurface **outSurface);
-	void GetRenderTargetData(HWSurface *a, HWSurface *b);
-	void ColorFill(HWSurface *surface, float red, float green, float blue);
-	void StretchRect(HWSurface *src, const LTRBRect *srcrect, HWSurface *dest);
-	bool SetRenderTarget(int index, HWSurface *surface);
 	void SetGammaRamp(const GammaRamp *ramp);
 	void SetPixelShaderConstantF(int uniformIndex, const float *data, int vec4fcount);
 	void SetHWPixelShader(HWPixelShader *shader);
@@ -362,19 +331,17 @@ private:
 
 		NUM_SHADERS
 	};
-	static const char *const ShaderNames[NUM_SHADERS];
+	static const char *const ShaderDefines[NUM_SHADERS];
 
 	void Flip();
 	void SetInitialState();
 	bool CreateResources();
 	void ReleaseResources();
 	bool LoadShaders();
-	void CreateBlockSurfaces();
 	bool CreateFBTexture();
 	bool CreatePaletteTexture();
 	bool CreateVertexes();
 	void UploadPalette();
-	void UpdateGammaTexture(float igamma);
 	void CalcFullscreenCoords(FBVERTEX verts[4], bool viewarea_only, bool can_double, uint32_t color0, uint32_t color1) const;
 	bool Reset();
 	HWTexture *GetCurrentScreen();
@@ -397,7 +364,6 @@ private:
 	void BeginLineBatch();
 	void EndLineBatch();
 	void EndBatch();
-	void CopyNextFrontBuffer();
 
 	// State
 	void EnableAlphaTest(BOOL enabled);
@@ -431,10 +397,7 @@ private:
 	int FlashAmount;
 	int TrueHeight;
 	int PixelDoubling;
-	int SkipAt;
 	int LBOffsetI;
-	int RenderTextureToggle;
-	int CurrRenderTexture;
 	float LBOffset;
 	float Gamma;
 	bool UpdatePending;
@@ -448,34 +411,28 @@ private:
 	bool GatheringWipeScreen;
 	bool AALines;
 	uint8_t BlockNum;
-	OpenGLPal *Palettes;
-	OpenGLTex *Textures;
-	Atlas *Atlases;
+	OpenGLPal *Palettes = nullptr;
+	OpenGLTex *Textures = nullptr;
+	Atlas *Atlases = nullptr;
 
-	HWTexture *FBTexture;
-	HWTexture *TempRenderTexture, *RenderTexture[2];
-	HWTexture *PaletteTexture;
-	HWTexture *GammaTexture;
-	HWTexture *ScreenshotTexture;
-	HWSurface *ScreenshotSurface;
-	HWSurface *FrontCopySurface;
+	HWTexture *FBTexture = nullptr;
+	HWTexture *PaletteTexture = nullptr;
+	HWTexture *ScreenshotTexture = nullptr;
 
-	HWVertexBuffer *VertexBuffer;
-	FBVERTEX *VertexData;
-	HWIndexBuffer *IndexBuffer;
-	uint16_t *IndexData;
-	BufferedTris *QuadExtra;
+	HWVertexBuffer *VertexBuffer = nullptr;
+	FBVERTEX *VertexData = nullptr;
+	HWIndexBuffer *IndexBuffer = nullptr;
+	uint16_t *IndexData = nullptr;
+	BufferedTris *QuadExtra = nullptr;
 	int VertexPos;
 	int IndexPos;
 	int QuadBatchPos;
 	enum { BATCH_None, BATCH_Quads, BATCH_Lines } BatchType;
 
 	HWPixelShader *Shaders[NUM_SHADERS];
-	HWPixelShader *GammaShader;
+	HWPixelShader *GammaShader = nullptr;
 
-	HWSurface *BlockSurface[2];
-	HWSurface *OldRenderTarget;
-	HWTexture *InitialWipeScreen, *FinalWipeScreen;
+	HWTexture *InitialWipeScreen = nullptr, *FinalWipeScreen = nullptr;
 
 	class Wiper
 	{

@@ -1,0 +1,17 @@
+
+in vec4 AttrPosition;
+in vec4 AttrColor0;
+in vec4 AttrColor1;
+in vec4 AttrTexCoord0;
+
+out vec4 PixelColor0;
+out vec4 PixelColor1;
+out vec4 PixelTexCoord0;
+
+void main()
+{
+	gl_Position = AttrPosition;
+	PixelColor0 = AttrColor0;
+	PixelColor1 = AttrColor1;
+	PixelTexCoord0 = AttrTexCoord0;
+}

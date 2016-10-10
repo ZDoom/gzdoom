@@ -71,7 +71,6 @@
 #include "gl/utility/gl_templates.h"
 #include "gl/gl_functions.h"
 
-CVAR(Bool, gl_antilag, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, gl_showpacks, 0, 0)
 #ifndef WIN32 // Defined in fb_d3d9 for Windows
 CVAR(Bool, vid_hwaalines, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -88,63 +87,66 @@ EXTERN_CVAR(Int, vid_refreshrate)
 
 extern cycle_t BlitCycles;
 
+void gl_LoadExtensions();
+
 IMPLEMENT_CLASS(OpenGLSWFrameBuffer)
 
-const char *const OpenGLSWFrameBuffer::ShaderNames[OpenGLSWFrameBuffer::NUM_SHADERS] =
+const char *const OpenGLSWFrameBuffer::ShaderDefines[OpenGLSWFrameBuffer::NUM_SHADERS] =
 {
-	"NormalColor",
-	"NormalColorPal",
-	"NormalColorInv",
-	"NormalColorPalInv",
+	"#define ENORMALCOLOR\n#define PALTEX 0\n#define DINVERT 0", // NormalColor
+	"#define ENORMALCOLOR\n#define PALTEX 1\n#define INVERT 0", // NormalColorPal
+	"#define ENORMALCOLOR\n#define PALTEX 0\n#define INVERT 1", // NormalColorInv
+	"#define ENORMALCOLOR\n#define PALTEX 1\n#define INVERT 1", // NormalColorPalInv
 
-	"RedToAlpha",
-	"RedToAlphaInv",
+	"#define EREDTOALPHA\n#define INVERT 0", // RedToAlpha
+	"#define EREDTOALPHA\n#define INVERT 1", // RedToAlphaInv
 
-	"VertexColor",
+	"#define EVERTEXCOLOR", // VertexColor
 
-	"SpecialColormap",
-	"SpecialColorMapPal",
+	"#define ESPECIALCOLORMAP\n#define PALTEX 0\n#define INVERT 0", // SpecialColormap
+	"#define ESPECIALCOLORMAP\n#define PALTEX 1\n#define INVERT 0", // SpecialColorMapPal
 
-	"InGameColormap",
-	"InGameColormapDesat",
-	"InGameColormapInv",
-	"InGameColormapInvDesat",
-	"InGameColormapPal",
-	"InGameColormapPalDesat",
-	"InGameColormapPalInv",
-	"InGameColormapPalInvDesat",
+	"#define EINGAMECOLORMAP\n#define PALTEX 0\n#define INVERT 0\n#define DESAT 0", // InGameColormap
+	"#define EINGAMECOLORMAP\n#define PALTEX 0\n#define INVERT 0\n#define DESAT 1", // InGameColormapDesat
+	"#define EINGAMECOLORMAP\n#define PALTEX 0\n#define INVERT 1\n#define DESAT 0", // InGameColormapInv
+	"#define EINGAMECOLORMAP\n#define PALTEX 0\n#define INVERT 1\n#define DESAT 1", // InGameColormapInvDesat
+	"#define EINGAMECOLORMAP\n#define PALTEX 1\n#define INVERT 0\n#define DESAT 0", // InGameColormapPal
+	"#define EINGAMECOLORMAP\n#define PALTEX 1\n#define INVERT 0\n#define DESAT 1", // InGameColormapPalDesat
+	"#define EINGAMECOLORMAP\n#define PALTEX 1\n#define INVERT 1\n#define DESAT 0", // InGameColormapPalInv
+	"#define EINGAMECOLORMAP\n#define PALTEX 1\n#define INVERT 1\n#define DESAT 1", // InGameColormapPalInvDesat
 
-	"BurnWipe",
-	"GammaCorrection",
+	"#define EBURNWIPE", // BurnWipe
+	"#define EGAMMACORRECTION", // GammaCorrection
 };
 
 OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen) :
 	Super(hMonitor, width, height, bits, refreshHz, fullscreen) 
 {
+	// To do: this needs to cooperate with the same static in OpenGLFrameBuffer::InitializeState
+	static bool first = true;
+	if (first)
+	{
+		ogl_LoadFunctions();
+	}
+	gl_LoadExtensions();
+	Super::InitializeState();
+
 	// SetVSync needs to be at the very top to workaround a bug in Nvidia's OpenGL driver.
 	// If wglSwapIntervalEXT is called after glBindFramebuffer in a frame the setting is not changed!
-	SetVSync(vid_vsync);
+	//SetVSync(vid_vsync);
 
 	VertexBuffer = nullptr;
 	IndexBuffer = nullptr;
 	FBTexture = nullptr;
-	TempRenderTexture = nullptr;
-	RenderTexture[0] = nullptr;
-	RenderTexture[1] = nullptr;
 	InitialWipeScreen = nullptr;
 	ScreenshotTexture = nullptr;
-	ScreenshotSurface = nullptr;
 	FinalWipeScreen = nullptr;
 	PaletteTexture = nullptr;
-	GammaTexture = nullptr;
-	FrontCopySurface = nullptr;
 	for (int i = 0; i < NUM_SHADERS; ++i)
 	{
 		Shaders[i] = nullptr;
 	}
 	GammaShader = nullptr;
-	BlockSurface[0] = nullptr;
-	BlockSurface[1] = nullptr;
 	VSync = vid_vsync;
 	BlendingRect.left = 0;
 	BlendingRect.top = 0;
@@ -160,9 +162,6 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 	QuadExtra = new BufferedTris[MAX_QUAD_BATCH];
 	Atlases = nullptr;
 	PixelDoubling = 0;
-	SkipAt = -1;
-	CurrRenderTexture = 0;
-	RenderTextureToggle = 0;
 
 	Gamma = 1.0;
 	FlashColor0 = 0;
@@ -180,7 +179,7 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 
 	memcpy(SourcePalette, GPalette.BaseColors, sizeof(PalEntry) * 256);
 
-	Windowed = !(static_cast<Win32Video *>(Video)->GoFullscreen(fullscreen));
+	//Windowed = !(static_cast<Win32Video *>(Video)->GoFullscreen(fullscreen));
 
 	TrueHeight = height;
 	/*if (fullscreen)
@@ -209,7 +208,56 @@ OpenGLSWFrameBuffer::~OpenGLSWFrameBuffer()
 	delete[] QuadExtra;
 }
 
-bool OpenGLSWFrameBuffer::CreatePixelShader(const void *vertexsrc, const void *fragmentsrc, HWPixelShader **outShader)
+OpenGLSWFrameBuffer::HWTexture::~HWTexture()
+{
+	if (Texture != 0) glDeleteTextures(1, (GLuint*)&Texture);
+	if (Buffer != 0) glDeleteBuffers(1, (GLuint*)&Buffer);
+}
+
+OpenGLSWFrameBuffer::HWVertexBuffer::~HWVertexBuffer()
+{
+	if (VertexArray != 0) glDeleteVertexArrays(1, (GLuint*)&VertexArray);
+	if (Buffer != 0) glDeleteBuffers(1, (GLuint*)&Buffer);
+}
+
+OpenGLSWFrameBuffer::FBVERTEX *OpenGLSWFrameBuffer::HWVertexBuffer::Lock()
+{
+	glBindBuffer(GL_ARRAY_BUFFER, Buffer);
+	return (FBVERTEX*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+}
+
+void OpenGLSWFrameBuffer::HWVertexBuffer::Unlock()
+{
+	glUnmapBuffer(GL_ARRAY_BUFFER);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+OpenGLSWFrameBuffer::HWIndexBuffer::~HWIndexBuffer()
+{
+	if (Buffer != 0) glDeleteBuffers(1, (GLuint*)&Buffer);
+}
+
+uint16_t *OpenGLSWFrameBuffer::HWIndexBuffer::Lock()
+{
+	glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &LockedOldBinding);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Buffer);
+	return (uint16_t*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
+}
+
+void OpenGLSWFrameBuffer::HWIndexBuffer::Unlock()
+{
+	glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, LockedOldBinding);
+}
+
+OpenGLSWFrameBuffer::HWPixelShader::~HWPixelShader()
+{
+	if (Program != 0) glDeleteProgram(Program);
+	if (VertexShader != 0) glDeleteShader(VertexShader);
+	if (FragmentShader != 0) glDeleteShader(FragmentShader);
+}
+
+bool OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragmentsrc, const FString &defines, HWPixelShader **outShader)
 {
 	auto shader = std::make_unique<HWPixelShader>();
 
@@ -217,25 +265,34 @@ bool OpenGLSWFrameBuffer::CreatePixelShader(const void *vertexsrc, const void *f
 	shader->VertexShader = glCreateShader(GL_VERTEX_SHADER);
 	shader->FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
+	vertexsrc = "#version 130\n" + defines + "\n#line 0\n" + vertexsrc;
+	fragmentsrc = "#version 130\n" + defines + "\n#line 0\n" + fragmentsrc;
+
 	{
-		int lengths[1] = { (int)strlen((const char*)vertexsrc) };
-		const char *sources[1] = { (const char*)vertexsrc };
+		int lengths[1] = { (int)vertexsrc.Len() };
+		const char *sources[1] = { vertexsrc.GetChars() };
 		glShaderSource(shader->VertexShader, 1, sources, lengths);
 		glCompileShader(shader->VertexShader);
 	}
 
 	{
-		int lengths[1] = { (int)strlen((const char*)fragmentsrc) };
-		const char *sources[1] = { (const char*)fragmentsrc };
+		int lengths[1] = { (int)fragmentsrc.Len() };
+		const char *sources[1] = { fragmentsrc.GetChars() };
 		glShaderSource(shader->FragmentShader, 1, sources, lengths);
 		glCompileShader(shader->FragmentShader);
 	}
 
 	GLint status = 0;
+	int errorShader = shader->VertexShader;
 	glGetShaderiv(shader->VertexShader, GL_COMPILE_STATUS, &status);
-	if (status != GL_FALSE) glGetShaderiv(shader->FragmentShader, GL_COMPILE_STATUS, &status);
+	if (status != GL_FALSE) { errorShader = shader->FragmentShader; glGetShaderiv(shader->FragmentShader, GL_COMPILE_STATUS, &status); }
 	if (status == GL_FALSE)
 	{
+		static char buffer[10000];
+		GLsizei length = 0;
+		buffer[0] = 0;
+		glGetShaderInfoLog(errorShader, 10000, &length, buffer);
+
 		*outShader = nullptr;
 		return false;
 	}
@@ -308,6 +365,8 @@ bool OpenGLSWFrameBuffer::CreateTexture(int width, int height, int levels, int f
 {
 	auto obj = std::make_unique<HWTexture>();
 
+	obj->Format = format;
+
 	GLint oldBinding = 0;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
 
@@ -317,7 +376,7 @@ bool OpenGLSWFrameBuffer::CreateTexture(int width, int height, int levels, int f
 	switch (format)
 	{
 	case GL_R8: srcformat = GL_RED; break;
-	case GL_RGBA8: srcformat = GL_RGBA; break;
+	case GL_RGBA8: srcformat = GL_BGRA; break;
 	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT: srcformat = GL_RGB; break;
 	case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT: srcformat = GL_RGBA; break;
 	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT: srcformat = GL_RGBA; break;
@@ -327,6 +386,8 @@ bool OpenGLSWFrameBuffer::CreateTexture(int width, int height, int levels, int f
 		return false;
 	}
 	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, srcformat, GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	glBindTexture(GL_TEXTURE_2D, oldBinding);
 
@@ -334,16 +395,9 @@ bool OpenGLSWFrameBuffer::CreateTexture(int width, int height, int levels, int f
 	return true;
 }
 
-bool OpenGLSWFrameBuffer::CreateOffscreenPlainSurface(int width, int height, int format, HWSurface **outSurface) { *outSurface = nullptr; return false; }
-bool OpenGLSWFrameBuffer::CreateRenderTarget(int width, int height, int format, HWSurface **outSurface) { *outSurface = nullptr; return false; }
-bool OpenGLSWFrameBuffer::GetBackBuffer(HWSurface **outSurface) { *outSurface = nullptr; return false; }
-bool OpenGLSWFrameBuffer::GetRenderTarget(int index, HWSurface **outSurface) { *outSurface = nullptr; return false; }
-void OpenGLSWFrameBuffer::GetRenderTargetData(HWSurface *a, HWSurface *b) { }
-
-void OpenGLSWFrameBuffer::ColorFill(HWSurface *surface, float red, float green, float blue) { }
-void OpenGLSWFrameBuffer::StretchRect(HWSurface *src, const LTRBRect *srcrect, HWSurface *dest) { }
-bool OpenGLSWFrameBuffer::SetRenderTarget(int index, HWSurface *surface) { return true; }
-void OpenGLSWFrameBuffer::SetGammaRamp(const GammaRamp *ramp) { }
+void OpenGLSWFrameBuffer::SetGammaRamp(const GammaRamp *ramp)
+{
+}
 
 void OpenGLSWFrameBuffer::SetPixelShaderConstantF(int uniformIndex, const float *data, int vec4fcount)
 {
@@ -487,7 +541,6 @@ void OpenGLSWFrameBuffer::SetInitialState()
 
 	NeedGammaUpdate = true;
 	NeedPalUpdate = true;
-	OldRenderTarget = nullptr;
 
 	// This constant is used for grayscaling weights (.xyz) and color inversion (.w)
 	float weights[4] = { 77 / 256.f, 143 / 256.f, 37 / 256.f, 1 };
@@ -524,7 +577,6 @@ bool OpenGLSWFrameBuffer::CreateResources()
 	{
 		return false;
 	}
-	CreateBlockSurfaces();
 	return true;
 }
 
@@ -539,41 +591,35 @@ bool OpenGLSWFrameBuffer::CreateResources()
 
 bool OpenGLSWFrameBuffer::LoadShaders()
 {
-	static const char models[][4] = { "30/", "20/", "14/" };
+	int lumpvert = Wads.CheckNumForFullName("shaders/glsl/swshader.vp");
+	int lumpfrag = Wads.CheckNumForFullName("shaders/glsl/swshader.fp");
+	if (lumpvert < 0 || lumpfrag < 0)
+		return false;
+
+	FString vertsource = Wads.ReadLump(lumpvert).GetString();
+	FString fragsource = Wads.ReadLump(lumpfrag).GetString();
+
 	FString shaderdir, shaderpath;
-	unsigned model, i;
-	int lump, lumpvert;
+	unsigned int i;
 
 	// We determine the best available model simply by trying them all in
 	// order of decreasing preference.
-	for (model = 0; model < countof(models); ++model)
+	for (i = 0; i < NUM_SHADERS; ++i)
 	{
-		shaderdir = "shaders/gl/sm";
-		shaderdir += models[model];
-		for (i = 0; i < NUM_SHADERS; ++i)
+		shaderpath = shaderdir;
+		if (!CreatePixelShader(vertsource, fragsource, ShaderDefines[i], &Shaders[i]) && i < SHADER_BurnWipe)
 		{
-			shaderpath = shaderdir;
-			lump = Wads.CheckNumForFullName(shaderpath + ShaderNames[i] + ".fp");
-			lumpvert = Wads.CheckNumForFullName(shaderpath + ShaderNames[i] + ".vp");
-			if (lump >= 0 && lumpvert >= 0)
-			{
-				FMemLump data = Wads.ReadLump(lump);
-				FMemLump datavert = Wads.ReadLump(lumpvert);
-				if (!CreatePixelShader(datavert.GetMem(), data.GetMem(), &Shaders[i]) && i < SHADER_BurnWipe)
-				{
-					break;
-				}
-			}
+			break;
 		}
-		if (i == NUM_SHADERS)
-		{ // Success!
-			return true;
-		}
-		// Failure. Release whatever managed to load (which is probably nothing.)
-		for (i = 0; i < NUM_SHADERS; ++i)
-		{
-			SafeRelease(Shaders[i]);
-		}
+	}
+	if (i == NUM_SHADERS)
+	{ // Success!
+		return true;
+	}
+	// Failure. Release whatever managed to load (which is probably nothing.)
+	for (i = 0; i < NUM_SHADERS; ++i)
+	{
+		SafeRelease(Shaders[i]);
 	}
 	return false;
 }
@@ -590,7 +636,6 @@ void OpenGLSWFrameBuffer::ReleaseResources()
 	KillNativeTexs();
 	KillNativePals();
 	ReleaseDefaultPoolItems();
-	SafeRelease(ScreenshotSurface);
 	SafeRelease(ScreenshotTexture);
 	SafeRelease(PaletteTexture);
 	for (int i = 0; i < NUM_SHADERS; ++i)
@@ -616,14 +661,9 @@ void OpenGLSWFrameBuffer::ReleaseDefaultPoolItems()
 {
 	SafeRelease(FBTexture);
 	SafeRelease(FinalWipeScreen);
-	SafeRelease(RenderTexture[0]);
-	SafeRelease(RenderTexture[1]);
 	SafeRelease(InitialWipeScreen);
 	SafeRelease(VertexBuffer);
 	SafeRelease(IndexBuffer);
-	SafeRelease(BlockSurface[0]);
-	SafeRelease(BlockSurface[1]);
-	SafeRelease(FrontCopySurface);
 }
 
 bool OpenGLSWFrameBuffer::Reset()
@@ -633,30 +673,8 @@ bool OpenGLSWFrameBuffer::Reset()
 	{
 		return false;
 	}
-	CreateBlockSurfaces();
 	SetInitialState();
 	return true;
-}
-
-//==========================================================================
-//
-// OpenGLSWFrameBuffer :: CreateBlockSurfaces
-//
-// Create blocking surfaces for antilag. It's okay if these can't be
-// created; antilag just won't work.
-//
-//==========================================================================
-
-void OpenGLSWFrameBuffer::CreateBlockSurfaces()
-{
-	BlockNum = 0;
-	if (CreateOffscreenPlainSurface(16, 16, GL_RGBA8, &BlockSurface[0]))
-	{
-		if (!CreateOffscreenPlainSurface(16, 16, GL_RGBA8, &BlockSurface[1]))
-		{
-			SafeRelease(BlockSurface[0]);
-		}
-	}
 }
 
 //==========================================================================
@@ -691,80 +709,11 @@ void OpenGLSWFrameBuffer::KillNativeTexs()
 	}
 }
 
-//==========================================================================
-//
-// OpenGLSWFrameBuffer :: CreateFBTexture
-//
-// Creates the "Framebuffer" texture. With the advent of hardware-assisted
-// 2D, this is something of a misnomer now. The FBTexture is only used for
-// uploading the software 3D image to video memory so that it can be drawn
-// to the real frame buffer.
-//
-// It also creates the TempRenderTexture, since this seemed like a
-// convenient place to do so.
-//
-//==========================================================================
-
 bool OpenGLSWFrameBuffer::CreateFBTexture()
 {
-	if (!CreateTexture(Width, Height, 1, GL_R8, &FBTexture))
-	{
-		int pow2width, pow2height, i;
-
-		for (i = 1; i < Width; i <<= 1) {} pow2width = i;
-		for (i = 1; i < Height; i <<= 1) {} pow2height = i;
-
-		if (!CreateTexture(pow2width, pow2height, 1, GL_R8, &FBTexture))
-		{
-			return false;
-		}
-		else
-		{
-			FBWidth = pow2width;
-			FBHeight = pow2height;
-		}
-	}
-	else
-	{
-		FBWidth = Width;
-		FBHeight = Height;
-	}
-	RenderTextureToggle = 0;
-	RenderTexture[0] = nullptr;
-	RenderTexture[1] = nullptr;
-	if (!CreateTexture(FBWidth, FBHeight, 1, GL_RGBA8, &RenderTexture[0]))
-	{
-		return false;
-	}
-	if (Windowed || PixelDoubling)
-	{
-		// Windowed or pixel doubling: Create another render texture so we can flip between them.
-		RenderTextureToggle = 1;
-		if (!CreateTexture(FBWidth, FBHeight, 1, GL_RGBA8, &RenderTexture[1]))
-		{
-			return false;
-		}
-	}
-	else
-	{
-		// Fullscreen and not pixel doubling: Create a render target to have the back buffer copied to.
-		if (!CreateRenderTarget(Width, Height, GL_RGBA8, &FrontCopySurface))
-		{
-			return false;
-		}
-	}
-	// Initialize the TempRenderTextures to black.
-	for (int i = 0; i <= RenderTextureToggle; ++i)
-	{
-		HWSurface *surf;
-		if (RenderTexture[i]->GetSurfaceLevel(0, &surf))
-		{
-			ColorFill(surf, 0.0f, 0.0f, 0.0f);
-			delete surf;
-		}
-	}
-	TempRenderTexture = RenderTexture[0];
-	CurrRenderTexture = 0;
+	CreateTexture(Width, Height, 1, GL_R8, &FBTexture);
+	FBWidth = Width;
+	FBHeight = Height;
 	return true;
 }
 
@@ -814,7 +763,7 @@ bool OpenGLSWFrameBuffer::CreateVertexes()
 
 void OpenGLSWFrameBuffer::CalcFullscreenCoords(FBVERTEX verts[4], bool viewarea_only, bool can_double, uint32_t color0, uint32_t color1) const
 {
-	float offset = OldRenderTarget != nullptr ? 0 : LBOffset;
+	float offset = LBOffset;//OldRenderTarget != nullptr ? 0 : LBOffset;
 	float top = offset - 0.5f;
 	float texright = float(Width) / float(FBWidth);
 	float texbot = float(Height) / float(FBHeight);
@@ -1042,18 +991,6 @@ void OpenGLSWFrameBuffer::Update()
 			LOG("SetGammaRamp\n");
 			SetGammaRamp(&ramp);
 		}
-		else
-		{
-			if (igamma != 1)
-			{
-				UpdateGammaTexture(igamma);
-				GammaShader = Shaders[SHADER_GammaCorrection];
-			}
-			else
-			{
-				GammaShader = nullptr;
-			}
-		}
 		psgamma[2] = psgamma[1] = psgamma[0] = igamma;
 		psgamma[3] = 0.5;		// For SM14 version
 		SetPixelShaderConstantF(PSCONST_Gamma, psgamma, 1);
@@ -1094,21 +1031,6 @@ void OpenGLSWFrameBuffer::Flip()
 	DrawLetterbox();
 	DoWindowedGamma();
 
-	CopyNextFrontBuffer();
-
-	// Attempt to counter input lag.
-	if (gl_antilag && BlockSurface[0] != nullptr)
-	{
-		LockedRect lr;
-		volatile int dummy;
-		ColorFill(BlockSurface[BlockNum], 0.0f, 0x20/255.0f, 0x50/255.0f);
-		BlockNum ^= 1;
-		if (BlockSurface[BlockNum]->LockRect(&lr, nullptr, false))
-		{
-			dummy = *(int *)lr.pBits;
-			BlockSurface[BlockNum]->UnlockRect();
-		}
-	}
 	// Limiting the frame rate is as simple as waiting for the timer to signal this event.
 	if (FPSLimitEvent != nullptr)
 	{
@@ -1116,13 +1038,6 @@ void OpenGLSWFrameBuffer::Flip()
 	}
 	Present();
 	InScene = false;
-
-	if (RenderTextureToggle)
-	{
-		// Flip the TempRenderTexture to the other one now.
-		CurrRenderTexture ^= RenderTextureToggle;
-		TempRenderTexture = RenderTexture[CurrRenderTexture];
-	}
 
 	if (Windowed)
 	{
@@ -1139,42 +1054,6 @@ void OpenGLSWFrameBuffer::Flip()
 			Reset();
 
 			V_OutputResized(Width, Height);
-		}
-	}
-}
-
-//==========================================================================
-//
-// OpenGLSWFrameBuffer :: CopyNextFrontBuffer
-//
-// Duplicates the contents of the back buffer that will become the front
-// buffer upon Present into FrontCopySurface so that we can get the
-// contents of the display without wasting time in GetFrontBufferData().
-//
-//==========================================================================
-
-void OpenGLSWFrameBuffer::CopyNextFrontBuffer()
-{
-	HWSurface *backbuff;
-
-	if (Windowed || PixelDoubling)
-	{
-		// Windowed mode or pixel doubling: TempRenderTexture has what we want
-		SafeRelease(FrontCopySurface);
-		if (TempRenderTexture->GetSurfaceLevel(0, &backbuff))
-		{
-			FrontCopySurface = backbuff;
-		}
-	}
-	else
-	{
-		// Fullscreen, not pixel doubled: The back buffer has what we want,
-		// but it might be letter boxed.
-		if (GetBackBuffer(&backbuff))
-		{
-			LTRBRect srcrect = { 0, LBOffsetI, Width, LBOffsetI + Height };
-			StretchRect(backbuff, &srcrect, FrontCopySurface);
-			delete backbuff;
 		}
 	}
 }
@@ -1207,50 +1086,49 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 {
 	if (copy3d)
 	{
-		LTRBRect texrect = { 0, 0, Width, Height };
-		LockedRect lockrect;
-
-		if ((FBWidth == Width && FBHeight == Height &&
-			FBTexture->LockRect(&lockrect, nullptr, true)) ||
-			FBTexture->LockRect(&lockrect, &texrect, false))
+		if (FBTexture->Buffer == 0)
 		{
-			if (lockrect.Pitch == Pitch && Pitch == Width)
+			glGenBuffers(1, (GLuint*)&FBTexture->Buffer);
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, FBTexture->Buffer);
+			glBufferData(GL_PIXEL_UNPACK_BUFFER, Width * Height, nullptr, GL_STREAM_DRAW);
+		}
+		else
+		{
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, FBTexture->Buffer);
+		}
+
+		uint8_t *dest = (uint8_t*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+		if (dest)
+		{
+			if (Pitch == Width)
 			{
-				memcpy(lockrect.pBits, MemBuffer, Width * Height);
+				memcpy(dest, MemBuffer, Width * Height);
 			}
 			else
 			{
-				uint8_t *dest = (uint8_t *)lockrect.pBits;
 				uint8_t *src = MemBuffer;
 				for (int y = 0; y < Height; y++)
 				{
 					memcpy(dest, src, Width);
-					dest += lockrect.Pitch;
+					dest += Width;
 					src += Pitch;
 				}
 			}
-			FBTexture->UnlockRect();
+			glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+			GLint oldBinding = 0;
+			glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
+			glBindTexture(GL_TEXTURE_2D, FBTexture->Texture);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Width, Height, GL_R8, GL_UNSIGNED_BYTE, 0);
+			glBindTexture(GL_TEXTURE_2D, oldBinding);
 		}
+
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	}
 	InScene = true;
 	if (vid_hwaalines)
 		glEnable(GL_LINE_SMOOTH);
 	else
 		glDisable(GL_LINE_SMOOTH);
-	assert(OldRenderTarget == nullptr);
-	if (TempRenderTexture != nullptr &&
-		((Windowed && TempRenderTexture != FinalWipeScreen) || GatheringWipeScreen || PixelDoubling))
-	{
-		HWSurface *targetsurf;
-		if (TempRenderTexture->GetSurfaceLevel(0, &targetsurf))
-		{
-			if (GetRenderTarget(0, &OldRenderTarget))
-			{
-				SetRenderTarget(0, targetsurf);
-			}
-			delete targetsurf;
-		}
-	}
 
 	SetTexture(0, FBTexture);
 	SetPaletteTexture(PaletteTexture, 256, BorderColor);
@@ -1271,10 +1149,8 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 			}
 			else
 			{
-				color0 = ColorValue(realfixedcolormap->ColorizeStart[0] / 2,
-					realfixedcolormap->ColorizeStart[1] / 2, realfixedcolormap->ColorizeStart[2] / 2, 0);
-				color1 = ColorValue(realfixedcolormap->ColorizeEnd[0] / 2,
-					realfixedcolormap->ColorizeEnd[1] / 2, realfixedcolormap->ColorizeEnd[2] / 2, 1);
+				color0 = ColorValue(realfixedcolormap->ColorizeStart[0] / 2, realfixedcolormap->ColorizeStart[1] / 2, realfixedcolormap->ColorizeStart[2] / 2, 0);
+				color1 = ColorValue(realfixedcolormap->ColorizeEnd[0] / 2, realfixedcolormap->ColorizeEnd[1] / 2, realfixedcolormap->ColorizeEnd[2] / 2, 1);
 				SetPixelShader(Shaders[SHADER_SpecialColormapPal]);
 			}
 		}
@@ -1323,7 +1199,7 @@ void OpenGLSWFrameBuffer::DrawLetterbox()
 
 void OpenGLSWFrameBuffer::DoWindowedGamma()
 {
-	if (OldRenderTarget != nullptr)
+	/*if (OldRenderTarget != nullptr)
 	{
 		FBVERTEX verts[4];
 
@@ -1336,49 +1212,28 @@ void OpenGLSWFrameBuffer::DoWindowedGamma()
 		DrawTriangleFans(2, verts);
 		delete OldRenderTarget;
 		OldRenderTarget = nullptr;
-	}
-}
-
-//==========================================================================
-//
-// OpenGLSWFrameBuffer :: UpdateGammaTexture
-//
-// Updates the gamma texture used by the PS14 shader. We only use the first
-// half of the texture so that we needn't worry about imprecision causing
-// it to grab from the border.
-//
-//==========================================================================
-
-void OpenGLSWFrameBuffer::UpdateGammaTexture(float igamma)
-{
-	LockedRect lockrect;
-
-	if (GammaTexture != nullptr && GammaTexture->LockRect(&lockrect, nullptr, false))
-	{
-		uint8_t *pix = (uint8_t *)lockrect.pBits;
-		for (int i = 0; i <= 128; ++i)
-		{
-			pix[i * 4 + 2] = pix[i * 4 + 1] = pix[i * 4] = uint8_t(255.f * powf(i / 128.f, igamma));
-			pix[i * 4 + 3] = 255;
-		}
-		GammaTexture->UnlockRect();
-	}
+	}*/
 }
 
 void OpenGLSWFrameBuffer::UploadPalette()
 {
-	LockedRect lockrect;
-
-	if (SkipAt < 0)
+	if (PaletteTexture->Buffer == 0)
 	{
-		SkipAt = 256;
+		glGenBuffers(1, (GLuint*)&PaletteTexture->Buffer);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PaletteTexture->Buffer);
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, 256 * 4, nullptr, GL_STREAM_DRAW);
 	}
-	if (PaletteTexture->LockRect(&lockrect, nullptr, false))
+	else
 	{
-		uint8_t *pix = (uint8_t *)lockrect.pBits;
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PaletteTexture->Buffer);
+	}
+
+	uint8_t *pix = (uint8_t *)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+	if (pix)
+	{
 		int i;
 
-		for (i = 0; i < SkipAt; ++i, pix += 4)
+		for (i = 0; i < 256; ++i, pix += 4)
 		{
 			pix[0] = SourcePalette[i].b;
 			pix[1] = SourcePalette[i].g;
@@ -1394,9 +1249,16 @@ void OpenGLSWFrameBuffer::UploadPalette()
 			pix[2] = SourcePalette[i].r;
 			pix[3] = 255;
 		}
-		PaletteTexture->UnlockRect();
+		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+		GLint oldBinding = 0;
+		glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
+		glBindTexture(GL_TEXTURE_2D, PaletteTexture->Texture);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 1, GL_BGRA, GL_UNSIGNED_BYTE, 0);
+		glBindTexture(GL_TEXTURE_2D, oldBinding);
 		BorderColor = ColorXRGB(SourcePalette[255].r, SourcePalette[255].g, SourcePalette[255].b);
 	}
+
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 }
 
 PalEntry *OpenGLSWFrameBuffer::GetPalette()
@@ -1484,6 +1346,8 @@ void OpenGLSWFrameBuffer::SetBlendingRect(int x1, int y1, int x2, int y2)
 
 void OpenGLSWFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type)
 {
+	Super::GetScreenshotBuffer(buffer, pitch, color_type);
+	/*
 	LockedRect lrect;
 
 	if (!Accel2D)
@@ -1513,6 +1377,7 @@ void OpenGLSWFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch
 			color_type = SS_BGRA;
 		}
 	}
+	*/
 }
 
 //==========================================================================
@@ -1527,56 +1392,7 @@ void OpenGLSWFrameBuffer::ReleaseScreenshotBuffer()
 	{
 		Super::ReleaseScreenshotBuffer();
 	}
-	if (ScreenshotSurface != nullptr)
-	{
-		ScreenshotSurface->UnlockRect();
-		delete ScreenshotSurface;
-		ScreenshotSurface = nullptr;
-	}
 	SafeRelease(ScreenshotTexture);
-}
-
-//==========================================================================
-//
-// OpenGLSWFrameBuffer :: GetCurrentScreen
-//
-// Returns a texture containing the pixels currently visible on-screen.
-//
-//==========================================================================
-
-OpenGLSWFrameBuffer::HWTexture *OpenGLSWFrameBuffer::GetCurrentScreen()
-{
-	HWTexture *tex;
-	HWSurface *surf;
-	bool hr;
-
-	if (FrontCopySurface == nullptr)
-	{
-		return nullptr;
-	}
-
-	hr = CreateTexture(FBWidth, FBHeight, 1, GL_RGBA8, &tex);
-
-	if (!hr)
-	{
-		return nullptr;
-	}
-	if (!tex->GetSurfaceLevel(0, &surf))
-	{
-		delete tex;
-		return nullptr;
-	}
-
-	// Video -> System memory : use GetRenderTargetData
-	GetRenderTargetData(FrontCopySurface, surf);
-	delete surf;
-
-	if (!hr)
-	{
-		delete tex;
-		return nullptr;
-	}
-	return tex;
 }
 
 /**************************************************************************/
@@ -2013,7 +1829,6 @@ bool OpenGLSWFrameBuffer::OpenGLTex::Create(OpenGLSWFrameBuffer *fb, bool wrappi
 
 bool OpenGLSWFrameBuffer::OpenGLTex::Update()
 {
-	LockedRect lrect;
 	LTRBRect rect;
 	uint8_t *dest;
 
@@ -2025,27 +1840,44 @@ bool OpenGLSWFrameBuffer::OpenGLTex::Update()
 	int format = Box->Owner->Tex->Format;
 
 	rect = Box->Area;
-	if (!Box->Owner->Tex->LockRect(&lrect, &rect, false))
+
+	if (Box->Owner->Tex->Buffer == 0)
+		glGenBuffers(1, (GLuint*)&Box->Owner->Tex->Buffer);
+
+	int bytesPerPixel = 4;
+	switch (format)
+	{
+	case GL_R8: bytesPerPixel = 1; break;
+	case GL_RGBA8: bytesPerPixel = 4; break;
+	default: return false;
+	}
+
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, Box->Owner->Tex->Buffer);
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, (rect.right - rect.left) * (rect.bottom - rect.top) * bytesPerPixel, nullptr, GL_STREAM_DRAW);
+
+	int pitch = (rect.right - rect.left) * bytesPerPixel;
+	uint8_t *bits = (uint8_t *)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+	dest = bits;
+	if (!dest)
 	{
 		return false;
 	}
-	dest = (uint8_t *)lrect.pBits;
 	if (Box->Padded)
 	{
-		dest += lrect.Pitch + (format == GL_R8 ? 1 : 4);
+		dest += pitch + (format == GL_R8 ? 1 : 4);
 	}
-	GameTex->FillBuffer(dest, lrect.Pitch, GameTex->GetHeight(), ToTexFmt(format));
+	GameTex->FillBuffer(dest, pitch, GameTex->GetHeight(), ToTexFmt(format));
 	if (Box->Padded)
 	{
 		// Clear top padding row.
-		dest = (uint8_t *)lrect.pBits;
+		dest = bits;
 		int numbytes = GameTex->GetWidth() + 2;
 		if (format != GL_R8)
 		{
 			numbytes <<= 2;
 		}
 		memset(dest, 0, numbytes);
-		dest += lrect.Pitch;
+		dest += pitch;
 		// Clear left and right padding columns.
 		if (format == GL_R8)
 		{
@@ -2053,7 +1885,7 @@ bool OpenGLSWFrameBuffer::OpenGLTex::Update()
 			{
 				dest[0] = 0;
 				dest[numbytes - 1] = 0;
-				dest += lrect.Pitch;
+				dest += pitch;
 			}
 		}
 		else
@@ -2062,13 +1894,20 @@ bool OpenGLSWFrameBuffer::OpenGLTex::Update()
 			{
 				*(uint32_t *)dest = 0;
 				*(uint32_t *)(dest + numbytes - 4) = 0;
-				dest += lrect.Pitch;
+				dest += pitch;
 			}
 		}
 		// Clear bottom padding row.
 		memset(dest, 0, numbytes);
 	}
-	Box->Owner->Tex->UnlockRect();
+
+	glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+	GLint oldBinding = 0;
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
+	glBindTexture(GL_TEXTURE_2D, Box->Owner->Tex->Texture);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, format == GL_RGBA8 ? GL_BGRA : GL_RED, GL_UNSIGNED_BYTE, 0);
+	glBindTexture(GL_TEXTURE_2D, oldBinding);
+	glBindTexture(GL_PIXEL_UNPACK_BUFFER, 0);
 	return true;
 }
 
@@ -2199,18 +2038,28 @@ OpenGLSWFrameBuffer::OpenGLPal::~OpenGLPal()
 
 bool OpenGLSWFrameBuffer::OpenGLPal::Update()
 {
-	LockedRect lrect;
 	uint32_t *buff;
 	const PalEntry *pal;
 	int skipat, i;
 
 	assert(Tex != nullptr);
 
-	if (!Tex->LockRect(&lrect, nullptr, 0))
+	if (Tex->Buffer == 0)
+	{
+		glGenBuffers(1, (GLuint*)&Tex->Buffer);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, Tex->Buffer);
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, Remap->NumEntries * 4, nullptr, GL_STREAM_DRAW);
+	}
+	else
+	{
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, Tex->Buffer);
+	}
+
+	buff = (uint32_t *)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+	if (buff == nullptr)
 	{
 		return false;
 	}
-	buff = (uint32_t *)lrect.pBits;
 	pal = Remap->Palette;
 
 	// See explanation in UploadPalette() for skipat rationale.
@@ -2226,7 +2075,14 @@ bool OpenGLSWFrameBuffer::OpenGLPal::Update()
 	}
 	BorderColor = ColorARGB(pal[i].a, pal[i - 1].r, pal[i - 1].g, pal[i - 1].b);
 
-	Tex->UnlockRect();
+	glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+	GLint oldBinding = 0;
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
+	glBindTexture(GL_TEXTURE_2D, Tex->Texture);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Remap->NumEntries, 1, GL_BGRA, GL_UNSIGNED_BYTE, 0);
+	glBindTexture(GL_TEXTURE_2D, oldBinding);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
 	return true;
 }
 

@@ -36,21 +36,26 @@
 #include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_presentshader.h"
 
+void FPresentShaderBase::Init(const char * vtx_shader_name, const char * program_name)
+{
+	mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquadscale.vp", "", 330);
+	mShader.Compile(FShaderProgram::Fragment, vtx_shader_name, "", 330);
+	mShader.SetFragDataLocation(0, "FragColor");
+	mShader.Link(program_name);
+	mShader.SetAttribLocation(0, "PositionInProjection");
+	mShader.SetAttribLocation(1, "UV");
+	InvGamma.Init(mShader, "InvGamma");
+	Contrast.Init(mShader, "Contrast");
+	Brightness.Init(mShader, "Brightness");
+	Scale.Init(mShader, "UVScale");
+}
+
 void FPresentShader::Bind()
 {
 	if (!mShader)
 	{
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquadscale.vp", "", 330);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/present.fp", "", 330);
-		mShader.SetFragDataLocation(0, "FragColor");
-		mShader.Link("shaders/glsl/present");
-		mShader.SetAttribLocation(0, "PositionInProjection");
-		mShader.SetAttribLocation(1, "UV");
+		Init("shaders/glsl/present.fp", "shaders/glsl/present");
 		InputTexture.Init(mShader, "InputTexture");
-		InvGamma.Init(mShader, "InvGamma");
-		Contrast.Init(mShader, "Contrast");
-		Brightness.Init(mShader, "Brightness");
-		Scale.Init(mShader, "UVScale");
 	}
 	mShader.Bind();
 }

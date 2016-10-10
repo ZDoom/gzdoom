@@ -106,6 +106,8 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mTonemapPalette = nullptr;
 	mBuffers = nullptr;
 	mPresentShader = nullptr;
+	mPresent3dCheckerShader = nullptr;
+	mPresent3dColumnShader = nullptr;
 	mPresent3dRowShader = nullptr;
 	mBloomExtractShader = nullptr;
 	mBloomCombineShader = nullptr;
@@ -148,6 +150,8 @@ void FGLRenderer::Initialize(int width, int height)
 	mFXAAShader = new FFXAAShader;
 	mFXAALumaShader = new FFXAALumaShader;
 	mPresentShader = new FPresentShader();
+	mPresent3dCheckerShader = new FPresent3DCheckerShader();
+	mPresent3dColumnShader = new FPresent3DColumnShader();
 	mPresent3dRowShader = new FPresent3DRowShader();
 	m2DDrawer = new F2DDrawer;
 
@@ -201,6 +205,8 @@ FGLRenderer::~FGLRenderer()
 	}
 	if (mBuffers) delete mBuffers;
 	if (mPresentShader) delete mPresentShader;
+	if (mPresent3dCheckerShader) delete mPresent3dCheckerShader;
+	if (mPresent3dColumnShader) delete mPresent3dColumnShader;
 	if (mLinearDepthShader) delete mLinearDepthShader;
 	if (mDepthBlurShader) delete mDepthBlurShader;
 	if (mSSAOShader) delete mSSAOShader;

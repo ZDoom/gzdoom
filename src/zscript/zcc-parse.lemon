@@ -528,7 +528,7 @@ default_statement_list(X) ::= default_statement_list(X) default_statement(B).
 
 default_statement(X) ::= SEMICOLON.							{ X = NULL; }
 //default_statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
-default_statement(X) ::= property_statement(A) SEMICOLON.	{ X = A; /*X-overwrites-A*/ }
+default_statement(X) ::= property_statement(A).				{ X = A; /*X-overwrites-A*/ }
 default_statement(X) ::= flag_statement(A).					{ X = A; /*X-overwrites-A*/ }
 
 %type flag_statement { ZCC_FlagStmt *}
@@ -550,11 +550,19 @@ flag_statement(X) ::= SUB dottable_id(A).
 
 %type property_statement{ZCC_PropertyStmt *}
 
-property_statement(X) ::= dottable_id(A) expr_list(B).
+property_statement(X) ::= dottable_id(A) expr_list(B) SEMICOLON.
 {
 	NEW_AST_NODE(PropertyStmt,stmt,A);
 	stmt->Prop = A;
 	stmt->Values = B;
+	X = stmt;
+}
+
+property_statement(X) ::= dottable_id(A) SEMICOLON.
+{
+	NEW_AST_NODE(PropertyStmt,stmt,A);
+	stmt->Prop = A;
+	stmt->Values = nullptr;
 	X = stmt;
 }
 

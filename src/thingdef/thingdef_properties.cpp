@@ -514,10 +514,11 @@ DEFINE_INFO_PROPERTY(conversationid, IiI, Actor)
 //==========================================================================
 DEFINE_PROPERTY(skip_super, 0, Actor)
 {
-	if (info->IsDescendantOf(RUNTIME_CLASS(AInventory)))
+	auto actorclass = RUNTIME_CLASS(AActor);
+	if (info->Size != actorclass->Size)
 	{
-		bag.ScriptPosition.Message(MSG_WARNING,
-			"'skip_super' in definition of inventory item '%s' ignored.", info->TypeName.GetChars() );
+		bag.ScriptPosition.Message(MSG_OPTERROR,
+			"'skip_super' is only allowed in subclasses of AActor with no additional fields and will be ignored.", info->TypeName.GetChars());
 		return;
 	}
 	if (bag.StateSet)
@@ -2484,7 +2485,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, face, S, PlayerPawn)
 		);
 	if (!valid)
 	{
-		bag.ScriptPosition.Message(MSG_WARNING,
+		bag.ScriptPosition.Message(MSG_OPTERROR,
 			"Invalid face '%s' for '%s';\nSTF replacement codes must be 3 alphanumeric characters.\n",
 			tmp.GetChars(), info->TypeName.GetChars ());
 	}
@@ -2551,13 +2552,13 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorset, ISIIIiiiiiiiiiiiiiiiiiiiiiiii, Pl
 		}
 		if (count != 0)
 		{
-			bag.ScriptPosition.Message(MSG_WARNING, "Extra ranges require 4 parameters each.\n");
+			bag.ScriptPosition.Message(MSG_OPTERROR, "Extra ranges require 4 parameters each.\n");
 		}
 	}
 
 	if (setnum < 0)
 	{
-		bag.ScriptPosition.Message(MSG_WARNING, "Color set number must not be negative.\n");
+		bag.ScriptPosition.Message(MSG_OPTERROR, "Color set number must not be negative.\n");
 	}
 	else
 	{
@@ -2584,7 +2585,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorsetfile, ISSI, PlayerPawn)
 
 	if (setnum < 0)
 	{
-		bag.ScriptPosition.Message(MSG_WARNING, "Color set number must not be negative.\n");
+		bag.ScriptPosition.Message(MSG_OPTERROR, "Color set number must not be negative.\n");
 	}
 	else if (color.Lump >= 0)
 	{
@@ -2602,7 +2603,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, clearcolorset, I, PlayerPawn)
 
 	if (setnum < 0)
 	{
-		bag.ScriptPosition.Message(MSG_WARNING, "Color set number must not be negative.\n");
+		bag.ScriptPosition.Message(MSG_OPTERROR, "Color set number must not be negative.\n");
 	}
 	else
 	{

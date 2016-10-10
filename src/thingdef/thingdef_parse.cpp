@@ -1063,7 +1063,7 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 		}
 		else
 		{
-			sc.ScriptMessage("\"%s\" requires an actor of type \"%s\"\n", propname.GetChars(), (*prop->cls)->TypeName.GetChars());
+			sc.ScriptMessage("'%s' requires an actor of type '%s'\n", propname.GetChars(), (*prop->cls)->TypeName.GetChars());
 			FScriptPosition::ErrorCounter++;
 		}
 	}
@@ -1073,7 +1073,7 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 	}
 	else
 	{
-		sc.ScriptError("\"%s\" is an unknown actor property\n", propname.GetChars());
+		sc.ScriptError("'%s' is an unknown actor property\n", propname.GetChars());
 	}
 }
 

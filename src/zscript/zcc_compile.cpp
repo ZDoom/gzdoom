@@ -32,10 +32,12 @@
 **
 */
 
-#include "dobject.h"
+#include "actor.h"
+#include "thingdef.h"
 #include "sc_man.h"
 #include "c_console.h"
 #include "c_dispatch.h"
+#include "doomerrors.h"
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "m_alloc.h"
@@ -110,8 +112,11 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 		// todo
 		case AST_States:
 		case AST_FuncDeclarator:
+			break;
+
 		case AST_Default:
-				break;
+			cls->Defaults.Push(static_cast<ZCC_Default *>(node));
+			break;
 
 		default:
 			assert(0 && "Unhandled AST node type");
@@ -358,6 +363,7 @@ int ZCCCompiler::Compile()
 	CreateStructTypes();
 	CompileAllConstants();
 	CompileAllFields();
+	InitDefaults();
 	return ErrorCount;
 }
 
@@ -1433,3 +1439,388 @@ PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize,
 	} while (val != arraysize);
 	return baseType;
 }
+
+//==========================================================================
+//
+// ZCCCompiler :: GetInt - Input must be a constant expression
+//
+//==========================================================================
+
+int ZCCCompiler::GetInt(ZCC_Expression *expr)
+{
+	if (expr->Type == TypeError)
+	{
+		return 0;
+	}
+	const PType::Conversion *route[CONVERSION_ROUTE_SIZE];
+	int routelen = expr->Type->FindConversion(TypeSInt32, route, countof(route));
+	if (routelen < 0)
+	{
+		Error(expr, "Cannot convert to integer");
+		return 0;
+	}
+	else
+	{
+		if (expr->Type->IsKindOf(RUNTIME_CLASS(PFloat)))
+		{
+			Warn(expr, "Truncation of floating point value");
+		}
+		auto ex = static_cast<ZCC_ExprConstant *>(ApplyConversion(expr, route, routelen));
+		return ex->IntVal;
+	}
+}
+
+double ZCCCompiler::GetDouble(ZCC_Expression *expr)
+{
+	if (expr->Type == TypeError)
+	{
+		return 0;
+	}
+	const PType::Conversion *route[CONVERSION_ROUTE_SIZE];
+	int routelen = expr->Type->FindConversion(TypeFloat64, route, countof(route));
+	if (routelen < 0)
+	{
+		Error(expr, "Cannot convert to float");
+		return 0;
+	}
+	else
+	{
+		auto ex = static_cast<ZCC_ExprConstant *>(ApplyConversion(expr, route, routelen));
+		return ex->DoubleVal;
+	}
+}
+
+const char *ZCCCompiler::GetString(ZCC_Expression *expr, bool silent)
+{
+	if (expr->Type == TypeError)
+	{
+		return 0;
+	}
+	else if (expr->Type->IsKindOf(RUNTIME_CLASS(PString)))
+	{
+		return static_cast<ZCC_ExprConstant *>(expr)->StringVal->GetChars();
+	}
+	else if (expr->Type->IsKindOf(RUNTIME_CLASS(PName)))
+	{
+		// Ugh... What a mess...
+		return FName(ENamedName(static_cast<ZCC_ExprConstant *>(expr)->IntVal)).GetChars();
+	}
+	else
+	{
+		if (!silent) Error(expr, "Cannot convert to string");
+		return 0;
+	}
+}
+
+//==========================================================================
+//
+// Parses an actor property's parameters and calls the handler
+//
+//==========================================================================
+
+void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *property, AActor *defaults, Baggage &bag)
+{
+	static TArray<FPropParam> params;
+	static TArray<FString> strings;
+
+	params.Clear();
+	strings.Clear();
+	params.Reserve(1);
+	params[0].i = 0;
+	if (prop->params[0] != '0')
+	{
+		if (property->Values == nullptr)
+		{
+			Error(property, "%s: arguments missing", prop->name);
+			return;
+		}
+		property->Values = Simplify(property->Values, &bag.Info->Symbols);	// need to do this before the loop so that we can find the head node again.
+		const char * p = prop->params;
+		auto exp = property->Values;
+
+		while (true)
+		{
+			FPropParam conv;
+			FPropParam pref;
+
+			if (exp->NodeType != AST_ExprConstant)
+			{
+				Error(exp, "%s: non-constant parameter", prop->name);
+			}
+			conv.s = nullptr;
+			pref.s = nullptr;
+			pref.i = -1;
+			switch ((*p) & 223)
+			{
+
+			case 'I':
+			case 'X':	// Expression in parentheses or number. We only support the constant here. The function will have to be handled by a separate property to get past the parser.
+			case 'M':	// special case for morph styles in DECORATE . This expression-aware parser will not need this.
+			case 'N':	// special case for thing activations in DECORATE. This expression-aware parser will not need this.
+				conv.i = GetInt(exp);
+				break;
+
+			case 'F':
+				conv.d = GetDouble(exp);
+				break;
+
+			case 'Z':	// an optional string. Does not allow any numerical value.
+				if (!GetString(exp, true))
+				{
+					// apply this expression to the next argument on the list.
+					params.Push(conv);
+					params[0].i++;
+					p++;
+					continue;
+				}
+				// fall through
+
+			case 'C':	// this parser accepts colors only in string form.
+				pref.i = 1;
+			case 'S':
+				conv.s = GetString(exp);
+				break;
+
+			case 'T': // a filtered string
+				conv.s = strings[strings.Reserve(1)] = strbin1(GetString(exp));
+				break;
+
+			case 'L':	// Either a number or a list of strings
+				if (!GetString(exp, true))
+				{
+					pref.i = 0;
+					conv.i = GetInt(exp);
+				}
+				else
+				{
+					pref.i = 1;
+					params.Push(pref);
+					params[0].i++;
+
+					do
+					{
+						conv.s = GetString(exp);
+						if (conv.s != nullptr)
+						{
+							params.Push(conv);
+							params[0].i++;
+						}
+						exp = Simplify(static_cast<ZCC_Expression *>(exp->SiblingNext), &bag.Info->Symbols);
+					} while (exp != property->Values);
+					goto endofparm;
+				}
+				break;
+
+			default:
+				assert(false);
+				break;
+
+			}
+			if (pref.i != -1)
+			{
+				params.Push(pref);
+				params[0].i++;
+			}
+			params.Push(conv);
+			params[0].i++;
+			exp = Simplify(static_cast<ZCC_Expression *>(exp->SiblingNext), &bag.Info->Symbols);
+		endofparm:
+			p++;
+			// Skip the DECORATE 'no comma' marker
+			if (*p == '_') p++;
+
+			else if (*p == 0)
+			{
+				if (exp != property->Values)
+				{
+					Error(property, "Too many values for '%s'", prop->name);
+				}
+				break;
+			}
+			else if (exp == property->Values)
+			{
+				if (*p < 'a')
+				{
+					Error(property, "Insufficient parameters for %s", prop->name);
+				}
+				break;
+			}
+		}
+	}
+	// call the handler
+	try
+	{
+		prop->Handler(defaults, bag.Info, bag, &params[0]);
+	}
+	catch (CRecoverableError &error)
+	{
+		Error(property, "%s", error.GetMessage());
+	}
+}
+
+//==========================================================================
+//
+// Parses an actor property
+//
+//==========================================================================
+
+void ZCCCompiler::ProcessDefaultProperty(PClassActor *cls, ZCC_PropertyStmt *prop, Baggage &bag)
+{
+	auto namenode = prop->Prop;
+	FString propname;
+
+	if (namenode->SiblingNext == namenode)
+	{
+		// a one-name property
+		propname = FName(namenode->Id);
+	}
+	else if (namenode->SiblingNext->SiblingNext == namenode)
+	{
+		// a two-name property
+		propname << FName(namenode->Id) << "." << FName(static_cast<ZCC_Identifier *>(namenode->SiblingNext)->Id);
+	}
+	else
+	{
+		Error(prop, "Property name may at most contain two parts");
+		return;
+	}
+
+	FPropertyInfo *property = FindProperty(propname);
+
+	if (property != nullptr && property->category != CAT_INFO)
+	{
+		if (cls->IsDescendantOf(*property->cls))
+		{
+			DispatchProperty(property, prop, (AActor *)bag.Info->Defaults, bag);
+		}
+		else
+		{
+			Error(prop, "'%s' requires an actor of type '%s'\n", propname.GetChars(), (*property->cls)->TypeName.GetChars());
+		}
+	}
+	else
+	{
+		Error(prop, "'%s' is an unknown actor property\n", propname.GetChars());
+	}
+}
+
+//==========================================================================
+//
+// Finds a flag and sets or clears it
+//
+//==========================================================================
+
+void ZCCCompiler::ProcessDefaultFlag(PClassActor *cls, ZCC_FlagStmt *flg)
+{
+	auto namenode = flg->name;
+	const char *n1 = FName(namenode->Id).GetChars(), *n2;
+
+	if (namenode->SiblingNext == namenode)
+	{
+		// a one-name flag
+		n2 = nullptr;
+	}
+	else if (namenode->SiblingNext->SiblingNext == namenode)
+	{
+		// a two-name flag
+		n2 = FName(static_cast<ZCC_Identifier *>(namenode->SiblingNext)->Id).GetChars();
+	}
+	else
+	{
+		Error(flg, "Flag name may at most contain two parts");
+		return;
+	}
+
+	auto fd = FindFlag(cls, n1, n2, true);
+	if (fd != nullptr)
+	{
+		if (fd->structoffset == -1)
+		{
+			Warn(flg, "Deprecated flag '%s%s%s' used", n1, n2 ? "." : "", n2 ? n2 : "");
+			HandleDeprecatedFlags((AActor*)cls->Defaults, cls, flg->set, fd->flagbit);
+		}
+		else
+		{
+			ModActorFlag((AActor*)cls->Defaults, fd, flg->set);
+		}
+	}
+	else
+	{
+		Error(flg, "Unknown flag '%s%s%s'", n1, n2 ? "." : "", n2 ? n2 : "");
+	}
+}
+
+//==========================================================================
+//
+// Parses the default list
+//
+//==========================================================================
+
+void ZCCCompiler::InitDefaults()
+{
+	for (auto c : Classes)
+	{
+		// This may be removed if the conditions change, but right now only subclasses of Actor can define a Default block.
+		if (!c->Type()->IsDescendantOf(RUNTIME_CLASS(AActor)))
+		{
+			if (c->Defaults.Size()) Error(c->cls, "%s: Non-actor classes may not have defaults", c->Type()->TypeName.GetChars());
+		}
+		else
+		{
+			// This should never happen.
+			if (c->Type()->Defaults != nullptr)
+			{
+				Error(c->cls, "%s already has defaults", c->Type()->TypeName.GetChars());
+			}
+			// This can only occur if a native parent is not initialized. In all other cases the sorting of the class list should prevent this from ever happening.
+			else if (c->Type()->ParentClass->Defaults == nullptr && c->Type() != RUNTIME_CLASS(AActor))
+			{
+				Error(c->cls, "Parent class %s of %s is not initialized", c->Type()->ParentClass->TypeName.GetChars(), c->Type()->TypeName.GetChars());
+			}
+			else
+			{
+				// Copy the parent's defaults and meta data.
+				auto ti = static_cast<PClassActor *>(c->Type());
+				ti->InitializeNativeDefaults();
+				ti->ParentClass->DeriveData(ti);
+
+
+				Baggage bag;
+			#ifdef _DEBUG
+				bag.ClassName = c->Type()->TypeName;
+			#endif
+				bag.Info = ti;
+				bag.DropItemSet = false;
+				bag.StateSet = false;
+				bag.fromZScript = true;
+				bag.CurrentState = 0;
+				bag.Lumpnum = Wads.CheckNumForFullName(*c->cls->SourceName, true);
+				bag.DropItemList = nullptr;
+				bag.ScriptPosition.StrictErrors = true;
+				// The actual script position needs to be set per property.
+
+				for (auto d : c->Defaults)
+				{
+					auto content = d->Content;
+					do
+					{
+						switch (content->NodeType)
+						{
+						case AST_PropertyStmt:
+							bag.ScriptPosition.FileName = *content->SourceName;
+							bag.ScriptPosition.ScriptLine = content->SourceLoc;
+							ProcessDefaultProperty(ti, static_cast<ZCC_PropertyStmt *>(content), bag);
+							break;
+
+						case AST_FlagStmt:
+							ProcessDefaultFlag(ti, static_cast<ZCC_FlagStmt *>(content));
+							break;
+						}
+						content = static_cast<decltype(content)>(content->SiblingNext);
+					} while (content != d->Content);
+				}
+			}
+		}
+	}
+}
+

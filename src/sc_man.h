@@ -140,6 +140,7 @@ enum
 struct FScriptPosition
 {
 	static int ErrorCounter;
+	static bool StrictErrors;
 	FString FileName;
 	int ScriptLine;
 

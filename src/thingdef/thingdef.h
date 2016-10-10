@@ -25,7 +25,7 @@ struct FFlagDef
 	int fieldsize;
 };
 
-FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2);
+FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bool strict = false);
 void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int index);
 bool CheckDeprecatedFlags(const AActor *actor, PClassActor *info, int index);
 const char *GetFlagName(unsigned int flagnum, int flagoffset);
@@ -146,6 +146,7 @@ struct Baggage
 	PClassActor *Info;
 	bool DropItemSet;
 	bool StateSet;
+	bool fromZScript;
 	int CurrentState;
 	int Lumpnum;
 	FStateDefinitions statedef;
@@ -272,7 +273,7 @@ typedef void (*PropHandler)(AActor *defaults, PClassActor *info, Baggage &bag, F
 enum ECategory
 {
 	CAT_PROPERTY,	// Inheritable property
-	CAT_INFO		// non-inheritable info (spawn ID, Doomednum, game filter, conversation ID)
+	CAT_INFO		// non-inheritable info (spawn ID, Doomednum, game filter, conversation ID, not usable in ZScript)
 };
 
 struct FPropertyInfo

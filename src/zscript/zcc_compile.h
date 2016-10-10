@@ -1,6 +1,10 @@
 #ifndef ZCC_COMPILE_H
 #define ZCC_COMPILE_H
 
+struct Baggage;
+struct FPropertyInfo;
+class AActor;
+
 struct ZCC_StructWork
 {
 	PSymbolTable TreeNodes;
@@ -40,6 +44,7 @@ struct ZCC_ClassWork
 	TArray<ZCC_Enum *> Enums;
 	TArray<ZCC_ConstantDef *> Constants;
 	TArray<ZCC_VarDeclarator *> Fields;
+	TArray<ZCC_Default *> Defaults;
 
 	ZCC_ClassWork(ZCC_Class * s, PSymbolTreeNode *n)
 	{
@@ -89,6 +94,14 @@ private:
 	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PSymbolTable *sym);
 	PType *ResolveUserType(ZCC_BasicType *type, PSymbolTable *sym);
 
+	void InitDefaults();
+	void ProcessDefaultFlag(PClassActor *cls, ZCC_FlagStmt *flg);
+	void ProcessDefaultProperty(PClassActor *cls, ZCC_PropertyStmt *flg, Baggage &bag);
+	void DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *pex, AActor *defaults, Baggage &bag);
+	int GetInt(ZCC_Expression *expr);
+	double GetDouble(ZCC_Expression *expr);
+	const char *GetString(ZCC_Expression *expr, bool silent = false);
+
 	TArray<ZCC_ConstantDef *> Constants;
 	TArray<ZCC_StructWork *> Structs;
 	TArray<ZCC_ClassWork *> Classes;
@@ -102,11 +115,6 @@ private:
 	ZCC_Expression *SimplifyFunctionCall(ZCC_ExprFuncCall *callop, PSymbolTable *Symbols);
 	ZCC_OpProto *PromoteUnary(EZCCExprType op, ZCC_Expression *&expr);
 	ZCC_OpProto *PromoteBinary(EZCCExprType op, ZCC_Expression *&left, ZCC_Expression *&right);
-
-	void PromoteToInt(ZCC_Expression *&expr);
-	void PromoteToUInt(ZCC_Expression *&expr);
-	void PromoteToDouble(ZCC_Expression *&expr);
-	void PromoteToString(ZCC_Expression *&expr);
 
 	ZCC_Expression *ApplyConversion(ZCC_Expression *expr, const PType::Conversion **route, int routelen);
 	ZCC_Expression *AddCastNode(PType *type, ZCC_Expression *expr);

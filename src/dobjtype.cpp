@@ -3163,6 +3163,7 @@ PClass *PClass::FindClassTentative(FName name, bool fatal)
 
 	type->TypeName = name;
 	type->ParentClass = this;
+	type->ConstructNative = ConstructNative;
 	type->Size = TentativeClass;
 	type->bRuntimeClass = true;
 	type->Symbols.SetParentTable(&Symbols);

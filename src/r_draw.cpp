@@ -2373,7 +2373,11 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 		color = 0;
 	}
 
-	if (style.Flags & STYLEF_TransSoulsAlpha)
+	if (style.Flags & STYLEF_ForceAlpha)
+	{
+		alpha = clamp<fixed_t>(alpha, 0, OPAQUE);
+	}
+	else if (style.Flags & STYLEF_TransSoulsAlpha)
 	{
 		alpha = fixed_t(transsouls * OPAQUE);
 	}

@@ -111,14 +111,16 @@ END_POINTERS
 //------------------------------------------------------------------------
 
 DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
-: x(.0), y(.0),
-  oldx(.0), oldy(.0),
-  firstTic(true),
-  Flags(0),
-  Caller(caller),
-  Owner(owner),
-  ID(id),
-  processPending(true)
+:	x(.0), y(.0),
+	oldx(.0), oldy(.0),
+	alpha(1.),
+	firstTic(true),
+	Flags(0),
+	Caller(caller),
+	Owner(owner),
+	ID(id),
+	processPending(true),
+	RenderStyle(STYLE_Normal)
 {
 	DPSprite *prev = nullptr;
 	DPSprite *next = Owner->psprites;
@@ -967,7 +969,7 @@ void A_OverlayOffset(AActor *self, int layer, double wx, double wy, int flags)
 	player_t *player = self->player;
 	DPSprite *psp;
 
-	if (player && (player->playerstate != PST_DEAD))
+	if (player)
 	{
 		psp = player->FindPSprite(layer);
 
@@ -1101,18 +1103,76 @@ DEFINE_ACTION_FUNCTION(AActor, OverlayY)
 // Because non-action functions cannot acquire the ID of the overlay...
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AActor, OverlayID)
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayAlpha)
 {
 	PARAM_ACTION_PROLOGUE;
+	PARAM_INT(layer);
+	PARAM_FLOAT(alphaset);
 
-	if (ACTION_CALL_FROM_PSPRITE())
-	{
-		ACTION_RETURN_INT(stateinfo->mPSPIndex);
-	}
-	ACTION_RETURN_INT(0);
+	if (self->player == nullptr)
+		return 0;
+
+	DPSprite *pspr = self->player->FindPSprite(layer);
+
+	if (pspr == nullptr)
+		return 0;
+
+	pspr->alpha = clamp<double>(alphaset, 0.0, 1.0);
+
+	return 0;
 }
 
+// NON-ACTION function to get the overlay alpha of a layer.
+DEFINE_ACTION_FUNCTION(AActor, OverlayAlpha)
+{
+	if (numret > 0)
+	{
+		assert(ret != nullptr);
+		PARAM_SELF_PROLOGUE(AActor);
+		PARAM_INT(layer);
 
+		if (self->player == nullptr)
+			return 0;
+
+		DPSprite *pspr = self->player->FindPSprite(layer);
+
+		if (pspr == nullptr)
+		{
+			ret->SetFloat(0.0);
+		}
+		else
+		{
+			ret->SetFloat(pspr->alpha);
+		}
+		return 1;
+	}
+	return 0;
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC A_OverlayRenderStyle
+//
+//---------------------------------------------------------------------------
+
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayRenderStyle)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT(layer);
+	PARAM_INT(style);
+
+	if (self->player == nullptr)
+		return 0;
+
+	DPSprite *pspr = self->player->FindPSprite(layer);
+
+	if (pspr == nullptr || style >= STYLE_Count)
+		return 0;
+
+	pspr->RenderStyle = style;
+
+	return 0;
+}
 
 //---------------------------------------------------------------------------
 //
@@ -1529,7 +1589,8 @@ void DPSprite::Serialize(FSerializer &arc)
 		("x", x)
 		("y", y)
 		("oldx", oldx)
-		("oldy", oldy);
+		("oldy", oldy)
+		("alpha", alpha);
 }
 
 //------------------------------------------------------------------------

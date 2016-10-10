@@ -136,12 +136,18 @@ private:
 		int Program = 0;
 		int VertexShader = 0;
 		int FragmentShader = 0;
+
+		int ConstantLocations[4];
+		int ImageLocation = -1;
+		int PaletteLocation = -1;
+		int NewScreenLocation = -1;
+		int BurnLocation = -1;
 	};
 
 	bool CreatePixelShader(FString vertexsrc, FString fragmentsrc, const FString &defines, HWPixelShader **outShader);
 	bool CreateVertexBuffer(int size, HWVertexBuffer **outVertexBuffer);
 	bool CreateIndexBuffer(int size, HWIndexBuffer **outIndexBuffer);
-	bool CreateTexture(int width, int height, int levels, int format, HWTexture **outTexture);
+	bool CreateTexture(const FString &name, int width, int height, int levels, int format, HWTexture **outTexture);
 	void SetGammaRamp(const GammaRamp *ramp);
 	void SetPixelShaderConstantF(int uniformIndex, const float *data, int vec4fcount);
 	void SetHWPixelShader(HWPixelShader *shader);
@@ -154,7 +160,7 @@ private:
 	void Present();
 
 	static uint32_t ColorARGB(uint32_t a, uint32_t r, uint32_t g, uint32_t b) { return ((a & 0xff) << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | ((b) & 0xff); }
-	static uint32_t ColorRGBA(uint32_t a, uint32_t r, uint32_t g, uint32_t b) { return ColorARGB(a, r, g, b); }
+	static uint32_t ColorRGBA(uint32_t r, uint32_t g, uint32_t b, uint32_t a) { return ColorARGB(a, r, g, b); }
 	static uint32_t ColorXRGB(uint32_t r, uint32_t g, uint32_t b) { return ColorARGB(0xff, r, g, b); }
 	static uint32_t ColorValue(float r, float g, float b, float a) { return ColorRGBA((uint32_t)(r * 255.0f), (uint32_t)(g * 255.0f), (uint32_t)(b * 255.0f), (uint32_t)(a * 255.0f)); }
 
@@ -297,10 +303,10 @@ private:
 
 	enum
 	{
-		PSCONST_Desaturation = 1,
-		PSCONST_PaletteMod = 2,
-		PSCONST_Weights = 6,
-		PSCONST_Gamma = 7,
+		PSCONST_Desaturation = 0,
+		PSCONST_PaletteMod = 1,
+		PSCONST_Weights = 2,
+		PSCONST_Gamma = 3,
 	};
 	enum
 	{
@@ -366,7 +372,7 @@ private:
 	void EndBatch();
 
 	// State
-	void EnableAlphaTest(BOOL enabled);
+	void EnableAlphaTest(bool enabled);
 	void SetAlphaBlend(int op, int srcblend = 0, int destblend = 0);
 	void SetConstant(int cnum, float r, float g, float b, float a);
 	void SetPixelShader(HWPixelShader *shader);
@@ -377,13 +383,17 @@ private:
 
 	template<typename T> static void SafeRelease(T &x) { if (x != nullptr) { delete x; x = nullptr; } }
 
-	std::unique_ptr<HWVertexBuffer> StreamVertexBuffer;
+	std::shared_ptr<FGLDebug> Debug;
 
-	BOOL AlphaTestEnabled;
-	BOOL AlphaBlendEnabled;
-	int AlphaBlendOp;
-	int AlphaSrcBlend;
-	int AlphaDestBlend;
+	std::unique_ptr<HWVertexBuffer> StreamVertexBuffer;
+	float ShaderConstants[16];
+	HWPixelShader *CurrentShader = nullptr;
+
+	bool AlphaTestEnabled = false;
+	bool AlphaBlendEnabled = false;
+	int AlphaBlendOp = 0;
+	int AlphaSrcBlend = 0;
+	int AlphaDestBlend = 0;
 	float Constant[3][4];
 	uint32_t CurBorderColor;
 	HWPixelShader *CurPixelShader;

@@ -5,15 +5,15 @@ in vec4 PixelTexCoord0;
 
 out vec4 FragColor;
 
-uniform sampler2D Image;// : register(s0);
-uniform sampler2D Palette;// : register(s1);
-uniform sampler2D NewScreen;// : register(s0);
-uniform sampler2D Burn;// : register(s1);
+uniform sampler2D Image;
+uniform sampler2D Palette;
+uniform sampler2D NewScreen;
+uniform sampler2D Burn;
 
-uniform vec4 Desaturation;// : register(c1);	// { Desat, 1 - Desat }
-uniform vec4 PaletteMod;// : register(c2);
-uniform vec4 Weights;// : register(c6);		// RGB->Gray weighting { 77/256.0, 143/256.0, 37/256.0, 1 }
-uniform vec4 Gamma;// : register(c7);
+uniform vec4 Desaturation; // { Desat, 1 - Desat }
+uniform vec4 PaletteMod;
+uniform vec4 Weights; // RGB->Gray weighting { 77/256.0, 143/256.0, 37/256.0, 1 }
+uniform vec4 Gamma;
 
 vec4 TextureLookup(vec2 tex_coord)
 {

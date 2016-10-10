@@ -70,6 +70,7 @@
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_templates.h"
 #include "gl/gl_functions.h"
+#include "gl_debug.h"
 
 CVAR(Int, gl_showpacks, 0, 0)
 #ifndef WIN32 // Defined in fb_d3d9 for Windows
@@ -131,6 +132,9 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 	gl_LoadExtensions();
 	Super::InitializeState();
 
+	Debug = std::make_shared<FGLDebug>();
+	Debug->Update();
+
 	// SetVSync needs to be at the very top to workaround a bug in Nvidia's OpenGL driver.
 	// If wglSwapIntervalEXT is called after glBindFramebuffer in a frame the setting is not changed!
 	//SetVSync(vid_vsync);
@@ -160,6 +164,7 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 	ScreenWipe = nullptr;
 	InScene = false;
 	QuadExtra = new BufferedTris[MAX_QUAD_BATCH];
+	memset(QuadExtra, 0, sizeof(BufferedTris) * MAX_QUAD_BATCH);
 	Atlases = nullptr;
 	PixelDoubling = 0;
 
@@ -288,10 +293,10 @@ bool OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragments
 	if (status != GL_FALSE) { errorShader = shader->FragmentShader; glGetShaderiv(shader->FragmentShader, GL_COMPILE_STATUS, &status); }
 	if (status == GL_FALSE)
 	{
-		static char buffer[10000];
+		/*static char buffer[10000];
 		GLsizei length = 0;
 		buffer[0] = 0;
-		glGetShaderInfoLog(errorShader, 10000, &length, buffer);
+		glGetShaderInfoLog(errorShader, 10000, &length, buffer);*/
 
 		*outShader = nullptr;
 		return false;
@@ -307,10 +312,19 @@ bool OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragments
 		*outShader = nullptr;
 		return false;
 	}
-	glBindAttribLocation(shader->Program, 0, "Position");
-	glBindAttribLocation(shader->Program, 1, "Color0");
-	glBindAttribLocation(shader->Program, 2, "Color1");
-	glBindAttribLocation(shader->Program, 3, "TexCoord");
+	glBindAttribLocation(shader->Program, 0, "AttrPosition");
+	glBindAttribLocation(shader->Program, 1, "AttrColor0");
+	glBindAttribLocation(shader->Program, 2, "AttrColor1");
+	glBindAttribLocation(shader->Program, 3, "AttrTexCoord0");
+
+	shader->ConstantLocations[PSCONST_Desaturation] = glGetUniformLocation(shader->Program, "Desaturation");
+	shader->ConstantLocations[PSCONST_PaletteMod] = glGetUniformLocation(shader->Program, "PaletteMod");
+	shader->ConstantLocations[PSCONST_Weights] = glGetUniformLocation(shader->Program, "Weights");
+	shader->ConstantLocations[PSCONST_Gamma] = glGetUniformLocation(shader->Program, "Gamma");
+	shader->ImageLocation = glGetUniformLocation(shader->Program, "Image");
+	shader->PaletteLocation = glGetUniformLocation(shader->Program, "Palette");
+	shader->NewScreenLocation = glGetUniformLocation(shader->Program, "NewScreen");
+	shader->BurnLocation = glGetUniformLocation(shader->Program, "Burn");
 
 	*outShader = shader.release();
 	return true;
@@ -361,7 +375,7 @@ bool OpenGLSWFrameBuffer::CreateIndexBuffer(int size, HWIndexBuffer **outIndexBu
 	return true;
 }
 
-bool OpenGLSWFrameBuffer::CreateTexture(int width, int height, int levels, int format, HWTexture **outTexture)
+bool OpenGLSWFrameBuffer::CreateTexture(const FString &name, int width, int height, int levels, int format, HWTexture **outTexture)
 {
 	auto obj = std::make_unique<HWTexture>();
 
@@ -389,6 +403,8 @@ bool OpenGLSWFrameBuffer::CreateTexture(int width, int height, int levels, int f
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
+	FGLDebug::LabelObject(GL_TEXTURE, obj->Texture, name);
+
 	glBindTexture(GL_TEXTURE_2D, oldBinding);
 
 	*outTexture = obj.release();
@@ -401,15 +417,32 @@ void OpenGLSWFrameBuffer::SetGammaRamp(const GammaRamp *ramp)
 
 void OpenGLSWFrameBuffer::SetPixelShaderConstantF(int uniformIndex, const float *data, int vec4fcount)
 {
-	glUniform4fv(uniformIndex, vec4fcount, data);
+	assert(uniformIndex < 4 && vec4fcount == 1); // This emulation of d3d9 only works for very simple stuff
+	for (int i = 0; i < 4; i++)
+		ShaderConstants[uniformIndex * 4 + i] = data[i];
+	if (CurrentShader && CurrentShader->ConstantLocations[uniformIndex] != -1)
+		glUniform4fv(CurrentShader->ConstantLocations[uniformIndex], vec4fcount, data);
 }
 
 void OpenGLSWFrameBuffer::SetHWPixelShader(HWPixelShader *shader)
 {
-	if (shader)
-		glUseProgram(shader->Program);
-	else
-		glUseProgram(0);
+	if (shader != CurrentShader)
+	{
+		if (shader)
+		{
+			glUseProgram(shader->Program);
+			for (int i = 0; i < 4; i++)
+			{
+				if (shader->ConstantLocations[i] != -1)
+					glUniform4fv(shader->ConstantLocations[i], 1, &ShaderConstants[i * 4]);
+			}
+		}
+		else
+		{
+			glUseProgram(0);
+		}
+	}
+	CurrentShader = shader;
 }
 
 void OpenGLSWFrameBuffer::SetStreamSource(HWVertexBuffer *vertexBuffer)
@@ -430,6 +463,8 @@ void OpenGLSWFrameBuffer::SetIndices(HWIndexBuffer *indexBuffer)
 
 void OpenGLSWFrameBuffer::DrawTriangleFans(int count, const FBVERTEX *vertices)
 {
+	count = 2 + count;
+
 	GLint oldBinding = 0;
 	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &oldBinding);
 
@@ -500,7 +535,7 @@ void OpenGLSWFrameBuffer::DrawPoints(int count, const FBVERTEX *vertices)
 
 void OpenGLSWFrameBuffer::DrawLineList(int count)
 {
-	glDrawArrays(GL_LINES, 0, count);
+	glDrawArrays(GL_LINES, 0, count * 2);
 }
 
 void OpenGLSWFrameBuffer::DrawTriangleList(int minIndex, int numVertices, int startIndex, int primitiveCount)
@@ -511,6 +546,8 @@ void OpenGLSWFrameBuffer::DrawTriangleList(int minIndex, int numVertices, int st
 void OpenGLSWFrameBuffer::Present()
 {
 	SwapBuffers();
+	glViewport(0, 0, GetClientWidth(), GetClientHeight());
+	Debug->Update();
 }
 
 //==========================================================================
@@ -611,6 +648,13 @@ bool OpenGLSWFrameBuffer::LoadShaders()
 		{
 			break;
 		}
+
+		glUseProgram(Shaders[i]->Program);
+		if (Shaders[i]->ImageLocation != -1) glUniform1i(Shaders[i]->ImageLocation, 0);
+		if (Shaders[i]->PaletteLocation != -1) glUniform1i(Shaders[i]->PaletteLocation, 1);
+		if (Shaders[i]->NewScreenLocation != -1) glUniform1i(Shaders[i]->NewScreenLocation, 0);
+		if (Shaders[i]->BurnLocation != -1) glUniform1i(Shaders[i]->BurnLocation, 1);
+		glUseProgram(0);
 	}
 	if (i == NUM_SHADERS)
 	{ // Success!
@@ -711,7 +755,7 @@ void OpenGLSWFrameBuffer::KillNativeTexs()
 
 bool OpenGLSWFrameBuffer::CreateFBTexture()
 {
-	CreateTexture(Width, Height, 1, GL_R8, &FBTexture);
+	CreateTexture("FBTexture", Width, Height, 1, GL_R8, &FBTexture);
 	FBWidth = Width;
 	FBHeight = Height;
 	return true;
@@ -725,7 +769,7 @@ bool OpenGLSWFrameBuffer::CreateFBTexture()
 
 bool OpenGLSWFrameBuffer::CreatePaletteTexture()
 {
-	if (!CreateTexture(256, 1, 1, GL_RGBA8, &PaletteTexture))
+	if (!CreateTexture("PaletteTexture", 256, 1, 1, GL_RGBA8, &PaletteTexture))
 	{
 		return false;
 	}
@@ -1118,7 +1162,7 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 			GLint oldBinding = 0;
 			glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
 			glBindTexture(GL_TEXTURE_2D, FBTexture->Texture);
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Width, Height, GL_R8, GL_UNSIGNED_BYTE, 0);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Width, Height, GL_RED, GL_UNSIGNED_BYTE, 0);
 			glBindTexture(GL_TEXTURE_2D, oldBinding);
 		}
 
@@ -1623,7 +1667,7 @@ OpenGLSWFrameBuffer::Atlas::Atlas(OpenGLSWFrameBuffer *fb, int w, int h, int for
 	}
 	*prev = this;
 
-	fb->CreateTexture(w, h, 1, format, &Tex);
+	fb->CreateTexture("Atlas", w, h, 1, format, &Tex);
 	Width = w;
 	Height = h;
 }
@@ -1907,7 +1951,7 @@ bool OpenGLSWFrameBuffer::OpenGLTex::Update()
 	glBindTexture(GL_TEXTURE_2D, Box->Owner->Tex->Texture);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, format == GL_RGBA8 ? GL_BGRA : GL_RED, GL_UNSIGNED_BYTE, 0);
 	glBindTexture(GL_TEXTURE_2D, oldBinding);
-	glBindTexture(GL_PIXEL_UNPACK_BUFFER, 0);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	return true;
 }
 
@@ -1996,7 +2040,7 @@ OpenGLSWFrameBuffer::OpenGLPal::OpenGLPal(FRemapTable *remap, OpenGLSWFrameBuffe
 
 	BorderColor = 0;
 	RoundedPaletteSize = count;
-	if (fb->CreateTexture(count, 1, 1, GL_RGBA8, &Tex))
+	if (fb->CreateTexture("Pal", count, 1, 1, GL_RGBA8, &Tex))
 	{
 		if (!Update())
 		{
@@ -3312,7 +3356,7 @@ void OpenGLSWFrameBuffer::SetColorOverlay(uint32_t color, float alpha, uint32_t 
 	}
 }
 
-void OpenGLSWFrameBuffer::EnableAlphaTest(BOOL enabled)
+void OpenGLSWFrameBuffer::EnableAlphaTest(bool enabled)
 {
 	if (enabled != AlphaTestEnabled)
 	{

@@ -113,6 +113,16 @@ private:
 		int Format = 0;
 	};
 
+	class HWFrameBuffer
+	{
+	public:
+		~HWFrameBuffer();
+
+		int Framebuffer = 0;
+		HWTexture *Texture = nullptr;
+	};
+
+
 	class HWVertexBuffer
 	{
 	public:
@@ -157,6 +167,7 @@ private:
 		int BurnLocation = -1;
 	};
 
+	bool CreateFrameBuffer(const FString &name, int width, int height, HWFrameBuffer **outFramebuffer);
 	bool CreatePixelShader(FString vertexsrc, FString fragmentsrc, const FString &defines, HWPixelShader **outShader);
 	bool CreateVertexBuffer(int size, HWVertexBuffer **outVertexBuffer);
 	bool CreateIndexBuffer(int size, HWIndexBuffer **outIndexBuffer);
@@ -376,7 +387,6 @@ private:
 	bool SetStyle(OpenGLTex *tex, DrawParms &parms, uint32_t &color0, uint32_t &color1, BufferedTris &quad);
 	static int GetStyleAlpha(int type);
 	static void SetColorOverlay(uint32_t color, float alpha, uint32_t &color0, uint32_t &color1);
-	void DoWindowedGamma();
 	void AddColorOnlyQuad(int left, int top, int width, int height, uint32_t color);
 	void AddColorOnlyRect(int left, int top, int width, int height, uint32_t color);
 	void CheckQuadBatch(int numtris = 2, int numverts = 4);
@@ -403,6 +413,8 @@ private:
 	std::unique_ptr<HWVertexBuffer> StreamVertexBuffer;
 	float ShaderConstants[NumPSCONST * 4];
 	HWPixelShader *CurrentShader = nullptr;
+
+	HWFrameBuffer *OutputFB = nullptr;
 
 	bool AlphaTestEnabled = false;
 	bool AlphaBlendEnabled = false;
@@ -455,7 +467,6 @@ private:
 	enum { BATCH_None, BATCH_Quads, BATCH_Lines } BatchType;
 
 	HWPixelShader *Shaders[NUM_SHADERS];
-	HWPixelShader *GammaShader = nullptr;
 
 	HWTexture *InitialWipeScreen = nullptr, *FinalWipeScreen = nullptr;
 

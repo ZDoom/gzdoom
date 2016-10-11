@@ -150,7 +150,6 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 	{
 		Shaders[i] = nullptr;
 	}
-	GammaShader = nullptr;
 	VSync = vid_vsync;
 	BlendingRect.left = 0;
 	BlendingRect.top = 0;
@@ -213,6 +212,12 @@ OpenGLSWFrameBuffer::~OpenGLSWFrameBuffer()
 	delete[] QuadExtra;
 }
 
+OpenGLSWFrameBuffer::HWFrameBuffer::~HWFrameBuffer()
+{
+	if (Framebuffer != 0) glDeleteFramebuffers(1, (GLuint*)&Framebuffer);
+	delete Texture;
+}
+
 OpenGLSWFrameBuffer::HWTexture::~HWTexture()
 {
 	if (Texture != 0) glDeleteTextures(1, (GLuint*)&Texture);
@@ -260,6 +265,43 @@ OpenGLSWFrameBuffer::HWPixelShader::~HWPixelShader()
 	if (Program != 0) glDeleteProgram(Program);
 	if (VertexShader != 0) glDeleteShader(VertexShader);
 	if (FragmentShader != 0) glDeleteShader(FragmentShader);
+}
+
+bool OpenGLSWFrameBuffer::CreateFrameBuffer(const FString &name, int width, int height, HWFrameBuffer **outFramebuffer)
+{
+	auto fb = std::make_unique<HWFrameBuffer>();
+
+	if (!CreateTexture(name, width, height, 1, GL_RGBA16F, &fb->Texture))
+	{
+		outFramebuffer = nullptr;
+		return false;
+	}
+
+	glGenFramebuffers(1, (GLuint*)&fb->Framebuffer);
+
+	GLint oldFramebufferBinding = 0, oldTextureBinding = 0;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &oldFramebufferBinding);
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldTextureBinding);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, fb->Framebuffer);
+	FGLDebug::LabelObject(GL_FRAMEBUFFER, fb->Framebuffer, name);
+
+	glBindTexture(GL_TEXTURE_2D, fb->Texture->Texture);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fb->Texture->Texture, 0);
+
+	GLenum result = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, oldFramebufferBinding);
+	glBindTexture(GL_TEXTURE_2D, oldTextureBinding);
+
+	if (result != GL_FRAMEBUFFER_COMPLETE)
+	{
+		outFramebuffer = nullptr;
+		return false;
+	}
+
+	*outFramebuffer = fb.release();
+	return true;
 }
 
 bool OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragmentsrc, const FString &defines, HWPixelShader **outShader)
@@ -398,6 +440,7 @@ bool OpenGLSWFrameBuffer::CreateTexture(const FString &name, int width, int heig
 	{
 	case GL_R8: srcformat = GL_RED; break;
 	case GL_RGBA8: srcformat = GL_BGRA; break;
+	case GL_RGBA16F: srcformat = GL_RGBA; break;
 	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT: srcformat = GL_RGB; break;
 	case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT: srcformat = GL_RGBA; break;
 	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT: srcformat = GL_RGBA; break;
@@ -552,11 +595,28 @@ void OpenGLSWFrameBuffer::DrawTriangleList(int minIndex, int numVertices, int st
 
 void OpenGLSWFrameBuffer::Present()
 {
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	FBVERTEX verts[4];
+
+	CalcFullscreenCoords(verts, false, true, 0, 0xFFFFFFFF);
+	for (int i = 0; i < 4; i++)
+		verts[i].tv = 1.0f - verts[i].tv;
+	SetTexture(0, OutputFB->Texture);
+	SetPixelShader(Shaders[SHADER_GammaCorrection]);
+	SetAlphaBlend(0);
+	EnableAlphaTest(false);
+	DrawTriangleFans(2, verts);
+
 	SwapBuffers();
+	Debug->Update();
+
 	glViewport(0, 0, GetClientWidth(), GetClientHeight());
+
 	float screensize[4] = { (float)GetClientWidth(), (float)GetClientHeight(), 1.0f, 1.0f };
 	SetPixelShaderConstantF(PSCONST_ScreenSize, screensize, 1);
-	Debug->Update();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, OutputFB->Framebuffer);
 }
 
 //==========================================================================
@@ -617,6 +677,11 @@ bool OpenGLSWFrameBuffer::CreateResources()
 	{
 		return false;
 	}
+
+	if (!CreateFrameBuffer("OutputFB", Width, Height, &OutputFB))
+		return false;
+	glBindFramebuffer(GL_FRAMEBUFFER, OutputFB->Framebuffer);
+
 	if (!CreateFBTexture() ||
 		!CreatePaletteTexture())
 	{
@@ -698,7 +763,6 @@ void OpenGLSWFrameBuffer::ReleaseResources()
 	{
 		SafeRelease(Shaders[i]);
 	}
-	GammaShader = nullptr;
 	if (ScreenWipe != nullptr)
 	{
 		delete ScreenWipe;
@@ -720,11 +784,17 @@ void OpenGLSWFrameBuffer::ReleaseDefaultPoolItems()
 	SafeRelease(InitialWipeScreen);
 	SafeRelease(VertexBuffer);
 	SafeRelease(IndexBuffer);
+	SafeRelease(OutputFB);
 }
 
 bool OpenGLSWFrameBuffer::Reset()
 {
 	ReleaseDefaultPoolItems();
+
+	if (!CreateFrameBuffer("OutputFB", Width, Height, &OutputFB))
+		return false;
+	glBindFramebuffer(GL_FRAMEBUFFER, OutputFB->Framebuffer);
+
 	if (!CreateFBTexture() || !CreateVertexes())
 	{
 		return false;
@@ -1086,7 +1156,6 @@ void OpenGLSWFrameBuffer::Flip()
 	assert(InScene);
 
 	DrawLetterbox();
-	DoWindowedGamma();
 
 	Present();
 	InScene = false;
@@ -1241,33 +1310,6 @@ void OpenGLSWFrameBuffer::DrawLetterbox()
 		glClear(GL_COLOR_BUFFER_BIT);
 		glDisable(GL_SCISSOR_TEST);
 	}
-}
-
-//==========================================================================
-//
-// OpenGLSWFrameBuffer :: DoWindowedGamma
-//
-// Draws the render target texture to the real back buffer using a gamma-
-// correcting pixel shader.
-//
-//==========================================================================
-
-void OpenGLSWFrameBuffer::DoWindowedGamma()
-{
-	/*if (OldRenderTarget != nullptr)
-	{
-		FBVERTEX verts[4];
-
-		CalcFullscreenCoords(verts, false, true, 0, 0xFFFFFFFF);
-		SetRenderTarget(0, OldRenderTarget);
-		SetTexture(0, TempRenderTexture);
-		SetPixelShader(Windowed && GammaShader ? GammaShader : Shaders[SHADER_NormalColor]);
-		SetAlphaBlend(0);
-		EnableAlphaTest(false);
-		DrawTriangleFans(2, verts);
-		delete OldRenderTarget;
-		OldRenderTarget = nullptr;
-	}*/
 }
 
 void OpenGLSWFrameBuffer::UploadPalette()

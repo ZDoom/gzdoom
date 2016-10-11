@@ -141,7 +141,6 @@ void I_InitGraphics ()
 	if (currentrenderer == 1) Video = gl_CreateVideo();
 	else Video = new Win32Video(0);
 #else
-	currentrenderer = vid_renderer;
 	Video = gl_CreateVideo();
 #endif
 

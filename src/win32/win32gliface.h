@@ -101,7 +101,7 @@ public:
 	Win32GLFrameBuffer() {}
 	// Actually, hMonitor is a HMONITOR, but it's passed as a void * as there
     // look to be some cross-platform bits in the way.
-	Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen);
+	Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra);
 	virtual ~Win32GLFrameBuffer();
 
 
@@ -143,7 +143,7 @@ protected:
 	float m_Gamma, m_Brightness, m_Contrast;
 	WORD m_origGamma[768];
 	BOOL m_supportsGamma;
-	bool m_Fullscreen;
+	bool m_Fullscreen, m_Bgra;
 	int m_Width, m_Height, m_Bits, m_RefreshHz;
 	int m_Lock;
 	char m_displayDeviceNameBuffer[CCHDEVICENAME];

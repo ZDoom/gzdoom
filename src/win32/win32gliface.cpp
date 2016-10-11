@@ -381,7 +381,8 @@ DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool bgra, 
 			fb->m_Height == m_DisplayHeight &&
 			fb->m_Bits == m_DisplayBits &&
 			fb->m_RefreshHz == m_DisplayHz &&
-			fb->m_Fullscreen == fs)
+			fb->m_Fullscreen == fs &&
+			fb->m_Bgra == bgra)
 		{
 			return old;
 		}
@@ -391,7 +392,7 @@ DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool bgra, 
 	if (vid_renderer == 1)
 		fb = new OpenGLFrameBuffer(m_hMonitor, m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz, fs);
 	else
-		fb = new OpenGLSWFrameBuffer(m_hMonitor, m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz, fs);
+		fb = new OpenGLSWFrameBuffer(m_hMonitor, m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz, fs, bgra);
 	return fb;
 }
 
@@ -867,13 +868,14 @@ IMPLEMENT_ABSTRACT_CLASS(Win32GLFrameBuffer)
 //
 //==========================================================================
 
-Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen) : BaseWinFB(width, height, false) 
+Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra) : BaseWinFB(width, height, bgra) 
 {
 	m_Width = width;
 	m_Height = height;
 	m_Bits = bits;
 	m_RefreshHz = refreshHz;
 	m_Fullscreen = fullscreen;
+	m_Bgra = bgra;
 	m_Lock=0;
 
 	RECT r;

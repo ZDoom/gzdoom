@@ -120,8 +120,8 @@ const char *const OpenGLSWFrameBuffer::ShaderDefines[OpenGLSWFrameBuffer::NUM_SH
 	"#define EGAMMACORRECTION", // GammaCorrection
 };
 
-OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen) :
-	Super(hMonitor, width, height, bits, refreshHz, fullscreen) 
+OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra) :
+	Super(hMonitor, width, height, bits, refreshHz, fullscreen, bgra) 
 {
 	// To do: this needs to cooperate with the same static in OpenGLFrameBuffer::InitializeState
 	static bool first = true;
@@ -892,7 +892,7 @@ void OpenGLSWFrameBuffer::KillNativeTexs()
 
 bool OpenGLSWFrameBuffer::CreateFBTexture()
 {
-	CreateTexture("FBTexture", Width, Height, 1, GL_R8, &FBTexture);
+	CreateTexture("FBTexture", Width, Height, 1, IsBgra() ? GL_RGBA8 : GL_R8, &FBTexture);
 	FBWidth = Width;
 	FBHeight = Height;
 	return true;
@@ -1262,13 +1262,16 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 {
 	if (copy3d)
 	{
+		int pixelsize = IsBgra() ? 4 : 1;
+		int size = Width * Height * pixelsize;
+
 		if (FBTexture->Buffers[0] == 0)
 		{
 			glGenBuffers(2, (GLuint*)FBTexture->Buffers);
 			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, FBTexture->Buffers[0]);
-			glBufferData(GL_PIXEL_UNPACK_BUFFER, Width * Height, nullptr, GL_STREAM_DRAW);
+			glBufferData(GL_PIXEL_UNPACK_BUFFER, size, nullptr, GL_STREAM_DRAW);
 			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, FBTexture->Buffers[1]);
-			glBufferData(GL_PIXEL_UNPACK_BUFFER, Width * Height, nullptr, GL_STREAM_DRAW);
+			glBufferData(GL_PIXEL_UNPACK_BUFFER, size, nullptr, GL_STREAM_DRAW);
 		}
 		else
 		{
@@ -1276,28 +1279,31 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 			FBTexture->CurrentBuffer = (FBTexture->CurrentBuffer + 1) & 1;
 		}
 
-		uint8_t *dest = (uint8_t*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, Width * Height, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+		uint8_t *dest = (uint8_t*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 		if (dest)
 		{
 			if (Pitch == Width)
 			{
-				memcpy(dest, MemBuffer, Width * Height);
+				memcpy(dest, MemBuffer, Width * Height * pixelsize);
 			}
 			else
 			{
 				uint8_t *src = MemBuffer;
 				for (int y = 0; y < Height; y++)
 				{
-					memcpy(dest, src, Width);
-					dest += Width;
-					src += Pitch;
+					memcpy(dest, src, Width * pixelsize);
+					dest += Width * pixelsize;
+					src += Pitch * pixelsize;
 				}
 			}
 			glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 			GLint oldBinding = 0;
 			glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
 			glBindTexture(GL_TEXTURE_2D, FBTexture->Texture);
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Width, Height, GL_RED, GL_UNSIGNED_BYTE, 0);
+			if (IsBgra())
+				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Width, Height, GL_BGRA, GL_UNSIGNED_BYTE, 0);
+			else
+				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Width, Height, GL_RED, GL_UNSIGNED_BYTE, 0);
 			glBindTexture(GL_TEXTURE_2D, oldBinding);
 		}
 
@@ -1314,7 +1320,10 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 	memset(Constant, 0, sizeof(Constant));
 	SetAlphaBlend(0);
 	EnableAlphaTest(false);
-	SetPixelShader(Shaders[SHADER_NormalColorPal]);
+	if (IsBgra())
+		SetPixelShader(Shaders[SHADER_NormalColor]);
+	else
+		SetPixelShader(Shaders[SHADER_NormalColorPal]);
 	if (copy3d)
 	{
 		FBVERTEX verts[4];
@@ -1330,7 +1339,10 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 			{
 				color0 = ColorValue(realfixedcolormap->ColorizeStart[0] / 2, realfixedcolormap->ColorizeStart[1] / 2, realfixedcolormap->ColorizeStart[2] / 2, 0);
 				color1 = ColorValue(realfixedcolormap->ColorizeEnd[0] / 2, realfixedcolormap->ColorizeEnd[1] / 2, realfixedcolormap->ColorizeEnd[2] / 2, 1);
-				SetPixelShader(Shaders[SHADER_SpecialColormapPal]);
+				if (IsBgra())
+					SetPixelShader(Shaders[SHADER_SpecialColormap]);
+				else
+					SetPixelShader(Shaders[SHADER_SpecialColormapPal]);
 			}
 		}
 		else
@@ -1341,7 +1353,10 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 		CalcFullscreenCoords(verts, Accel2D, false, color0, color1);
 		DrawTriangleFans(2, verts);
 	}
-	SetPixelShader(Shaders[SHADER_NormalColorPal]);
+	if (IsBgra())
+		SetPixelShader(Shaders[SHADER_NormalColor]);
+	else
+		SetPixelShader(Shaders[SHADER_NormalColorPal]);
 }
 
 //==========================================================================

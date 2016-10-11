@@ -29,7 +29,7 @@ class OpenGLFrameBuffer : public SDLGLFB
 public:
 
 	explicit OpenGLSWFrameBuffer() {}
-	OpenGLSWFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen);
+	OpenGLSWFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra);
 	~OpenGLSWFrameBuffer();
 
 	bool IsValid() override;

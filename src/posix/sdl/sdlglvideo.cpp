@@ -314,8 +314,8 @@ bool SDLGLVideo::InitHardware (bool allowsoftware, int multisample)
 
 // FrameBuffer implementation -----------------------------------------------
 
-SDLGLFB::SDLGLFB (void *, int width, int height, int, int, bool fullscreen)
-	: DFrameBuffer (width, height, false)
+SDLGLFB::SDLGLFB (void *, int width, int height, int, int, bool fullscreen, bool bgra)
+	: DFrameBuffer (width, height, bgra)
 {
 	int i;
 	

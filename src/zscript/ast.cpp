@@ -54,7 +54,12 @@ static const char *BuiltInTypeNames[] =
 	"vector3",
 	"vector4",
 	"name",
-	"usertype"
+	"color",
+	"state",
+	"sound",
+
+	"usertype",
+
 };
 
 class FLispString
@@ -767,6 +772,7 @@ static void PrintFuncParamDecl(FLispString &out, ZCC_TreeNode *node)
 	PrintNodes(out, dnode->Type);
 	out.AddName(dnode->Name);
 	out.AddHex(dnode->Flags);
+	PrintNodes(out, dnode->Default);
 	out.Close();
 }
 

@@ -88,6 +88,7 @@ static void InitTokenMap()
 	TOKENDEF (TK_LtGtEq,		ZCC_LTGTEQ);
 	TOKENDEF (TK_Is,			ZCC_IS);
 	TOKENDEF (TK_DotDot,		ZCC_DOTDOT);
+	TOKENDEF (TK_Ellipsis,		ZCC_ELLIPSIS);
 	TOKENDEF ('|',				ZCC_OR);
 	TOKENDEF ('^',				ZCC_XOR);
 	TOKENDEF ('&',				ZCC_AND);
@@ -112,6 +113,7 @@ static void InitTokenMap()
 	TOKENDEF (TK_Class,			ZCC_CLASS);
 	TOKENDEF (TK_Abstract,		ZCC_ABSTRACT);
 	TOKENDEF (TK_Native,		ZCC_NATIVE);
+	TOKENDEF (TK_Action,		ZCC_ACTION);
 	TOKENDEF (TK_Replaces,		ZCC_REPLACES);
 	TOKENDEF (TK_Static,		ZCC_STATIC);
 	TOKENDEF (TK_Private,		ZCC_PRIVATE);
@@ -172,6 +174,9 @@ static void InitTokenMap()
 	TOKENDEF (TK_Loop,			ZCC_LOOP);
 	TOKENDEF (TK_Goto,			ZCC_GOTO);
 	TOKENDEF (TK_States,		ZCC_STATES);
+	TOKENDEF (TK_State,			ZCC_STATE);
+	TOKENDEF (TK_Color,			ZCC_COLOR);
+	TOKENDEF (TK_Sound,			ZCC_SOUND);
 
 	TOKENDEF (TK_Identifier,	ZCC_IDENTIFIER);
 	TOKENDEF (TK_StringConst,	ZCC_STRCONST);

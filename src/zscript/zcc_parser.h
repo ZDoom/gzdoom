@@ -119,6 +119,11 @@ enum EZCCBuiltinType
 	ZCC_Vector3,
 	ZCC_Vector4,
 	ZCC_Name,
+
+	ZCC_Color,		// special types for ZDoom.
+	ZCC_State,
+	ZCC_Sound,
+
 	ZCC_UserType,
 
 	ZCC_NUM_BUILT_IN_TYPES
@@ -437,6 +442,7 @@ struct ZCC_LocalVarStmt : ZCC_Statement
 struct ZCC_FuncParamDecl : ZCC_TreeNode
 {
 	ZCC_Type *Type;
+	ZCC_Expression *Default;
 	ENamedName Name;
 	int Flags;
 };

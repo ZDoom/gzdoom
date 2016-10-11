@@ -188,6 +188,7 @@ class_ancestry(X) ::= COLON dottable_id(A).	{ X = A; /*X-overwrites-A*/ }
 class_flags(X) ::= .										{ X.Flags = 0; X.Replaces = NULL; }
 class_flags(X) ::= class_flags(A) ABSTRACT.					{ X.Flags = A.Flags | ZCC_Abstract; X.Replaces = A.Replaces; }
 class_flags(X) ::= class_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; X.Replaces = A.Replaces; }
+class_flags(X) ::= class_flags(A) ACTION.					{ X.Flags = A.Flags | ZCC_Action; X.Replaces = A.Replaces; }
 class_flags(X) ::= class_flags(A) REPLACES dottable_id(B).	{ X.Flags = A.Flags; X.Replaces = B; }
 
 /*----- Dottable Identifier -----*/
@@ -585,6 +586,9 @@ type_name1(X) ::= DOUBLE(T).				{ X.Int = ZCC_Float64; X.SourceLoc = T.SourceLoc
 type_name1(X) ::= STRING(T).				{ X.Int = ZCC_String; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= VECTOR(T) vector_size(A).	{ X.Int = A.Int; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= NAME(T).					{ X.Int = ZCC_Name; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= SOUND(T).					{ X.Int = ZCC_Sound; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= STATE(T).					{ X.Int = ZCC_State; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= COLOR(T).					{ X.Int = ZCC_Color; X.SourceLoc = T.SourceLoc; }
 
 type_name(X) ::= type_name1(A).
 {
@@ -841,6 +845,17 @@ func_params(X) ::= .	/* empty */			{ X = NULL; }
 func_params(X) ::= VOID.					{ X = NULL; }
 func_params(X) ::= func_param_list(X).
 
+func_params(X) ::= func_param_list(A) COMMA ELLIPSIS.
+{
+	NEW_AST_NODE(FuncParamDecl,parm,stat->sc->GetMessageLine());
+	parm->Type = nullptr;
+	parm->Name = NAME_None;
+	parm->Flags = 0;
+	parm->Default = nullptr;
+	X = A; /*X-overwrites-A*/ 
+	X->AppendSibling(parm);
+}
+
 func_param_list(X) ::= func_param(X).
 func_param_list(X) ::= func_param_list(A) COMMA func_param(B).	{ X = A; /*X-overwrites-A*/ X->AppendSibling(B); }
 
@@ -850,6 +865,17 @@ func_param(X) ::= func_param_flags(A) type(B) IDENTIFIER(C).
 	parm->Type = B;
 	parm->Name = C.Name();
 	parm->Flags = A.Int;
+	parm->Default = nullptr;
+	X = parm;
+}
+
+func_param(X) ::= func_param_flags(A) type(B) IDENTIFIER(C) EQ expr(D).
+{
+	NEW_AST_NODE(FuncParamDecl,parm,A.SourceLoc ? A.SourceLoc : B->SourceLoc);
+	parm->Type = B;
+	parm->Name = C.Name();
+	parm->Flags = A.Int;
+	parm->Default = D;
 	X = parm;
 }
 

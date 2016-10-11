@@ -804,3 +804,18 @@ enum ERenderStyle
 	STYLE_AddStencil,
 	STYLE_AddShaded,
 };
+
+// Type definition for the implicit 'callingstate' parameter that gets passed to action functions.
+enum EStateType
+{
+	STATE_Actor,
+	STATE_Psprite,
+	STATE_StateChain,
+}
+
+struct FStateParamInfo
+{
+	state mCallingState;
+	EStateType mStateType;
+	int mPSPIndex;
+}

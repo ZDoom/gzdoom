@@ -136,10 +136,14 @@ void I_InitGraphics ()
 	val.Bool = !!Args->CheckParm ("-devparm");
 	ticker.SetGenericRepDefault (val, CVAR_Bool);
 
-	//currentrenderer = vid_renderer;
+//#define USE_D3D9_VIDEO
+#ifdef USE_D3D9_VIDEO
+	if (currentrenderer == 1) Video = gl_CreateVideo();
+	else Video = new Win32Video(0);
+#else
+	currentrenderer = vid_renderer;
 	Video = gl_CreateVideo();
-	//if (currentrenderer==1) Video = gl_CreateVideo();
-	//else Video = new Win32Video (0);
+#endif
 
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");

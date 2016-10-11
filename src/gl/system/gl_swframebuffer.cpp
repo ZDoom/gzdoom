@@ -130,14 +130,14 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 		ogl_LoadFunctions();
 	}
 	gl_LoadExtensions();
-	Super::InitializeState();
-
-	Debug = std::make_shared<FGLDebug>();
-	Debug->Update();
+	InitializeState();
 
 	// SetVSync needs to be at the very top to workaround a bug in Nvidia's OpenGL driver.
 	// If wglSwapIntervalEXT is called after glBindFramebuffer in a frame the setting is not changed!
-	//SetVSync(vid_vsync);
+	Super::SetVSync(vid_vsync);
+
+	Debug = std::make_shared<FGLDebug>();
+	Debug->Update();
 
 	VertexBuffer = nullptr;
 	IndexBuffer = nullptr;
@@ -216,7 +216,7 @@ OpenGLSWFrameBuffer::~OpenGLSWFrameBuffer()
 OpenGLSWFrameBuffer::HWTexture::~HWTexture()
 {
 	if (Texture != 0) glDeleteTextures(1, (GLuint*)&Texture);
-	if (Buffer != 0) glDeleteBuffers(1, (GLuint*)&Buffer);
+	if (Buffers[0] != 0) glDeleteBuffers(2, (GLuint*)Buffers);
 }
 
 OpenGLSWFrameBuffer::HWVertexBuffer::~HWVertexBuffer()
@@ -228,7 +228,7 @@ OpenGLSWFrameBuffer::HWVertexBuffer::~HWVertexBuffer()
 OpenGLSWFrameBuffer::FBVERTEX *OpenGLSWFrameBuffer::HWVertexBuffer::Lock()
 {
 	glBindBuffer(GL_ARRAY_BUFFER, Buffer);
-	return (FBVERTEX*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+	return (FBVERTEX*)glMapBufferRange(GL_ARRAY_BUFFER, 0, Size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 }
 
 void OpenGLSWFrameBuffer::HWVertexBuffer::Unlock()
@@ -246,7 +246,7 @@ uint16_t *OpenGLSWFrameBuffer::HWIndexBuffer::Lock()
 {
 	glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &LockedOldBinding);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Buffer);
-	return (uint16_t*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
+	return (uint16_t*)glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, Size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 }
 
 void OpenGLSWFrameBuffer::HWIndexBuffer::Unlock()
@@ -321,6 +321,7 @@ bool OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragments
 	shader->ConstantLocations[PSCONST_PaletteMod] = glGetUniformLocation(shader->Program, "PaletteMod");
 	shader->ConstantLocations[PSCONST_Weights] = glGetUniformLocation(shader->Program, "Weights");
 	shader->ConstantLocations[PSCONST_Gamma] = glGetUniformLocation(shader->Program, "Gamma");
+	shader->ConstantLocations[PSCONST_ScreenSize] = glGetUniformLocation(shader->Program, "ScreenSize");
 	shader->ImageLocation = glGetUniformLocation(shader->Program, "Image");
 	shader->PaletteLocation = glGetUniformLocation(shader->Program, "Palette");
 	shader->NewScreenLocation = glGetUniformLocation(shader->Program, "NewScreen");
@@ -334,6 +335,8 @@ bool OpenGLSWFrameBuffer::CreateVertexBuffer(int size, HWVertexBuffer **outVerte
 {
 	auto obj = std::make_unique<HWVertexBuffer>();
 
+	obj->Size = size;
+
 	GLint oldBinding = 0;
 	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &oldBinding);
 
@@ -341,6 +344,7 @@ bool OpenGLSWFrameBuffer::CreateVertexBuffer(int size, HWVertexBuffer **outVerte
 	glGenBuffers(1, (GLuint*)&obj->Buffer);
 	glBindVertexArray(obj->VertexArray);
 	glBindBuffer(GL_ARRAY_BUFFER, obj->Buffer);
+	FGLDebug::LabelObject(GL_BUFFER, obj->Buffer, "VertexBuffer");
 	glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_STREAM_DRAW);
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
@@ -362,11 +366,14 @@ bool OpenGLSWFrameBuffer::CreateIndexBuffer(int size, HWIndexBuffer **outIndexBu
 {
 	auto obj = std::make_unique<HWIndexBuffer>();
 
+	obj->Size = size;
+
 	GLint oldBinding = 0;
 	glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &oldBinding);
 
 	glGenBuffers(1, (GLuint*)&obj->Buffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj->Buffer);
+	FGLDebug::LabelObject(GL_BUFFER, obj->Buffer, "IndexBuffer");
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, nullptr, GL_STREAM_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, oldBinding);
@@ -417,7 +424,7 @@ void OpenGLSWFrameBuffer::SetGammaRamp(const GammaRamp *ramp)
 
 void OpenGLSWFrameBuffer::SetPixelShaderConstantF(int uniformIndex, const float *data, int vec4fcount)
 {
-	assert(uniformIndex < 4 && vec4fcount == 1); // This emulation of d3d9 only works for very simple stuff
+	assert(uniformIndex < NumPSCONST && vec4fcount == 1); // This emulation of d3d9 only works for very simple stuff
 	for (int i = 0; i < 4; i++)
 		ShaderConstants[uniformIndex * 4 + i] = data[i];
 	if (CurrentShader && CurrentShader->ConstantLocations[uniformIndex] != -1)
@@ -431,7 +438,7 @@ void OpenGLSWFrameBuffer::SetHWPixelShader(HWPixelShader *shader)
 		if (shader)
 		{
 			glUseProgram(shader->Program);
-			for (int i = 0; i < 4; i++)
+			for (int i = 0; i < NumPSCONST; i++)
 			{
 				if (shader->ConstantLocations[i] != -1)
 					glUniform4fv(shader->ConstantLocations[i], 1, &ShaderConstants[i * 4]);
@@ -547,6 +554,8 @@ void OpenGLSWFrameBuffer::Present()
 {
 	SwapBuffers();
 	glViewport(0, 0, GetClientWidth(), GetClientHeight());
+	float screensize[4] = { (float)GetClientWidth(), (float)GetClientHeight(), 1.0f, 1.0f };
+	SetPixelShaderConstantF(PSCONST_ScreenSize, screensize, 1);
 	Debug->Update();
 }
 
@@ -561,7 +570,7 @@ void OpenGLSWFrameBuffer::Present()
 
 void OpenGLSWFrameBuffer::SetInitialState()
 {
-	AlphaBlendEnabled = FALSE;
+	AlphaBlendEnabled = false;
 	AlphaBlendOp = GL_FUNC_ADD;
 	AlphaSrcBlend = 0;
 	AlphaDestBlend = 0;
@@ -583,7 +592,10 @@ void OpenGLSWFrameBuffer::SetInitialState()
 	float weights[4] = { 77 / 256.f, 143 / 256.f, 37 / 256.f, 1 };
 	SetPixelShaderConstantF(PSCONST_Weights, weights, 1);
 
-	AlphaTestEnabled = FALSE;
+	float screensize[4] = { (float)GetClientWidth(), (float)GetClientHeight(), 1.0f, 1.0f };
+	SetPixelShaderConstantF(PSCONST_ScreenSize, screensize, 1);
+
+	AlphaTestEnabled = false;
 
 	CurBorderColor = 0;
 
@@ -1043,6 +1055,7 @@ void OpenGLSWFrameBuffer::Update()
 	if (NeedPalUpdate)
 	{
 		UploadPalette();
+		NeedPalUpdate = false;
 	}
 
 	BlitCycles.Reset();
@@ -1075,11 +1088,6 @@ void OpenGLSWFrameBuffer::Flip()
 	DrawLetterbox();
 	DoWindowedGamma();
 
-	// Limiting the frame rate is as simple as waiting for the timer to signal this event.
-	if (FPSLimitEvent != nullptr)
-	{
-		WaitForSingleObject(FPSLimitEvent, 1000);
-	}
 	Present();
 	InScene = false;
 
@@ -1130,18 +1138,21 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 {
 	if (copy3d)
 	{
-		if (FBTexture->Buffer == 0)
+		if (FBTexture->Buffers[0] == 0)
 		{
-			glGenBuffers(1, (GLuint*)&FBTexture->Buffer);
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, FBTexture->Buffer);
+			glGenBuffers(2, (GLuint*)FBTexture->Buffers);
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, FBTexture->Buffers[0]);
+			glBufferData(GL_PIXEL_UNPACK_BUFFER, Width * Height, nullptr, GL_STREAM_DRAW);
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, FBTexture->Buffers[1]);
 			glBufferData(GL_PIXEL_UNPACK_BUFFER, Width * Height, nullptr, GL_STREAM_DRAW);
 		}
 		else
 		{
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, FBTexture->Buffer);
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, FBTexture->Buffers[FBTexture->CurrentBuffer]);
+			FBTexture->CurrentBuffer = (FBTexture->CurrentBuffer + 1) & 1;
 		}
 
-		uint8_t *dest = (uint8_t*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+		uint8_t *dest = (uint8_t*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, Width * Height, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 		if (dest)
 		{
 			if (Pitch == Width)
@@ -1178,7 +1189,7 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 	SetPaletteTexture(PaletteTexture, 256, BorderColor);
 	memset(Constant, 0, sizeof(Constant));
 	SetAlphaBlend(0);
-	EnableAlphaTest(FALSE);
+	EnableAlphaTest(false);
 	SetPixelShader(Shaders[SHADER_NormalColorPal]);
 	if (copy3d)
 	{
@@ -1252,7 +1263,7 @@ void OpenGLSWFrameBuffer::DoWindowedGamma()
 		SetTexture(0, TempRenderTexture);
 		SetPixelShader(Windowed && GammaShader ? GammaShader : Shaders[SHADER_NormalColor]);
 		SetAlphaBlend(0);
-		EnableAlphaTest(FALSE);
+		EnableAlphaTest(false);
 		DrawTriangleFans(2, verts);
 		delete OldRenderTarget;
 		OldRenderTarget = nullptr;
@@ -1261,18 +1272,21 @@ void OpenGLSWFrameBuffer::DoWindowedGamma()
 
 void OpenGLSWFrameBuffer::UploadPalette()
 {
-	if (PaletteTexture->Buffer == 0)
+	if (PaletteTexture->Buffers[0] == 0)
 	{
-		glGenBuffers(1, (GLuint*)&PaletteTexture->Buffer);
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PaletteTexture->Buffer);
+		glGenBuffers(2, (GLuint*)PaletteTexture->Buffers);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PaletteTexture->Buffers[0]);
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, 256 * 4, nullptr, GL_STREAM_DRAW);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PaletteTexture->Buffers[1]);
 		glBufferData(GL_PIXEL_UNPACK_BUFFER, 256 * 4, nullptr, GL_STREAM_DRAW);
 	}
 	else
 	{
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PaletteTexture->Buffer);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PaletteTexture->Buffers[PaletteTexture->CurrentBuffer]);
+		PaletteTexture->CurrentBuffer = (PaletteTexture->CurrentBuffer + 1) & 1;
 	}
 
-	uint8_t *pix = (uint8_t *)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+	uint8_t *pix = (uint8_t*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 256 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 	if (pix)
 	{
 		int i;
@@ -1358,6 +1372,7 @@ void OpenGLSWFrameBuffer::SetVSync(bool vsync)
 		VSync = vsync;
 		Reset();
 	}
+	Super::SetVSync(vsync);
 }
 
 void OpenGLSWFrameBuffer::NewRefreshRate()
@@ -1510,7 +1525,7 @@ void OpenGLSWFrameBuffer::DrawPackedTextures(int packnum)
 		BufferedTris *quad = &QuadExtra[QuadBatchPos];
 		FBVERTEX *vert = &VertexData[VertexPos];
 
-		quad->Group1 = 0;
+		quad->ClearSetup();
 		if (pack->Format == GL_R8/* && !tex->IsGray*/)
 		{
 			quad->Flags = BQF_WrapUV | BQF_GamePalette/* | BQF_DisableAlphaTest*/;
@@ -1885,8 +1900,8 @@ bool OpenGLSWFrameBuffer::OpenGLTex::Update()
 
 	rect = Box->Area;
 
-	if (Box->Owner->Tex->Buffer == 0)
-		glGenBuffers(1, (GLuint*)&Box->Owner->Tex->Buffer);
+	if (Box->Owner->Tex->Buffers[0] == 0)
+		glGenBuffers(2, (GLuint*)Box->Owner->Tex->Buffers);
 
 	int bytesPerPixel = 4;
 	switch (format)
@@ -1896,11 +1911,13 @@ bool OpenGLSWFrameBuffer::OpenGLTex::Update()
 	default: return false;
 	}
 
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, Box->Owner->Tex->Buffer);
-	glBufferData(GL_PIXEL_UNPACK_BUFFER, (rect.right - rect.left) * (rect.bottom - rect.top) * bytesPerPixel, nullptr, GL_STREAM_DRAW);
+	int buffersize = (rect.right - rect.left) * (rect.bottom - rect.top) * bytesPerPixel;
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, Box->Owner->Tex->Buffers[Box->Owner->Tex->CurrentBuffer]);
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, buffersize, nullptr, GL_STREAM_DRAW);
+	Box->Owner->Tex->CurrentBuffer = (Box->Owner->Tex->CurrentBuffer + 1) & 1;
 
 	int pitch = (rect.right - rect.left) * bytesPerPixel;
-	uint8_t *bits = (uint8_t *)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+	uint8_t *bits = (uint8_t *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, buffersize, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 	dest = bits;
 	if (!dest)
 	{
@@ -2088,18 +2105,21 @@ bool OpenGLSWFrameBuffer::OpenGLPal::Update()
 
 	assert(Tex != nullptr);
 
-	if (Tex->Buffer == 0)
+	if (Tex->Buffers[0] == 0)
 	{
-		glGenBuffers(1, (GLuint*)&Tex->Buffer);
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, Tex->Buffer);
+		glGenBuffers(2, (GLuint*)Tex->Buffers);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, Tex->Buffers[0]);
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, Remap->NumEntries * 4, nullptr, GL_STREAM_DRAW);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, Tex->Buffers[1]);
 		glBufferData(GL_PIXEL_UNPACK_BUFFER, Remap->NumEntries * 4, nullptr, GL_STREAM_DRAW);
 	}
 	else
 	{
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, Tex->Buffer);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, Tex->Buffers[Tex->CurrentBuffer]);
+		Tex->CurrentBuffer = (Tex->CurrentBuffer + 1) & 1;
 	}
 
-	buff = (uint32_t *)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+	buff = (uint32_t *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, Remap->NumEntries * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 	if (buff == nullptr)
 	{
 		return false;
@@ -2625,7 +2645,7 @@ void OpenGLSWFrameBuffer::FlatFill(int left, int top, int right, int bottom, FTe
 	BufferedTris *quad = &QuadExtra[QuadBatchPos];
 	FBVERTEX *vert = &VertexData[VertexPos];
 
-	quad->Group1 = 0;
+	quad->ClearSetup();
 	if (tex->GetTexFormat() == GL_R8 && !tex->IsGray)
 	{
 		quad->Flags = BQF_WrapUV | BQF_GamePalette; // | BQF_DisableAlphaTest;
@@ -2743,7 +2763,7 @@ void OpenGLSWFrameBuffer::FillSimplePoly(FTexture *texture, FVector2 *points, in
 	color0 = 0;
 	color1 = 0xFFFFFFFF;
 
-	quad->Group1 = 0;
+	quad->ClearSetup();
 	if (tex->GetTexFormat() == GL_R8 && !tex->IsGray)
 	{
 		quad->Flags = BQF_WrapUV | BQF_GamePalette | BQF_DisableAlphaTest;
@@ -2830,7 +2850,7 @@ void OpenGLSWFrameBuffer::AddColorOnlyQuad(int left, int top, int width, int hei
 	float x = float(left) - 0.5f;
 	float y = float(top) - 0.5f + (GatheringWipeScreen ? 0 : LBOffset);
 
-	quad->Group1 = 0;
+	quad->ClearSetup();
 	quad->ShaderNum = BQS_ColorOnly;
 	if ((color & 0xFF000000) != 0xFF000000)
 	{
@@ -3004,7 +3024,7 @@ void OpenGLSWFrameBuffer::EndQuadBatch()
 		{
 			const BufferedTris *q2 = &QuadExtra[j];
 			if (quad->Texture != q2->Texture ||
-				quad->Group1 != q2->Group1 ||
+				!quad->IsSameSetup(*q2) ||
 				quad->Palette != q2->Palette)
 			{
 				break;
@@ -3371,7 +3391,7 @@ void OpenGLSWFrameBuffer::SetAlphaBlend(int op, int srcblend, int destblend)
 	{ // Disable alpha blend
 		if (AlphaBlendEnabled)
 		{
-			AlphaBlendEnabled = FALSE;
+			AlphaBlendEnabled = false;
 			glDisable(GL_BLEND);
 		}
 	}
@@ -3382,7 +3402,7 @@ void OpenGLSWFrameBuffer::SetAlphaBlend(int op, int srcblend, int destblend)
 
 		if (!AlphaBlendEnabled)
 		{
-			AlphaBlendEnabled = TRUE;
+			AlphaBlendEnabled = true;
 			glEnable(GL_BLEND);
 		}
 		if (AlphaBlendOp != op)

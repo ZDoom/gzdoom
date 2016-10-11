@@ -78,7 +78,16 @@ private:
 		uint32_t color0, color1;
 		FLOAT tu, tv;
 	};
-	//#define D3DFVF_FBVERTEX (D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1)
+
+	enum
+	{
+		PSCONST_Desaturation,
+		PSCONST_PaletteMod,
+		PSCONST_Weights,
+		PSCONST_Gamma,
+		PSCONST_ScreenSize,
+		NumPSCONST
+	};
 
 	struct GammaRamp
 	{
@@ -93,10 +102,12 @@ private:
 	class HWTexture
 	{
 	public:
+		HWTexture() { Buffers[0] = 0; Buffers[1] = 0; }
 		~HWTexture();
 
 		int Texture = 0;
-		int Buffer = 0;
+		int Buffers[2];
+		int CurrentBuffer = 0;
 		int WrapS = 0;
 		int WrapT = 0;
 		int Format = 0;
@@ -112,6 +123,7 @@ private:
 
 		int VertexArray = 0;
 		int Buffer = 0;
+		int Size = 0;
 	};
 
 	class HWIndexBuffer
@@ -123,6 +135,7 @@ private:
 		void Unlock();
 
 		int Buffer = 0;
+		int Size = 0;
 
 	private:
 		int LockedOldBinding = 0;
@@ -137,7 +150,7 @@ private:
 		int VertexShader = 0;
 		int FragmentShader = 0;
 
-		int ConstantLocations[4];
+		int ConstantLocations[NumPSCONST];
 		int ImageLocation = -1;
 		int PaletteLocation = -1;
 		int NewScreenLocation = -1;
@@ -283,31 +296,33 @@ private:
 
 	struct BufferedTris
 	{
-		union
-		{
-			struct
-			{
-				uint8_t Flags;
-				uint8_t ShaderNum : 4;
-				int BlendOp;
-				int SrcBlend, DestBlend;
-			};
-			uint32_t Group1;
-		};
+		uint8_t Flags;
+		uint8_t ShaderNum;
+		int BlendOp;
+		int SrcBlend;
+		int DestBlend;
+
 		uint8_t Desat;
 		OpenGLPal *Palette;
 		HWTexture *Texture;
 		uint16_t NumVerts;		// Number of _unique_ vertices used by this set.
 		uint16_t NumTris;		// Number of triangles used by this set.
+
+		void ClearSetup()
+		{
+			Flags = 0;
+			ShaderNum = 0;
+			BlendOp = 0;
+			SrcBlend = 0;
+			DestBlend = 0;
+		}
+
+		bool IsSameSetup(const BufferedTris &other) const
+		{
+			return Flags == other.Flags && ShaderNum == other.ShaderNum && BlendOp == other.BlendOp && SrcBlend == other.SrcBlend && DestBlend == other.DestBlend;
+		}
 	};
 
-	enum
-	{
-		PSCONST_Desaturation = 0,
-		PSCONST_PaletteMod = 1,
-		PSCONST_Weights = 2,
-		PSCONST_Gamma = 3,
-	};
 	enum
 	{
 		SHADER_NormalColor,
@@ -386,7 +401,7 @@ private:
 	std::shared_ptr<FGLDebug> Debug;
 
 	std::unique_ptr<HWVertexBuffer> StreamVertexBuffer;
-	float ShaderConstants[16];
+	float ShaderConstants[NumPSCONST * 4];
 	HWPixelShader *CurrentShader = nullptr;
 
 	bool AlphaTestEnabled = false;

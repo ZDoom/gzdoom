@@ -8,9 +8,11 @@ out vec4 PixelColor0;
 out vec4 PixelColor1;
 out vec4 PixelTexCoord0;
 
+uniform vec4 ScreenSize;
+
 void main()
 {
-	gl_Position = vec4(AttrPosition.xy / vec2(1920*2,1080*2) * 2.0 - 1.0, 1.0, 1.0);
+	gl_Position = vec4(AttrPosition.xy / ScreenSize.xy * 2.0 - 1.0, 1.0, 1.0);
 	gl_Position.y = -gl_Position.y;
 	PixelColor0 = AttrColor0.bgra;
 	PixelColor1 = AttrColor1.bgra;

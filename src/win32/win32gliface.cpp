@@ -25,6 +25,7 @@
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
+#include "gl/system/gl_swframebuffer.h"
 
 extern "C" {
     _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
@@ -387,7 +388,10 @@ DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool bgra, 
 		//old->GetFlash(flashColor, flashAmount);
 		delete old;
 	}
-	fb = new OpenGLFrameBuffer(m_hMonitor, m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz, fs);
+	if (vid_renderer == 1)
+		fb = new OpenGLFrameBuffer(m_hMonitor, m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz, fs);
+	else
+		fb = new OpenGLSWFrameBuffer(m_hMonitor, m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz, fs);
 	return fb;
 }
 

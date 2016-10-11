@@ -634,6 +634,7 @@ void AActor::RemoveInventory(AInventory *item)
 
 bool AActor::TakeInventory(PClassActor *itemclass, int amount, bool fromdecorate, bool notakeinfinite)
 {
+	amount = abs(amount);
 	AInventory *item = FindInventory(itemclass);
 
 	if (item == NULL)
@@ -666,6 +667,7 @@ bool AActor::TakeInventory(PClassActor *itemclass, int amount, bool fromdecorate
 		item->IsKindOf(RUNTIME_CLASS(AAmmo)))
 	{
 		// Nothing to do here, except maybe res = false;? Would it make sense?
+		result = false;
 	}
 	else if (!amount || amount>=item->Amount)
 	{

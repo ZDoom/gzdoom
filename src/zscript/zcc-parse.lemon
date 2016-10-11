@@ -430,25 +430,31 @@ state_flow_type(X) ::= GOTO(T) dottable_id(A) state_goto_offset(B).
 	NEW_AST_NODE(StateGoto, flow, T);
 	flow->Label = A;
 	flow->Offset = B;
+	flow->Qualifier = nullptr;
+	X = flow;
+}
+
+state_flow_type(X) ::= GOTO(T) IDENTIFIER(C) SCOPE dottable_id(A) state_goto_offset(B).
+{
+	NEW_AST_NODE(StateGoto, flow, T);
+	flow->Label = A;
+	flow->Offset = B;
+
+	NEW_AST_NODE(Identifier,id,C);
+	id->Id = C.Name();
+	flow->Qualifier =id;
 	X = flow;
 }
 
 state_goto_offset(X) ::= .				{ X = NULL; }
-state_goto_offset(X) ::= PLUS expr(A).	{ X = A; /*X-overwrites-A*/ }	/* Must evaluate to a non-negative integer constant. */
+state_goto_offset(X) ::= ADD expr(A).	{ X = A; /*X-overwrites-A*/ }	/* Must evaluate to a non-negative integer constant. */
 
-state_line(X) ::= NWS(A) NWS(B) expr state_opts(C) state_action(D).
+state_line(X) ::= NWS(A) NWS(B) expr(E) state_opts(C) state_action(D).
 {
 	NEW_AST_NODE(StateLine, line, A);
-	const char *sprite = FName(A.Name()).GetChars();
-	if (strlen(sprite) != 4)
-	{
-		Printf("Sprite name '%s' must be four characters", sprite);
-	}
-	else
-	{
-		memcpy(line->Sprite, sprite, 4);
-	}
+	line->Sprite = stat->Strings.Alloc(FName(A.Name()).GetChars());
 	line->Frames = stat->Strings.Alloc(FName(B.Name()).GetChars());
+	line->Duration = E;
 	line->bBright = C.Bright;
 	line->bFast = C.Fast;
 	line->bSlow = C.Slow;

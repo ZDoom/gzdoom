@@ -405,6 +405,7 @@ static void PrintStateGoto(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_StateGoto *snode = (ZCC_StateGoto *)node;
 	out.Open("state-goto");
+	PrintNodes(out, snode->Qualifier);
 	PrintNodes(out, snode->Label);
 	PrintNodes(out, snode->Offset);
 	out.Close();
@@ -414,7 +415,8 @@ static void PrintStateLine(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_StateLine *snode = (ZCC_StateLine *)node;
 	out.Open("state-line");
-	out.Add(snode->Sprite, 4);
+	out.Add(*(snode->Sprite));
+	PrintNodes(out, snode->Duration);
 	if (snode->bNoDelay) out.Add("nodelay", 7);
 	if (snode->bBright) out.Add("bright", 6);
 	if (snode->bFast) out.Add("fast", 4);

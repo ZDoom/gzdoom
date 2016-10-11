@@ -260,19 +260,21 @@ struct ZCC_Expression : ZCC_TreeNode
 
 struct ZCC_StateGoto : ZCC_StatePart
 {
+	ZCC_Identifier *Qualifier;
 	ZCC_Identifier *Label;
 	ZCC_Expression *Offset;
 };
 
 struct ZCC_StateLine : ZCC_StatePart
 {
-	char Sprite[4];
+	FString *Sprite;
 	BITFIELD bBright : 1;
 	BITFIELD bFast : 1;
 	BITFIELD bSlow : 1;
 	BITFIELD bNoDelay : 1;
 	BITFIELD bCanRaise : 1;
 	FString *Frames;
+	ZCC_Expression *Duration;
 	ZCC_Expression *Offset;
 	ZCC_TreeNode *Action;
 };

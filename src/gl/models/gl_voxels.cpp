@@ -314,12 +314,12 @@ void FVoxelModel::MakeSlabPolys(int x, int y, kvxslab_t *voxptr, FVoxelMap &chec
 		}
 		if (cull & 4)
 		{
-			AddFace(x, y, z, x+1, y, z, x, y, z+c, x+1, y, z+c, *col, check);
+			AddFace(x+1, y, z, x, y, z, x+1, y, z+c, x, y, z+c, *col, check);
 		}
 		if (cull & 8)
 		{
-			AddFace(x+1, y+1, z, x, y+1, z, x+1, y+1, z+c, x, y+1, z+c, *col, check);
-		}
+			AddFace(x, y+1, z, x+1, y+1, z, x, y+1, z+c, x+1, y+1, z+c, *col, check);
+		}	
 		z+=c;
 		col+=c;
 	}

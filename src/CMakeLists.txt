@@ -1152,6 +1152,7 @@ set( FASTMATH_SOURCES
 	gl/system/gl_interface.cpp
 	gl/system/gl_framebuffer.cpp
 	gl/system/gl_swframebuffer.cpp
+	gl/system/gl_swwipe.cpp
 	gl/system/gl_debug.cpp
 	gl/system/gl_menu.cpp
 	gl/system/gl_wipe.cpp

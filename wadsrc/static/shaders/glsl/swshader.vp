@@ -13,7 +13,9 @@ uniform vec4 ScreenSize;
 void main()
 {
 	gl_Position = vec4(AttrPosition.xy / ScreenSize.xy * 2.0 - 1.0, 1.0, 1.0);
+#if defined(EGAMMACORRECTION)
 	gl_Position.y = -gl_Position.y;
+#endif
 	PixelColor0 = AttrColor0.bgra;
 	PixelColor1 = AttrColor1.bgra;
 	PixelTexCoord0 = AttrTexCoord0;

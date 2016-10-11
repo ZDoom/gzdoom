@@ -64,19 +64,26 @@ public:
 	void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor) override;
 	void DrawPixel(int x, int y, int palcolor, uint32 rgbcolor) override;
 	void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints, double originx, double originy, double scalex, double scaley, DAngle rotation, FDynamicColormap *colormap, int lightlevel) override;
-	//bool WipeStartScreen(int type) override;
-	//void WipeEndScreen() override;
-	//bool WipeDo(int ticks) override;
-	//void WipeCleanup() override;
+	bool WipeStartScreen(int type) override;
+	void WipeEndScreen() override;
+	bool WipeDo(int ticks) override;
+	void WipeCleanup() override;
 	bool Is8BitMode() override { return false; }
 	int GetTrueHeight() override { return TrueHeight; }
 
 private:
 	struct FBVERTEX
 	{
-		FLOAT x, y, z, rhw;
+		float x, y, z, rhw;
 		uint32_t color0, color1;
-		FLOAT tu, tv;
+		float tu, tv;
+	};
+
+	struct BURNVERTEX
+	{
+		float x, y, z, rhw;
+		float tu0, tv0;
+		float tu1, tv1;
 	};
 
 	enum
@@ -178,6 +185,7 @@ private:
 	void SetStreamSource(HWVertexBuffer *vertexBuffer);
 	void SetIndices(HWIndexBuffer *indexBuffer);
 	void DrawTriangleFans(int count, const FBVERTEX *vertices);
+	void DrawTriangleFans(int count, const BURNVERTEX *vertices);
 	void DrawPoints(int count, const FBVERTEX *vertices);
 	void DrawLineList(int count);
 	void DrawTriangleList(int minIndex, int numVertices, int startIndex, int primitiveCount);
@@ -376,7 +384,7 @@ private:
 	void UploadPalette();
 	void CalcFullscreenCoords(FBVERTEX verts[4], bool viewarea_only, bool can_double, uint32_t color0, uint32_t color1) const;
 	bool Reset();
-	HWTexture *GetCurrentScreen();
+	HWTexture *CopyCurrentScreen();
 	void ReleaseDefaultPoolItems();
 	void KillNativePals();
 	void KillNativeTexs();
@@ -410,7 +418,7 @@ private:
 
 	std::shared_ptr<FGLDebug> Debug;
 
-	std::unique_ptr<HWVertexBuffer> StreamVertexBuffer;
+	std::unique_ptr<HWVertexBuffer> StreamVertexBuffer, StreamVertexBufferBurn;
 	float ShaderConstants[NumPSCONST * 4];
 	HWPixelShader *CurrentShader = nullptr;
 
@@ -476,7 +484,7 @@ private:
 		virtual ~Wiper();
 		virtual bool Run(int ticks, OpenGLSWFrameBuffer *fb) = 0;
 
-		//void DrawScreen(OpenGLSWFrameBuffer *fb, HWTexture *tex, int blendop = 0, uint32_t color0 = 0, uint32_t color1 = 0xFFFFFFF);
+		void DrawScreen(OpenGLSWFrameBuffer *fb, HWTexture *tex, int blendop = 0, uint32_t color0 = 0, uint32_t color1 = 0xFFFFFFF);
 	};
 
 	class Wiper_Melt;			friend class Wiper_Melt;

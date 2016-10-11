@@ -461,6 +461,28 @@ bool OpenGLSWFrameBuffer::CreateTexture(const FString &name, int width, int heig
 	return true;
 }
 
+OpenGLSWFrameBuffer::HWTexture *OpenGLSWFrameBuffer::CopyCurrentScreen()
+{
+	auto obj = std::make_unique<HWTexture>();
+	obj->Format = GL_RGBA16F;
+
+	GLint oldBinding = 0;
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
+
+	glGenTextures(1, (GLuint*)&obj->Texture);
+	glBindTexture(GL_TEXTURE_2D, obj->Texture);
+
+	glCopyTexImage2D(GL_TEXTURE_2D, 0, obj->Format, 0, 0, Width, Height, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	FGLDebug::LabelObject(GL_TEXTURE, obj->Texture, "CopyCurrentScreen");
+
+	glBindTexture(GL_TEXTURE_2D, oldBinding);
+
+	return obj.release();
+}
+
 void OpenGLSWFrameBuffer::SetGammaRamp(const GammaRamp *ramp)
 {
 }
@@ -548,6 +570,39 @@ void OpenGLSWFrameBuffer::DrawTriangleFans(int count, const FBVERTEX *vertices)
 	glBindVertexArray(oldBinding);
 }
 
+void OpenGLSWFrameBuffer::DrawTriangleFans(int count, const BURNVERTEX *vertices)
+{
+	count = 2 + count;
+
+	GLint oldBinding = 0;
+	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &oldBinding);
+
+	if (!StreamVertexBufferBurn)
+	{
+		StreamVertexBufferBurn = std::make_unique<HWVertexBuffer>();
+		glGenVertexArrays(1, (GLuint*)&StreamVertexBufferBurn->VertexArray);
+		glGenBuffers(1, (GLuint*)&StreamVertexBufferBurn->Buffer);
+		glBindVertexArray(StreamVertexBufferBurn->VertexArray);
+		glBindBuffer(GL_ARRAY_BUFFER, StreamVertexBufferBurn->Buffer);
+		glBufferData(GL_ARRAY_BUFFER, count * sizeof(BURNVERTEX), vertices, GL_STREAM_DRAW);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(BURNVERTEX), (const GLvoid*)offsetof(BURNVERTEX, x));
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(BURNVERTEX), (const GLvoid*)offsetof(BURNVERTEX, tu0));
+	}
+	else
+	{
+		glBindVertexArray(StreamVertexBufferBurn->VertexArray);
+		glBindBuffer(GL_ARRAY_BUFFER, StreamVertexBufferBurn->Buffer);
+		glBufferData(GL_ARRAY_BUFFER, count * sizeof(BURNVERTEX), vertices, GL_STREAM_DRAW);
+	}
+
+	glDrawArrays(GL_TRIANGLE_FAN, 0, count);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(oldBinding);
+}
+
 void OpenGLSWFrameBuffer::DrawPoints(int count, const FBVERTEX *vertices)
 {
 	GLint oldBinding = 0;
@@ -600,8 +655,8 @@ void OpenGLSWFrameBuffer::Present()
 	FBVERTEX verts[4];
 
 	CalcFullscreenCoords(verts, false, true, 0, 0xFFFFFFFF);
-	for (int i = 0; i < 4; i++)
-		verts[i].tv = 1.0f - verts[i].tv;
+	//for (int i = 0; i < 4; i++)
+	//	verts[i].tv = 1.0f - verts[i].tv;
 	SetTexture(0, OutputFB->Texture);
 	SetPixelShader(Shaders[SHADER_GammaCorrection]);
 	SetAlphaBlend(0);

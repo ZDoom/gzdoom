@@ -714,6 +714,11 @@ xx(Mant_Dig)
 xx(Min_10_Exp)
 xx(Max_10_Exp)
 
+// implicit function parameters
+xx(self)
+xx(caller)
+xx(stateinfo)
+
 xx(__decorate_internal_int__)
 xx(__decorate_internal_bool__)
 xx(__decorate_internal_state__)

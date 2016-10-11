@@ -410,7 +410,7 @@ static void ParseArgListDef(FScanner &sc, PClassActor *cls,
 //
 //==========================================================================
 
-void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, PClassActor *cls, DWORD funcflags)
+void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, PClass *cls, DWORD funcflags)
 {
 	// Must be called before adding any other arguments.
 	assert(args == NULL || args->Size() == 0);
@@ -419,21 +419,21 @@ void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, PClassActor
 	if (funcflags & VARF_Method)
 	{
 		// implied self pointer
-		if (args != NULL)		args->Push(NewClassPointer(cls));
-		if (argflags != NULL)	argflags->Push(0);
+		if (args != NULL)		args->Push(NewClassPointer(RUNTIME_CLASS(AActor))); 
+		if (argflags != NULL)	argflags->Push(VARF_Implicit);
 	}
 	if (funcflags & VARF_Action)
 	{
 		// implied stateowner and callingstate pointers
 		if (args != NULL)
 		{
-			args->Push(NewClassPointer(RUNTIME_CLASS(AActor)));
+			args->Push(NewClassPointer(cls));
 			args->Push(TypeState);
 		}
 		if (argflags != NULL)
 		{
-			argflags->Push(0);
-			argflags->Push(0);
+			argflags->Push(VARF_Implicit);
+			argflags->Push(VARF_Implicit);
 		}
 	}
 }

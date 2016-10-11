@@ -111,7 +111,10 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 
 		// todo
 		case AST_States:
+			break;
+
 		case AST_FuncDeclarator:
+			cls->Functions.Push(static_cast<ZCC_FuncDeclarator *>(node));
 			break;
 
 		case AST_Default:
@@ -364,6 +367,7 @@ int ZCCCompiler::Compile()
 	CompileAllConstants();
 	CompileAllFields();
 	InitDefaults();
+	InitFunctions();
 	return ErrorCount;
 }
 
@@ -1179,7 +1183,7 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 	{
 		auto field = Fields[0];
 
-		PType *fieldtype = DetermineType(type, field, field->Type, true);
+		PType *fieldtype = DetermineType(type, field, field->Names->Name, field->Type, true);
 
 		// For structs only allow 'deprecated', for classes exclude function qualifiers.
 		int notallowed = forstruct? ~ZCC_Deprecated : ZCC_Latent | ZCC_Final | ZCC_Action | ZCC_Static | ZCC_FuncConst | ZCC_Abstract; 
@@ -1264,11 +1268,11 @@ FString ZCCCompiler::FlagsToString(uint32_t flags)
 //
 //==========================================================================
 
-PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_VarDeclarator *field, ZCC_Type *ztype, bool allowarraytypes)
+PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName name, ZCC_Type *ztype, bool allowarraytypes)
 {
 	if (!allowarraytypes && ztype->ArraySize != nullptr)
 	{
-		Error(field, "%s: Array type not allowed", FName(field->Names->Name).GetChars());
+		Error(field, "%s: Array type not allowed", name.GetChars());
 		return TypeError;
 	}
 	switch (ztype->NodeType)
@@ -1322,8 +1326,17 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_VarDeclarator *field, ZC
 
 		case ZCC_Vector4:
 			// This has almost no use, so we really shouldn't bother.
-			Error(field, "vector<4> not implemented for %s", FName(field->Names->Name).GetChars());
+			Error(field, "vector<4> not implemented for %s", name.GetChars());
 			return TypeError;
+
+		case ZCC_State:
+			return TypeState;
+
+		case ZCC_Color:
+			return TypeColor;
+
+		case ZCC_Sound:
+			return TypeSound;
 
 		case ZCC_UserType:
 			return ResolveUserType(btype, &outertype->Symbols);
@@ -1334,19 +1347,19 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_VarDeclarator *field, ZC
 	case AST_MapType:
 		if (allowarraytypes)
 		{
-			Error(field, "%s: Map types not implemented yet", FName(field->Names->Name).GetChars());
+			Error(field, "%s: Map types not implemented yet", name.GetChars());
 			// Todo: Decide what we allow here and if it makes sense to allow more complex constructs.
 			auto mtype = static_cast<ZCC_MapType *>(ztype);
-			return NewMap(DetermineType(outertype, field, mtype->KeyType, false), DetermineType(outertype, field, mtype->ValueType, false));
+			return NewMap(DetermineType(outertype, field, name, mtype->KeyType, false), DetermineType(outertype, field, name, mtype->ValueType, false));
 		}
 		break;
 
 	case AST_DynArrayType:
 		if (allowarraytypes)
 		{
-			Error(field, "%s: Dynamic array types not implemented yet", FName(field->Names->Name).GetChars());
+			Error(field, "%s: Dynamic array types not implemented yet", name.GetChars());
 			auto atype = static_cast<ZCC_DynArrayType *>(ztype);
-			return NewDynArray(DetermineType(outertype, field, atype->ElementType, false));
+			return NewDynArray(DetermineType(outertype, field, name, atype->ElementType, false));
 		}
 		break;
 
@@ -1648,6 +1661,7 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 		}
 	}
 	// call the handler
+	FScriptPosition::ErrorCounter = 0;
 	try
 	{
 		prop->Handler(defaults, bag.Info, bag, &params[0]);
@@ -1656,6 +1670,7 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 	{
 		Error(property, "%s", error.GetMessage());
 	}
+	ErrorCount += FScriptPosition::ErrorCounter;
 }
 
 //==========================================================================
@@ -1819,6 +1834,133 @@ void ZCCCompiler::InitDefaults()
 						content = static_cast<decltype(content)>(content->SiblingNext);
 					} while (content != d->Content);
 				}
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
+// Parses the functions list
+//
+//==========================================================================
+
+void ZCCCompiler::InitFunctions()
+{
+	TArray<PType *> rets(1);
+	TArray<PType *> args;
+	TArray<DWORD> argflags;
+	TArray<ENamedName> argnames;
+
+	for (auto c : Classes)
+	{
+		for (auto f : c->Functions)
+		{
+			Printf("processing function %s\n", FName(f->Name).GetChars());
+			rets.Clear();
+			args.Clear();
+			argflags.Clear();
+			// For the time being, let's not allow overloading. This may be reconsidered later but really just adds an unnecessary amount of complexity here.
+			if (AddTreeNode(f->Name, f, &c->TreeNodes, false))
+			{
+				auto t = f->Type;
+				if (t != nullptr)
+				{
+					do
+					{
+						auto type = DetermineType(c->Type(), f, f->Name, t, false);
+						// TBD: disallow certain types? For now, let everything pass that isn't an array.
+						rets.Push(type);
+						t = static_cast<decltype(t)>(t->SiblingNext);
+					} while (t != f->Type);
+				}
+
+				int notallowed = ZCC_Latent | ZCC_Meta | ZCC_ReadOnly | ZCC_FuncConst | ZCC_Abstract;
+
+				if (f->Flags & notallowed)
+				{
+					Error(f, "Invalid qualifiers for %s (%s not allowed)", FName(f->Name).GetChars(), FlagsToString(f->Flags & notallowed));
+					f->Flags &= notallowed;
+				}
+				uint32_t varflags = VARF_Method;
+				AFuncDesc *afd = nullptr;
+
+				// map to implementation flags.
+				if (f->Flags & ZCC_Private) varflags |= VARF_Private;
+				if (f->Flags & ZCC_Protected) varflags |= VARF_Protected;
+				if (f->Flags & ZCC_Deprecated) varflags |= VARF_Deprecated;
+				if (f->Flags & ZCC_Action) varflags |= VARF_Action|VARF_Final;	// Action implies Final.
+				if (f->Flags & ZCC_Static) varflags = (varflags & ~VARF_Method) | VARF_Final;	// Static implies Final.
+				if ((f->Flags & (ZCC_Action | ZCC_Static)) == (ZCC_Action | ZCC_Static))
+				{
+					Error(f, "%s: Action and Static on the same function is not allowed.", FName(f->Name).GetChars());
+					varflags |= VARF_Method;
+				}
+
+				if (f->Flags & ZCC_Native)
+				{
+					varflags |= VARF_Native;
+					afd = FindFunction(FName(f->Name).GetChars());
+					if (afd == nullptr)
+					{
+						Error(f, "The function '%s' has not been exported from the executable.", FName(f->Name).GetChars());
+					}
+				}
+				SetImplicitArgs(&args, &argflags, c->Type(), varflags);
+				// Give names to the implicit parameters.
+				// Note that 'self' is the second argument on action functions, because this is the one referring to the owning class.
+				if (varflags & VARF_Action)
+				{
+					argnames.Push(NAME_caller);
+					argnames.Push(NAME_self);
+					argnames.Push(NAME_stateinfo);
+				}
+				else if (varflags & VARF_Method)
+				{
+					argnames.Push(NAME_self);
+				}
+
+				auto p = f->Params;
+				if (p != nullptr)
+				{
+					do
+					{
+						if (p->Type != nullptr)
+						{
+							auto type = DetermineType(c->Type(), p, f->Name, p->Type, false);
+							int flags;
+							if (p->Flags & ZCC_In) flags |= VARF_In;
+							if (p->Flags & ZCC_Out) flags |= VARF_Out;
+							if (p->Default != nullptr)
+							{
+								auto val = Simplify(p->Default, &c->Type()->Symbols);
+								flags |= VARF_Optional;
+								if (val->Operation != PEX_ConstValue)
+								{
+									Error(c->cls, "Default parameter %s is not constant in %s", FName(p->Name).GetChars(), FName(f->Name).GetChars());
+								}
+								// Todo: Store and handle the default value (native functions will discard it anyway but for scripted ones this should be done decently.)
+							}
+							// TBD: disallow certain types? For now, let everything pass that isn't an array.
+							args.Push(type);
+							argflags.Push(flags);
+						}
+						else
+						{
+							args.Push(nullptr);
+							argflags.Push(0);
+						}
+						p = static_cast<decltype(p)>(p->SiblingNext);
+					} while (p != f->Params);
+				}
+
+				PFunction *sym = new PFunction(f->Name);
+				sym->AddVariant(NewPrototype(rets, args), argflags, afd == nullptr? nullptr : *(afd->VMPointer));
+				sym->Flags = varflags;
+				c->Type()->Symbols.ReplaceSymbol(sym);
+
+				// todo: Check inheritance.
+				// todo: Process function bodies.
 			}
 		}
 	}

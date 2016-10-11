@@ -24,6 +24,11 @@ enum
 	VARF_Private		= (1<<5),	// field is private to containing class
 	VARF_Protected		= (1<<6),	// field is only accessible by containing class and children.
 	VARF_Deprecated		= (1<<7),	// Deprecated fields should output warnings when used.
+	VARF_Virtual		= (1<<8),	// function is virtual
+	VARF_Final			= (1<<9),	// Function may not be overridden in subclasses
+	VARF_In				= (1<<10),
+	VARF_Out			= (1<<11),
+	VARF_Implicit		= (1<<12),	// implicitly created parameters (i.e. do not compare when checking function signatures)
 };
 
 // Symbol information -------------------------------------------------------

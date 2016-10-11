@@ -45,6 +45,7 @@ struct ZCC_ClassWork
 	TArray<ZCC_ConstantDef *> Constants;
 	TArray<ZCC_VarDeclarator *> Fields;
 	TArray<ZCC_Default *> Defaults;
+	TArray<ZCC_FuncDeclarator *> Functions;
 
 	ZCC_ClassWork(ZCC_Class * s, PSymbolTreeNode *n)
 	{
@@ -90,7 +91,7 @@ private:
 	void CompileAllFields();
 	bool CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, PSymbolTable *TreeNodes, bool forstruct);
 	FString FlagsToString(uint32_t flags);
-	PType *DetermineType(PType *outertype, ZCC_VarDeclarator *field, ZCC_Type *ztype, bool allowarraytypes);
+	PType *DetermineType(PType *outertype, ZCC_TreeNode *field, FName name, ZCC_Type *ztype, bool allowarraytypes);
 	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PSymbolTable *sym);
 	PType *ResolveUserType(ZCC_BasicType *type, PSymbolTable *sym);
 
@@ -101,6 +102,8 @@ private:
 	int GetInt(ZCC_Expression *expr);
 	double GetDouble(ZCC_Expression *expr);
 	const char *GetString(ZCC_Expression *expr, bool silent = false);
+
+	void InitFunctions();
 
 	TArray<ZCC_ConstantDef *> Constants;
 	TArray<ZCC_StructWork *> Structs;

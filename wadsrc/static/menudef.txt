@@ -1736,6 +1736,41 @@ OptionMenu ModReplayerOptions
 
 /*=======================================
  *
+ * Change Renderer Menu
+ *
+ *=======================================*/
+
+OptionValue "PolyDoom"
+{
+	0, "$OPTVAL_SWDOOM"
+	1, "$OPTVAL_HWPOLY"
+}
+
+OptionValue "D3DGL"
+{
+	0, "$OPTVAL_GL"
+	1, "$OPTVAL_D3D"
+}
+
+OptionValue "GLD3D"
+{
+	0, "$OPTVAL_D3D"
+	1, "$OPTVAL_GL"
+}
+
+OptionMenu RendererMenu
+{
+	Title "$RNDMNU_TITLE"
+	Option "$RNDMNU_RENDERER",	"vid_renderer", "PolyDoom"
+	Option "$RNDMNU_TRUECOLOR",	"swtruecolor", "OnOff"
+	IfOption(Windows)
+	{
+		Option "$RNDMNU_CANVAS",	"vid_used3d", "D3DGL"
+	}
+}
+
+/*=======================================
+ *
  * Video mode menu
  *
  *=======================================*/
@@ -1782,6 +1817,7 @@ OptionMenu VideoModeMenu
 	Option "$VIDMNU_ASPECTRATIO",		"menu_screenratios", "Ratios"
 	Option "$VIDMNU_FORCEASPECT",		"vid_aspect", "ForceRatios"
 	Option "$VIDMNU_5X4ASPECTRATIO",	"vid_tft", "YesNo"
+	Submenu "$VIDMNU_CHANGERENDER",		"RendererMenu"
 	StaticText " "
 	ScreenResolution "res_0"
 	ScreenResolution "res_1"

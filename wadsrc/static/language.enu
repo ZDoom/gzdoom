@@ -2145,6 +2145,12 @@ MODMNU_QUALITY			= "Quality";
 MODMNU_VOLUMERAMPING	= "Volume ramping";
 MODMNU_CHIPOMATIC		= "Chip-o-matic";
 
+// Renderer Options
+RNDMNU_TITLE			= "CHANGE RENDERER";
+RNDMNU_RENDERER			= "Hardware Acceleration";
+RNDMNU_TRUECOLOR		= "Software Truecolor Mode";
+RNDMNU_CANVAS			= "Software Canvas";
+
 // Video Options
 VIDMNU_TITLE			= "VIDEO MODE";
 VIDMNU_FULLSCREEN		= "Fullscreen";
@@ -2152,6 +2158,7 @@ VIDMNU_HIDPI			= "Retina/HiDPI support";
 VIDMNU_ASPECTRATIO		= "Aspect ratio";
 VIDMNU_FORCEASPECT		= "Force aspect ratio";
 VIDMNU_5X4ASPECTRATIO	= "Enable 5:4 aspect ratio";
+VIDMNU_CHANGERENDER		= "Change Rendering Output";
 VIDMNU_ENTERTEXT		= "Press ENTER to set mode";
 VIDMNU_TESTTEXT1		= "T to test mode for 5 seconds";
 VIDMNU_TESTTEXT2		= "Please wait 5 seconds...";
@@ -2300,6 +2307,11 @@ OPTVAL_WARNINGS				= "Warnings";
 OPTVAL_NOTIFICATIONS		= "Notifications";
 OPTVAL_EVERYTHING			= "Everything";
 OPTVAL_FULLSCREENONLY		= "Fullscreen only";
+OPTVAL_GL 					= "OpenGL";
+OPTVAL_D3D					= "Direct3D";
+OPTVAL_HWPOLY				= "OpenGL-Accelerated";
+OPTVAL_SWDOOM				= "Doom Software Renderer";
+
 // Colors
 C_BRICK					= "\cabrick";
 C_TAN					= "\cbtan";

@@ -211,6 +211,7 @@ ACTOR Actor native //: Thinker
 	native state A_JumpIfTargetInsideMeleeRange(state label);
 	native state A_JumpIfInventory(class<Inventory> itemtype, int itemamount, state label, int owner = AAPTR_DEFAULT);
 	native state A_JumpIfArmorType(name Type, state label, int amount = 1);
+	action native bool A_SetInventory(class<Inventory> itemtype, int amount, int ptr = AAPTR_DEFAULT, bool beyondMax = false);
 	native bool A_GiveInventory(class<Inventory> itemtype, int amount = 0, int giveto = AAPTR_DEFAULT);
 	native bool A_TakeInventory(class<Inventory> itemtype, int amount = 0, int flags = 0, int giveto = AAPTR_DEFAULT);
 	action native bool A_SpawnItem(class<Actor> itemtype = "Unknown", float distance = 0, float zheight = 0, bool useammo = true, bool transfer_translation = false);

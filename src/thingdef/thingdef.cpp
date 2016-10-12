@@ -480,32 +480,3 @@ void LoadActors ()
 	if (!batchrun) Printf("DECORATE parsing took %.2f ms\n", timer.TimeMS());
 	// Base time: ~52 ms
 }
-
-
-//==========================================================================
-//
-// CreateDamageFunction
-//
-// Creates a damage function suitable for a constant, non-expressioned
-// value.
-//
-//==========================================================================
-
-VMScriptFunction *CreateDamageFunction(int dmg)
-{
-	if (dmg == 0)
-	{
-		// For zero damage, do not create a function so that the special collision detection case still works as before.
-		return NULL;
-	}
-	else
-	{
-		VMFunctionBuilder build;
-		build.Registers[REGT_POINTER].Get(1);		// The self pointer
-		build.EmitRetInt(0, false, dmg);
-		build.EmitRetInt(1, true, 0);
-		VMScriptFunction *sfunc = build.MakeFunction();
-		sfunc->NumArgs = 1;
-		return sfunc;
-	}
-}

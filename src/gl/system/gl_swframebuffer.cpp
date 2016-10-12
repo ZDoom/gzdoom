@@ -153,8 +153,8 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 	VSync = vid_vsync;
 	BlendingRect.left = 0;
 	BlendingRect.top = 0;
-	BlendingRect.right = FBWidth;
-	BlendingRect.bottom = FBHeight;
+	BlendingRect.right = Width;
+	BlendingRect.bottom = Height;
 	In2D = 0;
 	Palettes = nullptr;
 	Textures = nullptr;
@@ -186,21 +186,6 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 	//Windowed = !(static_cast<Win32Video *>(Video)->GoFullscreen(fullscreen));
 
 	TrueHeight = height;
-	/*if (fullscreen)
-	{
-		for (Win32Video::ModeInfo *mode = static_cast<Win32Video *>(Video)->m_Modes; mode != nullptr; mode = mode->next)
-		{
-			if (mode->width == Width && mode->height == Height)
-			{
-				TrueHeight = mode->realheight;
-				PixelDoubling = mode->doubling;
-				break;
-			}
-		}
-	}*/
-	// Offset from top of screen to top of letterboxed screen
-	LBOffsetI = (TrueHeight - Height) / 2;
-	LBOffset = float(LBOffsetI);
 
 	CreateResources();
 	SetInitialState();
@@ -650,28 +635,39 @@ void OpenGLSWFrameBuffer::DrawTriangleList(int minIndex, int numVertices, int st
 
 void OpenGLSWFrameBuffer::Present()
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	int clientWidth = GetClientWidth();
+	int clientHeight = GetClientHeight();
+	if (clientWidth > 0 && clientHeight > 0)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glViewport(0, 0, clientWidth, clientHeight);
 
-	FBVERTEX verts[4];
+		float scale = MIN(clientWidth / (float)Width, clientHeight / (float)Height);
+		int letterboxWidth = (int)round(Width * scale);
+		int letterboxHeight = (int)round(Height * scale);
+		int letterboxX = (clientWidth - letterboxWidth) / 2;
+		int letterboxY = (clientHeight - letterboxHeight) / 2;
 
-	CalcFullscreenCoords(verts, false, true, 0, 0xFFFFFFFF);
-	//for (int i = 0; i < 4; i++)
-	//	verts[i].tv = 1.0f - verts[i].tv;
-	SetTexture(0, OutputFB->Texture);
-	SetPixelShader(Shaders[SHADER_GammaCorrection]);
-	SetAlphaBlend(0);
-	EnableAlphaTest(false);
-	DrawTriangleFans(2, verts);
+		DrawLetterbox(letterboxX, letterboxY, letterboxWidth, letterboxHeight);
+		glViewport(letterboxX, letterboxY, letterboxWidth, letterboxHeight);
+
+		FBVERTEX verts[4];
+		CalcFullscreenCoords(verts, false, 0, 0xFFFFFFFF);
+		SetTexture(0, OutputFB->Texture);
+		SetPixelShader(Shaders[SHADER_GammaCorrection]);
+		SetAlphaBlend(0);
+		EnableAlphaTest(false);
+		DrawTriangleFans(2, verts);
+	}
 
 	SwapBuffers();
 	Debug->Update();
 
-	glViewport(0, 0, GetClientWidth(), GetClientHeight());
-
-	float screensize[4] = { (float)GetClientWidth(), (float)GetClientHeight(), 1.0f, 1.0f };
+	float screensize[4] = { (float)Width, (float)Height, 1.0f, 1.0f };
 	SetPixelShaderConstantF(PSCONST_ScreenSize, screensize, 1);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, OutputFB->Framebuffer);
+	glViewport(0, 0, Width, Height);
 }
 
 //==========================================================================
@@ -707,7 +703,7 @@ void OpenGLSWFrameBuffer::SetInitialState()
 	float weights[4] = { 77 / 256.f, 143 / 256.f, 37 / 256.f, 1 };
 	SetPixelShaderConstantF(PSCONST_Weights, weights, 1);
 
-	float screensize[4] = { (float)GetClientWidth(), (float)GetClientHeight(), 1.0f, 1.0f };
+	float screensize[4] = { (float)Width, (float)Height, 1.0f, 1.0f };
 	SetPixelShaderConstantF(PSCONST_ScreenSize, screensize, 1);
 
 	AlphaTestEnabled = false;
@@ -846,14 +842,14 @@ bool OpenGLSWFrameBuffer::Reset()
 {
 	ReleaseDefaultPoolItems();
 
-	if (!CreateFrameBuffer("OutputFB", Width, Height, &OutputFB))
-		return false;
-	glBindFramebuffer(GL_FRAMEBUFFER, OutputFB->Framebuffer);
-
-	if (!CreateFBTexture() || !CreateVertexes())
+	if (!CreateFrameBuffer("OutputFB", Width, Height, &OutputFB) || !CreateFBTexture() || !CreateVertexes())
 	{
 		return false;
 	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, OutputFB->Framebuffer);
+	glViewport(0, 0, Width, Height);
+
 	SetInitialState();
 	return true;
 }
@@ -892,10 +888,7 @@ void OpenGLSWFrameBuffer::KillNativeTexs()
 
 bool OpenGLSWFrameBuffer::CreateFBTexture()
 {
-	CreateTexture("FBTexture", Width, Height, 1, GL_R8, &FBTexture);
-	FBWidth = Width;
-	FBHeight = Height;
-	return true;
+	return CreateTexture("FBTexture", Width, Height, 1, GL_R8, &FBTexture);
 }
 
 //==========================================================================
@@ -906,11 +899,7 @@ bool OpenGLSWFrameBuffer::CreateFBTexture()
 
 bool OpenGLSWFrameBuffer::CreatePaletteTexture()
 {
-	if (!CreateTexture("PaletteTexture", 256, 1, 1, GL_RGBA8, &PaletteTexture))
-	{
-		return false;
-	}
-	return true;
+	return CreateTexture("PaletteTexture", 256, 1, 1, GL_RGBA8, &PaletteTexture);
 }
 
 //==========================================================================
@@ -942,35 +931,31 @@ bool OpenGLSWFrameBuffer::CreateVertexes()
 //
 //==========================================================================
 
-void OpenGLSWFrameBuffer::CalcFullscreenCoords(FBVERTEX verts[4], bool viewarea_only, bool can_double, uint32_t color0, uint32_t color1) const
+void OpenGLSWFrameBuffer::CalcFullscreenCoords(FBVERTEX verts[4], bool viewarea_only, uint32_t color0, uint32_t color1) const
 {
-	float offset = LBOffset;//OldRenderTarget != nullptr ? 0 : LBOffset;
-	float top = offset - 0.5f;
-	float texright = float(Width) / float(FBWidth);
-	float texbot = float(Height) / float(FBHeight);
 	float mxl, mxr, myt, myb, tmxl, tmxr, tmyt, tmyb;
 
 	if (viewarea_only)
 	{ // Just calculate vertices for the viewarea/BlendingRect
-		mxl = float(BlendingRect.left) - 0.5f;
-		mxr = float(BlendingRect.right) - 0.5f;
-		myt = float(BlendingRect.top) + top;
-		myb = float(BlendingRect.bottom) + top;
-		tmxl = float(BlendingRect.left) / float(Width) * texright;
-		tmxr = float(BlendingRect.right) / float(Width) * texright;
-		tmyt = float(BlendingRect.top) / float(Height) * texbot;
-		tmyb = float(BlendingRect.bottom) / float(Height) * texbot;
+		mxl = float(BlendingRect.left);
+		mxr = float(BlendingRect.right);
+		myt = float(BlendingRect.top);
+		myb = float(BlendingRect.bottom);
+		tmxl = float(BlendingRect.left) / float(Width);
+		tmxr = float(BlendingRect.right) / float(Width);
+		tmyt = float(BlendingRect.top) / float(Height);
+		tmyb = float(BlendingRect.bottom) / float(Height);
 	}
 	else
 	{ // Calculate vertices for the whole screen
-		mxl = -0.5f;
-		mxr = float(Width << (can_double ? PixelDoubling : 0)) - 0.5f;
-		myt = top;
-		myb = float(Height << (can_double ? PixelDoubling : 0)) + top;
+		mxl = 0.0f;
+		mxr = float(Width);
+		myt = 0.0f;
+		myb = float(Height);
 		tmxl = 0;
-		tmxr = texright;
+		tmxr = 1.0f;
 		tmyt = 0;
-		tmyb = texbot;
+		tmyb = 1.0f;
 	}
 
 	//{   mxl, myt, 0, 1, 0, 0xFFFFFFFF,    tmxl,    tmyt },
@@ -1210,8 +1195,6 @@ void OpenGLSWFrameBuffer::Flip()
 {
 	assert(InScene);
 
-	DrawLetterbox();
-
 	Present();
 	InScene = false;
 
@@ -1225,8 +1208,6 @@ void OpenGLSWFrameBuffer::Flip()
 
 			TrueHeight = Height;
 			PixelDoubling = 0;
-			LBOffsetI = 0;
-			LBOffset = 0.0f;
 			Reset();
 
 			V_OutputResized(Width, Height);
@@ -1338,7 +1319,7 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 			color0 = FlashColor0;
 			color1 = FlashColor1;
 		}
-		CalcFullscreenCoords(verts, Accel2D, false, color0, color1);
+		CalcFullscreenCoords(verts, Accel2D, color0, color1);
 		DrawTriangleFans(2, verts);
 	}
 	SetPixelShader(Shaders[SHADER_NormalColorPal]);
@@ -1353,18 +1334,36 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 //
 //==========================================================================
 
-void OpenGLSWFrameBuffer::DrawLetterbox()
+void OpenGLSWFrameBuffer::DrawLetterbox(int x, int y, int width, int height)
 {
-	if (LBOffsetI != 0)
+	int clientWidth = GetClientWidth();
+	int clientHeight = GetClientHeight();
+	if (clientWidth == 0 || clientHeight == 0)
+		return;
+
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glEnable(GL_SCISSOR_TEST);
+	if (x > 0)
 	{
-		glEnable(GL_SCISSOR_TEST);
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glScissor(0, 0, Width, LBOffsetI);
+		glScissor(0, 0, clientWidth, x);
 		glClear(GL_COLOR_BUFFER_BIT);
-		glScissor(0, Height + LBOffsetI, Width, TrueHeight - Height + LBOffsetI);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glDisable(GL_SCISSOR_TEST);
 	}
+	if (clientHeight - x - height > 0)
+	{
+		glScissor(0, x + height, clientWidth, clientHeight - x - height);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	if (y > 0)
+	{
+		glScissor(0, x, y, height);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	if (clientWidth - y - width > 0)
+	{
+		glScissor(y + width, x, clientWidth - y - width, height);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	glDisable(GL_SCISSOR_TEST);
 }
 
 void OpenGLSWFrameBuffer::UploadPalette()
@@ -1604,7 +1603,7 @@ void OpenGLSWFrameBuffer::DrawPackedTextures(int packnum)
 			continue;
 		}
 
-		AddColorOnlyRect(x - 1, y - 1 - LBOffsetI, 258, 258, ColorXRGB(255, 255, 0));
+		AddColorOnlyRect(x - 1, y - 1, 258, 258, ColorXRGB(255, 255, 0));
 		int back = 0;
 		for (PackedTexture *box = pack->UsedList; box != nullptr; box = box->Next)
 		{
@@ -1638,8 +1637,8 @@ void OpenGLSWFrameBuffer::DrawPackedTextures(int packnum)
 		quad->NumVerts = 4;
 		quad->NumTris = 2;
 
-		float x0 = float(x) - 0.5f;
-		float y0 = float(y) - 0.5f;
+		float x0 = float(x);
+		float y0 = float(y);
 		float x1 = x0 + 256.f;
 		float y1 = y0 + 256.f;
 
@@ -1695,7 +1694,7 @@ void OpenGLSWFrameBuffer::DrawPackedTextures(int packnum)
 		{
 			x = 8;
 			y += 256 + 8;
-			if (y > TrueHeight - 256)
+			if (y > Height - 256)
 			{
 				return;
 			}
@@ -2457,7 +2456,7 @@ void OpenGLSWFrameBuffer::DrawLine(int x0, int y0, int x1, int y1, int palcolor,
 	}
 	// Add the endpoints to the vertex buffer.
 	VertexData[VertexPos].x = float(x0);
-	VertexData[VertexPos].y = float(y0) + LBOffset;
+	VertexData[VertexPos].y = float(y0);
 	VertexData[VertexPos].z = 0;
 	VertexData[VertexPos].rhw = 1;
 	VertexData[VertexPos].color0 = color;
@@ -2466,7 +2465,7 @@ void OpenGLSWFrameBuffer::DrawLine(int x0, int y0, int x1, int y1, int palcolor,
 	VertexData[VertexPos].tv = 0;
 
 	VertexData[VertexPos + 1].x = float(x1);
-	VertexData[VertexPos + 1].y = float(y1) + LBOffset;
+	VertexData[VertexPos + 1].y = float(y1);
 	VertexData[VertexPos + 1].z = 0;
 	VertexData[VertexPos + 1].rhw = 1;
 	VertexData[VertexPos + 1].color0 = color;
@@ -2548,7 +2547,6 @@ void OpenGLSWFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
 	double uscale = 1.f / tex->Box->Owner->Width;
 	bool scissoring = false;
 	FBVERTEX *vert;
-	float yoffs;
 
 	if (parms.flipX)
 	{
@@ -2598,7 +2596,7 @@ void OpenGLSWFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
 			BeginQuadBatch();
 		}
 		glEnable(GL_SCISSOR_TEST);
-		glScissor(parms.lclip, parms.uclip + LBOffsetI, parms.rclip - parms.lclip, parms.dclip - parms.uclip);
+		glScissor(parms.lclip, parms.uclip, parms.rclip - parms.lclip, parms.dclip - parms.uclip);
 	}
 #endif
 	parms.bilinear = false;
@@ -2618,23 +2616,6 @@ void OpenGLSWFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
 	}
 	quad->NumTris = 2;
 	quad->NumVerts = 4;
-
-	yoffs = GatheringWipeScreen ? 0.5f : 0.5f - LBOffset;
-
-#if 0
-	// Coordinates are truncated to integers, because that's effectively
-	// what the software renderer does. The hardware will instead round
-	// to nearest, it seems.
-	x0 = floorf(x0) - 0.5f;
-	y0 = floorf(y0) - yoffs;
-	x1 = floorf(x1) - 0.5f;
-	y1 = floorf(y1) - yoffs;
-#else
-	x0 = x0 - 0.5f;
-	y0 = y0 - yoffs;
-	x1 = x1 - 0.5f;
-	y1 = y1 - yoffs;
-#endif
 
 	vert = &VertexData[VertexPos];
 
@@ -2719,7 +2700,6 @@ void OpenGLSWFrameBuffer::FlatFill(int left, int top, int right, int bottom, FTe
 	{
 		return;
 	}
-	float yoffs = GatheringWipeScreen ? 0.5f : 0.5f - LBOffset;
 	float x0 = float(left);
 	float y0 = float(top);
 	float x1 = float(right);
@@ -2732,10 +2712,6 @@ void OpenGLSWFrameBuffer::FlatFill(int left, int top, int right, int bottom, FTe
 	float v0 = (y0 - yo) * ith;
 	float u1 = (x1 - xo) * itw;
 	float v1 = (y1 - yo) * ith;
-	x0 -= 0.5f;
-	y0 -= yoffs;
-	x1 -= 0.5f;
-	y1 -= yoffs;
 
 	CheckQuadBatch();
 
@@ -2824,7 +2800,7 @@ void OpenGLSWFrameBuffer::FillSimplePoly(FTexture *texture, FVector2 *points, in
 	BufferedTris *quad;
 	FBVERTEX *verts;
 	OpenGLTex *tex;
-	float yoffs, uscale, vscale;
+	float uscale, vscale;
 	int i, ipos;
 	uint32_t color0, color1;
 	float ox, oy;
@@ -2890,7 +2866,6 @@ void OpenGLSWFrameBuffer::FillSimplePoly(FTexture *texture, FVector2 *points, in
 	quad->NumVerts = npoints;
 	quad->NumTris = npoints - 2;
 
-	yoffs = GatheringWipeScreen ? 0 : LBOffset;
 	uscale = float(1.f / (texture->GetScaledWidth() * scalex));
 	vscale = float(1.f / (texture->GetScaledHeight() * scaley));
 	ox = float(originx);
@@ -2899,13 +2874,13 @@ void OpenGLSWFrameBuffer::FillSimplePoly(FTexture *texture, FVector2 *points, in
 	for (i = 0; i < npoints; ++i)
 	{
 		verts[i].x = points[i].X;
-		verts[i].y = points[i].Y + yoffs;
+		verts[i].y = points[i].Y;
 		verts[i].z = 0;
 		verts[i].rhw = 1;
 		verts[i].color0 = color0;
 		verts[i].color1 = color1;
-		float u = points[i].X - 0.5f - ox;
-		float v = points[i].Y - 0.5f - oy;
+		float u = points[i].X - ox;
+		float v = points[i].Y - oy;
 		if (dorotate)
 		{
 			float t = u;
@@ -2944,8 +2919,8 @@ void OpenGLSWFrameBuffer::AddColorOnlyQuad(int left, int top, int width, int hei
 	quad = &QuadExtra[QuadBatchPos];
 	verts = &VertexData[VertexPos];
 
-	float x = float(left) - 0.5f;
-	float y = float(top) - 0.5f + (GatheringWipeScreen ? 0 : LBOffset);
+	float x = float(left);
+	float y = float(top);
 
 	quad->ClearSetup();
 	quad->ShaderNum = BQS_ColorOnly;

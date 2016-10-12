@@ -232,7 +232,6 @@ bool OpenGLSWFrameBuffer::WipeDo(int ticks)
 
 	EnableAlphaTest(false);
 	bool done = ScreenWipe->Run(ticks, this);
-	DrawLetterbox();
 	return done;
 }
 
@@ -284,7 +283,7 @@ void OpenGLSWFrameBuffer::Wiper::DrawScreen(OpenGLSWFrameBuffer *fb, HWTexture *
 {
 	FBVERTEX verts[4];
 
-	fb->CalcFullscreenCoords(verts, false, false, color0, color1);
+	fb->CalcFullscreenCoords(verts, false, color0, color1);
 	fb->SetTexture(0, tex);
 	fb->SetAlphaBlend(blendop, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	fb->SetPixelShader(fb->Shaders[SHADER_NormalColor]);
@@ -410,15 +409,15 @@ bool OpenGLSWFrameBuffer::Wiper_Melt::Run(int ticks, OpenGLSWFrameBuffer *fb)
 					quad->NumTris = 2;
 
 					// Fill the vertex buffer.
-					float u0 = rect.left / float(fb->FBWidth);
+					float u0 = rect.left / float(fb->Width);
 					float v0 = 0;
-					float u1 = rect.right / float(fb->FBWidth);
-					float v1 = (rect.bottom - rect.top) / float(fb->FBHeight);
+					float u1 = rect.right / float(fb->Width);
+					float v1 = (rect.bottom - rect.top) / float(fb->Height);
 
-					float x0 = float(rect.left) - 0.5f;
-					float x1 = float(rect.right) - 0.5f;
-					float y0 = float(dpt.y + fb->LBOffsetI) - 0.5f;
-					float y1 = float(fbheight + fb->LBOffsetI) - 0.5f;
+					float x0 = float(rect.left);
+					float x1 = float(rect.right);
+					float y0 = float(dpt.y);
+					float y1 = float(fbheight);
 
 					vert[0].x = x0;
 					vert[0].y = y0;
@@ -562,18 +561,15 @@ bool OpenGLSWFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLSWFrameBuffer *fb)
 	DrawScreen(fb, fb->InitialWipeScreen);
 
 	// Burn the new screen on top of it.
-	float top = fb->LBOffset - 0.5f;
-	float right = float(fb->Width) - 0.5f;
-	float bot = float(fb->Height) + top;
-	float texright = float(fb->Width) / float(fb->FBWidth);
-	float texbot = float(fb->Height) / float(fb->FBHeight);
+	float right = float(fb->Width);
+	float bot = float(fb->Height);
 
 	BURNVERTEX verts[4] =
 	{
-		{ -0.5f, top, 0.5f, 1.f,      0.f,    0.f, 0, 0 },
-		{ right, top, 0.5f, 1.f, texright,    0.f, 1, 0 },
-		{ right, bot, 0.5f, 1.f, texright, texbot, 1, 1 },
-		{ -0.5f, bot, 0.5f, 1.f,      0.f, texbot, 0, 1 }
+		{ 0.f,   0.f, 0.f, 1.f, 0.f, 0.f, 0, 0 },
+		{ right, 0.f, 0.f, 1.f, 1.f, 0.f, 1, 0 },
+		{ right, bot, 0.f, 1.f, 1.f, 1.f, 1, 1 },
+		{ 0.f,   bot, 0.f, 1.f, 0.f, 1.f, 0, 1 }
 	};
 
 	fb->SetTexture(0, fb->FinalWipeScreen);

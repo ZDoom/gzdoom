@@ -7,7 +7,7 @@
 #include "gi.h"
 #include "doomstat.h"
 #include "gstrings.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 #include "p_enemy.h"
 #include "a_doomglobal.h"
@@ -19,6 +19,7 @@
 #include "p_maputl.h"
 #include "serializer.h"
 #include "g_shared/a_pickups.h"
+#include "vm.h"
 
 // Include all the other Doom stuff here to reduce compile time
 #include "a_arachnotron.cpp"

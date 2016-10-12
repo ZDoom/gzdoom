@@ -6,7 +6,7 @@
 #include "s_sound.h"
 #include "p_enemy.h"
 #include "templates.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "doomstat.h"
 */
 

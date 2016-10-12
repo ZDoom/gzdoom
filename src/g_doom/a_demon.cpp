@@ -6,7 +6,7 @@
 #include "p_enemy.h"
 #include "gstrings.h"
 #include "a_action.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_sargattack ("SargAttack");

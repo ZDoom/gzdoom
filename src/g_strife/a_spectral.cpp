@@ -6,7 +6,7 @@
 #include "s_sound.h"
 #include "m_random.h"
 #include "a_strifeglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 class ASpectralMonster : public AActor

@@ -10,7 +10,7 @@
 #include "gstrings.h"
 #include "a_hexenglobal.h"
 #include "a_weaponpiece.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_quietusdrop ("QuietusDrop");

@@ -8,7 +8,7 @@
 #include "p_local.h"
 #include "a_action.h"
 #include "a_hexenglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 IMPLEMENT_CLASS (AFighterWeapon)

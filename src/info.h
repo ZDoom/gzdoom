@@ -54,6 +54,18 @@ class FScanner;
 struct FActorInfo;
 class FIntCVar;
 
+enum EStateDefineFlags
+{
+	SDF_NEXT = 0,
+	SDF_STATE = 1,
+	SDF_STOP = 2,
+	SDF_WAIT = 3,
+	SDF_LABEL = 4,
+	SDF_INDEX = 5,
+	SDF_MASK = 7,
+	SDF_DEHACKED = 8,	// Identify a state as having been modified by a dehacked lump
+};
+
 enum EStateType
 {
 	STATE_Actor,

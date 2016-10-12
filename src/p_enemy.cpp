@@ -43,7 +43,7 @@
 #include "p_enemy.h"
 #include "a_sharedglobal.h"
 #include "a_action.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "d_dehacked.h"
 #include "g_level.h"
 #include "r_utility.h"
@@ -53,6 +53,7 @@
 #include "p_spec.h"
 #include "p_checkposition.h"
 #include "math/cmath.h"
+#include "vm.h"
 
 #include "gi.h"
 

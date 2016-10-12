@@ -6,7 +6,7 @@
 #include "p_local.h"
 #include "s_sound.h"
 #include "gstrings.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "p_enemy.h"
 #include "a_specialspot.h"
 #include "g_level.h"
@@ -18,6 +18,7 @@
 #include "a_morph.h"
 #include "p_spec.h"
 #include "serializer.h"
+#include "vm.h"
 
 // Include all the other Heretic stuff here to reduce compile time
 #include "a_chicken.cpp"

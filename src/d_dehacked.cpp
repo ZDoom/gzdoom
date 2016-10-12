@@ -70,6 +70,9 @@
 #include "doomerrors.h"
 #include "p_effect.h"
 #include "serializer.h"
+#include "vm.h"
+#include "thingdef.h"
+#include "info.h"
 #include "vmbuilder.h"
 
 // [SO] Just the way Randy said to do it :)

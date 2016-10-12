@@ -53,7 +53,7 @@
 #include "a_action.h"
 #include "a_keys.h"
 #include "p_conversation.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_game.h"
 #include "teaminfo.h"
 #include "r_data/r_translate.h"
@@ -71,6 +71,7 @@
 #include "p_checkposition.h"
 #include "serializer.h"
 #include "r_utility.h"
+#include "thingdef.h"
 
 // MACROS ------------------------------------------------------------------
 

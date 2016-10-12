@@ -6,7 +6,7 @@
 #include "s_sound.h"
 #include "p_local.h"
 #include "gstrings.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_impmsatk ("ImpMsAttack");

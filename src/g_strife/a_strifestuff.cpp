@@ -10,7 +10,7 @@
 #include "p_enemy.h"
 #include "p_lnspec.h"
 #include "c_console.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "doomstat.h"
 #include "gstrings.h"
 #include "a_keys.h"
@@ -21,6 +21,7 @@
 #include "serializer.h"
 #include "p_spec.h"
 #include "portal.h"
+#include "vm.h"
 
 // Include all the other Strife stuff here to reduce compile time
 #include "a_acolyte.cpp"

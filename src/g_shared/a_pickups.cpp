@@ -14,7 +14,7 @@
 #include "a_strifeglobal.h"
 #include "a_morph.h"
 #include "a_specialspot.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 #include "g_game.h"
 #include "doomstat.h"

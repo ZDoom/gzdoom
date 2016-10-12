@@ -6,7 +6,7 @@
 #include "a_action.h"
 #include "templates.h"
 #include "m_bbox.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "doomstat.h"
 */
 

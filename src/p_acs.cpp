@@ -83,6 +83,7 @@
 #include "a_morph.h"
 #include "i_music.h"
 #include "serializer.h"
+#include "thingdef.h"
 
 #include "g_shared/a_pickups.h"
 

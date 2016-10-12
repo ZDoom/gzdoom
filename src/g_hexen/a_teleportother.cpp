@@ -7,7 +7,7 @@
 #include "s_sound.h"
 #include "p_lnspec.h"
 #include "m_random.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 #include "doomstat.h"
 */

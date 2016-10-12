@@ -48,7 +48,7 @@
 #include "decallib.h"
 #include "i_system.h"
 #include "thingdef.h"
-#include "thingdef_exp.h"
+#include "codegeneration/thingdef_exp.h"
 #include "r_data/r_translate.h"
 
 // TYPES -------------------------------------------------------------------

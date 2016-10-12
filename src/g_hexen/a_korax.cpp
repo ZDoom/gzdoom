@@ -25,7 +25,7 @@
 #include "a_action.h"
 #include "m_random.h"
 #include "i_system.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 */
 

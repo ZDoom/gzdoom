@@ -7,7 +7,7 @@
 #include "m_random.h"
 #include "a_hexenglobal.h"
 #include "i_system.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 */
 

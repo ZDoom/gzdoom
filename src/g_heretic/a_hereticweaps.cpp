@@ -11,7 +11,7 @@
 #include "gstrings.h"
 #include "gi.h"
 #include "r_data/r_translate.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "doomstat.h"
 */
 

@@ -11,7 +11,7 @@
 #include "p_effect.h"
 #include "gi.h"
 #include "templates.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "doomstat.h"
 */
 

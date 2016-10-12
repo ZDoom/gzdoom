@@ -54,6 +54,7 @@
 #include "serializer.h"
 #include "gstrings.h"
 #include "r_utility.h"
+#include "cmdlib.h"
 
 #include "../version.h"
 

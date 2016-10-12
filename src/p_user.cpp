@@ -48,7 +48,7 @@
 #include "doomdef.h"
 #include "c_dispatch.h"
 #include "tarray.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 #include "d_net.h"
 #include "gstrings.h"

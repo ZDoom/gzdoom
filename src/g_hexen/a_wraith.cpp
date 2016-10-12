@@ -7,7 +7,7 @@
 #include "a_action.h"
 #include "m_random.h"
 #include "a_sharedglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_stealhealth ("StealHealth");

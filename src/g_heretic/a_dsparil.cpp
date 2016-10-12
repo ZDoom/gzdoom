@@ -9,7 +9,7 @@
 #include "a_sharedglobal.h"
 #include "gstrings.h"
 #include "a_specialspot.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 */
 

@@ -46,7 +46,7 @@
 #include "v_text.h"
 #include "p_lnspec.h"
 #include "gdtoa.h"
-#include "thingdef_exp.h"
+#include "codegeneration/thingdef_exp.h"
 
 #define DEFINING_CONST ((PSymbolConst *)(void *)1)
 

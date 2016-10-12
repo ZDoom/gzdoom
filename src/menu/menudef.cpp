@@ -50,6 +50,7 @@
 #include "m_joy.h"
 #include "gi.h"
 #include "i_sound.h"
+#include "cmdlib.h"
 
 #include "optionmenuitems.h"
 

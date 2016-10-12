@@ -6,7 +6,7 @@
 #include "p_local.h"
 #include "s_sound.h"
 #include "ravenshared.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 */
 

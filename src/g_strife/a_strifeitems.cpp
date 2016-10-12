@@ -13,7 +13,7 @@
 #include "a_keys.h"
 #include "c_console.h"
 #include "templates.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 #include "doomstat.h"
 */

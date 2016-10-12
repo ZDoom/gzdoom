@@ -52,7 +52,7 @@
 #include "cmdlib.h"
 #include "g_level.h"
 #include "stats.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "d_player.h"
 
 extern void LoadActors ();

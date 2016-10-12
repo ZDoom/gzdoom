@@ -61,7 +61,7 @@
 #include "c_console.h"
 #include "doomerrors.h"
 #include "a_sharedglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "v_video.h"
 #include "v_font.h"
 #include "doomstat.h"
@@ -77,6 +77,8 @@
 #include "p_maputl.h"
 #include "p_spec.h"
 #include "templates.h"
+#include "vm.h"
+#include "thingdef.h"
 #include "math/cmath.h"
 
 AActor *SingleActorFromTID(int tid, AActor *defactor);

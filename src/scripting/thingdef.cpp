@@ -61,7 +61,7 @@
 #include "p_conversation.h"
 #include "v_text.h"
 #include "thingdef.h"
-#include "thingdef_exp.h"
+#include "codegeneration/thingdef_exp.h"
 #include "a_sharedglobal.h"
 #include "vmbuilder.h"
 #include "stats.h"

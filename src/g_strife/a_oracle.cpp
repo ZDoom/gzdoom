@@ -4,7 +4,7 @@
 #include "a_strifeglobal.h"
 #include "p_enemy.h"
 #include "r_defs.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 

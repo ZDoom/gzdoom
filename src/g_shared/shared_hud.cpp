@@ -52,6 +52,7 @@
 #include "d_net.h"
 #include "d_player.h"
 #include "r_utility.h"
+#include "cmdlib.h"
 
 #include <time.h>
 

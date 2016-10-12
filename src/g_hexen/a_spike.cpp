@@ -7,7 +7,7 @@
 #include "a_sharedglobal.h"
 #include "s_sound.h"
 #include "m_bbox.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_thrustraise ("ThrustRaise");

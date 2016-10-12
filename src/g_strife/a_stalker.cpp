@@ -5,7 +5,7 @@
 #include "p_local.h"
 #include "p_enemy.h"
 #include "s_sound.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_stalker ("Stalker");

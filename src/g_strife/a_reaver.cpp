@@ -6,7 +6,7 @@
 #include "m_random.h"
 #include "p_local.h"
 #include "a_strifeglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_reaverattack ("ReaverAttack");

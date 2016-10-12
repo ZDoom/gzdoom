@@ -7,7 +7,7 @@
 #include "a_hexenglobal.h"
 #include "gstrings.h"
 #include "a_weaponpiece.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "doomstat.h"
 */
 

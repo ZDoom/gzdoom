@@ -9,7 +9,7 @@
 #include "a_strifeglobal.h"
 #include "c_console.h"
 #include "gstrings.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "doomstat.h"
 */
 

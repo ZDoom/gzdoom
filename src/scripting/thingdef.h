@@ -6,6 +6,7 @@
 #include "s_sound.h"
 #include "sc_man.h"
 #include "cmdlib.h"
+#include "vm.h"
 
 
 class FScanner;
@@ -45,18 +46,6 @@ INTBOOL CheckActorFlag(const AActor *owner, const char *flagname, bool printerro
 class FxExpression;
 
 struct FStateLabels;
-
-enum EStateDefineFlags
-{
-	SDF_NEXT = 0,
-	SDF_STATE = 1,
-	SDF_STOP = 2,
-	SDF_WAIT = 3,
-	SDF_LABEL = 4,
-	SDF_INDEX = 5,
-	SDF_MASK = 7,
-	SDF_DEHACKED = 8,	// Identify a state as having been modified by a dehacked lump
-};
 
 struct FStateDefine
 {
@@ -171,13 +160,6 @@ inline void ResetBaggage (Baggage *bag, PClassActor *stateclass)
 //
 //==========================================================================
 
-struct AFuncDesc
-{
-	const char *Name;
-	actionf_p Function;
-	VMNativeFunction **VMPointer;
-};
-
 AFuncDesc *FindFunction(const char * string);
 
 
@@ -188,8 +170,6 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 class FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag);
 FName CheckCastKludges(FName in);
 void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, PClass *cls, DWORD funcflags);
-
-PFunction *FindGlobalActionFunction(const char *name);
 
 //==========================================================================
 //
@@ -232,23 +212,13 @@ enum EDefinitionType
 };
 
 #if defined(_MSC_VER)
-#pragma section(".areg$u",read)
 #pragma section(".greg$u",read)
-#pragma section(".mreg$u",read)
 
-#define MSVC_ASEG __declspec(allocate(".areg$u"))
-#define GCC_ASEG
 #define MSVC_PSEG __declspec(allocate(".greg$u"))
 #define GCC_PSEG
-#define MSVC_MSEG __declspec(allocate(".mreg$u"))
-#define GCC_MSEG
 #else
-#define MSVC_ASEG
-#define GCC_ASEG __attribute__((section(SECTION_AREG))) __attribute__((used))
 #define MSVC_PSEG
 #define GCC_PSEG __attribute__((section(SECTION_GREG))) __attribute__((used))
-#define MSVC_MSEG
-#define GCC_MSEG __attribute__((section(SECTION_MREG))) __attribute__((used))
 #endif
 
 
@@ -322,39 +292,4 @@ int MatchString (const char *in, const char **strings);
 #define PROP_COLOR_PARM(var, no) \
 	int var = params[(no)+1].i== 0? params[(no)+2].i : V_GetColor(NULL, params[(no)+2].s);
 
-
-// Macros to handle action functions. These are here so that I don't have to
-// change every single use in case the parameters change.
-#define DECLARE_ACTION(name)	extern VMNativeFunction *name##_VMPtr;
-
-// This distinction is here so that CALL_ACTION produces errors when trying to
-// access a function that requires parameters.
-#define DEFINE_ACTION_FUNCTION(cls, name) \
-	static int AF_##name(VM_ARGS); \
-	VMNativeFunction *name##_VMPtr; \
-	static const AFuncDesc cls##_##name##_Hook = { #name, AF_##name, &name##_VMPtr }; \
-	extern AFuncDesc const *const cls##_##name##_HookPtr; \
-	MSVC_ASEG AFuncDesc const *const cls##_##name##_HookPtr GCC_ASEG = &cls##_##name##_Hook; \
-	static int AF_##name(VM_ARGS)
-
-#define DEFINE_ACTION_FUNCTION_PARAMS(cls, name) DEFINE_ACTION_FUNCTION(cls, name)
-
-//#define DECLARE_PARAMINFO AActor *self, AActor *stateowner, FState *CallingState, int ParameterIndex, StateCallData *statecall
-//#define PUSH_PARAMINFO self, stateowner, CallingState, ParameterIndex, statecall
-
-#define CALL_ACTION(name,self) { /*AF_##name(self, self, NULL, 0, NULL)*/ \
-		VMValue params[3] = { self, self, VMValue(NULL, ATAG_STATEINFO) }; \
-		stack->Call(name##_VMPtr, params, countof(params), NULL, 0, NULL); \
-	}
-
-
-#define ACTION_RETURN_STATE(v) do { FState *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_STATE); return 1; } return 0; } while(0)
-#define ACTION_RETURN_FLOAT(v) do { double u = v; if (numret > 0) { assert(ret != nullptr); ret->SetFloat(u); return 1; } return 0; } while(0)
-#define ACTION_RETURN_INT(v) do { int u = v; if (numret > 0) { assert(ret != NULL); ret->SetInt(u); return 1; } return 0; } while(0)
-#define ACTION_RETURN_BOOL(v) ACTION_RETURN_INT(v)
-
-// Checks to see what called the current action function
-#define ACTION_CALL_FROM_ACTOR() (stateinfo == nullptr || stateinfo->mStateType == STATE_Actor)
-#define ACTION_CALL_FROM_PSPRITE() (self->player && stateinfo != nullptr && stateinfo->mStateType == STATE_Psprite)
-#define ACTION_CALL_FROM_INVENTORY() (stateinfo != nullptr && stateinfo->mStateType == STATE_StateChain)
 #endif

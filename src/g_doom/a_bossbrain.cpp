@@ -7,7 +7,7 @@
 #include "s_sound.h"
 #include "statnums.h"
 #include "a_specialspot.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "doomstat.h"
 #include "g_level.h"
 */

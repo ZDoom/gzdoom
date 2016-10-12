@@ -32,6 +32,7 @@
 **
 */
 
+#include <ctype.h>
 #include "menu/menu.h"
 #include "d_event.h"
 #include "d_gui.h"

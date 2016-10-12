@@ -25,7 +25,7 @@
 
 // Basic data types.
 // Needs fixed point, and BAM angles.
-#include "thingdef/thingdef.h"
+//#include "vm.h"
 
 #define WEAPONBOTTOM			128.
 
@@ -120,7 +120,6 @@ void DoReadyWeaponToBob(AActor *self);
 void DoReadyWeaponToFire(AActor *self, bool primary = true, bool secondary = true);
 void DoReadyWeaponToSwitch(AActor *self, bool switchable = true);
 
-DECLARE_ACTION(A_Raise)
 void A_ReFire(AActor *self, FState *state = NULL);
 
 #endif	// __P_PSPR_H__

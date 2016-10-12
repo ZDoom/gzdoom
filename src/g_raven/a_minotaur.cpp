@@ -8,12 +8,13 @@
 #include "a_action.h"
 #include "gi.h"
 #include "w_wad.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 #include "doomstat.h"
 #include "a_pickups.h"
 #include "d_player.h"
 #include "serializer.h"
+#include "vm.h"
 
 #define MAULATORTICS (25*35)
 

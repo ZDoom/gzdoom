@@ -11,7 +11,7 @@
 #include "p_enemy.h"
 #include "d_event.h"
 #include "gstrings.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 void P_UpdateBeak (AActor *actor);

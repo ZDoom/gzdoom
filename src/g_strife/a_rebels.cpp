@@ -8,7 +8,7 @@
 #include "gi.h"
 #include "a_sharedglobal.h"
 #include "a_strifeglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "doomstat.h"
 */
 

@@ -39,7 +39,8 @@
 #include "i_system.h"
 #include "c_dispatch.h"
 #include "v_text.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
+#include "thingdef.h"
 
 // Each state is owned by an actor. Actors can own any number of
 // states, but a single state cannot be owned by more than one

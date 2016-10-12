@@ -5,7 +5,7 @@
 #include "p_spec.h"
 #include "p_enemy.h"
 #include "a_action.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 //

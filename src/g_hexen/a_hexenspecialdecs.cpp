@@ -11,7 +11,7 @@
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "a_hexenglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 #include "doomstat.h"
 */

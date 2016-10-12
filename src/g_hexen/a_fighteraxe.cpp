@@ -10,8 +10,10 @@
 #include "p_pspr.h"
 #include "gstrings.h"
 #include "a_hexenglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
+
+DECLARE_ACTION(A_Raise)
 
 #define AXERANGE	(2.25 * MELEERANGE)
 

@@ -7,7 +7,7 @@
 #include "a_action.h"
 #include "a_sharedglobal.h"
 #include "gstrings.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_dripblood ("DripBlood");

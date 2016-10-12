@@ -68,7 +68,6 @@ struct StateCallData;
 class VMFrameStack;
 struct VMValue;
 struct VMReturn;
-typedef int (*actionf_p)(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret);/*(VM_ARGS)*/
 class VMFunction;
 
 // A VM function ------------------------------------------------------------

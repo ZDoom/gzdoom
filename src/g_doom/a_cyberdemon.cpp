@@ -4,7 +4,7 @@
 #include "s_sound.h"
 #include "p_enemy.h"
 #include "a_action.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 DEFINE_ACTION_FUNCTION(AActor, A_CyberAttack)

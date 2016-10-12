@@ -77,6 +77,7 @@
 #include "r_utility.h"
 #include "menu/menu.h"
 #include "intermission/intermission.h"
+#include "vm.h"
 
 // MACROS ------------------------------------------------------------------
 

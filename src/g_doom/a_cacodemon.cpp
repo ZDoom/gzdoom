@@ -7,7 +7,7 @@
 #include "gstrings.h"
 #include "a_action.h"
 #include "s_sound.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_headattack ("HeadAttack");

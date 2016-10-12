@@ -6,7 +6,7 @@
 #include "p_enemy.h"
 #include "s_sound.h"
 #include "a_strifeglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static bool CrusaderCheckRange (AActor *self)

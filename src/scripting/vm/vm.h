@@ -3,6 +3,7 @@
 
 #include "zstring.h"
 #include "dobject.h"
+#include "autosegs.h"
 
 #define MAX_RETURNS		8	// Maximum number of results a function called by script code can return
 #define MAX_TRY_DEPTH	8	// Maximum number of nested TRYs in a single function
@@ -959,5 +960,64 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_POINTER_OPT(x,type)	++paramnum; PARAM_POINTER_OPT_AT(paramnum,x,type)
 #define PARAM_OBJECT_OPT(x,type)	++paramnum; PARAM_OBJECT_OPT_AT(paramnum,x,type)
 #define PARAM_CLASS_OPT(x,base)		++paramnum; PARAM_CLASS_OPT_AT(paramnum,x,base)
+
+typedef int(*actionf_p)(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret);/*(VM_ARGS)*/
+
+struct AFuncDesc
+{
+	const char *Name;
+	actionf_p Function;
+	VMNativeFunction **VMPointer;
+};
+
+#if defined(_MSC_VER)
+#pragma section(".areg$u",read)
+
+#define MSVC_ASEG __declspec(allocate(".areg$u"))
+#define GCC_ASEG
+#else
+#define MSVC_ASEG
+#define GCC_ASEG __attribute__((section(SECTION_AREG))) __attribute__((used))
+#endif
+
+// Macros to handle action functions. These are here so that I don't have to
+// change every single use in case the parameters change.
+#define DECLARE_ACTION(name)	extern VMNativeFunction *name##_VMPtr;
+
+// This distinction is here so that CALL_ACTION produces errors when trying to
+// access a function that requires parameters.
+#define DEFINE_ACTION_FUNCTION(cls, name) \
+	static int AF_##name(VM_ARGS); \
+	VMNativeFunction *name##_VMPtr; \
+	static const AFuncDesc cls##_##name##_Hook = { #name, AF_##name, &name##_VMPtr }; \
+	extern AFuncDesc const *const cls##_##name##_HookPtr; \
+	MSVC_ASEG AFuncDesc const *const cls##_##name##_HookPtr GCC_ASEG = &cls##_##name##_Hook; \
+	static int AF_##name(VM_ARGS)
+
+#define DEFINE_ACTION_FUNCTION_PARAMS(cls, name) DEFINE_ACTION_FUNCTION(cls, name)
+
+//#define DECLARE_PARAMINFO AActor *self, AActor *stateowner, FState *CallingState, int ParameterIndex, StateCallData *statecall
+//#define PUSH_PARAMINFO self, stateowner, CallingState, ParameterIndex, statecall
+
+#define CALL_ACTION(name,self) { /*AF_##name(self, self, NULL, 0, NULL)*/ \
+		VMValue params[3] = { self, self, VMValue(NULL, ATAG_STATEINFO) }; \
+		stack->Call(name##_VMPtr, params, countof(params), NULL, 0, NULL); \
+	}
+
+
+#define ACTION_RETURN_STATE(v) do { FState *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_STATE); return 1; } return 0; } while(0)
+#define ACTION_RETURN_FLOAT(v) do { double u = v; if (numret > 0) { assert(ret != nullptr); ret->SetFloat(u); return 1; } return 0; } while(0)
+#define ACTION_RETURN_INT(v) do { int u = v; if (numret > 0) { assert(ret != NULL); ret->SetInt(u); return 1; } return 0; } while(0)
+#define ACTION_RETURN_BOOL(v) ACTION_RETURN_INT(v)
+
+// Checks to see what called the current action function
+#define ACTION_CALL_FROM_ACTOR() (stateinfo == nullptr || stateinfo->mStateType == STATE_Actor)
+#define ACTION_CALL_FROM_PSPRITE() (self->player && stateinfo != nullptr && stateinfo->mStateType == STATE_Psprite)
+#define ACTION_CALL_FROM_INVENTORY() (stateinfo != nullptr && stateinfo->mStateType == STATE_StateChain)
+
+class PFunction;
+
+PFunction *FindGlobalActionFunction(const char *name);
+
 
 #endif

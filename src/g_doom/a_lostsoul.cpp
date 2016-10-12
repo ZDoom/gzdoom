@@ -9,7 +9,7 @@
 #include "gi.h"
 #include "gstrings.h"
 #include "a_action.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
  FRandom pr_oldsoul ("BetaLostSoul");

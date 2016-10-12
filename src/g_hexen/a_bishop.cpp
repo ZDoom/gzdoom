@@ -6,7 +6,7 @@
 #include "a_action.h"
 #include "m_random.h"
 #include "a_hexenglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_boom ("BishopBoom");

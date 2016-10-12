@@ -1367,24 +1367,24 @@ void OpenGLSWFrameBuffer::DrawLetterbox(int x, int y, int width, int height)
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_SCISSOR_TEST);
-	if (x > 0)
-	{
-		glScissor(0, 0, clientWidth, x);
-		glClear(GL_COLOR_BUFFER_BIT);
-	}
-	if (clientHeight - x - height > 0)
-	{
-		glScissor(0, x + height, clientWidth, clientHeight - x - height);
-		glClear(GL_COLOR_BUFFER_BIT);
-	}
 	if (y > 0)
 	{
-		glScissor(0, x, y, height);
+		glScissor(0, 0, clientWidth, y);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
-	if (clientWidth - y - width > 0)
+	if (clientHeight - y - height > 0)
 	{
-		glScissor(y + width, x, clientWidth - y - width, height);
+		glScissor(0, y + height, clientWidth, clientHeight - y - height);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	if (x > 0)
+	{
+		glScissor(0, y, x, height);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	if (clientWidth - x - width > 0)
+	{
+		glScissor(x + width, y, clientWidth - x - width, height);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
 	glDisable(GL_SCISSOR_TEST);

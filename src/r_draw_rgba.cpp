@@ -104,6 +104,8 @@ public:
 		LLVMDrawers::Instance()->DrawSpan(&args);
 	}
 
+	FString DebugInfo() override { return "DrawSpanLLVMCommand"; }
+
 protected:
 	DrawSpanArgs args;
 
@@ -247,6 +249,11 @@ public:
 		WorkerThreadData d = ThreadData(thread);
 		LLVMDrawers::Instance()->vlinec4(&args, &d);
 	}
+
+	FString DebugInfo() override
+	{
+		return "DrawWall4LLVMCommand\n" + args.ToString();
+	}
 };
 
 class DrawWall1LLVMCommand : public DrawerCommand
@@ -301,6 +308,11 @@ public:
 		WorkerThreadData d = ThreadData(thread);
 		LLVMDrawers::Instance()->vlinec1(&args, &d);
 	}
+
+	FString DebugInfo() override
+	{
+		return "DrawWall1LLVMCommand\n" + args.ToString();
+	}
 };
 
 class DrawColumnLLVMCommand : public DrawerCommand
@@ -316,6 +328,11 @@ protected:
 		d.pass_start_y = thread->pass_start_y;
 		d.pass_end_y = thread->pass_end_y;
 		return d;
+	}
+
+	FString DebugInfo() override
+	{
+		return "DrawColumnLLVMCommand";
 	}
 
 public:
@@ -510,6 +527,11 @@ public:
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 		}
 	}
+
+	FString DebugInfo() override
+	{
+		return "DrawFuzzColumnRGBACommand";
+	}
 };
 
 class FillSpanRGBACommand : public DrawerCommand
@@ -543,6 +565,11 @@ public:
 		uint32_t color = LightBgra::shade_pal_index_simple(_color, light);
 		for (int i = 0; i < count; i++)
 			dest[i] = color;
+	}
+
+	FString DebugInfo() override
+	{
+		return "FillSpanRGBACommand";
 	}
 };
 
@@ -663,6 +690,11 @@ public:
 			dy--;
 		}
 	}
+
+	FString DebugInfo() override
+	{
+		return "DrawSlabRGBACommand";
+	}
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -736,6 +768,11 @@ public:
 
 			dest[x] = 0xff000000 | (red << 16) | (green << 8) | blue;
 		} while (++x <= x2);
+	}
+
+	FString DebugInfo() override
+	{
+		return "DrawFogBoundaryLineRGBACommand";
 	}
 };
 
@@ -886,6 +923,11 @@ public:
 			count--;
 		}
 	}
+
+	FString DebugInfo() override
+	{
+		return "DrawTiltedSpanRGBACommand";
+	}
 };
 
 class DrawColoredSpanRGBACommand : public DrawerCommand
@@ -924,6 +966,11 @@ public:
 		uint32_t color = LightBgra::shade_pal_index_simple(_color, light);
 		for (int i = 0; i < count; i++)
 			dest[i] = color;
+	}
+
+	FString DebugInfo() override
+	{
+		return "DrawColoredSpanRGBACommand";
 	}
 };
 
@@ -991,6 +1038,11 @@ public:
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			dest += spacing;
 		}
+	}
+
+	FString DebugInfo() override
+	{
+		return "FillTransColumnRGBACommand";
 	}
 };
 

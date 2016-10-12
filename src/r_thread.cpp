@@ -97,25 +97,49 @@ void DrawerCommandQueue::Finish()
 	thread.core = 0;
 	thread.num_cores = (int)(queue->threads.size() + 1);
 
-	for (int pass = 0; pass < queue->num_passes; pass++)
+	struct TryCatchData
 	{
-		thread.pass_start_y = pass * queue->rows_in_pass;
-		thread.pass_end_y = (pass + 1) * queue->rows_in_pass;
-		if (pass + 1 == queue->num_passes)
-			thread.pass_end_y = MAX(thread.pass_end_y, MAXHEIGHT);
+		DrawerCommandQueue *queue;
+		DrawerThread *thread;
+		size_t command_index;
+	} data;
 
-		size_t size = queue->active_commands.size();
-		for (size_t i = 0; i < size; i++)
+	data.queue = queue;
+	data.thread = &thread;
+	data.command_index = 0;
+	VectoredTryCatch(&data,
+	[](void *data)
+	{
+		TryCatchData *d = (TryCatchData*)data;
+
+		for (int pass = 0; pass < d->queue->num_passes; pass++)
 		{
-			auto &command = queue->active_commands[i];
-			command->Execute(&thread);
+			d->thread->pass_start_y = pass * d->queue->rows_in_pass;
+			d->thread->pass_end_y = (pass + 1) * d->queue->rows_in_pass;
+			if (pass + 1 == d->queue->num_passes)
+				d->thread->pass_end_y = MAX(d->thread->pass_end_y, MAXHEIGHT);
+
+			size_t size = d->queue->active_commands.size();
+			for (d->command_index = 0; d->command_index < size; d->command_index++)
+			{
+				auto &command = d->queue->active_commands[d->command_index];
+				command->Execute(d->thread);
+			}
 		}
-	}
+	},
+	[](void *data)
+	{
+		TryCatchData *d = (TryCatchData*)data;
+		ReportFatalError(d->queue->active_commands[d->command_index], true);
+	});
 
 	// Wait for everyone to finish:
 
 	std::unique_lock<std::mutex> end_lock(queue->end_mutex);
 	queue->end_condition.wait(end_lock, [&]() { return queue->finished_threads == queue->threads.size(); });
+
+	if (!queue->thread_error.IsEmpty())
+		I_FatalError("Fatal drawer error: %s", queue->thread_error.GetChars());
 
 	// Clean up batch:
 
@@ -157,20 +181,42 @@ void DrawerCommandQueue::StartThreads()
 				start_lock.unlock();
 
 				// Do the work:
-				for (int pass = 0; pass < queue->num_passes; pass++)
-				{
-					thread->pass_start_y = pass * queue->rows_in_pass;
-					thread->pass_end_y = (pass + 1) * queue->rows_in_pass;
-					if (pass + 1 == queue->num_passes)
-						thread->pass_end_y = MAX(thread->pass_end_y, MAXHEIGHT);
 
-					size_t size = queue->active_commands.size();
-					for (size_t i = 0; i < size; i++)
+				struct TryCatchData
+				{
+					DrawerCommandQueue *queue;
+					DrawerThread *thread;
+					size_t command_index;
+				} data;
+
+				data.queue = queue;
+				data.thread = thread;
+				data.command_index = 0;
+				VectoredTryCatch(&data,
+				[](void *data)
+				{
+					TryCatchData *d = (TryCatchData*)data;
+
+					for (int pass = 0; pass < d->queue->num_passes; pass++)
 					{
-						auto &command = queue->active_commands[i];
-						command->Execute(thread);
+						d->thread->pass_start_y = pass * d->queue->rows_in_pass;
+						d->thread->pass_end_y = (pass + 1) * d->queue->rows_in_pass;
+						if (pass + 1 == d->queue->num_passes)
+							d->thread->pass_end_y = MAX(d->thread->pass_end_y, MAXHEIGHT);
+
+						size_t size = d->queue->active_commands.size();
+						for (d->command_index = 0; d->command_index < size; d->command_index++)
+						{
+							auto &command = d->queue->active_commands[d->command_index];
+							command->Execute(d->thread);
+						}
 					}
-				}
+				},
+				[](void *data)
+				{
+					TryCatchData *d = (TryCatchData*)data;
+					ReportFatalError(d->queue->active_commands[d->command_index], true);
+				});
 
 				// Notify main thread that we finished:
 				std::unique_lock<std::mutex> end_lock(queue->end_mutex);
@@ -194,3 +240,26 @@ void DrawerCommandQueue::StopThreads()
 	lock.lock();
 	shutdown_flag = false;
 }
+
+void DrawerCommandQueue::ReportFatalError(DrawerCommand *command, bool worker_thread)
+{
+	if (worker_thread)
+	{
+		std::unique_lock<std::mutex> end_lock(Instance()->end_mutex);
+		if (Instance()->thread_error.IsEmpty())
+			Instance()->thread_error = command->DebugInfo();
+	}
+	else
+	{
+		I_FatalError("Fatal drawer error: %s", command->DebugInfo().GetChars());
+	}
+}
+
+#ifndef WIN32
+
+void VectoredTryCatch(void *data, void(*tryBlock)(void *data), void(*catchBlock)(void *data))
+{
+	tryBlock(data);
+}
+
+#endif

@@ -3399,3 +3399,37 @@ void DisplayCrashLog ()
 	}
 	CloseTarFiles ();
 }
+
+/////////////////////////////////////////////////////////////////////////////
+
+namespace
+{
+	bool __declspec(thread) DrawerExceptionSetJumpResult;
+	CONTEXT __declspec(thread) DrawerExceptionSetJumpContext;
+	PVOID __declspec(thread) DrawerExceptionHandlerHandle;
+
+	LONG WINAPI DrawerExceptionHandler(_EXCEPTION_POINTERS *exceptionInfo)
+	{
+		//RtlRestoreContext(&DrawerExceptionSetJumpContext, exceptionInfo->ExceptionRecord);
+		*exceptionInfo->ContextRecord = DrawerExceptionSetJumpContext;
+		return EXCEPTION_CONTINUE_EXECUTION;
+	}
+}
+
+void VectoredTryCatch(void *data, void(*tryBlock)(void *data), void(*catchBlock)(void *data))
+{
+	DrawerExceptionSetJumpResult = false;
+	RtlCaptureContext(&DrawerExceptionSetJumpContext);
+	if (DrawerExceptionSetJumpResult)
+	{
+		RemoveVectoredExceptionHandler(DrawerExceptionHandlerHandle);
+		catchBlock(data);
+	}
+	else
+	{
+		DrawerExceptionSetJumpResult = true;
+		DrawerExceptionHandlerHandle = AddVectoredExceptionHandler(1, DrawerExceptionHandler);
+		tryBlock(data);
+		RemoveVectoredExceptionHandler(DrawerExceptionHandlerHandle);
+	}
+}

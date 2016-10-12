@@ -137,6 +137,7 @@ class ApplySpecialColormapRGBACommand : public DrawerCommand
 public:
 	ApplySpecialColormapRGBACommand(FSpecialColormap *colormap, DFrameBuffer *screen);
 	void Execute(DrawerThread *thread) override;
+	FString DebugInfo() override { return "ApplySpecialColormapRGBACommand"; }
 };
 
 template<typename CommandType, typename BlendMode>

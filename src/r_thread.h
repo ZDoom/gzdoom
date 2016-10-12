@@ -79,7 +79,10 @@ public:
 	}
 
 	virtual void Execute(DrawerThread *thread) = 0;
+	virtual FString DebugInfo() = 0;
 };
+
+void VectoredTryCatch(void *data, void(*tryBlock)(void *data), void(*catchBlock)(void *data));
 
 // Manages queueing up commands and executing them on worker threads
 class DrawerCommandQueue
@@ -101,6 +104,7 @@ class DrawerCommandQueue
 	std::mutex end_mutex;
 	std::condition_variable end_condition;
 	size_t finished_threads = 0;
+	FString thread_error;
 
 	int threaded_render = 0;
 	DrawerThread single_core_thread;
@@ -112,6 +116,7 @@ class DrawerCommandQueue
 	void Finish();
 
 	static DrawerCommandQueue *Instance();
+	static void ReportFatalError(DrawerCommand *command, bool worker_thread);
 
 	DrawerCommandQueue();
 	~DrawerCommandQueue();
@@ -128,7 +133,17 @@ public:
 		if (queue->threaded_render == 0 || !r_multithreaded)
 		{
 			T command(std::forward<Types>(args)...);
-			command.Execute(&queue->single_core_thread);
+			VectoredTryCatch(&command,
+			[](void *data)
+			{
+				T *c = (T*)data;
+				c->Execute(&Instance()->single_core_thread);
+			},
+			[](void *data)
+			{
+				T *c = (T*)data;
+				ReportFatalError(c, false);
+			});
 		}
 		else
 		{

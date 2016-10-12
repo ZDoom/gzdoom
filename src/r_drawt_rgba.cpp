@@ -104,6 +104,11 @@ public:
 		WorkerThreadData d = ThreadData(thread);
 		LLVMDrawers::Instance()->DrawColumnRt1(&args, &d);
 	}
+
+	FString DebugInfo() override
+	{
+		return "DrawColumnRt1LLVMCommand";
+	}
 };
 
 #define DECLARE_DRAW_COMMAND(name, func, base) \
@@ -157,6 +162,11 @@ public:
 	void Execute(DrawerThread *thread) override
 	{
 		thread->dc_temp_rgba = buff == NULL ? thread->dc_temp_rgbabuff_rgba : (uint32_t*)buff;
+	}
+
+	FString DebugInfo() override
+	{
+		return "RtInitColsRGBACommand";
 	}
 };
 
@@ -233,6 +243,11 @@ public:
 			dest += 32;
 		} while (--count);
 	}
+
+	FString DebugInfo() override
+	{
+		return "DrawColumnHorizRGBACommand";
+	}
 };
 
 class FillColumnHorizRGBACommand : public DrawerCommand
@@ -277,6 +292,11 @@ public:
 			dest[0] = color; dest[4] = color;
 			dest += 8;
 		} while (--count);
+	}
+
+	FString DebugInfo() override
+	{
+		return "FillColumnHorizRGBACommand";
 	}
 };
 

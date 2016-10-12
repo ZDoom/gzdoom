@@ -1422,7 +1422,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	vis->pic = tex;
 	vis->Style.ColormapNum = 0;
 
-	if (flip)
+	if (!(flip) != !(pspr->Flags & PSPF_FLIP))
 	{
 		vis->xiscale = -FLOAT2FIXED(pspritexiscale * tex->Scale.X);
 		vis->startfrac = (tex->GetWidth() << FRACBITS) - 1;

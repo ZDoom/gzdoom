@@ -129,19 +129,20 @@ void FGLRenderer::DrawPSprite (player_t * player,DPSprite *psp, float sx, float 
 	y1 = viewwindowy + vh / 2 - (ftexturemid * scale);
 	y2 = y1 + (r.height * scale) + 1;
 
-	if (!mirror)
+	if (!(mirror) != !(psp->Flags & PSPF_FLIP))
 	{
-		fU1=tex->GetSpriteUL();
-		fV1=tex->GetSpriteVT();
-		fU2=tex->GetSpriteUR();
-		fV2=tex->GetSpriteVB();
+		fU2 = tex->GetSpriteUL();
+		fV1 = tex->GetSpriteVT();
+		fU1 = tex->GetSpriteUR();
+		fV2 = tex->GetSpriteVB();
 	}
 	else
 	{
-		fU2=tex->GetSpriteUL();
-		fV1=tex->GetSpriteVT();
-		fU1=tex->GetSpriteUR();
-		fV2=tex->GetSpriteVB();
+		fU1 = tex->GetSpriteUL();
+		fV1 = tex->GetSpriteVT();
+		fU2 = tex->GetSpriteUR();
+		fV2 = tex->GetSpriteVB();
+		
 	}
 
 	if (tex->GetTransparent() || OverrideShader != -1)

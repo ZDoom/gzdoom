@@ -83,6 +83,13 @@ struct DrawSpanArgs
 		simple_shade = 1,
 		nearest_filter = 2
 	};
+
+	FString ToString()
+	{
+		FString info;
+		info.Format("x1 = %i, x2 = %i, y = %i, flags = %i", x1, x2, y, flags);
+		return info;
+	}
 };
 
 struct DrawColumnArgs
@@ -117,6 +124,13 @@ struct DrawColumnArgs
 	{
 		simple_shade = 1
 	};
+
+	FString ToString()
+	{
+		FString info;
+		info.Format("dest_y = %i, count = %i, flags = %i", dest_y, count, flags);
+		return info;
+	}
 };
 
 class LLVMDrawers

@@ -107,7 +107,7 @@ public:
 
 	FString DebugInfo() override
 	{
-		return "DrawColumnRt1LLVMCommand";
+		return "DrawColumnRt1LLVMCommand\n" + args.ToString();
 	}
 };
 

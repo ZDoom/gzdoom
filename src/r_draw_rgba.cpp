@@ -104,7 +104,10 @@ public:
 		LLVMDrawers::Instance()->DrawSpan(&args);
 	}
 
-	FString DebugInfo() override { return "DrawSpanLLVMCommand"; }
+	FString DebugInfo() override
+	{
+		return "DrawSpanLLVMCommand\n" + args.ToString();
+	}
 
 protected:
 	DrawSpanArgs args;
@@ -332,7 +335,7 @@ protected:
 
 	FString DebugInfo() override
 	{
-		return "DrawColumnLLVMCommand";
+		return "DrawColumnLLVMCommand\n" + args.ToString();
 	}
 
 public:

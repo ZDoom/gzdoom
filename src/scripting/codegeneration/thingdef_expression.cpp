@@ -91,7 +91,7 @@ static const FLOP FxFlops[] =
 //
 //==========================================================================
 
-FCompileContext::FCompileContext(PClassActor *cls, PPrototype *ret) : Class(cls), ReturnProto(ret)
+FCompileContext::FCompileContext(PClass *cls, PPrototype *ret) : Class(cls), ReturnProto(ret)
 {
 }
 
@@ -3902,7 +3902,7 @@ VMFunction *FxVMFunctionCall::GetDirectFunction()
 	// then it can be a "direct" function. That is, the DECORATE
 	// definition can call that function directly without wrapping
 	// it inside VM code.
-	if (EmitTail && (ArgList ? ArgList->Size() : 0) == 0 && (Function->Flags & VARF_Action))
+	if ((ArgList ? ArgList->Size() : 0) == 0 && (Function->Flags & VARF_Action))
 	{
 		return Function->Variants[0].Implementation;
 	}
@@ -4922,20 +4922,19 @@ FxExpression *FxStateByIndex::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	ABORT(ctx.Class);
+	auto aclass = dyn_cast<PClassActor>(ctx.Class);
 
-	if (ctx.Class->NumOwnedStates == 0)
-	{
-		// This can't really happen
-		assert(false);
-	}
-	if (ctx.Class->NumOwnedStates <= index)
+	// This expression type can only be used from DECORATE, so there's no need to consider the possibility of calling it from a non-actor.
+	assert(aclass != nullptr && aclass->NumOwnedStates > 0);
+
+	if (aclass->NumOwnedStates <= index)
 	{
 		ScriptPosition.Message(MSG_ERROR, "%s: Attempt to jump to non existing state index %d", 
 			ctx.Class->TypeName.GetChars(), index);
 		delete this;
 		return NULL;
 	}
-	FxExpression *x = new FxConstant(ctx.Class->OwnedStates + index, ScriptPosition);
+	FxExpression *x = new FxConstant(aclass->OwnedStates + index, ScriptPosition);
 	delete this;
 	return x;
 }
@@ -5245,7 +5244,6 @@ FxDamageValue::FxDamageValue(FxExpression *v)
 {
 	val = v;
 	ValueType = TypeVoid;
-	MyFunction = NULL;
 }
 
 FxDamageValue::~FxDamageValue()

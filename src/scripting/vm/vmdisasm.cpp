@@ -33,6 +33,7 @@
 
 #include "vm.h"
 #include "c_console.h"
+#include "templates.h"
 
 #define NOP		MODE_AUNUSED | MODE_BUNUSED | MODE_CUNUSED
 
@@ -598,3 +599,21 @@ static int print_reg(FILE *out, int col, int arg, int mode, int immshift, const 
 	}
 	return col;
 }
+
+//==========================================================================
+//
+// Do some postprocessing after everything has been defined
+//
+//==========================================================================
+
+void DumpFunction(FILE *dump, VMScriptFunction *sfunc, const char *label, int labellen)
+{
+	const char *marks = "=======================================================";
+	fprintf(dump, "\n%.*s %s %.*s", MAX(3, 38 - labellen / 2), marks, label, MAX(3, 38 - labellen / 2), marks);
+	fprintf(dump, "\nInteger regs: %-3d  Float regs: %-3d  Address regs: %-3d  String regs: %-3d\nStack size: %d\n",
+		sfunc->NumRegD, sfunc->NumRegF, sfunc->NumRegA, sfunc->NumRegS, sfunc->MaxParam);
+	VMDumpConstants(dump, sfunc);
+	fprintf(dump, "\nDisassembly @ %p:\n", sfunc->Code);
+	VMDisasm(dump, sfunc->Code, sfunc->CodeSize, sfunc);
+}
+

@@ -69,6 +69,7 @@
 #include "teaminfo.h"
 #include "v_video.h"
 #include "r_data/colormaps.h"
+#include "vmbuilder.h"
 
 
 //==========================================================================
@@ -656,7 +657,7 @@ DEFINE_PROPERTY(damage, X, Actor)
 	}
 	else
 	{
-		defaults->DamageFunc = (VMFunction *)(uintptr_t)(ActorDamageFuncs.Push(id) + 1);
+		defaults->DamageFunc = FunctionBuildList.AddFunction(bag.Info, id, FStringf("%s.DamageFunction", bag.Info->TypeName.GetChars()), false);
 	}
 }
 

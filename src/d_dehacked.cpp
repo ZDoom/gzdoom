@@ -820,7 +820,8 @@ void SetDehParams(FState *state, int codepointer)
 		int argcount = MBFCodePointerFactories[codepointer](buildit, value1, value2);
 		buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(sym->Variants[0].Implementation, ATAG_OBJECT), NAP + argcount, 0);
 		// Attach it to the state.
-		VMScriptFunction *sfunc = buildit.MakeFunction();
+		VMScriptFunction *sfunc = new VMScriptFunction;
+		buildit.MakeFunction(sfunc);
 		sfunc->NumArgs = NAP;
 		state->SetAction(sfunc);
 	}

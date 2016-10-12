@@ -66,173 +66,47 @@
 #include "vmbuilder.h"
 #include "stats.h"
 
-TDeletingArray<class FxExpression *> ActorDamageFuncs;
-
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 void InitThingdef();
-void ParseDecorate(FScanner &ctx);
 
 // STATIC FUNCTION PROTOTYPES --------------------------------------------
 PClassActor *QuestItemClasses[31];
 
 //==========================================================================
 //
-// Do some postprocessing after everything has been defined
+// SetImplicitArgs
+//
+// Adds the parameters implied by the function flags.
 //
 //==========================================================================
 
-static void DumpFunction(FILE *dump, VMScriptFunction *sfunc, const char *label, int labellen)
+void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, PClass *cls, DWORD funcflags)
 {
-	const char *marks = "=======================================================";
-	fprintf(dump, "\n%.*s %s %.*s", MAX(3, 38 - labellen / 2), marks, label, MAX(3, 38 - labellen / 2), marks);
-	fprintf(dump, "\nInteger regs: %-3d  Float regs: %-3d  Address regs: %-3d  String regs: %-3d\nStack size: %d\n",
-		sfunc->NumRegD, sfunc->NumRegF, sfunc->NumRegA, sfunc->NumRegS, sfunc->MaxParam);
-	VMDumpConstants(dump, sfunc);
-	fprintf(dump, "\nDisassembly @ %p:\n", sfunc->Code);
-	VMDisasm(dump, sfunc->Code, sfunc->CodeSize, sfunc);
+	// Must be called before adding any other arguments.
+	assert(args == NULL || args->Size() == 0);
+	assert(argflags == NULL || argflags->Size() == 0);
+
+	if (funcflags & VARF_Method)
+	{
+		// implied self pointer
+		if (args != NULL)		args->Push(NewClassPointer(cls)); 
+		if (argflags != NULL)	argflags->Push(VARF_Implicit);
+	}
+	if (funcflags & VARF_Action)
+	{
+		// implied caller and callingstate pointers
+		if (args != NULL)
+		{
+			args->Insert(0, NewClassPointer(RUNTIME_CLASS(AActor)));	// the caller must go before self due to an old design mistake.
+			args->Push(TypeState);
+		}
+		if (argflags != NULL)
+		{
+			argflags->Push(VARF_Implicit);
+			argflags->Push(VARF_Implicit);
+		}
+	}
 }
-
-static void FinishThingdef()
-{
-	int errorcount = 0;
-	unsigned i;
-	int codesize = 0;
-	FILE *dump = NULL;
-
-	if (Args->CheckParm("-dumpdisasm")) dump = fopen("disasm.txt", "w");
-
-	for (i = 0; i < StateTempCalls.Size(); ++i)
-	{
-		FStateTempCall *tcall = StateTempCalls[i];
-		VMFunction *func = nullptr;
-
-		assert(tcall->Code != NULL);
-
-		// We don't know the return type in advance for anonymous functions.
-		FCompileContext ctx(tcall->ActorClass, nullptr);
-		tcall->Code = tcall->Code->Resolve(ctx);
-		tcall->Proto = ctx.ReturnProto;
-
-		// Make sure resolving it didn't obliterate it.
-		if (tcall->Code != nullptr)
-		{
-			// Can we call this function directly without wrapping it in an
-			// anonymous function? e.g. Are we passing any parameters to it?
-			func = tcall->Code->GetDirectFunction();
-
-			if (func == nullptr)
-			{
-				VMFunctionBuilder buildit(true);
-
-				assert(tcall->Proto != nullptr);
-
-				// Allocate registers used to pass parameters in.
-				// self, stateowner, state (all are pointers)
-				buildit.Registers[REGT_POINTER].Get(3);
-
-				// Emit code
-				tcall->Code->Emit(&buildit);
-
-				VMScriptFunction *sfunc = buildit.MakeFunction();
-				sfunc->NumArgs = NAP;
-				
-				// Generate prototype for this anonymous function
-				TArray<PType *> args(3);
-				SetImplicitArgs(&args, NULL, tcall->ActorClass, VARF_Method | VARF_Action);
-				sfunc->Proto = NewPrototype(tcall->Proto->ReturnTypes, args);
-
-				func = sfunc;
-
-				if (dump != NULL)
-				{
-					char label[64];
-					int labellen = mysnprintf(label, countof(label), "Function %s.States[%d] (*%d)",
-						tcall->ActorClass->TypeName.GetChars(), tcall->FirstState, tcall->NumStates);
-					DumpFunction(dump, sfunc, label, labellen);
-					codesize += sfunc->CodeSize;
-				}
-			}
-
-			delete tcall->Code;
-			tcall->Code = nullptr;
-			for (int k = 0; k < tcall->NumStates; ++k)
-			{
-				tcall->ActorClass->OwnedStates[tcall->FirstState + k].SetAction(func);
-			}
-		}
-	}
-
-	for (i = 0; i < PClassActor::AllActorClasses.Size(); i++)
-	{
-		PClassActor *ti = PClassActor::AllActorClasses[i];
-
-		if (ti->Size == TentativeClass)
-		{
-			Printf(TEXTCOLOR_RED "Class %s referenced but not defined\n", ti->TypeName.GetChars());
-			errorcount++;
-			continue;
-		}
-
-		AActor *def = GetDefaultByType(ti);
-
-		if (!def)
-		{
-			Printf(TEXTCOLOR_RED "No ActorInfo defined for class '%s'\n", ti->TypeName.GetChars());
-			errorcount++;
-			continue;
-		}
-
-		if (def->DamageFunc != nullptr)
-		{
-			FxDamageValue *dmg = (FxDamageValue *)ActorDamageFuncs[(uintptr_t)def->DamageFunc - 1];
-			VMScriptFunction *sfunc;
-			sfunc = dmg->GetFunction();
-			if (sfunc == nullptr)
-			{
-				FCompileContext ctx(ti);
-				dmg = static_cast<FxDamageValue *>(dmg->Resolve(ctx));
-
-				if (dmg != nullptr)
-				{
-					VMFunctionBuilder buildit;
-					buildit.Registers[REGT_POINTER].Get(1);		// The self pointer
-					dmg->Emit(&buildit);
-					sfunc = buildit.MakeFunction();
-					sfunc->NumArgs = 1;
-					sfunc->Proto = nullptr;		///FIXME: Need a proper prototype here
-					// Save this function in case this damage value was reused
-					// (which happens quite easily with inheritance).
-					dmg->SetFunction(sfunc);
-				}
-			}
-			def->DamageFunc = sfunc;
-
-			if (dump != nullptr && sfunc != nullptr)
-			{
-				char label[64];
-				int labellen = mysnprintf(label, countof(label), "Function %s.Damage",
-					ti->TypeName.GetChars());
-				DumpFunction(dump, sfunc, label, labellen);
-				codesize += sfunc->CodeSize;
-			}
-		}
-	}
-	if (dump != NULL)
-	{
-		fprintf(dump, "\n*************************************************************************\n%i code bytes\n", codesize * 4);
-		fclose(dump);
-	}
-	if (errorcount > 0)
-	{
-		I_Error("%d errors during actor postprocessing", errorcount);
-	}
-
-	ActorDamageFuncs.DeleteAndClear();
-	StateTempCalls.DeleteAndClear();
-}
-
-
 
 //==========================================================================
 //
@@ -242,29 +116,48 @@ static void FinishThingdef()
 //
 //==========================================================================
 void ParseScripts();
+void ParseAllDecorate();
 
 void LoadActors ()
 {
-	int lastlump, lump;
 	cycle_t timer;
 
 	timer.Reset(); timer.Clock();
-	ActorDamageFuncs.Clear();
-	InitThingdef();
-	lastlump = 0;
-	ParseScripts();
-
 	FScriptPosition::ResetErrorCounter();
-	while ((lump = Wads.FindLump ("DECORATE", &lastlump)) != -1)
-	{
-		FScanner sc(lump);
-		ParseDecorate (sc);
-	}
-	FinishThingdef();
+
+	InitThingdef();
+	ParseScripts();
+	ParseAllDecorate();
+
+	FunctionBuildList.Build();
+
 	if (FScriptPosition::ErrorCounter > 0)
 	{
 		I_Error("%d errors while parsing DECORATE scripts", FScriptPosition::ErrorCounter);
 	}
+
+	int errorcount = 0;
+	for (auto ti : PClassActor::AllActorClasses)
+	{
+		if (ti->Size == TentativeClass)
+		{
+			Printf(TEXTCOLOR_RED "Class %s referenced but not defined\n", ti->TypeName.GetChars());
+			errorcount++;
+			continue;
+		}
+
+		if (GetDefaultByType(ti) == nullptr)
+		{
+			Printf(TEXTCOLOR_RED "No ActorInfo defined for class '%s'\n", ti->TypeName.GetChars());
+			errorcount++;
+			continue;
+		}
+	}
+	if (errorcount > 0)
+	{
+		I_Error("%d errors during actor postprocessing", errorcount);
+	}
+
 	timer.Unclock();
 	if (!batchrun) Printf("DECORATE parsing took %.2f ms\n", timer.TimeMS());
 	// Base time: ~52 ms

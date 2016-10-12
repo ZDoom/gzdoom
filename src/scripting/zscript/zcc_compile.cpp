@@ -47,6 +47,7 @@
 #include "p_lnspec.h"
 #include "gdtoa.h"
 #include "codegeneration/thingdef_exp.h"
+#include "vmbuilder.h"
 
 #define DEFINING_CONST ((PSymbolConst *)(void *)1)
 
@@ -2165,12 +2166,7 @@ void ZCCCompiler::CompileStates()
 						auto code = SetupActionFunction(static_cast<PClassActor *>(c->Type()), sl->Action);
 						if (code != nullptr)
 						{
-							auto tcall = new FStateTempCall;
-							tcall->Code = code;
-							tcall->ActorClass = static_cast<PClassActor *>(c->Type());
-							tcall->FirstState = statedef.GetStateCount() - count;
-							tcall->NumStates = count;
-							StateTempCalls.Push(tcall);
+							state.ActionFunc = FunctionBuildList.AddFunction(c->Type(), code, FStringf("%s.StateFunction.%d", c->Type()->TypeName.GetChars(), statedef.GetStateCount()), true);
 						}
 					}
 					break;

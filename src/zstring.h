@@ -308,6 +308,13 @@ private:
 	bool operator >= (const FString &illegal) const;
 };
 
+class FStringf : public FString
+{
+public:
+	FStringf(const char *fmt, ...);
+};
+
+
 namespace StringFormat
 {
 	enum

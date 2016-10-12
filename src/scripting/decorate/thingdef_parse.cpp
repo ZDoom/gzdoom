@@ -443,42 +443,6 @@ static void ParseArgListDef(FScanner &sc, PClassActor *cls,
 
 //==========================================================================
 //
-// SetImplicitArgs
-//
-// Adds the parameters implied by the function flags.
-//
-//==========================================================================
-
-void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, PClass *cls, DWORD funcflags)
-{
-	// Must be called before adding any other arguments.
-	assert(args == NULL || args->Size() == 0);
-	assert(argflags == NULL || argflags->Size() == 0);
-
-	if (funcflags & VARF_Method)
-	{
-		// implied self pointer
-		if (args != NULL)		args->Push(NewClassPointer(RUNTIME_CLASS(AActor))); 
-		if (argflags != NULL)	argflags->Push(VARF_Implicit);
-	}
-	if (funcflags & VARF_Action)
-	{
-		// implied stateowner and callingstate pointers
-		if (args != NULL)
-		{
-			args->Push(NewClassPointer(cls));
-			args->Push(TypeState);
-		}
-		if (argflags != NULL)
-		{
-			argflags->Push(VARF_Implicit);
-			argflags->Push(VARF_Implicit);
-		}
-	}
-}
-
-//==========================================================================
-//
 // ParseFunctionDef
 //
 // Parses a native function's parameters and adds it to the class,
@@ -1557,5 +1521,16 @@ void ParseDecorate (FScanner &sc)
 			ParseOldDecoration(sc, DEF_Decoration);
 			break;
 		}
+	}
+}
+
+void ParseAllDecorate()
+{
+	int lastlump, lump;
+
+	while ((lump = Wads.FindLump("DECORATE", &lastlump)) != -1)
+	{
+		FScanner sc(lump);
+		ParseDecorate(sc);
 	}
 }

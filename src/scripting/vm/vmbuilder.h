@@ -26,7 +26,7 @@ public:
 	VMFunctionBuilder(bool checkself = false);
 	~VMFunctionBuilder();
 
-	VMScriptFunction *MakeFunction();
+	void MakeFunction(VMScriptFunction *func);
 
 	// Returns the constant register holding the value.
 	int GetConstantInt(int val);
@@ -87,4 +87,34 @@ private:
 
 };
 
+void DumpFunction(FILE *dump, VMScriptFunction *sfunc, const char *label, int labellen);
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+class FxExpression;
+
+class FFunctionBuildList
+{
+	struct Item
+	{
+		PClass *Class = nullptr;
+		FxExpression *Code = nullptr;
+		PPrototype *Proto = nullptr;
+		VMScriptFunction *Function = nullptr;
+		FString DumpName;
+		int type;	// temporary kludge
+	};
+
+	TArray<Item> mItems;
+
+public:
+	VMFunction *AddFunction(PClass *cls, FxExpression *code, const FString &name, bool statecall = false);
+	void Build();
+};
+
+extern FFunctionBuildList FunctionBuildList;
 #endif

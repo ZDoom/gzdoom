@@ -57,8 +57,7 @@
 #include "codegeneration/thingdef_exp.h"
 #include "version.h"
 #include "templates.h"
-
-TDeletingArray<FStateTempCall *> StateTempCalls;
+#include "vmbuilder.h"
 
 //==========================================================================
 //***
@@ -141,13 +140,14 @@ void ParseStates(FScanner &sc, PClassActor * actor, AActor * defaults, Baggage &
 	FString statestring;
 	FState state;
 	char lastsprite[5] = "";
-	FStateTempCall *tcall = NULL;
-	FArgumentList *args = NULL;
+	FxExpression *ScriptCode;
+	FArgumentList *args = nullptr;
 
 	sc.MustGetStringName ("{");
 	sc.SetEscape(false);	// disable escape sequences in the state parser
 	while (!sc.CheckString ("}") && !sc.End)
 	{
+		ScriptCode = nullptr;
 		memset(&state,0,sizeof(state));
 		statestring = ParseStateString(sc);
 		if (!statestring.CompareNoCase("GOTO"))
@@ -224,10 +224,6 @@ do_stop:
 			sc.MustGetString();
 			statestring = sc.String;
 
-			if (tcall == NULL)
-			{
-				tcall = new FStateTempCall;
-			}
 			if (sc.CheckString("RANDOM"))
 			{
 				int min, max;
@@ -315,34 +311,26 @@ do_stop:
 				}
 
 				bool hasfinalret;
-				tcall->Code = ParseActions(sc, state, statestring, bag, hasfinalret);
-				if (!hasfinalret && tcall->Code != nullptr)
+				ScriptCode = ParseActions(sc, state, statestring, bag, hasfinalret);
+				if (!hasfinalret && ScriptCode != nullptr)
 				{
-					static_cast<FxSequence *>(tcall->Code)->Add(new FxReturnStatement(nullptr, sc));
+					static_cast<FxSequence *>(ScriptCode)->Add(new FxReturnStatement(nullptr, sc));
 				}
 				goto endofstate;
 			}
 			sc.UnGet();
 endofstate:
+			if (ScriptCode != nullptr)
+			{
+				state.ActionFunc = FunctionBuildList.AddFunction(actor, ScriptCode, FStringf("%s.StateFunction.%d", actor->TypeName.GetChars(), bag.statedef.GetStateCount()), true);
+			}
 			int count = bag.statedef.AddStates(&state, statestring);
 			if (count < 0)
 			{
-				sc.ScriptError ("Invalid frame character string '%s'", statestring.GetChars());
+				sc.ScriptError("Invalid frame character string '%s'", statestring.GetChars());
 				count = -count;
 			}
-			if (tcall->Code != NULL)
-			{
-				tcall->ActorClass = actor;
-				tcall->FirstState = bag.statedef.GetStateCount() - count;
-				tcall->NumStates = count;
-				StateTempCalls.Push(tcall);
-				tcall = NULL;
-			}
 		}
-	}
-	if (tcall != NULL)
-	{
-		delete tcall;
 	}
 	if (args != NULL)
 	{

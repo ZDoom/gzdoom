@@ -41,6 +41,9 @@
 */
 
 #include "m_random.h"
+#include "sc_man.h"
+#include "s_sound.h"
+#include "actor.h"
 
 
 #define CHECKRESOLVED() if (isresolved) return this; isresolved=true;
@@ -58,14 +61,15 @@ class FxJumpStatement;
 //
 //
 //==========================================================================
+struct FScriptPosition;
 
 struct FCompileContext
 {
 	TArray<FxJumpStatement *> Jumps;
 	PPrototype *ReturnProto;
-	PClassActor *Class;
+	PClass *Class;
 
-	FCompileContext(PClassActor *cls = nullptr, PPrototype *ret = nullptr);
+	FCompileContext(PClass *cls = nullptr, PPrototype *ret = nullptr);
 
 	PSymbol *FindInClass(FName identifier);
 	PSymbol *FindGlobal(FName identifier);
@@ -1175,7 +1179,6 @@ public:
 class FxDamageValue : public FxExpression
 {
 	FxExpression *val;
-	VMScriptFunction *MyFunction;
 
 public:
 
@@ -1184,8 +1187,6 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpEmit Emit(VMFunctionBuilder *build);
-	VMScriptFunction *GetFunction() const { return MyFunction; }
-	void SetFunction(VMScriptFunction *func) { MyFunction = func; }
 };
 
 //==========================================================================

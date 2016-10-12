@@ -32,6 +32,10 @@
 */
 
 #include "vmbuilder.h"
+#include "codegeneration/thingdef_exp.h"
+#include "info.h"
+#include "m_argv.h"
+#include "thingdef.h"
 
 //==========================================================================
 //
@@ -68,10 +72,8 @@ VMFunctionBuilder::~VMFunctionBuilder()
 //
 //==========================================================================
 
-VMScriptFunction *VMFunctionBuilder::MakeFunction()
+void VMFunctionBuilder::MakeFunction(VMScriptFunction *func)
 {
-	VMScriptFunction *func = new VMScriptFunction;
-
 	func->Alloc(Code.Size(), NumIntConstants, NumFloatConstants, NumStringConstants, NumAddressConstants);
 
 	// Copy code block.
@@ -106,8 +108,6 @@ VMScriptFunction *VMFunctionBuilder::MakeFunction()
 	// entries on the parameter stack, but it means the caller probably
 	// did something wrong.
 	assert(ActiveParam == 0);
-
-	return func;
 }
 
 //==========================================================================
@@ -633,4 +633,114 @@ void VMFunctionBuilder::Backpatch(size_t loc, size_t target)
 void VMFunctionBuilder::BackpatchToHere(size_t loc)
 {
 	Backpatch(loc, Code.Size());
+}
+
+//==========================================================================
+//
+// FFunctionBuildList
+//
+// This list contains all functions yet to build.
+// All adding functions return a VMFunction - either a complete one
+// for native functions or an empty VMScriptFunction for scripted ones
+// This VMScriptFunction object later gets filled in with the actual
+// info, but we get the pointer right after registering the function
+// with the builder.
+//
+//==========================================================================
+FFunctionBuildList FunctionBuildList;
+
+VMFunction *FFunctionBuildList::AddFunction(PClass *cls, FxExpression *code, const FString &name, bool statecall)
+{
+	auto func = code->GetDirectFunction();
+	if (func != nullptr)
+	{
+		delete code;
+		return func;
+	}
+
+	Printf("Adding %s\n", name.GetChars());
+
+	Item it;
+	it.Class = cls;
+	it.Code = code;
+	it.DumpName = name;
+	it.Function = new VMScriptFunction;
+	it.Proto = nullptr;
+	it.type = statecall;
+	mItems.Push(it);
+	return it.Function;
+}
+
+
+void FFunctionBuildList::Build()
+{
+	int errorcount = 0;
+	int codesize = 0;
+	FILE *dump = nullptr;
+
+	if (Args->CheckParm("-dumpdisasm")) dump = fopen("disasm.txt", "w");
+
+	for (auto &item : mItems)
+	{
+		assert(item.Code != NULL);
+
+		// We don't know the return type in advance for anonymous functions.
+		FCompileContext ctx(item.Class, nullptr);
+		item.Code = item.Code->Resolve(ctx);
+		item.Proto = ctx.ReturnProto;
+
+		// Make sure resolving it didn't obliterate it.
+		if (item.Code != nullptr)
+		{
+			VMFunctionBuilder buildit(true);
+
+			assert(item.Proto != nullptr);
+
+			int numargs;
+			int flags;
+
+			// Kludge alert. This needs to be done in a more universal fashion.
+			// Right now there's only action and damage functions, so for the time being
+			// this will do to get the whole thing started first.
+
+			if (item.type == 1)	// anonymous action function
+			{
+				numargs = NAP;
+				flags = VARF_Method | VARF_Action;
+			}
+			else
+			{
+				numargs = 1;
+				flags = VARF_Method;
+			}
+
+			// Generate prototype for this anonymous function
+			buildit.Registers[REGT_POINTER].Get(numargs);
+			TArray<PType *> args(numargs);
+			SetImplicitArgs(&args, nullptr, item.Class, flags);
+
+			VMScriptFunction *sfunc = item.Function;
+			item.Function->Proto = NewPrototype(item.Proto->ReturnTypes, args);
+
+			// Emit code
+			item.Code->Emit(&buildit);
+			buildit.MakeFunction(item.Function);
+			item.Function->NumArgs = numargs;
+
+			if (dump != nullptr)
+			{
+				char label[64];
+				int labellen = mysnprintf(label, countof(label), item.DumpName,
+				item.Class->TypeName.GetChars());
+				DumpFunction(dump, sfunc, label, labellen);
+				codesize += sfunc->CodeSize;
+			}
+		}
+		delete item.Code;
+	}
+	if (dump != nullptr)
+	{
+		fprintf(dump, "\n*************************************************************************\n%i code bytes\n", codesize * 4);
+		fclose(dump);
+	}
 }

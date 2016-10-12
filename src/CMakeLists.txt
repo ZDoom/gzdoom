@@ -815,11 +815,15 @@ file( GLOB HEADER_FILES
 	posix/cocoa/*.h
 	posix/sdl/*.h
 	r_data/*.h
+	rapidjson/*.h
 	resourcefiles/*.h
 	sfmt/*.h
 	sound/*.h
 	textures/*.h
 	scripting/*.h
+	scripting/codegeneration/*.h
+	scripting/decorate/*.h
+	scripting/zscript/*.h
 	scripting/vm/*.h
 	xlat/*.h
 	*.h

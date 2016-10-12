@@ -103,25 +103,6 @@ public:
 
 //==========================================================================
 //
-//
-//
-//==========================================================================
-
-struct FStateTempCall
-{
-	FStateTempCall() : ActorClass(NULL), Code(NULL), FirstState(0), NumStates(0) {}
-
-	PClassActor *ActorClass;
-	class FxExpression *Code;
-	class PPrototype *Proto;
-	int FirstState;
-	int NumStates;
-};
-extern TDeletingArray<FStateTempCall *> StateTempCalls;
-extern TDeletingArray<class FxExpression *> ActorDamageFuncs;
-
-//==========================================================================
-//
 // Extra info maintained while defining an actor.
 //
 //==========================================================================

@@ -86,6 +86,15 @@ EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, vid_refreshrate)
 
+CVAR(Int, vid_max_width, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Int, vid_max_height, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+namespace
+{
+	int ClampWidth(int width) { return (vid_max_width == 0 || width < vid_max_width) ? width : vid_max_width; }
+	int ClampHeight(int height) { return (vid_max_height == 0 || height < vid_max_height) ? height : vid_max_height; }
+}
+
 extern cycle_t BlitCycles;
 
 void gl_LoadExtensions();
@@ -121,7 +130,7 @@ const char *const OpenGLSWFrameBuffer::ShaderDefines[OpenGLSWFrameBuffer::NUM_SH
 };
 
 OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra) :
-	Super(hMonitor, width, height, bits, refreshHz, fullscreen, bgra) 
+	Super(hMonitor, ClampWidth(width), ClampHeight(height), bits, refreshHz, fullscreen, bgra)
 {
 	// To do: this needs to cooperate with the same static in OpenGLFrameBuffer::InitializeState
 	static bool first = true;
@@ -1200,8 +1209,8 @@ void OpenGLSWFrameBuffer::Flip()
 
 	if (Windowed)
 	{
-		int clientWidth = GetClientWidth();
-		int clientHeight = GetClientHeight();
+		int clientWidth = ClampWidth(GetClientWidth());
+		int clientHeight = ClampHeight(GetClientHeight());
 		if (clientWidth > 0 && clientHeight > 0 && (Width != clientWidth || Height != clientHeight))
 		{
 			Resize(clientWidth, clientHeight);

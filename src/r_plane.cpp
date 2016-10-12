@@ -888,9 +888,19 @@ static const BYTE *R_GetOneSkyColumn (FTexture *fronttex, int x)
 // Get a column of sky when there are two overlapping sky textures
 static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 {
-	DWORD ang = (skyangle + xtoviewangle[x]) ^ skyflip;
-	DWORD angle1 = (DWORD)((UMulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
-	DWORD angle2 = (DWORD)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
+	DWORD ang, angle1, angle2 = (DWORD)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
+
+	if (r_linearsky)
+	{
+		angle_t xangle = (angle_t)((0.5 - x / (double)viewwidth) * FocalTangent * ANGLE_90);
+		ang = (skyangle + xangle) ^ skyflip;
+	}
+	else
+	{
+		ang = (skyangle + xtoviewangle[x]) ^ skyflip;
+	}
+	angle1 = (DWORD)((UMulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
+	angle2 = (DWORD)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
 
 	// Check if this column has already been built. If so, there's
 	// no reason to waste time building it again.

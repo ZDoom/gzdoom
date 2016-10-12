@@ -382,7 +382,7 @@ private:
 	bool CreatePaletteTexture();
 	bool CreateVertexes();
 	void UploadPalette();
-	void CalcFullscreenCoords(FBVERTEX verts[4], bool viewarea_only, bool can_double, uint32_t color0, uint32_t color1) const;
+	void CalcFullscreenCoords(FBVERTEX verts[4], bool viewarea_only, uint32_t color0, uint32_t color1) const;
 	bool Reset();
 	HWTexture *CopyCurrentScreen();
 	void ReleaseDefaultPoolItems();
@@ -390,7 +390,7 @@ private:
 	void KillNativeTexs();
 	PackedTexture *AllocPackedTexture(int width, int height, bool wrapping, int format);
 	void DrawPackedTextures(int packnum);
-	void DrawLetterbox();
+	void DrawLetterbox(int x, int y, int width, int height);
 	void Draw3DPart(bool copy3d);
 	bool SetStyle(OpenGLTex *tex, DrawParms &parms, uint32_t &color0, uint32_t &color1, BufferedTris &quad);
 	static int GetStyleAlpha(int type);
@@ -442,13 +442,10 @@ private:
 	int FlashAmount;
 	int TrueHeight;
 	int PixelDoubling;
-	int LBOffsetI;
-	float LBOffset;
 	float Gamma;
 	bool UpdatePending;
 	bool NeedPalUpdate;
 	bool NeedGammaUpdate;
-	int FBWidth, FBHeight;
 	bool VSync;
 	LTRBRect BlendingRect;
 	int In2D;

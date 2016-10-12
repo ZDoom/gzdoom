@@ -53,7 +53,9 @@
 #include "g_level.h"
 #include "stats.h"
 #include "vm.h"
+#include "thingdef.h"
 #include "d_player.h"
+#include "doomerrors.h"
 
 extern void LoadActors ();
 extern void InitBotStuff();
@@ -378,6 +380,75 @@ void PClassActor::InitializeNativeDefaults()
 		((AActor*)Defaults)->DamageMultiply = 1.;	// fixme: Make this a DECORATE property.
 		((AActor*)Defaults)->ConversationRoot = -1;
 	}
+}
+
+//==========================================================================
+//
+// PClassActor :: SetReplacement
+//
+// Sets as a replacement class for another class.
+//
+//==========================================================================
+
+bool PClassActor::SetReplacement(FName replaceName)
+{
+	// Check for "replaces"
+	if (replaceName != NAME_None)
+	{
+		// Get actor name
+		PClassActor *replacee = PClass::FindActor(replaceName);
+
+		if (replacee == nullptr)
+		{
+			return false;
+		}
+		if (replacee != nullptr)
+		{
+			replacee->Replacement = this;
+			Replacee = replacee;
+		}
+	}
+	return true;
+}
+
+//==========================================================================
+//
+// PClassActor :: SetDropItems
+//
+// Sets a new drop item list
+//
+//==========================================================================
+
+void PClassActor::SetDropItems(DDropItem *drops)
+{
+	DropItems = drops;
+	GC::WriteBarrier(this, DropItems);
+}
+
+
+//==========================================================================
+//
+// PClassActor :: Finalize
+//
+// Installs the parsed states and does some sanity checking
+//
+//==========================================================================
+
+void PClassActor::Finalize(FStateDefinitions &statedef)
+{
+	AActor *defaults = (AActor*)Defaults;
+
+	try
+	{
+		statedef.FinishStates(this, defaults);
+	}
+	catch (CRecoverableError &)
+	{
+		statedef.MakeStateDefines(NULL);
+		throw;
+	}
+	statedef.InstallStates(this, defaults);
+	statedef.MakeStateDefines(NULL);
 }
 
 //==========================================================================

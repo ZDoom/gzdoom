@@ -65,6 +65,12 @@ void PClassInventory::ReplaceClassRef(PClass *oldclass, PClass *newclass)
 	}
 }
 
+void PClassInventory::Finalize(FStateDefinitions &statedef)
+{
+	Super::Finalize(statedef);
+	((AActor*)Defaults)->flags |= MF_SPECIAL;
+}
+
 IMPLEMENT_CLASS(PClassAmmo)
 
 PClassAmmo::PClassAmmo()

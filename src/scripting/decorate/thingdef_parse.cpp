@@ -57,6 +57,45 @@
 #include "m_argv.h"
 
 void ParseOldDecoration(FScanner &sc, EDefinitionType def);
+EXTERN_CVAR(Bool, strictdecorate);
+
+
+//==========================================================================
+//
+// DecoDerivedClass
+//
+// Create a derived class and performs some additional sanity checks
+//
+//==========================================================================
+
+PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FName typeName)
+{
+	PClassActor *type = static_cast<PClassActor *>(parent->CreateDerivedClass(typeName, parent->Size));
+	if (type == nullptr)
+	{
+		FString newname = typeName.GetChars();
+		FString sourcefile = sc.FileName;
+
+		sourcefile.Substitute(":", "@");
+		newname << '@' << sourcefile;
+		if (strictdecorate)
+		{
+			sc.Message(MSG_ERROR, "Tried to define class '%s' more than once.", typeName.GetChars());
+		}
+		else
+		{
+			// Due to backwards compatibility issues this cannot be an unconditional error.
+			sc.Message(MSG_WARNING, "Tried to define class '%s' more than once. Renaming class to '%s'", typeName.GetChars(), newname.GetChars());
+		}
+		type = static_cast<PClassActor *>(parent->CreateDerivedClass(newname, parent->Size));
+		if (type == nullptr)
+		{
+			// This we cannot handle cleanly anymore. Let's just abort and forget about the odd mod out that was this careless.
+			sc.Message(MSG_FATAL, "Tried to define class '%s' more than twice in the same file.", typeName.GetChars());
+		}
+	}
+	return type;
+}
 
 //==========================================================================
 //
@@ -1131,6 +1170,80 @@ static void ParseActionDef (FScanner &sc, PClassActor *cls)
 // Starts a new actor definition
 //
 //==========================================================================
+PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName parentName, bool native)
+{
+	PClassActor *replacee = NULL;
+	PClassActor *ti = NULL;
+
+	PClassActor *parent = RUNTIME_CLASS(AActor);
+
+	if (parentName != NAME_None)
+	{
+		parent = PClass::FindActor(parentName);
+
+		PClassActor *p = parent;
+		while (p != NULL)
+		{
+			if (p->TypeName == typeName)
+			{
+				sc.Message(MSG_ERROR, "'%s' inherits from a class with the same name", typeName.GetChars());
+				break;
+			}
+			p = dyn_cast<PClassActor>(p->ParentClass);
+		}
+
+		if (parent == NULL)
+		{
+			sc.Message(MSG_ERROR, "Parent type '%s' not found in %s", parentName.GetChars(), typeName.GetChars());
+			parent = RUNTIME_CLASS(AActor);
+		}
+		else if (!parent->IsDescendantOf(RUNTIME_CLASS(AActor)))
+		{
+			sc.Message(MSG_ERROR, "Parent type '%s' is not an actor in %s", parentName.GetChars(), typeName.GetChars());
+			parent = RUNTIME_CLASS(AActor);
+		}
+	}
+
+	if (native)
+	{
+		ti = PClass::FindActor(typeName);
+		if (ti == NULL)
+		{
+			extern void DumpTypeTable();
+			DumpTypeTable();
+			sc.Message(MSG_ERROR, "Unknown native actor '%s'", typeName.GetChars());
+			goto create;
+		}
+		else if (ti != RUNTIME_CLASS(AActor) && ti->ParentClass->NativeClass() != parent->NativeClass())
+		{
+			sc.Message(MSG_ERROR, "Native class '%s' does not inherit from '%s'", typeName.GetChars(), parentName.GetChars());
+			parent = RUNTIME_CLASS(AActor);
+			goto create;
+		}
+		else if (ti->Defaults != NULL)
+		{
+			sc.Message(MSG_ERROR, "Redefinition of internal class '%s'", typeName.GetChars());
+			goto create;
+		}
+		ti->InitializeNativeDefaults();
+		ti->ParentClass->DeriveData(ti);
+	}
+	else
+	{
+	create:
+		ti = DecoDerivedClass(sc, parent, typeName);
+	}
+
+	ti->Replacee = ti->Replacement = NULL;
+	ti->DoomEdNum = -1;
+	return ti;
+}
+
+//==========================================================================
+//
+// Starts a new actor definition
+//
+//==========================================================================
 static PClassActor *ParseActorHeader(FScanner &sc, Baggage *bag)
 {
 	FName typeName;
@@ -1216,7 +1329,10 @@ static PClassActor *ParseActorHeader(FScanner &sc, Baggage *bag)
 		info->DoomEdNum = DoomEdNum > 0 ? DoomEdNum : -1;
 		info->SourceLumpName = Wads.GetLumpFullPath(sc.LumpNum);
 
-		SetReplacement(sc, info, replaceName);
+		if (!info->SetReplacement(replaceName))
+		{
+			sc.ScriptMessage("Replaced type '%s' not found for %s", replaceName.GetChars(), info->TypeName.GetChars());
+		}
 
 		ResetBaggage (bag, info == RUNTIME_CLASS(AActor) ? NULL : static_cast<PClassActor *>(info->ParentClass));
 		bag->Info = info;
@@ -1293,7 +1409,18 @@ static void ParseActor(FScanner &sc)
 			break;
 		}
 	}
-	FinishActor(sc, info, bag);
+	if (bag.DropItemSet)
+	{
+		bag.Info->SetDropItems(bag.DropItemList);
+	}
+	try
+	{
+		info->Finalize(bag.statedef);
+	}
+	catch (CRecoverableError &err)
+	{
+		sc.ScriptError("%s", err.GetMessage());
+	}
 	sc.SetCMode (false);
 }
 

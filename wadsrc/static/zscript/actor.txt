@@ -371,25 +371,30 @@ class Actor : Thinker native
 	native int ACS_NamedExecuteWithResult(name script, int arg1=0, int arg2=0, int arg3=0, int arg4=0);
 	native void ACS_NamedExecuteAlways(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0);
 	
-/*
 	States
 	{
 	Spawn:
-		TNT1 A -1
-		Stop
+		TNT1 A -1;
+		Stop;
 	Null:
-		TNT1 A 1
-		Stop
+		TNT1 A 1;
+		Stop;
 	GenericFreezeDeath:
 		// Generic freeze death frames. Woo!
-		"####" "#" 5 A_GenericFreezeDeath
-		"----" A 1 A_FreezeDeathChunks
-		Wait
+		#### # 5 A_GenericFreezeDeath;
+		---- A 1 A_FreezeDeathChunks;
+		Wait;
 	GenericCrush:
-		POL5 A -1
-		Stop
+		POL5 A -1;
+		Stop;
+	Test.State:
+		&&&& A[\] 5 offset(4,4*2);
+		&&&& A[\] DEFAULT_HEALTH;
+		abcd efgh random(3, 6);
+		lght blahblah 5*3 light("furz", "bläh", "rülps");
+		lght blahblah 5 light("boing");
+		goto Actor::Spawn+1;
 	}
-*/
 
 	// Internal functions
 	deprecated private native state __decorate_internal_state__(state s);

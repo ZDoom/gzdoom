@@ -76,202 +76,6 @@ void ParseDecorate(FScanner &ctx);
 // STATIC FUNCTION PROTOTYPES --------------------------------------------
 PClassActor *QuestItemClasses[31];
 
-EXTERN_CVAR(Bool, strictdecorate);
-
-PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FName typeName)
-{
-	PClassActor *type = static_cast<PClassActor *>(parent->CreateDerivedClass(typeName, parent->Size));
-	if (type == nullptr)
-	{
-		FString newname = typeName.GetChars();
-		FString sourcefile = sc.FileName;
-
-		sourcefile.Substitute(":", "@");
-		newname << '@' << sourcefile;
-		if (strictdecorate)
-		{
-			sc.Message(MSG_ERROR, "Tried to define class '%s' more than once.", typeName.GetChars());
-		}
-		else
-		{
-			// Due to backwards compatibility issues this cannot be an unconditional error.
-			sc.Message(MSG_WARNING, "Tried to define class '%s' more than once. Renaming class to '%s'", typeName.GetChars(), newname.GetChars());
-		}
-		type = static_cast<PClassActor *>(parent->CreateDerivedClass(newname, parent->Size));
-		if (type == nullptr)
-		{
-			// This we cannot handle cleanly anymore. Let's just abort and forget about the odd mod out that was this careless.
-			sc.Message(MSG_FATAL, "Tried to define class '%s' more than twice in the same file.", typeName.GetChars());
-		}
-	}
-	return type;
-}
-//==========================================================================
-//
-// Starts a new actor definition
-//
-//==========================================================================
-PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName parentName, bool native)
-{
-	PClassActor *replacee = NULL;
-	PClassActor *ti = NULL;
-
-	PClassActor *parent = RUNTIME_CLASS(AActor);
-
-	if (parentName != NAME_None)
-	{
-		parent = PClass::FindActor(parentName);
-		
-		PClassActor *p = parent;
-		while (p != NULL)
-		{
-			if (p->TypeName == typeName)
-			{
-				sc.Message(MSG_ERROR, "'%s' inherits from a class with the same name", typeName.GetChars());
-				break;
-			}
-			p = dyn_cast<PClassActor>(p->ParentClass);
-		}
-
-		if (parent == NULL)
-		{
-			sc.Message(MSG_ERROR, "Parent type '%s' not found in %s", parentName.GetChars(), typeName.GetChars());
-			parent = RUNTIME_CLASS(AActor);
-		}
-		else if (!parent->IsDescendantOf(RUNTIME_CLASS(AActor)))
-		{
-			sc.Message(MSG_ERROR, "Parent type '%s' is not an actor in %s", parentName.GetChars(), typeName.GetChars());
-			parent = RUNTIME_CLASS(AActor);
-		}
-	}
-
-	if (native)
-	{
-		ti = PClass::FindActor(typeName);
-		if (ti == NULL)
-		{
-			extern void DumpTypeTable();
-			DumpTypeTable();
-			sc.Message(MSG_ERROR, "Unknown native actor '%s'", typeName.GetChars());
-			goto create;
-		}
-		else if (ti != RUNTIME_CLASS(AActor) && ti->ParentClass->NativeClass() != parent->NativeClass())
-		{
-			sc.Message(MSG_ERROR, "Native class '%s' does not inherit from '%s'", typeName.GetChars(), parentName.GetChars());
-			parent = RUNTIME_CLASS(AActor);
-			goto create;
-		}
-		else if (ti->Defaults != NULL)
-		{
-			sc.Message(MSG_ERROR, "Redefinition of internal class '%s'", typeName.GetChars());
-			goto create;
-		}
-		ti->InitializeNativeDefaults();
-		ti->ParentClass->DeriveData(ti);
-	}
-	else
-	{
-	create:
-		ti = DecoDerivedClass(sc, parent, typeName);
-	}
-
-	ti->Replacee = ti->Replacement = NULL;
-	ti->DoomEdNum = -1;
-	return ti;
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-void SetReplacement(FScanner &sc, PClassActor *info, FName replaceName)
-{
-	// Check for "replaces"
-	if (replaceName != NAME_None)
-	{
-		// Get actor name
-		PClassActor *replacee = PClass::FindActor(replaceName);
-
-		if (replacee == NULL)
-		{
-			sc.ScriptMessage("Replaced type '%s' not found for %s", replaceName.GetChars(), info->TypeName.GetChars());
-			return;
-		}
-		if (replacee != NULL)
-		{
-			replacee->Replacement = info;
-			info->Replacee = replacee;
-		}
-	}
-
-}
-
-//==========================================================================
-//
-// Finalizes an actor definition
-//
-//==========================================================================
-
-void FinishActor(const FScriptPosition &sc, PClassActor *info, Baggage &bag)
-{
-	AActor *defaults = (AActor*)info->Defaults;
-
-	try
-	{
-		bag.statedef.FinishStates (info, defaults);
-	}
-	catch (CRecoverableError &err)
-	{
-		sc.Message(MSG_ERROR, "%s", err.GetMessage());
-		bag.statedef.MakeStateDefines(NULL);
-		return;
-	}
-	bag.statedef.InstallStates (info, defaults);
-	bag.statedef.MakeStateDefines(NULL);
-	if (bag.DropItemSet)
-	{
-		info->DropItems = bag.DropItemList;
-		GC::WriteBarrier(info, info->DropItems);
-	}
-	if (info->IsDescendantOf (RUNTIME_CLASS(AInventory)))
-	{
-		defaults->flags |= MF_SPECIAL;
-	}
-
-	// Weapons must be checked for all relevant states. They may crash the game otherwise.
-	if (info->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
-	{
-		FState *ready = info->FindState(NAME_Ready);
-		FState *select = info->FindState(NAME_Select);
-		FState *deselect = info->FindState(NAME_Deselect);
-		FState *fire = info->FindState(NAME_Fire);
-
-		// Consider any weapon without any valid state abstract and don't output a warning
-		// This is for creating base classes for weapon groups that only set up some properties.
-		if (ready || select || deselect || fire)
-		{
-			if (!ready)
-			{
-				sc.Message(MSG_ERROR, "Weapon %s doesn't define a ready state.\n", info->TypeName.GetChars());
-			}
-			if (!select) 
-			{
-				sc.Message(MSG_ERROR, "Weapon %s doesn't define a select state.\n", info->TypeName.GetChars());
-			}
-			if (!deselect) 
-			{
-				sc.Message(MSG_ERROR, "Weapon %s doesn't define a deselect state.\n", info->TypeName.GetChars());
-			}
-			if (!fire) 
-			{
-				sc.Message(MSG_ERROR, "Weapon %s doesn't define a fire state.\n", info->TypeName.GetChars());
-			}
-		}
-	}
-}
-
 //==========================================================================
 //
 // Do some postprocessing after everything has been defined
@@ -426,14 +230,6 @@ static void FinishThingdef()
 
 	ActorDamageFuncs.DeleteAndClear();
 	StateTempCalls.DeleteAndClear();
-
-	// Since these are defined in DECORATE now the table has to be initialized here.
-	for(int i = 0; i < 31; i++)
-	{
-		char fmt[20];
-		mysnprintf(fmt, countof(fmt), "QuestItem%d", i+1);
-		QuestItemClasses[i] = PClass::FindActor(fmt);
-	}
 }
 
 
@@ -454,10 +250,11 @@ void LoadActors ()
 
 	timer.Reset(); timer.Clock();
 	ActorDamageFuncs.Clear();
-	FScriptPosition::ResetErrorCounter();
 	InitThingdef();
 	lastlump = 0;
 	ParseScripts();
+
+	FScriptPosition::ResetErrorCounter();
 	while ((lump = Wads.FindLump ("DECORATE", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
@@ -471,4 +268,12 @@ void LoadActors ()
 	timer.Unclock();
 	if (!batchrun) Printf("DECORATE parsing took %.2f ms\n", timer.TimeMS());
 	// Base time: ~52 ms
+
+	// Since these are defined in DECORATE now the table has to be initialized here.
+	for (int i = 0; i < 31; i++)
+	{
+		char fmt[20];
+		mysnprintf(fmt, countof(fmt), "QuestItem%d", i + 1);
+		QuestItemClasses[i] = PClass::FindActor(fmt);
+	}
 }

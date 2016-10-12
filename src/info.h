@@ -53,6 +53,7 @@ struct Baggage;
 class FScanner;
 struct FActorInfo;
 class FIntCVar;
+class FStateDefinitions;
 
 enum EStateDefineFlags
 {
@@ -234,6 +235,9 @@ public:
 	void SetPainChance(FName type, int chance);
 	size_t PropagateMark();
 	void InitializeNativeDefaults();
+	bool SetReplacement(FName replaceName);
+	void SetDropItems(DDropItem *drops);
+	virtual void Finalize(FStateDefinitions &statedef);
 
 	FState *FindState(int numnames, FName *names, bool exact=false) const;
 	FState *FindStateByString(const char *name, bool exact=false);

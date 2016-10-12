@@ -69,6 +69,10 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 	name << "nodes - " << FName(cnode->NodeName);
 	cls->TreeNodes.SetName(name);
 
+	if (!static_cast<PClassActor *>(cnode->Type)->SetReplacement(cnode->Replaces->Id))
+	{
+		Warn(cnode, "Replaced type '%s' not found for %s", FName(cnode->Replaces->Id).GetChars(), cnode->Type->TypeName.GetChars());
+	}
 
 	// Need to check if the class actually has a body.
 	if (node != nullptr) do
@@ -1836,6 +1840,10 @@ void ZCCCompiler::InitDefaults()
 						content = static_cast<decltype(content)>(content->SiblingNext);
 					} while (content != d->Content);
 				}
+				if (bag.DropItemSet)
+				{
+					bag.Info->SetDropItems(bag.DropItemList);
+				}
 			}
 		}
 	}
@@ -2238,6 +2246,14 @@ void ZCCCompiler::CompileStates()
 				}
 				st = static_cast<decltype(st)>(st->SiblingNext);
 			} while (st != s->Body);
+		}
+		try
+		{
+			static_cast<PClassActor *>(c->Type())->Finalize(statedef);
+		}
+		catch (CRecoverableError &err)
+		{
+			Error(c->cls, "%s", err.GetMessage());
 		}
 	}
 }

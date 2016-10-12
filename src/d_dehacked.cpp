@@ -804,7 +804,7 @@ void SetDehParams(FState *state, int codepointer)
 	}
 	else
 	{
-		VMFunctionBuilder buildit;
+		VMFunctionBuilder buildit(true);
 		// Allocate registers used to pass parameters in.
 		// self, stateowner, state (all are pointers)
 		buildit.Registers[REGT_POINTER].Get(NAP);

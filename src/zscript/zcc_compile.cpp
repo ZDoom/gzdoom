@@ -46,6 +46,7 @@
 #include "v_text.h"
 #include "p_lnspec.h"
 #include "gdtoa.h"
+#include "thingdef_exp.h"
 
 #define DEFINING_CONST ((PSymbolConst *)(void *)1)
 
@@ -109,8 +110,8 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 			enumType = nullptr;
 			break;
 
-		// todo
 		case AST_States:
+			cls->States.Push(static_cast<ZCC_States *>(node));
 			break;
 
 		case AST_FuncDeclarator:
@@ -368,6 +369,7 @@ int ZCCCompiler::Compile()
 	CompileAllFields();
 	InitDefaults();
 	InitFunctions();
+	CompileStates();
 	return ErrorCount;
 }
 
@@ -1856,7 +1858,6 @@ void ZCCCompiler::InitFunctions()
 	{
 		for (auto f : c->Functions)
 		{
-			Printf("processing function %s\n", FName(f->Name).GetChars());
 			rets.Clear();
 			args.Clear();
 			argflags.Clear();
@@ -1966,3 +1967,277 @@ void ZCCCompiler::InitFunctions()
 	}
 }
 
+//==========================================================================
+//
+// very complicated check for random duration.
+//
+//==========================================================================
+
+static bool CheckRandom(ZCC_Expression *duration)
+{
+	if (duration->NodeType != AST_ExprFuncCall) return false;
+	auto func = static_cast<ZCC_ExprFuncCall *>(duration);
+	if (func->Function == nullptr) return false;
+	if (func->Function->NodeType != AST_ExprID) return false;
+	auto f2 = static_cast<ZCC_ExprID *>(func->Function);
+	return f2->Identifier == NAME_Random;
+}
+
+//==========================================================================
+//
+// Sets up the action function call
+//
+//==========================================================================
+FxExpression *ZCCCompiler::SetupActionFunction(PClassActor *cls, ZCC_TreeNode *af)
+{
+	// We have 3 cases to consider here:
+	// 1. An action function without parameters. This can be called directly
+	// 2. An action functon with parameters or a non-action function. This needs to be wrapped into a helper function to set everything up.
+	// 3. An anonymous function.
+
+	// 1. and 2. are exposed through AST_ExprFunctionCall
+	if (af->NodeType == AST_ExprFuncCall)
+	{
+		auto fc = static_cast<ZCC_ExprFuncCall *>(af);
+		assert(fc->Function->NodeType == AST_ExprID);
+		auto id = static_cast<ZCC_ExprID *>(fc->Function);
+
+		PFunction *afd = dyn_cast<PFunction>(cls->Symbols.FindSymbol(id->Identifier, true));
+		if (afd != nullptr)
+		{
+			if (fc->Parameters == nullptr && (afd->Flags & VARF_Action))
+			{
+				// This is the simple case which doesn't require work on the tree.
+				return new FxVMFunctionCall(afd, nullptr, *af, true);
+			}
+			else
+			{
+				// need to generate a function from the information.
+			}
+		}
+		else
+		{
+			Error(af, "%s: action function not found in %s", FName(id->Identifier).GetChars(), cls->TypeName.GetChars());
+			return nullptr;
+		}
+	}
+	Error(af, "Complex action functions not supported yet.");
+	return nullptr;
+
+	/*
+	bool hasfinalret;
+	tcall->Code = ParseActions(sc, state, statestring, bag, hasfinalret);
+	if (!hasfinalret && tcall->Code != nullptr)
+	{
+	static_cast<FxSequence *>(tcall->Code)->Add(new FxReturnStatement(nullptr, sc));
+	}
+	*/
+
+}
+
+//==========================================================================
+//
+// Compile the states
+//
+//==========================================================================
+
+void ZCCCompiler::CompileStates()
+{
+	for (auto c : Classes)
+	{
+		if (!c->Type()->IsDescendantOf(RUNTIME_CLASS(AActor)))
+		{
+			Error(c->cls, "%s: States can only be defined for actors.", c->Type()->TypeName.GetChars());
+			continue;
+		}
+		FString statename;	// The state builder wants the label as one complete string, not separated into tokens.
+		FStateDefinitions statedef;
+		for (auto s : c->States)
+		{
+			auto st = s->Body;
+			do
+			{
+				switch (st->NodeType)
+				{
+				case AST_StateLabel:
+				{
+					auto sl = static_cast<ZCC_StateLabel *>(st);
+					statename = FName(sl->Label);
+					statedef.AddStateLabel(statename);
+					break;
+				}
+				case AST_StateLine:
+				{
+					auto sl = static_cast<ZCC_StateLine *>(st);
+					FState state;
+					memset(&state, 0, sizeof(state));
+					if (sl->Sprite->Len() != 4)
+					{
+						Error(sl, "Sprite name must be exactly 4 characters. Found '%s'", sl->Sprite->GetChars());
+					}
+					else
+					{
+						state.sprite = GetSpriteIndex(sl->Sprite->GetChars());
+					}
+					// It is important to call CheckRandom before Simplify, because Simplify will resolve the function's name to nonsense
+					// and there is little point fixing it because it is essentially useless outside of resolving constants.
+					if (CheckRandom(sl->Duration))
+					{
+						auto func = static_cast<ZCC_ExprFuncCall *>(Simplify(sl->Duration, &c->Type()->Symbols));
+						if (func->Parameters == func->Parameters->SiblingNext || func->Parameters != func->Parameters->SiblingNext->SiblingNext)
+						{
+							Error(sl, "Random duration requires exactly 2 parameters");
+						}
+						int v1 = GetInt(func->Parameters->Value);
+						int v2 = GetInt(static_cast<ZCC_FuncParm *>(func->Parameters->SiblingNext)->Value);
+						if (v1 > v2) std::swap(v1, v2);
+						state.Tics = (int16_t)clamp<int>(v1, 0, INT16_MAX);
+						state.TicRange = (uint16_t)clamp<int>(v2 - v1, 0, UINT16_MAX);
+					}
+					else
+					{
+						auto duration = Simplify(sl->Duration, &c->Type()->Symbols);
+						if (duration->Operation == PEX_ConstValue)
+						{
+							state.Tics = (int16_t)clamp<int>(GetInt(duration), -1, INT16_MAX);
+							state.TicRange = 0;
+						}
+						else
+						{
+							Error(sl, "Duration is not a constant");
+						}
+					}
+					state.Fullbright = sl->bBright;
+					state.Fast = sl->bFast;
+					state.Slow = sl->bSlow;
+					state.CanRaise = sl->bCanRaise;
+					if ((state.NoDelay = sl->bNoDelay))
+					{
+						if (statedef.GetStateLabelIndex(NAME_Spawn) != statedef.GetStateCount())
+						{
+							Warn(sl, "NODELAY only has an effect on the first state after 'Spawn:'");
+						}
+					}
+					if (sl->Offset != nullptr)
+					{
+						auto o1 = static_cast<ZCC_Expression *>(Simplify(sl->Offset, &c->Type()->Symbols));
+						auto o2 = static_cast<ZCC_Expression *>(Simplify(static_cast<ZCC_Expression *>(o1->SiblingNext), &c->Type()->Symbols));
+
+						if (o1->Operation != PEX_ConstValue || o2->Operation != PEX_ConstValue)
+						{
+							Error(o1, "State offsets must be constant");
+						}
+						else
+						{
+							state.Misc1 = GetInt(o1);
+							state.Misc2 = GetInt(o2);
+						}
+					}
+#ifdef DYNLIGHT
+					if (sl->Lights != nullptr)
+					{
+						auto l = sl->Lights;
+						do
+						{
+							AddStateLight(&state, GetString(l));
+							l = static_cast<decltype(l)>(l->SiblingNext);
+						} while (l != sl->Lights);
+					}
+#endif
+
+					int count = statedef.AddStates(&state, sl->Frames->GetChars());
+					if (count < 0)
+					{
+						Error(sl, "Invalid frame character string '%s'", sl->Frames->GetChars());
+						count = -count;
+					}
+
+					if (sl->Action != nullptr)
+					{
+						auto code = SetupActionFunction(static_cast<PClassActor *>(c->Type()), sl->Action);
+						if (code != nullptr)
+						{
+							auto tcall = new FStateTempCall;
+							tcall->Code = code;
+							tcall->ActorClass = static_cast<PClassActor *>(c->Type());
+							tcall->FirstState = statedef.GetStateCount() - count;
+							tcall->NumStates = count;
+							StateTempCalls.Push(tcall);
+						}
+					}
+					break;
+				}
+				case AST_StateGoto:
+				{
+					auto sg = static_cast<ZCC_StateGoto *>(st);
+					statename = "";
+					if (sg->Qualifier != nullptr)
+					{
+						statename << sg->Qualifier->Id << "::";
+					}
+					auto part = sg->Label;
+					do
+					{
+						statename << part->Id << '.';
+						part = static_cast<decltype(part)>(part->SiblingNext);
+					} while (part != sg->Label);
+					statename.Truncate((long)statename.Len() - 1);	// remove the last '.' in the label name
+					if (sg->Offset != nullptr)
+					{
+						auto ofs = Simplify(sg->Offset, &c->Type()->Symbols);
+						if (ofs->Operation != PEX_ConstValue)
+						{
+							Error(sg, "Constant offset expected for GOTO");
+						}
+						else
+						{
+							int offset = GetInt(ofs);
+							if (offset < 0)
+							{
+								Error(sg, "GOTO offset must be positive");
+								offset = 0;
+							}
+							if (offset > 0)
+							{
+								statename.AppendFormat("+%d", offset);
+							}
+						}
+					}
+					if (!statedef.SetGotoLabel(statename))
+					{
+						Error(sg, "GOTO before first state");
+					}
+					break;
+				}
+				case AST_StateFail:
+				case AST_StateWait:
+					if (!statedef.SetWait())
+					{
+						Error(st, "%s before first state", st->NodeType == AST_StateFail ? "Fail" : "Wait");
+						continue;
+					}
+					break;
+
+				case AST_StateLoop:
+					if (!statedef.SetLoop())
+					{
+						Error(st, "LOOP before first state");
+						continue;
+					}
+					break;
+
+				case AST_StateStop:
+					if (!statedef.SetStop())
+					{
+						Error(st, "STOP before first state");
+					}
+					break;
+
+				default:
+					assert(0 && "Bad AST node in state");
+				}
+				st = static_cast<decltype(st)>(st->SiblingNext);
+			} while (st != s->Body);
+		}
+	}
+}

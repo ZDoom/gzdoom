@@ -4,6 +4,7 @@
 struct Baggage;
 struct FPropertyInfo;
 class AActor;
+class FxExpression;
 
 struct ZCC_StructWork
 {
@@ -46,6 +47,7 @@ struct ZCC_ClassWork
 	TArray<ZCC_VarDeclarator *> Fields;
 	TArray<ZCC_Default *> Defaults;
 	TArray<ZCC_FuncDeclarator *> Functions;
+	TArray<ZCC_States *> States;
 
 	ZCC_ClassWork(ZCC_Class * s, PSymbolTreeNode *n)
 	{
@@ -104,6 +106,8 @@ private:
 	const char *GetString(ZCC_Expression *expr, bool silent = false);
 
 	void InitFunctions();
+	void CompileStates();
+	FxExpression *SetupActionFunction(PClassActor *cls, ZCC_TreeNode *sl);
 
 	TArray<ZCC_ConstantDef *> Constants;
 	TArray<ZCC_StructWork *> Structs;

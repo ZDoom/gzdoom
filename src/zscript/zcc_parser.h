@@ -2,6 +2,7 @@
 #define ZCC_PARSER_H
 
 #include "memarena.h"
+#include "sc_man.h"
 
 struct ZCCToken
 {
@@ -176,6 +177,12 @@ struct ZCC_TreeNode
 		SiblingPrev = siblingend;
 		siblingend->SiblingNext = this;
 	}
+
+	operator FScriptPosition()
+	{
+		return FScriptPosition(*SourceName, SourceLoc);
+	}
+
 };
 
 struct ZCC_Identifier : ZCC_TreeNode
@@ -276,6 +283,7 @@ struct ZCC_StateLine : ZCC_StatePart
 	FString *Frames;
 	ZCC_Expression *Duration;
 	ZCC_Expression *Offset;
+	ZCC_ExprConstant *Lights;
 	ZCC_TreeNode *Action;
 };
 

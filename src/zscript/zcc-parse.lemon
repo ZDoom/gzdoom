@@ -40,6 +40,7 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 
 	struct StateOpts {
 		ZCC_Expression *Offset;
+		ZCC_ExprConstant *Lights;
 		bool Bright;
 		bool Fast;
 		bool Slow;
@@ -47,7 +48,8 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 		bool CanRaise;
 
 		void Zero() {
-			Offset = NULL;
+			Offset = nullptr;
+			Lights = nullptr;
 			Bright = false;
 			Fast = false;
 			Slow = false;
@@ -461,6 +463,7 @@ state_line(X) ::= NWS(A) NWS(B) expr(E) state_opts(C) state_action(D).
 	line->bNoDelay = C.NoDelay;
 	line->bCanRaise = C.CanRaise;
 	line->Offset = C.Offset;
+	line->Lights = C.Lights;
 	line->Action = D;
 	X = line;
 }
@@ -472,10 +475,28 @@ state_opts(X) ::= state_opts(A) SLOW.								{ A.Slow = true; X = A; /*X-overwri
 state_opts(X) ::= state_opts(A) NODELAY.							{ A.NoDelay = true; X = A; /*X-overwrites-A*/ }
 state_opts(X) ::= state_opts(A) CANRAISE.							{ A.CanRaise = true; X = A; /*X-overwrites-A*/ }
 state_opts(X) ::= state_opts(A) OFFSET LPAREN expr(B) COMMA expr(C) RPAREN.	{ A.Offset = B; B->AppendSibling(C); X = A; /*X-overwrites-A*/ }
-state_opts(X) ::= state_opts(A) LIGHT LPAREN light_list RPAREN.		{ X = A; /*X-overwrites-A*/ }	///FIXME: GZDoom would want to know this
+state_opts(X) ::= state_opts(A) LIGHT LPAREN light_list(B) RPAREN.		{ X = A; /*X-overwrites-A*/ X.Lights = B; }
 
-light_list ::= STRCONST.
-light_list ::= light_list COMMA STRCONST.
+%type light_list {ZCC_ExprConstant *}
+
+light_list(X) ::= STRCONST(A).
+{
+	NEW_AST_NODE(ExprConstant, strconst, A);
+	strconst->Operation = PEX_ConstValue;
+	strconst->Type = TypeString;
+	strconst->StringVal = A.String;
+	X = strconst;
+}
+
+light_list(X) ::= light_list(A) COMMA STRCONST(B).
+{
+	NEW_AST_NODE(ExprConstant, strconst, B);
+	strconst->Operation = PEX_ConstValue;
+	strconst->Type = TypeString;
+	strconst->StringVal = B.String;
+	A->AppendSibling(strconst); 
+	X = A; /*X-overwrites-A*/
+}
 
 /* A state action can be either a compound statement or a single action function call. */
 state_action(X) ::= LBRACE statement_list(A) scanner_mode RBRACE.	{ X = A; /*X-overwrites-A*/ }

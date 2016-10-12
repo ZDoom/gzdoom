@@ -3858,12 +3858,13 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxVMFunctionCall::FxVMFunctionCall(PFunction *func, FArgumentList *args, const FScriptPosition &pos)
+FxVMFunctionCall::FxVMFunctionCall(PFunction *func, FArgumentList *args, const FScriptPosition &pos, bool ownerisself)
 : FxExpression(pos)
 {
 	Function = func;
 	ArgList = args;
 	EmitTail = false;
+	OwnerIsSelf = ownerisself;
 }
 
 //==========================================================================
@@ -3968,28 +3969,55 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 			return reg;
 		}
 	}
-	// Emit code to pass implied parameters
-	if (Function->Flags & VARF_Method)
+
+	// Passing the caller as 'self' is a serious design mistake in DECORATE because it mixes up the types of the two actors involved.
+	// For ZSCRIPT 'self' is properly used for the state's owning actor, meaning we have to pass the second argument here.
+
+	// If both functions are non-action or both are action, there is no need for special treatment.
+	if (!OwnerIsSelf || (!!(Function->Flags & VARF_Action) == build->IsActionFunc))
 	{
-		build->Emit(OP_PARAM, 0, REGT_POINTER, 0);
-		count += 1;
+		// Emit code to pass implied parameters
+		if (Function->Flags & VARF_Method)
+		{
+			build->Emit(OP_PARAM, 0, REGT_POINTER, 0);
+			count += 1;
+		}
+		if (Function->Flags & VARF_Action)
+		{
+			static_assert(NAP == 3, "This code needs to be updated if NAP changes");
+			if (build->IsActionFunc)
+			{
+				build->Emit(OP_PARAM, 0, REGT_POINTER, 1);
+				build->Emit(OP_PARAM, 0, REGT_POINTER, 2);
+			}
+			else
+			{
+				int null = build->GetConstantAddress(nullptr, ATAG_GENERIC);
+				build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
+				build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
+			}
+			count += 2;
+		}
 	}
-	if (Function->Flags & VARF_Action)
+	else
 	{
-		static_assert(NAP == 3, "This code needs to be updated if NAP changes");
-		if (build->IsActionFunc)
+		// There are two possibilities here: 
+		// Calling a non-action function from an action function.
+		// In that case the 'stateowner' pointer needs to be used as self.
+		if (build->IsActionFunc && (Function->Flags & VARF_Method))
 		{
 			build->Emit(OP_PARAM, 0, REGT_POINTER, 1);
-			build->Emit(OP_PARAM, 0, REGT_POINTER, 2);
+			count += 1;
 		}
-		else
+		// and calling an action function from a non-action function.
+		// This must be blocked because it lacks crucial information.
+		if (!build->IsActionFunc && (Function->Flags & VARF_Action))
 		{
-			int null = build->GetConstantAddress(nullptr, ATAG_GENERIC);
-			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
-			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
+			// This case should be eliminated in the analyzing stage.
+			I_Error("Cannot call action function from non-action functions.");
 		}
-		count += 2;
 	}
+
 	// Emit code to pass explicit parameters
 	if (ArgList != NULL)
 	{

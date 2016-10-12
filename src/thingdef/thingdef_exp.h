@@ -948,11 +948,12 @@ public:
 class FxVMFunctionCall : public FxExpression
 {
 	bool EmitTail;
+	bool OwnerIsSelf;	// ZSCRIPT makes the state's owner the self pointer to ensure proper type handling
 	PFunction *Function;
 	FArgumentList *ArgList;
 
 public:
-	FxVMFunctionCall(PFunction *func, FArgumentList *args, const FScriptPosition &pos);
+	FxVMFunctionCall(PFunction *func, FArgumentList *args, const FScriptPosition &pos, bool ownerisself);
 	~FxVMFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
 	PPrototype *ReturnProto();

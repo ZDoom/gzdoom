@@ -347,23 +347,6 @@ static void DoParse(int lumpnum)
 	symtable.SetName("Global_Node");
 	ZCCCompiler cc(state, NULL, symtable, GlobalSymbols);
 	cc.Compile();
-	// ... and another one afterward so we can see what the compiler does with the data.
-#ifdef _DEBUG
-	if (f != NULL)
-	{
-		fclose(f);
-	}
-	FString ast = ZCC_PrintAST(state.TopNode);
-	FString filename = Wads.GetLumpFullName(lumpnum);
-	FString astfile = ExtractFileBase(filename, false);
-	astfile << "-after.ast";
-	f = fopen(astfile, "w");
-	if (f != NULL)
-	{
-		fputs(ast.GetChars(), f);
-		fclose(f);
-	}
-#endif
 }
 
 void ParseScripts()

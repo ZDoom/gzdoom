@@ -100,7 +100,7 @@ FxVMFunctionCall *DoActionSpecials(FScanner &sc, FState & state, Baggage &bag)
 		{
 			sc.ScriptError ("Too many arguments to %s", specname.GetChars());
 		}
-		return new FxVMFunctionCall(FindGlobalActionFunction("A_CallSpecial"), args, sc);
+		return new FxVMFunctionCall(FindGlobalActionFunction("A_CallSpecial"), args, sc, false);
 	}
 	return NULL;
 }
@@ -582,7 +582,7 @@ FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, B
 	{
 		FArgumentList *args = new FArgumentList;
 		ParseFunctionParameters(sc, bag.Info, *args, afd, statestring, &bag.statedef);
-		call = new FxVMFunctionCall(afd, args->Size() > 0 ? args : NULL, sc);
+		call = new FxVMFunctionCall(afd, args->Size() > 0 ? args : NULL, sc, false);
 		if (args->Size() == 0)
 		{
 			delete args;

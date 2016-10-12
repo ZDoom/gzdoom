@@ -515,7 +515,7 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 						args = nullptr;
 					}
 
-					return new FxVMFunctionCall(func, args, sc);
+					return new FxVMFunctionCall(func, args, sc, false);
 				}
 			}
 

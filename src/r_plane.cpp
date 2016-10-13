@@ -852,10 +852,11 @@ extern FTexture *rw_pic;
 // since the most anyone can ever see of the sky is 500 pixels.
 // We need 4 skybufs because wallscan can draw up to 4 columns at a time.
 // Need two versions - one for true color and one for palette
+#define MAXSKYBUF 2048
 static BYTE skybuf[4][512];
-static uint32_t skybuf_bgra[4][512];
+static uint32_t skybuf_bgra[MAXSKYBUF][512];
 static DWORD lastskycol[4];
-static DWORD lastskycol_bgra[4];
+static DWORD lastskycol_bgra[MAXSKYBUF];
 static int skycolplace;
 static int skycolplace_bgra;
 
@@ -945,7 +946,7 @@ static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 	else
 	{
 		//return R_GetOneSkyColumn(fronttex, x);
-		for (i = 0; i < 4; ++i)
+		for (i = 0; i < MAXSKYBUF; ++i)
 		{
 			if (lastskycol_bgra[i] == skycol)
 			{
@@ -955,7 +956,7 @@ static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 
 		lastskycol_bgra[skycolplace_bgra] = skycol;
 		uint32_t *composite = skybuf_bgra[skycolplace_bgra];
-		skycolplace_bgra = (skycolplace_bgra + 1) & 3;
+		skycolplace_bgra = (skycolplace_bgra + 1) % MAXSKYBUF;
 
 		// The ordering of the following code has been tuned to allow VC++ to optimize
 		// it well. In particular, this arrangement lets it keep count in a register

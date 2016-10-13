@@ -852,7 +852,7 @@ extern FTexture *rw_pic;
 // since the most anyone can ever see of the sky is 500 pixels.
 // We need 4 skybufs because wallscan can draw up to 4 columns at a time.
 // Need two versions - one for true color and one for palette
-#define MAXSKYBUF 2048
+#define MAXSKYBUF 3072
 static BYTE skybuf[4][512];
 static uint32_t skybuf_bgra[MAXSKYBUF][512];
 static DWORD lastskycol[4];

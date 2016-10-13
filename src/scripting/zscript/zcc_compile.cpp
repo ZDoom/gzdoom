@@ -1575,8 +1575,13 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 			switch ((*p) & 223)
 			{
 
-			case 'I':
 			case 'X':	// Expression in parentheses or number. We only support the constant here. The function will have to be handled by a separate property to get past the parser.
+				conv.i = GetInt(exp);
+				params.Push(conv);
+				conv.exp = nullptr;
+				break;
+
+			case 'I':
 			case 'M':	// special case for morph styles in DECORATE . This expression-aware parser will not need this.
 			case 'N':	// special case for thing activations in DECORATE. This expression-aware parser will not need this.
 				conv.i = GetInt(exp);
@@ -2188,7 +2193,7 @@ void ZCCCompiler::CompileStates()
 					auto part = sg->Label;
 					do
 					{
-						statename << part->Id << '.';
+						statename << FName(part->Id) << '.';
 						part = static_cast<decltype(part)>(part->SiblingNext);
 					} while (part != sg->Label);
 					statename.Truncate((long)statename.Len() - 1);	// remove the last '.' in the label name

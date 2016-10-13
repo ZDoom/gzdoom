@@ -889,7 +889,7 @@ static const BYTE *R_GetOneSkyColumn (FTexture *fronttex, int x)
 // Get a column of sky when there are two overlapping sky textures
 static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 {
-	DWORD ang, angle1, angle2 = (DWORD)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
+	DWORD ang, angle1, angle2;
 
 	if (r_linearsky)
 	{
@@ -946,11 +946,12 @@ static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 	else
 	{
 		//return R_GetOneSkyColumn(fronttex, x);
-		for (i = 0; i < MAXSKYBUF; ++i)
+		for (i = skycolplace_bgra - 4; i < skycolplace_bgra; ++i)
 		{
-			if (lastskycol_bgra[i] == skycol)
+			int ic = (i % MAXSKYBUF); // i "checker" - can wrap around the ends of the array
+			if (lastskycol_bgra[ic] == skycol)
 			{
-				return (BYTE*)(skybuf_bgra[i]);
+				return (BYTE*)(skybuf_bgra[ic]);
 			}
 		}
 

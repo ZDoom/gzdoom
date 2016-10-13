@@ -18,27 +18,25 @@ class LLVMProgram
 {
 public:
 	LLVMProgram();
-	~LLVMProgram();
 
+	void CreateEE();
+	std::string DumpModule();
 	void StopLogFatalErrors();
 
 	template<typename Func>
 	Func *GetProcAddress(const char *name) { return reinterpret_cast<Func*>(PointerToFunction(name)); }
 
 	llvm::LLVMContext &context() { return *mContext; }
-	llvm::Module *module() { return mModule; }
+	llvm::Module *module() { return mModule.get(); }
 	llvm::ExecutionEngine *engine() { return mEngine.get(); }
-	llvm::legacy::PassManager *modulePassManager() { return mModulePassManager.get(); }
-	llvm::legacy::FunctionPassManager *functionPassManager() { return mFunctionPassManager.get(); }
 
 private:
 	void *PointerToFunction(const char *name);
 
+	llvm::TargetMachine *machine = nullptr;
 	std::unique_ptr<llvm::LLVMContext> mContext;
-	llvm::Module *mModule;
+	std::unique_ptr<llvm::Module> mModule;
 	std::unique_ptr<llvm::ExecutionEngine> mEngine;
-	std::unique_ptr<llvm::legacy::PassManager> mModulePassManager;
-	std::unique_ptr<llvm::legacy::FunctionPassManager> mFunctionPassManager;
 };
 
 class LLVMDrawersImpl : public LLVMDrawers
@@ -143,8 +141,7 @@ LLVMDrawersImpl::LLVMDrawersImpl()
 	CodegenDrawWall("tmvline1_revsubclamp", DrawWallVariant::RevSubClamp, 1);
 	CodegenDrawWall("tmvline4_revsubclamp", DrawWallVariant::RevSubClamp, 4);
 
-	mProgram.modulePassManager()->run(*mProgram.module());
-	mProgram.engine()->finalizeObject();
+	mProgram.CreateEE();
 
 	FillColumn = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("FillColumn");
 	FillColumnAdd = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("FillColumnAdd");
@@ -205,6 +202,37 @@ LLVMDrawersImpl::LLVMDrawersImpl()
 	tmvline1_revsubclamp = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("tmvline1_revsubclamp");
 	tmvline4_revsubclamp = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("tmvline4_revsubclamp");
 
+#if 0
+	std::vector<uint32_t> foo(1024 * 4);
+	std::vector<uint32_t> boo(256 * 256 * 4);
+	DrawColumnArgs args = { 0 };
+	WorkerThreadData thread = { 0 };
+	thread.core = 0;
+	thread.num_cores = 1;
+	thread.pass_start_y = 0;
+	thread.pass_end_y = 3600;
+	thread.temp = foo.data();
+	foo[125 * 4] = 1234;
+	foo[126 * 4] = 1234;
+	for (int i = 0; i < 16; i++)
+		boo[i] = i;
+	args.dest = boo.data() + 4;
+	args.dest_y = 125;
+	args.pitch = 256;
+	args.count = 1;
+	args.texturefrac = 0;
+	args.flags = 0;
+	args.iscale = 252769;
+	args.light = 256;
+	args.color = 4279179008;
+	args.srcalpha = 12;
+	args.destalpha = 256;
+	args.light_red = 192;
+	args.light_green = 256;
+	args.light_blue = 128;
+	DrawColumnRt4AddClamp(&args, &thread);
+#endif
+
 	mProgram.StopLogFatalErrors();
 }
 
@@ -225,8 +253,6 @@ void LLVMDrawersImpl::CodegenDrawColumn(const char *name, DrawColumnVariant vari
 
 	if (llvm::verifyFunction(*function.func))
 		I_FatalError("verifyFunction failed for " __FUNCTION__);
-
-	mProgram.functionPassManager()->run(*function.func);
 }
 
 void LLVMDrawersImpl::CodegenDrawSpan(const char *name, DrawSpanVariant variant)
@@ -245,8 +271,6 @@ void LLVMDrawersImpl::CodegenDrawSpan(const char *name, DrawSpanVariant variant)
 
 	if (llvm::verifyFunction(*function.func))
 		I_FatalError("verifyFunction failed for " __FUNCTION__);
-
-	mProgram.functionPassManager()->run(*function.func);
 }
 
 void LLVMDrawersImpl::CodegenDrawWall(const char *name, DrawWallVariant variant, int columns)
@@ -266,8 +290,6 @@ void LLVMDrawersImpl::CodegenDrawWall(const char *name, DrawWallVariant variant,
 
 	if (llvm::verifyFunction(*function.func))
 		I_FatalError("verifyFunction failed for " __FUNCTION__);
-
-	mProgram.functionPassManager()->run(*function.func);
 }
 
 llvm::Type *LLVMDrawersImpl::GetDrawColumnArgsStruct(llvm::LLVMContext &context)
@@ -298,7 +320,7 @@ llvm::Type *LLVMDrawersImpl::GetDrawColumnArgsStruct(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_blue;
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t desaturate;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t flags;
-	return llvm::StructType::get(context, elements, false)->getPointerTo();
+	return llvm::StructType::create(context, elements, "DrawColumnArgs", false)->getPointerTo();
 }
 
 llvm::Type *LLVMDrawersImpl::GetDrawSpanArgsStruct(llvm::LLVMContext &context)
@@ -329,7 +351,7 @@ llvm::Type *LLVMDrawersImpl::GetDrawSpanArgsStruct(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_blue;
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t desaturate;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t flags;
-	return llvm::StructType::get(context, elements, false)->getPointerTo();
+	return llvm::StructType::create(context, elements, "DrawSpanArgs", false)->getPointerTo();
 }
 
 llvm::Type *LLVMDrawersImpl::GetDrawWallArgsStruct(llvm::LLVMContext &context)
@@ -350,7 +372,7 @@ llvm::Type *LLVMDrawersImpl::GetDrawWallArgsStruct(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_blue;
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t desaturate;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t flags;
-	return llvm::StructType::get(context, elements, false)->getPointerTo();
+	return llvm::StructType::create(context, elements, "DrawWallArgs", false)->getPointerTo();
 }
 
 llvm::Type *LLVMDrawersImpl::GetWorkerThreadDataStruct(llvm::LLVMContext &context)
@@ -359,7 +381,7 @@ llvm::Type *LLVMDrawersImpl::GetWorkerThreadDataStruct(llvm::LLVMContext &contex
 	for (int i = 0; i < 4; i++)
 		elements.push_back(llvm::Type::getInt32Ty(context));
 	elements.push_back(llvm::Type::getInt8PtrTy(context));
-	return llvm::StructType::get(context, elements, false)->getPointerTo();
+	return llvm::StructType::create(context, elements, "ThreadData", false)->getPointerTo();
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -406,29 +428,28 @@ LLVMProgram::LLVMProgram()
 		I_FatalError("Could not find LLVM target: %s", errorstring.c_str());
 
 	TargetOptions opt;
-	auto relocModel = Optional<Reloc::Model>(Reloc::Static);
-	TargetMachine *machine = target->createTargetMachine(targetTriple, cpuName, cpuFeaturesStr, opt, relocModel, CodeModel::Default, CodeGenOpt::Aggressive);
+	auto relocModel = Optional<Reloc::Model>();
+	machine = target->createTargetMachine(targetTriple, cpuName, cpuFeaturesStr, opt, relocModel, CodeModel::JITDefault, CodeGenOpt::Aggressive);
 	if (!machine)
 		I_FatalError("Could not create LLVM target machine");
 
 	mContext = std::make_unique<LLVMContext>();
 
-	auto moduleOwner = std::make_unique<Module>("render", context());
-	mModule = moduleOwner.get();
+	mModule = std::make_unique<Module>("render", context());
 	mModule->setTargetTriple(targetTriple);
 	mModule->setDataLayout(machine->createDataLayout());
 
-	EngineBuilder engineBuilder(std::move(moduleOwner));
-	engineBuilder.setErrorStr(&errorstring);
-	engineBuilder.setOptLevel(CodeGenOpt::Aggressive);
-	engineBuilder.setRelocationModel(Reloc::Static);
-	engineBuilder.setEngineKind(EngineKind::JIT);
-	mEngine.reset(engineBuilder.create(machine));
-	if (!mEngine)
-		I_FatalError("Could not create LLVM execution engine: %s", errorstring.c_str());
+}
 
-	mModulePassManager = std::make_unique<legacy::PassManager>();
-	mFunctionPassManager = std::make_unique<legacy::FunctionPassManager>(mModule);
+void LLVMProgram::CreateEE()
+{
+	using namespace llvm;
+
+	legacy::FunctionPassManager PerFunctionPasses(mModule.get());
+	legacy::PassManager PerModulePasses;
+
+	PerFunctionPasses.add(createTargetTransformInfoWrapperPass(machine->getTargetIRAnalysis()));
+	PerModulePasses.add(createTargetTransformInfoWrapperPass(machine->getTargetIRAnalysis()));
 
 	PassManagerBuilder passManagerBuilder;
 	passManagerBuilder.OptLevel = 3;
@@ -437,22 +458,46 @@ LLVMProgram::LLVMProgram()
 	passManagerBuilder.SLPVectorize = true;
 	passManagerBuilder.LoopVectorize = true;
 	passManagerBuilder.LoadCombine = true;
-	passManagerBuilder.populateModulePassManager(*mModulePassManager.get());
-	passManagerBuilder.populateFunctionPassManager(*mFunctionPassManager.get());
+	passManagerBuilder.populateModulePassManager(PerModulePasses);
+	passManagerBuilder.populateFunctionPassManager(PerFunctionPasses);
+
+	// Run function passes:
+	PerFunctionPasses.doInitialization();
+	for (llvm::Function &func : *mModule.get())
+	{
+		if (!func.isDeclaration())
+			PerFunctionPasses.run(func);
+	}
+	PerFunctionPasses.doFinalization();
+
+	// Run module passes:
+	PerModulePasses.run(*mModule.get());
+
+	std::string errorstring;
+
+	EngineBuilder engineBuilder(std::move(mModule));
+	engineBuilder.setErrorStr(&errorstring);
+	engineBuilder.setOptLevel(CodeGenOpt::Aggressive);
+	engineBuilder.setRelocationModel(Reloc::Static);
+	engineBuilder.setEngineKind(EngineKind::JIT);
+	mEngine.reset(engineBuilder.create(machine));
+	if (!mEngine)
+		I_FatalError("Could not create LLVM execution engine: %s", errorstring.c_str());
+
+	mEngine->finalizeObject();
 }
 
-LLVMProgram::~LLVMProgram()
+std::string LLVMProgram::DumpModule()
 {
-	mEngine.reset();
-	mContext.reset();
+	std::string str;
+	llvm::raw_string_ostream stream(str);
+	mModule->print(stream, nullptr, false, true);
+	return stream.str();
 }
 
 void *LLVMProgram::PointerToFunction(const char *name)
 {
-	llvm::Function *function = mModule->getFunction(name);
-	if (!function)
-		return nullptr;
-	return mEngine->getPointerToFunction(function);
+	return reinterpret_cast<void(*)()>(mEngine->getFunctionAddress(name));
 }
 
 void LLVMProgram::StopLogFatalErrors()

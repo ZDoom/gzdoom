@@ -34,7 +34,7 @@ SSAInt SSAIntPtr::load(bool constantScopeDomain) const
 SSAVec4i SSAIntPtr::load_vec4i(bool constantScopeDomain) const
 {
 	llvm::PointerType *m4xint32typeptr = llvm::VectorType::get(llvm::Type::getInt32Ty(SSAScope::context()), 4)->getPointerTo();
-	auto loadInst = SSAScope::builder().CreateLoad(SSAScope::builder().CreateBitCast(v, m4xint32typeptr, SSAScope::hint()), false, SSAScope::hint());
+	auto loadInst = SSAScope::builder().CreateAlignedLoad(SSAScope::builder().CreateBitCast(v, m4xint32typeptr, SSAScope::hint()), 16, false, SSAScope::hint());
 	if (constantScopeDomain)
 		loadInst->setMetadata(llvm::LLVMContext::MD_alias_scope, SSAScope::constant_scope_list());
 	return SSAVec4i::from_llvm(loadInst);
@@ -43,7 +43,7 @@ SSAVec4i SSAIntPtr::load_vec4i(bool constantScopeDomain) const
 SSAVec4i SSAIntPtr::load_unaligned_vec4i(bool constantScopeDomain) const
 {
 	llvm::PointerType *m4xint32typeptr = llvm::VectorType::get(llvm::Type::getInt32Ty(SSAScope::context()), 4)->getPointerTo();
-	auto loadInst = SSAScope::builder().CreateAlignedLoad(SSAScope::builder().CreateBitCast(v, m4xint32typeptr, SSAScope::hint()), 4, false, SSAScope::hint());
+	auto loadInst = SSAScope::builder().CreateAlignedLoad(SSAScope::builder().CreateBitCast(v, m4xint32typeptr, SSAScope::hint()), 1, false, SSAScope::hint());
 	if (constantScopeDomain)
 		loadInst->setMetadata(llvm::LLVMContext::MD_alias_scope, SSAScope::constant_scope_list());
 	return SSAVec4i::from_llvm(loadInst);
@@ -58,13 +58,13 @@ void SSAIntPtr::store(const SSAInt &new_value)
 void SSAIntPtr::store_vec4i(const SSAVec4i &new_value)
 {
 	llvm::PointerType *m4xint32typeptr = llvm::VectorType::get(llvm::Type::getInt32Ty(SSAScope::context()), 4)->getPointerTo();
-	auto inst = SSAScope::builder().CreateStore(new_value.v, SSAScope::builder().CreateBitCast(v, m4xint32typeptr, SSAScope::hint()));
+	auto inst = SSAScope::builder().CreateAlignedStore(new_value.v, SSAScope::builder().CreateBitCast(v, m4xint32typeptr, SSAScope::hint()), 16);
 	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
 }
 
 void SSAIntPtr::store_unaligned_vec4i(const SSAVec4i &new_value)
 {
 	llvm::PointerType *m4xint32typeptr = llvm::VectorType::get(llvm::Type::getInt32Ty(SSAScope::context()), 4)->getPointerTo();
-	auto inst = SSAScope::builder().CreateAlignedStore(new_value.v, SSAScope::builder().CreateBitCast(v, m4xint32typeptr, SSAScope::hint()), 4);
+	auto inst = SSAScope::builder().CreateAlignedStore(new_value.v, SSAScope::builder().CreateBitCast(v, m4xint32typeptr, SSAScope::hint()), 1);
 	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
 }

@@ -287,7 +287,7 @@ vec3 AmbientOcclusionColor()
 	}
 	else 
 	{
-		fogdist = max(16.0, length(pixelpos.xyz));
+		fogdist = max(16.0, distance(pixelpos.xyz, uCameraPos.xyz));
 	}
 	fogfactor = exp2 (uFogDensity * fogdist);
 			

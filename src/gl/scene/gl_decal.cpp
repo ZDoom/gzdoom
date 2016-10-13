@@ -316,6 +316,8 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		gl_RenderState.SetFog(0,-1);
 	}
 
+	gl_RenderState.SetNormal(glseg.Normal());
+
 	FQuadDrawer qd;
 	for (i = 0; i < 4; i++)
 	{

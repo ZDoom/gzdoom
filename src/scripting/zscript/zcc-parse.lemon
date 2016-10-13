@@ -565,6 +565,7 @@ default_statement_list(X) ::= default_statement_list(X) default_statement(B).
 
 
 default_statement(X) ::= SEMICOLON.							{ X = NULL; }
+default_statement(X) ::= error SEMICOLON.						{ X = NULL; }
 //default_statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
 default_statement(X) ::= property_statement(A).				{ X = A; /*X-overwrites-A*/ }
 default_statement(X) ::= flag_statement(A).					{ X = A; /*X-overwrites-A*/ }

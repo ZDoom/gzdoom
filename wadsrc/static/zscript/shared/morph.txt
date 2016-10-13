@@ -1,0 +1,21 @@
+class MorphProjectile : Actor native
+{
+	Default
+	{
+		Damage 1;
+		Projectile;
+		-ACTIVATEIMPACT
+		-ACTIVATEPCROSS
+	}
+}
+
+class MorphedMonster : Actor native
+{
+	Default
+	{
+		Monster;
+		-COUNTKILL
+		+FLOORCLIP
+	}
+}
+

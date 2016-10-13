@@ -3622,12 +3622,19 @@ FxFunctionCall::~FxFunctionCall()
 
 //==========================================================================
 //
-//
+// Note: This currently only deals with the simple cases and needs some changes.
 //
 //==========================================================================
 
 FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 {
+	// This part is mostly a kludge, it really needs to get the class type from Self.
+	PFunction *afd = dyn_cast<PFunction>(ctx.Class->Symbols.FindSymbol(MethodName, true));
+	if (afd != nullptr)
+	{
+		return new FxVMFunctionCall(afd, ArgList, ScriptPosition, false);
+	}
+
 	for (size_t i = 0; i < countof(FxFlops); ++i)
 	{
 		if (MethodName == FxFlops[i].Name)

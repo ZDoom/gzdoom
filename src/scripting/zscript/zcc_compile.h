@@ -5,6 +5,8 @@ struct Baggage;
 struct FPropertyInfo;
 class AActor;
 class FxExpression;
+typedef TDeletingArray<FxExpression*> FArgumentList;
+
 
 struct ZCC_StructWork
 {
@@ -135,6 +137,10 @@ private:
 	void Warn(ZCC_TreeNode *node, const char *msg, ...);
 	void Error(ZCC_TreeNode *node, const char *msg, ...);
 	void MessageV(ZCC_TreeNode *node, const char *txtcolor, const char *msg, va_list argptr);
+
+	FxExpression *ConvertAST(ZCC_TreeNode *ast);
+	FxExpression *ConvertNode(ZCC_TreeNode *node);
+	FArgumentList *ConvertNodeList(ZCC_TreeNode *head);
 
 	DObject *Outer;
 	PSymbolTable *GlobalTreeNodes;

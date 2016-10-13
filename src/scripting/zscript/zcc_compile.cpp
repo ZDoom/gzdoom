@@ -45,6 +45,7 @@
 #include "zcc_compile.h"
 #include "v_text.h"
 #include "p_lnspec.h"
+#include "i_system.h"
 #include "gdtoa.h"
 #include "codegeneration/thingdef_exp.h"
 #include "vmbuilder.h"
@@ -2028,10 +2029,6 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClassActor *cls, ZCC_TreeNode *a
 				// This is the simple case which doesn't require work on the tree.
 				return new FxVMFunctionCall(afd, nullptr, *af, true);
 			}
-			else
-			{
-				// need to generate a function from the information.
-			}
 		}
 		else
 		{
@@ -2039,8 +2036,10 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClassActor *cls, ZCC_TreeNode *a
 			return nullptr;
 		}
 	}
-	Error(af, "Complex action functions not supported yet.");
-	return nullptr;
+	return ConvertAST(af);
+
+	//Error(af, "Complex action functions not supported yet.");
+	//return nullptr;
 
 	/*
 	bool hasfinalret;
@@ -2263,4 +2262,84 @@ void ZCCCompiler::CompileStates()
 			Error(c->cls, "%s", err.GetMessage());
 		}
 	}
+}
+
+//==========================================================================
+//
+// Convert the AST data for the code generator.
+//
+//==========================================================================
+
+FxExpression *ZCCCompiler::ConvertAST(ZCC_TreeNode *ast)
+{
+	// FxReturnStatement will have to be done more intelligently, of course.
+	return new FxReturnStatement(ConvertNode(ast), *ast);
+}
+
+FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
+{
+	// Note: Do not call 'Simplify' here because that function tends to destroy identifiers due to lack of context in which to resolve them.
+	// The Fx nodes created here will be better suited for that.
+	switch (ast->NodeType)
+	{
+	case AST_ExprFuncCall:
+	{
+		auto fcall = static_cast<ZCC_ExprFuncCall *>(ast);
+		assert(fcall->Function->NodeType == AST_ExprID);	// of course this cannot remain. Right now nothing more complex can come along but later this will have to be decomposed into 'self' and the actual function name.
+		auto fname = static_cast<ZCC_ExprID *>(fcall->Function)->Identifier;
+		return new FxFunctionCall(nullptr, fname, ConvertNodeList(fcall->Parameters), *ast);
+	}
+
+	case AST_FuncParm:
+	{
+		auto fparm = static_cast<ZCC_FuncParm *>(ast);
+		// ignore the label for now, that's stuff for far later, when a bit more here is working.
+		return ConvertNode(fparm->Value);
+	}
+
+	case AST_ExprConstant:
+	{
+		auto cnst = static_cast<ZCC_ExprConstant *>(ast);
+		if (cnst->Type->IsKindOf(RUNTIME_CLASS(PInt)))
+		{
+			return new FxConstant(cnst->IntVal, *ast);
+		}
+		else if (cnst->Type->IsKindOf(RUNTIME_CLASS(PFloat)))
+		{
+			return new FxConstant(cnst->DoubleVal, *ast);
+		}
+		else if (cnst->Type->IsKindOf(RUNTIME_CLASS(PString)))
+		{
+			return new FxConstant(*cnst->StringVal, *ast);
+		}
+		else if (cnst->Type->IsKindOf(RUNTIME_CLASS(PName)))
+		{
+			return new FxConstant(ENamedName(cnst->IntVal), *ast);
+		}
+		else
+		{
+			// can there be other types?
+			Error(cnst, "Unknown constant type");
+			return new FxConstant(0, *ast);
+		}
+	}
+
+	default:
+		// only for development. I_Error is more convenient here than a normal error.
+		I_Error("ConvertNode encountered unsupported node of type %d", ast->NodeType);
+		return nullptr;
+	}
+}
+
+
+FArgumentList *ZCCCompiler::ConvertNodeList(ZCC_TreeNode *head)
+{
+	FArgumentList *list = new FArgumentList;
+	auto node = head;
+	do
+	{
+		list->Push(ConvertNode(node));
+		node = node->SiblingNext;
+	} while (node != head);
+	return list;
 }

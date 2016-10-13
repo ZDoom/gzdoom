@@ -658,7 +658,7 @@ VMFunction *FFunctionBuildList::AddFunction(PClass *cls, FxExpression *code, con
 		return func;
 	}
 
-	Printf("Adding %s\n", name.GetChars());
+	//Printf("Adding %s\n", name.GetChars());
 
 	Item it;
 	it.Class = cls;

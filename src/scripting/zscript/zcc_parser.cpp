@@ -399,6 +399,7 @@ ZCC_TreeNode *ZCC_AST::InitNode(size_t size, EZCCTreeNodeType type, ZCC_TreeNode
 	if (basis != NULL)
 	{
 		node->SourceName = basis->SourceName;
+		node->SourceLump = basis->SourceLump;
 		node->SourceLoc = basis->SourceLoc;
 	}
 	return node;
@@ -408,5 +409,6 @@ ZCC_TreeNode *ZCCParseState::InitNode(size_t size, EZCCTreeNodeType type)
 {
 	ZCC_TreeNode *node = ZCC_AST::InitNode(size, type, NULL);
 	node->SourceName = Strings.Alloc(sc->ScriptName);
+	node->SourceLump = sc->LumpNum;
 	return node;
 }

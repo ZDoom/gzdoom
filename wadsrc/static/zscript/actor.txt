@@ -387,13 +387,6 @@ class Actor : Thinker native
 	GenericCrush:
 		POL5 A -1;
 		Stop;
-	Test.State:
-		&&&& A[\] 5 offset(4,4*2);
-		&&&& A[\] DEFAULT_HEALTH;
-		abcd efgh random(3, 6);
-		lght blahblah 5*3 light("furz", "bläh", "rülps");
-		lght blahblah 5 light("boing");
-		goto Actor::Spawn+1;
 	}
 
 	// Internal functions

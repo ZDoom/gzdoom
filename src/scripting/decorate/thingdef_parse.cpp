@@ -1526,7 +1526,7 @@ void ParseDecorate (FScanner &sc)
 
 void ParseAllDecorate()
 {
-	int lastlump, lump;
+	int lastlump = 0, lump;
 
 	while ((lump = Wads.FindLump("DECORATE", &lastlump)) != -1)
 	{

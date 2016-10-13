@@ -149,6 +149,7 @@ struct ZCC_TreeNode
 	// can't use FScriptPosition, because the string wouldn't have a chance to
 	// destruct if we did that.
 	FString *SourceName;
+	int SourceLump;
 	int SourceLoc;
 
 	// Node type is one of the node types above, which corresponds with

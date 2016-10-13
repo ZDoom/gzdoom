@@ -1,0 +1,9 @@
+zscript/constants.txt
+zscript/actor.txt
+
+zscript/shared/inventory.txt
+zscript/shared/player.txt
+zscript/shared/specialspot.txt
+
+//zscript/test1.txt
+

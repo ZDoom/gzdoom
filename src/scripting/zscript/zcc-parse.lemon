@@ -211,6 +211,16 @@ dottable_id(X) ::= dottable_id(A) DOT IDENTIFIER(B).
 	A->AppendSibling(id2);
 	X = A; /*X-overwrites-A*/
 }
+// a bit of a hack to allow the 'color' token to be used inside default properties.
+// as a variable name it is practically meaningless because it cannot defined
+// as such anywhere so it will always produce an error during processing.
+dottable_id(X) ::= dottable_id(A) DOT COLOR.
+{
+	NEW_AST_NODE(Identifier,id2,A);
+	id2->Id = NAME_Color;
+	A->AppendSibling(id2);
+	X = A; /*X-overwrites-A*/
+}
 
 /*------ Class Body ------*/
 // Body is a list of:

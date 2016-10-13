@@ -70,7 +70,7 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 	name << "nodes - " << FName(cnode->NodeName);
 	cls->TreeNodes.SetName(name);
 
-	if (!static_cast<PClassActor *>(cnode->Type)->SetReplacement(cnode->Replaces->Id))
+	if (cnode->Replaces != nullptr && !static_cast<PClassActor *>(cnode->Type)->SetReplacement(cnode->Replaces->Id))
 	{
 		Warn(cnode, "Replaced type '%s' not found for %s", FName(cnode->Replaces->Id).GetChars(), cnode->Type->TypeName.GetChars());
 	}
@@ -1565,7 +1565,9 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 
 			if (exp->NodeType != AST_ExprConstant)
 			{
-				Error(exp, "%s: non-constant parameter", prop->name);
+				// If we get TypeError, there has already been a message from deeper down so do not print another one.
+				if (exp->Type != TypeError) Error(exp, "%s: non-constant parameter", prop->name);
+				return;
 			}
 			conv.s = nullptr;
 			pref.s = nullptr;
@@ -1654,6 +1656,7 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 				if (exp != property->Values)
 				{
 					Error(property, "Too many values for '%s'", prop->name);
+					return;
 				}
 				break;
 			}
@@ -1662,6 +1665,7 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 				if (*p < 'a')
 				{
 					Error(property, "Insufficient parameters for %s", prop->name);
+					return;
 				}
 				break;
 			}
@@ -1816,7 +1820,7 @@ void ZCCCompiler::InitDefaults()
 				bag.StateSet = false;
 				bag.fromZScript = true;
 				bag.CurrentState = 0;
-				bag.Lumpnum = Wads.CheckNumForFullName(*c->cls->SourceName, true);
+				bag.Lumpnum = c->cls->SourceLump;
 				bag.DropItemList = nullptr;
 				bag.ScriptPosition.StrictErrors = true;
 				// The actual script position needs to be set per property.
@@ -2061,6 +2065,8 @@ void ZCCCompiler::CompileStates()
 		}
 		FString statename;	// The state builder wants the label as one complete string, not separated into tokens.
 		FStateDefinitions statedef;
+		statedef.MakeStateDefines(dyn_cast<PClassActor>(c->Type()->ParentClass));
+
 		for (auto s : c->States)
 		{
 			auto st = s->Body;

@@ -30,6 +30,34 @@ zscript/shared/setcolor.txt
 zscript/shared/sectoraction.txt
 zscript/shared/dog.txt
 
+zscript/doom/doomplayer.txt
+zscript/doom/possessed.txt
+zscript/doom/doomimp.txt
+zscript/doom/demon.txt
+zscript/doom/lostsoul.txt
+zscript/doom/cacodemon.txt
+zscript/doom/bruiser.txt
+zscript/doom/revenant.txt
+zscript/doom/arachnotron.txt
+zscript/doom/fatso.txt
+zscript/doom/painelemental.txt
+zscript/doom/archvile.txt
+zscript/doom/cyberdemon.txt
+zscript/doom/spidermaster.txt
+zscript/doom/keen.txt
+zscript/doom/bossbrain.txt
+
+zscript/doom/deadthings.txt
+zscript/doom/doomammo.txt
+zscript/doom/doomarmor.txt
+zscript/doom/doomartifacts.txt
+zscript/doom/doomhealth.txt
+zscript/doom/doomkeys.txt
+zscript/doom/doommisc.txt
+zscript/doom/doomdecorations.txt
+zscript/doom/doomweapons.txt
+zscript/doom/stealthmonsters.txt
+zscript/doom/scriptedmarine.txt
 
 //zscript/test1.txt
 

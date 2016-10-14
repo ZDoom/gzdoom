@@ -458,6 +458,18 @@ state_flow_type(X) ::= GOTO(T) IDENTIFIER(C) SCOPE dottable_id(A) state_goto_off
 	X = flow;
 }
 
+state_flow_type(X) ::= GOTO(T) SUPER(C) SCOPE dottable_id(A) state_goto_offset(B).
+{
+	NEW_AST_NODE(StateGoto, flow, T);
+	flow->Label = A;
+	flow->Offset = B;
+
+	NEW_AST_NODE(Identifier,id,C);
+	id->Id = NAME_Super;
+	flow->Qualifier =id;
+	X = flow;
+}
+
 state_goto_offset(X) ::= .				{ X = NULL; }
 state_goto_offset(X) ::= ADD expr(A).	{ X = A; /*X-overwrites-A*/ }	/* Must evaluate to a non-negative integer constant. */
 

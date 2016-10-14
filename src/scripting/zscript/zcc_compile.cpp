@@ -1657,7 +1657,7 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 			// Skip the DECORATE 'no comma' marker
 			if (*p == '_') p++;
 
-			else if (*p == 0)
+			if (*p == 0)
 			{
 				if (exp != property->Values)
 				{
@@ -1834,7 +1834,7 @@ void ZCCCompiler::InitDefaults()
 				for (auto d : c->Defaults)
 				{
 					auto content = d->Content;
-					do
+					if (content != nullptr) do
 					{
 						switch (content->NodeType)
 						{
@@ -1870,7 +1870,7 @@ void ZCCCompiler::InitFunctions()
 {
 	TArray<PType *> rets(1);
 	TArray<PType *> args;
-	TArray<DWORD> argflags;
+	TArray<uint32_t> argflags;
 	TArray<ENamedName> argnames;
 
 	for (auto c : Classes)
@@ -2032,8 +2032,13 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClassActor *cls, ZCC_TreeNode *a
 		}
 		else
 		{
-			Error(af, "%s: action function not found in %s", FName(id->Identifier).GetChars(), cls->TypeName.GetChars());
-			return nullptr;
+			// it may also be an action special so check that first before printing an error.
+			if (!P_FindLineSpecial(FName(id->Identifier).GetChars()))
+			{
+				Error(af, "%s: action function not found in %s", FName(id->Identifier).GetChars(), cls->TypeName.GetChars());
+				return nullptr;
+			}
+			// Action specials fall through to the code generator.
 		}
 	}
 	return ConvertAST(af);
@@ -2074,7 +2079,7 @@ void ZCCCompiler::CompileStates()
 		for (auto s : c->States)
 		{
 			auto st = s->Body;
-			do
+			if (st != nullptr) do
 			{
 				switch (st->NodeType)
 				{
@@ -2187,7 +2192,7 @@ void ZCCCompiler::CompileStates()
 					statename = "";
 					if (sg->Qualifier != nullptr)
 					{
-						statename << sg->Qualifier->Id << "::";
+						statename << FName(sg->Qualifier->Id) << "::";
 					}
 					auto part = sg->Label;
 					do

@@ -1,30 +1,30 @@
 // Gibbed marine -----------------------------------------------------------
 
-actor GibbedMarine
+class GibbedMarine : Actor
 {
 	States
 	{
 	Spawn:
-		PLAY W -1
-		Stop
+		PLAY W -1;
+		Stop;
 	}
 }
 
 // Gibbed marine (extra copy) ----------------------------------------------
 
-actor GibbedMarineExtra : GibbedMarine
+class GibbedMarineExtra : GibbedMarine
 {
 }
 
 // Dead marine -------------------------------------------------------------
 
-actor DeadMarine
+class DeadMarine : Actor
 {
 	States
 	{
 	Spawn:
-		PLAY N -1
-		Stop
+		PLAY N -1;
+		Stop;
 	}
 }
 
@@ -35,63 +35,78 @@ actor DeadMarine
 
 // Dead zombie man ---------------------------------------------------------
 
-actor DeadZombieMan : ZombieMan
+class DeadZombieMan : ZombieMan
 {
-	Skip_Super
-	DropItem None
+	Default
+	{
+		Skip_Super;
+		DropItem "None";
+	}
 	States
 	{
 	Spawn:
-		Goto Super::Death+4
+		Goto Super::Death+4;
 	}
 }
 
 // Dead shotgun guy --------------------------------------------------------
 
-actor DeadShotgunGuy : ShotgunGuy
+class DeadShotgunGuy : ShotgunGuy
 {
-	Skip_Super
-	DropItem None
+	Default
+	{
+		Skip_Super;
+		DropItem "None";
+	}
 	States
 	{
 	Spawn:
-		Goto Super::Death+4
+		Goto Super::Death+4;
 	}
 }
 
 // Dead imp ----------------------------------------------------------------
 
-actor DeadDoomImp : DoomImp
+class DeadDoomImp : DoomImp
 {
-	Skip_Super
+	Default
+	{
+		Skip_Super;
+	}
 	States
 	{
 	Spawn:
-		Goto Super::Death+4
+		Goto Super::Death+4;
 	}
 }
 
 // Dead demon --------------------------------------------------------------
 
-actor DeadDemon : Demon
+class DeadDemon : Demon
 {
-	Skip_Super
+	Default
+	{
+		Skip_Super;
+	}
 	States
 	{
 	Spawn:
-		Goto Super::Death+5
+		Goto Super::Death+5;
 	}
 }
 
 // Dead cacodemon ----------------------------------------------------------
 
-actor DeadCacodemon : Cacodemon
+class DeadCacodemon : Cacodemon
 {
-	Skip_Super
+	Default
+	{
+		Skip_Super;
+	}
 	States
 	{
 	Spawn:
-		Goto Super::Death+5
+		Goto Super::Death+5;
 	}
 }
 
@@ -103,12 +118,15 @@ actor DeadCacodemon : Cacodemon
  * a holdover from that.)
  */
 
-actor DeadLostSoul : LostSoul
+class DeadLostSoul : LostSoul
 {
-	Skip_Super
+	Default
+	{
+		Skip_Super;
+	}
 	States
 	{
 	Spawn:
-		Goto Super::Death+5
+		Goto Super::Death+5;
 	}
 }

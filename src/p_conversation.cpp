@@ -763,6 +763,7 @@ public:
 		else if (goodbyestr[0] == '$')
 		{
 			goodbyestr = GStrings(goodbyestr + 1);
+			if (goodbyestr == nullptr) goodbyestr = "Bye.";
 		}
 		mResponses.Push(mResponseLines.Size());
 		mResponseLines.Push(FString(goodbyestr));

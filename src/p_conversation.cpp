@@ -750,7 +750,6 @@ public:
 			char goodbye[25];
 			mysnprintf(goodbye, countof(goodbye), "TXT_RANDOMGOODBYE_%d", 1 + (pr_randomspeech() % NUM_RANDOM_GOODBYES));
 			goodbyestr = GStrings[goodbye];
-			if (goodbyestr == nullptr) goodbyestr = "Bye.";
 		}
 		else if (strncmp(goodbyestr, "RANDOM_", 7) == 0)
 		{
@@ -758,13 +757,12 @@ public:
 
 			byetext.Format("TXT_%s_%02d", goodbyestr, 1 + (pr_randomspeech() % NUM_RANDOM_LINES));
 			goodbyestr = GStrings[byetext];
-			if (goodbyestr == nullptr) goodbyestr = "Bye.";
 		}
 		else if (goodbyestr[0] == '$')
 		{
 			goodbyestr = GStrings(goodbyestr + 1);
-			if (goodbyestr == nullptr) goodbyestr = "Bye.";
 		}
+		if (goodbyestr == nullptr) goodbyestr = "Bye.";
 		mResponses.Push(mResponseLines.Size());
 		mResponseLines.Push(FString(goodbyestr));
 

@@ -297,10 +297,10 @@ class Actor : Thinker native
 	native void A_ScaleVelocity(float scale, int ptr = AAPTR_DEFAULT);
 	action native void A_ChangeVelocity(float x = 0, float y = 0, float z = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetArg(int pos, int value);
-	native void A_SetUserVar(name varname, int value);
-	native void A_SetUserArray(name varname, int index, int value);
-	native void A_SetUserVarFloat(name varname, float value);
-	native void A_SetUserArrayFloat(name varname, int index, float value);
+	deprecated native void A_SetUserVar(name varname, int value);
+	deprecated native void A_SetUserArray(name varname, int index, int value);
+	deprecated native void A_SetUserVarFloat(name varname, float value);
+	deprecated native void A_SetUserArrayFloat(name varname, int index, float value);
 	native void A_SetSpecial(int spec, int arg0 = 0, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0);
 	native void A_Quake(int intensity, int duration, int damrad, int tremrad, sound sfx = "world/quake");
 	native void A_QuakeEx(int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, sound sfx = "world/quake", int flags = 0, float mulWaveX = 1, float mulWaveY = 1, float mulWaveZ = 1, int falloff = 0, int highpoint = 0, float rollIntensity = 0, float rollWave = 0);

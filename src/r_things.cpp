@@ -100,6 +100,7 @@ EXTERN_CVAR (Bool, st_scale)
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, r_drawfuzz)
 EXTERN_CVAR(Bool, r_deathcamera);
+CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 //
 // Sprite rotation 0 is facing the viewer,
@@ -569,7 +570,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 	else if (fixedcolormap != NULL)
 		R_SetColorMapLight(fixedcolormap, 0, 0);
 	else if (!foggy && (spr->renderflags & RF_FULLBRIGHT))
-		R_SetColorMapLight(usecolormap, 0, 0);
+		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &NormalLight : usecolormap, 0, 0);
 	else
 		calclighting = true;
 
@@ -1088,7 +1089,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	vis->deltax = float(pos.X - ViewPos.X);
 	vis->deltay = float(pos.Y - ViewPos.Y);
 	vis->renderflags = renderflags;
-	if(thing->flags5 & MF5_BRIGHT) vis->renderflags |= RF_FULLBRIGHT; // kg3D
+	if(thing->flags5 & MF5_BRIGHT)
+		vis->renderflags |= RF_FULLBRIGHT; // kg3D
 	vis->Style.RenderStyle = thing->RenderStyle;
 	vis->FillColor = thing->fillcolor;
 	vis->Translation = thing->Translation;		// [RH] thing translation table
@@ -1164,7 +1166,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		}
 		else if (!foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
 		{ // full bright
-			vis->Style.BaseColormap = mybasecolormap;
+			vis->Style.BaseColormap = (r_fullbrightignoresectorcolor) ? &NormalLight : mybasecolormap;
 			vis->Style.ColormapNum = 0;
 		}
 		else

@@ -3942,13 +3942,43 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	{
 		for (unsigned i = 0; i < ArgList->Size(); i++)
 		{
-			// temporary hack to let strings get compiled as state. This will have to be done more intelligently.
-			if (i+implicit < argtypes.Size() && argtypes[i+implicit] == TypeState && (*ArgList)[i]->isConstant() && static_cast<FxConstant*>((*ArgList)[i])->ValueType == TypeString)
+			if ((*ArgList)[i]->isConstant())
 			{
-				auto statenode = new FxMultiNameState(static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetString(), ScriptPosition);
-				delete (*ArgList)[i];
-				(*ArgList)[i] = statenode;
+				if (i + implicit < argtypes.Size())
+				{
+					auto type = static_cast<FxConstant*>((*ArgList)[i])->ValueType;
+					// temporary hack to add the casts which get used by the internal definitions
+					if (argtypes[i + implicit] == TypeState && type == TypeString)
+					{
+						ScriptPosition.Message(MSG_WARNING, "Converting %s to state", static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetString());
+						auto statenode = new FxMultiNameState(static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetString(), ScriptPosition);
+						delete (*ArgList)[i];
+						(*ArgList)[i] = statenode;
+					}
+					if (argtypes[i + implicit] == TypeSound && type == TypeString)
+					{
+						ScriptPosition.Message(MSG_WARNING, "Converting %s to sound", static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetString());
+						auto statenode = new FxConstant(FSoundID(static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetString()), ScriptPosition);
+						delete (*ArgList)[i];
+						(*ArgList)[i] = statenode;
+					}
+					if (argtypes[i + implicit] == TypeSInt32 && type == TypeFloat64)
+					{
+						ScriptPosition.Message(MSG_WARNING, "Converting %f to int", static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetFloat());
+						auto statenode = new FxConstant(static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetInt(), ScriptPosition);
+						delete (*ArgList)[i];
+						(*ArgList)[i] = statenode;
+					}
+					if (argtypes[i + implicit] == TypeFloat64 && type == TypeSInt32)
+					{
+						ScriptPosition.Message(MSG_WARNING, "Converting %d to float", static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetInt());
+						auto statenode = new FxConstant(static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetFloat(), ScriptPosition);
+						delete (*ArgList)[i];
+						(*ArgList)[i] = statenode;
+					}
+				}
 			}
+
 			(*ArgList)[i] = (*ArgList)[i]->Resolve(ctx);
 			if ((*ArgList)[i] == NULL) failed = true;
 		}

@@ -824,17 +824,6 @@ inline PClass::MetaClass *PClass::GetClass() const
 	return static_cast<MetaClass *>(DObject::GetClass());
 }
 
-// A class that hasn't had its parent class defined yet ---------------------
-
-class PClassWaitingForParent : public PClass
-{
-	DECLARE_CLASS(PClassWaitingForParent, PClass);
-public:
-	PClassWaitingForParent(FName myname, FName parentname);
-
-	FName ParentName;
-};
-
 // Type tables --------------------------------------------------------------
 
 struct FTypeTable

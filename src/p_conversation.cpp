@@ -556,6 +556,7 @@ FStrifeDialogueNode::~FStrifeDialogueNode ()
 {
 	if (SpeakerName != NULL) delete[] SpeakerName;
 	if (Dialogue != NULL) delete[] Dialogue;
+	if (Goodbye != nullptr) delete[] Goodbye;
 	FStrifeDialogueReply *tokill = Children;
 	while (tokill != NULL)
 	{
@@ -743,10 +744,26 @@ public:
 			++i;
 			V_FreeBrokenLines (ReplyLines);
 		}
-		char goodbye[25];
-		mysnprintf(goodbye, countof(goodbye), "TXT_RANDOMGOODBYE_%d", 1+(pr_randomspeech() % NUM_RANDOM_GOODBYES));
-		const char *goodbyestr = GStrings[goodbye];
-		if (goodbyestr == NULL) goodbyestr = "Bye.";
+		const char *goodbyestr = CurNode->Goodbye;
+		if (goodbyestr == nullptr)
+		{
+			char goodbye[25];
+			mysnprintf(goodbye, countof(goodbye), "TXT_RANDOMGOODBYE_%d", 1 + (pr_randomspeech() % NUM_RANDOM_GOODBYES));
+			goodbyestr = GStrings[goodbye];
+			if (goodbyestr == nullptr) goodbyestr = "Bye.";
+		}
+		else if (strncmp(goodbyestr, "RANDOM_", 7) == 0)
+		{
+			FString byetext;
+
+			byetext.Format("TXT_%s_%02d", goodbyestr, 1 + (pr_randomspeech() % NUM_RANDOM_LINES));
+			goodbyestr = GStrings[byetext];
+			if (goodbyestr == nullptr) goodbyestr = "Bye.";
+		}
+		else if (goodbyestr[0] == '$')
+		{
+			goodbyestr = GStrings(goodbyestr + 1);
+		}
 		mResponses.Push(mResponseLines.Size());
 		mResponseLines.Push(FString(goodbyestr));
 

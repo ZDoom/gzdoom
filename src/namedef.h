@@ -584,6 +584,7 @@ xx(Dialog)
 xx(Ifitem)
 xx(Choice)
 xx(Link)
+xx(Goodbye)
 
 // Special menus
 xx(Mainmenu)

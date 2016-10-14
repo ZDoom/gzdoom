@@ -433,6 +433,11 @@ FStateLabels *FStateDefinitions::CreateStateLabelList(TArray<FStateDefine> & sta
 
 void FStateDefinitions::InstallStates(PClassActor *info, AActor *defaults)
 {
+	if (defaults == nullptr)
+	{
+		I_Error("Called InstallStates without actor defaults in %s", info->TypeName.GetChars());
+	}
+
 	// First ensure we have a valid spawn state.
 	FState *state = FindState("Spawn");
 

@@ -817,3 +817,43 @@ int DamageTypeDefinition::ApplyMobjDamageFactor(int damage, FName type, DmgFacto
 	double factor = GetMobjDamageFactor(type, factors);
 	return int(damage * factor);
 }
+
+//==========================================================================
+//
+// Reads a damage definition
+//
+//==========================================================================
+
+void FMapInfoParser::ParseDamageDefinition()
+{
+	sc.MustGetString();
+	FName damageType = sc.String;
+
+	DamageTypeDefinition dtd;
+
+	ParseOpenBrace();
+	while (sc.MustGetAnyToken(), sc.TokenType != '}')
+	{
+		if (sc.Compare("FACTOR"))
+		{
+			sc.MustGetStringName("=");
+			sc.MustGetFloat();
+			dtd.DefaultFactor = sc.Float;
+			if (dtd.DefaultFactor == 0) dtd.ReplaceFactor = true;
+		}
+		else if (sc.Compare("REPLACEFACTOR"))
+		{
+			dtd.ReplaceFactor = true;
+		}
+		else if (sc.Compare("NOARMOR"))
+		{
+			dtd.NoArmor = true;
+		}
+		else
+		{
+			sc.ScriptError("Unexpected data (%s) in damagetype definition.", sc.String);
+		}
+	}
+
+	dtd.Apply(damageType);
+}

@@ -1,0 +1,29 @@
+class DoomBuilderCamera : Actor
+{
+	States
+	{
+	Spawn:
+		TNT1 A 1;
+		Stop;
+	}
+}
+
+
+class SecurityCamera : Actor native 
+{
+	default
+	{
+		+NOBLOCKMAP 
+		+NOGRAVITY
+		+DONTSPLASH
+	}
+	default
+	{
+		RenderStyle "None";
+		CameraHeight 0;
+	}
+}
+
+class AimingCamera : SecurityCamera native 
+{
+}

@@ -4,28 +4,34 @@
 //
 /***************************************************************************/
 
-ACTOR ItemFog
+class ItemFog : Actor
 {
-	+NOBLOCKMAP
-	+NOGRAVITY
+	default
+	{
+		+NOBLOCKMAP
+		+NOGRAVITY
+	}
 	States
 	{
 	Spawn:
-		IFOG ABABCDE 6 BRIGHT
-		Stop
+		IFOG ABABCDE 6 BRIGHT;
+		Stop;
 	}
 }
 
 // Pickup flash -------------------------------------------------------------
 
-ACTOR PickupFlash
+class PickupFlash : Actor
 {
-	+NOGRAVITY
+	default
+	{
+		+NOGRAVITY
+	}
 	States
 	{
 	Spawn:
-		ACLO DCDCBCBABA 3
-		Stop
+		ACLO DCDCBCBABA 3;
+		Stop;
 	}
 }
 

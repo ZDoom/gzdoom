@@ -10,6 +10,26 @@ zscript/shared/blood.txt
 zscript/shared/ice.txt
 zscript/shared/debris.txt
 zscript/shared/specialspot.txt
+zscript/shared/decal.txt
+zscript/shared/splashes.txt
+zscript/shared/pickups.txt
+zscript/shared/fountain.txt
+zscript/shared/spark.txt
+zscript/shared/soundsequence.txt
+zscript/shared/soundenvironment.txt
+zscript/shared/bridge.txt
+zscript/shared/teleport.txt
+zscript/shared/camera.txt
+zscript/shared/movingcamera.txt
+zscript/shared/mapmarker.txt
+zscript/shared/waterzone.txt
+zscript/shared/skies.txt
+zscript/shared/hatetarget.txt
+zscript/shared/secrettrigger.txt
+zscript/shared/setcolor.txt
+zscript/shared/sectoraction.txt
+zscript/shared/dog.txt
+
 
 //zscript/test1.txt
 

@@ -110,6 +110,7 @@ struct FMapInfoParser
 	void ParseAMColors(bool);
 	FName CheckEndSequence();
 	FName ParseEndGame();
+	void ParseDamageDefinition();
 };
 
 #define DEFINE_MAP_OPTION(name, old) \

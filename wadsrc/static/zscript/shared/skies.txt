@@ -1,0 +1,49 @@
+class SkyViewpoint : Actor native 
+{
+	default
+	{
+		+NOSECTOR
+		+NOBLOCKMAP
+		+NOGRAVITY
+		+DONTSPLASH
+	}
+}
+
+class SkyPicker : Actor native 
+{
+	default
+	{
+		+NOSECTOR
+		+NOBLOCKMAP
+		+NOGRAVITY
+		+DONTSPLASH
+	}
+}
+
+class SkyCamCompat : SkyViewpoint native
+{
+}
+
+class StackPoint : SkyViewpoint native 
+{
+}
+
+class UpperStackLookOnly : StackPoint
+{
+}
+
+class LowerStackLookOnly : StackPoint
+{
+}
+
+
+class SectorSilencer native 
+{
+	default
+	{
+		+NOBLOCKMAP
+		+NOGRAVITY
+		+DONTSPLASH
+		RenderStyle "None";
+	}
+}

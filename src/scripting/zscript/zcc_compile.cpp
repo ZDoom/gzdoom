@@ -2169,13 +2169,6 @@ void ZCCCompiler::CompileStates()
 					}
 #endif
 
-					int count = statedef.AddStates(&state, sl->Frames->GetChars());
-					if (count < 0)
-					{
-						Error(sl, "Invalid frame character string '%s'", sl->Frames->GetChars());
-						count = -count;
-					}
-
 					if (sl->Action != nullptr)
 					{
 						auto code = SetupActionFunction(static_cast<PClassActor *>(c->Type()), sl->Action);
@@ -2183,6 +2176,13 @@ void ZCCCompiler::CompileStates()
 						{
 							state.ActionFunc = FunctionBuildList.AddFunction(c->Type(), code, FStringf("%s.StateFunction.%d", c->Type()->TypeName.GetChars(), statedef.GetStateCount()), true);
 						}
+					}
+
+					int count = statedef.AddStates(&state, sl->Frames->GetChars());
+					if (count < 0)
+					{
+						Error(sl, "Invalid frame character string '%s'", sl->Frames->GetChars());
+						count = -count;
 					}
 					break;
 				}

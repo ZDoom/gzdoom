@@ -3632,7 +3632,10 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	PFunction *afd = dyn_cast<PFunction>(ctx.Class->Symbols.FindSymbol(MethodName, true));
 	if (afd != nullptr)
 	{
-		return new FxVMFunctionCall(afd, ArgList, ScriptPosition, false);
+		auto x = new FxVMFunctionCall(afd, ArgList, ScriptPosition, false);
+		ArgList = nullptr;
+		delete this;
+		return x->Resolve(ctx);
 	}
 
 	for (size_t i = 0; i < countof(FxFlops); ++i)
@@ -3927,11 +3930,25 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 	bool failed = false;
+	auto proto = Function->Variants[0].Implementation->Proto;
+	auto argtypes = proto->ArgumentTypes;
+
+	int implicit;
+	if (Function->Flags & VARF_Action) implicit = 3;
+	else if (Function->Flags & VARF_Method) implicit = 1;
+	else implicit = 0;
 
 	if (ArgList != NULL)
 	{
 		for (unsigned i = 0; i < ArgList->Size(); i++)
 		{
+			// temporary hack to let strings get compiled as state. This will have to be done more intelligently.
+			if (i+implicit < argtypes.Size() && argtypes[i+implicit] == TypeState && (*ArgList)[i]->isConstant() && static_cast<FxConstant*>((*ArgList)[i])->ValueType == TypeString)
+			{
+				auto statenode = new FxMultiNameState(static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetString(), ScriptPosition);
+				delete (*ArgList)[i];
+				(*ArgList)[i] = statenode;
+			}
 			(*ArgList)[i] = (*ArgList)[i]->Resolve(ctx);
 			if ((*ArgList)[i] == NULL) failed = true;
 		}
@@ -3941,7 +3958,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 		delete this;
 		return NULL;
 	}
-	TArray<PType *> &rets = Function->Variants[0].Implementation->Proto->ReturnTypes;
+	TArray<PType *> &rets = proto->ReturnTypes;
 	if (rets.Size() > 0)
 	{
 		ValueType = rets[0];
@@ -5175,7 +5192,7 @@ static int DoFindState(VMFrameStack *stack, VMValue *param, int numparam, VMRetu
 }
 
 // Find a state with any number of dots in its name.
-int DecoFindMultiNameState(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+int BuiltinFindMultiNameState(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam > 1);
 	assert(numret == 1);
@@ -5191,7 +5208,7 @@ int DecoFindMultiNameState(VMFrameStack *stack, VMValue *param, int numparam, VM
 }
 
 // Find a state without any dots in its name.
-int DecoFindSingleNameState(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+int BuiltinFindSingleNameState(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam == 2);
 	assert(numret == 1);
@@ -5217,18 +5234,18 @@ ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
 		build->EmitParamInt(names[i]);
 	}
 
-	// For one name, use the DecoFindSingleNameState function. For more than
-	// one name, use the DecoFindMultiNameState function.
+	// For one name, use the BuiltinFindSingleNameState function. For more than
+	// one name, use the BuiltinFindMultiNameState function.
 	VMFunction *callfunc;
 	PSymbol *sym;
 	
 	if (names.Size() == 1)
 	{
-		sym = FindDecorateBuiltinFunction(NAME_DecoFindSingleNameState, DecoFindSingleNameState);
+		sym = FindDecorateBuiltinFunction(NAME_BuiltinFindSingleNameState, BuiltinFindSingleNameState);
 	}
 	else
 	{
-		sym = FindDecorateBuiltinFunction(NAME_DecoFindMultiNameState, DecoFindMultiNameState);
+		sym = FindDecorateBuiltinFunction(NAME_BuiltinFindMultiNameState, BuiltinFindMultiNameState);
 	}
 
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));

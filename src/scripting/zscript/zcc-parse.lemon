@@ -79,7 +79,7 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 	FString unexpected, expecting;
 
 	int i;
-	int stateno = yypParser->yystack[yypParser->yyidx].stateno;
+	int stateno = yypParser->yytos->stateno;
 
 	unexpected << "Unexpected " << ZCCTokenName(yymajor);
 

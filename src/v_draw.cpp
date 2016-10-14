@@ -310,7 +310,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 				else
 					pixels = img->GetColumn(frac >> FRACBITS, spanptr);
 
-				R_DrawMaskedColumn(pixels, spans);
+				R_DrawMaskedColumn(pixels, spans, false);
 				dc_x++;
 				frac += xiscale_i;
 			}
@@ -325,7 +325,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 					else
 						pixels = img->GetColumn(frac >> FRACBITS, spanptr);
 
-					R_DrawMaskedColumnHoriz(pixels, spans);
+					R_DrawMaskedColumn(pixels, spans, true);
 					dc_x++;
 					frac += xiscale_i;
 				}
@@ -339,7 +339,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 				else
 					pixels = img->GetColumn(frac >> FRACBITS, spanptr);
 
-				R_DrawMaskedColumn(pixels, spans);
+				R_DrawMaskedColumn(pixels, spans, false);
 				dc_x++;
 				frac += xiscale_i;
 			}

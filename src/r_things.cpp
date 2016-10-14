@@ -250,7 +250,7 @@ double	 		sprtopscreen;
 
 bool			sprflipvert;
 
-void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span)
+void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span, bool useRt)
 {
 	int pixelsize = r_swtruecolor ? 4 : 1;
 	int inputpixelsize = (r_swtruecolor && !drawer_needs_pal_input) ? 4 : 1;
@@ -326,11 +326,17 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span)
 			dc_source = column + top * inputpixelsize;
 			dc_dest = (ylookup[dc_yl] + dc_x) * pixelsize + dc_destorg;
 			dc_count = dc_yh - dc_yl + 1;
-			colfunc ();
+			if (useRt)
+				hcolfunc_pre();
+			else
+				colfunc ();
 		}
 nextpost:
 		span++;
 	}
+
+	if (sprflipvert && useRt)
+		rt_flip_posts();
 }
 
 // [ZZ]
@@ -476,7 +482,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 					pixels = tex->GetColumn (frac >> FRACBITS, &spans);
 
 				if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-					R_DrawMaskedColumn (pixels, spans);
+					R_DrawMaskedColumn (pixels, spans, false);
 				dc_x++;
 				frac += xiscale;
 			}
@@ -492,7 +498,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 						pixels = tex->GetColumn (frac >> FRACBITS, &spans);
 
 					if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-						R_DrawMaskedColumnHoriz (pixels, spans);
+						R_DrawMaskedColumn (pixels, spans, true);
 					dc_x++;
 					frac += xiscale;
 				}
@@ -507,7 +513,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 					pixels = tex->GetColumn (frac >> FRACBITS, &spans);
 
 				if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-					R_DrawMaskedColumn (pixels, spans);
+					R_DrawMaskedColumn (pixels, spans, false);
 				dc_x++;
 				frac += xiscale;
 			}
@@ -617,7 +623,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 				R_SetColorMapLight(usecolormap, rw_light, shade);
 			}
 			if (!R_ClipSpriteColumnWithPortals(spr))
-				R_WallSpriteColumn(R_DrawMaskedColumn);
+				R_WallSpriteColumn(false);
 			dc_x++;
 		}
 
@@ -631,7 +637,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 			for (int zz = 4; zz; --zz)
 			{
 				if (!R_ClipSpriteColumnWithPortals(spr))
-					R_WallSpriteColumn(R_DrawMaskedColumnHoriz);
+					R_WallSpriteColumn(true);
 				dc_x++;
 			}
 			rt_draw4cols(dc_x - 4);
@@ -644,14 +650,14 @@ void R_DrawWallSprite(vissprite_t *spr)
 				R_SetColorMapLight(usecolormap, rw_light, shade);
 			}
 			if (!R_ClipSpriteColumnWithPortals(spr))
-				R_WallSpriteColumn(R_DrawMaskedColumn);
+				R_WallSpriteColumn(false);
 			dc_x++;
 		}
 	}
 	R_FinishSetPatchStyle();
 }
 
-void R_WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans))
+void R_WallSpriteColumn (bool useRt)
 {
 	float iscale = swall[dc_x] * MaskedScaleY;
 	dc_iscale = FLOAT2FIXED(iscale);
@@ -668,7 +674,7 @@ void R_WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Sp
 	else
 		column = WallSpriteTile->GetColumn (lwall[dc_x] >> FRACBITS, &spans);
 	dc_texturefrac = 0;
-	drawfunc (column, spans);
+	R_DrawMaskedColumn(column, spans, useRt);
 	rw_light += rw_lightstep;
 }
 

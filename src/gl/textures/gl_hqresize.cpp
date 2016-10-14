@@ -266,21 +266,10 @@ static unsigned char *xbrzHelper( void (*xbrzFunction) ( size_t, const uint32_t*
 	return newBuffer;
 }
 
-static unsigned char *xbrzoldHelper( void (*xbrzFunction) ( size_t factor, const uint32_t* src, uint32_t* trg, int srcWidth, int srcHeight, const xbrz_old::ScalerCfg& cfg, int yFirst, int yLast ),
-							  const int N,
-							  unsigned char *inputBuffer,
-							  const int inWidth,
-							  const int inHeight,
-							  int &outWidth,
-							  int &outHeight )
+static void xbrzOldScale(size_t factor, const uint32_t* src, uint32_t* trg, int srcWidth, int srcHeight, xbrz::ColorFormat colFmt, const xbrz::ScalerCfg& cfg, int yFirst, int yLast)
 {
-	outWidth = N * inWidth;
-	outHeight = N *inHeight;
-
-	unsigned char * newBuffer = new unsigned char[outWidth*outHeight*4];
-	xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer), inWidth, inHeight, xbrz_old::ScalerCfg(), 0, std::numeric_limits<int>::max());
-	delete[] inputBuffer;
-	return newBuffer;
+	static_assert(sizeof(xbrz::ScalerCfg) == sizeof(xbrz_old::ScalerCfg), "ScalerCfg classes have different layout");
+	xbrz_old::scale(factor, src, trg, srcWidth, srcHeight, reinterpret_cast<const xbrz_old::ScalerCfg&>(cfg), yFirst, yLast);
 }
 
 
@@ -372,7 +361,7 @@ unsigned char *gl_CreateUpsampledTextureBuffer ( const FTexture *inputTexture, u
 		case 13:
 		case 14:
 		case 15:
-			return xbrzoldHelper(xbrz_old::scale, type - 11, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+			return xbrzHelper(xbrzOldScale, type - 11, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 			
 		}
 	}

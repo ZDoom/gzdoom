@@ -286,6 +286,7 @@ class USDFParser : public UDMFParserBase
 
 		FString SpeakerName;
 		FString Dialogue;
+		FString Goodbye;
 
 		while (!sc.CheckToken('}'))
 		{
@@ -331,7 +332,9 @@ class USDFParser : public UDMFParserBase
 					node->ItemCheckNode = CheckInt(key);
 					break;
 
-
+				case NAME_Goodbye:
+					Goodbye = CheckString(key);
+					break;
 				}
 			}
 			else
@@ -354,6 +357,7 @@ class USDFParser : public UDMFParserBase
 		}
 		node->SpeakerName = ncopystring(SpeakerName);
 		node->Dialogue = ncopystring(Dialogue);
+		node->Goodbye = ncopystring(Goodbye);
 		return true;
 	}
 

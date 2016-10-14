@@ -87,14 +87,16 @@ conversation // Starts a dialog.
 
     page // Starts a new page.  Pages are automatically numbered starting at 1.
     {
-        name   = <string>;  // Name that goes in the upper left hand corner
-        panel  = <string>;  // Name of lump to render as the background.
-        voice  = <string>;  // Narration sound lump.
-        dialog = <string>;  // Dialog of the page.
-        drop   = <integer>; // mobj for the object to drop if the actor is 
-                            // killed.
-        link   = <integer>; // Page to jump to if all ifitem conditions are
-                            // satisified.
+        name    = <string>;  // Name that goes in the upper left hand corner
+        panel   = <string>;  // Name of lump to render as the background.
+        voice   = <string>;  // Narration sound lump.
+        dialog  = <string>;  // Dialog of the page.
+	goodbye = <string>;  // Custom goodbye message. If omitted then the
+                             // generic goodbyes will be displayed instead.
+        drop    = <integer>; // mobj for the object to drop if the actor is 
+                             // killed.
+        link    = <integer>; // Page to jump to if all ifitem conditions are
+                             // satisified.
 
         // jumps to the specified page if the player has the specified amount 
         // or more of item in their inventory.  This can be repeated as many

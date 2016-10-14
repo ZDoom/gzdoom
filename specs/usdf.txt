@@ -91,7 +91,7 @@ conversation // Starts a dialog.
         panel   = <string>;  // Name of lump to render as the background.
         voice   = <string>;  // Narration sound lump.
         dialog  = <string>;  // Dialog of the page.
-		goodbye = <string>;  // Custom goodbye message. If omitted then the
+	goodbye = <string>;  // Custom goodbye message. If omitted then the
                              // generic goodbyes will be displayed instead.
         drop    = <integer>; // mobj for the object to drop if the actor is 
                              // killed.

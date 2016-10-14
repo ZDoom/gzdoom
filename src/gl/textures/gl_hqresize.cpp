@@ -46,6 +46,17 @@
 #include "gl/xbr/xbrz.h"
 #include "gl/xbr/xbrz_old.h"
 
+#ifdef __APPLE__
+#	include <AvailabilityMacros.h>
+#	if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
+#		define GZ_USE_LIBDISPATCH
+#	endif // MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
+#endif // __APPLE__
+
+#ifdef GZ_USE_LIBDISPATCH
+#	include <dispatch/dispatch.h>
+#endif // GZ_USE_LIBDISPATCH
+
 CUSTOM_CVAR(Int, gl_texture_hqresize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	if (self < 0 || self > 16)
@@ -75,6 +86,22 @@ CUSTOM_CVAR(Int, gl_texture_hqresize_targets, 7, CVAR_ARCHIVE | CVAR_GLOBALCONFI
 CVAR (Flag, gl_texture_hqresize_textures, gl_texture_hqresize_targets, 1);
 CVAR (Flag, gl_texture_hqresize_sprites, gl_texture_hqresize_targets, 2);
 CVAR (Flag, gl_texture_hqresize_fonts, gl_texture_hqresize_targets, 4);
+
+#ifdef GZ_USE_LIBDISPATCH
+CVAR(Bool, gl_texture_hqresize_multithread, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
+CUSTOM_CVAR(Int, gl_texture_hqresize_mt_width, 16, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 2)    self = 2;
+	if (self > 1024) self = 1024;
+}
+
+CUSTOM_CVAR(Int, gl_texture_hqresize_mt_height, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 2)    self = 2;
+	if (self > 1024) self = 1024;
+}
+#endif // GZ_USE_LIBDISPATCH
 
 
 static void scale2x ( uint32* inputBuffer, uint32* outputBuffer, int inWidth, int inHeight )
@@ -261,7 +288,30 @@ static unsigned char *xbrzHelper( void (*xbrzFunction) ( size_t, const uint32_t*
 	outHeight = N *inHeight;
 
 	unsigned char * newBuffer = new unsigned char[outWidth*outHeight*4];
-	xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer), inWidth, inHeight, xbrz::ARGB, xbrz::ScalerCfg(), 0, std::numeric_limits<int>::max());
+	
+#ifdef GZ_USE_LIBDISPATCH
+	const int thresholdWidth  = gl_texture_hqresize_mt_width;
+	const int thresholdHeight = gl_texture_hqresize_mt_height;
+	
+	if (gl_texture_hqresize_multithread
+		&& inWidth  > thresholdWidth
+		&& inHeight > thresholdHeight)
+	{
+		const dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+		
+		dispatch_apply(inHeight / thresholdHeight + 1, queue, ^(size_t sliceY)
+		{
+			xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer),
+				inWidth, inHeight, xbrz::ARGB, xbrz::ScalerCfg(), sliceY * thresholdHeight, (sliceY + 1) * thresholdHeight);
+		});
+	}
+	else
+#endif // GZ_USE_LIBDISPATCH
+	{
+		xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer),
+			inWidth, inHeight, xbrz::ARGB, xbrz::ScalerCfg(), 0, std::numeric_limits<int>::max());
+	}
+
 	delete[] inputBuffer;
 	return newBuffer;
 }

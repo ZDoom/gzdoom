@@ -2695,7 +2695,10 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 		FRemapTable *table = TranslationToTable(translation);
 		if (table != NULL && !table->Inactive)
 		{
-			dc_translation = table->Remap;
+			if (r_swtruecolor)
+				dc_translation = (BYTE*)table->Palette;
+			else
+				dc_translation = table->Remap;
 		}
 	}
 	basecolormapsave = basecolormap;

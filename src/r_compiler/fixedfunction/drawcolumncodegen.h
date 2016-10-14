@@ -42,7 +42,8 @@ private:
 	SSAVec4i ProcessPixelPal(SSAInt sample_index, SSAVec4i bgcolor, DrawColumnVariant variant, bool isSimpleShade);
 	SSAVec4i Sample(SSAInt frac);
 	SSAInt ColormapSample(SSAInt frac);
-	SSAInt TranslateSample(SSAInt frac);
+	SSAVec4i TranslateSample(SSAInt frac);
+	SSAInt TranslateSamplePal(SSAInt frac);
 	SSAVec4i Shade(SSAVec4i fgcolor, bool isSimpleShade);
 	SSAVec4i ShadePal(SSAInt palIndex, bool isSimpleShade);
 	bool IsPaletteInput(DrawColumnVariant variant);

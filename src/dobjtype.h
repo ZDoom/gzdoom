@@ -852,7 +852,6 @@ PArray *NewArray(PType *type, unsigned int count);
 PDynArray *NewDynArray(PType *type);
 PPointer *NewPointer(PType *type);
 PClassPointer *NewClassPointer(PClass *restrict);
-PClassWaitingForParent *NewUnknownClass(FName myname, FName parentname);
 PEnum *NewEnum(FName name, PTypeBase *outer);
 PStruct *NewStruct(FName name, PTypeBase *outer);
 PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> &argtypes);

@@ -99,11 +99,11 @@ void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FNam
 		if (args != nullptr)
 		{
 			// Special treatment for weapons and CustomInventorys: 'self' is not the defining class but the actual user of the item, so this pointer must be of type 'Actor'
-			/* if (cls->IsDescendantOf(RUNTIME_CLASS(AStateProvider)))
+			if (cls->IsDescendantOf(RUNTIME_CLASS(AStateProvider)))
 			{
 				args->Insert(0, RUNTIME_CLASS(AActor));	// this must go in before the real pointer to the containing class.
 			}
-			else*/
+			else
 			{
 				args->Push(cls);
 			}

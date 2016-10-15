@@ -1642,6 +1642,7 @@ void AInventory::DetachFromOwner ()
 {
 }
 
+IMPLEMENT_CLASS(AStateProvider)
 IMPLEMENT_CLASS (ACustomInventory)
 
 //===========================================================================

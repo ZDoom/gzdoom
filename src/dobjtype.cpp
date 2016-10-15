@@ -2475,7 +2475,7 @@ size_t PFunction::PropagateMark()
 {
 	for (unsigned i = 0; i < Variants.Size(); ++i)
 	{
-		//GC::Mark(Variants[i].Proto);
+		GC::Mark(Variants[i].Proto);
 		GC::Mark(Variants[i].Implementation);
 	}
 	return Variants.Size() * sizeof(Variants[0]) + Super::PropagateMark();
@@ -2490,14 +2490,29 @@ size_t PFunction::PropagateMark()
 //
 //==========================================================================
 
-unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl)
+unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags)
 {
 	Variant variant;
 
+	// I do not think we really want to deal with overloading here...
+	assert(Variants.Size() == 0);
+
+	variant.Flags = flags;
 	variant.Proto = proto;
 	variant.ArgFlags = argflags;
 	variant.Implementation = impl;
 	if (impl != nullptr) impl->Proto = proto;
+
+	// SelfClass can differ from OwningClass, but this is variant-dependent.
+	// Unlike the owner there can be cases where different variants can have different SelfClasses.
+	// (Of course only if this ever gets enabled...)
+	if (flags & VARF_Method)
+	{
+		assert(proto->ArgumentTypes.Size() > 0);
+		variant.SelfClass = dyn_cast<PClass>(proto->ArgumentTypes[0]);
+		assert(variant.SelfClass != nullptr);
+	}
+
 	return Variants.Push(variant);
 }
 

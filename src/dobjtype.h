@@ -696,16 +696,17 @@ public:
 		VMFunction *Implementation;
 		TArray<DWORD> ArgFlags;		// Should be the same length as Proto->ArgumentTypes
 		TArray<FName> ArgNames;		// we need the names to access them later when the function gets compiled.
+		DWORD Flags;
+		PClass *SelfClass;
 	};
 	TArray<Variant> Variants;
-	DWORD Flags;
+	PClass *OwningClass = nullptr;
 
-	unsigned AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl);
+	unsigned AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags);
 
 	size_t PropagateMark();
 
-	PFunction(FName name) : PSymbol(name), Flags(0) {}
-	PFunction() : PSymbol(NAME_None), Flags(0) {}
+	PFunction(PClass *owner = nullptr, FName name = NAME_None) : PSymbol(name), OwningClass(owner) {}
 };
 
 // Meta-info for every class derived from DObject ---------------------------

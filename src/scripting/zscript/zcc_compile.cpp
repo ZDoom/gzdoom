@@ -1960,9 +1960,8 @@ void ZCCCompiler::InitFunctions()
 					} while (p != f->Params);
 				}
 
-				PFunction *sym = new PFunction(f->Name);
-				sym->AddVariant(NewPrototype(rets, args), argflags, argnames, afd == nullptr? nullptr : *(afd->VMPointer));
-				sym->Flags = varflags;
+				PFunction *sym = new PFunction(c->Type(), f->Name);
+				sym->AddVariant(NewPrototype(rets, args), argflags, argnames, afd == nullptr? nullptr : *(afd->VMPointer), varflags);
 				c->Type()->Symbols.ReplaceSymbol(sym);
 
 				// todo: Check inheritance.
@@ -2010,7 +2009,7 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClassActor *cls, ZCC_TreeNode *a
 		PFunction *afd = dyn_cast<PFunction>(cls->Symbols.FindSymbol(id->Identifier, true));
 		if (afd != nullptr)
 		{
-			if (fc->Parameters == nullptr && (afd->Flags & VARF_Action))
+			if (fc->Parameters == nullptr && (afd->Variants[0].Flags & VARF_Action))
 			{
 				// We can use this function directly without wrapping it in a caller.
 				return new FxVMFunctionCall(afd, nullptr, *af, true);

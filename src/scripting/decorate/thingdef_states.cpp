@@ -602,12 +602,12 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 	int pnum = 0;
 	bool zeroparm;
 
-	if (afd->Flags & VARF_Method)
+	if (afd->Variants[0].Flags & VARF_Method)
 	{
 		numparams--;
 		pnum++;
 	}
-	if (afd->Flags & VARF_Action)
+	if (afd->Variants[0].Flags & VARF_Action)
 	{
 		numparams -= 2;
 		pnum += 2;

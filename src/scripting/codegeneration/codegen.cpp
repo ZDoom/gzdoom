@@ -3898,7 +3898,7 @@ VMFunction *FxVMFunctionCall::GetDirectFunction()
 	// then it can be a "direct" function. That is, the DECORATE
 	// definition can call that function directly without wrapping
 	// it inside VM code.
-	if ((ArgList ? ArgList->Size() : 0) == 0 && (Function->Flags & VARF_Action))
+	if ((ArgList ? ArgList->Size() : 0) == 0 && (Function->Variants[0].Flags & VARF_Action))
 	{
 		return Function->Variants[0].Implementation;
 	}
@@ -3920,8 +3920,8 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	auto argtypes = proto->ArgumentTypes;
 
 	int implicit;
-	if (Function->Flags & VARF_Action) implicit = 3;
-	else if (Function->Flags & VARF_Method) implicit = 1;
+	if (Function->Variants[0].Flags & VARF_Action) implicit = 3;
+	else if (Function->Variants[0].Flags & VARF_Method) implicit = 1;
 	else implicit = 0;
 
 	if (ArgList != NULL)
@@ -4014,15 +4014,15 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	// For ZSCRIPT 'self' is properly used for the state's owning actor, meaning we have to pass the second argument here.
 
 	// If both functions are non-action or both are action, there is no need for special treatment.
-	if (!OwnerIsSelf || (!!(Function->Flags & VARF_Action) == build->IsActionFunc))
+	if (!OwnerIsSelf || (!!(Function->Variants[0].Flags & VARF_Action) == build->IsActionFunc))
 	{
 		// Emit code to pass implied parameters
-		if (Function->Flags & VARF_Method)
+		if (Function->Variants[0].Flags & VARF_Method)
 		{
 			build->Emit(OP_PARAM, 0, REGT_POINTER, 0);
 			count += 1;
 		}
-		if (Function->Flags & VARF_Action)
+		if (Function->Variants[0].Flags & VARF_Action)
 		{
 			static_assert(NAP == 3, "This code needs to be updated if NAP changes");
 			if (build->IsActionFunc)
@@ -4041,17 +4041,14 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	}
 	else
 	{
-		// There are two possibilities here: 
-		// Calling a non-action function from an action function.
-		// In that case the 'stateowner' pointer needs to be used as self.
-		if (build->IsActionFunc && (Function->Flags & VARF_Method))
+		if (build->IsActionFunc && (Function->Variants[0].Flags & VARF_Method))
 		{
-			build->Emit(OP_PARAM, 0, REGT_POINTER, 1);
+			build->Emit(OP_PARAM, 0, REGT_POINTER, 0);
 			count += 1;
 		}
 		// and calling an action function from a non-action function.
 		// This must be blocked because it lacks crucial information.
-		if (!build->IsActionFunc && (Function->Flags & VARF_Action))
+		if (!build->IsActionFunc && (Function->Variants[0].Flags & VARF_Action))
 		{
 			// This case should be eliminated in the analyzing stage.
 			I_Error("Cannot call action function from non-action functions.");

@@ -474,9 +474,8 @@ void ParseFunctionDef(FScanner &sc, PClassActor *cls, FName funcname,
 
 	if (afd != NULL)
 	{
-		PFunction *sym = new PFunction(funcname);
-		sym->AddVariant(NewPrototype(rets, args), argflags, argnames, *(afd->VMPointer));
-		sym->Flags = funcflags;
+		PFunction *sym = new PFunction(cls, funcname);
+		sym->AddVariant(NewPrototype(rets, args), argflags, argnames, *(afd->VMPointer), funcflags);
 		if (cls->Symbols.AddSymbol(sym) == NULL)
 		{
 			delete sym;

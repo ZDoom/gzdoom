@@ -2119,7 +2119,7 @@ static int PatchCodePtrs (int dummy)
 				else
 				{
 					TArray<DWORD> &args = sym->Variants[0].ArgFlags;
-					if ((sym->Flags & (VARF_Method | VARF_Action)) != (VARF_Method | VARF_Action) || (args.Size() > NAP && !(args[NAP] & VARF_Optional)))
+					if ((sym->Variants[0].Flags & (VARF_Method | VARF_Action)) != (VARF_Method | VARF_Action) || (args.Size() > NAP && !(args[NAP] & VARF_Optional)))
 					{
 						Printf("Frame %d: Incompatible code pointer '%s'\n", frame, Line2);
 						sym = NULL;
@@ -2731,7 +2731,7 @@ static bool LoadDehSupp ()
 						else
 						{
 							TArray<DWORD> &args = sym->Variants[0].ArgFlags;
-							if ((sym->Flags & (VARF_Method|VARF_Action)) != (VARF_Method | VARF_Action) || (args.Size() > NAP && !(args[NAP] & VARF_Optional)))
+							if ((sym->Variants[0].Flags & (VARF_Method|VARF_Action)) != (VARF_Method | VARF_Action) || (args.Size() > NAP && !(args[NAP] & VARF_Optional)))
 							{
 								sc.ScriptMessage("Incompatible code pointer '%s'", sc.String);
 							}

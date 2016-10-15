@@ -142,9 +142,8 @@ PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, i
 	rets[0] = returntype != nullptr? returntype : TypeError;	// Use TypeError as placeholder if we do not know the return type yet.
 	SetImplicitArgs(&args, &argflags, &argnames, containingclass, flags);
 
-	PFunction *sym = new PFunction(NAME_None);	// anonymous functions do not have names.
-	sym->AddVariant(NewPrototype(rets, args), argflags, argnames, nullptr);
-	sym->Flags = VARF_Action;
+	PFunction *sym = new PFunction(containingclass, NAME_None);	// anonymous functions do not have names.
+	sym->AddVariant(NewPrototype(rets, args), argflags, argnames, nullptr, VARF_Action|VARF_Method);
 	return sym;
 }
 

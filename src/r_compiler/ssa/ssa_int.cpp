@@ -47,6 +47,11 @@ SSAInt SSAInt::add(SSAInt b, bool no_unsigned_wrap, bool no_signed_wrap)
 	return SSAInt::from_llvm(SSAScope::builder().CreateAdd(v, b.v, SSAScope::hint(), no_unsigned_wrap, no_signed_wrap));
 }
 
+SSAInt SSAInt::ashr(int bits)
+{
+	return SSAInt::from_llvm(SSAScope::builder().CreateAShr(v, bits, SSAScope::hint()));
+}
+
 SSAInt operator+(const SSAInt &a, const SSAInt &b)
 {
 	return SSAInt::from_llvm(SSAScope::builder().CreateAdd(a.v, b.v, SSAScope::hint()));

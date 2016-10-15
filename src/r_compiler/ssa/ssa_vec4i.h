@@ -35,8 +35,6 @@ public:
 	static SSAVec4i combinehi(SSAVec8s v0, SSAVec8s v1);
 	static SSAVec4i combinelo(SSAVec8s v0, SSAVec8s v1);
 	static SSAVec4i sqrt(SSAVec4i f);
-	//static SSAVec4i min_sse41(SSAVec4i a, SSAVec4i b);
-	//static SSAVec4i max_sse41(SSAVec4i a, SSAVec4i b);
 	static SSAVec4i from_llvm(llvm::Value *v) { return SSAVec4i(v); }
 	static llvm::Type *llvm_type();
 

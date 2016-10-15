@@ -49,7 +49,7 @@ fixed_t		sky1cyl,		sky2cyl;
 double		sky1pos,		sky2pos;
 
 // [RH] Stretch sky texture if not taller than 128 pixels?
-CUSTOM_CVAR (Bool, r_stretchsky, true, CVAR_ARCHIVE)
+CUSTOM_CVAR (Bool, r_stretchsky, false, CVAR_ARCHIVE)
 {
 	R_InitSkyMap ();
 }

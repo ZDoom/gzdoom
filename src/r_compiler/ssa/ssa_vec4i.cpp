@@ -171,20 +171,6 @@ SSAVec4i SSAVec4i::sqrt(SSAVec4i f)
 	return SSAVec4i::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse2_sqrt_pd), f.v, SSAScope::hint()));
 }
 
-/*
-SSAVec4i SSAVec4i::min_sse41(SSAVec4i a, SSAVec4i b)
-{
-	llvm::Value *values[2] = { a.v, b.v };
-	return SSAVec4i::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse41_pminsd), values, SSAScope::hint()));
-}
-
-SSAVec4i SSAVec4i::max_sse41(SSAVec4i a, SSAVec4i b)
-{
-	llvm::Value *values[2] = { a.v, b.v };
-	return SSAVec4i::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse41_pmaxsd), values, SSAScope::hint()));
-}
-*/
-
 SSAVec4i operator+(const SSAVec4i &a, const SSAVec4i &b)
 {
 	return SSAVec4i::from_llvm(SSAScope::builder().CreateAdd(a.v, b.v, SSAScope::hint()));

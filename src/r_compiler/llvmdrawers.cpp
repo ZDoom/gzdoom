@@ -4,6 +4,7 @@
 #include "r_compiler/fixedfunction/drawspancodegen.h"
 #include "r_compiler/fixedfunction/drawwallcodegen.h"
 #include "r_compiler/fixedfunction/drawcolumncodegen.h"
+#include "r_compiler/fixedfunction/drawskycodegen.h"
 #include "r_compiler/ssa/ssa_function.h"
 #include "r_compiler/ssa/ssa_scope.h"
 #include "r_compiler/ssa/ssa_for_block.h"
@@ -48,10 +49,12 @@ private:
 	void CodegenDrawColumn(const char *name, DrawColumnVariant variant, DrawColumnMethod method);
 	void CodegenDrawSpan(const char *name, DrawSpanVariant variant);
 	void CodegenDrawWall(const char *name, DrawWallVariant variant, int columns);
+	void CodegenDrawSky(const char *name, DrawSkyVariant variant, int columns);
 
 	static llvm::Type *GetDrawColumnArgsStruct(llvm::LLVMContext &context);
 	static llvm::Type *GetDrawSpanArgsStruct(llvm::LLVMContext &context);
 	static llvm::Type *GetDrawWallArgsStruct(llvm::LLVMContext &context);
+	static llvm::Type *GetDrawSkyArgsStruct(llvm::LLVMContext &context);
 	static llvm::Type *GetWorkerThreadDataStruct(llvm::LLVMContext &context);
 
 	LLVMProgram mProgram;
@@ -140,6 +143,10 @@ LLVMDrawersImpl::LLVMDrawersImpl()
 	CodegenDrawWall("tmvline4_subclamp", DrawWallVariant::SubClamp, 4);
 	CodegenDrawWall("tmvline1_revsubclamp", DrawWallVariant::RevSubClamp, 1);
 	CodegenDrawWall("tmvline4_revsubclamp", DrawWallVariant::RevSubClamp, 4);
+	CodegenDrawSky("DrawSky1", DrawSkyVariant::Single, 1);
+	CodegenDrawSky("DrawSky4", DrawSkyVariant::Single, 4);
+	CodegenDrawSky("DrawDoubleSky1", DrawSkyVariant::Double, 1);
+	CodegenDrawSky("DrawDoubleSky4", DrawSkyVariant::Double, 4);
 
 	mProgram.CreateEE();
 
@@ -201,6 +208,10 @@ LLVMDrawersImpl::LLVMDrawersImpl()
 	tmvline4_subclamp = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("tmvline4_subclamp");
 	tmvline1_revsubclamp = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("tmvline1_revsubclamp");
 	tmvline4_revsubclamp = mProgram.GetProcAddress<void(const DrawWallArgs *, const WorkerThreadData *)>("tmvline4_revsubclamp");
+	DrawSky1 = mProgram.GetProcAddress<void(const DrawSkyArgs *, const WorkerThreadData *)>("DrawSky1");
+	DrawSky4 = mProgram.GetProcAddress<void(const DrawSkyArgs *, const WorkerThreadData *)>("DrawSky4");
+	DrawDoubleSky1 = mProgram.GetProcAddress<void(const DrawSkyArgs *, const WorkerThreadData *)>("DrawDoubleSky1");
+	DrawDoubleSky4 = mProgram.GetProcAddress<void(const DrawSkyArgs *, const WorkerThreadData *)>("DrawDoubleSky4");
 
 #if 0
 	std::vector<uint32_t> foo(1024 * 4);
@@ -292,6 +303,25 @@ void LLVMDrawersImpl::CodegenDrawWall(const char *name, DrawWallVariant variant,
 		I_FatalError("verifyFunction failed for " __FUNCTION__);
 }
 
+void LLVMDrawersImpl::CodegenDrawSky(const char *name, DrawSkyVariant variant, int columns)
+{
+	llvm::IRBuilder<> builder(mProgram.context());
+	SSAScope ssa_scope(&mProgram.context(), mProgram.module(), &builder);
+
+	SSAFunction function(name);
+	function.add_parameter(GetDrawSkyArgsStruct(mProgram.context()));
+	function.add_parameter(GetWorkerThreadDataStruct(mProgram.context()));
+	function.create_public();
+
+	DrawSkyCodegen codegen;
+	codegen.Generate(variant, columns == 4, function.parameter(0), function.parameter(1));
+
+	builder.CreateRetVoid();
+
+	if (llvm::verifyFunction(*function.func))
+		I_FatalError("verifyFunction failed for " __FUNCTION__);
+}
+
 llvm::Type *LLVMDrawersImpl::GetDrawColumnArgsStruct(llvm::LLVMContext &context)
 {
 	std::vector<llvm::Type *> elements;
@@ -373,6 +403,17 @@ llvm::Type *LLVMDrawersImpl::GetDrawWallArgsStruct(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t desaturate;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t flags;
 	return llvm::StructType::create(context, elements, "DrawWallArgs", false)->getPointerTo();
+}
+
+llvm::Type *LLVMDrawersImpl::GetDrawSkyArgsStruct(llvm::LLVMContext &context)
+{
+	std::vector<llvm::Type *> elements;
+	elements.push_back(llvm::Type::getInt8PtrTy(context));
+	for (int i = 0; i < 8; i++)
+		elements.push_back(llvm::Type::getInt8PtrTy(context));
+	for (int i = 0; i < 15; i++)
+		elements.push_back(llvm::Type::getInt32Ty(context));
+	return llvm::StructType::create(context, elements, "DrawSkyArgs", false)->getPointerTo();
 }
 
 llvm::Type *LLVMDrawersImpl::GetWorkerThreadDataStruct(llvm::LLVMContext &context)

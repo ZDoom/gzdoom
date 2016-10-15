@@ -20,6 +20,7 @@ public:
 	static SSAInt MAX(SSAInt a, SSAInt b);
 
 	SSAInt add(SSAInt b, bool no_unsigned_wrap, bool no_signed_wrap);
+	SSAInt ashr(int bits);
 
 	llvm::Value *v;
 };

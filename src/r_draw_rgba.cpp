@@ -377,6 +377,47 @@ public:
 	}
 };
 
+class DrawSkyLLVMCommand : public DrawerCommand
+{
+protected:
+	DrawSkyArgs args;
+
+	WorkerThreadData ThreadData(DrawerThread *thread)
+	{
+		WorkerThreadData d;
+		d.core = thread->core;
+		d.num_cores = thread->num_cores;
+		d.pass_start_y = thread->pass_start_y;
+		d.pass_end_y = thread->pass_end_y;
+		return d;
+	}
+
+public:
+	DrawSkyLLVMCommand(uint32_t solid_top, uint32_t solid_bottom)
+	{
+		args.dest = (uint32_t*)dc_dest;
+		args.dest_y = _dest_y;
+		args.count = dc_count;
+		args.pitch = dc_pitch;
+		for (int i = 0; i < 4; i++)
+		{
+			args.texturefrac[i] = vplce[i];
+			args.iscale[i] = vince[i];
+			args.source0[i] = (const uint32_t *)bufplce[i];
+			args.source1[i] = (const uint32_t *)bufplce2[i];
+		}
+		args.textureheight0 = bufheight[0];
+		args.textureheight1 = bufheight[1];
+		args.top_color = solid_top;
+		args.bottom_color = solid_bottom;
+	}
+
+	FString DebugInfo() override
+	{
+		return "DrawSkyLLVMCommand\n" + args.ToString();
+	}
+};
+
 #define DECLARE_DRAW_COMMAND(name, func, base) \
 class name##LLVMCommand : public base \
 { \
@@ -416,6 +457,10 @@ DECLARE_DRAW_COMMAND(FillColumnAdd, FillColumnAdd, DrawColumnLLVMCommand);
 DECLARE_DRAW_COMMAND(FillColumnAddClamp, FillColumnAddClamp, DrawColumnLLVMCommand);
 DECLARE_DRAW_COMMAND(FillColumnSubClamp, FillColumnSubClamp, DrawColumnLLVMCommand);
 DECLARE_DRAW_COMMAND(FillColumnRevSubClamp, FillColumnRevSubClamp, DrawColumnLLVMCommand);
+DECLARE_DRAW_COMMAND(DrawSingleSky1, DrawSky1, DrawSkyLLVMCommand);
+DECLARE_DRAW_COMMAND(DrawSingleSky4, DrawSky4, DrawSkyLLVMCommand);
+DECLARE_DRAW_COMMAND(DrawDoubleSky1, DrawDoubleSky1, DrawSkyLLVMCommand);
+DECLARE_DRAW_COMMAND(DrawDoubleSky4, DrawDoubleSky4, DrawSkyLLVMCommand);
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -1202,6 +1247,26 @@ void ApplySpecialColormapRGBACommand::Execute(DrawerThread *thread)
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
+
+void R_DrawSingleSkyCol1(uint32_t solid_top, uint32_t solid_bottom)
+{
+	DrawerCommandQueue::QueueCommand<DrawSingleSky1LLVMCommand>(solid_top, solid_bottom);
+}
+
+void R_DrawSingleSkyCol4(uint32_t solid_top, uint32_t solid_bottom)
+{
+	DrawerCommandQueue::QueueCommand<DrawSingleSky4LLVMCommand>(solid_top, solid_bottom);
+}
+
+void R_DrawDoubleSkyCol1(uint32_t solid_top, uint32_t solid_bottom)
+{
+	DrawerCommandQueue::QueueCommand<DrawDoubleSky1LLVMCommand>(solid_top, solid_bottom);
+}
+
+void R_DrawDoubleSkyCol4(uint32_t solid_top, uint32_t solid_bottom)
+{
+	DrawerCommandQueue::QueueCommand<DrawDoubleSky4LLVMCommand>(solid_top, solid_bottom);
+}
 
 void R_DrawColumn_rgba()
 {

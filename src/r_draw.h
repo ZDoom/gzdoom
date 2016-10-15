@@ -381,6 +381,11 @@ void R_SetDSColorMapLight(FSWColormap *base_colormap, float light, int shade);
 
 void R_SetTranslationMap(lighttable_t *translation);
 
+void R_DrawSingleSkyCol1(uint32_t solid_top, uint32_t solid_bottom);
+void R_DrawSingleSkyCol4(uint32_t solid_top, uint32_t solid_bottom);
+void R_DrawDoubleSkyCol1(uint32_t solid_top, uint32_t solid_bottom);
+void R_DrawDoubleSkyCol4(uint32_t solid_top, uint32_t solid_bottom);
+
 extern bool r_swtruecolor;
 
 EXTERN_CVAR(Bool, r_multithreaded);

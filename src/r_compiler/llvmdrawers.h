@@ -133,6 +133,29 @@ struct DrawColumnArgs
 	}
 };
 
+struct DrawSkyArgs
+{
+	uint32_t *dest;
+	const uint32_t *source0[4];
+	const uint32_t *source1[4];
+	int32_t pitch;
+	int32_t count;
+	int32_t dest_y;
+	uint32_t texturefrac[4];
+	uint32_t iscale[4];
+	uint32_t textureheight0;
+	uint32_t textureheight1;
+	uint32_t top_color;
+	uint32_t bottom_color;
+
+	FString ToString()
+	{
+		FString info;
+		info.Format("dest_y = %i, count = %i", dest_y, count);
+		return info;
+	}
+};
+
 class LLVMDrawers
 {
 public:
@@ -202,6 +225,11 @@ public:
 	void(*tmvline4_subclamp)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
 	void(*tmvline1_revsubclamp)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
 	void(*tmvline4_revsubclamp)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
+
+	void(*DrawSky1)(const DrawSkyArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawSky4)(const DrawSkyArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawDoubleSky1)(const DrawSkyArgs *, const WorkerThreadData *) = nullptr;
+	void(*DrawDoubleSky4)(const DrawSkyArgs *, const WorkerThreadData *) = nullptr;
 
 private:
 	static LLVMDrawers *Singleton;

@@ -2290,7 +2290,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		auto fcall = static_cast<ZCC_ExprFuncCall *>(ast);
 		assert(fcall->Function->NodeType == AST_ExprID);	// of course this cannot remain. Right now nothing more complex can come along but later this will have to be decomposed into 'self' and the actual function name.
 		auto fname = static_cast<ZCC_ExprID *>(fcall->Function)->Identifier;
-		return new FxFunctionCall(fname, ConvertNodeList(fcall->Parameters), *ast);
+		return new FxFunctionCall(fname, NAME_None, ConvertNodeList(fcall->Parameters), *ast);
 		//return ConvertFunctionCall(fcall->Function, ConvertNodeList(fcall->Parameters), ConvertClass, *ast);
 	}
 

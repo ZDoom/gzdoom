@@ -3643,11 +3643,30 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxFunctionCall::FxFunctionCall(FName methodname, FArgumentList *args, const FScriptPosition &pos)
+FxFunctionCall::FxFunctionCall(FName methodname, FName rngname, FArgumentList *args, const FScriptPosition &pos)
 : FxExpression(pos)
 {
 	MethodName = methodname;
+	RNG = nullptr;
 	ArgList = args;
+	if (rngname != NAME_None)
+	{
+		switch (MethodName)
+		{
+		case NAME_Random:
+		case NAME_FRandom:
+		case NAME_RandomPick:
+		case NAME_FRandomPick:
+		case NAME_Random2:
+			RNG = FRandom::StaticFindRNG(rngname.GetChars());
+			break;
+
+		default:
+			pos.Message(MSG_ERROR, "Cannot use named RNGs with %s", MethodName.GetChars());
+			break;
+
+		}
+	}
 }
 
 //==========================================================================
@@ -3749,7 +3768,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		return x->Resolve(ctx);
 	}
 
-	// Last but not least: Check builtins. The random functions will have to be duplicated for the case where an RNG is specified.
+	// Last but not least: Check builtins. The random functions can take a named RNG if specified.
 	// Note that for all builtins the used arguments have to be nulled in the ArgList so that they won't get deleted before they get used.
 	FxExpression *func = nullptr;
 
@@ -3759,7 +3778,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	case NAME_Random:
 		if (CheckArgSize(NAME_Random, ArgList, 2, 2, ScriptPosition))
 		{
-			func = new FxRandom(nullptr, (*ArgList)[0], (*ArgList)[1], ScriptPosition, ctx.FromDecorate);
+			func = new FxRandom(RNG, (*ArgList)[0], (*ArgList)[1], ScriptPosition, ctx.FromDecorate);
 			(*ArgList)[0] = (*ArgList)[1] = nullptr;
 		}
 		break;
@@ -3767,7 +3786,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	case NAME_FRandom:
 		if (CheckArgSize(NAME_FRandom, ArgList, 2, 2, ScriptPosition))
 		{
-			func = new FxFRandom(nullptr, (*ArgList)[0], (*ArgList)[1], ScriptPosition);
+			func = new FxFRandom(RNG, (*ArgList)[0], (*ArgList)[1], ScriptPosition);
 			(*ArgList)[0] = (*ArgList)[1] = nullptr;
 		}
 		break;
@@ -3776,7 +3795,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	case NAME_FRandomPick:
 		if (CheckArgSize(MethodName, ArgList, 1, -1, ScriptPosition))
 		{
-			func = new FxRandomPick(nullptr, *ArgList, MethodName == NAME_FRandomPick, ScriptPosition, ctx.FromDecorate);
+			func = new FxRandomPick(RNG, *ArgList, MethodName == NAME_FRandomPick, ScriptPosition, ctx.FromDecorate);
 			for (auto &i : *ArgList) i = nullptr;	// Ownership of items is transferred to FxMinMax but not ownership of the array itself, so Clear cannot be called here.
 		}
 		break;
@@ -3784,7 +3803,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	case NAME_Random2:
 		if (CheckArgSize(NAME_Random2, ArgList, 1, 1, ScriptPosition))
 		{
-			func = new FxRandom2(nullptr, (*ArgList)[0], ScriptPosition, ctx.FromDecorate);
+			func = new FxRandom2(RNG, (*ArgList)[0], ScriptPosition, ctx.FromDecorate);
 			(*ArgList)[0] = nullptr;
 		}
 		break;

@@ -649,7 +649,7 @@ void VMFunctionBuilder::BackpatchToHere(size_t loc)
 //==========================================================================
 FFunctionBuildList FunctionBuildList;
 
-VMFunction *FFunctionBuildList::AddFunction(PClass *cls, FxExpression *code, const FString &name, bool statecall)
+VMFunction *FFunctionBuildList::AddFunction(PFunction *functype, FxExpression *code, const FString &name, bool statecall)
 {
 	auto func = code->GetDirectFunction();
 	if (func != nullptr)
@@ -661,7 +661,7 @@ VMFunction *FFunctionBuildList::AddFunction(PClass *cls, FxExpression *code, con
 	//Printf("Adding %s\n", name.GetChars());
 
 	Item it;
-	it.Class = cls;
+	it.Func = functype;
 	it.Code = code;
 	it.DumpName = name;
 	it.Function = new VMScriptFunction;
@@ -684,8 +684,11 @@ void FFunctionBuildList::Build()
 	{
 		assert(item.Code != NULL);
 
+		// This needs to be fixed, so that the compile context receives the entire function symbol, including the containing class, the prototype and argument names, which will be needed to run the code generator
+		// As a first step this just needs to get working so fetch the class type from the prototype's argument list.
+		auto cls = static_cast<PClass*>(item.Func->Variants[0].Proto->ArgumentTypes[!!(item.Func->Flags & VARF_Action)]);
 		// We don't know the return type in advance for anonymous functions.
-		FCompileContext ctx(item.Class, nullptr);
+		FCompileContext ctx(cls, nullptr);
 		item.Code = item.Code->Resolve(ctx);
 		item.Proto = ctx.ReturnProto;
 
@@ -695,32 +698,15 @@ void FFunctionBuildList::Build()
 			VMFunctionBuilder buildit(true);
 
 			assert(item.Proto != nullptr);
-
-			int numargs;
-			int flags;
-
-			// Kludge alert. This needs to be done in a more universal fashion.
-			// Right now there's only action and damage functions, so for the time being
-			// this will do to get the whole thing started first.
-
-			if (item.type == 1)	// anonymous action function
-			{
-				numargs = NAP;
-				flags = VARF_Method | VARF_Action;
-			}
-			else
-			{
-				numargs = 1;
-				flags = VARF_Method;
-			}
+			auto numargs = item.Func->Variants[0].Proto->ArgumentTypes.Size();
 
 			// Generate prototype for this anonymous function
+			// Fixme: This later needs to do proper allocation for the function's entire argument list, once non-anonymous functions can be done.
 			buildit.Registers[REGT_POINTER].Get(numargs);
-			TArray<PType *> args(numargs);
-			SetImplicitArgs(&args, nullptr, item.Class, flags);
 
 			VMScriptFunction *sfunc = item.Function;
-			item.Function->Proto = NewPrototype(item.Proto->ReturnTypes, args);
+			// create a new prototype from the now known return type and the argument list of the function's template prototype.
+			item.Function->Proto = NewPrototype(item.Proto->ReturnTypes, item.Func->Variants[0].Proto->ArgumentTypes);
 
 			// Emit code
 			item.Code->Emit(&buildit);
@@ -731,7 +717,7 @@ void FFunctionBuildList::Build()
 			{
 				char label[64];
 				int labellen = mysnprintf(label, countof(label), item.DumpName,
-				item.Class->TypeName.GetChars());
+				cls->TypeName.GetChars());
 				DumpFunction(dump, sfunc, label, labellen);
 				codesize += sfunc->CodeSize;
 			}

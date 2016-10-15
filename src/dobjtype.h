@@ -692,14 +692,15 @@ class PFunction : public PSymbol
 public:
 	struct Variant
 	{
-		//PPrototype *Proto;
+		PPrototype *Proto;
 		VMFunction *Implementation;
 		TArray<DWORD> ArgFlags;		// Should be the same length as Proto->ArgumentTypes
+		TArray<FName> ArgNames;		// we need the names to access them later when the function gets compiled.
 	};
 	TArray<Variant> Variants;
 	DWORD Flags;
 
-	unsigned AddVariant(PPrototype *proto, TArray<DWORD> &argflags, VMFunction *impl);
+	unsigned AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl);
 
 	size_t PropagateMark();
 

@@ -80,32 +80,72 @@ PClassActor *QuestItemClasses[31];
 //
 //==========================================================================
 
-void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, PClass *cls, DWORD funcflags)
+void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FName> *argnames, PClass *cls, DWORD funcflags)
 {
 	// Must be called before adding any other arguments.
-	assert(args == NULL || args->Size() == 0);
-	assert(argflags == NULL || argflags->Size() == 0);
+	assert(args == nullptr || args->Size() == 0);
+	assert(argflags == nullptr || argflags->Size() == 0);
 
 	if (funcflags & VARF_Method)
 	{
 		// implied self pointer
-		if (args != NULL)		args->Push(NewClassPointer(cls)); 
-		if (argflags != NULL)	argflags->Push(VARF_Implicit);
+		if (args != nullptr)		args->Push(cls); 
+		if (argflags != nullptr)	argflags->Push(VARF_Implicit);
+		if (argnames != nullptr)	argnames->Push(NAME_self);
 	}
 	if (funcflags & VARF_Action)
 	{
 		// implied caller and callingstate pointers
-		if (args != NULL)
+		if (args != nullptr)
 		{
-			args->Insert(0, NewClassPointer(RUNTIME_CLASS(AActor)));	// the caller must go before self due to an old design mistake.
-			args->Push(TypeState);
+			// Special treatment for weapons and CustomInventorys: 'self' is not the defining class but the actual user of the item, so this pointer must be of type 'Actor'
+			/* if (cls->IsDescendantOf(RUNTIME_CLASS(AStateProvider)))
+			{
+				args->Insert(0, RUNTIME_CLASS(AActor));	// this must go in before the real pointer to the containing class.
+			}
+			else*/
+			{
+				args->Push(cls);
+			}
+			args->Push(TypeState/*Info*/);	// fixme: TypeState is not the correct type here!!!
 		}
-		if (argflags != NULL)
+		if (argflags != nullptr)
 		{
 			argflags->Push(VARF_Implicit);
 			argflags->Push(VARF_Implicit);
+		}
+		if (argnames != nullptr)
+		{
+			argnames->Push(NAME_invoker);
+			argnames->Push(NAME_stateinfo);
 		}
 	}
+}
+
+//==========================================================================
+//
+// CreateAnonymousFunction
+//
+// Creates a function symbol for an anonymous function
+// This contains actual info about the implied variables which is needed
+// during code generation.
+//
+//==========================================================================
+
+PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, int flags)
+{
+	TArray<PType *> rets(1);
+	TArray<PType *> args;
+	TArray<uint32_t> argflags;
+	TArray<FName> argnames;
+
+	rets[0] = returntype != nullptr? returntype : TypeError;	// Use TypeError as placeholder if we do not know the return type yet.
+	SetImplicitArgs(&args, &argflags, &argnames, containingclass, flags);
+
+	PFunction *sym = new PFunction(NAME_None);	// anonymous functions do not have names.
+	sym->AddVariant(NewPrototype(rets, args), argflags, argnames, nullptr);
+	sym->Flags = VARF_Action;
+	return sym;
 }
 
 //==========================================================================

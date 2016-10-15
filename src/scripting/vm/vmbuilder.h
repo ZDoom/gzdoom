@@ -101,7 +101,7 @@ class FFunctionBuildList
 {
 	struct Item
 	{
-		PClass *Class = nullptr;
+		PFunction *Func = nullptr;
 		FxExpression *Code = nullptr;
 		PPrototype *Proto = nullptr;
 		VMScriptFunction *Function = nullptr;
@@ -112,7 +112,7 @@ class FFunctionBuildList
 	TArray<Item> mItems;
 
 public:
-	VMFunction *AddFunction(PClass *cls, FxExpression *code, const FString &name, bool statecall = false);
+	VMFunction *AddFunction(PFunction *func, FxExpression *code, const FString &name, bool statecall = false);
 	void Build();
 };
 

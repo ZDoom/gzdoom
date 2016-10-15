@@ -657,7 +657,8 @@ DEFINE_PROPERTY(damage, X, Actor)
 	}
 	else
 	{
-		defaults->DamageFunc = FunctionBuildList.AddFunction(bag.Info, id, FStringf("%s.DamageFunction", bag.Info->TypeName.GetChars()), false);
+		auto funcsym = CreateAnonymousFunction(bag.Info, TypeSInt32, VARF_Method);
+		defaults->DamageFunc = FunctionBuildList.AddFunction(funcsym, id, FStringf("%s.DamageFunction", bag.Info->TypeName.GetChars()), false);
 	}
 }
 

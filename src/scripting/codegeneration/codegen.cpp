@@ -3883,7 +3883,7 @@ FxVMFunctionCall::~FxVMFunctionCall()
 PPrototype *FxVMFunctionCall::ReturnProto()
 {
 	EmitTail = true;
-	return Function->Variants[0].Implementation->Proto;
+	return Function->Variants[0].Proto;
 }
 
 //==========================================================================
@@ -3916,7 +3916,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 	bool failed = false;
-	auto proto = Function->Variants[0].Implementation->Proto;
+	auto proto = Function->Variants[0].Proto;
 	auto argtypes = proto->ArgumentTypes;
 
 	int implicit;

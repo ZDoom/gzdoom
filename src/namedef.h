@@ -717,7 +717,7 @@ xx(Max_10_Exp)
 
 // implicit function parameters
 xx(self)
-xx(caller)
+xx(invoker)
 xx(stateinfo)
 
 xx(__decorate_internal_int__)

@@ -322,7 +322,8 @@ do_stop:
 endofstate:
 			if (ScriptCode != nullptr)
 			{
-				state.ActionFunc = FunctionBuildList.AddFunction(actor, ScriptCode, FStringf("%s.StateFunction.%d", actor->TypeName.GetChars(), bag.statedef.GetStateCount()), true);
+				auto funcsym = CreateAnonymousFunction(actor, nullptr, VARF_Method | VARF_Action);
+				state.ActionFunc = FunctionBuildList.AddFunction(funcsym, ScriptCode, FStringf("%s.StateFunction.%d", actor->TypeName.GetChars(), bag.statedef.GetStateCount()), true);
 			}
 			int count = bag.statedef.AddStates(&state, statestring);
 			if (count < 0)
@@ -595,7 +596,7 @@ FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, B
 void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression *> &out_params,
 	PFunction *afd, FString statestring, FStateDefinitions *statedef)
 {
-	const TArray<PType *> &params = afd->Variants[0].Implementation->Proto->ArgumentTypes;
+	const TArray<PType *> &params = afd->Variants[0].Proto->ArgumentTypes;
 	const TArray<DWORD> &paramflags = afd->Variants[0].ArgFlags;
 	int numparams = (int)params.Size();
 	int pnum = 0;

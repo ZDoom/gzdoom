@@ -1870,7 +1870,7 @@ void ZCCCompiler::InitFunctions()
 	TArray<PType *> rets(1);
 	TArray<PType *> args;
 	TArray<uint32_t> argflags;
-	TArray<ENamedName> argnames;
+	TArray<FName> argnames;
 
 	for (auto c : Classes)
 	{
@@ -1925,20 +1925,7 @@ void ZCCCompiler::InitFunctions()
 						Error(f, "The function '%s' has not been exported from the executable.", FName(f->Name).GetChars());
 					}
 				}
-				SetImplicitArgs(&args, &argflags, c->Type(), varflags);
-				// Give names to the implicit parameters.
-				// Note that 'self' is the second argument on action functions, because this is the one referring to the owning class.
-				if (varflags & VARF_Action)
-				{
-					argnames.Push(NAME_caller);
-					argnames.Push(NAME_self);
-					argnames.Push(NAME_stateinfo);
-				}
-				else if (varflags & VARF_Method)
-				{
-					argnames.Push(NAME_self);
-				}
-
+				SetImplicitArgs(&args, &argflags, &argnames, c->Type(), varflags);
 				auto p = f->Params;
 				if (p != nullptr)
 				{
@@ -1974,7 +1961,7 @@ void ZCCCompiler::InitFunctions()
 				}
 
 				PFunction *sym = new PFunction(f->Name);
-				sym->AddVariant(NewPrototype(rets, args), argflags, afd == nullptr? nullptr : *(afd->VMPointer));
+				sym->AddVariant(NewPrototype(rets, args), argflags, argnames, afd == nullptr? nullptr : *(afd->VMPointer));
 				sym->Flags = varflags;
 				c->Type()->Symbols.ReplaceSymbol(sym);
 
@@ -2025,7 +2012,7 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClassActor *cls, ZCC_TreeNode *a
 		{
 			if (fc->Parameters == nullptr && (afd->Flags & VARF_Action))
 			{
-				// This is the simple case which doesn't require work on the tree.
+				// We can use this function directly without wrapping it in a caller.
 				return new FxVMFunctionCall(afd, nullptr, *af, true);
 			}
 		}
@@ -2040,6 +2027,7 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClassActor *cls, ZCC_TreeNode *a
 			// Action specials fall through to the code generator.
 		}
 	}
+	ConvertClass = cls;
 	return ConvertAST(af);
 
 	//Error(af, "Complex action functions not supported yet.");
@@ -2173,7 +2161,8 @@ void ZCCCompiler::CompileStates()
 						auto code = SetupActionFunction(static_cast<PClassActor *>(c->Type()), sl->Action);
 						if (code != nullptr)
 						{
-							state.ActionFunc = FunctionBuildList.AddFunction(c->Type(), code, FStringf("%s.StateFunction.%d", c->Type()->TypeName.GetChars(), statedef.GetStateCount()), true);
+							auto funcsym = CreateAnonymousFunction(c->Type(), nullptr, VARF_Method | VARF_Action);
+							state.ActionFunc = FunctionBuildList.AddFunction(funcsym, code, FStringf("%s.StateFunction.%d", c->Type()->TypeName.GetChars(), statedef.GetStateCount()), true);
 						}
 					}
 
@@ -2289,10 +2278,10 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 	case AST_ExprFuncCall:
 	{
 		auto fcall = static_cast<ZCC_ExprFuncCall *>(ast);
-		//return ConvertFunctionCall(fcall);
 		assert(fcall->Function->NodeType == AST_ExprID);	// of course this cannot remain. Right now nothing more complex can come along but later this will have to be decomposed into 'self' and the actual function name.
 		auto fname = static_cast<ZCC_ExprID *>(fcall->Function)->Identifier;
 		return new FxFunctionCall(nullptr, fname, ConvertNodeList(fcall->Parameters), *ast);
+		//return ConvertFunctionCall(fcall->Function, ConvertNodeList(fcall->Parameters), ConvertClass, *ast);
 	}
 
 	case AST_FuncParm:

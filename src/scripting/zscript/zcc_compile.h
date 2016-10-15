@@ -143,6 +143,7 @@ private:
 	FArgumentList *ConvertNodeList(ZCC_TreeNode *head);
 
 	DObject *Outer;
+	PClass *ConvertClass;	// class type to be used when resoving symbold while converting an AST
 	PSymbolTable *GlobalTreeNodes;
 	PSymbolTable *OutputSymbols;
 	ZCC_AST &AST;

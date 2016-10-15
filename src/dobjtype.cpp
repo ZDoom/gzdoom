@@ -2490,14 +2490,14 @@ size_t PFunction::PropagateMark()
 //
 //==========================================================================
 
-unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, VMFunction *impl)
+unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl)
 {
 	Variant variant;
 
-	//variant.Proto = proto;
+	variant.Proto = proto;
 	variant.ArgFlags = argflags;
 	variant.Implementation = impl;
-	impl->Proto = proto;
+	if (impl != nullptr) impl->Proto = proto;
 	return Variants.Push(variant);
 }
 

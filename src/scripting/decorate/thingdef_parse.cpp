@@ -458,6 +458,7 @@ void ParseFunctionDef(FScanner &sc, PClassActor *cls, FName funcname,
 	const AFuncDesc *afd;
 	TArray<PType *> args;
 	TArray<DWORD> argflags;
+	TArray<FName> argnames;
 
 	afd = FindFunction(funcname);
 	if (afd == NULL)
@@ -467,13 +468,14 @@ void ParseFunctionDef(FScanner &sc, PClassActor *cls, FName funcname,
 	}
 	sc.MustGetToken('(');
 
-	SetImplicitArgs(&args, &argflags, cls, funcflags);
+	SetImplicitArgs(&args, &argflags, &argnames, cls, funcflags);
+	// This function will be removed once all internal classes have been ported so don't bother filling in the function's argument names, because for anything going through here they'll never be used.
 	ParseArgListDef(sc, cls, args, argflags);
 
 	if (afd != NULL)
 	{
 		PFunction *sym = new PFunction(funcname);
-		sym->AddVariant(NewPrototype(rets, args), argflags, *(afd->VMPointer));
+		sym->AddVariant(NewPrototype(rets, args), argflags, argnames, *(afd->VMPointer));
 		sym->Flags = funcflags;
 		if (cls->Symbols.AddSymbol(sym) == NULL)
 		{

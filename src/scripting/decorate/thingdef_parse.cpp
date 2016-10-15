@@ -49,7 +49,7 @@
 #include "v_palette.h"
 #include "doomerrors.h"
 #include "i_system.h"
-#include "codegeneration/thingdef_exp.h"
+#include "codegeneration/codegen.h"
 #include "w_wad.h"
 #include "v_video.h"
 #include "version.h"

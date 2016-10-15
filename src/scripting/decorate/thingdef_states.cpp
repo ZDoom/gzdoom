@@ -54,7 +54,7 @@
 #include "s_sound.h"
 #include "i_system.h"
 #include "colormatcher.h"
-#include "codegeneration/thingdef_exp.h"
+#include "codegeneration/codegen.h"
 #include "version.h"
 #include "templates.h"
 #include "vmbuilder.h"

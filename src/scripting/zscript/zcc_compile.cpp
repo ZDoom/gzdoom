@@ -47,7 +47,7 @@
 #include "p_lnspec.h"
 #include "i_system.h"
 #include "gdtoa.h"
-#include "codegeneration/thingdef_exp.h"
+#include "codegeneration/codegen.h"
 #include "vmbuilder.h"
 
 #define DEFINING_CONST ((PSymbolConst *)(void *)1)
@@ -2290,6 +2290,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 	case AST_ExprFuncCall:
 	{
 		auto fcall = static_cast<ZCC_ExprFuncCall *>(ast);
+		//return ConvertFunctionCall(fcall);
 		assert(fcall->Function->NodeType == AST_ExprID);	// of course this cannot remain. Right now nothing more complex can come along but later this will have to be decomposed into 'self' and the actual function name.
 		auto fname = static_cast<ZCC_ExprID *>(fcall->Function)->Identifier;
 		return new FxFunctionCall(nullptr, fname, ConvertNodeList(fcall->Parameters), *ast);

@@ -1247,7 +1247,7 @@ set (PCH_SOURCES
 	scripting/thingdef.cpp
 	scripting/thingdef_data.cpp
 	scripting/thingdef_properties.cpp
-	scripting/codegeneration/thingdef_expression.cpp
+	scripting/codegeneration/codegen.cpp
 	scripting/decorate/olddecorations.cpp
 	scripting/decorate/thingdef_exp.cpp
 	scripting/decorate/thingdef_parse.cpp

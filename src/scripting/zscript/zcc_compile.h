@@ -111,13 +111,15 @@ private:
 	void CompileStates();
 	FxExpression *SetupActionFunction(PClassActor *cls, ZCC_TreeNode *sl);
 
+	bool SimplifyingConstant;
 	TArray<ZCC_ConstantDef *> Constants;
 	TArray<ZCC_StructWork *> Structs;
 	TArray<ZCC_ClassWork *> Classes;
 
 	PSymbolTreeNode *AddTreeNode(FName name, ZCC_TreeNode *node, PSymbolTable *treenodes, bool searchparents = false);
 
-	ZCC_Expression *Simplify(ZCC_Expression *root, PSymbolTable *Symbols);
+	ZCC_Expression *Simplify(ZCC_Expression *root, PSymbolTable *Symbols, bool wantconstant);
+	ZCC_Expression *DoSimplify(ZCC_Expression *root, PSymbolTable *Symbols);
 	ZCC_Expression *SimplifyUnary(ZCC_ExprUnary *unary, PSymbolTable *Symbols);
 	ZCC_Expression *SimplifyBinary(ZCC_ExprBinary *binary, PSymbolTable *Symbols);
 	ZCC_Expression *SimplifyMemberAccess(ZCC_ExprMemberAccess *dotop, PSymbolTable *Symbols);

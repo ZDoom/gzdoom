@@ -685,7 +685,7 @@ bool ZCCCompiler::CompileConstant(ZCC_ConstantDef *def, PSymbolTable *sym)
 	assert(def->Symbol == nullptr);
 
 	def->Symbol = DEFINING_CONST;	// avoid recursion
-	ZCC_Expression *val = Simplify(def->Value, sym);
+	ZCC_Expression *val = Simplify(def->Value, sym, true);
 	def->Value = val;
 	if (def->Symbol == DEFINING_CONST) def->Symbol = nullptr;
 	return (val->NodeType == AST_ExprConstant);
@@ -705,7 +705,13 @@ bool ZCCCompiler::CompileConstant(ZCC_ConstantDef *def, PSymbolTable *sym)
 //
 //==========================================================================
 
-ZCC_Expression *ZCCCompiler::Simplify(ZCC_Expression *root, PSymbolTable *sym)
+ZCC_Expression *ZCCCompiler::Simplify(ZCC_Expression *root, PSymbolTable *sym, bool wantconstant)
+{
+	SimplifyingConstant = wantconstant;
+	return  DoSimplify(root, sym);
+}
+
+ZCC_Expression *ZCCCompiler::DoSimplify(ZCC_Expression *root, PSymbolTable *sym)
 {
 	if (root->NodeType == AST_ExprUnary)
 	{
@@ -738,7 +744,7 @@ ZCC_Expression *ZCCCompiler::Simplify(ZCC_Expression *root, PSymbolTable *sym)
 
 ZCC_Expression *ZCCCompiler::SimplifyUnary(ZCC_ExprUnary *unary, PSymbolTable *sym)
 {
-	unary->Operand = Simplify(unary->Operand, sym);
+	unary->Operand = DoSimplify(unary->Operand, sym);
 	if (unary->Operand->Type == nullptr)
 	{
 		return unary;
@@ -763,8 +769,8 @@ ZCC_Expression *ZCCCompiler::SimplifyUnary(ZCC_ExprUnary *unary, PSymbolTable *s
 
 ZCC_Expression *ZCCCompiler::SimplifyBinary(ZCC_ExprBinary *binary, PSymbolTable *sym)
 {
-	binary->Left = Simplify(binary->Left, sym);
-	binary->Right = Simplify(binary->Right, sym);
+	binary->Left = DoSimplify(binary->Left, sym);
+	binary->Right = DoSimplify(binary->Right, sym);
 	if (binary->Left->Type == nullptr || binary->Right->Type == nullptr)
 	{
 		// We do not know yet what this is so we cannot promote it (yet.)
@@ -794,7 +800,8 @@ ZCC_Expression *ZCCCompiler::SimplifyMemberAccess(ZCC_ExprMemberAccess *dotop, P
 {
 	PSymbolTable *symtable;
 
-	dotop->Left = Simplify(dotop->Left, symt);
+	// TBD: Is it safe to simplify the left side here when not processing a constant?
+	dotop->Left = DoSimplify(dotop->Left, symt);
 
 	if (dotop->Left->Operation == PEX_TypeRef)
 	{ // Type refs can be evaluated now.
@@ -842,7 +849,6 @@ ZCC_Expression *ZCCCompiler::SimplifyFunctionCall(ZCC_ExprFuncCall *callop, PSym
 	ZCC_FuncParm *parm;
 	int parmcount = 0;
 
-	callop->Function = Simplify(callop->Function, sym);
 	parm = callop->Parameters;
 	if (parm != NULL)
 	{
@@ -850,10 +856,17 @@ ZCC_Expression *ZCCCompiler::SimplifyFunctionCall(ZCC_ExprFuncCall *callop, PSym
 		{
 			parmcount++;
 			assert(parm->NodeType == AST_FuncParm);
-			parm->Value = Simplify(parm->Value, sym);
+			parm->Value = DoSimplify(parm->Value, sym);
 			parm = static_cast<ZCC_FuncParm *>(parm->SiblingNext);
 		}
 		while (parm != callop->Parameters);
+	}
+	// Only simplify the 'function' part if we want to retrieve a constant.
+	// This is necessary to evaluate the type casts, but for actual functions
+	// the simplification process is destructive and has to be avoided.
+	if (SimplifyingConstant)
+	{
+		callop->Function = DoSimplify(callop->Function, sym);
 	}
 	// If the left side is a type ref, then this is actually a cast
 	// and not a function call.
@@ -1440,11 +1453,11 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt)
 PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PSymbolTable *sym)
 {
 	// The duplicate Simplify call is necessary because if the head node gets replaced there is no way to detect the end of the list otherwise.
-	arraysize = Simplify(arraysize, sym);
+	arraysize = Simplify(arraysize, sym, true);
 	ZCC_Expression *val;
 	do
 	{
-		val = Simplify(arraysize, sym);
+		val = Simplify(arraysize, sym, true);
 		if (val->Operation != PEX_ConstValue || !val->Type->IsA(RUNTIME_CLASS(PInt)))
 		{
 			Error(arraysize, "Array index must be an integer constant");
@@ -1556,7 +1569,7 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 			Error(property, "%s: arguments missing", prop->name);
 			return;
 		}
-		property->Values = Simplify(property->Values, &bag.Info->Symbols);	// need to do this before the loop so that we can find the head node again.
+		property->Values = Simplify(property->Values, &bag.Info->Symbols, true);	// need to do this before the loop so that we can find the head node again.
 		const char * p = prop->params;
 		auto exp = property->Values;
 
@@ -1634,7 +1647,7 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 							params.Push(conv);
 							params[0].i++;
 						}
-						exp = Simplify(static_cast<ZCC_Expression *>(exp->SiblingNext), &bag.Info->Symbols);
+						exp = Simplify(static_cast<ZCC_Expression *>(exp->SiblingNext), &bag.Info->Symbols, true);
 					} while (exp != property->Values);
 					goto endofparm;
 				}
@@ -1652,7 +1665,7 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 			}
 			params.Push(conv);
 			params[0].i++;
-			exp = Simplify(static_cast<ZCC_Expression *>(exp->SiblingNext), &bag.Info->Symbols);
+			exp = Simplify(static_cast<ZCC_Expression *>(exp->SiblingNext), &bag.Info->Symbols, true);
 		endofparm:
 			p++;
 			// Skip the DECORATE 'no comma' marker
@@ -1944,7 +1957,7 @@ void ZCCCompiler::InitFunctions()
 							if (p->Flags & ZCC_Out) flags |= VARF_Out;
 							if (p->Default != nullptr)
 							{
-								auto val = Simplify(p->Default, &c->Type()->Symbols);
+								auto val = Simplify(p->Default, &c->Type()->Symbols, true);
 								flags |= VARF_Optional;
 								if (val->Operation != PEX_ConstValue)
 								{
@@ -2101,10 +2114,9 @@ void ZCCCompiler::CompileStates()
 						state.sprite = GetSpriteIndex(sl->Sprite->GetChars());
 					}
 					// It is important to call CheckRandom before Simplify, because Simplify will resolve the function's name to nonsense
-					// and there is little point fixing it because it is essentially useless outside of resolving constants.
 					if (CheckRandom(sl->Duration))
 					{
-						auto func = static_cast<ZCC_ExprFuncCall *>(Simplify(sl->Duration, &c->Type()->Symbols));
+						auto func = static_cast<ZCC_ExprFuncCall *>(Simplify(sl->Duration, &c->Type()->Symbols, true));
 						if (func->Parameters == func->Parameters->SiblingNext || func->Parameters != func->Parameters->SiblingNext->SiblingNext)
 						{
 							Error(sl, "Random duration requires exactly 2 parameters");
@@ -2117,7 +2129,7 @@ void ZCCCompiler::CompileStates()
 					}
 					else
 					{
-						auto duration = Simplify(sl->Duration, &c->Type()->Symbols);
+						auto duration = Simplify(sl->Duration, &c->Type()->Symbols, true);
 						if (duration->Operation == PEX_ConstValue)
 						{
 							state.Tics = (int16_t)clamp<int>(GetInt(duration), -1, INT16_MAX);
@@ -2141,8 +2153,8 @@ void ZCCCompiler::CompileStates()
 					}
 					if (sl->Offset != nullptr)
 					{
-						auto o1 = static_cast<ZCC_Expression *>(Simplify(sl->Offset, &c->Type()->Symbols));
-						auto o2 = static_cast<ZCC_Expression *>(Simplify(static_cast<ZCC_Expression *>(o1->SiblingNext), &c->Type()->Symbols));
+						auto o1 = static_cast<ZCC_Expression *>(Simplify(sl->Offset, &c->Type()->Symbols, true));
+						auto o2 = static_cast<ZCC_Expression *>(Simplify(static_cast<ZCC_Expression *>(o1->SiblingNext), &c->Type()->Symbols, true));
 
 						if (o1->Operation != PEX_ConstValue || o2->Operation != PEX_ConstValue)
 						{
@@ -2201,7 +2213,7 @@ void ZCCCompiler::CompileStates()
 					statename.Truncate((long)statename.Len() - 1);	// remove the last '.' in the label name
 					if (sg->Offset != nullptr)
 					{
-						auto ofs = Simplify(sg->Offset, &c->Type()->Symbols);
+						auto ofs = Simplify(sg->Offset, &c->Type()->Symbols, true);
 						if (ofs->Operation != PEX_ConstValue)
 						{
 							Error(sg, "Constant offset expected for GOTO");

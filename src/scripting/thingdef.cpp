@@ -149,6 +149,43 @@ PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, i
 
 //==========================================================================
 //
+// FindClassMemberFunction
+//
+// Looks for a name in a class's symbol table and outputs appropriate messages
+//
+//==========================================================================
+
+PFunction *FindClassMemberFunction(PClass *selfcls, PClass *funccls, FName name, FScriptPosition &sc)
+{
+	// Skip ACS_NamedExecuteWithResult. Anything calling this should use the builtin instead.
+	if (name == NAME_ACS_NamedExecuteWithResult) return nullptr;
+
+	PSymbolTable *symtable;
+	auto symbol = selfcls->Symbols.FindSymbolInTable(name, symtable);
+	auto funcsym = dyn_cast<PFunction>(symbol);
+
+	if (symbol != nullptr)
+	{
+		if (funcsym == nullptr)
+		{
+			sc.Message(MSG_ERROR, "%s is not a member function of %s", name.GetChars(), selfcls->TypeName.GetChars());
+		}
+		else if (funcsym->Variants[0].Flags & VARF_Private && symtable != &funccls->Symbols)
+		{
+			// private access is only allowed if the symbol table belongs to the class in which the current function is being defined.
+			sc.Message(MSG_ERROR, "%s is declared private and not accessible", symbol->SymbolName.GetChars());
+		}
+		else if (funcsym->Variants[0].Flags & VARF_Deprecated)
+		{
+			sc.Message(MSG_WARNING, "Call to deprecated function %s", symbol->SymbolName.GetChars());
+		}
+	}
+	// return nullptr if the name cannot be found in the symbol table so that the calling code can do other checks.
+	return funcsym;
+}
+
+//==========================================================================
+//
 // LoadActors
 //
 // Called from FActor::StaticInit()

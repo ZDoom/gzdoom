@@ -2011,24 +2011,30 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClassActor *cls, ZCC_TreeNode *a
 		assert(fc->Function->NodeType == AST_ExprID);
 		auto id = static_cast<ZCC_ExprID *>(fc->Function);
 
-		PFunction *afd = dyn_cast<PFunction>(cls->Symbols.FindSymbol(id->Identifier, true));
-		if (afd != nullptr)
+		// We must skip ACS_NamedExecuteWithResult here, because this name both exists as an action function and as a builtin.
+		// The code which gets called from here can easily make use of the builtin, so let's just pass this name without any checks.
+		// The actual action function is still needed by DECORATE:
+		if (id->Identifier != NAME_ACS_NamedExecuteWithResult)
 		{
-			if (fc->Parameters == nullptr && (afd->Variants[0].Flags & VARF_Action))
+			PFunction *afd = dyn_cast<PFunction>(cls->Symbols.FindSymbol(id->Identifier, true));
+			if (afd != nullptr)
 			{
-				// We can use this function directly without wrapping it in a caller.
-				return new FxVMFunctionCall(afd, nullptr, *af, true);
+				if (fc->Parameters == nullptr && (afd->Variants[0].Flags & VARF_Action))
+				{
+					// We can use this function directly without wrapping it in a caller.
+					return new FxVMFunctionCall(afd, nullptr, *af, true);
+				}
 			}
-		}
-		else
-		{
-			// it may also be an action special so check that first before printing an error.
-			if (!P_FindLineSpecial(FName(id->Identifier).GetChars()))
+			else
 			{
-				Error(af, "%s: action function not found in %s", FName(id->Identifier).GetChars(), cls->TypeName.GetChars());
-				return nullptr;
+				// it may also be an action special so check that first before printing an error.
+				if (!P_FindLineSpecial(FName(id->Identifier).GetChars()))
+				{
+					Error(af, "%s: action function not found in %s", FName(id->Identifier).GetChars(), cls->TypeName.GetChars());
+					return nullptr;
+				}
+				// Action specials fall through to the code generator.
 			}
-			// Action specials fall through to the code generator.
 		}
 	}
 	ConvertClass = cls;
@@ -2284,7 +2290,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		auto fcall = static_cast<ZCC_ExprFuncCall *>(ast);
 		assert(fcall->Function->NodeType == AST_ExprID);	// of course this cannot remain. Right now nothing more complex can come along but later this will have to be decomposed into 'self' and the actual function name.
 		auto fname = static_cast<ZCC_ExprID *>(fcall->Function)->Identifier;
-		return new FxFunctionCall(nullptr, fname, ConvertNodeList(fcall->Parameters), *ast);
+		return new FxFunctionCall(fname, ConvertNodeList(fcall->Parameters), *ast);
 		//return ConvertFunctionCall(fcall->Function, ConvertNodeList(fcall->Parameters), ConvertClass, *ast);
 	}
 
@@ -2298,21 +2304,21 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 	case AST_ExprConstant:
 	{
 		auto cnst = static_cast<ZCC_ExprConstant *>(ast);
-		if (cnst->Type->IsKindOf(RUNTIME_CLASS(PInt)))
+		if (cnst->Type->IsA(RUNTIME_CLASS(PName)))
+		{
+			return new FxConstant(FName(ENamedName(cnst->IntVal)), *ast);
+		}
+		else if (cnst->Type->IsA(RUNTIME_CLASS(PInt)))
 		{
 			return new FxConstant(cnst->IntVal, *ast);
 		}
-		else if (cnst->Type->IsKindOf(RUNTIME_CLASS(PFloat)))
+		else if (cnst->Type->IsA(RUNTIME_CLASS(PFloat)))
 		{
 			return new FxConstant(cnst->DoubleVal, *ast);
 		}
-		else if (cnst->Type->IsKindOf(RUNTIME_CLASS(PString)))
+		else if (cnst->Type->IsA(RUNTIME_CLASS(PString)))
 		{
 			return new FxConstant(*cnst->StringVal, *ast);
-		}
-		else if (cnst->Type->IsKindOf(RUNTIME_CLASS(PName)))
-		{
-			return new FxConstant(ENamedName(cnst->IntVal), *ast);
 		}
 		else
 		{

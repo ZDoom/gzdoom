@@ -3630,10 +3630,9 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxFunctionCall::FxFunctionCall(FxExpression *self, FName methodname, FArgumentList *args, const FScriptPosition &pos)
+FxFunctionCall::FxFunctionCall(FName methodname, FArgumentList *args, const FScriptPosition &pos)
 : FxExpression(pos)
 {
-	Self = self;
 	MethodName = methodname;
 	ArgList = args;
 }
@@ -3646,7 +3645,6 @@ FxFunctionCall::FxFunctionCall(FxExpression *self, FName methodname, FArgumentLi
 
 FxFunctionCall::~FxFunctionCall()
 {
-	SAFE_DELETE(Self);
 	SAFE_DELETE(ArgList);
 }
 
@@ -3659,9 +3657,9 @@ FxFunctionCall::~FxFunctionCall()
 FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 {
 	ABORT(ctx.Class);
-	
-	PFunction *afd = dyn_cast<PFunction>(ctx.Class->Symbols.FindSymbol(MethodName, true));
-	// Todo: More checks are needed here to make it work as expected.
+
+	PFunction *afd = FindClassMemberFunction(ctx.Class, ctx.Class, MethodName, ScriptPosition);
+
 	if (afd != nullptr)
 	{
 		auto x = new FxVMFunctionCall(afd, ArgList, ScriptPosition, false);
@@ -3674,14 +3672,8 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	{
 		if (MethodName == FxFlops[i].Name)
 		{
-			if (Self != NULL)
-			{
-				ScriptPosition.Message(MSG_ERROR, "Global functions cannot have a self pointer");
-				delete this;
-				return NULL;
-			}
 			FxExpression *x = new FxFlopFunctionCall(i, ArgList, ScriptPosition);
-			ArgList = NULL;
+			ArgList = nullptr;
 			delete this;
 			return x->Resolve(ctx);
 		}
@@ -3706,24 +3698,25 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 			ScriptPosition.Message(MSG_ERROR, "Not enough parameters for '%s' (expected %d, got %d)", 
 				MethodName.GetChars(), min, paramcount);
 			delete this;
-			return NULL;
+			return nullptr;
 		}
 		else if (paramcount > max)
 		{
 			ScriptPosition.Message(MSG_ERROR, "too many parameters for '%s' (expected %d, got %d)", 
 				MethodName.GetChars(), max, paramcount);
 			delete this;
-			return NULL;
+			return nullptr;
 		}
-		FxExpression *x = new FxActionSpecialCall(Self, special, ArgList, ScriptPosition);
-		ArgList = NULL;
+		FxExpression *self = (ctx.Function && ctx.Function->Variants[0].Flags & VARF_Method) ? new FxSelf(ScriptPosition) : nullptr;
+		FxExpression *x = new FxActionSpecialCall(self, special, ArgList, ScriptPosition);
+		ArgList = nullptr;
 		delete this;
 		return x->Resolve(ctx);
 	}
 
 	ScriptPosition.Message(MSG_ERROR, "Call to unknown function '%s'", MethodName.GetChars());
 	delete this;
-	return NULL;
+	return nullptr;
 }
 
 
@@ -3780,6 +3773,7 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 	CHECKRESOLVED();
 	bool failed = false;
 
+	SAFE_RESOLVE_OPT(Self, ctx);
 	if (ArgList != NULL)
 	{
 		for (unsigned i = 0; i < ArgList->Size(); i++)
@@ -3840,11 +3834,12 @@ int DecoCallLineSpecial(VMFrameStack *stack, VMValue *param, int numparam, VMRet
 
 ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 {
-	assert(Self == NULL);
 	unsigned i = 0;
 
 	build->Emit(OP_PARAMI, abs(Special));			// pass special number
-	build->Emit(OP_PARAM, 0, REGT_POINTER, 0);		// pass self
+	// fixme: This really should use the Self pointer that got passed to this class instead of just using the first argument from the function. 
+	// Once static functions are possible, or specials can be called through a member access operator this won't work anymore.
+	build->Emit(OP_PARAM, 0, REGT_POINTER, 0);		// pass self 
 	if (ArgList != NULL)
 	{
 		for (; i < ArgList->Size(); ++i)

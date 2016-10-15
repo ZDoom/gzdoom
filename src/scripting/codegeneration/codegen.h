@@ -888,13 +888,12 @@ typedef TDeletingArray<FxExpression*> FArgumentList;
 
 class FxFunctionCall : public FxExpression
 {
-	FxExpression *Self;
 	FName MethodName;
 	FArgumentList *ArgList;
 
 public:
 
-	FxFunctionCall(FxExpression *self, FName methodname, FArgumentList *args, const FScriptPosition &pos);
+	FxFunctionCall(FName methodname, FArgumentList *args, const FScriptPosition &pos);
 	~FxFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
 };

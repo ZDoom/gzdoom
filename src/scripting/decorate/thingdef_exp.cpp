@@ -548,7 +548,7 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 						while (sc.CheckToken(','));
 						sc.MustGetToken(')');
 					}
-					return new FxFunctionCall(NULL, identifier, args, sc);
+					return new FxFunctionCall(identifier, args, sc);
 				}
 				catch (...)
 				{

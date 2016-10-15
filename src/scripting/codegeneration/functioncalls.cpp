@@ -39,75 +39,6 @@
 
 // just some rough concepts for now...
 
-//==========================================================================
-//
-// FindClassMemberFunction
-//
-// Looks for a name in a class's
-//
-//==========================================================================
-
-PFunction *FindClassMemberFunction(PClass *cls, FName name, FScriptPosition &sc)
-{
-	PSymbolTable *symtable;
-	auto symbol = cls->Symbols.FindSymbolInTable(name, symtable);
-	auto funcsym = dyn_cast<PFunction>(symbol);
-
-	if (symbol != nullptr)
-	{
-		if (funcsym == nullptr)
-		{
-			sc.Message(MSG_ERROR, "%s is not a member function of %s", name.GetChars(), cls->TypeName.GetChars());
-		}
-		else if (funcsym->Flags & VARF_Private && symtable != &cls->Symbols)
-		{
-			sc.Message(MSG_ERROR, "%s is declared private and not accessible", symbol->SymbolName.GetChars());
-		}
-		else if (funcsym->Flags & VARF_Deprecated)
-		{
-			sc.Message(MSG_WARNING, "Call to deprecated function %s", symbol->SymbolName.GetChars());
-		}
-	}
-	return funcsym;
-}
-
-
-//==========================================================================
-//
-// let's save some work down the line by analyzing the type of function 
-// that's being called right here and create appropriate nodes.
-// A simple function call expression must be immediately resolvable in
-// the context it gets compiled in, if the function name cannot be
-// resolved here, it will never.
-//
-//==========================================================================
-
-FxExpression *ConvertSimpleFunctionCall(ZCC_ExprID *function, FArgumentList *args, PClass *cls, FScriptPosition &sc)
-{
-	// Priority is as follows:
-	//1. member functions of the containing class.
-	//2. action specials.
-	//3. floating point operations
-	//4. global builtins
-
-	if (cls != nullptr)
-	{
-		// There is an action function ACS_NamedExecuteWithResult which must be ignored here for this to work.
-		if (function->Identifier != NAME_ACS_NamedExecuteWithResult)
-		{
-		{
-			args = ConvertNodeList(fcall->Parameters);
-			if (args->Size() == 0)
-			{
-				delete args;
-				args = nullptr;
-			}
-
-			return new FxMemberunctionCall(new FxSelf(), new FxInvoker(), func, args, sc, false);
-		}
-	}
-	
-}
 
 //==========================================================================
 //
@@ -125,7 +56,7 @@ FxExpression *ConvertFunctionCall(ZCC_Expression *function, FArgumentList *args,
 	switch(function->NodeType)
 	{
 		case AST_ExprID:
-			return ConvertSimpleFunctionCall(static_cast<ZCC_ExprID *>(function), args, cls, sc);
+			return new FxFunctionCall( ConvertSimpleFunctionCall(static_cast<ZCC_ExprID *>(function), args, cls, sc);
 		
 		case AST_ExprMemberAccess:
 			return ConvertMemberCall(fcall);

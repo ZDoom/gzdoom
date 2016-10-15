@@ -152,6 +152,7 @@ class FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestr
 FName CheckCastKludges(FName in);
 void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FName> *argnames, PClass *cls, DWORD funcflags);
 PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, int flags);
+PFunction *FindClassMemberFunction(PClass *cls, PClass *funccls, FName name, FScriptPosition &sc);
 
 //==========================================================================
 //

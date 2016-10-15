@@ -408,7 +408,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 	ESPSResult		mode;
 	bool			ispsprite = (!vis->sector && vis->gpos != FVector3(0, 0, 0));
 
-	if (vis->xscale == 0 || vis->yscale == 0)
+	if (vis->xscale == 0 || fabs(vis->yscale) < (1.0f / 32000.0f))
 	{ // scaled to 0; can't see
 		return;
 	}

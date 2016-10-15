@@ -199,7 +199,9 @@ struct rule {
   int index;               /* An index number for this rule */
   int iRule;               /* Rule number as used in the generated tables */
   Boolean canReduce;       /* True if this rule is ever reduced */
+#if 0
   Boolean doesReduce;      /* Reduce actions occur after optimization */
+#endif
   struct rule *nextlhs;    /* Next rule with the same LHS */
   struct rule *next;       /* Next rule in the global list */
 };
@@ -4156,6 +4158,7 @@ void ReportTable(
   }
   free(ax);
 
+#if 0
   /* Mark rules that are actually used for reduce actions after all
   ** optimizations have been applied
   */
@@ -4168,6 +4171,7 @@ void ReportTable(
       }
     }
   }
+#endif
 
   /* Finish rendering the constants now that the action table has
   ** been computed */
@@ -4462,12 +4466,16 @@ void ReportTable(
     assert( rp->noCode );
     fprintf(out,"      /* (%d) ", rp->iRule);
     writeRuleText(out, rp);
+#if 0
     if( rp->doesReduce ){
+#endif
       fprintf(out, " */ yytestcase(yyruleno==%d);\n", rp->iRule); lineno++;
+#if 0
     }else{
       fprintf(out, " (OPTIMIZED OUT) */ assert(yyruleno!=%d);\n",
               rp->iRule); lineno++;
     }
+#endif
   }
   fprintf(out,"       break;\n"); lineno++;
   tplt_xfer(lemp->name,in,out,&lineno);

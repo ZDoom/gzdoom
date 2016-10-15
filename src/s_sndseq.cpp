@@ -442,7 +442,7 @@ IMPLEMENT_CLASS (DSeqPolyNode)
 void DSeqPolyNode::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
-	//arc << m_Poly;
+	arc("poly", m_Poly);
 }
 
 IMPLEMENT_CLASS (DSeqSectorNode)

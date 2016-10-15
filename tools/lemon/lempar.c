@@ -308,6 +308,7 @@ static int yyGrowStack(yyParser *p){
     if( yyTraceFILE ){
       fprintf(yyTraceFILE,"%sStack grows from %d to %d entries.\n",
               yyTracePrompt, p->yystksz, newSize);
+      fflush(yyTraceFILE);
     }
 #endif
     p->yystksz = newSize;
@@ -410,6 +411,7 @@ static void yy_pop_parser_stack(yyParser *pParser){
     fprintf(yyTraceFILE,"%sPopping %s\n",
       yyTracePrompt,
       yyTokenName[yytos->major]);
+    fflush(yyTraceFILE);
   }
 #endif
   yy_destructor(pParser, yytos->major, &yytos->minor);
@@ -474,6 +476,7 @@ static unsigned int yy_find_shift_action(
         if( yyTraceFILE ){
           fprintf(yyTraceFILE, "%sFALLBACK %s => %s\n",
              yyTracePrompt, yyTokenName[iLookAhead], yyTokenName[iFallback]);
+          fflush(yyTraceFILE);
         }
 #endif
         assert( yyFallback[iFallback]==0 ); /* Fallback loop must terminate */
@@ -498,6 +501,7 @@ static unsigned int yy_find_shift_action(
             fprintf(yyTraceFILE, "%sWILDCARD %s => %s\n",
                yyTracePrompt, yyTokenName[iLookAhead],
                yyTokenName[YYWILDCARD]);
+            fflush(yyTraceFILE);
           }
 #endif /* NDEBUG */
           return yy_action[j];
@@ -551,6 +555,7 @@ static void yyStackOverflow(yyParser *yypParser){
 #ifndef NDEBUG
    if( yyTraceFILE ){
      fprintf(yyTraceFILE,"%sStack Overflow!\n",yyTracePrompt);
+     fflush(yyTraceFILE);
    }
 #endif
    while( yypParser->yytos>yypParser->yystack ) yy_pop_parser_stack(yypParser);
@@ -576,6 +581,7 @@ static void yyTraceShift(yyParser *yypParser, int yyNewState){
       fprintf(yyTraceFILE,"%sShift '%s'\n",
          yyTracePrompt,yyTokenName[yypParser->yytos->major]);
     }
+    fflush(yyTraceFILE);
   }
 }
 #else
@@ -653,6 +659,7 @@ static void yy_reduce(
     yysize = yyRuleInfo[yyruleno].nrhs;
     fprintf(yyTraceFILE, "%sReduce [%s], go to state %d.\n", yyTracePrompt,
       yyRuleName[yyruleno], yymsp[-yysize].stateno);
+    fflush(yyTraceFILE);
   }
 #endif /* NDEBUG */
 
@@ -726,6 +733,7 @@ static void yy_parse_failed(
 #ifndef NDEBUG
   if( yyTraceFILE ){
     fprintf(yyTraceFILE,"%sFail!\n",yyTracePrompt);
+    fflush(yyTraceFILE);
   }
 #endif
   while( yypParser->yytos>yypParser->yystack ) yy_pop_parser_stack(yypParser);
@@ -764,12 +772,17 @@ static void yy_accept(
 #ifndef NDEBUG
   if( yyTraceFILE ){
     fprintf(yyTraceFILE,"%sAccept!\n",yyTracePrompt);
+    fflush(yyTraceFILE);
   }
 #endif
 #ifndef YYNOERRORRECOVERY
   yypParser->yyerrcnt = -1;
 #endif
+#if 0
   assert( yypParser->yytos==yypParser->yystack );
+#else
+  while (yypParser->yytos>yypParser->yystack) yy_pop_parser_stack(yypParser);
+#endif
   /* Here code is inserted which will be executed whenever the
   ** parser accepts */
 /*********** Begin %parse_accept code *****************************************/
@@ -823,6 +836,7 @@ void Parse(
 #ifndef NDEBUG
   if( yyTraceFILE ){
     fprintf(yyTraceFILE,"%sInput '%s'\n",yyTracePrompt,yyTokenName[yymajor]);
+    fflush(yyTraceFILE);
   }
 #endif
 
@@ -845,6 +859,7 @@ void Parse(
 #ifndef NDEBUG
       if( yyTraceFILE ){
         fprintf(yyTraceFILE,"%sSyntax Error!\n",yyTracePrompt);
+        fflush(yyTraceFILE);
       }
 #endif
 #ifdef YYERRORSYMBOL
@@ -876,6 +891,7 @@ void Parse(
         if( yyTraceFILE ){
           fprintf(yyTraceFILE,"%sDiscard input token %s\n",
              yyTracePrompt,yyTokenName[yymajor]);
+          fflush(yyTraceFILE);
         }
 #endif
         yy_destructor(yypParser, (YYCODETYPE)yymajor, &yyminorunion);
@@ -949,6 +965,7 @@ void Parse(
       cDiv = ' ';
     }
     fprintf(yyTraceFILE,"]\n");
+    fflush(yyTraceFILE);
   }
 #endif
   return;

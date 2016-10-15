@@ -69,8 +69,9 @@ struct FCompileContext
 	PPrototype *ReturnProto;
 	PFunction *Function;	// The function that is currently being compiled (or nullptr for constant evaluation.)
 	PClass *Class;			// The type of the owning class.
+	bool FromDecorate;
 
-	FCompileContext(PFunction *func = nullptr, PPrototype *ret = nullptr);
+	FCompileContext(PFunction *func, PPrototype *ret, bool fromdecorate);
 	FCompileContext(PClass *cls);	// only to be used to resolve constants!
 
 	PSymbol *FindInClass(FName identifier, PSymbolTable *&symt);
@@ -383,10 +384,11 @@ public:
 class FxIntCast : public FxExpression
 {
 	FxExpression *basex;
+	bool NoWarn;
 
 public:
 
-	FxIntCast(FxExpression *x);
+	FxIntCast(FxExpression *x, bool nowarn);
 	~FxIntCast();
 	FxExpression *Resolve(FCompileContext&);
 
@@ -759,7 +761,7 @@ protected:
 
 public:
 
-	FxRandom(FRandom *, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos);
+	FxRandom(FRandom *, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos, bool nowarn);
 	~FxRandom();
 	FxExpression *Resolve(FCompileContext&);
 	PPrototype *ReturnProto();
@@ -780,7 +782,7 @@ protected:
 
 public:
 
-	FxRandomPick(FRandom *, TArray<FxExpression*> &expr, bool floaty, const FScriptPosition &pos);
+	FxRandomPick(FRandom *, TArray<FxExpression*> &expr, bool floaty, const FScriptPosition &pos, bool nowarn);
 	~FxRandomPick();
 	FxExpression *Resolve(FCompileContext&);
 
@@ -814,7 +816,7 @@ class FxRandom2 : public FxExpression
 
 public:
 
-	FxRandom2(FRandom *, FxExpression *m, const FScriptPosition &pos);
+	FxRandom2(FRandom *, FxExpression *m, const FScriptPosition &pos, bool nowarn);
 	~FxRandom2();
 	FxExpression *Resolve(FCompileContext&);
 	PPrototype *ReturnProto();

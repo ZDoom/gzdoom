@@ -91,12 +91,12 @@ static const FLOP FxFlops[] =
 //
 //==========================================================================
 
-FCompileContext::FCompileContext(PFunction *fnc, PPrototype *ret) : ReturnProto(ret), Function(fnc), Class(nullptr)
+FCompileContext::FCompileContext(PFunction *fnc, PPrototype *ret, bool fromdecorate) : ReturnProto(ret), Function(fnc), Class(nullptr), FromDecorate(fromdecorate)
 {
 	if (fnc != nullptr) Class = fnc->OwningClass;
 }
 
-FCompileContext::FCompileContext(PClass *cls) : ReturnProto(nullptr), Function(nullptr), Class(cls)
+FCompileContext::FCompileContext(PClass *cls) : ReturnProto(nullptr), Function(nullptr), Class(cls), FromDecorate(true)	// only used by DECORATE constants.
 {
 }
 
@@ -495,11 +495,12 @@ ExpEmit FxBoolCast::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxIntCast::FxIntCast(FxExpression *x)
+FxIntCast::FxIntCast(FxExpression *x, bool nowarn)
 : FxExpression(x->ScriptPosition)
 {
 	basex=x;
 	ValueType = TypeSInt32;
+	NoWarn = nowarn;
 }
 
 //==========================================================================
@@ -536,6 +537,7 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 		else
 		{
 			// Ugh. This should abort, but too many mods fell into this logic hole somewhere, so this seroious error needs to be reduced to a warning. :(
+			// At least in ZScript, MSG_OPTERROR always means to report an error, not a warning so the problem only exists in DECORATE.
 			if (!basex->isConstant())	ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got a name");
 			else ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got \"%s\"", static_cast<FxConstant*>(basex)->GetValue().GetName().GetChars());
 			FxExpression * x = new FxConstant(0, ScriptPosition);
@@ -549,9 +551,19 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 		{
 			ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
 			FxExpression *x = new FxConstant(constval.GetInt(), ScriptPosition);
+			if (!NoWarn && constval.GetInt() != constval.GetFloat())
+			{
+				ScriptPosition.Message(MSG_WARNING, "Truncation of floating point constant %f", constval.GetFloat());
+			}
+
 			delete this;
 			return x;
 		}
+		else if (!NoWarn)
+		{
+			ScriptPosition.Message(MSG_WARNING, "Truncation of floating point value");
+		}
+
 		return this;
 	}
 	ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
@@ -634,6 +646,7 @@ FxExpression *FxFloatCast::Resolve(FCompileContext &ctx)
 		else
 		{
 			// Ugh. This should abort, but too many mods fell into this logic hole somewhere, so this seroious error needs to be reduced to a warning. :(
+			// At least in ZScript, MSG_OPTERROR always means to report an error, not a warning so the problem only exists in DECORATE.
 			if (!basex->isConstant()) ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got a name");
 			else ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got \"%s\"", static_cast<FxConstant*>(basex)->GetValue().GetName().GetChars());
 			FxExpression *x = new FxConstant(0.0, ScriptPosition);
@@ -837,7 +850,7 @@ FxExpression *FxUnaryNotBitwise::Resolve(FCompileContext& ctx)
 	if  (Operand->ValueType->GetRegType() == REGT_FLOAT /* lax */)
 	{
 		// DECORATE allows floats here so cast them to int.
-		Operand = new FxIntCast(Operand);
+		Operand = new FxIntCast(Operand, ctx.FromDecorate);
 		Operand = Operand->Resolve(ctx);
 		if (Operand == NULL) 
 		{
@@ -1165,7 +1178,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 		}
 		else if (ValueType->GetRegType() == REGT_INT)
 		{
-			Right = new FxIntCast(Right);
+			Right = new FxIntCast(Right, ctx.FromDecorate);
 		}
 		else
 		{
@@ -1840,12 +1853,12 @@ FxExpression *FxBinaryInt::Resolve(FCompileContext& ctx)
 		// For DECORATE which allows floats here.
 		if (left->ValueType->GetRegType() != REGT_INT)
 		{
-			left = new FxIntCast(left);
+			left = new FxIntCast(left, ctx.FromDecorate);
 			left = left->Resolve(ctx);
 		}
 		if (right->ValueType->GetRegType() != REGT_INT)
 		{
-			right = new FxIntCast(right);
+			right = new FxIntCast(right, ctx.FromDecorate);
 			right = right->Resolve(ctx);
 		}
 		if (left == NULL || right == NULL)
@@ -2710,14 +2723,14 @@ ExpEmit FxMinMax::Emit(VMFunctionBuilder *build)
 //
 //
 //==========================================================================
-FxRandom::FxRandom(FRandom * r, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos)
+FxRandom::FxRandom(FRandom * r, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos, bool nowarn)
 : FxExpression(pos)
 {
 	EmitTail = false;
 	if (mi != NULL && ma != NULL)
 	{
-		min = new FxIntCast(mi);
-		max = new FxIntCast(ma);
+		min = new FxIntCast(mi, nowarn);
+		max = new FxIntCast(ma, nowarn);
 	}
 	else min = max = NULL;
 	rng = r;
@@ -2843,7 +2856,7 @@ ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
 //
 //
 //==========================================================================
-FxRandomPick::FxRandomPick(FRandom *r, TArray<FxExpression*> &expr, bool floaty, const FScriptPosition &pos)
+FxRandomPick::FxRandomPick(FRandom *r, TArray<FxExpression*> &expr, bool floaty, const FScriptPosition &pos, bool nowarn)
 : FxExpression(pos)
 {
 	assert(expr.Size() > 0);
@@ -2856,7 +2869,7 @@ FxRandomPick::FxRandomPick(FRandom *r, TArray<FxExpression*> &expr, bool floaty,
 		}
 		else
 		{
-			choices[index] = new FxIntCast(expr[index]);
+			choices[index] = new FxIntCast(expr[index], nowarn);
 		}
 
 	}
@@ -3008,7 +3021,7 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 FxFRandom::FxFRandom(FRandom *r, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos)
-: FxRandom(r, NULL, NULL, pos)
+: FxRandom(r, NULL, NULL, pos, true)
 {
 	if (mi != NULL && ma != NULL)
 	{
@@ -3089,12 +3102,12 @@ ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxRandom2::FxRandom2(FRandom *r, FxExpression *m, const FScriptPosition &pos)
+FxRandom2::FxRandom2(FRandom *r, FxExpression *m, const FScriptPosition &pos, bool nowarn)
 : FxExpression(pos)
 {
 	EmitTail = false;
 	rng = r;
-	if (m) mask = new FxIntCast(m);
+	if (m) mask = new FxIntCast(m, nowarn);
 	else mask = new FxConstant(-1, pos);
 	ValueType = TypeSInt32;
 }
@@ -3505,7 +3518,7 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 	if (index->ValueType->GetRegType() == REGT_FLOAT /* lax */)
 	{
 		// DECORATE allows floats here so cast them to int.
-		index = new FxIntCast(index);
+		index = new FxIntCast(index, ctx.FromDecorate);
 		index = index->Resolve(ctx);
 		if (index == NULL) 
 		{
@@ -3792,7 +3805,7 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 			{
 				if ((*ArgList)[i]->ValueType->GetRegType() == REGT_FLOAT /* lax */)
 				{
-					(*ArgList)[i] = new FxIntCast((*ArgList)[i]);
+					(*ArgList)[i] = new FxIntCast((*ArgList)[i], ctx.FromDecorate);
 				}
 				else
 				{
@@ -5075,7 +5088,7 @@ FxExpression *FxRuntimeStateIndex::Resolve(FCompileContext &ctx)
 	}
 	else if (Index->ValueType->GetRegType() != REGT_INT)
 	{ // Float.
-		Index = new FxIntCast(Index);
+		Index = new FxIntCast(Index, ctx.FromDecorate);
 		SAFE_RESOLVE(Index, ctx);
 	}
 

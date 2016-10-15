@@ -131,7 +131,7 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool c
 		}
 		else if (type == TypeSInt32)
 		{
-			x = new FxIntCast(x);
+			x = new FxIntCast(x, true);
 		}
 		else
 		{
@@ -871,7 +871,7 @@ static bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defau
 					{
 						conv.i = -1;
 						params.Push(conv);
-						x = new FxDamageValue(new FxIntCast(ParseExpression(sc, bag.Info)));
+						x = new FxDamageValue(new FxIntCast(ParseExpression(sc, bag.Info), true));
 						sc.MustGetStringName(")");
 						conv.exp = x;
 						params.Push(conv);

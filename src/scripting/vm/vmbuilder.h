@@ -106,13 +106,13 @@ class FFunctionBuildList
 		PPrototype *Proto = nullptr;
 		VMScriptFunction *Function = nullptr;
 		FString DumpName;
-		int type;	// temporary kludge
+		bool FromDecorate;
 	};
 
 	TArray<Item> mItems;
 
 public:
-	VMFunction *AddFunction(PFunction *func, FxExpression *code, const FString &name, bool statecall = false);
+	VMFunction *AddFunction(PFunction *func, FxExpression *code, const FString &name, bool fromdecorate);
 	void Build();
 };
 

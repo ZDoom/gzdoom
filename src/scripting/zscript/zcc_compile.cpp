@@ -2172,7 +2172,7 @@ void ZCCCompiler::CompileStates()
 						if (code != nullptr)
 						{
 							auto funcsym = CreateAnonymousFunction(c->Type(), nullptr, VARF_Method | VARF_Action);
-							state.ActionFunc = FunctionBuildList.AddFunction(funcsym, code, FStringf("%s.StateFunction.%d", c->Type()->TypeName.GetChars(), statedef.GetStateCount()), true);
+							state.ActionFunc = FunctionBuildList.AddFunction(funcsym, code, FStringf("%s.StateFunction.%d", c->Type()->TypeName.GetChars(), statedef.GetStateCount()), false);
 						}
 					}
 

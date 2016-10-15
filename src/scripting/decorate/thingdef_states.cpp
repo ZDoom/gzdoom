@@ -84,7 +84,7 @@ FxVMFunctionCall *DoActionSpecials(FScanner &sc, FState & state, Baggage &bag)
 		{
 			while (i < 5)
 			{
-				args->Push(new FxIntCast(ParseExpression(sc, bag.Info)));
+				args->Push(new FxIntCast(ParseExpression(sc, bag.Info), true));
 				i++;
 				if (!sc.CheckToken (',')) break;
 			}

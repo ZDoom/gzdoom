@@ -448,7 +448,7 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 		sc.MustGetToken('(');
 		FxExpression *exp = ParseExpressionM(sc, cls);
 		sc.MustGetToken(')');
-		return new FxIntCast(exp);
+		return new FxIntCast(exp, true);
 	}
 	else if (sc.CheckToken(TK_Float))
 	{
@@ -600,7 +600,7 @@ static FxExpression *ParseRandom(FScanner &sc, FName identifier, PClassActor *cl
 
 	if (identifier == NAME_Random)
 	{
-		return new FxRandom(rng, min, max, sc);
+		return new FxRandom(rng, min, max, sc, true);
 	}
 	else
 	{
@@ -627,7 +627,7 @@ static FxExpression *ParseRandomPick(FScanner &sc, FName identifier, PClassActor
 			break;
 		sc.MustGetToken(',');
 	}
-	return new FxRandomPick(rng, list, floaty, sc);
+	return new FxRandomPick(rng, list, floaty, sc, true);
 }
 
 static FxExpression *ParseRandom2(FScanner &sc, PClassActor *cls)
@@ -642,7 +642,7 @@ static FxExpression *ParseRandom2(FScanner &sc, PClassActor *cls)
 		mask = ParseExpressionM(sc, cls);
 		sc.MustGetToken(')');
 	}
-	return new FxRandom2(rng, mask, sc);
+	return new FxRandom2(rng, mask, sc, true);
 }
 
 static FxExpression *ParseAbs(FScanner &sc, PClassActor *cls)

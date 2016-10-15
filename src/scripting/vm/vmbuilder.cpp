@@ -649,7 +649,7 @@ void VMFunctionBuilder::BackpatchToHere(size_t loc)
 //==========================================================================
 FFunctionBuildList FunctionBuildList;
 
-VMFunction *FFunctionBuildList::AddFunction(PFunction *functype, FxExpression *code, const FString &name, bool statecall)
+VMFunction *FFunctionBuildList::AddFunction(PFunction *functype, FxExpression *code, const FString &name, bool fromdecorate)
 {
 	auto func = code->GetDirectFunction();
 	if (func != nullptr)
@@ -666,7 +666,7 @@ VMFunction *FFunctionBuildList::AddFunction(PFunction *functype, FxExpression *c
 	it.DumpName = name;
 	it.Function = new VMScriptFunction;
 	it.Proto = nullptr;
-	it.type = statecall;
+	it.FromDecorate = fromdecorate;
 	mItems.Push(it);
 	return it.Function;
 }
@@ -687,7 +687,7 @@ void FFunctionBuildList::Build()
 		// This needs to be fixed, so that the compile context receives the entire function symbol, including the containing class, the prototype and argument names, which will be needed to run the code generator
 		// As a first step this just needs to get working so fetch the class type from the prototype's argument list.
 		// We don't know the return type in advance for anonymous functions.
-		FCompileContext ctx(item.Func, nullptr);
+		FCompileContext ctx(item.Func, nullptr, item.FromDecorate);
 		item.Code = item.Code->Resolve(ctx);
 		item.Proto = ctx.ReturnProto;
 

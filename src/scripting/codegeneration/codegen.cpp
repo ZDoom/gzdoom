@@ -2541,7 +2541,7 @@ FxExpression *FxMinMax::Resolve(FCompileContext &ctx)
 		{
 			floatcount++;
 		}
-		else if (choices[i]->ValueType->GetRegType() == REGT_INT)
+		else if (choices[i]->ValueType->GetRegType() == REGT_INT && choices[i]->ValueType != TypeName)
 		{
 			intcount++;
 		}
@@ -3663,7 +3663,29 @@ FxFunctionCall::~FxFunctionCall()
 
 //==========================================================================
 //
-// Note: This currently only deals with the simple cases and needs some changes.
+// Check function that gets called
+//
+//==========================================================================
+
+static bool CheckArgSize(FName fname, FArgumentList *args, int min, int max, FScriptPosition &sc)
+{
+	int s = args ? args->Size() : 0;
+	if (s < min)
+	{
+		sc.Message(MSG_ERROR, "Insufficient arguments in call to %s, expected %d, got %d", fname.GetChars(), min, s);
+		return false;
+	}
+	else if (s > max && max >= 0)
+	{
+		sc.Message(MSG_ERROR, "Too many arguments in call to %s, expected %d, got %d", fname.GetChars(), min, s);
+		return false;
+	}
+	return true;
+}
+
+//==========================================================================
+//
+//
 //
 //==========================================================================
 
@@ -3727,6 +3749,94 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		return x->Resolve(ctx);
 	}
 
+	// Last but not least: Check builtins. The random functions will have to be duplicated for the case where an RNG is specified.
+	// Note that for all builtins the used arguments have to be nulled in the ArgList so that they won't get deleted before they get used.
+	FxExpression *func = nullptr;
+
+	Printf("Resolving %s with %d args\n", MethodName.GetChars(), ArgList->Size());
+	switch (MethodName)
+	{
+	case NAME_Random:
+		if (CheckArgSize(NAME_Random, ArgList, 2, 2, ScriptPosition))
+		{
+			func = new FxRandom(nullptr, (*ArgList)[0], (*ArgList)[1], ScriptPosition, ctx.FromDecorate);
+			(*ArgList)[0] = (*ArgList)[1] = nullptr;
+		}
+		break;
+
+	case NAME_FRandom:
+		if (CheckArgSize(NAME_FRandom, ArgList, 2, 2, ScriptPosition))
+		{
+			func = new FxFRandom(nullptr, (*ArgList)[0], (*ArgList)[1], ScriptPosition);
+			(*ArgList)[0] = (*ArgList)[1] = nullptr;
+		}
+		break;
+
+	case NAME_RandomPick:
+	case NAME_FRandomPick:
+		if (CheckArgSize(MethodName, ArgList, 1, -1, ScriptPosition))
+		{
+			func = new FxRandomPick(nullptr, *ArgList, MethodName == NAME_FRandomPick, ScriptPosition, ctx.FromDecorate);
+			for (auto &i : *ArgList) i = nullptr;	// Ownership of items is transferred to FxMinMax but not ownership of the array itself, so Clear cannot be called here.
+		}
+		break;
+
+	case NAME_Random2:
+		if (CheckArgSize(NAME_Random2, ArgList, 1, 1, ScriptPosition))
+		{
+			func = new FxRandom2(nullptr, (*ArgList)[0], ScriptPosition, ctx.FromDecorate);
+			(*ArgList)[0] = nullptr;
+		}
+		break;
+
+	case NAME_Min:
+	case NAME_Max:
+		if (CheckArgSize(MethodName, ArgList, 2, -1, ScriptPosition))
+		{
+			func = new FxMinMax(*ArgList, MethodName, ScriptPosition);
+			for (auto &i : *ArgList) i = nullptr;	// Ownership of items is transferred to FxMinMax but not ownership of the array itself, so Clear cannot be called here.
+		}
+		break;
+
+	case NAME_Clamp:
+		if (CheckArgSize(MethodName, ArgList, 3, 3, ScriptPosition))
+		{
+			TArray<FxExpression *> pass;
+			pass.Resize(2);
+			pass[0] = (*ArgList)[0];
+			pass[1] = (*ArgList)[1];
+			pass[0] = new FxMinMax(pass, NAME_Max, ScriptPosition);
+			pass[1] = (*ArgList)[2];
+			func = new FxMinMax(*ArgList, NAME_Min, ScriptPosition);
+			(*ArgList)[0] = (*ArgList)[1] = (*ArgList)[2] = nullptr;
+		}
+		break;
+
+	case NAME_Abs:
+		if (CheckArgSize(MethodName, ArgList, 1, 1, ScriptPosition))
+		{
+			func = new FxAbs((*ArgList)[0]);
+			(*ArgList)[0] = nullptr;
+		}
+		break;
+
+	case NAME_ATan2:
+	case NAME_VectorAngle:
+		if (CheckArgSize(MethodName, ArgList, 2, 2, ScriptPosition))
+		{
+			func = MethodName == NAME_ATan2 ? new FxATan2((*ArgList)[0], (*ArgList)[1], ScriptPosition) : new FxATan2((*ArgList)[1], (*ArgList)[0], ScriptPosition);
+			(*ArgList)[0] = (*ArgList)[1] = nullptr;
+		}
+		break;
+
+	default:
+		break;
+	}
+	if (func != nullptr)
+	{
+		delete this;
+		return func->Resolve(ctx);
+	}
 	ScriptPosition.Message(MSG_ERROR, "Call to unknown function '%s'", MethodName.GetChars());
 	delete this;
 	return nullptr;

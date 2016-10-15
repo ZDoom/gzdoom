@@ -2301,6 +2301,12 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		return ConvertNode(fparm->Value);
 	}
 
+	case AST_ExprID:
+	{
+		auto id = static_cast<ZCC_ExprID *>(ast);
+		return new FxIdentifier(id->Identifier, *ast);
+	}
+
 	case AST_ExprConstant:
 	{
 		auto cnst = static_cast<ZCC_ExprConstant *>(ast);

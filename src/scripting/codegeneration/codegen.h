@@ -203,7 +203,10 @@ protected:
 	: ScriptPosition(pos)
 	{
 	}
-public:
+
+public:	
+	FxExpression *CheckIntForName();
+
 	virtual ~FxExpression() {}
 	virtual FxExpression *Resolve(FCompileContext &ctx);
 	

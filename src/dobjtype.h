@@ -29,6 +29,7 @@ enum
 	VARF_In				= (1<<10),
 	VARF_Out			= (1<<11),
 	VARF_Implicit		= (1<<12),	// implicitly created parameters (i.e. do not compare when checking function signatures)
+	VARF_Static			= (1<<13),	// static class data (by necessity read only.)
 };
 
 // Symbol information -------------------------------------------------------

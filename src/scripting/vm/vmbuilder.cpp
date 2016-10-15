@@ -686,9 +686,8 @@ void FFunctionBuildList::Build()
 
 		// This needs to be fixed, so that the compile context receives the entire function symbol, including the containing class, the prototype and argument names, which will be needed to run the code generator
 		// As a first step this just needs to get working so fetch the class type from the prototype's argument list.
-		auto cls = static_cast<PClass*>(item.Func->Variants[0].Proto->ArgumentTypes[!!(item.Func->Variants[0].Flags & VARF_Action)]);
 		// We don't know the return type in advance for anonymous functions.
-		FCompileContext ctx(cls, nullptr);
+		FCompileContext ctx(item.Func, nullptr);
 		item.Code = item.Code->Resolve(ctx);
 		item.Proto = ctx.ReturnProto;
 
@@ -715,10 +714,7 @@ void FFunctionBuildList::Build()
 
 			if (dump != nullptr)
 			{
-				char label[64];
-				int labellen = mysnprintf(label, countof(label), item.DumpName,
-				cls->TypeName.GetChars());
-				DumpFunction(dump, sfunc, label, labellen);
+				DumpFunction(dump, sfunc, item.DumpName.GetChars(), (int)item.DumpName.Len());
 				codesize += sfunc->CodeSize;
 			}
 		}

@@ -89,7 +89,7 @@ void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FNam
 	if (funcflags & VARF_Method)
 	{
 		// implied self pointer
-		if (args != nullptr)		args->Push(cls); 
+		if (args != nullptr)		args->Push(NewPointer(cls)); 
 		if (argflags != nullptr)	argflags->Push(VARF_Implicit);
 		if (argnames != nullptr)	argnames->Push(NAME_self);
 	}
@@ -101,11 +101,11 @@ void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FNam
 			// Special treatment for weapons and CustomInventorys: 'self' is not the defining class but the actual user of the item, so this pointer must be of type 'Actor'
 			if (cls->IsDescendantOf(RUNTIME_CLASS(AStateProvider)))
 			{
-				args->Insert(0, RUNTIME_CLASS(AActor));	// this must go in before the real pointer to the containing class.
+				args->Insert(0, NewPointer(RUNTIME_CLASS(AActor)));	// this must go in before the real pointer to the containing class.
 			}
 			else
 			{
-				args->Push(cls);
+				args->Push(NewPointer(cls));
 			}
 			args->Push(TypeState/*Info*/);	// fixme: TypeState is not the correct type here!!!
 		}

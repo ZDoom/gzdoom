@@ -2509,7 +2509,9 @@ unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArra
 	if (flags & VARF_Method)
 	{
 		assert(proto->ArgumentTypes.Size() > 0);
-		variant.SelfClass = dyn_cast<PClass>(proto->ArgumentTypes[0]);
+		auto selftypeptr = dyn_cast<PPointer>(proto->ArgumentTypes[0]);
+		assert(selftypeptr != nullptr);
+		variant.SelfClass = dyn_cast<PClass>(selftypeptr->PointedType);
 		assert(variant.SelfClass != nullptr);
 	}
 

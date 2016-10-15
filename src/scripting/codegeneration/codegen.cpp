@@ -49,7 +49,7 @@
 #include "thingdef.h"
 #include "p_lnspec.h"
 #include "doomstat.h"
-#include "thingdef_exp.h"
+#include "codegen.h"
 #include "m_fixed.h"
 #include "vmbuilder.h"
 #include "v_text.h"
@@ -91,13 +91,25 @@ static const FLOP FxFlops[] =
 //
 //==========================================================================
 
-FCompileContext::FCompileContext(PClass *cls, PPrototype *ret) : Class(cls), ReturnProto(ret)
+FCompileContext::FCompileContext(PFunction *fnc, PPrototype *ret) : ReturnProto(ret), Function(fnc), Class(nullptr)
+{
+	if (fnc != nullptr) Class = fnc->OwningClass;
+}
+
+FCompileContext::FCompileContext(PClass *cls) : ReturnProto(nullptr), Function(nullptr), Class(cls)
 {
 }
 
-PSymbol *FCompileContext::FindInClass(FName identifier)
+PSymbol *FCompileContext::FindInClass(FName identifier, PSymbolTable *&symt)
 {
-	return Class ? Class->Symbols.FindSymbol(identifier, true) : nullptr;
+	return Class != nullptr? Class->Symbols.FindSymbolInTable(identifier, symt) : nullptr;
+}
+
+PSymbol *FCompileContext::FindInSelfClass(FName identifier, PSymbolTable *&symt)
+{
+	// If we have no self we cannot retrieve any values from it.
+	if (Function == nullptr || Function->Variants[0].SelfClass == nullptr) return nullptr;
+	return Function->Variants[0].SelfClass->Symbols.FindSymbolInTable(identifier, symt);
 }
 PSymbol *FCompileContext::FindGlobal(FName identifier)
 {
@@ -3178,15 +3190,16 @@ FxIdentifier::FxIdentifier(FName name, const FScriptPosition &pos)
 FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 {
 	PSymbol * sym;
-	FxExpression *newex = NULL;
-	//FBaseCVar * cv = NULL;
-	//FString s;
+	FxExpression *newex = nullptr;
 	int num;
-	//const PClass *Class;
 	
 	CHECKRESOLVED();
+
+	// Ugh, the horror. Constants need to be taken from the owning class, but members from the self class to catch invalid accesses here...
+
 	// see if the current class (if valid) defines something with this name.
-	if ((sym = ctx.FindInClass(Identifier)) != NULL)
+	PSymbolTable *symtbl;
+	if ((sym = ctx.FindInClass(Identifier, symtbl)) != nullptr)
 	{
 		if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
 		{
@@ -3195,15 +3208,64 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		}
 		else if (sym->IsKindOf(RUNTIME_CLASS(PField)))
 		{
+			ABORT(ctx.Function);	// only valid when resolving a function.
 			PField *vsym = static_cast<PField*>(sym);
-			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as member variable, index %d\n", Identifier.GetChars(), vsym->Offset);
-			newex = new FxClassMember((new FxSelf(ScriptPosition))->Resolve(ctx), vsym, ScriptPosition);
+
+			// We have 4 cases to consider here:
+			// 1. The symbol is a static/meta member (not implemented yet) which is always accessible.
+			// 2. This is a static function 
+			// 3. This is an action function with a restricted self pointer
+			// 4. This is a normal member or unrestricted action function.
+			if (vsym->Flags & VARF_Deprecated)
+			{
+				ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s", vsym->SymbolName.GetChars());
+			}
+			if ((vsym->Flags & VARF_Private) && symtbl != &ctx.Class->Symbols)
+			{
+				ScriptPosition.Message(MSG_ERROR, "Private member %s not accessible", vsym->SymbolName.GetChars());
+				delete this;
+				return nullptr;
+			}
+
+			if (vsym->Flags & VARF_Static)
+			{
+				// todo. For now these cannot be defined so let's just exit.
+				delete this;
+				return nullptr;
+			}
+
+			if (ctx.Function->Variants[0].SelfClass == nullptr)
+			{
+				ScriptPosition.Message(MSG_ERROR, "Unable to access class member from static function");
+				delete this;
+				return nullptr;
+			}
+			else 
+			{
+				if (ctx.Function->Variants[0].SelfClass != ctx.Class)
+				{
+					// Check if the restricted class can access it.
+					PSymbol *sym2;
+					if ((sym2 = ctx.FindInSelfClass(Identifier, symtbl)) != nullptr)
+					{
+						if (sym != sym2)
+						{
+							ScriptPosition.Message(MSG_ERROR, "Member variable of %s not accessible through restricted self pointer", ctx.Class->TypeName.GetChars());
+							delete this;
+							return nullptr;
+						}
+					}
+				}
+				ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as member variable, index %d\n", Identifier.GetChars(), vsym->Offset);
+				newex = new FxClassMember((new FxSelf(ScriptPosition))->Resolve(ctx), vsym, ScriptPosition);
+			}
 		}
 		else
 		{
 			ScriptPosition.Message(MSG_ERROR, "Invalid member identifier '%s'\n", Identifier.GetChars());
 		}
 	}
+
 	// now check the global identifiers.
 	else if ((sym = ctx.FindGlobal(Identifier)) != NULL)
 	{
@@ -3217,23 +3279,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			ScriptPosition.Message(MSG_ERROR, "Invalid global identifier '%s'\n", Identifier.GetChars());
 		}
 	}
-	/*
-	else if ((Class = PClass::FindClass(Identifier)))
-	{
-		pos.Message(MSG_DEBUGLOG, "Resolving name '%s' as class name\n", Identifier.GetChars());
-			newex = new FxClassType(Class, ScriptPosition);
-		}
-	}
-	*/
 
-	// also check for CVars
-	/*
-	else if ((cv = FindCVar(Identifier, NULL)) != NULL)
-	{
-		CLOG(CL_RESOLVE, LPrintf("Resolving name '%s' as cvar\n", Identifier.GetChars()));
-		newex = new FxCVar(cv, ScriptPosition);
-	}
-	*/
 	// and line specials
 	else if ((num = P_FindLineSpecial(Identifier, NULL, NULL)))
 	{
@@ -3270,15 +3316,13 @@ FxSelf::FxSelf(const FScriptPosition &pos)
 FxExpression *FxSelf::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
-	if (!ctx.Class)
+	if (ctx.Function == nullptr || ctx.Function->Variants[0].SelfClass == nullptr)
 	{
-		// can't really happen with DECORATE's expression evaluator.
 		ScriptPosition.Message(MSG_ERROR, "self used outside of a member function");
 		delete this;
-		return NULL;
+		return nullptr;
 	}
-	ValueType = ctx.Class;
-	ValueType = NewPointer(RUNTIME_CLASS(DObject));
+	ValueType = NewPointer(ctx.Function->Variants[0].SelfClass);
 	return this;
 }  
 
@@ -3614,8 +3658,10 @@ FxFunctionCall::~FxFunctionCall()
 
 FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 {
-	// This part is mostly a kludge, it really needs to get the class type from Self.
+	ABORT(ctx.Class);
+	
 	PFunction *afd = dyn_cast<PFunction>(ctx.Class->Symbols.FindSymbol(MethodName, true));
+	// Todo: More checks are needed here to make it work as expected.
 	if (afd != nullptr)
 	{
 		auto x = new FxVMFunctionCall(afd, ArgList, ScriptPosition, false);
@@ -5172,9 +5218,9 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 			delete this;
 			return NULL;
 		}
-		else if (!scope->IsDescendantOf(ctx.Class))
+		else if (!scope->IsAncestorOf(ctx.Class))
 		{
-			ScriptPosition.Message(MSG_ERROR, "'%s' is not an ancestor of '%s'", names[0].GetChars(),ctx.Class->TypeName.GetChars());
+			ScriptPosition.Message(MSG_ERROR, "'%s' is not an ancestor of '%s'", names[0].GetChars(), ctx.Class->TypeName.GetChars());
 			delete this;
 			return NULL;
 		}

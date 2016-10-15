@@ -1888,6 +1888,11 @@ void ZCCCompiler::InitFunctions()
 					do
 					{
 						auto type = DetermineType(c->Type(), f, f->Name, t, false);
+						if (type->IsKindOf(RUNTIME_CLASS(PStruct)))
+						{
+							// structs and classes only get passed by pointer.
+							type = NewPointer(type);
+						}
 						// TBD: disallow certain types? For now, let everything pass that isn't an array.
 						rets.Push(type);
 						t = static_cast<decltype(t)>(t->SiblingNext);

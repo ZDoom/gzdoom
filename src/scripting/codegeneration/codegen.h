@@ -67,11 +67,14 @@ struct FCompileContext
 {
 	TArray<FxJumpStatement *> Jumps;
 	PPrototype *ReturnProto;
-	PClass *Class;
+	PFunction *Function;	// The function that is currently being compiled (or nullptr for constant evaluation.)
+	PClass *Class;			// The type of the owning class.
 
-	FCompileContext(PClass *cls = nullptr, PPrototype *ret = nullptr);
+	FCompileContext(PFunction *func = nullptr, PPrototype *ret = nullptr);
+	FCompileContext(PClass *cls);	// only to be used to resolve constants!
 
-	PSymbol *FindInClass(FName identifier);
+	PSymbol *FindInClass(FName identifier, PSymbolTable *&symt);
+	PSymbol *FindInSelfClass(FName identifier, PSymbolTable *&symt);
 	PSymbol *FindGlobal(FName identifier);
 
 	void HandleJumps(int token, FxExpression *handler);

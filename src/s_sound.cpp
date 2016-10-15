@@ -1303,6 +1303,32 @@ void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, float volume, fl
 
 //==========================================================================
 //
+// S_PlaySound - Subfunction used by ACS and DECORATE
+//
+// Has a local parameter to make the sound audible only to the source
+//
+//==========================================================================
+
+void S_PlaySound(AActor *a, int chan, FSoundID sid, float vol, float atten, bool local)
+{
+	if (a == nullptr)
+		return;
+
+	if (!local)
+	{
+		S_Sound(a, chan, sid, vol, atten);
+	}
+	else
+	{
+		if (a->CheckLocalView(consoleplayer))
+		{
+			S_Sound(chan, sid, vol, ATTN_NONE);
+		}
+	}
+}
+
+//==========================================================================
+//
 // S_LoadSound
 //
 // Returns a pointer to the sfxinfo with the actual sound data.

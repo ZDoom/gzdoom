@@ -1033,9 +1033,8 @@ static void R_DrawSkyColumn(int start_x, int y1, int y2, int columns)
 	dc_dest = (ylookup[y1] + start_x) * 4 + dc_destorg;
 	dc_count = y2 - y1;
 
-	// To do: figure out how GZDoom calculates the solid top and bottom colors
-	uint32_t solid_top = 0xff7f7f7f;
-	uint32_t solid_bottom = 0xff3f3f3f;
+	uint32_t solid_top = frontskytex->GetSkyCapColor(false);
+	uint32_t solid_bottom = frontskytex->GetSkyCapColor(true);
 
 	if (columns == 4)
 		if (!backskytex)

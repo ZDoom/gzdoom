@@ -1207,6 +1207,10 @@ int R_FindCustomTranslation(const char *name)
 	{
 		return TRANSLATION(TRANSLATION_Standard, 7);
 	}
+	else if (!stricmp(name, "None"))
+	{
+		return 0;
+	}
 	int *t = customTranslationMap.CheckKey(FName(name, true));
 	return (t != nullptr)? *t : -1;
 }

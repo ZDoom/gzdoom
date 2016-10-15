@@ -198,9 +198,6 @@ protected:
 	FxExpression(const FScriptPosition &pos)
 	: ScriptPosition(pos)
 	{
-		isresolved = false;
-		ScriptPosition = pos;
-		ValueType = NULL;
 	}
 public:
 	virtual ~FxExpression() {}
@@ -215,12 +212,10 @@ public:
 
 	virtual ExpEmit Emit(VMFunctionBuilder *build);
 
-	TArray<FxJumpStatement *> JumpAddresses;
-
 	FScriptPosition ScriptPosition;
-	PType *ValueType;
+	PType *ValueType = nullptr;
 
-	bool isresolved;
+	bool isresolved = false;
 };
 
 //==========================================================================
@@ -1005,11 +1000,30 @@ public:
 
 //==========================================================================
 //
+// Base class for loops
+//
+//==========================================================================
+
+class FxLoopStatement : public FxExpression
+{
+protected:
+	FxLoopStatement(const FScriptPosition &pos)
+	: FxExpression(pos)
+	{
+	}
+	
+	void HandleJumps(int token, FCompileContext &ctx);
+
+	TArray<FxJumpStatement *> JumpAddresses;
+};
+
+//==========================================================================
+//
 // FxWhileLoop
 //
 //==========================================================================
 
-class FxWhileLoop : public FxExpression
+class FxWhileLoop : public FxLoopStatement
 {
 	FxExpression *Condition;
 	FxExpression *Code;
@@ -1027,7 +1041,7 @@ public:
 //
 //==========================================================================
 
-class FxDoWhileLoop : public FxExpression
+class FxDoWhileLoop : public FxLoopStatement
 {
 	FxExpression *Condition;
 	FxExpression *Code;
@@ -1045,7 +1059,7 @@ public:
 //
 //==========================================================================
 
-class FxForLoop : public FxExpression
+class FxForLoop : public FxLoopStatement
 {
 	FxExpression *Init;
 	FxExpression *Condition;

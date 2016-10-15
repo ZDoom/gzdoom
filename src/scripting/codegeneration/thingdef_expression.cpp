@@ -104,20 +104,6 @@ PSymbol *FCompileContext::FindGlobal(FName identifier)
 	return GlobalSymbols.FindSymbol(identifier, true);
 }
 
-void FCompileContext::HandleJumps(int token, FxExpression *handler)
-{
-	for (unsigned int i = 0; i < Jumps.Size(); i++)
-	{
-		if (Jumps[i]->Token == token)
-		{
-			Jumps[i]->AddressResolver = handler;
-			handler->JumpAddresses.Push(Jumps[i]);
-			Jumps.Delete(i);
-			i--;
-		}
-	}
-}
-
 void FCompileContext::CheckReturn(PPrototype *proto, FScriptPosition &pos)
 {
 	assert(proto != nullptr);
@@ -4398,6 +4384,27 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 	return ExpEmit();
 }
 
+
+//==========================================================================
+//
+// FxLoopStatement
+//
+//==========================================================================
+
+void FxLoopStatement::HandleJumps(int token, FCompileContext &ctx)
+{
+	for (unsigned int i = 0; i < ctx.Jumps.Size(); i++)
+	{
+		if (ctx.Jumps[i]->Token == token)
+		{
+			ctx.Jumps[i]->AddressResolver = this;
+			JumpAddresses.Push(ctx.Jumps[i]);
+			ctx.Jumps.Delete(i);
+			i--;
+		}
+	}
+}
+
 //==========================================================================
 //
 // FxWhileLoop
@@ -4405,7 +4412,7 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxWhileLoop::FxWhileLoop(FxExpression *condition, FxExpression *code, const FScriptPosition &pos)
-: FxExpression(pos), Condition(condition), Code(code)
+: FxLoopStatement(pos), Condition(condition), Code(code)
 {
 	ValueType = TypeVoid;
 }
@@ -4422,8 +4429,8 @@ FxExpression *FxWhileLoop::Resolve(FCompileContext &ctx)
 	SAFE_RESOLVE(Condition, ctx);
 	SAFE_RESOLVE_OPT(Code, ctx);
 
-	ctx.HandleJumps(TK_Break, this);
-	ctx.HandleJumps(TK_Continue, this);
+	HandleJumps(TK_Break, ctx);
+	HandleJumps(TK_Continue, ctx);
 
 	if (Condition->ValueType != TypeBool)
 	{
@@ -4506,7 +4513,7 @@ ExpEmit FxWhileLoop::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxDoWhileLoop::FxDoWhileLoop(FxExpression *condition, FxExpression *code, const FScriptPosition &pos)
-: FxExpression(pos), Condition(condition), Code(code)
+: FxLoopStatement(pos), Condition(condition), Code(code)
 {
 	ValueType = TypeVoid;
 }
@@ -4523,8 +4530,8 @@ FxExpression *FxDoWhileLoop::Resolve(FCompileContext &ctx)
 	SAFE_RESOLVE(Condition, ctx);
 	SAFE_RESOLVE_OPT(Code, ctx);
 
-	ctx.HandleJumps(TK_Break, this);
-	ctx.HandleJumps(TK_Continue, this);
+	HandleJumps(TK_Break, ctx);
+	HandleJumps(TK_Continue, ctx);
 
 	if (Condition->ValueType != TypeBool)
 	{
@@ -4608,7 +4615,7 @@ ExpEmit FxDoWhileLoop::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxForLoop::FxForLoop(FxExpression *init, FxExpression *condition, FxExpression *iteration, FxExpression *code, const FScriptPosition &pos)
-: FxExpression(pos), Init(init), Condition(condition), Iteration(iteration), Code(code)
+: FxLoopStatement(pos), Init(init), Condition(condition), Iteration(iteration), Code(code)
 {
 	ValueType = TypeVoid;
 }
@@ -4629,8 +4636,8 @@ FxExpression *FxForLoop::Resolve(FCompileContext &ctx)
 	SAFE_RESOLVE_OPT(Iteration, ctx);
 	SAFE_RESOLVE_OPT(Code, ctx);
 
-	ctx.HandleJumps(TK_Break, this);
-	ctx.HandleJumps(TK_Continue, this);
+	HandleJumps(TK_Break, ctx);
+	HandleJumps(TK_Continue, ctx);
 
 	if (Condition != nullptr)
 	{
@@ -5041,17 +5048,20 @@ static bool VerifyJumpTarget(AActor *stateowner, FStateParamInfo *stateinfo, int
 {
 	PClassActor *cls = stateowner->GetClass();
 
-	while (cls != RUNTIME_CLASS(AActor))
+	if (stateinfo->mCallingState != nullptr)
 	{
-		// both calling and target state need to belong to the same class.
-		if (cls->OwnsState(stateinfo->mCallingState))
+		while (cls != RUNTIME_CLASS(AActor))
 		{
-			return cls->OwnsState(stateinfo->mCallingState + index);
-		}
+			// both calling and target state need to belong to the same class.
+			if (cls->OwnsState(stateinfo->mCallingState))
+			{
+				return cls->OwnsState(stateinfo->mCallingState + index);
+			}
 
-		// We can safely assume the ParentClass is of type PClassActor
-		// since we stop when we see the Actor base class.
-		cls = static_cast<PClassActor *>(cls->ParentClass);
+			// We can safely assume the ParentClass is of type PClassActor
+			// since we stop when we see the Actor base class.
+			cls = static_cast<PClassActor *>(cls->ParentClass);
+		}
 	}
 	return false;
 }

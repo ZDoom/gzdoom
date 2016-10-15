@@ -1032,16 +1032,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PlaySound)
 	PARAM_FLOAT_OPT	(volume)		{ volume = 1; }
 	PARAM_BOOL_OPT	(looping)		{ looping = false; }
 	PARAM_FLOAT_OPT	(attenuation)	{ attenuation = ATTN_NORM; }
+	PARAM_BOOL_OPT	(local)			{ local = false; }
 
 	if (!looping)
 	{
-		S_Sound (self, channel, soundid, (float)volume, (float)attenuation);
+		S_PlaySound(self, channel, soundid, (float)volume, (float)attenuation, local);
 	}
 	else
 	{
 		if (!S_IsActorPlayingSomething (self, channel&7, soundid))
 		{
-			S_Sound (self, channel | CHAN_LOOP, soundid, (float)volume, (float)attenuation);
+			S_PlaySound(self, channel | CHAN_LOOP, soundid, (float)volume, (float)attenuation, local);
 		}
 	}
 	return 0;

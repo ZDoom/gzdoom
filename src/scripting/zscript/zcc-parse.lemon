@@ -99,6 +99,7 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 		}
 	}
 	stat->sc->ScriptMessage("%s\n%s\n", unexpected.GetChars(), expecting.GetChars());
+	FScriptPosition::ErrorCounter++;
 }
 %parse_accept { DPrintf(DMSG_SPAMMY, "Input accepted\n"); }
 %parse_failure { /**failed = true;*/ }

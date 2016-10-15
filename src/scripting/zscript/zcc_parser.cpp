@@ -39,6 +39,7 @@
 #include "cmdlib.h"
 #include "m_alloc.h"
 #include "i_system.h"
+#include "v_text.h"
 #include "zcc_parser.h"
 #include "zcc_compile.h"
 
@@ -323,6 +324,12 @@ static void DoParse(int lumpnum)
 	ZCCParse(parser, 0, value, &state);
 	ZCCParseFree(parser, free);
 
+	// If the parser fails, there is no point starting the compiler, because it'd only flood the output with endless errors.
+	if (FScriptPosition::ErrorCounter > 0)
+	{
+		I_Error("%d errors while parsing %s", FScriptPosition::ErrorCounter, Wads.GetLumpFullPath(lumpnum));
+	}
+
 	{
 	// Make a dump of the AST before running the compiler for diagnostic purposes.
 #ifdef _DEBUG
@@ -347,11 +354,24 @@ static void DoParse(int lumpnum)
 	symtable.SetName("Global_Node");
 	ZCCCompiler cc(state, NULL, symtable, GlobalSymbols);
 	cc.Compile();
+
+	if (FScriptPosition::ErrorCounter > 0)
+	{
+		// Abort if the compiler produced any errors. Also do not compile further lumps, because they very likely miss some stuff.
+		I_Error("%d errors, %d warnings while compiling %s", FScriptPosition::ErrorCounter, FScriptPosition::WarnCounter, Wads.GetLumpFullPath(lumpnum));
+	}
+	else if (FScriptPosition::WarnCounter > 0)
+	{
+		// If we got warnings, but no errors, print the information but continue.
+		Printf(TEXTCOLOR_ORANGE, "%d warnings while compiling %s", FScriptPosition::WarnCounter, Wads.GetLumpFullPath(lumpnum));
+	}
+
 }
 
 void ParseScripts()
 {
 	int lump, lastlump = 0;
+	FScriptPosition::ResetErrorCounter();
 	while ((lump = Wads.FindLump("ZSCRIPT", &lastlump)) != -1)
 	{
 		DoParse(lump);

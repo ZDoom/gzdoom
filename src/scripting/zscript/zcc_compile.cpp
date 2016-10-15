@@ -203,8 +203,9 @@ void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *treenode, ZC
 //==========================================================================
 
 ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, PSymbolTable &_outsymbols)
-	: Outer(_outer), GlobalTreeNodes(&_symbols), OutputSymbols(&_outsymbols), AST(ast), ErrorCount(0), WarnCount(0)
+	: Outer(_outer), GlobalTreeNodes(&_symbols), OutputSymbols(&_outsymbols), AST(ast)
 {
+	FScriptPosition::ResetErrorCounter();
 	// Group top-level nodes by type
 	if (ast.TopNode != NULL)
 	{
@@ -320,7 +321,7 @@ void ZCCCompiler::Warn(ZCC_TreeNode *node, const char *msg, ...)
 	MessageV(node, TEXTCOLOR_ORANGE, msg, argptr);
 	va_end(argptr);
 
-	WarnCount++;
+	FScriptPosition::WarnCounter++;
 }
 
 //==========================================================================
@@ -338,7 +339,7 @@ void ZCCCompiler::Error(ZCC_TreeNode *node, const char *msg, ...)
 	MessageV(node, TEXTCOLOR_RED, msg, argptr);
 	va_end(argptr);
 
-	ErrorCount++;
+	FScriptPosition::ErrorCounter++;
 }
 
 //==========================================================================
@@ -376,7 +377,7 @@ int ZCCCompiler::Compile()
 	InitDefaults();
 	InitFunctions();
 	CompileStates();
-	return ErrorCount;
+	return FScriptPosition::ErrorCounter;
 }
 
 //==========================================================================
@@ -1678,7 +1679,6 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 		}
 	}
 	// call the handler
-	FScriptPosition::ErrorCounter = 0;
 	try
 	{
 		prop->Handler(defaults, bag.Info, bag, &params[0]);
@@ -1687,7 +1687,6 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 	{
 		Error(property, "%s", error.GetMessage());
 	}
-	ErrorCount += FScriptPosition::ErrorCounter;
 }
 
 //==========================================================================

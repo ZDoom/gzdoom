@@ -146,8 +146,6 @@ private:
 	PSymbolTable *GlobalTreeNodes;
 	PSymbolTable *OutputSymbols;
 	ZCC_AST &AST;
-	int ErrorCount;
-	int WarnCount;
 };
 
 void ZCC_InitConversions();

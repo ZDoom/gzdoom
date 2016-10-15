@@ -127,6 +127,7 @@ void LoadActors ()
 
 	InitThingdef();
 	ParseScripts();
+
 	ParseAllDecorate();
 
 	FunctionBuildList.Build();

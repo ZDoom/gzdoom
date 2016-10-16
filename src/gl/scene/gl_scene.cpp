@@ -1199,7 +1199,6 @@ void FGLInterface::StateChanged(AActor *actor)
 
 void FGLInterface::StartSerialize(FSerializer &arc)
 {
-	gl_DeleteAllAttachedLights();
 	if (arc.BeginObject("glinfo"))
 	{
 		arc("fogdensity", fogdensity)
@@ -1211,8 +1210,11 @@ void FGLInterface::StartSerialize(FSerializer &arc)
 
 void FGLInterface::EndSerialize(FSerializer &arc)
 {
-	gl_RecreateAllAttachedLights();
-	if (arc.isReading()) gl_InitPortals();
+	if (arc.isReading())
+	{
+		gl_RecreateAllAttachedLights();
+		gl_InitPortals();
+	}
 }
 
 //===========================================================================

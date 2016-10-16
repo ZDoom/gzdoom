@@ -994,7 +994,7 @@ static void R_DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, doub
 	for (int i = 0; i < columns; i++)
 	{
 		double uv_stepd = skyiscale * yrepeat;
-		double v = (texturemid + uv_stepd * (y1 - CenterY + 0.5)) / height + 1.0f;
+		double v = (texturemid + uv_stepd * (y1 - CenterY + 0.5)) / height;
 		double v_step = uv_stepd / height;
 
 		uint32_t uv_pos = (uint32_t)(v * 0x01000000);
@@ -1048,7 +1048,7 @@ static void R_DrawSkyColumn(int start_x, int y1, int y2, int columns)
 {
 	if (1 << frontskytex->HeightBits == frontskytex->GetHeight())
 	{
-		double texturemid = skymid * frontskytex->Scale.Y;
+		double texturemid = skymid * frontskytex->Scale.Y + frontskytex->GetHeight();
 		R_DrawSkyColumnStripe(start_x, y1, y2, columns, frontskytex->Scale.Y, texturemid, frontskytex->Scale.Y);
 	}
 	else

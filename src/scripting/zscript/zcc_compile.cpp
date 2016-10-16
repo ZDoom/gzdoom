@@ -1009,7 +1009,7 @@ ZCC_Expression *ZCCCompiler::IdentifyIdentifier(ZCC_ExprID *idnode, PSymbolTable
 			return node;
 		}
 	}
-	else
+	else if (SimplifyingConstant)	// leave unknown identifiers alone when simplifying non-constants. It is impossible to know what they are here.
 	{
 		// Also handle line specials.
 		// To call this like a function this needs to be done differently, but for resolving constants this is ok.

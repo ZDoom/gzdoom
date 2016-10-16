@@ -1314,7 +1314,7 @@ void R_DrawPortals ()
 		vissprite_p = firstvissprite;
 
 		visplaneStack.Pop (pl);
-		if (pl->Alpha > 0)
+		if (pl->Alpha > 0 && pl->picnum != skyflatnum)
 		{
 			R_DrawSinglePlane (pl, pl->Alpha, pl->Additive, true);
 		}

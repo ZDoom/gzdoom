@@ -13,8 +13,8 @@
 #include "r_compiler/ssa/ssa_ubyte_ptr.h"
 #include "r_compiler/ssa/ssa_vec4f_ptr.h"
 #include "r_compiler/ssa/ssa_vec4i_ptr.h"
-#include "r_compiler/ssa/ssa_pixels.h"
 #include "r_compiler/ssa/ssa_stack.h"
+#include "r_compiler/ssa/ssa_bool.h"
 #include "r_compiler/ssa/ssa_barycentric_weight.h"
 #include "r_compiler/llvm_include.h"
 

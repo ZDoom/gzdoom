@@ -25,12 +25,19 @@
 
 #endif
 
+#ifdef __APPLE__
+#define __STDC_LIMIT_MACROS    // DataTypes.h:57:3: error: "Must #define __STDC_LIMIT_MACROS before #including Support/DataTypes.h"
+#define __STDC_CONSTANT_MACROS // DataTypes.h:61:3: error: "Must #define __STDC_CONSTANT_MACROS before " "#including Support/DataTypes.h"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wredundant-move"
+#endif
+
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Attributes.h>
 #include <llvm/IR/Verifier.h>
-#include <llvm/IR/PassManager.h>
+//#include <llvm/IR/PassManager.h>
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Intrinsics.h>
@@ -43,8 +50,14 @@
 #include <llvm/Transforms/IPO/PassManagerBuilder.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Support/TargetRegistry.h>
+#include <llvm/Support/Host.h>
 #include <llvm/CodeGen/AsmPrinter.h>
 #include <llvm/MC/MCAsmInfo.h>
+#include <llvm/Target/TargetSubtargetInfo.h>
+
+#ifdef __APPLE__
+#pragma clang diagnostic pop
+#endif
 
 #ifdef _MSC_VER
 

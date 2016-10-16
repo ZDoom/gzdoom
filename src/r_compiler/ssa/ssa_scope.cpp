@@ -41,12 +41,12 @@ llvm::Function *SSAScope::intrinsic(llvm::Intrinsic::ID id, llvm::ArrayRef<llvm:
 	return func;
 }
 
-llvm::Value *SSAScope::alloca(llvm::Type *type)
+llvm::Value *SSAScope::alloc_stack(llvm::Type *type)
 {
-	return alloca(type, SSAInt(1));
+	return alloc_stack(type, SSAInt(1));
 }
 
-llvm::Value *SSAScope::alloca(llvm::Type *type, SSAInt size)
+llvm::Value *SSAScope::alloc_stack(llvm::Type *type, SSAInt size)
 {
 	// Allocas must be created at top of entry block for the PromoteMemoryToRegisterPass to work
 	llvm::BasicBlock &entry = SSAScope::builder().GetInsertBlock()->getParent()->getEntryBlock();

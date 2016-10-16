@@ -55,10 +55,17 @@ SSAVec4i::SSAVec4i(SSAInt i0, SSAInt i1, SSAInt i2, SSAInt i3)
 	std::vector<llvm::Constant*> constants;
 	constants.resize(4, llvm::ConstantInt::get(SSAScope::context(), llvm::APInt(32, 0, true)));
 	v = llvm::ConstantVector::get(constants);
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9)
+	v = SSAScope::builder().CreateInsertElement(v, i0.v, SSAInt(0).v, SSAScope::hint());
+	v = SSAScope::builder().CreateInsertElement(v, i1.v, SSAInt(1).v, SSAScope::hint());
+	v = SSAScope::builder().CreateInsertElement(v, i2.v, SSAInt(2).v, SSAScope::hint());
+	v = SSAScope::builder().CreateInsertElement(v, i3.v, SSAInt(3).v, SSAScope::hint());
+#else
 	v = SSAScope::builder().CreateInsertElement(v, i0.v, (uint64_t)0, SSAScope::hint());
 	v = SSAScope::builder().CreateInsertElement(v, i1.v, (uint64_t)1, SSAScope::hint());
 	v = SSAScope::builder().CreateInsertElement(v, i2.v, (uint64_t)2, SSAScope::hint());
 	v = SSAScope::builder().CreateInsertElement(v, i3.v, (uint64_t)3, SSAScope::hint());
+#endif
 }
 
 SSAVec4i::SSAVec4i(SSAVec4f f32)
@@ -84,7 +91,11 @@ SSAVec4i SSAVec4i::insert(SSAInt index, SSAInt value)
 
 SSAVec4i SSAVec4i::insert(int index, SSAInt value)
 {
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9)
+	return SSAVec4i::from_llvm(SSAScope::builder().CreateInsertElement(v, value.v, SSAInt(index).v, SSAScope::hint()));
+#else
 	return SSAVec4i::from_llvm(SSAScope::builder().CreateInsertElement(v, value.v, index, SSAScope::hint()));
+#endif
 }
 
 SSAVec4i SSAVec4i::insert(int index, int value)

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "ssa_scope.h"
+
 template<typename SSAVariable>
 class SSAStack
 {
@@ -8,7 +10,7 @@ public:
 	SSAStack()
 	: v(0)
 	{
-		v = SSAScope::alloca(SSAVariable::llvm_type());
+		v = SSAScope::alloc_stack(SSAVariable::llvm_type());
 	}
 
 	SSAVariable load() const

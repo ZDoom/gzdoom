@@ -12,8 +12,8 @@ public:
 	static llvm::Module *module();
 	static llvm::IRBuilder<> &builder();
 	static llvm::Function *intrinsic(llvm::Intrinsic::ID id, llvm::ArrayRef<llvm::Type *> parameter_types = llvm::ArrayRef<llvm::Type*>());
-	static llvm::Value *alloca(llvm::Type *type);
-	static llvm::Value *alloca(llvm::Type *type, SSAInt size);
+	static llvm::Value *alloc_stack(llvm::Type *type);
+	static llvm::Value *alloc_stack(llvm::Type *type, SSAInt size);
 	static llvm::MDNode *constant_scope_list();
 	static const std::string &hint();
 	static void set_hint(const std::string &hint);

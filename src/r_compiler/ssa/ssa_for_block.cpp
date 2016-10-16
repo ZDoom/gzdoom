@@ -16,6 +16,7 @@ SSAForBlock::SSAForBlock()
 void SSAForBlock::loop_block(SSABool true_condition, int unroll_count)
 {
 	auto branch = SSAScope::builder().CreateCondBr(true_condition.v, loop_basic_block, end_basic_block);
+#if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9)
 	if (unroll_count > 0)
 	{
 		using namespace llvm;
@@ -29,6 +30,7 @@ void SSAForBlock::loop_block(SSABool true_condition, int unroll_count)
 		auto md_loop = MDNode::getDistinct(SSAScope::context(), { md_unroll_enable, md_unroll_count });
 		branch->setMetadata(LLVMContext::MD_loop, md_loop);
 	}
+#endif
 	SSAScope::builder().SetInsertPoint(loop_basic_block);
 }
 

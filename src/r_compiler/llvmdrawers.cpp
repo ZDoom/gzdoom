@@ -263,7 +263,7 @@ void LLVMDrawersImpl::CodegenDrawColumn(const char *name, DrawColumnVariant vari
 	builder.CreateRetVoid();
 
 	if (llvm::verifyFunction(*function.func))
-		I_FatalError("verifyFunction failed for " __FUNCTION__);
+		I_FatalError("verifyFunction failed for CodegenDrawColumn()");
 }
 
 void LLVMDrawersImpl::CodegenDrawSpan(const char *name, DrawSpanVariant variant)
@@ -281,7 +281,7 @@ void LLVMDrawersImpl::CodegenDrawSpan(const char *name, DrawSpanVariant variant)
 	builder.CreateRetVoid();
 
 	if (llvm::verifyFunction(*function.func))
-		I_FatalError("verifyFunction failed for " __FUNCTION__);
+		I_FatalError("verifyFunction failed for CodegenDrawSpan()");
 }
 
 void LLVMDrawersImpl::CodegenDrawWall(const char *name, DrawWallVariant variant, int columns)
@@ -300,7 +300,7 @@ void LLVMDrawersImpl::CodegenDrawWall(const char *name, DrawWallVariant variant,
 	builder.CreateRetVoid();
 
 	if (llvm::verifyFunction(*function.func))
-		I_FatalError("verifyFunction failed for " __FUNCTION__);
+		I_FatalError("verifyFunction failed for CodegenDrawWall()");
 }
 
 void LLVMDrawersImpl::CodegenDrawSky(const char *name, DrawSkyVariant variant, int columns)
@@ -319,7 +319,7 @@ void LLVMDrawersImpl::CodegenDrawSky(const char *name, DrawSkyVariant variant, i
 	builder.CreateRetVoid();
 
 	if (llvm::verifyFunction(*function.func))
-		I_FatalError("verifyFunction failed for " __FUNCTION__);
+		I_FatalError("verifyFunction failed for CodegenDrawSky()");
 }
 
 llvm::Type *LLVMDrawersImpl::GetDrawColumnArgsStruct(llvm::LLVMContext &context)
@@ -469,7 +469,11 @@ LLVMProgram::LLVMProgram()
 		I_FatalError("Could not find LLVM target: %s", errorstring.c_str());
 
 	TargetOptions opt;
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9)
+	Reloc::Model relocModel = Reloc::Default;
+#else
 	auto relocModel = Optional<Reloc::Model>();
+#endif
 	machine = target->createTargetMachine(targetTriple, cpuName, cpuFeaturesStr, opt, relocModel, CodeModel::JITDefault, CodeGenOpt::Aggressive);
 	if (!machine)
 		I_FatalError("Could not create LLVM target machine");
@@ -478,7 +482,11 @@ LLVMProgram::LLVMProgram()
 
 	mModule = std::make_unique<Module>("render", context());
 	mModule->setTargetTriple(targetTriple);
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9)
+	mModule->setDataLayout(new DataLayout(*machine->getSubtargetImpl()->getDataLayout()));
+#else
 	mModule->setDataLayout(machine->createDataLayout());
+#endif
 
 }
 
@@ -489,8 +497,10 @@ void LLVMProgram::CreateEE()
 	legacy::FunctionPassManager PerFunctionPasses(mModule.get());
 	legacy::PassManager PerModulePasses;
 
+#if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9)
 	PerFunctionPasses.add(createTargetTransformInfoWrapperPass(machine->getTargetIRAnalysis()));
 	PerModulePasses.add(createTargetTransformInfoWrapperPass(machine->getTargetIRAnalysis()));
+#endif
 
 	PassManagerBuilder passManagerBuilder;
 	passManagerBuilder.OptLevel = 3;
@@ -532,13 +542,17 @@ std::string LLVMProgram::DumpModule()
 {
 	std::string str;
 	llvm::raw_string_ostream stream(str);
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9)
+	mModule->print(stream, nullptr);
+#else
 	mModule->print(stream, nullptr, false, true);
+#endif
 	return stream.str();
 }
 
 void *LLVMProgram::PointerToFunction(const char *name)
 {
-	return reinterpret_cast<void(*)()>(mEngine->getFunctionAddress(name));
+	return reinterpret_cast<void*>(mEngine->getFunctionAddress(name));
 }
 
 void LLVMProgram::StopLogFatalErrors()

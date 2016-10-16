@@ -48,10 +48,6 @@
 
 FxExpression *ConvertFunctionCall(ZCC_Expression *function, FArgumentList *args, PClass *cls, FScriptPosition &sc)
 {
-	// function names can either be
-	// - plain identifiers
-	// - class members
-	// - array syntax for random() calls.
 	
 	switch(function->NodeType)
 	{
@@ -63,10 +59,6 @@ FxExpression *ConvertFunctionCall(ZCC_Expression *function, FArgumentList *args,
 		
 		case AST_ExprBinary:
 			// Array access syntax is wrapped into a ZCC_ExprBinary object.
-			if (fcall->Function->Operation == PEX_ArrayAccess)
-			{
-				return ConvertArrayFunctionCall(fcall);
-			}
 			break;
 
 		default:

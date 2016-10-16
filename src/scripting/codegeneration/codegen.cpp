@@ -3796,15 +3796,15 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		if (CheckArgSize(MethodName, ArgList, 1, -1, ScriptPosition))
 		{
 			func = new FxRandomPick(RNG, *ArgList, MethodName == NAME_FRandomPick, ScriptPosition, ctx.FromDecorate);
-			for (auto &i : *ArgList) i = nullptr;	// Ownership of items is transferred to FxMinMax but not ownership of the array itself, so Clear cannot be called here.
+			for (auto &i : *ArgList) i = nullptr;
 		}
 		break;
 
 	case NAME_Random2:
-		if (CheckArgSize(NAME_Random2, ArgList, 1, 1, ScriptPosition))
+		if (CheckArgSize(NAME_Random2, ArgList, 0, 1, ScriptPosition))
 		{
-			func = new FxRandom2(RNG, (*ArgList)[0], ScriptPosition, ctx.FromDecorate);
-			(*ArgList)[0] = nullptr;
+			func = new FxRandom2(RNG, ArgList->Size() == 0? nullptr : (*ArgList)[0], ScriptPosition, ctx.FromDecorate);
+			if (ArgList->Size() > 0) (*ArgList)[0] = nullptr;
 		}
 		break;
 
@@ -3813,7 +3813,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		if (CheckArgSize(MethodName, ArgList, 2, -1, ScriptPosition))
 		{
 			func = new FxMinMax(*ArgList, MethodName, ScriptPosition);
-			for (auto &i : *ArgList) i = nullptr;	// Ownership of items is transferred to FxMinMax but not ownership of the array itself, so Clear cannot be called here.
+			for (auto &i : *ArgList) i = nullptr;
 		}
 		break;
 

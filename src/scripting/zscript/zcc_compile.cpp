@@ -2300,10 +2300,40 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 	case AST_ExprFuncCall:
 	{
 		auto fcall = static_cast<ZCC_ExprFuncCall *>(ast);
-		assert(fcall->Function->NodeType == AST_ExprID);	// of course this cannot remain. Right now nothing more complex can come along but later this will have to be decomposed into 'self' and the actual function name.
-		auto fname = static_cast<ZCC_ExprID *>(fcall->Function)->Identifier;
-		return new FxFunctionCall(fname, NAME_None, ConvertNodeList(fcall->Parameters), *ast);
-		//return ConvertFunctionCall(fcall->Function, ConvertNodeList(fcall->Parameters), ConvertClass, *ast);
+
+		// function names can either be
+		// - plain identifiers
+		// - class members
+		// - array syntax for random() calls.
+		// Everything else coming here is a syntax error.
+		switch (fcall->Function->NodeType)
+		{
+		case AST_ExprID:
+			// The function name is a simple identifier.
+			return new FxFunctionCall(static_cast<ZCC_ExprID *>(fcall->Function)->Identifier, NAME_None, ConvertNodeList(fcall->Parameters), *ast);
+
+		case AST_ExprMemberAccess:
+			// calling a class member through its pointer
+			// todo.
+			break;
+
+		case AST_ExprBinary:
+			// Array syntax for randoms. They are internally stored as ExprBinary with both an identifier on the left and right side.
+			if (fcall->Function->Operation == PEX_ArrayAccess)
+			{
+				auto binary = static_cast<ZCC_ExprBinary *>(fcall->Function);
+				if (binary->Left->NodeType == AST_ExprID && binary->Right->NodeType == AST_ExprID)
+				{
+					return new FxFunctionCall(static_cast<ZCC_ExprID *>(binary->Left)->Identifier, static_cast<ZCC_ExprID *>(binary->Right)->Identifier, ConvertNodeList(fcall->Parameters), *ast);
+				}
+			}
+			// fall through if this isn't an array access node.
+
+		default:
+			Error(fcall, "Invalid function identifier");
+			return new FxNop(*ast);	// return something so that the compiler can continue.
+		}
+		break;
 	}
 
 	case AST_FuncParm:
@@ -2346,22 +2376,47 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		}
 	}
 
-	default:
-		// only for development. I_Error is more convenient here than a normal error.
-		I_Error("ConvertNode encountered unsupported node of type %d", ast->NodeType);
-		return nullptr;
+	case AST_ExprBinary:
+	{
+		auto binary = static_cast<ZCC_ExprBinary *>(ast);
+		auto left = ConvertNode(binary->Left);
+		auto right = ConvertNode(binary->Right);
+		auto op = binary->Operation;
+		switch (op)
+		{
+		case PEX_Add:
+		case PEX_Sub:
+			return new FxAddSub(op == PEX_Add ? '+' : '-', left, right);
+
+		case PEX_Mul:
+		case PEX_Div:
+		case PEX_Mod:
+			return new FxMulDiv(op == PEX_Mul ? '*' : op == PEX_Div ? '/' : '%', left, right);
+
+		default:
+			I_Error("Binary operator %d not implemented yet", op);
+		}
+		break;
 	}
+	}
+
+	// only for development. I_Error is more convenient here than a normal error.
+	I_Error("ConvertNode encountered unsupported node of type %d", ast->NodeType);
+	return nullptr;
 }
 
 
 FArgumentList *ZCCCompiler::ConvertNodeList(ZCC_TreeNode *head)
 {
 	FArgumentList *list = new FArgumentList;
-	auto node = head;
-	do
+	if (head != nullptr)
 	{
-		list->Push(ConvertNode(node));
-		node = node->SiblingNext;
-	} while (node != head);
+		auto node = head;
+		do
+		{
+			list->Push(ConvertNode(node));
+			node = node->SiblingNext;
+		} while (node != head);
+	}
 	return list;
 }

@@ -75,11 +75,16 @@
 CVAR(Int, gl_showpacks, 0, 0)
 #ifndef WIN32 // Defined in fb_d3d9 for Windows
 CVAR(Bool, vid_hwaalines, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, vid_hw2d, true, CVAR_NOINITCALL)
+{
+	V_SetBorderNeedRefresh();
+	ST_SetNeedRefresh();
+}
 #else
 EXTERN_CVAR(Bool, vid_hwaalines)
+EXTERN_CVAR(Bool, vid_hw2d)
 #endif
 
-EXTERN_CVAR(Bool, vid_hw2d)
 EXTERN_CVAR(Bool, fullscreen)
 EXTERN_CVAR(Float, Gamma)
 EXTERN_CVAR(Bool, vid_vsync)
@@ -95,35 +100,46 @@ namespace
 	int ClampHeight(int height) { return (vid_max_height == 0 || height < vid_max_height) ? height : vid_max_height; }
 }
 
+#ifdef WIN32
 extern cycle_t BlitCycles;
+#endif
 
 void gl_LoadExtensions();
+void gl_PrintStartupLog();
+
+#ifndef WIN32
+// This has to be in this file because system headers conflict Doom headers
+DFrameBuffer *CreateGLSWFrameBuffer(int width, int height, bool bgra, bool fullscreen)
+{
+	return new OpenGLSWFrameBuffer(NULL, width, height, 32, 60, fullscreen, bgra);
+}
+#endif
 
 IMPLEMENT_CLASS(OpenGLSWFrameBuffer)
 
 const char *const OpenGLSWFrameBuffer::ShaderDefines[OpenGLSWFrameBuffer::NUM_SHADERS] =
 {
-	"#define ENORMALCOLOR\n#define PALTEX 0\n#define DINVERT 0", // NormalColor
-	"#define ENORMALCOLOR\n#define PALTEX 1\n#define INVERT 0", // NormalColorPal
-	"#define ENORMALCOLOR\n#define PALTEX 0\n#define INVERT 1", // NormalColorInv
-	"#define ENORMALCOLOR\n#define PALTEX 1\n#define INVERT 1", // NormalColorPalInv
+	"#define ENORMALCOLOR", // NormalColor
+	"#define ENORMALCOLOR\n#define PALTEX", // NormalColorPal
+	"#define ENORMALCOLOR\n#define INVERT", // NormalColorInv
+	"#define ENORMALCOLOR\n#define PALTEX\n#define INVERT", // NormalColorPalInv
 
-	"#define EREDTOALPHA\n#define INVERT 0", // RedToAlpha
-	"#define EREDTOALPHA\n#define INVERT 1", // RedToAlphaInv
+	"#define EREDTOALPHA", // RedToAlpha
+	"#define EREDTOALPHA\n#define INVERT", // RedToAlphaInv
 
 	"#define EVERTEXCOLOR", // VertexColor
 
-	"#define ESPECIALCOLORMAP\n#define PALTEX 0\n#define INVERT 0", // SpecialColormap
-	"#define ESPECIALCOLORMAP\n#define PALTEX 1\n#define INVERT 0", // SpecialColorMapPal
+	"#define ESPECIALCOLORMAP\n", // SpecialColormap
+	"#define ESPECIALCOLORMAP\n#define PALTEX", // SpecialColorMapPal
 
-	"#define EINGAMECOLORMAP\n#define PALTEX 0\n#define INVERT 0\n#define DESAT 0", // InGameColormap
-	"#define EINGAMECOLORMAP\n#define PALTEX 0\n#define INVERT 0\n#define DESAT 1", // InGameColormapDesat
-	"#define EINGAMECOLORMAP\n#define PALTEX 0\n#define INVERT 1\n#define DESAT 0", // InGameColormapInv
-	"#define EINGAMECOLORMAP\n#define PALTEX 0\n#define INVERT 1\n#define DESAT 1", // InGameColormapInvDesat
-	"#define EINGAMECOLORMAP\n#define PALTEX 1\n#define INVERT 0\n#define DESAT 0", // InGameColormapPal
-	"#define EINGAMECOLORMAP\n#define PALTEX 1\n#define INVERT 0\n#define DESAT 1", // InGameColormapPalDesat
-	"#define EINGAMECOLORMAP\n#define PALTEX 1\n#define INVERT 1\n#define DESAT 0", // InGameColormapPalInv
-	"#define EINGAMECOLORMAP\n#define PALTEX 1\n#define INVERT 1\n#define DESAT 1", // InGameColormapPalInvDesat
+	"#define EINGAMECOLORMAP", // InGameColormap
+	"#define EINGAMECOLORMAP\n#define DESAT", // InGameColormapDesat
+	"#define EINGAMECOLORMAP\n#define INVERT", // InGameColormapInv
+	"#define EINGAMECOLORMAP\n#define INVERT\n#define DESAT", // InGameColormapInvDesat
+	"#define EINGAMECOLORMAP\n#define PALTEX\n", // InGameColormapPal
+	"#define EINGAMECOLORMAP\n#define PALTEX\n#define DESAT", // InGameColormapPalDesat
+	"#define EINGAMECOLORMAP\n#define PALTEX\n#define INVERT", // InGameColormapPalInv
+	"#define EINGAMECOLORMAP\n#define PALTEX\n#define INVERT\n#define DESAT", // InGameColormapPalInvDesat
 
 	"#define EBURNWIPE", // BurnWipe
 	"#define EGAMMACORRECTION", // GammaCorrection
@@ -140,6 +156,11 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 	}
 	gl_LoadExtensions();
 	InitializeState();
+	if (first)
+	{
+		gl_PrintStartupLog();
+		first = false;
+	}
 
 	// SetVSync needs to be at the very top to workaround a bug in Nvidia's OpenGL driver.
 	// If wglSwapIntervalEXT is called after glBindFramebuffer in a frame the setting is not changed!
@@ -206,6 +227,19 @@ OpenGLSWFrameBuffer::~OpenGLSWFrameBuffer()
 	delete[] QuadExtra;
 }
 
+void *OpenGLSWFrameBuffer::MapBuffer(int target, int size)
+{
+	if (glMapBufferRange)
+	{
+		return (FBVERTEX*)glMapBufferRange(target, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+	}
+	else
+	{
+		glBufferData(target, size, nullptr, GL_STREAM_DRAW);
+		return glMapBuffer(target, GL_WRITE_ONLY);
+	}
+}
+
 OpenGLSWFrameBuffer::HWFrameBuffer::~HWFrameBuffer()
 {
 	if (Framebuffer != 0) glDeleteFramebuffers(1, (GLuint*)&Framebuffer);
@@ -227,7 +261,7 @@ OpenGLSWFrameBuffer::HWVertexBuffer::~HWVertexBuffer()
 OpenGLSWFrameBuffer::FBVERTEX *OpenGLSWFrameBuffer::HWVertexBuffer::Lock()
 {
 	glBindBuffer(GL_ARRAY_BUFFER, Buffer);
-	return (FBVERTEX*)glMapBufferRange(GL_ARRAY_BUFFER, 0, Size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+	return (FBVERTEX*)MapBuffer(GL_ARRAY_BUFFER, Size);
 }
 
 void OpenGLSWFrameBuffer::HWVertexBuffer::Unlock()
@@ -245,7 +279,7 @@ uint16_t *OpenGLSWFrameBuffer::HWIndexBuffer::Lock()
 {
 	glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &LockedOldBinding);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Buffer);
-	return (uint16_t*)glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, Size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+	return (uint16_t*)MapBuffer(GL_ELEMENT_ARRAY_BUFFER, Size);
 }
 
 void OpenGLSWFrameBuffer::HWIndexBuffer::Unlock()
@@ -290,6 +324,7 @@ bool OpenGLSWFrameBuffer::CreateFrameBuffer(const FString &name, int width, int 
 
 	if (result != GL_FRAMEBUFFER_COMPLETE)
 	{
+		//Printf("Framebuffer is not complete");
 		outFramebuffer = nullptr;
 		return false;
 	}
@@ -305,9 +340,15 @@ bool OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragments
 	shader->Program = glCreateProgram();
 	shader->VertexShader = glCreateShader(GL_VERTEX_SHADER);
 	shader->FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-
-	vertexsrc = "#version 130\n" + defines + "\n#line 0\n" + vertexsrc;
-	fragmentsrc = "#version 130\n" + defines + "\n#line 0\n" + fragmentsrc;
+	
+	int maxGlslVersion = 330;
+	int shaderVersion = MIN((int)round(gl.glslversion * 10) * 10, maxGlslVersion);
+	
+	FString prefix;
+	prefix.AppendFormat("#version %d\n%s\n#line 0\n", shaderVersion, defines.GetChars());
+	
+	vertexsrc = prefix + vertexsrc;
+	fragmentsrc = prefix + fragmentsrc;
 
 	{
 		int lengths[1] = { (int)vertexsrc.Len() };
@@ -329,10 +370,11 @@ bool OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragments
 	if (status != GL_FALSE) { errorShader = shader->FragmentShader; glGetShaderiv(shader->FragmentShader, GL_COMPILE_STATUS, &status); }
 	if (status == GL_FALSE)
 	{
-		/*static char buffer[10000];
+		static char buffer[10000];
 		GLsizei length = 0;
 		buffer[0] = 0;
-		glGetShaderInfoLog(errorShader, 10000, &length, buffer);*/
+		glGetShaderInfoLog(errorShader, 10000, &length, buffer);
+		//Printf("Shader compile failed: %s", buffer);
 
 		*outShader = nullptr;
 		return false;
@@ -341,17 +383,23 @@ bool OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragments
 	glAttachShader(shader->Program, shader->VertexShader);
 	glAttachShader(shader->Program, shader->FragmentShader);
 	glBindFragDataLocation(shader->Program, 0, "FragColor");
-	glLinkProgram(shader->Program);
-	glGetProgramiv(shader->Program, GL_LINK_STATUS, &status);
-	if (status == GL_FALSE)
-	{
-		*outShader = nullptr;
-		return false;
-	}
 	glBindAttribLocation(shader->Program, 0, "AttrPosition");
 	glBindAttribLocation(shader->Program, 1, "AttrColor0");
 	glBindAttribLocation(shader->Program, 2, "AttrColor1");
 	glBindAttribLocation(shader->Program, 3, "AttrTexCoord0");
+	glLinkProgram(shader->Program);
+	glGetProgramiv(shader->Program, GL_LINK_STATUS, &status);
+	if (status == GL_FALSE)
+	{
+		static char buffer[10000];
+		GLsizei length = 0;
+		buffer[0] = 0;
+		glGetProgramInfoLog(shader->Program, 10000, &length, buffer);
+		//Printf("Shader compile failed: %s", buffer);
+	
+		*outShader = nullptr;
+		return false;
+	}
 
 	shader->ConstantLocations[PSCONST_Desaturation] = glGetUniformLocation(shader->Program, "Desaturation");
 	shader->ConstantLocations[PSCONST_PaletteMod] = glGetUniformLocation(shader->Program, "PaletteMod");
@@ -776,8 +824,6 @@ bool OpenGLSWFrameBuffer::LoadShaders()
 	FString shaderdir, shaderpath;
 	unsigned int i;
 
-	// We determine the best available model simply by trying them all in
-	// order of decreasing preference.
 	for (i = 0; i < NUM_SHADERS; ++i)
 	{
 		shaderpath = shaderdir;
@@ -813,7 +859,9 @@ bool OpenGLSWFrameBuffer::LoadShaders()
 
 void OpenGLSWFrameBuffer::ReleaseResources()
 {
+#ifdef WIN32
 	I_SaveWindowedPos();
+#endif
 	KillNativeTexs();
 	KillNativePals();
 	ReleaseDefaultPoolItems();
@@ -1022,27 +1070,6 @@ int OpenGLSWFrameBuffer::GetPageCount()
 
 //==========================================================================
 //
-// OpenGLSWFrameBuffer :: PaletteChanged
-//
-//==========================================================================
-
-void OpenGLSWFrameBuffer::PaletteChanged()
-{
-}
-
-//==========================================================================
-//
-// OpenGLSWFrameBuffer :: QueryNewPalette
-//
-//==========================================================================
-
-int OpenGLSWFrameBuffer::QueryNewPalette()
-{
-	return 0;
-}
-
-//==========================================================================
-//
 // OpenGLSWFrameBuffer :: IsValid
 //
 //==========================================================================
@@ -1050,17 +1077,6 @@ int OpenGLSWFrameBuffer::QueryNewPalette()
 bool OpenGLSWFrameBuffer::IsValid()
 {
 	return true;
-}
-
-//==========================================================================
-//
-// OpenGLSWFrameBuffer :: IsFullscreen
-//
-//==========================================================================
-
-bool OpenGLSWFrameBuffer::IsFullscreen()
-{
-	return !Windowed;
 }
 
 //==========================================================================
@@ -1089,8 +1105,6 @@ bool OpenGLSWFrameBuffer::Lock(bool buffered)
 
 void OpenGLSWFrameBuffer::Unlock()
 {
-	LOG1("Unlock     <%d>\n", LockCount);
-
 	if (LockCount == 0)
 	{
 		return;
@@ -1155,7 +1169,7 @@ void OpenGLSWFrameBuffer::Update()
 
 		NeedGammaUpdate = false;
 		igamma = 1 / Gamma;
-		if (!Windowed)
+		if (IsFullscreen())
 		{
 			GammaRamp ramp;
 
@@ -1163,7 +1177,6 @@ void OpenGLSWFrameBuffer::Update()
 			{
 				ramp.blue[i] = ramp.green[i] = ramp.red[i] = uint16_t(65535.f * powf(i / 255.f, igamma));
 			}
-			LOG("SetGammaRamp\n");
 			SetGammaRamp(&ramp);
 		}
 		psgamma[2] = psgamma[1] = psgamma[0] = igamma;
@@ -1177,8 +1190,10 @@ void OpenGLSWFrameBuffer::Update()
 		NeedPalUpdate = false;
 	}
 
+#ifdef WIN32
 	BlitCycles.Reset();
 	BlitCycles.Clock();
+#endif
 
 	LockCount = 0;
 	Draw3DPart(In2D <= 1);
@@ -1187,8 +1202,10 @@ void OpenGLSWFrameBuffer::Update()
 		Flip();
 	}
 
+#ifdef WIN32
 	BlitCycles.Unclock();
 	//LOG1 ("cycles = %d\n", BlitCycles);
+#endif
 
 	Buffer = nullptr;
 	UpdatePending = false;
@@ -1207,7 +1224,7 @@ void OpenGLSWFrameBuffer::Flip()
 	Present();
 	InScene = false;
 
-	if (Windowed)
+	if (!IsFullscreen())
 	{
 		int clientWidth = ClampWidth(GetClientWidth());
 		int clientHeight = ClampHeight(GetClientHeight());
@@ -1230,6 +1247,8 @@ void OpenGLSWFrameBuffer::Flip()
 //
 //==========================================================================
 
+#ifdef WIN32
+
 bool OpenGLSWFrameBuffer::PaintToWindow()
 {
 	if (LockCount != 0)
@@ -1239,6 +1258,8 @@ bool OpenGLSWFrameBuffer::PaintToWindow()
 	Draw3DPart(true);
 	return true;
 }
+
+#endif
 
 //==========================================================================
 //
@@ -1269,7 +1290,7 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 			FBTexture->CurrentBuffer = (FBTexture->CurrentBuffer + 1) & 1;
 		}
 
-		uint8_t *dest = (uint8_t*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+		uint8_t *dest = (uint8_t*)MapBuffer(GL_PIXEL_UNPACK_BUFFER, size);
 		if (dest)
 		{
 			if (Pitch == Width)
@@ -1406,7 +1427,7 @@ void OpenGLSWFrameBuffer::UploadPalette()
 		PaletteTexture->CurrentBuffer = (PaletteTexture->CurrentBuffer + 1) & 1;
 	}
 
-	uint8_t *pix = (uint8_t*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 256 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+	uint8_t *pix = (uint8_t*)MapBuffer(GL_PIXEL_UNPACK_BUFFER, 256 * 4);
 	if (pix)
 	{
 		int i;
@@ -1451,7 +1472,6 @@ void OpenGLSWFrameBuffer::UpdatePalette()
 
 bool OpenGLSWFrameBuffer::SetGamma(float gamma)
 {
-	LOG1("SetGamma %g\n", gamma);
 	Gamma = gamma;
 	NeedGammaUpdate = true;
 	return true;
@@ -1497,14 +1517,10 @@ void OpenGLSWFrameBuffer::SetVSync(bool vsync)
 
 void OpenGLSWFrameBuffer::NewRefreshRate()
 {
-	if (!Windowed)
+	if (IsFullscreen())
 	{
 		Reset();
 	}
-}
-
-void OpenGLSWFrameBuffer::Blank()
-{
 }
 
 void OpenGLSWFrameBuffer::SetBlendingRect(int x1, int y1, int x2, int y2)
@@ -2037,7 +2053,7 @@ bool OpenGLSWFrameBuffer::OpenGLTex::Update()
 	Box->Owner->Tex->CurrentBuffer = (Box->Owner->Tex->CurrentBuffer + 1) & 1;
 
 	int pitch = (rect.right - rect.left) * bytesPerPixel;
-	uint8_t *bits = (uint8_t *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, buffersize, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+	uint8_t *bits = (uint8_t *)MapBuffer(GL_PIXEL_UNPACK_BUFFER, buffersize);
 	dest = bits;
 	if (!dest)
 	{
@@ -2086,7 +2102,10 @@ bool OpenGLSWFrameBuffer::OpenGLTex::Update()
 	GLint oldBinding = 0;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
 	glBindTexture(GL_TEXTURE_2D, Box->Owner->Tex->Texture);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, format == GL_RGBA8 ? GL_BGRA : GL_RED, GL_UNSIGNED_BYTE, 0);
+	if (format == GL_RGBA8)
+		glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, GL_BGRA, GL_UNSIGNED_BYTE, 0);
+	else
+		glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, GL_RED, GL_UNSIGNED_BYTE, 0);
 	glBindTexture(GL_TEXTURE_2D, oldBinding);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	return true;
@@ -2239,7 +2258,7 @@ bool OpenGLSWFrameBuffer::OpenGLPal::Update()
 		Tex->CurrentBuffer = (Tex->CurrentBuffer + 1) & 1;
 	}
 
-	buff = (uint32_t *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, Remap->NumEntries * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+	buff = (uint32_t *)MapBuffer(GL_PIXEL_UNPACK_BUFFER, Remap->NumEntries * 4);
 	if (buff == nullptr)
 	{
 		return false;

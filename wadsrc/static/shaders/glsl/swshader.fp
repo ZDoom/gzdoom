@@ -17,7 +17,7 @@ uniform vec4 Gamma;
 
 vec4 TextureLookup(vec2 tex_coord)
 {
-#if PALTEX
+#if defined(PALTEX)
 	float index = texture(Image, tex_coord).x;
 	index = index * PaletteMod.x + PaletteMod.y;
 	return texture(Palette, vec2(index, 0.5));
@@ -28,7 +28,7 @@ vec4 TextureLookup(vec2 tex_coord)
 
 vec4 Invert(vec4 rgb)
 {
-#if INVERT
+#if defined(INVERT)
 	rgb.rgb = Weights.www - rgb.xyz;
 #endif
 	return rgb;
@@ -90,7 +90,7 @@ vec4 InGameColormap(vec2 tex_coord, vec4 color, vec4 fade)
 	vec4 rgb = SampleTexture(tex_coord);
 
 	// Desaturate
-#if DESAT
+#if defined(DESAT)
 	vec3 intensity;
 	intensity.rgb = vec3(Grayscale(rgb) * Desaturation.x);
 	rgb.rgb = intensity.rgb + rgb.rgb * Desaturation.y;

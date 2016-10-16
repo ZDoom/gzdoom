@@ -19,7 +19,7 @@ class OpenGLSWFrameBuffer : public Win32GLFrameBuffer
 	DECLARE_CLASS(OpenGLSWFrameBuffer, Win32GLFrameBuffer)
 #else
 #include "sdlglvideo.h"
-class OpenGLFrameBuffer : public SDLGLFB
+class OpenGLSWFrameBuffer : public SDLGLFB
 {
 //	typedef SDLGLFB Super;	//[C]commented, DECLARE_CLASS defines this in linux
 	DECLARE_CLASS(OpenGLSWFrameBuffer, SDLGLFB)
@@ -32,6 +32,7 @@ public:
 	OpenGLSWFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen);
 	~OpenGLSWFrameBuffer();
 
+
 	bool IsValid() override;
 	bool Lock(bool buffered) override;
 	void Unlock() override;
@@ -43,11 +44,6 @@ public:
 	bool SetFlash(PalEntry rgb, int amount) override;
 	void GetFlash(PalEntry &rgb, int &amount) override;
 	int GetPageCount() override;
-	bool IsFullscreen() override;
-	void PaletteChanged() override;
-	int QueryNewPalette() override;
-	void Blank() override;
-	bool PaintToWindow() override;
 	void SetVSync(bool vsync) override;
 	void NewRefreshRate() override;
 	void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type) override;
@@ -68,8 +64,15 @@ public:
 	void WipeEndScreen() override;
 	bool WipeDo(int ticks) override;
 	void WipeCleanup() override;
+
+#ifdef WIN32
+	void PaletteChanged() override { }
+	int QueryNewPalette() override { return 0; }
+	void Blank() override { }
+	bool PaintToWindow() override;
 	bool Is8BitMode() override { return false; }
 	int GetTrueHeight() override { return TrueHeight; }
+#endif
 
 private:
 	struct FBVERTEX
@@ -195,6 +198,8 @@ private:
 	static uint32_t ColorRGBA(uint32_t r, uint32_t g, uint32_t b, uint32_t a) { return ColorARGB(a, r, g, b); }
 	static uint32_t ColorXRGB(uint32_t r, uint32_t g, uint32_t b) { return ColorARGB(0xff, r, g, b); }
 	static uint32_t ColorValue(float r, float g, float b, float a) { return ColorRGBA((uint32_t)(r * 255.0f), (uint32_t)(g * 255.0f), (uint32_t)(b * 255.0f), (uint32_t)(a * 255.0f)); }
+	
+	static void *MapBuffer(int target, int size);
 
 	// The number of points for the vertex buffer.
 	enum { NUM_VERTS = 10240 };
@@ -309,9 +314,6 @@ private:
 		BQS_SpecialColormap,
 		BQS_InGameColormap,
 	};
-
-	struct PackedTexture;
-	struct Atlas;
 
 	struct BufferedTris
 	{

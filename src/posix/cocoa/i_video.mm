@@ -101,6 +101,7 @@
 
 @end
 
+DFrameBuffer *CreateGLSWFrameBuffer(int width, int height, bool fullscreen);
 
 EXTERN_CVAR(Bool, ticker   )
 EXTERN_CVAR(Bool, vid_vsync)
@@ -483,7 +484,7 @@ NSOpenGLPixelFormat* CreatePixelFormat(const OpenGLProfile profile)
 		attributes[i++] = NSOpenGLPFAAllowOfflineRenderers;
 	}
 
-	if (NSAppKitVersionNumber >= AppKit10_7 && OpenGLProfile::Core == profile && 1 == vid_renderer)
+	if (NSAppKitVersionNumber >= AppKit10_7 && OpenGLProfile::Core == profile)
 	{
 		NSOpenGLPixelFormatAttribute profile = NSOpenGLProfileVersion3_2Core;
 		const char* const glversion = Args->CheckValue("-glversion");
@@ -622,7 +623,8 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
 	}
 	else
 	{
-		fb = new CocoaFrameBuffer(width, height, fullscreen);
+		//fb = new CocoaFrameBuffer(width, height, fullscreen);
+		fb = CreateGLSWFrameBuffer(width, height, fullscreen);
 	}
 
 	fb->SetFlash(flashColor, flashAmount);

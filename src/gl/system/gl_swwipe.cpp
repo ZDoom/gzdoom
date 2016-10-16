@@ -383,8 +383,8 @@ bool OpenGLSWFrameBuffer::Wiper_Melt::Run(int ticks, OpenGLSWFrameBuffer *fb)
 			}
 			if (ticks == 0)
 			{ // Only draw for the final tick.
-				RECT rect;
-				POINT dpt;
+				LTRBRect rect;
+				struct Point { int x, y; } dpt;
 
 				dpt.x = i * fbwidth / WIDTH;
 				dpt.y = MAX(0, y[i] * fbheight / HEIGHT);

@@ -59,6 +59,13 @@ zscript/doom/doomweapons.txt
 zscript/doom/stealthmonsters.txt
 zscript/doom/scriptedmarine.txt
 
+zscript/raven/artiegg.txt
+zscript/raven/artitele.txt
+zscript/raven/ravenartifacts.txt
+zscript/raven/ravenhealth.txt
+zscript/raven/ravenambient.txt
+zscript/raven/minotaur.txt
+
 zscript/heretic/hereticplayer.txt
 zscript/heretic/hereticammo.txt
 zscript/heretic/hereticarmor.txt

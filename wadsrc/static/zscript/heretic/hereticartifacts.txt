@@ -32,7 +32,7 @@ Class ArtiInvisibility : PowerupGiver
 		Alpha 0.4;
 		Inventory.RespawnTics 4230;
 		Inventory.Icon "ARTIINVS";
-		Powerup.Type "Ghost";
+		Powerup.Type "PowerGhost";
 		Inventory.PickupMessage "$TXT_ARTIINVISIBILITY";
 		Tag "$TAG_ARTIINVISIBILITY";
 	}

@@ -1451,7 +1451,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObje
 			{
 				ndx = -1;
 			}
-			else if (value->ObjectFlags & OF_EuthanizeMe)
+			else if (value->ObjectFlags & (OF_EuthanizeMe | OF_Transient))
 			{
 				return arc;
 			}

@@ -1,0 +1,118 @@
+// Super map ----------------------------------------------------------------
+
+Class SuperMap : MapRevealer
+{
+	Default
+	{
+		+COUNTITEM
+		+INVENTORY.ALWAYSPICKUP
+		+FLOATBOB
+		Inventory.MaxAmount 0;
+		Inventory.PickupMessage "$TXT_ITEMSUPERMAP";
+	}
+	States
+	{
+	Spawn:
+		SPMP A -1;
+		Stop;
+	}
+}
+
+
+// Invisibility -------------------------------------------------------------
+
+Class ArtiInvisibility : PowerupGiver
+{
+	Default
+	{
+		+COUNTITEM
+		+FLOATBOB
+		Inventory.PickupFlash "PickupFlash";
+		RenderStyle "Translucent";
+		Alpha 0.4;
+		Inventory.RespawnTics 4230;
+		Inventory.Icon "ARTIINVS";
+		Powerup.Type "Ghost";
+		Inventory.PickupMessage "$TXT_ARTIINVISIBILITY";
+		Tag "$TAG_ARTIINVISIBILITY";
+	}
+	States
+	{
+	Spawn:
+		INVS A 350 Bright;
+		Loop;
+	}
+}
+
+ 
+// Tome of power ------------------------------------------------------------
+
+Class ArtiTomeOfPower : PowerupGiver native
+{
+	Default
+	{
+		+COUNTITEM
+		+FLOATBOB
+		Inventory.PickupFlash "PickupFlash";
+		Inventory.Icon "ARTIPWBK";
+		Powerup.Type "Weaponlevel2";
+		Inventory.PickupMessage "$TXT_ARTITOMEOFPOWER";
+		Tag "$TAG_ARTITOMEOFPOWER";
+	}
+	States
+	{
+	Spawn:
+		PWBK A 350;
+		Loop;
+	}
+}
+
+
+// Time bomb ----------------------------------------------------------------
+
+Class ActivatedTimeBomb : Actor
+{
+	Default
+	{
+		+NOGRAVITY
+		RenderStyle "Translucent";
+		Alpha 0.4;
+		DeathSound "misc/timebomb";
+	}
+		
+	action native void A_Timebomb();
+	
+	States
+	{
+	Spawn:
+		FBMB ABCD 10;
+		FBMB E 6 A_Scream;
+		XPL1 A 4 BRIGHT A_Timebomb;
+		XPL1 BCDEF 4 BRIGHT;
+		Stop;
+	}
+}
+
+
+Class ArtiTimeBomb : Inventory native
+{
+	Default
+	{
+		+COUNTITEM
+		+FLOATBOB
+		Inventory.PickupFlash "PickupFlash";
+		+INVENTORY.INVBAR
+		+INVENTORY.FANCYPICKUPSOUND
+		Inventory.Icon "ARTIFBMB";
+		Inventory.PickupSound "misc/p_pkup";
+		Inventory.PickupMessage "$TXT_ARTIFIREBOMB";
+		Tag "$TAG_ARTIFIREBOMB";
+		Inventory.DefMaxAmount;
+	}
+	States
+	{
+	Spawn:
+		FBMB E 350;
+		Loop;
+	}
+}

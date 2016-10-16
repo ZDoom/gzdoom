@@ -1123,6 +1123,18 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 		delete this;
 		return x;
 	}
+	else if (ValueType == TypeState)
+	{
+		// Right now this only supports string constants. There should be an option to pass a string variable, too.
+		if (basex->isConstant() && (basex->ValueType == TypeString || basex->ValueType == TypeName))
+		{
+			FxExpression *x = new FxMultiNameState(static_cast<FxConstant *>(basex)->GetValue().GetString(), basex->ScriptPosition);
+			x = x->Resolve(ctx);
+			basex = nullptr;
+			delete this;
+			return x;
+		}
+	}
 	else if (ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
 	{
 		FxExpression *x = new FxClassTypeCast(static_cast<PClassPointer*>(ValueType), basex);
@@ -4624,45 +4636,10 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	{
 		for (unsigned i = 0; i < ArgList->Size(); i++)
 		{
-			if ((*ArgList)[i]->isConstant())
-			{
-				if (i + implicit < argtypes.Size())
-				{
-					auto type = static_cast<FxConstant*>((*ArgList)[i])->ValueType;
-					// temporary hack to add the casts which get used by the internal definitions
-					if (argtypes[i + implicit] == TypeState && type == TypeString)
-					{
-						ScriptPosition.Message(MSG_WARNING, "Converting %s to state", static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetString());
-						auto statenode = new FxMultiNameState(static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetString(), ScriptPosition);
-						delete (*ArgList)[i];
-						(*ArgList)[i] = statenode;
-					}
-					if (argtypes[i + implicit] == TypeSound && type == TypeString)
-					{
-						ScriptPosition.Message(MSG_WARNING, "Converting %s to sound", static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetString());
-						auto statenode = new FxConstant(FSoundID(static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetString()), ScriptPosition);
-						delete (*ArgList)[i];
-						(*ArgList)[i] = statenode;
-					}
-					if (argtypes[i + implicit] == TypeSInt32 && type == TypeFloat64)
-					{
-						ScriptPosition.Message(MSG_WARNING, "Converting %f to int", static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetFloat());
-						auto statenode = new FxConstant(static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetInt(), ScriptPosition);
-						delete (*ArgList)[i];
-						(*ArgList)[i] = statenode;
-					}
-					if (argtypes[i + implicit] == TypeFloat64 && type == TypeSInt32)
-					{
-						ScriptPosition.Message(MSG_WARNING, "Converting %d to float", static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetInt());
-						auto statenode = new FxConstant(static_cast<FxConstant*>((*ArgList)[i])->GetValue().GetFloat(), ScriptPosition);
-						delete (*ArgList)[i];
-						(*ArgList)[i] = statenode;
-					}
-				}
-			}
-
-			(*ArgList)[i] = (*ArgList)[i]->Resolve(ctx);
-			if ((*ArgList)[i] == NULL) failed = true;
+			FxExpression *x = new FxTypeCast((*ArgList)[i], argtypes[i + implicit], false);
+			x = x->Resolve(ctx);
+			failed |= (x == nullptr);
+			(*ArgList)[i] = x;
 		}
 	}
 	if (failed)
@@ -5592,7 +5569,7 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 	
 	if (basex->ValueType != TypeName && basex->ValueType != TypeString)
 	{
-		ScriptPosition.Message(MSG_ERROR, "Cannot convert to class type");
+		ScriptPosition.Message(MSG_ERROR, "Cannot convert %s to class type", basex->ValueType->DescriptiveName());
 		delete this;
 		return NULL;
 	}
@@ -5855,7 +5832,7 @@ FxMultiNameState::FxMultiNameState(const char *_statestring, const FScriptPositi
 	}
 	else
 	{
-		scopename = NULL;
+		scopename = NAME_None;
 	}
 	names = MakeStateNameList(statestring);
 	names.Insert(0, scopename);

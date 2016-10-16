@@ -1748,7 +1748,8 @@ PClassPointer::PClassPointer()
 PClassPointer::PClassPointer(PClass *restrict)
 : PPointer(RUNTIME_CLASS(PClass)), ClassRestriction(restrict)
 {
-	mDescriptiveName.Format("ClassPointer<%s>", restrict->TypeName.GetChars());
+	if (restrict) mDescriptiveName.Format("ClassPointer<%s>", restrict->TypeName.GetChars());
+	else mDescriptiveName = "ClassPointer";
 }
 
 //==========================================================================

@@ -174,6 +174,7 @@ struct ExpVal
 	
 	FName GetName() const
 	{
+		if (Type == TypeString) return FName(*(FString *)&pointer);
 		return Type == TypeName ? ENamedName(Int) : NAME_None;
 	}
 };
@@ -338,8 +339,9 @@ public:
 	FxConstant(PClass *val, const FScriptPosition &pos) : FxExpression(pos)
 	{
 		value.pointer = (void*)val;
-		ValueType = val;
-		value.Type = NewClassPointer(RUNTIME_CLASS(AActor));
+		if (val != nullptr) ValueType = NewClassPointer(val);
+		else ValueType = NewClassPointer(RUNTIME_CLASS(DObject));
+		value.Type = NewClassPointer(RUNTIME_CLASS(DObject));
 		isresolved = true;
 	}
 

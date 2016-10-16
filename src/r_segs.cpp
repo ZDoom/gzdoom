@@ -1142,7 +1142,7 @@ WallscanSampler::WallscanSampler(int y1, float swal, double yrepeat, fixed_t xof
 		}
 		else
 		{
-			double magnitude = abs(uv_stepd * 2);
+			double magnitude = fabs(uv_stepd * 2);
 			bool magnifying = magnitude < 1.0f;
 
 			int mipmap_offset = 0;

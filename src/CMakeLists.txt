@@ -272,8 +272,8 @@ if( NOT NO_OPENAL )
 	endif()
 endif()
 
-set( LLVM_COMPONENTS core support asmparser asmprinter bitreader codegen passes ipo
-	irreader transformutils instrumentation profiledata debuginfocodeview runtimedyld
+set( LLVM_COMPONENTS core support asmparser asmprinter bitreader codegen ipo
+	irreader transformutils instrumentation profiledata runtimedyld
 	object instcombine linker analysis selectiondag scalaropts vectorize executionengine
 	mc mcdisassembler mcparser mcjit target x86asmprinter x86info x86desc x86utils x86codegen )
 

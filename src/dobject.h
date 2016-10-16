@@ -201,6 +201,7 @@ enum EObjectFlags
 	OF_EuthanizeMe		= 1 << 5,		// Object wants to die
 	OF_Cleanup			= 1 << 6,		// Object is now being deleted by the collector
 	OF_YesReallyDelete	= 1 << 7,		// Object is being deleted outside the collector, and this is okay, so don't print a warning
+	OF_Transient		= 1 << 11,		// Object should not be archived (references to it will be nulled on disk)
 
 	OF_WhiteBits		= OF_White0 | OF_White1,
 	OF_MarkBits			= OF_WhiteBits | OF_Black,
@@ -573,6 +574,9 @@ protected:
 	}
 };
 
+// When you write to a pointer to an Object, you must call this for
+// proper bookkeeping in case the Object holding this pointer has
+// already been processed by the GC.
 static inline void GC::WriteBarrier(DObject *pointing, DObject *pointed)
 {
 	if (pointed != NULL && pointed->IsWhite() && pointing->IsBlack())

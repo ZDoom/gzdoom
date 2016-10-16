@@ -30,7 +30,7 @@ private:
 	SSAInt texturefrac[4];
 	SSAInt iscale[4];
 	SSAInt textureheight0;
-	SSAInt textureheight1;
+	SSAInt maxtextureheight1;
 	SSAVec4i top_color;
 	SSAVec4i bottom_color;
 	SSAWorkerThread thread;

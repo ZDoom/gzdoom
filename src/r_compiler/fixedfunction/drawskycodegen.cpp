@@ -34,7 +34,8 @@ void DrawSkyCodegen::Generate(DrawSkyVariant variant, bool fourColumns, SSAValue
 	iscale[2] = args[0][18].load(true);
 	iscale[3] = args[0][19].load(true);
 	textureheight0 = args[0][20].load(true);
-	textureheight1 = args[0][21].load(true);
+	SSAInt textureheight1 = args[0][21].load(true);
+	maxtextureheight1 = textureheight1 - 1;
 	top_color = SSAVec4i::unpack(args[0][22].load(true));
 	bottom_color = SSAVec4i::unpack(args[0][23].load(true));
 
@@ -105,7 +106,7 @@ SSAVec4i DrawSkyCodegen::Sample(SSAInt frac, int index, DrawSkyVariant variant)
 	}
 	else
 	{
-		SSAInt sample_index2 = SSAInt::MIN(sample_index, textureheight1);
+		SSAInt sample_index2 = SSAInt::MIN(sample_index, maxtextureheight1);
 		SSAVec4i color0 = source0[index][sample_index * 4].load_vec4ub(false);
 		SSAVec4i color1 = source1[index][sample_index2 * 4].load_vec4ub(false);
 		return blend_alpha_blend(color0, color1);

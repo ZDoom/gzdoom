@@ -595,9 +595,9 @@ ExpEmit FxIntCast::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxFloatCast::FxFloatCast(FxExpression *x)
-: FxExpression(x->ScriptPosition)
+	: FxExpression(x->ScriptPosition)
 {
-	basex=x;
+	basex = x;
 	ValueType = TypeFloat64;
 }
 
@@ -677,6 +677,519 @@ ExpEmit FxFloatCast::Emit(VMFunctionBuilder *build)
 	ExpEmit to(build, REGT_FLOAT);
 	build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_I2F);
 	return to;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxNameCast::FxNameCast(FxExpression *x)
+	: FxExpression(x->ScriptPosition)
+{
+	basex = x;
+	ValueType = TypeName;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxNameCast::~FxNameCast()
+{
+	SAFE_DELETE(basex);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxNameCast::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(basex, ctx);
+
+	if (basex->ValueType == TypeName)
+	{
+		FxExpression *x = basex;
+		basex = NULL;
+		delete this;
+		return x;
+	}
+	else if (basex->ValueType == TypeString)
+	{
+		if (basex->isConstant())
+		{
+			ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
+			FxExpression *x = new FxConstant(constval.GetName(), ScriptPosition);
+			delete this;
+			return x;
+		}
+		return this;
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Cannot convert to name");
+		delete this;
+		return NULL;
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxNameCast::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit from = basex->Emit(build);
+	assert(!from.Konst);
+	assert(basex->ValueType == TypeString);
+	from.Free(build);
+	ExpEmit to(build, REGT_INT);
+	build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_S2N);
+	return to;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxStringCast::FxStringCast(FxExpression *x)
+	: FxExpression(x->ScriptPosition)
+{
+	basex = x;
+	ValueType = TypeString;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxStringCast::~FxStringCast()
+{
+	SAFE_DELETE(basex);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxStringCast::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(basex, ctx);
+
+	if (basex->ValueType == TypeString)
+	{
+		FxExpression *x = basex;
+		basex = NULL;
+		delete this;
+		return x;
+	}
+	else if (basex->ValueType == TypeName)
+	{
+		if (basex->isConstant())
+		{
+			ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
+			FxExpression *x = new FxConstant(constval.GetString(), ScriptPosition);
+			delete this;
+			return x;
+		}
+		return this;
+	}
+	else if (basex->ValueType == TypeSound)
+	{
+		if (basex->isConstant())
+		{
+			ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
+			FxExpression *x = new FxConstant(S_sfx[constval.GetInt()].name, ScriptPosition);
+			delete this;
+			return x;
+		}
+		return this;
+	}
+	// although it could be done, let's not convert colors back to strings.
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Cannot convert to string");
+		delete this;
+		return NULL;
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxStringCast::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit from = basex->Emit(build);
+	assert(!from.Konst);
+
+	from.Free(build);
+	ExpEmit to(build, REGT_STRING);
+	if (ValueType == TypeName)
+	{
+		build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_N2S);
+	}
+	else if (ValueType == TypeSound)
+	{
+		build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_So2S);
+	}
+	return to;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxColorCast::FxColorCast(FxExpression *x)
+	: FxExpression(x->ScriptPosition)
+{
+	basex = x;
+	ValueType = TypeColor;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxColorCast::~FxColorCast()
+{
+	SAFE_DELETE(basex);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxColorCast::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(basex, ctx);
+
+	if (basex->ValueType == TypeColor || basex->ValueType->GetClass() == RUNTIME_CLASS(PInt))
+	{
+		FxExpression *x = basex;
+		x->ValueType = TypeColor;
+		basex = NULL;
+		delete this;
+		return x;
+	}
+	else if (basex->ValueType == TypeString)
+	{
+		if (basex->isConstant())
+		{
+			ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
+			FxExpression *x = new FxConstant(V_GetColor(nullptr, constval.GetString()), ScriptPosition);
+			delete this;
+			return x;
+		}
+		return this;
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Cannot convert to color");
+		delete this;
+		return NULL;
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxColorCast::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit from = basex->Emit(build);
+	assert(!from.Konst);
+	assert(basex->ValueType == TypeString);
+	from.Free(build);
+	ExpEmit to(build, REGT_INT);
+	build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_S2Co);
+	return to;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxSoundCast::FxSoundCast(FxExpression *x)
+	: FxExpression(x->ScriptPosition)
+{
+	basex = x;
+	ValueType = TypeSound;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxSoundCast::~FxSoundCast()
+{
+	SAFE_DELETE(basex);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxSoundCast::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(basex, ctx);
+
+	if (basex->ValueType == TypeSound || basex->ValueType->GetClass() == RUNTIME_CLASS(PInt))
+	{
+		FxExpression *x = basex;
+		x->ValueType = TypeSound;
+		basex = NULL;
+		delete this;
+		return x;
+	}
+	else if (basex->ValueType == TypeString)
+	{
+		if (basex->isConstant())
+		{
+			ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
+			FxExpression *x = new FxConstant(FSoundID(constval.GetString()), ScriptPosition);
+			delete this;
+			return x;
+		}
+		return this;
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Cannot convert to sound");
+		delete this;
+		return NULL;
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxSoundCast::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit from = basex->Emit(build);
+	assert(!from.Konst);
+	assert(basex->ValueType == TypeString);
+	from.Free(build);
+	ExpEmit to(build, REGT_INT);
+	build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_S2So);
+	return to;
+}
+
+//==========================================================================
+//
+// generic type cast operator
+//
+//==========================================================================
+
+FxTypeCast::FxTypeCast(FxExpression *x, PType *type, bool nowarn)
+	: FxExpression(x->ScriptPosition)
+{
+	basex = x;
+	ValueType = type;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxTypeCast::~FxTypeCast()
+{
+	SAFE_DELETE(basex);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(basex, ctx);
+
+	// first deal with the simple types
+	if (ValueType == TypeError || basex->ValueType == TypeError)
+	{
+		delete this;
+		return nullptr;
+	}
+	else if (ValueType == TypeVoid)	// this should never happen
+	{
+		goto errormsg;
+	}
+	else if (basex->ValueType == TypeVoid)
+	{
+		goto errormsg;
+	}
+	else if (basex->ValueType == ValueType)
+	{
+		// don't go through the entire list if the types are the same.
+		goto basereturn;
+	}
+	else if (ValueType->GetRegType() == REGT_FLOAT)
+	{
+		FxExpression *x = new FxFloatCast(basex);
+		x = x->Resolve(ctx);
+		basex = nullptr;
+		delete this;
+		return x;
+	}
+	else if (ValueType->IsA(RUNTIME_CLASS(PInt)))
+	{
+		// This is only for casting to actual ints. Subtypes representing an int will be handled elsewhere.
+		FxExpression *x = new FxIntCast(basex, NoWarn);
+		x = x->Resolve(ctx);
+		basex = nullptr;
+		delete this;
+		return x;
+	}
+	else if (ValueType == TypeBool)
+	{
+		FxExpression *x = new FxBoolCast(basex);
+		x = x->Resolve(ctx);
+		basex = nullptr;
+		delete this;
+		return x;
+	}
+	else if (ValueType == TypeString)
+	{
+		FxExpression *x = new FxStringCast(basex);
+		x = x->Resolve(ctx);
+		basex = nullptr;
+		delete this;
+		return x;
+	}
+	else if (ValueType == TypeName)
+	{
+		FxExpression *x = new FxNameCast(basex);
+		x = x->Resolve(ctx);
+		basex = nullptr;
+		delete this;
+		return x;
+	}
+	else if (ValueType == TypeSound)
+	{
+		FxExpression *x = new FxSoundCast(basex);
+		x = x->Resolve(ctx);
+		basex = nullptr;
+		delete this;
+		return x;
+	}
+	else if (ValueType == TypeColor)
+	{
+		FxExpression *x = new FxColorCast(basex);
+		x = x->Resolve(ctx);
+		basex = nullptr;
+		delete this;
+		return x;
+	}
+	else if (ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
+	{
+		FxExpression *x = new FxClassTypeCast(static_cast<PClassPointer*>(ValueType), basex);
+		x = x->Resolve(ctx);
+		basex = nullptr;
+		delete this;
+		return x;
+	}
+	/* else if (ValueType->IsKindOf(RUNTIME_CLASS(PEnum)))
+	{
+	// this is not yet ready and does not get assigned to actual values.
+	}
+	*/
+	else if (ValueType->IsKindOf(RUNTIME_CLASS(PClass)))	// this should never happen because the VM doesn't handle plain class types - just pointers
+	{
+		if (basex->ValueType->IsKindOf(RUNTIME_CLASS(PClass)))
+		{
+			// class types are only compatible if the base type is a descendant of the result type.
+			auto fromtype = static_cast<PClass *>(basex->ValueType);
+			auto totype = static_cast<PClass *>(ValueType);
+			if (fromtype->IsDescendantOf(totype)) goto basereturn;
+		}
+	}
+	else if (ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
+	{
+		// Pointers to different types are only compatible if both point to an object and the source type is a child of the destination type.
+		if (basex->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
+		{
+			auto fromtype = static_cast<PPointer *>(basex->ValueType);
+			auto totype = static_cast<PPointer *>(ValueType);
+			if (fromtype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)) && totype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
+			{
+
+				auto fromcls = static_cast<PClass *>(fromtype->PointedType);
+				auto tocls = static_cast<PClass *>(totype->PointedType);
+				if (fromcls->IsDescendantOf(tocls)) goto basereturn;
+			}
+		}
+	}
+	// todo: pointers to class objects. 
+	// All other types are only compatible to themselves and have already been handled above by the equality check.
+	// Anything that falls through here is not compatible and must print an error.
+
+errormsg:
+	ScriptPosition.Message(MSG_ERROR, "Cannot convert %s to %s", basex->ValueType->DescriptiveName(), ValueType->DescriptiveName());
+	delete this;
+	return nullptr;
+
+basereturn:
+	auto x = basex;
+	basex = nullptr;
+	delete this;
+	return x;
+
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxTypeCast::Emit(VMFunctionBuilder *build)
+{
+	assert(false);
+	// This should never be reached
+	return ExpEmit();
 }
 
 //==========================================================================
@@ -5030,10 +5543,11 @@ VMFunction *FxReturnStatement::GetDirectFunction()
 //
 //==========================================================================
 
-FxClassTypeCast::FxClassTypeCast(PClass *dtype, FxExpression *x)
+FxClassTypeCast::FxClassTypeCast(PClassPointer *dtype, FxExpression *x)
 : FxExpression(x->ScriptPosition)
 {
-	desttype = dtype;
+	ValueType = dtype;
+	desttype = dtype->ClassRestriction;
 	basex=x;
 }
 
@@ -5058,8 +5572,25 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(basex, ctx);
+
+	if (basex->ValueType->GetClass() == RUNTIME_CLASS(PClassPointer))
+	{
+		auto to = static_cast<PClassPointer *>(ValueType);
+		auto from = static_cast<PClassPointer *>(basex->ValueType);
+		if (from->ClassRestriction->IsDescendantOf(to->ClassRestriction))
+		{
+			basex->ValueType = to;
+			auto x = basex;
+			basex = nullptr;
+			delete this;
+			return x;
+		}
+		ScriptPosition.Message(MSG_ERROR, "Cannot convert from %s to %s: Incompatible class types", from->ClassRestriction->TypeName.GetChars(), to->ClassRestriction->TypeName.GetChars());
+		delete this;
+		return nullptr;
+	}
 	
-	if (basex->ValueType != TypeName)
+	if (basex->ValueType != TypeName && basex->ValueType != TypeString)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Cannot convert to class type");
 		delete this;
@@ -5096,6 +5627,10 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 		FxExpression *x = new FxConstant(cls, ScriptPosition);
 		delete this;
 		return x;
+	}
+	if (basex->ValueType == TypeString)
+	{
+		basex = new FxNameCast(basex);
 	}
 	return this;
 }

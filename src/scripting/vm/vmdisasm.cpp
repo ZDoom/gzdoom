@@ -379,6 +379,9 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 				case CAST_I2F:
 					mode = MODE_AF | MODE_BI | MODE_CUNUSED;
 					break;
+				case CAST_Co2S:
+				case CAST_So2S:
+				case CAST_N2S:
 				case CAST_I2S:
 					mode = MODE_AS | MODE_BI | MODE_CUNUSED;
 					break;
@@ -391,6 +394,9 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 				case CAST_P2S:
 					mode = MODE_AS | MODE_BP | MODE_CUNUSED;
 					break;
+				case CAST_S2Co:
+				case CAST_S2So:
+				case CAST_S2N:
 				case CAST_S2I:
 					mode = MODE_AI | MODE_BS | MODE_CUNUSED;
 					break;

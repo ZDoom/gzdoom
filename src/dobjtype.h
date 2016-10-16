@@ -222,6 +222,7 @@ public:
 	PType			*HashNext;		// next type in this type table
 	PSymbolTable	Symbols;
 	bool			MemberOnly = false;		// type may only be used as a struct/class member but not as a local variable or function argument.
+	FString			mDescriptiveName;
 
 	PType();
 	PType(unsigned int size, unsigned int align);
@@ -284,6 +285,8 @@ public:
 
 	// Get the type IDs used by IsMatch
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
+
+	const char *DescriptiveName() const;
 
 	size_t PropagateMark();
 
@@ -377,8 +380,12 @@ public:
 	PTypeBase		*Outer;			// object this type is contained within
 	FName			TypeName;		// this type's name
 
-	PNamedType() : Outer(NULL) {}
-	PNamedType(FName name, PTypeBase *outer) : Outer(outer), TypeName(name) {}
+	PNamedType() : Outer(NULL) {
+		mDescriptiveName = "NamedType";
+	}
+	PNamedType(FName name, PTypeBase *outer) : Outer(outer), TypeName(name) {
+		mDescriptiveName = name.GetChars();
+	}
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;

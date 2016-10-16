@@ -207,7 +207,7 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool c
 		sc.SetEscape(true);
 		sc.MustGetString();
 		sc.SetEscape(false);
-		x = new FxClassTypeCast(static_cast<PClassPointer *>(type)->ClassRestriction, new FxConstant(FName(sc.String), sc));
+		x = new FxClassTypeCast(static_cast<PClassPointer *>(type), new FxConstant(FName(sc.String), sc));
 	}
 	else
 	{

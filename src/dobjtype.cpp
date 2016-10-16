@@ -199,6 +199,7 @@ END_POINTERS
 PType::PType()
 : Size(0), Align(1), HashNext(NULL)
 {
+	mDescriptiveName = "Type";
 }
 
 //==========================================================================
@@ -210,6 +211,7 @@ PType::PType()
 PType::PType(unsigned int size, unsigned int align)
 : Size(size), Align(align), HashNext(NULL)
 {
+	mDescriptiveName = "Type";
 }
 
 //==========================================================================
@@ -535,6 +537,17 @@ void PType::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 
 //==========================================================================
 //
+// PType :: GetTypeIDs
+//
+//==========================================================================
+
+const char *PType::DescriptiveName() const
+{
+	return mDescriptiveName.GetChars();
+}
+
+//==========================================================================
+//
 // PType :: StaticInit												STATIC
 //
 // Set up TypeTableType values for every PType child and create basic types.
@@ -649,6 +662,7 @@ PBasicType::PBasicType()
 PBasicType::PBasicType(unsigned int size, unsigned int align)
 : PType(size, align)
 {
+	mDescriptiveName = "BasicType";
 }
 
 /* PCompoundType **********************************************************/
@@ -714,6 +728,7 @@ IMPLEMENT_CLASS(PInt)
 PInt::PInt()
 : PBasicType(4, 4), Unsigned(false)
 {
+	mDescriptiveName = "SInt32";
 	Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Min, this, -0x7FFFFFFF - 1));
 	Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this,  0x7FFFFFFF));
 }
@@ -727,6 +742,8 @@ PInt::PInt()
 PInt::PInt(unsigned int size, bool unsign)
 : PBasicType(size, size), Unsigned(unsign)
 {
+	mDescriptiveName.Format("%cInt%d", unsign? 'U':'S', size);
+
 	MemberOnly = (size < 4);
 	if (!unsign)
 	{
@@ -981,6 +998,8 @@ IMPLEMENT_CLASS(PBool)
 PBool::PBool()
 : PInt(sizeof(bool), true)
 {
+	mDescriptiveName = "Bool";
+	MemberOnly = false;
 	// Override the default max set by PInt's constructor
 	PSymbolConstNumeric *maxsym = static_cast<PSymbolConstNumeric *>(Symbols.FindSymbol(NAME_Max, false));
 	assert(maxsym != NULL && maxsym->IsKindOf(RUNTIME_CLASS(PSymbolConstNumeric)));
@@ -1000,6 +1019,7 @@ IMPLEMENT_CLASS(PFloat)
 PFloat::PFloat()
 : PBasicType(8, 8)
 {
+	mDescriptiveName = "Float";
 	SetDoubleSymbols();
 }
 
@@ -1012,6 +1032,7 @@ PFloat::PFloat()
 PFloat::PFloat(unsigned int size)
 : PBasicType(size, size)
 {
+	mDescriptiveName.Format("Float%d", size);
 	if (size == 8)
 	{
 		SetDoubleSymbols();
@@ -1274,6 +1295,7 @@ IMPLEMENT_CLASS(PString)
 PString::PString()
 : PBasicType(sizeof(FString), __alignof(FString))
 {
+	mDescriptiveName = "String";
 }
 
 //==========================================================================
@@ -1376,6 +1398,7 @@ IMPLEMENT_CLASS(PName)
 PName::PName()
 : PInt(sizeof(FName), true)
 {
+	mDescriptiveName = "Name";
 	assert(sizeof(FName) == __alignof(FName));
 }
 
@@ -1425,6 +1448,7 @@ IMPLEMENT_CLASS(PSound)
 PSound::PSound()
 : PInt(sizeof(FSoundID), true)
 {
+	mDescriptiveName = "Sound";
 	assert(sizeof(FSoundID) == __alignof(FSoundID));
 }
 
@@ -1474,6 +1498,7 @@ IMPLEMENT_CLASS(PColor)
 PColor::PColor()
 : PInt(sizeof(PalEntry), true)
 {
+	mDescriptiveName = "Color";
 	assert(sizeof(PalEntry) == __alignof(PalEntry));
 }
 
@@ -1490,6 +1515,7 @@ IMPLEMENT_CLASS(PStatePointer)
 PStatePointer::PStatePointer()
 : PBasicType(sizeof(FState *), __alignof(FState *))
 {
+	mDescriptiveName = "State";
 }
 
 //==========================================================================
@@ -1564,6 +1590,7 @@ END_POINTERS
 PPointer::PPointer()
 : PBasicType(sizeof(void *), __alignof(void *)), PointedType(NULL)
 {
+	mDescriptiveName = "Pointer";
 }
 
 //==========================================================================
@@ -1575,6 +1602,7 @@ PPointer::PPointer()
 PPointer::PPointer(PType *pointsat)
 : PBasicType(sizeof(void *), __alignof(void *)), PointedType(pointsat)
 {
+	mDescriptiveName.Format("Pointer<%s>", pointsat->DescriptiveName());
 }
 
 //==========================================================================
@@ -1708,6 +1736,7 @@ END_POINTERS
 PClassPointer::PClassPointer()
 : PPointer(RUNTIME_CLASS(PClass)), ClassRestriction(NULL)
 {
+	mDescriptiveName = "ClassPointer";
 }
 
 //==========================================================================
@@ -1719,6 +1748,7 @@ PClassPointer::PClassPointer()
 PClassPointer::PClassPointer(PClass *restrict)
 : PPointer(RUNTIME_CLASS(PClass)), ClassRestriction(restrict)
 {
+	mDescriptiveName.Format("ClassPointer<%s>", restrict->TypeName.GetChars());
 }
 
 //==========================================================================
@@ -1784,6 +1814,7 @@ END_POINTERS
 PEnum::PEnum()
 : ValueType(NULL)
 {
+	mDescriptiveName = "Enum";
 }
 
 //==========================================================================
@@ -1795,6 +1826,7 @@ PEnum::PEnum()
 PEnum::PEnum(FName name, PTypeBase *outer)
 : PNamedType(name, outer), ValueType(NULL)
 {
+	mDescriptiveName.Format("Enum<%s>", name.GetChars());
 }
 
 //==========================================================================
@@ -1833,6 +1865,7 @@ END_POINTERS
 PArray::PArray()
 : ElementType(NULL), ElementCount(0)
 {
+	mDescriptiveName = "Array";
 }
 
 //==========================================================================
@@ -1844,6 +1877,8 @@ PArray::PArray()
 PArray::PArray(PType *etype, unsigned int ecount)
 : ElementType(etype), ElementCount(ecount)
 {
+	mDescriptiveName.Format("Array<%s>[%d]", etype->DescriptiveName(), ecount);
+
 	Align = etype->Align;
 	// Since we are concatenating elements together, the element size should
 	// also be padded to the nearest alignment.
@@ -1975,6 +2010,7 @@ IMPLEMENT_CLASS(PVector)
 PVector::PVector()
 : PArray(TypeFloat32, 3)
 {
+	mDescriptiveName = "Vector";
 }
 
 //==========================================================================
@@ -1986,6 +2022,7 @@ PVector::PVector()
 PVector::PVector(unsigned int size)
 : PArray(TypeFloat32, size)
 {
+	mDescriptiveName.Format("Vector<%d>", size);
 	assert(size >= 2 && size <= 4);
 }
 
@@ -2025,6 +2062,7 @@ END_POINTERS
 PDynArray::PDynArray()
 : ElementType(NULL)
 {
+	mDescriptiveName = "DynArray";
 	Size = sizeof(FArray);
 	Align = __alignof(FArray);
 }
@@ -2038,6 +2076,7 @@ PDynArray::PDynArray()
 PDynArray::PDynArray(PType *etype)
 : ElementType(etype)
 {
+	mDescriptiveName.Format("DynArray<%s>", etype->DescriptiveName());
 	Size = sizeof(FArray);
 	Align = __alignof(FArray);
 }
@@ -2105,6 +2144,7 @@ END_POINTERS
 PMap::PMap()
 : KeyType(NULL), ValueType(NULL)
 {
+	mDescriptiveName = "Map";
 	Size = sizeof(FMap);
 	Align = __alignof(FMap);
 }
@@ -2118,6 +2158,7 @@ PMap::PMap()
 PMap::PMap(PType *keytype, PType *valtype)
 : KeyType(keytype), ValueType(valtype)
 {
+	mDescriptiveName.Format("Map<%s, %s>", keytype->DescriptiveName(), valtype->DescriptiveName());
 	Size = sizeof(FMap);
 	Align = __alignof(FMap);
 }
@@ -2181,6 +2222,7 @@ IMPLEMENT_CLASS(PStruct)
 
 PStruct::PStruct()
 {
+	mDescriptiveName = "Struct";
 }
 
 //==========================================================================
@@ -2192,6 +2234,7 @@ PStruct::PStruct()
 PStruct::PStruct(FName name, PTypeBase *outer)
 : PNamedType(name, outer)
 {
+	mDescriptiveName.Format("Struct<%s>", name.GetChars());
 }
 
 //==========================================================================
@@ -2804,6 +2847,7 @@ PClass::PClass()
 	Defaults = NULL;
 	bRuntimeClass = false;
 	ConstructNative = NULL;
+	mDescriptiveName = "Class";
 
 	PClass::AllClasses.Push(this);
 }
@@ -2896,6 +2940,7 @@ void ClassReg::SetupClass(PClass *cls)
 	cls->Size = SizeOf;
 	cls->Pointers = Pointers;
 	cls->ConstructNative = ConstructNative;
+	cls->mDescriptiveName.Format("Class<%s>", cls->TypeName.GetChars());
 }
 
 //==========================================================================
@@ -3108,6 +3153,7 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 	type->TypeName = name;
 	type->Size = size;
 	type->bRuntimeClass = true;
+	type->mDescriptiveName.Format("Class<%s>", name.GetChars());
 	Derive(type);
 	DeriveData(type);
 	if (!notnew)
@@ -3185,6 +3231,7 @@ PClass *PClass::FindClassTentative(FName name, bool fatal)
 	type->ConstructNative = ConstructNative;
 	type->Size = TentativeClass;
 	type->bRuntimeClass = true;
+	type->mDescriptiveName.Format("Class<%s>", name.GetChars());
 	type->Symbols.SetParentTable(&Symbols);
 	TypeTable.AddType(type, RUNTIME_CLASS(PClass), (intptr_t)type->Outer, name, bucket);
 	return type;

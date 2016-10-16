@@ -1466,6 +1466,39 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 		reg.f[a] = reg.s[b].ToDouble();
 		break;
 
+	case CAST_S2N:
+		ASSERTD(a); ASSERTS(b);
+		reg.d[a] = FName(reg.s[b]);
+		break;
+
+	case CAST_N2S:
+	{
+		ASSERTS(a); ASSERTD(b);
+		FName name = FName(ENamedName(reg.d[b]));
+		reg.s[a] = name.IsValidName() ? name.GetChars() : "";
+		break; 
+	}
+
+	case CAST_S2Co:
+		ASSERTD(a); ASSERTS(b);
+		reg.d[a] = V_GetColor(NULL, reg.s[b]);
+		break;
+
+	case CAST_Co2S:
+		ASSERTS(a); ASSERTD(b);
+		reg.s[a].Format("%02x %02x %02x", PalEntry(reg.d[b]).r, PalEntry(reg.d[b]).g, PalEntry(reg.d[b]).b);
+		break;
+
+	case CAST_S2So:
+		ASSERTD(a); ASSERTS(b);
+		reg.d[a] = FSoundID(reg.s[b]);
+		break;
+
+	case CAST_So2S:
+		ASSERTS(a); ASSERTD(b);
+		reg.s[a] = S_sfx[reg.d[b]].name;
+		break;
+
 	default:
 		assert(0);
 	}

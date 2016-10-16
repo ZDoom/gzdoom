@@ -32,6 +32,8 @@
 */
 
 #include <math.h>
+#include <v_video.h>
+#include <s_sound.h>
 #include "vm.h"
 #include "xs_Float.h"
 #include "math/cmath.h"

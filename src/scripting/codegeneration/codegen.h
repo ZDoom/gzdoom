@@ -411,6 +411,78 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
+class FxNameCast : public FxExpression
+{
+	FxExpression *basex;
+
+public:
+
+	FxNameCast(FxExpression *x);
+	~FxNameCast();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+class FxStringCast : public FxExpression
+{
+	FxExpression *basex;
+
+public:
+
+	FxStringCast(FxExpression *x);
+	~FxStringCast();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+class FxColorCast : public FxExpression
+{
+	FxExpression *basex;
+
+public:
+
+	FxColorCast(FxExpression *x);
+	~FxColorCast();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+class FxSoundCast : public FxExpression
+{
+	FxExpression *basex;
+
+public:
+
+	FxSoundCast(FxExpression *x);
+	~FxSoundCast();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxTypeCast
+//
+//==========================================================================
+
+class FxTypeCast : public FxExpression
+{
+	FxExpression *basex;
+	bool NoWarn;
+
+public:
+
+	FxTypeCast(FxExpression *x, PType *type, bool nowarn);
+	~FxTypeCast();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
 //==========================================================================
 //
 //	FxSign
@@ -1130,7 +1202,7 @@ class FxClassTypeCast : public FxExpression
 
 public:
 
-	FxClassTypeCast(PClass *dtype, FxExpression *x);
+	FxClassTypeCast(PClassPointer *dtype, FxExpression *x);
 	~FxClassTypeCast();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);

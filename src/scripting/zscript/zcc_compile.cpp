@@ -885,7 +885,7 @@ ZCC_Expression *ZCCCompiler::SimplifyFunctionCall(ZCC_ExprFuncCall *callop, PSym
 			if (routelen < 0)
 			{
 				///FIXME: Need real type names
-				Error(callop, "Cannot convert type 1 to type 2");
+				Error(callop, "Cannot convert %s to %s", parm->Value->Type->DescriptiveName(), dest->DescriptiveName());
 				callop->ToErrorNode();
 			}
 			else
@@ -1341,7 +1341,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 			//return TypeFloat32;
 		case ZCC_Float64:
 			retval = TypeFloat64;
-			return;
+			break;
 
 		case ZCC_String:
 			retval = TypeString;
@@ -1433,7 +1433,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 	}
 	if (retval != TypeError && retval->MemberOnly && !formember)
 	{
-		Error(field, "Invalid type");	// fixme: Types need a descriptive name that can be output here.
+		Error(field, "Invalid type %s", retval->DescriptiveName());	// fixme: Types need a descriptive name that can be output here.
 		return TypeError;
 	}
 	return retval;

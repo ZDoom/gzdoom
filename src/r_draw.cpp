@@ -2689,16 +2689,19 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 		alpha = clamp<fixed_t> (alpha, 0, OPAQUE);
 	}
 
-	dc_translation = NULL;
-	if (translation != 0)
+	if (translation != -1)
 	{
-		FRemapTable *table = TranslationToTable(translation);
-		if (table != NULL && !table->Inactive)
+		dc_translation = NULL;
+		if (translation != 0)
 		{
-			if (r_swtruecolor)
-				dc_translation = (BYTE*)table->Palette;
-			else
-				dc_translation = table->Remap;
+			FRemapTable *table = TranslationToTable(translation);
+			if (table != NULL && !table->Inactive)
+			{
+				if (r_swtruecolor)
+					dc_translation = (BYTE*)table->Palette;
+				else
+					dc_translation = table->Remap;
+			}
 		}
 	}
 	basecolormapsave = basecolormap;
@@ -2801,10 +2804,11 @@ bool R_GetTransMaskDrawers (fixed_t (**tmvline1)(), void (**tmvline4)())
 
 void R_SetTranslationMap(lighttable_t *translation)
 {
-	dc_fcolormap = nullptr;
-	dc_colormap = translation;
 	if (r_swtruecolor)
 	{
+		dc_fcolormap = nullptr;
+		dc_colormap = nullptr;
+		dc_translation = translation;
 		dc_shade_constants.light_red = 256;
 		dc_shade_constants.light_green = 256;
 		dc_shade_constants.light_blue = 256;
@@ -2816,6 +2820,11 @@ void R_SetTranslationMap(lighttable_t *translation)
 		dc_shade_constants.desaturate = 0;
 		dc_shade_constants.simple_shade = true;
 		dc_light = 0;
+	}
+	else
+	{
+		dc_fcolormap = nullptr;
+		dc_colormap = translation;
 	}
 }
 

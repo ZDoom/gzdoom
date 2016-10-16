@@ -221,6 +221,7 @@ public:
 	unsigned int	Align;			// this type's preferred alignment
 	PType			*HashNext;		// next type in this type table
 	PSymbolTable	Symbols;
+	bool			MemberOnly = false;		// type may only be used as a struct/class member but not as a local variable or function argument.
 
 	PType();
 	PType(unsigned int size, unsigned int align);

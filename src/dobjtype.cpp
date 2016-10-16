@@ -727,6 +727,7 @@ PInt::PInt()
 PInt::PInt(unsigned int size, bool unsign)
 : PBasicType(size, size), Unsigned(unsign)
 {
+	MemberOnly = (size < 4);
 	if (!unsign)
 	{
 		int maxval = (1 << ((8 * size) - 1)) - 1;
@@ -1018,6 +1019,7 @@ PFloat::PFloat(unsigned int size)
 	else
 	{
 		assert(size == 4);
+		MemberOnly = true;
 		SetSingleSymbols();
 	}
 }

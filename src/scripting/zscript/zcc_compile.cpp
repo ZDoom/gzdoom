@@ -1205,7 +1205,7 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 	{
 		auto field = Fields[0];
 
-		PType *fieldtype = DetermineType(type, field, field->Names->Name, field->Type, true);
+		PType *fieldtype = DetermineType(type, field, field->Names->Name, field->Type, true, true);
 
 		// For structs only allow 'deprecated', for classes exclude function qualifiers.
 		int notallowed = forstruct? ~ZCC_Deprecated : ZCC_Latent | ZCC_Final | ZCC_Action | ZCC_Static | ZCC_FuncConst | ZCC_Abstract; 
@@ -1290,8 +1290,9 @@ FString ZCCCompiler::FlagsToString(uint32_t flags)
 //
 //==========================================================================
 
-PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName name, ZCC_Type *ztype, bool allowarraytypes)
+PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName name, ZCC_Type *ztype, bool allowarraytypes, bool formember)
 {
+	PType *retval = TypeError;
 	if (!allowarraytypes && ztype->ArraySize != nullptr)
 	{
 		Error(field, "%s: Array type not allowed", name.GetChars());
@@ -1305,26 +1306,33 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 		switch (btype->Type)
 		{
 		case ZCC_SInt8:
-			return TypeSInt8;
+			retval = TypeSInt8;
+			break;
 
 		case ZCC_UInt8:
-			return TypeUInt8;
+			retval = TypeUInt8;
+			break;
 
 		case ZCC_SInt16:
-			return TypeSInt16;
+			retval = TypeSInt16;
+			break;
 
 		case ZCC_UInt16:
-			return TypeUInt16;
+			retval = TypeUInt16;
+			break;
 
 		case ZCC_SInt32:
 		case ZCC_IntAuto: // todo: for enums, autoselect appropriately sized int
-			return TypeSInt32;
+			retval = TypeSInt32;
+			break;
 
 		case ZCC_UInt32:
-			return TypeUInt32;
+			retval = TypeUInt32;
+			break;
 
 		case ZCC_Bool:
-			return TypeBool;
+			retval = TypeBool;
+			break;
 
 			// Do we really want to allow single precision floats, despite all the problems they cause?
 			// These are nearly guaranteed to desync between MSVC and GCC on x87, because GCC does not implement an IEEE compliant mode
@@ -1332,19 +1340,24 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 		case ZCC_FloatAuto:
 			//return TypeFloat32;
 		case ZCC_Float64:
-			return TypeFloat64;
+			retval = TypeFloat64;
+			return;
 
 		case ZCC_String:
-			return TypeString;
+			retval = TypeString;
+			break;
 
 		case ZCC_Name:
-			return TypeName;
+			retval = TypeName;
+			break;
 
 		case ZCC_Vector2:
-			return TypeVector2;
+			retval = TypeVector2;
+			break;
 
 		case ZCC_Vector3:
-			return TypeVector3;
+			retval = TypeVector3;
+			break;
 
 		case ZCC_Vector4:
 			// This has almost no use, so we really shouldn't bother.
@@ -1352,18 +1365,22 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 			return TypeError;
 
 		case ZCC_State:
-			return TypeState;
+			retval = TypeState;
+			break;
 
 		case ZCC_Color:
-			return TypeColor;
+			retval = TypeColor;
+			break;
 
 		case ZCC_Sound:
-			return TypeSound;
+			retval = TypeSound;
+			break;
 
 		case ZCC_UserType:
-			return ResolveUserType(btype, &outertype->Symbols);
+			retval = ResolveUserType(btype, &outertype->Symbols);
 			break;
 		}
+		break;
 	}
 
 	case AST_MapType:
@@ -1372,7 +1389,8 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 			Error(field, "%s: Map types not implemented yet", name.GetChars());
 			// Todo: Decide what we allow here and if it makes sense to allow more complex constructs.
 			auto mtype = static_cast<ZCC_MapType *>(ztype);
-			return NewMap(DetermineType(outertype, field, name, mtype->KeyType, false), DetermineType(outertype, field, name, mtype->ValueType, false));
+			retval = NewMap(DetermineType(outertype, field, name, mtype->KeyType, false, false), DetermineType(outertype, field, name, mtype->ValueType, false, false));
+			break;
 		}
 		break;
 
@@ -1381,7 +1399,8 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 		{
 			Error(field, "%s: Dynamic array types not implemented yet", name.GetChars());
 			auto atype = static_cast<ZCC_DynArrayType *>(ztype);
-			return NewDynArray(DetermineType(outertype, field, name, atype->ElementType, false));
+			retval = NewDynArray(DetermineType(outertype, field, name, atype->ElementType, false, false));
+			break;
 		}
 		break;
 
@@ -1390,7 +1409,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 		auto ctype = static_cast<ZCC_ClassType *>(ztype);
 		if (ctype->Restriction == nullptr)
 		{
-			return NewClassPointer(RUNTIME_CLASS(DObject));
+			retval = NewClassPointer(RUNTIME_CLASS(DObject));
 		}
 		else
 		{
@@ -1407,11 +1426,17 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 				Error(field, "%s does not represent a class type", FName(ctype->Restriction->Id).GetChars());
 				return TypeError;
 			}
-			return NewClassPointer(static_cast<PClass *>(typesym->Type));
+			retval = NewClassPointer(static_cast<PClass *>(typesym->Type));
 		}
+		break;
 	}
 	}
-	return TypeError;
+	if (retval != TypeError && retval->MemberOnly && !formember)
+	{
+		Error(field, "Invalid type");	// fixme: Types need a descriptive name that can be output here.
+		return TypeError;
+	}
+	return retval;
 }
 
 //==========================================================================
@@ -1900,7 +1925,7 @@ void ZCCCompiler::InitFunctions()
 				{
 					do
 					{
-						auto type = DetermineType(c->Type(), f, f->Name, t, false);
+						auto type = DetermineType(c->Type(), f, f->Name, t, false, false);
 						if (type->IsKindOf(RUNTIME_CLASS(PStruct)))
 						{
 							// structs and classes only get passed by pointer.
@@ -1951,7 +1976,7 @@ void ZCCCompiler::InitFunctions()
 					{
 						if (p->Type != nullptr)
 						{
-							auto type = DetermineType(c->Type(), p, f->Name, p->Type, false);
+							auto type = DetermineType(c->Type(), p, f->Name, p->Type, false, false);
 							int flags;
 							if (p->Flags & ZCC_In) flags |= VARF_In;
 							if (p->Flags & ZCC_Out) flags |= VARF_Out;

@@ -55,8 +55,9 @@ SSAVec4i DrawerCodegen::shade_pal_index_advanced(SSAInt index, SSAInt light, con
 
 SSAVec4i DrawerCodegen::shade_bgra_simple(SSAVec4i color, SSAInt light)
 {
+	SSAInt alpha = color[3];
 	color = color * light / 256;
-	return color.insert(3, 255);
+	return color.insert(3, alpha);
 }
 
 SSAVec4i DrawerCodegen::shade_bgra_advanced(SSAVec4i color, SSAInt light, const SSAShadeConstants &constants)

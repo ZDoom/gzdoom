@@ -168,6 +168,7 @@ bool DrawColumnCodegen::IsPaletteInput(DrawColumnVariant variant)
 SSAVec4i DrawColumnCodegen::ProcessPixel(SSAInt sample_index, SSAVec4i bgcolor, DrawColumnVariant variant, bool isSimpleShade)
 {
 	SSAInt alpha, inv_alpha;
+	SSAVec4i fg;
 	switch (variant)
 	{
 	default:
@@ -177,24 +178,30 @@ SSAVec4i DrawColumnCodegen::ProcessPixel(SSAInt sample_index, SSAVec4i bgcolor, 
 		return blend_copy(Shade(Sample(sample_index), isSimpleShade));
 	case DrawColumnVariant::DrawAdd:
 	case DrawColumnVariant::DrawAddClamp:
-		return blend_add(Shade(Sample(sample_index), isSimpleShade), bgcolor, srcalpha, destalpha);
+		fg = Shade(Sample(sample_index), isSimpleShade);
+		return blend_add(fg, bgcolor, srcalpha, calc_blend_bgalpha(fg, destalpha));
 	case DrawColumnVariant::DrawShaded:
 		alpha = SSAInt::MAX(SSAInt::MIN(ColormapSample(sample_index), SSAInt(64)), SSAInt(0)) * 4;
 		inv_alpha = 256 - alpha;
 		return blend_add(color, bgcolor, alpha, inv_alpha);
 	case DrawColumnVariant::DrawSubClamp:
-		return blend_sub(Shade(Sample(sample_index), isSimpleShade), bgcolor, srcalpha, destalpha);
+		fg = Shade(Sample(sample_index), isSimpleShade);
+		return blend_sub(fg, bgcolor, srcalpha, calc_blend_bgalpha(fg, destalpha));
 	case DrawColumnVariant::DrawRevSubClamp:
-		return blend_revsub(Shade(Sample(sample_index), isSimpleShade), bgcolor, srcalpha, destalpha);
+		fg = Shade(Sample(sample_index), isSimpleShade);
+		return blend_revsub(fg, bgcolor, srcalpha, calc_blend_bgalpha(fg, destalpha));
 	case DrawColumnVariant::DrawTranslated:
 		return blend_copy(Shade(TranslateSample(sample_index), isSimpleShade));
 	case DrawColumnVariant::DrawTlatedAdd:
 	case DrawColumnVariant::DrawAddClampTranslated:
-		return blend_add(Shade(TranslateSample(sample_index), isSimpleShade), bgcolor, srcalpha, destalpha);
+		fg = Shade(TranslateSample(sample_index), isSimpleShade);
+		return blend_add(fg, bgcolor, srcalpha, calc_blend_bgalpha(fg, destalpha));
 	case DrawColumnVariant::DrawSubClampTranslated:
-		return blend_sub(Shade(TranslateSample(sample_index), isSimpleShade), bgcolor, srcalpha, destalpha);
+		fg = Shade(TranslateSample(sample_index), isSimpleShade);
+		return blend_sub(fg, bgcolor, srcalpha, calc_blend_bgalpha(fg, destalpha));
 	case DrawColumnVariant::DrawRevSubClampTranslated:
-		return blend_revsub(Shade(TranslateSample(sample_index), isSimpleShade), bgcolor, srcalpha, destalpha);
+		fg = Shade(TranslateSample(sample_index), isSimpleShade);
+		return blend_revsub(fg, bgcolor, srcalpha, calc_blend_bgalpha(fg, destalpha));
 	case DrawColumnVariant::Fill:
 		return blend_copy(color);
 	case DrawColumnVariant::FillAdd:

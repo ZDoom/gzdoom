@@ -182,10 +182,10 @@ SSAVec4i DrawWallCodegen::Blend(SSAVec4i fg, SSAVec4i bg, DrawWallVariant varian
 		return blend_alpha_blend(fg, bg);
 	case DrawWallVariant::Add:
 	case DrawWallVariant::AddClamp:
-		return blend_add(fg, bg, srcalpha, destalpha);
+		return blend_add(fg, bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 	case DrawWallVariant::SubClamp:
-		return blend_sub(fg, bg, srcalpha, destalpha);
+		return blend_sub(fg, bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 	case DrawWallVariant::RevSubClamp:
-		return blend_revsub(fg, bg, srcalpha, destalpha);
+		return blend_revsub(fg, bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 	}
 }

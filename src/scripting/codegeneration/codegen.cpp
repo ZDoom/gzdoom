@@ -264,9 +264,9 @@ FxExpression *FxExpression::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-bool FxExpression::RequestAddress()
+bool FxExpression::RequestAddress(bool *writable)
 {
-	ScriptPosition.Message(MSG_ERROR, "invalid dereference\n");
+	if (writable != nullptr) *writable = false;
 	return false;
 }
 
@@ -1490,6 +1490,67 @@ ExpEmit FxUnaryNotBoolean::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+FxSizeAlign::FxSizeAlign(FxExpression *operand, int which)
+	: FxExpression(operand->ScriptPosition)
+{
+	Operand = operand;
+	Which = which;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxSizeAlign::~FxSizeAlign()
+{
+	SAFE_DELETE(Operand);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxSizeAlign::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(Operand, ctx);
+
+	auto type = Operand->ValueType;
+	if (Operand->isConstant())
+	{
+		ScriptPosition.Message(MSG_ERROR, "cannot determine %s of a constant", Which == 'a'? "alignment" : "size");
+		delete this;
+		return NULL;
+	}
+	else if (!Operand->RequestAddress(nullptr))
+	{
+		ScriptPosition.Message(MSG_ERROR, "Operand must be addressable to determine %s", Which == 'a' ? "alignment" : "size");
+		delete this;
+		return NULL;
+	}
+	else
+	{
+		FxExpression *x = new FxConstant(Which == 'a' ? int(type->Align) : int(type->Size), Operand->ScriptPosition);
+		delete this;
+		return x->Resolve(ctx);
+	}
+}
+
+ExpEmit FxSizeAlign::Emit(VMFunctionBuilder *build)
+{
+	return ExpEmit();
+}
+
+//==========================================================================
+//
 // FxPreIncrDecr
 //
 //==========================================================================
@@ -1506,10 +1567,11 @@ FxPreIncrDecr::~FxPreIncrDecr()
 	SAFE_DELETE(Base);
 }
 
-bool FxPreIncrDecr::RequestAddress()
+bool FxPreIncrDecr::RequestAddress(bool *writable)
 {
 	AddressRequested = true;
-	return AddressWritable;
+	if (writable != nullptr) *writable = AddressWritable;
+	return true;
 }
 
 FxExpression *FxPreIncrDecr::Resolve(FCompileContext &ctx)
@@ -1531,7 +1593,7 @@ FxExpression *FxPreIncrDecr::Resolve(FCompileContext &ctx)
 		delete this;
 		return nullptr;
 	}
-	if (!(AddressWritable = Base->RequestAddress()))
+	if (!Base->RequestAddress(&AddressWritable) || !AddressWritable )
 	{
 		ScriptPosition.Message(MSG_ERROR, "Expression must be a modifiable value");
 		delete this;
@@ -1594,6 +1656,7 @@ FxExpression *FxPostIncrDecr::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(Base, ctx);
+	bool AddressWritable;
 
 	ValueType = Base->ValueType;
 
@@ -1609,7 +1672,7 @@ FxExpression *FxPostIncrDecr::Resolve(FCompileContext &ctx)
 		delete this;
 		return nullptr;
 	}
-	if (!Base->RequestAddress())
+	if (!Base->RequestAddress(&AddressWritable) || !AddressWritable)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Expression must be a modifiable value");
 		delete this;
@@ -1667,10 +1730,11 @@ FxAssign::~FxAssign()
 	SAFE_DELETE(Right);
 }
 
-bool FxAssign::RequestAddress()
+bool FxAssign::RequestAddress(bool *writable)
 {
 	AddressRequested = true;
-	return AddressWritable;
+	if (writable != nullptr) *writable = AddressWritable;
+	return true;
 }
 
 FxExpression *FxAssign::Resolve(FCompileContext &ctx)
@@ -1688,7 +1752,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 		delete this;
 		return nullptr;
 	}
-	if (!(AddressWritable = Base->RequestAddress()))
+	if (!Base->RequestAddress(&AddressWritable) || !AddressWritable)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Expression must be a modifiable value");
 		delete this;
@@ -3968,10 +4032,11 @@ FxClassMember::~FxClassMember()
 //
 //==========================================================================
 
-bool FxClassMember::RequestAddress()
+bool FxClassMember::RequestAddress(bool *writable)
 {
 	AddressRequested = true;
-	return !!(~membervar->Flags & VARF_ReadOnly);
+	if (writable != nullptr) *writable = !(membervar->Flags & VARF_ReadOnly);
+	return true;
 }
 
 //==========================================================================
@@ -4079,10 +4144,11 @@ FxArrayElement::~FxArrayElement()
 //
 //==========================================================================
 
-bool FxArrayElement::RequestAddress()
+bool FxArrayElement::RequestAddress(bool *writable)
 {
 	AddressRequested = true;
-	return AddressWritable;
+	if (writable != nullptr) *writable = AddressWritable;
+	return true;
 }
 
 //==========================================================================
@@ -4108,7 +4174,7 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 			return NULL;
 		}
 	}
-	if (index->ValueType->GetRegType() != REGT_INT)
+	if (index->ValueType->GetRegType() != REGT_INT && index->ValueType != TypeName)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Array index must be integer");
 		delete this;
@@ -4141,7 +4207,12 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 		delete this;
 		return NULL;
 	}
-	AddressWritable = Array->RequestAddress();
+	if (!Array->RequestAddress(&AddressWritable))
+	{
+		ScriptPosition.Message(MSG_ERROR, "Unable to dereference array.");
+		delete this;
+		return NULL;
+	}
 	return this;
 }
 

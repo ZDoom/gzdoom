@@ -212,7 +212,7 @@ public:
 	virtual FxExpression *Resolve(FCompileContext &ctx);
 	
 	virtual bool isConstant() const;
-	virtual bool RequestAddress();
+	virtual bool RequestAddress(bool *writable);
 	virtual PPrototype *ReturnProto();
 	virtual VMFunction *GetDirectFunction();
 	bool IsNumeric() const { return ValueType != TypeName && (ValueType->GetRegType() == REGT_INT || ValueType->GetRegType() == REGT_FLOAT); }
@@ -555,6 +555,24 @@ public:
 
 //==========================================================================
 //
+//	FxSign
+//
+//==========================================================================
+
+class FxSizeAlign : public FxExpression
+{
+	FxExpression *Operand;
+	int Which;
+
+public:
+	FxSizeAlign(FxExpression*, int which);
+	~FxSizeAlign();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
 //	FxPreIncrDecr
 //
 //==========================================================================
@@ -570,7 +588,7 @@ public:
 	FxPreIncrDecr(FxExpression *base, int token);
 	~FxPreIncrDecr();
 	FxExpression *Resolve(FCompileContext&);
-	bool RequestAddress();
+	bool RequestAddress(bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -609,7 +627,7 @@ public:
 	FxAssign(FxExpression *base, FxExpression *right);
 	~FxAssign();
 	FxExpression *Resolve(FCompileContext&);
-	bool RequestAddress();
+	bool RequestAddress(bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
 
 	ExpEmit Address;
@@ -932,7 +950,7 @@ public:
 	FxClassMember(FxExpression*, PField*, const FScriptPosition&);
 	~FxClassMember();
 	FxExpression *Resolve(FCompileContext&);
-	bool RequestAddress();
+	bool RequestAddress(bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -967,7 +985,7 @@ public:
 	FxArrayElement(FxExpression*, FxExpression*);
 	~FxArrayElement();
 	FxExpression *Resolve(FCompileContext&);
-	bool RequestAddress();
+	bool RequestAddress(bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 

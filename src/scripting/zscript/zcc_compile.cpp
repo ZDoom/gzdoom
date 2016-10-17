@@ -2405,6 +2405,46 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		}
 	}
 
+	case AST_ExprUnary:
+	{
+		auto unary = static_cast<ZCC_ExprUnary *>(ast);
+		auto operand = ConvertNode(unary->Operand);
+		auto op = unary->Operation;
+		switch (op)
+		{
+		case PEX_PostDec:
+		case PEX_PostInc:
+			return new FxPostIncrDecr(operand, op == PEX_PostDec ? TK_Decr : TK_Incr);
+
+		case PEX_PreDec:
+		case PEX_PreInc:
+			return new FxPreIncrDecr(operand, op == PEX_PostDec ? TK_Decr : TK_Incr);
+
+		case PEX_Negate:
+			return new FxMinusSign(operand);
+
+		case PEX_AntiNegate:
+			return new FxPlusSign(operand);
+
+		case PEX_BitNot:
+			return new FxUnaryNotBitwise(operand);
+
+		case PEX_BoolNot:
+			return new FxUnaryNotBoolean(operand);
+
+		case PEX_SizeOf:
+		case PEX_AlignOf:
+			return new FxSizeAlign(operand, op == PEX_AlignOf ? 'a' : 's');
+
+		default:
+			assert(0 && "Unknown unary operator.");	// should never happen
+			Error(unary, "Unknown unary operator ID #%d", op);
+			return new FxNop(*ast);
+		}
+		break;
+	}
+
+
 	case AST_ExprBinary:
 	{
 		auto binary = static_cast<ZCC_ExprBinary *>(ast);
@@ -2433,6 +2473,31 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		case PEX_BitXor:
 			return new FxBinaryInt(op == PEX_LeftShift ? TK_LShift : op == PEX_RightShift ? TK_RShift : op == PEX_URightShift? TK_URShift : op == PEX_BitAnd ? '&' : op == PEX_BitOr ? '|' : '^', left, right);
 
+		case PEX_BoolOr:
+		case PEX_BoolAnd:
+			return new FxBinaryLogical(op == PEX_BoolAnd ? TK_AndAnd : TK_OrOr, left, right);
+
+		case PEX_LT:
+		case PEX_LTEQ:
+		case PEX_GT:
+		case PEX_GTEQ:
+			return new FxCompareRel(op == PEX_LT ? '<' : op == PEX_RightShift ? '>' : op == PEX_LTEQ ? TK_Leq : TK_Geq, left, right);
+
+		case PEX_EQEQ:
+		case PEX_NEQ:
+			return new FxCompareEq(op == PEX_NEQ ? TK_Neq : TK_Eq, left, right); 
+
+
+		// todo: These do not have representations in DECORATE and no implementation exists yet.
+		case PEX_LTGTEQ:
+		case PEX_Concat:
+		case PEX_Is:
+			// more esoteric operators
+		case PEX_APREQ:
+
+		// vector operations will be done later.
+		case PEX_CrossProduct:
+		case PEX_DotProduct:
 		default:
 			I_Error("Binary operator %d not implemented yet", op);
 		}

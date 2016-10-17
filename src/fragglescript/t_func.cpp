@@ -3636,7 +3636,7 @@ void FParser::SF_Pow()
 {
 	if (CheckArgs(2))
 	{
-		t_return.setDouble(pow(floatvalue(t_argv[0]), floatvalue(t_argv[1])));
+		t_return.setDouble(g_pow(floatvalue(t_argv[0]), floatvalue(t_argv[1])));
 	}
 }
 

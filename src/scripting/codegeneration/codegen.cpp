@@ -1824,13 +1824,16 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 	{
 		ValueType = TypeBool;
 	}
-	if (left->ValueType->GetRegType() == REGT_INT && right->ValueType->GetRegType() == REGT_INT)
-	{
-		ValueType = TypeSInt32;
-	}
 	else if (left->IsNumeric() && right->IsNumeric())
 	{
-		ValueType = TypeFloat64;
+		if (left->ValueType->GetRegType() == REGT_INT && right->ValueType->GetRegType() == REGT_INT)
+		{
+			ValueType = TypeSInt32;
+		}
+		else
+		{
+			ValueType = TypeFloat64;
+		}
 	}
 	else if (left->ValueType->GetRegType() == REGT_POINTER && left->ValueType == right->ValueType)
 	{
@@ -2129,6 +2132,60 @@ ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 			return to;
 		}
 	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxPow::FxPow(FxExpression *l, FxExpression *r)
+	: FxBinary(TK_MulMul, new FxFloatCast(l), new FxFloatCast(r))
+{
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxPow::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+
+	if (!ResolveLR(ctx, true)) return NULL;
+
+	if (left->isConstant() && right->isConstant())
+	{
+		double v1 = static_cast<FxConstant *>(left)->GetValue().GetFloat();
+		double v2 = static_cast<FxConstant *>(right)->GetValue().GetFloat();
+		return new FxConstant(g_pow(v1, v2), left->ScriptPosition);
+	}
+	return this;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxPow::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit op1 = left->Emit(build);
+	ExpEmit op2 = right->Emit(build);
+
+	// Pow is not commutative, so either side may be constant (but not both).
+	assert(!op1.Konst || !op2.Konst);
+	op1.Free(build);
+	op2.Free(build);
+	assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
+	ExpEmit to(build, REGT_FLOAT);
+	build->Emit((op1.Konst ? OP_POWF_KR : op2.Konst ? OP_POWF_RK : OP_POWF_RR),	to.RegNum, op1.RegNum, op2.RegNum);
+	return to;
 }
 
 //==========================================================================

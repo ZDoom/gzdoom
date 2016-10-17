@@ -1055,15 +1055,15 @@ begin:
 
 	OP(POWF_RR):
 		ASSERTF(a); ASSERTF(B); ASSERTF(C);
-		reg.f[a] = pow(reg.f[B], reg.f[C]);
+		reg.f[a] = g_pow(reg.f[B], reg.f[C]);
 		NEXTOP;
 	OP(POWF_RK):
 		ASSERTF(a); ASSERTF(B); ASSERTKF(C);
-		reg.f[a] = pow(reg.f[B], konstf[C]);
+		reg.f[a] = g_pow(reg.f[B], konstf[C]);
 		NEXTOP;
 	OP(POWF_KR):
 		ASSERTF(a); ASSERTKF(B); ASSERTF(C);
-		reg.f[a] = pow(konstf[B], reg.f[C]);
+		reg.f[a] = g_pow(konstf[B], reg.f[C]);
 		NEXTOP;
 
 	OP(MINF_RR):

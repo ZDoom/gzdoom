@@ -41,6 +41,7 @@
 #include "m_alloc.h"
 #include "zcc_parser.h"
 #include "templates.h"
+#include "math/cmath.h"
 
 #define luai_nummod(a,b)        ((a) - floor((a)/(b))*(b))
 
@@ -332,7 +333,7 @@ void ZCC_InitOperators()
 		{ PEX_Mod		 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->UIntVal %= r->UIntVal; return l; } },
 		{ PEX_Mod		 , (PType **)&TypeFloat64, (PType **)&TypeFloat64, (PType **)&TypeFloat64, [](auto *l, auto *r, auto &) { l->DoubleVal = luai_nummod(l->DoubleVal, r->DoubleVal); return l; } },
 
-		{ PEX_Pow		 , (PType **)&TypeFloat64, (PType **)&TypeFloat64, (PType **)&TypeFloat64, [](auto *l, auto *r, auto &) { l->DoubleVal = pow(l->DoubleVal, r->DoubleVal); return l; } },
+		{ PEX_Pow		 , (PType **)&TypeFloat64, (PType **)&TypeFloat64, (PType **)&TypeFloat64, [](auto *l, auto *r, auto &) { l->DoubleVal = g_pow(l->DoubleVal, r->DoubleVal); return l; } },
 
 		{ PEX_Concat	 , (PType **)&TypeString,  (PType **)&TypeString,  (PType **)&TypeString,  EvalConcat },
 

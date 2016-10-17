@@ -686,6 +686,21 @@ public:
 //
 //==========================================================================
 
+class FxPow : public FxBinary
+{
+public:
+
+	FxPow(FxExpression*, FxExpression*);
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxBinary
+//
+//==========================================================================
+
 class FxCompareRel : public FxBinary
 {
 public:

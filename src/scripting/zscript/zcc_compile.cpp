@@ -2422,6 +2422,9 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		case PEX_Mod:
 			return new FxMulDiv(op == PEX_Mul ? '*' : op == PEX_Div ? '/' : '%', left, right);
 
+		case PEX_Pow:
+			return new FxPow(left, right);
+
 		default:
 			I_Error("Binary operator %d not implemented yet", op);
 		}

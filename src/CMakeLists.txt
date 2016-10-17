@@ -1287,6 +1287,8 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	math/log10.c
 	math/mtherr.c
 	math/polevl.c
+	math/pow.c
+	math/powi.c
 	math/sin.c
 	math/sinh.c
 	math/sqrt.c

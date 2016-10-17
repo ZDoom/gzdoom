@@ -145,8 +145,8 @@ HMISong::HMISong (FileReader &reader, EMidiDevice type, const char *args)
 	MusHeader = new BYTE[len];
 	SongLen = len;
 	NumTracks = 0;
-    if (reader.Read(MusHeader, len) != len)
-        return;
+	if (reader.Read(MusHeader, len) != len)
+		return;
 
 	// Do some validation of the MIDI file
 	if (memcmp(MusHeader, HMI_SONG_MAGIC, sizeof(HMI_SONG_MAGIC)) == 0)

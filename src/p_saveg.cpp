@@ -888,10 +888,10 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 		// deep down in the deserializer or just a crash if the few insufficient safeguards were not triggered.
 		BYTE chk[16] = { 0 };
 		arc.Array("checksum", chk, 16);
-		if (arc.GetSize("linedefs") != numlines ||
-			arc.GetSize("sidedefs") != numsides ||
-			arc.GetSize("sectors") != numsectors ||
-			arc.GetSize("polyobjs") != po_NumPolyobjs ||
+		if (arc.GetSize("linedefs") != (unsigned)numlines ||
+			arc.GetSize("sidedefs") != (unsigned)numsides ||
+			arc.GetSize("sectors") != (unsigned)numsectors ||
+			arc.GetSize("polyobjs") != (unsigned)po_NumPolyobjs ||
 			memcmp(chk, level.md5, 16))
 		{
 			I_Error("Savegame is from a different level");

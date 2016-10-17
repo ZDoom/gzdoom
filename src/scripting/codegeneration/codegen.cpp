@@ -1556,7 +1556,7 @@ ExpEmit FxSizeAlign::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxPreIncrDecr::FxPreIncrDecr(FxExpression *base, int token)
-: FxExpression(base->ScriptPosition), Base(base), Token(token)
+: FxExpression(base->ScriptPosition), Token(token), Base(base)
 {
 	AddressRequested = false;
 	AddressWritable = false;
@@ -1643,7 +1643,7 @@ ExpEmit FxPreIncrDecr::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxPostIncrDecr::FxPostIncrDecr(FxExpression *base, int token)
-: FxExpression(base->ScriptPosition), Base(base), Token(token)
+: FxExpression(base->ScriptPosition), Token(token), Base(base)
 {
 }
 
@@ -1890,14 +1890,14 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 	}
 	else if (left->IsNumeric() && right->IsNumeric())
 	{
-		if (left->ValueType->GetRegType() == REGT_INT && right->ValueType->GetRegType() == REGT_INT)
-		{
-			ValueType = TypeSInt32;
-		}
+	if (left->ValueType->GetRegType() == REGT_INT && right->ValueType->GetRegType() == REGT_INT)
+	{
+		ValueType = TypeSInt32;
+	}
 		else
-		{
-			ValueType = TypeFloat64;
-		}
+	{
+		ValueType = TypeFloat64;
+	}
 	}
 	else if (left->ValueType->GetRegType() == REGT_POINTER && left->ValueType == right->ValueType)
 	{
@@ -3915,9 +3915,9 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 						}
 					}
 				}
-				ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as member variable, index %d\n", Identifier.GetChars(), vsym->Offset);
-				newex = new FxClassMember((new FxSelf(ScriptPosition))->Resolve(ctx), vsym, ScriptPosition);
-			}
+			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as member variable, index %d\n", Identifier.GetChars(), vsym->Offset);
+			newex = new FxClassMember((new FxSelf(ScriptPosition))->Resolve(ctx), vsym, ScriptPosition);
+		}
 		}
 		else
 		{
@@ -4816,28 +4816,28 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	// If both functions are non-action or both are action, there is no need for special treatment.
 	if (!OwnerIsSelf || (!!(Function->Variants[0].Flags & VARF_Action) == build->IsActionFunc))
 	{
-		// Emit code to pass implied parameters
+	// Emit code to pass implied parameters
 		if (Function->Variants[0].Flags & VARF_Method)
-		{
-			build->Emit(OP_PARAM, 0, REGT_POINTER, 0);
-			count += 1;
-		}
+	{
+		build->Emit(OP_PARAM, 0, REGT_POINTER, 0);
+		count += 1;
+	}
 		if (Function->Variants[0].Flags & VARF_Action)
+	{
+		static_assert(NAP == 3, "This code needs to be updated if NAP changes");
+		if (build->IsActionFunc)
 		{
-			static_assert(NAP == 3, "This code needs to be updated if NAP changes");
-			if (build->IsActionFunc)
-			{
-				build->Emit(OP_PARAM, 0, REGT_POINTER, 1);
-				build->Emit(OP_PARAM, 0, REGT_POINTER, 2);
-			}
-			else
-			{
-				int null = build->GetConstantAddress(nullptr, ATAG_GENERIC);
-				build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
-				build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
-			}
-			count += 2;
+			build->Emit(OP_PARAM, 0, REGT_POINTER, 1);
+			build->Emit(OP_PARAM, 0, REGT_POINTER, 2);
 		}
+		else
+		{
+			int null = build->GetConstantAddress(nullptr, ATAG_GENERIC);
+			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
+			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
+		}
+		count += 2;
+	}
 	}
 	else
 	{
@@ -5869,18 +5869,18 @@ static bool VerifyJumpTarget(AActor *stateowner, FStateParamInfo *stateinfo, int
 
 	if (stateinfo->mCallingState != nullptr)
 	{
-		while (cls != RUNTIME_CLASS(AActor))
+	while (cls != RUNTIME_CLASS(AActor))
+	{
+		// both calling and target state need to belong to the same class.
+		if (cls->OwnsState(stateinfo->mCallingState))
 		{
-			// both calling and target state need to belong to the same class.
-			if (cls->OwnsState(stateinfo->mCallingState))
-			{
-				return cls->OwnsState(stateinfo->mCallingState + index);
-			}
-
-			// We can safely assume the ParentClass is of type PClassActor
-			// since we stop when we see the Actor base class.
-			cls = static_cast<PClassActor *>(cls->ParentClass);
+			return cls->OwnsState(stateinfo->mCallingState + index);
 		}
+
+		// We can safely assume the ParentClass is of type PClassActor
+		// since we stop when we see the Actor base class.
+		cls = static_cast<PClassActor *>(cls->ParentClass);
+	}
 	}
 	return false;
 }

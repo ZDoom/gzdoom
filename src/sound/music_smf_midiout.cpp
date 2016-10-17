@@ -114,10 +114,10 @@ MIDISong2::MIDISong2 (FileReader &reader, EMidiDevice type, const char *args)
 		return;
 	}
 #endif
-    SongLen = reader.GetLength();
+	SongLen = reader.GetLength();
 	MusHeader = new BYTE[SongLen];
-    if (reader.Read(MusHeader, SongLen) != SongLen)
-        return;
+	if (reader.Read(MusHeader, SongLen) != SongLen)
+		return;
 
 	// Do some validation of the MIDI file
 	if (MusHeader[4] != 0 || MusHeader[5] != 0 || MusHeader[6] != 0 || MusHeader[7] != 6)

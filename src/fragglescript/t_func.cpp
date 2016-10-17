@@ -497,7 +497,7 @@ DFsSection *FParser::looping_section()
 					if(!best || (current->start_index > best->start_index))
 						best = current;     // save it
 				}
-				current = current->next;
+			current = current->next;
 		}
 	}
 	

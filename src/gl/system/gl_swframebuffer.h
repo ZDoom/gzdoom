@@ -194,6 +194,10 @@ private:
 	void DrawTriangleList(int minIndex, int numVertices, int startIndex, int primitiveCount);
 	void Present();
 
+	void BindFBBuffer();
+	void *MappedMemBuffer = nullptr;
+	bool UseMappedMemBuffer = true;
+
 	static uint32_t ColorARGB(uint32_t a, uint32_t r, uint32_t g, uint32_t b) { return ((a & 0xff) << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | ((b) & 0xff); }
 	static uint32_t ColorRGBA(uint32_t r, uint32_t g, uint32_t b, uint32_t a) { return ColorARGB(a, r, g, b); }
 	static uint32_t ColorXRGB(uint32_t r, uint32_t g, uint32_t b) { return ColorARGB(0xff, r, g, b); }

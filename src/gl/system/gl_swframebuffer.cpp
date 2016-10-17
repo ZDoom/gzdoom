@@ -1093,7 +1093,24 @@ bool OpenGLSWFrameBuffer::Lock(bool buffered)
 	}
 	assert(!In2D);
 	Accel2D = vid_hw2d;
-	Buffer = MemBuffer;
+	if (UseMappedMemBuffer)
+	{
+		if (!MappedMemBuffer)
+		{
+			BindFBBuffer();
+
+			MappedMemBuffer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE);
+			Pitch = Width;
+			if (MappedMemBuffer == nullptr)
+				return true;
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+		}
+		Buffer = (uint8_t*)MappedMemBuffer;
+	}
+	else
+	{
+		Buffer = MemBuffer;
+	}
 	return false;
 }
 
@@ -1269,54 +1286,73 @@ bool OpenGLSWFrameBuffer::PaintToWindow()
 //
 //==========================================================================
 
+void OpenGLSWFrameBuffer::BindFBBuffer()
+{
+	int usage = UseMappedMemBuffer ? GL_DYNAMIC_DRAW : GL_STREAM_DRAW;
+
+	int pixelsize = IsBgra() ? 4 : 1;
+	int size = Width * Height * pixelsize;
+
+	if (FBTexture->Buffers[0] == 0)
+	{
+		glGenBuffers(2, (GLuint*)FBTexture->Buffers);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, FBTexture->Buffers[1]);
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, size, nullptr, usage);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, FBTexture->Buffers[0]);
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, size, nullptr, usage);
+	}
+	else
+	{
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, FBTexture->Buffers[FBTexture->CurrentBuffer]);
+	}
+}
+
 void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 {
 	if (copy3d)
 	{
-		int pixelsize = IsBgra() ? 4 : 1;
-		int size = Width * Height * pixelsize;
+		BindFBBuffer();
+		FBTexture->CurrentBuffer = (FBTexture->CurrentBuffer + 1) & 1;
 
-		if (FBTexture->Buffers[0] == 0)
+		if (!UseMappedMemBuffer)
 		{
-			glGenBuffers(2, (GLuint*)FBTexture->Buffers);
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, FBTexture->Buffers[0]);
-			glBufferData(GL_PIXEL_UNPACK_BUFFER, size, nullptr, GL_STREAM_DRAW);
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, FBTexture->Buffers[1]);
-			glBufferData(GL_PIXEL_UNPACK_BUFFER, size, nullptr, GL_STREAM_DRAW);
-		}
-		else
-		{
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, FBTexture->Buffers[FBTexture->CurrentBuffer]);
-			FBTexture->CurrentBuffer = (FBTexture->CurrentBuffer + 1) & 1;
-		}
+			int pixelsize = IsBgra() ? 4 : 1;
+			int size = Width * Height * pixelsize;
 
-		uint8_t *dest = (uint8_t*)MapBuffer(GL_PIXEL_UNPACK_BUFFER, size);
-		if (dest)
-		{
-			if (Pitch == Width)
+			uint8_t *dest = (uint8_t*)MapBuffer(GL_PIXEL_UNPACK_BUFFER, size);
+			if (dest)
 			{
-				memcpy(dest, MemBuffer, Width * Height * pixelsize);
-			}
-			else
-			{
-				uint8_t *src = MemBuffer;
-				for (int y = 0; y < Height; y++)
+				if (Pitch == Width)
 				{
-					memcpy(dest, src, Width * pixelsize);
-					dest += Width * pixelsize;
-					src += Pitch * pixelsize;
+					memcpy(dest, MemBuffer, Width * Height * pixelsize);
 				}
+				else
+				{
+					uint8_t *src = MemBuffer;
+					for (int y = 0; y < Height; y++)
+					{
+						memcpy(dest, src, Width * pixelsize);
+						dest += Width * pixelsize;
+						src += Pitch * pixelsize;
+					}
+				}
+				glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 			}
-			glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-			GLint oldBinding = 0;
-			glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
-			glBindTexture(GL_TEXTURE_2D, FBTexture->Texture);
-			if (IsBgra())
-				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Width, Height, GL_BGRA, GL_UNSIGNED_BYTE, 0);
-			else
-				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Width, Height, GL_RED, GL_UNSIGNED_BYTE, 0);
-			glBindTexture(GL_TEXTURE_2D, oldBinding);
 		}
+		else if (MappedMemBuffer)
+		{
+			glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+			MappedMemBuffer = nullptr;
+		}
+
+		GLint oldBinding = 0;
+		glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
+		glBindTexture(GL_TEXTURE_2D, FBTexture->Texture);
+		if (IsBgra())
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Width, Height, GL_BGRA, GL_UNSIGNED_BYTE, 0);
+		else
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Width, Height, GL_RED, GL_UNSIGNED_BYTE, 0);
+		glBindTexture(GL_TEXTURE_2D, oldBinding);
 
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	}

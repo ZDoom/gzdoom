@@ -184,7 +184,7 @@ void DCeiling::Tick ()
 				case DCeiling::ceilLowerAndCrush:
 					if (m_CrushMode == ECrushMode::crushSlowdown)
 						m_Speed = 1. / 8;
-						break;
+					break;
 
 				default:
 					break;

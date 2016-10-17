@@ -331,6 +331,10 @@ void FRandom::StaticReadRNGState(FSerializer &arc)
 	FRandom *rng;
 
 	arc("rngseed", rngseed);
+
+	// Call StaticClearRandom in order to ensure that SFMT is initialized
+	FRandom::StaticClearRandom ();
+
 	if (arc.BeginArray("rngs"))
 	{
 		int count = arc.ArraySize();

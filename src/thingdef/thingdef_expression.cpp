@@ -91,7 +91,7 @@ static const FLOP FxFlops[] =
 //
 //==========================================================================
 
-FCompileContext::FCompileContext(PClassActor *cls, PPrototype *ret) : Class(cls), ReturnProto(ret)
+FCompileContext::FCompileContext(PClassActor *cls, PPrototype *ret) : ReturnProto(ret), Class(cls)
 {
 }
 
@@ -959,7 +959,7 @@ ExpEmit FxUnaryNotBoolean::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxPreIncrDecr::FxPreIncrDecr(FxExpression *base, int token)
-: FxExpression(base->ScriptPosition), Base(base), Token(token)
+: FxExpression(base->ScriptPosition), Token(token), Base(base)
 {
 	AddressRequested = false;
 	AddressWritable = false;
@@ -1045,7 +1045,7 @@ ExpEmit FxPreIncrDecr::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxPostIncrDecr::FxPostIncrDecr(FxExpression *base, int token)
-: FxExpression(base->ScriptPosition), Base(base), Token(token)
+: FxExpression(base->ScriptPosition), Token(token), Base(base)
 {
 }
 

@@ -79,11 +79,8 @@ zscript/heretic/clink.txt
 zscript/heretic/beast.txt
 zscript/heretic/snake.txt
 zscript/heretic/hereticimp.txt
-/*
 zscript/heretic/knight.txt
 zscript/heretic/wizard.txt
 zscript/heretic/ironlich.txt
 zscript/heretic/dsparil.txt
 zscript/heretic/chicken.txt
-*/
-

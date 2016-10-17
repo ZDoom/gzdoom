@@ -2385,6 +2385,10 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		{
 			return new FxConstant(cnst->IntVal, *ast);
 		}
+		else if (cnst->Type->IsA(RUNTIME_CLASS(PBool)))
+		{
+			return new FxConstant(!!cnst->IntVal, *ast);
+		}
 		else if (cnst->Type->IsA(RUNTIME_CLASS(PFloat)))
 		{
 			return new FxConstant(cnst->DoubleVal, *ast);
@@ -2396,7 +2400,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		else
 		{
 			// can there be other types?
-			Error(cnst, "Unknown constant type");
+			Error(cnst, "Unknown constant type %s", cnst->Type->DescriptiveName());
 			return new FxConstant(0, *ast);
 		}
 	}

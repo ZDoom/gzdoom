@@ -482,7 +482,7 @@ LLVMProgram::LLVMProgram()
 
 	mModule = std::make_unique<Module>("render", context());
 	mModule->setTargetTriple(targetTriple);
-#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9)
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
 	mModule->setDataLayout(new DataLayout(*machine->getSubtargetImpl()->getDataLayout()));
 #else
 	mModule->setDataLayout(machine->createDataLayout());
@@ -497,7 +497,7 @@ void LLVMProgram::CreateEE()
 	legacy::FunctionPassManager PerFunctionPasses(mModule.get());
 	legacy::PassManager PerModulePasses;
 
-#if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9)
+#if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8)
 	PerFunctionPasses.add(createTargetTransformInfoWrapperPass(machine->getTargetIRAnalysis()));
 	PerModulePasses.add(createTargetTransformInfoWrapperPass(machine->getTargetIRAnalysis()));
 #endif
@@ -542,7 +542,7 @@ std::string LLVMProgram::DumpModule()
 {
 	std::string str;
 	llvm::raw_string_ostream stream(str);
-#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9)
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
 	mModule->print(stream, nullptr);
 #else
 	mModule->print(stream, nullptr, false, true);

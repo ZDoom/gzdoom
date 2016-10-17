@@ -73,7 +73,7 @@ int currentcanvas = -1;
 bool changerenderer;
 
 // Software OpenGL canvas
-CUSTOM_CVAR(Bool, vid_used3d, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Bool, vid_used3d, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	if (self != currentcanvas)
 		Printf("You must restart " GAMENAME " for this change to take effect.\n");

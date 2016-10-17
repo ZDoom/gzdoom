@@ -365,6 +365,18 @@ void ZCC_InitOperators()
 		{ PEX_LTEQ		 , (PType **)&TypeBool,    (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->UIntVal <= r->UIntVal; l->Type = TypeBool; return l; } },
 		{ PEX_LTEQ		 , (PType **)&TypeBool,    (PType **)&TypeFloat64, (PType **)&TypeFloat64, [](auto *l, auto *r, auto &) { l->IntVal = l->DoubleVal <= r->DoubleVal; l->Type = TypeBool; return l; } },
 
+		{ PEX_GT		 , (PType **)&TypeBool,    (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->IntVal > r->IntVal; l->Type = TypeBool; return l; } },
+		{ PEX_GT		 , (PType **)&TypeBool,    (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->UIntVal > r->UIntVal; l->Type = TypeBool; return l; } },
+		{ PEX_GT		 , (PType **)&TypeBool,    (PType **)&TypeFloat64, (PType **)&TypeFloat64, [](auto *l, auto *r, auto &) { l->IntVal = l->DoubleVal > r->DoubleVal; l->Type = TypeBool; return l; } },
+
+		{ PEX_GTEQ		 , (PType **)&TypeBool,    (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->IntVal >= r->IntVal; l->Type = TypeBool; return l; } },
+		{ PEX_GTEQ		 , (PType **)&TypeBool,    (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->UIntVal >= r->UIntVal; l->Type = TypeBool; return l; } },
+		{ PEX_GTEQ		 , (PType **)&TypeBool,    (PType **)&TypeFloat64, (PType **)&TypeFloat64, [](auto *l, auto *r, auto &) { l->IntVal = l->DoubleVal >= r->DoubleVal; l->Type = TypeBool; return l; } },
+
+		{ PEX_NEQ		 , (PType **)&TypeBool,    (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->IntVal != r->IntVal; l->Type = TypeBool; return l; } },
+		{ PEX_NEQ		 , (PType **)&TypeBool,    (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->UIntVal != r->UIntVal; l->Type = TypeBool; return l; } },
+		{ PEX_NEQ		 , (PType **)&TypeBool,    (PType **)&TypeFloat64, (PType **)&TypeFloat64, [](auto *l, auto *r, auto &) { l->IntVal = l->DoubleVal != r->DoubleVal; l->Type = TypeBool; return l; } },
+
 		{ PEX_EQEQ		 , (PType **)&TypeBool,    (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->IntVal == r->IntVal; l->Type = TypeBool; return l; } },
 		{ PEX_EQEQ		 , (PType **)&TypeBool,    (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->UIntVal == r->UIntVal; l->Type = TypeBool; return l; } },
 		{ PEX_EQEQ		 , (PType **)&TypeBool,    (PType **)&TypeFloat64, (PType **)&TypeFloat64, [](auto *l, auto *r, auto &) { l->IntVal = l->DoubleVal == r->DoubleVal; l->Type = TypeBool; return l; } },

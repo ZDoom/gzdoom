@@ -1161,9 +1161,8 @@ expr(X) ::= expr(A) LT expr(B).			/* a < b */
 }
 expr(X) ::= expr(A) GT expr(B).			/* a > b */
 {
-	BINARY_EXPR(A,B,PEX_LTEQ);
-	UNARY_EXPR(expr2,PEX_BoolNot);
-	X = expr1;
+	BINARY_EXPR(A,B,PEX_GT);
+	X = expr2;
 }
 expr(X) ::= expr(A) LTEQ expr(B).		/* a <= b */
 {
@@ -1172,9 +1171,8 @@ expr(X) ::= expr(A) LTEQ expr(B).		/* a <= b */
 }
 expr(X) ::= expr(A) GTEQ expr(B).		/* a >= b */
 {
-	BINARY_EXPR(A,B,PEX_LT);
-	UNARY_EXPR(expr1,PEX_BoolNot);
-	X = expr1;
+	BINARY_EXPR(A,B,PEX_GTEQ);
+	X = expr2;
 }
 expr(X) ::= expr(A) LTGTEQ expr(B).		/* a <>= b */
 {
@@ -1194,9 +1192,8 @@ expr(X) ::= expr(A) EQEQ expr(B).		/* a == b */
 }
 expr(X) ::= expr(A) NEQ expr(B).		/* a != b */
 {
-	BINARY_EXPR(A,B,PEX_EQEQ);
-	UNARY_EXPR(expr2,PEX_BoolNot);
-	X = expr1;
+	BINARY_EXPR(A,B,PEX_NEQ);
+	X = expr2;
 }
 expr(X) ::= expr(A) APPROXEQ expr(B).	/* a ~== b */
 {

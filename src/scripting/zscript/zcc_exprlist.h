@@ -36,10 +36,13 @@ xx(Concat,			)
 
 xx(LT,				)
 xx(LTEQ,			)
+xx(GT,				)
+xx(GTEQ,			)
 xx(LTGTEQ,			)
 xx(Is,				)
 
 xx(EQEQ,			)
+xx(NEQ,			)
 xx(APREQ,			)
 
 xx(BitAnd,			)

@@ -97,6 +97,8 @@ public:
 		args.flags = 0;
 		if (dc_shade_constants.simple_shade)
 			args.flags |= DrawColumnArgs::simple_shade;
+
+		DetectRangeError(args.dest, args.dest_y, args.count);
 	}
 
 	void Execute(DrawerThread *thread) override

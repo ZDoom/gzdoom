@@ -76,6 +76,7 @@ extern "C" const BYTE*	dc_source2;
 extern "C" uint32_t		dc_texturefracx;
 
 extern "C" BYTE			*dc_dest, *dc_destorg;
+extern "C" int			dc_destheight;
 extern "C" int			dc_count;
 
 extern "C" DWORD		vplce[4];

@@ -64,6 +64,7 @@ BYTE*			viewimage;
 extern "C" {
 int				ylookup[MAXHEIGHT];
 BYTE			*dc_destorg;
+int				dc_destheight;
 }
 int 			scaledviewwidth;
 

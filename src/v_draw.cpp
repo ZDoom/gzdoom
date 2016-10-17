@@ -204,7 +204,9 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 		mode = R_SetPatchStyle(parms.style, parms.Alpha, 0, parms.fillcolor);
 
 	BYTE *destorgsave = dc_destorg;
+	int destheightsave = dc_destheight;
 	dc_destorg = screen->GetBuffer();
+	dc_destheight = screen->GetHeight();
 	if (dc_destorg == NULL)
 	{
 		I_FatalError("Attempt to write to buffer of hardware canvas");
@@ -362,6 +364,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	R_FinishSetPatchStyle ();
 
 	dc_destorg = destorgsave;
+	dc_destheight = destheightsave;
 
 	if (ticdup != 0 && menuactive == MENU_Off)
 	{

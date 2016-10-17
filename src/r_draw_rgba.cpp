@@ -245,6 +245,8 @@ public:
 			args.flags |= DrawWallArgs::simple_shade;
 		if (args.source2[0] == nullptr)
 			args.flags |= DrawWallArgs::nearest_filter;
+
+		DetectRangeError(args.dest, args.dest_y, args.count);
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -304,6 +306,8 @@ public:
 			args.flags |= DrawWallArgs::simple_shade;
 		if (args.source2[0] == nullptr)
 			args.flags |= DrawWallArgs::nearest_filter;
+
+		DetectRangeError(args.dest, args.dest_y, args.count);
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -368,6 +372,8 @@ public:
 		args.flags = 0;
 		if (dc_shade_constants.simple_shade)
 			args.flags |= DrawColumnArgs::simple_shade;
+
+		DetectRangeError(args.dest, args.dest_y, args.count);
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -410,6 +416,8 @@ public:
 		args.textureheight1 = bufheight[1];
 		args.top_color = solid_top;
 		args.bottom_color = solid_bottom;
+
+		DetectRangeError(args.dest, args.dest_y, args.count);
 	}
 
 	FString DebugInfo() override

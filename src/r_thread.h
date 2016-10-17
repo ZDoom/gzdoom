@@ -72,6 +72,30 @@ class DrawerCommand
 protected:
 	int _dest_y;
 
+	void DetectRangeError(uint32_t *&dest, int &dest_y, int &count)
+	{
+#if defined(_MSC_VER) && defined(_DEBUG)
+		if (dest_y < 0 || count < 0 || dest_y + count > dc_destheight)
+			__debugbreak(); // Buffer overrun detected!
+#endif
+
+		if (dest_y < 0)
+		{
+			count += dest_y;
+			dest_y = 0;
+			dest = (uint32_t*)dc_destorg;
+		}
+		else if (dest_y >= dc_destheight)
+		{
+			dest_y = 0;
+			count = 0;
+		}
+
+		if (count < 0 || count > MAXHEIGHT) count = 0;
+		if (dest_y + count >= dc_destheight)
+			count = dc_destheight - dest_y;
+	}
+
 public:
 	DrawerCommand()
 	{

@@ -2425,6 +2425,14 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		case PEX_Pow:
 			return new FxPow(left, right);
 
+		case PEX_LeftShift:
+		case PEX_RightShift:
+		case PEX_URightShift:
+		case PEX_BitAnd:
+		case PEX_BitOr:
+		case PEX_BitXor:
+			return new FxBinaryInt(op == PEX_LeftShift ? TK_LShift : op == PEX_RightShift ? TK_RShift : op == PEX_URightShift? TK_URShift : op == PEX_BitAnd ? '&' : op == PEX_BitOr ? '|' : '^', left, right);
+
 		default:
 			I_Error("Binary operator %d not implemented yet", op);
 		}

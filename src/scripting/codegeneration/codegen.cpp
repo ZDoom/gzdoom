@@ -2430,9 +2430,9 @@ FxExpression *FxBinaryInt::Resolve(FCompileContext& ctx)
 	CHECKRESOLVED();
 	if (!ResolveLR(ctx, false)) return NULL;
 
-	if (ValueType->GetRegType() == REGT_FLOAT /* lax */)
+	if (ValueType->GetRegType() == REGT_FLOAT && ctx.FromDecorate)
 	{
-		// For DECORATE which allows floats here.
+		// For DECORATE which allows floats here. ZScript does not.
 		if (left->ValueType->GetRegType() != REGT_INT)
 		{
 			left = new FxIntCast(left, ctx.FromDecorate);

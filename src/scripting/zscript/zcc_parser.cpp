@@ -95,6 +95,7 @@ static void InitTokenMap()
 	TOKENDEF ('&',				ZCC_AND);
 	TOKENDEF (TK_LShift,		ZCC_LSH);
 	TOKENDEF (TK_RShift,		ZCC_RSH);
+	TOKENDEF (TK_URShift,		ZCC_URSH);
 	TOKENDEF ('-',				ZCC_SUB);
 	TOKENDEF ('+',				ZCC_ADD);
 	TOKENDEF ('*',				ZCC_MUL);

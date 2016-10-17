@@ -32,6 +32,7 @@ xx(CrossProduct,	)
 xx(DotProduct,		)
 xx(LeftShift,		)
 xx(RightShift,		)
+xx(URightShift,		)
 xx(Concat,			)
 
 xx(LT,				)
@@ -42,7 +43,7 @@ xx(LTGTEQ,			)
 xx(Is,				)
 
 xx(EQEQ,			)
-xx(NEQ,			)
+xx(NEQ,				)
 xx(APREQ,			)
 
 xx(BitAnd,			)

@@ -114,7 +114,7 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 %left OR.		/* Note that this is like the Ruby precedence for these */
 %left XOR.		/* three operators and not the C precedence, since */
 %left AND.		/* they are higher priority than the comparisons. */
-%left LSH RSH.
+%left LSH RSH URSH.
 %left SUB ADD.
 %left MUL DIV MOD CROSSPROD DOTPROD.
 %left POW.
@@ -1146,6 +1146,11 @@ expr(X) ::= expr(A) LSH expr(B).		/* a << b */
 expr(X) ::= expr(A) RSH expr(B).		/* a >> b */
 {
 	BINARY_EXPR(A,B,PEX_RightShift);
+	X = expr2;
+}
+expr(X) ::= expr(A) URSH expr(B).		/* a >>> b */
+{
+	BINARY_EXPR(A,B,PEX_URightShift);
 	X = expr2;
 }
 expr(X) ::= expr(A) DOTDOT expr(B).		/* a .. b */

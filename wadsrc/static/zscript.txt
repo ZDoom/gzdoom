@@ -73,13 +73,13 @@ zscript/heretic/hereticartifacts.txt
 zscript/heretic/heretickeys.txt
 zscript/heretic/hereticdecorations.txt
 zscript/heretic/hereticmisc.txt
-/*
 zscript/heretic/hereticweaps.txt
 zscript/heretic/mummy.txt
 zscript/heretic/clink.txt
 zscript/heretic/beast.txt
 zscript/heretic/snake.txt
 zscript/heretic/hereticimp.txt
+/*
 zscript/heretic/knight.txt
 zscript/heretic/wizard.txt
 zscript/heretic/ironlich.txt

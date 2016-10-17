@@ -4297,7 +4297,6 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	// Note that for all builtins the used arguments have to be nulled in the ArgList so that they won't get deleted before they get used.
 	FxExpression *func = nullptr;
 
-	Printf("Resolving %s with %d args\n", MethodName.GetChars(), ArgList->Size());
 	switch (MethodName)
 	{
 	case NAME_Random:

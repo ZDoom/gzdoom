@@ -93,11 +93,11 @@ zscript/hexen/mageplayer.txt
 zscript/hexen/pig.txt
 zscript/hexen/flame.txt
 zscript/hexen/flies.txt
-/*
 zscript/hexen/hexenarmor.txt
 zscript/hexen/hexendecorations.txt
 zscript/hexen/hexenkeys.txt
 zscript/hexen/hexenspecialdecs.txt
+/*
 zscript/hexen/mana.txt
 zscript/hexen/puzzleitems.txt
 zscript/hexen/scriptprojectiles.txt

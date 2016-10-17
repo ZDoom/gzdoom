@@ -2471,7 +2471,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		case PEX_BitAnd:
 		case PEX_BitOr:
 		case PEX_BitXor:
-			return new FxBinaryInt(op == PEX_LeftShift ? TK_LShift : op == PEX_RightShift ? TK_RShift : op == PEX_URightShift? TK_URShift : op == PEX_BitAnd ? '&' : op == PEX_BitOr ? '|' : '^', left, right);
+			return new FxBinaryInt(op == PEX_LeftShift ? TK_LShift : op == PEX_RightShift ? TK_RShift : op == PEX_URightShift ? TK_URShift : op == PEX_BitAnd ? '&' : op == PEX_BitOr ? '|' : '^', left, right);
 
 		case PEX_BoolOr:
 		case PEX_BoolAnd:
@@ -2485,23 +2485,33 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 
 		case PEX_EQEQ:
 		case PEX_NEQ:
-			return new FxCompareEq(op == PEX_NEQ ? TK_Neq : TK_Eq, left, right); 
+			return new FxCompareEq(op == PEX_NEQ ? TK_Neq : TK_Eq, left, right);
 
 
-		// todo: These do not have representations in DECORATE and no implementation exists yet.
+			// todo: These do not have representations in DECORATE and no implementation exists yet.
 		case PEX_LTGTEQ:
 		case PEX_Concat:
 		case PEX_Is:
 			// more esoteric operators
 		case PEX_APREQ:
 
-		// vector operations will be done later.
+			// vector operations will be done later.
 		case PEX_CrossProduct:
 		case PEX_DotProduct:
 		default:
 			I_Error("Binary operator %d not implemented yet", op);
 		}
 		break;
+	}
+
+	case AST_ExprTrinary:
+	{
+		auto trinary = static_cast<ZCC_ExprTrinary *>(ast);
+		auto condition = ConvertNode(trinary->Test);
+		auto left = ConvertNode(trinary->Left);
+		auto right = ConvertNode(trinary->Right);
+
+		return new FxConditional(condition, left, right);
 	}
 	}
 

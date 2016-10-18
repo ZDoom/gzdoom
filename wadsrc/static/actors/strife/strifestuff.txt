@@ -1675,8 +1675,8 @@ ACTOR Meat native
 
 ACTOR Junk : Meat
 {
-states
-{
+	States
+	{
 	Spawn:
 		JUNK A 700
 		Stop

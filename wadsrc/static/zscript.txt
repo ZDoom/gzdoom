@@ -116,7 +116,6 @@ zscript/hexen/bishop.txt
 zscript/hexen/blastradius.txt
 zscript/hexen/boostarmor.txt
 zscript/hexen/clericmace.txt
-/*
 zscript/hexen/clericflame.txt
 zscript/hexen/clericholy.txt
 zscript/hexen/clericstaff.txt
@@ -136,4 +135,3 @@ zscript/hexen/serpent.txt
 zscript/hexen/spike.txt
 zscript/hexen/wraith.txt
 zscript/hexen/heresiarch.txt
-*/

@@ -41,17 +41,17 @@ const char *GetVersionString();
 
 /** Lots of different version numbers **/
 
-#define VERSIONSTR "0.1beta"
+#define VERSIONSTR "0.2pre"
 
 // The version as seen in the Windows resource
-#define RC_FILEVERSION 0,1,0,0
-#define RC_PRODUCTVERSION 0,1,0,0
-#define RC_PRODUCTVERSION2 "0.1beta"
+#define RC_FILEVERSION 0,1,9999,0
+#define RC_PRODUCTVERSION 0,1,9999,0
+#define RC_PRODUCTVERSION2 "0.2pre"
 
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you
 // didn't change anything that will affect sync.
-#define NETGAMEVERSION 232
+#define NETGAMEVERSION 233
 
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to

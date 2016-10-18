@@ -3,6 +3,7 @@ xx(Nil,				)
 
 xx(ID,				)
 xx(Super,			)
+xx(Null,			)
 xx(Self,			)
 xx(ConstValue,		)
 xx(FuncCall,		)

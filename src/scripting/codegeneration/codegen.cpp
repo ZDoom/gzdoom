@@ -1888,16 +1888,20 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 	{
 		ValueType = TypeBool;
 	}
+	else if (left->ValueType == TypeName && right->ValueType == TypeName)
+	{
+		ValueType = TypeName;
+	}
 	else if (left->IsNumeric() && right->IsNumeric())
 	{
-	if (left->ValueType->GetRegType() == REGT_INT && right->ValueType->GetRegType() == REGT_INT)
-	{
-		ValueType = TypeSInt32;
-	}
+		if (left->ValueType->GetRegType() == REGT_INT && right->ValueType->GetRegType() == REGT_INT)
+		{
+			ValueType = TypeSInt32;
+		}
 		else
-	{
-		ValueType = TypeFloat64;
-	}
+		{
+			ValueType = TypeFloat64;
+		}
 	}
 	else if (left->ValueType->GetRegType() == REGT_POINTER && left->ValueType == right->ValueType)
 	{
@@ -2395,7 +2399,7 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 		return NULL;
 	}
 
-	if (!IsNumeric() && !IsPointer())
+	if (!IsNumeric() && !IsPointer() && ValueType != TypeName)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
 		delete this;

@@ -956,6 +956,13 @@ primary(X) ::= IDENTIFIER(A).
 	expr->Type = NULL;
 	X = expr;
 }
+primary(X) ::= NULL(T).
+{
+	NEW_AST_NODE(Expression, expr, T);
+	expr->Operation = PEX_Null;
+	expr->Type = NULL;
+	X = expr;
+}
 primary(X) ::= SUPER(T).
 {
 	NEW_AST_NODE(Expression, expr, T);

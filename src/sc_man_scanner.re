@@ -171,6 +171,7 @@ std2:
 		'global'					{ RET(TK_Global); }
 		'self'						{ RET(TK_Self); }
 		'stop'						{ RET(TK_Stop); }
+		'null'						{ RET(TK_Null); }
 
 		'is'						{ RET(TK_Is); }
 		'replaces'					{ RET(TK_Replaces); }

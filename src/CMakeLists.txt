@@ -610,6 +610,11 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set( CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++ ${CMAKE_EXE_LINKER_FLAGS}" )
 	endif ()
 
+	# Linux - add these flags for LLVM compatibility to prevent crashing
+	if ( UNIX AND NOT APPLE )
+		set( CMAKE_EXE_LINKER_FLAGS "-Wl,--exclude-libs,ALL ${CMAKE_EXE_LINKER_FLAGS}" )
+	endif()
+
 	# Remove extra warnings when using the official DirectX headers.
 	# Also, TDM-GCC 4.4.0 no longer accepts glibc-style printf formats as valid,
 	# which is a royal pain. The previous version I had been using was fine with them.

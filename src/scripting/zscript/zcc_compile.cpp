@@ -1554,7 +1554,7 @@ const char *ZCCCompiler::GetString(ZCC_Expression *expr, bool silent)
 {
 	if (expr->Type == TypeError)
 	{
-		return 0;
+		return nullptr;
 	}
 	else if (expr->Type->IsKindOf(RUNTIME_CLASS(PString)))
 	{
@@ -1568,7 +1568,7 @@ const char *ZCCCompiler::GetString(ZCC_Expression *expr, bool silent)
 	else
 	{
 		if (!silent) Error(expr, "Cannot convert to string");
-		return 0;
+		return nullptr;
 	}
 }
 
@@ -1631,7 +1631,7 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 				conv.d = GetDouble(exp);
 				break;
 
-			case 'Z':	// an optional string. Does not allow any numerical value.
+			case 'Z':	// an optional string. Does not allow any numeric value.
 				if (!GetString(exp, true))
 				{
 					// apply this expression to the next argument on the list.
@@ -1640,7 +1640,8 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 					p++;
 					continue;
 				}
-				// fall through
+				conv.s = GetString(exp);
+				break;
 
 			case 'C':	// this parser accepts colors only in string form.
 				pref.i = 1;

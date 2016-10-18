@@ -104,7 +104,6 @@ zscript/hexen/speedboots.txt
 zscript/hexen/ettin.txt
 zscript/hexen/centaur.txt
 zscript/hexen/demons.txt
-/*
 zscript/hexen/firedemon.txt
 zscript/hexen/fog.txt
 zscript/hexen/summon.txt
@@ -117,6 +116,7 @@ zscript/hexen/bishop.txt
 zscript/hexen/blastradius.txt
 zscript/hexen/boostarmor.txt
 zscript/hexen/clericmace.txt
+/*
 zscript/hexen/clericflame.txt
 zscript/hexen/clericholy.txt
 zscript/hexen/clericstaff.txt

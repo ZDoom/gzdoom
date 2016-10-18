@@ -813,6 +813,31 @@ begin:
 		reg.d[a] = konstd[B] / reg.d[C];
 		NEXTOP;
 
+	OP(DIVU_RR):
+		ASSERTD(a); ASSERTD(B); ASSERTD(C);
+		if (reg.d[C] == 0)
+		{
+			THROW(X_DIVISION_BY_ZERO);
+		}
+		reg.d[a] = int((unsigned)reg.d[B] / (unsigned)reg.d[C]);
+		NEXTOP;
+	OP(DIVU_RK):
+		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
+		if (konstd[C] == 0)
+		{
+			THROW(X_DIVISION_BY_ZERO);
+		}
+		reg.d[a] = int((unsigned)reg.d[B] / (unsigned)konstd[C]);
+		NEXTOP;
+	OP(DIVU_KR):
+		ASSERTD(a); ASSERTKD(B); ASSERTD(C);
+		if (reg.d[C] == 0)
+		{
+			THROW(X_DIVISION_BY_ZERO);
+		}
+		reg.d[a] = int((unsigned)konstd[B] / (unsigned)reg.d[C]);
+		NEXTOP;
+
 	OP(MOD_RR):
 		ASSERTD(a); ASSERTD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
@@ -836,6 +861,31 @@ begin:
 			THROW(X_DIVISION_BY_ZERO);
 		}
 		reg.d[a] = konstd[B] % reg.d[C];
+		NEXTOP;
+
+	OP(MODU_RR):
+		ASSERTD(a); ASSERTD(B); ASSERTD(C);
+		if (reg.d[C] == 0)
+		{
+			THROW(X_DIVISION_BY_ZERO);
+		}
+		reg.d[a] = int((unsigned)reg.d[B] % (unsigned)reg.d[C]);
+		NEXTOP;
+	OP(MODU_RK):
+		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
+		if (konstd[C] == 0)
+		{
+			THROW(X_DIVISION_BY_ZERO);
+		}
+		reg.d[a] = int((unsigned)reg.d[B] % (unsigned)konstd[C]);
+		NEXTOP;
+	OP(MODU_KR):
+		ASSERTD(a); ASSERTKD(B); ASSERTD(C);
+		if (reg.d[C] == 0)
+		{
+			THROW(X_DIVISION_BY_ZERO);
+		}
+		reg.d[a] = int((unsigned)konstd[B] % (unsigned)reg.d[C]);
 		NEXTOP;
 
 	OP(AND_RR):

@@ -115,12 +115,18 @@ xx(SUB_RK,		sub,	RIRIKI),
 xx(SUB_KR,		sub,	RIKIRI),
 xx(MUL_RR,		mul,	RIRIRI),		// dA = dB * dkC
 xx(MUL_RK,		mul,	RIRIKI),
-xx(DIV_RR,		div,	RIRIRI),		// dA = dkB / dkC
+xx(DIV_RR,		div,	RIRIRI),		// dA = dkB / dkC (signed)
 xx(DIV_RK,		div,	RIRIKI),
 xx(DIV_KR,		div,	RIKIRI),
-xx(MOD_RR,		mod,	RIRIRI),		// dA = dkB % dkC
+xx(DIVU_RR,		divu,	RIRIRI),		// dA = dkB / dkC (unsigned)
+xx(DIVU_RK,		divu,	RIRIKI),
+xx(DIVU_KR,		divu,	RIKIRI),
+xx(MOD_RR,		mod,	RIRIRI),		// dA = dkB % dkC (signed)
 xx(MOD_RK,		mod,	RIRIKI),
 xx(MOD_KR,		mod,	RIKIRI),
+xx(MODU_RR,		modu,	RIRIRI),		// dA = dkB % dkC (unsigned)
+xx(MODU_RK,		modu,	RIRIKI),
+xx(MODU_KR,		modu,	RIKIRI),
 xx(AND_RR,		and,	RIRIRI),		// dA = dB & dkC
 xx(AND_RK,		and,	RIRIKI),
 xx(OR_RR,		or,		RIRIRI),		// dA = dB | dkC

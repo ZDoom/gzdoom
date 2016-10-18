@@ -169,3 +169,11 @@ zscript/strife/thingstoblowup.txt
 zscript/strife/templar.txt
 zscript/strife/zombie.txt
 zscript/strife/sigil.txt
+
+zscript/chex/chexmonsters.txt
+zscript/chex/chexkeys.txt
+zscript/chex/chexammo.txt
+zscript/chex/chexweapons.txt
+zscript/chex/chexitems.txt
+zscript/chex/chexdecorations.txt
+zscript/chex/chexplayer.txt

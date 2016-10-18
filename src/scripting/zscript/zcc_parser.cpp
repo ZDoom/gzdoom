@@ -39,6 +39,7 @@
 #include "cmdlib.h"
 #include "m_alloc.h"
 #include "i_system.h"
+#include "m_argv.h"
 #include "v_text.h"
 #include "zcc_parser.h"
 #include "zcc_compile.h"
@@ -297,7 +298,7 @@ static void DoParse(int lumpnum)
 
 	parser = ZCCParseAlloc(malloc);
 	ZCCParseState state;
-#ifdef _DEBUG
+#if 0	// this costs a lot of time and should only be activated when it's really needed.
 	FILE *f = fopen("trace.txt", "w");
 	char prompt = '\0';
 	ZCCParseTrace(f, &prompt);
@@ -331,24 +332,26 @@ static void DoParse(int lumpnum)
 		I_Error("%d errors while parsing %s", FScriptPosition::ErrorCounter, Wads.GetLumpFullPath(lumpnum));
 	}
 
-	{
-	// Make a dump of the AST before running the compiler for diagnostic purposes.
-#ifdef _DEBUG
+#if 0
 	if (f != NULL)
 	{
-		fclose(f);
-	}
-	FString ast = ZCC_PrintAST(state.TopNode);
-	FString filename = Wads.GetLumpFullName(lumpnum);
-	FString astfile = ExtractFileBase(filename, false);
-	astfile << "-before.ast";
-	f = fopen(astfile, "w");
-	if (f != NULL)
-	{
-		fputs(ast.GetChars(), f);
 		fclose(f);
 	}
 #endif
+
+	// Make a dump of the AST before running the compiler for diagnostic purposes.
+	if (Args->CheckParm("-dumpast"))
+	{
+		FString ast = ZCC_PrintAST(state.TopNode);
+		FString filename = Wads.GetLumpFullName(lumpnum);
+		FString astfile = ExtractFileBase(filename, false);
+		astfile << ".ast";
+		FILE *ff = fopen(astfile, "w");
+		if (ff != NULL)
+		{
+			fputs(ast.GetChars(), ff);
+			fclose(ff);
+		}
 	}
 
 	PSymbolTable symtable;

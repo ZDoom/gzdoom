@@ -1020,30 +1020,55 @@ static void R_DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, doub
 		angle1 = (DWORD)((UMulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
 		angle2 = (DWORD)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
 
-		bufplce[i] = (const BYTE *)frontskytex->GetColumnBgra(angle1, nullptr);
-		bufplce2[i] = backskytex ? (const BYTE *)backskytex->GetColumnBgra(angle2, nullptr) : nullptr;
+		if (r_swtruecolor)
+		{
+			bufplce[i] = (const BYTE *)frontskytex->GetColumnBgra(angle1, nullptr);
+			bufplce2[i] = backskytex ? (const BYTE *)backskytex->GetColumnBgra(angle2, nullptr) : nullptr;
+		}
+		else
+		{
+			bufplce[i] = (const BYTE *)frontskytex->GetColumn(angle1, nullptr);
+			bufplce2[i] = backskytex ? (const BYTE *)backskytex->GetColumn(angle2, nullptr) : nullptr;
+		}
 		vince[i] = uv_step;
 		vplce[i] = uv_pos;
 	}
 
 	bufheight[0] = height;
 	bufheight[1] = backskytex ? backskytex->GetHeight() : height;
-	dc_dest = (ylookup[y1] + start_x) * 4 + dc_destorg;
+	int pixelsize = r_swtruecolor ? 4 : 1;
+	dc_dest = (ylookup[y1] + start_x) * pixelsize + dc_destorg;
 	dc_count = y2 - y1;
 
 	uint32_t solid_top = frontskytex->GetSkyCapColor(false);
 	uint32_t solid_bottom = frontskytex->GetSkyCapColor(true);
 
-	if (columns == 4)
-		if (!backskytex)
-			R_DrawSingleSkyCol4(solid_top, solid_bottom);
+	if (r_swtruecolor)
+	{
+		if (columns == 4)
+			if (!backskytex)
+				R_DrawSingleSkyCol4_rgba(solid_top, solid_bottom);
+			else
+				R_DrawDoubleSkyCol4_rgba(solid_top, solid_bottom);
 		else
-			R_DrawDoubleSkyCol4(solid_top, solid_bottom);
+			if (!backskytex)
+				R_DrawSingleSkyCol1_rgba(solid_top, solid_bottom);
+			else
+				R_DrawDoubleSkyCol1_rgba(solid_top, solid_bottom);
+	}
 	else
-		if (!backskytex)
-			R_DrawSingleSkyCol1(solid_top, solid_bottom);
+	{
+		if (columns == 4)
+			if (!backskytex)
+				R_DrawSingleSkyCol4(solid_top, solid_bottom);
+			else
+				R_DrawDoubleSkyCol4(solid_top, solid_bottom);
 		else
-			R_DrawDoubleSkyCol1(solid_top, solid_bottom);
+			if (!backskytex)
+				R_DrawSingleSkyCol1(solid_top, solid_bottom);
+			else
+				R_DrawDoubleSkyCol1(solid_top, solid_bottom);
+	}
 }
 
 static void R_DrawSkyColumn(int start_x, int y1, int y2, int columns)
@@ -1253,7 +1278,7 @@ static void R_DrawSky (visplane_t *pl)
 		R_DrawCubeSky(pl);
 		return;
 	}
-	else if (r_swtruecolor && r_capsky)
+	else if (r_capsky)
 	{
 		R_DrawCapSky(pl);
 		return;

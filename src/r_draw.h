@@ -387,6 +387,11 @@ void R_DrawSingleSkyCol4(uint32_t solid_top, uint32_t solid_bottom);
 void R_DrawDoubleSkyCol1(uint32_t solid_top, uint32_t solid_bottom);
 void R_DrawDoubleSkyCol4(uint32_t solid_top, uint32_t solid_bottom);
 
+void R_DrawSingleSkyCol1_rgba(uint32_t solid_top, uint32_t solid_bottom);
+void R_DrawSingleSkyCol4_rgba(uint32_t solid_top, uint32_t solid_bottom);
+void R_DrawDoubleSkyCol1_rgba(uint32_t solid_top, uint32_t solid_bottom);
+void R_DrawDoubleSkyCol4_rgba(uint32_t solid_top, uint32_t solid_bottom);
+
 struct TriVertex
 {
 	TriVertex() { }

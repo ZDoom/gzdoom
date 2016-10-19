@@ -1692,22 +1692,22 @@ void R_DrawTriangles(const VSMatrix &objectToWorld, const TriVertex *vertices, i
 
 /////////////////////////////////////////////////////////////////////////////
 
-void R_DrawSingleSkyCol1(uint32_t solid_top, uint32_t solid_bottom)
+void R_DrawSingleSkyCol1_rgba(uint32_t solid_top, uint32_t solid_bottom)
 {
 	DrawerCommandQueue::QueueCommand<DrawSingleSky1LLVMCommand>(solid_top, solid_bottom);
 }
 
-void R_DrawSingleSkyCol4(uint32_t solid_top, uint32_t solid_bottom)
+void R_DrawSingleSkyCol4_rgba(uint32_t solid_top, uint32_t solid_bottom)
 {
 	DrawerCommandQueue::QueueCommand<DrawSingleSky4LLVMCommand>(solid_top, solid_bottom);
 }
 
-void R_DrawDoubleSkyCol1(uint32_t solid_top, uint32_t solid_bottom)
+void R_DrawDoubleSkyCol1_rgba(uint32_t solid_top, uint32_t solid_bottom)
 {
 	DrawerCommandQueue::QueueCommand<DrawDoubleSky1LLVMCommand>(solid_top, solid_bottom);
 }
 
-void R_DrawDoubleSkyCol4(uint32_t solid_top, uint32_t solid_bottom)
+void R_DrawDoubleSkyCol4_rgba(uint32_t solid_top, uint32_t solid_bottom)
 {
 	DrawerCommandQueue::QueueCommand<DrawDoubleSky4LLVMCommand>(solid_top, solid_bottom);
 }

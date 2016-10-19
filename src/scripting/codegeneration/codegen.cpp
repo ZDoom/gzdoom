@@ -5185,23 +5185,36 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 	return ExpEmit();
 }
 
-
 //==========================================================================
 //
-// FxLoopStatement
+// FxLoopStatement :: Resolve
+//
+// saves the loop pointer in the context and sets this object as the current loop
+// so that continues and breaks always resolve to the innermost loop.
 //
 //==========================================================================
 
-void FxLoopStatement::HandleJumps(int token, FCompileContext &ctx)
+FxExpression *FxLoopStatement::Resolve(FCompileContext &ctx)
 {
-	for (unsigned int i = 0; i < ctx.Jumps.Size(); i++)
+	auto outer = ctx.Loop;
+	ctx.Loop = this;
+	auto x = DoResolve(ctx);
+	ctx.Loop = outer;
+	return x;
+}
+
+void FxLoopStatement::Backpatch(VMFunctionBuilder *build, size_t loopstart, size_t loopend)
+{
+	// Give a proper address to any break/continue statement within this loop.
+	for (unsigned int i = 0; i < Jumps.Size(); i++)
 	{
-		if (ctx.Jumps[i]->Token == token)
+		if (Jumps[i]->Token == TK_Break)
 		{
-			ctx.Jumps[i]->AddressResolver = this;
-			JumpAddresses.Push(ctx.Jumps[i]);
-			ctx.Jumps.Delete(i);
-			i--;
+			build->Backpatch(Jumps[i]->Address, loopend);
+		}
+		else
+		{ // Continue statement.
+			build->Backpatch(Jumps[i]->Address, loopstart);
 		}
 	}
 }
@@ -5224,14 +5237,11 @@ FxWhileLoop::~FxWhileLoop()
 	SAFE_DELETE(Code);
 }
 
-FxExpression *FxWhileLoop::Resolve(FCompileContext &ctx)
+FxExpression *FxWhileLoop::DoResolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(Condition, ctx);
 	SAFE_RESOLVE_OPT(Code, ctx);
-
-	HandleJumps(TK_Break, ctx);
-	HandleJumps(TK_Continue, ctx);
 
 	if (Condition->ValueType != TypeBool)
 	{
@@ -5291,19 +5301,7 @@ ExpEmit FxWhileLoop::Emit(VMFunctionBuilder *build)
 		build->Backpatch(jumpspot, loopend);
 	}
 
-	// Give a proper address to any break/continue statement within this loop.
-	for (unsigned int i = 0; i < JumpAddresses.Size(); i++)
-	{
-		if (JumpAddresses[i]->Token == TK_Break)
-		{
-			build->Backpatch(JumpAddresses[i]->Address, loopend);
-		}
-		else
-		{ // Continue statement.
-			build->Backpatch(JumpAddresses[i]->Address, loopstart);
-		}
-	}
-
+	Backpatch(build, loopstart, loopend);
 	return ExpEmit();
 }
 
@@ -5325,14 +5323,11 @@ FxDoWhileLoop::~FxDoWhileLoop()
 	SAFE_DELETE(Code);
 }
 
-FxExpression *FxDoWhileLoop::Resolve(FCompileContext &ctx)
+FxExpression *FxDoWhileLoop::DoResolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(Condition, ctx);
 	SAFE_RESOLVE_OPT(Code, ctx);
-
-	HandleJumps(TK_Break, ctx);
-	HandleJumps(TK_Continue, ctx);
 
 	if (Condition->ValueType != TypeBool)
 	{
@@ -5344,7 +5339,7 @@ FxExpression *FxDoWhileLoop::Resolve(FCompileContext &ctx)
 	{
 		if (static_cast<FxConstant *>(Condition)->GetValue().GetBool() == false)
 		{ // The code executes once, if any.
-			if (JumpAddresses.Size() == 0)
+			if (Jumps.Size() == 0)
 			{ // We would still have to handle the jumps however.
 				FxExpression *e = Code;
 				if (e == nullptr) e = new FxNop(ScriptPosition);
@@ -5393,18 +5388,7 @@ ExpEmit FxDoWhileLoop::Emit(VMFunctionBuilder *build)
 	}
 	loopend = build->GetAddress();
 
-	// Give a proper address to any break/continue statement within this loop.
-	for (unsigned int i = 0; i < JumpAddresses.Size(); i++)
-	{
-		if (JumpAddresses[i]->Token == TK_Break)
-		{
-			build->Backpatch(JumpAddresses[i]->Address, loopend);
-		}
-		else
-		{ // Continue statement.
-			build->Backpatch(JumpAddresses[i]->Address, loopstart);
-		}
-	}
+	Backpatch(build, loopstart, loopend);
 
 	return ExpEmit();
 }
@@ -5429,16 +5413,13 @@ FxForLoop::~FxForLoop()
 	SAFE_DELETE(Code);
 }
 
-FxExpression *FxForLoop::Resolve(FCompileContext &ctx)
+FxExpression *FxForLoop::DoResolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE_OPT(Init, ctx);
 	SAFE_RESOLVE_OPT(Condition, ctx);
 	SAFE_RESOLVE_OPT(Iteration, ctx);
 	SAFE_RESOLVE_OPT(Code, ctx);
-
-	HandleJumps(TK_Break, ctx);
-	HandleJumps(TK_Continue, ctx);
 
 	if (Condition != nullptr)
 	{
@@ -5480,7 +5461,7 @@ ExpEmit FxForLoop::Emit(VMFunctionBuilder *build)
 	size_t codestart;
 	size_t jumpspot;
 
-	// Init statement.
+	// Init statement (only used by DECORATE. ZScript is pulling it before the loop statement and enclosing the entire loop in a compound statement so that Init can have local variables.)
 	if (Init != nullptr)
 	{
 		ExpEmit init = Init->Emit(build);
@@ -5520,19 +5501,7 @@ ExpEmit FxForLoop::Emit(VMFunctionBuilder *build)
 		build->Backpatch(jumpspot, loopend);
 	}
 
-	// Give a proper address to any break/continue statement within this loop.
-	for (unsigned int i = 0; i < JumpAddresses.Size(); i++)
-	{
-		if (JumpAddresses[i]->Token == TK_Break)
-		{
-			build->Backpatch(JumpAddresses[i]->Address, loopend);
-		}
-		else
-		{ // Continue statement.
-			build->Backpatch(JumpAddresses[i]->Address, loopstart);
-		}
-	}
-
+	Backpatch(build, loopstart, loopend);
 	return ExpEmit();
 }
 
@@ -5543,7 +5512,7 @@ ExpEmit FxForLoop::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxJumpStatement::FxJumpStatement(int token, const FScriptPosition &pos)
-: FxExpression(pos), Token(token), AddressResolver(nullptr)
+: FxExpression(pos), Token(token)
 {
 	ValueType = TypeVoid;
 }
@@ -5552,18 +5521,21 @@ FxExpression *FxJumpStatement::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 
-	ctx.Jumps.Push(this);
-
-	return this;
+	if (ctx.Loop != nullptr)
+	{
+		ctx.Loop->Jumps.Push(this);
+		return this;
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "'%s' outside of a loop", Token == TK_Break ? "break" : "continue");
+		delete this;
+		return nullptr;
+	}
 }
 
 ExpEmit FxJumpStatement::Emit(VMFunctionBuilder *build)
 {
-	if (AddressResolver == nullptr)
-	{
-		ScriptPosition.Message(MSG_ERROR, "Jump statement %s has nowhere to go!", FScanner::TokenName(Token).GetChars());
-	}
-
 	Address = build->Emit(OP_JMP, 0);
 
 	return ExpEmit();

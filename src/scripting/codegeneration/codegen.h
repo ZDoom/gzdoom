@@ -62,10 +62,11 @@ class FxJumpStatement;
 //
 //==========================================================================
 struct FScriptPosition;
+class FxLoopStatement;
 
 struct FCompileContext
 {
-	TArray<FxJumpStatement *> Jumps;
+	FxLoopStatement *Loop;
 	PPrototype *ReturnProto;
 	PFunction *Function;	// The function that is currently being compiled (or nullptr for constant evaluation.)
 	PClass *Class;			// The type of the owning class.
@@ -1127,9 +1128,12 @@ protected:
 	{
 	}
 	
-	void HandleJumps(int token, FCompileContext &ctx);
+	void Backpatch(VMFunctionBuilder *build, size_t loopstart, size_t loopend);
+	FxExpression *Resolve(FCompileContext&) final;
+	virtual FxExpression *DoResolve(FCompileContext&) = 0;
 
-	TArray<FxJumpStatement *> JumpAddresses;
+public:
+	TArray<FxJumpStatement *> Jumps;
 };
 
 //==========================================================================
@@ -1146,7 +1150,7 @@ class FxWhileLoop : public FxLoopStatement
 public:
 	FxWhileLoop(FxExpression *condition, FxExpression *code, const FScriptPosition &pos);
 	~FxWhileLoop();
-	FxExpression *Resolve(FCompileContext&);
+	FxExpression *DoResolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -1164,7 +1168,7 @@ class FxDoWhileLoop : public FxLoopStatement
 public:
 	FxDoWhileLoop(FxExpression *condition, FxExpression *code, const FScriptPosition &pos);
 	~FxDoWhileLoop();
-	FxExpression *Resolve(FCompileContext&);
+	FxExpression *DoResolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -1184,7 +1188,7 @@ class FxForLoop : public FxLoopStatement
 public:
 	FxForLoop(FxExpression *init, FxExpression *condition, FxExpression *iteration, FxExpression *code, const FScriptPosition &pos);
 	~FxForLoop();
-	FxExpression *Resolve(FCompileContext&);
+	FxExpression *DoResolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -1203,7 +1207,6 @@ public:
 
 	int Token;
 	size_t Address;
-	FxExpression *AddressResolver;
 };
 
 //==========================================================================

@@ -314,7 +314,7 @@ do_stop:
 				ScriptCode = ParseActions(sc, state, statestring, bag, hasfinalret);
 				if (!hasfinalret && ScriptCode != nullptr)
 				{
-					static_cast<FxSequence *>(ScriptCode)->Add(new FxReturnStatement(nullptr, sc));
+					static_cast<FxCompoundStatement *>(ScriptCode)->Add(new FxReturnStatement(nullptr, sc));
 				}
 				goto endofstate;
 			}
@@ -474,7 +474,7 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 
 	const FScriptPosition pos(sc);
 
-	FxSequence *seq = NULL;
+	FxCompoundStatement *seq = NULL;
 	bool lastwasret = false;
 
 	sc.MustGetString();
@@ -536,7 +536,7 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 		{
 			if (seq == NULL)
 			{
-				seq = new FxSequence(pos);
+				seq = new FxCompoundStatement(pos);
 			}
 			seq->Add(add);
 		}

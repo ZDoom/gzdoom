@@ -5016,11 +5016,11 @@ ExpEmit FxFlopFunctionCall::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
-// FxSequence :: Resolve
+// FxCompoundStatement :: Resolve
 //
 //==========================================================================
 
-FxExpression *FxSequence::Resolve(FCompileContext &ctx)
+FxExpression *FxCompoundStatement::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	for (unsigned i = 0; i < Expressions.Size(); ++i)
@@ -5036,11 +5036,11 @@ FxExpression *FxSequence::Resolve(FCompileContext &ctx)
 
 //==========================================================================
 //
-// FxSequence :: Emit
+// FxCompoundStatement :: Emit
 //
 //==========================================================================
 
-ExpEmit FxSequence::Emit(VMFunctionBuilder *build)
+ExpEmit FxCompoundStatement::Emit(VMFunctionBuilder *build)
 {
 	for (unsigned i = 0; i < Expressions.Size(); ++i)
 	{
@@ -5053,11 +5053,11 @@ ExpEmit FxSequence::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
-// FxSequence :: GetDirectFunction
+// FxCompoundStatement :: GetDirectFunction
 //
 //==========================================================================
 
-VMFunction *FxSequence::GetDirectFunction()
+VMFunction *FxCompoundStatement::GetDirectFunction()
 {
 	if (Expressions.Size() == 1)
 	{

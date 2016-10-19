@@ -2087,7 +2087,7 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClassActor *cls, ZCC_TreeNode *a
 	tcall->Code = ParseActions(sc, state, statestring, bag, hasfinalret);
 	if (!hasfinalret && tcall->Code != nullptr)
 	{
-	static_cast<FxSequence *>(tcall->Code)->Add(new FxReturnStatement(nullptr, sc));
+	static_cast<FxCompoundStatement *>(tcall->Code)->Add(new FxReturnStatement(nullptr, sc));
 	}
 	*/
 

@@ -528,6 +528,10 @@ state_action(X) ::= LBRACE(T) statement_list(A) scanner_mode RBRACE.
 	stmt->Content = A;
 	X = stmt;
 }
+state_action(X) ::= LBRACE scanner_mode RBRACE.	
+{
+	X = NULL;
+}
 state_action(X) ::= LBRACE error scanner_mode RBRACE.				{ X = NULL; }
 state_action(X) ::= state_call(A) scanner_mode SEMICOLON.			{ X = A; /*X-overwrites-A*/ }
 

@@ -1079,16 +1079,16 @@ public:
 
 //==========================================================================
 //
-// FxSequence
+// FxCompoundStatement
 //
 //==========================================================================
 
-class FxSequence : public FxExpression
+class FxCompoundStatement : public FxExpression
 {
 	TDeletingArray<FxExpression *> Expressions;
 
 public:
-	FxSequence(const FScriptPosition &pos) : FxExpression(pos) {}
+	FxCompoundStatement(const FScriptPosition &pos) : FxExpression(pos) {}
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 	void Add(FxExpression *expr) { if (expr != NULL) Expressions.Push(expr); }

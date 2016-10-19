@@ -2534,6 +2534,39 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		return new FxConditional(condition, left, right);
 	}
 
+	case AST_LocalVarStmt:
+	{
+		auto loc = static_cast<ZCC_LocalVarStmt *>(ast);
+		auto node = loc->Vars;
+		FxSequence *list = new FxSequence(*ast);
+		do
+		{
+			// Type determination must be done for each field to properly handle array definitions.
+			PType *type = DetermineType(ConvertClass, node, node->Name, loc->Type, true, false);
+			if (type->IsKindOf(RUNTIME_CLASS(PArray)))
+			{
+				Error(loc, "Local array variables not implemented yet.");
+			}
+			else
+			{
+				FxExpression *val;
+				if (node->InitIsArray)
+				{
+					Error(node, "Tried to initialize %s with an array", FName(node->Name).GetChars());
+					val = nullptr;
+				}
+				else
+				{
+					val = node->Init ? ConvertNode(node->Init) : nullptr;
+				}
+				list->Add(new FxLocalVariableDeclaration(type, node->Name, val, *node));
+			}
+
+			node = static_cast<decltype(node)>(node->SiblingNext);
+		} while (node != loc->Vars);
+		return list;
+	}
+
 	case AST_ExpressionStmt:
 		return ConvertNode(static_cast<ZCC_ExpressionStmt *>(ast)->Expression);
 

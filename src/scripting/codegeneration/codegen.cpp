@@ -5016,6 +5016,58 @@ ExpEmit FxFlopFunctionCall::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
+// FxSequence :: Resolve
+//
+//==========================================================================
+
+FxExpression *FxSequence::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	for (unsigned i = 0; i < Expressions.Size(); ++i)
+	{
+		if (NULL == (Expressions[i] = Expressions[i]->Resolve(ctx)))
+		{
+			delete this;
+			return nullptr;
+		}
+	}
+	return this;
+}
+
+//==========================================================================
+//
+// FxSequence :: Emit
+//
+//==========================================================================
+
+ExpEmit FxSequence::Emit(VMFunctionBuilder *build)
+{
+	for (unsigned i = 0; i < Expressions.Size(); ++i)
+	{
+		ExpEmit v = Expressions[i]->Emit(build);
+		// Throw away any result. We don't care about it.
+		v.Free(build);
+	}
+	return ExpEmit();
+}
+
+//==========================================================================
+//
+// FxSequence :: GetDirectFunction
+//
+//==========================================================================
+
+VMFunction *FxSequence::GetDirectFunction()
+{
+	if (Expressions.Size() == 1)
+	{
+		return Expressions[0]->GetDirectFunction();
+	}
+	return NULL;
+}
+
+//==========================================================================
+//
 // FxCompoundStatement :: Resolve
 //
 //==========================================================================
@@ -5023,18 +5075,11 @@ ExpEmit FxFlopFunctionCall::Emit(VMFunctionBuilder *build)
 FxExpression *FxCompoundStatement::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
+	auto outer = ctx.Block;
 	Outer = ctx.Block;
 	ctx.Block = this;
-	for (unsigned i = 0; i < Expressions.Size(); ++i)
-	{
-		if (NULL == (Expressions[i] = Expressions[i]->Resolve(ctx)))
-		{
-			ctx.Block = Outer;
-			delete this;
-			return nullptr;
-		}
-	}
-	ctx.Block = Outer;
+	auto x = FxSequence::Resolve(ctx);
+	ctx.Block = outer;
 	return this;
 }
 
@@ -5046,33 +5091,13 @@ FxExpression *FxCompoundStatement::Resolve(FCompileContext &ctx)
 
 ExpEmit FxCompoundStatement::Emit(VMFunctionBuilder *build)
 {
-	for (unsigned i = 0; i < Expressions.Size(); ++i)
-	{
-		ExpEmit v = Expressions[i]->Emit(build);
-		// Throw away any result. We don't care about it.
-		v.Free(build);
-	}
+	auto e = FxSequence::Emit(build);
 	// Release all local variables in this block.
 	for (auto l : LocalVars)
 	{
 		l->Release(build);
 	}
-	return ExpEmit();
-}
-
-//==========================================================================
-//
-// FxCompoundStatement :: GetDirectFunction
-//
-//==========================================================================
-
-VMFunction *FxCompoundStatement::GetDirectFunction()
-{
-	if (Expressions.Size() == 1)
-	{
-		return Expressions[0]->GetDirectFunction();
-	}
-	return NULL;
+	return e;
 }
 
 //==========================================================================

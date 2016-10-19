@@ -1087,25 +1087,41 @@ public:
 
 //==========================================================================
 //
-// FxCompoundStatement
+// FxSequence (a list of statements with no semantics attached - used to return multiple nodes as one)
 //
 //==========================================================================
 class FxLocalVariableDeclaration;
 
-class FxCompoundStatement : public FxExpression
+class FxSequence : public FxExpression
+{
+	TDeletingArray<FxExpression *> Expressions;
+
+public:
+	FxSequence(const FScriptPosition &pos) : FxExpression(pos) {}
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+	void Add(FxExpression *expr) { if (expr != NULL) Expressions.Push(expr); }
+	VMFunction *GetDirectFunction();
+};
+
+//==========================================================================
+//
+// FxCompoundStatement (like a list but implements maintenance of local variables)
+//
+//==========================================================================
+class FxLocalVariableDeclaration;
+
+class FxCompoundStatement : public FxSequence
 {
 	TArray<FxLocalVariableDeclaration *> LocalVars;
-	TDeletingArray<FxExpression *> Expressions;
 	FxCompoundStatement *Outer = nullptr;
 
 	friend class FxLocalVariableDeclaration;
 
 public:
-	FxCompoundStatement(const FScriptPosition &pos) : FxExpression(pos) {}
+	FxCompoundStatement(const FScriptPosition &pos) : FxSequence(pos) {}
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
-	void Add(FxExpression *expr) { if (expr != NULL) Expressions.Push(expr); }
-	VMFunction *GetDirectFunction();
 	FxLocalVariableDeclaration *FindLocalVariable(FName name);
 	bool CheckLocalVariable(FName name);
 };

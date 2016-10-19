@@ -387,6 +387,19 @@ void R_DrawSingleSkyCol4(uint32_t solid_top, uint32_t solid_bottom);
 void R_DrawDoubleSkyCol1(uint32_t solid_top, uint32_t solid_bottom);
 void R_DrawDoubleSkyCol4(uint32_t solid_top, uint32_t solid_bottom);
 
+struct TriVertex
+{
+	TriVertex() { }
+	TriVertex(float x, float y, float z, float w, float u, float v, float light) : x(x), y(y), z(z), w(w) { varying[0] = u; varying[1] = v; varying[2] = light; }
+
+	enum { NumVarying = 3 };
+	float x, y, z, w;
+	float varying[NumVarying];
+};
+
+class VSMatrix;
+void R_DrawTriangles(const VSMatrix &objectToWorld, const TriVertex *vertices, int count, int clipleft, int clipright, const short *cliptop, const short *clipbottom);
+
 extern bool r_swtruecolor;
 
 EXTERN_CVAR(Bool, r_multithreaded);

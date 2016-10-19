@@ -36,6 +36,9 @@ public:
 	uint32_t dc_temp_rgbabuff_rgba[MAXHEIGHT * 4];
 	uint32_t *dc_temp_rgba;
 
+	short triangle_clip_top[MAXWIDTH];
+	short triangle_clip_bottom[MAXWIDTH];
+
 	// Checks if a line is rendered by this thread
 	bool line_skipped_by_thread(int line)
 	{

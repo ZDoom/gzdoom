@@ -47,13 +47,10 @@
 
 EXTERN_CVAR(Bool, r_shadercolormaps)
 
-CVAR(Bool, r_drawtriangle, false, 0)
-
 void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio);
 void R_SetupColormap(player_t *);
 void R_SetupFreelook();
 void R_InitRenderer();
-void R_DrawTriangle();
 
 FSoftwareRenderer::FSoftwareRenderer()
 {
@@ -195,8 +192,6 @@ void FSoftwareRenderer::RenderView(player_t *player)
 	}
 
 	R_EndDrawerCommands();
-	if (r_swtruecolor && r_drawtriangle)
-		R_DrawTriangle();
 }
 
 //==========================================================================

@@ -1257,458 +1257,437 @@ void ApplySpecialColormapRGBACommand::Execute(DrawerThread *thread)
 
 /////////////////////////////////////////////////////////////////////////////
 
-struct TriVertex
+class DrawTrianglesCommand : public DrawerCommand
 {
-	TriVertex() { }
-	TriVertex(float x, float y, float z, float w, float u, float v, float light) : x(x), y(y), z(z), w(w) { varying[0] = u; varying[1] = v; varying[2] = light; }
-
-	enum { NumVarying = 3 };
-	float x, y, z, w;
-	float varying[NumVarying];
-};
-
-float gradx(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2)
-{
-	float top = (c1 - c2) * (y0 - y2) - (c0 - c2) * (y1 - y2);
-	float bottom = (x1 - x2) * (y0 - y2) - (x0 - x2) * (y1 - y2);
-	return top / bottom;
-}
-
-float grady(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2)
-{
-	float top = (c1 - c2) * (x0 - x2) - (c0 - c2) * (x1 - x2);
-	float bottom = -((x1 - x2) * (y0 - y2) - (x0 - x2) * (y1 - y2));
-	return top / bottom;
-}
-
-void triangle(uint32_t *dest, int pitch, const TriVertex &v1, const TriVertex &v2, const TriVertex &v3, int clipleft, int clipright, const short *cliptop, const short *clipbottom)
-{
-	// 28.4 fixed-point coordinates
-	const int Y1 = (int)round(16.0f * v1.y);
-	const int Y2 = (int)round(16.0f * v2.y);
-	const int Y3 = (int)round(16.0f * v3.y);
-
-	const int X1 = (int)round(16.0f * v1.x);
-	const int X2 = (int)round(16.0f * v2.x);
-	const int X3 = (int)round(16.0f * v3.x);
-
-	// Deltas
-	const int DX12 = X1 - X2;
-	const int DX23 = X2 - X3;
-	const int DX31 = X3 - X1;
-
-	const int DY12 = Y1 - Y2;
-	const int DY23 = Y2 - Y3;
-	const int DY31 = Y3 - Y1;
-
-	// Fixed-point deltas
-	const int FDX12 = DX12 << 4;
-	const int FDX23 = DX23 << 4;
-	const int FDX31 = DX31 << 4;
-
-	const int FDY12 = DY12 << 4;
-	const int FDY23 = DY23 << 4;
-	const int FDY31 = DY31 << 4;
-
-	// Bounding rectangle
-	int clipymin = cliptop[clipleft];
-	int clipymax = clipbottom[clipleft];
-	for (int i = clipleft + 1; i <= clipright; i++)
+public:
+	DrawTrianglesCommand(const VSMatrix &objectToWorld, const TriVertex *vertices, int count, int clipleft, int clipright, const short *clipdata)
+		: objectToWorld(objectToWorld), vertices(vertices), count(count), clipleft(clipleft), clipright(clipright), clipdata(clipdata)
 	{
-		clipymin = MIN(clipymin, (int)cliptop[i]);
-		clipymax = MAX(clipymax, (int)clipbottom[i]);
-	}
-	int minx = MAX((MIN(MIN(X1, X2), X3) + 0xF) >> 4, clipleft);
-	int maxx = MIN((MAX(MAX(X1, X2), X3) + 0xF) >> 4, clipright);
-	int miny = MAX((MIN(MIN(Y1, Y2), Y3) + 0xF) >> 4, clipymin);
-	int maxy = MIN((MAX(MAX(Y1, Y2), Y3) + 0xF) >> 4, clipymax);
-	if (minx >= maxx || miny >= maxy)
-		return;
-
-	// Block size, standard 8x8 (must be power of two)
-	const int q = 8;
-
-	// Start in corner of 8x8 block
-	minx &= ~(q - 1);
-	miny &= ~(q - 1);
-
-	dest += miny * pitch;
-
-	// Half-edge constants
-	int C1 = DY12 * X1 - DX12 * Y1;
-	int C2 = DY23 * X2 - DX23 * Y2;
-	int C3 = DY31 * X3 - DX31 * Y3;
-
-	// Correct for fill convention
-	if (DY12 < 0 || (DY12 == 0 && DX12 > 0)) C1++;
-	if (DY23 < 0 || (DY23 == 0 && DX23 > 0)) C2++;
-	if (DY31 < 0 || (DY31 == 0 && DX31 > 0)) C3++;
-
-	// Gradients
-	float gradWX = gradx(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
-	float gradWY = grady(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
-	float startW = v1.w + gradWX * (minx - v1.x) + gradWY * (miny - v1.y);
-	float gradVaryingX[TriVertex::NumVarying], gradVaryingY[TriVertex::NumVarying], startVarying[TriVertex::NumVarying];
-	for (int i = 0; i < TriVertex::NumVarying; i++)
-	{
-		gradVaryingX[i] = gradx(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.varying[i] * v1.w, v2.varying[i] * v2.w, v3.varying[i] * v3.w);
-		gradVaryingY[i] = grady(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.varying[i] * v1.w, v2.varying[i] * v2.w, v3.varying[i] * v3.w);
-		startVarying[i] = v1.varying[i] * v1.w + gradVaryingX[i] * (minx - v1.x) + gradVaryingY[i] * (miny - v1.y);
 	}
 
-	// Loop through blocks
-	for (int y = miny; y < maxy; y += q)
+	void Execute(DrawerThread *thread) override
 	{
-		for (int x = minx; x < maxx; x += q)
+		int cliplength = clipright - clipleft + 1;
+		for (int i = 0; i < cliplength; i++)
 		{
-			// Corners of block
-			int x0 = x << 4;
-			int x1 = (x + q - 1) << 4;
-			int y0 = y << 4;
-			int y1 = (y + q - 1) << 4;
+			thread->triangle_clip_top[clipleft + i] = clipdata[i];
+			thread->triangle_clip_bottom[clipleft + i] = clipdata[cliplength + i];
+		}
 
-			// Evaluate half-space functions
-			bool a00 = C1 + DX12 * y0 - DY12 * x0 > 0;
-			bool a10 = C1 + DX12 * y0 - DY12 * x1 > 0;
-			bool a01 = C1 + DX12 * y1 - DY12 * x0 > 0;
-			bool a11 = C1 + DX12 * y1 - DY12 * x1 > 0;
-			int a = (a00 << 0) | (a10 << 1) | (a01 << 2) | (a11 << 3);
+		draw_triangles(objectToWorld, vertices, count, clipleft, clipright, thread->triangle_clip_top, thread->triangle_clip_bottom, thread);
+	}
 
-			bool b00 = C2 + DX23 * y0 - DY23 * x0 > 0;
-			bool b10 = C2 + DX23 * y0 - DY23 * x1 > 0;
-			bool b01 = C2 + DX23 * y1 - DY23 * x0 > 0;
-			bool b11 = C2 + DX23 * y1 - DY23 * x1 > 0;
-			int b = (b00 << 0) | (b10 << 1) | (b01 << 2) | (b11 << 3);
+	FString DebugInfo() override
+	{
+		return "DrawTrianglesCommand";
+	}
 
-			bool c00 = C3 + DX31 * y0 - DY31 * x0 > 0;
-			bool c10 = C3 + DX31 * y0 - DY31 * x1 > 0;
-			bool c01 = C3 + DX31 * y1 - DY31 * x0 > 0;
-			bool c11 = C3 + DX31 * y1 - DY31 * x1 > 0;
-			int c = (c00 << 0) | (c10 << 1) | (c01 << 2) | (c11 << 3);
+private:
+	float gradx(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2)
+	{
+		float top = (c1 - c2) * (y0 - y2) - (c0 - c2) * (y1 - y2);
+		float bottom = (x1 - x2) * (y0 - y2) - (x0 - x2) * (y1 - y2);
+		return top / bottom;
+	}
 
-			// Skip block when outside an edge
-			if (a == 0x0 || b == 0x0 || c == 0x0) continue;
+	float grady(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2)
+	{
+		float top = (c1 - c2) * (x0 - x2) - (c0 - c2) * (x1 - x2);
+		float bottom = -((x1 - x2) * (y0 - y2) - (x0 - x2) * (y1 - y2));
+		return top / bottom;
+	}
 
-			// Check if block needs clipping
-			int clipcount = 0;
-			for (int ix = 0; ix < q; ix++)
+	void triangle(uint32_t *dest, int pitch, const TriVertex &v1, const TriVertex &v2, const TriVertex &v3, int clipleft, int clipright, const short *cliptop, const short *clipbottom, DrawerThread *thread)
+	{
+		// 28.4 fixed-point coordinates
+		const int Y1 = (int)round(16.0f * v1.y);
+		const int Y2 = (int)round(16.0f * v2.y);
+		const int Y3 = (int)round(16.0f * v3.y);
+
+		const int X1 = (int)round(16.0f * v1.x);
+		const int X2 = (int)round(16.0f * v2.x);
+		const int X3 = (int)round(16.0f * v3.x);
+
+		// Deltas
+		const int DX12 = X1 - X2;
+		const int DX23 = X2 - X3;
+		const int DX31 = X3 - X1;
+
+		const int DY12 = Y1 - Y2;
+		const int DY23 = Y2 - Y3;
+		const int DY31 = Y3 - Y1;
+
+		// Fixed-point deltas
+		const int FDX12 = DX12 << 4;
+		const int FDX23 = DX23 << 4;
+		const int FDX31 = DX31 << 4;
+
+		const int FDY12 = DY12 << 4;
+		const int FDY23 = DY23 << 4;
+		const int FDY31 = DY31 << 4;
+
+		// Bounding rectangle
+		int clipymin = cliptop[clipleft];
+		int clipymax = clipbottom[clipleft];
+		for (int i = clipleft + 1; i <= clipright; i++)
+		{
+			clipymin = MIN(clipymin, (int)cliptop[i]);
+			clipymax = MAX(clipymax, (int)clipbottom[i]);
+		}
+		int minx = MAX((MIN(MIN(X1, X2), X3) + 0xF) >> 4, clipleft);
+		int maxx = MIN((MAX(MAX(X1, X2), X3) + 0xF) >> 4, clipright);
+		int miny = MAX((MIN(MIN(Y1, Y2), Y3) + 0xF) >> 4, clipymin);
+		int maxy = MIN((MAX(MAX(Y1, Y2), Y3) + 0xF) >> 4, clipymax);
+		if (minx >= maxx || miny >= maxy)
+			return;
+
+		// Block size, standard 8x8 (must be power of two)
+		const int q = 8;
+
+		// Start in corner of 8x8 block
+		minx &= ~(q - 1);
+		miny &= ~(q - 1);
+
+		dest += miny * pitch;
+
+		// Half-edge constants
+		int C1 = DY12 * X1 - DX12 * Y1;
+		int C2 = DY23 * X2 - DX23 * Y2;
+		int C3 = DY31 * X3 - DX31 * Y3;
+
+		// Correct for fill convention
+		if (DY12 < 0 || (DY12 == 0 && DX12 > 0)) C1++;
+		if (DY23 < 0 || (DY23 == 0 && DX23 > 0)) C2++;
+		if (DY31 < 0 || (DY31 == 0 && DX31 > 0)) C3++;
+
+		// Gradients
+		float gradWX = gradx(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
+		float gradWY = grady(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
+		float startW = v1.w + gradWX * (minx - v1.x) + gradWY * (miny - v1.y);
+		float gradVaryingX[TriVertex::NumVarying], gradVaryingY[TriVertex::NumVarying], startVarying[TriVertex::NumVarying];
+		for (int i = 0; i < TriVertex::NumVarying; i++)
+		{
+			gradVaryingX[i] = gradx(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.varying[i] * v1.w, v2.varying[i] * v2.w, v3.varying[i] * v3.w);
+			gradVaryingY[i] = grady(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.varying[i] * v1.w, v2.varying[i] * v2.w, v3.varying[i] * v3.w);
+			startVarying[i] = v1.varying[i] * v1.w + gradVaryingX[i] * (minx - v1.x) + gradVaryingY[i] * (miny - v1.y);
+		}
+
+		// Loop through blocks
+		for (int y = miny; y < maxy; y += q)
+		{
+			for (int x = minx; x < maxx; x += q)
 			{
-				clipcount += (cliptop[x + ix] > y) || (clipbottom[x + ix] < y + q - 1);
-			}
+				// Corners of block
+				int x0 = x << 4;
+				int x1 = (x + q - 1) << 4;
+				int y0 = y << 4;
+				int y1 = (y + q - 1) << 4;
 
-			// Calculate varying variables for affine block
-			float offx0 = (x - minx) + 0.5f;
-			float offy0 = (y - miny) + 0.5f;
-			float offx1 = offx0 + q;
-			float offy1 = offy0 + q;
-			float rcpWTL = 1.0f / (startW + offx0 * gradWX + offy0 * gradWY);
-			float rcpWTR = 1.0f / (startW + offx1 * gradWX + offy0 * gradWY);
-			float rcpWBL = 1.0f / (startW + offx0 * gradWX + offy1 * gradWY);
-			float rcpWBR = 1.0f / (startW + offx1 * gradWX + offy1 * gradWY);
-			float varyingTL[TriVertex::NumVarying];
-			float varyingTR[TriVertex::NumVarying];
-			float varyingBL[TriVertex::NumVarying];
-			float varyingBR[TriVertex::NumVarying];
-			for (int i = 0; i < TriVertex::NumVarying; i++)
-			{
-				varyingTL[i] = (startVarying[i] + offx0 * gradVaryingX[i] + offy0 * gradVaryingY[i]) * rcpWTL;
-				varyingTR[i] = (startVarying[i] + offx1 * gradVaryingX[i] + offy0 * gradVaryingY[i]) * rcpWTR;
-				varyingBL[i] = ((startVarying[i] + offx0 * gradVaryingX[i] + offy1 * gradVaryingY[i]) * rcpWBL - varyingTL[i]) * (1.0f / q);
-				varyingBR[i] = ((startVarying[i] + offx1 * gradVaryingX[i] + offy1 * gradVaryingY[i]) * rcpWBR - varyingTR[i]) * (1.0f / q);
-			}
+				// Evaluate half-space functions
+				bool a00 = C1 + DX12 * y0 - DY12 * x0 > 0;
+				bool a10 = C1 + DX12 * y0 - DY12 * x1 > 0;
+				bool a01 = C1 + DX12 * y1 - DY12 * x0 > 0;
+				bool a11 = C1 + DX12 * y1 - DY12 * x1 > 0;
+				int a = (a00 << 0) | (a10 << 1) | (a01 << 2) | (a11 << 3);
 
-			uint32_t *buffer = dest;
+				bool b00 = C2 + DX23 * y0 - DY23 * x0 > 0;
+				bool b10 = C2 + DX23 * y0 - DY23 * x1 > 0;
+				bool b01 = C2 + DX23 * y1 - DY23 * x0 > 0;
+				bool b11 = C2 + DX23 * y1 - DY23 * x1 > 0;
+				int b = (b00 << 0) | (b10 << 1) | (b01 << 2) | (b11 << 3);
 
-			// Accept whole block when totally covered
-			if (a == 0xF && b == 0xF && c == 0xF && clipcount == 0)
-			{
-				for (int iy = 0; iy < q; iy++)
+				bool c00 = C3 + DX31 * y0 - DY31 * x0 > 0;
+				bool c10 = C3 + DX31 * y0 - DY31 * x1 > 0;
+				bool c01 = C3 + DX31 * y1 - DY31 * x0 > 0;
+				bool c11 = C3 + DX31 * y1 - DY31 * x1 > 0;
+				int c = (c00 << 0) | (c10 << 1) | (c01 << 2) | (c11 << 3);
+
+				// Skip block when outside an edge
+				if (a == 0x0 || b == 0x0 || c == 0x0) continue;
+
+				// Check if block needs clipping
+				int clipcount = 0;
+				for (int ix = 0; ix < q; ix++)
 				{
-					float varying[TriVertex::NumVarying], varyingStep[TriVertex::NumVarying];
-					for (int i = 0; i < TriVertex::NumVarying; i++)
-					{
-						varying[i] = varyingTL[i] + varyingBL[i] * iy;
-						varyingStep[i] = (varyingTR[i] + varyingBR[i] * iy - varying[i]) * (1.0f / q);
-					}
-
-					for (int ix = x; ix < x + q; ix++)
-					{
-						uint32_t red = (uint32_t)clamp(varying[0] * 255.0f + 0.5f, 0.0f, 255.0f);
-						uint32_t green = (uint32_t)clamp(varying[1] * 255.0f + 0.5f, 0.0f, 255.0f);
-						uint32_t blue = (uint32_t)clamp(varying[2] * 255.0f + 0.5f, 0.0f, 255.0f);
-
-						buffer[ix] = 0xff000000 | (red << 16) | (green << 8) | blue;
-
-						for (int i = 0; i < TriVertex::NumVarying; i++)
-							varying[i] += varyingStep[i];
-					}
-
-					buffer += pitch;
+					clipcount += (cliptop[x + ix] > y) || (clipbottom[x + ix] < y + q - 1);
 				}
-			}
-			else // Partially covered block
-			{
-				int CY1 = C1 + DX12 * y0 - DY12 * x0;
-				int CY2 = C2 + DX23 * y0 - DY23 * x0;
-				int CY3 = C3 + DX31 * y0 - DY31 * x0;
 
-				for (int iy = 0; iy < q; iy++)
+				// Calculate varying variables for affine block
+				float offx0 = (x - minx) + 0.5f;
+				float offy0 = (y - miny) + 0.5f;
+				float offx1 = offx0 + q;
+				float offy1 = offy0 + q;
+				float rcpWTL = 1.0f / (startW + offx0 * gradWX + offy0 * gradWY);
+				float rcpWTR = 1.0f / (startW + offx1 * gradWX + offy0 * gradWY);
+				float rcpWBL = 1.0f / (startW + offx0 * gradWX + offy1 * gradWY);
+				float rcpWBR = 1.0f / (startW + offx1 * gradWX + offy1 * gradWY);
+				float varyingTL[TriVertex::NumVarying];
+				float varyingTR[TriVertex::NumVarying];
+				float varyingBL[TriVertex::NumVarying];
+				float varyingBR[TriVertex::NumVarying];
+				for (int i = 0; i < TriVertex::NumVarying; i++)
 				{
-					int CX1 = CY1;
-					int CX2 = CY2;
-					int CX3 = CY3;
+					varyingTL[i] = (startVarying[i] + offx0 * gradVaryingX[i] + offy0 * gradVaryingY[i]) * rcpWTL;
+					varyingTR[i] = (startVarying[i] + offx1 * gradVaryingX[i] + offy0 * gradVaryingY[i]) * rcpWTR;
+					varyingBL[i] = ((startVarying[i] + offx0 * gradVaryingX[i] + offy1 * gradVaryingY[i]) * rcpWBL - varyingTL[i]) * (1.0f / q);
+					varyingBR[i] = ((startVarying[i] + offx1 * gradVaryingX[i] + offy1 * gradVaryingY[i]) * rcpWBR - varyingTR[i]) * (1.0f / q);
+				}
 
-					float varying[TriVertex::NumVarying], varyingStep[TriVertex::NumVarying];
-					for (int i = 0; i < TriVertex::NumVarying; i++)
+				uint32_t *buffer = dest;
+
+				// Accept whole block when totally covered
+				if (a == 0xF && b == 0xF && c == 0xF && clipcount == 0)
+				{
+					for (int iy = 0; iy < q; iy++)
 					{
-						varying[i] = varyingTL[i] + varyingBL[i] * iy;
-						varyingStep[i] = (varyingTR[i] + varyingBR[i] * iy - varying[i]) * (1.0f / q);
-					}
-
-					for (int ix = x; ix < x + q; ix++)
-					{
-						bool visible = (cliptop[ix] <= y + iy) && (clipbottom[ix] >= y + iy);
-
-						if (CX1 > 0 && CX2 > 0 && CX3 > 0 && visible)
+						float varying[TriVertex::NumVarying], varyingStep[TriVertex::NumVarying];
+						for (int i = 0; i < TriVertex::NumVarying; i++)
 						{
-							uint32_t red = (uint32_t)clamp(varying[0] * 255.0f + 0.5f, 0.0f, 255.0f);
-							uint32_t green = (uint32_t)clamp(varying[1] * 255.0f + 0.5f, 0.0f, 255.0f);
-							uint32_t blue = (uint32_t)clamp(varying[2] * 255.0f + 0.5f, 0.0f, 255.0f);
-
-							buffer[ix] = 0xff000000 | (red << 16) | (green << 8) | blue;
+							varying[i] = varyingTL[i] + varyingBL[i] * iy;
+							varyingStep[i] = (varyingTR[i] + varyingBR[i] * iy - varying[i]) * (1.0f / q);
 						}
 
-						for (int i = 0; i < TriVertex::NumVarying; i++)
-							varying[i] += varyingStep[i];
+						if (!thread->skipped_by_thread(y + iy))
+						{
+							for (int ix = x; ix < x + q; ix++)
+							{
+								uint32_t red = (uint32_t)clamp(varying[0] * 255.0f + 0.5f, 0.0f, 255.0f);
+								uint32_t green = (uint32_t)clamp(varying[1] * 255.0f + 0.5f, 0.0f, 255.0f);
+								uint32_t blue = (uint32_t)clamp(varying[2] * 255.0f + 0.5f, 0.0f, 255.0f);
 
-						CX1 -= FDY12;
-						CX2 -= FDY23;
-						CX3 -= FDY31;
+								buffer[ix] = 0xff000000 | (red << 16) | (green << 8) | blue;
+
+								for (int i = 0; i < TriVertex::NumVarying; i++)
+									varying[i] += varyingStep[i];
+							}
+						}
+
+						buffer += pitch;
 					}
+				}
+				else // Partially covered block
+				{
+					int CY1 = C1 + DX12 * y0 - DY12 * x0;
+					int CY2 = C2 + DX23 * y0 - DY23 * x0;
+					int CY3 = C3 + DX31 * y0 - DY31 * x0;
 
-					CY1 += FDX12;
-					CY2 += FDX23;
-					CY3 += FDX31;
+					for (int iy = 0; iy < q; iy++)
+					{
+						int CX1 = CY1;
+						int CX2 = CY2;
+						int CX3 = CY3;
 
-					buffer += pitch;
+						float varying[TriVertex::NumVarying], varyingStep[TriVertex::NumVarying];
+						for (int i = 0; i < TriVertex::NumVarying; i++)
+						{
+							varying[i] = varyingTL[i] + varyingBL[i] * iy;
+							varyingStep[i] = (varyingTR[i] + varyingBR[i] * iy - varying[i]) * (1.0f / q);
+						}
+
+						if (!thread->skipped_by_thread(y + iy))
+						{
+							for (int ix = x; ix < x + q; ix++)
+							{
+								bool visible = (cliptop[ix] <= y + iy) && (clipbottom[ix] >= y + iy);
+
+								if (CX1 > 0 && CX2 > 0 && CX3 > 0 && visible)
+								{
+									uint32_t red = (uint32_t)clamp(varying[0] * 255.0f + 0.5f, 0.0f, 255.0f);
+									uint32_t green = (uint32_t)clamp(varying[1] * 255.0f + 0.5f, 0.0f, 255.0f);
+									uint32_t blue = (uint32_t)clamp(varying[2] * 255.0f + 0.5f, 0.0f, 255.0f);
+
+									buffer[ix] = 0xff000000 | (red << 16) | (green << 8) | blue;
+								}
+
+								for (int i = 0; i < TriVertex::NumVarying; i++)
+									varying[i] += varyingStep[i];
+
+								CX1 -= FDY12;
+								CX2 -= FDY23;
+								CX3 -= FDY31;
+							}
+						}
+
+						CY1 += FDX12;
+						CY2 += FDX23;
+						CY3 += FDX31;
+
+						buffer += pitch;
+					}
+				}
+			}
+
+			dest += q * pitch;
+		}
+	}
+
+	bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2)
+	{
+		if (clipdistance1 < 0.0f && clipdistance2 < 0.0f)
+			return true;
+
+		if (clipdistance1 < 0.0f)
+			t1 = MAX(-clipdistance1 / (clipdistance2 - clipdistance1), t1);
+
+		if (clipdistance2 < 0.0f)
+			t2 = MIN(1.0f + clipdistance2 / (clipdistance1 - clipdistance2), t2);
+
+		return false;
+	}
+
+	void clipedge(const TriVertex &v1, const TriVertex &v2, TriVertex *clippedvert, int &numclipvert)
+	{
+		// Clip and cull so that the following is true for all vertices:
+		// -v.w <= v.x <= v.w
+		// -v.w <= v.y <= v.w
+		// -v.w <= v.z <= v.w
+
+		float t1 = 0.0f, t2 = 1.0f;
+		bool culled =
+			cullhalfspace(v1.x + v1.w, v2.x + v2.w, t1, t2) ||
+			cullhalfspace(v1.w - v1.x, v2.w - v2.x, t1, t2) ||
+			cullhalfspace(v1.y + v1.w, v2.y + v2.w, t1, t2) ||
+			cullhalfspace(v1.w - v1.y, v2.w - v2.y, t1, t2) ||
+			cullhalfspace(v1.z + v1.w, v2.z + v2.w, t1, t2) ||
+			cullhalfspace(v1.w - v1.z, v2.w - v2.z, t1, t2);
+		if (culled)
+			return;
+
+		if (t1 == 0.0f)
+		{
+			clippedvert[numclipvert++] = v1;
+		}
+		else
+		{
+			auto &v = clippedvert[numclipvert++];
+			v.x = v1.x * (1.0f - t1) + v2.x * t1;
+			v.y = v1.y * (1.0f - t1) + v2.y * t1;
+			v.z = v1.z * (1.0f - t1) + v2.z * t1;
+			v.w = v1.w * (1.0f - t1) + v2.w * t1;
+			for (int i = 0; i < TriVertex::NumVarying; i++)
+				v.varying[i] = v1.varying[i] * (1.0f - t1) + v2.varying[i] * t1;
+		}
+
+		if (t2 != 1.0f)
+		{
+			auto &v = clippedvert[numclipvert++];
+			v.x = v1.x * (1.0f - t2) + v2.x * t2;
+			v.y = v1.y * (1.0f - t2) + v2.y * t2;
+			v.z = v1.z * (1.0f - t2) + v2.z * t2;
+			v.w = v1.w * (1.0f - t2) + v2.w * t2;
+			for (int i = 0; i < TriVertex::NumVarying; i++)
+				v.varying[i] = v1.varying[i] * (1.0f - t2) + v2.varying[i] * t2;
+		}
+	}
+
+	void draw_triangles(const VSMatrix &objectToWorld, const TriVertex *vinput, int vcount, int clipleft, int clipright, const short *cliptop, const short *clipbottom, DrawerThread *thread)
+	{
+		for (int i = 0; i < vcount / 3; i++)
+		{
+			TriVertex vert[3];
+
+			// Vertex shader stuff:
+			for (int j = 0; j < 3; j++)
+			{
+				auto &v = vert[j];
+				v = *(vinput++);
+
+				// Apply object to world transform:
+				const float *matrix = objectToWorld.get();
+				float vx = matrix[0 * 4 + 0] * v.x + matrix[1 * 4 + 0] * v.y + matrix[2 * 4 + 0] * v.z + matrix[3 * 4 + 0] * v.w;
+				float vy = matrix[0 * 4 + 1] * v.x + matrix[1 * 4 + 1] * v.y + matrix[2 * 4 + 1] * v.z + matrix[3 * 4 + 1] * v.w;
+				float vz = matrix[0 * 4 + 2] * v.x + matrix[1 * 4 + 2] * v.y + matrix[2 * 4 + 2] * v.z + matrix[3 * 4 + 2] * v.w;
+				float vw = matrix[0 * 4 + 3] * v.x + matrix[1 * 4 + 3] * v.y + matrix[2 * 4 + 3] * v.z + matrix[3 * 4 + 3] * v.w;
+				v.x = vx;
+				v.y = vy;
+				v.z = vz;
+				v.w = vw;
+
+				// The software renderer world to clip transform:
+				double nearp = 5.0f;
+				double farp = 65536.f;
+				double tr_x = v.x - ViewPos.X;
+				double tr_y = v.y - ViewPos.Y;
+				double tr_z = v.z - ViewPos.Z;
+				double tx = tr_x * ViewSin - tr_y * ViewCos;
+				double tz = tr_x * ViewTanCos + tr_y * ViewTanSin;
+				v.x = (float)tx;
+				v.y = (float)tr_z;
+				v.z = (float)(-tz * (farp + nearp) / (nearp - farp) + (2.0f * farp * nearp) / (nearp - farp));
+				v.w = (float)tz;
+			}
+
+			// Cull, clip and generate additional vertices as needed
+			TriVertex clippedvert[6];
+			int numclipvert = 0;
+			clipedge(vert[0], vert[1], clippedvert, numclipvert);
+			clipedge(vert[1], vert[2], clippedvert, numclipvert);
+			clipedge(vert[2], vert[0], clippedvert, numclipvert);
+
+			// Map to 2D viewport:
+			for (int j = 0; j < numclipvert; j++)
+			{
+				auto &v = clippedvert[j];
+
+				// Calculate normalized device coordinates:
+				v.w = 1.0f / v.w;
+				v.x *= v.w;
+				v.y *= v.w;
+				v.z *= v.w;
+
+				// Apply viewport scale to get screen coordinates:
+				v.x = (float)(CenterX + v.x * CenterX);
+				v.y = (float)(CenterY - v.y * InvZtoScale);
+			}
+
+			// Draw screen triangles
+			bool ccw = false;
+			if (ccw)
+			{
+				for (int i = numclipvert; i > 1; i--)
+				{
+					triangle((uint32_t*)dc_destorg, dc_pitch, clippedvert[numclipvert - 1], clippedvert[i - 1], clippedvert[i - 2], clipleft, clipright, cliptop, clipbottom, thread);
+				}
+			}
+			else
+			{
+				for (int i = 2; i < numclipvert; i++)
+				{
+					triangle((uint32_t*)dc_destorg, dc_pitch, clippedvert[0], clippedvert[i - 1], clippedvert[i], clipleft, clipright, cliptop, clipbottom, thread);
 				}
 			}
 		}
-
-		dest += q * pitch;
 	}
-}
 
-bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2)
+	VSMatrix objectToWorld;
+	const TriVertex *vertices;
+	int count;
+	int clipleft;
+	int clipright;
+	const short *clipdata;
+};
+
+void R_DrawTriangles(const VSMatrix &objectToWorld, const TriVertex *vertices, int count, int clipleft, int clipright, const short *cliptop, const short *clipbottom)
 {
-	if (clipdistance1 < 0.0f && clipdistance2 < 0.0f)
-		return true;
-
-	if (clipdistance1 < 0.0f)
-		t1 = MAX(-clipdistance1 / (clipdistance2 - clipdistance1), t1);
-
-	if (clipdistance2 < 0.0f)
-		t2 = MIN(1.0f + clipdistance2 / (clipdistance1 - clipdistance2), t2);
-
-	return false;
-}
-
-void clipedge(const TriVertex &v1, const TriVertex &v2, TriVertex *clippedvert, int &numclipvert)
-{
-	// Clip and cull so that the following is true for all vertices:
-	// -v.w <= v.x <= v.w
-	// -v.w <= v.y <= v.w
-	// -v.w <= v.z <= v.w
-
-	float t1 = 0.0f, t2 = 1.0f;
-	bool culled =
-		cullhalfspace(v1.x + v1.w, v2.x + v2.w, t1, t2) ||
-		cullhalfspace(v1.w - v1.x, v2.w - v2.x, t1, t2) ||
-		cullhalfspace(v1.y + v1.w, v2.y + v2.w, t1, t2) ||
-		cullhalfspace(v1.w - v1.y, v2.w - v2.y, t1, t2) ||
-		cullhalfspace(v1.z + v1.w, v2.z + v2.w, t1, t2) ||
-		cullhalfspace(v1.w - v1.z, v2.w - v2.z, t1, t2);
-	if (culled)
+	if (clipright < clipleft || clipleft < 0 || clipright > MAXWIDTH)
 		return;
 
-	if (t1 == 0.0f)
+	int cliplength = clipright - clipleft + 1;
+	short *clipdata = (short*)DrawerCommandQueue::AllocMemory(cliplength * 2 * sizeof(short));
+	if (!clipdata)
 	{
-		clippedvert[numclipvert++] = v1;
-	}
-	else
-	{
-		auto &v = clippedvert[numclipvert++];
-		v.x = v1.x * (1.0f - t1) + v2.x * t1;
-		v.y = v1.y * (1.0f - t1) + v2.y * t1;
-		v.z = v1.z * (1.0f - t1) + v2.z * t1;
-		v.w = v1.w * (1.0f - t1) + v2.w * t1;
-		for (int i = 0; i < TriVertex::NumVarying; i++)
-			v.varying[i] = v1.varying[i] * (1.0f - t1) + v2.varying[i] * t1;
+		DrawerCommandQueue::WaitForWorkers();
+		clipdata = (short*)DrawerCommandQueue::AllocMemory(cliplength * 2 * sizeof(short));
+		if (!clipdata)
+			return;
 	}
 
-	if (t2 != 1.0f)
-	{
-		auto &v = clippedvert[numclipvert++];
-		v.x = v1.x * (1.0f - t2) + v2.x * t2;
-		v.y = v1.y * (1.0f - t2) + v2.y * t2;
-		v.z = v1.z * (1.0f - t2) + v2.z * t2;
-		v.w = v1.w * (1.0f - t2) + v2.w * t2;
-		for (int i = 0; i < TriVertex::NumVarying; i++)
-			v.varying[i] = v1.varying[i] * (1.0f - t2) + v2.varying[i] * t2;
-	}
-}
+	for (int i = 0; i < cliplength; i++)
+		clipdata[i] = cliptop[clipleft + i];
+	for (int i = 0; i < cliplength; i++)
+		clipdata[cliplength + i] = clipbottom[clipleft + i];
 
-void R_DrawTriangle()
-{
-	int clipleft = 0;
-	int clipright = viewwidth - 1;
-	short cliptop[MAXWIDTH];
-	short clipbottom[MAXWIDTH];
-	for (int i = clipleft; i < clipright; i++)
-	{
-		cliptop[i] = (i - clipleft) / 4;
-		clipbottom[i] = viewheight - 1 - (i - clipleft) / 4;
-	}
-
-	TriVertex cube[6 * 6] =
-	{
-		{-1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-
-		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{-1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{-1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-
-
-		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{-1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-
-		{-1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-
-
-		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{-1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-
-		{-1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{-1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-
-
-		{-1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-
-		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{-1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-
-
-		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-
-		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-
-
-		{-1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{-1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{-1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-
-		{-1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{-1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f }
-	};
-
-	for (int i = 0; i < 6; i++)
-	{
-		cube[i * 6 + 0].varying[0] = 1.0f;
-		cube[i * 6 + 1].varying[1] = 1.0f;
-		cube[i * 6 + 2].varying[2] = 1.0f;
-		cube[i * 6 + 3].varying[2] = 1.0f;
-		cube[i * 6 + 4].varying[0] = 1.0f;
-		cube[i * 6 + 4].varying[1] = 1.0f;
-		cube[i * 6 + 4].varying[2] = 1.0f;
-		cube[i * 6 + 5].varying[0] = 1.0f;
-	}
-
-	static float angle = 0.0f;
-	angle = fmod(angle + 0.5f, 360.0f);
-	VSMatrix objectToWorld(0);
-	objectToWorld.translate((float)ViewPos.X, (float)ViewPos.Y + 50.0f, (float)ViewPos.Z);
-	objectToWorld.rotate(angle, 0.57735f, 0.57735f, 0.57735f);
-	objectToWorld.scale(10.0f, 10.0f, 10.0f);
-
-	TriVertex *vinput = cube;
-	for (int i = 0; i < 6 * 6 / 3; i++)
-	{
-		TriVertex vert[3];
-
-		// Vertex shader stuff:
-		for (int j = 0; j < 3; j++)
-		{
-			auto &v = vert[j];
-			v = *(vinput++);
-
-			// Apply object to world transform:
-			const float *matrix = objectToWorld.get();
-			float vx = matrix[0 * 4 + 0] * v.x + matrix[1 * 4 + 0] * v.y + matrix[2 * 4 + 0] * v.z + matrix[3 * 4 + 0] * v.w;
-			float vy = matrix[0 * 4 + 1] * v.x + matrix[1 * 4 + 1] * v.y + matrix[2 * 4 + 1] * v.z + matrix[3 * 4 + 1] * v.w;
-			float vz = matrix[0 * 4 + 2] * v.x + matrix[1 * 4 + 2] * v.y + matrix[2 * 4 + 2] * v.z + matrix[3 * 4 + 2] * v.w;
-			float vw = matrix[0 * 4 + 3] * v.x + matrix[1 * 4 + 3] * v.y + matrix[2 * 4 + 3] * v.z + matrix[3 * 4 + 3] * v.w;
-			v.x = vx;
-			v.y = vy;
-			v.z = vz;
-			v.w = vw;
-
-			// The software renderer world to clip transform:
-			double nearp = 5.0f;
-			double farp = 65536.f;
-			double tr_x = v.x - ViewPos.X;
-			double tr_y = v.y - ViewPos.Y;
-			double tr_z = v.z - ViewPos.Z;
-			double tx = tr_x * ViewSin - tr_y * ViewCos;
-			double tz = tr_x * ViewTanCos + tr_y * ViewTanSin;
-			v.x = (float)tx;
-			v.y = (float)tr_z;
-			v.z = (float)(-tz * (farp + nearp) / (nearp - farp) + (2.0f * farp * nearp) / (nearp - farp));
-			v.w = (float)tz;
-		}
-
-		// Cull, clip and generate additional vertices as needed
-		TriVertex clippedvert[6];
-		int numclipvert = 0;
-		clipedge(vert[0], vert[1], clippedvert, numclipvert);
-		clipedge(vert[1], vert[2], clippedvert, numclipvert);
-		clipedge(vert[2], vert[0], clippedvert, numclipvert);
-
-		// Map to 2D viewport:
-		for (int j = 0; j < numclipvert; j++)
-		{
-			auto &v = clippedvert[j];
-
-			// Calculate normalized device coordinates:
-			v.w = 1.0f / v.w;
-			v.x *= v.w;
-			v.y *= v.w;
-			v.z *= v.w;
-
-			// Apply viewport scale to get screen coordinates:
-			v.x = (float)(CenterX + v.x * CenterX);
-			v.y = (float)(CenterY - v.y * InvZtoScale);
-		}
-
-		for (int i = numclipvert; i > 1; i--)
-		{
-			triangle((uint32_t*)dc_destorg, dc_pitch, clippedvert[numclipvert - 1], clippedvert[i - 1], clippedvert[i - 2], clipleft, clipright, cliptop, clipbottom);
-		}
-	}
+	DrawerCommandQueue::QueueCommand<DrawTrianglesCommand>(objectToWorld, vertices, count, clipleft, clipright, clipdata);
 }
 
 /////////////////////////////////////////////////////////////////////////////

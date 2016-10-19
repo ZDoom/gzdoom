@@ -59,12 +59,14 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "r_draw_rgba.h"
+#include "gl/data/gl_matrix.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
 #endif
 
 CVAR(Bool, r_capsky, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, r_cubesky, false, 0)
 
 //EXTERN_CVAR (Int, tx)
 //EXTERN_CVAR (Int, ty)
@@ -1154,9 +1156,104 @@ static void R_DrawCapSky(visplane_t *pl)
 	}
 }
 
+static void R_DrawCubeSky(visplane_t *pl)
+{
+	int x1 = pl->left;
+	int x2 = pl->right;
+	short *uwal = (short *)pl->top;
+	short *dwal = (short *)pl->bottom;
+
+	static TriVertex cube[6 * 6] =
+	{
+		{ -1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ -1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ -1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ -1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+		{ -1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+
+		{ -1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ -1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+
+		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ -1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ -1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+		{ -1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f }
+	};
+
+	static bool first_time = true;
+	if (first_time)
+	{
+		for (int i = 0; i < 6; i++)
+		{
+			cube[i * 6 + 0].varying[0] = 1.0f;
+			cube[i * 6 + 1].varying[1] = 1.0f;
+			cube[i * 6 + 2].varying[2] = 1.0f;
+			cube[i * 6 + 3].varying[2] = 1.0f;
+			cube[i * 6 + 4].varying[0] = 1.0f;
+			cube[i * 6 + 4].varying[1] = 1.0f;
+			cube[i * 6 + 4].varying[2] = 1.0f;
+			cube[i * 6 + 5].varying[0] = 1.0f;
+		}
+		first_time = false;
+	}
+
+	//static float angle = 0.0f;
+	//angle = fmod(angle + 0.5f, 360.0f);
+	VSMatrix objectToWorld(0);
+	objectToWorld.translate((float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z);
+	//objectToWorld.rotate(angle, 0.57735f, 0.57735f, 0.57735f);
+	objectToWorld.scale(100.0f, 100.0f, 100.0f);
+
+	R_DrawTriangles(objectToWorld, cube, 6 * 6, x1, x2 - 1, uwal, dwal);
+}
+
 static void R_DrawSky (visplane_t *pl)
 {
-	if (r_swtruecolor && r_capsky)
+	if (r_swtruecolor && r_cubesky)
+	{
+		R_DrawCubeSky(pl);
+		return;
+	}
+	else if (r_swtruecolor && r_capsky)
 	{
 		R_DrawCapSky(pl);
 		return;

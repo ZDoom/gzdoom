@@ -39,6 +39,7 @@
 #include "r_plane.h"
 #include "r_draw_rgba.h"
 #include "r_compiler/llvmdrawers.h"
+#include "gl/data/gl_matrix.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -1258,6 +1259,9 @@ void ApplySpecialColormapRGBACommand::Execute(DrawerThread *thread)
 
 struct TriVertex
 {
+	TriVertex() { }
+	TriVertex(float x, float y, float z, float w, float u, float v, float light) : x(x), y(y), z(z), w(w) { varying[0] = u; varying[1] = v; varying[2] = light; }
+
 	enum { NumVarying = 3 };
 	float x, y, z, w;
 	float varying[NumVarying];
@@ -1307,10 +1311,12 @@ void triangle(uint32_t *dest, int pitch, const TriVertex &v1, const TriVertex &v
 	const int FDY31 = DY31 << 4;
 
 	// Bounding rectangle
-	int minx = (MIN(MIN(X1, X2), X3) + 0xF) >> 4;
-	int maxx = (MAX(MAX(X1, X2), X3) + 0xF) >> 4;
-	int miny = (MIN(MIN(Y1, Y2), Y3) + 0xF) >> 4;
-	int maxy = (MAX(MAX(Y1, Y2), Y3) + 0xF) >> 4;
+	int minx = MAX((MIN(MIN(X1, X2), X3) + 0xF) >> 4, 0);
+	int maxx = MIN((MAX(MAX(X1, X2), X3) + 0xF) >> 4, viewwidth);
+	int miny = MAX((MIN(MIN(Y1, Y2), Y3) + 0xF) >> 4, 0);
+	int maxy = MIN((MAX(MAX(Y1, Y2), Y3) + 0xF) >> 4, viewheight);
+	if (minx >= maxx || miny >= maxy)
+		return;
 
 	// Block size, standard 8x8 (must be power of two)
 	const int q = 8;
@@ -1477,30 +1483,205 @@ void triangle(uint32_t *dest, int pitch, const TriVertex &v1, const TriVertex &v
 	}
 }
 
+bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2)
+{
+	if (clipdistance1 < 0.0f && clipdistance2 < 0.0f)
+		return true;
+
+	if (clipdistance1 < 0.0f)
+		t1 = MAX(-clipdistance1 / (clipdistance2 - clipdistance1), t1);
+
+	if (clipdistance2 < 0.0f)
+		t2 = MIN(1.0f - clipdistance2 / (clipdistance1 - clipdistance2), t2);
+
+	return false;
+}
+
+void clipedge(const TriVertex &v1, const TriVertex &v2, TriVertex *clippedvert, int &numclipvert)
+{
+	// Clip and cull so that the following is true for all vertices:
+	// -v.w <= v.x <= v.w
+	// -v.w <= v.y <= v.w
+	// -v.w <= v.z <= v.w
+
+	float t1 = 0.0f, t2 = 1.0f;
+	bool culled =
+		cullhalfspace(v1.x + v1.w, v2.x + v2.w, t1, t2) ||
+		cullhalfspace(v1.w - v1.x, v2.w - v2.x, t1, t2) ||
+		cullhalfspace(v1.y + v1.w, v2.y + v2.w, t1, t2) ||
+		cullhalfspace(v1.w - v1.y, v2.w - v2.y, t1, t2) ||
+		cullhalfspace(v1.z + v1.w, v2.z + v2.w, t1, t2) ||
+		cullhalfspace(v1.w - v1.z, v2.w - v2.z, t1, t2);
+	if (culled)
+		return;
+
+	if (t1 == 0.0f)
+	{
+		clippedvert[numclipvert++] = v1;
+	}
+	else
+	{
+		auto &v = clippedvert[numclipvert++];
+		v.x = v1.x * (1.0f - t1) + v2.x * t1;
+		v.y = v1.y * (1.0f - t1) + v2.y * t1;
+		v.z = v1.z * (1.0f - t1) + v2.z * t1;
+		v.w = v1.w * (1.0f - t1) + v2.w * t1;
+		for (int i = 0; i < TriVertex::NumVarying; i++)
+			v.varying[i] = v1.varying[i] * (1.0f - t1) + v2.varying[i] * t1;
+	}
+
+	if (t2 != 1.0f)
+	{
+		auto &v = clippedvert[numclipvert++];
+		v.x = v1.x * (1.0f - t2) + v2.x * t2;
+		v.y = v1.y * (1.0f - t2) + v2.y * t2;
+		v.z = v1.z * (1.0f - t2) + v2.z * t2;
+		v.w = v1.w * (1.0f - t2) + v2.w * t2;
+		for (int i = 0; i < TriVertex::NumVarying; i++)
+			v.varying[i] = v1.varying[i] * (1.0f - t2) + v2.varying[i] * t2;
+	}
+}
+
 void R_DrawTriangle()
 {
-	TriVertex trivert[6];
+	TriVertex cube[6 * 6] =
+	{
+		{-1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
 
-	trivert[0].x = 100;
-	trivert[0].y = 350;
-	trivert[0].w = 1.0f;
-	trivert[0].varying[0] = 0.0f;
-	trivert[0].varying[1] = 1.0f;
-	trivert[0].varying[2] = 0.0f;
-	trivert[1].x = 400;
-	trivert[1].y = 500;
-	trivert[1].w = 1.0f;
-	trivert[1].varying[0] = 1.0f;
-	trivert[1].varying[1] = 0.0f;
-	trivert[1].varying[2] = 0.0f;
-	trivert[2].x = 200;
-	trivert[2].y = 200;
-	trivert[2].w = 1.0f;
-	trivert[2].varying[0] = 0.0f;
-	trivert[2].varying[1] = 0.0f;
-	trivert[2].varying[2] = 1.0f;
+		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{-1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{-1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
 
-	triangle((uint32_t*)dc_destorg, dc_pitch, trivert[0], trivert[1], trivert[2]);
+
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{-1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+		{-1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{-1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+		{-1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{-1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+
+		{-1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{-1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+
+		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+
+		{-1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{-1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{-1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+
+		{-1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{-1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f }
+	};
+
+	for (int i = 0; i < 6; i++)
+	{
+		cube[i * 6 + 0].varying[0] = 1.0f;
+		cube[i * 6 + 1].varying[1] = 1.0f;
+		cube[i * 6 + 2].varying[2] = 1.0f;
+		cube[i * 6 + 3].varying[2] = 1.0f;
+		cube[i * 6 + 4].varying[0] = 1.0f;
+		cube[i * 6 + 4].varying[1] = 1.0f;
+		cube[i * 6 + 4].varying[2] = 1.0f;
+		cube[i * 6 + 5].varying[0] = 1.0f;
+	}
+
+	static float angle = 0.0f;
+	angle = fmod(angle + 0.5f, 360.0f);
+	VSMatrix objectToWorld(0);
+	objectToWorld.translate((float)ViewPos.X, (float)ViewPos.Y + 5.0f, (float)ViewPos.Z);
+	objectToWorld.rotate(angle, 0.57735f, 0.57735f, 0.57735f);
+
+	TriVertex *vinput = cube;
+	for (int i = 0; i < 6 * 6 / 3; i++)
+	{
+		TriVertex vert[3];
+
+		// Vertex shader stuff:
+		for (int j = 0; j < 3; j++)
+		{
+			auto &v = vert[j];
+			v = *(vinput++);
+
+			// Apply object to world transform:
+			const float *matrix = objectToWorld.get();
+			float vx = matrix[0 * 4 + 0] * v.x + matrix[1 * 4 + 0] * v.y + matrix[2 * 4 + 0] * v.z + matrix[3 * 4 + 0] * v.w;
+			float vy = matrix[0 * 4 + 1] * v.x + matrix[1 * 4 + 1] * v.y + matrix[2 * 4 + 1] * v.z + matrix[3 * 4 + 1] * v.w;
+			float vz = matrix[0 * 4 + 2] * v.x + matrix[1 * 4 + 2] * v.y + matrix[2 * 4 + 2] * v.z + matrix[3 * 4 + 2] * v.w;
+			float vw = matrix[0 * 4 + 3] * v.x + matrix[1 * 4 + 3] * v.y + matrix[2 * 4 + 3] * v.z + matrix[3 * 4 + 3] * v.w;
+			v.x = vx;
+			v.y = vy;
+			v.z = vz;
+			v.w = vw;
+
+			// The software renderer world to clip transform:
+			double nearp = 5.0f;
+			double farp = 65536.f;
+			double tr_x = v.x - ViewPos.X;
+			double tr_y = v.y - ViewPos.Y;
+			double tr_z = v.z - ViewPos.Z;
+			double tx = tr_x * ViewSin - tr_y * ViewCos;
+			double tz = tr_x * ViewTanCos + tr_y * ViewTanSin;
+			v.x = (float)tx;
+			v.y = (float)tr_z;
+			v.z = (float)(-tz * (farp + nearp) / (nearp - farp) + (2.0f * farp * nearp) / (nearp - farp));
+			v.w = (float)tz;
+		}
+
+		// Cull, clip and generate additional vertices as needed
+		TriVertex clippedvert[6];
+		int numclipvert = 0;
+		clipedge(vert[0], vert[1], clippedvert, numclipvert);
+		clipedge(vert[1], vert[2], clippedvert, numclipvert);
+		clipedge(vert[2], vert[0], clippedvert, numclipvert);
+
+		// Map to 2D viewport:
+		for (int j = 0; j < numclipvert; j++)
+		{
+			auto &v = clippedvert[j];
+
+			// Calculate normalized device coordinates:
+			v.w = 1.0f / v.w;
+			v.x *= v.w;
+			v.y *= v.w;
+			v.z *= v.w;
+
+			// Apply viewport scale to get screen coordinates:
+			v.x = (float)(CenterX + v.x * CenterX);
+			v.y = (float)(CenterY - v.y * InvZtoScale);
+		}
+
+		for (int i = numclipvert; i > 1; i--)
+		{
+			triangle((uint32_t*)dc_destorg, dc_pitch, clippedvert[numclipvert - 1], clippedvert[i - 1], clippedvert[i - 2]);
+		}
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -1637,15 +1637,75 @@ assign_op(X) ::= XOREQ(T).		{ X.Int = ZCC_XOREQ; X.SourceLoc = T.SourceLoc; }
 
 %type local_var{ZCC_LocalVarStmt *}
 
-local_var(X) ::= type(A) variable_list(B) var_init(C).
+local_var(X) ::= type(A) variable_list_with_init(B).
 {
 	NEW_AST_NODE(LocalVarStmt,vardef,A);
 	vardef->Type = A;
 	vardef->Vars = B;
-	vardef->Inits = C;
 	X = vardef;
 }
 
-%type var_init{ZCC_Expression *}
-var_init(X) ::= .						{ X = NULL; }
-var_init(X) ::= EQ expr_list(A).		{ X = A; /*X-overwrites-A*/ }
+%type var_init{ZCC_VarInit *}
+var_init(X) ::= IDENTIFIER(A).						
+{ 
+	NEW_AST_NODE(VarInit,var,A);
+	var->Name = ENamedName(A.Int);
+	var->ArraySize = NULL;
+	var->Init = NULL;
+	var->InitIsArray = false;
+	X = var;
+}
+
+var_init(X) ::= IDENTIFIER(A) array_size(B).
+{
+	NEW_AST_NODE(VarInit,var,A);
+	var->Name = ENamedName(A.Int);
+	var->ArraySize = B;
+	var->Init = NULL;
+	var->InitIsArray = false;
+	X = var;
+}
+
+var_init(X) ::= IDENTIFIER(A) EQ expr(B).						
+{ 
+	NEW_AST_NODE(VarInit,var,A);
+	var->Name = ENamedName(A.Int);
+	var->ArraySize = NULL;
+	var->Init = B;
+	var->InitIsArray = false;
+	X = var;
+}
+
+var_init(X) ::= IDENTIFIER(A) EQ  LBRACE expr_list(C) RBRACE.	// this is for arrays which declare the size with the type
+{ 
+	NEW_AST_NODE(VarInit,var,A);
+	var->Name = ENamedName(A.Int);
+	var->ArraySize = NULL;
+	var->Init = C;
+	var->InitIsArray = true;
+	X = var;
+}
+
+var_init(X) ::= IDENTIFIER(A) array_size(B) EQ  LBRACE expr_list(C) RBRACE.
+{ 
+	NEW_AST_NODE(VarInit,var,A);
+	var->Name = ENamedName(A.Int);
+	var->ArraySize = B;
+	var->Init = C;
+	var->InitIsArray = true;
+	X = var;
+}
+
+var_init(X) ::= IDENTIFIER EQ  LBRACE error RBRACE.
+{ 
+	X = NULL;
+}
+
+%type variable_list_with_init{ZCC_VarInit *}
+
+variable_list_with_init(X) ::= var_init(X).
+variable_list_with_init(X) ::= variable_list_with_init(A) COMMA var_init(B).
+{
+	A->AppendSibling(B);
+	X = A; /*X-overwrites-A*/
+}

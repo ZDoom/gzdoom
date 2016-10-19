@@ -437,6 +437,17 @@ static void PrintVarName(FLispString &out, ZCC_TreeNode *node)
 	out.Close();
 }
 
+static void PrintVarInit(FLispString &out, ZCC_TreeNode *node)
+{
+	ZCC_VarInit *vnode = (ZCC_VarInit *)node;
+	out.Open("var-init");
+	PrintNodes(out, vnode->ArraySize);
+	PrintNodes(out, vnode->Init);
+	if (vnode->InitIsArray) out.Add("array", 5);
+	out.AddName(vnode->Name);
+	out.Close();
+}
+
 static void PrintType(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_Type *tnode = (ZCC_Type *)node;
@@ -762,7 +773,6 @@ static void PrintLocalVarStmt(FLispString &out, ZCC_TreeNode *node)
 	out.Open("local-var-stmt");
 	PrintNodes(out, snode->Type);
 	PrintNodes(out, snode->Vars);
-	PrintNodes(out, snode->Inits);
 	out.Close();
 }
 
@@ -859,6 +869,7 @@ void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *
 	PrintStateGoto,
 	PrintStateLine,
 	PrintVarName,
+	PrintVarInit,
 	PrintType,
 	PrintBasicType,
 	PrintMapType,

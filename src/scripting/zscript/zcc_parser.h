@@ -62,6 +62,7 @@ enum EZCCTreeNodeType
 	AST_StateGoto,
 	AST_StateLine,
 	AST_VarName,
+	AST_VarInit,
 	AST_Type,
 	AST_BasicType,
 	AST_MapType,
@@ -294,6 +295,12 @@ struct ZCC_VarName : ZCC_TreeNode
 	ZCC_Expression *ArraySize;	// NULL if not an array
 };
 
+struct ZCC_VarInit : ZCC_VarName
+{
+	ZCC_Expression *Init;
+	bool InitIsArray;	// this is needed to distinguish one-element arrays from raw elements.
+};
+
 struct ZCC_Type : ZCC_TreeNode
 {
 	ZCC_Expression *ArraySize;	// NULL if not an array
@@ -446,8 +453,7 @@ struct ZCC_AssignStmt : ZCC_Statement
 struct ZCC_LocalVarStmt : ZCC_Statement
 {
 	ZCC_Type *Type;
-	ZCC_VarName *Vars;
-	ZCC_Expression *Inits;
+	ZCC_VarInit *Vars;
 };
 
 struct ZCC_FuncParamDecl : ZCC_TreeNode

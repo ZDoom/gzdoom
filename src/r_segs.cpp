@@ -58,6 +58,7 @@
 
 
 CVAR(Bool, r_np2, true, 0)
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 //CVAR (Int, ty, 8, 0)
 //CVAR (Int, tx, 8, 0)
@@ -318,7 +319,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	rw_scalestep = ds->iscalestep;
 
 	if (fixedlightlev >= 0)
-		R_SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
 		R_SetColorMapLight(fixedcolormap, 0, 0);
 
@@ -635,7 +636,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	}
 
 	if (fixedlightlev >= 0)
-		R_SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
 		R_SetColorMapLight(fixedcolormap, 0, 0);
 
@@ -1762,7 +1763,7 @@ void R_RenderSegLoop ()
 	fixed_t xoffset = rw_offset;
 
 	if (fixedlightlev >= 0)
-		R_SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
 		R_SetColorMapLight(fixedcolormap, 0, 0);
 
@@ -3161,11 +3162,11 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 
 	rw_light = rw_lightleft + (x1 - WallC.sx1) * rw_lightstep;
 	if (fixedlightlev >= 0)
-		R_SetColorMapLight(usecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
 		R_SetColorMapLight(fixedcolormap, 0, 0);
 	else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
-		R_SetColorMapLight(usecolormap, 0, 0);
+		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, 0);
 	else
 		calclighting = true;
 

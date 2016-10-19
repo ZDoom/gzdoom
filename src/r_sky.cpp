@@ -49,7 +49,8 @@ fixed_t		sky1cyl,		sky2cyl;
 double		sky1pos,		sky2pos;
 
 // [RH] Stretch sky texture if not taller than 128 pixels?
-CUSTOM_CVAR (Bool, r_stretchsky, false, CVAR_ARCHIVE)
+// Also now controls capped skies. 0 = normal, 1 = stretched, 2 = capped
+CUSTOM_CVAR (Int, r_skymode, 2, CVAR_ARCHIVE)
 {
 	R_InitSkyMap ();
 }
@@ -99,7 +100,7 @@ void R_InitSkyMap ()
 	skytexturemid = 0;
 	if (skyheight >= 128 && skyheight < 200)
 	{
-		skystretch = (r_stretchsky
+		skystretch = (r_skymode == 1
 					  && skyheight >= 128
 					  && level.IsFreelookAllowed()
 					  && !(level.flags & LEVEL_FORCENOSKYSTRETCH)) ? 1 : 0;

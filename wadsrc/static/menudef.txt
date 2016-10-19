@@ -600,6 +600,13 @@ OptionValue ColumnMethods
 	1.0, "$OPTVAL_OPTIMIZED"
 }
 
+OptionValue SkyModes
+{
+	0.0, "$OPTVAL_NORMAL"
+	1.0, "$OPTVAL_STRETCH"
+	2.0, "$OPTVAL_CAPPED"
+}
+
 OptionValue RocketTrailTypes
 {
 	0.0, "$OPTVAL_OFF"
@@ -700,8 +707,7 @@ OptionMenu "VideoOptions"
 		//Option "$DSPLYMNU_ATTACHEDSURFACES", 	"vid_attachedsurfaces", "OnOff"
 	}
 	
-	Option "$DSPLYMNU_CAPSKY",					"r_capsky", "OnOff"
-	Option "$DSPLYMNU_STRETCHSKY",				"r_stretchsky", "OnOff"
+	Option "$DSPLYMNU_SKYMODE",					"r_skymode", "SkyModes"
 	Option "$DSPLYMNU_LINEARSKY",				"r_linearsky", "OnOff"
 	Option "$DSPLYMNU_GZDFULLBRIGHT",			"r_fullbrightignoresectorcolor", "OnOff"
 	Option "$DSPLYMNU_DRAWFUZZ",				"r_drawfuzz", "Fuzziness"

@@ -65,7 +65,7 @@
 #pragma warning(disable:4244)
 #endif
 
-CVAR(Bool, r_capsky, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+EXTERN_CVAR(Int, r_skymode)
 CVAR(Bool, r_cubesky, false, 0)
 
 //EXTERN_CVAR (Int, tx)
@@ -1268,7 +1268,7 @@ static void R_DrawSky (visplane_t *pl)
 		R_DrawCubeSky(pl);
 		return;
 	}
-	else if (r_capsky)
+	else if (r_skymode == 2)
 	{
 		R_DrawCapSky(pl);
 		return;

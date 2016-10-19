@@ -1492,7 +1492,7 @@ bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t
 		t1 = MAX(-clipdistance1 / (clipdistance2 - clipdistance1), t1);
 
 	if (clipdistance2 < 0.0f)
-		t2 = MIN(1.0f - clipdistance2 / (clipdistance1 - clipdistance2), t2);
+		t2 = MIN(1.0f + clipdistance2 / (clipdistance1 - clipdistance2), t2);
 
 	return false;
 }

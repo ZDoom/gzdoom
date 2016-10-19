@@ -522,7 +522,12 @@ light_list(X) ::= light_list(A) COMMA STRCONST(B).
 }
 
 /* A state action can be either a compound statement or a single action function call. */
-state_action(X) ::= LBRACE statement_list(A) scanner_mode RBRACE.	{ X = A; /*X-overwrites-A*/ }
+state_action(X) ::= LBRACE(T) statement_list(A) scanner_mode RBRACE.	
+{
+	NEW_AST_NODE(CompoundStmt,stmt,T);
+	stmt->Content = A;
+	X = stmt;
+}
 state_action(X) ::= LBRACE error scanner_mode RBRACE.				{ X = NULL; }
 state_action(X) ::= state_call(A) scanner_mode SEMICOLON.			{ X = A; /*X-overwrites-A*/ }
 

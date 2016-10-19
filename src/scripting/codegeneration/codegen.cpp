@@ -5023,14 +5023,18 @@ ExpEmit FxFlopFunctionCall::Emit(VMFunctionBuilder *build)
 FxExpression *FxCompoundStatement::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
+	Outer = ctx.Block;
+	ctx.Block = this;
 	for (unsigned i = 0; i < Expressions.Size(); ++i)
 	{
 		if (NULL == (Expressions[i] = Expressions[i]->Resolve(ctx)))
 		{
+			ctx.Block = Outer;
 			delete this;
-			return NULL;
+			return nullptr;
 		}
 	}
+	ctx.Block = Outer;
 	return this;
 }
 
@@ -5048,6 +5052,11 @@ ExpEmit FxCompoundStatement::Emit(VMFunctionBuilder *build)
 		// Throw away any result. We don't care about it.
 		v.Free(build);
 	}
+	// Release all local variables in this block.
+	for (auto l : LocalVars)
+	{
+		l->Release(build);
+	}
 	return ExpEmit();
 }
 
@@ -5064,6 +5073,52 @@ VMFunction *FxCompoundStatement::GetDirectFunction()
 		return Expressions[0]->GetDirectFunction();
 	}
 	return NULL;
+}
+
+//==========================================================================
+//
+// FxCompoundStatement :: FindLocalVariable
+//
+// Looks for a variable name in any of the containing compound statements
+//
+//==========================================================================
+
+FxLocalVariableDeclaration *FxCompoundStatement::FindLocalVariable(FName name)
+{
+	auto block = this;
+	while (block != nullptr)
+	{
+		for (auto l : block->LocalVars)
+		{
+			if (l->Name == name)
+			{
+				return l;
+			}
+		}
+		block = block->Outer;
+	}
+	return nullptr;
+}
+
+//==========================================================================
+//
+// FxCompoundStatement :: CheckLocalVariable
+//
+// Checks if the current block already contains a local variable 
+// of the given name.
+//
+//==========================================================================
+
+bool FxCompoundStatement::CheckLocalVariable(FName name)
+{
+	for (auto l : LocalVars)
+	{
+		if (l->Name == name)
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 //==========================================================================
@@ -6141,4 +6196,88 @@ ExpEmit FxDamageValue::Emit(VMFunctionBuilder *build)
 	build->Emit(OP_RETI, 1 | RET_FINAL, true);
 
 	return ExpEmit();
+}
+
+//==========================================================================
+//
+// declares a single local variable (no arrays)
+//
+//==========================================================================
+
+FxLocalVariableDeclaration::FxLocalVariableDeclaration(PType *type, FName name, FxExpression *initval, const FScriptPosition &p)
+	:FxExpression(p)
+{
+	ValueType = type;
+	Name = name;
+	Init = initval == nullptr? nullptr : new FxTypeCast(initval, type, false);
+}
+
+FxExpression *FxLocalVariableDeclaration::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE_OPT(Init, ctx);
+	if (ctx.Block == nullptr)
+	{
+		ScriptPosition.Message(MSG_ERROR, "Variable declaration outside compound statement");
+		delete this;
+		return nullptr;
+	}
+	ctx.Block->LocalVars.Push(this);
+	return this;
+}
+
+ExpEmit FxLocalVariableDeclaration::Emit(VMFunctionBuilder *build)
+{
+	if (Init == nullptr)
+	{
+		RegNum = build->Registers[ValueType->GetRegType()].Get(1);
+	}
+	else
+	{
+		ExpEmit emitval = Init->Emit(build);
+
+		int regtype = emitval.RegType;
+		if (regtype < REGT_INT || regtype > REGT_TYPE)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Attempted to assign a non-value");
+			return ExpEmit();
+		}
+		if (emitval.Konst)
+		{
+			auto constval = static_cast<FxConstant *>(Init);
+			RegNum = build->Registers[regtype].Get(1);
+			switch (regtype)
+			{
+			default:
+			case REGT_INT:
+				build->Emit(OP_LK, build->GetConstantInt(constval->GetValue().GetInt()), RegNum);
+				break;
+
+			case REGT_FLOAT:
+				build->Emit(OP_LKF, build->GetConstantFloat(constval->GetValue().GetFloat()), RegNum);
+				break;
+
+			case REGT_POINTER:
+				build->Emit(OP_LKP, build->GetConstantAddress(constval->GetValue().GetPointer(), ATAG_GENERIC), RegNum);
+				break;
+
+			case REGT_STRING:
+				build->Emit(OP_LKS, build->GetConstantString(constval->GetValue().GetString()), RegNum);
+			}
+			emitval.Free(build);
+		}
+		else
+		{
+			// take over the register that got allocated while emitting the Init expression.
+			RegNum = emitval.RegNum;
+		}
+	}
+	return ExpEmit();
+}
+
+void FxLocalVariableDeclaration::Release(VMFunctionBuilder *build)
+{
+	// Release the register after the containing block gets closed
+	assert(RegNum != -1);
+	build->Registers[ValueType->GetRegType()].Return(RegNum, 1);
 }

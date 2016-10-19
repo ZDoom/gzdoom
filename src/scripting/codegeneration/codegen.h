@@ -63,10 +63,12 @@ class FxJumpStatement;
 //==========================================================================
 struct FScriptPosition;
 class FxLoopStatement;
+class FxCompoundStatement;
 
 struct FCompileContext
 {
-	FxLoopStatement *Loop;
+	FxLoopStatement *Loop = nullptr;
+	FxCompoundStatement *Block = nullptr;
 	PPrototype *ReturnProto;
 	PFunction *Function;	// The function that is currently being compiled (or nullptr for constant evaluation.)
 	PClass *Class;			// The type of the owning class.
@@ -160,6 +162,12 @@ struct ExpVal
 	{
 		int regtype = Type->GetRegType();
 		return regtype == REGT_INT ? double(Int) : regtype == REGT_FLOAT ? Float : 0;
+	}
+
+	void *GetPointer() const
+	{
+		int regtype = Type->GetRegType();
+		return regtype == REGT_POINTER ? pointer : nullptr;
 	}
 
 	const FString GetString() const
@@ -1082,10 +1090,15 @@ public:
 // FxCompoundStatement
 //
 //==========================================================================
+class FxLocalVariableDeclaration;
 
 class FxCompoundStatement : public FxExpression
 {
+	TArray<FxLocalVariableDeclaration *> LocalVars;
 	TDeletingArray<FxExpression *> Expressions;
+	FxCompoundStatement *Outer = nullptr;
+
+	friend class FxLocalVariableDeclaration;
 
 public:
 	FxCompoundStatement(const FScriptPosition &pos) : FxExpression(pos) {}
@@ -1093,6 +1106,8 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build);
 	void Add(FxExpression *expr) { if (expr != NULL) Expressions.Push(expr); }
 	VMFunction *GetDirectFunction();
+	FxLocalVariableDeclaration *FindLocalVariable(FName name);
+	bool CheckLocalVariable(FName name);
 };
 
 //==========================================================================
@@ -1341,7 +1356,26 @@ public:
 	}
 };
 
-FxExpression *ParseExpression (FScanner &sc, PClassActor *cls, bool mustresolve = false);
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
+class FxLocalVariableDeclaration : public FxExpression
+{
+	friend class FxCompoundStatement;
+
+	FName Name;
+	FxExpression *Init;
+	int RegNum = -1;
+
+public:
+	FxLocalVariableDeclaration(PType *type, FName name, FxExpression *initval, const FScriptPosition &p);
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+	void Release(VMFunctionBuilder *build);
+
+};
 
 #endif

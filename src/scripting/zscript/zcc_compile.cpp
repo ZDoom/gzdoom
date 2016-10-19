@@ -2313,8 +2313,27 @@ void ZCCCompiler::CompileStates()
 
 FxExpression *ZCCCompiler::ConvertAST(ZCC_TreeNode *ast)
 {
-	// FxReturnStatement will have to be done more intelligently, of course.
-	return new FxReturnStatement(ConvertNode(ast), *ast);
+	// there are two possibilities here: either a single function call or a compound statement. For a compound statement we also need to check if the last thing added was a return.
+	if (ast->NodeType == AST_ExprFuncCall)
+	{
+		return new FxReturnStatement(ConvertNode(ast), *ast);
+	}
+	else
+	{
+		// This must be done here so that we can check for a trailing return statement.
+		auto x = new FxCompoundStatement(*ast);
+		auto compound = static_cast<ZCC_CompoundStmt *>(ast);
+		bool isreturn = false;
+		auto node = compound->Content;
+		if (node != nullptr) do
+		{
+			x->Add(ConvertNode(node));
+			isreturn = node->NodeType == AST_ReturnStmt;
+			node = static_cast<decltype(node)>(node->SiblingNext);
+		} while (node != compound->Content);
+		if (!isreturn) x->Add(new FxReturnStatement(nullptr, *ast));
+		return x;
+	}
 }
 
 FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
@@ -2514,8 +2533,42 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 
 		return new FxConditional(condition, left, right);
 	}
+
+	case AST_ExpressionStmt:
+		return ConvertNode(static_cast<ZCC_ExpressionStmt *>(ast)->Expression);
+
+	case AST_ReturnStmt:
+	{
+		auto ret = static_cast<ZCC_ReturnStmt *>(ast);
+		FArgumentList *args = ConvertNodeList(ret->Values);
+		if (args->Size() == 0)
+		{
+			return new FxReturnStatement(nullptr, *ast);
+		}
+		else if (args->Size() == 1)
+		{
+			return new FxReturnStatement((*args)[0], *ast);
+		}
+		else
+		{
+			Error(ast, "Return with multiple values not implemented yet.");
+			return new FxReturnStatement(nullptr, *ast);
+		}
 	}
 
+	case AST_CompoundStmt:
+	{
+		auto x = new FxCompoundStatement(*ast);
+		auto compound = static_cast<ZCC_CompoundStmt *>(ast);
+		auto node = compound->Content;
+		if (node != nullptr) do
+		{
+			x->Add(ConvertNode(node));
+			node = static_cast<decltype(node)>(node->SiblingNext);
+		} while (node != compound->Content);
+		return x;
+	}
+	}
 	// only for development. I_Error is more convenient here than a normal error.
 	I_Error("ConvertNode encountered unsupported node of type %d", ast->NodeType);
 	return nullptr;

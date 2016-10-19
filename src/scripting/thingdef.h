@@ -144,6 +144,7 @@ inline void ResetBaggage (Baggage *bag, PClassActor *stateclass)
 AFuncDesc *FindFunction(const char * string);
 
 
+FxExpression *ParseExpression(FScanner &sc, PClassActor *cls, bool mustresolve = false);
 void ParseStates(FScanner &sc, PClassActor *actor, AActor *defaults, Baggage &bag);
 void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression *> &out_params,
 	PFunction *afd, FString statestring, FStateDefinitions *statedef);

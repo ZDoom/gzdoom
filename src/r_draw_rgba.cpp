@@ -1281,7 +1281,7 @@ float grady(float x0, float y0, float x1, float y1, float x2, float y2, float c0
 	return top / bottom;
 }
 
-void triangle(uint32_t *dest, int pitch, const TriVertex &v1, const TriVertex &v2, const TriVertex &v3)
+void triangle(uint32_t *dest, int pitch, const TriVertex &v1, const TriVertex &v2, const TriVertex &v3, int clipleft, int clipright, const short *cliptop, const short *clipbottom)
 {
 	// 28.4 fixed-point coordinates
 	const int Y1 = (int)round(16.0f * v1.y);
@@ -1311,10 +1311,17 @@ void triangle(uint32_t *dest, int pitch, const TriVertex &v1, const TriVertex &v
 	const int FDY31 = DY31 << 4;
 
 	// Bounding rectangle
-	int minx = MAX((MIN(MIN(X1, X2), X3) + 0xF) >> 4, 0);
-	int maxx = MIN((MAX(MAX(X1, X2), X3) + 0xF) >> 4, viewwidth);
-	int miny = MAX((MIN(MIN(Y1, Y2), Y3) + 0xF) >> 4, 0);
-	int maxy = MIN((MAX(MAX(Y1, Y2), Y3) + 0xF) >> 4, viewheight);
+	int clipymin = cliptop[clipleft];
+	int clipymax = clipbottom[clipleft];
+	for (int i = clipleft + 1; i <= clipright; i++)
+	{
+		clipymin = MIN(clipymin, (int)cliptop[i]);
+		clipymax = MAX(clipymax, (int)clipbottom[i]);
+	}
+	int minx = MAX((MIN(MIN(X1, X2), X3) + 0xF) >> 4, clipleft);
+	int maxx = MIN((MAX(MAX(X1, X2), X3) + 0xF) >> 4, clipright);
+	int miny = MAX((MIN(MIN(Y1, Y2), Y3) + 0xF) >> 4, clipymin);
+	int maxy = MIN((MAX(MAX(Y1, Y2), Y3) + 0xF) >> 4, clipymax);
 	if (minx >= maxx || miny >= maxy)
 		return;
 
@@ -1382,6 +1389,13 @@ void triangle(uint32_t *dest, int pitch, const TriVertex &v1, const TriVertex &v
 			// Skip block when outside an edge
 			if (a == 0x0 || b == 0x0 || c == 0x0) continue;
 
+			// Check if block needs clipping
+			int clipcount = 0;
+			for (int ix = 0; ix < q; ix++)
+			{
+				clipcount += (cliptop[x + ix] > y) || (clipbottom[x + ix] < y + q - 1);
+			}
+
 			// Calculate varying variables for affine block
 			float offx0 = (x - minx) + 0.5f;
 			float offy0 = (y - miny) + 0.5f;
@@ -1406,7 +1420,7 @@ void triangle(uint32_t *dest, int pitch, const TriVertex &v1, const TriVertex &v
 			uint32_t *buffer = dest;
 
 			// Accept whole block when totally covered
-			if (a == 0xF && b == 0xF && c == 0xF)
+			if (a == 0xF && b == 0xF && c == 0xF && clipcount == 0)
 			{
 				for (int iy = 0; iy < q; iy++)
 				{
@@ -1453,7 +1467,9 @@ void triangle(uint32_t *dest, int pitch, const TriVertex &v1, const TriVertex &v
 
 					for (int ix = x; ix < x + q; ix++)
 					{
-						if (CX1 > 0 && CX2 > 0 && CX3 > 0)
+						bool visible = (cliptop[ix] <= y + iy) && (clipbottom[ix] >= y + iy);
+
+						if (CX1 > 0 && CX2 > 0 && CX3 > 0 && visible)
 						{
 							uint32_t red = (uint32_t)clamp(varying[0] * 255.0f + 0.5f, 0.0f, 255.0f);
 							uint32_t green = (uint32_t)clamp(varying[1] * 255.0f + 0.5f, 0.0f, 255.0f);
@@ -1544,6 +1560,16 @@ void clipedge(const TriVertex &v1, const TriVertex &v2, TriVertex *clippedvert, 
 
 void R_DrawTriangle()
 {
+	int clipleft = 0;
+	int clipright = viewwidth - 1;
+	short cliptop[MAXWIDTH];
+	short clipbottom[MAXWIDTH];
+	for (int i = clipleft; i < clipright; i++)
+	{
+		cliptop[i] = (i - clipleft) / 4;
+		clipbottom[i] = viewheight - 1 - (i - clipleft) / 4;
+	}
+
 	TriVertex cube[6 * 6] =
 	{
 		{-1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
@@ -1615,8 +1641,9 @@ void R_DrawTriangle()
 	static float angle = 0.0f;
 	angle = fmod(angle + 0.5f, 360.0f);
 	VSMatrix objectToWorld(0);
-	objectToWorld.translate((float)ViewPos.X, (float)ViewPos.Y + 5.0f, (float)ViewPos.Z);
+	objectToWorld.translate((float)ViewPos.X, (float)ViewPos.Y + 50.0f, (float)ViewPos.Z);
 	objectToWorld.rotate(angle, 0.57735f, 0.57735f, 0.57735f);
+	objectToWorld.scale(10.0f, 10.0f, 10.0f);
 
 	TriVertex *vinput = cube;
 	for (int i = 0; i < 6 * 6 / 3; i++)
@@ -1679,7 +1706,7 @@ void R_DrawTriangle()
 
 		for (int i = numclipvert; i > 1; i--)
 		{
-			triangle((uint32_t*)dc_destorg, dc_pitch, clippedvert[numclipvert - 1], clippedvert[i - 1], clippedvert[i - 2]);
+			triangle((uint32_t*)dc_destorg, dc_pitch, clippedvert[numclipvert - 1], clippedvert[i - 1], clippedvert[i - 2], clipleft, clipright, cliptop, clipbottom);
 		}
 	}
 }

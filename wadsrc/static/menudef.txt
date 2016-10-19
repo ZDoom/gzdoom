@@ -700,6 +700,7 @@ OptionMenu "VideoOptions"
 		//Option "$DSPLYMNU_ATTACHEDSURFACES", 	"vid_attachedsurfaces", "OnOff"
 	}
 	
+	Option "$DSPLYMNU_CAPSKY",					"r_capsky", "OnOff"
 	Option "$DSPLYMNU_STRETCHSKY",				"r_stretchsky", "OnOff"
 	Option "$DSPLYMNU_LINEARSKY",				"r_linearsky", "OnOff"
 	Option "$DSPLYMNU_GZDFULLBRIGHT",			"r_fullbrightignoresectorcolor", "OnOff"

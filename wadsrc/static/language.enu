@@ -1786,6 +1786,7 @@ DSPLYMNU_BLOODFADE				= "Blood Flash Intensity";
 DSPLYMNU_PICKUPFADE				= "Pickup Flash Intensity";
 DSPLYMNU_PALLETEHACK			= "DirectDraw palette hack"; // Not used
 DSPLYMNU_ATTACHEDSURFACES		= "Use attached surfaces"; // Not used
+DSPLYMNU_CAPSKY					= "Cap skies with solid color";
 DSPLYMNU_STRETCHSKY				= "Stretch short skies";
 DSPLYMNU_LINEARSKY				= "Linear skies";
 DSPLYMNU_GZDFULLBRIGHT			= "Emulate GZDoom FullBright";

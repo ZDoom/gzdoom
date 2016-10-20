@@ -51,6 +51,8 @@ extern "C" DWORD		vplce[4];
 extern "C" DWORD		vince[4];
 extern "C" BYTE*		palookupoffse[4];
 extern "C" const BYTE*	bufplce[4];
+extern "C" const BYTE*	bufplce2[4];
+extern "C" uint32_t		bufheight[4];
 
 // [RH] Temporary buffer for column drawing
 extern "C" BYTE			*dc_temp;
@@ -292,5 +294,10 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 
 // transmaskwallscan is like maskwallscan, but it can also blend to the background
 void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);
+
+void R_DrawSingleSkyCol1(uint32_t solid_top, uint32_t solid_bottom);
+void R_DrawSingleSkyCol4(uint32_t solid_top, uint32_t solid_bottom);
+void R_DrawDoubleSkyCol1(uint32_t solid_top, uint32_t solid_bottom);
+void R_DrawDoubleSkyCol4(uint32_t solid_top, uint32_t solid_bottom);
 
 #endif

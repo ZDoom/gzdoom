@@ -45,6 +45,7 @@
 #include "v_video.h"
 #include "m_fixed.h"
 #include "textures/textures.h"
+#include "v_palette.h"
 
 typedef bool (*CheckFunc)(FileReader & file);
 typedef FTexture * (*CreateFunc)(FileReader & file, int lumpnum);
@@ -567,6 +568,78 @@ void FTexture::SetScaledSize(int fitwidth, int fitheight)
 	// compensate for roundoff errors
 	if (int(Scale.X * fitwidth) != Width) Scale.X += (1 / 65536.);
 	if (int(Scale.Y * fitheight) != Height) Scale.Y += (1 / 65536.);
+}
+
+//===========================================================================
+// 
+//	Gets the average color of a texture for use as a sky cap color
+//
+//===========================================================================
+
+namespace
+{
+	PalEntry averageColor(const DWORD *data, int size, int maxout)
+	{
+		int				i;
+		unsigned int	r, g, b;
+
+		// First clear them.
+		r = g = b = 0;
+		if (size == 0)
+		{
+			return PalEntry(255, 255, 255);
+		}
+		for (i = 0; i < size; i++)
+		{
+			b += BPART(data[i]);
+			g += GPART(data[i]);
+			r += RPART(data[i]);
+		}
+
+		r = r / size;
+		g = g / size;
+		b = b / size;
+
+		int maxv = MAX(MAX(r, g), b);
+
+		if (maxv && maxout)
+		{
+			r = Scale(r, maxout, maxv);
+			g = Scale(g, maxout, maxv);
+			b = Scale(b, maxout, maxv);
+		}
+		return PalEntry(255, r, g, b);
+	}
+}
+
+PalEntry FTexture::GetSkyCapColor(bool bottom)
+{
+	PalEntry col;
+	int w;
+	int h;
+
+	if (!bSWSkyColorDone)
+	{
+		bSWSkyColorDone = true;
+
+		FBitmap bitmap;
+		bitmap.Create(GetWidth(), GetHeight());
+		CopyTrueColorPixels(&bitmap, 0, 0);
+		int w = GetWidth();
+		int h = GetHeight();
+
+		const uint32_t *buffer = (const uint32_t *)bitmap.GetPixels();
+		if (buffer)
+		{
+			CeilingSkyColor = averageColor((DWORD *)buffer, w * MIN(30, h), 0);
+			if (h>30)
+			{
+				FloorSkyColor = averageColor(((DWORD *)buffer) + (h - 30)*w, w * 30, 0);
+			}
+			else FloorSkyColor = CeilingSkyColor;
+		}
+	}
+	return bottom ? FloorSkyColor : CeilingSkyColor;
 }
 
 

@@ -167,7 +167,7 @@ void gl_GenerateGlobalBrightmapFromColormap()
 //	component becomes one.
 //
 //===========================================================================
-PalEntry averageColor(const DWORD *data, int size, int maxout)
+static PalEntry averageColor(const DWORD *data, int size, int maxout)
 {
 	int				i;
 	unsigned int	r, g, b;
@@ -216,10 +216,7 @@ FTexture::MiscGLInfo::MiscGLInfo() throw()
 	GlowColor = 0;
 	GlowHeight = 128;
 	bSkybox = false;
-	FloorSkyColor = 0;
-	CeilingSkyColor = 0;
 	bFullbright = false;
-	bSkyColorDone = false;
 	bBrightmapChecked = false;
 	bDisableFullbright = false;
 	bNoFilter = false;
@@ -324,38 +321,6 @@ void FTexture::GetGlowColor(float *data)
 	data[0]=gl_info.GlowColor.r/255.0f;
 	data[1]=gl_info.GlowColor.g/255.0f;
 	data[2]=gl_info.GlowColor.b/255.0f;
-}
-
-//===========================================================================
-// 
-//	Gets the average color of a texture for use as a sky cap color
-//
-//===========================================================================
-
-PalEntry FTexture::GetSkyCapColor(bool bottom)
-{
-	PalEntry col;
-	int w;
-	int h;
-
-	if (!gl_info.bSkyColorDone)
-	{
-		gl_info.bSkyColorDone = true;
-
-		unsigned char *buffer = GLRenderer->GetTextureBuffer(this, w, h);
-
-		if (buffer)
-		{
-			gl_info.CeilingSkyColor = averageColor((DWORD *) buffer, w * MIN(30, h), 0);
-			if (h>30)
-			{
-				gl_info.FloorSkyColor = averageColor(((DWORD *) buffer)+(h-30)*w, w * 30, 0);
-			}
-			else gl_info.FloorSkyColor = gl_info.CeilingSkyColor;
-			delete[] buffer;
-		}
-	}
-	return bottom? gl_info.FloorSkyColor : gl_info.CeilingSkyColor;
 }
 
 //===========================================================================

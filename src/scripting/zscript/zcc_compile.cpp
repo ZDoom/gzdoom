@@ -2078,19 +2078,6 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClassActor *cls, ZCC_TreeNode *a
 	}
 	ConvertClass = cls;
 	return ConvertAST(af);
-
-	//Error(af, "Complex action functions not supported yet.");
-	//return nullptr;
-
-	/*
-	bool hasfinalret;
-	tcall->Code = ParseActions(sc, state, statestring, bag, hasfinalret);
-	if (!hasfinalret && tcall->Code != nullptr)
-	{
-	static_cast<FxCompoundStatement *>(tcall->Code)->Add(new FxReturnStatement(nullptr, sc));
-	}
-	*/
-
 }
 
 //==========================================================================

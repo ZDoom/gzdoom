@@ -2545,7 +2545,8 @@ unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArra
 
 	variant.Flags = flags;
 	variant.Proto = proto;
-	variant.ArgFlags = argflags;
+	variant.ArgFlags = std::move(argflags);
+	variant.ArgNames = std::move(argnames);
 	variant.Implementation = impl;
 	if (impl != nullptr) impl->Proto = proto;
 

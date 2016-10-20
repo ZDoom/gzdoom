@@ -789,6 +789,7 @@ public:
 	VM_UBYTE NumKonstA;
 	VM_UHALF MaxParam;		// Maximum number of parameters this function has on the stack at once
 	VM_UBYTE NumArgs;		// Number of arguments this function takes
+	FString PrintableName;	// so that the VM can print meaningful info if something in this function goes wrong.
 };
 
 class VMFrameStack

@@ -64,6 +64,7 @@ class FxJumpStatement;
 struct FScriptPosition;
 class FxLoopStatement;
 class FxCompoundStatement;
+class FxLocalVariableDeclaration;
 
 struct FCompileContext
 {
@@ -73,6 +74,7 @@ struct FCompileContext
 	PFunction *Function;	// The function that is currently being compiled (or nullptr for constant evaluation.)
 	PClass *Class;			// The type of the owning class.
 	bool FromDecorate;
+	TDeletingArray<FxLocalVariableDeclaration *> FunctionArgs;
 
 	FCompileContext(PFunction *func, PPrototype *ret, bool fromdecorate);
 	FCompileContext(PClass *cls);	// only to be used to resolve constants!
@@ -191,8 +193,7 @@ struct ExpVal
 struct ExpEmit
 {
 	ExpEmit() : RegNum(0), RegType(REGT_NIL), Konst(false), Fixed(false), Final(false) {}
-	ExpEmit(int reg, int type) : RegNum(reg), RegType(type), Konst(false), Fixed(false), Final(false) {}
-	ExpEmit(int reg, int type, bool konst)  : RegNum(reg), RegType(type), Konst(konst), Fixed(false), Final(false) {}
+	ExpEmit(int reg, int type, bool konst = false, bool fixed = false)  : RegNum(reg), RegType(type), Konst(konst), Fixed(fixed), Final(false) {}
 	ExpEmit(VMFunctionBuilder *build, int type);
 	void Free(VMFunctionBuilder *build);
 	void Reuse(VMFunctionBuilder *build);
@@ -1122,7 +1123,7 @@ public:
 	FxCompoundStatement(const FScriptPosition &pos) : FxSequence(pos) {}
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
-	FxLocalVariableDeclaration *FindLocalVariable(FName name);
+	FxLocalVariableDeclaration *FindLocalVariable(FName name, FCompileContext &ctx);
 	bool CheckLocalVariable(FName name);
 };
 
@@ -1384,9 +1385,9 @@ class FxLocalVariableDeclaration : public FxExpression
 
 	FName Name;
 	FxExpression *Init;
+public:
 	int RegNum = -1;
 
-public:
 	FxLocalVariableDeclaration(PType *type, FName name, FxExpression *initval, const FScriptPosition &p);
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);

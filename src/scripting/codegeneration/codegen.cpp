@@ -5074,7 +5074,6 @@ VMFunction *FxSequence::GetDirectFunction()
 
 FxExpression *FxCompoundStatement::Resolve(FCompileContext &ctx)
 {
-	CHECKRESOLVED();
 	auto outer = ctx.Block;
 	Outer = ctx.Block;
 	ctx.Block = this;
@@ -5105,10 +5104,12 @@ ExpEmit FxCompoundStatement::Emit(VMFunctionBuilder *build)
 // FxCompoundStatement :: FindLocalVariable
 //
 // Looks for a variable name in any of the containing compound statements
+// This does a simple linear search on each block's variables. 
+// The lists here normally don't get large enough to justify something more complex.
 //
 //==========================================================================
 
-FxLocalVariableDeclaration *FxCompoundStatement::FindLocalVariable(FName name)
+FxLocalVariableDeclaration *FxCompoundStatement::FindLocalVariable(FName name, FCompileContext &ctx)
 {
 	auto block = this;
 	while (block != nullptr)
@@ -5121,6 +5122,14 @@ FxLocalVariableDeclaration *FxCompoundStatement::FindLocalVariable(FName name)
 			}
 		}
 		block = block->Outer;
+	}
+	// finally check the context for function arguments
+	for (auto arg : ctx.FunctionArgs)
+	{
+		if (arg->Name == name)
+		{
+			return arg;
+		}
 	}
 	return nullptr;
 }

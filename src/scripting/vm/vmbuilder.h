@@ -105,7 +105,7 @@ class FFunctionBuildList
 		FxExpression *Code = nullptr;
 		PPrototype *Proto = nullptr;
 		VMScriptFunction *Function = nullptr;
-		FString DumpName;
+		FString PrintableName;
 		bool FromDecorate;
 	};
 

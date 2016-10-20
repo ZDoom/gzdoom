@@ -663,7 +663,7 @@ VMFunction *FFunctionBuildList::AddFunction(PFunction *functype, FxExpression *c
 	Item it;
 	it.Func = functype;
 	it.Code = code;
-	it.DumpName = name;
+	it.PrintableName = name;
 	it.Function = new VMScriptFunction;
 	it.Proto = nullptr;
 	it.FromDecorate = fromdecorate;
@@ -684,39 +684,45 @@ void FFunctionBuildList::Build()
 	{
 		assert(item.Code != NULL);
 
-		// This needs to be fixed, so that the compile context receives the entire function symbol, including the containing class, the prototype and argument names, which will be needed to run the code generator
-		// As a first step this just needs to get working so fetch the class type from the prototype's argument list.
 		// We don't know the return type in advance for anonymous functions.
-		FCompileContext ctx(item.Func, nullptr, item.FromDecorate);
+		FCompileContext ctx(item.Func, item.Func->SymbolName == NAME_None ? nullptr : item.Func->Variants[0].Proto, item.FromDecorate);
+
+		// Allocate registers for the function's arguments and create local variable nodes before starting to resolve it.
+		VMFunctionBuilder buildit(true);
+		for(unsigned i=0;i<item.Func->Variants[0].Proto->ArgumentTypes.Size();i++)
+		{
+			auto type = item.Func->Variants[0].Proto->ArgumentTypes[i];
+			auto name = item.Func->Variants[0].ArgNames[i];
+			// this won't get resolved and won't get emitted. This is only needed so that the code generator can retrieve the necessary info to do its work.
+			auto local = new FxLocalVariableDeclaration(type, name, nullptr, FScriptPosition());	
+			local->RegNum = buildit.Registers[type->GetRegType()].Get(1);
+			ctx.FunctionArgs.Push(local);
+		}
+
 		item.Code = item.Code->Resolve(ctx);
 		item.Proto = ctx.ReturnProto;
 
 		// Make sure resolving it didn't obliterate it.
 		if (item.Code != nullptr)
 		{
-			VMFunctionBuilder buildit(true);
-
 			assert(item.Proto != nullptr);
-			auto numargs = item.Func->Variants[0].Proto->ArgumentTypes.Size();
 
 			// Generate prototype for this anonymous function
-			// Fixme: This later needs to do proper allocation for the function's entire argument list, once non-anonymous functions can be done.
-			buildit.Registers[REGT_POINTER].Get(numargs);
-
 			VMScriptFunction *sfunc = item.Function;
 			// create a new prototype from the now known return type and the argument list of the function's template prototype.
-			item.Function->Proto = NewPrototype(item.Proto->ReturnTypes, item.Func->Variants[0].Proto->ArgumentTypes);
+			sfunc->Proto = NewPrototype(item.Proto->ReturnTypes, item.Func->Variants[0].Proto->ArgumentTypes);
 
 			// Emit code
 			item.Code->Emit(&buildit);
-			buildit.MakeFunction(item.Function);
-			item.Function->NumArgs = numargs;
+			buildit.MakeFunction(sfunc);
+			sfunc->NumArgs = item.Func->Variants[0].Proto->ArgumentTypes.Size();
 
 			if (dump != nullptr)
 			{
-				DumpFunction(dump, sfunc, item.DumpName.GetChars(), (int)item.DumpName.Len());
+				DumpFunction(dump, sfunc, item.PrintableName.GetChars(), (int)item.PrintableName.Len());
 				codesize += sfunc->CodeSize;
 			}
+			sfunc->PrintableName = item.PrintableName;
 		}
 		delete item.Code;
 	}

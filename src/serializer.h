@@ -60,7 +60,7 @@ public:
 	FWriter *w = nullptr;
 	FReader *r = nullptr;
 
-	int ArraySize();
+	unsigned ArraySize();
 	void WriteKey(const char *key);
 	void WriteObjects();
 

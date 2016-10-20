@@ -117,10 +117,10 @@ XMISong::XMISong (FileReader &reader, EMidiDevice type, const char *args)
 		return;
 	}
 #endif
-    SongLen = reader.GetLength();
+	SongLen = reader.GetLength();
 	MusHeader = new BYTE[SongLen];
-    if (reader.Read(MusHeader, SongLen) != SongLen)
-        return;
+	if (reader.Read(MusHeader, SongLen) != SongLen)
+		return;
 
 	// Find all the songs in this file.
 	NumSongs = FindXMIDforms(MusHeader, SongLen, NULL);

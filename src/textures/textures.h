@@ -262,6 +262,7 @@ public:
 	}
 
 	void SetScaledSize(int fitwidth, int fitheight);
+	PalEntry GetSkyCapColor(bool bottom);
 
 	virtual void HackHack (int newheight);	// called by FMultipatchTexture to discover corrupt patches.
 
@@ -284,6 +285,11 @@ protected:
 		gl_info.Brightmap = NULL;
 		gl_info.areas = NULL;
 	}
+
+private:
+	bool bSWSkyColorDone = false;
+	PalEntry FloorSkyColor;
+	PalEntry CeilingSkyColor;
 
 public:
 	static void FlipSquareBlock (BYTE *block, int x, int y);

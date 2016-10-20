@@ -63,6 +63,8 @@
 #pragma warning(disable:4244)
 #endif
 
+EXTERN_CVAR(Int, r_skymode)
+
 //EXTERN_CVAR (Int, tx)
 //EXTERN_CVAR (Int, ty)
 
@@ -898,8 +900,171 @@ static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 	return composite;
 }
 
+static void R_DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, double scale, double texturemid, double yrepeat)
+{
+	uint32_t height = frontskytex->GetHeight();
+
+	for (int i = 0; i < columns; i++)
+	{
+		double uv_stepd = skyiscale * yrepeat;
+		double v = (texturemid + uv_stepd * (y1 - CenterY + 0.5)) / height;
+		double v_step = uv_stepd / height;
+
+		uint32_t uv_pos = (uint32_t)(v * 0x01000000);
+		uint32_t uv_step = (uint32_t)(v_step * 0x01000000);
+
+		int x = start_x + i;
+		if (MirrorFlags & RF_XFLIP)
+			x = (viewwidth - x);
+
+		DWORD ang, angle1, angle2;
+
+		ang = (skyangle + xtoviewangle[x]) ^ skyflip;
+		angle1 = (DWORD)((UMulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
+		angle2 = (DWORD)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
+
+		bufplce[i] = (const BYTE *)frontskytex->GetColumn(angle1, nullptr);
+		bufplce2[i] = backskytex ? (const BYTE *)backskytex->GetColumn(angle2, nullptr) : nullptr;
+
+		vince[i] = uv_step;
+		vplce[i] = uv_pos;
+	}
+
+	bufheight[0] = height;
+	bufheight[1] = backskytex ? backskytex->GetHeight() : height;
+	dc_dest = (ylookup[y1] + start_x) + dc_destorg;
+	dc_count = y2 - y1;
+
+	uint32_t solid_top = frontskytex->GetSkyCapColor(false);
+	uint32_t solid_bottom = frontskytex->GetSkyCapColor(true);
+
+	if (columns == 4)
+		if (!backskytex)
+			R_DrawSingleSkyCol4(solid_top, solid_bottom);
+		else
+			R_DrawDoubleSkyCol4(solid_top, solid_bottom);
+	else
+		if (!backskytex)
+			R_DrawSingleSkyCol1(solid_top, solid_bottom);
+		else
+			R_DrawDoubleSkyCol1(solid_top, solid_bottom);
+}
+
+static void R_DrawSkyColumn(int start_x, int y1, int y2, int columns)
+{
+	if (1 << frontskytex->HeightBits == frontskytex->GetHeight())
+	{
+		double texturemid = skymid * frontskytex->Scale.Y + frontskytex->GetHeight();
+		R_DrawSkyColumnStripe(start_x, y1, y2, columns, frontskytex->Scale.Y, texturemid, frontskytex->Scale.Y);
+	}
+	else
+	{
+		double yrepeat = frontskytex->Scale.Y;
+		double scale = frontskytex->Scale.Y * skyscale;
+		double iscale = 1 / scale;
+		short drawheight = short(frontskytex->GetHeight() * scale);
+		double topfrac = fmod(skymid + iscale * (1 - CenterY), frontskytex->GetHeight());
+		if (topfrac < 0) topfrac += frontskytex->GetHeight();
+		double texturemid = topfrac - iscale * (1 - CenterY);
+		R_DrawSkyColumnStripe(start_x, y1, y2, columns, scale, texturemid, yrepeat);
+	}
+}
+
+static void R_DrawCapSky(visplane_t *pl)
+{
+	int x1 = pl->left;
+	int x2 = pl->right;
+	short *uwal = (short *)pl->top;
+	short *dwal = (short *)pl->bottom;
+
+	// Calculate where 4 column alignment begins and ends:
+	int aligned_x1 = clamp((x1 + 3) / 4 * 4, x1, x2);
+	int aligned_x2 = clamp(x2 / 4 * 4, x1, x2);
+
+	// First unaligned columns:
+	for (int x = x1; x < aligned_x1; x++)
+	{
+		int y1 = uwal[x];
+		int y2 = dwal[x];
+		if (y2 <= y1)
+			continue;
+
+		R_DrawSkyColumn(x, y1, y2, 1);
+	}
+
+	// The aligned columns
+	for (int x = aligned_x1; x < aligned_x2; x += 4)
+	{
+		// Find y1, y2, light and uv values for four columns:
+		int y1[4] = { uwal[x], uwal[x + 1], uwal[x + 2], uwal[x + 3] };
+		int y2[4] = { dwal[x], dwal[x + 1], dwal[x + 2], dwal[x + 3] };
+
+		// Figure out where we vertically can start and stop drawing 4 columns in one go
+		int middle_y1 = y1[0];
+		int middle_y2 = y2[0];
+		for (int i = 1; i < 4; i++)
+		{
+			middle_y1 = MAX(y1[i], middle_y1);
+			middle_y2 = MIN(y2[i], middle_y2);
+		}
+
+		// If we got an empty column in our set we cannot draw 4 columns in one go:
+		bool empty_column_in_set = false;
+		for (int i = 0; i < 4; i++)
+		{
+			if (y2[i] <= y1[i])
+				empty_column_in_set = true;
+		}
+		if (empty_column_in_set || middle_y2 <= middle_y1)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				if (y2[i] <= y1[i])
+					continue;
+
+				R_DrawSkyColumn(x + i, y1[i], y2[i], 1);
+			}
+			continue;
+		}
+
+		// Draw the first rows where not all 4 columns are active
+		for (int i = 0; i < 4; i++)
+		{
+			if (y1[i] < middle_y1)
+				R_DrawSkyColumn(x + i, y1[i], middle_y1, 1);
+		}
+
+		// Draw the area where all 4 columns are active
+		R_DrawSkyColumn(x, middle_y1, middle_y2, 4);
+
+		// Draw the last rows where not all 4 columns are active
+		for (int i = 0; i < 4; i++)
+		{
+			if (middle_y2 < y2[i])
+				R_DrawSkyColumn(x + i, middle_y2, y2[i], 1);
+		}
+	}
+
+	// The last unaligned columns:
+	for (int x = aligned_x2; x < x2; x++)
+	{
+		int y1 = uwal[x];
+		int y2 = dwal[x];
+		if (y2 <= y1)
+			continue;
+
+		R_DrawSkyColumn(x, y1, y2, 1);
+	}
+}
+
 static void R_DrawSky (visplane_t *pl)
 {
+	if (r_skymode == 2)
+	{
+		R_DrawCapSky(pl);
+		return;
+	}
+
 	int x;
 	float swal;
 

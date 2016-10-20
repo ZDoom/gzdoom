@@ -935,8 +935,8 @@ static void R_DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, doub
 	dc_dest = (ylookup[y1] + start_x) + dc_destorg;
 	dc_count = y2 - y1;
 
-	uint32_t solid_top = frontskytex->GetSWSkyCapColor(false);
-	uint32_t solid_bottom = frontskytex->GetSWSkyCapColor(true);
+	uint32_t solid_top = frontskytex->GetSkyCapColor(false);
+	uint32_t solid_bottom = frontskytex->GetSkyCapColor(true);
 
 	if (columns == 4)
 		if (!backskytex)

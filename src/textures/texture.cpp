@@ -591,9 +591,9 @@ namespace
 		}
 		for (i = 0; i < size; i++)
 		{
-			r += BPART(data[i]);
+			b += BPART(data[i]);
 			g += GPART(data[i]);
-			b += RPART(data[i]);
+			r += RPART(data[i]);
 		}
 
 		r = r / size;
@@ -612,7 +612,7 @@ namespace
 	}
 }
 
-PalEntry FTexture::GetSWSkyCapColor(bool bottom)
+PalEntry FTexture::GetSkyCapColor(bool bottom)
 {
 	PalEntry col;
 	int w;
@@ -631,15 +631,15 @@ PalEntry FTexture::GetSWSkyCapColor(bool bottom)
 		const uint32_t *buffer = (const uint32_t *)bitmap.GetPixels();
 		if (buffer)
 		{
-			SWCeilingSkyColor = averageColor((DWORD *)buffer, w * MIN(30, h), 0);
+			CeilingSkyColor = averageColor((DWORD *)buffer, w * MIN(30, h), 0);
 			if (h>30)
 			{
-				SWFloorSkyColor = averageColor(((DWORD *)buffer) + (h - 30)*w, w * 30, 0);
+				FloorSkyColor = averageColor(((DWORD *)buffer) + (h - 30)*w, w * 30, 0);
 			}
-			else SWFloorSkyColor = SWCeilingSkyColor;
+			else FloorSkyColor = CeilingSkyColor;
 		}
 	}
-	return bottom ? SWFloorSkyColor : SWCeilingSkyColor;
+	return bottom ? FloorSkyColor : CeilingSkyColor;
 }
 
 

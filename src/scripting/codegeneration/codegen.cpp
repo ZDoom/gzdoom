@@ -160,6 +160,18 @@ void FCompileContext::CheckReturn(PPrototype *proto, FScriptPosition &pos)
 	}
 }
 
+FxLocalVariableDeclaration *FCompileContext::FindLocalVariable(FName name)
+{
+	if (Block == nullptr)
+	{
+		return nullptr;
+	}
+	else
+	{
+		return Block->FindLocalVariable(name, *this);
+	}
+}
+
 //==========================================================================
 //
 // ExpEmit
@@ -1611,9 +1623,13 @@ ExpEmit FxPreIncrDecr::Emit(VMFunctionBuilder *build)
 	int zero = build->GetConstantInt(0);
 	int regtype = ValueType->GetRegType();
 	ExpEmit pointer = Base->Emit(build);
+	ExpEmit value = pointer;
 
-	ExpEmit value(build, regtype);
-	build->Emit(ValueType->GetLoadOp(), value.RegNum, pointer.RegNum, zero);
+	if (!pointer.Target)
+	{
+		value = ExpEmit(build, regtype);
+		build->Emit(ValueType->GetLoadOp(), value.RegNum, pointer.RegNum, zero);
+	}
 
 	if (regtype == REGT_INT)
 	{
@@ -1624,7 +1640,10 @@ ExpEmit FxPreIncrDecr::Emit(VMFunctionBuilder *build)
 		build->Emit((Token == TK_Incr) ? OP_ADDF_RK : OP_SUBF_RK, value.RegNum, value.RegNum, build->GetConstantFloat(1.));
 	}
 
-	build->Emit(ValueType->GetStoreOp(), pointer.RegNum, value.RegNum, zero);
+	if (!pointer.Target)
+	{
+		build->Emit(ValueType->GetStoreOp(), pointer.RegNum, value.RegNum, zero);
+	}
 
 	if (AddressRequested)
 	{
@@ -1690,9 +1709,13 @@ ExpEmit FxPostIncrDecr::Emit(VMFunctionBuilder *build)
 	int zero = build->GetConstantInt(0);
 	int regtype = ValueType->GetRegType();
 	ExpEmit pointer = Base->Emit(build);
+	ExpEmit out = pointer;
 
-	ExpEmit out(build, regtype);
-	build->Emit(ValueType->GetLoadOp(), out.RegNum, pointer.RegNum, zero);
+	if (!pointer.Target)
+	{
+		out = ExpEmit(build, regtype);
+		build->Emit(ValueType->GetLoadOp(), out.RegNum, pointer.RegNum, zero);
+	}
 
 	ExpEmit assign(build, regtype);
 	if (regtype == REGT_INT)
@@ -1704,7 +1727,10 @@ ExpEmit FxPostIncrDecr::Emit(VMFunctionBuilder *build)
 		build->Emit((Token == TK_Incr) ? OP_ADDF_RK : OP_SUBF_RK, assign.RegNum, out.RegNum, build->GetConstantFloat(1.));
 	}
 
-	build->Emit(ValueType->GetStoreOp(), pointer.RegNum, assign.RegNum, zero);
+	if (!pointer.Target)
+	{
+		build->Emit(ValueType->GetStoreOp(), pointer.RegNum, assign.RegNum, zero);
+	}
 
 	pointer.Free(build);
 	assign.Free(build);
@@ -1781,6 +1807,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 
 ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 {
+	static const BYTE loadops[] = { OP_NOP, OP_LK, OP_LKF, OP_LKS, OP_LKP };
 	assert(ValueType == Base->ValueType && IsNumeric());
 	assert(ValueType->GetRegType() == Right->ValueType->GetRegType());
 
@@ -1788,16 +1815,31 @@ ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 	Address = pointer;
 
 	ExpEmit result = Right->Emit(build);
-	
-	if (result.Konst)
-	{
-		ExpEmit temp(build, result.RegType);
-		build->Emit(result.RegType == REGT_FLOAT ? OP_LKF : OP_LK, temp.RegNum, result.RegNum);
-		result.Free(build);
-		result = temp;
-	}
+	assert(result.RegType <= REGT_TYPE);
 
-	build->Emit(ValueType->GetStoreOp(), pointer.RegNum, result.RegNum, build->GetConstantInt(0));
+	if (pointer.Target)
+	{
+		if (result.Konst)
+		{
+			build->Emit(loadops[result.RegType], pointer.RegNum, result.RegNum);
+		}
+		else
+		{
+			build->Emit(Right->ValueType->GetMoveOp(), pointer.RegNum, result.RegNum);
+		}
+	}
+	else
+	{
+		if (result.Konst)
+		{
+			ExpEmit temp(build, result.RegType);
+			build->Emit(loadops[result.RegType], temp.RegNum, result.RegNum);
+			result.Free(build);
+			result = temp;
+		}
+
+		build->Emit(ValueType->GetStoreOp(), pointer.RegNum, result.RegNum, build->GetConstantInt(0));
+	}
 
 	if (AddressRequested)
 	{
@@ -1837,9 +1879,16 @@ ExpEmit FxAssignSelf::Emit(VMFunctionBuilder *build)
 {
 	assert(ValueType = Assignment->ValueType);
 	ExpEmit pointer = Assignment->Address; // FxAssign should have already emitted it
-	ExpEmit out(build, ValueType->GetRegType());
-	build->Emit(ValueType->GetLoadOp(), out.RegNum, pointer.RegNum, build->GetConstantInt(0));
-	return out;
+	if (!pointer.Target)
+	{
+		ExpEmit out(build, ValueType->GetRegType());
+		build->Emit(ValueType->GetLoadOp(), out.RegNum, pointer.RegNum, build->GetConstantInt(0));
+		return out;
+	}
+	else
+	{
+		return pointer;
+	}
 }
 
 //==========================================================================
@@ -3858,8 +3907,15 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 	
 	CHECKRESOLVED();
 
+	// Local variables have highest priority.
+	FxLocalVariableDeclaration *local = ctx.FindLocalVariable(Identifier);
+	if (local != nullptr)
+	{
+		auto x = new FxLocalVariable(local, ScriptPosition);
+		delete this;
+		return x->Resolve(ctx);
+	}
 	// Ugh, the horror. Constants need to be taken from the owning class, but members from the self class to catch invalid accesses here...
-
 	// see if the current class (if valid) defines something with this name.
 	PSymbolTable *symtbl;
 	if ((sym = ctx.FindInClass(Identifier, symtbl)) != nullptr)
@@ -3965,6 +4021,40 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
+FxLocalVariable::FxLocalVariable(FxLocalVariableDeclaration *var, const FScriptPosition &sc)
+	: FxExpression(sc)
+{
+	Variable = var;
+	AddressRequested = false;
+}
+
+FxExpression *FxLocalVariable::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	return this;
+}
+
+bool FxLocalVariable::RequestAddress(bool *writable)
+{
+	AddressRequested = true;
+	if (writable != nullptr) *writable = !(Variable->VarFlags & VARF_ReadOnly);
+	return true;
+}
+	
+ExpEmit FxLocalVariable::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit ret(Variable->RegNum, Variable->ValueType->GetRegType(), false, true);
+	if (AddressRequested) ret.Target = true;
+	return ret;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FxSelf::FxSelf(const FScriptPosition &pos)
 : FxExpression(pos)
 {
@@ -3998,9 +4088,7 @@ FxExpression *FxSelf::Resolve(FCompileContext& ctx)
 ExpEmit FxSelf::Emit(VMFunctionBuilder *build)
 {
 	// self is always the first pointer passed to the function
-	ExpEmit me(0, REGT_POINTER);
-	me.Fixed = true;
-	return me;
+	return ExpEmit(0, REGT_POINTER, false, true);
 }
 
 
@@ -6238,10 +6326,11 @@ ExpEmit FxDamageValue::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxLocalVariableDeclaration::FxLocalVariableDeclaration(PType *type, FName name, FxExpression *initval, const FScriptPosition &p)
+FxLocalVariableDeclaration::FxLocalVariableDeclaration(PType *type, FName name, FxExpression *initval, int varflags, const FScriptPosition &p)
 	:FxExpression(p)
 {
 	ValueType = type;
+	VarFlags = varflags;
 	Name = name;
 	Init = initval == nullptr? nullptr : new FxTypeCast(initval, type, false);
 }

@@ -90,7 +90,7 @@ void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FNam
 	{
 		// implied self pointer
 		if (args != nullptr)		args->Push(NewPointer(cls)); 
-		if (argflags != nullptr)	argflags->Push(VARF_Implicit);
+		if (argflags != nullptr)	argflags->Push(VARF_Implicit | VARF_ReadOnly);
 		if (argnames != nullptr)	argnames->Push(NAME_self);
 	}
 	if (funcflags & VARF_Action)
@@ -111,8 +111,8 @@ void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FNam
 		}
 		if (argflags != nullptr)
 		{
-			argflags->Push(VARF_Implicit);
-			argflags->Push(VARF_Implicit);
+			argflags->Push(VARF_Implicit | VARF_ReadOnly);
+			argflags->Push(VARF_Implicit | VARF_ReadOnly);
 		}
 		if (argnames != nullptr)
 		{

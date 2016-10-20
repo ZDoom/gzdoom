@@ -194,7 +194,7 @@ begin:
 		ASSERTF(a+2); ASSERTA(B); ASSERTKD(C);
 		GETADDR(PB,KC,X_READ_NIL);
 		{
-			float *v = (float *)ptr;
+			auto v = (double *)ptr;
 			reg.f[a] = v[0];
 			reg.f[a+1] = v[1];
 			reg.f[a+2] = v[2];
@@ -204,7 +204,7 @@ begin:
 		ASSERTF(a+2); ASSERTA(B); ASSERTD(C);
 		GETADDR(PB,RC,X_READ_NIL);
 		{
-			float *v = (float *)ptr;
+			auto v = (double *)ptr;
 			reg.f[a] = v[0];
 			reg.f[a+1] = v[1];
 			reg.f[a+2] = v[2];
@@ -290,20 +290,20 @@ begin:
 		ASSERTA(a); ASSERTF(B+2); ASSERTKD(C);
 		GETADDR(PA,KC,X_WRITE_NIL);
 		{
-			float *v = (float *)ptr;
-			v[0] = (float)reg.f[B];
-			v[1] = (float)reg.f[B+1];
-			v[2] = (float)reg.f[B+2];
+			auto v = (double *)ptr;
+			v[0] = reg.f[B];
+			v[1] = reg.f[B+1];
+			v[2] = reg.f[B+2];
 		}
 		NEXTOP;
 	OP(SV_R):
 		ASSERTA(a); ASSERTF(B+2); ASSERTD(C);
 		GETADDR(PA,RC,X_WRITE_NIL);
 		{
-			float *v = (float *)ptr;
-			v[0] = (float)reg.f[B];
-			v[1] = (float)reg.f[B+1];
-			v[2] = (float)reg.f[B+2];
+			auto v = (double *)ptr;
+			v[0] = reg.f[B];
+			v[1] = reg.f[B+1];
+			v[2] = reg.f[B+2];
 		}
 		NEXTOP;
 	OP(SBIT):

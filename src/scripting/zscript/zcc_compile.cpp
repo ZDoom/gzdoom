@@ -42,6 +42,7 @@
 #include "cmdlib.h"
 #include "m_alloc.h"
 #include "zcc_parser.h"
+#include "zcc-parse.h"
 #include "zcc_compile.h"
 #include "v_text.h"
 #include "p_lnspec.h"
@@ -2344,10 +2345,41 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 			// The function name is a simple identifier.
 			return new FxFunctionCall(static_cast<ZCC_ExprID *>(fcall->Function)->Identifier, NAME_None, ConvertNodeList(fcall->Parameters), *ast);
 
+			// not yet done
+		case AST_ExprTypeRef:
+		case AST_SwitchStmt:
+		case AST_CaseStmt:
 		case AST_ExprMemberAccess:
 			// calling a class member through its pointer
 			// todo.
 			break;
+
+		case AST_AssignStmt:
+		{
+			auto assign = static_cast<ZCC_AssignStmt *>(ast);
+			switch (assign->AssignOp)
+			{
+			case ZCC_EQ:		
+				// this ignores multi-assign statements (these should probably be disabled in the grammar.)
+				return new FxAssign(ConvertNode(assign->Dests), ConvertNode(assign->Sources));
+
+			case ZCC_MULEQ:		
+			case ZCC_DIVEQ:		
+			case ZCC_MODEQ:		
+			case ZCC_ADDEQ:		
+			case ZCC_SUBEQ:		
+			case ZCC_LSHEQ:		
+			case ZCC_RSHEQ:		
+			case ZCC_ANDEQ:		
+			case ZCC_OREQ:		
+			case ZCC_XOREQ:		
+				//break;
+			default:	
+				Error(ast, "Invalid assign statement");
+
+			}
+			break;
+		}
 
 		case AST_ExprBinary:
 			// Array syntax for randoms. They are internally stored as ExprBinary with both an identifier on the left and right side.
@@ -2546,7 +2578,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 				{
 					val = node->Init ? ConvertNode(node->Init) : nullptr;
 				}
-				list->Add(new FxLocalVariableDeclaration(type, node->Name, val, *node));
+				list->Add(new FxLocalVariableDeclaration(type, node->Name, val, 0, *node));	// todo: Handle flags in the grammar.
 			}
 
 			node = static_cast<decltype(node)>(node->SiblingNext);
@@ -2575,6 +2607,35 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 			return new FxReturnStatement(nullptr, *ast);
 		}
 	}
+
+	case AST_BreakStmt:
+	case AST_ContinueStmt:
+		return new FxJumpStatement(ast->NodeType == AST_BreakStmt ? TK_Break : TK_Continue, *ast);
+
+	case AST_IfStmt:
+	{
+		auto iff = static_cast<ZCC_IfStmt *>(ast);
+		return new FxIfStatement(ConvertNode(iff->Condition), ConvertNode(iff->TruePath), ConvertNode(iff->FalsePath), *ast);
+	}
+
+	case AST_IterationStmt:
+	{
+		auto iter = static_cast<ZCC_IterationStmt *>(ast);
+		if (iter->CheckAt == ZCC_IterationStmt::End)
+		{
+			assert(iter->LoopBumper == nullptr);
+			return new FxDoWhileLoop(ConvertNode(iter->LoopCondition), ConvertNode(iter->LoopStatement), *ast);
+		}
+		else if (iter->LoopBumper != nullptr)
+		{
+			return new FxForLoop(nullptr, ConvertNode(iter->LoopCondition), ConvertNode(iter->LoopBumper), ConvertNode(iter->LoopStatement), *ast);
+		}
+		else
+		{
+			return new FxWhileLoop(ConvertNode(iter->LoopCondition), ConvertNode(iter->LoopStatement), *ast);
+		}
+	}
+
 
 	case AST_CompoundStmt:
 	{

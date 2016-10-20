@@ -85,6 +85,7 @@ struct FCompileContext
 
 	void HandleJumps(int token, FxExpression *handler);
 	void CheckReturn(PPrototype *proto, FScriptPosition &pos);
+	FxLocalVariableDeclaration *FindLocalVariable(FName name);
 };
 
 //==========================================================================
@@ -198,7 +199,7 @@ struct ExpEmit
 	void Free(VMFunctionBuilder *build);
 	void Reuse(VMFunctionBuilder *build);
 
-	BYTE RegNum, RegType, Konst:1, Fixed:1, Final:1;
+	BYTE RegNum, RegType, Konst:1, Fixed:1, Final:1, Target:1;
 };
 
 //==========================================================================
@@ -966,6 +967,24 @@ public:
 
 //==========================================================================
 //
+//	FxLocalVariable
+//
+//==========================================================================
+
+class FxLocalVariable : public FxExpression
+{
+public:
+	FxLocalVariableDeclaration *Variable;
+	bool AddressRequested;
+
+	FxLocalVariable(FxLocalVariableDeclaration*, const FScriptPosition&);
+	FxExpression *Resolve(FCompileContext&);
+	bool RequestAddress(bool *writable);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
 //	FxSelf
 //
 //==========================================================================
@@ -1382,13 +1401,15 @@ public:
 class FxLocalVariableDeclaration : public FxExpression
 {
 	friend class FxCompoundStatement;
+	friend class FxLocalVariable;
 
 	FName Name;
 	FxExpression *Init;
+	int VarFlags;
 public:
 	int RegNum = -1;
 
-	FxLocalVariableDeclaration(PType *type, FName name, FxExpression *initval, const FScriptPosition &p);
+	FxLocalVariableDeclaration(PType *type, FName name, FxExpression *initval, int varflags, const FScriptPosition &p);
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 	void Release(VMFunctionBuilder *build);

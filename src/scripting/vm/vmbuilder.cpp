@@ -693,8 +693,9 @@ void FFunctionBuildList::Build()
 		{
 			auto type = item.Func->Variants[0].Proto->ArgumentTypes[i];
 			auto name = item.Func->Variants[0].ArgNames[i];
-			// this won't get resolved and won't get emitted. This is only needed so that the code generator can retrieve the necessary info to do its work.
-			auto local = new FxLocalVariableDeclaration(type, name, nullptr, FScriptPosition());	
+			auto flags = item.Func->Variants[0].ArgFlags[i];
+			// this won't get resolved and won't get emitted. It is only needed so that the code generator can retrieve the necessary info about this argument to do its work.
+			auto local = new FxLocalVariableDeclaration(type, name, nullptr, flags, FScriptPosition());	
 			local->RegNum = buildit.Registers[type->GetRegType()].Get(1);
 			ctx.FunctionArgs.Push(local);
 		}

@@ -28,7 +28,7 @@ enum
 	VARF_Final			= (1<<9),	// Function may not be overridden in subclasses
 	VARF_In				= (1<<10),
 	VARF_Out			= (1<<11),
-	VARF_Implicit		= (1<<12),	// implicitly created parameters (i.e. do not compare when checking function signatures)
+	VARF_Implicit		= (1<<12),	// implicitly created parameters (i.e. do not compare types when checking function signatures)
 	VARF_Static			= (1<<13),	// static class data (by necessity read only.)
 };
 
@@ -272,6 +272,9 @@ public:
 	// Gets the opcode to load from memory to a register
 	virtual int GetLoadOp() const;
 
+	// Gets the opcode to move from register to another register
+	virtual int GetMoveOp() const;
+
 	// Gets the register type for this type
 	virtual int GetRegType() const;
 
@@ -409,6 +412,7 @@ public:
 	virtual double GetValueFloat(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
+	virtual int GetMoveOp() const;
 	virtual int GetRegType() const;
 
 	bool Unsigned;
@@ -438,6 +442,7 @@ public:
 	virtual double GetValueFloat(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
+	virtual int GetMoveOp() const;
 	virtual int GetRegType() const;
 protected:
 	PFloat();
@@ -516,6 +521,7 @@ public:
 
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
+	virtual int GetMoveOp() const;
 	virtual int GetRegType() const;
 };
 
@@ -530,6 +536,7 @@ public:
 
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
+	virtual int GetMoveOp() const;
 	virtual int GetRegType() const;
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;

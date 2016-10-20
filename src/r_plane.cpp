@@ -1098,7 +1098,15 @@ static void R_DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, doub
 
 		DWORD ang, angle1, angle2;
 
-		ang = (skyangle + xtoviewangle[x]) ^ skyflip;
+		if (r_linearsky)
+		{
+			angle_t xangle = (angle_t)((0.5 - x / (double)viewwidth) * FocalTangent * ANGLE_90);
+			ang = (skyangle + xangle) ^ skyflip;
+		}
+		else
+		{
+			ang = (skyangle + xtoviewangle[x]) ^ skyflip;
+		}
 		angle1 = (DWORD)((UMulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
 		angle2 = (DWORD)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
 

@@ -179,7 +179,7 @@ FxLocalVariableDeclaration *FCompileContext::FindLocalVariable(FName name)
 //==========================================================================
 
 ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)
-: RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false), Fixed(false), Final(false)
+: RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false), Fixed(false), Final(false), Target(false)
 {
 }
 
@@ -1807,15 +1807,15 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 
 ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 {
-	static const BYTE loadops[] = { OP_NOP, OP_LK, OP_LKF, OP_LKS, OP_LKP };
+	static const BYTE loadops[] = { OP_LK, OP_LKF, OP_LKS, OP_LKP };
 	assert(ValueType == Base->ValueType && IsNumeric());
 	assert(ValueType->GetRegType() == Right->ValueType->GetRegType());
 
-	ExpEmit pointer = Base->Emit(build);
-	Address = pointer;
-
 	ExpEmit result = Right->Emit(build);
 	assert(result.RegType <= REGT_TYPE);
+
+	ExpEmit pointer = Base->Emit(build);
+	Address = pointer;
 
 	if (pointer.Target)
 	{
@@ -4025,6 +4025,7 @@ FxLocalVariable::FxLocalVariable(FxLocalVariableDeclaration *var, const FScriptP
 	: FxExpression(sc)
 {
 	Variable = var;
+	ValueType = var->ValueType;
 	AddressRequested = false;
 }
 
@@ -5167,7 +5168,7 @@ FxExpression *FxCompoundStatement::Resolve(FCompileContext &ctx)
 	ctx.Block = this;
 	auto x = FxSequence::Resolve(ctx);
 	ctx.Block = outer;
-	return this;
+	return x;
 }
 
 //==========================================================================

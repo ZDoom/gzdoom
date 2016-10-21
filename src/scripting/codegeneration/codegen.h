@@ -193,8 +193,8 @@ struct ExpVal
 
 struct ExpEmit
 {
-	ExpEmit() : RegNum(0), RegType(REGT_NIL), Konst(false), Fixed(false), Final(false) {}
-	ExpEmit(int reg, int type, bool konst = false, bool fixed = false)  : RegNum(reg), RegType(type), Konst(konst), Fixed(fixed), Final(false) {}
+	ExpEmit() : RegNum(0), RegType(REGT_NIL), Konst(false), Fixed(false), Final(false), Target(false) {}
+	ExpEmit(int reg, int type, bool konst = false, bool fixed = false)  : RegNum(reg), RegType(type), Konst(konst), Fixed(fixed), Final(false), Target(false) {}
 	ExpEmit(VMFunctionBuilder *build, int type);
 	void Free(VMFunctionBuilder *build);
 	void Reuse(VMFunctionBuilder *build);

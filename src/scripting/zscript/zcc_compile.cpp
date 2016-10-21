@@ -2354,33 +2354,6 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 			// todo.
 			break;
 
-		case AST_AssignStmt:
-		{
-			auto assign = static_cast<ZCC_AssignStmt *>(ast);
-			switch (assign->AssignOp)
-			{
-			case ZCC_EQ:		
-				// this ignores multi-assign statements (these should probably be disabled in the grammar.)
-				return new FxAssign(ConvertNode(assign->Dests), ConvertNode(assign->Sources));
-
-			case ZCC_MULEQ:		
-			case ZCC_DIVEQ:		
-			case ZCC_MODEQ:		
-			case ZCC_ADDEQ:		
-			case ZCC_SUBEQ:		
-			case ZCC_LSHEQ:		
-			case ZCC_RSHEQ:		
-			case ZCC_ANDEQ:		
-			case ZCC_OREQ:		
-			case ZCC_XOREQ:		
-				//break;
-			default:	
-				Error(ast, "Invalid assign statement");
-
-			}
-			break;
-		}
-
 		case AST_ExprBinary:
 			// Array syntax for randoms. They are internally stored as ExprBinary with both an identifier on the left and right side.
 			if (fcall->Function->Operation == PEX_ArrayAccess)
@@ -2396,6 +2369,33 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		default:
 			Error(fcall, "Invalid function identifier");
 			return new FxNop(*ast);	// return something so that the compiler can continue.
+		}
+		break;
+	}
+
+	case AST_AssignStmt:
+	{
+		auto assign = static_cast<ZCC_AssignStmt *>(ast);
+		switch (assign->AssignOp)
+		{
+		case ZCC_EQ:
+			// this ignores multi-assign statements (these should probably be disabled in the grammar.)
+			return new FxAssign(ConvertNode(assign->Dests), ConvertNode(assign->Sources));
+
+		case ZCC_MULEQ:
+		case ZCC_DIVEQ:
+		case ZCC_MODEQ:
+		case ZCC_ADDEQ:
+		case ZCC_SUBEQ:
+		case ZCC_LSHEQ:
+		case ZCC_RSHEQ:
+		case ZCC_ANDEQ:
+		case ZCC_OREQ:
+		case ZCC_XOREQ:
+			//break;
+		default:
+			Error(ast, "Invalid assign statement");
+
 		}
 		break;
 	}

@@ -314,7 +314,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	rw_scalestep = ds->iscalestep;
 
 	if (fixedlightlev >= 0)
-		dc_colormap = (r_fullbrightignoresectorcolor) ? (&FullNormalLight->Maps + fixedlightlev) : (basecolormap->Maps + fixedlightlev);
+		dc_colormap = (r_fullbrightignoresectorcolor) ? (FullNormalLight.Maps + fixedlightlev) : (basecolormap->Maps + fixedlightlev);
 	else if (fixedcolormap != NULL)
 		dc_colormap = fixedcolormap;
 
@@ -631,7 +631,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	}
 
 	if (fixedlightlev >= 0)
-		dc_colormap = (r_fullbrightignoresectorcolor) ? (&FullNormalLight->Maps + fixedlightlev) : (basecolormap->Maps + fixedlightlev);
+		dc_colormap = (r_fullbrightignoresectorcolor) ? (FullNormalLight.Maps + fixedlightlev) : (basecolormap->Maps + fixedlightlev);
 	else if (fixedcolormap != NULL)
 		dc_colormap = fixedcolormap;
 
@@ -1789,7 +1789,7 @@ void R_RenderSegLoop ()
 	fixed_t xoffset = rw_offset;
 
 	if (fixedlightlev >= 0)
-		dc_colormap = (r_fullbrightignoresectorcolor) ? (&FullNormalLight->Maps + fixedlightlev) : (basecolormap->Maps + fixedlightlev);
+		dc_colormap = (r_fullbrightignoresectorcolor) ? (FullNormalLight.Maps + fixedlightlev) : (basecolormap->Maps + fixedlightlev);
 	else if (fixedcolormap != NULL)
 		dc_colormap = fixedcolormap;
 
@@ -3188,11 +3188,11 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 
 	rw_light = rw_lightleft + (x1 - WallC.sx1) * rw_lightstep;
 	if (fixedlightlev >= 0)
-		dc_colormap = (r_fullbrightignoresectorcolor) ? (&FullNormalLight->Maps + fixedlightlev) : (usecolormap->Maps + fixedlightlev);
+		dc_colormap = (r_fullbrightignoresectorcolor) ? (FullNormalLight.Maps + fixedlightlev) : (usecolormap->Maps + fixedlightlev);
 	else if (fixedcolormap != NULL)
 		dc_colormap = fixedcolormap;
 	else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
-		dc_colormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight->Maps : usecolormap->Maps;
+		dc_colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : usecolormap->Maps;
 	else
 		calclighting = true;
 

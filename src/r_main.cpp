@@ -486,7 +486,7 @@ void R_SetupColormap(player_t *player)
 			// [SP] Emulate GZDoom's light-amp goggles.
 			if (r_fullbrightignoresectorcolor && fixedlightlev >= 0)
 			{
-				fixedcolormap = &FullNormalLight;
+				fixedcolormap = FullNormalLight.Maps;
 			}
 		}
 	}

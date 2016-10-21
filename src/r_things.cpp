@@ -549,7 +549,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 	else if (fixedcolormap != NULL)
 		dc_colormap = fixedcolormap;
 	else if (!foggy && (spr->renderflags & RF_FULLBRIGHT))
-		dc_colormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight->Maps : usecolormap->Maps;
+		dc_colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : usecolormap->Maps;
 	else
 		calclighting = true;
 
@@ -1142,7 +1142,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		}
 		else if (!foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
 		{ // full bright
-			vis->Style.colormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight->Maps : mybasecolormap->Maps;
+			vis->Style.colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : mybasecolormap->Maps;
 		}
 		else
 		{ // diminished light
@@ -1464,11 +1464,11 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 			}
 			if (fixedlightlev >= 0)
 			{
-				vis->Style.colormap = (r_fullbrightignoresectorcolor) ? (&FullNormalLight->Maps + fixedlightlev) : (mybasecolormap->Maps + fixedlightlev);
+				vis->Style.colormap = (r_fullbrightignoresectorcolor) ? (FullNormalLight.Maps + fixedlightlev) : (mybasecolormap->Maps + fixedlightlev);
 			}
 			else if (!foggy && pspr->GetState()->GetFullbright())
 			{ // full bright
-				vis->Style.colormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight->Maps : mybasecolormap->Maps;	// [RH] use basecolormap
+				vis->Style.colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : mybasecolormap->Maps;	// [RH] use basecolormap
 			}
 			else
 			{ // local light
@@ -2064,7 +2064,7 @@ void R_DrawSprite (vissprite_t *spr)
 			}
 			else if (!foggy && (spr->renderflags & RF_FULLBRIGHT))
 			{ // full bright
-				spr->Style.colormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight->Maps : mybasecolormap->Maps;
+				spr->Style.colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : mybasecolormap->Maps;
 			}
 			else
 			{ // diminished light
@@ -2622,7 +2622,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	}
 	else if (particle->bright)
 	{
-		vis->Style.colormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight->Maps : map;
+		vis->Style.colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : map;
 	}
 	else
 	{

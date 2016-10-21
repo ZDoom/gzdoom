@@ -73,6 +73,7 @@ struct FakeCmap
 
 TArray<FakeCmap> fakecmaps;
 FSWColormap realcolormaps;
+FSWColormap realfbcolormaps; //[SP] For fullbright use
 size_t numfakecmaps;
 
 
@@ -456,6 +457,12 @@ void R_DeinitColormaps ()
 	SpecialColormaps.Clear();
 	fakecmaps.Clear();
 	delete[] realcolormaps.Maps;
+	if (realfbcolormaps != NULL)
+	{
+		delete[] realfbcolormaps;
+		realfbcolormaps = NULL;
+	}
+	delete[] realfbcolormaps.Maps;
 	FreeSpecialLights();
 }
 
@@ -545,12 +552,20 @@ void R_InitColormaps ()
 			}
 		}
 	}
+
+	// [SP] Create a copy of the colormap
+	if (!realfbcolormaps)
+	{
+		realfbcolormaps = new BYTE[256*NUMCOLORMAPS*fakecmaps.Size()];
+		memcpy(realfbcolormaps, realcolormaps, 256*NUMCOLORMAPS*fakecmaps.Size());
+	}
+
 	NormalLight.Color = PalEntry (255, 255, 255);
 	NormalLight.Fade = 0;
 	NormalLight.Maps = realcolormaps.Maps;
 	FullNormalLight.Color = PalEntry (255, 255, 255);
 	FullNormalLight.Fade = 0;
-	FullNormalLight.Maps = realcolormaps.Maps;
+	FullNormalLight.Maps = realfbcolormaps.Maps;
 	NormalLightHasFixedLights = R_CheckForFixedLights(realcolormaps.Maps);
 	numfakecmaps = fakecmaps.Size();
 

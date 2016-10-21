@@ -1671,7 +1671,7 @@ int PPointer::GetStoreOp() const
 
 int PPointer::GetLoadOp() const
 {
-	return PointedType->IsKindOf(RUNTIME_CLASS(PClass)) ? OP_LO : OP_LP;
+	return (PointedType && PointedType->IsKindOf(RUNTIME_CLASS(PClass))) ? OP_LO : OP_LP;
 }
 
 //==========================================================================

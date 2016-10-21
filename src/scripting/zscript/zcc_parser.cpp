@@ -154,7 +154,7 @@ static void InitTokenMap()
 	TOKENDEF (TK_Out,			ZCC_OUT);
 	TOKENDEF (TK_Optional,		ZCC_OPTIONAL);
 	TOKENDEF (TK_Super,			ZCC_SUPER);
-	TOKENDEF (TK_Null,			ZCC_NULL);
+	TOKENDEF (TK_Null,			ZCC_NULLPTR);
 	TOKENDEF (TK_Self,			ZCC_SELF);
 	TOKENDEF ('~',				ZCC_TILDE);
 	TOKENDEF ('!',				ZCC_BANG);

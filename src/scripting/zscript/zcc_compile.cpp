@@ -1462,6 +1462,10 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt)
 		{
 			return TypeSInt32;	// hack this to an integer until we can resolve the enum mess.
 		}
+		if (type->IsKindOf(RUNTIME_CLASS(PClass)))
+		{
+			return NewPointer(type);
+		}
 		return type;
 	}
 	return TypeError;
@@ -2353,6 +2357,8 @@ static FxExpression *ModifyAssign(FxBinary *operation, FxExpression *left)
 
 FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 {
+	if (ast == nullptr) return nullptr;
+
 	// Note: Do not call 'Simplify' here because that function tends to destroy identifiers due to lack of context in which to resolve them.
 	// The Fx nodes created here will be better suited for that.
 	switch (ast->NodeType)
@@ -2435,6 +2441,10 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		else if (cnst->Type->IsA(RUNTIME_CLASS(PString)))
 		{
 			return new FxConstant(*cnst->StringVal, *ast);
+		}
+		else if (cnst->Type == TypeNullPtr)
+		{
+			return new FxConstant(*ast);
 		}
 		else
 		{

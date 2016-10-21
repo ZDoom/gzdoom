@@ -1450,6 +1450,14 @@ constant(X) ::= TRUE(A).
 	NEW_INTCONST_NODE(boolconst, TypeBool, true, A);
 	X = boolconst;
 }
+constant(X) ::= NULLPTR(A).
+{
+	NEW_AST_NODE(ExprConstant, nullptrconst, A);
+	nullptrconst->Operation = PEX_ConstValue;
+	nullptrconst->Type = TypeNullPtr;
+	nullptrconst->StringVal = nullptr;
+	X = nullptrconst;
+}
 
 /************ Statements ************/
 

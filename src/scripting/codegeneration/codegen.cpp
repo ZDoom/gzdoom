@@ -229,6 +229,31 @@ static PSymbol *FindDecorateBuiltinFunction(FName funcname, VMNativeFunction::Na
 //
 //==========================================================================
 
+static bool AreCompatiblePointerTypes(PType *dest, PType *source)
+{
+	if (dest->IsKindOf(RUNTIME_CLASS(PPointer)) && source->IsKindOf(RUNTIME_CLASS(PPointer)))
+	{
+		// Pointers to different types are only compatible if both point to an object and the source type is a child of the destination type.
+		auto fromtype = static_cast<PPointer *>(source);
+		auto totype = static_cast<PPointer *>(dest);
+		if (fromtype == nullptr) return true;
+		if (fromtype == totype) return true;
+		if (fromtype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)) && totype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
+		{
+			auto fromcls = static_cast<PClass *>(fromtype->PointedType);
+			auto tocls = static_cast<PClass *>(totype->PointedType);
+			return (fromcls->IsDescendantOf(tocls));
+		}
+	}
+	return false;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 ExpEmit FxExpression::Emit (VMFunctionBuilder *build)
 {
 	ScriptPosition.Message(MSG_ERROR, "Unemitted expression found");
@@ -1174,21 +1199,9 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 			if (fromtype->IsDescendantOf(totype)) goto basereturn;
 		}
 	}
-	else if (ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
+	else if (AreCompatiblePointerTypes(ValueType, basex->ValueType))
 	{
-		// Pointers to different types are only compatible if both point to an object and the source type is a child of the destination type.
-		if (basex->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
-		{
-			auto fromtype = static_cast<PPointer *>(basex->ValueType);
-			auto totype = static_cast<PPointer *>(ValueType);
-			if (fromtype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)) && totype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
-			{
-
-				auto fromcls = static_cast<PClass *>(fromtype->PointedType);
-				auto tocls = static_cast<PClass *>(totype->PointedType);
-				if (fromcls->IsDescendantOf(tocls)) goto basereturn;
-			}
-		}
+		goto basereturn;
 	}
 	// todo: pointers to class objects. 
 	// All other types are only compatible to themselves and have already been handled above by the equality check.
@@ -1201,9 +1214,9 @@ errormsg:
 
 basereturn:
 	auto x = basex;
+	x->ValueType = ValueType;
 	basex = nullptr;
 	delete this;
-	x->ValueType = ValueType;
 	return x;
 
 }
@@ -1996,14 +2009,21 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 			ValueType = TypeFloat64;
 		}
 	}
-	else if (left->ValueType->GetRegType() == REGT_POINTER && left->ValueType == right->ValueType)
+	else if (left->ValueType->GetRegType() == REGT_POINTER)
 	{
-		ValueType = left->ValueType;
+		if (left->ValueType == right->ValueType || right->ValueType == TypeNullPtr || left->ValueType == TypeNullPtr ||
+			AreCompatiblePointerTypes(left->ValueType, right->ValueType))
+		{
+			// pointers can only be compared for equality.
+			assert(Operator == TK_Eq || Operator == TK_Neq);
+			ValueType = TypeBool;
+		}
 	}
 	else
 	{
 		ValueType = TypeVoid;
 	}
+	assert(ValueType > nullptr && ValueType < (PType*)0xfffffffffffffff);
 
 	if (castnumeric)
 	{
@@ -4191,67 +4211,72 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 
 	SAFE_RESOLVE(Object, ctx);
 
-	if (Object->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
+	if (Object->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
 	{
 		PSymbolTable *symtbl;
-		PClass *cls = static_cast<PClassPointer *>(Object->ValueType)->ClassRestriction;
-		if ((sym = cls->Symbols.FindSymbolInTable(Identifier, symtbl)) != nullptr)
+		auto ptype = static_cast<PPointer *>(Object->ValueType)->PointedType;
+
+		if (ptype->IsKindOf(RUNTIME_CLASS(PClass)))
 		{
-			if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
+			PClass *cls = static_cast<PClass *>(ptype);
+			if ((sym = cls->Symbols.FindSymbolInTable(Identifier, symtbl)) != nullptr)
 			{
-				ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as class constant\n", Identifier.GetChars());
-				newex = FxConstant::MakeConstant(sym, ScriptPosition);
-			}
-			else if (sym->IsKindOf(RUNTIME_CLASS(PField)))
-			{
-				PField *vsym = static_cast<PField*>(sym);
-
-				// We have 4 cases to consider here:
-				// 1. The symbol is a static/meta member (not implemented yet) which is always accessible.
-				// 2. This is a static function 
-				// 3. This is an action function with a restricted self pointer
-				// 4. This is a normal member or unrestricted action function.
-				if (vsym->Flags & VARF_Deprecated)
+				if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
 				{
-					ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s", vsym->SymbolName.GetChars());
+					ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as class constant\n", Identifier.GetChars());
+					newex = FxConstant::MakeConstant(sym, ScriptPosition);
 				}
-				if ((vsym->Flags & VARF_Private) && symtbl != &ctx.Class->Symbols)
+				else if (sym->IsKindOf(RUNTIME_CLASS(PField)))
 				{
-					ScriptPosition.Message(MSG_ERROR, "Private member %s not accessible", vsym->SymbolName.GetChars());
+					PField *vsym = static_cast<PField*>(sym);
+
+					// We have 4 cases to consider here:
+					// 1. The symbol is a static/meta member (not implemented yet) which is always accessible.
+					// 2. This is a static function 
+					// 3. This is an action function with a restricted self pointer
+					// 4. This is a normal member or unrestricted action function.
+					if (vsym->Flags & VARF_Deprecated)
+					{
+						ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s", vsym->SymbolName.GetChars());
+					}
+					if ((vsym->Flags & VARF_Private) && symtbl != &ctx.Class->Symbols)
+					{
+						ScriptPosition.Message(MSG_ERROR, "Private member %s not accessible", vsym->SymbolName.GetChars());
+						delete this;
+						return nullptr;
+					}
+
+					if (vsym->Flags & VARF_Static)
+					{
+						// todo. For now these cannot be defined so let's just exit.
+						ScriptPosition.Message(MSG_ERROR, "Static members not implemented yet.");
+						delete this;
+						return nullptr;
+					}
+					auto x = new FxClassMember(Object, vsym, ScriptPosition);
+					delete this;
+					return x->Resolve(ctx);
+				}
+				else
+				{
+					ScriptPosition.Message(MSG_ERROR, "Invalid member identifier '%s'\n", Identifier.GetChars());
 					delete this;
 					return nullptr;
 				}
-
-				if (vsym->Flags & VARF_Static)
-				{
-					// todo. For now these cannot be defined so let's just exit.
-					ScriptPosition.Message(MSG_ERROR, "Static members not implemented yet.");
-					delete this;
-					return nullptr;
-				}
-				auto x = new FxClassMember(Object, vsym, ScriptPosition);
-				delete this;
-				return x->Resolve(ctx);
 			}
 			else
 			{
-				ScriptPosition.Message(MSG_ERROR, "Invalid member identifier '%s'\n", Identifier.GetChars());
+				ScriptPosition.Message(MSG_ERROR, "Unknown identifier '%s'", Identifier.GetChars());
 				delete this;
 				return nullptr;
 			}
 		}
-		else
+		else if (ptype->IsA(RUNTIME_CLASS(PStruct)))
 		{
-			ScriptPosition.Message(MSG_ERROR, "Unknown identifier '%s'", Identifier.GetChars());
-			delete this;
-			return nullptr;
+			// todo
 		}
 	}
 	else if (Object->ValueType->IsA(RUNTIME_CLASS(PStruct)))
-	{
-		// todo
-	}
-	else if (Object->ValueType->IsA(RUNTIME_CLASS(PPointer)))
 	{
 		// todo
 	}

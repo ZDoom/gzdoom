@@ -120,6 +120,7 @@ class FRenderState
 	FShader *activeShader;
 
 	EPassType mPassType = NORMAL_PASS;
+	int mNumDrawBuffers = 1;
 
 	bool ApplyShader();
 
@@ -489,6 +490,22 @@ public:
 	EPassType GetPassType()
 	{
 		return mPassType;
+	}
+
+	void EnableDrawBuffers(int count)
+	{
+		count = MIN(count, 3);
+		if (mNumDrawBuffers != count)
+		{
+			static GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+			glDrawBuffers(count, buffers);
+			mNumDrawBuffers = count;
+		}
+	}
+
+	int GetPassDrawBufferCount()
+	{
+		return mPassType == GBUFFER_PASS ? 3 : 1;
 	}
 
 	// Backwards compatibility crap follows

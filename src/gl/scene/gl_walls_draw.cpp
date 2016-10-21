@@ -227,6 +227,7 @@ void GLWall::RenderFogBoundary()
 		{
 			int rel = rellight + getExtraLight();
 			gl_SetFog(lightlevel, rel, &Colormap, false);
+			gl_RenderState.EnableDrawBuffers(1);
 			gl_RenderState.SetEffect(EFF_FOGBOUNDARY);
 			gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 			glEnable(GL_POLYGON_OFFSET_FILL);
@@ -235,6 +236,7 @@ void GLWall::RenderFogBoundary()
 			glPolygonOffset(0.0f, 0.0f);
 			glDisable(GL_POLYGON_OFFSET_FILL);
 			gl_RenderState.SetEffect(EFF_NONE);
+			gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		}
 		else
 		{

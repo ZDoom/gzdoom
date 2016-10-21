@@ -160,9 +160,8 @@ void FGLRenderer::Set3DViewport(bool mainview)
 	{
 		bool useSSAO = (gl_ssao != 0);
 		mBuffers->BindSceneFB(useSSAO);
-		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-		glDrawBuffers(useSSAO ? 3 : 1, buffers);
 		gl_RenderState.SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
+		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		gl_RenderState.Apply();
 	}
 
@@ -479,6 +478,11 @@ void FGLRenderer::DrawScene(int drawmode)
 	static int recursion=0;
 	static int ssao_portals_available = 0;
 
+	if (drawmode == DM_MAINVIEW)
+		ssao_portals_available = gl_ssao_portals + 1;
+	else if (drawmode == DM_OFFSCREEN)
+		ssao_portals_available = 0;
+
 	if (camera != nullptr)
 	{
 		ActorRenderFlags savedflags = camera->renderflags;
@@ -495,35 +499,14 @@ void FGLRenderer::DrawScene(int drawmode)
 	}
 	GLRenderer->mClipPortal = NULL;	// this must be reset before any portal recursion takes place.
 
-	// Decide if we need to do ssao for this scene
-	bool applySSAO = gl_ssao != 0 && FGLRenderBuffers::IsEnabled();
-	switch (drawmode)
-	{
-	case DM_MAINVIEW: ssao_portals_available = gl_ssao_portals; break;
-	case DM_OFFSCREEN: ssao_portals_available = 0; applySSAO = false; break;
-	case DM_PORTAL: applySSAO = applySSAO && (ssao_portals_available > 0); ssao_portals_available--; break;
-	}
-
-	// If SSAO is active, switch to gbuffer shaders and use the framebuffer with gbuffers
-	if (applySSAO)
-	{
-		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-		glDrawBuffers(3, buffers);
-		gl_RenderState.SetPassType(GBUFFER_PASS);
-		gl_RenderState.Apply();
-		gl_RenderState.ApplyMatrices();
-	}
-
 	RenderScene(recursion);
 
-	// Apply ambient occlusion and switch back to shaders without gbuffer output
-	if (applySSAO)
+	if (ssao_portals_available > 0 && gl_RenderState.GetPassType() == GBUFFER_PASS)
 	{
-		GLenum buffers[] = { GL_COLOR_ATTACHMENT0 };
-		glDrawBuffers(1, buffers);
+		gl_RenderState.EnableDrawBuffers(1);
 		AmbientOccludeScene();
 		mBuffers->BindSceneFB(true);
-		gl_RenderState.SetPassType(NORMAL_PASS);
+		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		gl_RenderState.Apply();
 		gl_RenderState.ApplyMatrices();
 	}

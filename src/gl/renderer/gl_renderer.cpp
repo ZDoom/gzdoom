@@ -205,12 +205,12 @@ FGLRenderer::~FGLRenderer()
 	}
 	if (mBuffers) delete mBuffers;
 	if (mPresentShader) delete mPresentShader;
-	if (mPresent3dCheckerShader) delete mPresent3dCheckerShader;
-	if (mPresent3dColumnShader) delete mPresent3dColumnShader;
 	if (mLinearDepthShader) delete mLinearDepthShader;
 	if (mDepthBlurShader) delete mDepthBlurShader;
 	if (mSSAOShader) delete mSSAOShader;
 	if (mSSAOCombineShader) delete mSSAOCombineShader;
+	if (mPresent3dCheckerShader) delete mPresent3dCheckerShader;
+	if (mPresent3dColumnShader) delete mPresent3dColumnShader;
 	if (mPresent3dRowShader) delete mPresent3dRowShader;
 	if (mBloomExtractShader) delete mBloomExtractShader;
 	if (mBloomCombineShader) delete mBloomCombineShader;

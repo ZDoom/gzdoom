@@ -170,6 +170,16 @@ void I_CreateRenderer()
 {
 	currentrenderer = vid_renderer;
 	currentcanvas = vid_used3d;
+	if (currentrenderer == 1)
+		Printf("Renderer: OpenGL\n");
+	else if (currentcanvas == 0)
+		Printf("Renderer: Software on OpenGL\n");
+	else if (currentcanvas == 1 && vid_forceddraw == false)
+		Printf("Renderer: Software on Direct3D\n");
+	else if (currentcanvas == 1)
+		Printf("Renderer: Software on DirectDraw\n");
+	else
+		Printf("Renderer: Unknown\n");
 	if (Renderer == NULL)
 	{
 		if (currentrenderer==1) Renderer = gl_CreateInterface();

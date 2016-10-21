@@ -1893,7 +1893,7 @@ void P_CalcHeight (player_t *player)
 	{
 		bob = 0;
 	}
-	player->viewz = player->mo->Z() + player->viewheight + bob;
+	player->viewz = player->mo->Z() + player->viewheight + (bob * player->mo->ViewBob); // [SP] Allow DECORATE changes to view bobbing speed.
 	if (player->mo->Floorclip && player->playerstate != PST_DEAD
 		&& player->mo->Z() <= player->mo->floorz)
 	{

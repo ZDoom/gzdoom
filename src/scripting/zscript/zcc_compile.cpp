@@ -2324,6 +2324,33 @@ FxExpression *ZCCCompiler::ConvertAST(ZCC_TreeNode *ast)
 	}
 }
 
+
+#define xx(a,z)	z,
+static int Pex2Tok[] = {
+#include "zcc_exprlist.h"
+};
+
+//==========================================================================
+//
+// Helper for modify/assign operators
+//
+//==========================================================================
+
+static FxExpression *ModifyAssign(FxBinary *operation, FxExpression *left)
+{
+	auto assignself = static_cast<FxAssignSelf *>(operation->left);
+	auto assignment = new FxAssign(left, operation);
+	assignself->Assignment = assignment;
+	return assignment;
+}
+
+
+//==========================================================================
+//
+// Convert an AST node and its children
+//
+//==========================================================================
+
 FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 {
 	// Note: Do not call 'Simplify' here because that function tends to destroy identifiers due to lack of context in which to resolve them.
@@ -2426,11 +2453,11 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		{
 		case PEX_PostDec:
 		case PEX_PostInc:
-			return new FxPostIncrDecr(operand, op == PEX_PostDec ? TK_Decr : TK_Incr);
+			return new FxPostIncrDecr(operand, Pex2Tok[op]);
 
 		case PEX_PreDec:
 		case PEX_PreInc:
-			return new FxPreIncrDecr(operand, op == PEX_PostDec ? TK_Decr : TK_Incr);
+			return new FxPreIncrDecr(operand, Pex2Tok[op]);
 
 		case PEX_Negate:
 			return new FxMinusSign(operand);
@@ -2446,7 +2473,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 
 		case PEX_SizeOf:
 		case PEX_AlignOf:
-			return new FxSizeAlign(operand, op == PEX_AlignOf ? 'a' : 's');
+			return new FxSizeAlign(operand, Pex2Tok[op]);
 
 		default:
 			assert(0 && "Unknown unary operator.");	// should never happen
@@ -2463,16 +2490,17 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		auto left = ConvertNode(binary->Left);
 		auto right = ConvertNode(binary->Right);
 		auto op = binary->Operation;
+		auto tok = Pex2Tok[op];
 		switch (op)
 		{
 		case PEX_Add:
 		case PEX_Sub:
-			return new FxAddSub(op == PEX_Add ? '+' : '-', left, right);
+			return new FxAddSub(tok, left, right);
 
 		case PEX_Mul:
 		case PEX_Div:
 		case PEX_Mod:
-			return new FxMulDiv(op == PEX_Mul ? '*' : op == PEX_Div ? '/' : '%', left, right);
+			return new FxMulDiv(tok, left, right);
 
 		case PEX_Pow:
 			return new FxPow(left, right);
@@ -2483,39 +2511,41 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		case PEX_BitAnd:
 		case PEX_BitOr:
 		case PEX_BitXor:
-			return new FxBinaryInt(op == PEX_LeftShift ? TK_LShift : op == PEX_RightShift ? TK_RShift : op == PEX_URightShift ? TK_URShift : op == PEX_BitAnd ? '&' : op == PEX_BitOr ? '|' : '^', left, right);
+			return new FxBinaryInt(tok, left, right);
 
 		case PEX_BoolOr:
 		case PEX_BoolAnd:
-			return new FxBinaryLogical(op == PEX_BoolAnd ? TK_AndAnd : TK_OrOr, left, right);
+			return new FxBinaryLogical(tok, left, right);
 
 		case PEX_LT:
 		case PEX_LTEQ:
 		case PEX_GT:
 		case PEX_GTEQ:
-			return new FxCompareRel(op == PEX_LT ? '<' : op == PEX_RightShift ? '>' : op == PEX_LTEQ ? TK_Leq : TK_Geq, left, right);
+			return new FxCompareRel(tok, left, right);
 
 		case PEX_EQEQ:
 		case PEX_NEQ:
-			return new FxCompareEq(op == PEX_NEQ ? TK_Neq : TK_Eq, left, right);
+			return new FxCompareEq(tok, left, right);
 
 		case PEX_Assign:
 			return new FxAssign(left, right);
-/*
-			case ZCC_MULEQ:
-			case ZCC_DIVEQ:
-			case ZCC_MODEQ:
-			case ZCC_ADDEQ:
-			case ZCC_SUBEQ:
-			case ZCC_LSHEQ:
-			case ZCC_RSHEQ:
-			case ZCC_ANDEQ:
-			case ZCC_OREQ:
-			case ZCC_XOREQ:
-				//break;
-			default:
-				Error(ast, "Invalid assign statement");
-*/
+
+		case PEX_AddAssign:
+		case PEX_SubAssign:
+			return ModifyAssign(new FxAddSub(tok, new FxAssignSelf(*ast), right), left);
+
+		case PEX_MulAssign:
+		case PEX_DivAssign:
+		case PEX_ModAssign:
+			return ModifyAssign(new FxMulDiv(tok, new FxAssignSelf(*ast), right), left);
+
+		case PEX_LshAssign:
+		case PEX_RshAssign:
+		case PEX_URshAssign:
+		case PEX_AndAssign:
+		case PEX_OrAssign:
+		case PEX_XorAssign:
+			return ModifyAssign(new FxBinaryInt(tok, new FxAssignSelf(*ast), right), left);
 
 			// todo: These do not have representations in DECORATE and no implementation exists yet.
 		case PEX_LTGTEQ:

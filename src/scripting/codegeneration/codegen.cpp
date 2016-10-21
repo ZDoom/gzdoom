@@ -1550,7 +1550,7 @@ FxExpression *FxSizeAlign::Resolve(FCompileContext& ctx)
 	}
 	else
 	{
-		FxExpression *x = new FxConstant(Which == 'a' ? int(type->Align) : int(type->Size), Operand->ScriptPosition);
+		FxExpression *x = new FxConstant(Which == TK_AlignOf ? int(type->Align) : int(type->Size), Operand->ScriptPosition);
 		delete this;
 		return x->Resolve(ctx);
 	}
@@ -1811,11 +1811,11 @@ ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 	assert(ValueType == Base->ValueType && IsNumeric());
 	assert(ValueType->GetRegType() == Right->ValueType->GetRegType());
 
-	ExpEmit result = Right->Emit(build);
-	assert(result.RegType <= REGT_TYPE);
-
 	ExpEmit pointer = Base->Emit(build);
 	Address = pointer;
+
+	ExpEmit result = Right->Emit(build);
+	assert(result.RegType <= REGT_TYPE);
 
 	if (pointer.Target)
 	{

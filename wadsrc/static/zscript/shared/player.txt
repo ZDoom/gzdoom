@@ -35,6 +35,7 @@ class PlayerPawn : Actor native
 		Player.MugShotMaxHealth 0;
 		Player.FlechetteType "ArtiPoisonBag3";
 		Player.AirCapacity 1;
+		Player.ViewBob 1;
 		Obituary "$OB_MPDEFAULT";
 	}
 }

@@ -1002,7 +1002,7 @@ void FTextureManager::UpdateAnimations (DWORD mstime)
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDoorAnimation *&p, FDoorAnimation **def)
 {
-	FTextureID tex = p->BaseTexture;
+	FTextureID tex = p? p->BaseTexture : FNullTextureID();
 	Serialize(arc, key, tex, def ? &(*def)->BaseTexture : nullptr);
 	if (arc.isReading())
 	{

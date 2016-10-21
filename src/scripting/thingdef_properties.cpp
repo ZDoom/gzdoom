@@ -2950,6 +2950,26 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, weaponslot, ISsssssssssssssssssssssssssssss
 
 //==========================================================================
 //
+// [SP] Player.Viewbob
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, viewbob, F, PlayerPawn)
+{
+	PROP_DOUBLE_PARM(z, 0);
+	// [SP] Hard limits. This is to prevent terrywads from making players sick.
+	//   Remember - this messes with a user option who probably has it set a
+	//   certain way for a reason. I think a 1.5 limit is pretty generous, but
+	//   it may be safe to increase it. I really need opinions from people who
+	//   could be affected by this.
+	if (z < 0.0 || z > 1.5)
+	{
+		I_Error("ViewBob must be between 0.0 and 1.5.");
+	}
+	defaults->ViewBob = z;
+}
+
+//==========================================================================
+//
 //==========================================================================
 DEFINE_CLASS_PROPERTY(playerclass, S, MorphProjectile)
 {

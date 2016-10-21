@@ -80,6 +80,7 @@ extern BYTE DesaturateColormap[31][256];
 extern "C" 
 {
 extern FDynamicColormap NormalLight;
+extern FDynamicColormap FullNormalLight;
 }
 extern bool NormalLightHasFixedLights;
 

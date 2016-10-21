@@ -84,6 +84,7 @@ PColor *TypeColor;
 PStatePointer *TypeState;
 PStruct *TypeVector2;
 PStruct *TypeVector3;
+PPointer *TypeNullPtr;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -616,6 +617,7 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeSound = new PSound);
 	TypeTable.AddType(TypeColor = new PColor);
 	TypeTable.AddType(TypeState = new PStatePointer);
+	TypeTable.AddType(TypeNullPtr = new PPointer);
 
 	TypeVector2 = new PStruct(NAME_Vector2, nullptr);
 	TypeVector2->AddField(NAME_X, TypeFloat64);
@@ -1635,7 +1637,7 @@ END_POINTERS
 PPointer::PPointer()
 : PBasicType(sizeof(void *), __alignof(void *)), PointedType(NULL)
 {
-	mDescriptiveName = "Pointer";
+	mDescriptiveName = "NullPointer";
 }
 
 //==========================================================================

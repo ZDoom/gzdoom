@@ -1078,6 +1078,10 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 		// don't go through the entire list if the types are the same.
 		goto basereturn;
 	}
+	else if (basex->ValueType == TypeNullPtr && (ValueType == TypeState || ValueType->IsKindOf(RUNTIME_CLASS(PPointer))))
+	{
+		goto basereturn;
+	}
 	else if (ValueType->GetRegType() == REGT_FLOAT)
 	{
 		FxExpression *x = new FxFloatCast(basex);
@@ -1199,6 +1203,7 @@ basereturn:
 	auto x = basex;
 	basex = nullptr;
 	delete this;
+	x->ValueType = ValueType;
 	return x;
 
 }
@@ -1772,9 +1777,64 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 
 	SAFE_RESOLVE(Right, ctx);
 
-	if (!Base->IsNumeric() || !Right->IsNumeric())
+	if (Base->IsNumeric() && Right->IsNumeric())
 	{
-		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		if (Right->ValueType != ValueType)
+		{
+			if (ValueType == TypeBool)
+			{
+				Right = new FxBoolCast(Right);
+			}
+			else if (ValueType->GetRegType() == REGT_INT)
+			{
+				Right = new FxIntCast(Right, ctx.FromDecorate);
+			}
+			else
+			{
+				Right = new FxFloatCast(Right);
+			}
+			SAFE_RESOLVE(Right, ctx);
+		}
+	}
+	else if (Base->ValueType == Right->ValueType)
+	{
+		if (Base->ValueType->IsKindOf(RUNTIME_CLASS(PArray)))
+		{
+			ScriptPosition.Message(MSG_ERROR, "Cannot assign arrays");
+			delete this;
+			return nullptr;
+		}
+		if (Base->ValueType->IsKindOf(RUNTIME_CLASS(PStruct)))
+		{
+			ScriptPosition.Message(MSG_ERROR, "Struct assignment not implemented yet");
+			delete this;
+			return nullptr;
+		}
+		// Both types are the same so this is ok.
+	}
+	else if ((Base->ValueType == TypeState || Base->ValueType->IsKindOf(RUNTIME_CLASS(PPointer))) && Right->ValueType == TypeNullPtr)
+	{
+		// null pointers can be assigned to any other pointer
+	}
+	else if (Base->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
+	{
+		// class pointers may be assignable so add a cast which performs a check.
+		Right = new FxClassTypeCast(static_cast<PClassPointer *>(ValueType), Right);
+		SAFE_RESOLVE(Right, ctx);
+	}
+	else if (Base->ValueType == TypeString && (Right->ValueType == TypeName || Right->ValueType == TypeSound))
+	{
+		Right = new FxStringCast(Right);
+		SAFE_RESOLVE(Right, ctx);
+	}
+	else if (Base->ValueType == TypeName && Right->ValueType == TypeString)
+	{
+		Right = new FxNameCast(Right);
+		SAFE_RESOLVE(Right, ctx);
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Assignment between incompatible types.");
 		delete this;
 		return nullptr;
 	}
@@ -1785,22 +1845,6 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 		return nullptr;
 	}
 
-	if (Right->ValueType != ValueType)
-	{
-		if (ValueType == TypeBool)
-		{
-			Right = new FxBoolCast(Right);
-		}
-		else if (ValueType->GetRegType() == REGT_INT)
-		{
-			Right = new FxIntCast(Right, ctx.FromDecorate);
-		}
-		else
-		{
-			Right = new FxFloatCast(Right);
-		}
-		SAFE_RESOLVE(Right, ctx);
-	}
 
 	return this;
 }
@@ -1808,7 +1852,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 {
 	static const BYTE loadops[] = { OP_LK, OP_LKF, OP_LKS, OP_LKP };
-	assert(ValueType == Base->ValueType && IsNumeric());
+	assert(ValueType == Base->ValueType);
 	assert(ValueType->GetRegType() == Right->ValueType->GetRegType());
 
 	ExpEmit pointer = Base->Emit(build);
@@ -2272,8 +2316,14 @@ FxExpression *FxPow::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 
-	if (!ResolveLR(ctx, true)) return NULL;
+	if (!ResolveLR(ctx, true)) return nullptr;
 
+	if (!IsNumeric())
+	{
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		delete this;
+		return nullptr;
+	}
 	if (left->isConstant() && right->isConstant())
 	{
 		double v1 = static_cast<FxConstant *>(left)->GetValue().GetFloat();
@@ -6015,6 +6065,14 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(basex, ctx);
 
+	if (basex->ValueType == TypeNullPtr)
+	{
+		basex->ValueType = ValueType;
+		auto x = basex;
+		basex = nullptr;
+		delete this;
+		return x;
+	}
 	if (basex->ValueType->GetClass() == RUNTIME_CLASS(PClassPointer))
 	{
 		auto to = static_cast<PClassPointer *>(ValueType);

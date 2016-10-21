@@ -530,6 +530,7 @@ class PPointer : public PBasicType
 	DECLARE_CLASS(PPointer, PBasicType);
 	HAS_OBJECT_POINTERS;
 public:
+	PPointer();
 	PPointer(PType *pointsat);
 
 	PType *PointedType;
@@ -546,7 +547,6 @@ public:
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
 
 protected:
-	PPointer();
 };
 
 class PClassPointer : public PPointer
@@ -890,6 +890,7 @@ extern PColor *TypeColor;
 extern PStruct *TypeVector2;
 extern PStruct *TypeVector3;
 extern PStatePointer *TypeState;
+extern PPointer *TypeNullPtr;
 
 // A constant value ---------------------------------------------------------
 

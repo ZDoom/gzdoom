@@ -379,6 +379,13 @@ public:
 		ValueType = value.Type = TypeState;
 		isresolved = true;
 	}
+
+	FxConstant(nullptr_t *nullp, const FScriptPosition &pos) : FxExpression(pos)
+	{
+		value.pointer = nullptr;
+		ValueType = value.Type = TypeNullPtr;
+		isresolved = true;
+	}
 	
 	static FxExpression *MakeConstant(PSymbol *sym, const FScriptPosition &pos);
 

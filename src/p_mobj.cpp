@@ -634,6 +634,7 @@ void AActor::RemoveInventory(AInventory *item)
 
 bool AActor::TakeInventory(PClassActor *itemclass, int amount, bool fromdecorate, bool notakeinfinite)
 {
+	amount = abs(amount);
 	AInventory *item = FindInventory(itemclass);
 
 	if (item == NULL)
@@ -666,6 +667,7 @@ bool AActor::TakeInventory(PClassActor *itemclass, int amount, bool fromdecorate
 		item->IsKindOf(RUNTIME_CLASS(AAmmo)))
 	{
 		// Nothing to do here, except maybe res = false;? Would it make sense?
+		result = false;
 	}
 	else if (!amount || amount>=item->Amount)
 	{
@@ -685,11 +687,30 @@ bool AActor::TakeInventory(PClassActor *itemclass, int amount, bool fromdecorate
 
 void AActor::DestroyAllInventory ()
 {
-	while (Inventory != NULL)
+	AInventory *inv = Inventory;
+	if (inv != nullptr)
 	{
-		AInventory *item = Inventory;
-		item->Destroy ();
-		assert (item != Inventory);
+		TArray<AInventory *> toDelete;
+
+		// Delete the list in a two stage approach.
+		// This is necessary because an item may destroy another item (e.g. sister weapons)
+		// which would break the list and leave parts of it undestroyed, maybe doing bad things later.
+		while (inv != nullptr)
+		{
+			toDelete.Push(inv);
+			AInventory *item = inv->Inventory;
+			inv->Inventory = nullptr;
+			inv->Owner = nullptr;
+			inv = item;
+		}
+		for (auto p : toDelete)
+		{
+			// the item may already have been deleted by another one, so check this here to avoid problems.
+			if (!(p->ObjectFlags & OF_EuthanizeMe))
+			{
+				p->Destroy();
+			}
+		}
 	}
 }
 
@@ -3778,6 +3799,8 @@ void AActor::Tick ()
 		else if (Z() <= floorz)
 		{
 			Crash();
+			if (ObjectFlags & OF_EuthanizeMe)
+				return;		// actor was destroyed
 		}
 
 		CheckPortalTransition(true);

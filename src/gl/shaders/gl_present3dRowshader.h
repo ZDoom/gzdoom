@@ -29,22 +29,35 @@
 #define GL_PRESENT3DROWSHADER_H_
 
 #include "gl_shaderprogram.h"
+#include "gl_presentshader.h"
 
-class FPresent3DRowShader
+class FPresentStereoShaderBase : public FPresentShaderBase
 {
 public:
-	void Bind();
-
 	FBufferedUniformSampler LeftEyeTexture;
 	FBufferedUniformSampler RightEyeTexture;
-	FBufferedUniform1f InvGamma;
-	FBufferedUniform1f Contrast;
-	FBufferedUniform1f Brightness;
-	FBufferedUniform2f Scale;
-	FBufferedUniform1i VerticalPixelOffset;
+	FBufferedUniform1i WindowPositionParity;
 
-private:
-	FShaderProgram mShader;
+protected:
+	void Init(const char * vtx_shader_name, const char * program_name) override;
+};
+
+class FPresent3DCheckerShader : public FPresentStereoShaderBase
+{
+public:
+	void Bind() override;
+};
+
+class FPresent3DColumnShader : public FPresentStereoShaderBase
+{
+public:
+	void Bind() override;
+};
+
+class FPresent3DRowShader : public FPresentStereoShaderBase
+{
+public:
+	void Bind() override;
 };
 
 // GL_PRESENT3DROWSHADER_H_

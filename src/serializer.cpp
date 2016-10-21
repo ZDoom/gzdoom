@@ -381,7 +381,7 @@ void FSerializer::Close()
 //
 //==========================================================================
 
-int FSerializer::ArraySize()
+unsigned FSerializer::ArraySize()
 {
 	if (r != nullptr && r->mObjects.Last().mObject->IsArray())
 	{
@@ -709,7 +709,7 @@ FSerializer &FSerializer::Sprite(const char *key, int32_t &spritenum, int32_t *d
 		{
 			if (val->IsString())
 			{
-				int name = *reinterpret_cast<const int*>(val->GetString());
+				uint32_t name = *reinterpret_cast<const uint32_t*>(val->GetString());
 				for (auto hint = NumStdSprites; hint-- != 0; )
 				{
 					if (sprites[hint].dwName == name)
@@ -1451,7 +1451,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObje
 			{
 				ndx = -1;
 			}
-			else if (value->ObjectFlags & OF_EuthanizeMe)
+			else if (value->ObjectFlags & (OF_EuthanizeMe | OF_Transient))
 			{
 				return arc;
 			}

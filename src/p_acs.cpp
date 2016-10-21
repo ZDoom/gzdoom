@@ -1616,7 +1616,7 @@ void FBehavior::StaticSerializeModuleStates (FSerializer &arc)
 	{
 		if (arc.isReading())
 		{
-			int modnum = arc.ArraySize();
+			auto modnum = arc.ArraySize();
 			if (modnum != StaticModules.Size())
 			{
 				I_Error("Level was saved with a different number of ACS modules. (Have %d, save has %d)", StaticModules.Size(), modnum);
@@ -2933,7 +2933,7 @@ void DACSThinker::Serialize(FSerializer &arc)
 		if (arc.BeginArray("runningscripts"))
 		{
 			auto cnt = arc.ArraySize();
-			for (int i = 0; i < cnt; i++)
+			for (unsigned i = 0; i < cnt; i++)
 			{
 				SavingRunningscript srs;
 				arc(nullptr, srs);
@@ -5821,43 +5821,54 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		// [ZK] A_Warp in ACS
 		case ACSF_Warp:
 		{
-			int tid_dest = args[0];
-			int xofs = args[1];
-			int yofs = args[2];
-			int zofs = args[3];
-			int angle = args[4];
-			int flags = args[5];
-			const char *statename = argCount > 6 ? FBehavior::StaticLookupString(args[6]) : "";
-			bool exact = argCount > 7 ? !!args[7] : false;
-			int heightoffset = argCount > 8 ? args[8] : 0;
-			int radiusoffset = argCount > 9 ? args[9] : 0;
-			int pitch = argCount > 10 ? args[10] : 0;
-
-			FState *state = argCount > 6 ? activator->GetClass()->FindStateByString(statename, exact) : 0;
-
-			AActor *reference;
-			if((flags & WARPF_USEPTR) && tid_dest != AAPTR_DEFAULT)
+			if (nullptr == activator)
 			{
-				reference = COPY_AAPTR(activator, tid_dest);
-			}
-			else
-			{
-				reference = SingleActorFromTID(tid_dest, activator);
-			}
-
-			// If there is no activator or actor to warp to, fail.
-			if (activator == NULL || !reference)
 				return false;
-
-			if (P_Thing_Warp(activator, reference, ACSToDouble(xofs), ACSToDouble(yofs), ACSToDouble(zofs), ACSToAngle(angle), flags, ACSToDouble(heightoffset), ACSToDouble(radiusoffset), ACSToAngle(pitch)))
-			{
-				if (state && argCount > 6)
-				{
-					activator->SetState(state);
-				}
-				return true;
 			}
-			return false;
+			
+			const int dest = args[0];
+			const int flags = args[5];
+			
+			AActor* const reference = ((flags & WARPF_USEPTR) && (AAPTR_DEFAULT != dest))
+				? COPY_AAPTR(activator, dest)
+				: SingleActorFromTID(dest, activator);
+
+			if (nullptr == reference)
+			{
+				// there is no actor to warp to
+				return false;
+			}
+			
+			const double xofs = ACSToDouble(args[1]);
+			const double yofs = ACSToDouble(args[2]);
+			const double zofs = ACSToDouble(args[3]);
+			const DAngle angle = ACSToAngle(args[4]);
+			const double heightoffset = argCount > 8 ? ACSToDouble(args[8]) : 0.0;
+			const double radiusoffset = argCount > 9 ? ACSToDouble(args[9]) : 0.0;
+			const DAngle pitch = ACSToAngle(argCount > 10 ? args[10] : 0);
+
+			if (!P_Thing_Warp(activator, reference, xofs, yofs, zofs, angle, flags, heightoffset, radiusoffset, pitch))
+			{
+				return false;
+			}
+			
+			if (argCount > 6)
+			{
+				const char* const statename = FBehavior::StaticLookupString(args[6]);
+				
+				if (nullptr != statename)
+				{
+					const bool exact = argCount > 7 && !!args[7];
+					FState* const state = activator->GetClass()->FindStateByString(statename, exact);
+					
+					if (nullptr != state)
+					{
+						activator->SetState(state);
+					}
+				}
+			}
+			
+			return true;
 		}
 		case ACSF_GetMaxInventory:
 			actor = SingleActorFromTID(args[0], activator);

@@ -600,6 +600,13 @@ OptionValue ColumnMethods
 	1.0, "$OPTVAL_OPTIMIZED"
 }
 
+OptionValue SkyModes
+{
+	0.0, "$OPTVAL_NORMAL"
+	1.0, "$OPTVAL_STRETCH"
+	2.0, "$OPTVAL_CAPPED"
+}
+
 OptionValue RocketTrailTypes
 {
 	0.0, "$OPTVAL_OFF"
@@ -674,6 +681,9 @@ OptionMenu "VideoOptions"
 
 	Option "$DSPLYMNU_VSYNC",					"vid_vsync", "OnOff"
 	Option "$DSPLYMNU_CAPFPS",					"cl_capfps", "OffOn"
+	Slider "$DSPLYMNU_BLOODFADE",				"blood_fade_scalar", 0.0, 1.0, 0.05, 1
+	Slider "$DSPLYMNU_PICKUPFADE",				"pickup_fade_scalar", 0.0, 1.0, 0.05, 1
+	Option "$DSPLYMNU_COLUMNMETHOD",			"r_columnmethod", "ColumnMethods"
 
 	StaticText " "
 	Option "$DSPLYMNU_WIPETYPE",				"wipetype", "Wipes"
@@ -685,7 +695,7 @@ OptionMenu "VideoOptions"
 		//Option "$DSPLYMNU_ATTACHEDSURFACES", 	"vid_attachedsurfaces", "OnOff"
 	}
 	
-	Option "$DSPLYMNU_STRETCHSKY",				"r_stretchsky", "OnOff"
+	Option "$DSPLYMNU_SKYMODE",					"r_skymode", "SkyModes"
 	Option "$DSPLYMNU_DRAWFUZZ",				"r_drawfuzz", "Fuzziness"
 	Slider "$DSPLYMNU_TRANSSOUL",				"transsouls", 0.25, 1.0, 0.05, 2
 	Option "$DSPLYMNU_FAKECONTRAST",			"r_fakecontrast", "Contrast"
@@ -704,6 +714,7 @@ OptionMenu "VideoOptions"
 	Slider "$DSPLYMNU_MOVEBOB",			"movebob", 0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_STILLBOB",		"stillbob", 0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_BOBSPEED",				"wbobspeed", 0, 2.0, 0.1, 2
+
 }
 
 //-------------------------------------------------------------------------------------------

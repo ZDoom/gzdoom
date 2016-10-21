@@ -38,23 +38,37 @@
 #include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_present3dRowshader.h"
 
+void FPresentStereoShaderBase::Init(const char * vtx_shader_name, const char * program_name)
+{
+	FPresentShaderBase::Init(vtx_shader_name, program_name);
+	LeftEyeTexture.Init(mShader, "LeftEyeTexture");
+	RightEyeTexture.Init(mShader, "RightEyeTexture");
+	WindowPositionParity.Init(mShader, "WindowPositionParity");
+}
+
+void FPresent3DCheckerShader::Bind()
+{
+	if (!mShader)
+	{
+		Init("shaders/glsl/present_checker3d.fp", "shaders/glsl/presentChecker3d");
+	}
+	mShader.Bind();
+}
+
+void FPresent3DColumnShader::Bind()
+{
+	if (!mShader)
+	{
+		Init("shaders/glsl/present_column3d.fp", "shaders/glsl/presentColumn3d");
+	}
+	mShader.Bind();
+}
+
 void FPresent3DRowShader::Bind()
 {
 	if (!mShader)
 	{
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquadscale.vp", "", 330);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/present_row3d.fp", "", 330);
-		mShader.SetFragDataLocation(0, "FragColor");
-		mShader.Link("shaders/glsl/presentRow3d");
-		mShader.SetAttribLocation(0, "PositionInProjection");
-		mShader.SetAttribLocation(1, "UV");
-		LeftEyeTexture.Init(mShader, "LeftEyeTexture");
-		RightEyeTexture.Init(mShader, "RightEyeTexture");
-		InvGamma.Init(mShader, "InvGamma");
-		Contrast.Init(mShader, "Contrast");
-		Brightness.Init(mShader, "Brightness");
-		Scale.Init(mShader, "UVScale");
-		VerticalPixelOffset.Init(mShader, "VerticalPixelOffset");
+		Init("shaders/glsl/present_row3d.fp", "shaders/glsl/presentRow3d");
 	}
 	mShader.Bind();
 }

@@ -1235,6 +1235,7 @@ set (PCH_SOURCES
 	p_3dfloors.cpp
 	p_3dmidtex.cpp
 	p_acs.cpp
+	p_actionfunctions.cpp
 	p_buildmap.cpp
 	p_ceiling.cpp
 	p_conversation.cpp
@@ -1373,7 +1374,6 @@ set (PCH_SOURCES
 	textures/warptexture.cpp
 	thingdef/olddecorations.cpp
 	thingdef/thingdef.cpp
-	thingdef/thingdef_codeptr.cpp
 	thingdef/thingdef_data.cpp
 	thingdef/thingdef_exp.cpp
 	thingdef/thingdef_expression.cpp

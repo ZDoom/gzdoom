@@ -114,10 +114,10 @@ MIDISong2::MIDISong2 (FileReader &reader, EMidiDevice type, const char *args)
 		return;
 	}
 #endif
-    SongLen = reader.GetLength();
+	SongLen = reader.GetLength();
 	MusHeader = new BYTE[SongLen];
-    if (reader.Read(MusHeader, SongLen) != SongLen)
-        return;
+	if (reader.Read(MusHeader, SongLen) != SongLen)
+		return;
 
 	// Do some validation of the MIDI file
 	if (MusHeader[4] != 0 || MusHeader[5] != 0 || MusHeader[6] != 0 || MusHeader[7] != 6)
@@ -598,7 +598,7 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 		if (event == MIDI_SYSEX || event == MIDI_SYSEXEND)
 		{
 			len = track->ReadVarLen();
-			if (len >= (MAX_EVENTS-1)*3*4)
+			if (len >= (MAX_EVENTS-1)*3*4 || DeviceType == MDEV_SNDSYS)
 			{ // This message will never fit. Throw it away.
 				track->TrackP += len;
 			}

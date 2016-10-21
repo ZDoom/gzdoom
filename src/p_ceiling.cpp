@@ -184,7 +184,7 @@ void DCeiling::Tick ()
 				case DCeiling::ceilLowerAndCrush:
 					if (m_CrushMode == ECrushMode::crushSlowdown)
 						m_Speed = 1. / 8;
-						break;
+					break;
 
 				default:
 					break;
@@ -214,6 +214,12 @@ DCeiling::DCeiling (sector_t *sec, double speed1, double speed2, int silent)
 	m_Speed = m_Speed1 = speed1;
 	m_Speed2 = speed2;
 	m_Silent = silent;
+	m_BottomHeight = 0;
+	m_TopHeight = 0;
+	m_Direction = 0;
+	m_Texture = FNullTextureID();
+	m_Tag = 0;
+	m_OldDirection = 0;
 }
 
 //============================================================================

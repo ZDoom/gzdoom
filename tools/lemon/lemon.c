@@ -167,7 +167,8 @@ struct symbol {
   int useCnt;              /* Number of times used */
   char *destructor;        /* Code which executes whenever this symbol is
                            ** popped from the stack during error processing */
-  int destLineno;          /* Line number for start of destructor */
+  int destLineno;          /* Line number for start of destructor.  Set to
+                           ** -1 for duplicate destructors. */
   char *datatype;          /* The data type of information held by this
                            ** object. Only used if type==NONTERMINAL */
   int dtnum;               /* The data type number.  In the parser, the value
@@ -192,10 +193,15 @@ struct rule {
   const char *code;        /* The code executed when this rule is reduced */
   const char *codePrefix;  /* Setup code before code[] above */
   const char *codeSuffix;  /* Breakdown code after code[] above */
+  int noCode;              /* True if this rule has no associated C code */
+  int codeEmitted;         /* True if the code has been emitted already */
   struct symbol *precsym;  /* Precedence symbol for this rule */
   int index;               /* An index number for this rule */
   int iRule;               /* Rule number as used in the generated tables */
   Boolean canReduce;       /* True if this rule is ever reduced */
+#if 0
+  Boolean doesReduce;      /* Reduce actions occur after optimization */
+#endif
   struct rule *nextlhs;    /* Next rule with the same LHS */
   struct rule *next;       /* Next rule in the global list */
 };
@@ -243,6 +249,7 @@ struct action {
     struct state *stp;     /* The new state, if a shift */
     struct rule *rp;       /* The rule, if a reduce */
   } x;
+  struct symbol *spOpt;    /* SHIFTREDUCE optimization to this symbol */
   struct action *next;     /* Next action for this state */
   struct action *collide;  /* Next action with the same hash */
 };
@@ -253,7 +260,7 @@ struct state {
   struct config *bp;       /* The basis configurations for this state */
   struct config *cfp;      /* All configurations in this set */
   int statenum;            /* Sequential number for this state */
-  struct action *ap;       /* Array of actions for this state */
+  struct action *ap;       /* List of actions for this state */
   int nTknAct, nNtAct;     /* Number of actions on terminals and nonterminals */
   int iTknOfst, iNtOfst;   /* yy_action[] offset for terminals and nonterms */
   int iDfltReduce;         /* Default action is to REDUCE by this rule */
@@ -433,6 +440,7 @@ void Action_add(
   *app = newaction;
   newaction->type = type;
   newaction->sp = sp;
+  newaction->spOpt = 0;
   if( type==SHIFT ){
     newaction->x.stp = (struct state *)arg;
   }else{
@@ -1483,7 +1491,7 @@ static void handle_C_option(char *z){
   }
 }
 
-/* Merge together to lists of rules order by rule.iRule */
+/* Merge together to lists of rules ordered by rule.iRule */
 static struct rule *Rule_merge(struct rule *pA, struct rule *pB){
   struct rule *pFirst = 0;
   struct rule **ppPrev = &pFirst;
@@ -1627,7 +1635,10 @@ int main(int argc, char **argv)
   for(i=1; ISUPPER(lem.symbols[i]->name[0]); i++);
   lem.nterminal = i;
 
-  /* Assign sequential rule numbers */
+  /* Assign sequential rule numbers.  Start with 0.  Put rules that have no
+  ** reduce action C-code associated with them last, so that the switch()
+  ** statement that selects reduction actions will have a smaller jump table.
+  */
   for(i=0, rp=lem.rule; rp; rp=rp->next){
     rp->iRule = rp->code ? i++ : -1;
   }
@@ -2179,7 +2190,7 @@ static void parseonetoken(struct pstate *psp)
 "There is no prior rule upon which to attach the code \
 fragment which begins on this line.");
           psp->errorcnt++;
-	}else if( psp->prevrule->code!=0 ){
+        }else if( psp->prevrule->code!=0 ){
           ErrorMsg(psp->filename,psp->tokenlineno,
 "Code fragment beginning on this line is not the first \
 to follow the previous rule.");
@@ -2187,7 +2198,8 @@ to follow the previous rule.");
         }else{
           psp->prevrule->line = psp->tokenlineno;
           psp->prevrule->code = &x[1];
-	}
+          psp->prevrule->noCode = 0;
+        }
       }else if( x[0]=='[' ){
         psp->state = PRECEDENCE_MARK_1;
       }else{
@@ -2293,6 +2305,7 @@ to follow the previous rule.");
           rp->lhsalias = psp->lhsalias;
           rp->nrhs = psp->nrhs;
           rp->code = 0;
+          rp->noCode = 1;
           rp->precsym = 0;
           rp->index = psp->gp->nrule++;
           rp->nextlhs = rp->lhs->rule;
@@ -3153,6 +3166,9 @@ int PrintAction(
       result = 0;
       break;
   }
+  if( result && ap->spOpt ){
+    fprintf(fp,"  /* because %s==%s */", ap->sp->name, ap->spOpt->name);
+  }
   return result;
 }
 
@@ -3531,9 +3547,8 @@ PRIVATE char *append_str(const char *zText, int n, int p1, int p2, int bNoSubst)
 }
 
 /*
-** zCode is a string that is the action associated with a rule.  Expand
-** the symbols in this string so that the refer to elements of the parser
-** stack.
+** Write and transform the rp->code string so that symbols are expanded.
+** Populate the rp->codePrefix and rp->codeSuffix strings, as appropriate.
 **
 ** Return 1 if the expanded code requires that "yylhsminor" local variable
 ** to be defined.
@@ -3557,12 +3572,12 @@ PRIVATE int translate_code(struct lemon *lemp, struct rule *rp){
     static char newlinestr[2] = { '\n', '\0' };
     rp->code = newlinestr;
     rp->line = rp->ruleline;
+    rp->noCode = 1;
+  }else{
+    rp->noCode = 0;
   }
 
-  if( rp->lhsalias==0 ){
-    /* There is no LHS value symbol. */
-    lhsdirect = 1;
-  }else if( rp->nrhs==0 ){
+  if( rp->nrhs==0 ){
     /* If there are no RHS symbols, then writing directly to the LHS is ok */
     lhsdirect = 1;
   }else if( rp->rhsalias[0]==0 ){
@@ -3574,7 +3589,11 @@ PRIVATE int translate_code(struct lemon *lemp, struct rule *rp){
       append_str("  yy_destructor(yypParser,%d,&yymsp[%d].minor);\n", 0,
                  rp->rhs[0]->index,1-rp->nrhs,0);
       rp->codePrefix = Strsafe(append_str(0,0,0,0,0));
+      rp->noCode = 0;
     }
+  }else if( rp->lhsalias==0 ){
+    /* There is no LHS value symbol. */
+    lhsdirect = 1;
   }else if( strcmp(rp->lhsalias,rp->rhsalias[0])==0 ){
     /* The LHS symbol and the left-most RHS symbol are the same, so 
     ** direct writing is allowed */
@@ -3717,7 +3736,10 @@ PRIVATE int translate_code(struct lemon *lemp, struct rule *rp){
 
   /* Suffix code generation complete */
   cp = append_str(0,0,0,0,0);
-  if( cp ) rp->codeSuffix = Strsafe(cp);
+  if( cp && cp[0] ){
+    rp->codeSuffix = Strsafe(cp);
+    rp->noCode = 0;
+  }
 
   return rc;
 }
@@ -4136,6 +4158,21 @@ void ReportTable(
   }
   free(ax);
 
+#if 0
+  /* Mark rules that are actually used for reduce actions after all
+  ** optimizations have been applied
+  */
+  for(rp=lemp->rule; rp; rp=rp->next) rp->doesReduce = LEMON_FALSE;
+  for(i=0; i<lemp->nxstate; i++){
+    struct action *ap;
+    for(ap=lemp->sorted[i]->ap; ap; ap=ap->next){
+      if( ap->type==REDUCE || ap->type==SHIFTREDUCE ){
+        ap->x.rp->doesReduce = i;
+      }
+    }
+  }
+#endif
+
   /* Finish rendering the constants now that the action table has
   ** been computed */
   fprintf(out,"#define YYNSTATE             %d\n",lemp->nxstate);  lineno++;
@@ -4201,20 +4238,21 @@ void ReportTable(
   fprintf(out, "};\n"); lineno++;
 
   /* Output the yy_shift_ofst[] table */
-  fprintf(out, "#define YY_SHIFT_USE_DFLT (%d)\n", mnTknOfst-1); lineno++;
   n = lemp->nxstate;
   while( n>0 && lemp->sorted[n-1]->iTknOfst==NO_OFFSET ) n--;
-  fprintf(out, "#define YY_SHIFT_COUNT (%d)\n", n-1); lineno++;
-  fprintf(out, "#define YY_SHIFT_MIN   (%d)\n", mnTknOfst); lineno++;
-  fprintf(out, "#define YY_SHIFT_MAX   (%d)\n", mxTknOfst); lineno++;
+  fprintf(out, "#define YY_SHIFT_USE_DFLT (%d)\n", lemp->nactiontab); lineno++;
+  fprintf(out, "#define YY_SHIFT_COUNT    (%d)\n", n-1); lineno++;
+  fprintf(out, "#define YY_SHIFT_MIN      (%d)\n", mnTknOfst); lineno++;
+  fprintf(out, "#define YY_SHIFT_MAX      (%d)\n", mxTknOfst); lineno++;
   fprintf(out, "static const %s yy_shift_ofst[] = {\n", 
-          minimum_size_type(mnTknOfst-1, mxTknOfst, &sz)); lineno++;
+       minimum_size_type(mnTknOfst, lemp->nterminal+lemp->nactiontab, &sz));
+       lineno++;
   lemp->tablesize += n*sz;
   for(i=j=0; i<n; i++){
     int ofst;
     stp = lemp->sorted[i];
     ofst = stp->iTknOfst;
-    if( ofst==NO_OFFSET ) ofst = mnTknOfst - 1;
+    if( ofst==NO_OFFSET ) ofst = lemp->nactiontab;
     if( j==0 ) fprintf(out," /* %5d */ ", i);
     fprintf(out, " %4d,", ofst);
     if( j==9 || i==n-1 ){
@@ -4354,6 +4392,7 @@ void ReportTable(
   for(i=0; i<lemp->nsymbol; i++){
     struct symbol *sp = lemp->symbols[i];
     if( sp==0 || sp->type==TERMINAL || sp->destructor==0 ) continue;
+    if( sp->destLineno<0 ) continue;  /* Already emitted */
     fprintf(out,"    case %d: /* %s */\n", sp->index, sp->name); lineno++;
 
     /* Combine duplicate destructors into a single case */
@@ -4364,7 +4403,7 @@ void ReportTable(
           && strcmp(sp->destructor,sp2->destructor)==0 ){
          fprintf(out,"    case %d: /* %s */\n",
                  sp2->index, sp2->name); lineno++;
-         sp2->destructor = 0;
+         sp2->destLineno = -1;  /* Avoid emitting this destructor again */
       }
     }
 
@@ -4398,32 +4437,45 @@ void ReportTable(
   /* First output rules other than the default: rule */
   for(rp=lemp->rule; rp; rp=rp->next){
     struct rule *rp2;               /* Other rules with the same action */
-    if( rp->code==0 ) continue;
-    if( rp->code[0]=='\n' && rp->code[1]==0 ) continue; /* Will be default: */
+    if( rp->codeEmitted ) continue;
+    if( rp->noCode ){
+      /* No C code actions, so this will be part of the "default:" rule */
+      continue; 
+    }
     fprintf(out,"      case %d: /* ",rp->iRule);
     writeRuleText(out, rp);
     fprintf(out," */\n"); lineno++;
     for(rp2=rp->next; rp2; rp2=rp2->next){
-      if( rp2->code==rp->code ){
+      if( rp2->code==rp->code && rp2->codePrefix==rp->codePrefix
+        && rp2->codeSuffix == rp->codeSuffix ){
         fprintf(out,"      case %d: /*",rp2->iRule);
         writeRuleText(out, rp2);
         fprintf(out, " */ yytestcase(yyruleno==%d);\n", rp2->iRule); lineno++;
-        rp2->code = 0;
+        rp2->codeEmitted = 1;
       }
     }
     emit_code(out,rp,lemp,&lineno);
     fprintf(out,"        break;\n"); lineno++;
-	rp->code = 0;
+    rp->codeEmitted = 1;
   }
   /* Finally, output the default: rule.  We choose as the default: all
   ** empty actions. */
   fprintf(out,"      default:\n"); lineno++;
   for(rp=lemp->rule; rp; rp=rp->next){
-    if( rp->code==0 ) continue;
-    assert( rp->code[0]=='\n' && rp->code[1]==0 );
+    if( rp->codeEmitted ) continue;
+    assert( rp->noCode );
     fprintf(out,"      /* (%d) ", rp->iRule);
     writeRuleText(out, rp);
-    fprintf(out," */ yytestcase(yyruleno==%d);\n", rp->iRule); lineno++;
+#if 0
+    if( rp->doesReduce ){
+#endif
+      fprintf(out, " */ yytestcase(yyruleno==%d);\n", rp->iRule); lineno++;
+#if 0
+    }else{
+      fprintf(out, " (OPTIMIZED OUT) */ assert(yyruleno!=%d);\n",
+              rp->iRule); lineno++;
+    }
+#endif
   }
   fprintf(out,"       break;\n"); lineno++;
   tplt_xfer(lemp->name,in,out,&lineno);
@@ -4496,7 +4548,7 @@ void ReportHeader(struct lemon *lemp)
 void CompressTables(struct lemon *lemp)
 {
   struct state *stp;
-  struct action *ap, *ap2;
+  struct action *ap, *ap2, *nextap;
   struct rule *rp, *rp2, *rbest;
   int nbest, n;
   int i;
@@ -4571,6 +4623,36 @@ void CompressTables(struct lemon *lemp)
         ap->type = SHIFTREDUCE;
         ap->x.rp = pNextState->pDfltReduce;
       }
+    }
+  }
+
+  /* If a SHIFTREDUCE action specifies a rule that has a single RHS term
+  ** (meaning that the SHIFTREDUCE will land back in the state where it
+  ** started) and if there is no C-code associated with the reduce action,
+  ** then we can go ahead and convert the action to be the same as the
+  ** action for the RHS of the rule.
+  */
+  for(i=0; i<lemp->nstate; i++){
+    stp = lemp->sorted[i];
+    for(ap=stp->ap; ap; ap=nextap){
+      nextap = ap->next;
+      if( ap->type!=SHIFTREDUCE ) continue;
+      rp = ap->x.rp;
+      if( rp->noCode==0 ) continue;
+      if( rp->nrhs!=1 ) continue;
+#if 1
+      /* Only apply this optimization to non-terminals.  It would be OK to
+      ** apply it to terminal symbols too, but that makes the parser tables
+      ** larger. */
+      if( ap->sp->index<lemp->nterminal ) continue;
+#endif
+      /* If we reach this point, it means the optimization can be applied */
+      nextap = ap;
+      for(ap2=stp->ap; ap2 && (ap2==ap || ap2->sp!=rp->lhs); ap2=ap2->next){}
+      assert( ap2!=0 );
+      ap->spOpt = ap2->sp;
+      ap->type = ap2->type;
+      ap->x = ap2->x;
     }
   }
 }

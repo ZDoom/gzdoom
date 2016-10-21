@@ -408,7 +408,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 	ESPSResult		mode;
 	bool			ispsprite = (!vis->sector && vis->gpos != FVector3(0, 0, 0));
 
-	if (vis->xscale == 0 || vis->yscale == 0)
+	if (vis->xscale == 0 || fabs(vis->yscale) < (1.0f / 32000.0f))
 	{ // scaled to 0; can't see
 		return;
 	}
@@ -1404,7 +1404,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	vis->pic = tex;
 	vis->ColormapNum = 0;
 
-	if (flip)
+	if (!(flip) != !(pspr->Flags & PSPF_FLIP))
 	{
 		vis->xiscale = -FLOAT2FIXED(pspritexiscale * tex->Scale.X);
 		vis->startfrac = (tex->GetWidth() << FRACBITS) - 1;
@@ -2097,7 +2097,7 @@ void R_DrawSprite (vissprite_t *spr)
 			{ // seen below floor: clip top
 				if (!spr->bIsVoxel && h > topclip)
 				{
-					topclip = MIN<short> (h, viewheight);
+					topclip = short(MIN(h, viewheight));
 				}
 				hzt = MIN(hzt, hz);
 			}
@@ -2127,7 +2127,7 @@ void R_DrawSprite (vissprite_t *spr)
 			{ // seen in the middle: clip top
 				if (!spr->bIsVoxel && h > topclip)
 				{
-					topclip = MIN<short> (h, viewheight);
+					topclip = MIN(h, viewheight);
 				}
 				hzt = MIN(hzt, hz);
 			}
@@ -2181,7 +2181,7 @@ void R_DrawSprite (vissprite_t *spr)
 			int h = xs_RoundToInt(CenterY - (hz - ViewPos.Z) * scale);
 			if (h > topclip)
 			{
-				topclip = MIN<short>(h, viewheight);
+				topclip = short(MIN(h, viewheight));
 			}
 		}
 		hzt = MIN(hzt, sclipTop);
@@ -2204,7 +2204,7 @@ void R_DrawSprite (vissprite_t *spr)
 		h = (centeryfrac - FixedMul (h-viewz, scale)) >> FRACBITS;
 		if (h > topclip)
 		{
-			topclip = MIN<short> (h, viewheight);
+			topclip = short(MIN(h, viewheight));
 		}
 	}
 #endif

@@ -1081,6 +1081,7 @@ void gl_AttachLight(AActor *actor, unsigned int count, const FLightDefaults *lig
 		light = Spawn<ADynamicLight>(actor->Pos(), NO_REPLACE);
 		light->target = actor;
 		light->owned = true;
+		light->ObjectFlags |= OF_Transient;
 		actor->dynamiclights.Push(light);
 	}
 	light->flags2&=~MF2_DORMANT;

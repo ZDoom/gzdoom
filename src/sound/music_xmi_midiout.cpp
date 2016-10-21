@@ -117,10 +117,10 @@ XMISong::XMISong (FileReader &reader, EMidiDevice type, const char *args)
 		return;
 	}
 #endif
-    SongLen = reader.GetLength();
+	SongLen = reader.GetLength();
 	MusHeader = new BYTE[SongLen];
-    if (reader.Read(MusHeader, SongLen) != SongLen)
-        return;
+	if (reader.Read(MusHeader, SongLen) != SongLen)
+		return;
 
 	// Find all the songs in this file.
 	NumSongs = FindXMIDforms(MusHeader, SongLen, NULL);
@@ -528,7 +528,7 @@ DWORD *XMISong::SendCommand (DWORD *events, EventSource due, DWORD delay, ptrdif
 		if (event == MIDI_SYSEX || event == MIDI_SYSEXEND)
 		{
 			len = track->ReadVarLen();
-			if (len >= (MAX_EVENTS-1)*3*4)
+			if (len >= (MAX_EVENTS-1)*3*4 || DeviceType == MDEV_SNDSYS)
 			{ // This message will never fit. Throw it away.
 				track->EventP += len;
 			}

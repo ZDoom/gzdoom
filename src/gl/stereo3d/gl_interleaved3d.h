@@ -42,15 +42,30 @@
 #include "gl/system/gl_system.h"
 #include "gl/renderer/gl_renderstate.h"
 
-class FPresent3DRowShader;
-
 namespace s3d {
+
+class CheckerInterleaved3D : public SideBySideSquished
+{
+public:
+	static const CheckerInterleaved3D& getInstance(float ipd);
+	CheckerInterleaved3D(double ipdMeters) : SideBySideSquished(ipdMeters) {}
+	void Present() const override;
+	void AdjustViewports() const override;
+};
+
+class ColumnInterleaved3D : public SideBySideSquished
+{
+public:
+	static const ColumnInterleaved3D& getInstance(float ipd);
+	ColumnInterleaved3D(double ipdMeters) : SideBySideSquished(ipdMeters) {}
+	void Present() const override;
+};
 
 class RowInterleaved3D : public TopBottom3D
 {
 public:
 	static const RowInterleaved3D& getInstance(float ipd);
-	RowInterleaved3D(double ipdMeters);
+	RowInterleaved3D(double ipdMeters) : TopBottom3D(ipdMeters) {}
 	void Present() const override;
 };
 

@@ -2372,13 +2372,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 			// The function name is a simple identifier.
 			return new FxFunctionCall(static_cast<ZCC_ExprID *>(fcall->Function)->Identifier, NAME_None, ConvertNodeList(fcall->Parameters), *ast);
 
-			// not yet done
-		case AST_ExprTypeRef:
-		case AST_SwitchStmt:
-		case AST_CaseStmt:
 		case AST_ExprMemberAccess:
-			// calling a class member through its pointer
-			// todo.
 			break;
 
 		case AST_ExprBinary:
@@ -2398,6 +2392,12 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 			return new FxNop(*ast);	// return something so that the compiler can continue.
 		}
 		break;
+	}
+
+	case AST_ExprMemberAccess:
+	{
+		auto memaccess = static_cast<ZCC_ExprMemberAccess *>(ast);
+		return new FxMemberIdentifier(ConvertNode(memaccess->Left), memaccess->Right, *ast);
 	}
 
 	case AST_FuncParm:
@@ -2659,6 +2659,11 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 			return new FxWhileLoop(ConvertNode(iter->LoopCondition), ConvertNode(iter->LoopStatement), *ast);
 		}
 	}
+
+	// not yet done
+	case AST_SwitchStmt:
+	case AST_CaseStmt:
+		break;
 
 
 	case AST_CompoundStmt:

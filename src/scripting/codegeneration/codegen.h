@@ -245,10 +245,27 @@ public:
 
 class FxIdentifier : public FxExpression
 {
+protected:
 	FName Identifier;
 
 public:
 	FxIdentifier(FName i, const FScriptPosition &p);
+	FxExpression *Resolve(FCompileContext&);
+};
+
+
+//==========================================================================
+//
+//	FxIdentifier
+//
+//==========================================================================
+
+class FxMemberIdentifier : public FxIdentifier
+{
+	FxExpression *Object;
+
+public:
+	FxMemberIdentifier(FxExpression *obj, FName i, const FScriptPosition &p);
 	FxExpression *Resolve(FCompileContext&);
 };
 

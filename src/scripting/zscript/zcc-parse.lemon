@@ -104,7 +104,7 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 %parse_accept { DPrintf(DMSG_SPAMMY, "Input accepted\n"); }
 %parse_failure { /**failed = true;*/ }
 
-%nonassoc EQ MULEQ DIVEQ MODEQ ADDEQ SUBEQ LSHEQ RSHEQ ANDEQ OREQ XOREQ.
+%right EQ MULEQ DIVEQ MODEQ ADDEQ SUBEQ LSHEQ RSHEQ ANDEQ OREQ XOREQ URSHEQ.
 %right QUESTION COLON.
 %left OROR.
 %left ANDAND.
@@ -1247,6 +1247,67 @@ expr(X) ::= expr(A) OROR expr(B).		/* a || b */
 	BINARY_EXPR(A,B,PEX_BoolOr);
 	X = expr2;
 }
+expr(X) ::= expr(A) EQ expr(B).		/* a = b */
+{
+	BINARY_EXPR(A,B,PEX_Assign);
+	X = expr2;
+}
+expr(X) ::= expr(A) ADDEQ expr(B).		/* a += b */
+{
+	BINARY_EXPR(A,B,PEX_AddAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) SUBEQ expr(B).		/* a -= b */
+{
+	BINARY_EXPR(A,B,PEX_SubAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) MULEQ expr(B).		/* a *= b */
+{
+	BINARY_EXPR(A,B,PEX_MulAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) DIVEQ expr(B).		/* a /= b */
+{
+	BINARY_EXPR(A,B,PEX_DivAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) MODEQ expr(B).		/* a %= b */
+{
+	BINARY_EXPR(A,B,PEX_ModAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) LSHEQ expr(B).		/* a <<= b */
+{
+	BINARY_EXPR(A,B,PEX_LshAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) RSHEQ expr(B).		/* a >>= b */
+{
+	BINARY_EXPR(A,B,PEX_RshAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) URSHEQ expr(B).		/* a >>>= b */
+{
+	BINARY_EXPR(A,B,PEX_URshAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) ANDEQ expr(B).		/* a &= b */
+{
+	BINARY_EXPR(A,B,PEX_AndAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) OREQ expr(B).		/* a |= b */
+{
+	BINARY_EXPR(A,B,PEX_OrAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) XOREQ expr(B).		/* a ^= b */
+{
+	BINARY_EXPR(A,B,PEX_XorAssign);
+	X = expr2;
+}
+
 
 expr(X) ::= expr(A) SCOPE expr(B).
 {
@@ -1402,7 +1463,7 @@ statement(X) ::= expression_statement(A) SEMICOLON.	{ X = A; /*X-overwrites-A*/ 
 statement(X) ::= selection_statement(X).
 statement(X) ::= iteration_statement(X).
 statement(X) ::= jump_statement(X).
-statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
+//statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= local_var(A) SEMICOLON.			{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= error SEMICOLON.					{ X = NULL; }
 
@@ -1553,7 +1614,6 @@ for_init(X) ::= for_bump(A).						{ X = A /*X-overwrites-A*/; }
 %type for_bump{ZCC_Statement *}
 for_bump(X) ::= .									{ X = NULL; }
 for_bump(X) ::= expression_statement(A).			{ X = A; /*X-overwrites-A*/ }
-for_bump(X) ::= assign_statement(A).				{ X = A; /*X-overwrites-A*/ }
 
 /*----- If Statements -----*/
 
@@ -1614,28 +1674,19 @@ labeled_statement(X) ::= DEFAULT(T) COLON.
 
 /*----- Assignment Statements -----*/
 
+/* This is no longer being used, in favor of handling assignments as expressions, just like C and C++ do.
+   Keep this here in case some other parts require assignment syntax or Lua-style multi-assignments become a thing.
 %type assign_statement{ZCC_AssignStmt *}
 
-assign_statement(X) ::= expr_list(A) assign_op(OP) expr_list(B). [EQ]
+assign_statement(X) ::= expr_list(A) EQ expr_list(B). [EQ]
 {
-	NEW_AST_NODE(AssignStmt,stmt,OP);
-	stmt->AssignOp = OP.Int;
+	NEW_AST_NODE(AssignStmt,stmt,A);
+	stmt->AssignOp = ZCC_EQ;
 	stmt->Dests = A;
 	stmt->Sources = B;
 	X = stmt;
 }
-
-assign_op(X) ::= EQ(T).			{ X.Int = ZCC_EQ; X.SourceLoc = T.SourceLoc; }
-assign_op(X) ::= MULEQ(T).		{ X.Int = ZCC_MULEQ; X.SourceLoc = T.SourceLoc; }
-assign_op(X) ::= DIVEQ(T).		{ X.Int = ZCC_DIVEQ; X.SourceLoc = T.SourceLoc; }
-assign_op(X) ::= MODEQ(T).		{ X.Int = ZCC_MODEQ; X.SourceLoc = T.SourceLoc; }
-assign_op(X) ::= ADDEQ(T).		{ X.Int = ZCC_ADDEQ; X.SourceLoc = T.SourceLoc; }
-assign_op(X) ::= SUBEQ(T).		{ X.Int = ZCC_SUBEQ; X.SourceLoc = T.SourceLoc; }
-assign_op(X) ::= LSHEQ(T).		{ X.Int = ZCC_LSHEQ; X.SourceLoc = T.SourceLoc; }
-assign_op(X) ::= RSHEQ(T).		{ X.Int = ZCC_RSHEQ; X.SourceLoc = T.SourceLoc; }
-assign_op(X) ::= ANDEQ(T).		{ X.Int = ZCC_ANDEQ; X.SourceLoc = T.SourceLoc; }
-assign_op(X) ::= OREQ(T).		{ X.Int = ZCC_OREQ; X.SourceLoc = T.SourceLoc; }
-assign_op(X) ::= XOREQ(T).		{ X.Int = ZCC_XOREQ; X.SourceLoc = T.SourceLoc; }
+*/
 
 /*----- Local Variable Definition "Statements" -----*/
 

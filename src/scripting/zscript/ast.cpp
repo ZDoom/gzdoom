@@ -747,21 +747,6 @@ static void PrintAssignStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_AssignStmt *snode = (ZCC_AssignStmt *)node;
 	out.Open("assign-stmt");
-	switch (snode->AssignOp)
-	{
-	case ZCC_EQ:		out.AddChar('='); break;
-	case ZCC_MULEQ:		out.Add("*=", 2); break;
-	case ZCC_DIVEQ:		out.Add("/=", 2); break;
-	case ZCC_MODEQ:		out.Add("%=", 2); break;
-	case ZCC_ADDEQ:		out.Add("+=", 2); break;
-	case ZCC_SUBEQ:		out.Add("-=", 2); break;
-	case ZCC_LSHEQ:		out.Add("<<=", 2); break;
-	case ZCC_RSHEQ:		out.Add(">>=", 2); break;
-	case ZCC_ANDEQ:		out.Add("&=", 2); break;
-	case ZCC_OREQ:		out.Add("|=", 2); break;
-	case ZCC_XOREQ:		out.Add("^=", 2); break;
-	default:			BadAssignOp(out, snode->AssignOp); break;
-	}
 	PrintNodes(out, snode->Dests);
 	PrintNodes(out, snode->Sources);
 	out.Close();

@@ -2373,33 +2373,6 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		break;
 	}
 
-	case AST_AssignStmt:
-	{
-		auto assign = static_cast<ZCC_AssignStmt *>(ast);
-		switch (assign->AssignOp)
-		{
-		case ZCC_EQ:
-			// this ignores multi-assign statements (these should probably be disabled in the grammar.)
-			return new FxAssign(ConvertNode(assign->Dests), ConvertNode(assign->Sources));
-
-		case ZCC_MULEQ:
-		case ZCC_DIVEQ:
-		case ZCC_MODEQ:
-		case ZCC_ADDEQ:
-		case ZCC_SUBEQ:
-		case ZCC_LSHEQ:
-		case ZCC_RSHEQ:
-		case ZCC_ANDEQ:
-		case ZCC_OREQ:
-		case ZCC_XOREQ:
-			//break;
-		default:
-			Error(ast, "Invalid assign statement");
-
-		}
-		break;
-	}
-
 	case AST_FuncParm:
 	{
 		auto fparm = static_cast<ZCC_FuncParm *>(ast);
@@ -2526,6 +2499,23 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		case PEX_NEQ:
 			return new FxCompareEq(op == PEX_NEQ ? TK_Neq : TK_Eq, left, right);
 
+		case PEX_Assign:
+			return new FxAssign(left, right);
+/*
+			case ZCC_MULEQ:
+			case ZCC_DIVEQ:
+			case ZCC_MODEQ:
+			case ZCC_ADDEQ:
+			case ZCC_SUBEQ:
+			case ZCC_LSHEQ:
+			case ZCC_RSHEQ:
+			case ZCC_ANDEQ:
+			case ZCC_OREQ:
+			case ZCC_XOREQ:
+				//break;
+			default:
+				Error(ast, "Invalid assign statement");
+*/
 
 			// todo: These do not have representations in DECORATE and no implementation exists yet.
 		case PEX_LTGTEQ:
@@ -2537,6 +2527,8 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 			// vector operations will be done later.
 		case PEX_CrossProduct:
 		case PEX_DotProduct:
+
+
 		default:
 			I_Error("Binary operator %d not implemented yet", op);
 		}

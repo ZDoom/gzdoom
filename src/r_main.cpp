@@ -455,6 +455,8 @@ void R_CopyStackedViewParameters()
 //
 //==========================================================================
 
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
+
 void R_SetupColormap(player_t *player)
 {
 	realfixedcolormap = NULL;
@@ -481,6 +483,11 @@ void R_SetupColormap(player_t *player)
 		else if (player->fixedlightlevel >= 0 && player->fixedlightlevel < NUMCOLORMAPS)
 		{
 			fixedlightlev = player->fixedlightlevel * 256;
+			// [SP] Emulate GZDoom's light-amp goggles.
+			if (r_fullbrightignoresectorcolor && fixedlightlev >= 0)
+			{
+				fixedcolormap = &FullNormalLight;
+			}
 		}
 	}
 	// [RH] Inverse light for shooting the Sigil

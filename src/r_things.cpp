@@ -99,6 +99,7 @@ EXTERN_CVAR (Bool, st_scale)
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, r_drawfuzz)
 EXTERN_CVAR(Bool, r_deathcamera);
+CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 //
 // Sprite rotation 0 is facing the viewer,
@@ -548,7 +549,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 	else if (fixedcolormap != NULL)
 		dc_colormap = fixedcolormap;
 	else if (!foggy && (spr->renderflags & RF_FULLBRIGHT))
-		dc_colormap = usecolormap->Maps;
+		dc_colormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight->Maps : usecolormap->Maps;
 	else
 		calclighting = true;
 
@@ -1066,7 +1067,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	vis->deltax = float(pos.X - ViewPos.X);
 	vis->deltay = float(pos.Y - ViewPos.Y);
 	vis->renderflags = renderflags;
-	if(thing->flags5 & MF5_BRIGHT) vis->renderflags |= RF_FULLBRIGHT; // kg3D
+	if(thing->flags5 & MF5_BRIGHT)
+		vis->renderflags |= RF_FULLBRIGHT; // kg3D
 	vis->Style.RenderStyle = thing->RenderStyle;
 	vis->FillColor = thing->fillcolor;
 	vis->Translation = thing->Translation;		// [RH] thing translation table
@@ -1140,7 +1142,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		}
 		else if (!foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
 		{ // full bright
-			vis->Style.colormap = mybasecolormap->Maps;
+			vis->Style.colormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight->Maps : mybasecolormap->Maps;
 		}
 		else
 		{ // diminished light
@@ -1462,11 +1464,11 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 			}
 			if (fixedlightlev >= 0)
 			{
-				vis->Style.colormap = mybasecolormap->Maps + fixedlightlev;
+				vis->Style.colormap = (r_fullbrightignoresectorcolor) ? (&FullNormalLight->Maps + fixedlightlev) : (mybasecolormap->Maps + fixedlightlev);
 			}
 			else if (!foggy && pspr->GetState()->GetFullbright())
 			{ // full bright
-				vis->Style.colormap = mybasecolormap->Maps;	// [RH] use basecolormap
+				vis->Style.colormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight->Maps : mybasecolormap->Maps;	// [RH] use basecolormap
 			}
 			else
 			{ // local light
@@ -1516,6 +1518,11 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 		{
 			noaccel = true;
 		}
+		// [SP] If emulating GZDoom fullbright, disable acceleration
+		if (r_fullbrightignoresectorcolor && fixedlightlev >= 0)
+			mybasecolormap = &FullNormalLight;
+		if (r_fullbrightignoresectorcolor && !foggy && pspr->GetState()->GetFullbright())
+			mybasecolormap = &FullNormalLight;
 		colormap_to_use = mybasecolormap;
 	}
 	else
@@ -2057,7 +2064,7 @@ void R_DrawSprite (vissprite_t *spr)
 			}
 			else if (!foggy && (spr->renderflags & RF_FULLBRIGHT))
 			{ // full bright
-				spr->Style.colormap = mybasecolormap->Maps;
+				spr->Style.colormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight->Maps : mybasecolormap->Maps;
 			}
 			else
 			{ // diminished light
@@ -2615,7 +2622,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	}
 	else if (particle->bright)
 	{
-		vis->Style.colormap = map;
+		vis->Style.colormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight->Maps : map;
 	}
 	else
 	{

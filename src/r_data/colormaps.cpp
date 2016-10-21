@@ -59,6 +59,7 @@ static bool R_CheckForFixedLights(const BYTE *colormaps);
 
 extern "C" {
 FDynamicColormap NormalLight;
+FDynamicColormap FullNormalLight; //[SP] Emulate GZDoom brightness
 }
 bool NormalLightHasFixedLights;
 
@@ -551,6 +552,9 @@ void R_InitColormaps ()
 	NormalLight.Color = PalEntry (255, 255, 255);
 	NormalLight.Fade = 0;
 	NormalLight.Maps = realcolormaps;
+	FullNormalLight.Color = PalEntry (255, 255, 255);
+	FullNormalLight.Fade = 0;
+	FullNormalLight.Maps = realcolormaps;
 	NormalLightHasFixedLights = R_CheckForFixedLights(realcolormaps);
 	numfakecmaps = fakecmaps.Size();
 

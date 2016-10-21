@@ -1787,6 +1787,7 @@ DSPLYMNU_PICKUPFADE				= "Pickup Flash Intensity";
 DSPLYMNU_PALLETEHACK			= "DirectDraw palette hack"; // Not used
 DSPLYMNU_ATTACHEDSURFACES		= "Use attached surfaces"; // Not used
 DSPLYMNU_SKYMODE				= "Sky render mode";
+DSPLYMNU_GZDFULLBRIGHT			= "Emulate GZDoom FullBright";
 DSPLYMNU_DRAWFUZZ				= "Use fuzz effect";
 DSPLYMNU_TRANSSOUL				= "Lost Soul translucency";
 DSPLYMNU_FAKECONTRAST			= "Use fake contrast";

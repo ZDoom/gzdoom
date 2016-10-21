@@ -105,6 +105,7 @@ TArray<PortalDrawseg> WallPortals(1000);	// note: this array needs to go away as
 subsector_t *InSubsector;
 
 CVAR (Bool, r_drawflat, false, 0)		// [RH] Don't texture segs?
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 
 void R_StoreWallRange (int start, int stop);
@@ -1108,7 +1109,7 @@ void R_Subsector (subsector_t *sub)
 	}
 	else
 	{
-		basecolormap = frontsector->ColorMap;
+		basecolormap = (r_fullbrightignoresectorcolor && fixedlightlev >= 0) ? &FullNormalLight : frontsector->ColorMap;
 	}
 
 	portal = frontsector->ValidatePortal(sector_t::ceiling);
@@ -1142,7 +1143,7 @@ void R_Subsector (subsector_t *sub)
 	}
 	else
 	{
-		basecolormap = frontsector->ColorMap;
+		basecolormap = (r_fullbrightignoresectorcolor && fixedlightlev >= 0) ? &FullNormalLight : frontsector->ColorMap;
 	}
 
 	// killough 3/7/98: Add (x,y) offsets to flats, add deep water check

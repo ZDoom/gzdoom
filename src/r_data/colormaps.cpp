@@ -457,7 +457,11 @@ void R_DeinitColormaps ()
 	SpecialColormaps.Clear();
 	fakecmaps.Clear();
 	delete[] realcolormaps.Maps;
-	delete[] realfbcolormaps.Maps;
+	if (realfbcolormaps.Maps)
+	{
+		delete[] realfbcolormaps.Maps;
+		realfbcolormaps.Maps = nullptr;
+	}
 	FreeSpecialLights();
 }
 

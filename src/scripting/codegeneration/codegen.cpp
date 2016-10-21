@@ -2678,6 +2678,98 @@ ExpEmit FxBinaryInt::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
+FxLtGtEq::FxLtGtEq(FxExpression *l, FxExpression *r)
+	: FxBinary(TK_LtGtEq, l, r)
+{
+	ValueType = TypeSInt32;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxLtGtEq::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+	if (!ResolveLR(ctx, false)) return NULL;
+
+	if (!left->IsNumeric() || !right->IsNumeric())
+	{
+		ScriptPosition.Message(MSG_ERROR, "<>= expects two numeric operands");
+		delete this;
+		return nullptr;
+	}
+	if (left->ValueType->GetRegType() != right->ValueType->GetRegType())
+	{
+		if (left->ValueType->GetRegType() == REGT_INT)
+		{
+			left = new FxFloatCast(left);
+			SAFE_RESOLVE(left, ctx);
+		}
+		if (right->ValueType->GetRegType() == REGT_INT)
+		{
+			right = new FxFloatCast(left);
+			SAFE_RESOLVE(left, ctx);
+		}
+	}
+
+	else if (left->isConstant() && right->isConstant())
+	{
+		// let's cut this short and always compare doubles. For integers the result will be exactly the same as with an integer comparison, either signed or unsigned.
+		auto v1 = static_cast<FxConstant *>(left)->GetValue().GetFloat();
+		auto v2 = static_cast<FxConstant *>(right)->GetValue().GetFloat();
+		auto e = new FxConstant(v1 < v2 ? -1 : v1 > v2 ? 1 : 0, ScriptPosition);
+		delete this;
+		return e;
+	}
+	return this;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxLtGtEq::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit op1 = left->Emit(build);
+	ExpEmit op2 = right->Emit(build);
+
+	assert(op1.RegType == op2.RegType);
+	assert(op1.RegType == REGT_INT || op1.RegType == REGT_FLOAT);
+	assert(!op1.Konst || !op2.Konst);
+
+	ExpEmit to(build, REGT_INT);
+
+	int instr = op1.RegType == REGT_INT ? (left->ValueType == TypeUInt32? OP_LTU_RR : OP_LT_RR) : OP_LTF_RR;
+	if (op1.Konst) instr += 2;
+	if (op2.Konst) instr++;
+
+
+	build->Emit(OP_LI, to.RegNum, 1);										// default to 1
+	build->Emit(instr, 0, op1.RegNum, op2.RegNum);							// if (left < right)
+	auto j1 = build->Emit(OP_JMP, 1);
+	build->Emit(OP_LI, to.RegNum, -1);										// result is -1
+	auto j2 = build->Emit(OP_JMP, 1);										// jump to end
+	build->BackpatchToHere(j1);
+	build->Emit(instr + OP_LE_RR - OP_LT_RR, 0, op1.RegNum, op2.RegNum);	// if (left == right)
+	auto j3 = build->Emit(OP_JMP, 1);
+	build->Emit(OP_LI, to.RegNum, 0);										// result is 0
+	build->BackpatchToHere(j2);
+	build->BackpatchToHere(j3);
+
+	return to;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FxBinaryLogical::FxBinaryLogical(int o, FxExpression *l, FxExpression *r)
 : FxExpression(l->ScriptPosition)
 {

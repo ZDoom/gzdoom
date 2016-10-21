@@ -2547,8 +2547,10 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		case PEX_XorAssign:
 			return ModifyAssign(new FxBinaryInt(tok, new FxAssignSelf(*ast), right), left);
 
-			// todo: These do not have representations in DECORATE and no implementation exists yet.
 		case PEX_LTGTEQ:
+			return new FxLtGtEq(left, right);
+
+			// todo: These do not have representations in DECORATE and no implementation exists yet.
 		case PEX_Concat:
 		case PEX_Is:
 			// more esoteric operators

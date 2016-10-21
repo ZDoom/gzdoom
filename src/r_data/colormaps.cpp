@@ -457,11 +457,6 @@ void R_DeinitColormaps ()
 	SpecialColormaps.Clear();
 	fakecmaps.Clear();
 	delete[] realcolormaps.Maps;
-	if (realfbcolormaps != NULL)
-	{
-		delete[] realfbcolormaps;
-		realfbcolormaps = NULL;
-	}
 	delete[] realfbcolormaps.Maps;
 	FreeSpecialLights();
 }
@@ -554,10 +549,10 @@ void R_InitColormaps ()
 	}
 
 	// [SP] Create a copy of the colormap
-	if (!realfbcolormaps)
+	if (!realfbcolormaps.Maps)
 	{
-		realfbcolormaps = new BYTE[256*NUMCOLORMAPS*fakecmaps.Size()];
-		memcpy(realfbcolormaps, realcolormaps, 256*NUMCOLORMAPS*fakecmaps.Size());
+		realfbcolormaps.Maps = new BYTE[256*NUMCOLORMAPS*fakecmaps.Size()];
+		memcpy(realfbcolormaps.Maps, realcolormaps.Maps, 256*NUMCOLORMAPS*fakecmaps.Size());
 	}
 
 	NormalLight.Color = PalEntry (255, 255, 255);

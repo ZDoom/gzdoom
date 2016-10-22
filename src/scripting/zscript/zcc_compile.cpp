@@ -2066,7 +2066,7 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClassActor *cls, ZCC_TreeNode *a
 				if (fc->Parameters == nullptr && (afd->Variants[0].Flags & VARF_Action))
 				{
 					// We can use this function directly without wrapping it in a caller.
-					return new FxVMFunctionCall(afd, nullptr, *af, true);
+					return new FxVMFunctionCall(new FxSelf(*af), afd, nullptr, *af, false);
 				}
 			}
 			else

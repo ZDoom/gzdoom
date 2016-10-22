@@ -4717,12 +4717,26 @@ static bool CheckArgSize(FName fname, FArgumentList *args, int min, int max, FSc
 FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 {
 	ABORT(ctx.Class);
+	bool error = false;
 
-	PFunction *afd = FindClassMemberFunction(ctx.Class, ctx.Class, MethodName, ScriptPosition);
+	PFunction *afd = FindClassMemberFunction(ctx.Class, ctx.Class, MethodName, ScriptPosition, &error);
+
+	if (error)
+	{
+		delete this;
+		return nullptr;
+	}
 
 	if (afd != nullptr)
 	{
-		auto x = new FxVMFunctionCall(afd, ArgList, ScriptPosition, false);
+		if (ctx.Function->Variants[0].Flags & VARF_Static && !(afd->Variants[0].Flags & VARF_Static))
+		{
+			ScriptPosition.Message(MSG_ERROR, "Call to non-static function %s from a static context", MethodName.GetChars());
+			delete this;
+			return nullptr;
+		}
+		auto self = !(afd->Variants[0].Flags & VARF_Static)? new FxSelf(ScriptPosition) : nullptr;
+		auto x = new FxVMFunctionCall(self, afd, ArgList, ScriptPosition, false);
 		ArgList = nullptr;
 		delete this;
 		return x->Resolve(ctx);
@@ -4864,6 +4878,105 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	ScriptPosition.Message(MSG_ERROR, "Call to unknown function '%s'", MethodName.GetChars());
 	delete this;
 	return nullptr;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxMemberFunctionCall::FxMemberFunctionCall(FxExpression *self, FName methodname, FArgumentList *args, const FScriptPosition &pos)
+	: FxExpression(pos)
+{
+	Self = self;
+	MethodName = methodname;
+	ArgList = args;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxMemberFunctionCall::~FxMemberFunctionCall()
+{
+	SAFE_DELETE(Self);
+	SAFE_DELETE(ArgList);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
+{
+	ABORT(ctx.Class);
+	SAFE_RESOLVE(Self, ctx);
+
+	PClass *cls;
+	bool staticonly = false;
+	if (Self->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
+	{
+		cls = static_cast<PClassPointer *>(Self->ValueType)->ClassRestriction;
+		staticonly = true;
+	}
+	else if (Self->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
+	{
+		auto ptype = static_cast<PPointer *>(Self->ValueType)->PointedType;
+		if (ptype->IsKindOf(RUNTIME_CLASS(PClass)))
+		{
+			cls = static_cast<PClass *>(ptype);
+		}
+		else
+		{
+			ScriptPosition.Message(MSG_ERROR, "Left hand side of %s must point to a class object\n", MethodName.GetChars());
+			delete this;
+			return nullptr;
+		}
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Invalid expression on left hand side of %s\n", MethodName.GetChars());
+		delete this;
+		return nullptr;
+	}
+
+	bool error = false;
+	PFunction *afd = FindClassMemberFunction(cls, cls, MethodName, ScriptPosition, &error);
+	if (error)
+	{
+		delete this;
+		return nullptr;
+	}
+
+	if (afd == nullptr)
+	{
+		ScriptPosition.Message(MSG_ERROR, "Unknown function %s\n", MethodName.GetChars());
+		delete this;
+		return nullptr;
+	}
+	if (staticonly && !(afd->Variants[0].Flags & VARF_Static))
+	{
+		if (!ctx.Class->IsDescendantOf(cls))
+		{
+			ScriptPosition.Message(MSG_ERROR, "Cannot call non-static function %s::%s from here\n", cls->TypeName.GetChars(), MethodName.GetChars());
+			delete this;
+			return nullptr;
+		}
+		// If this is a qualified call to a parent class function, let it through (but this needs to disable virtual calls later.)
+	}
+
+	// do not pass the self pointer to static functions.
+	auto self = !(afd->Variants[0].Flags & VARF_Static) ? Self : nullptr;
+	auto x = new FxVMFunctionCall(self, afd, ArgList, ScriptPosition, staticonly);
+	ArgList = nullptr;
+	delete this;
+	return x->Resolve(ctx);
 }
 
 
@@ -5042,13 +5155,14 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxVMFunctionCall::FxVMFunctionCall(PFunction *func, FArgumentList *args, const FScriptPosition &pos, bool ownerisself)
+FxVMFunctionCall::FxVMFunctionCall(FxExpression *self, PFunction *func, FArgumentList *args, const FScriptPosition &pos, bool novirtual)
 : FxExpression(pos)
 {
+	Self = self;
 	Function = func;
 	ArgList = args;
 	EmitTail = false;
-	OwnerIsSelf = ownerisself;
+	NoVirtual = novirtual;
 }
 
 //==========================================================================
@@ -5103,6 +5217,7 @@ VMFunction *FxVMFunctionCall::GetDirectFunction()
 FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
+	SAFE_RESOLVE_OPT(Self, ctx);
 	bool failed = false;
 	auto proto = Function->Variants[0].Proto;
 	auto argtypes = proto->ArgumentTypes;
@@ -5111,6 +5226,14 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	if (Function->Variants[0].Flags & VARF_Action) implicit = 3;
 	else if (Function->Variants[0].Flags & VARF_Method) implicit = 1;
 	else implicit = 0;
+
+	// This should never happen.
+	if (Self == nullptr && !(Function->Variants[0].Flags & VARF_Static))
+	{
+		ScriptPosition.Message(MSG_ERROR, "Call to non-static function without a self pointer");
+		delete this;
+		return nullptr;
+	}
 
 	if (ArgList != NULL)
 	{
@@ -5142,16 +5265,14 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 
 //==========================================================================
 //
-// Assumption: This call is being generated inside a function whose a0
-// register is a self pointer. For action functions, a1 maps to stateowner
-// and a2 maps to callingstate. (self, stateowner, callingstate)
+//
 //
 //==========================================================================
 
 ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 {
 	assert((build->IsActionFunc && build->Registers[REGT_POINTER].GetMostUsed() >= NAP) ||
-		   (!build->IsActionFunc && build->Registers[REGT_POINTER].GetMostUsed() >= 1));
+		(!build->IsActionFunc && build->Registers[REGT_POINTER].GetMostUsed() >= 1));
 	int count = (ArgList ? ArgList->Size() : 0);
 
 	if (count == 1)
@@ -5163,35 +5284,34 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 		}
 	}
 
-	// Passing the caller as 'self' is a serious design mistake in DECORATE because it mixes up the types of the two actors involved.
-	// For ZSCRIPT 'self' is properly used for the state's owning actor, meaning we have to pass the second argument here.
-
 	// If both functions are non-action or both are action, there is no need for special treatment.
-	if (!OwnerIsSelf || (!!(Function->Variants[0].Flags & VARF_Action) == build->IsActionFunc))
+	//if (elf || (!!(Function->Variants[0].Flags & VARF_Action) == build->IsActionFunc))
 	{
-	// Emit code to pass implied parameters
+		// Emit code to pass implied parameters
 		if (Function->Variants[0].Flags & VARF_Method)
-	{
-		build->Emit(OP_PARAM, 0, REGT_POINTER, 0);
-		count += 1;
-	}
+		{
+			assert(Self != nullptr);
+			Self->Emit(build);
+			count += 1;
+		}
 		if (Function->Variants[0].Flags & VARF_Action)
-	{
-		static_assert(NAP == 3, "This code needs to be updated if NAP changes");
-		if (build->IsActionFunc)
 		{
-			build->Emit(OP_PARAM, 0, REGT_POINTER, 1);
-			build->Emit(OP_PARAM, 0, REGT_POINTER, 2);
+			static_assert(NAP == 3, "This code needs to be updated if NAP changes");
+			if (build->IsActionFunc)
+			{
+				build->Emit(OP_PARAM, 0, REGT_POINTER, 1);
+				build->Emit(OP_PARAM, 0, REGT_POINTER, 2);
+			}
+			else
+			{
+				int null = build->GetConstantAddress(nullptr, ATAG_GENERIC);
+				build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
+				build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
+			}
+			count += 2;
 		}
-		else
-		{
-			int null = build->GetConstantAddress(nullptr, ATAG_GENERIC);
-			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
-			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
-		}
-		count += 2;
 	}
-	}
+	/*
 	else
 	{
 		if (build->IsActionFunc && (Function->Variants[0].Flags & VARF_Method))
@@ -5207,6 +5327,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 			I_Error("Cannot call action function from non-action functions.");
 		}
 	}
+	*/
 
 	// Emit code to pass explicit parameters
 	if (ArgList != NULL)

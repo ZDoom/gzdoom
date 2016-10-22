@@ -1082,6 +1082,26 @@ public:
 
 //==========================================================================
 //
+//	FxFunctionCall
+//
+//==========================================================================
+
+class FxMemberFunctionCall : public FxExpression
+{
+	FxExpression *Self;
+	FName MethodName;
+	FArgumentList *ArgList;
+
+public:
+
+	FxMemberFunctionCall(FxExpression *self, FName methodname, FArgumentList *args, const FScriptPosition &pos);
+	~FxMemberFunctionCall();
+	FxExpression *Resolve(FCompileContext&);
+};
+
+
+//==========================================================================
+//
 //	FxActionSpecialCall
 //
 //==========================================================================
@@ -1130,12 +1150,13 @@ public:
 class FxVMFunctionCall : public FxExpression
 {
 	bool EmitTail;
-	bool OwnerIsSelf;	// ZSCRIPT makes the state's owner the self pointer to ensure proper type handling
+	bool NoVirtual;
+	FxExpression *Self;
 	PFunction *Function;
 	FArgumentList *ArgList;
 
 public:
-	FxVMFunctionCall(PFunction *func, FArgumentList *args, const FScriptPosition &pos, bool ownerisself);
+	FxVMFunctionCall(FxExpression *self, PFunction *func, FArgumentList *args, const FScriptPosition &pos, bool novirtual);
 	~FxVMFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
 	PPrototype *ReturnProto();

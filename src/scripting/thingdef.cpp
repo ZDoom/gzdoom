@@ -155,7 +155,7 @@ PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, i
 //
 //==========================================================================
 
-PFunction *FindClassMemberFunction(PClass *selfcls, PClass *funccls, FName name, FScriptPosition &sc)
+PFunction *FindClassMemberFunction(PClass *selfcls, PClass *funccls, FName name, FScriptPosition &sc, bool *error)
 {
 	// Skip ACS_NamedExecuteWithResult. Anything calling this should use the builtin instead.
 	if (name == NAME_ACS_NamedExecuteWithResult) return nullptr;

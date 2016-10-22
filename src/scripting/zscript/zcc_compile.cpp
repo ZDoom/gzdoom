@@ -2535,6 +2535,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 
 		case PEX_EQEQ:
 		case PEX_NEQ:
+		case PEX_APREQ:
 			return new FxCompareEq(tok, left, right);
 
 		case PEX_Assign:
@@ -2563,8 +2564,6 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 			// todo: These do not have representations in DECORATE and no implementation exists yet.
 		case PEX_Concat:
 		case PEX_Is:
-			// more esoteric operators
-		case PEX_APREQ:
 
 			// vector operations will be done later.
 		case PEX_CrossProduct:

@@ -2525,6 +2525,7 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 		return NULL;
 	}
 
+	if (Operator == TK_ApproxEq && ValueType->GetRegType() != REGT_FLOAT) Operator = TK_Eq;
 	if (left->isConstant() && right->isConstant())
 	{
 		int v;
@@ -2533,7 +2534,7 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 		{
 			double v1 = static_cast<FxConstant *>(left)->GetValue().GetFloat();
 			double v2 = static_cast<FxConstant *>(right)->GetValue().GetFloat();
-			v = Operator == TK_Eq? v1 == v2 : v1 != v2;
+			v = Operator == TK_Eq? v1 == v2 : Operator == TK_Neq? v1 != v2 : fabs(v1-v2) < VM_EPSILON;
 		}
 		else
 		{
@@ -2588,7 +2589,7 @@ ExpEmit FxCompareEq::Emit(VMFunctionBuilder *build)
 
 	// See FxUnaryNotBoolean for comments, since it's the same thing.
 	build->Emit(OP_LI, to.RegNum, 0, 0);
-	build->Emit(instr, Operator != TK_Eq, op1.RegNum, op2.RegNum);
+	build->Emit(instr, Operator == TK_ApproxEq? CMP_APPROX : Operator != TK_Eq, op1.RegNum, op2.RegNum);
 	build->Emit(OP_JMP, 1);
 	build->Emit(OP_LI, to.RegNum, 1);
 	return to;

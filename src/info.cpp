@@ -94,13 +94,13 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 		}
 		if (stateret == NULL)
 		{
-			stack.Call(ActionFunc, params, countof(params), NULL, 0, NULL);
+			stack.Call(ActionFunc, params, ActionFunc->ImplicitArgs, NULL, 0, NULL);
 		}
 		else
 		{
 			VMReturn ret;
 			ret.PointerAt((void **)stateret);
-			stack.Call(ActionFunc, params, countof(params), &ret, 1, NULL);
+			stack.Call(ActionFunc, params, ActionFunc->ImplicitArgs, &ret, 1, NULL);
 		}
 		ActionCycles.Unclock();
 		return true;

@@ -168,7 +168,7 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 					numret = 2;
 				}
 			}
-			stack.Call(state->ActionFunc, params, countof(params), wantret, numret);
+			stack.Call(state->ActionFunc, params, state->ActionFunc->ImplicitArgs, wantret, numret);
 			// As long as even one state succeeds, the whole chain succeeds unless aborted below.
 			// A state that wants to jump does not count as "succeeded".
 			if (nextstate == NULL)

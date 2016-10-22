@@ -5196,11 +5196,11 @@ PPrototype *FxVMFunctionCall::ReturnProto()
 
 VMFunction *FxVMFunctionCall::GetDirectFunction()
 {
-	// If this return statement calls a function with no arguments,
+	// If this return statement calls a non-virtual function with no arguments,
 	// then it can be a "direct" function. That is, the DECORATE
 	// definition can call that function directly without wrapping
 	// it inside VM code.
-	if ((ArgList ? ArgList->Size() : 0) == 0 && (Function->Variants[0].Flags & VARF_Action))
+	if ((ArgList ? ArgList->Size() : 0) == 0 && !(Function->Variants[0].Flags & VARF_Virtual))
 	{
 		return Function->Variants[0].Implementation;
 	}
@@ -5222,10 +5222,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	auto proto = Function->Variants[0].Proto;
 	auto argtypes = proto->ArgumentTypes;
 
-	int implicit;
-	if (Function->Variants[0].Flags & VARF_Action) implicit = 3;
-	else if (Function->Variants[0].Flags & VARF_Method) implicit = 1;
-	else implicit = 0;
+	int implicit = Function->GetImplicitArgs();
 
 	// This should never happen.
 	if (Self == nullptr && !(Function->Variants[0].Flags & VARF_Static))

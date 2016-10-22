@@ -719,6 +719,12 @@ public:
 	PClass *OwningClass = nullptr;
 
 	unsigned AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags);
+	int GetImplicitArgs()
+	{
+		if (Variants[0].Flags & VARF_Action) return 3;
+		else if (Variants[0].Flags & VARF_Method) return 1;
+		return 0;
+	}
 
 	size_t PropagateMark();
 

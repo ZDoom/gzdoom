@@ -665,6 +665,7 @@ VMFunction *FFunctionBuildList::AddFunction(PFunction *functype, FxExpression *c
 	it.Code = code;
 	it.PrintableName = name;
 	it.Function = new VMScriptFunction;
+	it.Function->ImplicitArgs = functype->GetImplicitArgs();
 	it.Proto = nullptr;
 	it.FromDecorate = fromdecorate;
 	mItems.Push(it);

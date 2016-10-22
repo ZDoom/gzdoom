@@ -1951,14 +1951,15 @@ void ZCCCompiler::InitFunctions()
 					f->Flags &= notallowed;
 				}
 				uint32_t varflags = VARF_Method;
+				int implicitargs = 1;
 				AFuncDesc *afd = nullptr;
 
 				// map to implementation flags.
 				if (f->Flags & ZCC_Private) varflags |= VARF_Private;
 				if (f->Flags & ZCC_Protected) varflags |= VARF_Protected;
 				if (f->Flags & ZCC_Deprecated) varflags |= VARF_Deprecated;
-				if (f->Flags & ZCC_Action) varflags |= VARF_Action|VARF_Final;	// Action implies Final.
-				if (f->Flags & ZCC_Static) varflags = (varflags & ~VARF_Method) | VARF_Final;	// Static implies Final.
+				if (f->Flags & ZCC_Action) varflags |= VARF_Action|VARF_Final, implicitargs = 3;	// Action implies Final.
+				if (f->Flags & ZCC_Static) varflags = (varflags & ~VARF_Method) | VARF_Final, implicitargs = 0;	// Static implies Final.
 				if ((f->Flags & (ZCC_Action | ZCC_Static)) == (ZCC_Action | ZCC_Static))
 				{
 					Error(f, "%s: Action and Static on the same function is not allowed.", FName(f->Name).GetChars());
@@ -1973,6 +1974,7 @@ void ZCCCompiler::InitFunctions()
 					{
 						Error(f, "The function '%s' has not been exported from the executable.", FName(f->Name).GetChars());
 					}
+					(*afd->VMPointer)->ImplicitArgs = BYTE(implicitargs);
 				}
 				SetImplicitArgs(&args, &argflags, &argnames, c->Type(), varflags);
 				auto p = f->Params;
@@ -2063,7 +2065,7 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClassActor *cls, ZCC_TreeNode *a
 			PFunction *afd = dyn_cast<PFunction>(cls->Symbols.FindSymbol(id->Identifier, true));
 			if (afd != nullptr)
 			{
-				if (fc->Parameters == nullptr && (afd->Variants[0].Flags & VARF_Action))
+				if (fc->Parameters == nullptr && !(afd->Variants[0].Flags & VARF_Virtual))
 				{
 					// We can use this function directly without wrapping it in a caller.
 					return new FxVMFunctionCall(new FxSelf(*af), afd, nullptr, *af, false);

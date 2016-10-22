@@ -823,7 +823,9 @@ void SetDehParams(FState *state, int codepointer)
 		VMScriptFunction *sfunc = new VMScriptFunction;
 		buildit.MakeFunction(sfunc);
 		sfunc->NumArgs = NAP;
+		sfunc->ImplicitArgs = NAP;
 		state->SetAction(sfunc);
+		sfunc->PrintableName.Format("Dehacked.%s.%d.%d", MBFCodePointers[codepointer].name.GetChars(), value1, value2);
 	}
 }
 

@@ -179,12 +179,12 @@ class VMFunction : public DObject
 	HAS_OBJECT_POINTERS;
 public:
 	bool Native;
+	BYTE ImplicitArgs = 0;	// either 0 for static, 1 for method or 3 for action
 	FName Name;
 
 	class PPrototype *Proto;
 
-	VMFunction() : Native(false), Name(NAME_None), Proto(NULL) {}
-	VMFunction(FName name) : Native(false), Name(name), Proto(NULL) {}
+	VMFunction(FName name = NAME_None) : Native(false), ImplicitArgs(0), Name(name), Proto(NULL) {}
 };
 
 enum EVMOpMode

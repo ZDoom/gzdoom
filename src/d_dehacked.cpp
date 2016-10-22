@@ -797,7 +797,7 @@ void SetDehParams(FState *state, int codepointer)
 	
 	// Let's identify the codepointer we're dealing with.
 	PFunction *sym;
-	sym = dyn_cast<PFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(FName(MBFCodePointers[codepointer].name), true));
+	sym = dyn_cast<PFunction>(RUNTIME_CLASS(AStateProvider)->Symbols.FindSymbol(FName(MBFCodePointers[codepointer].name), true));
 	if (sym == NULL) return;
 
 	if (codepointer < 0 || (unsigned)codepointer >= countof(MBFCodePointerFactories))
@@ -2113,7 +2113,7 @@ static int PatchCodePtrs (int dummy)
 
 				// This skips the action table and goes directly to the internal symbol table
 				// DEH compatible functions are easy to recognize.
-				PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(symname, true));
+				PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AStateProvider)->Symbols.FindSymbol(symname, true));
 				if (sym == NULL)
 				{
 					Printf("Frame %d: Unknown code pointer '%s'\n", frame, Line2);
@@ -2721,11 +2721,11 @@ static bool LoadDehSupp ()
 					}
 					else
 					{
-						// all relevant code pointers are either defined in AInventory 
+						// all relevant code pointers are either defined in AStateProvider
 						// or AActor so this will find all of them.
 						FString name = "A_";
 						name << sc.String;
-						PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(name, true));
+						PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AStateProvider)->Symbols.FindSymbol(name, true));
 						if (sym == NULL)
 						{
 							sc.ScriptError("Unknown code pointer '%s'", sc.String);

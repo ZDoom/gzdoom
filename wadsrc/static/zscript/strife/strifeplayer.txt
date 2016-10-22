@@ -36,9 +36,9 @@ class StrifePlayer : PlayerPawn
 		Player.Colorset 7, "Blue",			0x90, 0x9F,  0x92,	0x20, 0x3F, 0x00, 0x1F,  0x50, 0x5F, 0x40, 0x4F,  0xC1, 0xCF, 0x01, 0x0F,  0xC0,0xC0,1,1,  0xD0, 0xDF, 0x10, 0x1F;
 	}
 
-	action native void A_ItBurnsItBurns();
-	action native void A_CrispyPlayer();
-	action native void A_HandLower();
+	native void A_ItBurnsItBurns();
+	native void A_CrispyPlayer();
+	native void A_HandLower();
 	
 	States
 	{

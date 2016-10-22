@@ -12,10 +12,10 @@ class SpectralMonster : Actor native
 		+NOICEDEATH
 	}
 	
-	action native void A_SpectreChunkSmall ();
-	action native void A_SpectreChunkLarge ();
-	action native void A_Spectre3Attack ();
-	action native void A_SpotLightning ();
+	native void A_SpectreChunkSmall ();
+	native void A_SpectreChunkLarge ();
+	native void A_Spectre3Attack ();
+	native void A_SpotLightning ();
 }
 
 
@@ -124,7 +124,7 @@ class SpectralLightningH1 : SpectralLightningBase
 		+SPECTRAL
 	}
 
-	action native void A_SpectralLightningTail ();
+	native void A_SpectralLightningTail ();
 
 	States
 	{
@@ -189,7 +189,7 @@ class SpectralLightningBigBall1 : SpectralLightningDeath2
 		+SPECTRAL
 	}
 
-	action native void A_SpectralBigBallLightning ();
+	native void A_SpectralBigBallLightning ();
 
 	States
 	{
@@ -259,7 +259,7 @@ class SpectralLightningSpot : SpectralLightningDeath1
 		Alpha 0.6;
 	}
 
-	action native void A_SpectralLightning ();
+	native void A_SpectralLightning ();
 
 	States
 	{

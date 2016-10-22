@@ -62,7 +62,7 @@ class PunchDagger : StrifeWeapon
 		Tag "$TAG_PUNCHDAGGER";
 	}
 	
-	action native void A_JabDagger ();
+	native void A_JabDagger ();
 	
 	States
 	{
@@ -184,9 +184,9 @@ class StrifeCrossbow : StrifeWeapon
 		Inventory.Icon "CBOWA0";
 	}
 	
-	action native void A_ClearFlash ();
-	action native void A_ShowElectricFlash ();
-	action native void A_FireArrow (class<Actor> proj);
+	native void A_ClearFlash ();
+	native void A_ShowElectricFlash ();
+	native void A_FireArrow (class<Actor> proj);
 
 	States
 	{
@@ -331,7 +331,7 @@ class MiniMissileLauncher : StrifeWeapon
 		Inventory.PickupMessage "$TXT_MMLAUNCHER";
 	}
 
-	action native void A_FireMiniMissile ();
+	native void A_FireMiniMissile ();
 
 	States
 	{
@@ -446,7 +446,7 @@ class FlameThrower : StrifeWeapon
 		Inventory.PickupMessage "$TXT_FLAMER";
 	}
 	
-	action native void A_FireFlamer ();
+	native void A_FireFlamer ();
 
 	States
 	{
@@ -492,7 +492,7 @@ class FlameMissile : Actor
 		Obituary "$OB_MPFLAMETHROWER";
 	}
 
-	action native void A_FlameDie ();
+	native void A_FlameDie ();
 
 	States
 	{
@@ -528,7 +528,7 @@ class Mauler : StrifeWeapon
 		Obituary "$OB_MPMAULER1";
 	}
 
-	action native void A_FireMauler1 ();
+	native void A_FireMauler1 ();
 
 	States
 	{
@@ -571,8 +571,8 @@ class Mauler2 : Mauler
 		Tag "$TAG_MAULER2";
 	}
 
-	action native void A_FireMauler2Pre ();
-	action native void A_FireMauler2 ();
+	native void A_FireMauler2Pre ();
+	native void A_FireMauler2 ();
 
 	States
 	{
@@ -639,7 +639,7 @@ class MaulerTorpedo : Actor
 		Obituary "$OB_MPMAULER";
 	}
 
-	action native void A_MaulerTorpedoWave ();
+	native void A_MaulerTorpedoWave ();
 
 	States
 	{
@@ -775,8 +775,8 @@ class PhosphorousFire : Actor native
 	Obituary "$OB_MPPHOSPHOROUSGRENADE";
 	}
 
-	action native void A_Burnarea ();
-	action native void A_Burnination ();
+	native void A_Burnarea ();
+	native void A_Burnination ();
 
 	States
 	{
@@ -816,7 +816,7 @@ class StrifeGrenadeLauncher : StrifeWeapon
 		Inventory.PickupMessage "$TXT_GLAUNCHER";
 	}
 
-	action native void A_FireGrenade (class<Actor> grenadetype, float angleofs, state flash);
+	native void A_FireGrenade (class<Actor> grenadetype, float angleofs, state flash);
 
 	States
 	{

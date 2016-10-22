@@ -13,7 +13,7 @@ static FRandom pr_reaverattack ("ReaverAttack");
 
 DEFINE_ACTION_FUNCTION(AActor, A_ReaverRanged)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->target != NULL)
 	{

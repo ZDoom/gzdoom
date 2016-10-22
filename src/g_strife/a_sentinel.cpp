@@ -11,7 +11,7 @@ static FRandom pr_sentinelrefire ("SentinelRefire");
 
 DEFINE_ACTION_FUNCTION(AActor, A_SentinelBob)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	double minz, maxz;
 
@@ -43,7 +43,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SentinelBob)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SentinelAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *missile, *trail;
 
@@ -75,7 +75,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SentinelAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SentinelRefire)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	A_FaceTarget (self);
 

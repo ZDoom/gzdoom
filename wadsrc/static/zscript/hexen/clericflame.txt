@@ -16,7 +16,7 @@ class CWeapFlame : ClericWeapon
 		Tag "$TAG_CWEAPFLAME";
 	}
 
-	action native void A_CFlameAttack();
+	native void A_CFlameAttack();
 
 	States
 	{
@@ -140,7 +140,7 @@ class CircleFlame : Actor
 		Obituary "$OB_MPCWEAPFLAME";
 	}
 
-	action native void A_CFlameRotate();
+	native void A_CFlameRotate();
 
 	States
 	{
@@ -184,8 +184,8 @@ class CFlameMissile : FastProjectile native
 		Obituary "$OB_MPCWEAPFLAME";
 	}
 
-	action native void A_CFlamePuff();
-	action native void A_CFlameMissile();
+	native void A_CFlamePuff();
+	native void A_CFlameMissile();
 
 	States
 	{

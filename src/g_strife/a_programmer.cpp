@@ -74,7 +74,7 @@ PalEntry AProgLevelEnder::GetBlend ()
 
 DEFINE_ACTION_FUNCTION(AActor, A_ProgrammerMelee)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int damage;
 
@@ -102,7 +102,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ProgrammerMelee)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpotLightning)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *spot;
 
@@ -128,7 +128,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpotLightning)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnProgrammerBase)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *foo = Spawn("ProgrammerBase", self->PosPlusZ(24.), ALLOW_REPLACE);
 	if (foo != NULL)
@@ -148,7 +148,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnProgrammerBase)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ProgrammerDeath)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!CheckBossDeath (self))
 		return 0;

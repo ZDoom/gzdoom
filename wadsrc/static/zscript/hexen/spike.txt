@@ -26,11 +26,11 @@ class ThrustFloor : Actor native
 		Height 128;
 	}
 
-	action native void A_ThrustRaise();
-	action native void A_ThrustImpale();
-	action native void A_ThrustLower();
-	action native void A_ThrustInitDn();
-	action native void A_ThrustInitUp();
+	native void A_ThrustRaise();
+	native void A_ThrustImpale();
+	native void A_ThrustLower();
+	native void A_ThrustInitDn();
+	native void A_ThrustInitUp();
 
 	States
 	{

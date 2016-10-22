@@ -19,22 +19,22 @@ class ScriptedMarine : Actor native
 		PainSound "*pain50";
 	}
 	
-	action native void A_M_Refire (bool ignoremissile=false);
-	action native void A_M_CheckAttack ();
-	action native void A_MarineChase ();
-	action native void A_MarineLook ();
-	action native void A_MarineNoise ();
-	action native void A_M_Punch (int force);
-	action native void A_M_SawRefire ();
-	action native void A_M_FirePistol (bool accurate);
-	action native void A_M_FireShotgun ();
-	action native void A_M_FireShotgun2 ();
-	action native void A_M_FireCGun(bool accurate);
-	action native void A_M_FireMissile ();
-	action native void A_M_FirePlasma ();
-	action native void A_M_FireRailgun ();
-	action native void A_M_BFGsound ();
-	action native void A_M_FireBFG ();
+	native void A_M_Refire (bool ignoremissile=false);
+	native void A_M_CheckAttack ();
+	native void A_MarineChase ();
+	native void A_MarineLook ();
+	native void A_MarineNoise ();
+	native void A_M_Punch (int force);
+	native void A_M_SawRefire ();
+	native void A_M_FirePistol (bool accurate);
+	native void A_M_FireShotgun ();
+	native void A_M_FireShotgun2 ();
+	native void A_M_FireCGun(bool accurate);
+	native void A_M_FireMissile ();
+	native void A_M_FirePlasma ();
+	native void A_M_FireRailgun ();
+	native void A_M_BFGsound ();
+	native void A_M_FireBFG ();
 	
 	States
 	{

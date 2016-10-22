@@ -13,7 +13,7 @@ class FWeapFist : FighterWeapon
 		Tag "$TAG_FWEAPFIST";
 	}
 
-	action native void A_FPunchAttack();
+	native void A_FPunchAttack();
 
 	States
 	{

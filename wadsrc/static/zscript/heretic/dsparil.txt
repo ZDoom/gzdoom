@@ -38,10 +38,10 @@ class Sorcerer1 : Actor
 		HitObituary "$OB_DSPARIL1HIT";
 	}
 
-	action native void A_Sor1Pain ();
-	action native void A_Sor1Chase ();
-	action native void A_Srcr1Attack ();
-	action native void A_SorcererRise ();
+	native void A_Sor1Pain ();
+	native void A_Sor1Chase ();
+	native void A_Srcr1Attack ();
+	native void A_SorcererRise ();
 
 	States
 	{
@@ -142,10 +142,10 @@ class Sorcerer2 : Actor
 		HitObituary "$OB_DSPARIL2HIT";
 	}
 
-	action native void A_Srcr2Decide ();
-	action native void A_Srcr2Attack ();
-	action native void A_Sor2DthInit ();
-	action native void A_Sor2DthLoop ();
+	native void A_Srcr2Decide ();
+	native void A_Srcr2Attack ();
+	native void A_Sor2DthInit ();
+	native void A_Sor2DthLoop ();
 
 	States
 	{
@@ -210,7 +210,7 @@ class Sorcerer2FX1 : Actor
 		RenderStyle "Add";
 	}
 
-	action native void A_BlueSpark ();
+	native void A_BlueSpark ();
 	
 	States
 	{
@@ -263,7 +263,7 @@ class Sorcerer2FX2 : Actor
 		RenderStyle "Add";
 	}
 
-	action native void A_GenWizard ();
+	native void A_GenWizard ();
 
 	States
 	{

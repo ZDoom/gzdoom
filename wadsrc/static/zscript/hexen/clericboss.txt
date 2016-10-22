@@ -18,7 +18,7 @@ class ClericBoss : Actor
 		Obituary "$OBCBOSS";
 	}
 
-	action native void A_ClericAttack();
+	native void A_ClericAttack();
 
 	States
 	{

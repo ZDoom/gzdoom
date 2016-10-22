@@ -9,7 +9,7 @@
 
 DEFINE_ACTION_FUNCTION(AActor, A_BspiAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target)
 		return 0;
@@ -23,7 +23,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BspiAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BabyMetal)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	S_Sound (self, CHAN_BODY, "baby/walk", 1, ATTN_IDLE);
 	A_Chase (stack, self);
 	return 0;

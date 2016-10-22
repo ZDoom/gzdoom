@@ -1546,7 +1546,7 @@ void APlayerPawn::TweakSpeeds (double &forward, double &side)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int sound = 0;
 	int chan = CHAN_VOICE;
@@ -1622,7 +1622,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_OPT(spawntype, APlayerChunk)	{ spawntype = NULL; }
 
 	APlayerPawn *mo;
@@ -1672,7 +1672,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CheckPlayerDone)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->player == NULL)
 	{

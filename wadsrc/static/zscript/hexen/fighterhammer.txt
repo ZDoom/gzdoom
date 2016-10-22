@@ -18,8 +18,8 @@ class FWeapHammer : FighterWeapon
 		Tag "$TAG_FWEAPHAMMER";
 	}
 
-	action native void A_FHammerAttack();
-	action native void A_FHammerThrow();
+	native void A_FHammerAttack();
+	native void A_FHammerThrow();
 
 	States
 	{

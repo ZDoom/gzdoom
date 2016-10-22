@@ -9,8 +9,8 @@ class BatSpawner : SwitchableDecoration
 		RenderStyle "None";
 	}
 
-	action native void A_BatSpawnInit();
-	action native void A_BatSpawn();
+	native void A_BatSpawnInit();
+	native void A_BatSpawn();
 
 	States
 	{
@@ -39,7 +39,7 @@ class Bat : Actor
 		+NOTELEPORT +CANPASS
 	}
 
-	action native void A_BatMove();
+	native void A_BatMove();
 
 	States
 	{

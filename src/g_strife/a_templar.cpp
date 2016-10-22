@@ -13,7 +13,7 @@ static FRandom pr_templar ("Templar");
 
 DEFINE_ACTION_FUNCTION(AActor, A_TemplarAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int damage;
 	DAngle angle;

@@ -23,13 +23,13 @@ class Bishop : Actor
 		Obituary"$OB_BISHOP";
 	}
 
-	action native void A_BishopChase();
-	action native void A_BishopDecide();
-	action native void A_BishopDoBlur();
-	action native void A_BishopSpawnBlur();
-	action native void A_BishopPainBlur();
-	action native void A_BishopAttack();
-	action native void A_BishopAttack2();
+	native void A_BishopChase();
+	native void A_BishopDecide();
+	native void A_BishopDoBlur();
+	native void A_BishopSpawnBlur();
+	native void A_BishopPainBlur();
+	native void A_BishopAttack();
+	native void A_BishopAttack2();
 
 	States
 	{

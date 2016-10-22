@@ -32,7 +32,7 @@ class AlienSpectre1 : SpectralMonster
 		+NOICEDEATH
 	}
 
-	action native void A_AlienSpectreDeath ();
+	native void A_AlienSpectreDeath ();
 
 	States
 	{

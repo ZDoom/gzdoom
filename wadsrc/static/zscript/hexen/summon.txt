@@ -36,7 +36,7 @@ class SummoningDoll : Actor
 		+NOTELEPORT
 	}
 
-	action native void A_Summon();
+	native void A_Summon();
 
 	States
 	{

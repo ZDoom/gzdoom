@@ -23,10 +23,10 @@ class Wraith : Actor
 		Obituary "$OB_WRAITH";
 	}
 
-	action native void A_WraithInit();
-	action native void A_WraithChase();
-	action native void A_WraithFX3();
-	action native void A_WraithMelee();
+	native void A_WraithInit();
+	native void A_WraithChase();
+	native void A_WraithFX3();
+	native void A_WraithMelee();
 
 	States
 	{
@@ -97,8 +97,8 @@ class WraithBuried : Wraith
 		PainChance 0;
 	}
 	
-	action native void A_WraithRaiseInit();
-	action native void A_WraithRaise();
+	native void A_WraithRaiseInit();
+	native void A_WraithRaise();
 	
 	States
 	{
@@ -133,7 +133,7 @@ class WraithFX1 : Actor
 		DeathSound "WraithMissileExplode";
 	}
 
-	action native void A_WraithFX2();
+	native void A_WraithFX2();
 
 	States
 	{

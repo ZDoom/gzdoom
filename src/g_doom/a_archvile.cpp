@@ -21,7 +21,7 @@ void A_Fire(AActor *self, double height);
 //
 DEFINE_ACTION_FUNCTION(AActor, A_VileStart)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	S_Sound (self, CHAN_VOICE, "vile/start", 1, ATTN_NORM);
 	return 0;
 }
@@ -33,7 +33,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VileStart)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_StartFire)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	S_Sound (self, CHAN_BODY, "vile/firestrt", 1, ATTN_NORM);
 	A_Fire (self, 0);
 	return 0;
@@ -41,7 +41,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_StartFire)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireCrackle)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	S_Sound (self, CHAN_BODY, "vile/firecrkl", 1, ATTN_NORM);
 	A_Fire (self, 0);
 	return 0;
@@ -49,7 +49,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCrackle)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Fire)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT_OPT(height)		{ height = 0; }
 	
 	A_Fire(self, height);
@@ -80,7 +80,7 @@ void A_Fire(AActor *self, double height)
 //
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileTarget)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_OPT(fire, AActor)	{ fire = PClass::FindActor("ArchvileFire"); }
 
 	AActor *fog;
@@ -111,7 +111,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileTarget)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_SOUND_OPT	(snd)		{ snd = "vile/stop"; }
 	PARAM_INT_OPT	(dmg)		{ dmg = 20; }
 	PARAM_INT_OPT	(blastdmg)	{ blastdmg = 70; }

@@ -360,13 +360,11 @@ void AddStateLight(FState *state, const char *lname);
 //   self         - Actor this action is to operate on (player if a weapon)
 //   stateowner   - Actor this action really belongs to (may be an item)
 //   callingstate - State this action was called from
-#define PARAM_ACTION_PROLOGUE_TYPE(type) \
+#define PARAM_ACTION_PROLOGUE(type) \
 	PARAM_PROLOGUE; \
 	PARAM_OBJECT	 (self, type); \
 	PARAM_OBJECT_OPT (stateowner, AActor) { stateowner = self; } \
 	PARAM_STATEINFO_OPT  (stateinfo) { stateinfo = nullptr; } \
-
-#define PARAM_ACTION_PROLOGUE	PARAM_ACTION_PROLOGUE_TYPE(AActor)
 
 // Number of action paramaters
 #define NAP 3

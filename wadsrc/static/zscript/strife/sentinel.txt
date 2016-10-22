@@ -28,7 +28,7 @@ class Sentinel : Actor
 		Obituary "$OB_SENTINEL";
 	}
 
-	action native void A_SentinelAttack ();
+	native void A_SentinelAttack ();
 
 	States
 	{

@@ -92,7 +92,7 @@ void ACustomBridge::Destroy()
 
 DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->target == NULL)
 	{ // Don't crash if somebody spawned this into the world
@@ -121,7 +121,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BridgeInit)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_OPT(balltype, AActor)	{ balltype = NULL; }
 
 	AActor *ball;

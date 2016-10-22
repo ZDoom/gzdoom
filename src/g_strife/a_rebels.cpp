@@ -22,7 +22,7 @@ static FRandom pr_shootgun ("ShootGun");
 
 DEFINE_ACTION_FUNCTION(AActor, A_ShootGun)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	DAngle pitch;
 
@@ -74,7 +74,7 @@ bool ATeleporterBeacon::Use (bool pickup)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Beacon)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *owner = self->target;
 	AActor *rebel;

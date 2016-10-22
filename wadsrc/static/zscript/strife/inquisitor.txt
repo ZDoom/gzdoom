@@ -25,13 +25,13 @@ class Inquisitor : Actor
 		Obituary "$OB_INQUISITOR";
 	}
 
-	action native void A_InquisitorWalk ();
-	action native void A_InquisitorDecide ();
-	action native void A_InquisitorAttack ();
-	action native void A_InquisitorJump ();
-	action native void A_InquisitorCheckLand ();
-	action native void A_TossArm ();
-	action native void A_ReaverRanged ();
+	native void A_InquisitorWalk ();
+	native void A_InquisitorDecide ();
+	native void A_InquisitorAttack ();
+	native void A_InquisitorJump ();
+	native void A_InquisitorCheckLand ();
+	native void A_TossArm ();
+	native void A_ReaverRanged ();
 
 	States
 	{

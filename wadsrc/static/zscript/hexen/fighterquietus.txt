@@ -97,7 +97,7 @@ class FWeapQuietus : FighterWeapon
 		Tag "$TAG_FWEAPQUIETUS";
 	}
 
-	action native void A_FSwordAttack();
+	native void A_FSwordAttack();
 
 	States
 	{
@@ -146,7 +146,7 @@ class FSwordMissile : Actor native
 		Obituary "$OB_MPFWEAPQUIETUS";
 	}
 
-	action native void A_FSwordFlames();
+	native void A_FSwordFlames();
 
 	States
 	{

@@ -122,7 +122,7 @@ class TeleporterBeacon : Inventory native
 		Inventory.PickupMessage "$TXT_BEACON";
 	}
 
-	action native void A_Beacon ();
+	native void A_Beacon ();
 
 	States
 	{

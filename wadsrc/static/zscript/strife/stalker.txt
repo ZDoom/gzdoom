@@ -28,11 +28,11 @@ class Stalker : Actor
 		HitObituary "$OB_STALKER";
 	}
 
-	action native void A_StalkerLookInit ();
-	action native void A_StalkerChaseDecide ();
-	action native void A_StalkerWalk ();
-	action native void A_StalkerDrop ();
-	action native void A_StalkerAttack ();
+	native void A_StalkerLookInit ();
+	native void A_StalkerChaseDecide ();
+	native void A_StalkerWalk ();
+	native void A_StalkerDrop ();
+	native void A_StalkerAttack ();
 
 	States
 	{

@@ -25,7 +25,7 @@ class Templar : Actor
 		Obituary "$OB_TEMPLAR";
 		DropItem "EnergyPod";
 	}
-	action native void A_TemplarAttack();
+	native void A_TemplarAttack();
 
 	States
 	{

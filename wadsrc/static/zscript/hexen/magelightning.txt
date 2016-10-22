@@ -16,8 +16,8 @@ class MWeapLightning : MageWeapon
 		Tag "$TAG_MWEAPLIGHTNING";
 	}
 
-	action native void A_LightningReady();
-	action native void A_MLightningAttack(class<Actor> floor = "LightningFloor", class<Actor> ceiling = "LightningCeiling");
+	native void A_LightningReady();
+	native void A_MLightningAttack(class<Actor> floor = "LightningFloor", class<Actor> ceiling = "LightningCeiling");
 
 	States
 	{
@@ -79,9 +79,9 @@ class LightningCeiling : Lightning
 		RenderStyle "Add";
 	}
 
-	action native void A_LightningZap();
-	action native void A_LightningClip();
-	action native void A_LightningRemove();
+	native void A_LightningZap();
+	native void A_LightningClip();
+	native void A_LightningRemove();
 
 	States
 	{
@@ -117,7 +117,7 @@ class LightningFloor : LightningCeiling
 		RenderStyle "Add";
 	}
 
-	action native void A_LastZap();
+	native void A_LastZap();
 
 	States
 	{
@@ -155,7 +155,7 @@ class LightningZap : Actor native
 		Obituary "$OB_MPMWEAPLIGHTNING";
 	}
 
-	action native void A_ZapMimic();
+	native void A_ZapMimic();
 
 	States
 	{

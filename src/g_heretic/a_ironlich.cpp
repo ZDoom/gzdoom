@@ -63,7 +63,7 @@ int AWhirlwind::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int i;
 	AActor *fire;
@@ -143,7 +143,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WhirlwindSeek)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->health -= 3;
 	if (self->health < 0)
@@ -174,7 +174,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WhirlwindSeek)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LichIceImpact)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	unsigned int i;
 	AActor *shard;
@@ -199,7 +199,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichIceImpact)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LichFireGrow)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->health--;
 	self->AddZ(9.);

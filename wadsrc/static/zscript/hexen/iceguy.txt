@@ -22,9 +22,9 @@ class IceGuy : Actor
 		Obituary "$OB_ICEGUY";
 	}
 
-	action native void A_IceGuyLook();
-	action native void A_IceGuyChase();
-	action native void A_IceGuyAttack();
+	native void A_IceGuyLook();
+	native void A_IceGuyChase();
+	native void A_IceGuyAttack();
 
 	States
 	{
@@ -69,7 +69,7 @@ class IceGuyFX : Actor
 		DeathSound "IceGuyMissileExplode";
 	}
 
-	action native void A_IceGuyMissileExplode();
+	native void A_IceGuyMissileExplode();
 
 	States
 	{

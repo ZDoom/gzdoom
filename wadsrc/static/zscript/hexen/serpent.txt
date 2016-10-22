@@ -24,15 +24,15 @@ class Serpent : Actor
 		HitObituary "$OB_SERPENTHIT";
 	}
 
-	action native void A_SerpentHumpDecide();
-	action native void A_SerpentHide();
-	action native void A_SerpentCheckForAttack();
-	action native void A_SerpentSpawnGibs();
-	action native void A_SerpentUnHide();
-	action native void A_SerpentRaiseHump();
-	action native void A_SerpentLowerHump();
-	action native void A_SerpentChooseAttack();
-	action native void A_SerpentMeleeAttack();
+	native void A_SerpentHumpDecide();
+	native void A_SerpentHide();
+	native void A_SerpentCheckForAttack();
+	native void A_SerpentSpawnGibs();
+	native void A_SerpentUnHide();
+	native void A_SerpentRaiseHump();
+	native void A_SerpentLowerHump();
+	native void A_SerpentChooseAttack();
+	native void A_SerpentMeleeAttack();
 
 	States
 	{
@@ -159,7 +159,7 @@ class SerpentHead : Actor
 		+NOBLOCKMAP
 	}
 
-	action native void A_SerpentHeadCheck();
+	native void A_SerpentHeadCheck();
 
 	States
 	{
@@ -183,9 +183,9 @@ class SerpentGib1 : Actor
 		+NOBLOCKMAP +NOGRAVITY
 	}
 
-	action native void A_FloatGib();
-	action native void A_DelayGib();
-	action native void A_SinkGib();
+	native void A_FloatGib();
+	native void A_DelayGib();
+	native void A_SinkGib();
 
 	States
 	{

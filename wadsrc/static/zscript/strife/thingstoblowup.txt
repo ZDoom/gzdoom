@@ -121,9 +121,9 @@ class PowerCrystal : Actor
 		ActiveSound "misc/reactor";
 	}
 
-	action native void A_ExtraLightOff ();
-	action native void A_Explode512 ();
-	action native void A_LightGoesOut ();
+	native void A_ExtraLightOff ();
+	native void A_Explode512 ();
+	native void A_LightGoesOut ();
 
 	States
 	{

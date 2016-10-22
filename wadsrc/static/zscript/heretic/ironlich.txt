@@ -27,7 +27,7 @@ class Ironlich : Actor
 		DropItem "ArtiEgg", 51, 0;
 	}
 
-	action native void A_LichAttack ();
+	native void A_LichAttack ();
 	
 	States
 	{
@@ -74,7 +74,7 @@ class HeadFX1 : Actor
 		RenderStyle "Add";
 	}
 
-	action native void A_LichIceImpact();
+	native void A_LichIceImpact();
 
 	States
 	{
@@ -135,7 +135,7 @@ class HeadFX3 : Actor
 		RenderStyle "Add";
 	}
 
-	action native void A_LichFireGrow ();
+	native void A_LichFireGrow ();
 
 	States
 	{
@@ -174,7 +174,7 @@ class Whirlwind : Actor native
 		Alpha 0.4;
 	}
 
-	action native void A_WhirlwindSeek();
+	native void A_WhirlwindSeek();
 	
 	States
 	{

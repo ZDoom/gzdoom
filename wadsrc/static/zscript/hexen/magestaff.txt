@@ -97,8 +97,8 @@ class MWeapBloodscourge : MageWeapon native
 		Tag "$TAG_MWEAPBLOODSCOURGE";
 	}
 
-	action native void A_MStaffAttack();
-	action native void A_MStaffPalette();
+	native void A_MStaffAttack();
+	native void A_MStaffPalette();
 
 	States
 	{
@@ -143,7 +143,7 @@ class MageStaffFX2 : Actor native
 		Obituary "$OB_MPMWEAPBLOODSCOURGE";
 	}
 
-	action native void A_MStaffTrack();
+	native void A_MStaffTrack();
 
 	States
 	{

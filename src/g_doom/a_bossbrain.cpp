@@ -18,7 +18,7 @@ static FRandom pr_spawnfly ("SpawnFly");
 
 DEFINE_ACTION_FUNCTION(AActor, A_BrainAwake)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	// killough 3/26/98: only generates sound now
 	S_Sound (self, CHAN_VOICE, "brain/sight", 1, ATTN_NONE);
 	return 0;
@@ -26,7 +26,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainAwake)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BrainPain)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	S_Sound (self, CHAN_VOICE, "brain/pain", 1, ATTN_NONE);
 	return 0;
 }
@@ -56,7 +56,7 @@ static void BrainishExplosion (const DVector3 &pos)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BrainScream)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	for (double x = -196; x < +320; x += 8)
 	{
@@ -69,7 +69,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainScream)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BrainExplode)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	double x = pr_brainexplode.Random2() / 32.;
 	DVector3 pos = self->Vec2OffsetZ(x, 0, 1 / 512. + pr_brainexplode() * 2);
 	BrainishExplosion(pos);
@@ -78,7 +78,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainExplode)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BrainDie)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	// [RH] If noexit, then don't end the level.
 	if ((deathmatch || alwaysapplydmflags) && (dmflags & DF_NO_EXIT))
@@ -111,7 +111,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainDie)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_OPT(spawntype, AActor) { spawntype = NULL; }
 
 	DSpotState *state = DSpotState::GetSpotState();
@@ -297,7 +297,7 @@ static void SpawnFly(AActor *self, PClassActor *spawntype, FSoundID sound)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnFly)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_OPT	(spawntype, AActor)	{ spawntype = NULL; }
 
 	FSoundID sound;
@@ -318,7 +318,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnFly)
 // travelling cube sound
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnSound)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	S_Sound (self, CHAN_BODY, "brain/cube", 1, ATTN_IDLE);
 	SpawnFly(self, PClass::FindActor("SpawnFire"), "brain/spawn");
 	return 0;

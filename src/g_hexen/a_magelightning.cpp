@@ -126,7 +126,7 @@ int ALightningZap::SpecialMissileHit (AActor *thing)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LightningReady)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	DoReadyWeapon(self);
 	if (pr_lightningready() < 160)
@@ -144,7 +144,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningReady)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *cMo;
 	AActor *target = NULL;
@@ -211,7 +211,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	PClassActor *lightning = PClass::FindActor(self->GetClass()->MissileName);
 	AActor *mo;
@@ -257,7 +257,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MLightningAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_OPT(floor, AActor)		{ floor = PClass::FindActor("LightningFloor"); }
 	PARAM_CLASS_OPT(ceiling, AActor)	{ ceiling = PClass::FindActor("LightningCeiling"); }
 
@@ -298,7 +298,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MLightningAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ZapMimic)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 
@@ -326,7 +326,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ZapMimic)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LastZap)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PClassActor *lightning = PClass::FindActor(self->GetClass()->MissileName);
 
 	AActor *mo;
@@ -353,7 +353,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LastZap)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LightningRemove)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 

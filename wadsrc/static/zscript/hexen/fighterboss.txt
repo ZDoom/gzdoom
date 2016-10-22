@@ -19,7 +19,7 @@ class FighterBoss : Actor
 		Obituary "$OB_FBOSS";
 	}
 
-	action native void A_FighterAttack();
+	native void A_FighterAttack();
 
 	States
 	{

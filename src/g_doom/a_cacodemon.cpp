@@ -14,7 +14,7 @@ static FRandom pr_headattack ("HeadAttack");
 
 DEFINE_ACTION_FUNCTION(AActor, A_HeadAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target)
 		return 0;

@@ -58,7 +58,7 @@ void APigPlayer::MorphPlayerThink ()
 
 DEFINE_ACTION_FUNCTION(AActor, A_SnoutAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	DAngle angle;
 	int damage;
@@ -96,7 +96,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SnoutAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PigPain)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	CALL_ACTION(A_Pain, self);
 	if (self->Z() <= self->floorz)

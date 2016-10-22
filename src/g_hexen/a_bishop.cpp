@@ -24,7 +24,7 @@ static FRandom pr_pain ("BishopPainBlur");
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target)
 	{
@@ -51,7 +51,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopAttack2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 
@@ -78,7 +78,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopAttack2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopMissileWeave)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	A_Weave(self, 2, 2, 2., 1.);
 	return 0;
@@ -92,7 +92,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopMissileWeave)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopDecide)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (pr_decide() < 220)
 	{
@@ -113,7 +113,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopDecide)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopDoBlur)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->special1 = (pr_doblur() & 3) + 3; // Random number of blurs
 	if (pr_doblur() < 120)
@@ -140,7 +140,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopDoBlur)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopSpawnBlur)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 
@@ -172,7 +172,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopSpawnBlur)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopChase)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	double newz = self->Z() - BobSin(self->special2) / 2.;
 	self->special2 = (self->special2 + 4) & 63;
@@ -189,7 +189,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopChase)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopPuff)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 
@@ -209,7 +209,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopPuff)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopPainBlur)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 

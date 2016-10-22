@@ -26,10 +26,10 @@ class Wizard : Actor
 		DropItem "ArtiTomeOfPower", 4, 0;
 	}
 
-	action native void A_GhostOff ();
-	action native void A_WizAtk1 ();
-	action native void A_WizAtk2 ();
-	action native void A_WizAtk3 ();
+	native void A_GhostOff ();
+	native void A_WizAtk1 ();
+	native void A_WizAtk2 ();
+	native void A_WizAtk3 ();
 
 	States
 	{

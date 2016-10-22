@@ -20,7 +20,7 @@ static FRandom pr_skelfist ("SkelFist");
 //
 DEFINE_ACTION_FUNCTION(AActor, A_SkelMissile)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *missile;
 		
@@ -44,7 +44,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkelMissile)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	double dist;
 	double slope;
@@ -123,7 +123,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SkelWhoosh)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target)
 		return 0;
@@ -134,7 +134,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkelWhoosh)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SkelFist)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target)
 		return 0;

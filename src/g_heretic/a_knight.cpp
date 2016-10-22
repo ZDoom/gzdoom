@@ -21,7 +21,7 @@ static FRandom pr_knightatk ("KnightAttack");
 
 DEFINE_ACTION_FUNCTION(AActor, A_DripBlood)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 
@@ -42,7 +42,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DripBlood)
 
 DEFINE_ACTION_FUNCTION(AActor, A_KnightAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target)
 	{

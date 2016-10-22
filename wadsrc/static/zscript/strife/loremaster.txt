@@ -91,7 +91,7 @@ class LoreShot : Actor native
 		ActiveSound "loremaster/swish";
 	}
 
-	action native void A_LoremasterChain ();
+	native void A_LoremasterChain ();
 
 	States
 	{

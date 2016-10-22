@@ -19,7 +19,7 @@ class Oracle : Actor
 		DropItem "Meat";
 	}
 
-	action native void A_WakeOracleSpectre ();
+	native void A_WakeOracleSpectre ();
 
 	States
 	{

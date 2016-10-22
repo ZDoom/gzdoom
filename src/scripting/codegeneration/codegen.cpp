@@ -5281,50 +5281,31 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 		}
 	}
 
-	// If both functions are non-action or both are action, there is no need for special treatment.
-	//if (elf || (!!(Function->Variants[0].Flags & VARF_Action) == build->IsActionFunc))
+	// Emit code to pass implied parameters
+	if (Function->Variants[0].Flags & VARF_Method)
 	{
-		// Emit code to pass implied parameters
-		if (Function->Variants[0].Flags & VARF_Method)
-		{
-			assert(Self != nullptr);
-			Self->Emit(build);
-			count += 1;
-		}
-		if (Function->Variants[0].Flags & VARF_Action)
-		{
-			static_assert(NAP == 3, "This code needs to be updated if NAP changes");
-			if (build->IsActionFunc)
-			{
-				build->Emit(OP_PARAM, 0, REGT_POINTER, 1);
-				build->Emit(OP_PARAM, 0, REGT_POINTER, 2);
-			}
-			else
-			{
-				int null = build->GetConstantAddress(nullptr, ATAG_GENERIC);
-				build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
-				build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
-			}
-			count += 2;
-		}
+		assert(Self != nullptr);
+		ExpEmit selfemit = Self->Emit(build);
+		assert(selfemit.RegType == REGT_POINTER);
+		build->Emit(OP_PARAM, 0, selfemit.RegType, selfemit.RegNum);
+		count += 1;
 	}
-	/*
-	else
+	if (Function->Variants[0].Flags & VARF_Action)
 	{
-		if (build->IsActionFunc && (Function->Variants[0].Flags & VARF_Method))
+		static_assert(NAP == 3, "This code needs to be updated if NAP changes");
+		if (build->IsActionFunc)
 		{
-			build->Emit(OP_PARAM, 0, REGT_POINTER, 0);
-			count += 1;
+			build->Emit(OP_PARAM, 0, REGT_POINTER, 1);
+			build->Emit(OP_PARAM, 0, REGT_POINTER, 2);
 		}
-		// and calling an action function from a non-action function.
-		// This must be blocked because it lacks crucial information.
-		if (!build->IsActionFunc && (Function->Variants[0].Flags & VARF_Action))
+		else
 		{
-			// This case should be eliminated in the analyzing stage.
-			I_Error("Cannot call action function from non-action functions.");
+			int null = build->GetConstantAddress(nullptr, ATAG_GENERIC);
+			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
+			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
 		}
+		count += 2;
 	}
-	*/
 
 	// Emit code to pass explicit parameters
 	if (ArgList != NULL)

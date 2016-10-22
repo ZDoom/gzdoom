@@ -28,7 +28,7 @@ static FRandom pr_oldbfg ("OldBFG");
 //
 DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle 	angle;
 	int 		damage;
@@ -69,7 +69,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FirePistol)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	bool accurate;
 
@@ -115,7 +115,7 @@ enum SAW_Flags
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_SOUND_OPT	(fullsound)			{ fullsound = "weapons/sawfull"; }
 	PARAM_SOUND_OPT	(hitsound)			{ hitsound = "weapons/sawhit"; }
 	PARAM_INT_OPT	(damage)			{ damage = 2; }
@@ -257,7 +257,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	int i;
 	player_t *player;
@@ -291,7 +291,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	int 		i;
 	DAngle 	angle;
@@ -338,21 +338,21 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_OpenShotgun2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	S_Sound (self, CHAN_WEAPON, "weapons/sshoto", 1, ATTN_NORM);
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_LoadShotgun2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	S_Sound (self, CHAN_WEAPON, "weapons/sshotl", 1, ATTN_NORM);
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_CloseShotgun2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	S_Sound (self, CHAN_WEAPON, "weapons/sshotc", 1, ATTN_NORM);
 	A_ReFire (self);
 	return 0;
@@ -411,7 +411,7 @@ void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int i
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FireCGun)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -456,7 +456,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCGun)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FireMissile)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -479,7 +479,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMissile)
 //
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireSTGrenade)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_CLASS_OPT(grenade, AActor)	{ grenade = PClass::FindActor("Grenade"); }
 
 	player_t *player;
@@ -511,7 +511,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireSTGrenade)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FirePlasma)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -574,21 +574,21 @@ static void FireRailgun(AActor *self, int offset_xy, bool fromweapon)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireRailgun)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 	FireRailgun(self, 0, ACTION_CALL_FROM_PSPRITE());
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireRailgunRight)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 	FireRailgun(self, 10, ACTION_CALL_FROM_PSPRITE());
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireRailgunLeft)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 	FireRailgun(self, -10, ACTION_CALL_FROM_PSPRITE());
 	return 0;
 }
@@ -605,7 +605,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RailWait)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireBFG)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -638,7 +638,7 @@ enum BFG_Flags
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_OPT	(spraytype, AActor)		{ spraytype = NULL; }
 	PARAM_INT_OPT	(numrays)				{ numrays = 0; }
 	PARAM_INT_OPT	(damagecnt)				{ damagecnt = 0; }
@@ -722,7 +722,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_BFGsound)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	S_Sound (self, CHAN_WEAPON, "weapons/bfgf", 1, ATTN_NORM);
 	return 0;
 }
@@ -738,7 +738,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BFGsound)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireOldBFG)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 	PClassActor *plasma[] = { PClass::FindActor("PlasmaBall1"), PClass::FindActor("PlasmaBall2") };
 	AActor * mo = NULL;
 

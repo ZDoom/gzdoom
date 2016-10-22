@@ -11,7 +11,7 @@ class FogSpawner : Actor
 		+INVISIBLE
 	}
 
-	action native void A_FogSpawn();
+	native void A_FogSpawn();
 
 	States
 	{
@@ -34,7 +34,7 @@ class FogPatchSmall : Actor
 		Alpha 0.6;
 	}
 
-	action native void A_FogMove();
+	native void A_FogMove();
 
 	States
 	{

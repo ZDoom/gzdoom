@@ -27,10 +27,10 @@ class Heresiarch native
 		Obituary "$OB_HERESIARCH";
 	}
 	
-	action native void A_SorcSpinBalls();
-	action native void A_SpeedBalls();
-	action native void A_SorcBossAttack();
-	action native void A_SpawnFizzle();
+	native void A_SorcSpinBalls();
+	native void A_SpeedBalls();
+	native void A_SorcBossAttack();
+	native void A_SpawnFizzle();
 	
 	States
 	{
@@ -93,9 +93,9 @@ class SorcBall native
 		DeathSound "SorcererBigBallExplode";
 	}
 
-	action native void A_SorcBallOrbit();
-	action native void A_SorcBallPop();
-	action native void A_BounceCheck ();
+	native void A_SorcBallOrbit();
+	native void A_SorcBallPop();
+	native void A_BounceCheck ();
 }
 
 // First ball (purple) - fires projectiles ----------------------------------
@@ -188,7 +188,7 @@ class SorcFX1 : Actor
 		DeathSound "SorcererHeadScream";
 	}
 
-	action native void A_SorcFX1Seek();
+	native void A_SorcFX1Seek();
 
 	States
 	{
@@ -218,8 +218,8 @@ class SorcFX2 : Actor
 		+NOTELEPORT
 	}
 
-	action native void A_SorcFX2Split();
-	action native void A_SorcFX2Orbit ();
+	native void A_SorcFX2Split();
+	native void A_SorcFX2Orbit ();
 
 	states
 	{
@@ -268,8 +268,8 @@ class SorcFX3 : Actor
 		SeeSound "SorcererBishopSpawn";
 	}
 
-	action native void A_SpawnBishop();
-	action native void A_SorcererBishopEntry();
+	native void A_SpawnBishop();
+	native void A_SorcererBishopEntry();
 
 	States
 	{
@@ -323,7 +323,7 @@ class SorcFX4 : Actor
 		DeathSound "SorcererBallExplode";
 	}
 
-	action native void A_SorcFX4Check();
+	native void A_SorcFX4Check();
 
 	States
 	{

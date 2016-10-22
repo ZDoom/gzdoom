@@ -23,7 +23,7 @@ class Knight : Actor
 		DropItem "CrossbowAmmo", 84, 5;
 	}
 
-	action native void A_KnightAttack ();
+	native void A_KnightAttack ();
 	
 	States
 	{
@@ -116,7 +116,7 @@ class RedAxe : KnightAxe
 		Damage 7;
 	}
 
-	action native void A_DripBlood ();
+	native void A_DripBlood ();
 
 	States
 	{

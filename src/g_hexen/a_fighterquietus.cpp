@@ -78,7 +78,7 @@ int AFSwordMissile::DoSpecialDamage(AActor *victim, int damage, FName damagetype
 
 DEFINE_ACTION_FUNCTION(AActor, A_FSwordAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -109,7 +109,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FSwordAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FSwordFlames)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int i;
 
@@ -131,7 +131,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FSwordFlames)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FighterAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target) return 0;
 

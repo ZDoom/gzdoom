@@ -33,10 +33,10 @@ class Programmer : Actor
 		DropItem "Sigil1";
 	}
 	
-	action native void A_ProgrammerMelee ();
-	action native void A_SpawnProgrammerBase ();
-	action native void A_ProgrammerDeath ();
-	action native void A_SpotLightning();
+	native void A_ProgrammerMelee ();
+	native void A_SpawnProgrammerBase ();
+	native void A_ProgrammerDeath ();
+	native void A_SpotLightning();
 	
 	States
 	{

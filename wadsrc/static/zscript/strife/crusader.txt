@@ -28,11 +28,11 @@ class Crusader : Actor
 		Obituary "$OB_CRUSADER";
 	}
 
-	action native void A_CrusaderChoose ();
-	action native void A_CrusaderSweepLeft ();
-	action native void A_CrusaderSweepRight ();
-	action native void A_CrusaderRefire ();
-	action native void A_CrusaderDeath ();
+	native void A_CrusaderChoose ();
+	native void A_CrusaderSweepLeft ();
+	native void A_CrusaderSweepRight ();
+	native void A_CrusaderRefire ();
+	native void A_CrusaderDeath ();
 
 	States
 	{

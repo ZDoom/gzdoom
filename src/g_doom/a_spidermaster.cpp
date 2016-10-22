@@ -13,7 +13,7 @@ static FRandom pr_spidrefire ("SpidRefire");
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpidRefire)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	// keep firing unless target got out of sight
 	A_FaceTarget (self);
@@ -33,7 +33,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpidRefire)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Metal)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	S_Sound (self, CHAN_BODY, "spider/walk", 1, ATTN_IDLE);
 	A_Chase (stack, self);

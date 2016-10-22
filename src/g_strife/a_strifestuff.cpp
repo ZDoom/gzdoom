@@ -87,7 +87,7 @@ int AForceFieldGuard::TakeSpecialDamage (AActor *inflictor, AActor *source, int 
 
 DEFINE_ACTION_FUNCTION(AActor, A_SetShadow)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->flags |= MF_STRIFEx8000000|MF_SHADOW;
 	self->RenderStyle = STYLE_Translucent;
@@ -97,7 +97,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetShadow)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ClearShadow)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->flags &= ~(MF_STRIFEx8000000|MF_SHADOW);
 	self->RenderStyle = STYLE_Normal;
@@ -109,7 +109,7 @@ static FRandom pr_gethurt ("HurtMe!");
 
 DEFINE_ACTION_FUNCTION(AActor, A_GetHurt)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->flags4 |= MF4_INCOMBAT;
 	if ((pr_gethurt() % 5) == 0)
@@ -128,7 +128,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_GetHurt)
 
 DEFINE_ACTION_FUNCTION(AActor, A_TurretLook)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *target;
 
@@ -160,7 +160,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_TurretLook)
 
 DEFINE_ACTION_FUNCTION(AActor, A_KlaxonBlare)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (--self->reactiontime < 0)
 	{
@@ -249,7 +249,7 @@ IMPLEMENT_CLASS (AMeat)
 
 DEFINE_ACTION_FUNCTION(AActor, A_TossGib)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	const char *gibtype = (self->flags & MF_NOBLOOD) ? "Junk" : "Meat";
 	AActor *gib = Spawn (gibtype, self->PosPlusZ(24.), ALLOW_REPLACE);
@@ -269,7 +269,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_TossGib)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FLoopActiveSound)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->ActiveSound != 0 && !(level.time & 7))
 	{
@@ -280,7 +280,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FLoopActiveSound)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Countdown)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (--self->reactiontime <= 0)
 	{
@@ -292,7 +292,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Countdown)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LoopActiveSound)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->ActiveSound != 0 && !S_IsActorPlayingSomething (self, CHAN_VOICE, -1))
 	{
@@ -303,7 +303,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LoopActiveSound)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	sector_t *sec = self->Sector;
 
@@ -332,7 +332,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ClearSoundTarget)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *actor;
 
@@ -347,7 +347,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearSoundTarget)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ItBurnsItBurns)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	S_Sound (self, CHAN_VOICE, "human/imonfire", 1, ATTN_NORM);
 
@@ -365,7 +365,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ItBurnsItBurns)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DropFire)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *drop = Spawn("FireDroplet", self->PosPlusZ(24.), ALLOW_REPLACE);
 	drop->Vel.Z = -1.;
@@ -375,7 +375,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DropFire)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CrispyPlayer)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->player != nullptr && self->player->mo == self)
 	{
@@ -401,7 +401,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CrispyPlayer)
 
 DEFINE_ACTION_FUNCTION(AActor, A_HandLower)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->player != nullptr)
 	{

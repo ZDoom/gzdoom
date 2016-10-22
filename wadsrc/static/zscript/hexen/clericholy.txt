@@ -96,8 +96,8 @@ class CWeapWraithverge : ClericWeapon native
 		Inventory.PickupSound "WeaponBuild";
 	}
 
-	action native void A_CHolyAttack();
-	action native void A_CHolyPalette();
+	native void A_CHolyAttack();
+	native void A_CHolyPalette();
 
 	States
 	{
@@ -139,7 +139,7 @@ class HolyMissile : Actor
 		+EXTREMEDEATH
 	}
 
-	action native void A_CHolyAttack2();
+	native void A_CHolyAttack2();
 
 	States
 	{
@@ -211,8 +211,8 @@ class HolySpirit : Actor native
 		Obituary "$OB_MPCWEAPWRAITHVERGE";
 	}
 
-	action native void A_CHolySeek();
-	action native void A_CHolyCheckScream();
+	native void A_CHolySeek();
+	native void A_CHolyCheckScream();
 
 	States
 	{
@@ -242,7 +242,7 @@ class HolyTail : Actor
 		Alpha 0.6;
 	}
 
-	action native void A_CHolyTail();
+	native void A_CHolyTail();
 
 	States
 	{

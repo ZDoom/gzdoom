@@ -10,7 +10,7 @@
 
 DEFINE_ACTION_FUNCTION(AActor, A_WakeOracleSpectre)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	TThinkerIterator<AActor> it(NAME_AlienSpectre3);
 	AActor *spectre = it.Next();

@@ -26,15 +26,15 @@ class Minotaur : Actor native
 		DropItem "PhoenixRodAmmo", 84, 10;
 	}
 
-	action native void A_MinotaurDecide();
-	action native void A_MinotaurAtk1();
-	action native void A_MinotaurAtk2();
-	action native void A_MinotaurAtk3();
-	action native void A_MinotaurCharge();
-	action native void A_MinotaurLook();
-	action native void A_MinotaurRoam();
-	action native void A_MinotaurChase();
-	action native void A_MinotaurDeath();
+	native void A_MinotaurDecide();
+	native void A_MinotaurAtk1();
+	native void A_MinotaurAtk2();
+	native void A_MinotaurAtk3();
+	native void A_MinotaurCharge();
+	native void A_MinotaurLook();
+	native void A_MinotaurRoam();
+	native void A_MinotaurChase();
+	native void A_MinotaurDeath();
 
 	States
 	{
@@ -179,7 +179,7 @@ class MinotaurFX2 : MinotaurFX1
 		DeathSound "minotaur/fx2hit";
 	}
 	
-	action native void A_MntrFloorFire();
+	native void A_MntrFloorFire();
 	
 	states
 	{

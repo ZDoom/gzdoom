@@ -23,12 +23,12 @@ class Dragon : Actor
 		Obituary "$OB_DRAGON";
 	}
 
-	action native void A_DragonInitFlight();
-	action native void A_DragonFlap();
-	action native void A_DragonFlight();
-	action native void A_DragonPain();
-	action native void A_DragonAttack();
-	action native void A_DragonCheckCrash();
+	native void A_DragonInitFlight();
+	native void A_DragonFlap();
+	native void A_DragonFlight();
+	native void A_DragonPain();
+	native void A_DragonAttack();
+	native void A_DragonCheckCrash();
 
 	States
 	{
@@ -77,7 +77,7 @@ class DragonFireball : Actor
 		DeathSound "DragonFireballExplode";
 	}
 
-	action native void A_DragonFX2();
+	native void A_DragonFX2();
 
 	States
 	{

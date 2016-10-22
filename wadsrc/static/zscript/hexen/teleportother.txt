@@ -41,11 +41,11 @@ class TelOtherFX1 : Actor native
 		Speed 20;
 	}
 
-	action native void A_TeloSpawnA();
-	action native void A_TeloSpawnB();
-	action native void A_TeloSpawnC();
-	action native void A_TeloSpawnD();
-	action native void A_CheckTeleRing ();
+	native void A_TeloSpawnA();
+	native void A_TeloSpawnB();
+	native void A_TeloSpawnC();
+	native void A_TeloSpawnD();
+	native void A_CheckTeleRing ();
 
 	States
 	{

@@ -26,10 +26,10 @@ class HereticImp : Actor
 		HitObituary "$OB_HERETICIMPHIT";
 	}
 	
-	action native void A_ImpMsAttack();
-	action native void A_ImpDeath();
-	action native void A_ImpXDeath1();
-	action native void A_ImpExplode();
+	native void A_ImpMsAttack();
+	native void A_ImpDeath();
+	native void A_ImpXDeath1();
+	native void A_ImpExplode();
 	
 	
 	States

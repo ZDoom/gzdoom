@@ -21,7 +21,7 @@ static FRandom pr_imp ("ImpExplode");
 
 DEFINE_ACTION_FUNCTION(AActor, A_ImpMsAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
     if (!self->target || pr_impmsatk() > 64)
     {
@@ -40,7 +40,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ImpMsAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ImpExplode)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *chunk;
 
@@ -70,7 +70,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ImpExplode)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ImpDeath)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->flags &= ~MF_SOLID;
 	self->flags2 |= MF2_FLOORCLIP;
@@ -85,7 +85,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ImpDeath)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ImpXDeath1)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->flags &= ~MF_SOLID;
 	self->flags |= MF_NOGRAVITY;

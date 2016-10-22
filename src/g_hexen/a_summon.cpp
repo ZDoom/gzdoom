@@ -49,7 +49,7 @@ bool AArtiDarkServant::Use (bool pickup)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Summon)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AMinotaurFriend *mo;
 

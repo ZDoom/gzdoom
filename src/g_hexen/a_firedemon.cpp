@@ -80,7 +80,7 @@ void A_FiredSpawnRock (AActor *actor)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FiredRocks)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	A_FiredSpawnRock (self);
 	A_FiredSpawnRock (self);
@@ -98,7 +98,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredRocks)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SmBounce)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	// give some more velocity (x,y,&z)
 	self->SetZ(self->floorz + 1);
@@ -116,7 +116,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SmBounce)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FiredAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->target == NULL)
 		return 0;
@@ -133,7 +133,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FiredChase)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int weaveindex = self->special1;
 	AActor *target = self->target;
@@ -226,7 +226,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredChase)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FiredSplotch)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 

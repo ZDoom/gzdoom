@@ -1789,7 +1789,7 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_Look)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *targ;
 
@@ -1909,7 +1909,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
 	PARAM_FLOAT_OPT	(minseedist)	{ minseedist = 0; }
 	PARAM_FLOAT_OPT	(maxseedist)	{ maxseedist = 0; }
@@ -2101,7 +2101,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ClearLastHeard)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	self->LastHeard = NULL;
 	return 0;
 }
@@ -2126,7 +2126,7 @@ enum ChaseFlags
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Wander)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT_OPT(flags) { flags = 0; }	
 	A_Wander(self, flags);
 	return 0;
@@ -2186,7 +2186,7 @@ void A_Wander(AActor *self, int flags)
 //==========================================================================
 DEFINE_ACTION_FUNCTION(AActor, A_Look2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *targ;
 
@@ -2768,7 +2768,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Chase)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_STATE_OPT	(melee)		{ melee = NULL; }
 	PARAM_STATE_OPT	(missile)	{ missile = NULL; }
 	PARAM_INT_OPT	(flags)		{ flags = 0; }
@@ -2790,14 +2790,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Chase)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FastChase)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	A_DoChase(stack, self, true, self->MeleeState, self->MissileState, true, true, false, 0);
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_VileChase)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	if (!P_CheckForResurrection(self, true))
 	{
 		A_DoChase(stack, self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
@@ -2947,7 +2947,7 @@ void A_FaceTarget(AActor *self)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_ANGLE_OPT(max_turn)		{ max_turn = 0.; }
 	PARAM_ANGLE_OPT(max_pitch)		{ max_pitch = 270.; }
 	PARAM_ANGLE_OPT(ang_offset)	{ ang_offset = 0.; }
@@ -2961,7 +2961,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMaster)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_ANGLE_OPT(max_turn) { max_turn = 0.; }
 	PARAM_ANGLE_OPT(max_pitch) { max_pitch = 270.; }
 	PARAM_ANGLE_OPT(ang_offset) { ang_offset = 0.; }
@@ -2975,7 +2975,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMaster)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTracer)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_ANGLE_OPT(max_turn) { max_turn = 0.; }
 	PARAM_ANGLE_OPT(max_pitch) { max_pitch = 270.; }
 	PARAM_ANGLE_OPT(ang_offset) { ang_offset = 0.; }
@@ -2996,7 +2996,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTracer)
 //===========================================================================
 DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target)
 		return 0;
@@ -3042,7 +3042,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Scream)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	if (self->DeathSound)
 	{
 		// Check for bosses.
@@ -3061,7 +3061,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Scream)
 
 DEFINE_ACTION_FUNCTION(AActor, A_XScream)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	if (self->player)
 		S_Sound (self, CHAN_VOICE, "*gibbed", 1, ATTN_NORM);
 	else
@@ -3077,7 +3077,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_XScream)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ScreamAndUnblock)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	CALL_ACTION(A_Scream, self);
 	A_Unblock(self, true);
 	return 0;
@@ -3091,7 +3091,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ScreamAndUnblock)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ActiveSound)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	if (self->ActiveSound)
 	{
 		S_Sound (self, CHAN_VOICE, self->ActiveSound, 1, ATTN_NORM);
@@ -3107,7 +3107,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ActiveSound)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ActiveAndUnblock)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	CALL_ACTION(A_ActiveSound, self);
 	A_Unblock(self, true);
 	return 0;
@@ -3257,7 +3257,7 @@ void P_TossItem (AActor *item)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	// [RH] Vary player pain sounds depending on health (ala Quake2)
 	if (self->player && self->player->morphTics == 0)
@@ -3306,7 +3306,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 // killough 11/98: kill an object
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Die)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
 
 		P_DamageMobj(self, NULL, NULL, self->health, damagetype, DMG_FORCED);
@@ -3320,7 +3320,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Die)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Detonate)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	int damage = self->GetMissileDamage(0, 1);
 	P_RadiusAttack (self, self->target, damage, damage, self->DamageType, RADF_HURTSOURCE);
 	P_CheckSplash(self, damage);
@@ -3463,7 +3463,7 @@ void A_BossDeath(AActor *self)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BossDeath)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	A_BossDeath(self);
 	return 0;
 }
@@ -3541,7 +3541,7 @@ bool A_RaiseMobj (AActor *actor, double speed)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ClassBossHealth)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	if (multiplayer && !deathmatch)		// co-op only
 	{
 		if (!self->special1)

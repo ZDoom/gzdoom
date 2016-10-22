@@ -10,7 +10,7 @@ class PoisonBag : Actor
 		+NOBLOCKMAP +NOGRAVITY
 	}
 
-	action native void A_PoisonBagInit();
+	native void A_PoisonBagInit();
 
 	States
 	{
@@ -37,7 +37,7 @@ class FireBomb : Actor
 		DeathSound "FlechetteExplode";
 	}
 
-	action native void A_TimeBomb();
+	native void A_TimeBomb();
 
 	States
 	{
@@ -69,8 +69,8 @@ class ThrowingBomb : Actor
 		DeathSound "FlechetteExplode";
 	}
 
-	action native void A_CheckThrowBomb();
-	action native void A_CheckThrowBomb2();
+	native void A_CheckThrowBomb();
+	native void A_CheckThrowBomb2();
 
 	States
 	{
@@ -193,8 +193,8 @@ class PoisonCloud : Actor native
 		DamageType "PoisonCloud";
 	}
 
-	action native void A_PoisonBagDamage();
-	action native void A_PoisonBagCheck();
+	native void A_PoisonBagDamage();
+	native void A_PoisonBagCheck();
 
 	States
 	{
@@ -233,7 +233,7 @@ class ZPoisonShroom : PoisonBag
 		DeathSound "PoisonShroomDeath";
 	}
 
-	action native void A_PoisonShroom();
+	native void A_PoisonShroom();
 
 	States
 	{

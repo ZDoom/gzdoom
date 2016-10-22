@@ -27,7 +27,7 @@ static FRandom pr_batmove ("BatMove");
 
 DEFINE_ACTION_FUNCTION(AActor, A_BatSpawnInit)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->special1 = 0;	// Frequency count
 	return 0;
@@ -35,7 +35,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatSpawnInit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BatSpawn)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	int delta;
@@ -64,7 +64,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatSpawn)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BatMove)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	DAngle newangle;
 

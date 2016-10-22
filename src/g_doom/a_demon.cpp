@@ -13,7 +13,7 @@ static FRandom pr_sargattack ("SargAttack");
 
 DEFINE_ACTION_FUNCTION(AActor, A_SargAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target)
 		return 0;

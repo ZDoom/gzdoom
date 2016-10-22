@@ -33,7 +33,7 @@ int ALoreShot::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LoremasterChain)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	S_Sound (self, CHAN_BODY, "loremaster/active", 1, ATTN_NORM);
 	Spawn("LoreShot2", self->Pos(), ALLOW_REPLACE);

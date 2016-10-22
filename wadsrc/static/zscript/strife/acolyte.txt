@@ -26,9 +26,9 @@ class Acolyte : StrifeHumanoid
 		Obituary "$OB_ACOLYTE";
 	}
 
-	action native void A_BeShadowyFoe ();
-	action native void A_AcolyteBits ();
-	action native void A_AcolyteDie ();
+	native void A_BeShadowyFoe ();
+	native void A_AcolyteBits ();
+	native void A_AcolyteDie ();
 
 	States
 	{
@@ -202,7 +202,7 @@ class AcolyteToBe : Acolyte
 		-ISMONSTER
 	}
 
-	action native void A_HideDecepticon ();
+	native void A_HideDecepticon ();
 
 	States
 	{

@@ -47,7 +47,7 @@ static FRandom pr_volcimpact ("VolcBallImpact");
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PodPain)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_OPT	(gootype, AActor)	{ gootype = PClass::FindActor("PodGoo"); }
 
 	int count;
@@ -78,7 +78,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PodPain)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RemovePod)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 
@@ -102,7 +102,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RemovePod)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MakePod)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_OPT(podtype, AActor)	{ podtype = PClass::FindActor("Pod"); }
 
 	AActor *mo;
@@ -133,7 +133,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MakePod)
 
 DEFINE_ACTION_FUNCTION(AActor, A_AccTeleGlitter)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (++self->health > 35)
 	{
@@ -151,7 +151,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AccTeleGlitter)
 
 DEFINE_ACTION_FUNCTION(AActor, A_VolcanoSet)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->tics = 105 + (pr_volcano() & 127);
 	return 0;
@@ -165,7 +165,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcanoSet)
 
 DEFINE_ACTION_FUNCTION(AActor, A_VolcanoBlast)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int i;
 	int count;
@@ -193,7 +193,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcanoBlast)
 
 DEFINE_ACTION_FUNCTION(AActor, A_VolcBallImpact)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	unsigned int i;
 	AActor *tiny;

@@ -17,7 +17,7 @@ class MWeapFrost : MageWeapon
 		Tag "$TAG_MWEAPFROST";
 	}
 
-	action native void A_FireConePL1();
+	native void A_FireConePL1();
 
 	States
 	{
@@ -63,7 +63,7 @@ class FrostMissile : Actor native
 		Obituary "$OB_MPMWEAPFROST";
 	}
 
-	action native void A_ShedShard();
+	native void A_ShedShard();
 
 	States
 	{

@@ -95,7 +95,7 @@ enum
 
 DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_Blast)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT_OPT	(blastflags)			{ blastflags = 0; }
 	PARAM_FLOAT_OPT	(strength)				{ strength = 255; }
 	PARAM_FLOAT_OPT	(radius)				{ radius = 255; }

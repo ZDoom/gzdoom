@@ -80,7 +80,7 @@ Class ActivatedTimeBomb : Actor
 		DeathSound "misc/timebomb";
 	}
 		
-	action native void A_Timebomb();
+	native void A_Timebomb();
 	
 	States
 	{

@@ -13,7 +13,7 @@ class CWeapMace : ClericWeapon
 		Tag "$TAG_CWEAPMACE";
 	}
 
-	action native void A_CMaceAttack();
+	native void A_CMaceAttack();
 
 	States
 	{

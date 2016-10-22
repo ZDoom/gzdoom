@@ -20,7 +20,7 @@ static FRandom pr_wizatk3 ("WizAtk3");
 
 DEFINE_ACTION_FUNCTION(AActor, A_GhostOff)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->RenderStyle = STYLE_Normal;
 	self->flags3 &= ~MF3_GHOST;
@@ -35,7 +35,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_GhostOff)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WizAtk1)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	A_FaceTarget (self);
 	CALL_ACTION(A_GhostOff, self);
@@ -50,7 +50,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WizAtk1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WizAtk2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	A_FaceTarget (self);
 	self->Alpha = HR_SHADOW;
@@ -67,7 +67,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WizAtk2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WizAtk3)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 

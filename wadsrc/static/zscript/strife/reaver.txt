@@ -22,7 +22,7 @@ class Reaver : Actor
 		Obituary "$OB_REAVER";
 	}
 	
-	action native void A_ReaverRanged ();
+	native void A_ReaverRanged ();
 	
 	States
 	{

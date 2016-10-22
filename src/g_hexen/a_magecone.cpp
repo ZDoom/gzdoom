@@ -51,7 +51,7 @@ int AFrostMissile::DoSpecialDamage (AActor *victim, int damage, FName damagetype
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireConePL1)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	DAngle angle;
 	int damage;
@@ -112,7 +112,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireConePL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ShedShard)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	int spawndir = self->special1;

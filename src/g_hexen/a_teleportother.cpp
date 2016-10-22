@@ -63,35 +63,35 @@ static void TeloSpawn (AActor *source, const char *type)
 
 DEFINE_ACTION_FUNCTION(AActor, A_TeloSpawnA)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	TeloSpawn (self, "TelOtherFX2");
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_TeloSpawnB)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	TeloSpawn (self, "TelOtherFX3");
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_TeloSpawnC)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	TeloSpawn (self, "TelOtherFX4");
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_TeloSpawnD)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	TeloSpawn (self, "TelOtherFX5");
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_CheckTeleRing)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->special1-- <= 0)
 	{

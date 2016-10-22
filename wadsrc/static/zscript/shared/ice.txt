@@ -21,7 +21,7 @@ class IceChunk : Actor
 		+NOBLOCKMAP
 		+MOVEWITHSECTOR
 	}
-	action native void A_IceSetTics ();
+	native void A_IceSetTics ();
 
 	States
 	{

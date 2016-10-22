@@ -9,7 +9,7 @@ class BridgeBall : Actor
 		+NOGRAVITY
 	}
 
-	action native void A_BridgeOrbit();
+	native void A_BridgeOrbit();
 	
 	States
 	{
@@ -36,7 +36,7 @@ class CustomBridge : Actor native
 		RenderStyle "None";
 	}
 
-	action native void A_BridgeInit(class<Actor> balltype = "BridgeBall");
+	native void A_BridgeInit(class<Actor> balltype = "BridgeBall");
 
 	states
 	{

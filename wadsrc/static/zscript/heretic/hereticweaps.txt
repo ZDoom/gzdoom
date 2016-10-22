@@ -23,7 +23,7 @@ class Staff : HereticWeapon
 		Tag "$TAG_STAFF";
 	}
 
-	action native void A_StaffAttack (int damage, class<Actor> puff);
+	native void A_StaffAttack (int damage, class<Actor> puff);
 
 	States
 	{
@@ -142,7 +142,7 @@ class GoldWand : HereticWeapon
 		Tag "$TAG_GOLDWAND";
 	}
 
-	action native void A_FireGoldWandPL1 ();
+	native void A_FireGoldWandPL1 ();
 	
 	States
 	{
@@ -178,7 +178,7 @@ class GoldWandPowered : GoldWand
 		Tag "$TAG_GOLDWANDP";
 	}
 
-	action native void A_FireGoldWandPL2 ();
+	native void A_FireGoldWandPL2 ();
 
 	States
 	{
@@ -294,7 +294,7 @@ class Crossbow : HereticWeapon
 		Tag "$TAG_CROSSBOW";
 	}
 
-	action native void A_FireCrossbowPL1 ();
+	native void A_FireCrossbowPL1 ();
 
 	States
 	{
@@ -330,7 +330,7 @@ class CrossbowPowered : Crossbow
 		Tag "$TAG_CROSSBOWP";
 	}
 
-	action native void A_FireCrossbowPL2();
+	native void A_FireCrossbowPL2();
 
 	States
 	{
@@ -462,7 +462,7 @@ class Gauntlets : Weapon
 		Obituary "$OB_MPGAUNTLETS";
 	}
 
-	action native void A_GauntletAttack (int power);
+	native void A_GauntletAttack (int power);
 
 	States
 	{
@@ -574,7 +574,7 @@ class Mace : HereticWeapon
 		Tag "$TAG_MACE";
 	}
 
-	action native void A_FireMacePL1();
+	native void A_FireMacePL1();
 	
 	States
 	{
@@ -611,7 +611,7 @@ class MacePowered : Mace
 		Tag "$TAG_MACEP";
 	}
 
-	action native void A_FireMacePL2();
+	native void A_FireMacePL2();
 	
 	States
 	{
@@ -642,8 +642,8 @@ class MaceFX1 : Actor
 		Obituary "$OB_MPMACE";
 	}
 
-	action native void A_MacePL1Check();
-	action native void A_MaceBallImpact();
+	native void A_MacePL1Check();
+	native void A_MaceBallImpact();
 
 	States
 	{
@@ -670,7 +670,7 @@ class MaceFX2 : MaceFX1
 		SeeSound "";
 	}
 
-	action native void A_MaceBallImpact2();
+	native void A_MaceBallImpact2();
 
 	States
 	{
@@ -725,7 +725,7 @@ class MaceFX4 : Actor native
 		Obituary "$OB_MPPMACE";
 	}
 
-	action native void A_DeathBallImpact();
+	native void A_DeathBallImpact();
 
 	States
 	{
@@ -778,7 +778,7 @@ class Blaster : HereticWeapon
 		Obituary "$OB_MPBLASTER";
 	}
 
-	action native void A_FireBlasterPL1();
+	native void A_FireBlasterPL1();
 
 	States
 	{
@@ -843,7 +843,7 @@ class BlasterFX1 : FastProjectile native
 		Obituary "$OB_MPPBLASTER";
 	}
 
-	action native void A_SpawnRippers();
+	native void A_SpawnRippers();
 
 	States
 	{
@@ -950,7 +950,7 @@ class SkullRod : HereticWeapon
 		Tag "$TAG_SKULLROD";
 	}
 
-	action native void A_FireSkullRodPL1();
+	native void A_FireSkullRodPL1();
 
 	States
 	{
@@ -984,7 +984,7 @@ class SkullRodPowered : SkullRod
 		Tag "$TAG_SKULLRODP";
 	}
 
-	action native void A_FireSkullRodPL2();
+	native void A_FireSkullRodPL2();
 
 	States
 	{
@@ -1053,9 +1053,9 @@ class HornRodFX2 : Actor native
 		Obituary "$OB_MPPSKULLROD";
 	}
 
-	action native void A_AddPlayerRain();
-	action native void A_HideInCeiling();
-	action native void A_SkullRodStorm();
+	native void A_AddPlayerRain();
+	native void A_HideInCeiling();
+	native void A_SkullRodStorm();
 
 	States
 	{
@@ -1094,7 +1094,7 @@ class RainPillar : Actor native
 		Obituary "$OB_MPPSKULLROD";
 	}
 
-	action native void A_RainImpact();
+	native void A_RainImpact();
 
 	States
 	{
@@ -1140,7 +1140,7 @@ class PhoenixRod : Weapon native
 		Tag "$TAG_PHOENIXROD";
 	}
 
-	action native void A_FirePhoenixPL1();
+	native void A_FirePhoenixPL1();
 
 	States
 	{
@@ -1176,9 +1176,9 @@ class PhoenixRodPowered : PhoenixRod native
 		Tag "$TAG_PHOENIXRODP";
 	}
 
-	action native void A_InitPhoenixPL2();
-	action native void A_FirePhoenixPL2();
-	action native void A_ShutdownPhoenixPL2();
+	native void A_InitPhoenixPL2();
+	native void A_FirePhoenixPL2();
+	native void A_ShutdownPhoenixPL2();
 
 	States
 	{
@@ -1212,7 +1212,7 @@ class PhoenixFX1 : Actor native
 		Obituary "$OB_MPPHOENIXROD";
 	}
 
-	action native void A_PhoenixPuff();
+	native void A_PhoenixPuff();
 
 	States
 	{
@@ -1265,8 +1265,8 @@ class PhoenixFX2 : Actor native
 		Obituary "$OB_MPPPHOENIXROD";
 	}
 
-	action native void A_FlameEnd();
-	action native void A_FloatPuff();
+	native void A_FlameEnd();
+	native void A_FloatPuff();
 
 	States
 	{

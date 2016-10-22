@@ -36,7 +36,7 @@ void A_SkullAttack(AActor *self, double speed)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT_OPT(speed) { speed = SKULLSPEED; }
 
 	if (speed <= 0)
@@ -47,7 +47,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BetaSkullAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int damage;
 	if (!self || !self->target || self->target->GetSpecies() == self->GetSpecies())

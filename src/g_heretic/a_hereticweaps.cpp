@@ -61,7 +61,7 @@ extern bool P_AutoUseChaosDevice (player_t *player);
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	DAngle angle;
 	DAngle slope;
@@ -107,7 +107,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL1)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	DAngle angle;
 	int damage;
@@ -144,7 +144,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int i;
 	DAngle angle;
@@ -187,7 +187,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL1)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -216,7 +216,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -247,7 +247,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL2)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	DAngle Angle;
 	int damage;
@@ -421,7 +421,7 @@ void FireMacePL1B (AActor *actor)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL1)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *ball;
 	player_t *player;
@@ -461,7 +461,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MacePL1Check)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->special1 == 0)
 	{
@@ -498,7 +498,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MacePL1Check)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MaceBallImpact)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if ((self->health != MAGIC_JUNK) && (self->flags & MF_INBOUNCE))
 	{ // Bounce
@@ -526,7 +526,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaceBallImpact)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MaceBallImpact2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *tiny;
 
@@ -579,7 +579,7 @@ boom:
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	player_t *player;
@@ -618,7 +618,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int i;
 	AActor *target;
@@ -761,7 +761,7 @@ int ARipper::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireBlasterPL1)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	DAngle angle;
 	int damage;
@@ -798,7 +798,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBlasterPL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnRippers)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	unsigned int i;
 	DAngle angle;
@@ -888,7 +888,7 @@ void ARainTracker::Serialize(FSerializer &arc)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSkullRodPL1)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	player_t *player;
@@ -924,7 +924,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSkullRodPL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSkullRodPL2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	player_t *player;
 	AActor *MissileActor;
@@ -964,7 +964,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSkullRodPL2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_AddPlayerRain)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	ARainTracker *tracker;
 
@@ -1024,7 +1024,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AddPlayerRain)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	ARainTracker *tracker;
@@ -1095,7 +1095,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RainImpact)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	if (self->Z() > self->floorz)
 	{
 		self->SetState (self->FindState("NotFloor"));
@@ -1115,7 +1115,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RainImpact)
 
 DEFINE_ACTION_FUNCTION(AActor, A_HideInCeiling)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	// We use bouncecount to store the 3D floor index
 	double foo;
@@ -1218,7 +1218,7 @@ int APhoenixFX2::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL1)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -1246,7 +1246,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PhoenixPuff)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *puff;
 	DAngle angle;
@@ -1271,7 +1271,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PhoenixPuff)
 
 DEFINE_ACTION_FUNCTION(AActor, A_InitPhoenixPL2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->player != NULL)
 	{
@@ -1294,7 +1294,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InitPhoenixPL2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 
@@ -1347,7 +1347,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ShutdownPhoenixPL2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -1373,7 +1373,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShutdownPhoenixPL2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FlameEnd)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->Vel.Z += 1.5;
 	return 0;
@@ -1387,7 +1387,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlameEnd)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FloatPuff)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->Vel.Z += 1.8;
 	return 0;

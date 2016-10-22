@@ -362,7 +362,7 @@ int APoisonCloud::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagInit)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	
@@ -382,7 +382,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagInit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagCheck)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (--self->special1 <= 0)
 	{
@@ -403,7 +403,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagCheck)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagDamage)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int bobIndex;
 	
@@ -422,7 +422,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagDamage)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (--self->health <= 0)
 	{
@@ -439,7 +439,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	// [RH] Check using actual velocity, although the vel.z < 2 check still stands
 	if (self->Vel.Z < 2 && self->Vel.LengthSquared() < (9./4.))

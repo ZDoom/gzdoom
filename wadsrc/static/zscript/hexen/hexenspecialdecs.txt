@@ -95,7 +95,7 @@ class Pottery1 : Actor native
 		+NOICEDEATH
 	}
 
-	action native void A_PotteryExplode();
+	native void A_PotteryExplode();
 
 	States
 	{
@@ -153,8 +153,8 @@ class PotteryBit : Actor
 		+NOICEDEATH
 	}
 
-	action native void A_PotteryChooseBit();
-	action native void A_PotteryCheck();
+	native void A_PotteryChooseBit();
+	native void A_PotteryCheck();
 
 	States
 	{
@@ -212,7 +212,7 @@ class ZCorpseLynchedNoHeart : Actor native
 		+SOLID +SPAWNCEILING +NOGRAVITY
 	}
 
-	action native void A_CorpseBloodDrip();
+	native void A_CorpseBloodDrip();
 
 	States
 	{
@@ -289,7 +289,7 @@ class ZCorpseSitting : Actor
 		DeathSound "FireDemonDeath";
 	}
 
-	action native void A_CorpseExplode();
+	native void A_CorpseExplode();
 
 	States
 	{
@@ -313,7 +313,7 @@ class LeafSpawner : Actor
 		+INVISIBLE
 	}
 
-	action native void A_LeafSpawn();
+	native void A_LeafSpawn();
 
 	States
 	{
@@ -338,8 +338,8 @@ class Leaf1 : Actor
 		+NOICEDEATH
 	}
 
-	action native void A_LeafThrust();
-	action native void A_LeafCheck();
+	native void A_LeafThrust();
+	native void A_LeafCheck();
 
 	States
 	{
@@ -556,7 +556,7 @@ class ZSuitOfArmor : Actor
 		DeathSound "SuitofArmorBreak";
 	}
 
-	action native void A_SoAExplode();
+	native void A_SoAExplode();
 
 	States
 	{
@@ -621,8 +621,8 @@ class ZBell : Actor native
 		DeathSound "BellRing";
 	}
 
-	action native void A_BellReset1();
-	action native void A_BellReset2();
+	native void A_BellReset1();
+	native void A_BellReset2();
 
 	States
 	{

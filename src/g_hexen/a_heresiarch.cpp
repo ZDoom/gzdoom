@@ -218,7 +218,7 @@ void ASorcBall1::DoFireSpell ()
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcSpinBalls)
 {
-	PARAM_ACTION_PROLOGUE_TYPE(AHeresiarch);
+	PARAM_SELF_PROLOGUE(AHeresiarch);
 
 	AActor *mo;
 
@@ -254,7 +254,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcSpinBalls)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 {
-	PARAM_ACTION_PROLOGUE_TYPE(ASorcBall);
+	PARAM_SELF_PROLOGUE(ASorcBall);
 
 	// [RH] If no parent, then die instead of crashing
 	if (self->target == NULL)
@@ -380,7 +380,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpeedBalls)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->args[3] = SORC_ACCELERATE;				// speed mode
 	self->args[2] = SORCBALL_TERMINAL_SPEED;		// target speed
@@ -676,7 +676,7 @@ void A_SorcOffense2(AActor *self)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcBossAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->args[3] = SORC_ACCELERATE;
 	self->args[2] = SORCBALL_INITIAL_SPEED;
@@ -693,7 +693,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBossAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnFizzle)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	int speed = (int)self->Speed;
 	DAngle rangle;
 	AActor *mo;
@@ -725,7 +725,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnFizzle)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcFX1Seek)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	A_DoBounceCheck (self, "SorcererHeadScream");
 	P_SeekerMissile(self, 2, 6);
@@ -751,7 +751,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX1Seek)
 // Split ball in two
 DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Split)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 
@@ -785,7 +785,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Split)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Orbit)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	DAngle angle;
 	DVector3 pos;
@@ -852,7 +852,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Orbit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnBishop)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	mo = Spawn("Bishop", self->Pos(), ALLOW_REPLACE);
@@ -881,7 +881,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnBishop)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcererBishopEntry)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	Spawn("SorcFX3Explosion", self->Pos(), ALLOW_REPLACE);
 	S_Sound (self, CHAN_VOICE, self->SeeSound, 1, ATTN_NORM);
@@ -898,7 +898,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcererBishopEntry)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcFX4Check)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->special2-- <= 0)
 	{
@@ -917,7 +917,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX4Check)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcBallPop)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	S_Sound (self, CHAN_BODY, "SorcererBallPop", 1, ATTN_NONE);
 	self->flags &= ~MF_NOGRAVITY;
@@ -961,7 +961,7 @@ void A_DoBounceCheck (AActor *self, const char *sound)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BounceCheck)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	A_DoBounceCheck (self, "SorcererBigBallExplode");
 	return 0;

@@ -15,8 +15,8 @@ class LittleFly : Actor
 		ActiveSound "FlyBuzz";
 	}
 	
-	action native void A_FlySearch();
-	action native void A_FlyBuzz();
+	native void A_FlySearch();
+	native void A_FlyBuzz();
 	
 	States
 	{

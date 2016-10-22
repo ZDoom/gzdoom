@@ -23,10 +23,10 @@ class FireDemon : Actor
 		Obituary "$OB_FIREDEMON";
 	}
 
-	action native void A_FiredRocks();
-	action native void A_FiredChase();
-	action native void A_FiredAttack();
-	action native void A_FiredSplotch();
+	native void A_FiredRocks();
+	native void A_FiredChase();
+	native void A_FiredAttack();
+	native void A_FiredSplotch();
 
 	States
 	{
@@ -124,7 +124,7 @@ class FireDemonRock1 : Actor
 		+NOTELEPORT
 	}
 
-	action native void A_SmBounce();
+	native void A_SmBounce();
 
 	States
 	{

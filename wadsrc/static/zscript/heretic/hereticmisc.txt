@@ -16,8 +16,8 @@ class Pod : Actor
 		DeathSound "world/podexplode";
 		PushFactor 0.5;
 	}
-	action native void A_PodPain (class<Actor> podtype = "PodGoo");
-	action native void A_RemovePod ();
+	native void A_PodPain (class<Actor> podtype = "PodGoo");
+	native void A_RemovePod ();
 	
 	States
 	{
@@ -75,7 +75,7 @@ class PodGenerator : Actor
 		AttackSound "world/podgrow";
 	}
 
-	action native void A_MakePod (class<Actor> podtype = "Pod");
+	native void A_MakePod (class<Actor> podtype = "Pod");
 
 	States
 	{
@@ -136,7 +136,7 @@ class TeleGlitter1 : Actor
 		Damage 0;
 	}
 
-	action native void A_AccTeleGlitter ();
+	native void A_AccTeleGlitter ();
 
 	States
 	{
@@ -178,8 +178,8 @@ class Volcano : Actor
 		+SOLID
 	}
 	
-	action native void A_VolcanoSet ();
-	action native void A_VolcanoBlast ();
+	native void A_VolcanoSet ();
+	native void A_VolcanoBlast ();
 	
 	States
 	{
@@ -210,7 +210,7 @@ class VolcanoBlast : Actor
 		DeathSound "world/volcano/blast";
 	}
 
-	action native void A_VolcBallImpact ();
+	native void A_VolcBallImpact ();
 
 	States
 	{

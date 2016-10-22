@@ -23,7 +23,7 @@ IMPLEMENT_CLASS(ADegninOre)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RemoveForceField)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->flags &= ~MF_SPECIAL;
 

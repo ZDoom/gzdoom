@@ -16,7 +16,7 @@
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KeenDie)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT_OPT(doortag)		{ doortag = 666; }
 
 	A_Unblock(self, false);

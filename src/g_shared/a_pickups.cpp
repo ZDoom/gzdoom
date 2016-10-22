@@ -355,7 +355,7 @@ bool P_GiveBody (AActor *actor, int num, int max)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing1)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->renderflags &= ~RF_INVISIBLE;
 	if (static_cast<AInventory *>(self)->DoRespawn ())
@@ -373,7 +373,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->flags |= MF_SPECIAL;
 	if (!(self->GetDefault()->flags & MF_NOGRAVITY))
@@ -393,7 +393,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialDoomThing)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->renderflags &= ~RF_INVISIBLE;
 	self->flags |= MF_SPECIAL;
@@ -418,7 +418,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialDoomThing)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	// Move item back to its original location
 	DVector2 sp = self->SpawnPoint;

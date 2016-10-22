@@ -24,11 +24,11 @@ class Korax : Actor
 		Obituary "$OB_KORAX";
 	}
 
-	action native void A_KoraxChase();
-	action native void A_KoraxDecide();
-	action native void A_KoraxBonePop();
-	action native void A_KoraxMissile();
-	action native void A_KoraxCommand();
+	native void A_KoraxChase();
+	native void A_KoraxDecide();
+	native void A_KoraxBonePop();
+	native void A_KoraxMissile();
+	native void A_KoraxCommand();
 
 	States
 	{
@@ -94,7 +94,7 @@ class KoraxSpirit : Actor
 		Alpha 0.4;
 	}
 	
-	action native void A_KSpiritRoam();
+	native void A_KSpiritRoam();
 	
 	States
 	{
@@ -119,8 +119,8 @@ class KoraxBolt : Actor
 		RenderStyle "Add";
 	}
 	
-	action native void A_KBolt();
-	action native void A_KBoltRaise();
+	native void A_KBolt();
+	native void A_KBoltRaise();
 	
 	States
 	{

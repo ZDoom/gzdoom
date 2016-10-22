@@ -20,7 +20,7 @@ static FRandom pr_cposrefire ("CPosRefire");
 //
 DEFINE_ACTION_FUNCTION(AActor, A_PosAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int damage;
 	DAngle angle;
@@ -60,7 +60,7 @@ static void A_SPosAttack2 (AActor *self)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SPosAttackUseAtkSound)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target)
 		return 0;
@@ -74,7 +74,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SPosAttackUseAtkSound)
 // meant for Dehacked only.
 DEFINE_ACTION_FUNCTION(AActor, A_SPosAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target)
 		return 0;
@@ -86,7 +86,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SPosAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CPosAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	DAngle angle;
 	DAngle bangle;
@@ -115,7 +115,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CPosAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CPosRefire)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	// keep firing unless target got out of sight
 	A_FaceTarget (self);

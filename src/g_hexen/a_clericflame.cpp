@@ -66,7 +66,7 @@ void ACFlameMissile::Effect ()
 
 DEFINE_ACTION_FUNCTION(AActor, A_CFlameAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -93,7 +93,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CFlamePuff)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->renderflags &= ~RF_INVISIBLE;
 	self->Vel.Zero();
@@ -109,7 +109,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlamePuff)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int i;
 	DAngle an;
@@ -159,7 +159,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CFlameRotate)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	DAngle an = self->Angles.Yaw + 90.;
 	self->VelFromAngle(an, FLAMEROTSPEED);

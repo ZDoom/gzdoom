@@ -32,7 +32,7 @@ class EntityPod : Actor
 		SeeSound "misc/gibbed";
 	}
 
-	action native void A_SpawnEntity ();
+	native void A_SpawnEntity ();
 
 	States
 	{
@@ -87,8 +87,8 @@ class EntityBoss : SpectralMonster
 		Obituary "$OB_ENTITY";
 	}
 
-	action native void A_EntityAttack();
-	action native void A_EntityDeath();
+	native void A_EntityAttack();
+	native void A_EntityDeath();
 
 	States
 	{
@@ -167,7 +167,7 @@ class EntitySecond : SpectralMonster
 		Obituary "$OB_ENTITY";
 	}
 
-	action native void A_SubEntityDeath ();
+	native void A_SubEntityDeath ();
 
 	States
 	{

@@ -19,7 +19,7 @@
 
 DEFINE_ACTION_FUNCTION(AActor, A_FatRaise)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	A_FaceTarget (self);
 	S_Sound (self, CHAN_WEAPON, "fatso/raiseguns", 1, ATTN_NORM);
@@ -28,7 +28,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FatRaise)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack1)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_OPT(spawntype, AActor)	{ spawntype = NULL; }
 
 	AActor *missile;
@@ -54,7 +54,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack1)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_OPT(spawntype, AActor)	{ spawntype = NULL; }
 
 	AActor *missile;
@@ -80,7 +80,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack2)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_OPT(spawntype, AActor)	{ spawntype = NULL; }
 
 	AActor *missile;
@@ -122,7 +122,7 @@ enum
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_OPT	(spawntype, AActor)		{ spawntype = NULL; }
 	PARAM_INT_OPT	(n)						{ n = 0; }
 	PARAM_INT_OPT	(flags)					{ flags = 0; }

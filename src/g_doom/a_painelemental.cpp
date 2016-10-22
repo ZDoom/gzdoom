@@ -147,7 +147,7 @@ void A_PainShootSkull (AActor *self, DAngle Angle, PClassActor *spawntype, int f
 // 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PainAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target)
 		return 0;
@@ -165,7 +165,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PainAttack)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DualPainAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_OPT(spawntype, AActor) { spawntype = NULL; }
 
 	if (!self->target)
@@ -179,7 +179,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DualPainAttack)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PainDie)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_OPT(spawntype, AActor) { spawntype = NULL; }
 
 	if (self->target != NULL && self->IsFriend(self->target))

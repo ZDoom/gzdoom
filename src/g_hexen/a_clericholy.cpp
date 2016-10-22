@@ -131,7 +131,7 @@ bool AHolySpirit::SpecialBlastHandling (AActor *source, double strength)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int j;
 	AActor *mo;
@@ -211,7 +211,7 @@ void SpawnSpiritTail (AActor *spirit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	player_t *player;
 	FTranslatedLineTarget t;
@@ -245,7 +245,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CHolyPalette)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->player != NULL)
 	{
@@ -328,7 +328,7 @@ static void CHolyTailRemove (AActor *actor)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CHolyTail)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *parent;
 
@@ -446,7 +446,7 @@ static void CHolySeekerMissile (AActor *actor, DAngle thresh, DAngle turnMax)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CHolySeek)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->health--;
 	if (self->health <= 0)
@@ -481,7 +481,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolySeek)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CHolyCheckScream)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	CALL_ACTION(A_CHolySeek, self);
 	if (pr_checkscream() < 20)
@@ -504,7 +504,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyCheckScream)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ClericAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target) return 0;
 

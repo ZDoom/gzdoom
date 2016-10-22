@@ -17,7 +17,7 @@ static FRandom pr_troopattack ("TroopAttack");
 //
 DEFINE_ACTION_FUNCTION(AActor, A_TroopAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target)
 		return 0;

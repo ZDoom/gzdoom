@@ -380,7 +380,7 @@ void ASpecialSpot::Destroy()
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnSingleItem)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS		(cls, AActor);
 	PARAM_INT_OPT	(fail_sp) { fail_sp = 0; }
 	PARAM_INT_OPT	(fail_co) { fail_co = 0; }

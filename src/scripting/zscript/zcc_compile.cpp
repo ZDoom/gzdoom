@@ -2381,7 +2381,11 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 			return new FxFunctionCall(static_cast<ZCC_ExprID *>(fcall->Function)->Identifier, NAME_None, ConvertNodeList(fcall->Parameters), *ast);
 
 		case AST_ExprMemberAccess:
-			break;
+		{
+			auto ema = static_cast<ZCC_ExprMemberAccess *>(fcall->Function);
+			Printf("Member call to %s\n", FName(ema->Right).GetChars());
+			return new FxMemberFunctionCall(ConvertNode(ema->Left), ema->Right, ConvertNodeList(fcall->Parameters), *ast);
+		}
 
 		case AST_ExprBinary:
 			// Array syntax for randoms. They are internally stored as ExprBinary with both an identifier on the left and right side.

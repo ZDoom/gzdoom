@@ -4975,6 +4975,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	auto self = !(afd->Variants[0].Flags & VARF_Static) ? Self : nullptr;
 	auto x = new FxVMFunctionCall(self, afd, ArgList, ScriptPosition, staticonly);
 	ArgList = nullptr;
+	if (Self == self) Self = nullptr;
 	delete this;
 	return x->Resolve(ctx);
 }
@@ -6226,6 +6227,7 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 	{
 		FName clsname = static_cast<FxConstant *>(basex)->GetValue().GetName();
 		PClass *cls = NULL;
+		FxExpression *x;
 
 		if (clsname != NAME_None)
 		{
@@ -6248,8 +6250,12 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 				}
 				ScriptPosition.Message(MSG_DEBUG, "resolving '%s' as class name", clsname.GetChars());
 			}
+			x = new FxConstant(cls, ScriptPosition);
 		}
-		FxExpression *x = new FxConstant(cls, ScriptPosition);
+		else
+		{
+			x = new FxConstant(ScriptPosition);	// create a genuine null pointer to get past the type checks.
+		}
 		delete this;
 		return x;
 	}

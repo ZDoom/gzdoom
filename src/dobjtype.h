@@ -574,7 +574,7 @@ class PField : public PSymbol
 public:
 	PField(FName name, PType *type) : PSymbol(name), Offset(0), Type(type), Flags(0) {}
 	PField(FName name, PType *type, DWORD flags) : PSymbol(name), Offset(0), Type(type), Flags(flags) {}
-	PField(FName name, PType *type, DWORD flags, unsigned offset) : PSymbol(name), Offset(offset), Type(type), Flags(flags) {}
+	PField(FName name, PType *type, DWORD flags, size_t offset) : PSymbol(name), Offset(unsigned(offset)), Type(type), Flags(flags) {}
 
 	unsigned int Offset;
 	PType *Type;

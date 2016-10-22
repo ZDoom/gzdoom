@@ -437,6 +437,8 @@ xx(ScaleX)
 xx(ScaleY)
 xx(Floatbobphase)
 xx(Target)
+xx(Master)
+xx(Tracer)
 
 xx(Blocking)
 xx(Blockmonsters)

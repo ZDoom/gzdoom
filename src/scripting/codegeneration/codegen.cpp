@@ -6199,9 +6199,9 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 		delete this;
 		return x;
 	}
+	auto to = static_cast<PClassPointer *>(ValueType);
 	if (basex->ValueType->GetClass() == RUNTIME_CLASS(PClassPointer))
 	{
-		auto to = static_cast<PClassPointer *>(ValueType);
 		auto from = static_cast<PClassPointer *>(basex->ValueType);
 		if (from->ClassRestriction->IsDescendantOf(to->ClassRestriction))
 		{
@@ -6227,7 +6227,6 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 	{
 		FName clsname = static_cast<FxConstant *>(basex)->GetValue().GetName();
 		PClass *cls = NULL;
-		FxExpression *x;
 
 		if (clsname != NAME_None)
 		{
@@ -6250,12 +6249,8 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 				}
 				ScriptPosition.Message(MSG_DEBUG, "resolving '%s' as class name", clsname.GetChars());
 			}
-			x = new FxConstant(cls, ScriptPosition);
 		}
-		else
-		{
-			x = new FxConstant(ScriptPosition);	// create a genuine null pointer to get past the type checks.
-		}
+		FxExpression *x = new FxConstant(cls, to, ScriptPosition);
 		delete this;
 		return x;
 	}

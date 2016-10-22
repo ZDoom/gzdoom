@@ -364,12 +364,10 @@ public:
 		isresolved = true;
 	}
 
-	FxConstant(PClass *val, const FScriptPosition &pos) : FxExpression(pos)
+	FxConstant(PClass *val, PClassPointer *valtype, const FScriptPosition &pos) : FxExpression(pos)
 	{
 		value.pointer = (void*)val;
-		if (val != nullptr) ValueType = NewClassPointer(val);
-		else ValueType = NewClassPointer(RUNTIME_CLASS(DObject));
-		value.Type = NewClassPointer(RUNTIME_CLASS(DObject));
+		value.Type = ValueType = valtype;
 		isresolved = true;
 	}
 

@@ -52,11 +52,17 @@ begin:
 	{
 #if !COMPGOTO
 	VM_UBYTE op;
-	for(;;) switch(op = pc->op, a = pc->a, pc++, op)
+	for(;;) switch(op = pc->op, a = pc->a, op)
 #else
+	pc--;
 	NEXTOP;
 #endif
 	{
+#if !COMPGOTO
+	default:
+		assert(0 && "Undefined opcode hit");
+		NEXTOP;
+#endif
 	OP(LI):
 		ASSERTD(a);
 		reg.d[a] = BCs;
@@ -367,13 +373,13 @@ begin:
 		}
 		NEXTOP;
 	OP(JMP):
-		pc += JMPOFS(pc - 1);
+		pc += JMPOFS(pc);
 		NEXTOP;
 	OP(IJMP):
 		ASSERTD(a);
 		pc += (BCs + reg.d[a]);
-		assert(pc->op == OP_JMP);
-		pc += 1 + JMPOFS(pc);
+		assert(pc[1].op == OP_JMP);
+		pc += 1 + JMPOFS(pc+1);
 		NEXTOP;
 	OP(PARAMI):
 		assert(f->NumParam < sfunc->MaxParam);
@@ -490,7 +496,7 @@ begin:
 			VMReturn returns[MAX_RETURNS];
 			int numret;
 
-			FillReturns(reg, f, returns, pc, C);
+			FillReturns(reg, f, returns, pc+1, C);
 			if (call->Native)
 			{
 				numret = static_cast<VMNativeFunction *>(call)->NativeCall(stack, reg.param + f->NumParam - B, B, returns, C);
@@ -603,8 +609,8 @@ begin:
 		{
 			THROW(X_TOO_MANY_TRIES);
 		}
-		assert((pc + JMPOFS(pc - 1))->op == OP_CATCH);
-		exception_frames[try_depth++] = pc + JMPOFS(pc - 1);
+		assert((pc + JMPOFS(pc) + 1)->op == OP_CATCH);
+		exception_frames[try_depth++] = pc + JMPOFS(pc) + 1;
 		NEXTOP;
 	OP(UNTRY):
 		assert(a <= try_depth);
@@ -704,8 +710,8 @@ begin:
 			}
 			if (cmp == (a & CMP_CHECK))
 			{
-				assert(pc->op == OP_JMP);
-				pc += 1 + JMPOFS(pc);
+				assert(pc[1].op == OP_JMP);
+				pc += 1 + JMPOFS(pc+1);
 			}
 			else
 			{

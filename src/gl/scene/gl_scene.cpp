@@ -509,6 +509,7 @@ void FGLRenderer::DrawScene(int drawmode)
 		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		gl_RenderState.Apply();
 		gl_RenderState.ApplyMatrices();
+		ssao_portals_available--;
 	}
 
 	// Handle all portals after rendering the opaque objects but before

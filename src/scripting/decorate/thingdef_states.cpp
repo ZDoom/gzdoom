@@ -38,7 +38,7 @@
 **
 */
 
-#include "actor.h"
+#include "a_pickups.h"
 #include "info.h"
 #include "sc_man.h"
 #include "tarray.h"
@@ -602,15 +602,15 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 	int pnum = 0;
 	bool zeroparm;
 
-	if (afd->Variants[0].Flags & VARF_Method)
+	if (afd->Variants[0].Flags & VARF_Action)
+	{
+		numparams -= NAP;
+		pnum += NAP;
+	}
+	else if (afd->Variants[0].Flags & VARF_Method)
 	{
 		numparams--;
 		pnum++;
-	}
-	if (afd->Variants[0].Flags & VARF_Action)
-	{
-		numparams -= 2;
-		pnum += 2;
 	}
 	assert(numparams >= 0);
 	zeroparm = numparams == 0;

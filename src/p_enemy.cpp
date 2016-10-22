@@ -2773,7 +2773,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Chase)
 	PARAM_STATE_OPT	(missile)	{ missile = NULL; }
 	PARAM_INT_OPT	(flags)		{ flags = 0; }
 
-	if (numparam >= NAP + 1)
+	if (numparam > 1)
 	{
 		if ((flags & CHF_RESURRECT) && P_CheckForResurrection(self, false))
 			return 0;

@@ -808,22 +808,23 @@ void SetDehParams(FState *state, int codepointer)
 	else
 	{
 		VMFunctionBuilder buildit(true);
+		int numargs = sym->GetImplicitArgs();
 		// Allocate registers used to pass parameters in.
 		// self, stateowner, state (all are pointers)
-		buildit.Registers[REGT_POINTER].Get(NAP);
+		buildit.Registers[REGT_POINTER].Get(numargs);
 		// Emit code to pass the standard action function parameters.
-		for (int i = 0; i < NAP; i++)
+		for (int i = 0; i < numargs; i++)
 		{
 			buildit.Emit(OP_PARAM, 0, REGT_POINTER, i);
 		}
 		// Emit code for action parameters.
 		int argcount = MBFCodePointerFactories[codepointer](buildit, value1, value2);
-		buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(sym->Variants[0].Implementation, ATAG_OBJECT), NAP + argcount, 0);
+		buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(sym->Variants[0].Implementation, ATAG_OBJECT), numargs + argcount, 0);
 		// Attach it to the state.
 		VMScriptFunction *sfunc = new VMScriptFunction;
 		buildit.MakeFunction(sfunc);
-		sfunc->NumArgs = NAP;
-		sfunc->ImplicitArgs = NAP;
+		sfunc->NumArgs = numargs;
+		sfunc->ImplicitArgs = numargs;
 		state->SetAction(sfunc);
 		sfunc->PrintableName.Format("Dehacked.%s.%d.%d", MBFCodePointers[codepointer].name.GetChars(), value1, value2);
 	}
@@ -2121,7 +2122,8 @@ static int PatchCodePtrs (int dummy)
 				else
 				{
 					TArray<DWORD> &args = sym->Variants[0].ArgFlags;
-					if ((sym->Variants[0].Flags & (VARF_Method | VARF_Action)) != (VARF_Method | VARF_Action) || (args.Size() > NAP && !(args[NAP] & VARF_Optional)))
+					unsigned numargs = sym->GetImplicitArgs();
+					if ((sym->Variants[0].Flags & VARF_Virtual || (args.Size() > numargs && !(args[numargs] & VARF_Optional))))
 					{
 						Printf("Frame %d: Incompatible code pointer '%s'\n", frame, Line2);
 						sym = NULL;
@@ -2733,7 +2735,8 @@ static bool LoadDehSupp ()
 						else
 						{
 							TArray<DWORD> &args = sym->Variants[0].ArgFlags;
-							if ((sym->Variants[0].Flags & (VARF_Method|VARF_Action)) != (VARF_Method | VARF_Action) || (args.Size() > NAP && !(args[NAP] & VARF_Optional)))
+							unsigned numargs = sym->GetImplicitArgs();
+							if ((sym->Variants[0].Flags & VARF_Virtual || (args.Size() > numargs && !(args[numargs] & VARF_Optional))))
 							{
 								sc.ScriptMessage("Incompatible code pointer '%s'", sc.String);
 							}

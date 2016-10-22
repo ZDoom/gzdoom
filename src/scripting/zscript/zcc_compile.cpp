@@ -32,7 +32,7 @@
 **
 */
 
-#include "actor.h"
+#include "a_pickups.h"
 #include "thingdef.h"
 #include "sc_man.h"
 #include "c_console.h"

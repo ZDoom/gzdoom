@@ -17,7 +17,7 @@ typedef unsigned int		VM_UWORD;
 typedef signed int			VM_SWORD;
 typedef VM_UBYTE			VM_ATAG;
 
-#define VM_EPSILON			(1/1024.0)
+#define VM_EPSILON			(1/65536.0)
 
 union VMOP
 {

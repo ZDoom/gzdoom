@@ -478,10 +478,21 @@ void FGLRenderer::DrawScene(int drawmode)
 	static int recursion=0;
 	static int ssao_portals_available = 0;
 
+	bool applySSAO = false;
 	if (drawmode == DM_MAINVIEW)
-		ssao_portals_available = gl_ssao_portals + 1;
+	{
+		ssao_portals_available = gl_ssao_portals;
+		applySSAO = true;
+	}
 	else if (drawmode == DM_OFFSCREEN)
+	{
 		ssao_portals_available = 0;
+	}
+	else if (ssao_portals_available > 0)
+	{
+		applySSAO = true;
+		ssao_portals_available--;
+	}
 
 	if (camera != nullptr)
 	{
@@ -501,7 +512,7 @@ void FGLRenderer::DrawScene(int drawmode)
 
 	RenderScene(recursion);
 
-	if (ssao_portals_available > 0 && gl_RenderState.GetPassType() == GBUFFER_PASS)
+	if (applySSAO && gl_RenderState.GetPassType() == GBUFFER_PASS)
 	{
 		gl_RenderState.EnableDrawBuffers(1);
 		AmbientOccludeScene();
@@ -509,7 +520,6 @@ void FGLRenderer::DrawScene(int drawmode)
 		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		gl_RenderState.Apply();
 		gl_RenderState.ApplyMatrices();
-		ssao_portals_available--;
 	}
 
 	// Handle all portals after rendering the opaque objects but before

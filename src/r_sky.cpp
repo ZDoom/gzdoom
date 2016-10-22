@@ -76,10 +76,20 @@ void R_InitSkyMap ()
 	int skyheight;
 	FTexture *skytex1, *skytex2;
 
+	// Do not allow the null texture which has no bitmap and will crash.
+	if (sky1texture.isNull())
+	{
+		sky1texture = TexMan.CheckForTexture("-noflat-", FTexture::TEX_Any);
+	}
+	if (sky2texture.isNull())
+	{
+		sky2texture = TexMan.CheckForTexture("-noflat-", FTexture::TEX_Any);
+	}
+
 	skytex1 = TexMan(sky1texture, true);
 	skytex2 = TexMan(sky2texture, true);
 
-	if (skytex1 == NULL)
+	if (skytex1 == nullptr)
 		return;
 
 	if ((level.flags & LEVEL_DOUBLESKY) && skytex1->GetHeight() != skytex2->GetHeight())

@@ -435,7 +435,7 @@ ExpEmit FxConstant::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxBoolCast::FxBoolCast(FxExpression *x)
-	: FxExpression(x->ScriptPosition)
+	: FxExpression(EFX_BoolCast, x->ScriptPosition)
 {
 	basex = x;
 	ValueType = TypeBool;
@@ -533,7 +533,7 @@ ExpEmit FxBoolCast::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxIntCast::FxIntCast(FxExpression *x, bool nowarn)
-: FxExpression(x->ScriptPosition)
+: FxExpression(EFX_IntCast, x->ScriptPosition)
 {
 	basex=x;
 	ValueType = TypeSInt32;
@@ -632,7 +632,7 @@ ExpEmit FxIntCast::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxFloatCast::FxFloatCast(FxExpression *x)
-	: FxExpression(x->ScriptPosition)
+	: FxExpression(EFX_FloatCast, x->ScriptPosition)
 {
 	basex = x;
 	ValueType = TypeFloat64;
@@ -723,7 +723,7 @@ ExpEmit FxFloatCast::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxNameCast::FxNameCast(FxExpression *x)
-	: FxExpression(x->ScriptPosition)
+	: FxExpression(EFX_NameCast, x->ScriptPosition)
 {
 	basex = x;
 	ValueType = TypeName;
@@ -801,7 +801,7 @@ ExpEmit FxNameCast::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxStringCast::FxStringCast(FxExpression *x)
-	: FxExpression(x->ScriptPosition)
+	: FxExpression(EFX_StringCast, x->ScriptPosition)
 {
 	basex = x;
 	ValueType = TypeString;
@@ -898,7 +898,7 @@ ExpEmit FxStringCast::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxColorCast::FxColorCast(FxExpression *x)
-	: FxExpression(x->ScriptPosition)
+	: FxExpression(EFX_ColorCast, x->ScriptPosition)
 {
 	basex = x;
 	ValueType = TypeColor;
@@ -977,7 +977,7 @@ ExpEmit FxColorCast::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxSoundCast::FxSoundCast(FxExpression *x)
-	: FxExpression(x->ScriptPosition)
+	: FxExpression(EFX_SoundCast, x->ScriptPosition)
 {
 	basex = x;
 	ValueType = TypeSound;
@@ -1056,7 +1056,7 @@ ExpEmit FxSoundCast::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxTypeCast::FxTypeCast(FxExpression *x, PType *type, bool nowarn)
-	: FxExpression(x->ScriptPosition)
+	: FxExpression(EFX_TypeCast, x->ScriptPosition)
 {
 	basex = x;
 	ValueType = type;
@@ -1241,7 +1241,7 @@ ExpEmit FxTypeCast::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxPlusSign::FxPlusSign(FxExpression *operand)
-: FxExpression(operand->ScriptPosition)
+: FxExpression(EFX_PlusSign, operand->ScriptPosition)
 {
 	Operand=operand;
 }
@@ -1295,7 +1295,7 @@ ExpEmit FxPlusSign::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxMinusSign::FxMinusSign(FxExpression *operand)
-: FxExpression(operand->ScriptPosition)
+: FxExpression(EFX_MinusSign, operand->ScriptPosition)
 {
 	Operand=operand;
 }
@@ -1375,7 +1375,7 @@ ExpEmit FxMinusSign::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxUnaryNotBitwise::FxUnaryNotBitwise(FxExpression *operand)
-: FxExpression(operand->ScriptPosition)
+: FxExpression(EFX_UnaryNotBitwise, operand->ScriptPosition)
 {
 	Operand=operand;
 }
@@ -1455,7 +1455,7 @@ ExpEmit FxUnaryNotBitwise::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxUnaryNotBoolean::FxUnaryNotBoolean(FxExpression *operand)
-: FxExpression(operand->ScriptPosition)
+: FxExpression(EFX_UnaryNotBoolean, operand->ScriptPosition)
 {
 	Operand=operand;
 }
@@ -1525,7 +1525,7 @@ ExpEmit FxUnaryNotBoolean::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxSizeAlign::FxSizeAlign(FxExpression *operand, int which)
-	: FxExpression(operand->ScriptPosition)
+	: FxExpression(EFX_SizeAlign, operand->ScriptPosition)
 {
 	Operand = operand;
 	Which = which;
@@ -1586,7 +1586,7 @@ ExpEmit FxSizeAlign::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxPreIncrDecr::FxPreIncrDecr(FxExpression *base, int token)
-: FxExpression(base->ScriptPosition), Token(token), Base(base)
+: FxExpression(EFX_PreIncrDecr, base->ScriptPosition), Token(token), Base(base)
 {
 	AddressRequested = false;
 	AddressWritable = false;
@@ -1680,7 +1680,7 @@ ExpEmit FxPreIncrDecr::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxPostIncrDecr::FxPostIncrDecr(FxExpression *base, int token)
-: FxExpression(base->ScriptPosition), Token(token), Base(base)
+: FxExpression(EFX_PostIncrDecr, base->ScriptPosition), Token(token), Base(base)
 {
 }
 
@@ -1762,7 +1762,7 @@ ExpEmit FxPostIncrDecr::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxAssign::FxAssign(FxExpression *base, FxExpression *right)
-: FxExpression(base->ScriptPosition), Base(base), Right(right)
+: FxExpression(EFX_Assign, base->ScriptPosition), Base(base), Right(right)
 {
 	AddressRequested = false;
 	AddressWritable = false;
@@ -1915,7 +1915,7 @@ ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxAssignSelf::FxAssignSelf(const FScriptPosition &pos)
-: FxExpression(pos)
+: FxExpression(EFX_AssignSelf, pos)
 {
 	Assignment = nullptr;
 }
@@ -1955,7 +1955,7 @@ ExpEmit FxAssignSelf::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxBinary::FxBinary(int o, FxExpression *l, FxExpression *r)
-: FxExpression(l->ScriptPosition)
+: FxExpression(EFX_Binary, l->ScriptPosition)
 {
 	Operator=o;
 	left=l;
@@ -2842,7 +2842,7 @@ ExpEmit FxLtGtEq::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxBinaryLogical::FxBinaryLogical(int o, FxExpression *l, FxExpression *r)
-: FxExpression(l->ScriptPosition)
+: FxExpression(EFX_BinaryLogical, l->ScriptPosition)
 {
 	Operator=o;
 	left=l;
@@ -3020,7 +3020,7 @@ ExpEmit FxBinaryLogical::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxConditional::FxConditional(FxExpression *c, FxExpression *t, FxExpression *f)
-: FxExpression(c->ScriptPosition)
+: FxExpression(EFX_Conditional, c->ScriptPosition)
 {
 	condition = c;
 	truex=t;
@@ -3185,7 +3185,7 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 FxAbs::FxAbs(FxExpression *v)
-: FxExpression(v->ScriptPosition)
+: FxExpression(EFX_Abs, v->ScriptPosition)
 {
 	val = v;
 	ValueType = v->ValueType;
@@ -3275,7 +3275,7 @@ ExpEmit FxAbs::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 FxATan2::FxATan2(FxExpression *y, FxExpression *x, const FScriptPosition &pos)
-: FxExpression(pos)
+: FxExpression(EFX_ATan2, pos)
 {
 	yval = y;
 	xval = x;
@@ -3368,7 +3368,7 @@ ExpEmit FxATan2::ToReg(VMFunctionBuilder *build, FxExpression *val)
 //
 //==========================================================================
 FxMinMax::FxMinMax(TArray<FxExpression*> &expr, FName type, const FScriptPosition &pos)
-: FxExpression(pos), Type(type)
+: FxExpression(EFX_MinMax, pos), Type(type)
 {
 	assert(expr.Size() > 0);
 	assert(type == NAME_Min || type == NAME_Max);
@@ -3586,7 +3586,7 @@ ExpEmit FxMinMax::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 FxRandom::FxRandom(FRandom * r, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos, bool nowarn)
-: FxExpression(pos)
+: FxExpression(EFX_Random, pos)
 {
 	EmitTail = false;
 	if (mi != NULL && ma != NULL)
@@ -3719,7 +3719,7 @@ ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 FxRandomPick::FxRandomPick(FRandom *r, TArray<FxExpression*> &expr, bool floaty, const FScriptPosition &pos, bool nowarn)
-: FxExpression(pos)
+: FxExpression(EFX_RandomPick, pos)
 {
 	assert(expr.Size() > 0);
 	choices.Resize(expr.Size());
@@ -3891,6 +3891,7 @@ FxFRandom::FxFRandom(FRandom *r, FxExpression *mi, FxExpression *ma, const FScri
 		max = new FxFloatCast(ma);
 	}
 	ValueType = TypeFloat64;
+	ExprType = EFX_FRandom;
 }
 
 //==========================================================================
@@ -3965,7 +3966,7 @@ ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxRandom2::FxRandom2(FRandom *r, FxExpression *m, const FScriptPosition &pos, bool nowarn)
-: FxExpression(pos)
+: FxExpression(EFX_Random2, pos)
 {
 	EmitTail = false;
 	rng = r;
@@ -4051,7 +4052,7 @@ ExpEmit FxRandom2::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxIdentifier::FxIdentifier(FName name, const FScriptPosition &pos)
-: FxExpression(pos)
+: FxExpression(EFX_Identifier, pos)
 {
 	Identifier = name;
 }
@@ -4195,6 +4196,7 @@ FxMemberIdentifier::FxMemberIdentifier(FxExpression *left, FName name, const FSc
 	: FxIdentifier(name, pos)
 {
 	Object = left;
+	ExprType = EFX_MemberIdentifier;
 }
 
 //==========================================================================
@@ -4295,7 +4297,7 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 //==========================================================================
 
 FxLocalVariable::FxLocalVariable(FxLocalVariableDeclaration *var, const FScriptPosition &sc)
-	: FxExpression(sc)
+	: FxExpression(EFX_LocalVariable, sc)
 {
 	Variable = var;
 	ValueType = var->ValueType;
@@ -4330,7 +4332,7 @@ ExpEmit FxLocalVariable::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxSelf::FxSelf(const FScriptPosition &pos)
-: FxExpression(pos)
+: FxExpression(EFX_Self, pos)
 {
 }
 
@@ -4373,7 +4375,7 @@ ExpEmit FxSelf::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxClassMember::FxClassMember(FxExpression *x, PField* mem, const FScriptPosition &pos)
-: FxExpression(pos)
+: FxExpression(EFX_ClassMember, pos)
 {
 	classx = x;
 	membervar = mem;
@@ -4471,7 +4473,7 @@ ExpEmit FxClassMember::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxArrayElement::FxArrayElement(FxExpression *base, FxExpression *_index)
-:FxExpression(base->ScriptPosition)
+:FxExpression(EFX_ArrayElement, base->ScriptPosition)
 {
 	Array=base;
 	index = _index;
@@ -4650,7 +4652,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxFunctionCall::FxFunctionCall(FName methodname, FName rngname, FArgumentList *args, const FScriptPosition &pos)
-: FxExpression(pos)
+: FxExpression(EFX_FunctionCall, pos)
 {
 	MethodName = methodname;
 	RNG = nullptr;
@@ -4888,7 +4890,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 //==========================================================================
 
 FxMemberFunctionCall::FxMemberFunctionCall(FxExpression *self, FName methodname, FArgumentList *args, const FScriptPosition &pos)
-	: FxExpression(pos)
+	: FxExpression(EFX_MemberFunctionCall, pos)
 {
 	Self = self;
 	MethodName = methodname;
@@ -4991,7 +4993,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 //==========================================================================
 
 FxActionSpecialCall::FxActionSpecialCall(FxExpression *self, int special, FArgumentList *args, const FScriptPosition &pos)
-: FxExpression(pos)
+: FxExpression(EFX_ActionSpecialCall, pos)
 {
 	Self = self;
 	Special = special;
@@ -5157,7 +5159,7 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxVMFunctionCall::FxVMFunctionCall(FxExpression *self, PFunction *func, FArgumentList *args, const FScriptPosition &pos, bool novirtual)
-: FxExpression(pos)
+: FxExpression(EFX_VMFunctionCall, pos)
 {
 	Self = self;
 	Function = func;
@@ -5391,7 +5393,7 @@ bool FxVMFunctionCall::CheckEmitCast(VMFunctionBuilder *build, bool returnit, Ex
 //==========================================================================
 
 FxFlopFunctionCall::FxFlopFunctionCall(size_t index, FArgumentList *args, const FScriptPosition &pos)
-: FxExpression(pos)
+: FxExpression(EFX_FlopFunctionCall, pos)
 {
 	assert(index < countof(FxFlops) && "FLOP index out of range");
 	Index = (int)index;
@@ -5612,7 +5614,7 @@ bool FxCompoundStatement::CheckLocalVariable(FName name)
 
 FxIfStatement::FxIfStatement(FxExpression *cond, FxExpression *true_part,
 	FxExpression *false_part, const FScriptPosition &pos)
-: FxExpression(pos)
+: FxExpression(EFX_IfStatement, pos)
 {
 	Condition = cond;
 	WhenTrue = true_part;
@@ -5764,7 +5766,7 @@ void FxLoopStatement::Backpatch(VMFunctionBuilder *build, size_t loopstart, size
 //==========================================================================
 
 FxWhileLoop::FxWhileLoop(FxExpression *condition, FxExpression *code, const FScriptPosition &pos)
-: FxLoopStatement(pos), Condition(condition), Code(code)
+: FxLoopStatement(EFX_WhileLoop, pos), Condition(condition), Code(code)
 {
 	ValueType = TypeVoid;
 }
@@ -5850,7 +5852,7 @@ ExpEmit FxWhileLoop::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxDoWhileLoop::FxDoWhileLoop(FxExpression *condition, FxExpression *code, const FScriptPosition &pos)
-: FxLoopStatement(pos), Condition(condition), Code(code)
+: FxLoopStatement(EFX_DoWhileLoop, pos), Condition(condition), Code(code)
 {
 	ValueType = TypeVoid;
 }
@@ -5938,7 +5940,7 @@ ExpEmit FxDoWhileLoop::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxForLoop::FxForLoop(FxExpression *init, FxExpression *condition, FxExpression *iteration, FxExpression *code, const FScriptPosition &pos)
-: FxLoopStatement(pos), Init(init), Condition(condition), Iteration(iteration), Code(code)
+: FxLoopStatement(EFX_ForLoop, pos), Init(init), Condition(condition), Iteration(iteration), Code(code)
 {
 	ValueType = TypeVoid;
 }
@@ -6050,7 +6052,7 @@ ExpEmit FxForLoop::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxJumpStatement::FxJumpStatement(int token, const FScriptPosition &pos)
-: FxExpression(pos), Token(token)
+: FxExpression(EFX_JumpStatement, pos), Token(token)
 {
 	ValueType = TypeVoid;
 }
@@ -6084,7 +6086,7 @@ ExpEmit FxJumpStatement::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxReturnStatement::FxReturnStatement(FxExpression *value, const FScriptPosition &pos)
-: FxExpression(pos), Value(value)
+: FxExpression(EFX_ReturnStatement, pos), Value(value)
 {
 	ValueType = TypeVoid;
 }
@@ -6162,7 +6164,7 @@ VMFunction *FxReturnStatement::GetDirectFunction()
 //==========================================================================
 
 FxClassTypeCast::FxClassTypeCast(PClassPointer *dtype, FxExpression *x)
-: FxExpression(x->ScriptPosition)
+: FxExpression(EFX_ClassTypeCast, x->ScriptPosition)
 {
 	ValueType = dtype;
 	desttype = dtype->ClassRestriction;
@@ -6348,7 +6350,7 @@ FxExpression *FxStateByIndex::Resolve(FCompileContext &ctx)
 //==========================================================================
 
 FxRuntimeStateIndex::FxRuntimeStateIndex(FxExpression *index)
-: FxExpression(index->ScriptPosition), Index(index)
+: FxExpression(EFX_RuntimeStateIndex, index->ScriptPosition), Index(index)
 {
 	EmitTail = false;
 	ValueType = TypeState;
@@ -6468,7 +6470,7 @@ ExpEmit FxRuntimeStateIndex::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxMultiNameState::FxMultiNameState(const char *_statestring, const FScriptPosition &pos)
-	:FxExpression(pos)
+	:FxExpression(EFX_MultiNameState, pos)
 {
 	FName scopename;
 	FString statestring = _statestring;
@@ -6645,7 +6647,7 @@ ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxDamageValue::FxDamageValue(FxExpression *v)
-: FxExpression(v->ScriptPosition)
+: FxExpression(EFX_DamageValue, v->ScriptPosition)
 {
 	val = v;
 	ValueType = TypeVoid;
@@ -6696,7 +6698,7 @@ ExpEmit FxDamageValue::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxLocalVariableDeclaration::FxLocalVariableDeclaration(PType *type, FName name, FxExpression *initval, int varflags, const FScriptPosition &p)
-	:FxExpression(p)
+	:FxExpression(EFX_LocalVariableDeclaration, p)
 {
 	ValueType = type;
 	VarFlags = varflags;

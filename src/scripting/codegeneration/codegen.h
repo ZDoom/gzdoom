@@ -202,6 +202,68 @@ struct ExpEmit
 	BYTE RegNum, RegType, Konst:1, Fixed:1, Final:1, Target:1;
 };
 
+enum EFxType
+{
+	EFX_Expression,
+	EFX_Identifier,
+	EFX_MemberIdentifier,
+	EFX_ClassDefaults,
+	EFX_Constant,
+	EFX_BoolCast,
+	EFX_IntCast,
+	EFX_FloatCast,
+	EFX_NameCast,
+	EFX_StringCast,
+	EFX_ColorCast,
+	EFX_SoundCast,
+	EFX_TypeCast,
+	EFX_PlusSign,
+	EFX_MinusSign,
+	EFX_UnaryNotBitwise,
+	EFX_UnaryNotBoolean,
+	EFX_SizeAlign,
+	EFX_PreIncrDecr,
+	EFX_PostIncrDecr,
+	EFX_Assign,
+	EFX_AssignSelf,
+	EFX_Binary,	// one token fits all, the operator is enough to distinguish them.
+	EFX_BinaryLogical,
+	EFX_Conditional,
+	EFX_Abs,
+	EFX_ATan2,
+	EFX_MinMax,
+	EFX_Random,
+	EFX_RandomPick,
+	EFX_FRandom,
+	EFX_Random2,
+	EFX_ClassMember,
+	EFX_LocalVariable,
+	EFX_Self,
+	EFX_ArrayElement,
+	EFX_FunctionCall,
+	EFX_MemberFunctionCall,
+	EFX_ActionSpecialCall,
+	EFX_FlopFunctionCall,
+	EFX_VMFunctionCall,
+	EFX_Sequence,
+	EFX_CompoundStatement,
+	EFX_IfStatement,
+	EFX_LoopStatement,
+	EFX_WhileLoop,
+	EFX_DoWhileLoop,
+	EFX_ForLoop,
+	EFX_JumpStatement,
+	EFX_ReturnStatement,
+	EFX_ClassTypeCast,
+	EFX_StateByIndex,
+	EFX_RuntimeStateIndex,
+	EFX_MultiNameState,
+	EFX_DamageValue,
+	EFX_Nop,
+	EFX_LocalVariableDeclaration,
+	EFX_COUNT
+};
+
 //==========================================================================
 //
 //
@@ -211,8 +273,8 @@ struct ExpEmit
 class FxExpression
 {
 protected:
-	FxExpression(const FScriptPosition &pos)
-	: ScriptPosition(pos)
+	FxExpression(EFxType type, const FScriptPosition &pos)
+	: ScriptPosition(pos), ExprType(type)
 	{
 	}
 
@@ -235,6 +297,7 @@ public:
 	PType *ValueType = nullptr;
 
 	bool isresolved = false;
+	EFxType ExprType;
 };
 
 //==========================================================================
@@ -272,23 +335,6 @@ public:
 
 //==========================================================================
 //
-//	FxDotIdentifier
-//
-//==========================================================================
-
-class FxDotIdentifier : public FxExpression
-{
-	FxExpression *container;
-	FName Identifier;
-
-public:
-	FxDotIdentifier(FxExpression*, FName, const FScriptPosition &);
-	~FxDotIdentifier();
-	FxExpression *Resolve(FCompileContext&);
-};
-
-//==========================================================================
-//
 //	FxClassDefaults
 //
 //==========================================================================
@@ -315,70 +361,70 @@ class FxConstant : public FxExpression
 	ExpVal value;
 
 public:
-	FxConstant(bool val, const FScriptPosition &pos) : FxExpression(pos)
+	FxConstant(bool val, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		ValueType = value.Type = TypeBool;
 		value.Int = val;
 		isresolved = true;
 	}
 
-	FxConstant(int val, const FScriptPosition &pos) : FxExpression(pos)
+	FxConstant(int val, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		ValueType = value.Type = TypeSInt32;
 		value.Int = val;
 		isresolved = true;
 	}
 
-	FxConstant(double val, const FScriptPosition &pos) : FxExpression(pos)
+	FxConstant(double val, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		ValueType = value.Type = TypeFloat64;
 		value.Float = val;
 		isresolved = true;
 	}
 
-	FxConstant(FSoundID val, const FScriptPosition &pos) : FxExpression(pos)
+	FxConstant(FSoundID val, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		ValueType = value.Type = TypeSound;
 		value.Int = val;
 		isresolved = true;
 	}
 
-	FxConstant(FName val, const FScriptPosition &pos) : FxExpression(pos)
+	FxConstant(FName val, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		ValueType = value.Type = TypeName;
 		value.Int = val;
 		isresolved = true;
 	}
 
-	FxConstant(const FString &str, const FScriptPosition &pos) : FxExpression(pos)
+	FxConstant(const FString &str, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		ValueType = TypeString;
 		value = ExpVal(str);
 		isresolved = true;
 	}
 
-	FxConstant(ExpVal cv, const FScriptPosition &pos) : FxExpression(pos)
+	FxConstant(ExpVal cv, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		value = cv;
 		ValueType = cv.Type;
 		isresolved = true;
 	}
 
-	FxConstant(PClass *val, PClassPointer *valtype, const FScriptPosition &pos) : FxExpression(pos)
+	FxConstant(PClass *val, PClassPointer *valtype, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		value.pointer = (void*)val;
 		value.Type = ValueType = valtype;
 		isresolved = true;
 	}
 
-	FxConstant(FState *state, const FScriptPosition &pos) : FxExpression(pos)
+	FxConstant(FState *state, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		value.pointer = state;
 		ValueType = value.Type = TypeState;
 		isresolved = true;
 	}
 
-	FxConstant(const FScriptPosition &pos) : FxExpression(pos)
+	FxConstant(const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		value.pointer = nullptr;
 		ValueType = value.Type = TypeNullPtr;
@@ -1175,7 +1221,7 @@ class FxSequence : public FxExpression
 	TDeletingArray<FxExpression *> Expressions;
 
 public:
-	FxSequence(const FScriptPosition &pos) : FxExpression(pos) {}
+	FxSequence(const FScriptPosition &pos) : FxExpression(EFX_Sequence, pos) {}
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 	void Add(FxExpression *expr) { if (expr != NULL) Expressions.Push(expr); }
@@ -1232,8 +1278,8 @@ public:
 class FxLoopStatement : public FxExpression
 {
 protected:
-	FxLoopStatement(const FScriptPosition &pos)
-	: FxExpression(pos)
+	FxLoopStatement(EFxType etype, const FScriptPosition &pos)
+	: FxExpression(etype, pos)
 	{
 	}
 	
@@ -1367,7 +1413,7 @@ class FxStateByIndex : public FxExpression
 
 public:
 
-	FxStateByIndex(int i, const FScriptPosition &pos) : FxExpression(pos)
+	FxStateByIndex(int i, const FScriptPosition &pos) : FxExpression(EFX_StateByIndex, pos)
 	{
 		index = i;
 	}
@@ -1440,7 +1486,7 @@ class FxNop : public FxExpression
 {
 public:
 	FxNop(const FScriptPosition &p)
-		: FxExpression(p)
+		: FxExpression(EFX_Nop, p)
 	{
 		isresolved = true;
 	}

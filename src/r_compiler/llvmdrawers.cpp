@@ -20,7 +20,9 @@ class LLVMProgram
 public:
 	LLVMProgram();
 
+	void CreateModule();
 	void CreateEE();
+	std::string GenerateAssembly(std::string cpuName);
 	std::string DumpModule();
 	void StopLogFatalErrors();
 
@@ -85,6 +87,8 @@ LLVMDrawers *LLVMDrawers::Instance()
 
 LLVMDrawersImpl::LLVMDrawersImpl()
 {
+	mProgram.CreateModule();
+
 	CodegenDrawColumn("FillColumn", DrawColumnVariant::Fill, DrawColumnMethod::Normal);
 	CodegenDrawColumn("FillColumnAdd", DrawColumnVariant::FillAdd, DrawColumnMethod::Normal);
 	CodegenDrawColumn("FillColumnAddClamp", DrawColumnVariant::FillAddClamp, DrawColumnMethod::Normal);
@@ -447,7 +451,11 @@ LLVMProgram::LLVMProgram()
 	InitializeNativeTargetAsmPrinter();
 
 	mContext = std::make_unique<LLVMContext>();
-	mModule = std::make_unique<Module>("render", context());
+}
+
+void LLVMProgram::CreateModule()
+{
+	mModule = std::make_unique<llvm::Module>("render", context());
 }
 
 void LLVMProgram::CreateEE()
@@ -455,22 +463,6 @@ void LLVMProgram::CreateEE()
 	using namespace llvm;
 
 	std::string errorstring;
-
-#if 0
-	std::string targetTriple = sys::getProcessTriple();
-	StringMap<bool> cpuFeatures;
-	sys::getHostCPUFeatures(cpuFeatures);
-	std::string cpuFeaturesStr;
-	for (const auto &it : cpuFeatures)
-	{
-		if (!cpuFeaturesStr.empty())
-			cpuFeaturesStr.push_back(' ');
-		cpuFeaturesStr.push_back(it.getValue() ? '+' : '-');
-		cpuFeaturesStr += it.getKey();
-	}
-
-	Printf("LLVM CPU features: %s\n", cpuFeaturesStr.c_str());
-#endif
 
 	llvm::Module *module = mModule.get();
 	EngineBuilder engineBuilder(std::move(mModule));
@@ -530,6 +522,69 @@ void LLVMProgram::CreateEE()
 		I_FatalError("Could not create LLVM execution engine: %s", errorstring.c_str());
 
 	mEngine->finalizeObject();
+}
+
+std::string LLVMProgram::GenerateAssembly(std::string cpuName)
+{
+	using namespace llvm;
+
+	std::string errorstring;
+
+	llvm::Module *module = mModule.get();
+	EngineBuilder engineBuilder(std::move(mModule));
+	engineBuilder.setErrorStr(&errorstring);
+	engineBuilder.setOptLevel(CodeGenOpt::Aggressive);
+	engineBuilder.setEngineKind(EngineKind::JIT);
+	engineBuilder.setMCPU(cpuName);
+	machine = engineBuilder.selectTarget();
+	if (!machine)
+		I_FatalError("Could not create LLVM target machine");
+
+	std::string targetTriple = machine->getTargetTriple().getTriple();
+
+	module->setTargetTriple(targetTriple);
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
+	module->setDataLayout(new DataLayout(*machine->getSubtargetImpl()->getDataLayout()));
+#else
+	module->setDataLayout(machine->createDataLayout());
+#endif
+
+	legacy::FunctionPassManager PerFunctionPasses(module);
+	legacy::PassManager PerModulePasses;
+
+#if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8)
+	PerFunctionPasses.add(createTargetTransformInfoWrapperPass(machine->getTargetIRAnalysis()));
+	PerModulePasses.add(createTargetTransformInfoWrapperPass(machine->getTargetIRAnalysis()));
+#endif
+
+	SmallString<16*1024> str;
+	raw_svector_ostream stream(str);
+	machine->addPassesToEmitFile(PerModulePasses, stream, TargetMachine::CGFT_AssemblyFile);
+	PerModulePasses.add(createPrintMIRPass(stream));
+
+	PassManagerBuilder passManagerBuilder;
+	passManagerBuilder.OptLevel = 3;
+	passManagerBuilder.SizeLevel = 0;
+	passManagerBuilder.Inliner = createFunctionInliningPass();
+	passManagerBuilder.SLPVectorize = true;
+	passManagerBuilder.LoopVectorize = true;
+	passManagerBuilder.LoadCombine = true;
+	passManagerBuilder.populateModulePassManager(PerModulePasses);
+	passManagerBuilder.populateFunctionPassManager(PerFunctionPasses);
+
+	// Run function passes:
+	PerFunctionPasses.doInitialization();
+	for (llvm::Function &func : *module)
+	{
+		if (!func.isDeclaration())
+			PerFunctionPasses.run(func);
+	}
+	PerFunctionPasses.doFinalization();
+
+	// Run module passes:
+	PerModulePasses.run(*module);
+
+	return str.c_str();
 }
 
 std::string LLVMProgram::DumpModule()

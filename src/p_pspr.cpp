@@ -582,8 +582,9 @@ void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac)
 
 		if (curbob != 0)
 		{
-			float bobx = float(player->bob * Rangex);
-			float boby = float(player->bob * Rangey);
+			//[SP] Added in decorate player.viewbob checks
+			float bobx = float(player->bob * Rangex * (float)player->mo->ViewBob);
+			float boby = float(player->bob * Rangey * (float)player->mo->ViewBob);
 			switch (bobstyle)
 			{
 			case AWeapon::BobNormal:

@@ -651,7 +651,8 @@ void APlayerPawn::Serialize(FSerializer &arc)
 		("fallingscreammaxn", FallingScreamMaxSpeed, def->FallingScreamMaxSpeed)
 		("userange", UseRange, def->UseRange)
 		("aircapacity", AirCapacity, def->AirCapacity)
-		("viewheight", ViewHeight, def->ViewHeight);
+		("viewheight", ViewHeight, def->ViewHeight)
+		("viewbob", ViewBob, def->ViewBob);
 }
 
 //===========================================================================
@@ -1891,7 +1892,7 @@ void P_CalcHeight (player_t *player)
 	{
 		bob = 0;
 	}
-	player->viewz = player->mo->Z() + player->viewheight + bob;
+	player->viewz = player->mo->Z() + player->viewheight + (bob * player->mo->ViewBob); // [SP] Allow DECORATE changes to view bobbing speed.
 	if (player->mo->Floorclip && player->playerstate != PST_DEAD
 		&& player->mo->Z() <= player->mo->floorz)
 	{

@@ -11,21 +11,21 @@
 
 #if COMPGOTO
 #define OP(x)	x
-#define NEXTOP	do { unsigned op = pc->op; a = pc->a; pc++; goto *ops[op]; } while(0)
+#define NEXTOP	do { pc++; unsigned op = pc->op; a = pc->a; goto *ops[op]; } while(0)
 #else
 #define OP(x)	case OP_##x
-#define NEXTOP	break
+#define NEXTOP	pc++; break
 #endif
 
 #define luai_nummod(a,b)        ((a) - floor((a)/(b))*(b))
 
-#define A				(pc[-1].a)
-#define B				(pc[-1].b)
-#define C				(pc[-1].c)
-#define Cs				(pc[-1].cs)
-#define BC				(pc[-1].i16u)
-#define BCs				(pc[-1].i16)
-#define ABCs			(pc[-1].i24)
+#define A				(pc[0].a)
+#define B				(pc[0].b)
+#define C				(pc[0].c)
+#define Cs				(pc[0].cs)
+#define BC				(pc[0].i16u)
+#define BCs				(pc[0].i16)
+#define ABCs			(pc[0].i24)
 #define JMPOFS(x)		((x)->i24)
 
 #define KC				(konstd[C])
@@ -48,8 +48,8 @@
 
 #define CMPJMP(test) \
 	if ((test) == (a & CMP_CHECK)) { \
-		assert(pc->op == OP_JMP); \
-		pc += 1 + JMPOFS(pc); \
+		assert(pc[1].op == OP_JMP); \
+		pc += 1 + JMPOFS(pc+1); \
 	} else { \
 		pc += 1; \
 	}

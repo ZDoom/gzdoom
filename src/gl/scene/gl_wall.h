@@ -66,7 +66,7 @@ struct GLSeg
 		// we do not use the vector math inlines here because they are not optimized for speed but accuracy in the playsim
 		float x = y2 - y1;
 		float y = x1 - x2;
-		float length = sqrt(x*x + y*y);
+		float length = sqrtf(x*x + y*y);
 		return FVector3(x / length, 0, y / length);
 	}
 };

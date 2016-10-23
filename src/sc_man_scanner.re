@@ -151,7 +151,7 @@ std2:
 		'transient'					{ RET(TK_Transient); }
 		'final'						{ RET(TK_Final); }
 		'throws'					{ RET(TK_Throws); }
-		'extends'					{ RET(TK_Extends); }
+		'extend'					{ RET(TK_Extend); }
 		'public'					{ RET(TK_Public); }
 		'protected'					{ RET(TK_Protected); }
 		'private'					{ RET(TK_Private); }

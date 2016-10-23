@@ -47,6 +47,9 @@ class Actor : Thinker native
 	}
 
 	// Functions
+	native Actor P_SpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
+	
+	// DECORATE compatible functions
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
 	native bool IsPointerEqual(int ptr_select1, int ptr_select2);
 	native int	CountInv(class<Inventory> itemtype, int ptr_select = AAPTR_DEFAULT);
@@ -112,8 +115,8 @@ class Actor : Thinker native
 	native void A_BetaSkullAttack();
 	native void A_Metal();
 	native void A_SpidRefire();
-	native void A_BabyMetal();
-	native void A_BspiAttack();
+	//native void A_BabyMetal();
+	//native void A_BspiAttack();
 	native void A_Hoof();
 	native void A_CyberAttack();
 	native void A_PainAttack(class<Actor> spawntype = "LostSoul", float angle = 0, int flags = 0, int limit = -1);

@@ -171,6 +171,18 @@ class_definition(X) ::= class_head(A) class_body(B).
 	X = A; /*X-overwrites-A*/
 }
 
+class_head(X) ::= EXTEND CLASS(T) IDENTIFIER(A).
+{
+	NEW_AST_NODE(Class,head,T);
+	head->NodeName = A.Name();
+	head->ParentName = nullptr;
+	head->Flags =  ZCC_Extension;
+	head->Replaces = nullptr;
+	head->Type = nullptr;
+	head->Symbol = nullptr;
+	X = head;
+}
+
 class_head(X) ::= CLASS(T) IDENTIFIER(A) class_ancestry(B) class_flags(C).
 {
 	NEW_AST_NODE(Class,head,T);

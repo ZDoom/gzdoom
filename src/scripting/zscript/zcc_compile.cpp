@@ -61,8 +61,29 @@
 
 void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 {
-	Classes.Push(new ZCC_ClassWork(static_cast<ZCC_Class *>(cnode), treenode));
-	auto cls = Classes.Last();
+	ZCC_ClassWork *cls = nullptr;
+	// If this is a class extension, put the new node directly into the existing class.
+	if (cnode->Flags == ZCC_Extension)
+	{
+		for (auto clss : Classes)
+		{
+			if (clss->NodeName() == cnode->NodeName)
+			{
+				cls = clss;
+				break;
+			}
+		}
+		if (cls == nullptr)
+		{
+			Error(cnode, "Class %s cannot be found in the current translation unit.");
+			return;
+		}
+	}
+	else
+	{
+		Classes.Push(new ZCC_ClassWork(static_cast<ZCC_Class *>(cnode), treenode));
+		cls = Classes.Last();
+	}
 
 	auto node = cnode->Body;
 	PSymbolTreeNode *childnode;
@@ -220,6 +241,12 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 			switch (node->NodeType)
 			{
 			case AST_Class:
+				// a class extension should not check the tree node symbols.
+				if (static_cast<ZCC_Class *>(node)->Flags == ZCC_Extension)
+				{
+					ProcessClass(static_cast<ZCC_Class *>(node), tnode);
+					break;
+				}
 			case AST_Struct:
 			case AST_ConstantDef:
 			case AST_Enum:

@@ -32,6 +32,7 @@ enum
 	ZCC_ReadOnly		= 1 << 9,
 	ZCC_FuncConst		= 1 << 10,
 	ZCC_Abstract		= 1 << 11,
+	ZCC_Extension		= 1 << 12,
 };
 
 // Function parameter modifiers

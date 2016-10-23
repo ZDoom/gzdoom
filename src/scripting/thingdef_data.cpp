@@ -676,6 +676,7 @@ void InitThingdef()
 	symt.AddSymbol(new PField(NAME_VisibleStartPitch, TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleStartPitch)));
 	symt.AddSymbol(new PField(NAME_VisibleEndAngle,	TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleEndAngle)));
 	symt.AddSymbol(new PField(NAME_VisibleEndPitch, TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleEndPitch)));
+	symt.AddSymbol(new PField("AttackSound",		TypeSound,		VARF_Native,				myoffsetof(AActor, AttackSound)));
 	symt.AddSymbol(new PField(NAME_Target,			TypeActor,		VARF_Native,				myoffsetof(AActor, target)));
 	symt.AddSymbol(new PField(NAME_Master,			TypeActor,		VARF_Native,				myoffsetof(AActor, master)));
 	symt.AddSymbol(new PField(NAME_Tracer,			TypeActor,		VARF_Native,				myoffsetof(AActor, tracer)));

@@ -86,3 +86,32 @@ class CacodemonBall : Actor
 		Stop;
 	}
 }
+
+
+//===========================================================================
+//
+// Code (must be attached to Actor)
+//
+//===========================================================================
+
+extend class Actor
+{
+	void A_HeadAttack()
+	{
+		if (target)
+		{
+			if (CheckMeleeRange())
+			{
+				int damage = random[pr_headattack](1, 6) * 10;
+				A_PlaySound (AttackSound, CHAN_WEAPON);
+				int newdam = target.DamageMobj (self, self, damage, "Melee");
+				target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			}
+			else
+			{
+				// launch a missile
+				SpawnMissile (target, "CacodemonBall");
+			}
+		}
+	}
+}

@@ -977,13 +977,6 @@ primary(X) ::= IDENTIFIER(A).
 	expr->Type = NULL;
 	X = expr;
 }
-primary(X) ::= NULL(T).
-{
-	NEW_AST_NODE(Expression, expr, T);
-	expr->Operation = PEX_Null;
-	expr->Type = NULL;
-	X = expr;
-}
 primary(X) ::= SUPER(T).
 {
 	NEW_AST_NODE(Expression, expr, T);
@@ -992,13 +985,7 @@ primary(X) ::= SUPER(T).
 	X = expr;
 }
 primary(X) ::= constant(A).				{ X = A; /*X-overwrites-A*/ }
-primary(X) ::= SELF(T).
-{
-	NEW_AST_NODE(Expression, expr, T);
-	expr->Operation = PEX_Self;
-	expr->Type = NULL;
-	X = expr;
-}
+
 primary(X) ::= LPAREN expr(A) RPAREN.
 {
 	X = A; /*X-overwrites-A*/

@@ -310,6 +310,12 @@ bool AActor::CheckMeleeRange ()
 	return true;				
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CheckMeleeRange)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(self->CheckMeleeRange());
+}
+
 //----------------------------------------------------------------------------
 //
 // FUNC P_CheckMeleeRange2

@@ -2001,7 +2001,10 @@ void ZCCCompiler::InitFunctions()
 					{
 						Error(f, "The function '%s' has not been exported from the executable.", FName(f->Name).GetChars());
 					}
-					(*afd->VMPointer)->ImplicitArgs = BYTE(implicitargs);
+					else
+					{
+						(*afd->VMPointer)->ImplicitArgs = BYTE(implicitargs);
+					}
 				}
 				SetImplicitArgs(&args, &argflags, &argnames, c->Type(), varflags);
 				auto p = f->Params;

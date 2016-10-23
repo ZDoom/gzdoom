@@ -169,7 +169,6 @@ std2:
 		'virtual'					{ RET(TK_Virtual); }
 		'super'						{ RET(TK_Super); }
 		'global'					{ RET(TK_Global); }
-		'self'						{ RET(TK_Self); }
 		'stop'						{ RET(TK_Stop); }
 		'null'						{ RET(TK_Null); }
 

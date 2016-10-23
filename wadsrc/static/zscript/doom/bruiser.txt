@@ -138,3 +138,30 @@ class BaronBall : Actor
 	}
 }
 
+//===========================================================================
+//
+// Code (must be attached to Actor)
+//
+//===========================================================================
+
+extend class Actor
+{
+	void A_BruisAttack()
+	{
+		if (target)
+		{
+			if (CheckMeleeRange())
+			{
+				int damage = random[pr_bruisattack](1, 8) * 10;
+				A_PlaySound ("baron/melee", CHAN_WEAPON);
+				int newdam = target.DamageMobj (self, self, damage, "Melee");
+				target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			}
+			else
+			{
+				// launch a missile
+				SpawnMissile (target, "BaronBall");
+			}
+		}
+	}
+}

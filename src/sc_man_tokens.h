@@ -108,7 +108,6 @@ xx(TK_Virtual,				"'virtual'")
 xx(TK_Super,				"'super'")
 xx(TK_Null,					"'null'")
 xx(TK_Global,				"'global'")
-xx(TK_Self,					"'self'")
 xx(TK_Stop,					"'stop'")
 xx(TK_Include,				"'include'")
 

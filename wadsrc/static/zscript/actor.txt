@@ -47,7 +47,10 @@ class Actor : Thinker native
 	}
 
 	// Functions
-	native Actor P_SpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
+	native Actor SpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
+	native void TraceBleed(int damage, Actor missile);
+	native bool CheckMeleeRange();
+	native int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags = 0, double angle = 0);
 	
 	// DECORATE compatible functions
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
@@ -110,13 +113,10 @@ class Actor : Thinker native
 	native void A_TroopAttack();
 	native void A_SargAttack();
 	native void A_HeadAttack();
-	native void A_BruisAttack();
 	native void A_SkullAttack(float speed = 20);
 	native void A_BetaSkullAttack();
 	native void A_Metal();
 	native void A_SpidRefire();
-	//native void A_BabyMetal();
-	//native void A_BspiAttack();
 	native void A_Hoof();
 	native void A_CyberAttack();
 	native void A_PainAttack(class<Actor> spawntype = "LostSoul", float angle = 0, int flags = 0, int limit = -1);

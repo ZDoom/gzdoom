@@ -44,7 +44,6 @@ enum
 };
 
 
-
 // Syntax tree structures.
 enum EZCCTreeNodeType
 {

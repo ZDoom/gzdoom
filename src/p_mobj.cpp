@@ -5824,7 +5824,7 @@ AActor *P_SpawnMissile (AActor *source, AActor *dest, PClassActor *type, AActor 
 	return P_SpawnMissileXYZ (source->PosPlusZ(32 + source->GetBobOffset()), source, dest, type, true, owner);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, P_SpawnMissile)
+DEFINE_ACTION_FUNCTION(AActor, SpawnMissile)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(dest, AActor);

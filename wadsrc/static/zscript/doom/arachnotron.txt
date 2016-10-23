@@ -101,7 +101,7 @@ extend class Actor
 		if (target)
 		{
 			A_FaceTarget();
-			P_SpawnMissile(target, "ArachnotronPlasma");
+			SpawnMissile(target, "ArachnotronPlasma");
 		}
 	}
 	

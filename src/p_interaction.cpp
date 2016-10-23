@@ -1555,6 +1555,18 @@ dopain:
 	return damage;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, DamageMobj)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(inflictor, AActor);
+	PARAM_OBJECT(source, AActor);
+	PARAM_INT(damage);
+	PARAM_NAME(mod);
+	PARAM_INT_OPT(flags) { flags = 0; }
+	PARAM_FLOAT_OPT(angle) { angle = 0; }
+	ACTION_RETURN_INT(P_DamageMobj(self, inflictor, source, damage, mod, flags, angle));
+}
+
 void P_PoisonMobj (AActor *target, AActor *inflictor, AActor *source, int damage, int duration, int period, FName type)
 {
 	// Check for invulnerability.

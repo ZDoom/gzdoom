@@ -2042,6 +2042,15 @@ void ZCCCompiler::InitFunctions()
 				sym->AddVariant(NewPrototype(rets, args), argflags, argnames, afd == nullptr? nullptr : *(afd->VMPointer), varflags);
 				c->Type()->Symbols.ReplaceSymbol(sym);
 
+				if (!(f->Flags & ZCC_Native))
+				{
+					auto code = ConvertAST(f->Body);
+					if (code != nullptr)
+					{
+						sym->Variants[0].Implementation = FunctionBuildList.AddFunction(sym, code, FStringf("%s.%s", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars()), false);
+					}
+				}
+
 				// todo: Check inheritance.
 				// todo: Process function bodies.
 			}

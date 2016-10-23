@@ -88,4 +88,27 @@ class ArachnotronPlasma : Actor
 	}
 }
 
+//===========================================================================
+//
+// Code (must be attached to Actor)
+//
+//===========================================================================
+
+extend class Actor
+{
+	void A_BspiAttack()
+	{
+		if (target)
+		{
+			A_FaceTarget();
+			P_SpawnMissile(target, "ArachnotronPlasma");
+		}
+	}
+	
+	void A_BabyMetal()
+	{
+		A_PlaySound("baby/walk", CHAN_BODY, 1, false, ATTN_IDLE);
+		A_Chase();
+	}
+}
 

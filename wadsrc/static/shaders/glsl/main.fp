@@ -142,16 +142,19 @@ float diffuseContribution(vec3 lightDirection, vec3 normal)
 //
 //===========================================================================
 
-float pointLightAttenuation(vec4 lightpos)
+float pointLightAttenuation(vec4 lightpos, float attenuate)
 {
 	float attenuation = max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
-	#if 0
+	if (attenuate == 0.0)
+	{
 		return attenuation;
-	#else
+	}
+	else
+	{
 		vec3 lightDirection = normalize(lightpos.xyz - pixelpos.xyz);
 		float diffuseAmount = diffuseContribution(lightDirection, normalize(vWorldNormal.xyz));
 		return attenuation * diffuseAmount;
-	#endif
+	}
 }
 
 //===========================================================================
@@ -229,7 +232,7 @@ vec4 getLightColor(float fogdist, float fogfactor)
 				vec4 lightpos = lights[i];
 				vec4 lightcolor = lights[i+1];
 				
-				lightcolor.rgb *= pointLightAttenuation(lightpos);
+				lightcolor.rgb *= pointLightAttenuation(lightpos, lightcolor.a);
 				dynlight.rgb += lightcolor.rgb;
 			}
 			//
@@ -240,7 +243,7 @@ vec4 getLightColor(float fogdist, float fogfactor)
 				vec4 lightpos = lights[i];
 				vec4 lightcolor = lights[i+1];
 				
-				lightcolor.rgb *= pointLightAttenuation(lightpos);
+				lightcolor.rgb *= pointLightAttenuation(lightpos, lightcolor.a);
 				dynlight.rgb -= lightcolor.rgb;
 			}
 		}
@@ -322,7 +325,7 @@ void main()
 						vec4 lightpos = lights[i];
 						vec4 lightcolor = lights[i+1];
 						
-						lightcolor.rgb *= pointLightAttenuation(lightpos);
+						lightcolor.rgb *= pointLightAttenuation(lightpos, lightcolor.a);
 						addlight.rgb += lightcolor.rgb;
 					}
 					frag.rgb = clamp(frag.rgb + desaturate(addlight).rgb, 0.0, 1.0);

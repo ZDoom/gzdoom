@@ -457,10 +457,11 @@ public:
 class FxBoolCast : public FxExpression
 {
 	FxExpression *basex;
+	bool NeedValue;
 
 public:
 
-	FxBoolCast(FxExpression *x);
+	FxBoolCast(FxExpression *x, bool needvalue = true);
 	~FxBoolCast();
 	FxExpression *Resolve(FCompileContext&);
 

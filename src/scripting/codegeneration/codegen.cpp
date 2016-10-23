@@ -434,11 +434,12 @@ ExpEmit FxConstant::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxBoolCast::FxBoolCast(FxExpression *x)
+FxBoolCast::FxBoolCast(FxExpression *x, bool needvalue)
 	: FxExpression(EFX_BoolCast, x->ScriptPosition)
 {
 	basex = x;
 	ValueType = TypeBool;
+	NeedValue = needvalue;
 }
 
 //==========================================================================
@@ -499,31 +500,37 @@ ExpEmit FxBoolCast::Emit(VMFunctionBuilder *build)
 	ExpEmit from = basex->Emit(build);
 	assert(!from.Konst);
 	assert(basex->ValueType->GetRegType() == REGT_INT || basex->ValueType->GetRegType() == REGT_FLOAT || basex->ValueType->GetRegType() == REGT_POINTER);
-	ExpEmit to(build, REGT_INT);
-	from.Free(build);
 
-	// Preload result with 0.
-	build->Emit(OP_LI, to.RegNum, 0);
-
-	// Check source against 0.
-	if (from.RegType == REGT_INT)
+	if (NeedValue)
 	{
-		build->Emit(OP_EQ_R, 1, from.RegNum, to.RegNum);
-	}
-	else if (from.RegType == REGT_FLOAT)
-	{
-		build->Emit(OP_EQF_K, 1, from.RegNum, build->GetConstantFloat(0.));
-	}
-	else if (from.RegType == REGT_POINTER)
-	{
-		build->Emit(OP_EQA_K, 1, from.RegNum, build->GetConstantAddress(nullptr, ATAG_GENERIC));
-	}
-	build->Emit(OP_JMP, 1);
+		ExpEmit to(build, REGT_INT);
+		from.Free(build);
+		// Preload result with 0.
+		build->Emit(OP_LI, to.RegNum, 0);
 
-	// Reload result with 1 if the comparison fell through.
-	build->Emit(OP_LI, to.RegNum, 1);
+		// Check source against 0.
+		if (from.RegType == REGT_INT)
+		{
+			build->Emit(OP_EQ_R, 1, from.RegNum, to.RegNum);
+		}
+		else if (from.RegType == REGT_FLOAT)
+		{
+			build->Emit(OP_EQF_K, 1, from.RegNum, build->GetConstantFloat(0.));
+		}
+		else if (from.RegType == REGT_POINTER)
+		{
+			build->Emit(OP_EQA_K, 1, from.RegNum, build->GetConstantAddress(nullptr, ATAG_GENERIC));
+		}
+		build->Emit(OP_JMP, 1);
 
-	return to;
+		// Reload result with 1 if the comparison fell through.
+		build->Emit(OP_LI, to.RegNum, 1);
+		return to;
+	}
+	else
+	{
+		return from;
+	}
 }
 
 //==========================================================================
@@ -5871,7 +5878,7 @@ FxExpression *FxIfStatement::Resolve(FCompileContext &ctx)
 
 	if (Condition->ValueType != TypeBool)
 	{
-		Condition = new FxBoolCast(Condition);
+		Condition = new FxBoolCast(Condition, false);
 		SAFE_RESOLVE(Condition, ctx);
 	}
 
@@ -5914,7 +5921,7 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 	// This is pretty much copied from FxConditional, except we don't
 	// keep any results.
 	ExpEmit cond = Condition->Emit(build);
-	assert(cond.RegType == REGT_INT && !cond.Konst);
+	assert(cond.RegType != REGT_STRING && !cond.Konst);
 
 	if (WhenTrue != NULL)
 	{
@@ -5933,7 +5940,22 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 	}
 
 	// Test condition.
-	build->Emit(OP_EQ_K, condcheck, cond.RegNum, build->GetConstantInt(0));
+
+	switch (cond.RegType)
+	{
+	default:
+	case REGT_INT:
+		build->Emit(OP_EQ_K, condcheck, cond.RegNum, build->GetConstantInt(0));
+		break;
+
+	case REGT_FLOAT:
+		build->Emit(OP_EQF_K, condcheck, cond.RegNum, build->GetConstantFloat(0));
+		break;
+
+	case REGT_POINTER:
+		build->Emit(OP_EQA_K, condcheck, cond.RegNum, build->GetConstantAddress(nullptr, ATAG_GENERIC));
+		break;
+	}
 	jumpspot = build->Emit(OP_JMP, 0);
 	cond.Free(build);
 

@@ -5608,6 +5608,234 @@ bool FxCompoundStatement::CheckLocalVariable(FName name)
 
 //==========================================================================
 //
+// FxSwitchStatement
+//
+//==========================================================================
+
+FxSwitchStatement::FxSwitchStatement(FxExpression *cond, FArgumentList *content, const FScriptPosition &pos)
+	: FxExpression(EFX_SwitchStatement, pos)
+{
+	Condition = new FxIntCast(cond, false);
+	Content = content;
+}
+
+FxSwitchStatement::~FxSwitchStatement()
+{
+	SAFE_DELETE(Condition);
+	SAFE_DELETE(Content);
+}
+
+FxExpression *FxSwitchStatement::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(Condition, ctx);
+
+	if (Content == nullptr || Content->Size() == 0)
+	{
+		ScriptPosition.Message(MSG_WARNING, "Empty switch statement");
+		if (Condition->isConstant())
+		{
+			return new FxNop(ScriptPosition);
+		}
+		else
+		{
+			// The condition may have a side effect so it should be processed (possible to-do: Analyze all nodes in there and delete if not.)
+			auto x = Condition;
+			Condition = nullptr;
+			delete this;
+			return Condition;
+		}
+	}
+
+	for (auto &line : *Content)
+	{
+		// Do not resolve breaks, they need special treatment inside switch blocks.
+		if (line->ExprType != EFX_JumpStatement || static_cast<FxJumpStatement *>(line)->Token != TK_Break)
+		{
+			SAFE_RESOLVE(line, ctx);
+		}
+	}
+
+	if (Condition->isConstant())
+	{
+		ScriptPosition.Message(MSG_WARNING, "Case expression is constant");
+		auto &content = *Content;
+		unsigned defaultindex = -1;
+		unsigned defaultbreak = -1;
+		unsigned caseindex = -1;
+		unsigned casebreak = -1;
+		// look for a case label with a matching value
+		for (unsigned i = 0; i < content.Size(); i++)
+		{
+			if (content[i] != nullptr)
+			{
+				if (content[i]->ExprType == EFX_CaseStatement)
+				{
+					auto casestmt = static_cast<FxCaseStatement *>(content[i]);
+					if (casestmt->Condition == nullptr) defaultindex = i;
+					else if (casestmt->CaseValue == static_cast<FxConstant *>(Condition)->GetValue().GetInt()) caseindex = i;
+				}
+				if (content[i]->ExprType == EFX_JumpStatement && static_cast<FxJumpStatement *>(content[i])->Token == TK_Break)
+				{
+					if (defaultindex >= 0 && defaultbreak < 0) defaultbreak = i;
+					if (caseindex >= 0 && casebreak < 0)
+					{
+						casebreak = i;
+						break;	// when we find this we do not need to look any further.
+					}
+				}
+			}
+		}
+		if (caseindex < 0)
+		{
+			caseindex = defaultindex;
+			casebreak = defaultbreak;
+		}
+		if (caseindex > 0 && casebreak - caseindex > 1)
+		{
+			auto seq = new FxSequence(ScriptPosition);
+			for (unsigned i = caseindex + 1; i < casebreak; i++)
+			{
+				if (content[i] != nullptr && content[i]->ExprType != EFX_CaseStatement)
+				{
+					seq->Add(content[i]);
+					content[i] = nullptr;
+				}
+			}
+			delete this;
+			return seq->Resolve(ctx);
+		}
+		delete this;
+		return new FxNop(ScriptPosition);
+	}
+
+	int mincase = INT_MAX;
+	int maxcase = INT_MIN;
+	for (auto line : *Content)
+	{
+		if (line->ExprType == EFX_CaseStatement)
+		{
+			auto casestmt = static_cast<FxCaseStatement *>(line);
+			if (casestmt->Condition != nullptr)
+			{
+				CaseAddr ca = { casestmt->CaseValue, 0 };
+				CaseAddresses.Push(ca);
+				if (ca.casevalue < mincase) mincase = ca.casevalue;
+				if (ca.casevalue > maxcase) maxcase = ca.casevalue;
+			}
+		}
+	}
+	return this;
+}
+
+ExpEmit FxSwitchStatement::Emit(VMFunctionBuilder *build)
+{
+	assert(Condition != nullptr);
+	ExpEmit emit = Condition->Emit(build);
+	assert(emit.RegType == REGT_INT);
+	// todo: 
+	// - sort jump table by value.
+	// - optimize the switch dispatcher to run in native code instead of executing each single branch instruction on its own.
+	// e.g.: build->Emit(OP_SWITCH, emit.RegNum, build->GetConstantInt(CaseAddresses.Size());
+	for (auto &ca : CaseAddresses)
+	{
+		if (ca.casevalue >= 0 && ca.casevalue <= 0xffff)
+		{
+			build->Emit(OP_TEST, emit.RegNum, (VM_SHALF)ca.casevalue);
+		}
+		else if (ca.casevalue < 0 && ca.casevalue >= -0xffff)
+		{
+			build->Emit(OP_TESTN, emit.RegNum, (VM_SHALF)-ca.casevalue);
+		}
+		else
+		{
+			build->Emit(OP_EQ_K, 1, emit.RegNum, build->GetConstantInt(ca.casevalue));
+		}
+		ca.jumpaddress = build->Emit(OP_JMP, 0);
+	}
+	size_t DefaultAddress = build->Emit(OP_JMP, 0);
+	TArray<size_t> BreakAddresses;
+
+	for (auto line : *Content)
+	{
+		switch (line->ExprType)
+		{
+		case EFX_CaseStatement:
+			if (static_cast<FxCaseStatement *>(line)->Condition != nullptr)
+			{
+				for (auto &ca : CaseAddresses)
+				{
+					if (ca.casevalue == static_cast<FxCaseStatement *>(line)->CaseValue)
+					{
+						build->BackpatchToHere(ca.jumpaddress);
+						break;
+					}
+				}
+			}
+			else
+			{
+				build->BackpatchToHere(DefaultAddress);
+			}
+			break;
+
+		case EFX_JumpStatement:
+			if (static_cast<FxJumpStatement *>(line)->Token == TK_Break)
+			{
+				BreakAddresses.Push(build->Emit(OP_JMP, 0));
+				break;
+			}
+			// fall through for continue.
+
+		default:
+			line->Emit(build);
+			break;
+		}
+	}
+	for (auto addr : BreakAddresses)
+	{
+		build->BackpatchToHere(addr);
+	}
+	return ExpEmit();
+}
+
+
+//==========================================================================
+//
+// FxCaseStatement
+//
+//==========================================================================
+
+FxCaseStatement::FxCaseStatement(FxExpression *cond, const FScriptPosition &pos)
+	: FxExpression(EFX_CaseStatement, pos)
+{
+	Condition = cond? new FxIntCast(cond, false) : nullptr;
+}
+
+FxCaseStatement::~FxCaseStatement()
+{
+	SAFE_DELETE(Condition);
+}
+
+FxExpression *FxCaseStatement::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE_OPT(Condition, ctx);
+
+	if (Condition != nullptr)
+	{
+		if (!Condition->isConstant())
+		{
+			ScriptPosition.Message(MSG_ERROR, "Case label must be a constant value");
+			delete this;
+			return nullptr;
+		}
+		CaseValue = static_cast<FxConstant *>(Condition)->GetValue().GetInt();
+	}
+	return this;
+}
+
+//==========================================================================
+//
 // FxIfStatement
 //
 //==========================================================================

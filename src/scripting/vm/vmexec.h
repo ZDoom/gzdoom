@@ -372,6 +372,13 @@ begin:
 			pc++;
 		}
 		NEXTOP;
+	OP(TESTN):
+		ASSERTD(a);
+		if (-reg.d[a] != BC)
+		{
+			pc++;
+		}
+		NEXTOP;
 	OP(JMP):
 		pc += JMPOFS(pc);
 		NEXTOP;

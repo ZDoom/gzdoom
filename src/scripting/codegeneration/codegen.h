@@ -261,6 +261,8 @@ enum EFxType
 	EFX_DamageValue,
 	EFX_Nop,
 	EFX_LocalVariableDeclaration,
+	EFX_SwitchStatement,
+	EFX_CaseStatement,
 	EFX_COUNT
 };
 
@@ -1248,6 +1250,51 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build);
 	FxLocalVariableDeclaration *FindLocalVariable(FName name, FCompileContext &ctx);
 	bool CheckLocalVariable(FName name);
+};
+
+//==========================================================================
+//
+// FxSwitchStatement
+//
+//==========================================================================
+
+class FxSwitchStatement : public FxExpression
+{
+	FxExpression *Condition;
+	FArgumentList *Content;
+
+	struct CaseAddr
+	{
+		int casevalue;
+		size_t jumpaddress;
+	};
+
+	TArray<CaseAddr> CaseAddresses;
+
+public:
+	FxSwitchStatement(FxExpression *cond, FArgumentList *content, const FScriptPosition &pos);
+	~FxSwitchStatement();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+// FxSwitchStatement
+//
+//==========================================================================
+
+class FxCaseStatement : public FxExpression
+{
+	FxExpression *Condition;
+	int CaseValue;	// copy the value to here for easier access.
+
+	friend class FxSwitchStatement;
+
+public:
+	FxCaseStatement(FxExpression *cond, const FScriptPosition &pos);
+	~FxCaseStatement();
+	FxExpression *Resolve(FCompileContext&);
 };
 
 //==========================================================================

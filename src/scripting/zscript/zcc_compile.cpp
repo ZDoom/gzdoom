@@ -2677,9 +2677,26 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 
 	// not yet done
 	case AST_SwitchStmt:
-	case AST_CaseStmt:
-		break;
+	{
+		auto swtch = static_cast<ZCC_SwitchStmt *>(ast);
+		if (swtch->Content->NodeType != AST_CompoundStmt)
+		{
+			Error(ast, "Expecting { after 'switch'");
+			return new FxNop(*ast);	// allow compiler to continue looking for errors.
+		}
+		else
+		{
+			// The switch content is wrapped into a compound statement which needs to be unraveled here.
+			auto cmpnd = static_cast<ZCC_CompoundStmt *>(swtch->Content);
+			return new FxSwitchStatement(ConvertNode(swtch->Condition), ConvertNodeList(cmpnd->Content), *ast);
+		}
+	}
 
+	case AST_CaseStmt:
+	{
+		auto cases = static_cast<ZCC_CaseStmt *>(ast);
+		return new FxCaseStatement(ConvertNode(cases->Condition), *ast); 
+	}
 
 	case AST_CompoundStmt:
 	{

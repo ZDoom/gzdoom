@@ -69,6 +69,7 @@ xx(DYNCAST_K,	dyncast,RPRPKP),
 
 // Control flow.
 xx(TEST,	test,	RII16),		// if (dA != BC) then pc++
+xx(TESTN,	testn,	RII16),		// if (dA != -BC) then pc++
 xx(JMP,		jmp,	I24),		// pc += ABC		-- The ABC fields contain a signed 24-bit offset.
 xx(IJMP,	ijmp,	RII16),		// pc += dA + BC	-- BC is a signed offset. The target instruction must be a JMP.
 xx(PARAM,	param,	__BCP),		// push parameter encoded in BC for function call (B=regtype, C=regnum)

@@ -638,6 +638,12 @@ static void ReadOnePlayer(FSerializer &arc, bool skipload)
 					playerTemp.Serialize(arc);
 					if (!skipload)
 					{
+						// This temp player has undefined pitch limits, so set them to something
+						// that should leave the pitch stored in the savegame intact when
+						// rendering. The real pitch limits will be set by P_SerializePlayers()
+						// via a net command, but that won't be processed in time for a screen
+						// wipe, so we need something here.
+						playerTemp.MaxPitch = playerTemp.MinPitch = playerTemp.mo->Angles.Pitch;
 						CopyPlayer(&players[i], &playerTemp, name);
 					}
 					else

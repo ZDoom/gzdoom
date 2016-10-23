@@ -3186,7 +3186,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		rereadcolormap = false;
 	}
 
-	rw_light = rw_lightleft + (x1 - WallC.sx1) * rw_lightstep;
+	rw_light = rw_lightleft + (x1 - savecoord.sx1) * rw_lightstep;
 	if (fixedlightlev >= 0)
 		dc_colormap = (r_fullbrightignoresectorcolor) ? (FullNormalLight.Maps + fixedlightlev) : (usecolormap->Maps + fixedlightlev);
 	else if (fixedcolormap != NULL)

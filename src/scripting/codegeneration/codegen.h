@@ -237,6 +237,7 @@ enum EFxType
 	EFX_FRandom,
 	EFX_Random2,
 	EFX_ClassMember,
+	EFX_StructMember,
 	EFX_LocalVariable,
 	EFX_Self,
 	EFX_ArrayElement,
@@ -1037,18 +1038,33 @@ public:
 //
 //==========================================================================
 
-class FxClassMember : public FxExpression
+class FxStructMember : public FxExpression
 {
 public:
 	FxExpression *classx;
 	PField *membervar;
 	bool AddressRequested;
+	bool AddressWritable;
 
-	FxClassMember(FxExpression*, PField*, const FScriptPosition&);
-	~FxClassMember();
+	FxStructMember(FxExpression*, PField*, const FScriptPosition&);
+	~FxStructMember();
 	FxExpression *Resolve(FCompileContext&);
 	bool RequestAddress(bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxClassMember
+//
+//==========================================================================
+
+class FxClassMember : public FxStructMember
+{
+public:
+
+	FxClassMember(FxExpression*, PField*, const FScriptPosition&);
+	FxExpression *Resolve(FCompileContext&);
 };
 
 //==========================================================================

@@ -4226,14 +4226,15 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 		PSymbolTable *symtbl;
 		auto ptype = static_cast<PPointer *>(Object->ValueType)->PointedType;
 
-		if (ptype->IsKindOf(RUNTIME_CLASS(PClass)))
+		if (ptype->IsKindOf(RUNTIME_CLASS(PStruct)))	// PClass is a child class of PStruct so this covers both.
 		{
-			PClass *cls = static_cast<PClass *>(ptype);
+			PStruct *cls = static_cast<PStruct *>(ptype);
+			bool isclass = cls->IsKindOf(RUNTIME_CLASS(PClass));
 			if ((sym = cls->Symbols.FindSymbolInTable(Identifier, symtbl)) != nullptr)
 			{
 				if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
 				{
-					ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as class constant\n", Identifier.GetChars());
+					ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as %s constant\n", Identifier.GetChars(), isclass? "class" : "struct");
 					newex = FxConstant::MakeConstant(sym, ScriptPosition);
 				}
 				else if (sym->IsKindOf(RUNTIME_CLASS(PField)))
@@ -4263,7 +4264,7 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 						delete this;
 						return nullptr;
 					}
-					auto x = new FxClassMember(Object, vsym, ScriptPosition);
+					auto x = isclass? new FxClassMember(Object, vsym, ScriptPosition) : new FxStructMember(Object, vsym, ScriptPosition);
 					delete this;
 					return x->Resolve(ctx);
 				}
@@ -4281,14 +4282,41 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 				return nullptr;
 			}
 		}
-		else if (ptype->IsA(RUNTIME_CLASS(PStruct)))
-		{
-			// todo
-		}
 	}
 	else if (Object->ValueType->IsA(RUNTIME_CLASS(PStruct)))
 	{
-		// todo
+		if ((sym = Object->ValueType->Symbols.FindSymbol(Identifier, false)) != nullptr)
+		{
+			if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
+			{
+				ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as struct constant\n", Identifier.GetChars());
+				newex = FxConstant::MakeConstant(sym, ScriptPosition);
+			}
+			else if (sym->IsKindOf(RUNTIME_CLASS(PField)))
+			{
+				PField *vsym = static_cast<PField*>(sym);
+
+				if (vsym->Flags & VARF_Deprecated)
+				{
+					ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s", vsym->SymbolName.GetChars());
+				}
+				auto x = new FxStructMember(Object, vsym, ScriptPosition);
+				delete this;
+				return x->Resolve(ctx);
+			}
+			else
+			{
+				ScriptPosition.Message(MSG_ERROR, "Invalid member identifier '%s'\n", Identifier.GetChars());
+				delete this;
+				return nullptr;
+			}
+		}
+		else
+		{
+			ScriptPosition.Message(MSG_ERROR, "Unknown identifier '%s'", Identifier.GetChars());
+			delete this;
+			return nullptr;
+		}
 	}
 
 	ScriptPosition.Message(MSG_ERROR, "Left side of %s is not a struct or class", Identifier.GetChars());
@@ -4381,13 +4409,13 @@ ExpEmit FxSelf::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxClassMember::FxClassMember(FxExpression *x, PField* mem, const FScriptPosition &pos)
-: FxExpression(EFX_ClassMember, pos)
+FxStructMember::FxStructMember(FxExpression *x, PField* mem, const FScriptPosition &pos)
+	: FxExpression(EFX_StructMember, pos)
 {
 	classx = x;
 	membervar = mem;
 	AddressRequested = false;
-	//if (classx->IsDefaultObject()) Readonly=true;
+	AddressWritable = true;	// must be true unless classx tells us otherwise if requested.
 }
 
 //==========================================================================
@@ -4396,7 +4424,7 @@ FxClassMember::FxClassMember(FxExpression *x, PField* mem, const FScriptPosition
 //
 //==========================================================================
 
-FxClassMember::~FxClassMember()
+FxStructMember::~FxStructMember()
 {
 	SAFE_DELETE(classx);
 }
@@ -4407,10 +4435,10 @@ FxClassMember::~FxClassMember()
 //
 //==========================================================================
 
-bool FxClassMember::RequestAddress(bool *writable)
+bool FxStructMember::RequestAddress(bool *writable)
 {
 	AddressRequested = true;
-	if (writable != nullptr) *writable = !(membervar->Flags & VARF_ReadOnly);
+	if (writable != nullptr) *writable = AddressWritable && !(membervar->Flags & VARF_ReadOnly);
 	return true;
 }
 
@@ -4420,23 +4448,50 @@ bool FxClassMember::RequestAddress(bool *writable)
 //
 //==========================================================================
 
-FxExpression *FxClassMember::Resolve(FCompileContext &ctx)
+FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(classx, ctx);
 
-	PPointer *ptrtype = dyn_cast<PPointer>(classx->ValueType);
-	if (ptrtype == NULL || !ptrtype->IsKindOf(RUNTIME_CLASS(DObject)))
+	if (classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
 	{
-		ScriptPosition.Message(MSG_ERROR, "Member variable requires a class or object");
-		delete this;
-		return NULL;
+		PPointer *ptrtype = dyn_cast<PPointer>(classx->ValueType);
+		if (ptrtype == nullptr || !ptrtype->PointedType->IsA(RUNTIME_CLASS(PStruct)))
+		{
+			ScriptPosition.Message(MSG_ERROR, "Member variable requires a struct");
+			delete this;
+			return nullptr;
+		}
+	}
+	else if (classx->ValueType->IsA(RUNTIME_CLASS(PStruct)))
+	{
+		// if this is a struct within a class or another struct we can simplify the expression by creating a new PField with a cumulative offset.
+		if (classx->ExprType == EFX_ClassMember || classx->ExprType == EFX_StructMember)
+		{
+			auto parentfield = static_cast<FxStructMember *>(classx)->membervar;
+			// PFields are garbage collected so this will be automatically taken care of later.
+			auto newfield = new PField(membervar->SymbolName, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset);
+			static_cast<FxStructMember *>(classx)->membervar = newfield;
+			classx->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
+			auto x = classx->Resolve(ctx);
+			classx = nullptr;
+			return x;
+		}
+		else
+		{
+			if (!(classx->RequestAddress(&AddressWritable)))
+			{
+				ScriptPosition.Message(MSG_ERROR, "unable to dereference left side of %s", membervar->SymbolName.GetChars());
+				delete this;
+				return nullptr;
+			}
+		}
 	}
 	ValueType = membervar->Type;
 	return this;
 }
 
-ExpEmit FxClassMember::Emit(VMFunctionBuilder *build)
+ExpEmit FxStructMember::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit obj = classx->Emit(build);
 	assert(obj.RegType == REGT_POINTER);
@@ -4472,6 +4527,41 @@ ExpEmit FxClassMember::Emit(VMFunctionBuilder *build)
 	return loc;
 }
 
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxClassMember::FxClassMember(FxExpression *x, PField* mem, const FScriptPosition &pos)
+: FxStructMember(x, mem, pos)
+{
+	ExprType = EFX_ClassMember;
+	//if (classx->IsDefaultObject()) Readonly=true;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxClassMember::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(classx, ctx);
+
+	PPointer *ptrtype = dyn_cast<PPointer>(classx->ValueType);
+	if (ptrtype == NULL || !ptrtype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
+	{
+		ScriptPosition.Message(MSG_ERROR, "Member variable requires a class or object");
+		delete this;
+		return NULL;
+	}
+	ValueType = membervar->Type;
+	return this;
+}
 
 //==========================================================================
 //

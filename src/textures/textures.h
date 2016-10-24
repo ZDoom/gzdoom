@@ -209,6 +209,7 @@ public:
 	int GetScaledTopOffset () { int foo = int((TopOffset * 2) / Scale.Y); return (foo >> 1) + (foo & 1); }
 	double GetScaledLeftOffsetDouble() { return LeftOffset / Scale.X; }
 	double GetScaledTopOffsetDouble() { return TopOffset / Scale.Y; }
+	virtual void ResolvePatches() {}
 
 	virtual void SetFrontSkyLayer();
 

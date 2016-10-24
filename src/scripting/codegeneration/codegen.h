@@ -703,14 +703,18 @@ class FxAssign : public FxExpression
 {
 	FxExpression *Base;
 	FxExpression *Right;
+	int IsBitWrite;
 	bool AddressRequested;
 	bool AddressWritable;
+	bool IsModifyAssign;
+
+	friend class FxAssignSelf;
 
 public:
-	FxAssign(FxExpression *base, FxExpression *right);
+	FxAssign(FxExpression *base, FxExpression *right, bool ismodify = false);
 	~FxAssign();
 	FxExpression *Resolve(FCompileContext&);
-	bool RequestAddress(bool *writable);
+	//bool RequestAddress(bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
 
 	ExpEmit Address;
@@ -1064,7 +1068,6 @@ class FxClassMember : public FxStructMember
 public:
 
 	FxClassMember(FxExpression*, PField*, const FScriptPosition&);
-	FxExpression *Resolve(FCompileContext&);
 };
 
 //==========================================================================

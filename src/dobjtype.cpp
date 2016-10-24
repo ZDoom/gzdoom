@@ -2479,6 +2479,31 @@ PField::PField()
 {
 }
 
+PField::PField(FName name, PType *type, DWORD flags, size_t offset, int bitvalue)
+	: PSymbol(name), Offset(unsigned(offset)), Type(type), Flags(flags)
+{
+	BitValue = bitvalue;
+	if (bitvalue > -1)
+	{
+		if (type->IsA(RUNTIME_CLASS(PInt)) && unsigned(bitvalue) < 8 * type->Size)
+		{
+			// map to the single bytes in the actual variable. The internal bit instructions operate on 8 bit values.
+#ifndef __BIG_ENDIAN__
+			Offset += BitValue / 8;
+#else
+			Offset += type->Size - 1 - BitValue / 8;
+#endif
+			BitValue &= 7;
+			Type = TypeBool;
+		}
+		else
+		{
+			// Just abort. Bit fields should only be defined internally.
+			I_FatalError("Trying to create an invalid bit field element: %s", name.GetChars());
+		}
+	}
+}
+
 /* PPrototype *************************************************************/
 
 IMPLEMENT_CLASS(PPrototype)

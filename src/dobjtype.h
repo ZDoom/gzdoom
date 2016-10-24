@@ -572,13 +572,12 @@ class PField : public PSymbol
 	DECLARE_CLASS(PField, PSymbol);
 	HAS_OBJECT_POINTERS
 public:
-	PField(FName name, PType *type) : PSymbol(name), Offset(0), Type(type), Flags(0) {}
-	PField(FName name, PType *type, DWORD flags) : PSymbol(name), Offset(0), Type(type), Flags(flags) {}
-	PField(FName name, PType *type, DWORD flags, size_t offset) : PSymbol(name), Offset(unsigned(offset)), Type(type), Flags(flags) {}
+	PField(FName name, PType *type, DWORD flags = 0, size_t offset = 0, int bitvalue = -1);
 
 	unsigned int Offset;
 	PType *Type;
 	DWORD Flags;
+	int BitValue;
 protected:
 	PField();
 };

@@ -170,7 +170,7 @@ static FxExpression *ParseExpressionM (FScanner &sc, PClassActor *cls)
 
 		exp->right = ParseExpressionM(sc, cls);
 
-		FxAssign *ret = new FxAssign(base, exp);
+		FxAssign *ret = new FxAssign(base, exp, true);
 		left->Assignment = ret;
 		return ret;
 	}

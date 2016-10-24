@@ -54,10 +54,11 @@ static TArray<AFuncDesc> AFTable;
 //==========================================================================
 
 // [RH] Keep GCC quiet by not using offsetof on Actor types.
-#define DEFINE_FLAG(prefix, name, type, variable) { (unsigned int)prefix##_##name, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable) }
-#define DEFINE_FLAG2(symbol, name, type, variable) { (unsigned int)symbol, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable) }
-#define DEFINE_DEPRECATED_FLAG(name) { DEPF_##name, #name, -1, 0 }
-#define DEFINE_DUMMY_FLAG(name) { DEPF_UNUSED, #name, -1, 0 }
+#define DEFINE_FLAG(prefix, name, type, variable) { (unsigned int)prefix##_##name, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), false }
+#define DEFINE_FLAG2(symbol, name, type, variable) { (unsigned int)symbol, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), false }
+#define DEFINE_FLAG2_DEPRECATED(symbol, name, type, variable) { (unsigned int)symbol, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), true }
+#define DEFINE_DEPRECATED_FLAG(name) { DEPF_##name, #name, -1, 0, true }
+#define DEFINE_DUMMY_FLAG(name, deprec) { DEPF_UNUSED, #name, -1, 0, deprec }
 
 static FFlagDef ActorFlagDefs[]=
 {
@@ -171,7 +172,6 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF4, SYNCHRONIZED, AActor, flags4),
 	DEFINE_FLAG(MF4, NOTARGETSWITCH, AActor, flags4),
 	DEFINE_FLAG(MF4, DONTHARMCLASS, AActor, flags4),
-	DEFINE_FLAG2(MF4_DONTHARMCLASS, DONTHURTSPECIES, AActor, flags4), // Deprecated name as an alias
 	DEFINE_FLAG(MF4, SHIELDREFLECT, AActor, flags4),
 	DEFINE_FLAG(MF4, DEFLECT, AActor, flags4),
 	DEFINE_FLAG(MF4, ALLOWPARTICLES, AActor, flags4),
@@ -278,7 +278,11 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(RF, MASKROTATION, AActor, renderflags),
 	DEFINE_FLAG(RF, ABSMASKANGLE, AActor, renderflags),
 	DEFINE_FLAG(RF, ABSMASKPITCH, AActor, renderflags),
+};
 
+// These won't be accessible through bitfield variables
+static FFlagDef MoreFlagDefs[] =
+{
 	// Bounce flags
 	DEFINE_FLAG2(BOUNCE_Walls, BOUNCEONWALLS, AActor, BounceFlags),
 	DEFINE_FLAG2(BOUNCE_Floors, BOUNCEONFLOORS, AActor, BounceFlags),
@@ -308,15 +312,16 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_DEPRECATED_FLAG(DOOMBOUNCE),
 
 	// Deprecated flags with no more existing functionality.
-	DEFINE_DUMMY_FLAG(FASTER),				// obsolete, replaced by 'Fast' state flag
-	DEFINE_DUMMY_FLAG(FASTMELEE),			// obsolete, replaced by 'Fast' state flag
+	DEFINE_DUMMY_FLAG(FASTER, true),				// obsolete, replaced by 'Fast' state flag
+	DEFINE_DUMMY_FLAG(FASTMELEE, true),			// obsolete, replaced by 'Fast' state flag
 
 	// Various Skulltag flags that are quite irrelevant to ZDoom
-	DEFINE_DUMMY_FLAG(NONETID),				// netcode-based
-	DEFINE_DUMMY_FLAG(ALLOWCLIENTSPAWN),	// netcode-based
-	DEFINE_DUMMY_FLAG(CLIENTSIDEONLY),	    // netcode-based
-	DEFINE_DUMMY_FLAG(SERVERSIDEONLY),		// netcode-based
-	DEFINE_DUMMY_FLAG(EXPLODEONDEATH),	    // seems useless
+	DEFINE_DUMMY_FLAG(NONETID, false),				// netcode-based
+	DEFINE_DUMMY_FLAG(ALLOWCLIENTSPAWN, false),	// netcode-based
+	DEFINE_DUMMY_FLAG(CLIENTSIDEONLY, false),	    // netcode-based
+	DEFINE_DUMMY_FLAG(SERVERSIDEONLY, false),		// netcode-based
+	DEFINE_DUMMY_FLAG(EXPLODEONDEATH, true),	    // seems useless
+	DEFINE_FLAG2_DEPRECATED(MF4_DONTHARMCLASS, DONTHURTSPECIES, AActor, flags4), // Deprecated name as an alias
 };
 
 static FFlagDef InventoryFlagDefs[] =
@@ -372,9 +377,9 @@ static FFlagDef WeaponFlagDefs[] =
 	DEFINE_FLAG(WIF, NODEATHDESELECT, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, NODEATHINPUT, AWeapon, WeaponFlags),
 	
-	DEFINE_DUMMY_FLAG(NOLMS),
+	DEFINE_DUMMY_FLAG(NOLMS, false),
 	DEFINE_FLAG(WIF, ALT_USES_BOTH, AWeapon, WeaponFlags),
-	DEFINE_DUMMY_FLAG(ALLOW_WITH_RESPAWN_INVUL),
+	DEFINE_DUMMY_FLAG(ALLOW_WITH_RESPAWN_INVUL, false),
 };
 
 static FFlagDef PlayerPawnFlagDefs[] =
@@ -394,6 +399,7 @@ static FFlagDef PowerSpeedFlagDefs[] =
 static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int NumDefs; } FlagLists[] =
 {
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 		ActorFlagDefs,		countof(ActorFlagDefs) },
+	{ &RUNTIME_CLASS_CASTLESS(AActor), 		MoreFlagDefs,		countof(MoreFlagDefs) },
 	{ &RUNTIME_CLASS_CASTLESS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs) },
 	{ &RUNTIME_CLASS_CASTLESS(AWeapon), 	WeaponFlagDefs,		countof(WeaponFlagDefs) },
 	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs) },
@@ -443,7 +449,7 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bo
 
 	if (part2 == NULL)
 	{ // Search all lists
-		int max = strict ? 1 : NUM_FLAG_LISTS;
+		int max = strict ? 2 : NUM_FLAG_LISTS;
 		for (i = 0; i < max; ++i)
 		{
 			if (type->IsDescendantOf (*FlagLists[i].Type))
@@ -683,4 +689,14 @@ void InitThingdef()
 	symt.AddSymbol(new PField(NAME_Target,			TypeActor,		VARF_Native,				myoffsetof(AActor, target)));
 	symt.AddSymbol(new PField(NAME_Master,			TypeActor,		VARF_Native,				myoffsetof(AActor, master)));
 	symt.AddSymbol(new PField(NAME_Tracer,			TypeActor,		VARF_Native,				myoffsetof(AActor, tracer)));
+
+	// synthesize a symbol for each flag. The bounce flags are excluded on purpose.
+	for (size_t i = 0; i < countof(ActorFlagDefs); i++)
+	{
+		int bit = 0;
+		unsigned val = ActorFlagDefs[i].flagbit;
+		while ((val >>= 1)) bit++;
+		symt.AddSymbol(new PField(FStringf("b%s", ActorFlagDefs[i].name), (ActorFlagDefs[i].fieldsize == 4? TypeSInt32 : TypeSInt16), VARF_Native, ActorFlagDefs[i].structoffset, bit));
+	}
+
 }

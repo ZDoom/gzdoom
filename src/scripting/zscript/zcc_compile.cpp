@@ -1836,9 +1836,12 @@ void ZCCCompiler::ProcessDefaultFlag(PClassActor *cls, ZCC_FlagStmt *flg)
 	auto fd = FindFlag(cls, n1, n2, true);
 	if (fd != nullptr)
 	{
-		if (fd->structoffset == -1)
+		if (fd->deprecated)
 		{
 			Warn(flg, "Deprecated flag '%s%s%s' used", n1, n2 ? "." : "", n2 ? n2 : "");
+		}
+		if (fd->structoffset == -1)
+		{
 			HandleDeprecatedFlags((AActor*)cls->Defaults, cls, flg->set, fd->flagbit);
 		}
 		else
@@ -2384,7 +2387,7 @@ static int Pex2Tok[] = {
 static FxExpression *ModifyAssign(FxBinary *operation, FxExpression *left)
 {
 	auto assignself = static_cast<FxAssignSelf *>(operation->left);
-	auto assignment = new FxAssign(left, operation);
+	auto assignment = new FxAssign(left, operation, true);
 	assignself->Assignment = assignment;
 	return assignment;
 }

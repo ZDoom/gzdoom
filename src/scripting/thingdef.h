@@ -24,6 +24,7 @@ struct FFlagDef
 	const char *name;
 	int structoffset;
 	int fieldsize;
+	bool deprecated;
 };
 
 FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bool strict = false);

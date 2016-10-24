@@ -1768,8 +1768,8 @@ ExpEmit FxPostIncrDecr::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxAssign::FxAssign(FxExpression *base, FxExpression *right)
-: FxExpression(EFX_Assign, base->ScriptPosition), Base(base), Right(right)
+FxAssign::FxAssign(FxExpression *base, FxExpression *right, bool ismodify)
+: FxExpression(EFX_Assign, base->ScriptPosition), Base(base), Right(right), IsModifyAssign(ismodify), IsBitWrite(-1)
 {
 	AddressRequested = false;
 	AddressWritable = false;
@@ -1781,12 +1781,14 @@ FxAssign::~FxAssign()
 	SAFE_DELETE(Right);
 }
 
+/* I don't think we should allow constructs like (a = b) = c;...
 bool FxAssign::RequestAddress(bool *writable)
 {
 	AddressRequested = true;
 	if (writable != nullptr) *writable = AddressWritable;
 	return true;
 }
+*/
 
 FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 {
@@ -1796,6 +1798,15 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 	ValueType = Base->ValueType;
 
 	SAFE_RESOLVE(Right, ctx);
+
+	if (IsModifyAssign && Base->ValueType == TypeBool && Right->ValueType != TypeBool)
+	{
+		// If the modify operation resulted in a type promotion from bool to int, this must be blocked.
+		// (this means, for bool, only &=, ^= and |= are allowed, although DECORATE is more lax.)
+		ScriptPosition.Message(MSG_ERROR, "Invalid modify/assign operation with a boolean operand");
+		delete this;
+		return nullptr;
+	}
 
 	if (Base->IsNumeric() && Right->IsNumeric())
 	{
@@ -1865,6 +1876,16 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 		return nullptr;
 	}
 
+	// Special case: Assignment to a bitfield.
+	if (Base->ExprType == EFX_StructMember || Base->ExprType == EFX_ClassMember)
+	{
+		auto f = static_cast<FxStructMember *>(Base)->membervar;
+		if (f->BitValue != -1 && !(f->Flags & VARF_ReadOnly))
+		{
+			IsBitWrite = f->BitValue;
+			return this;
+		}
+	}
 
 	return this;
 }
@@ -1902,7 +1923,15 @@ ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 			result = temp;
 		}
 
-		build->Emit(ValueType->GetStoreOp(), pointer.RegNum, result.RegNum, build->GetConstantInt(0));
+		if (IsBitWrite == -1)
+		{
+			build->Emit(ValueType->GetStoreOp(), pointer.RegNum, result.RegNum, build->GetConstantInt(0));
+		}
+		else
+		{
+			build->Emit(OP_SBIT, pointer.RegNum, result.RegNum, 1 << IsBitWrite);
+		}
+
 	}
 
 	if (AddressRequested)
@@ -1941,12 +1970,19 @@ FxExpression *FxAssignSelf::Resolve(FCompileContext &ctx)
 
 ExpEmit FxAssignSelf::Emit(VMFunctionBuilder *build)
 {
-	assert(ValueType = Assignment->ValueType);
+	assert(ValueType == Assignment->ValueType);
 	ExpEmit pointer = Assignment->Address; // FxAssign should have already emitted it
 	if (!pointer.Target)
 	{
 		ExpEmit out(build, ValueType->GetRegType());
-		build->Emit(ValueType->GetLoadOp(), out.RegNum, pointer.RegNum, build->GetConstantInt(0));
+		if (Assignment->IsBitWrite != -1)
+		{
+			build->Emit(OP_LBIT, out.RegNum, pointer.RegNum, 1 << Assignment->IsBitWrite);
+		}
+		else
+		{
+			build->Emit(ValueType->GetLoadOp(), out.RegNum, pointer.RegNum, build->GetConstantInt(0));
+		}
 		return out;
 	}
 	else
@@ -1999,11 +2035,29 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 
 	if (left->ValueType == TypeBool && right->ValueType == TypeBool)
 	{
-		ValueType = TypeBool;
+		if (Operator == '&' || Operator == '|' || Operator == '^' || ctx.FromDecorate)
+		{
+			ValueType = TypeBool;
+		}
+		else
+		{
+			ValueType = TypeSInt32;	// math operations on bools result in integers.
+		}
 	}
 	else if (left->ValueType == TypeName && right->ValueType == TypeName)
 	{
-		ValueType = TypeName;
+		// pointers can only be compared for equality.
+		if (Operator == TK_Eq || Operator == TK_Neq)
+		{
+			ValueType = TypeBool;
+			return true;
+		}
+		else
+		{
+			ScriptPosition.Message(MSG_ERROR, "Invalid operation for names");
+			delete this;
+			return false;
+		}
 	}
 	else if (left->IsNumeric() && right->IsNumeric())
 	{
@@ -2022,13 +2076,25 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 			AreCompatiblePointerTypes(left->ValueType, right->ValueType))
 		{
 			// pointers can only be compared for equality.
-			assert(Operator == TK_Eq || Operator == TK_Neq);
-			ValueType = TypeBool;
+			if (Operator == TK_Eq || Operator == TK_Neq)
+			{
+				ValueType = TypeBool;
+				return true;
+			}
+			else
+			{
+				ScriptPosition.Message(MSG_ERROR, "Invalid operation for pointers");
+				delete this;
+				return false;
+			}
 		}
 	}
 	else
 	{
-		ValueType = TypeVoid;
+		// To check: It may be that this could pass in DECORATE, although setting TypeVoid here would pretty much prevent that.
+		ScriptPosition.Message(MSG_ERROR, "Incompatible operator");
+		delete this;
+		return false;
 	}
 	assert(ValueType > nullptr && ValueType < (PType*)0xfffffffffffffff);
 
@@ -2077,7 +2143,7 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
 		delete this;
-		return NULL;
+		return nullptr;
 	}
 	else if (left->isConstant() && right->isConstant())
 	{
@@ -2771,7 +2837,7 @@ FxLtGtEq::FxLtGtEq(FxExpression *l, FxExpression *r)
 FxExpression *FxLtGtEq::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
-	if (!ResolveLR(ctx, false)) return NULL;
+	if (!ResolveLR(ctx, true)) return NULL;
 
 	if (!left->IsNumeric() || !right->IsNumeric())
 	{
@@ -4456,21 +4522,21 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 	if (classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
 	{
 		PPointer *ptrtype = dyn_cast<PPointer>(classx->ValueType);
-		if (ptrtype == nullptr || !ptrtype->PointedType->IsA(RUNTIME_CLASS(PStruct)))
+		if (ptrtype == nullptr || !ptrtype->PointedType->IsKindOf(RUNTIME_CLASS(PStruct)))
 		{
-			ScriptPosition.Message(MSG_ERROR, "Member variable requires a struct");
+			ScriptPosition.Message(MSG_ERROR, "Member variable requires a struct or class object.");
 			delete this;
 			return nullptr;
 		}
 	}
-	else if (classx->ValueType->IsA(RUNTIME_CLASS(PStruct)))
+	else if (classx->ValueType->IsA(RUNTIME_CLASS(PStruct)))	// Classes can never be used as value types so we do not have to consider that case.
 	{
 		// if this is a struct within a class or another struct we can simplify the expression by creating a new PField with a cumulative offset.
 		if (classx->ExprType == EFX_ClassMember || classx->ExprType == EFX_StructMember)
 		{
 			auto parentfield = static_cast<FxStructMember *>(classx)->membervar;
 			// PFields are garbage collected so this will be automatically taken care of later.
-			auto newfield = new PField(membervar->SymbolName, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset);
+			auto newfield = new PField(membervar->SymbolName, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset, membervar->BitValue);
 			static_cast<FxStructMember *>(classx)->membervar = newfield;
 			classx->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
 			auto x = classx->Resolve(ctx);
@@ -4522,7 +4588,17 @@ ExpEmit FxStructMember::Emit(VMFunctionBuilder *build)
 	int offsetreg = build->GetConstantInt((int)membervar->Offset);
 	ExpEmit loc(build, membervar->Type->GetRegType());
 
-	build->Emit(membervar->Type->GetLoadOp(), loc.RegNum, obj.RegNum, offsetreg);
+	if (membervar->BitValue == -1)
+	{
+		build->Emit(membervar->Type->GetLoadOp(), loc.RegNum, obj.RegNum, offsetreg);
+	}
+	else
+	{
+		ExpEmit out(build, REGT_POINTER);
+		build->Emit(OP_ADDA_RK, out.RegNum, obj.RegNum, offsetreg);
+		build->Emit(OP_LBIT, loc.RegNum, out.RegNum, 1 << membervar->BitValue);
+		out.Free(build);
+	}
 	obj.Free(build);
 	return loc;
 }
@@ -4530,7 +4606,8 @@ ExpEmit FxStructMember::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
-//
+// not really needed at the moment but may become useful with meta properties
+// and some other class-specific extensions.
 //
 //==========================================================================
 
@@ -4539,28 +4616,6 @@ FxClassMember::FxClassMember(FxExpression *x, PField* mem, const FScriptPosition
 {
 	ExprType = EFX_ClassMember;
 	//if (classx->IsDefaultObject()) Readonly=true;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FxExpression *FxClassMember::Resolve(FCompileContext &ctx)
-{
-	CHECKRESOLVED();
-	SAFE_RESOLVE(classx, ctx);
-
-	PPointer *ptrtype = dyn_cast<PPointer>(classx->ValueType);
-	if (ptrtype == NULL || !ptrtype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
-	{
-		ScriptPosition.Message(MSG_ERROR, "Member variable requires a class or object");
-		delete this;
-		return NULL;
-	}
-	ValueType = membervar->Type;
-	return this;
 }
 
 //==========================================================================

@@ -536,7 +536,7 @@ void GLDrawList::SortSpriteIntoWall(SortNode * head,SortNode * sort)
 
 		const bool drawBillboardFacingCamera = gl_billboard_faces_camera;
 		// [Nash] has +ROLLSPRITE
-		const bool rotated = (ss->actor != nullptr && ss->actor->renderflags & RF_ROLLSPRITE | RF_WALLSPRITE | RF_FLATSPRITE);
+		const bool rotated = (ss->actor != nullptr && ss->actor->renderflags & (RF_ROLLSPRITE | RF_WALLSPRITE | RF_FLATSPRITE));
 
 		// cannot sort them at the moment. This requires more complex splitting.
 		if (drawWithXYBillboard || drawBillboardFacingCamera || rotated)

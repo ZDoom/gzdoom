@@ -1245,6 +1245,23 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 				part.Texture = NULL;
 				part.Translation = NULL;
 			}
+			else if (sc.Compare("Sprite"))
+			{
+				TexPart part;
+				TexInit init;
+				ParsePatch(sc, part, init);
+				if (init.TexName.IsNotEmpty())
+				{
+					parts.Push(part);
+					init.UseType = TEX_Sprite;
+					init.Silent = bSilent;
+					init.HasLine = true;
+					init.sc = sc;
+					inits.Push(init);
+				}
+				part.Texture = NULL;
+				part.Translation = NULL;
+			}
 			else if (sc.Compare("Graphic"))
 			{
 				TexPart part;

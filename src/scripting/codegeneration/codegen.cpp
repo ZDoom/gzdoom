@@ -5812,10 +5812,10 @@ FxExpression *FxSwitchStatement::Resolve(FCompileContext &ctx)
 	{
 		ScriptPosition.Message(MSG_WARNING, "Case expression is constant");
 		auto &content = *Content;
-		unsigned defaultindex = -1;
-		unsigned defaultbreak = -1;
-		unsigned caseindex = -1;
-		unsigned casebreak = -1;
+		int defaultindex = -1;
+		int defaultbreak = -1;
+		int caseindex = -1;
+		int casebreak = -1;
 		// look for a case label with a matching value
 		for (unsigned i = 0; i < content.Size(); i++)
 		{
@@ -5846,7 +5846,7 @@ FxExpression *FxSwitchStatement::Resolve(FCompileContext &ctx)
 		if (caseindex > 0 && casebreak - caseindex > 1)
 		{
 			auto seq = new FxSequence(ScriptPosition);
-			for (unsigned i = caseindex + 1; i < casebreak; i++)
+			for (int i = caseindex + 1; i < casebreak; i++)
 			{
 				if (content[i] != nullptr && content[i]->ExprType != EFX_CaseStatement)
 				{

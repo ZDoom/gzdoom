@@ -4867,13 +4867,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeLinkFlags)
 
 	if (blockmap != -1)
 	{
-		if (blockmap == 0) self->flags &= *MF_NOBLOCKMAP;
+		if (blockmap == 0) self->flags &= ~MF_NOBLOCKMAP;
 		else self->flags |= MF_NOBLOCKMAP;
 	}
 
 	if (sector != -1)
 	{
-		if (sector == 0) self->flags &= *MF_NOSECTOR;
+		if (sector == 0) self->flags &= ~MF_NOSECTOR;
 		else self->flags |= MF_NOSECTOR;
 	}
 

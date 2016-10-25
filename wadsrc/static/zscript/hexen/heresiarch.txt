@@ -96,6 +96,12 @@ class SorcBall native
 	native void A_SorcBallOrbit();
 	native void A_SorcBallPop();
 	native void A_BounceCheck ();
+	
+	void A_SorcBallExplode()
+	{
+		bNOBOUNCESOUND = true;
+		A_Explode(255, 255);
+	}
 }
 
 // First ball (purple) - fires projectiles ----------------------------------
@@ -112,8 +118,7 @@ class SorcBall1 : SorcBall native
 		SBMP B 2 A_BounceCheck;
 		Wait;
 	Death:
-		SBS4 D 0 A_ChangeFlag("NOBOUNCESOUND", 1);
-		SBS4 D 5 A_Explode(255,255);
+		SBS4 D 5 A_SorcBallExplode;
 		SBS4 E 5;
 		SBS4 FGH 6;
 		Stop;
@@ -135,8 +140,7 @@ class SorcBall2 : SorcBall native
 		SBMB B 2 A_BounceCheck;
 		Wait;
 	Death:
-		SBS4 D 0 A_ChangeFlag("NOBOUNCESOUND", 1);
-		SBS3 D 5 A_Explode(255,255);
+		SBS3 D 5 A_SorcBallExplode;
 		SBS3 E 5;
 		SBS3 FGH 6;
 		Stop;
@@ -157,8 +161,7 @@ class SorcBall3 : SorcBall native
 		SBMG B 2 A_BounceCheck;
 		Wait;
 	Death:
-		SBS4 D 0 A_ChangeFlag("NOBOUNCESOUND", 1);
-		SBS3 D 5 A_Explode(255,255);
+		SBS3 D 5 A_SorcBallExplode;
 		SBS3 E 5;
 		SBS3 FGH 6;
 		Stop;

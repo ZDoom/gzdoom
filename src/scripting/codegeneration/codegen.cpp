@@ -1769,7 +1769,7 @@ ExpEmit FxPostIncrDecr::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxAssign::FxAssign(FxExpression *base, FxExpression *right, bool ismodify)
-: FxExpression(EFX_Assign, base->ScriptPosition), Base(base), Right(right), IsModifyAssign(ismodify), IsBitWrite(-1)
+: FxExpression(EFX_Assign, base->ScriptPosition), Base(base), Right(right), IsBitWrite(-1), IsModifyAssign(ismodify)
 {
 	AddressRequested = false;
 	AddressWritable = false;

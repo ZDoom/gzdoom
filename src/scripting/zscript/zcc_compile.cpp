@@ -1240,7 +1240,7 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 
 		if (field->Flags & notallowed)
 		{
-			Error(field, "Invalid qualifiers for %s (%s not allowed)", FName(field->Names->Name).GetChars(), FlagsToString(field->Flags & notallowed));
+			Error(field, "Invalid qualifiers for %s (%s not allowed)", FName(field->Names->Name).GetChars(), FlagsToString(field->Flags & notallowed).GetChars());
 			field->Flags &= notallowed;
 		}
 		uint32_t varflags = 0;
@@ -1977,7 +1977,7 @@ void ZCCCompiler::InitFunctions()
 
 				if (f->Flags & notallowed)
 				{
-					Error(f, "Invalid qualifiers for %s (%s not allowed)", FName(f->Name).GetChars(), FlagsToString(f->Flags & notallowed));
+					Error(f, "Invalid qualifiers for %s (%s not allowed)", FName(f->Name).GetChars(), FlagsToString(f->Flags & notallowed).GetChars());
 					f->Flags &= notallowed;
 				}
 				uint32_t varflags = VARF_Method;
@@ -2018,7 +2018,7 @@ void ZCCCompiler::InitFunctions()
 						if (p->Type != nullptr)
 						{
 							auto type = DetermineType(c->Type(), p, f->Name, p->Type, false, false);
-							int flags;
+							int flags = 0;
 							if (p->Flags & ZCC_In) flags |= VARF_In;
 							if (p->Flags & ZCC_Out) flags |= VARF_Out;
 							if (p->Default != nullptr)

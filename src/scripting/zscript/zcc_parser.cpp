@@ -331,7 +331,7 @@ static void DoParse(int lumpnum)
 	// If the parser fails, there is no point starting the compiler, because it'd only flood the output with endless errors.
 	if (FScriptPosition::ErrorCounter > 0)
 	{
-		I_Error("%d errors while parsing %s", FScriptPosition::ErrorCounter, Wads.GetLumpFullPath(lumpnum));
+		I_Error("%d errors while parsing %s", FScriptPosition::ErrorCounter, Wads.GetLumpFullPath(lumpnum).GetChars());
 	}
 
 #if 0
@@ -364,12 +364,12 @@ static void DoParse(int lumpnum)
 	if (FScriptPosition::ErrorCounter > 0)
 	{
 		// Abort if the compiler produced any errors. Also do not compile further lumps, because they very likely miss some stuff.
-		I_Error("%d errors, %d warnings while compiling %s", FScriptPosition::ErrorCounter, FScriptPosition::WarnCounter, Wads.GetLumpFullPath(lumpnum));
+		I_Error("%d errors, %d warnings while compiling %s", FScriptPosition::ErrorCounter, FScriptPosition::WarnCounter, Wads.GetLumpFullPath(lumpnum).GetChars());
 	}
 	else if (FScriptPosition::WarnCounter > 0)
 	{
 		// If we got warnings, but no errors, print the information but continue.
-		Printf(TEXTCOLOR_ORANGE, "%d warnings while compiling %s", FScriptPosition::WarnCounter, Wads.GetLumpFullPath(lumpnum));
+		Printf(TEXTCOLOR_ORANGE "%d warnings while compiling %s", FScriptPosition::WarnCounter, Wads.GetLumpFullPath(lumpnum).GetChars());
 	}
 
 }

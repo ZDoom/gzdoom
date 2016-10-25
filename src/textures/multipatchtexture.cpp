@@ -1323,6 +1323,24 @@ void FMultiPatchTexture::ResolvePatches()
 		for (int i = 0; i < NumParts; i++)
 		{
 			FTextureID texno = TexMan.CheckForTexture(Inits[i].TexName, Inits[i].UseType);
+			if (texno == id)	// we found ourselves. Try looking for another one with the same name which is not a multipatch texture itself.
+			{
+				TArray<FTextureID> list;
+				TexMan.ListTextures(Inits[i].TexName, list);
+				for (int i = list.Size() - 1; i >= 0; i--)
+				{
+					if (list[i] != id && !TexMan[list[i]]->bMultiPatch)
+					{
+						texno = list[i];
+						break;
+					}
+				}
+				if (texno == id)
+				{
+					if (Inits[i].HasLine) Inits[i].sc.Message(MSG_WARNING, "Texture '%s' references itself as patch\n", Inits[i].TexName.GetChars());
+					else Printf(TEXTCOLOR_YELLOW  "Texture '%s' references itself as patch\n", Inits[i].TexName.GetChars());
+				}
+			}
 
 			if (!texno.isValid())
 			{

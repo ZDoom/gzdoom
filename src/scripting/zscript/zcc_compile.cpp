@@ -1836,7 +1836,7 @@ void ZCCCompiler::ProcessDefaultFlag(PClassActor *cls, ZCC_FlagStmt *flg)
 	auto fd = FindFlag(cls, n1, n2, true);
 	if (fd != nullptr)
 	{
-		if (fd->deprecated)
+		if (fd->varflags & VARF_Deprecated)
 		{
 			Warn(flg, "Deprecated flag '%s%s%s' used", n1, n2 ? "." : "", n2 ? n2 : "");
 		}

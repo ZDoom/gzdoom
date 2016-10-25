@@ -54,11 +54,12 @@ static TArray<AFuncDesc> AFTable;
 //==========================================================================
 
 // [RH] Keep GCC quiet by not using offsetof on Actor types.
-#define DEFINE_FLAG(prefix, name, type, variable) { (unsigned int)prefix##_##name, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), false }
-#define DEFINE_FLAG2(symbol, name, type, variable) { (unsigned int)symbol, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), false }
-#define DEFINE_FLAG2_DEPRECATED(symbol, name, type, variable) { (unsigned int)symbol, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), true }
+#define DEFINE_FLAG(prefix, name, type, variable) { (unsigned int)prefix##_##name, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), VARF_Native }
+#define DEFINE_READONLY_FLAG(prefix, name, type, variable) { (unsigned int)prefix##_##name, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), VARF_Native|VARF_ReadOnly }
+#define DEFINE_FLAG2(symbol, name, type, variable) { (unsigned int)symbol, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), VARF_Native }
+#define DEFINE_FLAG2_DEPRECATED(symbol, name, type, variable) { (unsigned int)symbol, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), VARF_Native|VARF_Deprecated }
 #define DEFINE_DEPRECATED_FLAG(name) { DEPF_##name, #name, -1, 0, true }
-#define DEFINE_DUMMY_FLAG(name, deprec) { DEPF_UNUSED, #name, -1, 0, deprec }
+#define DEFINE_DUMMY_FLAG(name, deprec) { DEPF_UNUSED, #name, -1, 0, deprec? VARF_Deprecated:0 }
 
 static FFlagDef ActorFlagDefs[]=
 {
@@ -66,8 +67,8 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF, SPECIAL, APlayerPawn, flags),
 	DEFINE_FLAG(MF, SOLID, AActor, flags),
 	DEFINE_FLAG(MF, SHOOTABLE, AActor, flags),
-	DEFINE_FLAG(MF, NOSECTOR, AActor, flags),
-	DEFINE_FLAG(MF, NOBLOCKMAP, AActor, flags),
+	DEFINE_READONLY_FLAG(MF, NOSECTOR, AActor, flags),
+	DEFINE_READONLY_FLAG(MF, NOBLOCKMAP, AActor, flags),
 	DEFINE_FLAG(MF, AMBUSH, AActor, flags),
 	DEFINE_FLAG(MF, JUSTHIT, AActor, flags),
 	DEFINE_FLAG(MF, JUSTATTACKED, AActor, flags),
@@ -83,8 +84,8 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF, NOBLOOD, AActor, flags),
 	DEFINE_FLAG(MF, CORPSE, AActor, flags),
 	DEFINE_FLAG(MF, INFLOAT, AActor, flags),
-	DEFINE_FLAG(MF, COUNTKILL, AActor, flags),
-	DEFINE_FLAG(MF, COUNTITEM, AActor, flags),
+	DEFINE_READONLY_FLAG(MF, COUNTKILL, AActor, flags),
+	DEFINE_READONLY_FLAG(MF, COUNTITEM, AActor, flags),
 	DEFINE_FLAG(MF, SKULLFLY, AActor, flags),
 	DEFINE_FLAG(MF, NOTDMATCH, AActor, flags),
 	DEFINE_FLAG(MF, SPAWNSOUNDSOURCE, AActor, flags),
@@ -185,7 +186,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF5, GETOWNER, AActor, flags5),
 	DEFINE_FLAG(MF5, NODROPOFF, AActor, flags5),
 	DEFINE_FLAG(MF5, NOFORWARDFALL, AActor, flags5),
-	DEFINE_FLAG(MF5, COUNTSECRET, AActor, flags5),
+	DEFINE_READONLY_FLAG(MF5, COUNTSECRET, AActor, flags5),
 	DEFINE_FLAG(MF5, NODAMAGE, AActor, flags5),
 	DEFINE_FLAG(MF5, BLOODSPLATTER, AActor, flags5),
 	DEFINE_FLAG(MF5, OLDRADIUSDMG, AActor, flags5),
@@ -696,7 +697,7 @@ void InitThingdef()
 		int bit = 0;
 		unsigned val = ActorFlagDefs[i].flagbit;
 		while ((val >>= 1)) bit++;
-		symt.AddSymbol(new PField(FStringf("b%s", ActorFlagDefs[i].name), (ActorFlagDefs[i].fieldsize == 4? TypeSInt32 : TypeSInt16), VARF_Native, ActorFlagDefs[i].structoffset, bit));
+		symt.AddSymbol(new PField(FStringf("b%s", ActorFlagDefs[i].name), (ActorFlagDefs[i].fieldsize == 4? TypeSInt32 : TypeSInt16), ActorFlagDefs[i].varflags, ActorFlagDefs[i].structoffset, bit));
 	}
 
 }

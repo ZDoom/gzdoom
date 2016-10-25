@@ -837,9 +837,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	sc_man_scanner.re
 	g_doom/a_archvile.cpp
 	g_doom/a_bossbrain.cpp
-	g_doom/a_bruiser.cpp
-	g_doom/a_cacodemon.cpp
-	g_doom/a_cyberdemon.cpp
 	g_doom/a_demon.cpp
 	g_doom/a_doomimp.cpp
 	g_doom/a_doomweaps.cpp

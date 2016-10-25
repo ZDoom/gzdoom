@@ -2908,7 +2908,8 @@ FSerializer &Serialize(FSerializer &arc, const char *key, SavingRunningscript &r
 void DACSThinker::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
-	arc("scripts", Scripts);
+	arc("scripts", Scripts)
+		("lastscript", LastScript);
 
 	if (arc.isWriting())
 	{

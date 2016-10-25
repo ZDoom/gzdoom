@@ -24,8 +24,6 @@
 // Include all the other Doom stuff here to reduce compile time
 #include "a_archvile.cpp"
 #include "a_bossbrain.cpp"
-#include "a_demon.cpp"
-#include "a_doomimp.cpp"
 #include "a_doomweaps.cpp"
 #include "a_fatso.cpp"
 #include "a_keen.cpp"

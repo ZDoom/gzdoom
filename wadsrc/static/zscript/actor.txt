@@ -110,8 +110,6 @@ class Actor : Thinker native
 	native void A_BossDeath();
 	native void A_CPosAttack();
 	native void A_CPosRefire();
-	native void A_TroopAttack();
-	native void A_SargAttack();
 	native void A_SkullAttack(float speed = 20);
 	native void A_BetaSkullAttack();
 	native void A_Metal();

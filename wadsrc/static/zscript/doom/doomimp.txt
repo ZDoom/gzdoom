@@ -92,3 +92,31 @@ class DoomImpBall : Actor
 		Stop;
 	}
 }
+
+//===========================================================================
+//
+// Code (must be attached to Actor)
+//
+//===========================================================================
+
+extend class Actor
+{
+	void A_TroopAttack()
+	{
+		if (target)
+		{
+			if (CheckMeleeRange())
+			{
+				int damage = random[pr_troopattack](1, 8) * 3;
+				A_PlaySound ("imp/melee", CHAN_WEAPON);
+				int newdam = target.DamageMobj (self, self, damage, "Melee");
+				target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			}
+			else
+			{
+				// launch a missile
+				SpawnMissile (target, "DoomImpBall");
+			}
+		}
+	}
+}

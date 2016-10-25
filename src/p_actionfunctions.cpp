@@ -4867,13 +4867,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeLinkFlags)
 
 	if (blockmap != -1)
 	{
-		if (blockmap == 0) self->flags &= MF_NOBLOCKMAP;
+		if (blockmap == 0) self->flags &= *MF_NOBLOCKMAP;
 		else self->flags |= MF_NOBLOCKMAP;
 	}
 
 	if (sector != -1)
 	{
-		if (sector == 0) self->flags &= MF_NOSECTOR;
+		if (sector == 0) self->flags &= *MF_NOSECTOR;
 		else self->flags |= MF_NOSECTOR;
 	}
 
@@ -4899,19 +4899,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeCountFlags)
 
 	if (kill != -1)
 	{
-		if (kill == 0) self->flags &= MF_COUNTKILL;
+		if (kill == 0) self->flags &= ~MF_COUNTKILL;
 		else self->flags |= MF_COUNTKILL;
 	}
 
 	if (item != -1)
 	{
-		if (item == 0) self->flags &= MF_COUNTITEM;
+		if (item == 0) self->flags &= ~MF_COUNTITEM;
 		else self->flags |= MF_COUNTITEM;
 	}
 
 	if (secret != -1)
 	{
-		if (secret == 0) self->flags5 &= MF5_COUNTSECRET;
+		if (secret == 0) self->flags5 &= ~MF5_COUNTSECRET;
 		else self->flags5 |= MF5_COUNTSECRET;
 	}
 	if (self->CountsAsKill() && self->health > 0) ++level.total_monsters;

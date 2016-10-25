@@ -279,11 +279,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(RF, MASKROTATION, AActor, renderflags),
 	DEFINE_FLAG(RF, ABSMASKANGLE, AActor, renderflags),
 	DEFINE_FLAG(RF, ABSMASKPITCH, AActor, renderflags),
-};
 
-// These won't be accessible through bitfield variables
-static FFlagDef MoreFlagDefs[] =
-{
 	// Bounce flags
 	DEFINE_FLAG2(BOUNCE_Walls, BOUNCEONWALLS, AActor, BounceFlags),
 	DEFINE_FLAG2(BOUNCE_Floors, BOUNCEONFLOORS, AActor, BounceFlags),
@@ -299,6 +295,11 @@ static FFlagDef MoreFlagDefs[] =
 	DEFINE_FLAG2(BOUNCE_MBF, MBFBOUNCER, AActor, BounceFlags),
 	DEFINE_FLAG2(BOUNCE_AutoOffFloorOnly, BOUNCEAUTOOFFFLOORONLY, AActor, BounceFlags),
 	DEFINE_FLAG2(BOUNCE_UseBounceState, USEBOUNCESTATE, AActor, BounceFlags),
+};
+
+// These won't be accessible through bitfield variables
+static FFlagDef MoreFlagDefs[] =
+{
 
 	// Deprecated flags. Handling must be performed in HandleDeprecatedFlags
 	DEFINE_DEPRECATED_FLAG(FIREDAMAGE),

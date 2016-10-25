@@ -1,3 +1,6 @@
+// for flag changer functions.
+const int FLAG_NO_CHANGE = -1;
+
 // Flags for A_PainAttack
 enum EPainAttackFlags
 {
@@ -820,3 +823,5 @@ struct FStateParamInfo
 	EStateType mStateType;
 	int mPSPIndex;
 }
+
+

@@ -238,8 +238,10 @@ class Actor : Thinker native
 	native void A_ExtChase(bool usemelee, bool usemissile, bool playactive = true, bool nightmarefast = false);
 	native void A_DropInventory(class<Inventory> itemtype);
 	native void A_SetBlend(color color1, float alpha, int tics, color color2 = "");
-	native void A_ChangeFlag(string flagname, bool value);
-	native state A_CheckFlag(string flagname, state label, int check_pointer = AAPTR_DEFAULT);
+	deprecated native void A_ChangeFlag(string flagname, bool value);
+	deprecated native state A_CheckFlag(string flagname, state label, int check_pointer = AAPTR_DEFAULT);
+	native void A_ChangeCountFlags(int kill = FLAG_NO_CHANGE, int item = FLAG_NO_CHANGE, int secret = FLAG_NO_CHANGE);
+	native void A_ChangeLinkFlags(int blockmap = FLAG_NO_CHANGE, int sector = FLAG_NO_CHANGE);
 	native state A_JumpIf(bool expression, state label);
 	native void A_RaiseMaster(bool copy = 0);
 	native void A_RaiseChildren(bool copy = 0);

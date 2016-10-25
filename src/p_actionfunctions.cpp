@@ -4854,6 +4854,74 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFlag)
 
 //===========================================================================
 //
+// A_ChangeCountFlags (needed, because these flags affect global counters)
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeLinkFlags)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT_OPT(blockmap) { blockmap = -1; }
+	PARAM_INT_OPT(sector) { sector = -1; }
+
+	self->UnlinkFromWorld();
+
+	if (blockmap != -1)
+	{
+		if (blockmap == 0) self->flags &= MF_NOBLOCKMAP;
+		else self->flags |= MF_NOBLOCKMAP;
+	}
+
+	if (sector != -1)
+	{
+		if (sector == 0) self->flags &= MF_NOSECTOR;
+		else self->flags |= MF_NOSECTOR;
+	}
+
+	self->LinkToWorld();
+	return 0;
+}
+
+//===========================================================================
+//
+// A_ChangeCountFlags (needed, because these flags affect global counters)
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeCountFlags)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT_OPT(kill) { kill = -1; }
+	PARAM_INT_OPT(item) { item = -1; }
+	PARAM_INT_OPT(secret) {	secret = -1; }
+
+	if (self->CountsAsKill() && self->health > 0) --level.total_monsters;
+	if (self->flags & MF_COUNTITEM) --level.total_items;
+	if (self->flags5 & MF5_COUNTSECRET) --level.total_secrets;
+
+	if (kill != -1)
+	{
+		if (kill == 0) self->flags &= MF_COUNTKILL;
+		else self->flags |= MF_COUNTKILL;
+	}
+
+	if (item != -1)
+	{
+		if (item == 0) self->flags &= MF_COUNTITEM;
+		else self->flags |= MF_COUNTITEM;
+	}
+
+	if (secret != -1)
+	{
+		if (secret == 0) self->flags5 &= MF5_COUNTSECRET;
+		else self->flags5 |= MF5_COUNTSECRET;
+	}
+	if (self->CountsAsKill() && self->health > 0) ++level.total_monsters;
+	if (self->flags & MF_COUNTITEM) ++level.total_items;
+	if (self->flags5 & MF5_COUNTSECRET) ++level.total_secrets;
+	return 0;
+}
+
+//===========================================================================
+//
 // A_RaiseMaster
 //
 //===========================================================================

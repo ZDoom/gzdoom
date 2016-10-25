@@ -981,6 +981,10 @@ void FTextureManager::Init()
 	{
 		AddTexturesForWad(i);
 	}
+	for (unsigned i = 0; i < Textures.Size(); i++)
+	{
+		Textures[i].Texture->ResolvePatches();
+	}
 
 	// Add one marker so that the last WAD is easier to handle and treat
 	// Build tiles as a completely separate block.

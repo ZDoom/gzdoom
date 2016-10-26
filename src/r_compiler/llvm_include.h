@@ -55,6 +55,10 @@
 #include <llvm/MC/MCAsmInfo.h>
 #include <llvm/Target/TargetSubtargetInfo.h>
 
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
+#include <llvm/Support/FormattedStream.h>
+#endif
+
 #ifdef __APPLE__
 #pragma clang diagnostic pop
 #endif

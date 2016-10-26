@@ -474,7 +474,11 @@ void LLVMProgram::CreateEE()
 	if (!machine)
 		I_FatalError("Could not create LLVM target machine");
 
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
+	std::string targetTriple = machine->getTargetTriple();
+#else
 	std::string targetTriple = machine->getTargetTriple().getTriple();
+#endif
 	std::string cpuName = machine->getTargetCPU();
 	Printf("LLVM target triple: %s\n", targetTriple.c_str());
 	Printf("LLVM target CPU: %s\n", cpuName.c_str());
@@ -540,7 +544,11 @@ std::string LLVMProgram::GenerateAssembly(std::string cpuName)
 	if (!machine)
 		I_FatalError("Could not create LLVM target machine");
 
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
+	std::string targetTriple = machine->getTargetTriple();
+#else
 	std::string targetTriple = machine->getTargetTriple().getTriple();
+#endif
 
 	module->setTargetTriple(targetTriple);
 #if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
@@ -558,9 +566,13 @@ std::string LLVMProgram::GenerateAssembly(std::string cpuName)
 #endif
 
 	SmallString<16*1024> str;
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
+	raw_svector_ostream vecstream(str);
+	formatted_raw_ostream stream(vecstream);
+#else
 	raw_svector_ostream stream(str);
+#endif
 	machine->addPassesToEmitFile(PerModulePasses, stream, TargetMachine::CGFT_AssemblyFile);
-	PerModulePasses.add(createPrintMIRPass(stream));
 
 	PassManagerBuilder passManagerBuilder;
 	passManagerBuilder.OptLevel = 3;

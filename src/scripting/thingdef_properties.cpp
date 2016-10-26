@@ -647,19 +647,9 @@ DEFINE_PROPERTY(damage, X, Actor)
 	// compatibility reasons, expressions must be enclosed within
 	// parentheses.
 
-	// Store this expression here for now. It will be converted to a function
-	// later once all actors have been processed.
 	defaults->DamageVal = dmgval;
-
-	if (id == nullptr)
-	{
-		defaults->DamageFunc = nullptr;
-	}
-	else
-	{
-		auto funcsym = CreateAnonymousFunction(bag.Info, TypeSInt32, VARF_Method);
-		defaults->DamageFunc = FunctionBuildList.AddFunction(funcsym, id, FStringf("%s.DamageFunction", bag.Info->TypeName.GetChars()), !bag.fromZScript);
-	}
+	// Only DECORATE can get here with a valid expression.
+	CreateDamageFunction(bag.Info, defaults, id, true);
 }
 
 //==========================================================================

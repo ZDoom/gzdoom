@@ -186,6 +186,28 @@ PFunction *FindClassMemberFunction(PClass *selfcls, PClass *funccls, FName name,
 
 //==========================================================================
 //
+// CreateDamageFunction
+//
+// creates a damage function from the given expression
+//
+//==========================================================================
+
+void CreateDamageFunction(PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate)
+{
+	if (id == nullptr)
+	{
+		defaults->DamageFunc = nullptr;
+	}
+	else
+	{
+		auto dmg = new FxReturnStatement(new FxIntCast(id, true), id->ScriptPosition);
+		auto funcsym = CreateAnonymousFunction(info, TypeSInt32, VARF_Method);
+		defaults->DamageFunc = FunctionBuildList.AddFunction(funcsym, dmg, FStringf("%s.DamageFunction", info->TypeName.GetChars()), fromDecorate);
+	}
+}
+
+//==========================================================================
+//
 // LoadActors
 //
 // Called from FActor::StaticInit()

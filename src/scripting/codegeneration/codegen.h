@@ -1531,25 +1531,6 @@ public:
 //
 //==========================================================================
 
-class FxDamageValue : public FxExpression
-{
-	FxExpression *val;
-
-public:
-
-	FxDamageValue(FxExpression *v);
-	~FxDamageValue();
-	FxExpression *Resolve(FCompileContext&);
-
-	ExpEmit Emit(VMFunctionBuilder *build);
-};
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 class FxNop : public FxExpression
 {
 public:

@@ -664,7 +664,7 @@ static bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defau
 					{
 						conv.i = -1;
 						params.Push(conv);
-						x = new FxDamageValue(new FxIntCast(ParseExpression(sc, bag.Info), true));
+						x = ParseExpression(sc, bag.Info);
 						sc.MustGetStringName(")");
 						conv.exp = x;
 						params.Push(conv);

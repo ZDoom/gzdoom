@@ -1773,8 +1773,16 @@ void ZCCCompiler::ProcessDefaultProperty(PClassActor *cls, ZCC_PropertyStmt *pro
 
 	if (namenode->SiblingNext == namenode)
 	{
+		if (namenode->Id == NAME_DamageFunction)
+		{
+			auto x = ConvertNode(prop->Values);
+			CreateDamageFunction(cls, (AActor *)bag.Info->Defaults, x, false);
+			return;
+		}
+
 		// a one-name property
 		propname = FName(namenode->Id);
+
 	}
 	else if (namenode->SiblingNext->SiblingNext == namenode)
 	{
@@ -1786,6 +1794,7 @@ void ZCCCompiler::ProcessDefaultProperty(PClassActor *cls, ZCC_PropertyStmt *pro
 		Error(prop, "Property name may at most contain two parts");
 		return;
 	}
+
 
 	FPropertyInfo *property = FindProperty(propname);
 

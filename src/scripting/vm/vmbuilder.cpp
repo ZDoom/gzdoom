@@ -684,10 +684,6 @@ void FFunctionBuildList::Build()
 
 	for (auto &item : mItems)
 	{
-		if (item.PrintableName.CompareNoCase("Middle.StateFunction.3") == 0)
-		{
-			int a = 0;
-		}
 		assert(item.Code != NULL);
 
 		// We don't know the return type in advance for anonymous functions.

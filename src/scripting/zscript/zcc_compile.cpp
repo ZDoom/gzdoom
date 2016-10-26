@@ -1901,7 +1901,6 @@ void ZCCCompiler::InitDefaults()
 				bag.CurrentState = 0;
 				bag.Lumpnum = c->cls->SourceLump;
 				bag.DropItemList = nullptr;
-				bag.ScriptPosition.StrictErrors = true;
 				// The actual script position needs to be set per property.
 
 				for (auto d : c->Defaults)
@@ -2425,7 +2424,6 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		case AST_ExprMemberAccess:
 		{
 			auto ema = static_cast<ZCC_ExprMemberAccess *>(fcall->Function);
-			Printf("Member call to %s\n", FName(ema->Right).GetChars());
 			return new FxMemberFunctionCall(ConvertNode(ema->Left), ema->Right, ConvertNodeList(fcall->Parameters), *ast);
 		}
 

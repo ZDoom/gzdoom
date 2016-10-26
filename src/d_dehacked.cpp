@@ -73,6 +73,7 @@
 #include "vm.h"
 #include "thingdef.h"
 #include "info.h"
+#include "v_text.h"
 #include "vmbuilder.h"
 
 // [SO] Just the way Randy said to do it :)
@@ -2108,7 +2109,7 @@ static int PatchCodePtrs (int dummy)
 					if (!symname.CompareNoCase(MBFCodePointers[i].alias))
 					{
 						symname = MBFCodePointers[i].name;
-						Printf("%s --> %s\n", MBFCodePointers[i].alias, MBFCodePointers[i].name.GetChars());
+						DPrintf(DMSG_SPAMMY, "%s --> %s\n", MBFCodePointers[i].alias, MBFCodePointers[i].name.GetChars());
 					}
 				}
 
@@ -2117,7 +2118,7 @@ static int PatchCodePtrs (int dummy)
 				PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AStateProvider)->Symbols.FindSymbol(symname, true));
 				if (sym == NULL)
 				{
-					Printf("Frame %d: Unknown code pointer '%s'\n", frame, Line2);
+					Printf(TEXTCOLOR_RED "Frame %d: Unknown code pointer '%s'\n", frame, Line2);
 				}
 				else
 				{
@@ -2125,7 +2126,7 @@ static int PatchCodePtrs (int dummy)
 					unsigned numargs = sym->GetImplicitArgs();
 					if ((sym->Variants[0].Flags & VARF_Virtual || (args.Size() > numargs && !(args[numargs] & VARF_Optional))))
 					{
-						Printf("Frame %d: Incompatible code pointer '%s'\n", frame, Line2);
+						Printf(TEXTCOLOR_RED "Frame %d: Incompatible code pointer '%s'\n", frame, Line2);
 						sym = NULL;
 					}
 				}

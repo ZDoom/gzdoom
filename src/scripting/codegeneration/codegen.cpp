@@ -4198,7 +4198,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			// 2. This is a static function 
 			// 3. This is an action function with a restricted self pointer
 			// 4. This is a normal member or unrestricted action function.
-			if (vsym->Flags & VARF_Deprecated)
+			if ((vsym->Flags & VARF_Deprecated) && !ctx.FromDecorate)
 			{
 				ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s", sym->SymbolName.GetChars());
 			}

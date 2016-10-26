@@ -202,8 +202,10 @@ void LoadActors ()
 	FScriptPosition::ResetErrorCounter();
 
 	InitThingdef();
+	FScriptPosition::StrictErrors = true;
 	ParseScripts();
 
+	FScriptPosition::StrictErrors = false;
 	ParseAllDecorate();
 
 	FunctionBuildList.Build();

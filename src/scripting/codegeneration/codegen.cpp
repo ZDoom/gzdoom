@@ -1067,6 +1067,7 @@ FxTypeCast::FxTypeCast(FxExpression *x, PType *type, bool nowarn)
 {
 	basex = x;
 	ValueType = type;
+	assert(ValueType != nullptr);
 }
 
 //==========================================================================
@@ -5410,9 +5411,19 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 
 	if (ArgList != NULL)
 	{
+		bool foundvarargs = false;
+		PType * type = nullptr;
 		for (unsigned i = 0; i < ArgList->Size(); i++)
 		{
-			FxExpression *x = new FxTypeCast((*ArgList)[i], argtypes[i + implicit], false);
+			// Varargs must all have the same type as the last typed argument. A_Jump is the only function using it.
+			if (!foundvarargs)
+			{
+				if (argtypes[i + implicit] == nullptr) foundvarargs = true;
+				else type = argtypes[i + implicit];
+			}
+			assert(type != nullptr);
+
+			FxExpression *x = new FxTypeCast((*ArgList)[i], type, false);
 			x = x->Resolve(ctx);
 			failed |= (x == nullptr);
 			(*ArgList)[i] = x;
@@ -7060,57 +7071,6 @@ ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
 	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), names.Size() + 1, 1);
 	build->Emit(OP_RESULT, 0, REGT_POINTER, dest.RegNum);
 	return dest;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FxDamageValue::FxDamageValue(FxExpression *v)
-: FxExpression(EFX_DamageValue, v->ScriptPosition)
-{
-	val = v;
-	ValueType = TypeVoid;
-}
-
-FxDamageValue::~FxDamageValue()
-{
-	SAFE_DELETE(val);
-
-}
-
-FxExpression *FxDamageValue::Resolve(FCompileContext &ctx)
-{
-	CHECKRESOLVED();
-	SAFE_RESOLVE(val, ctx)
-
-	if (!val->IsNumeric())
-	{
-		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
-		delete this;
-		return NULL;
-	}
-	return this;
-}
-
-// This is a highly-specialized "expression" type that emits a complete function.
-ExpEmit FxDamageValue::Emit(VMFunctionBuilder *build)
-{
-	if (val->isConstant())
-	{
-		build->EmitRetInt(0, false, static_cast<FxConstant *>(val)->GetValue().Int);
-	}
-	else
-	{
-		ExpEmit emitval = val->Emit(build);
-		assert(emitval.RegType == REGT_INT);
-		build->Emit(OP_RET, 0, REGT_INT | (emitval.Konst ? REGT_KONST : 0), emitval.RegNum);
-	}
-	build->Emit(OP_RETI, 1 | RET_FINAL, true);
-
-	return ExpEmit();
 }
 
 //==========================================================================

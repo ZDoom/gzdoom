@@ -667,8 +667,8 @@ void InitThingdef()
 	symt.AddSymbol(new PField(NAME_MomX,			TypeFloat64,	VARF_Native|VARF_ReadOnly|VARF_Deprecated,	myoffsetof(AActor, Vel.X)));
 	symt.AddSymbol(new PField(NAME_MomY,			TypeFloat64,	VARF_Native|VARF_ReadOnly|VARF_Deprecated,	myoffsetof(AActor, Vel.Y)));
 	symt.AddSymbol(new PField(NAME_MomZ,			TypeFloat64,	VARF_Native|VARF_ReadOnly|VARF_Deprecated,	myoffsetof(AActor, Vel.Z)));
-	symt.AddSymbol(new PField(NAME_ScaleX,			TypeFloat64,	VARF_Native|VARF_ReadOnly|VARF_Deprecated,	myoffsetof(AActor, Scale.X)));
-	symt.AddSymbol(new PField(NAME_ScaleY,			TypeFloat64,	VARF_Native|VARF_ReadOnly|VARF_Deprecated,	myoffsetof(AActor, Scale.Y)));
+	symt.AddSymbol(new PField(NAME_ScaleX,			TypeFloat64,	VARF_Native|VARF_Deprecated,	myoffsetof(AActor, Scale.X)));
+	symt.AddSymbol(new PField(NAME_ScaleY,			TypeFloat64,	VARF_Native|VARF_Deprecated,	myoffsetof(AActor, Scale.Y)));
 	symt.AddSymbol(new PField(NAME_Score,			TypeSInt32,		VARF_Native,				myoffsetof(AActor, Score)));
 	symt.AddSymbol(new PField(NAME_Accuracy,		TypeSInt32,		VARF_Native,				myoffsetof(AActor, accuracy)));
 	symt.AddSymbol(new PField(NAME_Stamina,			TypeSInt32,		VARF_Native,				myoffsetof(AActor, stamina)));

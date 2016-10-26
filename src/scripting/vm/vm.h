@@ -173,20 +173,6 @@ enum EVMAbortException
 	X_BAD_SELF,
 };
 
-class VMFunction : public DObject
-{
-	DECLARE_ABSTRACT_CLASS(VMFunction, DObject);
-	HAS_OBJECT_POINTERS;
-public:
-	bool Native;
-	BYTE ImplicitArgs = 0;	// either 0 for static, 1 for method or 3 for action
-	FName Name;
-
-	class PPrototype *Proto;
-
-	VMFunction(FName name = NAME_None) : Native(false), ImplicitArgs(0), Name(name), Proto(NULL) {}
-};
-
 enum EVMOpMode
 {
 	MODE_ASHIFT		= 0,
@@ -642,6 +628,21 @@ do_double:		if (inexact)
 	}
 };
 
+class VMFunction : public DObject
+{
+	DECLARE_ABSTRACT_CLASS(VMFunction, DObject);
+	HAS_OBJECT_POINTERS;
+public:
+	bool Native;
+	BYTE ImplicitArgs = 0;	// either 0 for static, 1 for method or 3 for action
+	FName Name;
+	TArray<VMValue> Defaults;
+
+	class PPrototype *Proto;
+
+	VMFunction(FName name = NAME_None) : Native(false), ImplicitArgs(0), Name(name), Proto(NULL) {}
+};
+
 // VM frame layout:
 //	VMFrame header
 //  parameter stack		- 16 byte boundary, 16 bytes each
@@ -829,7 +830,7 @@ class VMNativeFunction : public VMFunction
 {
 	DECLARE_CLASS(VMNativeFunction, VMFunction);
 public:
-	typedef int (*NativeCallType)(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret);
+	typedef int (*NativeCallType)(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret);
 
 	VMNativeFunction() : NativeCall(NULL) { Native = true; }
 	VMNativeFunction(NativeCallType call) : NativeCall(call) { Native = true; }
@@ -900,8 +901,8 @@ void VMDumpConstants(FILE *out, const VMScriptFunction *func);
 void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction *func);
 
 // Use this in the prototype for a native function.
-#define VM_ARGS			VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret
-#define VM_ARGS_NAMES	stack, param, numparam, ret, numret
+#define VM_ARGS			VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret
+#define VM_ARGS_NAMES	stack, param, defaultparam, numparam, ret, numret
 
 // Use these to collect the parameters in a native function.
 // variable name <x> at position <p>
@@ -924,6 +925,16 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 //		PARAM_INT_OPT(0,myint) { myint = 55; }
 // Just make sure to fill it in when using these macros, because the compiler isn't likely
 // to give useful error messages if you don't.
+#define PARAM_EXISTS					((p) < numparam && param[p].Type != REGT_NIL)
+#define ASSERTINT(p)					assert((p).Type == REGT_INT)
+#define ASSERTFLOAT(p)					assert((p).Type == REGT_FLOAT)
+#define ASSERTSTRING(p)					assert((p).Type == REGT_STRING)
+#define ASSERTOBJECT(p)					assert((p).Type == REGT_POINTER && (p).atag == ATAG_OBJECT)
+#define ASSERTPOINTER(p)				assert((p).Type == REGT_POINTER && (p).atag == ATAG_GENERIC)
+#define ASSERTSTATE(p)					assert((p).Type == REGT_POINTER && ((p).atag == ATAG_GENERIC || (p).atag == ATAG_STATE))
+
+#define PARAM_INT_DEF_AT(p,x)			int x; if (PARAM_EXISTS) { ASSERTINT(param[p]); x = param[p].i; } else { ASSERTINT(defaultparam[p]); x = defaultparam[p].i; }
+
 #define PARAM_INT_OPT_AT(p,x)			int x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_INT); x = param[p].i; } else
 #define PARAM_BOOL_OPT_AT(p,x)			bool x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_INT); x = !!param[p].i; } else
 #define PARAM_NAME_OPT_AT(p,x)			FName x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_INT); x = ENamedName(param[p].i); } else
@@ -954,6 +965,20 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_OBJECT(x,type)		++paramnum; PARAM_OBJECT_AT(paramnum,x,type)
 #define PARAM_CLASS(x,base)			++paramnum; PARAM_CLASS_AT(paramnum,x,base)
 
+#define PARAM_INT_DEF(x)			++paramnum; PARAM_INT_DEF_AT(paramnum,x)
+#define PARAM_BOOL_DEF(x)			++paramnum; PARAM_BOOL_DEF_AT(paramnum,x)
+#define PARAM_NAME_DEF(x)			++paramnum; PARAM_NAME_DEF_AT(paramnum,x)
+#define PARAM_SOUND_DEF(x)			++paramnum; PARAM_SOUND_DEF_AT(paramnum,x)
+#define PARAM_COLOR_DEF(x)			++paramnum; PARAM_COLOR_DEF_AT(paramnum,x)
+#define PARAM_FLOAT_DEF(x)			++paramnum; PARAM_FLOAT_DEF_AT(paramnum,x)
+#define PARAM_ANGLE_DEF(x)			++paramnum; PARAM_ANGLE_DEF_AT(paramnum,x)
+#define PARAM_STRING_DEF(x)			++paramnum; PARAM_STRING_DEF_AT(paramnum,x)
+#define PARAM_STATE_DEF(x)			++paramnum; PARAM_STATE_DEF_AT(paramnum,x)
+#define PARAM_STATEINFO_DEF(x)		++paramnum; PARAM_STATEINFO_DEF_AT(paramnum,x)
+#define PARAM_POINTER_DEF(x,type)	++paramnum; PARAM_POINTER_DEF_AT(paramnum,x,type)
+#define PARAM_OBJECT_DEF(x,type)	++paramnum; PARAM_OBJECT_DEF_AT(paramnum,x,type)
+#define PARAM_CLASS_DEF(x,base)		++paramnum; PARAM_CLASS_DEF_AT(paramnum,x,base)
+
 #define PARAM_INT_OPT(x)			++paramnum; PARAM_INT_OPT_AT(paramnum,x)
 #define PARAM_BOOL_OPT(x)			++paramnum; PARAM_BOOL_OPT_AT(paramnum,x)
 #define PARAM_NAME_OPT(x)			++paramnum; PARAM_NAME_OPT_AT(paramnum,x)
@@ -968,7 +993,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_OBJECT_OPT(x,type)	++paramnum; PARAM_OBJECT_OPT_AT(paramnum,x,type)
 #define PARAM_CLASS_OPT(x,base)		++paramnum; PARAM_CLASS_OPT_AT(paramnum,x,base)
 
-typedef int(*actionf_p)(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret);/*(VM_ARGS)*/
+typedef int(*actionf_p)(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret);/*(VM_ARGS)*/
 
 struct AFuncDesc
 {

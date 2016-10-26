@@ -506,7 +506,7 @@ begin:
 			FillReturns(reg, f, returns, pc+1, C);
 			if (call->Native)
 			{
-				numret = static_cast<VMNativeFunction *>(call)->NativeCall(stack, reg.param + f->NumParam - B, B, returns, C);
+				numret = static_cast<VMNativeFunction *>(call)->NativeCall(stack, reg.param + f->NumParam - B, call->Defaults, B, returns, C);
 			}
 			else
 			{
@@ -550,7 +550,7 @@ begin:
 
 			if (call->Native)
 			{
-				return static_cast<VMNativeFunction *>(call)->NativeCall(stack, reg.param + f->NumParam - B, B, ret, numret);
+				return static_cast<VMNativeFunction *>(call)->NativeCall(stack, reg.param + f->NumParam - B, call->Defaults, B, ret, numret);
 			}
 			else
 			{ // FIXME: Not a true tail call

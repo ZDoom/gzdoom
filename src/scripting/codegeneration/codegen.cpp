@@ -96,7 +96,7 @@ FCompileContext::FCompileContext(PFunction *fnc, PPrototype *ret, bool fromdecor
 	if (fnc != nullptr) Class = fnc->OwningClass;
 }
 
-FCompileContext::FCompileContext(PClass *cls) : ReturnProto(nullptr), Function(nullptr), Class(cls), FromDecorate(true)	// only used by DECORATE constants.
+FCompileContext::FCompileContext(PClass *cls, bool fromdecorate) : ReturnProto(nullptr), Function(nullptr), Class(cls), FromDecorate(fromdecorate)
 {
 }
 
@@ -3745,7 +3745,7 @@ FxExpression *FxRandom::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-int DecoRandom(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+int DecoRandom(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam >= 1 && numparam <= 3);
 	FRandom *rng = reinterpret_cast<FRandom *>(param[0].a);
@@ -3995,7 +3995,7 @@ FxFRandom::FxFRandom(FRandom *r, FxExpression *mi, FxExpression *ma, const FScri
 //
 //==========================================================================
 
-int DecoFRandom(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+int DecoFRandom(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam == 1 || numparam == 3);
 	FRandom *rng = reinterpret_cast<FRandom *>(param[0].a);
@@ -5255,7 +5255,7 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-int DecoCallLineSpecial(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+int DecoCallLineSpecial(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam > 2 && numparam < 8);
 	assert(param[0].Type == REGT_INT);
@@ -6702,7 +6702,7 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-int DecoNameToClass(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+int DecoNameToClass(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam == 2);
 	assert(numret == 1);
@@ -6842,7 +6842,7 @@ static bool VerifyJumpTarget(AActor *stateowner, FStateParamInfo *stateinfo, int
 	return false;
 }
 
-static int DecoHandleRuntimeState(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+static int DecoHandleRuntimeState(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	PARAM_PROLOGUE;
 	PARAM_OBJECT(stateowner, AActor);
@@ -7008,7 +7008,7 @@ static int DoFindState(VMFrameStack *stack, VMValue *param, int numparam, VMRetu
 }
 
 // Find a state with any number of dots in its name.
-int BuiltinFindMultiNameState(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+int BuiltinFindMultiNameState(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam > 1);
 	assert(numret == 1);
@@ -7024,7 +7024,7 @@ int BuiltinFindMultiNameState(VMFrameStack *stack, VMValue *param, int numparam,
 }
 
 // Find a state without any dots in its name.
-int BuiltinFindSingleNameState(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+int BuiltinFindSingleNameState(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam == 2);
 	assert(numret == 1);

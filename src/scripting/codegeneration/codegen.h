@@ -77,7 +77,7 @@ struct FCompileContext
 	TDeletingArray<FxLocalVariableDeclaration *> FunctionArgs;
 
 	FCompileContext(PFunction *func, PPrototype *ret, bool fromdecorate);
-	FCompileContext(PClass *cls);	// only to be used to resolve constants!
+	FCompileContext(PClass *cls, bool fromdecorate);	// only to be used to resolve constants!
 
 	PSymbol *FindInClass(FName identifier, PSymbolTable *&symt);
 	PSymbol *FindInSelfClass(FName identifier, PSymbolTable *&symt);

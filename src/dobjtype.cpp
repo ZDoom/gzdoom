@@ -521,7 +521,7 @@ int PType::GetMoveOp() const
 
 int PType::GetRegType() const
 {
-	assert(0 && "No register for this type");
+	//assert(0 && "No register for this type");	// wrong place for this assert, it makes it impossible to use this function to check for bad types.
 	return REGT_NIL;
 }
 

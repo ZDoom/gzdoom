@@ -1952,6 +1952,7 @@ void ZCCCompiler::InitFunctions()
 	TArray<PType *> rets(1);
 	TArray<PType *> args;
 	TArray<uint32_t> argflags;
+	TArray<VMValue> argdefaults;
 	TArray<FName> argnames;
 
 	for (auto c : Classes)
@@ -1961,6 +1962,7 @@ void ZCCCompiler::InitFunctions()
 			rets.Clear();
 			args.Clear();
 			argflags.Clear();
+			bool hasdefault = false;
 			// For the time being, let's not allow overloading. This may be reconsidered later but really just adds an unnecessary amount of complexity here.
 			if (AddTreeNode(f->Name, f, &c->TreeNodes, false))
 			{
@@ -2018,36 +2020,96 @@ void ZCCCompiler::InitFunctions()
 					}
 				}
 				SetImplicitArgs(&args, &argflags, &argnames, c->Type(), varflags);
+				argdefaults.Resize(argnames.Size());
 				auto p = f->Params;
 				if (p != nullptr)
 				{
 					do
 					{
+						VMValue vmval;	// default is REGT_NIL which means 'no default value' here.
 						if (p->Type != nullptr)
 						{
 							auto type = DetermineType(c->Type(), p, f->Name, p->Type, false, false);
 							int flags = 0;
 							if (p->Flags & ZCC_In) flags |= VARF_In;
 							if (p->Flags & ZCC_Out) flags |= VARF_Out;
-							if (p->Default != nullptr)
+							if ((type->IsA(RUNTIME_CLASS(PStruct))) || (flags & VARF_Out))
 							{
-								auto val = Simplify(p->Default, &c->Type()->Symbols, true);
-								flags |= VARF_Optional;
-								if (val->Operation != PEX_ConstValue)
+								// 'out' parameters and all structs except vectors are passed by reference
+								if ((flags & VARF_Out) || (type != TypeVector2 && type != TypeVector3))
 								{
-									Error(c->cls, "Default parameter %s is not constant in %s", FName(p->Name).GetChars(), FName(f->Name).GetChars());
+									type = NewPointer(type);
 								}
-								// Todo: Store and handle the default value (native functions will discard it anyway but for scripted ones this should be done decently.)
+							}
+							if (type->GetRegType() == REGT_NIL && type != TypeVector2 && type != TypeVector3)
+							{
+								Error(p, "Invalid type %s for function parameter", type->DescriptiveName());
+							}
+							else if (p->Default != nullptr)
+							{
+								flags |= VARF_Optional;
+								// The simplifier is not suited to convert the constant into something usable. 
+								// All it does is reduce the expression to a constant but we still got to do proper type checking and conversion.
+								// It will also lose important type info about enums, once these get implemented
+								// The code generator can do this properly for us.
+								FxExpression *x = new FxTypeCast(ConvertNode(p->Default), type, false);
+								FCompileContext ctx(c->Type(), false);
+								x = x->Resolve(ctx);
+
+								if (x != nullptr)
+								{
+									if (!x->isConstant())
+									{
+										Error(p, "Default parameter %s is not constant in %s", FName(p->Name).GetChars(), FName(f->Name).GetChars());
+									}
+									else  if (x->ValueType != type)
+									{
+										Error(p, "Default parameter %s could not be converted to target type %s", FName(p->Name).GetChars(), c->Type()->TypeName.GetChars());
+									}
+									else
+									{
+										auto cnst = static_cast<FxConstant *>(x);
+										hasdefault = true;
+										switch (type->GetRegType())
+										{
+										case REGT_INT:
+											vmval = cnst->GetValue().GetInt();
+											break;
+
+										case REGT_FLOAT:
+											vmval = cnst->GetValue().GetFloat();
+											break;
+
+										case REGT_POINTER:
+											if (type->IsKindOf(RUNTIME_CLASS(PClassPointer)))
+												vmval = (DObject*)cnst->GetValue().GetPointer();
+											else
+												vmval = cnst->GetValue().GetPointer();
+											break;
+
+										case REGT_STRING:
+											vmval = cnst->GetValue().GetString();
+											break;
+
+										default:
+											assert(0 && "no valid type for constant");
+											break;
+										}
+									}
+								}
+								if (x != nullptr) delete x;
 							}
 							// TBD: disallow certain types? For now, let everything pass that isn't an array.
 							args.Push(type);
 							argflags.Push(flags);
+
 						}
 						else
 						{
 							args.Push(nullptr);
 							argflags.Push(0);
 						}
+						argdefaults.Push(vmval);
 						p = static_cast<decltype(p)>(p->SiblingNext);
 					} while (p != f->Params);
 				}
@@ -2064,9 +2126,11 @@ void ZCCCompiler::InitFunctions()
 						sym->Variants[0].Implementation = FunctionBuildList.AddFunction(sym, code, FStringf("%s.%s", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars()), false);
 					}
 				}
-
+				if (sym->Variants[0].Implementation != nullptr && hasdefault)	// do not copy empty default lists, they only waste space and processing time.
+				{
+					sym->Variants[0].Implementation->Defaults = std::move(argdefaults);
+				}
 				// todo: Check inheritance.
-				// todo: Process function bodies.
 			}
 		}
 	}

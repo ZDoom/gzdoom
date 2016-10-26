@@ -87,7 +87,7 @@ FxExpression *ParseExpression (FScanner &sc, PClassActor *cls, bool mustresolve)
 
 	if (mustresolve)
 	{
-		FCompileContext ctx(cls);
+		FCompileContext ctx(cls, true);
 		data = data->Resolve(ctx);
 	}
 

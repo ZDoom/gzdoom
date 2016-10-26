@@ -680,6 +680,7 @@ void InitThingdef()
 	symt.AddSymbol(new PField(NAME_Threshold,		TypeSInt32,		VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, threshold)));
 	symt.AddSymbol(new PField(NAME_DefThreshold,	TypeSInt32,		VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, DefThreshold)));
 	symt.AddSymbol(new PField(NAME_Damage,			TypeSInt32,		VARF_Native|VARF_ReadOnly,  myoffsetof(AActor, DamageVal)));
+	symt.AddSymbol(new PField("visdir",				TypeSInt32,		VARF_Native,				myoffsetof(AActor, visdir)));
 	symt.AddSymbol(new PField(NAME_VisibleStartAngle, TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleStartAngle)));
 	symt.AddSymbol(new PField(NAME_VisibleStartPitch, TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleStartPitch)));
 	symt.AddSymbol(new PField(NAME_VisibleEndAngle,	TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleEndAngle)));
@@ -688,6 +689,7 @@ void InitThingdef()
 	symt.AddSymbol(new PField("Pos",				TypeVector3,	VARF_Native|VARF_ReadOnly,  myoffsetof(AActor, __Pos)));
 	symt.AddSymbol(new PField("Vel",				TypeVector3,	VARF_Native,				myoffsetof(AActor, Vel)));
 	symt.AddSymbol(new PField("Scale",				TypeVector2,	VARF_Native,				myoffsetof(AActor, Scale)));
+	symt.AddSymbol(new PField("SeeState",			TypeState,		VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, SeeState)));
 	symt.AddSymbol(new PField(NAME_Target,			TypeActor,		VARF_Native,				myoffsetof(AActor, target)));
 	symt.AddSymbol(new PField(NAME_Master,			TypeActor,		VARF_Native,				myoffsetof(AActor, master)));
 	symt.AddSymbol(new PField(NAME_Tracer,			TypeActor,		VARF_Native,				myoffsetof(AActor, tracer)));

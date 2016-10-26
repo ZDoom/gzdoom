@@ -842,7 +842,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	g_doom/a_keen.cpp
 	g_doom/a_lostsoul.cpp
 	g_doom/a_painelemental.cpp
-	g_doom/a_possessed.cpp
 	g_doom/a_revenant.cpp
 	g_doom/a_scriptedmarine.cpp
 	g_doom/a_spidermaster.cpp

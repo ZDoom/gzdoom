@@ -4043,6 +4043,18 @@ DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLin
 	return result->linetarget ? result->pitch : t1->Angles.Pitch;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, AimLineAttack)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ANGLE(angle);
+	PARAM_FLOAT(distance);
+	PARAM_POINTER_OPT(pLineTarget, FTranslatedLineTarget) { pLineTarget = nullptr; }
+	PARAM_ANGLE_OPT(vrange) { vrange = 0.; }
+	PARAM_INT_OPT(flags) { flags = 0; }
+	PARAM_OBJECT_OPT(target, AActor) { target = nullptr; }
+	PARAM_OBJECT_OPT(friender, AActor) { friender = nullptr; }
+	ACTION_RETURN_FLOAT(P_AimLineAttack(self, angle, distance, pLineTarget, vrange, flags, target, friender).Degrees);
+}
 
 //==========================================================================
 //
@@ -4408,6 +4420,25 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	{
 		return P_LineAttack(t1, angle, distance, pitch, damage, damageType, type, flags, victim, actualdamage);
 	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, LineAttack)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ANGLE(angle);
+	PARAM_FLOAT(distance);
+	PARAM_ANGLE(pitch);
+	PARAM_INT(damage);
+	PARAM_NAME(damageType);
+	PARAM_CLASS(puffType, AActor);
+	PARAM_INT_OPT(flags) { flags = 0; }
+	PARAM_POINTER_OPT(victim, FTranslatedLineTarget) { victim = nullptr; }
+
+	int acdmg;
+	auto puff = P_LineAttack(self, angle, distance, pitch, damage, damageType, puffType, flags, victim, &acdmg);
+	if (numret > 0) ret[0].SetPointer(puff, ATAG_OBJECT);
+	if (numret > 1) ret[1].SetInt(acdmg), numret = 2;
+	return numret;
 }
 
 //==========================================================================

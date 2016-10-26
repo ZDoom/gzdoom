@@ -300,6 +300,7 @@ public:
 	PType *ValueType = nullptr;
 
 	bool isresolved = false;
+	bool NeedResult = true;	// should be set to false if not needed and properly handled by all nodes for their subnodes to eliminate redundant code
 	EFxType ExprType;
 };
 
@@ -1246,7 +1247,7 @@ public:
 	FxSequence(const FScriptPosition &pos) : FxExpression(EFX_Sequence, pos) {}
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
-	void Add(FxExpression *expr) { if (expr != NULL) Expressions.Push(expr); }
+	void Add(FxExpression *expr) { if (expr != NULL) Expressions.Push(expr); expr->NeedResult = false; }
 	VMFunction *GetDirectFunction();
 };
 

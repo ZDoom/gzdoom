@@ -1519,9 +1519,8 @@ ExpEmit FxUnaryNotBoolean::Emit(VMFunctionBuilder *build)
 	assert(ValueType == TypeBool);
 	ExpEmit from = Operand->Emit(build);
 	assert(!from.Konst);
-	// ~x & 1
-	build->Emit(OP_NOT, from.RegNum, from.RegNum, 0);
-	build->Emit(OP_AND_RK, from.RegNum, from.RegNum, build->GetConstantInt(1));
+	// boolean not is the same as XOR-ing the lowest bit
+	build->Emit(OP_XOR_RK, from.RegNum, from.RegNum, build->GetConstantInt(1));
 	return from;
 }
 
@@ -1734,32 +1733,54 @@ ExpEmit FxPostIncrDecr::Emit(VMFunctionBuilder *build)
 	int zero = build->GetConstantInt(0);
 	int regtype = ValueType->GetRegType();
 	ExpEmit pointer = Base->Emit(build);
-	ExpEmit out = pointer;
 
 	if (!pointer.Target)
 	{
-		out = ExpEmit(build, regtype);
+		ExpEmit out(build, regtype);
 		build->Emit(ValueType->GetLoadOp(), out.RegNum, pointer.RegNum, zero);
+		ExpEmit assign(build, regtype);
+		if (regtype == REGT_INT)
+		{
+			build->Emit((Token == TK_Incr) ? OP_ADD_RK : OP_SUB_RK, assign.RegNum, out.RegNum, build->GetConstantInt(1));
+		}
+		else
+		{
+			build->Emit((Token == TK_Incr) ? OP_ADDF_RK : OP_SUBF_RK, assign.RegNum, out.RegNum, build->GetConstantFloat(1.));
+		}
+		build->Emit(ValueType->GetStoreOp(), pointer.RegNum, out.RegNum, zero);
+		pointer.Free(build);
+		assign.Free(build);
+		return out;
 	}
-
-	ExpEmit assign(build, regtype);
-	if (regtype == REGT_INT)
+	else if (NeedResult)
 	{
-		build->Emit((Token == TK_Incr) ? OP_ADD_RK : OP_SUB_RK, assign.RegNum, out.RegNum, build->GetConstantInt(1));
+		ExpEmit out(build, regtype);
+		if (regtype == REGT_INT)
+		{
+			build->Emit(OP_MOVE, out.RegNum, pointer.RegNum);
+			build->Emit((Token == TK_Incr) ? OP_ADD_RK : OP_SUB_RK, pointer.RegNum, pointer.RegNum, build->GetConstantInt(1));
+		}
+		else
+		{
+			build->Emit(OP_MOVEF, out.RegNum, pointer.RegNum);
+			build->Emit((Token == TK_Incr) ? OP_ADDF_RK : OP_SUBF_RK, pointer.RegNum, pointer.RegNum, build->GetConstantFloat(1.));
+		}
+		pointer.Free(build);
+		return out;
 	}
 	else
 	{
-		build->Emit((Token == TK_Incr) ? OP_ADDF_RK : OP_SUBF_RK, assign.RegNum, out.RegNum, build->GetConstantFloat(1.));
+		if (regtype == REGT_INT)
+		{
+			build->Emit((Token == TK_Incr) ? OP_ADD_RK : OP_SUB_RK, pointer.RegNum, pointer.RegNum, build->GetConstantInt(1));
+		}
+		else
+		{
+			build->Emit((Token == TK_Incr) ? OP_ADDF_RK : OP_SUBF_RK, pointer.RegNum, pointer.RegNum, build->GetConstantFloat(1.));
+		}
+		pointer.Free(build);
+		return ExpEmit();
 	}
-
-	if (!pointer.Target)
-	{
-		build->Emit(ValueType->GetStoreOp(), pointer.RegNum, assign.RegNum, zero);
-	}
-
-	pointer.Free(build);
-	assign.Free(build);
-	return out;
 }
 
 //==========================================================================
@@ -5795,7 +5816,8 @@ FxExpression *FxSwitchStatement::Resolve(FCompileContext &ctx)
 			auto x = Condition;
 			Condition = nullptr;
 			delete this;
-			return Condition;
+			x->NeedResult = false;
+			return x;
 		}
 	}
 
@@ -5805,6 +5827,7 @@ FxExpression *FxSwitchStatement::Resolve(FCompileContext &ctx)
 		if (line->ExprType != EFX_JumpStatement || static_cast<FxJumpStatement *>(line)->Token != TK_Break)
 		{
 			SAFE_RESOLVE(line, ctx);
+			line->NeedResult = false;
 		}
 	}
 
@@ -5999,6 +6022,8 @@ FxIfStatement::FxIfStatement(FxExpression *cond, FxExpression *true_part,
 	Condition = cond;
 	WhenTrue = true_part;
 	WhenFalse = false_part;
+	if (WhenTrue != nullptr) WhenTrue->NeedResult = false;
+	if (WhenFalse != nullptr) WhenFalse->NeedResult = false;
 	assert(cond != NULL);
 }
 
@@ -6338,6 +6363,8 @@ FxForLoop::FxForLoop(FxExpression *init, FxExpression *condition, FxExpression *
 : FxLoopStatement(EFX_ForLoop, pos), Init(init), Condition(condition), Iteration(iteration), Code(code)
 {
 	ValueType = TypeVoid;
+	if (Iteration != nullptr) Iteration->NeedResult = false;
+	if (Code != nullptr) Code->NeedResult = false;
 }
 
 FxForLoop::~FxForLoop()
@@ -7139,19 +7166,19 @@ ExpEmit FxLocalVariableDeclaration::Emit(VMFunctionBuilder *build)
 			{
 			default:
 			case REGT_INT:
-				build->Emit(OP_LK, build->GetConstantInt(constval->GetValue().GetInt()), RegNum);
+				build->Emit(OP_LK, RegNum, build->GetConstantInt(constval->GetValue().GetInt()));
 				break;
 
 			case REGT_FLOAT:
-				build->Emit(OP_LKF, build->GetConstantFloat(constval->GetValue().GetFloat()), RegNum);
+				build->Emit(OP_LKF, RegNum, build->GetConstantFloat(constval->GetValue().GetFloat()));
 				break;
 
 			case REGT_POINTER:
-				build->Emit(OP_LKP, build->GetConstantAddress(constval->GetValue().GetPointer(), ATAG_GENERIC), RegNum);
+				build->Emit(OP_LKP, RegNum, build->GetConstantAddress(constval->GetValue().GetPointer(), ATAG_GENERIC));
 				break;
 
 			case REGT_STRING:
-				build->Emit(OP_LKS, build->GetConstantString(constval->GetValue().GetString()), RegNum);
+				build->Emit(OP_LKS, RegNum, build->GetConstantString(constval->GetValue().GetString()));
 			}
 			emitval.Free(build);
 		}

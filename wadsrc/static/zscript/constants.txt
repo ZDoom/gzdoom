@@ -824,4 +824,41 @@ struct FStateParamInfo
 	int mPSPIndex;
 }
 
+// returned by AimLineAttack.
+struct FTranslatedLineTarget
+{
+	Actor linetarget;
+	double angleFromSource;
+	bool unlinked;	// found by a trace that went through an unlinked portal.
+}
 
+enum EAimFlags
+{
+	ALF_FORCENOSMART = 1,
+	ALF_CHECK3D = 2,
+	ALF_CHECKNONSHOOTABLE = 4,
+	ALF_CHECKCONVERSATION = 8,
+	ALF_NOFRIENDS = 16,
+	ALF_PORTALRESTRICT = 32,	// only work through portals with a global offset (to be used for stuff that cannot remember the calculated FTranslatedLineTarget info)
+}
+
+enum ELineAttackFlags
+{
+	LAF_ISMELEEATTACK = 1,
+	LAF_NORANDOMPUFFZ = 2,
+	LAF_NOIMPACTDECAL = 4,
+	LAF_NOINTERACT =	8,
+}
+
+const MELEERANGE = 64;
+const SAWRANGE = (64.+(1./65536.));	// use meleerange + 1 so the puff doesn't skip the flash (i.e. plays all states)
+const MISSILERANGE = (32*64);
+const PLAYERMISSILERANGE = 8192;	// [RH] New MISSILERANGE for players
+
+enum ESightFlags
+{
+	SF_IGNOREVISIBILITY=1,
+	SF_SEEPASTSHOOTABLELINES=2,
+	SF_SEEPASTBLOCKEVERYTHING=4,
+	SF_IGNOREWATERBOUNDARY=8
+}

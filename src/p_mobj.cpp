@@ -510,6 +510,14 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SetState)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_STATE(state);
+	PARAM_BOOL_OPT(nofunction) { nofunction = false; }
+	ACTION_RETURN_BOOL(self->SetState(state, nofunction));
+};
+
 //============================================================================
 //
 // AActor :: AddInventory

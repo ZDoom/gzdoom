@@ -51,6 +51,12 @@ class Actor : Thinker native
 	native void TraceBleed(int damage, Actor missile);
 	native bool CheckMeleeRange();
 	native int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags = 0, double angle = 0);
+	native double AimLineAttack(double angle, double distance, out FTranslatedLineTarget pLineTarget = null, double vrange = 0., int flags = 0, Actor target = null, Actor friender = null);
+	native Actor, int LineAttack(double angle, double distance, double pitch, int damage, Name damageType, class<Actor> pufftype, int flags = 0, out FTranslatedLineTarget victim = null);
+	native bool CheckSight(Actor target, int flags = 0);
+	native bool HitFriend();
+	native bool SetState(state st, bool nofunction = false);
+
 	
 	// DECORATE compatible functions
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
@@ -88,10 +94,7 @@ class Actor : Thinker native
 	native void A_FaceTarget(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0);
 	native void A_FaceTracer(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0);
 	native void A_FaceMaster(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0);
-	native void A_PosAttack();
 	native void A_Scream();
-	native void A_SPosAttack();
-	native void A_SPosAttackUseAtkSound();
 	native void A_VileChase();
 	native void A_VileStart();
 	native void A_VileTarget(class<Actor> fire = "ArchvileFire");
@@ -108,8 +111,6 @@ class Actor : Thinker native
 	native void A_FatAttack2(class<Actor> spawntype = "FatShot");
 	native void A_FatAttack3(class<Actor> spawntype = "FatShot");
 	native void A_BossDeath();
-	native void A_CPosAttack();
-	native void A_CPosRefire();
 	native void A_SkullAttack(float speed = 20);
 	native void A_BetaSkullAttack();
 	native void A_Metal();

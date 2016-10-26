@@ -461,6 +461,12 @@ bool P_HitFriend(AActor * self)
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, HitFriend)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(P_HitFriend(self));
+}
+
 //
 // P_Move
 // Move in the current direction,

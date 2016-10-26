@@ -29,7 +29,6 @@
 #include "a_keen.cpp"
 #include "a_lostsoul.cpp"
 #include "a_painelemental.cpp"
-#include "a_possessed.cpp"
 #include "a_revenant.cpp"
 #include "a_spidermaster.cpp"
 #include "a_scriptedmarine.cpp"

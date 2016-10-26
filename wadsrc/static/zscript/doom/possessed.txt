@@ -251,3 +251,93 @@ class WolfensteinSS : Actor
 		Goto See ;
 	}
 }
+
+//===========================================================================
+//
+// Code (must be attached to Actor)
+//
+//===========================================================================
+
+extend class Actor
+{
+	void A_PosAttack()
+	{
+		if (target)
+		{
+			A_FaceTarget();
+			double ang = angle;
+			double slope = AimLineAttack(ang, MISSILERANGE);
+			A_PlaySound("grunt/attack", CHAN_WEAPON);
+			ang  += Random2[PosAttack]() * (22.5/256);
+			int damage = Random[PosAttack](1, 5) * 3;
+			LineAttack(ang, MISSILERANGE, slope, damage, "Hitscan", "Bulletpuff");
+		}
+	}
+	
+	
+	private void A_SPosAttackInternal()
+	{
+		if (target)
+		{
+			A_FaceTarget();
+			double bangle = angle;
+			double slope = AimLineAttack(bangle, MISSILERANGE);
+		
+			for (int i=0 ; i<3 ; i++)
+			{
+				double ang = bangle + Random2[SPosAttack]() * (22.5/256);
+				int damage = Random[SPosAttack](1, 5) * 3;
+				LineAttack(ang, MISSILERANGE, slope, damage, "Hitscan", "Bulletpuff");
+			}
+		}
+    }
+	
+	void A_SPosAttackUseAtkSound()
+	{
+		if (target)
+		{
+			A_PlaySound(AttackSound, CHAN_WEAPON);
+			A_SPosAttackInternal();
+		}
+	}
+	
+	// This version of the function, which uses a hard-coded sound, is meant for Dehacked only.
+	void A_SPosAttack()
+	{
+		if (target)
+		{
+			A_PlaySound("shotguy/attack", CHAN_WEAPON);
+			A_SPosAttackInternal();
+		}
+	}
+	
+	void A_CPosAttack()
+	{
+		if (target)
+		{
+			if (bStealth) visdir = 1;
+			A_PlaySound(AttackSound, CHAN_WEAPON);
+			A_FaceTarget();
+			double slope = AimLineAttack(angle, MISSILERANGE);
+			double ang = angle + Random2[SPosAttack]() * (22.5/256);
+			int damage = Random[CPosAttack](1, 5) * 3;
+			LineAttack(ang, MISSILERANGE, slope, damage, "Hitscan", "Bulletpuff");
+		}
+	}
+	
+	void A_CPosRefire()
+	{
+		// keep firing unless target got out of sight
+		A_FaceTarget();
+		if (Random[CPosRefire](0, 255) >= 40)
+		{
+			if (!target
+				|| HitFriend()
+				|| target.health <= 0
+				|| !CheckSight(target, SF_SEEPASTBLOCKEVERYTHING|SF_SEEPASTSHOOTABLELINES))
+			{
+				SetState(SeeState);
+			}
+		}
+	}
+}

@@ -30,7 +30,6 @@
 #include "a_lostsoul.cpp"
 #include "a_painelemental.cpp"
 #include "a_revenant.cpp"
-#include "a_spidermaster.cpp"
 #include "a_scriptedmarine.cpp"
 
 // The barrel of green goop ------------------------------------------------

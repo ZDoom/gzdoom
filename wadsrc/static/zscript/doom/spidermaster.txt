@@ -60,3 +60,34 @@ class SpiderMastermind : Actor
 		Stop;
 	}
 }
+
+//===========================================================================
+//
+// Code (must be attached to Actor)
+//
+//===========================================================================
+
+extend class Actor
+{
+	void A_SpidRefire()
+	{
+		// keep firing unless target got out of sight
+		A_FaceTarget();
+		if (Random[CPosRefire](0, 255) >= 10)
+		{
+			if (!target
+				|| HitFriend()
+				|| target.health <= 0
+				|| !CheckSight(target, SF_SEEPASTBLOCKEVERYTHING|SF_SEEPASTSHOOTABLELINES))
+			{
+				SetState(SeeState);
+			}
+		}
+	}
+
+	void A_Metal()
+	{
+		A_PlaySound("spider/walk", CHAN_BODY, 1, false, ATTN_IDLE);
+		A_Chase();
+	}
+}

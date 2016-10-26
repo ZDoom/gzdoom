@@ -924,7 +924,7 @@ begin:
 		reg.d[a] = reg.d[B] ^ reg.d[C];
 		NEXTOP;
 	OP(XOR_RK):
-		ASSERTD(a); ASSERTD(B); ASSERTD(C);
+		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
 		reg.d[a] = reg.d[B] ^ konstd[C];
 		NEXTOP;
 

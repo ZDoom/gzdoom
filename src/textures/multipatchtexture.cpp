@@ -1324,7 +1324,7 @@ void FMultiPatchTexture::ResolvePatches()
 			if (texno == id)	// we found ourselves. Try looking for another one with the same name which is not a multipatch texture itself.
 			{
 				TArray<FTextureID> list;
-				TexMan.ListTextures(Inits[i].TexName, list);
+				TexMan.ListTextures(Inits[i].TexName, list, true);
 				for (int i = list.Size() - 1; i >= 0; i--)
 				{
 					if (list[i] != id && !TexMan[list[i]]->bMultiPatch)

@@ -292,7 +292,6 @@ void FIWadManager::ParseIWadInfos(const char *fn)
 int FIWadManager::ScanIWAD (const char *iwad)
 {
 	FResourceFile *iwadfile = FResourceFile::OpenResourceFile(iwad, NULL, true);
-	if (iwadfile == NULL) iwadfile = FResourceFile::OpenDirectory(iwad, true); //mxd. A directory can also work as an IWAD
 
 	if (iwadfile != NULL)
 	{
@@ -345,7 +344,7 @@ int FIWadManager::CheckIWAD (const char *doomwaddir, WadStuff *wads)
 			
 			iwad.Format ("%s%s%s", doomwaddir, slash, mIWadNames[i].GetChars());
 			FixPathSeperator (iwad);
-			if (DirEntryExists(iwad))
+			if (FileExists (iwad))
 			{
 				wads[i].Type = ScanIWAD (iwad);
 				if (wads[i].Type != -1)
@@ -414,7 +413,7 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 		}
 		else
 		{
-			if(FileExists(custwad)) DefaultExtension (custwad, ".wad"); //mxd. Don't treat folders as .wads
+			DefaultExtension (custwad, ".wad");
 			iwadparm = custwad;
 			mIWadNames[0] = custwad;
 			CheckIWAD ("", &wads[0]);

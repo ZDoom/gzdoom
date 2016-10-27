@@ -1753,7 +1753,7 @@ ExpEmit FxPostIncrDecr::Emit(VMFunctionBuilder *build)
 		{
 			build->Emit((Token == TK_Incr) ? OP_ADDF_RK : OP_SUBF_RK, assign.RegNum, out.RegNum, build->GetConstantFloat(1.));
 		}
-		build->Emit(ValueType->GetStoreOp(), pointer.RegNum, out.RegNum, zero);
+		build->Emit(ValueType->GetStoreOp(), pointer.RegNum, assign.RegNum, zero);
 		pointer.Free(build);
 		assign.Free(build);
 		return out;

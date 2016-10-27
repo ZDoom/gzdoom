@@ -47,6 +47,13 @@ class Actor : Thinker native
 	}
 
 	// Functions
+
+	bool IsPointerEqual(int ptr_select1, int ptr_select2)
+	{
+		return GetPointer(ptr_select1) == GetPointer(ptr_select2);
+	}
+
+	native Actor GetPointer(int aaptr);
 	native Actor SpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
 	native void TraceBleed(int damage, Actor missile);
 	native bool CheckMeleeRange();
@@ -56,11 +63,11 @@ class Actor : Thinker native
 	native bool CheckSight(Actor target, int flags = 0);
 	native bool HitFriend();
 	native bool SetState(state st, bool nofunction = false);
+	native void LinkToWorld();
+	native void UnlinkFromWorld();
 
-	
 	// DECORATE compatible functions
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
-	native bool IsPointerEqual(int ptr_select1, int ptr_select2);
 	native int	CountInv(class<Inventory> itemtype, int ptr_select = AAPTR_DEFAULT);
 	native float GetDistance(bool checkz, int ptr = AAPTR_DEFAULT);
 	native float GetAngle(int flags, int ptr = AAPTR_DEFAULT);
@@ -78,9 +85,89 @@ class Actor : Thinker native
 	action native float OverlayX(int layer = 0);
 	action native float OverlayY(int layer = 0);
 
+	// DECORATE setters - it probably makes more sense to set these values directly now...
+	void A_SetMass(int newmass) { mass = newmass; }
+	void A_SetGravity(float newgravity) { gravity = clamp(newgravity, 0., 10.); }
+	void A_SetArg(int arg, int val) { if (arg >= 0 && arg < 5) args[arg] = val;	}
+	void A_Turn(float turn = 0) { angle += turn; }
+	void A_SetDamageType(name newdamagetype) { damagetype = newdamagetype; }
+	void A_SetSolid() { bSolid = true; }
+	void A_UnsetSolid() { bSolid = false; }
+	void A_SetFloat() { bFloat = true; }
+	void A_UnsetFloat() { bFloat = false; }
+	void A_SetFloatBobPhase(int bob) { if (bob >= 0 && bob <= 63) FloatBobPhase = bob; }
+	void A_SetRipperLevel(int level) { RipperLevel = level; }
+	void A_SetRipMin(int minimum) { RipLevelMin = minimum; }
+	void A_SetRipMax(int maximum) { RipLevelMax = maximum; }
+
+	void A_SetScale(float scalex, float scaley = 0, int ptr = AAPTR_DEFAULT, bool usezero = false)
+	{
+		Actor aptr = GetPointer(ptr);
+		if (aptr)
+		{
+			aptr.Scale.X = scalex;
+			aptr.Scale.Y = scaley != 0 || usezero? scaley : scalex;	// use scalex here, too, if only one parameter.
+		}
+	}
+	void A_SetSpeed(float speed, int ptr = AAPTR_DEFAULT)
+	{
+		Actor aptr = GetPointer(ptr);
+		if (aptr) aptr.Speed = speed;
+	}
+	void A_SetFloatSpeed(float speed, int ptr = AAPTR_DEFAULT)
+	{
+		Actor aptr = GetPointer(ptr);
+		if (aptr) aptr.FloatSpeed = speed;
+	}
+	void A_SetPainThreshold(int threshold, int ptr = AAPTR_DEFAULT)
+	{
+		Actor aptr = GetPointer(ptr);
+		if (aptr) aptr.PainThreshold = threshold;
+	}
+	bool A_SetSpriteAngle(float angle = 0, int ptr = AAPTR_DEFAULT)
+	{
+		Actor aptr = GetPointer(ptr);
+		if (!aptr) return false;
+		aptr.SpriteAngle = angle;
+		return true;
+	}
+	bool A_SetSpriteRotation(float angle = 0, int ptr = AAPTR_DEFAULT)
+	{
+		Actor aptr = GetPointer(ptr);
+		if (!aptr) return false;
+		aptr.SpriteRotation = angle;
+		return true;
+	}
+
+	deprecated void A_FaceConsolePlayer(float MaxTurnAngle = 0) {}
+
+	void A_SetSpecial(int spec, int arg0 = 0, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0)
+	{
+		special = spec;
+		args[0] = arg0;
+		args[1] = arg1;
+		args[2] = arg2;
+		args[3] = arg3;
+		args[4] = arg4;
+	}
+
+	void A_ClearTarget()
+	{
+		target = null;
+		lastheard = null;
+		lastenemy = null;
+	}
+
+	void A_ChangeLinkFlags(int blockmap = FLAG_NO_CHANGE, int sector = FLAG_NO_CHANGE)
+	{	
+		UnlinkFromWorld();
+		if (blockmap != FLAG_NO_CHANGE) bNoBlockmap = blockmap;
+		if (sector != FLAG_NO_CHANGE) bNoSector = sector;
+		LinkToWorld();
+	}
+
 	// Action functions
 	// Meh, MBF redundant functions. Only for DeHackEd support.
-	native void A_Turn(float angle = 0);
 	native bool A_LineEffect(int boomspecial = 0, int tag = 0);
 	// End of MBF redundant functions.
 
@@ -121,9 +208,9 @@ class Actor : Thinker native
 	native void A_BrainScream();
 	native void A_BrainDie();
 	native void A_BrainAwake();
-	native void A_BrainSpit(class<Actor> spawntype = "none");	// needs special treatment for default
+	native void A_BrainSpit(class<Actor> spawntype = null);	// needs special treatment for default
 	native void A_SpawnSound();
-	native void A_SpawnFly(class<Actor> spawntype = "none");	// needs special treatment for default
+	native void A_SpawnFly(class<Actor> spawntype = null);	// needs special treatment for default
 	native void A_BrainExplode();
 	native void A_Die(name damagetype = "none");
 	native void A_Detonate();
@@ -145,12 +232,8 @@ class Actor : Thinker native
 	native void A_NoGravity();
 	native void A_Gravity();
 	native void A_LowGravity();
-	native void A_SetGravity(float gravity);
+
 	native void A_Fall();
-	native void A_SetSolid();
-	native void A_UnsetSolid();
-	native void A_SetFloat();
-	native void A_UnsetFloat();
 
 	native void A_M_Saw(sound fullsound = "weapons/sawfull", sound hitsound = "weapons/sawhit", int damage = 2, class<Actor> pufftype = "BulletPuff");
 
@@ -186,7 +269,6 @@ class Actor : Thinker native
 	native void A_ClearSoundTarget();
 	native void A_FireAssaultGun();
 	native void A_CheckTerrain();
-	native void A_FaceConsolePlayer(float MaxTurnAngle = 0); // [TP] no-op
 
 	deprecated native void A_MissileAttack();
 	deprecated native void A_MeleeAttack();
@@ -194,7 +276,7 @@ class Actor : Thinker native
 	deprecated native void A_BulletAttack();
 	native void A_WolfAttack(int flags = 0, sound whattoplay = "weapons/pistol", float snipe = 1.0, int maxdamage = 64, int blocksize = 128, int pointblank = 2, int longrange = 4, float runspeed = 160.0, class<Actor> pufftype = "BulletPuff");
 	native void A_PlaySound(sound whattoplay = "weapons/pistol", int slot = CHAN_BODY, float volume = 1.0, bool looping = false, float attenuation = ATTN_NORM);
-	native void A_PlayWeaponSound(sound whattoplay);
+	deprecated void A_PlayWeaponSound(sound whattoplay) { A_PlaySound(whattoplay, CHAN_WEAPON); }
 	native void A_FLoopActiveSound();
 	native void A_LoopActiveSound();
 	native void A_StopSound(int slot = CHAN_VOICE);	// Bad default but that's what is originally was...
@@ -204,7 +286,7 @@ class Actor : Thinker native
 	native state A_Jump(int chance = 256, state label, ...);
 	native void A_CustomMissile(class<Actor> missiletype, float spawnheight = 32, float spawnofs_xy = 0, float angle = 0, int flags = 0, float pitch = 0, int ptr = AAPTR_TARGET);
 	native void A_CustomBulletAttack(float spread_xy, float spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", float range = 0, int flags = 0, int ptr = AAPTR_TARGET, class<Actor> missile = null, float Spawnheight = 32, float Spawnofs_xy = 0);
-	native void A_CustomRailgun(int damage, int spawnofs_xy = 0, color color1 = 0, color color2 = 0, int flags = 0, int aim = 0, float maxdiff = 0, class<Actor> pufftype = "BulletPuff", float spread_xy = 0, float spread_z = 0, float range = 0, int duration = 0, float sparsity = 1.0, float driftspeed = 1.0, class<Actor> spawnclass = "none", float spawnofs_z = 0, int spiraloffset = 270, int limit = 0);
+	native void A_CustomRailgun(int damage, int spawnofs_xy = 0, color color1 = 0, color color2 = 0, int flags = 0, int aim = 0, float maxdiff = 0, class<Actor> pufftype = "BulletPuff", float spread_xy = 0, float spread_z = 0, float range = 0, int duration = 0, float sparsity = 1.0, float driftspeed = 1.0, class<Actor> spawnclass = null, float spawnofs_z = 0, int spiraloffset = 270, int limit = 0);
 	native state A_JumpIfHealthLower(int health, state label, int ptr_selector = AAPTR_DEFAULT);
 	native state A_JumpIfCloser(float distance, state label, bool noz = false);
 	native state A_JumpIfTracerCloser(float distance, state label, bool noz = false);
@@ -213,6 +295,7 @@ class Actor : Thinker native
 	native state A_JumpIfTargetInsideMeleeRange(state label);
 	native state A_JumpIfInventory(class<Inventory> itemtype, int itemamount, state label, int owner = AAPTR_DEFAULT);
 	native state A_JumpIfArmorType(name Type, state label, int amount = 1);
+	native bool A_SetInventory(class<Inventory> itemtype, int amount, int ptr = AAPTR_DEFAULT, bool beyondMax = false);
 	native bool A_GiveInventory(class<Inventory> itemtype, int amount = 0, int giveto = AAPTR_DEFAULT);
 	native bool A_TakeInventory(class<Inventory> itemtype, int amount = 0, int flags = 0, int giveto = AAPTR_DEFAULT);
 	action native bool A_SpawnItem(class<Actor> itemtype = "Unknown", float distance = 0, float zheight = 0, bool useammo = true, bool transfer_translation = false);
@@ -227,8 +310,6 @@ class Actor : Thinker native
 	native void A_FadeIn(float reduce = 0.1, int flags = 0);
 	native void A_FadeOut(float reduce = 0.1, int flags = 1); //bool remove == true
 	native void A_FadeTo(float target, float amount = 0.1, int flags = 0);
-	native void A_SetScale(float scalex, float scaley = 0, int ptr = AAPTR_DEFAULT, bool usezero = false);
-	native void A_SetMass(int mass);
 	native void A_SpawnDebris(class<Actor> spawntype, bool transfer_translation = false, float mult_h = 1, float mult_v = 1);
 	native void A_SpawnParticle(color color1, int flags = 0, int lifetime = 35, float size = 1, float angle = 0, float xoff = 0, float yoff = 0, float zoff = 0, float velx = 0, float vely = 0, float velz = 0, float accelx = 0, float accely = 0, float accelz = 0, float startalphaf = 1, float fadestepf = -1, float sizestep = 0);
 	native state A_CheckSight(state label);
@@ -238,7 +319,6 @@ class Actor : Thinker native
 	deprecated native void A_ChangeFlag(string flagname, bool value);
 	deprecated native state A_CheckFlag(string flagname, state label, int check_pointer = AAPTR_DEFAULT);
 	native void A_ChangeCountFlags(int kill = FLAG_NO_CHANGE, int item = FLAG_NO_CHANGE, int secret = FLAG_NO_CHANGE);
-	native void A_ChangeLinkFlags(int blockmap = FLAG_NO_CHANGE, int sector = FLAG_NO_CHANGE);
 	native state A_JumpIf(bool expression, state label);
 	native void A_RaiseMaster(bool copy = 0);
 	native void A_RaiseChildren(bool copy = 0);
@@ -247,7 +327,7 @@ class Actor : Thinker native
 	native state A_CheckCeiling(state label);
 	native state A_PlayerSkinCheck(state label);
 	deprecated native void A_BasicAttack(int meleedamage, sound meleesound, class<actor> missiletype, float missileheight);
-	native state, bool A_Teleport(state teleportstate = null, class<SpecialSpot> targettype = "BossSpot", class<Actor> fogtype = "TeleportFog", int flags = 0, float mindist = 0, float maxdist = 0, int ptr = AAPTR_DEFAULT);
+	native state, bool A_Teleport(state teleportstate = null, class<SpecialSpot> targettype = "BossSpot", class<Actor> fogtype = "TeleportFog", int flags = 0, float mindist = 0, float maxdist = 128, int ptr = AAPTR_DEFAULT);
 	native state, bool A_Warp(int ptr_destination, float xofs = 0, float yofs = 0, float zofs = 0, float angle = 0, int flags = 0, state success_state = null, float heightoffset = 0, float radiusoffset = 0, float pitch = 0);
 	action native bool A_ThrowGrenade(class<Actor> itemtype, float zheight = 0, float xyvel = 0, float zvel = 0, bool useammo = true);
 	native void A_Weave(int xspeed, int yspeed, float xdist, float ydist);
@@ -256,7 +336,7 @@ class Actor : Thinker native
 	native state A_JumpIfInTargetInventory(class<Inventory> itemtype, int amount, state label, int forward_ptr = AAPTR_DEFAULT);
 	native bool A_GiveToTarget(class<Inventory> itemtype, int amount = 0, int forward_ptr = AAPTR_DEFAULT);
 	native bool A_TakeFromTarget(class<Inventory> itemtype, int amount = 0, int flags = 0, int forward_ptr = AAPTR_DEFAULT);
-	native int A_RadiusGive(class<Inventory> itemtype, float distance, int flags, int amount = 0, class<Actor> filter = "None", name species = "None", float mindist = 0, int limit = 0);
+	native int A_RadiusGive(class<Inventory> itemtype, float distance, int flags, int amount = 0, class<Actor> filter = null, name species = "None", float mindist = 0, int limit = 0);
 	native state A_CheckSpecies(state jump, name species = 'none', int ptr = AAPTR_DEFAULT);
 	native void A_CountdownArg(int argnum, state targstate = null);
 	native void A_CustomMeleeAttack(int damage = 0, sound meleesound = "", sound misssound = "", name damagetype = "none", bool bleed = true);
@@ -264,7 +344,7 @@ class Actor : Thinker native
 	native void A_Burst(class<Actor> chunktype);
 	action native void A_Blast(int flags = 0, float strength = 255, float radius = 255, float speed = 20, class<Actor> blasteffect = "BlastEffect", sound blastsound = "BlastRadius");
 	native void A_RadiusThrust(int force = 128, int distance = -1, int flags = RTF_AFFECTSOURCE, int fullthrustdistance = 0);
-	native void A_RadiusDamageSelf(int damage = 128, float distance = 128, int flags = 0, class<Actor> flashtype = "None");
+	native void A_RadiusDamageSelf(int damage = 128, float distance = 128, int flags = 0, class<Actor> flashtype = null);
 	native int A_Explode(int damage = -1, int distance = -1, int flags = XF_HURTSOURCE, bool alert = false, int fulldamagedistance = 0, int nails = 0, int naildamage = 10, class<Actor> pufftype = "BulletPuff", name damagetype = "none");
 	native void A_Stop();
 	native void A_Respawn(int flags = 1);
@@ -273,7 +353,6 @@ class Actor : Thinker native
 	native void A_DeQueueCorpse();
 	native void A_LookEx(int flags = 0, float minseedist = 0, float maxseedist = 0, float maxheardist = 0, float fov = 0, state label = null);
 	native void A_ClearLastHeard();
-	native void A_ClearTarget();
 	native state A_CheckLOF(state jump, int flags = 0, float range = 0, float minrange = 0, float angle = 0, float pitch = 0, float offsetheight = 0, float offsetwidth = 0, int ptr_target = AAPTR_DEFAULT, float offsetforward = 0);
 	native state A_JumpIfTargetInLOS (state label, float fov = 0, int flags = 0, float dist_max = 0, float dist_close = 0);
 	native state A_JumpIfInTargetLOS (state label, float fov = 0, int flags = 0, float dist_max = 0, float dist_close = 0);
@@ -295,51 +374,41 @@ class Actor : Thinker native
 	native void A_SetRoll(float roll, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_ScaleVelocity(float scale, int ptr = AAPTR_DEFAULT);
 	native void A_ChangeVelocity(float x = 0, float y = 0, float z = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
-	native void A_SetArg(int pos, int value);
 	deprecated native void A_SetUserVar(name varname, int value);
 	deprecated native void A_SetUserArray(name varname, int index, int value);
 	deprecated native void A_SetUserVarFloat(name varname, float value);
 	deprecated native void A_SetUserArrayFloat(name varname, int index, float value);
-	native void A_SetSpecial(int spec, int arg0 = 0, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0);
 	native void A_Quake(int intensity, int duration, int damrad, int tremrad, sound sfx = "world/quake");
 	native void A_QuakeEx(int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, sound sfx = "world/quake", int flags = 0, float mulWaveX = 1, float mulWaveY = 1, float mulWaveZ = 1, int falloff = 0, int highpoint = 0, float rollIntensity = 0, float rollWave = 0);
 	action native void A_SetTics(int tics);
-	native void A_SetDamageType(name damagetype);
 	native void A_DropItem(class<Actor> item, int dropamount = -1, int chance = 256);
-	native void A_SetSpeed(float speed, int ptr = AAPTR_DEFAULT);
-	native void A_SetFloatSpeed(float speed, int ptr = AAPTR_DEFAULT);
-	native void A_SetPainThreshold(int threshold, int ptr = AAPTR_DEFAULT);
-	native void A_DamageSelf(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
-	native void A_DamageTarget(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
-	native void A_DamageMaster(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
-	native void A_DamageTracer(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
-	native void A_DamageChildren(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
-	native void A_DamageSiblings(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
-	native void A_KillTarget(name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
-	native void A_KillMaster(name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
-	native void A_KillTracer(name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
-	native void A_KillChildren(name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
-	native void A_KillSiblings(name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
-	native void A_RemoveTarget(int flags = 0, class<Actor> filter = "None", name species = "None");
-	native void A_RemoveMaster(int flags = 0, class<Actor> filter = "None", name species = "None");
-	native void A_RemoveTracer(int flags = 0, class<Actor> filter = "None", name species = "None");
-	native void A_RemoveChildren(bool removeall = false, int flags = 0, class<Actor> filter = "None", name species = "None");
-	native void A_RemoveSiblings(bool removeall = false, int flags = 0, class<Actor> filter = "None", name species = "None");
-	native void A_Remove(int removee, int flags = 0, class<Actor> filter = "None", name species = "None");
+	native void A_DamageSelf(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_DamageTarget(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_DamageMaster(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_DamageTracer(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_DamageChildren(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_DamageSiblings(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_KillTarget(name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_KillMaster(name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_KillTracer(name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_KillChildren(name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_KillSiblings(name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_RemoveTarget(int flags = 0, class<Actor> filter = null, name species = "None");
+	native void A_RemoveMaster(int flags = 0, class<Actor> filter = null, name species = "None");
+	native void A_RemoveTracer(int flags = 0, class<Actor> filter = null, name species = "None");
+	native void A_RemoveChildren(bool removeall = false, int flags = 0, class<Actor> filter = null, name species = "None");
+	native void A_RemoveSiblings(bool removeall = false, int flags = 0, class<Actor> filter = null, name species = "None");
+	native void A_Remove(int removee, int flags = 0, class<Actor> filter = null, name species = "None");
 	native int A_GiveToChildren(class<Inventory> itemtype, int amount = 0);
 	native int A_GiveToSiblings(class<Inventory> itemtype, int amount = 0);
 	native int A_TakeFromChildren(class<Inventory> itemtype, int amount = 0);
 	native int A_TakeFromSiblings(class<Inventory> itemtype, int amount = 0);
 	native void A_SetTeleFog(class<Actor> oldpos, class<Actor> newpos);
 	native void A_SwapTeleFog();
-	native void A_SetFloatBobPhase(int bob);
 	native void A_SetHealth(int health, int ptr = AAPTR_DEFAULT);
 	native void A_ResetHealth(int ptr = AAPTR_DEFAULT);
 	native state A_JumpIfHigherOrLower(state high, state low, float offsethigh = 0, float offsetlow = 0, bool includeHeight = true, int ptr = AAPTR_TARGET);
 	native void A_SetSpecies(name species, int ptr = AAPTR_DEFAULT);
-	native void A_SetRipperLevel(int level);
-	native void A_SetRipMin(int mininum);
-	native void A_SetRipMax(int maximum);
 	native void A_SetChaseThreshold(int threshold, bool def = false, int ptr = AAPTR_DEFAULT);
 	native state A_CheckProximity(state jump, class<Actor> classname, float distance, int count = 1, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native state A_CheckBlock(state block, int flags = 0, int ptr = AAPTR_DEFAULT, float xofs = 0, float yofs = 0, float zofs = 0, float angle = 0);
@@ -348,8 +417,6 @@ class Actor : Thinker native
 	native bool A_FaceMovementDirection(float offset = 0, float anglelimit = 0, float pitchlimit = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native int A_ClearOverlays(int sstart = 0, int sstop = 0, bool safety = true);
 	native bool A_CopySpriteFrame(int from, int to, int flags = 0);
-	native bool A_SetSpriteAngle(float angle = 0, int ptr = AAPTR_DEFAULT);
-	native bool A_SetSpriteRotation(float angle = 0, int ptr = AAPTR_DEFAULT);
 	native bool A_SetVisibleRotation(float anglestart = 0, float angleend = 0, float pitchstart = 0, float pitchend = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetTranslation(string transname);
 
@@ -362,13 +429,34 @@ class Actor : Thinker native
 	action native void A_OverlayOffset(int layer = PSP_WEAPON, float wx = 0, float wy = 32, int flags = 0);
 	action native void A_OverlayFlags(int layer, int flags, bool set);
 
-	native int ACS_NamedExecute(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0);
-	native int ACS_NamedSuspend(name script, int mapnum=0);
-	native int ACS_NamedTerminate(name script, int mapnum=0);
-	native int ACS_NamedLockedExecute(name script, int mapnum=0, int arg1=0, int arg2=0, int lock=0);
-	native int ACS_NamedLockedExecuteDoor(name script, int mapnum=0, int arg1=0, int arg2=0, int lock=0);
-	native int ACS_NamedExecuteWithResult(name script, int arg1=0, int arg2=0, int arg3=0, int arg4=0);
-	native void ACS_NamedExecuteAlways(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0);
+	int ACS_NamedExecute(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0)
+	{
+		return ACS_Execute(-int(script), mapnum, arg1, arg2, arg3);
+	}
+	int ACS_NamedSuspend(name script, int mapnum=0)
+	{
+		return ACS_Suspend(-int(script), mapnum);
+	}
+	int ACS_NamedTerminate(name script, int mapnum=0)
+	{
+		return ACS_Terminate(-int(script), mapnum);
+	}
+	int ACS_NamedLockedExecute(name script, int mapnum=0, int arg1=0, int arg2=0, int lock=0)
+	{
+		return ACS_LockedExecute(-int(script), mapnum, arg1, arg2, lock);
+	}
+	int ACS_NamedLockedExecuteDoor(name script, int mapnum=0, int arg1=0, int arg2=0, int lock=0)
+	{
+		return ACS_LockedExecuteDoor(-int(script), mapnum, arg1, arg2, lock);
+	}
+	int ACS_NamedExecuteWithResult(name script, int arg1=0, int arg2=0, int arg3=0, int arg4=0)
+	{
+		return ACS_ExecuteWithResult(-int(script), arg1, arg2, arg3, arg4);
+	}
+	int ACS_NamedExecuteAlways(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0)
+	{
+		return ACS_ExecuteAlways(-int(script), mapnum, arg1, arg2, arg3);
+	}
 	
 	States
 	{

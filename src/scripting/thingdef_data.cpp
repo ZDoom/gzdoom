@@ -67,8 +67,8 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF, SPECIAL, APlayerPawn, flags),
 	DEFINE_FLAG(MF, SOLID, AActor, flags),
 	DEFINE_FLAG(MF, SHOOTABLE, AActor, flags),
-	DEFINE_READONLY_FLAG(MF, NOSECTOR, AActor, flags),
-	DEFINE_READONLY_FLAG(MF, NOBLOCKMAP, AActor, flags),
+	DEFINE_FLAG(MF, NOSECTOR, AActor, flags),
+	DEFINE_FLAG(MF, NOBLOCKMAP, AActor, flags),
 	DEFINE_FLAG(MF, AMBUSH, AActor, flags),
 	DEFINE_FLAG(MF, JUSTHIT, AActor, flags),
 	DEFINE_FLAG(MF, JUSTATTACKED, AActor, flags),
@@ -84,8 +84,8 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF, NOBLOOD, AActor, flags),
 	DEFINE_FLAG(MF, CORPSE, AActor, flags),
 	DEFINE_FLAG(MF, INFLOAT, AActor, flags),
-	DEFINE_READONLY_FLAG(MF, COUNTKILL, AActor, flags),
-	DEFINE_READONLY_FLAG(MF, COUNTITEM, AActor, flags),
+	DEFINE_FLAG(MF, COUNTKILL, AActor, flags),
+	DEFINE_FLAG(MF, COUNTITEM, AActor, flags),
 	DEFINE_FLAG(MF, SKULLFLY, AActor, flags),
 	DEFINE_FLAG(MF, NOTDMATCH, AActor, flags),
 	DEFINE_FLAG(MF, SPAWNSOUNDSOURCE, AActor, flags),
@@ -186,7 +186,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF5, GETOWNER, AActor, flags5),
 	DEFINE_FLAG(MF5, NODROPOFF, AActor, flags5),
 	DEFINE_FLAG(MF5, NOFORWARDFALL, AActor, flags5),
-	DEFINE_READONLY_FLAG(MF5, COUNTSECRET, AActor, flags5),
+	DEFINE_FLAG(MF5, COUNTSECRET, AActor, flags5),
 	DEFINE_FLAG(MF5, NODAMAGE, AActor, flags5),
 	DEFINE_FLAG(MF5, BLOODSPLATTER, AActor, flags5),
 	DEFINE_FLAG(MF5, OLDRADIUSDMG, AActor, flags5),
@@ -677,10 +677,20 @@ void InitThingdef()
 	symt.AddSymbol(new PField(NAME_ReactionTime,	TypeSInt32,		VARF_Native,				myoffsetof(AActor, reactiontime)));
 	symt.AddSymbol(new PField(NAME_MeleeRange,		TypeFloat64,	VARF_Native,				myoffsetof(AActor, meleerange)));
 	symt.AddSymbol(new PField(NAME_Speed,			TypeFloat64,	VARF_Native,				myoffsetof(AActor, Speed)));
-	symt.AddSymbol(new PField(NAME_Threshold,		TypeSInt32,		VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, threshold)));
+	symt.AddSymbol(new PField("FloatSpeed",			TypeFloat64,	VARF_Native,				myoffsetof(AActor, FloatSpeed)));
+	symt.AddSymbol(new PField("PainThreshold",		TypeSInt32,		VARF_Native,				myoffsetof(AActor, PainThreshold)));
+	symt.AddSymbol(new PField("spriteAngle",		TypeFloat64,	VARF_Native,				myoffsetof(AActor, SpriteAngle)));
+	symt.AddSymbol(new PField("spriteRotation",		TypeFloat64,	VARF_Native,				myoffsetof(AActor, SpriteRotation)));
+	symt.AddSymbol(new PField(NAME_Threshold,		TypeSInt32,		VARF_Native,				myoffsetof(AActor, threshold)));
 	symt.AddSymbol(new PField(NAME_DefThreshold,	TypeSInt32,		VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, DefThreshold)));
 	symt.AddSymbol(new PField(NAME_Damage,			TypeSInt32,		VARF_Native|VARF_ReadOnly,  myoffsetof(AActor, DamageVal)));
 	symt.AddSymbol(new PField("visdir",				TypeSInt32,		VARF_Native,				myoffsetof(AActor, visdir)));
+	symt.AddSymbol(new PField("Gravity",			TypeFloat64,	VARF_Native,				myoffsetof(AActor, Gravity)));
+	symt.AddSymbol(new PField("DamageType",			TypeName,		VARF_Native,				myoffsetof(AActor, DamageType)));
+	symt.AddSymbol(new PField("FloatBobPhase",		TypeUInt8,		VARF_Native,				myoffsetof(AActor, FloatBobPhase)));
+	symt.AddSymbol(new PField("RipperLevel",		TypeSInt32,		VARF_Native,				myoffsetof(AActor, RipperLevel)));
+	symt.AddSymbol(new PField("RipLevelMin",		TypeSInt32,		VARF_Native,				myoffsetof(AActor, RipLevelMin)));
+	symt.AddSymbol(new PField("RipLevelMax",		TypeSInt32,		VARF_Native,				myoffsetof(AActor, RipLevelMax)));
 	symt.AddSymbol(new PField(NAME_VisibleStartAngle, TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleStartAngle)));
 	symt.AddSymbol(new PField(NAME_VisibleStartPitch, TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleStartPitch)));
 	symt.AddSymbol(new PField(NAME_VisibleEndAngle,	TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleEndAngle)));
@@ -693,6 +703,8 @@ void InitThingdef()
 	symt.AddSymbol(new PField(NAME_Target,			TypeActor,		VARF_Native,				myoffsetof(AActor, target)));
 	symt.AddSymbol(new PField(NAME_Master,			TypeActor,		VARF_Native,				myoffsetof(AActor, master)));
 	symt.AddSymbol(new PField(NAME_Tracer,			TypeActor,		VARF_Native,				myoffsetof(AActor, tracer)));
+	symt.AddSymbol(new PField("LastHeard",			TypeActor,		VARF_Native,				myoffsetof(AActor, LastHeard)));
+	symt.AddSymbol(new PField("LastEnemy",			TypeActor,		VARF_Native,				myoffsetof(AActor, lastenemy)));
 
 	// synthesize a symbol for each flag. The bounce flags are excluded on purpose.
 	for (size_t i = 0; i < countof(ActorFlagDefs); i++)

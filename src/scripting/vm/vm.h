@@ -925,7 +925,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 //		PARAM_INT_OPT(0,myint) { myint = 55; }
 // Just make sure to fill it in when using these macros, because the compiler isn't likely
 // to give useful error messages if you don't.
-#define PARAM_EXISTS					((p) < numparam && param[p].Type != REGT_NIL)
+#define PARAM_EXISTS(p)					((p) < numparam && param[p].Type != REGT_NIL)
 #define ASSERTINT(p)					assert((p).Type == REGT_INT)
 #define ASSERTFLOAT(p)					assert((p).Type == REGT_FLOAT)
 #define ASSERTSTRING(p)					assert((p).Type == REGT_STRING)
@@ -933,7 +933,18 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define ASSERTPOINTER(p)				assert((p).Type == REGT_POINTER && (p).atag == ATAG_GENERIC)
 #define ASSERTSTATE(p)					assert((p).Type == REGT_POINTER && ((p).atag == ATAG_GENERIC || (p).atag == ATAG_STATE))
 
-#define PARAM_INT_DEF_AT(p,x)			int x; if (PARAM_EXISTS) { ASSERTINT(param[p]); x = param[p].i; } else { ASSERTINT(defaultparam[p]); x = defaultparam[p].i; }
+#define PARAM_INT_DEF_AT(p,x)			int x; if (PARAM_EXISTS(p)) { ASSERTINT(param[p]); x = param[p].i; } else { ASSERTINT(defaultparam[p]); x = defaultparam[p].i; }
+#define PARAM_BOOL_DEF_AT(p,x)			bool x; if (PARAM_EXISTS(p)) { ASSERTINT(param[p]); x = !!param[p].i; } else { ASSERTINT(defaultparam[p]); x = !!defaultparam[p].i; }
+#define PARAM_NAME_DEF_AT(p,x)			FName x; if (PARAM_EXISTS(p)) { ASSERTINT(param[p]); x = ENamedName(param[p].i); } else { ASSERTINT(defaultparam[p]); x = ENamedName(defaultparam[p].i); }
+#define PARAM_SOUND_DEF_AT(p,x)			FSoundID x; if (PARAM_EXISTS(p)) { ASSERTINT(param[p]); x = FSoundID(param[p].i); } else { ASSERTINT(defaultparam[p]); x = FSoundID(defaultparam[p].i); }
+#define PARAM_COLOR_DEF_AT(p,x)			PalEntry x; if (PARAM_EXISTS(p)) { ASSERTINT(param[p]); x = param[p].i; } else { ASSERTINT(defaultparam[p]); x = defaultparam[p].i; }
+#define PARAM_FLOAT_DEF_AT(p,x)			double x; if (PARAM_EXISTS(p)) { ASSERTFLOAT(param[p]); x = param[p].f; } else { ASSERTFLOAT(defaultparam[p]); x = defaultparam[p].f; }
+#define PARAM_ANGLE_DEF_AT(p,x)			DAngle x; if (PARAM_EXISTS(p)) { ASSERTFLOAT(param[p]); x = param[p].f; } else { ASSERTFLOAT(defaultparam[p]); x = defaultparam[p].f; }
+#define PARAM_STRING_DEF_AT(p,x)		FString x; if (PARAM_EXISTS(p)) { ASSERTSTRING(param[p]); x = param[p].s; } else { ASSERTSTRING(defaultparam[p]); x = defaultparam[p].s; }
+#define PARAM_STATE_DEF_AT(p,x)			FState *x; if (PARAM_EXISTS(p)) { ASSERTSTATE(param[p]); x = (FState*)param[p].a; } else { ASSERTSTATE(defaultparam[p]); x = (FState*)defaultparam[p].a; }
+#define PARAM_POINTER_DEF_AT(p,x,t)		t *x; if (PARAM_EXISTS(p)) { ASSERTPOINTER(param[p]); x = (t*)param[p].a; } else { ASSERTPOINTER(defaultparam[p]); x = (t*)defaultparam[p].a; }
+#define PARAM_OBJECT_DEF_AT(p,x,t)		t *x; if (PARAM_EXISTS(p)) { ASSERTOBJECT(param[p]); x = (t*)param[p].a; } else { ASSERTOBJECT(defaultparam[p]); x = (t*)defaultparam[p].a; }
+#define PARAM_CLASS_DEF_AT(p,x,t)		t::MetaClass *x; if (PARAM_EXISTS(p)) { ASSERTOBJECT(param[p]); x = (t::MetaClass*)param[p].a; } else { ASSERTOBJECT(defaultparam[p]); x = (t::MetaClass*)defaultparam[p].a; }
 
 #define PARAM_INT_OPT_AT(p,x)			int x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_INT); x = param[p].i; } else
 #define PARAM_BOOL_OPT_AT(p,x)			bool x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_INT); x = !!param[p].i; } else
@@ -1047,6 +1058,24 @@ struct AFuncDesc
 #define ACTION_CALL_FROM_ACTOR() (stateinfo == nullptr || stateinfo->mStateType == STATE_Actor)
 #define ACTION_CALL_FROM_PSPRITE() (self->player && stateinfo != nullptr && stateinfo->mStateType == STATE_Psprite)
 #define ACTION_CALL_FROM_INVENTORY() (stateinfo != nullptr && stateinfo->mStateType == STATE_StateChain)
+
+// Standard parameters for all action functons
+//   self         - Actor this action is to operate on (player if a weapon)
+//   stateowner   - Actor this action really belongs to (may be an item)
+//   callingstate - State this action was called from
+#define PARAM_ACTION_PROLOGUE(type) \
+	PARAM_PROLOGUE; \
+	PARAM_OBJECT	 (self, type); \
+	PARAM_OBJECT_OPT (stateowner, AActor) { stateowner = self; } \
+	PARAM_STATEINFO_OPT  (stateinfo) { stateinfo = nullptr; } \
+
+// Number of action paramaters
+#define NAP 3
+
+#define PARAM_SELF_PROLOGUE(type) \
+	PARAM_PROLOGUE; \
+	PARAM_OBJECT(self, type);
+
 
 class PFunction;
 

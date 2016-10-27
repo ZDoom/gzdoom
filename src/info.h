@@ -356,21 +356,4 @@ int GetSpriteIndex(const char * spritename, bool add = true);
 TArray<FName> &MakeStateNameList(const char * fname);
 void AddStateLight(FState *state, const char *lname);
 
-// Standard parameters for all action functons
-//   self         - Actor this action is to operate on (player if a weapon)
-//   stateowner   - Actor this action really belongs to (may be an item)
-//   callingstate - State this action was called from
-#define PARAM_ACTION_PROLOGUE(type) \
-	PARAM_PROLOGUE; \
-	PARAM_OBJECT	 (self, type); \
-	PARAM_OBJECT_OPT (stateowner, AActor) { stateowner = self; } \
-	PARAM_STATEINFO_OPT  (stateinfo) { stateinfo = nullptr; } \
-
-// Number of action paramaters
-#define NAP 3
-
-#define PARAM_SELF_PROLOGUE(type) \
-	PARAM_PROLOGUE; \
-	PARAM_OBJECT(self, type);
-
 #endif	// __INFO_H__

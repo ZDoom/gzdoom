@@ -2102,12 +2102,14 @@ void ZCCCompiler::InitFunctions()
 							// TBD: disallow certain types? For now, let everything pass that isn't an array.
 							args.Push(type);
 							argflags.Push(flags);
+							argnames.Push(p->Name);
 
 						}
 						else
 						{
 							args.Push(nullptr);
 							argflags.Push(0);
+							argnames.Push(NAME_None);
 						}
 						argdefaults.Push(vmval);
 						p = static_cast<decltype(p)>(p->SiblingNext);
@@ -2120,7 +2122,7 @@ void ZCCCompiler::InitFunctions()
 
 				if (!(f->Flags & ZCC_Native))
 				{
-					auto code = ConvertAST(f->Body);
+					auto code = ConvertAST(c->Type(), f->Body);
 					if (code != nullptr)
 					{
 						sym->Variants[0].Implementation = FunctionBuildList.AddFunction(sym, code, FStringf("%s.%s", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars()), false);
@@ -2157,7 +2159,7 @@ static bool CheckRandom(ZCC_Expression *duration)
 // Sets up the action function call
 //
 //==========================================================================
-FxExpression *ZCCCompiler::SetupActionFunction(PClassActor *cls, ZCC_TreeNode *af)
+FxExpression *ZCCCompiler::SetupActionFunction(PClass *cls, ZCC_TreeNode *af)
 {
 	// We have 3 cases to consider here:
 	// 1. An action function without parameters. This can be called directly
@@ -2197,8 +2199,7 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClassActor *cls, ZCC_TreeNode *a
 			}
 		}
 	}
-	ConvertClass = cls;
-	return ConvertAST(af);
+	return ConvertAST(cls, af);
 }
 
 //==========================================================================
@@ -2419,8 +2420,9 @@ void ZCCCompiler::CompileStates()
 //
 //==========================================================================
 
-FxExpression *ZCCCompiler::ConvertAST(ZCC_TreeNode *ast)
+FxExpression *ZCCCompiler::ConvertAST(PClass *cls, ZCC_TreeNode *ast)
 {
+	ConvertClass = cls;
 	// there are two possibilities here: either a single function call or a compound statement. For a compound statement we also need to check if the last thing added was a return.
 	if (ast->NodeType == AST_ExprFuncCall)
 	{
@@ -2679,6 +2681,9 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 
 		case PEX_LTGTEQ:
 			return new FxLtGtEq(left, right);
+
+		case PEX_ArrayAccess:
+			return new FxArrayElement(left, right);
 
 			// todo: These do not have representations in DECORATE and no implementation exists yet.
 		case PEX_Concat:

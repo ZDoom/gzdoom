@@ -474,10 +474,11 @@ class FxIntCast : public FxExpression
 {
 	FxExpression *basex;
 	bool NoWarn;
+	bool Explicit;
 
 public:
 
-	FxIntCast(FxExpression *x, bool nowarn);
+	FxIntCast(FxExpression *x, bool nowarn, bool explicitly = false);
 	~FxIntCast();
 	FxExpression *Resolve(FCompileContext&);
 
@@ -559,10 +560,11 @@ class FxTypeCast : public FxExpression
 {
 	FxExpression *basex;
 	bool NoWarn;
+	bool Explicit;
 
 public:
 
-	FxTypeCast(FxExpression *x, PType *type, bool nowarn);
+	FxTypeCast(FxExpression *x, PType *type, bool nowarn, bool explicitly = false);
 	~FxTypeCast();
 	FxExpression *Resolve(FCompileContext&);
 

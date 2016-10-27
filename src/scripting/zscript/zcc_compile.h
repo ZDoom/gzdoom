@@ -109,7 +109,7 @@ private:
 
 	void InitFunctions();
 	void CompileStates();
-	FxExpression *SetupActionFunction(PClassActor *cls, ZCC_TreeNode *sl);
+	FxExpression *SetupActionFunction(PClass *cls, ZCC_TreeNode *sl);
 
 	bool SimplifyingConstant;
 	TArray<ZCC_ConstantDef *> Constants;
@@ -140,7 +140,7 @@ private:
 	void Error(ZCC_TreeNode *node, const char *msg, ...);
 	void MessageV(ZCC_TreeNode *node, const char *txtcolor, const char *msg, va_list argptr);
 
-	FxExpression *ConvertAST(ZCC_TreeNode *ast);
+	FxExpression *ConvertAST(PClass *cclass, ZCC_TreeNode *ast);
 	FxExpression *ConvertNode(ZCC_TreeNode *node);
 	FArgumentList *ConvertNodeList(ZCC_TreeNode *head);
 

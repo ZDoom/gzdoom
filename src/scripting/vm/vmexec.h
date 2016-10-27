@@ -175,13 +175,13 @@ begin:
 	OP(LO):
 		ASSERTA(a); ASSERTA(B); ASSERTKD(C);
 		GETADDR(PB,KC,X_READ_NIL);
-		reg.a[a] = *(void **)ptr;
+		reg.a[a] = GC::ReadBarrier(*(DObject **)ptr);
 		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 	OP(LO_R):
 		ASSERTA(a); ASSERTA(B); ASSERTD(C);
 		GETADDR(PB,RC,X_READ_NIL);
-		reg.a[a] = *(void **)ptr;
+		reg.a[a] = GC::ReadBarrier(*(DObject **)ptr);
 		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 	OP(LP):

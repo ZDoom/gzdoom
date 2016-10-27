@@ -539,12 +539,13 @@ ExpEmit FxBoolCast::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxIntCast::FxIntCast(FxExpression *x, bool nowarn)
+FxIntCast::FxIntCast(FxExpression *x, bool nowarn, bool explicitly)
 : FxExpression(EFX_IntCast, x->ScriptPosition)
 {
 	basex=x;
 	ValueType = TypeSInt32;
 	NoWarn = nowarn;
+	Explicit = explicitly;
 }
 
 //==========================================================================
@@ -571,9 +572,10 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 
 	if (basex->ValueType->GetRegType() == REGT_INT)
 	{
-		if (basex->ValueType != TypeName)
+		if (basex->ValueType != TypeName || Explicit)	// names can be converted to int, but only with an explicit type cast.
 		{
 			FxExpression *x = basex;
+			x->ValueType = ValueType;
 			basex = NULL;
 			delete this;
 			return x;
@@ -582,7 +584,8 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 		{
 			// Ugh. This should abort, but too many mods fell into this logic hole somewhere, so this seroious error needs to be reduced to a warning. :(
 			// At least in ZScript, MSG_OPTERROR always means to report an error, not a warning so the problem only exists in DECORATE.
-			if (!basex->isConstant())	ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got a name");
+			if (!basex->isConstant())	
+				ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got a name");
 			else ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got \"%s\"", static_cast<FxConstant*>(basex)->GetValue().GetName().GetChars());
 			FxExpression * x = new FxConstant(0, ScriptPosition);
 			delete this;
@@ -1062,11 +1065,13 @@ ExpEmit FxSoundCast::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxTypeCast::FxTypeCast(FxExpression *x, PType *type, bool nowarn)
+FxTypeCast::FxTypeCast(FxExpression *x, PType *type, bool nowarn, bool explicitly)
 	: FxExpression(EFX_TypeCast, x->ScriptPosition)
 {
 	basex = x;
 	ValueType = type;
+	NoWarn = nowarn;
+	Explicit = explicitly;
 	assert(ValueType != nullptr);
 }
 
@@ -1126,7 +1131,7 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 	else if (ValueType->IsA(RUNTIME_CLASS(PInt)))
 	{
 		// This is only for casting to actual ints. Subtypes representing an int will be handled elsewhere.
-		FxExpression *x = new FxIntCast(basex, NoWarn);
+		FxExpression *x = new FxIntCast(basex, NoWarn, Explicit);
 		x = x->Resolve(ctx);
 		basex = nullptr;
 		delete this;
@@ -4964,12 +4969,31 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		return x->Resolve(ctx);
 	}
 
-	// Last but not least: Check builtins. The random functions can take a named RNG if specified.
+	// Last but not least: Check builtins and type casts. The random functions can take a named RNG if specified.
 	// Note that for all builtins the used arguments have to be nulled in the ArgList so that they won't get deleted before they get used.
 	FxExpression *func = nullptr;
 
 	switch (MethodName)
 	{
+	case NAME_Int:
+	case NAME_uInt:
+	case NAME_Double:
+	case NAME_Name:
+	case NAME_Color:
+	case NAME_Sound:
+		if (CheckArgSize(MethodName, ArgList, 1, 1, ScriptPosition))
+		{
+			PType *type = MethodName == NAME_Int ? TypeSInt32 :
+				MethodName == NAME_uInt ? TypeUInt32 :
+				MethodName == NAME_Double ? TypeFloat64 :
+				MethodName == NAME_Name ? TypeName :
+				MethodName == NAME_Color ? TypeColor : (PType*)TypeSound;
+
+			func = new FxTypeCast((*ArgList)[0], type, true, true);
+			(*ArgList)[0] = nullptr;
+		}
+		break;
+
 	case NAME_Random:
 		if (CheckArgSize(NAME_Random, ArgList, 2, 2, ScriptPosition))
 		{
@@ -5044,6 +5068,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		break;
 
 	default:
+		// todo: Check for class type casts
 		break;
 	}
 	if (func != nullptr)
@@ -5216,8 +5241,11 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 		for (unsigned i = 0; i < ArgList->Size(); i++)
 		{
 			(*ArgList)[i] = (*ArgList)[i]->Resolve(ctx);
-			if ((*ArgList)[i] == NULL) failed = true;
-			if (Special < 0 && i == 0)
+			if ((*ArgList)[i] == NULL)
+			{
+				failed = true;
+			}
+			else if (Special < 0 && i == 0)
 			{
 				if ((*ArgList)[i]->ValueType != TypeName)
 				{
@@ -5409,10 +5437,16 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 		return nullptr;
 	}
 
-	if (ArgList != NULL)
+	if (ArgList != nullptr)
 	{
 		bool foundvarargs = false;
 		PType * type = nullptr;
+		if (ArgList->Size() + implicit > proto->ArgumentTypes.Size())
+		{
+			ScriptPosition.Message(MSG_ERROR, "Too many arguments in call to %s", Function->SymbolName.GetChars());
+			delete this;
+			return nullptr;
+		}
 		for (unsigned i = 0; i < ArgList->Size(); i++)
 		{
 			// Varargs must all have the same type as the last typed argument. A_Jump is the only function using it.
@@ -5476,24 +5510,23 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 		assert(selfemit.RegType == REGT_POINTER);
 		build->Emit(OP_PARAM, 0, selfemit.RegType, selfemit.RegNum);
 		count += 1;
-	}
-	if (Function->Variants[0].Flags & VARF_Action)
-	{
-		static_assert(NAP == 3, "This code needs to be updated if NAP changes");
-		if (build->IsActionFunc)
+		if (Function->Variants[0].Flags & VARF_Action)
 		{
-			build->Emit(OP_PARAM, 0, REGT_POINTER, 1);
-			build->Emit(OP_PARAM, 0, REGT_POINTER, 2);
+			static_assert(NAP == 3, "This code needs to be updated if NAP changes");
+			if (build->IsActionFunc && selfemit.RegNum == 0)	// only pass this function's stateowner and stateinfo if the subfunction is run in self's context.
+			{
+				build->Emit(OP_PARAM, 0, REGT_POINTER, 1);
+				build->Emit(OP_PARAM, 0, REGT_POINTER, 2);
+			}
+			else
+			{
+				// pass self as stateowner, otherwise all attempts of the subfunction to retrieve a state from a name would fail.
+				build->Emit(OP_PARAM, 0, selfemit.RegType, selfemit.RegNum);
+				build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(nullptr, ATAG_GENERIC));
+			}
+			count += 2;
 		}
-		else
-		{
-			int null = build->GetConstantAddress(nullptr, ATAG_GENERIC);
-			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
-			build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, null);
-		}
-		count += 2;
 	}
-
 	// Emit code to pass explicit parameters
 	if (ArgList != NULL)
 	{

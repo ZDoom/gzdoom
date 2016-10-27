@@ -479,7 +479,7 @@ class Gauntlets : Weapon
 		GAUN A 1 A_Raise;
 		Loop;
 	Fire:
-		GAUN B 4 A_PlayWeaponSound("weapons/gauntletsuse");
+		GAUN B 4 A_PlaySound("weapons/gauntletsuse", CHAN_WEAPON);
 		GAUN C 4;
 	Hold:
 		GAUN DEF 4 BRIGHT A_GauntletAttack(0);
@@ -512,7 +512,7 @@ class GauntletsPowered : Gauntlets
 		GAUN G 1 A_Raise;
 		Loop;
 	Fire:
-		GAUN J 4 A_PlayWeaponSound("weapons/gauntletsuse");
+		GAUN J 4 A_PlaySound("weapons/gauntletsuse", CHAN_WEAPON);
 		GAUN K 4;
 	Hold:
 		GAUN LMN 4 BRIGHT A_GauntletAttack(1);

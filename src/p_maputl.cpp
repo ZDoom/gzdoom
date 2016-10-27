@@ -386,6 +386,14 @@ bool AActor::FixMapthingPos()
 	return success;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, UnlinkFromWorld)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->UnlinkFromWorld();
+	return 0;
+}
+
+
 //==========================================================================
 //
 // P_SetThingPosition
@@ -506,6 +514,13 @@ void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
 	}
 	// Portal links cannot be done unless the level is fully initialized.
 	if (!spawningmapthing) UpdateRenderSectorList();
+}
+
+DEFINE_ACTION_FUNCTION(AActor, LinkToWorld)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->LinkToWorld();
+	return 0;
 }
 
 void AActor::SetOrigin(double x, double y, double z, bool moving)

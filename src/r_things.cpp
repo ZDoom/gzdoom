@@ -255,17 +255,15 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span, bool us
 {
 	int pixelsize = r_swtruecolor ? 4 : 1;
 	int inputpixelsize = (r_swtruecolor && !drawer_needs_pal_input) ? 4 : 1;
-	const fixed_t centeryfrac = FLOAT2FIXED(CenterY);
-	const fixed_t texturemid = FLOAT2FIXED(dc_texturemid);
 	while (span->Length != 0)
 	{
 		const int length = span->Length;
 		const int top = span->TopOffset;
 
 		// calculate unclipped screen coordinates for post
-		dc_yl = xs_RoundToInt(sprtopscreen + spryscale * top);
-		dc_yh = xs_RoundToInt(sprtopscreen + spryscale * (top + length)) - 1;
-
+		dc_yl = (int)(sprtopscreen + spryscale * top);
+		dc_yh = (int)(sprtopscreen + spryscale * (top + length)) - 1;
+		
 		if (sprflipvert)
 		{
 			swapvalues (dc_yl, dc_yh);
@@ -282,49 +280,8 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span, bool us
 
 		if (dc_yl <= dc_yh)
 		{
-			if (sprflipvert)
-			{
-				dc_texturefrac = (dc_yl*dc_iscale) - (top << FRACBITS)
-					- FixedMul (centeryfrac, dc_iscale) - texturemid;
-				const fixed_t maxfrac = length << FRACBITS;
-				while (dc_texturefrac >= maxfrac)
-				{
-					if (++dc_yl > dc_yh)
-						goto nextpost;
-					dc_texturefrac += dc_iscale;
-				}
-				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
-				while (endfrac < 0)
-				{
-					if (--dc_yh < dc_yl)
-						goto nextpost;
-					endfrac -= dc_iscale;
-				}
-			}
-			else
-			{
-				dc_texturefrac = texturemid - (top << FRACBITS)
-					+ (dc_yl*dc_iscale) - FixedMul (centeryfrac-FRACUNIT, dc_iscale);
-				while (dc_texturefrac < 0)
-				{
-					if (++dc_yl > dc_yh)
-						goto nextpost;
-					dc_texturefrac += dc_iscale;
-				}
-				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
-				const fixed_t maxfrac = length << FRACBITS;
-				if (dc_yh < mfloorclip[dc_x]-1 && endfrac < maxfrac - dc_iscale)
-				{
-					dc_yh++;
-				}
-				else while (endfrac >= maxfrac)
-				{
-					if (--dc_yh < dc_yl)
-						goto nextpost;
-					endfrac -= dc_iscale;
-				}
-			}
-			dc_source = column + top * inputpixelsize;
+			dc_texturefrac = FLOAT2FIXED((dc_yl + 0.5 - sprtopscreen) / spryscale);
+			dc_source = column;
 			dc_dest = (ylookup[dc_yl] + dc_x) * pixelsize + dc_destorg;
 			dc_count = dc_yh - dc_yl + 1;
 			if (useRt)
@@ -332,7 +289,6 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span, bool us
 			else
 				colfunc ();
 		}
-nextpost:
 		span++;
 	}
 
@@ -1006,21 +962,23 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		const double thingxscalemul = spriteScale.X / tex->Scale.X;
 
 		tx -= ((renderflags & RF_XFLIP) ? (tex->GetWidth() - tex->LeftOffset - 1) : tex->LeftOffset) * thingxscalemul;
-		x1 = centerx + xs_RoundToInt(tx * xscale);
+		double dtx1 = tx * xscale;
+		x1 = centerx + xs_RoundToInt(dtx1);
 
 		// off the right side?
 		if (x1 >= WindowRight)
 			return;
 
 		tx += tex->GetWidth() * thingxscalemul;
-		x2 = centerx + xs_RoundToInt(tx * xscale);
+		double dtx2 = tx * xscale;
+		x2 = centerx + xs_RoundToInt(dtx2);
 
 		// off the left side or too small?
 		if ((x2 < WindowLeft || x2 <= x1))
 			return;
 
 		xscale = spriteScale.X * xscale / tex->Scale.X;
-		iscale = (tex->GetWidth() << FRACBITS) / (x2 - x1);
+		iscale = (fixed_t)(tex->GetWidth() / (dtx2 - dtx1) * FRACUNIT);
 
 		double yscale = spriteScale.Y / tex->Scale.Y;
 
@@ -1047,9 +1005,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			vis->startfrac = 0;
 			vis->xiscale = iscale;
 		}
-
-		if (vis->x1 > x1)
-			vis->startfrac += vis->xiscale * (vis->x1 - x1);
+		
+		vis->startfrac += (fixed_t)(vis->xiscale * (vis->x1 - centerx - dtx1 + 0.5 * thingxscalemul));
 	}
 	else
 	{

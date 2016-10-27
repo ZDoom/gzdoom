@@ -124,7 +124,8 @@ std2:
 		'sound'						{ RET(TK_Sound); }
 		'state'						{ RET(TK_State); }
 		'color'						{ RET(TK_Color); }
-		'vector'					{ RET(TK_Vector); }
+		'vector2'					{ RET(TK_Vector2); }
+		'vector3'					{ RET(TK_Vector3); }
 		'map'						{ RET(TK_Map); }
 		'array'						{ RET(TK_Array); }
 		'in'						{ RET(TK_In); }

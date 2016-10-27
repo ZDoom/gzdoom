@@ -656,7 +656,8 @@ type_name1(X) ::= int_type(X).
 type_name1(X) ::= FLOAT(T).					{ X.Int = ZCC_FloatAuto; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= DOUBLE(T).				{ X.Int = ZCC_Float64; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= STRING(T).				{ X.Int = ZCC_String; X.SourceLoc = T.SourceLoc; }
-type_name1(X) ::= VECTOR(T) vector_size(A).	{ X.Int = A.Int; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= VECTOR2(T).				{ X.Int = ZCC_Vector2; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= VECTOR3(T).				{ X.Int = ZCC_Vector3; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= NAME(T).					{ X.Int = ZCC_Name; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= SOUND(T).					{ X.Int = ZCC_Sound; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= STATE(T).					{ X.Int = ZCC_State; X.SourceLoc = T.SourceLoc; }
@@ -686,30 +687,10 @@ type_name(X) ::= DOT dottable_id(A).
 	X = type;
 }
 
-/* Vectors can be 2, 3, or 4 entries long. Default is a 3D vector.
- * (Well, actually, I'm not sure if 4D ones are going to happen
- * straight away.)
- */
-%token_class intconst INTCONST|UINTCONST.
-vector_size(X) ::= .						{ X.Int = ZCC_Vector3; X.SourceLoc = stat->sc->GetMessageLine(); }
-vector_size(X) ::= LT intconst(A) GT.
-{
-	if (A.Int >= 2 && A.Int <= 4)
-	{
-		X.Int = ZCC_Vector2 + A.Int - 2;
-	}
-	else
-	{
-		X.Int = ZCC_Vector3;
-		stat->sc->ScriptMessage("Invalid vector size %d\n", A.Int);
-	}
-	X.SourceLoc = A.SourceLoc;
-}
-
 /* Type names can also be used as identifiers in contexts where type names
  * are not normally allowed. */
 %fallback IDENTIFIER
-	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR NAME MAP ARRAY VOID.
+	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR2 VECTOR3 NAME MAP ARRAY VOID.
 
 /* Aggregate types */
 %type aggregate_type {ZCC_Type *}
@@ -985,6 +966,29 @@ primary(X) ::= SUPER(T).
 	X = expr;
 }
 primary(X) ::= constant(A).				{ X = A; /*X-overwrites-A*/ }
+
+primary(XX) ::= LPAREN expr(A) COMMA expr(B) COMMA expr(C) RPAREN.
+{
+	NEW_AST_NODE(VectorInitializer, expr, A);
+	expr->Operation = PEX_Vector;
+	expr->Type = TypeVector3;
+	expr->X = A;
+	expr->Y = B;
+	expr->Z = C;
+	XX = expr;
+}
+
+
+primary(X) ::= LPAREN expr(A) COMMA expr(B) RPAREN.
+{
+	NEW_AST_NODE(VectorInitializer, expr, A);
+	expr->Operation = PEX_Vector;
+	expr->Type = TypeVector2;
+	expr->X = A;
+	expr->Y = B;
+	expr->Z = nullptr;
+	X = expr;
+}
 
 primary(X) ::= LPAREN expr(A) RPAREN.
 {

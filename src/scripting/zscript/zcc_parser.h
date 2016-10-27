@@ -98,6 +98,7 @@ enum EZCCTreeNodeType
 	AST_Default,
 	AST_FlagStmt,
 	AST_PropertyStmt,
+	AST_VectorInitializer,
 
 	NUM_AST_NODE_TYPES
 };
@@ -383,6 +384,11 @@ struct ZCC_ExprTrinary : ZCC_Expression
 	ZCC_Expression *Test;
 	ZCC_Expression *Left;
 	ZCC_Expression *Right;
+};
+
+struct ZCC_VectorInitializer : ZCC_Expression
+{
+	ZCC_Expression *X, *Y, *Z;
 };
 
 struct ZCC_Statement : ZCC_TreeNode

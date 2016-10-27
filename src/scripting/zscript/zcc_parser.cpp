@@ -141,7 +141,8 @@ static void InitTokenMap()
 	TOKENDEF2(TK_Float,			ZCC_FLOAT,		NAME_Float);
 	TOKENDEF2(TK_Double,		ZCC_DOUBLE,		NAME_Double);
 	TOKENDEF2(TK_String,		ZCC_STRING,		NAME_String);
-	TOKENDEF2(TK_Vector,		ZCC_VECTOR,		NAME_Vector);
+	TOKENDEF2(TK_Vector2,		ZCC_VECTOR2,	NAME_Vector2);
+	TOKENDEF2(TK_Vector3,		ZCC_VECTOR3,	NAME_Vector3);
 	TOKENDEF2(TK_Name,			ZCC_NAME,		NAME_Name);
 	TOKENDEF2(TK_Map,			ZCC_MAP,		NAME_Map);
 	TOKENDEF2(TK_Array,			ZCC_ARRAY,		NAME_Array);

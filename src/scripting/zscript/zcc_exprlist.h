@@ -9,6 +9,7 @@ xx(FuncCall,		'(')
 xx(ArrayAccess,		TK_Array)
 xx(MemberAccess,	'.')
 xx(TypeRef,			TK_Class)
+xx(Vector,			TK_Vector2)
 
 xx(PostInc,			TK_Incr)
 xx(PostDec,			TK_Decr)

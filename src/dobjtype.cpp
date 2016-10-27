@@ -628,6 +628,8 @@ void PType::StaticInit()
 	TypeVector3->AddField(NAME_X, TypeFloat64);
 	TypeVector3->AddField(NAME_Y, TypeFloat64);
 	TypeVector3->AddField(NAME_Z, TypeFloat64);
+	// allow accessing xy as a vector2. This is marked native because it's not supposed to be serialized.
+	TypeVector3->Symbols.AddSymbol(new PField(NAME_XY, TypeVector2, VARF_Native, 0));
 	TypeTable.AddType(TypeVector3);
 
 

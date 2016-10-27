@@ -141,54 +141,14 @@ void A_PainShootSkull (AActor *self, DAngle Angle, PClassActor *spawntype, int f
 }
 
 
-//
-// A_PainAttack
-// Spawn a lost soul and launch it at the target
-// 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PainAttack)
+DEFINE_ACTION_FUNCTION(AActor, A_PainShootSkull)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-
-	if (!self->target)
-		return 0;
-
-	PARAM_CLASS_OPT (spawntype, AActor)	{ spawntype = NULL; }
-	PARAM_ANGLE_OPT (angle)				{ angle = 0.; }
-	PARAM_INT_OPT   (flags)				{ flags = 0; }
-	PARAM_INT_OPT   (limit)				{ limit = -1; }
-
-	if (!(flags & PAF_AIMFACING))
-		A_FaceTarget (self);
-	A_PainShootSkull (self, self->Angles.Yaw + angle, spawntype, flags, limit);
+	PARAM_CLASS(spawntype, AActor);
+	PARAM_FLOAT(angle);
+	PARAM_INT_DEF(flags);
+	PARAM_INT_DEF(limit);
+	A_PainShootSkull(self, angle, spawntype, flags, limit);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DualPainAttack)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_OPT(spawntype, AActor) { spawntype = NULL; }
-
-	if (!self->target)
-		return 0;
-
-	A_FaceTarget (self);
-	A_PainShootSkull (self, self->Angles.Yaw + 45., spawntype);
-	A_PainShootSkull (self, self->Angles.Yaw - 45., spawntype);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PainDie)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_OPT(spawntype, AActor) { spawntype = NULL; }
-
-	if (self->target != NULL && self->IsFriend(self->target))
-	{ // And I thought you were my friend!
-		self->flags &= ~MF_FRIENDLY;
-	}
-	A_Unblock(self, true);
-	A_PainShootSkull (self, self->Angles.Yaw + 90, spawntype);
-	A_PainShootSkull (self, self->Angles.Yaw + 180, spawntype);
-	A_PainShootSkull (self, self->Angles.Yaw + 270, spawntype);
-	return 0;
-}

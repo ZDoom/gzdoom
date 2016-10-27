@@ -1148,7 +1148,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BulletAttack)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Jump)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT_OPT(maxchance) { maxchance = 256; }
+	PARAM_INT_DEF(maxchance);
 
 	paramnum++;		// Increment paramnum to point at the first jump target
 	int count = numparam - paramnum;
@@ -2685,7 +2685,7 @@ bool DoTakeInventory(AActor *receiver, bool orresult, VM_ARGS)
 	}
 	if (!orresult)
 	{
-		PARAM_INT_OPT(setreceiver)	{ setreceiver = AAPTR_DEFAULT; }
+		PARAM_INT_DEF(setreceiver);
 		receiver = COPY_AAPTR(receiver, setreceiver);
 	}
 	if (receiver == NULL)
@@ -7012,52 +7012,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CopySpriteFrame)
 	
 	if (!(flags & CPSF_NOSPRITE))	copyto->sprite = copyfrom->sprite;
 	if (!(flags & CPSF_NOFRAME))	copyto->frame = copyfrom->frame;
-	ACTION_RETURN_BOOL(true);
-}
-
-//==========================================================================
-//
-// A_SetSpriteAngle(angle, ptr)
-//
-// Specifies which angle the actor must always draw its sprite from.
-//==========================================================================
-
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpriteAngle)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT_DEF(angle);
-	PARAM_INT_DEF(ptr);
-
-	AActor *mobj = COPY_AAPTR(self, ptr);
-
-	if (mobj == nullptr)
-	{
-		ACTION_RETURN_BOOL(false);
-	}
-	mobj->SpriteAngle = angle;
-	ACTION_RETURN_BOOL(true);
-}
-
-//==========================================================================
-//
-// A_SetSpriteRotation(angle, ptr)
-//
-// Specifies how much to fake a sprite rotation.
-//==========================================================================
-
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpriteRotation)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_ANGLE_OPT(angle) { angle = 0.; }
-	PARAM_INT_OPT(ptr) { ptr = AAPTR_DEFAULT; }
-
-	AActor *mobj = COPY_AAPTR(self, ptr);
-
-	if (mobj == nullptr)
-	{
-		ACTION_RETURN_BOOL(false);
-	}
-	mobj->SpriteRotation = angle;
 	ACTION_RETURN_BOOL(true);
 }
 

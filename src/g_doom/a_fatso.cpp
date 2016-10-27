@@ -30,11 +30,11 @@ enum
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_OPT	(spawntype, AActor)		{ spawntype = NULL; }
-	PARAM_INT_OPT	(n)						{ n = 0; }
-	PARAM_INT_OPT	(flags)					{ flags = 0; }
-	PARAM_FLOAT_OPT	(vrange)				{ vrange = 4; }
-	PARAM_FLOAT_OPT	(hrange)				{ hrange = 0.5; }
+	PARAM_CLASS_DEF	(spawntype, AActor)	
+	PARAM_INT_DEF	(n)					
+	PARAM_INT_DEF	(flags)				
+	PARAM_FLOAT_DEF	(vrange)			
+	PARAM_FLOAT_DEF	(hrange)			
 
 	int i, j;
 

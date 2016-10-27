@@ -147,8 +147,8 @@ enum
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_AlertMonsters)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT_OPT(maxdist) { maxdist = 0; }
-	PARAM_INT_OPT(Flags) { Flags = 0; }
+	PARAM_FLOAT_DEF(maxdist);
+	PARAM_INT_DEF(Flags);
 
 	AActor * target = NULL;
 	AActor * emitter = self;

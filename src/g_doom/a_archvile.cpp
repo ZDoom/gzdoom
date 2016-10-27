@@ -50,7 +50,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCrackle)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Fire)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT_OPT(height)		{ height = 0; }
+	PARAM_FLOAT_DEF(height);
 	
 	A_Fire(self, height);
 	return 0;
@@ -81,7 +81,7 @@ void A_Fire(AActor *self, double height)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileTarget)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_OPT(fire, AActor)	{ fire = PClass::FindActor("ArchvileFire"); }
+	PARAM_CLASS_DEF(fire, AActor);
 
 	AActor *fog;
 		
@@ -112,13 +112,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileTarget)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_SOUND_OPT	(snd)		{ snd = "vile/stop"; }
-	PARAM_INT_OPT	(dmg)		{ dmg = 20; }
-	PARAM_INT_OPT	(blastdmg)	{ blastdmg = 70; }
-	PARAM_INT_OPT	(blastrad)	{ blastrad = 70; }
-	PARAM_FLOAT_OPT	(thrust)	{ thrust = 1; }
-	PARAM_NAME_OPT	(dmgtype)	{ dmgtype = NAME_Fire; }
-	PARAM_INT_OPT	(flags)		{ flags = 0; }
+	PARAM_SOUND_DEF	(snd)		
+	PARAM_INT_DEF	(dmg)		
+	PARAM_INT_DEF	(blastdmg)	
+	PARAM_INT_DEF	(blastrad)	
+	PARAM_FLOAT_DEF	(thrust)	
+	PARAM_NAME_DEF	(dmgtype)	
+	PARAM_INT_DEF	(flags)		
 
 	AActor *fire, *target;
 		

@@ -1923,8 +1923,8 @@ PClassWeapon *Net_ReadWeapon(BYTE **stream)
 DEFINE_ACTION_FUNCTION_PARAMS(AWeapon, A_ZoomFactor)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT_OPT	(zoom)	{ zoom = 1; }
-	PARAM_INT_OPT	(flags)	{ flags = 0; }
+	PARAM_FLOAT_DEF(zoom);
+	PARAM_INT_DEF(flags);
 
 	if (self->player != NULL && self->player->ReadyWeapon != NULL)
 	{

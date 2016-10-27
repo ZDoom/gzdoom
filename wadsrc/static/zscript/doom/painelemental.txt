@@ -51,3 +51,45 @@ class PainElemental : Actor
 		Goto See;
 	}
 }
+
+
+//===========================================================================
+//
+// Code (must be attached to Actor)
+//
+//===========================================================================
+
+extend class Actor
+{
+	native void A_PainShootSkull(Class<Actor> spawntype, float angle, int flags = 0, int limit = -1);
+
+	void A_PainAttack(class<Actor> spawntype = "LostSoul", float addangle = 0, int flags = 0, int limit = -1)
+	{
+		if (target)
+		{
+			A_FaceTarget();
+			A_PainShootSkull(spawntype, angle + addangle, flags, limit);
+		}
+	}
+	void A_DualPainAttack(class<Actor> spawntype = "LostSoul")
+	{
+		if (target)
+		{
+			A_FaceTarget();
+			A_PainShootSkull(spawntype, angle + 45);
+			A_PainShootSkull(spawntype, angle - 45);
+		}
+	}
+	
+	void A_PainDie(class<Actor> spawntype = "LostSoul")
+	{
+		if (target && IsFriend(target))
+		{ // And I thought you were my friend!
+			bFriendly = false;
+		}
+		A_NoBlocking();
+		A_PainShootSkull(spawntype, angle + 90);
+		A_PainShootSkull(spawntype, angle + 180);
+		A_PainShootSkull(spawntype, angle + 270);
+	}
+}

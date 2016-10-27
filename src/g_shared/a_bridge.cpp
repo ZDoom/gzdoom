@@ -122,7 +122,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BridgeInit)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_OPT(balltype, AActor)	{ balltype = NULL; }
+	PARAM_CLASS_DEF(balltype, AActor);
 
 	AActor *ball;
 

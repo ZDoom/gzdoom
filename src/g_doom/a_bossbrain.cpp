@@ -112,7 +112,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainDie)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_OPT(spawntype, AActor) { spawntype = NULL; }
+	PARAM_CLASS_DEF(spawntype, AActor);
 
 	DSpotState *state = DSpotState::GetSpotState();
 	AActor *targ;
@@ -298,7 +298,7 @@ static void SpawnFly(AActor *self, PClassActor *spawntype, FSoundID sound)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnFly)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_OPT	(spawntype, AActor)	{ spawntype = NULL; }
+	PARAM_CLASS_DEF(spawntype, AActor);
 
 	FSoundID sound;
 

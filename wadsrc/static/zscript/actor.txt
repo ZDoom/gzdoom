@@ -66,6 +66,7 @@ class Actor : Thinker native
 	native void LinkToWorld();
 	native void UnlinkFromWorld();
 	native void VelFromAngle(float speed = 0, float angle = 0);
+	native bool isFriend(Actor other);
 
 	// DECORATE compatible functions
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
@@ -173,6 +174,22 @@ class Actor : Thinker native
 		DamageMobj(null, null, health, damagetype, DMG_FORCED);
 	}
 
+
+	native void A_Face(Actor faceto, float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0);
+
+	void A_FaceTarget(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0)
+	{
+		A_Face(target, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_ofs);
+	}
+	void A_FaceTracer(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0)
+	{
+		A_Face(tracer, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_ofs);
+	}
+	void A_FaceMaster(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0)
+	{
+		A_Face(master, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_ofs);
+	}
+
 	// Action functions
 	// Meh, MBF redundant functions. Only for DeHackEd support.
 	native bool A_LineEffect(int boomspecial = 0, int tag = 0);
@@ -185,9 +202,6 @@ class Actor : Thinker native
 	native void A_XScream();
 	native void A_Look();
 	native void A_Chase(state melee = null, state missile = null, int flags = 0);
-	native void A_FaceTarget(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0);
-	native void A_FaceTracer(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0);
-	native void A_FaceMaster(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0);
 	native void A_Scream();
 	native void A_VileChase();
 	native void A_VileStart();
@@ -203,9 +217,6 @@ class Actor : Thinker native
 	native void A_BossDeath();
 	native void A_SkullAttack(float speed = 20);
 	native void A_BetaSkullAttack();
-	native void A_PainAttack(class<Actor> spawntype = "LostSoul", float angle = 0, int flags = 0, int limit = -1);
-	native void A_DualPainAttack(class<Actor> spawntype = "LostSoul");
-	native void A_PainDie(class<Actor> spawntype = "LostSoul");
 	native void A_KeenDie(int doortag = 666);
 	native void A_BrainPain();
 	native void A_BrainScream();

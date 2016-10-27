@@ -1922,12 +1922,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT_OPT	(flags)			{ flags = 0; }
-	PARAM_FLOAT_OPT	(minseedist)	{ minseedist = 0; }
-	PARAM_FLOAT_OPT	(maxseedist)	{ maxseedist = 0; }
-	PARAM_FLOAT_OPT (maxheardist)	{ maxheardist = 0; }
-	PARAM_ANGLE_OPT (fov)			{ fov = 0.; }
-	PARAM_STATE_OPT	(seestate)		{ seestate = NULL; }
+	PARAM_INT_DEF	(flags)			
+	PARAM_FLOAT_DEF	(minseedist)	
+	PARAM_FLOAT_DEF	(maxseedist)	
+	PARAM_FLOAT_DEF (maxheardist)	
+	PARAM_ANGLE_DEF (fov)			
+	PARAM_STATE_DEF	(seestate)		
 
 	AActor *targ = NULL; // Shuts up gcc
 	double dist;
@@ -2139,7 +2139,7 @@ enum ChaseFlags
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Wander)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT_OPT(flags) { flags = 0; }	
+	PARAM_INT_DEF(flags);
 	A_Wander(self, flags);
 	return 0;
 }
@@ -2781,9 +2781,9 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Chase)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE_OPT	(melee)		{ melee = NULL; }
-	PARAM_STATE_OPT	(missile)	{ missile = NULL; }
-	PARAM_INT_OPT	(flags)		{ flags = 0; }
+	PARAM_STATE_DEF	(melee)		
+	PARAM_STATE_DEF	(missile)	
+	PARAM_INT_DEF	(flags)		
 
 	if (numparam > 1)
 	{
@@ -2822,8 +2822,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ExtChase)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL		(domelee);
 	PARAM_BOOL		(domissile);
-	PARAM_BOOL_OPT	(playactive)	{ playactive = true; }
-	PARAM_BOOL_OPT	(nightmarefast)	{ nightmarefast = false; }
+	PARAM_BOOL_DEF	(playactive);
+	PARAM_BOOL_DEF	(nightmarefast);
 
 	// Now that A_Chase can handle state label parameters, this function has become rather useless...
 	A_DoChase(stack, self, false,
@@ -2957,45 +2957,18 @@ void A_FaceTarget(AActor *self)
 	A_Face(self, self->target);
 }
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Face)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_ANGLE_OPT(max_turn)		{ max_turn = 0.; }
-	PARAM_ANGLE_OPT(max_pitch)		{ max_pitch = 270.; }
-	PARAM_ANGLE_OPT(ang_offset)	{ ang_offset = 0.; }
-	PARAM_ANGLE_OPT(pitch_offset)	{ pitch_offset = 0.; }
-	PARAM_INT_OPT(flags)			{ flags = 0; }
-	PARAM_FLOAT_OPT(z_add)			{ z_add = 0; }
+	PARAM_OBJECT(faceto, AActor)
+	PARAM_ANGLE_DEF(max_turn)		
+	PARAM_ANGLE_DEF(max_pitch)		
+	PARAM_ANGLE_DEF(ang_offset)		
+	PARAM_ANGLE_DEF(pitch_offset)	
+	PARAM_INT_DEF(flags)			
+	PARAM_FLOAT_DEF(z_add)			
 
-	A_Face(self, self->target, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_add);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMaster)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_ANGLE_OPT(max_turn) { max_turn = 0.; }
-	PARAM_ANGLE_OPT(max_pitch) { max_pitch = 270.; }
-	PARAM_ANGLE_OPT(ang_offset) { ang_offset = 0.; }
-	PARAM_ANGLE_OPT(pitch_offset) { pitch_offset = 0.; }
-	PARAM_INT_OPT(flags) { flags = 0; }
-	PARAM_FLOAT_OPT(z_add) { z_add = 0; }
-
-	A_Face(self, self->master, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_add);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTracer)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_ANGLE_OPT(max_turn) { max_turn = 0.; }
-	PARAM_ANGLE_OPT(max_pitch) { max_pitch = 270.; }
-	PARAM_ANGLE_OPT(ang_offset) { ang_offset = 0.; }
-	PARAM_ANGLE_OPT(pitch_offset) { pitch_offset = 0.; }
-	PARAM_INT_OPT(flags) { flags = 0; }
-	PARAM_FLOAT_OPT(z_add) { z_add = 0; }
-
-	A_Face(self, self->tracer, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_add);
+	A_Face(self, faceto, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_add);
 	return 0;
 }
 

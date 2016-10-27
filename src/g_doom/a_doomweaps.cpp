@@ -116,17 +116,17 @@ enum SAW_Flags
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_SOUND_OPT	(fullsound)			{ fullsound = "weapons/sawfull"; }
-	PARAM_SOUND_OPT	(hitsound)			{ hitsound = "weapons/sawhit"; }
-	PARAM_INT_OPT	(damage)			{ damage = 2; }
-	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = NULL; }
-	PARAM_INT_OPT	(flags)				{ flags = 0; }
-	PARAM_FLOAT_OPT	(range)				{ range = 0; }
-	PARAM_ANGLE_OPT	(spread_xy)			{ spread_xy = 2.8125; }
-	PARAM_ANGLE_OPT	(spread_z)			{ spread_z = 0.; }
-	PARAM_FLOAT_OPT	(lifesteal)			{ lifesteal = 0; }
-	PARAM_INT_OPT	(lifestealmax)		{ lifestealmax = 0; }
-	PARAM_CLASS_OPT	(armorbonustype, ABasicArmorBonus)	{ armorbonustype = NULL; }
+	PARAM_SOUND_DEF	(fullsound)			
+	PARAM_SOUND_DEF	(hitsound)			
+	PARAM_INT_DEF	(damage)			
+	PARAM_CLASS_DEF	(pufftype, AActor)	
+	PARAM_INT_DEF	(flags)				
+	PARAM_FLOAT_DEF	(range)				
+	PARAM_ANGLE_DEF	(spread_xy)			
+	PARAM_ANGLE_DEF	(spread_z)			
+	PARAM_FLOAT_DEF	(lifesteal)			
+	PARAM_INT_DEF	(lifestealmax)		
+	PARAM_CLASS_DEF	(armorbonustype, ABasicArmorBonus)
 
 	DAngle angle;
 	DAngle slope;
@@ -480,7 +480,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMissile)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireSTGrenade)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_CLASS_OPT(grenade, AActor)	{ grenade = PClass::FindActor("Grenade"); }
+	PARAM_CLASS_DEF(grenade, AActor);
 
 	player_t *player;
 
@@ -639,14 +639,14 @@ enum BFG_Flags
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_OPT	(spraytype, AActor)		{ spraytype = NULL; }
-	PARAM_INT_OPT	(numrays)				{ numrays = 0; }
-	PARAM_INT_OPT	(damagecnt)				{ damagecnt = 0; }
-	PARAM_ANGLE_OPT	(angle)					{ angle = 0.; }
-	PARAM_FLOAT_OPT	(distance)				{ distance = 0; }
-	PARAM_ANGLE_OPT	(vrange)				{ vrange = 0.; }
-	PARAM_INT_OPT	(defdamage)				{ defdamage = 0; }
-	PARAM_INT_OPT	(flags)					{ flags = 0; }
+	PARAM_CLASS_DEF	(spraytype, AActor)
+	PARAM_INT_DEF	(numrays)			
+	PARAM_INT_DEF	(damagecnt)			
+	PARAM_ANGLE_DEF	(angle)				
+	PARAM_FLOAT_DEF	(distance)			
+	PARAM_ANGLE_DEF	(vrange)			
+	PARAM_INT_DEF	(defdamage)			
+	PARAM_INT_DEF	(flags)				
 
 	int 				i;
 	int 				j;

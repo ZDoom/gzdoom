@@ -382,9 +382,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnSingleItem)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS		(cls, AActor);
-	PARAM_INT_OPT	(fail_sp) { fail_sp = 0; }
-	PARAM_INT_OPT	(fail_co) { fail_co = 0; }
-	PARAM_INT_OPT	(fail_dm) { fail_dm = 0; }
+	PARAM_INT_DEF	(fail_sp) 
+	PARAM_INT_DEF	(fail_co) 
+	PARAM_INT_DEF	(fail_dm) 
 
 	AActor *spot = NULL;
 	DSpotState *state = DSpotState::GetSpotState();

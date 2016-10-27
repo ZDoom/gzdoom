@@ -37,7 +37,7 @@ void A_SkullAttack(AActor *self, double speed)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullAttack)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT_OPT(speed) { speed = SKULLSPEED; }
+	PARAM_FLOAT_DEF(speed);
 
 	if (speed <= 0)
 		speed = SKULLSPEED;

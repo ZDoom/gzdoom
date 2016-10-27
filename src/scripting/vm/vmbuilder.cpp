@@ -728,6 +728,10 @@ void FFunctionBuildList::Build()
 			sfunc->PrintableName = item.PrintableName;
 		}
 		delete item.Code;
+		if (dump != nullptr)
+		{
+			fflush(dump);
+		}
 	}
 	if (dump != nullptr)
 	{

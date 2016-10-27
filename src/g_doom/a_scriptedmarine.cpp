@@ -151,7 +151,7 @@ void AScriptedMarine::Tick ()
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Refire)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_BOOL_OPT(ignoremissile)	{ ignoremissile = false; }
+	PARAM_BOOL_DEF(ignoremissile);
 
 	if (self->target == NULL || self->target->health <= 0)
 	{
@@ -250,10 +250,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_MarineLook)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Saw)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_SOUND_OPT	(fullsound)			{ fullsound = "weapons/sawfull"; }
-	PARAM_SOUND_OPT	(hitsound)			{ hitsound = "weapons/sawhit"; }
-	PARAM_INT_OPT	(damage)			{ damage = 2; }
-	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = NULL; }
+	PARAM_SOUND_DEF	(fullsound)			
+	PARAM_SOUND_DEF	(hitsound)			
+	PARAM_INT_DEF	(damage)			
+	PARAM_CLASS_DEF	(pufftype, AActor)	
 
 	if (self->target == NULL)
 		return 0;

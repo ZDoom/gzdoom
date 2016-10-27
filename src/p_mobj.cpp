@@ -514,7 +514,7 @@ DEFINE_ACTION_FUNCTION(AActor, SetState)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_STATE(state);
-	PARAM_BOOL_OPT(nofunction) { nofunction = false; }
+	PARAM_BOOL_DEF(nofunction);
 	ACTION_RETURN_BOOL(self->SetState(state, nofunction));
 };
 
@@ -6255,6 +6255,13 @@ bool AActor::IsFriend (AActor *other)
 			players[FriendPlayer-1].mo->IsTeammate(players[other->FriendPlayer-1].mo);
 	}
 	return false;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, isFriend)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	ACTION_RETURN_BOOL(self->IsFriend(other));
 }
 
 //==========================================================================

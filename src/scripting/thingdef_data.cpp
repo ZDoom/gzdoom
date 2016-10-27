@@ -447,12 +447,11 @@ static FFlagDef *FindFlag (FFlagDef *flags, int numflags, const char *flag)
 FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bool strict)
 {
 	FFlagDef *def;
-	size_t i;
 
 	if (part2 == NULL)
 	{ // Search all lists
 		int max = strict ? 2 : NUM_FLAG_LISTS;
-		for (i = 0; i < max; ++i)
+		for (int i = 0; i < max; ++i)
 		{
 			if (type->IsDescendantOf (*FlagLists[i].Type))
 			{
@@ -466,7 +465,7 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bo
 	}
 	else
 	{ // Search just the named list
-		for (i = 0; i < NUM_FLAG_LISTS; ++i)
+		for (size_t i = 0; i < NUM_FLAG_LISTS; ++i)
 		{
 			if (stricmp ((*FlagLists[i].Type)->TypeName.GetChars(), part1) == 0)
 			{

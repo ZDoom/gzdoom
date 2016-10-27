@@ -4048,11 +4048,11 @@ DEFINE_ACTION_FUNCTION(AActor, AimLineAttack)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_ANGLE(angle);
 	PARAM_FLOAT(distance);
-	PARAM_POINTER_OPT(pLineTarget, FTranslatedLineTarget) { pLineTarget = nullptr; }
-	PARAM_ANGLE_OPT(vrange) { vrange = 0.; }
-	PARAM_INT_OPT(flags) { flags = 0; }
-	PARAM_OBJECT_OPT(target, AActor) { target = nullptr; }
-	PARAM_OBJECT_OPT(friender, AActor) { friender = nullptr; }
+	PARAM_POINTER_DEF(pLineTarget, FTranslatedLineTarget);
+	PARAM_ANGLE_DEF(vrange);
+	PARAM_INT_DEF(flags);
+	PARAM_OBJECT_DEF(target, AActor);
+	PARAM_OBJECT_DEF(friender, AActor);
 	ACTION_RETURN_FLOAT(P_AimLineAttack(self, angle, distance, pLineTarget, vrange, flags, target, friender).Degrees);
 }
 
@@ -4431,8 +4431,8 @@ DEFINE_ACTION_FUNCTION(AActor, LineAttack)
 	PARAM_INT(damage);
 	PARAM_NAME(damageType);
 	PARAM_CLASS(puffType, AActor);
-	PARAM_INT_OPT(flags) { flags = 0; }
-	PARAM_POINTER_OPT(victim, FTranslatedLineTarget) { victim = nullptr; }
+	PARAM_INT_DEF(flags);
+	PARAM_POINTER_DEF(victim, FTranslatedLineTarget);
 
 	int acdmg;
 	auto puff = P_LineAttack(self, angle, distance, pitch, damage, damageType, puffType, flags, victim, &acdmg);

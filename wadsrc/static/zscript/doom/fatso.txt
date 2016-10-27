@@ -93,3 +93,75 @@ class FatShot : Actor
 }
 
 
+//===========================================================================
+//
+// Code (must be attached to Actor)
+//
+//===========================================================================
+
+extend class Actor
+{
+	const FATSPREAD = 90./8;
+	
+
+	void A_FatRaise()
+	{
+		A_FaceTarget();
+		A_PlaySound("fatso/raiseguns", CHAN_WEAPON);
+	}
+
+	void A_FatAttack1(class<Actor> spawntype = "FatShot")
+	{
+		if (target)
+		{
+			A_FaceTarget ();
+			// Change direction  to ...
+			Angle += FATSPREAD;
+			SpawnMissile (target, spawntype);
+			Actor missile = SpawnMissile (target, spawntype);
+			if (missile)
+			{
+				missile.Angle += FATSPREAD;
+				missile.VelFromAngle();
+			}
+		}
+	}
+	
+	void A_FatAttack2(class<Actor> spawntype = "FatShot")
+	{
+		if (target)
+		{
+			A_FaceTarget ();
+			// Now here choose opposite deviation.
+			Angle -= FATSPREAD;
+			SpawnMissile (target, spawntype);
+			Actor missile = SpawnMissile (target, spawntype);
+			if (missile)
+			{
+				missile.Angle -= FATSPREAD;
+				missile.VelFromAngle();
+			}
+		}
+	}
+	
+	void A_FatAttack3(class<Actor> spawntype = "FatShot")
+	{
+		if (target)
+		{
+			A_FaceTarget ();
+			Actor missile = SpawnMissile (target, spawntype);
+			if (missile)
+			{
+				missile.Angle -= FATSPREAD/2;
+				missile.VelFromAngle();
+			}
+			missile = SpawnMissile (target, spawntype);
+			if (missile)
+			{
+				missile.Angle += FATSPREAD/2;
+				missile.VelFromAngle();
+			}
+		}
+	}
+}
+

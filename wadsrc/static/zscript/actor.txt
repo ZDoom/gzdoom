@@ -65,6 +65,7 @@ class Actor : Thinker native
 	native bool SetState(state st, bool nofunction = false);
 	native void LinkToWorld();
 	native void UnlinkFromWorld();
+	native void VelFromAngle(float speed = 0, float angle = 0);
 
 	// DECORATE compatible functions
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
@@ -166,6 +167,12 @@ class Actor : Thinker native
 		LinkToWorld();
 	}
 
+	// killough 11/98: kill an object
+	void A_Die(name damagetype = "none")
+	{
+		DamageMobj(null, null, health, damagetype, DMG_FORCED);
+	}
+
 	// Action functions
 	// Meh, MBF redundant functions. Only for DeHackEd support.
 	native bool A_LineEffect(int boomspecial = 0, int tag = 0);
@@ -193,10 +200,6 @@ class Actor : Thinker native
 	native void A_SkelWhoosh();
 	native void A_SkelFist();
 	native void A_SkelMissile();
-	native void A_FatRaise();
-	native void A_FatAttack1(class<Actor> spawntype = "FatShot");
-	native void A_FatAttack2(class<Actor> spawntype = "FatShot");
-	native void A_FatAttack3(class<Actor> spawntype = "FatShot");
 	native void A_BossDeath();
 	native void A_SkullAttack(float speed = 20);
 	native void A_BetaSkullAttack();
@@ -212,7 +215,6 @@ class Actor : Thinker native
 	native void A_SpawnSound();
 	native void A_SpawnFly(class<Actor> spawntype = null);	// needs special treatment for default
 	native void A_BrainExplode();
-	native void A_Die(name damagetype = "none");
 	native void A_Detonate();
 	native void A_Mushroom(class<Actor> spawntype = "FatShot", int numspawns = 0, int flags = 0, float vrange = 4.0, float hrange = 0.5);
 	native bool A_CallSpecial(int special, int arg1=0, int arg2=0, int arg3=0, int arg4=0, int arg5=0);

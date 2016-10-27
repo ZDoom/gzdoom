@@ -188,7 +188,7 @@ void VMFillParams(VMValue *params, VMFrame *callee, int numparam)
 	const VMRegisters calleereg(callee);
 
 	assert(calleefunc != NULL && !calleefunc->Native);
-	assert(numparam == calleefunc->NumArgs || ((int)calleefunc->Defaults.Size() == numparam));
+	assert(numparam == calleefunc->NumArgs || ((int)calleefunc->Defaults.Size() == calleefunc->NumArgs));
 	assert(REGT_INT == 0 && REGT_FLOAT == 1 && REGT_STRING == 2 && REGT_POINTER == 3);
 
 	regd = regf = regs = rega = 0;

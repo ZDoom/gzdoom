@@ -84,7 +84,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatMove)
 	}
 
 	// Adjust velocity vector to new direction
-	self->VelFromAngle(newangle, self->Speed);
+	self->VelFromAngle(self->Speed, newangle);
 
 	if (pr_batmove()<15)
 	{

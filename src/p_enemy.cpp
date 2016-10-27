@@ -2500,7 +2500,7 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 					DAngle ang = actor->AngleTo(actor->target);
 					if (pr_chase() < 128) ang += 90.;
 					else ang -= 90.;
-					actor->VelFromAngle(ang, 13.);
+					actor->VelFromAngle(13., ang);
 					actor->FastChaseStrafeCount = 3;		// strafe time
 				}
 			}
@@ -3312,16 +3312,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 	{
 		S_Sound (self, CHAN_VOICE, self->PainSound, 1, ATTN_NORM);
 	}
-	return 0;
-}
-
-// killough 11/98: kill an object
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Die)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
-
-		P_DamageMobj(self, NULL, NULL, self->health, damagetype, DMG_FORCED);
 	return 0;
 }
 

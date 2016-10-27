@@ -109,7 +109,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_EntityDeath)
 		second = Spawn("EntitySecond", pos, ALLOW_REPLACE);
 		second->CopyFriendliness(self, true);
 		A_FaceTarget(second);
-		second->VelFromAngle(an, velmul[i]);
+		second->VelFromAngle(velmul[i], an);
 	}
 	return 0;
 }

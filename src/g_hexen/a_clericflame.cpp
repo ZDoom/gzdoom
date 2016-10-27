@@ -162,7 +162,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameRotate)
 	PARAM_SELF_PROLOGUE(AActor);
 
 	DAngle an = self->Angles.Yaw + 90.;
-	self->VelFromAngle(an, FLAMEROTSPEED);
+	self->VelFromAngle(FLAMEROTSPEED, an);
 	self->Vel += DVector2(self->specialf1, self->specialf2);
 
 	self->Angles.Yaw += 6.;

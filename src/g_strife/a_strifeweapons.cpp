@@ -988,7 +988,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 		spot = Spawn("SpectralLightningSpot", self->Pos(), ALLOW_REPLACE);
 		if (spot != NULL)
 		{
-			spot->VelFromAngle(self->Angles.Yaw, 28.);
+			spot->VelFromAngle(28., self->Angles.Yaw);
 		}
 	}
 	if (spot != NULL)
@@ -1089,7 +1089,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 		spot = P_SpawnPlayerMissile (self, PClass::FindActor("SpectralLightningBigV1"));
 		if (spot != NULL)
 		{
-			spot->VelFromAngle(self->Angles.Yaw, spot->Speed);
+			spot->VelFromAngle(spot->Speed, self->Angles.Yaw);
 		}
 	}
 	return 0;

@@ -137,7 +137,7 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 			VMReturn *wantret;
 			FStateParamInfo stp = { state, STATE_StateChain, PSP_WEAPON };
 
-			params[2] = VMValue(&stp, ATAG_STATEINFO);
+			params[2] = VMValue(&stp, ATAG_GENERIC);
 			retval = true;		// assume success
 			wantret = NULL;		// assume no return value wanted
 			numret = 0;
@@ -4218,15 +4218,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_STATE		(jump);
-	PARAM_INT_OPT	(flags)			{ flags = 0; }
-	PARAM_FLOAT_OPT	(range)			{ range = 0; }
-	PARAM_FLOAT_OPT	(minrange)		{ minrange = 0; }
-	PARAM_ANGLE_OPT	(angle)			{ angle = 0.; }
-	PARAM_ANGLE_OPT	(pitch)			{ pitch = 0.; }
-	PARAM_FLOAT_OPT	(offsetheight)	{ offsetheight = 0; }
-	PARAM_FLOAT_OPT	(offsetwidth)	{ offsetwidth = 0; }
-	PARAM_INT_OPT	(ptr_target)	{ ptr_target = AAPTR_DEFAULT; }
-	PARAM_FLOAT_OPT	(offsetforward)	{ offsetforward = 0; }
+	PARAM_INT_DEF	(flags)			
+	PARAM_FLOAT_DEF	(range)			
+	PARAM_FLOAT_DEF	(minrange)		
+	PARAM_ANGLE_DEF	(angle)			
+	PARAM_ANGLE_DEF	(pitch)			
+	PARAM_FLOAT_DEF	(offsetheight)	
+	PARAM_FLOAT_DEF	(offsetwidth)	
+	PARAM_INT_DEF	(ptr_target)	
+	PARAM_FLOAT_DEF	(offsetforward)	
 
 	DAngle ang;
 

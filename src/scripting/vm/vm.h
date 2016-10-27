@@ -159,7 +159,6 @@ enum
 	ATAG_AREGISTER,			// pointer to an address register
 
 	ATAG_STATE,				// pointer to FState
-	ATAG_STATEINFO,			// FState plus some info.
 	ATAG_RNG,				// pointer to FRandom
 };
 
@@ -929,7 +928,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define ASSERTINT(p)					assert((p).Type == REGT_INT)
 #define ASSERTFLOAT(p)					assert((p).Type == REGT_FLOAT)
 #define ASSERTSTRING(p)					assert((p).Type == REGT_STRING)
-#define ASSERTOBJECT(p)					assert((p).Type == REGT_POINTER && (p).atag == ATAG_OBJECT)
+#define ASSERTOBJECT(p)					assert((p).Type == REGT_POINTER && ((p).atag == ATAG_OBJECT || (p).a == nullptr))
 #define ASSERTPOINTER(p)				assert((p).Type == REGT_POINTER && (p).atag == ATAG_GENERIC)
 #define ASSERTSTATE(p)					assert((p).Type == REGT_POINTER && ((p).atag == ATAG_GENERIC || (p).atag == ATAG_STATE))
 
@@ -950,14 +949,9 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_BOOL_OPT_AT(p,x)			bool x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_INT); x = !!param[p].i; } else
 #define PARAM_NAME_OPT_AT(p,x)			FName x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_INT); x = ENamedName(param[p].i); } else
 #define PARAM_SOUND_OPT_AT(p,x)			FSoundID x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_INT); x = FSoundID(param[p].i); } else
-#define PARAM_COLOR_OPT_AT(p,x)			PalEntry x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_INT); x.d = param[p].i; } else
 #define PARAM_FLOAT_OPT_AT(p,x)			double x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_FLOAT); x = param[p].f; } else
 #define PARAM_ANGLE_OPT_AT(p,x)		DAngle x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_FLOAT); x = param[p].f; } else
-#define PARAM_STRING_OPT_AT(p,x)		FString x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_STRING); x = param[p].s(); } else
 #define PARAM_STATE_OPT_AT(p,x)			FState *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_STATE || param[p].atag == ATAG_GENERIC || param[p].a == NULL)); x = (FState *)param[p].a; } else
-#define PARAM_STATEINFO_OPT_AT(p,x)		FStateParamInfo *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_STATEINFO || param[p].atag == ATAG_GENERIC  || param[p].a == NULL)); x = (FStateParamInfo *)param[p].a; } else
-#define PARAM_POINTER_OPT_AT(p,x,type)	type *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER); x = (type *)param[p].a; } else
-#define PARAM_OBJECT_OPT_AT(p,x,type)	type *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); x = (type *)param[p].a; assert(x == NULL || x->IsKindOf(RUNTIME_CLASS(type))); } else
 #define PARAM_CLASS_OPT_AT(p,x,base)	base::MetaClass *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); x = (base::MetaClass *)param[p].a; assert(x == NULL || x->IsDescendantOf(RUNTIME_CLASS(base))); } else
 
 // The above, but with an automatically increasing position index.
@@ -985,7 +979,6 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_ANGLE_DEF(x)			++paramnum; PARAM_ANGLE_DEF_AT(paramnum,x)
 #define PARAM_STRING_DEF(x)			++paramnum; PARAM_STRING_DEF_AT(paramnum,x)
 #define PARAM_STATE_DEF(x)			++paramnum; PARAM_STATE_DEF_AT(paramnum,x)
-#define PARAM_STATEINFO_DEF(x)		++paramnum; PARAM_STATEINFO_DEF_AT(paramnum,x)
 #define PARAM_POINTER_DEF(x,type)	++paramnum; PARAM_POINTER_DEF_AT(paramnum,x,type)
 #define PARAM_OBJECT_DEF(x,type)	++paramnum; PARAM_OBJECT_DEF_AT(paramnum,x,type)
 #define PARAM_CLASS_DEF(x,base)		++paramnum; PARAM_CLASS_DEF_AT(paramnum,x,base)
@@ -994,14 +987,9 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_BOOL_OPT(x)			++paramnum; PARAM_BOOL_OPT_AT(paramnum,x)
 #define PARAM_NAME_OPT(x)			++paramnum; PARAM_NAME_OPT_AT(paramnum,x)
 #define PARAM_SOUND_OPT(x)			++paramnum; PARAM_SOUND_OPT_AT(paramnum,x)
-#define PARAM_COLOR_OPT(x)			++paramnum; PARAM_COLOR_OPT_AT(paramnum,x)
 #define PARAM_FLOAT_OPT(x)			++paramnum; PARAM_FLOAT_OPT_AT(paramnum,x)
 #define PARAM_ANGLE_OPT(x)			++paramnum; PARAM_ANGLE_OPT_AT(paramnum,x)
-#define PARAM_STRING_OPT(x)			++paramnum; PARAM_STRING_OPT_AT(paramnum,x)
 #define PARAM_STATE_OPT(x)			++paramnum; PARAM_STATE_OPT_AT(paramnum,x)
-#define PARAM_STATEINFO_OPT(x)		++paramnum; PARAM_STATEINFO_OPT_AT(paramnum,x)
-#define PARAM_POINTER_OPT(x,type)	++paramnum; PARAM_POINTER_OPT_AT(paramnum,x,type)
-#define PARAM_OBJECT_OPT(x,type)	++paramnum; PARAM_OBJECT_OPT_AT(paramnum,x,type)
 #define PARAM_CLASS_OPT(x,base)		++paramnum; PARAM_CLASS_OPT_AT(paramnum,x,base)
 
 typedef int(*actionf_p)(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret);/*(VM_ARGS)*/
@@ -1043,7 +1031,7 @@ struct AFuncDesc
 //#define PUSH_PARAMINFO self, stateowner, CallingState, ParameterIndex, statecall
 
 #define CALL_ACTION(name,self) { /*AF_##name(self, self, NULL, 0, NULL)*/ \
-		VMValue params[3] = { self, self, VMValue(NULL, ATAG_STATEINFO) }; \
+		VMValue params[3] = { self, self, VMValue(NULL, ATAG_GENERIC) }; \
 		stack->Call(name##_VMPtr, params, countof(params), NULL, 0, NULL); \
 	}
 
@@ -1066,8 +1054,8 @@ struct AFuncDesc
 #define PARAM_ACTION_PROLOGUE(type) \
 	PARAM_PROLOGUE; \
 	PARAM_OBJECT	 (self, type); \
-	PARAM_OBJECT_OPT (stateowner, AActor) { stateowner = self; } \
-	PARAM_STATEINFO_OPT  (stateinfo) { stateinfo = nullptr; } \
+	PARAM_OBJECT (stateowner, AActor) \
+	PARAM_POINTER  (stateinfo, FStateParamInfo) \
 
 // Number of action paramaters
 #define NAP 3

@@ -1366,7 +1366,7 @@ public:
 		Vel.Y = speed * Angles.Yaw.Sin();
 	}
 
-	void VelFromAngle(DAngle angle, double speed)
+	void VelFromAngle(double speed, DAngle angle)
 	{
 		Vel.X = speed * angle.Cos();
 		Vel.Y = speed * angle.Sin();

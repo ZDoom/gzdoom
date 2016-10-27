@@ -5838,7 +5838,7 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnMissile)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(dest, AActor);
 	PARAM_CLASS(type, AActor);
-	PARAM_OBJECT_OPT(owner, AActor) { owner = self; }
+	PARAM_OBJECT_DEF(owner, AActor);
 	ACTION_RETURN_OBJECT(P_SpawnMissile(self, dest, type, owner));
 }
 
@@ -6582,6 +6582,31 @@ void AActor::SetTranslation(const char *trname)
 		Translation = tnum;
 	}
 	// silently ignore if the name does not exist, this would create some insane message spam otherwise.
+}
+
+
+// This combines all 3 variations of the internal function
+DEFINE_ACTION_FUNCTION(AActor, VelFromAngle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	if (numparam == 1)
+	{
+		self->VelFromAngle();
+	}
+	else
+	{
+		PARAM_FLOAT(speed);
+		if (numparam == 2)
+		{
+			self->VelFromAngle(speed);
+		}
+		else
+		{
+			PARAM_ANGLE(angle);
+			self->VelFromAngle(speed, angle);
+		}
+	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------

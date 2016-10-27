@@ -415,7 +415,7 @@ void P_MinotaurSlam (AActor *source, AActor *target)
 
 	angle = source->AngleTo(target);
 	thrust = 16 + pr_minotaurslam() / 64.;
-	target->VelFromAngle(angle, thrust);
+	target->VelFromAngle(thrust, angle);
 	damage = pr_minotaurslam.HitDice (static_cast<AMinotaur *>(source) ? 4 : 6);
 	int newdam = P_DamageMobj (target, NULL, NULL, damage, NAME_Melee);
 	P_TraceBleed (newdam > 0 ? newdam : damage, target, angle, 0.);

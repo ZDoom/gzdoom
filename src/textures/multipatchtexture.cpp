@@ -192,6 +192,7 @@ protected:
 		int UseType = TEX_Null;
 		bool Silent = false;
 		bool HasLine = false;
+		bool UseOffsets = false;
 		FScriptPosition sc;
 	};
 
@@ -1141,11 +1142,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, TexInit &init)
 			}
 			else if (sc.Compare("useoffsets"))
 			{
-				if (part.Texture != NULL)
-				{
-					part.OriginX -= part.Texture->LeftOffset;
-					part.OriginY -= part.Texture->TopOffset;
-				}
+				init.UseOffsets = true;
 			}
 		}
 	}
@@ -1343,7 +1340,7 @@ void FMultiPatchTexture::ResolvePatches()
 				else
 				{
 					// If it could be resolved, just print a developer warning.
-					DPrintf(DMSG_WARNING, "Resolved self-referencing texture by picking an older entry for %s", Inits[i].TexName.GetChars());
+					DPrintf(DMSG_WARNING, "Resolved self-referencing texture by picking an older entry for %s\n", Inits[i].TexName.GetChars());
 				}
 			}
 
@@ -1360,6 +1357,11 @@ void FMultiPatchTexture::ResolvePatches()
 				Parts[i].Texture = TexMan[texno];
 				bComplex |= Parts[i].Texture->bComplex;
 				Parts[i].Texture->bKeepAround = true;
+				if (Inits[i].UseOffsets)
+				{
+					Parts[i].OriginX -= Parts[i].Texture->LeftOffset;
+					Parts[i].OriginY -= Parts[i].Texture->TopOffset;
+				}
 			}
 		}
 		for (int i = 0; i < NumParts; i++)

@@ -886,8 +886,6 @@ namespace
 PalEntry FTexture::GetSkyCapColor(bool bottom)
 {
 	PalEntry col;
-	int w;
-	int h;
 
 	if (!bSWSkyColorDone)
 	{

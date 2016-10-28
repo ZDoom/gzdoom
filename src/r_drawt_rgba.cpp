@@ -258,14 +258,14 @@ class FillColumnHorizRGBACommand : public DrawerCommand
 	int _yl;
 	int _yh;
 	int _count;
-	int _color;
+	uint32_t _color;
 
 public:
 	FillColumnHorizRGBACommand()
 	{
 		_x = dc_x;
 		_count = dc_count;
-		_color = dc_color;
+		_color = GPalette.BaseColors[dc_color].d | (uint32_t)0xff000000;
 		_yl = dc_yl;
 		_yh = dc_yh;
 	}
@@ -273,7 +273,7 @@ public:
 	void Execute(DrawerThread *thread) override
 	{
 		int count = _count;
-		int color = _color;
+		uint32_t color = _color;
 		uint32_t *dest;
 
 		if (count <= 0)

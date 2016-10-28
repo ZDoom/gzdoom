@@ -224,7 +224,7 @@ public:
 	PSymbolTable	Symbols;
 	bool			MemberOnly = false;		// type may only be used as a struct/class member but not as a local variable or function argument.
 	FString			mDescriptiveName;
-	BYTE loadOp, storeOp, moveOp, RegType;
+	BYTE loadOp, storeOp, moveOp, RegType, RegCount;
 
 	PType(unsigned int size = 1, unsigned int align = 1);
 	virtual ~PType();
@@ -291,6 +291,10 @@ public:
 		return RegType;
 	}
 
+	int GetRegCount() const
+	{
+		return RegCount;
+	}
 	// Returns true if this type matches the two identifiers. Referring to the
 	// above table, any type is identified by at most two characteristics. Each
 	// type that implements this function will cast these to the appropriate type.
@@ -476,8 +480,6 @@ class PString : public PBasicType
 	DECLARE_CLASS(PString, PBasicType);
 public:
 	PString();
-
-	virtual int GetRegType() const;
 
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;

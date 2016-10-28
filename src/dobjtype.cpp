@@ -205,6 +205,7 @@ PType::PType(unsigned int size, unsigned int align)
 	storeOp = OP_NOP;
 	moveOp = OP_NOP;
 	RegType = REGT_NIL;
+	RegCount = 1;
 }
 
 //==========================================================================
@@ -570,7 +571,8 @@ void PType::StaticInit()
 	TypeVector2->loadOp = OP_LV2;
 	TypeVector2->storeOp = OP_SV2;
 	TypeVector2->moveOp = OP_MOVEV2;
-	TypeVector2->RegType = REGT_FLOAT|REGT_MULTIREG;
+	TypeVector2->RegType = REGT_FLOAT;
+	TypeVector2->RegCount = 2;
 
 	TypeVector3 = new PStruct(NAME_Vector3, nullptr);
 	TypeVector3->AddField(NAME_X, TypeFloat64);
@@ -579,10 +581,11 @@ void PType::StaticInit()
 	// allow accessing xy as a vector2. This is marked native because it's not supposed to be serialized.
 	TypeVector3->Symbols.AddSymbol(new PField(NAME_XY, TypeVector2, VARF_Native, 0));
 	TypeTable.AddType(TypeVector3);
-	TypeVector2->loadOp = OP_LV3;
-	TypeVector2->storeOp = OP_SV3;
-	TypeVector2->moveOp = OP_MOVEV3;
-	TypeVector2->RegType = REGT_FLOAT | REGT_MULTIREG;
+	TypeVector3->loadOp = OP_LV3;
+	TypeVector3->storeOp = OP_SV3;
+	TypeVector3->moveOp = OP_MOVEV3;
+	TypeVector3->RegType = REGT_FLOAT;
+	TypeVector3->RegCount = 3;
 
 
 
@@ -1207,17 +1210,11 @@ PString::PString()
 : PBasicType(sizeof(FString), __alignof(FString))
 {
 	mDescriptiveName = "String";
-}
+	storeOp = OP_SS;
+	loadOp = OP_LS;
+	moveOp = OP_MOVES;
+	RegType = REGT_STRING;
 
-//==========================================================================
-//
-// PString :: GetRegType
-//
-//==========================================================================
-
-int PString::GetRegType() const
-{
-	return REGT_STRING;
 }
 
 //==========================================================================
@@ -2089,6 +2086,7 @@ IMPLEMENT_CLASS(PStruct)
 PStruct::PStruct()
 {
 	mDescriptiveName = "Struct";
+	Size = 0;
 }
 
 //==========================================================================
@@ -2101,6 +2099,7 @@ PStruct::PStruct(FName name, PTypeBase *outer)
 : PNamedType(name, outer)
 {
 	mDescriptiveName.Format("Struct<%s>", name.GetChars());
+	Size = 0;
 }
 
 //==========================================================================

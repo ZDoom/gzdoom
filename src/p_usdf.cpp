@@ -76,11 +76,11 @@ class USDFParser : public UDMFParserBase
 
 	//===========================================================================
 	//
-	// Parse a cost block
+	// Parse a cost/require/exclude block
 	//
 	//===========================================================================
 
-	bool ParseCost(FStrifeDialogueReply *response)
+	bool ParseCostRequireExclude(FStrifeDialogueReply *response, FName type)
 	{
 		FStrifeDialogueItemCheck check;
 		check.Item = NULL;
@@ -101,7 +101,12 @@ class USDFParser : public UDMFParserBase
 			}
 		}
 
-		response->ItemCheck.Push(check);
+		switch (type)
+		{
+		case NAME_Cost:		response->ItemCheck.Push(check);	break;
+		case NAME_Require:	response->ItemCheckRequire.Push(check); break;
+		case NAME_Exclude:	response->ItemCheckExclude.Push(check); break;
+		}
 		return true;
 	}
 
@@ -206,7 +211,9 @@ class USDFParser : public UDMFParserBase
 				switch(key)
 				{
 				case NAME_Cost:
-					ParseCost(reply);
+				case NAME_Require:
+				case NAME_Exclude:
+					ParseCostRequireExclude(reply, key);
 					break;
 
 				default:

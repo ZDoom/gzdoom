@@ -193,13 +193,13 @@ struct ExpVal
 
 struct ExpEmit
 {
-	ExpEmit() : RegNum(0), RegType(REGT_NIL), Konst(false), Fixed(false), Final(false), Target(false) {}
-	ExpEmit(int reg, int type, bool konst = false, bool fixed = false)  : RegNum(reg), RegType(type), Konst(konst), Fixed(fixed), Final(false), Target(false) {}
-	ExpEmit(VMFunctionBuilder *build, int type);
+	ExpEmit() : RegNum(0), RegType(REGT_NIL), RegCount(1), Konst(false), Fixed(false), Final(false), Target(false) {}
+	ExpEmit(int reg, int type, bool konst = false, bool fixed = false)  : RegNum(reg), RegType(type), RegCount(1), Konst(konst), Fixed(fixed), Final(false), Target(false) {}
+	ExpEmit(VMFunctionBuilder *build, int type, int count = 1);
 	void Free(VMFunctionBuilder *build);
 	void Reuse(VMFunctionBuilder *build);
 
-	BYTE RegNum, RegType, Konst:1, Fixed:1, Final:1, Target:1;
+	BYTE RegNum, RegType, RegCount, Konst:1, Fixed:1, Final:1, Target:1;
 };
 
 enum EFxType
@@ -264,6 +264,7 @@ enum EFxType
 	EFX_LocalVariableDeclaration,
 	EFX_SwitchStatement,
 	EFX_CaseStatement,
+	EFX_VectorInitializer,
 	EFX_COUNT
 };
 
@@ -446,6 +447,25 @@ public:
 	{
 		return value;
 	}
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxVectorInitializer : public FxExpression
+{
+	FxExpression *xyz[3];
+	bool isConst;	// gets set to true if all element are const
+
+public:
+	FxVectorInitializer(FxExpression *x, FxExpression *y, FxExpression *z, const FScriptPosition &sc);
+	~FxVectorInitializer();
+	FxExpression *Resolve(FCompileContext&);
+
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -1561,6 +1581,7 @@ class FxLocalVariableDeclaration : public FxExpression
 	FName Name;
 	FxExpression *Init;
 	int VarFlags;
+	int RegCount;
 public:
 	int RegNum = -1;
 

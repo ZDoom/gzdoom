@@ -301,7 +301,8 @@ static void DoParse(int lumpnum)
 
 	parser = ZCCParseAlloc(malloc);
 	ZCCParseState state;
-#if 0	// this costs a lot of time and should only be activated when it's really needed.
+//#define TRACE
+#ifdef TRACE	// this costs a lot of time and should only be activated when it's really needed.
 	FILE *f = fopen("trace.txt", "w");
 	char prompt = '\0';
 	ZCCParseTrace(f, &prompt);
@@ -335,7 +336,7 @@ static void DoParse(int lumpnum)
 		I_Error("%d errors while parsing %s", FScriptPosition::ErrorCounter, Wads.GetLumpFullPath(lumpnum).GetChars());
 	}
 
-#if 0
+#ifdef TRACE
 	if (f != NULL)
 	{
 		fclose(f);

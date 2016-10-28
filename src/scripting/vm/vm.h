@@ -137,7 +137,7 @@ enum
 	REGT_MULTIREG	= 8,	// (e.g. a vector)
 	REGT_ADDROF		= 32,	// used with PARAM: pass address of this register
 
-	REGT_NIL		= 255	// parameter was omitted
+	REGT_NIL		= 128	// parameter was omitted
 };
 
 #define RET_FINAL	(0x80)	// Used with RET and RETI in the destination slot: this is the final return value

@@ -178,8 +178,8 @@ FxLocalVariableDeclaration *FCompileContext::FindLocalVariable(FName name)
 //
 //==========================================================================
 
-ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)
-: RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false), Fixed(false), Final(false), Target(false)
+ExpEmit::ExpEmit(VMFunctionBuilder *build, int type, int count)
+: RegNum(build->Registers[type].Get(count)), RegType(type), RegCount(count), Konst(false), Fixed(false), Final(false), Target(false)
 {
 }
 
@@ -187,7 +187,7 @@ void ExpEmit::Free(VMFunctionBuilder *build)
 {
 	if (!Fixed && !Konst && RegType <= REGT_TYPE)
 	{
-		build->Registers[RegType].Return(RegNum, 1);
+		build->Registers[RegType].Return(RegNum, RegCount);
 	}
 }
 
@@ -195,6 +195,7 @@ void ExpEmit::Reuse(VMFunctionBuilder *build)
 {
 	if (!Fixed && !Konst)
 	{
+		assert(RegCount == 1);
 		bool success = build->Registers[RegType].Reuse(RegNum);
 		assert(success && "Attempt to reuse a register that is already in use");
 	}
@@ -426,6 +427,200 @@ ExpEmit FxConstant::Emit(VMFunctionBuilder *build)
 		out.RegNum = 0;
 	}
 	return out;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxVectorInitializer::FxVectorInitializer(FxExpression *x, FxExpression *y, FxExpression *z, const FScriptPosition &sc)
+	:FxExpression(EFX_VectorInitializer, sc)
+{
+	xyz[0] = x;
+	xyz[1] = y;
+	xyz[2] = z;
+	isConst = false;
+	ValueType = TypeVoid;	// we do not know yet
+}
+
+FxVectorInitializer::~FxVectorInitializer()
+{
+	for (auto &a : xyz)
+		SAFE_DELETE(a);
+}
+
+FxExpression *FxVectorInitializer::Resolve(FCompileContext&ctx)
+{
+	bool fails = false;
+
+	for (auto &a : xyz)
+	{
+		if (a != nullptr)
+		{
+			a = a->Resolve(ctx);
+			if (a == nullptr) fails = true;
+			else
+			{
+				if (a->ValueType != TypeVector2)	// a vec3 may be initialized with (vec2, z)
+				{
+					a = new FxFloatCast(a);
+					a = a->Resolve(ctx);
+					fails |= (a == nullptr);
+				}
+			}
+		}
+	}
+	if (fails)
+	{
+		delete this;
+		return nullptr;
+	}
+	// at this point there are three legal cases:
+	// * two floats = vector2
+	// * three floats = vector3
+	// * vector2 + float = vector3
+	if (xyz[0]->ValueType == TypeVector2)
+	{
+		if (xyz[1]->ValueType != TypeFloat64 || xyz[2] != nullptr)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Not a valid vector");
+			delete this;
+			return nullptr;
+		}
+		ValueType = TypeVector3;
+		if (xyz[0]->ExprType == EFX_VectorInitializer)
+		{
+			// If two vector initializers are nested, unnest them now.
+			auto vi = static_cast<FxVectorInitializer*>(xyz[0]);
+			xyz[2] = xyz[1];
+			xyz[1] = vi->xyz[1];
+			xyz[0] = vi->xyz[0];
+			delete vi;
+		}
+	}
+	else if (xyz[0]->ValueType == TypeFloat64 && xyz[1]->ValueType == TypeFloat64)
+	{
+		ValueType = xyz[2] == nullptr ? TypeVector2 : TypeVector3;
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Not a valid vector");
+		delete this;
+		return nullptr;
+	}
+
+	// check if all elements are constant. If so this can be emitted as a constant vector.
+	isConst = true;
+	for (auto &a : xyz)
+	{
+		if (a != nullptr && !a->isConstant()) isConst = false;
+	}
+	return this;
+}
+
+static ExpEmit EmitKonst(VMFunctionBuilder *build, ExpEmit &emit)
+{
+	if (emit.Konst)
+	{
+		ExpEmit out(build, REGT_FLOAT);
+		build->Emit(OP_LKF, out.RegNum, emit.RegNum);
+		return out;
+	}
+	return emit;
+}
+
+ExpEmit FxVectorInitializer::Emit(VMFunctionBuilder *build)
+{
+	// no const handling here. Ultimstely it's too rarely used (i.e. the only fully constant vector ever allocated in ZDoom is the 0-vector in a very few places)
+	// and the negatives (excessive allocation of float constants) outweigh the positives (saved a few instructions)
+	assert(xyz[0] != nullptr);
+	assert(xyz[1] != nullptr);
+	if (ValueType == TypeVector2)
+	{
+		ExpEmit xval = EmitKonst(build, xyz[0]->Emit(build));
+		ExpEmit yval = EmitKonst(build, xyz[1]->Emit(build));
+		assert(xval.RegType == REGT_FLOAT && yval.RegType == REGT_FLOAT);
+		if (yval.RegNum == xval.RegNum + 1)
+		{
+			// The results are already in two continuous registers so just return them as-is.
+			xval.RegCount++;
+			return xval;
+		}
+		else
+		{
+			// The values are not in continuous registers so they need to be copied together now.
+			ExpEmit out(build, REGT_FLOAT, 2);
+			build->Emit(OP_MOVEF, out.RegNum, xval.RegNum);
+			build->Emit(OP_MOVEF, out.RegNum + 1, yval.RegNum);
+			xval.Free(build);
+			yval.Free(build);
+			return out;
+		}
+	}
+	else if (xyz[0]->ValueType == TypeVector2)	// vec2+float
+	{
+		ExpEmit xyval = xyz[0]->Emit(build);
+		ExpEmit zval = EmitKonst(build, xyz[1]->Emit(build));
+		assert(xyval.RegType == REGT_FLOAT && xyval.RegCount == 2 && zval.RegType == REGT_FLOAT);
+		if (zval.RegNum == xyval.RegNum + 2)
+		{
+			// The results are already in three continuous registers so just return them as-is.
+			xyval.RegCount++;
+			return xyval;
+		}
+		else
+		{
+			// The values are not in continuous registers so they need to be copied together now.
+			ExpEmit out(build, REGT_FLOAT, 3);
+			build->Emit(OP_MOVEV2, out.RegNum, xyval.RegNum);
+			build->Emit(OP_MOVEF, out.RegNum + 2, zval.RegNum);
+			xyval.Free(build);
+			zval.Free(build);
+			return out;
+		}
+	}
+	else // 3*float
+	{
+		assert(xyz[2] != nullptr);
+		ExpEmit xval = EmitKonst(build, xyz[0]->Emit(build));
+		ExpEmit yval = EmitKonst(build, xyz[1]->Emit(build));
+		ExpEmit zval = EmitKonst(build, xyz[2]->Emit(build));
+		assert(xval.RegType == REGT_FLOAT && yval.RegType == REGT_FLOAT && zval.RegType == REGT_FLOAT);
+		if (yval.RegNum == xval.RegNum + 1 && zval.RegNum == xval.RegNum + 2)
+		{
+			// The results are already in three continuous registers so just return them as-is.
+			xval.RegCount += 2;
+			return xval;
+		}
+		else
+		{
+			// The values are not in continuous registers so they need to be copied together now.
+			ExpEmit out(build, REGT_FLOAT, 3);
+			//Try to optimize a bit...
+			if (yval.RegNum == xval.RegNum + 1)
+			{
+				build->Emit(OP_MOVEV2, out.RegNum, xval.RegNum);
+				build->Emit(OP_MOVEF, out.RegNum + 2, zval.RegNum);
+			}
+			else if (zval.RegNum == yval.RegNum + 1)
+			{
+				build->Emit(OP_MOVEF, out.RegNum, xval.RegNum);
+				build->Emit(OP_MOVEV2, out.RegNum+1, yval.RegNum);
+			}
+			else
+			{
+				build->Emit(OP_MOVEF, out.RegNum, xval.RegNum);
+				build->Emit(OP_MOVEF, out.RegNum + 1, yval.RegNum);
+				build->Emit(OP_MOVEF, out.RegNum + 2, zval.RegNum);
+			}
+			xval.Free(build);
+			yval.Free(build);
+			zval.Free(build);
+			return out;
+		}
+	}
 }
 
 //==========================================================================
@@ -4613,7 +4808,7 @@ ExpEmit FxStructMember::Emit(VMFunctionBuilder *build)
 	}
 
 	int offsetreg = build->GetConstantInt((int)membervar->Offset);
-	ExpEmit loc(build, membervar->Type->GetRegType());
+	ExpEmit loc(build, membervar->Type->GetRegType(), membervar->Type->GetRegCount());
 
 	if (membervar->BitValue == -1)
 	{
@@ -7118,6 +7313,7 @@ FxLocalVariableDeclaration::FxLocalVariableDeclaration(PType *type, FName name, 
 	ValueType = type;
 	VarFlags = varflags;
 	Name = name;
+	RegCount = type == TypeVector2 ? 2 : type == TypeVector3 ? 3 : 1;
 	Init = initval == nullptr? nullptr : new FxTypeCast(initval, type, false);
 }
 
@@ -7139,7 +7335,7 @@ ExpEmit FxLocalVariableDeclaration::Emit(VMFunctionBuilder *build)
 {
 	if (Init == nullptr)
 	{
-		RegNum = build->Registers[ValueType->GetRegType()].Get(1);
+		RegNum = build->Registers[ValueType->GetRegType()].Get(RegCount);
 	}
 	else
 	{
@@ -7188,5 +7384,5 @@ void FxLocalVariableDeclaration::Release(VMFunctionBuilder *build)
 {
 	// Release the register after the containing block gets closed
 	assert(RegNum != -1);
-	build->Registers[ValueType->GetRegType()].Return(RegNum, 1);
+	build->Registers[ValueType->GetRegType()].Return(RegNum, RegCount);
 }

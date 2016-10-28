@@ -52,7 +52,6 @@ static const char *BuiltInTypeNames[] =
 	"string",
 	"vector2",
 	"vector3",
-	"vector4",
 	"name",
 	"color",
 	"state",
@@ -622,6 +621,16 @@ static void PrintExprTrinary(FLispString &out, ZCC_TreeNode *node)
 	out.Close();
 }
 
+static void PrintVectorInitializer(FLispString &out, ZCC_TreeNode *node)
+{
+	ZCC_VectorInitializer *enode = (ZCC_VectorInitializer *)node;
+	OpenExprType(out, enode->Operation);
+	PrintNodes(out, enode->X);
+	PrintNodes(out, enode->Y);
+	PrintNodes(out, enode->Z);
+	out.Close();
+}
+
 static void PrintFuncParam(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_FuncParm *pnode = (ZCC_FuncParm *)node;
@@ -889,7 +898,8 @@ void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *
 	PrintFuncDeclarator,
 	PrintDefault,
 	PrintFlagStmt,
-	PrintPropertyStmt
+	PrintPropertyStmt,
+	PrintVectorInitializer,
 };
 
 FString ZCC_PrintAST(ZCC_TreeNode *root)

@@ -120,7 +120,6 @@ enum EZCCBuiltinType
 	ZCC_String,
 	ZCC_Vector2,
 	ZCC_Vector3,
-	ZCC_Vector4,
 	ZCC_Name,
 
 	ZCC_Color,		// special types for ZDoom.

@@ -1387,11 +1387,6 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 			retval = TypeVector3;
 			break;
 
-		case ZCC_Vector4:
-			// This has almost no use, so we really shouldn't bother.
-			Error(field, "vector<4> not implemented for %s", name.GetChars());
-			return TypeError;
-
 		case ZCC_State:
 			retval = TypeState;
 			break;
@@ -2708,6 +2703,15 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		auto right = ConvertNode(trinary->Right);
 
 		return new FxConditional(condition, left, right);
+	}
+
+	case AST_VectorInitializer:
+	{
+		auto vecini = static_cast<ZCC_VectorInitializer *>(ast);
+		auto xx = ConvertNode(vecini->X);
+		auto yy = ConvertNode(vecini->Y);
+		auto zz = ConvertNode(vecini->Z);
+		return new FxVectorInitializer(xx, yy, zz, *ast);
 	}
 
 	case AST_LocalVarStmt:

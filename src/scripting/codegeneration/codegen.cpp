@@ -5785,7 +5785,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	{
 		bool foundvarargs = false;
 		PType * type = nullptr;
-		if (ArgList->Size() + implicit > proto->ArgumentTypes.Size())
+		if (argtypes.Last() != nullptr && ArgList->Size() + implicit > argtypes.Size())
 		{
 			ScriptPosition.Message(MSG_ERROR, "Too many arguments in call to %s", Function->SymbolName.GetChars());
 			delete this;

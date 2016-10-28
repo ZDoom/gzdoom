@@ -193,18 +193,6 @@ END_POINTERS
 
 //==========================================================================
 //
-// PType Default Constructor
-//
-//==========================================================================
-
-PType::PType()
-: Size(0), Align(1), HashNext(NULL)
-{
-	mDescriptiveName = "Type";
-}
-
-//==========================================================================
-//
 // PType Parameterized Constructor
 //
 //==========================================================================
@@ -213,6 +201,10 @@ PType::PType(unsigned int size, unsigned int align)
 : Size(size), Align(align), HashNext(NULL)
 {
 	mDescriptiveName = "Type";
+	loadOp = OP_NOP;
+	storeOp = OP_NOP;
+	moveOp = OP_NOP;
+	RegType = REGT_NIL;
 }
 
 //==========================================================================
@@ -479,54 +471,6 @@ double PType::GetValueFloat(void *addr) const
 
 //==========================================================================
 //
-// PType :: GetStoreOp
-//
-//==========================================================================
-
-int PType::GetStoreOp() const
-{
-	assert(0 && "Cannot store this type");
-	return OP_NOP;
-}
-
-//==========================================================================
-//
-// PType :: GetLoadOp
-//
-//==========================================================================
-
-int PType::GetLoadOp() const
-{
-	assert(0 && "Cannot load this type");
-	return OP_NOP;
-}
-
-//==========================================================================
-//
-// PType :: GetMoveOp
-//
-//==========================================================================
-
-int PType::GetMoveOp() const
-{
-	assert(0 && "Cannot move this type");
-	return OP_NOP;
-}
-
-//==========================================================================
-//
-// PType :: GetRegType
-//
-//==========================================================================
-
-int PType::GetRegType() const
-{
-	//assert(0 && "No register for this type");	// wrong place for this assert, it makes it impossible to use this function to check for bad types.
-	return REGT_NIL;
-}
-
-//==========================================================================
-//
 // PType :: IsMatch
 //
 //==========================================================================
@@ -747,6 +691,7 @@ PInt::PInt()
 	mDescriptiveName = "SInt32";
 	Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Min, this, -0x7FFFFFFF - 1));
 	Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this,  0x7FFFFFFF));
+	SetOps;
 }
 
 //==========================================================================
@@ -772,6 +717,33 @@ PInt::PInt(unsigned int size, bool unsign)
 	{
 		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Min, this, 0u));
 		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this, (1u << (8 * size)) - 1));
+	}
+	SetOps();
+}
+
+void PInt::SetOps()
+{
+	moveOp = OP_MOVE;
+	RegType = REGT_INT;
+	if (Size == 4)
+	{
+		storeOp = OP_SW;
+		loadOp = OP_LW;
+	}
+	else if (Size == 1)
+	{
+		storeOp = OP_SB;
+		loadOp = Unsigned ? OP_LBU : OP_LB;
+	}
+	else if (Size == 2)
+	{
+		storeOp = OP_SH;
+		loadOp = Unsigned ? OP_LHU : OP_LH;
+	}
+	else
+	{
+		assert(0 && "Unhandled integer size");
+		storeOp = OP_NOP;
 	}
 }
 
@@ -942,76 +914,6 @@ double PInt::GetValueFloat(void *addr) const
 //
 //==========================================================================
 
-int PInt::GetStoreOp() const
-{
-	if (Size == 4)
-	{
-		return OP_SW;
-	}
-	else if (Size == 1)
-	{
-		return OP_SB;
-	}
-	else if (Size == 2)
-	{
-		return OP_SH;
-	}
-	else
-	{
-		assert(0 && "Unhandled integer size");
-		return OP_NOP;
-	}
-}
-
-//==========================================================================
-//
-// PInt :: GetLoadOp
-//
-//==========================================================================
-
-int PInt::GetLoadOp() const
-{
-	if (Size == 4)
-	{
-		return OP_LW;
-	}
-	else if (Size == 1)
-	{
-		return Unsigned ? OP_LBU : OP_LB;
-	}
-	else if (Size == 2)
-	{
-		return Unsigned ? OP_LHU : OP_LH;
-	}
-	else
-	{
-		assert(0 && "Unhandled integer size");
-		return OP_NOP;
-	}
-}
-
-//==========================================================================
-//
-// PInt :: GetLoadOp
-//
-//==========================================================================
-
-int PInt::GetMoveOp() const
-{
-	return OP_MOVE;
-}
-
-//==========================================================================
-//
-// PInt :: GetRegType
-//
-//==========================================================================
-
-int PInt::GetRegType() const
-{
-	return REGT_INT;
-}
-
 /* PBool ******************************************************************/
 
 IMPLEMENT_CLASS(PBool)
@@ -1048,6 +950,7 @@ PFloat::PFloat()
 {
 	mDescriptiveName = "Float";
 	SetDoubleSymbols();
+	SetOps();
 }
 
 //==========================================================================
@@ -1070,6 +973,7 @@ PFloat::PFloat(unsigned int size)
 		MemberOnly = true;
 		SetSingleSymbols();
 	}
+	SetOps();
 }
 
 //==========================================================================
@@ -1264,60 +1168,21 @@ double PFloat::GetValueFloat(void *addr) const
 //
 //==========================================================================
 
-int PFloat::GetStoreOp() const
+void PFloat::SetOps()
 {
 	if (Size == 4)
 	{
-		return OP_SSP;
+		storeOp = OP_SSP;
+		loadOp = OP_LSP;
 	}
 	else
 	{
 		assert(Size == 8);
-		return OP_SDP;
+		storeOp = OP_SDP;
+		loadOp = OP_LDP;
 	}
-}
-
-//==========================================================================
-//
-// PFloat :: GetLoadOp
-//
-//==========================================================================
-
-int PFloat::GetLoadOp() const
-{
-	if (Size == 4)
-	{
-		return OP_LSP;
-	}
-	else
-	{
-		assert(Size == 8);
-		return OP_LDP;
-	}
-	assert(0 && "Cannot load this type");
-	return OP_NOP;
-}
-
-//==========================================================================
-//
-// PFloat :: GetMoveOp
-//
-//==========================================================================
-
-int PFloat::GetMoveOp() const
-{
-	return OP_MOVEF;
-}
-
-//==========================================================================
-//
-// PFloat :: GetRegType
-//
-//==========================================================================
-
-int PFloat::GetRegType() const
-{
-	return REGT_FLOAT;
+	moveOp = OP_MOVEF;
+	RegType = REGT_FLOAT;
 }
 
 /* PString ****************************************************************/
@@ -1554,50 +1419,10 @@ PStatePointer::PStatePointer()
 : PBasicType(sizeof(FState *), __alignof(FState *))
 {
 	mDescriptiveName = "State";
-}
-
-//==========================================================================
-//
-// PStatePointer :: GetStoreOp
-//
-//==========================================================================
-
-int PStatePointer::GetStoreOp() const
-{
-	return OP_SP;
-}
-
-//==========================================================================
-//
-// PStatePointer :: GetLoadOp
-//
-//==========================================================================
-
-int PStatePointer::GetLoadOp() const
-{
-	return OP_LP;
-}
-
-//==========================================================================
-//
-// PStatePointer :: GetMoveOp
-//
-//==========================================================================
-
-int PStatePointer::GetMoveOp() const
-{
-	return OP_MOVEA;
-}
-
-//==========================================================================
-//
-// PStatePointer :: GetRegType
-//
-//==========================================================================
-
-int PStatePointer::GetRegType() const
-{
-	return REGT_POINTER;
+	storeOp = OP_SP;
+	loadOp = OP_LP;
+	moveOp = OP_MOVEA;
+	RegType = REGT_POINTER;
 }
 
 //==========================================================================
@@ -1640,6 +1465,7 @@ PPointer::PPointer()
 : PBasicType(sizeof(void *), __alignof(void *)), PointedType(NULL)
 {
 	mDescriptiveName = "NullPointer";
+	SetOps();
 }
 
 //==========================================================================
@@ -1652,6 +1478,7 @@ PPointer::PPointer(PType *pointsat)
 : PBasicType(sizeof(void *), __alignof(void *)), PointedType(pointsat)
 {
 	mDescriptiveName.Format("Pointer<%s>", pointsat->DescriptiveName());
+	SetOps();
 }
 
 //==========================================================================
@@ -1660,42 +1487,12 @@ PPointer::PPointer(PType *pointsat)
 //
 //==========================================================================
 
-int PPointer::GetStoreOp() const
+void PPointer::SetOps()
 {
-	return OP_SP;
-}
-
-//==========================================================================
-//
-// PPointer :: GetLoadOp
-//
-//==========================================================================
-
-int PPointer::GetLoadOp() const
-{
-	return (PointedType && PointedType->IsKindOf(RUNTIME_CLASS(PClass))) ? OP_LO : OP_LP;
-}
-
-//==========================================================================
-//
-// PPointer :: GetMoveOp
-//
-//==========================================================================
-
-int PPointer::GetMoveOp() const
-{
-	return OP_MOVEA;
-}
-
-//==========================================================================
-//
-// PPointer :: GetRegType
-//
-//==========================================================================
-
-int PPointer::GetRegType() const
-{
-	return REGT_POINTER;
+	storeOp = OP_SP;
+	loadOp = (PointedType && PointedType->IsKindOf(RUNTIME_CLASS(PClass))) ? OP_LO : OP_LP;
+	moveOp = OP_MOVEA;
+	RegType = REGT_POINTER;
 }
 
 //==========================================================================

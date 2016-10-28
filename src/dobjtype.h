@@ -204,6 +204,7 @@ class PType : public PTypeBase
 	HAS_OBJECT_POINTERS;
 protected:
 	enum { MetaClassNum = CLASSREG_PClassType };
+
 public:
 	typedef PClassType MetaClass;
 	MetaClass *GetClass() const;
@@ -223,9 +224,9 @@ public:
 	PSymbolTable	Symbols;
 	bool			MemberOnly = false;		// type may only be used as a struct/class member but not as a local variable or function argument.
 	FString			mDescriptiveName;
+	BYTE loadOp, storeOp, moveOp, RegType;
 
-	PType();
-	PType(unsigned int size, unsigned int align);
+	PType(unsigned int size = 1, unsigned int align = 1);
 	virtual ~PType();
 
 	bool AddConversion(PType *target, void (*convertconst)(ZCC_ExprConstant *, class FSharedStringArena &));
@@ -267,16 +268,28 @@ public:
 	virtual double GetValueFloat(void *addr) const;
 
 	// Gets the opcode to store from a register to memory
-	virtual int GetStoreOp() const;
+	int GetStoreOp() const
+	{
+		return storeOp;
+	}
 
 	// Gets the opcode to load from memory to a register
-	virtual int GetLoadOp() const;
+	int GetLoadOp() const
+	{
+		return loadOp;
+	}
 
 	// Gets the opcode to move from register to another register
-	virtual int GetMoveOp() const;
+	int GetMoveOp() const
+	{
+		return moveOp;
+	}
 
 	// Gets the register type for this type
-	virtual int GetRegType() const;
+	int GetRegType() const
+	{
+		return RegType;
+	}
 
 	// Returns true if this type matches the two identifiers. Referring to the
 	// above table, any type is identified by at most two characteristics. Each
@@ -410,14 +423,11 @@ public:
 	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
 	virtual double GetValueFloat(void *addr) const;
-	virtual int GetStoreOp() const;
-	virtual int GetLoadOp() const;
-	virtual int GetMoveOp() const;
-	virtual int GetRegType() const;
 
 	bool Unsigned;
 protected:
 	PInt();
+	void SetOps();
 };
 
 class PBool : public PInt
@@ -440,12 +450,9 @@ public:
 	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
 	virtual double GetValueFloat(void *addr) const;
-	virtual int GetStoreOp() const;
-	virtual int GetLoadOp() const;
-	virtual int GetMoveOp() const;
-	virtual int GetRegType() const;
 protected:
 	PFloat();
+	void SetOps();
 private:
 	struct SymbolInitF
 	{
@@ -518,11 +525,6 @@ public:
 
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
-
-	virtual int GetStoreOp() const;
-	virtual int GetLoadOp() const;
-	virtual int GetMoveOp() const;
-	virtual int GetRegType() const;
 };
 
 class PPointer : public PBasicType
@@ -535,11 +537,6 @@ public:
 
 	PType *PointedType;
 
-	virtual int GetStoreOp() const;
-	virtual int GetLoadOp() const;
-	virtual int GetMoveOp() const;
-	virtual int GetRegType() const;
-
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
 
@@ -547,6 +544,7 @@ public:
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
 
 protected:
+	void SetOps();
 };
 
 class PClassPointer : public PPointer

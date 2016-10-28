@@ -1461,7 +1461,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 	}
 	if (retval != TypeError && retval->MemberOnly && !formember)
 	{
-		Error(field, "Invalid type %s", retval->DescriptiveName());	// fixme: Types need a descriptive name that can be output here.
+		Error(field, "Invalid type %s", retval->DescriptiveName());
 		return TypeError;
 	}
 	return retval;

@@ -567,6 +567,10 @@ void PType::StaticInit()
 	TypeVector2->AddField(NAME_X, TypeFloat64);
 	TypeVector2->AddField(NAME_Y, TypeFloat64);
 	TypeTable.AddType(TypeVector2);
+	TypeVector2->loadOp = OP_LV2;
+	TypeVector2->storeOp = OP_SV2;
+	TypeVector2->moveOp = OP_MOVEV2;
+	TypeVector2->RegType = REGT_FLOAT|REGT_MULTIREG;
 
 	TypeVector3 = new PStruct(NAME_Vector3, nullptr);
 	TypeVector3->AddField(NAME_X, TypeFloat64);
@@ -575,6 +579,10 @@ void PType::StaticInit()
 	// allow accessing xy as a vector2. This is marked native because it's not supposed to be serialized.
 	TypeVector3->Symbols.AddSymbol(new PField(NAME_XY, TypeVector2, VARF_Native, 0));
 	TypeTable.AddType(TypeVector3);
+	TypeVector2->loadOp = OP_LV3;
+	TypeVector2->storeOp = OP_SV3;
+	TypeVector2->moveOp = OP_MOVEV3;
+	TypeVector2->RegType = REGT_FLOAT | REGT_MULTIREG;
 
 
 
@@ -691,7 +699,7 @@ PInt::PInt()
 	mDescriptiveName = "SInt32";
 	Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Min, this, -0x7FFFFFFF - 1));
 	Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this,  0x7FFFFFFF));
-	SetOps;
+	SetOps();
 }
 
 //==========================================================================

@@ -1352,11 +1352,6 @@ begin:
 		fc = konstf[C];
 		fbp = &reg.f[B];
 		goto Do_MULV2;
-	OP(MULVF2_KR):
-		ASSERTF(a+1); ASSERTKF(B+1); ASSERTF(C);
-		fc = reg.f[C];
-		fbp = &konstf[B];
-		goto Do_MULV2;
 
 	OP(DIVVF2_RR):
 		ASSERTF(a+1); ASSERTF(B+1); ASSERTF(C);
@@ -1370,11 +1365,6 @@ begin:
 		ASSERTF(a+1); ASSERTF(B+1); ASSERTKF(C);
 		fc = konstf[C];
 		fbp = &reg.f[B];
-		goto Do_DIVV2;
-	OP(DIVVF2_KR):
-		ASSERTF(a+1); ASSERTKF(B+1); ASSERTF(C);
-		fc = reg.f[C];
-		fbp = &konstf[B];
 		goto Do_DIVV2;
 
 	OP(LENV2):
@@ -1488,11 +1478,6 @@ begin:
 		fc = konstf[C];
 		fbp = &reg.f[B];
 		goto Do_MULV3;
-	OP(MULVF3_KR):
-		ASSERTF(a+2); ASSERTKF(B+2); ASSERTF(C);
-		fc = reg.f[C];
-		fbp = &konstf[B];
-		goto Do_MULV3;
 
 	OP(DIVVF3_RR):
 		ASSERTF(a+2); ASSERTF(B+2); ASSERTF(C);
@@ -1507,11 +1492,6 @@ begin:
 		ASSERTF(a+2); ASSERTF(B+2); ASSERTKF(C);
 		fc = konstf[C];
 		fbp = &reg.f[B];
-		goto Do_DIVV3;
-	OP(DIVVF3_KR):
-		ASSERTF(a+2); ASSERTKF(B+2); ASSERTF(C);
-		fc = reg.f[C];
-		fbp = &konstf[B];
 		goto Do_DIVV3;
 
 	OP(LENV3):

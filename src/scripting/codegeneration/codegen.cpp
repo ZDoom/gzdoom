@@ -1476,7 +1476,7 @@ FxExpression *FxPlusSign::Resolve(FCompileContext& ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(Operand, ctx);
 
-	if (Operand->IsNumeric())
+	if (Operand->IsNumeric() || Operand->IsVector())
 	{
 		FxExpression *e = Operand;
 		Operand = NULL;
@@ -1530,7 +1530,7 @@ FxExpression *FxMinusSign::Resolve(FCompileContext& ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(Operand, ctx);
 
-	if (Operand->IsNumeric())
+	if (Operand->IsNumeric() || Operand->IsVector())
 	{
 		if (Operand->isConstant())
 		{
@@ -1563,6 +1563,7 @@ ExpEmit FxMinusSign::Emit(VMFunctionBuilder *build)
 	assert(ValueType == Operand->ValueType);
 	ExpEmit from = Operand->Emit(build);
 	assert(from.Konst == 0);
+	assert(ValueType->GetRegCount() == from.RegCount);
 	// Do it in-place.
 	if (ValueType->GetRegType() == REGT_INT)
 	{
@@ -1571,7 +1572,21 @@ ExpEmit FxMinusSign::Emit(VMFunctionBuilder *build)
 	else
 	{
 		assert(ValueType->GetRegType() == REGT_FLOAT);
-		build->Emit(OP_FLOP, from.RegNum, from.RegNum, FLOP_NEG);
+		switch (from.RegCount)
+		{
+		case 1:
+			build->Emit(OP_FLOP, from.RegNum, from.RegNum, FLOP_NEG);
+			break;
+
+		case 2:
+			build->Emit(OP_NEGV2, from.RegNum, from.RegNum);
+			break;
+
+		case 3:
+			build->Emit(OP_NEGV3, from.RegNum, from.RegNum);
+			break;
+
+		}
 	}
 	return from;
 }
@@ -1610,10 +1625,10 @@ FxExpression *FxUnaryNotBitwise::Resolve(FCompileContext& ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(Operand, ctx);
 
-	if  (Operand->ValueType->GetRegType() == REGT_FLOAT /* lax */)
+	if  (ctx.FromDecorate && Operand->IsNumeric() && Operand->ValueType->GetRegType() == REGT_FLOAT /* lax */)
 	{
 		// DECORATE allows floats here so cast them to int.
-		Operand = new FxIntCast(Operand, ctx.FromDecorate);
+		Operand = new FxIntCast(Operand, true);
 		Operand = Operand->Resolve(ctx);
 		if (Operand == NULL) 
 		{
@@ -1622,7 +1637,8 @@ FxExpression *FxUnaryNotBitwise::Resolve(FCompileContext& ctx)
 		}
 	}
 
-	if (Operand->ValueType->GetRegType() != REGT_INT)
+	// Names were not blocked in DECORATE here after the scripting branch merge. Now they are again.
+	if (Operand->ValueType->GetRegType() != REGT_INT || Operand->ValueType == TypeName)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Integer type expected");
 		delete this;
@@ -1763,13 +1779,13 @@ FxExpression *FxSizeAlign::Resolve(FCompileContext& ctx)
 	auto type = Operand->ValueType;
 	if (Operand->isConstant())
 	{
-		ScriptPosition.Message(MSG_ERROR, "cannot determine %s of a constant", Which == 'a'? "alignment" : "size");
+		ScriptPosition.Message(MSG_ERROR, "cannot determine %s of a constant", Which == TK_AlignOf? "alignment" : "size");
 		delete this;
 		return NULL;
 	}
 	else if (!Operand->RequestAddress(nullptr))
 	{
-		ScriptPosition.Message(MSG_ERROR, "Operand must be addressable to determine %s", Which == 'a' ? "alignment" : "size");
+		ScriptPosition.Message(MSG_ERROR, "Operand must be addressable to determine %s", Which == TK_AlignOf ? "alignment" : "size");
 		delete this;
 		return NULL;
 	}
@@ -2057,7 +2073,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 			delete this;
 			return nullptr;
 		}
-		if (Base->ValueType->IsKindOf(RUNTIME_CLASS(PStruct)))
+		if (!Base->IsVector() && Base->ValueType->IsKindOf(RUNTIME_CLASS(PStruct)))
 		{
 			ScriptPosition.Message(MSG_ERROR, "Struct assignment not implemented yet");
 			delete this;
@@ -2255,7 +2271,78 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 		return false;
 	}
 
-	if (left->ValueType == TypeBool && right->ValueType == TypeBool)
+	if (left->IsVector() || right->IsVector())
+	{
+		switch (Operator)
+		{
+		case '+':
+		case '-':
+			// a vector2 can be added to or subtracted from a vector 3 but it needs to be the right operand.
+			if (left->ValueType == right->ValueType || (left->ValueType == TypeVector3 && right->ValueType == TypeVector2))
+			{
+				ValueType = left->ValueType;
+				return true;
+			}
+			else
+			{
+				ScriptPosition.Message(MSG_ERROR, "Incompatible operands for operator %c", Operator);
+				delete this;
+				return false;
+			}
+			break;
+
+		case '/':
+			if (right->IsVector())
+			{
+				// For division, the vector must be the first operand.
+				ScriptPosition.Message(MSG_ERROR, "Incompatible operands for division");
+				delete this;
+				return false;
+			}
+		case '*':
+			if (left->IsVector())
+			{
+				right = new FxFloatCast(right);
+				right = right->Resolve(ctx);
+				if (right == nullptr)
+				{
+					delete this;
+					return false;
+				}
+				ValueType = left->ValueType;
+			}
+			else
+			{
+				left = new FxFloatCast(left);
+				left = left->Resolve(ctx);
+				if (left == nullptr)
+				{
+					delete this;
+					return false;
+				}
+				ValueType = right->ValueType;
+			}
+			break;
+
+		case TK_Eq:
+		case TK_Neq:
+			if (left->ValueType != right->ValueType)
+			{
+				ScriptPosition.Message(MSG_ERROR, "Incompatible operands for comparison");
+				delete this;
+				return false;
+			}
+			ValueType = TypeBool;
+			break;
+
+		default:
+			ScriptPosition.Message(MSG_ERROR, "Incompatible operation for vector type");
+			delete this;
+			return false;
+
+		}
+	}
+	else if (left->ValueType == TypeBool && right->ValueType == TypeBool)
 	{
 		if (Operator == '&' || Operator == '|' || Operator == '^' || ctx.FromDecorate)
 		{
@@ -2361,7 +2448,7 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 	CHECKRESOLVED();
 	if (!ResolveLR(ctx, true)) return NULL;
 
-	if (!IsNumeric())
+	if (!IsNumeric() && !IsVector())
 	{
 		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
 		delete this;
@@ -2410,6 +2497,8 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 {
 	assert(Operator == '+' || Operator == '-');
+	// allocate the result first so that the operation does not leave gaps in the register set.
+	ExpEmit to(build, ValueType->GetRegType(), ValueType->GetRegCount());	
 	ExpEmit op1 = left->Emit(build);
 	ExpEmit op2 = right->Emit(build);
 	if (Operator == '+')
@@ -2422,10 +2511,20 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 		assert(!op1.Konst);
 		op1.Free(build);
 		op2.Free(build);
-		if (ValueType->GetRegType() == REGT_FLOAT)
+		if (IsVector())
 		{
 			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
-			ExpEmit to(build, REGT_FLOAT);
+			build->Emit(right->ValueType == TypeVector2? OP_ADDV2_RR : OP_ADDV3_RR, to.RegNum, op1.RegNum, op2.RegNum);
+			if (left->ValueType == TypeVector3 && right->ValueType == TypeVector2 && to.RegNum != op1.RegNum)
+			{
+				// must move the z-coordinate
+				build->Emit(OP_MOVEF, to.RegNum + 2, op1.RegNum + 2);
+			}
+			return to;
+		}
+		else if (ValueType->GetRegType() == REGT_FLOAT)
+		{
+			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
 			build->Emit(op2.Konst ? OP_ADDF_RK : OP_ADDF_RR, to.RegNum, op1.RegNum, op2.RegNum);
 			return to;
 		}
@@ -2433,7 +2532,6 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 		{
 			assert(ValueType->GetRegType() == REGT_INT);
 			assert(op1.RegType == REGT_INT && op2.RegType == REGT_INT);
-			ExpEmit to(build, REGT_INT);
 			build->Emit(op2.Konst ? OP_ADD_RK : OP_ADD_RR, to.RegNum, op1.RegNum, op2.RegNum);
 			return to;
 		}
@@ -2444,21 +2542,23 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 		assert(!op1.Konst || !op2.Konst);
 		op1.Free(build);
 		op2.Free(build);
-		if (ValueType->GetRegType() == REGT_FLOAT)
+		if (IsVector())
 		{
 			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
-			ExpEmit to(build, REGT_FLOAT);
-			build->Emit(op1.Konst ? OP_SUBF_KR : op2.Konst ? OP_SUBF_RK : OP_SUBF_RR,
-				to.RegNum, op1.RegNum, op2.RegNum);
+			build->Emit(right->ValueType == TypeVector2 ? OP_SUBV2_RR : OP_SUBV3_RR, to.RegNum, op1.RegNum, op2.RegNum);
+			return to;
+		}
+		else if (ValueType->GetRegType() == REGT_FLOAT)
+		{
+			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
+			build->Emit(op1.Konst ? OP_SUBF_KR : op2.Konst ? OP_SUBF_RK : OP_SUBF_RR, to.RegNum, op1.RegNum, op2.RegNum);
 			return to;
 		}
 		else
 		{
 			assert(ValueType->GetRegType() == REGT_INT);
 			assert(op1.RegType == REGT_INT && op2.RegType == REGT_INT);
-			ExpEmit to(build, REGT_INT);
-			build->Emit(op1.Konst ? OP_SUB_KR : op2.Konst ? OP_SUB_RK : OP_SUB_RR,
-				to.RegNum, op1.RegNum, op2.RegNum);
+			build->Emit(op1.Konst ? OP_SUB_KR : op2.Konst ? OP_SUB_RK : OP_SUB_RR, to.RegNum, op1.RegNum, op2.RegNum);
 			return to;
 		}
 	}
@@ -2487,7 +2587,7 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 
 	if (!ResolveLR(ctx, true)) return NULL;
 
-	if (!IsNumeric())
+	if (!IsNumeric() && !IsVector())
 	{
 		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
 		delete this;
@@ -2552,8 +2652,32 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 
 ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 {
+	// allocate the result first so that the operation does not leave gaps in the register set.
+	ExpEmit to(build, ValueType->GetRegType(), ValueType->GetRegCount());
 	ExpEmit op1 = left->Emit(build);
 	ExpEmit op2 = right->Emit(build);
+
+	if (IsVector())
+	{
+		assert(Operator != '%');
+		if (right->IsVector())
+		{
+			swapvalues(op1, op2);
+		}
+		int op;
+		if (op2.Konst)
+		{
+			op = Operator == '*' ? (ValueType == TypeVector2 ? OP_MULVF2_RK : OP_MULVF3_RK) : (ValueType == TypeVector2 ? OP_DIVVF2_RK : OP_DIVVF3_RK);
+		}
+		else
+		{
+			op = Operator == '*' ? (ValueType == TypeVector2 ? OP_MULVF2_RR : OP_MULVF3_RR) : (ValueType == TypeVector2 ? OP_DIVVF2_RR : OP_DIVVF3_RR);
+		}
+		build->Emit(op, to.RegNum, op1.RegNum, op2.RegNum);
+		op1.Free(build);
+		op2.Free(build);
+		return to;
+	}
 
 	if (Operator == '*')
 	{
@@ -2568,7 +2692,6 @@ ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 		if (ValueType->GetRegType() == REGT_FLOAT)
 		{
 			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
-			ExpEmit to(build, REGT_FLOAT);
 			build->Emit(op2.Konst ? OP_MULF_RK : OP_MULF_RR, to.RegNum, op1.RegNum, op2.RegNum);
 			return to;
 		}
@@ -2576,7 +2699,6 @@ ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 		{
 			assert(ValueType->GetRegType() == REGT_INT);
 			assert(op1.RegType == REGT_INT && op2.RegType == REGT_INT);
-			ExpEmit to(build, REGT_INT);
 			build->Emit(op2.Konst ? OP_MUL_RK : OP_MUL_RR, to.RegNum, op1.RegNum, op2.RegNum);
 			return to;
 		}
@@ -2813,7 +2935,7 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 		return NULL;
 	}
 
-	if (!IsNumeric() && !IsPointer() && ValueType != TypeName)
+	if (!IsNumeric() && !IsPointer() && !IsVector() && ValueType != TypeName)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
 		delete this;
@@ -2866,11 +2988,13 @@ ExpEmit FxCompareEq::Emit(VMFunctionBuilder *build)
 		swapvalues(op1, op2);
 	}
 	assert(!op1.Konst);
+	assert(op1.RegCount >= 1 && op1.RegCount <= 3);
 
 	ExpEmit to(build, REGT_INT);
 
+	static int flops[] = { OP_EQF_R, OP_EQV2_R, OP_EQV3_R };
 	instr = op1.RegType == REGT_INT ? OP_EQ_R :
-			op1.RegType == REGT_FLOAT ? OP_EQF_R :
+			op1.RegType == REGT_FLOAT ? flops[op1.RegCount-1] :
 			OP_EQA_R;
 	op1.Free(build);
 	if (!op2.Konst)
@@ -3349,13 +3473,24 @@ FxExpression *FxConditional::Resolve(FCompileContext& ctx)
 	RESOLVE(falsex, ctx);
 	ABORT(condition && truex && falsex);
 
-	if (truex->ValueType == TypeBool && falsex->ValueType == TypeBool)
+	if (truex->ValueType == falsex->ValueType)
+		ValueType = truex->ValueType;
+	else if (truex->ValueType == TypeBool && falsex->ValueType == TypeBool)
 		ValueType = TypeBool;
 	else if (truex->ValueType->GetRegType() == REGT_INT && falsex->ValueType->GetRegType() == REGT_INT)
 		ValueType = TypeSInt32;
 	else if (truex->IsNumeric() && falsex->IsNumeric())
 		ValueType = TypeFloat64;
+	else
+		ValueType = TypeVoid;
 	//else if (truex->ValueType != falsex->ValueType)
+
+	if (!IsNumeric() && !IsPointer() && !IsVector())
+	{
+		ScriptPosition.Message(MSG_ERROR, "Incompatible types for ?: operator");
+		delete this;
+		return false;
+	}
 
 	if (condition->ValueType != TypeBool)
 	{
@@ -3465,7 +3600,9 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 			else
 			{
 				assert(falseop.RegType == REGT_FLOAT);
-				build->Emit(OP_MOVEF, out.RegNum, falseop.RegNum, 0);
+				assert(falseop.RegCount == out.RegCount);
+				static int flops[] = { OP_MOVEF, OP_MOVEV2, OP_MOVEV3 };
+				build->Emit(flops[falseop.RegNum], out.RegNum, falseop.RegNum, 0);
 			}
 		}
 	}
@@ -4625,6 +4762,7 @@ FxLocalVariable::FxLocalVariable(FxLocalVariableDeclaration *var, const FScriptP
 	Variable = var;
 	ValueType = var->ValueType;
 	AddressRequested = false;
+	RegOffset = 0;
 }
 
 FxExpression *FxLocalVariable::Resolve(FCompileContext &ctx)
@@ -4642,7 +4780,8 @@ bool FxLocalVariable::RequestAddress(bool *writable)
 	
 ExpEmit FxLocalVariable::Emit(VMFunctionBuilder *build)
 {
-	ExpEmit ret(Variable->RegNum, Variable->ValueType->GetRegType(), false, true);
+	ExpEmit ret(Variable->RegNum + RegOffset, Variable->ValueType->GetRegType(), false, true);
+	ret.RegCount = ValueType->GetRegCount();
 	if (AddressRequested) ret.Target = true;
 	return ret;
 }
@@ -4764,6 +4903,16 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 			auto x = classx->Resolve(ctx);
 			classx = nullptr;
 			return x;
+		}
+		else if (classx->ExprType == EFX_LocalVariable && classx->IsVector())	// vectors are a special case because they are held in registers
+		{
+			// since this is a vector, all potential things that may get here are single float or an xy-vector.
+			auto locvar = static_cast<FxLocalVariable *>(classx);
+			locvar->RegOffset = membervar->Offset / 8;
+			locvar->ValueType = membervar->Type;
+			classx = nullptr;
+			delete this;
+			return locvar;
 		}
 		else
 		{

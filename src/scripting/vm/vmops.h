@@ -208,12 +208,10 @@ xx(SUBV2_RK,	subv2,	RVRVKV),
 xx(SUBV2_KR,	subv2,	RVKVRV),
 xx(DOTV2_RR,	dotv2,	RVRVRV),		// va = vB dot vkC
 xx(DOTV2_RK,	dotv2,	RVRVKV),
-xx(MULVF2_RR,	mulv2,	RVRVRV),		// vA = vkB * fkC
-xx(MULVF2_RK,	mulv2,	RVRVKV),
-xx(MULVF2_KR,	mulv2,	RVKVRV),
-xx(DIVVF2_RR,	divv2,	RVRVRV),		// vA = vkB / fkC
-xx(DIVVF2_RK,	divv2,	RVRVKV),
-xx(DIVVF2_KR,	divv2,	RVKVRV),
+xx(MULVF2_RR,	mulv2,	RVRVRF),		// vA = vkB * fkC
+xx(MULVF2_RK,	mulv2,	RVRVKF),
+xx(DIVVF2_RR,	divv2,	RVRVRF),		// vA = vkB / fkC
+xx(DIVVF2_RK,	divv2,	RVRVKF),
 xx(LENV2,		lenv2,	RFRV),			// fA = vB.Length
 xx(EQV2_R,		beqv2,	CVRR),			// if ((vB == vkC) != A) then pc++ (inexact if A & 32)
 xx(EQV2_K,		beqv2,	CVRK),
@@ -230,12 +228,10 @@ xx(DOTV3_RK,	dotv3,	RVRVKV),
 xx(CROSSV_RR,	crossv,	RVRVRV),		// vA = vkB cross vkC
 xx(CROSSV_RK,	crossv,	RVRVKV),
 xx(CROSSV_KR,	crossv,	RVKVRV),
-xx(MULVF3_RR,	mulv3,	RVRVRV),		// vA = vkB * fkC
-xx(MULVF3_RK,	mulv3,	RVRVKV),
-xx(MULVF3_KR,	mulv3,	RVKVRV),
-xx(DIVVF3_RR,	divv3,	RVRVRV),		// vA = vkB / fkC
-xx(DIVVF3_RK,	divv3,	RVRVKV),
-xx(DIVVF3_KR,	divv3,	RVKVRV),
+xx(MULVF3_RR,	mulv3,	RVRVRF),		// vA = vkB * fkC
+xx(MULVF3_RK,	mulv3,	RVRVKF),
+xx(DIVVF3_RR,	divv3,	RVRVRF),		// vA = vkB / fkC
+xx(DIVVF3_RK,	divv3,	RVRVKF),
 xx(LENV3,		lenv3,	RFRV),			// fA = vB.Length
 xx(EQV3_R,		beqv3,	CVRR),			// if ((vB == vkC) != A) then pc++ (inexact if A & 33)
 xx(EQV3_K,		beqv3,	CVRK),

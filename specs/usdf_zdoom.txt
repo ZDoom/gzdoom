@@ -50,6 +50,16 @@ conversation
                 item   = <string>;
             }
 
+            require
+            {
+                item   = <string>;
+            }
+
+            exclude
+            {
+                item   = <string>;
+            }
+
             giveitem        = <string>;
         }
     }

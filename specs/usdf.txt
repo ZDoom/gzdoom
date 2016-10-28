@@ -122,6 +122,26 @@ conversation // Starts a dialog.
                 amount = <integer>; // Minimum amount of the item needed.
             }
 
+            // The amount of an item needed for this option to become available.
+            // You can have as many as needed. All require blocks must be satisfied
+            // to show this option.
+            require
+            {
+                item   = <integer>; // Item that is required to show this option.
+                amount = <integer>; // Minimum amount of the item needed.
+            }
+
+            // The undesired amount of an item. This option will become available
+            // if you have less than the specified amount. You can have as many
+            // as needed. All exclude blocks must be satisfied to show this option.
+            // Note: if both require and exclude are defined then all require
+            // and all exclude blocks must be satisfied to show this option.
+            exclude
+            {
+                item   = <integer>; // Item that is unwanted to show this option.
+                amount = <integer>; // Unwanted minimum amount of the item.
+            }
+
             displaycost     = <bool>;    // Whether the cost should be
                                          // displayed with the option.
                                          // If no cost is specified this should

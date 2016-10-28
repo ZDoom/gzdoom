@@ -979,7 +979,7 @@ primary(XX) ::= LPAREN expr(A) COMMA expr(B) COMMA expr(C) RPAREN.
 }
 
 
-primary(X) ::= LPAREN expr(A) COMMA expr(B) RPAREN.
+primary(XX) ::= LPAREN expr(A) COMMA expr(B) RPAREN.
 {
 	NEW_AST_NODE(VectorInitializer, expr, A);
 	expr->Operation = PEX_Vector;
@@ -987,7 +987,7 @@ primary(X) ::= LPAREN expr(A) COMMA expr(B) RPAREN.
 	expr->X = A;
 	expr->Y = B;
 	expr->Z = nullptr;
-	X = expr;
+	XX = expr;
 }
 
 primary(X) ::= LPAREN expr(A) RPAREN.

@@ -33,8 +33,10 @@ xx(LO,		lo,		RPRPKI),	// load object
 xx(LO_R,	lo,		RPRPRI),
 xx(LP,		lp,		RPRPKI),	// load pointer
 xx(LP_R,	lp,		RPRPRI),
-xx(LV,		lv,		RVRPKI),	// load vector
-xx(LV_R,	lv,		RVRPRI),
+xx(LV2,		lv2,	RVRPKI),	// load vector2
+xx(LV2_R,	lv2,	RVRPRI),
+xx(LV3,		lv3,	RVRPKI),	// load vector3
+xx(LV3_R,	lv3,	RVRPRI),
 
 xx(LBIT,	lbit,	RIRPI8),	// rA = !!(*rB & C)  -- *rB is a byte
 
@@ -53,8 +55,10 @@ xx(SS,		ss,		RPRSKI),		// store string
 xx(SS_R,	ss,		RPRSRI),
 xx(SP,		sp,		RPRPKI),		// store pointer
 xx(SP_R,	sp,		RPRPRI),
-xx(SV,		sv,		RPRVKI),		// store vector
-xx(SV_R,	sv,		RPRVRI),
+xx(SV2,		sv2,	RPRVKI),		// store vector2
+xx(SV2_R,	sv2,	RPRVRI),
+xx(SV3,		sv3,	RPRVKI),		// store vector3
+xx(SV3_R,	sv3,	RPRVRI),
 
 xx(SBIT,	sbit,	RPRII8),		// *rA |= C if rB is true, *rA &= ~C otherwise
 
@@ -63,6 +67,8 @@ xx(MOVE,		mov,	RIRI),		// dA = dB
 xx(MOVEF,		mov,	RFRF),		// fA = fB
 xx(MOVES,		mov,	RSRS),		// sA = sB
 xx(MOVEA,		mov,	RPRP),		// aA = aB
+xx(MOVEV2,		mov2,	RFRF),		// fA = fB (2 elements)
+xx(MOVEV3,		mov3,	RFRF),		// fA = fB (3 elements)
 xx(CAST,		cast,	CAST),		// xA = xB, conversion specified by C
 xx(DYNCAST_R,	dyncast,RPRPRP),	// aA = aB after casting to rkC (specifying a class)
 xx(DYNCAST_K,	dyncast,RPRPKP),
@@ -193,24 +199,46 @@ xx(LEF_RR,		ble,	CFRR),			// if ((fkb <= fkC) != (A & 1)) then pc++
 xx(LEF_RK,		ble,	CFRK),
 xx(LEF_KR,		ble,	CFKR),
 
-// Vector math.
-xx(NEGV,		negv,	RVRV),			// vA = -vB
-xx(ADDV_RR,		addv,	RVRVRV),		// vA = vB + vkC
-xx(ADDV_RK,		addv,	RVRVKV),
-xx(SUBV_RR,		subv,	RVRVRV),		// vA = vkB - vkC
-xx(SUBV_RK,		subv,	RVRVKV),
-xx(SUBV_KR,		subv,	RVKVRV),
-xx(DOTV_RR,		dotv,	RVRVRV),		// va = vB dot vkC
-xx(DOTV_RK,		dotv,	RVRVKV),
+// Vector math. (2D)
+xx(NEGV2,		negv2,	RVRV),			// vA = -vB
+xx(ADDV2_RR,	addv2,	RVRVRV),		// vA = vB + vkC
+xx(ADDV2_RK,	addv2,	RVRVKV),
+xx(SUBV2_RR,	subv2,	RVRVRV),		// vA = vkB - vkC
+xx(SUBV2_RK,	subv2,	RVRVKV),
+xx(SUBV2_KR,	subv2,	RVKVRV),
+xx(DOTV2_RR,	dotv2,	RVRVRV),		// va = vB dot vkC
+xx(DOTV2_RK,	dotv2,	RVRVKV),
+xx(MULVF2_RR,	mulv2,	RVRVRV),		// vA = vkB * fkC
+xx(MULVF2_RK,	mulv2,	RVRVKV),
+xx(MULVF2_KR,	mulv2,	RVKVRV),
+xx(DIVVF2_RR,	divv2,	RVRVRV),		// vA = vkB / fkC
+xx(DIVVF2_RK,	divv2,	RVRVKV),
+xx(DIVVF2_KR,	divv2,	RVKVRV),
+xx(LENV2,		lenv2,	RFRV),			// fA = vB.Length
+xx(EQV2_R,		beqv2,	CVRR),			// if ((vB == vkC) != A) then pc++ (inexact if A & 32)
+xx(EQV2_K,		beqv2,	CVRK),
+
+// Vector math (3D)
+xx(NEGV3,		negv3,	RVRV),			// vA = -vB
+xx(ADDV3_RR,	addv3,	RVRVRV),		// vA = vB + vkC
+xx(ADDV3_RK,	addv3,	RVRVKV),
+xx(SUBV3_RR,	subv3,	RVRVRV),		// vA = vkB - vkC
+xx(SUBV3_RK,	subv3,	RVRVKV),
+xx(SUBV3_KR,	subv3,	RVKVRV),
+xx(DOTV3_RR,	dotv3,	RVRVRV),		// va = vB dot vkC
+xx(DOTV3_RK,	dotv3,	RVRVKV),
 xx(CROSSV_RR,	crossv,	RVRVRV),		// vA = vkB cross vkC
 xx(CROSSV_RK,	crossv,	RVRVKV),
 xx(CROSSV_KR,	crossv,	RVKVRV),
-xx(MULVF_RR,	mulv,	RVRVRV),		// vA = vkB * fkC
-xx(MULVF_RK,	mulv,	RVRVKV),
-xx(MULVF_KR,	mulv,	RVKVRV),
-xx(LENV,		lenv,	RFRV),			// fA = vB.Length
-xx(EQV_R,		beqv,	CVRR),			// if ((vB == vkC) != A) then pc++ (inexact if A & 32)
-xx(EQV_K,		beqv,	CVRK),
+xx(MULVF3_RR,	mulv3,	RVRVRV),		// vA = vkB * fkC
+xx(MULVF3_RK,	mulv3,	RVRVKV),
+xx(MULVF3_KR,	mulv3,	RVKVRV),
+xx(DIVVF3_RR,	divv3,	RVRVRV),		// vA = vkB / fkC
+xx(DIVVF3_RK,	divv3,	RVRVKV),
+xx(DIVVF3_KR,	divv3,	RVKVRV),
+xx(LENV3,		lenv3,	RFRV),			// fA = vB.Length
+xx(EQV3_R,		beqv3,	CVRR),			// if ((vB == vkC) != A) then pc++ (inexact if A & 33)
+xx(EQV3_K,		beqv3,	CVRK),
 
 // Pointer math.
 xx(ADDA_RR,		add,	RPRPRI),		// pA = pB + dkC

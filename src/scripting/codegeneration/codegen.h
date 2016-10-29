@@ -228,6 +228,7 @@ enum EFxType
 	EFX_AssignSelf,
 	EFX_Binary,	// one token fits all, the operator is enough to distinguish them.
 	EFX_BinaryLogical,
+	EFX_DotCross,
 	EFX_Conditional,
 	EFX_Abs,
 	EFX_ATan2,
@@ -900,6 +901,26 @@ public:
 
 	FxBinaryLogical(int, FxExpression*, FxExpression*);
 	~FxBinaryLogical();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxBinaryLogical
+//
+//==========================================================================
+
+class FxDotCross : public FxExpression
+{
+public:
+	int				Operator;
+	FxExpression		*left;
+	FxExpression		*right;
+
+	FxDotCross(int, FxExpression*, FxExpression*);
+	~FxDotCross();
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpEmit Emit(VMFunctionBuilder *build);

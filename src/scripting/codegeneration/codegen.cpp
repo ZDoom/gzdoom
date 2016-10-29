@@ -3438,6 +3438,76 @@ ExpEmit FxBinaryLogical::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
+FxDotCross::FxDotCross(int o, FxExpression *l, FxExpression *r)
+	: FxExpression(EFX_DotCross, l->ScriptPosition)
+{
+	Operator = o;
+	left = l;
+	right = r;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxDotCross::~FxDotCross()
+{
+	SAFE_DELETE(left);
+	SAFE_DELETE(right);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxDotCross::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+	RESOLVE(left, ctx);
+	RESOLVE(right, ctx);
+	ABORT(right && left);
+
+	if (!left->IsVector() || left->ValueType != right->ValueType || (Operator == TK_Cross && left->ValueType != TypeVector3))
+	{
+		ScriptPosition.Message(MSG_ERROR, "Incompatible operants for %sproduct", Operator == TK_Cross ? "cross-" : "dot-");
+		delete this;
+		return nullptr;
+	}
+	ValueType = Operator == TK_Cross ? (PType*)TypeVector3 : TypeFloat64;
+	return this;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxDotCross::Emit(VMFunctionBuilder *build)
+{
+	// This is not the "right" way to do these, but it works for now.
+	// (Problem: No information sharing is done between nodes to reduce the
+	// code size if you have something like a1 && a2 && a3 && ... && an.)
+	ExpEmit to(build, ValueType->GetRegType(), ValueType->GetRegCount());
+	ExpEmit op1 = left->Emit(build);
+	ExpEmit op2 = right->Emit(build);
+	int op = Operator == TK_Cross ? OP_CROSSV_RR : left->ValueType == TypeVector3 ? OP_DOTV3_RR : OP_DOTV2_RR;
+	build->Emit(op, to.RegNum, op1.RegNum, op2.RegNum);
+	op1.Free(build);
+	op2.Free(build);
+	return to;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FxConditional::FxConditional(FxExpression *c, FxExpression *t, FxExpression *f)
 : FxExpression(EFX_Conditional, c->ScriptPosition)
 {

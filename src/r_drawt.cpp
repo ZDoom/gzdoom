@@ -838,6 +838,21 @@ void rt_tlaterevsubclamp4cols (int sx, int yl, int yh)
 	rt_revsubclamp4cols(sx, yl, yh);
 }
 
+// Reorder the posts so that they get drawn top-to-bottom instead of bottom-to-top.
+void rt_flip_posts()
+{
+	unsigned int *front = horizspan[dc_x & 3];
+	unsigned int *back = dc_ctspan[dc_x & 3] - 2;
+
+	while (front < back)
+	{
+		swapvalues(front[0], back[0]);
+		swapvalues(front[1], back[1]);
+		front += 2;
+		back -= 2;
+	}
+}
+
 // Copies all spans in all four columns to the screen starting at sx.
 // sx should be dword-aligned.
 void rt_draw4cols (int sx)
@@ -1102,102 +1117,4 @@ void R_FillColumnHorizP (void)
 		dest[0] = color; dest[4] = color;
 		dest += 8;
 	} while (--count);
-}
-
-// Same as R_DrawMaskedColumn() except that it always uses R_DrawColumnHoriz().
-
-void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *span)
-{
-	const fixed_t texturemid = FLOAT2FIXED(dc_texturemid);
-	while (span->Length != 0)
-	{
-		const int length = span->Length;
-		const int top = span->TopOffset;
-
-		// calculate unclipped screen coordinates for post
-		dc_yl = xs_RoundToInt(sprtopscreen + spryscale * top);
-		dc_yh = xs_RoundToInt(sprtopscreen + spryscale * (top + length) - 1);
-
-		if (sprflipvert)
-		{
-			swapvalues (dc_yl, dc_yh);
-		}
-
-		if (dc_yh >= mfloorclip[dc_x])
-		{
-			dc_yh = mfloorclip[dc_x] - 1;
-		}
-		if (dc_yl < mceilingclip[dc_x])
-		{
-			dc_yl = mceilingclip[dc_x];
-		}
-
-		if (dc_yl <= dc_yh)
-		{
-			if (sprflipvert)
-			{
-				dc_texturefrac = (dc_yl*dc_iscale) - (top << FRACBITS)
-					- fixed_t(CenterY * dc_iscale) - texturemid;
-				const fixed_t maxfrac = length << FRACBITS;
-				while (dc_texturefrac >= maxfrac)
-				{
-					if (++dc_yl > dc_yh)
-						goto nextpost;
-					dc_texturefrac += dc_iscale;
-				}
-				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
-				while (endfrac < 0)
-				{
-					if (--dc_yh < dc_yl)
-						goto nextpost;
-					endfrac -= dc_iscale;
-				}
-			}
-			else
-			{
-				dc_texturefrac = texturemid - (top << FRACBITS)
-					+ (dc_yl*dc_iscale) - fixed_t((CenterY-1) * dc_iscale);
-				while (dc_texturefrac < 0)
-				{
-					if (++dc_yl > dc_yh)
-						goto nextpost;
-					dc_texturefrac += dc_iscale;
-				}
-				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
-				const fixed_t maxfrac = length << FRACBITS;
-				if (dc_yh < mfloorclip[dc_x]-1 && endfrac < maxfrac - dc_iscale)
-				{
-					dc_yh++;
-				}
-				else while (endfrac >= maxfrac)
-				{
-					if (--dc_yh < dc_yl)
-						goto nextpost;
-					endfrac -= dc_iscale;
-				}
-			}
-			dc_source = column + top;
-			dc_dest = ylookup[dc_yl] + dc_x + dc_destorg;
-			dc_count = dc_yh - dc_yl + 1;
-			hcolfunc_pre ();
-		}
-nextpost:
-		span++;
-	}
-
-	if (sprflipvert)
-	{
-		unsigned int *front = horizspan[dc_x&3];
-		unsigned int *back = dc_ctspan[dc_x&3] - 2;
-
-		// Reorder the posts so that they get drawn top-to-bottom
-		// instead of bottom-to-top.
-		while (front < back)
-		{
-			swapvalues (front[0], back[0]);
-			swapvalues (front[1], back[1]);
-			front += 2;
-			back -= 2;
-		}
-	}
 }

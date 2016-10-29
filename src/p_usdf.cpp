@@ -210,9 +210,17 @@ class USDFParser : public UDMFParserBase
 			{
 				switch(key)
 				{
-				case NAME_Cost:
 				case NAME_Require:
 				case NAME_Exclude:
+					// Print a warning if the namespace is not ZDoom otherwise fall-through. [FishyClockwork]
+					if (namespace_bits != Zd)
+					{
+						sc.ScriptMessage("Detected \"%s\" block, ignoring. Require/Exclude are exclusive to namespace ZDoom.", key == NAME_Require ? "Require" : "Exclude");
+						while (!sc.CheckToken('}')) sc.MustGetAnyToken(); // Skip this block
+						break;
+					}
+
+				case NAME_Cost:
 					ParseCostRequireExclude(reply, key);
 					break;
 

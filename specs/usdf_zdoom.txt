@@ -50,14 +50,24 @@ conversation
                 item   = <string>;
             }
 
+            // The amount of an item needed for this option to become available.
+            // You can have as many as needed. All require blocks must be satisfied
+            // to show this option.
             require
             {
-                item   = <string>;
+                item   = <string>;  // Item that is required to show this option.
+                amount = <integer>; // Minimum amount of the item needed.
             }
 
+            // The undesired amount of an item. This option will become available
+            // if you have less than the specified amount. You can have as many
+            // as needed. All exclude blocks must be satisfied to show this option.
+            // Note: if both require and exclude are defined then all require
+            // and all exclude blocks must be satisfied to show this option.
             exclude
             {
-                item   = <string>;
+                item   = <string>;  // Item that is unwanted to show this option.
+                amount = <integer>; // Unwanted minimum amount of the item.
             }
 
             giveitem        = <string>;

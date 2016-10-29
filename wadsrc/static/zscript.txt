@@ -177,5 +177,3 @@ zscript/chex/chexweapons.txt
 zscript/chex/chexitems.txt
 zscript/chex/chexdecorations.txt
 zscript/chex/chexplayer.txt
-
-zscript/test2.txt

@@ -676,7 +676,7 @@ FxExpression *FxBoolCast::Resolve(FCompileContext &ctx)
 		delete this;
 		return x;
 	}
-	else if (basex->ValueType->GetRegType() == REGT_INT || basex->ValueType->GetRegType() == REGT_FLOAT || basex->ValueType->GetRegType() == REGT_POINTER)
+	else if ((basex->ValueType->GetRegType() == REGT_INT || basex->ValueType->GetRegType() == REGT_FLOAT || basex->ValueType->GetRegType() == REGT_POINTER) && !basex->IsVector())
 	{
 		if (basex->isConstant())
 		{
@@ -797,7 +797,7 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 			return x;
 		}
 	}
-	else if (basex->ValueType->GetRegType() == REGT_FLOAT)
+	else if (basex->ValueType->GetRegType() == REGT_FLOAT && !basex->IsVector())
 	{
 		if (basex->isConstant())
 		{
@@ -875,7 +875,7 @@ FxExpression *FxFloatCast::Resolve(FCompileContext &ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(basex, ctx);
 
-	if (basex->ValueType->GetRegType() == REGT_FLOAT)
+	if (basex->ValueType->GetRegType() == REGT_FLOAT && !basex->IsVector())
 	{
 		FxExpression *x = basex;
 		basex = NULL;
@@ -1095,11 +1095,11 @@ ExpEmit FxStringCast::Emit(VMFunctionBuilder *build)
 
 	from.Free(build);
 	ExpEmit to(build, REGT_STRING);
-	if (ValueType == TypeName)
+	if (basex->ValueType == TypeName)
 	{
 		build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_N2S);
 	}
-	else if (ValueType == TypeSound)
+	else if (basex->ValueType == TypeSound)
 	{
 		build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_So2S);
 	}
@@ -1325,7 +1325,7 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 	{
 		goto basereturn;
 	}
-	else if (ValueType->GetRegType() == REGT_FLOAT)
+	else if (ValueType->GetRegType() == REGT_FLOAT && !IsVector())
 	{
 		FxExpression *x = new FxFloatCast(basex);
 		x = x->Resolve(ctx);
@@ -4867,6 +4867,7 @@ ExpEmit FxLocalVariable::Emit(VMFunctionBuilder *build)
 }
 
 
+
 //==========================================================================
 //
 //
@@ -7671,10 +7672,16 @@ ExpEmit FxLocalVariableDeclaration::Emit(VMFunctionBuilder *build)
 			}
 			emitval.Free(build);
 		}
-		else
+		else if (Init->ExprType != EFX_LocalVariable)
 		{
 			// take over the register that got allocated while emitting the Init expression.
 			RegNum = emitval.RegNum;
+		}
+		else
+		{
+			ExpEmit out(build, emitval.RegType, emitval.RegCount);
+			build->Emit(ValueType->GetMoveOp(), out.RegNum, emitval.RegNum);
+			RegNum = out.RegNum;
 		}
 	}
 	return ExpEmit();

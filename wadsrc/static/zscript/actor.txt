@@ -53,6 +53,7 @@ class Actor : Thinker native
 		return GetPointer(ptr_select1) == GetPointer(ptr_select2);
 	}
 
+	native void SetOrigin(vector3 newpos, bool moving);
 	native Actor GetPointer(int aaptr);
 	native Actor SpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
 	native void TraceBleed(int damage, Actor missile);
@@ -296,7 +297,7 @@ class Actor : Thinker native
 	deprecated native void A_PlaySoundEx(sound whattoplay, name slot, bool looping = false, int attenuation = 0);
 	deprecated native void A_StopSoundEx(name slot);
 	native void A_SeekerMissile(int threshold, int turnmax, int flags = 0, int chance = 50, int distance = 10);
-	native state A_Jump(int chance = 256, state label, ...);
+	native state A_Jump(int chance, state label, ...);
 	native void A_CustomMissile(class<Actor> missiletype, float spawnheight = 32, float spawnofs_xy = 0, float angle = 0, int flags = 0, float pitch = 0, int ptr = AAPTR_TARGET);
 	native void A_CustomBulletAttack(float spread_xy, float spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", float range = 0, int flags = 0, int ptr = AAPTR_TARGET, class<Actor> missile = null, float Spawnheight = 32, float Spawnofs_xy = 0);
 	native void A_CustomRailgun(int damage, int spawnofs_xy = 0, color color1 = 0, color color2 = 0, int flags = 0, int aim = 0, float maxdiff = 0, class<Actor> pufftype = "BulletPuff", float spread_xy = 0, float spread_z = 0, float range = 0, int duration = 0, float sparsity = 1.0, float driftspeed = 1.0, class<Actor> spawnclass = null, float spawnofs_z = 0, int spiraloffset = 270, int limit = 0);

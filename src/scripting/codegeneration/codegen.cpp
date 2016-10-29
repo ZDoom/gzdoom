@@ -5535,6 +5535,18 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 
 	PClass *cls;
 	bool staticonly = false;
+	if (Self->IsVector())
+	{
+		// handle builtins: Vectors got 2: Length and Unit.
+		if (MethodName == NAME_Length || MethodName == NAME_Unit)
+		{
+			auto x = new FxVectorBuiltin(Self, MethodName);
+			Self = nullptr;
+			delete this;
+			return x->Resolve(ctx);
+		}
+	}
+
 	if (Self->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
 	{
 		cls = static_cast<PClassPointer *>(Self->ValueType)->ClassRestriction;
@@ -6094,6 +6106,51 @@ ExpEmit FxFlopFunctionCall::Emit(VMFunctionBuilder *build)
 
 	build->Emit(OP_FLOP, v.RegNum, v.RegNum, FxFlops[Index].Flop);
 	return v;
+}
+
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+FxVectorBuiltin::FxVectorBuiltin(FxExpression *self, FName name)
+	:FxExpression(EFX_VectorBuiltin, self->ScriptPosition)
+{
+	Self = self;
+	Function = name;
+}
+
+FxVectorBuiltin::~FxVectorBuiltin()
+{
+	SAFE_DELETE(Self);
+}
+
+FxExpression *FxVectorBuiltin::Resolve(FCompileContext &ctx)
+{
+	SAFE_RESOLVE(Self, ctx);
+	assert(Self->IsVector());	// should never be created for anything else.
+	ValueType = Function == NAME_Length ? TypeFloat64 : Self->ValueType;
+	return this;
+}
+
+ExpEmit FxVectorBuiltin::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit to(build, ValueType->GetRegType(), ValueType->GetRegCount());
+	ExpEmit op = Self->Emit(build);
+	if (Function == NAME_Length)
+	{
+		build->Emit(Self->ValueType == TypeVector2 ? OP_LENV2 : OP_LENV3, to.RegNum, op.RegNum);
+	}
+	else
+	{
+		ExpEmit len(build, REGT_FLOAT);
+		build->Emit(Self->ValueType == TypeVector2 ? OP_LENV2 : OP_LENV3, len.RegNum, op.RegNum);
+		build->Emit(Self->ValueType == TypeVector2 ? OP_DIVVF2_RR : OP_DIVVF3_RR, to.RegNum, op.RegNum, len.RegNum);
+		len.Free(build);
+	}
+	op.Free(build);
+	return to;
 }
 
 //==========================================================================

@@ -266,6 +266,7 @@ enum EFxType
 	EFX_SwitchStatement,
 	EFX_CaseStatement,
 	EFX_VectorInitializer,
+	EFX_VectorBuiltin,
 	EFX_COUNT
 };
 
@@ -1250,6 +1251,25 @@ public:
 
 	FxFlopFunctionCall(size_t index, FArgumentList *args, const FScriptPosition &pos);
 	~FxFlopFunctionCall();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxFlopFunctionCall
+//
+//==========================================================================
+
+class FxVectorBuiltin : public FxExpression
+{
+	FName Function;
+	FxExpression *Self;
+
+public:
+
+	FxVectorBuiltin(FxExpression *self, FName name);
+	~FxVectorBuiltin();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

@@ -730,3 +730,5 @@ xx(__decorate_internal_state__)
 xx(__decorate_internal_float__)
 
 xx(DamageFunction)
+xx(Length)
+xx(Unit)

@@ -173,7 +173,7 @@ CVAR(Bool, r_drawmirrors, true, 0)
 float *MaskedSWall;
 float MaskedScaleY;
 
-static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FTexture::Span *spans), FTexture *tex)
+static void BlastMaskedColumn (FTexture *tex, bool useRt)
 {
 	// calculate lighting
 	if (fixedcolormap == NULL && fixedlightlev < 0)
@@ -198,7 +198,7 @@ static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FText
 	// draw the texture
 	const FTexture::Span *spans;
 	const BYTE *pixels = tex->GetColumn (maskedtexturecol[dc_x] >> FRACBITS, &spans);
-	blastfunc (pixels, spans);
+	R_DrawMaskedColumn(pixels, spans, useRt);
 	rw_light += rw_lightstep;
 	spryscale += rw_scalestep;
 }
@@ -441,7 +441,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		{
 			for (dc_x = x1; dc_x < x2; ++dc_x)
 			{
-				BlastMaskedColumn (R_DrawMaskedColumn, tex);
+				BlastMaskedColumn (tex, false);
 			}
 		}
 		else
@@ -456,24 +456,24 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 			while ((dc_x < stop) && (dc_x & 3))
 			{
-				BlastMaskedColumn (R_DrawMaskedColumn, tex);
+				BlastMaskedColumn (tex, false);
 				dc_x++;
 			}
 
 			while (dc_x < stop)
 			{
 				rt_initcols();
-				BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
-				BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
-				BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
-				BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex);
+				BlastMaskedColumn (tex, true); dc_x++;
+				BlastMaskedColumn (tex, true); dc_x++;
+				BlastMaskedColumn (tex, true); dc_x++;
+				BlastMaskedColumn (tex, true);
 				rt_draw4cols (dc_x - 3);
 				dc_x++;
 			}
 
 			while (dc_x < x2)
 			{
-				BlastMaskedColumn (R_DrawMaskedColumn, tex);
+				BlastMaskedColumn (tex, false);
 				dc_x++;
 			}
 		}
@@ -3245,7 +3245,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 				{ // calculate lighting
 					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 				}
-				R_WallSpriteColumn (R_DrawMaskedColumn);
+				R_WallSpriteColumn (false);
 				dc_x++;
 			}
 
@@ -3258,7 +3258,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 				rt_initcols();
 				for (int zz = 4; zz; --zz)
 				{
-					R_WallSpriteColumn (R_DrawMaskedColumnHoriz);
+					R_WallSpriteColumn (true);
 					dc_x++;
 				}
 				rt_draw4cols (dc_x - 4);
@@ -3270,7 +3270,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 				{ // calculate lighting
 					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 				}
-				R_WallSpriteColumn (R_DrawMaskedColumn);
+				R_WallSpriteColumn (false);
 				dc_x++;
 			}
 		}

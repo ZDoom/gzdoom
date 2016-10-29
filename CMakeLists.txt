@@ -94,6 +94,15 @@ function( add_pk3 PK3_NAME PK3_DIR )
 		SOURCES ${PK3_SRCS})
 	# Phase 3: Assign source files to a nice folder structure in the IDE
 	assort_pk3_source_folder("Source Files" ${PK3_DIR})
+	# Phase 4: Add the resulting PK3 to the install target.
+	if( WIN32 )
+		set( INSTALL_PK3_PATH . CACHE STRING "Directory where zdoom.pk3 will be placed during install." )
+	else()
+		set( INSTALL_PK3_PATH share/games/doom CACHE STRING "Directory where zdoom.pk3 will be placed during install." )
+	endif()
+	install(FILES "${PROJECT_BINARY_DIR}/${PK3_NAME}"
+			DESTINATION ${INSTALL_PK3_PATH}
+			COMPONENT "Game resources")
 endfunction()
 
 # Macro for building libraries without debugging information
@@ -252,6 +261,7 @@ if( ZLIB_FOUND AND NOT FORCE_INTERNAL_ZLIB )
 	message( STATUS "Using system zlib, includes found at ${ZLIB_INCLUDE_DIR}" )
 else()
 	message( STATUS "Using internal zlib" )
+	set( SKIP_INSTALL_ALL TRUE ) # Avoid installing zlib alongside zdoom
 	add_subdirectory( zlib )
 	set( ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/zlib )
 	set( ZLIB_LIBRARIES z )
@@ -294,6 +304,16 @@ if( NOT CMAKE_CROSSCOMPILING )
 		set( CROSS_EXPORTS "" )
 	endif()
 endif()
+
+# Install the entire docs directory in the distributed zip package
+if( WIN32 )
+	set( INSTALL_DOCS_PATH docs CACHE STRING "Directory where the documentation will be placed during install." )
+else()
+	set( INSTALL_DOCS_PATH share/doc/${ZDOOM_EXE_NAME} CACHE STRING "Directory where the zdoom documentation will be placed during install." )
+endif()
+install(DIRECTORY docs/ 
+		DESTINATION ${INSTALL_DOCS_PATH} 
+		COMPONENT "Documentation")
 
 add_subdirectory( lzma )
 add_subdirectory( tools )

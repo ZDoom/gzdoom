@@ -192,6 +192,7 @@ protected:
 		int UseType = TEX_Null;
 		bool Silent = false;
 		bool HasLine = false;
+		bool UseOffsets = false;
 		FScriptPosition sc;
 	};
 
@@ -296,8 +297,6 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 	{
 		Printf ("Texture %s is left without any patches\n", Name.GetChars());
 	}
-
-	CheckForHacks ();
 
 	DefinitionLump = deflumpnum;
 }
@@ -1142,11 +1141,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, TexInit &init)
 			}
 			else if (sc.Compare("useoffsets"))
 			{
-				if (part.Texture != NULL)
-				{
-					part.OriginX -= part.Texture->LeftOffset;
-					part.OriginY -= part.Texture->TopOffset;
-				}
+				init.UseOffsets = true;
 			}
 		}
 	}
@@ -1324,6 +1319,29 @@ void FMultiPatchTexture::ResolvePatches()
 		for (int i = 0; i < NumParts; i++)
 		{
 			FTextureID texno = TexMan.CheckForTexture(Inits[i].TexName, Inits[i].UseType);
+			if (texno == id)	// we found ourselves. Try looking for another one with the same name which is not a multipatch texture itself.
+			{
+				TArray<FTextureID> list;
+				TexMan.ListTextures(Inits[i].TexName, list, true);
+				for (int i = list.Size() - 1; i >= 0; i--)
+				{
+					if (list[i] != id && !TexMan[list[i]]->bMultiPatch)
+					{
+						texno = list[i];
+						break;
+					}
+				}
+				if (texno == id)
+				{
+					if (Inits[i].HasLine) Inits[i].sc.Message(MSG_WARNING, "Texture '%s' references itself as patch\n", Inits[i].TexName.GetChars());
+					else Printf(TEXTCOLOR_YELLOW  "Texture '%s' references itself as patch\n", Inits[i].TexName.GetChars());
+				}
+				else
+				{
+					// If it could be resolved, just print a developer warning.
+					DPrintf(DMSG_WARNING, "Resolved self-referencing texture by picking an older entry for %s\n", Inits[i].TexName.GetChars());
+				}
+			}
 
 			if (!texno.isValid())
 			{
@@ -1338,6 +1356,11 @@ void FMultiPatchTexture::ResolvePatches()
 				Parts[i].Texture = TexMan[texno];
 				bComplex |= Parts[i].Texture->bComplex;
 				Parts[i].Texture->bKeepAround = true;
+				if (Inits[i].UseOffsets)
+				{
+					Parts[i].OriginX -= Parts[i].Texture->LeftOffset;
+					Parts[i].OriginY -= Parts[i].Texture->TopOffset;
+				}
 			}
 		}
 		for (int i = 0; i < NumParts; i++)
@@ -1352,6 +1375,8 @@ void FMultiPatchTexture::ResolvePatches()
 	}
 	delete[] Inits;
 	Inits = nullptr;
+
+	CheckForHacks();
 
 	// If this texture is just a wrapper around a single patch, we can simply
 	// forward GetPixels() and GetColumn() calls to that patch.

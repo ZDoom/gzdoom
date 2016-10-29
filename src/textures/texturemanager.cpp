@@ -267,7 +267,7 @@ FTextureID FTextureManager::CheckForTexture (const char *name, int usetype, BITF
 //
 //==========================================================================
 
-int FTextureManager::ListTextures (const char *name, TArray<FTextureID> &list)
+int FTextureManager::ListTextures (const char *name, TArray<FTextureID> &list, bool listall)
 {
 	int i;
 
@@ -293,11 +293,14 @@ int FTextureManager::ListTextures (const char *name, TArray<FTextureID> &list)
 			// NULL textures must be ignored.
 			if (tex->UseType!=FTexture::TEX_Null) 
 			{
-				unsigned int j;
-				for(j = 0; j < list.Size(); j++)
+				unsigned int j = list.Size();
+				if (!listall)
 				{
-					// Check for overriding definitions from newer WADs
-					if (Textures[list[j].GetIndex()].Texture->UseType == tex->UseType) break;
+					for (j = 0; j < list.Size(); j++)
+					{
+						// Check for overriding definitions from newer WADs
+						if (Textures[list[j].GetIndex()].Texture->UseType == tex->UseType) break;
+					}
 				}
 				if (j==list.Size()) list.Push(FTextureID(i));
 			}

@@ -267,6 +267,7 @@ enum EFxType
 	EFX_CaseStatement,
 	EFX_VectorInitializer,
 	EFX_VectorBuiltin,
+	EFX_TypeCheck,
 	EFX_COUNT
 };
 
@@ -925,6 +926,27 @@ public:
 	FxDotCross(int, FxExpression*, FxExpression*);
 	~FxDotCross();
 	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxBinaryLogical
+//
+//==========================================================================
+
+class FxTypeCheck : public FxExpression
+{
+public:
+	FxExpression		*left;
+	FxExpression		*right;
+	bool EmitTail;
+
+	FxTypeCheck(FxExpression*, FxExpression*);
+	~FxTypeCheck();
+	FxExpression *Resolve(FCompileContext&);
+	PPrototype *ReturnProto();
 
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

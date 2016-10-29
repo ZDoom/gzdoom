@@ -203,23 +203,24 @@ void ExpEmit::Reuse(VMFunctionBuilder *build)
 
 //==========================================================================
 //
-// FindDecorateBuiltinFunction
+// FindBuiltinFunction
 //
 // Returns the symbol for a decorate utility function. If not found, create
-// it and install it in Actor.
+// it and install it a local symbol table.
 //
 //==========================================================================
+static PSymbolTable Builtins;
 
-static PSymbol *FindDecorateBuiltinFunction(FName funcname, VMNativeFunction::NativeCallType func)
+static PSymbol *FindBuiltinFunction(FName funcname, VMNativeFunction::NativeCallType func)
 {
-	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(funcname, false);
+	PSymbol *sym = Builtins.FindSymbol(funcname, false);
 	if (sym == NULL)
 	{
 		PSymbolVMFunction *symfunc = new PSymbolVMFunction(funcname);
 		VMNativeFunction *calldec = new VMNativeFunction(func, funcname);
 		symfunc->Function = calldec;
 		sym = symfunc;
-		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
+		Builtins.AddSymbol(sym);
 	}
 	return sym;
 }
@@ -3615,9 +3616,6 @@ FxExpression *FxDotCross::Resolve(FCompileContext& ctx)
 
 ExpEmit FxDotCross::Emit(VMFunctionBuilder *build)
 {
-	// This is not the "right" way to do these, but it works for now.
-	// (Problem: No information sharing is done between nodes to reduce the
-	// code size if you have something like a1 && a2 && a3 && ... && an.)
 	ExpEmit to(build, ValueType->GetRegType(), ValueType->GetRegCount());
 	ExpEmit op1 = left->Emit(build);
 	ExpEmit op2 = right->Emit(build);
@@ -3626,6 +3624,108 @@ ExpEmit FxDotCross::Emit(VMFunctionBuilder *build)
 	op1.Free(build);
 	op2.Free(build);
 	return to;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxTypeCheck::FxTypeCheck(FxExpression *l, FxExpression *r)
+	: FxExpression(EFX_TypeCheck, l->ScriptPosition)
+{
+	left = new FxTypeCast(l, NewPointer(RUNTIME_CLASS(DObject)), false);
+	right = new FxClassTypeCast(NewClassPointer(RUNTIME_CLASS(DObject)), r);
+	EmitTail = false;
+	ValueType = TypeBool;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxTypeCheck::~FxTypeCheck()
+{
+	SAFE_DELETE(left);
+	SAFE_DELETE(right);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxTypeCheck::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+	RESOLVE(left, ctx);
+	RESOLVE(right, ctx);
+	ABORT(right && left);
+	return this;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+PPrototype *FxTypeCheck::ReturnProto()
+{
+	EmitTail = true;
+	return FxExpression::ReturnProto();
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+int BuiltinTypeCheck(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+{
+	assert(numparam == 2);
+	PARAM_POINTER_AT(0, obj, DObject);
+	PARAM_CLASS_AT(1, cls, DObject);
+	ACTION_RETURN_BOOL(obj->IsKindOf(cls));
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxTypeCheck::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit out(build, REGT_INT);
+	EmitParameter(build, left, ScriptPosition);
+	EmitParameter(build, right, ScriptPosition);
+
+
+	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinTypeCheck, BuiltinTypeCheck);
+
+	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
+	assert(((PSymbolVMFunction *)sym)->Function != NULL);
+	auto callfunc = ((PSymbolVMFunction *)sym)->Function;
+
+	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
+	build->Emit(opcode, build->GetConstantAddress(callfunc, ATAG_OBJECT), 2, 1);
+
+	if (EmitTail)
+	{
+		ExpEmit call;
+		call.Final = true;
+		return call;
+	}
+
+	build->Emit(OP_RESULT, 0, REGT_INT, out.RegNum);
+	return out;
 }
 
 //==========================================================================
@@ -4278,7 +4378,7 @@ FxExpression *FxRandom::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-int DecoRandom(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+int BuiltinRandom(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam >= 1 && numparam <= 3);
 	FRandom *rng = reinterpret_cast<FRandom *>(param[0].a);
@@ -4309,7 +4409,7 @@ ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
 {
 	// Call DecoRandom to generate a random number.
 	VMFunction *callfunc;
-	PSymbol *sym = FindDecorateBuiltinFunction(NAME_DecoRandom, DecoRandom);
+	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinRandom, BuiltinRandom);
 
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
@@ -4428,9 +4528,9 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 
 	assert(choices.Size() > 0);
 
-	// Call DecoRandom to generate a random number.
+	// Call BuiltinRandom to generate a random number.
 	VMFunction *callfunc;
-	PSymbol *sym = FindDecorateBuiltinFunction(NAME_DecoRandom, DecoRandom);
+	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinRandom, BuiltinRandom);
 
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
@@ -4528,7 +4628,7 @@ FxFRandom::FxFRandom(FRandom *r, FxExpression *mi, FxExpression *ma, const FScri
 //
 //==========================================================================
 
-int DecoFRandom(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+int BuiltinFRandom(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam == 1 || numparam == 3);
 	FRandom *rng = reinterpret_cast<FRandom *>(param[0].a);
@@ -4553,9 +4653,9 @@ int DecoFRandom(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultpar
 
 ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
 {
-	// Call the DecoFRandom function to generate a floating point random number..
+	// Call the BuiltinFRandom function to generate a floating point random number..
 	VMFunction *callfunc;
-	PSymbol *sym = FindDecorateBuiltinFunction(NAME_DecoFRandom, DecoFRandom);
+	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinFRandom, BuiltinFRandom);
 
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
@@ -4647,9 +4747,9 @@ FxExpression *FxRandom2::Resolve(FCompileContext &ctx)
 
 ExpEmit FxRandom2::Emit(VMFunctionBuilder *build)
 {
-	// Call the DecoRandom function to generate the random number.
+	// Call the BuiltinRandom function to generate the random number.
 	VMFunction *callfunc;
-	PSymbol *sym = FindDecorateBuiltinFunction(NAME_DecoRandom, DecoRandom);
+	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinRandom, BuiltinRandom);
 
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
@@ -5836,7 +5936,7 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-int DecoCallLineSpecial(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+int BuiltinCallLineSpecial(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam > 2 && numparam < 8);
 	assert(param[0].Type == REGT_INT);
@@ -5885,9 +5985,9 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 			}
 		}
 	}
-	// Call the DecoCallLineSpecial function to perform the desired special.
+	// Call the BuiltinCallLineSpecial function to perform the desired special.
 	VMFunction *callfunc;
-	PSymbol *sym = FindDecorateBuiltinFunction(NAME_DecoCallLineSpecial, DecoCallLineSpecial);
+	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinCallLineSpecial, BuiltinCallLineSpecial);
 
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
@@ -7347,7 +7447,7 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-int DecoNameToClass(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+int BuiltinNameToClass(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam == 2);
 	assert(numret == 1);
@@ -7380,9 +7480,9 @@ ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)
 	build->Emit(OP_PARAM, 0, clsname.RegType, clsname.RegNum);
 	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(const_cast<PClass *>(desttype), ATAG_OBJECT));
 
-	// Call the DecoNameToClass function to convert from 'name' to class.
+	// Call the BuiltinNameToClass function to convert from 'name' to class.
 	VMFunction *callfunc;
-	PSymbol *sym = FindDecorateBuiltinFunction(NAME_DecoNameToClass, DecoNameToClass);
+	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinNameToClass, BuiltinNameToClass);
 
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
@@ -7487,7 +7587,7 @@ static bool VerifyJumpTarget(AActor *stateowner, FStateParamInfo *stateinfo, int
 	return false;
 }
 
-static int DecoHandleRuntimeState(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+static int BuiltinHandleRuntimeState(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	PARAM_PROLOGUE;
 	PARAM_OBJECT(stateowner, AActor);
@@ -7522,7 +7622,7 @@ ExpEmit FxRuntimeStateIndex::Emit(VMFunctionBuilder *build)
 	VMFunction *callfunc;
 	PSymbol *sym;
 	
-	sym = FindDecorateBuiltinFunction(NAME_DecoHandleRuntimeState, DecoHandleRuntimeState);
+	sym = FindBuiltinFunction(NAME_BuiltinHandleRuntimeState, BuiltinHandleRuntimeState);
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
@@ -7702,11 +7802,11 @@ ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
 	
 	if (names.Size() == 1)
 	{
-		sym = FindDecorateBuiltinFunction(NAME_BuiltinFindSingleNameState, BuiltinFindSingleNameState);
+		sym = FindBuiltinFunction(NAME_BuiltinFindSingleNameState, BuiltinFindSingleNameState);
 	}
 	else
 	{
-		sym = FindDecorateBuiltinFunction(NAME_BuiltinFindMultiNameState, BuiltinFindMultiNameState);
+		sym = FindBuiltinFunction(NAME_BuiltinFindMultiNameState, BuiltinFindMultiNameState);
 	}
 
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));

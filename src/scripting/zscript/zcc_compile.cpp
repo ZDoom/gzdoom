@@ -2690,9 +2690,11 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		case PEX_DotProduct:
 			return new FxDotCross(tok, left, right);
 
+		case PEX_Is:
+			return new FxTypeCheck(left, right);
+
 				// todo: These do not have representations in DECORATE and no implementation exists yet.
 		case PEX_Concat:
-		case PEX_Is:
 
 		default:
 			I_Error("Binary operator %d not implemented yet", op);

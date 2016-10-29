@@ -673,13 +673,14 @@ xx(PlayerClass)
 xx(Wi_NoAutostartMap)
 
 // Decorate compatibility functions
-xx(DecoRandom)
-xx(DecoFRandom)
-xx(DecoCallLineSpecial)
-xx(DecoNameToClass)
+xx(BuiltinTypeCheck)
+xx(BuiltinRandom)
+xx(BuiltinFRandom)
+xx(BuiltinCallLineSpecial)
+xx(BuiltinNameToClass)
 xx(BuiltinFindMultiNameState)
 xx(BuiltinFindSingleNameState)
-xx(DecoHandleRuntimeState)
+xx(BuiltinHandleRuntimeState)
 xx(Damage)
 
 // basic type names

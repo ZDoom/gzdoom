@@ -45,7 +45,7 @@ struct DrawWallArgs
 	FString ToString()
 	{
 		FString info;
-		info.Format("dest_y = %i, count = %i, flags = %i", dest_y, count, flags);
+		info.Format("dest_y = %i, count = %i, flags = %i, texturefrac[0] = %u, textureheight[0] = %u", dest_y, count, flags, texturefrac[0], textureheight[0]);
 		return info;
 	}
 };
@@ -128,7 +128,7 @@ struct DrawColumnArgs
 	FString ToString()
 	{
 		FString info;
-		info.Format("dest_y = %i, count = %i, flags = %i", dest_y, count, flags);
+		info.Format("dest_y = %i, count = %i, flags = %i, iscale = %i (%f), texturefrac = %i (%f)", dest_y, count, flags, iscale, ((fixed_t)iscale) / (float)FRACUNIT, texturefrac, ((fixed_t)texturefrac) / (float)FRACUNIT);
 		return info;
 	}
 };

@@ -109,7 +109,7 @@ public:
 
 	FString DebugInfo() override
 	{
-		return "DrawColumnRt1LLVMCommand\n" + args.ToString();
+		return "DrawColumnRt\n" + args.ToString();
 	}
 };
 
@@ -168,7 +168,7 @@ public:
 
 	FString DebugInfo() override
 	{
-		return "RtInitColsRGBACommand";
+		return "RtInitCols";
 	}
 };
 
@@ -248,7 +248,7 @@ public:
 
 	FString DebugInfo() override
 	{
-		return "DrawColumnHorizRGBACommand";
+		return "DrawColumnHoriz";
 	}
 };
 
@@ -298,7 +298,7 @@ public:
 
 	FString DebugInfo() override
 	{
-		return "FillColumnHorizRGBACommand";
+		return "FillColumnHoriz";
 	}
 };
 

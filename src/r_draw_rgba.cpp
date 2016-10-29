@@ -107,7 +107,7 @@ public:
 
 	FString DebugInfo() override
 	{
-		return "DrawSpanLLVMCommand\n" + args.ToString();
+		return "DrawSpan\n" + args.ToString();
 	}
 
 protected:
@@ -258,7 +258,7 @@ public:
 
 	FString DebugInfo() override
 	{
-		return "DrawWall4LLVMCommand\n" + args.ToString();
+		return "DrawWall4\n" + args.ToString();
 	}
 };
 
@@ -319,7 +319,7 @@ public:
 
 	FString DebugInfo() override
 	{
-		return "DrawWall1LLVMCommand\n" + args.ToString();
+		return "DrawWall1\n" + args.ToString();
 	}
 };
 
@@ -340,7 +340,7 @@ protected:
 
 	FString DebugInfo() override
 	{
-		return "DrawColumnLLVMCommand\n" + args.ToString();
+		return "DrawColumn\n" + args.ToString();
 	}
 
 public:
@@ -423,7 +423,7 @@ public:
 
 	FString DebugInfo() override
 	{
-		return "DrawSkyLLVMCommand\n" + args.ToString();
+		return "DrawSky\n" + args.ToString();
 	}
 };
 
@@ -587,7 +587,7 @@ public:
 
 	FString DebugInfo() override
 	{
-		return "DrawFuzzColumnRGBACommand";
+		return "DrawFuzzColumn";
 	}
 };
 
@@ -626,7 +626,7 @@ public:
 
 	FString DebugInfo() override
 	{
-		return "FillSpanRGBACommand";
+		return "FillSpan";
 	}
 };
 
@@ -750,7 +750,7 @@ public:
 
 	FString DebugInfo() override
 	{
-		return "DrawSlabRGBACommand";
+		return "DrawSlab";
 	}
 };
 
@@ -829,7 +829,7 @@ public:
 
 	FString DebugInfo() override
 	{
-		return "DrawFogBoundaryLineRGBACommand";
+		return "DrawFogBoundaryLine";
 	}
 };
 
@@ -983,7 +983,7 @@ public:
 
 	FString DebugInfo() override
 	{
-		return "DrawTiltedSpanRGBACommand";
+		return "DrawTiltedSpan";
 	}
 };
 
@@ -1027,7 +1027,7 @@ public:
 
 	FString DebugInfo() override
 	{
-		return "DrawColoredSpanRGBACommand";
+		return "DrawColoredSpan";
 	}
 };
 
@@ -1099,7 +1099,7 @@ public:
 
 	FString DebugInfo() override
 	{
-		return "FillTransColumnRGBACommand";
+		return "FillTransColumn";
 	}
 };
 
@@ -1279,7 +1279,7 @@ public:
 
 	FString DebugInfo() override
 	{
-		return "DrawTrianglesCommand";
+		return "DrawTriangles";
 	}
 
 private:

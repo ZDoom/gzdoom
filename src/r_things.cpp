@@ -260,9 +260,9 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span, bool us
 		const int top = span->TopOffset;
 
 		// calculate unclipped screen coordinates for post
-		dc_yl = (int)(sprtopscreen + spryscale * top);
-		dc_yh = (int)(sprtopscreen + spryscale * (top + length)) - 1;
-		
+		dc_yl = (int)(sprtopscreen + spryscale * top + 0.5);
+		dc_yh = (int)(sprtopscreen + spryscale * (top + length) + 0.5) - 1;
+
 		if (sprflipvert)
 		{
 			swapvalues (dc_yl, dc_yh);

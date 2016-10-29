@@ -76,8 +76,8 @@ namespace = "ZDoom";
 III.A : Conversations
 ---------------------
 
-This block only lists the newly added fields. Currently ZDoom only adds one
-field to the specification:
+This block only lists the newly added fields. Currently ZDoom only adds a few
+fields to the specification:
 
 conversation // Starts a dialog.
 {

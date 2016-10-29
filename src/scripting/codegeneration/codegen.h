@@ -295,9 +295,11 @@ public:
 	virtual PPrototype *ReturnProto();
 	virtual VMFunction *GetDirectFunction();
 	bool IsNumeric() const { return ValueType != TypeName && ValueType->GetRegCount() == 1 && (ValueType->GetRegType() == REGT_INT || ValueType->GetRegType() == REGT_FLOAT); }
+	bool IsFloat() const { return ValueType->GetRegType() == REGT_FLOAT && ValueType->GetRegCount() == 1; }
 	bool IsInteger() const { return ValueType != TypeName && (ValueType->GetRegType() == REGT_INT); }
 	bool IsPointer() const { return ValueType->GetRegType() == REGT_POINTER; }
 	bool IsVector() const { return ValueType == TypeVector2 || ValueType == TypeVector3; };
+	bool IsBoolCompat() const { return ValueType->GetRegCount() == 1 && (ValueType->GetRegType() == REGT_INT || ValueType->GetRegType() == REGT_FLOAT || ValueType->GetRegType() == REGT_POINTER); }
 
 	virtual ExpEmit Emit(VMFunctionBuilder *build);
 

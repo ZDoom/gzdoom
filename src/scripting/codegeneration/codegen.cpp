@@ -676,7 +676,7 @@ FxExpression *FxBoolCast::Resolve(FCompileContext &ctx)
 		delete this;
 		return x;
 	}
-	else if ((basex->ValueType->GetRegType() == REGT_INT || basex->ValueType->GetRegType() == REGT_FLOAT || basex->ValueType->GetRegType() == REGT_POINTER) && !basex->IsVector())
+	else if (basex->IsBoolCompat())
 	{
 		if (basex->isConstant())
 		{
@@ -797,7 +797,7 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 			return x;
 		}
 	}
-	else if (basex->ValueType->GetRegType() == REGT_FLOAT && !basex->IsVector())
+	else if (basex->IsFloat())
 	{
 		if (basex->isConstant())
 		{
@@ -875,7 +875,7 @@ FxExpression *FxFloatCast::Resolve(FCompileContext &ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(basex, ctx);
 
-	if (basex->ValueType->GetRegType() == REGT_FLOAT && !basex->IsVector())
+	if (basex->IsFloat())
 	{
 		FxExpression *x = basex;
 		basex = NULL;
@@ -1325,7 +1325,7 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 	{
 		goto basereturn;
 	}
-	else if (ValueType->GetRegType() == REGT_FLOAT && !IsVector())
+	else if (IsFloat())
 	{
 		FxExpression *x = new FxFloatCast(basex);
 		x = x->Resolve(ctx);
@@ -1635,7 +1635,7 @@ FxExpression *FxUnaryNotBitwise::Resolve(FCompileContext& ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(Operand, ctx);
 
-	if  (ctx.FromDecorate && Operand->IsNumeric() && Operand->ValueType->GetRegType() == REGT_FLOAT /* lax */)
+	if  (ctx.FromDecorate && Operand->IsFloat() /* lax */)
 	{
 		// DECORATE allows floats here so cast them to int.
 		Operand = new FxIntCast(Operand, true);
@@ -1648,7 +1648,7 @@ FxExpression *FxUnaryNotBitwise::Resolve(FCompileContext& ctx)
 	}
 
 	// Names were not blocked in DECORATE here after the scripting branch merge. Now they are again.
-	if (Operand->ValueType->GetRegType() != REGT_INT || Operand->ValueType == TypeName)
+	if (!Operand->IsInteger())
 	{
 		ScriptPosition.Message(MSG_ERROR, "Integer type expected");
 		delete this;
@@ -2281,7 +2281,51 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 		return false;
 	}
 
-	if (left->IsVector() || right->IsVector())
+	if (left->ValueType == TypeString || right->ValueType == TypeString)
+	{
+		switch (Operator)
+		{
+		case '+':
+			// later
+			break;
+
+		case '<':
+		case '>':
+		case TK_Geq:
+		case TK_Leq:
+		case TK_Eq:
+		case TK_Neq:
+		case TK_ApproxEq:
+			if (left->ValueType != TypeString)
+			{
+				left = new FxStringCast(left);
+				left = left->Resolve(ctx);
+				if (left == nullptr)
+				{
+					delete this;
+					return nullptr;
+				}
+			}
+			if (right->ValueType != TypeString)
+			{
+				right = new FxStringCast(right);
+				right = right->Resolve(ctx);
+				if (right == nullptr)
+				{
+					delete this;
+					return nullptr;
+				}
+			}
+			ValueType = TypeBool;
+			break;
+
+		default:
+			ScriptPosition.Message(MSG_ERROR, "Incompatible operands for comparison");
+			delete this;
+			return false;
+		}
+	}
+	else if (left->IsVector() || right->IsVector())
 	{
 		switch (Operator)
 		{
@@ -2466,7 +2510,7 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 	}
 	else if (left->isConstant() && right->isConstant())
 	{
-		if (ValueType->GetRegType() == REGT_FLOAT)
+		if (IsFloat())
 		{
 			double v;
 			double v1 = static_cast<FxConstant *>(left)->GetValue().GetFloat();
@@ -2605,7 +2649,7 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 	}
 	else if (left->isConstant() && right->isConstant())
 	{
-		if (ValueType->GetRegType() == REGT_FLOAT)
+		if (IsFloat())
 		{
 			double v;
 			double v1 = static_cast<FxConstant *>(left)->GetValue().GetFloat();
@@ -2834,7 +2878,17 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 	{
 		int v;
 
-		if (ValueType->GetRegType() == REGT_FLOAT)
+		if (ValueType == TypeString)
+		{
+			FString v1 = static_cast<FxConstant *>(left)->GetValue().GetString();
+			FString v2 = static_cast<FxConstant *>(right)->GetValue().GetString();
+			int res = v1.Compare(v2);
+			v = Operator == '<' ? res < 0 :
+				Operator == '>' ? res > 0 :
+				Operator == TK_Geq ? res >= 0 :
+				Operator == TK_Leq ? res <= 0 : 0;
+		}
+		else if (IsFloat())
 		{
 			double v1 = static_cast<FxConstant *>(left)->GetValue().GetFloat();
 			double v2 = static_cast<FxConstant *>(right)->GetValue().GetFloat();
@@ -2873,47 +2927,81 @@ ExpEmit FxCompareRel::Emit(VMFunctionBuilder *build)
 	ExpEmit op1 = left->Emit(build);
 	ExpEmit op2 = right->Emit(build);
 	assert(op1.RegType == op2.RegType);
-	assert(op1.RegType == REGT_INT || op1.RegType == REGT_FLOAT);
 	assert(!op1.Konst || !op2.Konst);
-	assert(Operator == '<' || Operator == '>' || Operator == TK_Geq || Operator == TK_Leq);
-	static const VM_UBYTE InstrMap[][4] =
-	{
-		{ OP_LT_RR, OP_LTF_RR, 0 },	// <
-		{ OP_LE_RR, OP_LEF_RR, 1 },	// >
-		{ OP_LT_RR, OP_LTF_RR, 1 },	// >=
-		{ OP_LE_RR, OP_LEF_RR, 0 }	// <=
-	};
-	int instr, check, index;
-	ExpEmit to(build, REGT_INT);
 
-	index = Operator == '<' ? 0 :
+	if (op1.RegType == REGT_STRING)
+	{
+		ExpEmit to(build, REGT_INT);
+		int a = Operator == '<' ? CMP_LT :
+			Operator == '>' ? CMP_LE | CMP_CHECK :
+			Operator == TK_Geq ? CMP_LT | CMP_CHECK : CMP_LE;
+
+		if (op1.Konst)
+		{
+			a |= CMP_BK;
+		}
+		else
+		{
+			op1.Free(build);
+		}
+		if (op2.Konst)
+		{
+			a |= CMP_CK;
+		}
+		else
+		{
+			op2.Free(build);
+		}
+
+		build->Emit(OP_LI, to.RegNum, 0, 0);
+		build->Emit(OP_CMPS, a, op1.RegNum, op2.RegNum);
+		build->Emit(OP_JMP, 1);
+		build->Emit(OP_LI, to.RegNum, 1);
+		return to;
+	}
+	else
+	{
+		assert(op1.RegType == REGT_INT || op1.RegType == REGT_FLOAT);
+		assert(Operator == '<' || Operator == '>' || Operator == TK_Geq || Operator == TK_Leq);
+		static const VM_UBYTE InstrMap[][4] =
+		{
+			{ OP_LT_RR, OP_LTF_RR, 0 },	// <
+			{ OP_LE_RR, OP_LEF_RR, 1 },	// >
+			{ OP_LT_RR, OP_LTF_RR, 1 },	// >=
+			{ OP_LE_RR, OP_LEF_RR, 0 }	// <=
+		};
+		int instr, check;
+		ExpEmit to(build, REGT_INT);
+		int index = Operator == '<' ? 0 :
 			Operator == '>' ? 1 :
 			Operator == TK_Geq ? 2 : 3;
-	instr = InstrMap[index][op1.RegType == REGT_INT ? 0 : 1];
-	check = InstrMap[index][2];
-	if (op2.Konst)
-	{
-		instr += 1;
-	}
-	else
-	{
-		op2.Free(build);
-	}
-	if (op1.Konst)
-	{
-		instr += 2;
-	}
-	else
-	{
-		op1.Free(build);
-	}
 
-	// See FxBoolCast for comments, since it's the same thing.
-	build->Emit(OP_LI, to.RegNum, 0, 0);
-	build->Emit(instr, check, op1.RegNum, op2.RegNum);
-	build->Emit(OP_JMP, 1);
-	build->Emit(OP_LI, to.RegNum, 1);
-	return to;
+		instr = InstrMap[index][op1.RegType == REGT_INT ? 0 : 1];
+		check = InstrMap[index][2];
+		if (op2.Konst)
+		{
+			instr += 1;
+		}
+		else
+		{
+			op2.Free(build);
+		}
+		if (op1.Konst)
+		{
+			instr += 2;
+		}
+		else
+		{
+			op1.Free(build);
+		}
+
+		// See FxBoolCast for comments, since it's the same thing.
+		build->Emit(OP_LI, to.RegNum, 0, 0);
+		build->Emit(instr, check, op1.RegNum, op2.RegNum);
+		build->Emit(OP_JMP, 1);
+		build->Emit(OP_LI, to.RegNum, 1);
+		return to;
+	}
 }
 
 //==========================================================================
@@ -2952,12 +3040,24 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 		return NULL;
 	}
 
-	if (Operator == TK_ApproxEq && ValueType->GetRegType() != REGT_FLOAT) Operator = TK_Eq;
+	if (Operator == TK_ApproxEq && left->ValueType->GetRegType() != REGT_FLOAT && left->ValueType->GetRegType() != REGT_STRING) 
+		Operator = TK_Eq;
 	if (left->isConstant() && right->isConstant())
 	{
 		int v;
 
-		if (ValueType->GetRegType() == REGT_FLOAT)
+		if (ValueType == TypeString)
+		{
+			FString v1 = static_cast<FxConstant *>(left)->GetValue().GetString();
+			FString v2 = static_cast<FxConstant *>(right)->GetValue().GetString();
+			if (Operator == TK_ApproxEq) v = !v1.CompareNoCase(v2);
+			else
+			{
+				v = !!v1.Compare(v2);
+				if (Operator == TK_Eq) v = !v;
+			}
+		}
+		else if (ValueType->GetRegType() == REGT_FLOAT)
 		{
 			double v1 = static_cast<FxConstant *>(left)->GetValue().GetFloat();
 			double v2 = static_cast<FxConstant *>(right)->GetValue().GetFloat();
@@ -2989,39 +3089,55 @@ ExpEmit FxCompareEq::Emit(VMFunctionBuilder *build)
 	ExpEmit op1 = left->Emit(build);
 	ExpEmit op2 = right->Emit(build);
 	assert(op1.RegType == op2.RegType);
-	assert(op1.RegType == REGT_INT || op1.RegType == REGT_FLOAT || op1.RegType == REGT_POINTER);
 	int instr;
 
-	// Only the second operand may be constant.
-	if (op1.Konst)
+	if (op1.RegType == REGT_STRING)
 	{
-		swapvalues(op1, op2);
-	}
-	assert(!op1.Konst);
-	assert(op1.RegCount >= 1 && op1.RegCount <= 3);
+		ExpEmit to(build, REGT_INT);
+		assert(Operator == TK_Eq || Operator == TK_Neq || Operator == TK_ApproxEq);
+		int a = Operator == TK_Eq ? CMP_EQ :
+			Operator == TK_Neq ? CMP_EQ | CMP_CHECK : CMP_EQ | CMP_APPROX;
 
-	ExpEmit to(build, REGT_INT);
-
-	static int flops[] = { OP_EQF_R, OP_EQV2_R, OP_EQV3_R };
-	instr = op1.RegType == REGT_INT ? OP_EQ_R :
-			op1.RegType == REGT_FLOAT ? flops[op1.RegCount-1] :
-			OP_EQA_R;
-	op1.Free(build);
-	if (!op2.Konst)
-	{
-		op2.Free(build);
+		build->Emit(OP_LI, to.RegNum, 0, 0);
+		build->Emit(OP_CMPS, a, op1.RegNum, op2.RegNum);
+		build->Emit(OP_JMP, 1);
+		build->Emit(OP_LI, to.RegNum, 1);
+		return to;
 	}
 	else
 	{
-		instr += 1;
-	}
 
-	// See FxUnaryNotBoolean for comments, since it's the same thing.
-	build->Emit(OP_LI, to.RegNum, 0, 0);
-	build->Emit(instr, Operator == TK_ApproxEq? CMP_APPROX : Operator != TK_Eq, op1.RegNum, op2.RegNum);
-	build->Emit(OP_JMP, 1);
-	build->Emit(OP_LI, to.RegNum, 1);
-	return to;
+		// Only the second operand may be constant.
+		if (op1.Konst)
+		{
+			swapvalues(op1, op2);
+		}
+		assert(!op1.Konst);
+		assert(op1.RegCount >= 1 && op1.RegCount <= 3);
+
+		ExpEmit to(build, REGT_INT);
+
+		static int flops[] = { OP_EQF_R, OP_EQV2_R, OP_EQV3_R };
+		instr = op1.RegType == REGT_INT ? OP_EQ_R :
+			op1.RegType == REGT_FLOAT ? flops[op1.RegCount - 1] :
+			OP_EQA_R;
+		op1.Free(build);
+		if (!op2.Konst)
+		{
+			op2.Free(build);
+		}
+		else
+		{
+			instr += 1;
+		}
+
+		// See FxUnaryNotBoolean for comments, since it's the same thing.
+		build->Emit(OP_LI, to.RegNum, 0, 0);
+		build->Emit(instr, Operator == TK_ApproxEq ? CMP_APPROX : Operator != TK_Eq, op1.RegNum, op2.RegNum);
+		build->Emit(OP_JMP, 1);
+		build->Emit(OP_LI, to.RegNum, 1);
+		return to;
+	}
 }
 
 //==========================================================================
@@ -3047,7 +3163,7 @@ FxExpression *FxBinaryInt::Resolve(FCompileContext& ctx)
 	CHECKRESOLVED();
 	if (!ResolveLR(ctx, false)) return NULL;
 
-	if (ValueType->GetRegType() == REGT_FLOAT && ctx.FromDecorate)
+	if (IsFloat() && ctx.FromDecorate)
 	{
 		// For DECORATE which allows floats here. ZScript does not.
 		if (left->ValueType->GetRegType() != REGT_INT)
@@ -3557,7 +3673,7 @@ FxExpression *FxConditional::Resolve(FCompileContext& ctx)
 		ValueType = truex->ValueType;
 	else if (truex->ValueType == TypeBool && falsex->ValueType == TypeBool)
 		ValueType = TypeBool;
-	else if (truex->ValueType->GetRegType() == REGT_INT && falsex->ValueType->GetRegType() == REGT_INT)
+	else if (truex->IsInteger() && falsex->IsInteger())
 		ValueType = TypeSInt32;
 	else if (truex->IsNumeric() && falsex->IsNumeric())
 		ValueType = TypeFloat64;
@@ -3565,7 +3681,7 @@ FxExpression *FxConditional::Resolve(FCompileContext& ctx)
 		ValueType = TypeVoid;
 	//else if (truex->ValueType != falsex->ValueType)
 
-	if (!IsNumeric() && !IsPointer() && !IsVector())
+	if ((!IsNumeric() && !IsPointer() && !IsVector()) || ValueType == TypeVoid)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Incompatible types for ?: operator");
 		delete this;
@@ -3590,7 +3706,7 @@ FxExpression *FxConditional::Resolve(FCompileContext& ctx)
 		return e;
 	}
 
-	if (ValueType->GetRegType() == REGT_FLOAT)
+	if (IsFloat())
 	{
 		if (truex->ValueType->GetRegType() != REGT_FLOAT)
 		{
@@ -3911,11 +4027,11 @@ FxExpression *FxMinMax::Resolve(FCompileContext &ctx)
 		RESOLVE(choices[i], ctx);
 		ABORT(choices[i]);
 
-		if (choices[i]->ValueType->GetRegType() == REGT_FLOAT)
+		if (choices[i]->IsFloat())
 		{
 			floatcount++;
 		}
-		else if (choices[i]->ValueType->GetRegType() == REGT_INT && choices[i]->ValueType != TypeName)
+		else if (choices[i]->IsInteger())
 		{
 			intcount++;
 		}
@@ -5690,7 +5806,7 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 					failed = true;
 				}
 			}
-			else if ((*ArgList)[i]->ValueType->GetRegType() != REGT_INT)
+			else if (!(*ArgList)[i]->IsInteger())
 			{
 				if ((*ArgList)[i]->ValueType->GetRegType() == REGT_FLOAT /* lax */)
 				{

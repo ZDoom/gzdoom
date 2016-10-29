@@ -296,6 +296,12 @@ struct VMReturn
 		((double *)Location)[1] = val[1];
 		((double *)Location)[2] = val[2];
 	}
+	void SetVector2(const double val[2])
+	{
+		//assert(RegType == REGT_FLOAT);
+		((double *)Location)[0] = val[0];
+		((double *)Location)[1] = val[1];
+	}
 	void SetString(const FString &val)
 	{
 		assert(RegType == REGT_STRING);

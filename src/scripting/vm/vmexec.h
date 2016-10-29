@@ -1808,9 +1808,13 @@ static void SetReturn(const VMRegisters &reg, VMFrame *frame, VMReturn *ret, VM_
 			assert(regnum + ((regtype & REGT_KONST) ? 2u : 0u) < frame->NumRegF);
 			src = &reg.f[regnum];
 		}
-		if (regtype & REGT_MULTIREG)
+		if (regtype & REGT_MULTIREG3)
 		{
 			ret->SetVector((double *)src);
+		}
+		else if (regtype & REGT_MULTIREG2)
+		{
+			ret->SetVector2((double *)src);
 		}
 		else
 		{

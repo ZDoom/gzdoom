@@ -254,7 +254,6 @@ bool			sprflipvert;
 void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span, bool useRt)
 {
 	int pixelsize = r_swtruecolor ? 4 : 1;
-	int inputpixelsize = (r_swtruecolor && !drawer_needs_pal_input) ? 4 : 1;
 	while (span->Length != 0)
 	{
 		const int length = span->Length;
@@ -1005,7 +1004,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			vis->startfrac = 0;
 			vis->xiscale = iscale;
 		}
-		
+
 		vis->startfrac += (fixed_t)(vis->xiscale * (vis->x1 - centerx - dtx1 + 0.5 * thingxscalemul));
 	}
 	else

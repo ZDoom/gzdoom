@@ -1148,7 +1148,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BulletAttack)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Jump)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT_DEF(maxchance);
+	PARAM_INT(maxchance);
 
 	paramnum++;		// Increment paramnum to point at the first jump target
 	int count = numparam - paramnum;

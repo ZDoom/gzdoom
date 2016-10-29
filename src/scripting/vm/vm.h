@@ -134,7 +134,9 @@ enum
 	REGT_TYPE		= 3,
 
 	REGT_KONST		= 4,
-	REGT_MULTIREG	= 8,	// (e.g. a vector)
+	REGT_MULTIREG2	= 8,
+	REGT_MULTIREG3	= 16,	// (e.g. a vector)
+	REGT_MULTIREG	= 24,
 	REGT_ADDROF		= 32,	// used with PARAM: pass address of this register
 
 	REGT_NIL		= 128	// parameter was omitted

@@ -532,6 +532,17 @@ void AActor::SetOrigin(double x, double y, double z, bool moving)
 	if (!moving) ClearInterpolation();
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SetOrigin)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_BOOL(moving);
+	self->SetOrigin(x, y, z, moving);
+	return 0;
+}
+
 //===========================================================================
 //
 // FBlockNode - allows to link actors into multiple blocks in the blockmap

@@ -334,7 +334,7 @@ PPrototype *FxExpression::ReturnProto()
 //
 //==========================================================================
 
-static void EmitParameter(VMFunctionBuilder *build, FxExpression *operand, const FScriptPosition &pos)
+static int EmitParameter(VMFunctionBuilder *build, FxExpression *operand, const FScriptPosition &pos)
 {
 	ExpEmit where = operand->Emit(build);
 
@@ -342,6 +342,7 @@ static void EmitParameter(VMFunctionBuilder *build, FxExpression *operand, const
 	{
 		pos.Message(MSG_ERROR, "Attempted to pass a non-value");
 		build->Emit(OP_PARAM, 0, where.RegType, where.RegNum);
+		return 1;
 	}
 	else
 	{
@@ -350,8 +351,17 @@ static void EmitParameter(VMFunctionBuilder *build, FxExpression *operand, const
 		{
 			regtype |= REGT_KONST;
 		}
+		else if (where.RegCount == 2)
+		{
+			regtype |= REGT_MULTIREG2;
+		}
+		else if (where.RegCount == 3)
+		{
+			regtype |= REGT_MULTIREG3;
+		}
 		build->Emit(OP_PARAM, 0, regtype, where.RegNum);
 		where.Free(build);
+		return where.RegCount;
 	}
 }
 
@@ -5873,6 +5883,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 			delete this;
 			return nullptr;
 		}
+
 		for (unsigned i = 0; i < ArgList->Size(); i++)
 		{
 			// Varargs must all have the same type as the last typed argument. A_Jump is the only function using it.
@@ -5888,6 +5899,18 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 			failed |= (x == nullptr);
 			(*ArgList)[i] = x;
 		}
+		int numargs = ArgList->Size() + implicit;
+		if ((unsigned)numargs < argtypes.Size() && argtypes[numargs] != nullptr)
+		{
+			auto flags = Function->Variants[0].ArgFlags[numargs];
+			if (!(flags & VARF_Optional))
+			{
+				ScriptPosition.Message(MSG_ERROR, "Insufficient arguments in call to %s", Function->SymbolName.GetChars());
+				delete this;
+				return nullptr;
+			}
+		}
+		
 	}
 	if (failed)
 	{
@@ -5917,7 +5940,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 {
 	assert((build->IsActionFunc && build->Registers[REGT_POINTER].GetMostUsed() >= NAP) ||
 		(!build->IsActionFunc && build->Registers[REGT_POINTER].GetMostUsed() >= 1));
-	int count = (ArgList ? ArgList->Size() : 0);
+	int count = 0; (ArgList ? ArgList->Size() : 0);
 
 	if (count == 1)
 	{
@@ -5928,6 +5951,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 		}
 	}
 
+	count = 0;
 	// Emit code to pass implied parameters
 	if (Function->Variants[0].Flags & VARF_Method)
 	{
@@ -5958,7 +5982,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	{
 		for (unsigned i = 0; i < ArgList->Size(); ++i)
 		{
-			EmitParameter(build, (*ArgList)[i], ScriptPosition);
+			count += EmitParameter(build, (*ArgList)[i], ScriptPosition);
 		}
 	}
 	// Get a constant register for this function

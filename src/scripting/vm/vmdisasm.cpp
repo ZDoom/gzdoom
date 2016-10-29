@@ -578,8 +578,10 @@ static int print_reg(FILE *out, int col, int arg, int mode, int immshift, const 
 				return col+printf_wrapper(out, "s%d", regnum);
 			case REGT_POINTER:
 				return col+printf_wrapper(out, "a%d", regnum);
-			case REGT_FLOAT | REGT_MULTIREG:
-				return col+printf_wrapper(out, "v%d", regnum);
+			case REGT_FLOAT | REGT_MULTIREG2:
+				return col+printf_wrapper(out, "v%d.2", regnum);
+			case REGT_FLOAT | REGT_MULTIREG3:
+				return col+printf_wrapper(out, "v%d.3", regnum);
 			case REGT_INT | REGT_KONST:
 				return col+print_reg(out, 0, regnum, MODE_KI, 0, func);
 			case REGT_FLOAT | REGT_KONST:

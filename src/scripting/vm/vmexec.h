@@ -453,7 +453,7 @@ begin:
 			}
 			else
 			{
-				switch(b & (REGT_TYPE | REGT_KONST | REGT_ADDROF))
+				switch(b)
 				{
 				case REGT_INT:
 					assert(C < f->NumRegD);
@@ -492,40 +492,31 @@ begin:
 					::new(param) VMValue(konsta[C].v, konstatag[C]);
 					break;
 				case REGT_FLOAT:
-					if (b & REGT_MULTIREG)
-					{
-						assert(C < f->NumRegF - 2);
-						assert(f->NumParam < sfunc->MaxParam - 1);
-						::new(param) VMValue(reg.f[C]);
-						::new(param+1) VMValue(reg.f[C+1]);
-						::new(param+2) VMValue(reg.f[C+2]);
-						f->NumParam += 2;
-					}
-					else
-					{
-						assert(C < f->NumRegF);
-						::new(param) VMValue(reg.f[C]);
-					}
+					assert(C < f->NumRegF);
+					::new(param) VMValue(reg.f[C]);
+					break;
+				case REGT_FLOAT | REGT_MULTIREG2:
+					assert(C < f->NumRegF - 1);
+					assert(f->NumParam < sfunc->MaxParam);
+					::new(param) VMValue(reg.f[C]);
+					::new(param + 1) VMValue(reg.f[C + 1]);
+					f->NumParam++;
+					break;
+				case REGT_FLOAT | REGT_MULTIREG3:
+					assert(C < f->NumRegF - 2);
+					assert(f->NumParam < sfunc->MaxParam - 1);
+					::new(param) VMValue(reg.f[C]);
+					::new(param + 1) VMValue(reg.f[C + 1]);
+					::new(param + 2) VMValue(reg.f[C + 2]);
+					f->NumParam += 2;
 					break;
 				case REGT_FLOAT | REGT_ADDROF:
 					assert(C < f->NumRegF);
 					::new(param) VMValue(&reg.f[C], ATAG_FREGISTER);
 					break;
 				case REGT_FLOAT | REGT_KONST:
-					if (b & REGT_MULTIREG)
-					{
-						assert(C < sfunc->NumKonstF - 2);
-						assert(f->NumParam < sfunc->MaxParam - 1);
-						::new(param) VMValue(konstf[C]);
-						::new(param+1) VMValue(konstf[C+1]);
-						::new(param+2) VMValue(konstf[C+2]);
-						f->NumParam += 2;
-					}
-					else
-					{
-						assert(C < sfunc->NumKonstF);
-						::new(param) VMValue(konstf[C]);
-					}
+					assert(C < sfunc->NumKonstF);
+					::new(param) VMValue(konstf[C]);
 					break;
 				default:
 					assert(0);

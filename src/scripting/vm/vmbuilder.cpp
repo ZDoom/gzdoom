@@ -498,7 +498,11 @@ size_t VMFunctionBuilder::Emit(int opcode, int opa, int opb, int opc)
 	assert(opc >= 0 && opc <= 255);
 	if (opcode == OP_PARAM)
 	{
-		ParamChange(1);
+		int chg;
+		if (opb & REGT_MULTIREG2) chg = 2;
+		else if (opb&REGT_MULTIREG3) chg = 3;
+		else chg = 1;
+		ParamChange(chg);
 	}
 	else if (opcode == OP_CALL || opcode == OP_CALL_K || opcode == OP_TAIL || opcode == OP_TAIL_K)
 	{

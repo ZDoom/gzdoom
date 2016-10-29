@@ -2017,6 +2017,7 @@ void ZCCCompiler::InitFunctions()
 				SetImplicitArgs(&args, &argflags, &argnames, c->Type(), varflags);
 				argdefaults.Resize(argnames.Size());
 				auto p = f->Params;
+				bool hasoptionals = false;
 				if (p != nullptr)
 				{
 					do
@@ -2043,6 +2044,7 @@ void ZCCCompiler::InitFunctions()
 							else if (p->Default != nullptr)
 							{
 								flags |= VARF_Optional;
+								hasoptionals = true;
 								// The simplifier is not suited to convert the constant into something usable. 
 								// All it does is reduce the expression to a constant but we still got to do proper type checking and conversion.
 								// It will also lose important type info about enums, once these get implemented
@@ -2093,6 +2095,10 @@ void ZCCCompiler::InitFunctions()
 									}
 								}
 								if (x != nullptr) delete x;
+							}
+							else if (hasoptionals)
+							{
+								Error(p, "All arguments after the first optional one need also be optional.");
 							}
 							// TBD: disallow certain types? For now, let everything pass that isn't an array.
 							args.Push(type);

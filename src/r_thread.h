@@ -109,7 +109,7 @@ public:
 	virtual FString DebugInfo() = 0;
 };
 
-void VectoredTryCatch(void *data, void(*tryBlock)(void *data), void(*catchBlock)(void *data));
+void VectoredTryCatch(void *data, void(*tryBlock)(void *data), void(*catchBlock)(void *data, const char *reason, bool fatal));
 
 // Manages queueing up commands and executing them on worker threads
 class DrawerCommandQueue
@@ -132,6 +132,7 @@ class DrawerCommandQueue
 	std::condition_variable end_condition;
 	size_t finished_threads = 0;
 	FString thread_error;
+	bool thread_error_fatal = false;
 
 	int threaded_render = 0;
 	DrawerThread single_core_thread;
@@ -143,7 +144,7 @@ class DrawerCommandQueue
 	void Finish();
 
 	static DrawerCommandQueue *Instance();
-	static void ReportFatalError(DrawerCommand *command, bool worker_thread);
+	static void ReportDrawerError(DrawerCommand *command, bool worker_thread, const char *reason, bool fatal);
 
 	DrawerCommandQueue();
 	~DrawerCommandQueue();
@@ -166,10 +167,10 @@ public:
 				T *c = (T*)data;
 				c->Execute(&Instance()->single_core_thread);
 			},
-			[](void *data)
+			[](void *data, const char *reason, bool fatal)
 			{
 				T *c = (T*)data;
-				ReportFatalError(c, false);
+				ReportDrawerError(c, false, reason, fatal);
 			});
 		}
 		else

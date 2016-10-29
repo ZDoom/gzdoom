@@ -127,10 +127,10 @@ void DrawerCommandQueue::Finish()
 			}
 		}
 	},
-	[](void *data)
+	[](void *data, const char *reason, bool fatal)
 	{
 		TryCatchData *d = (TryCatchData*)data;
-		ReportFatalError(d->queue->active_commands[d->command_index], true);
+		ReportDrawerError(d->queue->active_commands[d->command_index], true, reason, fatal);
 	});
 
 	// Wait for everyone to finish:
@@ -139,7 +139,14 @@ void DrawerCommandQueue::Finish()
 	queue->end_condition.wait(end_lock, [&]() { return queue->finished_threads == queue->threads.size(); });
 
 	if (!queue->thread_error.IsEmpty())
-		I_FatalError("Fatal drawer error: %s", queue->thread_error.GetChars());
+	{
+		static bool first = true;
+		if (queue->thread_error_fatal)
+			I_FatalError("%s", queue->thread_error.GetChars());
+		else if (first)
+			Printf("%s\n", queue->thread_error.GetChars());
+		first = false;
+	}
 
 	// Clean up batch:
 
@@ -212,10 +219,10 @@ void DrawerCommandQueue::StartThreads()
 						}
 					}
 				},
-				[](void *data)
+				[](void *data, const char *reason, bool fatal)
 				{
 					TryCatchData *d = (TryCatchData*)data;
-					ReportFatalError(d->queue->active_commands[d->command_index], true);
+					ReportDrawerError(d->queue->active_commands[d->command_index], true, reason, fatal);
 				});
 
 				// Notify main thread that we finished:
@@ -241,23 +248,31 @@ void DrawerCommandQueue::StopThreads()
 	shutdown_flag = false;
 }
 
-void DrawerCommandQueue::ReportFatalError(DrawerCommand *command, bool worker_thread)
+void DrawerCommandQueue::ReportDrawerError(DrawerCommand *command, bool worker_thread, const char *reason, bool fatal)
 {
 	if (worker_thread)
 	{
 		std::unique_lock<std::mutex> end_lock(Instance()->end_mutex);
-		if (Instance()->thread_error.IsEmpty())
-			Instance()->thread_error = command->DebugInfo();
+		if (Instance()->thread_error.IsEmpty() || (!Instance()->thread_error_fatal && fatal))
+		{
+			Instance()->thread_error = reason + (FString)": " + command->DebugInfo();
+			Instance()->thread_error_fatal = fatal;
+		}
 	}
 	else
 	{
-		I_FatalError("Fatal drawer error: %s", command->DebugInfo().GetChars());
+		static bool first = true;
+		if (fatal)
+			I_FatalError("%s: %s", reason, command->DebugInfo().GetChars());
+		else if (first)
+			Printf("%s: %s\n", reason, command->DebugInfo().GetChars());
+		first = false;
 	}
 }
 
 #ifndef WIN32
 
-void VectoredTryCatch(void *data, void(*tryBlock)(void *data), void(*catchBlock)(void *data))
+void VectoredTryCatch(void *data, void(*tryBlock)(void *data), void(*catchBlock)(void *data, const char *reason, bool fatal))
 {
 	tryBlock(data);
 }

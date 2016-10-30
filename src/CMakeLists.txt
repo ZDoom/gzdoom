@@ -835,7 +835,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	${OTHER_SYSTEM_SOURCES}
 	sc_man_scanner.h
 	sc_man_scanner.re
-	g_doom/a_archvile.cpp
 	g_doom/a_bossbrain.cpp
 	g_doom/a_doomweaps.cpp
 	g_doom/a_keen.cpp

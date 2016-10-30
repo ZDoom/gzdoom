@@ -345,6 +345,7 @@ static int EncodeRegType(ExpEmit reg)
 	else if (reg.RegCount == 2)
 	{
 		regtype |= REGT_MULTIREG2;
+
 	}
 	else if (reg.RegCount == 3)
 	{
@@ -3808,7 +3809,7 @@ FxExpression *FxConditional::Resolve(FCompileContext& ctx)
 		ValueType = TypeVoid;
 	//else if (truex->ValueType != falsex->ValueType)
 
-	if ((!IsNumeric() && !IsPointer() && !IsVector()) || ValueType == TypeVoid)
+	if (ValueType->GetRegType() == REGT_NIL)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Incompatible types for ?: operator");
 		delete this;

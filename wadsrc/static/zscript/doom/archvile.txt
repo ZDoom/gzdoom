@@ -87,3 +87,91 @@ class ArchvileFire : Actor
 	}
 }
 
+
+//===========================================================================
+//
+// Code (must be attached to Actor)
+//
+//===========================================================================
+
+// A_VileAttack flags
+//#define VAF_DMGTYPEAPPLYTODIRECT 1
+
+extend class Actor
+{
+
+	void A_VileStart()
+	{
+		A_PlaySound ("vile/start", CHAN_VOICE);
+	}
+	
+	//
+	// A_VileTarget
+	// Spawn the hellfire
+	//
+	void A_VileTarget(class<Actor> fire = "ArchvileFire")
+	{
+		if (target)
+		{
+			A_FaceTarget ();
+
+			Actor fog = Spawn (fire, target.Pos, ALLOW_REPLACE);
+			tracer = fog;
+			fog.target = self;
+			fog.tracer = self.target;
+			fog.A_Fire(0);
+		}
+	}
+	
+	void A_VileAttack(sound snd = "vile/stop", int initialdmg = 20, int blastdmg = 70, int blastradius = 70, float thrust = 1.0, name damagetype = "Fire", int flags = 0)
+	{
+		if (target)
+		{
+			A_FaceTarget();
+			if (!CheckSight(target, 0)) return;
+			A_PlaySound(snd, CHAN_WEAPON);
+			int newdam = target.DamageMobj (self, self, initialdmg, (flags & VAF_DMGTYPEAPPLYTODIRECT)? damagetype : 'none');
+
+			TraceBleed (newdam > 0 ? newdam : initialdmg, target);
+			
+			Actor fire = tracer;
+			if (fire)
+			{
+				// move the fire between the vile and the player
+				fire.SetOrigin(target.Vec3Angle(-24., angle, 0), true);
+				fire.A_Explode(blastdmg, blastradius, XF_NOSPLASH, false, 0, 0, 0, "BulletPuff", damagetype);
+			}
+			if (!target.bDontThrust)
+			{
+				target.Vel.z = thrust * 1000 / max(1, target.Mass);
+			}
+		}
+	}
+	
+	void A_StartFire()
+	{
+		A_PlaySound ("vile/firestrt", CHAN_BODY);
+		A_Fire();
+	}
+	
+	//
+	// A_Fire
+	// Keep fire in front of player unless out of sight
+	//
+	void A_Fire(float spawnheight = 0)
+	{
+		Actor dest = tracer;
+		if (!dest || !target) return;
+				
+		// don't move it if the vile lost sight
+		if (!target.CheckSight (dest, 0) ) return;
+
+		SetOrigin(dest.Vec3Angle(24, dest.angle, height), true);
+	}
+	
+	void A_FireCrackle()
+	{
+		A_PlaySound ("vile/firecrkl", CHAN_BODY);
+		A_Fire();
+	}
+}

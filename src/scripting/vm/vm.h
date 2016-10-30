@@ -4,6 +4,7 @@
 #include "zstring.h"
 #include "dobject.h"
 #include "autosegs.h"
+#include "vectors.h"
 
 #define MAX_RETURNS		8	// Maximum number of results a function called by script code can return
 #define MAX_TRY_DEPTH	8	// Maximum number of nested TRYs in a single function
@@ -296,9 +297,22 @@ struct VMReturn
 		((double *)Location)[1] = val[1];
 		((double *)Location)[2] = val[2];
 	}
+	void SetVector(const DVector3 &val)
+	{
+		assert(RegType == (REGT_FLOAT | REGT_MULTIREG3));
+		((double *)Location)[0] = val[0];
+		((double *)Location)[1] = val[1];
+		((double *)Location)[2] = val[2];
+	}
 	void SetVector2(const double val[2])
 	{
 		assert(RegType == (REGT_FLOAT|REGT_MULTIREG2));
+		((double *)Location)[0] = val[0];
+		((double *)Location)[1] = val[1];
+	}
+	void SetVector2(const DVector2 &val)
+	{
+		assert(RegType == (REGT_FLOAT | REGT_MULTIREG2));
 		((double *)Location)[0] = val[0];
 		((double *)Location)[1] = val[1];
 	}
@@ -1029,6 +1043,7 @@ struct AFuncDesc
 #define ACTION_RETURN_STATE(v) do { FState *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_STATE); return 1; } return 0; } while(0)
 #define ACTION_RETURN_OBJECT(v) do { auto state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_OBJECT); return 1; } return 0; } while(0)
 #define ACTION_RETURN_FLOAT(v) do { double u = v; if (numret > 0) { assert(ret != nullptr); ret->SetFloat(u); return 1; } return 0; } while(0)
+#define ACTION_RETURN_VEC3(v) do { DVector3 u = v; if (numret > 0) { assert(ret != nullptr); ret[0].SetVector(u); return 1; } return 0; } while(0)
 #define ACTION_RETURN_INT(v) do { int u = v; if (numret > 0) { assert(ret != NULL); ret->SetInt(u); return 1; } return 0; } while(0)
 #define ACTION_RETURN_BOOL(v) ACTION_RETURN_INT(v)
 

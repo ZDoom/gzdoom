@@ -466,12 +466,20 @@ public:
 class FxVectorValue : public FxExpression
 {
 	FxExpression *xyz[3];
-	bool isConst;	// gets set to true if all element are const
+	bool isConst;	// gets set to true if all element are const (used by function defaults parser)
 
 public:
+
+	friend class ZCCCompiler;
+
 	FxVectorValue(FxExpression *x, FxExpression *y, FxExpression *z, const FScriptPosition &sc);
 	~FxVectorValue();
 	FxExpression *Resolve(FCompileContext&);
+	bool isConstVector(int dim)
+	{
+		if (!isConst) return false;
+		return dim == 2 ? xyz[2] == nullptr : xyz[2] != nullptr;
+	}
 
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

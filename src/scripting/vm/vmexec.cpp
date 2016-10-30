@@ -188,14 +188,14 @@ void VMFillParams(VMValue *params, VMFrame *callee, int numparam)
 	const VMRegisters calleereg(callee);
 
 	assert(calleefunc != NULL && !calleefunc->Native);
-	assert(numparam == calleefunc->NumArgs || ((int)calleefunc->Defaults.Size() == calleefunc->NumArgs));
+	assert(numparam == calleefunc->NumArgs || ((int)calleefunc->DefaultArgs.Size() == calleefunc->NumArgs));
 	assert(REGT_INT == 0 && REGT_FLOAT == 1 && REGT_STRING == 2 && REGT_POINTER == 3);
 
 	regd = regf = regs = rega = 0;
 	for (int i = 0; i < calleefunc->NumArgs; ++i)
 	{
 		// get all actual parameters and fill the rest from the defaults.
-		VMValue &p = i < numparam? params[i] : calleefunc->Defaults[i];
+		VMValue &p = i < numparam? params[i] : calleefunc->DefaultArgs[i];
 		if (p.Type < REGT_STRING)
 		{
 			if (p.Type == REGT_INT)

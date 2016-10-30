@@ -722,7 +722,13 @@ void FFunctionBuildList::Build()
 			// Emit code
 			item.Code->Emit(&buildit);
 			buildit.MakeFunction(sfunc);
-			sfunc->NumArgs = item.Func->Variants[0].Proto->ArgumentTypes.Size();
+			sfunc->NumArgs = 0;
+			// NumArgs for the VMFunction must be the amount of stack elements, which can differ from the amount of logical function arguments if vectors are in the list.
+			// For the VM a vector is 2 or 3 args, depending on size.
+			for (auto s : item.Func->Variants[0].Proto->ArgumentTypes)
+			{
+				sfunc->NumArgs += s->GetRegCount();
+			}
 
 			if (dump != nullptr)
 			{

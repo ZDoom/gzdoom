@@ -415,7 +415,7 @@ int VMFrameStack::Call(VMFunction *func, VMValue *params, int numparams, VMRetur
 	{
 		if (func->Native)
 		{
-			return static_cast<VMNativeFunction *>(func)->NativeCall(this, params, func->Defaults, numparams, results, numresults);
+			return static_cast<VMNativeFunction *>(func)->NativeCall(this, params, func->DefaultArgs, numparams, results, numresults);
 		}
 		else
 		{

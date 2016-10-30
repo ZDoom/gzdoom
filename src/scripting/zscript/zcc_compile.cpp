@@ -2022,7 +2022,8 @@ void ZCCCompiler::InitFunctions()
 				{
 					do
 					{
-						VMValue vmval;	// default is REGT_NIL which means 'no default value' here.
+						int elementcount = 1;
+						VMValue vmval[3];	// default is REGT_NIL which means 'no default value' here.
 						if (p->Type != nullptr)
 						{
 							auto type = DetermineType(c->Type(), p, f->Name, p->Type, false, false);
@@ -2035,6 +2036,14 @@ void ZCCCompiler::InitFunctions()
 								if ((flags & VARF_Out) || (type != TypeVector2 && type != TypeVector3))
 								{
 									type = NewPointer(type);
+								}
+								else if (type == TypeVector2)
+								{
+									elementcount = 2;
+								}
+								else if (type == TypeVector3)
+								{
+									elementcount = 3;
 								}
 							}
 							if (type->GetRegType() == REGT_NIL && type != TypeVector2 && type != TypeVector3)
@@ -2055,7 +2064,21 @@ void ZCCCompiler::InitFunctions()
 
 								if (x != nullptr)
 								{
-									if (!x->isConstant())
+									// Vectors need special treatment because they use more than one entry in the Defaults and do not report as actual constants
+									if (type == TypeVector2 && x->ExprType == EFX_VectorValue && static_cast<FxVectorValue *>(x)->isConstVector(2))
+									{
+										auto vx = static_cast<FxVectorValue *>(x);
+										vmval[0] = static_cast<FxConstant *>(vx->xyz[0])->GetValue().GetFloat();
+										vmval[1] = static_cast<FxConstant *>(vx->xyz[1])->GetValue().GetFloat();
+									}
+									else if (type == TypeVector3 && x->ExprType == EFX_VectorValue && static_cast<FxVectorValue *>(x)->isConstVector(3))
+									{
+										auto vx = static_cast<FxVectorValue *>(x);
+										vmval[0] = static_cast<FxConstant *>(vx->xyz[0])->GetValue().GetFloat();
+										vmval[1] = static_cast<FxConstant *>(vx->xyz[1])->GetValue().GetFloat();
+										vmval[2] = static_cast<FxConstant *>(vx->xyz[2])->GetValue().GetFloat();
+									}
+									else if (!x->isConstant())
 									{
 										Error(p, "Default parameter %s is not constant in %s", FName(p->Name).GetChars(), FName(f->Name).GetChars());
 									}
@@ -2070,22 +2093,22 @@ void ZCCCompiler::InitFunctions()
 										switch (type->GetRegType())
 										{
 										case REGT_INT:
-											vmval = cnst->GetValue().GetInt();
+											vmval[0] = cnst->GetValue().GetInt();
 											break;
 
 										case REGT_FLOAT:
-											vmval = cnst->GetValue().GetFloat();
+											vmval[0] = cnst->GetValue().GetFloat();
 											break;
 
 										case REGT_POINTER:
 											if (type->IsKindOf(RUNTIME_CLASS(PClassPointer)))
-												vmval = (DObject*)cnst->GetValue().GetPointer();
+												vmval[0] = (DObject*)cnst->GetValue().GetPointer();
 											else
-												vmval = cnst->GetValue().GetPointer();
+												vmval[0] = cnst->GetValue().GetPointer();
 											break;
 
 										case REGT_STRING:
-											vmval = cnst->GetValue().GetString();
+											vmval[0] = cnst->GetValue().GetString();
 											break;
 
 										default:
@@ -2112,7 +2135,7 @@ void ZCCCompiler::InitFunctions()
 							argflags.Push(0);
 							argnames.Push(NAME_None);
 						}
-						argdefaults.Push(vmval);
+						for(int i=0;i<elementcount;i++) argdefaults.Push(vmval[i]);
 						p = static_cast<decltype(p)>(p->SiblingNext);
 					} while (p != f->Params);
 				}
@@ -2131,7 +2154,7 @@ void ZCCCompiler::InitFunctions()
 				}
 				if (sym->Variants[0].Implementation != nullptr && hasdefault)	// do not copy empty default lists, they only waste space and processing time.
 				{
-					sym->Variants[0].Implementation->Defaults = std::move(argdefaults);
+					sym->Variants[0].Implementation->DefaultArgs = std::move(argdefaults);
 				}
 				// todo: Check inheritance.
 			}

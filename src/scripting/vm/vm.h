@@ -643,7 +643,7 @@ public:
 	bool Native;
 	BYTE ImplicitArgs = 0;	// either 0 for static, 1 for method or 3 for action
 	FName Name;
-	TArray<VMValue> Defaults;
+	TArray<VMValue> DefaultArgs;
 
 	class PPrototype *Proto;
 

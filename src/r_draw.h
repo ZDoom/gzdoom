@@ -403,7 +403,7 @@ struct TriVertex
 };
 
 class VSMatrix;
-void R_DrawTriangles(const VSMatrix &objectToWorld, const TriVertex *vertices, int count, int clipleft, int clipright, const short *cliptop, const short *clipbottom);
+void R_DrawTriangles(const VSMatrix &objectToWorld, const TriVertex *vertices, int count, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture);
 
 extern bool r_swtruecolor;
 

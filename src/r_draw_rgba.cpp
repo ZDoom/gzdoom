@@ -1260,8 +1260,8 @@ void ApplySpecialColormapRGBACommand::Execute(DrawerThread *thread)
 class DrawTrianglesCommand : public DrawerCommand
 {
 public:
-	DrawTrianglesCommand(const VSMatrix &objectToWorld, const TriVertex *vertices, int count, int clipleft, int clipright, const short *clipdata)
-		: objectToWorld(objectToWorld), vertices(vertices), count(count), clipleft(clipleft), clipright(clipright), clipdata(clipdata)
+	DrawTrianglesCommand(const VSMatrix &transform, const TriVertex *vertices, int count, int clipleft, int clipright, const short *clipdata, const uint32_t *texturePixels, int textureWidth, int textureHeight)
+		: transform(transform), vertices(vertices), count(count), clipleft(clipleft), clipright(clipright), clipdata(clipdata), texturePixels(texturePixels), textureWidth(textureWidth), textureHeight(textureHeight)
 	{
 	}
 
@@ -1274,7 +1274,7 @@ public:
 			thread->triangle_clip_bottom[clipleft + i] = clipdata[cliplength + i];
 		}
 
-		draw_triangles(objectToWorld, vertices, count, clipleft, clipright, thread->triangle_clip_top, thread->triangle_clip_bottom, thread);
+		draw_triangles(transform, vertices, count, clipleft, clipright, thread->triangle_clip_top, thread->triangle_clip_bottom, thread);
 	}
 
 	FString DebugInfo() override
@@ -1337,7 +1337,7 @@ private:
 		int minx = MAX((MIN(MIN(X1, X2), X3) + 0xF) >> 4, clipleft);
 		int maxx = MIN((MAX(MAX(X1, X2), X3) + 0xF) >> 4, clipright);
 		int miny = MAX((MIN(MIN(Y1, Y2), Y3) + 0xF) >> 4, clipymin);
-		int maxy = MIN((MAX(MAX(Y1, Y2), Y3) + 0xF) >> 4, clipymax);
+		int maxy = MIN((MAX(MAX(Y1, Y2), Y3) + 0xF) >> 4, clipymax - 1);
 		if (minx >= maxx || miny >= maxy)
 			return;
 
@@ -1407,9 +1407,9 @@ private:
 
 				// Check if block needs clipping
 				int clipcount = 0;
-				for (int ix = 0; ix < q; ix++)
+				for (int ix = x; ix < x + q; ix++)
 				{
-					clipcount += (cliptop[x + ix] > y) || (clipbottom[x + ix] < y + q - 1);
+					clipcount += (clipleft > ix) || (clipright < ix) || (cliptop[ix] > y) || (clipbottom[ix] <= y + q - 1);
 				}
 
 				// Calculate varying variables for affine block
@@ -1451,11 +1451,15 @@ private:
 						{
 							for (int ix = x; ix < x + q; ix++)
 							{
-								uint32_t red = (uint32_t)clamp(varying[0] * 255.0f + 0.5f, 0.0f, 255.0f);
-								uint32_t green = (uint32_t)clamp(varying[1] * 255.0f + 0.5f, 0.0f, 255.0f);
-								uint32_t blue = (uint32_t)clamp(varying[2] * 255.0f + 0.5f, 0.0f, 255.0f);
+								uint32_t ufrac = (uint32_t)((varying[0] - floor(varying[0])) * 0x100000000LL);
+								uint32_t vfrac = (uint32_t)((varying[1] - floor(varying[1])) * 0x100000000LL);
+								//uint32_t light = (uint32_t)clamp(varying[2] * 255.0f + 0.5f, 0.0f, 255.0f);
 
-								buffer[ix] = 0xff000000 | (red << 16) | (green << 8) | blue;
+								uint32_t upos = ((ufrac >> 16) * textureWidth) >> 16;
+								uint32_t vpos = ((vfrac >> 16) * textureHeight) >> 16;
+								uint32_t uvoffset = upos * textureHeight + vpos;
+
+								buffer[ix] = texturePixels[uvoffset];
 
 								for (int i = 0; i < TriVertex::NumVarying; i++)
 									varying[i] += varyingStep[i];
@@ -1488,15 +1492,19 @@ private:
 						{
 							for (int ix = x; ix < x + q; ix++)
 							{
-								bool visible = (cliptop[ix] <= y + iy) && (clipbottom[ix] >= y + iy);
+								bool visible = ix >= clipleft && ix <= clipright && (cliptop[ix] <= y + iy) && (clipbottom[ix] > y + iy);
 
 								if (CX1 > 0 && CX2 > 0 && CX3 > 0 && visible)
 								{
-									uint32_t red = (uint32_t)clamp(varying[0] * 255.0f + 0.5f, 0.0f, 255.0f);
-									uint32_t green = (uint32_t)clamp(varying[1] * 255.0f + 0.5f, 0.0f, 255.0f);
-									uint32_t blue = (uint32_t)clamp(varying[2] * 255.0f + 0.5f, 0.0f, 255.0f);
+									uint32_t ufrac = (uint32_t)((varying[0] - floor(varying[0])) * 0x100000000LL);
+									uint32_t vfrac = (uint32_t)((varying[1] - floor(varying[1])) * 0x100000000LL);
+									//uint32_t light = (uint32_t)clamp(varying[2] * 255.0f + 0.5f, 0.0f, 255.0f);
 
-									buffer[ix] = 0xff000000 | (red << 16) | (green << 8) | blue;
+									uint32_t upos = ((ufrac >> 16) * textureWidth) >> 16;
+									uint32_t vpos = ((vfrac >> 16) * textureHeight) >> 16;
+									uint32_t uvoffset = upos * textureHeight + vpos;
+
+									buffer[ix] = texturePixels[uvoffset];
 								}
 
 								for (int i = 0; i < TriVertex::NumVarying; i++)
@@ -1523,13 +1531,15 @@ private:
 
 	bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2)
 	{
-		if (clipdistance1 < 0.0f && clipdistance2 < 0.0f)
+		float d1 = clipdistance1 * (1.0f - t1) + clipdistance2 * t1;
+		float d2 = clipdistance1 * (1.0f - t2) + clipdistance2 * t2;
+		if (d1 < 0.0f && d2 < 0.0f)
 			return true;
 
-		if (clipdistance1 < 0.0f)
+		if (d1 < 0.0f)
 			t1 = MAX(-clipdistance1 / (clipdistance2 - clipdistance1), t1);
 
-		if (clipdistance2 < 0.0f)
+		if (d2 < 0.0f)
 			t2 = MIN(1.0f + clipdistance2 / (clipdistance1 - clipdistance2), t2);
 
 		return false;
@@ -1580,7 +1590,7 @@ private:
 		}
 	}
 
-	void draw_triangles(const VSMatrix &objectToWorld, const TriVertex *vinput, int vcount, int clipleft, int clipright, const short *cliptop, const short *clipbottom, DrawerThread *thread)
+	void draw_triangles(const VSMatrix &transform, const TriVertex *vinput, int vcount, int clipleft, int clipright, const short *cliptop, const short *clipbottom, DrawerThread *thread)
 	{
 		for (int i = 0; i < vcount / 3; i++)
 		{
@@ -1592,8 +1602,8 @@ private:
 				auto &v = vert[j];
 				v = *(vinput++);
 
-				// Apply object to world transform:
-				const float *matrix = objectToWorld.get();
+				// Apply transform to get world coordinates:
+				const float *matrix = transform.get();
 				float vx = matrix[0 * 4 + 0] * v.x + matrix[1 * 4 + 0] * v.y + matrix[2 * 4 + 0] * v.z + matrix[3 * 4 + 0] * v.w;
 				float vy = matrix[0 * 4 + 1] * v.x + matrix[1 * 4 + 1] * v.y + matrix[2 * 4 + 1] * v.z + matrix[3 * 4 + 1] * v.w;
 				float vz = matrix[0 * 4 + 2] * v.x + matrix[1 * 4 + 2] * v.y + matrix[2 * 4 + 2] * v.z + matrix[3 * 4 + 2] * v.w;
@@ -1611,9 +1621,9 @@ private:
 				double tr_z = v.z - ViewPos.Z;
 				double tx = tr_x * ViewSin - tr_y * ViewCos;
 				double tz = tr_x * ViewTanCos + tr_y * ViewTanSin;
-				v.x = (float)tx;
-				v.y = (float)tr_z;
-				v.z = (float)(-tz * (farp + nearp) / (nearp - farp) + (2.0f * farp * nearp) / (nearp - farp));
+				v.x = (float)tx * 0.5f;
+				v.y = (float)tr_z * 0.5f;
+				v.z = (float)((-tz * (farp + nearp) / (nearp - farp) + (2.0f * farp * nearp) / (nearp - farp)));
 				v.w = (float)tz;
 			}
 
@@ -1636,8 +1646,8 @@ private:
 				v.z *= v.w;
 
 				// Apply viewport scale to get screen coordinates:
-				v.x = (float)(CenterX + v.x * CenterX);
-				v.y = (float)(CenterY - v.y * InvZtoScale);
+				v.x = (float)(CenterX + v.x * 2.0f * CenterX);
+				v.y = (float)(CenterY - v.y * 2.0f * InvZtoScale);
 			}
 
 			// Draw screen triangles
@@ -1659,15 +1669,18 @@ private:
 		}
 	}
 
-	VSMatrix objectToWorld;
+	VSMatrix transform;
 	const TriVertex *vertices;
 	int count;
 	int clipleft;
 	int clipright;
 	const short *clipdata;
+	const uint32_t *texturePixels;
+	int textureWidth;
+	int textureHeight;
 };
 
-void R_DrawTriangles(const VSMatrix &objectToWorld, const TriVertex *vertices, int count, int clipleft, int clipright, const short *cliptop, const short *clipbottom)
+void R_DrawTriangles(const VSMatrix &transform, const TriVertex *vertices, int count, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture)
 {
 	if (clipright < clipleft || clipleft < 0 || clipright > MAXWIDTH)
 		return;
@@ -1687,7 +1700,7 @@ void R_DrawTriangles(const VSMatrix &objectToWorld, const TriVertex *vertices, i
 	for (int i = 0; i < cliplength; i++)
 		clipdata[cliplength + i] = clipbottom[clipleft + i];
 
-	DrawerCommandQueue::QueueCommand<DrawTrianglesCommand>(objectToWorld, vertices, count, clipleft, clipright, clipdata);
+	DrawerCommandQueue::QueueCommand<DrawTrianglesCommand>(transform, vertices, count, clipleft, clipright, clipdata, texture->GetPixelsBgra(), texture->GetWidth(), texture->GetHeight());
 }
 
 /////////////////////////////////////////////////////////////////////////////

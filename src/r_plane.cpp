@@ -998,85 +998,66 @@ static void R_DrawCubeSky(visplane_t *pl)
 
 	static TriVertex cube[6 * 6] =
 	{
-		{ -1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		// Top
+		{ -1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
+		{  1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
+		{  1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.1f, 1.0f },
 
-		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ -1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ -1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{  1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.1f, 1.0f },
+		{ -1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.1f, 1.0f },
+		{ -1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
 
+		// Bottom
+		{  1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.9f, 1.0f },
+		{  1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f },
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
 
-		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
+		{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.9f, 1.0f },
+		{  1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.9f, 1.0f },
 
-		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		// Front
+		{  1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
+		{  1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
+		{ -1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
 
+		{ -1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
+		{  1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
 
-		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ -1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		// Back
+		{ -1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
+		{  1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
+		{  1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
 
-		{ -1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{  1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
+		{ -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
+		{ -1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
 
+		// Right
+		{  1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
+		{  1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
+		{  1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
 
-		{ -1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		{  1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
+		{  1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
+		{  1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
 
-		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ -1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
+		// Left
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
+		{ -1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
+		{ -1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
 
-
-		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-
-		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-
-
-		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ -1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ -1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-
-		{ -1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f },
-		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f }
+		{ -1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
+		{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f }
 	};
 
-	static bool first_time = true;
-	if (first_time)
-	{
-		for (int i = 0; i < 6; i++)
-		{
-			cube[i * 6 + 0].varying[0] = 1.0f;
-			cube[i * 6 + 1].varying[1] = 1.0f;
-			cube[i * 6 + 2].varying[2] = 1.0f;
-			cube[i * 6 + 3].varying[2] = 1.0f;
-			cube[i * 6 + 4].varying[0] = 1.0f;
-			cube[i * 6 + 4].varying[1] = 1.0f;
-			cube[i * 6 + 4].varying[2] = 1.0f;
-			cube[i * 6 + 5].varying[0] = 1.0f;
-		}
-		first_time = false;
-	}
+	VSMatrix transform(0);
+	transform.translate((float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z);
+	transform.scale(1000.0f, 1000.0f, 1000.0f);
 
-	//static float angle = 0.0f;
-	//angle = fmod(angle + 0.5f, 360.0f);
-	VSMatrix objectToWorld(0);
-	objectToWorld.translate((float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z);
-	//objectToWorld.rotate(angle, 0.57735f, 0.57735f, 0.57735f);
-	objectToWorld.scale(100.0f, 100.0f, 100.0f);
-
-	R_DrawTriangles(objectToWorld, cube, 6 * 6, x1, x2 - 1, uwal, dwal);
+	R_DrawTriangles(transform, cube, 6 * 6, x1, x2 - 1, uwal, dwal, frontskytex);
 }
 
 static void R_DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, double scale, double texturemid, double yrepeat)

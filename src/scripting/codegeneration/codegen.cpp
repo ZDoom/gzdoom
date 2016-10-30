@@ -519,6 +519,7 @@ FxExpression *FxVectorValue::Resolve(FCompileContext&ctx)
 			xyz[2] = xyz[1];
 			xyz[1] = vi->xyz[1];
 			xyz[0] = vi->xyz[0];
+			vi->xyz[0] = vi->xyz[1] = nullptr; // Don't delete our own expressions.
 			delete vi;
 		}
 	}

@@ -89,6 +89,9 @@ conversation // Starts a dialog.
 
     page
     {
+        goodbye = <string>; // Custom goodbye message. If omitted then the
+                            // generic goodbyes will be displayed instead.
+
         choice
         {
             // The amount of an item needed for this option to become available.

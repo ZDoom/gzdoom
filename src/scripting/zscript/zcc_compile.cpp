@@ -1967,7 +1967,7 @@ void ZCCCompiler::InitFunctions()
 					do
 					{
 						auto type = DetermineType(c->Type(), f, f->Name, t, false, false);
-						if (type->IsKindOf(RUNTIME_CLASS(PStruct)))
+						if (type->IsKindOf(RUNTIME_CLASS(PStruct)) && type != TypeVector2 && type != TypeVector3)
 						{
 							// structs and classes only get passed by pointer.
 							type = NewPointer(type);

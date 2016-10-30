@@ -623,7 +623,7 @@ static void PrintExprTrinary(FLispString &out, ZCC_TreeNode *node)
 
 static void PrintVectorInitializer(FLispString &out, ZCC_TreeNode *node)
 {
-	ZCC_VectorInitializer *enode = (ZCC_VectorInitializer *)node;
+	ZCC_VectorValue *enode = (ZCC_VectorValue *)node;
 	OpenExprType(out, enode->Operation);
 	PrintNodes(out, enode->X);
 	PrintNodes(out, enode->Y);

@@ -446,8 +446,8 @@ ExpEmit FxConstant::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxVectorInitializer::FxVectorInitializer(FxExpression *x, FxExpression *y, FxExpression *z, const FScriptPosition &sc)
-	:FxExpression(EFX_VectorInitializer, sc)
+FxVectorValue::FxVectorValue(FxExpression *x, FxExpression *y, FxExpression *z, const FScriptPosition &sc)
+	:FxExpression(EFX_VectorValue, sc)
 {
 	xyz[0] = x;
 	xyz[1] = y;
@@ -456,13 +456,13 @@ FxVectorInitializer::FxVectorInitializer(FxExpression *x, FxExpression *y, FxExp
 	ValueType = TypeVoid;	// we do not know yet
 }
 
-FxVectorInitializer::~FxVectorInitializer()
+FxVectorValue::~FxVectorValue()
 {
 	for (auto &a : xyz)
 		SAFE_DELETE(a);
 }
 
-FxExpression *FxVectorInitializer::Resolve(FCompileContext&ctx)
+FxExpression *FxVectorValue::Resolve(FCompileContext&ctx)
 {
 	bool fails = false;
 
@@ -501,10 +501,10 @@ FxExpression *FxVectorInitializer::Resolve(FCompileContext&ctx)
 			return nullptr;
 		}
 		ValueType = TypeVector3;
-		if (xyz[0]->ExprType == EFX_VectorInitializer)
+		if (xyz[0]->ExprType == EFX_VectorValue)
 		{
 			// If two vector initializers are nested, unnest them now.
-			auto vi = static_cast<FxVectorInitializer*>(xyz[0]);
+			auto vi = static_cast<FxVectorValue*>(xyz[0]);
 			xyz[2] = xyz[1];
 			xyz[1] = vi->xyz[1];
 			xyz[0] = vi->xyz[0];
@@ -542,7 +542,7 @@ static ExpEmit EmitKonst(VMFunctionBuilder *build, ExpEmit &emit)
 	return emit;
 }
 
-ExpEmit FxVectorInitializer::Emit(VMFunctionBuilder *build)
+ExpEmit FxVectorValue::Emit(VMFunctionBuilder *build)
 {
 	// no const handling here. Ultimstely it's too rarely used (i.e. the only fully constant vector ever allocated in ZDoom is the 0-vector in a very few places)
 	// and the negatives (excessive allocation of float constants) outweigh the positives (saved a few instructions)

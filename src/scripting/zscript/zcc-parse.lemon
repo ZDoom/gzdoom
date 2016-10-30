@@ -945,7 +945,6 @@ func_param_flags(X) ::= func_param_flags(A) OPTIONAL(T).	{ X.Int = A.Int | ZCC_O
 
 %type expr{ZCC_Expression *}
 %type primary{ZCC_Expression *}
-%type vectorinit{ZCC_VectorInitializer*}
 %type unary_expr{ZCC_Expression *}
 %type constant{ZCC_ExprConstant *}
 
@@ -967,8 +966,26 @@ primary(X) ::= SUPER(T).
 	X = expr;
 }
 primary(X) ::= constant(A).				{ X = A; /*X-overwrites-A*/ }
-primary(X) ::= vectorinit(A).			{ X = A; /*X-overwrites-A*/ }
-
+primary(XX) ::= LPAREN expr(A) COMMA expr(B) COMMA expr(C) RPAREN. [DOT]
+{
+	NEW_AST_NODE(VectorValue, expr, A);
+	expr->Operation = PEX_Vector;
+	expr->Type = TypeVector3;
+	expr->X = A;
+	expr->Y = B;
+	expr->Z = C;
+	XX = expr;
+}
+primary(XX) ::= LPAREN expr(A) COMMA expr(B) RPAREN. [DOT]
+{
+	NEW_AST_NODE(VectorValue, expr, A);
+	expr->Operation = PEX_Vector;
+	expr->Type = TypeVector2;
+	expr->X = A;
+	expr->Y = B;
+	expr->Z = nullptr;
+	XX = expr;
+}
 primary(X) ::= LPAREN expr(A) RPAREN.
 {
 	X = A; /*X-overwrites-A*/
@@ -1018,29 +1035,6 @@ primary(X) ::= SCOPE primary(B).
 	X = expr2;
 }
 */
-
-vectorinit(XX) ::= LPAREN expr(A) COMMA expr(B) COMMA expr(C) RPAREN. [DOT]
-{
-	NEW_AST_NODE(VectorInitializer, expr, A);
-	expr->Operation = PEX_Vector;
-	expr->Type = TypeVector3;
-	expr->X = A;
-	expr->Y = B;
-	expr->Z = C;
-	XX = expr;
-}
-
-
-vectorinit(XX) ::= LPAREN expr(A) COMMA expr(B) RPAREN. [DOT]
-{
-	NEW_AST_NODE(VectorInitializer, expr, A);
-	expr->Operation = PEX_Vector;
-	expr->Type = TypeVector2;
-	expr->X = A;
-	expr->Y = B;
-	expr->Z = nullptr;
-	XX = expr;
-}
 
 /*----- Unary Expressions -----*/
 

@@ -265,7 +265,7 @@ enum EFxType
 	EFX_LocalVariableDeclaration,
 	EFX_SwitchStatement,
 	EFX_CaseStatement,
-	EFX_VectorInitializer,
+	EFX_VectorValue,
 	EFX_VectorBuiltin,
 	EFX_TypeCheck,
 	EFX_COUNT
@@ -463,14 +463,14 @@ public:
 //
 //==========================================================================
 
-class FxVectorInitializer : public FxExpression
+class FxVectorValue : public FxExpression
 {
 	FxExpression *xyz[3];
 	bool isConst;	// gets set to true if all element are const
 
 public:
-	FxVectorInitializer(FxExpression *x, FxExpression *y, FxExpression *z, const FScriptPosition &sc);
-	~FxVectorInitializer();
+	FxVectorValue(FxExpression *x, FxExpression *y, FxExpression *z, const FScriptPosition &sc);
+	~FxVectorValue();
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpEmit Emit(VMFunctionBuilder *build);

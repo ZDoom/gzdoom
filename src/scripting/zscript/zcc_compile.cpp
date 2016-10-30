@@ -2712,13 +2712,13 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		return new FxConditional(condition, left, right);
 	}
 
-	case AST_VectorInitializer:
+	case AST_VectorValue:
 	{
-		auto vecini = static_cast<ZCC_VectorInitializer *>(ast);
+		auto vecini = static_cast<ZCC_VectorValue *>(ast);
 		auto xx = ConvertNode(vecini->X);
 		auto yy = ConvertNode(vecini->Y);
 		auto zz = ConvertNode(vecini->Z);
-		return new FxVectorInitializer(xx, yy, zz, *ast);
+		return new FxVectorValue(xx, yy, zz, *ast);
 	}
 
 	case AST_LocalVarStmt:

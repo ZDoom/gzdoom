@@ -345,7 +345,11 @@ class USDFParser : public UDMFParserBase
 					break;
 
 				case NAME_Goodbye:
-					Goodbye = CheckString(key);
+					// Custom goodbyes are exclusive to namespace ZDoom. [FishyClockwork]
+					if (namespace_bits == Zd)
+					{
+						Goodbye = CheckString(key);
+					}
 					break;
 				}
 			}

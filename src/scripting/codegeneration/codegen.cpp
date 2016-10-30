@@ -335,6 +335,30 @@ PPrototype *FxExpression::ReturnProto()
 //
 //==========================================================================
 
+static int EncodeRegType(ExpEmit reg)
+{
+	int regtype = reg.RegType;
+	if (reg.Konst)
+	{
+		regtype |= REGT_KONST;
+	}
+	else if (reg.RegCount == 2)
+	{
+		regtype |= REGT_MULTIREG2;
+	}
+	else if (reg.RegCount == 3)
+	{
+		regtype |= REGT_MULTIREG3;
+	}
+	return regtype;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 static int EmitParameter(VMFunctionBuilder *build, FxExpression *operand, const FScriptPosition &pos)
 {
 	ExpEmit where = operand->Emit(build);
@@ -347,20 +371,7 @@ static int EmitParameter(VMFunctionBuilder *build, FxExpression *operand, const 
 	}
 	else
 	{
-		int regtype = where.RegType;
-		if (where.Konst)
-		{
-			regtype |= REGT_KONST;
-		}
-		else if (where.RegCount == 2)
-		{
-			regtype |= REGT_MULTIREG2;
-		}
-		else if (where.RegCount == 3)
-		{
-			regtype |= REGT_MULTIREG3;
-		}
-		build->Emit(OP_PARAM, 0, regtype, where.RegNum);
+		build->Emit(OP_PARAM, 0, EncodeRegType(where), where.RegNum);
 		where.Free(build);
 		return where.RegCount;
 	}
@@ -6215,9 +6226,9 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	}
 	else if (vmfunc->Proto->ReturnTypes.Size() > 0)
 	{ // Call, expecting one result
-		ExpEmit reg(build, vmfunc->Proto->ReturnTypes[0]->GetRegType());
+		ExpEmit reg(build, vmfunc->Proto->ReturnTypes[0]->GetRegType(), vmfunc->Proto->ReturnTypes[0]->GetRegCount());
 		build->Emit(OP_CALL_K, funcaddr, count, 1);
-		build->Emit(OP_RESULT, 0, reg.RegType, reg.RegNum);
+		build->Emit(OP_RESULT, 0, EncodeRegType(reg), reg.RegNum);
 		return reg;
 	}
 	else
@@ -6255,7 +6266,7 @@ bool FxVMFunctionCall::CheckEmitCast(VMFunctionBuilder *build, bool returnit, Ex
 			else
 			{
 				ExpEmit where = arg->Emit(build);
-				build->Emit(OP_RET, RET_FINAL, where.RegType | (where.Konst ? REGT_KONST : 0), where.RegNum);
+				build->Emit(OP_RET, RET_FINAL, EncodeRegType(where), where.RegNum);
 				where.Free(build);
 			}
 			reg = ExpEmit();
@@ -7319,7 +7330,7 @@ ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build)
 			}
 			else
 			{
-				build->Emit(OP_RET, RET_FINAL, out.RegType | (out.Konst ? REGT_KONST : 0), out.RegNum);
+				build->Emit(OP_RET, RET_FINAL, EncodeRegType(out), out.RegNum);
 			}
 		}
 	}

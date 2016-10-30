@@ -291,14 +291,14 @@ struct VMReturn
 	}
 	void SetVector(const double val[3])
 	{	
-		//assert(RegType == REGT_FLOAT);
+		assert(RegType == (REGT_FLOAT|REGT_MULTIREG3));
 		((double *)Location)[0] = val[0];
 		((double *)Location)[1] = val[1];
 		((double *)Location)[2] = val[2];
 	}
 	void SetVector2(const double val[2])
 	{
-		//assert(RegType == REGT_FLOAT);
+		assert(RegType == (REGT_FLOAT|REGT_MULTIREG2));
 		((double *)Location)[0] = val[0];
 		((double *)Location)[1] = val[1];
 	}

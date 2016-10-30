@@ -673,6 +673,13 @@ VMFunction *FFunctionBuildList::AddFunction(PFunction *functype, FxExpression *c
 	it.Function->ImplicitArgs = functype->GetImplicitArgs();
 	it.Proto = nullptr;
 	it.FromDecorate = fromdecorate;
+
+	// set prototype for named functions.
+	if (it.Func->SymbolName != NAME_None)
+	{
+		it.Function->Proto = it.Func->Variants[0].Proto;
+	}
+
 	mItems.Push(it);
 	return it.Function;
 }
@@ -714,10 +721,13 @@ void FFunctionBuildList::Build()
 		{
 			assert(item.Proto != nullptr);
 
-			// Generate prototype for this anonymous function
+			// Generate prototype for anonymous functions.
 			VMScriptFunction *sfunc = item.Function;
 			// create a new prototype from the now known return type and the argument list of the function's template prototype.
-			sfunc->Proto = NewPrototype(item.Proto->ReturnTypes, item.Func->Variants[0].Proto->ArgumentTypes);
+			if (sfunc->Proto == nullptr)
+			{
+				sfunc->Proto = NewPrototype(item.Proto->ReturnTypes, item.Func->Variants[0].Proto->ArgumentTypes);
+			}
 
 			// Emit code
 			item.Code->Emit(&buildit);

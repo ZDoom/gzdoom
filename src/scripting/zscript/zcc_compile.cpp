@@ -1490,6 +1490,7 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt)
 		}
 		return type;
 	}
+	Error(type, "Unable to resolve %s as type.", FName(type->UserType->Id).GetChars());
 	return TypeError;
 }
 
@@ -2186,8 +2187,8 @@ static bool CheckRandom(ZCC_Expression *duration)
 FxExpression *ZCCCompiler::SetupActionFunction(PClass *cls, ZCC_TreeNode *af)
 {
 	// We have 3 cases to consider here:
-	// 1. An action function without parameters. This can be called directly
-	// 2. An action functon with parameters or a non-action function. This needs to be wrapped into a helper function to set everything up.
+	// 1. A function without parameters. This can be called directly
+	// 2. A functon with parameters. This needs to be wrapped into a helper function to set everything up.
 	// 3. An anonymous function.
 
 	// 1. and 2. are exposed through AST_ExprFunctionCall
@@ -2236,9 +2237,10 @@ void ZCCCompiler::CompileStates()
 {
 	for (auto c : Classes)
 	{
+		
 		if (!c->Type()->IsDescendantOf(RUNTIME_CLASS(AActor)))
 		{
-			Error(c->cls, "%s: States can only be defined for actors.", c->Type()->TypeName.GetChars());
+			if (c->States.Size()) Error(c->cls, "%s: States can only be defined for actors.", c->Type()->TypeName.GetChars());
 			continue;
 		}
 		FString statename;	// The state builder wants the label as one complete string, not separated into tokens.

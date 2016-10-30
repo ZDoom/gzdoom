@@ -1488,6 +1488,14 @@ static int PatchFrame (int frameNum)
 	return result;
 }
 
+// there is exactly one place where this is needed and we do not want to expose the state internals to ZSCRIPT.
+DEFINE_ACTION_FUNCTION(AActor, isDEHState)
+{
+	PARAM_PROLOGUE;
+	PARAM_STATE(state);
+	ACTION_RETURN_BOOL(state != nullptr && (state->DefineFlags & SDF_DEHACKED));
+}
+
 static int PatchSprite (int sprNum)
 {
 	int result;

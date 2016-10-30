@@ -67,7 +67,7 @@ enum EStateDefineFlags
 	SDF_DEHACKED = 8,	// Identify a state as having been modified by a dehacked lump
 };
 
-enum EStateType
+enum EStateType : int // this must ensure proper alignment.
 {
 	STATE_Actor,
 	STATE_Psprite,

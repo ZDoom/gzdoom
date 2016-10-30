@@ -1,3 +1,4 @@
+zscript/base.txt
 zscript/constants.txt
 zscript/actor.txt
 

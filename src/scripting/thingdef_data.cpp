@@ -671,7 +671,7 @@ void InitThingdef()
 	symt.AddSymbol(new PField(NAME_Score,			TypeSInt32,		VARF_Native,				myoffsetof(AActor, Score)));
 	symt.AddSymbol(new PField(NAME_Accuracy,		TypeSInt32,		VARF_Native,				myoffsetof(AActor, accuracy)));
 	symt.AddSymbol(new PField(NAME_Stamina,			TypeSInt32,		VARF_Native,				myoffsetof(AActor, stamina)));
-	symt.AddSymbol(new PField(NAME_Height,			TypeFloat64,	VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, Height)));
+	symt.AddSymbol(new PField(NAME_Height,			TypeFloat64,	VARF_Native,				myoffsetof(AActor, Height)));
 	symt.AddSymbol(new PField(NAME_Radius,			TypeFloat64,	VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, radius)));
 	symt.AddSymbol(new PField(NAME_ReactionTime,	TypeSInt32,		VARF_Native,				myoffsetof(AActor, reactiontime)));
 	symt.AddSymbol(new PField(NAME_MeleeRange,		TypeFloat64,	VARF_Native,				myoffsetof(AActor, meleerange)));
@@ -698,6 +698,7 @@ void InitThingdef()
 	symt.AddSymbol(new PField("Pos",				TypeVector3,	VARF_Native|VARF_ReadOnly,  myoffsetof(AActor, __Pos)));
 	symt.AddSymbol(new PField("Vel",				TypeVector3,	VARF_Native,				myoffsetof(AActor, Vel)));
 	symt.AddSymbol(new PField("Scale",				TypeVector2,	VARF_Native,				myoffsetof(AActor, Scale)));
+	symt.AddSymbol(new PField("CurState",			TypeState,		VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, state)));	// has to be renamed on the script side because it clashes with the same named type.
 	symt.AddSymbol(new PField("SeeState",			TypeState,		VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, SeeState)));
 	symt.AddSymbol(new PField(NAME_Target,			TypeActor,		VARF_Native,				myoffsetof(AActor, target)));
 	symt.AddSymbol(new PField(NAME_Master,			TypeActor,		VARF_Native,				myoffsetof(AActor, master)));

@@ -4258,6 +4258,17 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	return actor;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Spawn)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(type, AActor);
+	PARAM_FLOAT_DEF(x);
+	PARAM_FLOAT_DEF(y);
+	PARAM_FLOAT_DEF(z);
+	PARAM_INT_DEF(flags);
+	ACTION_RETURN_OBJECT(AActor::StaticSpawn(type, DVector3(x, y, z), replace_t(flags)));
+}
+
 PClassActor *ClassForSpawn(FName classname)
 {
 	PClass *cls = PClass::FindClass(classname);
@@ -5951,6 +5962,16 @@ AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassAct
 	return th;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, OldSpawnMissile)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(dest, AActor);
+	PARAM_CLASS(type, AActor);
+	PARAM_OBJECT_DEF(owner, AActor);
+	ACTION_RETURN_OBJECT(P_OldSpawnMissile(self, owner, dest, type));
+}
+
+
 //---------------------------------------------------------------------------
 //
 // FUNC P_SpawnMissileAngle
@@ -6614,6 +6635,16 @@ DEFINE_ACTION_FUNCTION(AActor, VelFromAngle)
 		}
 	}
 	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SetXYZ)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	self->SetXYZ(x, y, z);
+	return 0; 
 }
 
 //----------------------------------------------------------------------------

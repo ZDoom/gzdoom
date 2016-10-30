@@ -1,0 +1,8 @@
+class Object native
+{
+	/*virtual*/ native void Destroy();
+}
+
+class Thinker : Object native
+{
+}

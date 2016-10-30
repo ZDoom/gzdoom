@@ -349,6 +349,13 @@ void DObject::Destroy ()
 	ObjectFlags = (ObjectFlags & ~OF_Fixed) | OF_EuthanizeMe;
 }
 
+DEFINE_ACTION_FUNCTION(DObject, Destroy)
+{
+	PARAM_SELF_PROLOGUE(DObject);
+	self->Destroy();
+	return 0;	
+}
+
 //==========================================================================
 //
 //

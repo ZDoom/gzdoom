@@ -838,7 +838,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	g_doom/a_archvile.cpp
 	g_doom/a_bossbrain.cpp
 	g_doom/a_doomweaps.cpp
-	g_doom/a_fatso.cpp
 	g_doom/a_keen.cpp
 	g_doom/a_lostsoul.cpp
 	g_doom/a_painelemental.cpp

@@ -25,7 +25,6 @@
 #include "a_archvile.cpp"
 #include "a_bossbrain.cpp"
 #include "a_doomweaps.cpp"
-#include "a_fatso.cpp"
 #include "a_keen.cpp"
 #include "a_lostsoul.cpp"
 #include "a_painelemental.cpp"

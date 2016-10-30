@@ -53,9 +53,13 @@ class Actor : Thinker native
 		return GetPointer(ptr_select1) == GetPointer(ptr_select2);
 	}
 
+	native static bool isDehState(state st);
 	native void SetOrigin(vector3 newpos, bool moving);
+	native void SetXYZ(vector3 newpos);
 	native Actor GetPointer(int aaptr);
+	native static Actor Spawn(class<Actor> type, vector3 pos = (0,0,0), int replace = NO_REPLACE);
 	native Actor SpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
+	native Actor OldSpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
 	native void TraceBleed(int damage, Actor missile);
 	native bool CheckMeleeRange();
 	native int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags = 0, double angle = 0);
@@ -228,7 +232,6 @@ class Actor : Thinker native
 	native void A_SpawnFly(class<Actor> spawntype = null);	// needs special treatment for default
 	native void A_BrainExplode();
 	native void A_Detonate();
-	native void A_Mushroom(class<Actor> spawntype = "FatShot", int numspawns = 0, int flags = 0, float vrange = 4.0, float hrange = 0.5);
 	native bool A_CallSpecial(int special, int arg1=0, int arg2=0, int arg3=0, int arg4=0, int arg5=0);
 
 	native void A_SetFloorClip();

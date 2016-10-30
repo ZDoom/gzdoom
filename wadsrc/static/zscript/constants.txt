@@ -876,3 +876,9 @@ enum EDmgFlags
 	DMG_NO_PROTECT = 256,
 	DMG_USEANGLE = 512,
 }
+
+enum EReplace
+{
+	NO_REPLACE = 0,
+	ALLOW_REPLACE = 1
+}

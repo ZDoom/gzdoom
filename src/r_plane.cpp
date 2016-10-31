@@ -595,9 +595,10 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 	fixed_t alpha = FLOAT2FIXED(Alpha);
 	//angle_t angle = (xform.Angle + xform.baseAngle).BAMs();
 
+	FTransform nulltransform;
+
 	if (picnum == skyflatnum)	// killough 10/98
 	{ // most skies map together
-		FTransform nulltransform;
 		lightlevel = 0;
 		xform = &nulltransform;
 		nulltransform.xOffs = nulltransform.yOffs = nulltransform.baseyOffs = 0;

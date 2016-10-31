@@ -303,7 +303,7 @@ CCMD (mpmap)
 	}
 	else
 	{
-		Printf ("Usage: map <map name>\n");
+		Printf ("Usage: mpmap <map name>\n");
 	}
 }
 
@@ -344,7 +344,7 @@ CCMD(mprecordmap)
 	}
 	else
 	{
-		Printf("Usage: recordmap <filename> <map name>\n");
+		Printf("Usage: mprecordmap <filename> <map name>\n");
 	}
 }
 
@@ -377,7 +377,7 @@ CCMD (mpopen)
 	}
 	else
 	{
-		Printf ("Usage: open <map file>\n");
+		Printf ("Usage: mpopen <map file>\n");
 	}
 }
 

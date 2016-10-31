@@ -1302,7 +1302,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	}
 
 	sx = pspr->oldx + (pspr->x - pspr->oldx) * ticfrac;
-	sy = pspr->oldy + (pspr->y - pspr->oldy) * ticfrac;
+	sy = pspr->oldy + (pspr->y - pspr->oldy) * ticfrac + WEAPON_FUDGE_Y;
 
 	if (pspr->Flags & PSPF_ADDBOB)
 	{
@@ -1610,7 +1610,7 @@ void R_DrawPlayerSprites ()
 			else
 			{
 				wx = weapon->oldx + (weapon->x - weapon->oldx) * r_TicFracF;
-				wy = weapon->oldy + (weapon->y - weapon->oldy) * r_TicFracF;
+				wy = weapon->oldy + (weapon->y - weapon->oldy) * r_TicFracF + WEAPON_FUDGE_Y;
 			}
 		}
 		else

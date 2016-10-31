@@ -82,11 +82,17 @@
 #define THROW(x)		throw(EVMAbortException(x))
 
 #define CMPJMP(test) \
-	if ((test) == (a & CMP_CHECK)) { \
+	pc++; \
+	if (VM_UBYTE(test) == VM_UBYTE(a)) { \
 		assert(pc[1].op == OP_JMP); \
-		pc += 1 + JMPOFS(pc+1); \
-	} else { \
-		pc += 1; \
+		pc += JMPOFS(pc); \
+	}
+
+#define CMPJMP_MASK(test) \
+	pc++; \
+	if (VM_UBYTE(test) == (VM_UBYTE(a) & CMP_CHECK)) { \
+		assert(pc[1].op == OP_JMP); \
+		pc += JMPOFS(pc); \
 	}
 
 #define GETADDR(a,o,x) \

@@ -36,110 +36,143 @@
 #include "r_data/colormaps.h"
 #include "r_triangle.h"
 
-void TriangleDrawer::draw(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture)
+void TriangleDrawer::draw(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture)
 {
-	draw_any(objectToWorld, vinput, vcount, ccw, clipleft, clipright, cliptop, clipbottom, texture, 0, &ScreenTriangleDrawer::draw);
+	draw_arrays(objectToWorld, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, texture, 0, &ScreenTriangleDrawer::draw);
 }
 
-void TriangleDrawer::fill(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, int solidcolor)
+void TriangleDrawer::fill(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, int solidcolor)
 {
-	draw_any(objectToWorld, vinput, vcount, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, solidcolor, &ScreenTriangleDrawer::fill);
+	draw_arrays(objectToWorld, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, solidcolor, &ScreenTriangleDrawer::fill);
 }
 
-void TriangleDrawer::draw_any(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture, int solidcolor, void(*drawfunc)(const ScreenTriangleDrawerArgs *))
+void TriangleDrawer::draw_arrays(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture, int solidcolor, void(*drawfunc)(const ScreenTriangleDrawerArgs *))
 {
-	for (int i = 0; i < vcount / 3; i++)
+	if (vcount < 3)
+		return;
+
+	ScreenTriangleDrawerArgs args;
+	args.dest = dc_destorg;
+	args.pitch = dc_pitch;
+	args.clipleft = clipleft;
+	args.clipright = clipright;
+	args.cliptop = cliptop;
+	args.clipbottom = clipbottom;
+	if (texture)
 	{
-		TriVertex vert[3];
+		args.textureWidth = texture->GetWidth();
+		args.textureHeight = texture->GetHeight();
+		args.texturePixels = texture->GetPixels();
+	}
+	else
+	{
+		args.textureWidth = 0;
+		args.textureHeight = 0;
+		args.texturePixels = nullptr;
+	}
+	args.solidcolor = solidcolor;
 
-		// Vertex shader stuff:
-		for (int j = 0; j < 3; j++)
+	TriVertex vert[3];
+	if (mode == TriangleDrawMode::Normal)
+	{
+		for (int i = 0; i < vcount / 3; i++)
 		{
-			auto &v = vert[j];
-			v = *(vinput++);
-
-			// Apply transform to get world coordinates:
-			v = objectToWorld * v;
-
-			// The software renderer world to clip transform:
-			double nearp = 5.0f;
-			double farp = 65536.f;
-			double tr_x = v.x - ViewPos.X;
-			double tr_y = v.y - ViewPos.Y;
-			double tr_z = v.z - ViewPos.Z;
-			double tx = tr_x * ViewSin - tr_y * ViewCos;
-			double tz = tr_x * ViewTanCos + tr_y * ViewTanSin;
-			v.x = (float)tx * 0.5f;
-			v.y = (float)tr_z * 0.5f;
-			v.z = (float)((-tz * (farp + nearp) / (nearp - farp) + (2.0f * farp * nearp) / (nearp - farp)));
-			v.w = (float)tz;
+			for (int j = 0; j < 3; j++)
+				vert[j] = shade_vertex(objectToWorld, *(vinput++));
+			draw_shaded_triangle(vert, ccw, &args, drawfunc);
 		}
-
-		// Cull, clip and generate additional vertices as needed
-		TriVertex clippedvert[6];
-		int numclipvert = 0;
-		clipedge(vert[0], vert[1], clippedvert, numclipvert);
-		clipedge(vert[1], vert[2], clippedvert, numclipvert);
-		clipedge(vert[2], vert[0], clippedvert, numclipvert);
-
-		// Map to 2D viewport:
-		for (int j = 0; j < numclipvert; j++)
+	}
+	else if (mode == TriangleDrawMode::Fan)
+	{
+		vert[0] = shade_vertex(objectToWorld, *(vinput++));
+		vert[1] = shade_vertex(objectToWorld, *(vinput++));
+		for (int i = 2; i < vcount; i++)
 		{
-			auto &v = clippedvert[j];
-
-			// Calculate normalized device coordinates:
-			v.w = 1.0f / v.w;
-			v.x *= v.w;
-			v.y *= v.w;
-			v.z *= v.w;
-
-			// Apply viewport scale to get screen coordinates:
-			v.x = (float)(CenterX + v.x * 2.0f * CenterX);
-			v.y = (float)(CenterY - v.y * 2.0f * InvZtoScale);
+			vert[2] = shade_vertex(objectToWorld, *(vinput++));
+			draw_shaded_triangle(vert, ccw, &args, drawfunc);
+			vert[1] = vert[2];
 		}
-
-		// Draw screen triangles
-
-		ScreenTriangleDrawerArgs args;
-		args.dest = dc_destorg;
-		args.pitch = dc_pitch;
-		args.clipleft = clipleft;
-		args.clipright = clipright;
-		args.cliptop = cliptop;
-		args.clipbottom = clipbottom;
-		if (texture)
+	}
+	else // TriangleDrawMode::Strip
+	{
+		vert[0] = shade_vertex(objectToWorld, *(vinput++));
+		vert[1] = shade_vertex(objectToWorld, *(vinput++));
+		for (int i = 2; i < vcount; i++)
 		{
-			args.textureWidth = texture->GetWidth();
-			args.textureHeight = texture->GetHeight();
-			args.texturePixels = texture->GetPixels();
+			vert[2] = shade_vertex(objectToWorld, *(vinput++));
+			draw_shaded_triangle(vert, ccw, &args, drawfunc);
+			vert[0] = vert[1];
+			vert[1] = vert[2];
+			ccw = !ccw;
 		}
-		else
-		{
-			args.textureWidth = 0;
-			args.textureHeight = 0;
-			args.texturePixels = nullptr;
-		}
-		args.solidcolor = solidcolor;
+	}
+}
 
-		if (ccw)
+TriVertex TriangleDrawer::shade_vertex(const TriMatrix &objectToWorld, TriVertex v)
+{
+	// Apply transform to get world coordinates:
+	v = objectToWorld * v;
+
+	// The software renderer world to clip transform:
+	double nearp = 5.0f;
+	double farp = 65536.f;
+	double tr_x = v.x - ViewPos.X;
+	double tr_y = v.y - ViewPos.Y;
+	double tr_z = v.z - ViewPos.Z;
+	double tx = tr_x * ViewSin - tr_y * ViewCos;
+	double tz = tr_x * ViewTanCos + tr_y * ViewTanSin;
+	v.x = (float)tx * 0.5f;
+	v.y = (float)tr_z * 0.5f;
+	v.z = (float)((-tz * (farp + nearp) / (nearp - farp) + (2.0f * farp * nearp) / (nearp - farp)));
+	v.w = (float)tz;
+
+	return v;
+}
+
+void TriangleDrawer::draw_shaded_triangle(const TriVertex *vert, bool ccw, ScreenTriangleDrawerArgs *args, void(*drawfunc)(const ScreenTriangleDrawerArgs *))
+{
+	// Cull, clip and generate additional vertices as needed
+	TriVertex clippedvert[6];
+	int numclipvert = 0;
+	clipedge(vert[0], vert[1], clippedvert, numclipvert);
+	clipedge(vert[1], vert[2], clippedvert, numclipvert);
+	clipedge(vert[2], vert[0], clippedvert, numclipvert);
+
+	// Map to 2D viewport:
+	for (int j = 0; j < numclipvert; j++)
+	{
+		auto &v = clippedvert[j];
+
+		// Calculate normalized device coordinates:
+		v.w = 1.0f / v.w;
+		v.x *= v.w;
+		v.y *= v.w;
+		v.z *= v.w;
+
+		// Apply viewport scale to get screen coordinates:
+		v.x = (float)(CenterX + v.x * 2.0f * CenterX);
+		v.y = (float)(CenterY - v.y * 2.0f * InvZtoScale);
+	}
+
+	// Draw screen triangles
+	if (ccw)
+	{
+		for (int i = numclipvert; i > 1; i--)
 		{
-			for (int i = numclipvert; i > 1; i--)
-			{
-				args.v1 = &clippedvert[numclipvert - 1];
-				args.v2 = &clippedvert[i - 1];
-				args.v3 = &clippedvert[i - 2];
-				drawfunc(&args);
-			}
+			args->v1 = &clippedvert[numclipvert - 1];
+			args->v2 = &clippedvert[i - 1];
+			args->v3 = &clippedvert[i - 2];
+			drawfunc(args);
 		}
-		else
+	}
+	else
+	{
+		for (int i = 2; i < numclipvert; i++)
 		{
-			for (int i = 2; i < numclipvert; i++)
-			{
-				args.v1 = &clippedvert[0];
-				args.v2 = &clippedvert[i - 1];
-				args.v3 = &clippedvert[i];
-				drawfunc(&args);
-			}
+			args->v1 = &clippedvert[0];
+			args->v2 = &clippedvert[i - 1];
+			args->v3 = &clippedvert[i];
+			drawfunc(args);
 		}
 	}
 }

@@ -53,14 +53,23 @@ struct TriMatrix
 	float matrix[16];
 };
 
+enum class TriangleDrawMode
+{
+	Normal,
+	Fan,
+	Strip
+};
+
 class TriangleDrawer
 {
 public:
-	static void draw(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture);
-	static void fill(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, int solidcolor);
+	static void draw(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture);
+	static void fill(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, int solidcolor);
 
 private:
-	static void draw_any(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture, int solidcolor, void(*drawfunc)(const ScreenTriangleDrawerArgs *));
+	static TriVertex shade_vertex(const TriMatrix &objectToWorld, TriVertex v);
+	static void draw_arrays(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture, int solidcolor, void(*drawfunc)(const ScreenTriangleDrawerArgs *));
+	static void draw_shaded_triangle(const TriVertex *vertices, bool ccw, ScreenTriangleDrawerArgs *args, void(*drawfunc)(const ScreenTriangleDrawerArgs *));
 	static bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2);
 	static void clipedge(const TriVertex &v1, const TriVertex &v2, TriVertex *clippedvert, int &numclipvert);
 };

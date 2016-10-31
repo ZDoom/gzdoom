@@ -508,6 +508,7 @@ void ZCCCompiler::CreateClassTypes()
 					// We will never get here if the name is a duplicate, so we can just do the assignment.
 					c->cls->Type = parent->FindClassTentative(c->NodeName());
 				}
+				c->Type()->bExported = true;	// this class is accessible to script side type casts. (The reason for this flag is that types like PInt need to be skipped.)
 				c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
 				GlobalSymbols.AddSymbol(c->cls->Symbol);
 				c->Type()->Symbols.SetName(c->NodeName());

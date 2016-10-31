@@ -769,6 +769,7 @@ public:
 	const size_t		*FlatPointers;	// object pointers defined by this class and all its superclasses; not initialized by default
 	BYTE				*Defaults;
 	bool				 bRuntimeClass;	// class was defined at run-time, not compile-time
+	bool				 bExported;		// This type has been declared in a script
 
 	void (*ConstructNative)(void *);
 

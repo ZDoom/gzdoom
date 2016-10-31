@@ -6612,6 +6612,20 @@ void AActor::SetTranslation(const char *trname)
 	// silently ignore if the name does not exist, this would create some insane message spam otherwise.
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SetDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(dmg);
+	self->SetDamage(dmg);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetDefaultByType)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(cls, AActor);
+	ACTION_RETURN_OBJECT(GetDefaultByType(cls));
+}
 
 // This combines all 3 variations of the internal function
 DEFINE_ACTION_FUNCTION(AActor, VelFromAngle)
@@ -6657,6 +6671,15 @@ DEFINE_ACTION_FUNCTION(AActor, Vec3Angle)
 	ACTION_RETURN_VEC3(self->Vec3Angle(length, angle, z, absolute));
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Vec2OffsetZ)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_BOOL_DEF(absolute);
+	ACTION_RETURN_VEC3(self->Vec2OffsetZ(x, y, z, absolute));
+}
 //----------------------------------------------------------------------------
 //
 // DropItem handling

@@ -2737,6 +2737,7 @@ PClass::PClass()
 	HashNext = NULL;
 	Defaults = NULL;
 	bRuntimeClass = false;
+	bExported = false;
 	ConstructNative = NULL;
 	mDescriptiveName = "Class";
 

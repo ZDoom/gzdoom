@@ -43,7 +43,7 @@
 //
 //==========================================================================
 
-VMFunctionBuilder::VMFunctionBuilder(bool selfcheck)
+VMFunctionBuilder::VMFunctionBuilder(int numimplicits)
 {
 	NumIntConstants = 0;
 	NumFloatConstants = 0;
@@ -51,7 +51,7 @@ VMFunctionBuilder::VMFunctionBuilder(bool selfcheck)
 	NumStringConstants = 0;
 	MaxParam = 0;
 	ActiveParam = 0;
-	IsActionFunc = selfcheck;
+	NumImplicits = numimplicits;
 }
 
 //==========================================================================

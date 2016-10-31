@@ -161,8 +161,8 @@ enum
 	ATAG_SREGISTER,			// pointer to a string register
 	ATAG_AREGISTER,			// pointer to an address register
 
-	ATAG_STATE,				// pointer to FState
 	ATAG_RNG,				// pointer to FRandom
+	ATAG_STATE  = ATAG_GENERIC,			// pointer to FState (cannot have its own type because there's no means to track inside the VM.)
 };
 
 enum EVMAbortException

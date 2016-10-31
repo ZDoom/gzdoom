@@ -61,6 +61,39 @@ static TArray<AFuncDesc> AFTable;
 #define DEFINE_DEPRECATED_FLAG(name) { DEPF_##name, #name, -1, 0, true }
 #define DEFINE_DUMMY_FLAG(name, deprec) { DEPF_UNUSED, #name, -1, 0, deprec? VARF_Deprecated:0 }
 
+// internal flags. These do not get exposed to actor definitions but scripts need to be able to access them as variables.
+static FFlagDef InternalActorFlagDefs[]=
+{
+	DEFINE_FLAG(MF, INCHASE, AActor, flags),
+	DEFINE_FLAG(MF, UNMORPHED, AActor, flags),
+	DEFINE_FLAG(MF2, FLY, AActor, flags2),
+	DEFINE_FLAG(MF2, ONMOBJ, AActor, flags2),
+	DEFINE_FLAG(MF2, DONTTRANSLATE, AActor, flags2),
+	DEFINE_FLAG(MF2, ARGSDEFINED, AActor, flags2),
+	DEFINE_FLAG(MF3, NOSIGHTCHECK, AActor, flags3),
+	DEFINE_FLAG(MF3, CRASHED, AActor, flags3),
+	DEFINE_FLAG(MF3, WARNBOT, AActor, flags3),
+	DEFINE_FLAG(MF3, HUNTPLAYERS, AActor, flags3),
+	DEFINE_FLAG(MF4, NOHATEPLAYERS, AActor, flags4),
+	DEFINE_FLAG(MF4, NOSKIN, AActor, flags4),
+	DEFINE_FLAG(MF4, SCROLLMOVE, AActor, flags4),
+	DEFINE_FLAG(MF4, VFRICTION, AActor, flags4),
+	DEFINE_FLAG(MF4, BOSSSPAWNED, AActor, flags4),
+	DEFINE_FLAG(MF5, AVOIDINGDROPOFF, AActor, flags5),
+	DEFINE_FLAG(MF5, CHASEGOAL, AActor, flags5),
+	DEFINE_FLAG(MF5, INCONVERSATION, AActor, flags5),
+	DEFINE_FLAG(MF6, ARMED, AActor, flags6),
+	DEFINE_FLAG(MF6, FALLING, AActor, flags6),
+	DEFINE_FLAG(MF6, LINEDONE, AActor, flags6),
+	DEFINE_FLAG(MF6, SHATTERING, AActor, flags6),
+	DEFINE_FLAG(MF6, KILLED, AActor, flags6),
+	DEFINE_FLAG(MF6, BOSSCUBE, AActor, flags6),
+	DEFINE_FLAG(MF6, INTRYMOVE, AActor, flags6),
+	DEFINE_FLAG(MF7, HANDLENODELAY, AActor, flags7),
+	DEFINE_FLAG(MF7, FLYCHEAT, AActor, flags7),
+};
+
+
 static FFlagDef ActorFlagDefs[]=
 {
 	DEFINE_FLAG(MF, PICKUP, APlayerPawn, flags),
@@ -687,6 +720,7 @@ void InitThingdef()
 	symt.AddSymbol(new PField("Gravity",			TypeFloat64,	VARF_Native,				myoffsetof(AActor, Gravity)));
 	symt.AddSymbol(new PField("DamageType",			TypeName,		VARF_Native,				myoffsetof(AActor, DamageType)));
 	symt.AddSymbol(new PField("FloatBobPhase",		TypeUInt8,		VARF_Native,				myoffsetof(AActor, FloatBobPhase)));
+	symt.AddSymbol(new PField("tics",				TypeSInt32,		VARF_Native,				myoffsetof(AActor, tics)));
 	symt.AddSymbol(new PField("RipperLevel",		TypeSInt32,		VARF_Native,				myoffsetof(AActor, RipperLevel)));
 	symt.AddSymbol(new PField("RipLevelMin",		TypeSInt32,		VARF_Native,				myoffsetof(AActor, RipLevelMin)));
 	symt.AddSymbol(new PField("RipLevelMax",		TypeSInt32,		VARF_Native,				myoffsetof(AActor, RipLevelMax)));
@@ -695,6 +729,7 @@ void InitThingdef()
 	symt.AddSymbol(new PField(NAME_VisibleEndAngle,	TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleEndAngle)));
 	symt.AddSymbol(new PField(NAME_VisibleEndPitch, TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleEndPitch)));
 	symt.AddSymbol(new PField("AttackSound",		TypeSound,		VARF_Native,				myoffsetof(AActor, AttackSound)));
+	symt.AddSymbol(new PField("DeathSound",			TypeSound,		VARF_Native,				myoffsetof(AActor, DeathSound)));
 	symt.AddSymbol(new PField("Pos",				TypeVector3,	VARF_Native|VARF_ReadOnly,  myoffsetof(AActor, __Pos)));
 	symt.AddSymbol(new PField("Vel",				TypeVector3,	VARF_Native,				myoffsetof(AActor, Vel)));
 	symt.AddSymbol(new PField("Scale",				TypeVector2,	VARF_Native,				myoffsetof(AActor, Scale)));
@@ -706,7 +741,7 @@ void InitThingdef()
 	symt.AddSymbol(new PField("LastHeard",			TypeActor,		VARF_Native,				myoffsetof(AActor, LastHeard)));
 	symt.AddSymbol(new PField("LastEnemy",			TypeActor,		VARF_Native,				myoffsetof(AActor, lastenemy)));
 
-	// synthesize a symbol for each flag. The bounce flags are excluded on purpose.
+	// synthesize a symbol for each flag.
 	for (size_t i = 0; i < countof(ActorFlagDefs); i++)
 	{
 		int bit = 0;
@@ -714,5 +749,19 @@ void InitThingdef()
 		while ((val >>= 1)) bit++;
 		symt.AddSymbol(new PField(FStringf("b%s", ActorFlagDefs[i].name), (ActorFlagDefs[i].fieldsize == 4? TypeSInt32 : TypeSInt16), ActorFlagDefs[i].varflags, ActorFlagDefs[i].structoffset, bit));
 	}
+	for (size_t i = 0; i < countof(InternalActorFlagDefs); i++)
+	{
+		int bit = 0;
+		unsigned val = InternalActorFlagDefs[i].flagbit;
+		while ((val >>= 1)) bit++;
+		symt.AddSymbol(new PField(FStringf("b%s", InternalActorFlagDefs[i].name), (InternalActorFlagDefs[i].fieldsize == 4 ? TypeSInt32 : TypeSInt16), InternalActorFlagDefs[i].varflags, InternalActorFlagDefs[i].structoffset, bit));
+	}
+
+	PSymbolTable &symt2 = RUNTIME_CLASS(DDropItem)->Symbols;
+	PType *TypeDropItem = NewPointer(RUNTIME_CLASS(DDropItem));
+	symt2.AddSymbol(new PField("Next", TypeDropItem, VARF_Native | VARF_ReadOnly, myoffsetof(DDropItem, Next)));
+	symt2.AddSymbol(new PField("ItemName", TypeName, VARF_Native | VARF_ReadOnly, myoffsetof(DDropItem, Name)));
+	symt2.AddSymbol(new PField("Probability", TypeSInt32, VARF_Native | VARF_ReadOnly, myoffsetof(DDropItem, Probability)));
+	symt2.AddSymbol(new PField("Amount", TypeSInt32, VARF_Native | VARF_ReadOnly, myoffsetof(DDropItem, Amount)));
 
 }

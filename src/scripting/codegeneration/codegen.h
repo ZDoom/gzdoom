@@ -268,6 +268,7 @@ enum EFxType
 	EFX_VectorValue,
 	EFX_VectorBuiltin,
 	EFX_TypeCheck,
+	EFX_DynamicCast,
 	EFX_COUNT
 };
 
@@ -320,10 +321,9 @@ public:
 
 class FxIdentifier : public FxExpression
 {
-protected:
+public:
 	FName Identifier;
 
-public:
 	FxIdentifier(FName i, const FScriptPosition &p);
 	FxExpression *Resolve(FCompileContext&);
 };
@@ -940,7 +940,7 @@ public:
 
 //==========================================================================
 //
-//	FxBinaryLogical
+//
 //
 //==========================================================================
 
@@ -955,6 +955,25 @@ public:
 	~FxTypeCheck();
 	FxExpression *Resolve(FCompileContext&);
 	PPrototype *ReturnProto();
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxDynamicCast : public FxExpression
+{
+	PClass *CastType;
+public:
+	FxExpression *expr;
+
+	FxDynamicCast(PClass*, FxExpression*);
+	~FxDynamicCast();
+	FxExpression *Resolve(FCompileContext&);
 
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

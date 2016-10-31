@@ -6,3 +6,26 @@ class Object native
 class Thinker : Object native
 {
 }
+
+class ThinkerIterator : Object native
+{
+	enum EStatnums
+	{
+		MAX_STATNUM = 127
+	}
+
+	native static ThinkerIterator Create(class<Actor> type = "Actor", int statnum=MAX_STATNUM+1);
+	native Thinker Next();
+	native void Reinit();
+}
+
+class DropItem : Object native
+{
+	/* native fields listed for reference only for now
+	native readonly DropItem Next;
+	native readonly name ItemName;	// internally called 'name' which clashes with the type.
+	native readonly int Probability;
+	native readonly int Amount;
+	*/
+}
+

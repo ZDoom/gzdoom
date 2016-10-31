@@ -164,7 +164,7 @@ bool	 		viewactive;
 
 bool 			netgame;				// only true if packets are broadcast 
 bool			multiplayer;
-bool			multiplayernext;			// [SP] MPMap implementation
+bool			multiplayernext = false;	// [SP] MPMap implementation
 player_t		players[MAXPLAYERS];
 bool			playeringame[MAXPLAYERS];
 

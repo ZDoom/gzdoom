@@ -1093,21 +1093,31 @@ WallscanSampler::WallscanSampler(int y1, float swal, double yrepeat, fixed_t xof
 	if (!r_swtruecolor)
 	{
 		height = texture->GetHeight();
+
 		int uv_fracbits = 32 - texture->HeightBits;
-		uv_max = height << uv_fracbits;
+		if (uv_fracbits != 32)
+		{
+			uv_max = height << uv_fracbits;
 
-		// Find start uv in [0-base_height[ range.
-		// Not using xs_ToFixed because it rounds the result and we need something that always rounds down to stay within the range.
-		double uv_stepd = swal * yrepeat;
-		double v = (dc_texturemid + uv_stepd * (y1 - CenterY + 0.5)) / height;
-		v = v - floor(v);
-		v *= height;
-		v *= (1 << uv_fracbits);
+			// Find start uv in [0-base_height[ range.
+			// Not using xs_ToFixed because it rounds the result and we need something that always rounds down to stay within the range.
+			double uv_stepd = swal * yrepeat;
+			double v = (dc_texturemid + uv_stepd * (y1 - CenterY + 0.5)) / height;
+			v = v - floor(v);
+			v *= height;
+			v *= (1 << uv_fracbits);
 
-		uv_pos = (uint32_t)v;
-		uv_step = xs_ToFixed(uv_fracbits, uv_stepd);
-		if (uv_step == 0) // To prevent divide by zero elsewhere
-			uv_step = 1;
+			uv_pos = (uint32_t)v;
+			uv_step = xs_ToFixed(uv_fracbits, uv_stepd);
+			if (uv_step == 0) // To prevent divide by zero elsewhere
+				uv_step = 1;
+		}
+		else
+		{ // Hack for one pixel tall textures
+			uv_pos = 0;
+			uv_step = 0;
+			uv_max = 1;
+		}
 
 		source = getcol(texture, xoffset >> FRACBITS);
 		source2 = nullptr;
@@ -1368,11 +1378,19 @@ void wallscan_any(
 		return;
 
 	fixed_t xoffset = rw_offset;
+
 	rw_pic->GetHeight(); // To ensure that rw_pic->HeightBits has been set
+	int fracbits = 32 - rw_pic->HeightBits;
+	if (fracbits == 32)
+	{ // Hack for one pixel tall textures
+		fracbits = 0;
+		yrepeat = 0;
+		dc_texturemid = 0;
+	}
 
 	DWORD(*draw1column)();
 	void(*draw4columns)();
-	setupwallscan(r_swtruecolor ? FRACBITS : 32 - rw_pic->HeightBits, draw1column, draw4columns);
+	setupwallscan(r_swtruecolor ? FRACBITS : fracbits, draw1column, draw4columns);
 
 	bool fixed = (fixedcolormap != NULL || fixedlightlev >= 0);
 	if (fixed)

@@ -224,10 +224,26 @@ void R_MapPlane (int y, int x1)
 
 	distance = planeheight * yslope[y];
 
-	ds_xstep = xs_ToFixed(32-ds_xbits, distance * xstepscale);
-	ds_ystep = xs_ToFixed(32-ds_ybits, distance * ystepscale);
-	ds_xfrac = xs_ToFixed(32-ds_xbits, distance * basexfrac) + pviewx;
-	ds_yfrac = xs_ToFixed(32-ds_ybits, distance * baseyfrac) + pviewy;
+	if (ds_xbits != 0)
+	{
+		ds_xstep = xs_ToFixed(32 - ds_xbits, distance * xstepscale);
+		ds_xfrac = xs_ToFixed(32 - ds_xbits, distance * basexfrac) + pviewx;
+	}
+	else
+	{
+		ds_xstep = 0;
+		ds_xfrac = 0;
+	}
+	if (ds_ybits != 0)
+	{
+		ds_ystep = xs_ToFixed(32 - ds_ybits, distance * ystepscale);
+		ds_yfrac = xs_ToFixed(32 - ds_ybits, distance * baseyfrac) + pviewy;
+	}
+	else
+	{
+		ds_ystep = 0;
+		ds_yfrac = 0;
+	}
 
 	if (plane_shade)
 	{
@@ -368,18 +384,18 @@ void R_MapTiltedPlane_C (int y, int x1)
 	DWORD u, v;
 	int i;
 
-	iz = plane_sz[2] + plane_sz[1]*(centery-y) + plane_sz[0]*(x1-centerx);
+	iz = plane_sz[2] + plane_sz[1] * (centery - y) + plane_sz[0] * (x1 - centerx);
 
 	// Lighting is simple. It's just linear interpolation from start to end
 	if (plane_shade)
 	{
-		uz = (iz + plane_sz[0]*width) * planelightfloat;
+		uz = (iz + plane_sz[0] * width) * planelightfloat;
 		vz = iz * planelightfloat;
-		R_CalcTiltedLighting (vz, uz, width);
+		R_CalcTiltedLighting(vz, uz, width);
 	}
 
-	uz = plane_su[2] + plane_su[1]*(centery-y) + plane_su[0]*(x1-centerx);
-	vz = plane_sv[2] + plane_sv[1]*(centery-y) + plane_sv[0]*(x1-centerx);
+	uz = plane_su[2] + plane_su[1] * (centery - y) + plane_su[0] * (x1 - centerx);
+	vz = plane_sv[2] + plane_sv[1] * (centery - y) + plane_sv[0] * (x1 - centerx);
 
 	fb = ylookup[y] + x1 + dc_destorg;
 
@@ -2116,6 +2132,15 @@ void R_DrawTiltedPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 		}
 	}
 
+	// Hack in support for 1 x Z and Z x 1 texture sizes
+	if (ds_ybits == 0)
+	{
+		plane_sv[2] = plane_sv[1] = plane_sv[0] = 0;
+	}
+	if (ds_xbits == 0)
+	{
+		plane_su[2] = plane_su[1] = plane_su[0] = 0;
+	}
 #if defined(X86_ASM)
 	if (!r_swtruecolor)
 	{

@@ -375,6 +375,7 @@ void ACSStringPool::Clear()
 
 int ACSStringPool::AddString(const char *str)
 {
+	if (str == nullptr) str = "";
 	size_t len = strlen(str);
 	unsigned int h = SuperFastHash(str, len);
 	unsigned int bucketnum = h % NUM_BUCKETS;

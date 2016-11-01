@@ -791,6 +791,10 @@ void ACSStringPool::WriteStrings(FSerializer &file, const char *key) const
 				{
 					if (file.BeginObject(nullptr))
 					{
+						if (i == 430)
+						{
+							int a = 0;
+						}
 						file("index", i)
 							("string", entry->Str)
 							("lockcount", entry->LockCount)

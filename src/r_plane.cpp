@@ -1909,7 +1909,7 @@ void R_DrawTiltedPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 	{
 		plane_sv[2] = plane_sv[1] = plane_sv[0] = 0;
 	}
-	if (ds_xbits = 0)
+	if (ds_xbits == 0)
 	{
 		plane_su[2] = plane_su[1] = plane_su[0] = 0;
 	}

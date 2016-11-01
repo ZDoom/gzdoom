@@ -2495,7 +2495,7 @@ void R_StoreWallRange (int start, int stop)
 				lwal = (fixed_t *)(openings + ds_p->maskedtexturecol);
 				swal = (float *)(openings + ds_p->swall);
 				FTexture *pic = TexMan(sidedef->GetTexture(side_t::mid), true);
-				double yscale = pic->Scale.X * sidedef->GetTextureYScale(side_t::mid);
+				double yscale = pic->Scale.Y * sidedef->GetTextureYScale(side_t::mid);
 				fixed_t xoffset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
 
 				if (pic->bWorldPanning)

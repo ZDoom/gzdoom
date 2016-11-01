@@ -694,8 +694,8 @@ OptionMenu "VideoOptions"
 
 	Option "$DSPLYMNU_VSYNC",					"vid_vsync", "OnOff"
 	Option "$DSPLYMNU_CAPFPS",					"cl_capfps", "OffOn"
-	Slider "$DSPLYMNU_BLOODFADE",				"blood_fade_scalar", 0.0, 1.0, 0.05, 1
-	Slider "$DSPLYMNU_PICKUPFADE",				"pickup_fade_scalar", 0.0, 1.0, 0.05, 1
+	Slider "$DSPLYMNU_BLOODFADE",				"blood_fade_scalar", 0.0, 1.0, 0.05, 2
+	Slider "$DSPLYMNU_PICKUPFADE",				"pickup_fade_scalar", 0.0, 1.0, 0.05, 2
 	Option "$DSPLYMNU_COLUMNMETHOD",			"r_columnmethod", "ColumnMethods"
 
 	StaticText " "
@@ -728,7 +728,7 @@ OptionMenu "VideoOptions"
 	ColorPicker "$DSPLYMNU_DIMCOLOR",			"dimcolor"
 	Slider "$DSPLYMNU_MOVEBOB",			"movebob", 0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_STILLBOB",		"stillbob", 0, 1.0, 0.05, 2
-	Slider "$DSPLYMNU_BOBSPEED",				"wbobspeed", 0, 2.0, 0.1, 2
+	Slider "$DSPLYMNU_BOBSPEED",				"wbobspeed", 0, 2.0, 0.1
 
 }
 
@@ -1270,7 +1270,7 @@ OptionMenu GameplayOptions
 	Title 	"$GMPLYMNU_TITLE"
 	//Indent 222
 	Option "$GMPLYMNU_TEAMPLAY",				"teamplay",	"OnOff"
-	Slider	"$GMPLYMNU_TEAMDAMAGE",	"teamdamage", 0, 1, 0.05
+	Slider	"$GMPLYMNU_TEAMDAMAGE",	"teamdamage", 0, 1, 0.05,2
 	StaticText " "
 	Option "$GMPLYMNU_SMARTAUTOAIM",			"sv_smartaim", "SmartAim"
 	StaticText " "
@@ -1855,7 +1855,7 @@ OptionMenu NetworkOptions
 	StaticText "$NETMNU_LOCALOPTIONS", 1
 	Option "$NETMNU_MOVEPREDICTION",		"cl_noprediction", "OffOn"
 	Option "$NETMNU_LINESPECIALPREDICTION",	"cl_predict_specials", "OnOff"
-	Slider "$NETMNU_PREDICTIONLERPSCALE",	"cl_predict_lerpscale", 0.0, 0.5, 0.05
+	Slider "$NETMNU_PREDICTIONLERPSCALE",	"cl_predict_lerpscale", 0.0, 0.5, 0.05, 2
 	Slider "$NETMNU_LERPTHRESHOLD",			"cl_predict_lerpthreshold", 0.1, 16.0, 0.1
 	StaticText " "
 	StaticText "$NETMNU_HOSTOPTIONS", 1

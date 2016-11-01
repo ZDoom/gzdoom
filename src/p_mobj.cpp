@@ -4509,6 +4509,13 @@ void AActor::AdjustFloorClip ()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, AdjustFloorClip)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->AdjustFloorClip();
+	return 0;
+}
+
 //
 // P_SpawnPlayer
 // Called when a player is spawned on the level.

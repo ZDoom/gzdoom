@@ -71,7 +71,7 @@ extern	bool			netgame;
 // Bot game? Like netgame, but doesn't involve network communication.
 extern	bool			multiplayer;
 
-// [SP] MPMap implementation - invokes fake multiplayer without bots
+// [SP] Map dm/coop implementation - invokes fake multiplayer without bots
 extern	bool			multiplayernext;
 
 // Flag: true only if started as net deathmatch.

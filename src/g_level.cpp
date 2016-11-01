@@ -183,12 +183,12 @@ CCMD (map)
 			}
 			else
 			{
-				if (argv.argc() > 2 && strcmp(argv[2], "coop") == 0)
+				if (argv.argc() > 2 && stricmp(argv[2], "coop") == 0)
 				{
 					deathmatch = false;
 					multiplayernext = true;
 				}
-				else if (argv.argc() > 2 && strcmp(argv[2], "dm") == 0)
+				else if (argv.argc() > 2 && stricmp(argv[2], "dm") == 0)
 				{
 					deathmatch = true;
 					multiplayernext = true;
@@ -230,12 +230,12 @@ CCMD(recordmap)
 			}
 			else
 			{
-				if (argv.argc() > 3 && strcmp(argv[3], "coop") == 0)
+				if (argv.argc() > 3 && stricmp(argv[3], "coop") == 0)
 				{
 					deathmatch = false;
 					multiplayernext = true;
 				}
-				else if (argv.argc() > 3 && strcmp(argv[3], "dm") == 0)
+				else if (argv.argc() > 3 && stricmp(argv[3], "dm") == 0)
 				{
 					deathmatch = true;
 					multiplayernext = true;
@@ -280,12 +280,12 @@ CCMD (open)
 		}
 		else
 		{
-			if (argv.argc() > 2 && strcmp(argv[2], "coop") == 0)
+			if (argv.argc() > 2 && stricmp(argv[2], "coop") == 0)
 			{
 				deathmatch = false;
 				multiplayernext = true;
 			}
-			else if (argv.argc() > 2 && strcmp(argv[2], "dm") == 0)
+			else if (argv.argc() > 2 && stricmp(argv[2], "dm") == 0)
 			{
 				deathmatch = true;
 				multiplayernext = true;

@@ -90,6 +90,8 @@
 
 #include "g_hub.h"
 
+#include <string.h>
+
 void STAT_StartNewGame(const char *lev);
 void STAT_ChangeLevel(const char *newl);
 
@@ -181,6 +183,16 @@ CCMD (map)
 			}
 			else
 			{
+				if (argv.argc() > 2 && strcmp(argv[2], "coop") == 0)
+				{
+					deathmatch = false;
+					multiplayernext = true;
+				}
+				else if (argv.argc() > 2 && strcmp(argv[2], "dm") == 0)
+				{
+					deathmatch = true;
+					multiplayernext = true;
+				}
 				G_DeferedInitNew (argv[1]);
 			}
 		}
@@ -192,7 +204,7 @@ CCMD (map)
 	}
 	else
 	{
-		Printf ("Usage: map <map name>\n");
+		Printf ("Usage: map <map name> [coop|dm]\n");
 	}
 }
 
@@ -218,6 +230,16 @@ CCMD(recordmap)
 			}
 			else
 			{
+				if (argv.argc() > 3 && strcmp(argv[3], "coop") == 0)
+				{
+					deathmatch = false;
+					multiplayernext = true;
+				}
+				else if (argv.argc() > 3 && strcmp(argv[3], "dm") == 0)
+				{
+					deathmatch = true;
+					multiplayernext = true;
+				}
 				G_DeferedInitNew(argv[2]);
 				gameaction = ga_recordgame;
 				newdemoname = argv[1];
@@ -232,7 +254,7 @@ CCMD(recordmap)
 	}
 	else
 	{
-		Printf("Usage: recordmap <filename> <map name>\n");
+		Printf("Usage: recordmap <filename> <map name> [coop|dm]\n");
 	}
 }
 
@@ -258,126 +280,23 @@ CCMD (open)
 		}
 		else
 		{
+			if (argv.argc() > 2 && strcmp(argv[2], "coop") == 0)
+			{
+				deathmatch = false;
+				multiplayernext = true;
+			}
+			else if (argv.argc() > 2 && strcmp(argv[2], "dm") == 0)
+			{
+				deathmatch = true;
+				multiplayernext = true;
+			}
 			gameaction = ga_newgame2;
 			d_skill = -1;
 		}
 	}
 	else
 	{
-		Printf ("Usage: open <map file>\n");
-	}
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-CCMD (mpmap)
-{
-	if (netgame)
-	{
-		Printf ("Use " TEXTCOLOR_BOLD "changemap" TEXTCOLOR_NORMAL " instead. " TEXTCOLOR_BOLD "Map"
-				TEXTCOLOR_NORMAL " is for single-player only.\n");
-		return;
-	}
-	if (argv.argc() > 1)
-	{
-		try
-		{
-			if (!P_CheckMapData(argv[1]))
-			{
-				Printf ("No map %s\n", argv[1]);
-			}
-			else
-			{
-				multiplayernext = true;
-				G_DeferedInitNew (argv[1]);
-			}
-		}
-		catch(CRecoverableError &error)
-		{
-			if (error.GetMessage())
-				Printf("%s", error.GetMessage());
-		}
-	}
-	else
-	{
-		Printf ("Usage: mpmap <map name>\n");
-	}
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-CCMD(mprecordmap)
-{
-	if (netgame)
-	{
-		Printf("You cannot record a new game while in a netgame.");
-		return;
-	}
-	if (argv.argc() > 2)
-	{
-		try
-		{
-			if (!P_CheckMapData(argv[2]))
-			{
-				Printf("No map %s\n", argv[2]);
-			}
-			else
-			{
-				multiplayernext = true;
-				G_DeferedInitNew(argv[2]);
-				gameaction = ga_recordgame;
-				newdemoname = argv[1];
-				newdemomap = argv[2];
-			}
-		}
-		catch (CRecoverableError &error)
-		{
-			if (error.GetMessage())
-				Printf("%s", error.GetMessage());
-		}
-	}
-	else
-	{
-		Printf("Usage: mprecordmap <filename> <map name>\n");
-	}
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-CCMD (mpopen)
-{
-	if (netgame)
-	{
-		Printf ("You cannot use open in multiplayer games.\n");
-		return;
-	}
-	if (argv.argc() > 1)
-	{
-		d_mapname = "file:";
-		d_mapname += argv[1];
-		if (!P_CheckMapData(d_mapname))
-		{
-			Printf ("No map %s\n", d_mapname.GetChars());
-		}
-		else
-		{
-			gameaction = ga_newgame2;
-			d_skill = -1;
-			multiplayernext = true;
-		}
-	}
-	else
-	{
-		Printf ("Usage: mpopen <map file>\n");
+		Printf ("Usage: open <map file> [coop|dm]\n");
 	}
 }
 

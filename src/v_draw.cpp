@@ -1330,6 +1330,13 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		return;
 	}
 
+	BYTE *destorgsave = dc_destorg;
+	dc_destorg = screen->GetBuffer();
+	if (dc_destorg == NULL)
+	{
+		I_FatalError("Attempt to write to buffer of hardware canvas");
+	}
+
 	scalex /= tex->Scale.X;
 	scaley /= tex->Scale.Y;
 
@@ -1432,6 +1439,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		pt1 = pt2;
 		pt2--;			if (pt2 < 0) pt2 = npoints;
 	} while (pt1 != botpt);
+	dc_destorg = destorgsave;
 #endif
 }
 

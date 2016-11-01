@@ -210,8 +210,9 @@ void FTexture::CalcBitSize ()
 	}
 	WidthMask = (1 << WidthBits) - 1;
 
-	// The minimum height is 2, because we cannot shift right 32 bits.
-	for (i = 1; (1 << i) < Height; ++i)
+	// <hr>The minimum height is 2, because we cannot shift right 32 bits.</hr>
+	// Scratch that. Somebody actually made a 1x1 texture, so now we have to handle it.
+	for (i = 0; (1 << i) < Height; ++i)
 	{ }
 
 	HeightBits = i;

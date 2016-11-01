@@ -125,8 +125,8 @@ enum EInPlace { EC_InPlace };
 public: \
 	virtual PClass *StaticType() const; \
 	static ClassReg RegistrationInfo, * const RegistrationInfoPtr; \
-private: \
 	typedef parent Super; \
+private: \
 	typedef cls ThisClass;
 
 #define DECLARE_ABSTRACT_CLASS_WITH_META(cls,parent,meta) \
@@ -150,6 +150,34 @@ protected: \
 
 #define HAS_FIELDS \
 	static void InitNativeFields();
+
+// Templates really are powerful
+#define VMEXPORTED_NATIVES_START \
+	template<class owner> class ExportedNatives : public ExportedNatives<typename owner::Super> {}; \
+	template<> class ExportedNatives<void> { \
+		protected: ExportedNatives<void>() {} \
+		public: \
+		static ExportedNatives<void> *Get() { static ExportedNatives<void> *Instance = nullptr; if (Instance == nullptr) Instance = new ExportedNatives<void>; return Instance; } \
+		ExportedNatives<void>(const ExportedNatives<void>&) = delete; \
+		ExportedNatives<void>(ExportedNatives<void>&&) = delete;
+
+#define VMEXPORTED_NATIVES_FUNC(func) \
+		template<class ret, class object, class ... args> ret func(void *ptr, args ... arglist) { return ret(); }
+
+#define VMEXPORTED_NATIVES_END };
+
+#define VMEXPORT_NATIVES_START(cls, parent) \
+	template<> class ExportedNatives<cls> : public ExportedNatives<parent> { \
+		protected: ExportedNatives<cls>() {} \
+		public: \
+		static ExportedNatives<cls> *Get() { static ExportedNatives<cls> *Instance = nullptr; if (Instance == nullptr) Instance = new ExportedNatives<cls>; return Instance; } \
+		ExportedNatives<cls>(const ExportedNatives<cls>&) = delete; \
+		ExportedNatives<cls>(ExportedNatives<cls>&&) = delete;
+
+#define VMEXPORT_NATIVES_FUNC(func) \
+		template<class ret, class object, class ... args> ret func(void *ptr, args ... arglist) { return static_cast<object *>(ptr)->object::##func(arglist...); }
+
+#define VMEXPORT_NATIVES_END(cls) };
 
 #if defined(_MSC_VER)
 #	pragma section(".creg$u",read)
@@ -575,6 +603,52 @@ protected:
 		M_Free (mem);
 	}
 };
+
+template<class T>
+class DVMObject : public T
+{
+public:
+	static char *FormatClassName()
+	{
+		static char *name = nullptr;
+		if (name == nullptr)
+		{
+			name = new char[64];
+			mysnprintf(name, 64, "DVMObject<%s>", Super::RegistrationInfo.Name);
+			atterm([]{ delete[] DVMObject<T>::RegistrationInfo.Name; });
+		}
+		return name;
+	}
+
+	virtual PClass *StaticType() const
+	{
+		return RegistrationInfo.MyClass;
+	}
+	static ClassReg RegistrationInfo;
+	static ClassReg * const RegistrationInfoPtr;
+	typedef T Super;
+
+private:
+	typedef DVMObject<T> ThisClass;
+	static void InPlaceConstructor(void *mem)
+	{
+		new((EInPlace *)mem) DVMObject<T>;
+	}
+};
+
+template<class T>
+ClassReg DVMObject<T>::RegistrationInfo =
+{
+	nullptr,
+	DVMObject<T>::FormatClassName(),
+	&DVMObject<T>::Super::RegistrationInfo,
+	nullptr,
+	DVMObject<T>::InPlaceConstructor,
+	nullptr,
+	sizeof(DVMObject<T>),
+	DVMObject<T>::MetaClassNum
+};
+template<class T> _DECLARE_TI(DVMObject<T>)
 
 // When you write to a pointer to an Object, you must call this for
 // proper bookkeeping in case the Object holding this pointer has

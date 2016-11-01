@@ -67,6 +67,143 @@
 char nulspace[1024 * 1024 * 4];
 bool save_full = false;	// for testing. Should be removed afterward.
 
+int utf8_encode(int32_t codepoint, char *buffer, int *size)
+{
+	if (codepoint < 0)
+		return -1;
+	else if (codepoint < 0x80)
+	{
+		buffer[0] = (char)codepoint;
+		*size = 1;
+	}
+	else if (codepoint < 0x800)
+	{
+		buffer[0] = 0xC0 + ((codepoint & 0x7C0) >> 6);
+		buffer[1] = 0x80 + ((codepoint & 0x03F));
+		*size = 2;
+	}
+	else if (codepoint < 0x10000)
+	{
+		buffer[0] = 0xE0 + ((codepoint & 0xF000) >> 12);
+		buffer[1] = 0x80 + ((codepoint & 0x0FC0) >> 6);
+		buffer[2] = 0x80 + ((codepoint & 0x003F));
+		*size = 3;
+	}
+	else if (codepoint <= 0x10FFFF)
+	{
+		buffer[0] = 0xF0 + ((codepoint & 0x1C0000) >> 18);
+		buffer[1] = 0x80 + ((codepoint & 0x03F000) >> 12);
+		buffer[2] = 0x80 + ((codepoint & 0x000FC0) >> 6);
+		buffer[3] = 0x80 + ((codepoint & 0x00003F));
+		*size = 4;
+	}
+	else
+		return -1;
+
+	return 0;
+}
+
+int utf8_decode(const char *src, int *size) 
+{
+	int c = src[0] & 255;
+	int r;
+
+	*size = 1;
+	if ((c & 0x80) == 0)
+	{
+		return c;
+	}
+
+	int c1 = src[1] & 255;
+
+	if ((c & 0xE0) == 0xC0) 
+	{
+		r = ((c & 0x1F) << 6) | c1;
+		if (r >= 128) 
+		{
+			*size = 2;
+			return r;
+		}
+		return -1;
+	}
+
+	int c2 = src[2] & 255;
+
+	if ((c & 0xF0) == 0xE0) 
+	{
+		r = ((c & 0x0F) << 12) | (c1 << 6) | c2;
+		if (r >= 2048 && (r < 55296 || r > 57343)) 
+		{
+			*size = 3;
+			return r;
+		}
+		return -1;
+	}
+	
+	int c3 = src[3] & 255;
+
+	if ((c & 0xF8) == 0xF0) 
+	{
+		r = ((c & 0x07) << 18) | (c1 << 12) | (c2 << 6) | c3;
+		if (r >= 65536 && r <= 1114111) 
+		{
+			*size = 4;
+			return r;
+		}
+	}
+	return -1;
+}
+
+static TArray<char> out;
+static const char *StringToUnicode(const char *cc, int size = -1)
+{
+	int ch;
+	const char *c = cc;
+	int count = 0;
+	int count1 = 0;
+	out.Clear();
+	while (ch = (*c++) & 255)
+	{
+		count1++;
+		if (ch >= 128)
+		{
+			if (ch < 0x800) count += 2;
+			else count += 3;
+			// The source cannot contain 4-byte chars.
+		}
+		else count++;
+		if (count1 == size && size > 0) break;
+	}
+	if (count == count1) return cc;	// string is pure ASCII.
+	// we need to convert
+	out.Resize(count + 1);
+	out.Last() = 0;
+	c = cc;
+	int i = 0;
+	while (ch = (*c++) & 255)
+	{
+		utf8_encode(ch, &out[i], &count1);
+		i += count1;
+	}
+	return &out[0];
+}
+
+static const char *UnicodeToString(const char *cc)
+{
+	out.Resize((unsigned)strlen(cc) + 1);
+	int ndx = 0;
+	while (*cc != 0)
+	{
+		int size;
+		int c = utf8_decode(cc, &size);
+		if (c < 0 || c > 255) c = '?';
+		out[ndx++] = c;
+		cc += size;
+	}
+	out[ndx] = 0;
+	return &out[0];
+}
+
 //==========================================================================
 //
 //
@@ -99,8 +236,8 @@ struct FJSONObject
 
 struct FWriter
 {
-	typedef rapidjson::Writer<rapidjson::StringBuffer, rapidjson::ASCII<> > Writer;
-	typedef rapidjson::PrettyWriter<rapidjson::StringBuffer, rapidjson::ASCII<> > PrettyWriter;
+	typedef rapidjson::Writer<rapidjson::StringBuffer, rapidjson::UTF8<> > Writer;
+	typedef rapidjson::PrettyWriter<rapidjson::StringBuffer, rapidjson::UTF8<> > PrettyWriter;
 
 	Writer *mWriter1;
 	PrettyWriter *mWriter2;
@@ -173,14 +310,16 @@ struct FWriter
 
 	void String(const char *k)
 	{
+		k = StringToUnicode(k);
 		if (mWriter1) mWriter1->String(k);
 		else if (mWriter2) mWriter2->String(k);
 	}
 
 	void String(const char *k, int size)
 	{
-		if (mWriter1) mWriter1->String(k, size);
-		else if (mWriter2) mWriter2->String(k, size);
+		k = StringToUnicode(k, size);
+		if (mWriter1) mWriter1->String(k);
+		else if (mWriter2) mWriter2->String(k);
 	}
 
 	void Bool(bool k)
@@ -602,7 +741,7 @@ FSerializer &FSerializer::Args(const char *key, int *args, int *defargs, int spe
 					}
 					else if (i == 0 && aval.IsString())
 					{
-						args[i] = -FName(aval.GetString());
+						args[i] = -FName(UnicodeToString(aval.GetString()));
 					}
 					else
 					{
@@ -654,7 +793,7 @@ FSerializer &FSerializer::ScriptNum(const char *key, int &num)
 			}
 			else if (val->IsString())
 			{
-				num = -FName(val->GetString());
+				num = -FName(UnicodeToString(val->GetString()));
 			}
 			else
 			{
@@ -709,7 +848,7 @@ FSerializer &FSerializer::Sprite(const char *key, int32_t &spritenum, int32_t *d
 		{
 			if (val->IsString())
 			{
-				uint32_t name = *reinterpret_cast<const uint32_t*>(val->GetString());
+				uint32_t name = *reinterpret_cast<const uint32_t*>(UnicodeToString(val->GetString()));
 				for (auto hint = NumStdSprites; hint-- != 0; )
 				{
 					if (sprites[hint].dwName == name)
@@ -747,7 +886,7 @@ FSerializer &FSerializer::StringPtr(const char *key, const char *&charptr)
 		{
 			if (val->IsString())
 			{
-				charptr = val->GetString();
+				charptr = UnicodeToString(val->GetString());
 			}
 			else
 			{
@@ -1403,7 +1542,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 				assert(nameval.IsString() && typeval.IsInt());
 				if (nameval.IsString() && typeval.IsInt())
 				{
-					value = TexMan.GetTexture(nameval.GetString(), typeval.GetInt());
+					value = TexMan.GetTexture(UnicodeToString(nameval.GetString()), typeval.GetInt());
 				}
 				else
 				{
@@ -1553,7 +1692,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FName &value, FName *d
 			assert(val->IsString());
 			if (val->IsString())
 			{
-				value = val->GetString();
+				value = UnicodeToString(val->GetString());
 			}
 			else
 			{
@@ -1638,7 +1777,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 			assert(val->IsString() || val->IsNull());
 			if (val->IsString())
 			{
-				sid = val->GetString();
+				sid = UnicodeToString(val->GetString());
 			}
 			else if (val->IsNull())
 			{
@@ -1687,7 +1826,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClassActor
 			assert(val->IsString() || val->IsNull());
 			if (val->IsString())
 			{
-				clst = PClass::FindActor(val->GetString());
+				clst = PClass::FindActor(UnicodeToString(val->GetString()));
 			}
 			else if (val->IsNull())
 			{
@@ -1735,7 +1874,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClass *&cl
 		{
 			if (val->IsString())
 			{
-				clst = PClass::FindClass(val->GetString());
+				clst = PClass::FindClass(UnicodeToString(val->GetString()));
 			}
 			else if (val->IsNull())
 			{
@@ -1810,7 +1949,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState
 				assert(cls.IsString() && ndx.IsUint());
 				if (cls.IsString() && ndx.IsUint())
 				{
-					PClassActor *clas = PClass::FindActor(cls.GetString());
+					PClassActor *clas = PClass::FindActor(UnicodeToString(cls.GetString()));
 					if (clas && ndx.GetUint() < (unsigned)clas->NumOwnedStates)
 					{
 						state = clas->OwnedStates + ndx.GetUint();
@@ -1932,7 +2071,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FString *&p
 			}
 			else if (val->IsString())
 			{
-				pstr = AActor::mStringPropertyData.Alloc(val->GetString());
+				pstr = AActor::mStringPropertyData.Alloc(UnicodeToString(val->GetString()));
 			}
 			else
 			{
@@ -1974,7 +2113,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FString &pstr, FString
 			}
 			else if (val->IsString())
 			{
-				pstr = val->GetString();
+				pstr = UnicodeToString(val->GetString());
 			}
 			else
 			{
@@ -2023,7 +2162,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr
 			}
 			else if (val->IsString())
 			{
-				pstr = copystring(val->GetString());
+				pstr = copystring(UnicodeToString(val->GetString()));
 			}
 			else
 			{

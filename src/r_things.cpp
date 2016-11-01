@@ -969,15 +969,14 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			return;
 
 		tx += tex->GetWidth() * thingxscalemul;
-		double dtx2 = tx * xscale;
-		x2 = centerx + xs_RoundToInt(dtx2);
+		x2 = centerx + xs_RoundToInt(tx * xscale);
 
 		// off the left side or too small?
 		if ((x2 < WindowLeft || x2 <= x1))
 			return;
 
 		xscale = spriteScale.X * xscale / tex->Scale.X;
-		iscale = (fixed_t)(tex->GetWidth() / (dtx2 - dtx1) * FRACUNIT);
+		iscale = (fixed_t)(FRACUNIT / xscale); // Round towards zero to avoid wrapping in edge cases
 
 		double yscale = spriteScale.Y / tex->Scale.Y;
 
@@ -1005,7 +1004,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			vis->xiscale = iscale;
 		}
 
-		vis->startfrac += (fixed_t)(vis->xiscale * (vis->x1 - centerx - dtx1 + 0.5 * thingxscalemul));
+		vis->startfrac += (fixed_t)(vis->xiscale * (vis->x1 - centerx + 0.5 - dtx1));
 	}
 	else
 	{

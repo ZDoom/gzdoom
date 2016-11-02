@@ -76,8 +76,8 @@ namespace = "ZDoom";
 III.A : Conversations
 ---------------------
 
-This block only lists the newly added fields. Currently ZDoom only adds one
-field to the specification:
+This block only lists the newly added fields. Currently ZDoom only adds a few
+fields to the specification:
 
 conversation // Starts a dialog.
 {
@@ -86,6 +86,35 @@ conversation // Starts a dialog.
 				// the standard conversation ID ('actor' property) is used instead
 				// for this purpose but since 'ZDoom' namespace requires the actor
 				// to be a class name it needs a separate field for this.
+
+    page
+    {
+        goodbye = <string>; // Custom goodbye message. If omitted then the
+                            // generic goodbyes will be displayed instead.
+
+        choice
+        {
+            // The amount of an item needed for this option to become available.
+            // You can have as many as needed. All require blocks must be satisfied
+            // to show this option.
+            require
+            {
+                item   = <string>;  // Item that is required to show this option.
+                amount = <integer>; // Minimum amount of the item needed.
+            }
+
+            // The undesired amount of an item. This option will become available
+            // if you have less than the specified amount. You can have as many
+            // as needed. All exclude blocks must be satisfied to show this option.
+            // Note: if both require and exclude are defined then all require
+            // and all exclude blocks must be satisfied to show this option.
+            exclude
+            {
+                item   = <string>;  // Item that is unwanted to show this option.
+                amount = <integer>; // Unwanted minimum amount of the item.
+            }
+        }
+    }
 }
 
 ===============================================================================

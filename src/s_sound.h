@@ -241,6 +241,9 @@ void S_Sound (const FPolyObj *poly, int channel, FSoundID sfxid, float volume, f
 void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, float volume, float attenuation);
 void S_Sound(const DVector3 &pos, int channel, FSoundID sfxid, float volume, float attenuation);
 
+// [Nash] Used by ACS and DECORATE
+void S_PlaySound(AActor *a, int chan, FSoundID sid, float vol, float atten, bool local);
+
 // sound channels
 // channel 0 never willingly overrides
 // other channels (1-7) always override a playing sound on that channel

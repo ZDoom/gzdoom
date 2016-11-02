@@ -994,16 +994,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PlaySound)
 	PARAM_FLOAT_DEF	(volume);
 	PARAM_BOOL_DEF	(looping);
 	PARAM_FLOAT_DEF	(attenuation);
+	PARAM_BOOL_OPT	(local)			{ local = false; }
 
 	if (!looping)
 	{
-		S_Sound (self, channel, soundid, (float)volume, (float)attenuation);
+		S_PlaySound(self, channel, soundid, (float)volume, (float)attenuation, local);
 	}
 	else
 	{
 		if (!S_IsActorPlayingSomething (self, channel&7, soundid))
 		{
-			S_Sound (self, channel | CHAN_LOOP, soundid, (float)volume, (float)attenuation);
+			S_PlaySound(self, channel | CHAN_LOOP, soundid, (float)volume, (float)attenuation, local);
 		}
 	}
 	return 0;
@@ -3097,14 +3098,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 {
 		PARAM_ACTION_PROLOGUE(AActor);
-		PARAM_CLASS		(missile, AActor);
+	PARAM_CLASS		(missile, AActor);
 		PARAM_FLOAT_DEF	(zheight)	
 		PARAM_FLOAT_DEF	(xyvel)		
 		PARAM_FLOAT_DEF	(zvel)		
 		PARAM_BOOL_DEF	(useammo)	
 
-		if (missile == NULL)
-		{
+	if (missile == NULL)
+	{
 		ACTION_RETURN_BOOL(true);
 	}
 	if (ACTION_CALL_FROM_PSPRITE())

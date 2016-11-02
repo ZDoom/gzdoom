@@ -672,6 +672,7 @@ void AWeapon::PostMorphWeapon ()
 
 	pspr = Owner->player->GetPSprite(PSP_WEAPON);
 	pspr->y = WEAPONBOTTOM;
+	pspr->ResetInterpolation();
 	pspr->SetState(GetUpState());
 }
 

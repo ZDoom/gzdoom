@@ -1104,6 +1104,12 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 
 	rw_pic->GetHeight();	// Make sure texture size is loaded
 	fracbits = 32 - rw_pic->HeightBits;
+	if (fracbits == 32)
+	{ // Hack for one pixel tall textures
+		fracbits = 0;
+		yrepeat = 0;
+		dc_texturemid = 0;
+	}
 	setupvline(fracbits);
 	xoffset = rw_offset;
 	basecolormapdata = basecolormap->Maps;
@@ -1456,6 +1462,12 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 
 	rw_pic->GetHeight();	// Make sure texture size is loaded
 	fracbits = 32- rw_pic->HeightBits;
+	if (fracbits == 32)
+	{ // Hack for one pixel tall textures
+		fracbits = 0;
+		yrepeat = 0;
+		dc_texturemid = 0;
+	}
 	setupmvline(fracbits);
 	xoffset = rw_offset;
 	basecolormapdata = basecolormap->Maps;
@@ -1631,6 +1643,12 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 
 	rw_pic->GetHeight();	// Make sure texture size is loaded
 	fracbits = 32 - rw_pic->HeightBits;
+	if (fracbits == 32)
+	{ // Hack for one pixel tall textures
+		fracbits = 0;
+		yrepeat = 0;
+		dc_texturemid = 0;
+	}
 	setuptmvline(fracbits);
 	xoffset = rw_offset;
 	basecolormapdata = basecolormap->Maps;
@@ -2521,7 +2539,7 @@ void R_StoreWallRange (int start, int stop)
 				lwal = (fixed_t *)(openings + ds_p->maskedtexturecol);
 				swal = (float *)(openings + ds_p->swall);
 				FTexture *pic = TexMan(sidedef->GetTexture(side_t::mid), true);
-				double yscale = pic->Scale.X * sidedef->GetTextureYScale(side_t::mid);
+				double yscale = pic->Scale.Y * sidedef->GetTextureYScale(side_t::mid);
 				fixed_t xoffset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
 
 				if (pic->bWorldPanning)

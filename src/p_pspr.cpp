@@ -262,8 +262,7 @@ void DPSprite::NewTick()
 			while (pspr)
 			{
 				pspr->processPending = true;
-				pspr->oldx = pspr->x;
-				pspr->oldy = pspr->y;
+				pspr->ResetInterpolation();
 
 				pspr = pspr->Next;
 			}

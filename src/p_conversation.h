@@ -45,6 +45,8 @@ struct FStrifeDialogueReply
 	int ActionSpecial;
 	int Args[5];
 	TArray<FStrifeDialogueItemCheck> ItemCheck;
+	TArray<FStrifeDialogueItemCheck> ItemCheckRequire;
+	TArray<FStrifeDialogueItemCheck> ItemCheckExclude;
 	char *Reply;
 	char *QuickYes;
 	int NextNode;	// index into StrifeDialogues

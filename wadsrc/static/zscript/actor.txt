@@ -76,6 +76,7 @@ class Actor : Thinker native
 	native vector3 Vec2OffsetZ(float x, float y, float atz, bool absolute = false);
 	native void VelFromAngle(float speed = 0, float angle = 0);
 	native bool isFriend(Actor other);
+	native void AdjustFloorClip();
 
 	// DECORATE compatible functions
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
@@ -98,7 +99,22 @@ class Actor : Thinker native
 
 	// DECORATE setters - it probably makes more sense to set these values directly now...
 	void A_SetMass(int newmass) { mass = newmass; }
+	void A_SetInvulnerable() { bInvulnerable = true; }
+	void A_UnSetInvulnerable() { bInvulnerable = false; }
+	void A_SetReflective() { bReflective = true; }
+	void A_UnSetReflective() { bReflective = false; }
+	void A_SetReflectiveInvulnerable() { bInvulnerable = true; bReflective = true; }
+	void A_UnSetReflectiveInvulnerable() { bInvulnerable = true; bReflective = false; }
+	void A_SetShootable() { bShootable = true; bNonShootable = false; }
+	void A_UnSetShootable() { bShootable = false; bNonShootable = true; }
+	void A_NoGravity() { bNoGravity = true; }
+	void A_Gravity() { bNoGravity = false; Gravity = 1; }
+	void A_LowGravity() { bNoGravity = false; Gravity = 0.125; }
 	void A_SetGravity(float newgravity) { gravity = clamp(newgravity, 0., 10.); }
+	void A_SetFloorClip() { bFloorClip = true; AdjustFloorClip(); }
+	void A_UnSetFloorClip() { bFloorClip = false;  FloorClip = 0; }
+	void A_HideThing() { bInvisible = true; }
+	void A_UnHideThing() { bInvisible = false; }
 	void A_SetArg(int arg, int val) { if (arg >= 0 && arg < 5) args[arg] = val;	}
 	void A_Turn(float turn = 0) { angle += turn; }
 	void A_SetDamageType(name newdamagetype) { damagetype = newdamagetype; }
@@ -208,6 +224,7 @@ class Actor : Thinker native
 	native void A_BFGSpray(class<Actor> spraytype = "BFGExtra", int numrays = 40, int damagecount = 15, float angle = 90, float distance = 16*64, float vrange = 32, int damage = 0, int flags = 0);
 	native void A_Pain();
 	native void A_NoBlocking();
+	void A_Fall() { A_NoBlocking(); }
 	native void A_XScream();
 	native void A_Look();
 	native void A_Chase(state melee = null, state missile = null, int flags = 0);
@@ -223,24 +240,6 @@ class Actor : Thinker native
 	native void A_KeenDie(int doortag = 666);
 	native void A_Detonate();
 	native bool A_CallSpecial(int special, int arg1=0, int arg2=0, int arg3=0, int arg4=0, int arg5=0);
-
-	native void A_SetFloorClip();
-	native void A_UnSetFloorClip();
-	native void A_HideThing();
-	native void A_UnHideThing();
-	native void A_SetInvulnerable();
-	native void A_UnSetInvulnerable();
-	native void A_SetReflective();
-	native void A_UnSetReflective();
-	native void A_SetReflectiveInvulnerable();
-	native void A_UnSetReflectiveInvulnerable();
-	native void A_SetShootable();
-	native void A_UnSetShootable();
-	native void A_NoGravity();
-	native void A_Gravity();
-	native void A_LowGravity();
-
-	native void A_Fall();
 
 	native void A_M_Saw(sound fullsound = "weapons/sawfull", sound hitsound = "weapons/sawhit", int damage = 2, class<Actor> pufftype = "BulletPuff");
 

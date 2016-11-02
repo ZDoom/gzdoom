@@ -718,6 +718,7 @@ void InitThingdef()
 	symt.AddSymbol(new PField(NAME_Damage,			TypeSInt32,		VARF_Native|VARF_ReadOnly,  myoffsetof(AActor, DamageVal)));
 	symt.AddSymbol(new PField("visdir",				TypeSInt32,		VARF_Native,				myoffsetof(AActor, visdir)));
 	symt.AddSymbol(new PField("Gravity",			TypeFloat64,	VARF_Native,				myoffsetof(AActor, Gravity)));
+	symt.AddSymbol(new PField("FloorClip",			TypeFloat64,	VARF_Native,				myoffsetof(AActor, Floorclip)));
 	symt.AddSymbol(new PField("DamageType",			TypeName,		VARF_Native,				myoffsetof(AActor, DamageType)));
 	symt.AddSymbol(new PField("FloatBobPhase",		TypeUInt8,		VARF_Native,				myoffsetof(AActor, FloatBobPhase)));
 	symt.AddSymbol(new PField("tics",				TypeSInt32,		VARF_Native,				myoffsetof(AActor, tics)));

@@ -563,8 +563,10 @@ ExpEmit FxVectorValue::Emit(VMFunctionBuilder *build)
 	assert(xyz[1] != nullptr);
 	if (ValueType == TypeVector2)
 	{
-		ExpEmit xval = EmitKonst(build, xyz[0]->Emit(build));
-		ExpEmit yval = EmitKonst(build, xyz[1]->Emit(build));
+		ExpEmit tempxval = xyz[0]->Emit(build);
+		ExpEmit tempyval = xyz[1]->Emit(build);
+		ExpEmit xval = EmitKonst(build, tempxval);
+		ExpEmit yval = EmitKonst(build, tempyval);
 		assert(xval.RegType == REGT_FLOAT && yval.RegType == REGT_FLOAT);
 		if (yval.RegNum == xval.RegNum + 1)
 		{
@@ -586,7 +588,8 @@ ExpEmit FxVectorValue::Emit(VMFunctionBuilder *build)
 	else if (xyz[0]->ValueType == TypeVector2)	// vec2+float
 	{
 		ExpEmit xyval = xyz[0]->Emit(build);
-		ExpEmit zval = EmitKonst(build, xyz[1]->Emit(build));
+		ExpEmit tempzval = xyz[1]->Emit(build);
+		ExpEmit zval = EmitKonst(build, tempzval);
 		assert(xyval.RegType == REGT_FLOAT && xyval.RegCount == 2 && zval.RegType == REGT_FLOAT);
 		if (zval.RegNum == xyval.RegNum + 2)
 		{
@@ -608,9 +611,12 @@ ExpEmit FxVectorValue::Emit(VMFunctionBuilder *build)
 	else // 3*float
 	{
 		assert(xyz[2] != nullptr);
-		ExpEmit xval = EmitKonst(build, xyz[0]->Emit(build));
-		ExpEmit yval = EmitKonst(build, xyz[1]->Emit(build));
-		ExpEmit zval = EmitKonst(build, xyz[2]->Emit(build));
+		ExpEmit tempxval = xyz[0]->Emit(build);
+		ExpEmit tempyval = xyz[1]->Emit(build);
+		ExpEmit tempzval = xyz[2]->Emit(build);
+		ExpEmit xval = EmitKonst(build, tempxval);
+		ExpEmit yval = EmitKonst(build, tempyval);
+		ExpEmit zval = EmitKonst(build, tempzval);
 		assert(xval.RegType == REGT_FLOAT && yval.RegType == REGT_FLOAT && zval.RegType == REGT_FLOAT);
 		if (yval.RegNum == xval.RegNum + 1 && zval.RegNum == xval.RegNum + 2)
 		{
@@ -2308,7 +2314,7 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 				if (left == nullptr)
 				{
 					delete this;
-					return nullptr;
+					return false;
 				}
 			}
 			if (right->ValueType != TypeString)
@@ -2318,7 +2324,7 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 				if (right == nullptr)
 				{
 					delete this;
-					return nullptr;
+					return false;
 				}
 			}
 			ValueType = TypeBool;
@@ -2464,7 +2470,7 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 		delete this;
 		return false;
 	}
-	assert(ValueType > nullptr && ValueType < (PType*)0xfffffffffffffff);
+	assert(ValueType != nullptr && ValueType < (PType*)0xfffffffffffffff);
 
 	if (castnumeric)
 	{
@@ -3206,7 +3212,7 @@ ExpEmit FxCompareEq::Emit(VMFunctionBuilder *build)
 
 		// See FxUnaryNotBoolean for comments, since it's the same thing.
 		build->Emit(OP_LI, to.RegNum, 0, 0);
-		build->Emit(instr, Operator == TK_ApproxEq ? CMP_APPROX : Operator != TK_Eq, op1.RegNum, op2.RegNum);
+		build->Emit(instr, Operator == TK_ApproxEq ? CMP_APPROX : ((Operator != TK_Eq) ? CMP_CHECK : 0), op1.RegNum, op2.RegNum);
 		build->Emit(OP_JMP, 1);
 		build->Emit(OP_LI, to.RegNum, 1);
 		return to;
@@ -3925,7 +3931,7 @@ FxExpression *FxConditional::Resolve(FCompileContext& ctx)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Incompatible types for ?: operator");
 		delete this;
-		return false;
+		return nullptr;
 	}
 
 	if (condition->ValueType != TypeBool)

@@ -701,7 +701,7 @@ void FFunctionBuildList::Build()
 		FCompileContext ctx(item.Func, item.Func->SymbolName == NAME_None ? nullptr : item.Func->Variants[0].Proto, item.FromDecorate);
 
 		// Allocate registers for the function's arguments and create local variable nodes before starting to resolve it.
-		VMFunctionBuilder buildit(!!(item.Func->Variants[0].Flags & VARF_Action));
+		VMFunctionBuilder buildit(item.Func->GetImplicitArgs());
 		for(unsigned i=0;i<item.Func->Variants[0].Proto->ArgumentTypes.Size();i++)
 		{
 			auto type = item.Func->Variants[0].Proto->ArgumentTypes[i];

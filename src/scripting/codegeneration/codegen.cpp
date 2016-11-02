@@ -3583,7 +3583,45 @@ FxExpression *FxBinaryLogical::Resolve(FCompileContext& ctx)
 			return x;
 		}
 	}
+	Flatten();
 	return this;
+}
+
+//==========================================================================
+//
+// flatten a list of the same operator into a single node.
+//
+//==========================================================================
+
+void FxBinaryLogical::Flatten()
+{
+	if (left->ExprType == EFX_BinaryLogical && static_cast<FxBinaryLogical *>(left)->Operator == Operator)
+	{
+		list = std::move(static_cast<FxBinaryLogical *>(left)->list);
+		delete left;
+	}
+	else
+	{
+		list.Push(left);
+	}
+
+	if (right->ExprType == EFX_BinaryLogical && static_cast<FxBinaryLogical *>(right)->Operator == Operator)
+	{
+		auto &rlist = static_cast<FxBinaryLogical *>(right)->list;
+		auto cnt = rlist.Size();
+		auto v = list.Reserve(cnt);
+		for (unsigned i = 0; i < cnt; i++)
+		{
+			list[v + i] = rlist[i];
+			rlist[i] = nullptr;
+		}
+		delete right;
+	}
+	else
+	{
+		list.Push(right);
+	}
+	left = right = nullptr;
 }
 
 //==========================================================================
@@ -3594,56 +3632,24 @@ FxExpression *FxBinaryLogical::Resolve(FCompileContext& ctx)
 
 ExpEmit FxBinaryLogical::Emit(VMFunctionBuilder *build)
 {
-	// This is not the "right" way to do these, but it works for now.
-	// (Problem: No information sharing is done between nodes to reduce the
-	// code size if you have something like a1 && a2 && a3 && ... && an.)
-	assert(left->ValueType->GetRegType() == REGT_INT && right->ValueType->GetRegType() == REGT_INT);
-	ExpEmit op1 = left->Emit(build);
-	assert(!op1.Konst);
+	TArray<size_t> patchspots;
+
 	int zero = build->GetConstantInt(0);
-	op1.Free(build);
-
-	if (Operator == TK_AndAnd)
+	for (unsigned i = 0; i < list.Size(); i++)
 	{
-		build->Emit(OP_EQ_K, 1, op1.RegNum, zero);
-		// If op1 is 0, skip evaluation of op2.
-		size_t patchspot = build->Emit(OP_JMP, 0, 0, 0);
-
-		// Evaluate op2.
-		ExpEmit op2 = right->Emit(build);
-		assert(!op2.Konst);
-		op2.Free(build);
-
-		ExpEmit to(build, REGT_INT);
-		build->Emit(OP_EQ_K, 1, op2.RegNum, zero);
-		build->Emit(OP_JMP, 2);
-		build->Emit(OP_LI, to.RegNum, 1);
-		build->Emit(OP_JMP, 1);
-		size_t target = build->Emit(OP_LI, to.RegNum, 0);
-		build->Backpatch(patchspot, target);
-		return to;
+		assert(list[i]->ValueType->GetRegType() == REGT_INT);
+		ExpEmit op1 = list[i]->Emit(build);
+		assert(!op1.Konst);
+		op1.Free(build);
+		build->Emit(OP_EQ_K, (Operator == TK_AndAnd) ? 1 : 0, op1.RegNum, zero);
+		patchspots.Push(build->Emit(OP_JMP, 0, 0, 0));
 	}
-	else
-	{
-		assert(Operator == TK_OrOr);
-		build->Emit(OP_EQ_K, 0, op1.RegNum, zero);
-		// If op1 is not 0, skip evaluation of op2.
-		size_t patchspot = build->Emit(OP_JMP, 0, 0, 0);
-
-		// Evaluate op2.
-		ExpEmit op2 = right->Emit(build);
-		assert(!op2.Konst);
-		op2.Free(build);
-
-		ExpEmit to(build, REGT_INT);
-		build->Emit(OP_EQ_K, 0, op2.RegNum, zero);
-		build->Emit(OP_JMP, 2);
-		build->Emit(OP_LI, to.RegNum, 0);
-		build->Emit(OP_JMP, 1);
-		size_t target = build->Emit(OP_LI, to.RegNum, 1);
-		build->Backpatch(patchspot, target);
-		return to;
-	}
+	ExpEmit to(build, REGT_INT);
+	build->Emit(OP_LI, to.RegNum, (Operator == TK_AndAnd) ? 1 : 0);
+	build->Emit(OP_JMP, 1);
+	auto ctarget = build->Emit(OP_LI, to.RegNum, (Operator == TK_AndAnd) ? 0 : 1);
+	for (auto addr : patchspots) build->Backpatch(addr, ctarget);
+	return to;
 }
 
 //==========================================================================

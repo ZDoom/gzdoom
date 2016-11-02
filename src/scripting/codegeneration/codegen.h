@@ -910,9 +910,11 @@ public:
 	int				Operator;
 	FxExpression		*left;
 	FxExpression		*right;
+	TDeletingArray<FxExpression *> list;
 
 	FxBinaryLogical(int, FxExpression*, FxExpression*);
 	~FxBinaryLogical();
+	void Flatten();
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpEmit Emit(VMFunctionBuilder *build);

@@ -1199,88 +1199,88 @@ begin:
 		ASSERTF(B); ASSERTF(C);
 		if (a & CMP_APPROX)
 		{
-			CMPJMP_MASK(fabs(reg.f[C] - reg.f[B]) < VM_EPSILON);
+			CMPJMP(fabs(reg.f[C] - reg.f[B]) < VM_EPSILON);
 		}
 		else
 		{
-			CMPJMP_MASK(reg.f[C] == reg.f[B]);
+			CMPJMP(reg.f[C] == reg.f[B]);
 		}
 		NEXTOP;
 	OP(EQF_K):
 		ASSERTF(B); ASSERTKF(C);
 		if (a & CMP_APPROX)
 		{
-			CMPJMP_MASK(fabs(konstf[C] - reg.f[B]) < VM_EPSILON);
+			CMPJMP(fabs(konstf[C] - reg.f[B]) < VM_EPSILON);
 		}
 		else
 		{
-			CMPJMP_MASK(konstf[C] == reg.f[B]);
+			CMPJMP(konstf[C] == reg.f[B]);
 		}
 		NEXTOP;
 	OP(LTF_RR):
 		ASSERTF(B); ASSERTF(C);
 		if (a & CMP_APPROX)
 		{
-			CMPJMP_MASK((reg.f[B] - reg.f[C]) < -VM_EPSILON);
+			CMPJMP((reg.f[B] - reg.f[C]) < -VM_EPSILON);
 		}
 		else
 		{
-			CMPJMP_MASK(reg.f[B] < reg.f[C]);
+			CMPJMP(reg.f[B] < reg.f[C]);
 		}
 		NEXTOP;
 	OP(LTF_RK):
 		ASSERTF(B); ASSERTKF(C);
 		if (a & CMP_APPROX)
 		{
-			CMPJMP_MASK((reg.f[B] - konstf[C]) < -VM_EPSILON);
+			CMPJMP((reg.f[B] - konstf[C]) < -VM_EPSILON);
 		}
 		else
 		{
-			CMPJMP_MASK(reg.f[B] < konstf[C]);
+			CMPJMP(reg.f[B] < konstf[C]);
 		}
 		NEXTOP;
 	OP(LTF_KR):
 		ASSERTKF(B); ASSERTF(C);
 		if (a & CMP_APPROX)
 		{
-			CMPJMP_MASK((konstf[B] - reg.f[C]) < -VM_EPSILON);
+			CMPJMP((konstf[B] - reg.f[C]) < -VM_EPSILON);
 		}
 		else
 		{
-			CMPJMP_MASK(konstf[B] < reg.f[C]);
+			CMPJMP(konstf[B] < reg.f[C]);
 		}
 		NEXTOP;
 	OP(LEF_RR):
 		ASSERTF(B); ASSERTF(C);
 		if (a & CMP_APPROX)
 		{
-			CMPJMP_MASK((reg.f[B] - reg.f[C]) <= -VM_EPSILON);
+			CMPJMP((reg.f[B] - reg.f[C]) <= -VM_EPSILON);
 		}
 		else
 		{
-			CMPJMP_MASK(reg.f[B] <= reg.f[C]);
+			CMPJMP(reg.f[B] <= reg.f[C]);
 		}
 		NEXTOP;
 	OP(LEF_RK):
 		ASSERTF(B); ASSERTKF(C);
 		if (a & CMP_APPROX)
 		{
-			CMPJMP_MASK((reg.f[B] - konstf[C]) <= -VM_EPSILON);
+			CMPJMP((reg.f[B] - konstf[C]) <= -VM_EPSILON);
 		}
 		else
 		{
-			CMPJMP_MASK(reg.f[B] <= konstf[C]);
+			CMPJMP(reg.f[B] <= konstf[C]);
 		}
 		NEXTOP;
 	OP(LEF_KR):
 		ASSERTKF(B); ASSERTF(C);
 		if (a & CMP_APPROX)
 		{
-			CMPJMP_MASK((konstf[B] - reg.f[C]) <= -VM_EPSILON);
+			CMPJMP((konstf[B] - reg.f[C]) <= -VM_EPSILON);
 		}
 		else
 		{
-			CMPJMP_MASK(konstf[B] <= reg.f[C]);
+			CMPJMP(konstf[B] <= reg.f[C]);
 		}
 		NEXTOP;
 
@@ -1369,12 +1369,12 @@ begin:
 	Do_EQV2:
 		if (a & CMP_APPROX)
 		{
-			CMPJMP_MASK(fabs(reg.f[B  ] - fcp[0]) < VM_EPSILON &&
-						fabs(reg.f[B+1] - fcp[1]) < VM_EPSILON);
+			CMPJMP(fabs(reg.f[B  ] - fcp[0]) < VM_EPSILON &&
+				   fabs(reg.f[B+1] - fcp[1]) < VM_EPSILON);
 		}
 		else
 		{
-			CMPJMP_MASK(reg.f[B] == fcp[0] && reg.f[B+1] == fcp[1]);
+			CMPJMP(reg.f[B] == fcp[0] && reg.f[B+1] == fcp[1]);
 		}
 		NEXTOP;
 	OP(EQV2_K):
@@ -1496,13 +1496,13 @@ begin:
 	Do_EQV3:
 		if (a & CMP_APPROX)
 		{
-			CMPJMP_MASK(fabs(reg.f[B  ] - fcp[0]) < VM_EPSILON &&
-						fabs(reg.f[B+1] - fcp[1]) < VM_EPSILON &&
-					    fabs(reg.f[B+2] - fcp[2]) < VM_EPSILON);
+			CMPJMP(fabs(reg.f[B  ] - fcp[0]) < VM_EPSILON &&
+				   fabs(reg.f[B+1] - fcp[1]) < VM_EPSILON &&
+				   fabs(reg.f[B+2] - fcp[2]) < VM_EPSILON);
 		}
 		else
 		{
-			CMPJMP_MASK(reg.f[B] == fcp[0] && reg.f[B+1] == fcp[1] && reg.f[B+2] == fcp[2]);
+			CMPJMP(reg.f[B] == fcp[0] && reg.f[B+1] == fcp[1] && reg.f[B+2] == fcp[2]);
 		}
 		NEXTOP;
 	OP(EQV3_K):

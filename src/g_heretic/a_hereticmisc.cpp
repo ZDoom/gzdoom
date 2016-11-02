@@ -24,7 +24,6 @@
 #include "a_chicken.cpp"
 #include "a_dsparil.cpp"
 #include "a_hereticartifacts.cpp"
-#include "a_hereticimp.cpp"
 #include "a_hereticweaps.cpp"
 #include "a_ironlich.cpp"
 #include "a_knight.cpp"

@@ -3091,64 +3091,71 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 	}
 	else
 	{
-		// also simplify comparisons against zero. For these a bool cast on the other value will do just as well and create better code.
-		if (left->isConstant())
+		// also simplify comparisons against zero. For these a bool cast/unary not on the other value will do just as well and create better code.
+		if (Operator != TK_ApproxEq)
 		{
-			bool leftisnull;
-			switch (left->ValueType->GetRegType())
+			if (left->isConstant())
 			{
-			case REGT_INT:
-				leftisnull = static_cast<FxConstant *>(left)->GetValue().GetInt() == 0;
-				break;
+				bool leftisnull;
+				switch (left->ValueType->GetRegType())
+				{
+				case REGT_INT:
+					leftisnull = static_cast<FxConstant *>(left)->GetValue().GetInt() == 0;
+					break;
 
-			case REGT_FLOAT:
-				assert(left->ValueType->GetRegCount() == 1);	// vectors should not be able to get here.
-				leftisnull = static_cast<FxConstant *>(left)->GetValue().GetFloat() == 0;
-				break;
+				case REGT_FLOAT:
+					assert(left->ValueType->GetRegCount() == 1);	// vectors should not be able to get here.
+					leftisnull = static_cast<FxConstant *>(left)->GetValue().GetFloat() == 0;
+					break;
 
-			case REGT_POINTER:
-				leftisnull = static_cast<FxConstant *>(left)->GetValue().GetPointer() == nullptr;
-				break;
+				case REGT_POINTER:
+					leftisnull = static_cast<FxConstant *>(left)->GetValue().GetPointer() == nullptr;
+					break;
 
-			default:
-				leftisnull = false;
+				default:
+					leftisnull = false;
+				}
+				if (leftisnull)
+				{
+					FxExpression *x;
+					if (Operator == TK_Eq) x = new FxUnaryNotBoolean(right);
+					else x = new FxBoolCast(right);
+					right = nullptr;
+					delete this;
+					return x->Resolve(ctx);
+				}
+
 			}
-			if (leftisnull)
+			if (right->isConstant())
 			{
-				FxExpression *x = new FxBoolCast(right);
-				right = nullptr;
-				delete this;
-				return x->Resolve(ctx);
-			}
-		
-		}
-		if (right->isConstant())
-		{
-			bool rightisnull;
-			switch (right->ValueType->GetRegType())
-			{
-			case REGT_INT:
-				rightisnull = static_cast<FxConstant *>(right)->GetValue().GetInt() == 0;
-				break;
+				bool rightisnull;
+				switch (right->ValueType->GetRegType())
+				{
+				case REGT_INT:
+					rightisnull = static_cast<FxConstant *>(right)->GetValue().GetInt() == 0;
+					break;
 
-			case REGT_FLOAT:
-				assert(right->ValueType->GetRegCount() == 1);	// vectors should not be able to get here.
-				rightisnull = static_cast<FxConstant *>(right)->GetValue().GetFloat() == 0;
-				break;
+				case REGT_FLOAT:
+					assert(right->ValueType->GetRegCount() == 1);	// vectors should not be able to get here.
+					rightisnull = static_cast<FxConstant *>(right)->GetValue().GetFloat() == 0;
+					break;
 
-			case REGT_POINTER:
-				rightisnull = static_cast<FxConstant *>(right)->GetValue().GetPointer() == nullptr;
-				break;
+				case REGT_POINTER:
+					rightisnull = static_cast<FxConstant *>(right)->GetValue().GetPointer() == nullptr;
+					break;
 
-			default:
-				rightisnull = false;
-			}
-			if (rightisnull)
-			{
-				FxExpression *x = new FxBoolCast(left);
-				left = nullptr;
-				delete this;
-				return x->Resolve(ctx);
+				default:
+					rightisnull = false;
+				}
+				if (rightisnull)
+				{
+					FxExpression *x;
+					if (Operator == TK_Eq) x = new FxUnaryNotBoolean(left);
+					else x = new FxBoolCast(left);
+					left = nullptr;
+					delete this;
+					return x->Resolve(ctx);
+				}
 			}
 		}
 	}

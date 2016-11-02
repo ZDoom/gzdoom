@@ -3,6 +3,8 @@
 
 class HereticImp : Actor
 {
+	bool extremecrash;
+
 	Default
 	{
 		Health 40;
@@ -25,12 +27,6 @@ class HereticImp : Actor
 		Obituary "$OB_HERETICIMP";
 		HitObituary "$OB_HERETICIMPHIT";
 	}
-	
-	native void A_ImpMsAttack();
-	native void A_ImpDeath();
-	native void A_ImpXDeath1();
-	native void A_ImpExplode();
-	
 	
 	States
 	{
@@ -74,6 +70,77 @@ class HereticImp : Actor
 		IMPX Y 7;
 		IMPX Z -1;
 		Stop;
+	}
+	
+	
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_ImpMsAttack
+	//
+	//----------------------------------------------------------------------------
+
+	void A_ImpMsAttack()
+	{
+		if (!target || random[ImpMSAtk]() > 64)
+		{
+			SetState (SeeState);
+			return;
+		}
+		A_SkullAttack(12);
+}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_ImpExplode
+	//
+	//----------------------------------------------------------------------------
+
+	void A_ImpExplode()
+	{
+		Actor chunk;
+
+		bNoGravity = false;
+
+		chunk = Spawn("HereticImpChunk1", pos, ALLOW_REPLACE);
+		chunk.vel.x = random2[ImpExplode]() / 64.;
+		chunk.vel.y = random2[ImpExplode]() / 64.;
+		chunk.vel.z = 9;
+
+		chunk = Spawn("HereticImpChunk2", pos, ALLOW_REPLACE);
+		chunk.vel.x = random2[ImpExplode]() / 64.;
+		chunk.vel.y = random2[ImpExplode]() / 64.;
+		chunk.vel.z = 9;
+		
+		if (extremecrash)
+		{
+			SetState ("XCrash");
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_ImpDeath
+	//
+	//----------------------------------------------------------------------------
+
+	void A_ImpDeath()
+	{
+		bSolid = false;
+		bFloorClip = true;
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_ImpXDeath1
+	//
+	//----------------------------------------------------------------------------
+
+	void A_ImpXDeath1()
+	{
+		bSolid = false;
+		bFloorClip = true;
+		bNoGravity = true;
+		extremecrash = true;
 	}
 }		
 

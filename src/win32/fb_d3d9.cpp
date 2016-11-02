@@ -1094,6 +1094,7 @@ void D3DFB::Update ()
 			DrawRateStuff();
 			DrawPackedTextures(d3d_showpacks);
 			EndBatch();		// Make sure all batched primitives are drawn.
+			In2D = 0;
 			Flip();
 		}
 		In2D = 0;

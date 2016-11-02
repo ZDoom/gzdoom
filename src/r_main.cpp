@@ -361,7 +361,7 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 	MaxVisForWall = (InvZtoScale * (SCREENWIDTH*r_Yaspect) /
 		(viewwidth*SCREENHEIGHT * FocalTangent));
 	MaxVisForWall = 32767.0 / MaxVisForWall;
-	MaxVisForFloor = 32767.0 / (viewheight * FocalLengthY / 160);
+	MaxVisForFloor = 32767.0 / (viewheight >> 2) * FocalLengthY / 160;
 
 	// Reset r_*Visibility vars
 	R_SetVisibility(R_GetVisibility());

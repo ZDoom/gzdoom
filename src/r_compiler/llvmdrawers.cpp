@@ -35,6 +35,14 @@
 #include "r_compiler/ssa/ssa_struct_type.h"
 #include "r_compiler/ssa/ssa_value.h"
 #include "r_compiler/ssa/ssa_barycentric_weight.h"
+#include "x86.h"
+#include "c_cvars.h"
+#include "version.h"
+
+CUSTOM_CVAR(String, llvm_cpu, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	Printf("You must restart " GAMENAME " for this change to take effect.\n");
+}
 
 class LLVMProgram
 {
@@ -485,12 +493,22 @@ void LLVMProgram::CreateEE()
 
 	std::string errorstring;
 
+	std::string mcpu = sys::getHostCPUName();
+	if (std::string(CPU.CPUString).find("G840") && mcpu == "sandybridge")
+		mcpu = "westmere"; // Pentium G840 is misdetected as a sandy bridge CPU
+
+	if (stricmp(llvm_cpu, "auto") != 0)
+	{
+		mcpu = llvm_cpu;
+		Printf("Overriding LLVM CPU target to %s\n", mcpu.c_str());
+	}
+
 	llvm::Module *module = mModule.get();
 	EngineBuilder engineBuilder(std::move(mModule));
 	engineBuilder.setErrorStr(&errorstring);
 	engineBuilder.setOptLevel(CodeGenOpt::Aggressive);
 	engineBuilder.setEngineKind(EngineKind::JIT);
-	engineBuilder.setMCPU(sys::getHostCPUName());
+	engineBuilder.setMCPU(mcpu);
 	machine = engineBuilder.selectTarget();
 	if (!machine)
 		I_FatalError("Could not create LLVM target machine");

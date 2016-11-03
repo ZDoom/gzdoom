@@ -269,6 +269,7 @@ enum EFxType
 	EFX_VectorBuiltin,
 	EFX_TypeCheck,
 	EFX_DynamicCast,
+	EFX_GlobalVariable,
 	EFX_COUNT
 };
 
@@ -1135,6 +1136,25 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
+
+//==========================================================================
+//
+//	FxGlobalVariaböe
+//
+//==========================================================================
+
+class FxGlobalVariable : public FxExpression
+{
+public:
+	PField *membervar;
+	bool AddressRequested;
+	bool AddressWritable;
+
+	FxGlobalVariable(PField*, const FScriptPosition&);
+	FxExpression *Resolve(FCompileContext&);
+	bool RequestAddress(bool *writable);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
 
 //==========================================================================
 //

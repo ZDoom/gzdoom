@@ -990,6 +990,15 @@ void AActor::CopyFriendliness (AActor *other, bool changeTarget, bool resetHealt
 	level.total_monsters += CountsAsKill();
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CopyFriendliness)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	PARAM_BOOL_DEF(changetarget);
+	PARAM_BOOL_DEF(resethealth);
+	self->CopyFriendliness(other, changetarget, resethealth);
+	return 0;
+}
 //============================================================================
 //
 // AActor :: ObtainInventory
@@ -6513,6 +6522,12 @@ double AActor::GetCameraHeight() const
 DDropItem *AActor::GetDropItems() const
 {
 	return GetClass()->DropItems;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetDropItems)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_OBJECT(self->GetDropItems());
 }
 
 double AActor::GetGravity() const

@@ -2100,6 +2100,7 @@ PStruct::PStruct(FName name, PTypeBase *outer)
 {
 	mDescriptiveName.Format("Struct<%s>", name.GetChars());
 	Size = 0;
+	HasNativeFields = false;
 }
 
 //==========================================================================
@@ -2114,7 +2115,7 @@ void PStruct::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset
 	{
 		if (!(field->Flags & VARF_Native))
 		{
-			field->Type->SetDefaultValue(base, offset + field->Offset, special);
+			field->Type->SetDefaultValue(base, unsigned(offset + field->Offset), special);
 		}
 	}
 }
@@ -2216,13 +2217,13 @@ bool PStruct::ReadFields(FSerializer &ar, void *addr) const
 
 PField *PStruct::AddField(FName name, PType *type, DWORD flags)
 {
-	PField *field = new PField(name, type);
+	PField *field = new PField(name, type, flags);
 
 	// The new field is added to the end of this struct, alignment permitting.
 	field->Offset = (Size + (type->Align - 1)) & ~(type->Align - 1);
 
 	// Enlarge this struct to enclose the new field.
-	Size = field->Offset + type->Size;
+	Size = unsigned(field->Offset + type->Size);
 
 	// This struct's alignment is the same as the largest alignment of any of
 	// its fields.
@@ -2235,6 +2236,29 @@ PField *PStruct::AddField(FName name, PType *type, DWORD flags)
 	}
 	Fields.Push(field);
 
+	return field;
+}
+
+//==========================================================================
+//
+// PStruct :: AddField
+//
+// Appends a new native field to the struct. Returns either the new field
+// or NULL if a symbol by that name already exists.
+//
+//==========================================================================
+
+PField *PStruct::AddNativeField(FName name, PType *type, size_t address, DWORD flags, int bitvalue)
+{
+	PField *field = new PField(name, type, flags|VARF_Native, address, bitvalue);
+
+	if (Symbols.AddSymbol(field) == nullptr)
+	{ // name is already in use
+		delete field;
+		return nullptr;
+	}
+	Fields.Push(field);
+	HasNativeFields = true;
 	return field;
 }
 
@@ -2286,7 +2310,7 @@ PField::PField()
 }
 
 PField::PField(FName name, PType *type, DWORD flags, size_t offset, int bitvalue)
-	: PSymbol(name), Offset(unsigned(offset)), Type(type), Flags(flags)
+	: PSymbol(name), Offset(offset), Type(type), Flags(flags)
 {
 	BitValue = bitvalue;
 	if (bitvalue > -1)
@@ -3085,7 +3109,7 @@ PField *PClass::AddField(FName name, PType *type, DWORD flags)
 	{
 		Defaults = (BYTE *)M_Realloc(Defaults, Size);
 		memset(Defaults + oldsize, 0, Size - oldsize);
-		type->SetDefaultValue(Defaults, field->Offset, &SpecialInits);
+		type->SetDefaultValue(Defaults, unsigned(field->Offset), &SpecialInits);
 	}
 	return field;
 }

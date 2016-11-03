@@ -280,13 +280,12 @@ extend class Actor
 	}
 	*/
 	
-	/*
 	private void SpawnFly(class<Actor> spawntype, sound snd)
 	{
-		AActor newmobj;
-		AActor fog;
-		AActor eye = master; // The eye is the spawnshot's master, not the target!
-		AActor targ = target; // Unlike other projectiles, the target is the intended destination.
+		Actor newmobj;
+		Actor fog;
+		Actor eye = master; // The eye is the spawnshot's master, not the target!
+		Actor targ = target; // Unlike other projectiles, the target is the intended destination.
 		int r;
 			
 		// [GZ] Should be more viable than a countdown...
@@ -307,7 +306,7 @@ extend class Actor
 			if (fog) A_PlaySound(snd, CHAN_BODY);
 		}
 
-		class<Actor> SpawnName;
+		class<Actor> SpawnName = null;
 
 		DropItem di;   // di will be our drop item list iterator
 		DropItem drop; // while drop stays as the reference point.
@@ -334,7 +333,7 @@ extend class Actor
 				}
 			}
 			di = drop;
-			n = randon[pr_spawnfly](0, n);
+			n = random[pr_spawnfly](0, n);
 			while (n >= 0)
 			{
 				if (di.Name != 'none')
@@ -385,11 +384,11 @@ extend class Actor
 				// (if the player has made noise).
 				newmobj.LastHeard = newmobj.Sector.SoundTarget;
 
-				if (newmobj.SeeState != null && newmobj.LookForPlayers (true, null))
+				if (newmobj.SeeState != null && newmobj.LookForPlayers (true))
 				{
 					newmobj.SetState (newmobj.SeeState);
 				}
-				if (!(newmobj.ObjectFlags & OF_EuthanizeMe))
+				if (!newmobj.bDestroyed)
 				{
 					// telefrag anything in this spot
 					newmobj.TeleportMove (newmobj.pos, true);
@@ -401,13 +400,8 @@ extend class Actor
 		// remove self (i.e., cube).
 		Destroy ();
 	}
-	*/
 
-
-	native
-	void A_SpawnFly(class<Actor> spawntype = null)	// needs special treatment for default
-	;
-	/*
+	void A_SpawnFly(class<Actor> spawntype = null)
 	{
 		sound snd; 
 		if (spawntype != null) 
@@ -419,18 +413,13 @@ extend class Actor
 			spawntype = "SpawnFire";
 			snd = "brain/spawn";
 		}
-		SpawnFly(self, spawntype, snd);
+		SpawnFly(spawntype, snd);
 	}
-	*/
-	
-	native
-	void A_SpawnSound()
-	;
-	/*
+
+		void A_SpawnSound()
 	{
 		// travelling cube sound
 		A_PlaySound("brain/cube", CHAN_BODY);
 		SpawnFly("SpawnFire", "brain/spawn");
 	}
-	*/
 }

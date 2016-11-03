@@ -77,6 +77,10 @@ class Actor : Thinker native
 	native void VelFromAngle(float speed = 0, float angle = 0);
 	native bool isFriend(Actor other);
 	native void AdjustFloorClip();
+	native DropItem GetDropItems();
+	native void CopyFriendliness (Actor other, bool changeTarget, bool resetHealth = true);
+	native bool LookForPlayers(bool allaround);
+	native bool TeleportMove(Vector3 pos, bool telefrag, bool modifyactor = true);
 
 	// DECORATE compatible functions
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);

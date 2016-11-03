@@ -1790,6 +1790,13 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, LookForPlayers)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL(allaround);
+	ACTION_RETURN_BOOL(P_LookForPlayers(self, allaround, nullptr));
+}
+
 //
 // ACTION ROUTINES
 //

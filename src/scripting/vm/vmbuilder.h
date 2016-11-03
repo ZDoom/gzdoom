@@ -30,6 +30,8 @@ public:
 
 	// Returns the constant register holding the value.
 	int GetConstantInt(int val);
+	int GetConstantInt(size_t val) { return GetConstantInt(int(val)); }
+	int GetConstantInt(unsigned val) { return GetConstantInt(int(val)); }
 	int GetConstantFloat(double val);
 	int GetConstantAddress(void *ptr, VM_ATAG tag);
 	int GetConstantString(FString str);

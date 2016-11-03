@@ -673,10 +673,16 @@ void InitThingdef()
 		qsort(&AFTable[0], AFTable.Size(), sizeof(AFTable[0]), funccmp);
 	}
 
+	PType *TypeActor = NewPointer(RUNTIME_CLASS(AActor));
+
+	PStruct *sstruct = NewStruct("Sector", nullptr);
+	auto sptr = NewPointer(sstruct);
+	sstruct->AddNativeField("soundtarget", TypeActor, myoffsetof(sector_t, SoundTarget));
+
 	// Define some member variables we feel like exposing to the user
 	PSymbolTable &symt = RUNTIME_CLASS(AActor)->Symbols;
 	PType *array5 = NewArray(TypeSInt32, 5);
-	PType *TypeActor = NewPointer(RUNTIME_CLASS(AActor));
+	symt.AddSymbol(new PField("sector",				sptr,			VARF_Native,				myoffsetof(AActor, Sector)));
 	symt.AddSymbol(new PField(NAME_Alpha,			TypeFloat64,	VARF_Native,				myoffsetof(AActor, Alpha)));
 	symt.AddSymbol(new PField(NAME_Angle,			TypeFloat64,	VARF_Native,				myoffsetof(AActor, Angles.Yaw)));
 	symt.AddSymbol(new PField(NAME_Args,			array5,			VARF_Native,				myoffsetof(AActor, args)));
@@ -725,12 +731,14 @@ void InitThingdef()
 	symt.AddSymbol(new PField("RipperLevel",		TypeSInt32,		VARF_Native,				myoffsetof(AActor, RipperLevel)));
 	symt.AddSymbol(new PField("RipLevelMin",		TypeSInt32,		VARF_Native,				myoffsetof(AActor, RipLevelMin)));
 	symt.AddSymbol(new PField("RipLevelMax",		TypeSInt32,		VARF_Native,				myoffsetof(AActor, RipLevelMax)));
+	symt.AddSymbol(new PField("special2",			TypeSInt32,		VARF_Native,				myoffsetof(AActor, special2)));
 	symt.AddSymbol(new PField(NAME_VisibleStartAngle, TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleStartAngle)));
 	symt.AddSymbol(new PField(NAME_VisibleStartPitch, TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleStartPitch)));
 	symt.AddSymbol(new PField(NAME_VisibleEndAngle,	TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleEndAngle)));
 	symt.AddSymbol(new PField(NAME_VisibleEndPitch, TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleEndPitch)));
 	symt.AddSymbol(new PField("AttackSound",		TypeSound,		VARF_Native,				myoffsetof(AActor, AttackSound)));
 	symt.AddSymbol(new PField("DeathSound",			TypeSound,		VARF_Native,				myoffsetof(AActor, DeathSound)));
+	symt.AddSymbol(new PField("SeeSound",			TypeSound,		VARF_Native,				myoffsetof(AActor, SeeSound)));
 	symt.AddSymbol(new PField("Pos",				TypeVector3,	VARF_Native|VARF_ReadOnly,  myoffsetof(AActor, __Pos)));
 	symt.AddSymbol(new PField("Vel",				TypeVector3,	VARF_Native,				myoffsetof(AActor, Vel)));
 	symt.AddSymbol(new PField("Scale",				TypeVector2,	VARF_Native,				myoffsetof(AActor, Scale)));
@@ -761,8 +769,11 @@ void InitThingdef()
 	PSymbolTable &symt2 = RUNTIME_CLASS(DDropItem)->Symbols;
 	PType *TypeDropItem = NewPointer(RUNTIME_CLASS(DDropItem));
 	symt2.AddSymbol(new PField("Next", TypeDropItem, VARF_Native | VARF_ReadOnly, myoffsetof(DDropItem, Next)));
-	symt2.AddSymbol(new PField("ItemName", TypeName, VARF_Native | VARF_ReadOnly, myoffsetof(DDropItem, Name)));
+	symt2.AddSymbol(new PField("Name", TypeName, VARF_Native | VARF_ReadOnly, myoffsetof(DDropItem, Name)));
 	symt2.AddSymbol(new PField("Probability", TypeSInt32, VARF_Native | VARF_ReadOnly, myoffsetof(DDropItem, Probability)));
-	symt2.AddSymbol(new PField("Amount", TypeSInt32, VARF_Native | VARF_ReadOnly, myoffsetof(DDropItem, Amount)));
+	symt2.AddSymbol(new PField("Amount", TypeSInt32, VARF_Native, myoffsetof(DDropItem, Amount)));
+
+	PSymbolTable &symt3 = RUNTIME_CLASS(DObject)->Symbols;
+	symt3.AddSymbol(new PField("bDestroyed", TypeSInt32, VARF_Native|VARF_ReadOnly, myoffsetof(DObject, ObjectFlags), 5/*OF_EuthanizeMe*/));
 
 }

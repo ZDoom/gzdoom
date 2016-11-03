@@ -199,7 +199,7 @@ static int printf_wrapper(FILE *f, const char *fmt, ...)
 
 void VMDumpConstants(FILE *out, const VMScriptFunction *func)
 {
-	char tmp[21];
+	char tmp[30];
 	int i, j, k, kk;
 
 	if (func->KonstD != NULL && func->NumKonstD != 0)
@@ -239,7 +239,7 @@ void VMDumpConstants(FILE *out, const VMScriptFunction *func)
 			for (j = 0, k = i; j < 4 && k < func->NumKonstA; j++, k += kk)
 			{
 				mysnprintf(tmp, countof(tmp), "%3d. %p:%d", k, func->KonstA[k].v, func->KonstATags()[k]);
-				printf_wrapper(out, "%-20s", tmp);
+				printf_wrapper(out, "%-22s", tmp);
 			}
 			printf_wrapper(out, "\n");
 		}

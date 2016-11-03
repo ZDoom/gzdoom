@@ -444,6 +444,17 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, TeleportMove)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_BOOL(telefrag);
+	PARAM_BOOL_DEF(modify);
+	ACTION_RETURN_BOOL(P_TeleportMove(self, DVector3(x, y, z), telefrag, modify));
+}
+	
 //==========================================================================
 //
 // [RH] P_PlayerStartStomp

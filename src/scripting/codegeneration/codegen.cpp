@@ -5067,6 +5067,12 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as global constant\n", Identifier.GetChars());
 			newex = FxConstant::MakeConstant(sym, ScriptPosition);
 		}
+		else if (sym->IsKindOf(RUNTIME_CLASS(PField)))
+		{
+			// internally defined global variable
+			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as global variable\n", Identifier.GetChars());
+			newex = new FxGlobalVariable(static_cast<PField *>(sym), ScriptPosition);
+		}
 		else
 		{
 			ScriptPosition.Message(MSG_ERROR, "Invalid global identifier '%s'\n", Identifier.GetChars());
@@ -5309,6 +5315,72 @@ ExpEmit FxSelf::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
+FxGlobalVariable::FxGlobalVariable(PField* mem, const FScriptPosition &pos)
+	: FxExpression(EFX_GlobalVariable, pos)
+{
+	membervar = mem;
+	AddressRequested = false;
+	AddressWritable = true;	// must be true unless classx tells us otherwise if requested.
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+bool FxGlobalVariable::RequestAddress(bool *writable)
+{
+	AddressRequested = true;
+	if (writable != nullptr) *writable = AddressWritable && !(membervar->Flags & VARF_ReadOnly);
+	return true;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxGlobalVariable::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	ValueType = membervar->Type;
+	return this;
+}
+
+ExpEmit FxGlobalVariable::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit obj(build, REGT_POINTER);
+
+	build->Emit(OP_LKP, obj.RegNum, build->GetConstantAddress((void*)(intptr_t)membervar->Offset, ATAG_GENERIC));
+	if (AddressRequested)
+	{
+		return obj;
+	}
+
+	ExpEmit loc(build, membervar->Type->GetRegType(), membervar->Type->GetRegCount());
+
+	if (membervar->BitValue == -1)
+	{
+		int offsetreg = build->GetConstantInt(0);
+		build->Emit(membervar->Type->GetLoadOp(), loc.RegNum, obj.RegNum, offsetreg);
+	}
+	else
+	{
+		build->Emit(OP_LBIT, loc.RegNum, obj.RegNum, 1 << membervar->BitValue);
+	}
+	obj.Free(build);
+	return loc;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FxStructMember::FxStructMember(FxExpression *x, PField* mem, const FScriptPosition &pos)
 	: FxExpression(EFX_StructMember, pos)
 {
@@ -5377,11 +5449,21 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 			classx = nullptr;
 			return x;
 		}
+		else if (classx->ExprType == EFX_GlobalVariable)
+		{
+			auto parentfield = static_cast<FxGlobalVariable *>(classx)->membervar;
+			auto newfield = new PField(membervar->SymbolName, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset, membervar->BitValue);
+			static_cast<FxGlobalVariable *>(classx)->membervar = newfield;
+			classx->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
+			auto x = classx->Resolve(ctx);
+			classx = nullptr;
+			return x;
+		}
 		else if (classx->ExprType == EFX_LocalVariable && classx->IsVector())	// vectors are a special case because they are held in registers
 		{
 			// since this is a vector, all potential things that may get here are single float or an xy-vector.
 			auto locvar = static_cast<FxLocalVariable *>(classx);
-			locvar->RegOffset = membervar->Offset / 8;
+			locvar->RegOffset = int(membervar->Offset / 8);
 			locvar->ValueType = membervar->Type;
 			classx = nullptr;
 			delete this;
@@ -5816,13 +5898,15 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	case NAME_Name:
 	case NAME_Color:
 	case NAME_Sound:
+	case NAME_State:
 		if (CheckArgSize(MethodName, ArgList, 1, 1, ScriptPosition))
 		{
 			PType *type = MethodName == NAME_Int ? TypeSInt32 :
 				MethodName == NAME_uInt ? TypeUInt32 :
 				MethodName == NAME_Double ? TypeFloat64 :
 				MethodName == NAME_Name ? TypeName :
-				MethodName == NAME_Color ? TypeColor : (PType*)TypeSound;
+				MethodName == NAME_Color ? TypeColor :
+				MethodName == NAME_State? TypeState :(PType*)TypeSound;
 
 			func = new FxTypeCast((*ArgList)[0], type, true, true);
 			(*ArgList)[0] = nullptr;
@@ -6615,13 +6699,18 @@ ExpEmit FxVectorBuiltin::Emit(VMFunctionBuilder *build)
 FxExpression *FxSequence::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
+	bool fail = false;
 	for (unsigned i = 0; i < Expressions.Size(); ++i)
 	{
 		if (nullptr == (Expressions[i] = Expressions[i]->Resolve(ctx)))
 		{
-			delete this;
-			return nullptr;
+			fail = true;
 		}
+	}
+	if (fail)
+	{
+		delete this;
+		return nullptr;
 	}
 	return this;
 }

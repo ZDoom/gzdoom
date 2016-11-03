@@ -574,7 +574,7 @@ class PField : public PSymbol
 public:
 	PField(FName name, PType *type, DWORD flags = 0, size_t offset = 0, int bitvalue = -1);
 
-	unsigned int Offset;
+	size_t Offset;
 	PType *Type;
 	DWORD Flags;
 	int BitValue;
@@ -669,8 +669,10 @@ public:
 	PStruct(FName name, PTypeBase *outer);
 
 	TArray<PField *> Fields;
+	bool HasNativeFields;
 
 	virtual PField *AddField(FName name, PType *type, DWORD flags=0);
+	virtual PField *AddNativeField(FName name, PType *type, size_t address, DWORD flags = 0, int bitvalue = -1);
 
 	size_t PropagateMark();
 

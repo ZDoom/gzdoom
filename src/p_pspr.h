@@ -29,11 +29,8 @@
 
 #define WEAPONBOTTOM			128.
 
-// [RH] +0x6000 helps it meet the screen bottom
-//		at higher resolutions while still being in
-//		the right spot at 320x200.
-#define WEAPONTOP				(32+6./16)
-
+#define WEAPONTOP				32.
+#define WEAPON_FUDGE_Y			0.375
 class AInventory;
 
 //
@@ -78,6 +75,7 @@ public:
 	DPSprite*	GetNext()	      { return Next; }
 	AActor*		GetCaller()	      { return Caller; }
 	void		SetCaller(AActor *newcaller) { Caller = newcaller; }
+	void		ResetInterpolation() { oldx = x; oldy = y; }
 
 	double x, y;
 	double oldx, oldy;

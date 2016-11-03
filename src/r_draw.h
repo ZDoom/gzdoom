@@ -116,7 +116,6 @@ extern void (*R_DrawSpanMaskedAddClamp)(void);
 
 // [RH] Span blit into an interleaved intermediate buffer
 extern void (*R_DrawColumnHoriz)(void);
-void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *spans);
 
 // [RH] Initialize the above pointers
 void R_InitColumnDrawers ();
@@ -183,6 +182,7 @@ extern void (*rt_map4cols)(int sx, int yl, int yh);
 #define rt_addclamp4cols	rt_addclamp4cols_c
 #endif
 
+void rt_flip_posts();
 void rt_draw4cols (int sx);
 
 // [RH] Preps the temporary horizontal buffer.

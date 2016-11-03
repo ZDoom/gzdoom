@@ -299,7 +299,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			while ((dc_x < stop4) && (dc_x & 3))
 			{
 				pixels = img->GetColumn(frac >> FRACBITS, spanptr);
-				R_DrawMaskedColumn(pixels, spans);
+				R_DrawMaskedColumn(pixels, spans, false);
 				dc_x++;
 				frac += xiscale_i;
 			}
@@ -310,7 +310,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 				for (int zz = 4; zz; --zz)
 				{
 					pixels = img->GetColumn(frac >> FRACBITS, spanptr);
-					R_DrawMaskedColumnHoriz(pixels, spans);
+					R_DrawMaskedColumn(pixels, spans, true);
 					dc_x++;
 					frac += xiscale_i;
 				}
@@ -320,7 +320,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			while (dc_x < x2_i)
 			{
 				pixels = img->GetColumn(frac >> FRACBITS, spanptr);
-				R_DrawMaskedColumn(pixels, spans);
+				R_DrawMaskedColumn(pixels, spans, false);
 				dc_x++;
 				frac += xiscale_i;
 			}
@@ -1330,6 +1330,13 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		return;
 	}
 
+	BYTE *destorgsave = dc_destorg;
+	dc_destorg = screen->GetBuffer();
+	if (dc_destorg == NULL)
+	{
+		I_FatalError("Attempt to write to buffer of hardware canvas");
+	}
+
 	scalex /= tex->Scale.X;
 	scaley /= tex->Scale.Y;
 
@@ -1432,6 +1439,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		pt1 = pt2;
 		pt2--;			if (pt2 < 0) pt2 = npoints;
 	} while (pt1 != botpt);
+	dc_destorg = destorgsave;
 #endif
 }
 

@@ -5389,11 +5389,11 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 						{
 							if (!looping)
 							{
-								S_PlaySound(spot, chan, sid, vol, atten, local);
+								S_PlaySound(spot, chan, sid, vol, atten, !!local);
 							}
 							else if (!S_IsActorPlayingSomething(spot, chan & 7, sid))
 							{
-								S_PlaySound(spot, chan | CHAN_LOOP, sid, vol, atten, local);
+								S_PlaySound(spot, chan | CHAN_LOOP, sid, vol, atten, !!local);
 							}
 						}
 					}

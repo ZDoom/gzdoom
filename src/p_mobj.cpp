@@ -131,7 +131,7 @@ CVAR (Int, cl_bloodtype, 0, CVAR_ARCHIVE);
 
 // CODE --------------------------------------------------------------------
 
-IMPLEMENT_POINTY_CLASS (AActor)
+IMPLEMENT_POINTY_CLASS_WITH_FIELDS (AActor)
  DECLARE_POINTER (target)
  DECLARE_POINTER (lastenemy)
  DECLARE_POINTER (tracer)
@@ -149,6 +149,99 @@ AActor::~AActor ()
 {
 	// Please avoid calling the destructor directly (or through delete)!
 	// Use Destroy() instead.
+}
+
+extern FFlagDef InternalActorFlagDefs[];
+extern FFlagDef ActorFlagDefs[];
+
+void AActor::InitNativeFields()
+{
+	PType *TypeActor = NewPointer(RUNTIME_CLASS(AActor));
+	PType *TypeInventory = NewPointer(RUNTIME_CLASS(AInventory));
+	PStruct *sstruct = NewStruct("Sector", nullptr);
+	auto TypeSector = NewPointer(sstruct);
+	PType *array5 = NewArray(TypeSInt32, 5);
+
+	auto meta = RUNTIME_CLASS(AActor);
+
+	// Define the member variables we feel like exposing to the user
+	meta->AddNativeField(NAME_Alpha,			TypeFloat64,	myoffsetof(AActor, Alpha));
+	meta->AddNativeField(NAME_Angle,			TypeFloat64,	myoffsetof(AActor, Angles.Yaw));
+	meta->AddNativeField(NAME_Args,				array5,			myoffsetof(AActor, args));
+	meta->AddNativeField(NAME_CeilingZ,			TypeFloat64,	myoffsetof(AActor, ceilingz), VARF_ReadOnly);
+	meta->AddNativeField(NAME_FloorZ,			TypeFloat64,	myoffsetof(AActor, floorz), VARF_ReadOnly);
+	meta->AddNativeField(NAME_Health,			TypeSInt32,		myoffsetof(AActor, health), VARF_ReadOnly);
+	meta->AddNativeField(NAME_Mass,				TypeSInt32,		myoffsetof(AActor, Mass));
+	meta->AddNativeField(NAME_Pitch,			TypeFloat64,	myoffsetof(AActor, Angles.Pitch));
+	meta->AddNativeField(NAME_Roll,				TypeFloat64,	myoffsetof(AActor, Angles.Roll));
+	meta->AddNativeField(NAME_Special,			TypeSInt32,		myoffsetof(AActor, special));
+	meta->AddNativeField(NAME_TID,				TypeSInt32,		myoffsetof(AActor, tid), VARF_ReadOnly);
+	meta->AddNativeField(NAME_TIDtoHate,		TypeSInt32,		myoffsetof(AActor, TIDtoHate), VARF_ReadOnly);
+	meta->AddNativeField(NAME_WaterLevel,		TypeSInt32,		myoffsetof(AActor, waterlevel), VARF_ReadOnly);
+	meta->AddNativeField(NAME_X,				TypeFloat64,	myoffsetof(AActor, __Pos.X), VARF_ReadOnly | VARF_Deprecated);	// must remain read-only!
+	meta->AddNativeField(NAME_Y,				TypeFloat64,	myoffsetof(AActor, __Pos.Y), VARF_ReadOnly | VARF_Deprecated);	// must remain read-only!
+	meta->AddNativeField(NAME_Z,				TypeFloat64,	myoffsetof(AActor, __Pos.Z), VARF_ReadOnly | VARF_Deprecated);	// must remain read-only!
+	meta->AddNativeField(NAME_VelX,				TypeFloat64,	myoffsetof(AActor, Vel.X), VARF_ReadOnly | VARF_Deprecated);
+	meta->AddNativeField(NAME_VelY,				TypeFloat64,	myoffsetof(AActor, Vel.Y), VARF_ReadOnly | VARF_Deprecated);
+	meta->AddNativeField(NAME_VelZ,				TypeFloat64,	myoffsetof(AActor, Vel.Z), VARF_ReadOnly | VARF_Deprecated);
+	meta->AddNativeField(NAME_MomX,				TypeFloat64,	myoffsetof(AActor, Vel.X), VARF_ReadOnly | VARF_Deprecated);
+	meta->AddNativeField(NAME_MomY,				TypeFloat64,	myoffsetof(AActor, Vel.Y), VARF_ReadOnly | VARF_Deprecated);
+	meta->AddNativeField(NAME_MomZ,				TypeFloat64,	myoffsetof(AActor, Vel.Z), VARF_ReadOnly | VARF_Deprecated);
+	meta->AddNativeField(NAME_ScaleX,			TypeFloat64,	myoffsetof(AActor, Scale.X), VARF_Deprecated);
+	meta->AddNativeField(NAME_ScaleY,			TypeFloat64,	myoffsetof(AActor, Scale.Y), VARF_Deprecated);
+	meta->AddNativeField(NAME_Score,			TypeSInt32,		myoffsetof(AActor, Score));
+	meta->AddNativeField(NAME_Accuracy,			TypeSInt32,		myoffsetof(AActor, accuracy));
+	meta->AddNativeField(NAME_Stamina,			TypeSInt32,		myoffsetof(AActor, stamina));
+	meta->AddNativeField(NAME_Height,			TypeFloat64,	myoffsetof(AActor, Height));
+	meta->AddNativeField(NAME_Radius,			TypeFloat64,	myoffsetof(AActor, radius), VARF_ReadOnly);
+	meta->AddNativeField(NAME_ReactionTime,		TypeSInt32,		myoffsetof(AActor, reactiontime));
+	meta->AddNativeField(NAME_MeleeRange,		TypeFloat64,	myoffsetof(AActor, meleerange));
+	meta->AddNativeField(NAME_Speed,			TypeFloat64,	myoffsetof(AActor, Speed));
+	meta->AddNativeField("FloatSpeed",			TypeFloat64,	myoffsetof(AActor, FloatSpeed));
+	meta->AddNativeField("PainThreshold",		TypeSInt32,		myoffsetof(AActor, PainThreshold));
+	meta->AddNativeField("spriteAngle",			TypeFloat64,	myoffsetof(AActor, SpriteAngle));
+	meta->AddNativeField("spriteRotation",		TypeFloat64,	myoffsetof(AActor, SpriteRotation));
+	meta->AddNativeField(NAME_Threshold,		TypeSInt32,		myoffsetof(AActor, threshold));
+	meta->AddNativeField(NAME_DefThreshold,		TypeSInt32,		myoffsetof(AActor, DefThreshold), VARF_ReadOnly);
+	meta->AddNativeField(NAME_Damage,			TypeSInt32,		myoffsetof(AActor, DamageVal), VARF_ReadOnly);
+	meta->AddNativeField("visdir",				TypeSInt32,		myoffsetof(AActor, visdir));
+	meta->AddNativeField("Gravity",				TypeFloat64,	myoffsetof(AActor, Gravity));
+	meta->AddNativeField("FloorClip",			TypeFloat64,	myoffsetof(AActor, Floorclip));
+	meta->AddNativeField("DamageType",			TypeName,		myoffsetof(AActor, DamageType));
+	meta->AddNativeField("FloatBobPhase",		TypeUInt8,		myoffsetof(AActor, FloatBobPhase));
+	meta->AddNativeField("tics",				TypeSInt32,		myoffsetof(AActor, tics));
+	meta->AddNativeField("RipperLevel",			TypeSInt32,		myoffsetof(AActor, RipperLevel));
+	meta->AddNativeField("RipLevelMin",			TypeSInt32,		myoffsetof(AActor, RipLevelMin));
+	meta->AddNativeField("RipLevelMax",			TypeSInt32,		myoffsetof(AActor, RipLevelMax));
+	meta->AddNativeField("special2",			TypeSInt32,		myoffsetof(AActor, special2));
+	meta->AddNativeField(NAME_VisibleStartAngle, TypeFloat64,	myoffsetof(AActor, VisibleStartAngle));
+	meta->AddNativeField(NAME_VisibleStartPitch, TypeFloat64,	myoffsetof(AActor, VisibleStartPitch));
+	meta->AddNativeField(NAME_VisibleEndAngle,	TypeFloat64,	myoffsetof(AActor, VisibleEndAngle));
+	meta->AddNativeField(NAME_VisibleEndPitch,	TypeFloat64,	myoffsetof(AActor, VisibleEndPitch));
+	meta->AddNativeField("AttackSound",			TypeSound,		myoffsetof(AActor, AttackSound));
+	meta->AddNativeField("DeathSound",			TypeSound,		myoffsetof(AActor, DeathSound));
+	meta->AddNativeField("SeeSound",			TypeSound,		myoffsetof(AActor, SeeSound));
+	meta->AddNativeField("Pos",					TypeVector3,	myoffsetof(AActor, __Pos), VARF_ReadOnly);
+	meta->AddNativeField("Vel",					TypeVector3,	myoffsetof(AActor, Vel));
+	meta->AddNativeField("Scale",				TypeVector2,	myoffsetof(AActor, Scale));
+	meta->AddNativeField("CurState",			TypeState,		myoffsetof(AActor, state), VARF_ReadOnly);	// has to be renamed on the script side because it clashes with the same named type.
+	meta->AddNativeField("SeeState",			TypeState,		myoffsetof(AActor, SeeState), VARF_ReadOnly);
+	meta->AddNativeField(NAME_Target,			TypeActor,		myoffsetof(AActor, target));
+	meta->AddNativeField(NAME_Master,			TypeActor,		myoffsetof(AActor, master));
+	meta->AddNativeField(NAME_Tracer,			TypeActor,		myoffsetof(AActor, tracer));
+	meta->AddNativeField("LastHeard",			TypeActor,		myoffsetof(AActor, LastHeard));
+	meta->AddNativeField("LastEnemy",			TypeActor,		myoffsetof(AActor, lastenemy));
+	meta->AddNativeField("Sector",				TypeSector,		myoffsetof(AActor, Sector));
+
+	// synthesize a symbol for each flag from the flag name tables to avoid redundant declaration of them.
+	for (size_t i = 0; ActorFlagDefs[i].flagbit != 0xffffffff; i++)
+	{
+		meta->AddNativeField(FStringf("b%s", ActorFlagDefs[i].name), (ActorFlagDefs[i].fieldsize == 4? TypeSInt32 : TypeSInt16), ActorFlagDefs[i].structoffset, ActorFlagDefs[i].varflags, ActorFlagDefs[i].flagbit);
+	}
+	for (size_t i = 0; InternalActorFlagDefs[i].flagbit != 0xffffffff; i++)
+	{
+		meta->AddNativeField(FStringf("b%s", InternalActorFlagDefs[i].name), (InternalActorFlagDefs[i].fieldsize == 4 ? TypeSInt32 : TypeSInt16), InternalActorFlagDefs[i].structoffset, InternalActorFlagDefs[i].varflags, InternalActorFlagDefs[i].flagbit);
+	}
 }
 
 //==========================================================================
@@ -6707,9 +6800,20 @@ DEFINE_ACTION_FUNCTION(AActor, Vec2OffsetZ)
 // DropItem handling
 //
 //----------------------------------------------------------------------------
-IMPLEMENT_POINTY_CLASS(DDropItem)
+IMPLEMENT_POINTY_CLASS_WITH_FIELDS(DDropItem)
  DECLARE_POINTER(Next)
 END_POINTERS
+
+void DDropItem::InitNativeFields()
+{
+	auto meta = RUNTIME_CLASS(DDropItem);
+	PType *TypeDropItem = NewPointer(RUNTIME_CLASS(DDropItem));
+	meta->AddNativeField("Next", TypeDropItem, myoffsetof(DDropItem, Next), VARF_ReadOnly);
+	meta->AddNativeField("Name", TypeName, myoffsetof(DDropItem, Name), VARF_ReadOnly);
+	meta->AddNativeField("Probability", TypeSInt32, myoffsetof(DDropItem, Probability), VARF_ReadOnly);
+	meta->AddNativeField("Amount", TypeSInt32, myoffsetof(DDropItem, Amount));
+}
+
 
 void PrintMiscActorInfo(AActor *query)
 {

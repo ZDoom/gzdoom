@@ -62,7 +62,7 @@ static TArray<AFuncDesc> AFTable;
 #define DEFINE_DUMMY_FLAG(name, deprec) { DEPF_UNUSED, #name, -1, 0, deprec? VARF_Deprecated:0 }
 
 // internal flags. These do not get exposed to actor definitions but scripts need to be able to access them as variables.
-static FFlagDef InternalActorFlagDefs[]=
+FFlagDef InternalActorFlagDefs[]=
 {
 	DEFINE_FLAG(MF, INCHASE, AActor, flags),
 	DEFINE_FLAG(MF, UNMORPHED, AActor, flags),
@@ -91,10 +91,11 @@ static FFlagDef InternalActorFlagDefs[]=
 	DEFINE_FLAG(MF6, INTRYMOVE, AActor, flags6),
 	DEFINE_FLAG(MF7, HANDLENODELAY, AActor, flags7),
 	DEFINE_FLAG(MF7, FLYCHEAT, AActor, flags7),
+	{ 0xffffffff }
 };
 
 
-static FFlagDef ActorFlagDefs[]=
+FFlagDef ActorFlagDefs[]=
 {
 	DEFINE_FLAG(MF, PICKUP, APlayerPawn, flags),
 	DEFINE_FLAG(MF, SPECIAL, APlayerPawn, flags),
@@ -328,6 +329,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG2(BOUNCE_MBF, MBFBOUNCER, AActor, BounceFlags),
 	DEFINE_FLAG2(BOUNCE_AutoOffFloorOnly, BOUNCEAUTOOFFFLOORONLY, AActor, BounceFlags),
 	DEFINE_FLAG2(BOUNCE_UseBounceState, USEBOUNCESTATE, AActor, BounceFlags),
+	{ 0xffffffff }
 };
 
 // These won't be accessible through bitfield variables
@@ -433,7 +435,7 @@ static FFlagDef PowerSpeedFlagDefs[] =
 
 static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int NumDefs; } FlagLists[] =
 {
-	{ &RUNTIME_CLASS_CASTLESS(AActor), 		ActorFlagDefs,		countof(ActorFlagDefs) },
+	{ &RUNTIME_CLASS_CASTLESS(AActor), 		ActorFlagDefs,		countof(ActorFlagDefs)-1 },	// -1 to account for the terminator
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 		MoreFlagDefs,		countof(MoreFlagDefs) },
 	{ &RUNTIME_CLASS_CASTLESS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs) },
 	{ &RUNTIME_CLASS_CASTLESS(AWeapon), 	WeaponFlagDefs,		countof(WeaponFlagDefs) },
@@ -634,6 +636,7 @@ static int funccmp(const void * a, const void * b)
 // Initialization
 //
 //==========================================================================
+void G_InitLevelLocalsForScript();
 
 void InitThingdef()
 {
@@ -679,101 +682,14 @@ void InitThingdef()
 	auto sptr = NewPointer(sstruct);
 	sstruct->AddNativeField("soundtarget", TypeActor, myoffsetof(sector_t, SoundTarget));
 
-	// Define some member variables we feel like exposing to the user
-	PSymbolTable &symt = RUNTIME_CLASS(AActor)->Symbols;
-	PType *array5 = NewArray(TypeSInt32, 5);
-	symt.AddSymbol(new PField("sector",				sptr,			VARF_Native,				myoffsetof(AActor, Sector)));
-	symt.AddSymbol(new PField(NAME_Alpha,			TypeFloat64,	VARF_Native,				myoffsetof(AActor, Alpha)));
-	symt.AddSymbol(new PField(NAME_Angle,			TypeFloat64,	VARF_Native,				myoffsetof(AActor, Angles.Yaw)));
-	symt.AddSymbol(new PField(NAME_Args,			array5,			VARF_Native,				myoffsetof(AActor, args)));
-	symt.AddSymbol(new PField(NAME_CeilingZ,		TypeFloat64,	VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, ceilingz)));
-	symt.AddSymbol(new PField(NAME_FloorZ,			TypeFloat64,	VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, floorz)));
-	symt.AddSymbol(new PField(NAME_Health,			TypeSInt32,		VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, health)));
-	symt.AddSymbol(new PField(NAME_Mass,			TypeSInt32,		VARF_Native,				myoffsetof(AActor, Mass)));
-	symt.AddSymbol(new PField(NAME_Pitch,			TypeFloat64,	VARF_Native,				myoffsetof(AActor, Angles.Pitch)));
-	symt.AddSymbol(new PField(NAME_Roll,			TypeFloat64,	VARF_Native,				myoffsetof(AActor, Angles.Roll)));
-	symt.AddSymbol(new PField(NAME_Special,			TypeSInt32,		VARF_Native,				myoffsetof(AActor, special)));
-	symt.AddSymbol(new PField(NAME_TID,				TypeSInt32,		VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, tid)));
-	symt.AddSymbol(new PField(NAME_TIDtoHate,		TypeSInt32,		VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, TIDtoHate)));
-	symt.AddSymbol(new PField(NAME_WaterLevel,		TypeSInt32,		VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, waterlevel)));
-	symt.AddSymbol(new PField(NAME_X,				TypeFloat64,	VARF_Native|VARF_ReadOnly|VARF_Deprecated,	myoffsetof(AActor, __Pos.X)));	// must remain read-only!
-	symt.AddSymbol(new PField(NAME_Y,				TypeFloat64,	VARF_Native|VARF_ReadOnly|VARF_Deprecated,	myoffsetof(AActor, __Pos.Y)));	// must remain read-only!
-	symt.AddSymbol(new PField(NAME_Z,				TypeFloat64,	VARF_Native|VARF_ReadOnly|VARF_Deprecated,	myoffsetof(AActor, __Pos.Z)));	// must remain read-only!
-	symt.AddSymbol(new PField(NAME_VelX,			TypeFloat64,	VARF_Native|VARF_ReadOnly|VARF_Deprecated,	myoffsetof(AActor, Vel.X)));
-	symt.AddSymbol(new PField(NAME_VelY,			TypeFloat64,	VARF_Native|VARF_ReadOnly|VARF_Deprecated,	myoffsetof(AActor, Vel.Y)));
-	symt.AddSymbol(new PField(NAME_VelZ,			TypeFloat64,	VARF_Native|VARF_ReadOnly|VARF_Deprecated,	myoffsetof(AActor, Vel.Z)));
-	symt.AddSymbol(new PField(NAME_MomX,			TypeFloat64,	VARF_Native|VARF_ReadOnly|VARF_Deprecated,	myoffsetof(AActor, Vel.X)));
-	symt.AddSymbol(new PField(NAME_MomY,			TypeFloat64,	VARF_Native|VARF_ReadOnly|VARF_Deprecated,	myoffsetof(AActor, Vel.Y)));
-	symt.AddSymbol(new PField(NAME_MomZ,			TypeFloat64,	VARF_Native|VARF_ReadOnly|VARF_Deprecated,	myoffsetof(AActor, Vel.Z)));
-	symt.AddSymbol(new PField(NAME_ScaleX,			TypeFloat64,	VARF_Native|VARF_Deprecated,	myoffsetof(AActor, Scale.X)));
-	symt.AddSymbol(new PField(NAME_ScaleY,			TypeFloat64,	VARF_Native|VARF_Deprecated,	myoffsetof(AActor, Scale.Y)));
-	symt.AddSymbol(new PField(NAME_Score,			TypeSInt32,		VARF_Native,				myoffsetof(AActor, Score)));
-	symt.AddSymbol(new PField(NAME_Accuracy,		TypeSInt32,		VARF_Native,				myoffsetof(AActor, accuracy)));
-	symt.AddSymbol(new PField(NAME_Stamina,			TypeSInt32,		VARF_Native,				myoffsetof(AActor, stamina)));
-	symt.AddSymbol(new PField(NAME_Height,			TypeFloat64,	VARF_Native,				myoffsetof(AActor, Height)));
-	symt.AddSymbol(new PField(NAME_Radius,			TypeFloat64,	VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, radius)));
-	symt.AddSymbol(new PField(NAME_ReactionTime,	TypeSInt32,		VARF_Native,				myoffsetof(AActor, reactiontime)));
-	symt.AddSymbol(new PField(NAME_MeleeRange,		TypeFloat64,	VARF_Native,				myoffsetof(AActor, meleerange)));
-	symt.AddSymbol(new PField(NAME_Speed,			TypeFloat64,	VARF_Native,				myoffsetof(AActor, Speed)));
-	symt.AddSymbol(new PField("FloatSpeed",			TypeFloat64,	VARF_Native,				myoffsetof(AActor, FloatSpeed)));
-	symt.AddSymbol(new PField("PainThreshold",		TypeSInt32,		VARF_Native,				myoffsetof(AActor, PainThreshold)));
-	symt.AddSymbol(new PField("spriteAngle",		TypeFloat64,	VARF_Native,				myoffsetof(AActor, SpriteAngle)));
-	symt.AddSymbol(new PField("spriteRotation",		TypeFloat64,	VARF_Native,				myoffsetof(AActor, SpriteRotation)));
-	symt.AddSymbol(new PField(NAME_Threshold,		TypeSInt32,		VARF_Native,				myoffsetof(AActor, threshold)));
-	symt.AddSymbol(new PField(NAME_DefThreshold,	TypeSInt32,		VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, DefThreshold)));
-	symt.AddSymbol(new PField(NAME_Damage,			TypeSInt32,		VARF_Native|VARF_ReadOnly,  myoffsetof(AActor, DamageVal)));
-	symt.AddSymbol(new PField("visdir",				TypeSInt32,		VARF_Native,				myoffsetof(AActor, visdir)));
-	symt.AddSymbol(new PField("Gravity",			TypeFloat64,	VARF_Native,				myoffsetof(AActor, Gravity)));
-	symt.AddSymbol(new PField("FloorClip",			TypeFloat64,	VARF_Native,				myoffsetof(AActor, Floorclip)));
-	symt.AddSymbol(new PField("DamageType",			TypeName,		VARF_Native,				myoffsetof(AActor, DamageType)));
-	symt.AddSymbol(new PField("FloatBobPhase",		TypeUInt8,		VARF_Native,				myoffsetof(AActor, FloatBobPhase)));
-	symt.AddSymbol(new PField("tics",				TypeSInt32,		VARF_Native,				myoffsetof(AActor, tics)));
-	symt.AddSymbol(new PField("RipperLevel",		TypeSInt32,		VARF_Native,				myoffsetof(AActor, RipperLevel)));
-	symt.AddSymbol(new PField("RipLevelMin",		TypeSInt32,		VARF_Native,				myoffsetof(AActor, RipLevelMin)));
-	symt.AddSymbol(new PField("RipLevelMax",		TypeSInt32,		VARF_Native,				myoffsetof(AActor, RipLevelMax)));
-	symt.AddSymbol(new PField("special2",			TypeSInt32,		VARF_Native,				myoffsetof(AActor, special2)));
-	symt.AddSymbol(new PField(NAME_VisibleStartAngle, TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleStartAngle)));
-	symt.AddSymbol(new PField(NAME_VisibleStartPitch, TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleStartPitch)));
-	symt.AddSymbol(new PField(NAME_VisibleEndAngle,	TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleEndAngle)));
-	symt.AddSymbol(new PField(NAME_VisibleEndPitch, TypeFloat64,	VARF_Native,				myoffsetof(AActor, VisibleEndPitch)));
-	symt.AddSymbol(new PField("AttackSound",		TypeSound,		VARF_Native,				myoffsetof(AActor, AttackSound)));
-	symt.AddSymbol(new PField("DeathSound",			TypeSound,		VARF_Native,				myoffsetof(AActor, DeathSound)));
-	symt.AddSymbol(new PField("SeeSound",			TypeSound,		VARF_Native,				myoffsetof(AActor, SeeSound)));
-	symt.AddSymbol(new PField("Pos",				TypeVector3,	VARF_Native|VARF_ReadOnly,  myoffsetof(AActor, __Pos)));
-	symt.AddSymbol(new PField("Vel",				TypeVector3,	VARF_Native,				myoffsetof(AActor, Vel)));
-	symt.AddSymbol(new PField("Scale",				TypeVector2,	VARF_Native,				myoffsetof(AActor, Scale)));
-	symt.AddSymbol(new PField("CurState",			TypeState,		VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, state)));	// has to be renamed on the script side because it clashes with the same named type.
-	symt.AddSymbol(new PField("SeeState",			TypeState,		VARF_Native|VARF_ReadOnly,	myoffsetof(AActor, SeeState)));
-	symt.AddSymbol(new PField(NAME_Target,			TypeActor,		VARF_Native,				myoffsetof(AActor, target)));
-	symt.AddSymbol(new PField(NAME_Master,			TypeActor,		VARF_Native,				myoffsetof(AActor, master)));
-	symt.AddSymbol(new PField(NAME_Tracer,			TypeActor,		VARF_Native,				myoffsetof(AActor, tracer)));
-	symt.AddSymbol(new PField("LastHeard",			TypeActor,		VARF_Native,				myoffsetof(AActor, LastHeard)));
-	symt.AddSymbol(new PField("LastEnemy",			TypeActor,		VARF_Native,				myoffsetof(AActor, lastenemy)));
+	G_InitLevelLocalsForScript();
 
-	// synthesize a symbol for each flag.
-	for (size_t i = 0; i < countof(ActorFlagDefs); i++)
+	FAutoSegIterator probe(CRegHead, CRegTail);
+
+	while (*++probe != NULL)
 	{
-		int bit = 0;
-		unsigned val = ActorFlagDefs[i].flagbit;
-		while ((val >>= 1)) bit++;
-		symt.AddSymbol(new PField(FStringf("b%s", ActorFlagDefs[i].name), (ActorFlagDefs[i].fieldsize == 4? TypeSInt32 : TypeSInt16), ActorFlagDefs[i].varflags, ActorFlagDefs[i].structoffset, bit));
+		if (((ClassReg *)*probe)->InitNatives) 
+			((ClassReg *)*probe)->InitNatives();
 	}
-	for (size_t i = 0; i < countof(InternalActorFlagDefs); i++)
-	{
-		int bit = 0;
-		unsigned val = InternalActorFlagDefs[i].flagbit;
-		while ((val >>= 1)) bit++;
-		symt.AddSymbol(new PField(FStringf("b%s", InternalActorFlagDefs[i].name), (InternalActorFlagDefs[i].fieldsize == 4 ? TypeSInt32 : TypeSInt16), InternalActorFlagDefs[i].varflags, InternalActorFlagDefs[i].structoffset, bit));
-	}
-
-	PSymbolTable &symt2 = RUNTIME_CLASS(DDropItem)->Symbols;
-	PType *TypeDropItem = NewPointer(RUNTIME_CLASS(DDropItem));
-	symt2.AddSymbol(new PField("Next", TypeDropItem, VARF_Native | VARF_ReadOnly, myoffsetof(DDropItem, Next)));
-	symt2.AddSymbol(new PField("Name", TypeName, VARF_Native | VARF_ReadOnly, myoffsetof(DDropItem, Name)));
-	symt2.AddSymbol(new PField("Probability", TypeSInt32, VARF_Native | VARF_ReadOnly, myoffsetof(DDropItem, Probability)));
-	symt2.AddSymbol(new PField("Amount", TypeSInt32, VARF_Native, myoffsetof(DDropItem, Amount)));
-
-	PSymbolTable &symt3 = RUNTIME_CLASS(DObject)->Symbols;
-	symt3.AddSymbol(new PField("bDestroyed", TypeSInt32, VARF_Native|VARF_ReadOnly, myoffsetof(DObject, ObjectFlags), 5/*OF_EuthanizeMe*/));
 
 }

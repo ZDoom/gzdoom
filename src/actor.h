@@ -565,6 +565,7 @@ class DDropItem : public DObject
 {
 	DECLARE_CLASS(DDropItem, DObject)
 	HAS_OBJECT_POINTERS
+	HAS_FIELDS
 public:
 	DDropItem *Next;
 	FName Name;
@@ -578,6 +579,7 @@ const double MinVel = EQUAL_EPSILON;
 class AActor : public DThinker
 {
 	DECLARE_CLASS_WITH_META (AActor, DThinker, PClassActor)
+	HAS_FIELDS
 	HAS_OBJECT_POINTERS
 public:
 	AActor () throw();

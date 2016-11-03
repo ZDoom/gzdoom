@@ -215,7 +215,6 @@ void CreateDamageFunction(PClassActor *info, AActor *defaults, FxExpression *id,
 //==========================================================================
 void ParseScripts();
 void ParseAllDecorate();
-void G_InitLevelLocalsForScript();
 
 void LoadActors ()
 {
@@ -224,7 +223,6 @@ void LoadActors ()
 	timer.Reset(); timer.Clock();
 	FScriptPosition::ResetErrorCounter();
 
-	G_InitLevelLocalsForScript();
 	InitThingdef();
 	FScriptPosition::StrictErrors = true;
 	ParseScripts();

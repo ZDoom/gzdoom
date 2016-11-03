@@ -62,6 +62,7 @@ ClassReg DObject::RegistrationInfo =
 	NULL,							// ParentType
 	NULL,							// Pointers
 	&DObject::InPlaceConstructor,	// ConstructNative
+	&DObject::InitNativeFields,
 	sizeof(DObject),				// SizeOf
 	CLASSREG_PClass,				// MetaClassNum
 };
@@ -336,6 +337,18 @@ DObject::~DObject ()
 			type->DestroySpecials(this);
 		}
 	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DObject::InitNativeFields()
+{
+	auto meta = RUNTIME_CLASS(DObject);
+	meta->AddNativeField("bDestroyed", TypeSInt32, myoffsetof(DObject, ObjectFlags), VARF_ReadOnly, OF_EuthanizeMe);
 }
 
 //==========================================================================

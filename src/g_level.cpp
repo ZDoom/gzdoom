@@ -1856,13 +1856,6 @@ void FLevelLocals::AddScroller (int secnum)
 //
 //==========================================================================
 
-inline int val2bit(int val)
-{
-	int bit = 0;
-	while ((val >>= 1)) bit++;
-	return bit;
-}
-
 void G_InitLevelLocalsForScript()
 {
 	PStruct *lstruct = NewStruct("LevelLocals", nullptr);
@@ -1884,14 +1877,14 @@ void G_InitLevelLocalsForScript()
 	lstruct->AddNativeField("nextmap", TypeString, myoffsetof(FLevelLocals, NextMap));
 	lstruct->AddNativeField("nextsecretmap", TypeString, myoffsetof(FLevelLocals, NextSecretMap));
 	lstruct->AddNativeField("maptype", TypeSInt32, myoffsetof(FLevelLocals, maptype), VARF_ReadOnly);
-	lstruct->AddNativeField("monsterstelefrag", TypeSInt32, myoffsetof(FLevelLocals, flags), VARF_ReadOnly, val2bit(LEVEL_MONSTERSTELEFRAG));
-	lstruct->AddNativeField("actownspecial", TypeSInt32, myoffsetof(FLevelLocals, flags), VARF_ReadOnly, val2bit(LEVEL_ACTOWNSPECIAL));
-	lstruct->AddNativeField("sndseqtotalctrl", TypeSInt32, myoffsetof(FLevelLocals, flags), VARF_ReadOnly, val2bit(LEVEL_SNDSEQTOTALCTRL));
-	lstruct->AddNativeField("allmap", TypeSInt32, myoffsetof(FLevelLocals, flags2), 0, val2bit(LEVEL2_ALLMAP));
-	lstruct->AddNativeField("missilesactivateimpact", TypeSInt32, myoffsetof(FLevelLocals, flags2), 0, val2bit(LEVEL2_MISSILESACTIVATEIMPACT));
-	lstruct->AddNativeField("monsterfallingdamage", TypeSInt32, myoffsetof(FLevelLocals, flags2), 0, val2bit(LEVEL2_MONSTERFALLINGDAMAGE));
-	lstruct->AddNativeField("checkswitchrange", TypeSInt32, myoffsetof(FLevelLocals, flags2), 0, val2bit(LEVEL2_CHECKSWITCHRANGE));
-	lstruct->AddNativeField("polygrind", TypeSInt32, myoffsetof(FLevelLocals, flags2), 0, val2bit(LEVEL2_POLYGRIND));
+	lstruct->AddNativeField("monsterstelefrag", TypeSInt32, myoffsetof(FLevelLocals, flags), VARF_ReadOnly, LEVEL_MONSTERSTELEFRAG);
+	lstruct->AddNativeField("actownspecial", TypeSInt32, myoffsetof(FLevelLocals, flags), VARF_ReadOnly, LEVEL_ACTOWNSPECIAL);
+	lstruct->AddNativeField("sndseqtotalctrl", TypeSInt32, myoffsetof(FLevelLocals, flags), VARF_ReadOnly, LEVEL_SNDSEQTOTALCTRL);
+	lstruct->AddNativeField("allmap", TypeSInt32, myoffsetof(FLevelLocals, flags2), 0, (LEVEL2_ALLMAP));
+	lstruct->AddNativeField("missilesactivateimpact", TypeSInt32, myoffsetof(FLevelLocals, flags2), 0, LEVEL2_MISSILESACTIVATEIMPACT);
+	lstruct->AddNativeField("monsterfallingdamage", TypeSInt32, myoffsetof(FLevelLocals, flags2), 0, LEVEL2_MONSTERFALLINGDAMAGE);
+	lstruct->AddNativeField("checkswitchrange", TypeSInt32, myoffsetof(FLevelLocals, flags2), 0, LEVEL2_CHECKSWITCHRANGE);
+	lstruct->AddNativeField("polygrind", TypeSInt32, myoffsetof(FLevelLocals, flags2), 0, LEVEL2_POLYGRIND);
 	lstruct->AddNativeField("music", TypeString, myoffsetof(FLevelLocals, Music), VARF_ReadOnly);
 	lstruct->AddNativeField("musicorder", TypeSInt32, myoffsetof(FLevelLocals, musicorder), VARF_ReadOnly);
 	lstruct->AddNativeField("total_secrets", TypeSInt32, myoffsetof(FLevelLocals, total_secrets), VARF_ReadOnly);

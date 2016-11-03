@@ -111,6 +111,7 @@ struct ClassReg
 	ClassReg *ParentType;
 	const size_t *Pointers;
 	void (*ConstructNative)(void *);
+	void(*InitNatives)();
 	unsigned int SizeOf:28;
 	unsigned int MetaClassNum:4;
 
@@ -147,6 +148,9 @@ protected: \
 #define HAS_OBJECT_POINTERS \
 	static const size_t PointerOffsets[];
 
+#define HAS_FIELDS \
+	static void InitNativeFields();
+
 // Taking the address of a field in an object at address 1 instead of
 // address 0 keeps GCC from complaining about possible misuse of offsetof.
 #define DECLARE_POINTER(field)	(size_t)&((ThisClass*)1)->field - 1,
@@ -159,13 +163,14 @@ protected: \
 #	define _DECLARE_TI(cls) ClassReg * const cls::RegistrationInfoPtr __attribute__((section(SECTION_CREG))) = &cls::RegistrationInfo;
 #endif
 
-#define _IMP_PCLASS(cls,ptrs,create) \
+#define _IMP_PCLASS(cls,ptrs,create, initn) \
 	ClassReg cls::RegistrationInfo = {\
 		NULL, \
 		#cls, \
 		&cls::Super::RegistrationInfo, \
 		ptrs, \
 		create, \
+		initn, \
 		sizeof(cls), \
 		cls::MetaClassNum }; \
 	_DECLARE_TI(cls) \
@@ -176,18 +181,27 @@ protected: \
 
 #define IMPLEMENT_POINTY_CLASS(cls) \
 	_IMP_CREATE_OBJ(cls) \
-	_IMP_PCLASS(cls,cls::PointerOffsets,cls::InPlaceConstructor) \
+	_IMP_PCLASS(cls,cls::PointerOffsets,cls::InPlaceConstructor, nullptr) \
+	const size_t cls::PointerOffsets[] = {
+
+#define IMPLEMENT_POINTY_CLASS_WITH_FIELDS(cls) \
+	_IMP_CREATE_OBJ(cls) \
+	_IMP_PCLASS(cls,cls::PointerOffsets,cls::InPlaceConstructor, cls::InitNativeFields) \
 	const size_t cls::PointerOffsets[] = {
 
 #define IMPLEMENT_CLASS(cls) \
 	_IMP_CREATE_OBJ(cls) \
-	_IMP_PCLASS(cls,NULL,cls::InPlaceConstructor) 
+	_IMP_PCLASS(cls,nullptr,cls::InPlaceConstructor, nullptr) 
+
+#define IMPLEMENT_CLASS_WITH_FIELDS(cls) \
+	_IMP_CREATE_OBJ(cls) \
+	_IMP_PCLASS(cls,nullptr,cls::InPlaceConstructor, cls::InitNativeFields) 
 
 #define IMPLEMENT_ABSTRACT_CLASS(cls) \
-	_IMP_PCLASS(cls,NULL,NULL)
+	_IMP_PCLASS(cls,nullptr,nullptr,nullptr)
 
 #define IMPLEMENT_ABSTRACT_POINTY_CLASS(cls) \
-	_IMP_PCLASS(cls,cls::PointerOffsets,NULL) \
+	_IMP_PCLASS(cls,cls::PointerOffsets,nullptr,nullptr) \
 	const size_t cls::PointerOffsets[] = {
 
 enum EObjectFlags
@@ -438,6 +452,7 @@ public:
 	virtual PClass *StaticType() const { return RegistrationInfo.MyClass; }
 	static ClassReg RegistrationInfo, * const RegistrationInfoPtr;
 	static void InPlaceConstructor (void *mem);
+	static void InitNativeFields();
 	typedef PClass MetaClass;
 private:
 	typedef DObject ThisClass;

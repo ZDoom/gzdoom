@@ -2309,13 +2309,18 @@ PField::PField()
 {
 }
 
+
 PField::PField(FName name, PType *type, DWORD flags, size_t offset, int bitvalue)
 	: PSymbol(name), Offset(offset), Type(type), Flags(flags)
 {
 	BitValue = bitvalue;
-	if (bitvalue > -1)
+	if (bitvalue != -1)
 	{
-		if (type->IsA(RUNTIME_CLASS(PInt)) && unsigned(bitvalue) < 8 * type->Size)
+		BitValue = 0;
+		unsigned val = bitvalue;
+		while ((val >>= 1)) BitValue++;
+
+		if (type->IsA(RUNTIME_CLASS(PInt)) && unsigned(BitValue) < 8u * type->Size)
 		{
 			// map to the single bytes in the actual variable. The internal bit instructions operate on 8 bit values.
 #ifndef __BIG_ENDIAN__

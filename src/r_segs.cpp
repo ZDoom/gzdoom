@@ -1159,12 +1159,12 @@ WallscanSampler::WallscanSampler(int y1, float swal, double yrepeat, fixed_t xof
 			int mipmap_offset = 0;
 			int mip_width = texture->GetWidth();
 			int mip_height = texture->GetHeight();
-			if (r_mipmap && texture->Mipmapped())
+			if (r_mipmap && texture->Mipmapped() && mip_width > 1 && mip_height > 1)
 			{
 				uint32_t xpos = (uint32_t)((((uint64_t)xoffset) << FRACBITS) / mip_width);
 				double texture_bias = 1.7f;
 				double level = MAX(magnitude - 3.0, 0.0);
-				while (level > texture_bias)
+				while (level > texture_bias && mip_width > 1 && mip_height > 1)
 				{
 					mipmap_offset += mip_width * mip_height;
 					level *= 0.5f;

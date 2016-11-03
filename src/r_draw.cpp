@@ -1073,7 +1073,7 @@ extern "C" BYTE *ds_curcolormap, *ds_cursource, *ds_curtiltedsource;
 void R_SetSpanSource(FTexture *tex)
 {
 	ds_source = r_swtruecolor ? (const BYTE*)tex->GetPixelsBgra() : tex->GetPixels();
-	ds_source_mipmapped = tex->Mipmapped();
+	ds_source_mipmapped = tex->Mipmapped() && tex->GetWidth() > 1 && tex->GetHeight() > 1;
 #ifdef X86_ASM
 	if (!r_swtruecolor && ds_cursource != ds_source)
 	{

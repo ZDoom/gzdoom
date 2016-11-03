@@ -189,7 +189,6 @@ extend class Actor
 
 	void A_BrainDie()
 	{
-		A_Log("A_BrainDie");
 		// [RH] If noexit, then don't end the level.
 		if ((GetCVar("deathmatch") || GetCVar("alwaysapplydmflags")) && GetCVar("sv_noexit"))
 			return;

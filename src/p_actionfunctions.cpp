@@ -3398,7 +3398,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeIn)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT_DEF(reduce);
 	PARAM_INT_DEF(flags);
-	PARAM_NAME_DEF(fontname);
 
 
 	if (reduce == 0)

@@ -2563,8 +2563,6 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 {
 	assert(Operator == '+' || Operator == '-');
-	// allocate the result first so that the operation does not leave gaps in the register set.
-	ExpEmit to(build, ValueType->GetRegType(), ValueType->GetRegCount());	
 	ExpEmit op1 = left->Emit(build);
 	ExpEmit op2 = right->Emit(build);
 	if (Operator == '+')
@@ -2577,6 +2575,7 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 		assert(!op1.Konst);
 		op1.Free(build);
 		op2.Free(build);
+		ExpEmit to(build, ValueType->GetRegType(), ValueType->GetRegCount());
 		if (IsVector())
 		{
 			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
@@ -2608,6 +2607,7 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 		assert(!op1.Konst || !op2.Konst);
 		op1.Free(build);
 		op2.Free(build);
+		ExpEmit to(build, ValueType->GetRegType(), ValueType->GetRegCount());
 		if (IsVector())
 		{
 			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
@@ -2720,7 +2720,6 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 {
 	// allocate the result first so that the operation does not leave gaps in the register set.
-	ExpEmit to(build, ValueType->GetRegType(), ValueType->GetRegCount());
 	ExpEmit op1 = left->Emit(build);
 	ExpEmit op2 = right->Emit(build);
 
@@ -2740,9 +2739,10 @@ ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 		{
 			op = Operator == '*' ? (ValueType == TypeVector2 ? OP_MULVF2_RR : OP_MULVF3_RR) : (ValueType == TypeVector2 ? OP_DIVVF2_RR : OP_DIVVF3_RR);
 		}
-		build->Emit(op, to.RegNum, op1.RegNum, op2.RegNum);
 		op1.Free(build);
 		op2.Free(build);
+		ExpEmit to(build, ValueType->GetRegType(), ValueType->GetRegCount());
+		build->Emit(op, to.RegNum, op1.RegNum, op2.RegNum);
 		return to;
 	}
 
@@ -2756,6 +2756,7 @@ ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 		assert(!op1.Konst);
 		op1.Free(build);
 		op2.Free(build);
+		ExpEmit to(build, ValueType->GetRegType());
 		if (ValueType->GetRegType() == REGT_FLOAT)
 		{
 			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
@@ -2777,10 +2778,10 @@ ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 		assert(Operator == '%' || Operator == '/');
 		op1.Free(build);
 		op2.Free(build);
+		ExpEmit to(build, ValueType->GetRegType());
 		if (ValueType->GetRegType() == REGT_FLOAT)
 		{
 			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
-			ExpEmit to(build, REGT_FLOAT);
 			build->Emit(Operator == '/' ? (op1.Konst ? OP_DIVF_KR : op2.Konst ? OP_DIVF_RK : OP_DIVF_RR)
 				: (op1.Konst ? OP_MODF_KR : op2.Konst ? OP_MODF_RK : OP_MODF_RR),
 				to.RegNum, op1.RegNum, op2.RegNum);
@@ -2790,7 +2791,6 @@ ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 		{
 			assert(ValueType->GetRegType() == REGT_INT);
 			assert(op1.RegType == REGT_INT && op2.RegType == REGT_INT);
-			ExpEmit to(build, REGT_INT);
 			build->Emit(Operator == '/' ? (op1.Konst ? OP_DIV_KR : op2.Konst ? OP_DIV_RK : OP_DIV_RR)
 				: (op1.Konst ? OP_MOD_KR : op2.Konst ? OP_MOD_RK : OP_MOD_RR),
 				to.RegNum, op1.RegNum, op2.RegNum);

@@ -197,13 +197,7 @@ static void BlastMaskedColumn (FTexture *tex, bool useRt)
 	// when forming multipatched textures (see r_data.c).
 
 	// draw the texture
-	const FTexture::Span *spans;
-	const BYTE *pixels;
-	if (r_swtruecolor && !drawer_needs_pal_input)
-		pixels = (const BYTE *)tex->GetColumnBgra(maskedtexturecol[dc_x] >> FRACBITS, &spans);
-	else
-		pixels = tex->GetColumn(maskedtexturecol[dc_x] >> FRACBITS, &spans);
-	R_DrawMaskedColumn(pixels, spans, useRt);
+	R_DrawMaskedColumn(tex, maskedtexturecol[dc_x], useRt);
 	rw_light += rw_lightstep;
 	spryscale += rw_scalestep;
 }

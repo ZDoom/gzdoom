@@ -251,9 +251,27 @@ double	 		sprtopscreen;
 
 bool			sprflipvert;
 
-void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span, bool useRt)
+void R_DrawMaskedColumn (FTexture *tex, fixed_t col, bool useRt, bool unmasked)
 {
+	const FTexture::Span *span;
+	const BYTE *column;
+	if (r_swtruecolor && !drawer_needs_pal_input)
+		column = (const BYTE *)tex->GetColumnBgra(col >> FRACBITS, &span);
+	else
+		column = tex->GetColumn(col >> FRACBITS, &span);
+
+	FTexture::Span unmaskedSpan[2];
+	if (unmasked)
+	{
+		span = unmaskedSpan;
+		unmaskedSpan[0].TopOffset = 0;
+		unmaskedSpan[0].Length = tex->GetHeight();
+		unmaskedSpan[1].TopOffset = 0;
+		unmaskedSpan[1].Length = 0;
+	}
+
 	int pixelsize = r_swtruecolor ? 4 : 1;
+
 	while (span->Length != 0)
 	{
 		const int length = span->Length;
@@ -283,6 +301,15 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span, bool us
 			dc_source = column;
 			dc_dest = (ylookup[dc_yl] + dc_x) * pixelsize + dc_destorg;
 			dc_count = dc_yh - dc_yl + 1;
+
+			fixed_t maxfrac = ((top + length) << FRACBITS) - 1;
+			dc_texturefrac = MAX(dc_texturefrac, 0);
+			dc_texturefrac = MIN(dc_texturefrac, maxfrac);
+			if (dc_iscale > 0)
+				dc_count = MIN(dc_count, (maxfrac - dc_texturefrac + dc_iscale - 1) / dc_iscale);
+			else if (dc_iscale < 0)
+				dc_count = MIN(dc_count, (dc_texturefrac - dc_iscale) / (-dc_iscale));
+
 			if (useRt)
 				hcolfunc_pre();
 			else
@@ -364,8 +391,6 @@ static inline bool R_ClipSpriteColumnWithPortals(vissprite_t* spr)
 //
 void R_DrawVisSprite (vissprite_t *vis)
 {
-	const BYTE *pixels;
-	const FTexture::Span *spans;
 	fixed_t 		frac;
 	FTexture		*tex;
 	int				x2, stop4;
@@ -432,13 +457,8 @@ void R_DrawVisSprite (vissprite_t *vis)
 		{
 			while ((dc_x < stop4) && (dc_x & 3))
 			{
-				if (r_swtruecolor && !drawer_needs_pal_input)
-					pixels = (const BYTE *)tex->GetColumnBgra (frac >> FRACBITS, &spans);
-				else
-					pixels = tex->GetColumn (frac >> FRACBITS, &spans);
-
 				if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-					R_DrawMaskedColumn (pixels, spans, false);
+					R_DrawMaskedColumn (tex, frac, false);
 				dc_x++;
 				frac += xiscale;
 			}
@@ -448,13 +468,8 @@ void R_DrawVisSprite (vissprite_t *vis)
 				rt_initcols(nullptr);
 				for (int zz = 4; zz; --zz)
 				{
-					if (r_swtruecolor && !drawer_needs_pal_input)
-						pixels = (const BYTE *)tex->GetColumnBgra (frac >> FRACBITS, &spans);
-					else
-						pixels = tex->GetColumn (frac >> FRACBITS, &spans);
-
 					if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-						R_DrawMaskedColumn (pixels, spans, true);
+						R_DrawMaskedColumn (tex, frac, true);
 					dc_x++;
 					frac += xiscale;
 				}
@@ -463,13 +478,8 @@ void R_DrawVisSprite (vissprite_t *vis)
 
 			while (dc_x < x2)
 			{
-				if (r_swtruecolor && !drawer_needs_pal_input)
-					pixels = (const BYTE *)tex->GetColumnBgra (frac >> FRACBITS, &spans);
-				else
-					pixels = tex->GetColumn (frac >> FRACBITS, &spans);
-
 				if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-					R_DrawMaskedColumn (pixels, spans, false);
+					R_DrawMaskedColumn (tex, frac, false);
 				dc_x++;
 				frac += xiscale;
 			}
@@ -623,14 +633,8 @@ void R_WallSpriteColumn (bool useRt)
 	else
 		sprtopscreen = CenterY - dc_texturemid * spryscale;
 
-	const BYTE *column;
-	const FTexture::Span *spans;
-	if (r_swtruecolor && !drawer_needs_pal_input)
-		column = (const BYTE *)WallSpriteTile->GetColumnBgra (lwall[dc_x] >> FRACBITS, &spans);
-	else
-		column = WallSpriteTile->GetColumn (lwall[dc_x] >> FRACBITS, &spans);
 	dc_texturefrac = 0;
-	R_DrawMaskedColumn(column, spans, useRt);
+	R_DrawMaskedColumn(WallSpriteTile, lwall[dc_x], useRt);
 	rw_light += rw_lightstep;
 }
 

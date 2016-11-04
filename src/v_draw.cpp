@@ -133,8 +133,6 @@ void DCanvas::DrawTexture (FTexture *img, double x, double y, int tags_first, ..
 void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 {
 #ifndef NO_SWRENDER
-	FTexture::Span unmaskedSpan[2];
-	const FTexture::Span **spanptr, *spans;
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
 	const BYTE *translation = NULL;
 
@@ -142,15 +140,6 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	{
 		r_swtruecolor = IsBgra();
 		R_InitColumnDrawers();
-	}
-
-	if (parms.masked)
-	{
-		spanptr = &spans;
-	}
-	else
-	{
-		spanptr = NULL;
 	}
 
 	if (APART(parms.colorOverlay) != 0)
@@ -217,17 +206,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 	if (mode != DontDraw)
 	{
-		const BYTE *pixels;
 		int stop4;
-
-		if (spanptr == NULL)
-		{ // Create a single span for forced unmasked images
-			spans = unmaskedSpan;
-			unmaskedSpan[0].TopOffset = 0;
-			unmaskedSpan[0].Length = img->GetHeight();
-			unmaskedSpan[1].TopOffset = 0;
-			unmaskedSpan[1].Length = 0;
-		}
 
 		double centeryback = CenterY;
 		CenterY = 0;
@@ -320,12 +299,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 		{
 			while ((dc_x < stop4) && (dc_x & 3))
 			{
-				if (r_swtruecolor && !drawer_needs_pal_input)
-					pixels = (const BYTE *)img->GetColumnBgra(frac >> FRACBITS, spanptr);
-				else
-					pixels = img->GetColumn(frac >> FRACBITS, spanptr);
-
-				R_DrawMaskedColumn(pixels, spans, false);
+				R_DrawMaskedColumn(img, frac, false, !parms.masked);
 				dc_x++;
 				frac += xiscale_i;
 			}
@@ -335,12 +309,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 				rt_initcols(nullptr);
 				for (int zz = 4; zz; --zz)
 				{
-					if (r_swtruecolor && !drawer_needs_pal_input)
-						pixels = (const BYTE *)img->GetColumnBgra(frac >> FRACBITS, spanptr);
-					else
-						pixels = img->GetColumn(frac >> FRACBITS, spanptr);
-
-					R_DrawMaskedColumn(pixels, spans, true);
+					R_DrawMaskedColumn(img, frac, true, !parms.masked);
 					dc_x++;
 					frac += xiscale_i;
 				}
@@ -349,12 +318,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 			while (dc_x < x2_i)
 			{
-				if (r_swtruecolor && !drawer_needs_pal_input)
-					pixels = (const BYTE *)img->GetColumnBgra(frac >> FRACBITS, spanptr);
-				else
-					pixels = img->GetColumn(frac >> FRACBITS, spanptr);
-
-				R_DrawMaskedColumn(pixels, spans, false);
+				R_DrawMaskedColumn(img, frac, false, !parms.masked);
 				dc_x++;
 				frac += xiscale_i;
 			}

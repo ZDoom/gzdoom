@@ -2254,7 +2254,7 @@ PField *PStruct::AddNativeField(FName name, PType *type, size_t address, DWORD f
 
 	if (Symbols.AddSymbol(field) == nullptr)
 	{ // name is already in use
-		delete field;
+		field->Destroy();
 		return nullptr;
 	}
 	Fields.Push(field);

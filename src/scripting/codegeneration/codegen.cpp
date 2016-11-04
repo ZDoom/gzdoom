@@ -55,6 +55,8 @@
 #include "v_text.h"
 #include "math/cmath.h"
 
+extern FRandom pr_exrandom;
+
 struct FLOP
 {
 	ENamedName Name;
@@ -5733,7 +5735,7 @@ FxFunctionCall::FxFunctionCall(FName methodname, FName rngname, FArgumentList *a
 : FxExpression(EFX_FunctionCall, pos)
 {
 	MethodName = methodname;
-	RNG = nullptr;
+	RNG = &pr_exrandom;
 	ArgList = args;
 	if (rngname != NAME_None)
 	{

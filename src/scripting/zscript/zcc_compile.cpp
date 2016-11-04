@@ -2248,6 +2248,7 @@ void ZCCCompiler::CompileStates()
 		FString statename;	// The state builder wants the label as one complete string, not separated into tokens.
 		FStateDefinitions statedef;
 		statedef.MakeStateDefines(dyn_cast<PClassActor>(c->Type()->ParentClass));
+		int numframes = 0;
 
 		for (auto s : c->States)
 		{
@@ -2279,13 +2280,15 @@ void ZCCCompiler::CompileStates()
 					// It is important to call CheckRandom before Simplify, because Simplify will resolve the function's name to nonsense
 					if (CheckRandom(sl->Duration))
 					{
-						auto func = static_cast<ZCC_ExprFuncCall *>(Simplify(sl->Duration, &c->Type()->Symbols, true));
+						auto func = static_cast<ZCC_ExprFuncCall *>(sl->Duration);
 						if (func->Parameters == func->Parameters->SiblingNext || func->Parameters != func->Parameters->SiblingNext->SiblingNext)
 						{
 							Error(sl, "Random duration requires exactly 2 parameters");
 						}
-						int v1 = GetInt(func->Parameters->Value);
-						int v2 = GetInt(static_cast<ZCC_FuncParm *>(func->Parameters->SiblingNext)->Value);
+						auto p1 = Simplify(func->Parameters->Value, &c->Type()->Symbols, true);
+						auto p2 = Simplify(static_cast<ZCC_FuncParm *>(func->Parameters->SiblingNext)->Value, &c->Type()->Symbols, true);
+						int v1 = GetInt(p1);
+						int v2 = GetInt(p2);
 						if (v1 > v2) std::swap(v1, v2);
 						state.Tics = (int16_t)clamp<int>(v1, 0, INT16_MAX);
 						state.TicRange = (uint16_t)clamp<int>(v2 - v1, 0, UINT16_MAX);
@@ -2346,7 +2349,7 @@ void ZCCCompiler::CompileStates()
 						auto code = SetupActionFunction(static_cast<PClassActor *>(c->Type()), sl->Action);
 						if (code != nullptr)
 						{
-							auto funcsym = CreateAnonymousFunction(c->Type(), nullptr, VARF_Method | VARF_Action);
+							auto funcsym = CreateAnonymousFunction(c->Type(), nullptr, VARF_Method | VARF_Action, (int)sl->Frames->Len());
 							state.ActionFunc = FunctionBuildList.AddFunction(funcsym, code, FStringf("%s.StateFunction.%d", c->Type()->TypeName.GetChars(), statedef.GetStateCount()), false);
 						}
 					}

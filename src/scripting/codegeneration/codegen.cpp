@@ -1416,6 +1416,26 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 			delete this;
 			return x;
 		}
+		else if (basex->IsNumeric() && basex->ValueType != TypeSound && basex->ValueType != TypeColor)
+		{
+			if (ctx.Function->SymbolName != NAME_None || !(ctx.Function->Variants[0].Flags & VARF_Action))
+			{
+				ScriptPosition.Message(MSG_ERROR, "State jumps with index can only be used in anonymous state functions.");
+				delete this;
+				return nullptr;
+			}
+			if (ctx.Function->StateCount != 1)
+			{
+				ScriptPosition.Message(MSG_ERROR, "State jumps with index cannot be used on multistate definitions");
+				delete this;
+				return nullptr;
+			}
+			FxExpression *x = new FxRuntimeStateIndex(basex);
+			x = x->Resolve(ctx);
+			basex = nullptr;
+			delete this;
+			return x;
+		}
 	}
 	else if (ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
 	{
@@ -7859,6 +7879,12 @@ FxExpression *FxRuntimeStateIndex::Resolve(FCompileContext &ctx)
 		delete this;
 		return nullptr;
 	}
+	else if (Index->isConstant() && static_cast<FxConstant *>(Index) < 0)
+	{
+		ScriptPosition.Message(MSG_ERROR, "State index must be positive");
+		delete this;
+		return nullptr;
+	}
 	else if (Index->ValueType->GetRegType() != REGT_INT)
 	{ // Float.
 		Index = new FxIntCast(Index, ctx.FromDecorate);
@@ -7912,8 +7938,7 @@ static int BuiltinHandleRuntimeState(VMFrameStack *stack, VMValue *param, TArray
 
 ExpEmit FxRuntimeStateIndex::Emit(VMFunctionBuilder *build)
 {
-	// This code can only be called from DECORATE, not ZSCRIPT so any function going through here
-	// is an anoynmous one which are always marked as 'action'.
+	// This can only be called from inline state functions which must be VARF_Action.
 	assert(build->NumImplicits >= NAP && build->Registers[REGT_POINTER].GetMostUsed() >= build->NumImplicits &&
 		"FxRuntimeStateIndex is only valid inside action functions");
 

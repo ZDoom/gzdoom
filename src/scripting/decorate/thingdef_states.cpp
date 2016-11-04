@@ -322,7 +322,7 @@ do_stop:
 endofstate:
 			if (ScriptCode != nullptr)
 			{
-				auto funcsym = CreateAnonymousFunction(actor, nullptr, VARF_Method | VARF_Action);
+				auto funcsym = CreateAnonymousFunction(actor, nullptr, VARF_Method | VARF_Action, (int)statestring.Len());
 				state.ActionFunc = FunctionBuildList.AddFunction(funcsym, ScriptCode, FStringf("%s.StateFunction.%d", actor->TypeName.GetChars(), bag.statedef.GetStateCount()), true);
 			}
 			int count = bag.statedef.AddStates(&state, statestring);

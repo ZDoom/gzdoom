@@ -153,7 +153,7 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 class FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag);
 FName CheckCastKludges(FName in);
 void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FName> *argnames, PClass *cls, DWORD funcflags);
-PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, int flags);
+PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, int flags, int statecount);
 PFunction *FindClassMemberFunction(PClass *cls, PClass *funccls, FName name, FScriptPosition &sc, bool *error);
 void CreateDamageFunction(PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate);
 

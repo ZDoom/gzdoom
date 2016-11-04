@@ -93,11 +93,6 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 	name << "nodes - " << FName(cnode->NodeName);
 	cls->TreeNodes.SetName(name);
 
-	if (cnode->Replaces != nullptr && !static_cast<PClassActor *>(cnode->Type)->SetReplacement(cnode->Replaces->Id))
-	{
-		Warn(cnode, "Replaced type '%s' not found for %s", FName(cnode->Replaces->Id).GetChars(), cnode->Type->TypeName.GetChars());
-	}
-
 	// Need to check if the class actually has a body.
 	if (node != nullptr) do
 	{
@@ -557,7 +552,7 @@ void ZCCCompiler::CreateClassTypes()
 		Classes.Push(c);
 	}
 
-	// Last but not least: Now that all classes have been created, we can create the symbols for the internal enums and link the treenode symbol tables
+	// Last but not least: Now that all classes have been created, we can create the symbols for the internal enums and link the treenode symbol tables and set up replacements
 	for (auto cd : Classes)
 	{
 		for (auto e : cd->Enums)
@@ -574,6 +569,12 @@ void ZCCCompiler::CreateClassTypes()
 				break;
 			}
 		}
+
+		if (cd->cls->Replaces != nullptr && !static_cast<PClassActor *>(cd->Type())->SetReplacement(cd->cls->Replaces->Id))
+		{
+			Warn(cd->cls, "Replaced type '%s' not found for %s", FName(cd->cls->Replaces->Id).GetChars(), cd->Type()->TypeName.GetChars());
+		}
+
 	}
 }
 

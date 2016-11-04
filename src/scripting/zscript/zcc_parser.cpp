@@ -179,9 +179,9 @@ static void InitTokenMap()
 	TOKENDEF (TK_Loop,			ZCC_LOOP);
 	TOKENDEF (TK_Goto,			ZCC_GOTO);
 	TOKENDEF (TK_States,		ZCC_STATES);
-	TOKENDEF (TK_State,			ZCC_STATE);
-	TOKENDEF (TK_Color,			ZCC_COLOR);
-	TOKENDEF (TK_Sound,			ZCC_SOUND);
+	TOKENDEF2(TK_State,			ZCC_STATE,		NAME_State);
+	TOKENDEF2(TK_Color,			ZCC_COLOR,		NAME_Color);
+	TOKENDEF2(TK_Sound,			ZCC_SOUND,		NAME_Sound);
 
 	TOKENDEF (TK_Identifier,	ZCC_IDENTIFIER);
 	TOKENDEF (TK_StringConst,	ZCC_STRCONST);
@@ -206,24 +206,27 @@ static void InitTokenMap()
 #undef TOKENDEF
 #undef TOKENDEF2
 
-static void ParseSingleFile(const char *filename, void *parser, ZCCParseState &state)
+static void ParseSingleFile(const char *filename, int lump, void *parser, ZCCParseState &state)
 {
 	int tokentype;
-	int lump;
 	//bool failed;
 	ZCCToken value;
 	FScanner sc;
 
-	lump = Wads.CheckNumForFullName(filename, true);
-	if (lump >= 0)
+	if (filename != nullptr)
 	{
-		sc.OpenLumpNum(lump);
+		lump = Wads.CheckNumForFullName(filename, true);
+		if (lump >= 0)
+		{
+			sc.OpenLumpNum(lump);
+		}
+		else
+		{
+			Printf("Could not find script lump '%s'\n", filename);
+			return;
+		}
 	}
-	else
-	{
-		Printf("Could not find script lump '%s'\n", filename);
-		return;
-	}
+	else sc.OpenLumpNum(lump);
 
 	state.sc = &sc;
 	while (sc.GetToken())
@@ -309,20 +312,39 @@ static void DoParse(int lumpnum)
 #endif
 
 	sc.OpenLumpNum(lumpnum);
-	// parse all files from this list in one go.
-	while (sc.GetString())
+	auto saved = sc.SavePos();
+	bool parsed = false;
+	if (sc.GetToken())
 	{
-		if (Wads.GetLumpFile(sc.LumpNum) == 0)
+		if (sc.TokenType == TK_Class || sc.TokenType == TK_Enum || sc.TokenType == TK_Struct || sc.TokenType == TK_Const || sc.TokenType == TK_Native)
 		{
-			int includefile = Wads.GetLumpFile(Wads.CheckNumForFullName(sc.String, true));
-			if (includefile != 0)
+			if (sc.CheckToken(TK_Identifier))
 			{
-				I_FatalError("File %s is overriding core lump %s.",
-					Wads.GetWadFullName(includefile), sc.String);
+				// This looks like an actual definition file and not a file list.
+				ParseSingleFile(nullptr, lumpnum, parser, state);
+				parsed = true;
 			}
 		}
+	}
+	if (!parsed)
+	{
+		sc.RestorePos(saved);
+		// parse all files from this list in one go.
+		while (sc.GetString())
+		{
+			FixPathSeperator(sc.String);
+			if (Wads.GetLumpFile(sc.LumpNum) == 0)
+			{
+				int includefile = Wads.GetLumpFile(Wads.CheckNumForFullName(sc.String, true));
+				if (includefile != 0)
+				{
+					I_FatalError("File %s is overriding core lump %s.",
+						Wads.GetWadFullName(includefile), sc.String);
+				}
+			}
 
-		ParseSingleFile(sc.String, parser, state);
+			ParseSingleFile(sc.String, 0, parser, state);
+		}
 	}
 
 	value.Int = -1;

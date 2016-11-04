@@ -671,6 +671,7 @@ public:
 		{
 			return FOptionMenuItem::MenuEvent(mkey, fromcontroller);
 		}
+		if (fabs(value) < FLT_EPSILON) value = 0;
 		SetSliderValue(clamp(value, mMin, mMax));
 		S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 		return true;

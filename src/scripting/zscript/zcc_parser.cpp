@@ -369,10 +369,10 @@ static void DoParse(int lumpnum)
 	if (Args->CheckParm("-dumpast"))
 	{
 		FString ast = ZCC_PrintAST(state.TopNode);
-		FString filename = Wads.GetLumpFullName(lumpnum);
-		FString astfile = ExtractFileBase(filename, false);
-		astfile << ".ast";
-		FILE *ff = fopen(astfile, "w");
+		FString filename = Wads.GetLumpFullPath(lumpnum);
+		filename.ReplaceChars(":\\/?|", '.');
+		filename << ".ast";
+		FILE *ff = fopen(filename, "w");
 		if (ff != NULL)
 		{
 			fputs(ast.GetChars(), ff);

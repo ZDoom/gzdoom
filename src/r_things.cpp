@@ -281,6 +281,15 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span, bool us
 			dc_source = column;
 			dc_dest = (ylookup[dc_yl] + dc_x) + dc_destorg;
 			dc_count = dc_yh - dc_yl + 1;
+
+			fixed_t maxfrac = ((top + length) << FRACBITS) - 1;
+			dc_texturefrac = MAX(dc_texturefrac, 0);
+			dc_texturefrac = MIN(dc_texturefrac, maxfrac);
+			if (dc_iscale > 0)
+				dc_count = MIN(dc_count, (maxfrac - dc_texturefrac + dc_iscale - 1) / dc_iscale);
+			else if (dc_iscale < 0)
+				dc_count = MIN(dc_count, (dc_texturefrac - dc_iscale) / (-dc_iscale));
+
 			if (useRt)
 				hcolfunc_pre();
 			else

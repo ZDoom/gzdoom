@@ -7886,7 +7886,7 @@ FxExpression *FxRuntimeStateIndex::Resolve(FCompileContext &ctx)
 		delete this;
 		return nullptr;
 	}
-	else if (Index->isConstant() && static_cast<FxConstant *>(Index)->GetValue() < 0)
+	else if (Index->isConstant() && static_cast<FxConstant *>(Index)->GetValue().GetInt() < 0)
 	{
 		ScriptPosition.Message(MSG_ERROR, "State index must be positive");
 		delete this;

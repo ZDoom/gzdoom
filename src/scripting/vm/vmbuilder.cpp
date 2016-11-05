@@ -713,6 +713,7 @@ void FFunctionBuildList::Build()
 			ctx.FunctionArgs.Push(local);
 		}
 
+		FScriptPosition::StrictErrors = !item.FromDecorate;
 		item.Code = item.Code->Resolve(ctx);
 		item.Proto = ctx.ReturnProto;
 
@@ -758,4 +759,6 @@ void FFunctionBuildList::Build()
 		fprintf(dump, "\n*************************************************************************\n%i code bytes\n", codesize * 4);
 		fclose(dump);
 	}
+	FScriptPosition::StrictErrors = false;
+
 }

@@ -1431,11 +1431,29 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 				delete this;
 				return nullptr;
 			}
-			FxExpression *x = new FxRuntimeStateIndex(basex);
-			x = x->Resolve(ctx);
-			basex = nullptr;
-			delete this;
-			return x;
+			if (basex->isConstant())
+			{
+				int i = static_cast<FxConstant *>(basex)->GetValue().GetInt();
+				if (i < 0)
+				{
+					ScriptPosition.Message(MSG_ERROR, "State index must be positive");
+					delete this;
+					return nullptr;
+				}
+				FxExpression *x = new FxStateByIndex(i, ScriptPosition);
+				x = x->Resolve(ctx);
+				basex = nullptr;
+				delete this;
+				return x;
+			}
+			else
+			{
+				FxExpression *x = new FxRuntimeStateIndex(basex);
+				x = x->Resolve(ctx);
+				basex = nullptr;
+				delete this;
+				return x;
+			}
 		}
 	}
 	else if (ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)))
@@ -8019,7 +8037,7 @@ FxExpression *FxStateByIndex::Resolve(FCompileContext &ctx)
 	ABORT(ctx.Class);
 	auto aclass = dyn_cast<PClassActor>(ctx.Class);
 
-	// This expression type can only be used from DECORATE, so there's no need to consider the possibility of calling it from a non-actor.
+	// This expression type can only be used from actors, for everything else it has already produced a compile error.
 	assert(aclass != nullptr && aclass->NumOwnedStates > 0);
 
 	if (aclass->NumOwnedStates <= index)

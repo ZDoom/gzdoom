@@ -3,9 +3,11 @@
 #include "d_player.h"
 #include "serializer.h"
 
-IMPLEMENT_POINTY_CLASS (DFlashFader)
- DECLARE_POINTER (ForWho)
-END_POINTERS
+IMPLEMENT_POINTY_CLASS(DFlashFader)
+
+IMPLEMENT_POINTERS_START(DFlashFader)
+	IMPLEMENT_POINTER(ForWho)
+IMPLEMENT_POINTERS_END
 
 DFlashFader::DFlashFader ()
 {

@@ -72,8 +72,10 @@
 //==========================================================================
 
 IMPLEMENT_POINTY_CLASS(DFsSection)
- DECLARE_POINTER(next)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(DFsSection)
+	IMPLEMENT_POINTER(next)
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //

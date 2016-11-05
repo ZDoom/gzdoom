@@ -172,9 +172,11 @@ static FPolyNode *FreePolyNodes;
 //
 //==========================================================================
 
-IMPLEMENT_POINTY_CLASS (DPolyAction)
-	DECLARE_POINTER(m_Interpolation)
-END_POINTERS
+IMPLEMENT_POINTY_CLASS(DPolyAction)
+
+IMPLEMENT_POINTERS_START(DPolyAction)
+	IMPLEMENT_POINTER(m_Interpolation)
+IMPLEMENT_POINTERS_END
 
 DPolyAction::DPolyAction ()
 {

@@ -162,9 +162,12 @@ public:
 //==========================================================================
 
 IMPLEMENT_ABSTRACT_POINTY_CLASS(DInterpolation)
-DECLARE_POINTER(Next)
-DECLARE_POINTER(Prev)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(DInterpolation)
+	IMPLEMENT_POINTER(Next)
+	IMPLEMENT_POINTER(Prev)
+IMPLEMENT_POINTERS_END
+
 IMPLEMENT_CLASS(DSectorPlaneInterpolation)
 IMPLEMENT_CLASS(DSectorScrollInterpolation)
 IMPLEMENT_CLASS(DWallScrollInterpolation)

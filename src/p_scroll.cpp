@@ -73,12 +73,13 @@ private:
 	}
 };
 
+IMPLEMENT_POINTY_CLASS(DScroller)
 
-IMPLEMENT_POINTY_CLASS (DScroller)
- DECLARE_POINTER (m_Interpolations[0])
- DECLARE_POINTER (m_Interpolations[1])
- DECLARE_POINTER (m_Interpolations[2])
-END_POINTERS
+IMPLEMENT_POINTERS_START(DScroller)
+	IMPLEMENT_POINTER(m_Interpolations[0])
+	IMPLEMENT_POINTER(m_Interpolations[1])
+	IMPLEMENT_POINTER(m_Interpolations[2])
+IMPLEMENT_POINTERS_END
 
 
 //-----------------------------------------------------------------------------

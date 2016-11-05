@@ -66,9 +66,11 @@ public:
 	TObjPtr<AInterpolationPoint> Next;
 };
 
-IMPLEMENT_POINTY_CLASS (AInterpolationPoint)
- DECLARE_POINTER (Next)
-END_POINTERS
+IMPLEMENT_POINTY_CLASS(AInterpolationPoint)
+
+IMPLEMENT_POINTERS_START(AInterpolationPoint)
+	IMPLEMENT_POINTER(Next)
+IMPLEMENT_POINTERS_END
 
 void AInterpolationPoint::Serialize(FSerializer &arc)
 {
@@ -176,10 +178,12 @@ protected:
 	int HoldTime;
 };
 
-IMPLEMENT_POINTY_CLASS (APathFollower)
- DECLARE_POINTER (PrevNode)
- DECLARE_POINTER (CurrNode)
-END_POINTERS
+IMPLEMENT_POINTY_CLASS(APathFollower)
+
+IMPLEMENT_POINTERS_START(APathFollower)
+	IMPLEMENT_POINTER(PrevNode)
+	IMPLEMENT_POINTER(CurrNode)
+IMPLEMENT_POINTERS_END
 
 void APathFollower::Serialize(FSerializer &arc)
 {
@@ -592,9 +596,11 @@ protected:
 	TObjPtr<AActor> Activator;
 };
 
-IMPLEMENT_POINTY_CLASS (AMovingCamera)
- DECLARE_POINTER (Activator)
-END_POINTERS
+IMPLEMENT_POINTY_CLASS(AMovingCamera)
+
+IMPLEMENT_POINTERS_START(AMovingCamera)
+	IMPLEMENT_POINTER(Activator)
+IMPLEMENT_POINTERS_END
 
 void AMovingCamera::Serialize(FSerializer &arc)
 {

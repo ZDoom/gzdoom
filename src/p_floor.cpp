@@ -815,10 +815,12 @@ bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed)
 //
 //==========================================================================
 
-IMPLEMENT_POINTY_CLASS (DElevator)
-	DECLARE_POINTER(m_Interp_Floor)
-	DECLARE_POINTER(m_Interp_Ceiling)
-END_POINTERS
+IMPLEMENT_POINTY_CLASS(DElevator)
+
+IMPLEMENT_POINTERS_START(DElevator)
+	IMPLEMENT_POINTER(m_Interp_Floor)
+	IMPLEMENT_POINTER(m_Interp_Ceiling)
+IMPLEMENT_POINTERS_END
 
 DElevator::DElevator ()
 {

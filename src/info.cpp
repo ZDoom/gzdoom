@@ -154,8 +154,10 @@ int GetSpriteIndex(const char * spritename, bool add)
 }
 
 IMPLEMENT_POINTY_CLASS(PClassActor)
- DECLARE_POINTER(DropItems)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(PClassActor)
+	IMPLEMENT_POINTER(DropItems)
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //

@@ -151,11 +151,6 @@ protected: \
 #define HAS_FIELDS \
 	static void InitNativeFields();
 
-// Taking the address of a field in an object at address 1 instead of
-// address 0 keeps GCC from complaining about possible misuse of offsetof.
-#define DECLARE_POINTER(field)	(size_t)&((ThisClass*)1)->field - 1,
-#define END_POINTERS			~(size_t)0 };
-
 #if defined(_MSC_VER)
 #	pragma section(".creg$u",read)
 #	define _DECLARE_TI(cls) __declspec(allocate(".creg$u")) ClassReg * const cls::RegistrationInfoPtr = &cls::RegistrationInfo;
@@ -182,12 +177,10 @@ protected: \
 #define IMPLEMENT_POINTY_CLASS(cls) \
 	_IMP_CREATE_OBJ(cls) \
 	_IMP_PCLASS(cls,cls::PointerOffsets,cls::InPlaceConstructor, nullptr) \
-	const size_t cls::PointerOffsets[] = {
 
 #define IMPLEMENT_POINTY_CLASS_WITH_FIELDS(cls) \
 	_IMP_CREATE_OBJ(cls) \
 	_IMP_PCLASS(cls,cls::PointerOffsets,cls::InPlaceConstructor, cls::InitNativeFields) \
-	const size_t cls::PointerOffsets[] = {
 
 #define IMPLEMENT_CLASS(cls) \
 	_IMP_CREATE_OBJ(cls) \
@@ -202,7 +195,12 @@ protected: \
 
 #define IMPLEMENT_ABSTRACT_POINTY_CLASS(cls) \
 	_IMP_PCLASS(cls,cls::PointerOffsets,nullptr,nullptr) \
-	const size_t cls::PointerOffsets[] = {
+
+// Taking the address of a field in an object at address 1 instead of
+// address 0 keeps GCC from complaining about possible misuse of offsetof.
+#define IMPLEMENT_POINTERS_START(cls)	const size_t cls::PointerOffsets[] = {
+#define IMPLEMENT_POINTER(field)		(size_t)&((ThisClass*)1)->field - 1,
+#define IMPLEMENT_POINTERS_END			~(size_t)0 };
 
 enum EObjectFlags
 {

@@ -100,9 +100,11 @@ static const FGenericButtons ButtonChecks[] =
 //------------------------------------------------------------------------
 
 IMPLEMENT_POINTY_CLASS(DPSprite)
-	DECLARE_POINTER(Caller)
-	DECLARE_POINTER(Next)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(DPSprite)
+	IMPLEMENT_POINTER(Caller)
+	IMPLEMENT_POINTER(Next)
+IMPLEMENT_POINTERS_END
 
 //------------------------------------------------------------------------
 //

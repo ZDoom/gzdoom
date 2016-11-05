@@ -81,8 +81,10 @@ public:
 };
 
 IMPLEMENT_POINTY_CLASS(ASoundSequenceSlot)
-	DECLARE_POINTER(Sequence)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(ASoundSequenceSlot)
+	IMPLEMENT_POINTER(Sequence)
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //

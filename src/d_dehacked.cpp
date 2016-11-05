@@ -231,9 +231,11 @@ DehInfo deh =
 // from the original actor's defaults. The original actor is then changed to
 // spawn the new class.
 
-IMPLEMENT_POINTY_CLASS (ADehackedPickup)
- DECLARE_POINTER (RealPickup)
-END_POINTERS
+IMPLEMENT_POINTY_CLASS(ADehackedPickup)
+
+IMPLEMENT_POINTERS_START(ADehackedPickup)
+	IMPLEMENT_POINTER(RealPickup)
+IMPLEMENT_POINTERS_END
 
 TArray<PClassActor *> TouchedActors;
 

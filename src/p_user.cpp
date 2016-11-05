@@ -622,10 +622,12 @@ void player_t::SendPitchLimits() const
 //
 //===========================================================================
 
-IMPLEMENT_POINTY_CLASS (APlayerPawn)
- DECLARE_POINTER(InvFirst)
- DECLARE_POINTER(InvSel)
-END_POINTERS
+IMPLEMENT_POINTY_CLASS(APlayerPawn)
+
+IMPLEMENT_POINTERS_START(APlayerPawn)
+	IMPLEMENT_POINTER(InvFirst)
+	IMPLEMENT_POINTER(InvSel)
+IMPLEMENT_POINTERS_END
 
 IMPLEMENT_CLASS (APlayerChunk)
 

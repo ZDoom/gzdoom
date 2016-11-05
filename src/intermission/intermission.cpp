@@ -59,9 +59,12 @@ IMPLEMENT_CLASS(DIntermissionScreenFader)
 IMPLEMENT_CLASS(DIntermissionScreenText)
 IMPLEMENT_CLASS(DIntermissionScreenCast)
 IMPLEMENT_CLASS(DIntermissionScreenScroller)
+
 IMPLEMENT_POINTY_CLASS(DIntermissionController)
-	DECLARE_POINTER(mScreen)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(DIntermissionController)
+	IMPLEMENT_POINTER(mScreen)
+IMPLEMENT_POINTERS_END
 
 extern int		NoWipe;
 

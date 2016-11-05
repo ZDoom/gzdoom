@@ -650,9 +650,11 @@ void AMorphProjectile::Serialize(FSerializer &arc)
 
 // Morphed Monster (you must subclass this to do something useful) ---------
 
-IMPLEMENT_POINTY_CLASS (AMorphedMonster)
- DECLARE_POINTER (UnmorphedMe)
-END_POINTERS
+IMPLEMENT_POINTY_CLASS(AMorphedMonster)
+
+IMPLEMENT_POINTERS_START(AMorphedMonster)
+	IMPLEMENT_POINTER(UnmorphedMe)
+IMPLEMENT_POINTERS_END
 
 void AMorphedMonster::Serialize(FSerializer &arc)
 {

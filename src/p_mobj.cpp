@@ -132,18 +132,20 @@ CVAR (Int, cl_bloodtype, 0, CVAR_ARCHIVE);
 // CODE --------------------------------------------------------------------
 
 IMPLEMENT_POINTY_CLASS_WITH_FIELDS (AActor)
- DECLARE_POINTER (target)
- DECLARE_POINTER (lastenemy)
- DECLARE_POINTER (tracer)
- DECLARE_POINTER (goal)
- DECLARE_POINTER (LastLookActor)
- DECLARE_POINTER (Inventory)
- DECLARE_POINTER (LastHeard)
- DECLARE_POINTER (master)
- DECLARE_POINTER (Poisoner)
- DECLARE_POINTER (DamageFunc)
- DECLARE_POINTER (alternative)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(AActor)
+	IMPLEMENT_POINTER(target)
+	IMPLEMENT_POINTER(lastenemy)
+	IMPLEMENT_POINTER(tracer)
+	IMPLEMENT_POINTER(goal)
+	IMPLEMENT_POINTER(LastLookActor)
+	IMPLEMENT_POINTER(Inventory)
+	IMPLEMENT_POINTER(LastHeard)
+	IMPLEMENT_POINTER(master)
+	IMPLEMENT_POINTER(Poisoner)
+	IMPLEMENT_POINTER(DamageFunc)
+	IMPLEMENT_POINTER(alternative)
+IMPLEMENT_POINTERS_END
 
 AActor::~AActor ()
 {
@@ -6953,9 +6955,12 @@ DEFINE_ACTION_FUNCTION(AActor, Vec3Offset)
 // DropItem handling
 //
 //----------------------------------------------------------------------------
+
 IMPLEMENT_POINTY_CLASS_WITH_FIELDS(DDropItem)
- DECLARE_POINTER(Next)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(DDropItem)
+	IMPLEMENT_POINTER(Next)
+IMPLEMENT_POINTERS_END
 
 void DDropItem::InitNativeFields()
 {
@@ -6966,7 +6971,6 @@ void DDropItem::InitNativeFields()
 	meta->AddNativeField("Probability", TypeSInt32, myoffsetof(DDropItem, Probability), VARF_ReadOnly);
 	meta->AddNativeField("Amount", TypeSInt32, myoffsetof(DDropItem, Amount));
 }
-
 
 void PrintMiscActorInfo(AActor *query)
 {

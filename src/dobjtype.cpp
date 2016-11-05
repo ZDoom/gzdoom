@@ -188,8 +188,10 @@ PClassClass::PClassClass()
 /* PType ******************************************************************/
 
 IMPLEMENT_ABSTRACT_POINTY_CLASS(PType)
- DECLARE_POINTER(HashNext)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(PType)
+	IMPLEMENT_POINTER(HashNext)
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //
@@ -643,8 +645,10 @@ IMPLEMENT_ABSTRACT_CLASS(PCompoundType)
 /* PNamedType *************************************************************/
 
 IMPLEMENT_ABSTRACT_POINTY_CLASS(PNamedType)
- DECLARE_POINTER(Outer)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(PNamedType)
+	IMPLEMENT_POINTER(Outer)
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //
@@ -1457,8 +1461,10 @@ bool PStatePointer::ReadValue(FSerializer &ar, const char *key, void *addr) cons
 /* PPointer ***************************************************************/
 
 IMPLEMENT_POINTY_CLASS(PPointer)
- DECLARE_POINTER(PointedType)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(PPointer)
+	IMPLEMENT_POINTER(PointedType)
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //
@@ -1586,8 +1592,10 @@ PPointer *NewPointer(PType *type, bool isconst)
 /* PClassPointer **********************************************************/
 
 IMPLEMENT_POINTY_CLASS(PClassPointer)
- DECLARE_POINTER(ClassRestriction)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(PClassPointer)
+	IMPLEMENT_POINTER(ClassRestriction)
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //
@@ -1665,8 +1673,10 @@ PClassPointer *NewClassPointer(PClass *restrict)
 /* PEnum ******************************************************************/
 
 IMPLEMENT_POINTY_CLASS(PEnum)
- DECLARE_POINTER(ValueType)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(PEnum)
+	IMPLEMENT_POINTER(ValueType)
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //
@@ -1716,8 +1726,10 @@ PEnum *NewEnum(FName name, PTypeBase *outer)
 /* PArray *****************************************************************/
 
 IMPLEMENT_POINTY_CLASS(PArray)
- DECLARE_POINTER(ElementType)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(PArray)
+	IMPLEMENT_POINTER(ElementType)
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //
@@ -1913,8 +1925,10 @@ PVector *NewVector(unsigned int size)
 /* PDynArray **************************************************************/
 
 IMPLEMENT_POINTY_CLASS(PDynArray)
- DECLARE_POINTER(ElementType)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(PDynArray)
+	IMPLEMENT_POINTER(ElementType)
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //
@@ -1994,9 +2008,11 @@ PDynArray *NewDynArray(PType *type)
 /* PMap *******************************************************************/
 
 IMPLEMENT_POINTY_CLASS(PMap)
- DECLARE_POINTER(KeyType)
- DECLARE_POINTER(ValueType)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(PMap)
+	IMPLEMENT_POINTER(KeyType)
+	IMPLEMENT_POINTER(ValueType)
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //
@@ -2486,8 +2502,10 @@ unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArra
 /* PClass *****************************************************************/
 
 IMPLEMENT_POINTY_CLASS(PClass)
- DECLARE_POINTER(ParentClass)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(PClass)
+	IMPLEMENT_POINTER(ParentClass)
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //
@@ -3407,12 +3425,18 @@ IMPLEMENT_ABSTRACT_CLASS(PSymbol);
 IMPLEMENT_CLASS(PSymbolConst);
 IMPLEMENT_CLASS(PSymbolConstNumeric);
 IMPLEMENT_CLASS(PSymbolConstString);
+
 IMPLEMENT_POINTY_CLASS(PSymbolType)
- DECLARE_POINTER(Type)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(PSymbolType)
+	IMPLEMENT_POINTER(Type)
+IMPLEMENT_POINTERS_END
+
 IMPLEMENT_POINTY_CLASS(PSymbolVMFunction)
- DECLARE_POINTER(Function)
-END_POINTERS
+
+IMPLEMENT_POINTERS_START(PSymbolVMFunction)
+	IMPLEMENT_POINTER(Function)
+IMPLEMENT_POINTERS_END
 IMPLEMENT_CLASS(PSymbolTreeNode)
 
 //==========================================================================

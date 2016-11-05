@@ -24,10 +24,11 @@ void AWeaponHolder::Serialize(FSerializer &arc)
 		("pieceweapon", PieceWeapon);
 }
 
+IMPLEMENT_POINTY_CLASS(AWeaponPiece)
 
-IMPLEMENT_POINTY_CLASS (AWeaponPiece)
- DECLARE_POINTER (FullWeapon)
-END_POINTERS
+IMPLEMENT_POINTERS_START(AWeaponPiece)
+	IMPLEMENT_POINTER(FullWeapon)
+IMPLEMENT_POINTERS_END
 
 
 void AWeaponPiece::Serialize(FSerializer &arc)

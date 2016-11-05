@@ -470,9 +470,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 int AInventory::StaticLastMessageTic;
 const char *AInventory::StaticLastMessage;
 
-IMPLEMENT_POINTY_CLASS (AInventory)
- DECLARE_POINTER (Owner)
-END_POINTERS
+IMPLEMENT_POINTY_CLASS(AInventory)
+
+IMPLEMENT_POINTERS_START(AInventory)
+	IMPLEMENT_POINTER(Owner)
+IMPLEMENT_POINTERS_END
 
 //===========================================================================
 //

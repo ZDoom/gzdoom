@@ -71,9 +71,11 @@ void DSectorEffect::Serialize(FSerializer &arc)
 	arc("sector", m_Sector);
 }
 
-IMPLEMENT_POINTY_CLASS (DMover)
-	DECLARE_POINTER(interpolation)
-END_POINTERS
+IMPLEMENT_POINTY_CLASS(DMover)
+
+IMPLEMENT_POINTERS_START(DMover)
+	IMPLEMENT_POINTER(interpolation)
+IMPLEMENT_POINTERS_END
 
 DMover::DMover ()
 {

@@ -158,9 +158,9 @@ protected: \
 #	define _DECLARE_TI(cls) ClassReg * const cls::RegistrationInfoPtr __attribute__((section(SECTION_CREG))) = &cls::RegistrationInfo;
 #endif
 
-#define _IMP_PCLASS(cls,ptrs,create, initn) \
+#define _IMP_PCLASS(cls, ptrs, create, initn) \
 	ClassReg cls::RegistrationInfo = {\
-		NULL, \
+		nullptr, \
 		#cls, \
 		&cls::Super::RegistrationInfo, \
 		ptrs, \
@@ -171,36 +171,25 @@ protected: \
 	_DECLARE_TI(cls) \
 	PClass *cls::StaticType() const { return RegistrationInfo.MyClass; }
 
-#define _IMP_CREATE_OBJ(cls) \
-	void cls::InPlaceConstructor(void *mem) { new((EInPlace *)mem) cls; }
-
-#define IMPLEMENT_POINTY_CLASS(cls) \
-	_IMP_CREATE_OBJ(cls) \
-	_IMP_PCLASS(cls,cls::PointerOffsets,cls::InPlaceConstructor, nullptr) \
-
-#define IMPLEMENT_POINTY_CLASS_WITH_FIELDS(cls) \
-	_IMP_CREATE_OBJ(cls) \
-	_IMP_PCLASS(cls,cls::PointerOffsets,cls::InPlaceConstructor, cls::InitNativeFields) \
-
-#define IMPLEMENT_CLASS(cls) \
-	_IMP_CREATE_OBJ(cls) \
-	_IMP_PCLASS(cls,nullptr,cls::InPlaceConstructor, nullptr) 
-
-#define IMPLEMENT_CLASS_WITH_FIELDS(cls) \
-	_IMP_CREATE_OBJ(cls) \
-	_IMP_PCLASS(cls,nullptr,cls::InPlaceConstructor, cls::InitNativeFields) 
-
-#define IMPLEMENT_ABSTRACT_CLASS(cls) \
-	_IMP_PCLASS(cls,nullptr,nullptr,nullptr)
-
-#define IMPLEMENT_ABSTRACT_POINTY_CLASS(cls) \
-	_IMP_PCLASS(cls,cls::PointerOffsets,nullptr,nullptr) \
+#define IMPLEMENT_CLASS(cls, isabstract, ptrs, fields) \
+	_X_CONSTRUCTOR_##isabstract##(cls) \
+	_IMP_PCLASS(cls, _X_POINTERS_##ptrs##(cls), _X_ABSTRACT_##isabstract##(cls), _X_FIELDS_##fields##(cls)) 
 
 // Taking the address of a field in an object at address 1 instead of
 // address 0 keeps GCC from complaining about possible misuse of offsetof.
 #define IMPLEMENT_POINTERS_START(cls)	const size_t cls::PointerOffsets[] = {
 #define IMPLEMENT_POINTER(field)		(size_t)&((ThisClass*)1)->field - 1,
 #define IMPLEMENT_POINTERS_END			~(size_t)0 };
+
+// Possible arguments for the IMPLEMENT_CLASS macro
+#define _X_POINTERS_true(cls)		cls::PointerOffsets
+#define _X_POINTERS_false(cls)		nullptr
+#define _X_FIELDS_true(cls)			cls::InitNativeFields
+#define _X_FIELDS_false(cls)		nullptr
+#define _X_CONSTRUCTOR_true(cls)
+#define _X_CONSTRUCTOR_false(cls)	void cls::InPlaceConstructor(void *mem) { new((EInPlace *)mem) cls; }
+#define _X_ABSTRACT_true(cls)		nullptr
+#define _X_ABSTRACT_false(cls)		cls::InPlaceConstructor
 
 enum EObjectFlags
 {

@@ -22,7 +22,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS(AWhirlwind)
+IMPLEMENT_CLASS(AWhirlwind, false, false, false)
 
 int AWhirlwind::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {

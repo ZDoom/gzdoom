@@ -27,7 +27,7 @@ public:
 	void MorphPlayerThink ();
 };
 
-IMPLEMENT_CLASS (APigPlayer)
+IMPLEMENT_CLASS(APigPlayer, false, false, false)
 
 void APigPlayer::MorphPlayerThink ()
 {

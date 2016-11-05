@@ -172,7 +172,7 @@ static FPolyNode *FreePolyNodes;
 //
 //==========================================================================
 
-IMPLEMENT_POINTY_CLASS(DPolyAction)
+IMPLEMENT_CLASS(DPolyAction, false, true, false)
 
 IMPLEMENT_POINTERS_START(DPolyAction)
 	IMPLEMENT_POINTER(m_Interpolation)
@@ -240,7 +240,7 @@ void DPolyAction::StopInterpolation ()
 //
 //==========================================================================
 
-IMPLEMENT_CLASS (DRotatePoly)
+IMPLEMENT_CLASS(DRotatePoly, false, false, false)
 
 DRotatePoly::DRotatePoly ()
 {
@@ -257,7 +257,7 @@ DRotatePoly::DRotatePoly (int polyNum)
 //
 //==========================================================================
 
-IMPLEMENT_CLASS (DMovePoly)
+IMPLEMENT_CLASS(DMovePoly, false, false, false)
 
 DMovePoly::DMovePoly ()
 {
@@ -284,7 +284,7 @@ DMovePoly::DMovePoly (int polyNum)
 //
 //==========================================================================
 
-IMPLEMENT_CLASS(DMovePolyTo)
+IMPLEMENT_CLASS(DMovePolyTo, false, false, false)
 
 DMovePolyTo::DMovePolyTo()
 {
@@ -309,7 +309,7 @@ DMovePolyTo::DMovePolyTo(int polyNum)
 //
 //==========================================================================
 
-IMPLEMENT_CLASS (DPolyDoor)
+IMPLEMENT_CLASS(DPolyDoor, false, false, false)
 
 DPolyDoor::DPolyDoor ()
 {

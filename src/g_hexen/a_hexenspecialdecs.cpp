@@ -39,7 +39,7 @@ public:
 	void HitFloor ();
 };
 
-IMPLEMENT_CLASS (APottery1)
+IMPLEMENT_CLASS(APottery1, false, false, false)
 
 void APottery1::HitFloor ()
 {
@@ -136,7 +136,7 @@ public:
 	void PostBeginPlay ();
 };
 
-IMPLEMENT_CLASS (AZCorpseLynchedNoHeart)
+IMPLEMENT_CLASS(AZCorpseLynchedNoHeart, false, false, false)
 
 void AZCorpseLynchedNoHeart::PostBeginPlay ()
 {
@@ -344,7 +344,7 @@ public:
 	void Activate (AActor *activator);
 };
 
-IMPLEMENT_CLASS (AZBell)
+IMPLEMENT_CLASS(AZBell, false, false, false)
 
 void AZBell::Activate (AActor *activator)
 {

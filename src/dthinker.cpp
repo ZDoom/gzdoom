@@ -47,7 +47,7 @@ extern cycle_t BotSupportCycles;
 extern cycle_t ActionCycles;
 extern int BotWTG;
 
-IMPLEMENT_CLASS (DThinker)
+IMPLEMENT_CLASS(DThinker, false, false, false)
 
 DThinker *NextToThink;
 
@@ -538,7 +538,7 @@ public:
 	}
 };
 
-IMPLEMENT_CLASS(DThinkerIterator);
+IMPLEMENT_CLASS(DThinkerIterator, false, false, false);
 DEFINE_ACTION_FUNCTION(DThinkerIterator, Create)
 {
 	PARAM_PROLOGUE;

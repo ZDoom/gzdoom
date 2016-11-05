@@ -23,7 +23,7 @@ public:
 	PalEntry GetBlend ();
 };
 
-IMPLEMENT_CLASS (AProgLevelEnder)
+IMPLEMENT_CLASS(AProgLevelEnder, false, false, false)
 
 //============================================================================
 //

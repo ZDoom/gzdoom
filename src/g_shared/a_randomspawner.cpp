@@ -231,4 +231,4 @@ class ARandomSpawner : public AActor
 
 };
 
-IMPLEMENT_CLASS (ARandomSpawner)
+IMPLEMENT_CLASS(ARandomSpawner, false, false, false)

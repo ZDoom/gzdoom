@@ -358,7 +358,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS (AMaceFX4)
+IMPLEMENT_CLASS(AMaceFX4, false, false, false)
 
 int AMaceFX4::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
@@ -726,7 +726,7 @@ void ABlasterFX1::Effect ()
 	}
 }
 
-IMPLEMENT_CLASS(ABlasterFX1)
+IMPLEMENT_CLASS(ABlasterFX1, false, false, false)
 
 // Ripper -------------------------------------------------------------------
 
@@ -738,7 +738,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS(ARipper)
+IMPLEMENT_CLASS(ARipper, false, false, false)
 
 int ARipper::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
@@ -828,7 +828,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS (AHornRodFX2)
+IMPLEMENT_CLASS(AHornRodFX2, false, false, false)
 
 int AHornRodFX2::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
@@ -849,7 +849,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS (ARainPillar)
+IMPLEMENT_CLASS(ARainPillar, false, false, false)
 
 int ARainPillar::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
@@ -871,7 +871,7 @@ public:
 	TObjPtr<AActor> Rain1, Rain2;
 };
 
-IMPLEMENT_CLASS (ARainTracker)
+IMPLEMENT_CLASS(ARainTracker, false, false, false)
 	
 void ARainTracker::Serialize(FSerializer &arc)
 {
@@ -1158,8 +1158,8 @@ public:
 	void EndPowerup ();
 };
 
-IMPLEMENT_CLASS (APhoenixRod)
-IMPLEMENT_CLASS (APhoenixRodPowered)
+IMPLEMENT_CLASS(APhoenixRod, false, false, false)
+IMPLEMENT_CLASS(APhoenixRodPowered, false, false, false)
 
 void APhoenixRodPowered::EndPowerup ()
 {
@@ -1177,8 +1177,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-
-IMPLEMENT_CLASS (APhoenixFX1)
+IMPLEMENT_CLASS(APhoenixFX1, false, false, false)
 
 int APhoenixFX1::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
@@ -1199,7 +1198,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS (APhoenixFX2)
+IMPLEMENT_CLASS(APhoenixFX2, false, false, false)
 
 int APhoenixFX2::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {

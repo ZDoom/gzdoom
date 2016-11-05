@@ -95,7 +95,8 @@ public:
 		// The special was already executed by TryPickup, so do nothing here
 	}
 };
-IMPLEMENT_CLASS (AFakeInventory)
+
+IMPLEMENT_CLASS(AFakeInventory, false, false, false)
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 

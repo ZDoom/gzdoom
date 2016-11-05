@@ -851,7 +851,7 @@ private:
 	double ItemFlash;
 };
 
-IMPLEMENT_CLASS(DStrifeStatusBar);
+IMPLEMENT_CLASS(DStrifeStatusBar, false, false, false);
 
 DBaseStatusBar *CreateStrifeStatusBar ()
 {

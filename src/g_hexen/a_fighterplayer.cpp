@@ -11,9 +11,9 @@
 #include "vm.h"
 */
 
-IMPLEMENT_CLASS (AFighterWeapon)
-IMPLEMENT_CLASS (AClericWeapon)
-IMPLEMENT_CLASS (AMageWeapon)
+IMPLEMENT_CLASS(AFighterWeapon, false, false, false)
+IMPLEMENT_CLASS(AClericWeapon, false, false, false)
+IMPLEMENT_CLASS(AMageWeapon, false, false, false)
 
 static FRandom pr_fpatk ("FPunchAttack");
 

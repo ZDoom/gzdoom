@@ -616,7 +616,7 @@ void InitAllPowerupEffects(AInventory *item)
 
 // Base class for morphing projectiles --------------------------------------
 
-IMPLEMENT_CLASS(AMorphProjectile)
+IMPLEMENT_CLASS(AMorphProjectile, false, false, false)
 
 int AMorphProjectile::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
@@ -650,7 +650,7 @@ void AMorphProjectile::Serialize(FSerializer &arc)
 
 // Morphed Monster (you must subclass this to do something useful) ---------
 
-IMPLEMENT_POINTY_CLASS(AMorphedMonster)
+IMPLEMENT_CLASS(AMorphedMonster, false, true, false)
 
 IMPLEMENT_POINTERS_START(AMorphedMonster)
 	IMPLEMENT_POINTER(UnmorphedMe)

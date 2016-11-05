@@ -47,7 +47,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS (ATeleporterBeacon)
+IMPLEMENT_CLASS(ATeleporterBeacon, false, false, false)
 
 bool ATeleporterBeacon::Use (bool pickup)
 {

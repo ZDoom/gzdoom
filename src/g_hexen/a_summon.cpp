@@ -21,7 +21,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS (AArtiDarkServant)
+IMPLEMENT_CLASS(AArtiDarkServant, false, false, false)
 
 //============================================================================
 //

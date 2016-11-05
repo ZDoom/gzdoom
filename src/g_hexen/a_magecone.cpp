@@ -32,7 +32,7 @@ public:
 	int DoSpecialDamage (AActor *victim, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS (AFrostMissile)
+IMPLEMENT_CLASS(AFrostMissile, false, false, false)
 
 int AFrostMissile::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 {

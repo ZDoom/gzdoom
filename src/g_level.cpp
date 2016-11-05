@@ -903,7 +903,7 @@ public:
 	void Tick ();
 };
 
-IMPLEMENT_CLASS (DAutosaver)
+IMPLEMENT_CLASS(DAutosaver, false, false, false)
 
 void DAutosaver::Tick ()
 {

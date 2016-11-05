@@ -66,7 +66,7 @@ public:
 	TObjPtr<AInterpolationPoint> Next;
 };
 
-IMPLEMENT_POINTY_CLASS(AInterpolationPoint)
+IMPLEMENT_CLASS(AInterpolationPoint, false, true, false)
 
 IMPLEMENT_POINTERS_START(AInterpolationPoint)
 	IMPLEMENT_POINTER(Next)
@@ -135,7 +135,7 @@ public:
 	void Tick () {}		// Does absolutely nothing itself
 };
 
-IMPLEMENT_CLASS (AInterpolationSpecial)
+IMPLEMENT_CLASS(AInterpolationSpecial, false, false, false)
 
 /*
 == PathFollower: something that follows a camera path
@@ -178,7 +178,7 @@ protected:
 	int HoldTime;
 };
 
-IMPLEMENT_POINTY_CLASS(APathFollower)
+IMPLEMENT_CLASS(APathFollower, false, true, false)
 
 IMPLEMENT_POINTERS_START(APathFollower)
 	IMPLEMENT_POINTER(PrevNode)
@@ -480,7 +480,7 @@ protected:
 	bool Interpolate ();
 };
 
-IMPLEMENT_CLASS (AActorMover)
+IMPLEMENT_CLASS(AActorMover, false, false, false)
 
 void AActorMover::BeginPlay()
 {
@@ -596,7 +596,7 @@ protected:
 	TObjPtr<AActor> Activator;
 };
 
-IMPLEMENT_POINTY_CLASS(AMovingCamera)
+IMPLEMENT_CLASS(AMovingCamera, false, true, false)
 
 IMPLEMENT_POINTERS_START(AMovingCamera)
 	IMPLEMENT_POINTER(Activator)

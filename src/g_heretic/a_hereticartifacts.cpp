@@ -17,8 +17,7 @@ public:
 	bool Use (bool pickup);
 };
 
-
-IMPLEMENT_CLASS (AArtiTomeOfPower)
+IMPLEMENT_CLASS(AArtiTomeOfPower, false, false, false)
 
 bool AArtiTomeOfPower::Use (bool pickup)
 {
@@ -64,8 +63,7 @@ public:
 	bool Use (bool pickup);
 };
 
-
-IMPLEMENT_CLASS (AArtiTimeBomb)
+IMPLEMENT_CLASS(AArtiTimeBomb, false, false, false)
 
 bool AArtiTimeBomb::Use (bool pickup)
 {

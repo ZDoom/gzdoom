@@ -179,7 +179,7 @@ AActor* actorvalue(const svalue_t &svalue)
 //
 //==========================================================================
 
-IMPLEMENT_POINTY_CLASS(DFsVariable)
+IMPLEMENT_CLASS(DFsVariable, false, true, false)
 
 IMPLEMENT_POINTERS_START(DFsVariable)
 	IMPLEMENT_POINTER(next)

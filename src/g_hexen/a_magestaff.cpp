@@ -56,7 +56,7 @@ public:
 	BYTE MStaffCount;
 };
 
-IMPLEMENT_CLASS (AMWeapBloodscourge)
+IMPLEMENT_CLASS(AMWeapBloodscourge, false, false, false)
 
 // Mage Staff FX2 (Bloodscourge) --------------------------------------------
 
@@ -68,7 +68,7 @@ public:
 	bool SpecialBlastHandling (AActor *source, double strength);
 };
 
-IMPLEMENT_CLASS (AMageStaffFX2)
+IMPLEMENT_CLASS(AMageStaffFX2, false, false, false)
 
 int AMageStaffFX2::SpecialMissileHit (AActor *victim)
 {

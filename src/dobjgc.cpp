@@ -125,7 +125,8 @@ public:
 	int PolyNum;
 	int SideNum;
 };
-IMPLEMENT_CLASS(DSectorMarker)
+
+IMPLEMENT_CLASS(DSectorMarker, false, false, false)
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 

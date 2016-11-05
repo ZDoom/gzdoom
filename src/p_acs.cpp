@@ -1369,7 +1369,7 @@ private:
 	DPlaneWatcher() {}
 };
 
-IMPLEMENT_POINTY_CLASS(DPlaneWatcher)
+IMPLEMENT_CLASS(DPlaneWatcher, false, true, false)
 
 IMPLEMENT_POINTERS_START(DPlaneWatcher)
 	IMPLEMENT_POINTER(Activator)
@@ -2860,7 +2860,7 @@ void FBehavior::StaticStopMyScripts (AActor *actor)
 
 //---- The ACS Interpreter ----//
 
-IMPLEMENT_POINTY_CLASS(DACSThinker)
+IMPLEMENT_CLASS(DACSThinker, false, true, false)
 
 IMPLEMENT_POINTERS_START(DACSThinker)
 	IMPLEMENT_POINTER(LastScript)
@@ -2991,7 +2991,7 @@ void DACSThinker::StopScriptsFor (AActor *actor)
 	}
 }
 
-IMPLEMENT_POINTY_CLASS(DLevelScript)
+IMPLEMENT_CLASS(DLevelScript, false, true, false)
 
 IMPLEMENT_POINTERS_START(DLevelScript)
 	IMPLEMENT_POINTER(next)

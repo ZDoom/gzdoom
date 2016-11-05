@@ -38,7 +38,7 @@ public:
 	FState *GetAtkState (bool hold);
 };
 
-IMPLEMENT_CLASS (AFWeapAxe)
+IMPLEMENT_CLASS(AFWeapAxe, false, false, false)
 
 FState *AFWeapAxe::GetUpState ()
 {

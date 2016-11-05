@@ -1785,9 +1785,7 @@ public:
 	void		Destroy() { Super::Destroy(); m_Sector->lightingdata=NULL; }
 };
 
-
-
-IMPLEMENT_CLASS (DLightLevel)
+IMPLEMENT_CLASS(DLightLevel, false, false, false)
 
 void DLightLevel::Serialize(FSerializer &arc)
 {

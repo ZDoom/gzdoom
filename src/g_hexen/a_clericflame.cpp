@@ -33,7 +33,7 @@ public:
 	void Effect ();
 };
 
-IMPLEMENT_CLASS (ACFlameMissile)
+IMPLEMENT_CLASS(ACFlameMissile, false, false, false)
 
 void ACFlameMissile::BeginPlay ()
 {

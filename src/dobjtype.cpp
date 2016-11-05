@@ -93,8 +93,8 @@ static const size_t TheEnd = ~(size_t)0;
 
 // CODE --------------------------------------------------------------------
 
-IMPLEMENT_CLASS(PErrorType)
-IMPLEMENT_CLASS(PVoidType)
+IMPLEMENT_CLASS(PErrorType, false, false, false)
+IMPLEMENT_CLASS(PVoidType, false, false, false)
 
 void DumpTypeTable()
 {
@@ -141,7 +141,7 @@ void DumpTypeTable()
 
 /* PClassType *************************************************************/
 
-IMPLEMENT_CLASS(PClassType)
+IMPLEMENT_CLASS(PClassType, false, false, false)
 
 //==========================================================================
 //
@@ -169,7 +169,7 @@ void PClassType::Derive(PClass *newclass)
 
 /* PClassClass ************************************************************/
 
-IMPLEMENT_CLASS(PClassClass)
+IMPLEMENT_CLASS(PClassClass, false, false, false)
 
 //==========================================================================
 //
@@ -187,7 +187,7 @@ PClassClass::PClassClass()
 
 /* PType ******************************************************************/
 
-IMPLEMENT_ABSTRACT_POINTY_CLASS(PType)
+IMPLEMENT_CLASS(PType, true, true, false)
 
 IMPLEMENT_POINTERS_START(PType)
 	IMPLEMENT_POINTER(HashNext)
@@ -614,7 +614,7 @@ void PType::StaticInit()
 
 /* PBasicType *************************************************************/
 
-IMPLEMENT_ABSTRACT_CLASS(PBasicType)
+IMPLEMENT_CLASS(PBasicType, true, false, false)
 
 //==========================================================================
 //
@@ -640,11 +640,11 @@ PBasicType::PBasicType(unsigned int size, unsigned int align)
 
 /* PCompoundType **********************************************************/
 
-IMPLEMENT_ABSTRACT_CLASS(PCompoundType)
+IMPLEMENT_CLASS(PCompoundType, true, false, false)
 
 /* PNamedType *************************************************************/
 
-IMPLEMENT_ABSTRACT_POINTY_CLASS(PNamedType)
+IMPLEMENT_CLASS(PNamedType, true, true, false)
 
 IMPLEMENT_POINTERS_START(PNamedType)
 	IMPLEMENT_POINTER(Outer)
@@ -692,7 +692,7 @@ FString PNamedType::QualifiedName() const
 
 /* PInt *******************************************************************/
 
-IMPLEMENT_CLASS(PInt)
+IMPLEMENT_CLASS(PInt, false, false, false)
 
 //==========================================================================
 //
@@ -931,7 +931,7 @@ double PInt::GetValueFloat(void *addr) const
 
 /* PBool ******************************************************************/
 
-IMPLEMENT_CLASS(PBool)
+IMPLEMENT_CLASS(PBool, false, false, false)
 
 //==========================================================================
 //
@@ -952,7 +952,7 @@ PBool::PBool()
 
 /* PFloat *****************************************************************/
 
-IMPLEMENT_CLASS(PFloat)
+IMPLEMENT_CLASS(PFloat, false, false, false)
 
 //==========================================================================
 //
@@ -1202,7 +1202,7 @@ void PFloat::SetOps()
 
 /* PString ****************************************************************/
 
-IMPLEMENT_CLASS(PString)
+IMPLEMENT_CLASS(PString, false, false, false)
 
 //==========================================================================
 //
@@ -1299,7 +1299,7 @@ void PString::DestroyValue(void *addr) const
 
 /* PName ******************************************************************/
 
-IMPLEMENT_CLASS(PName)
+IMPLEMENT_CLASS(PName, false, false, false)
 
 //==========================================================================
 //
@@ -1349,7 +1349,7 @@ bool PName::ReadValue(FSerializer &ar, const char *key, void *addr) const
 
 /* PSound *****************************************************************/
 
-IMPLEMENT_CLASS(PSound)
+IMPLEMENT_CLASS(PSound, false, false, false)
 
 //==========================================================================
 //
@@ -1399,7 +1399,7 @@ bool PSound::ReadValue(FSerializer &ar, const char *key, void *addr) const
 
 /* PColor *****************************************************************/
 
-IMPLEMENT_CLASS(PColor)
+IMPLEMENT_CLASS(PColor, false, false, false)
 
 //==========================================================================
 //
@@ -1416,7 +1416,7 @@ PColor::PColor()
 
 /* PStatePointer **********************************************************/
 
-IMPLEMENT_CLASS(PStatePointer)
+IMPLEMENT_CLASS(PStatePointer, false, false, false)
 
 //==========================================================================
 //
@@ -1460,7 +1460,7 @@ bool PStatePointer::ReadValue(FSerializer &ar, const char *key, void *addr) cons
 
 /* PPointer ***************************************************************/
 
-IMPLEMENT_POINTY_CLASS(PPointer)
+IMPLEMENT_CLASS(PPointer, false, true, false)
 
 IMPLEMENT_POINTERS_START(PPointer)
 	IMPLEMENT_POINTER(PointedType)
@@ -1591,7 +1591,7 @@ PPointer *NewPointer(PType *type, bool isconst)
 
 /* PClassPointer **********************************************************/
 
-IMPLEMENT_POINTY_CLASS(PClassPointer)
+IMPLEMENT_CLASS(PClassPointer, false, true, false)
 
 IMPLEMENT_POINTERS_START(PClassPointer)
 	IMPLEMENT_POINTER(ClassRestriction)
@@ -1672,7 +1672,7 @@ PClassPointer *NewClassPointer(PClass *restrict)
 
 /* PEnum ******************************************************************/
 
-IMPLEMENT_POINTY_CLASS(PEnum)
+IMPLEMENT_CLASS(PEnum, false, true, false)
 
 IMPLEMENT_POINTERS_START(PEnum)
 	IMPLEMENT_POINTER(ValueType)
@@ -1725,7 +1725,7 @@ PEnum *NewEnum(FName name, PTypeBase *outer)
 
 /* PArray *****************************************************************/
 
-IMPLEMENT_POINTY_CLASS(PArray)
+IMPLEMENT_CLASS(PArray, false, true, false)
 
 IMPLEMENT_POINTERS_START(PArray)
 	IMPLEMENT_POINTER(ElementType)
@@ -1874,7 +1874,7 @@ PArray *NewArray(PType *type, unsigned int count)
 
 /* PVector ****************************************************************/
 
-IMPLEMENT_CLASS(PVector)
+IMPLEMENT_CLASS(PVector, false, false, false)
 
 //==========================================================================
 //
@@ -1924,7 +1924,7 @@ PVector *NewVector(unsigned int size)
 
 /* PDynArray **************************************************************/
 
-IMPLEMENT_POINTY_CLASS(PDynArray)
+IMPLEMENT_CLASS(PDynArray, false, true, false)
 
 IMPLEMENT_POINTERS_START(PDynArray)
 	IMPLEMENT_POINTER(ElementType)
@@ -2007,7 +2007,7 @@ PDynArray *NewDynArray(PType *type)
 
 /* PMap *******************************************************************/
 
-IMPLEMENT_POINTY_CLASS(PMap)
+IMPLEMENT_CLASS(PMap, false, true, false)
 
 IMPLEMENT_POINTERS_START(PMap)
 	IMPLEMENT_POINTER(KeyType)
@@ -2091,7 +2091,7 @@ PMap *NewMap(PType *keytype, PType *valuetype)
 
 /* PStruct ****************************************************************/
 
-IMPLEMENT_CLASS(PStruct)
+IMPLEMENT_CLASS(PStruct, false, false, false)
 
 //==========================================================================
 //
@@ -2312,7 +2312,7 @@ PStruct *NewStruct(FName name, PTypeBase *outer)
 
 /* PField *****************************************************************/
 
-IMPLEMENT_CLASS(PField)
+IMPLEMENT_CLASS(PField, false, false, false)
 
 //==========================================================================
 //
@@ -2357,7 +2357,7 @@ PField::PField(FName name, PType *type, DWORD flags, size_t offset, int bitvalue
 
 /* PPrototype *************************************************************/
 
-IMPLEMENT_CLASS(PPrototype)
+IMPLEMENT_CLASS(PPrototype, false, false, false)
 
 //==========================================================================
 //
@@ -2443,7 +2443,7 @@ PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> 
 
 /* PFunction **************************************************************/
 
-IMPLEMENT_CLASS(PFunction)
+IMPLEMENT_CLASS(PFunction, false, false, false)
 
 //==========================================================================
 //
@@ -2501,7 +2501,7 @@ unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArra
 
 /* PClass *****************************************************************/
 
-IMPLEMENT_POINTY_CLASS(PClass)
+IMPLEMENT_CLASS(PClass, false, true, false)
 
 IMPLEMENT_POINTERS_START(PClass)
 	IMPLEMENT_POINTER(ParentClass)
@@ -3420,24 +3420,23 @@ CCMD(typetable)
 
 // Symbol tables ------------------------------------------------------------
 
-IMPLEMENT_ABSTRACT_CLASS(PTypeBase);
-IMPLEMENT_ABSTRACT_CLASS(PSymbol);
-IMPLEMENT_CLASS(PSymbolConst);
-IMPLEMENT_CLASS(PSymbolConstNumeric);
-IMPLEMENT_CLASS(PSymbolConstString);
-
-IMPLEMENT_POINTY_CLASS(PSymbolType)
+IMPLEMENT_CLASS(PTypeBase, true, false, false);
+IMPLEMENT_CLASS(PSymbol, true, false, false);
+IMPLEMENT_CLASS(PSymbolConst, false, false, false);
+IMPLEMENT_CLASS(PSymbolConstNumeric, false, false, false);
+IMPLEMENT_CLASS(PSymbolConstString, false, false, false);
+IMPLEMENT_CLASS(PSymbolTreeNode, false, false, false)
+IMPLEMENT_CLASS(PSymbolType, false, true, false)
 
 IMPLEMENT_POINTERS_START(PSymbolType)
 	IMPLEMENT_POINTER(Type)
 IMPLEMENT_POINTERS_END
 
-IMPLEMENT_POINTY_CLASS(PSymbolVMFunction)
+IMPLEMENT_CLASS(PSymbolVMFunction, false, true, false)
 
 IMPLEMENT_POINTERS_START(PSymbolVMFunction)
 	IMPLEMENT_POINTER(Function)
 IMPLEMENT_POINTERS_END
-IMPLEMENT_CLASS(PSymbolTreeNode)
 
 //==========================================================================
 //

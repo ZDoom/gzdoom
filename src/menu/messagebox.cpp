@@ -73,7 +73,7 @@ public:
 	virtual void HandleResult(bool res);
 };
 
-IMPLEMENT_CLASS(DMessageBoxMenu)
+IMPLEMENT_CLASS(DMessageBoxMenu, false, false, false)
 
 //=============================================================================
 //
@@ -365,7 +365,7 @@ public:
 	virtual void HandleResult(bool res);
 };
 
-IMPLEMENT_CLASS(DQuitMenu)
+IMPLEMENT_CLASS(DQuitMenu, false, false, false)
 
 //=============================================================================
 //
@@ -458,7 +458,7 @@ public:
 	virtual void HandleResult(bool res);
 };
 
-IMPLEMENT_CLASS(DEndGameMenu)
+IMPLEMENT_CLASS(DEndGameMenu, false, false, false)
 
 //=============================================================================
 //
@@ -536,7 +536,7 @@ public:
 	virtual void HandleResult(bool res);
 };
 
-IMPLEMENT_CLASS(DQuickSaveMenu)
+IMPLEMENT_CLASS(DQuickSaveMenu, false, false, false)
 
 //=============================================================================
 //
@@ -632,7 +632,7 @@ public:
 	virtual void HandleResult(bool res);
 };
 
-IMPLEMENT_CLASS(DQuickLoadMenu)
+IMPLEMENT_CLASS(DQuickLoadMenu, false, false, false)
 
 //=============================================================================
 //

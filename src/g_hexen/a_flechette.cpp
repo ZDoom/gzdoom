@@ -24,7 +24,7 @@ DECLARE_ACTION(A_CheckThrowBomb)
 
 // Poison Bag Artifact (Flechette) ------------------------------------------
 
-IMPLEMENT_CLASS (AArtiPoisonBag)
+IMPLEMENT_CLASS(AArtiPoisonBag, false, false, false)
 
 // Poison Bag 1 (The Cleric's) ----------------------------------------------
 
@@ -35,7 +35,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS (AArtiPoisonBag1)
+IMPLEMENT_CLASS(AArtiPoisonBag1, false, false, false)
 
 bool AArtiPoisonBag1::Use (bool pickup)
 {
@@ -60,7 +60,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS (AArtiPoisonBag2)
+IMPLEMENT_CLASS(AArtiPoisonBag2, false, false, false)
 
 bool AArtiPoisonBag2::Use (bool pickup)
 {
@@ -85,7 +85,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS (AArtiPoisonBag3)
+IMPLEMENT_CLASS(AArtiPoisonBag3, false, false, false)
 
 bool AArtiPoisonBag3::Use (bool pickup)
 {
@@ -136,7 +136,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS (AArtiPoisonBagGiver)
+IMPLEMENT_CLASS(AArtiPoisonBagGiver, false, false, false)
 
 bool AArtiPoisonBagGiver::Use (bool pickup)
 {
@@ -167,7 +167,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS (AArtiPoisonBagShooter)
+IMPLEMENT_CLASS(AArtiPoisonBagShooter, false, false, false)
 
 bool AArtiPoisonBagShooter::Use (bool pickup)
 {
@@ -296,7 +296,7 @@ public:
 	void BeginPlay ();
 };
 
-IMPLEMENT_CLASS (APoisonCloud)
+IMPLEMENT_CLASS(APoisonCloud, false, false, false)
 
 void APoisonCloud::BeginPlay ()
 {

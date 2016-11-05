@@ -16,7 +16,7 @@ public:
 	void Touch (AActor *toucher);
 };
 
-IMPLEMENT_CLASS (ASpectralMonster)
+IMPLEMENT_CLASS(ASpectralMonster, false, false, false)
 
 void ASpectralMonster::Touch (AActor *toucher)
 {

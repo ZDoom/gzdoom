@@ -5015,6 +5015,27 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		delete this;
 		return x->Resolve(ctx);
 	}
+
+	if (Identifier == NAME_Default)
+	{
+		if (ctx.Function->Variants[0].SelfClass == nullptr)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Unable to access class defaults from static function");
+			delete this;
+			return nullptr;
+		}
+		if (!ctx.Function->Variants[0].SelfClass->IsDescendantOf(RUNTIME_CLASS(AActor)))
+		{
+			ScriptPosition.Message(MSG_ERROR, "'Default' requires an actor type.");
+			delete this;
+			return nullptr;
+		}
+
+		FxExpression * x = new FxClassDefaults(new FxSelf(ScriptPosition), ScriptPosition);
+		delete this;
+		return x->Resolve(ctx);
+	}
+
 	// Ugh, the horror. Constants need to be taken from the owning class, but members from the self class to catch invalid accesses here...
 	// see if the current class (if valid) defines something with this name.
 	PSymbolTable *symtbl;
@@ -5354,6 +5375,95 @@ ExpEmit FxSelf::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
+FxClassDefaults::FxClassDefaults(FxExpression *X, const FScriptPosition &pos)
+	: FxExpression(EFX_ClassDefaults, pos)
+{
+	obj = X;
+	EmitTail = false;
+}
+
+FxClassDefaults::~FxClassDefaults()
+{
+	SAFE_DELETE(obj);
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+PPrototype *FxClassDefaults::ReturnProto()
+{
+	EmitTail = true;
+	return FxExpression::ReturnProto();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxClassDefaults::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(obj, ctx);
+	assert(obj->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)));
+	ValueType = NewPointer(static_cast<PPointer*>(obj->ValueType)->PointedType, true);
+	return this;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+int BuiltinGetDefault(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+{
+	assert(numparam == 1);
+	PARAM_POINTER_AT(0, obj, DObject);
+	ACTION_RETURN_OBJECT(obj->GetClass()->Defaults);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxClassDefaults::Emit(VMFunctionBuilder *build)
+{
+	EmitParameter(build, obj, ScriptPosition);
+	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinGetDefault, BuiltinGetDefault);
+
+	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
+	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
+	auto callfunc = ((PSymbolVMFunction *)sym)->Function;
+	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
+	build->Emit(opcode, build->GetConstantAddress(callfunc, ATAG_OBJECT), 1, 1);
+
+	if (EmitTail)
+	{
+		ExpEmit call;
+		call.Final = true;
+		return call;
+	}
+
+	ExpEmit out(build, REGT_POINTER);
+	build->Emit(OP_RESULT, 0, REGT_POINTER, out.RegNum);
+	return out;
+
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FxGlobalVariable::FxGlobalVariable(PField* mem, const FScriptPosition &pos)
 	: FxExpression(EFX_GlobalVariable, pos)
 {
@@ -5464,6 +5574,21 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(classx, ctx);
+
+	if (membervar->SymbolName == NAME_Default)
+	{
+		if (!classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer))
+			|| !static_cast<PPointer *>(classx->ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(AActor)))
+		{
+			ScriptPosition.Message(MSG_ERROR, "'Default' requires an actor type.");
+			delete this;
+			return nullptr;
+		}
+		FxExpression * x = new FxClassDefaults(classx, ScriptPosition);
+		classx = nullptr;
+		delete this;
+		return x->Resolve(ctx);
+	}
 
 	if (classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
 	{
@@ -5581,7 +5706,6 @@ FxClassMember::FxClassMember(FxExpression *x, PField* mem, const FScriptPosition
 : FxStructMember(x, mem, pos)
 {
 	ExprType = EFX_ClassMember;
-	//if (classx->IsDefaultObject()) Readonly=true;
 }
 
 //==========================================================================

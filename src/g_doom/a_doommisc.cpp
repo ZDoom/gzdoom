@@ -29,21 +29,3 @@
 #include "a_revenant.cpp"
 #include "a_scriptedmarine.cpp"
 
-// The barrel of green goop ------------------------------------------------
-
-DEFINE_ACTION_FUNCTION(AActor, A_BarrelDestroy)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-
-	if (dmflags2 & DF2_BARRELS_RESPAWN)
-	{
-		self->Height = self->GetDefault()->Height;
-		self->renderflags |= RF_INVISIBLE;
-		self->flags &= ~MF_SOLID;
-	}
-	else
-	{
-		self->Destroy ();
-	}
-	return 0;
-}

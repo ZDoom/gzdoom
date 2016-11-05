@@ -683,6 +683,7 @@ xx(BuiltinNameToClass)
 xx(BuiltinFindMultiNameState)
 xx(BuiltinFindSingleNameState)
 xx(BuiltinHandleRuntimeState)
+xx(BuiltinGetDefault)
 xx(Damage)
 
 // basic type names

@@ -1508,10 +1508,10 @@ void PPointer::SetOps()
 
 bool PPointer::IsMatch(intptr_t id1, intptr_t id2) const
 {
-	assert(id2 == 0);
+	assert(id2 == 0 || id2 == 1);
 	PType *pointat = (PType *)id1;
 
-	return pointat == PointedType;
+	return pointat == PointedType && (!!id2) == IsConst;
 }
 
 //==========================================================================

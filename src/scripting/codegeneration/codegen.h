@@ -355,12 +355,14 @@ public:
 class FxClassDefaults : public FxExpression
 {
 	FxExpression *obj;
+	bool EmitTail;
 
 public:
-	FxClassDefaults(FxExpression*, const FScriptPosition &);
+	FxClassDefaults(FxExpression *, const FScriptPosition &);
 	~FxClassDefaults();
+	PPrototype *ReturnProto();
 	FxExpression *Resolve(FCompileContext&);
-	bool IsDefaultObject() const;
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================

@@ -34,6 +34,23 @@ class ExplosiveBarrel : Actor
 	}
 }
 
+extend class Actor
+{
+	void A_BarrelDestroy()
+	{
+		if (GetCVar("sv_barrelrespawn"))
+		{
+			Height = Default.Height;
+			bInvisible = true;
+			bSolid = false;
+		}
+		else
+		{
+			Destroy();
+		}
+	}
+}
+
 // Bullet puff -------------------------------------------------------------
 
 class BulletPuff : Actor

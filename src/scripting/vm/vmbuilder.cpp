@@ -715,19 +715,23 @@ void FFunctionBuildList::Build()
 
 		FScriptPosition::StrictErrors = !item.FromDecorate;
 		item.Code = item.Code->Resolve(ctx);
-		item.Proto = ctx.ReturnProto;
 
 		// Make sure resolving it didn't obliterate it.
 		if (item.Code != nullptr)
 		{
-			assert(item.Proto != nullptr);
-
 			if (!item.Code->CheckReturn())
 			{
 				auto newcmpd = new FxCompoundStatement(item.Code->ScriptPosition);
 				newcmpd->Add(item.Code);
 				newcmpd->Add(new FxReturnStatement(nullptr, item.Code->ScriptPosition));
 				item.Code = newcmpd->Resolve(ctx);
+			}
+
+			item.Proto = ctx.ReturnProto;
+			if (item.Proto == nullptr)
+			{
+				item.Code->ScriptPosition.Message(MSG_ERROR, "Function %s without prototype", item.PrintableName.GetChars());
+				continue;
 			}
 
 			// Generate prototype for anonymous functions.

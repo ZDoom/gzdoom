@@ -60,6 +60,9 @@ CVAR(Bool, r_minfilter, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 // Use mipmapped textures
 CVAR(Bool, r_mipmap, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
+// Level of detail texture bias
+CVAR(Float, r_lod_bias, -1.5, 0); // To do: add CVAR_ARCHIVE | CVAR_GLOBALCONFIG when a good default has been decided
+
 /////////////////////////////////////////////////////////////////////////////
 
 class DrawSpanLLVMCommand : public DrawerCommand
@@ -377,7 +380,7 @@ public:
 		if (dc_shade_constants.simple_shade)
 			args.flags |= DrawColumnArgs::simple_shade;
 		if (args.source2 == nullptr)
-			args.flags |= DrawWallArgs::nearest_filter;
+			args.flags |= DrawColumnArgs::nearest_filter;
 
 		DetectRangeError(args.dest, args.dest_y, args.count);
 	}

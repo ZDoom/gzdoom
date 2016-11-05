@@ -264,8 +264,13 @@ void R_DrawMaskedColumnBgra(FTexture *tex, fixed_t col, bool useRt, bool unmaske
 
 	// Texture mipmap and filter selection:
 	fixed_t xoffset = col;
-	double magnitude = fabs(uv_stepd * 2);
-	bool magnifying = magnitude < 1.0f;
+
+	double xmagnitude = 1.0; // To do: pass this into R_DrawMaskedColumn
+	double ymagnitude = fabs(uv_stepd);
+	double magnitude = MAX(ymagnitude, xmagnitude);
+	double min_lod = -1000.0;
+	double lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
+	bool magnifying = lod < 0.0f;
 
 	int mipmap_offset = 0;
 	int mip_width = tex->GetWidth();
@@ -273,12 +278,11 @@ void R_DrawMaskedColumnBgra(FTexture *tex, fixed_t col, bool useRt, bool unmaske
 	if (r_mipmap && tex->Mipmapped() && mip_width > 1 && mip_height > 1)
 	{
 		uint32_t xpos = (uint32_t)((((uint64_t)xoffset) << FRACBITS) / mip_width);
-		double texture_bias = 1.7f;
-		double level = MAX(magnitude - 3.0, 0.0);
-		while (level > texture_bias && mip_width > 1 && mip_height > 1)
+		int level = (int)lod;
+		while (level > 0 && mip_width > 1 && mip_height > 1)
 		{
 			mipmap_offset += mip_width * mip_height;
-			level *= 0.5f;
+			level--;
 			mip_width = MAX(mip_width >> 1, 1);
 			mip_height = MAX(mip_height >> 1, 1);
 		}
@@ -424,6 +428,7 @@ void R_DrawMaskedColumn (FTexture *tex, fixed_t col, bool useRt, bool unmasked)
 		{
 			dc_texturefrac = FLOAT2FIXED((dc_yl + 0.5 - sprtopscreen) / spryscale);
 			dc_source = column;
+			dc_source2 = nullptr;
 			dc_dest = (ylookup[dc_yl] + dc_x) * pixelsize + dc_destorg;
 			dc_count = dc_yh - dc_yl + 1;
 
@@ -3215,6 +3220,7 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 										dc_x = lxt + x;
 										rt_initcols(OffscreenColorBuffer + (dc_x & ~3) * OffscreenBufferHeight);
 										dc_source = col;
+										dc_source2 = nullptr;
 										dc_texturefrac = yplc[xxl];
 										hcolfunc_pre();
 									}

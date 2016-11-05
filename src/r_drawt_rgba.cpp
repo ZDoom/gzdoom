@@ -99,7 +99,7 @@ public:
 		if (dc_shade_constants.simple_shade)
 			args.flags |= DrawColumnArgs::simple_shade;
 		if (args.source2 == nullptr)
-			args.flags |= DrawWallArgs::nearest_filter;
+			args.flags |= DrawColumnArgs::nearest_filter;
 
 		DetectRangeError(args.dest, args.dest_y, args.count);
 	}

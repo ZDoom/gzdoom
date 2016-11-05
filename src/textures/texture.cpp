@@ -456,7 +456,7 @@ void FTexture::GenerateBgraMipmaps()
 					Color4f src11 = src[sy1 + sx1 * srch];
 					Color4f c = (src00 + src01 + src10 + src11) * 0.25f;
 
-					dest[y + x * h] = src00;
+					dest[y + x * h] = c;
 				}
 			}
 
@@ -483,7 +483,7 @@ void FTexture::GenerateBgraMipmaps()
 					smoothed[y + x * h] = c;
 				}
 			}
-			float k = 0.04f;
+			float k = 0.08f;
 			for (int j = 0; j < w * h; j++)
 				dest[j] = dest[j] + (dest[j] - smoothed[j]) * k;
 
@@ -502,10 +502,10 @@ void FTexture::GenerateBgraMipmaps()
 			int h = MAX(Height >> i, 1);
 			for (int j = 0; j < w * h; j++)
 			{
-				uint32_t a = (uint32_t)clamp(powf(src[j].a, 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
-				uint32_t r = (uint32_t)clamp(powf(src[j].r, 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
-				uint32_t g = (uint32_t)clamp(powf(src[j].g, 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
-				uint32_t b = (uint32_t)clamp(powf(src[j].b, 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t a = (uint32_t)clamp(powf(MAX(src[j].a, 0.0f), 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t r = (uint32_t)clamp(powf(MAX(src[j].r, 0.0f), 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t g = (uint32_t)clamp(powf(MAX(src[j].g, 0.0f), 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t b = (uint32_t)clamp(powf(MAX(src[j].b, 0.0f), 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
 				dest[j] = (a << 24) | (r << 16) | (g << 8) | b;
 			}
 			src += w * h;

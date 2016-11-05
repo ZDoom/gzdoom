@@ -1070,7 +1070,7 @@ EXTERN_CVAR(Bool, r_mipmap)
 struct WallscanSampler
 {
 	WallscanSampler() { }
-	WallscanSampler(int y1, float swal, double yrepeat, fixed_t xoffset, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x));
+	WallscanSampler(int y1, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x));
 
 	uint32_t uv_pos;
 	uint32_t uv_step;
@@ -1082,8 +1082,10 @@ struct WallscanSampler
 	uint32_t height;
 };
 
-WallscanSampler::WallscanSampler(int y1, float swal, double yrepeat, fixed_t xoffset, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x))
+WallscanSampler::WallscanSampler(int y1, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x))
 {
+	xoffset += FLOAT2FIXED(xmagnitude * 0.5);
+
 	if (!r_swtruecolor)
 	{
 		height = texture->GetHeight();
@@ -1147,8 +1149,11 @@ WallscanSampler::WallscanSampler(int y1, float swal, double yrepeat, fixed_t xof
 		}
 		else
 		{
-			double magnitude = fabs(uv_stepd * 2);
-			bool magnifying = magnitude < 1.0f;
+			double ymagnitude = fabs(uv_stepd);
+			double magnitude = MAX(ymagnitude, xmagnitude);
+			double min_lod = -1000.0;
+			double lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
+			bool magnifying = lod < 0.0f;
 
 			int mipmap_offset = 0;
 			int mip_width = texture->GetWidth();
@@ -1156,12 +1161,12 @@ WallscanSampler::WallscanSampler(int y1, float swal, double yrepeat, fixed_t xof
 			if (r_mipmap && texture->Mipmapped() && mip_width > 1 && mip_height > 1)
 			{
 				uint32_t xpos = (uint32_t)((((uint64_t)xoffset) << FRACBITS) / mip_width);
-				double texture_bias = 1.7f;
-				double level = MAX(magnitude - 3.0, 0.0);
-				while (level > texture_bias && mip_width > 1 && mip_height > 1)
+
+				int level = (int)lod;
+				while (level > 0 && mip_width > 1 && mip_height > 1)
 				{
 					mipmap_offset += mip_width * mip_height;
-					level *= 0.5f;
+					level--;
 					mip_width = MAX(mip_width >> 1, 1);
 					mip_height = MAX(mip_height >> 1, 1);
 				}
@@ -1411,6 +1416,8 @@ void wallscan_any(
 	int aligned_x1 = clamp((x1 + 3) / 4 * 4, x1, x2);
 	int aligned_x2 = clamp(x2 / 4 * 4, x1, x2);
 
+	double xmagnitude = 1.0;
+
 	// First unaligned columns:
 	for (int x = x1; x < aligned_x1; x++, light += rw_lightstep)
 	{
@@ -1422,7 +1429,9 @@ void wallscan_any(
 		if (!fixed)
 			R_SetColorMapLight(basecolormap, light, wallshade);
 
-		WallscanSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, rw_pic, getcol);
+		if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
+
+		WallscanSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic, getcol);
 		wallscan_drawcol1(x, y1, y2, sampler, draw1column);
 	}
 
@@ -1442,7 +1451,10 @@ void wallscan_any(
 
 		WallscanSampler sampler[4];
 		for (int i = 0; i < 4; i++)
-			sampler[i] = WallscanSampler(y1[i], swal[x + i], yrepeat, lwal[x + i] + xoffset, rw_pic, getcol);
+		{
+			if (x + i + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + i + 1]) - FIXED2DBL(lwal[x + i]));
+			sampler[i] = WallscanSampler(y1[i], swal[x + i], yrepeat, lwal[x + i] + xoffset, xmagnitude, rw_pic, getcol);
+		}
 
 		// Figure out where we vertically can start and stop drawing 4 columns in one go
 		int middle_y1 = y1[0];
@@ -1529,7 +1541,9 @@ void wallscan_any(
 		if (!fixed)
 			R_SetColorMapLight(basecolormap, light, wallshade);
 
-		WallscanSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, rw_pic, getcol);
+		if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
+
+		WallscanSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic, getcol);
 		wallscan_drawcol1(x, y1, y2, sampler, draw1column);
 	}
 

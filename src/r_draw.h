@@ -411,5 +411,6 @@ EXTERN_CVAR(Bool, r_multithreaded);
 EXTERN_CVAR(Bool, r_magfilter);
 EXTERN_CVAR(Bool, r_minfilter);
 EXTERN_CVAR(Bool, r_mipmap);
+EXTERN_CVAR(Float, r_lod_bias);
 
 #endif

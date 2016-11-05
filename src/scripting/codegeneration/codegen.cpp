@@ -5075,7 +5075,14 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		}
 		else
 		{
-			ScriptPosition.Message(MSG_ERROR, "Invalid member identifier '%s'\n", Identifier.GetChars());
+			if (sym->IsKindOf(RUNTIME_CLASS(PFunction)))
+			{
+				ScriptPosition.Message(MSG_ERROR, "Function '%s' used without ().\n", Identifier.GetChars());
+			}
+			else
+			{
+				ScriptPosition.Message(MSG_ERROR, "Invalid member identifier '%s'.\n", Identifier.GetChars());
+			}
 			delete this;
 			return nullptr;
 		}

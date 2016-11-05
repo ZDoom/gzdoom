@@ -2464,15 +2464,15 @@ FxExpression *ZCCCompiler::ConvertAST(PClass *cls, ZCC_TreeNode *ast)
 		// This must be done here so that we can check for a trailing return statement.
 		auto x = new FxCompoundStatement(*ast);
 		auto compound = static_cast<ZCC_CompoundStmt *>(ast);
-		bool isreturn = false;
+		//bool isreturn = false;
 		auto node = compound->Content;
 		if (node != nullptr) do
 		{
 			x->Add(ConvertNode(node));
-			isreturn = node->NodeType == AST_ReturnStmt;
+			//isreturn = node->NodeType == AST_ReturnStmt;
 			node = static_cast<decltype(node)>(node->SiblingNext);
 		} while (node != compound->Content);
-		if (!isreturn) x->Add(new FxReturnStatement(nullptr, *ast));
+		//if (!isreturn) x->Add(new FxReturnStatement(nullptr, *ast));
 		return x;
 	}
 }

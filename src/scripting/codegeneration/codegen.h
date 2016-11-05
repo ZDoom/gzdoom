@@ -297,6 +297,7 @@ public:
 	virtual bool RequestAddress(bool *writable);
 	virtual PPrototype *ReturnProto();
 	virtual VMFunction *GetDirectFunction();
+	virtual bool CheckReturn() { return false; }
 	bool IsNumeric() const { return ValueType != TypeName && ValueType->GetRegCount() == 1 && (ValueType->GetRegType() == REGT_INT || ValueType->GetRegType() == REGT_FLOAT); }
 	bool IsFloat() const { return ValueType->GetRegType() == REGT_FLOAT && ValueType->GetRegCount() == 1; }
 	bool IsInteger() const { return ValueType != TypeName && (ValueType->GetRegType() == REGT_INT); }
@@ -1390,6 +1391,7 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build);
 	void Add(FxExpression *expr) { if (expr != NULL) Expressions.Push(expr); expr->NeedResult = false; }
 	VMFunction *GetDirectFunction();
+	bool CheckReturn();
 };
 
 //==========================================================================
@@ -1438,6 +1440,7 @@ public:
 	~FxSwitchStatement();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
+	bool CheckReturn();
 };
 
 //==========================================================================
@@ -1476,6 +1479,7 @@ public:
 	~FxIfStatement();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
+	bool CheckReturn();
 };
 
 //==========================================================================
@@ -1589,6 +1593,7 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 	VMFunction *GetDirectFunction();
+	bool CheckReturn() { return true; }
 };
 
 //==========================================================================

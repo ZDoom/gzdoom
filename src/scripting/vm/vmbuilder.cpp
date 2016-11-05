@@ -715,6 +715,13 @@ void FFunctionBuildList::Build()
 
 		FScriptPosition::StrictErrors = !item.FromDecorate;
 		item.Code = item.Code->Resolve(ctx);
+		if (!item.Code->CheckReturn())
+		{
+			auto newcmpd = new FxCompoundStatement(item.Code->ScriptPosition);
+			newcmpd->Add(item.Code);
+			newcmpd->Add(new FxReturnStatement(nullptr, item.Code->ScriptPosition));
+			item.Code = newcmpd->Resolve(ctx);
+		}
 		item.Proto = ctx.ReturnProto;
 
 		// Make sure resolving it didn't obliterate it.

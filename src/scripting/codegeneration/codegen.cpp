@@ -6881,6 +6881,18 @@ FxExpression *FxSequence::Resolve(FCompileContext &ctx)
 
 //==========================================================================
 //
+// FxSequence :: CheckReturn
+//
+//==========================================================================
+
+bool FxSequence::CheckReturn()
+{
+	// a sequence always returns when its last element returns.
+	return Expressions.Size() > 0 && Expressions.Last()->CheckReturn();
+}
+
+//==========================================================================
+//
 // FxSequence :: Emit
 //
 //==========================================================================
@@ -7194,6 +7206,24 @@ ExpEmit FxSwitchStatement::Emit(VMFunctionBuilder *build)
 	return ExpEmit();
 }
 
+//==========================================================================
+//
+// FxSequence :: CheckReturn
+//
+//==========================================================================
+
+bool FxSwitchStatement::CheckReturn()
+{
+	//A switch statement returns when it contains no breaks and ends with a return
+	for (auto line : *Content)
+	{
+		if (line->ExprType == EFX_JumpStatement)
+		{
+			return false;	// Break means that the end of the statement will be reached, Continue cannot happen in the last statement of the last block.
+		}
+	}
+	return Content->Size() > 0 && Content->Last()->CheckReturn();
+}
 
 //==========================================================================
 //
@@ -7355,15 +7385,33 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 	v.Free(build);
 	if (path2 != nullptr)
 	{
-		size_t path1jump = build->Emit(OP_JMP, 0);
+		size_t path1jump;
+		
+		// if the branch ends with a return we do not need a terminating jmp.
+		if (!path1->CheckReturn()) path1jump = build->Emit(OP_JMP, 0);
+		else path1jump = 0xffffffff;
 		// Evaluate second path
 		build->BackpatchToHere(jumpspot);
 		v = path2->Emit(build);
 		v.Free(build);
 		jumpspot = path1jump;
 	}
-	build->BackpatchToHere(jumpspot);
+	if (jumpspot != 0xffffffff) build->BackpatchToHere(jumpspot);
 	return ExpEmit();
+}
+
+
+//==========================================================================
+//
+// FxIfStatement :: CheckReturn
+//
+//==========================================================================
+
+bool FxIfStatement::CheckReturn()
+{
+	//An if statement returns if both branches return, if present.
+	return (WhenTrue == nullptr || WhenTrue->CheckReturn()) &&
+			(WhenFalse == nullptr || WhenFalse->CheckReturn());
 }
 
 //==========================================================================

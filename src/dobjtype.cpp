@@ -1467,7 +1467,7 @@ END_POINTERS
 //==========================================================================
 
 PPointer::PPointer()
-: PBasicType(sizeof(void *), __alignof(void *)), PointedType(NULL)
+: PBasicType(sizeof(void *), __alignof(void *)), PointedType(NULL), IsConst(false)
 {
 	mDescriptiveName = "NullPointer";
 	SetOps();
@@ -1479,10 +1479,10 @@ PPointer::PPointer()
 //
 //==========================================================================
 
-PPointer::PPointer(PType *pointsat)
-: PBasicType(sizeof(void *), __alignof(void *)), PointedType(pointsat)
+PPointer::PPointer(PType *pointsat, bool isconst)
+: PBasicType(sizeof(void *), __alignof(void *)), PointedType(pointsat), IsConst(isconst)
 {
-	mDescriptiveName.Format("Pointer<%s>", pointsat->DescriptiveName());
+	mDescriptiveName.Format("Pointer<%s%s>", pointsat->DescriptiveName(), isconst? "readonly " : "");
 	SetOps();
 }
 
@@ -1570,14 +1570,14 @@ bool PPointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
 //
 //==========================================================================
 
-PPointer *NewPointer(PType *type)
+PPointer *NewPointer(PType *type, bool isconst)
 {
 	size_t bucket;
-	PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PPointer), (intptr_t)type, 0, &bucket);
+	PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PPointer), (intptr_t)type, isconst ? 1 : 0, &bucket);
 	if (ptype == NULL)
 	{
 		ptype = new PPointer(type);
-		TypeTable.AddType(ptype, RUNTIME_CLASS(PPointer), (intptr_t)type, 0, bucket);
+		TypeTable.AddType(ptype, RUNTIME_CLASS(PPointer), (intptr_t)type, isconst ? 1 : 0, bucket);
 	}
 	return static_cast<PPointer *>(ptype);
 }

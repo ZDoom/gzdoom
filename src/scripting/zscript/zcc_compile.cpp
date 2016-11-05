@@ -1481,16 +1481,16 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt)
 	if (sym == nullptr && symt != &GlobalSymbols) sym = GlobalSymbols.FindSymbolInTable(type->UserType->Id, table);
 	if (sym != nullptr && sym->IsKindOf(RUNTIME_CLASS(PSymbolType)))
 	{
-		auto type = static_cast<PSymbolType *>(sym)->Type;
-		if (type->IsKindOf(RUNTIME_CLASS(PEnum)))
+		auto ptype = static_cast<PSymbolType *>(sym)->Type;
+		if (ptype->IsKindOf(RUNTIME_CLASS(PEnum)))
 		{
 			return TypeSInt32;	// hack this to an integer until we can resolve the enum mess.
 		}
-		if (type->IsKindOf(RUNTIME_CLASS(PClass)))
+		if (ptype->IsKindOf(RUNTIME_CLASS(PClass)))
 		{
-			return NewPointer(type);
+			return NewPointer(ptype, type->isconst);
 		}
-		return type;
+		return ptype;
 	}
 	Error(type, "Unable to resolve %s as type.", FName(type->UserType->Id).GetChars());
 	return TypeError;

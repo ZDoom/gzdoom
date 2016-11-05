@@ -310,6 +310,7 @@ struct ZCC_BasicType : ZCC_Type
 {
 	EZCCBuiltinType	Type;
 	ZCC_Identifier *UserType;
+	bool isconst;
 };
 
 struct ZCC_MapType : ZCC_Type

@@ -241,6 +241,7 @@ static bool AreCompatiblePointerTypes(PType *dest, PType *source)
 		auto fromtype = static_cast<PPointer *>(source);
 		auto totype = static_cast<PPointer *>(dest);
 		if (fromtype == nullptr) return true;
+		if (totype->IsConst && !fromtype->IsConst) return false;
 		if (fromtype == totype) return true;
 		if (fromtype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)) && totype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
 		{
@@ -3852,8 +3853,7 @@ ExpEmit FxTypeCheck::Emit(VMFunctionBuilder *build)
 FxDynamicCast::FxDynamicCast(PClass * cls, FxExpression *r)
 	: FxExpression(EFX_DynamicCast, r->ScriptPosition)
 {
-	expr = new FxTypeCast(r, NewPointer(RUNTIME_CLASS(DObject)), true, true);
-	ValueType = NewPointer(cls);
+	expr = r;
 	CastType = cls;
 }
 
@@ -3878,6 +3878,15 @@ FxExpression *FxDynamicCast::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(expr, ctx);
+	bool constflag = expr->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer *>(expr->ValueType)->IsConst;
+	expr = new FxTypeCast(expr, NewPointer(RUNTIME_CLASS(DObject), constflag), true, true);
+	expr = expr->Resolve(ctx);
+	if (expr == nullptr)
+	{
+		delete this;
+		return nullptr;
+	}
+	ValueType = NewPointer(CastType, constflag);
 	return this;
 }
 
@@ -3903,7 +3912,8 @@ ExpEmit FxDynamicCast::Emit(VMFunctionBuilder *build)
 
 	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 2, 1);
 	build->Emit(OP_RESULT, 0, REGT_INT, check.RegNum);
-	auto patch = build->Emit(OP_EQ_K, 0, check.RegNum, build->GetConstantInt(0));
+	build->Emit(OP_EQ_K, 0, check.RegNum, build->GetConstantInt(0));
+	auto patch = build->Emit(OP_JMP, 0);
 	build->Emit(OP_LKP, out.RegNum, build->GetConstantAddress(nullptr, ATAG_OBJECT));
 	build->BackpatchToHere(patch);
 	return out;
@@ -5439,7 +5449,8 @@ FxStructMember::~FxStructMember()
 bool FxStructMember::RequestAddress(bool *writable)
 {
 	AddressRequested = true;
-	if (writable != nullptr) *writable = AddressWritable && !(membervar->Flags & VARF_ReadOnly);
+	if (writable != nullptr) *writable = (AddressWritable && !(membervar->Flags & VARF_ReadOnly) &&
+											(!classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) || !static_cast<PPointer*>(classx->ValueType)->IsConst));
 	return true;
 }
 

@@ -668,6 +668,7 @@ type_name(X) ::= type_name1(A).
 	NEW_AST_NODE(BasicType, type, A);
 	type->Type = (EZCCBuiltinType)A.Int;
 	type->UserType = NULL;
+	type->isconst = false;
 	X = type;
 }
 type_name(X) ::= IDENTIFIER(A).			/* User-defined type (struct, enum, or class) */
@@ -676,14 +677,27 @@ type_name(X) ::= IDENTIFIER(A).			/* User-defined type (struct, enum, or class) 
 	NEW_AST_NODE(Identifier, id, A);
 	type->Type = ZCC_UserType;
 	type->UserType = id;
+	type->isconst = false;
 	id->Id = A.Name();
 	X = type;
 }
+type_name(X) ::= READONLY LT IDENTIFIER(A) GT.
+{
+	NEW_AST_NODE(BasicType, type, A);
+	NEW_AST_NODE(Identifier, id, A);
+	type->Type = ZCC_UserType;
+	type->UserType = id;
+	type->isconst = true;
+	id->Id = A.Name();
+	X = type;
+}
+
 type_name(X) ::= DOT dottable_id(A).
 {
 	NEW_AST_NODE(BasicType, type, A);
 	type->Type = ZCC_UserType;
 	type->UserType = A;
+	type->isconst = false;
 	X = type;
 }
 
@@ -698,7 +712,7 @@ type_name(X) ::= DOT dottable_id(A).
 %type type_list {ZCC_Type *}
 %type type_list_or_void {ZCC_Type *}
 %type type_or_array {ZCC_Type *}
-%type class_restrictor {ZCC_Identifier *}
+	%type class_restrictor {ZCC_Identifier *}
 %type array_size{ZCC_Expression *}
 %type array_size_expr{ZCC_Expression *}
 

@@ -535,9 +535,10 @@ class PPointer : public PBasicType
 	HAS_OBJECT_POINTERS;
 public:
 	PPointer();
-	PPointer(PType *pointsat);
+	PPointer(PType *pointsat, bool isconst = false);
 
 	PType *PointedType;
+	bool IsConst;
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
@@ -877,7 +878,7 @@ PVector *NewVector(unsigned int size);
 PMap *NewMap(PType *keytype, PType *valuetype);
 PArray *NewArray(PType *type, unsigned int count);
 PDynArray *NewDynArray(PType *type);
-PPointer *NewPointer(PType *type);
+PPointer *NewPointer(PType *type, bool isconst = false);
 PClassPointer *NewClassPointer(PClass *restrict);
 PEnum *NewEnum(FName name, PTypeBase *outer);
 PStruct *NewStruct(FName name, PTypeBase *outer);

@@ -480,7 +480,7 @@ void FThinkerIterator::Reinit ()
 	m_SearchingFresh = false;
 }
 
-DThinker *FThinkerIterator::Next ()
+DThinker *FThinkerIterator::Next (bool exact)
 {
 	if (m_ParentType == NULL)
 	{
@@ -496,7 +496,11 @@ DThinker *FThinkerIterator::Next ()
 				{
 					DThinker *thinker = m_CurrThinker;
 					m_CurrThinker = thinker->NextThinker;
-					if (thinker->IsKindOf(m_ParentType))
+					if (exact)
+					{
+						if (thinker->IsA(m_ParentType)) return thinker;
+					}
+					else if (thinker->IsKindOf(m_ParentType))
 					{
 						return thinker;
 					}

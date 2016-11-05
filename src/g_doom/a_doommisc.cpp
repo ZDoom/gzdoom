@@ -24,7 +24,6 @@
 // Include all the other Doom stuff here to reduce compile time
 #include "a_bossbrain.cpp"
 #include "a_doomweaps.cpp"
-#include "a_keen.cpp"
 #include "a_lostsoul.cpp"
 #include "a_painelemental.cpp"
 #include "a_revenant.cpp"

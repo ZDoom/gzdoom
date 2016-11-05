@@ -369,6 +369,12 @@ DEFINE_ACTION_FUNCTION(DObject, Destroy)
 	return 0;	
 }
 
+DEFINE_ACTION_FUNCTION(DObject, GetClass)
+{
+	PARAM_SELF_PROLOGUE(DObject);
+	ACTION_RETURN_OBJECT(self->GetClass());
+}
+
 //==========================================================================
 //
 //

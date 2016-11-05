@@ -121,7 +121,7 @@ private:
 public:
 	FThinkerIterator (const PClass *type, int statnum=MAX_STATNUM+1);
 	FThinkerIterator (const PClass *type, int statnum, DThinker *prev);
-	DThinker *Next ();
+	DThinker *Next (bool exact = false);
 	void Reinit ();
 };
 
@@ -146,9 +146,9 @@ public:
 	TThinkerIterator (const char *subclass, int statnum=MAX_STATNUM+1) : FThinkerIterator(PClass::FindClass(subclass), statnum)
 	{
 	}
-	T *Next ()
+	T *Next (bool exact = false)
 	{
-		return static_cast<T *>(FThinkerIterator::Next ());
+		return static_cast<T *>(FThinkerIterator::Next (exact));
 	}
 };
 

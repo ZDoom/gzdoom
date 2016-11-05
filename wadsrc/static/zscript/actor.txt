@@ -227,7 +227,7 @@ class Actor : Thinker native
 	native void A_MonsterRail();
 	native void A_BFGSpray(class<Actor> spraytype = "BFGExtra", int numrays = 40, int damagecount = 15, float angle = 90, float distance = 16*64, float vrange = 32, int damage = 0, int flags = 0);
 	native void A_Pain();
-	native void A_NoBlocking();
+	native void A_NoBlocking(bool drop = true);
 	void A_Fall() { A_NoBlocking(); }
 	native void A_XScream();
 	native void A_Look();
@@ -241,7 +241,6 @@ class Actor : Thinker native
 	native void A_BossDeath();
 	native void A_SkullAttack(float speed = 20);
 	native void A_BetaSkullAttack();
-	native void A_KeenDie(int doortag = 666);
 	native void A_Detonate();
 	native bool A_CallSpecial(int special, int arg1=0, int arg2=0, int arg3=0, int arg4=0, int arg5=0);
 

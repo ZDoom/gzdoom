@@ -42,3 +42,40 @@ class CommanderKeen : Actor
 		Goto Spawn;
 	}
 }
+
+
+//===========================================================================
+//
+// Code (must be attached to Actor)
+//
+//===========================================================================
+
+extend class Actor
+{
+
+	//
+	// A_KeenDie
+	// DOOM II special, map 32.
+	// Uses special tag 666 by default.
+	//
+
+	void A_KeenDie(int doortag = 666)
+	{
+		A_NoBlocking(false);
+
+		// scan the remaining thinkers to see if all Keens are dead
+		ThinkerIterator it = ThinkerIterator.Create(GetClass());
+		Actor mo;
+		while (mo = Actor(it.Next(true)))
+		{
+			if (mo.health > 0 && mo != self)
+			{
+				// other Keen not dead
+				return;
+			}
+		}
+		Door_Open(doortag, 16);
+	}
+}
+
+

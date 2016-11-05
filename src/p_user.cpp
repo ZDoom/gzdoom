@@ -2677,10 +2677,11 @@ void P_PlayerThink (player_t *player)
 		// Apply degeneration.
 		if (dmflags2 & DF2_YES_DEGENERATION)
 		{
-			if ((level.time % TICRATE) == 0 && player->health > deh.MaxHealth)
+			int maxhealth = player->mo->GetMaxHealth() + player->mo->stamina;
+			if ((level.time % TICRATE) == 0 && player->health > maxhealth)
 			{
-				if (player->health - 5 < deh.MaxHealth)
-					player->health = deh.MaxHealth;
+				if (player->health - 5 < maxhealth)
+					player->health = maxhealth;
 				else
 					player->health--;
 

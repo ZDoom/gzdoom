@@ -58,10 +58,12 @@ public:
 	void Generate(DrawColumnVariant variant, DrawColumnMethod method, SSAValue args, SSAValue thread_data);
 
 private:
-	void Loop(DrawColumnVariant variant, DrawColumnMethod method, bool isSimpleShade);
-	SSAVec4i ProcessPixel(SSAInt sample_index, SSAVec4i bgcolor, DrawColumnVariant variant, bool isSimpleShade);
+	void LoopShade(DrawColumnVariant variant, DrawColumnMethod method, bool isSimpleShade);
+	void Loop(DrawColumnVariant variant, DrawColumnMethod method, bool isSimpleShade, bool isNearestFilter);
+	SSAVec4i ProcessPixel(SSAInt sample_index, SSAVec4i bgcolor, DrawColumnVariant variant, DrawColumnMethod method, bool isSimpleShade, bool isNearestFilter);
 	SSAVec4i ProcessPixelPal(SSAInt sample_index, SSAVec4i bgcolor, DrawColumnVariant variant, bool isSimpleShade);
-	SSAVec4i Sample(SSAInt frac);
+	SSAVec4i Sample(SSAInt frac, DrawColumnMethod method, bool isNearestFilter);
+	SSAVec4i SampleLinear(SSAUBytePtr col0, SSAUBytePtr col1, SSAInt texturefracx, SSAInt texturefracy, SSAInt one, SSAInt height);
 	SSAInt ColormapSample(SSAInt frac);
 	SSAVec4i TranslateSample(SSAInt frac);
 	SSAInt TranslateSamplePal(SSAInt frac);
@@ -73,6 +75,7 @@ private:
 
 	SSAUBytePtr dest;
 	SSAUBytePtr source;
+	SSAUBytePtr source2;
 	SSAUBytePtr colormap;
 	SSAUBytePtr translation;
 	SSAUBytePtr basecolors;
@@ -80,6 +83,9 @@ private:
 	SSAInt count;
 	SSAInt dest_y;
 	SSAInt iscale;
+	SSAInt texturefracx;
+	SSAInt textureheight;
+	SSAInt one;
 	SSAInt texturefrac;
 	SSAInt light;
 	SSAVec4i color;
@@ -87,6 +93,7 @@ private:
 	SSAInt srcalpha;
 	SSAInt destalpha;
 	SSABool is_simple_shade;
+	SSABool is_nearest_filter;
 	SSAShadeConstants shade_constants;
 	SSAWorkerThread thread;
 };

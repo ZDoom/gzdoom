@@ -117,6 +117,7 @@ struct DrawColumnArgs
 {
 	uint32_t *dest;
 	const uint8_t *source;
+	const uint8_t *source2;
 	uint8_t *colormap;
 	uint8_t *translation;
 	const uint32_t *basecolors;
@@ -124,6 +125,8 @@ struct DrawColumnArgs
 	int32_t count;
 	int32_t dest_y;
 	uint32_t iscale;
+	uint32_t texturefracx;
+	uint32_t textureheight;
 	uint32_t texturefrac;
 	uint32_t light;
 	uint32_t color;
@@ -143,7 +146,8 @@ struct DrawColumnArgs
 	uint32_t flags;
 	enum Flags
 	{
-		simple_shade = 1
+		simple_shade = 1,
+		nearest_filter = 2
 	};
 
 	FString ToString()

@@ -117,6 +117,9 @@ void DrawWallCodegen::LoopShade(DrawWallVariant variant, bool fourColumns, bool 
 	branch.if_block(is_nearest_filter);
 	Loop(variant, fourColumns, isSimpleShade, true);
 	branch.else_block();
+	int numColumns = fourColumns ? 4 : 1;
+	for (int i = 0; i < numColumns; i++)
+		stack_frac[i].store(stack_frac[i].load() - (one[i] / 2));
 	Loop(variant, fourColumns, isSimpleShade, false);
 	branch.end_block();
 }
@@ -180,8 +183,28 @@ SSAVec4i DrawWallCodegen::Sample(SSAInt frac, int index, bool isNearestFilter)
 	}
 	else
 	{
-		return sample_linear(source[index], source2[index], texturefracx[index], frac, one[index], textureheight[index]);
+		return SampleLinear(source[index], source2[index], texturefracx[index], frac, one[index], textureheight[index]);
 	}
+}
+
+SSAVec4i DrawWallCodegen::SampleLinear(SSAUBytePtr col0, SSAUBytePtr col1, SSAInt texturefracx, SSAInt texturefracy, SSAInt one, SSAInt height)
+{
+	SSAInt frac_y0 = (texturefracy >> FRACBITS) * height;
+	SSAInt frac_y1 = ((texturefracy + one) >> FRACBITS) * height;
+	SSAInt y0 = frac_y0 >> FRACBITS;
+	SSAInt y1 = frac_y1 >> FRACBITS;
+
+	SSAVec4i p00 = col0[y0 * 4].load_vec4ub(true);
+	SSAVec4i p01 = col0[y1 * 4].load_vec4ub(true);
+	SSAVec4i p10 = col1[y0 * 4].load_vec4ub(true);
+	SSAVec4i p11 = col1[y1 * 4].load_vec4ub(true);
+
+	SSAInt inv_b = texturefracx;
+	SSAInt a = (frac_y1 >> (FRACBITS - 4)) & 15;
+	SSAInt inv_a = 16 - a;
+	SSAInt b = 16 - inv_b;
+
+	return (p00 * (a * b) + p01 * (inv_a * b) + p10 * (a * inv_b) + p11 * (inv_a * inv_b) + 127) >> 8;
 }
 
 SSAVec4i DrawWallCodegen::Shade(SSAVec4i fg, int index, bool isSimpleShade)

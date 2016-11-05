@@ -1183,6 +1183,7 @@ WallscanSampler::WallscanSampler(int y1, float swal, double yrepeat, fixed_t xof
 			}
 			else
 			{
+				xoffset -= FRACUNIT / 2;
 				int tx0 = (xoffset >> FRACBITS) % mip_width;
 				if (tx0 < 0)
 					tx0 += mip_width;

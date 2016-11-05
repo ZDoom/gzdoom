@@ -360,6 +360,7 @@ llvm::Type *LLVMDrawersImpl::GetDrawColumnArgsStruct(llvm::LLVMContext &context)
 	std::vector<llvm::Type *> elements;
 	elements.push_back(llvm::Type::getInt8PtrTy(context)); // uint32_t *dest;
 	elements.push_back(llvm::Type::getInt8PtrTy(context)); // const uint32_t *source;
+	elements.push_back(llvm::Type::getInt8PtrTy(context)); // const uint32_t *source2;
 	elements.push_back(llvm::Type::getInt8PtrTy(context)); // uint8_t *colormap;
 	elements.push_back(llvm::Type::getInt8PtrTy(context)); // uint8_t *translation;
 	elements.push_back(llvm::Type::getInt8PtrTy(context)); // const uint32_t *basecolors;
@@ -367,6 +368,8 @@ llvm::Type *LLVMDrawersImpl::GetDrawColumnArgsStruct(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t count;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // int32_t dest_y;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t iscale;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t texturefracx;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t textureheight;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t texturefrac;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t light;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t color;

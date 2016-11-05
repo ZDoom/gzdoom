@@ -2973,7 +2973,8 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 		{
 			R_SetColorMapLight(basecolormap, 0, 0);
 		}
-		return r_columnmethod ? DoDraw1 : DoDraw0;
+		bool active_columnmethod = r_columnmethod && !r_swtruecolor;
+		return active_columnmethod ? DoDraw1 : DoDraw0;
 	}
 
 	fglevel = GetAlpha(style.SrcAlpha, alpha);
@@ -3006,7 +3007,8 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 	{
 		return DontDraw;
 	}
-	return r_columnmethod ? DoDraw1 : DoDraw0;
+	bool active_columnmethod = r_columnmethod && !r_swtruecolor;
+	return active_columnmethod ? DoDraw1 : DoDraw0;
 }
 
 void R_FinishSetPatchStyle ()

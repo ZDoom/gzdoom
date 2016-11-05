@@ -45,6 +45,7 @@ private:
 	SSAInt Loop4x(DrawSpanVariant variant, bool isSimpleShade, bool isNearestFilter, bool is64x64);
 	void Loop(SSAInt start, DrawSpanVariant variant, bool isSimpleShade, bool isNearestFilter, bool is64x64);
 	SSAVec4i Sample(SSAInt xfrac, SSAInt yfrac, bool isNearestFilter, bool is64x64);
+	SSAVec4i SampleLinear(SSAUBytePtr texture, SSAInt xfrac, SSAInt yfrac, SSAInt xbits, SSAInt ybits);
 	SSAVec4i Shade(SSAVec4i fg, bool isSimpleShade);
 	SSAVec4i Blend(SSAVec4i fg, SSAVec4i bg, DrawSpanVariant variant);
 

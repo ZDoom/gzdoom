@@ -348,6 +348,7 @@ public:
 	{
 		args.dest = (uint32_t*)dc_dest;
 		args.source = dc_source;
+		args.source2 = dc_source2;
 		args.colormap = dc_colormap;
 		args.translation = dc_translation;
 		args.basecolors = (const uint32_t *)GPalette.BaseColors;
@@ -355,6 +356,8 @@ public:
 		args.count = dc_count;
 		args.dest_y = _dest_y;
 		args.iscale = dc_iscale;
+		args.texturefracx = dc_texturefracx;
+		args.textureheight = dc_textureheight;
 		args.texturefrac = dc_texturefrac;
 		args.light = LightBgra::calc_light_multiplier(dc_light);
 		args.color = LightBgra::shade_pal_index_simple(dc_color, args.light);
@@ -373,6 +376,8 @@ public:
 		args.flags = 0;
 		if (dc_shade_constants.simple_shade)
 			args.flags |= DrawColumnArgs::simple_shade;
+		if (args.source2 == nullptr)
+			args.flags |= DrawWallArgs::nearest_filter;
 
 		DetectRangeError(args.dest, args.dest_y, args.count);
 	}

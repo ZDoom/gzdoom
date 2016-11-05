@@ -43,6 +43,7 @@ private:
 	void LoopShade(DrawWallVariant variant, bool fourColumns, bool isSimpleShade);
 	void Loop(DrawWallVariant variant, bool fourColumns, bool isSimpleShade, bool isNearestFilter);
 	SSAVec4i Sample(SSAInt frac, int index, bool isNearestFilter);
+	SSAVec4i SampleLinear(SSAUBytePtr col0, SSAUBytePtr col1, SSAInt texturefracx, SSAInt texturefracy, SSAInt one, SSAInt height);
 	SSAVec4i Shade(SSAVec4i fg, int index, bool isSimpleShade);
 	SSAVec4i Blend(SSAVec4i fg, SSAVec4i bg, DrawWallVariant variant);
 

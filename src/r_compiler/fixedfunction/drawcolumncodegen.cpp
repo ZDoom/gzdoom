@@ -36,30 +36,35 @@ void DrawColumnCodegen::Generate(DrawColumnVariant variant, DrawColumnMethod met
 {
 	dest = args[0][0].load(true);
 	source = args[0][1].load(true);
-	colormap = args[0][2].load(true);
-	translation = args[0][3].load(true);
-	basecolors = args[0][4].load(true);
-	pitch = args[0][5].load(true);
-	count = args[0][6].load(true);
-	dest_y = args[0][7].load(true);
+	source2 = args[0][2].load(true);
+	colormap = args[0][3].load(true);
+	translation = args[0][4].load(true);
+	basecolors = args[0][5].load(true);
+	pitch = args[0][6].load(true);
+	count = args[0][7].load(true);
+	dest_y = args[0][8].load(true);
 	if (method == DrawColumnMethod::Normal)
-		iscale = args[0][8].load(true);
-	texturefrac = args[0][9].load(true);
-	light = args[0][10].load(true);
-	color = SSAVec4i::unpack(args[0][11].load(true));
-	srccolor = SSAVec4i::unpack(args[0][12].load(true));
-	srcalpha = args[0][13].load(true);
-	destalpha = args[0][14].load(true);
-	SSAShort light_alpha = args[0][15].load(true);
-	SSAShort light_red = args[0][16].load(true);
-	SSAShort light_green = args[0][17].load(true);
-	SSAShort light_blue = args[0][18].load(true);
-	SSAShort fade_alpha = args[0][19].load(true);
-	SSAShort fade_red = args[0][20].load(true);
-	SSAShort fade_green = args[0][21].load(true);
-	SSAShort fade_blue = args[0][22].load(true);
-	SSAShort desaturate = args[0][23].load(true);
-	SSAInt flags = args[0][24].load(true);
+	{
+		iscale = args[0][9].load(true);
+		texturefracx = args[0][10].load(true);
+		textureheight = args[0][11].load(true);
+	}
+	texturefrac = args[0][12].load(true);
+	light = args[0][13].load(true);
+	color = SSAVec4i::unpack(args[0][14].load(true));
+	srccolor = SSAVec4i::unpack(args[0][15].load(true));
+	srcalpha = args[0][16].load(true);
+	destalpha = args[0][17].load(true);
+	SSAShort light_alpha = args[0][18].load(true);
+	SSAShort light_red = args[0][19].load(true);
+	SSAShort light_green = args[0][20].load(true);
+	SSAShort light_blue = args[0][21].load(true);
+	SSAShort fade_alpha = args[0][22].load(true);
+	SSAShort fade_red = args[0][23].load(true);
+	SSAShort fade_green = args[0][24].load(true);
+	SSAShort fade_blue = args[0][25].load(true);
+	SSAShort desaturate = args[0][26].load(true);
+	SSAInt flags = args[0][27].load(true);
 	shade_constants.light = SSAVec4i(light_blue.zext_int(), light_green.zext_int(), light_red.zext_int(), light_alpha.zext_int());
 	shade_constants.fade = SSAVec4i(fade_blue.zext_int(), fade_green.zext_int(), fade_red.zext_int(), fade_alpha.zext_int());
 	shade_constants.desaturate = desaturate.zext_int();
@@ -71,6 +76,7 @@ void DrawColumnCodegen::Generate(DrawColumnVariant variant, DrawColumnMethod met
 	thread.temp = thread_data[0][4].load(true);
 
 	is_simple_shade = (flags & DrawColumnArgs::simple_shade) == SSAInt(DrawColumnArgs::simple_shade);
+	is_nearest_filter = (flags & DrawColumnArgs::nearest_filter) == SSAInt(DrawColumnArgs::nearest_filter);
 
 	count = count_for_thread(dest_y, count, thread);
 	dest = dest_for_thread(dest_y, pitch, dest, thread);
@@ -79,21 +85,40 @@ void DrawColumnCodegen::Generate(DrawColumnVariant variant, DrawColumnMethod met
 	{
 		stack_frac.store(texturefrac + iscale * skipped_by_thread(dest_y, thread));
 		iscale = iscale * thread.num_cores;
+		one = (1 << 30) / textureheight;
+
+		SSAIfBlock branch;
+		branch.if_block(is_simple_shade);
+		LoopShade(variant, method, true);
+		branch.else_block();
+		LoopShade(variant, method, false);
+		branch.end_block();
 	}
 	else
 	{
 		source = thread.temp[((dest_y + skipped_by_thread(dest_y, thread)) * 4 + texturefrac) * 4];
-	}
 
+		SSAIfBlock branch;
+		branch.if_block(is_simple_shade);
+		Loop(variant, method, true, true);
+		branch.else_block();
+		Loop(variant, method, false, true);
+		branch.end_block();
+	}
+}
+
+void DrawColumnCodegen::LoopShade(DrawColumnVariant variant, DrawColumnMethod method, bool isSimpleShade)
+{
 	SSAIfBlock branch;
-	branch.if_block(is_simple_shade);
-	Loop(variant, method, true);
+	branch.if_block(is_nearest_filter);
+	Loop(variant, method, isSimpleShade, true);
 	branch.else_block();
-	Loop(variant, method, false);
+	stack_frac.store(stack_frac.load() - (one >> 1));
+	Loop(variant, method, isSimpleShade, false);
 	branch.end_block();
 }
 
-void DrawColumnCodegen::Loop(DrawColumnVariant variant, DrawColumnMethod method, bool isSimpleShade)
+void DrawColumnCodegen::Loop(DrawColumnVariant variant, DrawColumnMethod method, bool isSimpleShade, bool isNearestFilter)
 {
 	SSAInt sincr;
 	if (method != DrawColumnMethod::Normal)
@@ -109,9 +134,10 @@ void DrawColumnCodegen::Loop(DrawColumnVariant variant, DrawColumnMethod method,
 		if (method == DrawColumnMethod::Normal)
 		{
 			frac = stack_frac.load();
-			sample_index = frac >> FRACBITS;
-			if (!IsPaletteInput(variant))
-				sample_index = sample_index * 4;
+			if (IsPaletteInput(variant))
+				sample_index = frac >> FRACBITS;
+			else
+				sample_index = frac;
 		}
 		else
 		{
@@ -140,7 +166,7 @@ void DrawColumnCodegen::Loop(DrawColumnVariant variant, DrawColumnMethod method,
 
 		SSAVec4i outcolor[4];
 		for (int i = 0; i < numColumns; i++)
-			outcolor[i] = ProcessPixel(sample_index + i * 4, bgcolor[i], variant, isSimpleShade);
+			outcolor[i] = ProcessPixel(sample_index + i * 4, bgcolor[i], variant, method, isSimpleShade, isNearestFilter);
 
 		if (numColumns == 4)
 		{
@@ -186,7 +212,7 @@ bool DrawColumnCodegen::IsPaletteInput(DrawColumnVariant variant)
 	}
 }
 
-SSAVec4i DrawColumnCodegen::ProcessPixel(SSAInt sample_index, SSAVec4i bgcolor, DrawColumnVariant variant, bool isSimpleShade)
+SSAVec4i DrawColumnCodegen::ProcessPixel(SSAInt sample_index, SSAVec4i bgcolor, DrawColumnVariant variant, DrawColumnMethod method, bool isSimpleShade, bool isNearestFilter)
 {
 	SSAInt alpha, inv_alpha;
 	SSAVec4i fg;
@@ -194,22 +220,22 @@ SSAVec4i DrawColumnCodegen::ProcessPixel(SSAInt sample_index, SSAVec4i bgcolor, 
 	{
 	default:
 	case DrawColumnVariant::DrawCopy:
-		return blend_copy(Sample(sample_index));
+		return blend_copy(Sample(sample_index, method, isNearestFilter));
 	case DrawColumnVariant::Draw:
-		return blend_copy(Shade(Sample(sample_index), isSimpleShade));
+		return blend_copy(Shade(Sample(sample_index, method, isNearestFilter), isSimpleShade));
 	case DrawColumnVariant::DrawAdd:
 	case DrawColumnVariant::DrawAddClamp:
-		fg = Shade(Sample(sample_index), isSimpleShade);
+		fg = Shade(Sample(sample_index, method, isNearestFilter), isSimpleShade);
 		return blend_add(fg, bgcolor, srcalpha, calc_blend_bgalpha(fg, destalpha));
 	case DrawColumnVariant::DrawShaded:
 		alpha = SSAInt::MAX(SSAInt::MIN(ColormapSample(sample_index), SSAInt(64)), SSAInt(0)) * 4;
 		inv_alpha = 256 - alpha;
 		return blend_add(color, bgcolor, alpha, inv_alpha);
 	case DrawColumnVariant::DrawSubClamp:
-		fg = Shade(Sample(sample_index), isSimpleShade);
+		fg = Shade(Sample(sample_index, method, isNearestFilter), isSimpleShade);
 		return blend_sub(fg, bgcolor, srcalpha, calc_blend_bgalpha(fg, destalpha));
 	case DrawColumnVariant::DrawRevSubClamp:
-		fg = Shade(Sample(sample_index), isSimpleShade);
+		fg = Shade(Sample(sample_index, method, isNearestFilter), isSimpleShade);
 		return blend_revsub(fg, bgcolor, srcalpha, calc_blend_bgalpha(fg, destalpha));
 	case DrawColumnVariant::DrawTranslated:
 		return blend_copy(Shade(TranslateSample(sample_index), isSimpleShade));
@@ -285,9 +311,45 @@ SSAVec4i DrawColumnCodegen::ProcessPixelPal(SSAInt sample_index, SSAVec4i bgcolo
 	}
 }
 
-SSAVec4i DrawColumnCodegen::Sample(SSAInt sample_index)
+SSAVec4i DrawColumnCodegen::Sample(SSAInt frac, DrawColumnMethod method, bool isNearestFilter)
 {
-	return source[sample_index].load_vec4ub(true);
+	if (method == DrawColumnMethod::Normal)
+	{
+		if (isNearestFilter)
+		{
+			SSAInt sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
+			return source[sample_index * 4].load_vec4ub(false);
+		}
+		else
+		{
+			return SampleLinear(source, source2, texturefracx, frac, one, textureheight);
+		}
+	}
+	else
+	{
+		return source[frac].load_vec4ub(true);
+	}
+}
+
+SSAVec4i DrawColumnCodegen::SampleLinear(SSAUBytePtr col0, SSAUBytePtr col1, SSAInt texturefracx, SSAInt texturefracy, SSAInt one, SSAInt height)
+{
+	// Clamp to edge
+	SSAInt frac_y0 = (SSAInt::MAX(SSAInt::MIN(texturefracy, SSAInt((1 << 30) - 1)), SSAInt(0)) >> (FRACBITS - 2)) * height;
+	SSAInt frac_y1 = (SSAInt::MAX(SSAInt::MIN(texturefracy + one, SSAInt((1 << 30) - 1)), SSAInt(0)) >> (FRACBITS - 2)) * height;
+	SSAInt y0 = frac_y0 >> FRACBITS;
+	SSAInt y1 = frac_y1 >> FRACBITS;
+
+	SSAVec4i p00 = col0[y0 * 4].load_vec4ub(true);
+	SSAVec4i p01 = col0[y1 * 4].load_vec4ub(true);
+	SSAVec4i p10 = col1[y0 * 4].load_vec4ub(true);
+	SSAVec4i p11 = col1[y1 * 4].load_vec4ub(true);
+
+	SSAInt inv_b = texturefracx;
+	SSAInt inv_a = (frac_y1 >> (FRACBITS - 4)) & 15;
+	SSAInt a = 16 - inv_a;
+	SSAInt b = 16 - inv_b;
+
+	return (p00 * (a * b) + p01 * (inv_a * b) + p10 * (a * inv_b) + p11 * (inv_a * inv_b) + 127) >> 8;
 }
 
 SSAInt DrawColumnCodegen::ColormapSample(SSAInt sample_index)

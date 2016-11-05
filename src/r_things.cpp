@@ -251,8 +251,133 @@ double	 		sprtopscreen;
 
 bool			sprflipvert;
 
+void R_DrawMaskedColumnBgra(FTexture *tex, fixed_t col, bool useRt, bool unmasked)
+{
+	fixed_t saved_iscale = dc_iscale; // Save this because we need to modify it for mipmaps
+
+	// Normalize to 0-1 range:
+	double uv_stepd = FIXED2DBL(dc_iscale);
+	double v_step = uv_stepd / tex->GetHeight();
+
+	// Convert to uint32:
+	dc_iscale = (uint32_t)(v_step * (1 << 30));
+
+	// Texture mipmap and filter selection:
+	fixed_t xoffset = col;
+	double magnitude = fabs(uv_stepd * 2);
+	bool magnifying = magnitude < 1.0f;
+
+	int mipmap_offset = 0;
+	int mip_width = tex->GetWidth();
+	int mip_height = tex->GetHeight();
+	if (r_mipmap && tex->Mipmapped() && mip_width > 1 && mip_height > 1)
+	{
+		uint32_t xpos = (uint32_t)((((uint64_t)xoffset) << FRACBITS) / mip_width);
+		double texture_bias = 1.7f;
+		double level = MAX(magnitude - 3.0, 0.0);
+		while (level > texture_bias && mip_width > 1 && mip_height > 1)
+		{
+			mipmap_offset += mip_width * mip_height;
+			level *= 0.5f;
+			mip_width = MAX(mip_width >> 1, 1);
+			mip_height = MAX(mip_height >> 1, 1);
+		}
+		xoffset = (xpos >> FRACBITS) * mip_width;
+	}
+
+	const uint32_t *pixels = tex->GetPixelsBgra() + mipmap_offset;
+
+	bool filter_nearest = (magnifying && !r_magfilter) || (!magnifying && !r_minfilter);
+	if (filter_nearest)
+	{
+		xoffset = MAX(MIN(xoffset, (mip_width << FRACBITS) - 1), 0);
+
+		int tx = xoffset >> FRACBITS;
+		dc_source = (BYTE*)(pixels + tx * mip_height);
+		dc_source2 = nullptr;
+		dc_textureheight = mip_height;
+		dc_texturefracx = 0;
+	}
+	else
+	{
+		xoffset = MAX(MIN(xoffset - (FRACUNIT / 2), (mip_width << FRACBITS) - 1), 0);
+
+		int tx0 = xoffset >> FRACBITS;
+		int tx1 = MIN(tx0 + 1, mip_width - 1);
+		dc_source = (BYTE*)(pixels + tx0 * mip_height);
+		dc_source2 = (BYTE*)(pixels + tx1 * mip_height);
+		dc_textureheight = mip_height;
+		dc_texturefracx = (xoffset >> (FRACBITS - 4)) & 15;
+	}
+
+	// Grab the posts we need to draw
+	const FTexture::Span *span;
+	tex->GetColumnBgra(col >> FRACBITS, &span);
+	FTexture::Span unmaskedSpan[2];
+	if (unmasked)
+	{
+		span = unmaskedSpan;
+		unmaskedSpan[0].TopOffset = 0;
+		unmaskedSpan[0].Length = tex->GetHeight();
+		unmaskedSpan[1].TopOffset = 0;
+		unmaskedSpan[1].Length = 0;
+	}
+
+	// Draw each span post
+	while (span->Length != 0)
+	{
+		const int length = span->Length;
+		const int top = span->TopOffset;
+
+		// calculate unclipped screen coordinates for post
+		dc_yl = (int)(sprtopscreen + spryscale * top + 0.5);
+		dc_yh = (int)(sprtopscreen + spryscale * (top + length) + 0.5) - 1;
+
+		if (sprflipvert)
+		{
+			swapvalues(dc_yl, dc_yh);
+		}
+
+		if (dc_yh >= mfloorclip[dc_x])
+		{
+			dc_yh = mfloorclip[dc_x] - 1;
+		}
+		if (dc_yl < mceilingclip[dc_x])
+		{
+			dc_yl = mceilingclip[dc_x];
+		}
+
+		if (dc_yl <= dc_yh)
+		{
+			dc_dest = (ylookup[dc_yl] + dc_x) * 4 + dc_destorg;
+			dc_count = dc_yh - dc_yl + 1;
+
+			double v = ((dc_yl + 0.5 - sprtopscreen) / spryscale) / tex->GetHeight();
+			dc_texturefrac = (uint32_t)(v * (1 << 30));
+
+			if (useRt)
+				hcolfunc_pre();
+			else
+				colfunc();
+		}
+		span++;
+	}
+
+	dc_iscale = saved_iscale;
+
+	if (sprflipvert && useRt)
+		rt_flip_posts();
+}
+
 void R_DrawMaskedColumn (FTexture *tex, fixed_t col, bool useRt, bool unmasked)
 {
+	// Handle the linear filtered version in a different function to reduce chances of merge conflicts from zdoom.
+	if (r_swtruecolor && !drawer_needs_pal_input && !useRt) // To do: add support to R_DrawColumnHoriz_rgba
+	{
+		R_DrawMaskedColumnBgra(tex, col, useRt, unmasked);
+		return;
+	}
+
 	const FTexture::Span *span;
 	const BYTE *column;
 	if (r_swtruecolor && !drawer_needs_pal_input)

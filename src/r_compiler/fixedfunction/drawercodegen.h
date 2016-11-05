@@ -88,8 +88,4 @@ public:
 
 	// Calculates the final alpha values to be used when combined with the source texture alpha channel
 	SSAInt calc_blend_bgalpha(SSAVec4i fg, SSAInt destalpha);
-
-	// SampleBgra
-	SSAVec4i sample_linear(SSAUBytePtr col0, SSAUBytePtr col1, SSAInt texturefracx, SSAInt texturefracy, SSAInt one, SSAInt height);
-	SSAVec4i sample_linear(SSAUBytePtr texture, SSAInt xfrac, SSAInt yfrac, SSAInt xbits, SSAInt ybits);
 };

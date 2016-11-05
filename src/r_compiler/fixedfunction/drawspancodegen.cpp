@@ -89,6 +89,8 @@ void DrawSpanCodegen::LoopShade(DrawSpanVariant variant, bool isSimpleShade)
 	branch.if_block(is_nearest_filter);
 	LoopFilter(variant, isSimpleShade, true);
 	branch.else_block();
+	stack_xfrac.store(stack_xfrac.load() - (SSAInt(1) << (31 - xbits)));
+	stack_yfrac.store(stack_yfrac.load() - (SSAInt(1) << (31 - ybits)));
 	LoopFilter(variant, isSimpleShade, false);
 	branch.end_block();
 }
@@ -187,13 +189,35 @@ SSAVec4i DrawSpanCodegen::Sample(SSAInt xfrac, SSAInt yfrac, bool isNearestFilte
 	{
 		if (is64x64)
 		{
-			return sample_linear(source, xfrac, yfrac, SSAInt(26), SSAInt(26));
+			return SampleLinear(source, xfrac, yfrac, SSAInt(26), SSAInt(26));
 		}
 		else
 		{
-			return sample_linear(source, xfrac, yfrac, 32 - xbits, 32 - ybits);
+			return SampleLinear(source, xfrac, yfrac, 32 - xbits, 32 - ybits);
 		}
 	}
+}
+
+SSAVec4i DrawSpanCodegen::SampleLinear(SSAUBytePtr texture, SSAInt xfrac, SSAInt yfrac, SSAInt xbits, SSAInt ybits)
+{
+	SSAInt xshift = (32 - xbits);
+	SSAInt yshift = (32 - ybits);
+	SSAInt xmask = (SSAInt(1) << xshift) - 1;
+	SSAInt ymask = (SSAInt(1) << yshift) - 1;
+	SSAInt x = xfrac >> xbits;
+	SSAInt y = yfrac >> ybits;
+
+	SSAVec4i p00 = texture[((y & ymask) + ((x & xmask) << yshift)) * 4].load_vec4ub(true);
+	SSAVec4i p01 = texture[(((y + 1) & ymask) + ((x & xmask) << yshift)) * 4].load_vec4ub(true);
+	SSAVec4i p10 = texture[((y & ymask) + (((x + 1) & xmask) << yshift)) * 4].load_vec4ub(true);
+	SSAVec4i p11 = texture[(((y + 1) & ymask) + (((x + 1) & xmask) << yshift)) * 4].load_vec4ub(true);
+
+	SSAInt inv_b = (xfrac >> (xbits - 4)) & 15;
+	SSAInt inv_a = (yfrac >> (ybits - 4)) & 15;
+	SSAInt a = 16 - inv_a;
+	SSAInt b = 16 - inv_b;
+
+	return (p00 * (a * b) + p01 * (inv_a * b) + p10 * (a * inv_b) + p11 * (inv_a * inv_b) + 127) >> 8;
 }
 
 SSAVec4i DrawSpanCodegen::Shade(SSAVec4i fg, bool isSimpleShade)

@@ -72,6 +72,7 @@ public:
 	{
 		args.dest = (uint32_t*)dc_destorg + ylookup[yl] + sx;
 		args.source = nullptr;
+		args.source2 = nullptr;
 		args.colormap = dc_colormap;
 		args.translation = dc_translation;
 		args.basecolors = (const uint32_t *)GPalette.BaseColors;
@@ -97,6 +98,8 @@ public:
 		args.flags = 0;
 		if (dc_shade_constants.simple_shade)
 			args.flags |= DrawColumnArgs::simple_shade;
+		if (args.source2 == nullptr)
+			args.flags |= DrawWallArgs::nearest_filter;
 
 		DetectRangeError(args.dest, args.dest_y, args.count);
 	}

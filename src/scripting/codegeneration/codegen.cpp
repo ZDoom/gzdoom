@@ -7441,9 +7441,9 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 
 bool FxIfStatement::CheckReturn()
 {
-	//An if statement returns if both branches return, if present.
-	return (WhenTrue == nullptr || WhenTrue->CheckReturn()) &&
-			(WhenFalse == nullptr || WhenFalse->CheckReturn());
+	//An if statement returns if both branches return. Both branches must be present.
+	return WhenTrue != nullptr && WhenTrue->CheckReturn() &&
+			WhenFalse != nullptr && WhenFalse->CheckReturn();
 }
 
 //==========================================================================

@@ -245,6 +245,16 @@ void R_MapPlane (int y, int x1)
 		ds_yfrac = 0;
 	}
 
+	if (r_swtruecolor)
+	{
+		double distance2 = planeheight * yslope[(y + 1 < viewheight) ? y + 1 : y - 1];
+		double xmagnitude = fabs(ystepscale * (distance2 - distance) * FocalLengthX);
+		double ymagnitude = fabs(xstepscale * (distance2 - distance) * FocalLengthX);
+		double magnitude = MAX(ymagnitude, xmagnitude);
+		double min_lod = -1000.0;
+		ds_lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
+	}
+
 	if (plane_shade)
 	{
 		// Determine lighting based on the span's distance from the viewer.

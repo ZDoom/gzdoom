@@ -316,6 +316,7 @@ extern "C" dsfixed_t		ds_ystep;
 extern "C" int				ds_xbits;
 extern "C" int				ds_ybits;
 extern "C" fixed_t			ds_alpha;
+extern "C" double			ds_lod;
 
 // start of a 64*64 tile image
 extern "C" const BYTE*		ds_source;

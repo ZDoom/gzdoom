@@ -1046,6 +1046,7 @@ dsfixed_t 				ds_xstep;
 dsfixed_t 				ds_ystep;
 int						ds_xbits;
 int						ds_ybits;
+double					ds_lod;
 
 // start of a floor/ceiling tile image 
 const BYTE*				ds_source;

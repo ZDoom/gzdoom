@@ -97,7 +97,7 @@ public:
 		args.flags = 0;
 		if (ds_shade_constants.simple_shade)
 			args.flags |= DrawSpanArgs::simple_shade;
-		if (!sampler_setup(args.source, args.xbits, args.ybits, args.xstep, args.ystep, ds_source_mipmapped))
+		if (!sampler_setup(args.source, args.xbits, args.ybits, ds_source_mipmapped))
 			args.flags |= DrawSpanArgs::nearest_filter;
 	}
 
@@ -117,18 +117,13 @@ protected:
 	DrawSpanArgs args;
 
 private:
-	inline static bool sampler_setup(const uint32_t * &source, int &xbits, int &ybits, fixed_t xstep, fixed_t ystep, bool mipmapped)
+	inline static bool sampler_setup(const uint32_t * &source, int &xbits, int &ybits, bool mipmapped)
 	{
-		// Is this a magfilter or minfilter?
-		fixed_t xmagnitude = abs(xstep) >> (32 - xbits - FRACBITS);
-		fixed_t ymagnitude = abs(ystep) >> (32 - ybits - FRACBITS);
-		fixed_t magnitude = (xmagnitude + ymagnitude) * 2 + (1 << (FRACBITS - 1));
-		bool magnifying = (magnitude >> FRACBITS == 0);
-
+		bool magnifying = ds_lod < 0.0f;
 		if (r_mipmap && mipmapped)
 		{
-			int level = magnitude >> (FRACBITS + 1);
-			while (level != 0)
+			int level = (int)ds_lod;
+			while (level > 0)
 			{
 				if (xbits <= 2 || ybits <= 2)
 					break;
@@ -136,7 +131,7 @@ private:
 				source += (1 << (xbits)) * (1 << (ybits));
 				xbits -= 1;
 				ybits -= 1;
-				level >>= 1;
+				level--;
 			}
 		}
 

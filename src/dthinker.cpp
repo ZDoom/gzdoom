@@ -47,7 +47,7 @@ extern cycle_t BotSupportCycles;
 extern cycle_t ActionCycles;
 extern int BotWTG;
 
-IMPLEMENT_CLASS(DThinker, false, false, false, false)
+IMPLEMENT_CLASS(DThinker, false, false, false, true)
 
 DThinker *NextToThink;
 

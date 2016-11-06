@@ -608,6 +608,8 @@ protected:
 	}
 };
 
+class AInventory;//
+
 template<class T>
 class DVMObject : public T
 {
@@ -638,6 +640,23 @@ private:
 	{
 		new((EInPlace *)mem) DVMObject<T>;
 	}
+
+public:
+	void Destroy()
+	{
+		Printf("Destroy\n");
+		ExportedNatives<T>::Get()->Destroy<void, T>(this);
+	}
+	void Tick()
+	{
+		Printf("Tick\n");
+		ExportedNatives<T>::Get()->Tick<void, T>(this);
+	}
+	AInventory *DropInventory(AInventory *item)
+	{
+		Printf("DropInventory\n");
+		return ExportedNatives<T>::Get()->DropInventory<AInventory *, T>(this, item);
+	}
 };
 
 template<class T>
@@ -654,6 +673,17 @@ ClassReg DVMObject<T>::RegistrationInfo =
 	DVMObject<T>::MetaClassNum
 };
 template<class T> _DECLARE_TI(DVMObject<T>)
+
+//Initial list
+VMEXPORTED_NATIVES_START
+	VMEXPORTED_NATIVES_FUNC(Destroy)
+	VMEXPORTED_NATIVES_FUNC(Tick)
+	VMEXPORTED_NATIVES_FUNC(DropInventory)
+VMEXPORTED_NATIVES_END
+
+VMEXPORT_NATIVES_START(DObject, void)
+	VMEXPORT_NATIVES_FUNC(Destroy)
+VMEXPORT_NATIVES_END(DObject)
 
 // When you write to a pointer to an Object, you must call this for
 // proper bookkeeping in case the Object holding this pointer has

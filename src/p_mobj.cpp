@@ -131,7 +131,7 @@ CVAR (Int, cl_bloodtype, 0, CVAR_ARCHIVE);
 
 // CODE --------------------------------------------------------------------
 
-IMPLEMENT_CLASS(AActor, false, true, true, false)
+IMPLEMENT_CLASS(AActor, false, true, true, true)
 
 IMPLEMENT_POINTERS_START(AActor)
 	IMPLEMENT_POINTER(target)

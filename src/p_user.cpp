@@ -622,7 +622,7 @@ void player_t::SendPitchLimits() const
 //
 //===========================================================================
 
-IMPLEMENT_CLASS(APlayerPawn, false, true, false, false)
+IMPLEMENT_CLASS(APlayerPawn, false, true, false, true)
 
 IMPLEMENT_POINTERS_START(APlayerPawn)
 	IMPLEMENT_POINTER(InvFirst)

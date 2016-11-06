@@ -1242,6 +1242,11 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	//
 	if (player)
 	{
+		// Don't allow DMG_FORCED to work on ultimate degreeslessness/buddha and nodamage.
+		if ((player->cheats & (CF_GODMODE2 | CF_BUDDHA2)) || (player->mo->flags5 & MF5_NODAMAGE))
+		{
+			flags &= ~DMG_FORCED;
+		}
 		//Added by MC: Lets bots look allround for enemies if they survive an ambush.
 		if (player->Bot != NULL)
 		{

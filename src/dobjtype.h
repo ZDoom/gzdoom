@@ -769,6 +769,7 @@ public:
 
 	// Per-class information -------------------------------------
 	PClass				*ParentClass;	// the class this class derives from
+	PClass				*VMExported;	// this is here to allow script classes to override native virtual functions
 	const size_t		*Pointers;		// object pointers defined by this class *only*
 	const size_t		*FlatPointers;	// object pointers defined by this class and all its superclasses; not initialized by default
 	BYTE				*Defaults;

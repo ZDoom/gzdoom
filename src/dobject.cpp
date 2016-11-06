@@ -57,14 +57,15 @@
 
 ClassReg DObject::RegistrationInfo =
 {
-	NULL,							// MyClass
-	"DObject",						// Name
-	NULL,							// ParentType
-	NULL,							// Pointers
-	&DObject::InPlaceConstructor,	// ConstructNative
-	&DObject::InitNativeFields,
-	sizeof(DObject),				// SizeOf
-	CLASSREG_PClass,				// MetaClassNum
+	nullptr,								// MyClass
+	"DObject",								// Name
+	nullptr,								// ParentType
+	&DVMObject<DObject>::RegistrationInfo,	// VMExport
+	nullptr,								// Pointers
+	&DObject::InPlaceConstructor,			// ConstructNative
+	&DObject::InitNativeFields,				// InitNatives
+	sizeof(DObject),						// SizeOf
+	CLASSREG_PClass,						// MetaClassNum
 };
 _DECLARE_TI(DObject)
 

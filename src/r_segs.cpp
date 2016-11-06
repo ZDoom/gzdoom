@@ -1225,7 +1225,7 @@ void wallscan_drawcol1(int x, int y1, int y2, WallscanSampler &sampler, DWORD(*d
 	}
 	else
 	{
-		if (sampler.uv_max == 0) // power of two
+		if (sampler.uv_max == 0 || sampler.uv_step == 0) // power of two
 		{
 			int count = y2 - y1;
 
@@ -1300,7 +1300,7 @@ void wallscan_drawcol4(int x, int y1, int y2, WallscanSampler *sampler, void(*dr
 	}
 	else
 	{
-		if (sampler[0].uv_max == 0) // power of two, no wrap handling needed
+		if (sampler[0].uv_max == 0 || sampler[0].uv_step == 0) // power of two, no wrap handling needed
 		{
 			int count = y2 - y1;
 			for (int i = 0; i < 4; i++)

@@ -8101,11 +8101,27 @@ FxExpression *FxRuntimeStateIndex::Resolve(FCompileContext &ctx)
 		delete this;
 		return nullptr;
 	}
-	else if (Index->isConstant() && static_cast<FxConstant *>(Index)->GetValue().GetInt() <= 0)
+	else if (Index->isConstant())
 	{
-		ScriptPosition.Message(MSG_ERROR, "State index must be positive");
-		delete this;
-		return nullptr;
+		int index = static_cast<FxConstant *>(Index)->GetValue().GetInt();
+		if (index < 0 || (index == 0 && !ctx.FromDecorate))
+		{
+			ScriptPosition.Message(MSG_ERROR, "State index must be positive");
+			delete this;
+			return nullptr;
+		}
+		else if (index == 0)
+		{
+			auto x = new FxConstant((FState*)nullptr, ScriptPosition);
+			delete this;
+			return x->Resolve(ctx);
+		}
+		else
+		{
+			auto x = new FxStateByIndex(index, ScriptPosition);
+			delete this;
+			return x->Resolve(ctx);
+		}
 	}
 	else if (Index->ValueType->GetRegType() != REGT_INT)
 	{ // Float.

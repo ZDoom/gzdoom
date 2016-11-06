@@ -181,15 +181,11 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool c
 		{
 			if (sc.String[0] == 0 || sc.Compare("None"))
 			{
-				x = new FxConstant((FState*)NULL, sc);
+				x = new FxConstant((FState*)nullptr, sc);
 			}
 			else if (sc.Compare("*"))
 			{
-				if (constant)
-				{
-					x = new FxConstant((FState*)(intptr_t)-1, sc);
-				}
-				else sc.ScriptError("Invalid state name '*'");
+				sc.ScriptError("Invalid state name '*'");
 			}
 			else
 			{

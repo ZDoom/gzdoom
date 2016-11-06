@@ -602,9 +602,10 @@ AFuncDesc *FindFunction(const char * string)
 //
 //==========================================================================
 
-PFunction *FindGlobalActionFunction(const char *name)
+VMFunction *FindVMFunction(PClass *cls, const char *name)
 {
-	return dyn_cast<PFunction>(RUNTIME_CLASS(AActor)->Symbols.FindSymbol(name, false));
+	auto f = dyn_cast<PFunction>(cls->Symbols.FindSymbol(name, true));
+	return f == nullptr ? nullptr : f->Variants[0].Implementation;
 }
 
 

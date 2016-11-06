@@ -6445,6 +6445,12 @@ FName AActor::GetSpecies()
 	return Species = thistype->TypeName; // [GZ] Speeds up future calls.
 }
 
+DEFINE_ACTION_FUNCTION(AActor, GetSpecies)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(self->GetSpecies());
+}
+
 //==========================================================================
 //
 // AActor :: IsFriend
@@ -6850,6 +6856,14 @@ DEFINE_ACTION_FUNCTION(AActor, VelFromAngle)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, DistanceBySpeed)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(targ, AActor);
+	PARAM_FLOAT(speed);
+	ACTION_RETURN_FLOAT(self->DistanceBySpeed(targ, speed));
+}
+
 DEFINE_ACTION_FUNCTION(AActor, SetXYZ)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -6879,6 +6893,7 @@ DEFINE_ACTION_FUNCTION(AActor, Vec2OffsetZ)
 	PARAM_BOOL_DEF(absolute);
 	ACTION_RETURN_VEC3(self->Vec2OffsetZ(x, y, z, absolute));
 }
+
 //----------------------------------------------------------------------------
 //
 // DropItem handling

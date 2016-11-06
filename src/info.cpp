@@ -68,7 +68,7 @@ cycle_t ActionCycles;
 
 void FState::SetAction(const char *name)
 {
-	ActionFunc = FindGlobalActionFunction(name)->Variants[0].Implementation;
+	ActionFunc = FindVMFunction(RUNTIME_CLASS(AActor), name);
 }
 
 bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info, FState **stateret)

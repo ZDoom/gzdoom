@@ -495,6 +495,7 @@ int VMFrameStack::Call(VMFunction *func, VMValue *params, int numparams, VMRetur
 class AActor;
 void CallAction(VMFrameStack *stack, VMFunction *vmfunc, AActor *self)
 {
-	VMValue params[3] = { self, self, VMValue(nullptr, ATAG_GENERIC) };
+	// Without the type cast this picks the 'void *' assignment...
+	VMValue params[3] = { (DObject*)self, (DObject*)self, VMValue(nullptr, ATAG_GENERIC) };
 	stack->Call(vmfunc, params, vmfunc->ImplicitArgs, nullptr, 0, nullptr);
 }

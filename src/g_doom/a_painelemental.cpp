@@ -21,7 +21,7 @@ enum PA_Flags
 // A_PainShootSkull
 // Spawn a lost soul and launch it at the target
 //
-void A_PainShootSkull (AActor *self, DAngle Angle, PClassActor *spawntype, int flags = 0, int limit = -1)
+void A_PainShootSkull (VMFrameStack *stack, AActor *self, DAngle Angle, PClassActor *spawntype, int flags = 0, int limit = -1)
 {
 	AActor *other;
 	double prestep;
@@ -137,7 +137,10 @@ void A_PainShootSkull (AActor *self, DAngle Angle, PClassActor *spawntype, int f
 	other->CopyFriendliness (self, !(flags & PAF_NOTARGET));
 
 	if (!(flags & PAF_NOSKULLATTACK))
-		A_SkullAttack(other, SKULLSPEED);
+	{
+		DECLARE_VMFUNC(AActor, A_SkullAttack);
+		CallAction(stack, A_SkullAttack, other);
+	}
 }
 
 
@@ -148,7 +151,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_PainShootSkull)
 	PARAM_FLOAT(angle);
 	PARAM_INT_DEF(flags);
 	PARAM_INT_DEF(limit);
-	A_PainShootSkull(self, angle, spawntype, flags, limit);
+	A_PainShootSkull(stack, self, angle, spawntype, flags, limit);
+
 	return 0;
 }
 

@@ -1071,7 +1071,8 @@ void CallAction(VMFrameStack *stack, VMFunction *vmfunc, AActor *self);
 
 class PFunction;
 
-PFunction *FindGlobalActionFunction(const char *name);
+VMFunction *FindVMFunction(PClass *cls, const char *name);
+#define DECLARE_VMFUNC(cls, name) static VMFunction *name; if (name == nullptr) name = FindVMFunction(RUNTIME_CLASS(cls), #name);
 
 
 

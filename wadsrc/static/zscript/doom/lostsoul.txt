@@ -81,3 +81,41 @@ class BetaSkull : LostSoul
 		Wait;
 	}
 }
+
+//===========================================================================
+//
+// Code (must be attached to Actor)
+//
+//===========================================================================
+
+extend class Actor
+{
+	const SKULLSPEED = 20;
+	
+	void A_SkullAttack(float skullspeed = SKULLSPEED)
+	{
+		if (target == null) return;
+
+		if (skullspeed <= 0) skullspeed = SKULLSPEED;
+
+		bSkullfly = true;
+		A_PlaySound(AttackSound, CHAN_VOICE);
+		A_FaceTarget();
+		VelFromAngle(skullspeed);
+		Vel.Z = (target.pos.Z + target.Height/2 - Vel.Z) / DistanceBySpeed(target, speed);
+	}
+
+	void A_BetaSkullAttack()
+	{
+		if (target == null || target.GetSpecies() == self.GetSpecies()) return;
+
+		A_PlaySound(AttackSound, CHAN_WEAPON);
+		A_FaceTarget();
+		
+		int damage = GetMissileDamage(7,1);
+		target.DamageMobj(self, self, damage, 'None');
+	}
+}
+
+
+

@@ -275,9 +275,9 @@ void R_DrawMaskedColumnBgra(FTexture *tex, fixed_t col, bool useRt, bool unmaske
 	int mipmap_offset = 0;
 	int mip_width = tex->GetWidth();
 	int mip_height = tex->GetHeight();
+	uint32_t xpos = (uint32_t)((((uint64_t)xoffset) << FRACBITS) / mip_width);
 	if (r_mipmap && tex->Mipmapped() && mip_width > 1 && mip_height > 1)
 	{
-		uint32_t xpos = (uint32_t)((((uint64_t)xoffset) << FRACBITS) / mip_width);
 		int level = (int)lod;
 		while (level > 0 && mip_width > 1 && mip_height > 1)
 		{
@@ -286,8 +286,8 @@ void R_DrawMaskedColumnBgra(FTexture *tex, fixed_t col, bool useRt, bool unmaske
 			mip_width = MAX(mip_width >> 1, 1);
 			mip_height = MAX(mip_height >> 1, 1);
 		}
-		xoffset = (xpos >> FRACBITS) * mip_width;
 	}
+	xoffset = (xpos >> FRACBITS) * mip_width;
 
 	const uint32_t *pixels = tex->GetPixelsBgra() + mipmap_offset;
 

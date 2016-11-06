@@ -1254,10 +1254,11 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			damage = target->health - 1;
 		}
 
+		if (!(flags & DMG_FORCED))
 		{
 			// check the real player, not a voodoo doll here for invulnerability effects
 			if ((!telefragDamage && ((player->mo->flags2 & MF2_INVULNERABLE) ||
-				(player->cheats & CF_GODMODE)) && !(flags & DMG_FORCED)) ||
+				(player->cheats & CF_GODMODE))) ||
 				(player->cheats & CF_GODMODE2) || (player->mo->flags5 & MF5_NODAMAGE))
 				//Absolutely no hurting if NODAMAGE is involved. Same for GODMODE2.
 			{ // player is invulnerable, so don't hurt him
@@ -1330,8 +1331,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			// but telefragging should still do enough damage to kill the player)
 			// Ignore players that are already dead.
 			// [MC]Buddha2 absorbs telefrag damage, and anything else thrown their way.
-			if ((((player->cheats & CF_BUDDHA2) || 
-				(((player->cheats & CF_BUDDHA) || (player->mo->flags7 & MF7_BUDDHA)) && !telefragDamage && !(flags & DMG_FORCED))) && (player->playerstate != PST_DEAD)))
+			if (!(flags & DMG_FORCED) && (((player->cheats & CF_BUDDHA2) || (((player->cheats & CF_BUDDHA) || (player->mo->flags7 & MF7_BUDDHA)) && !telefragDamage)) && (player->playerstate != PST_DEAD)))
 			{
 				// If this is a voodoo doll we need to handle the real player as well.
 				player->mo->health = target->health = player->health = 1;

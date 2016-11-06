@@ -653,7 +653,7 @@ void VMFunctionBuilder::BackpatchToHere(size_t loc)
 //==========================================================================
 FFunctionBuildList FunctionBuildList;
 
-VMFunction *FFunctionBuildList::AddFunction(PFunction *functype, FxExpression *code, const FString &name, bool fromdecorate)
+VMFunction *FFunctionBuildList::AddFunction(PFunction *functype, FxExpression *code, const FString &name, bool fromdecorate, int stateindex, int statecount)
 {
 	auto func = code->GetDirectFunction();
 	if (func != nullptr)
@@ -673,6 +673,8 @@ VMFunction *FFunctionBuildList::AddFunction(PFunction *functype, FxExpression *c
 	it.Function->ImplicitArgs = functype->GetImplicitArgs();
 	it.Proto = nullptr;
 	it.FromDecorate = fromdecorate;
+	it.StateIndex = stateindex;
+	it.StateCount = statecount;
 
 	// set prototype for named functions.
 	if (it.Func->SymbolName != NAME_None)
@@ -698,7 +700,7 @@ void FFunctionBuildList::Build()
 		assert(item.Code != NULL);
 
 		// We don't know the return type in advance for anonymous functions.
-		FCompileContext ctx(item.Func, item.Func->SymbolName == NAME_None ? nullptr : item.Func->Variants[0].Proto, item.FromDecorate);
+		FCompileContext ctx(item.Func, item.Func->SymbolName == NAME_None ? nullptr : item.Func->Variants[0].Proto, item.FromDecorate, item.StateIndex, item.StateCount);
 
 		// Allocate registers for the function's arguments and create local variable nodes before starting to resolve it.
 		VMFunctionBuilder buildit(item.Func->GetImplicitArgs());

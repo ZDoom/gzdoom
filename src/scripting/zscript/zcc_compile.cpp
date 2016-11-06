@@ -2349,8 +2349,8 @@ void ZCCCompiler::CompileStates()
 						auto code = SetupActionFunction(static_cast<PClassActor *>(c->Type()), sl->Action);
 						if (code != nullptr)
 						{
-							auto funcsym = CreateAnonymousFunction(c->Type(), nullptr, VARF_Method | VARF_Action, (int)sl->Frames->Len());
-							state.ActionFunc = FunctionBuildList.AddFunction(funcsym, code, FStringf("%s.StateFunction.%d", c->Type()->TypeName.GetChars(), statedef.GetStateCount()), false);
+							auto funcsym = CreateAnonymousFunction(c->Type(), nullptr, VARF_Method | VARF_Action);
+							state.ActionFunc = FunctionBuildList.AddFunction(funcsym, code, FStringf("%s.StateFunction.%d", c->Type()->TypeName.GetChars(), statedef.GetStateCount()), false, statedef.GetStateCount(), (int)sl->Frames->Len());
 						}
 					}
 

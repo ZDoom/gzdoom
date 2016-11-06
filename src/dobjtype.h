@@ -719,7 +719,6 @@ public:
 	};
 	TArray<Variant> Variants;
 	PClass *OwningClass = nullptr;
-	int StateCount = 0;	// needed to process state indices later.
 
 	unsigned AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags);
 	int GetImplicitArgs()

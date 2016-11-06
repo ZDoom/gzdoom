@@ -93,12 +93,14 @@ static const FLOP FxFlops[] =
 //
 //==========================================================================
 
-FCompileContext::FCompileContext(PFunction *fnc, PPrototype *ret, bool fromdecorate) : ReturnProto(ret), Function(fnc), Class(nullptr), FromDecorate(fromdecorate)
+FCompileContext::FCompileContext(PFunction *fnc, PPrototype *ret, bool fromdecorate, int stateindex, int statecount) 
+	: ReturnProto(ret), Function(fnc), Class(nullptr), FromDecorate(fromdecorate), StateIndex(stateindex), StateCount(statecount)
 {
 	if (fnc != nullptr) Class = fnc->OwningClass;
 }
 
-FCompileContext::FCompileContext(PClass *cls, bool fromdecorate) : ReturnProto(nullptr), Function(nullptr), Class(cls), FromDecorate(fromdecorate)
+FCompileContext::FCompileContext(PClass *cls, bool fromdecorate) 
+	: ReturnProto(nullptr), Function(nullptr), Class(cls), FromDecorate(fromdecorate), StateIndex(-1), StateCount(0)
 {
 }
 
@@ -1426,13 +1428,13 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 		}
 		else if (basex->IsNumeric() && basex->ValueType != TypeSound && basex->ValueType != TypeColor)
 		{
-			if (ctx.Function->SymbolName != NAME_None || !(ctx.Function->Variants[0].Flags & VARF_Action))
+			if (ctx.StateIndex < 0)
 			{
 				ScriptPosition.Message(MSG_ERROR, "State jumps with index can only be used in anonymous state functions.");
 				delete this;
 				return nullptr;
 			}
-			if (ctx.Function->StateCount != 1)
+			if (ctx.StateCount != 1)
 			{
 				ScriptPosition.Message(MSG_ERROR, "State jumps with index cannot be used on multistate definitions");
 				delete this;
@@ -1447,7 +1449,7 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 					delete this;
 					return nullptr;
 				}
-				FxExpression *x = new FxStateByIndex(i, ScriptPosition);
+				FxExpression *x = new FxStateByIndex(ctx.StateIndex + i, ScriptPosition);
 				x = x->Resolve(ctx);
 				basex = nullptr;
 				delete this;

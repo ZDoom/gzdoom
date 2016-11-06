@@ -132,7 +132,7 @@ void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FNam
 //
 //==========================================================================
 
-PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, int flags, int statecount)
+PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, int flags)
 {
 	TArray<PType *> rets(1);
 	TArray<PType *> args;
@@ -143,7 +143,6 @@ PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, i
 	SetImplicitArgs(&args, &argflags, &argnames, containingclass, flags);
 
 	PFunction *sym = new PFunction(containingclass, NAME_None);	// anonymous functions do not have names.
-	sym->StateCount = statecount;
 	sym->AddVariant(NewPrototype(rets, args), argflags, argnames, nullptr, flags);
 	return sym;
 }
@@ -202,7 +201,7 @@ void CreateDamageFunction(PClassActor *info, AActor *defaults, FxExpression *id,
 	else
 	{
 		auto dmg = new FxReturnStatement(new FxIntCast(id, true), id->ScriptPosition);
-		auto funcsym = CreateAnonymousFunction(info, TypeSInt32, VARF_Method, 0);
+		auto funcsym = CreateAnonymousFunction(info, TypeSInt32, VARF_Method);
 		defaults->DamageFunc = FunctionBuildList.AddFunction(funcsym, dmg, FStringf("%s.DamageFunction", info->TypeName.GetChars()), fromDecorate);
 	}
 }

@@ -106,13 +106,15 @@ class FFunctionBuildList
 		PPrototype *Proto = nullptr;
 		VMScriptFunction *Function = nullptr;
 		FString PrintableName;
+		int StateIndex;
+		int StateCount;
 		bool FromDecorate;
 	};
 
 	TArray<Item> mItems;
 
 public:
-	VMFunction *AddFunction(PFunction *func, FxExpression *code, const FString &name, bool fromdecorate);
+	VMFunction *AddFunction(PFunction *func, FxExpression *code, const FString &name, bool fromdecorate, int currentstate = -1, int statecnt = 0);
 	void Build();
 };
 

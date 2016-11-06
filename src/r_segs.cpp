@@ -1114,7 +1114,7 @@ WallscanSampler::WallscanSampler(int y1, float swal, double yrepeat, fixed_t xof
 // Draw a column with support for non-power-of-two ranges
 void wallscan_drawcol1(int x, int y1, int y2, WallscanSampler &sampler, DWORD(*draw1column)())
 {
-	if (sampler.uv_max == 0) // power of two
+	if (sampler.uv_max == 0 || sampler.uv_step == 0) // power of two
 	{
 		int count = y2 - y1;
 
@@ -1162,7 +1162,7 @@ void wallscan_drawcol1(int x, int y1, int y2, WallscanSampler &sampler, DWORD(*d
 // Draw four columns with support for non-power-of-two ranges
 void wallscan_drawcol4(int x, int y1, int y2, WallscanSampler *sampler, void(*draw4columns)())
 {
-	if (sampler[0].uv_max == 0) // power of two, no wrap handling needed
+	if (sampler[0].uv_max == 0 || sampler[0].uv_step == 0) // power of two, no wrap handling needed
 	{
 		int count = y2 - y1;
 		for (int i = 0; i < 4; i++)

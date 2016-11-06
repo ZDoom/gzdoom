@@ -29,7 +29,7 @@ public:
 	void MorphPlayerThink ();
 };
 
-IMPLEMENT_CLASS(AChickenPlayer, false, false, false)
+IMPLEMENT_CLASS(AChickenPlayer, false, false, false, false)
 
 void AChickenPlayer::MorphPlayerThink ()
 {

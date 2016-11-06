@@ -331,7 +331,7 @@ public:
 	}
 };
 
-IMPLEMENT_CLASS(DColorPickerMenu, true, false, false)
+IMPLEMENT_CLASS(DColorPickerMenu, true, false, false, false)
 
 CCMD(undocolorpic)
 {

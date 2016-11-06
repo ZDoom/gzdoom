@@ -285,7 +285,7 @@ void DSeqNode::SerializeSequences (FSerializer &arc)
 	arc("sndseqlisthead", SequenceListHead);
 }
 
-IMPLEMENT_CLASS(DSeqNode, false, true, false)
+IMPLEMENT_CLASS(DSeqNode, false, true, false, false)
 
 IMPLEMENT_POINTERS_START(DSeqNode)
 	IMPLEMENT_POINTER(m_ChildSeqNode)
@@ -429,7 +429,7 @@ FName DSeqNode::GetSequenceName () const
 	return Sequences[m_Sequence]->SeqName;
 }
 
-IMPLEMENT_CLASS(DSeqActorNode, false, true, false)
+IMPLEMENT_CLASS(DSeqActorNode, false, true, false, false)
 
 IMPLEMENT_POINTERS_START(DSeqActorNode)
 	IMPLEMENT_POINTER(m_Actor)
@@ -441,7 +441,7 @@ void DSeqActorNode::Serialize(FSerializer &arc)
 	arc("actor", m_Actor);
 }
 
-IMPLEMENT_CLASS(DSeqPolyNode, false, false, false)
+IMPLEMENT_CLASS(DSeqPolyNode, false, false, false, false)
 
 void DSeqPolyNode::Serialize(FSerializer &arc)
 {
@@ -449,7 +449,7 @@ void DSeqPolyNode::Serialize(FSerializer &arc)
 	arc("poly", m_Poly);
 }
 
-IMPLEMENT_CLASS(DSeqSectorNode, false, false, false)
+IMPLEMENT_CLASS(DSeqSectorNode, false, false, false, false)
 
 void DSeqSectorNode::Serialize(FSerializer &arc)
 {

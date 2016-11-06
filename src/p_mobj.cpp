@@ -131,7 +131,7 @@ CVAR (Int, cl_bloodtype, 0, CVAR_ARCHIVE);
 
 // CODE --------------------------------------------------------------------
 
-IMPLEMENT_CLASS(AActor, false, true, true)
+IMPLEMENT_CLASS(AActor, false, true, true, false)
 
 IMPLEMENT_POINTERS_START(AActor)
 	IMPLEMENT_POINTER(target)
@@ -6956,7 +6956,7 @@ DEFINE_ACTION_FUNCTION(AActor, Vec3Offset)
 //
 //----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DDropItem, false, true, true)
+IMPLEMENT_CLASS(DDropItem, false, true, true, false)
 
 IMPLEMENT_POINTERS_START(DDropItem)
 	IMPLEMENT_POINTER(Next)

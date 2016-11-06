@@ -126,7 +126,7 @@ public:
 	int SideNum;
 };
 
-IMPLEMENT_CLASS(DSectorMarker, false, false, false)
+IMPLEMENT_CLASS(DSectorMarker, false, false, false, false)
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 

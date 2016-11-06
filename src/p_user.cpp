@@ -508,7 +508,7 @@ int player_t::GetSpawnClass()
 //
 //===========================================================================
 
-IMPLEMENT_CLASS(PClassPlayerPawn, false, false, false)
+IMPLEMENT_CLASS(PClassPlayerPawn, false, false, false, false)
 
 PClassPlayerPawn::PClassPlayerPawn()
 {
@@ -622,14 +622,14 @@ void player_t::SendPitchLimits() const
 //
 //===========================================================================
 
-IMPLEMENT_CLASS(APlayerPawn, false, true, false)
+IMPLEMENT_CLASS(APlayerPawn, false, true, false, false)
 
 IMPLEMENT_POINTERS_START(APlayerPawn)
 	IMPLEMENT_POINTER(InvFirst)
 	IMPLEMENT_POINTER(InvSel)
 IMPLEMENT_POINTERS_END
 
-IMPLEMENT_CLASS(APlayerChunk, false, false, false)
+IMPLEMENT_CLASS(APlayerChunk, false, false, false, false)
 
 void APlayerPawn::Serialize(FSerializer &arc)
 {

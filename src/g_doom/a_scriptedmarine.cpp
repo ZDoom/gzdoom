@@ -19,7 +19,7 @@ static FRandom pr_m_gunshot ("SMarineGunshot");
 static FRandom pr_m_saw ("SMarineSaw");
 static FRandom pr_m_fireshotgun2 ("SMarineFireSSG");
 
-IMPLEMENT_CLASS(AScriptedMarine, false, false, false)
+IMPLEMENT_CLASS(AScriptedMarine, false, false, false, false)
 
 void AScriptedMarine::Serialize(FSerializer &arc)
 {

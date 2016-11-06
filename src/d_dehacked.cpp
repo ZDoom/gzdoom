@@ -231,7 +231,7 @@ DehInfo deh =
 // from the original actor's defaults. The original actor is then changed to
 // spawn the new class.
 
-IMPLEMENT_CLASS(ADehackedPickup, false, true, false)
+IMPLEMENT_CLASS(ADehackedPickup, false, true, false, false)
 
 IMPLEMENT_POINTERS_START(ADehackedPickup)
 	IMPLEMENT_POINTER(RealPickup)

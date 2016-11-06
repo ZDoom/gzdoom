@@ -21,7 +21,7 @@
 
 #define BONUSADD 6
 
-IMPLEMENT_CLASS(AWeapon, false, true, false)
+IMPLEMENT_CLASS(AWeapon, false, true, false, false)
 
 IMPLEMENT_POINTERS_START(AWeapon)
 	IMPLEMENT_POINTER(Ammo1)
@@ -38,7 +38,7 @@ TMap<PClassWeapon *, int> Weapons_hton;
 
 static int ntoh_cmp(const void *a, const void *b);
 
-IMPLEMENT_CLASS(PClassWeapon, false, false, false)
+IMPLEMENT_CLASS(PClassWeapon, false, false, false, false)
 
 PClassWeapon::PClassWeapon()
 {
@@ -791,7 +791,7 @@ FState *AWeapon::GetStateForButtonName (FName button)
 
 /* Weapon giver ***********************************************************/
 
-IMPLEMENT_CLASS(AWeaponGiver, false, false, false)
+IMPLEMENT_CLASS(AWeaponGiver, false, false, false, false)
 
 void AWeaponGiver::Serialize(FSerializer &arc)
 {

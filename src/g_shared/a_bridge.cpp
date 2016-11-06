@@ -41,7 +41,7 @@ public:
 	void Destroy();
 };
 
-IMPLEMENT_CLASS(ACustomBridge, false, false, false)
+IMPLEMENT_CLASS(ACustomBridge, false, false, false, false)
 
 void ACustomBridge::BeginPlay ()
 {
@@ -156,7 +156,7 @@ public:
 	void BeginPlay ();
 };
 
-IMPLEMENT_CLASS(AInvisibleBridge, false, false, false)
+IMPLEMENT_CLASS(AInvisibleBridge, false, false, false, false)
 
 void AInvisibleBridge::BeginPlay ()
 {

@@ -1103,7 +1103,7 @@ public:
 
 };
 
-IMPLEMENT_CLASS(DConversationMenu, true, false, false)
+IMPLEMENT_CLASS(DConversationMenu, true, false, false, false)
 int DConversationMenu::mSelection;	// needs to be preserved if the same dialogue is restarted
 
 

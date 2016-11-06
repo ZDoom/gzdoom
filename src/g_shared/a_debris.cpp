@@ -25,7 +25,7 @@ public:
 	}
 };
 
-IMPLEMENT_CLASS(AGlassShard, false, false, false)
+IMPLEMENT_CLASS(AGlassShard, false, false, false, false)
 
 // Dirt stuff
 

@@ -161,17 +161,17 @@ public:
 //
 //==========================================================================
 
-IMPLEMENT_CLASS(DInterpolation, true, true, false)
+IMPLEMENT_CLASS(DInterpolation, true, true, false, false)
 
 IMPLEMENT_POINTERS_START(DInterpolation)
 	IMPLEMENT_POINTER(Next)
 	IMPLEMENT_POINTER(Prev)
 IMPLEMENT_POINTERS_END
 
-IMPLEMENT_CLASS(DSectorPlaneInterpolation, false, false, false)
-IMPLEMENT_CLASS(DSectorScrollInterpolation, false, false, false)
-IMPLEMENT_CLASS(DWallScrollInterpolation, false, false, false)
-IMPLEMENT_CLASS(DPolyobjInterpolation, false, false, false)
+IMPLEMENT_CLASS(DSectorPlaneInterpolation, false, false, false, false)
+IMPLEMENT_CLASS(DSectorScrollInterpolation, false, false, false, false)
+IMPLEMENT_CLASS(DWallScrollInterpolation, false, false, false, false)
+IMPLEMENT_CLASS(DPolyobjInterpolation, false, false, false, false)
 
 //==========================================================================
 //

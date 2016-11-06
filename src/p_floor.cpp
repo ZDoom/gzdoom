@@ -64,7 +64,7 @@ static void StartFloorSound (sector_t *sec)
 //
 //==========================================================================
 
-IMPLEMENT_CLASS(DFloor, false, false, false)
+IMPLEMENT_CLASS(DFloor, false, false, false, false)
 
 DFloor::DFloor ()
 {
@@ -815,7 +815,7 @@ bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed)
 //
 //==========================================================================
 
-IMPLEMENT_CLASS(DElevator, false, true, false)
+IMPLEMENT_CLASS(DElevator, false, true, false, false)
 
 IMPLEMENT_POINTERS_START(DElevator)
 	IMPLEMENT_POINTER(m_Interp_Floor)
@@ -1105,9 +1105,9 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag)
 //
 //==========================================================================
 
-IMPLEMENT_CLASS(DWaggleBase, false, false, false)
-IMPLEMENT_CLASS(DFloorWaggle, false, false, false)
-IMPLEMENT_CLASS(DCeilingWaggle, false, false, false)
+IMPLEMENT_CLASS(DWaggleBase, false, false, false, false)
+IMPLEMENT_CLASS(DFloorWaggle, false, false, false, false)
+IMPLEMENT_CLASS(DCeilingWaggle, false, false, false, false)
 
 DWaggleBase::DWaggleBase ()
 {

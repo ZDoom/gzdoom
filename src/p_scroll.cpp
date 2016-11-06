@@ -73,7 +73,7 @@ private:
 	}
 };
 
-IMPLEMENT_CLASS(DScroller, false, true, false)
+IMPLEMENT_CLASS(DScroller, false, true, false, false)
 
 IMPLEMENT_POINTERS_START(DScroller)
 	IMPLEMENT_POINTER(m_Interpolations[0])

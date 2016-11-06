@@ -91,7 +91,7 @@ static bool		MenuEnabled = true;
 //
 //============================================================================
 
-IMPLEMENT_CLASS(DMenu, false, true, false)
+IMPLEMENT_CLASS(DMenu, false, true, false, false)
 
 IMPLEMENT_POINTERS_START(DMenu)
 	IMPLEMENT_POINTER(mParentMenu)

@@ -31,7 +31,7 @@ public:
 	TObjPtr<AActor> DirtClump;
 };
 
-IMPLEMENT_CLASS(AThrustFloor, false, true, false)
+IMPLEMENT_CLASS(AThrustFloor, false, true, false, false)
 
 IMPLEMENT_POINTERS_START(AThrustFloor)
 	IMPLEMENT_POINTER(DirtClump)

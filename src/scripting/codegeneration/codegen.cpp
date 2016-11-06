@@ -6083,6 +6083,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 
 	switch (MethodName)
 	{
+	case NAME_Bool:
 	case NAME_Int:
 	case NAME_uInt:
 	case NAME_Double:
@@ -6092,7 +6093,9 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	case NAME_State:
 		if (CheckArgSize(MethodName, ArgList, 1, 1, ScriptPosition))
 		{
-			PType *type = MethodName == NAME_Int ? TypeSInt32 :
+			PType *type = 
+				MethodName == NAME_Bool ? TypeBool :
+				MethodName == NAME_Int ? TypeSInt32 :
 				MethodName == NAME_uInt ? TypeUInt32 :
 				MethodName == NAME_Double ? TypeFloat64 :
 				MethodName == NAME_Name ? TypeName :

@@ -1348,10 +1348,26 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	R_SetupSpanBits(tex);
 	R_SetSpanColormap(colormap != NULL ? &colormap->Maps[clamp(shade >> FRACBITS, 0, NUMCOLORMAPS-1) * 256] : identitymap);
 	R_SetSpanSource(tex->GetPixels());
-	scalex = double(1u << (32 - ds_xbits)) / scalex;
-	scaley = double(1u << (32 - ds_ybits)) / scaley;
-	ds_xstep = xs_RoundToInt(cosrot * scalex);
-	ds_ystep = xs_RoundToInt(sinrot * scaley);
+	if (ds_xbits != 0)
+	{
+		scalex = double(1u << (32 - ds_xbits)) / scalex;
+		ds_xstep = xs_RoundToInt(cosrot * scalex);
+	}
+	else
+	{ // Texture is one pixel wide.
+		scalex = 0;
+		ds_xstep = 0;
+	}
+	if (ds_ybits != 0)
+	{
+		scaley = double(1u << (32 - ds_ybits)) / scaley;
+		ds_ystep = xs_RoundToInt(sinrot * scaley);
+	}
+	else
+	{ // Texture is one pixel tall.
+		scaley = 0;
+		ds_ystep = 0;
+	}
 
 	// Travel down the right edge and create an outline of that edge.
 	pt1 = toppt;

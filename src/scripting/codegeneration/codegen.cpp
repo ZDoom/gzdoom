@@ -6086,6 +6086,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	case NAME_Bool:
 	case NAME_Int:
 	case NAME_uInt:
+	case NAME_Float:
 	case NAME_Double:
 	case NAME_Name:
 	case NAME_Color:
@@ -6097,6 +6098,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 				MethodName == NAME_Bool ? TypeBool :
 				MethodName == NAME_Int ? TypeSInt32 :
 				MethodName == NAME_uInt ? TypeUInt32 :
+				MethodName == NAME_Float ? TypeFloat64 :
 				MethodName == NAME_Double ? TypeFloat64 :
 				MethodName == NAME_Name ? TypeName :
 				MethodName == NAME_Color ? TypeColor :

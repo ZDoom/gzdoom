@@ -1411,7 +1411,14 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 		// Right now this only supports string constants. There should be an option to pass a string variable, too.
 		if (basex->isConstant() && (basex->ValueType == TypeString || basex->ValueType == TypeName))
 		{
-			FxExpression *x = new FxMultiNameState(static_cast<FxConstant *>(basex)->GetValue().GetString(), basex->ScriptPosition);
+			const char *s = static_cast<FxConstant *>(basex)->GetValue().GetString();
+			if (*s == 0 && !ctx.FromDecorate)	// DECORATE should never get here at all, but let's better be safe.
+			{
+				ScriptPosition.Message(MSG_ERROR, "State jump to empty label.");
+				delete this;
+				return nullptr;
+			}
+			FxExpression *x = new FxMultiNameState(s, basex->ScriptPosition);
 			x = x->Resolve(ctx);
 			basex = nullptr;
 			delete this;
@@ -1434,7 +1441,7 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 			if (basex->isConstant())
 			{
 				int i = static_cast<FxConstant *>(basex)->GetValue().GetInt();
-				if (i < 0)
+				if (i <= 0)
 				{
 					ScriptPosition.Message(MSG_ERROR, "State index must be positive");
 					delete this;
@@ -8087,7 +8094,7 @@ FxExpression *FxRuntimeStateIndex::Resolve(FCompileContext &ctx)
 		delete this;
 		return nullptr;
 	}
-	else if (Index->isConstant() && static_cast<FxConstant *>(Index)->GetValue().GetInt() < 0)
+	else if (Index->isConstant() && static_cast<FxConstant *>(Index)->GetValue().GetInt() <= 0)
 	{
 		ScriptPosition.Message(MSG_ERROR, "State index must be positive");
 		delete this;

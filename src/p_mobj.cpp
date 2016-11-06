@@ -3197,14 +3197,13 @@ int AActor::GetMissileDamage (int mask, int add)
 	}
 	VMFrameStack stack;
 	VMValue param = this;
-	VMReturn results[2];
+	VMReturn result;
 
-	int amount, calculated = false;
+	int amount;
 
-	results[0].IntAt(&amount);
-	results[1].IntAt(&calculated);
+	result.IntAt(&amount);
 
-	if (stack.Call(DamageFunc, &param, 1, results, 2) < 1)
+	if (stack.Call(DamageFunc, &param, 1, &result, 1) < 1)
 	{ // No results
 		return 0;
 	}

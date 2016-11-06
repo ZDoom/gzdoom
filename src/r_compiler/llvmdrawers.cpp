@@ -497,7 +497,7 @@ void LLVMProgram::CreateEE()
 	std::string errorstring;
 
 	std::string mcpu = sys::getHostCPUName();
-	if (std::string(CPU.CPUString).find("G840") && mcpu == "sandybridge")
+	if (std::string(CPU.CPUString).find("G840") != std::string::npos && mcpu == "sandybridge")
 		mcpu = "westmere"; // Pentium G840 is misdetected as a sandy bridge CPU
 
 	if (stricmp(llvm_cpu, "auto") != 0)

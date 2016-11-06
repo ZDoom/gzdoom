@@ -3063,20 +3063,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_XScream)
 
 //===========================================================================
 //
-// A_ScreamAndUnblock
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_ScreamAndUnblock)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	CALL_ACTION(A_Scream, self);
-	A_Unblock(self, true);
-	return 0;
-}
-
-//===========================================================================
-//
 // A_ActiveSound
 //
 //===========================================================================
@@ -3086,22 +3072,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ActiveSound)
 	PARAM_SELF_PROLOGUE(AActor);
 	if (self->ActiveSound)
 	{
-		S_Sound (self, CHAN_VOICE, self->ActiveSound, 1, ATTN_NORM);
+		S_Sound(self, CHAN_VOICE, self->ActiveSound, 1, ATTN_NORM);
 	}
-	return 0;
-}
-
-//===========================================================================
-//
-// A_ActiveAndUnblock
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_ActiveAndUnblock)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	CALL_ACTION(A_ActiveSound, self);
-	A_Unblock(self, true);
 	return 0;
 }
 

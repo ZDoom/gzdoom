@@ -130,6 +130,8 @@ class Actor : Thinker native
 	void A_SetRipperLevel(int level) { RipperLevel = level; }
 	void A_SetRipMin(int minimum) { RipLevelMin = minimum; }
 	void A_SetRipMax(int maximum) { RipLevelMax = maximum; }
+	void A_ScreamAndUnblock() { A_Scream(); A_NoBlocking(); }
+	void A_ActiveAndUnblock() { A_ActiveSound(); A_NoBlocking(); }
 
 	void A_SetScale(float scalex, float scaley = 0, int ptr = AAPTR_DEFAULT, bool usezero = false)
 	{
@@ -246,8 +248,6 @@ class Actor : Thinker native
 
 	native void A_M_Saw(sound fullsound = "weapons/sawfull", sound hitsound = "weapons/sawhit", int damage = 2, class<Actor> pufftype = "BulletPuff");
 
-	native void A_ScreamAndUnblock();
-	native void A_ActiveAndUnblock();
 	native void A_ActiveSound();
 
 	native void A_FastChase();

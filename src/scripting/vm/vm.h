@@ -1034,10 +1034,9 @@ struct AFuncDesc
 //#define DECLARE_PARAMINFO AActor *self, AActor *stateowner, FState *CallingState, int ParameterIndex, StateCallData *statecall
 //#define PUSH_PARAMINFO self, stateowner, CallingState, ParameterIndex, statecall
 
-#define CALL_ACTION(name,self) { /*AF_##name(self, self, NULL, 0, NULL)*/ \
-		VMValue params[3] = { self, self, VMValue(NULL, ATAG_GENERIC) }; \
-		stack->Call(name##_VMPtr, params, countof(params), NULL, 0, NULL); \
-	}
+class AActor;
+void CallAction(VMFrameStack *stack, VMFunction *vmfunc, AActor *self);
+#define CALL_ACTION(name, self) CallAction(stack, name##_VMPtr, self);
 
 
 #define ACTION_RETURN_STATE(v) do { FState *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_STATE); return 1; } return 0; } while(0)

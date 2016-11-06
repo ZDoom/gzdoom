@@ -491,3 +491,10 @@ int VMFrameStack::Call(VMFunction *func, VMValue *params, int numparams, VMRetur
 		throw;
 	}
 }
+
+class AActor;
+void CallAction(VMFrameStack *stack, VMFunction *vmfunc, AActor *self)
+{
+	VMValue params[3] = { self, self, VMValue(nullptr, ATAG_GENERIC) };
+	stack->Call(vmfunc, params, vmfunc->ImplicitArgs, nullptr, 0, nullptr);
+}

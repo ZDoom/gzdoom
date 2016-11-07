@@ -850,7 +850,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	sc_man_scanner.re
 	g_doom/a_bossbrain.cpp
 	g_doom/a_doomweaps.cpp
-	g_doom/a_lostsoul.cpp
 	g_doom/a_painelemental.cpp
 	g_doom/a_revenant.cpp
 	g_doom/a_scriptedmarine.cpp

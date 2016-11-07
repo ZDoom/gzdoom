@@ -336,10 +336,10 @@ int VMFunctionBuilder::RegAvailability::Get(int count)
 	{
 		return -1;
 	}
-
+	
 	mask = count == 32 ? ~0u : (1 << count) - 1;
 
-	for (i = 0; i < 256/32; ++i)
+	for (i = 0; i < 256 / 32; ++i)
 	{
 		// Find the first word with free registers
 		VM_UWORD bits = Used[i];
@@ -362,9 +362,9 @@ int VMFunctionBuilder::RegAvailability::Get(int count)
 				{
 					if (firstbit + count <= 32)
 					{ // Needed bits all fit in one word, so we got it.
-						if (firstbit + count > MostUsed)
+						if (i * 32 + firstbit + count > MostUsed)
 						{
-							MostUsed = firstbit + count;
+							MostUsed = i * 32 + firstbit + count;
 						}
 						Used[i] |= mask << firstbit;
 						return i * 32 + firstbit;
@@ -374,9 +374,9 @@ int VMFunctionBuilder::RegAvailability::Get(int count)
 					{ // There is a next word.
 						if (((Used[i + 1]) & (mask >> (32 - firstbit))) == 0)
 						{ // The next word has the needed open space, too.
-							if (firstbit + count > MostUsed)
+							if (i * 32 + firstbit + count > MostUsed)
 							{
-								MostUsed = firstbit + count;
+								MostUsed = i * 32 + firstbit + count;
 							}
 							Used[i] |= mask << firstbit;
 							Used[i + 1] |= mask >> (32 - firstbit);

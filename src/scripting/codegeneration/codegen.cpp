@@ -4061,6 +4061,7 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 	// Test condition.
 	build->Emit(OP_EQ_K, 1, cond.RegNum, build->GetConstantInt(0));
 	falsejump = build->Emit(OP_JMP, 0);
+	cond.Free(build);
 
 	// Evaluate true expression.
 	if (truex->isConstant() && truex->ValueType->GetRegType() == REGT_INT)
@@ -4073,6 +4074,7 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 		ExpEmit trueop = truex->Emit(build);
 		if (trueop.Konst)
 		{
+			trueop.Free(build);
 			if (trueop.RegType == REGT_FLOAT)
 			{
 				out = ExpEmit(build, REGT_FLOAT);
@@ -4113,20 +4115,18 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 		{
 			if (falseop.RegType == REGT_FLOAT)
 			{
-				out = ExpEmit(build, REGT_FLOAT);
 				build->Emit(OP_LKF, out.RegNum, falseop.RegNum);
 			}
 			else if (falseop.RegType == REGT_POINTER)
 			{
-				out = ExpEmit(build, REGT_POINTER);
 				build->Emit(OP_LKP, out.RegNum, falseop.RegNum);
 			}
 			else
 			{
 				assert(falseop.RegType == REGT_STRING);
-				out = ExpEmit(build, REGT_STRING);
 				build->Emit(OP_LKS, out.RegNum, falseop.RegNum);
 			}
+			falseop.Free(build);
 		}
 		else
 		{

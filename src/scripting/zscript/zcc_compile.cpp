@@ -1676,11 +1676,8 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 			case 'C':	// this parser accepts colors only in string form.
 				pref.i = 1;
 			case 'S':
+			case 'T': // a filtered string (ZScript only parses filtered strings so there's nothing to do here.)
 				conv.s = GetString(exp);
-				break;
-
-			case 'T': // a filtered string
-				conv.s = strings[strings.Reserve(1)] = strbin1(GetString(exp));
 				break;
 
 			case 'L':	// Either a number or a list of strings

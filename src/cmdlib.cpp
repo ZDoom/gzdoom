@@ -632,7 +632,10 @@ int strbin (char *str)
 						if (*p >= '0' && *p <= '7')
 							c += *p-'0';
 						else
+						{
+							p--;
 							break;
+						}
 						p++;
 					}
 					*str++ = c;
@@ -732,7 +735,10 @@ FString strbin1 (const char *start)
 						if (*p >= '0' && *p <= '7')
 							c += *p-'0';
 						else
+						{
+							p--;
 							break;
+						}
 						p++;
 					}
 					result << c;

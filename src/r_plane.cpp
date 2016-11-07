@@ -59,7 +59,7 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "r_draw_rgba.h"
-#include "gl/data/gl_matrix.h"
+#include "r_triangle.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
@@ -1015,6 +1015,250 @@ static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 	}
 }
 
+static void R_DrawCubeSky(visplane_t *pl)
+{
+	int x1 = pl->left;
+	int x2 = pl->right;
+	short *uwal = (short *)pl->top;
+	short *dwal = (short *)pl->bottom;
+
+	static TriVertex cube[6 * 6] =
+	{
+		// Top
+		{ -1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
+		{ 1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
+		{ 1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.1f, 1.0f },
+
+		{ 1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.1f, 1.0f },
+		{ -1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.1f, 1.0f },
+		{ -1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
+
+		// Bottom
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.9f, 1.0f },
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f },
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
+
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
+		{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.9f, 1.0f },
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.9f, 1.0f },
+
+		// Front
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
+		{ 1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
+		{ -1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
+
+		{ -1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
+
+		// Back
+		{ -1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
+		{ 1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
+
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
+		{ -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
+		{ -1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
+
+		// Right
+		{ 1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
+		{ 1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
+
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
+		{ 1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
+
+		// Left
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
+		{ -1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
+		{ -1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
+
+		{ -1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
+		{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f }
+	};
+
+	TriMatrix objectToWorld = TriMatrix::translate((float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z) * TriMatrix::scale(1000.0f, 1000.0f, 1000.0f);
+	TriMatrix objectToClip = TriMatrix::viewToClip() * TriMatrix::worldToView() * objectToWorld;
+	//TriMatrix objectToWorld = TriMatrix::scale(1000.0f, 1000.0f, 1000.0f);
+	//TriMatrix objectToClip = TriMatrix::viewToClip() * objectToWorld;
+
+	uint32_t solid_top = frontskytex->GetSkyCapColor(false);
+	uint32_t solid_bottom = frontskytex->GetSkyCapColor(true);
+
+	solid_top = RGB32k.RGB[(RPART(solid_top) >> 3)][(GPART(solid_top) >> 3)][(BPART(solid_top) >> 3)];
+	solid_bottom = RGB32k.RGB[(RPART(solid_bottom) >> 3)][(GPART(solid_bottom) >> 3)][(BPART(solid_bottom) >> 3)];
+
+	TriangleDrawer::fill(objectToClip, cube, 6, TriangleDrawMode::Normal, false, x1, x2 - 1, uwal, dwal, solid_top);
+	TriangleDrawer::fill(objectToClip, cube + 6, 6, TriangleDrawMode::Normal, false, x1, x2 - 1, uwal, dwal, solid_bottom);
+	TriangleDrawer::draw(objectToClip, cube + 2 * 6, 4 * 6, TriangleDrawMode::Normal, false, x1, x2 - 1, uwal, dwal, frontskytex);
+}
+
+namespace
+{
+	class SkyDome
+	{
+	public:
+		SkyDome() { CreateDome(); }
+		void Render(visplane_t *pl);
+
+	private:
+		TArray<TriVertex> mVertices;
+		TArray<unsigned int> mPrimStart;
+		int mRows, mColumns;
+
+		void SkyVertex(int r, int c, bool yflip);
+		void CreateSkyHemisphere(bool zflip);
+		void CreateDome();
+		void RenderRow(int row, visplane_t *pl);
+		void RenderCapColorRow(int row, bool bottomCap, visplane_t *pl);
+
+		TriVertex SetVertex(float xx, float yy, float zz, float uu = 0, float vv = 0);
+		TriVertex SetVertexXYZ(float xx, float yy, float zz, float uu = 0, float vv = 0);
+	};
+
+	TriVertex SkyDome::SetVertex(float xx, float yy, float zz, float uu, float vv)
+	{
+		TriVertex v;
+		v.x = xx;
+		v.y = yy;
+		v.z = zz;
+		v.w = 1.0f;
+		v.varying[0] = uu;
+		v.varying[1] = vv;
+		v.varying[2] = 1.0f;
+		return v;
+	}
+
+	TriVertex SkyDome::SetVertexXYZ(float xx, float yy, float zz, float uu, float vv)
+	{
+		TriVertex v;
+		v.x = xx;
+		v.y = zz;
+		v.z = yy;
+		v.w = 1.0f;
+		v.varying[0] = uu;
+		v.varying[1] = vv;
+		v.varying[2] = 1.0f;
+		return v;
+	}
+
+	void SkyDome::SkyVertex(int r, int c, bool zflip)
+	{
+		static const FAngle maxSideAngle = 60.f;
+		static const float scale = 10000.;
+
+		FAngle topAngle = (c / (float)mColumns * 360.f);
+		FAngle sideAngle = maxSideAngle * (mRows - r) / mRows;
+		float height = sideAngle.Sin();
+		float realRadius = scale * sideAngle.Cos();
+		FVector2 pos = topAngle.ToVector(realRadius);
+		float z = (!zflip) ? scale * height : -scale * height;
+
+		float u, v;
+		//uint32_t color = r == 0 ? 0xffffff : 0xffffffff;
+
+		// And the texture coordinates.
+		if (!zflip)	// Flipped Y is for the lower hemisphere.
+		{
+			u = (-c / (float)mColumns);
+			v = (r / (float)mRows);
+		}
+		else
+		{
+			u = (-c / (float)mColumns);
+			v = 1.0f + ((mRows - r) / (float)mRows);
+		}
+
+		if (r != 4) z += 300;
+
+		// And finally the vertex.
+		TriVertex vert;
+		vert = SetVertexXYZ(-pos.X, z - 1.f, pos.Y, u * 4.0f, v + 0.5f/*, color*/);
+		mVertices.Push(vert);
+	}
+
+	void SkyDome::CreateSkyHemisphere(bool zflip)
+	{
+		int r, c;
+
+		mPrimStart.Push(mVertices.Size());
+
+		for (c = 0; c < mColumns; c++)
+		{
+			SkyVertex(1, c, zflip);
+		}
+
+		// The total number of triangles per hemisphere can be calculated
+		// as follows: rows * columns * 2 + 2 (for the top cap).
+		for (r = 0; r < mRows; r++)
+		{
+			mPrimStart.Push(mVertices.Size());
+			for (c = 0; c <= mColumns; c++)
+			{
+				SkyVertex(r + zflip, c, zflip);
+				SkyVertex(r + 1 - zflip, c, zflip);
+			}
+		}
+	}
+
+	void SkyDome::CreateDome()
+	{
+		mColumns = 128;
+		mRows = 4;
+		CreateSkyHemisphere(false);
+		CreateSkyHemisphere(true);
+		mPrimStart.Push(mVertices.Size());
+	}
+
+	void SkyDome::RenderRow(int row, visplane_t *pl)
+	{
+		int x1 = pl->left;
+		int x2 = pl->right;
+		short *uwal = (short *)pl->top;
+		short *dwal = (short *)pl->bottom;
+		TriMatrix objectToWorld = TriMatrix::translate((float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z);
+		TriMatrix objectToClip = TriMatrix::viewToClip() * TriMatrix::worldToView() * objectToWorld;
+		TriangleDrawer::draw(objectToClip, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Strip, false, x1, x2 - 1, uwal, dwal, frontskytex);
+	}
+
+	void SkyDome::RenderCapColorRow(int row, bool bottomCap, visplane_t *pl)
+	{
+		uint32_t solid = frontskytex->GetSkyCapColor(bottomCap);
+		solid = RGB32k.RGB[(RPART(solid) >> 3)][(GPART(solid) >> 3)][(BPART(solid) >> 3)];
+
+		int x1 = pl->left;
+		int x2 = pl->right;
+		short *uwal = (short *)pl->top;
+		short *dwal = (short *)pl->bottom;
+		TriMatrix objectToWorld = TriMatrix::translate((float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z);
+		TriMatrix objectToClip = TriMatrix::viewToClip() * TriMatrix::worldToView() * objectToWorld;
+		TriangleDrawer::fill(objectToClip, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Fan, bottomCap, x1, x2 - 1, uwal, dwal, solid);
+	}
+
+	void SkyDome::Render(visplane_t *pl)
+	{
+		int rc = mRows + 1;
+
+		// No need to draw this as the software renderer can't look that high anyway
+		//RenderCapColorRow(0, false, pl);
+		//RenderCapColorRow(rc, true, pl);
+
+		for (int i = 1; i <= mRows; i++)
+		{
+			RenderRow(i, pl);
+			RenderRow(rc + i, pl);
+		}
+	}
+}
+
+static void R_DrawDomeSky(visplane_t *pl)
+{
+	static SkyDome skydome;
+	skydome.Render(pl);
+}
+
 static void R_DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, double scale, double texturemid, double yrepeat)
 {
 	uint32_t height = frontskytex->GetHeight();
@@ -1210,6 +1454,16 @@ static void R_DrawSky (visplane_t *pl)
 	if (r_skymode == 2)
 	{
 		R_DrawCapSky(pl);
+		return;
+	}
+	else if (r_skymode == 3)
+	{
+		R_DrawCubeSky(pl);
+		return;
+	}
+	else if (r_skymode == 4)
+	{
+		R_DrawDomeSky(pl);
 		return;
 	}
 

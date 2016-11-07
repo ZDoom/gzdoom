@@ -1141,6 +1141,28 @@ TriMatrix TriMatrix::rotate(float angle, float x, float y, float z)
 	return m;
 }
 
+TriMatrix TriMatrix::swapYZ()
+{
+	TriMatrix m = null();
+	m.matrix[0 + 0 * 4] = 1.0f;
+	m.matrix[1 + 2 * 4] = 1.0f;
+	m.matrix[2 + 1 * 4] = -1.0f;
+	m.matrix[3 + 3 * 4] = 1.0f;
+	return m;
+}
+
+TriMatrix TriMatrix::perspective(float fovy, float aspect, float z_near, float z_far)
+{
+	float f = (float)(1.0 / tan(fovy * M_PI / 360.0));
+	TriMatrix m = null();
+	m.matrix[0 + 0 * 4] = f / aspect;
+	m.matrix[1 + 1 * 4] = f;
+	m.matrix[2 + 2 * 4] = (z_far + z_near) / (z_near - z_far);
+	m.matrix[2 + 3 * 4] = (2.0f * z_far * z_near) / (z_near - z_far);
+	m.matrix[3 + 2 * 4] = -1.0f;
+	return m;
+}
+
 TriMatrix TriMatrix::frustum(float left, float right, float bottom, float top, float near, float far)
 {
 	float a = (right + left) / (right - left);

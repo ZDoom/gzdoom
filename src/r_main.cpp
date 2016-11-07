@@ -60,8 +60,17 @@
 #include "r_data/colormaps.h"
 #include "p_maputl.h"
 #include "r_swrenderer2.h"
+#include "r_poly.h"
+#include "p_setup.h"
+#include "version.h"
 
-CVAR(Bool, r_newrenderer, 0, 0);
+CUSTOM_CVAR(Bool, r_newrenderer, 0, CVAR_NOINITCALL)
+{
+	if (self == 1 && !hasglnodes)
+	{
+		Printf("No GL BSP detected. You must enable automap texturing and then restart the map\n");
+	}
+}
 
 // MACROS ------------------------------------------------------------------
 
@@ -907,13 +916,13 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
 	PO_LinkToSubsectors();
 	InSubsector = NULL;
-	if (!r_newrenderer || !r_swtruecolor)
+	if (!r_newrenderer)
 	{
 		R_RenderBSPNode(nodes + numnodes - 1);	// The head node is the last node output.
 	}
 	else
 	{
-		RenderBsp bsp;
+		RenderPolyBsp bsp;
 		bsp.Render();
 	}
 	R_3D_ResetClip(); // reset clips (floor/ceiling)
@@ -925,7 +934,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	if (viewactive)
 	{
 		PlaneCycles.Clock();
-		if (!r_newrenderer || !r_swtruecolor)
+		if (!r_newrenderer)
 		{
 			R_DrawPlanes();
 			R_DrawPortals();

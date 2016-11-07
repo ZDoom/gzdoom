@@ -1051,6 +1051,7 @@ set( NOT_COMPILED_SOURCE_FILES
 set( FASTMATH_PCH_SOURCES
 	r_swrenderer.cpp
 	r_swrenderer2.cpp
+	r_poly.cpp
 	r_3dfloors.cpp
 	r_bsp.cpp
 	r_draw.cpp

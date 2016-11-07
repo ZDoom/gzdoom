@@ -40,7 +40,7 @@ class Serpent : Actor
 		SSPT H 10 A_Look;
 		Loop;
 	See:
-		SSPT HH 1 A_Chase("Melee", "None", CHF_NIGHTMAREFAST|CHF_NOPLAYACTIVE);
+		SSPT HH 1 A_Chase("Melee", null, CHF_NIGHTMAREFAST|CHF_NOPLAYACTIVE);
 		SSPT H 2 A_SerpentHumpDecide;
 		Loop;
 	Pain:
@@ -81,7 +81,7 @@ class Serpent : Actor
 		SSPT [ 1 A_FreezeDeathChunks;
 		Wait;
 	Walk:
-		SSPT IJI 5 A_Chase("Attack", "None", CHF_NIGHTMAREFAST);
+		SSPT IJI 5 A_Chase("Attack", null, CHF_NIGHTMAREFAST);
 		SSPT J 5 A_SerpentCheckForAttack;
 		Goto Dive;
 	Hump:

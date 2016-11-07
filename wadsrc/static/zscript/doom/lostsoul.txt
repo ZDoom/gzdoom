@@ -102,7 +102,7 @@ extend class Actor
 		A_PlaySound(AttackSound, CHAN_VOICE);
 		A_FaceTarget();
 		VelFromAngle(skullspeed);
-		Vel.Z = (target.pos.Z + target.Height/2 - Vel.Z) / DistanceBySpeed(target, speed);
+		Vel.Z = (target.pos.Z + target.Height/2 - pos.Z) / DistanceBySpeed(target, speed);
 	}
 
 	void A_BetaSkullAttack()

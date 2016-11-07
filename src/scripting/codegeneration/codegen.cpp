@@ -6164,7 +6164,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 			pass[1] = (*ArgList)[1];
 			pass[0] = new FxMinMax(pass, NAME_Max, ScriptPosition);
 			pass[1] = (*ArgList)[2];
-			func = new FxMinMax(*ArgList, NAME_Min, ScriptPosition);
+			func = new FxMinMax(pass, NAME_Min, ScriptPosition);
 			(*ArgList)[0] = (*ArgList)[1] = (*ArgList)[2] = nullptr;
 		}
 		break;

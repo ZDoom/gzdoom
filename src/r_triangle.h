@@ -46,6 +46,10 @@ struct TriMatrix
 	static TriMatrix translate(float x, float y, float z);
 	static TriMatrix scale(float x, float y, float z);
 	static TriMatrix rotate(float angle, float x, float y, float z);
+	static TriMatrix frustum(float left, float right, float bottom, float top, float near, float far);
+
+	static TriMatrix worldToView(); // Software renderer world to view space transform
+	static TriMatrix viewToClip(); // Software renderer shearing projection
 
 	TriVertex operator*(TriVertex v) const;
 	TriMatrix operator*(const TriMatrix &m) const;
@@ -63,12 +67,12 @@ enum class TriangleDrawMode
 class TriangleDrawer
 {
 public:
-	static void draw(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture);
-	static void fill(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, int solidcolor);
+	static void draw(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture);
+	static void fill(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, int solidcolor);
 
 private:
-	static TriVertex shade_vertex(const TriMatrix &objectToWorld, TriVertex v);
-	static void draw_arrays(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture, int solidcolor, void(*drawfunc)(const ScreenTriangleDrawerArgs *));
+	static TriVertex shade_vertex(const TriMatrix &objectToClip, TriVertex v);
+	static void draw_arrays(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture, int solidcolor, void(*drawfunc)(const ScreenTriangleDrawerArgs *));
 	static void draw_shaded_triangle(const TriVertex *vertices, bool ccw, ScreenTriangleDrawerArgs *args, void(*drawfunc)(const ScreenTriangleDrawerArgs *));
 	static bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2);
 	static void clipedge(const TriVertex &v1, const TriVertex &v2, TriVertex *clippedvert, int &numclipvert);

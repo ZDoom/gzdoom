@@ -36,17 +36,17 @@
 #include "r_data/colormaps.h"
 #include "r_triangle.h"
 
-void TriangleDrawer::draw(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture)
+void TriangleDrawer::draw(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture)
 {
-	draw_arrays(objectToWorld, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, texture, 0, &ScreenTriangleDrawer::draw);
+	draw_arrays(objectToClip, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, texture, 0, &ScreenTriangleDrawer::draw);
 }
 
-void TriangleDrawer::fill(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, int solidcolor)
+void TriangleDrawer::fill(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, int solidcolor)
 {
-	draw_arrays(objectToWorld, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, solidcolor, &ScreenTriangleDrawer::fill);
+	draw_arrays(objectToClip, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, solidcolor, &ScreenTriangleDrawer::fill);
 }
 
-void TriangleDrawer::draw_arrays(const TriMatrix &objectToWorld, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture, int solidcolor, void(*drawfunc)(const ScreenTriangleDrawerArgs *))
+void TriangleDrawer::draw_arrays(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture, int solidcolor, void(*drawfunc)(const ScreenTriangleDrawerArgs *))
 {
 	if (vcount < 3)
 		return;
@@ -78,28 +78,28 @@ void TriangleDrawer::draw_arrays(const TriMatrix &objectToWorld, const TriVertex
 		for (int i = 0; i < vcount / 3; i++)
 		{
 			for (int j = 0; j < 3; j++)
-				vert[j] = shade_vertex(objectToWorld, *(vinput++));
+				vert[j] = shade_vertex(objectToClip, *(vinput++));
 			draw_shaded_triangle(vert, ccw, &args, drawfunc);
 		}
 	}
 	else if (mode == TriangleDrawMode::Fan)
 	{
-		vert[0] = shade_vertex(objectToWorld, *(vinput++));
-		vert[1] = shade_vertex(objectToWorld, *(vinput++));
+		vert[0] = shade_vertex(objectToClip, *(vinput++));
+		vert[1] = shade_vertex(objectToClip, *(vinput++));
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = shade_vertex(objectToWorld, *(vinput++));
+			vert[2] = shade_vertex(objectToClip, *(vinput++));
 			draw_shaded_triangle(vert, ccw, &args, drawfunc);
 			vert[1] = vert[2];
 		}
 	}
 	else // TriangleDrawMode::Strip
 	{
-		vert[0] = shade_vertex(objectToWorld, *(vinput++));
-		vert[1] = shade_vertex(objectToWorld, *(vinput++));
+		vert[0] = shade_vertex(objectToClip, *(vinput++));
+		vert[1] = shade_vertex(objectToClip, *(vinput++));
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = shade_vertex(objectToWorld, *(vinput++));
+			vert[2] = shade_vertex(objectToClip, *(vinput++));
 			draw_shaded_triangle(vert, ccw, &args, drawfunc);
 			vert[0] = vert[1];
 			vert[1] = vert[2];
@@ -108,25 +108,10 @@ void TriangleDrawer::draw_arrays(const TriMatrix &objectToWorld, const TriVertex
 	}
 }
 
-TriVertex TriangleDrawer::shade_vertex(const TriMatrix &objectToWorld, TriVertex v)
+TriVertex TriangleDrawer::shade_vertex(const TriMatrix &objectToClip, TriVertex v)
 {
-	// Apply transform to get world coordinates:
-	v = objectToWorld * v;
-
-	// The software renderer world to clip transform:
-	double nearp = 5.0f;
-	double farp = 65536.f;
-	double tr_x = v.x - ViewPos.X;
-	double tr_y = v.y - ViewPos.Y;
-	double tr_z = v.z - ViewPos.Z;
-	double tx = tr_x * ViewSin - tr_y * ViewCos;
-	double tz = tr_x * ViewTanCos + tr_y * ViewTanSin;
-	v.x = (float)tx * 0.5f;
-	v.y = (float)tr_z * 0.5f;
-	v.z = (float)((-tz * (farp + nearp) / (nearp - farp) + (2.0f * farp * nearp) / (nearp - farp)));
-	v.w = (float)tz;
-
-	return v;
+	// Apply transform to get clip coordinates:
+	return objectToClip * v;
 }
 
 void TriangleDrawer::draw_shaded_triangle(const TriVertex *vert, bool ccw, ScreenTriangleDrawerArgs *args, void(*drawfunc)(const ScreenTriangleDrawerArgs *))
@@ -150,8 +135,8 @@ void TriangleDrawer::draw_shaded_triangle(const TriVertex *vert, bool ccw, Scree
 		v.z *= v.w;
 
 		// Apply viewport scale to get screen coordinates:
-		v.x = (float)(CenterX + v.x * 2.0f * CenterX);
-		v.y = (float)(CenterY - v.y * 2.0f * InvZtoScale);
+		v.x = viewwidth * (1.0f + v.x) * 0.5f;
+		v.y = viewheight * (1.0f - v.y) * 0.5f;
 	}
 
 	// Draw screen triangles
@@ -715,6 +700,45 @@ TriMatrix TriMatrix::rotate(float angle, float x, float y, float z)
 	m.matrix[2 + 2 * 4] = (z*z*(1.0f - c) + c);
 	m.matrix[3 + 3 * 4] = 1.0f;
 	return m;
+}
+
+TriMatrix TriMatrix::frustum(float left, float right, float bottom, float top, float near, float far)
+{
+	float a = (right + left) / (right - left);
+	float b = (top + bottom) / (top - bottom);
+	float c = -(far + near) / (far - near);
+	float d = -(2.0f * far) / (far - near);
+	TriMatrix m = null();
+	m.matrix[0 + 0 * 4] = 2.0f * near / (right - left);
+	m.matrix[1 + 1 * 4] = 2.0f * near / (top - bottom);
+	m.matrix[0 + 2 * 4] = a;
+	m.matrix[1 + 2 * 4] = b;
+	m.matrix[2 + 2 * 4] = c;
+	m.matrix[2 + 3 * 4] = d;
+	m.matrix[3 + 2 * 4] = -1;
+	return m;
+}
+
+TriMatrix TriMatrix::worldToView()
+{
+	TriMatrix m = null();
+	m.matrix[0 + 0 * 4] = (float)ViewSin;
+	m.matrix[0 + 1 * 4] = (float)-ViewCos;
+	m.matrix[1 + 2 * 4] = 1.0f;
+	m.matrix[2 + 0 * 4] = (float)-ViewCos;
+	m.matrix[2 + 1 * 4] = (float)-ViewSin;
+	m.matrix[3 + 3 * 4] = 1.0f;
+	return m * translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);
+}
+
+TriMatrix TriMatrix::viewToClip()
+{
+	float near = 5.0f;
+	float far = 65536.0f;
+	float width = (float)(FocalTangent * near);
+	float top = (float)(CenterY / InvZtoScale * near);
+	float bottom = (float)(top - viewheight / InvZtoScale * near);
+	return frustum(-width, width, bottom, top, near, far);
 }
 
 TriMatrix TriMatrix::operator*(const TriMatrix &mult) const

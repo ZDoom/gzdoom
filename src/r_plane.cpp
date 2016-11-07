@@ -966,6 +966,9 @@ static void R_DrawCubeSky(visplane_t *pl)
 	};
 
 	TriMatrix objectToWorld = TriMatrix::translate((float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z) * TriMatrix::scale(1000.0f, 1000.0f, 1000.0f);
+	TriMatrix objectToClip = TriMatrix::viewToClip() * TriMatrix::worldToView() * objectToWorld;
+	//TriMatrix objectToWorld = TriMatrix::scale(1000.0f, 1000.0f, 1000.0f);
+	//TriMatrix objectToClip = TriMatrix::viewToClip() * objectToWorld;
 
 	uint32_t solid_top = frontskytex->GetSkyCapColor(false);
 	uint32_t solid_bottom = frontskytex->GetSkyCapColor(true);
@@ -973,9 +976,9 @@ static void R_DrawCubeSky(visplane_t *pl)
 	solid_top = RGB32k.RGB[(RPART(solid_top) >> 3)][(GPART(solid_top) >> 3)][(BPART(solid_top) >> 3)];
 	solid_bottom = RGB32k.RGB[(RPART(solid_bottom) >> 3)][(GPART(solid_bottom) >> 3)][(BPART(solid_bottom) >> 3)];
 
-	TriangleDrawer::fill(objectToWorld, cube, 6, TriangleDrawMode::Normal, false, x1, x2 - 1, uwal, dwal, solid_top);
-	TriangleDrawer::fill(objectToWorld, cube + 6, 6, TriangleDrawMode::Normal, false, x1, x2 - 1, uwal, dwal, solid_bottom);
-	TriangleDrawer::draw(objectToWorld, cube + 2 * 6, 4 * 6, TriangleDrawMode::Normal, false, x1, x2 - 1, uwal, dwal, frontskytex);
+	TriangleDrawer::fill(objectToClip, cube, 6, TriangleDrawMode::Normal, false, x1, x2 - 1, uwal, dwal, solid_top);
+	TriangleDrawer::fill(objectToClip, cube + 6, 6, TriangleDrawMode::Normal, false, x1, x2 - 1, uwal, dwal, solid_bottom);
+	TriangleDrawer::draw(objectToClip, cube + 2 * 6, 4 * 6, TriangleDrawMode::Normal, false, x1, x2 - 1, uwal, dwal, frontskytex);
 }
 
 namespace
@@ -1102,7 +1105,8 @@ namespace
 		short *uwal = (short *)pl->top;
 		short *dwal = (short *)pl->bottom;
 		TriMatrix objectToWorld = TriMatrix::translate((float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z);
-		TriangleDrawer::draw(objectToWorld, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Strip, false, x1, x2 - 1, uwal, dwal, frontskytex);
+		TriMatrix objectToClip = TriMatrix::viewToClip() * TriMatrix::worldToView() * objectToWorld;
+		TriangleDrawer::draw(objectToClip, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Strip, false, x1, x2 - 1, uwal, dwal, frontskytex);
 	}
 
 	void SkyDome::RenderCapColorRow(int row, bool bottomCap, visplane_t *pl)
@@ -1115,7 +1119,8 @@ namespace
 		short *uwal = (short *)pl->top;
 		short *dwal = (short *)pl->bottom;
 		TriMatrix objectToWorld = TriMatrix::translate((float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z);
-		TriangleDrawer::fill(objectToWorld, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Fan, bottomCap, x1, x2 - 1, uwal, dwal, solid);
+		TriMatrix objectToClip = TriMatrix::viewToClip() * TriMatrix::worldToView() * objectToWorld;
+		TriangleDrawer::fill(objectToClip, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Fan, bottomCap, x1, x2 - 1, uwal, dwal, solid);
 	}
 
 	void SkyDome::Render(visplane_t *pl)

@@ -54,6 +54,7 @@ class Actor : Thinker native
 	}
 
 	native static readonly<Actor> GetDefaultByType(class<Actor> cls);
+	native static float deltaangle(float ang1, float ang2);
 	native void SetDamage(int dmg);
 	native static bool isDehState(state st);
 	native void SetOrigin(vector3 newpos, bool moving);
@@ -62,6 +63,8 @@ class Actor : Thinker native
 	native static Actor Spawn(class<Actor> type, vector3 pos = (0,0,0), int replace = NO_REPLACE);
 	native Actor SpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
 	native Actor OldSpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
+	native Actor SpawnPuff(class<Actor> pufftype, vector3 pos, float hitdir, float particledir, int updown, int flags = 0, Actor vict = null);
+	
 	native void TraceBleed(int damage, Actor missile);
 	native bool CheckMeleeRange();
 	native int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags = 0, double angle = 0);
@@ -72,6 +75,10 @@ class Actor : Thinker native
 	native bool SetState(state st, bool nofunction = false);
 	native void LinkToWorld();
 	native void UnlinkFromWorld();
+	native bool CanSeek(Actor target);
+	native double AngleTo(Actor target, bool absolute = false);
+	native void AddZ(float zadd);
+	native vector3 Vec3Offset(float x, float y, float z, bool absolute = false);
 	native vector3 Vec3Angle(float length, float angle, float z = 0, bool absolute = false);
 	native vector3 Vec2OffsetZ(float x, float y, float atz, bool absolute = false);
 	native void VelFromAngle(float speed = 0, float angle = 0);
@@ -238,10 +245,6 @@ class Actor : Thinker native
 	native void A_Chase(state melee = null, state missile = null, int flags = 0);
 	native void A_Scream();
 	native void A_VileChase();
-	native void A_Tracer();
-	native void A_SkelWhoosh();
-	native void A_SkelFist();
-	native void A_SkelMissile();
 	native void A_BossDeath();
 	native void A_Detonate();
 	native bool A_CallSpecial(int special, int arg1=0, int arg2=0, int arg3=0, int arg4=0, int arg5=0);

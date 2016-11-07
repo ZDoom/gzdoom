@@ -1871,6 +1871,13 @@ bool AActor::CanSeek(AActor *target) const
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CanSeek)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(target, AActor);
+	ACTION_RETURN_BOOL(self->CanSeek(target));
+}
+
 //----------------------------------------------------------------------------
 //
 // FUNC P_SeekerMissile
@@ -5424,7 +5431,20 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos1
 	return puff;
 }
 
-
+DEFINE_ACTION_FUNCTION(AActor, SpawnPuff)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(pufftype, AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_ANGLE(hitdir);
+	PARAM_ANGLE(particledir);
+	PARAM_INT(updown);
+	PARAM_INT_DEF(flags);
+	PARAM_OBJECT_DEF(victim, AActor);
+	ACTION_RETURN_OBJECT(P_SpawnPuff(self, pufftype, DVector3(x, y, z), hitdir, particledir, updown, flags, victim));
+}
 
 //---------------------------------------------------------------------------
 //
@@ -6817,6 +6837,22 @@ void AActor::SetTranslation(const char *trname)
 	// silently ignore if the name does not exist, this would create some insane message spam otherwise.
 }
 
+DEFINE_ACTION_FUNCTION(AActor, deltaangle)	// should this be global?
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(a1);
+	PARAM_FLOAT(a2);
+	ACTION_RETURN_FLOAT(deltaangle(DAngle(a1), DAngle(a2)).Degrees);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, AddZ)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(addz);
+	self->AddZ(addz);
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(AActor, SetDamage)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -6856,6 +6892,14 @@ DEFINE_ACTION_FUNCTION(AActor, VelFromAngle)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, AngleTo)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(targ, AActor);
+	PARAM_BOOL_DEF(absolute);
+	ACTION_RETURN_FLOAT(self->AngleTo(targ, absolute).Degrees);
+}
+
 DEFINE_ACTION_FUNCTION(AActor, DistanceBySpeed)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -6892,6 +6936,16 @@ DEFINE_ACTION_FUNCTION(AActor, Vec2OffsetZ)
 	PARAM_FLOAT(z);
 	PARAM_BOOL_DEF(absolute);
 	ACTION_RETURN_VEC3(self->Vec2OffsetZ(x, y, z, absolute));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Vec3Offset)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_BOOL_DEF(absolute);
+	ACTION_RETURN_VEC3(self->Vec3Offset(x, y, z, absolute));
 }
 
 //----------------------------------------------------------------------------

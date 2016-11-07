@@ -851,7 +851,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	g_doom/a_bossbrain.cpp
 	g_doom/a_doomweaps.cpp
 	g_doom/a_painelemental.cpp
-	g_doom/a_revenant.cpp
 	g_doom/a_scriptedmarine.cpp
 	g_heretic/a_chicken.cpp
 	g_heretic/a_dsparil.cpp

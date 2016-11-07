@@ -25,6 +25,5 @@
 #include "a_bossbrain.cpp"
 #include "a_doomweaps.cpp"
 #include "a_painelemental.cpp"
-#include "a_revenant.cpp"
 #include "a_scriptedmarine.cpp"
 

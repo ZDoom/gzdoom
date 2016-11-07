@@ -199,9 +199,6 @@ static void InitTokenMap()
 	TOKENDEF (TK_CanRaise,		ZCC_CANRAISE);
 	TOKENDEF (TK_Light,			ZCC_LIGHT);
 	TOKENDEF (TK_Extend,		ZCC_EXTEND);
-
-	ZCC_InitOperators();
-	ZCC_InitConversions();
 }
 #undef TOKENDEF
 #undef TOKENDEF2
@@ -293,11 +290,6 @@ parse_end:
 
 static void DoParse(int lumpnum)
 {
-	if (TokenMap.CountUsed() == 0)
-	{
-		InitTokenMap();
-	}
-
 	FScanner sc;
 	void *parser;
 	ZCCToken value;
@@ -400,6 +392,13 @@ static void DoParse(int lumpnum)
 
 void ParseScripts()
 {
+	if (TokenMap.CountUsed() == 0)
+	{
+		InitTokenMap();
+	}
+	ZCC_InitOperators();
+	ZCC_InitConversions();
+
 	int lump, lastlump = 0;
 	FScriptPosition::ResetErrorCounter();
 	while ((lump = Wads.FindLump("ZSCRIPT", &lastlump)) != -1)

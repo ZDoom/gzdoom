@@ -774,5 +774,5 @@ void FFunctionBuildList::Build()
 		fclose(dump);
 	}
 	FScriptPosition::StrictErrors = false;
-
+	mItems.Clear();
 }

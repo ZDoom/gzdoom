@@ -51,8 +51,6 @@
 #include "codegeneration/codegen.h"
 #include "vmbuilder.h"
 
-#define DEFINING_CONST ((PSymbolConst *)(void *)1)
-
 //==========================================================================
 //
 // ZCCCompiler :: ProcessClass
@@ -714,10 +712,8 @@ bool ZCCCompiler::CompileConstant(ZCC_ConstantDef *def, PSymbolTable *sym)
 {
 	assert(def->Symbol == nullptr);
 
-	def->Symbol = DEFINING_CONST;	// avoid recursion
 	ZCC_Expression *val = Simplify(def->Value, sym, true);
 	def->Value = val;
-	if (def->Symbol == DEFINING_CONST) def->Symbol = nullptr;
 	return (val->NodeType == AST_ExprConstant);
 }
 

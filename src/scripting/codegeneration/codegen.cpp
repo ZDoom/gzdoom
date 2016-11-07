@@ -213,18 +213,17 @@ void ExpEmit::Reuse(VMFunctionBuilder *build)
 // it and install it a local symbol table.
 //
 //==========================================================================
-static PSymbolTable Builtins;
 
 static PSymbol *FindBuiltinFunction(FName funcname, VMNativeFunction::NativeCallType func)
 {
-	PSymbol *sym = Builtins.FindSymbol(funcname, false);
+	PSymbol *sym = GlobalSymbols.FindSymbol(funcname, false);
 	if (sym == nullptr)
 	{
 		PSymbolVMFunction *symfunc = new PSymbolVMFunction(funcname);
 		VMNativeFunction *calldec = new VMNativeFunction(func, funcname);
 		symfunc->Function = calldec;
 		sym = symfunc;
-		Builtins.AddSymbol(sym);
+		GlobalSymbols.AddSymbol(sym);
 	}
 	return sym;
 }

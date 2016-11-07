@@ -1897,7 +1897,7 @@ void ZCCCompiler::InitDefaults()
 				bag.Info = ti;
 				bag.DropItemSet = false;
 				bag.StateSet = false;
-				bag.fromZScript = true;
+				bag.fromDecorate = false;
 				bag.CurrentState = 0;
 				bag.Lumpnum = c->cls->SourceLump;
 				bag.DropItemList = nullptr;

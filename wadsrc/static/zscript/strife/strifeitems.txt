@@ -198,7 +198,7 @@ class ShadowArmor : PowerupGiver
 		RenderStyle "Translucent";
 		Tag "$TAG_SHADOWARMOR";
 		Inventory.MaxAmount 2;
-		Powerup.Type "Shadow";
+		Powerup.Type "PowerShadow";
 		Inventory.Icon "I_SHD1";
 		Inventory.PickupSound "misc/i_pkup";
 		Inventory.PickupMessage "$TXT_SHADOWARMOR";
@@ -222,7 +222,7 @@ class EnvironmentalSuit : PowerupGiver
 		+INVENTORY.INVBAR
 		-INVENTORY.FANCYPICKUPSOUND
 		Inventory.MaxAmount 5;
-		Powerup.Type "Mask";
+		Powerup.Type "PowerMask";
 		Tag "$TAG_ENVSUIT";
 		Inventory.Icon "I_MASK";
 		Inventory.PickupSound "misc/i_pkup";
@@ -353,7 +353,7 @@ class Targeter : PowerupGiver
 		+INVENTORY.INVBAR
 		-INVENTORY.FANCYPICKUPSOUND
 		Tag "$TAG_TARGETER";
-		Powerup.Type "Targeter";
+		Powerup.Type "PowerTargeter";
 		Inventory.MaxAmount 5;
 		Inventory.Icon "I_TARG";
 		Inventory.PickupSound "misc/i_pkup";
@@ -478,7 +478,7 @@ class Scanner : PowerupGiver native
 		Inventory.MaxAmount 1;
 		Tag "$TAG_SCANNER";
 		Inventory.Icon "I_PMUP";
-		Powerup.Type "Scanner";
+		Powerup.Type "PowerScanner";
 		Inventory.PickupSound "misc/i_pkup";
 		Inventory.PickupMessage "$TXT_SCANNER";
 	}

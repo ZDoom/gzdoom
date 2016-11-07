@@ -1064,6 +1064,7 @@ static void ParseActor(FScanner &sc)
 	PClassActor *info = NULL;
 	Baggage bag;
 
+	bag.fromDecorate = true;
 	info = ParseActorHeader(sc, &bag);
 	sc.MustGetToken('{');
 	while (sc.MustGetAnyToken(), sc.TokenType != '}')

@@ -158,6 +158,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 	type = DecoDerivedClass(FScriptPosition(sc), parent, typeName);
 	ResetBaggage(&bag, parent);
 	bag.Info = type;
+	bag.fromDecorate = true;
 #ifdef _DEBUG
 	bag.ClassName = type->TypeName;
 #endif

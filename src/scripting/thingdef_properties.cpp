@@ -2422,11 +2422,18 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 	// Yuck! What was I thinking when I decided to prepend "Power" to the name? 
 	// Now it's too late to change it...
 	PClassActor *cls = PClass::FindActor(str);
-	if (cls == NULL || (!cls->IsDescendantOf(RUNTIME_CLASS(APowerup)) && !bag.fromZScript))
+	if (cls == nullptr || !cls->IsDescendantOf(RUNTIME_CLASS(APowerup)))
 	{
-		FString st;
-		st.Format("%s%s", strnicmp(str, "power", 5)? "Power" : "", str);
-		cls = FindClassTentativePowerup(st);
+		if (bag.fromDecorate)
+		{
+			FString st;
+			st.Format("%s%s", strnicmp(str, "power", 5) ? "Power" : "", str);
+			cls = FindClassTentativePowerup(st);
+		}
+		else
+		{
+			I_Error("Unknown powerup type %s", str);
+		}
 	}
 
 	defaults->PowerupType = cls;

@@ -55,7 +55,7 @@ Class ArtiTomeOfPower : PowerupGiver native
 		+FLOATBOB
 		Inventory.PickupFlash "PickupFlash";
 		Inventory.Icon "ARTIPWBK";
-		Powerup.Type "Weaponlevel2";
+		Powerup.Type "PowerWeaponlevel2";
 		Inventory.PickupMessage "$TXT_ARTITOMEOFPOWER";
 		Tag "$TAG_ARTITOMEOFPOWER";
 	}

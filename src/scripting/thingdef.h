@@ -117,7 +117,7 @@ struct Baggage
 	PClassActor *Info;
 	bool DropItemSet;
 	bool StateSet;
-	bool fromZScript;
+	bool fromDecorate;
 	int CurrentState;
 	int Lumpnum;
 	FStateDefinitions statedef;
@@ -132,6 +132,7 @@ inline void ResetBaggage (Baggage *bag, PClassActor *stateclass)
 	bag->DropItemList = NULL;
 	bag->DropItemSet = false;
 	bag->CurrentState = 0;
+	bag->fromDecorate = true;
 	bag->StateSet = false;
 	bag->statedef.MakeStateDefines(stateclass);
 }

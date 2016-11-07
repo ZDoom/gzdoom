@@ -25,6 +25,7 @@
 #define __R_TRIANGLE__
 
 #include "r_draw.h"
+#include "r_thread.h"
 
 class FTexture;
 struct ScreenTriangleDrawerArgs;
@@ -72,10 +73,14 @@ public:
 
 private:
 	static TriVertex shade_vertex(const TriMatrix &objectToClip, TriVertex v);
-	static void draw_arrays(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, FTexture *texture, int solidcolor, void(*drawfunc)(const ScreenTriangleDrawerArgs *));
-	static void draw_shaded_triangle(const TriVertex *vertices, bool ccw, ScreenTriangleDrawerArgs *args, void(*drawfunc)(const ScreenTriangleDrawerArgs *));
+	static void draw_arrays(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, DrawerThread *thread, void(*drawfunc)(const ScreenTriangleDrawerArgs *, DrawerThread *));
+	static void draw_shaded_triangle(const TriVertex *vertices, bool ccw, ScreenTriangleDrawerArgs *args, DrawerThread *thread, void(*drawfunc)(const ScreenTriangleDrawerArgs *, DrawerThread *));
 	static bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2);
 	static void clipedge(const TriVertex &v1, const TriVertex &v2, TriVertex *clippedvert, int &numclipvert);
+
+	static void queue_arrays(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor);
+
+	friend class DrawTrianglesCommand;
 };
 
 struct ScreenTriangleDrawerArgs
@@ -98,12 +103,38 @@ struct ScreenTriangleDrawerArgs
 class ScreenTriangleDrawer
 {
 public:
-	static void draw(const ScreenTriangleDrawerArgs *args);
-	static void fill(const ScreenTriangleDrawerArgs *args);
+	static void draw(const ScreenTriangleDrawerArgs *args, DrawerThread *thread);
+	static void fill(const ScreenTriangleDrawerArgs *args, DrawerThread *thread);
+
+	static void draw32(const ScreenTriangleDrawerArgs *args, DrawerThread *thread);
+	static void fill32(const ScreenTriangleDrawerArgs *args, DrawerThread *thread);
 
 private:
 	static float gradx(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2);
 	static float grady(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2);
+};
+
+class DrawTrianglesCommand : public DrawerCommand
+{
+public:
+	DrawTrianglesCommand(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *clipdata, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor);
+
+	void Execute(DrawerThread *thread) override;
+	FString DebugInfo() override;
+
+private:
+	TriMatrix objectToClip;
+	const TriVertex *vinput;
+	int vcount;
+	TriangleDrawMode mode;
+	bool ccw;
+	int clipleft;
+	int clipright;
+	const short *clipdata;
+	const uint8_t *texturePixels;
+	int textureWidth;
+	int textureHeight;
+	int solidcolor;
 };
 
 #endif

@@ -8001,7 +8001,7 @@ int BuiltinNameToClass(VMFrameStack *stack, VMValue *param, TArray<VMValue> &def
 
 	FName clsname = ENamedName(param[0].i);
 	const PClass *cls = PClass::FindClass(clsname);
-	const PClass *desttype = reinterpret_cast<PClass *>(param[0].a);
+	const PClass *desttype = reinterpret_cast<PClass *>(param[1].a);
 
 	if (!cls->IsDescendantOf(desttype))
 	{

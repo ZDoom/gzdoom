@@ -66,7 +66,6 @@
 #endif
 
 EXTERN_CVAR(Int, r_skymode)
-CVAR(Bool, r_cubesky, false, 0)
 
 //EXTERN_CVAR (Int, tx)
 //EXTERN_CVAR (Int, ty)
@@ -1016,77 +1015,6 @@ static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 	}
 }
 
-static void R_DrawCubeSky(visplane_t *pl)
-{
-	int x1 = pl->left;
-	int x2 = pl->right;
-	short *uwal = (short *)pl->top;
-	short *dwal = (short *)pl->bottom;
-
-	static TriVertex cube[6 * 6] =
-	{
-		// Top
-		{ -1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
-		{  1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
-		{  1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.1f, 1.0f },
-
-		{  1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.1f, 1.0f },
-		{ -1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.1f, 1.0f },
-		{ -1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
-
-		// Bottom
-		{  1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.9f, 1.0f },
-		{  1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f },
-		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
-
-		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
-		{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.9f, 1.0f },
-		{  1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.9f, 1.0f },
-
-		// Front
-		{  1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
-		{  1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
-		{ -1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
-
-		{ -1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
-		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
-		{  1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
-
-		// Back
-		{ -1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
-		{  1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
-		{  1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
-
-		{  1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
-		{ -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
-		{ -1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
-
-		// Right
-		{  1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
-		{  1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
-		{  1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
-
-		{  1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
-		{  1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
-		{  1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
-
-		// Left
-		{ -1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
-		{ -1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
-		{ -1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
-
-		{ -1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
-		{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
-		{ -1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f }
-	};
-
-	VSMatrix transform(0);
-	transform.translate((float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z);
-	transform.scale(1000.0f, 1000.0f, 1000.0f);
-
-	R_DrawTriangles(transform, cube, 6 * 6, x1, x2 - 1, uwal, dwal, frontskytex);
-}
-
 static void R_DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, double scale, double texturemid, double yrepeat)
 {
 	uint32_t height = frontskytex->GetHeight();
@@ -1279,12 +1207,7 @@ static void R_DrawCapSky(visplane_t *pl)
 
 static void R_DrawSky (visplane_t *pl)
 {
-	if (r_swtruecolor && r_cubesky)
-	{
-		R_DrawCubeSky(pl);
-		return;
-	}
-	else if (r_skymode == 2)
+	if (r_skymode == 2)
 	{
 		R_DrawCapSky(pl);
 		return;

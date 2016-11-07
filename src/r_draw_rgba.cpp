@@ -1260,6 +1260,7 @@ void ApplySpecialColormapRGBACommand::Execute(DrawerThread *thread)
 
 /////////////////////////////////////////////////////////////////////////////
 
+#if 0
 class DrawTrianglesCommand : public DrawerCommand
 {
 public:
@@ -1705,6 +1706,7 @@ void R_DrawTriangles(const VSMatrix &transform, const TriVertex *vertices, int c
 
 	DrawerCommandQueue::QueueCommand<DrawTrianglesCommand>(transform, vertices, count, clipleft, clipright, clipdata, texture->GetPixelsBgra(), texture->GetWidth(), texture->GetHeight());
 }
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 

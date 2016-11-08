@@ -127,7 +127,7 @@ TriVertex PolyTriangleDrawer::shade_vertex(const TriUniforms &uniforms, TriVerte
 void PolyTriangleDrawer::draw_shaded_triangle(const TriVertex *vert, bool ccw, ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, DrawerThread *))
 {
 	// Cull, clip and generate additional vertices as needed
-	TriVertex clippedvert[6];
+	TriVertex clippedvert[12];
 	int numclipvert;
 	clipedge(vert, clippedvert, numclipvert);
 
@@ -196,7 +196,7 @@ void PolyTriangleDrawer::clipedge(const TriVertex *verts, TriVertex *clippedvert
 	// -v.w <= v.z <= v.w
 	
 	// use barycentric weights while clipping vertices
-	float weights[6 * 3 * 2];
+	float weights[12 * 3 * 2];
 	for (int i = 0; i < 3; i++)
 	{
 		weights[i * 3 + 0] = 0.0f;
@@ -220,7 +220,7 @@ void PolyTriangleDrawer::clipedge(const TriVertex *verts, TriVertex *clippedvert
 	
 	// Clip against each halfspace
 	float *input = weights;
-	float *output = weights + 6 * 3;
+	float *output = weights + 12 * 3;
 	int inputverts = 3;
 	int outputverts = 0;
 	for (int p = 0; p < 6; p++)

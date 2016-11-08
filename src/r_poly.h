@@ -62,8 +62,8 @@ private:
 	void AddLine(seg_t *line, sector_t *frontsector);
 	TriVertex PlaneVertex(vertex_t *v1, sector_t *sector, const secplane_t &plane);
 
-	void AddSprite(AActor *thing);
-	void AddWallSprite(AActor *thing);
+	void AddSprite(AActor *thing, subsector_t *sub);
+	void AddWallSprite(AActor *thing, subsector_t *sub);
 	bool IsThingCulled(AActor *thing);
 	visstyle_t GetSpriteVisStyle(AActor *thing, double z);
 	FTexture *GetSpriteTexture(AActor *thing, /*out*/ bool &flipX);

@@ -152,9 +152,9 @@ void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 	for (AActor *thing = sub->sector->thinglist; thing != nullptr; thing = thing->snext)
 	{
 		if ((thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
-			AddWallSprite(thing);
+			AddWallSprite(thing, sub);
 		else
-			AddSprite(thing);
+			AddSprite(thing, sub);
 	}
 }
 
@@ -273,7 +273,7 @@ bool RenderPolyBsp::IsThingCulled(AActor *thing)
 	return false;
 }
 
-void RenderPolyBsp::AddSprite(AActor *thing)
+void RenderPolyBsp::AddSprite(AActor *thing, subsector_t *sub)
 {
 	if (IsThingCulled(thing))
 		return;
@@ -307,6 +307,20 @@ void RenderPolyBsp::AddSprite(AActor *thing)
 		{ pos.X - ViewSin * spriteHalfWidth, pos.Y + ViewCos * spriteHalfWidth },
 		{ pos.X + ViewSin * spriteHalfWidth, pos.Y - ViewCos * spriteHalfWidth }
 	};
+
+	// Is this sprite inside? (To do: clip the points)
+	for (int i = 0; i < 2; i++)
+	{
+		for (uint32_t i = 0; i < sub->numlines; i++)
+		{
+			seg_t *line = &sub->firstline[i];
+			double nx = line->v1->fY() - line->v2->fY();
+			double ny = line->v2->fX() - line->v1->fX();
+			double d = -(line->v1->fX() * nx + line->v1->fY() * ny);
+			if (pos.X * nx + pos.Y * ny + d > 0.0)
+				return;
+		}
+	}
 
 	//double depth = 1.0;
 	//visstyle_t visstyle = GetSpriteVisStyle(thing, depth);
@@ -347,7 +361,7 @@ void RenderPolyBsp::AddSprite(AActor *thing)
 	TriangleDrawer::draw(worldToClip, vertices, 4, TriangleDrawMode::Fan, false, 0, viewwidth, cliptop, clipbottom, tex);
 }
 
-void RenderPolyBsp::AddWallSprite(AActor *thing)
+void RenderPolyBsp::AddWallSprite(AActor *thing, subsector_t *sub)
 {
 	if (IsThingCulled(thing))
 		return;

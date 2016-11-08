@@ -250,9 +250,12 @@ void FSoftwareRenderer::DrawRemainingPlayerSprites()
 #define MAX_DN_ANGLE	56		// Max looking down angle
 #define MAX_UP_ANGLE	32		// Max looking up angle
 
+EXTERN_CVAR(Bool, r_newrenderer)	// [SP] dpJudas's new renderer
+EXTERN_CVAR(Float, maxviewpitch)	// [SP] CVAR from GZDoom
+
 int FSoftwareRenderer::GetMaxViewPitch(bool down)
 {
-	return down ? MAX_DN_ANGLE : MAX_UP_ANGLE;
+	return (r_newrenderer) ? int(maxviewpitch) : (down ? MAX_DN_ANGLE : MAX_UP_ANGLE);
 }
 
 //==========================================================================

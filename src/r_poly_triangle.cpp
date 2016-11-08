@@ -638,6 +638,10 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 	int textureHeight = args->textureHeight;
 	uint32_t light = args->uniforms->light;
 
+#if !defined(NO_SSE)
+	__m128i mlight = _mm_set1_epi16(light);
+#endif
+
 	// 28.4 fixed-point coordinates
 	const int Y1 = (int)round(16.0f * v1.y);
 	const int Y2 = (int)round(16.0f * v2.y);
@@ -781,6 +785,7 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 						varyingStep[i] = (uint32_t)(step * 0x100000000LL);
 					}
 
+#if NO_SSE
 					for (int ix = x; ix < x + q; ix++)
 					{
 						uint32_t ufrac = varying[0];
@@ -802,6 +807,34 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 						for (int i = 0; i < TriVertex::NumVarying; i++)
 							varying[i] += varyingStep[i];
 					}
+#else
+					for (int sse = 0; sse < q / 4; sse++)
+					{
+						uint32_t fg[4];
+						for (int ix = 0; ix < 4; ix++)
+						{
+							uint32_t ufrac = varying[0];
+							uint32_t vfrac = varying[1];
+							uint32_t upos = ((ufrac >> 16) * textureWidth) >> 16;
+							uint32_t vpos = ((vfrac >> 16) * textureHeight) >> 16;
+							uint32_t uvoffset = upos * textureHeight + vpos;
+							fg[ix] = texturePixels[uvoffset];
+							for (int i = 0; i < TriVertex::NumVarying; i++)
+								varying[i] += varyingStep[i];
+						}
+
+						__m128i mfg = _mm_loadu_si128((const __m128i*)fg);
+						__m128i mfg0 = _mm_unpacklo_epi8(mfg, _mm_setzero_si128());
+						__m128i mfg1 = _mm_unpackhi_epi8(mfg, _mm_setzero_si128());
+						__m128i mout0 = _mm_srli_epi16(_mm_mullo_epi16(mfg0, mlight), 8);
+						__m128i mout1 = _mm_srli_epi16(_mm_mullo_epi16(mfg1, mlight), 8);
+						__m128i mout = _mm_packus_epi16(mout0, mout1);
+						__m128i mmask0 = _mm_shufflehi_epi16(_mm_shufflelo_epi16(mfg0, _MM_SHUFFLE(3, 3, 3, 3)), _MM_SHUFFLE(3, 3, 3, 3));
+						__m128i mmask1 = _mm_shufflehi_epi16(_mm_shufflelo_epi16(mfg1, _MM_SHUFFLE(3, 3, 3, 3)), _MM_SHUFFLE(3, 3, 3, 3));
+						__m128i mmask = _mm_cmplt_epi8(_mm_packus_epi16(mmask0, mmask1), _mm_setzero_si128());
+						_mm_maskmoveu_si128(mout, mmask, (char*)(&buffer[x + sse * 4]));
+					}
+#endif
 
 					buffer += pitch;
 				}

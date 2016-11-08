@@ -821,13 +821,20 @@ void ScreenTriangleDrawer::draw32(const ScreenTriangleDrawerArgs *args, DrawerTh
 						{
 							uint32_t ufrac = (uint32_t)((varying[0] - floor(varying[0])) * 0x100000000LL);
 							uint32_t vfrac = (uint32_t)((varying[1] - floor(varying[1])) * 0x100000000LL);
-							//uint32_t light = (uint32_t)clamp(varying[2] * 255.0f + 0.5f, 0.0f, 255.0f);
+							uint32_t light = (uint32_t)clamp(varying[2] * 256.0f + 0.5f, 0.0f, 256.0f);
 
 							uint32_t upos = ((ufrac >> 16) * textureWidth) >> 16;
 							uint32_t vpos = ((vfrac >> 16) * textureHeight) >> 16;
 							uint32_t uvoffset = upos * textureHeight + vpos;
 
-							buffer[ix] = texturePixels[uvoffset];
+							uint32_t fg = texturePixels[uvoffset];
+							uint32_t fg_red = (RPART(fg) * light) >> 8;
+							uint32_t fg_green = (GPART(fg) * light) >> 8;
+							uint32_t fg_blue = (BPART(fg) * light) >> 8;
+							uint32_t fg_alpha = APART(fg);
+
+							if (fg_alpha > 127)
+								buffer[ix] = 0xff000000 | (fg_red << 16) | (fg_green << 8) | fg_blue;
 
 							for (int i = 0; i < TriVertex::NumVarying; i++)
 								varying[i] += varyingStep[i];
@@ -866,13 +873,20 @@ void ScreenTriangleDrawer::draw32(const ScreenTriangleDrawerArgs *args, DrawerTh
 							{
 								uint32_t ufrac = (uint32_t)((varying[0] - floor(varying[0])) * 0x100000000LL);
 								uint32_t vfrac = (uint32_t)((varying[1] - floor(varying[1])) * 0x100000000LL);
-								//uint32_t light = (uint32_t)clamp(varying[2] * 255.0f + 0.5f, 0.0f, 255.0f);
+								uint32_t light = (uint32_t)clamp(varying[2] * 256.0f + 0.5f, 0.0f, 256.0f);
 
 								uint32_t upos = ((ufrac >> 16) * textureWidth) >> 16;
 								uint32_t vpos = ((vfrac >> 16) * textureHeight) >> 16;
 								uint32_t uvoffset = upos * textureHeight + vpos;
 
-								buffer[ix] = texturePixels[uvoffset];
+								uint32_t fg = texturePixels[uvoffset];
+								uint32_t fg_red = (RPART(fg) * light) >> 8;
+								uint32_t fg_green = (GPART(fg) * light) >> 8;
+								uint32_t fg_blue = (BPART(fg) * light) >> 8;
+								uint32_t fg_alpha = APART(fg);
+
+								if (fg_alpha > 127)
+									buffer[ix] = 0xff000000 | (fg_red << 16) | (fg_green << 8) | fg_blue;
 							}
 
 							for (int i = 0; i < TriVertex::NumVarying; i++)

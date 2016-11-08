@@ -60,6 +60,7 @@ private:
 	void RenderNode(void *node);
 	void RenderSubsector(subsector_t *sub);
 	void AddLine(seg_t *line, sector_t *frontsector);
+	TriVertex PlaneVertex(vertex_t *v1, sector_t *sector, const secplane_t &plane);
 
 	void RenderPlayerSprites();
 	void RenderPlayerSprite(DPSprite *sprite, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac);
@@ -111,8 +112,7 @@ public:
 
 private:
 	FTexture *GetTexture();
-	int GetShade();
-	//float GetLight(short x);
+	int GetLightLevel();
 };
 
 // Texture coordinates for a wall

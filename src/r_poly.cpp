@@ -62,7 +62,7 @@ void RenderPolyBsp::Render()
 		TriMatrix::rotate((float)(ViewAngle - 90).Radians(), 0.0f, -1.0f, 0.0f) *
 		TriMatrix::swapYZ() *
 		TriMatrix::translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);
-	worldToClip = TriMatrix::perspective(fovy, ratio, 5.0, 65535.0f) * worldToView;
+	worldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
 
 	// Y shearing like the Doom renderer:
 	//worldToClip = TriMatrix::viewToClip() * TriMatrix::worldToView();
@@ -87,6 +87,36 @@ void RenderPolyBsp::RenderScreenSprites()
 		sprite.Render();
 }
 
+TriVertex RenderPolyBsp::PlaneVertex(vertex_t *v1, sector_t *sector, const secplane_t &plane)
+{
+	TriVertex v;
+	v.x = (float)v1->fPos().X;
+	v.y = (float)v1->fPos().Y;
+	v.z = (float)plane.ZatPoint(v1);
+	v.w = 1.0f;
+	v.varying[0] = v.x / 64.0f;
+	v.varying[1] = v.y / 64.0f;
+
+	if (fixedlightlev >= 0)
+		v.varying[2] = fixedlightlev / 255.0f;
+	else if (fixedcolormap)
+		v.varying[2] = 1.0f;
+	else
+		v.varying[2] = sector->lightlevel / 255.0f;
+
+	/*
+	double vis = r_FloorVisibility / (plane.Zat0() - ViewPos.Z);
+	if (fixedlightlev >= 0)
+		R_SetDSColorMapLight(sector->ColorMap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+	else if (fixedcolormap)
+		R_SetDSColorMapLight(fixedcolormap, 0, 0);
+	else
+		R_SetDSColorMapLight(sector->ColorMap, (float)(vis * fabs(CenterY - y)), LIGHT2SHADE(sector->lightlevel));
+	*/
+
+	return v;
+}
+
 void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 {
 	sector_t *frontsector = sub->sector;
@@ -107,22 +137,8 @@ void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 	for (uint32_t i = 0; i < sub->numlines; i++)
 	{
 		seg_t *line = &sub->firstline[i];
-		int j = sub->numlines - 1 - i;
-		ceilVertices[j].x = (float)line->v1->fPos().X;
-		ceilVertices[j].y = (float)line->v1->fPos().Y;
-		ceilVertices[j].z = (float)frontsector->ceilingplane.ZatPoint(line->v1);
-		ceilVertices[j].w = 1.0f;
-		ceilVertices[j].varying[0] = ceilVertices[j].x / 64.0f;
-		ceilVertices[j].varying[1] = ceilVertices[j].y / 64.0f;
-		ceilVertices[j].varying[2] = 1.0f;
-
-		floorVertices[i].x = (float)line->v1->fPos().X;
-		floorVertices[i].y = (float)line->v1->fPos().Y;
-		floorVertices[i].z = (float)frontsector->floorplane.ZatPoint(line->v1);
-		floorVertices[i].w = 1.0f;
-		floorVertices[i].varying[0] = floorVertices[i].x / 64.0f;
-		floorVertices[i].varying[1] = floorVertices[i].y / 64.0f;
-		floorVertices[i].varying[2] = 1.0f;
+		ceilVertices[sub->numlines - 1 - i] = PlaneVertex(line->v1, frontsector, frontsector->ceilingplane);
+		floorVertices[i] = PlaneVertex(line->v1, frontsector, frontsector->floorplane);
 	}
 
 	FTexture *floortex = TexMan(frontsector->GetTexture(sector_t::floor));
@@ -592,7 +608,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	vertices[0].w = 1.0f;
 	vertices[0].varying[0] = (float)texcoords.u1;
 	vertices[0].varying[1] = (float)texcoords.v1;
-	vertices[0].varying[2] = 1.0f;
+	vertices[0].varying[2] = GetLightLevel() / 255.0f;
 
 	vertices[1].x = (float)v2.X;
 	vertices[1].y = (float)v2.Y;
@@ -600,7 +616,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	vertices[1].w = 1.0f;
 	vertices[1].varying[0] = (float)texcoords.u2;
 	vertices[1].varying[1] = (float)texcoords.v1;
-	vertices[1].varying[2] = 1.0f;
+	vertices[1].varying[2] = GetLightLevel() / 255.0f;
 
 	vertices[2].x = (float)v2.X;
 	vertices[2].y = (float)v2.Y;
@@ -608,7 +624,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	vertices[2].w = 1.0f;
 	vertices[2].varying[0] = (float)texcoords.u2;
 	vertices[2].varying[1] = (float)texcoords.v2;
-	vertices[2].varying[2] = 1.0f;
+	vertices[2].varying[2] = GetLightLevel() / 255.0f;
 
 	vertices[3].x = (float)v1.X;
 	vertices[3].y = (float)v1.Y;
@@ -616,7 +632,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	vertices[3].w = 1.0f;
 	vertices[3].varying[0] = (float)texcoords.u1;
 	vertices[3].varying[1] = (float)texcoords.v2;
-	vertices[3].varying[2] = 1.0f;
+	vertices[3].varying[2] = GetLightLevel() / 255.0f;
 
 	TriangleDrawer::draw(worldToClip, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, cliptop, clipbottom, tex);
 }
@@ -630,18 +646,17 @@ FTexture *RenderPolyWall::GetTexture()
 		return tex;
 }
 
-int RenderPolyWall::GetShade()
+int RenderPolyWall::GetLightLevel()
 {
 	if (fixedlightlev >= 0 || fixedcolormap)
 	{
-		return 0;
+		return 255;
 	}
 	else
 	{
 		bool foggy = false;
 		int actualextralight = foggy ? 0 : extralight << 4;
-		int shade = LIGHT2SHADE(Line->sidedef->GetLightLevel(foggy, Line->frontsector->lightlevel) + actualextralight);
-		return shade;
+		return Line->sidedef->GetLightLevel(foggy, Line->frontsector->lightlevel) + actualextralight;
 	}
 }
 

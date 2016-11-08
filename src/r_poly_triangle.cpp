@@ -379,17 +379,20 @@ void ScreenPolyTriangleDrawer::draw(const ScreenPolyTriangleDrawerArgs *args, Dr
 			{
 				for (int iy = 0; iy < q; iy++)
 				{
-					float varying[TriVertex::NumVarying], varyingStep[TriVertex::NumVarying];
+					uint32_t varying[TriVertex::NumVarying], varyingStep[TriVertex::NumVarying];
 					for (int i = 0; i < TriVertex::NumVarying; i++)
 					{
-						varying[i] = varyingTL[i] + varyingBL[i] * iy;
-						varyingStep[i] = (varyingTR[i] + varyingBR[i] * iy - varying[i]) * (1.0f / q);
+						float pos = varyingTL[i] + varyingBL[i] * iy;
+						float step = (varyingTR[i] + varyingBR[i] * iy - varying[i]) * (1.0f / q);
+
+						varying[i] = (uint32_t)((pos - floor(pos)) * 0x100000000LL);
+						varyingStep[i] = (uint32_t)(step * 0x100000000LL);
 					}
 
 					for (int ix = x; ix < x + q; ix++)
 					{
-						uint32_t ufrac = (uint32_t)((varying[0] - floor(varying[0])) * 0x100000000LL);
-						uint32_t vfrac = (uint32_t)((varying[1] - floor(varying[1])) * 0x100000000LL);
+						uint32_t ufrac = varying[0];
+						uint32_t vfrac = varying[1];
 
 						uint32_t upos = ((ufrac >> 16) * textureWidth) >> 16;
 						uint32_t vpos = ((vfrac >> 16) * textureHeight) >> 16;
@@ -416,11 +419,14 @@ void ScreenPolyTriangleDrawer::draw(const ScreenPolyTriangleDrawerArgs *args, Dr
 					int CX2 = CY2;
 					int CX3 = CY3;
 
-					float varying[TriVertex::NumVarying], varyingStep[TriVertex::NumVarying];
+					uint32_t varying[TriVertex::NumVarying], varyingStep[TriVertex::NumVarying];
 					for (int i = 0; i < TriVertex::NumVarying; i++)
 					{
-						varying[i] = varyingTL[i] + varyingBL[i] * iy;
-						varyingStep[i] = (varyingTR[i] + varyingBR[i] * iy - varying[i]) * (1.0f / q);
+						float pos = varyingTL[i] + varyingBL[i] * iy;
+						float step = (varyingTR[i] + varyingBR[i] * iy - pos) * (1.0f / q);
+
+						varying[i] = (uint32_t)((pos - floor(pos)) * 0x100000000LL);
+						varyingStep[i] = (uint32_t)(step * 0x100000000LL);
 					}
 
 					for (int ix = x; ix < x + q; ix++)
@@ -429,8 +435,8 @@ void ScreenPolyTriangleDrawer::draw(const ScreenPolyTriangleDrawerArgs *args, Dr
 
 						if (CX1 > 0 && CX2 > 0 && CX3 > 0 && visible)
 						{
-							uint32_t ufrac = (uint32_t)((varying[0] - floor(varying[0])) * 0x100000000LL);
-							uint32_t vfrac = (uint32_t)((varying[1] - floor(varying[1])) * 0x100000000LL);
+							uint32_t ufrac = varying[0];
+							uint32_t vfrac = varying[1];
 
 							uint32_t upos = ((ufrac >> 16) * textureWidth) >> 16;
 							uint32_t vpos = ((vfrac >> 16) * textureHeight) >> 16;
@@ -765,17 +771,20 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 			{
 				for (int iy = 0; iy < q; iy++)
 				{
-					float varying[TriVertex::NumVarying], varyingStep[TriVertex::NumVarying];
+					uint32_t varying[TriVertex::NumVarying], varyingStep[TriVertex::NumVarying];
 					for (int i = 0; i < TriVertex::NumVarying; i++)
 					{
-						varying[i] = varyingTL[i] + varyingBL[i] * iy;
-						varyingStep[i] = (varyingTR[i] + varyingBR[i] * iy - varying[i]) * (1.0f / q);
+						float pos = varyingTL[i] + varyingBL[i] * iy;
+						float step = (varyingTR[i] + varyingBR[i] * iy - pos) * (1.0f / q);
+
+						varying[i] = (uint32_t)((pos - floor(pos)) * 0x100000000LL);
+						varyingStep[i] = (uint32_t)(step * 0x100000000LL);
 					}
 
 					for (int ix = x; ix < x + q; ix++)
 					{
-						uint32_t ufrac = (uint32_t)((varying[0] - floor(varying[0])) * 0x100000000LL);
-						uint32_t vfrac = (uint32_t)((varying[1] - floor(varying[1])) * 0x100000000LL);
+						uint32_t ufrac = varying[0];
+						uint32_t vfrac = varying[1];
 
 						uint32_t upos = ((ufrac >> 16) * textureWidth) >> 16;
 						uint32_t vpos = ((vfrac >> 16) * textureHeight) >> 16;
@@ -809,11 +818,14 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 					int CX2 = CY2;
 					int CX3 = CY3;
 
-					float varying[TriVertex::NumVarying], varyingStep[TriVertex::NumVarying];
+					uint32_t varying[TriVertex::NumVarying], varyingStep[TriVertex::NumVarying];
 					for (int i = 0; i < TriVertex::NumVarying; i++)
 					{
-						varying[i] = varyingTL[i] + varyingBL[i] * iy;
-						varyingStep[i] = (varyingTR[i] + varyingBR[i] * iy - varying[i]) * (1.0f / q);
+						float pos = varyingTL[i] + varyingBL[i] * iy;
+						float step = (varyingTR[i] + varyingBR[i] * iy - pos) * (1.0f / q);
+
+						varying[i] = (uint32_t)((pos - floor(pos)) * 0x100000000LL);
+						varyingStep[i] = (uint32_t)(step * 0x100000000LL);
 					}
 
 					for (int ix = x; ix < x + q; ix++)
@@ -822,8 +834,8 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 
 						if (CX1 > 0 && CX2 > 0 && CX3 > 0 && visible)
 						{
-							uint32_t ufrac = (uint32_t)((varying[0] - floor(varying[0])) * 0x100000000LL);
-							uint32_t vfrac = (uint32_t)((varying[1] - floor(varying[1])) * 0x100000000LL);
+							uint32_t ufrac = varying[0];
+							uint32_t vfrac = varying[1];
 
 							uint32_t upos = ((ufrac >> 16) * textureWidth) >> 16;
 							uint32_t vpos = ((vfrac >> 16) * textureHeight) >> 16;

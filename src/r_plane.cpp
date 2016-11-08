@@ -1025,58 +1025,58 @@ static void R_DrawCubeSky(visplane_t *pl)
 	static TriVertex cube[6 * 6] =
 	{
 		// Top
-		{ -1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
-		{ 1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
-		{ 1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.1f, 1.0f },
+		{ -1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f },
+		{ 1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f },
+		{ 1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.1f },
 
-		{ 1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.1f, 1.0f },
-		{ -1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.1f, 1.0f },
-		{ -1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
+		{ 1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.1f },
+		{ -1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.1f },
+		{ -1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f },
 
 		// Bottom
-		{ 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.9f, 1.0f },
-		{ 1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f },
-		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.9f },
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 1.0f },
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f },
 
-		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
-		{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.9f, 1.0f },
-		{ 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.9f, 1.0f },
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f },
+		{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.9f },
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.9f },
 
 		// Front
-		{ 1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
-		{ 1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
-		{ -1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f },
+		{ 1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f },
+		{ -1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f },
 
-		{ -1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
-		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
-		{ 1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
+		{ -1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f },
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 2.0f },
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f },
 
 		// Back
-		{ -1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
-		{ 1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
-		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
+		{ -1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f },
+		{ 1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.0f },
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 2.0f },
 
-		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
-		{ -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
-		{ -1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 2.0f },
+		{ -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 2.0f },
+		{ -1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f },
 
 		// Right
-		{ 1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
-		{ 1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
-		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
+		{ 1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f },
+		{ 1.0f,  1.0f,  0.6f, 1.0f, 0.0f, 0.0f },
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 2.0f },
 
-		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
-		{ 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
-		{ 1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
+		{ 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 2.0f },
+		{ 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 2.0f },
+		{ 1.0f, -1.0f,  0.6f, 1.0f, 1.0f, 0.0f },
 
 		// Left
-		{ -1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f },
-		{ -1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f, 1.0f },
-		{ -1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f },
+		{ -1.0f,  1.0f,  0.6f, 1.0f, 1.0f, 0.0f },
+		{ -1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.0f },
 
-		{ -1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.0f, 1.0f },
-		{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 2.0f, 1.0f },
-		{ -1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f }
+		{ -1.0f, -1.0f,  0.6f, 1.0f, 0.0f, 0.0f },
+		{ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 2.0f },
+		{ -1.0f,  1.0f, -1.0f, 1.0f, 1.0f, 2.0f }
 	};
 
 	TriMatrix objectToWorld = TriMatrix::translate((float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z) * TriMatrix::scale(1000.0f, 1000.0f, 1000.0f);
@@ -1090,9 +1090,14 @@ static void R_DrawCubeSky(visplane_t *pl)
 	solid_top = RGB32k.RGB[(RPART(solid_top) >> 3)][(GPART(solid_top) >> 3)][(BPART(solid_top) >> 3)];
 	solid_bottom = RGB32k.RGB[(RPART(solid_bottom) >> 3)][(GPART(solid_bottom) >> 3)][(BPART(solid_bottom) >> 3)];
 
-	TriangleDrawer::fill(objectToClip, cube, 6, TriangleDrawMode::Normal, false, x1, x2 - 1, uwal, dwal, solid_top);
-	TriangleDrawer::fill(objectToClip, cube + 6, 6, TriangleDrawMode::Normal, false, x1, x2 - 1, uwal, dwal, solid_bottom);
-	TriangleDrawer::draw(objectToClip, cube + 2 * 6, 4 * 6, TriangleDrawMode::Normal, false, x1, x2 - 1, uwal, dwal, frontskytex);
+	TriUniforms uniforms;
+	uniforms.objectToClip = objectToClip;
+	uniforms.light = 256;
+	uniforms.flags = 0;
+
+	TriangleDrawer::fill(uniforms, cube, 6, TriangleDrawMode::Normal, false, x1, x2 - 1, uwal, dwal, solid_top);
+	TriangleDrawer::fill(uniforms, cube + 6, 6, TriangleDrawMode::Normal, false, x1, x2 - 1, uwal, dwal, solid_bottom);
+	TriangleDrawer::draw(uniforms, cube + 2 * 6, 4 * 6, TriangleDrawMode::Normal, false, x1, x2 - 1, uwal, dwal, frontskytex);
 }
 
 namespace
@@ -1127,7 +1132,6 @@ namespace
 		v.w = 1.0f;
 		v.varying[0] = uu;
 		v.varying[1] = vv;
-		v.varying[2] = 1.0f;
 		return v;
 	}
 
@@ -1140,7 +1144,6 @@ namespace
 		v.w = 1.0f;
 		v.varying[0] = uu;
 		v.varying[1] = vv;
-		v.varying[2] = 1.0f;
 		return v;
 	}
 
@@ -1220,7 +1223,11 @@ namespace
 		short *dwal = (short *)pl->bottom;
 		TriMatrix objectToWorld = TriMatrix::translate((float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z);
 		TriMatrix objectToClip = TriMatrix::viewToClip() * TriMatrix::worldToView() * objectToWorld;
-		TriangleDrawer::draw(objectToClip, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Strip, false, x1, x2 - 1, uwal, dwal, frontskytex);
+		TriUniforms uniforms;
+		uniforms.objectToClip = objectToClip;
+		uniforms.light = 256;
+		uniforms.flags = 0;
+		TriangleDrawer::draw(uniforms, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Strip, false, x1, x2 - 1, uwal, dwal, frontskytex);
 	}
 
 	void SkyDome::RenderCapColorRow(int row, bool bottomCap, visplane_t *pl)
@@ -1234,7 +1241,11 @@ namespace
 		short *dwal = (short *)pl->bottom;
 		TriMatrix objectToWorld = TriMatrix::translate((float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z);
 		TriMatrix objectToClip = TriMatrix::viewToClip() * TriMatrix::worldToView() * objectToWorld;
-		TriangleDrawer::fill(objectToClip, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Fan, bottomCap, x1, x2 - 1, uwal, dwal, solid);
+		TriUniforms uniforms;
+		uniforms.objectToClip = objectToClip;
+		uniforms.light = 256;
+		uniforms.flags = 0;
+		TriangleDrawer::fill(uniforms, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Fan, bottomCap, x1, x2 - 1, uwal, dwal, solid);
 	}
 
 	void SkyDome::Render(visplane_t *pl)

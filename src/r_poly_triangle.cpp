@@ -36,31 +36,31 @@
 #include "r_data/colormaps.h"
 #include "r_poly_triangle.h"
 
-void PolyTriangleDrawer::draw(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, FTexture *texture)
+void PolyTriangleDrawer::draw(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, FTexture *texture)
 {
 	if (r_swtruecolor)
-		queue_arrays(objectToClip, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, (const uint8_t*)texture->GetPixelsBgra(), texture->GetWidth(), texture->GetHeight(), 0);
+		queue_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, (const uint8_t*)texture->GetPixelsBgra(), texture->GetWidth(), texture->GetHeight(), 0);
 	else
-		draw_arrays(objectToClip, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, texture->GetPixels(), texture->GetWidth(), texture->GetHeight(), 0, nullptr, &ScreenPolyTriangleDrawer::draw);
+		draw_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, texture->GetPixels(), texture->GetWidth(), texture->GetHeight(), 0, nullptr, &ScreenPolyTriangleDrawer::draw);
 }
 
-void PolyTriangleDrawer::fill(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, int solidcolor)
+void PolyTriangleDrawer::fill(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, int solidcolor)
 {
 	if (r_swtruecolor)
-		queue_arrays(objectToClip, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, 0, 0, solidcolor);
+		queue_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, 0, 0, solidcolor);
 	else
-		draw_arrays(objectToClip, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, 0, 0, solidcolor, nullptr, &ScreenPolyTriangleDrawer::fill);
+		draw_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, 0, 0, solidcolor, nullptr, &ScreenPolyTriangleDrawer::fill);
 }
 
-void PolyTriangleDrawer::queue_arrays(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor)
+void PolyTriangleDrawer::queue_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor)
 {
 	if (clipright < clipleft || clipleft < 0 || clipright > MAXWIDTH || clipbottom < cliptop || cliptop < 0 || clipbottom > MAXHEIGHT)
 		return;
 
-	DrawerCommandQueue::QueueCommand<DrawPolyTrianglesCommand>(objectToClip, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, texturePixels, textureWidth, textureHeight, solidcolor);
+	DrawerCommandQueue::QueueCommand<DrawPolyTrianglesCommand>(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, texturePixels, textureWidth, textureHeight, solidcolor);
 }
 
-void PolyTriangleDrawer::draw_arrays(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, DrawerThread *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, DrawerThread *))
+void PolyTriangleDrawer::draw_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, DrawerThread *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, DrawerThread *))
 {
 	if (vcount < 3)
 		return;
@@ -76,6 +76,7 @@ void PolyTriangleDrawer::draw_arrays(const TriMatrix &objectToClip, const TriVer
 	args.textureWidth = textureWidth;
 	args.textureHeight = textureHeight;
 	args.solidcolor = solidcolor;
+	args.uniforms = &uniforms;
 
 	TriVertex vert[3];
 	if (mode == TriangleDrawMode::Normal)
@@ -83,28 +84,28 @@ void PolyTriangleDrawer::draw_arrays(const TriMatrix &objectToClip, const TriVer
 		for (int i = 0; i < vcount / 3; i++)
 		{
 			for (int j = 0; j < 3; j++)
-				vert[j] = shade_vertex(objectToClip, *(vinput++));
+				vert[j] = shade_vertex(uniforms, *(vinput++));
 			draw_shaded_triangle(vert, ccw, &args, thread, drawfunc);
 		}
 	}
 	else if (mode == TriangleDrawMode::Fan)
 	{
-		vert[0] = shade_vertex(objectToClip, *(vinput++));
-		vert[1] = shade_vertex(objectToClip, *(vinput++));
+		vert[0] = shade_vertex(uniforms, *(vinput++));
+		vert[1] = shade_vertex(uniforms, *(vinput++));
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = shade_vertex(objectToClip, *(vinput++));
+			vert[2] = shade_vertex(uniforms, *(vinput++));
 			draw_shaded_triangle(vert, ccw, &args, thread, drawfunc);
 			vert[1] = vert[2];
 		}
 	}
 	else // TriangleDrawMode::Strip
 	{
-		vert[0] = shade_vertex(objectToClip, *(vinput++));
-		vert[1] = shade_vertex(objectToClip, *(vinput++));
+		vert[0] = shade_vertex(uniforms, *(vinput++));
+		vert[1] = shade_vertex(uniforms, *(vinput++));
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = shade_vertex(objectToClip, *(vinput++));
+			vert[2] = shade_vertex(uniforms, *(vinput++));
 			draw_shaded_triangle(vert, ccw, &args, thread, drawfunc);
 			vert[0] = vert[1];
 			vert[1] = vert[2];
@@ -113,10 +114,10 @@ void PolyTriangleDrawer::draw_arrays(const TriMatrix &objectToClip, const TriVer
 	}
 }
 
-TriVertex PolyTriangleDrawer::shade_vertex(const TriMatrix &objectToClip, TriVertex v)
+TriVertex PolyTriangleDrawer::shade_vertex(const TriUniforms &uniforms, TriVertex v)
 {
 	// Apply transform to get clip coordinates:
-	return objectToClip * v;
+	return uniforms.objectToClip * v;
 }
 
 void PolyTriangleDrawer::draw_shaded_triangle(const TriVertex *vert, bool ccw, ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, DrawerThread *))
@@ -389,7 +390,6 @@ void ScreenPolyTriangleDrawer::draw(const ScreenPolyTriangleDrawerArgs *args, Dr
 					{
 						uint32_t ufrac = (uint32_t)((varying[0] - floor(varying[0])) * 0x100000000LL);
 						uint32_t vfrac = (uint32_t)((varying[1] - floor(varying[1])) * 0x100000000LL);
-						//uint32_t light = (uint32_t)clamp(varying[2] * 255.0f + 0.5f, 0.0f, 255.0f);
 
 						uint32_t upos = ((ufrac >> 16) * textureWidth) >> 16;
 						uint32_t vpos = ((vfrac >> 16) * textureHeight) >> 16;
@@ -431,7 +431,6 @@ void ScreenPolyTriangleDrawer::draw(const ScreenPolyTriangleDrawerArgs *args, Dr
 						{
 							uint32_t ufrac = (uint32_t)((varying[0] - floor(varying[0])) * 0x100000000LL);
 							uint32_t vfrac = (uint32_t)((varying[1] - floor(varying[1])) * 0x100000000LL);
-							//uint32_t light = (uint32_t)clamp(varying[2] * 255.0f + 0.5f, 0.0f, 255.0f);
 
 							uint32_t upos = ((ufrac >> 16) * textureWidth) >> 16;
 							uint32_t vpos = ((vfrac >> 16) * textureHeight) >> 16;
@@ -631,6 +630,7 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 	const uint32_t *texturePixels = (const uint32_t *)args->texturePixels;
 	int textureWidth = args->textureWidth;
 	int textureHeight = args->textureHeight;
+	uint32_t light = args->uniforms->light;
 
 	// 28.4 fixed-point coordinates
 	const int Y1 = (int)round(16.0f * v1.y);
@@ -776,7 +776,6 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 					{
 						uint32_t ufrac = (uint32_t)((varying[0] - floor(varying[0])) * 0x100000000LL);
 						uint32_t vfrac = (uint32_t)((varying[1] - floor(varying[1])) * 0x100000000LL);
-						uint32_t light = (uint32_t)clamp(varying[2] * 256.0f + 0.5f, 0.0f, 256.0f);
 
 						uint32_t upos = ((ufrac >> 16) * textureWidth) >> 16;
 						uint32_t vpos = ((vfrac >> 16) * textureHeight) >> 16;
@@ -825,7 +824,6 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 						{
 							uint32_t ufrac = (uint32_t)((varying[0] - floor(varying[0])) * 0x100000000LL);
 							uint32_t vfrac = (uint32_t)((varying[1] - floor(varying[1])) * 0x100000000LL);
-							uint32_t light = (uint32_t)clamp(varying[2] * 256.0f + 0.5f, 0.0f, 256.0f);
 
 							uint32_t upos = ((ufrac >> 16) * textureWidth) >> 16;
 							uint32_t vpos = ((vfrac >> 16) * textureHeight) >> 16;
@@ -1034,15 +1032,15 @@ float ScreenPolyTriangleDrawer::grady(float x0, float y0, float x1, float y1, fl
 
 /////////////////////////////////////////////////////////////////////////////
 
-DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor)
-	: objectToClip(objectToClip), vinput(vinput), vcount(vcount), mode(mode), ccw(ccw), clipleft(clipleft), clipright(clipright), cliptop(cliptop), clipbottom(clipbottom), texturePixels(texturePixels), textureWidth(textureWidth), textureHeight(textureHeight), solidcolor(solidcolor)
+DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor)
+	: uniforms(uniforms), vinput(vinput), vcount(vcount), mode(mode), ccw(ccw), clipleft(clipleft), clipright(clipright), cliptop(cliptop), clipbottom(clipbottom), texturePixels(texturePixels), textureWidth(textureWidth), textureHeight(textureHeight), solidcolor(solidcolor)
 {
 }
 
 void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
 {
 	PolyTriangleDrawer::draw_arrays(
-		objectToClip, vinput, vcount, mode, ccw,
+		uniforms, vinput, vcount, mode, ccw,
 		clipleft, clipright, cliptop, clipbottom,
 		texturePixels, textureWidth, textureHeight, solidcolor,
 		thread, texturePixels ? ScreenPolyTriangleDrawer::draw32 : ScreenPolyTriangleDrawer::fill32);

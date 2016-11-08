@@ -31,17 +31,17 @@ struct ScreenPolyTriangleDrawerArgs;
 class PolyTriangleDrawer
 {
 public:
-	static void draw(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, FTexture *texture);
-	static void fill(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, int solidcolor);
+	static void draw(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, FTexture *texture);
+	static void fill(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, int solidcolor);
 
 private:
-	static TriVertex shade_vertex(const TriMatrix &objectToClip, TriVertex v);
-	static void draw_arrays(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, DrawerThread *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, DrawerThread *));
+	static TriVertex shade_vertex(const TriUniforms &uniforms, TriVertex v);
+	static void draw_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, DrawerThread *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, DrawerThread *));
 	static void draw_shaded_triangle(const TriVertex *vertices, bool ccw, ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, DrawerThread *));
 	static bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2);
 	static void clipedge(const TriVertex &v1, const TriVertex &v2, TriVertex *clippedvert, int &numclipvert);
 
-	static void queue_arrays(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor);
+	static void queue_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor);
 
 	friend class DrawPolyTrianglesCommand;
 };
@@ -61,6 +61,7 @@ struct ScreenPolyTriangleDrawerArgs
 	int textureWidth;
 	int textureHeight;
 	int solidcolor;
+	const TriUniforms *uniforms;
 };
 
 class ScreenPolyTriangleDrawer
@@ -80,13 +81,13 @@ private:
 class DrawPolyTrianglesCommand : public DrawerCommand
 {
 public:
-	DrawPolyTrianglesCommand(const TriMatrix &objectToClip, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor);
+	DrawPolyTrianglesCommand(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor);
 
 	void Execute(DrawerThread *thread) override;
 	FString DebugInfo() override;
 
 private:
-	TriMatrix objectToClip;
+	TriUniforms uniforms;
 	const TriVertex *vinput;
 	int vcount;
 	TriangleDrawMode mode;

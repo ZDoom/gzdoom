@@ -87,13 +87,6 @@ TriVertex RenderPolyBsp::PlaneVertex(vertex_t *v1, sector_t *sector, const secpl
 	v.varying[0] = v.x / 64.0f;
 	v.varying[1] = v.y / 64.0f;
 
-	if (fixedlightlev >= 0)
-		v.varying[2] = fixedlightlev / 255.0f;
-	else if (fixedcolormap)
-		v.varying[2] = 1.0f;
-	else
-		v.varying[2] = sector->lightlevel / 255.0f;
-
 	/*
 	double vis = r_FloorVisibility / (plane.Zat0() - ViewPos.Z);
 	if (fixedlightlev >= 0)
@@ -119,25 +112,53 @@ void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 			AddLine(line, frontsector);
 	}
 
-	TriVertex *floorVertices = PolyVertexBuffer::GetVertices(sub->numlines);
-	TriVertex *ceilVertices = PolyVertexBuffer::GetVertices(sub->numlines);
-	if (floorVertices == nullptr || ceilVertices == nullptr)
-		return;
-
-	for (uint32_t i = 0; i < sub->numlines; i++)
-	{
-		seg_t *line = &sub->firstline[i];
-		ceilVertices[sub->numlines - 1 - i] = PlaneVertex(line->v1, frontsector, frontsector->ceilingplane);
-		floorVertices[i] = PlaneVertex(line->v1, frontsector, frontsector->floorplane);
-	}
-
 	FTexture *floortex = TexMan(frontsector->GetTexture(sector_t::floor));
 	if (floortex->UseType != FTexture::TEX_Null)
-		PolyTriangleDrawer::draw(worldToClip, floorVertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, floortex);
+	{
+		TriVertex *vertices = PolyVertexBuffer::GetVertices(sub->numlines);
+		if (!vertices)
+			return;
+
+		for (uint32_t i = 0; i < sub->numlines; i++)
+		{
+			seg_t *line = &sub->firstline[i];
+			vertices[i] = PlaneVertex(line->v1, frontsector, frontsector->floorplane);
+		}
+
+		TriUniforms uniforms;
+		uniforms.objectToClip = worldToClip;
+		uniforms.light = (uint32_t)(frontsector->lightlevel / 255.0f * 256.0f);
+		if (fixedlightlev >= 0)
+			uniforms.light = (uint32_t)(fixedlightlev / 255.0f * 256.0f);
+		else if (fixedcolormap)
+			uniforms.light = 256;
+		uniforms.flags = 0;
+		PolyTriangleDrawer::draw(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, floortex);
+	}
 
 	FTexture *ceiltex = TexMan(frontsector->GetTexture(sector_t::ceiling));
 	if (ceiltex->UseType != FTexture::TEX_Null)
-		PolyTriangleDrawer::draw(worldToClip, ceilVertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, ceiltex);
+	{
+		TriVertex *vertices = PolyVertexBuffer::GetVertices(sub->numlines);
+		if (!vertices)
+			return;
+
+		for (uint32_t i = 0; i < sub->numlines; i++)
+		{
+			seg_t *line = &sub->firstline[i];
+			vertices[sub->numlines - 1 - i] = PlaneVertex(line->v1, frontsector, frontsector->ceilingplane);
+		}
+
+		TriUniforms uniforms;
+		uniforms.objectToClip = worldToClip;
+		uniforms.light = (uint32_t)(frontsector->lightlevel / 255.0f * 256.0f);
+		if (fixedlightlev >= 0)
+			uniforms.light = (uint32_t)(fixedlightlev / 255.0f * 256.0f);
+		else if (fixedcolormap)
+			uniforms.light = 256;
+		uniforms.flags = 0;
+		PolyTriangleDrawer::draw(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, ceiltex);
+	}
 
 	for (AActor *thing = sub->sector->thinglist; thing != nullptr; thing = thing->snext)
 	{
@@ -344,10 +365,13 @@ void RenderPolyBsp::AddSprite(AActor *thing, subsector_t *sub)
 		vertices[i].varying[1] = (float)((1.0f - offsets[i].second) * tex->Scale.Y);
 		if (flipTextureX)
 			vertices[i].varying[0] = 1.0f - vertices[i].varying[0];
-		vertices[i].varying[2] = (thing->Sector->lightlevel + actualextralight) / 255.0f;
 	}
 
-	PolyTriangleDrawer::draw(worldToClip, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, tex);
+	TriUniforms uniforms;
+	uniforms.objectToClip = worldToClip;
+	uniforms.light = (uint32_t)((thing->Sector->lightlevel + actualextralight) / 255.0f * 256.0f);
+	uniforms.flags = 0;
+	PolyTriangleDrawer::draw(uniforms, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, tex);
 }
 
 void RenderPolyBsp::AddWallSprite(AActor *thing, subsector_t *sub)
@@ -858,7 +882,6 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	vertices[0].w = 1.0f;
 	vertices[0].varying[0] = (float)texcoords.u1;
 	vertices[0].varying[1] = (float)texcoords.v1;
-	vertices[0].varying[2] = GetLightLevel() / 255.0f;
 
 	vertices[1].x = (float)v2.X;
 	vertices[1].y = (float)v2.Y;
@@ -866,7 +889,6 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	vertices[1].w = 1.0f;
 	vertices[1].varying[0] = (float)texcoords.u2;
 	vertices[1].varying[1] = (float)texcoords.v1;
-	vertices[1].varying[2] = GetLightLevel() / 255.0f;
 
 	vertices[2].x = (float)v2.X;
 	vertices[2].y = (float)v2.Y;
@@ -874,7 +896,6 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	vertices[2].w = 1.0f;
 	vertices[2].varying[0] = (float)texcoords.u2;
 	vertices[2].varying[1] = (float)texcoords.v2;
-	vertices[2].varying[2] = GetLightLevel() / 255.0f;
 
 	vertices[3].x = (float)v1.X;
 	vertices[3].y = (float)v1.Y;
@@ -882,9 +903,12 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	vertices[3].w = 1.0f;
 	vertices[3].varying[0] = (float)texcoords.u1;
 	vertices[3].varying[1] = (float)texcoords.v2;
-	vertices[3].varying[2] = GetLightLevel() / 255.0f;
 
-	PolyTriangleDrawer::draw(worldToClip, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, tex);
+	TriUniforms uniforms;
+	uniforms.objectToClip = worldToClip;
+	uniforms.light = (uint32_t)(GetLightLevel() / 255.0f * 256.0f);
+	uniforms.flags = 0;
+	PolyTriangleDrawer::draw(uniforms, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, tex);
 }
 
 FTexture *RenderPolyWall::GetTexture()

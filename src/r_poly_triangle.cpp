@@ -369,7 +369,7 @@ void ScreenPolyTriangleDrawer::draw(const ScreenPolyTriangleDrawerArgs *args, Dr
 	for (int y = miny; y < maxy; y += q, dest += q * pitch)
 	{
 		// Is this row of blocks done by this thread?
-		if (thread->skipped_by_thread(y / q)) continue;
+		if (thread && thread->skipped_by_thread(y / q)) continue;
 
 		for (int x = minx; x < maxx; x += q)
 		{
@@ -436,7 +436,7 @@ void ScreenPolyTriangleDrawer::draw(const ScreenPolyTriangleDrawerArgs *args, Dr
 					for (int i = 0; i < TriVertex::NumVarying; i++)
 					{
 						float pos = varyingTL[i] + varyingBL[i] * iy;
-						float step = (varyingTR[i] + varyingBR[i] * iy - varying[i]) * (1.0f / q);
+						float step = (varyingTR[i] + varyingBR[i] * iy - pos) * (1.0f / q);
 
 						varying[i] = (uint32_t)((pos - floor(pos)) * 0x100000000LL);
 						varyingStep[i] = (uint32_t)(step * 0x100000000LL);
@@ -451,7 +451,8 @@ void ScreenPolyTriangleDrawer::draw(const ScreenPolyTriangleDrawerArgs *args, Dr
 						uint32_t vpos = ((vfrac >> 16) * textureHeight) >> 16;
 						uint32_t uvoffset = upos * textureHeight + vpos;
 
-						buffer[ix] = texturePixels[uvoffset];
+						if (texturePixels[uvoffset] != 0)
+							buffer[ix] = texturePixels[uvoffset];
 
 						for (int i = 0; i < TriVertex::NumVarying; i++)
 							varying[i] += varyingStep[i];
@@ -495,7 +496,8 @@ void ScreenPolyTriangleDrawer::draw(const ScreenPolyTriangleDrawerArgs *args, Dr
 							uint32_t vpos = ((vfrac >> 16) * textureHeight) >> 16;
 							uint32_t uvoffset = upos * textureHeight + vpos;
 
-							buffer[ix] = texturePixels[uvoffset];
+							if (texturePixels[uvoffset] != 0)
+								buffer[ix] = texturePixels[uvoffset];
 						}
 
 						for (int i = 0; i < TriVertex::NumVarying; i++)
@@ -588,7 +590,7 @@ void ScreenPolyTriangleDrawer::fill(const ScreenPolyTriangleDrawerArgs *args, Dr
 	for (int y = miny; y < maxy; y += q, dest += q * pitch)
 	{
 		// Is this row of blocks done by this thread?
-		if (thread->skipped_by_thread(y / q)) continue;
+		if (thread && thread->skipped_by_thread(y / q)) continue;
 
 		for (int x = minx; x < maxx; x += q)
 		{

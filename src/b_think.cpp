@@ -358,7 +358,7 @@ void DBot::WhatToGet (AActor *item)
 	}
 	else if ((typeis (Megasphere) || typeis (Soulsphere) || typeis (HealthBonus)) && player->mo->health >= deh.MaxSoulsphere)
 		return;
-	else if (item->IsKindOf (RUNTIME_CLASS(AHealth)) && player->mo->health >= deh.MaxHealth /*MAXHEALTH*/)
+	else if (item->IsKindOf (RUNTIME_CLASS(AHealth)) && player->mo->health >= player->mo->GetMaxHealth() + player->mo->stamina)
 		return;
 
 	if ((dest == NULL ||

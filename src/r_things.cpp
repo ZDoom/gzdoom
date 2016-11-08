@@ -281,6 +281,15 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span, bool us
 			dc_source = column;
 			dc_dest = (ylookup[dc_yl] + dc_x) + dc_destorg;
 			dc_count = dc_yh - dc_yl + 1;
+
+			fixed_t maxfrac = ((top + length) << FRACBITS) - 1;
+			dc_texturefrac = MAX(dc_texturefrac, 0);
+			dc_texturefrac = MIN(dc_texturefrac, maxfrac);
+			if (dc_iscale > 0)
+				dc_count = MIN(dc_count, (maxfrac - dc_texturefrac + dc_iscale - 1) / dc_iscale);
+			else if (dc_iscale < 0)
+				dc_count = MIN(dc_count, (dc_texturefrac - dc_iscale) / (-dc_iscale));
+
 			if (useRt)
 				hcolfunc_pre();
 			else
@@ -954,15 +963,14 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			return;
 
 		tx += tex->GetWidth() * thingxscalemul;
-		double dtx2 = tx * xscale;
-		x2 = centerx + xs_RoundToInt(dtx2);
+		x2 = centerx + xs_RoundToInt(tx * xscale);
 
 		// off the left side or too small?
 		if ((x2 < WindowLeft || x2 <= x1))
 			return;
 
 		xscale = spriteScale.X * xscale / tex->Scale.X;
-		iscale = (fixed_t)(tex->GetWidth() / (dtx2 - dtx1) * FRACUNIT);
+		iscale = (fixed_t)(FRACUNIT / xscale); // Round towards zero to avoid wrapping in edge cases
 
 		double yscale = spriteScale.Y / tex->Scale.Y;
 
@@ -990,7 +998,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			vis->xiscale = iscale;
 		}
 
-		vis->startfrac += (fixed_t)(vis->xiscale * (vis->x1 - centerx - dtx1 + 0.5 * thingxscalemul));
+		vis->startfrac += (fixed_t)(vis->xiscale * (vis->x1 - centerx + 0.5 - dtx1));
 	}
 	else
 	{

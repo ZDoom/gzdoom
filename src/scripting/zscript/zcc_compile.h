@@ -78,7 +78,7 @@ struct ZCC_ConstantWork
 class ZCCCompiler
 {
 public:
-	ZCCCompiler(ZCC_AST &tree, DObject *outer, PSymbolTable &symbols, PSymbolTable &outsymbols);
+	ZCCCompiler(ZCC_AST &tree, DObject *outer, PSymbolTable &symbols, PSymbolTable &outsymbols, int lumpnum);
 	~ZCCCompiler();
 	int Compile();
 
@@ -149,6 +149,7 @@ private:
 	PSymbolTable *GlobalTreeNodes;
 	PSymbolTable *OutputSymbols;
 	ZCC_AST &AST;
+	int Lump;
 };
 
 void ZCC_InitConversions();

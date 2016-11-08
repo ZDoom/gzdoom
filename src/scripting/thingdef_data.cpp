@@ -55,7 +55,7 @@ static TArray<AFuncDesc> AFTable;
 
 // [RH] Keep GCC quiet by not using offsetof on Actor types.
 #define DEFINE_FLAG(prefix, name, type, variable) { (unsigned int)prefix##_##name, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), VARF_Native }
-#define DEFINE_READONLY_FLAG(prefix, name, type, variable) { (unsigned int)prefix##_##name, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), VARF_Native|VARF_ReadOnly }
+#define DEFINE_PROTECTED_FLAG(prefix, name, type, variable) { (unsigned int)prefix##_##name, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), VARF_Native|VARF_ReadOnly|VARF_InternalAccess }
 #define DEFINE_FLAG2(symbol, name, type, variable) { (unsigned int)symbol, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), VARF_Native }
 #define DEFINE_FLAG2_DEPRECATED(symbol, name, type, variable) { (unsigned int)symbol, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), VARF_Native|VARF_Deprecated }
 #define DEFINE_DEPRECATED_FLAG(name) { DEPF_##name, #name, -1, 0, true }
@@ -99,8 +99,8 @@ FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF, SPECIAL, APlayerPawn, flags),
 	DEFINE_FLAG(MF, SOLID, AActor, flags),
 	DEFINE_FLAG(MF, SHOOTABLE, AActor, flags),
-	DEFINE_FLAG(MF, NOSECTOR, AActor, flags),
-	DEFINE_FLAG(MF, NOBLOCKMAP, AActor, flags),
+	DEFINE_PROTECTED_FLAG(MF, NOSECTOR, AActor, flags),
+	DEFINE_PROTECTED_FLAG(MF, NOBLOCKMAP, AActor, flags),
 	DEFINE_FLAG(MF, AMBUSH, AActor, flags),
 	DEFINE_FLAG(MF, JUSTHIT, AActor, flags),
 	DEFINE_FLAG(MF, JUSTATTACKED, AActor, flags),

@@ -76,9 +76,10 @@ struct FCompileContext
 	bool FromDecorate;		// DECORATE must silence some warnings and demote some errors.
 	int StateIndex;			// index in actor's state table for anonymous functions, otherwise -1 (not used by DECORATE which pre-resolves state indices)
 	int StateCount;			// amount of states an anoymous function is being used on (must be 1 for state indices to be allowed.)
+	int Lump;
 	TDeletingArray<FxLocalVariableDeclaration *> FunctionArgs;
 
-	FCompileContext(PFunction *func, PPrototype *ret, bool fromdecorate, int stateindex, int statecount);
+	FCompileContext(PFunction *func, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump);
 	FCompileContext(PClass *cls, bool fromdecorate);	// only to be used to resolve constants!
 
 	PSymbol *FindInClass(FName identifier, PSymbolTable *&symt);
@@ -87,6 +88,7 @@ struct FCompileContext
 
 	void HandleJumps(int token, FxExpression *handler);
 	void CheckReturn(PPrototype *proto, FScriptPosition &pos);
+	bool CheckReadOnly(int flags);
 	FxLocalVariableDeclaration *FindLocalVariable(FName name);
 };
 
@@ -296,7 +298,7 @@ public:
 	virtual FxExpression *Resolve(FCompileContext &ctx);
 	
 	virtual bool isConstant() const;
-	virtual bool RequestAddress(bool *writable);
+	virtual bool RequestAddress(FCompileContext &ctx, bool *writable);
 	virtual PPrototype *ReturnProto();
 	virtual VMFunction *GetDirectFunction();
 	virtual bool CheckReturn() { return false; }
@@ -715,7 +717,7 @@ public:
 	FxPreIncrDecr(FxExpression *base, int token);
 	~FxPreIncrDecr();
 	FxExpression *Resolve(FCompileContext&);
-	bool RequestAddress(bool *writable);
+	bool RequestAddress(FCompileContext &ctx, bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -758,7 +760,7 @@ public:
 	FxAssign(FxExpression *base, FxExpression *right, bool ismodify = false);
 	~FxAssign();
 	FxExpression *Resolve(FCompileContext&);
-	//bool RequestAddress(bool *writable);
+	//bool RequestAddress(FCompileContext &ctx, bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
 
 	ExpEmit Address;
@@ -1157,7 +1159,7 @@ public:
 
 	FxGlobalVariable(PField*, const FScriptPosition&);
 	FxExpression *Resolve(FCompileContext&);
-	bool RequestAddress(bool *writable);
+	bool RequestAddress(FCompileContext &ctx, bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -1178,7 +1180,7 @@ public:
 	FxStructMember(FxExpression*, PField*, const FScriptPosition&);
 	~FxStructMember();
 	FxExpression *Resolve(FCompileContext&);
-	bool RequestAddress(bool *writable);
+	bool RequestAddress(FCompileContext &ctx, bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -1210,7 +1212,7 @@ public:
 
 	FxLocalVariable(FxLocalVariableDeclaration*, const FScriptPosition&);
 	FxExpression *Resolve(FCompileContext&);
-	bool RequestAddress(bool *writable);
+	bool RequestAddress(FCompileContext &ctx, bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -1245,7 +1247,7 @@ public:
 	FxArrayElement(FxExpression*, FxExpression*);
 	~FxArrayElement();
 	FxExpression *Resolve(FCompileContext&);
-	bool RequestAddress(bool *writable);
+	bool RequestAddress(FCompileContext &ctx, bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 

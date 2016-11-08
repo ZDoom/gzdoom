@@ -53,6 +53,7 @@
 #include "m_fixed.h"
 #include "vmbuilder.h"
 #include "v_text.h"
+#include "w_wad.h"
 #include "math/cmath.h"
 
 extern FRandom pr_exrandom;
@@ -93,14 +94,14 @@ static const FLOP FxFlops[] =
 //
 //==========================================================================
 
-FCompileContext::FCompileContext(PFunction *fnc, PPrototype *ret, bool fromdecorate, int stateindex, int statecount) 
-	: ReturnProto(ret), Function(fnc), Class(nullptr), FromDecorate(fromdecorate), StateIndex(stateindex), StateCount(statecount)
+FCompileContext::FCompileContext(PFunction *fnc, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump) 
+	: ReturnProto(ret), Function(fnc), Class(nullptr), FromDecorate(fromdecorate), StateIndex(stateindex), StateCount(statecount), Lump(lump)
 {
 	if (fnc != nullptr) Class = fnc->OwningClass;
 }
 
 FCompileContext::FCompileContext(PClass *cls, bool fromdecorate) 
-	: ReturnProto(nullptr), Function(nullptr), Class(cls), FromDecorate(fromdecorate), StateIndex(-1), StateCount(0)
+	: ReturnProto(nullptr), Function(nullptr), Class(cls), FromDecorate(fromdecorate), StateIndex(-1), StateCount(0), Lump(-1)
 {
 }
 
@@ -162,6 +163,13 @@ void FCompileContext::CheckReturn(PPrototype *proto, FScriptPosition &pos)
 	{
 		pos.Message(MSG_ERROR, "Return type mismatch");
 	}
+}
+
+bool FCompileContext::CheckReadOnly(int flags)
+{
+	if (!(flags & VARF_ReadOnly)) return false;
+	if (!(flags & VARF_InternalAccess)) return true;
+	return Wads.GetLumpFile(Lump) != 0;
 }
 
 FxLocalVariableDeclaration *FCompileContext::FindLocalVariable(FName name)
@@ -307,7 +315,7 @@ FxExpression *FxExpression::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-bool FxExpression::RequestAddress(bool *writable)
+bool FxExpression::RequestAddress(FCompileContext &ctx, bool *writable)
 {
 	if (writable != nullptr) *writable = false;
 	return false;
@@ -1178,9 +1186,19 @@ FxExpression *FxColorCast::Resolve(FCompileContext &ctx)
 		if (basex->isConstant())
 		{
 			ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
-			FxExpression *x = new FxConstant(V_GetColor(nullptr, constval.GetString()), ScriptPosition);
-			delete this;
-			return x;
+			if (constval.GetString().Len() == 0)
+			{
+				// empty string means 'no state'. This would otherwise just cause endless errors and have the same result anyway.
+				FxExpression *x = new FxConstant(-1, ScriptPosition);
+				delete this;
+				return x;
+			}
+			else
+			{
+				FxExpression *x = new FxConstant(V_GetColor(nullptr, constval.GetString()), ScriptPosition);
+				delete this;
+				return x;
+			}
 		}
 		return this;
 	}
@@ -1870,7 +1888,7 @@ FxExpression *FxSizeAlign::Resolve(FCompileContext& ctx)
 		delete this;
 		return nullptr;
 	}
-	else if (!Operand->RequestAddress(nullptr))
+	else if (!Operand->RequestAddress(ctx, nullptr))
 	{
 		ScriptPosition.Message(MSG_ERROR, "Operand must be addressable to determine %s", Which == TK_AlignOf ? "alignment" : "size");
 		delete this;
@@ -1907,7 +1925,7 @@ FxPreIncrDecr::~FxPreIncrDecr()
 	SAFE_DELETE(Base);
 }
 
-bool FxPreIncrDecr::RequestAddress(bool *writable)
+bool FxPreIncrDecr::RequestAddress(FCompileContext &ctx, bool *writable)
 {
 	AddressRequested = true;
 	if (writable != nullptr) *writable = AddressWritable;
@@ -1933,7 +1951,7 @@ FxExpression *FxPreIncrDecr::Resolve(FCompileContext &ctx)
 		delete this;
 		return nullptr;
 	}
-	if (!Base->RequestAddress(&AddressWritable) || !AddressWritable )
+	if (!Base->RequestAddress(ctx, &AddressWritable) || !AddressWritable )
 	{
 		ScriptPosition.Message(MSG_ERROR, "Expression must be a modifiable value");
 		delete this;
@@ -2019,7 +2037,7 @@ FxExpression *FxPostIncrDecr::Resolve(FCompileContext &ctx)
 		delete this;
 		return nullptr;
 	}
-	if (!Base->RequestAddress(&AddressWritable) || !AddressWritable)
+	if (!Base->RequestAddress(ctx, &AddressWritable) || !AddressWritable)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Expression must be a modifiable value");
 		delete this;
@@ -2107,7 +2125,7 @@ FxAssign::~FxAssign()
 }
 
 /* I don't think we should allow constructs like (a = b) = c;...
-bool FxAssign::RequestAddress(bool *writable)
+bool FxAssign::RequestAddress(FCompileContext &ctx, bool *writable)
 {
 	AddressRequested = true;
 	if (writable != nullptr) *writable = AddressWritable;
@@ -2177,7 +2195,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 		SAFE_RESOLVE(Right, ctx);
 	}
 
-	if (!Base->RequestAddress(&AddressWritable) || !AddressWritable)
+	if (!Base->RequestAddress(ctx, &AddressWritable) || !AddressWritable)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Expression must be a modifiable value");
 		delete this;
@@ -2188,7 +2206,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 	if (Base->ExprType == EFX_StructMember || Base->ExprType == EFX_ClassMember)
 	{
 		auto f = static_cast<FxStructMember *>(Base)->membervar;
-		if (f->BitValue != -1 && !(f->Flags & VARF_ReadOnly))
+		if (f->BitValue != -1 && !ctx.CheckReadOnly(f->Flags))
 		{
 			IsBitWrite = f->BitValue;
 			return this;
@@ -5335,10 +5353,10 @@ FxExpression *FxLocalVariable::Resolve(FCompileContext &ctx)
 	return this;
 }
 
-bool FxLocalVariable::RequestAddress(bool *writable)
+bool FxLocalVariable::RequestAddress(FCompileContext &ctx, bool *writable)
 {
 	AddressRequested = true;
-	if (writable != nullptr) *writable = !(Variable->VarFlags & VARF_ReadOnly);
+	if (writable != nullptr) *writable = !ctx.CheckReadOnly(Variable->VarFlags);
 	return true;
 }
 	
@@ -5504,10 +5522,10 @@ FxGlobalVariable::FxGlobalVariable(PField* mem, const FScriptPosition &pos)
 //
 //==========================================================================
 
-bool FxGlobalVariable::RequestAddress(bool *writable)
+bool FxGlobalVariable::RequestAddress(FCompileContext &ctx, bool *writable)
 {
 	AddressRequested = true;
-	if (writable != nullptr) *writable = AddressWritable && !(membervar->Flags & VARF_ReadOnly);
+	if (writable != nullptr) *writable = AddressWritable && !ctx.CheckReadOnly(membervar->Flags);
 	return true;
 }
 
@@ -5582,10 +5600,10 @@ FxStructMember::~FxStructMember()
 //
 //==========================================================================
 
-bool FxStructMember::RequestAddress(bool *writable)
+bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 {
 	AddressRequested = true;
-	if (writable != nullptr) *writable = (AddressWritable && !(membervar->Flags & VARF_ReadOnly) &&
+	if (writable != nullptr) *writable = (AddressWritable && !ctx.CheckReadOnly(membervar->Flags) &&
 											(!classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) || !static_cast<PPointer*>(classx->ValueType)->IsConst));
 	return true;
 }
@@ -5662,7 +5680,7 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 		}
 		else
 		{
-			if (!(classx->RequestAddress(&AddressWritable)))
+			if (!(classx->RequestAddress(ctx, &AddressWritable)))
 			{
 				ScriptPosition.Message(MSG_ERROR, "unable to dereference left side of %s", membervar->SymbolName.GetChars());
 				delete this;
@@ -5767,7 +5785,7 @@ FxArrayElement::~FxArrayElement()
 //
 //==========================================================================
 
-bool FxArrayElement::RequestAddress(bool *writable)
+bool FxArrayElement::RequestAddress(FCompileContext &ctx, bool *writable)
 {
 	AddressRequested = true;
 	if (writable != nullptr) *writable = AddressWritable;
@@ -5830,7 +5848,7 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 		delete this;
 		return nullptr;
 	}
-	if (!Array->RequestAddress(&AddressWritable))
+	if (!Array->RequestAddress(ctx, &AddressWritable))
 	{
 		ScriptPosition.Message(MSG_ERROR, "Unable to dereference array.");
 		delete this;

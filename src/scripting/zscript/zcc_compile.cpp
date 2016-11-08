@@ -217,8 +217,8 @@ void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *treenode, ZC
 //
 //==========================================================================
 
-ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, PSymbolTable &_outsymbols)
-	: Outer(_outer), GlobalTreeNodes(&_symbols), OutputSymbols(&_outsymbols), AST(ast)
+ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, PSymbolTable &_outsymbols, int lumpnum)
+	: Outer(_outer), GlobalTreeNodes(&_symbols), OutputSymbols(&_outsymbols), AST(ast), Lump(lumpnum)
 {
 	FScriptPosition::ResetErrorCounter();
 	// Group top-level nodes by type
@@ -2146,7 +2146,7 @@ void ZCCCompiler::InitFunctions()
 					auto code = ConvertAST(c->Type(), f->Body);
 					if (code != nullptr)
 					{
-						sym->Variants[0].Implementation = FunctionBuildList.AddFunction(sym, code, FStringf("%s.%s", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars()), false);
+						sym->Variants[0].Implementation = FunctionBuildList.AddFunction(sym, code, FStringf("%s.%s", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars()), false, -1, 0, Lump);
 					}
 				}
 				if (sym->Variants[0].Implementation != nullptr && hasdefault)	// do not copy empty default lists, they only waste space and processing time.
@@ -2344,7 +2344,7 @@ void ZCCCompiler::CompileStates()
 						if (code != nullptr)
 						{
 							auto funcsym = CreateAnonymousFunction(c->Type(), nullptr, VARF_Method | VARF_Action);
-							state.ActionFunc = FunctionBuildList.AddFunction(funcsym, code, FStringf("%s.StateFunction.%d", c->Type()->TypeName.GetChars(), statedef.GetStateCount()), false, statedef.GetStateCount(), (int)sl->Frames->Len());
+							state.ActionFunc = FunctionBuildList.AddFunction(funcsym, code, FStringf("%s.StateFunction.%d", c->Type()->TypeName.GetChars(), statedef.GetStateCount()), false, statedef.GetStateCount(), (int)sl->Frames->Len(), Lump);
 						}
 					}
 

@@ -108,13 +108,14 @@ class FFunctionBuildList
 		FString PrintableName;
 		int StateIndex;
 		int StateCount;
+		int Lump;
 		bool FromDecorate;
 	};
 
 	TArray<Item> mItems;
 
 public:
-	VMFunction *AddFunction(PFunction *func, FxExpression *code, const FString &name, bool fromdecorate, int currentstate = -1, int statecnt = 0);
+	VMFunction *AddFunction(PFunction *func, FxExpression *code, const FString &name, bool fromdecorate, int currentstate = -1, int statecnt = 0, int lumpnum = -1);
 	void Build();
 };
 

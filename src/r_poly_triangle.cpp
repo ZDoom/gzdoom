@@ -425,7 +425,7 @@ void ScreenPolyTriangleDrawer::draw(const ScreenPolyTriangleDrawerArgs *args, Dr
 
 					for (int ix = x; ix < x + q; ix++)
 					{
-						bool visible = ix >= clipleft && ix <= clipright && (cliptop <= y + iy) && (clipbottom > y + iy);
+						bool visible = ix >= clipleft && ix < clipright && (cliptop <= y + iy) && (clipbottom > y + iy);
 
 						if (CX1 > 0 && CX2 > 0 && CX3 > 0 && visible)
 						{
@@ -594,7 +594,7 @@ void ScreenPolyTriangleDrawer::fill(const ScreenPolyTriangleDrawerArgs *args, Dr
 
 					for (int ix = x; ix < x + q; ix++)
 					{
-						bool visible = ix >= clipleft && ix <= clipright && (cliptop <= y + iy) && (clipbottom > y + iy);
+						bool visible = ix >= clipleft && ix < clipright && (cliptop <= y + iy) && (clipbottom > y + iy);
 
 						if (CX1 > 0 && CX2 > 0 && CX3 > 0 && visible)
 						{
@@ -819,7 +819,7 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 
 					for (int ix = x; ix < x + q; ix++)
 					{
-						bool visible = ix >= clipleft && ix <= clipright && (cliptop <= y + iy) && (clipbottom > y + iy);
+						bool visible = ix >= clipleft && ix < clipright && (cliptop <= y + iy) && (clipbottom > y + iy);
 
 						if (CX1 > 0 && CX2 > 0 && CX3 > 0 && visible)
 						{
@@ -995,7 +995,7 @@ void ScreenPolyTriangleDrawer::fill32(const ScreenPolyTriangleDrawerArgs *args, 
 
 					for (int ix = x; ix < x + q; ix++)
 					{
-						bool visible = ix >= clipleft && ix <= clipright && (cliptop <= y + iy) && (clipbottom > y + iy);
+						bool visible = ix >= clipleft && ix < clipright && (cliptop <= y + iy) && (clipbottom > y + iy);
 
 						if (CX1 > 0 && CX2 > 0 && CX3 > 0 && visible)
 						{

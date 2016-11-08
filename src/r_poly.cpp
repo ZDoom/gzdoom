@@ -67,6 +67,7 @@ void RenderPolyBsp::Render()
 		RenderSubsector(*it);
 
 	RenderPlayerSprites();
+	DrawerCommandQueue::WaitForWorkers();
 	RenderScreenSprites(); // To do: should be called by FSoftwareRenderer::DrawRemainingPlayerSprites instead of here
 }
 

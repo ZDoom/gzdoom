@@ -29,7 +29,7 @@
 #include "doomdata.h"
 #include "r_utility.h"
 #include "r_main.h"
-#include "r_triangle.h"
+#include "r_poly_triangle.h"
 
 // DScreen accelerated sprite to be rendered
 class PolyScreenSprite

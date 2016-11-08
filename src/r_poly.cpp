@@ -35,22 +35,11 @@ EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)
 EXTERN_CVAR(Bool, st_scale)
 
-namespace
-{
-	short cliptop[MAXWIDTH], clipbottom[MAXWIDTH];
-}
-
 /////////////////////////////////////////////////////////////////////////////
 
 void RenderPolyBsp::Render()
 {
 	PolyVertexBuffer::Clear();
-
-	for (int i = 0; i < viewwidth; i++)
-	{
-		cliptop[i] = 0;
-		clipbottom[i] = viewheight;
-	}
 
 	// Perspective correct:
 	float ratio = WidescreenRatio;
@@ -143,11 +132,11 @@ void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 
 	FTexture *floortex = TexMan(frontsector->GetTexture(sector_t::floor));
 	if (floortex->UseType != FTexture::TEX_Null)
-		TriangleDrawer::draw(worldToClip, floorVertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, cliptop, clipbottom, floortex);
+		PolyTriangleDrawer::draw(worldToClip, floorVertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, floortex);
 
 	FTexture *ceiltex = TexMan(frontsector->GetTexture(sector_t::ceiling));
 	if (ceiltex->UseType != FTexture::TEX_Null)
-		TriangleDrawer::draw(worldToClip, ceilVertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, cliptop, clipbottom, ceiltex);
+		PolyTriangleDrawer::draw(worldToClip, ceilVertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, ceiltex);
 
 	for (AActor *thing = sub->sector->thinglist; thing != nullptr; thing = thing->snext)
 	{
@@ -357,8 +346,7 @@ void RenderPolyBsp::AddSprite(AActor *thing, subsector_t *sub)
 		vertices[i].varying[2] = (thing->Sector->lightlevel + actualextralight) / 255.0f;
 	}
 
-	TriangleDrawer::draw(worldToClip, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, cliptop, clipbottom, tex);
-	TriangleDrawer::draw(worldToClip, vertices, 4, TriangleDrawMode::Fan, false, 0, viewwidth, cliptop, clipbottom, tex);
+	PolyTriangleDrawer::draw(worldToClip, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, tex);
 }
 
 void RenderPolyBsp::AddWallSprite(AActor *thing, subsector_t *sub)
@@ -895,7 +883,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	vertices[3].varying[1] = (float)texcoords.v2;
 	vertices[3].varying[2] = GetLightLevel() / 255.0f;
 
-	TriangleDrawer::draw(worldToClip, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, cliptop, clipbottom, tex);
+	PolyTriangleDrawer::draw(worldToClip, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, tex);
 }
 
 FTexture *RenderPolyWall::GetTexture()

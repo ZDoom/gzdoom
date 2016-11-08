@@ -464,7 +464,7 @@ void OpenGLFrameBuffer::Clear(int left, int top, int right, int bottom, int palc
 
 void OpenGLFrameBuffer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	double originx, double originy, double scalex, double scaley,
-	DAngle rotation, FDynamicColormap *colormap, int lightlevel)
+	DAngle rotation, FDynamicColormap *colormap, int lightlevel, int bottomclip)
 {
 	if (GLRenderer != nullptr && GLRenderer->m2DDrawer != nullptr && npoints >= 3)
 	{

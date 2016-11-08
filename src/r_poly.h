@@ -62,6 +62,12 @@ private:
 	void AddLine(seg_t *line, sector_t *frontsector);
 	TriVertex PlaneVertex(vertex_t *v1, sector_t *sector, const secplane_t &plane);
 
+	void AddSprite(AActor *thing);
+	void AddWallSprite(AActor *thing);
+	bool IsThingCulled(AActor *thing);
+	visstyle_t GetSpriteVisStyle(AActor *thing, double z);
+	FTexture *GetSpriteTexture(AActor *thing, /*out*/ bool &flipX);
+
 	void RenderPlayerSprites();
 	void RenderPlayerSprite(DPSprite *sprite, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac);
 

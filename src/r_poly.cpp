@@ -149,13 +149,13 @@ void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 	if (ceiltex->UseType != FTexture::TEX_Null)
 		TriangleDrawer::draw(worldToClip, ceilVertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, cliptop, clipbottom, ceiltex);
 
-	/*for (AActor *thing = sub->sector->thinglist; thing != nullptr; thing = thing->snext)
+	for (AActor *thing = sub->sector->thinglist; thing != nullptr; thing = thing->snext)
 	{
 		if ((thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 			AddWallSprite(thing);
 		else
 			AddSprite(thing);
-	}*/
+	}
 }
 
 void RenderPolyBsp::AddLine(seg_t *line, sector_t *frontsector)
@@ -246,6 +246,253 @@ void RenderPolyBsp::AddLine(seg_t *line, sector_t *frontsector)
 				wall.Masked = true;
 				wall.Render(worldToClip);
 			}
+		}
+	}
+}
+
+bool RenderPolyBsp::IsThingCulled(AActor *thing)
+{
+	FIntCVar *cvar = thing->GetClass()->distancecheck;
+	if (cvar != nullptr && *cvar >= 0)
+	{
+		double dist = (thing->Pos() - ViewPos).LengthSquared();
+		double check = (double)**cvar;
+		if (dist >= check * check)
+			return true;
+	}
+
+	// Don't waste time projecting sprites that are definitely not visible.
+	if (thing == nullptr ||
+		(thing->renderflags & RF_INVISIBLE) ||
+		!thing->RenderStyle.IsVisible(thing->Alpha) ||
+		!thing->IsVisibleToPlayer())
+	{
+		return true;
+	}
+
+	return false;
+}
+
+void RenderPolyBsp::AddSprite(AActor *thing)
+{
+	if (IsThingCulled(thing))
+		return;
+
+	DVector3 pos = thing->InterpolatedPosition(r_TicFracF);
+	pos.Z += thing->GetBobOffset(r_TicFracF);
+
+	bool flipTextureX = false;
+	FTexture *tex = GetSpriteTexture(thing, flipTextureX);
+	if (tex == nullptr)
+		return;
+	DVector2 spriteScale = thing->Scale;
+	double thingxscalemul = spriteScale.X / tex->Scale.X;
+	double thingyscalemul = spriteScale.Y / tex->Scale.Y;
+
+	if (flipTextureX)
+		pos.X -= (tex->GetWidth() - tex->LeftOffset) * thingxscalemul;
+	else
+		pos.X -= tex->LeftOffset * thingxscalemul;
+
+	//pos.Z -= tex->TopOffset * thingyscalemul;
+	pos.Z -= (tex->GetHeight() - tex->TopOffset) * thingyscalemul + thing->Floorclip;
+
+	double spriteHalfWidth = thingxscalemul * tex->GetWidth() * 0.5;
+	double spriteHeight = thingyscalemul * tex->GetHeight();
+
+	pos.X += spriteHalfWidth;
+
+	DVector2 points[2] =
+	{
+		{ pos.X - ViewSin * spriteHalfWidth, pos.Y + ViewCos * spriteHalfWidth },
+		{ pos.X + ViewSin * spriteHalfWidth, pos.Y - ViewCos * spriteHalfWidth }
+	};
+
+	//double depth = 1.0;
+	//visstyle_t visstyle = GetSpriteVisStyle(thing, depth);
+	// Rumor has it that AlterWeaponSprite needs to be called with visstyle passed in somewhere around here..
+	//R_SetColorMapLight(visstyle.BaseColormap, 0, visstyle.ColormapNum << FRACBITS);
+
+	TriVertex *vertices = PolyVertexBuffer::GetVertices(4);
+	if (!vertices)
+		return;
+
+	bool foggy = false;
+	int actualextralight = foggy ? 0 : extralight << 4;
+
+	std::pair<float, float> offsets[4] =
+	{
+		{ 0.0f,  1.0f },
+		{ 1.0f,  1.0f },
+		{ 1.0f,  0.0f },
+		{ 0.0f,  0.0f },
+	};
+
+	for (int i = 0; i < 4; i++)
+	{
+		auto &p = (i == 0 || i == 3) ? points[0] : points[1];
+
+		vertices[i].x = (float)p.X;
+		vertices[i].y = (float)p.Y;
+		vertices[i].z = (float)(pos.Z + spriteHeight * offsets[i].second);
+		vertices[i].w = 1.0f;
+		vertices[i].varying[0] = (float)(offsets[i].first * tex->Scale.X);
+		vertices[i].varying[1] = (float)((1.0f - offsets[i].second) * tex->Scale.Y);
+		if (flipTextureX)
+			vertices[i].varying[0] = 1.0f - vertices[i].varying[0];
+		vertices[i].varying[2] = (thing->Sector->lightlevel + actualextralight) / 255.0f;
+	}
+
+	TriangleDrawer::draw(worldToClip, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, cliptop, clipbottom, tex);
+	TriangleDrawer::draw(worldToClip, vertices, 4, TriangleDrawMode::Fan, false, 0, viewwidth, cliptop, clipbottom, tex);
+}
+
+void RenderPolyBsp::AddWallSprite(AActor *thing)
+{
+	if (IsThingCulled(thing))
+		return;
+}
+
+visstyle_t RenderPolyBsp::GetSpriteVisStyle(AActor *thing, double z)
+{
+	visstyle_t visstyle;
+
+	bool foggy = false;
+	int actualextralight = foggy ? 0 : extralight << 4;
+	int spriteshade = LIGHT2SHADE(thing->Sector->lightlevel + actualextralight);
+
+	visstyle.RenderStyle = thing->RenderStyle;
+	visstyle.Alpha = float(thing->Alpha);
+	visstyle.ColormapNum = 0;
+
+	// The software renderer cannot invert the source without inverting the overlay
+	// too. That means if the source is inverted, we need to do the reverse of what
+	// the invert overlay flag says to do.
+	bool invertcolormap = (visstyle.RenderStyle.Flags & STYLEF_InvertOverlay) != 0;
+
+	if (visstyle.RenderStyle.Flags & STYLEF_InvertSource)
+	{
+		invertcolormap = !invertcolormap;
+	}
+
+	FDynamicColormap *mybasecolormap = thing->Sector->ColorMap;
+
+	// Sprites that are added to the scene must fade to black.
+	if (visstyle.RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0)
+	{
+		mybasecolormap = GetSpecialLights(mybasecolormap->Color, 0, mybasecolormap->Desaturate);
+	}
+
+	if (visstyle.RenderStyle.Flags & STYLEF_FadeToBlack)
+	{
+		if (invertcolormap)
+		{ // Fade to white
+			mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(255, 255, 255), mybasecolormap->Desaturate);
+			invertcolormap = false;
+		}
+		else
+		{ // Fade to black
+			mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(0, 0, 0), mybasecolormap->Desaturate);
+		}
+	}
+
+	// get light level
+	if (fixedcolormap != NULL)
+	{ // fixed map
+		visstyle.BaseColormap = fixedcolormap;
+		visstyle.ColormapNum = 0;
+	}
+	else
+	{
+		if (invertcolormap)
+		{
+			mybasecolormap = GetSpecialLights(mybasecolormap->Color, mybasecolormap->Fade.InverseColor(), mybasecolormap->Desaturate);
+		}
+		if (fixedlightlev >= 0)
+		{
+			visstyle.BaseColormap = mybasecolormap;
+			visstyle.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
+		}
+		else if (!foggy && ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
+		{ // full bright
+			visstyle.BaseColormap = mybasecolormap;
+			visstyle.ColormapNum = 0;
+		}
+		else
+		{ // diminished light
+			double minz = double((2048 * 4) / double(1 << 20));
+			visstyle.ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(z, minz), spriteshade);
+			visstyle.BaseColormap = mybasecolormap;
+		}
+	}
+
+	return visstyle;
+}
+
+FTexture *RenderPolyBsp::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
+{
+	flipX = false;
+	if (thing->picnum.isValid())
+	{
+		FTexture *tex = TexMan(thing->picnum);
+		if (tex->UseType == FTexture::TEX_Null)
+		{
+			return nullptr;
+		}
+
+		if (tex->Rotations != 0xFFFF)
+		{
+			// choose a different rotation based on player view
+			spriteframe_t *sprframe = &SpriteFrames[tex->Rotations];
+			DVector3 pos = thing->InterpolatedPosition(r_TicFracF);
+			pos.Z += thing->GetBobOffset(r_TicFracF);
+			DAngle ang = (pos - ViewPos).Angle();
+			angle_t rot;
+			if (sprframe->Texture[0] == sprframe->Texture[1])
+			{
+				rot = (ang - thing->Angles.Yaw + 45.0 / 2 * 9).BAMs() >> 28;
+			}
+			else
+			{
+				rot = (ang - thing->Angles.Yaw + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+			}
+			flipX = (sprframe->Flip & (1 << rot)) != 0;
+			tex = TexMan[sprframe->Texture[rot]];	// Do not animate the rotation
+		}
+		return tex;
+	}
+	else
+	{
+		// decide which texture to use for the sprite
+		int spritenum = thing->sprite;
+		if (spritenum >= (signed)sprites.Size() || spritenum < 0)
+			return nullptr;
+
+		spritedef_t *sprdef = &sprites[spritenum];
+		if (thing->frame >= sprdef->numframes)
+		{
+			// If there are no frames at all for this sprite, don't draw it.
+			return nullptr;
+		}
+		else
+		{
+			//picnum = SpriteFrames[sprdef->spriteframes + thing->frame].Texture[0];
+			// choose a different rotation based on player view
+			spriteframe_t *sprframe = &SpriteFrames[sprdef->spriteframes + thing->frame];
+			DVector3 pos = thing->InterpolatedPosition(r_TicFracF);
+			pos.Z += thing->GetBobOffset(r_TicFracF);
+			DAngle ang = (pos - ViewPos).Angle();
+			angle_t rot;
+			if (sprframe->Texture[0] == sprframe->Texture[1])
+			{
+				rot = (ang - thing->Angles.Yaw + 45.0 / 2 * 9).BAMs() >> 28;
+			}
+			else
+			{
+				rot = (ang - thing->Angles.Yaw + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+			}
+			flipX = (sprframe->Flip & (1 << rot)) != 0;
+			return TexMan[sprframe->Texture[rot]];	// Do not animate the rotation
 		}
 	}
 }

@@ -638,10 +638,6 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 	int textureHeight = args->textureHeight;
 	uint32_t light = args->uniforms->light;
 
-#if !defined(NO_SSE)
-	__m128i mlight = _mm_set1_epi16(light);
-#endif
-
 	// 28.4 fixed-point coordinates
 	const int Y1 = (int)round(16.0f * v1.y);
 	const int Y2 = (int)round(16.0f * v2.y);
@@ -768,6 +764,16 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 				varyingBR[i] = ((startVarying[i] + offx1 * gradVaryingX[i] + offy1 * gradVaryingY[i]) * rcpWBR - varyingTR[i]) * (1.0f / q);
 			}
 
+			float globVis = 1706.0f;
+			float vis = globVis / rcpWTL;
+			float shade = 64.0f - (light * 255 / 256 + 12.0f) * 32.0f / 128.0f;
+			float lightscale = clamp((shade - MIN(24.0f, vis)) / 32.0f, 0.0f, 31.0f / 32.0f);
+			int diminishedlight = (int)clamp((1.0f - lightscale) * 256.0f + 0.5f, 0.0f, 256.0f);
+
+#if !defined(NO_SSE)
+			__m128i mlight = _mm_set1_epi16(diminishedlight);
+#endif
+
 			uint32_t *buffer = dest;
 
 			// Accept whole block when totally covered
@@ -796,9 +802,9 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 						uint32_t uvoffset = upos * textureHeight + vpos;
 
 						uint32_t fg = texturePixels[uvoffset];
-						uint32_t fg_red = (RPART(fg) * light) >> 8;
-						uint32_t fg_green = (GPART(fg) * light) >> 8;
-						uint32_t fg_blue = (BPART(fg) * light) >> 8;
+						uint32_t fg_red = (RPART(fg) * diminishedlight) >> 8;
+						uint32_t fg_green = (GPART(fg) * diminishedlight) >> 8;
+						uint32_t fg_blue = (BPART(fg) * diminishedlight) >> 8;
 						uint32_t fg_alpha = APART(fg);
 
 						if (fg_alpha > 127)
@@ -875,9 +881,9 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 							uint32_t uvoffset = upos * textureHeight + vpos;
 
 							uint32_t fg = texturePixels[uvoffset];
-							uint32_t fg_red = (RPART(fg) * light) >> 8;
-							uint32_t fg_green = (GPART(fg) * light) >> 8;
-							uint32_t fg_blue = (BPART(fg) * light) >> 8;
+							uint32_t fg_red = (RPART(fg) * diminishedlight) >> 8;
+							uint32_t fg_green = (GPART(fg) * diminishedlight) >> 8;
+							uint32_t fg_blue = (BPART(fg) * diminishedlight) >> 8;
 							uint32_t fg_alpha = APART(fg);
 
 							if (fg_alpha > 127)

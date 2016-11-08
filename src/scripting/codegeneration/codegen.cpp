@@ -6409,7 +6409,16 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 			}
 			else if (Special < 0 && i == 0)
 			{
-				if ((*ArgList)[i]->ValueType != TypeName)
+				if ((*ArgList)[i]->ValueType == TypeString)
+				{
+					(*ArgList)[i] = new FxNameCast((*ArgList)[i]);
+					(*ArgList)[i] = (*ArgList)[i]->Resolve(ctx);
+					if ((*ArgList)[i] == nullptr)
+					{
+						failed = true;
+					}
+				}
+				else if ((*ArgList)[i]->ValueType != TypeName)
 				{
 					ScriptPosition.Message(MSG_ERROR, "Name expected for parameter %d", i);
 					failed = true;

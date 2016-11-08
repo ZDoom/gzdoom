@@ -139,10 +139,8 @@ void TriangleDrawer::draw_shaded_triangle(const TriVertex *vert, bool ccw, Scree
 {
 	// Cull, clip and generate additional vertices as needed
 	TriVertex clippedvert[6];
-	int numclipvert = 0;
-	clipedge(vert[0], vert[1], clippedvert, numclipvert);
-	clipedge(vert[1], vert[2], clippedvert, numclipvert);
-	clipedge(vert[2], vert[0], clippedvert, numclipvert);
+	int numclipvert;
+	clipedge(vert, clippedvert, numclipvert);
 
 	// Map to 2D viewport:
 	for (int j = 0; j < numclipvert; j++)
@@ -185,62 +183,113 @@ void TriangleDrawer::draw_shaded_triangle(const TriVertex *vert, bool ccw, Scree
 
 bool TriangleDrawer::cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2)
 {
-	float d1 = clipdistance1 * (1.0f - t1) + clipdistance2 * t1;
-	float d2 = clipdistance1 * (1.0f - t2) + clipdistance2 * t2;
-	if (d1 < 0.0f && d2 < 0.0f)
+	if (clipdistance1 < 0.0f && clipdistance2 < 0.0f)
 		return true;
 
-	if (d1 < 0.0f)
-		t1 = MAX(-clipdistance1 / (clipdistance2 - clipdistance1), t1);
+	if (clipdistance1 < 0.0f)
+		t1 = MAX(-clipdistance1 / (clipdistance2 - clipdistance1), 0.0f);
+	else
+		t1 = 0.0f;
 
-	if (d2 < 0.0f)
-		t2 = MIN(1.0f + clipdistance2 / (clipdistance1 - clipdistance2), t2);
+	if (clipdistance2 < 0.0f)
+		t2 = MIN(1.0f + clipdistance2 / (clipdistance1 - clipdistance2), 1.0f);
+	else
+		t2 = 1.0f;
 
 	return false;
 }
 
-void TriangleDrawer::clipedge(const TriVertex &v1, const TriVertex &v2, TriVertex *clippedvert, int &numclipvert)
+void TriangleDrawer::clipedge(const TriVertex *verts, TriVertex *clippedvert, int &numclipvert)
 {
 	// Clip and cull so that the following is true for all vertices:
 	// -v.w <= v.x <= v.w
 	// -v.w <= v.y <= v.w
 	// -v.w <= v.z <= v.w
-
-	float t1 = 0.0f, t2 = 1.0f;
-	bool culled =
-		cullhalfspace(v1.x + v1.w, v2.x + v2.w, t1, t2) ||
-		cullhalfspace(v1.w - v1.x, v2.w - v2.x, t1, t2) ||
-		cullhalfspace(v1.y + v1.w, v2.y + v2.w, t1, t2) ||
-		cullhalfspace(v1.w - v1.y, v2.w - v2.y, t1, t2) ||
-		cullhalfspace(v1.z + v1.w, v2.z + v2.w, t1, t2) ||
-		cullhalfspace(v1.w - v1.z, v2.w - v2.z, t1, t2);
-	if (culled)
-		return;
-
-	if (t1 == 0.0f)
+	
+	// use barycentric weights while clipping vertices
+	float weights[6 * 3 * 2];
+	for (int i = 0; i < 3; i++)
 	{
-		clippedvert[numclipvert++] = v1;
+		weights[i * 3 + 0] = 0.0f;
+		weights[i * 3 + 1] = 0.0f;
+		weights[i * 3 + 2] = 0.0f;
+		weights[i * 3 + i] = 1.0f;
 	}
-	else
+	
+	// halfspace clip distances
+	float clipdistance[6 * 3];
+	for (int i = 0; i < 3; i++)
 	{
-		auto &v = clippedvert[numclipvert++];
-		v.x = v1.x * (1.0f - t1) + v2.x * t1;
-		v.y = v1.y * (1.0f - t1) + v2.y * t1;
-		v.z = v1.z * (1.0f - t1) + v2.z * t1;
-		v.w = v1.w * (1.0f - t1) + v2.w * t1;
-		for (int i = 0; i < TriVertex::NumVarying; i++)
-			v.varying[i] = v1.varying[i] * (1.0f - t1) + v2.varying[i] * t1;
+		const auto &v = verts[i];
+		clipdistance[i * 6 + 0] = v.x + v.w;
+		clipdistance[i * 6 + 1] = v.w - v.x;
+		clipdistance[i * 6 + 2] = v.y + v.w;
+		clipdistance[i * 6 + 3] = v.w - v.y;
+		clipdistance[i * 6 + 4] = v.z + v.w;
+		clipdistance[i * 6 + 5] = v.w - v.z;
 	}
-
-	if (t2 != 1.0f)
+	
+	// Clip against each halfspace
+	float *input = weights;
+	float *output = weights + 6 * 3;
+	int inputverts = 3;
+	int outputverts = 0;
+	for (int p = 0; p < 6; p++)
 	{
-		auto &v = clippedvert[numclipvert++];
-		v.x = v1.x * (1.0f - t2) + v2.x * t2;
-		v.y = v1.y * (1.0f - t2) + v2.y * t2;
-		v.z = v1.z * (1.0f - t2) + v2.z * t2;
-		v.w = v1.w * (1.0f - t2) + v2.w * t2;
-		for (int i = 0; i < TriVertex::NumVarying; i++)
-			v.varying[i] = v1.varying[i] * (1.0f - t2) + v2.varying[i] * t2;
+		// Clip each edge
+		outputverts = 0;
+		for (int i = 0; i < inputverts; i++)
+		{
+			int j = (i + 1) % inputverts;
+			float clipdistance1 =
+				clipdistance[0 * 6 + p] * input[i * 3 + 0] +
+				clipdistance[1 * 6 + p] * input[i * 3 + 1] +
+				clipdistance[2 * 6 + p] * input[i * 3 + 2];
+
+			float clipdistance2 =
+				clipdistance[0 * 6 + p] * input[j * 3 + 0] +
+				clipdistance[1 * 6 + p] * input[j * 3 + 1] +
+				clipdistance[2 * 6 + p] * input[j * 3 + 2];
+				
+			float t1, t2;
+			if (!cullhalfspace(clipdistance1, clipdistance2, t1, t2))
+			{
+				// add t1 vertex
+				for (int k = 0; k < 3; k++)
+					output[outputverts * 3 + k] = input[i * 3 + k] * (1.0f - t1) + input[j * 3 + k] * t1;
+				outputverts++;
+			
+				if (t2 != 1.0f && t2 > t1)
+				{
+					// add t2 vertex
+					for (int k = 0; k < 3; k++)
+						output[outputverts * 3 + k] = input[i * 3 + k] * (1.0f - t2) + input[j * 3 + k] * t2;
+					outputverts++;
+				}
+			}
+		}
+		std::swap(input, output);
+		std::swap(inputverts, outputverts);
+		if (inputverts == 0)
+			break;
+	}
+	
+	// Convert barycentric weights to actual vertices
+	numclipvert = inputverts;
+	for (int i = 0; i < numclipvert; i++)
+	{
+		auto &v = clippedvert[i];
+		memset(&v, 0, sizeof(TriVertex));
+		for (int w = 0; w < 3; w++)
+		{
+			float weight = input[i * 3 + w];
+			v.x += verts[w].x * weight;
+			v.y += verts[w].y * weight;
+			v.z += verts[w].z * weight;
+			v.w += verts[w].w * weight;
+			for (int iv = 0; iv < TriVertex::NumVarying; iv++)
+				v.varying[iv] += verts[w].varying[iv] * weight;
+		}
 	}
 }
 

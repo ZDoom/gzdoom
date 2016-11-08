@@ -102,7 +102,7 @@ private:
 	static void draw_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, DrawerThread *thread, void(*drawfunc)(const ScreenTriangleDrawerArgs *, DrawerThread *));
 	static void draw_shaded_triangle(const TriVertex *vertices, bool ccw, ScreenTriangleDrawerArgs *args, DrawerThread *thread, void(*drawfunc)(const ScreenTriangleDrawerArgs *, DrawerThread *));
 	static bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2);
-	static void clipedge(const TriVertex &v1, const TriVertex &v2, TriVertex *clippedvert, int &numclipvert);
+	static void clipedge(const TriVertex *verts, TriVertex *clippedvert, int &numclipvert);
 
 	static void queue_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor);
 

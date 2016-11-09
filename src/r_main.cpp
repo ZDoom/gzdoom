@@ -68,7 +68,7 @@ CUSTOM_CVAR(Bool, r_newrenderer, 0, CVAR_NOINITCALL)
 {
 	if (self == 1 && !hasglnodes)
 	{
-		Printf("No GL BSP detected. You must enable automap texturing and then restart the map\n");
+		Printf("No GL BSP detected. You must restart the map before rendering will be correct\n");
 	}
 }
 

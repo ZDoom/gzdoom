@@ -28,6 +28,7 @@ struct FSoftwareRenderer : public FRenderer
 	virtual void DrawRemainingPlayerSprites() override;
 
 	virtual int GetMaxViewPitch(bool down) override;
+	bool RequireGLNodes() override;
 
 	void OnModeSet () override;
 	void ErrorCleanup () override;

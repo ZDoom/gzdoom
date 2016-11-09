@@ -258,6 +258,11 @@ int FSoftwareRenderer::GetMaxViewPitch(bool down)
 	return (r_newrenderer) ? int(maxviewpitch) : (down ? MAX_DN_ANGLE : MAX_UP_ANGLE);
 }
 
+bool FSoftwareRenderer::RequireGLNodes()
+{
+	return r_newrenderer;
+}
+
 //==========================================================================
 //
 // OnModeSet

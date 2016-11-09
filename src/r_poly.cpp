@@ -35,11 +35,17 @@ EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)
 EXTERN_CVAR(Bool, st_scale)
 
+CVAR(Bool, r_debug_cull, 0, 0)
+
 /////////////////////////////////////////////////////////////////////////////
 
 void RenderPolyBsp::Render()
 {
 	PolyVertexBuffer::Clear();
+	SolidSegments.clear();
+	SolidSegments.reserve(MAXWIDTH / 2 + 2);
+	SolidSegments.push_back({ -0x7fff, 0 });
+	SolidSegments.push_back({ viewwidth, 0x7fff });
 
 	// Perspective correct:
 	float ratio = WidescreenRatio;
@@ -63,8 +69,16 @@ void RenderPolyBsp::Render()
 		RenderNode(nodes + numnodes - 1);	// The head node is the last node output.
 
 	// Render back to front (we don't have a zbuffer at the moment, sniff!):
-	for (auto it = PvsSectors.rbegin(); it != PvsSectors.rend(); ++it)
-		RenderSubsector(*it);
+	if (!r_debug_cull)
+	{
+		for (auto it = PvsSectors.rbegin(); it != PvsSectors.rend(); ++it)
+			RenderSubsector(*it);
+	}
+	else
+	{
+		for (auto it = PvsSectors.begin(); it != PvsSectors.end(); ++it)
+			RenderSubsector(*it);
+	}
 
 	RenderPlayerSprites();
 	DrawerCommandQueue::WaitForWorkers();
@@ -543,8 +557,24 @@ void RenderPolyBsp::RenderNode(void *node)
 
 		node = bsp->children[side];
 	}
-	PvsSectors.push_back((subsector_t *)((BYTE *)node - 1));
-	//RenderSubsector((subsector_t *)((BYTE *)node - 1));
+
+	// Mark that we need to render this
+	subsector_t *sub = (subsector_t *)((BYTE *)node - 1);
+	PvsSectors.push_back(sub);
+
+	// Update culling info for further bsp clipping
+	for (uint32_t i = 0; i < sub->numlines; i++)
+	{
+		seg_t *line = &sub->firstline[i];
+		if ((line->sidedef == nullptr || !(line->sidedef->Flags & WALLF_POLYOBJ)) && line->backsector == nullptr)
+		{
+			int sx1, sx2;
+			if (GetSegmentRangeForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), sx1, sx2))
+			{
+				MarkSegmentCulled(sx1, sx2);
+			}
+		}
+	}
 }
 
 void RenderPolyBsp::RenderPlayerSprites()
@@ -752,6 +782,52 @@ void RenderPolyBsp::RenderPlayerSprite(DPSprite *sprite, AActor *owner, float bo
 	//R_DrawVisSprite(vis);
 }
 
+bool RenderPolyBsp::IsSegmentCulled(int x1, int x2) const
+{
+	int next = 0;
+	while (SolidSegments[next].X2 <= x2)
+		next++;
+	return (x1 >= SolidSegments[next].X1 && x2 <= SolidSegments[next].X2);
+}
+
+void RenderPolyBsp::MarkSegmentCulled(int x1, int x2)
+{
+	if (x1 >= x2)
+		return;
+
+	int cur = 1;
+	while (true)
+	{
+		if (SolidSegments[cur].X1 <= x1 && SolidSegments[cur].X2 >= x2) // Already fully marked
+		{
+			break;
+		}
+		else if (cur + 1 != SolidSegments.size() && SolidSegments[cur].X2 >= x1 && SolidSegments[cur].X1 <= x2) // Merge segments
+		{
+			// Find last segment
+			int merge = cur;
+			while (merge + 2 != SolidSegments.size() && SolidSegments[merge + 1].X1 <= x2)
+				merge++;
+
+			// Apply new merged range
+			SolidSegments[cur].X1 = MIN(SolidSegments[cur].X1, x1);
+			SolidSegments[cur].X2 = MAX(SolidSegments[merge].X2, x2);
+
+			// Remove additional segments we merged with
+			if (merge > cur)
+				SolidSegments.erase(SolidSegments.begin() + (cur + 1), SolidSegments.begin() + (merge + 1));
+
+			break;
+		}
+		else if (SolidSegments[cur].X1 > x1) // Insert new segment
+		{
+			SolidSegments.insert(SolidSegments.begin() + cur, { x1, x2 });
+			break;
+		}
+		cur++;
+	}
+}
+
 int RenderPolyBsp::PointOnSide(const DVector2 &pos, const node_t *node)
 {
 	return DMulScale32(FLOAT2FIXED(pos.Y) - node->y, node->dx, node->x - FLOAT2FIXED(pos.X), node->dy) > 0;
@@ -854,6 +930,55 @@ bool RenderPolyBsp::CheckBBox(float *bspcoord)
 
 	// Find the first clippost that touches the source post
 	//	(adjacent pixels are touching).
+
+	// Does not cross a pixel.
+	if (sx2 <= sx1)
+		return false;
+
+	return !IsSegmentCulled(sx1, sx2);
+}
+
+bool RenderPolyBsp::GetSegmentRangeForLine(double x1, double y1, double x2, double y2, int &sx1, int &sx2) const
+{
+	x1 = x1 - ViewPos.X;
+	y1 = y1 - ViewPos.Y;
+	x2 = x2 - ViewPos.X;
+	y2 = y2 - ViewPos.Y;
+
+	// Sitting on a line?
+	if (y1 * (x1 - x2) + x1 * (y2 - y1) >= -EQUAL_EPSILON)
+		return false;
+
+	double rx1 = x1 * ViewSin - y1 * ViewCos;
+	double rx2 = x2 * ViewSin - y2 * ViewCos;
+	double ry1 = x1 * ViewTanCos + y1 * ViewTanSin;
+	double ry2 = x2 * ViewTanCos + y2 * ViewTanSin;
+
+	if (rx1 >= -ry1)
+	{
+		if (rx1 > ry1) return false;	// left edge is off the right side
+		if (ry1 == 0) return false;
+		sx1 = xs_RoundToInt(CenterX + rx1 * CenterX / ry1);
+	}
+	else
+	{
+		if (rx2 < -ry2) return false;	// wall is off the left side
+		if (rx1 - rx2 - ry2 + ry1 == 0) return false;	// wall does not intersect view volume
+		sx1 = 0;
+	}
+
+	if (rx2 <= ry2)
+	{
+		if (rx2 < -ry2) return false;	// right edge is off the left side
+		if (ry2 == 0) return false;
+		sx2 = xs_RoundToInt(CenterX + rx2 * CenterX / ry2);
+	}
+	else
+	{
+		if (rx1 > ry1) return false;	// wall is off the right side
+		if (ry2 - ry1 - rx2 + rx1 == 0) return false;	// wall does not intersect view volume
+		sx2 = viewwidth;
+	}
 
 	// Does not cross a pixel.
 	if (sx2 <= sx1)

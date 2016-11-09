@@ -77,6 +77,11 @@ private:
 	// Returns true if some part of the bbox might be visible.
 	bool CheckBBox(float *bspcoord);
 
+	bool GetSegmentRangeForLine(double x1, double y1, double x2, double y2, int &sx1, int &sx2) const;
+
+	void MarkSegmentCulled(int x1, int x2);
+	bool IsSegmentCulled(int x1, int x2) const;
+
 	std::vector<subsector_t *> PvsSectors;
 	TriMatrix worldToClip;
 
@@ -84,6 +89,14 @@ private:
 
 	const int BaseXCenter = 160;
 	const int BaseYCenter = 100;
+
+	struct SolidSegment
+	{
+		SolidSegment(int x1, int x2) : X1(x1), X2(x2) { }
+		int X1, X2;
+	};
+
+	std::vector<SolidSegment> SolidSegments;
 };
 
 class RenderPolyWall

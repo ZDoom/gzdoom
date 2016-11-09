@@ -47,6 +47,10 @@ void RenderPolyBsp::Render()
 	SolidSegments.push_back({ -0x7fff, 0 });
 	SolidSegments.push_back({ viewwidth, 0x7fff });
 
+	SectorSpriteRanges.clear();
+	SectorSpriteRanges.resize(numsectors);
+	SortedSprites.clear();
+
 	// Perspective correct:
 	float ratio = WidescreenRatio;
 	float fovratio = (WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
@@ -174,13 +178,35 @@ void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 		PolyTriangleDrawer::draw(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, ceiltex);
 	}
 
-	for (AActor *thing = sub->sector->thinglist; thing != nullptr; thing = thing->snext)
+	SpriteRange sprites = GetSpritesForSector(sub->sector);
+	for (int i = 0; i < sprites.Count; i++)
 	{
+		AActor *thing = SortedSprites[sprites.Start + i].Thing;
 		if ((thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 			AddWallSprite(thing, sub);
 		else
 			AddSprite(thing, sub);
 	}
+}
+
+SpriteRange RenderPolyBsp::GetSpritesForSector(sector_t *sector)
+{
+	if (SectorSpriteRanges.size() < sector->sectornum || sector->sectornum < 0)
+		return SpriteRange();
+
+	auto &range = SectorSpriteRanges[sector->sectornum];
+	if (range.Start == -1)
+	{
+		range.Start = (int)SortedSprites.size();
+		range.Count = 0;
+		for (AActor *thing = sector->thinglist; thing != nullptr; thing = thing->snext)
+		{
+			SortedSprites.push_back({ thing, (thing->Pos() - ViewPos).LengthSquared() });
+			range.Count++;
+		}
+		std::stable_sort(SortedSprites.begin() + range.Start, SortedSprites.begin() + range.Start + range.Count);
+	}
+	return range;
 }
 
 void RenderPolyBsp::AddLine(seg_t *line, sector_t *frontsector)

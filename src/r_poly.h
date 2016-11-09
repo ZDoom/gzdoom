@@ -49,6 +49,26 @@ public:
 	FDynamicColormap *Colormap = nullptr;
 };
 
+// Used for sorting things by distance to the camera
+class PolySortedSprite
+{
+public:
+	PolySortedSprite(AActor *thing, double distanceSquared) : Thing(thing), DistanceSquared(distanceSquared) { }
+	bool operator<(const PolySortedSprite &other) const { return DistanceSquared > other.DistanceSquared; }
+
+	AActor *Thing;
+	double DistanceSquared;
+};
+
+class SpriteRange
+{
+public:
+	SpriteRange() = default;
+	SpriteRange(int start, int count) : Start(start), Count(count) { }
+	int Start = -1;
+	int Count = 0;
+};
+
 // Renders a GL BSP tree in a scene
 class RenderPolyBsp
 {
@@ -67,6 +87,7 @@ private:
 	bool IsThingCulled(AActor *thing);
 	visstyle_t GetSpriteVisStyle(AActor *thing, double z);
 	FTexture *GetSpriteTexture(AActor *thing, /*out*/ bool &flipX);
+	SpriteRange GetSpritesForSector(sector_t *sector);
 
 	void RenderPlayerSprites();
 	void RenderPlayerSprite(DPSprite *sprite, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac);
@@ -84,6 +105,9 @@ private:
 
 	std::vector<subsector_t *> PvsSectors;
 	TriMatrix worldToClip;
+
+	std::vector<SpriteRange> SectorSpriteRanges;
+	std::vector<PolySortedSprite> SortedSprites;
 
 	std::vector<PolyScreenSprite> ScreenSprites;
 

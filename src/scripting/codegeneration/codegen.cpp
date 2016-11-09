@@ -3251,10 +3251,15 @@ ExpEmit FxCompareEq::Emit(VMFunctionBuilder *build)
 		int a = Operator == TK_Eq ? CMP_EQ :
 			Operator == TK_Neq ? CMP_EQ | CMP_CHECK : CMP_EQ | CMP_APPROX;
 
+		if (op1.Konst) a|= CMP_BK;
+		if (op2.Konst) a |= CMP_CK;
+
 		build->Emit(OP_LI, to.RegNum, 0, 0);
 		build->Emit(OP_CMPS, a, op1.RegNum, op2.RegNum);
 		build->Emit(OP_JMP, 1);
 		build->Emit(OP_LI, to.RegNum, 1);
+		op1.Free(build);
+		op2.Free(build);
 		return to;
 	}
 	else

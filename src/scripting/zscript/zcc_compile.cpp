@@ -497,6 +497,8 @@ void ZCCCompiler::CreateClassTypes()
 						DPrintf(DMSG_SPAMMY, "Registered %s as native with parent %s\n", me->TypeName.GetChars(), parent->TypeName.GetChars());
 					}
 					c->cls->Type = me;
+					auto ac = dyn_cast<PClassActor>(me);
+					if (ac != nullptr) ac->SourceLumpName = *c->cls->SourceName;
 				}
 				else
 				{

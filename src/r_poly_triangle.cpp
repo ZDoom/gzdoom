@@ -94,6 +94,7 @@ void PolyTriangleDrawer::draw_arrays(const TriUniforms &uniforms, const TriVerte
 	args.stencilPitch = PolyStencilBuffer::Instance()->BlockWidth();
 	args.stencilValues = PolyStencilBuffer::Instance()->Values();
 	args.stencilMasks = PolyStencilBuffer::Instance()->Masks();
+	args.subsectorGBuffer = PolySubsectorGBuffer::Instance()->Values();
 
 	TriVertex vert[3];
 	if (mode == TriangleDrawMode::Normal)

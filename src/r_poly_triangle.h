@@ -125,6 +125,32 @@ private:
 	uint32_t &ValueMask; // 4 * 4 + 2 * 2 + 1 bits indicating is Values are the same
 };
 
+class PolySubsectorGBuffer
+{
+public:
+	static PolySubsectorGBuffer *Instance()
+	{
+		static PolySubsectorGBuffer buffer;
+		return &buffer;
+	}
+
+	void Resize(int newwidth, int newheight)
+	{
+		width = newwidth;
+		height = newheight;
+		values.resize(width * height);
+	}
+
+	int Width() const { return width; }
+	int Height() const { return height; }
+	uint32_t *Values() { return values.data(); }
+
+private:
+	int width;
+	int height;
+	std::vector<uint32_t> values;
+};
+
 class PolyStencilBuffer
 {
 public:
@@ -186,6 +212,7 @@ struct ScreenPolyTriangleDrawerArgs
 	int stencilPitch;
 	uint8_t stencilTestValue;
 	uint8_t stencilWriteValue;
+	uint32_t *subsectorGBuffer;
 };
 
 class ScreenPolyTriangleDrawer

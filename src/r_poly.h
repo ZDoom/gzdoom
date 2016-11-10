@@ -97,14 +97,16 @@ public:
 	void Render();
 	void RenderScreenSprites();
 
+	static const uint32_t SkySubsectorDepth = 0xffffffff;
+
 private:
 	void RenderNode(void *node);
 	void RenderSubsector(subsector_t *sub);
-	void AddLine(seg_t *line, sector_t *frontsector);
+	void AddLine(seg_t *line, sector_t *frontsector, uint32_t subsectorDepth);
 	TriVertex PlaneVertex(vertex_t *v1, sector_t *sector, const secplane_t &plane);
 
-	void AddSprite(AActor *thing, subsector_t *sub);
-	void AddWallSprite(AActor *thing, subsector_t *sub);
+	void AddSprite(AActor *thing, subsector_t *sub, uint32_t subsectorDepth);
+	void AddWallSprite(AActor *thing, subsector_t *sub, uint32_t subsectorDepth);
 	bool IsThingCulled(AActor *thing);
 	visstyle_t GetSpriteVisStyle(AActor *thing, double z);
 	FTexture *GetSpriteTexture(AActor *thing, /*out*/ bool &flipX);
@@ -125,6 +127,8 @@ private:
 	bool IsSegmentCulled(int x1, int x2) const;
 
 	std::vector<subsector_t *> PvsSectors;
+	uint32_t NextSubsectorDepth = 0;
+
 	TriMatrix worldToClip;
 
 	std::vector<SpriteRange> SectorSpriteRanges;
@@ -176,6 +180,7 @@ public:
 	FSWColormap *Colormap = nullptr;
 	bool Masked = false;
 	bool IsSky = false;
+	uint32_t SubsectorDepth = 0;
 
 private:
 	FTexture *GetTexture();

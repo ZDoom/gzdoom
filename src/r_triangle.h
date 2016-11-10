@@ -63,6 +63,7 @@ struct TriMatrix
 struct TriUniforms
 {
 	uint32_t light;
+	uint32_t subsectorDepth;
 
 	uint16_t light_alpha;
 	uint16_t light_red;

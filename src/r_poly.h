@@ -175,6 +175,7 @@ public:
 	double UnpeggedCeil = 0.0;
 	FSWColormap *Colormap = nullptr;
 	bool Masked = false;
+	bool IsSky = false;
 
 private:
 	FTexture *GetTexture();

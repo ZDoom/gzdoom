@@ -51,7 +51,6 @@ void RenderPolyBsp::Render()
 	SectorSpriteRanges.resize(numsectors);
 	SortedSprites.clear();
 	PvsSectors.clear();
-	SectorSpriteRanges.clear();
 	ScreenSprites.clear();
 	PolyStencilBuffer::Instance()->Clear(viewwidth, viewheight, 0);
 
@@ -76,10 +75,8 @@ void RenderPolyBsp::Render()
 	else
 		RenderNode(nodes + numnodes - 1);	// The head node is the last node output.
 
-	skydome.Render(worldToClip);
-
-	// Render back to front (we don't have a zbuffer at the moment, sniff!):
-	if (!r_debug_cull)
+	// Render front to back using the stencil buffer
+	if (r_debug_cull)
 	{
 		for (auto it = PvsSectors.rbegin(); it != PvsSectors.rend(); ++it)
 			RenderSubsector(*it);
@@ -89,6 +86,8 @@ void RenderPolyBsp::Render()
 		for (auto it = PvsSectors.begin(); it != PvsSectors.end(); ++it)
 			RenderSubsector(*it);
 	}
+
+	skydome.Render(worldToClip);
 
 	RenderPlayerSprites();
 	DrawerCommandQueue::WaitForWorkers();
@@ -138,7 +137,7 @@ void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 
 	FTextureID floorpicnum = frontsector->GetTexture(sector_t::floor);
 	FTexture *floortex = TexMan(floorpicnum);
-	if (floortex->UseType != FTexture::TEX_Null && floorpicnum != skyflatnum)
+	if (floortex->UseType != FTexture::TEX_Null)
 	{
 		TriVertex *vertices = PolyVertexBuffer::GetVertices(sub->numlines);
 		if (!vertices)
@@ -158,12 +157,16 @@ void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 		else if (fixedcolormap)
 			uniforms.light = 256;
 		uniforms.flags = 0;
-		PolyTriangleDrawer::draw(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, floortex);
+
+		bool isSky = floorpicnum == skyflatnum;
+		if (!isSky)
+			PolyTriangleDrawer::draw(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, floortex, 0);
+		PolyTriangleDrawer::stencil(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, 0, isSky ? 255 : 254);
 	}
 
 	FTextureID ceilpicnum = frontsector->GetTexture(sector_t::ceiling);
 	FTexture *ceiltex = TexMan(ceilpicnum);
-	if (ceiltex->UseType != FTexture::TEX_Null && ceilpicnum != skyflatnum)
+	if (ceiltex->UseType != FTexture::TEX_Null)
 	{
 		TriVertex *vertices = PolyVertexBuffer::GetVertices(sub->numlines);
 		if (!vertices)
@@ -183,7 +186,11 @@ void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 		else if (fixedcolormap)
 			uniforms.light = 256;
 		uniforms.flags = 0;
-		PolyTriangleDrawer::draw(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, ceiltex);
+
+		bool isSky = ceilpicnum == skyflatnum;
+		if (!isSky)
+			PolyTriangleDrawer::draw(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, ceiltex, 0);
+		PolyTriangleDrawer::stencil(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, 0, isSky ? 255 : 254);
 	}
 
 	SpriteRange sprites = GetSpritesForSector(sub->sector);
@@ -272,23 +279,25 @@ void RenderPolyBsp::AddLine(seg_t *line, sector_t *frontsector)
 		bool bothSkyCeiling = frontsector->GetTexture(sector_t::ceiling) == skyflatnum && backsector->GetTexture(sector_t::ceiling) == skyflatnum;
 		bool bothSkyFloor = frontsector->GetTexture(sector_t::floor) == skyflatnum && backsector->GetTexture(sector_t::floor) == skyflatnum;
 
-		if ((topceilz1 > topfloorz1 || topceilz2 > topfloorz2) && !bothSkyCeiling && line->sidedef)
+		if ((topceilz1 > topfloorz1 || topceilz2 > topfloorz2) && line->sidedef)
 		{
 			wall.SetCoords(line->v1->fPos(), line->v2->fPos(), topceilz1, topfloorz1, topceilz2, topfloorz2);
 			wall.TopZ = topceilz1;
 			wall.BottomZ = topfloorz1;
 			wall.UnpeggedCeil = topceilz1;
 			wall.Texpart = side_t::top;
+			wall.IsSky = bothSkyCeiling;
 			wall.Render(worldToClip);
 		}
 
-		if ((bottomfloorz1 < bottomceilz1 || bottomfloorz2 < bottomceilz2) && !bothSkyFloor && line->sidedef)
+		if ((bottomfloorz1 < bottomceilz1 || bottomfloorz2 < bottomceilz2) && line->sidedef)
 		{
 			wall.SetCoords(line->v1->fPos(), line->v2->fPos(), bottomceilz1, bottomfloorz2, bottomceilz2, bottomfloorz2);
 			wall.TopZ = bottomceilz1;
 			wall.BottomZ = bottomfloorz2;
 			wall.UnpeggedCeil = topceilz1;
 			wall.Texpart = side_t::bottom;
+			wall.IsSky = bothSkyFloor;
 			wall.Render(worldToClip);
 		}
 
@@ -419,7 +428,7 @@ void RenderPolyBsp::AddSprite(AActor *thing, subsector_t *sub)
 	uniforms.objectToClip = worldToClip;
 	uniforms.light = (uint32_t)((thing->Sector->lightlevel + actualextralight) / 255.0f * 256.0f);
 	uniforms.flags = 0;
-	PolyTriangleDrawer::draw(uniforms, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, tex);
+	PolyTriangleDrawer::draw(uniforms, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, tex, 254);
 }
 
 void RenderPolyBsp::AddWallSprite(AActor *thing, subsector_t *sub)
@@ -1067,7 +1076,10 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	uniforms.objectToClip = worldToClip;
 	uniforms.light = (uint32_t)(GetLightLevel() / 255.0f * 256.0f);
 	uniforms.flags = 0;
-	PolyTriangleDrawer::draw(uniforms, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, tex);
+
+	if (!IsSky)
+		PolyTriangleDrawer::draw(uniforms, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, tex, 0);
+	PolyTriangleDrawer::stencil(uniforms, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, 0, IsSky ? 255 : 254);
 }
 
 FTexture *RenderPolyWall::GetTexture()
@@ -1395,7 +1407,7 @@ void PolySkyDome::CreateDome()
 
 void PolySkyDome::RenderRow(const TriUniforms &uniforms, FTexture *skytex, int row)
 {
-	PolyTriangleDrawer::draw(uniforms, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Strip, false, 0, viewwidth, 0, viewheight, skytex);
+	PolyTriangleDrawer::draw(uniforms, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Strip, false, 0, viewwidth, 0, viewheight, skytex, 255);
 }
 
 void PolySkyDome::RenderCapColorRow(const TriUniforms &uniforms, FTexture *skytex, int row, bool bottomCap)
@@ -1403,7 +1415,7 @@ void PolySkyDome::RenderCapColorRow(const TriUniforms &uniforms, FTexture *skyte
 	uint32_t solid = skytex->GetSkyCapColor(bottomCap);
 	if (!r_swtruecolor)
 		solid = RGB32k.RGB[(RPART(solid) >> 3)][(GPART(solid) >> 3)][(BPART(solid) >> 3)];
-	PolyTriangleDrawer::fill(uniforms, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Fan, bottomCap, 0, viewwidth, 0, viewheight, solid);
+	PolyTriangleDrawer::fill(uniforms, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Fan, bottomCap, 0, viewwidth, 0, viewheight, solid, 255);
 }
 
 void PolySkyDome::Render(const TriMatrix &worldToClip)

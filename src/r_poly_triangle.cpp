@@ -40,31 +40,39 @@
 #include <immintrin.h>
 #endif
 
-void PolyTriangleDrawer::draw(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, FTexture *texture)
+void PolyTriangleDrawer::draw(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, FTexture *texture, int stenciltestvalue)
 {
 	if (r_swtruecolor)
-		queue_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, (const uint8_t*)texture->GetPixelsBgra(), texture->GetWidth(), texture->GetHeight(), 0);
+		queue_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, (const uint8_t*)texture->GetPixelsBgra(), texture->GetWidth(), texture->GetHeight(), 0, stenciltestvalue, stenciltestvalue);
 	else
-		draw_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, texture->GetPixels(), texture->GetWidth(), texture->GetHeight(), 0, nullptr, &ScreenPolyTriangleDrawer::draw);
+		draw_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, texture->GetPixels(), texture->GetWidth(), texture->GetHeight(), 0, stenciltestvalue, stenciltestvalue, nullptr, &ScreenPolyTriangleDrawer::draw);
 }
 
-void PolyTriangleDrawer::fill(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, int solidcolor)
+void PolyTriangleDrawer::fill(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, int solidcolor, int stenciltestvalue)
 {
 	if (r_swtruecolor)
-		queue_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, 0, 0, solidcolor);
+		queue_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, 0, 0, solidcolor, stenciltestvalue, stenciltestvalue);
 	else
-		draw_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, 0, 0, solidcolor, nullptr, &ScreenPolyTriangleDrawer::fill);
+		draw_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, 0, 0, solidcolor, stenciltestvalue, stenciltestvalue, nullptr, &ScreenPolyTriangleDrawer::fill);
 }
 
-void PolyTriangleDrawer::queue_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor)
+void PolyTriangleDrawer::stencil(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, int stenciltestvalue, int stencilwritevalue)
+{
+	if (r_swtruecolor)
+		queue_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, 0, 0, 0xbeef, stenciltestvalue, stencilwritevalue);
+	else
+		draw_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, 0, 0, 0, stenciltestvalue, stencilwritevalue, nullptr, &ScreenPolyTriangleDrawer::stencil);
+}
+
+void PolyTriangleDrawer::queue_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, int stenciltestvalue, int stencilwritevalue)
 {
 	if (clipright < clipleft || clipleft < 0 || clipright > MAXWIDTH || clipbottom < cliptop || cliptop < 0 || clipbottom > MAXHEIGHT)
 		return;
 
-	DrawerCommandQueue::QueueCommand<DrawPolyTrianglesCommand>(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, texturePixels, textureWidth, textureHeight, solidcolor);
+	DrawerCommandQueue::QueueCommand<DrawPolyTrianglesCommand>(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, texturePixels, textureWidth, textureHeight, solidcolor, stenciltestvalue, stencilwritevalue);
 }
 
-void PolyTriangleDrawer::draw_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, DrawerThread *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, DrawerThread *))
+void PolyTriangleDrawer::draw_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, int stenciltestvalue, int stencilwritevalue, DrawerThread *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, DrawerThread *))
 {
 	if (vcount < 3)
 		return;
@@ -81,6 +89,11 @@ void PolyTriangleDrawer::draw_arrays(const TriUniforms &uniforms, const TriVerte
 	args.textureHeight = textureHeight;
 	args.solidcolor = solidcolor;
 	args.uniforms = &uniforms;
+	args.stencilTestValue = stenciltestvalue;
+	args.stencilWriteValue = stencilwritevalue;
+	args.stencilPitch = PolyStencilBuffer::Instance()->BlockWidth();
+	args.stencilValues = PolyStencilBuffer::Instance()->Values();
+	args.stencilMasks = PolyStencilBuffer::Instance()->Masks();
 
 	TriVertex vert[3];
 	if (mode == TriangleDrawMode::Normal)
@@ -677,6 +690,158 @@ void ScreenPolyTriangleDrawer::fill(const ScreenPolyTriangleDrawerArgs *args, Dr
 	}
 }
 
+void ScreenPolyTriangleDrawer::stencil(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread)
+{
+	const TriVertex &v1 = *args->v1;
+	const TriVertex &v2 = *args->v2;
+	const TriVertex &v3 = *args->v3;
+	int clipleft = args->clipleft;
+	int clipright = args->clipright;
+	int cliptop = args->cliptop;
+	int clipbottom = args->clipbottom;
+	int solidcolor = args->solidcolor;
+	uint8_t *stencilValues = args->stencilValues;
+	uint32_t *stencilMasks = args->stencilMasks;
+	int stencilPitch = args->stencilPitch;
+	uint8_t stencilTestValue = args->stencilTestValue;
+	uint8_t stencilWriteValue = args->stencilWriteValue;
+
+	// 28.4 fixed-point coordinates
+	const int Y1 = (int)round(16.0f * v1.y);
+	const int Y2 = (int)round(16.0f * v2.y);
+	const int Y3 = (int)round(16.0f * v3.y);
+
+	const int X1 = (int)round(16.0f * v1.x);
+	const int X2 = (int)round(16.0f * v2.x);
+	const int X3 = (int)round(16.0f * v3.x);
+
+	// Deltas
+	const int DX12 = X1 - X2;
+	const int DX23 = X2 - X3;
+	const int DX31 = X3 - X1;
+
+	const int DY12 = Y1 - Y2;
+	const int DY23 = Y2 - Y3;
+	const int DY31 = Y3 - Y1;
+
+	// Fixed-point deltas
+	const int FDX12 = DX12 << 4;
+	const int FDX23 = DX23 << 4;
+	const int FDX31 = DX31 << 4;
+
+	const int FDY12 = DY12 << 4;
+	const int FDY23 = DY23 << 4;
+	const int FDY31 = DY31 << 4;
+
+	// Bounding rectangle
+	int minx = MAX((MIN(MIN(X1, X2), X3) + 0xF) >> 4, clipleft);
+	int maxx = MIN((MAX(MAX(X1, X2), X3) + 0xF) >> 4, clipright - 1);
+	int miny = MAX((MIN(MIN(Y1, Y2), Y3) + 0xF) >> 4, cliptop);
+	int maxy = MIN((MAX(MAX(Y1, Y2), Y3) + 0xF) >> 4, clipbottom - 1);
+	if (minx >= maxx || miny >= maxy)
+		return;
+
+	// Block size, standard 8x8 (must be power of two)
+	const int q = 8;
+
+	// Start in corner of 8x8 block
+	minx &= ~(q - 1);
+	miny &= ~(q - 1);
+
+	// Half-edge constants
+	int C1 = DY12 * X1 - DX12 * Y1;
+	int C2 = DY23 * X2 - DX23 * Y2;
+	int C3 = DY31 * X3 - DX31 * Y3;
+
+	// Correct for fill convention
+	if (DY12 < 0 || (DY12 == 0 && DX12 > 0)) C1++;
+	if (DY23 < 0 || (DY23 == 0 && DX23 > 0)) C2++;
+	if (DY31 < 0 || (DY31 == 0 && DX31 > 0)) C3++;
+
+	// Loop through blocks
+	for (int y = miny; y < maxy; y += q)
+	{
+		// Is this row of blocks done by this thread?
+		if (thread && thread->skipped_by_thread(y / q)) continue;
+
+		for (int x = minx; x < maxx; x += q)
+		{
+			// Corners of block
+			int x0 = x << 4;
+			int x1 = (x + q - 1) << 4;
+			int y0 = y << 4;
+			int y1 = (y + q - 1) << 4;
+
+			// Evaluate half-space functions
+			bool a00 = C1 + DX12 * y0 - DY12 * x0 > 0;
+			bool a10 = C1 + DX12 * y0 - DY12 * x1 > 0;
+			bool a01 = C1 + DX12 * y1 - DY12 * x0 > 0;
+			bool a11 = C1 + DX12 * y1 - DY12 * x1 > 0;
+			int a = (a00 << 0) | (a10 << 1) | (a01 << 2) | (a11 << 3);
+
+			bool b00 = C2 + DX23 * y0 - DY23 * x0 > 0;
+			bool b10 = C2 + DX23 * y0 - DY23 * x1 > 0;
+			bool b01 = C2 + DX23 * y1 - DY23 * x0 > 0;
+			bool b11 = C2 + DX23 * y1 - DY23 * x1 > 0;
+			int b = (b00 << 0) | (b10 << 1) | (b01 << 2) | (b11 << 3);
+
+			bool c00 = C3 + DX31 * y0 - DY31 * x0 > 0;
+			bool c10 = C3 + DX31 * y0 - DY31 * x1 > 0;
+			bool c01 = C3 + DX31 * y1 - DY31 * x0 > 0;
+			bool c11 = C3 + DX31 * y1 - DY31 * x1 > 0;
+			int c = (c00 << 0) | (c10 << 1) | (c01 << 2) | (c11 << 3);
+
+			// Skip block when outside an edge
+			if (a == 0x0 || b == 0x0 || c == 0x0) continue;
+
+			// Check if block needs clipping
+			bool clipneeded = clipleft > x || clipright < (x + q) || cliptop > y || clipbottom < (y + q);
+
+			PolyStencilBlock stencil(x / 8 + y / 8 * stencilPitch, stencilValues, stencilMasks);
+
+			// Accept whole block when totally covered
+			if (a == 0xF && b == 0xF && c == 0xF && !clipneeded && stencil.IsSingleValue())
+			{
+				// Reject whole block if the stencil test fails
+				if (stencil.Get(0, 0) != stencilTestValue)
+					continue;
+				stencil.Clear(stencilWriteValue);
+			}
+			else // Partially covered block
+			{
+				int CY1 = C1 + DX12 * y0 - DY12 * x0;
+				int CY2 = C2 + DX23 * y0 - DY23 * x0;
+				int CY3 = C3 + DX31 * y0 - DY31 * x0;
+
+				for (int iy = 0; iy < q; iy++)
+				{
+					int CX1 = CY1;
+					int CX2 = CY2;
+					int CX3 = CY3;
+
+					for (int ix = 0; ix < q; ix++)
+					{
+						bool visible = (ix + x >= clipleft) && (ix + x < clipright) && (cliptop <= y + iy) && (clipbottom > y + iy);
+
+						if (CX1 > 0 && CX2 > 0 && CX3 > 0 && visible && stencil.Get(ix, iy) == stencilTestValue)
+						{
+							stencil.Set(ix, iy, stencilWriteValue);
+						}
+
+						CX1 -= FDY12;
+						CX2 -= FDY23;
+						CX3 -= FDY31;
+					}
+
+					CY1 += FDX12;
+					CY2 += FDX23;
+					CY3 += FDX31;
+				}
+			}
+		}
+	}
+}
+
 void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread)
 {
 	uint32_t *dest = (uint32_t *)args->dest;
@@ -692,6 +857,10 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 	int textureWidth = args->textureWidth;
 	int textureHeight = args->textureHeight;
 	uint32_t light = args->uniforms->light;
+	uint8_t *stencilValues = args->stencilValues;
+	uint32_t *stencilMasks = args->stencilMasks;
+	int stencilPitch = args->stencilPitch;
+	uint8_t stencilTestValue = args->stencilTestValue;
 
 	// 28.4 fixed-point coordinates
 	const int Y1 = (int)round(16.0f * v1.y);
@@ -831,9 +1000,15 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 
 			uint32_t *buffer = dest;
 
+			PolyStencilBlock stencil(x / 8 + y / 8 * stencilPitch, stencilValues, stencilMasks);
+
 			// Accept whole block when totally covered
-			if (a == 0xF && b == 0xF && c == 0xF && !clipneeded)
+			if (a == 0xF && b == 0xF && c == 0xF && !clipneeded && stencil.IsSingleValue())
 			{
+				// Reject whole block if the stencil test fails
+				if (stencil.Get(0, 0) != stencilTestValue)
+					continue;
+
 				for (int iy = 0; iy < q; iy++)
 				{
 					uint32_t varying[TriVertex::NumVarying], varyingStep[TriVertex::NumVarying];
@@ -922,11 +1097,11 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 						varyingStep[i] = (uint32_t)(step * 0x100000000LL);
 					}
 
-					for (int ix = x; ix < x + q; ix++)
+					for (int ix = 0; ix < q; ix++)
 					{
-						bool visible = ix >= clipleft && ix < clipright && (cliptop <= y + iy) && (clipbottom > y + iy);
+						bool visible = (ix + x >= clipleft) && (ix + x < clipright) && (cliptop <= y + iy) && (clipbottom > y + iy);
 
-						if (CX1 > 0 && CX2 > 0 && CX3 > 0 && visible)
+						if (CX1 > 0 && CX2 > 0 && CX3 > 0 && visible && stencil.Get(ix, iy) == stencilTestValue)
 						{
 							uint32_t ufrac = varying[0];
 							uint32_t vfrac = varying[1];
@@ -942,7 +1117,7 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 							uint32_t fg_alpha = APART(fg);
 
 							if (fg_alpha > 127)
-								buffer[ix] = 0xff000000 | (fg_red << 16) | (fg_green << 8) | fg_blue;
+								buffer[ix + x] = 0xff000000 | (fg_red << 16) | (fg_green << 8) | fg_blue;
 						}
 
 						for (int i = 0; i < TriVertex::NumVarying; i++)
@@ -976,6 +1151,10 @@ void ScreenPolyTriangleDrawer::fill32(const ScreenPolyTriangleDrawerArgs *args, 
 	int cliptop = args->cliptop;
 	int clipbottom = args->clipbottom;
 	int solidcolor = args->solidcolor;
+	uint8_t *stencilValues = args->stencilValues;
+	uint32_t *stencilMasks = args->stencilMasks;
+	int stencilPitch = args->stencilPitch;
+	uint8_t stencilTestValue = args->stencilTestValue;
 
 	// 28.4 fixed-point coordinates
 	const int Y1 = (int)round(16.0f * v1.y);
@@ -1072,9 +1251,15 @@ void ScreenPolyTriangleDrawer::fill32(const ScreenPolyTriangleDrawerArgs *args, 
 
 			uint32_t *buffer = dest;
 
+			PolyStencilBlock stencil(x / 8 + y / 8 * stencilPitch, stencilValues, stencilMasks);
+
 			// Accept whole block when totally covered
-			if (a == 0xF && b == 0xF && c == 0xF && !clipneeded)
+			if (a == 0xF && b == 0xF && c == 0xF && !clipneeded && stencil.IsSingleValue())
 			{
+				// Reject whole block if the stencil test fails
+				if (stencil.Get(0, 0) != stencilTestValue)
+					continue;
+
 				for (int iy = 0; iy < q; iy++)
 				{
 					for (int ix = x; ix < x + q; ix++)
@@ -1097,13 +1282,13 @@ void ScreenPolyTriangleDrawer::fill32(const ScreenPolyTriangleDrawerArgs *args, 
 					int CX2 = CY2;
 					int CX3 = CY3;
 
-					for (int ix = x; ix < x + q; ix++)
+					for (int ix = 0; ix < q; ix++)
 					{
-						bool visible = ix >= clipleft && ix < clipright && (cliptop <= y + iy) && (clipbottom > y + iy);
+						bool visible = (ix + x >= clipleft) && (ix + x < clipright) && (cliptop <= y + iy) && (clipbottom > y + iy);
 
-						if (CX1 > 0 && CX2 > 0 && CX3 > 0 && visible)
+						if (CX1 > 0 && CX2 > 0 && CX3 > 0 && visible && stencil.Get(ix, iy) == stencilTestValue)
 						{
-							buffer[ix] = solidcolor;
+							buffer[ix + x] = solidcolor;
 						}
 
 						CX1 -= FDY12;
@@ -1138,8 +1323,8 @@ float ScreenPolyTriangleDrawer::grady(float x0, float y0, float x1, float y1, fl
 
 /////////////////////////////////////////////////////////////////////////////
 
-DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor)
-	: uniforms(uniforms), vinput(vinput), vcount(vcount), mode(mode), ccw(ccw), clipleft(clipleft), clipright(clipright), cliptop(cliptop), clipbottom(clipbottom), texturePixels(texturePixels), textureWidth(textureWidth), textureHeight(textureHeight), solidcolor(solidcolor)
+DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, int stenciltestvalue, int stencilwritevalue)
+	: uniforms(uniforms), vinput(vinput), vcount(vcount), mode(mode), ccw(ccw), clipleft(clipleft), clipright(clipright), cliptop(cliptop), clipbottom(clipbottom), texturePixels(texturePixels), textureWidth(textureWidth), textureHeight(textureHeight), solidcolor(solidcolor), stenciltestvalue(stenciltestvalue), stencilwritevalue(stencilwritevalue)
 {
 }
 
@@ -1149,7 +1334,8 @@ void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
 		uniforms, vinput, vcount, mode, ccw,
 		clipleft, clipright, cliptop, clipbottom,
 		texturePixels, textureWidth, textureHeight, solidcolor,
-		thread, texturePixels ? ScreenPolyTriangleDrawer::draw32 : ScreenPolyTriangleDrawer::fill32);
+		stenciltestvalue, stencilwritevalue,
+		thread, texturePixels ? ScreenPolyTriangleDrawer::draw32 : solidcolor != 0xbeef ? ScreenPolyTriangleDrawer::fill32 : ScreenPolyTriangleDrawer::stencil);
 }
 
 FString DrawPolyTrianglesCommand::DebugInfo()

@@ -31,17 +31,18 @@ struct ScreenPolyTriangleDrawerArgs;
 class PolyTriangleDrawer
 {
 public:
-	static void draw(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, FTexture *texture);
-	static void fill(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, int solidcolor);
+	static void draw(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, FTexture *texture, int stenciltestvalue);
+	static void fill(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, int solidcolor, int stenciltestvalue);
+	static void stencil(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, int stenciltestvalue, int stencilwritevalue);
 
 private:
 	static TriVertex shade_vertex(const TriUniforms &uniforms, TriVertex v);
-	static void draw_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, DrawerThread *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, DrawerThread *));
+	static void draw_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, int stenciltestvalue, int stencilwritevalue, DrawerThread *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, DrawerThread *));
 	static void draw_shaded_triangle(const TriVertex *vertices, bool ccw, ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, DrawerThread *));
 	static bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2);
 	static void clipedge(const TriVertex *verts, TriVertex *clippedvert, int &numclipvert);
 
-	static void queue_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor);
+	static void queue_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, int stenciltestvalue, int stencilwritevalue);
 
 	enum { max_additional_vertices = 16 };
 
@@ -75,16 +76,14 @@ public:
 		int leveloffset = 0;
 		for (int i = 1; i < 4; i++)
 		{
-			int iy = i + 3;
-
 			x >>= 1;
 			y >>= 1;
 
 			bool same =
-				Values[(x << i)       + (y << iy)]       != value ||
-				Values[((x + 1) << i) + (y << iy)]       != value ||
-				Values[(x << i)       + ((y + 1) << iy)] != value ||
-				Values[((x + 1) << i) + ((y + 1) << iy)] != value;
+				Values[(x << i)       + (y << i) * 8]       != value ||
+				Values[((x + 1) << i) + (y << i) * 8]       != value ||
+				Values[(x << i)       + ((y + 1) << i) * 8] != value ||
+				Values[((x + 1) << i) + ((y + 1) << i) * 8] != value;
 
 			int levelbit = 1 << (leveloffset + x + y * (8 >> i));
 
@@ -92,6 +91,8 @@ public:
 				ValueMask = ValueMask & ~levelbit;
 			else
 				ValueMask = ValueMask | levelbit;
+
+			leveloffset += (8 >> leveloffset) * (8 >> leveloffset);
 		}
 
 		if (Values[0] != value || Values[4] != value || Values[4 * 8] != value || Values[4 * 8 + 4] != value)
@@ -112,6 +113,11 @@ public:
 	{
 		Values[0] = value;
 		ValueMask = 0xffffffff;
+	}
+
+	bool IsSingleValue() const
+	{
+		return ValueMask == 0xffffffff;
 	}
 
 private:
@@ -175,6 +181,11 @@ struct ScreenPolyTriangleDrawerArgs
 	int textureHeight;
 	int solidcolor;
 	const TriUniforms *uniforms;
+	uint8_t *stencilValues;
+	uint32_t *stencilMasks;
+	int stencilPitch;
+	uint8_t stencilTestValue;
+	uint8_t stencilWriteValue;
 };
 
 class ScreenPolyTriangleDrawer
@@ -182,6 +193,8 @@ class ScreenPolyTriangleDrawer
 public:
 	static void draw(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread);
 	static void fill(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread);
+
+	static void stencil(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread);
 
 	static void draw32(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread);
 	static void fill32(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread);
@@ -194,7 +207,7 @@ private:
 class DrawPolyTrianglesCommand : public DrawerCommand
 {
 public:
-	DrawPolyTrianglesCommand(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor);
+	DrawPolyTrianglesCommand(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, int stenciltestvalue, int stencilwritevalue);
 
 	void Execute(DrawerThread *thread) override;
 	FString DebugInfo() override;
@@ -213,6 +226,8 @@ private:
 	int textureWidth;
 	int textureHeight;
 	int solidcolor;
+	int stenciltestvalue;
+	int stencilwritevalue;
 };
 
 #endif

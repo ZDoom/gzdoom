@@ -1,6 +1,8 @@
 #ifndef ZCC_COMPILE_H
 #define ZCC_COMPILE_H
 
+#include <memory>
+
 struct Baggage;
 struct FPropertyInfo;
 class AActor;

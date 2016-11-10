@@ -644,17 +644,14 @@ private:
 public:
 	void Destroy()
 	{
-		Printf("Destroy\n");
 		ExportedNatives<T>::Get()->Destroy<void, T>(this);
 	}
 	void Tick()
 	{
-		Printf("Tick\n");
 		ExportedNatives<T>::Get()->Tick<void, T>(this);
 	}
 	AInventory *DropInventory(AInventory *item)
 	{
-		Printf("DropInventory\n");
 		return ExportedNatives<T>::Get()->DropInventory<AInventory *, T>(this, item);
 	}
 };

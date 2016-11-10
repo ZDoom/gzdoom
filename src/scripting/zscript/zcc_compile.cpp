@@ -2839,10 +2839,14 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		}
 		else if (args->Size() == 1)
 		{
+			auto arg = (*args)[0];
+			(*args)[0] = nullptr;
+			delete args;
 			return new FxReturnStatement((*args)[0], *ast);
 		}
 		else
 		{
+			delete args;
 			Error(ast, "Return with multiple values not implemented yet.");
 			return new FxReturnStatement(nullptr, *ast);
 		}

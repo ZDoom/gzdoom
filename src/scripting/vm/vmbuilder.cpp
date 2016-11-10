@@ -776,4 +776,5 @@ void FFunctionBuildList::Build()
 	}
 	FScriptPosition::StrictErrors = false;
 	mItems.Clear();
+	FxAlloc.FreeAllBlocks();
 }

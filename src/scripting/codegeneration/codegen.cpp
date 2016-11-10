@@ -57,6 +57,7 @@
 #include "math/cmath.h"
 
 extern FRandom pr_exrandom;
+FMemArena FxAlloc(65536);
 
 struct FLOP
 {
@@ -483,7 +484,9 @@ FxVectorValue::FxVectorValue(FxExpression *x, FxExpression *y, FxExpression *z, 
 FxVectorValue::~FxVectorValue()
 {
 	for (auto &a : xyz)
+	{
 		SAFE_DELETE(a);
+	}
 }
 
 FxExpression *FxVectorValue::Resolve(FCompileContext&ctx)
@@ -3721,6 +3724,8 @@ ExpEmit FxBinaryLogical::Emit(VMFunctionBuilder *build)
 	build->Emit(OP_JMP, 1);
 	auto ctarget = build->Emit(OP_LI, to.RegNum, (Operator == TK_AndAnd) ? 0 : 1);
 	for (auto addr : patchspots) build->Backpatch(addr, ctarget);
+	list.Clear();
+	list.ShrinkToFit();
 	return to;
 }
 
@@ -4362,6 +4367,7 @@ FxMinMax::FxMinMax(TArray<FxExpression*> &expr, FName type, const FScriptPositio
 	for (unsigned i = 0; i < expr.Size(); ++i)
 	{
 		choices[i] = expr[i];
+		expr[i] = nullptr;
 	}
 }
 
@@ -4713,10 +4719,12 @@ FxRandomPick::FxRandomPick(FRandom *r, TArray<FxExpression*> &expr, bool floaty,
 		if (floaty)
 		{
 			choices[index] = new FxFloatCast(expr[index]);
+			expr[index] = nullptr;
 		}
 		else
 		{
 			choices[index] = new FxIntCast(expr[index], nowarn);
+			expr[index] = nullptr;
 		}
 
 	}
@@ -5218,6 +5226,11 @@ FxMemberIdentifier::FxMemberIdentifier(FxExpression *left, FName name, const FSc
 	ExprType = EFX_MemberIdentifier;
 }
 
+FxMemberIdentifier::~FxMemberIdentifier()
+{
+	SAFE_DELETE(Object);
+}
+
 //==========================================================================
 //
 //
@@ -5277,6 +5290,7 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 						return nullptr;
 					}
 					auto x = isclass? new FxClassMember(Object, vsym, ScriptPosition) : new FxStructMember(Object, vsym, ScriptPosition);
+					Object = nullptr;
 					delete this;
 					return x->Resolve(ctx);
 				}
@@ -5313,6 +5327,7 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 					ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s", vsym->SymbolName.GetChars());
 				}
 				auto x = new FxStructMember(Object, vsym, ScriptPosition);
+				Object = nullptr;
 				delete this;
 				return x->Resolve(ctx);
 			}
@@ -5942,12 +5957,12 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxFunctionCall::FxFunctionCall(FName methodname, FName rngname, FArgumentList *args, const FScriptPosition &pos)
+FxFunctionCall::FxFunctionCall(FName methodname, FName rngname, FArgumentList &args, const FScriptPosition &pos)
 : FxExpression(EFX_FunctionCall, pos)
 {
 	MethodName = methodname;
 	RNG = &pr_exrandom;
-	ArgList = args;
+	ArgList = std::move(args);
 	if (rngname != NAME_None)
 	{
 		switch (MethodName)
@@ -5976,7 +5991,6 @@ FxFunctionCall::FxFunctionCall(FName methodname, FName rngname, FArgumentList *a
 
 FxFunctionCall::~FxFunctionCall()
 {
-	SAFE_DELETE(ArgList);
 }
 
 //==========================================================================
@@ -5985,9 +5999,9 @@ FxFunctionCall::~FxFunctionCall()
 //
 //==========================================================================
 
-static bool CheckArgSize(FName fname, FArgumentList *args, int min, int max, FScriptPosition &sc)
+static bool CheckArgSize(FName fname, FArgumentList &args, int min, int max, FScriptPosition &sc)
 {
-	int s = args ? args->Size() : 0;
+	int s = args.Size();
 	if (s < min)
 	{
 		sc.Message(MSG_ERROR, "Insufficient arguments in call to %s, expected %d, got %d", fname.GetChars(), min, s);
@@ -6030,7 +6044,6 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		}
 		auto self = !(afd->Variants[0].Flags & VARF_Static)? new FxSelf(ScriptPosition) : nullptr;
 		auto x = new FxVMFunctionCall(self, afd, ArgList, ScriptPosition, false);
-		ArgList = nullptr;
 		delete this;
 		return x->Resolve(ctx);
 	}
@@ -6040,7 +6053,6 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		if (MethodName == FxFlops[i].Name)
 		{
 			FxExpression *x = new FxFlopFunctionCall(i, ArgList, ScriptPosition);
-			ArgList = nullptr;
 			delete this;
 			return x->Resolve(ctx);
 		}
@@ -6059,7 +6071,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	}
 	if (special != 0 && min >= 0)
 	{
-		int paramcount = ArgList? ArgList->Size() : 0;
+		int paramcount = ArgList.Size();
 		if (paramcount < min)
 		{
 			ScriptPosition.Message(MSG_ERROR, "Not enough parameters for '%s' (expected %d, got %d)", 
@@ -6076,7 +6088,6 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		}
 		FxExpression *self = (ctx.Function && ctx.Function->Variants[0].Flags & VARF_Method) ? new FxSelf(ScriptPosition) : nullptr;
 		FxExpression *x = new FxActionSpecialCall(self, special, ArgList, ScriptPosition);
-		ArgList = nullptr;
 		delete this;
 		return x->Resolve(ctx);
 	}
@@ -6086,8 +6097,8 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	{
 		if (CheckArgSize(MethodName, ArgList, 1, 1, ScriptPosition))
 		{
-			FxExpression *x = new FxDynamicCast(cls, (*ArgList)[0]);
-			(*ArgList)[0] = nullptr;
+			FxExpression *x = new FxDynamicCast(cls, ArgList[0]);
+			ArgList[0] = nullptr;
 			delete this;
 			return x->Resolve(ctx);
 		}
@@ -6126,29 +6137,29 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 				MethodName == NAME_Color ? TypeColor :
 				MethodName == NAME_State? TypeState :(PType*)TypeSound;
 
-			func = new FxTypeCast((*ArgList)[0], type, true, true);
-			(*ArgList)[0] = nullptr;
+			func = new FxTypeCast(ArgList[0], type, true, true);
+			ArgList[0] = nullptr;
 		}
 		break;
 
 	case NAME_Random:
 		// allow calling Random without arguments to default to (0, 255)
-		if (ArgList->Size() == 0)
+		if (ArgList.Size() == 0)
 		{
 			func = new FxRandom(RNG, new FxConstant(0, ScriptPosition), new FxConstant(255, ScriptPosition), ScriptPosition, ctx.FromDecorate);
 		}
 		else if (CheckArgSize(NAME_Random, ArgList, 2, 2, ScriptPosition))
 		{
-			func = new FxRandom(RNG, (*ArgList)[0], (*ArgList)[1], ScriptPosition, ctx.FromDecorate);
-			(*ArgList)[0] = (*ArgList)[1] = nullptr;
+			func = new FxRandom(RNG, ArgList[0], ArgList[1], ScriptPosition, ctx.FromDecorate);
+			ArgList[0] = ArgList[1] = nullptr;
 		}
 		break;
 
 	case NAME_FRandom:
 		if (CheckArgSize(NAME_FRandom, ArgList, 2, 2, ScriptPosition))
 		{
-			func = new FxFRandom(RNG, (*ArgList)[0], (*ArgList)[1], ScriptPosition);
-			(*ArgList)[0] = (*ArgList)[1] = nullptr;
+			func = new FxFRandom(RNG, ArgList[0], ArgList[1], ScriptPosition);
+			ArgList[0] = ArgList[1] = nullptr;
 		}
 		break;
 
@@ -6156,16 +6167,15 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	case NAME_FRandomPick:
 		if (CheckArgSize(MethodName, ArgList, 1, -1, ScriptPosition))
 		{
-			func = new FxRandomPick(RNG, *ArgList, MethodName == NAME_FRandomPick, ScriptPosition, ctx.FromDecorate);
-			for (auto &i : *ArgList) i = nullptr;
+			func = new FxRandomPick(RNG, ArgList, MethodName == NAME_FRandomPick, ScriptPosition, ctx.FromDecorate);
 		}
 		break;
 
 	case NAME_Random2:
 		if (CheckArgSize(NAME_Random2, ArgList, 0, 1, ScriptPosition))
 		{
-			func = new FxRandom2(RNG, ArgList->Size() == 0? nullptr : (*ArgList)[0], ScriptPosition, ctx.FromDecorate);
-			if (ArgList->Size() > 0) (*ArgList)[0] = nullptr;
+			func = new FxRandom2(RNG, ArgList.Size() == 0? nullptr : ArgList[0], ScriptPosition, ctx.FromDecorate);
+			if (ArgList.Size() > 0) ArgList[0] = nullptr;
 		}
 		break;
 
@@ -6173,8 +6183,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	case NAME_Max:
 		if (CheckArgSize(MethodName, ArgList, 2, -1, ScriptPosition))
 		{
-			func = new FxMinMax(*ArgList, MethodName, ScriptPosition);
-			for (auto &i : *ArgList) i = nullptr;
+			func = new FxMinMax(ArgList, MethodName, ScriptPosition);
 		}
 		break;
 
@@ -6183,20 +6192,20 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		{
 			TArray<FxExpression *> pass;
 			pass.Resize(2);
-			pass[0] = (*ArgList)[0];
-			pass[1] = (*ArgList)[1];
+			pass[0] = ArgList[0];
+			pass[1] = ArgList[1];
 			pass[0] = new FxMinMax(pass, NAME_Max, ScriptPosition);
-			pass[1] = (*ArgList)[2];
+			pass[1] = ArgList[2];
 			func = new FxMinMax(pass, NAME_Min, ScriptPosition);
-			(*ArgList)[0] = (*ArgList)[1] = (*ArgList)[2] = nullptr;
+			ArgList[0] = ArgList[1] = ArgList[2] = nullptr;
 		}
 		break;
 
 	case NAME_Abs:
 		if (CheckArgSize(MethodName, ArgList, 1, 1, ScriptPosition))
 		{
-			func = new FxAbs((*ArgList)[0]);
-			(*ArgList)[0] = nullptr;
+			func = new FxAbs(ArgList[0]);
+			ArgList[0] = nullptr;
 		}
 		break;
 
@@ -6204,8 +6213,8 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	case NAME_VectorAngle:
 		if (CheckArgSize(MethodName, ArgList, 2, 2, ScriptPosition))
 		{
-			func = MethodName == NAME_ATan2 ? new FxATan2((*ArgList)[0], (*ArgList)[1], ScriptPosition) : new FxATan2((*ArgList)[1], (*ArgList)[0], ScriptPosition);
-			(*ArgList)[0] = (*ArgList)[1] = nullptr;
+			func = MethodName == NAME_ATan2 ? new FxATan2(ArgList[0], ArgList[1], ScriptPosition) : new FxATan2(ArgList[1], ArgList[0], ScriptPosition);
+			ArgList[0] = ArgList[1] = nullptr;
 		}
 		break;
 
@@ -6229,12 +6238,12 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-FxMemberFunctionCall::FxMemberFunctionCall(FxExpression *self, FName methodname, FArgumentList *args, const FScriptPosition &pos)
+FxMemberFunctionCall::FxMemberFunctionCall(FxExpression *self, FName methodname, FArgumentList &args, const FScriptPosition &pos)
 	: FxExpression(EFX_MemberFunctionCall, pos)
 {
 	Self = self;
 	MethodName = methodname;
-	ArgList = args;
+	ArgList = std::move(args);
 }
 
 //==========================================================================
@@ -6246,7 +6255,6 @@ FxMemberFunctionCall::FxMemberFunctionCall(FxExpression *self, FName methodname,
 FxMemberFunctionCall::~FxMemberFunctionCall()
 {
 	SAFE_DELETE(Self);
-	SAFE_DELETE(ArgList);
 }
 
 //==========================================================================
@@ -6342,7 +6350,6 @@ isresolved:
 	// do not pass the self pointer to static functions.
 	auto self = (afd->Variants[0].Flags & VARF_Method) ? Self : nullptr;
 	auto x = new FxVMFunctionCall(self, afd, ArgList, ScriptPosition, staticonly);
-	ArgList = nullptr;
 	if (Self == self) Self = nullptr;
 	delete this;
 	return x->Resolve(ctx);
@@ -6358,12 +6365,12 @@ isresolved:
 //
 //==========================================================================
 
-FxActionSpecialCall::FxActionSpecialCall(FxExpression *self, int special, FArgumentList *args, const FScriptPosition &pos)
+FxActionSpecialCall::FxActionSpecialCall(FxExpression *self, int special, FArgumentList &args, const FScriptPosition &pos)
 : FxExpression(EFX_ActionSpecialCall, pos)
 {
 	Self = self;
 	Special = special;
-	ArgList = args;
+	ArgList = std::move(args);
 	EmitTail = false;
 }
 
@@ -6376,7 +6383,6 @@ FxActionSpecialCall::FxActionSpecialCall(FxExpression *self, int special, FArgum
 FxActionSpecialCall::~FxActionSpecialCall()
 {
 	SAFE_DELETE(Self);
-	SAFE_DELETE(ArgList);
 }
 
 //==========================================================================
@@ -6403,50 +6409,47 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 	bool failed = false;
 
 	SAFE_RESOLVE_OPT(Self, ctx);
-	if (ArgList != nullptr)
+	for (unsigned i = 0; i < ArgList.Size(); i++)
 	{
-		for (unsigned i = 0; i < ArgList->Size(); i++)
+		ArgList[i] = ArgList[i]->Resolve(ctx);
+		if (ArgList[i] == nullptr)
 		{
-			(*ArgList)[i] = (*ArgList)[i]->Resolve(ctx);
-			if ((*ArgList)[i] == nullptr)
+			failed = true;
+		}
+		else if (Special < 0 && i == 0)
+		{
+			if (ArgList[i]->ValueType == TypeString)
 			{
+				ArgList[i] = new FxNameCast(ArgList[i]);
+				ArgList[i] = ArgList[i]->Resolve(ctx);
+				if (ArgList[i] == nullptr)
+				{
+					failed = true;
+				}
+			}
+			else if (ArgList[i]->ValueType != TypeName)
+			{
+				ScriptPosition.Message(MSG_ERROR, "Name expected for parameter %d", i);
 				failed = true;
 			}
-			else if (Special < 0 && i == 0)
-			{
-				if ((*ArgList)[i]->ValueType == TypeString)
-				{
-					(*ArgList)[i] = new FxNameCast((*ArgList)[i]);
-					(*ArgList)[i] = (*ArgList)[i]->Resolve(ctx);
-					if ((*ArgList)[i] == nullptr)
-					{
-						failed = true;
-					}
-				}
-				else if ((*ArgList)[i]->ValueType != TypeName)
-				{
-					ScriptPosition.Message(MSG_ERROR, "Name expected for parameter %d", i);
-					failed = true;
-				}
-			}
-			else if (!(*ArgList)[i]->IsInteger())
-			{
-				if ((*ArgList)[i]->ValueType->GetRegType() == REGT_FLOAT /* lax */)
-				{
-					(*ArgList)[i] = new FxIntCast((*ArgList)[i], ctx.FromDecorate);
-				}
-				else
-				{
-					ScriptPosition.Message(MSG_ERROR, "Integer expected for parameter %d", i);
-					failed = true;
-				}
-			}
 		}
-		if (failed)
+		else if (!ArgList[i]->IsInteger())
 		{
-			delete this;
-			return nullptr;
+			if (ArgList[i]->ValueType->GetRegType() == REGT_FLOAT /* lax */)
+			{
+				ArgList[i] = new FxIntCast(ArgList[i], ctx.FromDecorate);
+			}
+			else
+			{
+				ScriptPosition.Message(MSG_ERROR, "Integer expected for parameter %d", i);
+				failed = true;
+			}
 		}
+	}
+	if (failed)
+	{
+		delete this;
+		return nullptr;
 	}
 	ValueType = TypeSInt32;
 	return this;
@@ -6481,30 +6484,27 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 	// fixme: This really should use the Self pointer that got passed to this class instead of just using the first argument from the function. 
 	// Once static functions are possible, or specials can be called through a member access operator this won't work anymore.
 	build->Emit(OP_PARAM, 0, REGT_POINTER, 0);		// pass self 
-	if (ArgList != nullptr)
+	for (; i < ArgList.Size(); ++i)
 	{
-		for (; i < ArgList->Size(); ++i)
+		FxExpression *argex = ArgList[i];
+		if (Special < 0 && i == 0)
 		{
-			FxExpression *argex = (*ArgList)[i];
-			if (Special < 0 && i == 0)
+			assert(argex->ValueType == TypeName);
+			assert(argex->isConstant());
+			build->EmitParamInt(-static_cast<FxConstant *>(argex)->GetValue().GetName());
+		}
+		else
+		{
+			assert(argex->ValueType->GetRegType() == REGT_INT);
+			if (argex->isConstant())
 			{
-				assert(argex->ValueType == TypeName);
-				assert(argex->isConstant());
-				build->EmitParamInt(-static_cast<FxConstant *>(argex)->GetValue().GetName());
+				build->EmitParamInt(static_cast<FxConstant *>(argex)->GetValue().GetInt());
 			}
 			else
 			{
-				assert(argex->ValueType->GetRegType() == REGT_INT);
-				if (argex->isConstant())
-				{
-					build->EmitParamInt(static_cast<FxConstant *>(argex)->GetValue().GetInt());
-				}
-				else
-				{
-					ExpEmit arg(argex->Emit(build));
-					build->Emit(OP_PARAM, 0, arg.RegType, arg.RegNum);
-					arg.Free(build);
-				}
+				ExpEmit arg(argex->Emit(build));
+				build->Emit(OP_PARAM, 0, arg.RegType, arg.RegNum);
+				arg.Free(build);
 			}
 		}
 	}
@@ -6515,6 +6515,8 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
+	ArgList.Clear();
+	ArgList.ShrinkToFit();
 
 	if (EmitTail)
 	{
@@ -6536,12 +6538,12 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxVMFunctionCall::FxVMFunctionCall(FxExpression *self, PFunction *func, FArgumentList *args, const FScriptPosition &pos, bool novirtual)
+FxVMFunctionCall::FxVMFunctionCall(FxExpression *self, PFunction *func, FArgumentList &args, const FScriptPosition &pos, bool novirtual)
 : FxExpression(EFX_VMFunctionCall, pos)
 {
 	Self = self;
 	Function = func;
-	ArgList = args;
+	ArgList = std::move(args);
 	EmitTail = false;
 	NoVirtual = novirtual;
 }
@@ -6554,7 +6556,6 @@ FxVMFunctionCall::FxVMFunctionCall(FxExpression *self, PFunction *func, FArgumen
 
 FxVMFunctionCall::~FxVMFunctionCall()
 {
-	SAFE_DELETE(ArgList);
 }
 
 //==========================================================================
@@ -6581,7 +6582,7 @@ VMFunction *FxVMFunctionCall::GetDirectFunction()
 	// then it can be a "direct" function. That is, the DECORATE
 	// definition can call that function directly without wrapping
 	// it inside VM code.
-	if ((ArgList ? ArgList->Size() : 0) == 0 && !(Function->Variants[0].Flags & VARF_Virtual))
+	if (ArgList.Size() == 0 && !(Function->Variants[0].Flags & VARF_Virtual))
 	{
 		return Function->Variants[0].Implementation;
 	}
@@ -6613,18 +6614,18 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 		return nullptr;
 	}
 
-	if (ArgList != nullptr)
+	if (ArgList.Size() > 0)
 	{
 		bool foundvarargs = false;
 		PType * type = nullptr;
-		if (argtypes.Last() != nullptr && ArgList->Size() + implicit > argtypes.Size())
+		if (argtypes.Last() != nullptr && ArgList.Size() + implicit > argtypes.Size())
 		{
 			ScriptPosition.Message(MSG_ERROR, "Too many arguments in call to %s", Function->SymbolName.GetChars());
 			delete this;
 			return nullptr;
 		}
 
-		for (unsigned i = 0; i < ArgList->Size(); i++)
+		for (unsigned i = 0; i < ArgList.Size(); i++)
 		{
 			// Varargs must all have the same type as the last typed argument. A_Jump is the only function using it.
 			if (!foundvarargs)
@@ -6634,12 +6635,12 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 			}
 			assert(type != nullptr);
 
-			FxExpression *x = new FxTypeCast((*ArgList)[i], type, false);
+			FxExpression *x = new FxTypeCast(ArgList[i], type, false);
 			x = x->Resolve(ctx);
 			failed |= (x == nullptr);
-			(*ArgList)[i] = x;
+			ArgList[i] = x;
 		}
-		int numargs = ArgList->Size() + implicit;
+		int numargs = ArgList.Size() + implicit;
 		if ((unsigned)numargs < argtypes.Size() && argtypes[numargs] != nullptr)
 		{
 			auto flags = Function->Variants[0].ArgFlags[numargs];
@@ -6679,13 +6680,15 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 {
 	assert(build->Registers[REGT_POINTER].GetMostUsed() >= build->NumImplicits);
-	int count = 0; (ArgList ? ArgList->Size() : 0);
+	int count = 0;
 
 	if (count == 1)
 	{
 		ExpEmit reg;
 		if (CheckEmitCast(build, EmitTail, reg))
 		{
+			ArgList.Clear();
+			ArgList.ShrinkToFit();
 			return reg;
 		}
 	}
@@ -6718,13 +6721,13 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 		selfemit.Free(build);
 	}
 	// Emit code to pass explicit parameters
-	if (ArgList != nullptr)
+	for (unsigned i = 0; i < ArgList.Size(); ++i)
 	{
-		for (unsigned i = 0; i < ArgList->Size(); ++i)
-		{
-			count += EmitParameter(build, (*ArgList)[i], ScriptPosition);
-		}
+		count += EmitParameter(build, ArgList[i], ScriptPosition);
 	}
+	ArgList.Clear();
+	ArgList.ShrinkToFit();
+
 	// Get a constant register for this function
 	VMFunction *vmfunc = Function->Variants[0].Implementation;
 	int funcaddr = build->GetConstantAddress(vmfunc, ATAG_OBJECT);
@@ -6766,7 +6769,7 @@ bool FxVMFunctionCall::CheckEmitCast(VMFunctionBuilder *build, bool returnit, Ex
 		funcname == NAME___decorate_internal_state__ ||
 		funcname == NAME___decorate_internal_float__)
 	{
-		FxExpression *arg = (*ArgList)[0];
+		FxExpression *arg = ArgList[0];
 		if (returnit)
 		{
 			if (arg->isConstant() &&
@@ -6799,12 +6802,12 @@ bool FxVMFunctionCall::CheckEmitCast(VMFunctionBuilder *build, bool returnit, Ex
 //
 //==========================================================================
 
-FxFlopFunctionCall::FxFlopFunctionCall(size_t index, FArgumentList *args, const FScriptPosition &pos)
+FxFlopFunctionCall::FxFlopFunctionCall(size_t index, FArgumentList &args, const FScriptPosition &pos)
 : FxExpression(EFX_FlopFunctionCall, pos)
 {
 	assert(index < countof(FxFlops) && "FLOP index out of range");
 	Index = (int)index;
-	ArgList = args;
+	ArgList = std::move(args);
 }
 
 //==========================================================================
@@ -6815,44 +6818,43 @@ FxFlopFunctionCall::FxFlopFunctionCall(size_t index, FArgumentList *args, const 
 
 FxFlopFunctionCall::~FxFlopFunctionCall()
 {
-	SAFE_DELETE(ArgList);
 }
 
 FxExpression *FxFlopFunctionCall::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 
-	if (ArgList == nullptr || ArgList->Size() != 1)
+	if (ArgList.Size() != 1)
 	{
 		ScriptPosition.Message(MSG_ERROR, "%s only has one parameter", FName(FxFlops[Index].Name).GetChars());
 		delete this;
 		return nullptr;
 	}
 
-	(*ArgList)[0] = (*ArgList)[0]->Resolve(ctx);
-	if ((*ArgList)[0] == nullptr)
+	ArgList[0] = ArgList[0]->Resolve(ctx);
+	if (ArgList[0] == nullptr)
 	{
 		delete this;
 		return nullptr;
 	}
 
-	if (!(*ArgList)[0]->IsNumeric())
+	if (!ArgList[0]->IsNumeric())
 	{
 		ScriptPosition.Message(MSG_ERROR, "numeric value expected for parameter");
 		delete this;
 		return nullptr;
 	}
-	if ((*ArgList)[0]->isConstant())
+	if (ArgList[0]->isConstant())
 	{
-		double v = static_cast<FxConstant *>((*ArgList)[0])->GetValue().GetFloat();
+		double v = static_cast<FxConstant *>(ArgList[0])->GetValue().GetFloat();
 		v = FxFlops[Index].Evaluate(v);
 		FxExpression *x = new FxConstant(v, ScriptPosition);
 		delete this;
 		return x;
 	}
-	if ((*ArgList)[0]->ValueType->GetRegType() == REGT_INT)
+	if (ArgList[0]->ValueType->GetRegType() == REGT_INT)
 	{
-		(*ArgList)[0] = new FxFloatCast((*ArgList)[0]);
+		ArgList[0] = new FxFloatCast(ArgList[0]);
 	}
 	ValueType = TypeFloat64;
 	return this;
@@ -6865,10 +6867,12 @@ FxExpression *FxFlopFunctionCall::Resolve(FCompileContext& ctx)
 
 ExpEmit FxFlopFunctionCall::Emit(VMFunctionBuilder *build)
 {
-	ExpEmit v = (*ArgList)[0]->Emit(build);
+	ExpEmit v = ArgList[0]->Emit(build);
 	assert(!v.Konst && v.RegType == REGT_FLOAT);
 
 	build->Emit(OP_FLOP, v.RegNum, v.RegNum, FxFlops[Index].Flop);
+	ArgList.Clear();
+	ArgList.ShrinkToFit();
 	return v;
 }
 
@@ -7081,17 +7085,16 @@ bool FxCompoundStatement::CheckLocalVariable(FName name)
 //
 //==========================================================================
 
-FxSwitchStatement::FxSwitchStatement(FxExpression *cond, FArgumentList *content, const FScriptPosition &pos)
+FxSwitchStatement::FxSwitchStatement(FxExpression *cond, FArgumentList &content, const FScriptPosition &pos)
 	: FxExpression(EFX_SwitchStatement, pos)
 {
 	Condition = new FxIntCast(cond, false);
-	Content = content;
+	Content = std::move(content);
 }
 
 FxSwitchStatement::~FxSwitchStatement()
 {
 	SAFE_DELETE(Condition);
-	SAFE_DELETE(Content);
 }
 
 FxExpression *FxSwitchStatement::Resolve(FCompileContext &ctx)
@@ -7099,7 +7102,7 @@ FxExpression *FxSwitchStatement::Resolve(FCompileContext &ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(Condition, ctx);
 
-	if (Content == nullptr || Content->Size() == 0)
+	if (Content.Size() == 0)
 	{
 		ScriptPosition.Message(MSG_WARNING, "Empty switch statement");
 		if (Condition->isConstant())
@@ -7117,7 +7120,7 @@ FxExpression *FxSwitchStatement::Resolve(FCompileContext &ctx)
 		}
 	}
 
-	for (auto &line : *Content)
+	for (auto &line : Content)
 	{
 		// Do not resolve breaks, they need special treatment inside switch blocks.
 		if (line->ExprType != EFX_JumpStatement || static_cast<FxJumpStatement *>(line)->Token != TK_Break)
@@ -7130,7 +7133,7 @@ FxExpression *FxSwitchStatement::Resolve(FCompileContext &ctx)
 	if (Condition->isConstant())
 	{
 		ScriptPosition.Message(MSG_WARNING, "Case expression is constant");
-		auto &content = *Content;
+		auto &content = Content;
 		int defaultindex = -1;
 		int defaultbreak = -1;
 		int caseindex = -1;
@@ -7182,7 +7185,7 @@ FxExpression *FxSwitchStatement::Resolve(FCompileContext &ctx)
 
 	int mincase = INT_MAX;
 	int maxcase = INT_MIN;
-	for (auto line : *Content)
+	for (auto line : Content)
 	{
 		if (line->ExprType == EFX_CaseStatement)
 		{
@@ -7227,7 +7230,7 @@ ExpEmit FxSwitchStatement::Emit(VMFunctionBuilder *build)
 	size_t DefaultAddress = build->Emit(OP_JMP, 0);
 	TArray<size_t> BreakAddresses;
 
-	for (auto line : *Content)
+	for (auto line : Content)
 	{
 		switch (line->ExprType)
 		{
@@ -7266,6 +7269,8 @@ ExpEmit FxSwitchStatement::Emit(VMFunctionBuilder *build)
 	{
 		build->BackpatchToHere(addr);
 	}
+	Content.Clear();
+	Content.ShrinkToFit();
 	return ExpEmit();
 }
 
@@ -7278,14 +7283,14 @@ ExpEmit FxSwitchStatement::Emit(VMFunctionBuilder *build)
 bool FxSwitchStatement::CheckReturn()
 {
 	//A switch statement returns when it contains no breaks and ends with a return
-	for (auto line : *Content)
+	for (auto line : Content)
 	{
 		if (line->ExprType == EFX_JumpStatement)
 		{
 			return false;	// Break means that the end of the statement will be reached, Continue cannot happen in the last statement of the last block.
 		}
 	}
-	return Content->Size() > 0 && Content->Last()->CheckReturn();
+	return Content.Size() > 0 && Content.Last()->CheckReturn();
 }
 
 //==========================================================================
@@ -8414,6 +8419,8 @@ ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
 
 	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), names.Size() + 1, 1);
 	build->Emit(OP_RESULT, 0, REGT_POINTER, dest.RegNum);
+	names.Clear();
+	names.ShrinkToFit();
 	return dest;
 }
 
@@ -8431,6 +8438,11 @@ FxLocalVariableDeclaration::FxLocalVariableDeclaration(PType *type, FName name, 
 	Name = name;
 	RegCount = type == TypeVector2 ? 2 : type == TypeVector3 ? 3 : 1;
 	Init = initval == nullptr? nullptr : new FxTypeCast(initval, type, false);
+}
+
+FxLocalVariableDeclaration::~FxLocalVariableDeclaration()
+{
+	SAFE_DELETE(Init);
 }
 
 FxExpression *FxLocalVariableDeclaration::Resolve(FCompileContext &ctx)

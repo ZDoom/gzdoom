@@ -56,6 +56,8 @@
 class VMFunctionBuilder;
 class FxJumpStatement;
 
+extern FMemArena FxAlloc;
+
 //==========================================================================
 //
 //
@@ -317,6 +319,14 @@ public:
 	bool isresolved = false;
 	bool NeedResult = true;	// should be set to false if not needed and properly handled by all nodes for their subnodes to eliminate redundant code
 	EFxType ExprType;
+
+	void *operator new(size_t size)
+	{
+		return FxAlloc.Alloc(size);
+	}
+
+	void operator delete(void *block) {}
+	void operator delete[](void *block) {}
 };
 
 //==========================================================================
@@ -347,6 +357,7 @@ class FxMemberIdentifier : public FxIdentifier
 
 public:
 	FxMemberIdentifier(FxExpression *obj, FName i, const FScriptPosition &p);
+	~FxMemberIdentifier();
 	FxExpression *Resolve(FCompileContext&);
 };
 
@@ -1264,11 +1275,11 @@ class FxFunctionCall : public FxExpression
 {
 	FName MethodName;
 	FRandom *RNG;
-	FArgumentList *ArgList;
+	FArgumentList ArgList;
 
 public:
 
-	FxFunctionCall(FName methodname, FName rngname, FArgumentList *args, const FScriptPosition &pos);
+	FxFunctionCall(FName methodname, FName rngname, FArgumentList &args, const FScriptPosition &pos);
 	~FxFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
 };
@@ -1284,11 +1295,11 @@ class FxMemberFunctionCall : public FxExpression
 {
 	FxExpression *Self;
 	FName MethodName;
-	FArgumentList *ArgList;
+	FArgumentList ArgList;
 
 public:
 
-	FxMemberFunctionCall(FxExpression *self, FName methodname, FArgumentList *args, const FScriptPosition &pos);
+	FxMemberFunctionCall(FxExpression *self, FName methodname, FArgumentList &args, const FScriptPosition &pos);
 	~FxMemberFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
 };
@@ -1305,11 +1316,11 @@ class FxActionSpecialCall : public FxExpression
 	int Special;
 	bool EmitTail;
 	FxExpression *Self;
-	FArgumentList *ArgList;
+	FArgumentList ArgList;
 
 public:
 
-	FxActionSpecialCall(FxExpression *self, int special, FArgumentList *args, const FScriptPosition &pos);
+	FxActionSpecialCall(FxExpression *self, int special, FArgumentList &args, const FScriptPosition &pos);
 	~FxActionSpecialCall();
 	FxExpression *Resolve(FCompileContext&);
 	PPrototype *ReturnProto();
@@ -1325,11 +1336,11 @@ public:
 class FxFlopFunctionCall : public FxExpression
 {
 	int Index;
-	FArgumentList *ArgList;
+	FArgumentList ArgList;
 
 public:
 
-	FxFlopFunctionCall(size_t index, FArgumentList *args, const FScriptPosition &pos);
+	FxFlopFunctionCall(size_t index, FArgumentList &args, const FScriptPosition &pos);
 	~FxFlopFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
@@ -1366,10 +1377,10 @@ class FxVMFunctionCall : public FxExpression
 	bool NoVirtual;
 	FxExpression *Self;
 	PFunction *Function;
-	FArgumentList *ArgList;
+	FArgumentList ArgList;
 
 public:
-	FxVMFunctionCall(FxExpression *self, PFunction *func, FArgumentList *args, const FScriptPosition &pos, bool novirtual);
+	FxVMFunctionCall(FxExpression *self, PFunction *func, FArgumentList &args, const FScriptPosition &pos, bool novirtual);
 	~FxVMFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
 	PPrototype *ReturnProto();
@@ -1429,7 +1440,7 @@ public:
 class FxSwitchStatement : public FxExpression
 {
 	FxExpression *Condition;
-	FArgumentList *Content;
+	FArgumentList Content;
 
 	struct CaseAddr
 	{
@@ -1440,7 +1451,7 @@ class FxSwitchStatement : public FxExpression
 	TArray<CaseAddr> CaseAddresses;
 
 public:
-	FxSwitchStatement(FxExpression *cond, FArgumentList *content, const FScriptPosition &pos);
+	FxSwitchStatement(FxExpression *cond, FArgumentList &content, const FScriptPosition &pos);
 	~FxSwitchStatement();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
@@ -1714,6 +1725,7 @@ public:
 	int RegNum = -1;
 
 	FxLocalVariableDeclaration(PType *type, FName name, FxExpression *initval, int varflags, const FScriptPosition &p);
+	~FxLocalVariableDeclaration();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 	void Release(VMFunctionBuilder *build);

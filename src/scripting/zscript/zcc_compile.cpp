@@ -2239,7 +2239,7 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClass *cls, ZCC_TreeNode *af)
 				if (fc->Parameters == nullptr && !(afd->Variants[0].Flags & VARF_Virtual))
 				{
 					// We can use this function directly without wrapping it in a caller.
-					return new FxVMFunctionCall(new FxSelf(*af), afd, nullptr, *af, false);
+					return new FxVMFunctionCall(new FxSelf(*af), afd, FArgumentList(), *af, false);
 				}
 			}
 			else
@@ -2563,16 +2563,17 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		// - class members
 		// - array syntax for random() calls.
 		// Everything else coming here is a syntax error.
+		FArgumentList args;
 		switch (fcall->Function->NodeType)
 		{
 		case AST_ExprID:
 			// The function name is a simple identifier.
-			return new FxFunctionCall(static_cast<ZCC_ExprID *>(fcall->Function)->Identifier, NAME_None, ConvertNodeList(fcall->Parameters), *ast);
+			return new FxFunctionCall(static_cast<ZCC_ExprID *>(fcall->Function)->Identifier, NAME_None, ConvertNodeList(args, fcall->Parameters), *ast);
 
 		case AST_ExprMemberAccess:
 		{
 			auto ema = static_cast<ZCC_ExprMemberAccess *>(fcall->Function);
-			return new FxMemberFunctionCall(ConvertNode(ema->Left), ema->Right, ConvertNodeList(fcall->Parameters), *ast);
+			return new FxMemberFunctionCall(ConvertNode(ema->Left), ema->Right, ConvertNodeList(args, fcall->Parameters), *ast);
 		}
 
 		case AST_ExprBinary:
@@ -2582,7 +2583,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 				auto binary = static_cast<ZCC_ExprBinary *>(fcall->Function);
 				if (binary->Left->NodeType == AST_ExprID && binary->Right->NodeType == AST_ExprID)
 				{
-					return new FxFunctionCall(static_cast<ZCC_ExprID *>(binary->Left)->Identifier, static_cast<ZCC_ExprID *>(binary->Right)->Identifier, ConvertNodeList(fcall->Parameters), *ast);
+					return new FxFunctionCall(static_cast<ZCC_ExprID *>(binary->Left)->Identifier, static_cast<ZCC_ExprID *>(binary->Right)->Identifier, ConvertNodeList(args, fcall->Parameters), *ast);
 				}
 			}
 			// fall through if this isn't an array access node.
@@ -2832,21 +2833,20 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 	case AST_ReturnStmt:
 	{
 		auto ret = static_cast<ZCC_ReturnStmt *>(ast);
-		FArgumentList *args = ConvertNodeList(ret->Values);
-		if (args->Size() == 0)
+		FArgumentList args;
+		ConvertNodeList(args, ret->Values);
+		if (args.Size() == 0)
 		{
 			return new FxReturnStatement(nullptr, *ast);
 		}
-		else if (args->Size() == 1)
+		else if (args.Size() == 1)
 		{
-			auto arg = (*args)[0];
-			(*args)[0] = nullptr;
-			delete args;
-			return new FxReturnStatement((*args)[0], *ast);
+			auto arg = args[0];
+			args[0] = nullptr;
+			return new FxReturnStatement(arg, *ast);
 		}
 		else
 		{
-			delete args;
 			Error(ast, "Return with multiple values not implemented yet.");
 			return new FxReturnStatement(nullptr, *ast);
 		}
@@ -2893,7 +2893,8 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		{
 			// The switch content is wrapped into a compound statement which needs to be unraveled here.
 			auto cmpnd = static_cast<ZCC_CompoundStmt *>(swtch->Content);
-			return new FxSwitchStatement(ConvertNode(swtch->Condition), ConvertNodeList(cmpnd->Content), *ast);
+			FArgumentList args;
+			return new FxSwitchStatement(ConvertNode(swtch->Condition), ConvertNodeList(args, cmpnd->Content), *ast);
 		}
 	}
 
@@ -2922,17 +2923,16 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 }
 
 
-FArgumentList *ZCCCompiler::ConvertNodeList(ZCC_TreeNode *head)
+FArgumentList &ZCCCompiler::ConvertNodeList(FArgumentList &args, ZCC_TreeNode *head)
 {
-	FArgumentList *list = new FArgumentList;
 	if (head != nullptr)
 	{
 		auto node = head;
 		do
 		{
-			list->Push(ConvertNode(node));
+			args.Push(ConvertNode(node));
 			node = node->SiblingNext;
 		} while (node != head);
 	}
-	return list;
+	return args;
 }

@@ -75,8 +75,8 @@ FxVMFunctionCall *DoActionSpecials(FScanner &sc, FState & state, Baggage &bag)
 
 	if (special > 0 && min_args >= 0)
 	{
-		FArgumentList *args = new FArgumentList;
-		args->Push(new FxConstant(special, sc));
+		FArgumentList args;
+		args.Push(new FxConstant(special, sc));
 		i = 0;
 
 		// Make this consistent with all other parameter parsing
@@ -84,7 +84,7 @@ FxVMFunctionCall *DoActionSpecials(FScanner &sc, FState & state, Baggage &bag)
 		{
 			while (i < 5)
 			{
-				args->Push(new FxIntCast(ParseExpression(sc, bag.Info), true));
+				args.Push(new FxIntCast(ParseExpression(sc, bag.Info), true));
 				i++;
 				if (!sc.CheckToken (',')) break;
 			}
@@ -571,13 +571,9 @@ FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, B
 	PFunction *afd = dyn_cast<PFunction>(bag.Info->Symbols.FindSymbol(symname, true));
 	if (afd != NULL)
 	{
-		FArgumentList *args = new FArgumentList;
-		ParseFunctionParameters(sc, bag.Info, *args, afd, statestring, &bag.statedef);
-		call = new FxVMFunctionCall(new FxSelf(sc), afd, args->Size() > 0 ? args : NULL, sc, false);
-		if (args->Size() == 0)
-		{
-			delete args;
-		}
+		FArgumentList args;
+		ParseFunctionParameters(sc, bag.Info, args, afd, statestring, &bag.statedef);
+		call = new FxVMFunctionCall(new FxSelf(sc), afd, args, sc, false);
 		return call;
 	}
 	sc.ScriptError("Invalid parameter '%s'\n", sc.String);

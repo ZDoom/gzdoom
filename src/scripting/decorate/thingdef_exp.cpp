@@ -482,7 +482,6 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 	else if (sc.CheckToken(TK_Identifier))
 	{
 		FName identifier = FName(sc.String);
-		FArgumentList *args;
 		PFunction *func;
 
 		switch (identifier)
@@ -503,18 +502,12 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 				// There is an action function ACS_NamedExecuteWithResult which must be ignored here for this to work.
 				if (func != nullptr && identifier != NAME_ACS_NamedExecuteWithResult)
 				{
-					args = new FArgumentList;
+					FArgumentList args;
 					if (sc.CheckToken('('))
 					{
 						sc.UnGet();
-						ParseFunctionParameters(sc, cls, *args, func, "", nullptr);
+						ParseFunctionParameters(sc, cls, args, func, "", nullptr);
 					}
-					if (args->Size() == 0)
-					{
-						delete args;
-						args = nullptr;
-					}
-
 					return new FxVMFunctionCall(new FxSelf(sc), func, args, sc, false);
 				}
 			}
@@ -536,26 +529,17 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 			case NAME_VectorAngle:
 				return ParseAtan2(sc, identifier, cls);
 			default:
-				args = new FArgumentList;
-				try
+				FArgumentList args;
+				if (!sc.CheckToken(')'))
 				{
-					if (!sc.CheckToken(')'))
+					do
 					{
-						do
-						{
-							args->Push(ParseExpressionM (sc, cls));
-						}
-						while (sc.CheckToken(','));
-						sc.MustGetToken(')');
+						args.Push(ParseExpressionM (sc, cls));
 					}
-					return new FxFunctionCall(identifier, NAME_None, args, sc);
+					while (sc.CheckToken(','));
+					sc.MustGetToken(')');
 				}
-				catch (...)
-				{
-					delete args;
-					throw;
-				}
-				break;
+				return new FxFunctionCall(identifier, NAME_None, args, sc);
 			}
 		}
 		else

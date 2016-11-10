@@ -144,7 +144,7 @@ private:
 
 	FxExpression *ConvertAST(PClass *cclass, ZCC_TreeNode *ast);
 	FxExpression *ConvertNode(ZCC_TreeNode *node);
-	FArgumentList *ConvertNodeList(ZCC_TreeNode *head);
+	FArgumentList &ConvertNodeList(FArgumentList &, ZCC_TreeNode *head);
 
 	DObject *Outer;
 	PClass *ConvertClass;	// class type to be used when resoving symbold while converting an AST

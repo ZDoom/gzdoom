@@ -72,6 +72,9 @@ void RenderPolyBsp::Render()
 	else
 		RenderNode(nodes + numnodes - 1);	// The head node is the last node output.
 
+	static PolySkyDome skydome;
+	skydome.Render(worldToClip);
+
 	// Render back to front (we don't have a zbuffer at the moment, sniff!):
 	if (!r_debug_cull)
 	{
@@ -130,8 +133,9 @@ void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 			AddLine(line, frontsector);
 	}
 
-	FTexture *floortex = TexMan(frontsector->GetTexture(sector_t::floor));
-	if (floortex->UseType != FTexture::TEX_Null)
+	FTextureID floorpicnum = frontsector->GetTexture(sector_t::floor);
+	FTexture *floortex = TexMan(floorpicnum);
+	if (floortex->UseType != FTexture::TEX_Null && floorpicnum != skyflatnum)
 	{
 		TriVertex *vertices = PolyVertexBuffer::GetVertices(sub->numlines);
 		if (!vertices)
@@ -154,8 +158,9 @@ void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 		PolyTriangleDrawer::draw(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, floortex);
 	}
 
-	FTexture *ceiltex = TexMan(frontsector->GetTexture(sector_t::ceiling));
-	if (ceiltex->UseType != FTexture::TEX_Null)
+	FTextureID ceilpicnum = frontsector->GetTexture(sector_t::ceiling);
+	FTexture *ceiltex = TexMan(ceilpicnum);
+	if (ceiltex->UseType != FTexture::TEX_Null && ceilpicnum != skyflatnum)
 	{
 		TriVertex *vertices = PolyVertexBuffer::GetVertices(sub->numlines);
 		if (!vertices)
@@ -261,8 +266,8 @@ void RenderPolyBsp::AddLine(seg_t *line, sector_t *frontsector)
 		double middlefloorz1 = MIN(bottomceilz1, middleceilz1);
 		double middlefloorz2 = MIN(bottomceilz2, middleceilz2);
 
-		bool bothSkyCeiling = false;// frontsector->GetTexture(sector_t::ceiling) == skyflatnum && backsector->GetTexture(sector_t::ceiling) == skyflatnum;
-		bool bothSkyFloor = false;// frontsector->GetTexture(sector_t::floor) == skyflatnum && backsector->GetTexture(sector_t::floor) == skyflatnum;
+		bool bothSkyCeiling = frontsector->GetTexture(sector_t::ceiling) == skyflatnum && backsector->GetTexture(sector_t::ceiling) == skyflatnum;
+		bool bothSkyFloor = frontsector->GetTexture(sector_t::floor) == skyflatnum && backsector->GetTexture(sector_t::floor) == skyflatnum;
 
 		if ((topceilz1 > topfloorz1 || topceilz2 > topfloorz2) && !bothSkyCeiling && line->sidedef)
 		{
@@ -1289,4 +1294,144 @@ TriVertex *PolyVertexBuffer::GetVertices(int count)
 void PolyVertexBuffer::Clear()
 {
 	NextBufferVertex = 0;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+TriVertex PolySkyDome::SetVertex(float xx, float yy, float zz, float uu, float vv)
+{
+	TriVertex v;
+	v.x = xx;
+	v.y = yy;
+	v.z = zz;
+	v.w = 1.0f;
+	v.varying[0] = uu;
+	v.varying[1] = vv;
+	return v;
+}
+
+TriVertex PolySkyDome::SetVertexXYZ(float xx, float yy, float zz, float uu, float vv)
+{
+	TriVertex v;
+	v.x = xx;
+	v.y = zz;
+	v.z = yy;
+	v.w = 1.0f;
+	v.varying[0] = uu;
+	v.varying[1] = vv;
+	return v;
+}
+
+void PolySkyDome::SkyVertex(int r, int c, bool zflip)
+{
+	static const FAngle maxSideAngle = 60.f;
+	static const float scale = 10000.;
+
+	FAngle topAngle = (c / (float)mColumns * 360.f);
+	FAngle sideAngle = maxSideAngle * (float)(mRows - r) / (float)mRows;
+	float height = sideAngle.Sin();
+	float realRadius = scale * sideAngle.Cos();
+	FVector2 pos = topAngle.ToVector(realRadius);
+	float z = (!zflip) ? scale * height : -scale * height;
+
+	float u, v;
+	//uint32_t color = r == 0 ? 0xffffff : 0xffffffff;
+
+	// And the texture coordinates.
+	if (!zflip)	// Flipped Y is for the lower hemisphere.
+	{
+		u = (-c / (float)mColumns);
+		v = (r / (float)mRows);
+	}
+	else
+	{
+		u = (-c / (float)mColumns);
+		v = 1.0f + ((mRows - r) / (float)mRows);
+	}
+
+	if (r != 4) z += 300;
+
+	// And finally the vertex.
+	TriVertex vert;
+	vert = SetVertexXYZ(-pos.X, z - 1.f, pos.Y, u * 4.0f, v + 0.5f/*, color*/);
+	mVertices.Push(vert);
+}
+
+void PolySkyDome::CreateSkyHemisphere(bool zflip)
+{
+	int r, c;
+
+	mPrimStart.Push(mVertices.Size());
+
+	for (c = 0; c < mColumns; c++)
+	{
+		SkyVertex(1, c, zflip);
+	}
+
+	// The total number of triangles per hemisphere can be calculated
+	// as follows: rows * columns * 2 + 2 (for the top cap).
+	for (r = 0; r < mRows; r++)
+	{
+		mPrimStart.Push(mVertices.Size());
+		for (c = 0; c <= mColumns; c++)
+		{
+			SkyVertex(r + zflip, c, zflip);
+			SkyVertex(r + 1 - zflip, c, zflip);
+		}
+	}
+}
+
+void PolySkyDome::CreateDome()
+{
+	mColumns = 128;
+	mRows = 4;
+	CreateSkyHemisphere(false);
+	CreateSkyHemisphere(true);
+	mPrimStart.Push(mVertices.Size());
+}
+
+void PolySkyDome::RenderRow(const TriUniforms &uniforms, FTexture *skytex, int row)
+{
+	PolyTriangleDrawer::draw(uniforms, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Strip, false, 0, viewwidth, 0, viewheight, skytex);
+}
+
+void PolySkyDome::RenderCapColorRow(const TriUniforms &uniforms, FTexture *skytex, int row, bool bottomCap)
+{
+	uint32_t solid = skytex->GetSkyCapColor(bottomCap);
+	if (!r_swtruecolor)
+		solid = RGB32k.RGB[(RPART(solid) >> 3)][(GPART(solid) >> 3)][(BPART(solid) >> 3)];
+	PolyTriangleDrawer::fill(uniforms, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Fan, bottomCap, 0, viewwidth, 0, viewheight, solid);
+}
+
+void PolySkyDome::Render(const TriMatrix &worldToClip)
+{
+	FTextureID sky1tex, sky2tex;
+	if ((level.flags & LEVEL_SWAPSKIES) && !(level.flags & LEVEL_DOUBLESKY))
+		sky1tex = sky2texture;
+	else
+		sky1tex = sky1texture;
+	sky2tex = sky2texture;
+
+	FTexture *frontskytex = TexMan(sky1tex, true);
+	FTexture *backskytex = nullptr;
+	if (level.flags & LEVEL_DOUBLESKY)
+		backskytex = TexMan(sky2tex, true);
+
+	TriMatrix objectToWorld = TriMatrix::translate((float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z);
+
+	TriUniforms uniforms;
+	uniforms.objectToClip = worldToClip * objectToWorld;
+	uniforms.light = 256;
+	uniforms.flags = 0;
+
+	int rc = mRows + 1;
+
+	RenderCapColorRow(uniforms, frontskytex, 0, false);
+	RenderCapColorRow(uniforms, frontskytex, rc, true);
+
+	for (int i = 1; i <= mRows; i++)
+	{
+		RenderRow(uniforms, frontskytex, i);
+		RenderRow(uniforms, frontskytex, rc + i);
+	}
 }

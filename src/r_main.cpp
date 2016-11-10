@@ -922,7 +922,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	}
 	else
 	{
-		RenderPolyBsp bsp;
+		static RenderPolyBsp bsp;
 		bsp.Render();
 	}
 	R_3D_ResetClip(); // reset clips (floor/ceiling)

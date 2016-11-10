@@ -41,15 +41,19 @@ CVAR(Bool, r_debug_cull, 0, 0)
 
 void RenderPolyBsp::Render()
 {
+	// Setup working buffers
 	PolyVertexBuffer::Clear();
 	SolidSegments.clear();
 	SolidSegments.reserve(MAXWIDTH / 2 + 2);
 	SolidSegments.push_back({ -0x7fff, 0 });
 	SolidSegments.push_back({ viewwidth, 0x7fff });
-
 	SectorSpriteRanges.clear();
 	SectorSpriteRanges.resize(numsectors);
 	SortedSprites.clear();
+	PvsSectors.clear();
+	SectorSpriteRanges.clear();
+	ScreenSprites.clear();
+	PolyStencilBuffer::Instance()->Clear(viewwidth, viewheight, 0);
 
 	// Perspective correct:
 	float ratio = WidescreenRatio;
@@ -66,13 +70,12 @@ void RenderPolyBsp::Render()
 	// Y shearing like the Doom renderer:
 	//worldToClip = TriMatrix::viewToClip() * TriMatrix::worldToView();
 
-	// Cull front to back (ok, so we dont cull yet, but we should during this!):
+	// Cull front to back
 	if (numnodes == 0)
 		PvsSectors.push_back(subsectors); // RenderSubsector(subsectors);
 	else
 		RenderNode(nodes + numnodes - 1);	// The head node is the last node output.
 
-	static PolySkyDome skydome;
 	skydome.Render(worldToClip);
 
 	// Render back to front (we don't have a zbuffer at the moment, sniff!):
@@ -226,9 +229,6 @@ void RenderPolyBsp::AddLine(seg_t *line, sector_t *frontsector)
 	double frontfloorz1 = frontsector->floorplane.ZatPoint(line->v1);
 	double frontceilz2 = frontsector->ceilingplane.ZatPoint(line->v2);
 	double frontfloorz2 = frontsector->floorplane.ZatPoint(line->v2);
-
-	//VisiblePlaneKey ceilingPlaneKey(frontsector->GetTexture(sector_t::ceiling), frontsector->ColorMap, frontsector->lightlevel, frontsector->ceilingplane, frontsector->planes[sector_t::ceiling].xform);
-	//VisiblePlaneKey floorPlaneKey(frontsector->GetTexture(sector_t::floor), frontsector->ColorMap, frontsector->lightlevel, frontsector->floorplane, frontsector->planes[sector_t::floor].xform);
 
 	RenderPolyWall wall;
 	wall.Line = line;

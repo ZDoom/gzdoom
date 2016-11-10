@@ -48,6 +48,117 @@ private:
 	friend class DrawPolyTrianglesCommand;
 };
 
+// 8x8 block of stencil values, plus a mask indicating if values are the same for early out stencil testing
+class PolyStencilBlock
+{
+public:
+	PolyStencilBlock(int block, uint8_t *values, uint32_t *masks) : Values(values + block * 64), ValueMask(masks[block])
+	{
+	}
+
+	void Set(int x, int y, uint8_t value)
+	{
+		if (ValueMask == 0xffffffff)
+		{
+			if (Values[0] == value)
+				return;
+
+			for (int i = 1; i < 8 * 8 + 4 * 4 + 2 * 2 + 1; i++)
+				Values[i] = Values[0];
+		}
+
+		if (Values[x + y * 8] == value)
+			return;
+
+		Values[x + y * 8] = value;
+
+		int leveloffset = 0;
+		for (int i = 1; i < 4; i++)
+		{
+			int iy = i + 3;
+
+			x >>= 1;
+			y >>= 1;
+
+			bool same =
+				Values[(x << i)       + (y << iy)]       != value ||
+				Values[((x + 1) << i) + (y << iy)]       != value ||
+				Values[(x << i)       + ((y + 1) << iy)] != value ||
+				Values[((x + 1) << i) + ((y + 1) << iy)] != value;
+
+			int levelbit = 1 << (leveloffset + x + y * (8 >> i));
+
+			if (same)
+				ValueMask = ValueMask & ~levelbit;
+			else
+				ValueMask = ValueMask | levelbit;
+		}
+
+		if (Values[0] != value || Values[4] != value || Values[4 * 8] != value || Values[4 * 8 + 4] != value)
+			ValueMask = ValueMask & ~(1 << 22);
+		else
+			ValueMask = ValueMask | (1 << 22);
+	}
+
+	uint8_t Get(int x, int y) const
+	{
+		if (ValueMask == 0xffffffff)
+			return Values[0];
+		else
+			return Values[x + y * 8];
+	}
+
+	void Clear(uint8_t value)
+	{
+		Values[0] = value;
+		ValueMask = 0xffffffff;
+	}
+
+private:
+	uint8_t *Values; // [8 * 8];
+	uint32_t &ValueMask; // 4 * 4 + 2 * 2 + 1 bits indicating is Values are the same
+};
+
+class PolyStencilBuffer
+{
+public:
+	static PolyStencilBuffer *Instance()
+	{
+		static PolyStencilBuffer buffer;
+		return &buffer;
+	}
+
+	void Clear(int newwidth, int newheight, uint8_t stencil_value = 0)
+	{
+		width = newwidth;
+		height = newheight;
+		int count = BlockWidth() * BlockHeight();
+		values.resize(count * 64);
+		masks.resize(count);
+
+		uint8_t *v = Values();
+		uint32_t *m = Masks();
+		for (int i = 0; i < count; i++)
+		{
+			PolyStencilBlock block(i, v, m);
+			block.Clear(stencil_value);
+		}
+	}
+
+	int Width() const { return width; }
+	int Height() const { return height; }
+	int BlockWidth() const { return (width + 7) / 8; }
+	int BlockHeight() const { return (height + 7) / 8; }
+	uint8_t *Values() { return values.data(); }
+	uint32_t *Masks() { return masks.data(); }
+
+private:
+	int width;
+	int height;
+	std::vector<uint8_t> values;
+	std::vector<uint32_t> masks;
+};
+
 struct ScreenPolyTriangleDrawerArgs
 {
 	uint8_t *dest;

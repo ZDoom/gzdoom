@@ -106,6 +106,8 @@ private:
 
 	static void queue_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor);
 
+	enum { max_additional_vertices = 16 };
+
 	friend class DrawTrianglesCommand;
 };
 

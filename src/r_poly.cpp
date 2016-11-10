@@ -129,7 +129,7 @@ void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 	for (uint32_t i = 0; i < sub->numlines; i++)
 	{
 		seg_t *line = &sub->firstline[i];
-		if (line->sidedef == NULL || !(line->sidedef->Flags & WALLF_POLYOBJ))
+		if (line->sidedef == nullptr || !(line->sidedef->Flags & WALLF_POLYOBJ))
 			AddLine(line, frontsector);
 	}
 
@@ -237,12 +237,15 @@ void RenderPolyBsp::AddLine(seg_t *line, sector_t *frontsector)
 
 	if (line->backsector == nullptr)
 	{
-		wall.SetCoords(line->v1->fPos(), line->v2->fPos(), frontceilz1, frontfloorz1, frontceilz2, frontfloorz2);
-		wall.TopZ = frontceilz1;
-		wall.BottomZ = frontfloorz1;
-		wall.UnpeggedCeil = frontceilz1;
-		wall.Texpart = side_t::mid;
-		wall.Render(worldToClip);
+		if (line->sidedef)
+		{
+			wall.SetCoords(line->v1->fPos(), line->v2->fPos(), frontceilz1, frontfloorz1, frontceilz2, frontfloorz2);
+			wall.TopZ = frontceilz1;
+			wall.BottomZ = frontfloorz1;
+			wall.UnpeggedCeil = frontceilz1;
+			wall.Texpart = side_t::mid;
+			wall.Render(worldToClip);
+		}
 	}
 	else
 	{
@@ -469,7 +472,7 @@ visstyle_t RenderPolyBsp::GetSpriteVisStyle(AActor *thing, double z)
 	}
 
 	// get light level
-	if (fixedcolormap != NULL)
+	if (fixedcolormap != nullptr)
 	{ // fixed map
 		visstyle.BaseColormap = fixedcolormap;
 		visstyle.ColormapNum = 0;
@@ -1268,7 +1271,7 @@ void PolyScreenSprite::Render()
 		DTA_FillColor, FillColor,
 		DTA_SpecialColormap, special,
 		DTA_ColorOverlay, overlay.d,
-		DTA_ColormapStyle, usecolormapstyle ? &colormapstyle : NULL,
+		DTA_ColormapStyle, usecolormapstyle ? &colormapstyle : nullptr,
 		TAG_DONE);
 }
 

@@ -138,7 +138,7 @@ TriVertex TriangleDrawer::shade_vertex(const TriUniforms &uniforms, TriVertex v)
 void TriangleDrawer::draw_shaded_triangle(const TriVertex *vert, bool ccw, ScreenTriangleDrawerArgs *args, DrawerThread *thread, void(*drawfunc)(const ScreenTriangleDrawerArgs *, DrawerThread *))
 {
 	// Cull, clip and generate additional vertices as needed
-	TriVertex clippedvert[12];
+	TriVertex clippedvert[max_additional_vertices];
 	int numclipvert;
 	clipedge(vert, clippedvert, numclipvert);
 
@@ -207,7 +207,7 @@ void TriangleDrawer::clipedge(const TriVertex *verts, TriVertex *clippedvert, in
 	// -v.w <= v.z <= v.w
 	
 	// use barycentric weights while clipping vertices
-	float weights[12 * 3 * 2];
+	float weights[max_additional_vertices * 3 * 2];
 	for (int i = 0; i < 3; i++)
 	{
 		weights[i * 3 + 0] = 0.0f;
@@ -231,7 +231,7 @@ void TriangleDrawer::clipedge(const TriVertex *verts, TriVertex *clippedvert, in
 	
 	// Clip against each halfspace
 	float *input = weights;
-	float *output = weights + 12 * 3;
+	float *output = weights + max_additional_vertices * 3;
 	int inputverts = 3;
 	int outputverts = 0;
 	for (int p = 0; p < 6; p++)
@@ -252,7 +252,7 @@ void TriangleDrawer::clipedge(const TriVertex *verts, TriVertex *clippedvert, in
 				clipdistance[2 * 6 + p] * input[j * 3 + 2];
 				
 			float t1, t2;
-			if (!cullhalfspace(clipdistance1, clipdistance2, t1, t2))
+			if (!cullhalfspace(clipdistance1, clipdistance2, t1, t2) && outputverts + 1 < max_additional_vertices)
 			{
 				// add t1 vertex
 				for (int k = 0; k < 3; k++)

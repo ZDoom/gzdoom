@@ -123,6 +123,8 @@ static void InitTokenMap()
 	TOKENDEF (TK_Private,		ZCC_PRIVATE);
 	TOKENDEF (TK_Protected,		ZCC_PROTECTED);
 	TOKENDEF (TK_Latent,		ZCC_LATENT);
+	TOKENDEF (TK_Virtual,		ZCC_VIRTUAL);
+	TOKENDEF (TK_Override,		ZCC_OVERRIDE);
 	TOKENDEF (TK_Final,			ZCC_FINAL);
 	TOKENDEF (TK_Meta,			ZCC_META);
 	TOKENDEF (TK_Deprecated,	ZCC_DEPRECATED);

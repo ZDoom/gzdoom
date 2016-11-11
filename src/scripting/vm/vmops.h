@@ -82,6 +82,7 @@ xx(PARAM,	param,	__BCP),		// push parameter encoded in BC for function call (B=r
 xx(PARAMI,	parami,	I24),		// push immediate, signed integer for function call
 xx(CALL,	call,	RPI8I8),	// Call function pkA with parameter count B and expected result count C
 xx(CALL_K,	call,	KPI8I8),
+xx(VTBL,	vtbl,	RPRPI8),	// dereferences a virtual method table.
 xx(TAIL,	tail,	RPI8),		// Call+Ret in a single instruction
 xx(TAIL_K,	tail,	KPI8),
 xx(RESULT,	result,	__BCP),		// Result should go in register encoded in BC (in caller, after CALL)

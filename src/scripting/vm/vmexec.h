@@ -525,6 +525,15 @@ begin:
 			}
 		}
 		NEXTOP;
+	OP(VTBL):
+		ASSERTA(a); ASSERTA(B);
+		{
+			auto o = (DObject*)reg.a[B];
+			auto p = o->GetClass();
+			assert(C < p->Virtuals.Size());
+			reg.a[a] = p->Virtuals[C];
+		}
+		NEXTOP;
 	OP(CALL_K):
 		ASSERTKA(a);
 		assert(konstatag[a] == ATAG_OBJECT);

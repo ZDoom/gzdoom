@@ -655,7 +655,9 @@ class VMFunction : public DObject
 	HAS_OBJECT_POINTERS;
 public:
 	bool Native;
+	bool Final = false;				// cannot be overridden
 	BYTE ImplicitArgs = 0;	// either 0 for static, 1 for method or 3 for action
+	int VirtualIndex = -1;
 	FName Name;
 	TArray<VMValue> DefaultArgs;
 

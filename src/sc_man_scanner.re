@@ -168,6 +168,7 @@ std2:
 		'optional'					{ RET(TK_Optional); }
 		'export'					{ RET(TK_Export); }
 		'virtual'					{ RET(TK_Virtual); }
+		'override'					{ RET(TK_Override); }
 		'super'						{ RET(TK_Super); }
 		'global'					{ RET(TK_Global); }
 		'stop'						{ RET(TK_Stop); }

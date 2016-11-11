@@ -33,6 +33,8 @@ enum
 	ZCC_FuncConst		= 1 << 10,
 	ZCC_Abstract		= 1 << 11,
 	ZCC_Extension		= 1 << 12,
+	ZCC_Virtual			= 1 << 13,
+	ZCC_Override		= 1 << 14,
 };
 
 // Function parameter modifiers

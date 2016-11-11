@@ -1,6 +1,6 @@
 class Object native
 {
-	/*virtual*/ native void Destroy();
+	virtual native void Destroy();
 	native class<Object> GetClass();
 }
 

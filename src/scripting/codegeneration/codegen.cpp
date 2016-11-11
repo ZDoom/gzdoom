@@ -6693,12 +6693,16 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 		}
 	}
 
+	VMFunction *vmfunc = Function->Variants[0].Implementation;
+	bool staticcall = (vmfunc->Final || vmfunc->VirtualIndex == -1 || NoVirtual);
+
 	count = 0;
 	// Emit code to pass implied parameters
+	ExpEmit selfemit;
 	if (Function->Variants[0].Flags & VARF_Method)
 	{
 		assert(Self != nullptr);
-		ExpEmit selfemit = Self->Emit(build);
+		selfemit = Self->Emit(build);
 		assert(selfemit.RegType == REGT_POINTER);
 		build->Emit(OP_PARAM, 0, selfemit.RegType, selfemit.RegNum);
 		count += 1;
@@ -6718,8 +6722,9 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 			}
 			count += 2;
 		}
-		selfemit.Free(build);
+		if (staticcall) selfemit.Free(build);
 	}
+	else staticcall = true;
 	// Emit code to pass explicit parameters
 	for (unsigned i = 0; i < ArgList.Size(); ++i)
 	{
@@ -6729,27 +6734,56 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	ArgList.ShrinkToFit();
 
 	// Get a constant register for this function
-	VMFunction *vmfunc = Function->Variants[0].Implementation;
-	int funcaddr = build->GetConstantAddress(vmfunc, ATAG_OBJECT);
-	// Emit the call
-	if (EmitTail)
-	{ // Tail call
-		build->Emit(OP_TAIL_K, funcaddr, count, 0);
-		ExpEmit call;
-		call.Final = true;
-		return call;
-	}
-	else if (vmfunc->Proto->ReturnTypes.Size() > 0)
-	{ // Call, expecting one result
-		ExpEmit reg(build, vmfunc->Proto->ReturnTypes[0]->GetRegType(), vmfunc->Proto->ReturnTypes[0]->GetRegCount());
-		build->Emit(OP_CALL_K, funcaddr, count, 1);
-		build->Emit(OP_RESULT, 0, EncodeRegType(reg), reg.RegNum);
-		return reg;
+	if (staticcall)
+	{
+		int funcaddr = build->GetConstantAddress(vmfunc, ATAG_OBJECT);
+		// Emit the call
+		if (EmitTail)
+		{ // Tail call
+			build->Emit(OP_TAIL_K, funcaddr, count, 0);
+			ExpEmit call;
+			call.Final = true;
+			return call;
+		}
+		else if (vmfunc->Proto->ReturnTypes.Size() > 0)
+		{ // Call, expecting one result
+			ExpEmit reg(build, vmfunc->Proto->ReturnTypes[0]->GetRegType(), vmfunc->Proto->ReturnTypes[0]->GetRegCount());
+			build->Emit(OP_CALL_K, funcaddr, count, 1);
+			build->Emit(OP_RESULT, 0, EncodeRegType(reg), reg.RegNum);
+			return reg;
+		}
+		else
+		{ // Call, expecting no results
+			build->Emit(OP_CALL_K, funcaddr, count, 0);
+			return ExpEmit();
+		}
 	}
 	else
-	{ // Call, expecting no results
-		build->Emit(OP_CALL_K, funcaddr, count, 0);
-		return ExpEmit();
+	{
+		selfemit.Free(build);
+		ExpEmit funcreg(build, REGT_POINTER);
+		build->Emit(OP_VTBL, funcreg.RegNum, selfemit.RegNum, vmfunc->VirtualIndex);
+		if (EmitTail)
+		{ // Tail call
+			build->Emit(OP_TAIL, funcreg.RegNum, count, 0);
+			ExpEmit call;
+			call.Final = true;
+			return call;
+		}
+		else if (vmfunc->Proto->ReturnTypes.Size() > 0)
+		{ // Call, expecting one result
+			ExpEmit reg(build, vmfunc->Proto->ReturnTypes[0]->GetRegType(), vmfunc->Proto->ReturnTypes[0]->GetRegCount());
+			build->Emit(OP_CALL, funcreg.RegNum, count, 1);
+			build->Emit(OP_RESULT, 0, EncodeRegType(reg), reg.RegNum);
+			return reg;
+		}
+		else
+		{ // Call, expecting no results
+			build->Emit(OP_CALL, funcreg.RegNum, count, 0);
+			return ExpEmit();
+		}
+
+
 	}
 }
 

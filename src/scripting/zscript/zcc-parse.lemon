@@ -905,6 +905,8 @@ decl_flags(X) ::= decl_flags(A) META(T).		{ X.Int = A.Int | ZCC_Meta; X.SourceLo
 decl_flags(X) ::= decl_flags(A) ACTION(T).		{ X.Int = A.Int | ZCC_Action; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
 decl_flags(X) ::= decl_flags(A) READONLY(T).	{ X.Int = A.Int | ZCC_ReadOnly; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
 decl_flags(X) ::= decl_flags(A) DEPRECATED(T).	{ X.Int = A.Int | ZCC_Deprecated; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
+decl_flags(X) ::= decl_flags(A) VIRTUAL(T).		{ X.Int = A.Int | ZCC_Virtual; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
+decl_flags(X) ::= decl_flags(A) OVERRIDE(T).	{ X.Int = A.Int | ZCC_Override; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
 
 func_const(X) ::= .							{ X.Int = 0; X.SourceLoc = stat->sc->GetMessageLine(); }
 func_const(X) ::= CONST(T).					{ X.Int = ZCC_FuncConst; X.SourceLoc = T.SourceLoc; }

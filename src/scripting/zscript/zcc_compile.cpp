@@ -1258,7 +1258,7 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 		PType *fieldtype = DetermineType(type, field, field->Names->Name, field->Type, true, true);
 
 		// For structs only allow 'deprecated', for classes exclude function qualifiers.
-		int notallowed = forstruct? ~ZCC_Deprecated : ZCC_Latent | ZCC_Final | ZCC_Action | ZCC_Static | ZCC_FuncConst | ZCC_Abstract; 
+		int notallowed = forstruct? ~ZCC_Deprecated : ZCC_Latent | ZCC_Final | ZCC_Action | ZCC_Static | ZCC_FuncConst | ZCC_Abstract | ZCC_Virtual | ZCC_Override; 
 
 		if (field->Flags & notallowed)
 		{
@@ -1894,6 +1894,7 @@ void ZCCCompiler::InitDefaults()
 		if (!c->Type()->IsDescendantOf(RUNTIME_CLASS(AActor)))
 		{
 			if (c->Defaults.Size()) Error(c->cls, "%s: Non-actor classes may not have defaults", c->Type()->TypeName.GetChars());
+			if (c->Type()->ParentClass) c->Type()->ParentClass->DeriveData(c->Type());
 		}
 		else
 		{
@@ -1989,6 +1990,16 @@ void ZCCCompiler::InitFunctions()
 
 	for (auto c : Classes)
 	{
+		// cannot be done earlier because it requires the parent class to be processed by this code, too.
+		if (c->Type()->ParentClass != nullptr)
+		{
+			if (c->Type()->ParentClass->Virtuals.Size() == 0)
+			{
+				// This a VMClass which didn't get processed here.
+				c->Type()->ParentClass->Virtuals = c->Type()->ParentClass->ParentClass->Virtuals;
+			}
+			c->Type()->Virtuals = c->Type()->ParentClass->Virtuals;
+		}
 		for (auto f : c->Functions)
 		{
 			rets.Clear();
@@ -2030,13 +2041,32 @@ void ZCCCompiler::InitFunctions()
 				if (f->Flags & ZCC_Private) varflags |= VARF_Private;
 				if (f->Flags & ZCC_Protected) varflags |= VARF_Protected;
 				if (f->Flags & ZCC_Deprecated) varflags |= VARF_Deprecated;
+				if (f->Flags & ZCC_Virtual) varflags |= VARF_Virtual;
+				if (f->Flags & ZCC_Override) varflags |= VARF_Override;
 				if (f->Flags & ZCC_Action) varflags |= VARF_Action|VARF_Final, implicitargs = 3;	// Action implies Final.
 				if (f->Flags & ZCC_Static) varflags = (varflags & ~VARF_Method) | VARF_Final, implicitargs = 0;	// Static implies Final.
-				if ((f->Flags & (ZCC_Action | ZCC_Static)) == (ZCC_Action | ZCC_Static))
+
+				if (varflags & VARF_Override) varflags &= ~VARF_Virtual;	// allow 'virtual override'.
+				// Only one of these flags may be used.
+				static int exclude[] = { ZCC_Virtual, ZCC_Override, ZCC_Action, ZCC_Static };
+				static const char * print[] = { "virtual", "override", "action", "static" };
+				int fc = 0;
+				FString build;
+				for (int i = 0; i < 4; i++)
 				{
-					Error(f, "%s: Action and Static on the same function is not allowed.", FName(f->Name).GetChars());
+					if (f->Flags & exclude[i])
+					{
+						fc++;
+						if (build.Len() > 0) build += ", ";
+						build += print[i];
+					}
+				}
+				if (fc > 1)
+				{
+					Error(f, "Invalid combination of qualifiers %s on function %s.", FName(f->Name).GetChars(), build.GetChars() );
 					varflags |= VARF_Method;
 				}
+				if (varflags & VARF_Override) varflags |= VARF_Virtual;	// Now that the flags are checked, make all override functions virtual as well.
 
 				if (f->Flags & ZCC_Native)
 				{
@@ -2193,7 +2223,41 @@ void ZCCCompiler::InitFunctions()
 				{
 					sym->Variants[0].Implementation->DefaultArgs = std::move(argdefaults);
 				}
-				// todo: Check inheritance.
+				
+				if (varflags & VARF_Virtual)
+				{
+					if (varflags & VARF_Final)
+					{
+						sym->Variants[0].Implementation->Final = true;
+					}
+					int vindex = c->Type()->FindVirtualIndex(sym->SymbolName, sym->Variants[0].Proto);
+					// specifying 'override' is necessary to prevent one of the biggest problem spots with virtual inheritance: Mismatching argument types.
+					if (varflags & VARF_Override)
+					{
+						if (vindex == -1)
+						{
+							Error(p, "Attempt to override non-existent virtual function %s", FName(f->Name).GetChars());
+						}
+						else
+						{
+							auto oldfunc = c->Type()->Virtuals[vindex];
+							if (oldfunc->Final)
+							{
+								Error(p, "Attempt to override final function %s", FName(f->Name).GetChars());
+							}
+							c->Type()->Virtuals[vindex] = sym->Variants[0].Implementation;
+							sym->Variants[0].Implementation->VirtualIndex = vindex;
+						}
+					}
+					else
+					{
+						if (vindex != -1)
+						{
+							Error(p, "Function %s attempts to override parent function without 'override' qualifier", FName(f->Name).GetChars());
+						}
+						sym->Variants[0].Implementation->VirtualIndex = c->Type()->Virtuals.Push(sym->Variants[0].Implementation);
+					}
+				}
 			}
 		}
 	}

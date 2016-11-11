@@ -31,6 +31,7 @@ enum
 	VARF_Implicit		= (1<<12),	// implicitly created parameters (i.e. do not compare types when checking function signatures)
 	VARF_Static			= (1<<13),	// static class data (by necessity read only.)
 	VARF_InternalAccess	= (1<<14),	// overrides VARF_ReadOnly for internal script code.
+	VARF_Override		= (1<<15),	// overrides a virtual function from the parent class.
 };
 
 // Symbol information -------------------------------------------------------
@@ -756,7 +757,7 @@ protected:
 	// We unravel _WITH_META here just as we did for PType.
 	enum { MetaClassNum = CLASSREG_PClassClass };
 	TArray<FTypeAndOffset> SpecialInits;
-	virtual void Derive(PClass *newclass);
+	void Derive(PClass *newclass, FName name);
 	void InitializeSpecials(void *addr) const;
 	void SetSuper();
 public:
@@ -768,8 +769,9 @@ public:
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
 	bool ReadAllFields(FSerializer &ar, void *addr) const;
 	void InitializeDefaults();
+	int FindVirtualIndex(FName name, PPrototype *proto);
+	virtual void DeriveData(PClass *newclass);
 
-	virtual void DeriveData(PClass *newclass) {}
 	static void StaticInit();
 	static void StaticShutdown();
 	static void StaticBootstrap();
@@ -782,6 +784,7 @@ public:
 	BYTE				*Defaults;
 	bool				 bRuntimeClass;	// class was defined at run-time, not compile-time
 	bool				 bExported;		// This type has been declared in a script
+	TArray<VMFunction*>	 Virtuals;	// virtual function table
 
 	void (*ConstructNative)(void *);
 
@@ -838,7 +841,7 @@ class PClassType : public PClass
 protected:
 public:
 	PClassType();
-	virtual void Derive(PClass *newclass);
+	virtual void DeriveData(PClass *newclass);
 
 	PClass *TypeTableType;	// The type to use for hashing into the type table
 };

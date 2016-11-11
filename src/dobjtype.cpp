@@ -156,14 +156,14 @@ PClassType::PClassType()
 
 //==========================================================================
 //
-// PClassType :: Derive
+// PClassType :: DeriveData
 //
 //==========================================================================
 
-void PClassType::Derive(PClass *newclass)
+void PClassType::DeriveData(PClass *newclass)
 {
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassType)));
-	Super::Derive(newclass);
+	Super::DeriveData(newclass);
 	static_cast<PClassType *>(newclass)->TypeTableType = TypeTableType;
 }
 
@@ -3030,12 +3030,14 @@ void PClass::DestroySpecials(void *addr) const
 //
 //==========================================================================
 
-void PClass::Derive(PClass *newclass)
+void PClass::Derive(PClass *newclass, FName name)
 {
+	newclass->bRuntimeClass = true;
 	newclass->ParentClass = this;
 	newclass->ConstructNative = ConstructNative;
 	newclass->Symbols.SetParentTable(&this->Symbols);
-	newclass->InitializeDefaults();
+	newclass->TypeName = name;
+	newclass->mDescriptiveName.Format("Class<%s>", name.GetChars());
 }
 
 //==========================================================================
@@ -3084,6 +3086,18 @@ void PClass::InitializeDefaults()
 
 //==========================================================================
 //
+// PClass :: DeriveData
+//
+// Copies inheritable data to the child class.
+//
+//==========================================================================
+
+void PClass::DeriveData(PClass *newclass)
+{
+}
+
+//==========================================================================
+//
 // PClass :: CreateDerivedClass
 //
 // Create a new class based on an existing class
@@ -3126,11 +3140,10 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 	// Create a new type object of the same type as us. (We may be a derived class of PClass.)
 	type = static_cast<PClass *>(GetClass()->CreateNew());
 
-	type->TypeName = name;
 	type->Size = size;
-	type->bRuntimeClass = true;
-	type->mDescriptiveName.Format("Class<%s>", name.GetChars());
-	Derive(type);
+	Derive(type, name);
+	type->InitializeDefaults();
+	type->Virtuals = Virtuals;
 	DeriveData(type);
 	if (!notnew)
 	{
@@ -3178,8 +3191,7 @@ PField *PClass::AddField(FName name, PType *type, DWORD flags)
 // PClass :: FindClassTentative
 //
 // Like FindClass but creates a placeholder if no class is found.
-// CreateDerivedClass will automatically fill in the placeholder when the
-// actual class is defined.
+// This will be filled in when the actual class is constructed.
 //
 //==========================================================================
 
@@ -3201,15 +3213,57 @@ PClass *PClass::FindClassTentative(FName name, bool fatal)
 	PClass *type = static_cast<PClass *>(GetClass()->CreateNew());
 	DPrintf(DMSG_SPAMMY, "Creating placeholder class %s : %s\n", name.GetChars(), TypeName.GetChars());
 
-	type->TypeName = name;
-	type->ParentClass = this;
-	type->ConstructNative = ConstructNative;
+	Derive(type, name);
 	type->Size = TentativeClass;
-	type->bRuntimeClass = true;
-	type->mDescriptiveName.Format("Class<%s>", name.GetChars());
-	type->Symbols.SetParentTable(&Symbols);
 	TypeTable.AddType(type, RUNTIME_CLASS(PClass), (intptr_t)type->Outer, name, bucket);
 	return type;
+}
+
+//==========================================================================
+//
+// PClass :: FindVirtualIndex
+//
+// Compares a prototype with the existing list of virtual functions
+// and returns an index if something matching is found.
+//
+//==========================================================================
+
+int PClass::FindVirtualIndex(FName name, PPrototype *proto)
+{
+	for (unsigned i = 0; i < Virtuals.Size(); i++)
+	{
+		if (Virtuals[i]->Name == name)
+		{
+			auto vproto = Virtuals[i]->Proto;
+			if (vproto->ReturnTypes.Size() != proto->ReturnTypes.Size() ||
+				vproto->ArgumentTypes.Size() != proto->ArgumentTypes.Size())
+			{
+				continue;	// number of parameters does not match, so it's incompatible
+			}
+			bool fail = false;
+			// The first argument is self and will mismatch so just skip it.
+			for (unsigned a = 1; a < proto->ArgumentTypes.Size(); a++)
+			{
+				if (proto->ArgumentTypes[a] != vproto->ArgumentTypes[a])
+				{
+					fail = true;
+					break;
+				}
+			}
+			if (fail) continue;
+
+			for (unsigned a = 0; a < proto->ReturnTypes.Size(); a++)
+			{
+				if (proto->ReturnTypes[a] != vproto->ReturnTypes[a])
+				{
+					fail = true;
+					break;
+				}
+			}
+			if (!fail) return i;
+		}
+	}
+	return -1;
 }
 
 //==========================================================================

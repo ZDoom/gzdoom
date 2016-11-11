@@ -609,6 +609,13 @@ protected:
 	}
 };
 
+//Initial list
+VMEXPORTED_NATIVES_START
+	VMEXPORTED_NATIVES_FUNC(Destroy)
+	VMEXPORTED_NATIVES_FUNC(Tick)
+	VMEXPORTED_NATIVES_FUNC(DropInventory)
+VMEXPORTED_NATIVES_END
+
 class AInventory;//
 
 template<class T>
@@ -671,13 +678,6 @@ ClassReg DVMObject<T>::RegistrationInfo =
 	DVMObject<T>::MetaClassNum
 };
 template<class T> _DECLARE_TI(DVMObject<T>)
-
-//Initial list
-VMEXPORTED_NATIVES_START
-	VMEXPORTED_NATIVES_FUNC(Destroy)
-	VMEXPORTED_NATIVES_FUNC(Tick)
-	VMEXPORTED_NATIVES_FUNC(DropInventory)
-VMEXPORTED_NATIVES_END
 
 VMEXPORT_NATIVES_START(DObject, void)
 	VMEXPORT_NATIVES_FUNC(Destroy)

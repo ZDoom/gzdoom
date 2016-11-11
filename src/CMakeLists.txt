@@ -857,7 +857,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	g_heretic/a_hereticartifacts.cpp
 	g_heretic/a_hereticweaps.cpp
 	g_heretic/a_ironlich.cpp
-	g_heretic/a_knight.cpp
 	g_heretic/a_wizard.cpp
 	g_hexen/a_bats.cpp
 	g_hexen/a_bishop.cpp

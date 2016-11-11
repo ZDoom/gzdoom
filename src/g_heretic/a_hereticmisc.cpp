@@ -26,7 +26,6 @@
 #include "a_hereticartifacts.cpp"
 #include "a_hereticweaps.cpp"
 #include "a_ironlich.cpp"
-#include "a_knight.cpp"
 #include "a_wizard.cpp"
 
 

@@ -22,8 +22,6 @@ class Knight : Actor
 		HitObituary "$OB_BONEKNIGHTHIT";
 		DropItem "CrossbowAmmo", 84, 5;
 	}
-
-	native void A_KnightAttack ();
 	
 	States
 	{
@@ -56,6 +54,34 @@ class Knight : Actor
 		Stop;
 	}
 
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_KnightAttack
+	//
+	//----------------------------------------------------------------------------
+
+	void A_KnightAttack ()
+	{
+		if (!target) return;
+		if (CheckMeleeRange ())
+		{
+			int damage = random[KnightAttack](1, 8) * 3;
+			int newdam = target.DamageMobj (self, self, damage, 'Melee');
+			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			A_PlaySound ("hknight/melee", CHAN_BODY);
+			return;
+		}
+		// Throw axe
+		A_PlaySound (AttackSound, CHAN_BODY);
+		if (self.bShadow || random[KnightAttack]() < 40)
+		{ // Red axe
+			SpawnMissileZ (pos.Z + 36, target, "RedAxe");
+		}
+		else
+		{ // Green axe
+			SpawnMissileZ (pos.Z + 36, target, "KnightAxe");
+		}
+	}
 }
 
 
@@ -116,8 +142,6 @@ class RedAxe : KnightAxe
 		Damage 7;
 	}
 
-	native void A_DripBlood ();
-
 	States
 	{
 	Spawn:
@@ -127,5 +151,20 @@ class RedAxe : KnightAxe
 		RAXE CDE 6 BRIGHT;
 		Stop;
 	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_DripBlood
+	//
+	//----------------------------------------------------------------------------
+	
+	void A_DripBlood ()
+	{
+		double xo = random2[DripBlood]() / 32.0;
+		double yo = random2[DripBlood]() / 32.0;
+		Actor mo = Spawn ("Blood", Vec3Offset(xo, yo, 0.), ALLOW_REPLACE);
+		mo.Vel.X = random2[DripBlood]() / 64.0;
+		mo.Vel.Y = random2[DripBlood]() / 64.0;
+		mo.Gravity = 1./8;
+	}
 }
-		

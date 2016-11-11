@@ -7000,7 +7000,7 @@ FxExpression *FxSequence::Resolve(FCompileContext &ctx)
 		{
 			fail = true;
 		}
-		if (Expressions[i]->ValueType == TypeError)
+		else if (Expressions[i]->ValueType == TypeError)
 		{
 			ScriptPosition.Message(MSG_ERROR, "Invalid statement");
 			fail = true;

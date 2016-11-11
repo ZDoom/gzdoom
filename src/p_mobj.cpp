@@ -6077,6 +6077,15 @@ AActor *P_SpawnMissileZ (AActor *source, double z, AActor *dest, PClassActor *ty
 	return P_SpawnMissileXYZ (source->PosAtZ(z), source, dest, type);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SpawnMissileZ)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(z);
+	PARAM_OBJECT(dest, AActor);
+	PARAM_CLASS(type, AActor);
+	ACTION_RETURN_OBJECT(P_SpawnMissileZ(self, z, dest, type));
+}
+
 AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassActor *type, bool checkspawn, AActor *owner)
 {
 	if (source == NULL)

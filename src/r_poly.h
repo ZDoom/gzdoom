@@ -54,10 +54,19 @@ class PolySortedSprite
 {
 public:
 	PolySortedSprite(AActor *thing, double distanceSquared) : Thing(thing), DistanceSquared(distanceSquared) { }
-	bool operator<(const PolySortedSprite &other) const { return DistanceSquared > other.DistanceSquared; }
+	bool operator<(const PolySortedSprite &other) const { return DistanceSquared < other.DistanceSquared; }
 
 	AActor *Thing;
 	double DistanceSquared;
+};
+
+class PolySubsectoredSprite
+{
+public:
+	PolySubsectoredSprite(AActor *thing, subsector_t *sub, uint32_t subsectorDepth) : thing(thing), sub(sub), subsectorDepth(subsectorDepth) { }
+	AActor *thing;
+	subsector_t *sub;
+	uint32_t subsectorDepth;
 };
 
 class SpriteRange
@@ -106,6 +115,7 @@ private:
 	void AddLine(seg_t *line, sector_t *frontsector, uint32_t subsectorDepth);
 	TriVertex PlaneVertex(vertex_t *v1, sector_t *sector, double height);
 
+	void RenderSprites();
 	void AddSprite(AActor *thing, subsector_t *sub, uint32_t subsectorDepth);
 	void AddWallSprite(AActor *thing, subsector_t *sub, uint32_t subsectorDepth);
 	bool IsThingCulled(AActor *thing);
@@ -136,6 +146,7 @@ private:
 
 	std::vector<SpriteRange> SectorSpriteRanges;
 	std::vector<PolySortedSprite> SortedSprites;
+	std::vector<PolySubsectoredSprite> SubsectoredSprites;
 
 	std::vector<PolyScreenSprite> ScreenSprites;
 

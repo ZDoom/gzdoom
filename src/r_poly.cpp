@@ -50,6 +50,7 @@ void RenderPolyBsp::Render()
 	SectorSpriteRanges.clear();
 	SectorSpriteRanges.resize(numsectors);
 	SortedSprites.clear();
+	SubsectoredSprites.clear();
 	PvsSectors.clear();
 	ScreenSprites.clear();
 	PolyStencilBuffer::Instance()->Clear(viewwidth, viewheight, 0);
@@ -99,6 +100,8 @@ void RenderPolyBsp::Render()
 
 	skydome.Render(worldToClip);
 
+	RenderSprites();
+
 	RenderPlayerSprites();
 	DrawerCommandQueue::WaitForWorkers();
 	RenderScreenSprites(); // To do: should be called by FSoftwareRenderer::DrawRemainingPlayerSprites instead of here
@@ -117,6 +120,12 @@ void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 
 	uint32_t subsectorDepth = NextSubsectorDepth++;
 
+	if (sub->sector->CenterFloor() != sub->sector->CenterCeiling())
+	{
+		RenderPlane(sub, subsectorDepth, true);
+		RenderPlane(sub, subsectorDepth, false);
+	}
+
 	for (uint32_t i = 0; i < sub->numlines; i++)
 	{
 		seg_t *line = &sub->firstline[i];
@@ -124,20 +133,23 @@ void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 			AddLine(line, frontsector, subsectorDepth);
 	}
 
-	if (sub->sector->CenterFloor() != sub->sector->CenterCeiling())
-	{
-		RenderPlane(sub, subsectorDepth, true);
-		RenderPlane(sub, subsectorDepth, false);
-	}
-
 	SpriteRange sprites = GetSpritesForSector(sub->sector);
 	for (int i = 0; i < sprites.Count; i++)
 	{
 		AActor *thing = SortedSprites[sprites.Start + i].Thing;
-		if ((thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
-			AddWallSprite(thing, sub, subsectorDepth);
+		SubsectoredSprites.push_back({ thing, sub, subsectorDepth });
+	}
+}
+
+void RenderPolyBsp::RenderSprites()
+{
+	for (auto it = SubsectoredSprites.rbegin(); it != SubsectoredSprites.rend(); ++it)
+	{
+		auto &spr = *it;
+		if ((spr.thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
+			AddWallSprite(spr.thing, spr.sub, spr.subsectorDepth);
 		else
-			AddSprite(thing, sub, subsectorDepth);
+			AddSprite(spr.thing, spr.sub, spr.subsectorDepth);
 	}
 }
 
@@ -556,7 +568,7 @@ void RenderPolyBsp::AddSprite(AActor *thing, subsector_t *sub, uint32_t subsecto
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
 	args.SetTexture(tex);
-	PolyTriangleDrawer::draw(args, PolyDrawVariant::Draw);
+	PolyTriangleDrawer::draw(args, PolyDrawVariant::DrawSubsector);
 }
 
 void RenderPolyBsp::AddWallSprite(AActor *thing, subsector_t *sub, uint32_t subsectorDepth)
@@ -1592,6 +1604,7 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 	uniforms.objectToClip = worldToClip * objectToWorld;
 	uniforms.light = 256;
 	uniforms.flags = 0;
+	uniforms.subsectorDepth = RenderPolyBsp::SkySubsectorDepth;
 
 	int rc = mRows + 1;
 

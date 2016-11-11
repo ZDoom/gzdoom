@@ -59,6 +59,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, PolyDrawVaria
 	default:
 	case PolyDrawVariant::Draw: drawfunc = r_swtruecolor ? ScreenPolyTriangleDrawer::draw32 : ScreenPolyTriangleDrawer::draw; break;
 	case PolyDrawVariant::Fill: drawfunc = r_swtruecolor ? ScreenPolyTriangleDrawer::fill32 : ScreenPolyTriangleDrawer::fill; break;
+	case PolyDrawVariant::DrawSubsector: drawfunc = r_swtruecolor ? ScreenPolyTriangleDrawer::drawsubsector32 : ScreenPolyTriangleDrawer::draw; break;
 	case PolyDrawVariant::Stencil: drawfunc = ScreenPolyTriangleDrawer::stencil; break;
 	}
 
@@ -846,11 +847,13 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 	const uint32_t *texturePixels = (const uint32_t *)args->texturePixels;
 	int textureWidth = args->textureWidth;
 	int textureHeight = args->textureHeight;
-	uint32_t light = args->uniforms->light;
 	uint8_t *stencilValues = args->stencilValues;
 	uint32_t *stencilMasks = args->stencilMasks;
 	int stencilPitch = args->stencilPitch;
 	uint8_t stencilTestValue = args->stencilTestValue;
+	uint32_t light = args->uniforms->light;
+	uint32_t subsector = args->uniforms->subsectorDepth;
+	uint32_t *subsectorGBuffer = args->subsectorGBuffer;
 
 	// 28.4 fixed-point coordinates
 	const int Y1 = (int)round(16.0f * v1.y);
@@ -895,6 +898,7 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 	miny &= ~(q - 1);
 
 	dest += miny * pitch;
+	subsectorGBuffer += miny * pitch;
 
 	// Half-edge constants
 	int C1 = DY12 * X1 - DX12 * Y1;
@@ -919,7 +923,7 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 	}
 
 	// Loop through blocks
-	for (int y = miny; y < maxy; y += q, dest += q * pitch)
+	for (int y = miny; y < maxy; y += q, dest += q * pitch, subsectorGBuffer += q * pitch)
 	{
 		// Is this row of blocks done by this thread?
 		if (thread->skipped_by_thread(y / q)) continue;
@@ -989,6 +993,7 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 #endif
 
 			uint32_t *buffer = dest;
+			uint32_t *subsectorbuffer = subsectorGBuffer;
 
 			PolyStencilBlock stencil(x / 8 + y / 8 * stencilPitch, stencilValues, stencilMasks);
 
@@ -1028,7 +1033,10 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 						uint32_t fg_alpha = APART(fg);
 
 						if (fg_alpha > 127)
+						{
 							buffer[ix] = 0xff000000 | (fg_red << 16) | (fg_green << 8) | fg_blue;
+							subsectorbuffer[ix] = subsector;
+						}
 
 						for (int i = 0; i < TriVertex::NumVarying; i++)
 							varying[i] += varyingStep[i];
@@ -1059,10 +1067,14 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 						__m128i mmask1 = _mm_shufflehi_epi16(_mm_shufflelo_epi16(mfg1, _MM_SHUFFLE(3, 3, 3, 3)), _MM_SHUFFLE(3, 3, 3, 3));
 						__m128i mmask = _mm_cmplt_epi8(_mm_packus_epi16(mmask0, mmask1), _mm_setzero_si128());
 						_mm_maskmoveu_si128(mout, mmask, (char*)(&buffer[x + sse * 4]));
+
+						__m128i msubsector = _mm_set1_epi32(subsector);
+						_mm_maskmoveu_si128(msubsector, mmask, (char*)(&subsectorbuffer[x + sse * 4]));
 					}
 #endif
 
 					buffer += pitch;
+					subsectorbuffer += pitch;
 				}
 			}
 			else // Partially covered block
@@ -1107,6 +1119,276 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 							uint32_t fg_alpha = APART(fg);
 
 							if (fg_alpha > 127)
+							{
+								buffer[ix + x] = 0xff000000 | (fg_red << 16) | (fg_green << 8) | fg_blue;
+								subsectorbuffer[ix + x] = subsector;
+							}
+						}
+
+						for (int i = 0; i < TriVertex::NumVarying; i++)
+							varying[i] += varyingStep[i];
+
+						CX1 -= FDY12;
+						CX2 -= FDY23;
+						CX3 -= FDY31;
+					}
+
+					CY1 += FDX12;
+					CY2 += FDX23;
+					CY3 += FDX31;
+
+					buffer += pitch;
+					subsectorbuffer += pitch;
+				}
+			}
+		}
+	}
+}
+
+void ScreenPolyTriangleDrawer::drawsubsector32(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread)
+{
+	uint32_t *dest = (uint32_t *)args->dest;
+	int pitch = args->pitch;
+	const TriVertex &v1 = *args->v1;
+	const TriVertex &v2 = *args->v2;
+	const TriVertex &v3 = *args->v3;
+	int clipleft = args->clipleft;
+	int clipright = args->clipright;
+	int cliptop = args->cliptop;
+	int clipbottom = args->clipbottom;
+	const uint32_t *texturePixels = (const uint32_t *)args->texturePixels;
+	int textureWidth = args->textureWidth;
+	int textureHeight = args->textureHeight;
+	uint32_t light = args->uniforms->light;
+	uint32_t subsector = args->uniforms->subsectorDepth;
+	uint32_t *subsectorGBuffer = args->subsectorGBuffer;
+
+	// 28.4 fixed-point coordinates
+	const int Y1 = (int)round(16.0f * v1.y);
+	const int Y2 = (int)round(16.0f * v2.y);
+	const int Y3 = (int)round(16.0f * v3.y);
+
+	const int X1 = (int)round(16.0f * v1.x);
+	const int X2 = (int)round(16.0f * v2.x);
+	const int X3 = (int)round(16.0f * v3.x);
+
+	// Deltas
+	const int DX12 = X1 - X2;
+	const int DX23 = X2 - X3;
+	const int DX31 = X3 - X1;
+
+	const int DY12 = Y1 - Y2;
+	const int DY23 = Y2 - Y3;
+	const int DY31 = Y3 - Y1;
+
+	// Fixed-point deltas
+	const int FDX12 = DX12 << 4;
+	const int FDX23 = DX23 << 4;
+	const int FDX31 = DX31 << 4;
+
+	const int FDY12 = DY12 << 4;
+	const int FDY23 = DY23 << 4;
+	const int FDY31 = DY31 << 4;
+
+	// Bounding rectangle
+	int minx = MAX((MIN(MIN(X1, X2), X3) + 0xF) >> 4, clipleft);
+	int maxx = MIN((MAX(MAX(X1, X2), X3) + 0xF) >> 4, clipright - 1);
+	int miny = MAX((MIN(MIN(Y1, Y2), Y3) + 0xF) >> 4, cliptop);
+	int maxy = MIN((MAX(MAX(Y1, Y2), Y3) + 0xF) >> 4, clipbottom - 1);
+	if (minx >= maxx || miny >= maxy)
+		return;
+
+	// Block size, standard 8x8 (must be power of two)
+	const int q = 8;
+
+	// Start in corner of 8x8 block
+	minx &= ~(q - 1);
+	miny &= ~(q - 1);
+
+	dest += miny * pitch;
+	subsectorGBuffer += miny * pitch;
+
+	// Half-edge constants
+	int C1 = DY12 * X1 - DX12 * Y1;
+	int C2 = DY23 * X2 - DX23 * Y2;
+	int C3 = DY31 * X3 - DX31 * Y3;
+
+	// Correct for fill convention
+	if (DY12 < 0 || (DY12 == 0 && DX12 > 0)) C1++;
+	if (DY23 < 0 || (DY23 == 0 && DX23 > 0)) C2++;
+	if (DY31 < 0 || (DY31 == 0 && DX31 > 0)) C3++;
+
+	// Gradients
+	float gradWX = gradx(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
+	float gradWY = grady(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
+	float startW = v1.w + gradWX * (minx - v1.x) + gradWY * (miny - v1.y);
+	float gradVaryingX[TriVertex::NumVarying], gradVaryingY[TriVertex::NumVarying], startVarying[TriVertex::NumVarying];
+	for (int i = 0; i < TriVertex::NumVarying; i++)
+	{
+		gradVaryingX[i] = gradx(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.varying[i] * v1.w, v2.varying[i] * v2.w, v3.varying[i] * v3.w);
+		gradVaryingY[i] = grady(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.varying[i] * v1.w, v2.varying[i] * v2.w, v3.varying[i] * v3.w);
+		startVarying[i] = v1.varying[i] * v1.w + gradVaryingX[i] * (minx - v1.x) + gradVaryingY[i] * (miny - v1.y);
+	}
+
+	// Loop through blocks
+	for (int y = miny; y < maxy; y += q, dest += q * pitch, subsectorGBuffer += q * pitch)
+	{
+		// Is this row of blocks done by this thread?
+		if (thread->skipped_by_thread(y / q)) continue;
+
+		for (int x = minx; x < maxx; x += q)
+		{
+			// Corners of block
+			int x0 = x << 4;
+			int x1 = (x + q - 1) << 4;
+			int y0 = y << 4;
+			int y1 = (y + q - 1) << 4;
+
+			// Evaluate half-space functions
+			bool a00 = C1 + DX12 * y0 - DY12 * x0 > 0;
+			bool a10 = C1 + DX12 * y0 - DY12 * x1 > 0;
+			bool a01 = C1 + DX12 * y1 - DY12 * x0 > 0;
+			bool a11 = C1 + DX12 * y1 - DY12 * x1 > 0;
+			int a = (a00 << 0) | (a10 << 1) | (a01 << 2) | (a11 << 3);
+
+			bool b00 = C2 + DX23 * y0 - DY23 * x0 > 0;
+			bool b10 = C2 + DX23 * y0 - DY23 * x1 > 0;
+			bool b01 = C2 + DX23 * y1 - DY23 * x0 > 0;
+			bool b11 = C2 + DX23 * y1 - DY23 * x1 > 0;
+			int b = (b00 << 0) | (b10 << 1) | (b01 << 2) | (b11 << 3);
+
+			bool c00 = C3 + DX31 * y0 - DY31 * x0 > 0;
+			bool c10 = C3 + DX31 * y0 - DY31 * x1 > 0;
+			bool c01 = C3 + DX31 * y1 - DY31 * x0 > 0;
+			bool c11 = C3 + DX31 * y1 - DY31 * x1 > 0;
+			int c = (c00 << 0) | (c10 << 1) | (c01 << 2) | (c11 << 3);
+
+			// Skip block when outside an edge
+			if (a == 0x0 || b == 0x0 || c == 0x0) continue;
+
+			// Check if block needs clipping
+			bool clipneeded = clipleft > x || clipright < (x + q) || cliptop > y || clipbottom < (y + q);
+
+			// Calculate varying variables for affine block
+			float offx0 = (x - minx) + 0.5f;
+			float offy0 = (y - miny) + 0.5f;
+			float offx1 = offx0 + q;
+			float offy1 = offy0 + q;
+			float rcpWTL = 1.0f / (startW + offx0 * gradWX + offy0 * gradWY);
+			float rcpWTR = 1.0f / (startW + offx1 * gradWX + offy0 * gradWY);
+			float rcpWBL = 1.0f / (startW + offx0 * gradWX + offy1 * gradWY);
+			float rcpWBR = 1.0f / (startW + offx1 * gradWX + offy1 * gradWY);
+			float varyingTL[TriVertex::NumVarying];
+			float varyingTR[TriVertex::NumVarying];
+			float varyingBL[TriVertex::NumVarying];
+			float varyingBR[TriVertex::NumVarying];
+			for (int i = 0; i < TriVertex::NumVarying; i++)
+			{
+				varyingTL[i] = (startVarying[i] + offx0 * gradVaryingX[i] + offy0 * gradVaryingY[i]) * rcpWTL;
+				varyingTR[i] = (startVarying[i] + offx1 * gradVaryingX[i] + offy0 * gradVaryingY[i]) * rcpWTR;
+				varyingBL[i] = ((startVarying[i] + offx0 * gradVaryingX[i] + offy1 * gradVaryingY[i]) * rcpWBL - varyingTL[i]) * (1.0f / q);
+				varyingBR[i] = ((startVarying[i] + offx1 * gradVaryingX[i] + offy1 * gradVaryingY[i]) * rcpWBR - varyingTR[i]) * (1.0f / q);
+			}
+
+			float globVis = 1706.0f;
+			float vis = globVis / rcpWTL;
+			float shade = 64.0f - (light * 255 / 256 + 12.0f) * 32.0f / 128.0f;
+			float lightscale = clamp((shade - MIN(24.0f, vis)) / 32.0f, 0.0f, 31.0f / 32.0f);
+			int diminishedlight = (int)clamp((1.0f - lightscale) * 256.0f + 0.5f, 0.0f, 256.0f);
+
+#if !defined(NO_SSE)
+			__m128i mlight = _mm_set1_epi16(diminishedlight);
+#endif
+
+			uint32_t *buffer = dest;
+			uint32_t *subsectorbuffer = subsectorGBuffer;
+
+			// Accept whole block when totally covered
+			if (a == 0xF && b == 0xF && c == 0xF && !clipneeded)
+			{
+				for (int iy = 0; iy < q; iy++)
+				{
+					uint32_t varying[TriVertex::NumVarying], varyingStep[TriVertex::NumVarying];
+					for (int i = 0; i < TriVertex::NumVarying; i++)
+					{
+						float pos = varyingTL[i] + varyingBL[i] * iy;
+						float step = (varyingTR[i] + varyingBR[i] * iy - pos) * (1.0f / q);
+
+						varying[i] = (uint32_t)((pos - floor(pos)) * 0x100000000LL);
+						varyingStep[i] = (uint32_t)(step * 0x100000000LL);
+					}
+
+					for (int ix = x; ix < x + q; ix++)
+					{
+						if (subsectorbuffer[ix] >= subsector)
+						{
+							uint32_t ufrac = varying[0];
+							uint32_t vfrac = varying[1];
+
+							uint32_t upos = ((ufrac >> 16) * textureWidth) >> 16;
+							uint32_t vpos = ((vfrac >> 16) * textureHeight) >> 16;
+							uint32_t uvoffset = upos * textureHeight + vpos;
+
+							uint32_t fg = texturePixels[uvoffset];
+							uint32_t fg_red = (RPART(fg) * diminishedlight) >> 8;
+							uint32_t fg_green = (GPART(fg) * diminishedlight) >> 8;
+							uint32_t fg_blue = (BPART(fg) * diminishedlight) >> 8;
+							uint32_t fg_alpha = APART(fg);
+
+							if (fg_alpha > 127)
+								buffer[ix] = 0xff000000 | (fg_red << 16) | (fg_green << 8) | fg_blue;
+						}
+
+						for (int i = 0; i < TriVertex::NumVarying; i++)
+							varying[i] += varyingStep[i];
+					}
+
+					buffer += pitch;
+					subsectorbuffer += pitch;
+				}
+			}
+			else // Partially covered block
+			{
+				int CY1 = C1 + DX12 * y0 - DY12 * x0;
+				int CY2 = C2 + DX23 * y0 - DY23 * x0;
+				int CY3 = C3 + DX31 * y0 - DY31 * x0;
+
+				for (int iy = 0; iy < q; iy++)
+				{
+					int CX1 = CY1;
+					int CX2 = CY2;
+					int CX3 = CY3;
+
+					uint32_t varying[TriVertex::NumVarying], varyingStep[TriVertex::NumVarying];
+					for (int i = 0; i < TriVertex::NumVarying; i++)
+					{
+						float pos = varyingTL[i] + varyingBL[i] * iy;
+						float step = (varyingTR[i] + varyingBR[i] * iy - pos) * (1.0f / q);
+
+						varying[i] = (uint32_t)((pos - floor(pos)) * 0x100000000LL);
+						varyingStep[i] = (uint32_t)(step * 0x100000000LL);
+					}
+
+					for (int ix = 0; ix < q; ix++)
+					{
+						bool visible = (ix + x >= clipleft) && (ix + x < clipright) && (cliptop <= y + iy) && (clipbottom > y + iy);
+
+						if (CX1 > 0 && CX2 > 0 && CX3 > 0 && visible && subsectorbuffer[ix + x] >= subsector)
+						{
+							uint32_t ufrac = varying[0];
+							uint32_t vfrac = varying[1];
+
+							uint32_t upos = ((ufrac >> 16) * textureWidth) >> 16;
+							uint32_t vpos = ((vfrac >> 16) * textureHeight) >> 16;
+							uint32_t uvoffset = upos * textureHeight + vpos;
+
+							uint32_t fg = texturePixels[uvoffset];
+							uint32_t fg_red = (RPART(fg) * diminishedlight) >> 8;
+							uint32_t fg_green = (GPART(fg) * diminishedlight) >> 8;
+							uint32_t fg_blue = (BPART(fg) * diminishedlight) >> 8;
+							uint32_t fg_alpha = APART(fg);
+
+							if (fg_alpha > 127)
 								buffer[ix + x] = 0xff000000 | (fg_red << 16) | (fg_green << 8) | fg_blue;
 						}
 
@@ -1123,6 +1405,7 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 					CY3 += FDX31;
 
 					buffer += pitch;
+					subsectorbuffer += pitch;
 				}
 			}
 		}

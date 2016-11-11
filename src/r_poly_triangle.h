@@ -32,7 +32,8 @@ enum class PolyDrawVariant
 {
 	Draw,
 	Fill,
-	Stencil
+	DrawSubsector,
+	Stencil,
 };
 
 class PolyDrawArgs
@@ -50,9 +51,9 @@ public:
 	const uint8_t *texturePixels = nullptr;
 	int textureWidth = 0;
 	int textureHeight = 0;
-	int solidcolor = 0;
-	int stenciltestvalue = 0;
-	int stencilwritevalue = 0;
+	uint32_t solidcolor = 0;
+	uint8_t stenciltestvalue = 0;
+	uint8_t stencilwritevalue = 0;
 
 	void SetTexture(FTexture *texture)
 	{
@@ -238,7 +239,7 @@ struct ScreenPolyTriangleDrawerArgs
 	const uint8_t *texturePixels;
 	int textureWidth;
 	int textureHeight;
-	int solidcolor;
+	uint32_t solidcolor;
 	const TriUniforms *uniforms;
 	uint8_t *stencilValues;
 	uint32_t *stencilMasks;
@@ -257,6 +258,7 @@ public:
 	static void stencil(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread);
 
 	static void draw32(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread);
+	static void drawsubsector32(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread);
 	static void fill32(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread);
 
 private:

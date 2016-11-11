@@ -40,6 +40,7 @@
 #include "doomerrors.h"
 #include "serializer.h"
 #include "d_player.h"
+#include "virtual.h"
 
 
 static cycle_t ThinkCycles;

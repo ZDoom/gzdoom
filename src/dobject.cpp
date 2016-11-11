@@ -48,6 +48,7 @@
 #include "a_sharedglobal.h"
 #include "dsectoreffect.h"
 #include "serializer.h"
+#include "virtual.h"
 
 //==========================================================================
 //

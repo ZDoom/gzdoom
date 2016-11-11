@@ -59,6 +59,7 @@
 #include "p_blockmap.h"
 #include "a_morph.h"
 #include "p_spec.h"
+#include "virtual.h"
 
 static FRandom pr_skullpop ("SkullPop");
 

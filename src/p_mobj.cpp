@@ -72,6 +72,7 @@
 #include "serializer.h"
 #include "r_utility.h"
 #include "thingdef.h"
+#include "virtual.h"
 
 // MACROS ------------------------------------------------------------------
 

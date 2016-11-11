@@ -108,10 +108,6 @@ private:
 	DThinker *NextThinker, *PrevThinker;
 };
 
-VMEXPORT_NATIVES_START(DThinker, DObject)
-	VMEXPORT_NATIVES_FUNC(Tick)
-VMEXPORT_NATIVES_END(DThinker)
-
 class FThinkerIterator
 {
 protected:

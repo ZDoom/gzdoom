@@ -23,7 +23,8 @@ class Actor : Thinker native
 		FloatBobPhase -1;	// randomly initialize by default
 		Gravity 1;
 		Friction 1;
-		DamageFactor 1.0;
+		DamageFactor 1.0;		// damage multiplier as target of damage.
+		DamageMultiply 1.0;		// damage multiplier as source of damage.
 		PushFactor 0.25;
 		WeaveIndexXY 0;
 		WeaveIndexZ 16;

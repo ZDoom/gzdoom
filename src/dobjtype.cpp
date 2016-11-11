@@ -2778,14 +2778,14 @@ void PClass::StaticBootstrap()
 PClass::PClass()
 {
 	Size = sizeof(DObject);
-	ParentClass = NULL;
-	Pointers = NULL;
-	FlatPointers = NULL;
-	HashNext = NULL;
-	Defaults = NULL;
+	ParentClass = nullptr;
+	Pointers = nullptr;
+	FlatPointers = nullptr;
+	HashNext = nullptr;
+	Defaults = nullptr;
 	bRuntimeClass = false;
 	bExported = false;
-	ConstructNative = NULL;
+	ConstructNative = nullptr;
 	mDescriptiveName = "Class";
 
 	PClass::AllClasses.Push(this);
@@ -2969,10 +2969,7 @@ DObject *PClass::CreateNew() const
 
 	ConstructNative (mem);
 	((DObject *)mem)->SetClass (const_cast<PClass *>(this));
-	if (Defaults != NULL)
-	{
-		InitializeSpecials(mem);
-	}
+	InitializeSpecials(mem);
 	return (DObject *)mem;
 }
 
@@ -3037,16 +3034,52 @@ void PClass::Derive(PClass *newclass)
 {
 	newclass->ParentClass = this;
 	newclass->ConstructNative = ConstructNative;
+	newclass->Symbols.SetParentTable(&this->Symbols);
+	newclass->InitializeDefaults();
+}
 
-	// Set up default instance of the new class.
-	newclass->Defaults = (BYTE *)M_Malloc(newclass->Size);
-	if (Defaults) memcpy(newclass->Defaults, Defaults, Size);
-	if (newclass->Size > Size)
+//==========================================================================
+//
+// PClassActor :: InitializeNativeDefaults
+//
+//==========================================================================
+
+void PClass::InitializeDefaults()
+{
+	assert(Defaults == NULL);
+	Defaults = (BYTE *)M_Malloc(Size);
+	if (ParentClass->Defaults != NULL)
 	{
-		memset(newclass->Defaults + Size, 0, newclass->Size - Size);
+		memcpy(Defaults, ParentClass->Defaults, ParentClass->Size);
+		if (Size > ParentClass->Size)
+		{
+			memset(Defaults + ParentClass->Size, 0, Size - ParentClass->Size);
+		}
+	}
+	else
+	{
+		memset(Defaults, 0, Size);
 	}
 
-	newclass->Symbols.SetParentTable(&this->Symbols);
+	if (bRuntimeClass)
+	{
+		// Copy parent values from the parent defaults.
+		assert(ParentClass != NULL);
+		ParentClass->InitializeSpecials(Defaults);
+
+		// and initialize our own special values.
+		auto it = Symbols.GetIterator();
+		PSymbolTable::MapType::Pair *pair;
+
+		while (it.NextPair(pair))
+		{
+			auto field = dyn_cast<PField>(pair->Value);
+			if (field != nullptr && !(field->Flags & VARF_Native))
+			{
+				field->Type->SetDefaultValue(Defaults, unsigned(field->Offset), &SpecialInits);
+			}
+		}
+	}
 }
 
 //==========================================================================
@@ -3136,7 +3169,6 @@ PField *PClass::AddField(FName name, PType *type, DWORD flags)
 	{
 		Defaults = (BYTE *)M_Realloc(Defaults, Size);
 		memset(Defaults + oldsize, 0, Size - oldsize);
-		type->SetDefaultValue(Defaults, unsigned(field->Offset), &SpecialInits);
 	}
 	return field;
 }

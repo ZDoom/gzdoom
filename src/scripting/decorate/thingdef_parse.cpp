@@ -875,7 +875,7 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 // Starts a new actor definition
 //
 //==========================================================================
-PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName parentName, bool native)
+PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName parentName)
 {
 	PClassActor *replacee = NULL;
 	PClassActor *ti = NULL;
@@ -908,36 +908,7 @@ PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName par
 			parent = RUNTIME_CLASS(AActor);
 		}
 	}
-
-	if (native)
-	{
-		ti = PClass::FindActor(typeName);
-		if (ti == NULL)
-		{
-			extern void DumpTypeTable();
-			DumpTypeTable();
-			sc.Message(MSG_ERROR, "Unknown native actor '%s'", typeName.GetChars());
-			goto create;
-		}
-		else if (ti != RUNTIME_CLASS(AActor) && ti->ParentClass->NativeClass() != parent->NativeClass())
-		{
-			sc.Message(MSG_ERROR, "Native class '%s' does not inherit from '%s'", typeName.GetChars(), parentName.GetChars());
-			parent = RUNTIME_CLASS(AActor);
-			goto create;
-		}
-		else if (ti->Defaults != NULL)
-		{
-			sc.Message(MSG_ERROR, "Redefinition of internal class '%s'", typeName.GetChars());
-			goto create;
-		}
-		ti->InitializeNativeDefaults();
-		ti->ParentClass->DeriveData(ti);
-	}
-	else
-	{
-	create:
-		ti = DecoDerivedClass(sc, parent, typeName);
-	}
+	ti = DecoDerivedClass(sc, parent, typeName);
 
 	ti->Replacee = ti->Replacement = NULL;
 	ti->DoomEdNum = -1;
@@ -1025,12 +996,13 @@ static PClassActor *ParseActorHeader(FScanner &sc, Baggage *bag)
 
 	if (sc.CheckString("native"))
 	{
-		native = true;
+		sc.ScriptMessage("Cannot define native classes in DECORATE");
+		FScriptPosition::ErrorCounter++;
 	}
 
 	try
 	{
-		PClassActor *info = CreateNewActor(sc, typeName, parentName, native);
+		PClassActor *info = CreateNewActor(sc, typeName, parentName);
 		info->DoomEdNum = DoomEdNum > 0 ? DoomEdNum : -1;
 		info->SourceLumpName = Wads.GetLumpFullPath(sc.LumpNum);
 

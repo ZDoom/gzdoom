@@ -234,7 +234,6 @@ public:
 	void SetDamageFactor(FName type, double factor);
 	void SetPainChance(FName type, int chance);
 	size_t PropagateMark();
-	void InitializeNativeDefaults();
 	bool SetReplacement(FName replaceName);
 	void SetDropItems(DDropItem *drops);
 	virtual void Finalize(FStateDefinitions &statedef);

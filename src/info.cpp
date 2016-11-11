@@ -357,35 +357,6 @@ size_t PClassActor::PropagateMark()
 
 //==========================================================================
 //
-// PClassActor :: InitializeNativeDefaults
-//
-// This is used by DECORATE to assign ActorInfos to internal classes
-//
-//==========================================================================
-
-void PClassActor::InitializeNativeDefaults()
-{
-	assert(Defaults == NULL);
-	Defaults = (BYTE *)M_Malloc(Size);
-	if (ParentClass->Defaults != NULL) 
-	{
-		memcpy(Defaults, ParentClass->Defaults, ParentClass->Size);
-		if (Size > ParentClass->Size)
-		{
-			memset(Defaults + ParentClass->Size, 0, Size - ParentClass->Size);
-		}
-	}
-	else
-	{
-		memset (Defaults, 0, Size);
-		// Non-DECORATE properties that must be set.
-		((AActor*)Defaults)->DamageMultiply = 1.;	// fixme: Make this a DECORATE property.
-		((AActor*)Defaults)->ConversationRoot = -1;
-	}
-}
-
-//==========================================================================
-//
 // PClassActor :: SetReplacement
 //
 // Sets as a replacement class for another class.

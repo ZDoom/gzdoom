@@ -1917,13 +1917,19 @@ void ZCCCompiler::InitDefaults()
 				if (ti->ParentClass->Defaults == DEFAULTS_VMEXPORT)
 				{
 					ti->ParentClass->Defaults = nullptr;
-					static_cast<PClassActor *>(ti->ParentClass)->InitializeNativeDefaults();
+					ti->ParentClass->InitializeDefaults();
 					ti->ParentClass->ParentClass->DeriveData(ti->ParentClass);
 				}
 
-				ti->InitializeNativeDefaults();
+				ti->InitializeDefaults();
 				ti->ParentClass->DeriveData(ti);
 
+				// We need special treatment for this one field in AActor's defaults which cannot be made visible to DECORATE as a property.
+				// It's better to do this here under controlled conditions than deeper down in the class type classes.
+				if (ti == RUNTIME_CLASS(AActor))
+				{
+					((AActor*)ti->Defaults)->ConversationRoot = 1;
+				}
 
 				Baggage bag;
 			#ifdef _DEBUG

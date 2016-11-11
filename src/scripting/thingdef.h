@@ -164,8 +164,6 @@ void CreateDamageFunction(PClassActor *info, AActor *defaults, FxExpression *id,
 //
 //==========================================================================
 
-PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName parentName, bool native);
-
 void HandleActorFlag(FScanner &sc, Baggage &bag, const char *part1, const char *part2, int mod);
 FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool constant);
 

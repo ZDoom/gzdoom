@@ -137,6 +137,13 @@ struct PSymbolTable
 	// Frees all symbols from this table.
 	void ReleaseSymbols();
 
+	typedef TMap<FName, PSymbol *> MapType;
+
+	MapType::Iterator GetIterator()
+	{
+		return MapType::Iterator(Symbols);
+	}
+
 	// add a name to help debugging.
 #ifdef _DEBUG
 	FString name;
@@ -147,7 +154,6 @@ struct PSymbolTable
 
 
 private:
-	typedef TMap<FName, PSymbol *> MapType;
 
 	PSymbolTable *ParentSymbolTable;
 	MapType Symbols;
@@ -761,6 +767,7 @@ public:
 	void WriteAllFields(FSerializer &ar, const void *addr) const;
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
 	bool ReadAllFields(FSerializer &ar, void *addr) const;
+	void InitializeDefaults();
 
 	virtual void DeriveData(PClass *newclass) {}
 	static void StaticInit();

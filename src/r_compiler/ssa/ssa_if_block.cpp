@@ -50,3 +50,9 @@ void SSAIfBlock::end_block()
 	SSAScope::builder().CreateBr(end_basic_block);
 	SSAScope::builder().SetInsertPoint(end_basic_block);
 }
+
+void SSAIfBlock::end_retvoid()
+{
+	SSAScope::builder().CreateRetVoid();
+	SSAScope::builder().SetInsertPoint(end_basic_block);
+}

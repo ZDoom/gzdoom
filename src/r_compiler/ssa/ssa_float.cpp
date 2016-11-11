@@ -24,6 +24,7 @@
 #include "ssa_float.h"
 #include "ssa_int.h"
 #include "ssa_scope.h"
+#include "ssa_bool.h"
 
 SSAFloat::SSAFloat()
 : v(0)
@@ -109,6 +110,35 @@ SSAFloat SSAFloat::fma(SSAFloat a, SSAFloat b, SSAFloat c)
 	args.push_back(b.v);
 	args.push_back(c.v);
 	return SSAFloat::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::fma, params), args, SSAScope::hint()));
+}
+
+SSAFloat SSAFloat::round(SSAFloat val)
+{
+	std::vector<llvm::Type *> params;
+	params.push_back(SSAFloat::llvm_type());
+	return SSAFloat::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::round, params), val.v, SSAScope::hint()));
+}
+
+SSAFloat SSAFloat::floor(SSAFloat val)
+{
+	std::vector<llvm::Type *> params;
+	params.push_back(SSAFloat::llvm_type());
+	return SSAFloat::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::floor, params), val.v, SSAScope::hint()));
+}
+
+SSAFloat SSAFloat::MIN(SSAFloat a, SSAFloat b)
+{
+	return SSAFloat::from_llvm(SSAScope::builder().CreateSelect((a < b).v, a.v, b.v, SSAScope::hint()));
+}
+
+SSAFloat SSAFloat::MAX(SSAFloat a, SSAFloat b)
+{
+	return SSAFloat::from_llvm(SSAScope::builder().CreateSelect((a > b).v, a.v, b.v, SSAScope::hint()));
+}
+
+SSAFloat SSAFloat::clamp(SSAFloat a, SSAFloat b, SSAFloat c)
+{
+	return SSAFloat::MAX(SSAFloat::MIN(a, c), b);
 }
 
 SSAFloat operator+(const SSAFloat &a, const SSAFloat &b)

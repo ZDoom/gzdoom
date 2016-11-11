@@ -56,7 +56,7 @@ llvm::IRBuilder<> &SSAScope::builder()
 
 llvm::Function *SSAScope::intrinsic(llvm::Intrinsic::ID id, llvm::ArrayRef<llvm::Type *> parameter_types)
 {
-	llvm::Function *func = module()->getFunction(llvm::Intrinsic::getName(id));
+	llvm::Function *func = module()->getFunction(llvm::Intrinsic::getName(id, parameter_types));
 	if (func == 0)
 		func = llvm::Function::Create(llvm::Intrinsic::getType(context(), id, parameter_types), llvm::Function::ExternalLinkage, llvm::Intrinsic::getName(id, parameter_types), module());
 	return func;

@@ -106,7 +106,7 @@ public:
 	void Render();
 	void RenderScreenSprites();
 
-	static const uint32_t SkySubsectorDepth = 0xffffffff;
+	static const uint32_t SkySubsectorDepth = 0x7fffffff;
 
 private:
 	void RenderNode(void *node);

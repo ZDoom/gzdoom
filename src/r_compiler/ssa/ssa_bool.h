@@ -37,6 +37,8 @@ public:
 	static SSABool from_llvm(llvm::Value *v) { return SSABool(v); }
 	static llvm::Type *llvm_type();
 
+	SSAInt zext_int();
+
 	llvm::Value *v;
 };
 

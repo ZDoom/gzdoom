@@ -37,10 +37,13 @@ SSAInt::SSAInt(int constant)
 	v = llvm::ConstantInt::get(SSAScope::context(), llvm::APInt(32, constant, true));
 }
 
-SSAInt::SSAInt(SSAFloat f)
+SSAInt::SSAInt(SSAFloat f, bool uint)
 : v(0)
 {
-	v = SSAScope::builder().CreateFPToSI(f.v, llvm::Type::getInt32Ty(SSAScope::context()), SSAScope::hint());
+	if (uint)
+		v = SSAScope::builder().CreateFPToUI(f.v, llvm::Type::getInt32Ty(SSAScope::context()), SSAScope::hint());
+	else
+		v = SSAScope::builder().CreateFPToSI(f.v, llvm::Type::getInt32Ty(SSAScope::context()), SSAScope::hint());
 }
 
 SSAInt::SSAInt(llvm::Value *v)
@@ -61,6 +64,11 @@ SSAInt SSAInt::MIN(SSAInt a, SSAInt b)
 SSAInt SSAInt::MAX(SSAInt a, SSAInt b)
 {
 	return SSAInt::from_llvm(SSAScope::builder().CreateSelect((a > b).v, a.v, b.v, SSAScope::hint()));
+}
+
+SSAInt SSAInt::clamp(SSAInt a, SSAInt b, SSAInt c)
+{
+	return SSAInt::MAX(SSAInt::MIN(a, c), b);
 }
 
 SSAInt SSAInt::add(SSAInt b, bool no_unsigned_wrap, bool no_signed_wrap)

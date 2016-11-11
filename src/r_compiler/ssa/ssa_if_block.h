@@ -32,6 +32,7 @@ public:
 	void if_block(SSABool true_condition);
 	void else_block();
 	void end_block();
+	void end_retvoid();
 
 private:
 	llvm::BasicBlock *if_basic_block;

@@ -44,6 +44,11 @@ llvm::Type *SSABool::llvm_type()
 	return llvm::Type::getInt1Ty(SSAScope::context());
 }
 
+SSAInt SSABool::zext_int()
+{
+	return SSAInt::from_llvm(SSAScope::builder().CreateZExt(v, SSAInt::llvm_type(), SSAScope::hint()));
+}
+
 SSABool operator&&(const SSABool &a, const SSABool &b)
 {
 	return SSABool::from_llvm(SSAScope::builder().CreateAnd(a.v, b.v, SSAScope::hint()));

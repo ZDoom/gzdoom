@@ -222,13 +222,13 @@ void RenderPolyBsp::RenderPlane(subsector_t *sub, uint32_t subsectorDepth, bool 
 	if (!isSky)
 	{
 		args.SetTexture(tex);
-		PolyTriangleDrawer::draw(args, PolyDrawVariant::Draw);
-		PolyTriangleDrawer::draw(args, PolyDrawVariant::Stencil);
+		PolyTriangleDrawer::draw(args, TriDrawVariant::Draw);
+		PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil);
 	}
 	else
 	{
 		args.stencilwritevalue = 255;
-		PolyTriangleDrawer::draw(args, PolyDrawVariant::Stencil);
+		PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil);
 
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
@@ -313,7 +313,7 @@ void RenderPolyBsp::RenderPlane(subsector_t *sub, uint32_t subsectorDepth, bool 
 
 			args.vinput = wallvert;
 			args.vcount = 4;
-			PolyTriangleDrawer::draw(args, PolyDrawVariant::Stencil);
+			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil);
 		}
 	}
 }
@@ -568,7 +568,7 @@ void RenderPolyBsp::AddSprite(AActor *thing, subsector_t *sub, uint32_t subsecto
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
 	args.SetTexture(tex);
-	PolyTriangleDrawer::draw(args, PolyDrawVariant::DrawSubsector);
+	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector);
 }
 
 void RenderPolyBsp::AddWallSprite(AActor *thing, subsector_t *sub, uint32_t subsectorDepth)
@@ -1234,8 +1234,8 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	args.stencilwritevalue = 1;
 	args.SetTexture(tex);
 
-	PolyTriangleDrawer::draw(args, PolyDrawVariant::Draw);
-	PolyTriangleDrawer::draw(args, PolyDrawVariant::Stencil);
+	PolyTriangleDrawer::draw(args, TriDrawVariant::Draw);
+	PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil);
 }
 
 FTexture *RenderPolyWall::GetTexture()
@@ -1567,7 +1567,7 @@ void PolySkyDome::RenderRow(PolyDrawArgs &args, int row)
 	args.vcount = mPrimStart[row + 1] - mPrimStart[row];
 	args.mode = TriangleDrawMode::Strip;
 	args.ccw = false;
-	PolyTriangleDrawer::draw(args, PolyDrawVariant::Draw);
+	PolyTriangleDrawer::draw(args, TriDrawVariant::Draw);
 }
 
 void PolySkyDome::RenderCapColorRow(PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap)
@@ -1581,7 +1581,7 @@ void PolySkyDome::RenderCapColorRow(PolyDrawArgs &args, FTexture *skytex, int ro
 	args.mode = TriangleDrawMode::Fan;
 	args.ccw = bottomCap;
 	args.solidcolor = solid;
-	PolyTriangleDrawer::draw(args, PolyDrawVariant::Fill);
+	PolyTriangleDrawer::draw(args, TriDrawVariant::Fill);
 }
 
 void PolySkyDome::Render(const TriMatrix &worldToClip)

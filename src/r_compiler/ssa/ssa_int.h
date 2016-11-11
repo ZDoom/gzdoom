@@ -32,13 +32,14 @@ class SSAInt
 public:
 	SSAInt();
 	explicit SSAInt(int constant);
-	SSAInt(SSAFloat f);
+	SSAInt(SSAFloat f, bool uint);
 	explicit SSAInt(llvm::Value *v);
 	static SSAInt from_llvm(llvm::Value *v) { return SSAInt(v); }
 	static llvm::Type *llvm_type();
 
 	static SSAInt MIN(SSAInt a, SSAInt b);
 	static SSAInt MAX(SSAInt a, SSAInt b);
+	static SSAInt clamp(SSAInt a, SSAInt b, SSAInt c);
 
 	SSAInt add(SSAInt b, bool no_unsigned_wrap, bool no_signed_wrap);
 	SSAInt ashr(int bits);

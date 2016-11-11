@@ -260,6 +260,14 @@ struct TriDrawTriangleArgs
 	uint32_t *subsectorGBuffer;
 };
 
+enum class TriDrawVariant
+{
+	Draw,
+	Fill,
+	DrawSubsector,
+	Stencil,
+};
+
 class LLVMDrawers
 {
 public:
@@ -334,6 +342,14 @@ public:
 	void(*DrawSky4)(const DrawSkyArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawDoubleSky1)(const DrawSkyArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawDoubleSky4)(const DrawSkyArgs *, const WorkerThreadData *) = nullptr;
+
+	void(*TriDraw8)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
+	void(*TriDraw32)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
+	void(*TriDrawSubsector8)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
+	void(*TriDrawSubsector32)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
+	void(*TriFill8)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
+	void(*TriFill32)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
+	void(*TriStencil)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
 
 private:
 	static LLVMDrawers *Singleton;

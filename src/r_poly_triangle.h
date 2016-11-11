@@ -28,14 +28,6 @@
 
 struct TriDrawTriangleArgs;
 
-enum class PolyDrawVariant
-{
-	Draw,
-	Fill,
-	DrawSubsector,
-	Stencil,
-};
-
 class PolyDrawArgs
 {
 public:
@@ -69,11 +61,11 @@ public:
 class PolyTriangleDrawer
 {
 public:
-	static void draw(const PolyDrawArgs &args, PolyDrawVariant variant);
+	static void draw(const PolyDrawArgs &args, TriDrawVariant variant);
 
 private:
 	static TriVertex shade_vertex(const TriUniforms &uniforms, TriVertex v);
-	static void draw_arrays(const PolyDrawArgs &args, PolyDrawVariant variant, WorkerThreadData *thread);
+	static void draw_arrays(const PolyDrawArgs &args, TriDrawVariant variant, WorkerThreadData *thread);
 	static void draw_shaded_triangle(const TriVertex *vertices, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *));
 	static bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2);
 	static void clipedge(const TriVertex *verts, TriVertex *clippedvert, int &numclipvert);
@@ -245,14 +237,14 @@ private:
 class DrawPolyTrianglesCommand : public DrawerCommand
 {
 public:
-	DrawPolyTrianglesCommand(const PolyDrawArgs &args, PolyDrawVariant variant);
+	DrawPolyTrianglesCommand(const PolyDrawArgs &args, TriDrawVariant variant);
 
 	void Execute(DrawerThread *thread) override;
 	FString DebugInfo() override;
 
 private:
 	PolyDrawArgs args;
-	PolyDrawVariant variant;
+	TriDrawVariant variant;
 };
 
 #endif

@@ -40,7 +40,7 @@
 #include <immintrin.h>
 #endif
 
-void PolyTriangleDrawer::draw(const PolyDrawArgs &args, PolyDrawVariant variant)
+void PolyTriangleDrawer::draw(const PolyDrawArgs &args, TriDrawVariant variant)
 {
 	if (r_swtruecolor)
 		DrawerCommandQueue::QueueCommand<DrawPolyTrianglesCommand>(args, variant);
@@ -48,19 +48,20 @@ void PolyTriangleDrawer::draw(const PolyDrawArgs &args, PolyDrawVariant variant)
 		draw_arrays(args, variant, nullptr);
 }
 
-void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, PolyDrawVariant variant, WorkerThreadData *thread)
+void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVariant variant, WorkerThreadData *thread)
 {
 	if (drawargs.vcount < 3)
 		return;
 
+	auto llvm = LLVMDrawers::Instance();
 	void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *);
 	switch (variant)
 	{
 	default:
-	case PolyDrawVariant::Draw: drawfunc = r_swtruecolor ? ScreenPolyTriangleDrawer::draw32 : ScreenPolyTriangleDrawer::draw; break;
-	case PolyDrawVariant::Fill: drawfunc = r_swtruecolor ? ScreenPolyTriangleDrawer::fill32 : ScreenPolyTriangleDrawer::fill; break;
-	case PolyDrawVariant::DrawSubsector: drawfunc = r_swtruecolor ? ScreenPolyTriangleDrawer::drawsubsector32 : ScreenPolyTriangleDrawer::draw; break;
-	case PolyDrawVariant::Stencil: drawfunc = ScreenPolyTriangleDrawer::stencil; break;
+	case TriDrawVariant::Draw: drawfunc = r_swtruecolor ? ScreenPolyTriangleDrawer::draw32 : ScreenPolyTriangleDrawer::draw; break;
+	case TriDrawVariant::Fill: drawfunc = r_swtruecolor ? ScreenPolyTriangleDrawer::fill32 : ScreenPolyTriangleDrawer::fill; break;
+	case TriDrawVariant::DrawSubsector: drawfunc = r_swtruecolor ? llvm->TriDrawSubsector32 : llvm->TriDrawSubsector8; break;
+	case TriDrawVariant::Stencil: drawfunc = ScreenPolyTriangleDrawer::stencil; break;
 	}
 
 	TriDrawTriangleArgs args;
@@ -1596,7 +1597,7 @@ float ScreenPolyTriangleDrawer::grady(float x0, float y0, float x1, float y1, fl
 
 /////////////////////////////////////////////////////////////////////////////
 
-DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const PolyDrawArgs &args, PolyDrawVariant variant)
+DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const PolyDrawArgs &args, TriDrawVariant variant)
 	: args(args), variant(variant)
 {
 }

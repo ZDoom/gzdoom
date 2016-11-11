@@ -64,7 +64,7 @@ public:
 			if (Values[0] == value)
 				return;
 
-			for (int i = 1; i < 8 * 8 + 4 * 4 + 2 * 2 + 1; i++)
+			for (int i = 1; i < 8 * 8; i++)
 				Values[i] = Values[0];
 		}
 

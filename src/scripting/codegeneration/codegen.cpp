@@ -1350,7 +1350,7 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 	// first deal with the simple types
 	if (ValueType == TypeError || basex->ValueType == TypeError)
 	{
-		ScriptPosition.Message(MSG_ERROR, "Trying to cast to invalid type. This error message means that somewhere in the script compiler an error check is missing.");
+		ScriptPosition.Message(MSG_ERROR, "Trying to cast to invalid type.");
 		delete this;
 		return nullptr;
 	}
@@ -5439,6 +5439,25 @@ ExpEmit FxSelf::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
+FxExpression *FxSuper::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+	if (ctx.Function == nullptr || ctx.Function->Variants[0].SelfClass == nullptr)
+	{
+		ScriptPosition.Message(MSG_ERROR, "super used outside of a member function");
+		delete this;
+		return nullptr;
+	}
+	ValueType = TypeError;	// this intentionally resolves to an invalid type so that it cannot be used outside of super calls.
+	return this;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FxClassDefaults::FxClassDefaults(FxExpression *X, const FScriptPosition &pos)
 	: FxExpression(EFX_ClassDefaults, pos)
 {
@@ -6268,6 +6287,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	ABORT(ctx.Class);
 	PClass *cls;
 	bool staticonly = false;
+	bool novirtual = false;
 
 	if (Self->ExprType == EFX_Identifier)
 	{
@@ -6281,6 +6301,15 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		}
 	}
 	SAFE_RESOLVE(Self, ctx);
+
+	if (Self->ExprType == EFX_Super)
+	{
+		// give the node the proper value type now that we know it's properly used.
+		cls = ctx.Function->Variants[0].SelfClass->ParentClass;
+		Self->ValueType = NewPointer(cls);
+		Self->ExprType = EFX_Self;
+		novirtual = true;	// super calls are always non-virtual
+	}
 
 	if (Self->IsVector())
 	{
@@ -6349,7 +6378,7 @@ isresolved:
 
 	// do not pass the self pointer to static functions.
 	auto self = (afd->Variants[0].Flags & VARF_Method) ? Self : nullptr;
-	auto x = new FxVMFunctionCall(self, afd, ArgList, ScriptPosition, staticonly);
+	auto x = new FxVMFunctionCall(self, afd, ArgList, ScriptPosition, staticonly|novirtual);
 	if (Self == self) Self = nullptr;
 	delete this;
 	return x->Resolve(ctx);
@@ -6969,6 +6998,11 @@ FxExpression *FxSequence::Resolve(FCompileContext &ctx)
 	{
 		if (nullptr == (Expressions[i] = Expressions[i]->Resolve(ctx)))
 		{
+			fail = true;
+		}
+		if (Expressions[i]->ValueType == TypeError)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Invalid statement");
 			fail = true;
 		}
 	}

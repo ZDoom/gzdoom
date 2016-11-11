@@ -2898,6 +2898,16 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		return list;
 	}
 
+	case AST_Expression:
+	{
+		auto ret = static_cast<ZCC_Expression *>(ast);
+		if (ret->Operation == PEX_Super)
+		{
+			return new FxSuper(*ast);
+		}
+		break;
+	}
+
 	case AST_ExpressionStmt:
 		return ConvertNode(static_cast<ZCC_ExpressionStmt *>(ast)->Expression);
 

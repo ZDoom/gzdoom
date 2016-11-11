@@ -276,6 +276,7 @@ enum EFxType
 	EFX_TypeCheck,
 	EFX_DynamicCast,
 	EFX_GlobalVariable,
+	EFX_Super,
 	EFX_COUNT
 };
 
@@ -1239,6 +1240,23 @@ public:
 	FxSelf(const FScriptPosition&);
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxSuper
+//
+//==========================================================================
+
+class FxSuper : public FxSelf
+{
+public:
+	FxSuper(const FScriptPosition&pos)
+		: FxSelf(pos)
+	{
+		ExprType = EFX_Super;
+	}
+	FxExpression *Resolve(FCompileContext&);
 };
 
 //==========================================================================

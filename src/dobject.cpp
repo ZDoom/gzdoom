@@ -366,6 +366,7 @@ void DObject::Destroy ()
 DEFINE_ACTION_FUNCTION(DObject, Destroy)
 {
 	PARAM_SELF_PROLOGUE(DObject);
+	self->VMSuperCall();
 	self->Destroy();
 	return 0;	
 }

@@ -235,7 +235,6 @@ enum EObjectFlags
 	OF_EuthanizeMe		= 1 << 5,		// Object wants to die
 	OF_Cleanup			= 1 << 6,		// Object is now being deleted by the collector
 	OF_YesReallyDelete	= 1 << 7,		// Object is being deleted outside the collector, and this is okay, so don't print a warning
-	OF_Transient		= 1 << 11,		// Object should not be archived (references to it will be nulled on disk)
 
 	OF_WhiteBits		= OF_White0 | OF_White1,
 	OF_MarkBits			= OF_WhiteBits | OF_Black,
@@ -244,6 +243,8 @@ enum EObjectFlags
 	OF_JustSpawned		= 1 << 8,		// Thinker was spawned this tic
 	OF_SerialSuccess	= 1 << 9,		// For debugging Serialize() calls
 	OF_Sentinel			= 1 << 10,		// Object is serving as the sentinel in a ring list
+	OF_Transient		= 1 << 11,		// Object should not be archived (references to it will be nulled on disk)
+	OF_SuperCall		= 1 << 12,		// A super call from the VM is about to be performed
 };
 
 template<class T> class TObjPtr;
@@ -498,6 +499,11 @@ public:
 	void SerializeUserVars(FSerializer &arc);
 	virtual void Serialize(FSerializer &arc);
 
+	void VMSuperCall()
+	{
+		ObjectFlags |= OF_SuperCall;
+	}
+
 	void ClearClass()
 	{
 		Class = NULL;
@@ -652,7 +658,27 @@ private:
 public:
 	void Destroy()
 	{
-		ExportedNatives<T>::Get()->template Destroy<void, T>(this);
+		if (ObjectFlags & OF_SuperCall)
+		{
+			ObjectFlags &= OF_SuperCall;
+			ExportedNatives<T>::Get()->template Destroy<void, T>(this);
+		}
+		else
+		{
+			static int VIndex = -1;
+			if (VIndex < 0)
+			{
+				// Look up the virtual function index in the defining class because this may have gotten overloaded in subclasses with something different than a virtual override.
+				auto sym = dyn_cast<PFunction>(RUNTIME_CLASS(DObject)->Symbols.FindSymbol("Destroy", false));
+				assert(sym != nullptr);
+				VIndex = sym->Variants[0].Implementation->VirtualIndex;
+				assert(VIndex >= 0);
+			}
+			// Without the type cast this picks the 'void *' assignment...
+			VMValue params[1] = { (DObject*)this };
+			VMFrameStack stack;
+			stack.Call(GetClass()->Virtuals[VIndex], params, 1, nullptr, 0, nullptr);
+		}
 	}
 	void Tick()
 	{

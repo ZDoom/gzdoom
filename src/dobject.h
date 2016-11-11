@@ -176,7 +176,7 @@ protected: \
 		ExportedNatives<cls>(ExportedNatives<cls>&&) = delete;
 
 #define VMEXPORT_NATIVES_FUNC(func) \
-		template<class ret, class object, class ... args> ret func(void *ptr, args ... arglist) { return static_cast<object *>(ptr)->object::##func(arglist...); }
+		template<class ret, class object, class ... args> ret func(void *ptr, args ... arglist) { return static_cast<object *>(ptr)->object::func(arglist...); }
 
 #define VMEXPORT_NATIVES_END(cls) };
 

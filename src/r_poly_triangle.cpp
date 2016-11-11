@@ -48,12 +48,12 @@ void PolyTriangleDrawer::draw(const PolyDrawArgs &args, PolyDrawVariant variant)
 		draw_arrays(args, variant, nullptr);
 }
 
-void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, PolyDrawVariant variant, DrawerThread *thread)
+void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, PolyDrawVariant variant, WorkerThreadData *thread)
 {
 	if (drawargs.vcount < 3)
 		return;
 
-	void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, DrawerThread *);
+	void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, WorkerThreadData *);
 	switch (variant)
 	{
 	default:
@@ -128,7 +128,7 @@ TriVertex PolyTriangleDrawer::shade_vertex(const TriUniforms &uniforms, TriVerte
 	return uniforms.objectToClip * v;
 }
 
-void PolyTriangleDrawer::draw_shaded_triangle(const TriVertex *vert, bool ccw, ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, DrawerThread *))
+void PolyTriangleDrawer::draw_shaded_triangle(const TriVertex *vert, bool ccw, ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, WorkerThreadData *))
 {
 	// Cull, clip and generate additional vertices as needed
 	TriVertex clippedvert[max_additional_vertices];
@@ -288,7 +288,7 @@ void PolyTriangleDrawer::clipedge(const TriVertex *verts, TriVertex *clippedvert
 
 /////////////////////////////////////////////////////////////////////////////
 
-void ScreenPolyTriangleDrawer::draw(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread)
+void ScreenPolyTriangleDrawer::draw(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread)
 {
 	uint8_t *dest = args->dest;
 	int pitch = args->pitch;
@@ -373,7 +373,7 @@ void ScreenPolyTriangleDrawer::draw(const ScreenPolyTriangleDrawerArgs *args, Dr
 	for (int y = miny; y < maxy; y += q, dest += q * pitch)
 	{
 		// Is this row of blocks done by this thread?
-		if (thread && thread->skipped_by_thread(y / q)) continue;
+		if (thread && ((y / q) % thread->num_cores != thread->core)) continue;
 
 		for (int x = minx; x < maxx; x += q)
 		{
@@ -523,7 +523,7 @@ void ScreenPolyTriangleDrawer::draw(const ScreenPolyTriangleDrawerArgs *args, Dr
 	}
 }
 
-void ScreenPolyTriangleDrawer::fill(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread)
+void ScreenPolyTriangleDrawer::fill(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread)
 {
 	uint8_t *dest = args->dest;
 	int pitch = args->pitch;
@@ -594,7 +594,7 @@ void ScreenPolyTriangleDrawer::fill(const ScreenPolyTriangleDrawerArgs *args, Dr
 	for (int y = miny; y < maxy; y += q, dest += q * pitch)
 	{
 		// Is this row of blocks done by this thread?
-		if (thread && thread->skipped_by_thread(y / q)) continue;
+		if (thread && ((y / q) % thread->num_cores != thread->core)) continue;
 
 		for (int x = minx; x < maxx; x += q)
 		{
@@ -681,7 +681,7 @@ void ScreenPolyTriangleDrawer::fill(const ScreenPolyTriangleDrawerArgs *args, Dr
 	}
 }
 
-void ScreenPolyTriangleDrawer::stencil(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread)
+void ScreenPolyTriangleDrawer::stencil(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread)
 {
 	const TriVertex &v1 = *args->v1;
 	const TriVertex &v2 = *args->v2;
@@ -753,7 +753,7 @@ void ScreenPolyTriangleDrawer::stencil(const ScreenPolyTriangleDrawerArgs *args,
 	for (int y = miny; y < maxy; y += q)
 	{
 		// Is this row of blocks done by this thread?
-		if (thread && thread->skipped_by_thread(y / q)) continue;
+		if (thread && ((y / q) % thread->num_cores != thread->core)) continue;
 
 		for (int x = minx; x < maxx; x += q)
 		{
@@ -833,7 +833,7 @@ void ScreenPolyTriangleDrawer::stencil(const ScreenPolyTriangleDrawerArgs *args,
 	}
 }
 
-void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread)
+void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread)
 {
 	uint32_t *dest = (uint32_t *)args->dest;
 	int pitch = args->pitch;
@@ -926,7 +926,7 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 	for (int y = miny; y < maxy; y += q, dest += q * pitch, subsectorGBuffer += q * pitch)
 	{
 		// Is this row of blocks done by this thread?
-		if (thread->skipped_by_thread(y / q)) continue;
+		if ((y / q) % thread->num_cores != thread->core) continue;
 
 		for (int x = minx; x < maxx; x += q)
 		{
@@ -1145,7 +1145,7 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 	}
 }
 
-void ScreenPolyTriangleDrawer::drawsubsector32(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread)
+void ScreenPolyTriangleDrawer::drawsubsector32(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread)
 {
 	uint32_t *dest = (uint32_t *)args->dest;
 	int pitch = args->pitch;
@@ -1234,7 +1234,7 @@ void ScreenPolyTriangleDrawer::drawsubsector32(const ScreenPolyTriangleDrawerArg
 	for (int y = miny; y < maxy; y += q, dest += q * pitch, subsectorGBuffer += q * pitch)
 	{
 		// Is this row of blocks done by this thread?
-		if (thread->skipped_by_thread(y / q)) continue;
+		if ((y / q) % thread->num_cores != thread->core) continue;
 
 		for (int x = minx; x < maxx; x += q)
 		{
@@ -1412,7 +1412,7 @@ void ScreenPolyTriangleDrawer::drawsubsector32(const ScreenPolyTriangleDrawerArg
 	}
 }
 
-void ScreenPolyTriangleDrawer::fill32(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread)
+void ScreenPolyTriangleDrawer::fill32(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread)
 {
 	uint32_t *dest = (uint32_t *)args->dest;
 	int pitch = args->pitch;
@@ -1487,7 +1487,7 @@ void ScreenPolyTriangleDrawer::fill32(const ScreenPolyTriangleDrawerArgs *args, 
 	for (int y = miny; y < maxy; y += q, dest += q * pitch)
 	{
 		// Is this row of blocks done by this thread?
-		if (thread->skipped_by_thread(y / q)) continue;
+		if ((y / q) % thread->num_cores != thread->core) continue;
 
 		for (int x = minx; x < maxx; x += q)
 		{
@@ -1603,7 +1603,14 @@ DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const PolyDrawArgs &args, Pol
 
 void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
 {
-	PolyTriangleDrawer::draw_arrays(args, variant, thread);
+	WorkerThreadData thread_data;
+	thread_data.core = thread->core;
+	thread_data.num_cores = thread->num_cores;
+	thread_data.pass_start_y = thread->pass_start_y;
+	thread_data.pass_end_y = thread->pass_end_y;
+	thread_data.temp = thread->dc_temp_rgba;
+
+	PolyTriangleDrawer::draw_arrays(args, variant, &thread_data);
 }
 
 FString DrawPolyTrianglesCommand::DebugInfo()

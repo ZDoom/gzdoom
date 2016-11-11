@@ -181,6 +181,85 @@ struct DrawSkyArgs
 	}
 };
 
+struct TriVertex
+{
+	TriVertex() { }
+	TriVertex(float x, float y, float z, float w, float u, float v) : x(x), y(y), z(z), w(w) { varying[0] = u; varying[1] = v; }
+
+	enum { NumVarying = 2 };
+	float x, y, z, w;
+	float varying[NumVarying];
+};
+
+struct TriMatrix
+{
+	static TriMatrix null();
+	static TriMatrix identity();
+	static TriMatrix translate(float x, float y, float z);
+	static TriMatrix scale(float x, float y, float z);
+	static TriMatrix rotate(float angle, float x, float y, float z);
+	static TriMatrix swapYZ();
+	static TriMatrix perspective(float fovy, float aspect, float near, float far);
+	static TriMatrix frustum(float left, float right, float bottom, float top, float near, float far);
+
+	static TriMatrix worldToView(); // Software renderer world to view space transform
+	static TriMatrix viewToClip(); // Software renderer shearing projection
+
+	TriVertex operator*(TriVertex v) const;
+	TriMatrix operator*(const TriMatrix &m) const;
+
+	float matrix[16];
+};
+
+struct TriUniforms
+{
+	uint32_t light;
+	uint32_t subsectorDepth;
+
+	uint16_t light_alpha;
+	uint16_t light_red;
+	uint16_t light_green;
+	uint16_t light_blue;
+	uint16_t fade_alpha;
+	uint16_t fade_red;
+	uint16_t fade_green;
+	uint16_t fade_blue;
+	uint16_t desaturate;
+	uint32_t flags;
+	enum Flags
+	{
+		simple_shade = 1,
+		nearest_filter = 2,
+		diminishing_lighting = 4
+	};
+
+	TriMatrix objectToClip;
+};
+
+struct ScreenPolyTriangleDrawerArgs
+{
+	uint8_t *dest;
+	int pitch;
+	TriVertex *v1;
+	TriVertex *v2;
+	TriVertex *v3;
+	int clipleft;
+	int clipright;
+	int cliptop;
+	int clipbottom;
+	const uint8_t *texturePixels;
+	int textureWidth;
+	int textureHeight;
+	uint32_t solidcolor;
+	const TriUniforms *uniforms;
+	uint8_t *stencilValues;
+	uint32_t *stencilMasks;
+	int stencilPitch;
+	uint8_t stencilTestValue;
+	uint8_t stencilWriteValue;
+	uint32_t *subsectorGBuffer;
+};
+
 class LLVMDrawers
 {
 public:

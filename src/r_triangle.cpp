@@ -75,7 +75,7 @@ void TriangleDrawer::queue_arrays(const TriUniforms &uniforms, const TriVertex *
 	DrawerCommandQueue::QueueCommand<DrawTrianglesCommand>(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, clipdata, texturePixels, textureWidth, textureHeight, solidcolor);
 }
 
-void TriangleDrawer::draw_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, DrawerThread *thread, void(*drawfunc)(const ScreenTriangleDrawerArgs *, DrawerThread *))
+void TriangleDrawer::draw_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, const short *cliptop, const short *clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, WorkerThreadData *thread, void(*drawfunc)(const ScreenTriangleDrawerArgs *, WorkerThreadData *))
 {
 	if (vcount < 3)
 		return;
@@ -135,7 +135,7 @@ TriVertex TriangleDrawer::shade_vertex(const TriUniforms &uniforms, TriVertex v)
 	return uniforms.objectToClip * v;
 }
 
-void TriangleDrawer::draw_shaded_triangle(const TriVertex *vert, bool ccw, ScreenTriangleDrawerArgs *args, DrawerThread *thread, void(*drawfunc)(const ScreenTriangleDrawerArgs *, DrawerThread *))
+void TriangleDrawer::draw_shaded_triangle(const TriVertex *vert, bool ccw, ScreenTriangleDrawerArgs *args, WorkerThreadData *thread, void(*drawfunc)(const ScreenTriangleDrawerArgs *, WorkerThreadData *))
 {
 	// Cull, clip and generate additional vertices as needed
 	TriVertex clippedvert[max_additional_vertices];
@@ -295,7 +295,7 @@ void TriangleDrawer::clipedge(const TriVertex *verts, TriVertex *clippedvert, in
 
 /////////////////////////////////////////////////////////////////////////////
 
-void ScreenTriangleDrawer::draw(const ScreenTriangleDrawerArgs *args, DrawerThread *thread)
+void ScreenTriangleDrawer::draw(const ScreenTriangleDrawerArgs *args, WorkerThreadData *thread)
 {
 	uint8_t *dest = args->dest;
 	int pitch = args->pitch;
@@ -538,7 +538,7 @@ void ScreenTriangleDrawer::draw(const ScreenTriangleDrawerArgs *args, DrawerThre
 	}
 }
 
-void ScreenTriangleDrawer::fill(const ScreenTriangleDrawerArgs *args, DrawerThread *thread)
+void ScreenTriangleDrawer::fill(const ScreenTriangleDrawerArgs *args, WorkerThreadData *thread)
 {
 	uint8_t *dest = args->dest;
 	int pitch = args->pitch;
@@ -706,7 +706,7 @@ void ScreenTriangleDrawer::fill(const ScreenTriangleDrawerArgs *args, DrawerThre
 	}
 }
 
-void ScreenTriangleDrawer::draw32(const ScreenTriangleDrawerArgs *args, DrawerThread *thread)
+void ScreenTriangleDrawer::draw32(const ScreenTriangleDrawerArgs *args, WorkerThreadData *thread)
 {
 	uint32_t *dest = (uint32_t *)args->dest;
 	int pitch = args->pitch;
@@ -873,7 +873,7 @@ void ScreenTriangleDrawer::draw32(const ScreenTriangleDrawerArgs *args, DrawerTh
 						varyingStep[i] = (uint32_t)(step * 0x100000000LL);
 					}
 
-					if (!thread->skipped_by_thread(y + iy))
+					if ((y + iy) % thread->num_cores == thread->core)
 					{
 						for (int ix = x; ix < x + q; ix++)
 						{
@@ -920,7 +920,7 @@ void ScreenTriangleDrawer::draw32(const ScreenTriangleDrawerArgs *args, DrawerTh
 						varyingStep[i] = (varyingTR[i] + varyingBR[i] * iy - varying[i]) * (1.0f / q);
 					}
 
-					if (!thread->skipped_by_thread(y + iy))
+					if ((y + iy) % thread->num_cores == thread->core)
 					{
 						for (int ix = x; ix < x + q; ix++)
 						{
@@ -967,7 +967,7 @@ void ScreenTriangleDrawer::draw32(const ScreenTriangleDrawerArgs *args, DrawerTh
 	}
 }
 
-void ScreenTriangleDrawer::fill32(const ScreenTriangleDrawerArgs *args, DrawerThread *thread)
+void ScreenTriangleDrawer::fill32(const ScreenTriangleDrawerArgs *args, WorkerThreadData *thread)
 {
 	uint32_t *dest = (uint32_t *)args->dest;
 	int pitch = args->pitch;
@@ -1088,7 +1088,7 @@ void ScreenTriangleDrawer::fill32(const ScreenTriangleDrawerArgs *args, DrawerTh
 			{
 				for (int iy = 0; iy < q; iy++)
 				{
-					if (!thread->skipped_by_thread(y + iy))
+					if ((y + iy) % thread->num_cores == thread->core)
 					{
 						for (int ix = x; ix < x + q; ix++)
 						{
@@ -1111,7 +1111,7 @@ void ScreenTriangleDrawer::fill32(const ScreenTriangleDrawerArgs *args, DrawerTh
 					int CX2 = CY2;
 					int CX3 = CY3;
 
-					if (!thread->skipped_by_thread(y + iy))
+					if ((y + iy) % thread->num_cores == thread->core)
 					{
 						for (int ix = x; ix < x + q; ix++)
 						{
@@ -1318,11 +1318,18 @@ void DrawTrianglesCommand::Execute(DrawerThread *thread)
 		thread->triangle_clip_bottom[clipleft + i] = clipdata[cliplength + i];
 	}
 
+	WorkerThreadData thread_data;
+	thread_data.core = thread->core;
+	thread_data.num_cores = thread->num_cores;
+	thread_data.pass_start_y = thread->pass_start_y;
+	thread_data.pass_end_y = thread->pass_end_y;
+	thread_data.temp = thread->dc_temp_rgba;
+
 	TriangleDrawer::draw_arrays(
 		uniforms, vinput, vcount, mode, ccw,
 		clipleft, clipright, thread->triangle_clip_top, thread->triangle_clip_bottom,
 		texturePixels, textureWidth, textureHeight, solidcolor,
-		thread, texturePixels ? ScreenTriangleDrawer::draw32 : ScreenTriangleDrawer::fill32);
+		&thread_data, texturePixels ? ScreenTriangleDrawer::draw32 : ScreenTriangleDrawer::fill32);
 }
 
 FString DrawTrianglesCommand::DebugInfo()

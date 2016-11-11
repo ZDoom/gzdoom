@@ -73,8 +73,8 @@ public:
 
 private:
 	static TriVertex shade_vertex(const TriUniforms &uniforms, TriVertex v);
-	static void draw_arrays(const PolyDrawArgs &args, PolyDrawVariant variant, DrawerThread *thread);
-	static void draw_shaded_triangle(const TriVertex *vertices, bool ccw, ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, DrawerThread *));
+	static void draw_arrays(const PolyDrawArgs &args, PolyDrawVariant variant, WorkerThreadData *thread);
+	static void draw_shaded_triangle(const TriVertex *vertices, bool ccw, ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, WorkerThreadData *));
 	static bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2);
 	static void clipedge(const TriVertex *verts, TriVertex *clippedvert, int &numclipvert);
 
@@ -225,41 +225,17 @@ private:
 	std::vector<uint32_t> masks;
 };
 
-struct ScreenPolyTriangleDrawerArgs
-{
-	uint8_t *dest;
-	int pitch;
-	TriVertex *v1;
-	TriVertex *v2;
-	TriVertex *v3;
-	int clipleft;
-	int clipright;
-	int cliptop;
-	int clipbottom;
-	const uint8_t *texturePixels;
-	int textureWidth;
-	int textureHeight;
-	uint32_t solidcolor;
-	const TriUniforms *uniforms;
-	uint8_t *stencilValues;
-	uint32_t *stencilMasks;
-	int stencilPitch;
-	uint8_t stencilTestValue;
-	uint8_t stencilWriteValue;
-	uint32_t *subsectorGBuffer;
-};
-
 class ScreenPolyTriangleDrawer
 {
 public:
-	static void draw(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread);
-	static void fill(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread);
+	static void draw(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread);
+	static void fill(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread);
 
-	static void stencil(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread);
+	static void stencil(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread);
 
-	static void draw32(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread);
-	static void drawsubsector32(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread);
-	static void fill32(const ScreenPolyTriangleDrawerArgs *args, DrawerThread *thread);
+	static void draw32(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread);
+	static void drawsubsector32(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread);
+	static void fill32(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread);
 
 private:
 	static float gradx(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2);

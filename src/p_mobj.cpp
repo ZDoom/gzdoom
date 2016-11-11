@@ -310,7 +310,7 @@ void AActor::InitNativeFields()
 	meta->AddNativeField("DeathType",			TypeName,		myoffsetof(AActor, DeathType));
 	meta->AddNativeField("DamageFactor",		TypeFloat64,	myoffsetof(AActor, DamageFactor));
 	meta->AddNativeField("DamageMultiply",		TypeFloat64,	myoffsetof(AActor, DamageMultiply));
-	meta->AddNativeField("TelefogSpurceType",	TypeActorClass,	myoffsetof(AActor, TeleFogSourceType));
+	meta->AddNativeField("TelefogSourceType",	TypeActorClass,	myoffsetof(AActor, TeleFogSourceType));
 	meta->AddNativeField("TelefogDestType",		TypeActorClass,	myoffsetof(AActor, TeleFogDestType));
 	meta->AddNativeField("SpawnState",			TypeState,		myoffsetof(AActor, SpawnState), VARF_ReadOnly);
 	meta->AddNativeField("SeeState",			TypeState,		myoffsetof(AActor, SeeState), VARF_ReadOnly);

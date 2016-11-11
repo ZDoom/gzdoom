@@ -83,8 +83,8 @@ private:
 	void SkyVertex(int r, int c, bool yflip);
 	void CreateSkyHemisphere(bool zflip);
 	void CreateDome();
-	void RenderRow(const TriUniforms &uniforms, FTexture *skytex, int row);
-	void RenderCapColorRow(const TriUniforms &uniforms, FTexture *skytex, int row, bool bottomCap);
+	void RenderRow(PolyDrawArgs &args, int row);
+	void RenderCapColorRow(PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap);
 
 	TriVertex SetVertex(float xx, float yy, float zz, float uu = 0, float vv = 0);
 	TriVertex SetVertexXYZ(float xx, float yy, float zz, float uu = 0, float vv = 0);

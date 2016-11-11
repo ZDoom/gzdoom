@@ -40,90 +40,79 @@
 #include <immintrin.h>
 #endif
 
-void PolyTriangleDrawer::draw(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, FTexture *texture, int stenciltestvalue)
+void PolyTriangleDrawer::draw(const PolyDrawArgs &args, PolyDrawVariant variant)
 {
 	if (r_swtruecolor)
-		queue_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, (const uint8_t*)texture->GetPixelsBgra(), texture->GetWidth(), texture->GetHeight(), 0, stenciltestvalue, stenciltestvalue);
+		DrawerCommandQueue::QueueCommand<DrawPolyTrianglesCommand>(args, variant);
 	else
-		draw_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, texture->GetPixels(), texture->GetWidth(), texture->GetHeight(), 0, stenciltestvalue, stenciltestvalue, nullptr, &ScreenPolyTriangleDrawer::draw);
+		draw_arrays(args, variant, nullptr);
 }
 
-void PolyTriangleDrawer::fill(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, int solidcolor, int stenciltestvalue)
+void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, PolyDrawVariant variant, DrawerThread *thread)
 {
-	if (r_swtruecolor)
-		queue_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, 0, 0, solidcolor, stenciltestvalue, stenciltestvalue);
-	else
-		draw_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, 0, 0, solidcolor, stenciltestvalue, stenciltestvalue, nullptr, &ScreenPolyTriangleDrawer::fill);
-}
-
-void PolyTriangleDrawer::stencil(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, int stenciltestvalue, int stencilwritevalue)
-{
-	if (r_swtruecolor)
-		queue_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, 0, 0, 0xbeef, stenciltestvalue, stencilwritevalue);
-	else
-		draw_arrays(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, nullptr, 0, 0, 0, stenciltestvalue, stencilwritevalue, nullptr, &ScreenPolyTriangleDrawer::stencil);
-}
-
-void PolyTriangleDrawer::queue_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, int stenciltestvalue, int stencilwritevalue)
-{
-	if (clipright < clipleft || clipleft < 0 || clipright > MAXWIDTH || clipbottom < cliptop || cliptop < 0 || clipbottom > MAXHEIGHT)
+	if (drawargs.vcount < 3)
 		return;
 
-	DrawerCommandQueue::QueueCommand<DrawPolyTrianglesCommand>(uniforms, vinput, vcount, mode, ccw, clipleft, clipright, cliptop, clipbottom, texturePixels, textureWidth, textureHeight, solidcolor, stenciltestvalue, stencilwritevalue);
-}
-
-void PolyTriangleDrawer::draw_arrays(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, int stenciltestvalue, int stencilwritevalue, DrawerThread *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, DrawerThread *))
-{
-	if (vcount < 3)
-		return;
+	void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, DrawerThread *);
+	switch (variant)
+	{
+	default:
+	case PolyDrawVariant::Draw: drawfunc = r_swtruecolor ? ScreenPolyTriangleDrawer::draw32 : ScreenPolyTriangleDrawer::draw; break;
+	case PolyDrawVariant::Fill: drawfunc = r_swtruecolor ? ScreenPolyTriangleDrawer::fill32 : ScreenPolyTriangleDrawer::fill; break;
+	case PolyDrawVariant::Stencil: drawfunc = ScreenPolyTriangleDrawer::stencil; break;
+	}
 
 	ScreenPolyTriangleDrawerArgs args;
 	args.dest = dc_destorg;
 	args.pitch = dc_pitch;
-	args.clipleft = clipleft;
-	args.clipright = clipright;
-	args.cliptop = cliptop;
-	args.clipbottom = clipbottom;
-	args.texturePixels = texturePixels;
-	args.textureWidth = textureWidth;
-	args.textureHeight = textureHeight;
-	args.solidcolor = solidcolor;
-	args.uniforms = &uniforms;
-	args.stencilTestValue = stenciltestvalue;
-	args.stencilWriteValue = stencilwritevalue;
+	args.clipleft = drawargs.clipleft;
+	args.clipright = drawargs.clipright;
+	args.cliptop = drawargs.cliptop;
+	args.clipbottom = drawargs.clipbottom;
+	args.texturePixels = drawargs.texturePixels;
+	args.textureWidth = drawargs.textureWidth;
+	args.textureHeight = drawargs.textureHeight;
+	args.solidcolor = drawargs.solidcolor;
+	args.uniforms = &drawargs.uniforms;
+	args.stencilTestValue = drawargs.stenciltestvalue;
+	args.stencilWriteValue = drawargs.stencilwritevalue;
 	args.stencilPitch = PolyStencilBuffer::Instance()->BlockWidth();
 	args.stencilValues = PolyStencilBuffer::Instance()->Values();
 	args.stencilMasks = PolyStencilBuffer::Instance()->Masks();
 	args.subsectorGBuffer = PolySubsectorGBuffer::Instance()->Values();
 
+	bool ccw = drawargs.ccw;
+	const TriVertex *vinput = drawargs.vinput;
+	int vcount = drawargs.vcount;
+
 	TriVertex vert[3];
-	if (mode == TriangleDrawMode::Normal)
+	if (drawargs.mode == TriangleDrawMode::Normal)
 	{
 		for (int i = 0; i < vcount / 3; i++)
 		{
 			for (int j = 0; j < 3; j++)
-				vert[j] = shade_vertex(uniforms, *(vinput++));
+				vert[j] = shade_vertex(drawargs.uniforms, *(vinput++));
 			draw_shaded_triangle(vert, ccw, &args, thread, drawfunc);
 		}
 	}
-	else if (mode == TriangleDrawMode::Fan)
+	else if (drawargs.mode == TriangleDrawMode::Fan)
 	{
-		vert[0] = shade_vertex(uniforms, *(vinput++));
-		vert[1] = shade_vertex(uniforms, *(vinput++));
+		vert[0] = shade_vertex(drawargs.uniforms, *(vinput++));
+		vert[1] = shade_vertex(drawargs.uniforms, *(vinput++));
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = shade_vertex(uniforms, *(vinput++));
+			vert[2] = shade_vertex(drawargs.uniforms, *(vinput++));
 			draw_shaded_triangle(vert, ccw, &args, thread, drawfunc);
 			vert[1] = vert[2];
 		}
 	}
 	else // TriangleDrawMode::Strip
 	{
-		vert[0] = shade_vertex(uniforms, *(vinput++));
-		vert[1] = shade_vertex(uniforms, *(vinput++));
+		vert[0] = shade_vertex(drawargs.uniforms, *(vinput++));
+		vert[1] = shade_vertex(drawargs.uniforms, *(vinput++));
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = shade_vertex(uniforms, *(vinput++));
+			vert[2] = shade_vertex(drawargs.uniforms, *(vinput++));
 			draw_shaded_triangle(vert, ccw, &args, thread, drawfunc);
 			vert[0] = vert[1];
 			vert[1] = vert[2];
@@ -1324,19 +1313,14 @@ float ScreenPolyTriangleDrawer::grady(float x0, float y0, float x1, float y1, fl
 
 /////////////////////////////////////////////////////////////////////////////
 
-DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const TriUniforms &uniforms, const TriVertex *vinput, int vcount, TriangleDrawMode mode, bool ccw, int clipleft, int clipright, int cliptop, int clipbottom, const uint8_t *texturePixels, int textureWidth, int textureHeight, int solidcolor, int stenciltestvalue, int stencilwritevalue)
-	: uniforms(uniforms), vinput(vinput), vcount(vcount), mode(mode), ccw(ccw), clipleft(clipleft), clipright(clipright), cliptop(cliptop), clipbottom(clipbottom), texturePixels(texturePixels), textureWidth(textureWidth), textureHeight(textureHeight), solidcolor(solidcolor), stenciltestvalue(stenciltestvalue), stencilwritevalue(stencilwritevalue)
+DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const PolyDrawArgs &args, PolyDrawVariant variant)
+	: args(args), variant(variant)
 {
 }
 
 void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
 {
-	PolyTriangleDrawer::draw_arrays(
-		uniforms, vinput, vcount, mode, ccw,
-		clipleft, clipright, cliptop, clipbottom,
-		texturePixels, textureWidth, textureHeight, solidcolor,
-		stenciltestvalue, stencilwritevalue,
-		thread, texturePixels ? ScreenPolyTriangleDrawer::draw32 : solidcolor != 0xbeef ? ScreenPolyTriangleDrawer::fill32 : ScreenPolyTriangleDrawer::stencil);
+	PolyTriangleDrawer::draw_arrays(args, variant, thread);
 }
 
 FString DrawPolyTrianglesCommand::DebugInfo()

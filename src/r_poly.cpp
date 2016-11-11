@@ -194,14 +194,29 @@ void RenderPolyBsp::RenderPlane(subsector_t *sub, uint32_t subsectorDepth, bool 
 		}
 	}
 
+	PolyDrawArgs args;
+	args.uniforms = uniforms;
+	args.vinput = vertices;
+	args.vcount = sub->numlines;
+	args.mode = TriangleDrawMode::Fan;
+	args.ccw = true;
+	args.clipleft = 0;
+	args.cliptop = 0;
+	args.clipright = viewwidth;
+	args.clipbottom = viewheight;
+	args.stenciltestvalue = 0;
+	args.stencilwritevalue = 1;
+
 	if (!isSky)
 	{
-		PolyTriangleDrawer::draw(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, tex, 0);
-		PolyTriangleDrawer::stencil(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, 0, 1);
+		args.SetTexture(tex);
+		PolyTriangleDrawer::draw(args, PolyDrawVariant::Draw);
+		PolyTriangleDrawer::draw(args, PolyDrawVariant::Stencil);
 	}
 	else
 	{
-		PolyTriangleDrawer::stencil(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, 0, 255);
+		args.stencilwritevalue = 255;
+		PolyTriangleDrawer::draw(args, PolyDrawVariant::Stencil);
 
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
@@ -284,7 +299,9 @@ void RenderPolyBsp::RenderPlane(subsector_t *sub, uint32_t subsectorDepth, bool 
 				wallvert[3] = PlaneVertex(line->v1, frontsector, skyHeight);
 			}
 
-			PolyTriangleDrawer::stencil(uniforms, wallvert, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, 0, 255);
+			args.vinput = wallvert;
+			args.vcount = 4;
+			PolyTriangleDrawer::draw(args, PolyDrawVariant::Stencil);
 		}
 	}
 }
@@ -525,7 +542,21 @@ void RenderPolyBsp::AddSprite(AActor *thing, subsector_t *sub, uint32_t subsecto
 	uniforms.light = (uint32_t)((thing->Sector->lightlevel + actualextralight) / 255.0f * 256.0f);
 	uniforms.flags = 0;
 	uniforms.subsectorDepth = subsectorDepth;
-	PolyTriangleDrawer::draw(uniforms, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, tex, 0);
+
+	PolyDrawArgs args;
+	args.uniforms = uniforms;
+	args.vinput = vertices;
+	args.vcount = 4;
+	args.mode = TriangleDrawMode::Fan;
+	args.ccw = true;
+	args.clipleft = 0;
+	args.cliptop = 0;
+	args.clipright = viewwidth;
+	args.clipbottom = viewheight;
+	args.stenciltestvalue = 0;
+	args.stencilwritevalue = 1;
+	args.SetTexture(tex);
+	PolyTriangleDrawer::draw(args, PolyDrawVariant::Draw);
 }
 
 void RenderPolyBsp::AddWallSprite(AActor *thing, subsector_t *sub, uint32_t subsectorDepth)
@@ -1177,8 +1208,22 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	uniforms.flags = 0;
 	uniforms.subsectorDepth = SubsectorDepth;
 
-	PolyTriangleDrawer::draw(uniforms, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, tex, 0);
-	PolyTriangleDrawer::stencil(uniforms, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, 0, 1);
+	PolyDrawArgs args;
+	args.uniforms = uniforms;
+	args.vinput = vertices;
+	args.vcount = 4;
+	args.mode = TriangleDrawMode::Fan;
+	args.ccw = true;
+	args.clipleft = 0;
+	args.cliptop = 0;
+	args.clipright = viewwidth;
+	args.clipbottom = viewheight;
+	args.stenciltestvalue = 0;
+	args.stencilwritevalue = 1;
+	args.SetTexture(tex);
+
+	PolyTriangleDrawer::draw(args, PolyDrawVariant::Draw);
+	PolyTriangleDrawer::draw(args, PolyDrawVariant::Stencil);
 }
 
 FTexture *RenderPolyWall::GetTexture()
@@ -1504,17 +1549,27 @@ void PolySkyDome::CreateDome()
 	mPrimStart.Push(mVertices.Size());
 }
 
-void PolySkyDome::RenderRow(const TriUniforms &uniforms, FTexture *skytex, int row)
+void PolySkyDome::RenderRow(PolyDrawArgs &args, int row)
 {
-	PolyTriangleDrawer::draw(uniforms, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Strip, false, 0, viewwidth, 0, viewheight, skytex, 255);
+	args.vinput = &mVertices[mPrimStart[row]];
+	args.vcount = mPrimStart[row + 1] - mPrimStart[row];
+	args.mode = TriangleDrawMode::Strip;
+	args.ccw = false;
+	PolyTriangleDrawer::draw(args, PolyDrawVariant::Draw);
 }
 
-void PolySkyDome::RenderCapColorRow(const TriUniforms &uniforms, FTexture *skytex, int row, bool bottomCap)
+void PolySkyDome::RenderCapColorRow(PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap)
 {
 	uint32_t solid = skytex->GetSkyCapColor(bottomCap);
 	if (!r_swtruecolor)
 		solid = RGB32k.RGB[(RPART(solid) >> 3)][(GPART(solid) >> 3)][(BPART(solid) >> 3)];
-	PolyTriangleDrawer::fill(uniforms, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Fan, bottomCap, 0, viewwidth, 0, viewheight, solid, 255);
+
+	args.vinput = &mVertices[mPrimStart[row]];
+	args.vcount = mPrimStart[row + 1] - mPrimStart[row];
+	args.mode = TriangleDrawMode::Fan;
+	args.ccw = bottomCap;
+	args.solidcolor = solid;
+	PolyTriangleDrawer::draw(args, PolyDrawVariant::Fill);
 }
 
 void PolySkyDome::Render(const TriMatrix &worldToClip)
@@ -1540,12 +1595,22 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 
 	int rc = mRows + 1;
 
-	RenderCapColorRow(uniforms, frontskytex, 0, false);
-	RenderCapColorRow(uniforms, frontskytex, rc, true);
+	PolyDrawArgs args;
+	args.uniforms = uniforms;
+	args.clipleft = 0;
+	args.cliptop = 0;
+	args.clipright = viewwidth;
+	args.clipbottom = viewheight;
+	args.stenciltestvalue = 255;
+	args.stencilwritevalue = 1;
+	args.SetTexture(frontskytex);
+
+	RenderCapColorRow(args, frontskytex, 0, false);
+	RenderCapColorRow(args, frontskytex, rc, true);
 
 	for (int i = 1; i <= mRows; i++)
 	{
-		RenderRow(uniforms, frontskytex, i);
-		RenderRow(uniforms, frontskytex, rc + i);
+		RenderRow(args, i);
+		RenderRow(args, rc + i);
 	}
 }

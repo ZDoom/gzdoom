@@ -102,8 +102,9 @@ public:
 private:
 	void RenderNode(void *node);
 	void RenderSubsector(subsector_t *sub);
+	void RenderPlane(subsector_t *sub, uint32_t subsectorDepth, bool ceiling);
 	void AddLine(seg_t *line, sector_t *frontsector, uint32_t subsectorDepth);
-	TriVertex PlaneVertex(vertex_t *v1, sector_t *sector, const secplane_t &plane);
+	TriVertex PlaneVertex(vertex_t *v1, sector_t *sector, double height);
 
 	void AddSprite(AActor *thing, subsector_t *sub, uint32_t subsectorDepth);
 	void AddWallSprite(AActor *thing, subsector_t *sub, uint32_t subsectorDepth);
@@ -128,6 +129,8 @@ private:
 
 	std::vector<subsector_t *> PvsSectors;
 	uint32_t NextSubsectorDepth = 0;
+	double MaxCeilingHeight = 0.0;
+	double MinFloorHeight = 0.0;
 
 	TriMatrix worldToClip;
 
@@ -179,7 +182,6 @@ public:
 	double UnpeggedCeil = 0.0;
 	FSWColormap *Colormap = nullptr;
 	bool Masked = false;
-	bool IsSky = false;
 	uint32_t SubsectorDepth = 0;
 
 private:

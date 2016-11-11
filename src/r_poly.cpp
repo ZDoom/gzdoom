@@ -73,9 +73,17 @@ void RenderPolyBsp::Render()
 
 	// Cull front to back
 	if (numnodes == 0)
-		PvsSectors.push_back(subsectors); // RenderSubsector(subsectors);
+	{
+		PvsSectors.push_back(subsectors);
+		MaxCeilingHeight = subsectors->sector->ceilingplane.Zat0();
+		MinFloorHeight = subsectors->sector->floorplane.Zat0();
+	}
 	else
+	{
+		MaxCeilingHeight = 0.0;
+		MinFloorHeight = 0.0;
 		RenderNode(nodes + numnodes - 1);	// The head node is the last node output.
+	}
 
 	// Render front to back
 	if (r_debug_cull)
@@ -102,29 +110,6 @@ void RenderPolyBsp::RenderScreenSprites()
 		sprite.Render();
 }
 
-TriVertex RenderPolyBsp::PlaneVertex(vertex_t *v1, sector_t *sector, const secplane_t &plane)
-{
-	TriVertex v;
-	v.x = (float)v1->fPos().X;
-	v.y = (float)v1->fPos().Y;
-	v.z = (float)plane.ZatPoint(v1);
-	v.w = 1.0f;
-	v.varying[0] = v.x / 64.0f;
-	v.varying[1] = v.y / 64.0f;
-
-	/*
-	double vis = r_FloorVisibility / (plane.Zat0() - ViewPos.Z);
-	if (fixedlightlev >= 0)
-		R_SetDSColorMapLight(sector->ColorMap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
-	else if (fixedcolormap)
-		R_SetDSColorMapLight(fixedcolormap, 0, 0);
-	else
-		R_SetDSColorMapLight(sector->ColorMap, (float)(vis * fabs(CenterY - y)), LIGHT2SHADE(sector->lightlevel));
-	*/
-
-	return v;
-}
-
 void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 {
 	sector_t *frontsector = sub->sector;
@@ -139,72 +124,10 @@ void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 			AddLine(line, frontsector, subsectorDepth);
 	}
 
-	FTextureID floorpicnum = frontsector->GetTexture(sector_t::floor);
-	FTexture *floortex = TexMan(floorpicnum);
-	if (floortex->UseType != FTexture::TEX_Null)
+	if (sub->sector->CenterFloor() != sub->sector->CenterCeiling())
 	{
-		bool isSky = floorpicnum == skyflatnum;
-
-		TriVertex *vertices = PolyVertexBuffer::GetVertices(sub->numlines);
-		if (!vertices)
-			return;
-
-		for (uint32_t i = 0; i < sub->numlines; i++)
-		{
-			seg_t *line = &sub->firstline[i];
-			vertices[i] = PlaneVertex(line->v1, frontsector, frontsector->floorplane);
-		}
-
-		TriUniforms uniforms;
-		uniforms.objectToClip = worldToClip;
-		uniforms.light = (uint32_t)(frontsector->lightlevel / 255.0f * 256.0f);
-		if (fixedlightlev >= 0)
-			uniforms.light = (uint32_t)(fixedlightlev / 255.0f * 256.0f);
-		else if (fixedcolormap)
-			uniforms.light = 256;
-		uniforms.flags = 0;
-		uniforms.subsectorDepth = isSky ? SkySubsectorDepth : subsectorDepth;
-		if (!isSky)
-		{
-			PolyTriangleDrawer::draw(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, floortex, 0);
-			PolyTriangleDrawer::stencil(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, 0, 1);
-		}
-		else
-			PolyTriangleDrawer::fill(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, 0, 0);
-	}
-
-	FTextureID ceilpicnum = frontsector->GetTexture(sector_t::ceiling);
-	FTexture *ceiltex = TexMan(ceilpicnum);
-	if (ceiltex->UseType != FTexture::TEX_Null)
-	{
-		bool isSky = ceilpicnum == skyflatnum;
-
-		TriVertex *vertices = PolyVertexBuffer::GetVertices(sub->numlines);
-		if (!vertices)
-			return;
-
-		for (uint32_t i = 0; i < sub->numlines; i++)
-		{
-			seg_t *line = &sub->firstline[i];
-			vertices[sub->numlines - 1 - i] = PlaneVertex(line->v1, frontsector, frontsector->ceilingplane);
-		}
-
-		TriUniforms uniforms;
-		uniforms.objectToClip = worldToClip;
-		uniforms.light = (uint32_t)(frontsector->lightlevel / 255.0f * 256.0f);
-		if (fixedlightlev >= 0)
-			uniforms.light = (uint32_t)(fixedlightlev / 255.0f * 256.0f);
-		else if (fixedcolormap)
-			uniforms.light = 256;
-		uniforms.flags = 0;
-		uniforms.subsectorDepth = isSky ? SkySubsectorDepth : subsectorDepth;
-		if (!isSky)
-		{
-			PolyTriangleDrawer::draw(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, ceiltex, 0);
-			PolyTriangleDrawer::stencil(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, 0, 1);
-		}
-		else
-			PolyTriangleDrawer::fill(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, 0, 0);
+		RenderPlane(sub, subsectorDepth, true);
+		RenderPlane(sub, subsectorDepth, false);
 	}
 
 	SpriteRange sprites = GetSpritesForSector(sub->sector);
@@ -216,6 +139,166 @@ void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 		else
 			AddSprite(thing, sub, subsectorDepth);
 	}
+}
+
+void RenderPolyBsp::RenderPlane(subsector_t *sub, uint32_t subsectorDepth, bool ceiling)
+{
+	sector_t *frontsector = sub->sector;
+
+	FTextureID picnum = frontsector->GetTexture(ceiling ? sector_t::ceiling : sector_t::floor);
+	FTexture *tex = TexMan(picnum);
+	if (tex->UseType == FTexture::TEX_Null)
+		return;
+
+	bool isSky = picnum == skyflatnum;
+	double skyHeight = ceiling ? MaxCeilingHeight : MinFloorHeight;
+
+	TriUniforms uniforms;
+	uniforms.objectToClip = worldToClip;
+	uniforms.light = (uint32_t)(frontsector->lightlevel / 255.0f * 256.0f);
+	if (fixedlightlev >= 0)
+		uniforms.light = (uint32_t)(fixedlightlev / 255.0f * 256.0f);
+	else if (fixedcolormap)
+		uniforms.light = 256;
+	uniforms.flags = 0;
+	uniforms.subsectorDepth = isSky ? SkySubsectorDepth : subsectorDepth;
+
+	/*
+	double vis = r_FloorVisibility / (plane.Zat0() - ViewPos.Z);
+	if (fixedlightlev >= 0)
+		R_SetDSColorMapLight(sector->ColorMap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+	else if (fixedcolormap)
+		R_SetDSColorMapLight(fixedcolormap, 0, 0);
+	else
+		R_SetDSColorMapLight(sector->ColorMap, (float)(vis * fabs(CenterY - y)), LIGHT2SHADE(sector->lightlevel));
+	*/
+
+	TriVertex *vertices = PolyVertexBuffer::GetVertices(sub->numlines);
+	if (!vertices)
+		return;
+
+	if (ceiling)
+	{
+		for (uint32_t i = 0; i < sub->numlines; i++)
+		{
+			seg_t *line = &sub->firstline[i];
+			vertices[sub->numlines - 1 - i] = PlaneVertex(line->v1, frontsector, isSky ? skyHeight : frontsector->ceilingplane.ZatPoint(line->v1));
+		}
+	}
+	else
+	{
+		for (uint32_t i = 0; i < sub->numlines; i++)
+		{
+			seg_t *line = &sub->firstline[i];
+			vertices[i] = PlaneVertex(line->v1, frontsector, isSky ? skyHeight : frontsector->floorplane.ZatPoint(line->v1));
+		}
+	}
+
+	if (!isSky)
+	{
+		PolyTriangleDrawer::draw(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, tex, 0);
+		PolyTriangleDrawer::stencil(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, 0, 1);
+	}
+	else
+	{
+		PolyTriangleDrawer::stencil(uniforms, vertices, sub->numlines, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, 0, 255);
+
+		for (uint32_t i = 0; i < sub->numlines; i++)
+		{
+			TriVertex *wallvert = PolyVertexBuffer::GetVertices(4);
+			if (!wallvert)
+				return;
+
+			seg_t *line = &sub->firstline[i];
+
+			bool closedSky = false;
+			if (line->backsector)
+			{
+				sector_t *backsector = (line->backsector != line->frontsector) ? line->backsector : line->frontsector;
+
+				double frontceilz1 = frontsector->ceilingplane.ZatPoint(line->v1);
+				double frontfloorz1 = frontsector->floorplane.ZatPoint(line->v1);
+				double frontceilz2 = frontsector->ceilingplane.ZatPoint(line->v2);
+				double frontfloorz2 = frontsector->floorplane.ZatPoint(line->v2);
+
+				double backceilz1 = backsector->ceilingplane.ZatPoint(line->v1);
+				double backfloorz1 = backsector->floorplane.ZatPoint(line->v1);
+				double backceilz2 = backsector->ceilingplane.ZatPoint(line->v2);
+				double backfloorz2 = backsector->floorplane.ZatPoint(line->v2);
+
+				double topceilz1 = frontceilz1;
+				double topceilz2 = frontceilz2;
+				double topfloorz1 = MIN(backceilz1, frontceilz1);
+				double topfloorz2 = MIN(backceilz2, frontceilz2);
+				double bottomceilz1 = MAX(frontfloorz1, backfloorz1);
+				double bottomceilz2 = MAX(frontfloorz2, backfloorz2);
+				double bottomfloorz1 = frontfloorz1;
+				double bottomfloorz2 = frontfloorz2;
+				double middleceilz1 = topfloorz1;
+				double middleceilz2 = topfloorz2;
+				double middlefloorz1 = MIN(bottomceilz1, middleceilz1);
+				double middlefloorz2 = MIN(bottomceilz2, middleceilz2);
+
+				bool bothSkyCeiling = frontsector->GetTexture(sector_t::ceiling) == skyflatnum && backsector->GetTexture(sector_t::ceiling) == skyflatnum;
+				bool bothSkyFloor = frontsector->GetTexture(sector_t::floor) == skyflatnum && backsector->GetTexture(sector_t::floor) == skyflatnum;
+
+				bool closedSector = backceilz1 == backfloorz1 && backceilz2 == backfloorz2;
+				closedSky = (ceiling && bothSkyCeiling && closedSector) || (!ceiling && bothSkyFloor && closedSector);
+				if (!closedSky)
+				{
+					bool topwall = (topceilz1 > topfloorz1 || topceilz2 > topfloorz2) && line->sidedef && !bothSkyCeiling;
+					bool bottomwall = (bottomfloorz1 < bottomceilz1 || bottomfloorz2 < bottomceilz2) && line->sidedef && !bothSkyFloor;
+					if ((ceiling && !topwall) || (!ceiling && !bottomwall))
+						continue;
+				}
+			}
+
+			if (ceiling)
+			{
+				wallvert[0] = PlaneVertex(line->v1, frontsector, skyHeight);
+				wallvert[1] = PlaneVertex(line->v2, frontsector, skyHeight);
+				if (!closedSky)
+				{
+					wallvert[2] = PlaneVertex(line->v2, frontsector, frontsector->ceilingplane.ZatPoint(line->v2));
+					wallvert[3] = PlaneVertex(line->v1, frontsector, frontsector->ceilingplane.ZatPoint(line->v1));
+				}
+				else
+				{
+					wallvert[2] = PlaneVertex(line->v2, frontsector, frontsector->floorplane.ZatPoint(line->v2));
+					wallvert[3] = PlaneVertex(line->v1, frontsector, frontsector->floorplane.ZatPoint(line->v1));
+				}
+			}
+			else
+			{
+				if (!closedSky)
+				{
+					wallvert[0] = PlaneVertex(line->v1, frontsector, frontsector->floorplane.ZatPoint(line->v1));
+					wallvert[1] = PlaneVertex(line->v2, frontsector, frontsector->floorplane.ZatPoint(line->v2));
+				}
+				else
+				{
+					wallvert[0] = PlaneVertex(line->v1, frontsector, frontsector->ceilingplane.ZatPoint(line->v1));
+					wallvert[1] = PlaneVertex(line->v2, frontsector, frontsector->ceilingplane.ZatPoint(line->v2));
+				}
+				wallvert[2] = PlaneVertex(line->v2, frontsector, skyHeight);
+				wallvert[3] = PlaneVertex(line->v1, frontsector, skyHeight);
+			}
+
+			PolyTriangleDrawer::stencil(uniforms, wallvert, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, 0, 255);
+		}
+	}
+}
+
+TriVertex RenderPolyBsp::PlaneVertex(vertex_t *v1, sector_t *sector, double height)
+{
+	TriVertex v;
+	v.x = (float)v1->fPos().X;
+	v.y = (float)v1->fPos().Y;
+	v.z = (float)height;
+	v.w = 1.0f;
+	v.varying[0] = v.x / 64.0f;
+	v.varying[1] = 1.0f - v.y / 64.0f;
+	return v;
 }
 
 SpriteRange RenderPolyBsp::GetSpritesForSector(sector_t *sector)
@@ -294,25 +377,23 @@ void RenderPolyBsp::AddLine(seg_t *line, sector_t *frontsector, uint32_t subsect
 		bool bothSkyCeiling = frontsector->GetTexture(sector_t::ceiling) == skyflatnum && backsector->GetTexture(sector_t::ceiling) == skyflatnum;
 		bool bothSkyFloor = frontsector->GetTexture(sector_t::floor) == skyflatnum && backsector->GetTexture(sector_t::floor) == skyflatnum;
 
-		if ((topceilz1 > topfloorz1 || topceilz2 > topfloorz2) && line->sidedef)
+		if ((topceilz1 > topfloorz1 || topceilz2 > topfloorz2) && line->sidedef && !bothSkyCeiling)
 		{
 			wall.SetCoords(line->v1->fPos(), line->v2->fPos(), topceilz1, topfloorz1, topceilz2, topfloorz2);
 			wall.TopZ = topceilz1;
 			wall.BottomZ = topfloorz1;
 			wall.UnpeggedCeil = topceilz1;
 			wall.Texpart = side_t::top;
-			wall.IsSky = bothSkyCeiling;
 			wall.Render(worldToClip);
 		}
 
-		if ((bottomfloorz1 < bottomceilz1 || bottomfloorz2 < bottomceilz2) && line->sidedef)
+		if ((bottomfloorz1 < bottomceilz1 || bottomfloorz2 < bottomceilz2) && line->sidedef && !bothSkyFloor)
 		{
 			wall.SetCoords(line->v1->fPos(), line->v2->fPos(), bottomceilz1, bottomfloorz2, bottomceilz2, bottomfloorz2);
 			wall.TopZ = bottomceilz1;
 			wall.BottomZ = bottomfloorz2;
 			wall.UnpeggedCeil = topceilz1;
 			wall.Texpart = side_t::bottom;
-			wall.IsSky = bothSkyFloor;
 			wall.Render(worldToClip);
 		}
 
@@ -619,6 +700,8 @@ void RenderPolyBsp::RenderNode(void *node)
 
 	// Mark that we need to render this
 	subsector_t *sub = (subsector_t *)((BYTE *)node - 1);
+	MaxCeilingHeight = MAX(MaxCeilingHeight, sub->sector->ceilingplane.Zat0());
+	MinFloorHeight = MIN(MinFloorHeight, sub->sector->floorplane.Zat0());
 	PvsSectors.push_back(sub);
 
 	// Update culling info for further bsp clipping
@@ -1092,15 +1175,10 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	uniforms.objectToClip = worldToClip;
 	uniforms.light = (uint32_t)(GetLightLevel() / 255.0f * 256.0f);
 	uniforms.flags = 0;
-	uniforms.subsectorDepth = IsSky ? RenderPolyBsp::SkySubsectorDepth : SubsectorDepth;
+	uniforms.subsectorDepth = SubsectorDepth;
 
-	if (!IsSky)
-	{
-		PolyTriangleDrawer::draw(uniforms, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, tex, 0);
-		PolyTriangleDrawer::stencil(uniforms, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, 0, 1);
-	}
-	else
-		PolyTriangleDrawer::fill(uniforms, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, 0, 0);
+	PolyTriangleDrawer::draw(uniforms, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, tex, 0);
+	PolyTriangleDrawer::stencil(uniforms, vertices, 4, TriangleDrawMode::Fan, true, 0, viewwidth, 0, viewheight, 0, 1);
 }
 
 FTexture *RenderPolyWall::GetTexture()
@@ -1428,7 +1506,7 @@ void PolySkyDome::CreateDome()
 
 void PolySkyDome::RenderRow(const TriUniforms &uniforms, FTexture *skytex, int row)
 {
-	PolyTriangleDrawer::draw(uniforms, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Strip, false, 0, viewwidth, 0, viewheight, skytex, 0);
+	PolyTriangleDrawer::draw(uniforms, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Strip, false, 0, viewwidth, 0, viewheight, skytex, 255);
 }
 
 void PolySkyDome::RenderCapColorRow(const TriUniforms &uniforms, FTexture *skytex, int row, bool bottomCap)
@@ -1436,7 +1514,7 @@ void PolySkyDome::RenderCapColorRow(const TriUniforms &uniforms, FTexture *skyte
 	uint32_t solid = skytex->GetSkyCapColor(bottomCap);
 	if (!r_swtruecolor)
 		solid = RGB32k.RGB[(RPART(solid) >> 3)][(GPART(solid) >> 3)][(BPART(solid) >> 3)];
-	PolyTriangleDrawer::fill(uniforms, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Fan, bottomCap, 0, viewwidth, 0, viewheight, solid, 0);
+	PolyTriangleDrawer::fill(uniforms, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], TriangleDrawMode::Fan, bottomCap, 0, viewwidth, 0, viewheight, solid, 255);
 }
 
 void PolySkyDome::Render(const TriMatrix &worldToClip)

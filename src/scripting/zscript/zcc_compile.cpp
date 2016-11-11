@@ -2244,8 +2244,9 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClass *cls, ZCC_TreeNode *af)
 			{
 				if (fc->Parameters == nullptr && !(afd->Variants[0].Flags & VARF_Virtual))
 				{
+					FArgumentList argumentlist;
 					// We can use this function directly without wrapping it in a caller.
-					return new FxVMFunctionCall(new FxSelf(*af), afd, FArgumentList(), *af, false);
+					return new FxVMFunctionCall(new FxSelf(*af), afd, argumentlist, *af, false);
 				}
 			}
 			else

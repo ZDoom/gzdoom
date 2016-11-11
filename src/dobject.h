@@ -36,6 +36,7 @@
 
 #include <stdlib.h>
 #include "doomtype.h"
+#include "i_system.h"
 
 class PClass;
 
@@ -202,8 +203,8 @@ protected: \
 	PClass *cls::StaticType() const { return RegistrationInfo.MyClass; }
 
 #define IMPLEMENT_CLASS(cls, isabstract, ptrs, fields, vmexport) \
-	_X_CONSTRUCTOR_##isabstract##(cls) \
-	_IMP_PCLASS(cls, _X_POINTERS_##ptrs##(cls), _X_ABSTRACT_##isabstract##(cls), _X_FIELDS_##fields##(cls), _X_VMEXPORT_##vmexport##(cls)) 
+	_X_CONSTRUCTOR_##isabstract(cls) \
+	_IMP_PCLASS(cls, _X_POINTERS_##ptrs(cls), _X_ABSTRACT_##isabstract(cls), _X_FIELDS_##fields(cls), _X_VMEXPORT_##vmexport(cls))
 
 // Taking the address of a field in an object at address 1 instead of
 // address 0 keeps GCC from complaining about possible misuse of offsetof.
@@ -644,15 +645,15 @@ private:
 public:
 	void Destroy()
 	{
-		ExportedNatives<T>::Get()->Destroy<void, T>(this);
+		ExportedNatives<T>::Get()->template Destroy<void, T>(this);
 	}
 	void Tick()
 	{
-		ExportedNatives<T>::Get()->Tick<void, T>(this);
+		ExportedNatives<T>::Get()->template Tick<void, T>(this);
 	}
 	AInventory *DropInventory(AInventory *item)
 	{
-		return ExportedNatives<T>::Get()->DropInventory<AInventory *, T>(this, item);
+		return ExportedNatives<T>::Get()->template DropInventory<AInventory *, T>(this, item);
 	}
 };
 

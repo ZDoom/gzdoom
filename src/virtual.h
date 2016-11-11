@@ -34,6 +34,7 @@
 VMEXPORTED_NATIVES_START
 	VMEXPORTED_NATIVES_FUNC(Destroy)
 	VMEXPORTED_NATIVES_FUNC(Tick)
+	VMEXPORTED_NATIVES_FUNC(PostBeginPlay)
 	VMEXPORTED_NATIVES_FUNC(DropInventory)
 VMEXPORTED_NATIVES_END
 
@@ -71,9 +72,9 @@ private:
 public:
 	void Destroy()
 	{
-		if (ObjectFlags & OF_SuperCall)
+		if (this->ObjectFlags & OF_SuperCall)
 		{
-			ObjectFlags &= OF_SuperCall;
+			this->ObjectFlags &= OF_SuperCall;
 			ExportedNatives<T>::Get()->template Destroy<void, T>(this);
 		}
 		else
@@ -90,13 +91,19 @@ public:
 			// Without the type cast this picks the 'void *' assignment...
 			VMValue params[1] = { (DObject*)this };
 			VMFrameStack stack;
-			stack.Call(GetClass()->Virtuals[VIndex], params, 1, nullptr, 0, nullptr);
+			stack.Call(this->GetClass()->Virtuals[VIndex], params, 1, nullptr, 0, nullptr);
 		}
 	}
 	void Tick()
 	{
 		ExportedNatives<T>::Get()->template Tick<void, T>(this);
 	}
+
+	void PostBeginPlay()
+	{
+		ExportedNatives<T>::Get()->template PostBeginPlay<void, T>(this);
+	}
+
 	AInventory *DropInventory(AInventory *item)
 	{
 		return ExportedNatives<T>::Get()->template DropInventory<AInventory *, T>(this, item);
@@ -124,7 +131,8 @@ VMEXPORT_NATIVES_END(DObject)
 
 VMEXPORT_NATIVES_START(DThinker, DObject)
 	VMEXPORT_NATIVES_FUNC(Tick)
-VMEXPORT_NATIVES_END(DThinker)
+	VMEXPORT_NATIVES_FUNC(PostBeginPlay)
+	VMEXPORT_NATIVES_END(DThinker)
 
 VMEXPORT_NATIVES_START(AActor, DThinker)
 	VMEXPORT_NATIVES_FUNC(DropInventory)

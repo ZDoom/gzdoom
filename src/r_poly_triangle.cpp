@@ -53,7 +53,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, PolyDrawVaria
 	if (drawargs.vcount < 3)
 		return;
 
-	void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, WorkerThreadData *);
+	void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *);
 	switch (variant)
 	{
 	default:
@@ -63,7 +63,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, PolyDrawVaria
 	case PolyDrawVariant::Stencil: drawfunc = ScreenPolyTriangleDrawer::stencil; break;
 	}
 
-	ScreenPolyTriangleDrawerArgs args;
+	TriDrawTriangleArgs args;
 	args.dest = dc_destorg;
 	args.pitch = dc_pitch;
 	args.clipleft = drawargs.clipleft;
@@ -128,7 +128,7 @@ TriVertex PolyTriangleDrawer::shade_vertex(const TriUniforms &uniforms, TriVerte
 	return uniforms.objectToClip * v;
 }
 
-void PolyTriangleDrawer::draw_shaded_triangle(const TriVertex *vert, bool ccw, ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, WorkerThreadData *))
+void PolyTriangleDrawer::draw_shaded_triangle(const TriVertex *vert, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *))
 {
 	// Cull, clip and generate additional vertices as needed
 	TriVertex clippedvert[max_additional_vertices];
@@ -288,7 +288,7 @@ void PolyTriangleDrawer::clipedge(const TriVertex *verts, TriVertex *clippedvert
 
 /////////////////////////////////////////////////////////////////////////////
 
-void ScreenPolyTriangleDrawer::draw(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread)
+void ScreenPolyTriangleDrawer::draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
 	uint8_t *dest = args->dest;
 	int pitch = args->pitch;
@@ -523,7 +523,7 @@ void ScreenPolyTriangleDrawer::draw(const ScreenPolyTriangleDrawerArgs *args, Wo
 	}
 }
 
-void ScreenPolyTriangleDrawer::fill(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread)
+void ScreenPolyTriangleDrawer::fill(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
 	uint8_t *dest = args->dest;
 	int pitch = args->pitch;
@@ -681,7 +681,7 @@ void ScreenPolyTriangleDrawer::fill(const ScreenPolyTriangleDrawerArgs *args, Wo
 	}
 }
 
-void ScreenPolyTriangleDrawer::stencil(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread)
+void ScreenPolyTriangleDrawer::stencil(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
 	const TriVertex &v1 = *args->v1;
 	const TriVertex &v2 = *args->v2;
@@ -833,7 +833,7 @@ void ScreenPolyTriangleDrawer::stencil(const ScreenPolyTriangleDrawerArgs *args,
 	}
 }
 
-void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread)
+void ScreenPolyTriangleDrawer::draw32(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
 	uint32_t *dest = (uint32_t *)args->dest;
 	int pitch = args->pitch;
@@ -1145,7 +1145,7 @@ void ScreenPolyTriangleDrawer::draw32(const ScreenPolyTriangleDrawerArgs *args, 
 	}
 }
 
-void ScreenPolyTriangleDrawer::drawsubsector32(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread)
+void ScreenPolyTriangleDrawer::drawsubsector32(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
 	uint32_t *dest = (uint32_t *)args->dest;
 	int pitch = args->pitch;
@@ -1412,7 +1412,7 @@ void ScreenPolyTriangleDrawer::drawsubsector32(const ScreenPolyTriangleDrawerArg
 	}
 }
 
-void ScreenPolyTriangleDrawer::fill32(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread)
+void ScreenPolyTriangleDrawer::fill32(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
 	uint32_t *dest = (uint32_t *)args->dest;
 	int pitch = args->pitch;

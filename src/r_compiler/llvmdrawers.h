@@ -236,25 +236,25 @@ struct TriUniforms
 	TriMatrix objectToClip;
 };
 
-struct ScreenPolyTriangleDrawerArgs
+struct TriDrawTriangleArgs
 {
 	uint8_t *dest;
-	int pitch;
+	int32_t pitch;
 	TriVertex *v1;
 	TriVertex *v2;
 	TriVertex *v3;
-	int clipleft;
-	int clipright;
-	int cliptop;
-	int clipbottom;
+	int32_t clipleft;
+	int32_t clipright;
+	int32_t cliptop;
+	int32_t clipbottom;
 	const uint8_t *texturePixels;
-	int textureWidth;
-	int textureHeight;
+	uint32_t textureWidth;
+	uint32_t textureHeight;
 	uint32_t solidcolor;
 	const TriUniforms *uniforms;
 	uint8_t *stencilValues;
 	uint32_t *stencilMasks;
-	int stencilPitch;
+	int32_t stencilPitch;
 	uint8_t stencilTestValue;
 	uint8_t stencilWriteValue;
 	uint32_t *subsectorGBuffer;

@@ -26,7 +26,7 @@
 
 #include "r_triangle.h"
 
-struct ScreenPolyTriangleDrawerArgs;
+struct TriDrawTriangleArgs;
 
 enum class PolyDrawVariant
 {
@@ -74,7 +74,7 @@ public:
 private:
 	static TriVertex shade_vertex(const TriUniforms &uniforms, TriVertex v);
 	static void draw_arrays(const PolyDrawArgs &args, PolyDrawVariant variant, WorkerThreadData *thread);
-	static void draw_shaded_triangle(const TriVertex *vertices, bool ccw, ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread, void(*drawfunc)(const ScreenPolyTriangleDrawerArgs *, WorkerThreadData *));
+	static void draw_shaded_triangle(const TriVertex *vertices, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *));
 	static bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2);
 	static void clipedge(const TriVertex *verts, TriVertex *clippedvert, int &numclipvert);
 
@@ -228,14 +228,14 @@ private:
 class ScreenPolyTriangleDrawer
 {
 public:
-	static void draw(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread);
-	static void fill(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread);
+	static void draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
+	static void fill(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 
-	static void stencil(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread);
+	static void stencil(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 
-	static void draw32(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread);
-	static void drawsubsector32(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread);
-	static void fill32(const ScreenPolyTriangleDrawerArgs *args, WorkerThreadData *thread);
+	static void draw32(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
+	static void drawsubsector32(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
+	static void fill32(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 
 private:
 	static float gradx(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2);

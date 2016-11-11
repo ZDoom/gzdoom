@@ -87,6 +87,10 @@ private:
 	static llvm::Type *GetDrawWallArgsStruct(llvm::LLVMContext &context);
 	static llvm::Type *GetDrawSkyArgsStruct(llvm::LLVMContext &context);
 	static llvm::Type *GetWorkerThreadDataStruct(llvm::LLVMContext &context);
+	static llvm::Type *GetTriVertexStruct(llvm::LLVMContext &context);
+	static llvm::Type *GetTriMatrixStruct(llvm::LLVMContext &context);
+	static llvm::Type *GetTriUniformsStruct(llvm::LLVMContext &context);
+	static llvm::Type *GetTriDrawTriangleArgs(llvm::LLVMContext &context);
 
 	LLVMProgram mProgram;
 };
@@ -459,6 +463,67 @@ llvm::Type *LLVMDrawersImpl::GetWorkerThreadDataStruct(llvm::LLVMContext &contex
 		elements.push_back(llvm::Type::getInt32Ty(context));
 	elements.push_back(llvm::Type::getInt8PtrTy(context));
 	return llvm::StructType::create(context, elements, "ThreadData", false)->getPointerTo();
+}
+
+llvm::Type *LLVMDrawersImpl::GetTriVertexStruct(llvm::LLVMContext &context)
+{
+	std::vector<llvm::Type *> elements;
+	for (int i = 0; i < 6; i++)
+		elements.push_back(llvm::Type::getFloatTy(context));
+	return llvm::StructType::create(context, elements, "TriVertex", false)->getPointerTo();
+}
+
+llvm::Type *LLVMDrawersImpl::GetTriMatrixStruct(llvm::LLVMContext &context)
+{
+	std::vector<llvm::Type *> elements;
+	for (int i = 0; i < 4 * 4; i++)
+		elements.push_back(llvm::Type::getFloatTy(context));
+	return llvm::StructType::create(context, elements, "TriMatrix", false)->getPointerTo();
+}
+
+llvm::Type *LLVMDrawersImpl::GetTriUniformsStruct(llvm::LLVMContext &context)
+{
+	std::vector<llvm::Type *> elements;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t light;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t subsectorDepth;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t light_alpha;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t light_red;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t light_green;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t light_blue;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_alpha;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_red;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_green;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_blue;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t desaturate;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t flags;
+	elements.push_back(GetTriMatrixStruct(context));     // TriMatrix objectToClip
+	return llvm::StructType::create(context, elements, "TriUniforms", false)->getPointerTo();
+}
+
+llvm::Type *LLVMDrawersImpl::GetTriDrawTriangleArgs(llvm::LLVMContext &context)
+{
+	std::vector<llvm::Type *> elements;
+	elements.push_back(llvm::Type::getInt8PtrTy(context));  // uint8_t *dest;
+	elements.push_back(llvm::Type::getInt32Ty(context));    // int32_t pitch;
+	elements.push_back(GetTriVertexStruct(context)->getPointerTo()); // TriVertex *v1;
+	elements.push_back(GetTriVertexStruct(context)->getPointerTo()); // TriVertex *v2;
+	elements.push_back(GetTriVertexStruct(context)->getPointerTo()); // TriVertex *v3;
+	elements.push_back(llvm::Type::getInt32Ty(context));    // int32_t clipleft;
+	elements.push_back(llvm::Type::getInt32Ty(context));    // int32_t clipright;
+	elements.push_back(llvm::Type::getInt32Ty(context));    // int32_t cliptop;
+	elements.push_back(llvm::Type::getInt32Ty(context));    // int32_t clipbottom;
+	elements.push_back(llvm::Type::getInt8PtrTy(context));  // const uint8_t *texturePixels;
+	elements.push_back(llvm::Type::getInt32Ty(context));    // uint32_t textureWidth;
+	elements.push_back(llvm::Type::getInt32Ty(context));    // uint32_t textureHeight;
+	elements.push_back(llvm::Type::getInt32Ty(context));    // uint32_t solidcolor;
+	elements.push_back(GetTriUniformsStruct(context)->getPointerTo()); // const TriUniforms *uniforms;
+	elements.push_back(llvm::Type::getInt8PtrTy(context));  // uint8_t *stencilValues;
+	elements.push_back(llvm::Type::getInt32PtrTy(context)); // uint32_t *stencilMasks;
+	elements.push_back(llvm::Type::getInt32Ty(context));    // int32_t stencilPitch;
+	elements.push_back(llvm::Type::getInt8Ty(context));     // uint8_t stencilTestValue;
+	elements.push_back(llvm::Type::getInt8Ty(context));     // uint8_t stencilWriteValue;
+	elements.push_back(llvm::Type::getInt32PtrTy(context)); // uint32_t *subsectorGBuffer;
+	return llvm::StructType::create(context, elements, "TriDrawTriangle", false)->getPointerTo();
 }
 
 /////////////////////////////////////////////////////////////////////////////

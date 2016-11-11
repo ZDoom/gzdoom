@@ -6680,7 +6680,19 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 				return nullptr;
 			}
 		}
-		
+	}
+	else
+	{
+		if ((unsigned)implicit < argtypes.Size() && argtypes[implicit] != nullptr)
+		{
+			auto flags = Function->Variants[0].ArgFlags[implicit];
+			if (!(flags & VARF_Optional))
+			{
+				ScriptPosition.Message(MSG_ERROR, "Insufficient arguments in call to %s", Function->SymbolName.GetChars());
+				delete this;
+				return nullptr;
+			}
+		}
 	}
 	if (failed)
 	{

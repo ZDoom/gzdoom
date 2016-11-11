@@ -883,3 +883,10 @@ enum EReplace
 	NO_REPLACE = 0,
 	ALLOW_REPLACE = 1
 }
+
+// This translucency value produces the closest match to Heretic's TINTTAB.
+// ~40% of the value of the overlaid image shows through.
+const HR_SHADOW = (0x6800 / 65536.);
+// Hexen's TINTTAB is the same as Heretic's, just reversed.
+const HX_SHADOW = (0x9800 / 65536.);
+const HX_ALTSHADOW = (0x6800 / 65536.);

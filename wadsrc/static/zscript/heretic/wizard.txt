@@ -26,11 +26,6 @@ class Wizard : Actor
 		DropItem "ArtiTomeOfPower", 4, 0;
 	}
 
-	native void A_GhostOff ();
-	native void A_WizAtk1 ();
-	native void A_WizAtk2 ();
-	native void A_WizAtk3 ();
-
 	States
 	{
 	Spawn:
@@ -70,6 +65,70 @@ class Wizard : Actor
 		WZRD M -1 A_SetFloorClip;
 		Stop;
 	}
+	
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_GhostOff
+	//
+	//----------------------------------------------------------------------------
+
+	void A_GhostOff ()
+	{
+		A_SetRenderStyle(1.0, STYLE_Normal);
+		bGhost = false;
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_WizAtk1
+	//
+	//----------------------------------------------------------------------------
+
+	void A_WizAtk1 ()
+	{
+		A_FaceTarget ();
+		A_GhostOff();
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_WizAtk2
+	//
+	//----------------------------------------------------------------------------
+
+	void A_WizAtk2 ()
+	{
+		A_FaceTarget ();
+		A_SetRenderStyle(HR_SHADOW, STYLE_Translucent);
+		bGhost = true;
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_WizAtk3
+	//
+	//----------------------------------------------------------------------------
+
+	void A_WizAtk3 ()
+	{
+		A_GhostOff();
+		if (!target) return;
+		A_PlaySound (AttackSound, CHAN_WEAPON);
+		if (CheckMeleeRange())
+		{
+			int damage = random[WizAtk3](1, 8) * 4;
+			int newdam = target.DamageMobj (self, self, damage, 'Melee');
+			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			return;
+		}
+		Actor mo = SpawnMissile (target, "WizardFX1");
+		if (mo != null)
+		{
+			SpawnMissileAngle("WizardFX1", mo.Angle - 45. / 8, mo.Vel.Z);
+			SpawnMissileAngle("WizardFX1", mo.Angle + 45. / 8, mo.Vel.Z);
+		}
+	}
+	
 }
 
 // Projectile --------------------------------------------------------

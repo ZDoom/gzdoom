@@ -6041,6 +6041,13 @@ static double GetDefaultSpeed(PClassActor *type)
 		return GetDefaultByType(type)->Speed;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, GetDefaultSpeed)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(type, AActor);
+	ACTION_RETURN_FLOAT(GetDefaultSpeed(type));
+}
+
 //---------------------------------------------------------------------------
 //
 // FUNC P_SpawnMissile
@@ -6281,6 +6288,19 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, double z,
 	}
 
 	return (!checkspawn || P_CheckMissileSpawn(mo, source->radius)) ? mo : NULL;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SpawnMissileAngleZSpeed)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(z);
+	PARAM_CLASS(type, AActor);
+	PARAM_ANGLE(angle);
+	PARAM_FLOAT(vz);
+	PARAM_FLOAT(speed);
+	PARAM_OBJECT_DEF(owner, AActor);
+	PARAM_BOOL_DEF(checkspawn);
+	ACTION_RETURN_OBJECT(P_SpawnMissileAngleZSpeed(self, z, type, angle, vz, speed, owner, checkspawn));
 }
 
 /*
@@ -6877,6 +6897,13 @@ DEFINE_ACTION_FUNCTION(AActor, GetDefaultByType)
 	PARAM_PROLOGUE;
 	PARAM_CLASS(cls, AActor);
 	ACTION_RETURN_OBJECT(GetDefaultByType(cls));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetBobOffset)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT_DEF(frac);
+	ACTION_RETURN_FLOAT(self->GetBobOffset(frac));
 }
 
 // This combines all 3 variations of the internal function

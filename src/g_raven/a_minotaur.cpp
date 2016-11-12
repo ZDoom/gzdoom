@@ -117,12 +117,6 @@ void AMinotaurFriend::Die (AActor *source, AActor *inflictor, int dmgflags)
 	}
 }
 
-bool AMinotaurFriend::OkayToSwitchTarget (AActor *other)
-{
-	if (other == tracer) return false;		// Do not target the master
-	return Super::OkayToSwitchTarget (other);
-}
-
 // Action functions for the minotaur ----------------------------------------
 
 //----------------------------------------------------------------------------

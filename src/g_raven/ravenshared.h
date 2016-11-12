@@ -21,7 +21,6 @@ public:
 	int StartTime;
 
 	void Die (AActor *source, AActor *inflictor, int dmgflags);
-	bool OkayToSwitchTarget (AActor *other);
 	void BeginPlay ();
 	
 	void Serialize(FSerializer &arc);

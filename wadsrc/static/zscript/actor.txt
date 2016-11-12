@@ -53,6 +53,12 @@ class Actor : Thinker native
 	{
 		return GetPointer(ptr_select1) == GetPointer(ptr_select2);
 	}
+	
+	static double BobSin(double fb)
+	{
+		return sin(fb * (180./32)) * 8;
+	}
+	
 
 	native static readonly<Actor> GetDefaultByType(class<Actor> cls);
 	native static float deltaangle(float ang1, float ang2);
@@ -84,6 +90,7 @@ class Actor : Thinker native
 	native bool CanSeek(Actor target);
 	native double AngleTo(Actor target, bool absolute = false);
 	native void AddZ(float zadd);
+	native void SetZ(float z);
 	native vector3 Vec3Offset(float x, float y, float z, bool absolute = false);
 	native vector3 Vec3Angle(float length, float angle, float z = 0, bool absolute = false);
 	native vector3 Vec2OffsetZ(float x, float y, float atz, bool absolute = false);

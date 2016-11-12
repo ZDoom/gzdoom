@@ -6885,6 +6885,14 @@ DEFINE_ACTION_FUNCTION(AActor, AddZ)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SetZ)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(z);
+	self->SetZ(z);
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(AActor, SetDamage)
 {
 	PARAM_SELF_PROLOGUE(AActor);

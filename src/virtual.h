@@ -35,7 +35,6 @@ VMEXPORTED_NATIVES_START
 	VMEXPORTED_NATIVES_FUNC(Destroy)
 	VMEXPORTED_NATIVES_FUNC(Tick)
 	VMEXPORTED_NATIVES_FUNC(PostBeginPlay)
-	VMEXPORTED_NATIVES_FUNC(DropInventory)
 VMEXPORTED_NATIVES_END
 
 template<class T>
@@ -103,11 +102,6 @@ public:
 	{
 		ExportedNatives<T>::Get()->template PostBeginPlay<void, T>(this);
 	}
-
-	AInventory *DropInventory(AInventory *item)
-	{
-		return ExportedNatives<T>::Get()->template DropInventory<AInventory *, T>(this, item);
-	}
 };
 
 template<class T>
@@ -134,7 +128,7 @@ VMEXPORT_NATIVES_START(DThinker, DObject)
 	VMEXPORT_NATIVES_FUNC(PostBeginPlay)
 	VMEXPORT_NATIVES_END(DThinker)
 
+/*
 VMEXPORT_NATIVES_START(AActor, DThinker)
-	VMEXPORT_NATIVES_FUNC(DropInventory)
 VMEXPORT_NATIVES_END(AActor)
-
+*/

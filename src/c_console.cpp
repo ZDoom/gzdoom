@@ -154,12 +154,12 @@ CUSTOM_CVAR(Int, con_scale, 0, CVAR_ARCHIVE)
 int active_con_scale()
 {
 	int scale = con_scale;
-	if (scale == 0)
+	if (scale <= 0)
 	{
-		scale = uiscale;
-		if (scale == 0)
+		scale = CleanXfac - 1;
+		if (scale <= 0)
 		{
-			scale = CleanXfac;
+			scale = 1;
 		}
 	}
 	return scale;

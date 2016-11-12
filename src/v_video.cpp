@@ -877,8 +877,6 @@ void DFrameBuffer::DrawRateStuff ()
 			int rate_x;
 
 			int textScale = active_con_scale();
-			if (textScale == 0)
-				textScale = CleanXfac;
 
 			chars = mysnprintf (fpsbuff, countof(fpsbuff), "%2u ms (%3u fps)", howlong, LastCount);
 			rate_x = Width / textScale - ConFont->StringWidth(&fpsbuff[0]);

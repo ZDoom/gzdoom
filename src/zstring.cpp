@@ -343,25 +343,71 @@ FString &FString::operator += (char tail)
 
 FString &FString::AppendCStrPart (const char *tail, size_t tailLen)
 {
-	size_t len1 = Len();
-	ReallocBuffer (len1 + tailLen);
-	StrCopy (Chars + len1, tail, tailLen);
+	if (tailLen > 0)
+	{
+		size_t len1 = Len();
+		ReallocBuffer(len1 + tailLen);
+		StrCopy(Chars + len1, tail, tailLen);
+	}
 	return *this;
 }
 
 FString &FString::CopyCStrPart(const char *tail, size_t tailLen)
 {
-	ReallocBuffer(tailLen);
-	StrCopy(Chars, tail, tailLen);
+	if (tailLen > 0)
+	{
+		ReallocBuffer(tailLen);
+		StrCopy(Chars, tail, tailLen);
+	}
+	else
+	{
+		Data()->Release();
+		NullString.RefCount++;
+		Chars = &NullString.Nothing[0];
+	}
 	return *this;
 }
 
 void FString::Truncate(long newlen)
 {
-	if (newlen >= 0 && newlen < (long)Len())
+	if (newlen <= 0)
+	{
+		Data()->Release();
+		NullString.RefCount++;
+		Chars = &NullString.Nothing[0];
+	}
+	else if (newlen < (long)Len())
 	{
 		ReallocBuffer (newlen);
 		Chars[newlen] = '\0';
+	}
+}
+
+void FString::Remove(size_t index, size_t remlen)
+{
+	if (index < Len())
+	{
+		if (index + remlen >= Len())
+		{
+			Truncate((long)index);
+		}
+		else
+		{
+			remlen = Len() - remlen < remlen ? Len() - remlen : remlen;
+			if (Data()->RefCount == 1)
+			{ // Can do this in place
+				memmove(Chars + index, Chars + index + remlen, Len() - index - remlen);
+				Data()->Len -= remlen;
+			}
+			else
+			{ // Must do it in a copy
+				FStringData *old = Data();
+				AllocBuffer(old->Len - remlen);
+				StrCopy(Chars, old->Chars(), index);
+				StrCopy(Chars + index, old->Chars() + index + remlen, old->Len - index - remlen);
+				old->Release();
+			}
+		}
 	}
 }
 
@@ -768,25 +814,28 @@ void FString::Insert (size_t index, const char *instr)
 
 void FString::Insert (size_t index, const char *instr, size_t instrlen)
 {
-	size_t mylen = Len();
-	if (index > mylen)
+	if (instrlen > 0)
 	{
-		index = mylen;
-	}
-	if (Data()->RefCount <= 1)
-	{
-		ReallocBuffer (mylen + instrlen);
-		memmove (Chars + index + instrlen, Chars + index, (mylen - index + 1)*sizeof(char));
-		memcpy (Chars + index, instr, instrlen*sizeof(char));
-	}
-	else
-	{
-		FStringData *old = Data();
-		AllocBuffer (mylen + instrlen);
-		StrCopy (Chars, old->Chars(), index);
-		StrCopy (Chars + index, instr, instrlen);
-		StrCopy (Chars + index + instrlen, old->Chars() + index, mylen - index);
-		old->Release();
+		size_t mylen = Len();
+		if (index >= mylen)
+		{
+			AppendCStrPart(instr, instrlen);
+		}
+		else if (Data()->RefCount <= 1)
+		{
+			ReallocBuffer(mylen + instrlen);
+			memmove(Chars + index + instrlen, Chars + index, (mylen - index + 1) * sizeof(char));
+			memcpy(Chars + index, instr, instrlen * sizeof(char));
+		}
+		else
+		{
+			FStringData *old = Data();
+			AllocBuffer(mylen + instrlen);
+			StrCopy(Chars, old->Chars(), index);
+			StrCopy(Chars + index, instr, instrlen);
+			StrCopy(Chars + index + instrlen, old->Chars() + index, mylen - index);
+			old->Release();
+		}
 	}
 }
 

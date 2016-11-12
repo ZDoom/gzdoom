@@ -30,6 +30,7 @@
 #include "r_utility.h"
 #include "r_main.h"
 #include "r_poly_triangle.h"
+#include "r_poly_intersection.h"
 
 // DScreen accelerated sprite to be rendered
 class PolyScreenSprite
@@ -143,6 +144,7 @@ private:
 	double MinFloorHeight = 0.0;
 
 	TriMatrix worldToClip;
+	FrustumPlanes frustumPlanes;
 
 	std::vector<SpriteRange> SectorSpriteRanges;
 	std::vector<PolySortedSprite> SortedSprites;

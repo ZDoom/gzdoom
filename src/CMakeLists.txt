@@ -1053,6 +1053,7 @@ set( FASTMATH_PCH_SOURCES
 	r_swrenderer2.cpp
 	r_poly.cpp
 	r_poly_triangle.cpp
+	r_poly_intersection.cpp
 	r_3dfloors.cpp
 	r_bsp.cpp
 	r_draw.cpp

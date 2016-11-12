@@ -75,6 +75,8 @@ void RenderPolyBsp::Render()
 	// Y shearing like the Doom renderer:
 	//worldToClip = TriMatrix::viewToClip() * TriMatrix::worldToView();
 
+	frustumPlanes = FrustumPlanes(worldToClip);
+
 	// Cull front to back
 	if (numnodes == 0)
 	{
@@ -1023,28 +1025,20 @@ int RenderPolyBsp::PointOnSide(const DVector2 &pos, const node_t *node)
 
 bool RenderPolyBsp::CheckBBox(float *bspcoord)
 {
-	static const int checkcoord[12][4] =
-	{
-		{ 3,0,2,1 },
-		{ 3,0,2,0 },
-		{ 3,1,2,0 },
-		{ 0 },
-		{ 2,0,2,1 },
-		{ 0,0,0,0 },
-		{ 3,1,3,0 },
-		{ 0 },
-		{ 2,0,3,1 },
-		{ 2,1,3,1 },
-		{ 2,1,3,0 }
-	};
+	// Start using a quick frustum AABB test:
+
+	AxisAlignedBoundingBox aabb(Vec3f(bspcoord[BOXLEFT], bspcoord[BOXBOTTOM], -1000.0f), Vec3f(bspcoord[BOXRIGHT], bspcoord[BOXTOP], 1000.0f));
+	auto result = IntersectionTest::frustum_aabb(frustumPlanes, aabb);
+	if (result == IntersectionTest::outside)
+		return false;
+
+	// Occlusion test using solid segments (which seems to be quite broken, actually):
 
 	int 				boxx;
 	int 				boxy;
 	int 				boxpos;
 
 	double	 			x1, y1, x2, y2;
-	double				rx1, ry1, rx2, ry2;
-	int					sx1, sx2;
 
 	// Find the corners of the box
 	// that define the edges from current viewpoint.
@@ -1066,64 +1060,31 @@ bool RenderPolyBsp::CheckBBox(float *bspcoord)
 	if (boxpos == 5)
 		return true;
 
-	x1 = bspcoord[checkcoord[boxpos][0]] - ViewPos.X;
-	y1 = bspcoord[checkcoord[boxpos][1]] - ViewPos.Y;
-	x2 = bspcoord[checkcoord[boxpos][2]] - ViewPos.X;
-	y2 = bspcoord[checkcoord[boxpos][3]] - ViewPos.Y;
+	static const int checkcoord[12][4] =
+	{
+		{ 3,0,2,1 },
+		{ 3,0,2,0 },
+		{ 3,1,2,0 },
+		{ 0 },
+		{ 2,0,2,1 },
+		{ 0,0,0,0 },
+		{ 3,1,3,0 },
+		{ 0 },
+		{ 2,0,3,1 },
+		{ 2,1,3,1 },
+		{ 2,1,3,0 }
+	};
 
-	// check clip list for an open space
+	x1 = bspcoord[checkcoord[boxpos][0]];
+	y1 = bspcoord[checkcoord[boxpos][1]];
+	x2 = bspcoord[checkcoord[boxpos][2]];
+	y2 = bspcoord[checkcoord[boxpos][3]];
 
-	// Sitting on a line?
-	if (y1 * (x1 - x2) + x1 * (y2 - y1) >= -EQUAL_EPSILON)
+	int sx1, sx2;
+	if (GetSegmentRangeForLine(x1, y1, x2, y2, sx1, sx2))
+		return !IsSegmentCulled(sx1, sx2);
+	else
 		return true;
-
-	rx1 = x1 * ViewSin - y1 * ViewCos;
-	rx2 = x2 * ViewSin - y2 * ViewCos;
-	ry1 = x1 * ViewTanCos + y1 * ViewTanSin;
-	ry2 = x2 * ViewTanCos + y2 * ViewTanSin;
-
-	/*if (MirrorFlags & RF_XFLIP)
-	{
-	double t = -rx1;
-	rx1 = -rx2;
-	rx2 = t;
-	swapvalues(ry1, ry2);
-	}*/
-
-	if (rx1 >= -ry1)
-	{
-		if (rx1 > ry1) return false;	// left edge is off the right side
-		if (ry1 == 0) return false;
-		sx1 = xs_RoundToInt(CenterX + rx1 * CenterX / ry1);
-	}
-	else
-	{
-		if (rx2 < -ry2) return false;	// wall is off the left side
-		if (rx1 - rx2 - ry2 + ry1 == 0) return false;	// wall does not intersect view volume
-		sx1 = 0;
-	}
-
-	if (rx2 <= ry2)
-	{
-		if (rx2 < -ry2) return false;	// right edge is off the left side
-		if (ry2 == 0) return false;
-		sx2 = xs_RoundToInt(CenterX + rx2 * CenterX / ry2);
-	}
-	else
-	{
-		if (rx1 > ry1) return false;	// wall is off the right side
-		if (ry2 - ry1 - rx2 + rx1 == 0) return false;	// wall does not intersect view volume
-		sx2 = viewwidth;
-	}
-
-	// Find the first clippost that touches the source post
-	//	(adjacent pixels are touching).
-
-	// Does not cross a pixel.
-	if (sx2 <= sx1)
-		return false;
-
-	return !IsSegmentCulled(sx1, sx2);
 }
 
 bool RenderPolyBsp::GetSegmentRangeForLine(double x1, double y1, double x2, double y2, int &sx1, int &sx2) const

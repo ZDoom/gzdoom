@@ -379,22 +379,42 @@ static int HistSize;
 #define NUMNOTIFIES 4
 #define NOTIFYFADETIME 6
 
-static struct NotifyText
+struct FNotifyText
 {
 	int TimeOut;
 	int PrintLevel;
 	FString Text;
-} NotifyStrings[NUMNOTIFIES];
+};
 
-static int NotifyTop, NotifyTopGoal;
+struct FNotifyBuffer
+{
+public:
+	FNotifyBuffer();
+	void AddString(int printlevel, FString source);
+	void Shift(int maxlines);
+	void Clear() { Text.Clear(); }
+	void Tick();
+	void Draw();
+
+private:
+	TArray<FNotifyText> Text;
+	int Top;
+	int TopGoal;
+	enum { NEWLINE, APPENDLINE, REPLACELINE } AddType;
+};
+static FNotifyBuffer NotifyStrings;
+
+CUSTOM_CVAR(Int, con_numnotify, NUMNOTIFIES, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
+{
+	NotifyStrings.Shift(con_numnotify);
+}
+
 
 int PrintColors[PRINTLEVELS+2] = { CR_RED, CR_GOLD, CR_GRAY, CR_GREEN, CR_GREEN, CR_GOLD };
 
 static void setmsgcolor (int index, int color);
 
 FILE *Logfile = NULL;
-
-void C_AddNotifyString (int printlevel, const char *source);
 
 
 FIntCVar msglevel ("msg", 0, CVAR_ARCHIVE);
@@ -489,7 +509,7 @@ void DequeueConsoleText ()
 		TextQueue *next = queued->Next;
 		if (queued->bNotify)
 		{
-			C_AddNotifyString (queued->PrintLevel, queued->Text);
+			NotifyStrings.AddString(queued->PrintLevel, queued->Text);
 		}
 		else
 		{
@@ -668,22 +688,30 @@ static void setmsgcolor (int index, int color)
 
 extern int DisplayWidth;
 
-void C_AddNotifyString (int printlevel, const char *source)
+FNotifyBuffer::FNotifyBuffer()
 {
-	static enum
-	{
-		NEWLINE,
-		APPENDLINE,
-		REPLACELINE
-	} addtype = NEWLINE;
+	Top = TopGoal = 0;
+	AddType = NEWLINE;
+}
 
+void FNotifyBuffer::Shift(int maxlines)
+{
+	if (maxlines >= 0 && Text.Size() > (unsigned)maxlines)
+	{
+		Text.Delete(0, Text.Size() - maxlines);
+	}
+}
+
+void FNotifyBuffer::AddString(int printlevel, FString source)
+{
 	FBrokenLines *lines;
-	int i, len, width;
+	int i, width;
 
 	if ((printlevel != 128 && !show_messages) ||
-		!(len = (int)strlen (source)) ||
+		source.IsEmpty() ||
 		gamestate == GS_FULLCONSOLE ||
-		gamestate == GS_DEMOSCREEN)
+		gamestate == GS_DEMOSCREEN ||
+		con_numnotify == 0)
 		return;
 
 	if (ConsoleDrawing)
@@ -701,15 +729,18 @@ void C_AddNotifyString (int printlevel, const char *source)
 		width = DisplayWidth / active_con_scaletext();
 	}
 
-	if (addtype == APPENDLINE && NotifyStrings[NUMNOTIFIES-1].PrintLevel == printlevel)
+	if (AddType == APPENDLINE && Text.Size() > 0 && Text[Text.Size() - 1].PrintLevel == printlevel)
 	{
-		FString str = NotifyStrings[NUMNOTIFIES-1].Text + source;
+		FString str = Text[Text.Size() - 1].Text + source;
 		lines = V_BreakLines (SmallFont, width, str);
 	}
 	else
 	{
 		lines = V_BreakLines (SmallFont, width, source);
-		addtype = (addtype == APPENDLINE) ? NEWLINE : addtype;
+		if (AddType == APPENDLINE)
+		{
+			AddType = NEWLINE;
+		}
 	}
 
 	if (lines == NULL)
@@ -717,30 +748,37 @@ void C_AddNotifyString (int printlevel, const char *source)
 
 	for (i = 0; lines[i].Width >= 0; i++)
 	{
-		if (addtype == NEWLINE)
+		FNotifyText newline;
+
+		newline.Text = lines[i].Text;
+		newline.TimeOut = gametic + int(con_notifytime * TICRATE);
+		newline.PrintLevel = printlevel;
+		if (AddType == NEWLINE || Text.Size() == 0)
 		{
-			for (int j = 0; j < NUMNOTIFIES-1; ++j)
+			if (con_numnotify > 0)
 			{
-				NotifyStrings[j] = NotifyStrings[j+1];
+				Shift(con_numnotify - 1);
 			}
+			Text.Push(newline);
 		}
-		NotifyStrings[NUMNOTIFIES-1].Text = lines[i].Text;
-		NotifyStrings[NUMNOTIFIES-1].TimeOut = gametic + (int)(con_notifytime * TICRATE);
-		NotifyStrings[NUMNOTIFIES-1].PrintLevel = printlevel;
-		addtype = NEWLINE;
+		else
+		{
+			Text[Text.Size() - 1] = newline;
+		}
+		AddType = NEWLINE;
 	}
 
 	V_FreeBrokenLines (lines);
 	lines = NULL;
 
-	switch (source[len-1])
+	switch (source[source.Len()-1])
 	{
-	case '\r':	addtype = REPLACELINE;	break;
-	case '\n':	addtype = NEWLINE;		break;
-	default:	addtype = APPENDLINE;	break;
+	case '\r':	AddType = REPLACELINE;	break;
+	case '\n':	AddType = NEWLINE;		break;
+	default:	AddType = APPENDLINE;	break;
 	}
 
-	NotifyTopGoal = 0;
+	TopGoal = 0;
 }
 
 void AddToConsole (int printlevel, const char *text)
@@ -763,7 +801,7 @@ int PrintString (int printlevel, const char *outline)
 		AddToConsole (printlevel, outline);
 		if (vidactive && screen && SmallFont)
 		{
-			C_AddNotifyString (printlevel, outline);
+			NotifyStrings.AddString(printlevel, outline);
 			maybedrawnow (false, false);
 		}
 	}
@@ -831,10 +869,7 @@ int DPrintf (int level, const char *format, ...)
 
 void C_FlushDisplay ()
 {
-	int i;
-
-	for (i = 0; i < NUMNOTIFIES; i++)
-		NotifyStrings[i].TimeOut = 0;
+	NotifyStrings.Clear();
 }
 
 void C_AdjustBottom ()
@@ -853,7 +888,7 @@ void C_NewModeAdjust ()
 }
 
 int consoletic = 0;
-void C_Ticker ()
+void C_Ticker()
 {
 	static int lasttic = 0;
 	consoletic++;
@@ -895,28 +930,43 @@ void C_Ticker ()
 	}
 
 	lasttic = consoletic;
+	NotifyStrings.Tick();
+}
 
-	if (NotifyTopGoal > NotifyTop)
+void FNotifyBuffer::Tick()
+{
+	if (TopGoal > Top)
 	{
-		NotifyTop++;
+		Top++;
 	}
-	else if (NotifyTopGoal < NotifyTop)
+	else if (TopGoal < Top)
 	{
-		NotifyTop--;
+		Top--;
+	}
+
+	// Remove lines from the beginning that have expired.
+	unsigned i;
+	for (i = 0; i < Text.Size(); ++i)
+	{
+		if (Text[i].TimeOut != 0 && Text[i].TimeOut > gametic)
+			break;
+	}
+	if (i > 0)
+	{
+		Text.Delete(0, i);
 	}
 }
 
-static void C_DrawNotifyText ()
+void FNotifyBuffer::Draw()
 {
 	bool center = (con_centernotify != 0.f);
-	int i, line, lineadv, color, j, skip;
+	int line, lineadv, color, j;
 	bool canskip;
 	
 	if (gamestate == GS_FULLCONSOLE || gamestate == GS_DEMOSCREEN/* || menuactive != MENU_Off*/)
 		return;
 
-	line = NotifyTop;
-	skip = 0;
+	line = Top;
 	canskip = true;
 
 	lineadv = SmallFont->GetHeight ();
@@ -927,67 +977,60 @@ static void C_DrawNotifyText ()
 
 	BorderTopRefresh = screen->GetPageCount ();
 
-	for (i = 0; i < NUMNOTIFIES; i++)
+	for (unsigned i = 0; i < Text.Size(); ++ i)
 	{
-		if (NotifyStrings[i].TimeOut == 0)
+		FNotifyText &notify = Text[i];
+
+		if (notify.TimeOut == 0)
 			continue;
 
-		j = NotifyStrings[i].TimeOut - gametic;
+		j = notify.TimeOut - gametic;
 		if (j > 0)
 		{
-			if (!show_messages && NotifyStrings[i].PrintLevel != 128)
+			if (!show_messages && notify.PrintLevel != 128)
 				continue;
 
-			double alpha;
+			double alpha = (j < NOTIFYFADETIME) ? 1. * j / NOTIFYFADETIME : 1;
 
-			if (j < NOTIFYFADETIME)
-			{
-				alpha = 1. * j / NOTIFYFADETIME;
-			}
-			else
-			{
-				alpha = 1;
-			}
-
-			if (NotifyStrings[i].PrintLevel >= PRINTLEVELS)
+			if (notify.PrintLevel >= PRINTLEVELS)
 				color = CR_UNTRANSLATED;
 			else
-				color = PrintColors[NotifyStrings[i].PrintLevel];
+				color = PrintColors[notify.PrintLevel];
 
 			if (active_con_scaletext() == 0)
 			{
 				if (!center)
-					screen->DrawText (SmallFont, color, 0, line, NotifyStrings[i].Text,
+					screen->DrawText (SmallFont, color, 0, line, notify.Text,
 						DTA_CleanNoMove, true, DTA_AlphaF, alpha, TAG_DONE);
 				else
 					screen->DrawText (SmallFont, color, (SCREENWIDTH -
-						SmallFont->StringWidth (NotifyStrings[i].Text)*CleanXfac)/2,
-						line, NotifyStrings[i].Text, DTA_CleanNoMove, true,
+						SmallFont->StringWidth (notify.Text)*CleanXfac)/2,
+						line, notify.Text, DTA_CleanNoMove, true,
 						DTA_AlphaF, alpha, TAG_DONE);
 			}
 			else if (active_con_scaletext() == 1)
 			{
 				if (!center)
-					screen->DrawText (SmallFont, color, 0, line, NotifyStrings[i].Text,
+					screen->DrawText (SmallFont, color, 0, line, notify.Text,
 						DTA_AlphaF, alpha, TAG_DONE);
 				else
 					screen->DrawText (SmallFont, color, (SCREENWIDTH -
-						SmallFont->StringWidth (NotifyStrings[i].Text))/2,
-						line, NotifyStrings[i].Text,
+						SmallFont->StringWidth (notify.Text))/2,
+						line, notify.Text,
 						DTA_AlphaF, alpha, TAG_DONE);
 			}
 			else
 			{
 				if (!center)
-					screen->DrawText (SmallFont, color, 0, line, NotifyStrings[i].Text,
+					screen->DrawText (SmallFont, color, 0, line, notify.Text,
 						DTA_VirtualWidth, screen->GetWidth() / active_con_scaletext(),
 						DTA_VirtualHeight, screen->GetHeight() / active_con_scaletext(),
 						DTA_KeepRatio, true,
 						DTA_AlphaF, alpha, TAG_DONE);
 				else
 					screen->DrawText (SmallFont, color, (screen->GetWidth() -
-						SmallFont->StringWidth (NotifyStrings[i].Text) * active_con_scaletext()) / 2 / active_con_scaletext(),
-						line, NotifyStrings[i].Text,
+						SmallFont->StringWidth (notify.Text) * active_con_scaletext()) / 2 / active_con_scaletext(),
+						line, notify.Text,
 						DTA_VirtualWidth, screen->GetWidth() / active_con_scaletext(),
 						DTA_VirtualHeight, screen->GetHeight() / active_con_scaletext(),
 						DTA_KeepRatio, true,
@@ -1000,16 +1043,15 @@ static void C_DrawNotifyText ()
 		{
 			if (canskip)
 			{
-				NotifyTop += lineadv;
+				Top += lineadv;
 				line += lineadv;
-				skip++;
 			}
-			NotifyStrings[i].TimeOut = 0;
+			notify.TimeOut = 0;
 		}
 	}
 	if (canskip)
 	{
-		NotifyTop = NotifyTopGoal;
+		Top = TopGoal;
 	}
 }
 
@@ -1059,7 +1101,7 @@ void C_DrawConsole (bool hw2d)
 
 	if (ConsoleState == c_up)
 	{
-		C_DrawNotifyText ();
+		NotifyStrings.Draw();
 		return;
 	}
 	else if (ConBottom)

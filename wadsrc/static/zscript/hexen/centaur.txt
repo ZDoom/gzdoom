@@ -54,14 +54,17 @@ class Centaur : Actor
 	XDeath:
 		CTXD A 4;
 		CTXD B 4 A_NoBlocking;
-		CTXD C 0 A_SpawnItemEx("CentaurSword", 0, 0, 45,
+		CTXD C 4
+		{
+			A_SpawnItemEx("CentaurSword", 0, 0, 45,
 								1 + random[CentaurDrop](-128,127)*0.03125,
 								1 + random[CentaurDrop](-128,127)*0.03125,
 								8 + random[CentaurDrop](0,255)*0.015625, 270);
-		CTXD C 4 A_SpawnItemEx("CentaurShield", 0, 0, 45,
+			A_SpawnItemEx("CentaurShield", 0, 0, 45,
 								1 + random[CentaurDrop](-128,127)*0.03125,
 								1 + random[CentaurDrop](-128,127)*0.03125,
 								8 + random[CentaurDrop](0,255)*0.015625, 90);
+		}
 		CTXD D 3 A_Scream;
 		CTXD E 4 A_QueueCorpse;
 		CTXD F 3;
@@ -74,6 +77,22 @@ class Centaur : Actor
 		CENT U 5 A_FreezeDeath;
 		CENT U 1 A_FreezeDeathChunks;
 		Wait;
+	}	
+}
+
+extend class Actor
+{
+	void A_CentaurDefend()
+	{
+		A_FaceTarget ();
+		if (CheckMeleeRange() && random[CentaurDefend]() < 32)
+		{
+			// This should unset REFLECTIVE as well
+			// (unless you want the Centaur to reflect projectiles forever!)
+			bReflective = false;
+			bInvulnerable = false;
+			SetState(MeleeState);
+		}
 	}
 }
 

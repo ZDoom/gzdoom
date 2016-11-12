@@ -859,7 +859,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	g_heretic/a_ironlich.cpp
 	g_hexen/a_blastradius.cpp
 	g_hexen/a_boostarmor.cpp
-	g_hexen/a_centaur.cpp
 	g_hexen/a_clericflame.cpp
 	g_hexen/a_clericholy.cpp
 	g_hexen/a_clericmace.cpp

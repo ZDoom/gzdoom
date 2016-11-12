@@ -29,7 +29,6 @@
 // Include all the Hexen stuff here to reduce compile time
 #include "a_blastradius.cpp"
 #include "a_boostarmor.cpp"
-#include "a_centaur.cpp"
 #include "a_clericflame.cpp"
 #include "a_clericholy.cpp"
 #include "a_clericmace.cpp"

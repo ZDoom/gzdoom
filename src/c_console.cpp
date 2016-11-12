@@ -115,8 +115,10 @@ static void ClearConsole ();
 
 struct GameAtExit
 {
+	GameAtExit(FString str) : Command(str) {}
+
 	GameAtExit *Next;
-	char Command[1];
+	FString Command;
 };
 
 static GameAtExit *ExitCmdList;
@@ -551,16 +553,14 @@ CCMD (atexit)
 		GameAtExit *record = ExitCmdList;
 		while (record != NULL)
 		{
-			Printf ("%s\n", record->Command);
+			Printf ("%s\n", record->Command.GetChars());
 			record = record->Next;
 		}
 		return;
 	}
 	for (int i = 1; i < argv.argc(); ++i)
 	{
-		GameAtExit *record = (GameAtExit *)M_Malloc (
-			sizeof(GameAtExit)+strlen(argv[i]));
-		strcpy (record->Command, argv[i]);
+		GameAtExit *record = new GameAtExit(argv[i]);
 		record->Next = ExitCmdList;
 		ExitCmdList = record;
 	}
@@ -582,8 +582,8 @@ void C_DeinitConsole ()
 	while (cmd != NULL)
 	{
 		GameAtExit *next = cmd->Next;
-		AddCommandString (cmd->Command);
-		M_Free (cmd);
+		AddCommandString (cmd->Command.LockBuffer());
+		delete cmd;
 		cmd = next;
 	}
 

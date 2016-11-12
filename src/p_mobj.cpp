@@ -3327,6 +3327,13 @@ void AActor::PlayActiveSound ()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, PlayActiveSound)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->PlayActiveSound();
+	return 0;
+}
+
 bool AActor::IsOkayToAttack (AActor *link)
 {
 	if (!(player							// Original AActor::IsOkayToAttack was only for players
@@ -6875,6 +6882,13 @@ DEFINE_ACTION_FUNCTION(AActor, deltaangle)	// should this be global?
 	PARAM_FLOAT(a1);
 	PARAM_FLOAT(a2);
 	ACTION_RETURN_FLOAT(deltaangle(DAngle(a1), DAngle(a2)).Degrees);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Distance2D)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	ACTION_RETURN_FLOAT(self->Distance2D(other));
 }
 
 DEFINE_ACTION_FUNCTION(AActor, AddZ)

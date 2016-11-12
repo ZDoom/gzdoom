@@ -3,6 +3,9 @@
 
 class FireDemon : Actor
 {
+	const FIREDEMON_ATTACK_RANGE = 64*8.;
+	int strafecount;
+
 	Default
 	{
 		Health 80;
@@ -22,11 +25,6 @@ class FireDemon : Actor
 		ActiveSound "FireDemonActive";
 		Obituary "$OB_FIREDEMON";
 	}
-
-	native void A_FiredRocks();
-	native void A_FiredChase();
-	native void A_FiredAttack();
-	native void A_FiredSplotch();
 
 	States
 	{
@@ -71,6 +69,208 @@ class FireDemon : Actor
 		FDMN R 1 A_FreezeDeathChunks;
 		Wait;
 	}
+	
+	
+
+
+	//============================================================================
+	// Fire Demon AI
+	//
+	// special1			index into floatbob
+	// strafecount			whether strafing or not
+	//============================================================================
+
+	//============================================================================
+	//
+	// A_FiredSpawnRock
+	//
+	//============================================================================
+
+	private void A_FiredSpawnRock ()
+	{
+		Actor mo;
+		class<Actor> rtype;
+
+		switch (random[FireDemonRock](0, 4))
+		{
+			case 0:
+				rtype = "FireDemonRock1";
+				break;
+			case 1:
+				rtype = "FireDemonRock2";
+				break;
+			case 2:
+				rtype = "FireDemonRock3";
+				break;
+			case 3:
+				rtype = "FireDemonRock4";
+				break;
+			case 4:
+			default:
+				rtype = "FireDemonRock5";
+				break;
+		}
+
+		double xo = (random[FireDemonRock]() - 128) / 16.;
+		double yo = (random[FireDemonRock]() - 128) / 16.;
+		double zo = random[FireDemonRock]() / 32.;
+		mo = Spawn (rtype, Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
+		if (mo)
+		{
+			mo.target = self;
+			mo.Vel.X = (random[FireDemonRock]() - 128) / 64.;
+			mo.Vel.Y = (random[FireDemonRock]() - 128) / 64.;
+			mo.Vel.Z = (random[FireDemonRock]() / 64.);
+			mo.special1 = 2;		// Number bounces
+		}
+
+		// Initialize fire demon
+		strafecount = 0;
+		bJustAttacked = false;
+	}
+
+	//============================================================================
+	//
+	// A_FiredRocks
+	//
+	//============================================================================
+	void A_FiredRocks()
+	{
+		A_FiredSpawnRock ();
+		A_FiredSpawnRock ();
+		A_FiredSpawnRock ();
+		A_FiredSpawnRock ();
+		A_FiredSpawnRock ();
+	}
+
+	//============================================================================
+	//
+	// A_FiredAttack
+	//
+	//============================================================================
+
+	void A_FiredAttack()
+	{
+		if (target == null)	return;
+		Actor mo = SpawnMissile (target, "FireDemonMissile");
+		if (mo) A_PlaySound ("FireDemonAttack", CHAN_BODY);
+	}
+
+	//============================================================================
+	//
+	// A_FiredChase
+	//
+	//============================================================================
+
+	void A_FiredChase()
+	{
+		int weaveindex = special1;
+		double ang;
+		double dist;
+
+		if (reactiontime) reactiontime--;
+		if (threshold) threshold--;
+
+		// Float up and down
+		AddZ(BobSin(weaveindex));
+		special1 = (weaveindex + 2) & 63;
+
+		// Ensure it stays above certain height
+		if (pos.Z < floorz + 64)
+		{
+			AddZ(2);
+		}
+
+		if(!target || !target.bShootable)
+		{	// Invalid target
+			LookForPlayers (true);
+			return;
+		}
+
+		// Strafe
+		if (strafecount > 0)
+		{
+			strafecount--;
+		}
+		else
+		{
+			strafecount = 0;
+			Vel.X = Vel.Y = 0;
+			dist = Distance2D(target);
+			if (dist < FIREDEMON_ATTACK_RANGE)
+			{
+				if (random[FiredChase]() < 30)
+				{
+					ang = AngleTo(target);
+					if (random[FiredChase]() < 128)
+						ang += 90;
+					else
+						ang -= 90;
+					Thrust(8, ang);
+					strafecount = 3;		// strafe time
+				}
+			}
+		}
+
+		FaceMovementDirection ();
+
+		// Normal movement
+		if (!strafecount)
+		{
+			if (--movecount<0 || !MonsterMove ())
+			{
+				NewChaseDir ();
+			}
+		}
+
+		// Do missile attack
+		if (!bJustAttacked)
+		{
+			if (CheckMissileRange () && (random[FiredChase]() < 20))
+			{
+				SetState (MissileState);
+				bJustAttacked = true;
+				return;
+			}
+		}
+		else
+		{
+			bJustAttacked = false;
+		}
+
+		// make active sound
+		if (random[FiredChase]() < 3)
+		{
+			PlayActiveSound ();
+		}
+	}
+
+	//============================================================================
+	//
+	// A_FiredSplotch
+	//
+	//============================================================================
+
+	void A_FiredSplotch()
+	{
+		Actor mo;
+
+		mo = Spawn ("FireDemonSplotch1", Pos, ALLOW_REPLACE);
+		if (mo)
+		{
+			mo.Vel.X = (random[FireDemonSplotch]() - 128) / 32.;
+			mo.Vel.Y = (random[FireDemonSplotch]() - 128) / 32.;
+			mo.Vel.Z = (random[FireDemonSplotch]() / 64.) + 3;
+		}
+		mo = Spawn ("FireDemonSplotch2", Pos, ALLOW_REPLACE);
+		if (mo)
+		{
+			mo.Vel.X = (random[FireDemonSplotch]() - 128) / 32.;
+			mo.Vel.Y = (random[FireDemonSplotch]() - 128) / 32.;
+			mo.Vel.Z = (random[FireDemonSplotch]() / 64.) + 3;
+		}
+	}
+	
 }
 
 // FireDemonSplotch1 -------------------------------------------------------
@@ -124,8 +324,6 @@ class FireDemonRock1 : Actor
 		+NOTELEPORT
 	}
 
-	native void A_SmBounce();
-
 	States
 	{
 	Spawn:
@@ -136,6 +334,21 @@ class FireDemonRock1 : Actor
 	XDeath:
 		FDMN S 200;
 		Stop;
+	}
+	
+	//============================================================================
+	//
+	// A_SmBounce
+	//
+	//============================================================================
+
+	void A_SmBounce()
+	{
+		// give some more velocity (x,y,&z)
+		SetZ(floorz + 1);
+		Vel.Z = 2. + random[SMBounce]() / 64.;
+		Vel.X = random[SMBounce](0, 2);
+		Vel.Y = random[SMBounce](0, 2);
 	}
 }
 

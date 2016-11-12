@@ -449,3 +449,10 @@ void FaceMovementDirection(AActor *actor)
 		break;
 	}
 }
+
+DEFINE_ACTION_FUNCTION(AActor, FaceMovementDirection)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	FaceMovementDirection(self);
+	return 0;
+}

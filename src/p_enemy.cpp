@@ -414,6 +414,12 @@ bool P_CheckMissileRange (AActor *actor)
 	return actor->SuggestMissileAttack (dist);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CheckMissileRange)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(P_CheckMissileRange(self));
+}
+
 bool AActor::SuggestMissileAttack (double dist)
 {
 	// new version encapsulates the different behavior in flags instead of virtual functions
@@ -706,6 +712,11 @@ bool P_Move (AActor *actor)
 		actor->flags &= ~MF_INFLOAT;
 	}
 	return true; 
+}
+DEFINE_ACTION_FUNCTION(AActor, MonsterMove)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(P_Move(self));
 }
 
 
@@ -1030,7 +1041,12 @@ void P_NewChaseDir(AActor * actor)
 
 }
 
-
+DEFINE_ACTION_FUNCTION(AActor, NewChaseDir)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	P_NewChaseDir(self);
+	return 0;
+}
 
 
 //=============================================================================

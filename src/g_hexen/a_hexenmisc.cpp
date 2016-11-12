@@ -38,7 +38,6 @@
 #include "a_fighterhammer.cpp"
 #include "a_fighterplayer.cpp"
 #include "a_fighterquietus.cpp"
-#include "a_firedemon.cpp"
 #include "a_flechette.cpp"
 #include "a_flies.cpp"
 #include "a_fog.cpp"

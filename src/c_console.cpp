@@ -282,7 +282,7 @@ struct FCommandBuffer
 
 	void CursorEnd()
 	{
-		CursorPos = Text.Len();
+		CursorPos = (unsigned)Text.Len();
 		StartPos = 0;
 		MakeStartPosGood();
 	}
@@ -358,7 +358,7 @@ struct FCommandBuffer
 			{
 				Text.Insert(CursorPos, clip);
 			}
-			CursorPos += clip.Len();
+			CursorPos += (unsigned)clip.Len();
 			MakeStartPosGood();
 		}
 	}
@@ -366,7 +366,7 @@ struct FCommandBuffer
 	void SetString(FString str)
 	{
 		Text = str;
-		CursorPos = Text.Len();
+		CursorPos = (unsigned)Text.Len();
 		MakeStartPosGood();
 	}
 };
@@ -1862,7 +1862,7 @@ static void C_TabComplete (bool goForward)
 		}
 		TabStart = i;
 
-		TabSize = CmdLine.Text.Len() - TabStart;
+		TabSize = (int)CmdLine.Text.Len() - TabStart;
 
 		if (!FindTabCommand(&CmdLine.Text[TabStart], &TabPos, TabSize))
 			return;		// No initial matches
@@ -1922,7 +1922,7 @@ static void C_TabComplete (bool goForward)
 			CmdLine.Text << TabCommands[TabPos].TabName << ' ';
 		}
 	}
-	CmdLine.CursorPos = CmdLine.Text.Len();
+	CmdLine.CursorPos = (unsigned)CmdLine.Text.Len();
 	CmdLine.MakeStartPosGood();
 }
 
@@ -1996,7 +1996,7 @@ static bool C_TabCompleteList ()
 			TabSize = commonsize;
 			CmdLine.Text.Truncate(TabStart);
 			CmdLine.Text.AppendCStrPart(TabCommands[TabPos].TabName.GetChars(), commonsize);
-			CmdLine.CursorPos = CmdLine.Text.Len();
+			CmdLine.CursorPos = (unsigned)CmdLine.Text.Len();
 		}
 		return false;
 	}

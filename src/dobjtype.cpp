@@ -2731,9 +2731,11 @@ void PClass::StaticShutdown ()
 
 	FAutoSegIterator probe(CRegHead, CRegTail);
 
-	while (*++probe != NULL)
+	while (*++probe != nullptr)
 	{
-		((ClassReg *)*probe)->MyClass = NULL;
+		auto cr = ((ClassReg *)*probe);
+		cr->MyClass = nullptr;
+		if (cr->VMExport != nullptr) cr->VMExport->MyClass = nullptr;
 	}
 
 }

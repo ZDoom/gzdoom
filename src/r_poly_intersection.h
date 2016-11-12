@@ -24,6 +24,7 @@
 
 #include "r_triangle.h"
 #include <algorithm>
+#include <cmath>
 
 class Vec4f
 {

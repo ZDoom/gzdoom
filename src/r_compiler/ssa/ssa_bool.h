@@ -23,6 +23,7 @@
 #pragma once
 
 #include "ssa_int.h"
+#include "ssa_ubyte.h"
 #include "ssa_float.h"
 
 namespace llvm { class Value; }
@@ -38,6 +39,8 @@ public:
 	static llvm::Type *llvm_type();
 
 	SSAInt zext_int();
+	SSAInt select(SSAInt a, SSAInt b);
+	SSAUByte select(SSAUByte a, SSAUByte b);
 
 	llvm::Value *v;
 };
@@ -52,6 +55,12 @@ SSABool operator<=(const SSAInt &a, const SSAInt &b);
 SSABool operator==(const SSAInt &a, const SSAInt &b);
 SSABool operator>=(const SSAInt &a, const SSAInt &b);
 SSABool operator>(const SSAInt &a, const SSAInt &b);
+
+SSABool operator<(const SSAUByte &a, const SSAUByte &b);
+SSABool operator<=(const SSAUByte &a, const SSAUByte &b);
+SSABool operator==(const SSAUByte &a, const SSAUByte &b);
+SSABool operator>=(const SSAUByte &a, const SSAUByte &b);
+SSABool operator>(const SSAUByte &a, const SSAUByte &b);
 
 SSABool operator<(const SSAFloat &a, const SSAFloat &b);
 SSABool operator<=(const SSAFloat &a, const SSAFloat &b);

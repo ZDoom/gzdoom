@@ -233,9 +233,17 @@ void DrawTriangleCodegen::LoopBlockX(TriDrawVariant variant, bool truecolor)
 		SSAFloat lightscale = SSAFloat::clamp((shade - SSAFloat::MIN(SSAFloat(24.0f), vis)) / 32.0f, SSAFloat(0.0f), SSAFloat(31.0f / 32.0f));
 		diminishedlight = SSAInt(SSAFloat::clamp((1.0f - lightscale) * 256.0f + 0.5f, SSAFloat(0.0f), SSAFloat(256.0f)), false);
 
+		SetStencilBlock(x / 8 + y / 8 * stencilPitch);
+
+		SSABool covered = a == SSAInt(0xF) && b == SSAInt(0xF) && c == SSAInt(0xF) && !clipneeded;
+		if (variant != TriDrawVariant::DrawSubsector)
+		{
+			covered = covered && StencilIsSingleValue();
+		}
+
 		// Accept whole block when totally covered
 		SSAIfBlock branch_covered;
-		branch_covered.if_block(a == SSAInt(0xF) && b == SSAInt(0xF) && c == SSAInt(0xF) && !clipneeded);
+		branch_covered.if_block(covered);
 		{
 			LoopFullBlock(variant, truecolor);
 		}
@@ -254,58 +262,86 @@ void DrawTriangleCodegen::LoopBlockX(TriDrawVariant variant, bool truecolor)
 
 void DrawTriangleCodegen::LoopFullBlock(TriDrawVariant variant, bool truecolor)
 {
-	int pixelsize = truecolor ? 4 : 1;
-
-	stack_iy.store(SSAInt(0));
-	stack_buffer.store(dest);
-	stack_subsectorbuffer.store(subsectorGBuffer);
-
-	SSAForBlock loopy;
-	SSAInt iy = stack_iy.load();
-	SSAUBytePtr buffer = stack_buffer.load();
-	SSAIntPtr subsectorbuffer = stack_subsectorbuffer.load();
-	loopy.loop_block(iy < SSAInt(q), q);
+	SSAIfBlock branch_stenciltest;
+	if (variant != TriDrawVariant::DrawSubsector)
 	{
-		SSAInt varyingStep[TriVertex::NumVarying];
-		for (int i = 0; i < TriVertex::NumVarying; i++)
-		{
-			SSAFloat pos = varyingTL[i] + varyingBL[i] * SSAFloat(iy);
-			SSAFloat step = (varyingTR[i] + varyingBR[i] * SSAFloat(iy) - pos) * (1.0f / q);
-
-			stack_varying[i].store(SSAInt((pos - SSAFloat::floor(pos)) * SSAFloat((float)0x100000000LL), true));
-			varyingStep[i] = SSAInt(step * SSAFloat((float)0x100000000LL), true);
-		}
-
-		stack_ix.store(x);
-		SSAForBlock loopx;
-		SSAInt ix = stack_ix.load();
-		SSAInt varying[TriVertex::NumVarying];
-		for (int i = 0; i < TriVertex::NumVarying; i++)
-			varying[i] = stack_varying[i].load();
-		loopx.loop_block(ix < x + q, q);
-		{
-			SSAIfBlock branch;
-			branch.if_block(subsectorbuffer[ix].load(true) >= subsectorDepth);
-			{
-				if (truecolor)
-					ProcessPixel(buffer[ix * 4], subsectorbuffer[ix], varying, variant, truecolor);
-				else
-					ProcessPixel(buffer[ix], subsectorbuffer[ix], varying, variant, truecolor);
-			}
-			branch.end_block();
-
-			for (int i = 0; i < TriVertex::NumVarying; i++)
-				stack_varying[i].store(varying[i] + varyingStep[i]);
-
-			stack_ix.store(ix + 1);
-		}
-		loopx.end_block();
-
-		stack_buffer.store(buffer[pitch * pixelsize]);
-		stack_subsectorbuffer.store(subsectorbuffer[pitch]);
-		stack_iy.store(iy + 1);
+		branch_stenciltest.if_block(StencilGetSingle() == stencilTestValue);
 	}
-	loopy.end_block();
+
+	if (variant == TriDrawVariant::Stencil)
+	{
+		StencilClear(stencilWriteValue);
+	}
+	else
+	{
+		int pixelsize = truecolor ? 4 : 1;
+
+		stack_iy.store(SSAInt(0));
+		stack_buffer.store(dest);
+		stack_subsectorbuffer.store(subsectorGBuffer);
+
+		SSAForBlock loopy;
+		SSAInt iy = stack_iy.load();
+		SSAUBytePtr buffer = stack_buffer.load();
+		SSAIntPtr subsectorbuffer = stack_subsectorbuffer.load();
+		loopy.loop_block(iy < SSAInt(q), q);
+		{
+			SSAInt varyingStep[TriVertex::NumVarying];
+			for (int i = 0; i < TriVertex::NumVarying; i++)
+			{
+				SSAFloat pos = varyingTL[i] + varyingBL[i] * SSAFloat(iy);
+				SSAFloat step = (varyingTR[i] + varyingBR[i] * SSAFloat(iy) - pos) * (1.0f / q);
+
+				stack_varying[i].store(SSAInt((pos - SSAFloat::floor(pos)) * SSAFloat((float)0x100000000LL), true));
+				varyingStep[i] = SSAInt(step * SSAFloat((float)0x100000000LL), true);
+			}
+
+			stack_ix.store(x);
+			SSAForBlock loopx;
+			SSAInt ix = stack_ix.load();
+			SSAInt varying[TriVertex::NumVarying];
+			for (int i = 0; i < TriVertex::NumVarying; i++)
+				varying[i] = stack_varying[i].load();
+			loopx.loop_block(ix < x + q, q);
+			{
+				if (variant == TriDrawVariant::DrawSubsector)
+				{
+					SSAIfBlock branch;
+					branch.if_block(subsectorbuffer[ix].load(true) >= subsectorDepth);
+					{
+						if (truecolor)
+							ProcessPixel(buffer[ix * 4], subsectorbuffer[ix], varying, variant, truecolor);
+						else
+							ProcessPixel(buffer[ix], subsectorbuffer[ix], varying, variant, truecolor);
+					}
+					branch.end_block();
+				}
+				else
+				{
+					if (truecolor)
+						ProcessPixel(buffer[ix * 4], subsectorbuffer[ix], varying, variant, truecolor);
+					else
+						ProcessPixel(buffer[ix], subsectorbuffer[ix], varying, variant, truecolor);
+				}
+
+				for (int i = 0; i < TriVertex::NumVarying; i++)
+					stack_varying[i].store(varying[i] + varyingStep[i]);
+
+				stack_ix.store(ix + 1);
+			}
+			loopx.end_block();
+
+			stack_buffer.store(buffer[pitch * pixelsize]);
+			stack_subsectorbuffer.store(subsectorbuffer[pitch]);
+			stack_iy.store(iy + 1);
+		}
+		loopy.end_block();
+	}
+
+	if (variant != TriDrawVariant::DrawSubsector)
+	{
+		branch_stenciltest.end_block();
+	}
 }
 
 void DrawTriangleCodegen::LoopPartialBlock(TriDrawVariant variant, bool truecolor)
@@ -354,14 +390,31 @@ void DrawTriangleCodegen::LoopPartialBlock(TriDrawVariant variant, bool truecolo
 		loopx.loop_block(ix < SSAInt(q), q);
 		{
 			SSABool visible = (ix + x >= clipleft) && (ix + x < clipright) && (cliptop <= y + iy) && (clipbottom > y + iy);
+			SSABool covered = CX1 > SSAInt(0) && CX2 > SSAInt(0) && CX3 > SSAInt(0) && visible;
+
+			if (variant == TriDrawVariant::DrawSubsector)
+			{
+				covered = covered && subsectorbuffer[ix + x].load(true) >= subsectorDepth;
+			}
+			else
+			{
+				covered = covered && StencilGet(ix, iy) == stencilTestValue;
+			}
 
 			SSAIfBlock branch;
-			branch.if_block(CX1 > SSAInt(0) && CX2 > SSAInt(0) && CX3 > SSAInt(0) && visible && subsectorbuffer[ix + x].load(true) >= subsectorDepth);
+			branch.if_block(covered);
 			{
-				if (truecolor)
-					ProcessPixel(buffer[(ix + x) * 4], subsectorbuffer[ix + x], varying, variant, truecolor);
+				if (variant == TriDrawVariant::Stencil)
+				{
+					StencilSet(ix, iy, stencilWriteValue);
+				}
 				else
-					ProcessPixel(buffer[ix + x], subsectorbuffer[ix + x], varying, variant, truecolor);
+				{
+					if (truecolor)
+						ProcessPixel(buffer[(ix + x) * 4], subsectorbuffer[ix + x], varying, variant, truecolor);
+					else
+						ProcessPixel(buffer[ix + x], subsectorbuffer[ix + x], varying, variant, truecolor);
+				}
 			}
 			branch.end_block();
 
@@ -387,37 +440,155 @@ void DrawTriangleCodegen::LoopPartialBlock(TriDrawVariant variant, bool truecolo
 
 void DrawTriangleCodegen::ProcessPixel(SSAUBytePtr buffer, SSAIntPtr subsectorbuffer, SSAInt *varying, TriDrawVariant variant, bool truecolor)
 {
-	SSAInt ufrac = varying[0];
-	SSAInt vfrac = varying[1];
-
-	SSAInt upos = ((ufrac >> 16) * textureWidth) >> 16;
-	SSAInt vpos = ((vfrac >> 16) * textureHeight) >> 16;
-	SSAInt uvoffset = upos * textureHeight + vpos;
-
-	if (truecolor)
+	if (variant == TriDrawVariant::Fill)
 	{
-		SSAVec4i fg = texturePixels[uvoffset * 4].load_vec4ub(true);
-		SSAInt fg_alpha = fg[3];
-		fg = (fg * diminishedlight) >> 8;
-		fg.insert(3, fg_alpha);
-
-		SSAIfBlock branch_transparency;
-		branch_transparency.if_block(fg_alpha > SSAInt(127));
+		if (truecolor)
 		{
-			buffer.store_vec4ub(fg);
+			buffer.store_vec4ub(SSAVec4i::unpack(solidcolor));
 		}
-		branch_transparency.end_block();
+		else
+		{
+			//buffer.store(solidcolor);
+		}
+		subsectorbuffer.store(subsectorDepth);
 	}
 	else
 	{
-		SSAUByte palindex = texturePixels[uvoffset].load(true);
-		SSAIfBlock branch_transparency;
-		branch_transparency.if_block(!(palindex.zext_int() == SSAInt(0)));
+		SSAInt ufrac = varying[0];
+		SSAInt vfrac = varying[1];
+
+		SSAInt upos = ((ufrac >> 16) * textureWidth) >> 16;
+		SSAInt vpos = ((vfrac >> 16) * textureHeight) >> 16;
+		SSAInt uvoffset = upos * textureHeight + vpos;
+
+		if (truecolor)
 		{
-			buffer.store(palindex);
+			SSAVec4i fg = texturePixels[uvoffset * 4].load_vec4ub(true);
+			SSAInt fg_alpha = fg[3];
+			fg = (fg * diminishedlight) >> 8;
+			fg.insert(3, fg_alpha);
+
+			if (variant == TriDrawVariant::DrawMasked || variant == TriDrawVariant::DrawSubsector)
+			{
+				SSAIfBlock branch_transparency;
+				branch_transparency.if_block(fg_alpha > SSAInt(127));
+				{
+					buffer.store_vec4ub(fg);
+					if (variant != TriDrawVariant::DrawSubsector)
+						subsectorbuffer.store(subsectorDepth);
+				}
+				branch_transparency.end_block();
+			}
+			else
+			{
+				buffer.store_vec4ub(fg);
+				subsectorbuffer.store(subsectorDepth);
+			}
 		}
-		branch_transparency.end_block();
+		else
+		{
+			SSAUByte palindex = texturePixels[uvoffset].load(true);
+
+			if (variant == TriDrawVariant::DrawMasked || variant == TriDrawVariant::DrawSubsector)
+			{
+				SSAIfBlock branch_transparency;
+				branch_transparency.if_block(!(palindex.zext_int() == SSAInt(0)));
+				{
+					buffer.store(palindex);
+					if (variant != TriDrawVariant::DrawSubsector)
+						subsectorbuffer.store(subsectorDepth);
+				}
+				branch_transparency.end_block();
+			}
+			else
+			{
+				buffer.store(palindex);
+				subsectorbuffer.store(subsectorDepth);
+			}
+		}
 	}
+}
+
+void DrawTriangleCodegen::SetStencilBlock(SSAInt block)
+{
+	StencilBlock = stencilValues[block * 64];
+	StencilBlockMask = stencilMasks[block];
+}
+
+void DrawTriangleCodegen::StencilSet(SSAInt x, SSAInt y, SSAUByte value)
+{
+	SSAInt mask = StencilBlockMask.load(false);
+
+	SSAIfBlock branchNeedsUpdate;
+	branchNeedsUpdate.if_block(!(mask == SSAInt(0xffffffff) && StencilBlock[0].load(false) == value));
+
+	SSAIfBlock branchFirstSet;
+	branchFirstSet.if_block(mask == SSAInt(0xffffffff));
+	{
+		SSAUByte val0 = StencilBlock[0].load(false);
+		for (int i = 1; i < 8 * 8; i++)
+			StencilBlock[i].store(val0);
+	}
+	branchFirstSet.end_block();
+
+	SSAIfBlock branchNeedsUpdate2;
+	branchNeedsUpdate2.if_block(!(StencilBlock[x + y * 8].load(false) == value));
+
+	StencilBlock[x + y * 8].store(value);
+
+	SSAInt leveloffset = SSAInt(0);
+	for (int i = 1; i < 4; i++)
+	{
+		x = x >> 1;
+		y = y >> 1;
+
+		SSABool differs =
+			!(StencilBlock[(x << i) + (y << i) * 8].load(false) == value &&
+			StencilBlock[((x + 1) << i) + (y << i) * 8].load(false) == value &&
+			StencilBlock[(x << i) + ((y + 1) << i) * 8].load(false) == value &&
+			StencilBlock[((x + 1) << i) + ((y + 1) << i) * 8].load(false) == value);
+
+		SSAInt levelbit = SSAInt(1) << (leveloffset + x + y * (8 >> i));
+
+		mask = differs.select(mask & ~levelbit, mask | levelbit);
+
+		leveloffset = leveloffset + (SSAInt(8) >> leveloffset) * (SSAInt(8) >> leveloffset);
+	}
+
+	SSABool differs = 
+		!(StencilBlock[0].load(false) == value &&
+		StencilBlock[4].load(false) == value &&
+		StencilBlock[4 * 8].load(false) == value &&
+		StencilBlock[4 * 8 + 4].load(false) == value);
+
+	mask = differs.select(mask & ~(1 << 22), mask | (1 << 22));
+
+	StencilBlockMask.store(mask);
+
+	branchNeedsUpdate2.end_block();
+	branchNeedsUpdate.end_block();
+}
+
+SSAUByte DrawTriangleCodegen::StencilGet(SSAInt x, SSAInt y)
+{
+	SSABool oneValueBlock = StencilBlockMask.load(false) == SSAInt(0xffffffff);
+	return oneValueBlock.select(StencilBlock[0].load(false), StencilBlock[x + y * 8].load(false));
+}
+
+SSAUByte DrawTriangleCodegen::StencilGetSingle()
+{
+	return StencilBlock[0].load(false);
+}
+
+void DrawTriangleCodegen::StencilClear(SSAUByte value)
+{
+	StencilBlock[0].store(value);
+	StencilBlockMask.store(SSAInt(0xffffffff));
+}
+
+SSABool DrawTriangleCodegen::StencilIsSingleValue()
+{
+	return StencilBlockMask.load(false) == SSAInt(0xffffffff);
 }
 
 void DrawTriangleCodegen::LoadArgs(TriDrawVariant variant, bool truecolor, SSAValue args, SSAValue thread_data)

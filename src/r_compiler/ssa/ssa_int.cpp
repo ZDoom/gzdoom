@@ -195,3 +195,8 @@ SSAInt operator|(const SSAInt &a, const SSAInt &b)
 {
 	return SSAInt::from_llvm(SSAScope::builder().CreateOr(a.v, b.v, SSAScope::hint()));
 }
+
+SSAInt operator~(const SSAInt &a)
+{
+	return SSAInt::from_llvm(SSAScope::builder().CreateNot(a.v, SSAScope::hint()));
+}

@@ -47,6 +47,13 @@ private:
 
 	void ProcessPixel(SSAUBytePtr buffer, SSAIntPtr subsectorbuffer, SSAInt *varying, TriDrawVariant variant, bool truecolor);
 
+	void SetStencilBlock(SSAInt block);
+	void StencilSet(SSAInt x, SSAInt y, SSAUByte value);
+	void StencilClear(SSAUByte value);
+	SSAUByte StencilGet(SSAInt x, SSAInt y);
+	SSAUByte StencilGetSingle();
+	SSABool StencilIsSingleValue();
+
 	SSAFloat gradx(SSAFloat x0, SSAFloat y0, SSAFloat x1, SSAFloat y1, SSAFloat x2, SSAFloat y2, SSAFloat c0, SSAFloat c1, SSAFloat c2);
 	SSAFloat grady(SSAFloat x0, SSAFloat y0, SSAFloat x1, SSAFloat y1, SSAFloat x2, SSAFloat y2, SSAFloat c0, SSAFloat c1, SSAFloat c2);
 
@@ -112,4 +119,7 @@ private:
 	SSAFloat varyingTR[TriVertex::NumVarying];
 	SSAFloat varyingBL[TriVertex::NumVarying];
 	SSAFloat varyingBR[TriVertex::NumVarying];
+
+	SSAUBytePtr StencilBlock;
+	SSAIntPtr StencilBlockMask;
 };

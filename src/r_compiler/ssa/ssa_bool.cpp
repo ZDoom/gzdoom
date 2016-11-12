@@ -22,6 +22,8 @@
 
 #include "r_compiler/llvm_include.h"
 #include "ssa_bool.h"
+#include "ssa_ubyte.h"
+#include "ssa_value.h"
 #include "ssa_scope.h"
 
 SSABool::SSABool()
@@ -47,6 +49,16 @@ llvm::Type *SSABool::llvm_type()
 SSAInt SSABool::zext_int()
 {
 	return SSAInt::from_llvm(SSAScope::builder().CreateZExt(v, SSAInt::llvm_type(), SSAScope::hint()));
+}
+
+SSAInt SSABool::select(SSAInt a, SSAInt b)
+{
+	return SSAValue::from_llvm(SSAScope::builder().CreateSelect(v, a.v, b.v, SSAScope::hint()));
+}
+
+SSAUByte SSABool::select(SSAUByte a, SSAUByte b)
+{
+	return SSAValue::from_llvm(SSAScope::builder().CreateSelect(v, a.v, b.v, SSAScope::hint()));
 }
 
 SSABool operator&&(const SSABool &a, const SSABool &b)
@@ -85,6 +97,33 @@ SSABool operator>=(const SSAInt &a, const SSAInt &b)
 }
 
 SSABool operator>(const SSAInt &a, const SSAInt &b)
+{
+	return SSABool::from_llvm(SSAScope::builder().CreateICmpSGT(a.v, b.v, SSAScope::hint()));
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+SSABool operator<(const SSAUByte &a, const SSAUByte &b)
+{
+	return SSABool::from_llvm(SSAScope::builder().CreateICmpSLT(a.v, b.v, SSAScope::hint()));
+}
+
+SSABool operator<=(const SSAUByte &a, const SSAUByte &b)
+{
+	return SSABool::from_llvm(SSAScope::builder().CreateICmpSLE(a.v, b.v, SSAScope::hint()));
+}
+
+SSABool operator==(const SSAUByte &a, const SSAUByte &b)
+{
+	return SSABool::from_llvm(SSAScope::builder().CreateICmpEQ(a.v, b.v, SSAScope::hint()));
+}
+
+SSABool operator>=(const SSAUByte &a, const SSAUByte &b)
+{
+	return SSABool::from_llvm(SSAScope::builder().CreateICmpSGE(a.v, b.v, SSAScope::hint()));
+}
+
+SSABool operator>(const SSAUByte &a, const SSAUByte &b)
 {
 	return SSABool::from_llvm(SSAScope::builder().CreateICmpSGT(a.v, b.v, SSAScope::hint()));
 }

@@ -263,6 +263,7 @@ struct TriDrawTriangleArgs
 enum class TriDrawVariant
 {
 	Draw,
+	DrawMasked,
 	Fill,
 	DrawSubsector,
 	Stencil,

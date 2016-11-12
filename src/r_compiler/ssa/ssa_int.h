@@ -74,3 +74,4 @@ SSAInt operator&(const SSAInt &a, int b);
 SSAInt operator&(const SSAInt &a, const SSAInt &b);
 SSAInt operator|(const SSAInt &a, int b);
 SSAInt operator|(const SSAInt &a, const SSAInt &b);
+SSAInt operator~(const SSAInt &a);

@@ -1524,7 +1524,7 @@ void PolySkyDome::SkyVertex(int r, int c, bool zflip)
 
 	// And finally the vertex.
 	TriVertex vert;
-	vert = SetVertexXYZ(-pos.X, z - 1.f, pos.Y, u * 4.0f, v + 0.5f/*, color*/);
+	vert = SetVertexXYZ(-pos.X, z - 1.f, pos.Y, u * 4.0f, v * 1.2f + 0.5f/*, color*/);
 	mVertices.Push(vert);
 }
 

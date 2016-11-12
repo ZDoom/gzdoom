@@ -105,7 +105,7 @@ public:
 			x >>= 1;
 			y >>= 1;
 
-			bool same =
+			bool differs =
 				Values[(x << i)       + (y << i) * 8]       != value ||
 				Values[((x + 1) << i) + (y << i) * 8]       != value ||
 				Values[(x << i)       + ((y + 1) << i) * 8] != value ||
@@ -113,7 +113,7 @@ public:
 
 			int levelbit = 1 << (leveloffset + x + y * (8 >> i));
 
-			if (same)
+			if (differs)
 				ValueMask = ValueMask & ~levelbit;
 			else
 				ValueMask = ValueMask | levelbit;

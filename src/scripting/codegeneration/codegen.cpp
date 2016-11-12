@@ -5096,14 +5096,11 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 	// Ugh, the horror. Constants need to be taken from the owning class, but members from the self class to catch invalid accesses here...
 	// see if the current class (if valid) defines something with this name.
 	PSymbolTable *symtbl;
-	if ((sym = ctx.FindInClass(Identifier, symtbl)) != nullptr)
+
+	// first check fields in self
+	if ((sym = ctx.FindInSelfClass(Identifier, symtbl)) != nullptr)
 	{
-		if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
-		{
-			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as class constant\n", Identifier.GetChars());
-			newex = FxConstant::MakeConstant(sym, ScriptPosition);
-		}
-		else if (sym->IsKindOf(RUNTIME_CLASS(PField)))
+		if (sym->IsKindOf(RUNTIME_CLASS(PField)))
 		{
 			if (!ctx.Function)
 			{
@@ -5161,6 +5158,18 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as member variable, index %d\n", Identifier.GetChars(), vsym->Offset);
 			newex = new FxClassMember((new FxSelf(ScriptPosition))->Resolve(ctx), vsym, ScriptPosition);
 		}
+	}
+
+	// now constants in the owning class.
+	if (newex == nullptr && (sym = ctx.FindInClass(Identifier, symtbl)) != nullptr)
+	{
+		if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
+		{
+			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as class constant\n", Identifier.GetChars());
+			newex = FxConstant::MakeConstant(sym, ScriptPosition);
+			delete this;
+			return newex->Resolve(ctx);
+		}
 		else
 		{
 			if (sym->IsKindOf(RUNTIME_CLASS(PFunction)))
@@ -5177,7 +5186,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 	}
 
 	// now check the global identifiers.
-	else if ((sym = ctx.FindGlobal(Identifier)) != nullptr)
+	if (newex == nullptr && (sym = ctx.FindGlobal(Identifier)) != nullptr)
 	{
 		if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
 		{
@@ -5197,12 +5206,13 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 	}
 
 	// and line specials
-	else if ((num = P_FindLineSpecial(Identifier, nullptr, nullptr)))
+	if (newex == nullptr && (num = P_FindLineSpecial(Identifier, nullptr, nullptr)))
 	{
 		ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as line special %d\n", Identifier.GetChars(), num);
 		newex = new FxConstant(num, ScriptPosition);
 	}
-	else
+	
+	if (newex == nullptr)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Unknown identifier '%s'", Identifier.GetChars());
 		delete this;

@@ -2577,7 +2577,9 @@ FxExpression *ZCCCompiler::ConvertAST(PClass *cls, ZCC_TreeNode *ast)
 	// there are two possibilities here: either a single function call or a compound statement. For a compound statement we also need to check if the last thing added was a return.
 	if (ast->NodeType == AST_ExprFuncCall)
 	{
-		return new FxReturnStatement(ConvertNode(ast), *ast);
+		auto cp = new FxCompoundStatement(*ast);
+		cp->Add(new FxReturnStatement(ConvertNode(ast), *ast));
+		return cp;
 	}
 	else
 	{

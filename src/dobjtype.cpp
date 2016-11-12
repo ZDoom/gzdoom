@@ -2495,6 +2495,10 @@ unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArra
 		variant.SelfClass = dyn_cast<PClass>(selftypeptr->PointedType);
 		assert(variant.SelfClass != nullptr);
 	}
+	else
+	{
+		variant.SelfClass = nullptr;
+	}
 
 	return Variants.Push(variant);
 }

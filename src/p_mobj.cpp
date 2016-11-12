@@ -6939,6 +6939,30 @@ DEFINE_ACTION_FUNCTION(AActor, VelFromAngle)
 	return 0;
 }
 
+// This combines all 3 variations of the internal function
+DEFINE_ACTION_FUNCTION(AActor, Thrust)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	if (numparam == 1)
+	{
+		self->Thrust();
+	}
+	else
+	{
+		PARAM_FLOAT(speed);
+		if (numparam == 2)
+		{
+			self->Thrust(speed);
+		}
+		else
+		{
+			PARAM_ANGLE(angle);
+			self->Thrust(angle, speed);
+		}
+	}
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(AActor, AngleTo)
 {
 	PARAM_SELF_PROLOGUE(AActor);

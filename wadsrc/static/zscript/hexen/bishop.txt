@@ -3,6 +3,9 @@
 
 class Bishop : Actor
 {
+	int missilecount;
+	int bobstate;
+	
 	Default
 	{
 		Health 130;
@@ -22,14 +25,6 @@ class Bishop : Actor
 		ActiveSound "BishopActiveSounds";
 		Obituary"$OB_BISHOP";
 	}
-
-	native void A_BishopChase();
-	native void A_BishopDecide();
-	native void A_BishopDoBlur();
-	native void A_BishopSpawnBlur();
-	native void A_BishopPainBlur();
-	native void A_BishopAttack();
-	native void A_BishopAttack2();
 
 	States
 	{
@@ -67,7 +62,7 @@ class Bishop : Actor
 		BISH J 5 BRIGHT A_Explode(random[BishopBoom](25,40));
 		BISH K 5 Bright;
 		BISH LM 4 Bright;
-		BISH N 4 A_SpawnItemEx("BishopPuff", 0,0,40, 0,0,0.5);
+		BISH N 4 A_SpawnItemEx("BishopPuff", 0,0,40, 0,0,-0.5);
 		BISH O 4 A_QueueCorpse;
 		BISH P -1;
 		Stop;
@@ -75,6 +70,172 @@ class Bishop : Actor
 		BISH X 5 A_FreezeDeath;
 		BISH X 1 A_FreezeDeathChunks;
 		Wait;
+	}
+	
+	
+
+	//============================================================================
+	//
+	// A_BishopAttack
+	//
+	//============================================================================
+
+	void A_BishopAttack()
+	{
+		if (!target)
+		{
+			return;
+		}
+		A_PlaySound (AttackSound, CHAN_BODY);
+		if (CheckMeleeRange())
+		{
+			int damage = random[BishopAttack](1, 8) * 4;
+			int newdam = target.DamageMobj (self, self, damage, 'Melee');
+			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			return;
+		}
+		missilecount = (random[BishopAttack]() & 3) + 5;
+	}
+
+	//============================================================================
+	//
+	// A_BishopAttack2
+	//
+	//		Spawns one of a string of bishop missiles
+	//============================================================================
+
+	void A_BishopAttack2()
+	{
+		if (!target || !missilecount)
+		{
+			missilecount = 0;
+			SetState (SeeState);
+			return;
+		}
+		Actor mo = SpawnMissile (target, "BishopFX");
+		if (mo != null)
+		{
+			mo.tracer = target;
+		}
+		missilecount--;
+		return;
+	}
+
+	//============================================================================
+	//
+	// A_BishopDecide
+	//
+	//============================================================================
+
+	void A_BishopDecide()
+	{
+		if (random[BishopDecide]() >= 220)
+		{
+			SetState ("Blur");
+		}
+	}
+
+	//============================================================================
+	//
+	// A_BishopDoBlur
+	//
+	//============================================================================
+
+	void A_BishopDoBlur()
+	{
+		missilecount = (random[BishopDoBlur]() & 3) + 3; // Random number of blurs
+		if (random[BishopDoBlur]() < 120)
+		{
+			Thrust(11, Angle + 90);
+		}
+		else if (random[BishopDoBlur]() > 125)
+		{
+			Thrust(11, Angle - 90);
+		}
+		else
+		{ // Thrust forward
+			Thrust(11);
+		}
+		A_PlaySound ("BishopBlur", CHAN_BODY);
+	}
+
+	//============================================================================
+	//
+	// A_BishopSpawnBlur
+	//
+	//============================================================================
+
+	void A_BishopSpawnBlur()
+	{
+		if (!--missilecount)
+		{
+			Vel.XY = (0,0);// = Vel.Y = 0;
+			if (random[BishopSpawnBlur]() > 96)
+			{
+				SetState (SeeState);
+			}
+			else
+			{
+				SetState (MissileState);
+			}
+		}
+		Actor mo = Spawn ("BishopBlur", Pos, ALLOW_REPLACE);
+		if (mo)
+		{
+			mo.angle = angle;
+		}
+	}
+
+	//============================================================================
+	//
+	// A_BishopChase
+	//
+	//============================================================================
+
+	void A_BishopChase()
+	{
+		double newz = pos.z - BobSin(bobstate) / 2.;
+		bobstate = (bobstate + 4) & 63;
+		newz += BobSin(bobstate) / 2.;
+		SetZ(newz);
+	}
+
+	//============================================================================
+	//
+	// A_BishopPainBlur
+	//
+	//============================================================================
+
+	void A_BishopPainBlur()
+	{
+		if (random[BishopPainBlur]() < 64)
+		{
+			SetState ("Blur");
+			return;
+		}
+		double xo = random2[BishopPainBlur]() / 16.;
+		double yo = random2[BishopPainBlue]() / 16.;
+		double zo = random2[BishopPainBlue]() / 32.;
+		Actor mo = Spawn ("BishopPainBlur", Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
+		if (mo)
+		{
+			mo.angle = angle;
+		}
+	}
+	
+}
+
+extend class Actor
+{
+	//============================================================================
+	//
+	// A_BishopMissileWeave (this function must be in Actor)
+	//
+	//============================================================================
+
+	void A_BishopMissileWeave()
+	{
+		A_Weave(2, 2, 2., 1.);
 	}
 }
 
@@ -164,3 +325,4 @@ class BishopBlur : Actor
 		Stop;
 	}
 }
+

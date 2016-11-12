@@ -95,6 +95,7 @@ class Actor : Thinker native
 	native vector3 Vec3Angle(float length, float angle, float z = 0, bool absolute = false);
 	native vector3 Vec2OffsetZ(float x, float y, float atz, bool absolute = false);
 	native void VelFromAngle(float speed = 0, float angle = 0);
+	native void Thrust(float speed = 0, float angle = 0);
 	native bool isFriend(Actor other);
 	native void AdjustFloorClip();
 	native DropItem GetDropItems();
@@ -292,7 +293,6 @@ class Actor : Thinker native
 	native void A_GenericFreezeDeath();
 	native void A_IceGuyDie();
 	native void A_CentaurDefend();
-	native void A_BishopMissileWeave();
 	native void A_CStaffMissileSlither();
 	native void A_PlayerScream();
 	native void A_SkullPop(class<PlayerChunk> skulltype = "BloodySkull");

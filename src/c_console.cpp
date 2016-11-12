@@ -282,7 +282,7 @@ struct FCommandBuffer
 
 	void CursorEnd()
 	{
-		CursorPos = Text.Len();
+		CursorPos = (unsigned)Text.Len();
 		StartPos = 0;
 		MakeStartPosGood();
 	}
@@ -358,7 +358,7 @@ struct FCommandBuffer
 			{
 				Text.Insert(CursorPos, clip);
 			}
-			CursorPos += clip.Len();
+			CursorPos += (unsigned)clip.Len();
 			MakeStartPosGood();
 		}
 	}
@@ -366,7 +366,7 @@ struct FCommandBuffer
 	void SetString(FString str)
 	{
 		Text = str;
-		CursorPos = Text.Len();
+		CursorPos = (unsigned)Text.Len();
 		MakeStartPosGood();
 	}
 };
@@ -404,9 +404,9 @@ private:
 };
 static FNotifyBuffer NotifyStrings;
 
-CUSTOM_CVAR(Int, con_numnotify, NUMNOTIFIES, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
+CUSTOM_CVAR(Int, con_notifylines, NUMNOTIFIES, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 {
-	NotifyStrings.Shift(con_numnotify);
+	NotifyStrings.Shift(self);
 }
 
 
@@ -613,7 +613,7 @@ void C_DeinitConsole ()
 	while (hist != NULL)
 	{
 		History *next = hist->Newer;
-		free (hist);
+		delete hist;
 		hist = next;
 	}
 	HistTail = HistHead = HistPos = NULL;
@@ -711,7 +711,7 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 		source.IsEmpty() ||
 		gamestate == GS_FULLCONSOLE ||
 		gamestate == GS_DEMOSCREEN ||
-		con_numnotify == 0)
+		con_notifylines == 0)
 		return;
 
 	if (ConsoleDrawing)
@@ -755,9 +755,9 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 		newline.PrintLevel = printlevel;
 		if (AddType == NEWLINE || Text.Size() == 0)
 		{
-			if (con_numnotify > 0)
+			if (con_notifylines > 0)
 			{
-				Shift(con_numnotify - 1);
+				Shift(con_notifylines - 1);
 			}
 			Text.Push(newline);
 		}
@@ -1659,7 +1659,7 @@ CCMD (history)
 
 	while (hist)
 	{
-		Printf ("   %s\n", hist->String);
+		Printf ("   %s\n", hist->String.GetChars());
 		hist = hist->Newer;
 	}
 }
@@ -1862,7 +1862,7 @@ static void C_TabComplete (bool goForward)
 		}
 		TabStart = i;
 
-		TabSize = CmdLine.Text.Len() - TabStart;
+		TabSize = (int)CmdLine.Text.Len() - TabStart;
 
 		if (!FindTabCommand(&CmdLine.Text[TabStart], &TabPos, TabSize))
 			return;		// No initial matches
@@ -1922,7 +1922,7 @@ static void C_TabComplete (bool goForward)
 			CmdLine.Text << TabCommands[TabPos].TabName << ' ';
 		}
 	}
-	CmdLine.CursorPos = CmdLine.Text.Len();
+	CmdLine.CursorPos = (unsigned)CmdLine.Text.Len();
 	CmdLine.MakeStartPosGood();
 }
 
@@ -1996,7 +1996,7 @@ static bool C_TabCompleteList ()
 			TabSize = commonsize;
 			CmdLine.Text.Truncate(TabStart);
 			CmdLine.Text.AppendCStrPart(TabCommands[TabPos].TabName.GetChars(), commonsize);
-			CmdLine.CursorPos = CmdLine.Text.Len();
+			CmdLine.CursorPos = (unsigned)CmdLine.Text.Len();
 		}
 		return false;
 	}

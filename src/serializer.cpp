@@ -163,7 +163,7 @@ static const char *StringToUnicode(const char *cc, int size = -1)
 	int count = 0;
 	int count1 = 0;
 	out.Clear();
-	while (ch = (*c++) & 255)
+	while ((ch = (*c++) & 255))
 	{
 		count1++;
 		if (ch >= 128)
@@ -181,7 +181,7 @@ static const char *StringToUnicode(const char *cc, int size = -1)
 	out.Last() = 0;
 	c = cc;
 	int i = 0;
-	while (ch = (*c++) & 255)
+	while ((ch = (*c++) & 255))
 	{
 		utf8_encode(ch, &out[i], &count1);
 		i += count1;

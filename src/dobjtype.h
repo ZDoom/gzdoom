@@ -145,15 +145,6 @@ struct PSymbolTable
 		return MapType::Iterator(Symbols);
 	}
 
-	// add a name to help debugging.
-#ifdef _DEBUG
-	FString name;
-	void SetName(const char *nm) { name = nm; }
-#else
-	void SetName(const char *) {}
-#endif
-
-
 private:
 
 	PSymbolTable *ParentSymbolTable;
@@ -828,7 +819,7 @@ public:
 	static PClassActor *FindActor(const FString &name)	{ return FindActor(FName(name, true)); }
 	static PClassActor *FindActor(ENamedName name)		{ return FindActor(FName(name)); }
 	static PClassActor *FindActor(FName name);
-	PClass *FindClassTentative(FName name, bool fatal = true);	// not static!
+	PClass *FindClassTentative(FName name);
 
 	static TArray<PClass *> AllClasses;
 

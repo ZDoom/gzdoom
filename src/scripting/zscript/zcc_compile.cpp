@@ -89,10 +89,6 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 	PSymbolTreeNode *childnode;
 	ZCC_Enum *enumType = nullptr;
 
-	FString name;
-	name << "nodes - " << FName(cnode->NodeName);
-	cls->TreeNodes.SetName(name);
-
 	// Need to check if the class actually has a body.
 	if (node != nullptr) do
 	{
@@ -418,7 +414,6 @@ void ZCCCompiler::CreateStructTypes()
 		s->Outer = s->OuterDef == nullptr? nullptr : s->OuterDef->Type;
 		s->strct->Type = NewStruct(s->NodeName(), s->Outer);
 		s->strct->Symbol = new PSymbolType(s->NodeName(), s->Type());
-		s->Type()->Symbols.SetName(FName(s->NodeName()));
 		GlobalSymbols.AddSymbol(s->strct->Symbol);
 
 		for (auto e : s->Enums)
@@ -486,6 +481,7 @@ void ZCCCompiler::CreateClassTypes()
 					if (me == nullptr)
 					{
 						Error(c->cls, "Unknown native class %s", c->NodeName().GetChars());
+						// Create a placeholder so that the compiler can continue looking for errors.
 						me = parent->FindClassTentative(c->NodeName());
 					}
 					else if (me->bRuntimeClass)
@@ -523,12 +519,25 @@ void ZCCCompiler::CreateClassTypes()
 					}
 
 					// We will never get here if the name is a duplicate, so we can just do the assignment.
-					c->cls->Type = parent->FindClassTentative(c->NodeName());
+					try
+					{
+						c->cls->Type = parent->CreateDerivedClass(c->NodeName(), TentativeClass);
+						if (c->Type() == nullptr)
+						{
+							Error(c->cls, "Class name %s already exists", c->NodeName().GetChars());
+						}
+					}
+					catch (CRecoverableError &err)
+					{
+						Error(c->cls, "%s", err.GetMessage());
+						// create a placeholder so that the compiler can continue looking for errors.
+						c->cls->Type = nullptr;
+					}
 				}
+				if (c->Type() == nullptr) c->cls->Type = parent->FindClassTentative(c->NodeName());
 				c->Type()->bExported = true;	// this class is accessible to script side type casts. (The reason for this flag is that types like PInt need to be skipped.)
 				c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
 				GlobalSymbols.AddSymbol(c->cls->Symbol);
-				c->Type()->Symbols.SetName(c->NodeName());
 				Classes.Push(c);
 				OrigClasses.Delete(i--);
 				donesomething = true;
@@ -553,7 +562,6 @@ void ZCCCompiler::CreateClassTypes()
 					c->cls->Type = RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName());
 					c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
 					GlobalSymbols.AddSymbol(c->cls->Symbol);
-					c->Type()->Symbols.SetName(c->NodeName());
 					Classes.Push(c);
 					OrigClasses.Delete(i--);
 					donesomething = true;
@@ -569,7 +577,6 @@ void ZCCCompiler::CreateClassTypes()
 		Error(c->cls, "Class %s has circular inheritance", FName(c->NodeName()).GetChars());
 		c->cls->Type = RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName());
 		c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
-		c->Type()->Symbols.SetName(FName(c->NodeName()).GetChars());
 		GlobalSymbols.AddSymbol(c->cls->Symbol);
 		Classes.Push(c);
 	}

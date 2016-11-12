@@ -375,7 +375,6 @@ static void DoParse(int lumpnum)
 	}
 
 	PSymbolTable symtable;
-	symtable.SetName("Global_Node");
 	ZCCCompiler cc(state, NULL, symtable, GlobalSymbols, lumpnum);
 	cc.Compile();
 

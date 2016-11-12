@@ -2491,6 +2491,11 @@ static bool DoGiveInventory(AActor *receiver, bool orresult, VM_ARGS)
 	{ // If there's nothing to receive it, it's obviously a fail, right?
 		return false;
 	}
+	// Owned inventory items cannot own anything because their Inventory pointer is repurposed for the owner's linked list.
+	if (receiver->IsKindOf(RUNTIME_CLASS(AInventory)) && static_cast<AInventory*>(receiver)->Owner != nullptr)
+	{
+		return false;
+	}
 
 	if (amount <= 0)
 	{

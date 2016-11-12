@@ -613,7 +613,7 @@ void C_DeinitConsole ()
 	while (hist != NULL)
 	{
 		History *next = hist->Newer;
-		free (hist);
+		delete hist;
 		hist = next;
 	}
 	HistTail = HistHead = HistPos = NULL;
@@ -1659,7 +1659,7 @@ CCMD (history)
 
 	while (hist)
 	{
-		Printf ("   %s\n", hist->String);
+		Printf ("   %s\n", hist->String.GetChars());
 		hist = hist->Newer;
 	}
 }

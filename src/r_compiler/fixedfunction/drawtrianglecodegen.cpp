@@ -520,75 +520,41 @@ void DrawTriangleCodegen::StencilSet(SSAInt x, SSAInt y, SSAUByte value)
 	SSAInt mask = StencilBlockMask.load(false);
 
 	SSAIfBlock branchNeedsUpdate;
-	branchNeedsUpdate.if_block(!(mask == SSAInt(0xffffffff) && StencilBlock[0].load(false) == value));
+	branchNeedsUpdate.if_block(!(mask == (SSAInt(0xffffff00) | value.zext_int())));
 
 	SSAIfBlock branchFirstSet;
-	branchFirstSet.if_block(mask == SSAInt(0xffffffff));
+	branchFirstSet.if_block((mask & SSAInt(0xffffff00)) == SSAInt(0xffffff00));
 	{
-		SSAUByte val0 = StencilBlock[0].load(false);
-		for (int i = 1; i < 8 * 8; i++)
+		SSAUByte val0 = mask.trunc_ubyte();
+		for (int i = 0; i < 8 * 8; i++)
 			StencilBlock[i].store(val0);
+		StencilBlockMask.store(SSAInt(0));
 	}
 	branchFirstSet.end_block();
 
-	SSAIfBlock branchNeedsUpdate2;
-	branchNeedsUpdate2.if_block(!(StencilBlock[x + y * 8].load(false) == value));
-
 	StencilBlock[x + y * 8].store(value);
 
-	SSAInt leveloffset = SSAInt(0);
-	for (int i = 1; i < 4; i++)
-	{
-		x = x >> 1;
-		y = y >> 1;
-
-		SSABool differs =
-			!(StencilBlock[(x << i) + (y << i) * 8].load(false) == value &&
-			StencilBlock[((x + 1) << i) + (y << i) * 8].load(false) == value &&
-			StencilBlock[(x << i) + ((y + 1) << i) * 8].load(false) == value &&
-			StencilBlock[((x + 1) << i) + ((y + 1) << i) * 8].load(false) == value);
-
-		SSAInt levelbit = SSAInt(1) << (leveloffset + x + y * (8 >> i));
-
-		mask = differs.select(mask & ~levelbit, mask | levelbit);
-
-		leveloffset = leveloffset + (SSAInt(8) >> leveloffset) * (SSAInt(8) >> leveloffset);
-	}
-
-	SSABool differs = 
-		!(StencilBlock[0].load(false) == value &&
-		StencilBlock[4].load(false) == value &&
-		StencilBlock[4 * 8].load(false) == value &&
-		StencilBlock[4 * 8 + 4].load(false) == value);
-
-	mask = differs.select(mask & ~(1 << 22), mask | (1 << 22));
-
-	StencilBlockMask.store(mask);
-
-	branchNeedsUpdate2.end_block();
 	branchNeedsUpdate.end_block();
 }
 
 SSAUByte DrawTriangleCodegen::StencilGet(SSAInt x, SSAInt y)
 {
-	SSABool oneValueBlock = StencilBlockMask.load(false) == SSAInt(0xffffffff);
-	return oneValueBlock.select(StencilBlock[0].load(false), StencilBlock[x + y * 8].load(false));
+	return StencilIsSingleValue().select(StencilBlockMask.load(false).trunc_ubyte(), StencilBlock[x + y * 8].load(false));
 }
 
 SSAUByte DrawTriangleCodegen::StencilGetSingle()
 {
-	return StencilBlock[0].load(false);
+	return StencilBlockMask.load(false).trunc_ubyte();
 }
 
 void DrawTriangleCodegen::StencilClear(SSAUByte value)
 {
-	StencilBlock[0].store(value);
-	StencilBlockMask.store(SSAInt(0xffffffff));
+	StencilBlockMask.store(SSAInt(0xffffff00) | value.zext_int());
 }
 
 SSABool DrawTriangleCodegen::StencilIsSingleValue()
 {
-	return StencilBlockMask.load(false) == SSAInt(0xffffffff);
+	return (StencilBlockMask.load(false) & SSAInt(0xffffff00)) == SSAInt(0xffffff00);
 }
 
 void DrawTriangleCodegen::LoadArgs(TriDrawVariant variant, bool truecolor, SSAValue args, SSAValue thread_data)

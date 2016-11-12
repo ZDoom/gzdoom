@@ -26,6 +26,7 @@ namespace llvm { class Value; }
 namespace llvm { class Type; }
 
 class SSAFloat;
+class SSAUByte;
 
 class SSAInt
 {
@@ -43,6 +44,8 @@ public:
 
 	SSAInt add(SSAInt b, bool no_unsigned_wrap, bool no_signed_wrap);
 	SSAInt ashr(int bits);
+
+	SSAUByte trunc_ubyte();
 
 	llvm::Value *v;
 };

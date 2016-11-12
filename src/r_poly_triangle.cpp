@@ -55,14 +55,25 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 
 	auto llvm = LLVMDrawers::Instance();
 	void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *);
+#if 1
 	switch (variant)
 	{
 	default:
 	case TriDrawVariant::Draw: drawfunc = r_swtruecolor ? llvm->TriDraw32: llvm->TriDraw8; break;
 	case TriDrawVariant::Fill: drawfunc = r_swtruecolor ? llvm->TriFill32 : llvm->TriFill8; break;
 	case TriDrawVariant::DrawSubsector: drawfunc = r_swtruecolor ? llvm->TriDrawSubsector32 : llvm->TriDrawSubsector8; break;
-	case TriDrawVariant::Stencil: drawfunc = ScreenPolyTriangleDrawer::stencil/*llvm->TriStencil*/; break;
+	case TriDrawVariant::Stencil: drawfunc = llvm->TriStencil; break;
 	}
+#else
+	switch (variant)
+	{
+	default:
+	case TriDrawVariant::Draw: drawfunc = r_swtruecolor ? ScreenPolyTriangleDrawer::draw32 : ScreenPolyTriangleDrawer::draw; break;
+	case TriDrawVariant::Fill: drawfunc = r_swtruecolor ? ScreenPolyTriangleDrawer::fill32 : ScreenPolyTriangleDrawer::fill; break;
+	case TriDrawVariant::DrawSubsector: drawfunc = r_swtruecolor ? ScreenPolyTriangleDrawer::drawsubsector32 : llvm->TriDrawSubsector8; break;
+	case TriDrawVariant::Stencil: drawfunc = ScreenPolyTriangleDrawer::stencil; break;
+	}
+#endif
 
 	TriDrawTriangleArgs args;
 	args.dest = dc_destorg;

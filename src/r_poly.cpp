@@ -41,6 +41,9 @@ CVAR(Bool, r_debug_cull, 0, 0)
 
 void RenderPolyBsp::Render()
 {
+	if (!r_swtruecolor) // Disable pal rendering for now
+		return;
+
 	// Setup working buffers
 	PolyVertexBuffer::Clear();
 	SolidSegments.clear();

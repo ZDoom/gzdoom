@@ -23,6 +23,7 @@
 #include "r_compiler/llvm_include.h"
 #include "ssa_int.h"
 #include "ssa_float.h"
+#include "ssa_ubyte.h"
 #include "ssa_bool.h"
 #include "ssa_scope.h"
 
@@ -79,6 +80,11 @@ SSAInt SSAInt::add(SSAInt b, bool no_unsigned_wrap, bool no_signed_wrap)
 SSAInt SSAInt::ashr(int bits)
 {
 	return SSAInt::from_llvm(SSAScope::builder().CreateAShr(v, bits, SSAScope::hint()));
+}
+
+SSAUByte SSAInt::trunc_ubyte()
+{
+	return SSAUByte::from_llvm(SSAScope::builder().CreateTrunc(v, SSAUByte::llvm_type(), SSAScope::hint()));
 }
 
 SSAInt operator+(const SSAInt &a, const SSAInt &b)

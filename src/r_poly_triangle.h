@@ -85,70 +85,40 @@ public:
 
 	void Set(int x, int y, uint8_t value)
 	{
-		if (ValueMask == 0xffffffff)
+		if ((ValueMask & 0xffffff00) == 0xffffff00)
 		{
-			if (Values[0] == value)
+			if ((ValueMask & 0xff) == value)
 				return;
 
-			for (int i = 1; i < 8 * 8; i++)
-				Values[i] = Values[0];
+			for (int i = 0; i < 8 * 8; i++)
+				Values[i] = (ValueMask & 0xff);
+			ValueMask = 0;
 		}
-
-		if (Values[x + y * 8] == value)
-			return;
 
 		Values[x + y * 8] = value;
-
-		int leveloffset = 0;
-		for (int i = 1; i < 4; i++)
-		{
-			x >>= 1;
-			y >>= 1;
-
-			bool differs =
-				Values[(x << i)       + (y << i) * 8]       != value ||
-				Values[((x + 1) << i) + (y << i) * 8]       != value ||
-				Values[(x << i)       + ((y + 1) << i) * 8] != value ||
-				Values[((x + 1) << i) + ((y + 1) << i) * 8] != value;
-
-			int levelbit = 1 << (leveloffset + x + y * (8 >> i));
-
-			if (differs)
-				ValueMask = ValueMask & ~levelbit;
-			else
-				ValueMask = ValueMask | levelbit;
-
-			leveloffset += (8 >> leveloffset) * (8 >> leveloffset);
-		}
-
-		if (Values[0] != value || Values[4] != value || Values[4 * 8] != value || Values[4 * 8 + 4] != value)
-			ValueMask = ValueMask & ~(1 << 22);
-		else
-			ValueMask = ValueMask | (1 << 22);
 	}
 
 	uint8_t Get(int x, int y) const
 	{
-		if (ValueMask == 0xffffffff)
-			return Values[0];
+		if (IsSingleValue())
+			return ValueMask & 0xff;
 		else
 			return Values[x + y * 8];
 	}
 
 	void Clear(uint8_t value)
 	{
-		Values[0] = value;
-		ValueMask = 0xffffffff;
+		ValueMask = 0xffffff00 | (uint32_t)value;
 	}
 
 	bool IsSingleValue() const
 	{
-		return ValueMask == 0xffffffff;
+		return (ValueMask & 0xffffff00) == 0xffffff00;
 	}
 
 private:
-	uint8_t *Values; // [8 * 8];
-	uint32_t &ValueMask; // 4 * 4 + 2 * 2 + 1 bits indicating is Values are the same
+	uint8_t *Values;
+	uint32_t &ValueMask;
 };
 
 class PolySubsectorGBuffer

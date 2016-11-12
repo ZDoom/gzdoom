@@ -404,9 +404,9 @@ private:
 };
 static FNotifyBuffer NotifyStrings;
 
-CUSTOM_CVAR(Int, con_numnotify, NUMNOTIFIES, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
+CUSTOM_CVAR(Int, con_notifylines, NUMNOTIFIES, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 {
-	NotifyStrings.Shift(con_numnotify);
+	NotifyStrings.Shift(self);
 }
 
 
@@ -711,7 +711,7 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 		source.IsEmpty() ||
 		gamestate == GS_FULLCONSOLE ||
 		gamestate == GS_DEMOSCREEN ||
-		con_numnotify == 0)
+		con_notifylines == 0)
 		return;
 
 	if (ConsoleDrawing)
@@ -755,9 +755,9 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 		newline.PrintLevel = printlevel;
 		if (AddType == NEWLINE || Text.Size() == 0)
 		{
-			if (con_numnotify > 0)
+			if (con_notifylines > 0)
 			{
-				Shift(con_numnotify - 1);
+				Shift(con_notifylines - 1);
 			}
 			Text.Push(newline);
 		}

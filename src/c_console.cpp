@@ -100,7 +100,7 @@ extern bool		advancedemo;
 extern FBaseCVar *CVars;
 extern FConsoleCommand *Commands[FConsoleCommand::HASH_SIZE];
 
-unsigned	ConCols, PhysRows;
+unsigned	ConCols;
 int			ConWidth;
 bool		vidactive = false;
 bool		cursoron = false;
@@ -533,7 +533,6 @@ void C_InitConsole (int width, int height, bool ingame)
 	}
 	ConWidth = (width - LEFTMARGIN - RIGHTMARGIN);
 	ConCols = ConWidth / cwidth;
-	PhysRows = height / cheight;
 
 	if (conbuffer == NULL) conbuffer = new FConsoleBuffer;
 }
@@ -1324,7 +1323,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 		case GK_PGUP:
 			if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
 			{ // Scroll console buffer up one page
-				RowAdjust += (SCREENHEIGHT-4) /
+				RowAdjust += (SCREENHEIGHT-4)/active_con_scale() /
 					((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? ConFont->GetHeight() : ConFont->GetHeight()*2) - 3;
 			}
 			else if (RowAdjust < conbuffer->GetFormattedLineCount())
@@ -1347,7 +1346,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 		case GK_PGDN:
 			if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
 			{ // Scroll console buffer down one page
-				const int scrollamt = (SCREENHEIGHT-4) /
+				const int scrollamt = (SCREENHEIGHT-4)/active_con_scale() /
 					((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? ConFont->GetHeight() : ConFont->GetHeight()*2) - 3;
 				if (RowAdjust < scrollamt)
 				{

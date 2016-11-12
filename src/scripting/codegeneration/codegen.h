@@ -192,7 +192,11 @@ struct ExpVal
 	
 	FName GetName() const
 	{
-		if (Type == TypeString) return FName(*(FString *)&pointer);
+		if (Type == TypeString)
+		{
+			if (((FString *)&pointer)->Len() == 0) return NAME_None;
+			return FName(*(FString *)&pointer);
+		}
 		return Type == TypeName ? ENamedName(Int) : NAME_None;
 	}
 };

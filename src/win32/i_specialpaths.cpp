@@ -43,7 +43,7 @@
 #include "version.h"	// for GAMENAME
 #include "i_system.h"
 
-typedef HRESULT (WINAPI *GKFP)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR *);
+#include "optwin32.h"
 
 //===========================================================================
 //
@@ -94,19 +94,17 @@ bool UseKnownFolders()
 
 bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create, FString &path)
 {
-	static TOptWin32Proc<GKFP> SHGetKnownFolderPath("shell32.dll", "SHGetKnownFolderPath");
+	using OptWin32::SHGetFolderPathA;
+	using OptWin32::SHGetKnownFolderPath;
 
 	char pathstr[MAX_PATH];
 
 	// SHGetKnownFolderPath knows about more folders than SHGetFolderPath, but is
 	// new to Vista, hence the reason we support both.
-	if (SHGetKnownFolderPath == NULL)
+	if (!SHGetKnownFolderPath)
 	{
-		static TOptWin32Proc<HRESULT(WINAPI*)(HWND, int, HANDLE, DWORD, LPTSTR)>
-			SHGetFolderPathA("shell32.dll", "SHGetFolderPathA");
-
 		// NT4 doesn't even have this function.
-		if (SHGetFolderPathA == NULL)
+		if (!SHGetFolderPathA)
 			return false;
 
 		if (shell_folder < 0)
@@ -117,7 +115,7 @@ bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create
 		{
 			shell_folder |= CSIDL_FLAG_CREATE;
 		}
-		if (FAILED(SHGetFolderPathA.Call(NULL, shell_folder, NULL, 0, pathstr)))
+		if (FAILED(SHGetFolderPathA(NULL, shell_folder, NULL, 0, pathstr)))
 		{
 			return false;
 		}
@@ -127,7 +125,7 @@ bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create
 	else
 	{
 		PWSTR wpath;
-		if (FAILED(SHGetKnownFolderPath.Call(known_folder, create ? KF_FLAG_CREATE : 0, NULL, &wpath)))
+		if (FAILED(SHGetKnownFolderPath(known_folder, create ? KF_FLAG_CREATE : 0, NULL, &wpath)))
 		{
 			return false;
 		}

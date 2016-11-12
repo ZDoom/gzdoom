@@ -359,6 +359,9 @@ protected:
 #ifndef DYN_FLUIDSYNTH
 #include <fluidsynth.h>
 #else
+#include "i_module.h"
+extern FModule FluidSynthModule;
+
 struct fluid_settings_t;
 struct fluid_synth_t;
 #endif
@@ -386,40 +389,35 @@ protected:
 
 #ifdef DYN_FLUIDSYNTH
 	enum { FLUID_FAILED = -1, FLUID_OK = 0 };
-	fluid_settings_t *(*new_fluid_settings)();
-	fluid_synth_t *(*new_fluid_synth)(fluid_settings_t *);
-	int (*delete_fluid_synth)(fluid_synth_t *);
-	void (*delete_fluid_settings)(fluid_settings_t *);
-	int (*fluid_settings_setnum)(fluid_settings_t *, const char *, double);
-	int (*fluid_settings_setstr)(fluid_settings_t *, const char *, const char *);
-	int (*fluid_settings_setint)(fluid_settings_t *, const char *, int);
-	int (*fluid_settings_getstr)(fluid_settings_t *, const char *, char **);
-	int (*fluid_settings_getint)(fluid_settings_t *, const char *, int *);
-	void (*fluid_synth_set_reverb_on)(fluid_synth_t *, int);
-	void (*fluid_synth_set_chorus_on)(fluid_synth_t *, int);
-	int (*fluid_synth_set_interp_method)(fluid_synth_t *, int, int);
-	int (*fluid_synth_set_polyphony)(fluid_synth_t *, int);
-	int (*fluid_synth_get_polyphony)(fluid_synth_t *);
-	int (*fluid_synth_get_active_voice_count)(fluid_synth_t *);
-	double (*fluid_synth_get_cpu_load)(fluid_synth_t *);
-	int (*fluid_synth_system_reset)(fluid_synth_t *);
-	int (*fluid_synth_noteon)(fluid_synth_t *, int, int, int);
-	int (*fluid_synth_noteoff)(fluid_synth_t *, int, int);
-	int (*fluid_synth_cc)(fluid_synth_t *, int, int, int);
-	int (*fluid_synth_program_change)(fluid_synth_t *, int, int);
-	int (*fluid_synth_channel_pressure)(fluid_synth_t *, int, int);
-	int (*fluid_synth_pitch_bend)(fluid_synth_t *, int, int);
-	int (*fluid_synth_write_float)(fluid_synth_t *, int, void *, int, int, void *, int, int);
-	int (*fluid_synth_sfload)(fluid_synth_t *, const char *, int);
-	void (*fluid_synth_set_reverb)(fluid_synth_t *, double, double, double, double);
-	void (*fluid_synth_set_chorus)(fluid_synth_t *, int, double, double, double, int);
-	int (*fluid_synth_sysex)(fluid_synth_t *, const char *, int, char *, int *, int *, int);
+	static TReqProc<FluidSynthModule, fluid_settings_t *(*)()> new_fluid_settings;
+	static TReqProc<FluidSynthModule, fluid_synth_t *(*)(fluid_settings_t *)> new_fluid_synth;
+	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *)> delete_fluid_synth;
+	static TReqProc<FluidSynthModule, void (*)(fluid_settings_t *)> delete_fluid_settings;
+	static TReqProc<FluidSynthModule, int (*)(fluid_settings_t *, const char *, double)> fluid_settings_setnum;
+	static TReqProc<FluidSynthModule, int (*)(fluid_settings_t *, const char *, const char *)> fluid_settings_setstr;
+	static TReqProc<FluidSynthModule, int (*)(fluid_settings_t *, const char *, int)> fluid_settings_setint;
+	static TReqProc<FluidSynthModule, int (*)(fluid_settings_t *, const char *, char **)> fluid_settings_getstr;
+	static TReqProc<FluidSynthModule, int (*)(fluid_settings_t *, const char *, int *)> fluid_settings_getint;
+	static TReqProc<FluidSynthModule, void (*)(fluid_synth_t *, int)> fluid_synth_set_reverb_on;
+	static TReqProc<FluidSynthModule, void (*)(fluid_synth_t *, int)> fluid_synth_set_chorus_on;
+	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int)> fluid_synth_set_interp_method;
+	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int)> fluid_synth_set_polyphony;
+	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *)> fluid_synth_get_polyphony;
+	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *)> fluid_synth_get_active_voice_count;
+	static TReqProc<FluidSynthModule, double (*)(fluid_synth_t *)> fluid_synth_get_cpu_load;
+	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *)> fluid_synth_system_reset;
+	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int, int)> fluid_synth_noteon;
+	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int)> fluid_synth_noteoff;
+	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int, int)> fluid_synth_cc;
+	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int)> fluid_synth_program_change;
+	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int)> fluid_synth_channel_pressure;
+	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int)> fluid_synth_pitch_bend;
+	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, void *, int, int, void *, int, int)> fluid_synth_write_float;
+	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, const char *, int)> fluid_synth_sfload;
+	static TReqProc<FluidSynthModule, void (*)(fluid_synth_t *, double, double, double, double)> fluid_synth_set_reverb;
+	static TReqProc<FluidSynthModule, void (*)(fluid_synth_t *, int, double, double, double, int)> fluid_synth_set_chorus;
+	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, const char *, int, char *, int *, int *, int)> fluid_synth_sysex;
 
-#ifdef _WIN32
-	HMODULE FluidSynthDLL;
-#else
-	void *FluidSynthSO;
-#endif
 	bool LoadFluidSynth();
 	void UnloadFluidSynth();
 #endif

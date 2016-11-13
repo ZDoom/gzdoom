@@ -46,7 +46,7 @@
 
 #endif
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__clang__)
 #define __STDC_LIMIT_MACROS    // DataTypes.h:57:3: error: "Must #define __STDC_LIMIT_MACROS before #including Support/DataTypes.h"
 #define __STDC_CONSTANT_MACROS // DataTypes.h:61:3: error: "Must #define __STDC_CONSTANT_MACROS before " "#including Support/DataTypes.h"
 #pragma clang diagnostic push
@@ -80,7 +80,7 @@
 #include <llvm/Support/FormattedStream.h>
 #endif
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__clang__)
 #pragma clang diagnostic pop
 #endif
 

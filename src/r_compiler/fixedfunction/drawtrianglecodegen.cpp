@@ -123,6 +123,12 @@ void DrawTriangleCodegen::Setup(TriDrawVariant variant, bool truecolor)
 	C3 = stack_C3.load();
 
 	// Gradients
+	v1.x = SSAFloat(X1) * 0.0625f;
+	v2.x = SSAFloat(X2) * 0.0625f;
+	v3.x = SSAFloat(X3) * 0.0625f;
+	v1.y = SSAFloat(Y1) * 0.0625f;
+	v2.y = SSAFloat(Y2) * 0.0625f;
+	v3.y = SSAFloat(Y3) * 0.0625f;
 	gradWX = gradx(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
 	gradWY = grady(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
 	startW = v1.w + gradWX * (SSAFloat(minx) - v1.x) + gradWY * (SSAFloat(miny) - v1.y);
@@ -218,8 +224,8 @@ void DrawTriangleCodegen::LoopBlockX(TriDrawVariant variant, bool truecolor)
 		SSABool clipneeded = clipleft > x || clipright < (x + q) || cliptop > y || clipbottom < (y + q);
 
 		// Calculate varying variables for affine block
-		SSAFloat offx0 = SSAFloat(x - minx) + 0.5f;
-		SSAFloat offy0 = SSAFloat(y - miny) + 0.5f;
+		SSAFloat offx0 = SSAFloat(x - minx);
+		SSAFloat offy0 = SSAFloat(y - miny);
 		SSAFloat offx1 = offx0 + SSAFloat(q);
 		SSAFloat offy1 = offy0 + SSAFloat(q);
 		SSAFloat rcpWTL = 1.0f / (startW + offx0 * gradWX + offy0 * gradWY);

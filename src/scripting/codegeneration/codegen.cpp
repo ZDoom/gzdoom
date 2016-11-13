@@ -5106,23 +5106,6 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			self = self->Resolve(ctx);
 			newex = ResolveMember(ctx, ctx.Function->Variants[0].SelfClass, self, ctx.Function->Variants[0].SelfClass);
 			ABORT(newex);
-
-			if (ctx.Function->Variants[0].SelfClass != ctx.Class)
-			{
-				// Check if the restricted class can access it.
-				PSymbol *sym2;
-				if ((sym2 = ctx.FindInClass(Identifier, symtbl)) != nullptr)
-				{
-					if (sym != sym2)
-					{
-						// At the moment this cannot happen as the only possibility is SelfClass being an AActor and OwningClass an AStateProvider which comes from AActor anyways.
-						ScriptPosition.Message(MSG_ERROR, "Member variable of %s not accessible through restricted self pointer", ctx.Class->TypeName.GetChars());
-						delete newex;
-						delete this;
-						return nullptr;
-					}
-				}
-			}
 		}
 	}
 
@@ -5138,20 +5121,12 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		}
 		else if (ctx.FromDecorate && ctx.Class->IsDescendantOf(RUNTIME_CLASS(AStateProvider)) && sym->IsKindOf(RUNTIME_CLASS(PField)))
 		{
-			if (~ctx.Function->Variants[0].Flags & VARF_Action)
-			{
-				// No stateowner pointer to rely on, complete ambiguity.
-				// Abort here instead of risking a crash.
-				ScriptPosition.Message(MSG_ERROR, "Member variable access from non-action function within a StateProvider.");
-				delete this;
-				return nullptr;
-			}
-
 			FxExpression *self = new FxSelf(ScriptPosition, true);
 			self = self->Resolve(ctx);
 			newex = ResolveMember(ctx, ctx.Class, self, ctx.Class);
 			ABORT(newex);
-			ScriptPosition.Message(MSG_WARNING, "Self pointer used in ambiguous context; VM execution may abort!");
+			ScriptPosition.Message(MSG_DEBUGWARN, "Self pointer used in ambiguous context; VM execution may abort!");
+			ctx.Unsafe = true;
 		}
 		else
 		{

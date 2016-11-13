@@ -116,10 +116,10 @@ private:
 	SSAInt x, y;
 	SSAInt x0, x1, y0, y1;
 	SSAInt diminishedlight;
-	SSAFloat varyingTL[TriVertex::NumVarying];
-	SSAFloat varyingTR[TriVertex::NumVarying];
-	SSAFloat varyingBL[TriVertex::NumVarying];
-	SSAFloat varyingBR[TriVertex::NumVarying];
+	SSAInt varyingPos[TriVertex::NumVarying];
+	SSAInt varyingStepPos[TriVertex::NumVarying];
+	SSAInt varyingStartStepX[TriVertex::NumVarying];
+	SSAInt varyingIncrStepX[TriVertex::NumVarying];
 
 	SSAUBytePtr StencilBlock;
 	SSAIntPtr StencilBlockMask;

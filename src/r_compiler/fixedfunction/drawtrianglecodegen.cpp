@@ -228,10 +228,20 @@ void DrawTriangleCodegen::LoopBlockX(TriDrawVariant variant, bool truecolor)
 		SSAFloat rcpWBR = 1.0f / (startW + offx1 * gradWX + offy1 * gradWY);
 		for (int i = 0; i < TriVertex::NumVarying; i++)
 		{
-			varyingTL[i] = (startVarying[i] + offx0 * gradVaryingX[i] + offy0 * gradVaryingY[i]) * rcpWTL;
-			varyingTR[i] = (startVarying[i] + offx1 * gradVaryingX[i] + offy0 * gradVaryingY[i]) * rcpWTR;
-			varyingBL[i] = ((startVarying[i] + offx0 * gradVaryingX[i] + offy1 * gradVaryingY[i]) * rcpWBL - varyingTL[i]) * (1.0f / q);
-			varyingBR[i] = ((startVarying[i] + offx1 * gradVaryingX[i] + offy1 * gradVaryingY[i]) * rcpWBR - varyingTR[i]) * (1.0f / q);
+			SSAFloat varyingTL = (startVarying[i] + offx0 * gradVaryingX[i] + offy0 * gradVaryingY[i]) * rcpWTL;
+			SSAFloat varyingTR = (startVarying[i] + offx1 * gradVaryingX[i] + offy0 * gradVaryingY[i]) * rcpWTR;
+			SSAFloat varyingBL = (startVarying[i] + offx0 * gradVaryingX[i] + offy1 * gradVaryingY[i]) * rcpWBL;
+			SSAFloat varyingBR = (startVarying[i] + offx1 * gradVaryingX[i] + offy1 * gradVaryingY[i]) * rcpWBR;
+
+			SSAFloat pos = varyingTL;
+			SSAFloat stepPos = (varyingBL - varyingTL) * (1.0f / q);
+			SSAFloat startStepX = (varyingTR - varyingTL) * (1.0f / q);
+			SSAFloat incrStepX = (varyingBR - varyingBL) * (1.0f / q) - startStepX;
+
+			varyingPos[i] = SSAInt(pos * SSAFloat((float)0x01000000), false);
+			varyingStepPos[i] = SSAInt(stepPos * SSAFloat((float)0x01000000), false);
+			varyingStartStepX[i] = SSAInt(startStepX * SSAFloat((float)0x01000000), false);
+			varyingIncrStepX[i] = SSAInt(incrStepX * SSAFloat((float)0x01000000), false);
 		}
 
 		SSAFloat globVis = SSAFloat(1706.0f);
@@ -296,11 +306,8 @@ void DrawTriangleCodegen::LoopFullBlock(TriDrawVariant variant, bool truecolor)
 			SSAInt varyingStep[TriVertex::NumVarying];
 			for (int i = 0; i < TriVertex::NumVarying; i++)
 			{
-				SSAFloat pos = varyingTL[i] + varyingBL[i] * SSAFloat(iy);
-				SSAFloat step = (varyingTR[i] + varyingBR[i] * SSAFloat(iy) - pos) * (1.0f / q);
-
-				stack_varying[i].store(SSAInt((pos - SSAFloat::floor(pos)) * SSAFloat((float)0x100000000LL), true));
-				varyingStep[i] = SSAInt(step * SSAFloat((float)0x100000000LL), true);
+				stack_varying[i].store((varyingPos[i] + varyingStepPos[i] * iy) << 8);
+				varyingStep[i] = (varyingStartStepX[i] + varyingIncrStepX[i] * iy) << 8;
 			}
 
 			stack_ix.store(SSAInt(0));
@@ -368,11 +375,8 @@ void DrawTriangleCodegen::LoopPartialBlock(TriDrawVariant variant, bool truecolo
 		SSAInt varyingStep[TriVertex::NumVarying];
 		for (int i = 0; i < TriVertex::NumVarying; i++)
 		{
-			SSAFloat pos = varyingTL[i] + varyingBL[i] * SSAFloat(iy);
-			SSAFloat step = (varyingTR[i] + varyingBR[i] * SSAFloat(iy) - pos) * (1.0f / q);
-
-			stack_varying[i].store(SSAInt((pos - SSAFloat::floor(pos)) * SSAFloat((float)0x100000000LL), true));
-			varyingStep[i] = SSAInt(step * SSAFloat((float)0x100000000LL), true);
+			stack_varying[i].store((varyingPos[i] + varyingStepPos[i] * iy) << 8);
+			varyingStep[i] = (varyingStartStepX[i] + varyingIncrStepX[i] * iy) << 8;
 		}
 
 		stack_CX1.store(CY1);

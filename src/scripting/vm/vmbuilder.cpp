@@ -762,6 +762,7 @@ void FFunctionBuildList::Build()
 				codesize += sfunc->CodeSize;
 			}
 			sfunc->PrintableName = item.PrintableName;
+			sfunc->Unsafe = ctx.Unsafe;
 		}
 		delete item.Code;
 		if (dump != nullptr)

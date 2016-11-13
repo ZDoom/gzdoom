@@ -11,6 +11,14 @@
 #include <gdk/gdk.h>
 #else
 #include <gdk/gdkkeysyms.h>
+typedef enum
+{
+	GTK_ALIGN_FULL,
+	GTK_ALIGN_START,
+	GTK_ALIGN_END,
+	GTK_ALIGN_CENTER,
+	GTK_ALIGN_BASELINE
+} GtkAlign;
 #endif
 
 #include "c_cvars.h"

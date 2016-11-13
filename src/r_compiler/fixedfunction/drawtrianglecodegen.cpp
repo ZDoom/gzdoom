@@ -284,8 +284,8 @@ void DrawTriangleCodegen::LoopFullBlock(TriDrawVariant variant, bool truecolor)
 		int pixelsize = truecolor ? 4 : 1;
 
 		stack_iy.store(SSAInt(0));
-		stack_buffer.store(dest);
-		stack_subsectorbuffer.store(subsectorGBuffer);
+		stack_buffer.store(dest[x * pixelsize]);
+		stack_subsectorbuffer.store(subsectorGBuffer[x]);
 
 		SSAForBlock loopy;
 		SSAInt iy = stack_iy.load();
@@ -303,32 +303,26 @@ void DrawTriangleCodegen::LoopFullBlock(TriDrawVariant variant, bool truecolor)
 				varyingStep[i] = SSAInt(step * SSAFloat((float)0x100000000LL), true);
 			}
 
-			stack_ix.store(x);
+			stack_ix.store(SSAInt(0));
 			SSAForBlock loopx;
 			SSAInt ix = stack_ix.load();
 			SSAInt varying[TriVertex::NumVarying];
 			for (int i = 0; i < TriVertex::NumVarying; i++)
 				varying[i] = stack_varying[i].load();
-			loopx.loop_block(ix < x + q, q);
+			loopx.loop_block(ix < SSAInt(q), q);
 			{
 				if (variant == TriDrawVariant::DrawSubsector)
 				{
 					SSAIfBlock branch;
 					branch.if_block(subsectorbuffer[ix].load(true) >= subsectorDepth);
 					{
-						if (truecolor)
-							ProcessPixel(buffer[ix * 4], subsectorbuffer[ix], varying, variant, truecolor);
-						else
-							ProcessPixel(buffer[ix], subsectorbuffer[ix], varying, variant, truecolor);
+						ProcessPixel(buffer[ix * pixelsize], subsectorbuffer[ix], varying, variant, truecolor);
 					}
 					branch.end_block();
 				}
 				else
 				{
-					if (truecolor)
-						ProcessPixel(buffer[ix * 4], subsectorbuffer[ix], varying, variant, truecolor);
-					else
-						ProcessPixel(buffer[ix], subsectorbuffer[ix], varying, variant, truecolor);
+					ProcessPixel(buffer[ix * pixelsize], subsectorbuffer[ix], varying, variant, truecolor);
 				}
 
 				for (int i = 0; i < TriVertex::NumVarying; i++)
@@ -359,8 +353,8 @@ void DrawTriangleCodegen::LoopPartialBlock(TriDrawVariant variant, bool truecolo
 	stack_CY2.store(C2 + DX23 * y0 - DY23 * x0);
 	stack_CY3.store(C3 + DX31 * y0 - DY31 * x0);
 	stack_iy.store(SSAInt(0));
-	stack_buffer.store(dest);
-	stack_subsectorbuffer.store(subsectorGBuffer);
+	stack_buffer.store(dest[x * pixelsize]);
+	stack_subsectorbuffer.store(subsectorGBuffer[x]);
 
 	SSAForBlock loopy;
 	SSAInt iy = stack_iy.load();
@@ -401,7 +395,7 @@ void DrawTriangleCodegen::LoopPartialBlock(TriDrawVariant variant, bool truecolo
 
 			if (variant == TriDrawVariant::DrawSubsector)
 			{
-				covered = covered && subsectorbuffer[ix + x].load(true) >= subsectorDepth;
+				covered = covered && subsectorbuffer[ix].load(true) >= subsectorDepth;
 			}
 			else
 			{
@@ -417,10 +411,7 @@ void DrawTriangleCodegen::LoopPartialBlock(TriDrawVariant variant, bool truecolo
 				}
 				else
 				{
-					if (truecolor)
-						ProcessPixel(buffer[(ix + x) * 4], subsectorbuffer[ix + x], varying, variant, truecolor);
-					else
-						ProcessPixel(buffer[ix + x], subsectorbuffer[ix + x], varying, variant, truecolor);
+					ProcessPixel(buffer[ix * pixelsize], subsectorbuffer[ix], varying, variant, truecolor);
 				}
 			}
 			branch.end_block();

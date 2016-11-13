@@ -17,7 +17,7 @@ class MWeapFrost : MageWeapon
 		Tag "$TAG_MWEAPFROST";
 	}
 
-	native void A_FireConePL1();
+	action native void A_FireConePL1();
 
 	States
 	{

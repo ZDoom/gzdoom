@@ -16,16 +16,16 @@ class Sigil : Weapon native
 		Inventory.PickupMessage "$TXT_SIGIL";
 	}
 	
-	native void A_SelectPiece ();
-	native void A_SelectSigilView ();
-	native void A_SelectSigilDown ();
-	native void A_SelectSigilAttack ();
-	native void A_SigilCharge ();
-	native void A_FireSigil1 ();
-	native void A_FireSigil2 ();
-	native void A_FireSigil3 ();
-	native void A_FireSigil4 ();
-	native void A_FireSigil5 ();
+	action native void A_SelectPiece ();
+	action native void A_SelectSigilView ();
+	action native void A_SelectSigilDown ();
+	action native void A_SelectSigilAttack ();
+	action native void A_SigilCharge ();
+	action native void A_FireSigil1 ();
+	action native void A_FireSigil2 ();
+	action native void A_FireSigil3 ();
+	action native void A_FireSigil4 ();
+	action native void A_FireSigil5 ();
 	
 	States
 	{

@@ -19,13 +19,6 @@ DECLARE_ACTION(A_Raise)
 
 static FRandom pr_axeatk ("FAxeAtk");
 
-void A_FAxeCheckReady (AActor *actor);
-void A_FAxeCheckUp (AActor *actor);
-void A_FAxeCheckAtk (AActor *actor);
-void A_FAxeCheckReadyG (AActor *actor);
-void A_FAxeCheckUpG (AActor *actor);
-void A_FAxeAttack (AActor *actor);
-
 // The Fighter's Axe --------------------------------------------------------
 
 class AFWeapAxe : public AFighterWeapon
@@ -68,7 +61,7 @@ FState *AFWeapAxe::GetAtkState (bool hold)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReady)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -95,7 +88,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReady)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReadyG)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -122,7 +115,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReadyG)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUp)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -149,7 +142,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUp)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUpG)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -176,7 +169,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUpG)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckAtk)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -199,7 +192,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckAtk)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle angle;
 	int power;

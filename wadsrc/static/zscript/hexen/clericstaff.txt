@@ -16,10 +16,10 @@ class CWeapStaff : ClericWeapon
 		Tag "$TAG_CWEAPSTAFF";
 	}
 
-	native void A_CStaffInitBlink();
-	native void A_CStaffCheckBlink();
-	native void A_CStaffCheck();
-	native void A_CStaffAttack();
+	action native void A_CStaffInitBlink();
+	action native void A_CStaffCheckBlink();
+	action native void A_CStaffCheck();
+	action native void A_CStaffAttack();
 
 	States
 	{

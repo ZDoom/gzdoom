@@ -99,7 +99,7 @@ static bool TryPunch(APlayerPawn *pmo, DAngle angle, int damage, int power)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	int damage;
 	int i;

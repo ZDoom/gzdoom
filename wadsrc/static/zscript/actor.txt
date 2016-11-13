@@ -317,7 +317,6 @@ class Actor : Thinker native
 	native void A_Countdown();
 	native void A_AlertMonsters(float maxdist = 0, int flags = 0);
 	native void A_ClearSoundTarget();
-	native void A_FireAssaultGun();
 	native void A_CheckTerrain();
 
 	deprecated native void A_MissileAttack();

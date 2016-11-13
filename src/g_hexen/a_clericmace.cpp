@@ -15,7 +15,7 @@ static FRandom pr_maceatk ("CMaceAttack");
 
 DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle angle;
 	int damage;

@@ -336,29 +336,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_OpenShotgun2)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	S_Sound (self, CHAN_WEAPON, "weapons/sshoto", 1, ATTN_NORM);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_LoadShotgun2)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	S_Sound (self, CHAN_WEAPON, "weapons/sshotl", 1, ATTN_NORM);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_CloseShotgun2)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	S_Sound (self, CHAN_WEAPON, "weapons/sshotc", 1, ATTN_NORM);
-	A_ReFire (self);
-	return 0;
-}
-
-
 //------------------------------------------------------------------------------------
 //
 // Setting a random flash like some of Doom's weapons can easily crash when the
@@ -593,12 +570,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireRailgunLeft)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_RailWait)
-{
-	// Okay, this was stupid. Just use a NULL function instead of this.
-	return 0;
-}
-
 //
 // A_FireBFG
 //
@@ -714,16 +685,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 			P_TraceBleed(newdam > 0 ? newdam : damage, &t, self);
 		}
 	}
-	return 0;
-}
-
-//
-// A_BFGsound
-//
-DEFINE_ACTION_FUNCTION(AActor, A_BFGsound)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	S_Sound (self, CHAN_WEAPON, "weapons/bfgf", 1, ATTN_NORM);
 	return 0;
 }
 

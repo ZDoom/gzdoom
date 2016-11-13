@@ -96,8 +96,8 @@ class CWeapWraithverge : ClericWeapon native
 		Inventory.PickupSound "WeaponBuild";
 	}
 
-	native void A_CHolyAttack();
-	native void A_CHolyPalette();
+	action native void A_CHolyAttack();
+	action native void A_CHolyPalette();
 
 	States
 	{

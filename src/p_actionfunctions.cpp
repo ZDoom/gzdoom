@@ -4643,7 +4643,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckForReload)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if ( self->player == NULL || self->player->ReadyWeapon == NULL )
 	{
@@ -4696,7 +4696,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckForReload)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ResetReloadCounter)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if (self->player == NULL || self->player->ReadyWeapon == NULL)
 		return 0;

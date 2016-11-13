@@ -34,7 +34,7 @@ class Snout : Weapon
 		Weapon.YAdjust 10;
 	}
 
-	native void A_SnoutAttack ();
+	action native void A_SnoutAttack ();
 
 	States
 	{

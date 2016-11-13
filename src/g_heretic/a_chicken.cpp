@@ -138,7 +138,7 @@ void P_UpdateBeak (AActor *self)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BeakRaise)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -170,7 +170,7 @@ void P_PlayPeck (AActor *chicken)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL1)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle angle;
 	int damage;
@@ -205,7 +205,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL2)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle angle;
 	int damage;

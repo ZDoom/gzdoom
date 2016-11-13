@@ -66,7 +66,7 @@ void ACFlameMissile::Effect ()
 
 DEFINE_ACTION_FUNCTION(AActor, A_CFlameAttack)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 

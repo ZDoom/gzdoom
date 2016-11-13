@@ -62,7 +62,7 @@ class PunchDagger : StrifeWeapon
 		Tag "$TAG_PUNCHDAGGER";
 	}
 	
-	native void A_JabDagger ();
+	action native void A_JabDagger ();
 	
 	States
 	{
@@ -184,9 +184,9 @@ class StrifeCrossbow : StrifeWeapon
 		Inventory.Icon "CBOWA0";
 	}
 	
-	native void A_ClearFlash ();
-	native void A_ShowElectricFlash ();
-	native void A_FireArrow (class<Actor> proj);
+	action native void A_ClearFlash ();
+	action native void A_ShowElectricFlash ();
+	action native void A_FireArrow (class<Actor> proj);
 
 	States
 	{
@@ -331,7 +331,7 @@ class MiniMissileLauncher : StrifeWeapon
 		Inventory.PickupMessage "$TXT_MMLAUNCHER";
 	}
 
-	native void A_FireMiniMissile ();
+	action native void A_FireMiniMissile ();
 
 	States
 	{
@@ -446,7 +446,7 @@ class FlameThrower : StrifeWeapon
 		Inventory.PickupMessage "$TXT_FLAMER";
 	}
 	
-	native void A_FireFlamer ();
+	action native void A_FireFlamer ();
 
 	States
 	{
@@ -528,7 +528,7 @@ class Mauler : StrifeWeapon
 		Obituary "$OB_MPMAULER1";
 	}
 
-	native void A_FireMauler1 ();
+	action native void A_FireMauler1 ();
 
 	States
 	{
@@ -571,8 +571,8 @@ class Mauler2 : Mauler
 		Tag "$TAG_MAULER2";
 	}
 
-	native void A_FireMauler2Pre ();
-	native void A_FireMauler2 ();
+	action native void A_FireMauler2Pre ();
+	action native void A_FireMauler2 ();
 
 	States
 	{
@@ -816,7 +816,7 @@ class StrifeGrenadeLauncher : StrifeWeapon
 		Inventory.PickupMessage "$TXT_GLAUNCHER";
 	}
 
-	native void A_FireGrenade (class<Actor> grenadetype, float angleofs, state flash);
+	action native void A_FireGrenade (class<Actor> grenadetype, float angleofs, state flash);
 
 	States
 	{

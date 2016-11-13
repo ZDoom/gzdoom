@@ -25,7 +25,7 @@ static FRandom pr_hammeratk ("FHammerAtk");
 
 DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle angle;
 	int damage;
@@ -95,7 +95,7 @@ hammerdone:
 
 DEFINE_ACTION_FUNCTION(AActor, A_FHammerThrow)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	AActor *mo;
 	player_t *player;

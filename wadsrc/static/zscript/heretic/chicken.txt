@@ -26,8 +26,8 @@ class Beak : Weapon
 		Weapon.SisterWeapon "BeakPowered";
 	}
 	
-	native void A_BeakRaise ();
-	native void A_BeakAttackPL1();
+	action native void A_BeakRaise ();
+	action native void A_BeakAttackPL1();
 
 	States
 	{
@@ -55,7 +55,7 @@ class BeakPowered : Beak
 		Weapon.SisterWeapon "Beak";
 	}
 
-	native void A_BeakAttackPL2();
+	action native void A_BeakAttackPL2();
 
 	States
 	{

@@ -97,7 +97,7 @@ class FWeapQuietus : FighterWeapon
 		Tag "$TAG_FWEAPQUIETUS";
 	}
 
-	native void A_FSwordAttack();
+	action native void A_FSwordAttack();
 
 	States
 	{

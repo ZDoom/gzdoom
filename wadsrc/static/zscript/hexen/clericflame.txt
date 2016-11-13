@@ -16,7 +16,7 @@ class CWeapFlame : ClericWeapon
 		Tag "$TAG_CWEAPFLAME";
 	}
 
-	native void A_CFlameAttack();
+	action native void A_CFlameAttack();
 
 	States
 	{

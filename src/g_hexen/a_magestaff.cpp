@@ -122,7 +122,7 @@ void MStaffSpawn (AActor *pmo, DAngle angle, AActor *alttarget)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MStaffAttack)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle angle;
 	player_t *player;
@@ -167,7 +167,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MStaffPalette)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if (self->player != NULL)
 	{

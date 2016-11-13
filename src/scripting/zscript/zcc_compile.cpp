@@ -2317,7 +2317,14 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClass *cls, ZCC_TreeNode *af)
 				{
 					FArgumentList argumentlist;
 					// We can use this function directly without wrapping it in a caller.
-					return new FxVMFunctionCall(new FxSelf(*af), afd, argumentlist, *af, false);
+					if ((afd->Variants[0].Flags & VARF_Action) || !cls->IsDescendantOf(RUNTIME_CLASS(AStateProvider)) || !afd->Variants[0].SelfClass->IsDescendantOf(RUNTIME_CLASS(AStateProvider)))
+					{
+						return new FxVMFunctionCall(new FxSelf(*af), afd, argumentlist, *af, false);
+					}
+					else
+					{
+						Error(af, "Cannot use non-action function %s here.", FName(id->Identifier).GetChars());
+					}
 				}
 			}
 			else

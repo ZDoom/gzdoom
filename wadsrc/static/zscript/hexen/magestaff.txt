@@ -97,8 +97,8 @@ class MWeapBloodscourge : MageWeapon native
 		Tag "$TAG_MWEAPBLOODSCOURGE";
 	}
 
-	native void A_MStaffAttack();
-	native void A_MStaffPalette();
+	action native void A_MStaffAttack();
+	action native void A_MStaffPalette();
 
 	States
 	{

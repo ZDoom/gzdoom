@@ -6007,6 +6007,24 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 
 	PFunction *afd = FindClassMemberFunction(ctx.Class, ctx.Class, MethodName, ScriptPosition, &error);
 
+	// Action functions in state providers need special treatment because self is of type Actor here.
+	if (afd != nullptr && ctx.Class->IsDescendantOf(RUNTIME_CLASS(AStateProvider)) && (ctx.Function->Variants[0].Flags & VARF_Action))
+	{
+		// Only accept static and action functions from the current class. Calling a member function will require explicit use of 'invoker'.
+		if ((afd->Variants[0].Flags & (VARF_Method|VARF_Action)) == VARF_Method)
+		{
+			// Everything else that may be used here must pass the selfclass check, i.e. it must be reachable from Actor.
+			// Note that FuncClass is still the current item because for symbol privacy checks this is relevant.
+			afd = FindClassMemberFunction(ctx.Function->Variants[0].SelfClass, ctx.Class, MethodName, ScriptPosition, &error);
+			if (afd == nullptr)
+			{
+				ScriptPosition.Message(MSG_ERROR, "Unable to call non-action function %s from here. Please use 'invoker.%s' to call it.", MethodName.GetChars(), MethodName.GetChars());
+				delete this;
+				return nullptr;
+			}
+		}
+	}
+
 	if (error)
 	{
 		delete this;
@@ -6306,7 +6324,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 
 isresolved:
 	bool error = false;
-	PFunction *afd = FindClassMemberFunction(cls, cls, MethodName, ScriptPosition, &error);
+	PFunction *afd = FindClassMemberFunction(cls, ctx.Class, MethodName, ScriptPosition, &error);
 	if (error)
 	{
 		delete this;

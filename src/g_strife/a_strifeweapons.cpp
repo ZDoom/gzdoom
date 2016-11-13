@@ -94,7 +94,7 @@ void P_DaggerAlert (AActor *target, AActor *emitter)
 
 DEFINE_ACTION_FUNCTION(AActor, A_JabDagger)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle 	angle;
 	int 		damage;
@@ -212,7 +212,7 @@ int APoisonBolt::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ClearFlash)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player = self->player;
 
@@ -231,7 +231,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearFlash)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ShowElectricFlash)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if (self->player != nullptr)
 	{
@@ -248,7 +248,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShowElectricFlash)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireArrow)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_CLASS(ti, AActor);
 
 	DAngle savedangle;
@@ -307,7 +307,7 @@ void P_StrifeGunShot (AActor *mo, bool accurate, DAngle pitch)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireAssaultGun)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	bool accurate;
 
@@ -343,7 +343,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireAssaultGun)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMiniMissile)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player = self->player;
 	DAngle savedangle;
@@ -413,7 +413,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlameDie)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireFlamer)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player = self->player;
 
@@ -450,7 +450,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireFlamer)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMauler1)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if (self->player != NULL)
 	{
@@ -494,7 +494,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2Pre)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	S_Sound (self, CHAN_WEAPON, "weapons/mauler2charge", 1, ATTN_NORM);
 
@@ -516,7 +516,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2Pre)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if (self->player != NULL)
 	{
@@ -688,7 +688,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burnination)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_CLASS(grenadetype, AActor);
 	PARAM_ANGLE(angleofs);
 	PARAM_STATE(flash)
@@ -821,7 +821,7 @@ AInventory *ASigil::CreateCopy (AActor *other)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SelectPiece)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	int pieces = MIN (static_cast<ASigil*>(self)->NumPieces, 5);
 
@@ -847,7 +847,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectPiece)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilView)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DPSprite *pspr;
 	int pieces;
@@ -874,7 +874,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilView)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilDown)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DPSprite *pspr;
 	int pieces;
@@ -904,7 +904,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilDown)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilAttack)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DPSprite *pspr;
 	int pieces;
@@ -927,7 +927,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SigilCharge)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 	if (self->player != NULL)
@@ -945,7 +945,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SigilCharge)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LightInverse)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if (self->player != NULL)
 	{
@@ -962,7 +962,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightInverse)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	AActor *spot;
 	player_t *player = self->player;
@@ -1007,7 +1007,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSigil2)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player = self->player;
 
@@ -1029,7 +1029,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSigil3)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	AActor *spot;
 	player_t *player = self->player;
@@ -1063,7 +1063,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil3)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	AActor *spot;
 	player_t *player = self->player;
@@ -1103,7 +1103,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSigil5)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player = self->player;
 

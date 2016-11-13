@@ -17,12 +17,12 @@ class FWeapAxe : FighterWeapon native
 		Tag "$TAG_FWEAPAXE";
 	}
 
-	native void A_FAxeCheckUp();
-	native void A_FAxeCheckReady();
-	native void A_FAxeCheckAtk();
-	native void A_FAxeAttack();
-	native void A_FAxeCheckUpG();
-	native void A_FAxeCheckReadyG();
+	action native void A_FAxeCheckUp();
+	action native void A_FAxeCheckReady();
+	action native void A_FAxeCheckAtk();
+	action native void A_FAxeAttack();
+	action native void A_FAxeCheckUpG();
+	action native void A_FAxeCheckReadyG();
 
 	States
 	{

@@ -61,7 +61,7 @@ extern bool P_AutoUseChaosDevice (player_t *player);
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle angle;
 	DAngle slope;
@@ -107,7 +107,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL1)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle angle;
 	int damage;
@@ -144,7 +144,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL2)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	int i;
 	DAngle angle;
@@ -187,7 +187,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL1)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -216,7 +216,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL2)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -247,7 +247,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL2)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle Angle;
 	int damage;
@@ -421,7 +421,7 @@ void FireMacePL1B (AActor *actor)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL1)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	AActor *ball;
 	player_t *player;
@@ -579,7 +579,7 @@ boom:
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL2)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	AActor *mo;
 	player_t *player;
@@ -761,7 +761,7 @@ int ARipper::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireBlasterPL1)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle angle;
 	int damage;
@@ -888,7 +888,7 @@ void ARainTracker::Serialize(FSerializer &arc)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSkullRodPL1)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	AActor *mo;
 	player_t *player;
@@ -924,7 +924,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSkullRodPL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSkullRodPL2)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 	AActor *MissileActor;
@@ -1217,7 +1217,7 @@ int APhoenixFX2::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL1)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -1270,7 +1270,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PhoenixPuff)
 
 DEFINE_ACTION_FUNCTION(AActor, A_InitPhoenixPL2)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if (self->player != NULL)
 	{
@@ -1293,7 +1293,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InitPhoenixPL2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	AActor *mo;
 
@@ -1346,7 +1346,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ShutdownPhoenixPL2)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 

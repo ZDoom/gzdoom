@@ -23,7 +23,7 @@ class Staff : HereticWeapon
 		Tag "$TAG_STAFF";
 	}
 
-	native void A_StaffAttack (int damage, class<Actor> puff);
+	action native void A_StaffAttack (int damage, class<Actor> puff);
 
 	States
 	{
@@ -142,7 +142,7 @@ class GoldWand : HereticWeapon
 		Tag "$TAG_GOLDWAND";
 	}
 
-	native void A_FireGoldWandPL1 ();
+	action native void A_FireGoldWandPL1 ();
 	
 	States
 	{
@@ -178,7 +178,7 @@ class GoldWandPowered : GoldWand
 		Tag "$TAG_GOLDWANDP";
 	}
 
-	native void A_FireGoldWandPL2 ();
+	action native void A_FireGoldWandPL2 ();
 
 	States
 	{
@@ -294,7 +294,7 @@ class Crossbow : HereticWeapon
 		Tag "$TAG_CROSSBOW";
 	}
 
-	native void A_FireCrossbowPL1 ();
+	action native void A_FireCrossbowPL1 ();
 
 	States
 	{
@@ -330,7 +330,7 @@ class CrossbowPowered : Crossbow
 		Tag "$TAG_CROSSBOWP";
 	}
 
-	native void A_FireCrossbowPL2();
+	action native void A_FireCrossbowPL2();
 
 	States
 	{
@@ -462,7 +462,7 @@ class Gauntlets : Weapon
 		Obituary "$OB_MPGAUNTLETS";
 	}
 
-	native void A_GauntletAttack (int power);
+	action native void A_GauntletAttack (int power);
 
 	States
 	{
@@ -574,7 +574,7 @@ class Mace : HereticWeapon
 		Tag "$TAG_MACE";
 	}
 
-	native void A_FireMacePL1();
+	action native void A_FireMacePL1();
 	
 	States
 	{
@@ -611,7 +611,7 @@ class MacePowered : Mace
 		Tag "$TAG_MACEP";
 	}
 
-	native void A_FireMacePL2();
+	action native void A_FireMacePL2();
 	
 	States
 	{
@@ -778,7 +778,7 @@ class Blaster : HereticWeapon
 		Obituary "$OB_MPBLASTER";
 	}
 
-	native void A_FireBlasterPL1();
+	action native void A_FireBlasterPL1();
 
 	States
 	{
@@ -950,7 +950,7 @@ class SkullRod : HereticWeapon
 		Tag "$TAG_SKULLROD";
 	}
 
-	native void A_FireSkullRodPL1();
+	action native void A_FireSkullRodPL1();
 
 	States
 	{
@@ -984,7 +984,7 @@ class SkullRodPowered : SkullRod
 		Tag "$TAG_SKULLRODP";
 	}
 
-	native void A_FireSkullRodPL2();
+	action native void A_FireSkullRodPL2();
 
 	States
 	{
@@ -1140,7 +1140,7 @@ class PhoenixRod : Weapon native
 		Tag "$TAG_PHOENIXROD";
 	}
 
-	native void A_FirePhoenixPL1();
+	action native void A_FirePhoenixPL1();
 
 	States
 	{
@@ -1176,9 +1176,9 @@ class PhoenixRodPowered : PhoenixRod native
 		Tag "$TAG_PHOENIXRODP";
 	}
 
-	native void A_InitPhoenixPL2();
-	native void A_FirePhoenixPL2();
-	native void A_ShutdownPhoenixPL2();
+	action native void A_InitPhoenixPL2();
+	action native void A_FirePhoenixPL2();
+	action native void A_ShutdownPhoenixPL2();
 
 	States
 	{

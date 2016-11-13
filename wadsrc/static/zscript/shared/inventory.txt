@@ -46,20 +46,22 @@ class StateProvider : Inventory native
 	action native void A_FireBullets(float spread_xy, float spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", int flags = 1, float range = 0, class<Actor> missile = null, float Spawnheight = 32, float Spawnofs_xy = 0);
 	action native void A_FireCustomMissile(class<Actor> missiletype, float angle = 0, bool useammo = true, float spawnofs_xy = 0, float spawnheight = 0, int flags = 0, float pitch = 0);
 	action native void A_RailAttack(int damage, int spawnofs_xy = 0, bool useammo = true, color color1 = 0, color color2 = 0, int flags = 0, float maxdiff = 0, class<Actor> pufftype = "BulletPuff", float spread_xy = 0, float spread_z = 0, float range = 0, int duration = 0, float sparsity = 1.0, float driftspeed = 1.0, class<Actor> spawnclass = "none", float spawnofs_z = 0, int spiraloffset = 270, int limit = 0);
-	native void A_Light(int extralight);
-	native void A_Light0();
-	native void A_Light1();
-	native void A_Light2();
-	native void A_LightInverse();
-	native void A_WeaponReady(int flags = 0);
-	native void A_Lower();
-	native void A_Raise();
+	native action void A_Light(int extralight);
+	action void A_Light0() { A_Light(0); }
+	action void A_Light1() { A_Light(1); }
+	action void A_Light2() { A_Light(2); }
+	action native void A_LightInverse();
+	action native void A_WeaponReady(int flags = 0);
+	action native void A_Lower();
+	action native void A_Raise();
 	action native void A_FirePistol();
 	action native void A_FireShotgun();
 	action native void A_FireShotgun2();
-	native void A_OpenShotgun2();
-	native void A_LoadShotgun2();
-	native void A_CloseShotgun2();
+
+	action void A_OpenShotgun2() { A_PlaySound("weapons/sshoto", CHAN_WEAPON); }
+	action void A_LoadShotgun2() { A_PlaySound("weapons/sshotl", CHAN_WEAPON); }
+	action void A_CloseShotgun2() { A_PlaySound("weapons/sshotc", CHAN_WEAPON); }
+
 	action native void A_FireCGun();
 	action native void A_FireSTGrenade(class<Actor> grenadetype = "Grenade");
 	action native void A_FireMissile();
@@ -67,17 +69,18 @@ class StateProvider : Inventory native
 	action native void A_FireRailgun();
 	action native void A_FireRailgunLeft();
 	action native void A_FireRailgunRight();
-	native void A_RailWait();
-	native void A_BFGsound();
+	action void A_RailWait() {}
+	action void A_BFGsound() { A_PlaySound("weapons/bfgf", CHAN_WEAPON); }
 	action native void A_FireBFG();
 	action native void A_FireOldBFG();
-	native void A_ReFire(state flash = null);
-	native void A_ClearReFire();
-	native void A_CheckReload();
-	native void A_GunFlash(state flash = null, int flags = 0);
+	action native void A_ReFire(state flash = null);
+	action native void A_ClearReFire();
+	action native void A_CheckReload();
+	action native void A_GunFlash(state flash = null, int flags = 0);
+	action native void A_FireAssaultGun();
 	action native void A_Saw(sound fullsound = "weapons/sawfull", sound hitsound = "weapons/sawhit", int damage = 2, class<Actor> pufftype = "BulletPuff", int flags = 0, float range = 0, float spread_xy = 2.8125, float spread_z = 0, float lifesteal = 0, int lifestealmax = 0, class<BasicArmorBonus> armorbonustype = "ArmorBonus");
-	native state A_CheckForReload(int counter, state label, bool dontincrement = false);
-	native void A_ResetReloadCounter();
+	action native state A_CheckForReload(int counter, state label, bool dontincrement = false);
+	action native void A_ResetReloadCounter();
 }
 
 class ScoreItem : Inventory native

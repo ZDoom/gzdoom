@@ -16,8 +16,8 @@ class MWeapLightning : MageWeapon
 		Tag "$TAG_MWEAPLIGHTNING";
 	}
 
-	native void A_LightningReady();
-	native void A_MLightningAttack(class<Actor> floor = "LightningFloor", class<Actor> ceiling = "LightningCeiling");
+	action native void A_LightningReady();
+	action native void A_MLightningAttack(class<Actor> floor = "LightningFloor", class<Actor> ceiling = "LightningCeiling");
 
 	States
 	{

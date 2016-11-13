@@ -211,7 +211,7 @@ void SpawnSpiritTail (AActor *spirit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 	FTranslatedLineTarget t;
@@ -245,7 +245,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CHolyPalette)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if (self->player != NULL)
 	{

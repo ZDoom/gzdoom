@@ -126,7 +126,7 @@ int ALightningZap::SpecialMissileHit (AActor *thing)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LightningReady)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DoReadyWeapon(self);
 	if (pr_lightningready() < 160)
@@ -257,7 +257,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MLightningAttack)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_CLASS_DEF(floor, AActor);
 	PARAM_CLASS_DEF(ceiling, AActor);
 

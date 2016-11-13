@@ -46,7 +46,7 @@ int ACStaffMissile::DoSpecialDamage (AActor *target, int damage, FName damagetyp
 
 DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	APlayerPawn *pmo;
 	int damage;
@@ -115,7 +115,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CStaffAttack)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	AActor *mo;
 	player_t *player;
@@ -167,7 +167,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffMissileSlither)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CStaffInitBlink)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	self->weaponspecial = (pr_blink()>>1)+20;
 	return 0;
@@ -181,7 +181,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffInitBlink)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheckBlink)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if (self->player && self->player->ReadyWeapon)
 	{

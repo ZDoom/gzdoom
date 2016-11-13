@@ -39,18 +39,25 @@ void DrawTriangleCodegen::Generate(TriDrawVariant variant, bool truecolor, SSAVa
 	LoopBlockY(variant, truecolor);
 }
 
+SSAInt DrawTriangleCodegen::FloatTo28_4(SSAFloat v)
+{
+	// SSAInt(SSAFloat::round(16.0f * v), false);
+	SSAInt a = SSAInt(v * 32.0f, false);
+	return (a + (a.ashr(31) | SSAInt(1))).ashr(1);
+}
+
 void DrawTriangleCodegen::Setup(TriDrawVariant variant, bool truecolor)
 {
 	int pixelsize = truecolor ? 4 : 1;
 
 	// 28.4 fixed-point coordinates
-	Y1 = SSAInt(SSAFloat::round(16.0f * v1.y), false);
-	Y2 = SSAInt(SSAFloat::round(16.0f * v2.y), false);
-	Y3 = SSAInt(SSAFloat::round(16.0f * v3.y), false);
+	Y1 = FloatTo28_4(v1.y);
+	Y2 = FloatTo28_4(v2.y);
+	Y3 = FloatTo28_4(v3.y);
 
-	X1 = SSAInt(SSAFloat::round(16.0f * v1.x), false);
-	X2 = SSAInt(SSAFloat::round(16.0f * v2.x), false);
-	X3 = SSAInt(SSAFloat::round(16.0f * v3.x), false);
+	X1 = FloatTo28_4(v1.x);
+	X2 = FloatTo28_4(v2.x);
+	X3 = FloatTo28_4(v3.x);
 
 	// Deltas
 	DX12 = X1 - X2;

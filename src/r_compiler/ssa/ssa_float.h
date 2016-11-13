@@ -43,7 +43,7 @@ public:
 	static SSAFloat exp(SSAFloat val);
 	static SSAFloat log(SSAFloat val);
 	static SSAFloat fma(SSAFloat a, SSAFloat b, SSAFloat c);
-	static SSAFloat round(SSAFloat val);
+	//static SSAFloat round(SSAFloat val);
 	static SSAFloat floor(SSAFloat val);
 	static SSAFloat MIN(SSAFloat a, SSAFloat b);
 	static SSAFloat MAX(SSAFloat a, SSAFloat b);

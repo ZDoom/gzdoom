@@ -112,12 +112,15 @@ SSAFloat SSAFloat::fma(SSAFloat a, SSAFloat b, SSAFloat c)
 	return SSAFloat::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::fma, params), args, SSAScope::hint()));
 }
 
+/* This intrinsic isn't always available..
 SSAFloat SSAFloat::round(SSAFloat val)
 {
+	
 	std::vector<llvm::Type *> params;
 	params.push_back(SSAFloat::llvm_type());
 	return SSAFloat::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::round, params), val.v, SSAScope::hint()));
 }
+*/
 
 SSAFloat SSAFloat::floor(SSAFloat val)
 {

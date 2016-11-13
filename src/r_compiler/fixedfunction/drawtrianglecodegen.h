@@ -40,6 +40,7 @@ private:
 	SSATriVertex LoadTriVertex(SSAValue v);
 	void LoadUniforms(SSAValue uniforms);
 	void Setup(TriDrawVariant variant, bool truecolor);
+	SSAInt FloatTo28_4(SSAFloat v);
 	void LoopBlockY(TriDrawVariant variant, bool truecolor);
 	void LoopBlockX(TriDrawVariant variant, bool truecolor);
 	void LoopFullBlock(TriDrawVariant variant, bool truecolor);

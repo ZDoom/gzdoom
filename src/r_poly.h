@@ -162,6 +162,7 @@ private:
 	};
 
 	std::vector<SolidSegment> SolidSegments;
+	const int SolidCullScale = 3000;
 
 	PolySkyDome skydome;
 };

@@ -47,9 +47,9 @@ void RenderPolyBsp::Render()
 	// Setup working buffers
 	PolyVertexBuffer::Clear();
 	SolidSegments.clear();
-	SolidSegments.reserve(MAXWIDTH / 2 + 2);
-	SolidSegments.push_back({ -0x7fff, 0 });
-	SolidSegments.push_back({ viewwidth, 0x7fff });
+	SolidSegments.reserve(SolidCullScale + 2);
+	SolidSegments.push_back({ -0x7fff, -SolidCullScale });
+	SolidSegments.push_back({ SolidCullScale , 0x7fff });
 	SectorSpriteRanges.clear();
 	SectorSpriteRanges.resize(numsectors);
 	SortedSprites.clear();
@@ -1027,12 +1027,12 @@ bool RenderPolyBsp::CheckBBox(float *bspcoord)
 {
 	// Start using a quick frustum AABB test:
 
-	AxisAlignedBoundingBox aabb(Vec3f(bspcoord[BOXLEFT], bspcoord[BOXBOTTOM], -1000.0f), Vec3f(bspcoord[BOXRIGHT], bspcoord[BOXTOP], 1000.0f));
+	AxisAlignedBoundingBox aabb(Vec3f(bspcoord[BOXLEFT], bspcoord[BOXBOTTOM], (float)ViewPos.Z - 1000.0f), Vec3f(bspcoord[BOXRIGHT], bspcoord[BOXTOP], (float)ViewPos.Z + 1000.0f));
 	auto result = IntersectionTest::frustum_aabb(frustumPlanes, aabb);
 	if (result == IntersectionTest::outside)
 		return false;
 
-	// Occlusion test using solid segments (which seems to be quite broken, actually):
+	// Occlusion test using solid segments:
 
 	int 				boxx;
 	int 				boxy;
@@ -1089,51 +1089,45 @@ bool RenderPolyBsp::CheckBBox(float *bspcoord)
 
 bool RenderPolyBsp::GetSegmentRangeForLine(double x1, double y1, double x2, double y2, int &sx1, int &sx2) const
 {
+	double znear = 5.0;
+
+	// Transform to 2D view space:
 	x1 = x1 - ViewPos.X;
 	y1 = y1 - ViewPos.Y;
 	x2 = x2 - ViewPos.X;
 	y2 = y2 - ViewPos.Y;
-
-	// Sitting on a line?
-	if (y1 * (x1 - x2) + x1 * (y2 - y1) >= -EQUAL_EPSILON)
-		return false;
-
 	double rx1 = x1 * ViewSin - y1 * ViewCos;
 	double rx2 = x2 * ViewSin - y2 * ViewCos;
-	double ry1 = x1 * ViewTanCos + y1 * ViewTanSin;
-	double ry2 = x2 * ViewTanCos + y2 * ViewTanSin;
+	double ry1 = x1 * ViewCos + y1 * ViewSin;
+	double ry2 = x2 * ViewCos + y2 * ViewSin;
 
-	if (rx1 >= -ry1)
-	{
-		if (rx1 > ry1) return false;	// left edge is off the right side
-		if (ry1 == 0) return false;
-		sx1 = xs_RoundToInt(CenterX + rx1 * CenterX / ry1);
-	}
-	else
-	{
-		if (rx2 < -ry2) return false;	// wall is off the left side
-		if (rx1 - rx2 - ry2 + ry1 == 0) return false;	// wall does not intersect view volume
-		sx1 = 0;
-	}
+	// Cull if line is entirely behind view
+	if (ry1 < znear && ry2 < znear) return false;
 
-	if (rx2 <= ry2)
+	// Clip line, if needed
+	double t1 = 0.0f, t2 = 1.0f;
+	if (ry1 < znear)
+		t1 = clamp((znear - ry1) / (ry2 - ry1), 0.0, 1.0);
+	if (ry2 < znear)
+		t2 = clamp((znear - ry1) / (ry2 - ry1), 0.0, 1.0);
+	if (t1 != 0.0 || t2 != 1.0)
 	{
-		if (rx2 < -ry2) return false;	// right edge is off the left side
-		if (ry2 == 0) return false;
-		sx2 = xs_RoundToInt(CenterX + rx2 * CenterX / ry2);
-	}
-	else
-	{
-		if (rx1 > ry1) return false;	// wall is off the right side
-		if (ry2 - ry1 - rx2 + rx1 == 0) return false;	// wall does not intersect view volume
-		sx2 = viewwidth;
+		double nx1 = rx1 * (1.0 - t1) + rx2 * t1;
+		double ny1 = ry1 * (1.0 - t1) + ry2 * t1;
+		double nx2 = rx1 * (1.0 - t2) + rx2 * t2;
+		double ny2 = ry1 * (1.0 - t2) + ry2 * t2;
+		rx1 = nx1;
+		rx2 = nx2;
+		ry1 = ny1;
+		ry2 = ny2;
 	}
 
-	// Does not cross a pixel.
-	if (sx2 <= sx1)
-		return false;
+	sx1 = (int)floor(clamp(rx1 / ry1 * (SolidCullScale / 3), (double)-SolidCullScale, (double)SolidCullScale));
+	sx2 = (int)floor(clamp(rx2 / ry2 * (SolidCullScale / 3), (double)-SolidCullScale, (double)SolidCullScale));
 
-	return true;
+	if (sx1 > sx2)
+		std::swap(sx1, sx2);
+	return sx1 != sx2;
 }
 
 /////////////////////////////////////////////////////////////////////////////

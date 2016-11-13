@@ -50,7 +50,7 @@ void RenderPolyBsp::Render()
 	SectorSpriteRanges.clear();
 	SectorSpriteRanges.resize(numsectors);
 	SortedSprites.clear();
-	SubsectoredSprites.clear();
+	TranslucentObjects.clear();
 	PvsSectors.clear();
 	ScreenSprites.clear();
 	PolyStencilBuffer::Instance()->Clear(viewwidth, viewheight, 0);
@@ -103,7 +103,7 @@ void RenderPolyBsp::Render()
 
 	skydome.Render(worldToClip);
 
-	RenderSprites();
+	RenderTranslucent();
 
 	RenderPlayerSprites();
 	DrawerCommandQueue::WaitForWorkers();
@@ -140,19 +140,24 @@ void RenderPolyBsp::RenderSubsector(subsector_t *sub)
 	for (int i = 0; i < sprites.Count; i++)
 	{
 		AActor *thing = SortedSprites[sprites.Start + i].Thing;
-		SubsectoredSprites.push_back({ thing, sub, subsectorDepth });
+		TranslucentObjects.push_back({ thing, sub, subsectorDepth });
 	}
+
+	TranslucentObjects.insert(TranslucentObjects.end(), TempTranslucentWalls.begin(), TempTranslucentWalls.end());
+	TempTranslucentWalls.clear();
 }
 
-void RenderPolyBsp::RenderSprites()
+void RenderPolyBsp::RenderTranslucent()
 {
-	for (auto it = SubsectoredSprites.rbegin(); it != SubsectoredSprites.rend(); ++it)
+	for (auto it = TranslucentObjects.rbegin(); it != TranslucentObjects.rend(); ++it)
 	{
-		auto &spr = *it;
-		if ((spr.thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
-			AddWallSprite(spr.thing, spr.sub, spr.subsectorDepth);
+		auto &obj = *it;
+		if (!obj.thing)
+			obj.wall.Render(worldToClip);
+		else if ((obj.thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
+			AddWallSprite(obj.thing, obj.sub, obj.subsectorDepth);
 		else
-			AddSprite(spr.thing, spr.sub, spr.subsectorDepth);
+			AddSprite(obj.thing, obj.sub, obj.subsectorDepth);
 	}
 }
 
@@ -448,7 +453,7 @@ void RenderPolyBsp::AddLine(seg_t *line, sector_t *frontsector, uint32_t subsect
 				wall.UnpeggedCeil = topceilz1;
 				wall.Texpart = side_t::mid;
 				wall.Masked = true;
-				wall.Render(worldToClip);
+				TempTranslucentWalls.push_back({ wall });
 			}
 		}
 	}
@@ -1206,8 +1211,15 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	args.stencilwritevalue = 1;
 	args.SetTexture(tex);
 
-	PolyTriangleDrawer::draw(args, TriDrawVariant::Draw);
-	PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil);
+	if (!Masked)
+	{
+		PolyTriangleDrawer::draw(args, TriDrawVariant::Draw);
+		PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil);
+	}
+	else
+	{
+		PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector);
+	}
 }
 
 FTexture *RenderPolyWall::GetTexture()

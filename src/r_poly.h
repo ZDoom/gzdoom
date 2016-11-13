@@ -50,6 +50,42 @@ public:
 	FDynamicColormap *Colormap = nullptr;
 };
 
+class RenderPolyWall
+{
+public:
+	void Render(const TriMatrix &worldToClip);
+
+	void SetCoords(const DVector2 &v1, const DVector2 &v2, double ceil1, double floor1, double ceil2, double floor2)
+	{
+		this->v1 = v1;
+		this->v2 = v2;
+		this->ceil1 = ceil1;
+		this->floor1 = floor1;
+		this->ceil2 = ceil2;
+		this->floor2 = floor2;
+	}
+
+	DVector2 v1;
+	DVector2 v2;
+	double ceil1 = 0.0;
+	double floor1 = 0.0;
+	double ceil2 = 0.0;
+	double floor2 = 0.0;
+
+	const seg_t *Line = nullptr;
+	side_t::ETexpart Texpart = side_t::mid;
+	double TopZ = 0.0;
+	double BottomZ = 0.0;
+	double UnpeggedCeil = 0.0;
+	FSWColormap *Colormap = nullptr;
+	bool Masked = false;
+	uint32_t SubsectorDepth = 0;
+
+private:
+	FTexture *GetTexture();
+	int GetLightLevel();
+};
+
 // Used for sorting things by distance to the camera
 class PolySortedSprite
 {
@@ -61,13 +97,17 @@ public:
 	double DistanceSquared;
 };
 
-class PolySubsectoredSprite
+class PolyTranslucentObject
 {
 public:
-	PolySubsectoredSprite(AActor *thing, subsector_t *sub, uint32_t subsectorDepth) : thing(thing), sub(sub), subsectorDepth(subsectorDepth) { }
-	AActor *thing;
-	subsector_t *sub;
-	uint32_t subsectorDepth;
+	PolyTranslucentObject(AActor *thing, subsector_t *sub, uint32_t subsectorDepth) : thing(thing), sub(sub), subsectorDepth(subsectorDepth) { }
+	PolyTranslucentObject(RenderPolyWall wall) : wall(wall) { }
+
+	AActor *thing = nullptr;
+	subsector_t *sub = nullptr;
+	uint32_t subsectorDepth = 0;
+
+	RenderPolyWall wall;
 };
 
 class SpriteRange
@@ -116,7 +156,7 @@ private:
 	void AddLine(seg_t *line, sector_t *frontsector, uint32_t subsectorDepth);
 	TriVertex PlaneVertex(vertex_t *v1, sector_t *sector, double height);
 
-	void RenderSprites();
+	void RenderTranslucent();
 	void AddSprite(AActor *thing, subsector_t *sub, uint32_t subsectorDepth);
 	void AddWallSprite(AActor *thing, subsector_t *sub, uint32_t subsectorDepth);
 	bool IsThingCulled(AActor *thing);
@@ -147,7 +187,9 @@ private:
 
 	std::vector<SpriteRange> SectorSpriteRanges;
 	std::vector<PolySortedSprite> SortedSprites;
-	std::vector<PolySubsectoredSprite> SubsectoredSprites;
+	std::vector<PolyTranslucentObject> TranslucentObjects;
+
+	std::vector<PolyTranslucentObject> TempTranslucentWalls;
 
 	std::vector<PolyScreenSprite> ScreenSprites;
 
@@ -164,42 +206,6 @@ private:
 	const int SolidCullScale = 3000;
 
 	PolySkyDome skydome;
-};
-
-class RenderPolyWall
-{
-public:
-	void Render(const TriMatrix &worldToClip);
-
-	void SetCoords(const DVector2 &v1, const DVector2 &v2, double ceil1, double floor1, double ceil2, double floor2)
-	{
-		this->v1 = v1;
-		this->v2 = v2;
-		this->ceil1 = ceil1;
-		this->floor1 = floor1;
-		this->ceil2 = ceil2;
-		this->floor2 = floor2;
-	}
-
-	DVector2 v1;
-	DVector2 v2;
-	double ceil1 = 0.0;
-	double floor1 = 0.0;
-	double ceil2 = 0.0;
-	double floor2 = 0.0;
-
-	const seg_t *Line = nullptr;
-	side_t::ETexpart Texpart = side_t::mid;
-	double TopZ = 0.0;
-	double BottomZ = 0.0;
-	double UnpeggedCeil = 0.0;
-	FSWColormap *Colormap = nullptr;
-	bool Masked = false;
-	uint32_t SubsectorDepth = 0;
-
-private:
-	FTexture *GetTexture();
-	int GetLightLevel();
 };
 
 // Texture coordinates for a wall

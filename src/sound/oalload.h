@@ -3,24 +3,9 @@
 
 #if !defined NO_OPENAL && defined DYN_OPENAL
 
-#ifndef _WIN32
-typedef void* FARPROC;
-#endif
-
-#define DEFINE_ENTRY(type, name) static type p_##name;
+#define DEFINE_ENTRY(type, name) static TReqProc<OpenALModule, type> p_##name{#name};
 #include "oaldef.h"
 #undef DEFINE_ENTRY
-struct oalloadentry
-{
-	const char *name;
-	FARPROC *funcaddr;
-};
-static oalloadentry oalfuncs[] = {
-#define DEFINE_ENTRY(type, name) { #name, (FARPROC*)&p_##name },
-#include "oaldef.h"
-#undef DEFINE_ENTRY
-{ NULL, 0 }
-};
 
 #ifndef IN_IDE_PARSER
 #define alEnable p_alEnable

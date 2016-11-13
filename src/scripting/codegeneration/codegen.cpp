@@ -5102,65 +5102,31 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 	{
 		if (sym->IsKindOf(RUNTIME_CLASS(PField)))
 		{
-			if (!ctx.Function)
-			{
-				ScriptPosition.Message(MSG_ERROR, "Cannot resolve class member outside a function", sym->SymbolName.GetChars());
-				delete this;
-				return nullptr;
-			}
-			PField *vsym = static_cast<PField*>(sym);
-
-			// We have 4 cases to consider here:
-			// 1. The symbol is a static/meta member (not implemented yet) which is always accessible.
-			// 2. This is a static function 
-			// 3. This is an action function with a restricted self pointer
-			// 4. This is a normal member or unrestricted action function.
-			if ((vsym->Flags & VARF_Deprecated) && !ctx.FromDecorate)
-			{
-				ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s", sym->SymbolName.GetChars());
-			}
-			if ((vsym->Flags & VARF_Private) && symtbl != &ctx.Class->Symbols)
-			{
-				ScriptPosition.Message(MSG_ERROR, "Private member %s not accessible", sym->SymbolName.GetChars());
-				delete this;
-				return nullptr;
-			}
-
-			if (vsym->Flags & VARF_Static)
-			{
-				// todo. For now these cannot be defined so let's just exit.
-				ScriptPosition.Message(MSG_ERROR, "Static members not implemented yet.");
-				delete this;
-				return nullptr;
-			}
-
-			if (ctx.Function->Variants[0].SelfClass == nullptr)
-			{
-				ScriptPosition.Message(MSG_ERROR, "Unable to access class member from static function");
-				delete this;
-				return nullptr;
-			}
+			FxExpression *self = new FxSelf(ScriptPosition);
+			self = self->Resolve(ctx);
+			newex = ResolveMember(ctx, ctx.Function->Variants[0].SelfClass, self, ctx.Function->Variants[0].SelfClass);
+			ABORT(newex);
 
 			if (ctx.Function->Variants[0].SelfClass != ctx.Class)
 			{
 				// Check if the restricted class can access it.
 				PSymbol *sym2;
-				if ((sym2 = ctx.FindInSelfClass(Identifier, symtbl)) != nullptr)
+				if ((sym2 = ctx.FindInClass(Identifier, symtbl)) != nullptr)
 				{
 					if (sym != sym2)
 					{
+						// At the moment this cannot happen as the only possibility is SelfClass being an AActor and OwningClass an AStateProvider which comes from AActor anyways.
 						ScriptPosition.Message(MSG_ERROR, "Member variable of %s not accessible through restricted self pointer", ctx.Class->TypeName.GetChars());
+						delete newex;
 						delete this;
 						return nullptr;
 					}
 				}
 			}
-			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as member variable, index %d\n", Identifier.GetChars(), vsym->Offset);
-			newex = new FxClassMember((new FxSelf(ScriptPosition))->Resolve(ctx), vsym, ScriptPosition);
 		}
 	}
 
-	// now constants in the owning class.
+	// now check in the owning class.
 	if (newex == nullptr && (sym = ctx.FindInClass(Identifier, symtbl)) != nullptr)
 	{
 		if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
@@ -5169,6 +5135,23 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			newex = FxConstant::MakeConstant(sym, ScriptPosition);
 			delete this;
 			return newex->Resolve(ctx);
+		}
+		else if (ctx.FromDecorate && ctx.Class->IsDescendantOf(RUNTIME_CLASS(AStateProvider)) && sym->IsKindOf(RUNTIME_CLASS(PField)))
+		{
+			if (~ctx.Function->Variants[0].Flags & VARF_Action)
+			{
+				// No stateowner pointer to rely on, complete ambiguity.
+				// Abort here instead of risking a crash.
+				ScriptPosition.Message(MSG_ERROR, "Member variable access from non-action function within a StateProvider.");
+				delete this;
+				return nullptr;
+			}
+
+			FxExpression *self = new FxSelf(ScriptPosition, true);
+			self = self->Resolve(ctx);
+			newex = ResolveMember(ctx, ctx.Class, self, ctx.Class);
+			ABORT(newex);
+			ScriptPosition.Message(MSG_WARNING, "Self pointer used in ambiguous context; VM execution may abort!");
 		}
 		else
 		{
@@ -5222,6 +5205,78 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 	return newex? newex->Resolve(ctx) : nullptr;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PClass *classctx, FxExpression *&object, PStruct *objtype)
+{
+	PSymbol *sym;
+	PSymbolTable *symtbl;
+	bool isclass = objtype->IsKindOf(RUNTIME_CLASS(PClass));
+	if ((sym = objtype->Symbols.FindSymbolInTable(Identifier, symtbl)) != nullptr)
+	{
+		if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
+		{
+			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as %s constant\n", Identifier.GetChars(), isclass ? "class" : "struct");
+			delete object;
+			object = nullptr;
+			return FxConstant::MakeConstant(sym, ScriptPosition);
+		}
+		else if (sym->IsKindOf(RUNTIME_CLASS(PField)))
+		{
+			PField *vsym = static_cast<PField*>(sym);
+
+			// We have 4 cases to consider here:
+			// 1. The symbol is a static/meta member (not implemented yet) which is always accessible.
+			// 2. This is a static function 
+			// 3. This is an action function with a restricted self pointer
+			// 4. This is a normal member or unrestricted action function.
+			if (vsym->Flags & VARF_Deprecated && !ctx.FromDecorate)
+			{
+				ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s", vsym->SymbolName.GetChars());
+			}
+			if ((vsym->Flags & VARF_Private) && symtbl != &classctx->Symbols)
+			{
+				ScriptPosition.Message(MSG_ERROR, "Private member %s not accessible", vsym->SymbolName.GetChars());
+				return nullptr;
+			}
+
+			if (vsym->Flags & VARF_Static)
+			{
+				// todo. For now these cannot be defined so let's just exit.
+				ScriptPosition.Message(MSG_ERROR, "Static members not implemented yet.");
+				return nullptr;
+			}
+			auto x = isclass ? new FxClassMember(object, vsym, ScriptPosition) : new FxStructMember(object, vsym, ScriptPosition);
+			object = nullptr;
+			return x->Resolve(ctx);
+		}
+		else
+		{
+			if (sym->IsKindOf(RUNTIME_CLASS(PFunction)))
+			{
+				ScriptPosition.Message(MSG_ERROR, "Function '%s' used without ().\n", Identifier.GetChars());
+			}
+			else
+			{
+				ScriptPosition.Message(MSG_ERROR, "Invalid member identifier '%s'.\n", Identifier.GetChars());
+			}
+			delete object;
+			object = nullptr;
+			return nullptr;
+		}
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Unknown identifier '%s'", Identifier.GetChars());
+		delete object;
+		object = nullptr;
+		return nullptr;
+	}
+}
 
 //==========================================================================
 //
@@ -5249,118 +5304,31 @@ FxMemberIdentifier::~FxMemberIdentifier()
 
 FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 {
-	PSymbol * sym;
-	FxExpression *newex = nullptr;
-
 	CHECKRESOLVED();
 
 	SAFE_RESOLVE(Object, ctx);
 
 	if (Object->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
 	{
-		PSymbolTable *symtbl;
 		auto ptype = static_cast<PPointer *>(Object->ValueType)->PointedType;
-
-		if (ptype->IsKindOf(RUNTIME_CLASS(PStruct)))	// PClass is a child class of PStruct so this covers both.
+		if (ptype->IsKindOf(RUNTIME_CLASS(PStruct)))
 		{
-			PStruct *cls = static_cast<PStruct *>(ptype);
-			bool isclass = cls->IsKindOf(RUNTIME_CLASS(PClass));
-			if ((sym = cls->Symbols.FindSymbolInTable(Identifier, symtbl)) != nullptr)
-			{
-				if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
-				{
-					ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as %s constant\n", Identifier.GetChars(), isclass? "class" : "struct");
-					newex = FxConstant::MakeConstant(sym, ScriptPosition);
-				}
-				else if (sym->IsKindOf(RUNTIME_CLASS(PField)))
-				{
-					PField *vsym = static_cast<PField*>(sym);
-
-					// We have 4 cases to consider here:
-					// 1. The symbol is a static/meta member (not implemented yet) which is always accessible.
-					// 2. This is a static function 
-					// 3. This is an action function with a restricted self pointer
-					// 4. This is a normal member or unrestricted action function.
-					if (vsym->Flags & VARF_Deprecated)
-					{
-						ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s", vsym->SymbolName.GetChars());
-					}
-					if ((vsym->Flags & VARF_Private) && symtbl != &ctx.Class->Symbols)
-					{
-						ScriptPosition.Message(MSG_ERROR, "Private member %s not accessible", vsym->SymbolName.GetChars());
-						delete this;
-						return nullptr;
-					}
-
-					if (vsym->Flags & VARF_Static)
-					{
-						// todo. For now these cannot be defined so let's just exit.
-						ScriptPosition.Message(MSG_ERROR, "Static members not implemented yet.");
-						delete this;
-						return nullptr;
-					}
-					auto x = isclass? new FxClassMember(Object, vsym, ScriptPosition) : new FxStructMember(Object, vsym, ScriptPosition);
-					Object = nullptr;
-					delete this;
-					return x->Resolve(ctx);
-				}
-				else
-				{
-					ScriptPosition.Message(MSG_ERROR, "Invalid member identifier '%s'\n", Identifier.GetChars());
-					delete this;
-					return nullptr;
-				}
-			}
-			else
-			{
-				ScriptPosition.Message(MSG_ERROR, "Unknown identifier '%s'", Identifier.GetChars());
-				delete this;
-				return nullptr;
-			}
+			auto ret = ResolveMember(ctx, ctx.Class, Object, static_cast<PStruct *>(ptype));
+			delete this;
+			return ret;
 		}
 	}
 	else if (Object->ValueType->IsA(RUNTIME_CLASS(PStruct)))
 	{
-		if ((sym = Object->ValueType->Symbols.FindSymbol(Identifier, false)) != nullptr)
-		{
-			if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
-			{
-				ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as struct constant\n", Identifier.GetChars());
-				newex = FxConstant::MakeConstant(sym, ScriptPosition);
-			}
-			else if (sym->IsKindOf(RUNTIME_CLASS(PField)))
-			{
-				PField *vsym = static_cast<PField*>(sym);
-
-				if (vsym->Flags & VARF_Deprecated)
-				{
-					ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s", vsym->SymbolName.GetChars());
-				}
-				auto x = new FxStructMember(Object, vsym, ScriptPosition);
-				Object = nullptr;
-				delete this;
-				return x->Resolve(ctx);
-			}
-			else
-			{
-				ScriptPosition.Message(MSG_ERROR, "Invalid member identifier '%s'\n", Identifier.GetChars());
-				delete this;
-				return nullptr;
-			}
-		}
-		else
-		{
-			ScriptPosition.Message(MSG_ERROR, "Unknown identifier '%s'", Identifier.GetChars());
-			delete this;
-			return nullptr;
-		}
+		auto ret = ResolveMember(ctx, ctx.Class, Object, static_cast<PStruct *>(Object->ValueType));
+		delete this;
+		return ret;
 	}
 
 	ScriptPosition.Message(MSG_ERROR, "Left side of %s is not a struct or class", Identifier.GetChars());
 	delete this;
 	return nullptr;
 }
-
 
 //==========================================================================
 //
@@ -5406,9 +5374,10 @@ ExpEmit FxLocalVariable::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxSelf::FxSelf(const FScriptPosition &pos)
+FxSelf::FxSelf(const FScriptPosition &pos, bool deccheck)
 : FxExpression(EFX_Self, pos)
 {
+	check = deccheck;
 }
 
 //==========================================================================
@@ -5438,6 +5407,12 @@ FxExpression *FxSelf::Resolve(FCompileContext& ctx)
 
 ExpEmit FxSelf::Emit(VMFunctionBuilder *build)
 {
+	if (check)
+	{
+		build->Emit(OP_EQA_R, 1, 0, 1);
+		build->Emit(OP_JMP, 1);
+		build->Emit(OP_THROW, 2, X_BAD_SELF);
+	}
 	// self is always the first pointer passed to the function
 	return ExpEmit(0, REGT_POINTER, false, true);
 }

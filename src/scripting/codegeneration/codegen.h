@@ -347,12 +347,13 @@ public:
 
 	FxIdentifier(FName i, const FScriptPosition &p);
 	FxExpression *Resolve(FCompileContext&);
+	FxExpression *ResolveMember(FCompileContext&, PClass*, FxExpression*&, PStruct*);
 };
 
 
 //==========================================================================
 //
-//	FxIdentifier
+//	FxMemberIdentifier
 //
 //==========================================================================
 
@@ -1240,8 +1241,10 @@ public:
 
 class FxSelf : public FxExpression
 {
+	bool check;
+
 public:
-	FxSelf(const FScriptPosition&);
+	FxSelf(const FScriptPosition&, bool deccheck = false);
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

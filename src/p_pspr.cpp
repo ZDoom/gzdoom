@@ -29,6 +29,7 @@
 #include "g_level.h"
 #include "d_player.h"
 #include "serializer.h"
+#include "v_text.h"
 
 
 // MACROS ------------------------------------------------------------------
@@ -337,6 +338,14 @@ void DPSprite::SetState(FState *newstate, bool pending)
 		{
 			FState *nextstate;
 			FStateParamInfo stp = { newstate, STATE_Psprite, ID };
+			if (newstate->ActionFunc != nullptr && newstate->ActionFunc->Unsafe)
+			{
+				// If an unsafe function (i.e. one that accesses user variables) is being detected, print a warning once and remove the bogus function. We may not call it because that would inevitably crash.
+				auto owner = FState::StaticFindStateOwner(newstate);
+				Printf(TEXTCOLOR_RED "Unsafe state call in state %s.%d to %s which accesses user variables. The action function has been removed from this state\n",
+					owner->TypeName.GetChars(), newstate - owner->OwnedStates, static_cast<VMScriptFunction *>(newstate->ActionFunc)->PrintableName.GetChars());
+				newstate->ActionFunc = nullptr;
+			}
 			if (newstate->CallAction(Owner->mo, Caller, &stp, &nextstate))
 			{
 				// It's possible this call resulted in this very layer being replaced.

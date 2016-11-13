@@ -656,6 +656,7 @@ class VMFunction : public DObject
 public:
 	bool Native;
 	bool Final = false;				// cannot be overridden
+	bool Unsafe = false;			// Contains references to class fields that are unsafe for psp and item state calls.
 	BYTE ImplicitArgs = 0;	// either 0 for static, 1 for method or 3 for action
 	int VirtualIndex = -1;
 	FName Name;

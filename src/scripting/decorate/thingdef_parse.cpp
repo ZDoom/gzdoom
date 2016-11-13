@@ -909,6 +909,7 @@ PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName par
 		}
 	}
 	ti = DecoDerivedClass(sc, parent, typeName);
+	ti->bDecorateClass = true;	// we only set this for 'modern' DECORATE. The original stuff  is so limited that it cannot do anything that may require flagging.
 
 	ti->Replacee = ti->Replacement = NULL;
 	ti->DoomEdNum = -1;

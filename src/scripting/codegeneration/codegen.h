@@ -79,6 +79,7 @@ struct FCompileContext
 	int StateIndex;			// index in actor's state table for anonymous functions, otherwise -1 (not used by DECORATE which pre-resolves state indices)
 	int StateCount;			// amount of states an anoymous function is being used on (must be 1 for state indices to be allowed.)
 	int Lump;
+	bool Unsafe = false;
 	TDeletingArray<FxLocalVariableDeclaration *> FunctionArgs;
 
 	FCompileContext(PFunction *func, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump);

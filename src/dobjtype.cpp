@@ -2791,6 +2791,7 @@ PClass::PClass()
 	Defaults = nullptr;
 	bRuntimeClass = false;
 	bExported = false;
+	bDecorateClass = false;
 	ConstructNative = nullptr;
 	mDescriptiveName = "Class";
 

@@ -8073,7 +8073,7 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 					delete this;
 					return nullptr;
 				}
-				ScriptPosition.Message(MSG_DEBUG, "resolving '%s' as class name", clsname.GetChars());
+				ScriptPosition.Message(MSG_DEBUGLOG, "resolving '%s' as class name", clsname.GetChars());
 			}
 		}
 		FxExpression *x = new FxConstant(cls, to, ScriptPosition);

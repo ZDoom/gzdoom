@@ -775,6 +775,7 @@ public:
 	BYTE				*Defaults;
 	bool				 bRuntimeClass;	// class was defined at run-time, not compile-time
 	bool				 bExported;		// This type has been declared in a script
+	bool				 bDecorateClass;	// may be subject to some idiosyncracies due to DECORATE backwards compatibility
 	TArray<VMFunction*>	 Virtuals;	// virtual function table
 
 	void (*ConstructNative)(void *);

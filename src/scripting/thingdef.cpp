@@ -208,6 +208,55 @@ void CreateDamageFunction(PClassActor *info, AActor *defaults, FxExpression *id,
 
 //==========================================================================
 //
+// CheckForUnsafeStates
+//
+// Performs a quick analysis to find potentially bad states.
+// This is not perfect because it cannot track jumps by function.
+// For such cases a runtime check in the relevant places is also present.
+//
+//==========================================================================
+static int CheckForUnsafeStates(PClassActor *obj)
+{
+	static ENamedName weaponstates[] = { NAME_Ready, NAME_Deselect, NAME_Select, NAME_Fire, NAME_AltFire, NAME_Hold, NAME_AltHold, NAME_Flash, NAME_AltFlash, NAME_None };
+	static ENamedName pickupstates[] = { NAME_Pickup, NAME_Drop, NAME_Use, NAME_None };
+	TMap<FState *, bool> checked;
+	ENamedName *test;
+	int errors = 0;
+
+	if (obj->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+	{
+		if (obj->Size == RUNTIME_CLASS(AWeapon)->Size) return 0;	// This class cannot have user variables.
+		test = weaponstates;
+	}
+	else if (obj->IsDescendantOf(RUNTIME_CLASS(ACustomInventory)))
+	{
+		if (obj->Size == RUNTIME_CLASS(ACustomInventory)->Size) return 0;	// This class cannot have user variables.
+		test = pickupstates;
+	}
+	else return 0;	// something else derived from AStateProvider. We do not know what this may be.
+
+	for (; *test != NAME_None; test++)
+	{
+		FState *state = obj->FindState(*test);
+		while (state != nullptr && checked.CheckKey(state) == nullptr)	// have we checked this state already. If yes, we can stop checking the current chain.
+		{
+			checked[state] = true;
+			if (state->ActionFunc && state->ActionFunc->Unsafe)
+			{
+				// If an unsafe function (i.e. one that accesses user variables) is being detected, print a warning once and remove the bogus function. We may not call it because that would inevitably crash.
+				auto owner = FState::StaticFindStateOwner(state);
+				Printf(TEXTCOLOR_RED "Unsafe state call in state %s.%d to %s, reached by %s.%s which accesses user variables.\n",
+					owner->TypeName.GetChars(), state - owner->OwnedStates, static_cast<VMScriptFunction *>(state->ActionFunc)->PrintableName.GetChars(), obj->TypeName.GetChars(), FName(*test).GetChars());
+				errors++;
+			}
+			state = state->NextState;
+		}
+	}
+	return errors;
+}
+
+//==========================================================================
+//
 // LoadActors
 //
 // Called from FActor::StaticInit()
@@ -252,6 +301,15 @@ void LoadActors ()
 			Printf(TEXTCOLOR_RED "No ActorInfo defined for class '%s'\n", ti->TypeName.GetChars());
 			errorcount++;
 			continue;
+		}
+
+		if (ti->bDecorateClass && ti->IsDescendantOf(RUNTIME_CLASS(AStateProvider)))
+		{
+			// either a DECORATE based weapon or CustomInventory. 
+			// These are subject to relaxed rules for user variables in states.
+			// Although there is a runtime check for bogus states, let's do a quick analysis if any of the known entry points
+			// hits an unsafe state. If we can find something here it can be handled wuth a compile error rather than a runtime error.
+			errorcount += CheckForUnsafeStates(ti);
 		}
 	}
 	if (errorcount > 0)

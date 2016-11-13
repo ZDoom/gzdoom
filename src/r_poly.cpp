@@ -46,10 +46,7 @@ void RenderPolyBsp::Render()
 
 	// Setup working buffers
 	PolyVertexBuffer::Clear();
-	SolidSegments.clear();
-	SolidSegments.reserve(SolidCullScale + 2);
-	SolidSegments.push_back({ -0x7fff, -SolidCullScale });
-	SolidSegments.push_back({ SolidCullScale , 0x7fff });
+	ClearSolidSegments();
 	SectorSpriteRanges.clear();
 	SectorSpriteRanges.resize(numsectors);
 	SortedSprites.clear();
@@ -92,6 +89,7 @@ void RenderPolyBsp::Render()
 	}
 
 	// Render front to back
+	ClearSolidSegments();
 	if (r_debug_cull)
 	{
 		for (auto it = PvsSectors.rbegin(); it != PvsSectors.rend(); ++it)
@@ -363,6 +361,12 @@ void RenderPolyBsp::AddLine(seg_t *line, sector_t *frontsector, uint32_t subsect
 	if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
 		return;
 
+	// Cull wall if not visible
+	int sx1, sx2;
+	bool hasSegmentRange = GetSegmentRangeForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), sx1, sx2);
+	if (hasSegmentRange && IsSegmentCulled(sx1, sx2))
+		return;
+
 	double frontceilz1 = frontsector->ceilingplane.ZatPoint(line->v1);
 	double frontfloorz1 = frontsector->floorplane.ZatPoint(line->v1);
 	double frontceilz2 = frontsector->ceilingplane.ZatPoint(line->v2);
@@ -384,6 +388,8 @@ void RenderPolyBsp::AddLine(seg_t *line, sector_t *frontsector, uint32_t subsect
 			wall.UnpeggedCeil = frontceilz1;
 			wall.Texpart = side_t::mid;
 			wall.Render(worldToClip);
+			if (hasSegmentRange)
+				MarkSegmentCulled(sx1, sx2);
 		}
 	}
 	else
@@ -970,6 +976,14 @@ void RenderPolyBsp::RenderPlayerSprite(DPSprite *sprite, AActor *owner, float bo
 	}
 
 	//R_DrawVisSprite(vis);
+}
+
+void RenderPolyBsp::ClearSolidSegments()
+{
+	SolidSegments.clear();
+	SolidSegments.reserve(SolidCullScale + 2);
+	SolidSegments.push_back({ -0x7fff, -SolidCullScale });
+	SolidSegments.push_back({ SolidCullScale , 0x7fff });
 }
 
 bool RenderPolyBsp::IsSegmentCulled(int x1, int x2) const

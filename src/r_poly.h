@@ -132,11 +132,10 @@ private:
 	// Checks BSP node/subtree bounding box.
 	// Returns true if some part of the bbox might be visible.
 	bool CheckBBox(float *bspcoord);
-
 	bool GetSegmentRangeForLine(double x1, double y1, double x2, double y2, int &sx1, int &sx2) const;
-
 	void MarkSegmentCulled(int x1, int x2);
 	bool IsSegmentCulled(int x1, int x2) const;
+	void ClearSolidSegments();
 
 	std::vector<subsector_t *> PvsSectors;
 	uint32_t NextSubsectorDepth = 0;

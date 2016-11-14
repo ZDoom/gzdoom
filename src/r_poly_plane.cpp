@@ -103,7 +103,8 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 
 			seg_t *line = &sub->firstline[i];
 
-			bool closedSky = false;
+			double skyBottomz1 = frontsector->ceilingplane.ZatPoint(line->v1);
+			double skyBottomz2 = frontsector->ceilingplane.ZatPoint(line->v2);
 			if (line->backsector)
 			{
 				sector_t *backsector = (line->backsector != line->frontsector) ? line->backsector : line->frontsector;
@@ -132,14 +133,17 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 				double middlefloorz2 = MIN(bottomceilz2, middleceilz2);
 
 				bool bothSkyCeiling = frontsector->GetTexture(sector_t::ceiling) == skyflatnum && backsector->GetTexture(sector_t::ceiling) == skyflatnum;
-				bool bothSkyFloor = frontsector->GetTexture(sector_t::floor) == skyflatnum && backsector->GetTexture(sector_t::floor) == skyflatnum;
 
 				bool closedSector = backceilz1 == backfloorz1 && backceilz2 == backfloorz2;
-				closedSky = (ceiling && bothSkyCeiling && closedSector) || (!ceiling && bothSkyFloor && closedSector);
-				if (!closedSky)
+				if (ceiling && bothSkyCeiling && closedSector)
+				{
+					skyBottomz1 = middlefloorz1;
+					skyBottomz2 = middlefloorz2;
+				}
+				else
 				{
 					bool topwall = (topceilz1 > topfloorz1 || topceilz2 > topfloorz2) && line->sidedef && !bothSkyCeiling;
-					bool bottomwall = (bottomfloorz1 < bottomceilz1 || bottomfloorz2 < bottomceilz2) && line->sidedef && !bothSkyFloor;
+					bool bottomwall = (bottomfloorz1 < bottomceilz1 || bottomfloorz2 < bottomceilz2) && line->sidedef;
 					if ((ceiling && !topwall) || (!ceiling && !bottomwall))
 						continue;
 				}
@@ -149,29 +153,13 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 			{
 				wallvert[0] = PlaneVertex(line->v1, frontsector, skyHeight);
 				wallvert[1] = PlaneVertex(line->v2, frontsector, skyHeight);
-				if (!closedSky)
-				{
-					wallvert[2] = PlaneVertex(line->v2, frontsector, frontsector->ceilingplane.ZatPoint(line->v2));
-					wallvert[3] = PlaneVertex(line->v1, frontsector, frontsector->ceilingplane.ZatPoint(line->v1));
-				}
-				else
-				{
-					wallvert[2] = PlaneVertex(line->v2, frontsector, frontsector->floorplane.ZatPoint(line->v2));
-					wallvert[3] = PlaneVertex(line->v1, frontsector, frontsector->floorplane.ZatPoint(line->v1));
-				}
+				wallvert[2] = PlaneVertex(line->v2, frontsector, skyBottomz2);
+				wallvert[3] = PlaneVertex(line->v1, frontsector, skyBottomz1);
 			}
 			else
 			{
-				if (!closedSky)
-				{
-					wallvert[0] = PlaneVertex(line->v1, frontsector, frontsector->floorplane.ZatPoint(line->v1));
-					wallvert[1] = PlaneVertex(line->v2, frontsector, frontsector->floorplane.ZatPoint(line->v2));
-				}
-				else
-				{
-					wallvert[0] = PlaneVertex(line->v1, frontsector, frontsector->ceilingplane.ZatPoint(line->v1));
-					wallvert[1] = PlaneVertex(line->v2, frontsector, frontsector->ceilingplane.ZatPoint(line->v2));
-				}
+				wallvert[0] = PlaneVertex(line->v1, frontsector, frontsector->floorplane.ZatPoint(line->v1));
+				wallvert[1] = PlaneVertex(line->v2, frontsector, frontsector->floorplane.ZatPoint(line->v2));
 				wallvert[2] = PlaneVertex(line->v2, frontsector, skyHeight);
 				wallvert[3] = PlaneVertex(line->v1, frontsector, skyHeight);
 			}

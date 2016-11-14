@@ -174,14 +174,15 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool c
 		val.Int = v;
 		x = new FxConstant(val, sc);
 	}
-	else if (type == TypeState)
+	else if (type == TypeStateLabel)
 	{
 		// This forces quotation marks around the state name.
 		if (sc.CheckToken(TK_StringConst))
 		{
 			if (sc.String[0] == 0 || sc.Compare("None"))
 			{
-				x = new FxConstant((FState*)nullptr, sc);
+				x = new FxConstant(0, sc);
+				x->ValueType = TypeStateLabel;
 			}
 			else if (sc.Compare("*"))
 			{

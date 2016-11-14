@@ -626,7 +626,7 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 	while (numparams > 0)
 	{
 		FxExpression *x;
-		if (statedef != NULL && params[pnum] == TypeState && sc.CheckNumber())
+		if (statedef != NULL && params[pnum] == TypeStateLabel && sc.CheckNumber())
 		{
 			// Special case: State label as an offset
 			if (sc.Number > 0 && statestring.Len() > 1)
@@ -646,7 +646,8 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 			}
 			else
 			{
-				x = new FxConstant((FState*)NULL, sc);
+				x = new FxConstant(0, sc);
+				x->ValueType = TypeStateLabel;
 			}
 		}
 		else
@@ -703,7 +704,7 @@ FName CheckCastKludges(FName in)
 	case NAME_Bool:
 		return NAME___decorate_internal_bool__;
 	case NAME_State:
-		return NAME___decorate_internal_state__;
+		return NAME_ResolveState;
 	case NAME_Float:
 		return NAME___decorate_internal_float__;
 	default:

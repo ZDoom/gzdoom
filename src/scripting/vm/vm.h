@@ -940,15 +940,12 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_FLOAT_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_FLOAT); double x = param[p].f;
 #define PARAM_ANGLE_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_FLOAT); DAngle x = param[p].f;
 #define PARAM_STRING_AT(p,x)		assert((p) < numparam); assert(param[p].Type == REGT_STRING); FString x = param[p].s();
-#define PARAM_STATE_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_STATE || param[p].atag == ATAG_GENERIC  || param[p].a == NULL)); FState *x = (FState *)param[p].a;
+#define PARAM_STATE_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); FState *x = (FState *)StateLabels.GetState(param[p].i, self->GetClass());
+#define PARAM_STATE_ACTION_AT(p,x)	assert((p) < numparam); assert(param[p].Type == REGT_INT); FState *x = (FState *)StateLabels.GetState(param[p].i, stateowner->GetClass());
 #define PARAM_POINTER_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER); type *x = (type *)param[p].a;
 #define PARAM_OBJECT_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); type *x = (type *)param[p].a; assert(x == NULL || x->IsKindOf(RUNTIME_CLASS(type)));
 #define PARAM_CLASS_AT(p,x,base)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); base::MetaClass *x = (base::MetaClass *)param[p].a; assert(x == NULL || x->IsDescendantOf(RUNTIME_CLASS(base)));
 
-// For optional paramaters. These have dangling elses for you to fill in the default assignment. e.g.:
-//		PARAM_INT_OPT(0,myint) { myint = 55; }
-// Just make sure to fill it in when using these macros, because the compiler isn't likely
-// to give useful error messages if you don't.
 #define PARAM_EXISTS(p)					((p) < numparam && param[p].Type != REGT_NIL)
 #define ASSERTINT(p)					assert((p).Type == REGT_INT)
 #define ASSERTFLOAT(p)					assert((p).Type == REGT_FLOAT)
@@ -965,7 +962,8 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_FLOAT_DEF_AT(p,x)			double x; if (PARAM_EXISTS(p)) { ASSERTFLOAT(param[p]); x = param[p].f; } else { ASSERTFLOAT(defaultparam[p]); x = defaultparam[p].f; }
 #define PARAM_ANGLE_DEF_AT(p,x)			DAngle x; if (PARAM_EXISTS(p)) { ASSERTFLOAT(param[p]); x = param[p].f; } else { ASSERTFLOAT(defaultparam[p]); x = defaultparam[p].f; }
 #define PARAM_STRING_DEF_AT(p,x)		FString x; if (PARAM_EXISTS(p)) { ASSERTSTRING(param[p]); x = param[p].s; } else { ASSERTSTRING(defaultparam[p]); x = defaultparam[p].s; }
-#define PARAM_STATE_DEF_AT(p,x)			FState *x; if (PARAM_EXISTS(p)) { ASSERTSTATE(param[p]); x = (FState*)param[p].a; } else { ASSERTSTATE(defaultparam[p]); x = (FState*)defaultparam[p].a; }
+#define PARAM_STATE_DEF_AT(p,x)			FState *x; if (PARAM_EXISTS(p)) { ASSERTINT(param[p]); x = (FState*)StateLabels.GetState(param[p].i, self->GetClass()); } else { ASSERTINT(defaultparam[p]); x = (FState*)StateLabels.GetState(defaultparam[p].i, self->GetClass()); }
+#define PARAM_STATE_ACTION_DEF_AT(p,x)	FState *x; if (PARAM_EXISTS(p)) { ASSERTINT(param[p]); x = (FState*)StateLabels.GetState(param[p].i, stateowner->GetClass()); } else { ASSERTINT(defaultparam[p]); x = (FState*)StateLabels.GetState(defaultparam[p].i, stateowner->GetClass()); }
 #define PARAM_POINTER_DEF_AT(p,x,t)		t *x; if (PARAM_EXISTS(p)) { ASSERTPOINTER(param[p]); x = (t*)param[p].a; } else { ASSERTPOINTER(defaultparam[p]); x = (t*)defaultparam[p].a; }
 #define PARAM_OBJECT_DEF_AT(p,x,t)		t *x; if (PARAM_EXISTS(p)) { ASSERTOBJECT(param[p]); x = (t*)param[p].a; } else { ASSERTOBJECT(defaultparam[p]); x = (t*)defaultparam[p].a; }
 #define PARAM_CLASS_DEF_AT(p,x,t)		t::MetaClass *x; if (PARAM_EXISTS(p)) { ASSERTOBJECT(param[p]); x = (t::MetaClass*)param[p].a; } else { ASSERTOBJECT(defaultparam[p]); x = (t::MetaClass*)defaultparam[p].a; }
@@ -982,6 +980,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_ANGLE(x)				++paramnum; PARAM_ANGLE_AT(paramnum,x)
 #define PARAM_STRING(x)				++paramnum; PARAM_STRING_AT(paramnum,x)
 #define PARAM_STATE(x)				++paramnum; PARAM_STATE_AT(paramnum,x)
+#define PARAM_STATE_ACTION(x)		++paramnum; PARAM_STATE_ACTION_AT(paramnum,x)
 #define PARAM_POINTER(x,type)		++paramnum; PARAM_POINTER_AT(paramnum,x,type)
 #define PARAM_OBJECT(x,type)		++paramnum; PARAM_OBJECT_AT(paramnum,x,type)
 #define PARAM_CLASS(x,base)			++paramnum; PARAM_CLASS_AT(paramnum,x,base)
@@ -995,6 +994,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_ANGLE_DEF(x)			++paramnum; PARAM_ANGLE_DEF_AT(paramnum,x)
 #define PARAM_STRING_DEF(x)			++paramnum; PARAM_STRING_DEF_AT(paramnum,x)
 #define PARAM_STATE_DEF(x)			++paramnum; PARAM_STATE_DEF_AT(paramnum,x)
+#define PARAM_STATE_ACTION_DEF(x)	++paramnum; PARAM_STATE_ACTION_DEF_AT(paramnum,x)
 #define PARAM_POINTER_DEF(x,type)	++paramnum; PARAM_POINTER_DEF_AT(paramnum,x,type)
 #define PARAM_OBJECT_DEF(x,type)	++paramnum; PARAM_OBJECT_DEF_AT(paramnum,x,type)
 #define PARAM_CLASS_DEF(x,base)		++paramnum; PARAM_CLASS_DEF_AT(paramnum,x,base)

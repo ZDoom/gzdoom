@@ -313,6 +313,44 @@ struct FDoomEdEntry
 	int Args[5];
 };
 
+struct FStateLabelStorage
+{
+	TArray<uint8_t> Storage;
+
+	int AddPointer(FState *ptr)
+	{
+		if (ptr != nullptr)
+		{
+			int pos = Storage.Reserve(sizeof(ptr) + sizeof(int));
+			memset(&Storage[pos], 0, sizeof(int));
+			memcpy(&Storage[pos + sizeof(int)], &ptr, sizeof(ptr));
+			return pos / 4 + 1;
+		}
+		else return 0;
+	}
+
+	int AddNames(TArray<FName> &names)
+	{
+		int siz = names.Size();
+		if (siz > 1)
+		{
+			int pos = Storage.Reserve(sizeof(int) + sizeof(FName) * names.Size());
+			memcpy(&Storage[pos], &siz, sizeof(int));
+			memcpy(&Storage[pos + sizeof(int)], &names[0], sizeof(FName) * names.Size());
+			return pos / 4 + 1;
+		}
+		else
+		{
+			// don't store single name states in the array.
+			return names[0].GetIndex() + 0x10000000;
+		}
+	}
+
+	FState *GetState(int pos, PClassActor *cls);
+};
+
+extern FStateLabelStorage StateLabels;
+
 enum ESpecialMapthings
 {
 	SMT_Player1Start = 1,

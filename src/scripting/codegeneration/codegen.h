@@ -310,9 +310,9 @@ public:
 	virtual PPrototype *ReturnProto();
 	virtual VMFunction *GetDirectFunction();
 	virtual bool CheckReturn() { return false; }
-	bool IsNumeric() const { return ValueType != TypeName && ValueType->GetRegCount() == 1 && (ValueType->GetRegType() == REGT_INT || ValueType->GetRegType() == REGT_FLOAT); }
+	bool IsNumeric() const { return ValueType->isNumeric(); }
 	bool IsFloat() const { return ValueType->GetRegType() == REGT_FLOAT && ValueType->GetRegCount() == 1; }
-	bool IsInteger() const { return ValueType != TypeName && (ValueType->GetRegType() == REGT_INT); }
+	bool IsInteger() const { return ValueType->isNumeric() && (ValueType->GetRegType() == REGT_INT); }
 	bool IsPointer() const { return ValueType->GetRegType() == REGT_POINTER; }
 	bool IsVector() const { return ValueType == TypeVector2 || ValueType == TypeVector3; };
 	bool IsBoolCompat() const { return ValueType->GetRegCount() == 1 && (ValueType->GetRegType() == REGT_INT || ValueType->GetRegType() == REGT_FLOAT || ValueType->GetRegType() == REGT_POINTER); }
@@ -1684,14 +1684,13 @@ public:
 
 class FxRuntimeStateIndex : public FxExpression
 {
-	bool EmitTail;
 	FxExpression *Index;
+	int symlabel;
 
 public:
 	FxRuntimeStateIndex(FxExpression *index);
 	~FxRuntimeStateIndex();
 	FxExpression *Resolve(FCompileContext&);
-	PPrototype *ReturnProto();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -1709,7 +1708,6 @@ public:
 
 	FxMultiNameState(const char *statestring, const FScriptPosition &pos);
 	FxExpression *Resolve(FCompileContext&);
-	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================

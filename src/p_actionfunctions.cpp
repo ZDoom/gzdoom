@@ -715,7 +715,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, CountProximity)
 
 //===========================================================================
 //
-// __decorate_internal_state__
 // __decorate_internal_int__
 // __decorate_internal_bool__
 // __decorate_internal_float__
@@ -724,13 +723,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, CountProximity)
 // returns whatever was passed.
 //
 //===========================================================================
-
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, __decorate_internal_state__)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE(returnme);
-	ACTION_RETURN_STATE(returnme);
-}
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, __decorate_internal_int__)
 {
@@ -1158,7 +1150,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BulletAttack)
 //==========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Jump)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT(maxchance);
 
 	paramnum++;		// Increment paramnum to point at the first jump target
@@ -1166,7 +1158,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Jump)
 	if (count > 0 && (maxchance >= 256 || pr_cajump() < maxchance))
 	{
 		int jumpnum = (count == 1 ? 0 : (pr_cajump() % count));
-		PARAM_STATE_AT(paramnum + jumpnum, jumpto);
+		PARAM_STATE_ACTION_AT(paramnum + jumpnum, jumpto);
 		ACTION_RETURN_STATE(jumpto);
 	}
 	ACTION_RETURN_STATE(NULL);
@@ -1177,137 +1169,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Jump)
 // State jump function
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHealthLower)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT		(health);
-	PARAM_STATE		(jump);
-	PARAM_INT_DEF	(ptr_selector);
 
-	AActor *measured;
-
-	measured = COPY_AAPTR(self, ptr_selector);
-
-	if (measured != NULL && measured->health < health)
-	{
-		ACTION_RETURN_STATE(jump);
-	}
-	ACTION_RETURN_STATE(NULL);
-}
-
-//==========================================================================
-//
-// State jump function
-//
-//==========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetOutsideMeleeRange)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE(jump);
-
-	if (!self->CheckMeleeRange())
-	{
-		ACTION_RETURN_STATE(jump);
-	}
-	ACTION_RETURN_STATE(NULL);
-}
-
-//==========================================================================
-//
-// State jump function
-//
-//==========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInsideMeleeRange)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE(jump);
-
-	if (self->CheckMeleeRange())
-	{
-		ACTION_RETURN_STATE(jump);
-	}
-	ACTION_RETURN_STATE(NULL);
-}
-
-//==========================================================================
-//
-// State jump function
-//
-//==========================================================================
-static int DoJumpIfCloser(AActor *target, VM_ARGS)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT	(dist);
-	PARAM_STATE	(jump);
-	PARAM_BOOL_DEF(noz);
-
-	if (!target)
-	{ // No target - no jump
-		ACTION_RETURN_STATE(NULL);
-	}
-	if (self->Distance2D(target) < dist &&
-		(noz || 
-		((self->Z() > target->Z() && self->Z() - target->Top() < dist) ||
-		(self->Z() <= target->Z() && target->Z() - self->Top() < dist))))
-	{
-		ACTION_RETURN_STATE(jump);
-	}
-	ACTION_RETURN_STATE(NULL);
-}
-
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfCloser)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-
-	AActor *target;
-
-	if (self->player == NULL)
-	{
-		target = self->target;
-	}
-	else
-	{
-		// Does the player aim at something that can be shot?
-		FTranslatedLineTarget t;
-		P_BulletSlope(self, &t, ALF_PORTALRESTRICT);
-		target = t.linetarget;
-	}
-	return DoJumpIfCloser(target, VM_ARGS_NAMES);
-}
-
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTracerCloser)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	return DoJumpIfCloser(self->tracer, VM_ARGS_NAMES);
-}
-
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfMasterCloser)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	return DoJumpIfCloser(self->master, VM_ARGS_NAMES);
-}
-
-//==========================================================================
-//
-// State jump function
-//
-//==========================================================================
-int DoJumpIfInventory(AActor *owner, VM_ARGS)
+DEFINE_ACTION_FUNCTION(AActor, CheckInventory)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS		(itemtype, AInventory);
 	PARAM_INT		(itemamount);
-	PARAM_STATE		(label);
-	PARAM_INT_DEF	(setowner) { setowner = AAPTR_DEFAULT; }
+	PARAM_INT_DEF	(setowner);
 
-	if (itemtype == NULL)
+	if (itemtype == nullptr)
 	{
-		ACTION_RETURN_STATE(NULL);
+		ACTION_RETURN_BOOL(false);
 	}
-	owner = COPY_AAPTR(owner, setowner);
-	if (owner == NULL)
+	AActor *owner = COPY_AAPTR(self, setowner);
+	if (owner == nullptr)
 	{
-		ACTION_RETURN_STATE(NULL);
+		ACTION_RETURN_BOOL(false);
 	}
 
 	AInventory *item = owner->FindInventory(itemtype);
@@ -1318,48 +1195,32 @@ int DoJumpIfInventory(AActor *owner, VM_ARGS)
 		{
 			if (item->Amount >= itemamount)
 			{
-				ACTION_RETURN_STATE(label);
+				ACTION_RETURN_BOOL(true);
 			}
 		}
 		else if (item->Amount >= item->MaxAmount)
 		{
-			ACTION_RETURN_STATE(label);
+			ACTION_RETURN_BOOL(true);
 		}
 	}
-	ACTION_RETURN_STATE(NULL);
+	ACTION_RETURN_BOOL(false);
 }
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInventory)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	return DoJumpIfInventory(self, VM_ARGS_NAMES);
-}
-
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetInventory)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	return DoJumpIfInventory(self->target, VM_ARGS_NAMES);
-}
 
 //==========================================================================
 //
 // State jump function
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfArmorType)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, CheckArmorType)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_NAME	 (type);
-	PARAM_STATE	 (label);
 	PARAM_INT_DEF(amount);
 
 	ABasicArmor *armor = (ABasicArmor *)self->FindInventory(NAME_BasicArmor);
 
-	if (armor && armor->ArmorType == type && armor->Amount >= amount)
-	{
-		ACTION_RETURN_STATE(label);
-	}
-	ACTION_RETURN_STATE(NULL);
+	ACTION_RETURN_BOOL(armor && armor->ArmorType == type && armor->Amount >= amount);
 }
 
 //==========================================================================
@@ -1910,7 +1771,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomComboAttack)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfNoAmmo)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_STATE(jump);
+	PARAM_STATE_ACTION(jump);
 
 	if (!ACTION_CALL_FROM_PSPRITE() || self->player->ReadyWeapon == nullptr)
 	{
@@ -3637,10 +3498,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
 // jumps if no player can see this actor
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSight)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, CheckIfSeen)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE(jump);
 
 	for (int i = 0; i < MAXPLAYERS; i++) 
 	{
@@ -3649,17 +3509,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSight)
 			// Always check sight from each player.
 			if (P_CheckSight(players[i].mo, self, SF_IGNOREVISIBILITY))
 			{
-				ACTION_RETURN_STATE(NULL);
+				ACTION_RETURN_BOOL(false);
 			}
 			// If a player is viewing from a non-player, then check that too.
 			if (players[i].camera != NULL && players[i].camera->player == NULL &&
 				P_CheckSight(players[i].camera, self, SF_IGNOREVISIBILITY))
 			{
-				ACTION_RETURN_STATE(NULL);
+				ACTION_RETURN_BOOL(false);
 			}
 		}
 	}
-	ACTION_RETURN_STATE(jump);
+	ACTION_RETURN_BOOL(true);
 }
 
 //===========================================================================
@@ -3706,11 +3566,10 @@ static bool DoCheckSightOrRange(AActor *self, AActor *camera, double range, bool
 	return false;
 }
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, CheckSightOrRange)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(range);
-	PARAM_STATE(jump);
 	PARAM_BOOL_DEF(twodi);
 
 	range *= range;
@@ -3721,25 +3580,24 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
 			// Always check from each player.
 			if (DoCheckSightOrRange(self, players[i].mo, range, twodi, true))
 			{
-				ACTION_RETURN_STATE(NULL);
+				ACTION_RETURN_BOOL(false);
 			}
 			// If a player is viewing from a non-player, check that too.
 			if (players[i].camera != NULL && players[i].camera->player == NULL &&
 				DoCheckSightOrRange(self, players[i].camera, range, twodi, true))
 			{
-				ACTION_RETURN_STATE(NULL);
+				ACTION_RETURN_BOOL(false);
 			}
 		}
 	}
-	ACTION_RETURN_STATE(jump);
+	ACTION_RETURN_BOOL(true);
 }
 
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckRange)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, CheckRange)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(range);
-	PARAM_STATE(jump);
 	PARAM_BOOL_DEF(twodi);
 
 	range *= range;
@@ -3750,17 +3608,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckRange)
 			// Always check from each player.
 			if (DoCheckSightOrRange(self, players[i].mo, range, twodi, false))
 			{
-				ACTION_RETURN_STATE(NULL);
+				ACTION_RETURN_BOOL(false);
 			}
 			// If a player is viewing from a non-player, check that too.
 			if (players[i].camera != NULL && players[i].camera->player == NULL &&
 				DoCheckSightOrRange(self, players[i].camera, range, twodi, false))
 			{
-				ACTION_RETURN_STATE(NULL);
+				ACTION_RETURN_BOOL(false);
 			}
 		}
 	}
-	ACTION_RETURN_STATE(jump);
+	ACTION_RETURN_BOOL(false);
 }
 
 
@@ -3812,20 +3670,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetBlend)
 	return 0;
 }
 
-
-//===========================================================================
-//
-// A_JumpIf
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIf)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_BOOL	(condition);
-	PARAM_STATE	(jump);
-
-	ACTION_RETURN_STATE(condition ? jump : NULL);
-}
 
 //===========================================================================
 //
@@ -3915,43 +3759,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Burst)
 
 	self->Destroy ();
 	return 0;
-}
-
-//===========================================================================
-//
-// A_CheckFloor
-// [GRB] Jumps if actor is standing on floor
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFloor)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE(jump);
-
-	if (self->Z() <= self->floorz)
-	{
-		ACTION_RETURN_STATE(jump);
-	}
-	ACTION_RETURN_STATE(NULL);
-}
-
-//===========================================================================
-//
-// A_CheckCeiling
-// [GZ] Totally copied from A_CheckFloor, jumps if actor touches ceiling
-//
-
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckCeiling)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE(jump);
-
-	if (self->Top() >= self->ceilingz) // Height needs to be counted
-	{
-		ACTION_RETURN_STATE(jump);
-	}
-	ACTION_RETURN_STATE(NULL);
 }
 
 //===========================================================================
@@ -4077,17 +3884,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PlayerSkinCheck)
+DEFINE_ACTION_FUNCTION(AActor, PlayerSkinCheck)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE(jump);
 
-	if (self->player != NULL &&
-		skins[self->player->userinfo.GetSkin()].othergame)
-	{
-		ACTION_RETURN_STATE(jump);
-	}
-	ACTION_RETURN_STATE(NULL);
+	ACTION_RETURN_BOOL(self->player != NULL &&
+		skins[self->player->userinfo.GetSkin()].othergame);
 }
 
 // [KS] *** Start of my modifications ***
@@ -4220,7 +4022,7 @@ ETraceStatus CheckLOFTraceFunc(FTraceResults &trace, void *userdata)
 	return TRACE_Abort;
 }
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, CheckLOF)
 {
 	// Check line of fire
 
@@ -4233,7 +4035,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 	DVector3 vel;
 
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE		(jump);
 	PARAM_INT_DEF	(flags)			
 	PARAM_FLOAT_DEF	(range)			
 	PARAM_FLOAT_DEF	(minrange)		
@@ -4290,7 +4091,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 				double distance = self->Distance3D(target);
 				if (distance > range)
 				{
-					ACTION_RETURN_STATE(NULL);
+					ACTION_RETURN_BOOL(false);
 				}
 			}
 
@@ -4339,7 +4140,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 		}
 		else
 		{
-			ACTION_RETURN_STATE(NULL);
+			ACTION_RETURN_BOOL(false);
 		}
 
 		double cp = pitch.Cos();
@@ -4377,7 +4178,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 	{
 		if (minrange > 0 && trace.Distance < minrange)
 		{
-			ACTION_RETURN_STATE(NULL);
+			ACTION_RETURN_BOOL(false);
 		}
 		if ((trace.HitType == TRACE_HitActor) && (trace.Actor != NULL) && !(lof_data.BadActor))
 		{
@@ -4385,9 +4186,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 			if (flags & (CLOFF_SETMASTER))	self->master = trace.Actor;
 			if (flags & (CLOFF_SETTRACER))	self->tracer = trace.Actor;
 		}
-		ACTION_RETURN_STATE(jump);
+		ACTION_RETURN_BOOL(true);
 	}
-	ACTION_RETURN_STATE(NULL);
+	ACTION_RETURN_BOOL(false);
 }
 
 //==========================================================================
@@ -4422,10 +4223,9 @@ enum JLOS_flags
 	JLOSF_CHECKTRACER =		1 << 12,
 };
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, CheckIfTargetInLOS)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE		(jump);
 	PARAM_ANGLE_DEF	(fov)		
 	PARAM_INT_DEF	(flags)		
 	PARAM_FLOAT_DEF	(dist_max)	
@@ -4456,11 +4256,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 
 		if (target == NULL)
 		{ // [KS] Let's not call P_CheckSight unnecessarily in this case.
-			ACTION_RETURN_STATE(NULL);
+			ACTION_RETURN_BOOL(false);
 		}
 		if ((flags & JLOSF_DEADNOJUMP) && (target->health <= 0))
 		{
-			ACTION_RETURN_STATE(NULL);
+			ACTION_RETURN_BOOL(false);
 		}
 
 		doCheckSight = !(flags & JLOSF_NOSIGHT);
@@ -4472,7 +4272,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 		
 		if (!t.linetarget)
 		{
-			ACTION_RETURN_STATE(NULL);
+			ACTION_RETURN_BOOL(false);
 		}
 		target = t.linetarget;
 
@@ -4498,24 +4298,24 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 	// [FDARI] If target is not a combatant, don't jump
 	if ( (flags & JLOSF_COMBATANTONLY) && (!target->player) && !(target->flags3 & MF3_ISMONSTER))
 	{
-		ACTION_RETURN_STATE(NULL);
+		ACTION_RETURN_BOOL(false);
 	}
 	// [FDARI] If actors share team, don't jump
 	if ((flags & JLOSF_ALLYNOJUMP) && self->IsFriend(target))
 	{
-		ACTION_RETURN_STATE(NULL);
+		ACTION_RETURN_BOOL(false);
 	}
 	double distance = self->Distance3D(target);
 
 	if (dist_max && (distance > dist_max))
 	{
-		ACTION_RETURN_STATE(NULL);
+		ACTION_RETURN_BOOL(false);
 	}
 	if (dist_close && (distance < dist_close))
 	{
 		if (flags & JLOSF_CLOSENOJUMP)
 		{
-			ACTION_RETURN_STATE(NULL);
+			ACTION_RETURN_BOOL(false);
 		}
 		if (flags & JLOSF_CLOSENOFOV)
 			fov = 0.;
@@ -4529,7 +4329,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 
 	if (doCheckSight && !P_CheckSight (viewport, target, SF_IGNOREVISIBILITY))
 	{
-		ACTION_RETURN_STATE(NULL);
+		ACTION_RETURN_BOOL(false);
 	}
 
 	if (flags & JLOSF_FLIPFOV)
@@ -4546,10 +4346,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 
 		if (an > (fov / 2))
 		{
-			ACTION_RETURN_STATE(NULL); // [KS] Outside of FOV - return
+			ACTION_RETURN_BOOL(false); // [KS] Outside of FOV - return
 		}
 	}
-	ACTION_RETURN_STATE(jump);
+	ACTION_RETURN_BOOL(true);
 }
 
 
@@ -4560,10 +4360,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, CheckIfInTargetLOS)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE		(jump);
 	PARAM_ANGLE_DEF	(fov)		
 	PARAM_INT_DEF	(flags)		
 	PARAM_FLOAT_DEF	(dist_max)	
@@ -4589,19 +4388,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 
 	if (target == NULL)
 	{ // [KS] Let's not call P_CheckSight unnecessarily in this case.
-		ACTION_RETURN_STATE(NULL);
+		ACTION_RETURN_BOOL(false);
 	}
 
 	if ((flags & JLOSF_DEADNOJUMP) && (target->health <= 0))
 	{
-		ACTION_RETURN_STATE(NULL);
+		ACTION_RETURN_BOOL(false);
 	}
 
 	double distance = self->Distance3D(target);
 
 	if (dist_max && (distance > dist_max))
 	{
-		ACTION_RETURN_STATE(NULL);
+		ACTION_RETURN_BOOL(false);
 	}
 
 	bool doCheckSight = !(flags & JLOSF_NOSIGHT);
@@ -4610,7 +4409,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 	{
 		if (flags & JLOSF_CLOSENOJUMP)
 		{
-			ACTION_RETURN_STATE(NULL);
+			ACTION_RETURN_BOOL(false);
 		}
 		if (flags & JLOSF_CLOSENOFOV)
 			fov = 0.;
@@ -4625,14 +4424,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 
 		if (an > (fov / 2))
 		{
-			ACTION_RETURN_STATE(NULL); // [KS] Outside of FOV - return
+			ACTION_RETURN_BOOL(false); // [KS] Outside of FOV - return
 		}
 	}
 	if (doCheckSight && !P_CheckSight (target, self, SF_IGNOREVISIBILITY))
 	{
-		ACTION_RETURN_STATE(NULL);
+		ACTION_RETURN_BOOL(false);
 	}
-	ACTION_RETURN_STATE(jump);
+	ACTION_RETURN_BOOL(true);
 }
 
 //===========================================================================
@@ -4650,7 +4449,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckForReload)
 		ACTION_RETURN_STATE(NULL);
 	}
 	PARAM_INT		(count);
-	PARAM_STATE		(jump);
+	PARAM_STATE_ACTION	(jump);
 	PARAM_BOOL_DEF	(dontincrement);
 
 	if (numret > 0)
@@ -4727,24 +4526,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFlag)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, CheckFlag)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_STRING	(flagname);
-	PARAM_STATE		(jumpto);
 	PARAM_INT_DEF	(checkpointer);
 
 	AActor *owner = COPY_AAPTR(self, checkpointer);
-	if (owner == NULL)
-	{
-		ACTION_RETURN_STATE(NULL);
-	}
-
-	if (CheckActorFlag(owner, flagname))
-	{
-		ACTION_RETURN_STATE(jumpto);
-	}
-	ACTION_RETURN_STATE(NULL);
+	ACTION_RETURN_BOOL(owner != nullptr && CheckActorFlag(owner, flagname));
 }
 
 
@@ -5175,7 +4964,7 @@ enum T_Flags
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_STATE_DEF		(teleport_state)			
 	PARAM_CLASS_DEF		(target_type, ASpecialSpot)	
 	PARAM_CLASS_DEF		(fog_type, AActor)			
@@ -5605,7 +5394,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT(destination_selector);
 	PARAM_FLOAT_DEF(xofs)				
 	PARAM_FLOAT_DEF(yofs)				
@@ -5900,27 +5689,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 		}
 	}
 	ACTION_RETURN_INT(given);
-}
-
-//===========================================================================
-//
-// A_CheckSpecies
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSpecies)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE(jump);
-	PARAM_NAME_DEF(species);
-	PARAM_INT_DEF(ptr);
-
-	AActor *mobj = COPY_AAPTR(self, ptr);
-
-	if (mobj != NULL && jump && mobj->GetSpecies() == species)
-	{
-		ACTION_RETURN_STATE(jump);
-	}
-	ACTION_RETURN_STATE(NULL);
 }
 
 //==========================================================================
@@ -6667,44 +6435,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ResetHealth)
 }
 
 //===========================================================================
-// A_JumpIfHigherOrLower
-//
-// Jumps if a target, master, or tracer is higher or lower than the calling 
-// actor. Can also specify how much higher/lower the actor needs to be than 
-// itself. Can also take into account the height of the actor in question,
-// depending on which it's checking. This means adding height of the
-// calling actor's self if the pointer is higher, or height of the pointer 
-// if its lower.
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHigherOrLower)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE(high);
-	PARAM_STATE(low);
-	PARAM_FLOAT_DEF(offsethigh);
-	PARAM_FLOAT_DEF(offsetlow);
-	PARAM_BOOL_DEF(includeHeight);
-	PARAM_INT_DEF(ptr);
-
-	AActor *mobj = COPY_AAPTR(self, ptr);
-
-
-	if (mobj != NULL && mobj != self) //AAPTR_DEFAULT is completely useless in this regard.
-	{
-		if ((high) && (mobj->Z() > ((includeHeight ? self->Height : 0) + self->Z() + offsethigh)))
-		{
-			ACTION_RETURN_STATE(high);
-		}
-		else if ((low) && (mobj->Z() + (includeHeight ? mobj->Height : 0)) < (self->Z() + offsetlow))
-		{
-			ACTION_RETURN_STATE(low);
-		}
-	}
-	ACTION_RETURN_STATE(NULL);
-}
-
-//===========================================================================
 // A_SetSpecies(str species, ptr)
 //
 // Sets the species of the calling actor('s pointer).
@@ -6760,29 +6490,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetChaseThreshold)
 // Checks to see if a certain actor class is close to the 
 // actor/pointer within distance, in numbers.
 //==========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, CheckProximity)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE(jump);
 	PARAM_CLASS(classname, AActor);
 	PARAM_FLOAT(distance);
 	PARAM_INT_DEF(count);
 	PARAM_INT_DEF(flags);
 	PARAM_INT_DEF(ptr);
 
-	if (!jump)
-	{
-		if (!(flags & (CPXF_SETTARGET | CPXF_SETMASTER | CPXF_SETTRACER)))
-		{
-			ACTION_RETURN_STATE(NULL);
-		}
-	}
-
-	if (P_Thing_CheckProximity(self, classname, distance, count, flags, ptr) && jump)
-	{
-		ACTION_RETURN_STATE(jump);
-	}
-	ACTION_RETURN_STATE(NULL);
+	ACTION_RETURN_BOOL(!!P_Thing_CheckProximity(self, classname, distance, count, flags, ptr));
 }
 
 /*===========================================================================
@@ -6806,10 +6523,9 @@ enum CBF
 	CBF_ABSOLUTEANGLE	= 1 << 8,	//Absolute angle for offsets.
 };
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, CheckBlock)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE(block)
 	PARAM_INT_DEF(flags)	
 	PARAM_INT_DEF(ptr)		
 	PARAM_FLOAT_DEF(xofs)	
@@ -6822,7 +6538,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 	//Needs at least one state jump to work. 
 	if (!mobj)
 	{
-		ACTION_RETURN_STATE(NULL);
+		ACTION_RETURN_BOOL(false);
 	}
 
 	if (!(flags & CBF_ABSOLUTEANGLE))
@@ -6872,7 +6588,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 	
 	if (checker)
 	{
-		ACTION_RETURN_STATE(NULL);
+		ACTION_RETURN_BOOL(false);
 	}
 
 	if (mobj->BlockingMobj)
@@ -6886,23 +6602,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 		}
 	}
 
-	//[MC] If modders don't want jumping, but just getting the pointer, only abort at
-	//this point. I.e. A_CheckBlock("",CBF_SETTRACER) is like having CBF_NOLINES.
-	//It gets the mobj blocking, if any, and doesn't jump at all.
-	if (!block)
-	{
-		ACTION_RETURN_STATE(NULL);
-	}
 	//[MC] I don't know why I let myself be persuaded not to include a flag.
 	//If an actor is loaded with pointers, they don't really have any options to spare.
 	//Also, fail if a dropoff or a step is too great to pass over when checking for dropoffs.
 	
-	if ((!(flags & CBF_NOACTORS) && (mobj->BlockingMobj)) || (!(flags & CBF_NOLINES) && mobj->BlockingLine != NULL) ||
-		((flags & CBF_DROPOFF) && !checker))
-	{
-		ACTION_RETURN_STATE(block);
-	}
-	ACTION_RETURN_STATE(NULL);
+	ACTION_RETURN_BOOL((!(flags & CBF_NOACTORS) && (mobj->BlockingMobj)) || (!(flags & CBF_NOLINES) && mobj->BlockingLine != NULL) ||
+		((flags & CBF_DROPOFF) && !checker));
 }
 
 //===========================================================================

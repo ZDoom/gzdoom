@@ -41,7 +41,7 @@ class Inventory : Actor native
 
 class StateProvider : Inventory native
 {
-	action native state A_JumpIfNoAmmo(state label);
+	action native state A_JumpIfNoAmmo(statelabel label);
 	action native void A_CustomPunch(int damage, bool norandom = false, int flags = CPF_USEAMMO, class<Actor> pufftype = "BulletPuff", float range = 0, float lifesteal = 0, int lifestealmax = 0, class<BasicArmorBonus> armorbonustype = "ArmorBonus", sound MeleeSound = 0, sound MissSound = "");
 	action native void A_FireBullets(float spread_xy, float spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", int flags = 1, float range = 0, class<Actor> missile = null, float Spawnheight = 32, float Spawnofs_xy = 0);
 	action native void A_FireCustomMissile(class<Actor> missiletype, float angle = 0, bool useammo = true, float spawnofs_xy = 0, float spawnheight = 0, int flags = 0, float pitch = 0);
@@ -73,13 +73,13 @@ class StateProvider : Inventory native
 	action void A_BFGsound() { A_PlaySound("weapons/bfgf", CHAN_WEAPON); }
 	action native void A_FireBFG();
 	action native void A_FireOldBFG();
-	action native void A_ReFire(state flash = null);
+	action native void A_ReFire(statelabel flash = null);
 	action native void A_ClearReFire();
 	action native void A_CheckReload();
-	action native void A_GunFlash(state flash = null, int flags = 0);
+	action native void A_GunFlash(statelabel flash = null, int flags = 0);
 	action native void A_FireAssaultGun();
 	action native void A_Saw(sound fullsound = "weapons/sawfull", sound hitsound = "weapons/sawhit", int damage = 2, class<Actor> pufftype = "BulletPuff", int flags = 0, float range = 0, float spread_xy = 2.8125, float spread_z = 0, float lifesteal = 0, int lifestealmax = 0, class<BasicArmorBonus> armorbonustype = "ArmorBonus");
-	action native state A_CheckForReload(int counter, state label, bool dontincrement = false);
+	action native state A_CheckForReload(int counter, statelabel label, bool dontincrement = false);
 	action native void A_ResetReloadCounter();
 }
 

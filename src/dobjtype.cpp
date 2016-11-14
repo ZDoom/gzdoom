@@ -82,6 +82,7 @@ PName *TypeName;
 PSound *TypeSound;
 PColor *TypeColor;
 PStatePointer *TypeState;
+PStateLabel *TypeStateLabel;
 PStruct *TypeVector2;
 PStruct *TypeVector3;
 PPointer *TypeNullPtr;
@@ -546,7 +547,8 @@ void PType::StaticInit()
 	RUNTIME_CLASS(PPrototype)->TypeTableType = RUNTIME_CLASS(PPrototype);
 	RUNTIME_CLASS(PClass)->TypeTableType = RUNTIME_CLASS(PClass);
 	RUNTIME_CLASS(PStatePointer)->TypeTableType = RUNTIME_CLASS(PStatePointer);
-	
+	RUNTIME_CLASS(PStateLabel)->TypeTableType = RUNTIME_CLASS(PStateLabel);
+
 	// Create types and add them type the type table.
 	TypeTable.AddType(TypeError = new PErrorType);
 	TypeTable.AddType(TypeVoid = new PVoidType);
@@ -564,6 +566,7 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeSound = new PSound);
 	TypeTable.AddType(TypeColor = new PColor);
 	TypeTable.AddType(TypeState = new PStatePointer);
+	TypeTable.AddType(TypeStateLabel = new PStateLabel);
 	TypeTable.AddType(TypeNullPtr = new PPointer);
 
 	TypeVector2 = new PStruct(NAME_Vector2, nullptr);
@@ -701,7 +704,7 @@ IMPLEMENT_CLASS(PInt, false, false, false, false)
 //==========================================================================
 
 PInt::PInt()
-: PBasicType(4, 4), Unsigned(false)
+: PBasicType(4, 4), Unsigned(false), IntCompatible(true)
 {
 	mDescriptiveName = "SInt32";
 	Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Min, this, -0x7FFFFFFF - 1));
@@ -715,8 +718,8 @@ PInt::PInt()
 //
 //==========================================================================
 
-PInt::PInt(unsigned int size, bool unsign)
-: PBasicType(size, size), Unsigned(unsign)
+PInt::PInt(unsigned int size, bool unsign, bool compatible)
+: PBasicType(size, size), Unsigned(unsign), IntCompatible(compatible)
 {
 	mDescriptiveName.Format("%cInt%d", unsign? 'U':'S', size);
 
@@ -1308,7 +1311,7 @@ IMPLEMENT_CLASS(PName, false, false, false, false)
 //==========================================================================
 
 PName::PName()
-: PInt(sizeof(FName), true)
+: PInt(sizeof(FName), true, false)
 {
 	mDescriptiveName = "Name";
 	assert(sizeof(FName) == __alignof(FName));
@@ -1412,6 +1415,22 @@ PColor::PColor()
 {
 	mDescriptiveName = "Color";
 	assert(sizeof(PalEntry) == __alignof(PalEntry));
+}
+
+/* PStateLabel *****************************************************************/
+
+IMPLEMENT_CLASS(PStateLabel, false, false, false, false)
+
+//==========================================================================
+//
+// PStateLabel Default Constructor
+//
+//==========================================================================
+
+PStateLabel::PStateLabel()
+	: PInt(sizeof(int), false, false)
+{
+	mDescriptiveName = "StateLabel";
 }
 
 /* PStatePointer **********************************************************/

@@ -227,6 +227,7 @@ public:
 
 	PType(unsigned int size = 1, unsigned int align = 1);
 	virtual ~PType();
+	virtual bool isNumeric() { return false; }
 
 	bool AddConversion(PType *target, void (*convertconst)(ZCC_ExprConstant *, class FSharedStringArena &));
 
@@ -417,7 +418,7 @@ class PInt : public PBasicType
 {
 	DECLARE_CLASS(PInt, PBasicType);
 public:
-	PInt(unsigned int size, bool unsign);
+	PInt(unsigned int size, bool unsign, bool compatible = true);
 
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
@@ -426,8 +427,10 @@ public:
 	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
 	virtual double GetValueFloat(void *addr) const;
+	virtual bool isNumeric() override { return IntCompatible; }
 
 	bool Unsigned;
+	bool IntCompatible;
 protected:
 	PInt();
 	void SetOps();
@@ -453,6 +456,7 @@ public:
 	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
 	virtual double GetValueFloat(void *addr) const;
+	virtual bool isNumeric() override { return true; }
 protected:
 	PFloat();
 	void SetOps();
@@ -514,6 +518,13 @@ class PColor : public PInt
 	DECLARE_CLASS(PColor, PInt);
 public:
 	PColor();
+};
+
+class PStateLabel : public PInt
+{
+	DECLARE_CLASS(PStateLabel, PInt);
+public:
+	PStateLabel();
 };
 
 // Pointers -----------------------------------------------------------------
@@ -903,6 +914,7 @@ extern PColor *TypeColor;
 extern PStruct *TypeVector2;
 extern PStruct *TypeVector3;
 extern PStatePointer *TypeState;
+extern PStateLabel *TypeStateLabel;
 extern PPointer *TypeNullPtr;
 
 // A constant value ---------------------------------------------------------

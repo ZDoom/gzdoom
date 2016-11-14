@@ -159,6 +159,7 @@ extern FFlagDef ActorFlagDefs[];
 
 void AActor::InitNativeFields()
 {
+	PType *TypePlayer = NewPointer(TypeVoid);	// placeholder
 	PType *TypeActor = NewPointer(RUNTIME_CLASS(AActor));
 	PType *TypeActorClass = NewClassPointer(RUNTIME_CLASS(AActor));
 	PType *TypeInventory = NewPointer(RUNTIME_CLASS(AInventory));
@@ -168,6 +169,7 @@ void AActor::InitNativeFields()
 
 	auto meta = RUNTIME_CLASS(AActor);
 
+	meta->AddNativeField("Player",				TypePlayer,		myoffsetof(AActor, player));
 	meta->AddNativeField("Pos",					TypeVector3,	myoffsetof(AActor, __Pos), VARF_ReadOnly);
 	meta->AddNativeField(NAME_X,				TypeFloat64,	myoffsetof(AActor, __Pos.X), VARF_ReadOnly | VARF_Deprecated);	// must remain read-only!
 	meta->AddNativeField(NAME_Y,				TypeFloat64,	myoffsetof(AActor, __Pos.Y), VARF_ReadOnly | VARF_Deprecated);	// must remain read-only!
@@ -694,7 +696,7 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 DEFINE_ACTION_FUNCTION(AActor, SetState)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE(state);
+	PARAM_POINTER(state, FState);
 	PARAM_BOOL_DEF(nofunction);
 	ACTION_RETURN_BOOL(self->SetState(state, nofunction));
 };

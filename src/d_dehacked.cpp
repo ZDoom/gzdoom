@@ -1494,7 +1494,7 @@ static int PatchFrame (int frameNum)
 DEFINE_ACTION_FUNCTION(AActor, isDEHState)
 {
 	PARAM_PROLOGUE;
-	PARAM_STATE(state);
+	PARAM_POINTER(state, FState);
 	ACTION_RETURN_BOOL(state != nullptr && (state->DefineFlags & SDF_DEHACKED));
 }
 

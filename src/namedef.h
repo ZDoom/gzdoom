@@ -730,10 +730,10 @@ xx(stateinfo)
 
 xx(__decorate_internal_int__)
 xx(__decorate_internal_bool__)
-xx(__decorate_internal_state__)
 xx(__decorate_internal_float__)
+xx(ResolveState)
 
 xx(DamageFunction)
 xx(Length)
 xx(Unit)
-xx(A_Jump)
+xx(StateLabel)

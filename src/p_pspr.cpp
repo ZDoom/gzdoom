@@ -886,7 +886,7 @@ static void P_CheckWeaponButtons (player_t *player)
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_ReFire)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_STATE_DEF(state);
+	PARAM_STATE_ACTION_DEF(state);
 	A_ReFire(self, state);
 	return 0;
 }
@@ -1224,7 +1224,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Overlay)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT		(layer);
-	PARAM_STATE_DEF(state);
+	PARAM_STATE_ACTION_DEF(state);
 	PARAM_BOOL_DEF(dontoverride);
 
 	player_t *player = self->player;
@@ -1294,7 +1294,7 @@ enum GF_Flags
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_STATE_DEF(flash);
+	PARAM_STATE_ACTION_DEF(flash);
 	PARAM_INT_DEF(flags);
 
 	player_t *player = self->player;
@@ -1359,6 +1359,19 @@ DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfla
 	} while (pLineTarget->linetarget == NULL && --i >= 0);
 
 	return pitch;
+}
+
+AActor *P_AimTarget(AActor *mo)
+{
+	FTranslatedLineTarget t;
+	P_BulletSlope(mo, &t, ALF_PORTALRESTRICT);
+	return t.linetarget;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, AimTarget)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_OBJECT(P_AimTarget(self));
 }
 
 

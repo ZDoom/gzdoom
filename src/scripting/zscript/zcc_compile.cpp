@@ -1429,7 +1429,15 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 			break;
 
 		case ZCC_UserType:
-			retval = ResolveUserType(btype, &outertype->Symbols);
+			// statelabel is not a token - there really is no need to, it works just as well as an identifier. Maybe the same should be done for some other types, too?
+			if (btype->UserType->Id == NAME_StateLabel)
+			{
+				retval = TypeStateLabel;
+			}
+			else
+			{
+				retval = ResolveUserType(btype, &outertype->Symbols);
+			}
 			break;
 		}
 		break;

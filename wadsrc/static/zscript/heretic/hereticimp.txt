@@ -113,7 +113,7 @@ class HereticImp : Actor
 		
 		if (extremecrash)
 		{
-			SetState ("XCrash");
+			SetStateLabel ("XCrash");
 		}
 	}
 

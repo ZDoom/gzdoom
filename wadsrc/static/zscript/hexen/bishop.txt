@@ -131,7 +131,7 @@ class Bishop : Actor
 	{
 		if (random[BishopDecide]() >= 220)
 		{
-			SetState ("Blur");
+			SetStateLabel ("Blur");
 		}
 	}
 
@@ -210,7 +210,7 @@ class Bishop : Actor
 	{
 		if (random[BishopPainBlur]() < 64)
 		{
-			SetState ("Blur");
+			SetStateLabel ("Blur");
 			return;
 		}
 		double xo = random2[BishopPainBlur]() / 16.;

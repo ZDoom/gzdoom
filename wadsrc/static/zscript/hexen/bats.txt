@@ -92,7 +92,7 @@ class Bat : Actor
 	{
 		if (special2 < 0)
 		{
-			SetState ("Death");
+			SetStateLabel ("Death");
 		}
 		special2 -= 2;		// Called every 2 tics
 

@@ -162,7 +162,7 @@ extend class Actor
 			boom.DeathSound = "misc/brainexplode";
 			boom.Vel.z = random[BrainScream](0, 255)/128.;
 
-			boom.SetState ("BossBrain::Brainexplode");
+			boom.SetStateLabel ("BossBrain::Brainexplode");
 			boom.bRocketTrail = false;
 			boom.SetDamage(0);	// disables collision detection which is not wanted here
 			boom.tics -= random[BrainScream](0, 7);

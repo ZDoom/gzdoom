@@ -812,7 +812,7 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 
 	if (basex->ValueType->GetRegType() == REGT_INT)
 	{
-		if (basex->ValueType != TypeName || Explicit)	// names can be converted to int, but only with an explicit type cast.
+		if (basex->ValueType->isNumeric() || Explicit)	// names can be converted to int, but only with an explicit type cast.
 		{
 			FxExpression *x = basex;
 			x->ValueType = ValueType;
@@ -822,7 +822,7 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 		}
 		else
 		{
-			// Ugh. This should abort, but too many mods fell into this logic hole somewhere, so this seroious error needs to be reduced to a warning. :(
+			// Ugh. This should abort, but too many mods fell into this logic hole somewhere, so this serious error needs to be reduced to a warning. :(
 			// At least in ZScript, MSG_OPTERROR always means to report an error, not a warning so the problem only exists in DECORATE.
 			if (!basex->isConstant())	
 				ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got a name");
@@ -919,7 +919,7 @@ FxExpression *FxFloatCast::Resolve(FCompileContext &ctx)
 	}
 	else if (basex->ValueType->GetRegType() == REGT_INT)
 	{
-		if (basex->ValueType != TypeName)
+		if (basex->ValueType->isNumeric())
 		{
 			if (basex->isConstant())
 			{
@@ -1428,8 +1428,15 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 		delete this;
 		return x;
 	}
-	else if (ValueType == TypeState)
+	else if (ValueType == TypeStateLabel)
 	{
+		if (basex->ValueType == TypeNullPtr)
+		{
+			auto x = new FxConstant(0, ScriptPosition);
+			x->ValueType = TypeStateLabel;
+			delete this;
+			return x;
+		}
 		// Right now this only supports string constants. There should be an option to pass a string variable, too.
 		if (basex->isConstant() && (basex->ValueType == TypeString || basex->ValueType == TypeName))
 		{
@@ -4022,6 +4029,10 @@ FxExpression *FxConditional::Resolve(FCompileContext& ctx)
 		ValueType = TypeSInt32;
 	else if (truex->IsNumeric() && falsex->IsNumeric())
 		ValueType = TypeFloat64;
+	else if (truex->IsPointer() && falsex->ValueType == TypeNullPtr)
+		ValueType = truex->ValueType;
+	else if (falsex->IsPointer() && truex->ValueType == TypeNullPtr)
+		ValueType = falsex->ValueType;
 	else
 		ValueType = TypeVoid;
 	//else if (truex->ValueType != falsex->ValueType)
@@ -4519,23 +4530,21 @@ static void EmitLoad(VMFunctionBuilder *build, const ExpEmit resultreg, const Ex
 ExpEmit FxMinMax::Emit(VMFunctionBuilder *build)
 {
 	unsigned i;
-	int opcode, opA;
+	int opcode;
 
 	assert(choices.Size() > 0);
-	assert(OP_LTF_RK == OP_LTF_RR+1);
-	assert(OP_LT_RK == OP_LT_RR+1);
-	assert(OP_LEF_RK == OP_LEF_RR+1);
-	assert(OP_LE_RK == OP_LE_RR+1);
+	assert(OP_MAXF_RK == OP_MAXF_RR+1);
+	assert(OP_MAX_RK == OP_MAX_RR+1);
+	assert(OP_MIN_RK == OP_MIN_RR+1);
+	assert(OP_MIN_RK == OP_MIN_RR+1);
 
 	if (Type == NAME_Min)
 	{
-		opcode = ValueType->GetRegType() == REGT_FLOAT ? OP_LEF_RR : OP_LE_RR;
-		opA = 1;
+		opcode = ValueType->GetRegType() == REGT_FLOAT ? OP_MINF_RR : OP_MIN_RR;
 	}
 	else
 	{
-		opcode = ValueType->GetRegType() == REGT_FLOAT ? OP_LTF_RR : OP_LT_RR;
-		opA = 0;
+		opcode = ValueType->GetRegType() == REGT_FLOAT ? OP_MAXF_RR : OP_MAX_RR;
 	}
 
 	ExpEmit bestreg;
@@ -4556,17 +4565,8 @@ ExpEmit FxMinMax::Emit(VMFunctionBuilder *build)
 	{
 		ExpEmit checkreg = choices[i]->Emit(build);
 		assert(checkreg.RegType == bestreg.RegType);
-		build->Emit(opcode + checkreg.Konst, opA, bestreg.RegNum, checkreg.RegNum);
-		build->Emit(OP_JMP, 1);
-		if (checkreg.Konst)
-		{
-			build->Emit(bestreg.RegType == REGT_FLOAT ? OP_LKF : OP_LK, bestreg.RegNum, checkreg.RegNum);
-		}
-		else
-		{
-			build->Emit(bestreg.RegType == REGT_FLOAT ? OP_MOVEF : OP_MOVE, bestreg.RegNum, checkreg.RegNum, 0);
-			checkreg.Free(build);
-		}
+		build->Emit(opcode + checkreg.Konst, bestreg.RegNum, bestreg.RegNum, checkreg.RegNum);
+		checkreg.Free(build);
 	}
 	return bestreg;
 }
@@ -6121,7 +6121,6 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	case NAME_Name:
 	case NAME_Color:
 	case NAME_Sound:
-	case NAME_State:
 		if (CheckArgSize(MethodName, ArgList, 1, 1, ScriptPosition))
 		{
 			PType *type = 
@@ -6131,8 +6130,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 				MethodName == NAME_Float ? TypeFloat64 :
 				MethodName == NAME_Double ? TypeFloat64 :
 				MethodName == NAME_Name ? TypeName :
-				MethodName == NAME_Color ? TypeColor :
-				MethodName == NAME_State? TypeState :(PType*)TypeSound;
+				MethodName == NAME_Color ? TypeColor : (PType*)TypeSound;
 
 			func = new FxTypeCast(ArgList[0], type, true, true);
 			ArgList[0] = nullptr;
@@ -6819,7 +6817,6 @@ bool FxVMFunctionCall::CheckEmitCast(VMFunctionBuilder *build, bool returnit, Ex
 	FName funcname = Function->SymbolName;
 	if (funcname == NAME___decorate_internal_int__ ||
 		funcname == NAME___decorate_internal_bool__ ||
-		funcname == NAME___decorate_internal_state__ ||
 		funcname == NAME___decorate_internal_float__)
 	{
 		FxExpression *arg = ArgList[0];
@@ -7926,6 +7923,13 @@ FxExpression *FxReturnStatement::Resolve(FCompileContext &ctx)
 	}
 	else
 	{
+		// If we already know the real return type we need at least try to cast the value to its proper type (unless in an anonymous function.)
+		if (ctx.ReturnProto != nullptr && ctx.Function->SymbolName != NAME_None)
+		{
+			Value = new FxTypeCast(Value, ctx.ReturnProto->ReturnTypes[0], false, false);
+			Value = Value->Resolve(ctx);
+			ABORT(Value);
+		}
 		retproto = Value->ReturnProto();
 	}
 
@@ -8135,7 +8139,9 @@ ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
-//
+// Symbolic state labels. 
+// Conversion will not happen inside the compiler anymore because it causes
+// just too many problems.
 //
 //==========================================================================
 
@@ -8155,7 +8161,9 @@ FxExpression *FxStateByIndex::Resolve(FCompileContext &ctx)
 		delete this;
 		return nullptr;
 	}
-	FxExpression *x = new FxConstant(aclass->OwnedStates + index, ScriptPosition);
+	int symlabel = StateLabels.AddPointer(aclass->OwnedStates + index);
+	FxExpression *x = new FxConstant(symlabel, ScriptPosition);
+	x->ValueType = TypeStateLabel;
 	delete this;
 	return x;
 }
@@ -8169,19 +8177,12 @@ FxExpression *FxStateByIndex::Resolve(FCompileContext &ctx)
 FxRuntimeStateIndex::FxRuntimeStateIndex(FxExpression *index)
 : FxExpression(EFX_RuntimeStateIndex, index->ScriptPosition), Index(index)
 {
-	EmitTail = false;
-	ValueType = TypeState;
+	ValueType = TypeStateLabel;
 }
 
 FxRuntimeStateIndex::~FxRuntimeStateIndex()
 {
 	SAFE_DELETE(Index);
-}
-
-PPrototype *FxRuntimeStateIndex::ReturnProto()
-{
-	EmitTail = true;
-	return FxExpression::ReturnProto();
 }
 
 FxExpression *FxRuntimeStateIndex::Resolve(FCompileContext &ctx)
@@ -8206,13 +8207,15 @@ FxExpression *FxRuntimeStateIndex::Resolve(FCompileContext &ctx)
 		}
 		else if (index == 0)
 		{
-			auto x = new FxConstant((FState*)nullptr, ScriptPosition);
+			int symlabel = StateLabels.AddPointer(nullptr);
+			auto x = new FxConstant(symlabel, ScriptPosition);
 			delete this;
-			return x->Resolve(ctx);
+			x->ValueType = TypeStateLabel;
+			return x;
 		}
 		else
 		{
-			auto x = new FxStateByIndex(index, ScriptPosition);
+			auto x = new FxStateByIndex(ctx.StateIndex + index, ScriptPosition);
 			delete this;
 			return x->Resolve(ctx);
 		}
@@ -8222,84 +8225,21 @@ FxExpression *FxRuntimeStateIndex::Resolve(FCompileContext &ctx)
 		Index = new FxIntCast(Index, ctx.FromDecorate);
 		SAFE_RESOLVE(Index, ctx);
 	}
-
+	auto aclass = dyn_cast<PClassActor>(ctx.Class);
+	assert(aclass != nullptr && aclass->NumOwnedStates > 0);
+	symlabel = StateLabels.AddPointer(aclass->OwnedStates + ctx.StateIndex);
+	ValueType = TypeStateLabel;
 	return this;
-}
-
-static bool VerifyJumpTarget(AActor *stateowner, FStateParamInfo *stateinfo, int index)
-{
-	PClassActor *cls = stateowner->GetClass();
-
-	if (stateinfo->mCallingState != nullptr)
-	{
-	while (cls != RUNTIME_CLASS(AActor))
-	{
-		// both calling and target state need to belong to the same class.
-		if (cls->OwnsState(stateinfo->mCallingState))
-		{
-			return cls->OwnsState(stateinfo->mCallingState + index);
-		}
-
-		// We can safely assume the ParentClass is of type PClassActor
-		// since we stop when we see the Actor base class.
-		cls = static_cast<PClassActor *>(cls->ParentClass);
-	}
-	}
-	return false;
-}
-
-static int BuiltinHandleRuntimeState(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
-{
-	PARAM_PROLOGUE;
-	PARAM_OBJECT(stateowner, AActor);
-	PARAM_POINTER(stateinfo, FStateParamInfo);
-	PARAM_INT(index);
-
-	if (index == 0 || !VerifyJumpTarget(stateowner, stateinfo, index))
-	{
-		// Null is returned if the location was invalid which means that no jump will be performed
-		// if used as return value
-		// 0 always meant the same thing so we handle it here for compatibility
-		ACTION_RETURN_STATE(nullptr);
-	}
-	else
-	{
-		ACTION_RETURN_STATE(stateinfo->mCallingState + index);
-	}
 }
 
 ExpEmit FxRuntimeStateIndex::Emit(VMFunctionBuilder *build)
 {
-	// This can only be called from inline state functions which must be VARF_Action.
-	assert(build->NumImplicits >= NAP && build->Registers[REGT_POINTER].GetMostUsed() >= build->NumImplicits &&
-		"FxRuntimeStateIndex is only valid inside action functions");
-
-	ExpEmit out(build, REGT_POINTER);
-
-	build->Emit(OP_PARAM, 0, REGT_POINTER, 1); // stateowner
-	build->Emit(OP_PARAM, 0, REGT_POINTER, 2); // stateinfo
-	ExpEmit id = Index->Emit(build);
-	build->Emit(OP_PARAM, 0, REGT_INT | (id.Konst ? REGT_KONST : 0), id.RegNum); // index
-
-	VMFunction *callfunc;
-	PSymbol *sym;
-	
-	sym = FindBuiltinFunction(NAME_BuiltinHandleRuntimeState, BuiltinHandleRuntimeState);
-	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
-	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
-	callfunc = ((PSymbolVMFunction *)sym)->Function;
-
-	if (EmitTail)
-	{
-		build->Emit(OP_TAIL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
-		out.Final = true;
-	}
-	else
-	{
-		build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
-		build->Emit(OP_RESULT, 0, REGT_POINTER, out.RegNum);
-	}
-
+	ExpEmit out = Index->Emit(build);
+	// out = (clamp(Index, 0, 32767) << 16) | symlabel | 0x80000000;  0x80000000 is here to make it negative.
+	build->Emit(OP_MAX_RK, out.RegNum, out.RegNum, build->GetConstantInt(0));
+	build->Emit(OP_MIN_RK, out.RegNum, out.RegNum, build->GetConstantInt(32767));
+	build->Emit(OP_SLL_RI, out.RegNum, out.RegNum, 16);
+	build->Emit(OP_OR_RK, out.RegNum, out.RegNum, build->GetConstantInt(symlabel|0x80000000));
 	return out;
 }
 
@@ -8340,6 +8280,7 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	ABORT(ctx.Class);
+	int symlabel;
 
 	if (names[0] == NAME_None)
 	{
@@ -8379,107 +8320,17 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 				return this;
 			}
 		}
-		FxExpression *x = new FxConstant(destination, ScriptPosition);
-		delete this;
-		return x;
-	}
-	names.Delete(0);
-	names.ShrinkToFit();
-	ValueType = TypeState;
-	return this;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-static int DoFindState(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, FName *names, int numnames)
-{
-	PARAM_OBJECT_AT(0, self, AActor);
-	FState *state = self->GetClass()->FindState(numparam - 1, names);
-	if (state == nullptr)
-	{
-		const char *dot = "";
-		Printf("Jump target '");
- 		for (int i = 0; i < numparam - 1; i++)
-		{
-			Printf("%s%s", dot, names[i].GetChars());
-			dot = ".";
-		}
-		Printf("' not found in %s\n", self->GetClass()->TypeName.GetChars());
-	}
-	ret->SetPointer(state, ATAG_STATE);
-	return 1;
-}
-
-// Find a state with any number of dots in its name.
-int BuiltinFindMultiNameState(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
-{
-	assert(numparam > 1);
-	assert(numret == 1);
-	assert(ret->RegType == REGT_POINTER);
-
-	FName *names = (FName *)alloca((numparam - 1) * sizeof(FName));
-	for (int i = 1; i < numparam; ++i)
-	{
-		PARAM_NAME_AT(i, zaname);
-		names[i - 1] = zaname;
-	}
-	return DoFindState(stack, param, numparam, ret, names, numparam - 1);
-}
-
-// Find a state without any dots in its name.
-int BuiltinFindSingleNameState(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
-{
-	assert(numparam == 2);
-	assert(numret == 1);
-	assert(ret->RegType == REGT_POINTER);
-
-	PARAM_NAME_AT(1, zaname);
-	return DoFindState(stack, param, numparam, ret, &zaname, 1);
-}
-
-ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
-{
-	ExpEmit dest(build, REGT_POINTER);
-	if (build->NumImplicits == NAP)
-	{
-		build->Emit(OP_PARAM, 0, REGT_POINTER, 1);		// pass stateowner
+		symlabel = StateLabels.AddPointer(destination);
 	}
 	else
 	{
-		build->Emit(OP_PARAM, 0, REGT_POINTER, 0);		// pass self
+		names.Delete(0);
+		symlabel = StateLabels.AddNames(names);
 	}
-	for (unsigned i = 0; i < names.Size(); ++i)
-	{
-		build->EmitParamInt(names[i]);
-	}
-
-	// For one name, use the BuiltinFindSingleNameState function. For more than
-	// one name, use the BuiltinFindMultiNameState function.
-	VMFunction *callfunc;
-	PSymbol *sym;
-	
-	if (names.Size() == 1)
-	{
-		sym = FindBuiltinFunction(NAME_BuiltinFindSingleNameState, BuiltinFindSingleNameState);
-	}
-	else
-	{
-		sym = FindBuiltinFunction(NAME_BuiltinFindMultiNameState, BuiltinFindMultiNameState);
-	}
-
-	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
-	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
-	callfunc = ((PSymbolVMFunction *)sym)->Function;
-
-	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), names.Size() + 1, 1);
-	build->Emit(OP_RESULT, 0, REGT_POINTER, dest.RegNum);
-	names.Clear();
-	names.ShrinkToFit();
-	return dest;
+	FxExpression *x = new FxConstant(symlabel, ScriptPosition);
+	x->ValueType = TypeStateLabel;
+	delete this;
+	return x;
 }
 
 //==========================================================================

@@ -370,8 +370,8 @@ class Actor : Thinker native
 	native void A_Weave(int xspeed, int yspeed, float xdist, float ydist);
 
 
-	native state, bool A_Teleport(statelabel teleportstate = null, class<SpecialSpot> targettype = "BossSpot", class<Actor> fogtype = "TeleportFog", int flags = 0, float mindist = 0, float maxdist = 128, int ptr = AAPTR_DEFAULT);
-	native state, bool A_Warp(int ptr_destination, float xofs = 0, float yofs = 0, float zofs = 0, float angle = 0, int flags = 0, statelabel success_state = null, float heightoffset = 0, float radiusoffset = 0, float pitch = 0);
+	action native state, bool A_Teleport(statelabel teleportstate = null, class<SpecialSpot> targettype = "BossSpot", class<Actor> fogtype = "TeleportFog", int flags = 0, float mindist = 0, float maxdist = 128, int ptr = AAPTR_DEFAULT);
+	action native state, bool A_Warp(int ptr_destination, float xofs = 0, float yofs = 0, float zofs = 0, float angle = 0, int flags = 0, statelabel success_state = null, float heightoffset = 0, float radiusoffset = 0, float pitch = 0);
 	native void A_CountdownArg(int argnum, statelabel targstate = null);
 	native state A_MonsterRefire(int chance, statelabel label);
 	native void A_LookEx(int flags = 0, float minseedist = 0, float maxseedist = 0, float maxheardist = 0, float fov = 0, statelabel label = null);

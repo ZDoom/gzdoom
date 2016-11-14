@@ -59,7 +59,6 @@
 #include "v_font.h"
 #include "r_data/colormaps.h"
 #include "p_maputl.h"
-#include "r_swrenderer2.h"
 #include "r_poly.h"
 #include "p_setup.h"
 #include "version.h"
@@ -922,8 +921,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	}
 	else
 	{
-		static RenderPolyBsp bsp;
-		bsp.Render();
+		RenderPolyScene::Instance()->Render();
 	}
 	R_3D_ResetClip(); // reset clips (floor/ceiling)
 	camera->renderflags = savedflags;
@@ -955,7 +953,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 		NetUpdate ();
 		
 		MaskedCycles.Clock();
-		if (!r_newrenderer || !r_swtruecolor)
+		if (!r_newrenderer)
 			R_DrawMasked ();
 		MaskedCycles.Unclock();
 

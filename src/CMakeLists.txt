@@ -1070,6 +1070,14 @@ set( FASTMATH_PCH_SOURCES
 	r_swrenderer.cpp
 	r_swrenderer2.cpp
 	r_poly.cpp
+	r_poly_cull.cpp
+	r_poly_particle.cpp
+	r_poly_plane.cpp
+	r_poly_playersprite.cpp
+	r_poly_wall.cpp
+	r_poly_wallsprite.cpp
+	r_poly_sprite.cpp
+	r_poly_sky.cpp
 	r_poly_triangle.cpp
 	r_poly_intersection.cpp
 	r_3dfloors.cpp

@@ -44,8 +44,11 @@
 #include "r_data/voxels.h"
 #include "r_draw_rgba.h"
 #include "r_compiler/llvmdrawers.h"
+#include "r_poly.h"
 
 EXTERN_CVAR(Bool, r_shadercolormaps)
+EXTERN_CVAR(Bool, r_newrenderer)	// [SP] dpJudas's new renderer
+EXTERN_CVAR(Float, maxviewpitch)	// [SP] CVAR from GZDoom
 
 void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio);
 void R_SetupColormap(player_t *);
@@ -239,7 +242,14 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 
 void FSoftwareRenderer::DrawRemainingPlayerSprites()
 {
-	R_DrawRemainingPlayerSprites();
+	if (!r_newrenderer)
+	{
+		R_DrawRemainingPlayerSprites();
+	}
+	else
+	{
+		RenderPolyScene::Instance()->RenderRemainingPlayerSprites();
+	}
 }
 
 //===========================================================================
@@ -249,9 +259,6 @@ void FSoftwareRenderer::DrawRemainingPlayerSprites()
 //===========================================================================
 #define MAX_DN_ANGLE	56		// Max looking down angle
 #define MAX_UP_ANGLE	32		// Max looking up angle
-
-EXTERN_CVAR(Bool, r_newrenderer)	// [SP] dpJudas's new renderer
-EXTERN_CVAR(Float, maxviewpitch)	// [SP] CVAR from GZDoom
 
 int FSoftwareRenderer::GetMaxViewPitch(bool down)
 {

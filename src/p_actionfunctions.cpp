@@ -2665,12 +2665,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetInventory)
 		}
 		else if (amount <= 0)
 		{
-			// Remove it all.
-			if (item)
-			{
-				item->DepleteOrDestroy();
-				res = true;
-			}
+			//Remove it all.
+			res = (mobj->TakeInventory(itemtype, item->Amount, true, false));
 			ACTION_RETURN_BOOL(res);
 		}
 		else if (amount < item->Amount)

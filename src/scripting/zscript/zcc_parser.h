@@ -228,6 +228,7 @@ struct ZCC_EnumTerminator : ZCC_TreeNode
 struct ZCC_States : ZCC_TreeNode
 {
 	struct ZCC_StatePart *Body;
+	ZCC_Identifier *Flags;
 };
 
 struct ZCC_StatePart : ZCC_TreeNode

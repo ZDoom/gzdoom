@@ -418,13 +418,36 @@ enumerator(X) ::= IDENTIFIER(A) EQ expr(B).			/* Expression must be constant. */
 %type state_call_params {ZCC_FuncParm *}
 
 %type state_opts {StateOpts}
+%type states_opts { ZCC_Identifier *}
+%type states_opt { ZCC_Identifier *}
 
 states_def(X) ::= STATES(T) scanner_mode LBRACE states_body(A) RBRACE.
+states_def(X) ::= STATES(T) states_opts(B) scanner_mode LBRACE states_body(A) RBRACE.
 {
 	NEW_AST_NODE(States,def,T);
+	def->Flags = B;
 	def->Body = A;
 	X = def;
 }
+
+states_opts(X) ::= . { X = nullptr; }
+states_opts(X) ::= LPAREN states_opt(A) RPAREN.  { X = A; /*X-overwrites-A*/ }
+
+states_opt(X) ::= IDENTIFIER(A).
+{
+	NEW_AST_NODE(Identifier,id,A);
+	id->Id = A.Name();
+	X = id;
+}
+
+states_opt(X) ::= states_opt(A) COMMA IDENTIFIER(B).
+{
+	NEW_AST_NODE(Identifier,id,B);
+	id->Id = B.Name();
+	X = A; /*X-overwrites-A*/
+	X->AppendSibling(id);
+}
+
 
 /* We use a special scanner mode to allow for sprite names and frame characters
  * to not be quoted even if they contain special characters. The scanner_mode

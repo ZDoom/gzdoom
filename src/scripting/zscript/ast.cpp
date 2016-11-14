@@ -358,6 +358,7 @@ static void PrintStates(FLispString &out, ZCC_TreeNode *node)
 	ZCC_States *snode = (ZCC_States *)node;
 	out.Break();
 	out.Open("states");
+	PrintNodes(out, snode->Flags, false, true);
 	PrintNodes(out, snode->Body, false, true);
 	out.Close();
 }

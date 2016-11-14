@@ -144,6 +144,22 @@ void ParseStates(FScanner &sc, PClassActor * actor, AActor * defaults, Baggage &
 	char lastsprite[5] = "";
 	FxExpression *ScriptCode;
 	FArgumentList *args = nullptr;
+	int flagdef = actor->DefaultStateUsage;
+
+	if (sc.CheckString("("))
+	{
+		flagdef = 0;
+		do
+		{
+			sc.MustGetString();
+			if (sc.Compare("Actor")) flagdef |= SUF_ACTOR;
+			else if (sc.Compare("Overlay")) flagdef |= SUF_OVERLAY;
+			else if (sc.Compare("Weapon")) flagdef |= SUF_WEAPON;
+			else if (sc.Compare("Item")) flagdef |= SUF_ITEM;
+			else sc.ScriptError("Unknown state block qualifier %s", sc.String);
+		} while (sc.CheckString(","));
+		sc.MustGetStringName(")");
+	}
 
 	sc.MustGetStringName ("{");
 	sc.SetEscape(false);	// disable escape sequences in the state parser
@@ -151,6 +167,7 @@ void ParseStates(FScanner &sc, PClassActor * actor, AActor * defaults, Baggage &
 	{
 		ScriptCode = nullptr;
 		memset(&state,0,sizeof(state));
+		state.UseFlags = (uint8_t)flagdef;
 		statestring = ParseStateString(sc);
 		if (!statestring.CompareNoCase("GOTO"))
 		{

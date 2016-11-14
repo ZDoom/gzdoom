@@ -2464,8 +2464,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetInventory)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS(itemtype, AInventory);
 	PARAM_INT(amount);
-	PARAM_INT_DEF(ptr)			{ ptr = AAPTR_DEFAULT; }
-	PARAM_BOOL_DEF(beyondMax)	{ beyondMax = false; }
+	PARAM_INT_DEF(ptr);
+	PARAM_BOOL_DEF(beyondMax);
 
 	bool res = false;
 

@@ -8299,7 +8299,7 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 			delete this;
 			return nullptr;
 		}
-		else if (!scope->IsAncestorOf(ctx.Class) && ctx.Class != RUNTIME_CLASS(AActor)) // AActor needs access to subclasses in a few places. TBD: Relax this for non-action functions?
+		else if (!scope->IsAncestorOf(ctx.Class))
 		{
 			ScriptPosition.Message(MSG_ERROR, "'%s' is not an ancestor of '%s'", names[0].GetChars(), ctx.Class->TypeName.GetChars());
 			delete this;

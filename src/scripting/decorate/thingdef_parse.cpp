@@ -1062,11 +1062,6 @@ static void ParseActor(FScanner &sc)
 			break;
 
 		case TK_States:
-			if (bag.StateSet) 
-			{
-				sc.ScriptMessage("'%s' contains multiple state declarations", bag.Info->TypeName.GetChars());
-				FScriptPosition::ErrorCounter++;
-			}
 			ParseStates(sc, bag.Info, (AActor *)bag.Info->Defaults, bag);
 			bag.StateSet = true;
 			break;

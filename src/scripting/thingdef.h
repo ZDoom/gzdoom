@@ -63,6 +63,7 @@ class FStateDefinitions
 	FState *laststatebeforelabel;
 	intptr_t lastlabel;
 	TArray<FState> StateArray;
+	uint8_t UseType;
 
 	static FStateDefine *FindStateLabelInList(TArray<FStateDefine> &list, FName name, bool create);
 	static FStateLabels *CreateStateLabelList(TArray<FStateDefine> &statelist);
@@ -74,6 +75,10 @@ class FStateDefinitions
 	FState *ResolveGotoLabel(AActor *actor, PClassActor *mytype, char *name);
 	static void FixStatePointers(PClassActor *actor, TArray<FStateDefine> & list);
 	void ResolveGotoLabels(PClassActor *actor, AActor *defaults, TArray<FStateDefine> & list);
+	void SetUseType(int type)
+	{
+		UseType = uint8_t(type);
+	}
 
 public:
 

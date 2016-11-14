@@ -1,6 +1,14 @@
 // for flag changer functions.
 const FLAG_NO_CHANGE = -1;
 
+enum EStateUseFlags
+{
+	SUF_ACTOR = 1,
+	SUF_OVERLAY = 2,
+	SUF_WEAPON = 4,
+	SUF_ITEM = 8,
+};
+
 // Flags for A_PainAttack
 enum EPainAttackFlags
 {

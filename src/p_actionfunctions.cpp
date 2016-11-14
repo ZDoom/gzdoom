@@ -3622,7 +3622,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, CheckRange)
 			}
 		}
 	}
-	ACTION_RETURN_BOOL(false);
+	ACTION_RETURN_BOOL(true);
 }
 
 

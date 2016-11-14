@@ -209,7 +209,6 @@ xx(XDeath)
 xx(Burn)
 //xx(Ice)			// already defined above
 xx(Disintegrate)
-xx(Brainexplode)
 
 // Weapon animator names.
 xx(Select)

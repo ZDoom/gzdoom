@@ -476,6 +476,10 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 		{
 			exp = new FxRuntimeStateIndex(ParseExpressionM(sc, cls));
 		}
+		// The parsed expression is of type 'statelabel', but we want a real state here so we must convert it.
+		FArgumentList args;
+		args.Push(exp);
+		exp = new FxFunctionCall(NAME_ResolveState, NAME_None, args, sc);
 		sc.MustGetToken(')');
 		return exp;
 	}

@@ -16,7 +16,7 @@ class Inventory : Actor native
 	private native void A_RestoreSpecialThing1();
 	private native void A_RestoreSpecialThing2();
 
-	States
+	States(Actor, Overlay, Weapon, Item)
 	{
 	HideDoomish:
 		TNT1 A 1050;

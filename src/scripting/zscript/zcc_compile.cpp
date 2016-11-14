@@ -2387,6 +2387,39 @@ void ZCCCompiler::CompileStates()
 
 		for (auto s : c->States)
 		{
+			int flags;
+			if (s->Flags != nullptr)
+			{
+				flags = 0;
+				auto p = s->Flags;
+				do
+				{
+					switch (p->Id)
+					{
+					case NAME_Actor:
+						flags |= SUF_ACTOR;
+						break;
+					case NAME_Overlay:
+						flags |= SUF_OVERLAY;
+						break;
+					case NAME_Weapon:
+						flags |= SUF_WEAPON;
+						break;
+					case NAME_Item:
+						flags |= SUF_ITEM;
+						break;
+					default:
+						Error(p, "Unknown States qualifier %s", FName(p->Id).GetChars());
+						break;
+					}
+
+					p = static_cast<decltype(p)>(p->SiblingNext);
+				} while (p != s->Flags);
+			}
+			else
+			{
+				flags = static_cast<PClassActor *>(c->Type())->DefaultStateUsage;
+			}
 			auto st = s->Body;
 			if (st != nullptr) do
 			{

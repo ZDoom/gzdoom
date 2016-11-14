@@ -469,7 +469,7 @@ class Weapon : StateProvider native
 		Weapon.BobRangeX 1.0;
 		Weapon.BobRangeY 1.0;
 		+WEAPONSPAWN
-		DefaultStateUsage SUF_ACTOR|SUF_OVERLAY|SUF_ITEM;
+		DefaultStateUsage SUF_ACTOR|SUF_OVERLAY|SUF_WEAPON;
 	}
 	States
 	{

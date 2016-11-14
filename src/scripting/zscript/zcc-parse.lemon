@@ -421,7 +421,6 @@ enumerator(X) ::= IDENTIFIER(A) EQ expr(B).			/* Expression must be constant. */
 %type states_opts { ZCC_Identifier *}
 %type states_opt { ZCC_Identifier *}
 
-states_def(X) ::= STATES(T) scanner_mode LBRACE states_body(A) RBRACE.
 states_def(X) ::= STATES(T) states_opts(B) scanner_mode LBRACE states_body(A) RBRACE.
 {
 	NEW_AST_NODE(States,def,T);

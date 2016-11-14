@@ -2437,6 +2437,7 @@ void ZCCCompiler::CompileStates()
 					auto sl = static_cast<ZCC_StateLine *>(st);
 					FState state;
 					memset(&state, 0, sizeof(state));
+					state.UseFlags = flags;
 					if (sl->Sprite->Len() != 4)
 					{
 						Error(sl, "Sprite name must be exactly 4 characters. Found '%s'", sl->Sprite->GetChars());

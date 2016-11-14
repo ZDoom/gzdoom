@@ -128,6 +128,13 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 
 	while (state != NULL)
 	{
+		if (!(state->UseFlags & SUF_ITEM))
+		{
+			auto so = FState::StaticFindStateOwner(state);
+			Printf("State %s.%d not flagged for use in CustomInventory state chains.\n", so->TypeName.GetChars(), int(state - so->OwnedStates));
+			return false;
+		}
+
 		this->state = state;
 		nextstate = NULL;	// assume no jump
 

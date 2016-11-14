@@ -6121,6 +6121,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	case NAME_Name:
 	case NAME_Color:
 	case NAME_Sound:
+	case NAME_State:
 		if (CheckArgSize(MethodName, ArgList, 1, 1, ScriptPosition))
 		{
 			PType *type = 
@@ -6130,6 +6131,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 				MethodName == NAME_Float ? TypeFloat64 :
 				MethodName == NAME_Double ? TypeFloat64 :
 				MethodName == NAME_Name ? TypeName :
+				MethodName == NAME_State ? TypeState :
 				MethodName == NAME_Color ? TypeColor : (PType*)TypeSound;
 
 			func = new FxTypeCast(ArgList[0], type, true, true);

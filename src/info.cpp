@@ -285,6 +285,7 @@ void PClassActor::DeriveData(PClass *newclass)
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassActor)));
 	PClassActor *newa = static_cast<PClassActor *>(newclass);
 
+	newa->DefaultStateUsage = DefaultStateUsage;
 	newa->Obituary = Obituary;
 	newa->HitObituary = HitObituary;
 	newa->DeathHeight = DeathHeight;

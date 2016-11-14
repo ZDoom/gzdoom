@@ -88,9 +88,9 @@ class ScoreItem : Inventory native
 	Default
 	{
 		Height 10;
-		+COUNTITEM;
+		+COUNTITEM
 		Inventory.Amount 1;
-		+Inventory.ALWAYSPICKUP;
+		+Inventory.ALWAYSPICKUP
 	}
 }
 
@@ -98,7 +98,7 @@ class Ammo : Inventory native
 {
 	Default
 	{
-		+INVENTORY.KEEPDEPLETED;
+		+INVENTORY.KEEPDEPLETED
 		Inventory.PickupSound "misc/ammo_pkup";
 	}
 }
@@ -119,7 +119,7 @@ class BasicArmor : Armor native
 {
 	Default
 	{
-		+Inventory.KEEPDEPLETED;
+		+Inventory.KEEPDEPLETED
 	}
 }
 
@@ -127,8 +127,8 @@ class BasicArmorBonus : Armor native
 {
 	Default
 	{
-		+Inventory.AUTOACTIVATE;
-		+Inventory.ALWAYSPICKUP;
+		+Inventory.AUTOACTIVATE
+		+Inventory.ALWAYSPICKUP
 		Inventory.MaxAmount 0;
 		Armor.SavePercent 33.335;
 	}
@@ -147,8 +147,8 @@ class HexenArmor : Armor native
 {
 	Default
 	{
-		+Inventory.KEEPDEPLETED;
-		+Inventory.UNDROPPABLE;
+		+Inventory.KEEPDEPLETED
+		+Inventory.UNDROPPABLE
 	}
 }
 
@@ -156,7 +156,13 @@ class DehackedPickup : Inventory native {}
 
 class FakeInventory : Inventory native {}
 
-class CustomInventory : StateProvider native {}
+class CustomInventory : StateProvider native 
+{
+	Default
+	{
+		DefaultStateUsage SUF_ACTOR|SUF_OVERLAY|SUF_ITEM;
+	}
+}
 
 class Health : Inventory native 
 {
@@ -173,7 +179,7 @@ class HealthPickup : Inventory native
 	Default
 	{
 		Inventory.DefMaxAmount;
-		+INVENTORY.INVBAR;
+		+INVENTORY.INVBAR
 	}
 }
 
@@ -192,8 +198,8 @@ class PowerupGiver : Inventory native
 	Default
 	{
 		Inventory.DefMaxAmount;
-		+INVENTORY.INVBAR;
-		+INVENTORY.FANCYPICKUPSOUND;
+		+INVENTORY.INVBAR
+		+INVENTORY.FANCYPICKUPSOUND
 		Inventory.PickupSound "misc/p_pkup";
 	}
 }
@@ -215,7 +221,7 @@ class PowerStrength : Powerup native
 	{
 		Powerup.Duration 1;
 		Powerup.Color "ff 00 00", 0.5;
-		+INVENTORY.HUBPOWER;
+		+INVENTORY.HUBPOWER
 	}
 }
 
@@ -245,7 +251,7 @@ class PowerShadow : PowerInvisibility
 {
 	Default
 	{
-		+INVENTORY.HUBPOWER;
+		+INVENTORY.HUBPOWER
 		Powerup.Duration -55;
 		Powerup.Strength 75;
 		Powerup.Mode "Cumulative";
@@ -267,7 +273,7 @@ class PowerMask : PowerIronFeet native
 	{
 		Powerup.Duration -80;
 		Powerup.Color "00 00 00", 0;
-		+INVENTORY.HUBPOWER;
+		+INVENTORY.HUBPOWER
 		Inventory.Icon "I_MASK";
 	}
 }
@@ -287,7 +293,7 @@ class PowerFlight : Powerup native
 	Default
 	{
 		Powerup.Duration -60;
-		+INVENTORY.HUBPOWER;
+		+INVENTORY.HUBPOWER
 	}
 }
 
@@ -297,7 +303,7 @@ class PowerWeaponLevel2 : Powerup native
 	{
 		Powerup.Duration -40;
 		Inventory.Icon "SPINBK0";
-		+INVENTORY.NOTELEPORTFREEZE;
+		+INVENTORY.NOTELEPORTFREEZE
 	}
 }
 
@@ -308,7 +314,7 @@ class PowerSpeed : Powerup native
 		Powerup.Duration -45;
 		Speed 1.5;
 		Inventory.Icon "SPBOOT0";
-		+INVENTORY.NOTELEPORTFREEZE;
+		+INVENTORY.NOTELEPORTFREEZE
 	}
 }
 
@@ -318,8 +324,8 @@ class PlayerSpeedTrail native
 {
 	Default
 	{
-		+NOBLOCKMAP;
-		+NOGRAVITY;
+		+NOBLOCKMAP
+		+NOGRAVITY
 		Alpha 0.6;
 		RenderStyle "Translucent";
 	}
@@ -339,7 +345,7 @@ class PowerTargeter : Powerup native
 	Default
 	{
 		Powerup.Duration -160;
-		+INVENTORY.HUBPOWER;
+		+INVENTORY.HUBPOWER
 	}
 	States
 	{
@@ -374,7 +380,7 @@ class PowerScanner : Powerup native
 	Default
 	{
 		Powerup.Duration -80;
-		+INVENTORY.HUBPOWER;
+		+INVENTORY.HUBPOWER
 	}
 }
 
@@ -445,8 +451,8 @@ class PuzzleItem : Inventory native
 {
 	Default
 	{
-		+NOGRAVITY;
-		+INVENTORY.INVBAR;
+		+NOGRAVITY
+		+INVENTORY.INVBAR
 		Inventory.DefMaxAmount;
 		Inventory.UseSound "PuzzleSuccess";
 		Inventory.PickupSound "misc/i_pkup";
@@ -462,7 +468,8 @@ class Weapon : StateProvider native
 		Weapon.BobSpeed 1.0;
 		Weapon.BobRangeX 1.0;
 		Weapon.BobRangeY 1.0;
-		+WEAPONSPAWN;
+		+WEAPONSPAWN
+		DefaultStateUsage SUF_ACTOR|SUF_OVERLAY|SUF_ITEM;
 	}
 	States
 	{
@@ -491,9 +498,9 @@ class WeaponHolder : Inventory native
 {
 	Default
 	{
-		+NOBLOCKMAP;
-		+NOSECTOR;
-		+INVENTORY.UNDROPPABLE;
+		+NOBLOCKMAP
+		+NOSECTOR
+		+INVENTORY.UNDROPPABLE
 	}
 }
 

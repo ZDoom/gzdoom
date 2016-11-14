@@ -534,6 +534,15 @@ DEFINE_PROPERTY(skip_super, 0, Actor)
 }
 
 //==========================================================================
+// for internal use only - please do not document!
+//==========================================================================
+DEFINE_PROPERTY(defaultstateusage, I, Actor)
+{
+	PROP_INT_PARM(use, 0);
+	static_cast<PClassActor*>(bag.Info)->DefaultStateUsage = use;
+
+}
+//==========================================================================
 //
 //==========================================================================
 DEFINE_PROPERTY(tag, S, Actor)

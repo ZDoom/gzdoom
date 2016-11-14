@@ -271,6 +271,7 @@ public:
 	PClassActor *Replacee;
 	int NumOwnedStates;
 	BYTE GameFilter;
+	uint8_t DefaultStateUsage; // state flag defaults for blocks without a qualifier.
 	WORD SpawnID;
 	WORD ConversationID;
 	SWORD DoomEdNum;

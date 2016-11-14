@@ -632,7 +632,7 @@ void FString::StripLeft ()
 	if (max == 0) return;
 	for (i = 0; i < max; ++i)
 	{
-		if (!isspace(Chars[i]))
+		if (!isspace((unsigned char)Chars[i]))
 			break;
 	}
 	if (i == 0)
@@ -697,7 +697,7 @@ void FString::StripRight ()
 	if (max == 0) return;
 	for (i = --max; i-- > 0; )
 	{
-		if (!isspace(Chars[i]))
+		if (!isspace((unsigned char)Chars[i]))
 			break;
 	}
 	if (i == max)
@@ -756,12 +756,12 @@ void FString::StripLeftRight ()
 	if (max == 0) return;
 	for (i = 0; i < max; ++i)
 	{
-		if (!isspace(Chars[i]))
+		if (!isspace((unsigned char)Chars[i]))
 			break;
 	}
 	for (j = max - 1; j >= i; --j)
 	{
-		if (!isspace(Chars[j]))
+		if (!isspace((unsigned char)Chars[j]))
 			break;
 	}
 	if (i == 0 && j == max - 1)
@@ -1040,7 +1040,7 @@ octdigits	= [0-7];
 	yych = *YYCURSOR;
 
 	// Skip preceding whitespace
-	while (yych != '\0' && isspace(yych)) { yych = *++YYCURSOR; }
+	while (yych != '\0' && isspace((unsigned char)yych)) { yych = *++YYCURSOR; }
 
 	// Check for sign
 	if (yych == '+' || yych == '-') { yych = *++YYCURSOR; }
@@ -1078,7 +1078,7 @@ octdigits	= [0-7];
 	}
 
 	// The rest should all be whitespace
-	while (yych != '\0' && isspace(yych)) { yych = *++YYCURSOR; }
+	while (yych != '\0' && isspace((unsigned char)yych)) { yych = *++YYCURSOR; }
 	return yych == '\0';
 }
 
@@ -1098,7 +1098,7 @@ digits		= [0-9];
 	yych = *YYCURSOR;
 
 	// Skip preceding whitespace
-	while (yych != '\0' && isspace(yych)) { yych = *++YYCURSOR; }
+	while (yych != '\0' && isspace((unsigned char)yych)) { yych = *++YYCURSOR; }
 
 	// Check for sign
 	if (yych == '+' || yych == '-') { yych = *++YYCURSOR; }
@@ -1129,7 +1129,7 @@ digits		= [0-9];
 	}
 
 	// The rest should all be whitespace
-	while (yych != '\0' && isspace(yych)) { yych = *++YYCURSOR; }
+	while (yych != '\0' && isspace((unsigned char)yych)) { yych = *++YYCURSOR; }
 	return yych == '\0';
 }
 

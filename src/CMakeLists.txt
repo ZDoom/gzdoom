@@ -189,6 +189,7 @@ else()
 		set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
 		set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 		set( NO_GTK ON )
+		set( DYN_GTK OFF )
 
 		# Prevent inclusion of fp.h and FixMath.h from Carbon framework
 		# Declarations from these files are not used but cause the following conflicts:
@@ -197,6 +198,7 @@ else()
 		add_definitions( -D__FP__ -D__FIXMATH__ )
 	else()
 		option( NO_GTK "Disable GTK+ dialogs (Not applicable to Windows)" )
+		option( DYN_GTK "Load GTK+ at runtime instead of compile time" ON )
 		option( VALGRIND "Add special Valgrind sequences to self-modifying code" )
 
 		set( FMOD_SEARCH_PATHS
@@ -212,22 +214,37 @@ else()
 
 		# Use GTK+ for the IWAD picker, if available.
 		if( NOT NO_GTK )
-			pkg_check_modules( GTK2 gtk+-2.0 )
-			if( GTK2_FOUND )
-				set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GTK2_LIBRARIES} )
-				include_directories( ${GTK2_INCLUDE_DIRS} )
-				link_directories( ${GTK2_LIBRARY_DIRS} )
+			pkg_check_modules( GTK3 gtk+-3.0 )
+			if( GTK3_FOUND )
+				if( NOT DYN_GTK )
+					set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GTK3_LIBRARIES} )
+				endif()
+				include_directories( ${GTK3_INCLUDE_DIRS} )
+				link_directories( ${GTK3_LIBRARY_DIRS} )
 			else()
-				set( NO_GTK ON )
+				pkg_check_modules( GTK2 gtk+-2.0 )
+				if( GTK2_FOUND )
+					if( NOT DYN_GTK )
+						set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GTK2_LIBRARIES} )
+					endif()
+					include_directories( ${GTK2_INCLUDE_DIRS} )
+					link_directories( ${GTK2_LIBRARY_DIRS} )
+				else()
+					set( NO_GTK ON )
+				endif()
 			endif()
 		endif()
 	endif()
 	set( NASM_NAMES nasm )
 	
 	if( NO_GTK )
-		add_definitions( -DNO_GTK=1 )
+		add_definitions( -DNO_GTK )
+	elseif( DYN_GTK )
+		add_definitions( -DDYN_GTK=1 )
+	else()
+		add_definitions( -DDYN_GTK=0 )
 	endif()
-	
+
 	# Non-Windows version also needs SDL except native OS X backend
 	if( NOT APPLE OR NOT OSX_COCOA_BACKEND )
 		find_package( SDL2 REQUIRED )
@@ -688,7 +705,8 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/sdlvideo.cpp
 	posix/sdl/st_start.cpp )
 set( PLAT_UNIX_SOURCES
-	posix/unix/i_specialpaths.cpp )
+	posix/unix/i_specialpaths.cpp
+	posix/unix/iwadpicker_gtk.cpp )
 set( PLAT_OSX_SOURCES
 	posix/osx/iwadpicker_cocoa.mm
 	posix/osx/i_specialpaths.mm
@@ -1062,6 +1080,7 @@ set (PCH_SOURCES
 	gi.cpp
 	gitinfo.cpp
 	hu_scores.cpp
+	i_module.cpp
 	i_net.cpp
 	info.cpp
 	keysections.cpp

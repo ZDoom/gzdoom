@@ -40,9 +40,6 @@
 #include <signal.h>
 #include <new>
 #include <sys/param.h>
-#ifndef NO_GTK
-#include <gtk/gtk.h>
-#endif
 #include <locale.h>
 #if defined(__MACH__) && !defined(NOASM)
 #include <sys/types.h>
@@ -86,10 +83,6 @@ void Mac_I_FatalError(const char* errortext);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-#ifndef NO_GTK
-bool GtkAvailable;
-#endif
 
 // The command line arguments.
 DArgs *Args;
@@ -259,10 +252,6 @@ int main (int argc, char **argv)
 	// Note that the LANG environment variable is overridden by LC_*
 	setenv ("LC_NUMERIC", "C", 1);
 
-#ifndef NO_GTK
-	GtkAvailable = gtk_init_check (&argc, &argv);
-#endif
-	
 	setlocale (LC_ALL, "C");
 
 	if (SDL_Init (0) < 0)

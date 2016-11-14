@@ -55,10 +55,13 @@
 #include "actor.h"
 #include "r_state.h"
 #include "w_wad.h"
+#include "i_module.h"
 #include "i_music.h"
 #include "i_musicinterns.h"
 #include "tempfiles.h"
 #include "cmdlib.h"
+
+FModule OpenALModule{"OpenAL"};
 
 #include "oalload.h"
 
@@ -66,18 +69,11 @@ CVAR (String, snd_aldevice, "Default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_efx, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 #ifdef _WIN32
-static HMODULE hmodOpenAL;
 #define OPENALLIB "openal32.dll"
-#else
-static void* hmodOpenAL;
-#ifdef __APPLE__
+#elif defined(__APPLE__)
 #define OPENALLIB "OpenAL.framework/OpenAL"
 #else
 #define OPENALLIB "libopenal.so.1"
-#endif
-#define LoadLibrary(x) dlopen((x), RTLD_LAZY)
-#define GetProcAddress(a,b) dlsym((a),(b))
-#define FreeLibrary(x) dlclose((x))
 #endif
 
 bool IsOpenALPresent()
@@ -93,29 +89,7 @@ bool IsOpenALPresent()
 	if (!done)
 	{
 		done = true;
-		if (hmodOpenAL == NULL)
-		{
-			hmodOpenAL = LoadLibrary(NicePath("$PROGDIR/" OPENALLIB));
-			if (hmodOpenAL == NULL)
-			{
-				hmodOpenAL = LoadLibrary(OPENALLIB);
-				if (hmodOpenAL == NULL)
-				{
-					return false;
-				}
-			}
-			for(int i = 0; oalfuncs[i].name != NULL; i++)
-			{
-				*oalfuncs[i].funcaddr = GetProcAddress(hmodOpenAL, oalfuncs[i].name);
-				if (*oalfuncs[i].funcaddr == NULL)
-				{
-					FreeLibrary(hmodOpenAL);
-					hmodOpenAL = NULL;
-					return false;
-				}
-			}
-		}
-		cached_result = true;
+		cached_result = OpenALModule.Load({NicePath("$PROGDIR/" OPENALLIB), OPENALLIB});
 	}
 	return cached_result;
 #endif

@@ -164,8 +164,6 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 				double topfloorz2 = MIN(backceilz2, frontceilz2);
 				double bottomceilz1 = MAX(frontfloorz1, backfloorz1);
 				double bottomceilz2 = MAX(frontfloorz2, backfloorz2);
-				double bottomfloorz1 = frontfloorz1;
-				double bottomfloorz2 = frontfloorz2;
 				double middleceilz1 = topfloorz1;
 				double middleceilz2 = topfloorz2;
 				double middlefloorz1 = MIN(bottomceilz1, middleceilz1);
@@ -179,12 +177,9 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 					skyBottomz1 = middlefloorz1;
 					skyBottomz2 = middlefloorz2;
 				}
-				else
+				else if (bothSkyCeiling)
 				{
-					bool topwall = (topceilz1 > topfloorz1 || topceilz2 > topfloorz2) && line->sidedef && !bothSkyCeiling;
-					bool bottomwall = (bottomfloorz1 < bottomceilz1 || bottomfloorz2 < bottomceilz2) && line->sidedef;
-					if ((ceiling && !topwall) || (!ceiling && !bottomwall))
-						continue;
+					continue;
 				}
 			}
 

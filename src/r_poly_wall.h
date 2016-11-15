@@ -31,17 +31,8 @@ class RenderPolyWall
 public:
 	static bool RenderLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, std::vector<PolyTranslucentObject> &translucentWallsOutput);
 
+	void SetCoords(const DVector2 &v1, const DVector2 &v2, double ceil1, double floor1, double ceil2, double floor2);
 	void Render(const TriMatrix &worldToClip);
-
-	void SetCoords(const DVector2 &v1, const DVector2 &v2, double ceil1, double floor1, double ceil2, double floor2)
-	{
-		this->v1 = v1;
-		this->v2 = v2;
-		this->ceil1 = ceil1;
-		this->floor1 = floor1;
-		this->ceil2 = ceil2;
-		this->floor2 = floor2;
-	}
 
 	DVector2 v1;
 	DVector2 v2;
@@ -60,6 +51,7 @@ public:
 	uint32_t SubsectorDepth = 0;
 
 private:
+	void ClampHeight(TriVertex &v1, TriVertex &v2);
 	FTexture *GetTexture();
 	int GetLightLevel();
 };

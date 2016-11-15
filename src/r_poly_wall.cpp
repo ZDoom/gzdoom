@@ -117,6 +117,16 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, seg_t *line, secto
 	return false;
 }
 
+void RenderPolyWall::SetCoords(const DVector2 &v1, const DVector2 &v2, double ceil1, double floor1, double ceil2, double floor2)
+{
+	this->v1 = v1;
+	this->v2 = v2;
+	this->ceil1 = ceil1;
+	this->floor1 = floor1;
+	this->ceil2 = ceil2;
+	this->floor2 = floor2;
+}
+
 void RenderPolyWall::Render(const TriMatrix &worldToClip)
 {
 	FTexture *tex = GetTexture();
@@ -157,6 +167,13 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	vertices[3].varying[0] = (float)texcoords.u1;
 	vertices[3].varying[1] = (float)texcoords.v2;
 
+	// Masked walls clamp to the 0-1 range (no texture repeat)
+	if (Masked)
+	{
+		ClampHeight(vertices[0], vertices[3]);
+		ClampHeight(vertices[1], vertices[2]);
+	}
+
 	TriUniforms uniforms;
 	uniforms.objectToClip = worldToClip;
 	uniforms.light = (uint32_t)(GetLightLevel() / 255.0f * 256.0f);
@@ -186,6 +203,26 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	{
 		PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector);
 	}
+}
+
+void RenderPolyWall::ClampHeight(TriVertex &v1, TriVertex &v2)
+{
+	float top = v1.z;
+	float bottom = v2.z;
+	float texv1 = v1.varying[1];
+	float texv2 = v2.varying[1];
+	float delta = (texv2 - texv1);
+
+	float t1 = texv1 < 0.0f ? -texv1 / delta : 0.0f;
+	float t2 = texv2 > 1.0f ? (1.0f - texv1) / delta : 1.0f;
+	float inv_t1 = 1.0f - t1;
+	float inv_t2 = 1.0f - t2;
+
+	v1.z = top * inv_t1 + bottom * t1;
+	v1.varying[1] = texv1 * inv_t1 + texv2 * t1;
+
+	v2.z = top * inv_t2 + bottom * t2;
+	v2.varying[1] = texv1 * inv_t2 + texv2 * t2;
 }
 
 FTexture *RenderPolyWall::GetTexture()
@@ -296,21 +333,14 @@ void PolyWallTextureCoords::CalcVMidPart(FTexture *tex, const seg_t *line, doubl
 	bool pegged = (line->linedef->flags & ML_DONTPEGBOTTOM) == 0;
 	if (pegged) // top to bottom
 	{
-		v1 = yoffset;
-		v2 = v1 + (topz - bottomz);
-		v1 *= vscale;
-		v2 *= vscale;
+		v1 = yoffset * vscale;
+		v2 = (yoffset + (topz - bottomz)) * vscale;
 	}
 	else // bottom to top
 	{
 		int texHeight = tex->GetHeight();
-		v1 = yoffset;
-		v2 = v1 + (topz - bottomz);
-		v1 *= vscale;
-		v2 *= vscale;
-		v1 = texHeight - v1;
-		v2 = texHeight - v2;
-		std::swap(v1, v2);
+		v1 = texHeight - (-yoffset + (topz - bottomz)) * vscale;
+		v2 = texHeight + yoffset * vscale;
 	}
 }
 
@@ -326,7 +356,7 @@ void PolyWallTextureCoords::CalcVBottomPart(FTexture *tex, const seg_t *line, do
 	}
 	else
 	{
-		v1 = yoffset + (unpeggedceil - topz);
+		v1 = -yoffset + (unpeggedceil - topz);
 		v2 = v1 + (topz - bottomz);
 		v1 *= vscale;
 		v2 *= vscale;

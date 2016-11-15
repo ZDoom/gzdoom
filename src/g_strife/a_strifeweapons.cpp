@@ -939,23 +939,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_SigilCharge)
 
 //============================================================================
 //
-// A_LightInverse
-//
-//============================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_LightInverse)
-{
-	PARAM_ACTION_PROLOGUE(AActor);
-
-	if (self->player != NULL)
-	{
-		self->player->extralight = INT_MIN;
-	}
-	return 0;
-}
-
-//============================================================================
-//
 // A_FireSigil1
 //
 //============================================================================

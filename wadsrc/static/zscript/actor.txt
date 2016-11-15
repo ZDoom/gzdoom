@@ -77,6 +77,12 @@ class Actor : Thinker native
 	native Actor SpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
 	native Actor SpawnMissileZ (double z, Actor dest, class<Actor> type);
 	native Actor SpawnMissileAngleZSpeed (double z, class<Actor> type, float angle, double vz, double speed, Actor owner = null, bool checkspawn = true);
+
+	native void A_Light(int extralight);
+	void A_Light0() { A_Light(0); }
+	void A_Light1() { A_Light(1); }
+	void A_Light2() { A_Light(2); }
+	void A_LightInverse() { A_Light(0x80000000); }
 	
 	native Actor OldSpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
 	native Actor SpawnPuff(class<Actor> pufftype, vector3 pos, float hitdir, float particledir, int updown, int flags = 0, Actor vict = null);

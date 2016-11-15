@@ -1847,8 +1847,8 @@ FxExpression *FxUnaryNotBoolean::Resolve(FCompileContext& ctx)
 
 ExpEmit FxUnaryNotBoolean::Emit(VMFunctionBuilder *build)
 {
-	assert(Operand->ValueType == ValueType);
-	assert(ValueType == TypeBool);
+	assert(Operand->ValueType == TypeBool);
+	assert(ValueType == TypeBool || IsInteger());	// this may have been changed by an int cast.
 	ExpEmit from = Operand->Emit(build);
 	assert(!from.Konst);
 	// boolean not is the same as XOR-ing the lowest bit

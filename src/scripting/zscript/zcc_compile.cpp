@@ -2051,6 +2051,35 @@ void ZCCCompiler::InitFunctions()
 				uint32_t varflags = VARF_Method;
 				int implicitargs = 1;
 				AFuncDesc *afd = nullptr;
+				int useflags = SUF_ACTOR | SUF_OVERLAY | SUF_WEAPON | SUF_ITEM;
+				if (f->UseFlags != nullptr)
+				{
+					useflags = 0;
+					auto p = f->UseFlags;
+					do
+					{
+						switch (p->Id)
+						{
+						case NAME_Actor:
+							useflags |= SUF_ACTOR;
+							break;
+						case NAME_Overlay:
+							useflags |= SUF_OVERLAY;
+							break;
+						case NAME_Weapon:
+							useflags |= SUF_WEAPON;
+							break;
+						case NAME_Item:
+							useflags |= SUF_ITEM;
+							break;
+						default:
+							Error(p, "Unknown Action qualifier %s", FName(p->Id).GetChars());
+							break;
+						}
+
+						p = static_cast<decltype(p)>(p->SiblingNext);
+					} while (p != f->UseFlags);
+				}
 
 				// map to implementation flags.
 				if (f->Flags & ZCC_Private) varflags |= VARF_Private;
@@ -2058,8 +2087,21 @@ void ZCCCompiler::InitFunctions()
 				if (f->Flags & ZCC_Deprecated) varflags |= VARF_Deprecated;
 				if (f->Flags & ZCC_Virtual) varflags |= VARF_Virtual;
 				if (f->Flags & ZCC_Override) varflags |= VARF_Override;
-				if (f->Flags & ZCC_Action) varflags |= VARF_Action|VARF_Final, implicitargs = 3;	// Action implies Final.
+				if (f->Flags & ZCC_Action)
+				{
+					varflags |= VARF_Final;	// Action implies Final.
+					if (useflags & (SUF_OVERLAY | SUF_WEAPON | SUF_ITEM))
+					{
+						varflags |= VARF_Action;
+						implicitargs = 3;
+					}
+					else
+					{
+						implicitargs = 1;
+					}
+				}
 				if (f->Flags & ZCC_Static) varflags = (varflags & ~VARF_Method) | VARF_Final, implicitargs = 0;	// Static implies Final.
+
 
 				if (varflags & VARF_Override) varflags &= ~VARF_Virtual;	// allow 'virtual override'.
 				// Only one of these flags may be used.
@@ -2096,9 +2138,7 @@ void ZCCCompiler::InitFunctions()
 						(*afd->VMPointer)->ImplicitArgs = BYTE(implicitargs);
 					}
 				}
-				// Todo: parse these values from the definition
-				int tempuseflags = (varflags & VARF_Action) ? SUF_WEAPON | SUF_ITEM | SUF_OVERLAY | SUF_ACTOR : SUF_ACTOR;
-				SetImplicitArgs(&args, &argflags, &argnames, c->Type(), varflags, tempuseflags);
+				SetImplicitArgs(&args, &argflags, &argnames, c->Type(), varflags, useflags);
 				argdefaults.Resize(argnames.Size());
 				auto p = f->Params;
 				bool hasoptionals = false;
@@ -2225,7 +2265,7 @@ void ZCCCompiler::InitFunctions()
 				}
 
 				PFunction *sym = new PFunction(c->Type(), f->Name);
-				sym->AddVariant(NewPrototype(rets, args), argflags, argnames, afd == nullptr? nullptr : *(afd->VMPointer), varflags);
+				sym->AddVariant(NewPrototype(rets, args), argflags, argnames, afd == nullptr? nullptr : *(afd->VMPointer), varflags, useflags);
 				c->Type()->Symbols.ReplaceSymbol(sym);
 
 				if (!(f->Flags & ZCC_Native))

@@ -5933,6 +5933,42 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
+// Checks if a function may be called from the current context.
+//
+//==========================================================================
+
+static bool CheckFunctionCompatiblity(FScriptPosition &ScriptPosition, PFunction *caller, PFunction *callee)
+{
+	if (callee->Variants[0].Flags & VARF_Method)
+	{
+		// The called function must support all usage modes of the current function. It may support more, but must not support less.
+		if ((callee->Variants[0].UseFlags & caller->Variants[0].UseFlags) != caller->Variants[0].UseFlags)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Function %s incompatible with current context\n", callee->SymbolName.GetChars());
+			return false;
+		}
+
+		if (!(caller->Variants[0].Flags & VARF_Method))
+		{
+			ScriptPosition.Message(MSG_ERROR, "Call to non-static function %s from a static context", callee->SymbolName.GetChars());
+			return false;
+		}
+		else
+		{
+			auto callingself = caller->Variants[0].SelfClass;
+			auto calledself = callee->Variants[0].SelfClass;
+			if (!callingself->IsDescendantOf(calledself))
+			{
+				ScriptPosition.Message(MSG_ERROR, "Call to member function %s with incompatible self pointer.", callee->SymbolName.GetChars());
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+//==========================================================================
+//
 //
 //
 //==========================================================================
@@ -6008,39 +6044,15 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 
 	PFunction *afd = FindClassMemberFunction(ctx.Class, ctx.Class, MethodName, ScriptPosition, &error);
 
-	// Action functions in state providers need special treatment because self is of type Actor here.
-	if (afd != nullptr && ctx.Class->IsDescendantOf(RUNTIME_CLASS(AStateProvider)) && (ctx.Function->Variants[0].Flags & VARF_Action))
-	{
-		// Only accept static and action functions from the current class. Calling a member function will require explicit use of 'invoker'.
-		if ((afd->Variants[0].Flags & (VARF_Method|VARF_Action)) == VARF_Method)
-		{
-			// Everything else that may be used here must pass the selfclass check, i.e. it must be reachable from Actor.
-			// Note that FuncClass is still the current item because for symbol privacy checks this is relevant.
-			afd = FindClassMemberFunction(ctx.Function->Variants[0].SelfClass, ctx.Class, MethodName, ScriptPosition, &error);
-			if (afd == nullptr)
-			{
-				ScriptPosition.Message(MSG_ERROR, "Unable to call non-action function %s from here. Please use 'invoker.%s' to call it.", MethodName.GetChars(), MethodName.GetChars());
-				delete this;
-				return nullptr;
-			}
-		}
-	}
-
-	if (error)
-	{
-		delete this;
-		return nullptr;
-	}
-
 	if (afd != nullptr)
 	{
-		if (ctx.Function->Variants[0].Flags & VARF_Static && !(afd->Variants[0].Flags & VARF_Static))
+		if (!CheckFunctionCompatiblity(ScriptPosition, ctx.Function, afd))
 		{
-			ScriptPosition.Message(MSG_ERROR, "Call to non-static function %s from a static context", MethodName.GetChars());
 			delete this;
 			return nullptr;
 		}
-		auto self = !(afd->Variants[0].Flags & VARF_Static)? new FxSelf(ScriptPosition) : nullptr;
+
+		auto self = (afd->Variants[0].Flags & VARF_Method)? new FxSelf(ScriptPosition) : nullptr;
 		auto x = new FxVMFunctionCall(self, afd, ArgList, ScriptPosition, false);
 		delete this;
 		return x->Resolve(ctx);
@@ -6338,6 +6350,7 @@ isresolved:
 		delete this;
 		return nullptr;
 	}
+
 	if (staticonly && (afd->Variants[0].Flags & VARF_Method))
 	{
 		if (!ctx.Class->IsDescendantOf(cls))
@@ -6352,6 +6365,28 @@ isresolved:
 			ScriptPosition.Message(MSG_ERROR, "Qualified member call to parent class not yet implemented\n", cls->TypeName.GetChars(), MethodName.GetChars());
 			delete this;
 			return nullptr;
+		}
+	}
+
+	if (afd->Variants[0].Flags & VARF_Method)
+	{
+		if (Self->ExprType == EFX_Self)
+		{
+			if (!CheckFunctionCompatiblity(ScriptPosition, ctx.Function, afd))
+			{
+				delete this;
+				return nullptr;
+			}
+		}
+		else
+		{
+			// Functions with no Actor usage may not be called through a pointer because they will lose their context.
+			if (!(afd->Variants[0].UseFlags & SUF_ACTOR))
+			{
+				ScriptPosition.Message(MSG_ERROR, "Function %s cannot be used with a non-self object\n", afd->SymbolName.GetChars());
+				delete this;
+				return nullptr;
+			}
 		}
 	}
 

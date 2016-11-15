@@ -101,6 +101,7 @@ enum EZCCTreeNodeType
 	AST_FlagStmt,
 	AST_PropertyStmt,
 	AST_VectorValue,
+	AST_DeclFlags,
 
 	NUM_AST_NODE_TYPES
 };
@@ -473,6 +474,12 @@ struct ZCC_FuncParamDecl : ZCC_TreeNode
 	int Flags;
 };
 
+struct ZCC_DeclFlags : ZCC_TreeNode
+{
+	ZCC_Identifier *Id;
+	int Flags;
+};
+
 struct ZCC_ConstantDef : ZCC_NamedNode
 {
 	ZCC_Expression *Value;
@@ -498,6 +505,7 @@ struct ZCC_FuncDeclarator : ZCC_Declarator
 	ZCC_FuncParamDecl *Params;
 	ENamedName Name;
 	ZCC_Statement *Body;
+	ZCC_Identifier *UseFlags;
 };
 
 struct ZCC_Default : ZCC_CompoundStmt

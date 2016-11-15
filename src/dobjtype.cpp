@@ -2489,7 +2489,7 @@ size_t PFunction::PropagateMark()
 //
 //==========================================================================
 
-unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags)
+unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags, int useflags)
 {
 	Variant variant;
 
@@ -2497,6 +2497,7 @@ unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArra
 	assert(Variants.Size() == 0);
 
 	variant.Flags = flags;
+	variant.UseFlags = useflags;
 	variant.Proto = proto;
 	variant.ArgFlags = std::move(argflags);
 	variant.ArgNames = std::move(argnames);

@@ -820,10 +820,21 @@ static void PrintFuncDeclarator(FLispString &out, ZCC_TreeNode *node)
 	out.Break();
 	out.Open("func-declarator");
 	out.AddHex(dnode->Flags);
+	PrintNodes(out, dnode->UseFlags);
 	PrintNodes(out, dnode->Type);
 	out.AddName(dnode->Name);
 	PrintNodes(out, dnode->Params);
 	PrintNodes(out, dnode->Body, false);
+	out.Close();
+}
+
+static void PrintDeclFlags(FLispString &out, ZCC_TreeNode *node)
+{
+	auto dnode = (ZCC_DeclFlags *)node;
+	out.Break();
+	out.Open("decl-flags");
+	out.AddHex(dnode->Flags);
+	PrintNodes(out, dnode->Id);
 	out.Close();
 }
 
@@ -901,6 +912,7 @@ void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *
 	PrintFlagStmt,
 	PrintPropertyStmt,
 	PrintVectorInitializer,
+	PrintDeclFlags,
 };
 
 FString ZCC_PrintAST(ZCC_TreeNode *root)

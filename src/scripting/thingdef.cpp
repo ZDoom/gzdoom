@@ -170,7 +170,7 @@ PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, i
 	SetImplicitArgs(&args, &argflags, &argnames, containingclass, fflags, flags);
 
 	PFunction *sym = new PFunction(containingclass, NAME_None);	// anonymous functions do not have names.
-	sym->AddVariant(NewPrototype(rets, args), argflags, argnames, nullptr, fflags);
+	sym->AddVariant(NewPrototype(rets, args), argflags, argnames, nullptr, fflags, flags);
 	return sym;
 }
 

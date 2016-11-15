@@ -814,20 +814,21 @@ declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
 	}
 	else if (C.FuncName != NAME_None)
 	{ // A function
-		NEW_AST_NODE(FuncDeclarator, decl, A.SourceLoc);
+		NEW_AST_NODE(FuncDeclarator, decl, A == nullptr? C.SourceLoc : A->SourceLoc);
 		decl->Type = B;
 		decl->Params = C.FuncParams;
 		decl->Name = C.FuncName;
-		decl->Flags = A.Int | C.FuncFlags;
+		decl->UseFlags = A == nullptr? nullptr : A->Id;
+		decl->Flags = (A == nullptr? 0 : A->Flags) | C.FuncFlags;
 		decl->Body = C.FuncBody;
 		X = decl;
 	}
 	else if (B != NULL && B->SiblingNext == B)
 	{ // A variable
-		NEW_AST_NODE(VarDeclarator, decl, A.SourceLoc);
+		NEW_AST_NODE(VarDeclarator, decl, A == nullptr? B->SourceLoc : A->SourceLoc);
 		decl->Type = B;
 		decl->Names = C.VarNames;
-		decl->Flags = A.Int;
+		decl->Flags = (A == nullptr? 0 : A->Flags);
 		X = decl;
 	}
 	else
@@ -845,10 +846,10 @@ declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
 }
 declarator_no_fun(X) ::= decl_flags(A) type(B) variable_list(C) SEMICOLON.
 {
-	NEW_AST_NODE(VarDeclarator, decl, A.SourceLoc ? A.SourceLoc : B->SourceLoc);
+	NEW_AST_NODE(VarDeclarator, decl, A != nullptr? A->SourceLoc : B->SourceLoc);
 	decl->Type = B;
 	decl->Names = C;
-	decl->Flags = A.Int;
+	decl->Flags = A == nullptr? 0 :  A->Flags;
 	X = decl;
 }
 
@@ -916,19 +917,52 @@ variable_list(X) ::= variable_list(A) COMMA variable_name(B).
 	X = A; /*X-overwrites-A*/
 }
 
-decl_flags(X) ::= .								{ X.Int = 0; X.SourceLoc = 0; }
-decl_flags(X) ::= decl_flags(A) NATIVE(T).		{ X.Int = A.Int | ZCC_Native; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) STATIC(T).		{ X.Int = A.Int | ZCC_Static; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) PRIVATE(T).		{ X.Int = A.Int | ZCC_Private; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) PROTECTED(T).	{ X.Int = A.Int | ZCC_Protected; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) LATENT(T).		{ X.Int = A.Int | ZCC_Latent; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) FINAL(T).		{ X.Int = A.Int | ZCC_Final; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) META(T).		{ X.Int = A.Int | ZCC_Meta; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) ACTION(T).		{ X.Int = A.Int | ZCC_Action; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) READONLY(T).	{ X.Int = A.Int | ZCC_ReadOnly; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) DEPRECATED(T).	{ X.Int = A.Int | ZCC_Deprecated; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) VIRTUAL(T).		{ X.Int = A.Int | ZCC_Virtual; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) OVERRIDE(T).	{ X.Int = A.Int | ZCC_Override; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
+%type decl_flags { ZCC_DeclFlags * }
+decl_flags(X) ::= .								{ X = NULL; }
+decl_flags(X) ::= decl_flags(F) decl_flag(A).
+{
+	if (F == nullptr)
+	{
+		NEW_AST_NODE(DeclFlags,nil_f,A);
+		X = nil_f;
+		X->Id = nullptr;
+		X->Flags = A.Int;
+	}
+	else
+	{
+		X = F;
+		X->Flags |= A.Int;
+	}
+}
+
+
+decl_flags(X) ::= decl_flags(F) ACTION(B) states_opts(A).
+{
+	if (F == nullptr)
+	{
+		NEW_AST_NODE(DeclFlags,nil_f,B.SourceLoc);
+		X = nil_f;
+		X->Flags = ZCC_Action;
+	}
+	else
+	{
+		X = F;
+		X->Flags |= ZCC_Action;
+	}
+	X->Id = A;
+}
+
+decl_flag(X) ::= NATIVE(T).		{ X.Int = ZCC_Native; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= STATIC(T).		{ X.Int = ZCC_Static; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= PRIVATE(T).	{ X.Int = ZCC_Private; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= PROTECTED(T).	{ X.Int = ZCC_Protected; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= LATENT(T).		{ X.Int = ZCC_Latent; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= FINAL(T).		{ X.Int = ZCC_Final; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= META(T).		{ X.Int = ZCC_Meta; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= READONLY(T).	{ X.Int = ZCC_ReadOnly; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= DEPRECATED(T).	{ X.Int = ZCC_Deprecated; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= VIRTUAL(T).	{ X.Int = ZCC_Virtual; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= OVERRIDE(T).	{ X.Int = ZCC_Override; X.SourceLoc =  T.SourceLoc; }
 
 func_const(X) ::= .							{ X.Int = 0; X.SourceLoc = stat->sc->GetMessageLine(); }
 func_const(X) ::= CONST(T).					{ X.Int = ZCC_FuncConst; X.SourceLoc = T.SourceLoc; }
@@ -979,9 +1013,9 @@ func_param(X) ::= func_param_flags(A) type(B) IDENTIFIER(C) EQ expr(D).
 }
 
 func_param_flags(X) ::= .									{ X.Int = 0; X.SourceLoc = 0; }
-func_param_flags(X) ::= func_param_flags(A) IN(T).			{ X.Int = A.Int | ZCC_In; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-func_param_flags(X) ::= func_param_flags(A) OUT(T).			{ X.Int = A.Int | ZCC_Out; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-func_param_flags(X) ::= func_param_flags(A) OPTIONAL(T).	{ X.Int = A.Int | ZCC_Optional; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
+func_param_flags(X) ::= func_param_flags(A) IN(T).			{ X.Int = A.Int | ZCC_In; X.SourceLoc =  T.SourceLoc; }
+func_param_flags(X) ::= func_param_flags(A) OUT(T).			{ X.Int = A.Int | ZCC_Out; X.SourceLoc =  T.SourceLoc; }
+func_param_flags(X) ::= func_param_flags(A) OPTIONAL(T).	{ X.Int = A.Int | ZCC_Optional; X.SourceLoc =  T.SourceLoc; }
 
 /************ Expressions ************/
 

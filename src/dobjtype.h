@@ -724,13 +724,14 @@ public:
 		VMFunction *Implementation;
 		TArray<DWORD> ArgFlags;		// Should be the same length as Proto->ArgumentTypes
 		TArray<FName> ArgNames;		// we need the names to access them later when the function gets compiled.
-		DWORD Flags;
+		uint32_t Flags;
+		int UseFlags;
 		PClass *SelfClass;
 	};
 	TArray<Variant> Variants;
 	PClass *OwningClass = nullptr;
 
-	unsigned AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags);
+	unsigned AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags, int useflags);
 	int GetImplicitArgs()
 	{
 		if (Variants[0].Flags & VARF_Action) return 3;

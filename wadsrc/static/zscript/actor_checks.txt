@@ -35,7 +35,7 @@ extend class Actor
 	{
 		if (!targ) return false;
 		return 
-			(Distance2D(target) < dist && (noz || 
+			(Distance2D(targ) < dist && (noz || 
 			 ((pos.z > targ.pos.z && pos.z - targ.pos.z - targ.height < dist) ||
 			  (pos.z <= targ.pos.z && targ.pos.z - pos.z - height < dist)
 			 )

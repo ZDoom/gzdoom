@@ -848,7 +848,7 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 		}
 		else if (!NoWarn)
 		{
-			ScriptPosition.Message(MSG_WARNING, "Truncation of floating point value");
+			ScriptPosition.Message(MSG_DEBUGWARN, "Truncation of floating point value");
 		}
 
 		return this;

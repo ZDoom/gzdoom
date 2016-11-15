@@ -102,6 +102,9 @@ void PolyCull::ClearSolidSegments()
 
 bool PolyCull::IsSegmentCulled(int x1, int x2) const
 {
+	x1 = clamp(x1, -0x7ffe, 0x7ffd);
+	x2 = clamp(x2, -0x7ffd, 0x7ffe);
+
 	int next = 0;
 	while (SolidSegments[next].X2 <= x2)
 		next++;
@@ -112,6 +115,9 @@ void PolyCull::MarkSegmentCulled(int x1, int x2)
 {
 	if (x1 >= x2)
 		return;
+
+	x1 = clamp(x1, -0x7ffe, 0x7ffd);
+	x2 = clamp(x2, -0x7ffd, 0x7ffe);
 
 	int cur = 1;
 	while (true)

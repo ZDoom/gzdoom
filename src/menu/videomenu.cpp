@@ -183,7 +183,7 @@ public:
 	}
 };
 
-IMPLEMENT_CLASS(DVideoModeMenu)
+IMPLEMENT_CLASS(DVideoModeMenu, false, false, false, false)
 
 
 //=============================================================================

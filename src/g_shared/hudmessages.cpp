@@ -44,13 +44,15 @@
 EXTERN_CVAR(Int, con_scaletext)
 int active_con_scaletext();
 
-IMPLEMENT_POINTY_CLASS (DHUDMessage)
- DECLARE_POINTER(Next)
-END_POINTERS
+IMPLEMENT_CLASS(DHUDMessage, false, true, false, false)
 
-IMPLEMENT_CLASS (DHUDMessageFadeOut)
-IMPLEMENT_CLASS (DHUDMessageFadeInOut)
-IMPLEMENT_CLASS (DHUDMessageTypeOnFadeOut)
+IMPLEMENT_POINTERS_START(DHUDMessage)
+	IMPLEMENT_POINTER(Next)
+IMPLEMENT_POINTERS_END
+
+IMPLEMENT_CLASS(DHUDMessageFadeOut, false, false, false, false)
+IMPLEMENT_CLASS(DHUDMessageFadeInOut, false, false, false, false)
+IMPLEMENT_CLASS(DHUDMessageTypeOnFadeOut, false, false, false, false)
 
 /*************************************************************************
  * Basic HUD message. Appears and disappears without any special effects *

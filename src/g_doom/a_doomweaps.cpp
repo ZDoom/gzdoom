@@ -11,7 +11,7 @@
 #include "p_effect.h"
 #include "gi.h"
 #include "templates.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "doomstat.h"
 */
 
@@ -28,7 +28,7 @@ static FRandom pr_oldbfg ("OldBFG");
 //
 DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle 	angle;
 	int 		damage;
@@ -69,7 +69,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FirePistol)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	bool accurate;
 
@@ -115,18 +115,18 @@ enum SAW_Flags
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_SOUND_OPT	(fullsound)			{ fullsound = "weapons/sawfull"; }
-	PARAM_SOUND_OPT	(hitsound)			{ hitsound = "weapons/sawhit"; }
-	PARAM_INT_OPT	(damage)			{ damage = 2; }
-	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = NULL; }
-	PARAM_INT_OPT	(flags)				{ flags = 0; }
-	PARAM_FLOAT_OPT	(range)				{ range = 0; }
-	PARAM_ANGLE_OPT	(spread_xy)			{ spread_xy = 2.8125; }
-	PARAM_ANGLE_OPT	(spread_z)			{ spread_z = 0.; }
-	PARAM_FLOAT_OPT	(lifesteal)			{ lifesteal = 0; }
-	PARAM_INT_OPT	(lifestealmax)		{ lifestealmax = 0; }
-	PARAM_CLASS_OPT	(armorbonustype, ABasicArmorBonus)	{ armorbonustype = NULL; }
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_SOUND_DEF	(fullsound)			
+	PARAM_SOUND_DEF	(hitsound)			
+	PARAM_INT_DEF	(damage)			
+	PARAM_CLASS_DEF	(pufftype, AActor)	
+	PARAM_INT_DEF	(flags)				
+	PARAM_FLOAT_DEF	(range)				
+	PARAM_ANGLE_DEF	(spread_xy)			
+	PARAM_ANGLE_DEF	(spread_z)			
+	PARAM_FLOAT_DEF	(lifesteal)			
+	PARAM_INT_DEF	(lifestealmax)		
+	PARAM_CLASS_DEF	(armorbonustype, ABasicArmorBonus)
 
 	DAngle angle;
 	DAngle slope;
@@ -257,7 +257,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	int i;
 	player_t *player;
@@ -291,7 +291,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	int 		i;
 	DAngle 	angle;
@@ -335,29 +335,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 	}
 	return 0;
 }
-
-DEFINE_ACTION_FUNCTION(AActor, A_OpenShotgun2)
-{
-	PARAM_ACTION_PROLOGUE;
-	S_Sound (self, CHAN_WEAPON, "weapons/sshoto", 1, ATTN_NORM);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_LoadShotgun2)
-{
-	PARAM_ACTION_PROLOGUE;
-	S_Sound (self, CHAN_WEAPON, "weapons/sshotl", 1, ATTN_NORM);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_CloseShotgun2)
-{
-	PARAM_ACTION_PROLOGUE;
-	S_Sound (self, CHAN_WEAPON, "weapons/sshotc", 1, ATTN_NORM);
-	A_ReFire (self);
-	return 0;
-}
-
 
 //------------------------------------------------------------------------------------
 //
@@ -411,7 +388,7 @@ void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int i
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FireCGun)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -456,7 +433,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCGun)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FireMissile)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -479,8 +456,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMissile)
 //
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireSTGrenade)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_CLASS_OPT(grenade, AActor)	{ grenade = PClass::FindActor("Grenade"); }
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_CLASS_DEF(grenade, AActor);
 
 	player_t *player;
 
@@ -511,7 +488,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireSTGrenade)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FirePlasma)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -574,28 +551,22 @@ static void FireRailgun(AActor *self, int offset_xy, bool fromweapon)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireRailgun)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 	FireRailgun(self, 0, ACTION_CALL_FROM_PSPRITE());
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireRailgunRight)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 	FireRailgun(self, 10, ACTION_CALL_FROM_PSPRITE());
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireRailgunLeft)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 	FireRailgun(self, -10, ACTION_CALL_FROM_PSPRITE());
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_RailWait)
-{
-	// Okay, this was stupid. Just use a NULL function instead of this.
 	return 0;
 }
 
@@ -605,7 +576,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RailWait)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireBFG)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -638,15 +609,15 @@ enum BFG_Flags
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_CLASS_OPT	(spraytype, AActor)		{ spraytype = NULL; }
-	PARAM_INT_OPT	(numrays)				{ numrays = 0; }
-	PARAM_INT_OPT	(damagecnt)				{ damagecnt = 0; }
-	PARAM_ANGLE_OPT	(angle)					{ angle = 0.; }
-	PARAM_FLOAT_OPT	(distance)				{ distance = 0; }
-	PARAM_ANGLE_OPT	(vrange)				{ vrange = 0.; }
-	PARAM_INT_OPT	(defdamage)				{ defdamage = 0; }
-	PARAM_INT_OPT	(flags)					{ flags = 0; }
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS_DEF	(spraytype, AActor)
+	PARAM_INT_DEF	(numrays)			
+	PARAM_INT_DEF	(damagecnt)			
+	PARAM_ANGLE_DEF	(angle)				
+	PARAM_FLOAT_DEF	(distance)			
+	PARAM_ANGLE_DEF	(vrange)			
+	PARAM_INT_DEF	(defdamage)			
+	PARAM_INT_DEF	(flags)				
 
 	int 				i;
 	int 				j;
@@ -718,16 +689,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 }
 
 //
-// A_BFGsound
-//
-DEFINE_ACTION_FUNCTION(AActor, A_BFGsound)
-{
-	PARAM_ACTION_PROLOGUE;
-	S_Sound (self, CHAN_WEAPON, "weapons/bfgf", 1, ATTN_NORM);
-	return 0;
-}
-
-//
 // A_FireOldBFG
 //
 // This function emulates Doom's Pre-Beta BFG
@@ -738,7 +699,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BFGsound)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireOldBFG)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 	PClassActor *plasma[] = { PClass::FindActor("PlasmaBall1"), PClass::FindActor("PlasmaBall2") };
 	AActor * mo = NULL;
 

@@ -1033,9 +1033,11 @@ public:
 	}
 };
 
-IMPLEMENT_POINTY_CLASS(DSuicider)
- DECLARE_POINTER(Pawn)
-END_POINTERS
+IMPLEMENT_CLASS(DSuicider, false, true, false, false)
+
+IMPLEMENT_POINTERS_START(DSuicider)
+	IMPLEMENT_POINTER(Pawn)
+IMPLEMENT_POINTERS_END
 
 void cht_Suicide (player_t *plyr)
 {

@@ -54,6 +54,7 @@
 #include "serializer.h"
 #include "gstrings.h"
 #include "r_utility.h"
+#include "cmdlib.h"
 
 #include "../version.h"
 
@@ -61,11 +62,13 @@
 #define XHAIRPICKUPSIZE		(2+XHAIRSHRINKSIZE)
 #define POWERUPICONSIZE		32
 
-IMPLEMENT_POINTY_CLASS(DBaseStatusBar)
-	DECLARE_POINTER(Messages[0])
-	DECLARE_POINTER(Messages[1])
-	DECLARE_POINTER(Messages[2])
-END_POINTERS
+IMPLEMENT_CLASS(DBaseStatusBar, false, true, false, false)
+
+IMPLEMENT_POINTERS_START(DBaseStatusBar)
+	IMPLEMENT_POINTER(Messages[0])
+	IMPLEMENT_POINTER(Messages[1])
+	IMPLEMENT_POINTER(Messages[2])
+IMPLEMENT_POINTERS_END
 
 EXTERN_CVAR (Bool, am_showmonsters)
 EXTERN_CVAR (Bool, am_showsecrets)

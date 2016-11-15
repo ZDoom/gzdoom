@@ -25,7 +25,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS (AArtiHealingRadius)
+IMPLEMENT_CLASS(AArtiHealingRadius, false, false, false, false)
 
 bool AArtiHealingRadius::Use (bool pickup)
 {

@@ -327,7 +327,7 @@ StateMap
 	BossEye,			Spawn, 3,	// S_BRAINEYE - S_BRAINEYE1
 	SpawnShot,			Spawn, 4,	// S_SPAWN1 - S_SPAWN4
 	SpawnFire,			Spawn, 8,	// S_SPAWNFIRE1 - S_SPAWNFIRE8
-	BossBrain,			BrainExplode, 3,	// S_BRAINEXPLODE1 - S_BRAINEXPLODE3
+	Rocket,				BrainExplode, 3,	// S_BRAINEXPLODE1 - S_BRAINEXPLODE3
 	GreenArmor,			Spawn, 2,	// S_ARM1 - S_ARM1A
 	BlueArmor,			Spawn, 2,	// S_ARM2 - S_ARM2A
 	ExplosiveBarrel,	Spawn, 7,	// S_BAR1 - S_BEXP5

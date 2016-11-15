@@ -50,7 +50,7 @@ public:
 	void Activate (AActor *activator);
 };
 
-IMPLEMENT_CLASS (ASecretTrigger)
+IMPLEMENT_CLASS(ASecretTrigger, false, false, false, false)
 
 void ASecretTrigger::PostBeginPlay ()
 {

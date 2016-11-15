@@ -1,0 +1,71 @@
+
+// Dark Servant Artifact ----------------------------------------------------
+
+class ArtiDarkServant : Inventory native
+{
+	Default
+	{
+		+COUNTITEM
+		+FLOATBOB
+		Inventory.RespawnTics 4230;
+		Inventory.DefMaxAmount;
+		Inventory.PickupFlash "PickupFlash";
+		+INVENTORY.INVBAR 
+		+INVENTORY.FANCYPICKUPSOUND
+		Inventory.Icon "ARTISUMN";
+		Inventory.PickupSound "misc/p_pkup";
+		Inventory.PickupMessage "$TXT_ARTISUMMON";
+		Tag "$TAG_ARTISUMMON";
+	}
+	States
+	{
+	Spawn:
+		SUMN A 350;
+		Loop;
+	}
+}
+
+// Summoning Doll -----------------------------------------------------------
+
+class SummoningDoll : Actor
+{
+	Default
+	{
+		Speed 20;
+		+NOBLOCKMAP +DROPOFF +MISSILE
+		+NOTELEPORT
+	}
+
+	native void A_Summon();
+
+	States
+	{
+	Spawn:
+		SUMN A 4;
+		Loop;
+	Death:
+		SUMN AA 4;
+		SUMN A 4 A_Summon;
+		Stop;
+	}
+}
+
+// Minotaur Smoke -----------------------------------------------------------
+
+class MinotaurSmoke : Actor
+{
+	Default
+	{
+	+NOBLOCKMAP +NOGRAVITY
+	+NOTELEPORT
+	RenderStyle "Translucent";
+	Alpha 0.6;
+
+	}
+	States
+	{
+	Spawn:
+		MNSM ABCDEFGHIJKLMNOPQ 3;
+		Stop;
+	}
+}

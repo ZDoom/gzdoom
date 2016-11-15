@@ -5,7 +5,7 @@
 #include "gstrings.h"
 #include "p_local.h"
 #include "s_sound.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 // Tome of power ------------------------------------------------------------
@@ -17,8 +17,7 @@ public:
 	bool Use (bool pickup);
 };
 
-
-IMPLEMENT_CLASS (AArtiTomeOfPower)
+IMPLEMENT_CLASS(AArtiTomeOfPower, false, false, false, false)
 
 bool AArtiTomeOfPower::Use (bool pickup)
 {
@@ -47,7 +46,7 @@ bool AArtiTomeOfPower::Use (bool pickup)
 
 DEFINE_ACTION_FUNCTION(AActor, A_TimeBomb)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->AddZ(32, false);
 	self->RenderStyle = STYLE_Add;
@@ -64,8 +63,7 @@ public:
 	bool Use (bool pickup);
 };
 
-
-IMPLEMENT_CLASS (AArtiTimeBomb)
+IMPLEMENT_CLASS(AArtiTimeBomb, false, false, false, false)
 
 bool AArtiTimeBomb::Use (bool pickup)
 {

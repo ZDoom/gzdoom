@@ -1,0 +1,24 @@
+
+// Boost Armor Artifact (Dragonskin Bracers) --------------------------------
+
+class ArtiBoostArmor : Inventory native
+{
+	Default
+	{
+		+COUNTITEM
+		+FLOATBOB
+		Inventory.DefMaxAmount;
+		Inventory.PickupFlash "PickupFlash";
+		+INVENTORY.INVBAR +INVENTORY.FANCYPICKUPSOUND
+		Inventory.Icon "ARTIBRAC";
+		Inventory.PickupSound "misc/p_pkup";
+		Inventory.PickupMessage "$TXT_ARTIBOOSTARMOR";
+		Tag "$TAG_ARTIBOOSTARMOR";
+	}
+	States
+	{
+	Spawn:
+		BRAC ABCDEFGH 4 Bright;
+		Loop;
+	}
+}

@@ -1,0 +1,26 @@
+
+// Healing Radius Artifact --------------------------------------------------
+
+class ArtiHealingRadius : Inventory native
+{
+	Default
+	{
+		+COUNTITEM
+		+FLOATBOB
+		Inventory.DefMaxAmount;
+		+INVENTORY.INVBAR 
+		+INVENTORY.FANCYPICKUPSOUND
+		Inventory.PickupFlash "PickupFlash";
+		Inventory.Icon "ARTIHRAD";
+		Inventory.PickupSound "misc/p_pkup";
+		Inventory.PickupMessage "$TXT_ARTIHEALINGRADIUS";
+		Tag "$TAG_ARTIHEALINGRADIUS";
+	}
+	States
+	{
+	Spawn:
+		HRAD ABCDEFGHIJKLMNOP 4 Bright;
+		Loop;
+	}
+}
+

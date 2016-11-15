@@ -7,7 +7,7 @@
 #include "a_doomglobal.h"
 #include "s_sound.h"
 #include "r_data/r_translate.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 */
 
@@ -19,7 +19,7 @@ static FRandom pr_m_gunshot ("SMarineGunshot");
 static FRandom pr_m_saw ("SMarineSaw");
 static FRandom pr_m_fireshotgun2 ("SMarineFireSSG");
 
-IMPLEMENT_CLASS (AScriptedMarine)
+IMPLEMENT_CLASS(AScriptedMarine, false, false, false, false)
 
 void AScriptedMarine::Serialize(FSerializer &arc)
 {
@@ -150,8 +150,8 @@ void AScriptedMarine::Tick ()
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Refire)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_BOOL_OPT(ignoremissile)	{ ignoremissile = false; }
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL_DEF(ignoremissile);
 
 	if (self->target == NULL || self->target->health <= 0)
 	{
@@ -182,7 +182,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Refire)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_SawRefire)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->target == NULL || self->target->health <= 0)
 	{
@@ -204,7 +204,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_SawRefire)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MarineNoise)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (static_cast<AScriptedMarine *>(self)->CurrentWeapon == AScriptedMarine::WEAPON_Chainsaw)
 	{
@@ -221,7 +221,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MarineNoise)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MarineChase)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	CALL_ACTION(A_MarineNoise, self);
 	A_Chase (stack, self);
 	return 0;
@@ -235,7 +235,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MarineChase)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MarineLook)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	CALL_ACTION(A_MarineNoise, self);
 	CALL_ACTION(A_Look, self);
 	return 0;
@@ -249,11 +249,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_MarineLook)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Saw)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_SOUND_OPT	(fullsound)			{ fullsound = "weapons/sawfull"; }
-	PARAM_SOUND_OPT	(hitsound)			{ hitsound = "weapons/sawhit"; }
-	PARAM_INT_OPT	(damage)			{ damage = 2; }
-	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = NULL; }
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_SOUND_DEF	(fullsound)			
+	PARAM_SOUND_DEF	(hitsound)			
+	PARAM_INT_DEF	(damage)			
+	PARAM_CLASS_DEF	(pufftype, AActor)	
 
 	if (self->target == NULL)
 		return 0;
@@ -347,7 +347,7 @@ static void MarinePunch(AActor *self, int damagemul)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Punch)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(mult);
 
 	MarinePunch(self, mult);
@@ -384,7 +384,7 @@ void P_GunShot2 (AActor *mo, bool accurate, DAngle pitch, PClassActor *pufftype)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FirePistol)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL(accurate);
 
 	if (self->target == NULL)
@@ -405,7 +405,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FirePistol)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	DAngle pitch;
 
@@ -431,7 +431,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_CheckAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->special1 != 0 || self->target == NULL)
 	{
@@ -452,7 +452,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_CheckAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	DAngle pitch;
 
@@ -483,7 +483,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun2)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FireCGun)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL(accurate);
 
 	if (self->target == NULL)
@@ -508,7 +508,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FireCGun)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_FireMissile)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->target == NULL)
 		return 0;
@@ -533,7 +533,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireMissile)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_FireRailgun)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->target == NULL)
 		return 0;
@@ -551,7 +551,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireRailgun)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_FirePlasma)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->target == NULL)
 		return 0;
@@ -570,7 +570,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FirePlasma)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_BFGsound)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->target == NULL)
 		return 0;
@@ -597,7 +597,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_BFGsound)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_FireBFG)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->target == NULL)
 		return 0;

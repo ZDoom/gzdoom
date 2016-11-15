@@ -565,6 +565,7 @@ class DDropItem : public DObject
 {
 	DECLARE_CLASS(DDropItem, DObject)
 	HAS_OBJECT_POINTERS
+	HAS_FIELDS
 public:
 	DDropItem *Next;
 	FName Name;
@@ -578,6 +579,7 @@ const double MinVel = EQUAL_EPSILON;
 class AActor : public DThinker
 {
 	DECLARE_CLASS_WITH_META (AActor, DThinker, PClassActor)
+	HAS_FIELDS
 	HAS_OBJECT_POINTERS
 public:
 	AActor () throw();
@@ -612,7 +614,7 @@ public:
 
 	virtual void BeginPlay();			// Called immediately after the actor is created
 	virtual void PostBeginPlay();		// Called immediately before the actor's first tick
-	virtual void LevelSpawned();		// Called after BeginPlay if this actor was spawned by the world
+	void LevelSpawned();				// Called after BeginPlay if this actor was spawned by the world
 	virtual void HandleSpawnFlags();	// Translates SpawnFlags into in-game flags.
 
 	virtual void MarkPrecacheSounds() const;	// Marks sounds used by this actor for precaching.
@@ -731,7 +733,7 @@ public:
 	void ObtainInventory (AActor *other);
 
 	// Die. Now.
-	virtual bool Massacre ();
+	bool Massacre ();
 
 	// Transforms the actor into a finely-ground paste
 	virtual bool Grind(bool items);
@@ -956,7 +958,7 @@ public:
 	{
 		SetOrigin(Pos() + vel, true);
 	}
-	virtual void SetOrigin(double x, double y, double z, bool moving);
+	void SetOrigin(double x, double y, double z, bool moving);
 	void SetOrigin(const DVector3 & npos, bool moving)
 	{
 		SetOrigin(npos.X, npos.Y, npos.Z, moving);
@@ -968,7 +970,7 @@ public:
 	bool IsInsideVisibleAngles() const;
 
 	// Calculate amount of missile damage
-	virtual int GetMissileDamage(int mask, int add);
+	int GetMissileDamage(int mask, int add);
 
 	bool CanSeek(AActor *target) const;
 
@@ -1366,7 +1368,7 @@ public:
 		Vel.Y = speed * Angles.Yaw.Sin();
 	}
 
-	void VelFromAngle(DAngle angle, double speed)
+	void VelFromAngle(double speed, DAngle angle)
 	{
 		Vel.X = speed * angle.Cos();
 		Vel.Y = speed * angle.Sin();

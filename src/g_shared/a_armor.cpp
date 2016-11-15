@@ -8,12 +8,11 @@
 #include "d_player.h"
 #include "serializer.h"
 
-
-IMPLEMENT_CLASS (AArmor)
-IMPLEMENT_CLASS (ABasicArmor)
-IMPLEMENT_CLASS (ABasicArmorPickup)
-IMPLEMENT_CLASS (ABasicArmorBonus)
-IMPLEMENT_CLASS (AHexenArmor)
+IMPLEMENT_CLASS(AArmor, false, false, false, false)
+IMPLEMENT_CLASS(ABasicArmor, false, false, false, false)
+IMPLEMENT_CLASS(ABasicArmorPickup, false, false, false, false)
+IMPLEMENT_CLASS(ABasicArmorBonus, false, false, false, false)
+IMPLEMENT_CLASS(AHexenArmor, false, false, false, false)
 
 //===========================================================================
 //

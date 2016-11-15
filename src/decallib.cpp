@@ -119,9 +119,11 @@ protected:
 	DDecalThinker () : DThinker (STAT_DECALTHINKER) {}
 };
 
-IMPLEMENT_POINTY_CLASS (DDecalThinker)
- DECLARE_POINTER (TheDecal)
-END_POINTERS
+IMPLEMENT_CLASS(DDecalThinker, false, true, false, false)
+
+IMPLEMENT_POINTERS_START(DDecalThinker)
+	IMPLEMENT_POINTER(TheDecal)
+IMPLEMENT_POINTERS_END
 
 void DDecalThinker::Serialize(FSerializer &arc)
 {
@@ -1151,7 +1153,7 @@ FDecalAnimator::~FDecalAnimator ()
 {
 }
 
-IMPLEMENT_CLASS (DDecalFader)
+IMPLEMENT_CLASS(DDecalFader, false, false, false, false)
 
 void DDecalFader::Serialize(FSerializer &arc)
 {
@@ -1200,7 +1202,7 @@ DThinker *FDecalFaderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 	return fader;
 }
 
-IMPLEMENT_CLASS (DDecalStretcher)
+IMPLEMENT_CLASS(DDecalStretcher, false, false, false, false)
 
 void DDecalStretcher::Serialize(FSerializer &arc)
 {
@@ -1288,7 +1290,7 @@ void DDecalStretcher::Tick ()
 	}
 }
 
-IMPLEMENT_CLASS (DDecalSlider)
+IMPLEMENT_CLASS(DDecalSlider, false, false, false, false)
 
 void DDecalSlider::Serialize(FSerializer &arc)
 {
@@ -1368,8 +1370,7 @@ FDecalAnimator *FDecalLib::FindAnimator (const char *name)
 	return NULL;
 }
 
-
-IMPLEMENT_CLASS (DDecalColorer)
+IMPLEMENT_CLASS(DDecalColorer, false, false, false, false)
 
 void DDecalColorer::Serialize(FSerializer &arc)
 {

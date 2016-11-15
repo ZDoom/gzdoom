@@ -1785,9 +1785,7 @@ public:
 	void		Destroy() { Super::Destroy(); m_Sector->lightingdata=NULL; }
 };
 
-
-
-IMPLEMENT_CLASS (DLightLevel)
+IMPLEMENT_CLASS(DLightLevel, false, false, false, false)
 
 void DLightLevel::Serialize(FSerializer &arc)
 {
@@ -3636,7 +3634,7 @@ void FParser::SF_Pow()
 {
 	if (CheckArgs(2))
 	{
-		t_return.setDouble(pow(floatvalue(t_argv[0]), floatvalue(t_argv[1])));
+		t_return.setDouble(g_pow(floatvalue(t_argv[0]), floatvalue(t_argv[1])));
 	}
 }
 

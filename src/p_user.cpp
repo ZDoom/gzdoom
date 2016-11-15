@@ -48,7 +48,7 @@
 #include "doomdef.h"
 #include "c_dispatch.h"
 #include "tarray.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 #include "d_net.h"
 #include "gstrings.h"
@@ -59,6 +59,7 @@
 #include "p_blockmap.h"
 #include "a_morph.h"
 #include "p_spec.h"
+#include "virtual.h"
 
 static FRandom pr_skullpop ("SkullPop");
 
@@ -508,7 +509,7 @@ int player_t::GetSpawnClass()
 //
 //===========================================================================
 
-IMPLEMENT_CLASS(PClassPlayerPawn)
+IMPLEMENT_CLASS(PClassPlayerPawn, false, false, false, false)
 
 PClassPlayerPawn::PClassPlayerPawn()
 {
@@ -622,12 +623,14 @@ void player_t::SendPitchLimits() const
 //
 //===========================================================================
 
-IMPLEMENT_POINTY_CLASS (APlayerPawn)
- DECLARE_POINTER(InvFirst)
- DECLARE_POINTER(InvSel)
-END_POINTERS
+IMPLEMENT_CLASS(APlayerPawn, false, true, false, true)
 
-IMPLEMENT_CLASS (APlayerChunk)
+IMPLEMENT_POINTERS_START(APlayerPawn)
+	IMPLEMENT_POINTER(InvFirst)
+	IMPLEMENT_POINTER(InvSel)
+IMPLEMENT_POINTERS_END
+
+IMPLEMENT_CLASS(APlayerChunk, false, false, false, false)
 
 void APlayerPawn::Serialize(FSerializer &arc)
 {
@@ -1549,7 +1552,7 @@ void APlayerPawn::TweakSpeeds (double &forward, double &side)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int sound = 0;
 	int chan = CHAN_VOICE;
@@ -1625,8 +1628,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_CLASS_OPT(spawntype, APlayerChunk)	{ spawntype = NULL; }
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS_DEF(spawntype, APlayerChunk);
 
 	APlayerPawn *mo;
 	player_t *player;
@@ -1675,7 +1678,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CheckPlayerDone)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->player == NULL)
 	{

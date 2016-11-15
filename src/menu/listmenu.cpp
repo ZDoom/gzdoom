@@ -42,7 +42,7 @@
 #include "d_event.h"
 #include "menu/menu.h"
 
-IMPLEMENT_CLASS(DListMenu)
+IMPLEMENT_CLASS(DListMenu, false, false, false, false)
 
 //=============================================================================
 //

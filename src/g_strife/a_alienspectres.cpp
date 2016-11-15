@@ -9,7 +9,7 @@
 #include "a_strifeglobal.h"
 #include "c_console.h"
 #include "gstrings.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "doomstat.h"
 */
 
@@ -20,7 +20,7 @@ static FRandom pr_spectrechunk ("212e4");
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkSmall)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *foo = Spawn("AlienChunkSmall", self->PosPlusZ(10.), ALLOW_REPLACE);
 
@@ -41,7 +41,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkSmall)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkLarge)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *foo = Spawn("AlienChunkLarge", self->PosPlusZ(10.), ALLOW_REPLACE);
 
@@ -62,7 +62,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkLarge)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Spectre3Attack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->target == NULL)
 		return 0;
@@ -86,7 +86,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Spectre3Attack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_AlienSpectreDeath)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *player;
 	char voc[32];

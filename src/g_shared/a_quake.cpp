@@ -14,9 +14,11 @@
 
 static FRandom pr_quake ("Quake");
 
-IMPLEMENT_POINTY_CLASS (DEarthquake)
- DECLARE_POINTER (m_Spot)
-END_POINTERS
+IMPLEMENT_CLASS(DEarthquake, false, true, false, false)
+
+IMPLEMENT_POINTERS_START(DEarthquake)
+	IMPLEMENT_POINTER(m_Spot)
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //

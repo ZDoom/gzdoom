@@ -1,0 +1,22 @@
+
+
+// Hate Target --------------------------------------------------------------
+
+class HateTarget : Actor native
+{
+	default
+	{
+		Radius 20;
+		Height 56;
+		+SHOOTABLE
+		+NOGRAVITY
+		+NOBLOOD
+		+DONTSPLASH
+		Mass 0x7fffffff;
+	}
+	States
+	{
+	Spawn:
+		TNT1 A -1;
+	}
+}

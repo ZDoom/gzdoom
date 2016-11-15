@@ -7,7 +7,7 @@
 #include "a_action.h"
 #include "m_random.h"
 #include "p_terrain.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_serpentchase ("SerpentChase");
@@ -25,7 +25,7 @@ static FRandom pr_delaygib ("DelayGib");
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentUnHide)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->renderflags &= ~RF_INVISIBLE;
 	self->Floorclip = 24;
@@ -40,7 +40,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentUnHide)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentHide)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->renderflags |= RF_INVISIBLE;
 	self->Floorclip = 0;
@@ -56,7 +56,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentHide)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentRaiseHump)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->Floorclip -= 4;
 	return 0;
@@ -70,7 +70,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentRaiseHump)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentLowerHump)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->Floorclip += 4;
 	return 0;
@@ -86,7 +86,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentLowerHump)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentHumpDecide)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->MissileState != NULL)
 	{
@@ -127,7 +127,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentHumpDecide)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentCheckForAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target)
 	{
@@ -167,7 +167,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentCheckForAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentChooseAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target || self->CheckMeleeRange())
 	{
@@ -188,7 +188,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentChooseAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentMeleeAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target)
 	{
@@ -216,7 +216,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentMeleeAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentSpawnGibs)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	static const char *GibTypes[] =
@@ -250,7 +250,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentSpawnGibs)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FloatGib)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->Floorclip -= 1;
 	return 0;
@@ -264,7 +264,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FloatGib)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SinkGib)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->Floorclip += 1;;
 	return 0;
@@ -278,7 +278,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SinkGib)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DelayGib)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->tics -= pr_delaygib()>>2;
 	return 0;
@@ -292,7 +292,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DelayGib)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentHeadCheck)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->Z() <= self->floorz)
 	{

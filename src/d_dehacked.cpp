@@ -70,6 +70,10 @@
 #include "doomerrors.h"
 #include "p_effect.h"
 #include "serializer.h"
+#include "vm.h"
+#include "thingdef.h"
+#include "info.h"
+#include "v_text.h"
 #include "vmbuilder.h"
 
 // [SO] Just the way Randy said to do it :)
@@ -227,9 +231,11 @@ DehInfo deh =
 // from the original actor's defaults. The original actor is then changed to
 // spawn the new class.
 
-IMPLEMENT_POINTY_CLASS (ADehackedPickup)
- DECLARE_POINTER (RealPickup)
-END_POINTERS
+IMPLEMENT_CLASS(ADehackedPickup, false, true, false, false)
+
+IMPLEMENT_POINTERS_START(ADehackedPickup)
+	IMPLEMENT_POINTER(RealPickup)
+IMPLEMENT_POINTERS_END
 
 TArray<PClassActor *> TouchedActors;
 
@@ -794,7 +800,7 @@ void SetDehParams(FState *state, int codepointer)
 	
 	// Let's identify the codepointer we're dealing with.
 	PFunction *sym;
-	sym = dyn_cast<PFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(FName(MBFCodePointers[codepointer].name), true));
+	sym = dyn_cast<PFunction>(RUNTIME_CLASS(AStateProvider)->Symbols.FindSymbol(FName(MBFCodePointers[codepointer].name), true));
 	if (sym == NULL) return;
 
 	if (codepointer < 0 || (unsigned)codepointer >= countof(MBFCodePointerFactories))
@@ -804,22 +810,26 @@ void SetDehParams(FState *state, int codepointer)
 	}
 	else
 	{
-		VMFunctionBuilder buildit;
+		int numargs = sym->GetImplicitArgs();
+		VMFunctionBuilder buildit(numargs);
 		// Allocate registers used to pass parameters in.
 		// self, stateowner, state (all are pointers)
-		buildit.Registers[REGT_POINTER].Get(NAP);
+		buildit.Registers[REGT_POINTER].Get(numargs);
 		// Emit code to pass the standard action function parameters.
-		for (int i = 0; i < NAP; i++)
+		for (int i = 0; i < numargs; i++)
 		{
 			buildit.Emit(OP_PARAM, 0, REGT_POINTER, i);
 		}
 		// Emit code for action parameters.
 		int argcount = MBFCodePointerFactories[codepointer](buildit, value1, value2);
-		buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(sym->Variants[0].Implementation, ATAG_OBJECT), NAP + argcount, 0);
+		buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(sym->Variants[0].Implementation, ATAG_OBJECT), numargs + argcount, 0);
 		// Attach it to the state.
-		VMScriptFunction *sfunc = buildit.MakeFunction();
-		sfunc->NumArgs = NAP;
+		VMScriptFunction *sfunc = new VMScriptFunction;
+		buildit.MakeFunction(sfunc);
+		sfunc->NumArgs = numargs;
+		sfunc->ImplicitArgs = numargs;
 		state->SetAction(sfunc);
+		sfunc->PrintableName.Format("Dehacked.%s.%d.%d", MBFCodePointers[codepointer].name.GetChars(), value1, value2);
 	}
 }
 
@@ -1480,6 +1490,14 @@ static int PatchFrame (int frameNum)
 	return result;
 }
 
+// there is exactly one place where this is needed and we do not want to expose the state internals to ZSCRIPT.
+DEFINE_ACTION_FUNCTION(AActor, isDEHState)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(state, FState);
+	ACTION_RETURN_BOOL(state != nullptr && (state->DefineFlags & SDF_DEHACKED));
+}
+
 static int PatchSprite (int sprNum)
 {
 	int result;
@@ -2101,23 +2119,24 @@ static int PatchCodePtrs (int dummy)
 					if (!symname.CompareNoCase(MBFCodePointers[i].alias))
 					{
 						symname = MBFCodePointers[i].name;
-						Printf("%s --> %s\n", MBFCodePointers[i].alias, MBFCodePointers[i].name.GetChars());
+						DPrintf(DMSG_SPAMMY, "%s --> %s\n", MBFCodePointers[i].alias, MBFCodePointers[i].name.GetChars());
 					}
 				}
 
 				// This skips the action table and goes directly to the internal symbol table
 				// DEH compatible functions are easy to recognize.
-				PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(symname, true));
+				PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AStateProvider)->Symbols.FindSymbol(symname, true));
 				if (sym == NULL)
 				{
-					Printf("Frame %d: Unknown code pointer '%s'\n", frame, Line2);
+					Printf(TEXTCOLOR_RED "Frame %d: Unknown code pointer '%s'\n", frame, Line2);
 				}
 				else
 				{
 					TArray<DWORD> &args = sym->Variants[0].ArgFlags;
-					if ((sym->Flags & (VARF_Method | VARF_Action)) != (VARF_Method | VARF_Action) || (args.Size() > NAP && !(args[NAP] & VARF_Optional)))
+					unsigned numargs = sym->GetImplicitArgs();
+					if ((sym->Variants[0].Flags & VARF_Virtual || (args.Size() > numargs && !(args[numargs] & VARF_Optional))))
 					{
-						Printf("Frame %d: Incompatible code pointer '%s'\n", frame, Line2);
+						Printf(TEXTCOLOR_RED "Frame %d: Incompatible code pointer '%s'\n", frame, Line2);
 						sym = NULL;
 					}
 				}
@@ -2715,11 +2734,11 @@ static bool LoadDehSupp ()
 					}
 					else
 					{
-						// all relevant code pointers are either defined in AInventory 
+						// all relevant code pointers are either defined in AStateProvider
 						// or AActor so this will find all of them.
 						FString name = "A_";
 						name << sc.String;
-						PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(name, true));
+						PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AStateProvider)->Symbols.FindSymbol(name, true));
 						if (sym == NULL)
 						{
 							sc.ScriptError("Unknown code pointer '%s'", sc.String);
@@ -2727,7 +2746,8 @@ static bool LoadDehSupp ()
 						else
 						{
 							TArray<DWORD> &args = sym->Variants[0].ArgFlags;
-							if ((sym->Flags & (VARF_Method|VARF_Action)) != (VARF_Method | VARF_Action) || (args.Size() > NAP && !(args[NAP] & VARF_Optional)))
+							unsigned numargs = sym->GetImplicitArgs();
+							if ((sym->Variants[0].Flags & VARF_Virtual || (args.Size() > numargs && !(args[numargs] & VARF_Optional))))
 							{
 								sc.ScriptMessage("Incompatible code pointer '%s'", sc.String);
 							}
@@ -3010,7 +3030,6 @@ void FinishDehPatch ()
 		while (subclass == nullptr);
 		
 		AActor *defaults2 = GetDefaultByType (subclass);
-		memcpy ((void *)defaults2, (void *)defaults1, sizeof(AActor));
 
 		// Make a copy of the replaced class's state labels 
 		FStateDefinitions statedef;

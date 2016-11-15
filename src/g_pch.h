@@ -18,3 +18,4 @@
 #include <direct.h>
 #include <io.h>
 #include <limits>
+#include <memory>

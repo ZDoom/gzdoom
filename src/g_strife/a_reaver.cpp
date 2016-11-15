@@ -6,14 +6,14 @@
 #include "m_random.h"
 #include "p_local.h"
 #include "a_strifeglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_reaverattack ("ReaverAttack");
 
 DEFINE_ACTION_FUNCTION(AActor, A_ReaverRanged)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->target != NULL)
 	{

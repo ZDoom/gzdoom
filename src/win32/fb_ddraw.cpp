@@ -61,7 +61,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DDrawFB)
+IMPLEMENT_CLASS(DDrawFB, false, false, false, false)
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 

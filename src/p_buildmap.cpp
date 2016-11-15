@@ -865,7 +865,7 @@ public:
 	void BeginPlay ();
 };
 
-IMPLEMENT_CLASS (ACustomSprite)
+IMPLEMENT_CLASS(ACustomSprite, false, false, false, false)
 
 void ACustomSprite::BeginPlay ()
 {

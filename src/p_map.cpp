@@ -444,6 +444,17 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, TeleportMove)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_BOOL(telefrag);
+	PARAM_BOOL_DEF(modify);
+	ACTION_RETURN_BOOL(P_TeleportMove(self, DVector3(x, y, z), telefrag, modify));
+}
+	
 //==========================================================================
 //
 // [RH] P_PlayerStartStomp
@@ -4043,6 +4054,18 @@ DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLin
 	return result->linetarget ? result->pitch : t1->Angles.Pitch;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, AimLineAttack)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ANGLE(angle);
+	PARAM_FLOAT(distance);
+	PARAM_POINTER_DEF(pLineTarget, FTranslatedLineTarget);
+	PARAM_ANGLE_DEF(vrange);
+	PARAM_INT_DEF(flags);
+	PARAM_OBJECT_DEF(target, AActor);
+	PARAM_OBJECT_DEF(friender, AActor);
+	ACTION_RETURN_FLOAT(P_AimLineAttack(self, angle, distance, pLineTarget, vrange, flags, target, friender).Degrees);
+}
 
 //==========================================================================
 //
@@ -4410,6 +4433,25 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, LineAttack)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ANGLE(angle);
+	PARAM_FLOAT(distance);
+	PARAM_ANGLE(pitch);
+	PARAM_INT(damage);
+	PARAM_NAME(damageType);
+	PARAM_CLASS(puffType, AActor);
+	PARAM_INT_DEF(flags);
+	PARAM_POINTER_DEF(victim, FTranslatedLineTarget);
+
+	int acdmg;
+	auto puff = P_LineAttack(self, angle, distance, pitch, damage, damageType, puffType, flags, victim, &acdmg);
+	if (numret > 0) ret[0].SetPointer(puff, ATAG_OBJECT);
+	if (numret > 1) ret[1].SetInt(acdmg), numret = 2;
+	return numret;
+}
+
 //==========================================================================
 //
 // P_LinePickActor
@@ -4572,6 +4614,16 @@ void P_TraceBleed(int damage, AActor *target, AActor *missile)
 		pitch = 0.;
 	}
 	P_TraceBleed(damage, target->PosPlusZ(target->Height/2), target, missile->AngleTo(target), pitch);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, TraceBleed)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(damage);
+	PARAM_OBJECT(missile, AActor);
+
+	P_TraceBleed(damage, self, missile);
+	return 0;
 }
 
 //==========================================================================

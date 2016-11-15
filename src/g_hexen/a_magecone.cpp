@@ -10,7 +10,7 @@
 #include "p_pspr.h"
 #include "gstrings.h"
 #include "a_hexenglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 const int SHARDSPAWN_LEFT	= 1;
@@ -32,7 +32,7 @@ public:
 	int DoSpecialDamage (AActor *victim, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS (AFrostMissile)
+IMPLEMENT_CLASS(AFrostMissile, false, false, false, false)
 
 int AFrostMissile::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 {
@@ -51,7 +51,7 @@ int AFrostMissile::DoSpecialDamage (AActor *victim, int damage, FName damagetype
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireConePL1)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle angle;
 	int damage;
@@ -112,7 +112,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireConePL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ShedShard)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	int spawndir = self->special1;

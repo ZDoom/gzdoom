@@ -40,10 +40,12 @@
 #include "serializer.h"
 #include "r_data/r_interpolate.h"
 
-IMPLEMENT_POINTY_CLASS (DPillar)
-	DECLARE_POINTER(m_Interp_Floor)
-	DECLARE_POINTER(m_Interp_Ceiling)
-END_POINTERS
+IMPLEMENT_CLASS(DPillar, false, true, false, false)
+
+IMPLEMENT_POINTERS_START(DPillar)
+	IMPLEMENT_POINTER(m_Interp_Floor)
+	IMPLEMENT_POINTER(m_Interp_Ceiling)
+IMPLEMENT_POINTERS_END
 
 DPillar::DPillar ()
 {

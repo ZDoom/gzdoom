@@ -77,6 +77,7 @@
 #include "r_utility.h"
 #include "menu/menu.h"
 #include "intermission/intermission.h"
+#include "vm.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -124,7 +125,8 @@ public:
 	int PolyNum;
 	int SideNum;
 };
-IMPLEMENT_CLASS(DSectorMarker)
+
+IMPLEMENT_CLASS(DSectorMarker, false, false, false, false)
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 

@@ -58,12 +58,14 @@ static int ImpactCount;
 
 CVAR (Bool, cl_spreaddecals, true, CVAR_ARCHIVE)
 
-IMPLEMENT_POINTY_CLASS (DBaseDecal)
-	DECLARE_POINTER(WallPrev)
-	DECLARE_POINTER(WallNext)
-END_POINTERS
+IMPLEMENT_CLASS(DBaseDecal, false, true, false, false)
 
-IMPLEMENT_CLASS (DImpactDecal)
+IMPLEMENT_POINTERS_START(DBaseDecal)
+	IMPLEMENT_POINTER(WallPrev)
+	IMPLEMENT_POINTER(WallNext)
+IMPLEMENT_POINTERS_END
+
+IMPLEMENT_CLASS(DImpactDecal, false, false, false, false)
 
 DBaseDecal::DBaseDecal ()
 : DThinker(STAT_DECAL),
@@ -744,7 +746,7 @@ public:
 	void BeginPlay ();
 };
 
-IMPLEMENT_CLASS (ADecal)
+IMPLEMENT_CLASS(ADecal, false, false, false, false)
 
 void ADecal::BeginPlay ()
 {

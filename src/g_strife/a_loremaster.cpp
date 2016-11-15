@@ -5,7 +5,7 @@
 #include "m_random.h"
 #include "p_local.h"
 #include "s_sound.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 // Loremaster (aka Priest) --------------------------------------------------
@@ -17,7 +17,7 @@ public:
 	int DoSpecialDamage (AActor *victim, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS (ALoreShot)
+IMPLEMENT_CLASS(ALoreShot, false, false, false, false)
 
 int ALoreShot::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 {
@@ -33,7 +33,7 @@ int ALoreShot::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LoremasterChain)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	S_Sound (self, CHAN_BODY, "loremaster/active", 1, ATTN_NORM);
 	Spawn("LoreShot2", self->Pos(), ALLOW_REPLACE);

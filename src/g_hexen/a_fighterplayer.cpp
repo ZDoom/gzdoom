@@ -8,12 +8,12 @@
 #include "p_local.h"
 #include "a_action.h"
 #include "a_hexenglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
-IMPLEMENT_CLASS (AFighterWeapon)
-IMPLEMENT_CLASS (AClericWeapon)
-IMPLEMENT_CLASS (AMageWeapon)
+IMPLEMENT_CLASS(AFighterWeapon, false, false, false, false)
+IMPLEMENT_CLASS(AClericWeapon, false, false, false, false)
+IMPLEMENT_CLASS(AMageWeapon, false, false, false, false)
 
 static FRandom pr_fpatk ("FPunchAttack");
 
@@ -99,7 +99,7 @@ static bool TryPunch(APlayerPawn *pmo, DAngle angle, int damage, int power)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	int damage;
 	int i;

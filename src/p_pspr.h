@@ -25,7 +25,7 @@
 
 // Basic data types.
 // Needs fixed point, and BAM angles.
-#include "thingdef/thingdef.h"
+//#include "vm.h"
 
 #define WEAPONBOTTOM			128.
 
@@ -111,6 +111,7 @@ void P_FireWeapon (player_t *player);
 void P_DropWeapon (player_t *player);
 void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac);
 DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget = NULL, int aimflags = 0);
+AActor *P_AimTarget(AActor *mo);
 
 void P_GunShot (AActor *mo, bool accurate, PClassActor *pufftype, DAngle pitch);
 
@@ -119,7 +120,6 @@ void DoReadyWeaponToBob(AActor *self);
 void DoReadyWeaponToFire(AActor *self, bool primary = true, bool secondary = true);
 void DoReadyWeaponToSwitch(AActor *self, bool switchable = true);
 
-DECLARE_ACTION(A_Raise)
 void A_ReFire(AActor *self, FState *state = NULL);
 
 #endif	// __P_PSPR_H__

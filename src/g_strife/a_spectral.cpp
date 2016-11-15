@@ -6,7 +6,7 @@
 #include "s_sound.h"
 #include "m_random.h"
 #include "a_strifeglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 class ASpectralMonster : public AActor
@@ -16,7 +16,7 @@ public:
 	void Touch (AActor *toucher);
 };
 
-IMPLEMENT_CLASS (ASpectralMonster)
+IMPLEMENT_CLASS(ASpectralMonster, false, false, false, false)
 
 void ASpectralMonster::Touch (AActor *toucher)
 {
@@ -26,7 +26,7 @@ void ASpectralMonster::Touch (AActor *toucher)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightningTail)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *foo = Spawn("SpectralLightningHTail", self->Vec3Offset(-self->Vel.X, -self->Vel.Y, 0.), ALLOW_REPLACE);
 
@@ -37,7 +37,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightningTail)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpectralBigBallLightning)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	PClassActor *cls = PClass::FindActor("SpectralLightningH3");
 	if (cls)
@@ -56,7 +56,7 @@ static FRandom pr_zap5 ("Zap5");
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightning)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *flash;
 
@@ -90,7 +90,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightning)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *dest;
 	double dist;

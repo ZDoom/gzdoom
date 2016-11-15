@@ -1,0 +1,514 @@
+class Actor : Thinker native
+{
+	const DEFAULT_HEALTH = 1000;
+	
+	Default
+	{
+		Scale 1;
+		Health DEFAULT_HEALTH;
+		Reactiontime 8;
+		Radius 20;
+		Height 16;
+		Mass 100;
+		RenderStyle 'Normal';
+		Alpha 1;
+		MinMissileChance 200;
+		MeleeRange 64 - 20;
+		MaxDropoffHeight 24;
+		MaxStepHeight 24;
+		BounceFactor 0.7;
+		WallBounceFactor 0.75;
+		BounceCount -1;
+		FloatSpeed 4;
+		FloatBobPhase -1;	// randomly initialize by default
+		Gravity 1;
+		Friction 1;
+		DamageFactor 1.0;		// damage multiplier as target of damage.
+		DamageMultiply 1.0;		// damage multiplier as source of damage.
+		PushFactor 0.25;
+		WeaveIndexXY 0;
+		WeaveIndexZ 16;
+		DesignatedTeam 255;
+		PainType "Normal";
+		DeathType "Normal";
+		TeleFogSourceType "TeleportFog";
+		TeleFogDestType 'TeleportFog';
+		RipperLevel 0;
+		RipLevelMin 0;
+		RipLevelMax 0;
+		DefThreshold 100;
+		BloodType "Blood", "BloodSplatter", "AxeBlood";
+		ExplosionDamage 128;
+		MissileHeight 32;
+		SpriteAngle 0;
+		SpriteRotation 0;
+		StencilColor "00 00 00";
+		VisibleAngles 0, 0;
+		VisiblePitch 0, 0;
+		DefaultStateUsage SUF_ACTOR|SUF_OVERLAY;
+	}
+
+	// Functions
+
+	bool IsPointerEqual(int ptr_select1, int ptr_select2)
+	{
+		return GetPointer(ptr_select1) == GetPointer(ptr_select2);
+	}
+	
+	static double BobSin(double fb)
+	{
+		return sin(fb * (180./32)) * 8;
+	}
+	
+
+	native static readonly<Actor> GetDefaultByType(class<Actor> cls);
+	native static float deltaangle(float ang1, float ang2);
+	native static float GetDefaultSpeed(class<Actor> type);
+	native float GetBobOffset(float frac = 0);
+	native void SetDamage(int dmg);
+	native static bool isDehState(state st);
+	native double Distance2D(Actor other);
+	native void SetOrigin(vector3 newpos, bool moving);
+	native void SetXYZ(vector3 newpos);
+	native Actor GetPointer(int aaptr);
+	native void FaceMovementDirection();
+	native Actor AimTarget();
+	native static Actor Spawn(class<Actor> type, vector3 pos = (0,0,0), int replace = NO_REPLACE);
+	native Actor SpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
+	native Actor SpawnMissileZ (double z, Actor dest, class<Actor> type);
+	native Actor SpawnMissileAngleZSpeed (double z, class<Actor> type, float angle, double vz, double speed, Actor owner = null, bool checkspawn = true);
+	
+	native Actor OldSpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
+	native Actor SpawnPuff(class<Actor> pufftype, vector3 pos, float hitdir, float particledir, int updown, int flags = 0, Actor vict = null);
+	
+	native void TraceBleed(int damage, Actor missile);
+	native bool CheckMeleeRange();
+	native int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags = 0, double angle = 0);
+	native double AimLineAttack(double angle, double distance, out FTranslatedLineTarget pLineTarget = null, double vrange = 0., int flags = 0, Actor target = null, Actor friender = null);
+	native Actor, int LineAttack(double angle, double distance, double pitch, int damage, Name damageType, class<Actor> pufftype, int flags = 0, out FTranslatedLineTarget victim = null);
+	native bool CheckSight(Actor target, int flags = 0);
+	native bool HitFriend();
+	native bool MonsterMove();
+	native void NewChaseDir();
+	native bool CheckMissileRange();
+	native bool SetState(state st, bool nofunction = false);
+	native state FindState(statelabel st);	// do we need exact later?
+	bool SetStateLabel(statelabel st, bool nofunction = false) { return SetState(FindState(st), nofunction); }
+	native action state ResolveState(statelabel st);	// this one, unlike FindState, is context aware.
+	native void LinkToWorld();
+	native void UnlinkFromWorld();
+	native bool CanSeek(Actor target);
+	native double AngleTo(Actor target, bool absolute = false);
+	native void AddZ(float zadd);
+	native void SetZ(float z);
+	native vector3 Vec3Offset(float x, float y, float z, bool absolute = false);
+	native vector3 Vec3Angle(float length, float angle, float z = 0, bool absolute = false);
+	native vector3 Vec2OffsetZ(float x, float y, float atz, bool absolute = false);
+	native void VelFromAngle(float speed = 0, float angle = 0);
+	native void Thrust(float speed = 0, float angle = 0);
+	native bool isFriend(Actor other);
+	native void AdjustFloorClip();
+	native DropItem GetDropItems();
+	native void CopyFriendliness (Actor other, bool changeTarget, bool resetHealth = true);
+	native bool LookForPlayers(bool allaround);
+	native bool TeleportMove(Vector3 pos, bool telefrag, bool modifyactor = true);
+	native double DistanceBySpeed(Actor other, double speed);
+	native name GetSpecies();
+	native void PlayActiveSound();
+
+	// DECORATE compatible functions
+	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
+	native int	CountInv(class<Inventory> itemtype, int ptr_select = AAPTR_DEFAULT);
+	native float GetDistance(bool checkz, int ptr = AAPTR_TARGET);
+	native float GetAngle(int flags, int ptr = AAPTR_DEFAULT);
+	native float GetZAt(float px = 0, float py = 0, float angle = 0, int flags = 0, int pick_pointer = AAPTR_DEFAULT);
+	native int GetSpawnHealth();
+	native int GetGibHealth();
+	native float GetCrouchFactor(int ptr = AAPTR_PLAYER1);
+	native float GetCVar(string cvar);
+	native int GetPlayerInput(int inputnum, int ptr = AAPTR_DEFAULT);
+	native int CountProximity(class<Actor> classname, float distance, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native float GetSpriteAngle(int ptr = AAPTR_DEFAULT);
+	native float GetSpriteRotation(int ptr = AAPTR_DEFAULT);
+	native int GetMissileDamage(int mask, int add, int ptr = AAPTR_DEFAULT);
+	action native int OverlayID();
+	action native float OverlayX(int layer = 0);
+	action native float OverlayY(int layer = 0);
+
+	// DECORATE setters - it probably makes more sense to set these values directly now...
+	void A_SetMass(int newmass) { mass = newmass; }
+	void A_SetInvulnerable() { bInvulnerable = true; }
+	void A_UnSetInvulnerable() { bInvulnerable = false; }
+	void A_SetReflective() { bReflective = true; }
+	void A_UnSetReflective() { bReflective = false; }
+	void A_SetReflectiveInvulnerable() { bInvulnerable = true; bReflective = true; }
+	void A_UnSetReflectiveInvulnerable() { bInvulnerable = false; bReflective = false; }
+	void A_SetShootable() { bShootable = true; bNonShootable = false; }
+	void A_UnSetShootable() { bShootable = false; bNonShootable = true; }
+	void A_NoGravity() { bNoGravity = true; }
+	void A_Gravity() { bNoGravity = false; Gravity = 1; }
+	void A_LowGravity() { bNoGravity = false; Gravity = 0.125; }
+	void A_SetGravity(float newgravity) { gravity = clamp(newgravity, 0., 10.); }
+	void A_SetFloorClip() { bFloorClip = true; AdjustFloorClip(); }
+	void A_UnSetFloorClip() { bFloorClip = false;  FloorClip = 0; }
+	void A_HideThing() { bInvisible = true; }
+	void A_UnHideThing() { bInvisible = false; }
+	void A_SetArg(int arg, int val) { if (arg >= 0 && arg < 5) args[arg] = val;	}
+	void A_Turn(float turn = 0) { angle += turn; }
+	void A_SetDamageType(name newdamagetype) { damagetype = newdamagetype; }
+	void A_SetSolid() { bSolid = true; }
+	void A_UnsetSolid() { bSolid = false; }
+	void A_SetFloat() { bFloat = true; }
+	void A_UnsetFloat() { bFloat = false; }
+	void A_SetFloatBobPhase(int bob) { if (bob >= 0 && bob <= 63) FloatBobPhase = bob; }
+	void A_SetRipperLevel(int level) { RipperLevel = level; }
+	void A_SetRipMin(int minimum) { RipLevelMin = minimum; }
+	void A_SetRipMax(int maximum) { RipLevelMax = maximum; }
+	void A_ScreamAndUnblock() { A_Scream(); A_NoBlocking(); }
+	void A_ActiveAndUnblock() { A_ActiveSound(); A_NoBlocking(); }
+	
+	//---------------------------------------------------------------------------
+	//
+	// FUNC P_SpawnMissileAngle
+	//
+	// Returns NULL if the missile exploded immediately, otherwise returns
+	// a mobj_t pointer to the missile.
+	//
+	//---------------------------------------------------------------------------
+
+	Actor SpawnMissileAngle (class<Actor> type, float angle, double vz)
+	{
+		return SpawnMissileAngleZSpeed (pos.z + 32 + GetBobOffset(), type, angle, vz, GetDefaultSpeed (type));
+	}
+
+	Actor SpawnMissileAngleZ (double z, class<Actor> type, double angle, double vz)
+	{
+		return SpawnMissileAngleZSpeed (z, type, angle, vz, GetDefaultSpeed (type));
+	}
+	
+
+	void A_SetScale(float scalex, float scaley = 0, int ptr = AAPTR_DEFAULT, bool usezero = false)
+	{
+		Actor aptr = GetPointer(ptr);
+		if (aptr)
+		{
+			aptr.Scale.X = scalex;
+			aptr.Scale.Y = scaley != 0 || usezero? scaley : scalex;	// use scalex here, too, if only one parameter.
+		}
+	}
+	void A_SetSpeed(float speed, int ptr = AAPTR_DEFAULT)
+	{
+		Actor aptr = GetPointer(ptr);
+		if (aptr) aptr.Speed = speed;
+	}
+	void A_SetFloatSpeed(float speed, int ptr = AAPTR_DEFAULT)
+	{
+		Actor aptr = GetPointer(ptr);
+		if (aptr) aptr.FloatSpeed = speed;
+	}
+	void A_SetPainThreshold(int threshold, int ptr = AAPTR_DEFAULT)
+	{
+		Actor aptr = GetPointer(ptr);
+		if (aptr) aptr.PainThreshold = threshold;
+	}
+	bool A_SetSpriteAngle(float angle = 0, int ptr = AAPTR_DEFAULT)
+	{
+		Actor aptr = GetPointer(ptr);
+		if (!aptr) return false;
+		aptr.SpriteAngle = angle;
+		return true;
+	}
+	bool A_SetSpriteRotation(float angle = 0, int ptr = AAPTR_DEFAULT)
+	{
+		Actor aptr = GetPointer(ptr);
+		if (!aptr) return false;
+		aptr.SpriteRotation = angle;
+		return true;
+	}
+
+	deprecated void A_FaceConsolePlayer(float MaxTurnAngle = 0) {}
+
+	void A_SetSpecial(int spec, int arg0 = 0, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0)
+	{
+		special = spec;
+		args[0] = arg0;
+		args[1] = arg1;
+		args[2] = arg2;
+		args[3] = arg3;
+		args[4] = arg4;
+	}
+
+	void A_ClearTarget()
+	{
+		target = null;
+		lastheard = null;
+		lastenemy = null;
+	}
+
+	void A_ChangeLinkFlags(int blockmap = FLAG_NO_CHANGE, int sector = FLAG_NO_CHANGE)
+	{	
+		UnlinkFromWorld();
+		if (blockmap != FLAG_NO_CHANGE) bNoBlockmap = blockmap;
+		if (sector != FLAG_NO_CHANGE) bNoSector = sector;
+		LinkToWorld();
+	}
+
+	// killough 11/98: kill an object
+	void A_Die(name damagetype = "none")
+	{
+		DamageMobj(null, null, health, damagetype, DMG_FORCED);
+	}
+
+
+	native void A_Face(Actor faceto, float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0);
+
+	void A_FaceTarget(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0)
+	{
+		A_Face(target, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_ofs);
+	}
+	void A_FaceTracer(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0)
+	{
+		A_Face(tracer, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_ofs);
+	}
+	void A_FaceMaster(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0)
+	{
+		A_Face(master, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_ofs);
+	}
+
+	// Action functions
+	// Meh, MBF redundant functions. Only for DeHackEd support.
+	native bool A_LineEffect(int boomspecial = 0, int tag = 0);
+	// End of MBF redundant functions.
+
+	native void A_MonsterRail();
+	native void A_BFGSpray(class<Actor> spraytype = "BFGExtra", int numrays = 40, int damagecount = 15, float angle = 90, float distance = 16*64, float vrange = 32, int damage = 0, int flags = 0);
+	native void A_Pain();
+	native void A_NoBlocking(bool drop = true);
+	void A_Fall() { A_NoBlocking(); }
+	native void A_XScream();
+	native void A_Look();
+	native void A_Chase(statelabel melee = null, statelabel missile = null, int flags = 0);
+	native void A_Scream();
+	native void A_VileChase();
+	native void A_BossDeath();
+	native void A_Detonate();
+	native bool A_CallSpecial(int special, int arg1=0, int arg2=0, int arg3=0, int arg4=0, int arg5=0);
+
+	native void A_M_Saw(sound fullsound = "weapons/sawfull", sound hitsound = "weapons/sawhit", int damage = 2, class<Actor> pufftype = "BulletPuff");
+
+	native void A_ActiveSound();
+
+	native void A_FastChase();
+	native void A_FreezeDeath();
+	native void A_FreezeDeathChunks();
+	native void A_GenericFreezeDeath();
+	native void A_IceGuyDie();
+	native void A_CStaffMissileSlither();
+	native void A_PlayerScream();
+	native void A_SkullPop(class<PlayerChunk> skulltype = "BloodySkull");
+	native void A_CheckPlayerDone();
+
+	native void A_Wander(int flags = 0);
+	native void A_Look2();
+	native void A_TossGib();
+	native void A_SentinelBob();
+	native void A_SentinelRefire();
+	native void A_Tracer2();
+	native void A_SetShadow();
+	native void A_ClearShadow();
+	native void A_GetHurt();
+	native void A_TurretLook();
+	native void A_KlaxonBlare();
+	native void A_Countdown();
+	native void A_AlertMonsters(float maxdist = 0, int flags = 0);
+	native void A_ClearSoundTarget();
+	native void A_CheckTerrain();
+
+	deprecated native void A_MissileAttack();
+	deprecated native void A_MeleeAttack();
+	deprecated native void A_ComboAttack();
+	deprecated native void A_BulletAttack();
+	native void A_WolfAttack(int flags = 0, sound whattoplay = "weapons/pistol", float snipe = 1.0, int maxdamage = 64, int blocksize = 128, int pointblank = 2, int longrange = 4, float runspeed = 160.0, class<Actor> pufftype = "BulletPuff");
+	native void A_PlaySound(sound whattoplay = "weapons/pistol", int slot = CHAN_BODY, float volume = 1.0, bool looping = false, float attenuation = ATTN_NORM, bool local = false);
+	deprecated void A_PlayWeaponSound(sound whattoplay) { A_PlaySound(whattoplay, CHAN_WEAPON); }
+	native void A_FLoopActiveSound();
+	native void A_LoopActiveSound();
+	native void A_StopSound(int slot = CHAN_VOICE);	// Bad default but that's what is originally was...
+	deprecated native void A_PlaySoundEx(sound whattoplay, name slot, bool looping = false, int attenuation = 0);
+	deprecated native void A_StopSoundEx(name slot);
+	native void A_SeekerMissile(int threshold, int turnmax, int flags = 0, int chance = 50, int distance = 10);
+	native action state A_Jump(int chance, statelabel label, ...);
+	native void A_CustomMissile(class<Actor> missiletype, float spawnheight = 32, float spawnofs_xy = 0, float angle = 0, int flags = 0, float pitch = 0, int ptr = AAPTR_TARGET);
+	native void A_CustomBulletAttack(float spread_xy, float spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", float range = 0, int flags = 0, int ptr = AAPTR_TARGET, class<Actor> missile = null, float Spawnheight = 32, float Spawnofs_xy = 0);
+	native void A_CustomRailgun(int damage, int spawnofs_xy = 0, color color1 = 0, color color2 = 0, int flags = 0, int aim = 0, float maxdiff = 0, class<Actor> pufftype = "BulletPuff", float spread_xy = 0, float spread_z = 0, float range = 0, int duration = 0, float sparsity = 1.0, float driftspeed = 1.0, class<Actor> spawnclass = null, float spawnofs_z = 0, int spiraloffset = 270, int limit = 0);
+	native bool A_SetInventory(class<Inventory> itemtype, int amount, int ptr = AAPTR_DEFAULT, bool beyondMax = false);
+	native bool A_GiveInventory(class<Inventory> itemtype, int amount = 0, int giveto = AAPTR_DEFAULT);
+	native bool A_TakeInventory(class<Inventory> itemtype, int amount = 0, int flags = 0, int giveto = AAPTR_DEFAULT);
+	action native bool A_SpawnItem(class<Actor> itemtype = "Unknown", float distance = 0, float zheight = 0, bool useammo = true, bool transfer_translation = false);
+	native bool A_SpawnItemEx(class<Actor> itemtype, float xofs = 0, float yofs = 0, float zofs = 0, float xvel = 0, float yvel = 0, float zvel = 0, float angle = 0, int flags = 0, int failchance = 0, int tid=0);
+	native void A_Print(string whattoprint, float time = 0, name fontname = "none");
+	native void A_PrintBold(string whattoprint, float time = 0, name fontname = "none");
+	native void A_Log(string whattoprint);
+	native void A_LogInt(int whattoprint);
+	native void A_LogFloat(float whattoprint);
+	native void A_SetTranslucent(float alpha, int style = 0);
+	native void A_SetRenderStyle(float alpha, int style);
+	native void A_FadeIn(float reduce = 0.1, int flags = 0);
+	native void A_FadeOut(float reduce = 0.1, int flags = 1); //bool remove == true
+	native void A_FadeTo(float target, float amount = 0.1, int flags = 0);
+	native void A_SpawnDebris(class<Actor> spawntype, bool transfer_translation = false, float mult_h = 1, float mult_v = 1);
+	native void A_SpawnParticle(color color1, int flags = 0, int lifetime = 35, float size = 1, float angle = 0, float xoff = 0, float yoff = 0, float zoff = 0, float velx = 0, float vely = 0, float velz = 0, float accelx = 0, float accely = 0, float accelz = 0, float startalphaf = 1, float fadestepf = -1, float sizestep = 0);
+	native void A_ExtChase(bool usemelee, bool usemissile, bool playactive = true, bool nightmarefast = false);
+	native void A_DropInventory(class<Inventory> itemtype);
+	native void A_SetBlend(color color1, float alpha, int tics, color color2 = 0);
+	deprecated native void A_ChangeFlag(string flagname, bool value);
+	native void A_ChangeCountFlags(int kill = FLAG_NO_CHANGE, int item = FLAG_NO_CHANGE, int secret = FLAG_NO_CHANGE);
+	native void A_RaiseMaster(bool copy = 0);
+	native void A_RaiseChildren(bool copy = 0);
+	native void A_RaiseSiblings(bool copy = 0);
+	deprecated native void A_BasicAttack(int meleedamage, sound meleesound, class<actor> missiletype, float missileheight);
+	action native bool A_ThrowGrenade(class<Actor> itemtype, float zheight = 0, float xyvel = 0, float zvel = 0, bool useammo = true);
+	native void A_Weave(int xspeed, int yspeed, float xdist, float ydist);
+
+
+	action native state, bool A_Teleport(statelabel teleportstate = null, class<SpecialSpot> targettype = "BossSpot", class<Actor> fogtype = "TeleportFog", int flags = 0, float mindist = 0, float maxdist = 128, int ptr = AAPTR_DEFAULT);
+	action native state, bool A_Warp(int ptr_destination, float xofs = 0, float yofs = 0, float zofs = 0, float angle = 0, int flags = 0, statelabel success_state = null, float heightoffset = 0, float radiusoffset = 0, float pitch = 0);
+	native void A_CountdownArg(int argnum, statelabel targstate = null);
+	native state A_MonsterRefire(int chance, statelabel label);
+	native void A_LookEx(int flags = 0, float minseedist = 0, float maxseedist = 0, float maxheardist = 0, float fov = 0, statelabel label = null);
+	
+	native void A_Recoil(float xyvel);
+	native bool A_GiveToTarget(class<Inventory> itemtype, int amount = 0, int forward_ptr = AAPTR_DEFAULT);
+	native bool A_TakeFromTarget(class<Inventory> itemtype, int amount = 0, int flags = 0, int forward_ptr = AAPTR_DEFAULT);
+	native int A_RadiusGive(class<Inventory> itemtype, float distance, int flags, int amount = 0, class<Actor> filter = null, name species = "None", float mindist = 0, int limit = 0);
+	native void A_CustomMeleeAttack(int damage = 0, sound meleesound = "", sound misssound = "", name damagetype = "none", bool bleed = true);
+	native void A_CustomComboAttack(class<Actor> missiletype, float spawnheight, int damage, sound meleesound = "", name damagetype = "none", bool bleed = true);
+	native void A_Burst(class<Actor> chunktype);
+	action native void A_Blast(int flags = 0, float strength = 255, float radius = 255, float speed = 20, class<Actor> blasteffect = "BlastEffect", sound blastsound = "BlastRadius");
+	native void A_RadiusThrust(int force = 128, int distance = -1, int flags = RTF_AFFECTSOURCE, int fullthrustdistance = 0);
+	native void A_RadiusDamageSelf(int damage = 128, float distance = 128, int flags = 0, class<Actor> flashtype = null);
+	native int A_Explode(int damage = -1, int distance = -1, int flags = XF_HURTSOURCE, bool alert = false, int fulldamagedistance = 0, int nails = 0, int naildamage = 10, class<Actor> pufftype = "BulletPuff", name damagetype = "none");
+	native void A_Stop();
+	native void A_Respawn(int flags = 1);
+	native void A_QueueCorpse();
+	native void A_DeQueueCorpse();
+	native void A_ClearLastHeard();
+	native bool A_SelectWeapon(class<Weapon> whichweapon, int flags = 0);
+	action native void A_Punch();
+	native void A_Feathers();
+	native void A_ClassBossHealth();
+	native void A_ShootGun();
+	native void A_RocketInFlight();
+	native void A_Bang4Cloud();
+	native void A_DropFire();
+	native void A_GiveQuestItem(int itemno);
+	native void A_RemoveForcefield();
+	native void A_DropWeaponPieces(class<Actor> p1, class<Actor> p2, class<Actor> p3);
+	native void A_PigPain ();
+	native void A_SetAngle(float angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void A_SetPitch(float pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void A_SetRoll(float roll, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void A_ScaleVelocity(float scale, int ptr = AAPTR_DEFAULT);
+	native void A_ChangeVelocity(float x = 0, float y = 0, float z = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	deprecated native void A_SetUserVar(name varname, int value);
+	deprecated native void A_SetUserArray(name varname, int index, int value);
+	deprecated native void A_SetUserVarFloat(name varname, float value);
+	deprecated native void A_SetUserArrayFloat(name varname, int index, float value);
+	native void A_Quake(int intensity, int duration, int damrad, int tremrad, sound sfx = "world/quake");
+	native void A_QuakeEx(int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, sound sfx = "world/quake", int flags = 0, float mulWaveX = 1, float mulWaveY = 1, float mulWaveZ = 1, int falloff = 0, int highpoint = 0, float rollIntensity = 0, float rollWave = 0);
+	action native void A_SetTics(int tics);
+	native void A_DropItem(class<Actor> item, int dropamount = -1, int chance = 256);
+	native void A_DamageSelf(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_DamageTarget(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_DamageMaster(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_DamageTracer(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_DamageChildren(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_DamageSiblings(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_KillTarget(name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_KillMaster(name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_KillTracer(name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_KillChildren(name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_KillSiblings(name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
+	native void A_RemoveTarget(int flags = 0, class<Actor> filter = null, name species = "None");
+	native void A_RemoveMaster(int flags = 0, class<Actor> filter = null, name species = "None");
+	native void A_RemoveTracer(int flags = 0, class<Actor> filter = null, name species = "None");
+	native void A_RemoveChildren(bool removeall = false, int flags = 0, class<Actor> filter = null, name species = "None");
+	native void A_RemoveSiblings(bool removeall = false, int flags = 0, class<Actor> filter = null, name species = "None");
+	native void A_Remove(int removee, int flags = 0, class<Actor> filter = null, name species = "None");
+	native int A_GiveToChildren(class<Inventory> itemtype, int amount = 0);
+	native int A_GiveToSiblings(class<Inventory> itemtype, int amount = 0);
+	native int A_TakeFromChildren(class<Inventory> itemtype, int amount = 0);
+	native int A_TakeFromSiblings(class<Inventory> itemtype, int amount = 0);
+	native void A_SetTeleFog(class<Actor> oldpos, class<Actor> newpos);
+	native void A_SwapTeleFog();
+	native void A_SetHealth(int health, int ptr = AAPTR_DEFAULT);
+	native void A_ResetHealth(int ptr = AAPTR_DEFAULT);
+	native void A_SetSpecies(name species, int ptr = AAPTR_DEFAULT);
+	native void A_SetChaseThreshold(int threshold, bool def = false, int ptr = AAPTR_DEFAULT);
+	native bool A_FaceMovementDirection(float offset = 0, float anglelimit = 0, float pitchlimit = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native int A_ClearOverlays(int sstart = 0, int sstop = 0, bool safety = true);
+	native bool A_CopySpriteFrame(int from, int to, int flags = 0);
+	native bool A_SetVisibleRotation(float anglestart = 0, float angleend = 0, float pitchstart = 0, float pitchend = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void A_SetTranslation(string transname);
+
+	native void A_RearrangePointers(int newtarget, int newmaster = AAPTR_DEFAULT, int newtracer = AAPTR_DEFAULT, int flags=0);
+	native void A_TransferPointer(int ptr_source, int ptr_recepient, int sourcefield, int recepientfield=AAPTR_DEFAULT, int flags=0);
+	native void A_CopyFriendliness(int ptr_source = AAPTR_MASTER);
+
+	action native bool A_Overlay(int layer, statelabel start = null, bool nooverride = false);
+	native void A_WeaponOffset(float wx = 0, float wy = 32, int flags = 0);
+	action native void A_OverlayOffset(int layer = PSP_WEAPON, float wx = 0, float wy = 32, int flags = 0);
+	action native void A_OverlayFlags(int layer, int flags, bool set);
+
+	int ACS_NamedExecute(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0)
+	{
+		return ACS_Execute(-int(script), mapnum, arg1, arg2, arg3);
+	}
+	int ACS_NamedSuspend(name script, int mapnum=0)
+	{
+		return ACS_Suspend(-int(script), mapnum);
+	}
+	int ACS_NamedTerminate(name script, int mapnum=0)
+	{
+		return ACS_Terminate(-int(script), mapnum);
+	}
+	int ACS_NamedLockedExecute(name script, int mapnum=0, int arg1=0, int arg2=0, int lock=0)
+	{
+		return ACS_LockedExecute(-int(script), mapnum, arg1, arg2, lock);
+	}
+	int ACS_NamedLockedExecuteDoor(name script, int mapnum=0, int arg1=0, int arg2=0, int lock=0)
+	{
+		return ACS_LockedExecuteDoor(-int(script), mapnum, arg1, arg2, lock);
+	}
+	int ACS_NamedExecuteWithResult(name script, int arg1=0, int arg2=0, int arg3=0, int arg4=0)
+	{
+		return ACS_ExecuteWithResult(-int(script), arg1, arg2, arg3, arg4);
+	}
+	int ACS_NamedExecuteAlways(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0)
+	{
+		return ACS_ExecuteAlways(-int(script), mapnum, arg1, arg2, arg3);
+	}
+	
+	States(Actor, Overlay, Weapon, Item)
+	{
+	Spawn:
+		TNT1 A -1;
+		Stop;
+	Null:
+		TNT1 A 1;
+		Stop;
+	GenericFreezeDeath:
+		// Generic freeze death frames. Woo!
+		#### # 5 A_GenericFreezeDeath;
+		---- A 1 A_FreezeDeathChunks;
+		Wait;
+	GenericCrush:
+		POL5 A -1;
+		Stop;
+	}
+
+	// Internal functions
+	deprecated private native int __decorate_internal_int__(int i);
+	deprecated private native bool __decorate_internal_bool__(bool b);
+	deprecated private native float __decorate_internal_float__(float f);
+}

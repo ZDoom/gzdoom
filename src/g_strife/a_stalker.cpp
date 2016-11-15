@@ -5,7 +5,7 @@
 #include "p_local.h"
 #include "p_enemy.h"
 #include "s_sound.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_stalker ("Stalker");
@@ -13,7 +13,7 @@ static FRandom pr_stalker ("Stalker");
 
 DEFINE_ACTION_FUNCTION(AActor, A_StalkerChaseDecide)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!(self->flags & MF_NOGRAVITY))
 	{
@@ -28,7 +28,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_StalkerChaseDecide)
 
 DEFINE_ACTION_FUNCTION(AActor, A_StalkerLookInit)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	FState *state;
 	if (self->flags & MF_NOGRAVITY)
@@ -48,7 +48,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_StalkerLookInit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_StalkerDrop)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->flags5 &= ~MF5_NOVERTICALMELEERANGE;
 	self->flags &= ~MF_NOGRAVITY;
@@ -57,7 +57,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_StalkerDrop)
 
 DEFINE_ACTION_FUNCTION(AActor, A_StalkerAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->flags & MF_NOGRAVITY)
 	{
@@ -79,7 +79,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_StalkerAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_StalkerWalk)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	S_Sound (self, CHAN_BODY, "stalker/walk", 1, ATTN_NORM);
 	A_Chase (stack, self);

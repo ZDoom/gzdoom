@@ -6,7 +6,7 @@
 #include "p_local.h"
 #include "s_sound.h"
 #include "ravenshared.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 */
 
@@ -21,7 +21,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS (AArtiDarkServant)
+IMPLEMENT_CLASS(AArtiDarkServant, false, false, false, false)
 
 //============================================================================
 //
@@ -49,7 +49,7 @@ bool AArtiDarkServant::Use (bool pickup)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Summon)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AMinotaurFriend *mo;
 

@@ -46,7 +46,7 @@ public:
 	void Activate (AActor *deactivator);
 };
 
-IMPLEMENT_CLASS (ASoundEnvironment)
+IMPLEMENT_CLASS(ASoundEnvironment, false, false, false, false)
 
 void ASoundEnvironment::PostBeginPlay ()
 {

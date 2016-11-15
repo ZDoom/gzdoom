@@ -2,7 +2,7 @@
 #include "m_random.h"
 #include "p_local.h"
 #include "a_hexenglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_maceatk ("CMaceAttack");
@@ -15,7 +15,7 @@ static FRandom pr_maceatk ("CMaceAttack");
 
 DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle angle;
 	int damage;

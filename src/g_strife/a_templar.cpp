@@ -6,14 +6,14 @@
 #include "p_enemy.h"
 #include "s_sound.h"
 #include "a_strifeglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_templar ("Templar");
 
 DEFINE_ACTION_FUNCTION(AActor, A_TemplarAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int damage;
 	DAngle angle;

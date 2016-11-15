@@ -470,7 +470,7 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 //
 //==========================================================================
 
-IMPLEMENT_CLASS (AKey)
+IMPLEMENT_CLASS(AKey, false, false, false, false)
 
 bool AKey::HandlePickup (AInventory *item)
 {

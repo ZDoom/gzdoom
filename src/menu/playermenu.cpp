@@ -526,7 +526,7 @@ public:
 	void Drawer ();
 };
 
-IMPLEMENT_CLASS(DPlayerMenu)
+IMPLEMENT_CLASS(DPlayerMenu, false, false, false, false)
 
 //=============================================================================
 //

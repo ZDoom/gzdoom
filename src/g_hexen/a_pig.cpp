@@ -11,7 +11,7 @@
 #include "p_enemy.h"
 #include "d_event.h"
 #include "gstrings.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_snoutattack ("SnoutAttack");
@@ -27,7 +27,7 @@ public:
 	void MorphPlayerThink ();
 };
 
-IMPLEMENT_CLASS (APigPlayer)
+IMPLEMENT_CLASS(APigPlayer, false, false, false, false)
 
 void APigPlayer::MorphPlayerThink ()
 {
@@ -58,7 +58,7 @@ void APigPlayer::MorphPlayerThink ()
 
 DEFINE_ACTION_FUNCTION(AActor, A_SnoutAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle angle;
 	int damage;
@@ -96,7 +96,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SnoutAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PigPain)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	CALL_ACTION(A_Pain, self);
 	if (self->Z() <= self->floorz)

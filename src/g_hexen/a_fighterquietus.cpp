@@ -10,7 +10,7 @@
 #include "gstrings.h"
 #include "a_hexenglobal.h"
 #include "a_weaponpiece.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_quietusdrop ("QuietusDrop");
@@ -59,7 +59,7 @@ public:
 	int DoSpecialDamage(AActor *victim, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS (AFSwordMissile)
+IMPLEMENT_CLASS(AFSwordMissile, false, false, false, false)
 
 int AFSwordMissile::DoSpecialDamage(AActor *victim, int damage, FName damagetype)
 {
@@ -78,7 +78,7 @@ int AFSwordMissile::DoSpecialDamage(AActor *victim, int damage, FName damagetype
 
 DEFINE_ACTION_FUNCTION(AActor, A_FSwordAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -109,7 +109,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FSwordAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FSwordFlames)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int i;
 
@@ -131,7 +131,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FSwordFlames)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FighterAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!self->target) return 0;
 

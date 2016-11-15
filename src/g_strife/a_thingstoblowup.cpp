@@ -6,8 +6,8 @@
 #include "p_enemy.h"
 #include "a_action.h"
 #include "gstrings.h"
-#include "thingdef/thingdef.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
+#include "vm.h"
 #include "doomstat.h"
 */
 
@@ -16,7 +16,7 @@ static FRandom pr_lightout ("LightOut");
 
 DEFINE_ACTION_FUNCTION(AActor, A_Bang4Cloud)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	double xo = (pr_bang4cloud.Random2() & 3) * (10. / 64);
 	double yo = (pr_bang4cloud.Random2() & 3) * (10. / 64);
@@ -63,7 +63,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveQuestItem)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ExtraLightOff)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->target != NULL && self->target->player != NULL)
 	{
@@ -74,7 +74,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ExtraLightOff)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Explode512)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	P_RadiusAttack (self, self->target, 512, 512, NAME_None, RADF_HURTSOURCE);
 	if (self->target != NULL && self->target->player != NULL)
@@ -90,7 +90,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Explode512)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LightGoesOut)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *foo;
 	sector_t *sec = self->Sector;

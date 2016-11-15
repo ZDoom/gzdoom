@@ -25,7 +25,7 @@
 #include "a_action.h"
 #include "m_random.h"
 #include "i_system.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 */
 
@@ -88,7 +88,7 @@ extern void SpawnSpiritTail (AActor *spirit);
 
 DEFINE_ACTION_FUNCTION(AActor, A_KoraxChase)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *spot;
 
@@ -155,7 +155,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxChase)
 
 DEFINE_ACTION_FUNCTION(AActor, A_KoraxBonePop)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	int i;
@@ -201,7 +201,7 @@ void KSpiritInit (AActor *spirit, AActor *korax)
 
 DEFINE_ACTION_FUNCTION(AActor, A_KoraxDecide)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (pr_koraxdecide()<220)
 	{
@@ -222,7 +222,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxDecide)
 
 DEFINE_ACTION_FUNCTION(AActor, A_KoraxMissile)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	static const struct { const char *type, *sound; } choices[6] =
 	{
@@ -265,7 +265,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxMissile)
 
 DEFINE_ACTION_FUNCTION(AActor, A_KoraxCommand)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	DAngle ang;
 	int numcommands;
 
@@ -399,7 +399,7 @@ static void A_KSpiritSeeker (AActor *actor, DAngle thresh, DAngle turnMax)
 
 DEFINE_ACTION_FUNCTION(AActor, A_KSpiritRoam)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->health-- <= 0)
 	{
@@ -432,7 +432,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KSpiritRoam)
 
 DEFINE_ACTION_FUNCTION(AActor, A_KBolt)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	// Countdown lifetime
 	if (self->special1-- <= 0)
@@ -450,7 +450,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KBolt)
 
 DEFINE_ACTION_FUNCTION(AActor, A_KBoltRaise)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 

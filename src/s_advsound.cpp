@@ -2213,7 +2213,7 @@ private:
 	int NextCheck;
 };
 
-IMPLEMENT_CLASS (AAmbientSound)
+IMPLEMENT_CLASS(AAmbientSound, false, false, false, false)
 
 //==========================================================================
 //
@@ -2470,7 +2470,7 @@ public:
 	virtual void PostBeginPlay();
 };
 
-IMPLEMENT_CLASS(AMusicChanger)
+IMPLEMENT_CLASS(AMusicChanger, false, false, false, false)
 
 bool AMusicChanger::DoTriggerAction (AActor *triggerer, int activationType)
 {

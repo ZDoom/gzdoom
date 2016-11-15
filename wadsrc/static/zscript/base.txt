@@ -1,0 +1,32 @@
+class Object native
+{
+	virtual native void Destroy();
+	native class<Object> GetClass();
+}
+
+class Thinker : Object native
+{
+}
+
+class ThinkerIterator : Object native
+{
+	enum EStatnums
+	{
+		MAX_STATNUM = 127
+	}
+
+	native static ThinkerIterator Create(class<Object> type = "Actor", int statnum=MAX_STATNUM+1);
+	native Thinker Next(bool exact = false);
+	native void Reinit();
+}
+
+class DropItem : Object native
+{
+	/* native fields listed for reference only for now
+	native readonly DropItem Next;
+	native readonly name Name;
+	native readonly int Probability;
+	native readonly int Amount;
+	*/
+}
+

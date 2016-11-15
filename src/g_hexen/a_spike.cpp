@@ -7,7 +7,7 @@
 #include "a_sharedglobal.h"
 #include "s_sound.h"
 #include "m_bbox.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_thrustraise ("ThrustRaise");
@@ -31,9 +31,11 @@ public:
 	TObjPtr<AActor> DirtClump;
 };
 
-IMPLEMENT_POINTY_CLASS (AThrustFloor)
- DECLARE_POINTER (DirtClump)
-END_POINTERS
+IMPLEMENT_CLASS(AThrustFloor, false, true, false, false)
+
+IMPLEMENT_POINTERS_START(AThrustFloor)
+	IMPLEMENT_POINTER(DirtClump)
+IMPLEMENT_POINTERS_END
 
 void AThrustFloor::Serialize(FSerializer &arc)
 {
@@ -79,7 +81,7 @@ void AThrustFloor::Deactivate (AActor *activator)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ThrustInitUp)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->special2 = 5;	// Raise speed
 	self->args[0] = 1;		// Mark as up
@@ -92,7 +94,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustInitUp)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ThrustInitDn)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->special2 = 5;	// Raise speed
 	self->args[0] = 0;		// Mark as down
@@ -108,7 +110,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustInitDn)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ThrustRaise)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AThrustFloor *actor = static_cast<AThrustFloor *>(self);
 
@@ -137,7 +139,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustRaise)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ThrustLower)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (A_SinkMobj (self, 6))
 	{
@@ -152,7 +154,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustLower)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ThrustImpale)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	// This doesn't need to iterate through portals.
 

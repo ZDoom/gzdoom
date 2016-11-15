@@ -39,7 +39,11 @@
 #include "i_system.h"
 #include "c_dispatch.h"
 #include "v_text.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
+#include "thingdef.h"
+
+// stores indices for symbolic state labels for some old-style DECORATE functions.
+FStateLabelStorage StateLabels;
 
 // Each state is owned by an actor. Actors can own any number of
 // states, but a single state cannot be owned by more than one
@@ -257,7 +261,94 @@ FState *PClassActor::FindStateByString(const char *name, bool exact)
 }
 
 
+//==========================================================================
+//
+// validate a runtime state index.
+//
+//==========================================================================
 
+static bool VerifyJumpTarget(PClassActor *cls, FState *CallingState, int index)
+{
+	while (cls != RUNTIME_CLASS(AActor))
+	{
+		// both calling and target state need to belong to the same class.
+		if (cls->OwnsState(CallingState))
+		{
+			return cls->OwnsState(CallingState + index);
+		}
+
+		// We can safely assume the ParentClass is of type PClassActor
+		// since we stop when we see the Actor base class.
+		cls = static_cast<PClassActor *>(cls->ParentClass);
+	}
+	return false;
+}
+
+//==========================================================================
+//
+// Get a statw pointer from a symbolic label
+//
+//==========================================================================
+
+FState *FStateLabelStorage::GetState(int pos, PClassActor *cls)
+{
+	if (pos > 0x10000000)
+	{
+		return cls? cls->FindState(ENamedName(pos - 0x10000000)) : nullptr;
+	}
+	else if (pos < 0)
+	{
+		// decode the combined value produced by the script.
+		int index = (pos >> 16) & 32767;
+		pos = ((pos & 65535) - 1) * 4;
+		FState *state;
+		memcpy(&state, &Storage[pos + sizeof(int)], sizeof(state));
+		if (VerifyJumpTarget(cls, state, index))
+			return state + index;
+		else
+			return nullptr;
+	}
+	else if (pos > 0)
+	{
+		int val;
+		pos = (pos - 1) * 4;
+		memcpy(&val, &Storage[pos], sizeof(int));
+
+		if (val == 0)
+		{
+			FState *state;
+			memcpy(&state, &Storage[pos + sizeof(int)], sizeof(state));
+			return state;
+		}
+		else if (cls != nullptr)
+		{
+			FName *labels = (FName*)&Storage[pos + sizeof(int)];
+			return cls->FindState(val, labels, false);
+		}
+	}
+	return nullptr;
+}
+
+//==========================================================================
+//
+// State label conversion function for scripts
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(AActor, FindState)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_STATE(newstate);
+	ACTION_RETURN_STATE(newstate);
+}
+
+// same as above but context aware.
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, ResolveState)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_STATE_ACTION(newstate);
+	ACTION_RETURN_STATE(newstate);
+}
 
 //==========================================================================
 //
@@ -432,6 +523,11 @@ FStateLabels *FStateDefinitions::CreateStateLabelList(TArray<FStateDefine> & sta
 
 void FStateDefinitions::InstallStates(PClassActor *info, AActor *defaults)
 {
+	if (defaults == nullptr)
+	{
+		I_Error("Called InstallStates without actor defaults in %s", info->TypeName.GetChars());
+	}
+
 	// First ensure we have a valid spawn state.
 	FState *state = FindState("Spawn");
 
@@ -817,7 +913,7 @@ bool FStateDefinitions::SetLoop()
 //
 //==========================================================================
 
-int FStateDefinitions::AddStates(FState *state, const char *framechars)
+int FStateDefinitions::AddStates(FState *state, const char *framechars, const FScriptPosition &sc)
 {
 	bool error = false;
 	int frame = 0;
@@ -843,6 +939,7 @@ int FStateDefinitions::AddStates(FState *state, const char *framechars)
 		state->Frame = frame;
 		state->SameFrame = noframe;
 		StateArray.Push(*state);
+		SourceLines.Push(sc);
 		++count;
 
 		// NODELAY flag is not carried past the first state
@@ -872,6 +969,7 @@ int FStateDefinitions::FinishStates(PClassActor *actor, AActor *defaults)
 		memcpy(realstates, &StateArray[0], count*sizeof(FState));
 		actor->OwnedStates = realstates;
 		actor->NumOwnedStates = count;
+		SaveStateSourceLines(realstates, SourceLines);
 
 		// adjust the state pointers
 		// In the case new states are added these must be adjusted, too!
@@ -914,6 +1012,7 @@ int FStateDefinitions::FinishStates(PClassActor *actor, AActor *defaults)
 	}
 	return count;
 }
+
 
 
 //==========================================================================

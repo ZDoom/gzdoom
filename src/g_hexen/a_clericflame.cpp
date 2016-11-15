@@ -10,7 +10,7 @@
 #include "p_pspr.h"
 #include "gstrings.h"
 #include "a_hexenglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 const double FLAMESPEED	= 0.45;
@@ -33,7 +33,7 @@ public:
 	void Effect ();
 };
 
-IMPLEMENT_CLASS (ACFlameMissile)
+IMPLEMENT_CLASS(ACFlameMissile, false, false, false, false)
 
 void ACFlameMissile::BeginPlay ()
 {
@@ -66,7 +66,7 @@ void ACFlameMissile::Effect ()
 
 DEFINE_ACTION_FUNCTION(AActor, A_CFlameAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -93,7 +93,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CFlamePuff)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->renderflags &= ~RF_INVISIBLE;
 	self->Vel.Zero();
@@ -109,7 +109,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlamePuff)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int i;
 	DAngle an;
@@ -159,10 +159,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CFlameRotate)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	DAngle an = self->Angles.Yaw + 90.;
-	self->VelFromAngle(an, FLAMEROTSPEED);
+	self->VelFromAngle(FLAMEROTSPEED, an);
 	self->Vel += DVector2(self->specialf1, self->specialf2);
 
 	self->Angles.Yaw += 6.;

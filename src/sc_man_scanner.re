@@ -118,14 +118,14 @@ std2:
 		'void'						{ RET(TK_Void); }
 		'struct'					{ RET(TK_Struct); }
 		'class'						{ RET(TK_Class); }
-		'mode'						{ RET(TK_Mode); }
 		'enum'						{ RET(TK_Enum); }
 		'name'						{ RET(TK_Name); }
 		'string'					{ RET(TK_String); }
 		'sound'						{ RET(TK_Sound); }
 		'state'						{ RET(TK_State); }
 		'color'						{ RET(TK_Color); }
-		'vector'					{ RET(TK_Vector); }
+		'vector2'					{ RET(TK_Vector2); }
+		'vector3'					{ RET(TK_Vector3); }
 		'map'						{ RET(TK_Map); }
 		'array'						{ RET(TK_Array); }
 		'in'						{ RET(TK_In); }
@@ -152,7 +152,7 @@ std2:
 		'transient'					{ RET(TK_Transient); }
 		'final'						{ RET(TK_Final); }
 		'throws'					{ RET(TK_Throws); }
-		'extends'					{ RET(TK_Extends); }
+		'extend'					{ RET(TK_Extend); }
 		'public'					{ RET(TK_Public); }
 		'protected'					{ RET(TK_Protected); }
 		'private'					{ RET(TK_Private); }
@@ -168,10 +168,11 @@ std2:
 		'optional'					{ RET(TK_Optional); }
 		'export'					{ RET(TK_Export); }
 		'virtual'					{ RET(TK_Virtual); }
+		'override'					{ RET(TK_Override); }
 		'super'						{ RET(TK_Super); }
 		'global'					{ RET(TK_Global); }
-		'self'						{ RET(TK_Self); }
 		'stop'						{ RET(TK_Stop); }
+		'null'						{ RET(TK_Null); }
 
 		'is'						{ RET(TK_Is); }
 		'replaces'					{ RET(TK_Replaces); }

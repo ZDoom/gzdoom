@@ -6,7 +6,7 @@
 #include "p_enemy.h"
 #include "s_sound.h"
 #include "a_strifeglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static bool CrusaderCheckRange (AActor *self)
@@ -20,7 +20,7 @@ static bool CrusaderCheckRange (AActor *self)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CrusaderChoose)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->target == NULL)
 		return 0;
@@ -51,7 +51,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CrusaderChoose)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CrusaderSweepLeft)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->Angles.Yaw += 90./16;
 	AActor *misl = P_SpawnMissileZAimed (self, self->Z() + 48, self->target, PClass::FindActor("FastFlameMissile"));
@@ -64,7 +64,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CrusaderSweepLeft)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CrusaderSweepRight)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->Angles.Yaw -= 90./16;
 	AActor *misl = P_SpawnMissileZAimed (self, self->Z() + 48, self->target, PClass::FindActor("FastFlameMissile"));
@@ -77,7 +77,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CrusaderSweepRight)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CrusaderRefire)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->target == NULL ||
 		self->target->health <= 0 ||
@@ -90,7 +90,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CrusaderRefire)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CrusaderDeath)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (CheckBossDeath (self))
 	{

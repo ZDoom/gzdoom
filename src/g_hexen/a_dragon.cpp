@@ -6,7 +6,7 @@
 #include "a_action.h"
 #include "m_random.h"
 #include "s_sound.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_dragonseek ("DragonSeek");
@@ -150,7 +150,7 @@ static void DragonSeek (AActor *actor, DAngle thresh, DAngle turnMax)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DragonInitFlight)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	FActorIterator iterator (self->tid);
 
@@ -175,7 +175,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonInitFlight)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DragonFlight)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	DAngle angle;
 
@@ -216,7 +216,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFlight)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DragonFlap)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	CALL_ACTION(A_DragonFlight, self);
 	if (pr_dragonflap() < 240)
@@ -238,7 +238,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFlap)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DragonAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	P_SpawnMissile (self, self->target, PClass::FindActor("DragonFireball"));
 	return 0;
@@ -252,7 +252,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DragonFX2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	int i;
@@ -283,7 +283,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFX2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DragonPain)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	CALL_ACTION(A_Pain, self);
 	if (!self->tracer)
@@ -301,7 +301,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonPain)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DragonCheckCrash)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->Z() <= self->floorz)
 	{

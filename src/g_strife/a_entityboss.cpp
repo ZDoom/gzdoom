@@ -6,7 +6,7 @@
 #include "p_enemy.h"
 #include "s_sound.h"
 #include "a_strifeglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 */
 
@@ -14,7 +14,7 @@ static FRandom pr_entity ("Entity");
 
 DEFINE_ACTION_FUNCTION(AActor, A_SubEntityDeath)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (CheckBossDeath (self))
 	{
@@ -42,7 +42,7 @@ DECLARE_ACTION(A_Spectre3Attack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_EntityAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	// Apparent Strife bug: Case 5 was unreachable because they used % 5 instead of % 6.
 	// I've fixed that by making case 1 duplicate it, since case 1 did nothing.
@@ -75,7 +75,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_EntityAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnEntity)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *entity = Spawn("EntityBoss", self->PosPlusZ(70.), ALLOW_REPLACE);
 	if (entity != NULL)
@@ -90,7 +90,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnEntity)
 
 DEFINE_ACTION_FUNCTION(AActor, A_EntityDeath)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *second;
 	double secondRadius = GetDefaultByName("EntitySecond")->radius * 2;
@@ -109,7 +109,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_EntityDeath)
 		second = Spawn("EntitySecond", pos, ALLOW_REPLACE);
 		second->CopyFriendliness(self, true);
 		A_FaceTarget(second);
-		second->VelFromAngle(an, velmul[i]);
+		second->VelFromAngle(velmul[i], an);
 	}
 	return 0;
 }

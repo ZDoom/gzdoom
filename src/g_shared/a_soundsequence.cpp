@@ -80,9 +80,11 @@ public:
 	TObjPtr<DSeqNode> Sequence;
 };
 
-IMPLEMENT_POINTY_CLASS(ASoundSequenceSlot)
-	DECLARE_POINTER(Sequence)
-END_POINTERS
+IMPLEMENT_CLASS(ASoundSequenceSlot, false, true, false, false)
+
+IMPLEMENT_POINTERS_START(ASoundSequenceSlot)
+	IMPLEMENT_POINTER(Sequence)
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //
@@ -109,7 +111,7 @@ public:
 	void MarkPrecacheSounds () const;
 };
 
-IMPLEMENT_CLASS (ASoundSequence)
+IMPLEMENT_CLASS(ASoundSequence, false, false, false, false)
 
 //==========================================================================
 //

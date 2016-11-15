@@ -10,7 +10,7 @@
 #include "p_pspr.h"
 #include "gstrings.h"
 #include "a_hexenglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_staffcheck ("CStaffCheck");
@@ -25,7 +25,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS (ACStaffMissile)
+IMPLEMENT_CLASS(ACStaffMissile, false, false, false, false)
 
 int ACStaffMissile::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
@@ -46,7 +46,7 @@ int ACStaffMissile::DoSpecialDamage (AActor *target, int damage, FName damagetyp
 
 DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	APlayerPawn *pmo;
 	int damage;
@@ -115,7 +115,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CStaffAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	AActor *mo;
 	player_t *player;
@@ -153,7 +153,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CStaffMissileSlither)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	A_Weave(self, 3, 0, 1., 0.);
 	return 0;
@@ -167,7 +167,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffMissileSlither)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CStaffInitBlink)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	self->weaponspecial = (pr_blink()>>1)+20;
 	return 0;
@@ -181,7 +181,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffInitBlink)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheckBlink)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if (self->player && self->player->ReadyWeapon)
 	{

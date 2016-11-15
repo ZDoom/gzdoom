@@ -5,14 +5,14 @@
 #include "p_local.h"
 #include "p_enemy.h"
 #include "s_sound.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_inq ("Inquisitor");
 
 DEFINE_ACTION_FUNCTION(AActor, A_InquisitorWalk)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	S_Sound (self, CHAN_BODY, "inquisitor/walk", 1, ATTN_NORM);
 	A_Chase (stack, self);
@@ -30,7 +30,7 @@ bool InquisitorCheckDistance (AActor *self)
 
 DEFINE_ACTION_FUNCTION(AActor, A_InquisitorDecide)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->target == NULL)
 		return 0;
@@ -52,7 +52,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorDecide)
 
 DEFINE_ACTION_FUNCTION(AActor, A_InquisitorAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *proj;
 
@@ -80,7 +80,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_InquisitorJump)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	double dist;
 	double speed;
@@ -102,7 +102,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorJump)
 
 DEFINE_ACTION_FUNCTION(AActor, A_InquisitorCheckLand)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->reactiontime--;
 	if (self->reactiontime < 0 ||
@@ -125,7 +125,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorCheckLand)
 
 DEFINE_ACTION_FUNCTION(AActor, A_TossArm)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *foo = Spawn("InquisitorArm", self->PosPlusZ(24.), ALLOW_REPLACE);
 	foo->Angles.Yaw = self->Angles.Yaw - 90. + pr_inq.Random2() * (360./1024.);

@@ -386,6 +386,14 @@ bool AActor::FixMapthingPos()
 	return success;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, UnlinkFromWorld)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->UnlinkFromWorld();
+	return 0;
+}
+
+
 //==========================================================================
 //
 // P_SetThingPosition
@@ -508,6 +516,13 @@ void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
 	if (!spawningmapthing) UpdateRenderSectorList();
 }
 
+DEFINE_ACTION_FUNCTION(AActor, LinkToWorld)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->LinkToWorld();
+	return 0;
+}
+
 void AActor::SetOrigin(double x, double y, double z, bool moving)
 {
 	UnlinkFromWorld ();
@@ -515,6 +530,17 @@ void AActor::SetOrigin(double x, double y, double z, bool moving)
 	LinkToWorld ();
 	P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS);
 	if (!moving) ClearInterpolation();
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SetOrigin)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_BOOL(moving);
+	self->SetOrigin(x, y, z, moving);
+	return 0;
 }
 
 //===========================================================================

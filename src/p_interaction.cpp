@@ -1242,6 +1242,11 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	//
 	if (player)
 	{
+		// Don't allow DMG_FORCED to work on ultimate degreeslessness/buddha and nodamage.
+		if ((player->cheats & (CF_GODMODE2 | CF_BUDDHA2)) || (player->mo->flags5 & MF5_NODAMAGE))
+		{
+			flags &= ~DMG_FORCED;
+		}
 		//Added by MC: Lets bots look allround for enemies if they survive an ambush.
 		if (player->Bot != NULL)
 		{
@@ -1553,6 +1558,18 @@ dopain:
 		return -1; //NOW we return -1!
 	}
 	return damage;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, DamageMobj)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(inflictor, AActor);
+	PARAM_OBJECT(source, AActor);
+	PARAM_INT(damage);
+	PARAM_NAME(mod);
+	PARAM_INT_DEF(flags);
+	PARAM_FLOAT_DEF(angle);
+	ACTION_RETURN_INT(P_DamageMobj(self, inflictor, source, damage, mod, flags, angle));
 }
 
 void P_PoisonMobj (AActor *target, AActor *inflictor, AActor *source, int damage, int duration, int period, FName type)

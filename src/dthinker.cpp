@@ -40,6 +40,7 @@
 #include "doomerrors.h"
 #include "serializer.h"
 #include "d_player.h"
+#include "virtual.h"
 
 
 static cycle_t ThinkCycles;
@@ -47,7 +48,7 @@ extern cycle_t BotSupportCycles;
 extern cycle_t ActionCycles;
 extern int BotWTG;
 
-IMPLEMENT_CLASS (DThinker)
+IMPLEMENT_CLASS(DThinker, false, false, false, true)
 
 DThinker *NextToThink;
 
@@ -480,7 +481,7 @@ void FThinkerIterator::Reinit ()
 	m_SearchingFresh = false;
 }
 
-DThinker *FThinkerIterator::Next ()
+DThinker *FThinkerIterator::Next (bool exact)
 {
 	if (m_ParentType == NULL)
 	{
@@ -496,7 +497,11 @@ DThinker *FThinkerIterator::Next ()
 				{
 					DThinker *thinker = m_CurrThinker;
 					m_CurrThinker = thinker->NextThinker;
-					if (thinker->IsKindOf(m_ParentType))
+					if (exact)
+					{
+						if (thinker->IsA(m_ParentType)) return thinker;
+					}
+					else if (thinker->IsKindOf(m_ParentType))
 					{
 						return thinker;
 					}
@@ -520,6 +525,44 @@ DThinker *FThinkerIterator::Next ()
 	} while (m_SearchStats && m_Stat != STAT_FIRST_THINKING);
 	return NULL;
 }
+
+// This is for scripting, which needs the iterator wrapped into an object with the needed functions exported.
+// Unfortunately we cannot have templated type conversions in scripts.
+class DThinkerIterator : public DObject, public FThinkerIterator
+{
+	DECLARE_CLASS(DThinkerIterator, DObject)
+
+public:
+	DThinkerIterator(PClass *cls = nullptr, int statnum = MAX_STATNUM + 1)
+		: FThinkerIterator(cls, statnum)
+	{
+	}
+};
+
+IMPLEMENT_CLASS(DThinkerIterator, false, false, false, false);
+DEFINE_ACTION_FUNCTION(DThinkerIterator, Create)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS_DEF(type, DThinker);
+	PARAM_INT_DEF(statnum);
+	ACTION_RETURN_OBJECT(new DThinkerIterator(type, statnum));
+}
+
+DEFINE_ACTION_FUNCTION(DThinkerIterator, Next)
+{
+	PARAM_SELF_PROLOGUE(DThinkerIterator);
+	ACTION_RETURN_OBJECT(self->Next());
+}
+
+DEFINE_ACTION_FUNCTION(DThinkerIterator, Reinit)
+{
+	PARAM_SELF_PROLOGUE(DThinkerIterator);
+	self->Reinit();
+	return 0;
+}
+
+
+
 
 ADD_STAT (think)
 {

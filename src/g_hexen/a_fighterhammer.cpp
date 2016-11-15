@@ -10,7 +10,7 @@
 #include "p_pspr.h"
 #include "gstrings.h"
 #include "a_hexenglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 const double HAMMER_RANGE = 1.5 * MELEERANGE;
@@ -25,7 +25,7 @@ static FRandom pr_hammeratk ("FHammerAtk");
 
 DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle angle;
 	int damage;
@@ -95,7 +95,7 @@ hammerdone:
 
 DEFINE_ACTION_FUNCTION(AActor, A_FHammerThrow)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	AActor *mo;
 	player_t *player;

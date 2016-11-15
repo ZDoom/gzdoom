@@ -119,7 +119,7 @@ public:
 
 };
 
-IMPLEMENT_CLASS(DLoadSaveMenu)
+IMPLEMENT_CLASS(DLoadSaveMenu, false, false, false, false)
 
 TArray<FSaveGameNode*> DLoadSaveMenu::SaveGames;
 int DLoadSaveMenu::LastSaved = -1;
@@ -934,7 +934,7 @@ public:
 
 };
 
-IMPLEMENT_CLASS(DSaveMenu)
+IMPLEMENT_CLASS(DSaveMenu, false, false, false, false)
 
 
 //=============================================================================
@@ -1102,7 +1102,7 @@ public:
 	bool MenuEvent (int mkey, bool fromcontroller);
 };
 
-IMPLEMENT_CLASS(DLoadMenu)
+IMPLEMENT_CLASS(DLoadMenu, false, false, false, false)
 
 
 //=============================================================================

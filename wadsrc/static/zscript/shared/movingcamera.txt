@@ -1,0 +1,46 @@
+class InterpolationPoint : Actor native
+{
+	default
+	{
+		+NOBLOCKMAP
+		+NOGRAVITY
+		+DONTSPLASH
+		RenderStyle "None";
+	}
+}
+
+class InterpolationSpecial : Actor native
+{
+	default
+	{
+		+NOBLOCKMAP
+		+NOSECTOR
+		+NOGRAVITY
+		+DONTSPLASH
+	}
+}
+
+class PathFollower : Actor native
+{
+	default
+	{
+		+NOBLOCKMAP
+		+NOSECTOR
+		+NOGRAVITY
+		+DONTSPLASH
+	}
+}
+
+class ActorMover : PathFollower native
+{
+}
+
+class MovingCamera : PathFollower native
+{
+	default
+	{
+		CameraHeight 0;
+	}
+}
+
+

@@ -1,0 +1,22 @@
+class ColorSetter : Actor native
+{
+	default
+	{
+		+NOBLOCKMAP
+		+NOGRAVITY
+		+DONTSPLASH
+		RenderStyle "None";
+	}
+}
+
+
+class FadeSetter : Actor native
+{
+	default
+	{
+		+NOBLOCKMAP
+		+NOGRAVITY
+		+DONTSPLASH
+		RenderStyle "None";
+	}
+}

@@ -36,6 +36,7 @@
 
 #include <stdlib.h>
 #include "doomtype.h"
+#include "i_system.h"
 
 class PClass;
 
@@ -109,8 +110,10 @@ struct ClassReg
 	PClass *MyClass;
 	const char *Name;
 	ClassReg *ParentType;
+	ClassReg *VMExport;
 	const size_t *Pointers;
 	void (*ConstructNative)(void *);
+	void(*InitNatives)();
 	unsigned int SizeOf:28;
 	unsigned int MetaClassNum:4;
 
@@ -124,8 +127,8 @@ enum EInPlace { EC_InPlace };
 public: \
 	virtual PClass *StaticType() const; \
 	static ClassReg RegistrationInfo, * const RegistrationInfoPtr; \
-private: \
 	typedef parent Super; \
+private: \
 	typedef cls ThisClass;
 
 #define DECLARE_ABSTRACT_CLASS_WITH_META(cls,parent,meta) \
@@ -147,10 +150,8 @@ protected: \
 #define HAS_OBJECT_POINTERS \
 	static const size_t PointerOffsets[];
 
-// Taking the address of a field in an object at address 1 instead of
-// address 0 keeps GCC from complaining about possible misuse of offsetof.
-#define DECLARE_POINTER(field)	(size_t)&((ThisClass*)1)->field - 1,
-#define END_POINTERS			~(size_t)0 };
+#define HAS_FIELDS \
+	static void InitNativeFields();
 
 #if defined(_MSC_VER)
 #	pragma section(".creg$u",read)
@@ -159,36 +160,41 @@ protected: \
 #	define _DECLARE_TI(cls) ClassReg * const cls::RegistrationInfoPtr __attribute__((section(SECTION_CREG))) = &cls::RegistrationInfo;
 #endif
 
-#define _IMP_PCLASS(cls,ptrs,create) \
+#define _IMP_PCLASS(cls, ptrs, create, initn, vmexport) \
 	ClassReg cls::RegistrationInfo = {\
-		NULL, \
+		nullptr, \
 		#cls, \
 		&cls::Super::RegistrationInfo, \
+		vmexport, \
 		ptrs, \
 		create, \
+		initn, \
 		sizeof(cls), \
 		cls::MetaClassNum }; \
 	_DECLARE_TI(cls) \
 	PClass *cls::StaticType() const { return RegistrationInfo.MyClass; }
 
-#define _IMP_CREATE_OBJ(cls) \
-	void cls::InPlaceConstructor(void *mem) { new((EInPlace *)mem) cls; }
+#define IMPLEMENT_CLASS(cls, isabstract, ptrs, fields, vmexport) \
+	_X_CONSTRUCTOR_##isabstract(cls) \
+	_IMP_PCLASS(cls, _X_POINTERS_##ptrs(cls), _X_ABSTRACT_##isabstract(cls), _X_FIELDS_##fields(cls), _X_VMEXPORT_##vmexport(cls))
 
-#define IMPLEMENT_POINTY_CLASS(cls) \
-	_IMP_CREATE_OBJ(cls) \
-	_IMP_PCLASS(cls,cls::PointerOffsets,cls::InPlaceConstructor) \
-	const size_t cls::PointerOffsets[] = {
+// Taking the address of a field in an object at address 1 instead of
+// address 0 keeps GCC from complaining about possible misuse of offsetof.
+#define IMPLEMENT_POINTERS_START(cls)	const size_t cls::PointerOffsets[] = {
+#define IMPLEMENT_POINTER(field)		(size_t)&((ThisClass*)1)->field - 1,
+#define IMPLEMENT_POINTERS_END			~(size_t)0 };
 
-#define IMPLEMENT_CLASS(cls) \
-	_IMP_CREATE_OBJ(cls) \
-	_IMP_PCLASS(cls,NULL,cls::InPlaceConstructor) 
-
-#define IMPLEMENT_ABSTRACT_CLASS(cls) \
-	_IMP_PCLASS(cls,NULL,NULL)
-
-#define IMPLEMENT_ABSTRACT_POINTY_CLASS(cls) \
-	_IMP_PCLASS(cls,cls::PointerOffsets,NULL) \
-	const size_t cls::PointerOffsets[] = {
+// Possible arguments for the IMPLEMENT_CLASS macro
+#define _X_POINTERS_true(cls)		cls::PointerOffsets
+#define _X_POINTERS_false(cls)		nullptr
+#define _X_FIELDS_true(cls)			cls::InitNativeFields
+#define _X_FIELDS_false(cls)		nullptr
+#define _X_CONSTRUCTOR_true(cls)
+#define _X_CONSTRUCTOR_false(cls)	void cls::InPlaceConstructor(void *mem) { new((EInPlace *)mem) cls; }
+#define _X_ABSTRACT_true(cls)		nullptr
+#define _X_ABSTRACT_false(cls)		cls::InPlaceConstructor
+#define _X_VMEXPORT_true(cls)		&DVMObject<cls>::RegistrationInfo
+#define _X_VMEXPORT_false(cls)		nullptr
 
 enum EObjectFlags
 {
@@ -201,7 +207,6 @@ enum EObjectFlags
 	OF_EuthanizeMe		= 1 << 5,		// Object wants to die
 	OF_Cleanup			= 1 << 6,		// Object is now being deleted by the collector
 	OF_YesReallyDelete	= 1 << 7,		// Object is being deleted outside the collector, and this is okay, so don't print a warning
-	OF_Transient		= 1 << 11,		// Object should not be archived (references to it will be nulled on disk)
 
 	OF_WhiteBits		= OF_White0 | OF_White1,
 	OF_MarkBits			= OF_WhiteBits | OF_Black,
@@ -210,6 +215,8 @@ enum EObjectFlags
 	OF_JustSpawned		= 1 << 8,		// Thinker was spawned this tic
 	OF_SerialSuccess	= 1 << 9,		// For debugging Serialize() calls
 	OF_Sentinel			= 1 << 10,		// Object is serving as the sentinel in a ring list
+	OF_Transient		= 1 << 11,		// Object should not be archived (references to it will be nulled on disk)
+	OF_SuperCall		= 1 << 12,		// A super call from the VM is about to be performed
 };
 
 template<class T> class TObjPtr;
@@ -438,6 +445,7 @@ public:
 	virtual PClass *StaticType() const { return RegistrationInfo.MyClass; }
 	static ClassReg RegistrationInfo, * const RegistrationInfoPtr;
 	static void InPlaceConstructor (void *mem);
+	static void InitNativeFields();
 	typedef PClass MetaClass;
 private:
 	typedef DObject ThisClass;
@@ -462,6 +470,11 @@ public:
 
 	void SerializeUserVars(FSerializer &arc);
 	virtual void Serialize(FSerializer &arc);
+
+	void VMSuperCall()
+	{
+		ObjectFlags |= OF_SuperCall;
+	}
 
 	void ClearClass()
 	{
@@ -573,6 +586,8 @@ protected:
 		M_Free (mem);
 	}
 };
+
+class AInventory;//
 
 // When you write to a pointer to an Object, you must call this for
 // proper bookkeeping in case the Object holding this pointer has

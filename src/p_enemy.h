@@ -1,7 +1,8 @@
 #ifndef __P_ENEMY_H__
 #define __P_ENEMY_H__
 
-#include "thingdef/thingdef.h"
+#include "vm.h"
+#include "vectors.h"
 
 struct sector_t;
 class AActor;

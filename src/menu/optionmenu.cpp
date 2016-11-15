@@ -64,8 +64,7 @@ void M_DrawConText (int color, int x, int y, const char *str)
 		TAG_DONE);
 }
 
-
-IMPLEMENT_CLASS(DOptionMenu)
+IMPLEMENT_CLASS(DOptionMenu, false, false, false, false)
 
 //=============================================================================
 //
@@ -579,7 +578,7 @@ public:
 	}
 };
 
-IMPLEMENT_CLASS(DGameplayMenu)
+IMPLEMENT_CLASS(DGameplayMenu, false, false, false, false)
 
 class DCompatibilityMenu : public DOptionMenu
 {
@@ -601,4 +600,4 @@ public:
 	}
 };
 
-IMPLEMENT_CLASS(DCompatibilityMenu)
+IMPLEMENT_CLASS(DCompatibilityMenu, false, false, false, false)

@@ -1,5 +1,5 @@
 #include "actor.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "p_conversation.h"
 #include "p_lnspec.h"
 #include "a_action.h"
@@ -29,7 +29,7 @@ public:
 	void Deactivate (AActor *activator);
 };
 
-IMPLEMENT_CLASS (ASwitchableDecoration)
+IMPLEMENT_CLASS(ASwitchableDecoration, false, false, false, false)
 
 void ASwitchableDecoration::Activate (AActor *activator)
 {
@@ -50,7 +50,7 @@ public:
 	void Deactivate (AActor *activator) {}
 };
 
-IMPLEMENT_CLASS (ASwitchingDecoration)
+IMPLEMENT_CLASS(ASwitchingDecoration, false, false, false, false)
 
 //----------------------------------------------------------------------------
 //
@@ -104,73 +104,9 @@ void A_Unblock(AActor *self, bool drop)
 
 DEFINE_ACTION_FUNCTION(AActor, A_NoBlocking)
 {
-	PARAM_ACTION_PROLOGUE;
-	A_Unblock(self, true);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_Fall)
-{
-	PARAM_ACTION_PROLOGUE;
-	A_Unblock(self, true);
-	return 0;
-}
-
-//==========================================================================
-//
-// A_SetFloorClip
-//
-//==========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_SetFloorClip)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	self->flags2 |= MF2_FLOORCLIP;
-	self->AdjustFloorClip ();
-	return 0;
-}
-
-//==========================================================================
-//
-// A_UnSetFloorClip
-//
-//==========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_UnSetFloorClip)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	self->flags2 &= ~MF2_FLOORCLIP;
-	self->Floorclip = 0;
-	return 0;
-}
-
-//==========================================================================
-//
-// A_HideThing
-//
-//==========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_HideThing)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	self->renderflags |= RF_INVISIBLE;
-	return 0;
-}
-
-//==========================================================================
-//
-// A_UnHideThing
-//
-//==========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_UnHideThing)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	self->renderflags &= ~RF_INVISIBLE;
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL_DEF(drop);
+	A_Unblock(self, drop);
 	return 0;
 }
 
@@ -182,7 +118,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_UnHideThing)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeath)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int t = pr_freezedeath();
 	self->tics = 75+t+pr_freezedeath();
@@ -228,7 +164,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeath)
 
 DEFINE_ACTION_FUNCTION(AActor, A_GenericFreezeDeath)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->Translation = TRANSLATION(TRANSLATION_Standard, 7);
 	CALL_ACTION(A_FreezeDeath, self);
@@ -243,7 +179,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_GenericFreezeDeath)
 
 DEFINE_ACTION_FUNCTION(AActor, A_IceSetTics)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int floor;
 
@@ -268,7 +204,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceSetTics)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int i;
 	int numChunks;
@@ -368,9 +304,11 @@ private:
 	DCorpsePointer () {}
 };
 
-IMPLEMENT_POINTY_CLASS(DCorpsePointer)
- DECLARE_POINTER(Corpse)
-END_POINTERS
+IMPLEMENT_CLASS(DCorpsePointer, false, true, false, false)
+
+IMPLEMENT_POINTERS_START(DCorpsePointer)
+	IMPLEMENT_POINTER(Corpse)
+IMPLEMENT_POINTERS_END
 
 CUSTOM_CVAR(Int, sv_corpsequeuesize, 64, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
@@ -446,7 +384,7 @@ void DCorpsePointer::Serialize(FSerializer &arc)
 // throw another corpse on the queue
 DEFINE_ACTION_FUNCTION(AActor, A_QueueCorpse)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (sv_corpsequeuesize > 0)
 	{
@@ -458,7 +396,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_QueueCorpse)
 // Remove an self from the queue (for resurrection)
 DEFINE_ACTION_FUNCTION(AActor, A_DeQueueCorpse)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	TThinkerIterator<DCorpsePointer> iterator (STAT_CORPSEPOINTER);
 	DCorpsePointer *corpsePtr;
@@ -472,164 +410,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeQueueCorpse)
 			return 0;
 		}
 	}
-	return 0;
-}
-
-//============================================================================
-//
-// A_SetInvulnerable
-//
-//============================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_SetInvulnerable)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	self->flags2 |= MF2_INVULNERABLE;
-	return 0;
-}
-
-//============================================================================
-//
-// A_UnSetInvulnerable
-//
-//============================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_UnSetInvulnerable)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	self->flags2 &= ~MF2_INVULNERABLE;
-	return 0;
-}
-
-//============================================================================
-//
-// A_SetReflective
-//
-//============================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_SetReflective)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	self->flags2 |= MF2_REFLECTIVE;
-	return 0;
-}
-
-//============================================================================
-//
-// A_UnSetReflective
-//
-//============================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_UnSetReflective)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	self->flags2 &= ~MF2_REFLECTIVE;
-	return 0;
-}
-
-//============================================================================
-//
-// A_SetReflectiveInvulnerable
-//
-//============================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_SetReflectiveInvulnerable)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	self->flags2 |= MF2_REFLECTIVE|MF2_INVULNERABLE;
-	return 0;
-}
-
-//============================================================================
-//
-// A_UnSetReflectiveInvulnerable
-//
-//============================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_UnSetReflectiveInvulnerable)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	self->flags2 &= ~(MF2_REFLECTIVE|MF2_INVULNERABLE);
-	return 0;
-}
-
-//==========================================================================
-//
-// A_SetShootable
-//
-//==========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_SetShootable)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	self->flags2 &= ~MF2_NONSHOOTABLE;
-	self->flags |= MF_SHOOTABLE;
-	return 0;
-}
-
-//==========================================================================
-//
-// A_UnSetShootable
-//
-//==========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_UnSetShootable)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	self->flags2 |= MF2_NONSHOOTABLE;
-	self->flags &= ~MF_SHOOTABLE;
-	return 0;
-}
-
-//===========================================================================
-//
-// A_NoGravity
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_NoGravity)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	self->flags |= MF_NOGRAVITY;
-	return 0;
-}
-
-//===========================================================================
-//
-// A_Gravity
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_Gravity)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	self->flags &= ~MF_NOGRAVITY;
-	self->Gravity = 1;
-	return 0;
-}
-
-//===========================================================================
-//
-// A_LowGravity
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_LowGravity)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	self->flags &= ~MF_NOGRAVITY;
-	self->Gravity = 1. / 8;;
 	return 0;
 }
 
@@ -668,4 +448,11 @@ void FaceMovementDirection(AActor *actor)
 		actor->Angles.Yaw = 315.;
 		break;
 	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, FaceMovementDirection)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	FaceMovementDirection(self);
+	return 0;
 }

@@ -95,13 +95,13 @@ enum
 
 DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_Blast)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_INT_OPT	(blastflags)			{ blastflags = 0; }
-	PARAM_FLOAT_OPT	(strength)				{ strength = 255; }
-	PARAM_FLOAT_OPT	(radius)				{ radius = 255; }
-	PARAM_FLOAT_OPT	(speed)					{ speed = 20; }
-	PARAM_CLASS_OPT	(blasteffect, AActor)	{ blasteffect = PClass::FindActor("BlastEffect"); }
-	PARAM_SOUND_OPT	(blastsound)			{ blastsound = "BlastRadius"; }
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT_DEF	(blastflags)			
+	PARAM_FLOAT_DEF	(strength)				
+	PARAM_FLOAT_DEF	(radius)				
+	PARAM_FLOAT_DEF	(speed)					
+	PARAM_CLASS_DEF	(blasteffect, AActor)	
+	PARAM_SOUND_DEF	(blastsound)			
 
 	AActor *mo;
 	TThinkerIterator<AActor> iterator;

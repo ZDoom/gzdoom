@@ -51,6 +51,7 @@
 #include "r_data/r_translate.h"
 #include "templates.h"
 #include "gstrings.h"
+#include "cmdlib.h"
 
 // States for the intermission
 typedef enum

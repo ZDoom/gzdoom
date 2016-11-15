@@ -63,6 +63,7 @@
 #include "w_zip.h"
 #include "doomerrors.h"
 #include "v_text.h"
+#include "cmdlib.h"
 
 char nulspace[1024 * 1024 * 4];
 bool save_full = false;	// for testing. Should be removed afterward.

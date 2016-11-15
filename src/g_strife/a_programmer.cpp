@@ -6,7 +6,7 @@
 #include "p_enemy.h"
 #include "s_sound.h"
 #include "a_strifeglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 #include "doomstat.h"
 */
@@ -23,7 +23,7 @@ public:
 	PalEntry GetBlend ();
 };
 
-IMPLEMENT_CLASS (AProgLevelEnder)
+IMPLEMENT_CLASS(AProgLevelEnder, false, false, false, false)
 
 //============================================================================
 //
@@ -74,7 +74,7 @@ PalEntry AProgLevelEnder::GetBlend ()
 
 DEFINE_ACTION_FUNCTION(AActor, A_ProgrammerMelee)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int damage;
 
@@ -102,7 +102,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ProgrammerMelee)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpotLightning)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *spot;
 
@@ -128,7 +128,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpotLightning)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnProgrammerBase)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *foo = Spawn("ProgrammerBase", self->PosPlusZ(24.), ALLOW_REPLACE);
 	if (foo != NULL)
@@ -148,7 +148,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnProgrammerBase)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ProgrammerDeath)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (!CheckBossDeath (self))
 		return 0;

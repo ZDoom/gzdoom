@@ -2,7 +2,7 @@
 #include "info.h"
 #include "gi.h"
 #include "m_random.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 
 static FRandom pr_orbit ("Orbit");
 
@@ -41,7 +41,7 @@ public:
 	void Destroy();
 };
 
-IMPLEMENT_CLASS(ACustomBridge)
+IMPLEMENT_CLASS(ACustomBridge, false, false, false, false)
 
 void ACustomBridge::BeginPlay ()
 {
@@ -92,7 +92,7 @@ void ACustomBridge::Destroy()
 
 DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->target == NULL)
 	{ // Don't crash if somebody spawned this into the world
@@ -121,8 +121,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BridgeInit)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_CLASS_OPT(balltype, AActor)	{ balltype = NULL; }
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS_DEF(balltype, AActor);
 
 	AActor *ball;
 
@@ -156,7 +156,7 @@ public:
 	void BeginPlay ();
 };
 
-IMPLEMENT_CLASS(AInvisibleBridge)
+IMPLEMENT_CLASS(AInvisibleBridge, false, false, false, false)
 
 void AInvisibleBridge::BeginPlay ()
 {

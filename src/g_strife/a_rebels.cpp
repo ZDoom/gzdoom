@@ -8,7 +8,7 @@
 #include "gi.h"
 #include "a_sharedglobal.h"
 #include "a_strifeglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "doomstat.h"
 */
 
@@ -22,7 +22,7 @@ static FRandom pr_shootgun ("ShootGun");
 
 DEFINE_ACTION_FUNCTION(AActor, A_ShootGun)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	DAngle pitch;
 
@@ -47,7 +47,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS (ATeleporterBeacon)
+IMPLEMENT_CLASS(ATeleporterBeacon, false, false, false, false)
 
 bool ATeleporterBeacon::Use (bool pickup)
 {
@@ -74,7 +74,7 @@ bool ATeleporterBeacon::Use (bool pickup)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Beacon)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *owner = self->target;
 	AActor *rebel;

@@ -54,7 +54,7 @@ public:
 	bool MouseEvent(int type, int x, int y);
 };
 
-IMPLEMENT_CLASS(DReadThisMenu)
+IMPLEMENT_CLASS(DReadThisMenu, false, false, false, false)
 
 //=============================================================================
 //

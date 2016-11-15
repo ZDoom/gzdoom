@@ -1,7 +1,7 @@
 /*
 #include "m_random.h"
 #include "p_local.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_fogspawn ("FogSpawn");
@@ -27,7 +27,7 @@ static FRandom pr_fogspawn ("FogSpawn");
 
 DEFINE_ACTION_FUNCTION(AActor, A_FogSpawn)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	static const char *fogs[3] =
 	{
@@ -70,7 +70,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogSpawn)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FogMove)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	double speed = self->args[0];
 	int weaveindex;

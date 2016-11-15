@@ -37,7 +37,7 @@
 #include "p_local.h"
 #include "statnums.h"
 #include "i_system.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "doomstat.h"
 #include "serializer.h"
 #include "a_pickups.h"
@@ -45,9 +45,8 @@
 static FRandom pr_spot ("SpecialSpot");
 static FRandom pr_spawnmace ("SpawnMace");
 
-
-IMPLEMENT_CLASS(DSpotState)
-IMPLEMENT_CLASS (ASpecialSpot)
+IMPLEMENT_CLASS(DSpotState, false, false, false, false)
+IMPLEMENT_CLASS(ASpecialSpot, false, false, false, false)
 TObjPtr<DSpotState> DSpotState::SpotState;
 
 //----------------------------------------------------------------------------
@@ -380,11 +379,11 @@ void ASpecialSpot::Destroy()
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnSingleItem)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS		(cls, AActor);
-	PARAM_INT_OPT	(fail_sp) { fail_sp = 0; }
-	PARAM_INT_OPT	(fail_co) { fail_co = 0; }
-	PARAM_INT_OPT	(fail_dm) { fail_dm = 0; }
+	PARAM_INT_DEF	(fail_sp) 
+	PARAM_INT_DEF	(fail_co) 
+	PARAM_INT_DEF	(fail_dm) 
 
 	AActor *spot = NULL;
 	DSpotState *state = DSpotState::GetSpotState();

@@ -8,7 +8,7 @@
 #include "doomstat.h"
 #include "v_font.h"
 
-IMPLEMENT_CLASS(PClassPuzzleItem)
+IMPLEMENT_CLASS(PClassPuzzleItem, false, false, false, false)
 
 void PClassPuzzleItem::DeriveData(PClass *newclass)
 {
@@ -17,7 +17,7 @@ void PClassPuzzleItem::DeriveData(PClass *newclass)
 	static_cast<PClassPuzzleItem *>(newclass)->PuzzFailMessage = PuzzFailMessage;
 }
 
-IMPLEMENT_CLASS(APuzzleItem)
+IMPLEMENT_CLASS(APuzzleItem, false, false, false, false)
 
 bool APuzzleItem::HandlePickup (AInventory *item)
 {

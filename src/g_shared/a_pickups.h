@@ -139,6 +139,7 @@ public:
 	PClassInventory();
 	virtual void DeriveData(PClass *newclass);
 	virtual void ReplaceClassRef(PClass *oldclass, PClass *newclass);
+	void Finalize(FStateDefinitions &statedef);
 
 	FString PickupMessage;
 	int GiveQuest;			// Optionally give one of the quest items.
@@ -225,10 +226,15 @@ private:
 	static const char *StaticLastMessage;
 };
 
-// CustomInventory: Supports the Use, Pickup, and Drop states from 96x
-class ACustomInventory : public AInventory
+class AStateProvider : public AInventory
 {
-	DECLARE_CLASS (ACustomInventory, AInventory)
+	DECLARE_CLASS(AStateProvider, AInventory)
+};
+
+// CustomInventory: Supports the Use, Pickup, and Drop states from 96x
+class ACustomInventory : public AStateProvider
+{
+	DECLARE_CLASS (ACustomInventory, AStateProvider)
 public:
 
 	// This is used when an inventory item's use state sequence is executed.
@@ -274,14 +280,15 @@ protected:
 public:
 	PClassWeapon();
 	virtual void ReplaceClassRef(PClass *oldclass, PClass *newclass);
+	void Finalize(FStateDefinitions &statedef);
 
 	int SlotNumber;
 	int SlotPriority;
 };
 
-class AWeapon : public AInventory
+class AWeapon : public AStateProvider
 {
-	DECLARE_CLASS_WITH_META(AWeapon, AInventory, PClassWeapon)
+	DECLARE_CLASS_WITH_META(AWeapon, AStateProvider, PClassWeapon)
 	HAS_OBJECT_POINTERS
 public:
 	DWORD WeaponFlags;

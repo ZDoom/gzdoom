@@ -320,7 +320,7 @@ bool P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *ques
 //
 //==========================================================================
 
-IMPLEMENT_CLASS (DActiveButton)
+IMPLEMENT_CLASS(DActiveButton, false, false, false, false)
 
 DActiveButton::DActiveButton ()
 {

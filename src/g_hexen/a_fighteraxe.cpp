@@ -10,19 +10,14 @@
 #include "p_pspr.h"
 #include "gstrings.h"
 #include "a_hexenglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
+
+DECLARE_ACTION(A_Raise)
 
 #define AXERANGE	(2.25 * MELEERANGE)
 
 static FRandom pr_axeatk ("FAxeAtk");
-
-void A_FAxeCheckReady (AActor *actor);
-void A_FAxeCheckUp (AActor *actor);
-void A_FAxeCheckAtk (AActor *actor);
-void A_FAxeCheckReadyG (AActor *actor);
-void A_FAxeCheckUpG (AActor *actor);
-void A_FAxeAttack (AActor *actor);
 
 // The Fighter's Axe --------------------------------------------------------
 
@@ -36,7 +31,7 @@ public:
 	FState *GetAtkState (bool hold);
 };
 
-IMPLEMENT_CLASS (AFWeapAxe)
+IMPLEMENT_CLASS(AFWeapAxe, false, false, false, false)
 
 FState *AFWeapAxe::GetUpState ()
 {
@@ -66,7 +61,7 @@ FState *AFWeapAxe::GetAtkState (bool hold)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReady)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -93,7 +88,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReady)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReadyG)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -120,7 +115,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReadyG)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUp)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -147,7 +142,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUp)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUpG)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -174,7 +169,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUpG)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckAtk)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player;
 
@@ -197,7 +192,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckAtk)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle angle;
 	int power;

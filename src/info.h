@@ -53,8 +53,29 @@ struct Baggage;
 class FScanner;
 struct FActorInfo;
 class FIntCVar;
+class FStateDefinitions;
 
-enum EStateType
+enum EStateDefineFlags
+{
+	SDF_NEXT = 0,
+	SDF_STATE = 1,
+	SDF_STOP = 2,
+	SDF_WAIT = 3,
+	SDF_LABEL = 4,
+	SDF_INDEX = 5,
+	SDF_MASK = 7,
+	SDF_DEHACKED = 8,	// Identify a state as having been modified by a dehacked lump
+};
+
+enum EStateUseFlags
+{
+	SUF_ACTOR = 1,
+	SUF_OVERLAY = 2,
+	SUF_WEAPON = 4,
+	SUF_ITEM = 8,
+};
+
+enum EStateType : int // this must ensure proper alignment.
 {
 	STATE_Actor,
 	STATE_Psprite,
@@ -84,11 +105,12 @@ struct FState
 	WORD		sprite;
 	SWORD		Tics;
 	WORD		TicRange;
+	short		Light;
 	BYTE		Frame;
+	BYTE		UseFlags;		
 	BYTE		DefineFlags;	// Unused byte so let's use it during state creation.
 	int			Misc1;			// Was changed to SBYTE, reverted to long for MBF compat
 	int			Misc2;			// Was changed to BYTE, reverted to long for MBF compat
-	short		Light;
 	BYTE		Fullbright:1;	// State is fullbright
 	BYTE		SameFrame:1;	// Ignore Frame (except when spawning actor)
 	BYTE		Fast:1;
@@ -139,6 +161,10 @@ struct FState
 	inline void SetFrame(BYTE frame)
 	{
 		Frame = frame - 'A';
+	}
+	inline bool CheckUse(int usetype)
+	{
+		return !!(UseFlags & usetype);
 	}
 	void SetAction(VMFunction *func) { ActionFunc = func; }
 	void ClearAction() { ActionFunc = NULL; }
@@ -221,7 +247,9 @@ public:
 	void SetDamageFactor(FName type, double factor);
 	void SetPainChance(FName type, int chance);
 	size_t PropagateMark();
-	void InitializeNativeDefaults();
+	bool SetReplacement(FName replaceName);
+	void SetDropItems(DDropItem *drops);
+	virtual void Finalize(FStateDefinitions &statedef);
 
 	FState *FindState(int numnames, FName *names, bool exact=false) const;
 	FState *FindStateByString(const char *name, bool exact=false);
@@ -243,6 +271,7 @@ public:
 	PClassActor *Replacee;
 	int NumOwnedStates;
 	BYTE GameFilter;
+	uint8_t DefaultStateUsage; // state flag defaults for blocks without a qualifier.
 	WORD SpawnID;
 	WORD ConversationID;
 	SWORD DoomEdNum;
@@ -298,6 +327,44 @@ struct FDoomEdEntry
 	int Args[5];
 };
 
+struct FStateLabelStorage
+{
+	TArray<uint8_t> Storage;
+
+	int AddPointer(FState *ptr)
+	{
+		if (ptr != nullptr)
+		{
+			int pos = Storage.Reserve(sizeof(ptr) + sizeof(int));
+			memset(&Storage[pos], 0, sizeof(int));
+			memcpy(&Storage[pos + sizeof(int)], &ptr, sizeof(ptr));
+			return pos / 4 + 1;
+		}
+		else return 0;
+	}
+
+	int AddNames(TArray<FName> &names)
+	{
+		int siz = names.Size();
+		if (siz > 1)
+		{
+			int pos = Storage.Reserve(sizeof(int) + sizeof(FName) * names.Size());
+			memcpy(&Storage[pos], &siz, sizeof(int));
+			memcpy(&Storage[pos + sizeof(int)], &names[0], sizeof(FName) * names.Size());
+			return pos / 4 + 1;
+		}
+		else
+		{
+			// don't store single name states in the array.
+			return names[0].GetIndex() + 0x10000000;
+		}
+	}
+
+	FState *GetState(int pos, PClassActor *cls);
+};
+
+extern FStateLabelStorage StateLabels;
+
 enum ESpecialMapthings
 {
 	SMT_Player1Start = 1,
@@ -339,24 +406,5 @@ void InitActorNumsFromMapinfo();
 int GetSpriteIndex(const char * spritename, bool add = true);
 TArray<FName> &MakeStateNameList(const char * fname);
 void AddStateLight(FState *state, const char *lname);
-
-// Standard parameters for all action functons
-//   self         - Actor this action is to operate on (player if a weapon)
-//   stateowner   - Actor this action really belongs to (may be an item)
-//   callingstate - State this action was called from
-#define PARAM_ACTION_PROLOGUE_TYPE(type) \
-	PARAM_PROLOGUE; \
-	PARAM_OBJECT	 (self, type); \
-	PARAM_OBJECT_OPT (stateowner, AActor) { stateowner = self; } \
-	PARAM_STATEINFO_OPT  (stateinfo) { stateinfo = nullptr; } \
-
-#define PARAM_ACTION_PROLOGUE	PARAM_ACTION_PROLOGUE_TYPE(AActor)
-
-// Number of action paramaters
-#define NAP 3
-
-#define PARAM_SELF_PROLOGUE(type) \
-	PARAM_PROLOGUE; \
-	PARAM_OBJECT(self, type);
 
 #endif	// __INFO_H__

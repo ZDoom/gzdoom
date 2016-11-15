@@ -903,7 +903,7 @@ public:
 	void Tick ();
 };
 
-IMPLEMENT_CLASS (DAutosaver)
+IMPLEMENT_CLASS(DAutosaver, false, false, false, false)
 
 void DAutosaver::Tick ()
 {
@@ -1846,6 +1846,58 @@ void FLevelLocals::AddScroller (int secnum)
 		Scrolls.Resize(numsectors);
 		memset (&Scrolls[0], 0, sizeof(Scrolls[0])*numsectors);
 	}
+}
+
+//==========================================================================
+//
+// sets up the script-side version of FLevelLocals
+// Since this is a global variable and the script compiler does
+// not allow defining them, it will be fully set up here.
+//
+//==========================================================================
+
+void G_InitLevelLocalsForScript()
+{
+	PStruct *lstruct = NewStruct("LevelLocals", nullptr);
+	PField *levelf = new PField("level", lstruct, VARF_Native | VARF_Static, (intptr_t)&level);
+	GlobalSymbols.AddSymbol(levelf);
+
+	// This only exports a selection of fields. Not everything here is useful to the playsim.
+	lstruct->AddNativeField("time", TypeSInt32, myoffsetof(FLevelLocals, time), VARF_ReadOnly);
+	lstruct->AddNativeField("maptime", TypeSInt32, myoffsetof(FLevelLocals, maptime), VARF_ReadOnly);
+	lstruct->AddNativeField("totaltime", TypeSInt32, myoffsetof(FLevelLocals, totaltime), VARF_ReadOnly);
+	lstruct->AddNativeField("starttime", TypeSInt32, myoffsetof(FLevelLocals, starttime), VARF_ReadOnly);
+	lstruct->AddNativeField("partime", TypeSInt32, myoffsetof(FLevelLocals, partime), VARF_ReadOnly);
+	lstruct->AddNativeField("sucktime", TypeSInt32, myoffsetof(FLevelLocals, sucktime), VARF_ReadOnly);
+	lstruct->AddNativeField("cluster", TypeSInt32, myoffsetof(FLevelLocals, cluster), VARF_ReadOnly);
+	lstruct->AddNativeField("clusterflags", TypeSInt32, myoffsetof(FLevelLocals, clusterflags), VARF_ReadOnly);
+	lstruct->AddNativeField("levelnum", TypeSInt32, myoffsetof(FLevelLocals, levelnum), VARF_ReadOnly);
+	//lstruct->AddNativeField("levelname", TypeString, myoffsetof(FLevelLocals, LevelName), VARF_ReadOnly);	// must use an access function to resolve string table references.
+	lstruct->AddNativeField("mapname", TypeString, myoffsetof(FLevelLocals, MapName), VARF_ReadOnly);
+	lstruct->AddNativeField("nextmap", TypeString, myoffsetof(FLevelLocals, NextMap));
+	lstruct->AddNativeField("nextsecretmap", TypeString, myoffsetof(FLevelLocals, NextSecretMap));
+	lstruct->AddNativeField("maptype", TypeSInt32, myoffsetof(FLevelLocals, maptype), VARF_ReadOnly);
+	lstruct->AddNativeField("monsterstelefrag", TypeSInt32, myoffsetof(FLevelLocals, flags), VARF_ReadOnly, LEVEL_MONSTERSTELEFRAG);
+	lstruct->AddNativeField("actownspecial", TypeSInt32, myoffsetof(FLevelLocals, flags), VARF_ReadOnly, LEVEL_ACTOWNSPECIAL);
+	lstruct->AddNativeField("sndseqtotalctrl", TypeSInt32, myoffsetof(FLevelLocals, flags), VARF_ReadOnly, LEVEL_SNDSEQTOTALCTRL);
+	lstruct->AddNativeField("allmap", TypeSInt32, myoffsetof(FLevelLocals, flags2), 0, (LEVEL2_ALLMAP));
+	lstruct->AddNativeField("missilesactivateimpact", TypeSInt32, myoffsetof(FLevelLocals, flags2), 0, LEVEL2_MISSILESACTIVATEIMPACT);
+	lstruct->AddNativeField("monsterfallingdamage", TypeSInt32, myoffsetof(FLevelLocals, flags2), 0, LEVEL2_MONSTERFALLINGDAMAGE);
+	lstruct->AddNativeField("checkswitchrange", TypeSInt32, myoffsetof(FLevelLocals, flags2), 0, LEVEL2_CHECKSWITCHRANGE);
+	lstruct->AddNativeField("polygrind", TypeSInt32, myoffsetof(FLevelLocals, flags2), 0, LEVEL2_POLYGRIND);
+	lstruct->AddNativeField("music", TypeString, myoffsetof(FLevelLocals, Music), VARF_ReadOnly);
+	lstruct->AddNativeField("musicorder", TypeSInt32, myoffsetof(FLevelLocals, musicorder), VARF_ReadOnly);
+	lstruct->AddNativeField("total_secrets", TypeSInt32, myoffsetof(FLevelLocals, total_secrets), VARF_ReadOnly);
+	lstruct->AddNativeField("found_secrets", TypeSInt32, myoffsetof(FLevelLocals, found_secrets));
+	lstruct->AddNativeField("total_items", TypeSInt32, myoffsetof(FLevelLocals, total_items), VARF_ReadOnly);
+	lstruct->AddNativeField("found_items", TypeSInt32, myoffsetof(FLevelLocals, found_items));
+	lstruct->AddNativeField("total_monsters", TypeSInt32, myoffsetof(FLevelLocals, total_monsters), VARF_ReadOnly);
+	lstruct->AddNativeField("killed_monsters", TypeSInt32, myoffsetof(FLevelLocals, killed_monsters));
+	lstruct->AddNativeField("gravity", TypeFloat64, myoffsetof(FLevelLocals, gravity));
+	lstruct->AddNativeField("aircontrol", TypeFloat64, myoffsetof(FLevelLocals, aircontrol));
+	lstruct->AddNativeField("airfriction", TypeFloat64, myoffsetof(FLevelLocals, airfriction));
+	lstruct->AddNativeField("airsupply", TypeSInt32, myoffsetof(FLevelLocals, airsupply));
+	lstruct->AddNativeField("teamdamage", TypeFloat64, myoffsetof(FLevelLocals, teamdamage));
 }
 
 //==========================================================================

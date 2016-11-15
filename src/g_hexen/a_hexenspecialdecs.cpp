@@ -11,7 +11,7 @@
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "a_hexenglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 #include "doomstat.h"
 */
@@ -39,7 +39,7 @@ public:
 	void HitFloor ();
 };
 
-IMPLEMENT_CLASS (APottery1)
+IMPLEMENT_CLASS(APottery1, false, false, false, false)
 
 void APottery1::HitFloor ()
 {
@@ -55,7 +55,7 @@ void APottery1::HitFloor ()
 
 DEFINE_ACTION_FUNCTION(AActor, A_PotteryExplode)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo = NULL;
 	int i;
@@ -93,7 +93,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PotteryExplode)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PotteryChooseBit)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->SetState (self->FindState(NAME_Death) + 1 + 2*(pr_bit()%5));
 	self->tics = 256+(pr_bit()<<1);
@@ -108,7 +108,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PotteryChooseBit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PotteryCheck)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int i;
 
@@ -136,7 +136,7 @@ public:
 	void PostBeginPlay ();
 };
 
-IMPLEMENT_CLASS (AZCorpseLynchedNoHeart)
+IMPLEMENT_CLASS(AZCorpseLynchedNoHeart, false, false, false, false)
 
 void AZCorpseLynchedNoHeart::PostBeginPlay ()
 {
@@ -152,7 +152,7 @@ void AZCorpseLynchedNoHeart::PostBeginPlay ()
 
 DEFINE_ACTION_FUNCTION(AActor, A_CorpseBloodDrip)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (pr_drip() <= 128)
 	{
@@ -169,7 +169,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CorpseBloodDrip)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CorpseExplode)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	int i;
@@ -207,7 +207,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CorpseExplode)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LeafSpawn)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	int i;
@@ -238,7 +238,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LeafSpawn)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LeafThrust)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (pr_leafthrust() <= 96)
 	{
@@ -255,7 +255,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LeafThrust)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LeafCheck)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->special1++;
 	if (self->special1 >= 20)
@@ -287,7 +287,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LeafCheck)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PoisonShroom)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->tics = 128 + (pr_shroom() << 1);
 	return 0;
@@ -301,7 +301,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonShroom)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SoAExplode)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	int i;
@@ -344,7 +344,7 @@ public:
 	void Activate (AActor *activator);
 };
 
-IMPLEMENT_CLASS (AZBell)
+IMPLEMENT_CLASS(AZBell, false, false, false, false)
 
 void AZBell::Activate (AActor *activator)
 {
@@ -362,7 +362,7 @@ void AZBell::Activate (AActor *activator)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BellReset1)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->flags |= MF_NOGRAVITY;
 	self->Height *= 4;
@@ -383,7 +383,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BellReset1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BellReset2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->flags |= MF_SHOOTABLE;
 	self->flags &= ~MF_CORPSE;

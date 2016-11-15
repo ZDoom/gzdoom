@@ -1,0 +1,29 @@
+// The Doom and Heretic players are not excluded from pickup in case
+// somebody wants to use these weapons with either of those games.
+
+class FighterWeapon : Weapon native
+{
+	Default
+	{
+		Weapon.Kickback 150;
+		Inventory.ForbiddenTo "ClericPlayer", "MagePlayer";
+	}
+}
+
+class ClericWeapon : Weapon native
+{
+	Default
+	{
+		Weapon.Kickback 150;
+		Inventory.ForbiddenTo "FighterPlayer", "MagePlayer";
+	}
+}
+
+class MageWeapon : Weapon native
+{
+	Default
+	{
+		Weapon.Kickback 150;
+		Inventory.ForbiddenTo "FighterPlayer", "ClericPlayer";
+	}
+}

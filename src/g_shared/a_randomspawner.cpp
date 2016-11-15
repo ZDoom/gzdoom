@@ -14,7 +14,7 @@
 #include "statnums.h"
 #include "gstrings.h"
 #include "a_action.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "v_text.h"
 #include "doomstat.h"
 #include "doomdata.h"
@@ -231,4 +231,4 @@ class ARandomSpawner : public AActor
 
 };
 
-IMPLEMENT_CLASS (ARandomSpawner)
+IMPLEMENT_CLASS(ARandomSpawner, false, false, false, false)

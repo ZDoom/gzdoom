@@ -1,0 +1,84 @@
+
+class SectorAction : Actor native
+{
+	default
+	{
+		+NOBLOCKMAP
+		+NOSECTOR
+		+NOGRAVITY
+		+DONTSPLASH
+	}
+}
+
+// Triggered when entering sector -------------------------------------------
+
+class SecActEnter : SectorAction native
+{
+}
+
+// Triggered when leaving sector --------------------------------------------
+
+class SecActExit : SectorAction native
+{
+}
+
+// Triggered when hitting sector's floor ------------------------------------
+
+class SecActHitFloor : SectorAction native
+{
+}
+
+// Triggered when hitting sector's ceiling ----------------------------------
+
+class SecActHitCeil : SectorAction native
+{
+}
+
+// Triggered when using inside sector ---------------------------------------
+
+class SecActUse : SectorAction native
+{
+}
+
+// Triggered when using a sector's wall -------------------------------------
+
+class SecActUseWall : SectorAction native
+{
+}
+
+// Triggered when eyes go below fake floor ----------------------------------
+
+class SecActEyesDive : SectorAction native
+{
+}
+
+// Triggered when eyes go above fake floor ----------------------------------
+
+class SecActEyesSurface : SectorAction native
+{
+}
+
+// Triggered when eyes go below fake floor ----------------------------------
+
+class SecActEyesBelowC : SectorAction native
+{
+}
+
+// Triggered when eyes go above fake floor ----------------------------------
+
+class SecActEyesAboveC : SectorAction native
+{
+}
+
+// Triggered when eyes go below fake floor ----------------------------------
+
+class SecActHitFakeFloor : SectorAction native
+{
+}
+
+// Music changer ----------------------------------
+
+class MusicChanger : SectorAction native
+{
+}
+

@@ -7,8 +7,7 @@
 #include "b_bot.h"
 #include "p_checkposition.h"
 
-
-IMPLEMENT_CLASS(AFastProjectile)
+IMPLEMENT_CLASS(AFastProjectile, false, false, false, false)
 
 
 //----------------------------------------------------------------------------

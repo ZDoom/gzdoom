@@ -42,7 +42,7 @@
 
 // arg0 = Visibility*4 for this skybox
 
-IMPLEMENT_CLASS (ASkyViewpoint)
+IMPLEMENT_CLASS(ASkyViewpoint, false, false, false, false)
 
 // If this actor has no TID, make it the default sky box
 void ASkyViewpoint::BeginPlay ()
@@ -73,7 +73,7 @@ void ASkyViewpoint::Destroy ()
 	Super::Destroy();
 }
 
-IMPLEMENT_CLASS (ASkyCamCompat)
+IMPLEMENT_CLASS(ASkyCamCompat, false, false, false, false)
 
 void ASkyCamCompat::BeginPlay()
 {
@@ -98,7 +98,7 @@ public:
 	void PostBeginPlay ();
 };
 
-IMPLEMENT_CLASS (ASkyPicker)
+IMPLEMENT_CLASS(ASkyPicker, false, false, false, false)
 
 void ASkyPicker::PostBeginPlay ()
 {
@@ -142,7 +142,7 @@ void ASkyPicker::PostBeginPlay ()
 
 // arg0 = opacity of plane; 0 = invisible, 255 = fully opaque
 
-IMPLEMENT_CLASS (AStackPoint)
+IMPLEMENT_CLASS(AStackPoint, false, false, false, false)
 
 void AStackPoint::BeginPlay ()
 {
@@ -160,7 +160,7 @@ public:
 	void Destroy ();
 };
 
-IMPLEMENT_CLASS (ASectorSilencer)
+IMPLEMENT_CLASS(ASectorSilencer, false, false, false, false)
 
 void ASectorSilencer::BeginPlay ()
 {
@@ -184,7 +184,7 @@ public:
 	void BeginPlay ();
 };
 
-IMPLEMENT_CLASS (ASectorFlagSetter)
+IMPLEMENT_CLASS(ASectorFlagSetter, false, false, false, false)
 
 void ASectorFlagSetter::BeginPlay ()
 {

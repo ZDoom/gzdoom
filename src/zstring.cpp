@@ -1262,3 +1262,11 @@ FStringData *FStringData::MakeCopy ()
 	FString::StrCopy (copy->Chars(), Chars(), Len);
 	return copy;
 }
+
+FStringf::FStringf(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	VFormat(fmt, ap);
+	va_end(ap);
+}

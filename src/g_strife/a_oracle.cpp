@@ -4,13 +4,13 @@
 #include "a_strifeglobal.h"
 #include "p_enemy.h"
 #include "r_defs.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 
 DEFINE_ACTION_FUNCTION(AActor, A_WakeOracleSpectre)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	TThinkerIterator<AActor> it(NAME_AlienSpectre3);
 	AActor *spectre = it.Next();

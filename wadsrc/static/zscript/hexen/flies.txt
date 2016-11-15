@@ -1,0 +1,30 @@
+
+// Buzzy fly ----------------------------------------------------------------
+
+class LittleFly : Actor
+{
+	Default
+	{
+		+NOBLOCKMAP +NOGRAVITY
+		+CANPASS
+		
+		Speed 6;
+		Radius 5;
+		Height 5;
+		Mass 2;
+		ActiveSound "FlyBuzz";
+	}
+	
+	native void A_FlySearch();
+	native void A_FlyBuzz();
+	
+	States
+	{
+	Spawn:
+		TNT1 A 20 A_FlySearch;	// [RH] Invisible when not flying
+		Loop;
+	Buzz:
+		AFLY ABCD 3 A_FlyBuzz;
+		Loop;
+	}
+}

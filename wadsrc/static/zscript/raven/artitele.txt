@@ -1,0 +1,27 @@
+
+// Teleport (self) ----------------------------------------------------------
+
+class ArtiTeleport : Inventory native
+{
+	Default
+	{
+		+COUNTITEM
+		+FLOATBOB
+		+INVENTORY.INVBAR
+		Inventory.PickupFlash "PickupFlash";
+		+INVENTORY.FANCYPICKUPSOUND
+		Inventory.DefMaxAmount;
+		Inventory.Icon "ARTIATLP";
+		Inventory.PickupSound "misc/p_pkup";
+		Inventory.PickupMessage "$TXT_ARTITELEPORT";
+		Tag "$TAG_ARTITELEPORT";
+	}
+	States
+	{
+	Spawn:
+		ATLP ABCB 4;
+		Loop;
+	}
+}
+
+

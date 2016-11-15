@@ -173,7 +173,7 @@ private:
 //
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS (DLighting)
+IMPLEMENT_CLASS(DLighting, false, false, false, false)
 
 DLighting::DLighting ()
 {
@@ -191,7 +191,7 @@ DLighting::DLighting (sector_t *sector)
 //
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS (DFireFlicker)
+IMPLEMENT_CLASS(DFireFlicker, false, false, false, false)
 
 DFireFlicker::DFireFlicker ()
 {
@@ -258,7 +258,7 @@ DFireFlicker::DFireFlicker (sector_t *sector, int upper, int lower)
 //
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS (DFlicker)
+IMPLEMENT_CLASS(DFlicker, false, false, false, false)
 
 DFlicker::DFlicker ()
 {
@@ -334,7 +334,7 @@ void EV_StartLightFlickering (int tag, int upper, int lower)
 //
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS (DLightFlash)
+IMPLEMENT_CLASS(DLightFlash, false, false, false, false)
 
 DLightFlash::DLightFlash ()
 {
@@ -409,7 +409,7 @@ DLightFlash::DLightFlash (sector_t *sector, int min, int max)
 //
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS (DStrobe)
+IMPLEMENT_CLASS(DStrobe, false, false, false, false)
 
 DStrobe::DStrobe ()
 {
@@ -667,7 +667,7 @@ void EV_LightChange (int tag, int value)
 //
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS (DGlow)
+IMPLEMENT_CLASS(DGlow, false, false, false, false)
 
 DGlow::DGlow ()
 {
@@ -736,7 +736,7 @@ DGlow::DGlow (sector_t *sector)
 //
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS (DGlow2)
+IMPLEMENT_CLASS(DGlow2, false, false, false, false)
 
 DGlow2::DGlow2 ()
 {
@@ -869,7 +869,7 @@ void EV_StartLightFading (int tag, int value, int tics)
 //
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS (DPhased)
+IMPLEMENT_CLASS(DPhased, false, false, false, false)
 
 DPhased::DPhased ()
 {

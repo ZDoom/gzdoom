@@ -399,7 +399,7 @@ public:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_ABSTRACT_CLASS(DEnterKey)
+IMPLEMENT_CLASS(DEnterKey, true, false, false, false)
 #endif
 
 //=============================================================================

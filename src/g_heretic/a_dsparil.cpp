@@ -9,7 +9,7 @@
 #include "a_sharedglobal.h"
 #include "gstrings.h"
 #include "a_specialspot.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 */
 
@@ -28,7 +28,7 @@ static FRandom pr_bluespark ("BlueSpark");
 
 DEFINE_ACTION_FUNCTION(AActor, A_Sor1Pain)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->special1 = 20; // Number of steps to walk fast
 	CALL_ACTION(A_Pain, self);
@@ -43,7 +43,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Sor1Pain)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Sor1Chase)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->special1)
 	{
@@ -64,7 +64,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Sor1Chase)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Srcr1Attack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	DAngle angle;
@@ -120,7 +120,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr1Attack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcererRise)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 
@@ -173,7 +173,7 @@ void P_DSparilTeleport (AActor *actor)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Srcr2Decide)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	static const int chance[] =
 	{
@@ -201,7 +201,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr2Decide)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Srcr2Attack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int chance;
 
@@ -243,7 +243,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr2Attack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BlueSpark)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int i;
 	AActor *mo;
@@ -266,7 +266,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BlueSpark)
 
 DEFINE_ACTION_FUNCTION(AActor, A_GenWizard)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 
@@ -301,7 +301,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_GenWizard)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Sor2DthInit)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->special1 = 7; // Animation loop counter
 	P_Massacre (); // Kill monsters early
@@ -316,7 +316,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Sor2DthInit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Sor2DthLoop)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (--self->special1)
 	{ // Need to loop

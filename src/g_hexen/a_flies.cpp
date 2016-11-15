@@ -60,7 +60,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlySearch)
 	// So search the sectors instead. We can't potentially find something all
 	// the way on the other side of the map and we can't find invisible corpses,
 	// but at least we aren't crippled on maps with lots of stuff going on.
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	validcount++;
 	AActor *other = FindCorpse(self, self->Sector, 5);
@@ -74,7 +74,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlySearch)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FlyBuzz)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *targ = self->target;
 

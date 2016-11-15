@@ -46,7 +46,7 @@ public:
 	void Deactivate (AActor *activator);
 };
 
-IMPLEMENT_CLASS (AParticleFountain)
+IMPLEMENT_CLASS(AParticleFountain, false, false, false, false)
 
 void AParticleFountain::PostBeginPlay ()
 {

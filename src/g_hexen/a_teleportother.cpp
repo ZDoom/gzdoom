@@ -7,7 +7,7 @@
 #include "s_sound.h"
 #include "p_lnspec.h"
 #include "m_random.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 #include "doomstat.h"
 */
@@ -34,7 +34,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS (AArtiTeleportOther)
+IMPLEMENT_CLASS(AArtiTeleportOther, false, false, false, false)
 
 // Teleport Other FX --------------------------------------------------------
 
@@ -45,7 +45,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS (ATelOtherFX1)
+IMPLEMENT_CLASS(ATelOtherFX1, false, false, false, false)
 
 static void TeloSpawn (AActor *source, const char *type)
 {
@@ -63,35 +63,35 @@ static void TeloSpawn (AActor *source, const char *type)
 
 DEFINE_ACTION_FUNCTION(AActor, A_TeloSpawnA)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	TeloSpawn (self, "TelOtherFX2");
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_TeloSpawnB)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	TeloSpawn (self, "TelOtherFX3");
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_TeloSpawnC)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	TeloSpawn (self, "TelOtherFX4");
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_TeloSpawnD)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	TeloSpawn (self, "TelOtherFX5");
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_CheckTeleRing)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->special1-- <= 0)
 	{

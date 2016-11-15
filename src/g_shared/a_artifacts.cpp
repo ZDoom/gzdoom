@@ -40,11 +40,11 @@ static FRandom pr_torch ("Torch");
 #define	TIMEFREEZE_TICS	( 12 * TICRATE )
 */
 
-IMPLEMENT_CLASS (APowerup)
+IMPLEMENT_CLASS(APowerup, false, false, false, false)
 
 // Powerup-Giver -------------------------------------------------------------
 
-IMPLEMENT_CLASS(PClassPowerupGiver)
+IMPLEMENT_CLASS(PClassPowerupGiver, false, false, false, false)
 
 void PClassPowerupGiver::ReplaceClassRef(PClass *oldclass, PClass *newclass)
 {
@@ -376,7 +376,7 @@ bool APowerup::GetNoTeleportFreeze ()
 
 // Invulnerability Powerup ---------------------------------------------------
 
-IMPLEMENT_CLASS (APowerInvulnerable)
+IMPLEMENT_CLASS(APowerInvulnerable, false, false, false, false)
 
 //===========================================================================
 //
@@ -513,7 +513,7 @@ int APowerInvulnerable::AlterWeaponSprite (visstyle_t *vis)
 
 // Strength (aka Berserk) Powerup --------------------------------------------
 
-IMPLEMENT_CLASS (APowerStrength)
+IMPLEMENT_CLASS(APowerStrength, false, false, false, false)
 
 //===========================================================================
 //
@@ -578,7 +578,7 @@ PalEntry APowerStrength::GetBlend ()
 
 // Invisibility Powerup ------------------------------------------------------
 
-IMPLEMENT_CLASS (APowerInvisibility)
+IMPLEMENT_CLASS(APowerInvisibility, false, false, false, false)
 
 // Invisibility flag combos
 #define INVISIBILITY_FLAGS1	(MF_SHADOW)
@@ -783,7 +783,7 @@ bool APowerInvisibility::HandlePickup (AInventory *item)
 
 // Ironfeet Powerup ----------------------------------------------------------
 
-IMPLEMENT_CLASS (APowerIronFeet)
+IMPLEMENT_CLASS(APowerIronFeet, false, false, false, false)
 
 //===========================================================================
 //
@@ -820,7 +820,7 @@ void APowerIronFeet::DoEffect ()
 
 // Strife Environment Suit Powerup -------------------------------------------
 
-IMPLEMENT_CLASS (APowerMask)
+IMPLEMENT_CLASS(APowerMask, false, false, false, false)
 
 //===========================================================================
 //
@@ -857,7 +857,7 @@ void APowerMask::DoEffect ()
 
 // Light-Amp Powerup ---------------------------------------------------------
 
-IMPLEMENT_CLASS (APowerLightAmp)
+IMPLEMENT_CLASS(APowerLightAmp, false, false, false, false)
 
 //===========================================================================
 //
@@ -899,7 +899,7 @@ void APowerLightAmp::EndEffect ()
 
 // Torch Powerup -------------------------------------------------------------
 
-IMPLEMENT_CLASS (APowerTorch)
+IMPLEMENT_CLASS(APowerTorch, false, false, false, false)
 
 //===========================================================================
 //
@@ -962,7 +962,7 @@ void APowerTorch::DoEffect ()
 
 // Flight (aka Wings of Wrath) powerup ---------------------------------------
 
-IMPLEMENT_CLASS (APowerFlight)
+IMPLEMENT_CLASS(APowerFlight, false, false, false, false)
 
 //===========================================================================
 //
@@ -1102,7 +1102,7 @@ bool APowerFlight::DrawPowerup (int x, int y)
 
 // Weapon Level 2 (aka Tome of Power) Powerup --------------------------------
 
-IMPLEMENT_CLASS (APowerWeaponLevel2)
+IMPLEMENT_CLASS(APowerWeaponLevel2, false, false, false, false)
 
 //===========================================================================
 //
@@ -1193,7 +1193,7 @@ public:
 	void Tick ();
 };
 
-IMPLEMENT_CLASS (APlayerSpeedTrail)
+IMPLEMENT_CLASS(APlayerSpeedTrail, false, false, false, false)
 
 //===========================================================================
 //
@@ -1216,7 +1216,7 @@ void APlayerSpeedTrail::Tick ()
 
 // Speed Powerup -------------------------------------------------------------
 
-IMPLEMENT_CLASS (APowerSpeed)
+IMPLEMENT_CLASS(APowerSpeed, false, false, false, false)
 
 //===========================================================================
 //
@@ -1303,11 +1303,11 @@ void APowerSpeed::DoEffect ()
 
 // Minotaur (aka Dark Servant) powerup ---------------------------------------
 
-IMPLEMENT_CLASS (APowerMinotaur)
+IMPLEMENT_CLASS(APowerMinotaur, false, false, false, false)
 
 // Targeter powerup ---------------------------------------------------------
 
-IMPLEMENT_CLASS (APowerTargeter)
+IMPLEMENT_CLASS(APowerTargeter, false, false, false, false)
 
 void APowerTargeter::Travelled ()
 {
@@ -1422,7 +1422,7 @@ void APowerTargeter::PositionAccuracy ()
 
 // Frightener Powerup --------------------------------
 
-IMPLEMENT_CLASS (APowerFrightener)
+IMPLEMENT_CLASS(APowerFrightener, false, false, false, false)
 
 //===========================================================================
 //
@@ -1458,7 +1458,7 @@ void APowerFrightener::EndEffect ()
 
 // Buddha Powerup --------------------------------
 
-IMPLEMENT_CLASS (APowerBuddha)
+IMPLEMENT_CLASS(APowerBuddha, false, false, false, false)
 
 //===========================================================================
 //
@@ -1494,11 +1494,11 @@ void APowerBuddha::EndEffect ()
 
 // Scanner powerup ----------------------------------------------------------
 
-IMPLEMENT_CLASS (APowerScanner)
+IMPLEMENT_CLASS(APowerScanner, false, false, false, false)
 
 // Time freezer powerup -----------------------------------------------------
 
-IMPLEMENT_CLASS( APowerTimeFreezer)
+IMPLEMENT_CLASS( APowerTimeFreezer, false, false, false, false)
 
 //===========================================================================
 //
@@ -1625,7 +1625,7 @@ void APowerTimeFreezer::EndEffect()
 
 // Damage powerup ------------------------------------------------------
 
-IMPLEMENT_CLASS(APowerDamage)
+IMPLEMENT_CLASS(APowerDamage, false, false, false, false)
 
 //===========================================================================
 //
@@ -1682,7 +1682,7 @@ void APowerDamage::ModifyDamage(int damage, FName damageType, int &newdamage, bo
 
 // Quarter damage powerup ------------------------------------------------------
 
-IMPLEMENT_CLASS(APowerProtection)
+IMPLEMENT_CLASS(APowerProtection, false, false, false, false)
 
 #define PROTECTION_FLAGS3	(MF3_NORADIUSDMG | MF3_DONTMORPH | MF3_DONTSQUASH | MF3_DONTBLAST | MF3_NOTELEOTHER)
 #define PROTECTION_FLAGS5	(MF5_NOPAIN | MF5_DONTRIP)
@@ -1760,7 +1760,7 @@ void APowerProtection::ModifyDamage(int damage, FName damageType, int &newdamage
 
 // Drain rune -------------------------------------------------------
 
-IMPLEMENT_CLASS(APowerDrain)
+IMPLEMENT_CLASS(APowerDrain, false, false, false, false)
 
 //===========================================================================
 //
@@ -1800,7 +1800,7 @@ void APowerDrain::EndEffect( )
 
 // Regeneration rune -------------------------------------------------------
 
-IMPLEMENT_CLASS(APowerRegeneration)
+IMPLEMENT_CLASS(APowerRegeneration, false, false, false, false)
 
 //===========================================================================
 //
@@ -1822,7 +1822,7 @@ void APowerRegeneration::DoEffect()
 
 // High jump rune -------------------------------------------------------
 
-IMPLEMENT_CLASS(APowerHighJump)
+IMPLEMENT_CLASS(APowerHighJump, false, false, false, false)
 
 //===========================================================================
 //
@@ -1860,7 +1860,7 @@ void APowerHighJump::EndEffect( )
 
 // Double firing speed rune ---------------------------------------------
 
-IMPLEMENT_CLASS(APowerDoubleFiringSpeed)
+IMPLEMENT_CLASS(APowerDoubleFiringSpeed, false, false, false, false)
 
 //===========================================================================
 //
@@ -1898,7 +1898,7 @@ void APowerDoubleFiringSpeed::EndEffect( )
 
 // Morph powerup ------------------------------------------------------
 
-IMPLEMENT_CLASS(APowerMorph)
+IMPLEMENT_CLASS(APowerMorph, false, false, false, false)
 
 //===========================================================================
 //
@@ -2002,7 +2002,7 @@ void APowerMorph::EndEffect( )
 
 // Infinite Ammo Powerup -----------------------------------------------------
 
-IMPLEMENT_CLASS(APowerInfiniteAmmo)
+IMPLEMENT_CLASS(APowerInfiniteAmmo, false, false, false, false)
 
 //===========================================================================
 //

@@ -25,10 +25,11 @@
 #include "gi.h"
 #include "p_pspr.h"
 #include "templates.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 #include "d_player.h"
 #include "serializer.h"
+#include "v_text.h"
 
 
 // MACROS ------------------------------------------------------------------
@@ -99,10 +100,12 @@ static const FGenericButtons ButtonChecks[] =
 //
 //------------------------------------------------------------------------
 
-IMPLEMENT_POINTY_CLASS(DPSprite)
-	DECLARE_POINTER(Caller)
-	DECLARE_POINTER(Next)
-END_POINTERS
+IMPLEMENT_CLASS(DPSprite, false, true, false, false)
+
+IMPLEMENT_POINTERS_START(DPSprite)
+	IMPLEMENT_POINTER(Caller)
+	IMPLEMENT_POINTER(Next)
+IMPLEMENT_POINTERS_END
 
 //------------------------------------------------------------------------
 //
@@ -293,6 +296,27 @@ void DPSprite::SetState(FState *newstate, bool pending)
 			Destroy();
 			return;
 		}
+
+		if (!(newstate->UseFlags & (SUF_OVERLAY|SUF_WEAPON)))	// Weapon and overlay are mostly the same, the main difference is that weapon states restrict the self pointer to class Actor.
+		{
+			auto so = FState::StaticFindStateOwner(newstate);
+			Printf(TEXTCOLOR_RED "State %s.%d not flagged for use in overlays or weapons\n", so->TypeName.GetChars(), int(newstate - so->OwnedStates));
+			State = nullptr;
+			Destroy();
+			return;
+		}
+		else if (!(newstate->UseFlags & SUF_WEAPON))
+		{
+			if (Caller->IsKindOf(RUNTIME_CLASS(AWeapon)))
+			{
+				auto so = FState::StaticFindStateOwner(newstate);
+				Printf(TEXTCOLOR_RED "State %s.%d not flagged for use in weapons\n", so->TypeName.GetChars(), int(newstate - so->OwnedStates));
+				State = nullptr;
+				Destroy();
+				return;
+			}
+		}
+
 		State = newstate;
 
 		if (newstate->sprite != SPR_FIXED)
@@ -335,6 +359,14 @@ void DPSprite::SetState(FState *newstate, bool pending)
 		{
 			FState *nextstate;
 			FStateParamInfo stp = { newstate, STATE_Psprite, ID };
+			if (newstate->ActionFunc != nullptr && newstate->ActionFunc->Unsafe)
+			{
+				// If an unsafe function (i.e. one that accesses user variables) is being detected, print a warning once and remove the bogus function. We may not call it because that would inevitably crash.
+				auto owner = FState::StaticFindStateOwner(newstate);
+				Printf(TEXTCOLOR_RED "Unsafe state call in state %s.%d to %s which accesses user variables. The action function has been removed from this state\n",
+					owner->TypeName.GetChars(), newstate - owner->OwnedStates, static_cast<VMScriptFunction *>(newstate->ActionFunc)->PrintableName.GetChars());
+				newstate->ActionFunc = nullptr;
+			}
 			if (newstate->CallAction(Owner->mo, Caller, &stp, &nextstate))
 			{
 				// It's possible this call resulted in this very layer being replaced.
@@ -742,8 +774,8 @@ void DoReadyWeapon(AActor *self)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_WeaponReady)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_INT_OPT(flags)	{ flags = 0; }
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT_DEF(flags);
 
 													DoReadyWeaponToSwitch(self, !(flags & WRF_NoSwitch));
 	if ((flags & WRF_NoFire) != WRF_NoFire)			DoReadyWeaponToFire(self, !(flags & WRF_NoPrimary), !(flags & WRF_NoSecondary));
@@ -874,8 +906,8 @@ static void P_CheckWeaponButtons (player_t *player)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_ReFire)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_STATE_OPT(state)	{ state = NULL; }
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_STATE_ACTION_DEF(state);
 	A_ReFire(self, state);
 	return 0;
 }
@@ -912,7 +944,7 @@ void A_ReFire(AActor *self, FState *state)
 
 DEFINE_ACTION_FUNCTION(AInventory, A_ClearReFire)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 	player_t *player = self->player;
 
 	if (NULL != player)
@@ -934,7 +966,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_ClearReFire)
 
 DEFINE_ACTION_FUNCTION(AInventory, A_CheckReload)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if (self->player != NULL)
 	{
@@ -1001,21 +1033,21 @@ void A_OverlayOffset(AActor *self, int layer, double wx, double wy, int flags)
 
 DEFINE_ACTION_FUNCTION(AActor, A_OverlayOffset)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_INT_OPT(layer)	{ layer = PSP_WEAPON; }
-	PARAM_FLOAT_OPT(wx)		{ wx = 0.; }
-	PARAM_FLOAT_OPT(wy)		{ wy = 32.; }
-	PARAM_INT_OPT(flags)	{ flags = 0; }
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT_DEF(layer)
+	PARAM_FLOAT_DEF(wx)	
+	PARAM_FLOAT_DEF(wy)	
+	PARAM_INT_DEF(flags)
 	A_OverlayOffset(self, ((layer != 0) ? layer : stateinfo->mPSPIndex), wx, wy, flags);
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_WeaponOffset)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_FLOAT_OPT(wx) { wx = 0.; }
-	PARAM_FLOAT_OPT(wy) { wy = 32.; }
-	PARAM_INT_OPT(flags) { flags = 0; }
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT_DEF(wx)	
+	PARAM_FLOAT_DEF(wy)	
+	PARAM_INT_DEF(flags)
 	A_OverlayOffset(self, PSP_WEAPON, wx, wy, flags);
 	return 0;
 }
@@ -1028,7 +1060,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WeaponOffset)
 
 DEFINE_ACTION_FUNCTION(AActor, A_OverlayFlags)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT(layer);
 	PARAM_INT(flags);
 	PARAM_BOOL(set);
@@ -1071,8 +1103,8 @@ static double GetOverlayPosition(AActor *self, int layer, bool gety)
 
 DEFINE_ACTION_FUNCTION(AActor, OverlayX)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_INT_OPT(layer) { layer = 0; }
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT_DEF(layer);
 
 	if (ACTION_CALL_FROM_PSPRITE())
 	{
@@ -1084,8 +1116,8 @@ DEFINE_ACTION_FUNCTION(AActor, OverlayX)
 
 DEFINE_ACTION_FUNCTION(AActor, OverlayY)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_INT_OPT(layer) { layer = 0; }
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT_DEF(layer);
 
 	if (ACTION_CALL_FROM_PSPRITE())
 	{
@@ -1103,7 +1135,7 @@ DEFINE_ACTION_FUNCTION(AActor, OverlayY)
 
 DEFINE_ACTION_FUNCTION(AActor, OverlayID)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if (ACTION_CALL_FROM_PSPRITE())
 	{
@@ -1122,7 +1154,7 @@ DEFINE_ACTION_FUNCTION(AActor, OverlayID)
 
 DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player = self->player;
 	DPSprite *psp;
@@ -1170,7 +1202,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
 
 DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if (self == nullptr)
 	{
@@ -1211,10 +1243,10 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Overlay)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT		(layer);
-	PARAM_STATE_OPT	(state) { state = nullptr; }
-	PARAM_BOOL_OPT	(dontoverride)	{ dontoverride = false; }
+	PARAM_STATE_ACTION_DEF(state);
+	PARAM_BOOL_DEF(dontoverride);
 
 	player_t *player = self->player;
 
@@ -1231,10 +1263,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Overlay)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ClearOverlays)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_INT_OPT(start) { start = 0; }
-	PARAM_INT_OPT(stop) { stop = 0; }
-	PARAM_BOOL_OPT(safety) { safety = true; }
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT_DEF(start);
+	PARAM_INT_DEF(stop);
+	PARAM_BOOL_DEF(safety)
 
 	if (self->player == nullptr)
 		ACTION_RETURN_INT(0);
@@ -1282,9 +1314,9 @@ enum GF_Flags
 
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_STATE_OPT(flash)	{ flash = nullptr; }
-	PARAM_INT_OPT  (flags)	{ flags = 0; }
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_STATE_ACTION_DEF(flash);
+	PARAM_INT_DEF(flags);
 
 	player_t *player = self->player;
 
@@ -1350,6 +1382,19 @@ DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfla
 	return pitch;
 }
 
+AActor *P_AimTarget(AActor *mo)
+{
+	FTranslatedLineTarget t;
+	P_BulletSlope(mo, &t, ALF_PORTALRESTRICT);
+	return t.linetarget;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, AimTarget)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_OBJECT(P_AimTarget(self));
+}
+
 
 //
 // P_GunShot
@@ -1370,42 +1415,9 @@ void P_GunShot (AActor *mo, bool accurate, PClassActor *pufftype, DAngle pitch)
 	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, pufftype);
 }
 
-DEFINE_ACTION_FUNCTION(AInventory, A_Light0)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	if (self->player != NULL)
-	{
-		self->player->extralight = 0;
-	}
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, A_Light1)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	if (self->player != NULL)
-	{
-		self->player->extralight = 1;
-	}
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AInventory, A_Light2)
-{
-	PARAM_ACTION_PROLOGUE;
-
-	if (self->player != NULL)
-	{
-		self->player->extralight = 2;
-	}
-	return 0;
-}
-
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_Light)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT(light);
 
 	if (self->player != NULL)

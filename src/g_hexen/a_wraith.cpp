@@ -7,7 +7,7 @@
 #include "a_action.h"
 #include "m_random.h"
 #include "a_sharedglobal.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_stealhealth ("StealHealth");
@@ -23,7 +23,7 @@ static FRandom pr_wraithfx4 ("WraithFX4");
 
 DEFINE_ACTION_FUNCTION(AActor, A_WraithInit)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->AddZ(48);
 
@@ -45,7 +45,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithInit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WraithRaiseInit)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->renderflags &= ~RF_INVISIBLE;
 	self->flags2 &= ~MF2_NONSHOOTABLE;
@@ -63,7 +63,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithRaiseInit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WraithRaise)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (A_RaiseMobj (self, 2))
 	{
@@ -88,7 +88,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithRaise)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WraithMelee)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int amount;
 
@@ -110,7 +110,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithMelee)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WraithFX2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	DAngle angle;
@@ -147,7 +147,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithFX2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WraithFX3)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	int numdropped = pr_wraithfx3() % 15;
@@ -242,7 +242,7 @@ void A_WraithFX4 (AActor *self)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WraithChase)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int weaveindex = self->WeaveIndexZ;
 	self->AddZ(BobSin(weaveindex));

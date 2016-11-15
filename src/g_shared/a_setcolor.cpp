@@ -15,7 +15,7 @@ class AColorSetter : public AActor
 
 };
 
-IMPLEMENT_CLASS(AColorSetter)
+IMPLEMENT_CLASS(AColorSetter, false, false, false, false)
 
 class AFadeSetter : public AActor
 {
@@ -30,4 +30,4 @@ class AFadeSetter : public AActor
 
 };
 
-IMPLEMENT_CLASS(AFadeSetter)
+IMPLEMENT_CLASS(AFadeSetter, false, false, false, false)

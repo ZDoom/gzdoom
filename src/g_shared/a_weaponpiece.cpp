@@ -3,8 +3,8 @@
 #include "doomstat.h"
 #include "serializer.h"
 
-IMPLEMENT_CLASS(PClassWeaponPiece)
-IMPLEMENT_CLASS (AWeaponHolder)
+IMPLEMENT_CLASS(PClassWeaponPiece, false, false, false, false)
+IMPLEMENT_CLASS(AWeaponHolder, false, false, false, false)
 
 void PClassWeaponPiece::ReplaceClassRef(PClass *oldclass, PClass *newclass)
 {
@@ -24,10 +24,11 @@ void AWeaponHolder::Serialize(FSerializer &arc)
 		("pieceweapon", PieceWeapon);
 }
 
+IMPLEMENT_CLASS(AWeaponPiece, false, true, false, false)
 
-IMPLEMENT_POINTY_CLASS (AWeaponPiece)
- DECLARE_POINTER (FullWeapon)
-END_POINTERS
+IMPLEMENT_POINTERS_START(AWeaponPiece)
+	IMPLEMENT_POINTER(FullWeapon)
+IMPLEMENT_POINTERS_END
 
 
 void AWeaponPiece::Serialize(FSerializer &arc)

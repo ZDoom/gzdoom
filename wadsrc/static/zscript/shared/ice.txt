@@ -1,0 +1,61 @@
+
+
+//==========================================================================
+//
+// Ice chunk
+//
+//==========================================================================
+
+class IceChunk : Actor
+{
+	Default
+	{
+		Radius 3;
+		Height 4;
+		Mass 5;
+		Gravity 0.125;
+		+DROPOFF
+		+CANNOTPUSH
+		+FLOORCLIP
+		+NOTELEPORT
+		+NOBLOCKMAP
+		+MOVEWITHSECTOR
+	}
+	native void A_IceSetTics ();
+
+	States
+	{
+	Spawn:
+		ICEC A 1;
+		ICEC ABCD 10 A_IceSetTics;
+		Stop;
+	}
+}
+
+//==========================================================================
+//
+// A chunk of ice that is also a player
+//
+//==========================================================================
+
+class IceChunkHead : PlayerChunk
+{
+	Default
+	{
+		Radius 3;
+		Height 4;
+		Mass 5;
+		Gravity 0.125;
+		DamageType "Ice";
+		+DROPOFF
+		+CANNOTPUSH
+	}
+	States
+	{
+	Spawn:
+		ICEC A 0;
+		ICEC A 10 A_CheckPlayerDone;
+		wait;
+	}
+}
+

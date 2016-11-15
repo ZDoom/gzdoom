@@ -10,7 +10,7 @@
 #include "a_action.h"
 #include "a_hexenglobal.h"
 #include "w_wad.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "g_level.h"
 */
 
@@ -24,7 +24,7 @@ DECLARE_ACTION(A_CheckThrowBomb)
 
 // Poison Bag Artifact (Flechette) ------------------------------------------
 
-IMPLEMENT_CLASS (AArtiPoisonBag)
+IMPLEMENT_CLASS(AArtiPoisonBag, false, false, false, false)
 
 // Poison Bag 1 (The Cleric's) ----------------------------------------------
 
@@ -35,7 +35,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS (AArtiPoisonBag1)
+IMPLEMENT_CLASS(AArtiPoisonBag1, false, false, false, false)
 
 bool AArtiPoisonBag1::Use (bool pickup)
 {
@@ -60,7 +60,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS (AArtiPoisonBag2)
+IMPLEMENT_CLASS(AArtiPoisonBag2, false, false, false, false)
 
 bool AArtiPoisonBag2::Use (bool pickup)
 {
@@ -85,7 +85,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS (AArtiPoisonBag3)
+IMPLEMENT_CLASS(AArtiPoisonBag3, false, false, false, false)
 
 bool AArtiPoisonBag3::Use (bool pickup)
 {
@@ -136,7 +136,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS (AArtiPoisonBagGiver)
+IMPLEMENT_CLASS(AArtiPoisonBagGiver, false, false, false, false)
 
 bool AArtiPoisonBagGiver::Use (bool pickup)
 {
@@ -167,7 +167,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS (AArtiPoisonBagShooter)
+IMPLEMENT_CLASS(AArtiPoisonBagShooter, false, false, false, false)
 
 bool AArtiPoisonBagShooter::Use (bool pickup)
 {
@@ -296,7 +296,7 @@ public:
 	void BeginPlay ();
 };
 
-IMPLEMENT_CLASS (APoisonCloud)
+IMPLEMENT_CLASS(APoisonCloud, false, false, false, false)
 
 void APoisonCloud::BeginPlay ()
 {
@@ -362,7 +362,7 @@ int APoisonCloud::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagInit)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	
@@ -382,7 +382,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagInit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagCheck)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (--self->special1 <= 0)
 	{
@@ -403,7 +403,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagCheck)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagDamage)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int bobIndex;
 	
@@ -422,7 +422,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagDamage)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (--self->health <= 0)
 	{
@@ -439,7 +439,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	// [RH] Check using actual velocity, although the vel.z < 2 check still stands
 	if (self->Vel.Z < 2 && self->Vel.LengthSquared() < (9./4.))

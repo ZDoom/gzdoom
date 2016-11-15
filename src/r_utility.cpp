@@ -1104,3 +1104,27 @@ void FCanvasTextureInfo::Mark()
 	}
 }
 
+
+//==========================================================================
+//
+// CVAR transsouls
+//
+// How translucent things drawn with STYLE_SoulTrans are. Normally, only
+// Lost Souls have this render style.
+// Values less than 0.25 will automatically be set to
+// 0.25 to ensure some degree of visibility. Likewise, values above 1.0 will
+// be set to 1.0, because anything higher doesn't make sense.
+//
+//==========================================================================
+
+CUSTOM_CVAR(Float, transsouls, 0.75f, CVAR_ARCHIVE)
+{
+	if (self < 0.25f)
+	{
+		self = 0.25f;
+	}
+	else if (self > 1.f)
+	{
+		self = 1.f;
+	}
+}

@@ -17,6 +17,7 @@
 #include "g_level.h"
 #include "colormatcher.h"
 #include "v_palette.h"
+#include "cmdlib.h"
 
 // Number of tics to move the popscreen up and down.
 #define POP_TIME (TICRATE/8)
@@ -850,7 +851,7 @@ private:
 	double ItemFlash;
 };
 
-IMPLEMENT_CLASS(DStrifeStatusBar);
+IMPLEMENT_CLASS(DStrifeStatusBar, false, false, false, false);
 
 DBaseStatusBar *CreateStrifeStatusBar ()
 {

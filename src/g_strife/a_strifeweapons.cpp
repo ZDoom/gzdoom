@@ -6,7 +6,7 @@
 #include "s_sound.h"
 #include "p_enemy.h"
 #include "templates.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 #include "doomstat.h"
 */
 
@@ -94,7 +94,7 @@ void P_DaggerAlert (AActor *target, AActor *emitter)
 
 DEFINE_ACTION_FUNCTION(AActor, A_JabDagger)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DAngle 	angle;
 	int 		damage;
@@ -146,9 +146,9 @@ enum
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_AlertMonsters)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_FLOAT_OPT(maxdist) { maxdist = 0; }
-	PARAM_INT_OPT(Flags) { Flags = 0; }
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT_DEF(maxdist);
+	PARAM_INT_DEF(Flags);
 
 	AActor * target = NULL;
 	AActor * emitter = self;
@@ -184,7 +184,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS (APoisonBolt)
+IMPLEMENT_CLASS(APoisonBolt, false, false, false, false)
 
 int APoisonBolt::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
@@ -212,7 +212,7 @@ int APoisonBolt::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ClearFlash)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player = self->player;
 
@@ -231,7 +231,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearFlash)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ShowElectricFlash)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if (self->player != nullptr)
 	{
@@ -248,7 +248,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShowElectricFlash)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireArrow)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_CLASS(ti, AActor);
 
 	DAngle savedangle;
@@ -307,7 +307,7 @@ void P_StrifeGunShot (AActor *mo, bool accurate, DAngle pitch)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireAssaultGun)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	bool accurate;
 
@@ -343,7 +343,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireAssaultGun)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMiniMissile)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player = self->player;
 	DAngle savedangle;
@@ -374,7 +374,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMiniMissile)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RocketInFlight)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *trail;
 
@@ -398,7 +398,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RocketInFlight)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FlameDie)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->flags |= MF_NOGRAVITY;
 	self->Vel.Z = pr_flamedie() & 3;
@@ -413,7 +413,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlameDie)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireFlamer)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player = self->player;
 
@@ -450,7 +450,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireFlamer)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMauler1)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if (self->player != NULL)
 	{
@@ -494,7 +494,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2Pre)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	S_Sound (self, CHAN_WEAPON, "weapons/mauler2charge", 1, ATTN_NORM);
 
@@ -516,7 +516,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2Pre)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if (self->player != NULL)
 	{
@@ -544,7 +544,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MaulerTorpedoWave)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *wavedef = GetDefaultByName("MaulerTorpedoWave");
 	double savedz;
@@ -607,7 +607,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS (APhosphorousFire)
+IMPLEMENT_CLASS(APhosphorousFire, false, false, false, false)
 
 int APhosphorousFire::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
@@ -620,7 +620,7 @@ int APhosphorousFire::DoSpecialDamage (AActor *target, int damage, FName damaget
 
 DEFINE_ACTION_FUNCTION(AActor, A_BurnArea)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, RADF_HURTSOURCE);
 	return 0;
@@ -628,7 +628,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BurnArea)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Burnination)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->Vel.Z -= 8;
 	self->Vel.X += (pr_phburn.Random2 (3));
@@ -688,7 +688,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burnination)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_CLASS(grenadetype, AActor);
 	PARAM_ANGLE(angleofs);
 	PARAM_STATE(flash)
@@ -734,7 +734,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 
 // The Almighty Sigil! ------------------------------------------------------
 
-IMPLEMENT_CLASS(ASigil)
+IMPLEMENT_CLASS(ASigil, false, false, false, false)
 
 //============================================================================
 //
@@ -821,7 +821,7 @@ AInventory *ASigil::CreateCopy (AActor *other)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SelectPiece)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	int pieces = MIN (static_cast<ASigil*>(self)->NumPieces, 5);
 
@@ -847,7 +847,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectPiece)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilView)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DPSprite *pspr;
 	int pieces;
@@ -874,7 +874,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilView)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilDown)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DPSprite *pspr;
 	int pieces;
@@ -904,7 +904,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilDown)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	DPSprite *pspr;
 	int pieces;
@@ -927,7 +927,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SigilCharge)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 	if (self->player != NULL)
@@ -945,7 +945,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SigilCharge)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LightInverse)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	if (self->player != NULL)
 	{
@@ -962,7 +962,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightInverse)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	AActor *spot;
 	player_t *player = self->player;
@@ -988,7 +988,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 		spot = Spawn("SpectralLightningSpot", self->Pos(), ALLOW_REPLACE);
 		if (spot != NULL)
 		{
-			spot->VelFromAngle(self->Angles.Yaw, 28.);
+			spot->VelFromAngle(28., self->Angles.Yaw);
 		}
 	}
 	if (spot != NULL)
@@ -1007,7 +1007,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSigil2)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player = self->player;
 
@@ -1029,7 +1029,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSigil3)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	AActor *spot;
 	player_t *player = self->player;
@@ -1063,7 +1063,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil3)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	AActor *spot;
 	player_t *player = self->player;
@@ -1089,7 +1089,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 		spot = P_SpawnPlayerMissile (self, PClass::FindActor("SpectralLightningBigV1"));
 		if (spot != NULL)
 		{
-			spot->VelFromAngle(self->Angles.Yaw, spot->Speed);
+			spot->VelFromAngle(spot->Speed, self->Angles.Yaw);
 		}
 	}
 	return 0;
@@ -1103,7 +1103,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSigil5)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_ACTION_PROLOGUE(AActor);
 
 	player_t *player = self->player;
 

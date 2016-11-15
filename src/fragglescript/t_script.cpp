@@ -75,23 +75,23 @@ AActor *trigger_obj;
 //
 //==========================================================================
 
-#define DECLARE_16_POINTERS(v, i) \
-	DECLARE_POINTER(v[i]) \
-	DECLARE_POINTER(v[i+1]) \
-	DECLARE_POINTER(v[i+2]) \
-	DECLARE_POINTER(v[i+3]) \
-	DECLARE_POINTER(v[i+4]) \
-	DECLARE_POINTER(v[i+5]) \
-	DECLARE_POINTER(v[i+6]) \
-	DECLARE_POINTER(v[i+7]) \
-	DECLARE_POINTER(v[i+8]) \
-	DECLARE_POINTER(v[i+9]) \
-	DECLARE_POINTER(v[i+10]) \
-	DECLARE_POINTER(v[i+11]) \
-	DECLARE_POINTER(v[i+12]) \
-	DECLARE_POINTER(v[i+13]) \
-	DECLARE_POINTER(v[i+14]) \
-	DECLARE_POINTER(v[i+15]) \
+#define IMPLEMENT_16_POINTERS(v, i) \
+	IMPLEMENT_POINTER(v[i]) \
+	IMPLEMENT_POINTER(v[i+1]) \
+	IMPLEMENT_POINTER(v[i+2]) \
+	IMPLEMENT_POINTER(v[i+3]) \
+	IMPLEMENT_POINTER(v[i+4]) \
+	IMPLEMENT_POINTER(v[i+5]) \
+	IMPLEMENT_POINTER(v[i+6]) \
+	IMPLEMENT_POINTER(v[i+7]) \
+	IMPLEMENT_POINTER(v[i+8]) \
+	IMPLEMENT_POINTER(v[i+9]) \
+	IMPLEMENT_POINTER(v[i+10]) \
+	IMPLEMENT_POINTER(v[i+11]) \
+	IMPLEMENT_POINTER(v[i+12]) \
+	IMPLEMENT_POINTER(v[i+13]) \
+	IMPLEMENT_POINTER(v[i+14]) \
+	IMPLEMENT_POINTER(v[i+15]) \
 
 //==========================================================================
 //
@@ -99,30 +99,32 @@ AActor *trigger_obj;
 //
 //==========================================================================
 
-IMPLEMENT_POINTY_CLASS(DFsScript)
-	DECLARE_POINTER(parent)
-	DECLARE_POINTER(trigger)
-	DECLARE_16_POINTERS(sections, 0)
-	DECLARE_POINTER(sections[16])
-	DECLARE_16_POINTERS(variables, 0)
-	DECLARE_16_POINTERS(children, 0)
-	DECLARE_16_POINTERS(children, 16)
-	DECLARE_16_POINTERS(children, 32)
-	DECLARE_16_POINTERS(children, 48)
-	DECLARE_16_POINTERS(children, 64)
-	DECLARE_16_POINTERS(children, 80)
-	DECLARE_16_POINTERS(children, 96)
-	DECLARE_16_POINTERS(children, 112)
-	DECLARE_16_POINTERS(children, 128)
-	DECLARE_16_POINTERS(children, 144)
-	DECLARE_16_POINTERS(children, 160)
-	DECLARE_16_POINTERS(children, 176)
-	DECLARE_16_POINTERS(children, 192)
-	DECLARE_16_POINTERS(children, 208)
-	DECLARE_16_POINTERS(children, 224)
-	DECLARE_16_POINTERS(children, 240)
-	DECLARE_POINTER(children[256])
-END_POINTERS
+IMPLEMENT_CLASS(DFsScript, false, true, false, false)
+
+IMPLEMENT_POINTERS_START(DFsScript)
+	IMPLEMENT_POINTER(parent)
+	IMPLEMENT_POINTER(trigger)
+	IMPLEMENT_16_POINTERS(sections, 0)
+	IMPLEMENT_POINTER(sections[16])
+	IMPLEMENT_16_POINTERS(variables, 0)
+	IMPLEMENT_16_POINTERS(children, 0)
+	IMPLEMENT_16_POINTERS(children, 16)
+	IMPLEMENT_16_POINTERS(children, 32)
+	IMPLEMENT_16_POINTERS(children, 48)
+	IMPLEMENT_16_POINTERS(children, 64)
+	IMPLEMENT_16_POINTERS(children, 80)
+	IMPLEMENT_16_POINTERS(children, 96)
+	IMPLEMENT_16_POINTERS(children, 112)
+	IMPLEMENT_16_POINTERS(children, 128)
+	IMPLEMENT_16_POINTERS(children, 144)
+	IMPLEMENT_16_POINTERS(children, 160)
+	IMPLEMENT_16_POINTERS(children, 176)
+	IMPLEMENT_16_POINTERS(children, 192)
+	IMPLEMENT_16_POINTERS(children, 208)
+	IMPLEMENT_16_POINTERS(children, 224)
+	IMPLEMENT_16_POINTERS(children, 240)
+	IMPLEMENT_POINTER(children[256])
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //
@@ -267,12 +269,14 @@ void DFsScript::ParseScript(char *position)
 //
 //==========================================================================
 
-IMPLEMENT_POINTY_CLASS(DRunningScript)
-	DECLARE_POINTER(prev)
-	DECLARE_POINTER(next)
-	DECLARE_POINTER(trigger)
-	DECLARE_16_POINTERS(variables, 0)
-END_POINTERS
+IMPLEMENT_CLASS(DRunningScript, false, true, false, false)
+
+IMPLEMENT_POINTERS_START(DRunningScript)
+	IMPLEMENT_POINTER(prev)
+	IMPLEMENT_POINTER(next)
+	IMPLEMENT_POINTER(trigger)
+	IMPLEMENT_16_POINTERS(variables, 0)
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //
@@ -375,10 +379,13 @@ void DRunningScript::Serialize(FSerializer &arc)
 // The main thinker
 //
 //==========================================================================
-IMPLEMENT_POINTY_CLASS(DFraggleThinker)
-	DECLARE_POINTER(RunningScripts)
-	DECLARE_POINTER(LevelScript)
-END_POINTERS
+
+IMPLEMENT_CLASS(DFraggleThinker, false, true, false, false)
+
+IMPLEMENT_POINTERS_START(DFraggleThinker)
+	IMPLEMENT_POINTER(RunningScripts)
+	IMPLEMENT_POINTER(LevelScript)
+IMPLEMENT_POINTERS_END
 
 TObjPtr<DFraggleThinker> DFraggleThinker::ActiveThinker;
 

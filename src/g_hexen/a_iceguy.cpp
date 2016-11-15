@@ -6,7 +6,7 @@
 #include "p_enemy.h"
 #include "a_action.h"
 #include "m_random.h"
-#include "thingdef/thingdef.h"
+#include "vm.h"
 */
 
 static FRandom pr_iceguylook ("IceGuyLook");
@@ -26,7 +26,7 @@ static const char *WispTypes[2] =
 
 DEFINE_ACTION_FUNCTION(AActor, A_IceGuyLook)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	double dist;
 	DAngle an;
@@ -49,7 +49,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyLook)
 
 DEFINE_ACTION_FUNCTION(AActor, A_IceGuyChase)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	double dist;
 	DAngle an;
@@ -78,7 +78,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyChase)
 
 DEFINE_ACTION_FUNCTION(AActor, A_IceGuyAttack)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if(!self->target) 
 	{
@@ -98,7 +98,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_IceGuyDie)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	self->Vel.Zero();
 	self->Height = self->GetDefault()->Height;
@@ -114,7 +114,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyDie)
 
 DEFINE_ACTION_FUNCTION(AActor, A_IceGuyMissileExplode)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *mo;
 	unsigned int i;

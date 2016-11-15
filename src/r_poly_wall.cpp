@@ -356,7 +356,7 @@ void PolyWallTextureCoords::CalcVBottomPart(FTexture *tex, const seg_t *line, do
 	}
 	else
 	{
-		v1 = -yoffset + (unpeggedceil - topz);
+		v1 = yoffset + (unpeggedceil - topz);
 		v2 = v1 + (topz - bottomz);
 		v1 *= vscale;
 		v2 *= vscale;

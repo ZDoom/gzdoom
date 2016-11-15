@@ -119,18 +119,18 @@ void PolyCull::MarkSegmentCulled(int x1, int x2)
 	x1 = clamp(x1, -0x7ffe, 0x7ffd);
 	x2 = clamp(x2, -0x7ffd, 0x7ffe);
 
-	int cur = 1;
+	int cur = 0;
 	while (true)
 	{
 		if (SolidSegments[cur].X1 <= x1 && SolidSegments[cur].X2 >= x2) // Already fully marked
 		{
 			break;
 		}
-		else if (cur + 1 != SolidSegments.size() && SolidSegments[cur].X2 >= x1 && SolidSegments[cur].X1 <= x2) // Merge segments
+		else if (SolidSegments[cur].X2 >= x1 && SolidSegments[cur].X1 <= x2) // Merge segments
 		{
 			// Find last segment
 			int merge = cur;
-			while (merge + 2 != SolidSegments.size() && SolidSegments[merge + 1].X1 <= x2)
+			while (merge + 1 != SolidSegments.size() && SolidSegments[merge + 1].X1 <= x2)
 				merge++;
 
 			// Apply new merged range

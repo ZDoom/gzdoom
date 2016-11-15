@@ -1415,9 +1415,9 @@ void P_GunShot (AActor *mo, bool accurate, PClassActor *pufftype, DAngle pitch)
 	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, pufftype);
 }
 
-DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_Light)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Light)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(light);
 
 	if (self->player != NULL)

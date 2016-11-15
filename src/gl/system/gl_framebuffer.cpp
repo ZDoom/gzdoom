@@ -53,7 +53,7 @@
 #include "gl/renderer/gl_2ddrawer.h"
 #include "gl_debug.h"
 
-IMPLEMENT_CLASS(OpenGLFrameBuffer)
+IMPLEMENT_CLASS(OpenGLFrameBuffer, false, false, false, false)
 EXTERN_CVAR (Float, vid_brightness)
 EXTERN_CVAR (Float, vid_contrast)
 EXTERN_CVAR (Bool, vid_vsync)

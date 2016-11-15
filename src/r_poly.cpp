@@ -147,7 +147,7 @@ void RenderPolyScene::RenderLine(subsector_t *sub, seg_t *line, sector_t *fronts
 	// Cull wall if not visible
 	int sx1, sx2;
 	bool hasSegmentRange = Cull.GetSegmentRangeForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), sx1, sx2);
-	if (hasSegmentRange && Cull.IsSegmentCulled(sx1, sx2))
+	if (!hasSegmentRange || Cull.IsSegmentCulled(sx1, sx2))
 		return;
 
 	// Tell automap we saw this

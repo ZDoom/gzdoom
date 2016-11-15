@@ -31,9 +31,48 @@
 
 void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, bool ceiling, double skyHeight)
 {
-	sector_t *frontsector = sub->sector;
+	sector_t *fakesector = sub->sector->heightsec;
+	if (fakesector && (fakesector == sub->sector || (fakesector->MoreFlags & SECF_IGNOREHEIGHTSEC) == SECF_IGNOREHEIGHTSEC))
+		fakesector = nullptr;
 
-	FTextureID picnum = frontsector->GetTexture(ceiling ? sector_t::ceiling : sector_t::floor);
+	bool fakeflooronly = fakesector && (fakesector->MoreFlags & SECF_FAKEFLOORONLY) != SECF_FAKEFLOORONLY;
+
+	FTextureID picnum;
+	bool ccw;
+	sector_t *frontsector;
+	if (ceiling && fakesector && ViewPos.Z < fakesector->floorplane.Zat0())
+	{
+		picnum = fakesector->GetTexture(sector_t::ceiling);
+		ccw = false;
+		ceiling = false;
+		frontsector = fakesector;
+	}
+	else if (!ceiling && fakesector && ViewPos.Z >= fakesector->floorplane.Zat0())
+	{
+		picnum = fakesector->GetTexture(sector_t::ceiling);
+		ccw = true;
+		frontsector = fakesector;
+	}
+	else if (ceiling && fakesector && ViewPos.Z > fakesector->ceilingplane.Zat0() && !fakeflooronly)
+	{
+		picnum = fakesector->GetTexture(sector_t::floor);
+		ccw = true;
+		frontsector = fakesector;
+	}
+	else if (!ceiling && fakesector && ViewPos.Z <= fakesector->ceilingplane.Zat0() && !fakeflooronly)
+	{
+		picnum = fakesector->GetTexture(sector_t::floor);
+		ccw = false;
+		ceiling = true;
+		frontsector = fakesector;
+	}
+	else
+	{
+		picnum = sub->sector->GetTexture(ceiling ? sector_t::ceiling : sector_t::floor);
+		ccw = true;
+		frontsector = sub->sector;
+	}
+
 	FTexture *tex = TexMan(picnum);
 	if (tex->UseType == FTexture::TEX_Null)
 		return;
@@ -76,7 +115,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 	args.vinput = vertices;
 	args.vcount = sub->numlines;
 	args.mode = TriangleDrawMode::Fan;
-	args.ccw = true;
+	args.ccw = ccw;
 	args.clipleft = 0;
 	args.cliptop = 0;
 	args.clipright = viewwidth;

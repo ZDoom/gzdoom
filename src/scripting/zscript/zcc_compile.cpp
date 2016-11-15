@@ -2096,7 +2096,9 @@ void ZCCCompiler::InitFunctions()
 						(*afd->VMPointer)->ImplicitArgs = BYTE(implicitargs);
 					}
 				}
-				SetImplicitArgs(&args, &argflags, &argnames, c->Type(), varflags);
+				// Todo: parse these values from the definition
+				int tempuseflags = (varflags & VARF_Action) ? SUF_WEAPON | SUF_ITEM | SUF_OVERLAY | SUF_ACTOR : SUF_ACTOR;
+				SetImplicitArgs(&args, &argflags, &argnames, c->Type(), varflags, tempuseflags);
 				argdefaults.Resize(argnames.Size());
 				auto p = f->Params;
 				bool hasoptionals = false;
@@ -2518,12 +2520,12 @@ void ZCCCompiler::CompileStates()
 						auto code = SetupActionFunction(static_cast<PClassActor *>(c->Type()), sl->Action);
 						if (code != nullptr)
 						{
-							auto funcsym = CreateAnonymousFunction(c->Type(), nullptr, VARF_Method | VARF_Action);
+							auto funcsym = CreateAnonymousFunction(c->Type(), nullptr, state.UseFlags);
 							state.ActionFunc = FunctionBuildList.AddFunction(funcsym, code, FStringf("%s.StateFunction.%d", c->Type()->TypeName.GetChars(), statedef.GetStateCount()), false, statedef.GetStateCount(), (int)sl->Frames->Len(), Lump);
 						}
 					}
 
-					int count = statedef.AddStates(&state, sl->Frames->GetChars());
+					int count = statedef.AddStates(&state, sl->Frames->GetChars(), *sl);
 					if (count < 0)
 					{
 						Error(sl, "Invalid frame character string '%s'", sl->Frames->GetChars());

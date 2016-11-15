@@ -5119,13 +5119,14 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			delete this;
 			return newex->Resolve(ctx);
 		}
-		else if (ctx.FromDecorate && ctx.Class->IsDescendantOf(RUNTIME_CLASS(AStateProvider)) && sym->IsKindOf(RUNTIME_CLASS(PField)))
+		// Do this check for ZScript as well, so that a clearer error message can be printed. MSG_OPTERROR will default to MSG_ERROR there.
+		else if (ctx.Function->Variants[0].SelfClass != ctx.Class && sym->IsKindOf(RUNTIME_CLASS(PField)))
 		{
 			FxExpression *self = new FxSelf(ScriptPosition, true);
 			self = self->Resolve(ctx);
 			newex = ResolveMember(ctx, ctx.Class, self, ctx.Class);
 			ABORT(newex);
-			ScriptPosition.Message(MSG_DEBUGWARN, "Self pointer used in ambiguous context; VM execution may abort!");
+			ScriptPosition.Message(MSG_OPTERROR, "Self pointer used in ambiguous context; VM execution may abort!");
 			ctx.Unsafe = true;
 		}
 		else

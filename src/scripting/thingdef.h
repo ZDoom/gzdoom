@@ -63,6 +63,7 @@ class FStateDefinitions
 	FState *laststatebeforelabel;
 	intptr_t lastlabel;
 	TArray<FState> StateArray;
+	TArray<FScriptPosition> SourceLines;
 
 	static FStateDefine *FindStateLabelInList(TArray<FStateDefine> &list, FName name, bool create);
 	static FStateLabels *CreateStateLabelList(TArray<FStateDefine> &statelist);
@@ -97,9 +98,13 @@ public:
 	bool SetStop();
 	bool SetWait();
 	bool SetLoop();
-	int AddStates(FState *state, const char *framechars);
+	int AddStates(FState *state, const char *framechars, const FScriptPosition &sc);
 	int GetStateCount() const { return StateArray.Size(); }
 };
+
+
+void SaveStateSourceLines(FState *firststate, TArray<FScriptPosition> &positions);
+FScriptPosition & GetStateSource(FState *state);
 
 //==========================================================================
 //
@@ -152,7 +157,7 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag, bool &endswithret);
 class FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag);
 FName CheckCastKludges(FName in);
-void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FName> *argnames, PClass *cls, DWORD funcflags);
+void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FName> *argnames, PClass *cls, DWORD funcflags, int useflags);
 PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, int flags);
 PFunction *FindClassMemberFunction(PClass *cls, PClass *funccls, FName name, FScriptPosition &sc, bool *error);
 void CreateDamageFunction(PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate);

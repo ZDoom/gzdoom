@@ -131,7 +131,7 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 		if (!(state->UseFlags & SUF_ITEM))
 		{
 			auto so = FState::StaticFindStateOwner(state);
-			Printf("State %s.%d not flagged for use in CustomInventory state chains.\n", so->TypeName.GetChars(), int(state - so->OwnedStates));
+			Printf(TEXTCOLOR_RED "State %s.%d not flagged for use in CustomInventory state chains.\n", so->TypeName.GetChars(), int(state - so->OwnedStates));
 			return false;
 		}
 

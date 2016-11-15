@@ -913,7 +913,7 @@ bool FStateDefinitions::SetLoop()
 //
 //==========================================================================
 
-int FStateDefinitions::AddStates(FState *state, const char *framechars)
+int FStateDefinitions::AddStates(FState *state, const char *framechars, const FScriptPosition &sc)
 {
 	bool error = false;
 	int frame = 0;
@@ -939,6 +939,7 @@ int FStateDefinitions::AddStates(FState *state, const char *framechars)
 		state->Frame = frame;
 		state->SameFrame = noframe;
 		StateArray.Push(*state);
+		SourceLines.Push(sc);
 		++count;
 
 		// NODELAY flag is not carried past the first state
@@ -968,6 +969,7 @@ int FStateDefinitions::FinishStates(PClassActor *actor, AActor *defaults)
 		memcpy(realstates, &StateArray[0], count*sizeof(FState));
 		actor->OwnedStates = realstates;
 		actor->NumOwnedStates = count;
+		SaveStateSourceLines(realstates, SourceLines);
 
 		// adjust the state pointers
 		// In the case new states are added these must be adjusted, too!
@@ -1010,6 +1012,7 @@ int FStateDefinitions::FinishStates(PClassActor *actor, AActor *defaults)
 	}
 	return count;
 }
+
 
 
 //==========================================================================

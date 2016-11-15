@@ -103,8 +103,8 @@ IMPLEMENT_CLASS(AFakeInventory, false, false, false, false)
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
-	FExtraInfo &extra, EDefinitionType def, FScanner &sc, TArray<FState> &StateArray);
-static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, FScanner &sc);
+	FExtraInfo &extra, EDefinitionType def, FScanner &sc, TArray<FState> &StateArray, TArray<FScriptPosition> &SourceLines);
+static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, TArray<FScriptPosition> &SourceLines, FScanner &sc);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -147,6 +147,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 {
 	Baggage bag;
 	TArray<FState> StateArray;
+	TArray<FScriptPosition> SourceLines;
 	FExtraInfo extra;
 	PClassActor *type;
 	PClassActor *parent;
@@ -168,7 +169,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 	sc.MustGetStringName("{");
 
 	memset (&extra, 0, sizeof(extra));
-	ParseInsideDecoration (bag, (AActor *)(type->Defaults), extra, def, sc, StateArray);
+	ParseInsideDecoration (bag, (AActor *)(type->Defaults), extra, def, sc, StateArray, SourceLines);
 
 	bag.Info->NumOwnedStates = StateArray.Size();
 	if (bag.Info->NumOwnedStates == 0)
@@ -192,11 +193,14 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 	{
 		// Make a copy of the final frozen frame for A_FreezeDeathChunks
 		FState icecopy = StateArray[extra.IceDeathEnd-1];
+		FScriptPosition icepos = SourceLines[extra.IceDeathEnd - 1];
 		StateArray.Push (icecopy);
+		SourceLines.Push(icepos);
 		type->NumOwnedStates += 1;
 	}
 
 	type->OwnedStates = new FState[type->NumOwnedStates];
+	SaveStateSourceLines(type->OwnedStates, SourceLines);
 	memcpy (type->OwnedStates, &StateArray[0], type->NumOwnedStates * sizeof(type->OwnedStates[0]));
 	if (type->NumOwnedStates == 1)
 	{
@@ -353,7 +357,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 //==========================================================================
 
 static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
-	FExtraInfo &extra, EDefinitionType def, FScanner &sc, TArray<FState> &StateArray)
+	FExtraInfo &extra, EDefinitionType def, FScanner &sc, TArray<FState> &StateArray, TArray<FScriptPosition> &SourceLines)
 {
 	AFakeInventory *const inv = static_cast<AFakeInventory *>(defaults);
 	char sprite[5] = "TNT1";
@@ -403,7 +407,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		{
 			sc.MustGetString ();
 			extra.SpawnStart = StateArray.Size();
-			ParseSpriteFrames (bag.Info, StateArray, sc);
+			ParseSpriteFrames (bag.Info, StateArray, SourceLines, sc);
 			extra.SpawnEnd = StateArray.Size();
 		}
 		else if ((def == DEF_BreakableDecoration || def == DEF_Projectile) &&
@@ -411,21 +415,21 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		{
 			sc.MustGetString ();
 			extra.DeathStart = StateArray.Size();
-			ParseSpriteFrames (bag.Info, StateArray, sc);
+			ParseSpriteFrames (bag.Info, StateArray, SourceLines, sc);
 			extra.DeathEnd = StateArray.Size();
 		}
 		else if (def == DEF_BreakableDecoration && sc.Compare ("IceDeathFrames"))
 		{
 			sc.MustGetString ();
 			extra.IceDeathStart = StateArray.Size();
-			ParseSpriteFrames (bag.Info, StateArray, sc);
+			ParseSpriteFrames (bag.Info, StateArray, SourceLines, sc);
 			extra.IceDeathEnd = StateArray.Size();
 		}
 		else if (def == DEF_BreakableDecoration && sc.Compare ("BurnDeathFrames"))
 		{
 			sc.MustGetString ();
 			extra.FireDeathStart = StateArray.Size();
-			ParseSpriteFrames (bag.Info, StateArray, sc);
+			ParseSpriteFrames (bag.Info, StateArray, SourceLines, sc);
 			extra.FireDeathEnd = StateArray.Size();
 		}
 		else if (def == DEF_BreakableDecoration && sc.Compare ("GenericIceDeath"))
@@ -650,12 +654,13 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 //			"10:A, 15:B, 8:C, 6:B"
 //==========================================================================
 
-static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, FScanner &sc)
+static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, TArray<FScriptPosition> &SourceLines, FScanner &sc)
 {
 	FState state;
 	char *token = strtok (sc.String, ",\t\n\r");
 
 	memset (&state, 0, sizeof(state));
+	state.UseFlags = info->DefaultStateUsage;
 
 	while (token != NULL)
 	{
@@ -705,6 +710,7 @@ static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, FScann
 				if (!firstState)
 				{
 					states.Push (state);
+					SourceLines.Push(sc);
 				}
 				firstState = false;
 				state.Frame = *token-'A';	
@@ -714,6 +720,7 @@ static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, FScann
 		if (!firstState)
 		{
 			states.Push (state);
+			SourceLines.Push(sc);
 		}
 
 		token = strtok (NULL, ",\t\n\r");

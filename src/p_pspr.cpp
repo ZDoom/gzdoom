@@ -300,10 +300,21 @@ void DPSprite::SetState(FState *newstate, bool pending)
 		if (!(newstate->UseFlags & (SUF_OVERLAY|SUF_WEAPON)))	// Weapon and overlay are mostly the same, the main difference is that weapon states restrict the self pointer to class Actor.
 		{
 			auto so = FState::StaticFindStateOwner(newstate);
-			Printf("State %s.%d not flagged for use in overlays or weapons\n", so->TypeName.GetChars(), int(newstate - so->OwnedStates));
+			Printf(TEXTCOLOR_RED "State %s.%d not flagged for use in overlays or weapons\n", so->TypeName.GetChars(), int(newstate - so->OwnedStates));
 			State = nullptr;
 			Destroy();
 			return;
+		}
+		else if (!(newstate->UseFlags & SUF_WEAPON))
+		{
+			if (Caller->IsKindOf(RUNTIME_CLASS(AWeapon)))
+			{
+				auto so = FState::StaticFindStateOwner(newstate);
+				Printf(TEXTCOLOR_RED "State %s.%d not flagged for use in weapons\n", so->TypeName.GetChars(), int(newstate - so->OwnedStates));
+				State = nullptr;
+				Destroy();
+				return;
+			}
 		}
 
 		State = newstate;

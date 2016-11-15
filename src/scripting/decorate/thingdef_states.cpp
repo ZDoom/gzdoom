@@ -145,6 +145,7 @@ void ParseStates(FScanner &sc, PClassActor * actor, AActor * defaults, Baggage &
 	FxExpression *ScriptCode;
 	FArgumentList *args = nullptr;
 	int flagdef = actor->DefaultStateUsage;
+	FScriptPosition scp;
 
 	if (sc.CheckString("("))
 	{
@@ -238,6 +239,7 @@ do_stop:
 				sc.ScriptError ("Sprite names must be exactly 4 characters\n");
 			}
 
+			scp = sc;
 			state.sprite = GetSpriteIndex(statestring);
 			state.Misc1 = state.Misc2 = 0;
 			sc.MustGetString();
@@ -341,10 +343,10 @@ do_stop:
 endofstate:
 			if (ScriptCode != nullptr)
 			{
-				auto funcsym = CreateAnonymousFunction(actor, nullptr, VARF_Method | VARF_Action);
+				auto funcsym = CreateAnonymousFunction(actor, nullptr, state.UseFlags);
 				state.ActionFunc = FunctionBuildList.AddFunction(funcsym, ScriptCode, FStringf("%s.StateFunction.%d", actor->TypeName.GetChars(), bag.statedef.GetStateCount()), true);
 			}
-			int count = bag.statedef.AddStates(&state, statestring);
+			int count = bag.statedef.AddStates(&state, statestring, scp);
 			if (count < 0)
 			{
 				sc.ScriptError("Invalid frame character string '%s'", statestring.GetChars());

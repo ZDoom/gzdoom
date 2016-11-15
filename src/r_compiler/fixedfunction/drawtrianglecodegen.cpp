@@ -254,7 +254,8 @@ void DrawTriangleCodegen::LoopBlockX(TriDrawVariant variant, bool truecolor)
 		SSAFloat vis = globVis / rcpWTL;
 		SSAFloat shade = 64.0f - (SSAFloat(light * 255 / 256) + 12.0f) * 32.0f / 128.0f;
 		SSAFloat lightscale = SSAFloat::clamp((shade - SSAFloat::MIN(SSAFloat(24.0f), vis)) / 32.0f, SSAFloat(0.0f), SSAFloat(31.0f / 32.0f));
-		diminishedlight = SSAInt(SSAFloat::clamp((1.0f - lightscale) * 256.0f + 0.5f, SSAFloat(0.0f), SSAFloat(256.0f)), false);
+		SSAInt diminishedlight = SSAInt(SSAFloat::clamp((1.0f - lightscale) * 256.0f + 0.5f, SSAFloat(0.0f), SSAFloat(256.0f)), false);
+		currentlight = is_fixed_light.select(light, diminishedlight);
 
 		SetStencilBlock(x / 8 + y / 8 * stencilPitch);
 
@@ -473,7 +474,7 @@ void DrawTriangleCodegen::ProcessPixel(SSAUBytePtr buffer, SSAIntPtr subsectorbu
 		{
 			SSAVec4i fg = texturePixels[uvoffset * 4].load_vec4ub(true);
 			SSAInt fg_alpha = fg[3];
-			fg = (fg * diminishedlight) >> 8;
+			fg = (fg * currentlight) >> 8;
 			fg.insert(3, fg_alpha);
 
 			if (variant == TriDrawVariant::DrawMasked || variant == TriDrawVariant::DrawSubsector)
@@ -625,4 +626,5 @@ void DrawTriangleCodegen::LoadUniforms(SSAValue uniforms)
 
 	is_simple_shade = (flags & TriUniforms::simple_shade) == SSAInt(TriUniforms::simple_shade);
 	is_nearest_filter = (flags & TriUniforms::nearest_filter) == SSAInt(TriUniforms::nearest_filter);
+	is_fixed_light = (flags & TriUniforms::fixed_light) == SSAInt(TriUniforms::fixed_light);
 }

@@ -244,7 +244,7 @@ int RenderPolyWall::GetLightLevel()
 	{
 		bool foggy = false;
 		int actualextralight = foggy ? 0 : extralight << 4;
-		return Line->sidedef->GetLightLevel(foggy, Line->frontsector->lightlevel) + actualextralight;
+		return clamp(Line->sidedef->GetLightLevel(foggy, Line->frontsector->lightlevel) + actualextralight, 0, 255);
 	}
 }
 

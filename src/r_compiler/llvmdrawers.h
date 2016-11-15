@@ -230,7 +230,7 @@ struct TriUniforms
 	{
 		simple_shade = 1,
 		nearest_filter = 2,
-		diminishing_lighting = 4
+		fixed_light = 4
 	};
 
 	TriMatrix objectToClip;

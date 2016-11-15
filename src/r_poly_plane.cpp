@@ -82,9 +82,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 	TriUniforms uniforms;
 	uniforms.objectToClip = worldToClip;
 	uniforms.light = (uint32_t)(frontsector->lightlevel / 255.0f * 256.0f);
-	if (fixedlightlev >= 0)
-		uniforms.light = (uint32_t)(fixedlightlev / 255.0f * 256.0f);
-	else if (fixedcolormap)
+	if (fixedlightlev >= 0 || fixedcolormap)
 		uniforms.light = 256;
 	uniforms.flags = 0;
 	uniforms.subsectorDepth = isSky ? RenderPolyScene::SkySubsectorDepth : subsectorDepth;

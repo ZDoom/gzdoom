@@ -111,10 +111,20 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, AActor *thing, subse
 			vertices[i].varying[0] = 1.0f - vertices[i].varying[0];
 	}
 
+	bool fullbrightSprite = ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
+
 	TriUniforms uniforms;
 	uniforms.objectToClip = worldToClip;
-	uniforms.light = (uint32_t)((thing->Sector->lightlevel + actualextralight) / 255.0f * 256.0f);
-	uniforms.flags = 0;
+	if (fullbrightSprite || fixedlightlev >= 0 || fixedcolormap)
+	{
+		uniforms.light = 256;
+		uniforms.flags = TriUniforms::fixed_light;
+	}
+	else
+	{
+		uniforms.light = (uint32_t)((thing->Sector->lightlevel + actualextralight) / 255.0f * 256.0f);
+		uniforms.flags = 0;
+	}
 	uniforms.subsectorDepth = subsectorDepth;
 
 	PolyDrawArgs args;

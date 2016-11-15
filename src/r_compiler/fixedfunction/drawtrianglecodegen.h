@@ -89,6 +89,7 @@ private:
 	SSAShadeConstants shade_constants;
 	SSABool is_simple_shade;
 	SSABool is_nearest_filter;
+	SSABool is_fixed_light;
 
 	SSAUBytePtr stencilValues;
 	SSAIntPtr stencilMasks;
@@ -115,7 +116,7 @@ private:
 
 	SSAInt x, y;
 	SSAInt x0, x1, y0, y1;
-	SSAInt diminishedlight;
+	SSAInt currentlight;
 	SSAInt varyingPos[TriVertex::NumVarying];
 	SSAInt varyingStepPos[TriVertex::NumVarying];
 	SSAInt varyingStartStepX[TriVertex::NumVarying];

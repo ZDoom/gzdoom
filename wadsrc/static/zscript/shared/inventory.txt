@@ -473,11 +473,11 @@ class Weapon : StateProvider native
 		Stop;
 	}
 	
-	native void A_ZoomFactor(float scale = 1, int flags = 0);
+	native action void A_ZoomFactor(float scale = 1, int flags = 0);
+	native action void A_SetCrosshair(int xhair);
 	const ZOOM_INSTANT = 1;
 	const ZOOM_NOSCALETURNING = 2;
 	
-	native void A_SetCrosshair(int xhair);
 }
 
 class WeaponGiver : Weapon native

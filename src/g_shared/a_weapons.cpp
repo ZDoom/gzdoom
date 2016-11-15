@@ -1925,7 +1925,7 @@ PClassWeapon *Net_ReadWeapon(BYTE **stream)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AWeapon, A_ZoomFactor)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_FLOAT_DEF(zoom);
 	PARAM_INT_DEF(flags);
 
@@ -1953,7 +1953,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AWeapon, A_ZoomFactor)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AWeapon, A_SetCrosshair)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT(xhair);
 
 	if (self->player != NULL && self->player->ReadyWeapon != NULL)

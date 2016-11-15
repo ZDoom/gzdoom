@@ -1847,8 +1847,8 @@ FxExpression *FxUnaryNotBoolean::Resolve(FCompileContext& ctx)
 
 ExpEmit FxUnaryNotBoolean::Emit(VMFunctionBuilder *build)
 {
-	assert(Operand->ValueType == ValueType);
-	assert(ValueType == TypeBool);
+	assert(Operand->ValueType == TypeBool);
+	assert(ValueType == TypeBool || IsInteger());	// this may have been changed by an int cast.
 	ExpEmit from = Operand->Emit(build);
 	assert(!from.Konst);
 	// boolean not is the same as XOR-ing the lowest bit
@@ -8069,11 +8069,10 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 			{
 				if (!cls->IsDescendantOf(desttype))
 				{
-					ScriptPosition.Message(MSG_ERROR, "class '%s' is not compatible with '%s'", clsname.GetChars(), desttype->TypeName.GetChars());
-					delete this;
-					return nullptr;
+					ScriptPosition.Message(MSG_OPTERROR, "class '%s' is not compatible with '%s'", clsname.GetChars(), desttype->TypeName.GetChars());
+					cls = nullptr;
 				}
-				ScriptPosition.Message(MSG_DEBUGLOG, "resolving '%s' as class name", clsname.GetChars());
+				else ScriptPosition.Message(MSG_DEBUGLOG, "resolving '%s' as class name", clsname.GetChars());
 			}
 		}
 		FxExpression *x = new FxConstant(cls, to, ScriptPosition);

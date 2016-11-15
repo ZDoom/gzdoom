@@ -85,7 +85,7 @@ public:
 
 private:
 	void RenderSubsector(subsector_t *sub);
-	void RenderLine(seg_t *line, sector_t *frontsector, uint32_t subsectorDepth);
+	void RenderLine(subsector_t *sub, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth);
 
 	void RenderTranslucent();
 	SpriteRange GetSpritesForSector(sector_t *sector);

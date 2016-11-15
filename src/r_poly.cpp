@@ -102,7 +102,7 @@ void RenderPolyScene::RenderSubsector(subsector_t *sub)
 	{
 		seg_t *line = &sub->firstline[i];
 		if (line->sidedef == nullptr || !(line->sidedef->Flags & WALLF_POLYOBJ))
-			RenderLine(line, frontsector, subsectorDepth);
+			RenderLine(sub, line, frontsector, subsectorDepth);
 	}
 
 	SpriteRange sprites = GetSpritesForSector(sub->sector);
@@ -136,7 +136,7 @@ SpriteRange RenderPolyScene::GetSpritesForSector(sector_t *sector)
 	return range;
 }
 
-void RenderPolyScene::RenderLine(seg_t *line, sector_t *frontsector, uint32_t subsectorDepth)
+void RenderPolyScene::RenderLine(subsector_t *sub, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth)
 {
 	// Reject lines not facing viewer
 	DVector2 pt1 = line->v1->fPos() - ViewPos;
@@ -149,6 +149,13 @@ void RenderPolyScene::RenderLine(seg_t *line, sector_t *frontsector, uint32_t su
 	bool hasSegmentRange = Cull.GetSegmentRangeForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), sx1, sx2);
 	if (hasSegmentRange && Cull.IsSegmentCulled(sx1, sx2))
 		return;
+
+	// Tell automap we saw this
+	if (!r_dontmaplines && line->linedef)
+	{
+		line->linedef->flags |= ML_MAPPED;
+		sub->flags |= SSECF_DRAWN;
+	}
 
 	// Render wall, and update culling info if its an occlusion blocker
 	if (RenderPolyWall::RenderLine(WorldToClip, line, frontsector, subsectorDepth, SubsectorTranslucentWalls))

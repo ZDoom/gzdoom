@@ -68,6 +68,7 @@
 #include "doomtype.h"
 #include "m_argv.h"
 #include "d_main.h"
+#include "i_module.h"
 #include "i_system.h"
 #include "c_console.h"
 #include "version.h"
@@ -83,6 +84,8 @@
 
 #include "stats.h"
 #include "st_start.h"
+
+#include "optwin32.h"
 
 #include <assert.h>
 
@@ -142,6 +145,21 @@ HFONT			GameTitleFont;
 LONG			GameTitleFontHeight;
 LONG			DefaultGUIFontHeight;
 LONG			ErrorIconChar;
+
+FModule Kernel32Module{"Kernel32"};
+FModule Shell32Module{"Shell32"};
+FModule User32Module{"User32"};
+
+namespace OptWin32 {
+#define DYN_WIN32_SYM(x) decltype(x) x{#x}
+
+DYN_WIN32_SYM(SHGetFolderPathA);
+DYN_WIN32_SYM(SHGetKnownFolderPath);
+DYN_WIN32_SYM(GetLongPathNameA);
+DYN_WIN32_SYM(GetMonitorInfoA);
+
+#undef DYN_WIN32_SYM
+} // namespace OptWin32
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -817,6 +835,11 @@ void DoMain (HINSTANCE hInstance)
 #endif
 
 		Args = new DArgs(__argc, __argv);
+
+		// Load Win32 modules
+		Kernel32Module.Load({"kernel32.dll"});
+		Shell32Module.Load({"shell32.dll"});
+		User32Module.Load({"user32.dll"});
 
 		// Under XP, get our session ID so we can know when the user changes/locks sessions.
 		// Since we need to remain binary compatible with older versions of Windows, we

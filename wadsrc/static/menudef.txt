@@ -683,6 +683,7 @@ OptionMenu "VideoOptions"
 	Option "$DSPLYMNU_CAPFPS",					"cl_capfps", "OffOn"
 	Slider "$DSPLYMNU_BLOODFADE",				"blood_fade_scalar", 0.0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_PICKUPFADE",				"pickup_fade_scalar", 0.0, 1.0, 0.05, 2
+	Slider "$DSPLYMNU_WATERFADE",				"underwater_fade_scalar", 0.0, 1.0, 0.05, 2
 	Option "$DSPLYMNU_COLUMNMETHOD",			"r_columnmethod", "ColumnMethods"
 
 	StaticText " "

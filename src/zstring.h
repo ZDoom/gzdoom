@@ -268,6 +268,7 @@ public:
 	bool IsNotEmpty() const { return Len() != 0; }
 
 	void Truncate (long newlen);
+	void Remove(size_t index, size_t remlen);
 
 	int Compare (const FString &other) const { return strcmp (Chars, other.Chars); }
 	int Compare (const char *other) const { return strcmp (Chars, other); }

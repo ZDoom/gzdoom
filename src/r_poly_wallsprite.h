@@ -27,5 +27,5 @@
 class RenderPolyWallSprite
 {
 public:
-	void Render(AActor *thing, subsector_t *sub, uint32_t subsectorDepth);
+	void Render(const TriMatrix &worldToClip, AActor *thing, subsector_t *sub, uint32_t subsectorDepth);
 };

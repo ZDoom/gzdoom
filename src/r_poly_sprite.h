@@ -30,8 +30,8 @@ public:
 	void Render(const TriMatrix &worldToClip, AActor *thing, subsector_t *sub, uint32_t subsectorDepth);
 
 	static bool IsThingCulled(AActor *thing);
+	static FTexture *GetSpriteTexture(AActor *thing, /*out*/ bool &flipX);
 
 private:
 	visstyle_t GetSpriteVisStyle(AActor *thing, double z);
-	FTexture *GetSpriteTexture(AActor *thing, /*out*/ bool &flipX);
 };

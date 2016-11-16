@@ -183,7 +183,7 @@ void RenderPolyScene::RenderTranslucent()
 		else if ((obj.thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 		{
 			RenderPolyWallSprite wallspr;
-			wallspr.Render(obj.thing, obj.sub, obj.subsectorDepth);
+			wallspr.Render(WorldToClip, obj.thing, obj.sub, obj.subsectorDepth);
 		}
 		else
 		{

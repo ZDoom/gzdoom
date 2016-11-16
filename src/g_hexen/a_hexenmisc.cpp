@@ -33,7 +33,6 @@
 #include "a_clericholy.cpp"
 #include "a_clericmace.cpp"
 #include "a_clericstaff.cpp"
-#include "a_dragon.cpp"
 #include "a_fighteraxe.cpp"
 #include "a_fighterhammer.cpp"
 #include "a_fighterplayer.cpp"

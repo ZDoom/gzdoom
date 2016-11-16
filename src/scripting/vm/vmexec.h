@@ -696,6 +696,8 @@ begin:
 	OP(BOUND):
 		if (reg.d[a] >= BC)
 		{
+			assert(false);
+			Printf("Array access out of bounds: Max. index = %u, current index = %u\n", BC, reg.d[a]);
 			THROW(X_ARRAY_OUT_OF_BOUNDS);
 		}
 		NEXTOP;

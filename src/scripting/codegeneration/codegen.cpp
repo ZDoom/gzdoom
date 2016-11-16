@@ -1670,19 +1670,23 @@ ExpEmit FxMinusSign::Emit(VMFunctionBuilder *build)
 {
 	assert(ValueType == Operand->ValueType);
 	ExpEmit from = Operand->Emit(build);
+	ExpEmit to;
 	assert(from.Konst == 0);
 	assert(ValueType->GetRegCount() == from.RegCount);
 	// Do it in-place, unless a local variable
 	if (from.Fixed)
 	{
-		ExpEmit to = ExpEmit(build, from.RegType, from.RegCount);
-		build->Emit(Operand->ValueType->GetMoveOp(), to.RegNum, from.RegNum);
-		from = to;
+		to = ExpEmit(build, from.RegType, from.RegCount);
+		from.Free(build);
+	}
+	else
+	{
+		to = from;
 	}
 
 	if (ValueType->GetRegType() == REGT_INT)
 	{
-		build->Emit(OP_NEG, from.RegNum, from.RegNum, 0);
+		build->Emit(OP_NEG, to.RegNum, from.RegNum, 0);
 	}
 	else
 	{
@@ -1690,20 +1694,20 @@ ExpEmit FxMinusSign::Emit(VMFunctionBuilder *build)
 		switch (from.RegCount)
 		{
 		case 1:
-			build->Emit(OP_FLOP, from.RegNum, from.RegNum, FLOP_NEG);
+			build->Emit(OP_FLOP, to.RegNum, from.RegNum, FLOP_NEG);
 			break;
 
 		case 2:
-			build->Emit(OP_NEGV2, from.RegNum, from.RegNum);
+			build->Emit(OP_NEGV2, to.RegNum, from.RegNum);
 			break;
 
 		case 3:
-			build->Emit(OP_NEGV3, from.RegNum, from.RegNum);
+			build->Emit(OP_NEGV3, to.RegNum, from.RegNum);
 			break;
 
 		}
 	}
-	return from;
+	return to;
 }
 
 //==========================================================================
@@ -4255,19 +4259,31 @@ FxExpression *FxAbs::Resolve(FCompileContext &ctx)
 
 ExpEmit FxAbs::Emit(VMFunctionBuilder *build)
 {
-	ExpEmit absofsteal = val->Emit(build);
-	assert(!absofsteal.Konst);
-	ExpEmit out(build, absofsteal.RegType);
-	if (absofsteal.RegType == REGT_INT)
+	assert(ValueType == val->ValueType);
+	ExpEmit from = val->Emit(build);
+	ExpEmit to;
+	assert(from.Konst == 0);
+	assert(ValueType->GetRegCount() == 1);
+	// Do it in-place, unless a local variable
+	if (from.Fixed)
 	{
-		build->Emit(OP_ABS, out.RegNum, absofsteal.RegNum, 0);
+		to = ExpEmit(build, from.RegType);
+		from.Free(build);
 	}
 	else
 	{
-		assert(absofsteal.RegType == REGT_FLOAT);
-		build->Emit(OP_FLOP, out.RegNum, absofsteal.RegNum, FLOP_ABS);
+		to = from;
 	}
-	return out;
+
+	if (ValueType->GetRegType() == REGT_INT)
+	{
+		build->Emit(OP_ABS, to.RegNum, from.RegNum, 0);
+	}
+	else
+	{
+		build->Emit(OP_FLOP, to.RegNum, from.RegNum, FLOP_ABS);
+	}
+	return to;
 }
 
 //==========================================================================
@@ -5898,6 +5914,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	else
 	{
 		ExpEmit indexv(index->Emit(build));
+		ExpEmit indexwork = indexv.Fixed ? ExpEmit(build, indexv.RegType) : indexv;
 		int shiftbits = 0;
 		while (1u << shiftbits < arraytype->ElementSize)
 		{ 
@@ -5907,19 +5924,19 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 		build->Emit(OP_BOUND, indexv.RegNum, arraytype->ElementCount);
 		if (shiftbits > 0)
 		{
-			build->Emit(OP_SLL_RI, indexv.RegNum, indexv.RegNum, shiftbits);
+			build->Emit(OP_SLL_RI, indexwork.RegNum, indexv.RegNum, shiftbits);
 		}
 
 		if (AddressRequested)
 		{
-			build->Emit(OP_ADDA_RR, start.RegNum, start.RegNum, indexv.RegNum);
+			build->Emit(OP_ADDA_RR, start.RegNum, start.RegNum, indexwork.RegNum);
 		}
 		else
 		{
 			build->Emit(arraytype->ElementType->GetLoadOp() + 1,	// added 1 to use the *_R version that
-				dest.RegNum, start.RegNum, indexv.RegNum);			// takes the offset from a register
+				dest.RegNum, start.RegNum, indexwork.RegNum);			// takes the offset from a register
 		}
-		indexv.Free(build);
+		indexwork.Free(build);
 	}
 	if (AddressRequested)
 	{
@@ -6955,13 +6972,26 @@ FxExpression *FxFlopFunctionCall::Resolve(FCompileContext& ctx)
 
 ExpEmit FxFlopFunctionCall::Emit(VMFunctionBuilder *build)
 {
-	ExpEmit v = ArgList[0]->Emit(build);
-	assert(!v.Konst && v.RegType == REGT_FLOAT);
+	assert(ValueType == ArgList[0]->ValueType);
+	ExpEmit from = ArgList[0]->Emit(build);
+	ExpEmit to;
+	assert(from.Konst == 0);
+	assert(ValueType->GetRegCount() == 1);
+	// Do it in-place, unless a local variable
+	if (from.Fixed)
+	{
+		to = ExpEmit(build, from.RegType);
+		from.Free(build);
+	}
+	else
+	{
+		to = from;
+	}
 
-	build->Emit(OP_FLOP, v.RegNum, v.RegNum, FxFlops[Index].Flop);
+	build->Emit(OP_FLOP, to.RegNum, from.RegNum, FxFlops[Index].Flop);
 	ArgList.Clear();
 	ArgList.ShrinkToFit();
-	return v;
+	return to;
 }
 
 

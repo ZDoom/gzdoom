@@ -52,6 +52,13 @@
 #include "v_video.h"
 #include "colormatcher.h"
 
+// [SP] This is a dummy CVAR that needs to be removed in child ports that implement the real version.
+CVAR(Int, vid_renderer, 1, CVAR_GLOBALCONFIG | CVAR_OVERRIDEGET | CVAR_ARCHIVE)
+
+// [SP] Lets the player (arbitrator) choose whether to override GetCVar checks.
+//   Danger of desync? Can we just make it a client var? This probably *fixes* desyncs, actually...
+CVAR(Bool, sv_overridegetcvar, true, CVAR_SERVERINFO | CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
+
 struct FLatchedValue
 {
 	FBaseCVar *Variable;

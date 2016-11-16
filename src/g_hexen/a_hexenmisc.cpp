@@ -39,7 +39,6 @@
 #include "a_fighterquietus.cpp"
 #include "a_flechette.cpp"
 #include "a_flies.cpp"
-#include "a_fog.cpp"
 #include "a_healingradius.cpp"
 #include "a_heresiarch.cpp"
 #include "a_hexenspecialdecs.cpp"

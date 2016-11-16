@@ -84,6 +84,9 @@ public:
 	static RenderPolyScene *Instance();
 
 private:
+	void ClearBuffers();
+	void SetupPerspectiveMatrix();
+	void RenderSectors();
 	void RenderSubsector(subsector_t *sub);
 	void RenderLine(subsector_t *sub, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth);
 

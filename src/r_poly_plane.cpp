@@ -29,6 +29,125 @@
 #include "r_poly.h"
 #include "r_sky.h" // for skyflatnum
 
+EXTERN_CVAR(Int, r_3dfloors)
+
+void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, double skyCeilingHeight, double skyFloorHeight)
+{
+	RenderPolyPlane plane;
+
+	if (r_3dfloors)
+	{
+		auto frontsector = sub->sector;
+		auto &ffloors = frontsector->e->XFloor.ffloors;
+
+		// 3D floor floors
+		for (int i = 0; i < (int)ffloors.Size(); i++)
+		{
+			F3DFloor *fakeFloor = ffloors[i];
+			if (!(fakeFloor->flags & FF_EXISTS)) continue;
+			if (!fakeFloor->model) continue;
+			if (fakeFloor->bottom.plane->isSlope()) continue;
+			//if (!(fakeFloor->flags & FF_NOSHADE) || (fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
+			//	R_3D_AddHeight(fakeFloor->top.plane, frontsector);
+			if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
+			if (fakeFloor->alpha == 0) continue;
+			if (fakeFloor->flags & FF_THISINSIDE && fakeFloor->flags & FF_INVERTSECTOR) continue;
+			//fakeFloor->alpha
+
+			double fakeHeight = fakeFloor->top.plane->ZatPoint(frontsector->centerspot);
+			if (fakeHeight < ViewPos.Z && fakeHeight > frontsector->floorplane.ZatPoint(frontsector->centerspot))
+			{
+				plane.Render3DFloor(worldToClip, sub, subsectorDepth, false, fakeFloor);
+			}
+		}
+
+		// 3D floor ceilings
+		for (int i = 0; i < (int)ffloors.Size(); i++)
+		{
+			F3DFloor *fakeFloor = ffloors[i];
+			if (!(fakeFloor->flags & FF_EXISTS)) continue;
+			if (!fakeFloor->model) continue;
+			if (fakeFloor->top.plane->isSlope()) continue;
+			//if (!(fakeFloor->flags & FF_NOSHADE) || (fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
+			//	R_3D_AddHeight(fakeFloor->bottom.plane, frontsector);
+			if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
+			if (fakeFloor->alpha == 0) continue;
+			if (!(fakeFloor->flags & FF_THISINSIDE) && (fakeFloor->flags & (FF_SWIMMABLE | FF_INVERTSECTOR)) == (FF_SWIMMABLE | FF_INVERTSECTOR)) continue;
+			//fakeFloor->alpha
+
+			double fakeHeight = fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot);
+			if (fakeHeight > ViewPos.Z && fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->centerspot))
+			{
+				plane.Render3DFloor(worldToClip, sub, subsectorDepth, true, fakeFloor);
+			}
+		}
+	}
+
+	plane.Render(worldToClip, sub, subsectorDepth, true, skyCeilingHeight);
+	plane.Render(worldToClip, sub, subsectorDepth, false, skyFloorHeight);
+}
+
+void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, bool ceiling, F3DFloor *fakeFloor)
+{
+	FTextureID picnum = ceiling ? *fakeFloor->bottom.texture : *fakeFloor->top.texture;
+	FTexture *tex = TexMan(picnum);
+	if (tex->UseType == FTexture::TEX_Null)
+		return;
+
+	int lightlevel = 255;
+	if (fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size())
+	{
+		lightlist_t *light = P_GetPlaneLight(sub->sector, &sub->sector->ceilingplane, false);
+		basecolormap = light->extra_colormap;
+		lightlevel = *light->p_lightlevel;
+	}
+
+	TriUniforms uniforms;
+	uniforms.objectToClip = worldToClip;
+	uniforms.light = (uint32_t)(lightlevel / 255.0f * 256.0f);
+	if (fixedlightlev >= 0 || fixedcolormap)
+		uniforms.light = 256;
+	uniforms.flags = 0;
+	uniforms.subsectorDepth = subsectorDepth;
+
+	TriVertex *vertices = PolyVertexBuffer::GetVertices(sub->numlines);
+	if (!vertices)
+		return;
+
+	if (ceiling)
+	{
+		for (uint32_t i = 0; i < sub->numlines; i++)
+		{
+			seg_t *line = &sub->firstline[i];
+			vertices[sub->numlines - 1 - i] = PlaneVertex(line->v1, fakeFloor->bottom.plane->ZatPoint(line->v1));
+		}
+	}
+	else
+	{
+		for (uint32_t i = 0; i < sub->numlines; i++)
+		{
+			seg_t *line = &sub->firstline[i];
+			vertices[i] = PlaneVertex(line->v1, fakeFloor->top.plane->ZatPoint(line->v1));
+		}
+	}
+
+	PolyDrawArgs args;
+	args.uniforms = uniforms;
+	args.vinput = vertices;
+	args.vcount = sub->numlines;
+	args.mode = TriangleDrawMode::Fan;
+	args.ccw = true;
+	args.clipleft = 0;
+	args.cliptop = 0;
+	args.clipright = viewwidth;
+	args.clipbottom = viewheight;
+	args.stenciltestvalue = 0;
+	args.stencilwritevalue = 1;
+	args.SetTexture(tex);
+	PolyTriangleDrawer::draw(args, TriDrawVariant::Draw);
+	PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil);
+}
+
 void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, bool ceiling, double skyHeight)
 {
 	sector_t *fakesector = sub->sector->heightsec;
@@ -96,7 +215,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
 			seg_t *line = &sub->firstline[i];
-			vertices[sub->numlines - 1 - i] = PlaneVertex(line->v1, frontsector, isSky ? skyHeight : frontsector->ceilingplane.ZatPoint(line->v1));
+			vertices[sub->numlines - 1 - i] = PlaneVertex(line->v1, isSky ? skyHeight : frontsector->ceilingplane.ZatPoint(line->v1));
 		}
 	}
 	else
@@ -104,7 +223,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
 			seg_t *line = &sub->firstline[i];
-			vertices[i] = PlaneVertex(line->v1, frontsector, isSky ? skyHeight : frontsector->floorplane.ZatPoint(line->v1));
+			vertices[i] = PlaneVertex(line->v1, isSky ? skyHeight : frontsector->floorplane.ZatPoint(line->v1));
 		}
 	}
 
@@ -183,17 +302,17 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 
 			if (ceiling)
 			{
-				wallvert[0] = PlaneVertex(line->v1, frontsector, skyHeight);
-				wallvert[1] = PlaneVertex(line->v2, frontsector, skyHeight);
-				wallvert[2] = PlaneVertex(line->v2, frontsector, skyBottomz2);
-				wallvert[3] = PlaneVertex(line->v1, frontsector, skyBottomz1);
+				wallvert[0] = PlaneVertex(line->v1, skyHeight);
+				wallvert[1] = PlaneVertex(line->v2, skyHeight);
+				wallvert[2] = PlaneVertex(line->v2, skyBottomz2);
+				wallvert[3] = PlaneVertex(line->v1, skyBottomz1);
 			}
 			else
 			{
-				wallvert[0] = PlaneVertex(line->v1, frontsector, frontsector->floorplane.ZatPoint(line->v1));
-				wallvert[1] = PlaneVertex(line->v2, frontsector, frontsector->floorplane.ZatPoint(line->v2));
-				wallvert[2] = PlaneVertex(line->v2, frontsector, skyHeight);
-				wallvert[3] = PlaneVertex(line->v1, frontsector, skyHeight);
+				wallvert[0] = PlaneVertex(line->v1, frontsector->floorplane.ZatPoint(line->v1));
+				wallvert[1] = PlaneVertex(line->v2, frontsector->floorplane.ZatPoint(line->v2));
+				wallvert[2] = PlaneVertex(line->v2, skyHeight);
+				wallvert[3] = PlaneVertex(line->v1, skyHeight);
 			}
 
 			args.vinput = wallvert;
@@ -203,7 +322,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 	}
 }
 
-TriVertex RenderPolyPlane::PlaneVertex(vertex_t *v1, sector_t *sector, double height)
+TriVertex RenderPolyPlane::PlaneVertex(vertex_t *v1, double height)
 {
 	TriVertex v;
 	v.x = (float)v1->fPos().X;

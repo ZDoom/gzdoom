@@ -36,7 +36,24 @@ void RenderPolyScene::Render()
 	if (!r_swtruecolor) // Disable pal rendering for now
 		return;
 
-	// Setup working buffers
+	ClearBuffers();
+	SetupPerspectiveMatrix();
+	Cull.CullScene(WorldToClip);
+	RenderSectors();
+	skydome.Render(WorldToClip);
+	RenderTranslucent();
+	PlayerSprites.Render();
+
+	DrawerCommandQueue::WaitForWorkers();
+}
+
+void RenderPolyScene::RenderRemainingPlayerSprites()
+{
+	PlayerSprites.RenderRemainingSprites();
+}
+
+void RenderPolyScene::ClearBuffers()
+{
 	PolyVertexBuffer::Clear();
 	SectorSpriteRanges.clear();
 	SectorSpriteRanges.resize(numsectors);
@@ -45,8 +62,10 @@ void RenderPolyScene::Render()
 	PolyStencilBuffer::Instance()->Clear(viewwidth, viewheight, 0);
 	PolySubsectorGBuffer::Instance()->Resize(dc_pitch, viewheight);
 	NextSubsectorDepth = 0;
+}
 
-	// Setup perspective matrix:
+void RenderPolyScene::SetupPerspectiveMatrix()
+{
 	float ratio = WidescreenRatio;
 	float fovratio = (WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
 	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(FieldOfView.Radians() / 2) / fovratio)).Degrees);
@@ -57,8 +76,10 @@ void RenderPolyScene::Render()
 		TriMatrix::swapYZ() *
 		TriMatrix::translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);
 	WorldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
+}
 
-	Cull.CullScene(WorldToClip);
+void RenderPolyScene::RenderSectors()
+{
 	if (r_debug_cull)
 	{
 		for (auto it = Cull.PvsSectors.rbegin(); it != Cull.PvsSectors.rend(); ++it)
@@ -69,19 +90,6 @@ void RenderPolyScene::Render()
 		for (auto it = Cull.PvsSectors.begin(); it != Cull.PvsSectors.end(); ++it)
 			RenderSubsector(*it);
 	}
-
-	skydome.Render(WorldToClip);
-
-	RenderTranslucent();
-
-	PlayerSprites.Render();
-	DrawerCommandQueue::WaitForWorkers();
-	RenderRemainingPlayerSprites(); // To do: should be called by FSoftwareRenderer::DrawRemainingPlayerSprites instead of here
-}
-
-void RenderPolyScene::RenderRemainingPlayerSprites()
-{
-	PlayerSprites.RenderRemainingSprites();
 }
 
 void RenderPolyScene::RenderSubsector(subsector_t *sub)
@@ -93,9 +101,7 @@ void RenderPolyScene::RenderSubsector(subsector_t *sub)
 
 	if (sub->sector->CenterFloor() != sub->sector->CenterCeiling())
 	{
-		RenderPolyPlane plane;
-		plane.Render(WorldToClip, sub, subsectorDepth, true, Cull.MaxCeilingHeight);
-		plane.Render(WorldToClip, sub, subsectorDepth, false, Cull.MinFloorHeight);
+		RenderPolyPlane::RenderPlanes(WorldToClip, sub, subsectorDepth, Cull.MaxCeilingHeight, Cull.MinFloorHeight);
 	}
 
 	for (uint32_t i = 0; i < sub->numlines; i++)

@@ -71,7 +71,7 @@ int currentrenderer = -1;
 bool changerenderer;
 
 // [ZDoomGL]
-CUSTOM_CVAR (Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR (Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL | CVAR_OVERRIDEGET)
 {
 	// 0: Software renderer
 	// 1: OpenGL renderer

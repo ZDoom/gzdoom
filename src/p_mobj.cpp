@@ -6909,7 +6909,7 @@ IMPLEMENT_CLASS(DActorIterator, false, false, false, false);
 DEFINE_ACTION_FUNCTION(DActorIterator, Create)
 {
 	PARAM_PROLOGUE;
-	PARAM_INT_DEF(tid);
+	PARAM_INT(tid);
 	PARAM_CLASS_DEF(type, AActor);
 	ACTION_RETURN_OBJECT(new DActorIterator(type, tid));
 }

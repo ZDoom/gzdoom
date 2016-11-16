@@ -1070,6 +1070,7 @@ set( FASTMATH_PCH_SOURCES
 	r_swrenderer.cpp
 	r_poly.cpp
 	r_poly_cull.cpp
+	r_poly_decal.cpp
 	r_poly_particle.cpp
 	r_poly_plane.cpp
 	r_poly_playersprite.cpp

@@ -1,5 +1,5 @@
 /*
-**  Handling drawing a sprite
+**  Handling drawing a decal
 **  Copyright (c) 2016 Magnus Norddahl
 **
 **  This software is provided 'as-is', without any express or implied
@@ -25,47 +25,77 @@
 #include "doomdef.h"
 #include "sbar.h"
 #include "r_data/r_translate.h"
-#include "r_poly_wallsprite.h"
+#include "r_poly_decal.h"
 #include "r_poly.h"
+#include "a_sharedglobal.h"
 
-void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, AActor *thing, subsector_t *sub, uint32_t subsectorDepth)
+void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const seg_t *line, uint32_t subsectorDepth)
 {
-	if (RenderPolySprite::IsThingCulled(thing))
+	for (DBaseDecal *decal = line->sidedef->AttachedDecals; decal != nullptr; decal = decal->WallNext)
+	{
+		RenderPolyDecal render;
+		render.Render(worldToClip, decal, line, subsectorDepth);
+	}
+}
+
+void RenderPolyDecal::Render(const TriMatrix &worldToClip, DBaseDecal *decal, const seg_t *line, uint32_t subsectorDepth)
+{
+	if (decal->RenderFlags & RF_INVISIBLE || !viewactive || !decal->PicNum.isValid())
 		return;
 
-	DVector3 pos = thing->InterpolatedPosition(r_TicFracF);
-	pos.Z += thing->GetBobOffset(r_TicFracF);
-
-	bool flipTextureX = false;
-	FTexture *tex = RenderPolySprite::GetSpriteTexture(thing, flipTextureX);
-	if (tex == nullptr)
+	FTexture *tex = TexMan(decal->PicNum, true);
+	if (tex == nullptr || tex->UseType == FTexture::TEX_Null)
 		return;
 
-	DVector2 spriteScale = thing->Scale;
+	double edge_right = tex->GetWidth();
+	double edge_left = tex->LeftOffset;
+	edge_right = (edge_right - edge_left) * decal->ScaleX;
+	edge_left *= decal->ScaleX;
+
+	double dcx, dcy;
+	decal->GetXY(line->sidedef, dcx, dcy);
+	DVector2 decal_pos = { dcx, dcy };
+
+	DVector2 angvec = (line->v2->fPos() - line->v1->fPos()).Unit();
+	DVector2 decal_left = decal_pos - edge_left * angvec;
+	DVector2 decal_right = decal_pos + edge_right * angvec;
+
+	// Determine actor z
+	double zpos = decal->Z;
+	sector_t *front = line->frontsector;
+	sector_t *back = (line->backsector != nullptr) ? line->backsector : line->frontsector;
+	switch (decal->RenderFlags & RF_RELMASK)
+	{
+	default:
+		zpos = decal->Z;
+		break;
+	case RF_RELUPPER:
+		if (line->linedef->flags & ML_DONTPEGTOP)
+			zpos = decal->Z + front->GetPlaneTexZ(sector_t::ceiling);
+		else
+			zpos = decal->Z + back->GetPlaneTexZ(sector_t::ceiling);
+		break;
+	case RF_RELLOWER:
+		if (line->linedef->flags & ML_DONTPEGBOTTOM)
+			zpos = decal->Z + front->GetPlaneTexZ(sector_t::ceiling);
+		else
+			zpos = decal->Z + back->GetPlaneTexZ(sector_t::floor);
+		break;
+	case RF_RELMID:
+		if (line->linedef->flags & ML_DONTPEGBOTTOM)
+			zpos = decal->Z + front->GetPlaneTexZ(sector_t::floor);
+		else
+			zpos = decal->Z + front->GetPlaneTexZ(sector_t::ceiling);
+	}
+
+	DVector2 spriteScale = { decal->ScaleX, decal->ScaleY };
 	double thingxscalemul = spriteScale.X / tex->Scale.X;
 	double thingyscalemul = spriteScale.Y / tex->Scale.Y;
 	double spriteHeight = thingyscalemul * tex->GetHeight();
 
-	DAngle ang = thing->Angles.Yaw + 90;
-	double angcos = ang.Cos();
-	double angsin = ang.Sin();
+	bool flipTextureX = (decal->RenderFlags & RF_XFLIP) == RF_XFLIP;
 
-	// Determine left and right edges of sprite. The sprite's angle is its normal,
-	// so the edges are 90 degrees each side of it.
-	double x2 = tex->GetScaledWidth() * spriteScale.X;
-	double x1 = tex->GetScaledLeftOffset() * spriteScale.X;
-	DVector2 left, right;
-	left.X = pos.X - x1 * angcos;
-	left.Y = pos.Y - x1 * angsin;
-	right.X = left.X + x2 * angcos;
-	right.Y = right.Y + x2 * angsin;
-
-	//int scaled_to = tex->GetScaledTopOffset();
-	//int scaled_bo = scaled_to - tex->GetScaledHeight();
-	//gzt = pos.Z + scale.Y * scaled_to;
-	//gzb = pos.Z + scale.Y * scaled_bo;
-
-	DVector2 points[2] = { left, right };
+	DVector2 points[2] = { decal_left, decal_right };
 
 	TriVertex *vertices = PolyVertexBuffer::GetVertices(4);
 	if (!vertices)
@@ -88,7 +118,7 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, AActor *thing, s
 
 		vertices[i].x = (float)p.X;
 		vertices[i].y = (float)p.Y;
-		vertices[i].z = (float)(pos.Z + spriteHeight * offsets[i].second);
+		vertices[i].z = (float)(zpos + spriteHeight * offsets[i].second);
 		vertices[i].w = 1.0f;
 		vertices[i].varying[0] = (float)(offsets[i].first * tex->Scale.X);
 		vertices[i].varying[1] = (float)((1.0f - offsets[i].second) * tex->Scale.Y);
@@ -96,7 +126,7 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, AActor *thing, s
 			vertices[i].varying[0] = 1.0f - vertices[i].varying[0];
 	}
 
-	bool fullbrightSprite = ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
+	bool fullbrightSprite = (decal->RenderFlags & RF_FULLBRIGHT) == RF_FULLBRIGHT;
 
 	TriUniforms uniforms;
 	uniforms.objectToClip = worldToClip;
@@ -107,7 +137,7 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, AActor *thing, s
 	}
 	else
 	{
-		uniforms.light = (uint32_t)((thing->Sector->lightlevel + actualextralight) / 255.0f * 256.0f);
+		uniforms.light = (uint32_t)((front->lightlevel + actualextralight) / 255.0f * 256.0f);
 		uniforms.flags = 0;
 	}
 	uniforms.subsectorDepth = subsectorDepth;

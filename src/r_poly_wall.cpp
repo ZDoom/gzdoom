@@ -26,6 +26,7 @@
 #include "sbar.h"
 #include "r_data/r_translate.h"
 #include "r_poly_wall.h"
+#include "r_poly_decal.h"
 #include "r_poly.h"
 #include "r_sky.h" // for skyflatnum
 
@@ -203,6 +204,8 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	{
 		PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector);
 	}
+
+	RenderPolyDecal::RenderWallDecals(worldToClip, Line, SubsectorDepth);
 }
 
 void RenderPolyWall::ClampHeight(TriVertex &v1, TriVertex &v2)

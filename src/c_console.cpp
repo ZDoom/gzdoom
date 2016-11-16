@@ -158,10 +158,14 @@ int active_con_scale()
 	int scale = con_scale;
 	if (scale <= 0)
 	{
-		scale = CleanXfac - 1;
-		if (scale <= 0)
+		scale = uiscale;
+		if (scale == 0)
 		{
-			scale = 1;
+			scale = CleanXfac - 1;
+			if (scale <= 0)
+			{
+				scale = 1;
+			}
 		}
 	}
 	return scale;

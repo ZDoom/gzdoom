@@ -229,9 +229,29 @@ FTexture *RenderPolyWall::GetTexture()
 {
 	FTexture *tex = TexMan(Line->sidedef->GetTexture(Texpart), true);
 	if (tex == nullptr || tex->UseType == FTexture::TEX_Null)
-		return nullptr;
-	else
-		return tex;
+	{
+		// Mapping error. Doom floodfills this with a plane.
+		// This code doesn't do that, but at least it uses the "right" texture..
+
+		if (Line->linedef && Line->backsector && Line->linedef->sidedef[0] == Line->sidedef)
+		{
+			if (Texpart == side_t::top)
+				tex = TexMan(Line->linedef->backsector->GetTexture(sector_t::ceiling), true);
+			else if (Texpart == side_t::bottom)
+				tex = TexMan(Line->linedef->backsector->GetTexture(sector_t::floor), true);
+		}
+		if (Line->linedef && Line->backsector && Line->linedef->sidedef[1] == Line->sidedef)
+		{
+			if (Texpart == side_t::top)
+				tex = TexMan(Line->linedef->frontsector->GetTexture(sector_t::ceiling), true);
+			else if (Texpart == side_t::bottom)
+				tex = TexMan(Line->linedef->frontsector->GetTexture(sector_t::floor), true);
+		}
+
+		if (tex == nullptr || tex->UseType == FTexture::TEX_Null)
+			return nullptr;
+	}
+	return tex;
 }
 
 int RenderPolyWall::GetLightLevel()

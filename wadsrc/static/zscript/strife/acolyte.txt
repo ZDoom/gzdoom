@@ -26,8 +26,6 @@ class Acolyte : StrifeHumanoid
 		Obituary "$OB_ACOLYTE";
 	}
 
-	native void A_BeShadowyFoe ();
-	native void A_AcolyteBits ();
 	native void A_AcolyteDie ();
 
 	States
@@ -76,6 +74,44 @@ class Acolyte : StrifeHumanoid
 		GIBS L 1400;
 		Stop;
 	}
+	
+	//============================================================================
+	//
+	// A_BeShadowyFoe
+	//
+	//============================================================================
+
+	void A_BeShadowyFoe()
+	{
+		A_SetRenderStyle(HR_SHADOW, STYLE_Translucent);
+		bFriendly = false;
+	}
+
+	//============================================================================
+	//
+	// A_AcolyteBits
+	//
+	//============================================================================
+
+	void A_AcolyteBits()
+	{
+		if (SpawnFlags & MTF_SHADOW)
+		{
+			A_BeShadowyFoe();
+		}
+		if (SpawnFlags & MTF_ALTSHADOW)
+		{
+			if (bShadow)
+			{
+				// I dunno.
+			}
+			else
+			{
+				A_SetRenderStyle(0, STYLE_None);
+			}
+		}
+	}
+	
 }
 	
 

@@ -881,7 +881,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	g_hexen/a_clericholy.cpp
 	g_hexen/a_clericmace.cpp
 	g_hexen/a_clericstaff.cpp
-	g_hexen/a_dragon.cpp
 	g_hexen/a_fighteraxe.cpp
 	g_hexen/a_fighterhammer.cpp
 	g_hexen/a_fighterplayer.cpp

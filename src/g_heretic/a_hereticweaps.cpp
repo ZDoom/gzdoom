@@ -59,7 +59,7 @@ extern bool P_AutoUseChaosDevice (player_t *player);
 //
 //----------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
+DEFINE_ACTION_FUNCTION(AActor, A_StaffAttack)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 
@@ -245,7 +245,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL2)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
+DEFINE_ACTION_FUNCTION(AActor, A_GauntletAttack)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 

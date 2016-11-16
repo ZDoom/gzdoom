@@ -1942,7 +1942,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
+DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT_DEF	(flags)			
@@ -2159,7 +2159,7 @@ enum ChaseFlags
 	CHF_STOPIFBLOCKED = 256,
 };
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Wander)
+DEFINE_ACTION_FUNCTION(AActor, A_Wander)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT_DEF(flags);
@@ -2801,7 +2801,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Chase)
+DEFINE_ACTION_FUNCTION(AActor, A_Chase)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_STATE_DEF	(melee)		
@@ -2840,7 +2840,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VileChase)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ExtChase)
+DEFINE_ACTION_FUNCTION(AActor, A_ExtChase)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL		(domelee);
@@ -2980,7 +2980,7 @@ void A_FaceTarget(AActor *self)
 	A_Face(self, self->target);
 }
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Face)
+DEFINE_ACTION_FUNCTION(AActor, A_Face)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(faceto, AActor)

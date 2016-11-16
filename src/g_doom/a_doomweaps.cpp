@@ -113,7 +113,7 @@ enum SAW_Flags
 	SF_STEALARMOR = 128,
 };
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
+DEFINE_ACTION_FUNCTION(AActor, A_Saw)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_SOUND_DEF	(fullsound)			
@@ -454,7 +454,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMissile)
 //
 // A_FireSTGrenade: not exactly backported from ST, but should work the same
 //
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireSTGrenade)
+DEFINE_ACTION_FUNCTION(AActor, A_FireSTGrenade)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_CLASS_DEF(grenade, AActor);
@@ -607,7 +607,7 @@ enum BFG_Flags
 	BFGF_MISSILEORIGIN = 2,
 };
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
+DEFINE_ACTION_FUNCTION(AActor, A_BFGSpray)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_DEF	(spraytype, AActor)

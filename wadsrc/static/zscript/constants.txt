@@ -898,3 +898,22 @@ const HR_SHADOW = (0x6800 / 65536.);
 // Hexen's TINTTAB is the same as Heretic's, just reversed.
 const HX_SHADOW = (0x9800 / 65536.);
 const HX_ALTSHADOW = (0x6800 / 65536.);
+
+enum EMapThingFlags
+{
+	MTF_AMBUSH			= 0x0008,	// Thing is deaf
+	MTF_DORMANT			= 0x0010,	// Thing is dormant (use Thing_Activate)
+
+	MTF_SINGLE			= 0x0100,	// Thing appears in single-player games
+	MTF_COOPERATIVE		= 0x0200,	// Thing appears in cooperative games
+	MTF_DEATHMATCH		= 0x0400,	// Thing appears in deathmatch games
+
+	MTF_SHADOW			= 0x0800,
+	MTF_ALTSHADOW		= 0x1000,
+	MTF_FRIENDLY		= 0x2000,
+	MTF_STANDSTILL		= 0x4000,
+	MTF_STRIFESOMETHING	= 0x8000,
+
+	MTF_SECRET			= 0x080000,	// Secret pickup
+	MTF_NOINFIGHTING	= 0x100000,
+};

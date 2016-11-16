@@ -2128,7 +2128,7 @@ void ZCCCompiler::InitFunctions()
 				if (f->Flags & ZCC_Native)
 				{
 					varflags |= VARF_Native;
-					afd = FindFunction(FName(f->Name).GetChars());
+					afd = FindFunction(c->Type(), FName(f->Name).GetChars());
 					if (afd == nullptr)
 					{
 						Error(f, "The function '%s' has not been exported from the executable.", FName(f->Name).GetChars());

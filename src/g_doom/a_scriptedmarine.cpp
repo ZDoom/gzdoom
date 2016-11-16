@@ -148,7 +148,7 @@ void AScriptedMarine::Tick ()
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Refire)
+DEFINE_ACTION_FUNCTION(AActor, A_M_Refire)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL_DEF(ignoremissile);
@@ -247,7 +247,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MarineLook)
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Saw)
+DEFINE_ACTION_FUNCTION(AActor, A_M_Saw)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_SOUND_DEF	(fullsound)			
@@ -345,7 +345,7 @@ static void MarinePunch(AActor *self, int damagemul)
 	}
 }
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Punch)
+DEFINE_ACTION_FUNCTION(AActor, A_M_Punch)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(mult);
@@ -382,7 +382,7 @@ void P_GunShot2 (AActor *mo, bool accurate, DAngle pitch, PClassActor *pufftype)
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FirePistol)
+DEFINE_ACTION_FUNCTION(AActor, A_M_FirePistol)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL(accurate);
@@ -481,7 +481,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun2)
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FireCGun)
+DEFINE_ACTION_FUNCTION(AActor, A_M_FireCGun)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL(accurate);

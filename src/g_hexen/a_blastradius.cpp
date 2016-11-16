@@ -93,7 +93,7 @@ enum
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_Blast)
+DEFINE_ACTION_FUNCTION (AActor, A_Blast)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT_DEF	(blastflags)			

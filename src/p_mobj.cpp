@@ -3098,6 +3098,13 @@ void AActor::RemoveFromHash ()
 	tid = 0;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, RemoveFromHash)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->RemoveFromHash();
+	return 0;
+}
+
 //==========================================================================
 //
 // P_IsTIDUsed
@@ -6886,12 +6893,56 @@ void AActor::SetTranslation(const char *trname)
 	// silently ignore if the name does not exist, this would create some insane message spam otherwise.
 }
 
+
+class DActorIterator : public DObject, public NActorIterator
+{
+	DECLARE_CLASS(DActorIterator, DObject)
+
+public:
+	DActorIterator(PClassActor *cls= nullptr, int tid = 0)
+		: NActorIterator(cls, tid)
+	{
+	}
+};
+
+IMPLEMENT_CLASS(DActorIterator, false, false, false, false);
+DEFINE_ACTION_FUNCTION(DActorIterator, Create)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT_DEF(tid);
+	PARAM_CLASS_DEF(type, AActor);
+	ACTION_RETURN_OBJECT(new DActorIterator(type, tid));
+}
+
+DEFINE_ACTION_FUNCTION(DActorIterator, Next)
+{
+	PARAM_SELF_PROLOGUE(DActorIterator);
+	ACTION_RETURN_OBJECT(self->Next());
+}
+
+DEFINE_ACTION_FUNCTION(DActorIterator, Reinit)
+{
+	PARAM_SELF_PROLOGUE(DActorIterator);
+	self->Reinit();
+	return 0;
+}
+
+
+
 DEFINE_ACTION_FUNCTION(AActor, deltaangle)	// should this be global?
 {
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(a1);
 	PARAM_FLOAT(a2);
 	ACTION_RETURN_FLOAT(deltaangle(DAngle(a1), DAngle(a2)).Degrees);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, absangle)	// should this be global?
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(a1);
+	PARAM_FLOAT(a2);
+	ACTION_RETURN_FLOAT(absangle(DAngle(a1), DAngle(a2)).Degrees);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, Distance2D)

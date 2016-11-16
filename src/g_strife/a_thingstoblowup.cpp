@@ -26,7 +26,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Bang4Cloud)
 
 // -------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveQuestItem)
+DEFINE_ACTION_FUNCTION(AActor, A_GiveQuestItem)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(questitem);

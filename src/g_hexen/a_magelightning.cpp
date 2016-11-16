@@ -255,7 +255,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MLightningAttack)
+DEFINE_ACTION_FUNCTION(AActor, A_MLightningAttack)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_CLASS_DEF(floor, AActor);

@@ -14,7 +14,7 @@
 
 static FRandom pr_spawnfly ("SpawnFly");
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
+DEFINE_ACTION_FUNCTION(AActor, A_BrainSpit)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_DEF(spawntype, AActor);

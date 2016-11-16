@@ -185,17 +185,17 @@ DECLARE_ACTION(A_FireRailgun)
 
 // Default ammo use of the various weapon attacks
 static AmmoPerAttack AmmoPerAttacks[] = {
-	{ &A_Punch_VMPtr, 0},
-	{ &A_FirePistol_VMPtr, 1},
-	{ &A_FireShotgun_VMPtr, 1}, 
-	{ &A_FireShotgun2_VMPtr, 2},
-	{ &A_FireCGun_VMPtr, 1},
-	{ &A_FireMissile_VMPtr, 1},
-	{ &A_Saw_VMPtr, 0},
-	{ &A_FirePlasma_VMPtr, 1},
-	{ &A_FireBFG_VMPtr, -1},	// uses deh.BFGCells
-	{ &A_FireOldBFG_VMPtr, 1},
-	{ &A_FireRailgun_VMPtr, 1},
+	{ &AActor_A_Punch_VMPtr, 0},
+	{ &AActor_A_FirePistol_VMPtr, 1},
+	{ &AActor_A_FireShotgun_VMPtr, 1},
+	{ &AActor_A_FireShotgun2_VMPtr, 2},
+	{ &AActor_A_FireCGun_VMPtr, 1},
+	{ &AActor_A_FireMissile_VMPtr, 1},
+	{ &AActor_A_Saw_VMPtr, 0},
+	{ &AActor_A_FirePlasma_VMPtr, 1},
+	{ &AActor_A_FireBFG_VMPtr, -1},	// uses deh.BFGCells
+	{ &AActor_A_FireOldBFG_VMPtr, 1},
+	{ &AActor_A_FireRailgun_VMPtr, 1},
 	{ NULL, 0}
 };
 

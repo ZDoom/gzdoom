@@ -772,7 +772,7 @@ void DoReadyWeapon(AActor *self)
 	DoReadyWeaponToGeneric(self, ~0);
 }
 
-DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_WeaponReady)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_WeaponReady)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT_DEF(flags);
@@ -904,7 +904,7 @@ static void P_CheckWeaponButtons (player_t *player)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_ReFire)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_ReFire)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_STATE_ACTION_DEF(state);
@@ -942,7 +942,7 @@ void A_ReFire(AActor *self, FState *state)
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AInventory, A_ClearReFire)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_ClearReFire)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	player_t *player = self->player;
@@ -964,7 +964,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_ClearReFire)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AInventory, A_CheckReload)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_CheckReload)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 
@@ -1152,7 +1152,7 @@ DEFINE_ACTION_FUNCTION(AActor, OverlayID)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_Lower)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 
@@ -1200,7 +1200,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
+DEFINE_ACTION_FUNCTION(AActor, A_Raise)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 
@@ -1241,7 +1241,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Overlay)
+DEFINE_ACTION_FUNCTION(AActor, A_Overlay)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT		(layer);
@@ -1261,7 +1261,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Overlay)
 	ACTION_RETURN_BOOL(true);
 }
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ClearOverlays)
+DEFINE_ACTION_FUNCTION(AActor, A_ClearOverlays)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT_DEF(start);
@@ -1312,7 +1312,7 @@ enum GF_Flags
 	GFF_NOEXTCHANGE = 1,
 };
 
-DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_GunFlash)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_STATE_ACTION_DEF(flash);
@@ -1415,7 +1415,7 @@ void P_GunShot (AActor *mo, bool accurate, PClassActor *pufftype, DAngle pitch)
 	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, pufftype);
 }
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Light)
+DEFINE_ACTION_FUNCTION(AActor, A_Light)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(light);

@@ -7962,7 +7962,7 @@ FxExpression *FxReturnStatement::Resolve(FCompileContext &ctx)
 	else
 	{
 		// If we already know the real return type we need at least try to cast the value to its proper type (unless in an anonymous function.)
-		if (ctx.ReturnProto != nullptr && ctx.Function->SymbolName != NAME_None)
+		if (ctx.ReturnProto != nullptr && ctx.ReturnProto->ReturnTypes.Size() > 0 && ctx.Function->SymbolName != NAME_None)
 		{
 			Value = new FxTypeCast(Value, ctx.ReturnProto->ReturnTypes[0], false, false);
 			Value = Value->Resolve(ctx);

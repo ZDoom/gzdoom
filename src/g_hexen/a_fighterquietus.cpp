@@ -24,7 +24,7 @@ static FRandom pr_fswordflame ("FSwordFlame");
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropWeaponPieces)
+DEFINE_ACTION_FUNCTION(AActor, A_DropWeaponPieces)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS(p1, AActor);

@@ -1020,26 +1020,21 @@ struct AFuncDesc
 
 // Macros to handle action functions. These are here so that I don't have to
 // change every single use in case the parameters change.
-#define DECLARE_ACTION(name)	extern VMNativeFunction *name##_VMPtr;
+#define DECLARE_ACTION(name)	extern VMNativeFunction *AActor_##name##_VMPtr;
 
 // This distinction is here so that CALL_ACTION produces errors when trying to
 // access a function that requires parameters.
 #define DEFINE_ACTION_FUNCTION(cls, name) \
-	static int AF_##name(VM_ARGS); \
-	VMNativeFunction *name##_VMPtr; \
-	static const AFuncDesc cls##_##name##_Hook = { #name, AF_##name, &name##_VMPtr }; \
+	static int AF_##cls##_##name(VM_ARGS); \
+	VMNativeFunction *cls##_##name##_VMPtr; \
+	static const AFuncDesc cls##_##name##_Hook = { #cls "_" #name, AF_##cls##_##name, &cls##_##name##_VMPtr }; \
 	extern AFuncDesc const *const cls##_##name##_HookPtr; \
 	MSVC_ASEG AFuncDesc const *const cls##_##name##_HookPtr GCC_ASEG = &cls##_##name##_Hook; \
-	static int AF_##name(VM_ARGS)
-
-#define DEFINE_ACTION_FUNCTION_PARAMS(cls, name) DEFINE_ACTION_FUNCTION(cls, name)
-
-//#define DECLARE_PARAMINFO AActor *self, AActor *stateowner, FState *CallingState, int ParameterIndex, StateCallData *statecall
-//#define PUSH_PARAMINFO self, stateowner, CallingState, ParameterIndex, statecall
+	static int AF_##cls##_##name(VM_ARGS)
 
 class AActor;
 void CallAction(VMFrameStack *stack, VMFunction *vmfunc, AActor *self);
-#define CALL_ACTION(name, self) CallAction(stack, name##_VMPtr, self);
+#define CALL_ACTION(name, self) CallAction(stack, AActor_##name##_VMPtr, self);
 
 
 #define ACTION_RETURN_STATE(v) do { FState *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_STATE); return 1; } return 0; } while(0)

@@ -20,6 +20,13 @@ class ThinkerIterator : Object native
 	native void Reinit();
 }
 
+class ActorIterator : Object native
+{
+	native static ActorIterator Create(int tid, class<Actor> type = "Actor");
+	native Actor Next();
+	native void Reinit();
+}
+
 class DropItem : Object native
 {
 	/* native fields listed for reference only for now

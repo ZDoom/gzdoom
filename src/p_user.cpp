@@ -1626,7 +1626,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 //
 //----------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
+DEFINE_ACTION_FUNCTION(AActor, A_SkullPop)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_DEF(spawntype, APlayerChunk);

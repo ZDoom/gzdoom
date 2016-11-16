@@ -42,7 +42,7 @@ static FRandom pr_volcimpact ("VolcBallImpact");
 //
 //----------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PodPain)
+DEFINE_ACTION_FUNCTION(AActor, A_PodPain)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_DEF	(gootype, AActor)
@@ -97,7 +97,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RemovePod)
 
 #define MAX_GEN_PODS 16
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MakePod)
+DEFINE_ACTION_FUNCTION(AActor, A_MakePod)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_DEF(podtype, AActor)

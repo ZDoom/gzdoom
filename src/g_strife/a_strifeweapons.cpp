@@ -144,7 +144,7 @@ enum
 	AMF_EMITFROMTARGET = 4,
 };
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_AlertMonsters)
+DEFINE_ACTION_FUNCTION(AActor, A_AlertMonsters)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT_DEF(maxdist);
@@ -246,7 +246,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShowElectricFlash)
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireArrow)
+DEFINE_ACTION_FUNCTION(AActor, A_FireArrow)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_CLASS(ti, AActor);
@@ -686,7 +686,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burnination)
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
+DEFINE_ACTION_FUNCTION(AActor, A_FireGrenade)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_CLASS(grenadetype, AActor);

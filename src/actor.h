@@ -1442,6 +1442,10 @@ public:
 
 		return base;
 	}
+	void Reinit()
+	{
+		base = nullptr;
+	}
 private:
 	AActor *base;
 	int id;

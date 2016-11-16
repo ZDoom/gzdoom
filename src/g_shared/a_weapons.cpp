@@ -1923,7 +1923,7 @@ PClassWeapon *Net_ReadWeapon(BYTE **stream)
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AWeapon, A_ZoomFactor)
+DEFINE_ACTION_FUNCTION(AWeapon, A_ZoomFactor)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_FLOAT_DEF(zoom);
@@ -1951,7 +1951,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AWeapon, A_ZoomFactor)
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AWeapon, A_SetCrosshair)
+DEFINE_ACTION_FUNCTION(AWeapon, A_SetCrosshair)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT(xhair);

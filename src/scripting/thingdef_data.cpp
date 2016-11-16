@@ -571,28 +571,33 @@ FPropertyInfo *FindProperty(const char * string)
 //
 //==========================================================================
 
-AFuncDesc *FindFunction(const char * string)
+AFuncDesc *FindFunction(PClass *cls, const char * string)
 {
-	int min = 0, max = AFTable.Size()-1;
-
-	while (min <= max)
+	for (int i = 0; i < 2; i++)
 	{
-		int mid = (min + max) / 2;
-		int lexval = stricmp (string, AFTable[mid].Name);
-		if (lexval == 0)
+		if (i == 1 && !cls->IsDescendantOf(RUNTIME_CLASS(AActor))) break;
+		FStringf fullname("%s_%s", i == 0 ? cls->TypeName.GetChars() : "Actor", string);
+		int min = 0, max = AFTable.Size() - 1;
+
+		while (min <= max)
 		{
-			return &AFTable[mid];
-		}
-		else if (lexval > 0)
-		{
-			min = mid + 1;
-		}
-		else
-		{
-			max = mid - 1;
+			int mid = (min + max) / 2;
+			int lexval = stricmp(fullname, AFTable[mid].Name + 1);
+			if (lexval == 0)
+			{
+				return &AFTable[mid];
+			}
+			else if (lexval > 0)
+			{
+				min = mid + 1;
+			}
+			else
+			{
+				max = mid - 1;
+			}
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 
@@ -627,7 +632,7 @@ static int propcmp(const void * a, const void * b)
 
 static int funccmp(const void * a, const void * b)
 {
-	return stricmp( ((AFuncDesc*)a)->Name, ((AFuncDesc*)b)->Name);
+	return stricmp(((AFuncDesc*)a)->Name + 1, ((AFuncDesc*)b)->Name + 1);	// +1 to get past the prefix letter of the native class name, which gets omitted by the FName for the class.
 }
 
 //==========================================================================

@@ -343,7 +343,7 @@ DEFINE_ACTION_FUNCTION(AActor, FindState)
 }
 
 // same as above but context aware.
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, ResolveState)
+DEFINE_ACTION_FUNCTION(AActor, ResolveState)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_STATE_ACTION(newstate);

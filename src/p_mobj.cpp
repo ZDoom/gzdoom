@@ -6956,7 +6956,8 @@ DEFINE_ACTION_FUNCTION(AActor, AddZ)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(addz);
-	self->AddZ(addz);
+	PARAM_BOOL_DEF(moving);
+	self->AddZ(addz, moving);
 	return 0;
 }
 

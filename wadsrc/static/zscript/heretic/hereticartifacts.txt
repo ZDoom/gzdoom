@@ -80,8 +80,6 @@ Class ActivatedTimeBomb : Actor
 		DeathSound "misc/timebomb";
 	}
 		
-	native void A_Timebomb();
-	
 	States
 	{
 	Spawn:
@@ -90,6 +88,13 @@ Class ActivatedTimeBomb : Actor
 		XPL1 A 4 BRIGHT A_Timebomb;
 		XPL1 BCDEF 4 BRIGHT;
 		Stop;
+	}
+
+	void A_TimeBomb()
+	{
+		AddZ(32, false);
+		A_SetRenderStyle(1., STYLE_Add);
+		A_Explode();
 	}
 }
 

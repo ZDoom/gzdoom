@@ -44,18 +44,6 @@ bool AArtiTomeOfPower::Use (bool pickup)
 
 // Time bomb ----------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AActor, A_TimeBomb)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-
-	self->AddZ(32, false);
-	self->RenderStyle = STYLE_Add;
-	self->Alpha = 1.;
-	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, RADF_HURTSOURCE);
-	P_CheckSplash(self, 128);
-	return 0;
-}
-
 class AArtiTimeBomb : public AInventory
 {
 	DECLARE_CLASS (AArtiTimeBomb, AInventory)

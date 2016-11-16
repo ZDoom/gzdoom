@@ -291,7 +291,7 @@ class Dragon : Actor
 
 	void A_DragonCheckCrash()
 	{
-		if (pos.z < floorz)
+		if (pos.z <= floorz)
 		{
 			SetStateLabel ("Crash");
 		}

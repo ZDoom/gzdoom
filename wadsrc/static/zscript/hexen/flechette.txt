@@ -37,8 +37,6 @@ class FireBomb : Actor
 		DeathSound "FlechetteExplode";
 	}
 
-	native void A_TimeBomb();
-
 	States
 	{
 	Spawn:
@@ -49,6 +47,13 @@ class FireBomb : Actor
 		XPL1 A 4 Bright A_TimeBomb;
 		XPL1 BCDEF 4 Bright;
 		Stop;
+	}
+
+	void A_TimeBomb()
+	{
+		AddZ(32, false);
+		A_SetRenderStyle(1., STYLE_Add);
+		A_Explode();
 	}
 }
 

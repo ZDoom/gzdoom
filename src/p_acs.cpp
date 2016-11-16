@@ -4549,6 +4549,8 @@ static void DoSetCVar(FBaseCVar *cvar, int value, bool is_string, bool force=fal
 	}
 }
 
+EXTERN_CVAR(Bool, sv_overridegetcvar)
+
 // Converts floating- to fixed-point as required.
 static int DoGetCVar(FBaseCVar *cvar, bool is_string)
 {
@@ -4557,6 +4559,24 @@ static int DoGetCVar(FBaseCVar *cvar, bool is_string)
 	if (cvar == nullptr)
 	{
 		return 0;
+	}
+	else if (sv_overridegetcvar && (cvar->GetFlags() & CVAR_OVERRIDEGET))
+	{
+		if (is_string)
+		{
+			val = cvar->GetGenericRepDefault(CVAR_String);
+			return GlobalACSStrings.AddString(val.String);
+		}
+		else if (cvar->GetRealType() == CVAR_Float)
+		{
+			val = cvar->GetGenericRepDefault(CVAR_Float);
+			return DoubleToACS(val.Float);
+		}
+		else
+		{
+			val = cvar->GetGenericRepDefault(CVAR_Int);
+			return val.Int;
+		}
 	}
 	else if (is_string)
 	{

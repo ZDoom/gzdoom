@@ -10,7 +10,6 @@ struct side_t;
 struct F3DFloor;
 class DBaseDecal;
 
-void P_SpawnDirt (AActor *actor, double radius);
 class DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *sec, double x, double y, double z, DAngle angle, double tracedist, bool permanent);
 
 class DBaseDecal : public DThinker

@@ -52,4 +52,3 @@
 #include "a_spike.cpp"
 #include "a_summon.cpp"
 #include "a_teleportother.cpp"
-#include "a_wraith.cpp"

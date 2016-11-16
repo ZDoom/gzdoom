@@ -3468,47 +3468,6 @@ int P_Massacre ()
 	return killcount;
 }
 
-//
-// A_SinkMobj
-// Sink a mobj incrementally into the floor
-//
-
-bool A_SinkMobj (AActor *actor, double speed)
-{
-	if (actor->Floorclip < actor->Height)
-	{
-		actor->Floorclip += speed;
-		return false;
-	}
-	return true;
-}
-
-//
-// A_RaiseMobj
-// Raise a mobj incrementally from the floor to 
-// 
-
-bool A_RaiseMobj (AActor *actor, double speed)
-{
-	bool done = true;
-
-	// Raise a mobj from the ground
-	if (actor->Floorclip > 0)
-	{
-		actor->Floorclip -= speed;
-		if (actor->Floorclip <= 0)
-		{
-			actor->Floorclip = 0;
-			done = true;
-		}
-		else
-		{
-			done = false;
-		}
-	}
-	return done;		// Reached target height
-}
-
 DEFINE_ACTION_FUNCTION(AActor, A_ClassBossHealth)
 {
 	PARAM_SELF_PROLOGUE(AActor);

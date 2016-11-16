@@ -900,7 +900,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	g_hexen/a_spike.cpp
 	g_hexen/a_summon.cpp
 	g_hexen/a_teleportother.cpp
-	g_hexen/a_wraith.cpp
 	g_strife/a_acolyte.cpp
 	g_strife/a_alienspectres.cpp
 	g_strife/a_coin.cpp

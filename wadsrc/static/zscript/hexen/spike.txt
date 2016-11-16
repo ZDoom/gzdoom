@@ -26,11 +26,7 @@ class ThrustFloor : Actor native
 		Height 128;
 	}
 
-	native void A_ThrustRaise();
 	native void A_ThrustImpale();
-	native void A_ThrustLower();
-	native void A_ThrustInitDn();
-	native void A_ThrustInitUp();
 
 	States
 	{
@@ -81,6 +77,79 @@ class ThrustFloor : Actor native
 		TSPK B 2 A_ThrustImpale;
 		Loop;
 	}
+	
+	//===========================================================================
+	//
+	// Thrust floor stuff
+	//
+	// Thrust Spike Variables
+	//		master		pointer to dirt clump actor
+	//		special2	speed of raise
+	//		args[0]		0 = lowered,  1 = raised
+	//		args[1]		0 = normal,   1 = bloody
+	//===========================================================================
+
+	void A_ThrustInitUp()
+	{
+		special2 = 5;	// Raise speed
+		args[0] = 1;		// Mark as up
+		Floorclip = 0;
+		bSolid = true;
+		bNoTeleport = true;
+		bFloorClip = true;
+		special1 = 0;
+	}
+
+	void A_ThrustInitDn()
+	{
+		special2 = 5;	// Raise speed
+		args[0] = 0;		// Mark as down
+		Floorclip = Default.Height;
+		bSolid = false;
+		bNoTeleport = true;
+		bFloorClip = true;
+		bInvisible = true;
+		master = Spawn("DirtClump", Pos, ALLOW_REPLACE);
+	}
+
+
+	void A_ThrustRaise()
+	{
+		if (RaiseMobj (special2))
+		{	// Reached it's target height
+			args[0] = 1;
+			if (args[1])
+				SetStateLabel ("BloodThrustInit2", true);
+			else
+				SetStateLabel ("ThrustInit2", true);
+		}
+
+		// Lose the dirt clump
+		if ((Floorclip < Height) && master)
+		{
+			master.Destroy ();
+			master = null;
+		}
+
+		// Spawn some dirt
+		if (random[Thrustraise]()<40)
+			SpawnDirt (radius);
+		special2++;							// Increase raise speed
+	}
+
+	void A_ThrustLower()
+	{
+		if (SinkMobj (6))
+		{
+			args[0] = 0;
+			if (args[1])
+				SetStateLabel ("BloodThrustInit1", true);
+			else
+				SetStateLabel ("ThrustInit1", true);
+		}
+	}
+
+	
 }
 
 // Spike up -----------------------------------------------------------------

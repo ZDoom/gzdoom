@@ -20,28 +20,13 @@ static FRandom pr_thrustraise ("ThrustRaise");
 class AThrustFloor : public AActor
 {
 	DECLARE_CLASS (AThrustFloor, AActor)
-	HAS_OBJECT_POINTERS
 public:
 	
-	void Serialize(FSerializer &arc);
-
 	void Activate (AActor *activator);
 	void Deactivate (AActor *activator);
-
-	TObjPtr<AActor> DirtClump;
 };
 
-IMPLEMENT_CLASS(AThrustFloor, false, true, false, false)
-
-IMPLEMENT_POINTERS_START(AThrustFloor)
-	IMPLEMENT_POINTER(DirtClump)
-IMPLEMENT_POINTERS_END
-
-void AThrustFloor::Serialize(FSerializer &arc)
-{
-	Super::Serialize (arc);
-	arc("dirtclump", DirtClump);
-}
+IMPLEMENT_CLASS(AThrustFloor, false, false, false, false)
 
 void AThrustFloor::Activate (AActor *activator)
 {
@@ -66,90 +51,6 @@ void AThrustFloor::Deactivate (AActor *activator)
 		else
 			SetState (FindState ("ThrustLower"));
 	}
-}
-
-//===========================================================================
-//
-// Thrust floor stuff
-//
-// Thrust Spike Variables
-//		DirtClump	pointer to dirt clump actor
-//		special2	speed of raise
-//		args[0]		0 = lowered,  1 = raised
-//		args[1]		0 = normal,   1 = bloody
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_ThrustInitUp)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-
-	self->special2 = 5;	// Raise speed
-	self->args[0] = 1;		// Mark as up
-	self->Floorclip = 0;
-	self->flags = MF_SOLID;
-	self->flags2 = MF2_NOTELEPORT|MF2_FLOORCLIP;
-	self->special1 = 0L;
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_ThrustInitDn)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-
-	self->special2 = 5;	// Raise speed
-	self->args[0] = 0;		// Mark as down
-	self->Floorclip = self->GetDefault()->Height;
-	self->flags = 0;
-	self->flags2 = MF2_NOTELEPORT|MF2_FLOORCLIP;
-	self->renderflags = RF_INVISIBLE;
-	static_cast<AThrustFloor *>(self)->DirtClump =
-		Spawn("DirtClump", self->Pos(), ALLOW_REPLACE);
-	return 0;
-}
-
-
-DEFINE_ACTION_FUNCTION(AActor, A_ThrustRaise)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-
-	AThrustFloor *actor = static_cast<AThrustFloor *>(self);
-
-	if (A_RaiseMobj (actor, self->special2))
-	{	// Reached it's target height
-		actor->args[0] = 1;
-		if (actor->args[1])
-			actor->SetState (actor->FindState ("BloodThrustInit2"), true);
-		else
-			actor->SetState (actor->FindState ("ThrustInit2"), true);
-	}
-
-	// Lose the dirt clump
-	if ((actor->Floorclip < actor->Height) && actor->DirtClump)
-	{
-		actor->DirtClump->Destroy ();
-		actor->DirtClump = NULL;
-	}
-
-	// Spawn some dirt
-	if (pr_thrustraise()<40)
-		P_SpawnDirt (actor, actor->radius);
-	actor->special2++;							// Increase raise speed
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_ThrustLower)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-
-	if (A_SinkMobj (self, 6))
-	{
-		self->args[0] = 0;
-		if (self->args[1])
-			self->SetState (self->FindState ("BloodThrustInit1"), true);
-		else
-			self->SetState (self->FindState ("ThrustInit1"), true);
-	}
-	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_ThrustImpale)

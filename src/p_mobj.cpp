@@ -204,8 +204,8 @@ void AActor::InitNativeFields()
 	meta->AddNativeField("fillcolor",			TypeColor,		myoffsetof(AActor, fillcolor));
 	meta->AddNativeField("Sector",				TypeSector,		myoffsetof(AActor, Sector));
 	//meta->AddNativeField("Subsector",			TypeSubsector,	myoffsetof(AActor, subsector));
-	meta->AddNativeField(NAME_CeilingZ,			TypeFloat64,	myoffsetof(AActor, ceilingz), VARF_ReadOnly);
-	meta->AddNativeField(NAME_FloorZ,			TypeFloat64,	myoffsetof(AActor, floorz), VARF_ReadOnly);
+	meta->AddNativeField(NAME_CeilingZ,			TypeFloat64,	myoffsetof(AActor, ceilingz));
+	meta->AddNativeField(NAME_FloorZ,			TypeFloat64,	myoffsetof(AActor, floorz));
 	meta->AddNativeField("DropoffZ",			TypeFloat64,	myoffsetof(AActor, dropoffz), VARF_ReadOnly);
 	meta->AddNativeField("floorsector",			TypeSector,		myoffsetof(AActor, floorsector));
 	meta->AddNativeField("floorpic",			TypeSInt32,		myoffsetof(AActor, floorpic));	// Do we need a variable type 'texture' to do this?
@@ -225,7 +225,7 @@ void AActor::InitNativeFields()
 	meta->AddNativeField("specialf1",			TypeFloat64,	myoffsetof(AActor, specialf1));
 	meta->AddNativeField("specialf2",			TypeFloat64,	myoffsetof(AActor, specialf2));
 	meta->AddNativeField("weaponspecial",		TypeSInt32,		myoffsetof(AActor, weaponspecial));
-	meta->AddNativeField(NAME_Health,			TypeSInt32,		myoffsetof(AActor, health), VARF_ReadOnly);
+	meta->AddNativeField(NAME_Health,			TypeSInt32,		myoffsetof(AActor, health));
 	meta->AddNativeField("movedir",				TypeUInt8,		myoffsetof(AActor, movedir));
 	meta->AddNativeField("visdir",				TypeSInt8,		myoffsetof(AActor, visdir));
 	meta->AddNativeField("movecount",			TypeSInt16,		myoffsetof(AActor, movecount));

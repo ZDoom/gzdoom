@@ -268,6 +268,68 @@ class Actor : Thinker native
 		DamageMobj(null, null, health, damagetype, DMG_FORCED);
 	}
 
+	void SpawnDirt (double radius)
+	{
+		class<Actor> dtype;
+		switch (random[Dirt](0, 5))
+		{
+			case 0: dtype = "Dirt1"; break;
+			case 1: dtype = "Dirt2"; break;
+			case 2: dtype = "Dirt3"; break;
+			case 3: dtype = "Dirt4"; break;
+			case 4: dtype = "Dirt5"; break;
+			default: dtype = "Dirt6"; break;
+		}
+
+		double zo = random[Dirt]() / 128. + 1;
+		Vector3 pos = Vec3Angle(radius, random[Dirt]() * (360./256), zo);
+
+		Actor mo = Spawn (dtype, pos, ALLOW_REPLACE);
+		if (mo)
+		{
+			mo.Vel.Z = random[Dirt]() / 64.;
+		}
+	}
+	
+	//
+	// A_SinkMobj
+	// Sink a mobj incrementally into the floor
+	//
+
+	bool SinkMobj (double speed)
+	{
+		if (Floorclip < Height)
+		{
+			Floorclip += speed;
+			return false;
+		}
+		return true;
+	}
+
+	//
+	// A_RaiseMobj
+	// Raise a mobj incrementally from the floor to 
+	// 
+
+	bool RaiseMobj (double speed)
+	{
+		// Raise a mobj from the ground
+		if (Floorclip > 0)
+		{
+			Floorclip -= speed;
+			if (Floorclip <= 0)
+			{
+				Floorclip = 0;
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	
 
 	native void A_Face(Actor faceto, float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0);
 

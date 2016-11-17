@@ -1223,7 +1223,7 @@ IMPLEMENT_CLASS(PString, false, false, false, false)
 //==========================================================================
 
 PString::PString()
-: PBasicType(sizeof(FString), __alignof(FString))
+: PBasicType(sizeof(FString), alignof(FString))
 {
 	mDescriptiveName = "String";
 	storeOp = OP_SS;
@@ -1323,7 +1323,7 @@ PName::PName()
 : PInt(sizeof(FName), true, false)
 {
 	mDescriptiveName = "Name";
-	assert(sizeof(FName) == __alignof(FName));
+	assert(sizeof(FName) == alignof(FName));
 }
 
 //==========================================================================
@@ -1373,7 +1373,7 @@ PSound::PSound()
 : PInt(sizeof(FSoundID), true)
 {
 	mDescriptiveName = "Sound";
-	assert(sizeof(FSoundID) == __alignof(FSoundID));
+	assert(sizeof(FSoundID) == alignof(FSoundID));
 }
 
 //==========================================================================
@@ -1423,7 +1423,7 @@ PColor::PColor()
 : PInt(sizeof(PalEntry), true)
 {
 	mDescriptiveName = "Color";
-	assert(sizeof(PalEntry) == __alignof(PalEntry));
+	assert(sizeof(PalEntry) == alignof(PalEntry));
 }
 
 /* PStateLabel *****************************************************************/
@@ -1453,7 +1453,7 @@ IMPLEMENT_CLASS(PStatePointer, false, false, false, false)
 //==========================================================================
 
 PStatePointer::PStatePointer()
-: PBasicType(sizeof(FState *), __alignof(FState *))
+: PBasicType(sizeof(FState *), alignof(FState *))
 {
 	mDescriptiveName = "State";
 	storeOp = OP_SP;
@@ -1501,7 +1501,7 @@ IMPLEMENT_POINTERS_END
 //==========================================================================
 
 PPointer::PPointer()
-: PBasicType(sizeof(void *), __alignof(void *)), PointedType(NULL), IsConst(false)
+: PBasicType(sizeof(void *), alignof(void *)), PointedType(NULL), IsConst(false)
 {
 	mDescriptiveName = "NullPointer";
 	SetOps();
@@ -1514,7 +1514,7 @@ PPointer::PPointer()
 //==========================================================================
 
 PPointer::PPointer(PType *pointsat, bool isconst)
-: PBasicType(sizeof(void *), __alignof(void *)), PointedType(pointsat), IsConst(isconst)
+: PBasicType(sizeof(void *), alignof(void *)), PointedType(pointsat), IsConst(isconst)
 {
 	mDescriptiveName.Format("Pointer<%s%s>", pointsat->DescriptiveName(), isconst? "readonly " : "");
 	SetOps();
@@ -1948,7 +1948,7 @@ PDynArray::PDynArray()
 {
 	mDescriptiveName = "DynArray";
 	Size = sizeof(FArray);
-	Align = __alignof(FArray);
+	Align = alignof(FArray);
 }
 
 //==========================================================================
@@ -1962,7 +1962,7 @@ PDynArray::PDynArray(PType *etype)
 {
 	mDescriptiveName.Format("DynArray<%s>", etype->DescriptiveName());
 	Size = sizeof(FArray);
-	Align = __alignof(FArray);
+	Align = alignof(FArray);
 }
 
 //==========================================================================
@@ -2032,7 +2032,7 @@ PMap::PMap()
 {
 	mDescriptiveName = "Map";
 	Size = sizeof(FMap);
-	Align = __alignof(FMap);
+	Align = alignof(FMap);
 }
 
 //==========================================================================
@@ -2046,7 +2046,7 @@ PMap::PMap(PType *keytype, PType *valtype)
 {
 	mDescriptiveName.Format("Map<%s, %s>", keytype->DescriptiveName(), valtype->DescriptiveName());
 	Size = sizeof(FMap);
-	Align = __alignof(FMap);
+	Align = alignof(FMap);
 }
 
 //==========================================================================

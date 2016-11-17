@@ -641,6 +641,7 @@ static int funccmp(const void * a, const void * b)
 //
 //==========================================================================
 void G_InitLevelLocalsForScript();
+void P_InitPlayerForScript();
 
 void InitThingdef()
 {
@@ -687,6 +688,7 @@ void InitThingdef()
 	sstruct->AddNativeField("soundtarget", TypeActor, myoffsetof(sector_t, SoundTarget));
 
 	G_InitLevelLocalsForScript();
+	P_InitPlayerForScript();
 
 	FAutoSegIterator probe(CRegHead, CRegTail);
 

@@ -3119,3 +3119,116 @@ bool P_IsPlayerTotallyFrozen(const player_t *player)
 		player->cheats & CF_TOTALLYFROZEN ||
 		((level.flags2 & LEVEL2_FROZEN) && player->timefreezer == 0);
 }
+
+
+//==========================================================================
+//
+// sets up the script-side version of players
+// Since this is a global variable and the script compiler does
+// not allow defining them, it will be fully set up here.
+//
+//==========================================================================
+
+void P_InitPlayerForScript()
+{
+	PStruct *pstruct = NewStruct("Player", nullptr);
+	pstruct->Size = sizeof(player_t);
+	pstruct->Align = alignof(player_t);
+	PArray *parray = NewArray(pstruct, MAXPLAYERS);
+	pstruct->Size = 0;	// make sure it cannot be instantiated in the script.
+	PField *playerf = new PField("players", pstruct, VARF_Native | VARF_Static, (intptr_t)&players);
+	GlobalSymbols.AddSymbol(playerf);
+
+	PType *TypeActor = NewPointer(RUNTIME_CLASS(AActor));
+	PType *TypePlayerPawn = NewPointer(RUNTIME_CLASS(APlayerPawn));
+	PType *TypeWeapon = NewPointer(RUNTIME_CLASS(AWeapon));
+	PType *TypeClassActor = NewClassPointer(RUNTIME_CLASS(AActor));
+	PType *TypeClassPlayerPawn = NewClassPointer(RUNTIME_CLASS(APlayerPawn));
+	PType *TypeClassWeapon = NewClassPointer(RUNTIME_CLASS(AWeapon));
+
+	//ticcmd_t	cmd;
+	//usercmd_t	original_cmd;
+	//userinfo_t	userinfo;				// [RH] who is this?
+	//FWeaponSlots weapons;
+	pstruct->AddNativeField("mo", TypePlayerPawn, myoffsetof(player_t, mo), VARF_ReadOnly);
+	pstruct->AddNativeField("playerstate", TypeUInt8, myoffsetof(player_t, playerstate));
+	pstruct->AddNativeField("original_oldbuttons", TypeUInt32, myoffsetof(player_t, original_oldbuttons));
+	pstruct->AddNativeField("cls", TypeClassPlayerPawn, myoffsetof(player_t, cls), VARF_ReadOnly);
+	pstruct->AddNativeField("DesiredFOV", TypeFloat32, myoffsetof(player_t, DesiredFOV));
+	pstruct->AddNativeField("FOV", TypeFloat32, myoffsetof(player_t, FOV), VARF_ReadOnly);
+	pstruct->AddNativeField("viewz", TypeFloat64, myoffsetof(player_t, viewz));
+	pstruct->AddNativeField("viewheight", TypeFloat64, myoffsetof(player_t, viewheight));
+	pstruct->AddNativeField("deltaviewheight", TypeFloat64, myoffsetof(player_t, deltaviewheight));
+	pstruct->AddNativeField("bob", TypeFloat64, myoffsetof(player_t, bob));
+	pstruct->AddNativeField("vel", TypeVector2, myoffsetof(player_t, Vel));
+	pstruct->AddNativeField("centering", TypeBool, myoffsetof(player_t, centering));
+	pstruct->AddNativeField("turnticks", TypeUInt8, myoffsetof(player_t, turnticks));
+	pstruct->AddNativeField("attackdown", TypeBool, myoffsetof(player_t, attackdown));
+	pstruct->AddNativeField("usedown", TypeBool, myoffsetof(player_t, usedown));
+	pstruct->AddNativeField("oldbuttons", TypeUInt32, myoffsetof(player_t, oldbuttons));
+	pstruct->AddNativeField("health", TypeSInt32, myoffsetof(player_t, health));
+	pstruct->AddNativeField("inventorytics", TypeSInt32, myoffsetof(player_t, inventorytics));
+	pstruct->AddNativeField("CurrentPlayerClass", TypeUInt8, myoffsetof(player_t, CurrentPlayerClass));
+	pstruct->AddNativeField("frags", NewArray(TypeSInt32, MAXPLAYERS), myoffsetof(player_t, frags));
+	pstruct->AddNativeField("fragcount", TypeSInt32, myoffsetof(player_t, fragcount));
+	pstruct->AddNativeField("lastkilltime", TypeSInt32, myoffsetof(player_t, lastkilltime));
+	pstruct->AddNativeField("multicount", TypeUInt8, myoffsetof(player_t, multicount));
+	pstruct->AddNativeField("spreecount", TypeUInt8, myoffsetof(player_t, spreecount));
+	pstruct->AddNativeField("WeaponState", TypeUInt16, myoffsetof(player_t, WeaponState));
+	pstruct->AddNativeField("ReadyWeapon", TypeWeapon, myoffsetof(player_t, ReadyWeapon));
+	pstruct->AddNativeField("PendingWeapon", TypeWeapon, myoffsetof(player_t, PendingWeapon));
+	pstruct->AddNativeField("psprites", NewPointer(RUNTIME_CLASS(DPSprite)), myoffsetof(player_t, psprites));
+	pstruct->AddNativeField("cheats", TypeSInt32, myoffsetof(player_t, cheats));
+	pstruct->AddNativeField("timefreezer", TypeSInt32, myoffsetof(player_t, timefreezer));
+	pstruct->AddNativeField("refire", TypeSInt16, myoffsetof(player_t, refire));
+	pstruct->AddNativeField("inconsistent", TypeSInt16, myoffsetof(player_t, inconsistant));
+	pstruct->AddNativeField("waiting", TypeSInt32, myoffsetof(player_t, waiting));
+	pstruct->AddNativeField("killcount", TypeSInt32, myoffsetof(player_t, killcount));
+	pstruct->AddNativeField("itemcount", TypeSInt32, myoffsetof(player_t, itemcount));
+	pstruct->AddNativeField("secretcount", TypeSInt32, myoffsetof(player_t, secretcount));
+	pstruct->AddNativeField("damagecount", TypeSInt32, myoffsetof(player_t, damagecount));
+	pstruct->AddNativeField("bonuscount", TypeSInt32, myoffsetof(player_t, bonuscount));
+	pstruct->AddNativeField("hazardcount", TypeSInt32, myoffsetof(player_t, hazardcount));
+	pstruct->AddNativeField("hazardinterval", TypeSInt32, myoffsetof(player_t, hazardinterval));
+	pstruct->AddNativeField("hazardtype", TypeName, myoffsetof(player_t, hazardtype));
+	pstruct->AddNativeField("poisoncount", TypeSInt32, myoffsetof(player_t, poisoncount));
+	pstruct->AddNativeField("poisontype", TypeName, myoffsetof(player_t, poisontype));
+	pstruct->AddNativeField("poisonpaintype", TypeName, myoffsetof(player_t, poisonpaintype));
+	pstruct->AddNativeField("poisoner", TypeActor, myoffsetof(player_t, poisoner));
+	pstruct->AddNativeField("attacker", TypeActor, myoffsetof(player_t, attacker));
+	pstruct->AddNativeField("extralight", TypeSInt32, myoffsetof(player_t, extralight));
+	pstruct->AddNativeField("fixedcolormap", TypeSInt16, myoffsetof(player_t, fixedcolormap));
+	pstruct->AddNativeField("fixedlightlevel", TypeSInt16, myoffsetof(player_t, fixedlightlevel));
+	pstruct->AddNativeField("morphtics", TypeSInt32, myoffsetof(player_t, morphTics));
+	pstruct->AddNativeField("MorphedPlayerClass", TypeClassPlayerPawn, myoffsetof(player_t, MorphedPlayerClass));
+	pstruct->AddNativeField("MorphStyle", TypeSInt32, myoffsetof(player_t, MorphStyle));
+	pstruct->AddNativeField("MorphExitFlash", TypeClassActor, myoffsetof(player_t, MorphExitFlash));
+	pstruct->AddNativeField("PremorphWeapon", TypeClassWeapon, myoffsetof(player_t, PremorphWeapon));
+	pstruct->AddNativeField("chickenPeck", TypeSInt32, myoffsetof(player_t, chickenPeck));
+	pstruct->AddNativeField("jumpTics", TypeSInt32, myoffsetof(player_t, jumpTics));
+	pstruct->AddNativeField("onground", TypeBool, myoffsetof(player_t, onground));
+	pstruct->AddNativeField("respawn_time", TypeSInt32, myoffsetof(player_t, respawn_time));
+	pstruct->AddNativeField("camera", TypeActor, myoffsetof(player_t, camera));
+	pstruct->AddNativeField("air_finished", TypeSInt32, myoffsetof(player_t, air_finished));
+	pstruct->AddNativeField("LastDamageType", TypeName, myoffsetof(player_t, LastDamageType));
+	pstruct->AddNativeField("MUSINFOactor", TypeActor, myoffsetof(player_t, MUSINFOactor));
+	pstruct->AddNativeField("MUSINFOtics", TypeSInt8, myoffsetof(player_t, MUSINFOtics));
+	pstruct->AddNativeField("settings_controller", TypeBool, myoffsetof(player_t, settings_controller));
+	pstruct->AddNativeField("crouching", TypeSInt8, myoffsetof(player_t, crouching));
+	pstruct->AddNativeField("crouchdir", TypeSInt8, myoffsetof(player_t, crouchdir));
+	pstruct->AddNativeField("bot", NewPointer(RUNTIME_CLASS(DBot)), myoffsetof(player_t, Bot));
+	pstruct->AddNativeField("BlendR", TypeFloat32, myoffsetof(player_t, BlendR));
+	pstruct->AddNativeField("BlendG", TypeFloat32, myoffsetof(player_t, BlendG));
+	pstruct->AddNativeField("BlendB", TypeFloat32, myoffsetof(player_t, BlendB));
+	pstruct->AddNativeField("BlendA", TypeFloat32, myoffsetof(player_t, BlendA));
+	pstruct->AddNativeField("LogText", TypeString, myoffsetof(player_t, LogText));
+	pstruct->AddNativeField("MinPitch", TypeFloat64, myoffsetof(player_t, MinPitch));
+	pstruct->AddNativeField("MaxPitch", TypeFloat64, myoffsetof(player_t, MaxPitch));
+	pstruct->AddNativeField("crouchfactor", TypeFloat64, myoffsetof(player_t, crouchfactor));
+	pstruct->AddNativeField("crouchoffset", TypeFloat64, myoffsetof(player_t, crouchoffset));
+	pstruct->AddNativeField("crouchviewdelta", TypeFloat64, myoffsetof(player_t, crouchviewdelta));
+	pstruct->AddNativeField("ConversationNPC", TypeActor, myoffsetof(player_t, ConversationNPC));
+	pstruct->AddNativeField("ConversationPC", TypeActor, myoffsetof(player_t, ConversationPC));
+	pstruct->AddNativeField("ConversationNPCAngle", TypeFloat64, myoffsetof(player_t, ConversationNPCAngle));
+	pstruct->AddNativeField("ConversationFaceTalker", TypeBool, myoffsetof(player_t, ConversationFaceTalker));
+}

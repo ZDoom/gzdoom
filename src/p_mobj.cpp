@@ -158,12 +158,11 @@ extern FFlagDef ActorFlagDefs[];
 
 void AActor::InitNativeFields()
 {
-	PType *TypePlayer = NewPointer(TypeVoid);	// placeholder
 	PType *TypeActor = NewPointer(RUNTIME_CLASS(AActor));
 	PType *TypeActorClass = NewClassPointer(RUNTIME_CLASS(AActor));
 	PType *TypeInventory = NewPointer(RUNTIME_CLASS(AInventory));
-	PStruct *sstruct = NewStruct("Sector", nullptr);
-	auto TypeSector = NewPointer(sstruct);
+	PType *TypePlayer = NewPointer(NewStruct("Player", nullptr));
+	auto TypeSector = NewPointer(NewStruct("Sector", nullptr));
 	PType *array5 = NewArray(TypeSInt32, 5);
 
 	auto meta = RUNTIME_CLASS(AActor);

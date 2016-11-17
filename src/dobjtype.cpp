@@ -421,6 +421,16 @@ void PType::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> 
 
 //==========================================================================
 //
+// PType :: SetDefaultValue
+//
+//==========================================================================
+
+void PType::SetPointer(void *base, unsigned offset, TArray<size_t> *stroffs) const
+{
+}
+
+//==========================================================================
+//
 // PType :: InitializeValue
 //
 //==========================================================================
@@ -1552,6 +1562,21 @@ void PPointer::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 
 //==========================================================================
 //
+// PPointer :: SetDefaultValue
+//
+//==========================================================================
+
+void PPointer::SetPointer(void *base, unsigned offset, TArray<size_t> *special) const
+{
+	if (PointedType != nullptr && PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
+	{
+		// Add to the list of pointers for this class.
+		special->Push(offset);
+	}
+}
+
+//==========================================================================
+//
 // PPointer :: WriteValue
 //
 //==========================================================================
@@ -1871,6 +1896,20 @@ void PArray::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset>
 
 //==========================================================================
 //
+// PArray :: SetDefaultValue
+//
+//==========================================================================
+
+void PArray::SetPointer(void *base, unsigned offset, TArray<size_t> *special) const
+{
+	for (unsigned i = 0; i < ElementCount; ++i)
+	{
+		ElementType->SetPointer(base, offset + i*ElementSize, special);
+	}
+}
+
+//==========================================================================
+//
 // NewArray
 //
 // Returns a PArray for the given type and size, making sure not to create
@@ -2100,6 +2139,23 @@ void PStruct::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset
 		if (!(field->Flags & VARF_Native))
 		{
 			field->Type->SetDefaultValue(base, unsigned(offset + field->Offset), special);
+		}
+	}
+}
+
+//==========================================================================
+//
+// PStruct :: SetPointer
+//
+//==========================================================================
+
+void PStruct::SetPointer(void *base, unsigned offset, TArray<size_t> *special) const
+{
+	for (const PField *field : Fields)
+	{
+		if (!(field->Flags & VARF_Native))
+		{
+			field->Type->SetPointer(base, unsigned(offset + field->Offset), special);
 		}
 	}
 }
@@ -3045,14 +3101,9 @@ void PClass::InitializeDefaults()
 		assert(ParentClass != NULL);
 		ParentClass->InitializeSpecials(Defaults);
 
-		// and initialize our own special values.
-		auto it = Symbols.GetIterator();
-		PSymbolTable::MapType::Pair *pair;
-
-		while (it.NextPair(pair))
+		for (const PField *field : Fields)
 		{
-			auto field = dyn_cast<PField>(pair->Value);
-			if (field != nullptr && !(field->Flags & VARF_Native))
+			if (!(field->Flags & VARF_Native))
 			{
 				field->Type->SetDefaultValue(Defaults, unsigned(field->Offset), &SpecialInits);
 			}
@@ -3270,7 +3321,7 @@ void PClass::BuildFlatPointers ()
 		return;
 	}
 	else if (ParentClass == NULL)
-	{ // No parent: FlatPointers is the same as Pointers.
+	{ // No parent (i.e. DObject: FlatPointers is the same as Pointers.
 		if (Pointers == NULL)
 		{ // No pointers: Make FlatPointers a harmless non-NULL.
 			FlatPointers = &TheEnd;
@@ -3283,7 +3334,19 @@ void PClass::BuildFlatPointers ()
 	else
 	{
 		ParentClass->BuildFlatPointers ();
-		if (Pointers == NULL)
+
+		TArray<size_t> ScriptPointers;
+
+		// Collect all pointers in scripted fields. These are not part of the Pointers list.
+		for (auto field : Fields)
+		{
+			if (!(field->Flags & VARF_Native))
+			{
+				field->Type->SetPointer(Defaults, unsigned(field->Offset), &ScriptPointers);
+			}
+		}
+
+		if (Pointers == nullptr && ScriptPointers.Size() == 0)
 		{ // No new pointers: Just use the same FlatPointers as the parent.
 			FlatPointers = ParentClass->FlatPointers;
 		}
@@ -3291,20 +3354,34 @@ void PClass::BuildFlatPointers ()
 		{ // New pointers: Create a new FlatPointers array and add them.
 			int numPointers, numSuperPointers;
 
-			// Count pointers defined by this class.
-			for (numPointers = 0; Pointers[numPointers] != ~(size_t)0; numPointers++)
-			{ }
+			if (Pointers != nullptr)
+			{
+				// Count pointers defined by this class.
+				for (numPointers = 0; Pointers[numPointers] != ~(size_t)0; numPointers++)
+				{
+				}
+			}
+			else numPointers = 0;
+
 			// Count pointers defined by superclasses.
 			for (numSuperPointers = 0; ParentClass->FlatPointers[numSuperPointers] != ~(size_t)0; numSuperPointers++)
 			{ }
 
 			// Concatenate them into a new array
-			size_t *flat = new size_t[numPointers + numSuperPointers + 1];
+			size_t *flat = new size_t[numPointers + numSuperPointers + ScriptPointers.Size() + 1];
 			if (numSuperPointers > 0)
 			{
 				memcpy (flat, ParentClass->FlatPointers, sizeof(size_t)*numSuperPointers);
 			}
-			memcpy (flat + numSuperPointers, Pointers, sizeof(size_t)*(numPointers+1));
+			if (numPointers > 0)
+			{
+				memcpy(flat + numSuperPointers, Pointers, sizeof(size_t)*numPointers);
+			}
+			if (ScriptPointers.Size() > 0)
+			{
+				memcpy(flat + numSuperPointers + numPointers, &ScriptPointers[0], sizeof(size_t) * ScriptPointers.Size());
+			}
+			flat[numSuperPointers + numPointers + ScriptPointers.Size()] = ~(size_t)0;
 			FlatPointers = flat;
 		}
 	}

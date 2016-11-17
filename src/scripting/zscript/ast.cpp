@@ -585,6 +585,16 @@ static void PrintExprFuncCall(FLispString &out, ZCC_TreeNode *node)
 	out.Close();
 }
 
+static void PrintExprClassCast(FLispString &out, ZCC_TreeNode *node)
+{
+	ZCC_ClassCast *enode = (ZCC_ClassCast *)node;
+	assert(enode->Operation == PEX_ClassCast);
+	out.Open("expr-class-cast");
+	out.AddName(enode->ClassName);
+	PrintNodes(out, enode->Parameters, false);
+	out.Close();
+}
+
 static void PrintExprMemberAccess(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ExprMemberAccess *enode = (ZCC_ExprMemberAccess *)node;
@@ -913,6 +923,7 @@ void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *
 	PrintPropertyStmt,
 	PrintVectorInitializer,
 	PrintDeclFlags,
+	PrintExprClassCast,
 };
 
 FString ZCC_PrintAST(ZCC_TreeNode *root)

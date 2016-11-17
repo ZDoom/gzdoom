@@ -258,6 +258,7 @@ enum EFxType
 	EFX_JumpStatement,
 	EFX_ReturnStatement,
 	EFX_ClassTypeCast,
+	EFX_ClassPtrCast,
 	EFX_StateByIndex,
 	EFX_RuntimeStateIndex,
 	EFX_MultiNameState,
@@ -1664,6 +1665,25 @@ public:
 
 	FxClassTypeCast(PClassPointer *dtype, FxExpression *x);
 	~FxClassTypeCast();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxClassPtrCast : public FxExpression
+{
+	PClass *desttype;
+	FxExpression *basex;
+
+public:
+
+	FxClassPtrCast(PClass *dtype, FxExpression *x);
+	~FxClassPtrCast();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

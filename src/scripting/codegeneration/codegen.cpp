@@ -8384,6 +8384,107 @@ ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
+//==========================================================================
+
+FxClassPtrCast::FxClassPtrCast(PClass *dtype, FxExpression *x)
+	: FxExpression(EFX_ClassPtrCast, x->ScriptPosition)
+{
+	ValueType = NewClassPointer(dtype);
+	desttype = dtype;
+	basex = x;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxClassPtrCast::~FxClassPtrCast()
+{
+	SAFE_DELETE(basex);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxClassPtrCast::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(basex, ctx);
+
+	if (basex->ValueType == TypeNullPtr)
+	{
+		basex->ValueType = ValueType;
+		auto x = basex;
+		basex = nullptr;
+		delete this;
+		return x;
+	}
+	auto to = static_cast<PClassPointer *>(ValueType);
+	if (basex->ValueType->GetClass() == RUNTIME_CLASS(PClassPointer))
+	{
+		auto from = static_cast<PClassPointer *>(basex->ValueType);
+		// Downcast is always ok.
+		if (from->ClassRestriction->IsDescendantOf(to->ClassRestriction))
+		{
+			basex->ValueType = to;
+			auto x = basex;
+			basex = nullptr;
+			delete this;
+			return x;
+		}
+		// Upcast needs a runtime check.
+		else if (to->ClassRestriction->IsDescendantOf(from->ClassRestriction))
+		{
+			return this;
+		}
+	}
+	// Everything else is an error.
+	ScriptPosition.Message(MSG_ERROR, "Cannot cast %s to %s. The types are incompatible.", basex->ValueType->DescriptiveName(), to->DescriptiveName());
+	delete this;
+	return nullptr;
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+int BuiltinClassCast(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(from, DObject);
+	PARAM_CLASS(to, DObject);
+	ACTION_RETURN_OBJECT(from->IsDescendantOf(to) ? from : nullptr);
+}
+
+ExpEmit FxClassPtrCast::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit clsname = basex->Emit(build);
+
+	build->Emit(OP_PARAM, 0, clsname.RegType, clsname.RegNum);
+	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(desttype, ATAG_OBJECT));
+
+	VMFunction *callfunc;
+	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinClassCast, BuiltinClassCast);
+
+	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
+	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
+	callfunc = ((PSymbolVMFunction *)sym)->Function;
+	clsname.Free(build);
+	ExpEmit dest(build, REGT_POINTER);
+	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 2, 1);
+	build->Emit(OP_RESULT, 0, REGT_POINTER, dest.RegNum);
+	return dest;
+}
+
+//==========================================================================
+//
 // Symbolic state labels. 
 // Conversion will not happen inside the compiler anymore because it causes
 // just too many problems.

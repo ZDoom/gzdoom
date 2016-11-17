@@ -2766,6 +2766,24 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		break;
 	}
 
+	case AST_ClassCast:
+	{
+		auto cc = static_cast<ZCC_ClassCast *>(ast);
+		if (cc->Parameters == nullptr || cc->Parameters->SiblingNext != cc->Parameters)
+		{
+			Error(cc, "Class type cast requires exactly one parameter");
+			return new FxNop(*ast);	// return something so that the compiler can continue.
+		}
+		auto cls = PClass::FindClass(cc->ClassName);
+		if (cls == nullptr)
+		{
+			Error(cc, "Unknown class %s", FName(cc->ClassName).GetChars());
+			return new FxNop(*ast);	// return something so that the compiler can continue.
+		}
+		return new FxClassPtrCast(cls, ConvertNode(cc->Parameters));
+	}
+
+
 	case AST_ExprMemberAccess:
 	{
 		auto memaccess = static_cast<ZCC_ExprMemberAccess *>(ast);

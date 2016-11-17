@@ -102,6 +102,7 @@ enum EZCCTreeNodeType
 	AST_PropertyStmt,
 	AST_VectorValue,
 	AST_DeclFlags,
+	AST_ClassCast,
 
 	NUM_AST_NODE_TYPES
 };
@@ -363,6 +364,12 @@ struct ZCC_FuncParm : ZCC_TreeNode
 struct ZCC_ExprFuncCall : ZCC_Expression
 {
 	ZCC_Expression *Function;
+	ZCC_FuncParm *Parameters;
+};
+
+struct ZCC_ClassCast : ZCC_Expression
+{
+	ENamedName ClassName;
 	ZCC_FuncParm *Parameters;
 };
 

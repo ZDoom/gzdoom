@@ -1080,6 +1080,14 @@ primary(X) ::= primary(A) LPAREN func_expr_list(B) RPAREN. [DOT]		// Function ca
 	expr->Parameters = B;
 	X = expr;
 }
+primary(X) ::= LPAREN CLASS LT IDENTIFIER(A) GT RPAREN LPAREN func_expr_list(B) RPAREN. [DOT]		// class type cast
+{
+	NEW_AST_NODE(ClassCast, expr, A);
+	expr->Operation = PEX_ClassCast;
+	expr->ClassName = ENamedName(A.Int);
+	expr->Parameters = B;
+	X = expr;
+}
 primary(X) ::= primary(A) LBRACKET expr(B) RBRACKET. [DOT]				// Array access
 {
 	NEW_AST_NODE(ExprBinary, expr, B);

@@ -5667,13 +5667,16 @@ ExpEmit FxStackVariable::Emit(VMFunctionBuilder *build)
 
 	if (AddressRequested)
 	{
-		ExpEmit obj(build, REGT_POINTER);
 		if (offsetreg >= 0)
 		{
+			ExpEmit obj(build, REGT_POINTER);
 			build->Emit(OP_ADDA_RK, obj.RegNum, build->FramePointer.RegNum, offsetreg);
 			return obj;
 		}
-		else return build->FramePointer;
+		else
+		{
+			return build->FramePointer;
+		}
 	}
 	ExpEmit loc(build, membervar->Type->GetRegType(), membervar->Type->GetRegCount());
 
@@ -5973,7 +5976,39 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 			delete this;
 			return nullptr;
 		}
-		// Todo: optimize out the array.
+
+		// if this is an array within a class or another struct we can simplify the expression by creating a new PField with a cumulative offset.
+		if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember)
+		{
+			auto parentfield = static_cast<FxStructMember *>(Array)->membervar;
+			// PFields are garbage collected so this will be automatically taken care of later.
+			auto newfield = new PField(NAME_None, arraytype->ElementType, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
+			static_cast<FxStructMember *>(Array)->membervar = newfield;
+			Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
+			auto x = Array->Resolve(ctx);
+			Array = nullptr;
+			return x;
+		}
+		else if (Array->ExprType == EFX_GlobalVariable)
+		{
+			auto parentfield = static_cast<FxGlobalVariable *>(Array)->membervar;
+			auto newfield = new PField(NAME_None, arraytype->ElementType, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
+			static_cast<FxGlobalVariable *>(Array)->membervar = newfield;
+			Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
+			auto x = Array->Resolve(ctx);
+			Array = nullptr;
+			return x;
+		}
+		else if (Array->ExprType == EFX_StackVariable)
+		{
+			auto parentfield = static_cast<FxStackVariable *>(Array)->membervar;
+			auto newfield = new PField(NAME_None, arraytype->ElementType, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
+			static_cast<FxStackVariable *>(Array)->ReplaceField(newfield);
+			Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
+			auto x = Array->Resolve(ctx);
+			Array = nullptr;
+			return x;
+		}
 	}
 
 	ValueType = arraytype->ElementType;
@@ -5996,7 +6031,6 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit start = Array->Emit(build);
 	PArray *const arraytype = static_cast<PArray*>(Array->ValueType);
-	ExpEmit dest(build, arraytype->ElementType->GetRegType());
 
 	if (start.Konst)
 	{
@@ -6028,11 +6062,14 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 					start = temp;
 				}
 			}
+			return start;
 		}
 		else
 		{
-			build->Emit(arraytype->ElementType->GetLoadOp(), dest.RegNum,
-				start.RegNum, build->GetConstantInt(indexval));
+			start.Free(build);
+			ExpEmit dest(build, ValueType->GetRegType());
+			build->Emit(arraytype->ElementType->GetLoadOp(), dest.RegNum, start.RegNum, build->GetConstantInt(indexval));
+			return dest;
 		}
 	}
 	else
@@ -6059,6 +6096,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 			build->Emit(OP_MUL_RK, indexwork.RegNum, indexv.RegNum, build->GetConstantInt(arraytype->ElementSize));
 		}
 
+		indexwork.Free(build);
 		if (AddressRequested)
 		{
 			if (!start.Fixed)
@@ -6067,28 +6105,23 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 			}
 			else
 			{
+				start.Free(build);
 				// do not clobber local variables.
 				ExpEmit temp(build, start.RegType);
 				build->Emit(OP_ADDA_RR, temp.RegNum, start.RegNum, indexwork.RegNum);
-				start.Free(build);
 				start = temp;
 			}
+			return start;
 		}
 		else
 		{
-			build->Emit(arraytype->ElementType->GetLoadOp() + 1,	// added 1 to use the *_R version that
-				dest.RegNum, start.RegNum, indexwork.RegNum);			// takes the offset from a register
+			start.Free(build);
+			ExpEmit dest(build, ValueType->GetRegType());
+			// added 1 to use the *_R version that takes the offset from a register
+			build->Emit(arraytype->ElementType->GetLoadOp() + 1, dest.RegNum, start.RegNum, indexwork.RegNum);
+			return dest;
 		}
-		indexwork.Free(build);
 	}
-	if (AddressRequested)
-	{
-		dest.Free(build);
-		return start;
-	}
-	
-	start.Free(build);
-	return dest;
 }
 
 //==========================================================================

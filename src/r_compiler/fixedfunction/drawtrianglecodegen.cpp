@@ -260,7 +260,7 @@ void DrawTriangleCodegen::LoopBlockX(TriDrawVariant variant, bool truecolor)
 		SetStencilBlock(x / 8 + y / 8 * stencilPitch);
 
 		SSABool covered = a == SSAInt(0xF) && b == SSAInt(0xF) && c == SSAInt(0xF) && !clipneeded;
-		if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector)
+		if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::DrawShadedSubsector && variant != TriDrawVariant::FillSubsector)
 		{
 			covered = covered && StencilIsSingleValue();
 		}
@@ -287,7 +287,7 @@ void DrawTriangleCodegen::LoopBlockX(TriDrawVariant variant, bool truecolor)
 void DrawTriangleCodegen::LoopFullBlock(TriDrawVariant variant, bool truecolor)
 {
 	SSAIfBlock branch_stenciltest;
-	if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector)
+	if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::DrawShadedSubsector && variant != TriDrawVariant::FillSubsector)
 	{
 		branch_stenciltest.if_block(StencilGetSingle() == stencilTestValue);
 	}
@@ -325,7 +325,7 @@ void DrawTriangleCodegen::LoopFullBlock(TriDrawVariant variant, bool truecolor)
 				varying[i] = stack_varying[i].load();
 			loopx.loop_block(ix < SSAInt(q), q);
 			{
-				if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::FillSubsector)
+				if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::DrawShadedSubsector || variant == TriDrawVariant::FillSubsector)
 				{
 					SSAIfBlock branch;
 					branch.if_block(subsectorbuffer[ix].load(true) >= subsectorDepth);
@@ -353,7 +353,7 @@ void DrawTriangleCodegen::LoopFullBlock(TriDrawVariant variant, bool truecolor)
 		loopy.end_block();
 	}
 
-	if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector)
+	if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::DrawShadedSubsector && variant != TriDrawVariant::FillSubsector)
 	{
 		branch_stenciltest.end_block();
 	}
@@ -404,7 +404,7 @@ void DrawTriangleCodegen::LoopPartialBlock(TriDrawVariant variant, bool truecolo
 			SSABool visible = (ix + x >= clipleft) && (ix + x < clipright) && (cliptop <= y + iy) && (clipbottom > y + iy);
 			SSABool covered = CX1 > SSAInt(0) && CX2 > SSAInt(0) && CX3 > SSAInt(0) && visible;
 
-			if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::FillSubsector)
+			if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::DrawShadedSubsector || variant == TriDrawVariant::FillSubsector)
 			{
 				covered = covered && subsectorbuffer[ix].load(true) >= subsectorDepth;
 			}
@@ -474,13 +474,13 @@ void DrawTriangleCodegen::ProcessPixel(SSAUBytePtr buffer, SSAIntPtr subsectorbu
 
 		if (truecolor)
 		{
-			SSAVec4i fg = texturePixels[uvoffset * 4].load_vec4ub(true);
-			SSAInt fg_alpha = fg[3];
-			fg = (fg * currentlight) >> 8;
-			fg.insert(3, fg_alpha);
-
 			if (variant == TriDrawVariant::DrawMasked || variant == TriDrawVariant::DrawSubsector)
 			{
+				SSAVec4i fg = texturePixels[uvoffset * 4].load_vec4ub(true);
+				SSAInt fg_alpha = fg[3];
+				fg = (fg * currentlight) >> 8;
+				fg.insert(3, fg_alpha);
+
 				SSAIfBlock branch_transparency;
 				branch_transparency.if_block(fg_alpha > SSAInt(127));
 				{
@@ -490,8 +490,22 @@ void DrawTriangleCodegen::ProcessPixel(SSAUBytePtr buffer, SSAIntPtr subsectorbu
 				}
 				branch_transparency.end_block();
 			}
+			else if (variant == TriDrawVariant::DrawShadedSubsector)
+			{
+				SSAInt alpha = texturePixels[uvoffset * 4].load(true).zext_int();
+				alpha = alpha + (alpha >> 7); // // 255 -> 256
+				SSAInt inv_alpha = 256 - alpha;
+
+				SSAVec4i bgcolor = buffer.load_vec4ub(false);
+				buffer.store_vec4ub(blend_add(shade_bgra_simple(SSAVec4i::unpack(solidcolor), currentlight), bgcolor, alpha, inv_alpha));
+			}
 			else
 			{
+				SSAVec4i fg = texturePixels[uvoffset * 4].load_vec4ub(true);
+				SSAInt fg_alpha = fg[3];
+				fg = (fg * currentlight) >> 8;
+				fg.insert(3, fg_alpha);
+
 				buffer.store_vec4ub(fg);
 				subsectorbuffer.store(subsectorDepth);
 			}

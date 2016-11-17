@@ -155,5 +155,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, DBaseDecal *decal, co
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
 	args.SetTexture(tex);
-	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector);
+	args.solidcolor = decal->AlphaColor;
+	//mode = R_SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
+	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawShadedSubsector);
 }

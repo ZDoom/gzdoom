@@ -190,6 +190,8 @@ LLVMDrawersImpl::LLVMDrawersImpl()
 	CodegenDrawTriangle("TriDraw32", TriDrawVariant::Draw, true);
 	CodegenDrawTriangle("TriDrawSubsector8", TriDrawVariant::DrawSubsector, false);
 	CodegenDrawTriangle("TriDrawSubsector32", TriDrawVariant::DrawSubsector, true);
+	CodegenDrawTriangle("TriDrawShadedSubsector8", TriDrawVariant::DrawShadedSubsector, false);
+	CodegenDrawTriangle("TriDrawShadedSubsector32", TriDrawVariant::DrawShadedSubsector, true);
 	CodegenDrawTriangle("TriFillSubsector8", TriDrawVariant::FillSubsector, false);
 	CodegenDrawTriangle("TriFillSubsector32", TriDrawVariant::FillSubsector, true);
 	CodegenDrawTriangle("TriFill8", TriDrawVariant::Fill, false);
@@ -264,6 +266,8 @@ LLVMDrawersImpl::LLVMDrawersImpl()
 	TriDraw32 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriDraw32");
 	TriDrawSubsector8 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriDrawSubsector8");
 	TriDrawSubsector32 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriDrawSubsector32");
+	TriDrawShadedSubsector8 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriDrawShadedSubsector8");
+	TriDrawShadedSubsector32 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriDrawShadedSubsector32");
 	TriFillSubsector8 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriFillSubsector8");
 	TriFillSubsector32 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriFillSubsector32");
 	TriFill8 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriFill8");

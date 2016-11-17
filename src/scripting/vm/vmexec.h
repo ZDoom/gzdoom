@@ -175,7 +175,7 @@ begin:
 	OP(LO):
 		ASSERTA(a); ASSERTA(B); ASSERTKD(C);
 		GETADDR(PB,KC,X_READ_NIL);
-		reg.a[a] = *(DObject **)ptr;
+		reg.a[a] = GC::ReadBarrier(*(DObject **)ptr);
 		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 	OP(LO_R):

@@ -3,6 +3,19 @@
 
 #include "dobject.h"
 
+class VMFunctionBuilder;
+
+struct ExpEmit
+{
+	ExpEmit() : RegNum(0), RegType(REGT_NIL), RegCount(1), Konst(false), Fixed(false), Final(false), Target(false) {}
+	ExpEmit(int reg, int type, bool konst = false, bool fixed = false) : RegNum(reg), RegType(type), RegCount(1), Konst(konst), Fixed(fixed), Final(false), Target(false) {}
+	ExpEmit(VMFunctionBuilder *build, int type, int count = 1);
+	void Free(VMFunctionBuilder *build);
+	void Reuse(VMFunctionBuilder *build);
+
+	BYTE RegNum, RegType, RegCount, Konst:1, Fixed : 1, Final : 1, Target : 1;
+};
+
 class VMFunctionBuilder
 {
 public:
@@ -62,6 +75,9 @@ public:
 
 	// amount of implicit parameters so that proper code can be emitted for method calls
 	int NumImplicits;
+
+	// keep the frame pointer, if needed, in a register because the LFP opcode is hideously inefficient, requiring more than 20 instructions on x64.
+	ExpEmit FramePointer;
 
 private:
 	struct AddrKonst

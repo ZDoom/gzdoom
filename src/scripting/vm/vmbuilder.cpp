@@ -718,6 +718,13 @@ void FFunctionBuildList::Build()
 
 		FScriptPosition::StrictErrors = !item.FromDecorate;
 		item.Code = item.Code->Resolve(ctx);
+		// If we need extra space, load the frame pointer into a register so that we do not have to call the wasteful LFP instruction more than once.
+		if (item.Function->ExtraSpace > 0)
+		{
+			buildit.FramePointer = ExpEmit(&buildit, REGT_POINTER);
+			buildit.FramePointer.Fixed = true;
+			buildit.Emit(OP_LFP, buildit.FramePointer.RegNum);
+		}
 
 		// Make sure resolving it didn't obliterate it.
 		if (item.Code != nullptr)

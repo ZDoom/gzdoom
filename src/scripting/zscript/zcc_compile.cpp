@@ -2970,28 +2970,38 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		auto loc = static_cast<ZCC_LocalVarStmt *>(ast);
 		auto node = loc->Vars;
 		FxSequence *list = new FxSequence(*ast);
+
+		PType *ztype = DetermineType(ConvertClass, node, node->Name, loc->Type, true, false);
+
+		if (loc->Type->ArraySize != nullptr)
+		{
+			ztype = ResolveArraySize(ztype, loc->Type->ArraySize, &ConvertClass->Symbols);
+		}
+
 		do
 		{
-			// Type determination must be done for each field to properly handle array definitions.
-			PType *type = DetermineType(ConvertClass, node, node->Name, loc->Type, true, false);
-			if (type->IsKindOf(RUNTIME_CLASS(PArray)))
+			PType *type;
+
+			if (node->ArraySize != nullptr)
 			{
-				Error(loc, "Local array variables not implemented yet.");
+				type = ResolveArraySize(ztype, node->ArraySize, &ConvertClass->Symbols);
 			}
 			else
 			{
-				FxExpression *val;
-				if (node->InitIsArray)
-				{
-					Error(node, "Tried to initialize %s with an array", FName(node->Name).GetChars());
-					val = nullptr;
-				}
-				else
-				{
-					val = node->Init ? ConvertNode(node->Init) : nullptr;
-				}
-				list->Add(new FxLocalVariableDeclaration(type, node->Name, val, 0, *node));	// todo: Handle flags in the grammar.
+				type = ztype;
 			}
+
+			FxExpression *val;
+			if (node->InitIsArray)
+			{
+				Error(node, "Compound initializer not implemented yet");
+				val = nullptr;
+			}
+			else
+			{
+				val = node->Init ? ConvertNode(node->Init) : nullptr;
+			}
+			list->Add(new FxLocalVariableDeclaration(type, node->Name, val, 0, *node));	// todo: Handle flags in the grammar.
 
 			node = static_cast<decltype(node)>(node->SiblingNext);
 		} while (node != loc->Vars);

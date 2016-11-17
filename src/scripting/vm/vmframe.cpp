@@ -182,15 +182,11 @@ void VMScriptFunction::DestroyExtra(void *addr)
 	}
 }
 
-void VMScriptFunction::SetExtraSpecial(PType *type, unsigned offset)
-{
-	type->SetDefaultValue(nullptr, offset, &SpecialInits);
-}
-
 int VMScriptFunction::AllocExtraStack(PType *type)
 {
 	int address = ((ExtraSpace + type->Align - 1) / type->Align) * type->Align;
 	ExtraSpace = address + type->Size;
+	type->SetDefaultValue(nullptr, address, &SpecialInits);
 	return address;
 }
 

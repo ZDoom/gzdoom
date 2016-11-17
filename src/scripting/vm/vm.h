@@ -818,7 +818,6 @@ public:
 
 	void InitExtra(void *addr);
 	void DestroyExtra(void *addr);
-	void SetExtraSpecial(PType *type, unsigned offset);
 	int AllocExtraStack(PType *type);
 };
 
@@ -1047,6 +1046,7 @@ void CallAction(VMFrameStack *stack, VMFunction *vmfunc, AActor *self);
 #define ACTION_RETURN_VEC3(v) do { DVector3 u = v; if (numret > 0) { assert(ret != nullptr); ret[0].SetVector(u); return 1; } return 0; } while(0)
 #define ACTION_RETURN_INT(v) do { int u = v; if (numret > 0) { assert(ret != NULL); ret->SetInt(u); return 1; } return 0; } while(0)
 #define ACTION_RETURN_BOOL(v) ACTION_RETURN_INT(v)
+#define ACTION_RETURN_STRING(v) do { FString u = v; if (numret > 0) { assert(ret != NULL); ret->SetString(u); return 1; } return 0; } while(0)
 
 // Checks to see what called the current action function
 #define ACTION_CALL_FROM_ACTOR() (stateinfo == nullptr || stateinfo->mStateType == STATE_Actor)

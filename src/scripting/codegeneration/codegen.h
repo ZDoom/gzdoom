@@ -44,6 +44,7 @@
 #include "sc_man.h"
 #include "s_sound.h"
 #include "actor.h"
+#include "vmbuilder.h"
 
 
 #define CHECKRESOLVED() if (isresolved) return this; isresolved=true;
@@ -202,17 +203,6 @@ struct ExpVal
 	}
 };
 
-struct ExpEmit
-{
-	ExpEmit() : RegNum(0), RegType(REGT_NIL), RegCount(1), Konst(false), Fixed(false), Final(false), Target(false) {}
-	ExpEmit(int reg, int type, bool konst = false, bool fixed = false)  : RegNum(reg), RegType(type), RegCount(1), Konst(konst), Fixed(fixed), Final(false), Target(false) {}
-	ExpEmit(VMFunctionBuilder *build, int type, int count = 1);
-	void Free(VMFunctionBuilder *build);
-	void Reuse(VMFunctionBuilder *build);
-
-	BYTE RegNum, RegType, RegCount, Konst:1, Fixed:1, Final:1, Target:1;
-};
-
 enum EFxType
 {
 	EFX_Expression,
@@ -282,6 +272,7 @@ enum EFxType
 	EFX_DynamicCast,
 	EFX_GlobalVariable,
 	EFX_Super,
+	EFX_StackVariable,
 	EFX_COUNT
 };
 
@@ -1236,6 +1227,27 @@ public:
 
 //==========================================================================
 //
+//	FxLocalVariable
+//
+//==========================================================================
+
+class FxStackVariable : public FxExpression
+{
+public:
+	PField *membervar;
+	bool AddressRequested;
+	bool AddressWritable;
+
+	FxStackVariable(PType *type, int offset, const FScriptPosition&);
+	~FxStackVariable();
+	void ReplaceField(PField *newfield);
+	FxExpression *Resolve(FCompileContext&);
+	bool RequestAddress(FCompileContext &ctx, bool *writable);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
 //	FxSelf
 //
 //==========================================================================
@@ -1746,6 +1758,7 @@ class FxLocalVariableDeclaration : public FxExpression
 	int VarFlags;
 	int RegCount;
 public:
+	int StackOffset = -1;
 	int RegNum = -1;
 
 	FxLocalVariableDeclaration(PType *type, FName name, FxExpression *initval, int varflags, const FScriptPosition &p);

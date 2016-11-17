@@ -2,7 +2,6 @@
 #define VM_H
 
 #include "zstring.h"
-#include "dobject.h"
 #include "autosegs.h"
 #include "vectors.h"
 
@@ -815,6 +814,12 @@ public:
 	VM_UHALF MaxParam;		// Maximum number of parameters this function has on the stack at once
 	VM_UBYTE NumArgs;		// Number of arguments this function takes
 	FString PrintableName;	// so that the VM can print meaningful info if something in this function goes wrong.
+	TArray<FTypeAndOffset> SpecialInits;	// list of all contents on the extra stack which require construction and destruction
+
+	void InitExtra(void *addr);
+	void DestroyExtra(void *addr);
+	void SetExtraSpecial(PType *type, unsigned offset);
+	int AllocExtraStack(PType *type);
 };
 
 class VMFrameStack
@@ -822,7 +827,6 @@ class VMFrameStack
 public:
 	VMFrameStack();
 	~VMFrameStack();
-	VMFrame *AllocFrame(int numregd, int numregf, int numregs, int numrega);
 	VMFrame *AllocFrame(VMScriptFunction *func);
 	VMFrame *PopFrame();
 	VMFrame *TopFrame()

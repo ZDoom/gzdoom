@@ -25,7 +25,6 @@
 
 // Basic data types.
 // Needs fixed point, and BAM angles.
-//#include "vm.h"
 
 #define WEAPONBOTTOM			128.
 

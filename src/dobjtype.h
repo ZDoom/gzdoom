@@ -5,9 +5,9 @@
 #error You must #include "dobject.h" to get dobjtype.h
 #endif
 
-#include "vm.h"
-
 typedef std::pair<const class PType *, unsigned> FTypeAndOffset;
+
+#include "vm.h"
 
 // Variable/parameter/field flags -------------------------------------------
 
@@ -256,9 +256,6 @@ public:
 	// Initialize the value, if needed (e.g. strings)
 	virtual void InitializeValue(void *addr, const void *def) const;
 
-	// This is for stack variables that may need construction/destruction at runtime
-	virtual bool RequireConstruction() const { return false; }
-
 	// Destroy the value, if needed (e.g. strings)
 	virtual void DestroyValue(void *addr) const;
 
@@ -492,7 +489,6 @@ public:
 	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special=NULL) const override;
 	void InitializeValue(void *addr, const void *def) const override;
 	void DestroyValue(void *addr) const override;
-	virtual bool RequireConstruction() const override { return true; }
 };
 
 // Variations of integer types ----------------------------------------------
@@ -630,9 +626,6 @@ public:
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
 
 	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) const override;
-	void InitializeValue(void *addr, const void *def) const override;
-	void DestroyValue(void *addr) const override;
-	bool RequireConstruction() const override { return ElementType->RequireConstruction(); }
 
 protected:
 	PArray();
@@ -649,9 +642,6 @@ public:
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
-	void InitializeValue(void *addr, const void *def) const override;
-	void DestroyValue(void *addr) const override;
-	bool RequireConstruction() const override { return true; }
 protected:
 	PDynArray();
 };
@@ -668,9 +658,6 @@ public:
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
-	void InitializeValue(void *addr, const void *def) const override;
-	void DestroyValue(void *addr) const override;
-	bool RequireConstruction() const override { return true; }
 protected:
 	PMap();
 };
@@ -678,10 +665,6 @@ protected:
 class PStruct : public PNamedType
 {
 	DECLARE_CLASS(PStruct, PNamedType);
-	
-protected:
-	TArray<FTypeAndOffset> SpecialInits;
-
 public:
 	PStruct(FName name, PTypeBase *outer);
 
@@ -699,12 +682,6 @@ public:
 
 	static void WriteFields(FSerializer &ar, const void *addr, const TArray<PField *> &fields);
 	bool ReadFields(FSerializer &ar, void *addr) const;
-	
-	void InitializeValue(void *addr, const void *def) const override;
-	void DestroyValue(void *addr) const override;
-	bool RequireConstruction() const override;
-	void InitializeSpecialInits();
-	
 protected:
 	PStruct();
 };
@@ -771,6 +748,7 @@ class PClass : public PStruct
 protected:
 	// We unravel _WITH_META here just as we did for PType.
 	enum { MetaClassNum = CLASSREG_PClassClass };
+	TArray<FTypeAndOffset> SpecialInits;
 	void Derive(PClass *newclass, FName name);
 	void InitializeSpecials(void *addr) const;
 	void SetSuper();

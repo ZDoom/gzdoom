@@ -25,7 +25,6 @@
 #include "gi.h"
 #include "p_pspr.h"
 #include "templates.h"
-#include "vm.h"
 #include "g_level.h"
 #include "d_player.h"
 #include "serializer.h"

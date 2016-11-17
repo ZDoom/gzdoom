@@ -13,7 +13,6 @@
 #include "cmdlib.h"
 #include "templates.h"
 #include "sbar.h"
-#include "vm.h"
 #include "doomstat.h"
 #include "g_level.h"
 #include "d_net.h"

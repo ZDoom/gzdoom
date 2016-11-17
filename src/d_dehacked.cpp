@@ -70,7 +70,6 @@
 #include "doomerrors.h"
 #include "p_effect.h"
 #include "serializer.h"
-#include "vm.h"
 #include "thingdef.h"
 #include "info.h"
 #include "v_text.h"

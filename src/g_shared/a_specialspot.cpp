@@ -37,7 +37,6 @@
 #include "p_local.h"
 #include "statnums.h"
 #include "i_system.h"
-#include "vm.h"
 #include "doomstat.h"
 #include "serializer.h"
 #include "a_pickups.h"

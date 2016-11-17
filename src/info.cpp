@@ -43,7 +43,6 @@
 #include "v_text.h"
 
 #include "gi.h"
-#include "vm.h"
 #include "actor.h"
 #include "r_state.h"
 #include "i_system.h"
@@ -52,7 +51,6 @@
 #include "cmdlib.h"
 #include "g_level.h"
 #include "stats.h"
-#include "vm.h"
 #include "thingdef.h"
 #include "d_player.h"
 #include "doomerrors.h"

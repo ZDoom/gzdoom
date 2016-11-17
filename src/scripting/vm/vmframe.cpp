@@ -32,7 +32,7 @@
 */
 
 #include <new>
-#include "vm.h"
+#include "dobject.h"
 
 IMPLEMENT_CLASS(VMException, false, false, false, false)
 IMPLEMENT_CLASS(VMFunction, true, true, false, false)
@@ -162,6 +162,38 @@ size_t VMScriptFunction::PropagateMark()
 	return NumKonstA * sizeof(void *) + Super::PropagateMark();
 }
 
+void VMScriptFunction::InitExtra(void *addr)
+{
+	char *caddr = (char*)addr;
+
+	for (auto tao : SpecialInits)
+	{
+		tao.first->InitializeValue(caddr + tao.second, nullptr);
+	}
+}
+
+void VMScriptFunction::DestroyExtra(void *addr)
+{
+	char *caddr = (char*)addr;
+
+	for (auto tao : SpecialInits)
+	{
+		tao.first->DestroyValue(caddr + tao.second);
+	}
+}
+
+void VMScriptFunction::SetExtraSpecial(PType *type, unsigned offset)
+{
+	type->SetDefaultValue(nullptr, offset, &SpecialInits);
+}
+
+int VMScriptFunction::AllocExtraStack(PType *type)
+{
+	int address = ((ExtraSpace + type->Align - 1) / type->Align) * type->Align;
+	ExtraSpace = address + type->Size;
+	return address;
+}
+
 //===========================================================================
 //
 // VMFrame :: InitRegS
@@ -227,34 +259,6 @@ VMFrameStack::~VMFrameStack()
 //
 // VMFrameStack :: AllocFrame
 //
-// Allocates a frame from the stack with the desired number of registers.
-//
-//===========================================================================
-
-VMFrame *VMFrameStack::AllocFrame(int numregd, int numregf, int numregs, int numrega)
-{
-	assert((unsigned)numregd < 255);
-	assert((unsigned)numregf < 255);
-	assert((unsigned)numregs < 255);
-	assert((unsigned)numrega < 255);
-	// To keep the arguments to this function simpler, it assumes that every
-	// register might be used as a parameter for a single call.
-	int numparam = numregd + numregf + numregs + numrega;
-	int size = VMFrame::FrameSize(numregd, numregf, numregs, numrega, numparam, 0);
-	VMFrame *frame = Alloc(size);
-	frame->NumRegD = numregd;
-	frame->NumRegF = numregf;
-	frame->NumRegS = numregs;
-	frame->NumRegA = numrega;
-	frame->MaxParam = numparam;
-	frame->InitRegS();
-	return frame;
-}
-
-//===========================================================================
-//
-// VMFrameStack :: AllocFrame
-//
 // Allocates a frame from the stack suitable for calling a particular
 // function.
 //
@@ -273,6 +277,10 @@ VMFrame *VMFrameStack::AllocFrame(VMScriptFunction *func)
 	frame->MaxParam = func->MaxParam;
 	frame->Func = func;
 	frame->InitRegS();
+	if (func->SpecialInits.Size())
+	{
+		func->InitExtra(frame->GetExtra());
+	}
 	return frame;
 }
 
@@ -357,6 +365,11 @@ VMFrame *VMFrameStack::PopFrame()
 	if (frame == NULL)
 	{
 		return NULL;
+	}
+	auto Func = static_cast<VMScriptFunction *>(frame->Func);
+	if (Func->SpecialInits.Size())
+	{
+		Func->DestroyExtra(frame->GetExtra());
 	}
 	// Free any string registers this frame had.
 	FString *regs = frame->GetRegS();

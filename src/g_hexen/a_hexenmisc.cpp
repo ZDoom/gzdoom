@@ -7,7 +7,6 @@
 #include "a_sharedglobal.h"
 #include "a_hexenglobal.h"
 #include "i_system.h"
-#include "vm.h"
 #include "gi.h"
 #include "g_level.h"
 #include "p_enemy.h"
@@ -24,7 +23,6 @@
 #include "p_maputl.h"
 #include "p_spec.h"
 #include "serializer.h"
-#include "vm.h"
 
 // Include all the Hexen stuff here to reduce compile time
 #include "a_blastradius.cpp"

@@ -6,7 +6,6 @@
 #include "s_sound.h"
 #include "sc_man.h"
 #include "cmdlib.h"
-#include "vm.h"
 
 
 class FScanner;

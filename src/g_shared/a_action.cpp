@@ -1,5 +1,4 @@
 #include "actor.h"
-#include "vm.h"
 #include "p_conversation.h"
 #include "p_lnspec.h"
 #include "a_action.h"

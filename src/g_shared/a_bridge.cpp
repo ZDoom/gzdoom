@@ -2,7 +2,6 @@
 #include "info.h"
 #include "gi.h"
 #include "m_random.h"
-#include "vm.h"
 
 static FRandom pr_orbit ("Orbit");
 

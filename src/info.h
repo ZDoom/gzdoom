@@ -43,7 +43,6 @@
 
 #include "dobject.h"
 #include "doomdef.h"
-#include "vm.h"
 #include "s_sound.h"
 
 #include "m_fixed.h"

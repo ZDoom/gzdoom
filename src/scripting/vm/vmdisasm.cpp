@@ -31,7 +31,7 @@
 **
 */
 
-#include "vm.h"
+#include "dobject.h"
 #include "c_console.h"
 #include "templates.h"
 

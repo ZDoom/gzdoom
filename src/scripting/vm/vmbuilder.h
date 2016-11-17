@@ -1,7 +1,7 @@
 #ifndef VMUTIL_H
 #define VMUTIL_H
 
-#include "vm.h"
+#include "dobject.h"
 
 class VMFunctionBuilder
 {

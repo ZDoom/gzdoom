@@ -39,7 +39,6 @@
 #include "i_system.h"
 #include "c_dispatch.h"
 #include "v_text.h"
-#include "vm.h"
 #include "thingdef.h"
 
 // stores indices for symbolic state labels for some old-style DECORATE functions.

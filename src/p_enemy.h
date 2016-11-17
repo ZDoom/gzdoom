@@ -1,7 +1,7 @@
 #ifndef __P_ENEMY_H__
 #define __P_ENEMY_H__
 
-#include "vm.h"
+#include "dobject.h"
 #include "vectors.h"
 
 struct sector_t;

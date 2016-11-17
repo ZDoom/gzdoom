@@ -3884,7 +3884,6 @@ int BuiltinTypeCheck(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defau
 
 ExpEmit FxTypeCheck::Emit(VMFunctionBuilder *build)
 {
-	ExpEmit out(build, REGT_INT);
 	EmitParameter(build, left, ScriptPosition);
 	EmitParameter(build, right, ScriptPosition);
 
@@ -3905,6 +3904,7 @@ ExpEmit FxTypeCheck::Emit(VMFunctionBuilder *build)
 		return call;
 	}
 
+	ExpEmit out(build, REGT_INT);
 	build->Emit(OP_RESULT, 0, REGT_INT, out.RegNum);
 	return out;
 }
@@ -3963,11 +3963,13 @@ FxExpression *FxDynamicCast::Resolve(FCompileContext& ctx)
 
 ExpEmit FxDynamicCast::Emit(VMFunctionBuilder *build)
 {
-	ExpEmit out = expr->Emit(build);
+	ExpEmit in = expr->Emit(build);
+	ExpEmit out = in.Fixed ? ExpEmit(build, in.RegType) : in;
 	ExpEmit check(build, REGT_INT);
 	assert(out.RegType == REGT_POINTER);
 
-	build->Emit(OP_PARAM, 0, REGT_POINTER, out.RegNum);
+	if (in.Fixed) build->Emit(OP_MOVEA, out.RegNum, in.RegNum);
+	build->Emit(OP_PARAM, 0, REGT_POINTER, in.RegNum);
 	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(CastType, ATAG_OBJECT));
 
 	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinTypeCheck, BuiltinTypeCheck);

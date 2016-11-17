@@ -35,6 +35,7 @@
 #include "r_poly_sprite.h"
 #include "r_poly_wallsprite.h"
 #include "r_poly_playersprite.h"
+#include "r_poly_particle.h"
 #include "r_poly_plane.h"
 #include "r_poly_sky.h"
 #include "r_poly_cull.h"
@@ -53,9 +54,11 @@ public:
 class PolyTranslucentObject
 {
 public:
+	PolyTranslucentObject(particle_t *particle, subsector_t *sub, uint32_t subsectorDepth) : particle(particle), sub(sub), subsectorDepth(subsectorDepth) { }
 	PolyTranslucentObject(AActor *thing, subsector_t *sub, uint32_t subsectorDepth) : thing(thing), sub(sub), subsectorDepth(subsectorDepth) { }
 	PolyTranslucentObject(RenderPolyWall wall) : wall(wall) { }
 
+	particle_t *particle = nullptr;
 	AActor *thing = nullptr;
 	subsector_t *sub = nullptr;
 	uint32_t subsectorDepth = 0;

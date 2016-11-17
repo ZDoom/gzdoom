@@ -266,6 +266,7 @@ enum class TriDrawVariant
 	DrawMasked,
 	Fill,
 	DrawSubsector,
+	FillSubsector,
 	Stencil,
 };
 
@@ -348,6 +349,8 @@ public:
 	void(*TriDraw32)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
 	void(*TriDrawSubsector8)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
 	void(*TriDrawSubsector32)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
+	void(*TriFillSubsector8)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
+	void(*TriFillSubsector32)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
 	void(*TriFill8)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
 	void(*TriFill32)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
 	void(*TriStencil)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;

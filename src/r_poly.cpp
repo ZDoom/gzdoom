@@ -111,6 +111,17 @@ void RenderPolyScene::RenderSubsector(subsector_t *sub)
 			RenderLine(sub, line, frontsector, subsectorDepth);
 	}
 
+	bool mainBSP = ((unsigned int)(sub - subsectors) < (unsigned int)numsubsectors);
+	if (mainBSP)
+	{
+		int subsectorIndex = (int)(sub - subsectors);
+		for (int i = ParticlesInSubsec[subsectorIndex]; i != NO_PARTICLE; i = Particles[i].snext)
+		{
+			particle_t *particle = Particles + i;
+			TranslucentObjects.push_back({ particle, sub, subsectorDepth });
+		}
+	}
+
 	SpriteRange sprites = GetSpritesForSector(sub->sector);
 	for (int i = 0; i < sprites.Count; i++)
 	{
@@ -176,7 +187,12 @@ void RenderPolyScene::RenderTranslucent()
 	for (auto it = TranslucentObjects.rbegin(); it != TranslucentObjects.rend(); ++it)
 	{
 		auto &obj = *it;
-		if (!obj.thing)
+		if (obj.particle)
+		{
+			RenderPolyParticle spr;
+			spr.Render(WorldToClip, obj.particle, obj.sub, obj.subsectorDepth);
+		}
+		else if (!obj.thing)
 		{
 			obj.wall.Render(WorldToClip);
 		}

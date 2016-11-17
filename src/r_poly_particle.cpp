@@ -28,6 +28,76 @@
 #include "r_poly_particle.h"
 #include "r_poly.h"
 
-void RenderPolyParticle::Render()
+void RenderPolyParticle::Render(const TriMatrix &worldToClip, particle_t *particle, subsector_t *sub, uint32_t subsectorDepth)
 {
+	DVector3 pos = particle->Pos;
+	double psize = particle->size / 8.0;
+	double zpos = pos.Z;
+
+	DVector2 points[2] =
+	{
+		{ pos.X - ViewSin * psize, pos.Y + ViewCos * psize },
+		{ pos.X + ViewSin * psize, pos.Y - ViewCos * psize }
+	};
+
+	TriVertex *vertices = PolyVertexBuffer::GetVertices(4);
+	if (!vertices)
+		return;
+
+	bool foggy = false;
+	int actualextralight = foggy ? 0 : extralight << 4;
+
+	std::pair<float, float> offsets[4] =
+	{
+		{ 0.0f,  1.0f },
+		{ 1.0f,  1.0f },
+		{ 1.0f,  0.0f },
+		{ 0.0f,  0.0f },
+	};
+
+	for (int i = 0; i < 4; i++)
+	{
+		auto &p = (i == 0 || i == 3) ? points[0] : points[1];
+
+		vertices[i].x = (float)p.X;
+		vertices[i].y = (float)p.Y;
+		vertices[i].z = (float)(zpos + psize * (2.0 * offsets[i].second - 1.0));
+		vertices[i].w = 1.0f;
+		vertices[i].varying[0] = (float)(offsets[i].first);
+		vertices[i].varying[1] = (float)(1.0f - offsets[i].second);
+	}
+
+	// int color = (particle->color >> 24) & 0xff; // pal index, I think
+	bool fullbrightSprite = particle->bright != 0;
+
+	TriUniforms uniforms;
+	uniforms.objectToClip = worldToClip;
+	if (fullbrightSprite || fixedlightlev >= 0 || fixedcolormap)
+	{
+		uniforms.light = 256;
+		uniforms.flags = TriUniforms::fixed_light;
+	}
+	else
+	{
+		uniforms.light = (uint32_t)((sub->sector->lightlevel + actualextralight) / 255.0f * 256.0f);
+		uniforms.flags = 0;
+	}
+	uniforms.subsectorDepth = subsectorDepth;
+
+	uint32_t alpha = particle->trans;
+
+	PolyDrawArgs args;
+	args.uniforms = uniforms;
+	args.vinput = vertices;
+	args.vcount = 4;
+	args.mode = TriangleDrawMode::Fan;
+	args.ccw = true;
+	args.clipleft = 0;
+	args.cliptop = 0;
+	args.clipright = viewwidth;
+	args.clipbottom = viewheight;
+	args.stenciltestvalue = 0;
+	args.stencilwritevalue = 1;
+	args.solidcolor = (alpha << 24) | (particle->color & 0xffffff);
+	PolyTriangleDrawer::draw(args, TriDrawVariant::FillSubsector);
 }

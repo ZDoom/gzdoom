@@ -22,8 +22,11 @@
 
 #pragma once
 
+#include "r_poly_triangle.h"
+#include "p_effect.h"
+
 class RenderPolyParticle
 {
 public:
-	void Render();
+	void Render(const TriMatrix &worldToClip, particle_t *particle, subsector_t *sub, uint32_t subsectorDepth);
 };

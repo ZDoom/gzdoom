@@ -260,7 +260,7 @@ void DrawTriangleCodegen::LoopBlockX(TriDrawVariant variant, bool truecolor)
 		SetStencilBlock(x / 8 + y / 8 * stencilPitch);
 
 		SSABool covered = a == SSAInt(0xF) && b == SSAInt(0xF) && c == SSAInt(0xF) && !clipneeded;
-		if (variant != TriDrawVariant::DrawSubsector)
+		if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector)
 		{
 			covered = covered && StencilIsSingleValue();
 		}
@@ -287,7 +287,7 @@ void DrawTriangleCodegen::LoopBlockX(TriDrawVariant variant, bool truecolor)
 void DrawTriangleCodegen::LoopFullBlock(TriDrawVariant variant, bool truecolor)
 {
 	SSAIfBlock branch_stenciltest;
-	if (variant != TriDrawVariant::DrawSubsector)
+	if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector)
 	{
 		branch_stenciltest.if_block(StencilGetSingle() == stencilTestValue);
 	}
@@ -325,7 +325,7 @@ void DrawTriangleCodegen::LoopFullBlock(TriDrawVariant variant, bool truecolor)
 				varying[i] = stack_varying[i].load();
 			loopx.loop_block(ix < SSAInt(q), q);
 			{
-				if (variant == TriDrawVariant::DrawSubsector)
+				if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::FillSubsector)
 				{
 					SSAIfBlock branch;
 					branch.if_block(subsectorbuffer[ix].load(true) >= subsectorDepth);
@@ -353,7 +353,7 @@ void DrawTriangleCodegen::LoopFullBlock(TriDrawVariant variant, bool truecolor)
 		loopy.end_block();
 	}
 
-	if (variant != TriDrawVariant::DrawSubsector)
+	if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector)
 	{
 		branch_stenciltest.end_block();
 	}
@@ -404,7 +404,7 @@ void DrawTriangleCodegen::LoopPartialBlock(TriDrawVariant variant, bool truecolo
 			SSABool visible = (ix + x >= clipleft) && (ix + x < clipright) && (cliptop <= y + iy) && (clipbottom > y + iy);
 			SSABool covered = CX1 > SSAInt(0) && CX2 > SSAInt(0) && CX3 > SSAInt(0) && visible;
 
-			if (variant == TriDrawVariant::DrawSubsector)
+			if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::FillSubsector)
 			{
 				covered = covered && subsectorbuffer[ix].load(true) >= subsectorDepth;
 			}
@@ -449,7 +449,7 @@ void DrawTriangleCodegen::LoopPartialBlock(TriDrawVariant variant, bool truecolo
 
 void DrawTriangleCodegen::ProcessPixel(SSAUBytePtr buffer, SSAIntPtr subsectorbuffer, SSAInt *varying, TriDrawVariant variant, bool truecolor)
 {
-	if (variant == TriDrawVariant::Fill)
+	if (variant == TriDrawVariant::Fill || variant == TriDrawVariant::FillSubsector)
 	{
 		if (truecolor)
 		{
@@ -459,7 +459,9 @@ void DrawTriangleCodegen::ProcessPixel(SSAUBytePtr buffer, SSAIntPtr subsectorbu
 		{
 			//buffer.store(solidcolor);
 		}
-		subsectorbuffer.store(subsectorDepth);
+
+		if (variant != TriDrawVariant::FillSubsector)
+			subsectorbuffer.store(subsectorDepth);
 	}
 	else
 	{

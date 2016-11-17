@@ -88,13 +88,21 @@ void RenderPolyScene::SetupPerspectiveMatrix()
 	}
 	viewheight = height; // So viewheight was calculated incorrectly. That's just.. wonderful.
 
+	// Code provided courtesy of Graf Zahl. Now we just have to plug it into the viewmatrix code...
+	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
+	double radPitch = ViewPitch.Normalized180().Radians();
+	double angx = cos(radPitch);
+	double angy = sin(radPitch) * glset.pixelstretch;
+	double alen = sqrt(angx*angx + angy*angy);
+	//mAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
+
 	float ratio = WidescreenRatio;
 	float fovratio = (WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
 	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(FieldOfView.Radians() / 2) / fovratio)).Degrees);
 	TriMatrix worldToView =
-		TriMatrix::scale(1.0f, glset.pixelstretch, 1.0f) *
-		TriMatrix::rotate((float)ViewPitch.Radians(), 1.0f, 0.0f, 0.0f) *
+		TriMatrix::rotate((float)asin(angy / alen), 1.0f, 0.0f, 0.0f) *
 		TriMatrix::rotate((float)(ViewAngle - 90).Radians(), 0.0f, -1.0f, 0.0f) *
+		TriMatrix::scale(1.0f, glset.pixelstretch, 1.0f) *
 		TriMatrix::swapYZ() *
 		TriMatrix::translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);
 	WorldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;

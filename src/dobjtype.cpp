@@ -541,7 +541,6 @@ void PType::StaticInit()
 	RUNTIME_CLASS(PEnum)->TypeTableType = RUNTIME_CLASS(PEnum);
 	RUNTIME_CLASS(PArray)->TypeTableType = RUNTIME_CLASS(PArray);
 	RUNTIME_CLASS(PDynArray)->TypeTableType = RUNTIME_CLASS(PDynArray);
-	RUNTIME_CLASS(PVector)->TypeTableType = RUNTIME_CLASS(PVector);
 	RUNTIME_CLASS(PMap)->TypeTableType = RUNTIME_CLASS(PMap);
 	RUNTIME_CLASS(PStruct)->TypeTableType = RUNTIME_CLASS(PStruct);
 	RUNTIME_CLASS(PPrototype)->TypeTableType = RUNTIME_CLASS(PPrototype);
@@ -1872,6 +1871,39 @@ void PArray::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset>
 
 //==========================================================================
 //
+// PArray :: InitializeValue
+// This is needed for local array variables
+//
+//==========================================================================
+
+void PArray::InitializeValue(void *addr, const void *def) const
+{
+	char *caddr = (char*)addr;
+	char *cdef = (char*)def;
+	for (unsigned i = 0; i < ElementCount; ++i)
+	{
+		ElementType->InitializeValue(caddr + i * ElementSize, cdef + i * ElementSize);
+	}
+}
+
+//==========================================================================
+//
+// PArray :: DestroyValue
+// This is needed for local array variables
+//
+//==========================================================================
+
+void PArray::DestroyValue(void *addr) const
+{
+	char *caddr = (char*)addr;
+	for (unsigned i = 0; i < ElementCount; ++i)
+	{
+		ElementType->DestroyValue(caddr + i * ElementSize);
+	}
+}
+
+//==========================================================================
+//
 // NewArray
 //
 // Returns a PArray for the given type and size, making sure not to create
@@ -1889,56 +1921,6 @@ PArray *NewArray(PType *type, unsigned int count)
 		TypeTable.AddType(atype, RUNTIME_CLASS(PArray), (intptr_t)type, count, bucket);
 	}
 	return (PArray *)atype;
-}
-
-/* PVector ****************************************************************/
-
-IMPLEMENT_CLASS(PVector, false, false, false, false)
-
-//==========================================================================
-//
-// PVector - Default Constructor
-//
-//==========================================================================
-
-PVector::PVector()
-: PArray(TypeFloat32, 3)
-{
-	mDescriptiveName = "Vector";
-}
-
-//==========================================================================
-//
-// PVector - Parameterized Constructor
-//
-//==========================================================================
-
-PVector::PVector(unsigned int size)
-: PArray(TypeFloat32, size)
-{
-	mDescriptiveName.Format("Vector<%d>", size);
-	assert(size >= 2 && size <= 4);
-}
-
-//==========================================================================
-//
-// NewVector
-//
-// Returns a PVector with the given dimension, making sure not to create
-// duplicates.
-//
-//==========================================================================
-
-PVector *NewVector(unsigned int size)
-{
-	size_t bucket;
-	PType *type = TypeTable.FindType(RUNTIME_CLASS(PVector), (intptr_t)TypeFloat32, size, &bucket);
-	if (type == NULL)
-	{
-		type = new PVector(size);
-		TypeTable.AddType(type, RUNTIME_CLASS(PVector), (intptr_t)TypeFloat32, size, bucket);
-	}
-	return (PVector *)type;
 }
 
 /* PDynArray **************************************************************/
@@ -2001,6 +1983,28 @@ void PDynArray::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 {
 	id1 = (intptr_t)ElementType;
 	id2 = 0;
+}
+
+//==========================================================================
+//
+// PDynArray :: InitializeValue
+//
+//==========================================================================
+
+void PDynArray::InitializeValue(void *addr, const void *def) const
+{
+	// DynArrays are not implemented yet.
+}
+
+//==========================================================================
+//
+// PDynArray :: DestroyValue
+//
+//==========================================================================
+
+void PDynArray::DestroyValue(void *addr) const
+{
+	// DynArrays are not implemented yet.
 }
 
 //==========================================================================
@@ -2085,6 +2089,28 @@ void PMap::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 {
 	id1 = (intptr_t)KeyType;
 	id2 = (intptr_t)ValueType;
+}
+
+//==========================================================================
+//
+// PMap :: InitializeValue
+//
+//==========================================================================
+
+void PMap::InitializeValue(void *addr, const void *def) const
+{
+	// Maps are not implemented yet.
+}
+
+//==========================================================================
+//
+// PMap :: DestroyValue
+//
+//==========================================================================
+
+void PMap::DestroyValue(void *addr) const
+{
+	// Maps are not implemented yet.
 }
 
 //==========================================================================
@@ -2307,6 +2333,76 @@ size_t PStruct::PropagateMark()
 {
 	GC::MarkArray(Fields);
 	return Fields.Size() * sizeof(void*) + Super::PropagateMark();
+}
+
+//==========================================================================
+//
+// PStruct :: InitializeValue
+// This is needed for local array variables
+//
+//==========================================================================
+
+void PStruct::InitializeValue(void *addr, const void *def) const
+{
+	char *caddr = (char*)addr;
+	char *cdef = (char*)def;
+
+	for (auto tao : SpecialInits)
+	{
+		tao.first->InitializeValue(caddr + tao.second, cdef + tao.second);
+	}
+}
+
+//==========================================================================
+//
+// PStruct :: DestroyValue
+// This is needed for local array variables
+//
+//==========================================================================
+
+void PStruct::DestroyValue(void *addr) const
+{
+	char *caddr = (char*)addr;
+	for (auto tao : SpecialInits)
+	{
+		tao.first->DestroyValue(caddr + tao.second);
+	}
+}
+
+
+//==========================================================================
+//
+// PStruct :: InitializeSpecialInits
+//
+// Initialize special field list.
+//
+//==========================================================================
+
+void PStruct::InitializeSpecialInits()
+{
+	// and initialize our own special values.
+	auto it = Symbols.GetIterator();
+	PSymbolTable::MapType::Pair *pair;
+
+	while (it.NextPair(pair))
+	{
+		auto field = dyn_cast<PField>(pair->Value);
+		if (field != nullptr && !(field->Flags & VARF_Native))
+		{
+			field->Type->SetDefaultValue(nullptr, unsigned(field->Offset), &SpecialInits);
+		}
+	}
+}
+
+//==========================================================================
+//
+// PStruct :: RequireConstruction
+//
+//==========================================================================
+
+bool PStruct::RequireConstruction() const
+{
+	return SpecialInits.Size() > 0;
 }
 
 //==========================================================================

@@ -29,6 +29,7 @@
 #include "gl/data/gl_data.h"
 
 CVAR(Bool, r_debug_cull, 0, 0)
+EXTERN_CVAR(Int, screenblocks)
 void InitGLRMapinfoData();
 
 /////////////////////////////////////////////////////////////////////////////
@@ -76,17 +77,25 @@ void RenderPolyScene::SetupPerspectiveMatrix()
 		bDidSetup = true;
 	}
 
-	float pixelstretch = (glset.pixelstretch) ? glset.pixelstretch : 1.2;
+	int height;
+	if (screenblocks >= 10)
+	{
+		height = SCREENHEIGHT;
+	}
+	else
+	{
+		height = (screenblocks*SCREENHEIGHT / 10) & ~7;
+	}
+	viewheight = height; // So viewheight was calculated incorrectly. That's just.. wonderful.
 
 	float ratio = WidescreenRatio;
 	float fovratio = (WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
 	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(FieldOfView.Radians() / 2) / fovratio)).Degrees);
 	TriMatrix worldToView =
-		TriMatrix::scale(1.0f, 1.2f, 1.0f) *
 		TriMatrix::rotate((float)ViewPitch.Radians(), 1.0f, 0.0f, 0.0f) *
 		TriMatrix::rotate((float)(ViewAngle - 90).Radians(), 0.0f, -1.0f, 0.0f) *
-		TriMatrix::scale(1.0f, pixelstretch, 1.0f) *
 		TriMatrix::swapYZ() *
+		TriMatrix::scale(1.0f, 1.0f, glset.pixelstretch) *
 		TriMatrix::translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);
 	WorldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
 }

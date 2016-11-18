@@ -381,15 +381,18 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 				switch (code[i].c)
 				{
 				case CAST_I2F:
+				case CAST_U2F:
 					mode = MODE_AF | MODE_BI | MODE_CUNUSED;
 					break;
 				case CAST_Co2S:
 				case CAST_So2S:
 				case CAST_N2S:
 				case CAST_I2S:
+				case CAST_U2S:
 					mode = MODE_AS | MODE_BI | MODE_CUNUSED;
 					break;
 				case CAST_F2I:
+				case CAST_F2U:
 					mode = MODE_AI | MODE_BF | MODE_CUNUSED;
 					break;
 				case CAST_F2S:

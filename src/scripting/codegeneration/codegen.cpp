@@ -871,7 +871,7 @@ ExpEmit FxIntCast::Emit(VMFunctionBuilder *build)
 	assert(basex->ValueType->GetRegType() == REGT_FLOAT);
 	from.Free(build);
 	ExpEmit to(build, REGT_INT);
-	build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_F2I);
+	build->Emit(OP_CAST, to.RegNum, from.RegNum, ValueType == TypeUInt32? CAST_F2U : CAST_F2I);
 	return to;
 }
 
@@ -962,7 +962,7 @@ ExpEmit FxFloatCast::Emit(VMFunctionBuilder *build)
 	assert(basex->ValueType->GetRegType() == REGT_INT);
 	from.Free(build);
 	ExpEmit to(build, REGT_FLOAT);
-	build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_I2F);
+	build->Emit(OP_CAST, to.RegNum, from.RegNum, basex->ValueType == TypeUInt32? CAST_U2F : CAST_I2F);
 	return to;
 }
 
@@ -3554,7 +3554,7 @@ ExpEmit FxShift::Emit(VMFunctionBuilder *build)
 		assert(!op2.Konst);
 		instr = InstrMap[index][1];
 	}
-	assert(instr > 0);
+	assert(instr != 0);
 	ExpEmit to(build, REGT_INT);
 	build->Emit(instr, to.RegNum, op1.RegNum, rop);
 	return to;

@@ -1658,14 +1658,26 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 		ASSERTF(a); ASSERTD(b);
 		reg.f[a] = reg.d[b];
 		break;
+	case CAST_U2F:
+		ASSERTF(a); ASSERTD(b);
+		reg.f[a] = unsigned(reg.d[b]);
+		break;
 	case CAST_I2S:
 		ASSERTS(a); ASSERTD(b);
 		reg.s[a].Format("%d", reg.d[b]);
+		break;
+	case CAST_U2S:
+		ASSERTS(a); ASSERTD(b);
+		reg.s[a].Format("%u", reg.d[b]);
 		break;
 
 	case CAST_F2I:
 		ASSERTD(a); ASSERTF(b);
 		reg.d[a] = (int)reg.f[b];
+		break;
+	case CAST_F2U:
+		ASSERTD(a); ASSERTF(b);
+		reg.d[a] = (int)(unsigned)reg.f[b];
 		break;
 	case CAST_F2S:
 		ASSERTS(a); ASSERTD(b);
@@ -1674,7 +1686,7 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 
 	case CAST_P2S:
 		ASSERTS(a); ASSERTA(b);
-		reg.s[a].Format("%s<%p>", reg.atag[b] == ATAG_OBJECT ? "Object" : "Pointer", reg.a[b]);
+		reg.s[a].Format("%s<%p>", reg.atag[b] == ATAG_OBJECT ? (reg.a[b] == nullptr? "Object" : ((DObject*)reg.a[b])->GetClass()->TypeName.GetChars() ) : "Pointer", reg.a[b]);
 		break;
 
 	case CAST_S2I:

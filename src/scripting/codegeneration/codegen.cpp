@@ -2377,10 +2377,6 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 	{
 		switch (Operator)
 		{
-		case '+':
-			// later
-			break;
-
 		case '<':
 		case '>':
 		case TK_Geq:
@@ -2421,22 +2417,6 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 	{
 		switch (Operator)
 		{
-		case '+':
-		case '-':
-			// a vector2 can be added to or subtracted from a vector 3 but it needs to be the right operand.
-			if (left->ValueType == right->ValueType || (left->ValueType == TypeVector3 && right->ValueType == TypeVector2))
-			{
-				ValueType = left->ValueType;
-				return true;
-			}
-			else
-			{
-				ScriptPosition.Message(MSG_ERROR, "Incompatible operands for operator %c", Operator);
-				delete this;
-				return false;
-			}
-			break;
-
 		case '/':
 			if (right->IsVector())
 			{
@@ -2592,16 +2572,55 @@ FxAddSub::FxAddSub(int o, FxExpression *l, FxExpression *r)
 FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
-	if (!ResolveLR(ctx, true)) 
-		return nullptr;
 
-	if (!IsNumeric() && !IsVector())
+	RESOLVE(left, ctx);
+	RESOLVE(right, ctx);
+	if (!left || !right)
 	{
-		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
 		delete this;
-		return nullptr;
+		return false;
 	}
-	else if (left->isConstant() && right->isConstant())
+
+	if (left->IsVector() && right->IsVector())
+	{
+		// a vector2 can be added to or subtracted from a vector 3 but it needs to be the right operand.
+		if (left->ValueType == right->ValueType || (left->ValueType == TypeVector3 && right->ValueType == TypeVector2))
+		{
+			ValueType = left->ValueType;
+		}
+		else
+		{
+			ScriptPosition.Message(MSG_ERROR, "Incompatible operands for %s", Operator == '+' ? "addition" : "subtraction");
+			delete this;
+			return nullptr;
+		}
+	}
+	else if (left->IsNumeric() && right->IsNumeric())
+	{
+		// Addition and subtraction of unsigned ints results in an unsigned int. (16 and 8 bit values never get here, they get promoted to regular ints elsewhere already.)
+		if (left->ValueType == TypeUInt32 && right->ValueType == TypeUInt32)
+		{
+			ValueType = TypeUInt32;
+		}
+		else if (left->ValueType->GetRegType() == REGT_INT && right->ValueType->GetRegType() == REGT_INT)
+		{
+			ValueType = TypeSInt32;		// Addition and subtraction forces all integer-derived types to signed int.
+		}
+		else
+		{
+			ValueType = TypeFloat64;
+			Promote(ctx);
+		}
+	}
+	else
+	{
+		// To check: It may be that this could pass in DECORATE, although setting TypeVoid here would pretty much prevent that.
+		ScriptPosition.Message(MSG_ERROR, "Incompatible operands for %s", Operator == '+' ? "addition" : "subtraction");
+		delete this;
+		return false;
+	}
+
+	if (left->isConstant() && right->isConstant())
 	{
 		if (IsFloat())
 		{
@@ -2631,7 +2650,6 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 
 		}
 	}
-	Promote(ctx);
 	return this;
 }
 

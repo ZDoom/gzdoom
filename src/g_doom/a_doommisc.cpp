@@ -20,7 +20,6 @@
 #include "g_shared/a_pickups.h"
 
 // Include all the other Doom stuff here to reduce compile time
-#include "a_bossbrain.cpp"
 #include "a_doomweaps.cpp"
 #include "a_painelemental.cpp"
 #include "a_scriptedmarine.cpp"

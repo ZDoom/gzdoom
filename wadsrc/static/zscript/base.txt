@@ -1,5 +1,9 @@
 class Object native
 {
+	// These really should be global functions...
+	native static int G_SkillPropertyInt(int p);
+	native static double G_SkillPropertyFloat(int p);
+
 	virtual native void Destroy();
 	native class<Object> GetClass();
 }
@@ -37,3 +41,8 @@ class DropItem : Object native
 	*/
 }
 
+class SpotState : Object native
+{
+	native static SpotState GetSpotState();
+	native SpecialSpot GetNextInList(class<Actor> type, int skipcounter);
+}

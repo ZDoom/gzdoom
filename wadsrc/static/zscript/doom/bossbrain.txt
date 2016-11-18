@@ -212,9 +212,7 @@ extend class Actor
 		Exit_Normal(0);
 	}
 
-	native
-	void A_BrainSpit(class<Actor> spawntype = null)	// needs special treatment for default
-	;/*
+	void A_BrainSpit(class<Actor> spawntype = null)
 	{
 		SpotState spstate = SpotState.GetSpotState();
 		Actor targ;
@@ -222,7 +220,7 @@ extend class Actor
 		bool isdefault = false;
 
 		// shoot a cube at current target
-		targ = spstate.GetNextInList("BossTarget", G_SkillProperty(SKILLP_EasyBossBrain));
+		targ = spstate.GetNextInList("BossTarget", G_SkillPropertyInt(SKILLP_EasyBossBrain));
 
 		if (targ)
 		{
@@ -249,7 +247,7 @@ extend class Actor
 				{
 					spit.special2 = 0;
 				}
-				else if (abs(spit.Vel.y) > fabs(spit.Vel.x))
+				else if (abs(spit.Vel.y) > abs(spit.Vel.x))
 				{
 					spit.special2 = int((targ.pos.y - pos.y) / spit.Vel.y);
 				}
@@ -273,7 +271,6 @@ extend class Actor
 			}
 		}
 	}
-	*/
 	
 	private void SpawnFly(class<Actor> spawntype, sound snd)
 	{

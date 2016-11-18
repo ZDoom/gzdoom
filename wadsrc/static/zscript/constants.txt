@@ -917,3 +917,31 @@ enum EMapThingFlags
 	MTF_SECRET			= 0x080000,	// Secret pickup
 	MTF_NOINFIGHTING	= 0x100000,
 };
+
+enum ESkillProperty
+{
+	SKILLP_FastMonsters,
+	SKILLP_Respawn,
+	SKILLP_RespawnLimit,
+	SKILLP_DisableCheats,
+	SKILLP_AutoUseHealth,
+	SKILLP_SpawnFilter,
+	SKILLP_EasyBossBrain,
+	SKILLP_ACSReturn,
+	SKILLP_NoPain,
+	SKILLP_EasyKey,
+	SKILLP_SlowMonsters,
+	SKILLP_Infight,
+};
+enum EFSkillProperty	// floating point properties
+{
+	SKILLP_AmmoFactor,
+	SKILLP_DropAmmoFactor,
+	SKILLP_ArmorFactor,
+	SKILLP_HealthFactor,
+	SKILLP_DamageFactor,
+	SKILLP_Aggressiveness,
+	SKILLP_MonsterHealth,
+	SKILLP_FriendlyHealth,
+};
+

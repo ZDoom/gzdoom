@@ -251,6 +251,12 @@ DSpotState *DSpotState::GetSpotState(bool create)
 	return SpotState;
 }
 
+DEFINE_ACTION_FUNCTION(DSpotState, GetSpotState)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_OBJECT(DSpotState::GetSpotState());
+}
+
 //----------------------------------------------------------------------------
 //
 // 
@@ -317,6 +323,14 @@ ASpecialSpot *DSpotState::GetNextInList(PClassActor *type, int skipcounter)
 	return NULL;
 }
 
+DEFINE_ACTION_FUNCTION(DSpotState, GetNextInList)
+{
+	PARAM_SELF_PROLOGUE(DSpotState);
+	PARAM_CLASS(type, AActor);
+	PARAM_INT(skipcounter);
+	ACTION_RETURN_OBJECT(self->GetNextInList(type, skipcounter));
+}
+
 //----------------------------------------------------------------------------
 //
 // 
@@ -370,7 +384,6 @@ void ASpecialSpot::Destroy()
 }
 
 // Mace spawn spot ----------------------------------------------------------
-
 
 // Every mace spawn spot will execute this action. The first one
 // will build a list of all mace spots in the level and spawn a

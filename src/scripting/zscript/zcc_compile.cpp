@@ -2902,10 +2902,12 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		case PEX_LeftShift:
 		case PEX_RightShift:
 		case PEX_URightShift:
+			return new FxShift(tok, left, right);
+
 		case PEX_BitAnd:
 		case PEX_BitOr:
 		case PEX_BitXor:
-			return new FxBinaryInt(tok, left, right);
+			return new FxBitOp(tok, left, right);
 
 		case PEX_BoolOr:
 		case PEX_BoolAnd:
@@ -2937,10 +2939,12 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		case PEX_LshAssign:
 		case PEX_RshAssign:
 		case PEX_URshAssign:
+			return ModifyAssign(new FxShift(tok, new FxAssignSelf(*ast), right), left);
+
 		case PEX_AndAssign:
 		case PEX_OrAssign:
 		case PEX_XorAssign:
-			return ModifyAssign(new FxBinaryInt(tok, new FxAssignSelf(*ast), right), left);
+			return ModifyAssign(new FxBitOp(tok, new FxAssignSelf(*ast), right), left);
 
 		case PEX_LTGTEQ:
 			return new FxLtGtEq(left, right);

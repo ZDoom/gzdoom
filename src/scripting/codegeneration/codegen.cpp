@@ -838,7 +838,7 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 		{
 			ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
 			FxExpression *x = new FxConstant(constval.GetInt(), ScriptPosition);
-			if (!NoWarn && constval.GetInt() != constval.GetFloat())
+			if (constval.GetInt() != constval.GetFloat())
 			{
 				ScriptPosition.Message(MSG_WARNING, "Truncation of floating point constant %f", constval.GetFloat());
 			}
@@ -2363,157 +2363,7 @@ FxBinary::~FxBinary()
 //
 //==========================================================================
 
-bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
-{
-	RESOLVE(left, ctx);
-	RESOLVE(right, ctx);
-	if (!left || !right)
-	{
-		delete this;
-		return false;
-	}
-
-	if (left->ValueType == TypeString || right->ValueType == TypeString)
-	{
-		switch (Operator)
-		{
-		case '<':
-		case '>':
-		case TK_Geq:
-		case TK_Leq:
-		case TK_Eq:
-		case TK_Neq:
-		case TK_ApproxEq:
-			if (left->ValueType != TypeString)
-			{
-				left = new FxStringCast(left);
-				left = left->Resolve(ctx);
-				if (left == nullptr)
-				{
-					delete this;
-					return false;
-				}
-			}
-			if (right->ValueType != TypeString)
-			{
-				right = new FxStringCast(right);
-				right = right->Resolve(ctx);
-				if (right == nullptr)
-				{
-					delete this;
-					return false;
-				}
-			}
-			ValueType = TypeBool;
-			break;
-
-		default:
-			ScriptPosition.Message(MSG_ERROR, "Incompatible operands for comparison");
-			delete this;
-			return false;
-		}
-	}
-	else if (left->IsVector() || right->IsVector())
-	{
-		switch (Operator)
-		{
-		case TK_Eq:
-		case TK_Neq:
-			if (left->ValueType != right->ValueType)
-			{
-				ScriptPosition.Message(MSG_ERROR, "Incompatible operands for comparison");
-				delete this;
-				return false;
-			}
-			ValueType = TypeBool;
-			break;
-
-		default:
-			ScriptPosition.Message(MSG_ERROR, "Incompatible operation for vector type");
-			delete this;
-			return false;
-
-		}
-	}
-	else if (left->ValueType == TypeBool && right->ValueType == TypeBool)
-	{
-		if (Operator == '&' || Operator == '|' || Operator == '^' || ctx.FromDecorate)
-		{
-			ValueType = TypeBool;
-		}
-		else
-		{
-			ValueType = TypeSInt32;	// math operations on bools result in integers.
-		}
-	}
-	else if (left->ValueType == TypeName && right->ValueType == TypeName)
-	{
-		// pointers can only be compared for equality.
-		if (Operator == TK_Eq || Operator == TK_Neq)
-		{
-			ValueType = TypeBool;
-			return true;
-		}
-		else
-		{
-			ScriptPosition.Message(MSG_ERROR, "Invalid operation for names");
-			delete this;
-			return false;
-		}
-	}
-	else if (left->IsNumeric() && right->IsNumeric())
-	{
-		if (left->ValueType->GetRegType() == REGT_INT && right->ValueType->GetRegType() == REGT_INT)
-		{
-			ValueType = TypeSInt32;
-		}
-		else
-		{
-			ValueType = TypeFloat64;
-		}
-	}
-	else if (left->ValueType->GetRegType() == REGT_POINTER)
-	{
-		if (left->ValueType == right->ValueType || right->ValueType == TypeNullPtr || left->ValueType == TypeNullPtr ||
-			AreCompatiblePointerTypes(left->ValueType, right->ValueType))
-		{
-			// pointers can only be compared for equality.
-			if (Operator == TK_Eq || Operator == TK_Neq)
-			{
-				ValueType = TypeBool;
-				return true;
-			}
-			else
-			{
-				ScriptPosition.Message(MSG_ERROR, "Invalid operation for pointers");
-				delete this;
-				return false;
-			}
-		}
-	}
-	else
-	{
-		// To check: It may be that this could pass in DECORATE, although setting TypeVoid here would pretty much prevent that.
-		ScriptPosition.Message(MSG_ERROR, "Incompatible operator");
-		delete this;
-		return false;
-	}
-	assert(ValueType != nullptr && ValueType < (PType*)0xfffffffffffffff);
-
-	if (castnumeric)
-	{
-		// later!
-	}
-	return true;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FxBinary::Promote(FCompileContext &ctx)
+bool FxBinary::Promote(FCompileContext &ctx, bool forceint)
 {
 	// math operations of unsigned ints results in an unsigned int. (16 and 8 bit values never get here, they get promoted to regular ints elsewhere already.)
 	if (left->ValueType == TypeUInt32 && right->ValueType == TypeUInt32)
@@ -2524,7 +2374,7 @@ void FxBinary::Promote(FCompileContext &ctx)
 	{
 		ValueType = TypeSInt32;		// Addition and subtraction forces all integer-derived types to signed int.
 	}
-	else
+	else if (!forceint)
 	{
 		ValueType = TypeFloat64;
 		if (left->IsFloat() && right->IsInteger())
@@ -2536,6 +2386,34 @@ void FxBinary::Promote(FCompileContext &ctx)
 			left = (new FxFloatCast(left))->Resolve(ctx);
 		}
 	}
+	else if (ctx.FromDecorate)
+	{
+		// For DECORATE which allows floats here. ZScript does not.
+		if (left->IsFloat())
+		{
+			left = new FxIntCast(left, ctx.FromDecorate);
+			left = left->Resolve(ctx);
+		}
+		if (right->IsFloat())
+		{
+			right = new FxIntCast(right, ctx.FromDecorate);
+			right = right->Resolve(ctx);
+		}
+		if (left == nullptr || right == nullptr)
+		{
+			delete this;
+			return false;
+		}
+		ValueType = TypeSInt32;
+
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Integer operand expected");
+		delete this;
+		return false;
+	}
+	return true;
 }
 
 //==========================================================================
@@ -3064,7 +2942,7 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 				return nullptr;
 			}
 		}
-		ValueType == TypeString;
+		ValueType = TypeString;
 	}
 	else if (left->IsNumeric() && right->IsNumeric())
 	{
@@ -3238,24 +3116,66 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 
-	if (!ResolveLR(ctx, true)) 
-		return nullptr;
-
+	RESOLVE(left, ctx);
+	RESOLVE(right, ctx);
 	if (!left || !right)
 	{
 		delete this;
 		return nullptr;
 	}
 
-	if (!IsNumeric() && !IsPointer() && !IsVector() && ValueType != TypeName)
+	if (left->ValueType != right->ValueType)	// identical types are always comparable, if they can be placed in a register, so we can save most checks if this is the case.
 	{
-		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
-		delete this;
-		return nullptr;
+		// Special cases: Compare strings and names with names, sounds, colors, state labels and class types.
+		// These are all types a string can be implicitly cast into, so for convenience, so they should when doing a comparison.
+		if ((left->ValueType == TypeString || left->ValueType == TypeName) &&
+			(right->ValueType == TypeName || right->ValueType == TypeSound || right->ValueType == TypeColor || right->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)) || right->ValueType == TypeStateLabel))
+		{
+			left = new FxTypeCast(left, right->ValueType, false, true);
+			left = left->Resolve(ctx);
+			ABORT(left);
+			ValueType = right->ValueType;
+		}
+		else if ((right->ValueType == TypeString || right->ValueType == TypeName) &&
+			(left->ValueType == TypeName || left->ValueType == TypeSound || left->ValueType == TypeColor || left->ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)) || left->ValueType == TypeStateLabel))
+		{
+			right = new FxTypeCast(right, left->ValueType, false, true);
+			right = right->Resolve(ctx);
+			ABORT(right);
+			ValueType = left->ValueType;
+		}
+		else if (left->IsNumeric() && right->IsNumeric())
+		{
+			Promote(ctx);
+		}
+		else if (left->ValueType->GetRegType() == REGT_POINTER && right->ValueType->GetRegType() == REGT_POINTER)
+		{
+			if (left->ValueType != right->ValueType && right->ValueType != TypeNullPtr && left->ValueType != TypeNullPtr &&
+				!AreCompatiblePointerTypes(left->ValueType, right->ValueType))
+			{
+				goto error;
+			}
+		}
+		else
+		{
+			goto error;
+		}
+	}
+	else if (left->ValueType->GetRegType() == REGT_NIL)
+	{
+		goto error;
+	}
+	else
+	{
+		ValueType = left->ValueType;
 	}
 
-	if (Operator == TK_ApproxEq && left->ValueType->GetRegType() != REGT_FLOAT && left->ValueType->GetRegType() != REGT_STRING) 
-		Operator = TK_Eq;
+	if (Operator == TK_ApproxEq && ValueType->GetRegType() != REGT_FLOAT && ValueType->GetRegType() != REGT_STRING)
+	{
+		// Only floats, vectors and strings have handling for '~==', for all other types this is an error.
+		goto error;
+	}
+
 	if (left->isConstant() && right->isConstant())
 	{
 		int v;
@@ -3357,9 +3277,13 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 			}
 		}
 	}
-	Promote(ctx);
 	ValueType = TypeBool;
 	return this;
+
+error:
+	ScriptPosition.Message(MSG_ERROR, "Incompatible operands for %s comparison", Operator == TK_Eq ? "==" : Operator == TK_Neq ? "!=" : "~==");
+	delete this;
+	return nullptr;
 }
 
 //==========================================================================
@@ -3435,7 +3359,7 @@ ExpEmit FxCompareEq::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxBinaryInt::FxBinaryInt(int o, FxExpression *l, FxExpression *r)
+FxBitOp::FxBitOp(int o, FxExpression *l, FxExpression *r)
 : FxBinary(o, l, r)
 {
 	ValueType = TypeSInt32;
@@ -3447,48 +3371,39 @@ FxBinaryInt::FxBinaryInt(int o, FxExpression *l, FxExpression *r)
 //
 //==========================================================================
 
-FxExpression *FxBinaryInt::Resolve(FCompileContext& ctx)
+FxExpression *FxBitOp::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
-	if (!ResolveLR(ctx, false)) 
-		return nullptr;
 
-	if (IsFloat() && ctx.FromDecorate)
+	RESOLVE(left, ctx);
+	RESOLVE(right, ctx);
+	if (!left || !right)
 	{
-		// For DECORATE which allows floats here. ZScript does not.
-		if (left->ValueType->GetRegType() != REGT_INT)
-		{
-			left = new FxIntCast(left, ctx.FromDecorate);
-			left = left->Resolve(ctx);
-		}
-		if (right->ValueType->GetRegType() != REGT_INT)
-		{
-			right = new FxIntCast(right, ctx.FromDecorate);
-			right = right->Resolve(ctx);
-		}
-		if (left == nullptr || right == nullptr)
-		{
-			delete this;
-			return nullptr;
-		}
-		ValueType = TypeSInt32;
+		delete this;
+		return false;
 	}
 
-	if (ValueType->GetRegType() != REGT_INT)
+	if (left->ValueType == TypeBool && right->ValueType == TypeBool)
 	{
-		ScriptPosition.Message(MSG_ERROR, "Integer type expected");
+		ValueType = TypeBool;
+	}
+	else if (left->IsNumeric() && right->IsNumeric())
+	{
+		if (!Promote(ctx, true)) return nullptr;
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Incompatible operands for bit operation");
 		delete this;
 		return nullptr;
 	}
-	else if (left->isConstant() && right->isConstant())
+
+	if (left->isConstant() && right->isConstant())
 	{
 		int v1 = static_cast<FxConstant *>(left)->GetValue().GetInt();
 		int v2 = static_cast<FxConstant *>(right)->GetValue().GetInt();
 
 		FxExpression *e = new FxConstant(
-			Operator == TK_LShift? v1 << v2 : 
-			Operator == TK_RShift? v1 >> v2 : 
-			Operator == TK_URShift? int((unsigned int)(v1) >> v2) : 
 			Operator == '&'? v1 & v2 : 
 			Operator == '|'? v1 | v2 : 
 			Operator == '^'? v1 ^ v2 : 0, ScriptPosition);
@@ -3505,7 +3420,98 @@ FxExpression *FxBinaryInt::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-ExpEmit FxBinaryInt::Emit(VMFunctionBuilder *build)
+ExpEmit FxBitOp::Emit(VMFunctionBuilder *build)
+{
+	assert(left->ValueType->GetRegType() == REGT_INT);
+	assert(right->ValueType->GetRegType() == REGT_INT);
+	int instr, rop;
+	ExpEmit op1, op2;
+
+	op1 = left->Emit(build);
+	op2 = right->Emit(build);
+	if (op1.Konst)
+	{
+		swapvalues(op1, op2);
+	}
+	assert(!op1.Konst);
+	rop = op2.RegNum;
+	op2.Free(build);
+	op1.Free(build);
+
+	instr = Operator == '&' ? OP_AND_RR :
+			Operator == '|' ? OP_OR_RR :
+			Operator == '^' ? OP_XOR_RR : -1;
+
+	assert(instr > 0);
+	ExpEmit to(build, REGT_INT);
+	build->Emit(instr + op2.Konst, to.RegNum, op1.RegNum, rop);
+	return to;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxShift::FxShift(int o, FxExpression *l, FxExpression *r)
+	: FxBinary(o, l, r)
+{
+	ValueType = TypeSInt32;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxShift::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+	RESOLVE(left, ctx);
+	RESOLVE(right, ctx);
+	if (!left || !right)
+	{
+		delete this;
+		return false;
+	}
+
+	if (left->IsNumeric() && right->IsNumeric())
+	{
+		if (!Promote(ctx, true)) return nullptr;
+		if (ValueType == TypeUInt32 && Operator == TK_RShift) Operator = TK_URShift;
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Incompatible operands for shift operation");
+		delete this;
+		return nullptr;
+	}
+
+	if (left->isConstant() && right->isConstant())
+	{
+		int v1 = static_cast<FxConstant *>(left)->GetValue().GetInt();
+		int v2 = static_cast<FxConstant *>(right)->GetValue().GetInt();
+
+		FxExpression *e = new FxConstant(
+			Operator == TK_LShift ? v1 << v2 :
+			Operator == TK_RShift ? v1 >> v2 :
+			Operator == TK_URShift ? int((unsigned int)(v1) >> v2) : 0, ScriptPosition);
+
+		delete this;
+		return e;
+	}
+	return this;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxShift::Emit(VMFunctionBuilder *build)
 {
 	assert(left->ValueType->GetRegType() == REGT_INT);
 	assert(right->ValueType->GetRegType() == REGT_INT);
@@ -3514,65 +3520,41 @@ ExpEmit FxBinaryInt::Emit(VMFunctionBuilder *build)
 		{ OP_SLL_RR, OP_SLL_KR, OP_SLL_RI },	// TK_LShift
 		{ OP_SRA_RR, OP_SRA_KR, OP_SRA_RI },	// TK_RShift
 		{ OP_SRL_RR, OP_SRL_KR, OP_SRL_RI },	// TK_URShift
-		{ OP_AND_RR, 0,         OP_AND_RK },	// '&'
-		{ OP_OR_RR,  0,			OP_OR_RK  },	// '|'
-		{ OP_XOR_RR, 0,         OP_XOR_RK },	// '^'
 	};
 	int index, instr, rop;
 	ExpEmit op1, op2;
 
 	index = Operator == TK_LShift ? 0 :
 			Operator == TK_RShift ? 1 :
-			Operator == TK_URShift ? 2 :
-			Operator == '&' ? 3 :
-			Operator == '|' ? 4 :
-			Operator == '^' ? 5 : -1;
+			Operator == TK_URShift ? 2 : -1;
 	assert(index >= 0);
 	op1 = left->Emit(build);
-	if (index < 3)
-	{ // Shift instructions use right-hand immediates instead of constant registers.
-		if (right->isConstant())
-		{
-			rop = static_cast<FxConstant *>(right)->GetValue().GetInt();
-			op2.Konst = true;
-		}
-		else
-		{
-			op2 = right->Emit(build);
-			assert(!op2.Konst);
-			op2.Free(build);
-			rop = op2.RegNum;
-		}
+
+	// Shift instructions use right-hand immediates instead of constant registers.
+	if (right->isConstant())
+	{
+		rop = static_cast<FxConstant *>(right)->GetValue().GetInt();
+		op2.Konst = true;
 	}
 	else
-	{ // The other operators only take a constant on the right-hand side.
+	{
 		op2 = right->Emit(build);
-		if (op1.Konst)
-		{
-			swapvalues(op1, op2);
-		}
-		assert(!op1.Konst);
-		rop = op2.RegNum;
+		assert(!op2.Konst);
 		op2.Free(build);
+		rop = op2.RegNum;
 	}
+
 	if (!op1.Konst)
 	{
 		op1.Free(build);
-		if (!op2.Konst)
-		{
-			instr = InstrMap[index][0];
-		}
-		else
-		{
-			instr = InstrMap[index][2];
-		}
+		instr = InstrMap[index][op2.Konst? 0:2];
 	}
 	else
 	{
 		assert(!op2.Konst);
 		instr = InstrMap[index][1];
 	}
-	assert(instr != 0);
+	assert(instr > 0);
 	ExpEmit to(build, REGT_INT);
 	build->Emit(instr, to.RegNum, op1.RegNum, rop);
 	return to;
@@ -3599,30 +3581,27 @@ FxLtGtEq::FxLtGtEq(FxExpression *l, FxExpression *r)
 FxExpression *FxLtGtEq::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
-	if (!ResolveLR(ctx, true)) 
-		return nullptr;
 
-	if (!left->IsNumeric() || !right->IsNumeric())
+	RESOLVE(left, ctx);
+	RESOLVE(right, ctx);
+	if (!left || !right)
+	{
+		delete this;
+		return false;
+	}
+
+	if (left->IsNumeric() && right->IsNumeric())
+	{
+		Promote(ctx);
+	}
+	else
 	{
 		ScriptPosition.Message(MSG_ERROR, "<>= expects two numeric operands");
 		delete this;
 		return nullptr;
 	}
-	if (left->ValueType->GetRegType() != right->ValueType->GetRegType())
-	{
-		if (left->ValueType->GetRegType() == REGT_INT)
-		{
-			left = new FxFloatCast(left);
-			SAFE_RESOLVE(left, ctx);
-		}
-		if (right->ValueType->GetRegType() == REGT_INT)
-		{
-			right = new FxFloatCast(left);
-			SAFE_RESOLVE(left, ctx);
-		}
-	}
 
-	else if (left->isConstant() && right->isConstant())
+	if (left->isConstant() && right->isConstant())
 	{
 		// let's cut this short and always compare doubles. For integers the result will be exactly the same as with an integer comparison, either signed or unsigned.
 		auto v1 = static_cast<FxConstant *>(left)->GetValue().GetFloat();

@@ -813,8 +813,7 @@ public:
 
 	FxBinary(int, FxExpression*, FxExpression*);
 	~FxBinary();
-	bool ResolveLR(FCompileContext& ctx, bool castnumeric);
-	void Promote(FCompileContext &ctx);
+	bool Promote(FCompileContext &ctx, bool forceint = false);
 };
 
 //==========================================================================
@@ -899,11 +898,26 @@ public:
 //
 //==========================================================================
 
-class FxBinaryInt : public FxBinary
+class FxBitOp : public FxBinary
 {
 public:
 
-	FxBinaryInt(int, FxExpression*, FxExpression*);
+	FxBitOp(int, FxExpression*, FxExpression*);
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxBinary
+//
+//==========================================================================
+
+class FxShift : public FxBinary
+{
+public:
+
+	FxShift(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

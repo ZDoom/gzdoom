@@ -139,27 +139,27 @@ static FxExpression *ParseExpressionM (FScanner &sc, PClassActor *cls)
 			break;
 
 		case TK_LShiftEq:
-			exp = new FxBinaryInt(TK_LShift, left, nullptr);
+			exp = new FxShift(TK_LShift, left, nullptr);
 			break;
 
 		case TK_RShiftEq:
-			exp = new FxBinaryInt(TK_RShift, left, nullptr);
+			exp = new FxShift(TK_RShift, left, nullptr);
 			break;
 
 		case TK_URShiftEq:
-			exp = new FxBinaryInt(TK_URShift, left, nullptr);
+			exp = new FxShift(TK_URShift, left, nullptr);
 			break;
 
 		case TK_AndEq:
-			exp = new FxBinaryInt('&', left, nullptr);
+			exp = new FxBitOp('&', left, nullptr);
 			break;
 
 		case TK_XorEq:
-			exp = new FxBinaryInt('^', left, nullptr);
+			exp = new FxBitOp('^', left, nullptr);
 			break;
 
 		case TK_OrEq:
-			exp = new FxBinaryInt('|', left, nullptr);
+			exp = new FxBitOp('|', left, nullptr);
 			break;
 
 		default:
@@ -207,7 +207,7 @@ static FxExpression *ParseExpressionJ (FScanner &sc, PClassActor *cls)
 	while (sc.CheckToken('|'))
 	{
 		FxExpression *right = ParseExpressionI (sc, cls);
-		tmp = new FxBinaryInt('|', tmp, right);
+		tmp = new FxBitOp('|', tmp, right);
 	}
 	return tmp;
 }
@@ -219,7 +219,7 @@ static FxExpression *ParseExpressionI (FScanner &sc, PClassActor *cls)
 	while (sc.CheckToken('^'))
 	{
 		FxExpression *right = ParseExpressionH (sc, cls);
-		tmp = new FxBinaryInt('^', tmp, right);
+		tmp = new FxBitOp('^', tmp, right);
 	}
 	return tmp;
 }
@@ -231,7 +231,7 @@ static FxExpression *ParseExpressionH (FScanner &sc, PClassActor *cls)
 	while (sc.CheckToken('&'))
 	{
 		FxExpression *right = ParseExpressionG (sc, cls);
-		tmp = new FxBinaryInt('&', tmp, right);
+		tmp = new FxBitOp('&', tmp, right);
 	}
 	return tmp;
 }
@@ -272,7 +272,7 @@ static FxExpression *ParseExpressionE (FScanner &sc, PClassActor *cls)
 	{
 		int token = sc.TokenType;
 		FxExpression *right = ParseExpressionD (sc, cls);
-		tmp = new FxBinaryInt(token, tmp, right);
+		tmp = new FxShift(token, tmp, right);
 	}
 	if (!sc.End) sc.UnGet();
 	return tmp;

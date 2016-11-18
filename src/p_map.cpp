@@ -1738,6 +1738,15 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly)
 	return P_CheckPosition(thing, pos, tm, actorsonly);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CheckPosition)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_BOOL_DEF(actorsonly);
+	ACTION_RETURN_BOOL(P_CheckPosition(self, DVector2(x, y), actorsonly));
+}
+
 //----------------------------------------------------------------------------
 //
 // FUNC P_TestMobjLocation

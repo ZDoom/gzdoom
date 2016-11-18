@@ -16,9 +16,7 @@ class Pod : Actor
 		DeathSound "world/podexplode";
 		PushFactor 0.5;
 	}
-	native void A_PodPain (class<Actor> podtype = "PodGoo");
-	native void A_RemovePod ();
-	
+
 	States
 	{
 	Spawn:
@@ -37,6 +35,44 @@ class Pod : Actor
 		PPOD IJKLMNOP 3;
 		Goto Spawn;
 	}
+	
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_PodPain
+	//
+	//----------------------------------------------------------------------------
+
+	void A_PodPain (class<Actor> gootype = "PodGoo")
+	{
+		int chance = Random[PodPain]();
+		if (chance < 128)
+		{
+			return;
+		}
+		for (int count = chance > 240 ? 2 : 1; count; count--)
+		{
+			Actor goo = Spawn(gootype, pos + (0, 0, 48), ALLOW_REPLACE);
+			goo.target = self;
+			goo.Vel.X = Random2[PodPain]() / 128.;
+			goo.Vel.Y = Random2[PodPain]() / 128.;
+			goo.Vel.Z = 0.5 + random[PodPain]() / 128.;
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_RemovePod
+	//
+	//----------------------------------------------------------------------------
+
+	void A_RemovePod ()
+	{
+		if (master && master.special1 > 0)
+		{
+			master.special1--;
+		}
+	}
+
 }
 
 
@@ -75,13 +111,40 @@ class PodGenerator : Actor
 		AttackSound "world/podgrow";
 	}
 
-	native void A_MakePod (class<Actor> podtype = "Pod");
 
 	States
 	{
 	Spawn:
 		TNT1 A 35 A_MakePod;
 		Loop;
+	}
+	
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_MakePod
+	//
+	//----------------------------------------------------------------------------
+
+	const MAX_GEN_PODS = 16;
+
+	void A_MakePod (class<Actor> podtype = "Pod")
+	{
+		if (special1 >= MAX_GEN_PODS)
+		{ // Too many generated pods
+			return;
+		}
+		Actor mo = Spawn(podtype, (pos.xy, ONFLOORZ), ALLOW_REPLACE);
+		if (!mo) return;
+		if (!mo.CheckPosition (mo.Pos.xy))
+		{ // Didn't fit
+			mo.Destroy ();
+			return;
+		}
+		mo.SetStateLabel("Grow");
+		mo.Thrust(4.5, random[MakePod]() * (360. / 256));
+		A_PlaySound (AttackSound, CHAN_BODY);
+		special1++; // Increment generated pod count
+		mo.master = self; // Link the generator to the pod
 	}
 }
 
@@ -136,7 +199,6 @@ class TeleGlitter1 : Actor
 		Damage 0;
 	}
 
-	native void A_AccTeleGlitter ();
 
 	States
 	{
@@ -147,6 +209,20 @@ class TeleGlitter1 : Actor
 		TGLT D 2 BRIGHT A_AccTeleGlitter;
 		TGLT E 2 BRIGHT;
 		Loop;
+	}
+	
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_AccTeleGlitter
+	//
+	//----------------------------------------------------------------------------
+
+	void A_AccTeleGlitter ()
+	{
+		if (++health > 35)
+		{
+			Vel.Z *= 1.5;
+		}
 	}
 }
 
@@ -178,9 +254,6 @@ class Volcano : Actor
 		+SOLID
 	}
 	
-	native void A_VolcanoSet ();
-	native void A_VolcanoBlast ();
-	
 	States
 	{
 	Spawn:
@@ -190,7 +263,38 @@ class Volcano : Actor
 		VLCO E 10 A_VolcanoBlast;
 		Goto Spawn+1;
 	}
+	
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_VolcanoSet
+	//
+	//----------------------------------------------------------------------------
 
+	void A_VolcanoSet ()
+	{
+		tics = 105 + (random[VolcanoSet]() & 127);
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_VolcanoBlast
+	//
+	//----------------------------------------------------------------------------
+
+	void A_VolcanoBlast ()
+	{
+		int count = random[VolcanoBlast](1,3);
+		for (int i = 0; i < count; i++)
+		{
+			Actor blast = Spawn("VolcanoBlast", pos + (0, 0, 44), ALLOW_REPLACE);
+			blast.target = self;
+			blast.Angle = random[VolcanoBlast]() * (360 / 256.);
+			blast.VelFromAngle(1.);
+			blast.Vel.Z = 2.5 + random[VolcanoBlast]() / 64.;
+			blast.A_PlaySound ("world/volcano/shoot", CHAN_BODY);
+			blast.CheckMissileSpawn (radius);
+		}
+	}
 }
 
 // Volcano blast ------------------------------------------------------------
@@ -210,8 +314,6 @@ class VolcanoBlast : Actor
 		DeathSound "world/volcano/blast";
 	}
 
-	native void A_VolcBallImpact ();
-
 	States
 	{
 	Spawn:
@@ -223,6 +325,35 @@ class VolcanoBlast : Actor
 		XPL1 A 4 BRIGHT A_VolcBallImpact;
 		XPL1 BCDEF 4 BRIGHT;
 		Stop;
+	}
+	
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_VolcBallImpact
+	//
+	//----------------------------------------------------------------------------
+
+	void A_VolcBallImpact ()
+	{
+		if (pos.Z <= floorz)
+		{
+			bNoGravity = true;
+			Gravity = 1;
+			AddZ(28);
+		}
+		A_Explode(25, 25, XF_NOSPLASH|XF_HURTSOURCE, false, 0, 0, 0, "BulletPuff", 'Fire');
+		for (int i = 0; i < 4; i++)
+		{
+			Actor tiny = Spawn("VolcanoTBlast", Pos, ALLOW_REPLACE);
+			if (tiny)
+			{
+				tiny.target = self;
+				tiny.Angle = 90.*i;
+				tiny.VelFromAngle(0.7);
+				tiny.Vel.Z = 1. + random[VolcBallImpact]() / 128.;
+				tiny.CheckMissileSpawn (radius);
+			}
+		}
 	}
 }
 
@@ -251,5 +382,4 @@ class VolcanoTBlast : Actor
 		Stop;
 	}
 }
-
 

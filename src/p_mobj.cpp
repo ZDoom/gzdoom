@@ -6022,6 +6022,13 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CheckMissileSpawn)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(add);
+	ACTION_RETURN_BOOL(P_CheckMissileSpawn(self, add));
+}
+
 
 //---------------------------------------------------------------------------
 //

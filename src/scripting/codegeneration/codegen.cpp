@@ -2922,9 +2922,18 @@ ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 		{
 			assert(ValueType->GetRegType() == REGT_INT);
 			assert(op1.RegType == REGT_INT && op2.RegType == REGT_INT);
-			build->Emit(Operator == '/' ? (op1.Konst ? OP_DIV_KR : op2.Konst ? OP_DIV_RK : OP_DIV_RR)
-				: (op1.Konst ? OP_MOD_KR : op2.Konst ? OP_MOD_RK : OP_MOD_RR),
-				to.RegNum, op1.RegNum, op2.RegNum);
+			if (ValueType == TypeUInt32)
+			{
+				build->Emit(Operator == '/' ? (op1.Konst ? OP_DIVU_KR : op2.Konst ? OP_DIVU_RK : OP_DIVU_RR)
+					: (op1.Konst ? OP_MODU_KR : op2.Konst ? OP_MODU_RK : OP_MODU_RR),
+					to.RegNum, op1.RegNum, op2.RegNum);
+			}
+			else
+			{
+				build->Emit(Operator == '/' ? (op1.Konst ? OP_DIV_KR : op2.Konst ? OP_DIV_RK : OP_DIV_RR)
+					: (op1.Konst ? OP_MOD_KR : op2.Konst ? OP_MOD_RK : OP_MOD_RR),
+					to.RegNum, op1.RegNum, op2.RegNum);
+			}
 			return to;
 		}
 	}
@@ -3024,16 +3033,51 @@ FxCompareRel::FxCompareRel(int o, FxExpression *l, FxExpression *r)
 FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
-	if (!ResolveLR(ctx, true)) 
-		return nullptr;
 
-	if (!IsNumeric())
+	RESOLVE(left, ctx);
+	RESOLVE(right, ctx);
+	if (!left || !right)
 	{
-		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
 		delete this;
 		return nullptr;
 	}
-	else if (left->isConstant() && right->isConstant())
+
+	if (left->ValueType == TypeString || right->ValueType == TypeString)
+	{
+		if (left->ValueType != TypeString)
+		{
+			left = new FxStringCast(left);
+			left = left->Resolve(ctx);
+			if (left == nullptr)
+			{
+				delete this;
+				return nullptr;
+			}
+		}
+		if (right->ValueType != TypeString)
+		{
+			right = new FxStringCast(right);
+			right = right->Resolve(ctx);
+			if (right == nullptr)
+			{
+				delete this;
+				return nullptr;
+			}
+		}
+		ValueType == TypeString;
+	}
+	else if (left->IsNumeric() && right->IsNumeric())
+	{
+		Promote(ctx);
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Incompatible operands for relative comparison");
+		delete this;
+		return nullptr;
+	}
+
+	if (left->isConstant() && right->isConstant())
 	{
 		int v;
 
@@ -3056,20 +3100,29 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 				Operator == TK_Geq? v1 >= v2 : 
 				Operator == TK_Leq? v1 <= v2 : 0;
 		}
-		else
+		else if (ValueType == TypeUInt32)
 		{
-			int v1 = static_cast<FxConstant *>(left)->GetValue().GetInt();
-			int v2 = static_cast<FxConstant *>(right)->GetValue().GetInt();
+			int v1 = static_cast<FxConstant *>(left)->GetValue().GetUInt();
+			int v2 = static_cast<FxConstant *>(right)->GetValue().GetUInt();
 			v =	Operator == '<'? v1 < v2 : 
 				Operator == '>'? v1 > v2 : 
 				Operator == TK_Geq? v1 >= v2 : 
 				Operator == TK_Leq? v1 <= v2 : 0;
 		}
+		else 
+		{
+			int v1 = static_cast<FxConstant *>(left)->GetValue().GetInt();
+			int v2 = static_cast<FxConstant *>(right)->GetValue().GetInt();
+			v = Operator == '<' ? v1 < v2 :
+				Operator == '>' ? v1 > v2 :
+				Operator == TK_Geq ? v1 >= v2 :
+				Operator == TK_Leq ? v1 <= v2 : 0;
+		}
 		FxExpression *e = new FxConstant(v, ScriptPosition);
 		delete this;
 		return e;
 	}
-	Promote(ctx);
+	CompareType = ValueType;	// needs to be preserved for detection of unsigned compare.
 	ValueType = TypeBool;
 	return this;
 }
@@ -3124,10 +3177,10 @@ ExpEmit FxCompareRel::Emit(VMFunctionBuilder *build)
 		assert(Operator == '<' || Operator == '>' || Operator == TK_Geq || Operator == TK_Leq);
 		static const VM_UBYTE InstrMap[][4] =
 		{
-			{ OP_LT_RR, OP_LTF_RR, 0 },	// <
-			{ OP_LE_RR, OP_LEF_RR, 1 },	// >
-			{ OP_LT_RR, OP_LTF_RR, 1 },	// >=
-			{ OP_LE_RR, OP_LEF_RR, 0 }	// <=
+			{ OP_LT_RR, OP_LTF_RR, OP_LTU_RR, 0 },	// <
+			{ OP_LE_RR, OP_LEF_RR, OP_LEU_RR, 1 },	// >
+			{ OP_LT_RR, OP_LTF_RR, OP_LTU_RR, 1 },	// >=
+			{ OP_LE_RR, OP_LEF_RR, OP_LEU_RR, 0 }	// <=
 		};
 		int instr, check;
 		ExpEmit to(build, REGT_INT);
@@ -3135,8 +3188,9 @@ ExpEmit FxCompareRel::Emit(VMFunctionBuilder *build)
 			Operator == '>' ? 1 :
 			Operator == TK_Geq ? 2 : 3;
 
-		instr = InstrMap[index][op1.RegType == REGT_INT ? 0 : 1];
-		check = InstrMap[index][2];
+		int mode = op1.RegType == REGT_FLOAT ? 1 : CompareType == TypeUInt32 ? 2 : 0;
+		instr = InstrMap[index][mode];
+		check = InstrMap[index][3];
 		if (op2.Konst)
 		{
 			instr += 1;

@@ -169,10 +169,16 @@ struct ExpVal
 		return regtype == REGT_INT ? Int : regtype == REGT_FLOAT ? int(Float) : 0;
 	}
 
+	unsigned GetUInt() const
+	{
+		int regtype = Type->GetRegType();
+		return regtype == REGT_INT ? unsigned(Int) : regtype == REGT_FLOAT ? unsigned(Float) : 0;
+	}
+
 	double GetFloat() const
 	{
 		int regtype = Type->GetRegType();
-		return regtype == REGT_INT ? double(Int) : regtype == REGT_FLOAT ? Float : 0;
+		return regtype == REGT_INT ? (Type == TypeUInt32? double(unsigned(Int)) : double(Int)) : regtype == REGT_FLOAT ? Float : 0;
 	}
 
 	void *GetPointer() const
@@ -864,6 +870,7 @@ public:
 
 class FxCompareRel : public FxBinary
 {
+	PType *CompareType;
 public:
 
 	FxCompareRel(int, FxExpression*, FxExpression*);

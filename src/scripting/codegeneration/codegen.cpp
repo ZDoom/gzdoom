@@ -2417,39 +2417,6 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 	{
 		switch (Operator)
 		{
-		case '/':
-			if (right->IsVector())
-			{
-				// For division, the vector must be the first operand.
-				ScriptPosition.Message(MSG_ERROR, "Incompatible operands for division");
-				delete this;
-				return false;
-			}
-		case '*':
-			if (left->IsVector())
-			{
-				right = new FxFloatCast(right);
-				right = right->Resolve(ctx);
-				if (right == nullptr)
-				{
-					delete this;
-					return false;
-				}
-				ValueType = left->ValueType;
-			}
-			else
-			{
-				left = new FxFloatCast(left);
-				left = left->Resolve(ctx);
-				if (left == nullptr)
-				{
-					delete this;
-					return false;
-				}
-				ValueType = right->ValueType;
-			}
-			break;
-
 		case TK_Eq:
 		case TK_Neq:
 			if (left->ValueType != right->ValueType)
@@ -2540,15 +2507,34 @@ bool FxBinary::ResolveLR(FCompileContext& ctx, bool castnumeric)
 	return true;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void FxBinary::Promote(FCompileContext &ctx)
 {
-	if (left->ValueType->GetRegType() == REGT_FLOAT && right->ValueType->GetRegType() == REGT_INT)
+	// math operations of unsigned ints results in an unsigned int. (16 and 8 bit values never get here, they get promoted to regular ints elsewhere already.)
+	if (left->ValueType == TypeUInt32 && right->ValueType == TypeUInt32)
 	{
-		right = (new FxFloatCast(right))->Resolve(ctx);
+		ValueType = TypeUInt32;
 	}
-	else if (left->ValueType->GetRegType() == REGT_INT && right->ValueType->GetRegType() == REGT_FLOAT)
+	else if (left->IsInteger() && right->IsInteger())
 	{
-		left = (new FxFloatCast(left))->Resolve(ctx);
+		ValueType = TypeSInt32;		// Addition and subtraction forces all integer-derived types to signed int.
+	}
+	else
+	{
+		ValueType = TypeFloat64;
+		if (left->IsFloat() && right->IsInteger())
+		{
+			right = (new FxFloatCast(right))->Resolve(ctx);
+		}
+		else if (left->IsInteger() && right->IsFloat())
+		{
+			left = (new FxFloatCast(left))->Resolve(ctx);
+		}
 	}
 }
 
@@ -2590,34 +2576,17 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 		}
 		else
 		{
-			ScriptPosition.Message(MSG_ERROR, "Incompatible operands for %s", Operator == '+' ? "addition" : "subtraction");
-			delete this;
-			return nullptr;
+			goto error;
 		}
 	}
 	else if (left->IsNumeric() && right->IsNumeric())
 	{
-		// Addition and subtraction of unsigned ints results in an unsigned int. (16 and 8 bit values never get here, they get promoted to regular ints elsewhere already.)
-		if (left->ValueType == TypeUInt32 && right->ValueType == TypeUInt32)
-		{
-			ValueType = TypeUInt32;
-		}
-		else if (left->ValueType->GetRegType() == REGT_INT && right->ValueType->GetRegType() == REGT_INT)
-		{
-			ValueType = TypeSInt32;		// Addition and subtraction forces all integer-derived types to signed int.
-		}
-		else
-		{
-			ValueType = TypeFloat64;
-			Promote(ctx);
-		}
+		Promote(ctx);
 	}
 	else
 	{
 		// To check: It may be that this could pass in DECORATE, although setting TypeVoid here would pretty much prevent that.
-		ScriptPosition.Message(MSG_ERROR, "Incompatible operands for %s", Operator == '+' ? "addition" : "subtraction");
-		delete this;
-		return false;
+		goto error;
 	}
 
 	if (left->isConstant() && right->isConstant())
@@ -2651,6 +2620,11 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 		}
 	}
 	return this;
+
+error:
+	ScriptPosition.Message(MSG_ERROR, "Incompatible operands for %s", Operator == '+' ? "addition" : "subtraction");
+	delete this;
+	return nullptr;
 }
 
 //==========================================================================
@@ -2750,16 +2724,70 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 
-	if (!ResolveLR(ctx, true)) 
-		return nullptr;
-
-	if (!IsNumeric() && !IsVector())
+	RESOLVE(left, ctx);
+	RESOLVE(right, ctx);
+	if (!left || !right)
 	{
-		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
 		delete this;
-		return nullptr;
+		return false;
 	}
-	else if (left->isConstant() && right->isConstant())
+
+	if (left->IsVector() || right->IsVector())
+	{
+		switch (Operator)
+		{
+		case '/':
+			// For division, the vector must be the first operand.
+			if (right->IsVector()) goto error;
+
+		case '*':
+			if (left->IsVector() && right->IsNumeric())
+			{
+				if (right->IsInteger())
+				{
+					right = new FxFloatCast(right);
+					right = right->Resolve(ctx);
+					if (right == nullptr)
+					{
+						delete this;
+						return false;
+					}
+				}
+				ValueType = left->ValueType;
+			}
+			else if (right->IsVector() && left->IsNumeric())
+			{
+				if (left->IsInteger())
+				{
+					left = new FxFloatCast(left);
+					left = left->Resolve(ctx);
+					if (left == nullptr)
+					{
+						delete this;
+						return false;
+					}
+				}
+				ValueType = right->ValueType;
+			}
+			break;
+
+		default:
+			// Vector modulus is not permitted
+			goto error;
+
+		}
+	}
+	else if (left->IsNumeric() && right->IsNumeric())
+	{
+		Promote(ctx);
+	}
+	else
+	{
+		// To check: It may be that this could pass in DECORATE, although setting TypeVoid here would pretty much prevent that.
+		goto error;
+	}
+
+	if (left->isConstant() && right->isConstant())
 	{
 		if (IsFloat())
 		{
@@ -2805,8 +2833,13 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 
 		}
 	}
-	Promote(ctx);
 	return this;
+
+error:
+	ScriptPosition.Message(MSG_ERROR, "Incompatible operands for %s", Operator == '*' ? "multiplication" : Operator == '%' ? "modulus" : "division");
+	delete this;
+	return nullptr;
+
 }
 
 
@@ -2818,7 +2851,6 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 
 ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 {
-	// allocate the result first so that the operation does not leave gaps in the register set.
 	ExpEmit op1 = left->Emit(build);
 	ExpEmit op2 = right->Emit(build);
 
@@ -2919,14 +2951,28 @@ FxExpression *FxPow::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 
-	if (!ResolveLR(ctx, true)) 
-		return nullptr;
-
-	if (!IsNumeric())
+	RESOLVE(left, ctx);
+	RESOLVE(right, ctx);
+	if (!left || !right)
 	{
-		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		delete this;
+		return false;
+	}
+	if (!left->IsNumeric() || !right->IsNumeric())
+	{
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected for '**'");
 		delete this;
 		return nullptr;
+	}
+	if (!left->IsFloat())
+	{
+		left = (new FxFloatCast(left))->Resolve(ctx);
+		ABORT(left);
+	}
+	if (!right->IsFloat())
+	{
+		right = (new FxFloatCast(right))->Resolve(ctx);
+		ABORT(right);
 	}
 	if (left->isConstant() && right->isConstant())
 	{
@@ -2936,7 +2982,6 @@ FxExpression *FxPow::Resolve(FCompileContext& ctx)
 	}
 	return this;
 }
-
 
 //==========================================================================
 //

@@ -88,6 +88,7 @@ public:
 
 private:
 	void ClearBuffers();
+	void SetSceneViewport();
 	void SetupPerspectiveMatrix();
 	void RenderSectors();
 	void RenderSubsector(subsector_t *sub);

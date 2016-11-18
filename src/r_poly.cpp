@@ -40,6 +40,7 @@ void RenderPolyScene::Render()
 		return;
 
 	ClearBuffers();
+	SetSceneViewport();
 	SetupPerspectiveMatrix();
 	Cull.CullScene(WorldToClip);
 	RenderSectors();
@@ -67,6 +68,18 @@ void RenderPolyScene::ClearBuffers()
 	NextSubsectorDepth = 0;
 }
 
+void RenderPolyScene::SetSceneViewport()
+{
+	int height;
+	if (screenblocks >= 10)
+		height = SCREENHEIGHT;
+	else
+		height = (screenblocks*SCREENHEIGHT / 10) & ~7;
+
+	int bottom = SCREENHEIGHT - (height + viewwindowy - ((height - viewheight) / 2));
+	PolyTriangleDrawer::set_viewport(viewwindowx, SCREENHEIGHT - bottom - height, viewwidth, height, screen);
+}
+
 void RenderPolyScene::SetupPerspectiveMatrix()
 {
 	static bool bDidSetup = false;
@@ -77,29 +90,22 @@ void RenderPolyScene::SetupPerspectiveMatrix()
 		bDidSetup = true;
 	}
 
-	int height;
-	if (screenblocks >= 10)
-		height = SCREENHEIGHT;
-	else
-		height = (screenblocks*SCREENHEIGHT / 10) & ~7;
-
-	int bottom = SCREENHEIGHT - (height + viewwindowy - ((height - viewheight) / 2));
-	PolyTriangleDrawer::set_viewport(viewwindowx, SCREENHEIGHT - bottom - height, viewwidth, height, screen);
-
 	// Code provided courtesy of Graf Zahl. Now we just have to plug it into the viewmatrix code...
 	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
 	double radPitch = ViewPitch.Normalized180().Radians();
 	double angx = cos(radPitch);
 	double angy = sin(radPitch) * glset.pixelstretch;
 	double alen = sqrt(angx*angx + angy*angy);
-	//mAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
+	float adjustedPitch = (float)asin(angy / alen);
+	float adjustedViewAngle = (float)(ViewAngle - 90).Radians();
 
 	float ratio = WidescreenRatio;
 	float fovratio = (WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
 	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(FieldOfView.Radians() / 2) / fovratio)).Degrees);
+
 	TriMatrix worldToView =
-		TriMatrix::rotate((float)asin(angy / alen), 1.0f, 0.0f, 0.0f) *
-		TriMatrix::rotate((float)(ViewAngle - 90).Radians(), 0.0f, -1.0f, 0.0f) *
+		TriMatrix::rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
+		TriMatrix::rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
 		TriMatrix::scale(1.0f, glset.pixelstretch, 1.0f) *
 		TriMatrix::swapYZ() *
 		TriMatrix::translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);

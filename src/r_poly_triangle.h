@@ -36,10 +36,6 @@ public:
 	int vcount = 0;
 	TriangleDrawMode mode = TriangleDrawMode::Normal;
 	bool ccw = false;
-	int clipleft = 0;
-	int clipright = 0;
-	int cliptop = 0;
-	int clipbottom = 0;
 	const uint8_t *texturePixels = nullptr;
 	int textureWidth = 0;
 	int textureHeight = 0;
@@ -61,6 +57,7 @@ public:
 class PolyTriangleDrawer
 {
 public:
+	static void set_viewport(int x, int y, int width, int height, DCanvas *canvas);
 	static void draw(const PolyDrawArgs &args, TriDrawVariant variant);
 
 private:
@@ -69,6 +66,10 @@ private:
 	static void draw_shaded_triangle(const TriVertex *vertices, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *));
 	static bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2);
 	static void clipedge(const TriVertex *verts, TriVertex *clippedvert, int &numclipvert);
+
+	static int viewport_x, viewport_y, viewport_width, viewport_height, dest_pitch, dest_width, dest_height;
+	static bool dest_bgra;
+	static uint8_t *dest;
 
 	enum { max_additional_vertices = 16 };
 

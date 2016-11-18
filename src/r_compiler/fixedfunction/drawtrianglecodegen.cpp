@@ -78,10 +78,10 @@ void DrawTriangleCodegen::Setup(TriDrawVariant variant, bool truecolor)
 	FDY31 = DY31 << 4;
 
 	// Bounding rectangle
-	minx = SSAInt::MAX((SSAInt::MIN(SSAInt::MIN(X1, X2), X3) + 0xF) >> 4, clipleft);
-	maxx = SSAInt::MIN((SSAInt::MAX(SSAInt::MAX(X1, X2), X3) + 0xF) >> 4, clipright - 1);
-	miny = SSAInt::MAX((SSAInt::MIN(SSAInt::MIN(Y1, Y2), Y3) + 0xF) >> 4, cliptop);
-	maxy = SSAInt::MIN((SSAInt::MAX(SSAInt::MAX(Y1, Y2), Y3) + 0xF) >> 4, clipbottom - 1);
+	minx = SSAInt::MAX((SSAInt::MIN(SSAInt::MIN(X1, X2), X3) + 0xF).ashr(4), clipleft);
+	maxx = SSAInt::MIN((SSAInt::MAX(SSAInt::MAX(X1, X2), X3) + 0xF).ashr(4), clipright - 1);
+	miny = SSAInt::MAX((SSAInt::MIN(SSAInt::MIN(Y1, Y2), Y3) + 0xF).ashr(4), cliptop);
+	maxy = SSAInt::MIN((SSAInt::MAX(SSAInt::MAX(Y1, Y2), Y3) + 0xF).ashr(4), clipbottom - 1);
 
 	SSAIfBlock if0;
 	if0.if_block(minx >= maxx || miny >= maxy);
@@ -221,7 +221,7 @@ void DrawTriangleCodegen::LoopBlockX(TriDrawVariant variant, bool truecolor)
 		branch.if_block(!(a == SSAInt(0) || b == SSAInt(0) || c == SSAInt(0)));
 
 		// Check if block needs clipping
-		SSABool clipneeded = clipleft > x || clipright < (x + q) || cliptop > y || clipbottom < (y + q);
+		SSABool clipneeded = x < clipleft || (x + q) > clipright || y < cliptop || (y + q) > clipbottom;
 
 		// Calculate varying variables for affine block
 		SSAFloat offx0 = SSAFloat(x - minx);
@@ -401,7 +401,7 @@ void DrawTriangleCodegen::LoopPartialBlock(TriDrawVariant variant, bool truecolo
 			varying[i] = stack_varying[i].load();
 		loopx.loop_block(ix < SSAInt(q), q);
 		{
-			SSABool visible = (ix + x >= clipleft) && (ix + x < clipright) && (cliptop <= y + iy) && (clipbottom > y + iy);
+			SSABool visible = (ix + x >= clipleft) && (ix + x < clipright) && (iy + y >= cliptop) && (iy + y < clipbottom);
 			SSABool covered = CX1 > SSAInt(0) && CX2 > SSAInt(0) && CX3 > SSAInt(0) && visible;
 
 			if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::DrawShadedSubsector || variant == TriDrawVariant::FillSubsector)
@@ -589,9 +589,9 @@ void DrawTriangleCodegen::LoadArgs(TriDrawVariant variant, bool truecolor, SSAVa
 	v1 = LoadTriVertex(args[0][2].load(true));
 	v2 = LoadTriVertex(args[0][3].load(true));
 	v3 = LoadTriVertex(args[0][4].load(true));
-	clipleft = args[0][5].load(true);
+	clipleft = SSAInt(0);// args[0][5].load(true);
 	clipright = args[0][6].load(true);
-	cliptop = args[0][7].load(true);
+	cliptop = SSAInt(0);// args[0][7].load(true);
 	clipbottom = args[0][8].load(true);
 	texturePixels = args[0][9].load(true);
 	textureWidth = args[0][10].load(true);

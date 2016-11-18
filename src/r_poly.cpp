@@ -62,8 +62,8 @@ void RenderPolyScene::ClearBuffers()
 	SectorSpriteRanges.resize(numsectors);
 	SortedSprites.clear();
 	TranslucentObjects.clear();
-	PolyStencilBuffer::Instance()->Clear(viewwidth, viewheight, 0);
-	PolySubsectorGBuffer::Instance()->Resize(dc_pitch, viewheight);
+	PolyStencilBuffer::Instance()->Clear(screen->GetWidth(), screen->GetHeight(), 0);
+	PolySubsectorGBuffer::Instance()->Resize(screen->GetPitch(), screen->GetHeight());
 	NextSubsectorDepth = 0;
 }
 
@@ -79,14 +79,12 @@ void RenderPolyScene::SetupPerspectiveMatrix()
 
 	int height;
 	if (screenblocks >= 10)
-	{
 		height = SCREENHEIGHT;
-	}
 	else
-	{
 		height = (screenblocks*SCREENHEIGHT / 10) & ~7;
-	}
-	viewheight = height; // So viewheight was calculated incorrectly. That's just.. wonderful.
+
+	int bottom = SCREENHEIGHT - (height + viewwindowy - ((height - viewheight) / 2));
+	PolyTriangleDrawer::set_viewport(viewwindowx, SCREENHEIGHT - bottom - height, viewwidth, height, screen);
 
 	// Code provided courtesy of Graf Zahl. Now we just have to plug it into the viewmatrix code...
 	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
@@ -105,6 +103,7 @@ void RenderPolyScene::SetupPerspectiveMatrix()
 		TriMatrix::scale(1.0f, glset.pixelstretch, 1.0f) *
 		TriMatrix::swapYZ() *
 		TriMatrix::translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);
+
 	WorldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
 }
 

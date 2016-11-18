@@ -92,10 +92,6 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, particle_t *partic
 	args.vcount = 4;
 	args.mode = TriangleDrawMode::Fan;
 	args.ccw = true;
-	args.clipleft = 0;
-	args.cliptop = 0;
-	args.clipright = viewwidth;
-	args.clipbottom = viewheight;
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
 	args.solidcolor = (alpha << 24) | (particle->color & 0xffffff);

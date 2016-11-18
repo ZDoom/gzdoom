@@ -40,9 +40,41 @@
 #include <immintrin.h>
 #endif
 
+int PolyTriangleDrawer::viewport_x;
+int PolyTriangleDrawer::viewport_y;
+int PolyTriangleDrawer::viewport_width;
+int PolyTriangleDrawer::viewport_height;
+int PolyTriangleDrawer::dest_pitch;
+int PolyTriangleDrawer::dest_width;
+int PolyTriangleDrawer::dest_height;
+uint8_t *PolyTriangleDrawer::dest;
+bool PolyTriangleDrawer::dest_bgra;
+
+void PolyTriangleDrawer::set_viewport(int x, int y, int width, int height, DCanvas *canvas)
+{
+	dest = (uint8_t*)canvas->GetBuffer();
+	dest_width = canvas->GetWidth();
+	dest_height = canvas->GetHeight();
+	dest_pitch = canvas->GetPitch();
+	dest_bgra = canvas->IsBgra();
+
+	int offsetx = clamp(x, 0, dest_width);
+	int offsety = clamp(y, 0, dest_height);
+	int pixelsize = dest_bgra ? 4 : 1;
+
+	viewport_x = x - offsetx;
+	viewport_y = y - offsety;
+	viewport_width = width;
+	viewport_height = height;
+
+	dest += (offsetx + offsety * dest_pitch) * pixelsize;
+	dest_width = clamp(viewport_x + viewport_width, 0, dest_width - offsetx);
+	dest_height = clamp(viewport_y + viewport_height, 0, dest_height - offsety);
+}
+
 void PolyTriangleDrawer::draw(const PolyDrawArgs &args, TriDrawVariant variant)
 {
-	if (r_swtruecolor)
+	if (dest_bgra)
 		DrawerCommandQueue::QueueCommand<DrawPolyTrianglesCommand>(args, variant);
 	else
 		draw_arrays(args, variant, nullptr);
@@ -59,33 +91,33 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 	switch (variant)
 	{
 	default:
-	case TriDrawVariant::Draw: drawfunc = r_swtruecolor ? llvm->TriDraw32: llvm->TriDraw8; break;
-	case TriDrawVariant::Fill: drawfunc = r_swtruecolor ? llvm->TriFill32 : llvm->TriFill8; break;
-	case TriDrawVariant::DrawSubsector: drawfunc = r_swtruecolor ? llvm->TriDrawSubsector32 : llvm->TriDrawSubsector8; break;
-	case TriDrawVariant::DrawShadedSubsector: drawfunc = r_swtruecolor ? llvm->TriDrawShadedSubsector32 : llvm->TriDrawShadedSubsector8; break;
-	case TriDrawVariant::FillSubsector: drawfunc = r_swtruecolor ? llvm->TriFillSubsector32 : llvm->TriFillSubsector8; break;
+	case TriDrawVariant::Draw: drawfunc = dest_bgra ? llvm->TriDraw32: llvm->TriDraw8; break;
+	case TriDrawVariant::Fill: drawfunc = dest_bgra ? llvm->TriFill32 : llvm->TriFill8; break;
+	case TriDrawVariant::DrawSubsector: drawfunc = dest_bgra ? llvm->TriDrawSubsector32 : llvm->TriDrawSubsector8; break;
+	case TriDrawVariant::DrawShadedSubsector: drawfunc = dest_bgra ? llvm->TriDrawShadedSubsector32 : llvm->TriDrawShadedSubsector8; break;
+	case TriDrawVariant::FillSubsector: drawfunc = dest_bgra ? llvm->TriFillSubsector32 : llvm->TriFillSubsector8; break;
 	case TriDrawVariant::Stencil: drawfunc = llvm->TriStencil; break;
 	}
 #else
 	switch (variant)
 	{
 	default:
-	case TriDrawVariant::Draw: drawfunc = r_swtruecolor ? ScreenPolyTriangleDrawer::draw32 : ScreenPolyTriangleDrawer::draw; break;
+	case TriDrawVariant::Draw: drawfunc = dest_bgra ? ScreenPolyTriangleDrawer::draw32 : ScreenPolyTriangleDrawer::draw; break;
 	case TriDrawVariant::FillSubsector:
-	case TriDrawVariant::Fill: drawfunc = r_swtruecolor ? ScreenPolyTriangleDrawer::fill32 : ScreenPolyTriangleDrawer::fill; break;
+	case TriDrawVariant::Fill: drawfunc = dest_bgra ? ScreenPolyTriangleDrawer::fill32 : ScreenPolyTriangleDrawer::fill; break;
 	case TriDrawVariant::DrawShadedSubsector:
-	case TriDrawVariant::DrawSubsector: drawfunc = r_swtruecolor ? ScreenPolyTriangleDrawer::drawsubsector32 : llvm->TriDrawSubsector8; break;
+	case TriDrawVariant::DrawSubsector: drawfunc = dest_bgra ? ScreenPolyTriangleDrawer::drawsubsector32 : llvm->TriDrawSubsector8; break;
 	case TriDrawVariant::Stencil: drawfunc = ScreenPolyTriangleDrawer::stencil; break;
 	}
 #endif
 
 	TriDrawTriangleArgs args;
-	args.dest = dc_destorg;
-	args.pitch = dc_pitch;
-	args.clipleft = drawargs.clipleft;
-	args.clipright = drawargs.clipright;
-	args.cliptop = drawargs.cliptop;
-	args.clipbottom = drawargs.clipbottom;
+	args.dest = dest;
+	args.pitch = dest_pitch;
+	args.clipleft = 0;
+	args.clipright = dest_width;
+	args.cliptop = 0;
+	args.clipbottom = dest_height;
 	args.texturePixels = drawargs.texturePixels;
 	args.textureWidth = drawargs.textureWidth;
 	args.textureHeight = drawargs.textureHeight;
@@ -163,8 +195,8 @@ void PolyTriangleDrawer::draw_shaded_triangle(const TriVertex *vert, bool ccw, T
 		v.z *= v.w;
 
 		// Apply viewport scale to get screen coordinates:
-		v.x = viewwidth * (1.0f + v.x) * 0.5f;
-		v.y = viewheight * (1.0f - v.y) * 0.5f;
+		v.x = viewport_x + viewport_width * (1.0f + v.x) * 0.5f;
+		v.y = viewport_y + viewport_height * (1.0f - v.y) * 0.5f;
 	}
 
 	// Draw screen triangles

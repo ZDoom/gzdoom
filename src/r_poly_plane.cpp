@@ -137,10 +137,6 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, subsector_t *s
 	args.vcount = sub->numlines;
 	args.mode = TriangleDrawMode::Fan;
 	args.ccw = true;
-	args.clipleft = 0;
-	args.cliptop = 0;
-	args.clipright = viewwidth;
-	args.clipbottom = viewheight;
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
 	args.SetTexture(tex);
@@ -233,10 +229,6 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 	args.vcount = sub->numlines;
 	args.mode = TriangleDrawMode::Fan;
 	args.ccw = ccw;
-	args.clipleft = 0;
-	args.cliptop = 0;
-	args.clipright = viewwidth;
-	args.clipbottom = viewheight;
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
 

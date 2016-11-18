@@ -704,16 +704,7 @@ begin:
 
 	OP(CONCAT):
 		ASSERTS(a); ASSERTS(B); ASSERTS(C);
-		{
-			FString *rB = &reg.s[B];
-			FString *rC = &reg.s[C];
-			FString concat(*rB);
-			for (++rB; rB <= rC; ++rB)
-			{
-				concat += *rB;
-			}
-			reg.s[a] = concat;
-		}
+		reg.s[a] = reg.s[B] + reg.s[C];
 		NEXTOP;
 	OP(LENS):
 		ASSERTD(a); ASSERTS(B);
@@ -1680,8 +1671,16 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 		reg.d[a] = (int)(unsigned)reg.f[b];
 		break;
 	case CAST_F2S:
-		ASSERTS(a); ASSERTD(b);
-		reg.s[a].Format("%.14g", reg.f[b]);
+		ASSERTS(a); ASSERTF(b);
+		reg.s[a].Format("%.5f", reg.f[b]);	// keep this small. For more precise conversion there should be a conversion function.
+		break;
+	case CAST_V22S:
+		ASSERTS(a); ASSERTF(b+1);
+		reg.s[a].Format("(%.5f, %.5f)", reg.f[b], reg.f[b + 1]);
+		break;
+	case CAST_V32S:
+		ASSERTS(a); ASSERTF(b + 2);
+		reg.s[a].Format("(%.5f, %.5f, %.5f)", reg.f[b], reg.f[b + 1], reg.f[b + 2]);
 		break;
 
 	case CAST_P2S:

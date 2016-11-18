@@ -396,6 +396,8 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 					mode = MODE_AI | MODE_BF | MODE_CUNUSED;
 					break;
 				case CAST_F2S:
+				case CAST_V22S:
+				case CAST_V32S:
 					mode = MODE_AS | MODE_BF | MODE_CUNUSED;
 					break;
 				case CAST_P2S:

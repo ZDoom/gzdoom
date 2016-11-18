@@ -125,6 +125,8 @@ enum
 	CAST_S2So,
 	CAST_Co2S,
 	CAST_So2S,
+	CAST_V22S,
+	CAST_V32S,
 };
 
 // Register types for VMParam

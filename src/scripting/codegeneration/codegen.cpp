@@ -2442,7 +2442,7 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 	if (!left || !right)
 	{
 		delete this;
-		return false;
+		return nullptr;
 	}
 
 	if (left->IsVector() && right->IsVector())
@@ -2607,7 +2607,7 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 	if (!left || !right)
 	{
 		delete this;
-		return false;
+		return nullptr;
 	}
 
 	if (left->IsVector() || right->IsVector())
@@ -2628,7 +2628,7 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 					if (right == nullptr)
 					{
 						delete this;
-						return false;
+						return nullptr;
 					}
 				}
 				ValueType = left->ValueType;
@@ -2642,7 +2642,7 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 					if (left == nullptr)
 					{
 						delete this;
-						return false;
+						return nullptr;
 					}
 				}
 				ValueType = right->ValueType;
@@ -2843,7 +2843,7 @@ FxExpression *FxPow::Resolve(FCompileContext& ctx)
 	if (!left || !right)
 	{
 		delete this;
-		return false;
+		return nullptr;
 	}
 	if (!left->IsNumeric() || !right->IsNumeric())
 	{
@@ -3380,7 +3380,7 @@ FxExpression *FxBitOp::Resolve(FCompileContext& ctx)
 	if (!left || !right)
 	{
 		delete this;
-		return false;
+		return nullptr;
 	}
 
 	if (left->ValueType == TypeBool && right->ValueType == TypeBool)
@@ -3474,7 +3474,7 @@ FxExpression *FxShift::Resolve(FCompileContext& ctx)
 	if (!left || !right)
 	{
 		delete this;
-		return false;
+		return nullptr;
 	}
 
 	if (left->IsNumeric() && right->IsNumeric())
@@ -3587,7 +3587,7 @@ FxExpression *FxLtGtEq::Resolve(FCompileContext& ctx)
 	if (!left || !right)
 	{
 		delete this;
-		return false;
+		return nullptr;
 	}
 
 	if (left->IsNumeric() && right->IsNumeric())
@@ -3648,6 +3648,137 @@ ExpEmit FxLtGtEq::Emit(VMFunctionBuilder *build)
 	build->BackpatchToHere(j3);
 
 	return to;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxConcat::FxConcat(FxExpression *l, FxExpression *r)
+	: FxBinary(TK_DotDot, l, r)
+{
+	ValueType = TypeString;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxConcat::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+
+	RESOLVE(left, ctx);
+	RESOLVE(right, ctx);
+	if (!left || !right)
+	{
+		delete this;
+		return nullptr;
+	}
+
+	// To concatenate two operands the only requirement is that they are integral types, i.e. can occupy a register
+	if (left->ValueType->GetRegType() == REGT_NIL || right->ValueType->GetRegType() == REGT_NIL)
+	{
+		ScriptPosition.Message(MSG_ERROR, "Invalid operand for string concatenation");
+		delete this;
+		return nullptr;
+	}
+
+	if (left->isConstant() && right->isConstant() && (left->ValueType == TypeString || left->ValueType == TypeName) && (right->ValueType == TypeString || right->ValueType == TypeName))
+	{
+		// for now this is only types which have a constant string representation.
+		auto v1 = static_cast<FxConstant *>(left)->GetValue().GetString();
+		auto v2 = static_cast<FxConstant *>(right)->GetValue().GetString();
+		auto e = new FxConstant(v1 + v2, ScriptPosition);
+		delete this;
+		return e;
+	}
+	return this;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxConcat::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit op1 = left->Emit(build);
+	ExpEmit op2 = right->Emit(build);
+	ExpEmit strng, strng2;
+
+	if (op1.RegType == REGT_STRING && op1.Konst)
+	{
+		strng = ExpEmit(build, REGT_STRING);
+		build->Emit(OP_LKS, strng.RegNum, op1.RegNum);
+	}
+	else if (op1.RegType == REGT_STRING)
+	{
+		strng = op1;
+	}
+	else
+	{
+		int cast;
+		strng = ExpEmit(build, REGT_STRING);
+		if (op1.Konst)
+		{
+			ExpEmit nonconst(build, op1.RegType);
+			build->Emit(op1.RegType == REGT_INT ? OP_LK : op1.RegType == REGT_FLOAT ? OP_LKF : OP_LKP, nonconst.RegNum, op1.RegNum);
+			op1 = nonconst;
+		}
+		if (op1.RegType == REGT_FLOAT) cast = op1.RegCount == 1 ? CAST_F2S : op1.RegCount == 2 ? CAST_V22S : CAST_V32S;
+		else if (left->ValueType == TypeUInt32) cast = CAST_U2S;
+		else if (left->ValueType == TypeName) cast = CAST_N2S;
+		else if (left->ValueType == TypeSound) cast = CAST_So2S;
+		else if (left->ValueType == TypeColor) cast = CAST_Co2S;
+		else if (op1.RegType == REGT_POINTER) cast = CAST_P2S;
+		else if (op1.RegType == REGT_INT) cast = CAST_I2S;
+		else assert(false && "Bad type for string concatenation");
+		build->Emit(OP_CAST, strng.RegNum, op1.RegNum, cast);
+		op1.Free(build);
+	}
+
+	if (op2.RegType == REGT_STRING && op2.Konst)
+	{
+		strng2 = ExpEmit(build, REGT_STRING);
+		build->Emit(OP_LKS, strng2.RegNum, op2.RegNum);
+	}
+	else if (op2.RegType == REGT_STRING)
+	{
+		strng2 = op2;
+	}
+	else
+	{
+		int cast;
+		strng2 = ExpEmit(build, REGT_STRING);
+		if (op2.Konst)
+		{
+			ExpEmit nonconst(build, op2.RegType);
+			build->Emit(op2.RegType == REGT_INT ? OP_LK : op2.RegType == REGT_FLOAT ? OP_LKF : OP_LKP, nonconst.RegNum, op2.RegNum);
+			op2 = nonconst;
+		}
+		if (op2.RegType == REGT_FLOAT) cast = op2.RegCount == 1 ? CAST_F2S : op2.RegCount == 2 ? CAST_V22S : CAST_V32S;
+		else if (right->ValueType == TypeUInt32) cast = CAST_U2S;
+		else if (right->ValueType == TypeName) cast = CAST_N2S;
+		else if (right->ValueType == TypeSound) cast = CAST_So2S;
+		else if (right->ValueType == TypeColor) cast = CAST_Co2S;
+		else if (op2.RegType == REGT_POINTER) cast = CAST_P2S;
+		else if (op2.RegType == REGT_INT) cast = CAST_I2S;
+		else assert(false && "Bad type for string concatenation");
+		build->Emit(OP_CAST, strng2.RegNum, op2.RegNum, cast);
+		op2.Free(build);
+	}
+	strng.Free(build);
+	strng2.Free(build);
+	ExpEmit dest(build, REGT_STRING);
+	assert(strng.RegType == strng2.RegType && strng.RegType == REGT_STRING);
+	build->Emit(OP_CONCAT, dest.RegNum, strng.RegNum, strng2.RegNum);
+	return dest;
 }
 
 //==========================================================================
@@ -8854,9 +8985,11 @@ ExpEmit FxLocalVariableDeclaration::Emit(VMFunctionBuilder *build)
 					break;
 
 				case REGT_POINTER:
-					build->Emit(OP_LKP, RegNum, build->GetConstantAddress(constval->GetValue().GetPointer(), ATAG_GENERIC));
+				{
+					bool isobject = ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)) || (ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PClass)));
+					build->Emit(OP_LKP, RegNum, build->GetConstantAddress(constval->GetValue().GetPointer(), isobject ? ATAG_OBJECT : ATAG_GENERIC));
 					break;
-
+				}
 				case REGT_STRING:
 					build->Emit(OP_LKS, RegNum, build->GetConstantString(constval->GetValue().GetString()));
 				}

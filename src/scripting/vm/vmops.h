@@ -101,7 +101,7 @@ xx(CATCH,	catch,	CATCH),		// A == 0: continue search on next try
 xx(BOUND,	bound,	RII16),		// if rA >= BC, throw exception
 
 // String instructions.
-xx(CONCAT,		concat,	RSRSRS),		// sA = sB.. ... ..sC
+xx(CONCAT,		concat,	RSRSRS),		// sA = sB..sC
 xx(LENS,		lens,	RIRS),			// dA = sB.Length
 xx(CMPS,		cmps,	I8RXRX),		// if ((skB op skC) != (A & 1)) then pc++
 

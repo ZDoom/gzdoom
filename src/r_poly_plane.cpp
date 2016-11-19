@@ -140,8 +140,8 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, subsector_t *s
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
 	args.SetTexture(tex);
-	PolyTriangleDrawer::draw(args, TriDrawVariant::Draw);
-	PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil);
+	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawNormal, TriBlendMode::Copy);
+	PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
 }
 
 void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, bool ceiling, double skyHeight)
@@ -235,13 +235,13 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 	if (!isSky)
 	{
 		args.SetTexture(tex);
-		PolyTriangleDrawer::draw(args, TriDrawVariant::Draw);
-		PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil);
+		PolyTriangleDrawer::draw(args, TriDrawVariant::DrawNormal, TriBlendMode::Copy);
+		PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
 	}
 	else
 	{
 		args.stencilwritevalue = 255;
-		PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil);
+		PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
 
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
@@ -309,7 +309,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 
 			args.vinput = wallvert;
 			args.vcount = 4;
-			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil);
+			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
 		}
 	}
 }

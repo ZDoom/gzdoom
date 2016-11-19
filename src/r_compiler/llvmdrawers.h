@@ -215,7 +215,9 @@ struct TriUniforms
 {
 	uint32_t light;
 	uint32_t subsectorDepth;
-
+	uint32_t color;
+	uint32_t srcalpha;
+	uint32_t destalpha;
 	uint16_t light_alpha;
 	uint16_t light_red;
 	uint16_t light_green;
@@ -250,7 +252,7 @@ struct TriDrawTriangleArgs
 	const uint8_t *texturePixels;
 	uint32_t textureWidth;
 	uint32_t textureHeight;
-	uint32_t solidcolor;
+	const uint8_t *translation;
 	const TriUniforms *uniforms;
 	uint8_t *stencilValues;
 	uint32_t *stencilMasks;
@@ -262,14 +264,30 @@ struct TriDrawTriangleArgs
 
 enum class TriDrawVariant
 {
-	Draw,
-	DrawMasked,
-	Fill,
+	DrawNormal,
+	FillNormal,
 	DrawSubsector,
-	DrawShadedSubsector,
 	FillSubsector,
-	Stencil,
+	FuzzSubsector,
+	Stencil
 };
+
+enum class TriBlendMode
+{
+	Copy,           // blend_copy(shade(fg))
+	AlphaBlend,     // blend_alpha_blend(shade(fg), bg)
+	AddSolid,       // blend_add(shade(fg), bg, srcalpha, destalpha)
+	Add,            // blend_add(shade(fg), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
+	Sub,            // blend_sub(shade(fg), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
+	RevSub,         // blend_revsub(shade(fg), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
+	Shaded,         // blend_add(color, bg, fg.a, 1 - fg.a)
+	TranslateCopy,  // blend_copy(shade(translate(fg)))
+	TranslateAdd,   // blend_add(shade(translate(fg)), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
+	TranslateSub,   // blend_sub(shade(translate(fg)), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
+	TranslateRevSub // blend_revsub(shade(translate(fg)), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
+};
+
+inline int NumTriBlendModes() { return (int)TriBlendMode::TranslateRevSub + 1; }
 
 class LLVMDrawers
 {
@@ -346,16 +364,14 @@ public:
 	void(*DrawDoubleSky1)(const DrawSkyArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawDoubleSky4)(const DrawSkyArgs *, const WorkerThreadData *) = nullptr;
 
-	void(*TriDraw8)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
-	void(*TriDraw32)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
-	void(*TriDrawSubsector8)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
-	void(*TriDrawSubsector32)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
-	void(*TriDrawShadedSubsector8)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
-	void(*TriDrawShadedSubsector32)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
-	void(*TriFillSubsector8)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
-	void(*TriFillSubsector32)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
-	void(*TriFill8)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
-	void(*TriFill32)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
+	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDrawNormal8;
+	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDrawNormal32;
+	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriFillNormal8;
+	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriFillNormal32;
+	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDrawSubsector8;
+	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDrawSubsector32;
+	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriFillSubsector8;
+	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriFillSubsector32;
 	void(*TriStencil)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
 
 private:

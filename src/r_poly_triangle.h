@@ -39,7 +39,7 @@ public:
 	const uint8_t *texturePixels = nullptr;
 	int textureWidth = 0;
 	int textureHeight = 0;
-	uint32_t solidcolor = 0;
+	const uint8_t *translation = nullptr;
 	uint8_t stenciltestvalue = 0;
 	uint8_t stencilwritevalue = 0;
 
@@ -58,11 +58,11 @@ class PolyTriangleDrawer
 {
 public:
 	static void set_viewport(int x, int y, int width, int height, DCanvas *canvas);
-	static void draw(const PolyDrawArgs &args, TriDrawVariant variant);
+	static void draw(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode);
 
 private:
 	static TriVertex shade_vertex(const TriUniforms &uniforms, TriVertex v);
-	static void draw_arrays(const PolyDrawArgs &args, TriDrawVariant variant, WorkerThreadData *thread);
+	static void draw_arrays(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode, WorkerThreadData *thread);
 	static void draw_shaded_triangle(const TriVertex *vertices, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *));
 	static bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2);
 	static void clipedge(const TriVertex *verts, TriVertex *clippedvert, int &numclipvert);
@@ -188,6 +188,7 @@ private:
 	std::vector<uint32_t> masks;
 };
 
+#if 0
 class ScreenPolyTriangleDrawer
 {
 public:
@@ -204,11 +205,12 @@ private:
 	static float gradx(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2);
 	static float grady(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2);
 };
+#endif
 
 class DrawPolyTrianglesCommand : public DrawerCommand
 {
 public:
-	DrawPolyTrianglesCommand(const PolyDrawArgs &args, TriDrawVariant variant);
+	DrawPolyTrianglesCommand(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode);
 
 	void Execute(DrawerThread *thread) override;
 	FString DebugInfo() override;
@@ -216,6 +218,7 @@ public:
 private:
 	PolyDrawArgs args;
 	TriDrawVariant variant;
+	TriBlendMode blendmode;
 };
 
 #endif

@@ -57,7 +57,7 @@ public:
 	void StopLogFatalErrors();
 
 	template<typename Func>
-	Func *GetProcAddress(const char *name) { return reinterpret_cast<Func*>(PointerToFunction(name)); }
+	Func *GetProcAddress(const std::string &name) { return reinterpret_cast<Func*>(PointerToFunction(name.c_str())); }
 
 	llvm::LLVMContext &context() { return *mContext; }
 	llvm::Module *module() { return mModule.get(); }
@@ -82,7 +82,7 @@ private:
 	void CodegenDrawSpan(const char *name, DrawSpanVariant variant);
 	void CodegenDrawWall(const char *name, DrawWallVariant variant, int columns);
 	void CodegenDrawSky(const char *name, DrawSkyVariant variant, int columns);
-	void CodegenDrawTriangle(const char *name, TriDrawVariant variant, bool truecolor);
+	void CodegenDrawTriangle(const std::string &name, TriDrawVariant variant, TriBlendMode blendmode, bool truecolor);
 
 	static llvm::Type *GetDrawColumnArgsStruct(llvm::LLVMContext &context);
 	static llvm::Type *GetDrawSpanArgsStruct(llvm::LLVMContext &context);
@@ -186,17 +186,18 @@ LLVMDrawersImpl::LLVMDrawersImpl()
 	CodegenDrawSky("DrawSky4", DrawSkyVariant::Single, 4);
 	CodegenDrawSky("DrawDoubleSky1", DrawSkyVariant::Double, 1);
 	CodegenDrawSky("DrawDoubleSky4", DrawSkyVariant::Double, 4);
-	CodegenDrawTriangle("TriDraw8", TriDrawVariant::Draw, false);
-	CodegenDrawTriangle("TriDraw32", TriDrawVariant::Draw, true);
-	CodegenDrawTriangle("TriDrawSubsector8", TriDrawVariant::DrawSubsector, false);
-	CodegenDrawTriangle("TriDrawSubsector32", TriDrawVariant::DrawSubsector, true);
-	CodegenDrawTriangle("TriDrawShadedSubsector8", TriDrawVariant::DrawShadedSubsector, false);
-	CodegenDrawTriangle("TriDrawShadedSubsector32", TriDrawVariant::DrawShadedSubsector, true);
-	CodegenDrawTriangle("TriFillSubsector8", TriDrawVariant::FillSubsector, false);
-	CodegenDrawTriangle("TriFillSubsector32", TriDrawVariant::FillSubsector, true);
-	CodegenDrawTriangle("TriFill8", TriDrawVariant::Fill, false);
-	CodegenDrawTriangle("TriFill32", TriDrawVariant::Fill, true);
-	CodegenDrawTriangle("TriStencil", TriDrawVariant::Stencil, false);
+	for (int i = 0; i < NumTriBlendModes(); i++)
+	{
+		CodegenDrawTriangle("TriDraw8_" + std::to_string(i), TriDrawVariant::DrawNormal, (TriBlendMode)i, false);
+		CodegenDrawTriangle("TriDraw32_" + std::to_string(i), TriDrawVariant::DrawNormal, (TriBlendMode)i, true);
+		CodegenDrawTriangle("TriFill8_" + std::to_string(i), TriDrawVariant::FillNormal, (TriBlendMode)i, false);
+		CodegenDrawTriangle("TriFill32_" + std::to_string(i), TriDrawVariant::FillNormal, (TriBlendMode)i, true);
+		CodegenDrawTriangle("TriDrawSubsector8_" + std::to_string(i), TriDrawVariant::DrawSubsector, (TriBlendMode)i, false);
+		CodegenDrawTriangle("TriDrawSubsector32_" + std::to_string(i), TriDrawVariant::DrawSubsector, (TriBlendMode)i, true);
+		CodegenDrawTriangle("TriFillSubsector8_" + std::to_string(i), TriDrawVariant::FillSubsector, (TriBlendMode)i, false);
+		CodegenDrawTriangle("TriFillSubsector32_" + std::to_string(i), TriDrawVariant::FillSubsector, (TriBlendMode)i, true);
+	}
+	CodegenDrawTriangle("TriStencil", TriDrawVariant::Stencil, TriBlendMode::Copy, false);
 
 	mProgram.CreateEE();
 
@@ -262,16 +263,17 @@ LLVMDrawersImpl::LLVMDrawersImpl()
 	DrawSky4 = mProgram.GetProcAddress<void(const DrawSkyArgs *, const WorkerThreadData *)>("DrawSky4");
 	DrawDoubleSky1 = mProgram.GetProcAddress<void(const DrawSkyArgs *, const WorkerThreadData *)>("DrawDoubleSky1");
 	DrawDoubleSky4 = mProgram.GetProcAddress<void(const DrawSkyArgs *, const WorkerThreadData *)>("DrawDoubleSky4");
-	TriDraw8 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriDraw8");
-	TriDraw32 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriDraw32");
-	TriDrawSubsector8 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriDrawSubsector8");
-	TriDrawSubsector32 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriDrawSubsector32");
-	TriDrawShadedSubsector8 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriDrawShadedSubsector8");
-	TriDrawShadedSubsector32 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriDrawShadedSubsector32");
-	TriFillSubsector8 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriFillSubsector8");
-	TriFillSubsector32 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriFillSubsector32");
-	TriFill8 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriFill8");
-	TriFill32 = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriFill32");
+	for (int i = 0; i < NumTriBlendModes(); i++)
+	{
+		TriDrawNormal8.push_back(mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriDraw8_" + std::to_string(i)));
+		TriDrawNormal32.push_back(mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriDraw32_" + std::to_string(i)));
+		TriFillNormal8.push_back(mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriFill8_" + std::to_string(i)));
+		TriFillNormal32.push_back(mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriFill32_" + std::to_string(i)));
+		TriDrawSubsector8.push_back(mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriDrawSubsector8_" + std::to_string(i)));
+		TriDrawSubsector32.push_back(mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriDrawSubsector32_" + std::to_string(i)));
+		TriFillSubsector8.push_back(mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriFillSubsector8_" + std::to_string(i)));
+		TriFillSubsector32.push_back(mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriFillSubsector32_" + std::to_string(i)));
+	}
 	TriStencil = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriStencil");
 
 #if 0
@@ -383,7 +385,7 @@ void LLVMDrawersImpl::CodegenDrawSky(const char *name, DrawSkyVariant variant, i
 		I_FatalError("verifyFunction failed for CodegenDrawSky()");
 }
 
-void LLVMDrawersImpl::CodegenDrawTriangle(const char *name, TriDrawVariant variant, bool truecolor)
+void LLVMDrawersImpl::CodegenDrawTriangle(const std::string &name, TriDrawVariant variant, TriBlendMode blendmode, bool truecolor)
 {
 	llvm::IRBuilder<> builder(mProgram.context());
 	SSAScope ssa_scope(&mProgram.context(), mProgram.module(), &builder);
@@ -394,12 +396,12 @@ void LLVMDrawersImpl::CodegenDrawTriangle(const char *name, TriDrawVariant varia
 	function.create_public();
 
 	DrawTriangleCodegen codegen;
-	codegen.Generate(variant, truecolor, function.parameter(0), function.parameter(1));
+	codegen.Generate(variant, blendmode, truecolor, function.parameter(0), function.parameter(1));
 
 	builder.CreateRetVoid();
 
 	if (llvm::verifyFunction(*function.func))
-		I_FatalError("verifyFunction failed for CodegenDrawTriangle()");
+		I_FatalError("verifyFunction failed for CodegenDrawTriangle(%d, %d, %d)", (int)variant, (int)blendmode, (int)truecolor);
 }
 
 llvm::Type *LLVMDrawersImpl::GetDrawColumnArgsStruct(llvm::LLVMContext &context)
@@ -529,6 +531,9 @@ llvm::Type *LLVMDrawersImpl::GetTriUniformsStruct(llvm::LLVMContext &context)
 	std::vector<llvm::Type *> elements;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t light;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t subsectorDepth;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t color;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t srcalpha;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t destalpha;
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t light_alpha;
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t light_red;
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t light_green;
@@ -558,7 +563,7 @@ llvm::Type *LLVMDrawersImpl::GetTriDrawTriangleArgs(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt8PtrTy(context));  // const uint8_t *texturePixels;
 	elements.push_back(llvm::Type::getInt32Ty(context));    // uint32_t textureWidth;
 	elements.push_back(llvm::Type::getInt32Ty(context));    // uint32_t textureHeight;
-	elements.push_back(llvm::Type::getInt32Ty(context));    // uint32_t solidcolor;
+	elements.push_back(llvm::Type::getInt8PtrTy(context));  // const uint8_t *translation;
 	elements.push_back(GetTriUniformsStruct(context)); // const TriUniforms *uniforms;
 	elements.push_back(llvm::Type::getInt8PtrTy(context));  // uint8_t *stencilValues;
 	elements.push_back(llvm::Type::getInt32PtrTy(context)); // uint32_t *stencilMasks;

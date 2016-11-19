@@ -193,12 +193,12 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 
 	if (!Masked)
 	{
-		PolyTriangleDrawer::draw(args, TriDrawVariant::Draw);
-		PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil);
+		PolyTriangleDrawer::draw(args, TriDrawVariant::DrawNormal, TriBlendMode::Copy);
+		PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
 	}
 	else
 	{
-		PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector);
+		PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::AlphaBlend);
 	}
 
 	RenderPolyDecal::RenderWallDecals(worldToClip, Line, SubsectorDepth);

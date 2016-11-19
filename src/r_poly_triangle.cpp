@@ -72,44 +72,32 @@ void PolyTriangleDrawer::set_viewport(int x, int y, int width, int height, DCanv
 	dest_height = clamp(viewport_y + viewport_height, 0, dest_height - offsety);
 }
 
-void PolyTriangleDrawer::draw(const PolyDrawArgs &args, TriDrawVariant variant)
+void PolyTriangleDrawer::draw(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode)
 {
 	if (dest_bgra)
-		DrawerCommandQueue::QueueCommand<DrawPolyTrianglesCommand>(args, variant);
+		DrawerCommandQueue::QueueCommand<DrawPolyTrianglesCommand>(args, variant, blendmode);
 	else
-		draw_arrays(args, variant, nullptr);
+		draw_arrays(args, variant, blendmode, nullptr);
 }
 
-void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVariant variant, WorkerThreadData *thread)
+void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVariant variant, TriBlendMode blendmode, WorkerThreadData *thread)
 {
 	if (drawargs.vcount < 3)
 		return;
 
 	auto llvm = LLVMDrawers::Instance();
 	void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *);
-#if 1
+	int bmode = (int)blendmode;
 	switch (variant)
 	{
 	default:
-	case TriDrawVariant::Draw: drawfunc = dest_bgra ? llvm->TriDraw32: llvm->TriDraw8; break;
-	case TriDrawVariant::Fill: drawfunc = dest_bgra ? llvm->TriFill32 : llvm->TriFill8; break;
-	case TriDrawVariant::DrawSubsector: drawfunc = dest_bgra ? llvm->TriDrawSubsector32 : llvm->TriDrawSubsector8; break;
-	case TriDrawVariant::DrawShadedSubsector: drawfunc = dest_bgra ? llvm->TriDrawShadedSubsector32 : llvm->TriDrawShadedSubsector8; break;
-	case TriDrawVariant::FillSubsector: drawfunc = dest_bgra ? llvm->TriFillSubsector32 : llvm->TriFillSubsector8; break;
+	case TriDrawVariant::DrawNormal: drawfunc = dest_bgra ? llvm->TriDrawNormal32[bmode] : llvm->TriDrawNormal8[bmode]; break;
+	case TriDrawVariant::FillNormal: drawfunc = dest_bgra ? llvm->TriFillNormal32[bmode] : llvm->TriFillNormal8[bmode]; break;
+	case TriDrawVariant::DrawSubsector: drawfunc = dest_bgra ? llvm->TriDrawSubsector32[bmode] : llvm->TriDrawSubsector8[bmode]; break;
+	case TriDrawVariant::FuzzSubsector:
+	case TriDrawVariant::FillSubsector: drawfunc = dest_bgra ? llvm->TriFillSubsector32[bmode] : llvm->TriFillSubsector8[bmode]; break;
 	case TriDrawVariant::Stencil: drawfunc = llvm->TriStencil; break;
 	}
-#else
-	switch (variant)
-	{
-	default:
-	case TriDrawVariant::Draw: drawfunc = dest_bgra ? ScreenPolyTriangleDrawer::draw32 : ScreenPolyTriangleDrawer::draw; break;
-	case TriDrawVariant::FillSubsector:
-	case TriDrawVariant::Fill: drawfunc = dest_bgra ? ScreenPolyTriangleDrawer::fill32 : ScreenPolyTriangleDrawer::fill; break;
-	case TriDrawVariant::DrawShadedSubsector:
-	case TriDrawVariant::DrawSubsector: drawfunc = dest_bgra ? ScreenPolyTriangleDrawer::drawsubsector32 : llvm->TriDrawSubsector8; break;
-	case TriDrawVariant::Stencil: drawfunc = ScreenPolyTriangleDrawer::stencil; break;
-	}
-#endif
 
 	TriDrawTriangleArgs args;
 	args.dest = dest;
@@ -121,7 +109,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 	args.texturePixels = drawargs.texturePixels;
 	args.textureWidth = drawargs.textureWidth;
 	args.textureHeight = drawargs.textureHeight;
-	args.solidcolor = drawargs.solidcolor;
+	args.translation = drawargs.translation;
 	args.uniforms = &drawargs.uniforms;
 	args.stencilTestValue = drawargs.stenciltestvalue;
 	args.stencilWriteValue = drawargs.stencilwritevalue;
@@ -336,6 +324,7 @@ void PolyTriangleDrawer::clipedge(const TriVertex *verts, TriVertex *clippedvert
 
 /////////////////////////////////////////////////////////////////////////////
 
+#if 0
 void ScreenPolyTriangleDrawer::draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
 	uint8_t *dest = args->dest;
@@ -1641,11 +1630,12 @@ float ScreenPolyTriangleDrawer::grady(float x0, float y0, float x1, float y1, fl
 	float bottom = -((x1 - x2) * (y0 - y2) - (x0 - x2) * (y1 - y2));
 	return top / bottom;
 }
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 
-DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const PolyDrawArgs &args, TriDrawVariant variant)
-	: args(args), variant(variant)
+DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode)
+	: args(args), variant(variant), blendmode(blendmode)
 {
 }
 
@@ -1658,7 +1648,7 @@ void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
 	thread_data.pass_end_y = thread->pass_end_y;
 	thread_data.temp = thread->dc_temp_rgba;
 
-	PolyTriangleDrawer::draw_arrays(args, variant, &thread_data);
+	PolyTriangleDrawer::draw_arrays(args, variant, blendmode, &thread_data);
 }
 
 FString DrawPolyTrianglesCommand::DebugInfo()

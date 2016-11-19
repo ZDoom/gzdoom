@@ -136,7 +136,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, AActor *thing, subse
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
 	args.SetTexture(tex);
-	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector);
+	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::AlphaBlend);
 }
 
 bool RenderPolySprite::IsThingCulled(AActor *thing)

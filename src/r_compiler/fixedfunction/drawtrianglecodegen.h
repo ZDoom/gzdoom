@@ -33,20 +33,23 @@ struct SSATriVertex
 class DrawTriangleCodegen : public DrawerCodegen
 {
 public:
-	void Generate(TriDrawVariant variant, bool truecolor, SSAValue args, SSAValue thread_data);
+	void Generate(TriDrawVariant variant, TriBlendMode blendmode, bool truecolor, SSAValue args, SSAValue thread_data);
 
 private:
-	void LoadArgs(TriDrawVariant variant, bool truecolor, SSAValue args, SSAValue thread_data);
+	void LoadArgs(SSAValue args, SSAValue thread_data);
 	SSATriVertex LoadTriVertex(SSAValue v);
 	void LoadUniforms(SSAValue uniforms);
-	void Setup(TriDrawVariant variant, bool truecolor);
+	void Setup();
 	SSAInt FloatTo28_4(SSAFloat v);
-	void LoopBlockY(TriDrawVariant variant, bool truecolor);
-	void LoopBlockX(TriDrawVariant variant, bool truecolor);
-	void LoopFullBlock(TriDrawVariant variant, bool truecolor);
-	void LoopPartialBlock(TriDrawVariant variant, bool truecolor);
+	void LoopBlockY();
+	void LoopBlockX();
+	void LoopFullBlock();
+	void LoopPartialBlock();
 
-	void ProcessPixel(SSAUBytePtr buffer, SSAIntPtr subsectorbuffer, SSAInt *varying, TriDrawVariant variant, bool truecolor);
+	void ProcessPixel(SSAUBytePtr buffer, SSAIntPtr subsectorbuffer, SSAInt *varying);
+
+	SSAVec4i TranslateSample(SSAInt uvoffset);
+	SSAVec4i Sample(SSAInt uvoffset);
 
 	void SetStencilBlock(SSAInt block);
 	void StencilSet(SSAInt x, SSAInt y, SSAUByte value);
@@ -57,6 +60,10 @@ private:
 
 	SSAFloat gradx(SSAFloat x0, SSAFloat y0, SSAFloat x1, SSAFloat y1, SSAFloat x2, SSAFloat y2, SSAFloat c0, SSAFloat c1, SSAFloat c2);
 	SSAFloat grady(SSAFloat x0, SSAFloat y0, SSAFloat x1, SSAFloat y1, SSAFloat x2, SSAFloat y2, SSAFloat c0, SSAFloat c1, SSAFloat c2);
+
+	TriDrawVariant variant;
+	TriBlendMode blendmode;
+	bool truecolor;
 
 	SSAStack<SSAInt> stack_C1, stack_C2, stack_C3;
 	SSAStack<SSAInt> stack_y;
@@ -82,7 +89,8 @@ private:
 	SSAUBytePtr texturePixels;
 	SSAInt textureWidth;
 	SSAInt textureHeight;
-	SSAInt solidcolor;
+	SSAUBytePtr translation;
+	SSAInt color, srcalpha, destalpha;
 
 	SSAInt light;
 	SSAInt subsectorDepth;

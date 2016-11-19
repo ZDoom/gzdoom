@@ -79,7 +79,7 @@ void PolySkyDome::RenderRow(PolyDrawArgs &args, int row)
 	args.vcount = mPrimStart[row + 1] - mPrimStart[row];
 	args.mode = TriangleDrawMode::Strip;
 	args.ccw = false;
-	PolyTriangleDrawer::draw(args, TriDrawVariant::Draw);
+	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawNormal, TriBlendMode::Copy);
 }
 
 void PolySkyDome::RenderCapColorRow(PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap)
@@ -92,8 +92,8 @@ void PolySkyDome::RenderCapColorRow(PolyDrawArgs &args, FTexture *skytex, int ro
 	args.vcount = mPrimStart[row + 1] - mPrimStart[row];
 	args.mode = TriangleDrawMode::Fan;
 	args.ccw = bottomCap;
-	args.solidcolor = solid;
-	PolyTriangleDrawer::draw(args, TriDrawVariant::Fill);
+	args.uniforms.color = solid;
+	PolyTriangleDrawer::draw(args, TriDrawVariant::FillNormal, TriBlendMode::Copy);
 }
 
 void PolySkyDome::CreateDome()

@@ -141,6 +141,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, DBaseDecal *decal, co
 		uniforms.flags = 0;
 	}
 	uniforms.subsectorDepth = subsectorDepth;
+	uniforms.color = decal->AlphaColor;
 
 	PolyDrawArgs args;
 	args.uniforms = uniforms;
@@ -151,7 +152,6 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, DBaseDecal *decal, co
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
 	args.SetTexture(tex);
-	args.solidcolor = decal->AlphaColor;
 	//mode = R_SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
-	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawShadedSubsector);
+	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Shaded);
 }

@@ -83,8 +83,8 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, particle_t *partic
 		uniforms.flags = 0;
 	}
 	uniforms.subsectorDepth = subsectorDepth;
-
 	uint32_t alpha = particle->trans;
+	uniforms.color = (alpha << 24) | (particle->color & 0xffffff);
 
 	PolyDrawArgs args;
 	args.uniforms = uniforms;
@@ -94,6 +94,5 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, particle_t *partic
 	args.ccw = true;
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
-	args.solidcolor = (alpha << 24) | (particle->color & 0xffffff);
-	PolyTriangleDrawer::draw(args, TriDrawVariant::FillSubsector);
+	PolyTriangleDrawer::draw(args, TriDrawVariant::FillSubsector, TriBlendMode::AlphaBlend);
 }

@@ -7185,6 +7185,12 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	{
 		ValueType = TypeVoid;
 	}
+	// If self is a struct, it will be a value type, not a reference, so we need to make an addresss request.
+	if (Self != nullptr && Self->ValueType->IsKindOf(RUNTIME_CLASS(PStruct)) && !Self->ValueType->IsKindOf(RUNTIME_CLASS(PClass)))
+	{
+		bool writable;
+		Self->RequestAddress(ctx, &writable);
+	}
 
 	return this;
 }

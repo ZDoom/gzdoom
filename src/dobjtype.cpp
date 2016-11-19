@@ -2765,6 +2765,7 @@ void PClass::StaticShutdown ()
 				uniqueFPs.Push(const_cast<size_t *>(type->FlatPointers));
 			}
 		}
+		type->Destroy();
 	}
 	for (i = 0; i < uniqueFPs.Size(); ++i)
 	{

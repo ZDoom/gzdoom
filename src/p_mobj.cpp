@@ -6884,6 +6884,12 @@ void AActor::ClearCounters()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, ClearCounters)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->ClearCounters();
+	return 0;
+}
 
 int AActor::ApplyDamageFactor(FName damagetype, int damage) const
 {

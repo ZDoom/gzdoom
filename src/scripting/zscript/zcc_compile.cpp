@@ -2262,10 +2262,18 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 
 		if (!(f->Flags & ZCC_Native))
 		{
-			auto code = ConvertAST(c->Type(), f->Body);
-			if (code != nullptr)
+			if (f->Body == nullptr)
 			{
-				sym->Variants[0].Implementation = FunctionBuildList.AddFunction(sym, code, FStringf("%s.%s", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars()), false, -1, 0, Lump);
+				Error(f, "Empty function %s", FName(f->Name).GetChars());
+				return;
+			}
+			else
+			{
+				auto code = ConvertAST(c->Type(), f->Body);
+				if (code != nullptr)
+				{
+					sym->Variants[0].Implementation = FunctionBuildList.AddFunction(sym, code, FStringf("%s.%s", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars()), false, -1, 0, Lump);
+				}
 			}
 		}
 		if (sym->Variants[0].Implementation != nullptr && hasdefault)	// do not copy empty default lists, they only waste space and processing time.
@@ -3149,7 +3157,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 	case AST_CaseStmt:
 	{
 		auto cases = static_cast<ZCC_CaseStmt *>(ast);
-		return new FxCaseStatement(ConvertNode(cases->Condition), *ast); 
+		return new FxCaseStatement(ConvertNode(cases->Condition), *ast);
 	}
 
 	case AST_CompoundStmt:
@@ -3163,6 +3171,21 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 			node = static_cast<decltype(node)>(node->SiblingNext);
 		} while (node != compound->Content);
 		return x;
+	}
+
+	case AST_AssignStmt:
+	{
+		auto ass = static_cast<ZCC_AssignStmt *>(ast);
+		FArgumentList args;
+		ConvertNodeList(args, ass->Dests);
+		assert(ass->Sources->SiblingNext == ass->Sources);	// right side should be a single function call - nothing else
+		if (ass->Sources->NodeType != AST_ExprFuncCall)
+		{
+			// don't let this through to the code generator. This node is only used to assign multiple returns of a function to more than one variable.
+			Error(ass, "Right side of multi-assignment must be a function call");
+			return new FxNop(*ast);	// allow compiler to continue looking for errors.
+		}
+		return new FxMultiAssign(args, ConvertNode(ass->Sources), *ast);
 	}
 	}
 	// only for development. I_Error is more convenient here than a normal error.

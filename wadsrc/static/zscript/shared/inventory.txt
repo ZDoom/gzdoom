@@ -11,10 +11,11 @@ class Inventory : Actor native
 	}
 	
 	// These are regular functions for the item itself.
-	private native void A_RestoreSpecialPosition();
 	private native void A_RestoreSpecialDoomThing();
 	private native void A_RestoreSpecialThing1();
 	private native void A_RestoreSpecialThing2();
+	
+	native bool, Actor CallTryPickup(Actor toucher);
 
 	States(Actor, Overlay, Weapon, Item)
 	{
@@ -70,7 +71,6 @@ class StateProvider : Inventory native
 	action native void A_CheckReload();
 	action native void A_GunFlash(statelabel flash = null, int flags = 0);
 	action native void A_FireAssaultGun();
-	action native void A_Saw(sound fullsound = "weapons/sawfull", sound hitsound = "weapons/sawhit", int damage = 2, class<Actor> pufftype = "BulletPuff", int flags = 0, float range = 0, float spread_xy = 2.8125, float spread_z = 0, float lifesteal = 0, int lifestealmax = 0, class<BasicArmorBonus> armorbonustype = "ArmorBonus");
 	action native state A_CheckForReload(int counter, statelabel label, bool dontincrement = false);
 	action native void A_ResetReloadCounter();
 }

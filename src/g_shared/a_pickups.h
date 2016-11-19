@@ -500,6 +500,7 @@ public:
 class ABasicArmorBonus : public AArmor
 {
 	DECLARE_CLASS (ABasicArmorBonus, AArmor)
+	HAS_FIELDS
 public:
 	
 	virtual void Serialize(FSerializer &arc);

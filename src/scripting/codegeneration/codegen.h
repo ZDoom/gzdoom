@@ -68,6 +68,7 @@ struct FScriptPosition;
 class FxLoopStatement;
 class FxCompoundStatement;
 class FxLocalVariableDeclaration;
+typedef TDeletingArray<FxExpression*> FArgumentList;
 
 struct FCompileContext
 {
@@ -280,6 +281,7 @@ enum EFxType
 	EFX_GlobalVariable,
 	EFX_Super,
 	EFX_StackVariable,
+	EFX_MultiAssign,
 	EFX_COUNT
 };
 
@@ -343,6 +345,7 @@ class FxIdentifier : public FxExpression
 {
 public:
 	FName Identifier;
+	bool noglobal = false;
 
 	FxIdentifier(FName i, const FScriptPosition &p);
 	FxExpression *Resolve(FCompileContext&);
@@ -780,6 +783,28 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build);
 
 	ExpEmit Address;
+};
+
+//==========================================================================
+//
+//	FxAssign
+//
+//==========================================================================
+class FxCompoundStatement;
+
+class FxMultiAssign : public FxExpression
+{
+	FxCompoundStatement *LocalVarContainer;	// for handling the temporary variables of the results, which may need type casts.
+	FArgumentList Base;
+	FxExpression *Right;
+	bool AddressRequested = false;
+	bool AddressWritable = false;
+
+public:
+	FxMultiAssign(FArgumentList &base, FxExpression *right, const FScriptPosition &pos);
+	~FxMultiAssign();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -1344,8 +1369,6 @@ public:
 //
 //==========================================================================
 
-typedef TDeletingArray<FxExpression*> FArgumentList;
-
 class FxFunctionCall : public FxExpression
 {
 	FName MethodName;
@@ -1448,11 +1471,16 @@ public:
 
 class FxVMFunctionCall : public FxExpression
 {
+	friend class FxMultiAssign;
+
 	bool EmitTail;
 	bool NoVirtual;
 	FxExpression *Self;
 	PFunction *Function;
 	FArgumentList ArgList;
+	// for multi assignment
+	int AssignCount = 0;
+	TArray<ExpEmit> ReturnRegs;
 
 public:
 	FxVMFunctionCall(FxExpression *self, PFunction *func, FArgumentList &args, const FScriptPosition &pos, bool novirtual);
@@ -1462,6 +1490,10 @@ public:
 	VMFunction *GetDirectFunction();
 	ExpEmit Emit(VMFunctionBuilder *build);
 	bool CheckEmitCast(VMFunctionBuilder *build, bool returnit, ExpEmit &reg);
+	TArray<PType*> &GetReturnTypes() const
+	{
+		return Function->Variants[0].Proto->ReturnTypes;
+	}
 };
 
 //==========================================================================
@@ -1497,6 +1529,7 @@ class FxCompoundStatement : public FxSequence
 	FxCompoundStatement *Outer = nullptr;
 
 	friend class FxLocalVariableDeclaration;
+	friend class FxMultiAssign;
 
 public:
 	FxCompoundStatement(const FScriptPosition &pos) : FxSequence(pos) {}
@@ -1822,6 +1855,7 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 	void Release(VMFunctionBuilder *build);
+	void SetReg(ExpEmit reginfo);
 
 };
 

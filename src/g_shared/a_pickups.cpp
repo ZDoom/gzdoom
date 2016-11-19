@@ -344,6 +344,14 @@ bool P_GiveBody (AActor *actor, int num, int max)
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, GiveBody)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(num);
+	PARAM_INT_DEF(max);
+	ACTION_RETURN_BOOL(P_GiveBody(self, num, max));
+}
+
 //---------------------------------------------------------------------------
 //
 // PROC A_RestoreSpecialThing1
@@ -352,12 +360,12 @@ bool P_GiveBody (AActor *actor, int num, int max)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing1)
+DEFINE_ACTION_FUNCTION(AInventory, A_RestoreSpecialThing1)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_SELF_PROLOGUE(AInventory);
 
 	self->renderflags &= ~RF_INVISIBLE;
-	if (static_cast<AInventory *>(self)->DoRespawn ())
+	if (self->DoRespawn ())
 	{
 		S_Sound (self, CHAN_VOICE, "misc/spawn", 1, ATTN_IDLE);
 	}
@@ -370,9 +378,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing1)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing2)
+DEFINE_ACTION_FUNCTION(AInventory, A_RestoreSpecialThing2)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_SELF_PROLOGUE(AInventory);
 
 	self->flags |= MF_SPECIAL;
 	if (!(self->GetDefault()->flags & MF_NOGRAVITY))
@@ -390,9 +398,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing2)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialDoomThing)
+DEFINE_ACTION_FUNCTION(AInventory, A_RestoreSpecialDoomThing)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_SELF_PROLOGUE(AInventory);
 
 	self->renderflags &= ~RF_INVISIBLE;
 	self->flags |= MF_SPECIAL;
@@ -400,7 +408,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialDoomThing)
 	{
 		self->flags &= ~MF_NOGRAVITY;
 	}
-	if (static_cast<AInventory *>(self)->DoRespawn ())
+	if (self->DoRespawn ())
 	{
 		self->SetState (self->SpawnState);
 		S_Sound (self, CHAN_VOICE, "misc/spawn", 1, ATTN_IDLE);
@@ -1547,6 +1555,17 @@ bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 	return res;
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, CallTryPickup)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	PARAM_OBJECT(toucher, AActor);
+	AActor *t_ret;
+	bool res = self->CallTryPickup(toucher, &t_ret);
+	if (numret > 0) ret[0].SetInt(res);
+	if (numret > 1) ret[1].SetPointer(t_ret, ATAG_OBJECT), numret = 2;
+	return numret;
+}
+	
 
 //===========================================================================
 //

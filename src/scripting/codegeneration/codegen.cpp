@@ -2331,6 +2331,95 @@ ExpEmit FxAssignSelf::Emit(VMFunctionBuilder *build)
 	}
 }
 
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxMultiAssign::FxMultiAssign(FArgumentList &base, FxExpression *right, const FScriptPosition &pos)
+	:FxExpression(EFX_MultiAssign, pos)
+{
+	Base = std::move(base);
+	Right = right;
+	LocalVarContainer = new FxCompoundStatement(ScriptPosition);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxMultiAssign::~FxMultiAssign()
+{
+	SAFE_DELETE(Right);
+	SAFE_DELETE(LocalVarContainer);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxMultiAssign::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(Right, ctx);
+	if (Right->ExprType != EFX_VMFunctionCall)
+	{
+		Right->ScriptPosition.Message(MSG_ERROR, "Function call expected on right side of multi-assigment");
+		delete this;
+		return nullptr;
+	}
+	auto VMRight = static_cast<FxVMFunctionCall *>(Right);
+	auto rets = VMRight->GetReturnTypes();
+	if (rets.Size() < Base.Size())
+	{
+		Right->ScriptPosition.Message(MSG_ERROR, "Insufficient returns in function %s", VMRight->Function->SymbolName.GetChars());
+		delete this;
+		return nullptr;
+	}
+	// Pack the generated data (temp local variables for the results and necessary type casts and single assignments) into a compound statement for easier management.
+	for (unsigned i = 0; i < Base.Size(); i++)
+	{
+		auto singlevar = new FxLocalVariableDeclaration(rets[i], NAME_None, nullptr, 0, ScriptPosition);
+		LocalVarContainer->Add(singlevar);
+		Base[i] = Base[i]->Resolve(ctx);
+		ABORT(Base[i]);
+		auto varaccess = new FxLocalVariable(singlevar, ScriptPosition);
+		auto assignee = new FxTypeCast(varaccess, Base[i]->ValueType, false);
+		LocalVarContainer->Add(new FxAssign(Base[i], assignee, false));
+	}
+	auto x = LocalVarContainer->Resolve(ctx);
+	LocalVarContainer = nullptr;
+	ABORT(x);
+	LocalVarContainer = static_cast<FxCompoundStatement*>(x);
+	static_cast<FxVMFunctionCall *>(Right)->AssignCount = Base.Size();
+	ValueType = TypeVoid;
+	return this;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxMultiAssign::Emit(VMFunctionBuilder *build)
+{
+	Right->Emit(build);
+	for (unsigned i = 0; i < Base.Size(); i++)
+	{
+		LocalVarContainer->LocalVars[i]->SetReg(static_cast<FxVMFunctionCall *>(Right)->ReturnRegs[i]);
+	}
+	static_cast<FxVMFunctionCall *>(Right)->ReturnRegs.Clear();
+	static_cast<FxVMFunctionCall *>(Right)->ReturnRegs.ShrinkToFit();
+	return LocalVarContainer->Emit(build);
+}
+
 //==========================================================================
 //
 //
@@ -5398,6 +5487,13 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		}
 	}
 
+	if (noglobal)
+	{
+		// This is needed to properly resolve class names on the left side of the member access operator
+		ValueType = TypeError;
+		return this;
+	}
+
 	// now check the global identifiers.
 	if (newex == nullptr && (sym = ctx.FindGlobal(Identifier)) != nullptr)
 	{
@@ -6710,11 +6806,20 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	bool staticonly = false;
 	bool novirtual = false;
 
+	PClass *ccls = nullptr;
+
 	if (Self->ExprType == EFX_Identifier)
 	{
+		ccls = PClass::FindClass(static_cast<FxIdentifier *>(Self)->Identifier);
 		// If the left side is a class name for a static member function call it needs to be resolved manually 
 		// because the resulting value type would cause problems in nearly every other place where identifiers are being used.
-		PClass *ccls = PClass::FindClass(static_cast<FxIdentifier *>(Self)->Identifier);
+		if (ccls != nullptr)static_cast<FxIdentifier *>(Self)->noglobal = true;
+	}
+
+	SAFE_RESOLVE(Self, ctx);
+
+	if (Self->ValueType == TypeError)
+	{
 		if (ccls != nullptr)
 		{
 			if (ccls->bExported)
@@ -6729,7 +6834,6 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			// Todo: static struct members need to work as well.
 		}
 	}
-	SAFE_RESOLVE(Self, ctx);
 
 	if (Self->ExprType == EFX_Super)
 	{
@@ -7282,10 +7386,8 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 		}
 		else if (vmfunc->Proto->ReturnTypes.Size() > 0)
 		{ // Call, expecting one result
-			ExpEmit reg(build, vmfunc->Proto->ReturnTypes[0]->GetRegType(), vmfunc->Proto->ReturnTypes[0]->GetRegCount());
-			build->Emit(OP_CALL_K, funcaddr, count, 1);
-			build->Emit(OP_RESULT, 0, EncodeRegType(reg), reg.RegNum);
-			return reg;
+			build->Emit(OP_CALL_K, funcaddr, count, MAX(1, AssignCount));
+			goto handlereturns;
 		}
 		else
 		{ // Call, expecting no results
@@ -7307,18 +7409,34 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 		}
 		else if (vmfunc->Proto->ReturnTypes.Size() > 0)
 		{ // Call, expecting one result
-			ExpEmit reg(build, vmfunc->Proto->ReturnTypes[0]->GetRegType(), vmfunc->Proto->ReturnTypes[0]->GetRegCount());
-			build->Emit(OP_CALL, funcreg.RegNum, count, 1);
-			build->Emit(OP_RESULT, 0, EncodeRegType(reg), reg.RegNum);
-			return reg;
+			build->Emit(OP_CALL, funcreg.RegNum, count, MAX(1, AssignCount));
+			goto handlereturns;
 		}
 		else
 		{ // Call, expecting no results
 			build->Emit(OP_CALL, funcreg.RegNum, count, 0);
 			return ExpEmit();
 		}
-
-
+	}
+handlereturns:
+	if (AssignCount == 0)
+	{
+		// Regular call, will not write to ReturnRegs
+		ExpEmit reg(build, vmfunc->Proto->ReturnTypes[0]->GetRegType(), vmfunc->Proto->ReturnTypes[0]->GetRegCount());
+		build->Emit(OP_RESULT, 0, EncodeRegType(reg), reg.RegNum);
+		return reg;
+	}
+	else
+	{
+		// Multi-Assignment call, this must fill in the ReturnRegs array so that the multi-assignment operator can dispatch the return values.
+		assert((unsigned)AssignCount <= vmfunc->Proto->ReturnTypes.Size());
+		for (int i = 0; i < AssignCount; i++)
+		{
+			ExpEmit reg(build, vmfunc->Proto->ReturnTypes[i]->GetRegType(), vmfunc->Proto->ReturnTypes[i]->GetRegCount());
+			build->Emit(OP_RESULT, 0, EncodeRegType(reg), reg.RegNum);
+			ReturnRegs.Push(reg);
+		}
+		return ExpEmit();
 	}
 }
 
@@ -9018,13 +9136,19 @@ FxExpression *FxLocalVariableDeclaration::Resolve(FCompileContext &ctx)
 	return this;
 }
 
+void FxLocalVariableDeclaration::SetReg(ExpEmit emit)
+{
+	assert(ValueType->GetRegType() == emit.RegType && ValueType->GetRegCount() == emit.RegCount);
+	RegNum = emit.RegNum;
+}
+
 ExpEmit FxLocalVariableDeclaration::Emit(VMFunctionBuilder *build)
 {
 	if (ValueType->RegType != REGT_NIL)
 	{
 		if (Init == nullptr)
 		{
-			RegNum = build->Registers[ValueType->GetRegType()].Get(RegCount);
+			if (RegNum == -1) RegNum = build->Registers[ValueType->GetRegType()].Get(RegCount);
 		}
 		else
 		{

@@ -1556,7 +1556,7 @@ statement(X) ::= expression_statement(A) SEMICOLON.	{ X = A; /*X-overwrites-A*/ 
 statement(X) ::= selection_statement(X).
 statement(X) ::= iteration_statement(X).
 statement(X) ::= jump_statement(X).
-//statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
+statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= local_var(A) SEMICOLON.			{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= error SEMICOLON.					{ X = NULL; }
 
@@ -1767,11 +1767,11 @@ labeled_statement(X) ::= DEFAULT(T) COLON.
 
 /*----- Assignment Statements -----*/
 
-/* This is no longer being used, in favor of handling assignments as expressions, just like C and C++ do.
-   Keep this here in case some other parts require assignment syntax or Lua-style multi-assignments become a thing.
 %type assign_statement{ZCC_AssignStmt *}
 
-assign_statement(X) ::= expr_list(A) EQ expr_list(B). [EQ]
+// The grammar won't let this pass without some syntactic help. 
+// Parentheses and braces aren't accepted either so brackets are the only way to get this through the parser without a conflict.
+assign_statement(X) ::= LBRACKET expr_list(A) RBRACKET EQ expr(B). [EQ]
 {
 	NEW_AST_NODE(AssignStmt,stmt,A);
 	stmt->AssignOp = ZCC_EQ;
@@ -1779,7 +1779,6 @@ assign_statement(X) ::= expr_list(A) EQ expr_list(B). [EQ]
 	stmt->Sources = B;
 	X = stmt;
 }
-*/
 
 /*----- Local Variable Definition "Statements" -----*/
 

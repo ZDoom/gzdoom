@@ -7,11 +7,12 @@
 #include "g_level.h"
 #include "d_player.h"
 #include "serializer.h"
+#include "cmdlib.h"
 
 IMPLEMENT_CLASS(AArmor, false, false, false, false)
 IMPLEMENT_CLASS(ABasicArmor, false, false, false, false)
 IMPLEMENT_CLASS(ABasicArmorPickup, false, false, false, false)
-IMPLEMENT_CLASS(ABasicArmorBonus, false, false, false, false)
+IMPLEMENT_CLASS(ABasicArmorBonus, false, false, true, false)
 IMPLEMENT_CLASS(AHexenArmor, false, false, false, false)
 
 //===========================================================================
@@ -276,6 +277,19 @@ bool ABasicArmorPickup::Use (bool pickup)
 	armor->ArmorType = this->GetClass()->TypeName;
 	armor->ActualSaveAmount = SaveAmount;
 	return true;
+}
+
+//===========================================================================
+//
+// ABasicArmorBonus :: InitNativeFields
+//
+//===========================================================================
+
+void ABasicArmorBonus::InitNativeFields()
+{
+	auto meta = RUNTIME_CLASS(ABasicArmorBonus);
+	meta->AddNativeField("SaveAmount", TypeSInt32, myoffsetof(ABasicArmorBonus, SaveAmount));
+	meta->AddNativeField("MaxSaveAmount", TypeSInt32, myoffsetof(ABasicArmorBonus, MaxSaveAmount));
 }
 
 //===========================================================================

@@ -1035,6 +1035,14 @@ AInventory *AActor::FindInventory (FName type)
 	return FindInventory(PClass::FindActor(type));
 }
 
+DEFINE_ACTION_FUNCTION(AActor, FindInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(type, AInventory);
+	PARAM_BOOL_DEF(subclass);
+	ACTION_RETURN_OBJECT(self->FindInventory(type, subclass));
+}
+
 //============================================================================
 //
 // AActor :: GiveInventoryType

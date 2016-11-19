@@ -3547,7 +3547,7 @@ ExpEmit FxShift::Emit(VMFunctionBuilder *build)
 	if (!op1.Konst)
 	{
 		op1.Free(build);
-		instr = InstrMap[index][op2.Konst? 0:2];
+		instr = InstrMap[index][op2.Konst? 2:0];
 	}
 	else
 	{
@@ -7067,7 +7067,8 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	SAFE_RESOLVE_OPT(Self, ctx);
 	bool failed = false;
 	auto proto = Function->Variants[0].Proto;
-	auto argtypes = proto->ArgumentTypes;
+	auto &argtypes = proto->ArgumentTypes;
+	auto &argflags = Function->Variants[0].ArgFlags;
 
 	int implicit = Function->GetImplicitArgs();
 
@@ -7100,8 +7101,29 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 			}
 			assert(type != nullptr);
 
-			FxExpression *x = new FxTypeCast(ArgList[i], type, false);
-			x = x->Resolve(ctx);
+			FxExpression *x;
+			if (!(argflags[i + implicit] & VARF_Ref))
+			{
+				x = new FxTypeCast(ArgList[i], type, false);
+				x = x->Resolve(ctx);
+			}
+			else
+			{
+				bool writable;
+				ArgList[i] = ArgList[i]->Resolve(ctx);	// nust be resolved before the address is requested.
+				ArgList[i]->RequestAddress(ctx, &writable);
+				ArgList[i]->ValueType = NewPointer(ArgList[i]->ValueType);
+				// For a reference argument the types must match 100%.
+				if (type != ArgList[i]->ValueType)
+				{
+					ScriptPosition.Message(MSG_ERROR, "Type mismatch in reference argument", Function->SymbolName.GetChars());
+					x = nullptr;
+				}
+				else
+				{
+					x = ArgList[i];
+				}
+			}
 			failed |= (x == nullptr);
 			ArgList[i] = x;
 		}

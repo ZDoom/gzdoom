@@ -32,6 +32,7 @@ enum
 	VARF_Static			= (1<<13),	// static class data (by necessity read only.)
 	VARF_InternalAccess	= (1<<14),	// overrides VARF_ReadOnly for internal script code.
 	VARF_Override		= (1<<15),	// overrides a virtual function from the parent class.
+	VARF_Ref			= (1<<16),	// argument is passed by reference.
 };
 
 // Symbol information -------------------------------------------------------

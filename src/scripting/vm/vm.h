@@ -157,13 +157,15 @@ enum
 	ATAG_OBJECT,			// pointer to an object; will be followed by GC
 
 	// The following are all for documentation during debugging and are
-	// functionally no different than ATAG_GENERIC.
+	// functionally no different than ATAG_GENERIC (meaning they are useless because they trigger asserts all over the place.)
 
+	/*
 	ATAG_FRAMEPOINTER,		// pointer to extra stack frame space for this function
 	ATAG_DREGISTER,			// pointer to a data register
 	ATAG_FREGISTER,			// pointer to a float register
 	ATAG_SREGISTER,			// pointer to a string register
 	ATAG_AREGISTER,			// pointer to an address register
+	*/
 
 	ATAG_RNG,				// pointer to FRandom
 	ATAG_STATE  = ATAG_GENERIC,			// pointer to FState (cannot have its own type because there's no means to track inside the VM.)

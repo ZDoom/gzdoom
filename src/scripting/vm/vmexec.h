@@ -87,7 +87,7 @@ begin:
 	OP(LFP):
 		ASSERTA(a); assert(sfunc != NULL); assert(sfunc->ExtraSpace > 0);
 		reg.a[a] = f->GetExtra();
-		reg.atag[a] = ATAG_FRAMEPOINTER;
+		reg.atag[a] = ATAG_GENERIC;	// using ATAG_FRAMEPOINTER will cause endless asserts.
 		NEXTOP;
 
 	OP(LB):
@@ -461,7 +461,7 @@ begin:
 					break;
 				case REGT_INT | REGT_ADDROF:
 					assert(C < f->NumRegD);
-					::new(param) VMValue(&reg.d[C], ATAG_DREGISTER);
+					::new(param) VMValue(&reg.d[C], ATAG_GENERIC);
 					break;
 				case REGT_INT | REGT_KONST:
 					assert(C < sfunc->NumKonstD);
@@ -473,7 +473,7 @@ begin:
 					break;
 				case REGT_STRING | REGT_ADDROF:
 					assert(C < f->NumRegS);
-					::new(param) VMValue(&reg.s[C], ATAG_SREGISTER);
+					::new(param) VMValue(&reg.s[C], ATAG_GENERIC);
 					break;
 				case REGT_STRING | REGT_KONST:
 					assert(C < sfunc->NumKonstS);
@@ -485,7 +485,7 @@ begin:
 					break;
 				case REGT_POINTER | REGT_ADDROF:
 					assert(C < f->NumRegA);
-					::new(param) VMValue(&reg.a[C], ATAG_AREGISTER);
+					::new(param) VMValue(&reg.a[C], ATAG_GENERIC);
 					break;
 				case REGT_POINTER | REGT_KONST:
 					assert(C < sfunc->NumKonstA);
@@ -512,7 +512,7 @@ begin:
 					break;
 				case REGT_FLOAT | REGT_ADDROF:
 					assert(C < f->NumRegF);
-					::new(param) VMValue(&reg.f[C], ATAG_FREGISTER);
+					::new(param) VMValue(&reg.f[C], ATAG_GENERIC);
 					break;
 				case REGT_FLOAT | REGT_KONST:
 					assert(C < sfunc->NumKonstF);

@@ -473,6 +473,8 @@ class Weapon : StateProvider native
 		Stop;
 	}
 	
+	native bool DepleteAmmo(bool altFire, bool checkEnough = true, int ammouse = -1);
+	
 	native action void A_ZoomFactor(float scale = 1, int flags = 0);
 	native action void A_SetCrosshair(int xhair);
 	const ZOOM_INSTANT = 1;

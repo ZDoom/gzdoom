@@ -166,36 +166,27 @@ static TArray<CodePointerAlias> MBFCodePointers;
 
 struct AmmoPerAttack
 {
-	VMNativeFunction **func;
+	ENamedName func;
 	int ammocount;
+	VMFunction *ptr;
 };
 
 DECLARE_ACTION(A_Punch)
-DECLARE_ACTION(A_FirePistol)
-DECLARE_ACTION(A_FireShotgun)
-DECLARE_ACTION(A_FireShotgun2)
-DECLARE_ACTION(A_FireCGun)
-DECLARE_ACTION(A_FireMissile)
-DECLARE_ACTION(A_Saw)
-DECLARE_ACTION(A_FirePlasma)
-DECLARE_ACTION(A_FireBFG)
-DECLARE_ACTION(A_FireOldBFG)
-DECLARE_ACTION(A_FireRailgun)
 
 // Default ammo use of the various weapon attacks
 static AmmoPerAttack AmmoPerAttacks[] = {
-	{ &AActor_A_Punch_VMPtr, 0},
-	{ &AActor_A_FirePistol_VMPtr, 1},
-	{ &AActor_A_FireShotgun_VMPtr, 1},
-	{ &AActor_A_FireShotgun2_VMPtr, 2},
-	{ &AActor_A_FireCGun_VMPtr, 1},
-	{ &AActor_A_FireMissile_VMPtr, 1},
-	{ &AActor_A_Saw_VMPtr, 0},
-	{ &AActor_A_FirePlasma_VMPtr, 1},
-	{ &AActor_A_FireBFG_VMPtr, -1},	// uses deh.BFGCells
-	{ &AActor_A_FireOldBFG_VMPtr, 1},
-	{ &AActor_A_FireRailgun_VMPtr, 1},
-	{ NULL, 0}
+	{ NAME_A_Punch, 0},
+	{ NAME_A_FirePistol, 1},
+	{ NAME_A_FireShotgun, 1},
+	{ NAME_A_FireShotgun2, 2},
+	{ NAME_A_FireCGun, 1},
+	{ NAME_A_FireMissile, 1},
+	{ NAME_A_Saw, 0},
+	{ NAME_A_FirePlasma, 1},
+	{ NAME_A_FireBFG, -1},	// uses deh.BFGCells
+	{ NAME_A_FireOldBFG, 1},
+	{ NAME_A_FireRailgun, 1},
+	{ NAME_None, 0}
 };
 
 
@@ -3095,7 +3086,12 @@ void FinishDehPatch ()
 				StateVisited[state] = true;
 				for(unsigned j = 0; AmmoPerAttacks[j].func != NULL; j++)
 				{
-					if (state->ActionFunc == *AmmoPerAttacks[j].func)
+					if (AmmoPerAttacks[i].ptr == nullptr)
+					{
+						auto p = dyn_cast<PFunction>(RUNTIME_CLASS(AStateProvider)->Symbols.FindSymbol(AmmoPerAttacks[i].func, true));
+						if (p != nullptr) AmmoPerAttacks[i].ptr = p->Variants[0].Implementation;
+					}
+					if (state->ActionFunc == AmmoPerAttacks[j].ptr)
 					{
 						found = true;
 						int use = AmmoPerAttacks[j].ammocount;

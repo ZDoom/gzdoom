@@ -15,54 +15,12 @@
 #include "doomstat.h"
 */
 
-static FRandom pr_punch ("Punch");
 static FRandom pr_saw ("Saw");
 static FRandom pr_fireshotgun2 ("FireSG2");
 static FRandom pr_fireplasma ("FirePlasma");
 static FRandom pr_firerail ("FireRail");
 static FRandom pr_bfgspray ("BFGSpray");
 static FRandom pr_oldbfg ("OldBFG");
-
-//
-// A_Punch
-//
-DEFINE_ACTION_FUNCTION(AActor, A_Punch)
-{
-	PARAM_ACTION_PROLOGUE(AActor);
-
-	DAngle 	angle;
-	int 		damage;
-	DAngle 		pitch;
-	FTranslatedLineTarget t;
-
-	if (self->player != NULL)
-	{
-		AWeapon *weapon = self->player->ReadyWeapon;
-		if (weapon != NULL && !(weapon->WeaponFlags & WIF_DEHAMMO) && ACTION_CALL_FROM_PSPRITE())
-		{
-			if (!weapon->DepleteAmmo (weapon->bAltFire))
-				return 0;
-		}
-	}
-
-	damage = (pr_punch()%10+1)<<1;
-
-	if (self->FindInventory<APowerStrength>())	
-		damage *= 10;
-
-	angle = self->Angles.Yaw + pr_punch.Random2() * (5.625 / 256);
-	pitch = P_AimLineAttack (self, angle, MELEERANGE);
-
-	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff, LAF_ISMELEEATTACK, &t);
-
-	// turn to face target
-	if (t.linetarget)
-	{
-		S_Sound (self, CHAN_WEAPON, "*fist", 1, ATTN_NORM);
-		self->Angles.Yaw = t.angleFromSource;
-	}
-	return 0;
-}
 
 //
 // A_FirePistol

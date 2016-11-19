@@ -388,7 +388,7 @@ static FFlagDef InventoryFlagDefs[] =
 	DEFINE_DEPRECATED_FLAG(INTERHUBSTRIP),
 };
 
-static FFlagDef WeaponFlagDefs[] =
+FFlagDef WeaponFlagDefs[] =
 {
 	// Weapon flags
 	DEFINE_FLAG(WIF, NOAUTOFIRE, AWeapon, WeaponFlags),
@@ -411,11 +411,13 @@ static FFlagDef WeaponFlagDefs[] =
 	DEFINE_FLAG(WIF, NOAUTOAIM, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, NODEATHDESELECT, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, NODEATHINPUT, AWeapon, WeaponFlags),
-	
-	DEFINE_DUMMY_FLAG(NOLMS, false),
 	DEFINE_FLAG(WIF, ALT_USES_BOTH, AWeapon, WeaponFlags),
+
+	DEFINE_DUMMY_FLAG(NOLMS, false),
 	DEFINE_DUMMY_FLAG(ALLOW_WITH_RESPAWN_INVUL, false),
 };
+
+
 
 static FFlagDef PlayerPawnFlagDefs[] =
 {

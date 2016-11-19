@@ -17,16 +17,39 @@
 #include "g_level.h"
 #include "d_net.h"
 #include "serializer.h"
+#include "thingdef.h"
 
 #define BONUSADD 6
 
-IMPLEMENT_CLASS(AWeapon, false, true, false, false)
+extern FFlagDef WeaponFlagDefs[];
+
+IMPLEMENT_CLASS(AWeapon, false, true, true, false)
 
 IMPLEMENT_POINTERS_START(AWeapon)
 	IMPLEMENT_POINTER(Ammo1)
 	IMPLEMENT_POINTER(Ammo2)
 	IMPLEMENT_POINTER(SisterWeapon)
 IMPLEMENT_POINTERS_END
+
+void AWeapon::InitNativeFields()
+{
+	auto meta = RUNTIME_CLASS(AWeapon);
+
+	meta->AddNativeField("bAltFire", TypeBool, myoffsetof(AWeapon, bAltFire));
+
+
+	// synthesize a symbol for each flag from the flag name tables to avoid redundant declaration of them.
+	for (size_t i = 0; WeaponFlagDefs[i].flagbit != 0xffffffff; i++)
+	{
+		if (WeaponFlagDefs[i].structoffset > 0)
+		{
+			meta->AddNativeField(FStringf("b%s", WeaponFlagDefs[i].name), (WeaponFlagDefs[i].fieldsize == 4 ? TypeSInt32 : TypeSInt16), WeaponFlagDefs[i].structoffset, WeaponFlagDefs[i].varflags, WeaponFlagDefs[i].flagbit);
+		}
+	}
+	// This flag is not accessible through actor definitions.
+	meta->AddNativeField("bDehAmmo", TypeSInt32, myoffsetof(AWeapon, WeaponFlags), VARF_ReadOnly, WIF_DEHAMMO);
+
+}
 
 FString WeaponSection;
 TArray<FString> KeyConfWeapons;
@@ -649,6 +672,15 @@ bool AWeapon::DepleteAmmo (bool altFire, bool checkEnough, int ammouse)
 			Ammo2->Amount = 0;
 	}
 	return true;
+}
+
+DEFINE_ACTION_FUNCTION(AWeapon, DepleteAmmo)
+{
+	PARAM_SELF_PROLOGUE(AWeapon);
+	PARAM_BOOL(altfire);
+	PARAM_BOOL_DEF(checkenough);
+	PARAM_INT_DEF(ammouse);
+	ACTION_RETURN_BOOL(self->DepleteAmmo(altfire, checkenough, ammouse));
 }
 
 

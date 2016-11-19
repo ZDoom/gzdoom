@@ -2160,6 +2160,7 @@ void ZCCCompiler::InitFunctions()
 								if ((flags & VARF_Out) || (type != TypeVector2 && type != TypeVector3))
 								{
 									type = NewPointer(type);
+									flags |= VARF_Ref;
 								}
 								else if (type == TypeVector2)
 								{

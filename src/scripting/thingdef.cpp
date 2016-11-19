@@ -131,7 +131,7 @@ void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FNam
 			{
 				args->Push(NewPointer(cls));
 			}
-			args->Push(TypeState/*Info*/);	// fixme: TypeState is not the correct type here!!!
+			args->Push(NewPointer(NewStruct("FStateParamInfo", nullptr)));
 		}
 		if (argflags != nullptr)
 		{

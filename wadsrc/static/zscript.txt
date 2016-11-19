@@ -48,6 +48,7 @@ zscript/doom/cyberdemon.txt
 zscript/doom/spidermaster.txt
 zscript/doom/keen.txt
 zscript/doom/bossbrain.txt
+zscript/doom/weaponfist.txt
 
 zscript/doom/deadthings.txt
 zscript/doom/doomammo.txt

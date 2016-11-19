@@ -829,7 +829,7 @@ enum EStateType
 struct FStateParamInfo
 {
 	state mCallingState;
-	EStateType mStateType;
+	/*EStateType*/int mStateType;
 	int mPSPIndex;
 }
 

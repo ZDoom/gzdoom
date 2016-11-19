@@ -289,6 +289,7 @@ public:
 class AWeapon : public AStateProvider
 {
 	DECLARE_CLASS_WITH_META(AWeapon, AStateProvider, PClassWeapon)
+	HAS_FIELDS
 	HAS_OBJECT_POINTERS
 public:
 	DWORD WeaponFlags;

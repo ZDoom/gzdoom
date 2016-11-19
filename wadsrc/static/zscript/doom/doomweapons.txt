@@ -60,54 +60,6 @@ class Chainsaw : Weapon
 //
 // --------------------------------------------------------------------------
 
-class Shotgun : DoomWeapon
-{
-	Default
-	{
-		Weapon.SelectionOrder 1300;
-		Weapon.AmmoUse 1;
-		Weapon.AmmoGive 8;
-		Weapon.AmmoType "Shell";
-		Inventory.PickupMessage "$GOTSHOTGUN";
-		Obituary "$OB_MPSHOTGUN";
-		Tag "$TAG_SHOTGUN";
-	}
-	States
-	{
-	Ready:
-		SHTG A 1 A_WeaponReady;
-		Loop;
-	Deselect:
-		SHTG A 1 A_Lower;
-		Loop;
-	Select:
-		SHTG A 1 A_Raise;
-		Loop;
-	Fire:
-		SHTG A 3;
-		SHTG A 7 A_FireShotgun;
-		SHTG BC 5;
-		SHTG D 4;
-		SHTG CB 5;
-		SHTG A 3;
-		SHTG A 7 A_ReFire;
-		Goto Ready;
-	Flash:
-		SHTF A 4 Bright A_Light1;
-		SHTF B 3 Bright A_Light2;
-		Goto LightDone;
-	Spawn:
-		SHOT A -1;
-		Stop;
-	}
-}	
-
-// --------------------------------------------------------------------------
-//
-// Shotgun
-//
-// --------------------------------------------------------------------------
-
 class SuperShotgun : DoomWeapon
 {
 	Default
@@ -153,50 +105,6 @@ class SuperShotgun : DoomWeapon
 		Goto LightDone;
 	Spawn:
 		SGN2 A -1;
-		Stop;
-	}
-}
-
-// --------------------------------------------------------------------------
-//
-// Chaingun
-//
-// --------------------------------------------------------------------------
-
-class Chaingun : DoomWeapon
-{
-	Default
-	{
-		Weapon.SelectionOrder 700;
-		Weapon.AmmoUse 1;
-		Weapon.AmmoGive 20;
-		Weapon.AmmoType "Clip";
-		Inventory.PickupMessage "$GOTCHAINGUN";
-		Obituary "$OB_MPCHAINGUN";
-		Tag "$TAG_CHAINGUN";
-	}
-	States
-	{
-	Ready:
-		CHGG A 1 A_WeaponReady;
-		Loop;
-	Deselect:
-		CHGG A 1 A_Lower;
-		Loop;
-	Select:
-		CHGG A 1 A_Raise;
-		Loop;
-	Fire:
-		CHGG AB 4 A_FireCGun;
-		CHGG B 0 A_ReFire;
-		Goto Ready;
-	Flash:
-		CHGF A 5 Bright A_Light1;
-		Goto LightDone;
-		CHGF B 5 Bright A_Light2;
-		Goto LightDone;
-	Spawn:
-		MGUN A -1;
 		Stop;
 	}
 }

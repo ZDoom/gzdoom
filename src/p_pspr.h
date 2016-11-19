@@ -59,6 +59,7 @@ enum PSPFlags
 class DPSprite : public DObject
 {
 	DECLARE_CLASS (DPSprite, DObject)
+	HAS_FIELDS
 	HAS_OBJECT_POINTERS
 public:
 	DPSprite(player_t *owner, AActor *caller, int id);

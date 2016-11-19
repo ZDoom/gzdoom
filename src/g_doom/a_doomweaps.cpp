@@ -15,6 +15,7 @@
 #include "doomstat.h"
 */
 
+void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int index);
 static FRandom pr_saw ("Saw");
 static FRandom pr_fireshotgun2 ("FireSG2");
 static FRandom pr_fireplasma ("FirePlasma");
@@ -36,28 +37,6 @@ enum SAW_Flags
 	SF_NOTURN = 64,
 	SF_STEALARMOR = 128,
 };
-
-
-static FRandom pr_gunshot("GunShot");
-//
-// P_GunShot
-//
-void P_GunShot(AActor *mo, bool accurate, PClassActor *pufftype, DAngle pitch)
-{
-	DAngle 	angle;
-	int 		damage;
-
-	damage = 5 * (pr_gunshot() % 3 + 1);
-	angle = mo->Angles.Yaw;
-
-	if (!accurate)
-	{
-		angle += pr_gunshot.Random2() * (5.625 / 256);
-	}
-
-	P_LineAttack(mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, pufftype);
-}
-
 
 
 DEFINE_ACTION_FUNCTION(AActor, A_Saw)
@@ -200,40 +179,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_Saw)
 }
 
 //
-// A_FireShotgun
-//
-DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun)
-{
-	PARAM_ACTION_PROLOGUE(AActor);
-
-	int i;
-	player_t *player;
-
-	if (nullptr == (player = self->player))
-	{
-		return 0;
-	}
-
-	S_Sound (self, CHAN_WEAPON,  "weapons/shotgf", 1, ATTN_NORM);
-	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != nullptr && ACTION_CALL_FROM_PSPRITE())
-	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
-			return 0;
-		P_SetPsprite(player, PSP_FLASH,  weapon->FindState(NAME_Flash), true);
-	}
-	player->mo->PlayAttacking2 ();
-
-	DAngle pitch = P_BulletSlope (self);
-
-	for (i = 0; i < 7; i++)
-	{
-		P_GunShot (self, false, PClass::FindActor(NAME_BulletPuff), pitch);
-	}
-	return 0;
-}
-
-//
 // A_FireShotgun2
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
@@ -280,98 +225,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 					  pitch + pr_fireshotgun2.Random2() * (7.097 / 256), damage,
 					  NAME_Hitscan, NAME_BulletPuff);
 	}
-	return 0;
-}
-
-//------------------------------------------------------------------------------------
-//
-// Setting a random flash like some of Doom's weapons can easily crash when the
-// definition is overridden incorrectly so let's check that the state actually exists.
-// Be aware though that this will not catch all DEHACKED related problems. But it will
-// find all DECORATE related ones.
-//
-//------------------------------------------------------------------------------------
-
-void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int index)
-{
-
-	PClassActor *cls = weapon->GetClass();
-	while (cls != RUNTIME_CLASS(AWeapon))
-	{
-		if (flashstate >= cls->OwnedStates && flashstate < cls->OwnedStates + cls->NumOwnedStates)
-		{
-			// The flash state belongs to this class.
-			// Now let's check if the actually wanted state does also
-			if (flashstate + index < cls->OwnedStates + cls->NumOwnedStates)
-			{
-				// we're ok so set the state
-				P_SetPsprite(player, PSP_FLASH,  flashstate + index, true);
-				return;
-			}
-			else
-			{
-				// oh, no! The state is beyond the end of the state table so use the original flash state.
-				P_SetPsprite(player, PSP_FLASH,  flashstate, true);
-				return;
-			}
-		}
-		// try again with parent class
-		cls = static_cast<PClassActor *>(cls->ParentClass);
-	}
-	// if we get here the state doesn't seem to belong to any class in the inheritance chain
-	// This can happen with Dehacked if the flash states are remapped. 
-	// The only way to check this would be to go through all Dehacked modifiable actors, convert
-	// their states into a single flat array and find the correct one.
-	// Rather than that, just check to make sure it belongs to something.
-	if (FState::StaticFindStateOwner(flashstate + index) == NULL)
-	{ // Invalid state. With no index offset, it should at least be valid.
-		index = 0;
-	}
-	P_SetPsprite(player, PSP_FLASH,  flashstate + index, true);
-}
-
-//
-// A_FireCGun
-//
-DEFINE_ACTION_FUNCTION(AActor, A_FireCGun)
-{
-	PARAM_ACTION_PROLOGUE(AActor);
-
-	player_t *player;
-
-	if (self == nullptr || nullptr == (player = self->player))
-	{
-		return 0;
-	}
-
-	AWeapon *weapon = player->ReadyWeapon;
-	if (weapon != nullptr && ACTION_CALL_FROM_PSPRITE())
-	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
-			return 0;
-		
-		S_Sound (self, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
-
-		FState *flash = weapon->FindState(NAME_Flash);
-		if (flash != nullptr)
-		{
-			// [RH] Fix for Sparky's messed-up Dehacked patch! Blargh!
-			FState * atk = weapon->FindState(NAME_Fire);
-
-			int theflash = clamp (int(player->GetPSprite(PSP_WEAPON)->GetState() - atk), 0, 1);
-
-			if (flash[theflash].sprite != flash->sprite)
-			{
-				theflash = 0;
-			}
-
-			P_SetSafeFlash (weapon, player, flash, theflash);
-		}
-
-	}
-	player->mo->PlayAttacking2 ();
-
-	P_GunShot (self, !player->refire, PClass::FindActor(NAME_BulletPuff), P_BulletSlope (self));
 	return 0;
 }
 

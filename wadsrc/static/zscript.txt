@@ -50,6 +50,8 @@ zscript/doom/keen.txt
 zscript/doom/bossbrain.txt
 zscript/doom/weaponfist.txt
 zscript/doom/weaponpistol.txt
+zscript/doom/weaponshotgun.txt
+zscript/doom/weaponchaingun.txt
 
 zscript/doom/deadthings.txt
 zscript/doom/doomammo.txt

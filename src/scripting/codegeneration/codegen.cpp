@@ -6706,7 +6706,7 @@ FxMemberFunctionCall::~FxMemberFunctionCall()
 FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 {
 	ABORT(ctx.Class);
-	PClass *cls;
+	PStruct *cls;
 	bool staticonly = false;
 	bool novirtual = false;
 
@@ -6714,11 +6714,19 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	{
 		// If the left side is a class name for a static member function call it needs to be resolved manually 
 		// because the resulting value type would cause problems in nearly every other place where identifiers are being used.
-		cls = PClass::FindClass(static_cast<FxIdentifier *>(Self)->Identifier);
-		if (cls != nullptr && cls->bExported)
+		PClass *ccls = PClass::FindClass(static_cast<FxIdentifier *>(Self)->Identifier);
+		if (ccls != nullptr)
 		{
-			staticonly = true;
-			goto isresolved;
+			if (ccls->bExported)
+			{
+				cls = ccls;
+				staticonly = true;
+				goto isresolved;
+			}
+		}
+		else
+		{
+			// Todo: static struct members need to work as well.
 		}
 	}
 	SAFE_RESOLVE(Self, ctx);
@@ -6755,9 +6763,9 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	if (Self->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
 	{
 		auto ptype = static_cast<PPointer *>(Self->ValueType)->PointedType;
-		if (ptype->IsKindOf(RUNTIME_CLASS(PClass)))
+		if (ptype->IsKindOf(RUNTIME_CLASS(PStruct)))
 		{
-			cls = static_cast<PClass *>(ptype);
+			cls = static_cast<PStruct *>(ptype);
 		}
 		else
 		{
@@ -6772,6 +6780,8 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		delete this;
 		return nullptr;
 	}
+
+	// Todo: handle member calls from instantiated structs.
 
 isresolved:
 	bool error = false;
@@ -6792,7 +6802,8 @@ isresolved:
 	if (staticonly && (afd->Variants[0].Flags & VARF_Method))
 	{
 		auto clstype = dyn_cast<PClass>(ctx.Class);
-		if (clstype == nullptr || !clstype->IsDescendantOf(cls))
+		auto ccls = dyn_cast<PClass>(cls);
+		if (clstype == nullptr || ccls == nullptr || !clstype->IsDescendantOf(ccls))
 		{
 			ScriptPosition.Message(MSG_ERROR, "Cannot call non-static function %s::%s from here\n", cls->TypeName.GetChars(), MethodName.GetChars());
 			delete this;
@@ -7067,7 +7078,7 @@ VMFunction *FxVMFunctionCall::GetDirectFunction()
 	if (ArgList.Size() == 0 && !(Function->Variants[0].Flags & VARF_Virtual))
 	{
 		unsigned imp = Function->GetImplicitArgs();
-		if (Function->Variants[0].ArgFlags.Size() <= imp || !(Function->Variants[0].ArgFlags[imp] & VARF_Optional)) return nullptr;
+		if (Function->Variants[0].ArgFlags.Size() > imp && !(Function->Variants[0].ArgFlags[imp] & VARF_Optional)) return nullptr;
 		return Function->Variants[0].Implementation;
 	}
 	

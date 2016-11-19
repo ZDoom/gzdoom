@@ -15,53 +15,6 @@ class DoomWeapon : Weapon
 
 // --------------------------------------------------------------------------
 //
-// Pistol 
-//
-// --------------------------------------------------------------------------
-
-class Pistol : DoomWeapon
-{
-	Default
-	{
-		Weapon.SelectionOrder 1900;
-		Weapon.AmmoUse 1;
-		Weapon.AmmoGive 20;
-		Weapon.AmmoType "Clip";
-		Obituary "$OB_MPPISTOL";
-		+WEAPON.WIMPY_WEAPON
-		Inventory.Pickupmessage "$PICKUP_PISTOL_DROPPED";
-		Tag "$TAG_PISTOL";
-	}
-	States
-	{
-	Ready:
-		PISG A 1 A_WeaponReady;
-		Loop;
-	Deselect:
-		PISG A 1 A_Lower;
-		Loop;
-	Select:
-		PISG A 1 A_Raise;
-		Loop;
-	Fire:
-		PISG A 4;
-		PISG B 6 A_FirePistol;
-		PISG C 4;
-		PISG B 5 A_ReFire;
-		Goto Ready;
-	Flash:
-		PISF A 7 Bright A_Light1;
-		Goto LightDone;
-		PISF A 7 Bright A_Light1;
-		Goto LightDone;
- 	Spawn:
-		PIST A -1;
-		Stop;
-	}
-}
-		
-// --------------------------------------------------------------------------
-//
 // Chainsaw
 //
 // --------------------------------------------------------------------------

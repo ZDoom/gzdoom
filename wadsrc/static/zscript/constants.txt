@@ -711,6 +711,7 @@ enum EPSpriteFlags
 // Default psprite layers
 enum EPSPLayers
 {
+	PSP_STRIFEHANDS = -1,
 	PSP_WEAPON = 1,
 	PSP_FLASH = 1000,
 };

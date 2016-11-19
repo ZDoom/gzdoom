@@ -78,6 +78,7 @@ class Actor : Thinker native
 	native void SetXYZ(vector3 newpos);
 	native Actor GetPointer(int aaptr);
 	native void FaceMovementDirection();
+	native double BulletSlope(out FTranslatedLineTarget pLineTarget = null, int aimflags = 0);
 	native Actor AimTarget();
 	native bool CheckMissileSpawn(double maxdist);
 	native bool CheckPosition(Vector2 pos, bool actorsonly = false);

@@ -79,7 +79,6 @@ CVAR(Int, sv_fastweapons, false, CVAR_SERVERINFO);
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static FRandom pr_wpnreadysnd ("WpnReadySnd");
-static FRandom pr_gunshot ("GunShot");
 
 static const FGenericButtons ButtonChecks[] =
 {
@@ -182,6 +181,16 @@ void P_SetPsprite(player_t *player, PSPLayers id, FState *state, bool pending)
 {
 	if (player == nullptr) return;
 	player->GetPSprite(id)->SetState(state, pending);
+}
+
+DEFINE_ACTION_FUNCTION(_Player, SetPSprite)	// the underscore is needed to get past the name mangler which removes the first clas name character to match the class representation (needs to be fixed in a later commit)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_INT(id);
+	PARAM_POINTER(state, FState);
+	PARAM_BOOL_DEF(pending);
+	P_SetPsprite(self, (PSPLayers)id, state, pending);
+	return 0;
 }
 
 DPSprite *player_t::GetPSprite(PSPLayers layer)
@@ -1381,6 +1390,15 @@ DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfla
 	return pitch;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, BulletSlope)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER_DEF(t, FTranslatedLineTarget);
+	PARAM_INT_DEF(aimflags);
+	ACTION_RETURN_FLOAT(P_BulletSlope(self, t, aimflags).Degrees);
+}
+
+
 AActor *P_AimTarget(AActor *mo)
 {
 	FTranslatedLineTarget t;
@@ -1394,25 +1412,6 @@ DEFINE_ACTION_FUNCTION(AActor, AimTarget)
 	ACTION_RETURN_OBJECT(P_AimTarget(self));
 }
 
-
-//
-// P_GunShot
-//
-void P_GunShot (AActor *mo, bool accurate, PClassActor *pufftype, DAngle pitch)
-{
-	DAngle 	angle;
-	int 		damage;
-		
-	damage = 5*(pr_gunshot()%3+1);
-	angle = mo->Angles.Yaw;
-
-	if (!accurate)
-	{
-		angle += pr_gunshot.Random2 () * (5.625 / 256);
-	}
-
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, pufftype);
-}
 
 DEFINE_ACTION_FUNCTION(AActor, A_Light)
 {

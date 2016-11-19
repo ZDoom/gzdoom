@@ -37,6 +37,17 @@ VMEXPORTED_NATIVES_START
 	VMEXPORTED_NATIVES_FUNC(PostBeginPlay)
 VMEXPORTED_NATIVES_END
 
+
+inline int GetVirtualIndex(PClass *cls, const char *funcname)
+{
+	// Look up the virtual function index in the defining class because this may have gotten overloaded in subclasses with something different than a virtual override.
+	auto sym = dyn_cast<PFunction>(cls->Symbols.FindSymbol(funcname, false));
+	assert(sym != nullptr);
+	auto VIndex = sym->Variants[0].Implementation->VirtualIndex;
+	assert(VIndex >= 0);
+	return VIndex;
+}
+
 template<class T>
 class DVMObject : public T
 {
@@ -79,14 +90,7 @@ public:
 		else
 		{
 			static int VIndex = -1;
-			if (VIndex < 0)
-			{
-				// Look up the virtual function index in the defining class because this may have gotten overloaded in subclasses with something different than a virtual override.
-				auto sym = dyn_cast<PFunction>(RUNTIME_CLASS(DObject)->Symbols.FindSymbol("Destroy", false));
-				assert(sym != nullptr);
-				VIndex = sym->Variants[0].Implementation->VirtualIndex;
-				assert(VIndex >= 0);
-			}
+			if (VIndex < 0) VIndex = GetVirtualIndex(RUNTIME_CLASS(DObject), "Destroy");
 			// Without the type cast this picks the 'void *' assignment...
 			VMValue params[1] = { (DObject*)this };
 			VMFrameStack stack;

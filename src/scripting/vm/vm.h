@@ -1032,8 +1032,6 @@ struct AFuncDesc
 // change every single use in case the parameters change.
 #define DECLARE_ACTION(name)	extern VMNativeFunction *AActor_##name##_VMPtr;
 
-// This distinction is here so that CALL_ACTION produces errors when trying to
-// access a function that requires parameters.
 #define DEFINE_ACTION_FUNCTION(cls, name) \
 	static int AF_##cls##_##name(VM_ARGS); \
 	VMNativeFunction *cls##_##name##_VMPtr; \
@@ -1077,6 +1075,10 @@ void CallAction(VMFrameStack *stack, VMFunction *vmfunc, AActor *self);
 	PARAM_PROLOGUE; \
 	PARAM_OBJECT(self, type);
 
+// for structs we need to check for ATAG_GENERIC instead of ATAG_OBJECT
+#define PARAM_SELF_STRUCT_PROLOGUE(type) \
+	PARAM_PROLOGUE; \
+	PARAM_POINTER(self, type);
 
 class PFunction;
 

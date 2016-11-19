@@ -49,7 +49,6 @@ class StateProvider : Inventory native
 	action native void A_WeaponReady(int flags = 0);
 	action native void A_Lower();
 	action native void A_Raise();
-	action native void A_FirePistol();
 	action native void A_FireShotgun();
 	action native void A_FireShotgun2();
 

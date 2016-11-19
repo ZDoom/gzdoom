@@ -2535,7 +2535,7 @@ unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArra
 		assert(proto->ArgumentTypes.Size() > 0);
 		auto selftypeptr = dyn_cast<PPointer>(proto->ArgumentTypes[0]);
 		assert(selftypeptr != nullptr);
-		variant.SelfClass = dyn_cast<PClass>(selftypeptr->PointedType);
+		variant.SelfClass = dyn_cast<PStruct>(selftypeptr->PointedType);
 		assert(variant.SelfClass != nullptr);
 	}
 	else

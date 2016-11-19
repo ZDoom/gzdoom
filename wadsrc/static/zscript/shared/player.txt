@@ -38,6 +38,17 @@ class PlayerPawn : Actor native
 		Player.ViewBob 1;
 		Obituary "$OB_MPDEFAULT";
 	}
+	
+	virtual void PlayAttacking ()
+	{
+		if (MissileState != null) SetState (MissileState);
+	}
+
+	virtual void PlayAttacking2 ()
+	{
+		if (MeleeState != null) SetState (MeleeState);
+	}
+	
 }
 
 class PlayerChunk : PlayerPawn native
@@ -56,4 +67,13 @@ class PlayerChunk : PlayerPawn native
 		-WINDTHRUST
 		-TELESTOMP
 	}
+}
+
+class PSprite : Object native
+{
+}
+
+struct Player native
+{
+	native void SetPsprite(int id, State stat, bool pending = false);
 }

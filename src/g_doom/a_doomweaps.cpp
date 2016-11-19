@@ -23,40 +23,6 @@ static FRandom pr_bfgspray ("BFGSpray");
 static FRandom pr_oldbfg ("OldBFG");
 
 //
-// A_FirePistol
-//
-DEFINE_ACTION_FUNCTION(AActor, A_FirePistol)
-{
-	PARAM_ACTION_PROLOGUE(AActor);
-
-	bool accurate;
-
-	if (self->player != nullptr)
-	{
-		AWeapon *weapon = self->player->ReadyWeapon;
-		if (weapon != nullptr && ACTION_CALL_FROM_PSPRITE())
-		{
-			if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
-				return 0;
-
-			P_SetPsprite(self->player, PSP_FLASH, weapon->FindState(NAME_Flash), true);
-		}
-		self->player->mo->PlayAttacking2 ();
-
-		accurate = !self->player->refire;
-	}
-	else
-	{
-		accurate = true;
-	}
-
-	S_Sound (self, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
-
-	P_GunShot (self, accurate, PClass::FindActor(NAME_BulletPuff), P_BulletSlope (self));
-	return 0;
-}
-
-//
 // A_Saw
 //
 enum SAW_Flags
@@ -70,6 +36,29 @@ enum SAW_Flags
 	SF_NOTURN = 64,
 	SF_STEALARMOR = 128,
 };
+
+
+static FRandom pr_gunshot("GunShot");
+//
+// P_GunShot
+//
+void P_GunShot(AActor *mo, bool accurate, PClassActor *pufftype, DAngle pitch)
+{
+	DAngle 	angle;
+	int 		damage;
+
+	damage = 5 * (pr_gunshot() % 3 + 1);
+	angle = mo->Angles.Yaw;
+
+	if (!accurate)
+	{
+		angle += pr_gunshot.Random2() * (5.625 / 256);
+	}
+
+	P_LineAttack(mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, pufftype);
+}
+
+
 
 DEFINE_ACTION_FUNCTION(AActor, A_Saw)
 {

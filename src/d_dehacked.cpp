@@ -3084,7 +3084,7 @@ void FinishDehPatch ()
 					break;	// State has already been checked so we reached a loop
 				}
 				StateVisited[state] = true;
-				for(unsigned j = 0; AmmoPerAttacks[j].func != NULL; j++)
+				for(unsigned j = 0; AmmoPerAttacks[j].func != NAME_None; j++)
 				{
 					if (AmmoPerAttacks[i].ptr == nullptr)
 					{

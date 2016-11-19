@@ -7066,6 +7066,8 @@ VMFunction *FxVMFunctionCall::GetDirectFunction()
 	// it inside VM code.
 	if (ArgList.Size() == 0 && !(Function->Variants[0].Flags & VARF_Virtual))
 	{
+		unsigned imp = Function->GetImplicitArgs();
+		if (Function->Variants[0].ArgFlags.Size() <= imp || !(Function->Variants[0].ArgFlags[imp] & VARF_Optional)) return nullptr;
 		return Function->Variants[0].Implementation;
 	}
 	

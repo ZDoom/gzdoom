@@ -386,6 +386,7 @@ static FFlagDef InventoryFlagDefs[] =
 
 	DEFINE_DEPRECATED_FLAG(PICKUPFLASH),
 	DEFINE_DEPRECATED_FLAG(INTERHUBSTRIP),
+	{ 0xffffffff }
 };
 
 FFlagDef WeaponFlagDefs[] =
@@ -415,6 +416,7 @@ FFlagDef WeaponFlagDefs[] =
 
 	DEFINE_DUMMY_FLAG(NOLMS, false),
 	DEFINE_DUMMY_FLAG(ALLOW_WITH_RESPAWN_INVUL, false),
+	{ 0xffffffff }
 };
 
 
@@ -425,22 +427,24 @@ static FFlagDef PlayerPawnFlagDefs[] =
 	DEFINE_FLAG(PPF, NOTHRUSTWHENINVUL, APlayerPawn, PlayerFlags),
 	DEFINE_FLAG(PPF, CANSUPERMORPH, APlayerPawn, PlayerFlags),
 	DEFINE_FLAG(PPF, CROUCHABLEMORPH, APlayerPawn, PlayerFlags),
+	{ 0xffffffff }
 };
 
 static FFlagDef PowerSpeedFlagDefs[] =
 {
 	// PowerSpeed flags
 	DEFINE_FLAG(PSF, NOTRAIL, APowerSpeed, SpeedFlags),
+	{ 0xffffffff }
 };
 
 static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int NumDefs; } FlagLists[] =
 {
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 		ActorFlagDefs,		countof(ActorFlagDefs)-1 },	// -1 to account for the terminator
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 		MoreFlagDefs,		countof(MoreFlagDefs) },
-	{ &RUNTIME_CLASS_CASTLESS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs) },
-	{ &RUNTIME_CLASS_CASTLESS(AWeapon), 	WeaponFlagDefs,		countof(WeaponFlagDefs) },
-	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs) },
-	{ &RUNTIME_CLASS_CASTLESS(APowerSpeed),	PowerSpeedFlagDefs,	countof(PowerSpeedFlagDefs) },
+	{ &RUNTIME_CLASS_CASTLESS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs)-1 },
+	{ &RUNTIME_CLASS_CASTLESS(AWeapon), 	WeaponFlagDefs,		countof(WeaponFlagDefs)-1 },
+	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs)-1 },
+	{ &RUNTIME_CLASS_CASTLESS(APowerSpeed),	PowerSpeedFlagDefs,	countof(PowerSpeedFlagDefs)-1 },
 };
 #define NUM_FLAG_LISTS (countof(FlagLists))
 
@@ -647,6 +651,23 @@ void P_InitPlayerForScript();
 
 void InitThingdef()
 {
+	PType *TypeActor = NewPointer(RUNTIME_CLASS(AActor));
+
+	PStruct *sstruct = NewStruct("Sector", nullptr);
+	auto sptr = NewPointer(sstruct);
+	sstruct->AddNativeField("soundtarget", TypeActor, myoffsetof(sector_t, SoundTarget));
+
+	G_InitLevelLocalsForScript();
+	P_InitPlayerForScript();
+
+	FAutoSegIterator probe(CRegHead, CRegTail);
+
+	while (*++probe != NULL)
+	{
+		if (((ClassReg *)*probe)->InitNatives)
+			((ClassReg *)*probe)->InitNatives();
+	}
+
 	// Sort the flag lists
 	for (size_t i = 0; i < NUM_FLAG_LISTS; ++i)
 	{
@@ -682,22 +703,4 @@ void InitThingdef()
 		AFTable.ShrinkToFit();
 		qsort(&AFTable[0], AFTable.Size(), sizeof(AFTable[0]), funccmp);
 	}
-
-	PType *TypeActor = NewPointer(RUNTIME_CLASS(AActor));
-
-	PStruct *sstruct = NewStruct("Sector", nullptr);
-	auto sptr = NewPointer(sstruct);
-	sstruct->AddNativeField("soundtarget", TypeActor, myoffsetof(sector_t, SoundTarget));
-
-	G_InitLevelLocalsForScript();
-	P_InitPlayerForScript();
-
-	FAutoSegIterator probe(CRegHead, CRegTail);
-
-	while (*++probe != NULL)
-	{
-		if (((ClassReg *)*probe)->InitNatives) 
-			((ClassReg *)*probe)->InitNatives();
-	}
-
 }

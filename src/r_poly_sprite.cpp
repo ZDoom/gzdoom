@@ -135,7 +135,6 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, AActor *thing, subse
 	args.ccw = true;
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
-	args.translation = nullptr;
 	args.SetTexture(tex, thing->Translation);
 
 	if (args.translation)

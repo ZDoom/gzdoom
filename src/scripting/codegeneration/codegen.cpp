@@ -1440,8 +1440,8 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 		// Right now this only supports string constants. There should be an option to pass a string variable, too.
 		if (basex->isConstant() && (basex->ValueType == TypeString || basex->ValueType == TypeName))
 		{
-			const char *s = static_cast<FxConstant *>(basex)->GetValue().GetString();
-			if (*s == 0 && !ctx.FromDecorate)	// DECORATE should never get here at all, but let's better be safe.
+			FString s= static_cast<FxConstant *>(basex)->GetValue().GetString();
+			if (s.Len() == 0 && !ctx.FromDecorate)	// DECORATE should never get here at all, but let's better be safe.
 			{
 				ScriptPosition.Message(MSG_ERROR, "State jump to empty label.");
 				delete this;

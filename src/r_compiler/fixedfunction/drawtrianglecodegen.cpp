@@ -514,6 +514,10 @@ void DrawTriangleCodegen::ProcessPixel(SSAUBytePtr buffer, SSAIntPtr subsectorbu
 			fg = TranslateSample(uvoffset);
 			output = blend_copy(shade_bgra_simple(fg, currentlight));
 			break;
+		case TriBlendMode::TranslateAlphaBlend:
+			fg = TranslateSample(uvoffset);
+			output = blend_alpha_blend(shade_bgra_simple(fg, currentlight), bg); break;
+			break;
 		case TriBlendMode::TranslateAdd:
 			fg = TranslateSample(uvoffset);
 			output = blend_add(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));

@@ -25,6 +25,7 @@
 #define __R_POLY_TRIANGLE__
 
 #include "r_triangle.h"
+#include "r_data/r_translate.h"
 
 struct TriDrawTriangleArgs;
 
@@ -51,6 +52,29 @@ public:
 			texturePixels = (const uint8_t *)texture->GetPixelsBgra();
 		else
 			texturePixels = texture->GetPixels();
+		translation = nullptr;
+	}
+
+	void SetTexture(FTexture *texture, uint32_t translationID)
+	{
+		if (translationID != -1 && translationID != 0)
+		{
+			FRemapTable *table = TranslationToTable(translationID);
+			if (table != nullptr && !table->Inactive)
+			{
+				if (r_swtruecolor)
+					translation = (uint8_t*)table->Palette;
+				else
+					translation = table->Remap;
+
+				textureWidth = texture->GetWidth();
+				textureHeight = texture->GetHeight();
+				texturePixels = texture->GetPixels();
+				return;
+			}
+		}
+
+		SetTexture(texture);
 	}
 };
 

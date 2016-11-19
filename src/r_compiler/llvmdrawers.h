@@ -282,6 +282,7 @@ enum class TriBlendMode
 	RevSub,         // blend_revsub(shade(fg), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
 	Shaded,         // blend_add(color, bg, fg.a, 1 - fg.a)
 	TranslateCopy,  // blend_copy(shade(translate(fg)))
+	TranslateAlphaBlend, // blend_alpha_blend(shade(translate(fg)), bg)
 	TranslateAdd,   // blend_add(shade(translate(fg)), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
 	TranslateSub,   // blend_sub(shade(translate(fg)), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
 	TranslateRevSub // blend_revsub(shade(translate(fg)), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))

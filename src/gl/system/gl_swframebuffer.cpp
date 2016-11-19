@@ -1543,20 +1543,21 @@ void OpenGLSWFrameBuffer::GetFlashedPalette(PalEntry pal[256])
 
 void OpenGLSWFrameBuffer::SetVSync(bool vsync)
 {
-	if (VSync != vsync)
-	{
-		VSync = vsync;
-		Reset();
-	}
+	// Switch to the default frame buffer because Nvidia's driver associates the vsync state with the bound FB object.
+	GLint oldDrawFramebufferBinding = 0, oldReadFramebufferBinding = 0;
+	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &oldDrawFramebufferBinding);
+	glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &oldReadFramebufferBinding);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+
 	Super::SetVSync(vsync);
+
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, oldDrawFramebufferBinding);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, oldReadFramebufferBinding);
 }
 
 void OpenGLSWFrameBuffer::NewRefreshRate()
 {
-	if (IsFullscreen())
-	{
-		Reset();
-	}
 }
 
 void OpenGLSWFrameBuffer::SetBlendingRect(int x1, int y1, int x2, int y2)

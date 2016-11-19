@@ -50,11 +50,6 @@ class StateProvider : Inventory native
 	action native void A_WeaponReady(int flags = 0);
 	action native void A_Lower();
 	action native void A_Raise();
-	action native void A_FireShotgun2();
-
-	action void A_OpenShotgun2() { A_PlaySound("weapons/sshoto", CHAN_WEAPON); }
-	action void A_LoadShotgun2() { A_PlaySound("weapons/sshotl", CHAN_WEAPON); }
-	action void A_CloseShotgun2() { A_PlaySound("weapons/sshotc", CHAN_WEAPON); }
 
 	action native void A_FireSTGrenade(class<Actor> grenadetype = "Grenade");
 	action native void A_FireMissile();

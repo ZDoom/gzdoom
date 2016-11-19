@@ -16,62 +16,11 @@
 */
 
 void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int index);
-static FRandom pr_fireshotgun2 ("FireSG2");
 static FRandom pr_fireplasma ("FirePlasma");
 static FRandom pr_firerail ("FireRail");
 static FRandom pr_bfgspray ("BFGSpray");
 static FRandom pr_oldbfg ("OldBFG");
 
-
-//
-// A_FireShotgun2
-//
-DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
-{
-	PARAM_ACTION_PROLOGUE(AActor);
-
-	int 		i;
-	DAngle 	angle;
-	int 		damage;
-	player_t *player;
-
-	if (nullptr == (player = self->player))
-	{
-		return 0;
-	}
-
-	S_Sound (self, CHAN_WEAPON, "weapons/sshotf", 1, ATTN_NORM);
-	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != nullptr && ACTION_CALL_FROM_PSPRITE())
-	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 2))
-			return 0;
-		P_SetPsprite(player, PSP_FLASH,  weapon->FindState(NAME_Flash), true);
-	}
-	player->mo->PlayAttacking2 ();
-
-
-	DAngle pitch = P_BulletSlope (self);
-		
-	for (i=0 ; i<20 ; i++)
-	{
-		damage = 5*(pr_fireshotgun2()%3+1);
-		angle = self->Angles.Yaw + pr_fireshotgun2.Random2() * (11.25 / 256);
-
-		// Doom adjusts the bullet slope by shifting a random number [-255,255]
-		// left 5 places. At 2048 units away, this means the vertical position
-		// of the shot can deviate as much as 255 units from nominal. So using
-		// some simple trigonometry, that means the vertical angle of the shot
-		// can deviate by as many as ~7.097 degrees or ~84676099 BAMs.
-
-		P_LineAttack (self,
-					  angle,
-					  PLAYERMISSILERANGE,
-					  pitch + pr_fireshotgun2.Random2() * (7.097 / 256), damage,
-					  NAME_Hitscan, NAME_BulletPuff);
-	}
-	return 0;
-}
 
 //
 // A_FireMissile

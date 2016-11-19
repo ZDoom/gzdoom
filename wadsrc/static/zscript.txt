@@ -51,6 +51,7 @@ zscript/doom/bossbrain.txt
 zscript/doom/weaponfist.txt
 zscript/doom/weaponpistol.txt
 zscript/doom/weaponshotgun.txt
+zscript/doom/weaponssg.txt
 zscript/doom/weaponchaingun.txt
 zscript/doom/weaponchainsaw.txt
 

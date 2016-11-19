@@ -7946,7 +7946,8 @@ FxExpression *FxIfStatement::Resolve(FCompileContext &ctx)
 	if (WhenTrue == nullptr && WhenFalse == nullptr)
 	{ // We don't do anything either way, so disappear
 		delete this;
-		return nullptr;
+		ScriptPosition.Message(MSG_WARNING, "empty if statement");
+		return new FxNop(ScriptPosition);
 	}
 
 	SAFE_RESOLVE(Condition, ctx);

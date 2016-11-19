@@ -39,6 +39,7 @@
 #include "x86.h"
 #include "c_cvars.h"
 #include "version.h"
+#include "m_misc.h"
 
 CUSTOM_CVAR(String, llvm_cpu, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
@@ -51,7 +52,9 @@ public:
 	LLVMProgram();
 
 	void CreateModule();
-	void CreateEE();
+	std::string GetTargetCPU();
+	bool LoadCachedModule(int version, std::string targetCPU);
+	void CreateEE(int version, std::string targetCPU, bool optimize);
 	std::string GenerateAssembly(std::string cpuName);
 	std::string DumpModule();
 	void StopLogFatalErrors();
@@ -64,6 +67,8 @@ public:
 	llvm::ExecutionEngine *engine() { return mEngine.get(); }
 
 private:
+	void SaveCachedModule(llvm::Module *module, int version, std::string targetCPU);
+	FString GetDrawerCacheFilename(int version, FString cpu);
 	void *PointerToFunction(const char *name);
 
 	llvm::TargetMachine *machine = nullptr;
@@ -122,84 +127,90 @@ LLVMDrawers *LLVMDrawers::Instance()
 
 LLVMDrawersImpl::LLVMDrawersImpl()
 {
-	mProgram.CreateModule();
-
-	CodegenDrawColumn("FillColumn", DrawColumnVariant::Fill, DrawColumnMethod::Normal);
-	CodegenDrawColumn("FillColumnAdd", DrawColumnVariant::FillAdd, DrawColumnMethod::Normal);
-	CodegenDrawColumn("FillColumnAddClamp", DrawColumnVariant::FillAddClamp, DrawColumnMethod::Normal);
-	CodegenDrawColumn("FillColumnSubClamp", DrawColumnVariant::FillSubClamp, DrawColumnMethod::Normal);
-	CodegenDrawColumn("FillColumnRevSubClamp", DrawColumnVariant::FillRevSubClamp, DrawColumnMethod::Normal);
-	CodegenDrawColumn("DrawColumn", DrawColumnVariant::Draw, DrawColumnMethod::Normal);
-	CodegenDrawColumn("DrawColumnAdd", DrawColumnVariant::DrawAdd, DrawColumnMethod::Normal);
-	CodegenDrawColumn("DrawColumnShaded", DrawColumnVariant::DrawShaded, DrawColumnMethod::Normal);
-	CodegenDrawColumn("DrawColumnAddClamp", DrawColumnVariant::DrawAddClamp, DrawColumnMethod::Normal);
-	CodegenDrawColumn("DrawColumnSubClamp", DrawColumnVariant::DrawSubClamp, DrawColumnMethod::Normal);
-	CodegenDrawColumn("DrawColumnRevSubClamp", DrawColumnVariant::DrawRevSubClamp, DrawColumnMethod::Normal);
-	CodegenDrawColumn("DrawColumnTranslated", DrawColumnVariant::DrawTranslated, DrawColumnMethod::Normal);
-	CodegenDrawColumn("DrawColumnTlatedAdd", DrawColumnVariant::DrawTlatedAdd, DrawColumnMethod::Normal);
-	CodegenDrawColumn("DrawColumnAddClampTranslated", DrawColumnVariant::DrawAddClampTranslated, DrawColumnMethod::Normal);
-	CodegenDrawColumn("DrawColumnSubClampTranslated", DrawColumnVariant::DrawSubClampTranslated, DrawColumnMethod::Normal);
-	CodegenDrawColumn("DrawColumnRevSubClampTranslated", DrawColumnVariant::DrawRevSubClampTranslated, DrawColumnMethod::Normal);
-	CodegenDrawColumn("DrawColumnRt1", DrawColumnVariant::Draw, DrawColumnMethod::Rt1);
-	CodegenDrawColumn("DrawColumnRt1Copy", DrawColumnVariant::DrawCopy, DrawColumnMethod::Rt1);
-	CodegenDrawColumn("DrawColumnRt1Add", DrawColumnVariant::DrawAdd, DrawColumnMethod::Rt1);
-	CodegenDrawColumn("DrawColumnRt1Shaded", DrawColumnVariant::DrawShaded, DrawColumnMethod::Rt1);
-	CodegenDrawColumn("DrawColumnRt1AddClamp", DrawColumnVariant::DrawAddClamp, DrawColumnMethod::Rt1);
-	CodegenDrawColumn("DrawColumnRt1SubClamp", DrawColumnVariant::DrawSubClamp, DrawColumnMethod::Rt1);
-	CodegenDrawColumn("DrawColumnRt1RevSubClamp", DrawColumnVariant::DrawRevSubClamp, DrawColumnMethod::Rt1);
-	CodegenDrawColumn("DrawColumnRt1Translated", DrawColumnVariant::DrawTranslated, DrawColumnMethod::Rt1);
-	CodegenDrawColumn("DrawColumnRt1TlatedAdd", DrawColumnVariant::DrawTlatedAdd, DrawColumnMethod::Rt1);
-	CodegenDrawColumn("DrawColumnRt1AddClampTranslated", DrawColumnVariant::DrawAddClampTranslated, DrawColumnMethod::Rt1);
-	CodegenDrawColumn("DrawColumnRt1SubClampTranslated", DrawColumnVariant::DrawSubClampTranslated, DrawColumnMethod::Rt1);
-	CodegenDrawColumn("DrawColumnRt1RevSubClampTranslated", DrawColumnVariant::DrawRevSubClampTranslated, DrawColumnMethod::Rt1);
-	CodegenDrawColumn("DrawColumnRt4", DrawColumnVariant::Draw, DrawColumnMethod::Rt4);
-	CodegenDrawColumn("DrawColumnRt4Copy", DrawColumnVariant::DrawCopy, DrawColumnMethod::Rt4);
-	CodegenDrawColumn("DrawColumnRt4Add", DrawColumnVariant::DrawAdd, DrawColumnMethod::Rt4);
-	CodegenDrawColumn("DrawColumnRt4Shaded", DrawColumnVariant::DrawShaded, DrawColumnMethod::Rt4);
-	CodegenDrawColumn("DrawColumnRt4AddClamp", DrawColumnVariant::DrawAddClamp, DrawColumnMethod::Rt4);
-	CodegenDrawColumn("DrawColumnRt4SubClamp", DrawColumnVariant::DrawSubClamp, DrawColumnMethod::Rt4);
-	CodegenDrawColumn("DrawColumnRt4RevSubClamp", DrawColumnVariant::DrawRevSubClamp, DrawColumnMethod::Rt4);
-	CodegenDrawColumn("DrawColumnRt4Translated", DrawColumnVariant::DrawTranslated, DrawColumnMethod::Rt4);
-	CodegenDrawColumn("DrawColumnRt4TlatedAdd", DrawColumnVariant::DrawTlatedAdd, DrawColumnMethod::Rt4);
-	CodegenDrawColumn("DrawColumnRt4AddClampTranslated", DrawColumnVariant::DrawAddClampTranslated, DrawColumnMethod::Rt4);
-	CodegenDrawColumn("DrawColumnRt4SubClampTranslated", DrawColumnVariant::DrawSubClampTranslated, DrawColumnMethod::Rt4);
-	CodegenDrawColumn("DrawColumnRt4RevSubClampTranslated", DrawColumnVariant::DrawRevSubClampTranslated, DrawColumnMethod::Rt4);
-	CodegenDrawSpan("DrawSpan", DrawSpanVariant::Opaque);
-	CodegenDrawSpan("DrawSpanMasked", DrawSpanVariant::Masked);
-	CodegenDrawSpan("DrawSpanTranslucent", DrawSpanVariant::Translucent);
-	CodegenDrawSpan("DrawSpanMaskedTranslucent", DrawSpanVariant::MaskedTranslucent);
-	CodegenDrawSpan("DrawSpanAddClamp", DrawSpanVariant::AddClamp);
-	CodegenDrawSpan("DrawSpanMaskedAddClamp", DrawSpanVariant::MaskedAddClamp);
-	CodegenDrawWall("vlinec1", DrawWallVariant::Opaque, 1);
-	CodegenDrawWall("vlinec4", DrawWallVariant::Opaque, 4);
-	CodegenDrawWall("mvlinec1", DrawWallVariant::Masked, 1);
-	CodegenDrawWall("mvlinec4", DrawWallVariant::Masked, 4);
-	CodegenDrawWall("tmvline1_add", DrawWallVariant::Add, 1);
-	CodegenDrawWall("tmvline4_add", DrawWallVariant::Add, 4);
-	CodegenDrawWall("tmvline1_addclamp", DrawWallVariant::AddClamp, 1);
-	CodegenDrawWall("tmvline4_addclamp", DrawWallVariant::AddClamp, 4);
-	CodegenDrawWall("tmvline1_subclamp", DrawWallVariant::SubClamp, 1);
-	CodegenDrawWall("tmvline4_subclamp", DrawWallVariant::SubClamp, 4);
-	CodegenDrawWall("tmvline1_revsubclamp", DrawWallVariant::RevSubClamp, 1);
-	CodegenDrawWall("tmvline4_revsubclamp", DrawWallVariant::RevSubClamp, 4);
-	CodegenDrawSky("DrawSky1", DrawSkyVariant::Single, 1);
-	CodegenDrawSky("DrawSky4", DrawSkyVariant::Single, 4);
-	CodegenDrawSky("DrawDoubleSky1", DrawSkyVariant::Double, 1);
-	CodegenDrawSky("DrawDoubleSky4", DrawSkyVariant::Double, 4);
-	for (int i = 0; i < NumTriBlendModes(); i++)
+	int version = 1; // Increment this number if the drawer codegen is modified (forces recreation of the module).
+	std::string targetCPU = mProgram.GetTargetCPU();
+	bool loaded = mProgram.LoadCachedModule(version, targetCPU);
+	if (!loaded)
 	{
-		CodegenDrawTriangle("TriDraw8_" + std::to_string(i), TriDrawVariant::DrawNormal, (TriBlendMode)i, false);
-		CodegenDrawTriangle("TriDraw32_" + std::to_string(i), TriDrawVariant::DrawNormal, (TriBlendMode)i, true);
-		CodegenDrawTriangle("TriFill8_" + std::to_string(i), TriDrawVariant::FillNormal, (TriBlendMode)i, false);
-		CodegenDrawTriangle("TriFill32_" + std::to_string(i), TriDrawVariant::FillNormal, (TriBlendMode)i, true);
-		CodegenDrawTriangle("TriDrawSubsector8_" + std::to_string(i), TriDrawVariant::DrawSubsector, (TriBlendMode)i, false);
-		CodegenDrawTriangle("TriDrawSubsector32_" + std::to_string(i), TriDrawVariant::DrawSubsector, (TriBlendMode)i, true);
-		CodegenDrawTriangle("TriFillSubsector8_" + std::to_string(i), TriDrawVariant::FillSubsector, (TriBlendMode)i, false);
-		CodegenDrawTriangle("TriFillSubsector32_" + std::to_string(i), TriDrawVariant::FillSubsector, (TriBlendMode)i, true);
-	}
-	CodegenDrawTriangle("TriStencil", TriDrawVariant::Stencil, TriBlendMode::Copy, false);
+		mProgram.CreateModule();
 
-	mProgram.CreateEE();
+		CodegenDrawColumn("FillColumn", DrawColumnVariant::Fill, DrawColumnMethod::Normal);
+		CodegenDrawColumn("FillColumnAdd", DrawColumnVariant::FillAdd, DrawColumnMethod::Normal);
+		CodegenDrawColumn("FillColumnAddClamp", DrawColumnVariant::FillAddClamp, DrawColumnMethod::Normal);
+		CodegenDrawColumn("FillColumnSubClamp", DrawColumnVariant::FillSubClamp, DrawColumnMethod::Normal);
+		CodegenDrawColumn("FillColumnRevSubClamp", DrawColumnVariant::FillRevSubClamp, DrawColumnMethod::Normal);
+		CodegenDrawColumn("DrawColumn", DrawColumnVariant::Draw, DrawColumnMethod::Normal);
+		CodegenDrawColumn("DrawColumnAdd", DrawColumnVariant::DrawAdd, DrawColumnMethod::Normal);
+		CodegenDrawColumn("DrawColumnShaded", DrawColumnVariant::DrawShaded, DrawColumnMethod::Normal);
+		CodegenDrawColumn("DrawColumnAddClamp", DrawColumnVariant::DrawAddClamp, DrawColumnMethod::Normal);
+		CodegenDrawColumn("DrawColumnSubClamp", DrawColumnVariant::DrawSubClamp, DrawColumnMethod::Normal);
+		CodegenDrawColumn("DrawColumnRevSubClamp", DrawColumnVariant::DrawRevSubClamp, DrawColumnMethod::Normal);
+		CodegenDrawColumn("DrawColumnTranslated", DrawColumnVariant::DrawTranslated, DrawColumnMethod::Normal);
+		CodegenDrawColumn("DrawColumnTlatedAdd", DrawColumnVariant::DrawTlatedAdd, DrawColumnMethod::Normal);
+		CodegenDrawColumn("DrawColumnAddClampTranslated", DrawColumnVariant::DrawAddClampTranslated, DrawColumnMethod::Normal);
+		CodegenDrawColumn("DrawColumnSubClampTranslated", DrawColumnVariant::DrawSubClampTranslated, DrawColumnMethod::Normal);
+		CodegenDrawColumn("DrawColumnRevSubClampTranslated", DrawColumnVariant::DrawRevSubClampTranslated, DrawColumnMethod::Normal);
+		CodegenDrawColumn("DrawColumnRt1", DrawColumnVariant::Draw, DrawColumnMethod::Rt1);
+		CodegenDrawColumn("DrawColumnRt1Copy", DrawColumnVariant::DrawCopy, DrawColumnMethod::Rt1);
+		CodegenDrawColumn("DrawColumnRt1Add", DrawColumnVariant::DrawAdd, DrawColumnMethod::Rt1);
+		CodegenDrawColumn("DrawColumnRt1Shaded", DrawColumnVariant::DrawShaded, DrawColumnMethod::Rt1);
+		CodegenDrawColumn("DrawColumnRt1AddClamp", DrawColumnVariant::DrawAddClamp, DrawColumnMethod::Rt1);
+		CodegenDrawColumn("DrawColumnRt1SubClamp", DrawColumnVariant::DrawSubClamp, DrawColumnMethod::Rt1);
+		CodegenDrawColumn("DrawColumnRt1RevSubClamp", DrawColumnVariant::DrawRevSubClamp, DrawColumnMethod::Rt1);
+		CodegenDrawColumn("DrawColumnRt1Translated", DrawColumnVariant::DrawTranslated, DrawColumnMethod::Rt1);
+		CodegenDrawColumn("DrawColumnRt1TlatedAdd", DrawColumnVariant::DrawTlatedAdd, DrawColumnMethod::Rt1);
+		CodegenDrawColumn("DrawColumnRt1AddClampTranslated", DrawColumnVariant::DrawAddClampTranslated, DrawColumnMethod::Rt1);
+		CodegenDrawColumn("DrawColumnRt1SubClampTranslated", DrawColumnVariant::DrawSubClampTranslated, DrawColumnMethod::Rt1);
+		CodegenDrawColumn("DrawColumnRt1RevSubClampTranslated", DrawColumnVariant::DrawRevSubClampTranslated, DrawColumnMethod::Rt1);
+		CodegenDrawColumn("DrawColumnRt4", DrawColumnVariant::Draw, DrawColumnMethod::Rt4);
+		CodegenDrawColumn("DrawColumnRt4Copy", DrawColumnVariant::DrawCopy, DrawColumnMethod::Rt4);
+		CodegenDrawColumn("DrawColumnRt4Add", DrawColumnVariant::DrawAdd, DrawColumnMethod::Rt4);
+		CodegenDrawColumn("DrawColumnRt4Shaded", DrawColumnVariant::DrawShaded, DrawColumnMethod::Rt4);
+		CodegenDrawColumn("DrawColumnRt4AddClamp", DrawColumnVariant::DrawAddClamp, DrawColumnMethod::Rt4);
+		CodegenDrawColumn("DrawColumnRt4SubClamp", DrawColumnVariant::DrawSubClamp, DrawColumnMethod::Rt4);
+		CodegenDrawColumn("DrawColumnRt4RevSubClamp", DrawColumnVariant::DrawRevSubClamp, DrawColumnMethod::Rt4);
+		CodegenDrawColumn("DrawColumnRt4Translated", DrawColumnVariant::DrawTranslated, DrawColumnMethod::Rt4);
+		CodegenDrawColumn("DrawColumnRt4TlatedAdd", DrawColumnVariant::DrawTlatedAdd, DrawColumnMethod::Rt4);
+		CodegenDrawColumn("DrawColumnRt4AddClampTranslated", DrawColumnVariant::DrawAddClampTranslated, DrawColumnMethod::Rt4);
+		CodegenDrawColumn("DrawColumnRt4SubClampTranslated", DrawColumnVariant::DrawSubClampTranslated, DrawColumnMethod::Rt4);
+		CodegenDrawColumn("DrawColumnRt4RevSubClampTranslated", DrawColumnVariant::DrawRevSubClampTranslated, DrawColumnMethod::Rt4);
+		CodegenDrawSpan("DrawSpan", DrawSpanVariant::Opaque);
+		CodegenDrawSpan("DrawSpanMasked", DrawSpanVariant::Masked);
+		CodegenDrawSpan("DrawSpanTranslucent", DrawSpanVariant::Translucent);
+		CodegenDrawSpan("DrawSpanMaskedTranslucent", DrawSpanVariant::MaskedTranslucent);
+		CodegenDrawSpan("DrawSpanAddClamp", DrawSpanVariant::AddClamp);
+		CodegenDrawSpan("DrawSpanMaskedAddClamp", DrawSpanVariant::MaskedAddClamp);
+		CodegenDrawWall("vlinec1", DrawWallVariant::Opaque, 1);
+		CodegenDrawWall("vlinec4", DrawWallVariant::Opaque, 4);
+		CodegenDrawWall("mvlinec1", DrawWallVariant::Masked, 1);
+		CodegenDrawWall("mvlinec4", DrawWallVariant::Masked, 4);
+		CodegenDrawWall("tmvline1_add", DrawWallVariant::Add, 1);
+		CodegenDrawWall("tmvline4_add", DrawWallVariant::Add, 4);
+		CodegenDrawWall("tmvline1_addclamp", DrawWallVariant::AddClamp, 1);
+		CodegenDrawWall("tmvline4_addclamp", DrawWallVariant::AddClamp, 4);
+		CodegenDrawWall("tmvline1_subclamp", DrawWallVariant::SubClamp, 1);
+		CodegenDrawWall("tmvline4_subclamp", DrawWallVariant::SubClamp, 4);
+		CodegenDrawWall("tmvline1_revsubclamp", DrawWallVariant::RevSubClamp, 1);
+		CodegenDrawWall("tmvline4_revsubclamp", DrawWallVariant::RevSubClamp, 4);
+		CodegenDrawSky("DrawSky1", DrawSkyVariant::Single, 1);
+		CodegenDrawSky("DrawSky4", DrawSkyVariant::Single, 4);
+		CodegenDrawSky("DrawDoubleSky1", DrawSkyVariant::Double, 1);
+		CodegenDrawSky("DrawDoubleSky4", DrawSkyVariant::Double, 4);
+		for (int i = 0; i < NumTriBlendModes(); i++)
+		{
+			CodegenDrawTriangle("TriDraw8_" + std::to_string(i), TriDrawVariant::DrawNormal, (TriBlendMode)i, false);
+			CodegenDrawTriangle("TriDraw32_" + std::to_string(i), TriDrawVariant::DrawNormal, (TriBlendMode)i, true);
+			CodegenDrawTriangle("TriFill8_" + std::to_string(i), TriDrawVariant::FillNormal, (TriBlendMode)i, false);
+			CodegenDrawTriangle("TriFill32_" + std::to_string(i), TriDrawVariant::FillNormal, (TriBlendMode)i, true);
+			CodegenDrawTriangle("TriDrawSubsector8_" + std::to_string(i), TriDrawVariant::DrawSubsector, (TriBlendMode)i, false);
+			CodegenDrawTriangle("TriDrawSubsector32_" + std::to_string(i), TriDrawVariant::DrawSubsector, (TriBlendMode)i, true);
+			CodegenDrawTriangle("TriFillSubsector8_" + std::to_string(i), TriDrawVariant::FillSubsector, (TriBlendMode)i, false);
+			CodegenDrawTriangle("TriFillSubsector32_" + std::to_string(i), TriDrawVariant::FillSubsector, (TriBlendMode)i, true);
+		}
+		CodegenDrawTriangle("TriStencil", TriDrawVariant::Stencil, TriBlendMode::Copy, false);
+	}
+
+	mProgram.CreateEE(version, targetCPU, !loaded);
 
 	FillColumn = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("FillColumn");
 	FillColumnAdd = mProgram.GetProcAddress<void(const DrawColumnArgs *, const WorkerThreadData *)>("FillColumnAdd");
@@ -603,12 +614,64 @@ void LLVMProgram::CreateModule()
 	mModule = std::make_unique<llvm::Module>("render", context());
 }
 
-void LLVMProgram::CreateEE()
+bool LLVMProgram::LoadCachedModule(int version, std::string targetCPU)
+{
+	FString filename = GetDrawerCacheFilename(version, targetCPU.c_str());
+	FILE *file = fopen(filename, "rb");
+	if (!file)
+		return false;
+
+	bool success = false;
+	std::string data;
+
+	fseek(file, 0, SEEK_END);
+	int length = ftell(file);
+	fseek(file, 0, SEEK_SET);
+	if (length > 0)
+	{
+		data.resize(length);
+		success = fread(&data[0], length, 1, file) == 1;
+	}
+
+	fclose(file);
+	if (!success)
+		return false;
+
+	auto result = llvm::parseBitcodeFile(llvm::MemoryBufferRef(data, filename.GetChars()), *mContext.get());
+	if (!result)
+		return false;
+
+	mModule = std::move(result.get());
+	return true;
+}
+
+void LLVMProgram::SaveCachedModule(llvm::Module *module, int version, std::string targetCPU)
+{
+	std::string str;
+	llvm::raw_string_ostream stream(str);
+	llvm::WriteBitcodeToFile(module, stream);
+	std::string data = stream.str();
+
+	FString filename = GetDrawerCacheFilename(version, targetCPU.c_str());
+	FILE *file = fopen(filename, "wb");
+	if (file)
+	{
+		fwrite(data.data(), data.size(), 1, file);
+		fclose(file);
+	}
+}
+
+FString LLVMProgram::GetDrawerCacheFilename(int version, FString cpu)
+{
+	FString path = M_GetCachePath(true);
+	FString filename;
+	filename.Format("%s/LLVMDrawers-%d-%s.bc", path.GetChars(), version, cpu.GetChars());
+	return filename;
+}
+
+std::string LLVMProgram::GetTargetCPU()
 {
 	using namespace llvm;
-
-	std::string errorstring;
-
 	std::string mcpu = sys::getHostCPUName();
 	if (std::string(CPU.CPUString).find("G840") != std::string::npos && mcpu == "sandybridge")
 		mcpu = "westmere"; // Pentium G840 is misdetected as a sandy bridge CPU
@@ -618,13 +681,21 @@ void LLVMProgram::CreateEE()
 		mcpu = llvm_cpu;
 		Printf("Overriding LLVM CPU target to %s\n", mcpu.c_str());
 	}
+	return mcpu;
+}
+
+void LLVMProgram::CreateEE(int version, std::string targetCPU, bool optimize)
+{
+	using namespace llvm;
+
+	std::string errorstring;
 
 	llvm::Module *module = mModule.get();
 	EngineBuilder engineBuilder(std::move(mModule));
 	engineBuilder.setErrorStr(&errorstring);
 	engineBuilder.setOptLevel(CodeGenOpt::Aggressive);
 	engineBuilder.setEngineKind(EngineKind::JIT);
-	engineBuilder.setMCPU(mcpu);
+	engineBuilder.setMCPU(targetCPU);
 	machine = engineBuilder.selectTarget();
 	if (!machine)
 		I_FatalError("Could not create LLVM target machine");
@@ -638,42 +709,51 @@ void LLVMProgram::CreateEE()
 	Printf("LLVM target triple: %s\n", targetTriple.c_str());
 	Printf("LLVM target CPU: %s\n", cpuName.c_str());
 
-	module->setTargetTriple(targetTriple);
+	if (optimize)
+	{
+		Printf("Optimizing drawers..\n");
+
+		module->setTargetTriple(targetTriple);
 #if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
-	module->setDataLayout(new DataLayout(*machine->getSubtargetImpl()->getDataLayout()));
+		module->setDataLayout(new DataLayout(*machine->getSubtargetImpl()->getDataLayout()));
 #else
-	module->setDataLayout(machine->createDataLayout());
+		module->setDataLayout(machine->createDataLayout());
 #endif
 
-	legacy::FunctionPassManager PerFunctionPasses(module);
-	legacy::PassManager PerModulePasses;
+		legacy::FunctionPassManager PerFunctionPasses(module);
+		legacy::PassManager PerModulePasses;
 
 #if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8)
-	PerFunctionPasses.add(createTargetTransformInfoWrapperPass(machine->getTargetIRAnalysis()));
-	PerModulePasses.add(createTargetTransformInfoWrapperPass(machine->getTargetIRAnalysis()));
+		PerFunctionPasses.add(createTargetTransformInfoWrapperPass(machine->getTargetIRAnalysis()));
+		PerModulePasses.add(createTargetTransformInfoWrapperPass(machine->getTargetIRAnalysis()));
 #endif
 
-	PassManagerBuilder passManagerBuilder;
-	passManagerBuilder.OptLevel = 3;
-	passManagerBuilder.SizeLevel = 0;
-	passManagerBuilder.Inliner = createFunctionInliningPass();
-	passManagerBuilder.SLPVectorize = true;
-	passManagerBuilder.LoopVectorize = true;
-	passManagerBuilder.LoadCombine = true;
-	passManagerBuilder.populateModulePassManager(PerModulePasses);
-	passManagerBuilder.populateFunctionPassManager(PerFunctionPasses);
+		PassManagerBuilder passManagerBuilder;
+		passManagerBuilder.OptLevel = 3;
+		passManagerBuilder.SizeLevel = 0;
+		passManagerBuilder.Inliner = createFunctionInliningPass();
+		passManagerBuilder.SLPVectorize = true;
+		passManagerBuilder.LoopVectorize = true;
+		passManagerBuilder.LoadCombine = true;
+		passManagerBuilder.populateModulePassManager(PerModulePasses);
+		passManagerBuilder.populateFunctionPassManager(PerFunctionPasses);
 
-	// Run function passes:
-	PerFunctionPasses.doInitialization();
-	for (llvm::Function &func : *module)
-	{
-		if (!func.isDeclaration())
-			PerFunctionPasses.run(func);
+		// Run function passes:
+		PerFunctionPasses.doInitialization();
+		for (llvm::Function &func : *module)
+		{
+			if (!func.isDeclaration())
+				PerFunctionPasses.run(func);
+		}
+		PerFunctionPasses.doFinalization();
+
+		// Run module passes:
+		PerModulePasses.run(*module);
+
+		SaveCachedModule(module, version, targetCPU);
 	}
-	PerFunctionPasses.doFinalization();
 
-	// Run module passes:
-	PerModulePasses.run(*module);
+	Printf("Compiling drawers..\n");
 
 	// Create execution engine and generate machine code
 	mEngine.reset(engineBuilder.create(machine));

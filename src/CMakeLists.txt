@@ -294,7 +294,7 @@ endif()
 set( LLVM_PRECOMPILED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../llvm" )
 
 if( NOT WIN32 )
-	set( LLVM_COMPONENTS core support asmparser asmprinter bitreader codegen ipo
+	set( LLVM_COMPONENTS core support asmparser asmprinter bitreader bitwriter codegen ipo
 		irreader transformutils instrumentation profiledata runtimedyld
 		object instcombine linker analysis selectiondag scalaropts vectorize executionengine
 		mc mcdisassembler mcparser mcjit target x86asmprinter x86info x86desc x86utils x86codegen )
@@ -307,7 +307,7 @@ if( NOT WIN32 )
 	include_directories( ${LLVM_INCLUDE_DIRS} )
 	set( ZDOOM_LIBS ${ZDOOM_LIBS} ${llvm_libs} )
 else()
-	set( LLVM_COMPONENTS core support asmparser asmprinter bitreader codegen passes ipo
+	set( LLVM_COMPONENTS core support asmparser asmprinter bitreader bitwriter codegen passes ipo
 		irreader transformutils instrumentation profiledata debuginfocodeview runtimedyld
 		object instcombine linker analysis selectiondag scalaropts vectorize executionengine
 		mc mcdisassembler mcparser mcjit target x86asmprinter x86info x86desc x86utils x86codegen )

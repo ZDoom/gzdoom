@@ -75,6 +75,7 @@
 #include <llvm/CodeGen/AsmPrinter.h>
 #include <llvm/MC/MCAsmInfo.h>
 #include <llvm/Target/TargetSubtargetInfo.h>
+#include <llvm/Bitcode/ReaderWriter.h>
 
 #if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
 #include <llvm/Support/FormattedStream.h>

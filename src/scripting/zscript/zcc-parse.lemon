@@ -278,15 +278,20 @@ class_member(X) ::= const_def(A).						{ X = A; /*X-overwrites-A*/ }
 %type struct_body{ZCC_TreeNode *}
 %type struct_member{ZCC_TreeNode *}
 
-struct_def(X) ::= STRUCT(T) IDENTIFIER(A) LBRACE opt_struct_body(B) RBRACE opt_semicolon.
+struct_def(X) ::= STRUCT(T) IDENTIFIER(A) struct_flags(S) LBRACE opt_struct_body(B) RBRACE opt_semicolon.
 {
 	NEW_AST_NODE(Struct,def,T);
 	def->NodeName = A.Name();
 	def->Body = B;
 	def->Type = nullptr;
 	def->Symbol = nullptr;
+	def->Flags = S.Flags;
 	X = def;
 }
+
+%type struct_flags{ClassFlagsBlock}
+struct_flags(X) ::= .										{ X.Flags = 0; }
+struct_flags(X) ::= NATIVE.									{ X.Flags = ZCC_Native; }
 
 opt_struct_body(X) ::= .								{ X = NULL; }
 opt_struct_body(X) ::= struct_body(X).
@@ -295,7 +300,7 @@ struct_body(X) ::= error.								{ X = NULL; }
 struct_body(X) ::= struct_member(X).
 struct_body(X) ::= struct_member(A) struct_body(B).		{ X = A; /*X-overwrites-A*/ X->AppendSibling(B); }
 
-struct_member(X) ::= declarator_no_fun(A).				{ X = A; /*X-overwrites-A*/ }
+struct_member(X) ::= declarator(A).						{ X = A; /*X-overwrites-A*/ }
 struct_member(X) ::= enum_def(A).						{ X = A; /*X-overwrites-A*/ }
 struct_member(X) ::= const_def(A).						{ X = A; /*X-overwrites-A*/ }
 
@@ -843,14 +848,6 @@ declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
 		}
 		X = NULL;
 	}
-}
-declarator_no_fun(X) ::= decl_flags(A) type(B) variable_list(C) SEMICOLON.
-{
-	NEW_AST_NODE(VarDeclarator, decl, A != nullptr? A->SourceLoc : B->SourceLoc);
-	decl->Type = B;
-	decl->Names = C;
-	decl->Flags = A == nullptr? 0 :  A->Flags;
-	X = decl;
 }
 
 // Need to split it up like this to avoid parsing conflicts.

@@ -196,6 +196,10 @@ void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *treenode, ZC
 			cls->Fields.Push(static_cast<ZCC_VarDeclarator *>(node)); 
 			break;
 
+		case AST_FuncDeclarator:
+			cls->Functions.Push(static_cast<ZCC_FuncDeclarator *>(node));
+			break;
+
 		case AST_EnumTerminator:
 			enumType = nullptr;
 			break;
@@ -411,7 +415,7 @@ void ZCCCompiler::CreateStructTypes()
 {
 	for(auto s : Structs)
 	{
-		s->Outer = s->OuterDef == nullptr? nullptr : s->OuterDef->Type;
+		s->Outer = s->OuterDef == nullptr? nullptr : s->OuterDef->CType();
 		s->strct->Type = NewStruct(s->NodeName(), s->Outer);
 		s->strct->Symbol = new PSymbolType(s->NodeName(), s->Type());
 		GlobalSymbols.AddSymbol(s->strct->Symbol);
@@ -1989,6 +1993,331 @@ void ZCCCompiler::InitDefaults()
 	}
 }
 
+
+void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool forclass)
+{
+	TArray<PType *> rets(1);
+	TArray<PType *> args;
+	TArray<uint32_t> argflags;
+	TArray<VMValue> argdefaults;
+	TArray<FName> argnames;
+
+	rets.Clear();
+	args.Clear();
+	argflags.Clear();
+	bool hasdefault = false;
+	// For the time being, let's not allow overloading. This may be reconsidered later but really just adds an unnecessary amount of complexity here.
+	if (AddTreeNode(f->Name, f, &c->TreeNodes, false))
+	{
+		auto t = f->Type;
+		if (t != nullptr)
+		{
+			do
+			{
+				auto type = DetermineType(c->Type(), f, f->Name, t, false, false);
+				if (type->IsKindOf(RUNTIME_CLASS(PStruct)) && type != TypeVector2 && type != TypeVector3)
+				{
+					// structs and classes only get passed by pointer.
+					type = NewPointer(type);
+				}
+				// TBD: disallow certain types? For now, let everything pass that isn't an array.
+				rets.Push(type);
+				t = static_cast<decltype(t)>(t->SiblingNext);
+			} while (t != f->Type);
+		}
+
+		int notallowed = ZCC_Latent | ZCC_Meta | ZCC_ReadOnly | ZCC_FuncConst | ZCC_Abstract;
+
+		if (f->Flags & notallowed)
+		{
+			Error(f, "Invalid qualifiers for %s (%s not allowed)", FName(f->Name).GetChars(), FlagsToString(f->Flags & notallowed).GetChars());
+			f->Flags &= notallowed;
+		}
+		uint32_t varflags = VARF_Method;
+		int implicitargs = 1;
+		AFuncDesc *afd = nullptr;
+		int useflags = SUF_ACTOR | SUF_OVERLAY | SUF_WEAPON | SUF_ITEM;
+		if (f->UseFlags != nullptr)
+		{
+			useflags = 0;
+			auto p = f->UseFlags;
+			do
+			{
+				switch (p->Id)
+				{
+				case NAME_Actor:
+					useflags |= SUF_ACTOR;
+					break;
+				case NAME_Overlay:
+					useflags |= SUF_OVERLAY;
+					break;
+				case NAME_Weapon:
+					useflags |= SUF_WEAPON;
+					break;
+				case NAME_Item:
+					useflags |= SUF_ITEM;
+					break;
+				default:
+					Error(p, "Unknown Action qualifier %s", FName(p->Id).GetChars());
+					break;
+				}
+
+				p = static_cast<decltype(p)>(p->SiblingNext);
+			} while (p != f->UseFlags);
+		}
+
+		// map to implementation flags.
+		if (f->Flags & ZCC_Private) varflags |= VARF_Private;
+		if (f->Flags & ZCC_Protected) varflags |= VARF_Protected;
+		if (f->Flags & ZCC_Deprecated) varflags |= VARF_Deprecated;
+		if (f->Flags & ZCC_Virtual) varflags |= VARF_Virtual;
+		if (f->Flags & ZCC_Override) varflags |= VARF_Override;
+		if (f->Flags & ZCC_Action)
+		{
+			// Non-Actors cannot have action functions.
+			if (!c->Type()->IsKindOf(RUNTIME_CLASS(PClassActor)))
+			{
+				Error(f, "'Action' can only be used in child classes of Actor");
+			}
+
+			varflags |= VARF_Final;	// Action implies Final.
+			if (useflags & (SUF_OVERLAY | SUF_WEAPON | SUF_ITEM))
+			{
+				varflags |= VARF_Action;
+				implicitargs = 3;
+			}
+			else
+			{
+				implicitargs = 1;
+			}
+		}
+		if (f->Flags & ZCC_Static) varflags = (varflags & ~VARF_Method) | VARF_Final, implicitargs = 0;	// Static implies Final.
+
+
+		if (varflags & VARF_Override) varflags &= ~VARF_Virtual;	// allow 'virtual override'.
+																	// Only one of these flags may be used.
+		static int exclude[] = { ZCC_Virtual, ZCC_Override, ZCC_Action, ZCC_Static };
+		static const char * print[] = { "virtual", "override", "action", "static" };
+		int fc = 0;
+		FString build;
+		for (int i = 0; i < 4; i++)
+		{
+			if (f->Flags & exclude[i])
+			{
+				fc++;
+				if (build.Len() > 0) build += ", ";
+				build += print[i];
+			}
+		}
+		if (fc > 1)
+		{
+			Error(f, "Invalid combination of qualifiers %s on function %s.", FName(f->Name).GetChars(), build.GetChars());
+			varflags |= VARF_Method;
+		}
+		if (varflags & VARF_Override) varflags |= VARF_Virtual;	// Now that the flags are checked, make all override functions virtual as well.
+
+		if (f->Flags & ZCC_Native)
+		{
+			varflags |= VARF_Native;
+			afd = FindFunction(c->Type(), FName(f->Name).GetChars());
+			if (afd == nullptr)
+			{
+				Error(f, "The function '%s' has not been exported from the executable.", FName(f->Name).GetChars());
+			}
+			else
+			{
+				(*afd->VMPointer)->ImplicitArgs = BYTE(implicitargs);
+			}
+		}
+		SetImplicitArgs(&args, &argflags, &argnames, c->Type(), varflags, useflags);
+		argdefaults.Resize(argnames.Size());
+		auto p = f->Params;
+		bool hasoptionals = false;
+		if (p != nullptr)
+		{
+			do
+			{
+				int elementcount = 1;
+				VMValue vmval[3];	// default is REGT_NIL which means 'no default value' here.
+				if (p->Type != nullptr)
+				{
+					auto type = DetermineType(c->Type(), p, f->Name, p->Type, false, false);
+					int flags = 0;
+					if (p->Flags & ZCC_In) flags |= VARF_In;
+					if (p->Flags & ZCC_Out) flags |= VARF_Out;
+					if ((type->IsA(RUNTIME_CLASS(PStruct))) || (flags & VARF_Out))
+					{
+						// 'out' parameters and all structs except vectors are passed by reference
+						if ((flags & VARF_Out) || (type != TypeVector2 && type != TypeVector3))
+						{
+							type = NewPointer(type);
+							flags |= VARF_Ref;
+						}
+						else if (type == TypeVector2)
+						{
+							elementcount = 2;
+						}
+						else if (type == TypeVector3)
+						{
+							elementcount = 3;
+						}
+					}
+					if (type->GetRegType() == REGT_NIL && type != TypeVector2 && type != TypeVector3)
+					{
+						Error(p, "Invalid type %s for function parameter", type->DescriptiveName());
+					}
+					else if (p->Default != nullptr)
+					{
+						flags |= VARF_Optional;
+						hasoptionals = true;
+						// The simplifier is not suited to convert the constant into something usable. 
+						// All it does is reduce the expression to a constant but we still got to do proper type checking and conversion.
+						// It will also lose important type info about enums, once these get implemented
+						// The code generator can do this properly for us.
+						FxExpression *x = new FxTypeCast(ConvertNode(p->Default), type, false);
+						FCompileContext ctx(c->Type(), false);
+						x = x->Resolve(ctx);
+
+						if (x != nullptr)
+						{
+							// Vectors need special treatment because they use more than one entry in the Defaults and do not report as actual constants
+							if (type == TypeVector2 && x->ExprType == EFX_VectorValue && static_cast<FxVectorValue *>(x)->isConstVector(2))
+							{
+								auto vx = static_cast<FxVectorValue *>(x);
+								vmval[0] = static_cast<FxConstant *>(vx->xyz[0])->GetValue().GetFloat();
+								vmval[1] = static_cast<FxConstant *>(vx->xyz[1])->GetValue().GetFloat();
+							}
+							else if (type == TypeVector3 && x->ExprType == EFX_VectorValue && static_cast<FxVectorValue *>(x)->isConstVector(3))
+							{
+								auto vx = static_cast<FxVectorValue *>(x);
+								vmval[0] = static_cast<FxConstant *>(vx->xyz[0])->GetValue().GetFloat();
+								vmval[1] = static_cast<FxConstant *>(vx->xyz[1])->GetValue().GetFloat();
+								vmval[2] = static_cast<FxConstant *>(vx->xyz[2])->GetValue().GetFloat();
+							}
+							else if (!x->isConstant())
+							{
+								Error(p, "Default parameter %s is not constant in %s", FName(p->Name).GetChars(), FName(f->Name).GetChars());
+							}
+							else  if (x->ValueType != type)
+							{
+								Error(p, "Default parameter %s could not be converted to target type %s", FName(p->Name).GetChars(), c->Type()->TypeName.GetChars());
+							}
+							else
+							{
+								auto cnst = static_cast<FxConstant *>(x);
+								hasdefault = true;
+								switch (type->GetRegType())
+								{
+								case REGT_INT:
+									vmval[0] = cnst->GetValue().GetInt();
+									break;
+
+								case REGT_FLOAT:
+									vmval[0] = cnst->GetValue().GetFloat();
+									break;
+
+								case REGT_POINTER:
+									if (type->IsKindOf(RUNTIME_CLASS(PClassPointer)))
+										vmval[0] = (DObject*)cnst->GetValue().GetPointer();
+									else
+										vmval[0] = cnst->GetValue().GetPointer();
+									break;
+
+								case REGT_STRING:
+									vmval[0] = cnst->GetValue().GetString();
+									break;
+
+								default:
+									assert(0 && "no valid type for constant");
+									break;
+								}
+							}
+						}
+						if (x != nullptr) delete x;
+					}
+					else if (hasoptionals)
+					{
+						Error(p, "All arguments after the first optional one need also be optional.");
+					}
+					// TBD: disallow certain types? For now, let everything pass that isn't an array.
+					args.Push(type);
+					argflags.Push(flags);
+					argnames.Push(p->Name);
+
+				}
+				else
+				{
+					args.Push(nullptr);
+					argflags.Push(0);
+					argnames.Push(NAME_None);
+				}
+				for (int i = 0; i<elementcount; i++) argdefaults.Push(vmval[i]);
+				p = static_cast<decltype(p)>(p->SiblingNext);
+			} while (p != f->Params);
+		}
+
+		PFunction *sym = new PFunction(c->Type(), f->Name);
+		sym->AddVariant(NewPrototype(rets, args), argflags, argnames, afd == nullptr ? nullptr : *(afd->VMPointer), varflags, useflags);
+		c->Type()->Symbols.ReplaceSymbol(sym);
+
+		if (!(f->Flags & ZCC_Native))
+		{
+			auto code = ConvertAST(c->Type(), f->Body);
+			if (code != nullptr)
+			{
+				sym->Variants[0].Implementation = FunctionBuildList.AddFunction(sym, code, FStringf("%s.%s", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars()), false, -1, 0, Lump);
+			}
+		}
+		if (sym->Variants[0].Implementation != nullptr && hasdefault)	// do not copy empty default lists, they only waste space and processing time.
+		{
+			sym->Variants[0].Implementation->DefaultArgs = std::move(argdefaults);
+		}
+
+		if (varflags & VARF_Virtual)
+		{
+			if (varflags & VARF_Final)
+			{
+				sym->Variants[0].Implementation->Final = true;
+			}
+			if (forclass)
+			{
+				PClass *clstype = static_cast<PClass *>(c->Type());
+				int vindex = clstype->FindVirtualIndex(sym->SymbolName, sym->Variants[0].Proto);
+				// specifying 'override' is necessary to prevent one of the biggest problem spots with virtual inheritance: Mismatching argument types.
+				if (varflags & VARF_Override)
+				{
+					if (vindex == -1)
+					{
+						Error(p, "Attempt to override non-existent virtual function %s", FName(f->Name).GetChars());
+					}
+					else
+					{
+						auto oldfunc = clstype->Virtuals[vindex];
+						if (oldfunc->Final)
+						{
+							Error(p, "Attempt to override final function %s", FName(f->Name).GetChars());
+						}
+						clstype->Virtuals[vindex] = sym->Variants[0].Implementation;
+						sym->Variants[0].Implementation->VirtualIndex = vindex;
+					}
+				}
+				else
+				{
+					if (vindex != -1)
+					{
+						Error(p, "Function %s attempts to override parent function without 'override' qualifier", FName(f->Name).GetChars());
+					}
+					sym->Variants[0].Implementation->VirtualIndex = clstype->Virtuals.Push(sym->Variants[0].Implementation);
+				}
+			}
+			else
+			{
+				Error(p, "Virtual functions can only be defined for classes");
+			}
+		}
+	}
+}
+
 //==========================================================================
 //
 // Parses the functions list
@@ -1997,11 +2326,13 @@ void ZCCCompiler::InitDefaults()
 
 void ZCCCompiler::InitFunctions()
 {
-	TArray<PType *> rets(1);
-	TArray<PType *> args;
-	TArray<uint32_t> argflags;
-	TArray<VMValue> argdefaults;
-	TArray<FName> argnames;
+	for (auto s : Structs)
+	{
+		for (auto f : s->Functions)
+		{
+			CompileFunction(s, f, false);
+		}
+	}
 
 	for (auto c : Classes)
 	{
@@ -2017,306 +2348,7 @@ void ZCCCompiler::InitFunctions()
 		}
 		for (auto f : c->Functions)
 		{
-			rets.Clear();
-			args.Clear();
-			argflags.Clear();
-			bool hasdefault = false;
-			// For the time being, let's not allow overloading. This may be reconsidered later but really just adds an unnecessary amount of complexity here.
-			if (AddTreeNode(f->Name, f, &c->TreeNodes, false))
-			{
-				auto t = f->Type;
-				if (t != nullptr)
-				{
-					do
-					{
-						auto type = DetermineType(c->Type(), f, f->Name, t, false, false);
-						if (type->IsKindOf(RUNTIME_CLASS(PStruct)) && type != TypeVector2 && type != TypeVector3)
-						{
-							// structs and classes only get passed by pointer.
-							type = NewPointer(type);
-						}
-						// TBD: disallow certain types? For now, let everything pass that isn't an array.
-						rets.Push(type);
-						t = static_cast<decltype(t)>(t->SiblingNext);
-					} while (t != f->Type);
-				}
-
-				int notallowed = ZCC_Latent | ZCC_Meta | ZCC_ReadOnly | ZCC_FuncConst | ZCC_Abstract;
-
-				if (f->Flags & notallowed)
-				{
-					Error(f, "Invalid qualifiers for %s (%s not allowed)", FName(f->Name).GetChars(), FlagsToString(f->Flags & notallowed).GetChars());
-					f->Flags &= notallowed;
-				}
-				uint32_t varflags = VARF_Method;
-				int implicitargs = 1;
-				AFuncDesc *afd = nullptr;
-				int useflags = SUF_ACTOR | SUF_OVERLAY | SUF_WEAPON | SUF_ITEM;
-				if (f->UseFlags != nullptr)
-				{
-					useflags = 0;
-					auto p = f->UseFlags;
-					do
-					{
-						switch (p->Id)
-						{
-						case NAME_Actor:
-							useflags |= SUF_ACTOR;
-							break;
-						case NAME_Overlay:
-							useflags |= SUF_OVERLAY;
-							break;
-						case NAME_Weapon:
-							useflags |= SUF_WEAPON;
-							break;
-						case NAME_Item:
-							useflags |= SUF_ITEM;
-							break;
-						default:
-							Error(p, "Unknown Action qualifier %s", FName(p->Id).GetChars());
-							break;
-						}
-
-						p = static_cast<decltype(p)>(p->SiblingNext);
-					} while (p != f->UseFlags);
-				}
-
-				// map to implementation flags.
-				if (f->Flags & ZCC_Private) varflags |= VARF_Private;
-				if (f->Flags & ZCC_Protected) varflags |= VARF_Protected;
-				if (f->Flags & ZCC_Deprecated) varflags |= VARF_Deprecated;
-				if (f->Flags & ZCC_Virtual) varflags |= VARF_Virtual;
-				if (f->Flags & ZCC_Override) varflags |= VARF_Override;
-				if (f->Flags & ZCC_Action)
-				{
-					varflags |= VARF_Final;	// Action implies Final.
-					if (useflags & (SUF_OVERLAY | SUF_WEAPON | SUF_ITEM))
-					{
-						varflags |= VARF_Action;
-						implicitargs = 3;
-					}
-					else
-					{
-						implicitargs = 1;
-					}
-				}
-				if (f->Flags & ZCC_Static) varflags = (varflags & ~VARF_Method) | VARF_Final, implicitargs = 0;	// Static implies Final.
-
-
-				if (varflags & VARF_Override) varflags &= ~VARF_Virtual;	// allow 'virtual override'.
-				// Only one of these flags may be used.
-				static int exclude[] = { ZCC_Virtual, ZCC_Override, ZCC_Action, ZCC_Static };
-				static const char * print[] = { "virtual", "override", "action", "static" };
-				int fc = 0;
-				FString build;
-				for (int i = 0; i < 4; i++)
-				{
-					if (f->Flags & exclude[i])
-					{
-						fc++;
-						if (build.Len() > 0) build += ", ";
-						build += print[i];
-					}
-				}
-				if (fc > 1)
-				{
-					Error(f, "Invalid combination of qualifiers %s on function %s.", FName(f->Name).GetChars(), build.GetChars() );
-					varflags |= VARF_Method;
-				}
-				if (varflags & VARF_Override) varflags |= VARF_Virtual;	// Now that the flags are checked, make all override functions virtual as well.
-
-				if (f->Flags & ZCC_Native)
-				{
-					varflags |= VARF_Native;
-					afd = FindFunction(c->Type(), FName(f->Name).GetChars());
-					if (afd == nullptr)
-					{
-						Error(f, "The function '%s' has not been exported from the executable.", FName(f->Name).GetChars());
-					}
-					else
-					{
-						(*afd->VMPointer)->ImplicitArgs = BYTE(implicitargs);
-					}
-				}
-				SetImplicitArgs(&args, &argflags, &argnames, c->Type(), varflags, useflags);
-				argdefaults.Resize(argnames.Size());
-				auto p = f->Params;
-				bool hasoptionals = false;
-				if (p != nullptr)
-				{
-					do
-					{
-						int elementcount = 1;
-						VMValue vmval[3];	// default is REGT_NIL which means 'no default value' here.
-						if (p->Type != nullptr)
-						{
-							auto type = DetermineType(c->Type(), p, f->Name, p->Type, false, false);
-							int flags = 0;
-							if (p->Flags & ZCC_In) flags |= VARF_In;
-							if (p->Flags & ZCC_Out) flags |= VARF_Out;
-							if ((type->IsA(RUNTIME_CLASS(PStruct))) || (flags & VARF_Out))
-							{
-								// 'out' parameters and all structs except vectors are passed by reference
-								if ((flags & VARF_Out) || (type != TypeVector2 && type != TypeVector3))
-								{
-									type = NewPointer(type);
-									flags |= VARF_Ref;
-								}
-								else if (type == TypeVector2)
-								{
-									elementcount = 2;
-								}
-								else if (type == TypeVector3)
-								{
-									elementcount = 3;
-								}
-							}
-							if (type->GetRegType() == REGT_NIL && type != TypeVector2 && type != TypeVector3)
-							{
-								Error(p, "Invalid type %s for function parameter", type->DescriptiveName());
-							}
-							else if (p->Default != nullptr)
-							{
-								flags |= VARF_Optional;
-								hasoptionals = true;
-								// The simplifier is not suited to convert the constant into something usable. 
-								// All it does is reduce the expression to a constant but we still got to do proper type checking and conversion.
-								// It will also lose important type info about enums, once these get implemented
-								// The code generator can do this properly for us.
-								FxExpression *x = new FxTypeCast(ConvertNode(p->Default), type, false);
-								FCompileContext ctx(c->Type(), false);
-								x = x->Resolve(ctx);
-
-								if (x != nullptr)
-								{
-									// Vectors need special treatment because they use more than one entry in the Defaults and do not report as actual constants
-									if (type == TypeVector2 && x->ExprType == EFX_VectorValue && static_cast<FxVectorValue *>(x)->isConstVector(2))
-									{
-										auto vx = static_cast<FxVectorValue *>(x);
-										vmval[0] = static_cast<FxConstant *>(vx->xyz[0])->GetValue().GetFloat();
-										vmval[1] = static_cast<FxConstant *>(vx->xyz[1])->GetValue().GetFloat();
-									}
-									else if (type == TypeVector3 && x->ExprType == EFX_VectorValue && static_cast<FxVectorValue *>(x)->isConstVector(3))
-									{
-										auto vx = static_cast<FxVectorValue *>(x);
-										vmval[0] = static_cast<FxConstant *>(vx->xyz[0])->GetValue().GetFloat();
-										vmval[1] = static_cast<FxConstant *>(vx->xyz[1])->GetValue().GetFloat();
-										vmval[2] = static_cast<FxConstant *>(vx->xyz[2])->GetValue().GetFloat();
-									}
-									else if (!x->isConstant())
-									{
-										Error(p, "Default parameter %s is not constant in %s", FName(p->Name).GetChars(), FName(f->Name).GetChars());
-									}
-									else  if (x->ValueType != type)
-									{
-										Error(p, "Default parameter %s could not be converted to target type %s", FName(p->Name).GetChars(), c->Type()->TypeName.GetChars());
-									}
-									else
-									{
-										auto cnst = static_cast<FxConstant *>(x);
-										hasdefault = true;
-										switch (type->GetRegType())
-										{
-										case REGT_INT:
-											vmval[0] = cnst->GetValue().GetInt();
-											break;
-
-										case REGT_FLOAT:
-											vmval[0] = cnst->GetValue().GetFloat();
-											break;
-
-										case REGT_POINTER:
-											if (type->IsKindOf(RUNTIME_CLASS(PClassPointer)))
-												vmval[0] = (DObject*)cnst->GetValue().GetPointer();
-											else
-												vmval[0] = cnst->GetValue().GetPointer();
-											break;
-
-										case REGT_STRING:
-											vmval[0] = cnst->GetValue().GetString();
-											break;
-
-										default:
-											assert(0 && "no valid type for constant");
-											break;
-										}
-									}
-								}
-								if (x != nullptr) delete x;
-							}
-							else if (hasoptionals)
-							{
-								Error(p, "All arguments after the first optional one need also be optional.");
-							}
-							// TBD: disallow certain types? For now, let everything pass that isn't an array.
-							args.Push(type);
-							argflags.Push(flags);
-							argnames.Push(p->Name);
-
-						}
-						else
-						{
-							args.Push(nullptr);
-							argflags.Push(0);
-							argnames.Push(NAME_None);
-						}
-						for(int i=0;i<elementcount;i++) argdefaults.Push(vmval[i]);
-						p = static_cast<decltype(p)>(p->SiblingNext);
-					} while (p != f->Params);
-				}
-
-				PFunction *sym = new PFunction(c->Type(), f->Name);
-				sym->AddVariant(NewPrototype(rets, args), argflags, argnames, afd == nullptr? nullptr : *(afd->VMPointer), varflags, useflags);
-				c->Type()->Symbols.ReplaceSymbol(sym);
-
-				if (!(f->Flags & ZCC_Native))
-				{
-					auto code = ConvertAST(c->Type(), f->Body);
-					if (code != nullptr)
-					{
-						sym->Variants[0].Implementation = FunctionBuildList.AddFunction(sym, code, FStringf("%s.%s", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars()), false, -1, 0, Lump);
-					}
-				}
-				if (sym->Variants[0].Implementation != nullptr && hasdefault)	// do not copy empty default lists, they only waste space and processing time.
-				{
-					sym->Variants[0].Implementation->DefaultArgs = std::move(argdefaults);
-				}
-				
-				if (varflags & VARF_Virtual)
-				{
-					if (varflags & VARF_Final)
-					{
-						sym->Variants[0].Implementation->Final = true;
-					}
-					int vindex = c->Type()->FindVirtualIndex(sym->SymbolName, sym->Variants[0].Proto);
-					// specifying 'override' is necessary to prevent one of the biggest problem spots with virtual inheritance: Mismatching argument types.
-					if (varflags & VARF_Override)
-					{
-						if (vindex == -1)
-						{
-							Error(p, "Attempt to override non-existent virtual function %s", FName(f->Name).GetChars());
-						}
-						else
-						{
-							auto oldfunc = c->Type()->Virtuals[vindex];
-							if (oldfunc->Final)
-							{
-								Error(p, "Attempt to override final function %s", FName(f->Name).GetChars());
-							}
-							c->Type()->Virtuals[vindex] = sym->Variants[0].Implementation;
-							sym->Variants[0].Implementation->VirtualIndex = vindex;
-						}
-					}
-					else
-					{
-						if (vindex != -1)
-						{
-							Error(p, "Function %s attempts to override parent function without 'override' qualifier", FName(f->Name).GetChars());
-						}
-						sym->Variants[0].Implementation->VirtualIndex = c->Type()->Virtuals.Push(sym->Variants[0].Implementation);
-					}
-				}
-			}
+			CompileFunction(c, f, true);
 		}
 	}
 }
@@ -2368,7 +2400,9 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClass *cls, ZCC_TreeNode *af)
 				{
 					FArgumentList argumentlist;
 					// We can use this function directly without wrapping it in a caller.
-					if ((afd->Variants[0].Flags & VARF_Action) || !cls->IsDescendantOf(RUNTIME_CLASS(AStateProvider)) || !afd->Variants[0].SelfClass->IsDescendantOf(RUNTIME_CLASS(AStateProvider)))
+					auto selfclass = dyn_cast<PClass>(afd->Variants[0].SelfClass);
+					assert(selfclass != nullptr);	// non classes are not supposed to get here.
+					if ((afd->Variants[0].Flags & VARF_Action) || !cls->IsDescendantOf(RUNTIME_CLASS(AStateProvider)) || !selfclass->IsDescendantOf(RUNTIME_CLASS(AStateProvider)))
 					{
 						return new FxVMFunctionCall(new FxSelf(*af), afd, argumentlist, *af, false);
 					}
@@ -2663,7 +2697,7 @@ void ZCCCompiler::CompileStates()
 //
 //==========================================================================
 
-FxExpression *ZCCCompiler::ConvertAST(PClass *cls, ZCC_TreeNode *ast)
+FxExpression *ZCCCompiler::ConvertAST(PStruct *cls, ZCC_TreeNode *ast)
 {
 	ConvertClass = cls;
 	// there are two possibilities here: either a single function call or a compound statement. For a compound statement we also need to check if the last thing added was a return.

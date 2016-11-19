@@ -2334,6 +2334,24 @@ PStruct *NewStruct(FName name, PTypeBase *outer)
 	return static_cast<PStruct *>(stype);
 }
 
+/* PNativeStruct ****************************************************************/
+
+IMPLEMENT_CLASS(PNativeStruct, false, false, false, false)
+
+//==========================================================================
+//
+// PNativeStruct - Parameterized Constructor
+//
+//==========================================================================
+
+PNativeStruct::PNativeStruct(FName name)
+	: PStruct(name, nullptr)
+{
+	mDescriptiveName.Format("NativeStruct<%s>", name.GetChars());
+	Size = 0;
+	HasNativeFields = true;
+}
+
 /* PField *****************************************************************/
 
 IMPLEMENT_CLASS(PField, false, false, false, false)

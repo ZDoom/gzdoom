@@ -202,19 +202,19 @@ struct ZCC_NamedNode : ZCC_TreeNode
 	PSymbolType *Symbol;
 };
 
-struct ZCC_Class : ZCC_NamedNode
+struct ZCC_Struct : ZCC_NamedNode
+{
+	VM_UWORD Flags;
+	ZCC_TreeNode *Body;
+	PStruct *Type;
+};
+
+struct ZCC_Class : ZCC_Struct
 {
 	ZCC_Identifier *ParentName;
 	ZCC_Identifier *Replaces;
-	VM_UWORD Flags;
-	ZCC_TreeNode *Body;
-	PClass *Type;
-};
 
-struct ZCC_Struct : ZCC_NamedNode
-{
-	ZCC_TreeNode *Body;
-	PStruct *Type;
+	PClass *CType() { return static_cast<PClass *>(Type); }
 };
 
 struct ZCC_Enum : ZCC_NamedNode

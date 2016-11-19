@@ -146,7 +146,7 @@ inline void ResetBaggage (Baggage *bag, PClassActor *stateclass)
 //
 //==========================================================================
 
-AFuncDesc *FindFunction(PClass *cls, const char * string);
+AFuncDesc *FindFunction(PStruct *cls, const char * string);
 
 
 FxExpression *ParseExpression(FScanner &sc, PClassActor *cls, bool mustresolve = false);
@@ -156,9 +156,9 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag, bool &endswithret);
 class FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag);
 FName CheckCastKludges(FName in);
-void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FName> *argnames, PClass *cls, DWORD funcflags, int useflags);
+void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FName> *argnames, PStruct *cls, DWORD funcflags, int useflags);
 PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, int flags);
-PFunction *FindClassMemberFunction(PClass *cls, PClass *funccls, FName name, FScriptPosition &sc, bool *error);
+PFunction *FindClassMemberFunction(PStruct *cls, PStruct *funccls, FName name, FScriptPosition &sc, bool *error);
 void CreateDamageFunction(PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate);
 
 //==========================================================================

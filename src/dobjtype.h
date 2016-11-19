@@ -694,6 +694,15 @@ protected:
 	PStruct();
 };
 
+// a native struct will always be abstract and cannot be instantiated. All variables are references.
+// In addition, native structs can have methods (but no virtual ones.)
+class PNativeStruct : public PStruct
+{
+	DECLARE_CLASS(PNativeStruct, PStruct);
+public:
+	PNativeStruct(FName name = NAME_None);
+};
+
 class PPrototype : public PCompoundType
 {
 	DECLARE_CLASS(PPrototype, PCompoundType);
@@ -723,10 +732,10 @@ public:
 		TArray<FName> ArgNames;		// we need the names to access them later when the function gets compiled.
 		uint32_t Flags;
 		int UseFlags;
-		PClass *SelfClass;
+		PStruct *SelfClass;
 	};
 	TArray<Variant> Variants;
-	PClass *OwningClass = nullptr;
+	PStruct *OwningClass = nullptr;
 
 	unsigned AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags, int useflags);
 	int GetImplicitArgs()
@@ -738,7 +747,7 @@ public:
 
 	size_t PropagateMark();
 
-	PFunction(PClass *owner = nullptr, FName name = NAME_None) : PSymbol(name), OwningClass(owner) {}
+	PFunction(PStruct *owner = nullptr, FName name = NAME_None) : PSymbol(name), OwningClass(owner) {}
 };
 
 // Meta-info for every class derived from DObject ---------------------------
@@ -749,9 +758,9 @@ enum
 };
 
 class PClassClass;
-class PClass : public PStruct
+class PClass : public PNativeStruct
 {
-	DECLARE_CLASS(PClass, PStruct);
+	DECLARE_CLASS(PClass, PNativeStruct);
 	HAS_OBJECT_POINTERS;
 protected:
 	// We unravel _WITH_META here just as we did for PType.

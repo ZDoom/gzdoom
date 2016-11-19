@@ -104,7 +104,7 @@ FScriptPosition & GetStateSource(FState *state)
 //
 //==========================================================================
 
-void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FName> *argnames, PClass *cls, DWORD funcflags, int useflags)
+void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FName> *argnames, PStruct *cls, DWORD funcflags, int useflags)
 {
 	// Must be called before adding any other arguments.
 	assert(args == nullptr || args->Size() == 0);
@@ -182,7 +182,7 @@ PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, i
 //
 //==========================================================================
 
-PFunction *FindClassMemberFunction(PClass *selfcls, PClass *funccls, FName name, FScriptPosition &sc, bool *error)
+PFunction *FindClassMemberFunction(PStruct *selfcls, PStruct *funccls, FName name, FScriptPosition &sc, bool *error)
 {
 	// Skip ACS_NamedExecuteWithResult. Anything calling this should use the builtin instead.
 	if (name == NAME_ACS_NamedExecuteWithResult) return nullptr;

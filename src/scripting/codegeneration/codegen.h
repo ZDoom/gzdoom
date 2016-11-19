@@ -75,7 +75,7 @@ struct FCompileContext
 	FxCompoundStatement *Block = nullptr;
 	PPrototype *ReturnProto;
 	PFunction *Function;	// The function that is currently being compiled (or nullptr for constant evaluation.)
-	PClass *Class;			// The type of the owning class.
+	PStruct *Class;			// The type of the owning class.
 	bool FromDecorate;		// DECORATE must silence some warnings and demote some errors.
 	int StateIndex;			// index in actor's state table for anonymous functions, otherwise -1 (not used by DECORATE which pre-resolves state indices)
 	int StateCount;			// amount of states an anoymous function is being used on (must be 1 for state indices to be allowed.)
@@ -84,7 +84,7 @@ struct FCompileContext
 	TDeletingArray<FxLocalVariableDeclaration *> FunctionArgs;
 
 	FCompileContext(PFunction *func, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump);
-	FCompileContext(PClass *cls, bool fromdecorate);	// only to be used to resolve constants!
+	FCompileContext(PStruct *cls, bool fromdecorate);	// only to be used to resolve constants!
 
 	PSymbol *FindInClass(FName identifier, PSymbolTable *&symt);
 	PSymbol *FindInSelfClass(FName identifier, PSymbolTable *&symt);
@@ -346,7 +346,7 @@ public:
 
 	FxIdentifier(FName i, const FScriptPosition &p);
 	FxExpression *Resolve(FCompileContext&);
-	FxExpression *ResolveMember(FCompileContext&, PClass*, FxExpression*&, PStruct*);
+	FxExpression *ResolveMember(FCompileContext&, PStruct*, FxExpression*&, PStruct*);
 };
 
 

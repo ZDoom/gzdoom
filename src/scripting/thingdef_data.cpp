@@ -577,11 +577,14 @@ FPropertyInfo *FindProperty(const char * string)
 //
 //==========================================================================
 
-AFuncDesc *FindFunction(PClass *cls, const char * string)
+AFuncDesc *FindFunction(PStruct *cls, const char * string)
 {
 	for (int i = 0; i < 2; i++)
 	{
-		if (i == 1 && !cls->IsDescendantOf(RUNTIME_CLASS(AActor))) break;
+		// Since many functions have been declared with Actor as owning class, despited being members of something else, let's hack around this until they have been fixed or exported.
+		// Since most of these are expected to be scriptified anyway, there's no point fixing them all before they get exported.
+		if (i == 1 && !cls->IsKindOf(RUNTIME_CLASS(PClassActor))) break;
+
 		FStringf fullname("%s_%s", i == 0 ? cls->TypeName.GetChars() : "Actor", string);
 		int min = 0, max = AFTable.Size() - 1;
 

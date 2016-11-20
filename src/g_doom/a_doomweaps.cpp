@@ -16,41 +16,10 @@
 */
 
 void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int index);
-static FRandom pr_fireplasma ("FirePlasma");
 static FRandom pr_firerail ("FireRail");
 static FRandom pr_bfgspray ("BFGSpray");
 static FRandom pr_oldbfg ("OldBFG");
 
-
-//
-// A_FirePlasma
-//
-DEFINE_ACTION_FUNCTION(AActor, A_FirePlasma)
-{
-	PARAM_ACTION_PROLOGUE(AActor);
-
-	player_t *player;
-
-	if (NULL == (player = self->player))
-	{
-		return 0;
-	}
-	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != NULL && ACTION_CALL_FROM_PSPRITE())
-	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
-			return 0;
-
-		FState *flash = weapon->FindState(NAME_Flash);
-		if (flash != NULL)
-		{
-			P_SetSafeFlash(weapon, player, flash, (pr_fireplasma()&1));
-		}
-	}
-
-	P_SpawnPlayerMissile (self, PClass::FindActor("PlasmaBall"));
-	return 0;
-}
 
 //
 // [RH] A_FireRailgun

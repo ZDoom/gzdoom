@@ -186,11 +186,11 @@ extend class Actor
 	void A_BrainDie()
 	{
 		// [RH] If noexit, then don't end the level.
-		if ((GetCVar("deathmatch") || GetCVar("alwaysapplydmflags")) && GetCVar("sv_noexit"))
+		if ((deathmatch || alwaysapplydmflags) && sv_noexit)
 			return;
 
 		// New dmflag: Kill all boss spawned monsters before ending the level.
-		if (GetCVar("sv_killbossmonst"))
+		if (sv_killbossmonst)
 		{
 			int count;	// Repeat until we have no more boss-spawned monsters.
 			ThinkerIterator it = ThinkerIterator.Create();

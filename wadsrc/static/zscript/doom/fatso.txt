@@ -192,7 +192,7 @@ extend class Actor
 		aimtarget.Height = Height;
 		
 		bool shootmode = ((flags & MSF_Classic) || // Flag explicitely set, or no flags and compat options
-					(flags == 0 && isDehState(CurState) && GetCVar("compat_mushroom")));
+					(flags == 0 && isDehState(CurState) && compat_mushroom));
 
 		for (i = -numspawns; i <= numspawns; i += 8)
 		{

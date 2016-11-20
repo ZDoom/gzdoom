@@ -41,7 +41,7 @@ extend class StateProvider
 			
 		}
 
-		int damage = GetCVar("deathmatch") ? 100 : 150;
+		int damage = deathmatch ? 100 : 150;
 		A_RailAttack(damage, offset_xy, false);	// note that this function handles ammo depletion itself for Dehacked compatibility purposes.
 	}
 

@@ -118,7 +118,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, DBaseDecal *decal, co
 
 		vertices[i].x = (float)p.X;
 		vertices[i].y = (float)p.Y;
-		vertices[i].z = (float)(zpos + spriteHeight * offsets[i].second);
+		vertices[i].z = (float)(zpos + spriteHeight * offsets[i].second - spriteHeight * 0.5);
 		vertices[i].w = 1.0f;
 		vertices[i].varying[0] = (float)(offsets[i].first * tex->Scale.X);
 		vertices[i].varying[1] = (float)((1.0f - offsets[i].second) * tex->Scale.Y);
@@ -140,7 +140,15 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, DBaseDecal *decal, co
 		uniforms.flags = 0;
 	}
 	uniforms.subsectorDepth = subsectorDepth;
-	uniforms.color = decal->AlphaColor;
+
+	if (r_swtruecolor)
+	{
+		uniforms.color = 0xff000000 | decal->AlphaColor;
+	}
+	else
+	{
+		uniforms.color = ((uint32_t)decal->AlphaColor) >> 24;
+	}
 
 	PolyDrawArgs args;
 	args.uniforms = uniforms;
@@ -152,7 +160,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, DBaseDecal *decal, co
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
 	args.SetTexture(tex);
-	args.SetColormap(line->frontsector->ColorMap);
+	args.SetColormap(front->ColorMap);
 	//mode = R_SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
 	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Shaded);
 }

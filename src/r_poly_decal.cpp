@@ -129,7 +129,6 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, DBaseDecal *decal, co
 	bool fullbrightSprite = (decal->RenderFlags & RF_FULLBRIGHT) == RF_FULLBRIGHT;
 
 	TriUniforms uniforms;
-	uniforms.objectToClip = worldToClip;
 	if (fullbrightSprite || fixedlightlev >= 0 || fixedcolormap)
 	{
 		uniforms.light = 256;
@@ -145,6 +144,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, DBaseDecal *decal, co
 
 	PolyDrawArgs args;
 	args.uniforms = uniforms;
+	args.objectToClip = &worldToClip;
 	args.vinput = vertices;
 	args.vcount = 4;
 	args.mode = TriangleDrawMode::Fan;

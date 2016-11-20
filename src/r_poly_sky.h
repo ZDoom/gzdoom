@@ -33,6 +33,7 @@ private:
 	TArray<TriVertex> mVertices;
 	TArray<unsigned int> mPrimStart;
 	int mRows, mColumns;
+	TriMatrix objectToClip;
 
 	void SkyVertex(int r, int c, bool yflip);
 	void CreateSkyHemisphere(bool zflip);

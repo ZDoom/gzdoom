@@ -103,7 +103,6 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, subsector_t *s
 	}
 
 	TriUniforms uniforms;
-	uniforms.objectToClip = worldToClip;
 	uniforms.light = (uint32_t)(lightlevel / 255.0f * 256.0f);
 	if (fixedlightlev >= 0 || fixedcolormap)
 		uniforms.light = 256;
@@ -133,6 +132,7 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, subsector_t *s
 
 	PolyDrawArgs args;
 	args.uniforms = uniforms;
+	args.objectToClip = &worldToClip;
 	args.vinput = vertices;
 	args.vcount = sub->numlines;
 	args.mode = TriangleDrawMode::Fan;
@@ -195,7 +195,6 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 	bool isSky = picnum == skyflatnum;
 
 	TriUniforms uniforms;
-	uniforms.objectToClip = worldToClip;
 	uniforms.light = (uint32_t)(frontsector->lightlevel / 255.0f * 256.0f);
 	if (fixedlightlev >= 0 || fixedcolormap)
 		uniforms.light = 256;
@@ -225,6 +224,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 
 	PolyDrawArgs args;
 	args.uniforms = uniforms;
+	args.objectToClip = &worldToClip;
 	args.vinput = vertices;
 	args.vcount = sub->numlines;
 	args.mode = TriangleDrawMode::Fan;

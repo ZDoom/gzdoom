@@ -234,8 +234,6 @@ struct TriUniforms
 		nearest_filter = 2,
 		fixed_light = 4
 	};
-
-	TriMatrix objectToClip;
 };
 
 struct TriDrawTriangleArgs

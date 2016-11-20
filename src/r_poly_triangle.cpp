@@ -124,28 +124,28 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 		for (int i = 0; i < vcount / 3; i++)
 		{
 			for (int j = 0; j < 3; j++)
-				vert[j] = shade_vertex(drawargs.uniforms, *(vinput++));
+				vert[j] = shade_vertex(*drawargs.objectToClip, *(vinput++));
 			draw_shaded_triangle(vert, ccw, &args, thread, drawfunc);
 		}
 	}
 	else if (drawargs.mode == TriangleDrawMode::Fan)
 	{
-		vert[0] = shade_vertex(drawargs.uniforms, *(vinput++));
-		vert[1] = shade_vertex(drawargs.uniforms, *(vinput++));
+		vert[0] = shade_vertex(*drawargs.objectToClip, *(vinput++));
+		vert[1] = shade_vertex(*drawargs.objectToClip, *(vinput++));
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = shade_vertex(drawargs.uniforms, *(vinput++));
+			vert[2] = shade_vertex(*drawargs.objectToClip, *(vinput++));
 			draw_shaded_triangle(vert, ccw, &args, thread, drawfunc);
 			vert[1] = vert[2];
 		}
 	}
 	else // TriangleDrawMode::Strip
 	{
-		vert[0] = shade_vertex(drawargs.uniforms, *(vinput++));
-		vert[1] = shade_vertex(drawargs.uniforms, *(vinput++));
+		vert[0] = shade_vertex(*drawargs.objectToClip, *(vinput++));
+		vert[1] = shade_vertex(*drawargs.objectToClip, *(vinput++));
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = shade_vertex(drawargs.uniforms, *(vinput++));
+			vert[2] = shade_vertex(*drawargs.objectToClip, *(vinput++));
 			draw_shaded_triangle(vert, ccw, &args, thread, drawfunc);
 			vert[0] = vert[1];
 			vert[1] = vert[2];
@@ -154,10 +154,10 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 	}
 }
 
-TriVertex PolyTriangleDrawer::shade_vertex(const TriUniforms &uniforms, TriVertex v)
+TriVertex PolyTriangleDrawer::shade_vertex(const TriMatrix &objectToClip, TriVertex v)
 {
 	// Apply transform to get clip coordinates:
-	return uniforms.objectToClip * v;
+	return objectToClip * v;
 }
 
 void PolyTriangleDrawer::draw_shaded_triangle(const TriVertex *vert, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *))
@@ -340,4 +340,151 @@ void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
 FString DrawPolyTrianglesCommand::DebugInfo()
 {
 	return "DrawPolyTriangles";
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+TriMatrix TriMatrix::null()
+{
+	TriMatrix m;
+	memset(m.matrix, 0, sizeof(m.matrix));
+	return m;
+}
+
+TriMatrix TriMatrix::identity()
+{
+	TriMatrix m = null();
+	m.matrix[0] = 1.0f;
+	m.matrix[5] = 1.0f;
+	m.matrix[10] = 1.0f;
+	m.matrix[15] = 1.0f;
+	return m;
+}
+
+TriMatrix TriMatrix::translate(float x, float y, float z)
+{
+	TriMatrix m = identity();
+	m.matrix[0 + 3 * 4] = x;
+	m.matrix[1 + 3 * 4] = y;
+	m.matrix[2 + 3 * 4] = z;
+	return m;
+}
+
+TriMatrix TriMatrix::scale(float x, float y, float z)
+{
+	TriMatrix m = null();
+	m.matrix[0 + 0 * 4] = x;
+	m.matrix[1 + 1 * 4] = y;
+	m.matrix[2 + 2 * 4] = z;
+	m.matrix[3 + 3 * 4] = 1;
+	return m;
+}
+
+TriMatrix TriMatrix::rotate(float angle, float x, float y, float z)
+{
+	float c = cosf(angle);
+	float s = sinf(angle);
+	TriMatrix m = null();
+	m.matrix[0 + 0 * 4] = (x*x*(1.0f - c) + c);
+	m.matrix[0 + 1 * 4] = (x*y*(1.0f - c) - z*s);
+	m.matrix[0 + 2 * 4] = (x*z*(1.0f - c) + y*s);
+	m.matrix[1 + 0 * 4] = (y*x*(1.0f - c) + z*s);
+	m.matrix[1 + 1 * 4] = (y*y*(1.0f - c) + c);
+	m.matrix[1 + 2 * 4] = (y*z*(1.0f - c) - x*s);
+	m.matrix[2 + 0 * 4] = (x*z*(1.0f - c) - y*s);
+	m.matrix[2 + 1 * 4] = (y*z*(1.0f - c) + x*s);
+	m.matrix[2 + 2 * 4] = (z*z*(1.0f - c) + c);
+	m.matrix[3 + 3 * 4] = 1.0f;
+	return m;
+}
+
+TriMatrix TriMatrix::swapYZ()
+{
+	TriMatrix m = null();
+	m.matrix[0 + 0 * 4] = 1.0f;
+	m.matrix[1 + 2 * 4] = 1.0f;
+	m.matrix[2 + 1 * 4] = -1.0f;
+	m.matrix[3 + 3 * 4] = 1.0f;
+	return m;
+}
+
+TriMatrix TriMatrix::perspective(float fovy, float aspect, float z_near, float z_far)
+{
+	float f = (float)(1.0 / tan(fovy * M_PI / 360.0));
+	TriMatrix m = null();
+	m.matrix[0 + 0 * 4] = f / aspect;
+	m.matrix[1 + 1 * 4] = f;
+	m.matrix[2 + 2 * 4] = (z_far + z_near) / (z_near - z_far);
+	m.matrix[2 + 3 * 4] = (2.0f * z_far * z_near) / (z_near - z_far);
+	m.matrix[3 + 2 * 4] = -1.0f;
+	return m;
+}
+
+TriMatrix TriMatrix::frustum(float left, float right, float bottom, float top, float near, float far)
+{
+	float a = (right + left) / (right - left);
+	float b = (top + bottom) / (top - bottom);
+	float c = -(far + near) / (far - near);
+	float d = -(2.0f * far) / (far - near);
+	TriMatrix m = null();
+	m.matrix[0 + 0 * 4] = 2.0f * near / (right - left);
+	m.matrix[1 + 1 * 4] = 2.0f * near / (top - bottom);
+	m.matrix[0 + 2 * 4] = a;
+	m.matrix[1 + 2 * 4] = b;
+	m.matrix[2 + 2 * 4] = c;
+	m.matrix[2 + 3 * 4] = d;
+	m.matrix[3 + 2 * 4] = -1;
+	return m;
+}
+
+TriMatrix TriMatrix::worldToView()
+{
+	TriMatrix m = null();
+	m.matrix[0 + 0 * 4] = (float)ViewSin;
+	m.matrix[0 + 1 * 4] = (float)-ViewCos;
+	m.matrix[1 + 2 * 4] = 1.0f;
+	m.matrix[2 + 0 * 4] = (float)-ViewCos;
+	m.matrix[2 + 1 * 4] = (float)-ViewSin;
+	m.matrix[3 + 3 * 4] = 1.0f;
+	return m * translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);
+}
+
+TriMatrix TriMatrix::viewToClip()
+{
+	float near = 5.0f;
+	float far = 65536.0f;
+	float width = (float)(FocalTangent * near);
+	float top = (float)(CenterY / InvZtoScale * near);
+	float bottom = (float)(top - viewheight / InvZtoScale * near);
+	return frustum(-width, width, bottom, top, near, far);
+}
+
+TriMatrix TriMatrix::operator*(const TriMatrix &mult) const
+{
+	TriMatrix result;
+	for (int x = 0; x < 4; x++)
+	{
+		for (int y = 0; y < 4; y++)
+		{
+			result.matrix[x + y * 4] =
+				matrix[0 * 4 + x] * mult.matrix[y * 4 + 0] +
+				matrix[1 * 4 + x] * mult.matrix[y * 4 + 1] +
+				matrix[2 * 4 + x] * mult.matrix[y * 4 + 2] +
+				matrix[3 * 4 + x] * mult.matrix[y * 4 + 3];
+		}
+	}
+	return result;
+}
+
+TriVertex TriMatrix::operator*(TriVertex v) const
+{
+	float vx = matrix[0 * 4 + 0] * v.x + matrix[1 * 4 + 0] * v.y + matrix[2 * 4 + 0] * v.z + matrix[3 * 4 + 0] * v.w;
+	float vy = matrix[0 * 4 + 1] * v.x + matrix[1 * 4 + 1] * v.y + matrix[2 * 4 + 1] * v.z + matrix[3 * 4 + 1] * v.w;
+	float vz = matrix[0 * 4 + 2] * v.x + matrix[1 * 4 + 2] * v.y + matrix[2 * 4 + 2] * v.z + matrix[3 * 4 + 2] * v.w;
+	float vw = matrix[0 * 4 + 3] * v.x + matrix[1 * 4 + 3] * v.y + matrix[2 * 4 + 3] * v.z + matrix[3 * 4 + 3] * v.w;
+	v.x = vx;
+	v.y = vy;
+	v.z = vz;
+	v.w = vw;
+	return v;
 }

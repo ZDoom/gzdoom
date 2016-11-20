@@ -71,7 +71,6 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, particle_t *partic
 	bool fullbrightSprite = particle->bright != 0;
 
 	TriUniforms uniforms;
-	uniforms.objectToClip = worldToClip;
 	if (fullbrightSprite || fixedlightlev >= 0 || fixedcolormap)
 	{
 		uniforms.light = 256;
@@ -88,6 +87,7 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, particle_t *partic
 
 	PolyDrawArgs args;
 	args.uniforms = uniforms;
+	args.objectToClip = &worldToClip;
 	args.vinput = vertices;
 	args.vcount = 4;
 	args.mode = TriangleDrawMode::Fan;

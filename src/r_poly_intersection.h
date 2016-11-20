@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "r_triangle.h"
+#include "r_poly_triangle.h"
 #include <algorithm>
 #include <cmath>
 

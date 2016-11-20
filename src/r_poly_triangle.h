@@ -22,8 +22,19 @@
 
 #pragma once
 
-#include "r_triangle.h"
+#include "r_draw.h"
+#include "r_thread.h"
+#include "r_compiler/llvmdrawers.h"
 #include "r_data/r_translate.h"
+
+class FTexture;
+
+enum class TriangleDrawMode
+{
+	Normal,
+	Fan,
+	Strip
+};
 
 struct TriDrawTriangleArgs;
 
@@ -31,6 +42,7 @@ class PolyDrawArgs
 {
 public:
 	TriUniforms uniforms;
+	const TriMatrix *objectToClip = nullptr;
 	const TriVertex *vinput = nullptr;
 	int vcount = 0;
 	TriangleDrawMode mode = TriangleDrawMode::Normal;
@@ -83,7 +95,7 @@ public:
 	static void draw(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode);
 
 private:
-	static TriVertex shade_vertex(const TriUniforms &uniforms, TriVertex v);
+	static TriVertex shade_vertex(const TriMatrix &objectToClip, TriVertex v);
 	static void draw_arrays(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode, WorkerThreadData *thread);
 	static void draw_shaded_triangle(const TriVertex *vertices, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *));
 	static bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2);

@@ -176,13 +176,13 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	}
 
 	TriUniforms uniforms;
-	uniforms.objectToClip = worldToClip;
 	uniforms.light = (uint32_t)(GetLightLevel() / 255.0f * 256.0f);
 	uniforms.flags = 0;
 	uniforms.subsectorDepth = SubsectorDepth;
 
 	PolyDrawArgs args;
 	args.uniforms = uniforms;
+	args.objectToClip = &worldToClip;
 	args.vinput = vertices;
 	args.vcount = 4;
 	args.mode = TriangleDrawMode::Fan;

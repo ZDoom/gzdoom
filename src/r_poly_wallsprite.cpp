@@ -99,7 +99,6 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, AActor *thing, s
 	bool fullbrightSprite = ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 
 	TriUniforms uniforms;
-	uniforms.objectToClip = worldToClip;
 	if (fullbrightSprite || fixedlightlev >= 0 || fixedcolormap)
 	{
 		uniforms.light = 256;
@@ -114,6 +113,7 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, AActor *thing, s
 
 	PolyDrawArgs args;
 	args.uniforms = uniforms;
+	args.objectToClip = &worldToClip;
 	args.vinput = vertices;
 	args.vcount = 4;
 	args.mode = TriangleDrawMode::Fan;

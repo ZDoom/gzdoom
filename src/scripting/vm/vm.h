@@ -814,10 +814,10 @@ public:
 	VM_UBYTE NumRegF;
 	VM_UBYTE NumRegS;
 	VM_UBYTE NumRegA;
-	VM_UBYTE NumKonstD;
-	VM_UBYTE NumKonstF;
-	VM_UBYTE NumKonstS;
-	VM_UBYTE NumKonstA;
+	VM_UHALF NumKonstD;
+	VM_UHALF NumKonstF;
+	VM_UHALF NumKonstS;
+	VM_UHALF NumKonstA;
 	VM_UHALF MaxParam;		// Maximum number of parameters this function has on the stack at once
 	VM_UBYTE NumArgs;		// Number of arguments this function takes
 	FString PrintableName;	// so that the VM can print meaningful info if something in this function goes wrong.

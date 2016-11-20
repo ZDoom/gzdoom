@@ -1993,7 +1993,7 @@ ExpEmit FxPreIncrDecr::Emit(VMFunctionBuilder *build)
 
 	if (regtype == REGT_INT)
 	{
-		build->Emit(OP_ADDI, value.RegNum, value.RegNum, (Token == TK_Incr) ? 1 : -1);
+		build->Emit(OP_ADDI, value.RegNum, value.RegNum, uint8_t((Token == TK_Incr) ? 1 : -1));
 	}
 	else
 	{
@@ -2077,7 +2077,7 @@ ExpEmit FxPostIncrDecr::Emit(VMFunctionBuilder *build)
 		ExpEmit assign(build, regtype);
 		if (regtype == REGT_INT)
 		{
-			build->Emit(OP_ADDI, assign.RegNum, out.RegNum, (Token == TK_Incr) ? 1 : -1);
+			build->Emit(OP_ADDI, assign.RegNum, out.RegNum, uint8_t((Token == TK_Incr) ? 1 : -1));
 		}
 		else
 		{
@@ -2094,7 +2094,7 @@ ExpEmit FxPostIncrDecr::Emit(VMFunctionBuilder *build)
 		if (regtype == REGT_INT)
 		{
 			build->Emit(OP_MOVE, out.RegNum, pointer.RegNum);
-			build->Emit(OP_ADDI, pointer.RegNum, pointer.RegNum, (Token == TK_Incr) ? 1 : -1);
+			build->Emit(OP_ADDI, pointer.RegNum, pointer.RegNum, uint8_t((Token == TK_Incr) ? 1 : -1));
 		}
 		else
 		{
@@ -2108,7 +2108,7 @@ ExpEmit FxPostIncrDecr::Emit(VMFunctionBuilder *build)
 	{
 		if (regtype == REGT_INT)
 		{
-			build->Emit(OP_ADDI, pointer.RegNum, pointer.RegNum, (Token == TK_Incr) ? 1 : -1);
+			build->Emit(OP_ADDI, pointer.RegNum, pointer.RegNum, uint8_t((Token == TK_Incr) ? 1 : -1));
 		}
 		else
 		{

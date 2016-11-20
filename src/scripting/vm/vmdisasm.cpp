@@ -147,7 +147,7 @@
 
 const VMOpInfo OpInfo[NUM_OPS] =
 {
-#define xx(op, name, mode)	{ #name, mode }
+#define xx(op, name, mode, alt, kreg, ktype)	{ #name, mode }
 #include "vmops.h"
 };
 

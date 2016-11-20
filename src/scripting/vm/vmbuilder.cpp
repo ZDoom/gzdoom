@@ -36,6 +36,19 @@
 #include "info.h"
 #include "m_argv.h"
 #include "thingdef.h"
+#include "doomerrors.h"
+
+struct VMRemap
+{
+	BYTE altOp, kReg, kType;
+};
+
+
+#define xx(op, name, mode, alt, kreg, ktype) {OP_##alt, kreg, ktype }
+VMRemap opRemap[NUM_OPS] = {
+#include "vmops.h"
+};
+#undef xx
 
 //==========================================================================
 //
@@ -523,10 +536,75 @@ size_t VMFunctionBuilder::GetAddress()
 
 size_t VMFunctionBuilder::Emit(int opcode, int opa, int opb, int opc)
 {
+	static BYTE opcodes[] = { OP_LK, OP_LKF, OP_LKS, OP_LKP };
+
 	assert(opcode >= 0 && opcode < NUM_OPS);
-	assert(opa >= 0 && opa <= 255);
-	assert(opb >= 0 && opb <= 255);
-	assert(opc >= 0 && opc <= 255);
+	assert(opa >= 0);
+	assert(opb >= 0);
+	assert(opc >= 0);
+
+
+	// The following were just asserts, meaning this would silently create broken code if there was an overflow
+	// if this happened in a release build. Not good.
+	// These are critical errors that need to be reported to the user.
+	// In addition, the limit of 256 constants can easily be exceeded with arrays so this had to be extended to
+	// 65535 by adding some checks here that map byte-limited instructions to alternatives that can handle larger indices.
+	// (See vmops.h for the remapping info.)
+
+	// Note: OP_CMPS also needs treatment, but I do not expect constant overflow to become an issue with strings, so for now there is no handling.
+
+	if (opa > 255)
+	{
+		if (opRemap[opcode].kReg != 1 || opa > 32767)
+		{
+			I_Error("Register limit exceeded");
+		}
+		int regtype = opRemap[opcode].kType;
+		ExpEmit emit(this, regtype);
+		Emit(opcodes[regtype], emit.RegNum, opa);
+		opcode = opRemap[opcode].altOp;
+		opa = emit.RegNum;
+		emit.Free(this);
+	}
+	if (opb > 255)
+	{
+		if (opRemap[opcode].kReg != 2 || opb > 32767)
+		{
+			I_Error("Register limit exceeded");
+		}
+		int regtype = opRemap[opcode].kType;
+		ExpEmit emit(this, regtype);
+		Emit(opcodes[regtype], emit.RegNum, opb);
+		opcode = opRemap[opcode].altOp;
+		opb = emit.RegNum;
+		emit.Free(this);
+	}
+	if (opc > 255)
+	{
+		if (opcode == OP_PARAM && (opb & REGT_KONST) && opc <= 32767)
+		{
+			int regtype = opb & REGT_TYPE;
+			opb = regtype;
+			ExpEmit emit(this, regtype);
+			Emit(opcodes[regtype], emit.RegNum, opc);
+			opc = emit.RegNum;
+			emit.Free(this);
+		}
+		else
+		{
+			if (opRemap[opcode].kReg != 4 || opc > 32767)
+			{
+				I_Error("Register limit exceeded");
+			}
+			int regtype = opRemap[opcode].kType;
+			ExpEmit emit(this, regtype);
+			Emit(opcodes[regtype], emit.RegNum, opc);
+			opcode = opRemap[opcode].altOp;
+			opc = emit.RegNum;
+			emit.Free(this);
+		}
+	}
+
 	if (opcode == OP_PARAM)
 	{
 		int chg;
@@ -784,23 +862,31 @@ void FFunctionBuildList::Build()
 			}
 
 			// Emit code
-			item.Code->Emit(&buildit);
-			buildit.MakeFunction(sfunc);
-			sfunc->NumArgs = 0;
-			// NumArgs for the VMFunction must be the amount of stack elements, which can differ from the amount of logical function arguments if vectors are in the list.
-			// For the VM a vector is 2 or 3 args, depending on size.
-			for (auto s : item.Func->Variants[0].Proto->ArgumentTypes)
+			try
 			{
-				sfunc->NumArgs += s->GetRegCount();
-			}
+				item.Code->Emit(&buildit);
+				buildit.MakeFunction(sfunc);
+				sfunc->NumArgs = 0;
+				// NumArgs for the VMFunction must be the amount of stack elements, which can differ from the amount of logical function arguments if vectors are in the list.
+				// For the VM a vector is 2 or 3 args, depending on size.
+				for (auto s : item.Func->Variants[0].Proto->ArgumentTypes)
+				{
+					sfunc->NumArgs += s->GetRegCount();
+				}
 
-			if (dump != nullptr)
-			{
-				DumpFunction(dump, sfunc, item.PrintableName.GetChars(), (int)item.PrintableName.Len());
-				codesize += sfunc->CodeSize;
+				if (dump != nullptr)
+				{
+					DumpFunction(dump, sfunc, item.PrintableName.GetChars(), (int)item.PrintableName.Len());
+					codesize += sfunc->CodeSize;
+				}
+				sfunc->PrintableName = item.PrintableName;
+				sfunc->Unsafe = ctx.Unsafe;
 			}
-			sfunc->PrintableName = item.PrintableName;
-			sfunc->Unsafe = ctx.Unsafe;
+			catch (CRecoverableError &err)
+			{
+				// catch errors from the code generator and pring something meaningful.
+				item.Code->ScriptPosition.Message(MSG_ERROR, "%s in %s", err.GetMessage(), item.PrintableName);
+			}
 		}
 		delete item.Code;
 		if (dump != nullptr)

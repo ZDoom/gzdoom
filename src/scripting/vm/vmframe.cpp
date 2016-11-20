@@ -86,10 +86,10 @@ void VMScriptFunction::Alloc(int numops, int numkonstd, int numkonstf, int numko
 {
 	assert(Code == NULL);
 	assert(numops > 0);
-	assert(numkonstd >= 0 && numkonstd <= 255);
-	assert(numkonstf >= 0 && numkonstf <= 255);
-	assert(numkonsts >= 0 && numkonsts <= 255);
-	assert(numkonsta >= 0 && numkonsta <= 255);
+	assert(numkonstd >= 0 && numkonstd <= 65535);
+	assert(numkonstf >= 0 && numkonstf <= 65535);
+	assert(numkonsts >= 0 && numkonsts <= 65535);
+	assert(numkonsta >= 0 && numkonsta <= 65535);
 	void *mem = M_Malloc(numops * sizeof(VMOP) +
 						 numkonstd * sizeof(int) +
 						 numkonstf * sizeof(double) +

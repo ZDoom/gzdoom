@@ -51,8 +51,6 @@ class StateProvider : Inventory native
 	action native void A_Lower();
 	action native void A_Raise();
 
-	action native void A_FireSTGrenade(class<Actor> grenadetype = "Grenade");
-	action native void A_FireMissile();
 	action native void A_FirePlasma();
 	action native void A_FireRailgun();
 	action native void A_FireRailgunLeft();

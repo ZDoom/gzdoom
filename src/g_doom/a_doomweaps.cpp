@@ -23,61 +23,6 @@ static FRandom pr_oldbfg ("OldBFG");
 
 
 //
-// A_FireMissile
-//
-DEFINE_ACTION_FUNCTION(AActor, A_FireMissile)
-{
-	PARAM_ACTION_PROLOGUE(AActor);
-
-	player_t *player;
-
-	if (NULL == (player = self->player))
-	{
-		return 0;
-	}
-	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != NULL && ACTION_CALL_FROM_PSPRITE())
-	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
-			return 0;
-	}
-	P_SpawnPlayerMissile (self, PClass::FindActor("Rocket"));
-	return 0;
-}
-
-//
-// A_FireSTGrenade: not exactly backported from ST, but should work the same
-//
-DEFINE_ACTION_FUNCTION(AActor, A_FireSTGrenade)
-{
-	PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_CLASS_DEF(grenade, AActor);
-
-	player_t *player;
-
-	if (grenade == NULL)
-		return 0;
-
-	if (NULL == (player = self->player))
-	{
-		return 0;
-	}
-	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != NULL && ACTION_CALL_FROM_PSPRITE())
-	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return 0;
-	}
-		
-	// Temporarily raise the pitch to send the grenade slightly upwards
-	DAngle SavedPlayerPitch = self->Angles.Pitch;
-	self->Angles.Pitch -= 6.328125; //(1152 << F RACBITS);
-	P_SpawnPlayerMissile(self, grenade);
-	self->Angles.Pitch = SavedPlayerPitch;
-	return 0;
-}
-
-//
 // A_FirePlasma
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FirePlasma)

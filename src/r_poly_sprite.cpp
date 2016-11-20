@@ -219,6 +219,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, AActor *thing, subse
 		args.uniforms.destalpha = 256;
 		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
 		args.SetTexture(tex, false);
+		args.uniforms.color = 0;
 		uniforms.flags |= TriUniforms::simple_shade;
 		PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Shaded);
 	}
@@ -227,6 +228,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, AActor *thing, subse
 		args.uniforms.destalpha = 256;
 		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
 		args.SetTexture(tex, false);
+		args.uniforms.color = 0;
 		uniforms.flags |= TriUniforms::simple_shade;
 		PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Shaded);
 	}

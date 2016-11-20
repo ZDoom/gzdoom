@@ -199,7 +199,12 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	}
 	else
 	{
-		PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::AlphaBlend);
+		args.uniforms.destalpha = (Line->linedef->flags & ML_ADDTRANS) ? 256 : (uint32_t)(256 - Line->linedef->alpha * 256);
+		args.uniforms.srcalpha = (uint32_t)(Line->linedef->alpha * 256);
+		if (args.uniforms.destalpha == 0 && args.uniforms.srcalpha == 256)
+			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::AlphaBlend);
+		else
+			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Add);
 	}
 
 	RenderPolyDecal::RenderWallDecals(worldToClip, Line, SubsectorDepth);

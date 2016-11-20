@@ -20,9 +20,7 @@
 **
 */
 
-
-#ifndef __R_POLY_TRIANGLE__
-#define __R_POLY_TRIANGLE__
+#pragma once
 
 #include "r_triangle.h"
 #include "r_data/r_translate.h"
@@ -100,52 +98,6 @@ private:
 	friend class DrawPolyTrianglesCommand;
 };
 
-// 8x8 block of stencil values, plus a mask indicating if values are the same for early out stencil testing
-class PolyStencilBlock
-{
-public:
-	PolyStencilBlock(int block, uint8_t *values, uint32_t *masks) : Values(values + block * 64), ValueMask(masks[block])
-	{
-	}
-
-	void Set(int x, int y, uint8_t value)
-	{
-		if ((ValueMask & 0xffffff00) == 0xffffff00)
-		{
-			if ((ValueMask & 0xff) == value)
-				return;
-
-			for (int i = 0; i < 8 * 8; i++)
-				Values[i] = (ValueMask & 0xff);
-			ValueMask = 0;
-		}
-
-		Values[x + y * 8] = value;
-	}
-
-	uint8_t Get(int x, int y) const
-	{
-		if (IsSingleValue())
-			return ValueMask & 0xff;
-		else
-			return Values[x + y * 8];
-	}
-
-	void Clear(uint8_t value)
-	{
-		ValueMask = 0xffffff00 | (uint32_t)value;
-	}
-
-	bool IsSingleValue() const
-	{
-		return (ValueMask & 0xffffff00) == 0xffffff00;
-	}
-
-private:
-	uint8_t *Values;
-	uint32_t &ValueMask;
-};
-
 class PolySubsectorGBuffer
 {
 public:
@@ -193,8 +145,7 @@ public:
 		uint32_t *m = Masks();
 		for (int i = 0; i < count; i++)
 		{
-			PolyStencilBlock block(i, v, m);
-			block.Clear(stencil_value);
+			m[i] = 0xffffff00 | stencil_value;
 		}
 	}
 
@@ -208,28 +159,11 @@ public:
 private:
 	int width;
 	int height;
+
+	// 8x8 blocks of stencil values, plus a mask for each block indicating if values are the same for early out stencil testing
 	std::vector<uint8_t> values;
 	std::vector<uint32_t> masks;
 };
-
-#if 0
-class ScreenPolyTriangleDrawer
-{
-public:
-	static void draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
-	static void fill(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
-
-	static void stencil(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
-
-	static void draw32(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
-	static void drawsubsector32(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
-	static void fill32(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
-
-private:
-	static float gradx(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2);
-	static float grady(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2);
-};
-#endif
 
 class DrawPolyTrianglesCommand : public DrawerCommand
 {
@@ -244,5 +178,3 @@ private:
 	TriDrawVariant variant;
 	TriBlendMode blendmode;
 };
-
-#endif

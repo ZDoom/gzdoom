@@ -1559,6 +1559,29 @@ statement(X) ::= jump_statement(X).
 statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= local_var(A) SEMICOLON.			{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= error SEMICOLON.					{ X = NULL; }
+statement(X) ::= staticarray_statement(A).			{ X = A; /*X-overwrites-A*/ }
+
+/*----- Static array Statements -----*/
+
+%type staticarray_statement{ZCC_StaticArrayStatement *}
+
+staticarray_statement(X) ::= STATIC CONST type(A) IDENTIFIER(B) LBRACKET RBRACKET EQ LBRACE expr_list(C) RBRACE.
+{
+	NEW_AST_NODE(StaticArrayStatement, stmt, A);
+	stmt->Type = A;
+	stmt->Id = ENamedName(B.Int);
+	stmt->Values = C;
+	X = stmt;
+}
+
+staticarray_statement(X) ::= STATIC CONST type(A) LBRACKET RBRACKET IDENTIFIER(B)  EQ LBRACE expr_list(C) RBRACE.
+{
+	NEW_AST_NODE(StaticArrayStatement, stmt, A);
+	stmt->Type = A;
+	stmt->Id = ENamedName(B.Int);
+	stmt->Values = C;
+	X = stmt;
+}
 
 /*----- Jump Statements -----*/
 

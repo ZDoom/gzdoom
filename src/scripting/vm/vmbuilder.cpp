@@ -45,10 +45,6 @@
 
 VMFunctionBuilder::VMFunctionBuilder(int numimplicits)
 {
-	NumIntConstants = 0;
-	NumFloatConstants = 0;
-	NumAddressConstants = 0;
-	NumStringConstants = 0;
 	MaxParam = 0;
 	ActiveParam = 0;
 	NumImplicits = numimplicits;
@@ -74,25 +70,25 @@ VMFunctionBuilder::~VMFunctionBuilder()
 
 void VMFunctionBuilder::MakeFunction(VMScriptFunction *func)
 {
-	func->Alloc(Code.Size(), NumIntConstants, NumFloatConstants, NumStringConstants, NumAddressConstants);
+	func->Alloc(Code.Size(), IntConstantList.Size(), FloatConstantList.Size(), StringConstantList.Size(), AddressConstantList.Size());
 
 	// Copy code block.
 	memcpy(func->Code, &Code[0], Code.Size() * sizeof(VMOP));
 
 	// Create constant tables.
-	if (NumIntConstants > 0)
+	if (IntConstantList.Size() > 0)
 	{
 		FillIntConstants(func->KonstD);
 	}
-	if (NumFloatConstants > 0)
+	if (FloatConstantList.Size() > 0)
 	{
 		FillFloatConstants(func->KonstF);
 	}
-	if (NumAddressConstants > 0)
+	if (AddressConstantList.Size() > 0)
 	{
 		FillAddressConstants(func->KonstA, func->KonstATags());
 	}
-	if (NumStringConstants > 0)
+	if (StringConstantList.Size() > 0)
 	{
 		FillStringConstants(func->KonstS);
 	}
@@ -118,13 +114,7 @@ void VMFunctionBuilder::MakeFunction(VMScriptFunction *func)
 
 void VMFunctionBuilder::FillIntConstants(int *konst)
 {
-	TMapIterator<int, int> it(IntConstants);
-	TMap<int, int>::Pair *pair;
-
-	while (it.NextPair(pair))
-	{
-		konst[pair->Value] = pair->Key;
-	}
+	memcpy(konst, &IntConstantList[0], sizeof(int) * IntConstantList.Size());
 }
 
 //==========================================================================
@@ -135,13 +125,7 @@ void VMFunctionBuilder::FillIntConstants(int *konst)
 
 void VMFunctionBuilder::FillFloatConstants(double *konst)
 {
-	TMapIterator<double, int> it(FloatConstants);
-	TMap<double, int>::Pair *pair;
-
-	while (it.NextPair(pair))
-	{
-		konst[pair->Value] = pair->Key;
-	}
+	memcpy(konst, &FloatConstantList[0], sizeof(double) * FloatConstantList.Size());
 }
 
 //==========================================================================
@@ -152,14 +136,8 @@ void VMFunctionBuilder::FillFloatConstants(double *konst)
 
 void VMFunctionBuilder::FillAddressConstants(FVoidObj *konst, VM_ATAG *tags)
 {
-	TMapIterator<void *, AddrKonst> it(AddressConstants);
-	TMap<void *, AddrKonst>::Pair *pair;
-
-	while (it.NextPair(pair))
-	{
-		konst[pair->Value.KonstNum].v = pair->Key;
-		tags[pair->Value.KonstNum] = pair->Value.Tag;
-	}
+	memcpy(konst, &AddressConstantList[0], sizeof(void*) * AddressConstantList.Size());
+	memcpy(tags, &AtagConstantList[0], sizeof(VM_ATAG) * AtagConstantList.Size());
 }
 
 //==========================================================================
@@ -170,12 +148,9 @@ void VMFunctionBuilder::FillAddressConstants(FVoidObj *konst, VM_ATAG *tags)
 
 void VMFunctionBuilder::FillStringConstants(FString *konst)
 {
-	TMapIterator<FString, int> it(StringConstants);
-	TMap<FString, int>::Pair *pair;
-
-	while (it.NextPair(pair))
+	for (auto &s : StringConstantList)
 	{
-		konst[pair->Value] = pair->Key;
+		*konst++ = s;
 	}
 }
 
@@ -183,22 +158,21 @@ void VMFunctionBuilder::FillStringConstants(FString *konst)
 //
 // VMFunctionBuilder :: GetConstantInt
 //
-// Returns a constant register initialized with the given value, or -1 if
-// there were no more constants free.
+// Returns a constant register initialized with the given value.
 //
 //==========================================================================
 
-int VMFunctionBuilder::GetConstantInt(int val)
+unsigned VMFunctionBuilder::GetConstantInt(int val)
 {
-	int *locp = IntConstants.CheckKey(val);
+	unsigned int *locp = IntConstantMap.CheckKey(val);
 	if (locp != NULL)
 	{
 		return *locp;
 	}
 	else
 	{
-		int loc = NumIntConstants++;
-		IntConstants.Insert(val, loc);
+		unsigned loc = IntConstantList.Push(val);
+		IntConstantMap.Insert(val, loc);
 		return loc;
 	}
 }
@@ -207,22 +181,21 @@ int VMFunctionBuilder::GetConstantInt(int val)
 //
 // VMFunctionBuilder :: GetConstantFloat
 //
-// Returns a constant register initialized with the given value, or -1 if
-// there were no more constants free.
+// Returns a constant register initialized with the given value.
 //
 //==========================================================================
 
-int VMFunctionBuilder::GetConstantFloat(double val)
+unsigned VMFunctionBuilder::GetConstantFloat(double val)
 {
-	int *locp = FloatConstants.CheckKey(val);
+	unsigned *locp = FloatConstantMap.CheckKey(val);
 	if (locp != NULL)
 	{
 		return *locp;
 	}
 	else
 	{
-		int loc = NumFloatConstants++;
-		FloatConstants.Insert(val, loc);
+		unsigned loc = FloatConstantList.Push(val);
+		FloatConstantMap.Insert(val, loc);
 		return loc;
 	}
 }
@@ -231,22 +204,21 @@ int VMFunctionBuilder::GetConstantFloat(double val)
 //
 // VMFunctionBuilder :: GetConstantString
 //
-// Returns a constant register initialized with the given value, or -1 if
-// there were no more constants free.
+// Returns a constant register initialized with the given value.
 //
 //==========================================================================
 
-int VMFunctionBuilder::GetConstantString(FString val)
+unsigned VMFunctionBuilder::GetConstantString(FString val)
 {
-	int *locp = StringConstants.CheckKey(val);
+	unsigned *locp = StringConstantMap.CheckKey(val);
 	if (locp != NULL)
 	{
 		return *locp;
 	}
 	else
 	{
-		int loc = NumStringConstants++;
-		StringConstants.Insert(val, loc);
+		int loc = StringConstantList.Push(val);
+		StringConstantMap.Insert(val, loc);
 		return loc;
 	}
 }
@@ -260,13 +232,13 @@ int VMFunctionBuilder::GetConstantString(FString val)
 //
 //==========================================================================
 
-int VMFunctionBuilder::GetConstantAddress(void *ptr, VM_ATAG tag)
+unsigned VMFunctionBuilder::GetConstantAddress(void *ptr, VM_ATAG tag)
 {
 	if (ptr == NULL)
 	{ // Make all NULL pointers generic. (Or should we allow typed NULLs?)
 		tag = ATAG_GENERIC;
 	}
-	AddrKonst *locp = AddressConstants.CheckKey(ptr);
+	AddrKonst *locp = AddressConstantMap.CheckKey(ptr);
 	if (locp != NULL)
 	{
 		// There should only be one tag associated with a memory location.
@@ -275,11 +247,70 @@ int VMFunctionBuilder::GetConstantAddress(void *ptr, VM_ATAG tag)
 	}
 	else
 	{
-		AddrKonst loc = { NumAddressConstants++, tag };
-		AddressConstants.Insert(ptr, loc);
+		unsigned locc = AddressConstantList.Push(ptr);
+		AtagConstantList.Push(tag);
+
+		AddrKonst loc = { locc, tag };
+		AddressConstantMap.Insert(ptr, loc);
 		return loc.KonstNum;
 	}
 }
+
+//==========================================================================
+//
+// VMFunctionBuilder :: AllocConstants*
+//
+// Returns a range of constant register initialized with the given values.
+//
+//==========================================================================
+
+unsigned VMFunctionBuilder::AllocConstantsInt(unsigned count, int *values)
+{
+	unsigned addr = IntConstantList.Reserve(count);
+	memcpy(&IntConstantList[addr], values, count * sizeof(int));
+	for (unsigned i = 0; i < count; i++)
+	{
+		IntConstantMap.Insert(values[i], addr + i);
+	}
+	return addr;
+}
+
+unsigned VMFunctionBuilder::AllocConstantsFloat(unsigned count, double *values)
+{
+	unsigned addr = FloatConstantList.Reserve(count);
+	memcpy(&FloatConstantList[addr], values, count * sizeof(double));
+	for (unsigned i = 0; i < count; i++)
+	{
+		FloatConstantMap.Insert(values[i], addr + i);
+	}
+	return addr;
+}
+
+unsigned VMFunctionBuilder::AllocConstantsAddress(unsigned count, void **ptrs, VM_ATAG tag)
+{
+	unsigned addr = AddressConstantList.Reserve(count);
+	AtagConstantList.Reserve(count);
+	memcpy(&AddressConstantList[addr], ptrs, count * sizeof(void *));
+	for (unsigned i = 0; i < count; i++)
+	{
+		AtagConstantList[addr + i] = tag;
+		AddrKonst loc = { addr+i, tag };
+		AddressConstantMap.Insert(ptrs[i], loc);
+	}
+	return addr;
+}
+
+unsigned VMFunctionBuilder::AllocConstantsString(unsigned count, FString *ptrs)
+{
+	unsigned addr = StringConstantList.Reserve(count);
+	for (unsigned i = 0; i < count; i++)
+	{
+		StringConstantList[addr + i] = ptrs[i];
+		StringConstantMap.Insert(ptrs[i], addr + i);
+	}
+	return addr;
+}
+
 
 //==========================================================================
 //

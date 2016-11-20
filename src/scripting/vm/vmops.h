@@ -10,6 +10,10 @@ xx(LK,		lk,		LKI),		// load integer constant
 xx(LKF,		lk,		LKF),		// load float constant
 xx(LKS,		lk,		LKS),		// load string constant
 xx(LKP,		lk,		LKP),		// load pointer constant
+xx(LK_R,	lk,		RIRII8),		// load integer constant indexed
+xx(LKF_R,	lk,		RFRII8),		// load float constant indexed
+xx(LKS_R,	lk,		RSRII8),		// load string constant indexed
+xx(LKP_R,	lk,		RPRII8),		// load pointer constant indexed
 xx(LFP,		lf,		LFP),		// load frame pointer
 
 // Load from memory. rA = *(rB + rkC)

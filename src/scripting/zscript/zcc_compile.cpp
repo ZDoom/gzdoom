@@ -2826,6 +2826,15 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		return new FxClassPtrCast(cls, ConvertNode(cc->Parameters));
 	}
 
+	case AST_StaticArrayStatement:
+	{
+		auto sas = static_cast<ZCC_StaticArrayStatement *>(ast);
+		PType *ztype = DetermineType(ConvertClass, sas, sas->Id, sas->Type, false, false);
+		FArgumentList args;
+		ConvertNodeList(args, sas->Values);
+		// This has to let the code generator resolve the constants, not the Simplifier, which lacks all the necessary type info.
+		return new FxStaticArray(ztype, sas->Id, args, *ast);
+	}
 
 	case AST_ExprMemberAccess:
 	{

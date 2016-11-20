@@ -5402,7 +5402,13 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 	FxLocalVariableDeclaration *local = ctx.FindLocalVariable(Identifier);
 	if (local != nullptr)
 	{
-		if (local->ValueType->GetRegType() != REGT_NIL)
+		if (local->ExprType == EFX_StaticArray)
+		{
+			auto x = new FxStaticArrayVariable(local, ScriptPosition);
+			delete this;
+			return x->Resolve(ctx);
+		}
+		else if (local->ValueType->GetRegType() != REGT_NIL)
 		{
 			auto x = new FxLocalVariable(local, ScriptPosition);
 			delete this;
@@ -5692,6 +5698,38 @@ ExpEmit FxLocalVariable::Emit(VMFunctionBuilder *build)
 	return ret;
 }
 
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxStaticArrayVariable::FxStaticArrayVariable(FxLocalVariableDeclaration *var, const FScriptPosition &sc)
+	: FxExpression(EFX_StaticArrayVariable, sc)
+{
+	Variable = static_cast<FxStaticArray*>(var);
+	ValueType = Variable->ValueType;
+}
+
+FxExpression *FxStaticArrayVariable::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	return this;
+}
+
+bool FxStaticArrayVariable::RequestAddress(FCompileContext &ctx, bool *writable)
+{
+	AddressRequested = true;
+	if (writable != nullptr) *writable = false;
+	return true;
+}
+
+ExpEmit FxStaticArrayVariable::Emit(VMFunctionBuilder *build)
+{
+	// returns the first const register for this array
+	return ExpEmit(Variable->StackOffset, Variable->ElementType->GetRegType(), true, false);
+}
 
 
 //==========================================================================
@@ -6357,6 +6395,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	ExpEmit start = Array->Emit(build);
 	PArray *const arraytype = static_cast<PArray*>(Array->ValueType);
 
+	/* what was this for?
 	if (start.Konst)
 	{
 		ExpEmit tmpstart(build, REGT_POINTER);
@@ -6364,16 +6403,17 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 		start.Free(build);
 		start = tmpstart;
 	}
+	*/
 	if (index->isConstant())
 	{
 		unsigned indexval = static_cast<FxConstant *>(index)->GetValue().GetInt();
 		assert(indexval < arraytype->ElementCount && "Array index out of bounds");
-		indexval *= arraytype->ElementSize;
 
 		if (AddressRequested)
 		{
 			if (indexval != 0)
 			{
+				indexval *= arraytype->ElementSize;
 				if (!start.Fixed)
 				{
 					build->Emit(OP_ADDA_RK, start.RegNum, start.RegNum, build->GetConstantInt(indexval));
@@ -6389,61 +6429,90 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 			}
 			return start;
 		}
-		else
+		else if (!start.Konst)
 		{
 			start.Free(build);
 			ExpEmit dest(build, ValueType->GetRegType());
-			build->Emit(arraytype->ElementType->GetLoadOp(), dest.RegNum, start.RegNum, build->GetConstantInt(indexval));
+			build->Emit(arraytype->ElementType->GetLoadOp(), dest.RegNum, start.RegNum, build->GetConstantInt(indexval* arraytype->ElementSize));
+			return dest;
+		}
+		else
+		{
+			static int LK_Ops[] = { OP_LK, OP_LKF, OP_LKS, OP_LKP };
+			assert(start.RegType == ValueType->GetRegType());
+			ExpEmit dest(build, start.RegType);
+			build->Emit(LK_Ops[start.RegType], dest.RegNum, start.RegNum + indexval);
 			return dest;
 		}
 	}
 	else
 	{
 		ExpEmit indexv(index->Emit(build));
-		ExpEmit indexwork = indexv.Fixed ? ExpEmit(build, indexv.RegType) : indexv;
 		build->Emit(OP_BOUND, indexv.RegNum, arraytype->ElementCount);
 
-		int shiftbits = 0;
-		while (1u << shiftbits < arraytype->ElementSize)
-		{ 
-			shiftbits++;
-		}
-		if (1u << shiftbits == arraytype->ElementSize)
+		if (!start.Konst)
 		{
-			if (shiftbits > 0)
+			ExpEmit indexwork = indexv.Fixed ? ExpEmit(build, indexv.RegType) : indexv;
+			int shiftbits = 0;
+			while (1u << shiftbits < arraytype->ElementSize)
 			{
-				build->Emit(OP_SLL_RI, indexwork.RegNum, indexv.RegNum, shiftbits);
+				shiftbits++;
 			}
-		}
-		else
-		{
-			// A shift won't do, so use a multiplication
-			build->Emit(OP_MUL_RK, indexwork.RegNum, indexv.RegNum, build->GetConstantInt(arraytype->ElementSize));
-		}
-
-		indexwork.Free(build);
-		if (AddressRequested)
-		{
-			if (!start.Fixed)
+			if (1u << shiftbits == arraytype->ElementSize)
 			{
-				build->Emit(OP_ADDA_RR, start.RegNum, start.RegNum, indexwork.RegNum);
+				if (shiftbits > 0)
+				{
+					build->Emit(OP_SLL_RI, indexwork.RegNum, indexv.RegNum, shiftbits);
+				}
+			}
+			else
+			{
+				// A shift won't do, so use a multiplication
+				build->Emit(OP_MUL_RK, indexwork.RegNum, indexv.RegNum, build->GetConstantInt(arraytype->ElementSize));
+			}
+			indexwork.Free(build);
+
+			if (AddressRequested)
+			{
+				if (!start.Fixed)
+				{
+					build->Emit(OP_ADDA_RR, start.RegNum, start.RegNum, indexwork.RegNum);
+				}
+				else
+				{
+					start.Free(build);
+					// do not clobber local variables.
+					ExpEmit temp(build, start.RegType);
+					build->Emit(OP_ADDA_RR, temp.RegNum, start.RegNum, indexwork.RegNum);
+					start = temp;
+				}
+				return start;
 			}
 			else
 			{
 				start.Free(build);
-				// do not clobber local variables.
-				ExpEmit temp(build, start.RegType);
-				build->Emit(OP_ADDA_RR, temp.RegNum, start.RegNum, indexwork.RegNum);
-				start = temp;
+				ExpEmit dest(build, ValueType->GetRegType());
+				// added 1 to use the *_R version that takes the offset from a register
+				build->Emit(arraytype->ElementType->GetLoadOp() + 1, dest.RegNum, start.RegNum, indexwork.RegNum);
+				return dest;
 			}
-			return start;
 		}
 		else
 		{
-			start.Free(build);
-			ExpEmit dest(build, ValueType->GetRegType());
-			// added 1 to use the *_R version that takes the offset from a register
-			build->Emit(arraytype->ElementType->GetLoadOp() + 1, dest.RegNum, start.RegNum, indexwork.RegNum);
+			static int LKR_Ops[] = { OP_LK_R, OP_LKF_R, OP_LKS_R, OP_LKP_R };
+			assert(start.RegType == ValueType->GetRegType());
+			ExpEmit dest(build, start.RegType);
+			if (start.RegNum <= 255)
+			{
+				// Since large constant tables are the exception, the constant component in C is an immediate value here.
+				build->Emit(LKR_Ops[start.RegType], dest.RegNum, indexv.RegNum, start.RegNum);
+			}
+			else
+			{
+				build->Emit(OP_ADD_RK, indexv.RegNum, indexv.RegNum, build->GetConstantInt(start.RegNum));
+				build->Emit(LKR_Ops[start.RegType], dest.RegNum, indexv.RegNum, 0);
+			}
+			indexv.Free(build);
 			return dest;
 		}
 	}
@@ -9240,4 +9309,83 @@ void FxLocalVariableDeclaration::Release(VMFunctionBuilder *build)
 	}
 	// Stack space will not be released because that would make controlled destruction impossible.
 	// For that all local stack variables need to live for the entire execution of a function.
+}
+
+
+FxStaticArray::FxStaticArray(PType *type, FName name, FArgumentList &args, const FScriptPosition &pos)
+	: FxLocalVariableDeclaration(NewArray(type, args.Size()), name, nullptr, VARF_Static|VARF_ReadOnly, pos)
+{
+	ElementType = type;
+	ExprType = EFX_StaticArray;
+	values = std::move(args);
+}
+
+FxExpression *FxStaticArray::Resolve(FCompileContext &ctx)
+{
+	bool fail = false;
+	for (unsigned i = 0; i < values.Size(); i++)
+	{
+		values[i] = new FxTypeCast(values[i], ElementType, false);
+		values[i] = values[i]->Resolve(ctx);
+		if (values[i] == nullptr) fail = true;
+		else if (!values[i]->isConstant())
+		{
+			ScriptPosition.Message(MSG_ERROR, "Initializer must be constant");
+			fail = true;
+		}
+	}
+	if (fail)
+	{
+		delete this;
+		return nullptr;
+	}
+	if (ElementType->GetRegType() == REGT_NIL)
+	{
+		ScriptPosition.Message(MSG_ERROR, "Invalid type for constant array");
+		delete this;
+		return nullptr;
+	}
+
+	ctx.Block->LocalVars.Push(this);
+	return this;
+}
+
+ExpEmit FxStaticArray::Emit(VMFunctionBuilder *build)
+{
+	switch (ElementType->GetRegType())
+	{
+	default:
+		assert(false && "Invalid register type");
+		break;
+
+	case REGT_INT:
+	{
+		TArray<int> cvalues;
+		for (auto v : values) cvalues.Push(static_cast<FxConstant *>(v)->GetValue().GetInt());
+		StackOffset = build->AllocConstantsInt(cvalues.Size(), &cvalues[0]);
+		break;
+	}
+	case REGT_FLOAT:
+	{
+		TArray<double> cvalues;
+		for (auto v : values) cvalues.Push(static_cast<FxConstant *>(v)->GetValue().GetFloat());
+		StackOffset = build->AllocConstantsFloat(cvalues.Size(), &cvalues[0]);
+		break;
+	}
+	case REGT_STRING:
+	{
+		TArray<FString> cvalues;
+		for (auto v : values) cvalues.Push(static_cast<FxConstant *>(v)->GetValue().GetString());
+		StackOffset = build->AllocConstantsString(cvalues.Size(), &cvalues[0]);
+		break;
+	}
+	case REGT_POINTER:
+	{
+		TArray<void*> cvalues;
+		for (auto v : values) cvalues.Push(static_cast<FxConstant *>(v)->GetValue().GetPointer());
+		StackOffset = build->AllocConstantsAddress(cvalues.Size(), &cvalues[0], ElementType->GetLoadOp() == OP_LO ? ATAG_OBJECT : ATAG_GENERIC);
+		break;
+	}
+	}
+	return ExpEmit();
 }

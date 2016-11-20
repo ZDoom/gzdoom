@@ -84,6 +84,26 @@ begin:
 		reg.a[a] = konsta[BC].v;
 		reg.atag[a] = konstatag[BC];
 		NEXTOP;
+
+	OP(LK_R) :
+		ASSERTD(a); ASSERTD(B);
+		reg.d[a] = konstd[reg.d[B] + C];
+		NEXTOP;
+	OP(LKF_R) :
+		ASSERTF(a); ASSERTD(B);
+		reg.f[a] = konstf[reg.d[B] + C];
+		NEXTOP;
+	OP(LKS_R) :
+		ASSERTS(a); ASSERTD(B);
+		reg.s[a] = konsts[reg.d[B] + C];
+		NEXTOP;
+	OP(LKP_R) :
+		ASSERTA(a); ASSERTD(B);
+		b = reg.d[B] + C;
+		reg.a[a] = konsta[b].v;
+		reg.atag[a] = konstatag[b];
+		NEXTOP;
+
 	OP(LFP):
 		ASSERTA(a); assert(sfunc != NULL); assert(sfunc->ExtraSpace > 0);
 		reg.a[a] = f->GetExtra();

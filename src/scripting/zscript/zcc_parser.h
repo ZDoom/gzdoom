@@ -103,6 +103,7 @@ enum EZCCTreeNodeType
 	AST_VectorValue,
 	AST_DeclFlags,
 	AST_ClassCast,
+	AST_StaticArrayStatement,
 
 	NUM_AST_NODE_TYPES
 };
@@ -404,6 +405,13 @@ struct ZCC_VectorValue : ZCC_Expression
 
 struct ZCC_Statement : ZCC_TreeNode
 {
+};
+
+struct ZCC_StaticArrayStatement : ZCC_Statement
+{
+	ZCC_Type *Type;
+	ENamedName Id;
+	ZCC_Expression *Values;
 };
 
 struct ZCC_CompoundStmt : ZCC_Statement

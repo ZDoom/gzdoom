@@ -282,6 +282,8 @@ enum EFxType
 	EFX_Super,
 	EFX_StackVariable,
 	EFX_MultiAssign,
+	EFX_StaticArray,
+	EFX_StaticArrayVariable,
 	EFX_COUNT
 };
 
@@ -1310,6 +1312,25 @@ public:
 
 //==========================================================================
 //
+//	FxLocalVariable
+//
+//==========================================================================
+class FxStaticArray;
+
+class FxStaticArrayVariable : public FxExpression
+{
+public:
+	FxStaticArray *Variable;
+	bool AddressRequested;
+
+	FxStaticArrayVariable(FxLocalVariableDeclaration*, const FScriptPosition&);
+	FxExpression *Resolve(FCompileContext&);
+	bool RequestAddress(FCompileContext &ctx, bool *writable);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
 //	FxSelf
 //
 //==========================================================================
@@ -1529,6 +1550,7 @@ class FxCompoundStatement : public FxSequence
 	FxCompoundStatement *Outer = nullptr;
 
 	friend class FxLocalVariableDeclaration;
+	friend class FxStaticArray;
 	friend class FxMultiAssign;
 
 public:
@@ -1841,6 +1863,7 @@ class FxLocalVariableDeclaration : public FxExpression
 {
 	friend class FxCompoundStatement;
 	friend class FxLocalVariable;
+	friend class FxStaticArrayVariable;
 
 	FName Name;
 	FxExpression *Init;
@@ -1858,5 +1881,26 @@ public:
 	void SetReg(ExpEmit reginfo);
 
 };
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxStaticArray : public FxLocalVariableDeclaration
+{
+	friend class FxStaticArrayVariable;
+
+	PType *ElementType;
+	FArgumentList values;
+
+public:
+
+	FxStaticArray(PType *type, FName name, FArgumentList &args, const FScriptPosition &pos);
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
 
 #endif

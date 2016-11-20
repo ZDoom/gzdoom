@@ -42,10 +42,16 @@ public:
 	void MakeFunction(VMScriptFunction *func);
 
 	// Returns the constant register holding the value.
-	int GetConstantInt(int val);
-	int GetConstantFloat(double val);
-	int GetConstantAddress(void *ptr, VM_ATAG tag);
-	int GetConstantString(FString str);
+	unsigned GetConstantInt(int val);
+	unsigned GetConstantFloat(double val);
+	unsigned GetConstantAddress(void *ptr, VM_ATAG tag);
+	unsigned GetConstantString(FString str);
+
+	unsigned AllocConstantsInt(unsigned int count, int *values);
+	unsigned AllocConstantsFloat(unsigned int count, double *values);
+	unsigned AllocConstantsAddress(unsigned int count, void **ptrs, VM_ATAG tag);
+	unsigned AllocConstantsString(unsigned int count, FString *ptrs);
+
 
 	// Returns the address of the next instruction to be emitted.
 	size_t GetAddress();
@@ -82,19 +88,20 @@ public:
 private:
 	struct AddrKonst
 	{
-		int KonstNum;
+		unsigned KonstNum;
 		VM_ATAG Tag;
 	};
-	// These map from the constant value to its position in the constant table.
-	TMap<int, int> IntConstants;
-	TMap<double, int> FloatConstants;
-	TMap<void *, AddrKonst> AddressConstants;
-	TMap<FString, int> StringConstants;
 
-	int NumIntConstants;
-	int NumFloatConstants;
-	int NumAddressConstants;
-	int NumStringConstants;
+	TArray<int> IntConstantList;
+	TArray<double> FloatConstantList;
+	TArray<void *> AddressConstantList;
+	TArray<VM_ATAG> AtagConstantList;
+	TArray<FString> StringConstantList;
+	// These map from the constant value to its position in the constant table.
+	TMap<int, unsigned> IntConstantMap;
+	TMap<double, unsigned> FloatConstantMap;
+	TMap<void *, AddrKonst> AddressConstantMap;
+	TMap<FString, unsigned> StringConstantMap;
 
 	int MaxParam;
 	int ActiveParam;

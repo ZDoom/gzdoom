@@ -595,6 +595,16 @@ static void PrintExprClassCast(FLispString &out, ZCC_TreeNode *node)
 	out.Close();
 }
 
+static void PrintStaticArray(FLispString &out, ZCC_TreeNode *node)
+{
+	ZCC_StaticArrayStatement *enode = (ZCC_StaticArrayStatement *)node;
+	out.Open("static-array-stmt");
+	PrintNodes(out, enode->Type, false);
+	out.AddName(enode->Id);
+	PrintNodes(out, enode->Values, false);
+	out.Close();
+}
+
 static void PrintExprMemberAccess(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ExprMemberAccess *enode = (ZCC_ExprMemberAccess *)node;

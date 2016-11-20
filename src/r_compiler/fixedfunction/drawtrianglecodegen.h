@@ -49,8 +49,13 @@ private:
 	SSAVec4i ProcessPixel32(SSAVec4i bg, SSAInt *varying);
 	SSAInt ProcessPixel8(SSAInt bg, SSAInt *varying);
 
-	SSAVec4i TranslateSample(SSAInt uvoffset);
-	SSAVec4i Sample(SSAInt uvoffset);
+	SSAVec4i TranslateSample32(SSAInt uvoffset);
+	SSAInt TranslateSample8(SSAInt uvoffset);
+	SSAVec4i Sample32(SSAInt uvoffset);
+	SSAInt Sample8(SSAInt uvoffset);
+	SSAInt Shade8(SSAInt c);
+	SSAVec4i ToBgra(SSAInt index);
+	SSAInt ToPal8(SSAVec4i c);
 
 	void SetStencilBlock(SSAInt block);
 	void StencilSet(SSAInt x, SSAInt y, SSAUByte value);
@@ -109,9 +114,7 @@ private:
 
 	SSAUBytePtr Colormaps;
 	SSAUBytePtr RGB32k;
-	SSAIntPtr Col2RGB8;
-	SSAIntPtr Col2RGB8_LessPrecision;
-	SSAIntPtr Col2RGB8_Inverse;
+	SSAUBytePtr BaseColors;
 
 	SSAWorkerThread thread;
 

@@ -260,9 +260,7 @@ struct TriDrawTriangleArgs
 	uint32_t *subsectorGBuffer;
 	const uint8_t *colormaps;
 	const uint8_t *RGB32k;
-	const uint32_t *Col2RGB8;
-	const uint32_t *Col2RGB8_LessPrecision;
-	const uint32_t *Col2RGB8_Inverse;
+	const uint8_t *BaseColors;
 };
 
 enum class TriDrawVariant

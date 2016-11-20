@@ -112,9 +112,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 	args.subsectorGBuffer = PolySubsectorGBuffer::Instance()->Values();
 	args.colormaps = drawargs.colormaps;
 	args.RGB32k = RGB32k.All;
-	args.Col2RGB8 = (const uint32_t*)Col2RGB8;
-	args.Col2RGB8_Inverse = (const uint32_t*)Col2RGB8_Inverse;
-	args.Col2RGB8_LessPrecision = (const uint32_t*)Col2RGB8_LessPrecision;
+	args.BaseColors = (const uint8_t *)GPalette.BaseColors;
 
 	bool ccw = drawargs.ccw;
 	const TriVertex *vinput = drawargs.vinput;

@@ -82,8 +82,18 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, particle_t *partic
 		uniforms.flags = 0;
 	}
 	uniforms.subsectorDepth = subsectorDepth;
-	uint32_t alpha = particle->trans;
-	uniforms.color = (alpha << 24) | (particle->color & 0xffffff);
+
+	if (r_swtruecolor)
+	{
+		uint32_t alpha = particle->trans;
+		uniforms.color = (alpha << 24) | (particle->color & 0xffffff);
+	}
+	else
+	{
+		uniforms.color = ((uint32_t)particle->color) >> 24;
+		uniforms.srcalpha = particle->trans;
+		uniforms.destalpha = 255 - particle->trans;
+	}
 
 	PolyDrawArgs args;
 	args.uniforms = uniforms;

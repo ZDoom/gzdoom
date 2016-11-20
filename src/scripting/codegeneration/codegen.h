@@ -284,6 +284,7 @@ enum EFxType
 	EFX_MultiAssign,
 	EFX_StaticArray,
 	EFX_StaticArrayVariable,
+	EFX_CVar,
 	EFX_COUNT
 };
 
@@ -1233,6 +1234,15 @@ public:
 	FxGlobalVariable(PField*, const FScriptPosition&);
 	FxExpression *Resolve(FCompileContext&);
 	bool RequestAddress(FCompileContext &ctx, bool *writable);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+class FxCVar : public FxExpression
+{
+	FBaseCVar *CVar;
+public:
+	FxCVar(FBaseCVar*, const FScriptPosition&);
+	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 

@@ -1993,7 +1993,7 @@ ExpEmit FxPreIncrDecr::Emit(VMFunctionBuilder *build)
 
 	if (regtype == REGT_INT)
 	{
-		build->Emit((Token == TK_Incr) ? OP_ADD_RK : OP_SUB_RK, value.RegNum, value.RegNum, build->GetConstantInt(1));
+		build->Emit(OP_ADDI, value.RegNum, value.RegNum, (Token == TK_Incr) ? 1 : -1);
 	}
 	else
 	{
@@ -2077,7 +2077,7 @@ ExpEmit FxPostIncrDecr::Emit(VMFunctionBuilder *build)
 		ExpEmit assign(build, regtype);
 		if (regtype == REGT_INT)
 		{
-			build->Emit((Token == TK_Incr) ? OP_ADD_RK : OP_SUB_RK, assign.RegNum, out.RegNum, build->GetConstantInt(1));
+			build->Emit(OP_ADDI, assign.RegNum, out.RegNum, (Token == TK_Incr) ? 1 : -1);
 		}
 		else
 		{
@@ -2094,7 +2094,7 @@ ExpEmit FxPostIncrDecr::Emit(VMFunctionBuilder *build)
 		if (regtype == REGT_INT)
 		{
 			build->Emit(OP_MOVE, out.RegNum, pointer.RegNum);
-			build->Emit((Token == TK_Incr) ? OP_ADD_RK : OP_SUB_RK, pointer.RegNum, pointer.RegNum, build->GetConstantInt(1));
+			build->Emit(OP_ADDI, pointer.RegNum, pointer.RegNum, (Token == TK_Incr) ? 1 : -1);
 		}
 		else
 		{
@@ -2108,7 +2108,7 @@ ExpEmit FxPostIncrDecr::Emit(VMFunctionBuilder *build)
 	{
 		if (regtype == REGT_INT)
 		{
-			build->Emit((Token == TK_Incr) ? OP_ADD_RK : OP_SUB_RK, pointer.RegNum, pointer.RegNum, build->GetConstantInt(1));
+			build->Emit(OP_ADDI, pointer.RegNum, pointer.RegNum, (Token == TK_Incr) ? 1 : -1);
 		}
 		else
 		{
@@ -5526,6 +5526,18 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as line special %d\n", Identifier.GetChars(), num);
 		newex = new FxConstant(num, ScriptPosition);
 	}
+
+	auto cvar = FindCVar(Identifier.GetChars(), nullptr);
+	if (cvar != nullptr)
+	{
+		if (cvar->GetFlags() & CVAR_USERINFO)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Cannot access userinfo CVARs directly. Use GetCVar() instead.");
+			delete this;
+			return nullptr;
+		}
+		newex = new FxCVar(cvar, ScriptPosition);
+	}
 	
 	if (newex == nullptr)
 	{
@@ -5953,6 +5965,114 @@ ExpEmit FxGlobalVariable::Emit(VMFunctionBuilder *build)
 	}
 	obj.Free(build);
 	return loc;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxCVar::FxCVar(FBaseCVar *cvar, const FScriptPosition &pos)
+	: FxExpression(EFX_CVar, pos)
+{
+	CVar = cvar;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxCVar::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	switch (CVar->GetRealType())
+	{
+	case CVAR_Bool:
+	case CVAR_DummyBool:
+		ValueType = TypeBool;
+		break;
+
+	case CVAR_Int:
+	case CVAR_DummyInt:
+		ValueType = TypeSInt32;
+		break;
+
+	case CVAR_Color:
+		ValueType = TypeColor;
+		break;
+
+	case CVAR_Float:
+		ValueType = TypeFloat64;
+		break;
+
+	case CVAR_String:
+		ValueType = TypeString;
+		break;
+
+	default:
+		ScriptPosition.Message(MSG_ERROR, "Unknown CVar type for %s", CVar->GetName());
+		delete this;
+		return nullptr;
+	}
+	return this;
+}
+
+ExpEmit FxCVar::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit dest(build, ValueType->GetRegType());
+	ExpEmit addr(build, REGT_POINTER);
+	int nul = build->GetConstantInt(0);
+	switch (CVar->GetRealType())
+	{
+	case CVAR_Int:
+		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FIntCVar *>(CVar)->Value, ATAG_GENERIC));
+		build->Emit(OP_LW, dest.RegNum, addr.RegNum, nul);
+		break;
+
+	case CVAR_Color:
+		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FColorCVar *>(CVar)->Value, ATAG_GENERIC));
+		build->Emit(OP_LW, dest.RegNum, addr.RegNum, nul);
+		break;
+
+	case CVAR_Float:
+		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FFloatCVar *>(CVar)->Value, ATAG_GENERIC));
+		build->Emit(OP_LSP, dest.RegNum, addr.RegNum, nul);
+		break;
+
+	case CVAR_Bool:
+		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FBoolCVar *>(CVar)->Value, ATAG_GENERIC));
+		build->Emit(OP_LBU, dest.RegNum, addr.RegNum, nul);
+		break;
+
+	case CVAR_String:
+		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FStringCVar *>(CVar)->Value, ATAG_GENERIC));
+		build->Emit(OP_LS, dest.RegNum, addr.RegNum, nul);
+		break;
+
+	case CVAR_DummyBool:
+		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FFlagCVar *>(CVar)->ValueVar.Value, ATAG_GENERIC));
+		build->Emit(OP_LBIT, dest.RegNum, addr.RegNum, static_cast<FFlagCVar *>(CVar)->BitNum);
+		break;
+
+	case CVAR_DummyInt:
+	{
+		auto cv = static_cast<FMaskCVar *>(CVar);
+		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&cv->ValueVar.Value, ATAG_GENERIC));
+		build->Emit(OP_LW, dest.RegNum, addr.RegNum, nul);
+		build->Emit(OP_AND_RK, dest.RegNum, dest.RegNum, build->GetConstantInt(cv->BitVal));
+		build->Emit(OP_SRL_RI, dest.RegNum, dest.RegNum, cv->BitNum);
+		break;
+	}
+
+	default:
+		assert(false && "Unsupported CVar type");
+		break;
+	}
+	return dest;
 }
 
 

@@ -1426,19 +1426,31 @@ begin:
 		ASSERTF(a+2); ASSERTF(B+2); ASSERTF(C);
 		fc = reg.f[C];
 		fbp = &reg.f[B];
+	Do_MULV3:
 		reg.f[a] = fbp[0] * fc;
 		reg.f[a+1] = fbp[1] * fc;
 		reg.f[a+2] = fbp[2] * fc;
 		NEXTOP;
+	OP(MULVF3_RK):
+		ASSERTF(a+2); ASSERTF(B+2); ASSERTKF(C);
+		fc = konstf[C];
+		fbp = &reg.f[B];
+		goto Do_MULV3;
 
-		OP(DIVVF3_RR):
+	OP(DIVVF3_RR):
 		ASSERTF(a+2); ASSERTF(B+2); ASSERTF(C);
 		fc = reg.f[C];
 		fbp = &reg.f[B];
+	Do_DIVV3:
 		reg.f[a] = fbp[0] / fc;
 		reg.f[a+1] = fbp[1] / fc;
 		reg.f[a+2] = fbp[2] / fc;
 		NEXTOP;
+	OP(DIVVF3_RK):
+		ASSERTF(a+2); ASSERTF(B+2); ASSERTKF(C);
+		fc = konstf[C];
+		fbp = &reg.f[B];
+		goto Do_DIVV3;
 
 	OP(LENV3):
 		ASSERTF(a); ASSERTF(B+2);

@@ -58,11 +58,9 @@ class Demon1 : Actor
 		DEMN H 6;
 		DEMN I 6
 		{
-			A_SpawnItemEx("Demon1Chunk1", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle+90), frandom[DemonChunks](1,4.984375)*sin(Angle+90), 8, 90, ChunkFlags);
-			A_SpawnItemEx("Demon1Chunk2", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle-90), frandom[DemonChunks](1,4.984375)*sin(Angle-90), 8, 270, ChunkFlags);
-			A_SpawnItemEx("Demon1Chunk3", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle-90), frandom[DemonChunks](1,4.984375)*sin(Angle-90), 8, 270, ChunkFlags);
-			A_SpawnItemEx("Demon1Chunk4", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle-90), frandom[DemonChunks](1,4.984375)*sin(Angle-90), 8, 270, ChunkFlags);
-			A_SpawnItemEx("Demon1Chunk5", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle-90), frandom[DemonChunks](1,4.984375)*sin(Angle-90), 8, 270, ChunkFlags);
+			static const class<Actor> chunks[] = { "Demon1Chunk1", "Demon1Chunk2", "Demon1Chunk3", "Demon1Chunk4", "Demon1Chunk5" };
+			for(int i = 0; i < 5; i++)
+				A_SpawnItemEx(chunks[i], 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle+90), frandom[DemonChunks](1,4.984375)*sin(Angle+90), 8, 90, ChunkFlags);
 		}
 		Goto Death+2;
 	Ice:
@@ -266,11 +264,9 @@ class Demon2 : Demon1
 		DEM2 H 6;
 		DEM2 I 6
 		{
-			A_SpawnItemEx("Demon2Chunk1", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle+90), frandom[DemonChunks](1,4.984375)*sin(Angle+90), 8, 90, ChunkFlags);
-			A_SpawnItemEx("Demon2Chunk2", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle-90), frandom[DemonChunks](1,4.984375)*sin(Angle-90), 8, 270, ChunkFlags);
-			A_SpawnItemEx("Demon2Chunk3", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle-90), frandom[DemonChunks](1,4.984375)*sin(Angle-90), 8, 270, ChunkFlags);
-			A_SpawnItemEx("Demon2Chunk4", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle-90), frandom[DemonChunks](1,4.984375)*sin(Angle-90), 8, 270, ChunkFlags);
-			A_SpawnItemEx("Demon2Chunk5", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle-90), frandom[DemonChunks](1,4.984375)*sin(Angle-90), 8, 270, ChunkFlags);
+			static const class<Actor> chunks[] = { "Demon2Chunk1", "Demon2Chunk2", "Demon2Chunk3", "Demon2Chunk4", "Demon2Chunk5" };
+			for(int i = 0; i < 5; i++)
+				A_SpawnItemEx(chunks[i], 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle+90), frandom[DemonChunks](1,4.984375)*sin(Angle+90), 8, 90, ChunkFlags);
 		}
 		Goto Death+2;
 	}

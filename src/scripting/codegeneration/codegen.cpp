@@ -7218,6 +7218,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	{
 		bool foundvarargs = false;
 		PType * type = nullptr;
+		int flag = 0;
 		if (argtypes.Last() != nullptr && ArgList.Size() + implicit > argtypes.Size())
 		{
 			ScriptPosition.Message(MSG_ERROR, "Too many arguments in call to %s", Function->SymbolName.GetChars());
@@ -7231,12 +7232,16 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 			if (!foundvarargs)
 			{
 				if (argtypes[i + implicit] == nullptr) foundvarargs = true;
-				else type = argtypes[i + implicit];
+				else
+				{
+					type = argtypes[i + implicit];
+					flag = argflags[i + implicit];
+				}
 			}
 			assert(type != nullptr);
 
 			FxExpression *x;
-			if (!(argflags[i + implicit] & VARF_Ref))
+			if (!(flag & VARF_Ref))
 			{
 				x = new FxTypeCast(ArgList[i], type, false);
 				x = x->Resolve(ctx);

@@ -46,7 +46,8 @@ private:
 	void LoopFullBlock();
 	void LoopPartialBlock();
 
-	void ProcessPixel(SSAUBytePtr buffer, SSAIntPtr subsectorbuffer, SSAInt *varying);
+	SSAVec4i ProcessPixel32(SSAVec4i bg, SSAInt *varying);
+	SSAInt ProcessPixel8(SSAInt bg, SSAInt *varying);
 
 	SSAVec4i TranslateSample(SSAInt uvoffset);
 	SSAVec4i Sample(SSAInt uvoffset);

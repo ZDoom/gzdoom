@@ -23,6 +23,7 @@
 #include "r_compiler/llvm_include.h"
 #include "ssa_bool.h"
 #include "ssa_ubyte.h"
+#include "ssa_vec4i.h"
 #include "ssa_value.h"
 #include "ssa_scope.h"
 
@@ -57,6 +58,11 @@ SSAInt SSABool::select(SSAInt a, SSAInt b)
 }
 
 SSAUByte SSABool::select(SSAUByte a, SSAUByte b)
+{
+	return SSAValue::from_llvm(SSAScope::builder().CreateSelect(v, a.v, b.v, SSAScope::hint()));
+}
+
+SSAVec4i SSABool::select(SSAVec4i a, SSAVec4i b)
 {
 	return SSAValue::from_llvm(SSAScope::builder().CreateSelect(v, a.v, b.v, SSAScope::hint()));
 }

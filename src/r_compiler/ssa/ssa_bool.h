@@ -29,6 +29,8 @@
 namespace llvm { class Value; }
 namespace llvm { class Type; }
 
+class SSAVec4i;
+
 class SSABool
 {
 public:
@@ -41,6 +43,7 @@ public:
 	SSAInt zext_int();
 	SSAInt select(SSAInt a, SSAInt b);
 	SSAUByte select(SSAUByte a, SSAUByte b);
+	SSAVec4i select(SSAVec4i a, SSAVec4i b);
 
 	llvm::Value *v;
 };

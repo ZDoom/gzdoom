@@ -303,57 +303,80 @@ void DrawTriangleCodegen::LoopFullBlock()
 	{
 		int pixelsize = truecolor ? 4 : 1;
 
-		stack_iy.store(SSAInt(0));
-		stack_buffer.store(dest[x * pixelsize]);
-		stack_subsectorbuffer.store(subsectorGBuffer[x]);
-
-		SSAForBlock loopy;
-		SSAInt iy = stack_iy.load();
-		SSAUBytePtr buffer = stack_buffer.load();
-		SSAIntPtr subsectorbuffer = stack_subsectorbuffer.load();
-		loopy.loop_block(iy < SSAInt(q), q);
+		for (int iy = 0; iy < q; iy++)
 		{
+			SSAUBytePtr buffer = dest[(x + iy * pitch) * pixelsize];
+			SSAIntPtr subsectorbuffer = subsectorGBuffer[x + iy * pitch];
+
+			SSAInt varying[TriVertex::NumVarying];
 			SSAInt varyingStep[TriVertex::NumVarying];
 			for (int i = 0; i < TriVertex::NumVarying; i++)
 			{
-				stack_varying[i].store((varyingPos[i] + varyingStepPos[i] * iy) << 8);
+				varying[i] = (varyingPos[i] + varyingStepPos[i] * iy) << 8;
 				varyingStep[i] = (varyingStartStepX[i] + varyingIncrStepX[i] * iy) << 8;
 			}
 
-			stack_ix.store(SSAInt(0));
-			SSAForBlock loopx;
-			SSAInt ix = stack_ix.load();
-			SSAInt varying[TriVertex::NumVarying];
-			for (int i = 0; i < TriVertex::NumVarying; i++)
-				varying[i] = stack_varying[i].load();
-			loopx.loop_block(ix < SSAInt(q), q);
+			for (int ix = 0; ix < q; ix += 4)
 			{
-				if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
+				SSAUBytePtr buf = buffer[ix * pixelsize];
+				if (truecolor)
 				{
-					SSAIfBlock branch;
-					branch.if_block(subsectorbuffer[ix].load(true) >= subsectorDepth);
+					SSAVec16ub pixels16 = buf.load_unaligned_vec16ub(false);
+					SSAVec8s pixels8hi = SSAVec8s::extendhi(pixels16);
+					SSAVec8s pixels8lo = SSAVec8s::extendlo(pixels16);
+					SSAVec4i pixels[4] =
 					{
-						ProcessPixel(buffer[ix * pixelsize], subsectorbuffer[ix], varying);
+						SSAVec4i::extendlo(pixels8lo),
+						SSAVec4i::extendhi(pixels8lo),
+						SSAVec4i::extendlo(pixels8hi),
+						SSAVec4i::extendhi(pixels8hi)
+					};
+
+					for (int sse = 0; sse < 4; sse++)
+					{
+						if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
+						{
+							SSABool subsectorTest = subsectorbuffer[ix].load(true) >= subsectorDepth;
+							pixels[sse] = subsectorTest.select(ProcessPixel32(pixels[sse], varying), pixels[sse]);
+						}
+						else
+						{
+							pixels[sse] = ProcessPixel32(pixels[sse], varying);
+						}
+
+						for (int i = 0; i < TriVertex::NumVarying; i++)
+							varying[i] = varying[i] + varyingStep[i];
 					}
-					branch.end_block();
+
+					buf.store_unaligned_vec16ub(SSAVec16ub(SSAVec8s(pixels[0], pixels[1]), SSAVec8s(pixels[2], pixels[3])));
 				}
 				else
 				{
-					ProcessPixel(buffer[ix * pixelsize], subsectorbuffer[ix], varying);
+					SSAVec4i pixels = buf.load_vec4ub(false);
+
+					for (int sse = 0; sse < 4; sse++)
+					{
+						if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
+						{
+							SSABool subsectorTest = subsectorbuffer[ix].load(true) >= subsectorDepth;
+							pixels.insert(sse, subsectorTest.select(ProcessPixel8(pixels[sse], varying), pixels[sse]));
+						}
+						else
+						{
+							pixels.insert(sse, ProcessPixel8(pixels[sse], varying));
+						}
+
+						for (int i = 0; i < TriVertex::NumVarying; i++)
+							varying[i] = varying[i] + varyingStep[i];
+					}
+
+					buf.store_vec4ub(pixels);
 				}
 
-				for (int i = 0; i < TriVertex::NumVarying; i++)
-					stack_varying[i].store(varying[i] + varyingStep[i]);
-
-				stack_ix.store(ix + 1);
+				if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector && variant != TriDrawVariant::FuzzSubsector)
+					subsectorbuffer[ix].store_unaligned_vec4i(SSAVec4i(subsectorDepth));
 			}
-			loopx.end_block();
-
-			stack_buffer.store(buffer[pitch * pixelsize]);
-			stack_subsectorbuffer.store(subsectorbuffer[pitch]);
-			stack_iy.store(iy + 1);
 		}
-		loopy.end_block();
 	}
 
 	if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector && variant != TriDrawVariant::FuzzSubsector)
@@ -425,7 +448,21 @@ void DrawTriangleCodegen::LoopPartialBlock()
 				}
 				else
 				{
-					ProcessPixel(buffer[ix * pixelsize], subsectorbuffer[ix], varying);
+					SSAUBytePtr buf = buffer[ix * pixelsize];
+
+					if (truecolor)
+					{
+						SSAVec4i bg = buf.load_vec4ub(false);
+						buf.store_vec4ub(ProcessPixel32(bg, varying));
+					}
+					else
+					{
+						SSAUByte bg = buf.load(false);
+						buf.store(ProcessPixel8(bg.zext_int(), varying).trunc_ubyte());
+					}
+
+					if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector && variant != TriDrawVariant::FuzzSubsector)
+						subsectorbuffer[ix].store(subsectorDepth);
 				}
 			}
 			branch.end_block();
@@ -466,7 +503,7 @@ SSAVec4i DrawTriangleCodegen::Sample(SSAInt uvoffset)
 		return texturePixels[uvoffset * 4].load_vec4ub(true);
 }
 
-void DrawTriangleCodegen::ProcessPixel(SSAUBytePtr buffer, SSAIntPtr subsectorbuffer, SSAInt *varying)
+SSAVec4i DrawTriangleCodegen::ProcessPixel32(SSAVec4i bg, SSAInt *varying)
 {
 	SSAInt ufrac = varying[0];
 	SSAInt vfrac = varying[1];
@@ -475,80 +512,81 @@ void DrawTriangleCodegen::ProcessPixel(SSAUBytePtr buffer, SSAIntPtr subsectorbu
 	SSAInt vpos = ((vfrac >> 16) * textureHeight) >> 16;
 	SSAInt uvoffset = upos * textureHeight + vpos;
 
-	if (truecolor)
+	SSAVec4i fg;
+	SSAInt alpha, inv_alpha;
+	SSAVec4i output;
+
+	switch (blendmode)
 	{
-		SSAVec4i fg;
-		SSAVec4i bg = buffer.load_vec4ub(false);
-		SSAInt alpha, inv_alpha;
-		SSAVec4i output;
+	default:
+	case TriBlendMode::Copy:
+		fg = Sample(uvoffset);
+		output = blend_copy(shade_bgra_simple(fg, currentlight)); break;
+	case TriBlendMode::AlphaBlend:
+		fg = Sample(uvoffset);
+		output = blend_alpha_blend(shade_bgra_simple(fg, currentlight), bg); break;
+	case TriBlendMode::AddSolid:
+		fg = Sample(uvoffset);
+		output = blend_add(shade_bgra_simple(fg, currentlight), bg, srcalpha, destalpha); break;
+	case TriBlendMode::Add:
+		fg = Sample(uvoffset);
+		output = blend_add(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha)); break;
+	case TriBlendMode::Sub:
+		fg = Sample(uvoffset);
+		output = blend_sub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha)); break;
+	case TriBlendMode::RevSub:
+		fg = Sample(uvoffset);
+		output = blend_revsub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha)); break;
+	case TriBlendMode::Shaded:
+		fg = Sample(uvoffset);
+		alpha = fg[0];
+		alpha = alpha + (alpha >> 7); // 255 -> 256
+		inv_alpha = 256 - alpha;
+		output = blend_add(shade_bgra_simple(SSAVec4i::unpack(color), currentlight), bg, alpha, inv_alpha);
+		break;
+	case TriBlendMode::TranslateCopy:
+		fg = TranslateSample(uvoffset);
+		output = blend_copy(shade_bgra_simple(fg, currentlight));
+		break;
+	case TriBlendMode::TranslateAlphaBlend:
+		fg = TranslateSample(uvoffset);
+		output = blend_alpha_blend(shade_bgra_simple(fg, currentlight), bg); break;
+		break;
+	case TriBlendMode::TranslateAdd:
+		fg = TranslateSample(uvoffset);
+		output = blend_add(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
+		break;
+	case TriBlendMode::TranslateSub:
+		fg = TranslateSample(uvoffset);
+		output = blend_sub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
+		break;
+	case TriBlendMode::TranslateRevSub:
+		fg = TranslateSample(uvoffset);
+		output = blend_revsub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
+		break;
+	}
 
-		switch (blendmode)
-		{
-		default:
-		case TriBlendMode::Copy:
-			fg = Sample(uvoffset);
-			output = blend_copy(shade_bgra_simple(fg, currentlight)); break;
-		case TriBlendMode::AlphaBlend:
-			fg = Sample(uvoffset);
-			output = blend_alpha_blend(shade_bgra_simple(fg, currentlight), bg); break;
-		case TriBlendMode::AddSolid:
-			fg = Sample(uvoffset);
-			output = blend_add(shade_bgra_simple(fg, currentlight), bg, srcalpha, destalpha); break;
-		case TriBlendMode::Add:
-			fg = Sample(uvoffset);
-			output = blend_add(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha)); break;
-		case TriBlendMode::Sub:
-			fg = Sample(uvoffset);
-			output = blend_sub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha)); break;
-		case TriBlendMode::RevSub:
-			fg = Sample(uvoffset);
-			output = blend_revsub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha)); break;
-		case TriBlendMode::Shaded:
-			fg = Sample(uvoffset);
-			alpha = fg[0];
-			alpha = alpha + (alpha >> 7); // 255 -> 256
-			inv_alpha = 256 - alpha;
-			output = blend_add(shade_bgra_simple(SSAVec4i::unpack(color), currentlight), bg, alpha, inv_alpha);
-			break;
-		case TriBlendMode::TranslateCopy:
-			fg = TranslateSample(uvoffset);
-			output = blend_copy(shade_bgra_simple(fg, currentlight));
-			break;
-		case TriBlendMode::TranslateAlphaBlend:
-			fg = TranslateSample(uvoffset);
-			output = blend_alpha_blend(shade_bgra_simple(fg, currentlight), bg); break;
-			break;
-		case TriBlendMode::TranslateAdd:
-			fg = TranslateSample(uvoffset);
-			output = blend_add(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
-			break;
-		case TriBlendMode::TranslateSub:
-			fg = TranslateSample(uvoffset);
-			output = blend_sub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
-			break;
-		case TriBlendMode::TranslateRevSub:
-			fg = TranslateSample(uvoffset);
-			output = blend_revsub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
-			break;
-		}
+	return output;
+}
 
-		buffer.store_vec4ub(output);
+SSAInt DrawTriangleCodegen::ProcessPixel8(SSAInt bg, SSAInt *varying)
+{
+	SSAInt ufrac = varying[0];
+	SSAInt vfrac = varying[1];
+
+	SSAInt upos = ((ufrac >> 16) * textureWidth) >> 16;
+	SSAInt vpos = ((vfrac >> 16) * textureHeight) >> 16;
+	SSAInt uvoffset = upos * textureHeight + vpos;
+
+	if (variant == TriDrawVariant::FillNormal || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
+	{
+		return color;
 	}
 	else
 	{
-		if (variant == TriDrawVariant::FillNormal || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
-		{
-			buffer.store(color.trunc_ubyte());
-		}
-		else
-		{
-			SSAUByte fg = texturePixels[uvoffset].load(true);
-			buffer.store(fg);
-		}
+		SSAUByte fg = texturePixels[uvoffset].load(true);
+		return fg.zext_int();
 	}
-
-	if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector && variant != TriDrawVariant::FuzzSubsector)
-		subsectorbuffer.store(subsectorDepth);
 }
 
 void DrawTriangleCodegen::SetStencilBlock(SSAInt block)

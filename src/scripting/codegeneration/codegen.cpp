@@ -6072,6 +6072,7 @@ ExpEmit FxCVar::Emit(VMFunctionBuilder *build)
 		assert(false && "Unsupported CVar type");
 		break;
 	}
+	addr.Free(build);
 	return dest;
 }
 

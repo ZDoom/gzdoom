@@ -56,6 +56,7 @@ zscript/doom/weaponchaingun.txt
 zscript/doom/weaponchainsaw.txt
 zscript/doom/weaponrlaunch.txt
 zscript/doom/weaponplasma.txt
+zscript/doom/weaponbfg.txt
 
 zscript/doom/deadthings.txt
 zscript/doom/doomammo.txt

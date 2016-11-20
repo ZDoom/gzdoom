@@ -364,7 +364,6 @@ class Actor : Thinker native
 	// End of MBF redundant functions.
 
 	native void A_MonsterRail();
-	native void A_BFGSpray(class<Actor> spraytype = "BFGExtra", int numrays = 40, int damagecount = 15, float angle = 90, float distance = 16*64, float vrange = 32, int damage = 0, int flags = 0);
 	native void A_Pain();
 	native void A_NoBlocking(bool drop = true);
 	void A_Fall() { A_NoBlocking(); }

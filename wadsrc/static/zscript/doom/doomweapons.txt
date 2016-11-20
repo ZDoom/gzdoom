@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------
 //
-// Doom weapon base class
+// Doom weap base class
 //
 // --------------------------------------------------------------------------
 
@@ -13,102 +13,51 @@ class DoomWeapon : Weapon
 }
 
 
-// --------------------------------------------------------------------------
-//
-// BFG 9000
-//
-// --------------------------------------------------------------------------
 
-class BFG9000 : DoomWeapon
+extend class StateProvider
 {
-	Default
-	{
-		Height 20;
-		Weapon.SelectionOrder 2800;
-		Weapon.AmmoUse 40;
-		Weapon.AmmoGive 40;
-		Weapon.AmmoType "Cell";
-		+WEAPON.NOAUTOFIRE;
-		Inventory.PickupMessage "$GOTBFG9000";
-		Tag "$TAG_BFG9000";
-	}
-	States
-	{
-	Ready:
-		BFGG A 1 A_WeaponReady;
-		Loop;
-	Deselect:
-		BFGG A 1 A_Lower;
-		Loop;
-	Select:
-		BFGG A 1 A_Raise;
-		Loop;
-	Fire:
-		BFGG A 20 A_BFGsound;
-		BFGG B 10 A_GunFlash;
-		BFGG B 10 A_FireBFG;
-		BFGG B 20 A_ReFire;
-		Goto Ready;
-	Flash:
-		BFGF A 11 Bright A_Light1;
-		BFGF B 6 Bright A_Light2;
-		Goto LightDone;
-	Spawn:
-		BFUG A -1;
-		Stop;
-	OldFire:
-		BFGG A 10 A_BFGsound;
-		BFGG BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB 1 A_FireOldBFG;
-		BFGG B 0 A_Light0;
-		BFGG B 20 A_ReFire;
-		Goto Ready;
-	}
-}
 
+	//
+	// [RH] A_FireRailgun
+	//
+	action void A_FireRailgun(int offset_xy = 0)
+	{
+		if (player == null)
+		{
+			return;
+		}
 
-class BFGBall : Actor
-{
-	Default
-	{
-		Radius 13;
-		Height 8;
-		Speed 25;
-		Damage 100;
-		Projectile;
-		+RANDOMIZE
-		RenderStyle "Add";
-		Alpha 0.75;
-		DeathSound "weapons/bfgx";
-		Obituary "$OB_MPBFG_BOOM";
-	}
-	States
-	{
-	Spawn:
-		BFS1 AB 4 Bright;
-		Loop;
-	Death:
-		BFE1 AB 8 Bright;
-		BFE1 C 8 Bright A_BFGSpray;
-		BFE1 DEF 8 Bright;
-		Stop;
-	}
-}
-		
-class BFGExtra : Actor
-{
-	Default
-	{
-		+NOBLOCKMAP
-		+NOGRAVITY
-		RenderStyle "Add";
-		Alpha 0.75;
-		DamageType "BFGSplash";
-	}
-	States
-	{
-	Spawn:
-		BFE2 ABCD 8 Bright;
-		Stop;
-	}
-}
+		Weapon weap = player.ReadyWeapon;
+		if (weap != null && invoker == weap && stateinfo != null && stateinfo.mStateType == STATE_Psprite)
+		{
+			if (!weap.DepleteAmmo (weap.bAltFire, true, 1))
+				return;
+			
+			State flash = weap.FindState('Flash');
+			if (flash != null)
+			{
+				player.SetSafeFlash(weap, flash, random[FireRail]()&1);
+			}
+			
+		}
 
+		int damage = GetCVar("deathmatch") ? 100 : 150;
+		A_RailAttack(damage, offset_xy, false);	// note that this function handles ammo depletion itself for Dehacked compatibility purposes.
+	}
+
+	action void A_FireRailgunLeft()
+	{
+		A_FireRailgun(-10);
+	}
+
+	action void A_FireRailgunRight()
+	{
+		A_FireRailgun(10);
+	}
+
+	action void A_RailWait() 
+	{
+		// only here to satisfy old Dehacked patches.
+	}
+
+}

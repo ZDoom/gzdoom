@@ -6878,6 +6878,22 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			return nullptr;
 		}
 	}
+	else if (Self->ValueType->IsKindOf(RUNTIME_CLASS(PStruct)))
+	{
+		bool writable;
+		if (Self->RequestAddress(ctx, &writable) && writable)
+		{
+			cls = static_cast<PStruct*>(Self->ValueType);
+			Self->ValueType = NewPointer(Self->ValueType);
+		}
+		else
+		{
+			// Cannot be made writable so we cannot use its methods.
+			ScriptPosition.Message(MSG_ERROR, "Invalid expression on left hand side of %s\n", MethodName.GetChars());
+			delete this;
+			return nullptr;
+		}
+	}
 	else
 	{
 		ScriptPosition.Message(MSG_ERROR, "Invalid expression on left hand side of %s\n", MethodName.GetChars());
@@ -7250,18 +7266,22 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 			{
 				bool writable;
 				ArgList[i] = ArgList[i]->Resolve(ctx);	// nust be resolved before the address is requested.
-				ArgList[i]->RequestAddress(ctx, &writable);
-				ArgList[i]->ValueType = NewPointer(ArgList[i]->ValueType);
-				// For a reference argument the types must match 100%.
-				if (type != ArgList[i]->ValueType)
+				if (ArgList[i]->ValueType != TypeNullPtr)
 				{
-					ScriptPosition.Message(MSG_ERROR, "Type mismatch in reference argument", Function->SymbolName.GetChars());
-					x = nullptr;
+					ArgList[i]->RequestAddress(ctx, &writable);
+					ArgList[i]->ValueType = NewPointer(ArgList[i]->ValueType);
+					// For a reference argument the types must match 100%.
+					if (type != ArgList[i]->ValueType)
+					{
+						ScriptPosition.Message(MSG_ERROR, "Type mismatch in reference argument", Function->SymbolName.GetChars());
+						x = nullptr;
+					}
+					else
+					{
+						x = ArgList[i];
+					}
 				}
-				else
-				{
-					x = ArgList[i];
-				}
+				else x = ArgList[i];
 			}
 			failed |= (x == nullptr);
 			ArgList[i] = x;
@@ -7305,13 +7325,6 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	{
 		ValueType = TypeVoid;
 	}
-	// If self is a struct, it will be a value type, not a reference, so we need to make an addresss request.
-	if (Self != nullptr && Self->ValueType->IsKindOf(RUNTIME_CLASS(PStruct)) && !Self->ValueType->IsKindOf(RUNTIME_CLASS(PClass)))
-	{
-		bool writable;
-		Self->RequestAddress(ctx, &writable);
-	}
-
 	return this;
 }
 
@@ -8851,6 +8864,13 @@ FxExpression *FxClassPtrCast::Resolve(FCompileContext &ctx)
 		{
 			return this;
 		}
+	}
+	else if (basex->ValueType == TypeString || basex->ValueType == TypeName)
+	{
+		FxExpression *x = new FxClassTypeCast(to, basex);
+		basex = nullptr;
+		delete this;
+		return x->Resolve(ctx);
 	}
 	// Everything else is an error.
 	ScriptPosition.Message(MSG_ERROR, "Cannot cast %s to %s. The types are incompatible.", basex->ValueType->DescriptiveName(), to->DescriptiveName());

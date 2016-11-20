@@ -840,6 +840,8 @@ struct FTranslatedLineTarget
 	Actor linetarget;
 	double angleFromSource;
 	bool unlinked;	// found by a trace that went through an unlinked portal.
+	
+	native void TraceBleed(int damage, Actor missile);
 }
 
 enum EAimFlags

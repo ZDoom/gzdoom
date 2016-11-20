@@ -4660,6 +4660,17 @@ void P_TraceBleed(int damage, FTranslatedLineTarget *t, AActor *puff)
 	P_TraceBleed(damage, t->linetarget->PosPlusZ(t->linetarget->Height/2), t->linetarget, t->angleFromSource, pitch);
 }
 
+DEFINE_ACTION_FUNCTION(_FTranslatedLineTarget, TraceBleed)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FTranslatedLineTarget);
+	PARAM_INT(damage);
+	PARAM_OBJECT(missile, AActor);
+
+	P_TraceBleed(damage, self, missile);
+	return 0;
+}
+
+
 //==========================================================================
 //
 //

@@ -51,13 +51,6 @@ class StateProvider : Inventory native
 	action native void A_Lower();
 	action native void A_Raise();
 
-	action native void A_FireRailgun();
-	action native void A_FireRailgunLeft();
-	action native void A_FireRailgunRight();
-	action void A_RailWait() {}
-	action void A_BFGsound() { A_PlaySound("weapons/bfgf", CHAN_WEAPON); }
-	action native void A_FireBFG();
-	action native void A_FireOldBFG();
 	action native void A_ReFire(statelabel flash = null);
 	action native void A_ClearReFire();
 	action native void A_CheckReload();

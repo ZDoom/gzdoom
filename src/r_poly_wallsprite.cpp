@@ -121,5 +121,6 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, AActor *thing, s
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
 	args.SetTexture(tex);
+	args.SetColormap(sub->sector->ColorMap);
 	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::AlphaBlend);
 }

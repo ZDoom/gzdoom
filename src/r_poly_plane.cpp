@@ -140,6 +140,7 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, subsector_t *s
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
 	args.SetTexture(tex);
+	args.SetColormap(sub->sector->ColorMap);
 	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawNormal, TriBlendMode::Copy);
 	PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
 }
@@ -231,6 +232,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 	args.ccw = ccw;
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
+	args.SetColormap(frontsector->ColorMap);
 
 	if (!isSky)
 	{

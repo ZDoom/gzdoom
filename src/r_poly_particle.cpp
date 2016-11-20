@@ -94,5 +94,6 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, particle_t *partic
 	args.ccw = true;
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
+	args.SetColormap(sub->sector->ColorMap);
 	PolyTriangleDrawer::draw(args, TriDrawVariant::FillSubsector, TriBlendMode::AlphaBlend);
 }

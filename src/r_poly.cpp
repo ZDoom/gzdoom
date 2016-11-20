@@ -36,9 +36,6 @@ void InitGLRMapinfoData();
 
 void RenderPolyScene::Render()
 {
-	if (!r_swtruecolor) // Disable pal rendering for now
-		return;
-
 	ClearBuffers();
 	SetSceneViewport();
 	SetupPerspectiveMatrix();
@@ -63,8 +60,8 @@ void RenderPolyScene::ClearBuffers()
 	SectorSpriteRanges.resize(numsectors);
 	SortedSprites.clear();
 	TranslucentObjects.clear();
-	PolyStencilBuffer::Instance()->Clear(screen->GetWidth(), screen->GetHeight(), 0);
-	PolySubsectorGBuffer::Instance()->Resize(screen->GetPitch(), screen->GetHeight());
+	PolyStencilBuffer::Instance()->Clear(RenderTarget->GetWidth(), RenderTarget->GetHeight(), 0);
+	PolySubsectorGBuffer::Instance()->Resize(RenderTarget->GetPitch(), RenderTarget->GetHeight());
 	NextSubsectorDepth = 0;
 }
 
@@ -77,7 +74,7 @@ void RenderPolyScene::SetSceneViewport()
 		height = (screenblocks*SCREENHEIGHT / 10) & ~7;
 
 	int bottom = SCREENHEIGHT - (height + viewwindowy - ((height - viewheight) / 2));
-	PolyTriangleDrawer::set_viewport(viewwindowx, SCREENHEIGHT - bottom - height, viewwidth, height, screen);
+	PolyTriangleDrawer::set_viewport(viewwindowx, SCREENHEIGHT - bottom - height, viewwidth, height, RenderTarget);
 }
 
 void RenderPolyScene::SetupPerspectiveMatrix()

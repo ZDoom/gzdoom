@@ -190,6 +190,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
 	args.SetTexture(tex);
+	args.SetColormap(Line->frontsector->ColorMap);
 
 	if (!Masked)
 	{

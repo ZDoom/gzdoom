@@ -107,6 +107,12 @@ private:
 	SSAUByte stencilWriteValue;
 	SSAIntPtr subsectorGBuffer;
 
+	SSAUBytePtr Colormaps;
+	SSAUBytePtr RGB32k;
+	SSAIntPtr Col2RGB8;
+	SSAIntPtr Col2RGB8_LessPrecision;
+	SSAIntPtr Col2RGB8_Inverse;
+
 	SSAWorkerThread thread;
 
 	// Block size, standard 8x8 (must be power of two)
@@ -126,6 +132,7 @@ private:
 	SSAInt x, y;
 	SSAInt x0, x1, y0, y1;
 	SSAInt currentlight;
+	SSAUBytePtr currentcolormap;
 	SSAInt varyingPos[TriVertex::NumVarying];
 	SSAInt varyingStepPos[TriVertex::NumVarying];
 	SSAInt varyingStartStepX[TriVertex::NumVarying];

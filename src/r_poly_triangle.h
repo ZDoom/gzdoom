@@ -26,6 +26,7 @@
 #include "r_thread.h"
 #include "r_compiler/llvmdrawers.h"
 #include "r_data/r_translate.h"
+#include "r_data/colormaps.h"
 
 class FTexture;
 
@@ -53,6 +54,7 @@ public:
 	const uint8_t *translation = nullptr;
 	uint8_t stenciltestvalue = 0;
 	uint8_t stencilwritevalue = 0;
+	const uint8_t *colormaps = nullptr;
 
 	void SetTexture(FTexture *texture)
 	{
@@ -85,6 +87,25 @@ public:
 		}
 
 		SetTexture(texture);
+	}
+
+	void SetColormap(FSWColormap *base_colormap)
+	{
+		uniforms.light_red = base_colormap->Color.r * 256 / 255;
+		uniforms.light_green = base_colormap->Color.g * 256 / 255;
+		uniforms.light_blue = base_colormap->Color.b * 256 / 255;
+		uniforms.light_alpha = base_colormap->Color.a * 256 / 255;
+		uniforms.fade_red = base_colormap->Fade.r;
+		uniforms.fade_green = base_colormap->Fade.g;
+		uniforms.fade_blue = base_colormap->Fade.b;
+		uniforms.fade_alpha = base_colormap->Fade.a;
+		uniforms.desaturate = MIN(abs(base_colormap->Desaturate), 255) * 255 / 256;
+		bool simple_shade = (base_colormap->Color.d == 0x00ffffff && base_colormap->Fade.d == 0x00000000 && base_colormap->Desaturate == 0);
+		if (simple_shade)
+			uniforms.flags |= TriUniforms::simple_shade;
+		else
+			uniforms.flags &= ~TriUniforms::simple_shade;
+		colormaps = base_colormap->Maps;
 	}
 };
 

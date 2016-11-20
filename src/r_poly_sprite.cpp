@@ -136,6 +136,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, AActor *thing, subse
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
 	args.SetTexture(tex, thing->Translation);
+	args.SetColormap(sub->sector->ColorMap);
 
 	if (args.translation)
 		PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::TranslateAlphaBlend);

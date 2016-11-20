@@ -258,7 +258,18 @@ void DrawTriangleCodegen::LoopBlockX()
 		SSAFloat shade = 64.0f - (SSAFloat(light * 255 / 256) + 12.0f) * 32.0f / 128.0f;
 		SSAFloat lightscale = SSAFloat::clamp((shade - SSAFloat::MIN(SSAFloat(24.0f), vis)) / 32.0f, SSAFloat(0.0f), SSAFloat(31.0f / 32.0f));
 		SSAInt diminishedlight = SSAInt(SSAFloat::clamp((1.0f - lightscale) * 256.0f + 0.5f, SSAFloat(0.0f), SSAFloat(256.0f)), false);
-		currentlight = is_fixed_light.select(light, diminishedlight);
+
+		if (!truecolor)
+		{
+			SSAInt diminishedindex = SSAInt(lightscale * 32.0f, false);
+			SSAInt lightindex = SSAInt::MIN((256 - light) * 32 / 256, SSAInt(31));
+			SSAInt colormapindex = is_fixed_light.select(lightindex, diminishedindex);
+			currentcolormap = Colormaps[colormapindex << 8];
+		}
+		else
+		{
+			currentlight = is_fixed_light.select(light, diminishedlight);
+		}
 
 		SetStencilBlock(x / 8 + y / 8 * stencilPitch);
 
@@ -352,25 +363,32 @@ void DrawTriangleCodegen::LoopFullBlock()
 				}
 				else
 				{
-					SSAVec4i pixels = buf.load_vec4ub(false);
+					SSAVec4i pixelsvec = buf.load_vec4ub(false);
+					SSAInt pixels[4] =
+					{
+						pixelsvec[0],
+						pixelsvec[1],
+						pixelsvec[2],
+						pixelsvec[3]
+					};
 
 					for (int sse = 0; sse < 4; sse++)
 					{
 						if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
 						{
 							SSABool subsectorTest = subsectorbuffer[ix].load(true) >= subsectorDepth;
-							pixels.insert(sse, subsectorTest.select(ProcessPixel8(pixels[sse], varying), pixels[sse]));
+							pixels[sse] = subsectorTest.select(ProcessPixel8(pixels[sse], varying), pixels[sse]);
 						}
 						else
 						{
-							pixels.insert(sse, ProcessPixel8(pixels[sse], varying));
+							pixels[sse] = ProcessPixel8(pixels[sse], varying);
 						}
 
 						for (int i = 0; i < TriVertex::NumVarying; i++)
 							varying[i] = varying[i] + varyingStep[i];
 					}
 
-					buf.store_vec4ub(pixels);
+					buf.store_vec4ub(SSAVec4i(pixels[0], pixels[1], pixels[2], pixels[3]));
 				}
 
 				if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector && variant != TriDrawVariant::FuzzSubsector)
@@ -580,12 +598,16 @@ SSAInt DrawTriangleCodegen::ProcessPixel8(SSAInt bg, SSAInt *varying)
 
 	if (variant == TriDrawVariant::FillNormal || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
 	{
-		return color;
+		return currentcolormap[color].load(true).zext_int();
 	}
 	else
 	{
-		SSAUByte fg = texturePixels[uvoffset].load(true);
-		return fg.zext_int();
+		SSAInt index = texturePixels[uvoffset].load(true).zext_int();
+		SSAInt fg = currentcolormap[index].load(true).zext_int();
+		if (blendmode != TriBlendMode::AlphaBlend)
+			return fg;
+		else
+			return (index == SSAInt(0)).select(bg, fg);
 	}
 }
 
@@ -659,6 +681,14 @@ void DrawTriangleCodegen::LoadArgs(SSAValue args, SSAValue thread_data)
 	stencilTestValue = args[0][17].load(true);
 	stencilWriteValue = args[0][18].load(true);
 	subsectorGBuffer = args[0][19].load(true);
+	if (!truecolor)
+	{
+		Colormaps = args[0][20].load(true);
+		RGB32k = args[0][21].load(true);
+		Col2RGB8 = args[0][22].load(true);
+		Col2RGB8_LessPrecision = args[0][23].load(true);
+		Col2RGB8_Inverse = args[0][24].load(true);
+	}
 
 	thread.core = thread_data[0][0].load(true);
 	thread.num_cores = thread_data[0][1].load(true);

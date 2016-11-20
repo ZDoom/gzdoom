@@ -127,7 +127,7 @@ LLVMDrawers *LLVMDrawers::Instance()
 
 LLVMDrawersImpl::LLVMDrawersImpl()
 {
-	int version = 2; // Increment this number if the drawer codegen is modified (forces recreation of the module).
+	int version = 3; // Increment this number if the drawer codegen is modified (forces recreation of the module).
 	std::string targetCPU = mProgram.GetTargetCPU();
 	bool loaded = mProgram.LoadCachedModule(version, targetCPU);
 	if (!loaded)
@@ -582,6 +582,11 @@ llvm::Type *LLVMDrawersImpl::GetTriDrawTriangleArgs(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt8Ty(context));     // uint8_t stencilTestValue;
 	elements.push_back(llvm::Type::getInt8Ty(context));     // uint8_t stencilWriteValue;
 	elements.push_back(llvm::Type::getInt32PtrTy(context)); // uint32_t *subsectorGBuffer;
+	elements.push_back(llvm::Type::getInt8PtrTy(context));  // const uint8_t *colormaps;
+	elements.push_back(llvm::Type::getInt8PtrTy(context));  // const uint8_t *RGB32k;
+	elements.push_back(llvm::Type::getInt32PtrTy(context)); // const uint32_t *Col2RGB8;
+	elements.push_back(llvm::Type::getInt32PtrTy(context)); // const uint32_t *Col2RGB8_LessPrecision;
+	elements.push_back(llvm::Type::getInt32PtrTy(context)); // const uint32_t *Col2RGB8_Inverse;
 	return llvm::StructType::create(context, elements, "TriDrawTriangle", false)->getPointerTo();
 }
 

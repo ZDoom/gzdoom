@@ -70,10 +70,7 @@ void PolyTriangleDrawer::set_viewport(int x, int y, int width, int height, DCanv
 
 void PolyTriangleDrawer::draw(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode)
 {
-	if (dest_bgra)
-		DrawerCommandQueue::QueueCommand<DrawPolyTrianglesCommand>(args, variant, blendmode);
-	else
-		draw_arrays(args, variant, blendmode, nullptr);
+	DrawerCommandQueue::QueueCommand<DrawPolyTrianglesCommand>(args, variant, blendmode);
 }
 
 void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVariant variant, TriBlendMode blendmode, WorkerThreadData *thread)
@@ -113,6 +110,11 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 	args.stencilValues = PolyStencilBuffer::Instance()->Values();
 	args.stencilMasks = PolyStencilBuffer::Instance()->Masks();
 	args.subsectorGBuffer = PolySubsectorGBuffer::Instance()->Values();
+	args.colormaps = drawargs.colormaps;
+	args.RGB32k = RGB32k.All;
+	args.Col2RGB8 = (const uint32_t*)Col2RGB8;
+	args.Col2RGB8_Inverse = (const uint32_t*)Col2RGB8_Inverse;
+	args.Col2RGB8_LessPrecision = (const uint32_t*)Col2RGB8_LessPrecision;
 
 	bool ccw = drawargs.ccw;
 	const TriVertex *vinput = drawargs.vinput;

@@ -28,6 +28,9 @@
 #include "r_poly_sprite.h"
 #include "r_poly.h"
 
+EXTERN_CVAR(Float, transsouls)
+EXTERN_CVAR(Int, r_drawfuzz)
+
 void RenderPolySprite::Render(const TriMatrix &worldToClip, AActor *thing, subsector_t *sub, uint32_t subsectorDepth)
 {
 	if (IsThingCulled(thing))
@@ -138,10 +141,104 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, AActor *thing, subse
 	args.SetTexture(tex, thing->Translation);
 	args.SetColormap(sub->sector->ColorMap);
 
-	if (args.translation)
-		PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::TranslateAlphaBlend);
+	if (thing->RenderStyle == LegacyRenderStyles[STYLE_Normal] ||
+		 (r_drawfuzz == 0 && thing->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy]))
+	{
+		args.uniforms.destalpha = 0;
+		args.uniforms.srcalpha = 256;
+		(args.translation) ?
+			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::TranslateAdd) :
+			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Add);
+	}
+	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Add])
+	{
+		args.uniforms.destalpha = (uint32_t)(1.0 * 256);
+		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
+		(args.translation) ?
+			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::TranslateAdd) :
+			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Add);
+	}
+	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Subtract])
+	{
+		args.uniforms.destalpha = (uint32_t)(1.0 * 256);
+		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
+		(args.translation) ?
+			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::TranslateSub) :
+			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Sub);
+	}
+	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_SoulTrans])
+	{
+		args.uniforms.destalpha = (uint32_t)(256 - transsouls * 256);
+		args.uniforms.srcalpha = (uint32_t)(transsouls * 256);
+		(args.translation) ?
+			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::TranslateAdd) :
+			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Add);
+	}
+	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Fuzzy] ||
+		 (r_drawfuzz == 2 && thing->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy]))
+	{	// NYI - Fuzzy - for now, just a copy of "Shadow"
+		args.uniforms.destalpha = 160;
+		args.uniforms.srcalpha = 0;
+		(args.translation) ?
+			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::TranslateAdd) :
+			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Add);
+		
+	}
+	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Shadow] ||
+		 (r_drawfuzz == 1 && thing->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy]))
+	{
+		args.uniforms.destalpha = 160;
+		args.uniforms.srcalpha = 0;
+		(args.translation) ?
+			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::TranslateAdd) :
+			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Add);
+		
+	}
+	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_TranslucentStencil])
+	{
+		// NYI
+		args.uniforms.destalpha = (uint32_t)(256 - thing->Alpha * 256);
+		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
+		args.uniforms.color = 0xff000000 | thing->fillcolor;
+		(args.translation) ?
+			PolyTriangleDrawer::draw(args, TriDrawVariant::FillSubsector, TriBlendMode::TranslateAdd) :
+			PolyTriangleDrawer::draw(args, TriDrawVariant::FillSubsector, TriBlendMode::Add);
+	}
+	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_AddStencil])
+	{
+		// NYI
+		args.uniforms.destalpha = 256;
+		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
+		args.uniforms.color = 0xff000000 | thing->fillcolor;
+		(args.translation) ?
+			PolyTriangleDrawer::draw(args, TriDrawVariant::FillSubsector, TriBlendMode::TranslateAdd) :
+			PolyTriangleDrawer::draw(args, TriDrawVariant::FillSubsector, TriBlendMode::Add);
+	}
+	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Shaded])
+	{
+		args.uniforms.destalpha = 256;
+		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
+		args.SetTexture(tex, false);
+		uniforms.flags |= TriUniforms::simple_shade;
+		PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Shaded);
+	}
+	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_AddShaded])
+	{	// NYI?
+		args.uniforms.destalpha = 256;
+		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
+		args.SetTexture(tex, false);
+		uniforms.flags |= TriUniforms::simple_shade;
+		PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Shaded);
+	}
 	else
-		PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::AlphaBlend);
+	{
+		args.uniforms.destalpha = (uint32_t)(256 - thing->Alpha * 256);
+		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
+		(args.translation) ?
+			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::TranslateAdd) :
+			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Add);
+	}
+
 }
 
 bool RenderPolySprite::IsThingCulled(AActor *thing)

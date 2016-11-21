@@ -644,7 +644,11 @@ bool LLVMProgram::LoadCachedModule(int version, std::string targetCPU)
 	if (!result)
 		return false;
 
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
+	mModule.reset(result.get());
+#else
 	mModule = std::move(result.get());
+#endif
 	return true;
 }
 

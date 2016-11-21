@@ -552,7 +552,6 @@ SSAVec4i DrawTriangleCodegen::ProcessPixel32(SSAVec4i bg, SSAInt *varying)
 	SSAInt uvoffset = upos * textureHeight + vpos;
 
 	SSAVec4i fg;
-	SSAInt alpha, inv_alpha;
 	SSAVec4i output;
 
 	switch (blendmode)
@@ -584,10 +583,7 @@ SSAVec4i DrawTriangleCodegen::ProcessPixel32(SSAVec4i bg, SSAInt *varying)
 		break;
 	case TriBlendMode::Shaded:
 		fg = Sample32(uvoffset);
-		alpha = fg[0];
-		alpha = alpha + (alpha >> 7); // 255 -> 256
-		inv_alpha = 256 - alpha;
-		output = blend_add(shade_bgra_simple(SSAVec4i::unpack(color), currentlight), bg, alpha, inv_alpha);
+		output = blend_stencil(shade_bgra_simple(SSAVec4i::unpack(color), currentlight), fg[3], bg, srcalpha, destalpha);
 		break;
 	case TriBlendMode::TranslateCopy:
 		fg = TranslateSample32(uvoffset);
@@ -667,10 +663,7 @@ SSAInt DrawTriangleCodegen::ProcessPixel8(SSAInt bg, SSAInt *varying)
 		output = ToPal8(blend_revsub(fg, ToBgra(bg), srcalpha, calc_blend_bgalpha(fg, destalpha)));
 		break;
 	case TriBlendMode::Shaded:
-		alpha = Sample8(uvoffset);
-		alpha = alpha + (alpha >> 7); // 255 -> 256
-		inv_alpha = 256 - alpha;
-		output = ToPal8(blend_add(ToBgra(Shade8(color)), ToBgra(bg), alpha, inv_alpha));
+		output = ToPal8(blend_stencil(ToBgra(Shade8(color)), Sample8(uvoffset), ToBgra(bg), srcalpha, destalpha));
 		break;
 	case TriBlendMode::TranslateCopy:
 		output = Shade8(TranslateSample8(uvoffset));

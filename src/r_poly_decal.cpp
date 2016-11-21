@@ -128,30 +128,31 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, DBaseDecal *decal, co
 
 	bool fullbrightSprite = (decal->RenderFlags & RF_FULLBRIGHT) == RF_FULLBRIGHT;
 
-	TriUniforms uniforms;
+	PolyDrawArgs args;
+	args.uniforms.flags = 0;
 	if (fullbrightSprite || fixedlightlev >= 0 || fixedcolormap)
 	{
-		uniforms.light = 256;
-		uniforms.flags = TriUniforms::fixed_light;
+		args.uniforms.light = 256;
+		args.uniforms.flags |= TriUniforms::fixed_light;
 	}
 	else
 	{
-		uniforms.light = (uint32_t)((front->lightlevel + actualextralight) / 255.0f * 256.0f);
-		uniforms.flags = 0;
+		args.uniforms.light = (uint32_t)((front->lightlevel + actualextralight) / 255.0f * 256.0f);
 	}
-	uniforms.subsectorDepth = subsectorDepth;
+	args.uniforms.subsectorDepth = subsectorDepth;
 
 	if (r_swtruecolor)
 	{
-		uniforms.color = 0xff000000 | decal->AlphaColor;
+		args.uniforms.color = 0xff000000 | decal->AlphaColor;
 	}
 	else
 	{
-		uniforms.color = ((uint32_t)decal->AlphaColor) >> 24;
+		args.uniforms.color = ((uint32_t)decal->AlphaColor) >> 24;
 	}
+	
+	args.uniforms.srcalpha = 256;
+	args.uniforms.destalpha = 0;
 
-	PolyDrawArgs args;
-	args.uniforms = uniforms;
 	args.objectToClip = &worldToClip;
 	args.vinput = vertices;
 	args.vcount = 4;

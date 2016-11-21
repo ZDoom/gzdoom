@@ -85,6 +85,7 @@ public:
 	SSAVec4i blend_sub(SSAVec4i fg, SSAVec4i bg, SSAInt srcalpha, SSAInt destalpha);
 	SSAVec4i blend_revsub(SSAVec4i fg, SSAVec4i bg, SSAInt srcalpha, SSAInt destalpha);
 	SSAVec4i blend_alpha_blend(SSAVec4i fg, SSAVec4i bg);
+	SSAVec4i blend_stencil(SSAVec4i color, SSAInt fgalpha, SSAVec4i bg, SSAInt srcalpha, SSAInt destalpha);
 
 	// Calculates the final alpha values to be used when combined with the source texture alpha channel
 	SSAInt calc_blend_bgalpha(SSAVec4i fg, SSAInt destalpha);

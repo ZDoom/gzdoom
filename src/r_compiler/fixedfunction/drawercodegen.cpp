@@ -107,18 +107,27 @@ SSAVec4i DrawerCodegen::blend_copy(SSAVec4i fg)
 
 SSAVec4i DrawerCodegen::blend_add(SSAVec4i fg, SSAVec4i bg, SSAInt srcalpha, SSAInt destalpha)
 {
+	SSAInt alpha = fg[3];
+	alpha = alpha + (alpha >> 7); // 255 -> 256
+	srcalpha = (alpha * srcalpha + 128) >> 8;
 	SSAVec4i color = (fg * srcalpha + bg * destalpha) / 256;
 	return color.insert(3, 255);
 }
 
 SSAVec4i DrawerCodegen::blend_sub(SSAVec4i fg, SSAVec4i bg, SSAInt srcalpha, SSAInt destalpha)
 {
+	SSAInt alpha = fg[3];
+	alpha = alpha + (alpha >> 7); // 255 -> 256
+	srcalpha = (alpha * srcalpha + 128) >> 8;
 	SSAVec4i color = (bg * destalpha - fg * srcalpha) / 256;
 	return color.insert(3, 255);
 }
 
 SSAVec4i DrawerCodegen::blend_revsub(SSAVec4i fg, SSAVec4i bg, SSAInt srcalpha, SSAInt destalpha)
 {
+	SSAInt alpha = fg[3];
+	alpha = alpha + (alpha >> 7); // 255 -> 256
+	srcalpha = (alpha * srcalpha + 128) >> 8;
 	SSAVec4i color = (fg * srcalpha - bg * destalpha) / 256;
 	return color.insert(3, 255);
 }
@@ -126,7 +135,7 @@ SSAVec4i DrawerCodegen::blend_revsub(SSAVec4i fg, SSAVec4i bg, SSAInt srcalpha, 
 SSAVec4i DrawerCodegen::blend_alpha_blend(SSAVec4i fg, SSAVec4i bg)
 {
 	SSAInt alpha = fg[3];
-	alpha = alpha + (alpha >> 7); // // 255 -> 256
+	alpha = alpha + (alpha >> 7); // 255 -> 256
 	SSAInt inv_alpha = 256 - alpha;
 	SSAVec4i color = (fg * alpha + bg * inv_alpha) / 256;
 	return color.insert(3, 255);
@@ -138,4 +147,16 @@ SSAInt DrawerCodegen::calc_blend_bgalpha(SSAVec4i fg, SSAInt destalpha)
 	alpha = alpha + (alpha >> 7);
 	SSAInt inv_alpha = 256 - alpha;
 	return (destalpha * alpha + 256 * inv_alpha + 128) >> 8;
+}
+
+SSAVec4i DrawerCodegen::blend_stencil(SSAVec4i stencilcolor, SSAInt fgalpha, SSAVec4i bg, SSAInt srcalpha, SSAInt destalpha)
+{
+	fgalpha = fgalpha + (fgalpha >> 7); // 255 -> 256
+	SSAInt inv_fgalpha = 256 - fgalpha;
+	
+	srcalpha = (fgalpha * srcalpha + 128) >> 8;
+	destalpha = (destalpha * fgalpha + 256 * inv_fgalpha + 128) >> 8;
+	
+	SSAVec4i color = (stencilcolor * srcalpha + bg * destalpha) / 256;
+	return color.insert(3, 255);
 }

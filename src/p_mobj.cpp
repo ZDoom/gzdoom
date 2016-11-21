@@ -161,8 +161,8 @@ void AActor::InitNativeFields()
 	PType *TypeActor = NewPointer(RUNTIME_CLASS(AActor));
 	PType *TypeActorClass = NewClassPointer(RUNTIME_CLASS(AActor));
 	PType *TypeInventory = NewPointer(RUNTIME_CLASS(AInventory));
-	PType *TypePlayer = NewPointer(NewStruct("Player", nullptr));
-	auto TypeSector = NewPointer(NewStruct("Sector", nullptr));
+	PType *TypePlayer = NewPointer(NewNativeStruct("Player", nullptr));
+	auto TypeSector = NewPointer(NewNativeStruct("Sector", nullptr));
 	PType *array5 = NewArray(TypeSInt32, 5);
 
 	auto meta = RUNTIME_CLASS(AActor);

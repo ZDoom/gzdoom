@@ -1533,7 +1533,7 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt)
 		{
 			return TypeSInt32;	// hack this to an integer until we can resolve the enum mess.
 		}
-		if (ptype->IsKindOf(RUNTIME_CLASS(PClass)))
+		if (ptype->IsKindOf(RUNTIME_CLASS(PNativeStruct)))	// native structs and classes cannot be instantiated, they always get used as reference.
 		{
 			return NewPointer(ptype, type->isconst);
 		}

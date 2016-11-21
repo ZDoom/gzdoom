@@ -2457,6 +2457,26 @@ PNativeStruct::PNativeStruct(FName name)
 	HasNativeFields = true;
 }
 
+//==========================================================================
+//
+// NewNativeStruct
+// Returns a PNativeStruct for the given name and container, making sure not to
+// create duplicates.
+//
+//==========================================================================
+
+PNativeStruct *NewNativeStruct(FName name, PTypeBase *outer)
+{
+	size_t bucket;
+	PType *stype = TypeTable.FindType(RUNTIME_CLASS(PNativeStruct), (intptr_t)outer, (intptr_t)name, &bucket);
+	if (stype == NULL)
+	{
+		stype = new PStruct(name, outer);
+		TypeTable.AddType(stype, RUNTIME_CLASS(PNativeStruct), (intptr_t)outer, (intptr_t)name, bucket);
+	}
+	return static_cast<PNativeStruct *>(stype);
+}
+
 /* PField *****************************************************************/
 
 IMPLEMENT_CLASS(PField, false, false, false, false)

@@ -1858,7 +1858,7 @@ void FLevelLocals::AddScroller (int secnum)
 
 void G_InitLevelLocalsForScript()
 {
-	PStruct *lstruct = NewStruct("LevelLocals", nullptr);
+	PStruct *lstruct = NewNativeStruct("LevelLocals", nullptr);
 	PField *levelf = new PField("level", lstruct, VARF_Native | VARF_Static, (intptr_t)&level);
 	GlobalSymbols.AddSymbol(levelf);
 

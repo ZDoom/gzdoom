@@ -922,6 +922,7 @@ PPointer *NewPointer(PType *type, bool isconst = false);
 PClassPointer *NewClassPointer(PClass *restrict);
 PEnum *NewEnum(FName name, PTypeBase *outer);
 PStruct *NewStruct(FName name, PTypeBase *outer);
+PNativeStruct *NewNativeStruct(FName name, PTypeBase *outer);
 PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> &argtypes);
 
 // Built-in types -----------------------------------------------------------

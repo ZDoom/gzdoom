@@ -3137,7 +3137,7 @@ bool P_IsPlayerTotallyFrozen(const player_t *player)
 
 void P_InitPlayerForScript()
 {
-	PStruct *pstruct = NewStruct("Player", nullptr);
+	PStruct *pstruct = NewNativeStruct("Player", nullptr);
 	pstruct->Size = sizeof(player_t);
 	pstruct->Align = alignof(player_t);
 	PArray *parray = NewArray(pstruct, MAXPLAYERS);

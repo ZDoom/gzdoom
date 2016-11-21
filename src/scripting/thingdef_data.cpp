@@ -663,7 +663,7 @@ void InitThingdef()
 {
 	PType *TypeActor = NewPointer(RUNTIME_CLASS(AActor));
 
-	PStruct *sstruct = NewStruct("Sector", nullptr);
+	PStruct *sstruct = NewNativeStruct("Sector", nullptr);
 	auto sptr = NewPointer(sstruct);
 	sstruct->AddNativeField("soundtarget", TypeActor, myoffsetof(sector_t, SoundTarget));
 

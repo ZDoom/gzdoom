@@ -58,7 +58,6 @@
 #include "sbar.h"
 #include "m_swap.h"
 #include "a_sharedglobal.h"
-#include "a_doomglobal.h"
 #include "a_strifeglobal.h"
 #include "v_video.h"
 #include "w_wad.h"
@@ -6110,6 +6109,34 @@ static bool CharArrayParms(int &capacity, int &offset, int &a, int *Stack, int &
 	return true;
 }
 
+static void SetMarineWeapon(AActor *marine, int weapon)
+{
+	static VMFunction *smw = nullptr;
+	if (smw == nullptr)
+	{
+		auto cls = PClass::FindActor("ScriptedMarine");
+		auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol("SetWeapon", true));
+		smw = func->Variants[0].Implementation;
+	}
+	VMValue params[2] = { marine, weapon };
+	VMFrameStack stack;
+	stack.Call(smw, params, 2, nullptr, 0, nullptr);
+}
+
+static void SetMarineSprite(AActor *marine, PClassActor *source)
+{
+	static VMFunction *sms = nullptr;
+	if (sms == nullptr)
+	{
+		auto cls = PClass::FindActor("ScriptedMarine");
+		auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol("SetSprite", true));
+		sms = func->Variants[0].Implementation;
+	}
+	VMValue params[2] = { marine, source };
+	VMFrameStack stack;
+	stack.Call(sms, params, 2, nullptr, 0, nullptr);
+}
+
 int DLevelScript::RunScript ()
 {
 	DACSThinker *controller = DACSThinker::ActiveThinker;
@@ -8946,20 +8973,19 @@ scriptwait:
 		case PCD_SETMARINEWEAPON:
 			if (STACK(2) != 0)
 			{
-				AScriptedMarine *marine;
-				TActorIterator<AScriptedMarine> iterator (STACK(2));
+				AActor *marine;
+				NActorIterator iterator("ScriptedMarine", STACK(2));
 
 				while ((marine = iterator.Next()) != NULL)
 				{
-					marine->SetWeapon ((AScriptedMarine::EMarineWeapon)STACK(1));
+					SetMarineWeapon(marine, STACK(1));
 				}
 			}
 			else
 			{
-				if (activator != NULL && activator->IsKindOf (RUNTIME_CLASS(AScriptedMarine)))
+				if (activator != nullptr && activator->IsKindOf (PClass::FindClass("ScriptedMarine")))
 				{
-					barrier_cast<AScriptedMarine *>(activator)->SetWeapon (
-						(AScriptedMarine::EMarineWeapon)STACK(1));
+					SetMarineWeapon(activator, STACK(1));
 				}
 			}
 			sp -= 2;
@@ -8973,19 +8999,19 @@ scriptwait:
 				{
 					if (STACK(2) != 0)
 					{
-						AScriptedMarine *marine;
-						TActorIterator<AScriptedMarine> iterator (STACK(2));
+						AActor *marine;
+						NActorIterator iterator("ScriptedMarine", STACK(2));
 
 						while ((marine = iterator.Next()) != NULL)
 						{
-							marine->SetSprite (type);
+							SetMarineSprite(marine, type);
 						}
 					}
 					else
 					{
-						if (activator != NULL && activator->IsKindOf (RUNTIME_CLASS(AScriptedMarine)))
+						if (activator != nullptr && activator->IsKindOf(PClass::FindClass("ScriptedMarine")))
 						{
-							barrier_cast<AScriptedMarine *>(activator)->SetSprite (type);
+							SetMarineSprite(activator, type);
 						}
 					}
 				}

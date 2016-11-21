@@ -230,6 +230,7 @@ static PSymbol *FindBuiltinFunction(FName funcname, VMNativeFunction::NativeCall
 	{
 		PSymbolVMFunction *symfunc = new PSymbolVMFunction(funcname);
 		VMNativeFunction *calldec = new VMNativeFunction(func, funcname);
+		calldec->PrintableName = funcname.GetChars();
 		symfunc->Function = calldec;
 		sym = symfunc;
 		GlobalSymbols.AddSymbol(sym);
@@ -1424,6 +1425,14 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 	{
 		FxExpression *x = new FxColorCast(basex);
 		x = x->Resolve(ctx);
+		basex = nullptr;
+		delete this;
+		return x;
+	}
+	else if (ValueType == TypeSpriteID && basex->IsInteger())
+	{
+		basex->ValueType = TypeSpriteID;
+		auto x = basex;
 		basex = nullptr;
 		delete this;
 		return x;

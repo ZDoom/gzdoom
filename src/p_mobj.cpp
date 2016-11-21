@@ -315,10 +315,11 @@ void AActor::InitNativeFields()
 	meta->AddNativeField("TelefogDestType",		TypeActorClass,	myoffsetof(AActor, TeleFogDestType));
 	meta->AddNativeField("SpawnState",			TypeState,		myoffsetof(AActor, SpawnState), VARF_ReadOnly);
 	meta->AddNativeField("SeeState",			TypeState,		myoffsetof(AActor, SeeState), VARF_ReadOnly);
-	meta->AddNativeField("MeleeState",			TypeState,		myoffsetof(AActor, MeleeState), VARF_ReadOnly);
-	meta->AddNativeField("MissileState",		TypeState,		myoffsetof(AActor, MissileState), VARF_ReadOnly);
+	meta->AddNativeField("MeleeState",			TypeState,		myoffsetof(AActor, MeleeState));
+	meta->AddNativeField("MissileState",		TypeState,		myoffsetof(AActor, MissileState));
 	//int ConversationRoot;				// THe root of the current dialogue
 	//FStrifeDialogueNode *Conversation;	// [RH] The dialogue to show when this actor is "used."
+	meta->AddNativeField("DecalGenerator", NewPointer(TypeVoid), myoffsetof(AActor, DecalGenerator));
 	//FDecalBase *DecalGenerator;
 
 	// synthesize a symbol for each flag from the flag name tables to avoid redundant declaration of them.

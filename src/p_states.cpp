@@ -289,7 +289,7 @@ static bool VerifyJumpTarget(PClassActor *cls, FState *CallingState, int index)
 //
 //==========================================================================
 
-FState *FStateLabelStorage::GetState(int pos, PClassActor *cls)
+FState *FStateLabelStorage::GetState(int pos, PClassActor *cls, bool exact)
 {
 	if (pos > 0x10000000)
 	{
@@ -322,7 +322,7 @@ FState *FStateLabelStorage::GetState(int pos, PClassActor *cls)
 		else if (cls != nullptr)
 		{
 			FName *labels = (FName*)&Storage[pos + sizeof(int)];
-			return cls->FindState(val, labels, false);
+			return cls->FindState(val, labels, exact);
 		}
 	}
 	return nullptr;
@@ -337,8 +337,9 @@ FState *FStateLabelStorage::GetState(int pos, PClassActor *cls)
 DEFINE_ACTION_FUNCTION(AActor, FindState)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE(newstate);
-	ACTION_RETURN_STATE(newstate);
+	PARAM_INT(newstate);
+	PARAM_BOOL_DEF(exact)
+	ACTION_RETURN_STATE(StateLabels.GetState(newstate, self->GetClass(), exact));
 }
 
 // same as above but context aware.

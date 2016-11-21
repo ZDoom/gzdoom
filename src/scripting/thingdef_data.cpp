@@ -581,17 +581,21 @@ AFuncDesc *FindFunction(PStruct *cls, const char * string)
 {
 	for (int i = 0; i < 2; i++)
 	{
-		// Since many functions have been declared with Actor as owning class, despited being members of something else, let's hack around this until they have been fixed or exported.
+		// Since many functions have been declared with Actor as owning class, despite being members of something else, let's hack around this until they have been fixed or exported.
 		// Since most of these are expected to be scriptified anyway, there's no point fixing them all before they get exported.
-		if (i == 1 && !cls->IsKindOf(RUNTIME_CLASS(PClassActor))) break;
+		if (i == 1)
+		{
+			if (!cls->IsKindOf(RUNTIME_CLASS(PClassActor))) break;
+			cls = RUNTIME_CLASS(AActor);
+		}
 
-		FStringf fullname("%s_%s", i == 0 ? cls->TypeName.GetChars() : "Actor", string);
 		int min = 0, max = AFTable.Size() - 1;
 
 		while (min <= max)
 		{
 			int mid = (min + max) / 2;
-			int lexval = stricmp(fullname, AFTable[mid].Name + 1);
+			int lexval = stricmp(cls->TypeName.GetChars(), AFTable[mid].ClassName + 1);
+			if (lexval == 0) lexval = stricmp(string, AFTable[mid].FuncName);
 			if (lexval == 0)
 			{
 				return &AFTable[mid];
@@ -641,7 +645,10 @@ static int propcmp(const void * a, const void * b)
 
 static int funccmp(const void * a, const void * b)
 {
-	return stricmp(((AFuncDesc*)a)->Name + 1, ((AFuncDesc*)b)->Name + 1);	// +1 to get past the prefix letter of the native class name, which gets omitted by the FName for the class.
+	// +1 to get past the prefix letter of the native class name, which gets omitted by the FName for the class.
+	int res = stricmp(((AFuncDesc*)a)->ClassName + 1, ((AFuncDesc*)b)->ClassName + 1);
+	if (res == 0) res = stricmp(((AFuncDesc*)a)->FuncName, ((AFuncDesc*)b)->FuncName);
+	return res;
 }
 
 //==========================================================================
@@ -700,7 +707,8 @@ void InitThingdef()
 		{
 			AFuncDesc *afunc = (AFuncDesc *)*probe;
 			assert(afunc->VMPointer != NULL);
-			*(afunc->VMPointer) = new VMNativeFunction(afunc->Function, afunc->Name);
+			*(afunc->VMPointer) = new VMNativeFunction(afunc->Function, afunc->FuncName);
+			(*(afunc->VMPointer))->PrintableName.Format("%s.%s [Native]", afunc->ClassName+1, afunc->FuncName);
 			AFTable.Push(*afunc);
 		}
 		AFTable.ShrinkToFit();

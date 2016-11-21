@@ -261,7 +261,6 @@ void VMDumpConstants(FILE *out, const VMScriptFunction *func)
 void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction *func)
 {
 	VMFunction *callfunc;
-	const char *callname;
 	const char *name;
 	int col;
 	int mode;
@@ -497,8 +496,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			}
 			else if (code[i].op == OP_CALL_K || code[i].op == OP_TAIL_K)
 			{
-				callname = callfunc->IsKindOf(RUNTIME_CLASS(VMScriptFunction)) ? static_cast<VMScriptFunction*>(callfunc)->PrintableName : callfunc->Name != NAME_None ? callfunc->Name : "[anonfunc]";
-				printf_wrapper(out, "  [%s]\n", callname);
+				printf_wrapper(out, "  [%s]\n", callfunc->PrintableName.GetChars());
 			}
 			else
 			{

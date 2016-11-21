@@ -867,7 +867,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	sc_man_scanner.h
 	sc_man_scanner.re
 	g_doom/a_painelemental.cpp
-	g_doom/a_scriptedmarine.cpp
 	g_heretic/a_chicken.cpp
 	g_heretic/a_dsparil.cpp
 	g_heretic/a_hereticartifacts.cpp

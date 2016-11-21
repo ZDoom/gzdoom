@@ -2304,14 +2304,14 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				{
 					if (vindex == -1)
 					{
-						Error(p, "Attempt to override non-existent virtual function %s", FName(f->Name).GetChars());
+						Error(f, "Attempt to override non-existent virtual function %s", FName(f->Name).GetChars());
 					}
 					else
 					{
 						auto oldfunc = clstype->Virtuals[vindex];
 						if (oldfunc->Final)
 						{
-							Error(p, "Attempt to override final function %s", FName(f->Name).GetChars());
+							Error(f, "Attempt to override final function %s", FName(f->Name).GetChars());
 						}
 						clstype->Virtuals[vindex] = sym->Variants[0].Implementation;
 						sym->Variants[0].Implementation->VirtualIndex = vindex;

@@ -7,21 +7,6 @@ class AScriptedMarine : public AActor
 {
 	DECLARE_CLASS (AScriptedMarine, AActor)
 public:
-	enum EMarineWeapon
-	{
-		WEAPON_Dummy,
-		WEAPON_Fist,
-		WEAPON_BerserkFist,
-		WEAPON_Chainsaw,
-		WEAPON_Pistol,
-		WEAPON_Shotgun,
-		WEAPON_SuperShotgun,
-		WEAPON_Chaingun,
-		WEAPON_RocketLauncher,
-		WEAPON_PlasmaRifle,
-		WEAPON_Railgun,
-		WEAPON_BFG
-	};
 
 	void Activate (AActor *activator);
 	void Deactivate (AActor *activator);

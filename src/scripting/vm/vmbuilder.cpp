@@ -887,7 +887,7 @@ void FFunctionBuildList::Build()
 			catch (CRecoverableError &err)
 			{
 				// catch errors from the code generator and pring something meaningful.
-				item.Code->ScriptPosition.Message(MSG_ERROR, "%s in %s", err.GetMessage(), item.PrintableName);
+				item.Code->ScriptPosition.Message(MSG_ERROR, "%s in %s", err.GetMessage(), item.PrintableName.GetChars());
 			}
 		}
 		delete item.Code;

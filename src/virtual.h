@@ -55,7 +55,7 @@ inline int GetVirtualIndex(PClass *cls, const char *funcname)
 	static int VIndex = -1; \
 	if (VIndex < 0) { \
 		VIndex = GetVirtualIndex(RUNTIME_CLASS(cls), #funcname); \
-		if (VIndex < 0) I_Error("Unable to find virtual function in " #cls, #funcname); \
+		if (VIndex < 0) I_Error("Unable to find virtual function %s in " #cls, #funcname); \
 	}
 
 #define VFUNC this->GetClass()->Virtuals[VIndex]

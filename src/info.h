@@ -359,7 +359,7 @@ struct FStateLabelStorage
 		}
 	}
 
-	FState *GetState(int pos, PClassActor *cls);
+	FState *GetState(int pos, PClassActor *cls, bool exact = false);
 };
 
 extern FStateLabelStorage StateLabels;

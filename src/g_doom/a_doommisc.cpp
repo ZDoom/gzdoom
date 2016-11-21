@@ -9,7 +9,6 @@
 #include "gstrings.h"
 #include "g_level.h"
 #include "p_enemy.h"
-#include "a_doomglobal.h"
 #include "a_specialspot.h"
 #include "templates.h"
 #include "m_bbox.h"
@@ -21,5 +20,3 @@
 
 // Include all the other Doom stuff here to reduce compile time
 #include "a_painelemental.cpp"
-#include "a_scriptedmarine.cpp"
-

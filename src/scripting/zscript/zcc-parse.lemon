@@ -787,11 +787,11 @@ type_list(X) ::= type_list(A) COMMA type_or_array(B). { X = A; /*X-overwrites-A*
 type_list_or_void(X) ::= VOID.				{ X = NULL; }
 type_list_or_void(X) ::= type_list(X).
 
-array_size_expr(X) ::= LBRACKET opt_expr(A) RBRACKET.
+array_size_expr(X) ::= LBRACKET(L) opt_expr(A) RBRACKET.
 {
 	if (A == NULL)
 	{
-		NEW_AST_NODE(Expression,nil,A);
+		NEW_AST_NODE(Expression,nil,L.SourceLoc);
 		nil->Operation = PEX_Nil;
 		nil->Type = NULL;
 		X = nil;

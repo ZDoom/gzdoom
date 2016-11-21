@@ -669,6 +669,7 @@ public:
 	int VirtualIndex = -1;
 	FName Name;
 	TArray<VMValue> DefaultArgs;
+	FString PrintableName;	// so that the VM can print meaningful info if something in this function goes wrong.
 
 	class PPrototype *Proto;
 
@@ -822,7 +823,6 @@ public:
 	VM_UHALF NumKonstA;
 	VM_UHALF MaxParam;		// Maximum number of parameters this function has on the stack at once
 	VM_UBYTE NumArgs;		// Number of arguments this function takes
-	FString PrintableName;	// so that the VM can print meaningful info if something in this function goes wrong.
 	TArray<FTypeAndOffset> SpecialInits;	// list of all contents on the extra stack which require construction and destruction
 
 	void InitExtra(void *addr);
@@ -1015,7 +1015,8 @@ typedef int(*actionf_p)(VMFrameStack *stack, VMValue *param, TArray<VMValue> &de
 
 struct AFuncDesc
 {
-	const char *Name;
+	const char *ClassName;
+	const char *FuncName;
 	actionf_p Function;
 	VMNativeFunction **VMPointer;
 };
@@ -1037,7 +1038,7 @@ struct AFuncDesc
 #define DEFINE_ACTION_FUNCTION(cls, name) \
 	static int AF_##cls##_##name(VM_ARGS); \
 	VMNativeFunction *cls##_##name##_VMPtr; \
-	static const AFuncDesc cls##_##name##_Hook = { #cls "_" #name, AF_##cls##_##name, &cls##_##name##_VMPtr }; \
+	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr }; \
 	extern AFuncDesc const *const cls##_##name##_HookPtr; \
 	MSVC_ASEG AFuncDesc const *const cls##_##name##_HookPtr GCC_ASEG = &cls##_##name##_Hook; \
 	static int AF_##cls##_##name(VM_ARGS)

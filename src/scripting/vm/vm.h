@@ -956,7 +956,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_OBJECT_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); type *x = (type *)param[p].a; assert(x == NULL || x->IsKindOf(RUNTIME_CLASS(type)));
 #define PARAM_CLASS_AT(p,x,base)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); base::MetaClass *x = (base::MetaClass *)param[p].a; assert(x == NULL || x->IsDescendantOf(RUNTIME_CLASS(base)));
 
-#define PARAM_EXISTS(p)					((p) < numparam && param[p].Type != REGT_NIL)
+#define PARAM_EXISTS(p)					((p) < numparam)
 #define ASSERTINT(p)					assert((p).Type == REGT_INT)
 #define ASSERTFLOAT(p)					assert((p).Type == REGT_FLOAT)
 #define ASSERTSTRING(p)					assert((p).Type == REGT_STRING)

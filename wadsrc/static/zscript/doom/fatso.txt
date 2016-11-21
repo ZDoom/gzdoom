@@ -175,7 +175,7 @@ extend class Actor
 	// Original idea: Linguica
 	//
 	
-	void A_Mushroom(class<Actor> spawntype = "FatShot", int numspawns = 0, int flags = 0, float vrange = 4.0, float hrange = 0.5)
+	void A_Mushroom(class<Actor> spawntype = "FatShot", int numspawns = 0, int flags = 0, double vrange = 4.0, double hrange = 0.5)
 	{
 		int i, j;
 

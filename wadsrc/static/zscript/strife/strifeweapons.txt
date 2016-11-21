@@ -816,7 +816,7 @@ class StrifeGrenadeLauncher : StrifeWeapon
 		Inventory.PickupMessage "$TXT_GLAUNCHER";
 	}
 
-	action native void A_FireGrenade (class<Actor> grenadetype, float angleofs, statelabel flash);
+	action native void A_FireGrenade (class<Actor> grenadetype, double angleofs, statelabel flash);
 
 	States
 	{

@@ -31,7 +31,7 @@ extend class Actor
 	//
 	//==========================================================================
 
-	bool CheckIfCloser(Actor targ, float dist, bool noz = false)
+	bool CheckIfCloser(Actor targ, double dist, bool noz = false)
 	{
 		if (!targ) return false;
 		return 
@@ -42,7 +42,7 @@ extend class Actor
 			));
 	}
 
-	action state A_JumpIfCloser(float distance, statelabel label, bool noz = false)
+	action state A_JumpIfCloser(double distance, statelabel label, bool noz = false)
 	{
 		Actor targ;
 
@@ -59,12 +59,12 @@ extend class Actor
 		return CheckIfCloser(targ, distance, noz)? ResolveState(label) : null;
 	}
 	
-	action state A_JumpIfTracerCloser(float distance, statelabel label, bool noz = false)
+	action state A_JumpIfTracerCloser(double distance, statelabel label, bool noz = false)
 	{
 		return CheckIfCloser(tracer, distance, noz)? ResolveState(label) : null;
 	}
 	
-	action state A_JumpIfMasterCloser(float distance, statelabel label, bool noz = false)
+	action state A_JumpIfMasterCloser(double distance, statelabel label, bool noz = false)
 	{
 		return CheckIfCloser(master, distance, noz)? ResolveState(label) : null;
 	}
@@ -124,20 +124,20 @@ extend class Actor
 	//==========================================================================
 
 	native bool CheckIfSeen();
-	native bool CheckSightOrRange(float distance, bool two_dimension = false);
-	native bool CheckRange(float distance, bool two_dimension = false);
+	native bool CheckSightOrRange(double distance, bool two_dimension = false);
+	native bool CheckRange(double distance, bool two_dimension = false);
 	
 	action state A_CheckSight(statelabel label)
 	{
 		return CheckIfSeen()? ResolveState(label) : null;
 	}
 
-	action state A_CheckSightOrRange(float distance, statelabel label, bool two_dimension = false)
+	action state A_CheckSightOrRange(double distance, statelabel label, bool two_dimension = false)
 	{
 		return CheckSightOrRange(distance, two_dimension)? ResolveState(label) : null;
 	}
 	
-	action state A_CheckRange(float distance, statelabel label, bool two_dimension = false)
+	action state A_CheckRange(double distance, statelabel label, bool two_dimension = false)
 	{
 		return CheckRange(distance, two_dimension)? ResolveState(label) : null;
 	}
@@ -202,28 +202,28 @@ extend class Actor
 	//
 	//==========================================================================
 
-	native bool CheckLOF(int flags = 0, float range = 0, float minrange = 0, float angle = 0, float pitch = 0, float offsetheight = 0, float offsetwidth = 0, int ptr_target = AAPTR_DEFAULT, float offsetforward = 0);
-	native bool CheckIfTargetInLOS (float fov = 0, int flags = 0, float dist_max = 0, float dist_close = 0);
-	native bool CheckIfInTargetLOS (float fov = 0, int flags = 0, float dist_max = 0, float dist_close = 0);
-	native bool CheckProximity(class<Actor> classname, float distance, int count = 1, int flags = 0, int ptr = AAPTR_DEFAULT);
-	native bool CheckBlock(int flags = 0, int ptr = AAPTR_DEFAULT, float xofs = 0, float yofs = 0, float zofs = 0, float angle = 0);
+	native bool CheckLOF(int flags = 0, double range = 0, double minrange = 0, double angle = 0, double pitch = 0, double offsetheight = 0, double offsetwidth = 0, int ptr_target = AAPTR_DEFAULT, double offsetforward = 0);
+	native bool CheckIfTargetInLOS (double fov = 0, int flags = 0, double dist_max = 0, double dist_close = 0);
+	native bool CheckIfInTargetLOS (double fov = 0, int flags = 0, double dist_max = 0, double dist_close = 0);
+	native bool CheckProximity(class<Actor> classname, double distance, int count = 1, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native bool CheckBlock(int flags = 0, int ptr = AAPTR_DEFAULT, double xofs = 0, double yofs = 0, double zofs = 0, double angle = 0);
 
-	action state A_CheckLOF(statelabel label, int flags = 0, float range = 0, float minrange = 0, float angle = 0, float pitch = 0, float offsetheight = 0, float offsetwidth = 0, int ptr_target = AAPTR_DEFAULT, float offsetforward = 0)
+	action state A_CheckLOF(statelabel label, int flags = 0, double range = 0, double minrange = 0, double angle = 0, double pitch = 0, double offsetheight = 0, double offsetwidth = 0, int ptr_target = AAPTR_DEFAULT, double offsetforward = 0)
 	{
 		return CheckLOF(flags, range, minrange, angle, pitch, offsetheight, offsetwidth, ptr_target, offsetforward)? ResolveState(label) : null;
 	}
 	
-	action state A_JumpIfTargetInLOS (statelabel label, float fov = 0, int flags = 0, float dist_max = 0, float dist_close = 0)
+	action state A_JumpIfTargetInLOS (statelabel label, double fov = 0, int flags = 0, double dist_max = 0, double dist_close = 0)
 	{
 		return CheckIfTargetInLOS(fov, flags, dist_max, dist_close)? ResolveState(label) : null;
 	}
 	
-	action state A_JumpIfInTargetLOS (statelabel label, float fov = 0, int flags = 0, float dist_max = 0, float dist_close = 0)
+	action state A_JumpIfInTargetLOS (statelabel label, double fov = 0, int flags = 0, double dist_max = 0, double dist_close = 0)
 	{
 		return CheckIfInTargetLOS(fov, flags, dist_max, dist_close)? ResolveState(label) : null;
 	}
 	
-	action state A_CheckProximity(statelabel label, class<Actor> classname, float distance, int count = 1, int flags = 0, int ptr = AAPTR_DEFAULT)
+	action state A_CheckProximity(statelabel label, class<Actor> classname, double distance, int count = 1, int flags = 0, int ptr = AAPTR_DEFAULT)
 	{
 		// This one was doing some weird stuff that needs to be preserved.
 		state jumpto = ResolveState(label);
@@ -237,7 +237,7 @@ extend class Actor
 		return CheckProximity(classname, distance, count, flags, ptr)? jumpto : null;
 	}
 	
-	action state A_CheckBlock(statelabel label, int flags = 0, int ptr = AAPTR_DEFAULT, float xofs = 0, float yofs = 0, float zofs = 0, float angle = 0)
+	action state A_CheckBlock(statelabel label, int flags = 0, int ptr = AAPTR_DEFAULT, double xofs = 0, double yofs = 0, double zofs = 0, double angle = 0)
 	{
 		return CheckBlock(flags, ptr, xofs, yofs, zofs, angle)? ResolveState(label) : null;
 	}
@@ -253,7 +253,7 @@ extend class Actor
 	// if its lower.
 	//===========================================================================
 	
-	action state A_JumpIfHigherOrLower(statelabel high, statelabel low, float offsethigh = 0, float offsetlow = 0, bool includeHeight = true, int ptr = AAPTR_TARGET)
+	action state A_JumpIfHigherOrLower(statelabel high, statelabel low, double offsethigh = 0, double offsetlow = 0, bool includeHeight = true, int ptr = AAPTR_TARGET)
 	{
 		Actor mobj = GetPointer(ptr);
 

@@ -65,12 +65,12 @@ class Actor : Thinker native
 	
 
 	native static readonly<Actor> GetDefaultByType(class<Actor> cls);
-	native static float deltaangle(float ang1, float ang2);
-	native static float absangle(float ang1, float ang2);
-	native static float GetDefaultSpeed(class<Actor> type);
+	native static double deltaangle(double ang1, double ang2);
+	native static double absangle(double ang1, double ang2);
+	native static double GetDefaultSpeed(class<Actor> type);
 	native void RemoveFromHash();
 	native string GetTag(string defstr = "");
-	native float GetBobOffset(float frac = 0);
+	native double GetBobOffset(double frac = 0);
 	native void ClearCounters();
 	native bool GiveBody (int num, int max=0);
 
@@ -88,7 +88,7 @@ class Actor : Thinker native
 	native static Actor Spawn(class<Actor> type, vector3 pos = (0,0,0), int replace = NO_REPLACE);
 	native Actor SpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
 	native Actor SpawnMissileZ (double z, Actor dest, class<Actor> type);
-	native Actor SpawnMissileAngleZSpeed (double z, class<Actor> type, float angle, double vz, double speed, Actor owner = null, bool checkspawn = true);
+	native Actor SpawnMissileAngleZSpeed (double z, class<Actor> type, double angle, double vz, double speed, Actor owner = null, bool checkspawn = true);
 	native Actor, Actor SpawnPlayerMissile(class<Actor> type, double angle = 0, double x = 0, double y = 0, double z = 0, out FTranslatedLineTarget pLineTarget = null, bool nofreeaim = false, bool noautoaim = false, int aimflags = 0);
 
 	native void A_Light(int extralight);
@@ -98,7 +98,7 @@ class Actor : Thinker native
 	void A_LightInverse() { A_Light(0x80000000); }
 	
 	native Actor OldSpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
-	native Actor SpawnPuff(class<Actor> pufftype, vector3 pos, float hitdir, float particledir, int updown, int flags = 0, Actor vict = null);
+	native Actor SpawnPuff(class<Actor> pufftype, vector3 pos, double hitdir, double particledir, int updown, int flags = 0, Actor vict = null);
 	
 	native void TraceBleed(int damage, Actor missile);
 	native bool CheckMeleeRange();
@@ -119,13 +119,13 @@ class Actor : Thinker native
 	native void UnlinkFromWorld();
 	native bool CanSeek(Actor target);
 	native double AngleTo(Actor target, bool absolute = false);
-	native void AddZ(float zadd, bool moving = true);
-	native void SetZ(float z);
-	native vector3 Vec3Offset(float x, float y, float z, bool absolute = false);
-	native vector3 Vec3Angle(float length, float angle, float z = 0, bool absolute = false);
-	native vector3 Vec2OffsetZ(float x, float y, float atz, bool absolute = false);
-	native void VelFromAngle(float speed = 0, float angle = 0);
-	native void Thrust(float speed = 0, float angle = 0);
+	native void AddZ(double zadd, bool moving = true);
+	native void SetZ(double z);
+	native vector3 Vec3Offset(double x, double y, double z, bool absolute = false);
+	native vector3 Vec3Angle(double length, double angle, double z = 0, bool absolute = false);
+	native vector3 Vec2OffsetZ(double x, double y, double atz, bool absolute = false);
+	native void VelFromAngle(double speed = 0, double angle = 0);
+	native void Thrust(double speed = 0, double angle = 0);
 	native bool isFriend(Actor other);
 	native void AdjustFloorClip();
 	native DropItem GetDropItems();
@@ -140,21 +140,21 @@ class Actor : Thinker native
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
 	native Inventory FindInventory(class<Inventory> itemtype, bool subclass = false);
 	native int	CountInv(class<Inventory> itemtype, int ptr_select = AAPTR_DEFAULT);
-	native float GetDistance(bool checkz, int ptr = AAPTR_TARGET);
-	native float GetAngle(int flags, int ptr = AAPTR_DEFAULT);
-	native float GetZAt(float px = 0, float py = 0, float angle = 0, int flags = 0, int pick_pointer = AAPTR_DEFAULT);
+	native double GetDistance(bool checkz, int ptr = AAPTR_TARGET);
+	native double GetAngle(int flags, int ptr = AAPTR_DEFAULT);
+	native double GetZAt(double px = 0, double py = 0, double angle = 0, int flags = 0, int pick_pointer = AAPTR_DEFAULT);
 	native int GetSpawnHealth();
 	native int GetGibHealth();
-	native float GetCrouchFactor(int ptr = AAPTR_PLAYER1);
-	native float GetCVar(string cvar);
+	native double GetCrouchFactor(int ptr = AAPTR_PLAYER1);
+	native double GetCVar(string cvar);
 	native int GetPlayerInput(int inputnum, int ptr = AAPTR_DEFAULT);
-	native int CountProximity(class<Actor> classname, float distance, int flags = 0, int ptr = AAPTR_DEFAULT);
-	native float GetSpriteAngle(int ptr = AAPTR_DEFAULT);
-	native float GetSpriteRotation(int ptr = AAPTR_DEFAULT);
+	native int CountProximity(class<Actor> classname, double distance, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native double GetSpriteAngle(int ptr = AAPTR_DEFAULT);
+	native double GetSpriteRotation(int ptr = AAPTR_DEFAULT);
 	native int GetMissileDamage(int mask, int add, int ptr = AAPTR_DEFAULT);
 	action native int OverlayID();
-	action native float OverlayX(int layer = 0);
-	action native float OverlayY(int layer = 0);
+	action native double OverlayX(int layer = 0);
+	action native double OverlayY(int layer = 0);
 
 	// DECORATE setters - it probably makes more sense to set these values directly now...
 	void A_SetMass(int newmass) { mass = newmass; }
@@ -169,13 +169,13 @@ class Actor : Thinker native
 	void A_NoGravity() { bNoGravity = true; }
 	void A_Gravity() { bNoGravity = false; Gravity = 1; }
 	void A_LowGravity() { bNoGravity = false; Gravity = 0.125; }
-	void A_SetGravity(float newgravity) { gravity = clamp(newgravity, 0., 10.); }
+	void A_SetGravity(double newgravity) { gravity = clamp(newgravity, 0., 10.); }
 	void A_SetFloorClip() { bFloorClip = true; AdjustFloorClip(); }
 	void A_UnSetFloorClip() { bFloorClip = false;  FloorClip = 0; }
 	void A_HideThing() { bInvisible = true; }
 	void A_UnHideThing() { bInvisible = false; }
 	void A_SetArg(int arg, int val) { if (arg >= 0 && arg < 5) args[arg] = val;	}
-	void A_Turn(float turn = 0) { angle += turn; }
+	void A_Turn(double turn = 0) { angle += turn; }
 	void A_SetDamageType(name newdamagetype) { damagetype = newdamagetype; }
 	void A_SetSolid() { bSolid = true; }
 	void A_UnsetSolid() { bSolid = false; }
@@ -197,7 +197,7 @@ class Actor : Thinker native
 	//
 	//---------------------------------------------------------------------------
 
-	Actor SpawnMissileAngle (class<Actor> type, float angle, double vz)
+	Actor SpawnMissileAngle (class<Actor> type, double angle, double vz)
 	{
 		return SpawnMissileAngleZSpeed (pos.z + 32 + GetBobOffset(), type, angle, vz, GetDefaultSpeed (type));
 	}
@@ -208,7 +208,7 @@ class Actor : Thinker native
 	}
 	
 
-	void A_SetScale(float scalex, float scaley = 0, int ptr = AAPTR_DEFAULT, bool usezero = false)
+	void A_SetScale(double scalex, double scaley = 0, int ptr = AAPTR_DEFAULT, bool usezero = false)
 	{
 		Actor aptr = GetPointer(ptr);
 		if (aptr)
@@ -217,12 +217,12 @@ class Actor : Thinker native
 			aptr.Scale.Y = scaley != 0 || usezero? scaley : scalex;	// use scalex here, too, if only one parameter.
 		}
 	}
-	void A_SetSpeed(float speed, int ptr = AAPTR_DEFAULT)
+	void A_SetSpeed(double speed, int ptr = AAPTR_DEFAULT)
 	{
 		Actor aptr = GetPointer(ptr);
 		if (aptr) aptr.Speed = speed;
 	}
-	void A_SetFloatSpeed(float speed, int ptr = AAPTR_DEFAULT)
+	void A_SetFloatSpeed(double speed, int ptr = AAPTR_DEFAULT)
 	{
 		Actor aptr = GetPointer(ptr);
 		if (aptr) aptr.FloatSpeed = speed;
@@ -232,14 +232,14 @@ class Actor : Thinker native
 		Actor aptr = GetPointer(ptr);
 		if (aptr) aptr.PainThreshold = threshold;
 	}
-	bool A_SetSpriteAngle(float angle = 0, int ptr = AAPTR_DEFAULT)
+	bool A_SetSpriteAngle(double angle = 0, int ptr = AAPTR_DEFAULT)
 	{
 		Actor aptr = GetPointer(ptr);
 		if (!aptr) return false;
 		aptr.SpriteAngle = angle;
 		return true;
 	}
-	bool A_SetSpriteRotation(float angle = 0, int ptr = AAPTR_DEFAULT)
+	bool A_SetSpriteRotation(double angle = 0, int ptr = AAPTR_DEFAULT)
 	{
 		Actor aptr = GetPointer(ptr);
 		if (!aptr) return false;
@@ -247,7 +247,7 @@ class Actor : Thinker native
 		return true;
 	}
 
-	deprecated void A_FaceConsolePlayer(float MaxTurnAngle = 0) {}
+	deprecated void A_FaceConsolePlayer(double MaxTurnAngle = 0) {}
 
 	void A_SetSpecial(int spec, int arg0 = 0, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0)
 	{
@@ -333,17 +333,17 @@ class Actor : Thinker native
 	}
 	
 
-	native void A_Face(Actor faceto, float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0);
+	native void A_Face(Actor faceto, double max_turn = 0, double max_pitch = 270, double ang_offset = 0, double pitch_offset = 0, int flags = 0, double z_ofs = 0);
 
-	void A_FaceTarget(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0)
+	void A_FaceTarget(double max_turn = 0, double max_pitch = 270, double ang_offset = 0, double pitch_offset = 0, int flags = 0, double z_ofs = 0)
 	{
 		A_Face(target, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_ofs);
 	}
-	void A_FaceTracer(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0)
+	void A_FaceTracer(double max_turn = 0, double max_pitch = 270, double ang_offset = 0, double pitch_offset = 0, int flags = 0, double z_ofs = 0)
 	{
 		A_Face(tracer, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_ofs);
 	}
-	void A_FaceMaster(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0, float z_ofs = 0)
+	void A_FaceMaster(double max_turn = 0, double max_pitch = 270, double ang_offset = 0, double pitch_offset = 0, int flags = 0, double z_ofs = 0)
 	{
 		A_Face(master, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_ofs);
 	}
@@ -392,7 +392,7 @@ class Actor : Thinker native
 	native void A_TurretLook();
 	native void A_KlaxonBlare();
 	native void A_Countdown();
-	native void A_AlertMonsters(float maxdist = 0, int flags = 0);
+	native void A_AlertMonsters(double maxdist = 0, int flags = 0);
 	native void A_ClearSoundTarget();
 	native void A_CheckTerrain();
 
@@ -400,8 +400,8 @@ class Actor : Thinker native
 	deprecated native void A_MeleeAttack();
 	deprecated native void A_ComboAttack();
 	deprecated native void A_BulletAttack();
-	native void A_WolfAttack(int flags = 0, sound whattoplay = "weapons/pistol", float snipe = 1.0, int maxdamage = 64, int blocksize = 128, int pointblank = 2, int longrange = 4, float runspeed = 160.0, class<Actor> pufftype = "BulletPuff");
-	native void A_PlaySound(sound whattoplay = "weapons/pistol", int slot = CHAN_BODY, float volume = 1.0, bool looping = false, float attenuation = ATTN_NORM, bool local = false);
+	native void A_WolfAttack(int flags = 0, sound whattoplay = "weapons/pistol", double snipe = 1.0, int maxdamage = 64, int blocksize = 128, int pointblank = 2, int longrange = 4, double runspeed = 160.0, class<Actor> pufftype = "BulletPuff");
+	native void A_PlaySound(sound whattoplay = "weapons/pistol", int slot = CHAN_BODY, double volume = 1.0, bool looping = false, double attenuation = ATTN_NORM, bool local = false);
 	deprecated void A_PlayWeaponSound(sound whattoplay) { A_PlaySound(whattoplay, CHAN_WEAPON); }
 	native void A_FLoopActiveSound();
 	native void A_LoopActiveSound();
@@ -410,55 +410,55 @@ class Actor : Thinker native
 	deprecated native void A_StopSoundEx(name slot);
 	native void A_SeekerMissile(int threshold, int turnmax, int flags = 0, int chance = 50, int distance = 10);
 	native action state A_Jump(int chance, statelabel label, ...);
-	native void A_CustomMissile(class<Actor> missiletype, float spawnheight = 32, float spawnofs_xy = 0, float angle = 0, int flags = 0, float pitch = 0, int ptr = AAPTR_TARGET);
-	native void A_CustomBulletAttack(float spread_xy, float spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", float range = 0, int flags = 0, int ptr = AAPTR_TARGET, class<Actor> missile = null, float Spawnheight = 32, float Spawnofs_xy = 0);
-	native void A_CustomRailgun(int damage, int spawnofs_xy = 0, color color1 = 0, color color2 = 0, int flags = 0, int aim = 0, float maxdiff = 0, class<Actor> pufftype = "BulletPuff", float spread_xy = 0, float spread_z = 0, float range = 0, int duration = 0, float sparsity = 1.0, float driftspeed = 1.0, class<Actor> spawnclass = null, float spawnofs_z = 0, int spiraloffset = 270, int limit = 0);
+	native void A_CustomMissile(class<Actor> missiletype, double spawnheight = 32, double spawnofs_xy = 0, double angle = 0, int flags = 0, double pitch = 0, int ptr = AAPTR_TARGET);
+	native void A_CustomBulletAttack(double spread_xy, double spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", double range = 0, int flags = 0, int ptr = AAPTR_TARGET, class<Actor> missile = null, double Spawnheight = 32, double Spawnofs_xy = 0);
+	native void A_CustomRailgun(int damage, int spawnofs_xy = 0, color color1 = 0, color color2 = 0, int flags = 0, int aim = 0, double maxdiff = 0, class<Actor> pufftype = "BulletPuff", double spread_xy = 0, double spread_z = 0, double range = 0, int duration = 0, double sparsity = 1.0, double driftspeed = 1.0, class<Actor> spawnclass = null, double spawnofs_z = 0, int spiraloffset = 270, int limit = 0);
 	native bool A_SetInventory(class<Inventory> itemtype, int amount, int ptr = AAPTR_DEFAULT, bool beyondMax = false);
 	native bool A_GiveInventory(class<Inventory> itemtype, int amount = 0, int giveto = AAPTR_DEFAULT);
 	native bool A_TakeInventory(class<Inventory> itemtype, int amount = 0, int flags = 0, int giveto = AAPTR_DEFAULT);
-	action native bool A_SpawnItem(class<Actor> itemtype = "Unknown", float distance = 0, float zheight = 0, bool useammo = true, bool transfer_translation = false);
-	native bool A_SpawnItemEx(class<Actor> itemtype, float xofs = 0, float yofs = 0, float zofs = 0, float xvel = 0, float yvel = 0, float zvel = 0, float angle = 0, int flags = 0, int failchance = 0, int tid=0);
-	native void A_Print(string whattoprint, float time = 0, name fontname = "none");
-	native void A_PrintBold(string whattoprint, float time = 0, name fontname = "none");
+	action native bool A_SpawnItem(class<Actor> itemtype = "Unknown", double distance = 0, double zheight = 0, bool useammo = true, bool transfer_translation = false);
+	native bool A_SpawnItemEx(class<Actor> itemtype, double xofs = 0, double yofs = 0, double zofs = 0, double xvel = 0, double yvel = 0, double zvel = 0, double angle = 0, int flags = 0, int failchance = 0, int tid=0);
+	native void A_Print(string whattoprint, double time = 0, name fontname = "none");
+	native void A_PrintBold(string whattoprint, double time = 0, name fontname = "none");
 	native void A_Log(string whattoprint);
 	native void A_LogInt(int whattoprint);
-	native void A_LogFloat(float whattoprint);
-	native void A_SetTranslucent(float alpha, int style = 0);
-	native void A_SetRenderStyle(float alpha, int style);
-	native void A_FadeIn(float reduce = 0.1, int flags = 0);
-	native void A_FadeOut(float reduce = 0.1, int flags = 1); //bool remove == true
-	native void A_FadeTo(float target, float amount = 0.1, int flags = 0);
-	native void A_SpawnDebris(class<Actor> spawntype, bool transfer_translation = false, float mult_h = 1, float mult_v = 1);
-	native void A_SpawnParticle(color color1, int flags = 0, int lifetime = 35, float size = 1, float angle = 0, float xoff = 0, float yoff = 0, float zoff = 0, float velx = 0, float vely = 0, float velz = 0, float accelx = 0, float accely = 0, float accelz = 0, float startalphaf = 1, float fadestepf = -1, float sizestep = 0);
+	native void A_LogFloat(double whattoprint);
+	native void A_SetTranslucent(double alpha, int style = 0);
+	native void A_SetRenderStyle(double alpha, int style);
+	native void A_FadeIn(double reduce = 0.1, int flags = 0);
+	native void A_FadeOut(double reduce = 0.1, int flags = 1); //bool remove == true
+	native void A_FadeTo(double target, double amount = 0.1, int flags = 0);
+	native void A_SpawnDebris(class<Actor> spawntype, bool transfer_translation = false, double mult_h = 1, double mult_v = 1);
+	native void A_SpawnParticle(color color1, int flags = 0, int lifetime = 35, double size = 1, double angle = 0, double xoff = 0, double yoff = 0, double zoff = 0, double velx = 0, double vely = 0, double velz = 0, double accelx = 0, double accely = 0, double accelz = 0, double startalphaf = 1, double fadestepf = -1, double sizestep = 0);
 	native void A_ExtChase(bool usemelee, bool usemissile, bool playactive = true, bool nightmarefast = false);
 	native void A_DropInventory(class<Inventory> itemtype);
-	native void A_SetBlend(color color1, float alpha, int tics, color color2 = 0);
+	native void A_SetBlend(color color1, double alpha, int tics, color color2 = 0);
 	deprecated native void A_ChangeFlag(string flagname, bool value);
 	native void A_ChangeCountFlags(int kill = FLAG_NO_CHANGE, int item = FLAG_NO_CHANGE, int secret = FLAG_NO_CHANGE);
 	native void A_RaiseMaster(bool copy = 0);
 	native void A_RaiseChildren(bool copy = 0);
 	native void A_RaiseSiblings(bool copy = 0);
-	deprecated native void A_BasicAttack(int meleedamage, sound meleesound, class<actor> missiletype, float missileheight);
-	action native bool A_ThrowGrenade(class<Actor> itemtype, float zheight = 0, float xyvel = 0, float zvel = 0, bool useammo = true);
-	native void A_Weave(int xspeed, int yspeed, float xdist, float ydist);
+	deprecated native void A_BasicAttack(int meleedamage, sound meleesound, class<actor> missiletype, double missileheight);
+	action native bool A_ThrowGrenade(class<Actor> itemtype, double zheight = 0, double xyvel = 0, double zvel = 0, bool useammo = true);
+	native void A_Weave(int xspeed, int yspeed, double xdist, double ydist);
 
 
-	action native state, bool A_Teleport(statelabel teleportstate = null, class<SpecialSpot> targettype = "BossSpot", class<Actor> fogtype = "TeleportFog", int flags = 0, float mindist = 0, float maxdist = 128, int ptr = AAPTR_DEFAULT);
-	action native state, bool A_Warp(int ptr_destination, float xofs = 0, float yofs = 0, float zofs = 0, float angle = 0, int flags = 0, statelabel success_state = null, float heightoffset = 0, float radiusoffset = 0, float pitch = 0);
+	action native state, bool A_Teleport(statelabel teleportstate = null, class<SpecialSpot> targettype = "BossSpot", class<Actor> fogtype = "TeleportFog", int flags = 0, double mindist = 0, double maxdist = 128, int ptr = AAPTR_DEFAULT);
+	action native state, bool A_Warp(int ptr_destination, double xofs = 0, double yofs = 0, double zofs = 0, double angle = 0, int flags = 0, statelabel success_state = null, double heightoffset = 0, double radiusoffset = 0, double pitch = 0);
 	native void A_CountdownArg(int argnum, statelabel targstate = null);
 	native state A_MonsterRefire(int chance, statelabel label);
-	native void A_LookEx(int flags = 0, float minseedist = 0, float maxseedist = 0, float maxheardist = 0, float fov = 0, statelabel label = null);
+	native void A_LookEx(int flags = 0, double minseedist = 0, double maxseedist = 0, double maxheardist = 0, double fov = 0, statelabel label = null);
 	
-	native void A_Recoil(float xyvel);
+	native void A_Recoil(double xyvel);
 	native bool A_GiveToTarget(class<Inventory> itemtype, int amount = 0, int forward_ptr = AAPTR_DEFAULT);
 	native bool A_TakeFromTarget(class<Inventory> itemtype, int amount = 0, int flags = 0, int forward_ptr = AAPTR_DEFAULT);
-	native int A_RadiusGive(class<Inventory> itemtype, float distance, int flags, int amount = 0, class<Actor> filter = null, name species = "None", float mindist = 0, int limit = 0);
+	native int A_RadiusGive(class<Inventory> itemtype, double distance, int flags, int amount = 0, class<Actor> filter = null, name species = "None", double mindist = 0, int limit = 0);
 	native void A_CustomMeleeAttack(int damage = 0, sound meleesound = "", sound misssound = "", name damagetype = "none", bool bleed = true);
-	native void A_CustomComboAttack(class<Actor> missiletype, float spawnheight, int damage, sound meleesound = "", name damagetype = "none", bool bleed = true);
+	native void A_CustomComboAttack(class<Actor> missiletype, double spawnheight, int damage, sound meleesound = "", name damagetype = "none", bool bleed = true);
 	native void A_Burst(class<Actor> chunktype);
-	action native void A_Blast(int flags = 0, float strength = 255, float radius = 255, float speed = 20, class<Actor> blasteffect = "BlastEffect", sound blastsound = "BlastRadius");
+	action native void A_Blast(int flags = 0, double strength = 255, double radius = 255, double speed = 20, class<Actor> blasteffect = "BlastEffect", sound blastsound = "BlastRadius");
 	native void A_RadiusThrust(int force = 128, int distance = -1, int flags = RTF_AFFECTSOURCE, int fullthrustdistance = 0);
-	native void A_RadiusDamageSelf(int damage = 128, float distance = 128, int flags = 0, class<Actor> flashtype = null);
+	native void A_RadiusDamageSelf(int damage = 128, double distance = 128, int flags = 0, class<Actor> flashtype = null);
 	native int A_Explode(int damage = -1, int distance = -1, int flags = XF_HURTSOURCE, bool alert = false, int fulldamagedistance = 0, int nails = 0, int naildamage = 10, class<Actor> pufftype = "BulletPuff", name damagetype = "none");
 	native void A_Stop();
 	native void A_Respawn(int flags = 1);
@@ -477,17 +477,17 @@ class Actor : Thinker native
 	native void A_RemoveForcefield();
 	native void A_DropWeaponPieces(class<Actor> p1, class<Actor> p2, class<Actor> p3);
 	native void A_PigPain ();
-	native void A_SetAngle(float angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
-	native void A_SetPitch(float pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
-	native void A_SetRoll(float roll, int flags = 0, int ptr = AAPTR_DEFAULT);
-	native void A_ScaleVelocity(float scale, int ptr = AAPTR_DEFAULT);
-	native void A_ChangeVelocity(float x = 0, float y = 0, float z = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void A_SetAngle(double angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void A_SetPitch(double pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void A_SetRoll(double roll, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void A_ScaleVelocity(double scale, int ptr = AAPTR_DEFAULT);
+	native void A_ChangeVelocity(double x = 0, double y = 0, double z = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	deprecated native void A_SetUserVar(name varname, int value);
 	deprecated native void A_SetUserArray(name varname, int index, int value);
-	deprecated native void A_SetUserVarFloat(name varname, float value);
-	deprecated native void A_SetUserArrayFloat(name varname, int index, float value);
+	deprecated native void A_SetUserVarFloat(name varname, double value);
+	deprecated native void A_SetUserArrayFloat(name varname, int index, double value);
 	native void A_Quake(int intensity, int duration, int damrad, int tremrad, sound sfx = "world/quake");
-	native void A_QuakeEx(int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, sound sfx = "world/quake", int flags = 0, float mulWaveX = 1, float mulWaveY = 1, float mulWaveZ = 1, int falloff = 0, int highpoint = 0, float rollIntensity = 0, float rollWave = 0);
+	native void A_QuakeEx(int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, sound sfx = "world/quake", int flags = 0, double mulWaveX = 1, double mulWaveY = 1, double mulWaveZ = 1, int falloff = 0, int highpoint = 0, double rollIntensity = 0, double rollWave = 0);
 	action native void A_SetTics(int tics);
 	native void A_DropItem(class<Actor> item, int dropamount = -1, int chance = 256);
 	native void A_DamageSelf(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = null, name species = "None", int src = AAPTR_DEFAULT, int inflict = AAPTR_DEFAULT);
@@ -517,10 +517,10 @@ class Actor : Thinker native
 	native void A_ResetHealth(int ptr = AAPTR_DEFAULT);
 	native void A_SetSpecies(name species, int ptr = AAPTR_DEFAULT);
 	native void A_SetChaseThreshold(int threshold, bool def = false, int ptr = AAPTR_DEFAULT);
-	native bool A_FaceMovementDirection(float offset = 0, float anglelimit = 0, float pitchlimit = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native bool A_FaceMovementDirection(double offset = 0, double anglelimit = 0, double pitchlimit = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native int A_ClearOverlays(int sstart = 0, int sstop = 0, bool safety = true);
 	native bool A_CopySpriteFrame(int from, int to, int flags = 0);
-	native bool A_SetVisibleRotation(float anglestart = 0, float angleend = 0, float pitchstart = 0, float pitchend = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native bool A_SetVisibleRotation(double anglestart = 0, double angleend = 0, double pitchstart = 0, double pitchend = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetTranslation(string transname);
 
 	native void A_RearrangePointers(int newtarget, int newmaster = AAPTR_DEFAULT, int newtracer = AAPTR_DEFAULT, int flags=0);
@@ -528,8 +528,8 @@ class Actor : Thinker native
 	native void A_CopyFriendliness(int ptr_source = AAPTR_MASTER);
 
 	action native bool A_Overlay(int layer, statelabel start = null, bool nooverride = false);
-	native void A_WeaponOffset(float wx = 0, float wy = 32, int flags = 0);
-	action native void A_OverlayOffset(int layer = PSP_WEAPON, float wx = 0, float wy = 32, int flags = 0);
+	native void A_WeaponOffset(double wx = 0, double wy = 32, int flags = 0);
+	action native void A_OverlayOffset(int layer = PSP_WEAPON, double wx = 0, double wy = 32, int flags = 0);
 	action native void A_OverlayFlags(int layer, int flags, bool set);
 
 	int ACS_NamedExecute(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0)
@@ -582,5 +582,5 @@ class Actor : Thinker native
 	// Internal functions
 	deprecated private native int __decorate_internal_int__(int i);
 	deprecated private native bool __decorate_internal_bool__(bool b);
-	deprecated private native float __decorate_internal_float__(float f);
+	deprecated private native double __decorate_internal_float__(double f);
 }

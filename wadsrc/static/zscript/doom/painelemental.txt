@@ -61,9 +61,9 @@ class PainElemental : Actor
 
 extend class Actor
 {
-	native void A_PainShootSkull(Class<Actor> spawntype, float angle, int flags = 0, int limit = -1);
+	native void A_PainShootSkull(Class<Actor> spawntype, double angle, int flags = 0, int limit = -1);
 
-	void A_PainAttack(class<Actor> spawntype = "LostSoul", float addangle = 0, int flags = 0, int limit = -1)
+	void A_PainAttack(class<Actor> spawntype = "LostSoul", double addangle = 0, int flags = 0, int limit = -1)
 	{
 		if (target)
 		{

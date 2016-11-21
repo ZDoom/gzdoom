@@ -130,7 +130,7 @@ void PolyCull::MarkSegmentCulled(int x1, int x2)
 		{
 			// Find last segment
 			int merge = cur;
-			while (merge + 1 != SolidSegments.size() && SolidSegments[merge + 1].X1 <= x2)
+			while (merge + 1 != (int)SolidSegments.size() && SolidSegments[merge + 1].X1 <= x2)
 				merge++;
 
 			// Apply new merged range
@@ -168,57 +168,43 @@ bool PolyCull::CheckBBox(float *bspcoord)
 
 	// Occlusion test using solid segments:
 
-	int 				boxx;
-	int 				boxy;
-	int 				boxpos;
-
-	double	 			x1, y1, x2, y2;
-
-	// Find the corners of the box
-	// that define the edges from current viewpoint.
-	if (ViewPos.X <= bspcoord[BOXLEFT])
-		boxx = 0;
-	else if (ViewPos.X < bspcoord[BOXRIGHT])
-		boxx = 1;
-	else
-		boxx = 2;
-
-	if (ViewPos.Y >= bspcoord[BOXTOP])
-		boxy = 0;
-	else if (ViewPos.Y > bspcoord[BOXBOTTOM])
-		boxy = 1;
-	else
-		boxy = 2;
-
-	boxpos = (boxy << 2) + boxx;
-	if (boxpos == 5)
-		return true;
-
-	static const int checkcoord[12][4] =
+	static const int lines[4][4] =
 	{
-		{ 3,0,2,1 },
-		{ 3,0,2,0 },
-		{ 3,1,2,0 },
-		{ 0 },
-		{ 2,0,2,1 },
-		{ 0,0,0,0 },
-		{ 3,1,3,0 },
-		{ 0 },
-		{ 2,0,3,1 },
-		{ 2,1,3,1 },
-		{ 2,1,3,0 }
+		{ BOXLEFT,  BOXBOTTOM, BOXRIGHT, BOXBOTTOM },
+		{ BOXRIGHT, BOXBOTTOM, BOXRIGHT, BOXTOP    },
+		{ BOXRIGHT, BOXTOP,    BOXLEFT,  BOXTOP    },
+		{ BOXLEFT,  BOXTOP,    BOXLEFT,  BOXBOTTOM }
 	};
 
-	x1 = bspcoord[checkcoord[boxpos][0]];
-	y1 = bspcoord[checkcoord[boxpos][1]];
-	x2 = bspcoord[checkcoord[boxpos][2]];
-	y2 = bspcoord[checkcoord[boxpos][3]];
-
-	int sx1, sx2;
-	if (GetSegmentRangeForLine(x1, y1, x2, y2, sx1, sx2))
-		return !IsSegmentCulled(sx1, sx2);
-	else
-		return true;
+	bool foundline = false;
+	int minsx1, maxsx2;
+	for (int i = 0; i < 4; i++)
+	{
+		int j = i < 3 ? i + 1 : 0;
+		int x1 = bspcoord[lines[i][0]];
+		int y1 = bspcoord[lines[i][1]];
+		int x2 = bspcoord[lines[i][2]];
+		int y2 = bspcoord[lines[i][3]];
+		int sx1, sx2;
+		if (GetSegmentRangeForLine(x1, y1, x2, y2, sx1, sx2))
+		{
+			if (foundline)
+			{
+				minsx1 = MIN(minsx1, sx1);
+				maxsx2 = MAX(maxsx2, sx2);
+			}
+			else
+			{
+				minsx1 = sx1;
+				maxsx2 = sx2;
+				foundline = true;
+			}
+		}
+	}
+	if (!foundline)
+		return false;
+		
+	return !IsSegmentCulled(minsx1, maxsx2);
 }
 
 bool PolyCull::GetSegmentRangeForLine(double x1, double y1, double x2, double y2, int &sx1, int &sx2) const

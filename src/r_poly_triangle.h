@@ -69,7 +69,7 @@ public:
 
 	void SetTexture(FTexture *texture, uint32_t translationID)
 	{
-		if (translationID != -1 && translationID != 0)
+		if (translationID != 0xffffffff && translationID != 0)
 		{
 			FRemapTable *table = TranslationToTable(translationID);
 			if (table != nullptr && !table->Inactive)

@@ -181,10 +181,10 @@ bool PolyCull::CheckBBox(float *bspcoord)
 	for (int i = 0; i < 4; i++)
 	{
 		int j = i < 3 ? i + 1 : 0;
-		int x1 = bspcoord[lines[i][0]];
-		int y1 = bspcoord[lines[i][1]];
-		int x2 = bspcoord[lines[i][2]];
-		int y2 = bspcoord[lines[i][3]];
+		float x1 = bspcoord[lines[i][0]];
+		float y1 = bspcoord[lines[i][1]];
+		float x2 = bspcoord[lines[i][2]];
+		float y2 = bspcoord[lines[i][3]];
 		int sx1, sx2;
 		if (GetSegmentRangeForLine(x1, y1, x2, y2, sx1, sx2))
 		{

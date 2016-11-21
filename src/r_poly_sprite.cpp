@@ -190,7 +190,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, AActor *thing, subse
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_AddStencil])
 	{
 		args.uniforms.destalpha = 256;
-		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256) * 2; // Don't know this needs to be multiplied by two..
+		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
 		args.uniforms.color = 0xff000000 | thing->fillcolor;
 		blendmode = TriBlendMode::Stencil;
 	}

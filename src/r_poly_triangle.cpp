@@ -339,7 +339,40 @@ void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
 
 FString DrawPolyTrianglesCommand::DebugInfo()
 {
-	return "DrawPolyTriangles";
+	FString variantstr;
+	switch (variant)
+	{
+	default: variantstr = "Unknown"; break;
+	case TriDrawVariant::DrawNormal: variantstr = "DrawNormal"; break;
+	case TriDrawVariant::FillNormal: variantstr = "FillNormal"; break;
+	case TriDrawVariant::DrawSubsector: variantstr = "DrawSubsector"; break;
+	case TriDrawVariant::FillSubsector: variantstr = "FillSubsector"; break;
+	case TriDrawVariant::FuzzSubsector: variantstr = "FuzzSubsector"; break;
+	case TriDrawVariant::Stencil: variantstr = "Stencil"; break;
+	}
+
+	FString blendmodestr;
+	switch (blendmode)
+	{
+	default: blendmodestr = "Unknown"; break;
+	case TriBlendMode::Copy: blendmodestr = "Copy"; break;
+	case TriBlendMode::AlphaBlend: blendmodestr = "AlphaBlend"; break;
+	case TriBlendMode::AddSolid: blendmodestr = "AddSolid"; break;
+	case TriBlendMode::Add: blendmodestr = "Add"; break;
+	case TriBlendMode::Sub: blendmodestr = "Sub"; break;
+	case TriBlendMode::RevSub: blendmodestr = "RevSub"; break;
+	case TriBlendMode::Stencil: blendmodestr = "Stencil"; break;
+	case TriBlendMode::Shaded: blendmodestr = "Shaded"; break;
+	case TriBlendMode::TranslateCopy: blendmodestr = "TranslateCopy"; break;
+	case TriBlendMode::TranslateAlphaBlend: blendmodestr = "TranslateAlphaBlend"; break;
+	case TriBlendMode::TranslateAdd: blendmodestr = "TranslateAdd"; break;
+	case TriBlendMode::TranslateSub: blendmodestr = "TranslateSub"; break;
+	case TriBlendMode::TranslateRevSub: blendmodestr = "TranslateRevSub"; break;
+	}
+
+	FString info;
+	info.Format("DrawPolyTriangles: variant = %s, blend mode = %s, color = %d", variantstr.GetChars(), blendmodestr.GetChars(), args.uniforms.color);
+	return info;
 }
 
 /////////////////////////////////////////////////////////////////////////////

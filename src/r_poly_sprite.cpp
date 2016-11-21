@@ -185,14 +185,14 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, AActor *thing, subse
 		args.uniforms.destalpha = (uint32_t)(256 - thing->Alpha * 256);
 		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
 		args.uniforms.color = 0xff000000 | thing->fillcolor;
-		blendmode = TriBlendMode::Shaded;
+		blendmode = TriBlendMode::Stencil;
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_AddStencil])
 	{
 		args.uniforms.destalpha = 256;
 		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256) * 2; // Don't know this needs to be multiplied by two..
 		args.uniforms.color = 0xff000000 | thing->fillcolor;
-		blendmode = TriBlendMode::Shaded;
+		blendmode = TriBlendMode::Stencil;
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Shaded])
 	{
@@ -213,6 +213,11 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, AActor *thing, subse
 		args.uniforms.destalpha = (uint32_t)(256 - thing->Alpha * 256);
 		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
 		blendmode = args.translation ? TriBlendMode::TranslateAdd : TriBlendMode::Add;
+	}
+	
+	if (blendmode == TriBlendMode::Shaded)
+	{
+		args.SetTexture(tex, thing->Translation, true);
 	}
 	
 	if (!r_swtruecolor)

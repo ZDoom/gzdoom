@@ -130,6 +130,8 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, DBaseDecal *decal, co
 
 	PolyDrawArgs args;
 	args.uniforms.flags = 0;
+	args.SetColormap(front->ColorMap);
+	args.SetTexture(tex, decal->Translation, true);
 	if (fullbrightSprite || fixedlightlev >= 0 || fixedcolormap)
 	{
 		args.uniforms.light = 256;
@@ -150,8 +152,8 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, DBaseDecal *decal, co
 		args.uniforms.color = ((uint32_t)decal->AlphaColor) >> 24;
 	}
 	
-	args.uniforms.srcalpha = 256;
-	args.uniforms.destalpha = 0;
+	args.uniforms.srcalpha = (uint32_t)(decal->Alpha * 256.0 + 0.5);
+	args.uniforms.destalpha = 256 - args.uniforms.srcalpha;
 
 	args.objectToClip = &worldToClip;
 	args.vinput = vertices;
@@ -160,8 +162,6 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, DBaseDecal *decal, co
 	args.ccw = true;
 	args.stenciltestvalue = 0;
 	args.stencilwritevalue = 1;
-	args.SetTexture(tex);
-	args.SetColormap(front->ColorMap);
 	//mode = R_SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
 	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Shaded);
 }

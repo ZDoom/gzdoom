@@ -581,9 +581,12 @@ SSAVec4i DrawTriangleCodegen::ProcessPixel32(SSAVec4i bg, SSAInt *varying)
 		fg = Sample32(uvoffset);
 		output = blend_revsub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 		break;
-	case TriBlendMode::Shaded:
+	case TriBlendMode::Stencil:
 		fg = Sample32(uvoffset);
 		output = blend_stencil(shade_bgra_simple(SSAVec4i::unpack(color), currentlight), fg[3], bg, srcalpha, destalpha);
+		break;
+	case TriBlendMode::Shaded:
+		output = blend_stencil(shade_bgra_simple(SSAVec4i::unpack(color), currentlight), Sample8(uvoffset), bg, srcalpha, destalpha);
 		break;
 	case TriBlendMode::TranslateCopy:
 		fg = TranslateSample32(uvoffset);
@@ -661,6 +664,9 @@ SSAInt DrawTriangleCodegen::ProcessPixel8(SSAInt bg, SSAInt *varying)
 	case TriBlendMode::RevSub:
 		fg = ToBgra(Shade8(Sample8(uvoffset)));
 		output = ToPal8(blend_revsub(fg, ToBgra(bg), srcalpha, calc_blend_bgalpha(fg, destalpha)));
+		break;
+	case TriBlendMode::Stencil:
+		output = ToPal8(blend_stencil(ToBgra(Shade8(color)), (Sample8(uvoffset) == SSAInt(0)).select(SSAInt(0), SSAInt(256)), ToBgra(bg), srcalpha, destalpha));
 		break;
 	case TriBlendMode::Shaded:
 		output = ToPal8(blend_stencil(ToBgra(Shade8(color)), Sample8(uvoffset), ToBgra(bg), srcalpha, destalpha));

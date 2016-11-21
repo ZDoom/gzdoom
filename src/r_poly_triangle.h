@@ -67,7 +67,7 @@ public:
 		translation = nullptr;
 	}
 
-	void SetTexture(FTexture *texture, uint32_t translationID)
+	void SetTexture(FTexture *texture, uint32_t translationID, bool forcePal = false)
 	{
 		if (translationID != 0xffffffff && translationID != 0)
 		{
@@ -85,8 +85,17 @@ public:
 				return;
 			}
 		}
-
-		SetTexture(texture);
+		
+		if (forcePal)
+		{
+			textureWidth = texture->GetWidth();
+			textureHeight = texture->GetHeight();
+			texturePixels = texture->GetPixels();
+		}
+		else
+		{
+			SetTexture(texture);
+		}
 	}
 
 	void SetColormap(FSWColormap *base_colormap)

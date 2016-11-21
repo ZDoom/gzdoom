@@ -2272,7 +2272,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				auto code = ConvertAST(c->Type(), f->Body);
 				if (code != nullptr)
 				{
-					sym->Variants[0].Implementation = FunctionBuildList.AddFunction(sym, code, FStringf("%s.%s", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars()), false, -1, 0, Lump);
+					FunctionBuildList.AddFunction(sym, code, FStringf("%s.%s", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars()), false, -1, 0, Lump);
 				}
 			}
 		}

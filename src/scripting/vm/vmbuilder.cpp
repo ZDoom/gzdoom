@@ -785,6 +785,8 @@ VMFunction *FFunctionBuildList::AddFunction(PFunction *functype, FxExpression *c
 	it.StateIndex = stateindex;
 	it.StateCount = statecount;
 	it.Lump = lumpnum;
+	assert(it.Func->Variants.Size() == 1);
+	it.Func->Variants[0].Implementation = it.Function;
 
 	// set prototype for named functions.
 	if (it.Func->SymbolName != NAME_None)

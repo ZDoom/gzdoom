@@ -85,6 +85,7 @@ PStatePointer *TypeState;
 PStateLabel *TypeStateLabel;
 PStruct *TypeVector2;
 PStruct *TypeVector3;
+PStruct *TypeColorStruct;
 PPointer *TypeNullPtr;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -577,6 +578,19 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeState = new PStatePointer);
 	TypeTable.AddType(TypeStateLabel = new PStateLabel);
 	TypeTable.AddType(TypeNullPtr = new PPointer);
+
+	TypeColorStruct = new PStruct("@ColorStruct", nullptr);	//This name is intentionally obfuscated so that it cannot be used explicitly. The point of this type is to gain access to the single channels of a color value.
+#ifdef __BIG_ENDIAN__
+	TypeColorStruct->AddField(NAME_a, TypeUInt8);
+	TypeColorStruct->AddField(NAME_r, TypeUInt8);
+	TypeColorStruct->AddField(NAME_g, TypeUInt8);
+	TypeColorStruct->AddField(NAME_b, TypeUInt8);
+#else
+	TypeColorStruct->AddField(NAME_b, TypeUInt8);
+	TypeColorStruct->AddField(NAME_g, TypeUInt8);
+	TypeColorStruct->AddField(NAME_r, TypeUInt8);
+	TypeColorStruct->AddField(NAME_a, TypeUInt8);
+#endif
 
 	TypeVector2 = new PStruct(NAME_Vector2, nullptr);
 	TypeVector2->AddField(NAME_X, TypeFloat64);

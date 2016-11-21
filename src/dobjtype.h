@@ -919,6 +919,7 @@ extern PSound *TypeSound;
 extern PColor *TypeColor;
 extern PStruct *TypeVector2;
 extern PStruct *TypeVector3;
+extern PStruct *TypeColorStruct;
 extern PStatePointer *TypeState;
 extern PStateLabel *TypeStateLabel;
 extern PPointer *TypeNullPtr;

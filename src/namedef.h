@@ -750,3 +750,9 @@ xx(A_FirePlasma)
 xx(A_FireBFG)
 xx(A_FireOldBFG)
 xx(A_FireRailgun)
+
+// color channels
+xx(a)
+xx(r)
+xx(g)
+xx(b)

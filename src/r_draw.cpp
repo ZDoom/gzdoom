@@ -2521,6 +2521,9 @@ void R_InitColumnDrawers ()
 			dovline4_saved = dovline4;
 			domvline4_saved = domvline4;
 		}
+		
+		// This code intentionally flips sub and revsub for all the classic drawer functions
+		// because the renderer swapped sub and revsub!
 
 		R_DrawColumnHoriz			= R_DrawColumnHoriz_rgba;
 		R_DrawColumn				= R_DrawColumn_rgba;
@@ -2537,16 +2540,16 @@ void R_InitColumnDrawers ()
 		R_FillColumn				= R_FillColumn_rgba;
 		R_FillAddColumn				= R_FillAddColumn_rgba;
 		R_FillAddClampColumn		= R_FillAddClampColumn_rgba;
-		R_FillSubClampColumn		= R_FillSubClampColumn_rgba;
-		R_FillRevSubClampColumn		= R_FillRevSubClampColumn_rgba;
+		R_FillSubClampColumn		= R_FillRevSubClampColumn_rgba;
+		R_FillRevSubClampColumn		= R_FillSubClampColumn_rgba;
 		R_DrawAddColumn				= R_DrawAddColumn_rgba;
 		R_DrawTlatedAddColumn		= R_DrawTlatedAddColumn_rgba;
 		R_DrawAddClampColumn		= R_DrawAddClampColumn_rgba;
 		R_DrawAddClampTranslatedColumn = R_DrawAddClampTranslatedColumn_rgba;
-		R_DrawSubClampColumn		= R_DrawSubClampColumn_rgba;
-		R_DrawSubClampTranslatedColumn = R_DrawSubClampTranslatedColumn_rgba;
-		R_DrawRevSubClampColumn		= R_DrawRevSubClampColumn_rgba;
-		R_DrawRevSubClampTranslatedColumn = R_DrawRevSubClampTranslatedColumn_rgba;
+		R_DrawSubClampColumn		= R_DrawRevSubClampColumn_rgba;
+		R_DrawSubClampTranslatedColumn = R_DrawRevSubClampTranslatedColumn_rgba;
+		R_DrawRevSubClampColumn		= R_DrawSubClampColumn_rgba;
+		R_DrawRevSubClampTranslatedColumn = R_DrawSubClampTranslatedColumn_rgba;
 		R_FillSpan					= R_FillSpan_rgba;
 		R_DrawFogBoundary			= R_DrawFogBoundary_rgba;
 		R_FillColumnHoriz			= R_FillColumnHoriz_rgba;
@@ -2578,20 +2581,20 @@ void R_InitColumnDrawers ()
 		rt_add4cols					= rt_add4cols_rgba;
 		rt_addclamp1col				= rt_addclamp1col_rgba;
 		rt_addclamp4cols			= rt_addclamp4cols_rgba;
-		rt_subclamp1col				= rt_subclamp1col_rgba;
-		rt_revsubclamp1col			= rt_revsubclamp1col_rgba;
+		rt_subclamp1col				= rt_revsubclamp1col_rgba;
+		rt_revsubclamp1col			= rt_subclamp1col_rgba;
 		rt_tlate1col				= rt_tlate1col_rgba;
 		rt_tlateadd1col				= rt_tlateadd1col_rgba;
 		rt_tlateaddclamp1col		= rt_tlateaddclamp1col_rgba;
-		rt_tlatesubclamp1col		= rt_tlatesubclamp1col_rgba;
-		rt_tlaterevsubclamp1col		= rt_tlaterevsubclamp1col_rgba;
-		rt_subclamp4cols			= rt_subclamp4cols_rgba;
-		rt_revsubclamp4cols			= rt_revsubclamp4cols_rgba;
+		rt_tlatesubclamp1col		= rt_tlaterevsubclamp1col_rgba;
+		rt_tlaterevsubclamp1col		= rt_tlatesubclamp1col_rgba;
+		rt_subclamp4cols			= rt_revsubclamp4cols_rgba;
+		rt_revsubclamp4cols			= rt_subclamp4cols_rgba;
 		rt_tlate4cols				= rt_tlate4cols_rgba;
 		rt_tlateadd4cols			= rt_tlateadd4cols_rgba;
 		rt_tlateaddclamp4cols		= rt_tlateaddclamp4cols_rgba;
-		rt_tlatesubclamp4cols		= rt_tlatesubclamp4cols_rgba;
-		rt_tlaterevsubclamp4cols	= rt_tlaterevsubclamp4cols_rgba;
+		rt_tlatesubclamp4cols		= rt_tlaterevsubclamp4cols_rgba;
+		rt_tlaterevsubclamp4cols	= rt_tlatesubclamp4cols_rgba;
 		rt_initcols					= rt_initcols_rgba;
 		rt_span_coverage			= rt_span_coverage_rgba;
 

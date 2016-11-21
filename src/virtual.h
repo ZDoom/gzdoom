@@ -35,6 +35,9 @@ VMEXPORTED_NATIVES_START
 	VMEXPORTED_NATIVES_FUNC(Destroy)
 	VMEXPORTED_NATIVES_FUNC(Tick)
 	VMEXPORTED_NATIVES_FUNC(PostBeginPlay)
+	VMEXPORTED_NATIVES_FUNC(BeginPlay)
+	VMEXPORTED_NATIVES_FUNC(Activate)
+	VMEXPORTED_NATIVES_FUNC(Deactivate)
 VMEXPORTED_NATIVES_END
 
 
@@ -47,6 +50,15 @@ inline int GetVirtualIndex(PClass *cls, const char *funcname)
 	assert(VIndex >= 0);
 	return VIndex;
 }
+
+#define VINDEX(cls, funcname) \
+	static int VIndex = -1; \
+	if (VIndex < 0) { \
+		VIndex = GetVirtualIndex(RUNTIME_CLASS(cls), #funcname); \
+		if (VIndex < 0) I_Error("Unable to find virtual function in " #cls, #funcname); \
+	}
+
+#define VFUNC this->GetClass()->Virtuals[VIndex]
 
 template<class T>
 class DVMObject : public T
@@ -84,28 +96,103 @@ public:
 	{
 		if (this->ObjectFlags & OF_SuperCall)
 		{
-			this->ObjectFlags &= OF_SuperCall;
+			this->ObjectFlags &= ~OF_SuperCall;
 			ExportedNatives<T>::Get()->template Destroy<void, T>(this);
 		}
 		else
 		{
-			static int VIndex = -1;
-			if (VIndex < 0) VIndex = GetVirtualIndex(RUNTIME_CLASS(DObject), "Destroy");
+			VINDEX(DObject, Destroy);
 			// Without the type cast this picks the 'void *' assignment...
 			VMValue params[1] = { (DObject*)this };
 			VMFrameStack stack;
-			stack.Call(this->GetClass()->Virtuals[VIndex], params, 1, nullptr, 0, nullptr);
+			stack.Call(VFUNC, params, 1, nullptr, 0, nullptr);
 		}
 	}
 	void Tick()
 	{
-		ExportedNatives<T>::Get()->template Tick<void, T>(this);
+		if (this->ObjectFlags & OF_SuperCall)
+		{
+			this->ObjectFlags &= ~OF_SuperCall;
+			ExportedNatives<T>::Get()->template Tick<void, T>(this);
+		}
+		else
+		{
+			VINDEX(DThinker, Tick);
+			// Without the type cast this picks the 'void *' assignment...
+			VMValue params[1] = { (DObject*)this };
+			VMFrameStack stack;
+			stack.Call(VFUNC, params, 1, nullptr, 0, nullptr);
+		}
 	}
 
 	void PostBeginPlay()
 	{
-		ExportedNatives<T>::Get()->template PostBeginPlay<void, T>(this);
+		if (this->ObjectFlags & OF_SuperCall)
+		{
+			this->ObjectFlags &= ~OF_SuperCall;
+			ExportedNatives<T>::Get()->template PostBeginPlay<void, T>(this);
+		}
+		else
+		{
+			VINDEX(DThinker, PostBeginPlay);
+			// Without the type cast this picks the 'void *' assignment...
+			VMValue params[1] = { (DObject*)this };
+			VMFrameStack stack;
+			stack.Call(VFUNC, params, 1, nullptr, 0, nullptr);
+		}
 	}
+
+	void BeginPlay()
+	{
+		if (this->ObjectFlags & OF_SuperCall)
+		{
+			this->ObjectFlags &= ~OF_SuperCall;
+			ExportedNatives<T>::Get()->template BeginPlay<void, T>(this);
+		}
+		else
+		{
+			VINDEX(AActor, BeginPlay);
+			// Without the type cast this picks the 'void *' assignment...
+			VMValue params[1] = { (DObject*)this };
+			VMFrameStack stack;
+			stack.Call(VFUNC, params, 1, nullptr, 0, nullptr);
+		}
+	}
+
+	void Activate(AActor *activator)
+	{
+		if (this->ObjectFlags & OF_SuperCall)
+		{
+			this->ObjectFlags &= ~OF_SuperCall;
+			ExportedNatives<T>::Get()->template Activate<void, T>(this, activator);
+		}
+		else
+		{
+			VINDEX(AActor, Activate);
+			// Without the type cast this picks the 'void *' assignment...
+			VMValue params[2] = { (DObject*)this, (DObject*)activator };
+			VMFrameStack stack;
+			stack.Call(VFUNC, params, 2, nullptr, 0, nullptr);
+		}
+	}
+
+	void Deactivate(AActor *activator)
+	{
+		if (this->ObjectFlags & OF_SuperCall)
+		{
+			this->ObjectFlags &= ~OF_SuperCall;
+			ExportedNatives<T>::Get()->template Deactivate<void, T>(this, activator);
+		}
+		else
+		{
+			VINDEX(AActor, Deactivate);
+			// Without the type cast this picks the 'void *' assignment...
+			VMValue params[2] = { (DObject*)this, (DObject*)activator };
+			VMFrameStack stack;
+			stack.Call(VFUNC, params, 2, nullptr, 0, nullptr);
+		}
+	}
+
 };
 
 template<class T>
@@ -130,7 +217,13 @@ VMEXPORT_NATIVES_END(DObject)
 VMEXPORT_NATIVES_START(DThinker, DObject)
 	VMEXPORT_NATIVES_FUNC(Tick)
 	VMEXPORT_NATIVES_FUNC(PostBeginPlay)
-	VMEXPORT_NATIVES_END(DThinker)
+VMEXPORT_NATIVES_END(DThinker)
+
+VMEXPORT_NATIVES_START(AActor, DThinker)
+	VMEXPORT_NATIVES_FUNC(BeginPlay)
+	VMEXPORT_NATIVES_FUNC(Activate)
+	VMEXPORT_NATIVES_FUNC(Deactivate)
+VMEXPORT_NATIVES_END(AActor)
 
 /*
 VMEXPORT_NATIVES_START(AActor, DThinker)

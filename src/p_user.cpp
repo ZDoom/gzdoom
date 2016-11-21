@@ -1280,22 +1280,18 @@ void APlayerPawn::PlayRunning ()
 
 void APlayerPawn::PlayAttacking ()
 {
-	static int VIndex = -1;
-	if (VIndex < 0) VIndex = GetVirtualIndex(RUNTIME_CLASS(APlayerPawn), "PlayAttacking");
-	// Without the type cast this picks the 'void *' assignment...
+	VINDEX(APlayerPawn, PlayAttacking);
 	VMValue params[1] = { (DObject*)this };
 	VMFrameStack stack;
-	stack.Call(this->GetClass()->Virtuals[VIndex], params, 1, nullptr, 0, nullptr);
+	stack.Call(VFUNC, params, 1, nullptr, 0, nullptr);
 }
 
 void APlayerPawn::PlayAttacking2 ()
 {
-	static int VIndex = -1;
-	if (VIndex < 0) VIndex = GetVirtualIndex(RUNTIME_CLASS(APlayerPawn), "PlayAttacking2");
-	// Without the type cast this picks the 'void *' assignment...
+	VINDEX(APlayerPawn, PlayAttacking2);
 	VMValue params[1] = { (DObject*)this };
 	VMFrameStack stack;
-	stack.Call(this->GetClass()->Virtuals[VIndex], params, 1, nullptr, 0, nullptr);
+	stack.Call(VFUNC, params, 1, nullptr, 0, nullptr);
 }
 
 void APlayerPawn::ThrowPoisonBag ()

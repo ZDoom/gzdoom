@@ -4112,6 +4112,15 @@ void AActor::Tick ()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Tick)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->VMSuperCall();
+	self->Tick();
+	return 0;
+}
+
+
 //==========================================================================
 //
 // AActor :: CheckNoDelay
@@ -4580,6 +4589,15 @@ void AActor::BeginPlay ()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, BeginPlay)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->VMSuperCall();
+	self->BeginPlay();
+	return 0;
+}
+
+
 void AActor::PostBeginPlay ()
 {
 	if (Renderer != NULL)
@@ -4635,6 +4653,15 @@ void AActor::Activate (AActor *activator)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Activate)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(activator, AActor);
+	self->VMSuperCall();
+	self->Activate(activator);
+	return 0;
+}
+
 void AActor::Deactivate (AActor *activator)
 {
 	if ((flags3 & MF3_ISMONSTER) && (health > 0 || (flags & MF_ICECORPSE)))
@@ -4653,6 +4680,15 @@ void AActor::Deactivate (AActor *activator)
 			}
 		}
 	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Deactivate)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(activator, AActor);
+	self->VMSuperCall();
+	self->Deactivate(activator);
+	return 0;
 }
 
 

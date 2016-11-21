@@ -10,6 +10,8 @@ class Object native
 
 class Thinker : Object native
 {
+	virtual native void Tick();
+	virtual native void PostBeginPlay();
 }
 
 class ThinkerIterator : Object native

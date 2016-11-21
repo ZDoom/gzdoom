@@ -258,6 +258,14 @@ void DThinker::PostBeginPlay ()
 {
 }
 
+DEFINE_ACTION_FUNCTION(DThinker, PostBeginPlay)
+{
+	PARAM_SELF_PROLOGUE(DThinker);
+	self->VMSuperCall();
+	self->PostBeginPlay();
+	return 0;
+}
+
 void DThinker::PostSerialize()
 {
 }
@@ -419,6 +427,14 @@ int DThinker::TickThinkers (FThinkerList *list, FThinkerList *dest)
 
 void DThinker::Tick ()
 {
+}
+
+DEFINE_ACTION_FUNCTION(DThinker, Tick)
+{
+	PARAM_SELF_PROLOGUE(DThinker);
+	self->VMSuperCall();
+	self->Tick();
+	return 0;
 }
 
 size_t DThinker::PropagateMark()

@@ -226,6 +226,9 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, AActor *thing, subse
 		uint32_t g = (args.uniforms.color >> 8) & 0xff;
 		uint32_t b = args.uniforms.color & 0xff;
 		args.uniforms.color = RGB32k.RGB[r >> 3][g >> 3][b >> 3];
+
+		if (blendmode == TriBlendMode::Sub) // Sub crashes in pal mode for some weird reason.
+			blendmode = TriBlendMode::Add;
 	}
 
 	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, blendmode);

@@ -371,7 +371,9 @@ FString DrawPolyTrianglesCommand::DebugInfo()
 	}
 
 	FString info;
-	info.Format("DrawPolyTriangles: variant = %s, blend mode = %s, color = %d", variantstr.GetChars(), blendmodestr.GetChars(), args.uniforms.color);
+	info.Format("DrawPolyTriangles: variant = %s, blend mode = %s, color = %d, light = %d, textureWidth = %d, textureHeight = %d, texture = %s, translation = %s, colormaps = %s",
+		variantstr.GetChars(), blendmodestr.GetChars(), args.uniforms.color, args.uniforms.light, args.textureWidth, args.textureHeight,
+		args.texturePixels ? "ptr" : "null", args.translation ? "ptr" : "null", args.colormaps ? "ptr" : "null");
 	return info;
 }
 

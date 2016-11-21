@@ -81,6 +81,8 @@ PString *TypeString;
 PName *TypeName;
 PSound *TypeSound;
 PColor *TypeColor;
+PTextureID *TypeTextureID;
+PSpriteID *TypeSpriteID;
 PStatePointer *TypeState;
 PStateLabel *TypeStateLabel;
 PStruct *TypeVector2;
@@ -546,6 +548,8 @@ void PType::StaticInit()
 	RUNTIME_CLASS(PString)->TypeTableType = RUNTIME_CLASS(PString);
 	RUNTIME_CLASS(PName)->TypeTableType = RUNTIME_CLASS(PName);
 	RUNTIME_CLASS(PSound)->TypeTableType = RUNTIME_CLASS(PSound);
+	RUNTIME_CLASS(PSpriteID)->TypeTableType = RUNTIME_CLASS(PSpriteID);
+	RUNTIME_CLASS(PTextureID)->TypeTableType = RUNTIME_CLASS(PTextureID);
 	RUNTIME_CLASS(PColor)->TypeTableType = RUNTIME_CLASS(PColor);
 	RUNTIME_CLASS(PPointer)->TypeTableType = RUNTIME_CLASS(PPointer);
 	RUNTIME_CLASS(PClassPointer)->TypeTableType = RUNTIME_CLASS(PClassPointer);
@@ -578,6 +582,8 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeState = new PStatePointer);
 	TypeTable.AddType(TypeStateLabel = new PStateLabel);
 	TypeTable.AddType(TypeNullPtr = new PPointer);
+	TypeTable.AddType(TypeSpriteID = new PSpriteID);
+	TypeTable.AddType(TypeTextureID = new PTextureID);
 
 	TypeColorStruct = new PStruct("@ColorStruct", nullptr);	//This name is intentionally obfuscated so that it cannot be used explicitly. The point of this type is to gain access to the single channels of a color value.
 #ifdef __BIG_ENDIAN__
@@ -1371,6 +1377,91 @@ bool PName::ReadValue(FSerializer &ar, const char *key, void *addr) const
 		*(FName*)addr = FName(cptr);
 		return true;
 	}
+}
+
+/* PSpriteID ******************************************************************/
+
+IMPLEMENT_CLASS(PSpriteID, false, false, false, false)
+
+//==========================================================================
+//
+// PName Default Constructor
+//
+//==========================================================================
+
+PSpriteID::PSpriteID()
+	: PInt(sizeof(int), true, true)
+{
+	mDescriptiveName = "SpriteID";
+}
+
+//==========================================================================
+//
+// PName :: WriteValue
+//
+//==========================================================================
+
+void PSpriteID::WriteValue(FSerializer &ar, const char *key, const void *addr) const
+{
+	int32_t val = *(int*)addr;
+	ar.Sprite(key, val, nullptr);
+}
+
+//==========================================================================
+//
+// PName :: ReadValue
+//
+//==========================================================================
+
+bool PSpriteID::ReadValue(FSerializer &ar, const char *key, void *addr) const
+{
+	int32_t val;
+	ar.Sprite(key, val, nullptr);
+	*(int*)addr = val;
+	return true;
+}
+
+/* PTextureID ******************************************************************/
+
+IMPLEMENT_CLASS(PTextureID, false, false, false, false)
+
+//==========================================================================
+//
+// PTextureID Default Constructor
+//
+//==========================================================================
+
+PTextureID::PTextureID()
+	: PInt(sizeof(FTextureID), true, false)
+{
+	mDescriptiveName = "TextureID";
+	assert(sizeof(FTextureID) == alignof(FTextureID));
+}
+
+//==========================================================================
+//
+// PTextureID :: WriteValue
+//
+//==========================================================================
+
+void PTextureID::WriteValue(FSerializer &ar, const char *key, const void *addr) const
+{
+	FTextureID val = *(FTextureID*)addr;
+	ar(key, val);
+}
+
+//==========================================================================
+//
+// PTextureID :: ReadValue
+//
+//==========================================================================
+
+bool PTextureID::ReadValue(FSerializer &ar, const char *key, void *addr) const
+{
+	FTextureID val;
+	ar(key, val);
+	*(FTextureID*)addr = val;
+	return true;
 }
 
 /* PSound *****************************************************************/

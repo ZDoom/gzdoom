@@ -113,13 +113,12 @@ enum EZCCBuiltinType
 	ZCC_SInt8,
 	ZCC_UInt8,
 	ZCC_SInt16,
-	ZCC_UInt16,
+	ZCC_UInt16,		// smaller than 32 bit types are only valid in structs, classes and arrays.
 	ZCC_SInt32,
 	ZCC_UInt32,
 	ZCC_IntAuto,	// for enums, autoselect appropriately sized int
 
 	ZCC_Bool,
-	ZCC_Float32,
 	ZCC_Float64,
 	ZCC_FloatAuto,	// 32-bit in structs/classes, 64-bit everywhere else
 	ZCC_String,

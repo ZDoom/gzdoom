@@ -1367,19 +1367,19 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 		switch (btype->Type)
 		{
 		case ZCC_SInt8:
-			retval = TypeSInt8;
+			retval = formember? TypeSInt8 : (PType*)TypeError;
 			break;
 
 		case ZCC_UInt8:
-			retval = TypeUInt8;
+			retval = formember ? TypeUInt8 : (PType*)TypeError;
 			break;
 
 		case ZCC_SInt16:
-			retval = TypeSInt16;
+			retval = formember ? TypeSInt16 : (PType*)TypeError;
 			break;
 
 		case ZCC_UInt16:
-			retval = TypeUInt16;
+			retval = formember ? TypeUInt16 : (PType*)TypeError;
 			break;
 
 		case ZCC_SInt32:
@@ -1395,11 +1395,9 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 			retval = TypeBool;
 			break;
 
-			// Do we really want to allow single precision floats, despite all the problems they cause?
-			// These are nearly guaranteed to desync between MSVC and GCC on x87, because GCC does not implement an IEEE compliant mode
-		case ZCC_Float32:
 		case ZCC_FloatAuto:
-			//return TypeFloat32;
+			retval = formember ? TypeFloat32 : TypeFloat64;
+
 		case ZCC_Float64:
 			retval = TypeFloat64;
 			break;
@@ -1433,14 +1431,24 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 			break;
 
 		case ZCC_UserType:
-			// statelabel is not a token - there really is no need to, it works just as well as an identifier. Maybe the same should be done for some other types, too?
-			if (btype->UserType->Id == NAME_StateLabel)
+			// statelabel et.al. are not tokens - there really is no need to, it works just as well as an identifier. Maybe the same should be done for some other types, too?
+			switch (btype->UserType->Id)
 			{
+			case NAME_StateLabel:
 				retval = TypeStateLabel;
-			}
-			else
-			{
+				break;
+
+			case NAME_SpriteID:
+				retval = TypeSpriteID;
+				break;
+
+			case NAME_TextureID:
+				retval = TypeTextureID;
+				break;
+
+			default:
 				retval = ResolveUserType(btype, &outertype->Symbols);
+				break;
 			}
 			break;
 		}

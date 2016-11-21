@@ -36,6 +36,8 @@
 #include <s_sound.h>
 #include "dobject.h"
 #include "xs_Float.h"
+#include "r_state.h"
+#include "textures/textures.h"
 #include "math/cmath.h"
 
 #define IMPLEMENT_VMEXEC

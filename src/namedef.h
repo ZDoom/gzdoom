@@ -737,6 +737,8 @@ xx(DamageFunction)
 xx(Length)
 xx(Unit)
 xx(StateLabel)
+xx(SpriteID)
+xx(TextureID)
 xx(Overlay)
 
 xx(A_Punch)

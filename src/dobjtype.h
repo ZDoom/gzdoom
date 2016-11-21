@@ -515,6 +515,26 @@ public:
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
 };
 
+class PSpriteID : public PInt
+{
+	DECLARE_CLASS(PSpriteID, PInt);
+public:
+	PSpriteID();
+
+	void WriteValue(FSerializer &ar, const char *key, const void *addr) const override;
+	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
+};
+
+class PTextureID : public PInt
+{
+	DECLARE_CLASS(PTextureID, PInt);
+public:
+	PTextureID();
+
+	void WriteValue(FSerializer &ar, const char *key, const void *addr) const override;
+	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
+};
+
 class PColor : public PInt
 {
 	DECLARE_CLASS(PColor, PInt);
@@ -917,6 +937,8 @@ extern PString *TypeString;
 extern PName *TypeName;
 extern PSound *TypeSound;
 extern PColor *TypeColor;
+extern PTextureID *TypeTextureID;
+extern PSpriteID *TypeSpriteID;
 extern PStruct *TypeVector2;
 extern PStruct *TypeVector3;
 extern PStruct *TypeColorStruct;

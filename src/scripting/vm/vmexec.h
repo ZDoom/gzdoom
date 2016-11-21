@@ -1695,6 +1695,19 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 		reg.s[a] = S_sfx[reg.d[b]].name;
 		break;
 
+	case CAST_SID2S:
+		ASSERTS(a); ASSERTD(b);
+		reg.s[a] = unsigned(reg.d[b]) >= sprites.Size() ? "TNT1" : sprites[reg.d[b]].name;
+		break;
+
+	case CAST_TID2S:
+	{
+		ASSERTS(a); ASSERTD(b);
+		auto tex = TexMan[*(FTextureID*)&(reg.d[b])];
+		reg.s[a] = tex == nullptr ? "(null)" : tex->Name.GetChars(); 
+		break;
+	}
+
 	default:
 		assert(0);
 	}

@@ -5679,7 +5679,7 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 			return ret;
 		}
 	}
-	else if (Object->ValueType->IsA(RUNTIME_CLASS(PStruct)))
+	else if (Object->ValueType->IsKindOf(RUNTIME_CLASS(PStruct)))
 	{
 		auto ret = ResolveMember(ctx, ctx.Class, Object, static_cast<PStruct *>(Object->ValueType));
 		delete this;
@@ -6278,7 +6278,7 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 			return nullptr;
 		}
 	}
-	else if (classx->ValueType->IsA(RUNTIME_CLASS(PStruct)))	// Classes can never be used as value types so we do not have to consider that case.
+	else if (classx->ValueType->IsKindOf(RUNTIME_CLASS(PStruct)))
 	{
 		// if this is a struct within a class or another struct we can simplify the expression by creating a new PField with a cumulative offset.
 		if (classx->ExprType == EFX_ClassMember || classx->ExprType == EFX_StructMember)

@@ -416,7 +416,10 @@ void ZCCCompiler::CreateStructTypes()
 	for(auto s : Structs)
 	{
 		s->Outer = s->OuterDef == nullptr? nullptr : s->OuterDef->CType();
-		s->strct->Type = NewStruct(s->NodeName(), s->Outer);
+		if (s->strct->Flags & ZCC_Native)
+			s->strct->Type = NewNativeStruct(s->NodeName(), nullptr);
+		else
+			s->strct->Type = NewStruct(s->NodeName(), s->Outer);
 		s->strct->Symbol = new PSymbolType(s->NodeName(), s->Type());
 		GlobalSymbols.AddSymbol(s->strct->Symbol);
 
@@ -2568,11 +2571,12 @@ void ZCCCompiler::CompileStates()
 							Error(sl, "Duration is not a constant");
 						}
 					}
-					state.Fullbright = sl->bBright;
-					state.Fast = sl->bFast;
-					state.Slow = sl->bSlow;
-					state.CanRaise = sl->bCanRaise;
-					if ((state.NoDelay = sl->bNoDelay))
+					if (sl->bBright) state.StateFlags |= STF_FULLBRIGHT;
+					if (sl->bFast) state.StateFlags |= STF_FAST;
+					if (sl->bSlow) state.StateFlags |= STF_SLOW;
+					if (sl->bCanRaise) state.StateFlags |= STF_CANRAISE;
+					if (sl->bNoDelay) state.StateFlags |= STF_NODELAY;
+					if (sl->bNoDelay)
 					{
 						if (statedef.GetStateLabelIndex(NAME_Spawn) != statedef.GetStateCount())
 						{

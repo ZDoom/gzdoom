@@ -1466,26 +1466,19 @@ static int PatchFrame (int frameNum)
 
 	if (info != &dummy)
 	{
-		info->DefineFlags |= SDF_DEHACKED;	// Signals the state has been modified by dehacked
+		info->StateFlags |= STF_DEHACKED;	// Signals the state has been modified by dehacked
 		if ((unsigned)(frame & 0x7fff) > 63)
 		{
-			Printf ("Frame %d: Subnumber must be in range [0,63]\n", frameNum);
+			Printf("Frame %d: Subnumber must be in range [0,63]\n", frameNum);
 		}
 		info->Tics = tics;
 		info->Misc1 = misc1;
 		info->Frame = frame & 0x3f;
-		info->Fullbright = frame & 0x8000 ? true : false;
+		if (frame & 0x8000) info->StateFlags |= STF_FULLBRIGHT;
+		else info->StateFlags &= STF_FULLBRIGHT;
 	}
 
 	return result;
-}
-
-// there is exactly one place where this is needed and we do not want to expose the state internals to ZSCRIPT.
-DEFINE_ACTION_FUNCTION(AActor, isDEHState)
-{
-	PARAM_PROLOGUE;
-	PARAM_POINTER(state, FState);
-	ACTION_RETURN_BOOL(state != nullptr && (state->DefineFlags & SDF_DEHACKED));
 }
 
 static int PatchSprite (int sprNum)

@@ -63,7 +63,17 @@ enum EStateDefineFlags
 	SDF_LABEL = 4,
 	SDF_INDEX = 5,
 	SDF_MASK = 7,
-	SDF_DEHACKED = 8,	// Identify a state as having been modified by a dehacked lump
+};
+
+enum EStateFlags
+{
+	STF_SLOW = 1,		// State duration is extended when slow monsters is on.
+	STF_FAST = 2,		// State duration is shortened when fast monsters is on.
+	STF_FULLBRIGHT = 4,	// State is fullbright
+	STF_NODELAY = 8,	// Spawn states executes its action normally
+	STF_SAMEFRAME = 16,	// Ignore Frame (except when spawning actor)
+	STF_CANRAISE = 32,	// Allows a monster to be resurrected without waiting for an infinate frame
+	STF_DEHACKED = 64,	// Modified by Dehacked
 };
 
 enum EStateUseFlags
@@ -101,33 +111,44 @@ struct FState
 {
 	FState		*NextState;
 	VMFunction	*ActionFunc;
-	WORD		sprite;
-	SWORD		Tics;
-	WORD		TicRange;
-	short		Light;
-	BYTE		Frame;
-	BYTE		UseFlags;		
-	BYTE		DefineFlags;	// Unused byte so let's use it during state creation.
-	int			Misc1;			// Was changed to SBYTE, reverted to long for MBF compat
-	int			Misc2;			// Was changed to BYTE, reverted to long for MBF compat
-	BYTE		Fullbright:1;	// State is fullbright
-	BYTE		SameFrame:1;	// Ignore Frame (except when spawning actor)
-	BYTE		Fast:1;
-	BYTE		NoDelay:1;		// Spawn states executes its action normally
-	BYTE		CanRaise:1;		// Allows a monster to be resurrected without waiting for an infinate frame
-	BYTE		Slow:1;			// Inverse of fast
-
+	int32_t		sprite;
+	int16_t		Tics;
+	uint16_t	TicRange;
+	int16_t		Light;
+	uint16_t	StateFlags;
+	uint8_t		Frame;
+	uint8_t		UseFlags;		
+	uint8_t		DefineFlags;	// Unused byte so let's use it during state creation.
+	int32_t		Misc1;			// Was changed to SBYTE, reverted to long for MBF compat
+	int32_t		Misc2;			// Was changed to BYTE, reverted to long for MBF compat
+public:
 	inline int GetFrame() const
 	{
 		return Frame;
 	}
 	inline bool GetSameFrame() const
 	{
-		return SameFrame;
+		return !!(StateFlags & STF_SAMEFRAME);
 	}
 	inline int GetFullbright() const
 	{
-		return Fullbright ? 0x10 /*RF_FULLBRIGHT*/ : 0;
+		return (StateFlags & STF_FULLBRIGHT)? 0x10 /*RF_FULLBRIGHT*/ : 0;
+	}
+	inline bool GetFast() const
+	{
+		return !!(StateFlags & STF_FAST);
+	}
+	inline bool GetSlow() const
+	{
+		return !!(StateFlags & STF_SLOW);
+	}
+	inline bool GetNoDelay() const
+	{
+		return !!(StateFlags & STF_NODELAY);
+	}
+	inline bool GetCanRaise() const
+	{
+		return !!(StateFlags & STF_CANRAISE);
 	}
 	inline int GetTics() const
 	{
@@ -149,21 +170,9 @@ struct FState
 	{
 		return NextState;
 	}
-	inline bool GetNoDelay() const
-	{
-		return NoDelay;
-	}
-	inline bool GetCanRaise() const
-	{
-		return CanRaise;
-	}
 	inline void SetFrame(BYTE frame)
 	{
 		Frame = frame - 'A';
-	}
-	inline bool CheckUse(int usetype)
-	{
-		return !!(UseFlags & usetype);
 	}
 	void SetAction(VMFunction *func) { ActionFunc = func; }
 	void ClearAction() { ActionFunc = NULL; }

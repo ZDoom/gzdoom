@@ -274,24 +274,24 @@ do_stop:
 			{
 				if (sc.Compare("BRIGHT")) 
 				{
-					state.Fullbright = true;
+					state.StateFlags |= STF_FULLBRIGHT;
 					continue;
 				}
 				if (sc.Compare("FAST")) 
 				{
-					state.Fast = true;
+					state.StateFlags |= STF_FAST;
 					continue;
 				}
 				if (sc.Compare("SLOW")) 
 				{
-					state.Slow = true;
+					state.StateFlags |= STF_SLOW;
 					continue;
 				}
 				if (sc.Compare("NODELAY"))
 				{
 					if (bag.statedef.GetStateLabelIndex(NAME_Spawn) == bag.statedef.GetStateCount())
 					{
-						state.NoDelay = true;
+						state.StateFlags |= STF_NODELAY;
 					}
 					else
 					{
@@ -327,7 +327,7 @@ do_stop:
 				}
 				if (sc.Compare("CANRAISE"))
 				{
-					state.CanRaise = true;
+					state.StateFlags |= STF_CANRAISE;
 					continue;
 				}
 

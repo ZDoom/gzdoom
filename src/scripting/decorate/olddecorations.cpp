@@ -699,7 +699,7 @@ static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, TArray
 				{
 					sc.ScriptError ("* must come after a frame");
 				}
-				state.Fullbright = true;
+				state.StateFlags |= STF_FULLBRIGHT;
 			}
 			else if (*token < 'A' || *token > ']')
 			{

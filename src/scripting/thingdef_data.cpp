@@ -658,6 +658,7 @@ static int funccmp(const void * a, const void * b)
 //==========================================================================
 void G_InitLevelLocalsForScript();
 void P_InitPlayerForScript();
+void P_InitStateForScript();
 
 void InitThingdef()
 {
@@ -669,6 +670,7 @@ void InitThingdef()
 
 	G_InitLevelLocalsForScript();
 	P_InitPlayerForScript();
+	P_InitStateForScript();
 
 	FAutoSegIterator probe(CRegHead, CRegTail);
 

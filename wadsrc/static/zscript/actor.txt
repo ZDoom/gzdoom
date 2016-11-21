@@ -78,7 +78,6 @@ class Actor : Thinker native
 	native bool GiveBody (int num, int max=0);
 
 	native void SetDamage(int dmg);
-	native static bool isDehState(state st);
 	native double Distance2D(Actor other);
 	native void SetOrigin(vector3 newpos, bool moving);
 	native void SetXYZ(vector3 newpos);

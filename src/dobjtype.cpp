@@ -558,6 +558,7 @@ void PType::StaticInit()
 	RUNTIME_CLASS(PDynArray)->TypeTableType = RUNTIME_CLASS(PDynArray);
 	RUNTIME_CLASS(PMap)->TypeTableType = RUNTIME_CLASS(PMap);
 	RUNTIME_CLASS(PStruct)->TypeTableType = RUNTIME_CLASS(PStruct);
+	RUNTIME_CLASS(PNativeStruct)->TypeTableType = RUNTIME_CLASS(PNativeStruct);
 	RUNTIME_CLASS(PPrototype)->TypeTableType = RUNTIME_CLASS(PPrototype);
 	RUNTIME_CLASS(PClass)->TypeTableType = RUNTIME_CLASS(PClass);
 	RUNTIME_CLASS(PStatePointer)->TypeTableType = RUNTIME_CLASS(PStatePointer);
@@ -2469,7 +2470,7 @@ PNativeStruct *NewNativeStruct(FName name, PTypeBase *outer)
 	PType *stype = TypeTable.FindType(RUNTIME_CLASS(PNativeStruct), (intptr_t)outer, (intptr_t)name, &bucket);
 	if (stype == NULL)
 	{
-		stype = new PStruct(name, outer);
+		stype = new PNativeStruct(name);
 		TypeTable.AddType(stype, RUNTIME_CLASS(PNativeStruct), (intptr_t)outer, (intptr_t)name, bucket);
 	}
 	return static_cast<PNativeStruct *>(stype);

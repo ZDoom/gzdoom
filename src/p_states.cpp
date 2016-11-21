@@ -924,9 +924,9 @@ int FStateDefinitions::AddStates(FState *state, const char *framechars, const FS
 
 		if (*framechars == '#')
 			noframe = true;
-		else if (*framechars == '^') 
+		else if (*framechars == '^')
 			frame = '\\' - 'A';
-		else 
+		else
 			frame = (*framechars & 223) - 'A';
 
 		framechars++;
@@ -937,13 +937,14 @@ int FStateDefinitions::AddStates(FState *state, const char *framechars, const FS
 		}
 
 		state->Frame = frame;
-		state->SameFrame = noframe;
+		if (noframe) state->StateFlags |= STF_SAMEFRAME;
+		else state->StateFlags &= STF_SAMEFRAME;
 		StateArray.Push(*state);
 		SourceLines.Push(sc);
 		++count;
 
 		// NODELAY flag is not carried past the first state
-		state->NoDelay = false;
+		state->StateFlags &= STF_NODELAY;
 	}
 	laststate = &StateArray[StateArray.Size() - 1];
 	laststatebeforelabel = laststate;
@@ -1054,4 +1055,32 @@ CCMD(dumpstates)
 		DumpStateHelper(info->StateList, "");
 		Printf(PRINT_LOG, "----------------------------\n");
 	}
+}
+
+//==========================================================================
+//
+// sets up the script-side version of states
+//
+//==========================================================================
+
+void P_InitStateForScript()
+{
+	PNativeStruct *pstruct = dyn_cast<PNativeStruct>(TypeState->PointedType);
+	assert(pstruct != nullptr);
+
+	pstruct->AddNativeField("NextState", TypeState, myoffsetof(FState, NextState), VARF_ReadOnly);
+	pstruct->AddNativeField("sprite", TypeSInt32, myoffsetof(FState, sprite), VARF_ReadOnly);
+	pstruct->AddNativeField("Tics", TypeSInt16, myoffsetof(FState, Tics), VARF_ReadOnly);
+	pstruct->AddNativeField("TicRange", TypeUInt16, myoffsetof(FState, TicRange), VARF_ReadOnly);
+	pstruct->AddNativeField("Frame", TypeUInt8, myoffsetof(FState, Frame), VARF_ReadOnly);
+	pstruct->AddNativeField("UseFlags", TypeUInt8, myoffsetof(FState, UseFlags), VARF_ReadOnly);
+	pstruct->AddNativeField("Misc1", TypeSInt32, myoffsetof(FState, Misc1), VARF_ReadOnly);
+	pstruct->AddNativeField("Misc2", TypeSInt32, myoffsetof(FState, Misc2), VARF_ReadOnly);
+	pstruct->AddNativeField("bSlow", TypeUInt16, myoffsetof(FState, StateFlags), VARF_ReadOnly, STF_SLOW);
+	pstruct->AddNativeField("bFast", TypeUInt16, myoffsetof(FState, StateFlags), VARF_ReadOnly, STF_FAST);
+	pstruct->AddNativeField("bFullbright", TypeUInt16, myoffsetof(FState, StateFlags), VARF_ReadOnly, STF_FULLBRIGHT);
+	pstruct->AddNativeField("bNoDelay", TypeUInt16, myoffsetof(FState, StateFlags), VARF_ReadOnly, STF_NODELAY);
+	pstruct->AddNativeField("bSameFrame", TypeUInt16, myoffsetof(FState, StateFlags), VARF_ReadOnly, STF_SAMEFRAME);
+	pstruct->AddNativeField("bCanRaise", TypeUInt16, myoffsetof(FState, StateFlags), VARF_ReadOnly, STF_CANRAISE);
+	pstruct->AddNativeField("bDehacked", TypeUInt16, myoffsetof(FState, StateFlags), VARF_ReadOnly, STF_DEHACKED);
 }

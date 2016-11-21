@@ -584,11 +584,11 @@ bool AActor::InStateSequence(FState * newstate, FState * basestate)
 int AActor::GetTics(FState * newstate)
 {
 	int tics = newstate->GetTics();
-	if (isFast() && newstate->Fast)
+	if (isFast() && newstate->GetFast())
 	{
 		return tics - (tics>>1);
 	}
-	else if (isSlow() && newstate->Slow)
+	else if (isSlow() && newstate->GetSlow())
 	{
 		return tics<<1;
 	}

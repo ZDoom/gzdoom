@@ -47,7 +47,7 @@
 #include "r_poly.h"
 
 EXTERN_CVAR(Bool, r_shadercolormaps)
-EXTERN_CVAR(Bool, r_newrenderer)	// [SP] dpJudas's new renderer
+EXTERN_CVAR(Bool, r_polyrenderer)	// [SP] dpJudas's new renderer
 EXTERN_CVAR(Float, maxviewpitch)	// [SP] CVAR from GZDoom
 
 void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio);
@@ -242,7 +242,7 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 
 void FSoftwareRenderer::DrawRemainingPlayerSprites()
 {
-	if (!r_newrenderer)
+	if (!r_polyrenderer)
 	{
 		R_DrawRemainingPlayerSprites();
 	}
@@ -262,12 +262,12 @@ void FSoftwareRenderer::DrawRemainingPlayerSprites()
 
 int FSoftwareRenderer::GetMaxViewPitch(bool down)
 {
-	return (r_newrenderer) ? int(maxviewpitch) : (down ? MAX_DN_ANGLE : MAX_UP_ANGLE);
+	return (r_polyrenderer) ? int(maxviewpitch) : (down ? MAX_DN_ANGLE : MAX_UP_ANGLE);
 }
 
 bool FSoftwareRenderer::RequireGLNodes()
 {
-	return r_newrenderer;
+	return r_polyrenderer;
 }
 
 //==========================================================================

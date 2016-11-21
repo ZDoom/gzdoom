@@ -63,7 +63,7 @@
 #include "p_setup.h"
 #include "version.h"
 
-CUSTOM_CVAR(Bool, r_newrenderer, 0, CVAR_NOINITCALL)
+CUSTOM_CVAR(Bool, r_polyrenderer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	if (self == 1 && !hasglnodes)
 	{
@@ -915,7 +915,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
 	PO_LinkToSubsectors();
 	InSubsector = NULL;
-	if (!r_newrenderer)
+	if (!r_polyrenderer)
 	{
 		R_RenderBSPNode(nodes + numnodes - 1);	// The head node is the last node output.
 	}
@@ -932,7 +932,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	if (viewactive)
 	{
 		PlaneCycles.Clock();
-		if (!r_newrenderer)
+		if (!r_polyrenderer)
 		{
 			R_DrawPlanes();
 			R_DrawPortals();
@@ -953,7 +953,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 		NetUpdate ();
 		
 		MaskedCycles.Clock();
-		if (!r_newrenderer)
+		if (!r_polyrenderer)
 			R_DrawMasked ();
 		MaskedCycles.Unclock();
 

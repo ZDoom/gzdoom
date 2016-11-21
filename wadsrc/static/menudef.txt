@@ -1773,6 +1773,7 @@ OptionMenu RendererMenu
 	Title "$RNDMNU_TITLE"
 	Option "$RNDMNU_RENDERER",	"vid_renderer", "PolyDoom"
 	Option "$RNDMNU_TRUECOLOR",	"swtruecolor", "OnOff"
+	Option "$RNDMNU_POLY",		"r_polyrenderer", "OnOff"
 	IfOption(Windows)
 	{
 		Option "$RNDMNU_CANVAS",	"vid_used3d", "D3DGL"

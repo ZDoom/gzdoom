@@ -30,6 +30,7 @@ class RenderPolyWall
 {
 public:
 	static bool RenderLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, std::vector<PolyTranslucentObject> &translucentWallsOutput);
+	static void Render3DFloorLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject> &translucentWallsOutput);
 
 	void SetCoords(const DVector2 &v1, const DVector2 &v2, double ceil1, double floor1, double ceil2, double floor2);
 	void Render(const TriMatrix &worldToClip);
@@ -41,7 +42,9 @@ public:
 	double ceil2 = 0.0;
 	double floor2 = 0.0;
 
-	const seg_t *Line = nullptr;
+	const seg_t *LineSeg = nullptr;
+	const line_t *Line = nullptr;
+	const side_t *Side = nullptr;
 	side_t::ETexpart Texpart = side_t::mid;
 	double TopZ = 0.0;
 	double BottomZ = 0.0;
@@ -60,15 +63,15 @@ private:
 class PolyWallTextureCoords
 {
 public:
-	PolyWallTextureCoords(FTexture *tex, const seg_t *line, side_t::ETexpart texpart, double topz, double bottomz, double unpeggedceil);
+	PolyWallTextureCoords(FTexture *tex, const seg_t *lineseg, const line_t *line, const side_t *side, side_t::ETexpart texpart, double topz, double bottomz, double unpeggedceil);
 
 	double u1, u2;
 	double v1, v2;
 
 private:
-	void CalcU(FTexture *tex, const seg_t *line, side_t::ETexpart texpart);
-	void CalcV(FTexture *tex, const seg_t *line, side_t::ETexpart texpart, double topz, double bottomz, double unpeggedceil);
-	void CalcVTopPart(FTexture *tex, const seg_t *line, double topz, double bottomz, double vscale, double yoffset);
-	void CalcVMidPart(FTexture *tex, const seg_t *line, double topz, double bottomz, double vscale, double yoffset);
-	void CalcVBottomPart(FTexture *tex, const seg_t *line, double topz, double bottomz, double unpeggedceil, double vscale, double yoffset);
+	void CalcU(FTexture *tex, const seg_t *lineseg, const line_t *line, const side_t *side, side_t::ETexpart texpart);
+	void CalcV(FTexture *tex, const line_t *line, const side_t *side, side_t::ETexpart texpart, double topz, double bottomz, double unpeggedceil);
+	void CalcVTopPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double vscale, double yoffset);
+	void CalcVMidPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double vscale, double yoffset);
+	void CalcVBottomPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double unpeggedceil, double vscale, double yoffset);
 };

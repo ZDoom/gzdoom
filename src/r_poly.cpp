@@ -140,7 +140,9 @@ void RenderPolyScene::RenderSubsector(subsector_t *sub)
 	{
 		seg_t *line = &sub->firstline[i];
 		if (line->sidedef == nullptr || !(line->sidedef->Flags & WALLF_POLYOBJ))
+		{
 			RenderLine(sub, line, frontsector, subsectorDepth);
+		}
 	}
 
 	bool mainBSP = ((unsigned int)(sub - subsectors) < (unsigned int)numsubsectors);
@@ -204,6 +206,19 @@ void RenderPolyScene::RenderLine(subsector_t *sub, seg_t *line, sector_t *fronts
 	{
 		line->linedef->flags |= ML_MAPPED;
 		sub->flags |= SSECF_DRAWN;
+	}
+
+	// Render 3D floor sides
+	if (line->backsector && frontsector->e && line->backsector->e->XFloor.ffloors.Size())
+	{
+		for (unsigned int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++)
+		{
+			F3DFloor *fakeFloor = line->backsector->e->XFloor.ffloors[i];
+			if (!(fakeFloor->flags & FF_EXISTS)) continue;
+			if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
+			if (!fakeFloor->model) continue;
+			RenderPolyWall::Render3DFloorLine(WorldToClip, line, frontsector, subsectorDepth, fakeFloor, SubsectorTranslucentWalls);
+		}
 	}
 
 	// Render wall, and update culling info if its an occlusion blocker

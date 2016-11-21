@@ -32,16 +32,18 @@
 
 bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, std::vector<PolyTranslucentObject> &translucentWallsOutput)
 {
+	RenderPolyWall wall;
+	wall.LineSeg = line;
+	wall.Line = line->linedef;
+	wall.Side = line->sidedef;
+	wall.Colormap = frontsector->ColorMap;
+	wall.Masked = false;
+	wall.SubsectorDepth = subsectorDepth;
+
 	double frontceilz1 = frontsector->ceilingplane.ZatPoint(line->v1);
 	double frontfloorz1 = frontsector->floorplane.ZatPoint(line->v1);
 	double frontceilz2 = frontsector->ceilingplane.ZatPoint(line->v2);
 	double frontfloorz2 = frontsector->floorplane.ZatPoint(line->v2);
-
-	RenderPolyWall wall;
-	wall.Line = line;
-	wall.Colormap = frontsector->ColorMap;
-	wall.Masked = false;
-	wall.SubsectorDepth = subsectorDepth;
 
 	if (line->backsector == nullptr)
 	{
@@ -118,6 +120,28 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, seg_t *line, secto
 	return false;
 }
 
+void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject> &translucentWallsOutput)
+{
+	double frontceilz1 = fakeFloor->top.plane->ZatPoint(line->v1);
+	double frontfloorz1 = fakeFloor->bottom.plane->ZatPoint(line->v1);
+	double frontceilz2 = fakeFloor->top.plane->ZatPoint(line->v2);
+	double frontfloorz2 = fakeFloor->bottom.plane->ZatPoint(line->v2);
+
+	RenderPolyWall wall;
+	wall.LineSeg = line;
+	wall.Line = fakeFloor->master;
+	wall.Side = fakeFloor->master->sidedef[0];
+	wall.Colormap = frontsector->ColorMap;
+	wall.Masked = false;
+	wall.SubsectorDepth = subsectorDepth;
+	wall.SetCoords(line->v1->fPos(), line->v2->fPos(), frontceilz1, frontfloorz1, frontceilz2, frontfloorz2);
+	wall.TopZ = frontceilz1;
+	wall.BottomZ = frontfloorz1;
+	wall.UnpeggedCeil = frontceilz1;
+	wall.Texpart = side_t::mid;
+	wall.Render(worldToClip);
+}
+
 void RenderPolyWall::SetCoords(const DVector2 &v1, const DVector2 &v2, double ceil1, double floor1, double ceil2, double floor2)
 {
 	this->v1 = v1;
@@ -134,7 +158,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	if (!tex)
 		return;
 
-	PolyWallTextureCoords texcoords(tex, Line, Texpart, TopZ, BottomZ, UnpeggedCeil);
+	PolyWallTextureCoords texcoords(tex, LineSeg, Line, Side, Texpart, TopZ, BottomZ, UnpeggedCeil);
 
 	TriVertex *vertices = PolyVertexBuffer::GetVertices(4);
 	if (!vertices)
@@ -199,15 +223,15 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	}
 	else
 	{
-		args.uniforms.destalpha = (Line->linedef->flags & ML_ADDTRANS) ? 256 : (uint32_t)(256 - Line->linedef->alpha * 256);
-		args.uniforms.srcalpha = (uint32_t)(Line->linedef->alpha * 256);
+		args.uniforms.destalpha = (Line->flags & ML_ADDTRANS) ? 256 : (uint32_t)(256 - Line->alpha * 256);
+		args.uniforms.srcalpha = (uint32_t)(Line->alpha * 256);
 		if (args.uniforms.destalpha == 0 && args.uniforms.srcalpha == 256)
 			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::AlphaBlend);
 		else
 			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Add);
 	}
 
-	RenderPolyDecal::RenderWallDecals(worldToClip, Line, SubsectorDepth);
+	RenderPolyDecal::RenderWallDecals(worldToClip, LineSeg, SubsectorDepth);
 }
 
 void RenderPolyWall::ClampHeight(TriVertex &v1, TriVertex &v2)
@@ -232,25 +256,25 @@ void RenderPolyWall::ClampHeight(TriVertex &v1, TriVertex &v2)
 
 FTexture *RenderPolyWall::GetTexture()
 {
-	FTexture *tex = TexMan(Line->sidedef->GetTexture(Texpart), true);
+	FTexture *tex = TexMan(Side->GetTexture(Texpart), true);
 	if (tex == nullptr || tex->UseType == FTexture::TEX_Null)
 	{
 		// Mapping error. Doom floodfills this with a plane.
 		// This code doesn't do that, but at least it uses the "right" texture..
 
-		if (Line->linedef && Line->backsector && Line->linedef->sidedef[0] == Line->sidedef)
+		if (Line && Line->backsector && Line->sidedef[0] == Side)
 		{
 			if (Texpart == side_t::top)
-				tex = TexMan(Line->linedef->backsector->GetTexture(sector_t::ceiling), true);
+				tex = TexMan(Line->backsector->GetTexture(sector_t::ceiling), true);
 			else if (Texpart == side_t::bottom)
-				tex = TexMan(Line->linedef->backsector->GetTexture(sector_t::floor), true);
+				tex = TexMan(Line->backsector->GetTexture(sector_t::floor), true);
 		}
-		if (Line->linedef && Line->backsector && Line->linedef->sidedef[1] == Line->sidedef)
+		if (Line && Line->backsector && Line->sidedef[1] == Side)
 		{
 			if (Texpart == side_t::top)
-				tex = TexMan(Line->linedef->frontsector->GetTexture(sector_t::ceiling), true);
+				tex = TexMan(Line->frontsector->GetTexture(sector_t::ceiling), true);
 			else if (Texpart == side_t::bottom)
-				tex = TexMan(Line->linedef->frontsector->GetTexture(sector_t::floor), true);
+				tex = TexMan(Line->frontsector->GetTexture(sector_t::floor), true);
 		}
 
 		if (tex == nullptr || tex->UseType == FTexture::TEX_Null)
@@ -269,33 +293,33 @@ int RenderPolyWall::GetLightLevel()
 	{
 		bool foggy = false;
 		int actualextralight = foggy ? 0 : extralight << 4;
-		return clamp(Line->sidedef->GetLightLevel(foggy, Line->frontsector->lightlevel) + actualextralight, 0, 255);
+		return clamp(Side->GetLightLevel(foggy, LineSeg->frontsector->lightlevel) + actualextralight, 0, 255);
 	}
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-PolyWallTextureCoords::PolyWallTextureCoords(FTexture *tex, const seg_t *line, side_t::ETexpart texpart, double topz, double bottomz, double unpeggedceil)
+PolyWallTextureCoords::PolyWallTextureCoords(FTexture *tex, const seg_t *lineseg, const line_t *line, const side_t *side, side_t::ETexpart texpart, double topz, double bottomz, double unpeggedceil)
 {
-	CalcU(tex, line, texpart);
-	CalcV(tex, line, texpart, topz, bottomz, unpeggedceil);
+	CalcU(tex, lineseg, line, side, texpart);
+	CalcV(tex, line, side, texpart, topz, bottomz, unpeggedceil);
 }
 
-void PolyWallTextureCoords::CalcU(FTexture *tex, const seg_t *line, side_t::ETexpart texpart)
+void PolyWallTextureCoords::CalcU(FTexture *tex, const seg_t *lineseg, const line_t *line, const side_t *side, side_t::ETexpart texpart)
 {
-	double lineLength = line->sidedef->TexelLength;
+	double lineLength = side->TexelLength;
 	double lineStart = 0.0;
 
-	bool entireSegment = ((line->linedef->v1 == line->v1) && (line->linedef->v2 == line->v2) || (line->linedef->v2 == line->v1) && (line->linedef->v1 == line->v2));
+	bool entireSegment = ((lineseg->v1 == line->v1) && (lineseg->v2 == line->v2) || (lineseg->v2 == line->v1) && (lineseg->v1 == line->v2));
 	if (!entireSegment)
 	{
-		lineLength = (line->v2->fPos() - line->v1->fPos()).Length();
-		lineStart = (line->v1->fPos() - line->linedef->v1->fPos()).Length();
+		lineLength = (lineseg->v2->fPos() - lineseg->v1->fPos()).Length();
+		lineStart = (lineseg->v1->fPos() - lineseg->v1->fPos()).Length();
 	}
 
 	int texWidth = tex->GetWidth();
-	double uscale = line->sidedef->GetTextureXScale(texpart) * tex->Scale.X;
-	u1 = lineStart + line->sidedef->GetTextureXOffset(texpart);
+	double uscale = side->GetTextureXScale(texpart) * tex->Scale.X;
+	u1 = lineStart + side->GetTextureXOffset(texpart);
 	u2 = u1 + lineLength;
 	u1 *= uscale;
 	u2 *= uscale;
@@ -303,11 +327,11 @@ void PolyWallTextureCoords::CalcU(FTexture *tex, const seg_t *line, side_t::ETex
 	u2 /= texWidth;
 }
 
-void PolyWallTextureCoords::CalcV(FTexture *tex, const seg_t *line, side_t::ETexpart texpart, double topz, double bottomz, double unpeggedceil)
+void PolyWallTextureCoords::CalcV(FTexture *tex, const line_t *line, const side_t *side, side_t::ETexpart texpart, double topz, double bottomz, double unpeggedceil)
 {
-	double vscale = line->sidedef->GetTextureYScale(texpart) * tex->Scale.Y;
+	double vscale = side->GetTextureYScale(texpart) * tex->Scale.Y;
 
-	double yoffset = line->sidedef->GetTextureYOffset(texpart);
+	double yoffset = side->GetTextureYOffset(texpart);
 	if (tex->bWorldPanning)
 		yoffset *= vscale;
 
@@ -315,13 +339,13 @@ void PolyWallTextureCoords::CalcV(FTexture *tex, const seg_t *line, side_t::ETex
 	{
 	default:
 	case side_t::mid:
-		CalcVMidPart(tex, line, topz, bottomz, vscale, yoffset);
+		CalcVMidPart(tex, line, side, topz, bottomz, vscale, yoffset);
 		break;
 	case side_t::top:
-		CalcVTopPart(tex, line, topz, bottomz, vscale, yoffset);
+		CalcVTopPart(tex, line, side, topz, bottomz, vscale, yoffset);
 		break;
 	case side_t::bottom:
-		CalcVBottomPart(tex, line, topz, bottomz, unpeggedceil, vscale, yoffset);
+		CalcVBottomPart(tex, line, side, topz, bottomz, unpeggedceil, vscale, yoffset);
 		break;
 	}
 
@@ -330,9 +354,9 @@ void PolyWallTextureCoords::CalcV(FTexture *tex, const seg_t *line, side_t::ETex
 	v2 /= texHeight;
 }
 
-void PolyWallTextureCoords::CalcVTopPart(FTexture *tex, const seg_t *line, double topz, double bottomz, double vscale, double yoffset)
+void PolyWallTextureCoords::CalcVTopPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double vscale, double yoffset)
 {
-	bool pegged = (line->linedef->flags & ML_DONTPEGTOP) == 0;
+	bool pegged = (line->flags & ML_DONTPEGTOP) == 0;
 	if (pegged) // bottom to top
 	{
 		int texHeight = tex->GetHeight();
@@ -353,9 +377,9 @@ void PolyWallTextureCoords::CalcVTopPart(FTexture *tex, const seg_t *line, doubl
 	}
 }
 
-void PolyWallTextureCoords::CalcVMidPart(FTexture *tex, const seg_t *line, double topz, double bottomz, double vscale, double yoffset)
+void PolyWallTextureCoords::CalcVMidPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double vscale, double yoffset)
 {
-	bool pegged = (line->linedef->flags & ML_DONTPEGBOTTOM) == 0;
+	bool pegged = (line->flags & ML_DONTPEGBOTTOM) == 0;
 	if (pegged) // top to bottom
 	{
 		v1 = yoffset * vscale;
@@ -369,9 +393,9 @@ void PolyWallTextureCoords::CalcVMidPart(FTexture *tex, const seg_t *line, doubl
 	}
 }
 
-void PolyWallTextureCoords::CalcVBottomPart(FTexture *tex, const seg_t *line, double topz, double bottomz, double unpeggedceil, double vscale, double yoffset)
+void PolyWallTextureCoords::CalcVBottomPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double unpeggedceil, double vscale, double yoffset)
 {
-	bool pegged = (line->linedef->flags & ML_DONTPEGBOTTOM) == 0;
+	bool pegged = (line->flags & ML_DONTPEGBOTTOM) == 0;
 	if (pegged) // top to bottom
 	{
 		v1 = yoffset;

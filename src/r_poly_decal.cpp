@@ -31,6 +31,9 @@
 
 void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const seg_t *line, uint32_t subsectorDepth)
 {
+	if (line->linedef == nullptr && line->sidedef == nullptr)
+		return;
+
 	for (DBaseDecal *decal = line->sidedef->AttachedDecals; decal != nullptr; decal = decal->WallNext)
 	{
 		RenderPolyDecal render;

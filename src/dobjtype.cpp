@@ -1547,50 +1547,6 @@ PStateLabel::PStateLabel()
 	mDescriptiveName = "StateLabel";
 }
 
-/* PStatePointer **********************************************************/
-
-IMPLEMENT_CLASS(PStatePointer, false, false, false, false)
-
-//==========================================================================
-//
-// PStatePointer Default Constructor
-//
-//==========================================================================
-
-PStatePointer::PStatePointer()
-: PBasicType(sizeof(FState *), alignof(FState *))
-{
-	mDescriptiveName = "State";
-	storeOp = OP_SP;
-	loadOp = OP_LP;
-	moveOp = OP_MOVEA;
-	RegType = REGT_POINTER;
-}
-
-//==========================================================================
-//
-// PStatePointer :: WriteValue
-//
-//==========================================================================
-
-void PStatePointer::WriteValue(FSerializer &ar, const char *key,const void *addr) const
-{
-	ar(key, *(FState **)addr);
-}
-
-//==========================================================================
-//
-// PStatePointer :: ReadValue
-//
-//==========================================================================
-
-bool PStatePointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
-{
-	bool res = false;
-	::Serialize(ar, key, *(FState **)addr, nullptr, &res);
-	return res;
-}
-
 /* PPointer ***************************************************************/
 
 IMPLEMENT_CLASS(PPointer, false, true, false, false)
@@ -1735,6 +1691,48 @@ PPointer *NewPointer(PType *type, bool isconst)
 	}
 	return static_cast<PPointer *>(ptype);
 }
+
+/* PStatePointer **********************************************************/
+
+IMPLEMENT_CLASS(PStatePointer, false, false, false, false)
+
+//==========================================================================
+//
+// PStatePointer Default Constructor
+//
+//==========================================================================
+
+PStatePointer::PStatePointer()
+{
+	mDescriptiveName = "Pointer<State>";
+	PointedType = NewNativeStruct(NAME_State, nullptr);
+	IsConst = true;
+}
+
+//==========================================================================
+//
+// PStatePointer :: WriteValue
+//
+//==========================================================================
+
+void PStatePointer::WriteValue(FSerializer &ar, const char *key, const void *addr) const
+{
+	ar(key, *(FState **)addr);
+}
+
+//==========================================================================
+//
+// PStatePointer :: ReadValue
+//
+//==========================================================================
+
+bool PStatePointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
+{
+	bool res = false;
+	::Serialize(ar, key, *(FState **)addr, nullptr, &res);
+	return res;
+}
+
 
 
 /* PClassPointer **********************************************************/

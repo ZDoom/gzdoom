@@ -551,16 +551,6 @@ public:
 
 // Pointers -----------------------------------------------------------------
 
-class PStatePointer : public PBasicType
-{
-	DECLARE_CLASS(PStatePointer, PBasicType);
-public:
-	PStatePointer();
-
-	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
-	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
-};
-
 class PPointer : public PBasicType
 {
 	DECLARE_CLASS(PPointer, PBasicType);
@@ -582,6 +572,17 @@ public:
 protected:
 	void SetOps();
 };
+
+class PStatePointer : public PPointer
+{
+	DECLARE_CLASS(PStatePointer, PPointer);
+public:
+	PStatePointer();
+
+	void WriteValue(FSerializer &ar, const char *key, const void *addr) const override;
+	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
+};
+
 
 class PClassPointer : public PPointer
 {

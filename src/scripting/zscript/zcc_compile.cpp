@@ -2845,8 +2845,9 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 	case AST_FuncParm:
 	{
 		auto fparm = static_cast<ZCC_FuncParm *>(ast);
-		// ignore the label for now, that's stuff for far later, when a bit more here is working.
-		return ConvertNode(fparm->Value);
+		auto node = ConvertNode(fparm->Value);
+		if (fparm->Label != NAME_None) node = new FxNamedNode(fparm->Label, node, *ast);
+		return node;
 	}
 
 	case AST_ExprID:

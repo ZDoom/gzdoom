@@ -285,6 +285,7 @@ enum EFxType
 	EFX_StaticArray,
 	EFX_StaticArrayVariable,
 	EFX_CVar,
+	EFX_NamedNode,
 	EFX_COUNT
 };
 
@@ -471,6 +472,31 @@ public:
 		value.pointer = nullptr;
 		ValueType = value.Type = TypeNullPtr;
 		isresolved = true;
+	}
+
+	FxConstant(PType *type, VMValue &vmval, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
+	{
+		ValueType = value.Type = type;
+		isresolved = true;
+		switch (vmval.Type)
+		{
+		default:
+		case REGT_INT:
+			value.Int = vmval.i;
+			break;
+
+		case REGT_FLOAT:
+			value.Float = vmval.f;
+			break;
+
+		case REGT_STRING:
+			value = ExpVal(vmval.s());
+			break;
+
+		case REGT_POINTER:
+			value.pointer = vmval.a;
+			break;
+		}
 	}
 	
 	static FxExpression *MakeConstant(PSymbol *sym, const FScriptPosition &pos);
@@ -1912,5 +1938,24 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
+class FxNamedNode : public FxExpression
+{
+public:
+	FName name;
+	FxExpression *value;
+	FxNamedNode(FName n, FxExpression *x, const FScriptPosition &pos)
+		: FxExpression(EFX_NamedNode, pos), name(n), value(x)
+	{
+	}
+
+	FxExpression *Resolve(FCompileContext&)
+	{
+		// This should never reach the backend in a supported context, 
+		// it's just needed to extend argument lists with the skipped parameters and needs to be resolved by the parent node.
+		ScriptPosition.Message(MSG_ERROR, "Named arguments not supported here");
+		delete this;
+		return nullptr;
+	}
+};
 
 #endif

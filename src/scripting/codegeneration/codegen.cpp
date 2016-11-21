@@ -6054,9 +6054,14 @@ ExpEmit FxCVar::Emit(VMFunctionBuilder *build)
 		break;
 
 	case CVAR_DummyBool:
-		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&static_cast<FFlagCVar *>(CVar)->ValueVar.Value, ATAG_GENERIC));
-		build->Emit(OP_LBIT, dest.RegNum, addr.RegNum, static_cast<FFlagCVar *>(CVar)->BitNum);
+	{
+		auto cv = static_cast<FFlagCVar *>(CVar);
+		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(&cv->ValueVar.Value, ATAG_GENERIC));
+		build->Emit(OP_LW, dest.RegNum, addr.RegNum, nul);
+		build->Emit(OP_SRL_RI, dest.RegNum, dest.RegNum, cv->BitNum);
+		build->Emit(OP_AND_RK, dest.RegNum, dest.RegNum, build->GetConstantInt(1));
 		break;
+	}
 
 	case CVAR_DummyInt:
 	{
@@ -7408,7 +7413,9 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	bool failed = false;
 	auto proto = Function->Variants[0].Proto;
 	auto &argtypes = proto->ArgumentTypes;
+	auto &argnames = Function->Variants[0].ArgNames;
 	auto &argflags = Function->Variants[0].ArgFlags;
+	auto &defaults = Function->Variants[0].Implementation->DefaultArgs;
 
 	int implicit = Function->GetImplicitArgs();
 
@@ -7445,6 +7452,67 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 				}
 			}
 			assert(type != nullptr);
+
+			if (ArgList[i]->ExprType == EFX_NamedNode)
+			{
+				if (!(flag & VARF_Optional))
+				{
+					ScriptPosition.Message(MSG_ERROR, "Cannot use a named argument here - not all required arguments have been passed.");
+					delete this;
+					return nullptr;
+				}
+				if (foundvarargs)
+				{
+					ScriptPosition.Message(MSG_ERROR, "Cannot use a named argument in the varargs part of the parameter list.");
+					delete this;
+					return nullptr;
+				}
+				unsigned j;
+				bool done = false;
+				FName name = static_cast<FxNamedNode *>(ArgList[i])->name;
+				for (j = 0; j < argnames.Size() - implicit; j++)
+				{
+					if (argnames[j + implicit] == name)
+					{
+						if (j < i)
+						{
+							ScriptPosition.Message(MSG_ERROR, "Named argument %s comes before current position in argument list.", name.GetChars());
+							delete this;
+							return nullptr;
+						}
+						// copy the original argument into the list
+						auto old = static_cast<FxNamedNode *>(ArgList[i]);
+						ArgList[i] = old->value; 
+						old->value = nullptr;
+						delete old;
+						// now fill the gap with constants created from the default list so that we got a full list of arguments.
+						int insert = j - i;
+						for (int k = 0; k < insert; k++)
+						{
+							auto ntype = argtypes[i + k + implicit];
+							// If this is a reference argument, the pointer type must be undone because the code below expects the pointed type as value type.
+							if (argflags[i + k + implicit] & VARF_Ref)
+							{
+								assert(ntype->IsKindOf(RUNTIME_CLASS(PPointer)));
+								ntype = TypeNullPtr; // the default of a reference type can only be a null pointer
+							}
+							auto x = new FxConstant(ntype, defaults[i + k + implicit], ScriptPosition);
+							ArgList.Insert(i + k, x);
+						}
+						done = true;
+						break;
+					}
+				}
+				if (!done)
+				{
+					ScriptPosition.Message(MSG_ERROR, "Named argument %s not found.", name.GetChars());
+					delete this;
+					return nullptr;
+				}
+				// re-get the proper info for the inserted node.
+				type = argtypes[i + implicit];
+				flag = argflags[i + implicit];
+			}
 
 			FxExpression *x;
 			if (!(flag & VARF_Ref))

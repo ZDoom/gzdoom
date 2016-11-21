@@ -81,7 +81,7 @@ extend class StateProvider
 				return;
 		}
 
-		SpawnPlayerMissile("BFGBall", angle, 0, 0, 0, null, false, sv_nobfgaim);
+		SpawnPlayerMissile("BFGBall", angle, nofreeaim:sv_nobfgaim);
 	}
 
 

@@ -13,7 +13,10 @@ struct ExpEmit
 	void Free(VMFunctionBuilder *build);
 	void Reuse(VMFunctionBuilder *build);
 
-	BYTE RegNum, RegType, RegCount, Konst:1, Fixed : 1, Final : 1, Target : 1;
+	uint16_t RegNum;
+	uint8_t RegType, RegCount;
+	// We are at 8 bytes for this struct, no matter what, so it's rather pointless to squeeze these flags into bitfields.
+	bool Konst, Fixed, Final, Target;
 };
 
 class VMFunctionBuilder

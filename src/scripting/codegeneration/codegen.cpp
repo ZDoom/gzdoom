@@ -8250,6 +8250,7 @@ ExpEmit FxSwitchStatement::Emit(VMFunctionBuilder *build)
 	}
 	size_t DefaultAddress = build->Emit(OP_JMP, 0);
 	TArray<size_t> BreakAddresses;
+	bool defaultset = false;
 
 	for (auto line : Content)
 	{
@@ -8270,6 +8271,7 @@ ExpEmit FxSwitchStatement::Emit(VMFunctionBuilder *build)
 			else
 			{
 				build->BackpatchToHere(DefaultAddress);
+				defaultset = true;
 			}
 			break;
 
@@ -8290,6 +8292,7 @@ ExpEmit FxSwitchStatement::Emit(VMFunctionBuilder *build)
 	{
 		build->BackpatchToHere(addr);
 	}
+	if (!defaultset) build->BackpatchToHere(DefaultAddress);
 	Content.Clear();
 	Content.ShrinkToFit();
 	return ExpEmit();

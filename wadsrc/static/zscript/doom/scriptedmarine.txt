@@ -96,6 +96,7 @@ class ScriptedMarine : Actor
 		PLAY F 6 BRIGHT A_M_FirePistol(1);
 		PLAY A 4 A_FaceTarget;
 		PLAY A 0 A_M_Refire(0, "ShootEnd");
+		Goto Fireloop.Pistol;
 	ShootEnd:
 		PLAY A 5;
 		Goto See;
@@ -226,18 +227,12 @@ class ScriptedMarine : Actor
 	//
 	//============================================================================
 	
-	// placeholder to make it compile for the time being.
-	SpriteID GetSprite(State st)
-	{
-		return SpriteID(0);
-	}
-
 	override void Tick ()
 	{
 		Super.Tick ();
 
 		// Override the standard sprite, if desired
-		if (SpriteOverride != 0 && sprite == GetSprite(SpawnState))
+		if (SpriteOverride != 0 && sprite == SpawnState.sprite)
 		{
 			sprite = SpriteOverride;
 		}
@@ -632,14 +627,14 @@ class ScriptedMarine : Actor
 	{
 		if (source == null)
 		{ // A valid actor class wasn't passed, so use the standard sprite
-			SpriteOverride = sprite = GetSprite(SpawnState);
+			SpriteOverride = sprite = SpawnState.sprite;
 			// Copy the standard scaling
 			Scale = Default.Scale;
 		}
 		else
 		{ // Use the same sprite and scaling the passed class spawns with
 			readonly<Actor> def = GetDefaultByType (source);
-			SpriteOverride = sprite = GetSprite(def.SpawnState);
+			SpriteOverride = sprite = def.SpawnState.sprite;
 			Scale = def.Scale;
 		}
 	}

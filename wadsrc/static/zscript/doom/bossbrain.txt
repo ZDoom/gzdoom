@@ -374,7 +374,7 @@ extend class Actor
 				}
 				// Make it act as if it was around when the player first made noise
 				// (if the player has made noise).
-				newmobj.LastHeard = newmobj.Sector.SoundTarget;
+				newmobj.LastHeard = newmobj.CurSector.SoundTarget;
 
 				if (newmobj.SeeState != null && newmobj.LookForPlayers (true))
 				{

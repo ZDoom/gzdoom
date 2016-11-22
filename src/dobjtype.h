@@ -19,7 +19,7 @@ enum
 	VARF_Optional		= (1<<0),	// func param is optional
 	VARF_Method			= (1<<1),	// func has an implied self parameter
 	VARF_Action			= (1<<2),	// func has implied owner and state parameters
-	VARF_Native			= (1<<3),	// func is native code/don't auto serialize field
+	VARF_Native			= (1<<3),	// func is native code, field is natively defined
 	VARF_ReadOnly		= (1<<4),	// field is read only, do not write to it
 	VARF_Private		= (1<<5),	// field is private to containing class
 	VARF_Protected		= (1<<6),	// field is only accessible by containing class and children.
@@ -33,6 +33,7 @@ enum
 	VARF_InternalAccess	= (1<<14),	// overrides VARF_ReadOnly for internal script code.
 	VARF_Override		= (1<<15),	// overrides a virtual function from the parent class.
 	VARF_Ref			= (1<<16),	// argument is passed by reference.
+	VARF_Transient		= (1<<17)  // don't auto serialize field.
 };
 
 // Symbol information -------------------------------------------------------
@@ -610,7 +611,7 @@ class PField : public PSymbol
 	DECLARE_CLASS(PField, PSymbol);
 	HAS_OBJECT_POINTERS
 public:
-	PField(FName name, PType *type, DWORD flags = 0, size_t offset = 0, int bitvalue = -1);
+	PField(FName name, PType *type, DWORD flags = 0, size_t offset = 0, int bitvalue = 0);
 
 	size_t Offset;
 	PType *Type;
@@ -700,7 +701,7 @@ public:
 	bool HasNativeFields;
 
 	virtual PField *AddField(FName name, PType *type, DWORD flags=0);
-	virtual PField *AddNativeField(FName name, PType *type, size_t address, DWORD flags = 0, int bitvalue = -1);
+	virtual PField *AddNativeField(FName name, PType *type, size_t address, DWORD flags = 0, int bitvalue = 0);
 
 	size_t PropagateMark();
 

@@ -46,6 +46,7 @@
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;
+static TArray<FieldDesc> FieldTable;
 
 //==========================================================================
 //
@@ -613,6 +614,37 @@ AFuncDesc *FindFunction(PStruct *cls, const char * string)
 	return nullptr;
 }
 
+//==========================================================================
+//
+// Find a function by name using a binary search
+//
+//==========================================================================
+
+FieldDesc *FindField(PStruct *cls, const char * string)
+{
+	int min = 0, max = FieldTable.Size() - 1;
+
+	while (min <= max)
+	{
+		int mid = (min + max) / 2;
+		int lexval = stricmp(cls->TypeName.GetChars(), FieldTable[mid].ClassName + 1);
+		if (lexval == 0) lexval = stricmp(string, FieldTable[mid].FieldName);
+		if (lexval == 0)
+		{
+			return &FieldTable[mid];
+		}
+		else if (lexval > 0)
+		{
+			min = mid + 1;
+		}
+		else
+		{
+			max = mid - 1;
+		}
+	}
+	return nullptr;
+}
+
 
 //==========================================================================
 //
@@ -648,6 +680,14 @@ static int funccmp(const void * a, const void * b)
 	// +1 to get past the prefix letter of the native class name, which gets omitted by the FName for the class.
 	int res = stricmp(((AFuncDesc*)a)->ClassName + 1, ((AFuncDesc*)b)->ClassName + 1);
 	if (res == 0) res = stricmp(((AFuncDesc*)a)->FuncName, ((AFuncDesc*)b)->FuncName);
+	return res;
+}
+
+static int fieldcmp(const void * a, const void * b)
+{
+	// +1 to get past the prefix letter of the native class name, which gets omitted by the FName for the class.
+	int res = stricmp(((FieldDesc*)a)->ClassName + 1, ((FieldDesc*)b)->ClassName + 1);
+	if (res == 0) res = stricmp(((FieldDesc*)a)->FieldName, ((FieldDesc*)b)->FieldName);
 	return res;
 }
 
@@ -716,4 +756,19 @@ void InitThingdef()
 		AFTable.ShrinkToFit();
 		qsort(&AFTable[0], AFTable.Size(), sizeof(AFTable[0]), funccmp);
 	}
+
+	FieldTable.Clear();
+	if (FieldTable.Size() == 0)
+	{
+		FAutoSegIterator probe(FRegHead, FRegTail);
+
+		while (*++probe != NULL)
+		{
+			FieldDesc *afield = (FieldDesc *)*probe;
+			FieldTable.Push(*afield);
+		}
+		FieldTable.ShrinkToFit();
+		qsort(&FieldTable[0], FieldTable.Size(), sizeof(FieldTable[0]), fieldcmp);
+	}
+
 }

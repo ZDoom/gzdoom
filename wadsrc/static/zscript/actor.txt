@@ -5,6 +5,168 @@ class Actor : Thinker native
 	const ONCEILINGZ = 2147483647.0;
 	const FLOATRANDZ = ONCEILINGZ-1;
 
+	// flags are not defined here, the native fields for those get synthesized from the internal tables.
+	
+	// for some comments on these fields, see their native representations in actor.h.
+	native PlayerInfo Player;
+	native readonly vector3 Pos;
+	native vector3 Prev;
+	native double spriteAngle;
+	native double spriteRotation;
+	native double VisibleStartAngle;
+	native double VisibleStartPitch;
+	native double VisibleEndAngle;
+	native double VisibleEndPitch;
+	native double Angle;
+	native double Pitch;
+	native double Roll;
+	native vector3 Vel;
+	native double Speed;
+	native double FloatSpeed;
+	native SpriteID sprite;
+	native uint8 frame;
+	native vector2 Scale;
+	native TextureID picnum;
+	native double Alpha;
+	native color fillcolor;
+	native Sector CurSector;
+	native double CeilingZ;
+	native double FloorZ;
+	native double DropoffZ;
+	native Sector floorsector;
+	native TextureID floorpic;
+	native int floorterrain;
+	native Sector ceilingsector;
+	native TextureID ceilingpic;
+	native double Height;
+	native readonly double Radius;
+	native double projectilepassheight;
+	native int tics;
+	native readonly State CurState;
+	native readonly int Damage;
+	native int projectilekickback;
+	native int special1;
+	native int special2;
+	native double specialf1;
+	native double specialf2;
+	native int weaponspecial;
+	native int Health;
+	native uint8 movedir;
+	native int8 visdir;
+	native int16 movecount;
+	native int16 strafecount;
+	native Actor Target;
+	native Actor Master;
+	native Actor Tracer;
+	native Actor LastHeard;
+	native Actor LastEnemy;
+	native Actor LastLookActor;
+	native int ReactionTime;
+	native int Threshold;
+	native readonly int DefThreshold;
+	native readonly vector3 SpawnPoint;
+	native readonly uint16 SpawnAngle;
+	native int StartHealth;
+	native uint8 WeaveIndexXY;
+	native uint8 WeaveIndexZ;
+	native int skillrespawncount;
+	native int Args[5];
+	native int Mass;
+	native int Special;
+	native readonly int TID;
+	native readonly int TIDtoHate;
+	native readonly int WaterLevel;
+	native int Score;
+	native int Accuracy;
+	native int Stamina;
+	native double MeleeRange;
+	native int PainThreshold;
+	native double Gravity;
+	native double FloorClip;
+	native name DamageType;
+	native name DamageTypeReceived;
+	native uint8 FloatBobPhase;
+	native int RipperLevel;
+	native int RipLevelMin;
+	native int RipLevelMax;
+	native name Species;
+	native Actor Alternative;
+	native Actor goal;
+	native uint8 MinMissileChance;
+	native int8 LastLookPlayerNumber;
+	native uint SpawnFlags;
+	native double meleethreshold;
+	native double maxtargetrange;
+	native double bouncefactor;
+	native double wallbouncefactor;
+	native int bouncecount;
+	native double friction;
+	native int FastChaseStrafeCount;
+	native double pushfactor;
+	native int lastpush;
+	native int activationtype;
+	native int lastbump;
+	native int DesignatedTeam;
+	native Actor BlockingMobj;
+	native int PoisonDamage;
+	native name PoisonDamageType;
+	native int PoisonDuration;
+	native int PoisonPeriod;
+	native int PoisonDamageReceived;
+	native name PoisonDamageTypeReceived;
+	native int PoisonDurationReceived;
+	native int PoisonPeriodReceived;
+	native Actor Poisoner;
+	native Inventory Inv;
+	native uint8 smokecounter;
+	native uint8 FriendPlayer;
+	native uint Translation;
+	native sound AttackSound;
+	native sound DeathSound;
+	native sound SeeSound;
+	native sound PainSound;
+	native sound ActiveSound;
+	native sound UseSound;
+	native sound BounceSound;
+	native sound WallBounceSound;
+	native sound CrushPainSound;
+	native double MaxDropoffHeight;
+	native double MaxStepHeight;
+	native int16 PainChance;
+	native name PainType;
+	native name DeathType;
+	native double DamageFactor;
+	native double DamageMultiply;
+	native Class<Actor> TelefogSourceType;
+	native Class<Actor> TelefogDestType;
+	native readonly State SpawnState;
+	native readonly State SeeState;
+	native State MeleeState;
+	native State MissileState;
+
+	// need some definition work first
+	//FRenderStyle RenderStyle;
+	//line_t *BlockingLine; // Line that blocked the last move
+	//int ConversationRoot; // THe root of the current dialogue
+	//DecalBase DecalGenerator;
+
+	// deprecated things.
+	native readonly deprecated double X;
+	native readonly deprecated double Y;
+	native readonly deprecated double Z;
+	native readonly deprecated double VelX;
+	native readonly deprecated double VelY;
+	native readonly deprecated double VelZ;
+	native readonly deprecated double MomX;
+	native readonly deprecated double MomY;
+	native readonly deprecated double MomZ;
+	native deprecated double ScaleX;
+	native deprecated double ScaleY;
+
+	//int ConversationRoot; // THe root of the current dialogue;
+	//FStrifeDialogueNode *Conversation; // [RH] The dialogue to show when this actor is used.;
+	
+	
 	Default
 	{
 		Scale 1;

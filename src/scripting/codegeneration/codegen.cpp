@@ -4082,7 +4082,7 @@ ExpEmit FxBinaryLogical::Emit(VMFunctionBuilder *build)
 	build->Emit(OP_JMP, 1);
 	auto ctarget = build->Emit(OP_LI, to.RegNum, (Operator == TK_AndAnd) ? 0 : 1);
 	for (auto addr : patchspots) build->Backpatch(addr, ctarget);
-	list.Clear();
+	list.DeleteAndClear();
 	list.ShrinkToFit();
 	return to;
 }
@@ -5232,6 +5232,8 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 	// The result register needs to be in-use when we return.
 	// It should have been freed earlier, so restore its in-use flag.
 	resultreg.Reuse(build);
+	choices.DeleteAndClear();
+	choices.ShrinkToFit();
 	return resultreg;
 }
 
@@ -6303,7 +6305,8 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 		{
 			auto parentfield = static_cast<FxStructMember *>(classx)->membervar;
 			// PFields are garbage collected so this will be automatically taken care of later.
-			auto newfield = new PField(membervar->SymbolName, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset, membervar->BitValue);
+			auto newfield = new PField(membervar->SymbolName, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset);
+			newfield->BitValue = membervar->BitValue;
 			static_cast<FxStructMember *>(classx)->membervar = newfield;
 			classx->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
 			auto x = classx->Resolve(ctx);
@@ -6313,7 +6316,8 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 		else if (classx->ExprType == EFX_GlobalVariable)
 		{
 			auto parentfield = static_cast<FxGlobalVariable *>(classx)->membervar;
-			auto newfield = new PField(membervar->SymbolName, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset, membervar->BitValue);
+			auto newfield = new PField(membervar->SymbolName, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset);
+			newfield->BitValue = membervar->BitValue;
 			static_cast<FxGlobalVariable *>(classx)->membervar = newfield;
 			classx->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
 			auto x = classx->Resolve(ctx);
@@ -6323,7 +6327,8 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 		else if (classx->ExprType == EFX_StackVariable)
 		{
 			auto parentfield = static_cast<FxStackVariable *>(classx)->membervar;
-			auto newfield = new PField(membervar->SymbolName, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset, membervar->BitValue);
+			auto newfield = new PField(membervar->SymbolName, membervar->Type, membervar->Flags | parentfield->Flags, membervar->Offset + parentfield->Offset);
+			newfield->BitValue = membervar->BitValue;
 			static_cast<FxStackVariable *>(classx)->ReplaceField(newfield);
 			classx->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
 			auto x = classx->Resolve(ctx);
@@ -7382,7 +7387,7 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
-	ArgList.Clear();
+	ArgList.DeleteAndClear();
 	ArgList.ShrinkToFit();
 
 	if (EmitTail)
@@ -7661,7 +7666,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 		ExpEmit reg;
 		if (CheckEmitCast(build, EmitTail, reg))
 		{
-			ArgList.Clear();
+			ArgList.DeleteAndClear();
 			ArgList.ShrinkToFit();
 			return reg;
 		}
@@ -7704,7 +7709,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	{
 		count += EmitParameter(build, ArgList[i], ScriptPosition);
 	}
-	ArgList.Clear();
+	ArgList.DeleteAndClear();
 	ArgList.ShrinkToFit();
 
 	// Get a constant register for this function
@@ -7905,7 +7910,7 @@ ExpEmit FxFlopFunctionCall::Emit(VMFunctionBuilder *build)
 	}
 
 	build->Emit(OP_FLOP, to.RegNum, from.RegNum, FxFlops[Index].Flop);
-	ArgList.Clear();
+	ArgList.DeleteAndClear();
 	ArgList.ShrinkToFit();
 	return to;
 }
@@ -8311,7 +8316,7 @@ ExpEmit FxSwitchStatement::Emit(VMFunctionBuilder *build)
 		build->BackpatchToHere(addr);
 	}
 	if (!defaultset) build->BackpatchToHere(DefaultAddress);
-	Content.Clear();
+	Content.DeleteAndClear();
 	Content.ShrinkToFit();
 	return ExpEmit();
 }

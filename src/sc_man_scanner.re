@@ -111,6 +111,10 @@ std2:
 		'sbyte'						{ RET(TK_SByte); }
 		'short'						{ RET(TK_Short); }
 		'ushort'					{ RET(TK_UShort); }
+		'int8'						{ RET(TK_Int8); }
+		'uint8'						{ RET(TK_UInt8); }
+		'int16'						{ RET(TK_Int16); }
+		'uint16'					{ RET(TK_UInt16); }
 		'int'						{ RET(TK_Int); }
 		'uint'						{ RET(TK_UInt); }
 		'long'						{ RET(TK_Long); }

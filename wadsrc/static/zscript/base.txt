@@ -48,3 +48,7 @@ class SpotState : Object native
 	native static SpotState GetSpotState();
 	native SpecialSpot GetNextInList(class<Actor> type, int skipcounter);
 }
+
+struct Sector native
+{
+}

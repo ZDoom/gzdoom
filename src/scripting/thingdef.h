@@ -147,6 +147,7 @@ inline void ResetBaggage (Baggage *bag, PClassActor *stateclass)
 //==========================================================================
 
 AFuncDesc *FindFunction(PStruct *cls, const char * string);
+FieldDesc *FindField(PStruct *cls, const char * string);
 
 
 FxExpression *ParseExpression(FScanner &sc, PClassActor *cls, bool mustresolve = false);

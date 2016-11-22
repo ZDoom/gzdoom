@@ -77,7 +77,7 @@ class PSprite : Object native
 {
 }
 
-struct Player native
+struct PlayerInfo native	// this is what internally is player_t
 {
 	native void SetPsprite(int id, State stat, bool pending = false);
 	native void SetSafeFlash(Weapon weap, State flashstate, int index);

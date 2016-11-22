@@ -1013,6 +1013,15 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 
 typedef int(*actionf_p)(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret);/*(VM_ARGS)*/
 
+struct FieldDesc
+{
+	const char *ClassName;
+	const char *FieldName;
+	unsigned FieldOffset;
+	unsigned FieldSize;
+	int BitValue;
+};
+
 struct AFuncDesc
 {
 	const char *ClassName;
@@ -1023,12 +1032,17 @@ struct AFuncDesc
 
 #if defined(_MSC_VER)
 #pragma section(".areg$u",read)
+#pragma section(".freg$u",read)
 
 #define MSVC_ASEG __declspec(allocate(".areg$u"))
+#define MSVC_FSEG __declspec(allocate(".freg$u"))
 #define GCC_ASEG
+#define GCC_FSEG
 #else
 #define MSVC_ASEG
+#define MSVC_FSEG
 #define GCC_ASEG __attribute__((section(SECTION_AREG))) __attribute__((used))
+#define GCC_FSEG __attribute__((section(SECTION_FREG))) __attribute__((used))
 #endif
 
 // Macros to handle action functions. These are here so that I don't have to
@@ -1042,6 +1056,32 @@ struct AFuncDesc
 	extern AFuncDesc const *const cls##_##name##_HookPtr; \
 	MSVC_ASEG AFuncDesc const *const cls##_##name##_HookPtr GCC_ASEG = &cls##_##name##_Hook; \
 	static int AF_##cls##_##name(VM_ARGS)
+
+// cls is the scripted class name, icls the internal one (e.g. player_t vs. Player)
+#define DEFINE_FIELD_X(cls, icls, name) \
+	static const FieldDesc VMField_##icls##_##name = { "A" #cls, #name, (unsigned)myoffsetof(icls, name), (unsigned)sizeof(icls::name), 0 }; \
+	extern FieldDesc const *const VMField_##icls##_##name##_HookPtr; \
+	MSVC_FSEG FieldDesc const *const VMField_##icls##_##name##_HookPtr GCC_FSEG = &VMField_##cls##_##name;
+
+#define DEFINE_FIELD_X_BIT(cls, icls, name, bitval) \
+	static const FieldDesc VMField_##icls##_##name = { "A" #cls, #name, (unsigned)myoffsetof(icls, name), (unsigned)sizeof(icls::name), bitval }; \
+	extern FieldDesc const *const VMField_##icls##_##name##_HookPtr; \
+	MSVC_FSEG FieldDesc const *const VMField_##icls##_##name##_HookPtr GCC_FSEG = &VMField_##cls##_##name;
+
+#define DEFINE_FIELD(cls, name) \
+	static const FieldDesc VMField_##cls##_##name = { #cls, #name, (unsigned)myoffsetof(cls, name), (unsigned)sizeof(cls::name), 0 }; \
+	extern FieldDesc const *const VMField_##cls##_##name##_HookPtr; \
+	MSVC_FSEG FieldDesc const *const VMField_##cls##_##name##_HookPtr GCC_FSEG = &VMField_##cls##_##name;
+
+#define DEFINE_FIELD_NAMED(cls, name, scriptname) \
+		static const FieldDesc VMField_##cls##_##scriptname = { #cls, #scriptname, (unsigned)myoffsetof(cls, name), (unsigned)sizeof(cls::name), 0 }; \
+	extern FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr; \
+	MSVC_FSEG FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr GCC_FSEG = &VMField_##cls##_##scriptname;
+
+#define DEFINE_FIELD_BIT(cls, name, scriptname, bitval) \
+		static const FieldDesc VMField_##cls##_##scriptname = { #cls, #scriptname, (unsigned)myoffsetof(cls, name), (unsigned)sizeof(cls::name), bitval }; \
+	extern FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr; \
+	MSVC_FSEG FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr GCC_FSEG = &VMField_##cls##_##scriptname;
 
 class AActor;
 void CallAction(VMFrameStack *stack, VMFunction *vmfunc, AActor *self);

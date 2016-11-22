@@ -613,8 +613,8 @@ void PType::StaticInit()
 	TypeVector3->AddField(NAME_X, TypeFloat64);
 	TypeVector3->AddField(NAME_Y, TypeFloat64);
 	TypeVector3->AddField(NAME_Z, TypeFloat64);
-	// allow accessing xy as a vector2. This is marked native because it's not supposed to be serialized.
-	TypeVector3->Symbols.AddSymbol(new PField(NAME_XY, TypeVector2, VARF_Native, 0));
+	// allow accessing xy as a vector2. This is not supposed to be serialized so it's marked transient
+	TypeVector3->Symbols.AddSymbol(new PField(NAME_XY, TypeVector2, VARF_Transient, 0));
 	TypeTable.AddType(TypeVector3);
 	TypeVector3->loadOp = OP_LV3;
 	TypeVector3->storeOp = OP_SV3;
@@ -2240,7 +2240,7 @@ void PStruct::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset
 {
 	for (const PField *field : Fields)
 	{
-		if (!(field->Flags & VARF_Native))
+		if (!(field->Flags & VARF_Transient))
 		{
 			field->Type->SetDefaultValue(base, unsigned(offset + field->Offset), special);
 		}
@@ -2257,7 +2257,7 @@ void PStruct::SetPointer(void *base, unsigned offset, TArray<size_t> *special) c
 {
 	for (const PField *field : Fields)
 	{
-		if (!(field->Flags & VARF_Native))
+		if (!(field->Flags & VARF_Transient))
 		{
 			field->Type->SetPointer(base, unsigned(offset + field->Offset), special);
 		}
@@ -2307,8 +2307,8 @@ void PStruct::WriteFields(FSerializer &ar, const void *addr, const TArray<PField
 	for (unsigned i = 0; i < fields.Size(); ++i)
 	{
 		const PField *field = fields[i];
-		// Skip fields with native serialization
-		if (!(field->Flags & VARF_Native))
+		// Skip fields without or with native serialization
+		if (!(field->Flags & VARF_Transient))
 		{
 			field->Type->WriteValue(ar, field->SymbolName.GetChars(), (const BYTE *)addr + field->Offset);
 		}
@@ -2394,7 +2394,7 @@ PField *PStruct::AddField(FName name, PType *type, DWORD flags)
 
 PField *PStruct::AddNativeField(FName name, PType *type, size_t address, DWORD flags, int bitvalue)
 {
-	PField *field = new PField(name, type, flags|VARF_Native, address, bitvalue);
+	PField *field = new PField(name, type, flags|VARF_Native|VARF_Transient, address, bitvalue);
 
 	if (Symbols.AddSymbol(field) == nullptr)
 	{ // name is already in use
@@ -2495,8 +2495,7 @@ PField::PField()
 PField::PField(FName name, PType *type, DWORD flags, size_t offset, int bitvalue)
 	: PSymbol(name), Offset(offset), Type(type), Flags(flags)
 {
-	BitValue = bitvalue;
-	if (bitvalue != -1)
+	if (bitvalue != 0)
 	{
 		BitValue = 0;
 		unsigned val = bitvalue;
@@ -2519,6 +2518,7 @@ PField::PField(FName name, PType *type, DWORD flags, size_t offset, int bitvalue
 			I_FatalError("Trying to create an invalid bit field element: %s", name.GetChars());
 		}
 	}
+	else BitValue = -1;
 }
 
 /* PPrototype *************************************************************/
@@ -2692,10 +2692,10 @@ static void RecurseWriteFields(const PClass *type, FSerializer &ar, const void *
 	if (type != NULL)
 	{
 		RecurseWriteFields(type->ParentClass, ar, addr);
-		// Don't write this part if it has no non-native variables
+		// Don't write this part if it has no non-transient variables
 		for (unsigned i = 0; i < type->Fields.Size(); ++i)
 		{
-			if (!(type->Fields[i]->Flags & VARF_Native))
+			if (!(type->Fields[i]->Flags & VARF_Transient))
 			{
 				// Tag this section with the class it came from in case
 				// a more-derived class has variables that shadow a less-

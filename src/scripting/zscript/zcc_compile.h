@@ -91,7 +91,7 @@ private:
 	bool CompileConstant(ZCC_ConstantDef *def, PSymbolTable *Symbols);
 
 	void CompileAllFields();
-	bool CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, PSymbolTable *TreeNodes, bool forstruct);
+	bool CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, PSymbolTable *TreeNodes, bool forstruct, bool hasnativechildren = false);
 	FString FlagsToString(uint32_t flags);
 	PType *DetermineType(PType *outertype, ZCC_TreeNode *field, FName name, ZCC_Type *ztype, bool allowarraytypes, bool formember);
 	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PSymbolTable *sym);

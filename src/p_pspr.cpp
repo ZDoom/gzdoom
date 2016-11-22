@@ -200,7 +200,7 @@ DPSprite *player_t::FindPSprite(int layer)
 	return pspr;
 }
 
-DEFINE_ACTION_FUNCTION(_Player, FindPSprite)	// the underscore is needed to get past the name mangler which removes the first clas name character to match the class representation (needs to be fixed in a later commit)
+DEFINE_ACTION_FUNCTION(_PlayerInfo, FindPSprite)	// the underscore is needed to get past the name mangler which removes the first clas name character to match the class representation (needs to be fixed in a later commit)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	PARAM_INT(id);
@@ -220,7 +220,7 @@ void P_SetPsprite(player_t *player, PSPLayers id, FState *state, bool pending)
 	player->GetPSprite(id)->SetState(state, pending);
 }
 
-DEFINE_ACTION_FUNCTION(_Player, SetPSprite)	// the underscore is needed to get past the name mangler which removes the first clas name character to match the class representation (needs to be fixed in a later commit)
+DEFINE_ACTION_FUNCTION(_PlayerInfo, SetPSprite)	// the underscore is needed to get past the name mangler which removes the first clas name character to match the class representation (needs to be fixed in a later commit)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	PARAM_INT(id);
@@ -291,7 +291,7 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 	return pspr;
 }
 
-DEFINE_ACTION_FUNCTION(_Player, GetPSprite)	// the underscore is needed to get past the name mangler which removes the first clas name character to match the class representation (needs to be fixed in a later commit)
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetPSprite)	// the underscore is needed to get past the name mangler which removes the first clas name character to match the class representation (needs to be fixed in a later commit)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	PARAM_INT(id);
@@ -1653,7 +1653,7 @@ void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int i
 	P_SetPsprite(player, PSP_FLASH, flashstate + index, true);
 }
 
-DEFINE_ACTION_FUNCTION(_Player, SetSafeFlash)
+DEFINE_ACTION_FUNCTION(_PlayerInfo, SetSafeFlash)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	PARAM_OBJECT(weapon, AWeapon);

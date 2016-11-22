@@ -55,6 +55,8 @@ EXTERN_CVAR (Bool, ticker)
 EXTERN_CVAR (Bool, fullscreen)
 EXTERN_CVAR (Float, vid_winscale)
 
+CVAR (Bool, vid_sdl, 0, 0);
+
 IVideo *Video;
 
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
@@ -119,7 +121,7 @@ void I_InitGraphics ()
 	ticker.SetGenericRepDefault (val, CVAR_Bool);
 	
 	//currentrenderer = vid_renderer;
-	if (currentrenderer==1) Video = new SDLGLVideo(0);
+	if (currentrenderer==1 || vid_sdl==0) Video = new SDLGLVideo(0);
 	else Video = new SDLVideo (0);
 	
 	if (Video == NULL)

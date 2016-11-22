@@ -1475,7 +1475,7 @@ static int PatchFrame (int frameNum)
 		info->Misc1 = misc1;
 		info->Frame = frame & 0x3f;
 		if (frame & 0x8000) info->StateFlags |= STF_FULLBRIGHT;
-		else info->StateFlags &= STF_FULLBRIGHT;
+		else info->StateFlags &= ~STF_FULLBRIGHT;
 	}
 
 	return result;

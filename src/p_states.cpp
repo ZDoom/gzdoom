@@ -938,13 +938,13 @@ int FStateDefinitions::AddStates(FState *state, const char *framechars, const FS
 
 		state->Frame = frame;
 		if (noframe) state->StateFlags |= STF_SAMEFRAME;
-		else state->StateFlags &= STF_SAMEFRAME;
+		else state->StateFlags &= ~STF_SAMEFRAME;
 		StateArray.Push(*state);
 		SourceLines.Push(sc);
 		++count;
 
 		// NODELAY flag is not carried past the first state
-		state->StateFlags &= STF_NODELAY;
+		state->StateFlags &= ~STF_NODELAY;
 	}
 	laststate = &StateArray[StateArray.Size() - 1];
 	laststatebeforelabel = laststate;

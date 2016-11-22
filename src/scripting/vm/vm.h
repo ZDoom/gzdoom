@@ -1061,7 +1061,12 @@ struct AFuncDesc
 #define DEFINE_FIELD_X(cls, icls, name) \
 	static const FieldDesc VMField_##icls##_##name = { "A" #cls, #name, (unsigned)myoffsetof(icls, name), (unsigned)sizeof(icls::name), 0 }; \
 	extern FieldDesc const *const VMField_##icls##_##name##_HookPtr; \
-	MSVC_FSEG FieldDesc const *const VMField_##icls##_##name##_HookPtr GCC_FSEG = &VMField_##cls##_##name;
+	MSVC_FSEG FieldDesc const *const VMField_##icls##_##name##_HookPtr GCC_FSEG = &VMField_##icls##_##name;
+
+#define DEFINE_FIELD_NAMED_X(cls, icls, name, scriptname) \
+	static const FieldDesc VMField_##icls##_##scriptname = { "A" #cls, #scriptname, (unsigned)myoffsetof(icls, name), (unsigned)sizeof(icls::name), 0 }; \
+	extern FieldDesc const *const VMField_##icls##_##scriptname##_HookPtr; \
+	MSVC_FSEG FieldDesc const *const VMField_##icls##_##scriptname##_HookPtr GCC_FSEG = &VMField_##icls##_##scriptname;
 
 #define DEFINE_FIELD_X_BIT(cls, icls, name, bitval) \
 	static const FieldDesc VMField_##icls##_##name = { "A" #cls, #name, (unsigned)myoffsetof(icls, name), (unsigned)sizeof(icls::name), bitval }; \

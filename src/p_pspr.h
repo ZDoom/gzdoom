@@ -59,7 +59,6 @@ enum PSPFlags
 class DPSprite : public DObject
 {
 	DECLARE_CLASS (DPSprite, DObject)
-	HAS_FIELDS
 	HAS_OBJECT_POINTERS
 public:
 	DPSprite(player_t *owner, AActor *caller, int id);
@@ -89,6 +88,7 @@ private:
 	void Tick();
 	void Destroy();
 
+public:	// must be public to be able to generate the field export tables. Grrr...
 	TObjPtr<AActor> Caller;
 	TObjPtr<DPSprite> Next;
 	player_t *Owner;

@@ -131,7 +131,7 @@ CVAR (Int, cl_bloodtype, 0, CVAR_ARCHIVE);
 
 // CODE --------------------------------------------------------------------
 
-IMPLEMENT_CLASS(AActor, false, true, true, true)
+IMPLEMENT_CLASS(AActor, false, true, false, true)
 
 IMPLEMENT_POINTERS_START(AActor)
 	IMPLEMENT_POINTER(target)
@@ -309,24 +309,6 @@ DEFINE_FIELD(AActor, MissileState)
 DEFINE_FIELD(AActor, ConversationRoot)
 DEFINE_FIELD(AActor, Conversation)
 DEFINE_FIELD(AActor, DecalGenerator)
-
-
-void AActor::InitNativeFields()
-{
-	auto meta = RUNTIME_CLASS(AActor);
-	// needs to be done manually until it can be given a proper type.
-	meta->AddNativeField("DecalGenerator", NewPointer(TypeVoid), myoffsetof(AActor, DecalGenerator));
-
-	// synthesize a symbol for each flag from the flag name tables to avoid redundant declaration of them.
-	for (size_t i = 0; ActorFlagDefs[i].flagbit != 0xffffffff; i++)
-	{
-		meta->AddNativeField(FStringf("b%s", ActorFlagDefs[i].name), (ActorFlagDefs[i].fieldsize == 4? TypeSInt32 : TypeSInt16), ActorFlagDefs[i].structoffset, ActorFlagDefs[i].varflags, ActorFlagDefs[i].flagbit);
-	}
-	for (size_t i = 0; InternalActorFlagDefs[i].flagbit != 0xffffffff; i++)
-	{
-		meta->AddNativeField(FStringf("b%s", InternalActorFlagDefs[i].name), (InternalActorFlagDefs[i].fieldsize == 4 ? TypeSInt32 : TypeSInt16), InternalActorFlagDefs[i].structoffset, InternalActorFlagDefs[i].varflags, InternalActorFlagDefs[i].flagbit);
-	}
-}
 
 //==========================================================================
 //
@@ -7183,18 +7165,13 @@ DEFINE_ACTION_FUNCTION(AActor, Vec3Offset)
 IMPLEMENT_CLASS(DDropItem, false, true, true, false)
 
 IMPLEMENT_POINTERS_START(DDropItem)
-	IMPLEMENT_POINTER(Next)
+IMPLEMENT_POINTER(Next)
 IMPLEMENT_POINTERS_END
 
-void DDropItem::InitNativeFields()
-{
-	auto meta = RUNTIME_CLASS(DDropItem);
-	PType *TypeDropItem = NewPointer(RUNTIME_CLASS(DDropItem));
-	meta->AddNativeField("Next", TypeDropItem, myoffsetof(DDropItem, Next), VARF_ReadOnly);
-	meta->AddNativeField("Name", TypeName, myoffsetof(DDropItem, Name), VARF_ReadOnly);
-	meta->AddNativeField("Probability", TypeSInt32, myoffsetof(DDropItem, Probability), VARF_ReadOnly);
-	meta->AddNativeField("Amount", TypeSInt32, myoffsetof(DDropItem, Amount));
-}
+DEFINE_FIELD(DDropItem, Next)
+DEFINE_FIELD(DDropItem, Name)
+DEFINE_FIELD(DDropItem, Probability)
+DEFINE_FIELD(DDropItem, Amount)
 
 void PrintMiscActorInfo(AActor *query)
 {

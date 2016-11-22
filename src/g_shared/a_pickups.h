@@ -289,7 +289,6 @@ public:
 class AWeapon : public AStateProvider
 {
 	DECLARE_CLASS_WITH_META(AWeapon, AStateProvider, PClassWeapon)
-	HAS_FIELDS
 	HAS_OBJECT_POINTERS
 public:
 	DWORD WeaponFlags;
@@ -500,7 +499,6 @@ public:
 class ABasicArmorBonus : public AArmor
 {
 	DECLARE_CLASS (ABasicArmorBonus, AArmor)
-	HAS_FIELDS
 public:
 	
 	virtual void Serialize(FSerializer &arc);

@@ -31,25 +31,45 @@ IMPLEMENT_POINTERS_START(AWeapon)
 	IMPLEMENT_POINTER(SisterWeapon)
 IMPLEMENT_POINTERS_END
 
-void AWeapon::InitNativeFields()
-{
-	auto meta = RUNTIME_CLASS(AWeapon);
+DEFINE_FIELD(AWeapon, WeaponFlags)
+DEFINE_FIELD(AWeapon, AmmoType1)
+DEFINE_FIELD(AWeapon, AmmoType2)	
+DEFINE_FIELD(AWeapon, AmmoGive1)
+DEFINE_FIELD(AWeapon, AmmoGive2)	
+DEFINE_FIELD(AWeapon, MinAmmo1)
+DEFINE_FIELD(AWeapon, MinAmmo2)		
+DEFINE_FIELD(AWeapon, AmmoUse1)
+DEFINE_FIELD(AWeapon, AmmoUse2)		
+DEFINE_FIELD(AWeapon, Kickback)
+DEFINE_FIELD(AWeapon, YAdjust)				
+DEFINE_FIELD(AWeapon, UpSound)
+DEFINE_FIELD(AWeapon, ReadySound)	
+DEFINE_FIELD(AWeapon, SisterWeaponType)		
+DEFINE_FIELD(AWeapon, ProjectileType)	
+DEFINE_FIELD(AWeapon, AltProjectileType)	
+DEFINE_FIELD(AWeapon, SelectionOrder)				
+DEFINE_FIELD(AWeapon, MinSelAmmo1)
+DEFINE_FIELD(AWeapon, MinSelAmmo2)	
+DEFINE_FIELD(AWeapon, MoveCombatDist)			
+DEFINE_FIELD(AWeapon, ReloadCounter)				
+DEFINE_FIELD(AWeapon, BobStyle)					
+DEFINE_FIELD(AWeapon, BobSpeed)					
+DEFINE_FIELD(AWeapon, BobRangeX)
+DEFINE_FIELD(AWeapon, BobRangeY)		
+DEFINE_FIELD(AWeapon, Ammo1)
+DEFINE_FIELD(AWeapon, Ammo2)
+DEFINE_FIELD(AWeapon, SisterWeapon)
+DEFINE_FIELD(AWeapon, FOVScale)
+DEFINE_FIELD(AWeapon, Crosshair)					
+DEFINE_FIELD(AWeapon, GivenAsMorphWeapon)
+DEFINE_FIELD(AWeapon, bAltFire)
+DEFINE_FIELD_BIT(AWeapon, WeaponFlags, bDehAmmo, WIF_DEHAMMO)
 
-	meta->AddNativeField("bAltFire", TypeBool, myoffsetof(AWeapon, bAltFire));
-
-
-	// synthesize a symbol for each flag from the flag name tables to avoid redundant declaration of them.
-	for (size_t i = 0; WeaponFlagDefs[i].flagbit != 0xffffffff; i++)
-	{
-		if (WeaponFlagDefs[i].structoffset > 0)
-		{
-			meta->AddNativeField(FStringf("b%s", WeaponFlagDefs[i].name), (WeaponFlagDefs[i].fieldsize == 4 ? TypeSInt32 : TypeSInt16), WeaponFlagDefs[i].structoffset, WeaponFlagDefs[i].varflags, WeaponFlagDefs[i].flagbit);
-		}
-	}
-	// This flag is not accessible through actor definitions.
-	meta->AddNativeField("bDehAmmo", TypeSInt32, myoffsetof(AWeapon, WeaponFlags), VARF_ReadOnly, WIF_DEHAMMO);
-
-}
+//===========================================================================
+//
+//
+//
+//===========================================================================
 
 FString WeaponSection;
 TArray<FString> KeyConfWeapons;
@@ -62,11 +82,23 @@ static int ntoh_cmp(const void *a, const void *b);
 
 IMPLEMENT_CLASS(PClassWeapon, false, false, false, false)
 
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
 PClassWeapon::PClassWeapon()
 {
 	SlotNumber = -1;
 	SlotPriority = INT_MAX;
 }
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
 
 void PClassWeapon::DeriveData(PClass *newclass)
 {
@@ -79,6 +111,12 @@ void PClassWeapon::DeriveData(PClass *newclass)
 }
 
 
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
 void PClassWeapon::ReplaceClassRef(PClass *oldclass, PClass *newclass)
 {
 	Super::ReplaceClassRef(oldclass, newclass);
@@ -90,6 +128,12 @@ void PClassWeapon::ReplaceClassRef(PClass *oldclass, PClass *newclass)
 		if (def->SisterWeaponType == oldclass) def->SisterWeaponType = static_cast<PClassWeapon *>(newclass);
 	}
 }
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
 
 void PClassWeapon::Finalize(FStateDefinitions &statedef)
 {

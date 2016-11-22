@@ -64,11 +64,14 @@ ClassReg DObject::RegistrationInfo =
 	&DVMObject<DObject>::RegistrationInfo,	// VMExport
 	nullptr,								// Pointers
 	&DObject::InPlaceConstructor,			// ConstructNative
-	&DObject::InitNativeFields,				// InitNatives
+	nullptr,
 	sizeof(DObject),						// SizeOf
 	CLASSREG_PClass,						// MetaClassNum
 };
 _DECLARE_TI(DObject)
+
+// This bit is needed in the playsim - but give it a less crappy name.
+DEFINE_FIELD_BIT(DObject,ObjectFlags, bDestroyed, OF_EuthanizeMe)
 
 //==========================================================================
 //
@@ -339,18 +342,6 @@ DObject::~DObject ()
 			type->DestroySpecials(this);
 		}
 	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void DObject::InitNativeFields()
-{
-	auto meta = RUNTIME_CLASS(DObject);
-	meta->AddNativeField("bDestroyed", TypeSInt32, myoffsetof(DObject, ObjectFlags), VARF_ReadOnly, OF_EuthanizeMe);
 }
 
 //==========================================================================

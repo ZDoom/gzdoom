@@ -63,7 +63,7 @@ static TArray<FieldDesc> FieldTable;
 #define DEFINE_DUMMY_FLAG(name, deprec) { DEPF_UNUSED, #name, -1, 0, deprec? VARF_Deprecated:0 }
 
 // internal flags. These do not get exposed to actor definitions but scripts need to be able to access them as variables.
-FFlagDef InternalActorFlagDefs[]=
+static FFlagDef InternalActorFlagDefs[]=
 {
 	DEFINE_FLAG(MF, INCHASE, AActor, flags),
 	DEFINE_FLAG(MF, UNMORPHED, AActor, flags),
@@ -90,11 +90,10 @@ FFlagDef InternalActorFlagDefs[]=
 	DEFINE_FLAG(MF6, INTRYMOVE, AActor, flags6),
 	DEFINE_FLAG(MF7, HANDLENODELAY, AActor, flags7),
 	DEFINE_FLAG(MF7, FLYCHEAT, AActor, flags7),
-	{ 0xffffffff }
 };
 
 
-FFlagDef ActorFlagDefs[]=
+static FFlagDef ActorFlagDefs[]=
 {
 	DEFINE_FLAG(MF, PICKUP, APlayerPawn, flags),
 	DEFINE_FLAG(MF, SPECIAL, APlayerPawn, flags),
@@ -328,7 +327,6 @@ FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG2(BOUNCE_MBF, MBFBOUNCER, AActor, BounceFlags),
 	DEFINE_FLAG2(BOUNCE_AutoOffFloorOnly, BOUNCEAUTOOFFFLOORONLY, AActor, BounceFlags),
 	DEFINE_FLAG2(BOUNCE_UseBounceState, USEBOUNCESTATE, AActor, BounceFlags),
-	{ 0xffffffff }
 };
 
 // These won't be accessible through bitfield variables
@@ -387,10 +385,9 @@ static FFlagDef InventoryFlagDefs[] =
 
 	DEFINE_DEPRECATED_FLAG(PICKUPFLASH),
 	DEFINE_DEPRECATED_FLAG(INTERHUBSTRIP),
-	{ 0xffffffff }
 };
 
-FFlagDef WeaponFlagDefs[] =
+static FFlagDef WeaponFlagDefs[] =
 {
 	// Weapon flags
 	DEFINE_FLAG(WIF, NOAUTOFIRE, AWeapon, WeaponFlags),
@@ -417,7 +414,6 @@ FFlagDef WeaponFlagDefs[] =
 
 	DEFINE_DUMMY_FLAG(NOLMS, false),
 	DEFINE_DUMMY_FLAG(ALLOW_WITH_RESPAWN_INVUL, false),
-	{ 0xffffffff }
 };
 
 
@@ -428,24 +424,23 @@ static FFlagDef PlayerPawnFlagDefs[] =
 	DEFINE_FLAG(PPF, NOTHRUSTWHENINVUL, APlayerPawn, PlayerFlags),
 	DEFINE_FLAG(PPF, CANSUPERMORPH, APlayerPawn, PlayerFlags),
 	DEFINE_FLAG(PPF, CROUCHABLEMORPH, APlayerPawn, PlayerFlags),
-	{ 0xffffffff }
 };
 
 static FFlagDef PowerSpeedFlagDefs[] =
 {
 	// PowerSpeed flags
 	DEFINE_FLAG(PSF, NOTRAIL, APowerSpeed, SpeedFlags),
-	{ 0xffffffff }
 };
 
-static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int NumDefs; } FlagLists[] =
+static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int NumDefs; int Use; } FlagLists[] =
 {
-	{ &RUNTIME_CLASS_CASTLESS(AActor), 		ActorFlagDefs,		countof(ActorFlagDefs)-1 },	// -1 to account for the terminator
-	{ &RUNTIME_CLASS_CASTLESS(AActor), 		MoreFlagDefs,		countof(MoreFlagDefs) },
-	{ &RUNTIME_CLASS_CASTLESS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs)-1 },
-	{ &RUNTIME_CLASS_CASTLESS(AWeapon), 	WeaponFlagDefs,		countof(WeaponFlagDefs)-1 },
-	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs)-1 },
-	{ &RUNTIME_CLASS_CASTLESS(APowerSpeed),	PowerSpeedFlagDefs,	countof(PowerSpeedFlagDefs)-1 },
+	{ &RUNTIME_CLASS_CASTLESS(AActor), 		ActorFlagDefs,		countof(ActorFlagDefs), 3 },	// -1 to account for the terminator
+	{ &RUNTIME_CLASS_CASTLESS(AActor), 		MoreFlagDefs,		countof(MoreFlagDefs), 1 },
+	{ &RUNTIME_CLASS_CASTLESS(AActor), 	InternalActorFlagDefs,	countof(InternalActorFlagDefs), 2 },
+	{ &RUNTIME_CLASS_CASTLESS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs), 3 },
+	{ &RUNTIME_CLASS_CASTLESS(AWeapon), 	WeaponFlagDefs,		countof(WeaponFlagDefs), 3 },
+	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs), 3 },
+	{ &RUNTIME_CLASS_CASTLESS(APowerSpeed),	PowerSpeedFlagDefs,	countof(PowerSpeedFlagDefs), 3 },
 };
 #define NUM_FLAG_LISTS (countof(FlagLists))
 
@@ -493,7 +488,7 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bo
 		int max = strict ? 2 : NUM_FLAG_LISTS;
 		for (int i = 0; i < max; ++i)
 		{
-			if (type->IsDescendantOf (*FlagLists[i].Type))
+			if ((FlagLists[i].Use & 1) && type->IsDescendantOf (*FlagLists[i].Type))
 			{
 				def = FindFlag (FlagLists[i].Defs, FlagLists[i].NumDefs, part1);
 				if (def != NULL)
@@ -709,8 +704,34 @@ void InitThingdef()
 	sstruct->AddNativeField("soundtarget", TypeActor, myoffsetof(sector_t, SoundTarget));
 
 	G_InitLevelLocalsForScript();
-	P_InitPlayerForScript();
 	P_InitStateForScript();
+
+	// set up a variable for the global players array.
+	PStruct *pstruct = NewNativeStruct("PlayerInfo", nullptr);
+	pstruct->Size = sizeof(player_t);
+	pstruct->Align = alignof(player_t);
+	PArray *parray = NewArray(pstruct, MAXPLAYERS);
+	PField *playerf = new PField("players", pstruct, VARF_Native | VARF_Static, (intptr_t)&players);
+	GlobalSymbols.AddSymbol(playerf);
+
+
+	// this needs to be done manually until it can be given a proper type.
+	RUNTIME_CLASS(AActor)->AddNativeField("DecalGenerator", NewPointer(TypeVoid), myoffsetof(AActor, DecalGenerator));
+
+	// synthesize a symbol for each flag from the flag name tables to avoid redundant declaration of them.
+	for (auto &fl : FlagLists)
+	{
+		if (fl.Use & 2)
+		{
+			for(int i=0;i<fl.NumDefs;i++)
+			{
+				if (fl.Defs[i].structoffset > 0) // skip the deprecated entries in this list
+				{
+					const_cast<PClass*>(*fl.Type)->AddNativeField(FStringf("b%s", fl.Defs[i].name), (fl.Defs[i].fieldsize == 4 ? TypeSInt32 : TypeSInt16), fl.Defs[i].structoffset, fl.Defs[i].varflags, fl.Defs[i].flagbit);
+				}
+			}
+		}
+	}
 
 	FAutoSegIterator probe(CRegHead, CRegTail);
 

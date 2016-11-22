@@ -100,7 +100,6 @@ FString GetPrintableDisplayName(PClassPlayerPawn *cls);
 class APlayerPawn : public AActor
 {
 	DECLARE_CLASS_WITH_META(APlayerPawn, AActor, PClassPlayerPawn)
-	HAS_FIELDS
 	HAS_OBJECT_POINTERS
 public:
 	

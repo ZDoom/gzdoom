@@ -161,12 +161,6 @@ bool ValidatePlayerClass(PClassActor *ti, const char *name)
 	return true;
 }
 
-void APlayerPawn::InitNativeFields()
-{
-	auto meta = RUNTIME_CLASS(APlayerPawn);
-	meta->AddNativeField("JumpZ", TypeFloat64, myoffsetof(APlayerPawn, JumpZ));
-}
-
 void SetupPlayerClasses ()
 {
 	FPlayerClass newclass;
@@ -628,7 +622,7 @@ void player_t::SendPitchLimits() const
 //
 //===========================================================================
 
-IMPLEMENT_CLASS(APlayerPawn, false, true, true, true)
+IMPLEMENT_CLASS(APlayerPawn, false, true, false, true)
 
 IMPLEMENT_POINTERS_START(APlayerPawn)
 	IMPLEMENT_POINTER(InvFirst)
@@ -3139,112 +3133,118 @@ bool P_IsPlayerTotallyFrozen(const player_t *player)
 
 //==========================================================================
 //
-// sets up the script-side version of players
-// Since this is a global variable and the script compiler does
-// not allow defining them, it will be fully set up here.
+// native members
 //
 //==========================================================================
 
-void P_InitPlayerForScript()
-{
-	PStruct *pstruct = NewNativeStruct("PlayerInfo", nullptr);
-	pstruct->Size = sizeof(player_t);
-	pstruct->Align = alignof(player_t);
-	PArray *parray = NewArray(pstruct, MAXPLAYERS);
-	pstruct->Size = 0;	// make sure it cannot be instantiated in the script.
-	PField *playerf = new PField("players", pstruct, VARF_Native | VARF_Static, (intptr_t)&players);
-	GlobalSymbols.AddSymbol(playerf);
+DEFINE_FIELD(APlayerPawn, crouchsprite)
+DEFINE_FIELD(APlayerPawn, MaxHealth)
+DEFINE_FIELD(APlayerPawn, MugShotMaxHealth)
+DEFINE_FIELD(APlayerPawn, RunHealth)
+DEFINE_FIELD(APlayerPawn, PlayerFlags)
+DEFINE_FIELD(APlayerPawn, InvFirst)
+DEFINE_FIELD(APlayerPawn, InvSel)
+DEFINE_FIELD(APlayerPawn, JumpZ)
+DEFINE_FIELD(APlayerPawn, GruntSpeed)
+DEFINE_FIELD(APlayerPawn, FallingScreamMinSpeed)
+DEFINE_FIELD(APlayerPawn, FallingScreamMaxSpeed)
+DEFINE_FIELD(APlayerPawn, ViewHeight)
+DEFINE_FIELD(APlayerPawn, ForwardMove1)
+DEFINE_FIELD(APlayerPawn, ForwardMove2)
+DEFINE_FIELD(APlayerPawn, SideMove1)
+DEFINE_FIELD(APlayerPawn, SideMove2)
+DEFINE_FIELD(APlayerPawn, ScoreIcon)
+DEFINE_FIELD(APlayerPawn, SpawnMask)
+DEFINE_FIELD(APlayerPawn, MorphWeapon)
+DEFINE_FIELD(APlayerPawn, AttackZOffset)
+DEFINE_FIELD(APlayerPawn, UseRange)
+DEFINE_FIELD(APlayerPawn, AirCapacity)
+DEFINE_FIELD(APlayerPawn, FlechetteType)
+DEFINE_FIELD(APlayerPawn, DamageFade)
+DEFINE_FIELD(APlayerPawn, ViewBob)
 
-	PType *TypeActor = NewPointer(RUNTIME_CLASS(AActor));
-	PType *TypePlayerPawn = NewPointer(RUNTIME_CLASS(APlayerPawn));
-	PType *TypeWeapon = NewPointer(RUNTIME_CLASS(AWeapon));
-	PType *TypeClassActor = NewClassPointer(RUNTIME_CLASS(AActor));
-	PType *TypeClassPlayerPawn = NewClassPointer(RUNTIME_CLASS(APlayerPawn));
-	PType *TypeClassWeapon = NewClassPointer(RUNTIME_CLASS(AWeapon));
-
-	//ticcmd_t	cmd;
-	//usercmd_t	original_cmd;
-	//userinfo_t	userinfo;				// [RH] who is this?
-	//FWeaponSlots weapons;
-	pstruct->AddNativeField("mo", TypePlayerPawn, myoffsetof(player_t, mo), VARF_ReadOnly);
-	pstruct->AddNativeField("playerstate", TypeUInt8, myoffsetof(player_t, playerstate));
-	pstruct->AddNativeField("original_oldbuttons", TypeUInt32, myoffsetof(player_t, original_oldbuttons));
-	pstruct->AddNativeField("cls", TypeClassPlayerPawn, myoffsetof(player_t, cls), VARF_ReadOnly);
-	pstruct->AddNativeField("DesiredFOV", TypeFloat32, myoffsetof(player_t, DesiredFOV));
-	pstruct->AddNativeField("FOV", TypeFloat32, myoffsetof(player_t, FOV), VARF_ReadOnly);
-	pstruct->AddNativeField("viewz", TypeFloat64, myoffsetof(player_t, viewz));
-	pstruct->AddNativeField("viewheight", TypeFloat64, myoffsetof(player_t, viewheight));
-	pstruct->AddNativeField("deltaviewheight", TypeFloat64, myoffsetof(player_t, deltaviewheight));
-	pstruct->AddNativeField("bob", TypeFloat64, myoffsetof(player_t, bob));
-	pstruct->AddNativeField("vel", TypeVector2, myoffsetof(player_t, Vel));
-	pstruct->AddNativeField("centering", TypeBool, myoffsetof(player_t, centering));
-	pstruct->AddNativeField("turnticks", TypeUInt8, myoffsetof(player_t, turnticks));
-	pstruct->AddNativeField("attackdown", TypeBool, myoffsetof(player_t, attackdown));
-	pstruct->AddNativeField("usedown", TypeBool, myoffsetof(player_t, usedown));
-	pstruct->AddNativeField("oldbuttons", TypeUInt32, myoffsetof(player_t, oldbuttons));
-	pstruct->AddNativeField("health", TypeSInt32, myoffsetof(player_t, health));
-	pstruct->AddNativeField("inventorytics", TypeSInt32, myoffsetof(player_t, inventorytics));
-	pstruct->AddNativeField("CurrentPlayerClass", TypeUInt8, myoffsetof(player_t, CurrentPlayerClass));
-	pstruct->AddNativeField("frags", NewArray(TypeSInt32, MAXPLAYERS), myoffsetof(player_t, frags));
-	pstruct->AddNativeField("fragcount", TypeSInt32, myoffsetof(player_t, fragcount));
-	pstruct->AddNativeField("lastkilltime", TypeSInt32, myoffsetof(player_t, lastkilltime));
-	pstruct->AddNativeField("multicount", TypeUInt8, myoffsetof(player_t, multicount));
-	pstruct->AddNativeField("spreecount", TypeUInt8, myoffsetof(player_t, spreecount));
-	pstruct->AddNativeField("WeaponState", TypeUInt16, myoffsetof(player_t, WeaponState));
-	pstruct->AddNativeField("ReadyWeapon", TypeWeapon, myoffsetof(player_t, ReadyWeapon));
-	pstruct->AddNativeField("PendingWeapon", TypeWeapon, myoffsetof(player_t, PendingWeapon));
-	pstruct->AddNativeField("psprites", NewPointer(RUNTIME_CLASS(DPSprite)), myoffsetof(player_t, psprites));
-	pstruct->AddNativeField("cheats", TypeSInt32, myoffsetof(player_t, cheats));
-	pstruct->AddNativeField("timefreezer", TypeSInt32, myoffsetof(player_t, timefreezer));
-	pstruct->AddNativeField("refire", TypeSInt16, myoffsetof(player_t, refire));
-	pstruct->AddNativeField("inconsistent", TypeSInt16, myoffsetof(player_t, inconsistant));
-	pstruct->AddNativeField("waiting", TypeSInt32, myoffsetof(player_t, waiting));
-	pstruct->AddNativeField("killcount", TypeSInt32, myoffsetof(player_t, killcount));
-	pstruct->AddNativeField("itemcount", TypeSInt32, myoffsetof(player_t, itemcount));
-	pstruct->AddNativeField("secretcount", TypeSInt32, myoffsetof(player_t, secretcount));
-	pstruct->AddNativeField("damagecount", TypeSInt32, myoffsetof(player_t, damagecount));
-	pstruct->AddNativeField("bonuscount", TypeSInt32, myoffsetof(player_t, bonuscount));
-	pstruct->AddNativeField("hazardcount", TypeSInt32, myoffsetof(player_t, hazardcount));
-	pstruct->AddNativeField("hazardinterval", TypeSInt32, myoffsetof(player_t, hazardinterval));
-	pstruct->AddNativeField("hazardtype", TypeName, myoffsetof(player_t, hazardtype));
-	pstruct->AddNativeField("poisoncount", TypeSInt32, myoffsetof(player_t, poisoncount));
-	pstruct->AddNativeField("poisontype", TypeName, myoffsetof(player_t, poisontype));
-	pstruct->AddNativeField("poisonpaintype", TypeName, myoffsetof(player_t, poisonpaintype));
-	pstruct->AddNativeField("poisoner", TypeActor, myoffsetof(player_t, poisoner));
-	pstruct->AddNativeField("attacker", TypeActor, myoffsetof(player_t, attacker));
-	pstruct->AddNativeField("extralight", TypeSInt32, myoffsetof(player_t, extralight));
-	pstruct->AddNativeField("fixedcolormap", TypeSInt16, myoffsetof(player_t, fixedcolormap));
-	pstruct->AddNativeField("fixedlightlevel", TypeSInt16, myoffsetof(player_t, fixedlightlevel));
-	pstruct->AddNativeField("morphtics", TypeSInt32, myoffsetof(player_t, morphTics));
-	pstruct->AddNativeField("MorphedPlayerClass", TypeClassPlayerPawn, myoffsetof(player_t, MorphedPlayerClass));
-	pstruct->AddNativeField("MorphStyle", TypeSInt32, myoffsetof(player_t, MorphStyle));
-	pstruct->AddNativeField("MorphExitFlash", TypeClassActor, myoffsetof(player_t, MorphExitFlash));
-	pstruct->AddNativeField("PremorphWeapon", TypeClassWeapon, myoffsetof(player_t, PremorphWeapon));
-	pstruct->AddNativeField("chickenPeck", TypeSInt32, myoffsetof(player_t, chickenPeck));
-	pstruct->AddNativeField("jumpTics", TypeSInt32, myoffsetof(player_t, jumpTics));
-	pstruct->AddNativeField("onground", TypeBool, myoffsetof(player_t, onground));
-	pstruct->AddNativeField("respawn_time", TypeSInt32, myoffsetof(player_t, respawn_time));
-	pstruct->AddNativeField("camera", TypeActor, myoffsetof(player_t, camera));
-	pstruct->AddNativeField("air_finished", TypeSInt32, myoffsetof(player_t, air_finished));
-	pstruct->AddNativeField("LastDamageType", TypeName, myoffsetof(player_t, LastDamageType));
-	pstruct->AddNativeField("MUSINFOactor", TypeActor, myoffsetof(player_t, MUSINFOactor));
-	pstruct->AddNativeField("MUSINFOtics", TypeSInt8, myoffsetof(player_t, MUSINFOtics));
-	pstruct->AddNativeField("settings_controller", TypeBool, myoffsetof(player_t, settings_controller));
-	pstruct->AddNativeField("crouching", TypeSInt8, myoffsetof(player_t, crouching));
-	pstruct->AddNativeField("crouchdir", TypeSInt8, myoffsetof(player_t, crouchdir));
-	pstruct->AddNativeField("bot", NewPointer(RUNTIME_CLASS(DBot)), myoffsetof(player_t, Bot));
-	pstruct->AddNativeField("BlendR", TypeFloat32, myoffsetof(player_t, BlendR));
-	pstruct->AddNativeField("BlendG", TypeFloat32, myoffsetof(player_t, BlendG));
-	pstruct->AddNativeField("BlendB", TypeFloat32, myoffsetof(player_t, BlendB));
-	pstruct->AddNativeField("BlendA", TypeFloat32, myoffsetof(player_t, BlendA));
-	pstruct->AddNativeField("LogText", TypeString, myoffsetof(player_t, LogText));
-	pstruct->AddNativeField("MinPitch", TypeFloat64, myoffsetof(player_t, MinPitch));
-	pstruct->AddNativeField("MaxPitch", TypeFloat64, myoffsetof(player_t, MaxPitch));
-	pstruct->AddNativeField("crouchfactor", TypeFloat64, myoffsetof(player_t, crouchfactor));
-	pstruct->AddNativeField("crouchoffset", TypeFloat64, myoffsetof(player_t, crouchoffset));
-	pstruct->AddNativeField("crouchviewdelta", TypeFloat64, myoffsetof(player_t, crouchviewdelta));
-	pstruct->AddNativeField("ConversationNPC", TypeActor, myoffsetof(player_t, ConversationNPC));
-	pstruct->AddNativeField("ConversationPC", TypeActor, myoffsetof(player_t, ConversationPC));
-	pstruct->AddNativeField("ConversationNPCAngle", TypeFloat64, myoffsetof(player_t, ConversationNPCAngle));
-	pstruct->AddNativeField("ConversationFaceTalker", TypeBool, myoffsetof(player_t, ConversationFaceTalker));
-}
+DEFINE_FIELD_X(PlayerInfo, player_t, mo)
+DEFINE_FIELD_X(PlayerInfo, player_t, playerstate)
+DEFINE_FIELD_X(PlayerInfo, player_t, original_oldbuttons)
+DEFINE_FIELD_X(PlayerInfo, player_t, cls)
+DEFINE_FIELD_X(PlayerInfo, player_t, DesiredFOV)
+DEFINE_FIELD_X(PlayerInfo, player_t, FOV)
+DEFINE_FIELD_X(PlayerInfo, player_t, viewz)
+DEFINE_FIELD_X(PlayerInfo, player_t, viewheight)
+DEFINE_FIELD_X(PlayerInfo, player_t, deltaviewheight)
+DEFINE_FIELD_X(PlayerInfo, player_t, bob)
+DEFINE_FIELD_X(PlayerInfo, player_t, Vel)
+DEFINE_FIELD_X(PlayerInfo, player_t, centering)
+DEFINE_FIELD_X(PlayerInfo, player_t, turnticks)
+DEFINE_FIELD_X(PlayerInfo, player_t, attackdown)
+DEFINE_FIELD_X(PlayerInfo, player_t, usedown)
+DEFINE_FIELD_X(PlayerInfo, player_t, oldbuttons)
+DEFINE_FIELD_X(PlayerInfo, player_t, health)
+DEFINE_FIELD_X(PlayerInfo, player_t, inventorytics)
+DEFINE_FIELD_X(PlayerInfo, player_t, CurrentPlayerClass)
+DEFINE_FIELD_X(PlayerInfo, player_t, frags)
+DEFINE_FIELD_X(PlayerInfo, player_t, fragcount)
+DEFINE_FIELD_X(PlayerInfo, player_t, lastkilltime)
+DEFINE_FIELD_X(PlayerInfo, player_t, multicount)
+DEFINE_FIELD_X(PlayerInfo, player_t, spreecount)
+DEFINE_FIELD_X(PlayerInfo, player_t, WeaponState)
+DEFINE_FIELD_X(PlayerInfo, player_t, ReadyWeapon)
+DEFINE_FIELD_X(PlayerInfo, player_t, PendingWeapon)
+DEFINE_FIELD_X(PlayerInfo, player_t, psprites)
+DEFINE_FIELD_X(PlayerInfo, player_t, cheats)
+DEFINE_FIELD_X(PlayerInfo, player_t, timefreezer)
+DEFINE_FIELD_X(PlayerInfo, player_t, refire)
+DEFINE_FIELD_NAMED_X(PlayerInfo, player_t, inconsistant, inconsistent)
+DEFINE_FIELD_X(PlayerInfo, player_t, waiting)
+DEFINE_FIELD_X(PlayerInfo, player_t, killcount)
+DEFINE_FIELD_X(PlayerInfo, player_t, itemcount)
+DEFINE_FIELD_X(PlayerInfo, player_t, secretcount)
+DEFINE_FIELD_X(PlayerInfo, player_t, damagecount)
+DEFINE_FIELD_X(PlayerInfo, player_t, bonuscount)
+DEFINE_FIELD_X(PlayerInfo, player_t, hazardcount)
+DEFINE_FIELD_X(PlayerInfo, player_t, hazardinterval)
+DEFINE_FIELD_X(PlayerInfo, player_t, hazardtype)
+DEFINE_FIELD_X(PlayerInfo, player_t, poisoncount)
+DEFINE_FIELD_X(PlayerInfo, player_t, poisontype)
+DEFINE_FIELD_X(PlayerInfo, player_t, poisonpaintype)
+DEFINE_FIELD_X(PlayerInfo, player_t, poisoner)
+DEFINE_FIELD_X(PlayerInfo, player_t, attacker)
+DEFINE_FIELD_X(PlayerInfo, player_t, extralight)
+DEFINE_FIELD_X(PlayerInfo, player_t, fixedcolormap)
+DEFINE_FIELD_X(PlayerInfo, player_t, fixedlightlevel)
+DEFINE_FIELD_X(PlayerInfo, player_t, morphTics)
+DEFINE_FIELD_X(PlayerInfo, player_t, MorphedPlayerClass)
+DEFINE_FIELD_X(PlayerInfo, player_t, MorphStyle)
+DEFINE_FIELD_X(PlayerInfo, player_t, MorphExitFlash)
+DEFINE_FIELD_X(PlayerInfo, player_t, PremorphWeapon)
+DEFINE_FIELD_X(PlayerInfo, player_t, chickenPeck)
+DEFINE_FIELD_X(PlayerInfo, player_t, jumpTics)
+DEFINE_FIELD_X(PlayerInfo, player_t, onground)
+DEFINE_FIELD_X(PlayerInfo, player_t, respawn_time)
+DEFINE_FIELD_X(PlayerInfo, player_t, camera)
+DEFINE_FIELD_X(PlayerInfo, player_t, air_finished)
+DEFINE_FIELD_X(PlayerInfo, player_t, LastDamageType)
+DEFINE_FIELD_X(PlayerInfo, player_t, MUSINFOactor)
+DEFINE_FIELD_X(PlayerInfo, player_t, MUSINFOtics)
+DEFINE_FIELD_X(PlayerInfo, player_t, settings_controller)
+DEFINE_FIELD_X(PlayerInfo, player_t, crouching)
+DEFINE_FIELD_X(PlayerInfo, player_t, crouchdir)
+DEFINE_FIELD_X(PlayerInfo, player_t, Bot)
+DEFINE_FIELD_X(PlayerInfo, player_t, BlendR)
+DEFINE_FIELD_X(PlayerInfo, player_t, BlendG)
+DEFINE_FIELD_X(PlayerInfo, player_t, BlendB)
+DEFINE_FIELD_X(PlayerInfo, player_t, BlendA)
+DEFINE_FIELD_X(PlayerInfo, player_t, LogText)
+DEFINE_FIELD_X(PlayerInfo, player_t, MinPitch)
+DEFINE_FIELD_X(PlayerInfo, player_t, MaxPitch)
+DEFINE_FIELD_X(PlayerInfo, player_t, crouchfactor)
+DEFINE_FIELD_X(PlayerInfo, player_t, crouchoffset)
+DEFINE_FIELD_X(PlayerInfo, player_t, crouchviewdelta)
+DEFINE_FIELD_X(PlayerInfo, player_t, ConversationNPC)
+DEFINE_FIELD_X(PlayerInfo, player_t, ConversationPC)
+DEFINE_FIELD_X(PlayerInfo, player_t, ConversationNPCAngle)
+DEFINE_FIELD_X(PlayerInfo, player_t, ConversationFaceTalker)
+DEFINE_FIELD_X(PlayerInfo, player_t, cmd)
+DEFINE_FIELD_X(PlayerInfo, player_t, original_cmd)
+DEFINE_FIELD_X(PlayerInfo, player_t, userinfo)
+DEFINE_FIELD_X(PlayerInfo, player_t, weapons)

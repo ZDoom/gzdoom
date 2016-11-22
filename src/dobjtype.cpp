@@ -2515,7 +2515,7 @@ PField::PField(FName name, PType *type, DWORD flags, size_t offset, int bitvalue
 		else
 		{
 			// Just abort. Bit fields should only be defined internally.
-			I_FatalError("Trying to create an invalid bit field element: %s", name.GetChars());
+			I_Error("Trying to create an invalid bit field element: %s", name.GetChars());
 		}
 	}
 	else BitValue = -1;

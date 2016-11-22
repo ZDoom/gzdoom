@@ -99,40 +99,32 @@ static const FGenericButtons ButtonChecks[] =
 //
 //------------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DPSprite, false, true, true, false)
+IMPLEMENT_CLASS(DPSprite, false, true, false, false)
 
 IMPLEMENT_POINTERS_START(DPSprite)
 	IMPLEMENT_POINTER(Caller)
 	IMPLEMENT_POINTER(Next)
 IMPLEMENT_POINTERS_END
 
-void DPSprite::InitNativeFields()
-{
-	auto meta = RUNTIME_CLASS(DPSprite);
-	PType *TypeActor = NewPointer(RUNTIME_CLASS(AActor));
-	PType *TypePSP = NewPointer(RUNTIME_CLASS(DPSprite));
-	PType *TypePlayer = NewPointer(NewNativeStruct("Player", nullptr));
-
-	meta->AddNativeField("State", TypeState, myoffsetof(DPSprite, State), VARF_ReadOnly);
-	meta->AddNativeField("Caller", TypeActor, myoffsetof(DPSprite, Caller), VARF_ReadOnly);
-	meta->AddNativeField("Next", TypePSP, myoffsetof(DPSprite, Next), VARF_ReadOnly);
-	meta->AddNativeField("Owner", TypePlayer, myoffsetof(DPSprite, Owner), VARF_ReadOnly);
-	meta->AddNativeField("Sprite", TypeSpriteID, myoffsetof(DPSprite, Sprite));
-	meta->AddNativeField("Frame", TypeSInt32, myoffsetof(DPSprite, Frame));
-	meta->AddNativeField("ID", TypePlayer, myoffsetof(DPSprite, ID), VARF_ReadOnly);
-	meta->AddNativeField("processPending", TypeBool, myoffsetof(DPSprite, processPending));
-	meta->AddNativeField("x", TypeFloat64, myoffsetof(DPSprite, x));
-	meta->AddNativeField("y", TypeFloat64, myoffsetof(DPSprite, y));
-	meta->AddNativeField("oldx", TypeFloat64, myoffsetof(DPSprite, oldx));
-	meta->AddNativeField("oldy", TypeFloat64, myoffsetof(DPSprite, oldy));
-	meta->AddNativeField("firstTic", TypeBool, myoffsetof(DPSprite, firstTic));
-	meta->AddNativeField("Tics", TypeSInt32, myoffsetof(DPSprite, Tics));
-	meta->AddNativeField("bAddWeapon", TypeSInt32, myoffsetof(DPSprite, Flags), 0, PSPF_ADDWEAPON);
-	meta->AddNativeField("bAddBob", TypeSInt32, myoffsetof(DPSprite, Flags), 0, PSPF_ADDBOB);
-	meta->AddNativeField("bPowDouble", TypeSInt32, myoffsetof(DPSprite, Flags), 0, PSPF_POWDOUBLE);
-	meta->AddNativeField("bCVarFast", TypeSInt32, myoffsetof(DPSprite, Flags), 0, PSPF_CVARFAST);
-	meta->AddNativeField("bFlip", TypeSInt32, myoffsetof(DPSprite, Flags), 0, PSPF_FLIP);
-}
+DEFINE_FIELD_NAMED(DPSprite, State, CurState)	// deconflict with same named type
+DEFINE_FIELD(DPSprite, Caller)
+DEFINE_FIELD(DPSprite, Next)
+DEFINE_FIELD(DPSprite, Owner)
+DEFINE_FIELD(DPSprite, Sprite)
+DEFINE_FIELD(DPSprite, Frame)
+DEFINE_FIELD(DPSprite, ID)
+DEFINE_FIELD(DPSprite, processPending)
+DEFINE_FIELD(DPSprite, x)
+DEFINE_FIELD(DPSprite, y)
+DEFINE_FIELD(DPSprite, oldx)
+DEFINE_FIELD(DPSprite, oldy)
+DEFINE_FIELD(DPSprite, firstTic)
+DEFINE_FIELD(DPSprite, Tics)
+DEFINE_FIELD_BIT(DPSprite, Flags, bAddWeapon, PSPF_ADDWEAPON)
+DEFINE_FIELD_BIT(DPSprite, Flags, bAddBob, PSPF_ADDBOB)
+DEFINE_FIELD_BIT(DPSprite, Flags, bPowDouble, PSPF_POWDOUBLE)
+DEFINE_FIELD_BIT(DPSprite, Flags, bCVarFast, PSPF_CVARFAST)
+DEFINE_FIELD_BIT(DPSprite, Flags, bFlip, PSPF_FLIP)
 
 //------------------------------------------------------------------------
 //

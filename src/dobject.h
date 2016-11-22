@@ -150,9 +150,6 @@ protected: \
 #define HAS_OBJECT_POINTERS \
 	static const size_t PointerOffsets[];
 
-#define HAS_FIELDS \
-	static void InitNativeFields();
-
 #if defined(_MSC_VER)
 #	pragma section(".creg$u",read)
 #	define _DECLARE_TI(cls) __declspec(allocate(".creg$u")) ClassReg * const cls::RegistrationInfoPtr = &cls::RegistrationInfo;
@@ -187,7 +184,7 @@ protected: \
 // Possible arguments for the IMPLEMENT_CLASS macro
 #define _X_POINTERS_true(cls)		cls::PointerOffsets
 #define _X_POINTERS_false(cls)		nullptr
-#define _X_FIELDS_true(cls)			cls::InitNativeFields
+#define _X_FIELDS_true(cls)			nullptr
 #define _X_FIELDS_false(cls)		nullptr
 #define _X_CONSTRUCTOR_true(cls)
 #define _X_CONSTRUCTOR_false(cls)	void cls::InPlaceConstructor(void *mem) { new((EInPlace *)mem) cls; }
@@ -445,7 +442,6 @@ public:
 	virtual PClass *StaticType() const { return RegistrationInfo.MyClass; }
 	static ClassReg RegistrationInfo, * const RegistrationInfoPtr;
 	static void InPlaceConstructor (void *mem);
-	static void InitNativeFields();
 	typedef PClass MetaClass;
 private:
 	typedef DObject ThisClass;

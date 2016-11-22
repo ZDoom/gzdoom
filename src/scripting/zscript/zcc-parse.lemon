@@ -295,8 +295,9 @@ struct_flags(X) ::= NATIVE.									{ X.Flags = ZCC_Native; }
 
 opt_struct_body(X) ::= .								{ X = NULL; }
 opt_struct_body(X) ::= struct_body(X).
+opt_struct_body(X) ::= error.							{ X = NULL; }
 
-struct_body(X) ::= error.								{ X = NULL; }
+
 struct_body(X) ::= struct_member(X).
 struct_body(X) ::= struct_member(A) struct_body(B).		{ X = A; /*X-overwrites-A*/ X->AppendSibling(B); }
 

@@ -23,3 +23,7 @@ class CajunTrace : Actor
 		+NOTELEPORT
 	}
 }
+
+struct Bot native
+{
+}

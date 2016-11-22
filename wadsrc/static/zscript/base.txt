@@ -1,5 +1,7 @@
 class Object native
 {
+	native bool bDestroyed;
+
 	// These really should be global functions...
 	native static int G_SkillPropertyInt(int p);
 	native static double G_SkillPropertyFloat(int p);
@@ -35,12 +37,10 @@ class ActorIterator : Object native
 
 class DropItem : Object native
 {
-	/* native fields listed for reference only for now
 	native readonly DropItem Next;
 	native readonly name Name;
 	native readonly int Probability;
-	native readonly int Amount;
-	*/
+	native int Amount;
 }
 
 class SpotState : Object native

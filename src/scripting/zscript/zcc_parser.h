@@ -164,6 +164,11 @@ struct ZCC_TreeNode
 	// Appends a sibling to this node's sibling list.
 	void AppendSibling(ZCC_TreeNode *sibling)
 	{
+		if (this == nullptr)
+		{
+			// Some bad syntax can actually get here, so better abort so that the user can see the error which caused this.
+			I_FatalError("Internal script compiler error. Execution aborted.");
+		}
 		if (sibling == NULL)
 		{
 			return;

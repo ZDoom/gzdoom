@@ -281,16 +281,17 @@ bool ABasicArmorPickup::Use (bool pickup)
 
 //===========================================================================
 //
-// ABasicArmorBonus :: InitNativeFields
+// ABasicArmorBonus
 //
 //===========================================================================
 
-void ABasicArmorBonus::InitNativeFields()
-{
-	auto meta = RUNTIME_CLASS(ABasicArmorBonus);
-	meta->AddNativeField("SaveAmount", TypeSInt32, myoffsetof(ABasicArmorBonus, SaveAmount));
-	meta->AddNativeField("MaxSaveAmount", TypeSInt32, myoffsetof(ABasicArmorBonus, MaxSaveAmount));
-}
+DEFINE_FIELD(ABasicArmorBonus, SavePercent)
+DEFINE_FIELD(ABasicArmorBonus, MaxSaveAmount)
+DEFINE_FIELD(ABasicArmorBonus, MaxAbsorb)
+DEFINE_FIELD(ABasicArmorBonus, MaxFullAbsorb)
+DEFINE_FIELD(ABasicArmorBonus, SaveAmount)
+DEFINE_FIELD(ABasicArmorBonus, BonusCount)
+DEFINE_FIELD(ABasicArmorBonus, BonusMax)
 
 //===========================================================================
 //

@@ -691,9 +691,6 @@ static int fieldcmp(const void * a, const void * b)
 // Initialization
 //
 //==========================================================================
-void G_InitLevelLocalsForScript();
-void P_InitPlayerForScript();
-void P_InitStateForScript();
 
 void InitThingdef()
 {
@@ -703,8 +700,10 @@ void InitThingdef()
 	auto sptr = NewPointer(sstruct);
 	sstruct->AddNativeField("soundtarget", TypeActor, myoffsetof(sector_t, SoundTarget));
 
-	G_InitLevelLocalsForScript();
-	P_InitStateForScript();
+	// set up a variable for the global level data structure
+	PStruct *lstruct = NewNativeStruct("LevelLocals", nullptr);
+	PField *levelf = new PField("level", lstruct, VARF_Native | VARF_Static, (intptr_t)&level);
+	GlobalSymbols.AddSymbol(levelf);
 
 	// set up a variable for the global players array.
 	PStruct *pstruct = NewNativeStruct("PlayerInfo", nullptr);

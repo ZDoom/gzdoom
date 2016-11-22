@@ -1063,24 +1063,18 @@ CCMD(dumpstates)
 //
 //==========================================================================
 
-void P_InitStateForScript()
-{
-	PNativeStruct *pstruct = dyn_cast<PNativeStruct>(TypeState->PointedType);
-	assert(pstruct != nullptr);
-
-	pstruct->AddNativeField("NextState", TypeState, myoffsetof(FState, NextState), VARF_ReadOnly);
-	pstruct->AddNativeField("sprite", TypeSInt32, myoffsetof(FState, sprite), VARF_ReadOnly);
-	pstruct->AddNativeField("Tics", TypeSInt16, myoffsetof(FState, Tics), VARF_ReadOnly);
-	pstruct->AddNativeField("TicRange", TypeUInt16, myoffsetof(FState, TicRange), VARF_ReadOnly);
-	pstruct->AddNativeField("Frame", TypeUInt8, myoffsetof(FState, Frame), VARF_ReadOnly);
-	pstruct->AddNativeField("UseFlags", TypeUInt8, myoffsetof(FState, UseFlags), VARF_ReadOnly);
-	pstruct->AddNativeField("Misc1", TypeSInt32, myoffsetof(FState, Misc1), VARF_ReadOnly);
-	pstruct->AddNativeField("Misc2", TypeSInt32, myoffsetof(FState, Misc2), VARF_ReadOnly);
-	pstruct->AddNativeField("bSlow", TypeUInt16, myoffsetof(FState, StateFlags), VARF_ReadOnly, STF_SLOW);
-	pstruct->AddNativeField("bFast", TypeUInt16, myoffsetof(FState, StateFlags), VARF_ReadOnly, STF_FAST);
-	pstruct->AddNativeField("bFullbright", TypeUInt16, myoffsetof(FState, StateFlags), VARF_ReadOnly, STF_FULLBRIGHT);
-	pstruct->AddNativeField("bNoDelay", TypeUInt16, myoffsetof(FState, StateFlags), VARF_ReadOnly, STF_NODELAY);
-	pstruct->AddNativeField("bSameFrame", TypeUInt16, myoffsetof(FState, StateFlags), VARF_ReadOnly, STF_SAMEFRAME);
-	pstruct->AddNativeField("bCanRaise", TypeUInt16, myoffsetof(FState, StateFlags), VARF_ReadOnly, STF_CANRAISE);
-	pstruct->AddNativeField("bDehacked", TypeUInt16, myoffsetof(FState, StateFlags), VARF_ReadOnly, STF_DEHACKED);
-}
+DEFINE_FIELD(FState, NextState)
+DEFINE_FIELD(FState, sprite)
+DEFINE_FIELD(FState, Tics)
+DEFINE_FIELD(FState, TicRange)
+DEFINE_FIELD(FState, Frame)
+DEFINE_FIELD(FState, UseFlags)
+DEFINE_FIELD(FState, Misc1)
+DEFINE_FIELD(FState, Misc2)
+DEFINE_FIELD_BIT(FState, StateFlags, bSlow)
+DEFINE_FIELD_BIT(FState, StateFlags, bFast)
+DEFINE_FIELD_BIT(FState, StateFlags, bFullbright)
+DEFINE_FIELD_BIT(FState, StateFlags, bNoDelay)
+DEFINE_FIELD_BIT(FState, StateFlags, bSameFrame)
+DEFINE_FIELD_BIT(FState, StateFlags, bCanRaise)
+DEFINE_FIELD_BIT(FState, StateFlags, bDehacked)

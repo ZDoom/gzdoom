@@ -49,6 +49,65 @@ class SpotState : Object native
 	native SpecialSpot GetNextInList(class<Actor> type, int skipcounter);
 }
 
+struct LevelLocals native
+{
+	native readonly int time;
+	native readonly int maptime;
+	native readonly int totaltime;
+	native readonly int starttime;
+	native readonly int partime;
+	native readonly int sucktime;
+	native readonly int cluster;
+	native readonly int clusterflags;
+	native readonly int levelnum;
+	native readonly String LevelName;
+	native readonly String MapName;
+	native String NextMap;
+	native String NextSecretMap;
+	native readonly int maptype;
+	native readonly String Music;
+	native readonly int musicorder;
+	native readonly int total_secrets;
+	native int found_secrets;
+	native readonly int total_items;
+	native int found_items;
+	native readonly int total_monsters;
+	native int killed_monsters;
+	native double gravity;
+	native double aircontrol;
+	native double airfriction;
+	native int airsupply;
+	native double teamdamage;
+	native bool monsterstelefrag;
+	native bool actownspecial;
+	native bool sndseqtotalctrl;
+	native bool allmap;
+	native bool missilesactivateimpact;
+	native bool monsterfallingdamage;
+	native bool checkswitchrange;
+	native bool polygrind;
+// level_info_t *info cannot be done yet.
+}
+
+struct State native
+{
+	State NextState;
+	int sprite;
+	int16 Tics;
+	uint16 TicRange;
+	uint8 Frame;		
+	uint8 UseFlags;	
+	int Misc1;
+	int Misc2;
+	uint16 bSlow;
+	uint16 bFast;
+	bool bFullbright;
+	bool bNoDelay;
+	bool bSameFrame;
+	bool bCanRaise;
+	bool bDehacked;
+}
+
 struct Sector native
 {
 }

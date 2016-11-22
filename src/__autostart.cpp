@@ -52,8 +52,8 @@
 // a single section during the final link. (.rdata is the standard section
 // for initialized read-only data.)
 
-#pragma comment(linker, "/merge:.areg=.rdata /merge:.creg=.rdata /merge:.greg=.rdata")
-#pragma comment(linker, "/merge:.yreg=.rdata /merge:.freg=.rdata")
+#pragma comment(linker, "/merge:.areg=.rdata /merge:.creg=.rdata /merge:.freg=.rdata")
+#pragma comment(linker, "/merge:.greg=.rdata /merge:.yreg=.rdata")
 
 #pragma section(".areg$a",read)
 __declspec(allocate(".areg$a")) void *const ARegHead = 0;
@@ -61,11 +61,11 @@ __declspec(allocate(".areg$a")) void *const ARegHead = 0;
 #pragma section(".creg$a",read)
 __declspec(allocate(".creg$a")) void *const CRegHead = 0;
 
-#pragma section(".greg$a",read)
-__declspec(allocate(".greg$a")) void *const GRegHead = 0;
-
 #pragma section(".freg$a",read)
 __declspec(allocate(".freg$a")) void *const FRegHead = 0;
+
+#pragma section(".greg$a",read)
+__declspec(allocate(".greg$a")) void *const GRegHead = 0;
 
 #pragma section(".yreg$a",read)
 __declspec(allocate(".yreg$a")) void *const YRegHead = 0;

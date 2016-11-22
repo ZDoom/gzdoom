@@ -5,6 +5,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2005 Jan Cholasta
+** Copyright 2005-2016 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

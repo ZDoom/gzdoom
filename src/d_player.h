@@ -100,6 +100,7 @@ FString GetPrintableDisplayName(PClassPlayerPawn *cls);
 class APlayerPawn : public AActor
 {
 	DECLARE_CLASS_WITH_META(APlayerPawn, AActor, PClassPlayerPawn)
+	HAS_FIELDS
 	HAS_OBJECT_POINTERS
 public:
 	
@@ -116,7 +117,7 @@ public:
 	virtual void PlayRunning ();
 	virtual void ThrowPoisonBag ();
 	virtual void TweakSpeeds (double &forwardmove, double &sidemove);
-	virtual void MorphPlayerThink ();
+	void MorphPlayerThink ();
 	virtual void ActivateMorphWeapon ();
 	AWeapon *PickNewWeapon (PClassAmmo *ammotype);
 	AWeapon *BestWeapon (PClassAmmo *ammotype);

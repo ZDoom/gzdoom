@@ -457,6 +457,12 @@ class Weapon : StateProvider native
 	
 	native bool DepleteAmmo(bool altFire, bool checkEnough = true, int ammouse = -1);
 	
+	virtual State GetReadyState ()
+	{
+		return FindState('Ready');
+	}
+	
+	
 	native action void A_ZoomFactor(double scale = 1, int flags = 0);
 	native action void A_SetCrosshair(int xhair);
 	const ZOOM_INSTANT = 1;

@@ -948,3 +948,8 @@ enum EFSkillProperty	// floating point properties
 	SKILLP_FriendlyHealth,
 };
 
+enum EWeaponPos
+{
+	WEAPONBOTTOM = 128,
+	WEAPONTOP = 32
+}

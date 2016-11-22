@@ -49,6 +49,13 @@ void AdjustPlayerAngle (AActor *pmo, FTranslatedLineTarget *t)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, AdjustPlayerAngle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(t, FTranslatedLineTarget);
+	AdjustPlayerAngle(self, t);
+	return 0;
+}
 //============================================================================
 //
 // TryPunch

@@ -867,7 +867,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	sc_man_scanner.h
 	sc_man_scanner.re
 	g_doom/a_painelemental.cpp
-	g_heretic/a_chicken.cpp
 	g_heretic/a_dsparil.cpp
 	g_heretic/a_hereticartifacts.cpp
 	g_heretic/a_hereticweaps.cpp
@@ -892,7 +891,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	g_hexen/a_magecone.cpp
 	g_hexen/a_magelightning.cpp
 	g_hexen/a_magestaff.cpp
-	g_hexen/a_pig.cpp
 	g_hexen/a_serpent.cpp
 	g_hexen/a_spike.cpp
 	g_hexen/a_summon.cpp

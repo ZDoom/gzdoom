@@ -2543,7 +2543,15 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 		return nullptr;
 	}
 
-	if (left->IsVector() && right->IsVector())
+	if (left->ValueType == TypeState && right->IsInteger() && Operator == '+' && !left->isConstant())
+	{
+		// This is the only special case of pointer addition that will be accepted - because it is used quite often in the existing game code.
+		ValueType = TypeState;
+		right = new FxMulDiv('*', right, new FxConstant((int)sizeof(FState), ScriptPosition));	// multiply by size here, so that constants can be better optimized.
+		right = right->Resolve(ctx);
+		ABORT(right);
+	}
+	else if (left->IsVector() && right->IsVector())
 	{
 		// a vector2 can be added to or subtracted from a vector 3 but it needs to be the right operand.
 		if (left->ValueType == right->ValueType || (left->ValueType == TypeVector3 && right->ValueType == TypeVector2))
@@ -2616,6 +2624,16 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 	ExpEmit op2 = right->Emit(build);
 	if (Operator == '+')
 	{
+		if (op1.RegType == REGT_POINTER)
+		{
+			assert(!op1.Konst);
+			assert(op2.RegType == REGT_INT);
+			op1.Free(build);
+			op2.Free(build);
+			ExpEmit opout(build, REGT_POINTER);
+			build->Emit(op2.Konst? OP_ADDA_RK : OP_ADDA_RR, opout.RegNum, op1.RegNum, op2.RegNum);
+			return opout;
+		}
 		// Since addition is commutative, only the second operand may be a constant.
 		if (op1.Konst)
 		{

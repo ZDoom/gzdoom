@@ -109,8 +109,29 @@ IMPLEMENT_POINTERS_END
 void DPSprite::InitNativeFields()
 {
 	auto meta = RUNTIME_CLASS(DPSprite);
+	PType *TypeActor = NewPointer(RUNTIME_CLASS(AActor));
+	PType *TypePSP = NewPointer(RUNTIME_CLASS(DPSprite));
+	PType *TypePlayer = NewPointer(NewNativeStruct("Player", nullptr));
 
 	meta->AddNativeField("State", TypeState, myoffsetof(DPSprite, State), VARF_ReadOnly);
+	meta->AddNativeField("Caller", TypeActor, myoffsetof(DPSprite, Caller), VARF_ReadOnly);
+	meta->AddNativeField("Next", TypePSP, myoffsetof(DPSprite, Next), VARF_ReadOnly);
+	meta->AddNativeField("Owner", TypePlayer, myoffsetof(DPSprite, Owner), VARF_ReadOnly);
+	meta->AddNativeField("Sprite", TypeSpriteID, myoffsetof(DPSprite, Sprite));
+	meta->AddNativeField("Frame", TypeSInt32, myoffsetof(DPSprite, Frame));
+	meta->AddNativeField("ID", TypePlayer, myoffsetof(DPSprite, ID), VARF_ReadOnly);
+	meta->AddNativeField("processPending", TypeBool, myoffsetof(DPSprite, processPending));
+	meta->AddNativeField("x", TypeFloat64, myoffsetof(DPSprite, x));
+	meta->AddNativeField("y", TypeFloat64, myoffsetof(DPSprite, y));
+	meta->AddNativeField("oldx", TypeFloat64, myoffsetof(DPSprite, oldx));
+	meta->AddNativeField("oldy", TypeFloat64, myoffsetof(DPSprite, oldy));
+	meta->AddNativeField("firstTic", TypeBool, myoffsetof(DPSprite, firstTic));
+	meta->AddNativeField("Tics", TypeSInt32, myoffsetof(DPSprite, Tics));
+	meta->AddNativeField("bAddWeapon", TypeSInt32, myoffsetof(DPSprite, Flags), 0, PSPF_ADDWEAPON);
+	meta->AddNativeField("bAddBob", TypeSInt32, myoffsetof(DPSprite, Flags), 0, PSPF_ADDBOB);
+	meta->AddNativeField("bPowDouble", TypeSInt32, myoffsetof(DPSprite, Flags), 0, PSPF_POWDOUBLE);
+	meta->AddNativeField("bCVarFast", TypeSInt32, myoffsetof(DPSprite, Flags), 0, PSPF_CVARFAST);
+	meta->AddNativeField("bFlip", TypeSInt32, myoffsetof(DPSprite, Flags), 0, PSPF_FLIP);
 }
 
 //------------------------------------------------------------------------
@@ -178,6 +199,14 @@ DPSprite *player_t::FindPSprite(int layer)
 
 	return pspr;
 }
+
+DEFINE_ACTION_FUNCTION(_Player, FindPSprite)	// the underscore is needed to get past the name mangler which removes the first clas name character to match the class representation (needs to be fixed in a later commit)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_INT(id);
+	ACTION_RETURN_OBJECT(self->FindPSprite((PSPLayers)id));
+}
+
 
 //------------------------------------------------------------------------
 //

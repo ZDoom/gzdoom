@@ -49,6 +49,10 @@ class PlayerPawn : Actor native
 		if (MeleeState != null) SetState (MeleeState);
 	}
 	
+	virtual void MorphPlayerThink()
+	{
+	}
+	
 }
 
 class PlayerChunk : PlayerPawn native
@@ -78,4 +82,5 @@ struct Player native
 	native void SetPsprite(int id, State stat, bool pending = false);
 	native void SetSafeFlash(Weapon weap, State flashstate, int index);
 	native PSprite GetPSprite(int id);
+	native PSprite FindPSprite(int id);
 }

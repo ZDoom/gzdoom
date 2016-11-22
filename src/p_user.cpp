@@ -161,6 +161,12 @@ bool ValidatePlayerClass(PClassActor *ti, const char *name)
 	return true;
 }
 
+void APlayerPawn::InitNativeFields()
+{
+	auto meta = RUNTIME_CLASS(APlayerPawn);
+	meta->AddNativeField("JumpZ", TypeFloat64, myoffsetof(APlayerPawn, JumpZ));
+}
+
 void SetupPlayerClasses ()
 {
 	FPlayerClass newclass;
@@ -622,7 +628,7 @@ void player_t::SendPitchLimits() const
 //
 //===========================================================================
 
-IMPLEMENT_CLASS(APlayerPawn, false, true, false, true)
+IMPLEMENT_CLASS(APlayerPawn, false, true, true, true)
 
 IMPLEMENT_POINTERS_START(APlayerPawn)
 	IMPLEMENT_POINTER(InvFirst)
@@ -1381,6 +1387,10 @@ void APlayerPawn::GiveDefaultInventory ()
 
 void APlayerPawn::MorphPlayerThink ()
 {
+	VINDEX(APlayerPawn, MorphPlayerThink);
+	VMValue params[1] = { (DObject*)this };
+	VMFrameStack stack;
+	stack.Call(VFUNC, params, 1, nullptr, 0, nullptr);
 }
 
 void APlayerPawn::ActivateMorphWeapon ()

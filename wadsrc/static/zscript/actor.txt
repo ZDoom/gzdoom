@@ -67,6 +67,7 @@ class Actor : Thinker native
 	virtual native void Activate(Actor activator);
 	virtual native void Deactivate(Actor activator);
 
+	native void AdjustPlayerAngle(FTranslatedLineTarget t);
 	native static readonly<Actor> GetDefaultByType(class<Actor> cls);
 	native static double deltaangle(double ang1, double ang2);
 	native static double absangle(double ang1, double ang2);
@@ -467,7 +468,6 @@ class Actor : Thinker native
 	native void A_DeQueueCorpse();
 	native void A_ClearLastHeard();
 	native bool A_SelectWeapon(class<Weapon> whichweapon, int flags = 0);
-	native void A_Feathers();
 	native void A_ClassBossHealth();
 	native void A_ShootGun();
 	native void A_RocketInFlight();
@@ -476,7 +476,6 @@ class Actor : Thinker native
 	native void A_GiveQuestItem(int itemno);
 	native void A_RemoveForcefield();
 	native void A_DropWeaponPieces(class<Actor> p1, class<Actor> p2, class<Actor> p3);
-	native void A_PigPain ();
 	native void A_SetAngle(double angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetPitch(double pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetRoll(double roll, int flags = 0, int ptr = AAPTR_DEFAULT);

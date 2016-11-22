@@ -34,8 +34,6 @@ class Snout : Weapon
 		Weapon.YAdjust 10;
 	}
 
-	action native void A_SnoutAttack ();
-
 	States
 	{
 	Ready:
@@ -54,12 +52,43 @@ class Snout : Weapon
 		WPIG B 8;
 		Goto Ready;
 	}
+	
+	//============================================================================
+	//
+	// A_SnoutAttack
+	//
+	//============================================================================
+
+	action void A_SnoutAttack ()
+	{
+		FTranslatedLineTarget t;
+
+		if (player == null)
+		{
+			return;
+		}
+
+		int damage = random[SnoutAttack](3, 6);
+		double ang = angle;
+		double slope = AimLineAttack(ang, MELEERANGE);
+		Actor puff = LineAttack(ang, MELEERANGE, slope, damage, 'Melee', "SnoutPuff", true, t);
+		A_PlaySound("PigActive", CHAN_VOICE);
+		if(t.linetarget)
+		{
+			AdjustPlayerAngle(t);
+			if(puff != null)
+			{ // Bit something
+				A_PlaySound("PigAttack", CHAN_VOICE);
+			}
+		}
+	}
+	
 }
 
 
 // Pig player ---------------------------------------------------------------
 
-class PigPlayer : PlayerPawn native
+class PigPlayer : PlayerPawn
 {
 	Default
 	{
@@ -112,6 +141,30 @@ class PigPlayer : PlayerPawn native
 		PIGY M 1 A_FreezeDeathChunks;
 		Wait;
 	}
+	
+
+	override void MorphPlayerThink ()
+	{
+		if (player.morphTics & 15)
+		{
+			return;
+		}
+		if(Vel.X == 0 && Vel.Y == 0 && random[PigPlayerThink]() < 64)
+		{ // Snout sniff
+			if (player.ReadyWeapon != null)
+			{
+				player.SetPsprite(PSP_WEAPON, player.ReadyWeapon.FindState('Grunt'));
+			}
+			A_PlaySound ("PigActive1", CHAN_VOICE); // snort
+			return;
+		}
+		if (random[PigPlayerThink]() < 48)
+		{
+			A_PlaySound ("PigActive", CHAN_VOICE); // snort
+		}
+	}
+
+	
 }
 	
 
@@ -168,3 +221,21 @@ class Pig : MorphedMonster
 	}
 }
 
+
+extend class Actor
+{
+	//============================================================================
+	//
+	// A_PigPain
+	//
+	//============================================================================
+
+	void A_PigPain ()
+	{
+		A_Pain();
+		if (pos.z <= floorz)
+		{
+			Vel.Z = 3.5;
+		}
+	}
+}

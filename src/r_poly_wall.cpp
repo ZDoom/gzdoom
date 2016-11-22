@@ -314,7 +314,7 @@ void PolyWallTextureCoords::CalcU(FTexture *tex, const seg_t *lineseg, const lin
 	if (!entireSegment)
 	{
 		lineLength = (lineseg->v2->fPos() - lineseg->v1->fPos()).Length();
-		lineStart = (lineseg->v1->fPos() - lineseg->v1->fPos()).Length();
+		lineStart = (lineseg->v1->fPos() - line->v1->fPos()).Length();
 	}
 
 	int texWidth = tex->GetWidth();

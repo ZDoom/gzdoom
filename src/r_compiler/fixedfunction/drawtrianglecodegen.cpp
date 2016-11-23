@@ -242,15 +242,15 @@ void DrawTriangleCodegen::LoopBlockX()
 			SSAFloat varyingBL = (startVarying[i] + offx0 * gradVaryingX[i] + offy1 * gradVaryingY[i]) * rcpWBL;
 			SSAFloat varyingBR = (startVarying[i] + offx1 * gradVaryingX[i] + offy1 * gradVaryingY[i]) * rcpWBR;
 
-			SSAFloat pos = varyingTL;
-			SSAFloat stepPos = (varyingBL - varyingTL) * (1.0f / q);
 			SSAFloat startStepX = (varyingTR - varyingTL) * (1.0f / q);
-			SSAFloat incrStepX = (varyingBR - varyingBL) * (1.0f / q) - startStepX;
+			SSAFloat endStepX = (varyingBR - varyingBL) * (1.0f / q);
+			SSAFloat incrStepX = (endStepX - startStepX) * (1.0f / q);
+			SSAFloat stepY = (varyingBL - varyingTL) * (1.0f / q);
 
-			varyingPos[i] = SSAInt(pos * SSAFloat((float)0x01000000), false);
-			varyingStepPos[i] = SSAInt(stepPos * SSAFloat((float)0x01000000), false);
-			varyingStartStepX[i] = SSAInt(startStepX * SSAFloat((float)0x01000000), false);
-			varyingIncrStepX[i] = SSAInt(incrStepX * SSAFloat((float)0x01000000), false);
+			varyingPos[i] = SSAInt(varyingTL * SSAFloat((float)0x01000000), false) << 8;
+			varyingStepY[i] = SSAInt(stepY * SSAFloat((float)0x01000000), false) << 8;
+			varyingStartStepX[i] = SSAInt(startStepX * SSAFloat((float)0x01000000), false) << 8;
+			varyingIncrStepX[i] = SSAInt(incrStepX * SSAFloat((float)0x01000000), false) << 8;
 		}
 
 		SSAFloat globVis = SSAFloat(1706.0f);
@@ -314,18 +314,22 @@ void DrawTriangleCodegen::LoopFullBlock()
 	{
 		int pixelsize = truecolor ? 4 : 1;
 
+		SSAInt varyingLine[TriVertex::NumVarying];
+		SSAInt varyingStepX[TriVertex::NumVarying];
+		for (int i = 0; i < TriVertex::NumVarying; i++)
+		{
+			varyingLine[i] = varyingPos[i];
+			varyingStepX[i] = varyingStartStepX[i];
+		}
+
 		for (int iy = 0; iy < q; iy++)
 		{
 			SSAUBytePtr buffer = dest[(x + iy * pitch) * pixelsize];
 			SSAIntPtr subsectorbuffer = subsectorGBuffer[x + iy * pitch];
 
 			SSAInt varying[TriVertex::NumVarying];
-			SSAInt varyingStep[TriVertex::NumVarying];
 			for (int i = 0; i < TriVertex::NumVarying; i++)
-			{
-				varying[i] = (varyingPos[i] + varyingStepPos[i] * iy) << 8;
-				varyingStep[i] = (varyingStartStepX[i] + varyingIncrStepX[i] * iy) << 8;
-			}
+				varying[i] = varyingLine[i];
 
 			for (int ix = 0; ix < q; ix += 4)
 			{
@@ -356,7 +360,7 @@ void DrawTriangleCodegen::LoopFullBlock()
 						}
 
 						for (int i = 0; i < TriVertex::NumVarying; i++)
-							varying[i] = varying[i] + varyingStep[i];
+							varying[i] = varying[i] + varyingStepX[i];
 					}
 
 					buf.store_unaligned_vec16ub(SSAVec16ub(SSAVec8s(pixels[0], pixels[1]), SSAVec8s(pixels[2], pixels[3])));
@@ -385,7 +389,7 @@ void DrawTriangleCodegen::LoopFullBlock()
 						}
 
 						for (int i = 0; i < TriVertex::NumVarying; i++)
-							varying[i] = varying[i] + varyingStep[i];
+							varying[i] = varying[i] + varyingStepX[i];
 					}
 
 					buf.store_vec4ub(SSAVec4i(pixels[0], pixels[1], pixels[2], pixels[3]));
@@ -393,6 +397,12 @@ void DrawTriangleCodegen::LoopFullBlock()
 
 				if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector && variant != TriDrawVariant::FuzzSubsector)
 					subsectorbuffer[ix].store_unaligned_vec4i(SSAVec4i(subsectorDepth));
+			}
+
+			for (int i = 0; i < TriVertex::NumVarying; i++)
+			{
+				varyingLine[i] = varyingLine[i] + varyingStepY[i];
+				varyingStepX[i] = varyingStepX[i] + varyingIncrStepX[i];
 			}
 		}
 	}
@@ -413,6 +423,11 @@ void DrawTriangleCodegen::LoopPartialBlock()
 	stack_iy.store(SSAInt(0));
 	stack_buffer.store(dest[x * pixelsize]);
 	stack_subsectorbuffer.store(subsectorGBuffer[x]);
+	for (int i = 0; i < TriVertex::NumVarying; i++)
+	{
+		stack_varyingLine[i].store(varyingPos[i]);
+		stack_varyingStep[i].store(varyingStartStepX[i]);
+	}
 
 	SSAForBlock loopy;
 	SSAInt iy = stack_iy.load();
@@ -421,14 +436,17 @@ void DrawTriangleCodegen::LoopPartialBlock()
 	SSAInt CY1 = stack_CY1.load();
 	SSAInt CY2 = stack_CY2.load();
 	SSAInt CY3 = stack_CY3.load();
+	SSAInt varyingLine[TriVertex::NumVarying];
+	SSAInt varyingStep[TriVertex::NumVarying];
+	for (int i = 0; i < TriVertex::NumVarying; i++)
+	{
+		varyingLine[i] = stack_varyingLine[i].load();
+		varyingStep[i] = stack_varyingStep[i].load();
+	}
 	loopy.loop_block(iy < SSAInt(q), q);
 	{
-		SSAInt varyingStep[TriVertex::NumVarying];
 		for (int i = 0; i < TriVertex::NumVarying; i++)
-		{
-			stack_varying[i].store((varyingPos[i] + varyingStepPos[i] * iy) << 8);
-			varyingStep[i] = (varyingStartStepX[i] + varyingIncrStepX[i] * iy) << 8;
-		}
+			stack_varying[i].store(varyingLine[i]);
 
 		stack_CX1.store(CY1);
 		stack_CX2.store(CY2);
@@ -494,6 +512,12 @@ void DrawTriangleCodegen::LoopPartialBlock()
 			stack_ix.store(ix + 1);
 		}
 		loopx.end_block();
+
+		for (int i = 0; i < TriVertex::NumVarying; i++)
+		{
+			stack_varyingLine[i].store(varyingLine[i] + varyingStepY[i]);
+			stack_varyingStep[i].store(varyingStep[i] + varyingIncrStepX[i]);
+		}
 
 		stack_CY1.store(CY1 + FDX12);
 		stack_CY2.store(CY2 + FDX23);

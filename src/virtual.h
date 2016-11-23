@@ -38,6 +38,7 @@ VMEXPORTED_NATIVES_START
 	VMEXPORTED_NATIVES_FUNC(BeginPlay)
 	VMEXPORTED_NATIVES_FUNC(Activate)
 	VMEXPORTED_NATIVES_FUNC(Deactivate)
+	VMEXPORTED_NATIVES_FUNC(DoSpecialDamage)
 VMEXPORTED_NATIVES_END
 
 
@@ -192,6 +193,26 @@ public:
 			stack.Call(VFUNC, params, 2, nullptr, 0, nullptr);
 		}
 	}
+	int DoSpecialDamage(AActor *target, int damage, FName damagetype)
+	{
+		if (this->ObjectFlags & OF_SuperCall)
+		{
+			this->ObjectFlags &= ~OF_SuperCall;
+			return ExportedNatives<T>::Get()->template DoSpecialDamage<int, T>(this, target, damage, damagetype);
+		}
+		else
+		{
+			VINDEX(AActor, DoSpecialDamage);
+			// Without the type cast this picks the 'void *' assignment...
+			VMValue params[4] = { (DObject*)this, (DObject*)target, damage, damagetype.GetIndex() };
+			VMReturn ret;
+			VMFrameStack stack;
+			int retval;
+			ret.IntAt(&retval);
+			stack.Call(VFUNC, params, 4, &ret, 1, nullptr);
+			return retval;
+		}
+	}
 
 };
 
@@ -223,6 +244,7 @@ VMEXPORT_NATIVES_START(AActor, DThinker)
 	VMEXPORT_NATIVES_FUNC(BeginPlay)
 	VMEXPORT_NATIVES_FUNC(Activate)
 	VMEXPORT_NATIVES_FUNC(Deactivate)
+	VMEXPORT_NATIVES_FUNC(DoSpecialDamage)
 VMEXPORT_NATIVES_END(AActor)
 
 /*

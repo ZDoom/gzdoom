@@ -860,7 +860,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	g_heretic/a_dsparil.cpp
 	g_heretic/a_hereticartifacts.cpp
 	g_heretic/a_hereticweaps.cpp
-	g_heretic/a_ironlich.cpp
 	g_hexen/a_blastradius.cpp
 	g_hexen/a_boostarmor.cpp
 	g_hexen/a_clericflame.cpp

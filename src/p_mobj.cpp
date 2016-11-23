@@ -6668,6 +6668,17 @@ int AActor::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, DoSpecialDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(target, AActor);
+	PARAM_INT(damage);
+	PARAM_NAME(damagetype);
+	self->VMSuperCall();
+	ACTION_RETURN_INT(self->DoSpecialDamage(target, damage, damagetype));
+}
+
+
 int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype)
 {
 	FState *death;
@@ -7178,6 +7189,13 @@ DEFINE_ACTION_FUNCTION(AActor, Vec3Offset)
 	PARAM_FLOAT(z);
 	PARAM_BOOL_DEF(absolute);
 	ACTION_RETURN_VEC3(self->Vec3Offset(x, y, z, absolute));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, RestoreDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->RestoreDamage();
+	return 0;
 }
 
 //----------------------------------------------------------------------------

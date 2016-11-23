@@ -2326,6 +2326,11 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 
 		if (varflags & VARF_Virtual)
 		{
+			if (sym->Variants[0].Implementation == nullptr)
+			{
+				Error(f, "Virtual function %s.%s not present.", c->Type()->TypeName.GetChars(), FName(f->Name).GetChars());
+				return;
+			}
 			if (varflags & VARF_Final)
 			{
 				sym->Variants[0].Implementation->Final = true;

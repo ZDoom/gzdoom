@@ -22,5 +22,3 @@
 #include "a_dsparil.cpp"
 #include "a_hereticartifacts.cpp"
 #include "a_hereticweaps.cpp"
-#include "a_ironlich.cpp"
-

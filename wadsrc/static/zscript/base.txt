@@ -12,6 +12,8 @@ class Object native
 
 class Thinker : Object native
 {
+	const TICRATE = 35;
+	
 	virtual native void Tick();
 	virtual native void PostBeginPlay();
 }

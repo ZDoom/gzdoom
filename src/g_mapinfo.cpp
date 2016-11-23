@@ -1508,10 +1508,18 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 
 	if (sc.CheckNumber())
 	{	// MAPNAME is a number; assume a Hexen wad
-		char maptemp[8];
-		mysnprintf (maptemp, countof(maptemp), "MAP%02d", sc.Number);
-		mapname = maptemp;
-		HexenHack = true;
+		if (format_type == FMT_New)
+		{
+			mapname = sc.String;
+		}
+		else
+		{
+			char maptemp[8];
+			mysnprintf(maptemp, countof(maptemp), "MAP%02d", sc.Number);
+			mapname = maptemp;
+			HexenHack = true;
+			format_type = FMT_Old;
+		}
 	}
 	else 
 	{

@@ -72,7 +72,7 @@ FRenderer *Renderer;
 IMPLEMENT_CLASS(DCanvas, true, false, false, false)
 IMPLEMENT_CLASS(DFrameBuffer, true, false, false, false)
 
-#if defined(_DEBUG) && defined(_M_IX86)
+#if defined(_DEBUG) && defined(_M_IX86) && !defined(__MINGW32__)
 #define DBGBREAK	{ __asm int 3 }
 #else
 #define DBGBREAK

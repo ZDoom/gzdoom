@@ -21,6 +21,11 @@
 
 #define DINPUT_BUFFERSIZE	32
 
+// MinGW-w64 (TDM5.1 - 2016/11/21)
+#ifndef DIK_PREVTRACK
+#define DIK_PREVTRACK DIK_CIRCUMFLEX
+#endif
+
 // TYPES -------------------------------------------------------------------
 
 class FDInputKeyboard : public FKeyboard

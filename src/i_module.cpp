@@ -97,5 +97,5 @@ bool FModule::Open(const char* lib)
 
 void *FModule::GetSym(const char* name)
 {
-	return GetProcAddress((HMODULE)handle, name);
+	return (void *)GetProcAddress((HMODULE)handle, name);
 }

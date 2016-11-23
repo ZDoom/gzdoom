@@ -1018,7 +1018,7 @@ IOKitJoystickManager::~IOKitJoystickManager()
 		if (0 != notification)
 		{
 			IOObjectRelease(notification);
-			notification = NULL;
+			notification = 0;
 		}
 	}
 }

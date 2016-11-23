@@ -728,15 +728,7 @@ if( WIN32 )
 	set( SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} )
 	set( OTHER_SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} ${PLAT_OSX_SOURCES} ${PLAT_COCOA_SOURCES} ${PLAT_UNIX_SOURCES} )
 	
-	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-		# CMake is not set up to compile and link rc files with GCC. :(
-		add_custom_command( OUTPUT zdoom-rc.o
-			COMMAND windres -o zdoom-rc.o -i ${CMAKE_CURRENT_SOURCE_DIR}/win32/zdoom.rc
-			DEPENDS win32/zdoom.rc )
-		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} zdoom-rc.o )
-	else()
-		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} win32/zdoom.rc )
-	endif()
+	set( SYSTEM_SOURCES ${SYSTEM_SOURCES} win32/zdoom.rc )
 elseif( APPLE )
 	if( OSX_COCOA_BACKEND )
 		set( SYSTEM_SOURCES_DIR posix posix/cocoa )

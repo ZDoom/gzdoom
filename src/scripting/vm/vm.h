@@ -4,6 +4,7 @@
 #include "zstring.h"
 #include "autosegs.h"
 #include "vectors.h"
+#include "cmdlib.h"
 
 #define MAX_RETURNS		8	// Maximum number of results a function called by script code can return
 #define MAX_TRY_DEPTH	8	// Maximum number of nested TRYs in a single function

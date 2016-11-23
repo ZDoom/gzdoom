@@ -98,6 +98,8 @@ public:
 
 IMPLEMENT_CLASS(AFakeInventory, false, false, false, false)
 
+DEFINE_FIELD(AFakeInventory, Respawnable)
+
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------

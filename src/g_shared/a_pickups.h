@@ -429,8 +429,8 @@ class AHealth : public AInventory
 {
 	DECLARE_CLASS_WITH_META(AHealth, AInventory, PClassHealth)
 
-	int PrevHealth;
 public:
+	int PrevHealth;
 	virtual bool TryPickup (AActor *&other);
 	virtual const char *PickupMessage ();
 };

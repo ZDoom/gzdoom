@@ -1,5 +1,20 @@
 class Inventory : Actor native
 {
+
+	native Actor Owner;						// Who owns this item? NULL if it's still a pickup.
+	native int Amount;						// Amount of item this instance has
+	native int MaxAmount;					// Max amount of item this instance can have
+	native int InterHubAmount;				// Amount of item that can be kept between hubs or levels
+	native int RespawnTics;					// Tics from pickup time to respawn time
+	native TextureID Icon;					// Icon to show on status bar or HUD
+	native int DropTime;					// Countdown after dropping
+	native Class<Actor> SpawnPointClass;	// For respawning like Heretic's mace
+	native Class<Actor> PickupFlash;		// actor to spawn as pickup flash
+	native Sound PickupSound;
+	native bool bPickupGood;
+	native bool bCreateCopyMoved;
+	native bool bInitEffectFailed;
+	
 	Default
 	{
 		Inventory.Amount 1;
@@ -73,6 +88,9 @@ class ScoreItem : Inventory native
 
 class Ammo : Inventory native
 {
+	native int BackpackAmount;
+	native int BackpackMaxAmount;
+	
 	Default
 	{
 		+INVENTORY.KEEPDEPLETED
@@ -82,6 +100,7 @@ class Ammo : Inventory native
 
 class BackpackItem : Inventory native
 {
+	native bool bDepleted;
 }
 
 class Armor : Inventory native
@@ -94,6 +113,15 @@ class Armor : Inventory native
 
 class BasicArmor : Armor native
 {
+	
+	native int AbsorbCount;
+	native double SavePercent;
+	native int MaxAbsorb;
+	native int MaxFullAbsorb;
+	native int BonusCount;
+	native Name ArmorType;
+	native int ActualSaveAmount;
+	
 	Default
 	{
 		+Inventory.KEEPDEPLETED
@@ -121,6 +149,12 @@ class BasicArmorBonus : Armor native
 
 class BasicArmorPickup : Armor native
 {
+
+	native double SavePercent;
+	native int MaxAbsorb;
+	native int MaxFullAbsorb;
+	native int SaveAmount;
+	
 	Default
 	{
 		+Inventory.AUTOACTIVATE;
@@ -130,6 +164,10 @@ class BasicArmorPickup : Armor native
 
 class HexenArmor : Armor native
 {
+	
+	native double Slots[5];
+	native double SlotsIncrement[4];
+	
 	Default
 	{
 		+Inventory.KEEPDEPLETED
@@ -139,7 +177,10 @@ class HexenArmor : Armor native
 
 class DehackedPickup : Inventory native {}
 
-class FakeInventory : Inventory native {}
+class FakeInventory : Inventory native 
+{
+	native bool Respawnable;
+}
 
 class CustomInventory : StateProvider native 
 {
@@ -151,6 +192,8 @@ class CustomInventory : StateProvider native
 
 class Health : Inventory native 
 {
+	native int PrevHealth;
+	
 	Default
 	{
 		Inventory.Amount 1;

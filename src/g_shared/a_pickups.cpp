@@ -88,6 +88,9 @@ void PClassAmmo::DeriveData(PClass *newclass)
 
 IMPLEMENT_CLASS(AAmmo, false, false, false, false)
 
+DEFINE_FIELD(AAmmo, BackpackAmount)
+DEFINE_FIELD(AAmmo, BackpackMaxAmount)
+
 //===========================================================================
 //
 // AAmmo :: Serialize
@@ -482,6 +485,20 @@ IMPLEMENT_CLASS(AInventory, false, true, false, false)
 IMPLEMENT_POINTERS_START(AInventory)
 	IMPLEMENT_POINTER(Owner)
 IMPLEMENT_POINTERS_END
+
+DEFINE_FIELD_BIT(AInventory, ItemFlags, bPickupGood, IF_PICKUPGOOD)
+DEFINE_FIELD_BIT(AInventory, ItemFlags, bCreateCopyMoved, IF_CREATECOPYMOVED)
+DEFINE_FIELD_BIT(AInventory, ItemFlags, bInitEffectFailed, IF_INITEFFECTFAILED)
+DEFINE_FIELD(AInventory, Owner)		
+DEFINE_FIELD(AInventory, Amount)
+DEFINE_FIELD(AInventory, MaxAmount)
+DEFINE_FIELD(AInventory, InterHubAmount)
+DEFINE_FIELD(AInventory, RespawnTics)
+DEFINE_FIELD(AInventory, Icon)
+DEFINE_FIELD(AInventory, DropTime)
+DEFINE_FIELD(AInventory, SpawnPointClass)
+DEFINE_FIELD(AInventory, PickupFlash)
+DEFINE_FIELD(AInventory, PickupSound)
 
 //===========================================================================
 //
@@ -1739,6 +1756,8 @@ void PClassHealth::DeriveData(PClass *newclass)
 
 IMPLEMENT_CLASS(AHealth, false, false, false, false)
 
+DEFINE_FIELD(AHealth, PrevHealth)
+
 //===========================================================================
 //
 // AHealth :: PickupMessage
@@ -1857,6 +1876,10 @@ void AHealthPickup::Serialize(FSerializer &arc)
 }
 
 // Backpack -----------------------------------------------------------------
+
+IMPLEMENT_CLASS(ABackpackItem, false, false, false, false)
+
+DEFINE_FIELD(ABackpackItem, bDepleted)
 
 //===========================================================================
 //
@@ -2033,7 +2056,6 @@ void ABackpackItem::DetachFromOwner ()
 //
 //===========================================================================
 
-IMPLEMENT_CLASS(ABackpackItem, false, false, false, false)
 IMPLEMENT_CLASS(AMapRevealer, false, false, false, false)
 
 //===========================================================================

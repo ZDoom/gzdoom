@@ -15,6 +15,15 @@ IMPLEMENT_CLASS(ABasicArmorPickup, false, false, false, false)
 IMPLEMENT_CLASS(ABasicArmorBonus, false, false, true, false)
 IMPLEMENT_CLASS(AHexenArmor, false, false, false, false)
 
+
+DEFINE_FIELD(ABasicArmor, AbsorbCount)
+DEFINE_FIELD(ABasicArmor, SavePercent)
+DEFINE_FIELD(ABasicArmor, MaxAbsorb)
+DEFINE_FIELD(ABasicArmor, MaxFullAbsorb)
+DEFINE_FIELD(ABasicArmor, BonusCount)
+DEFINE_FIELD(ABasicArmor, ArmorType)
+DEFINE_FIELD(ABasicArmor, ActualSaveAmount)
+
 //===========================================================================
 //
 // ABasicArmor :: Serialize
@@ -192,6 +201,11 @@ void ABasicArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 		Inventory->AbsorbDamage (damage, damageType, newdamage);
 	}
 }
+
+DEFINE_FIELD(ABasicArmorPickup, SavePercent)
+DEFINE_FIELD(ABasicArmorPickup, MaxAbsorb)
+DEFINE_FIELD(ABasicArmorPickup, MaxFullAbsorb)
+DEFINE_FIELD(ABasicArmorPickup, SaveAmount)
 
 //===========================================================================
 //
@@ -395,6 +409,10 @@ bool ABasicArmorBonus::Use (bool pickup)
 	armor->MaxAmount = MAX (armor->MaxAmount, MaxSaveAmount);
 	return true;
 }
+
+
+DEFINE_FIELD(AHexenArmor, Slots)
+DEFINE_FIELD(AHexenArmor, SlotsIncrement)
 
 //===========================================================================
 //

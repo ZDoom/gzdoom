@@ -286,7 +286,7 @@ public:
 	PClassPlayerPawn *PlayerClass;
 	PClassActor *MorphFlash, *UnMorphFlash;
 	int MorphStyle;
-	player_t *Player;
+	player_t *MorphedPlayer;
 	bool bInUndoMorph;	// Because P_UndoPlayerMorph() can call EndEffect recursively
 
 protected:

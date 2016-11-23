@@ -487,6 +487,12 @@ class PowerDoubleFiringSpeed : Powerup native {}
 
 class PowerMorph : Powerup native
 {
+	native Class<PlayerPawn> PlayerClass;
+	native Class<Actor> MorphFlash, UnMorphFlash;
+	native int MorphStyle;
+	native PlayerInfo MorphedPlayer;
+	native bool bInUndoMorph;
+
 	Default
 	{
 		Powerup.Duration -40;

@@ -618,6 +618,13 @@ void InitAllPowerupEffects(AInventory *item)
 
 IMPLEMENT_CLASS(AMorphProjectile, false, false, false, false)
 
+DEFINE_FIELD(AMorphProjectile, PlayerClass)
+DEFINE_FIELD(AMorphProjectile, MonsterClass)
+DEFINE_FIELD(AMorphProjectile, MorphFlash)
+DEFINE_FIELD(AMorphProjectile, UnMorphFlash)
+DEFINE_FIELD(AMorphProjectile, Duration)
+DEFINE_FIELD(AMorphProjectile, MorphStyle)
+
 int AMorphProjectile::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if (target->player)
@@ -651,6 +658,11 @@ IMPLEMENT_CLASS(AMorphedMonster, false, true, false, false)
 IMPLEMENT_POINTERS_START(AMorphedMonster)
 	IMPLEMENT_POINTER(UnmorphedMe)
 IMPLEMENT_POINTERS_END
+
+DEFINE_FIELD(AMorphedMonster, UnmorphedMe)
+DEFINE_FIELD(AMorphedMonster, UnmorphTime)
+DEFINE_FIELD(AMorphedMonster, MorphStyle)
+DEFINE_FIELD(AMorphedMonster, MorphExitFlash)
 
 void AMorphedMonster::Serialize(FSerializer &arc)
 {

@@ -1910,13 +1910,10 @@ void APowerMorph::InitEffect( )
 {
 	Super::InitEffect();
 
-	if (Owner != NULL && Owner->player != NULL && PlayerClass != NAME_None)
+	if (Owner != nullptr && Owner->player != nullptr && PlayerClass != nullptr)
 	{
 		player_t *realplayer = Owner->player;	// Remember the identity of the player
-		PClassActor *morph_flash = PClass::FindActor(MorphFlash);
-		PClassActor *unmorph_flash = PClass::FindActor(UnMorphFlash);
-		PClassPlayerPawn *player_class = dyn_cast<PClassPlayerPawn>(PClass::FindClass (PlayerClass));
-		if (P_MorphPlayer(realplayer, realplayer, player_class, -1/*INDEFINITELY*/, MorphStyle, morph_flash, unmorph_flash))
+		if (P_MorphPlayer(realplayer, realplayer, PlayerClass, -1/*INDEFINITELY*/, MorphStyle, MorphFlash, UnMorphFlash))
 		{
 			Owner = realplayer->mo;				// Replace the new owner in our owner; safe because we are not attached to anything yet
 			ItemFlags |= IF_CREATECOPYMOVED;	// Let the caller know the "real" owner has changed (to the morphed actor)
@@ -1960,7 +1957,7 @@ void APowerMorph::EndEffect( )
 	}
 
 	// Unmorph if possible
-	if (!bNoCallUndoMorph)
+	if (!bInUndoMorph)
 	{
 		int savedMorphTics = Player->morphTics;
 		P_UndoPlayerMorph (Player, Player, 0, !!(Player->MorphStyle & MORPH_UNDOALWAYS));

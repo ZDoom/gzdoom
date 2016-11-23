@@ -71,13 +71,14 @@
 #include "r_data/colormaps.h"
 #include "vmbuilder.h"
 
+extern TArray<PClassActor **> OptionalClassPtrs;
 
 //==========================================================================
 //
 // Gets a class pointer and performs an error check for correct type
 //
 //==========================================================================
-static PClassActor *FindClassTentative(const char *name, PClass *ancestor)
+static PClassActor *FindClassTentative(const char *name, PClass *ancestor, bool optional = false)
 {
 	// "" and "none" mean 'no class'
 	if (name == NULL || *name == 0 || !stricmp(name, "none"))
@@ -91,23 +92,27 @@ static PClassActor *FindClassTentative(const char *name, PClass *ancestor)
 	{
 		I_Error("%s does not inherit from %s\n", name, ancestor->TypeName.GetChars());
 	}
+	if (cls->Size == TentativeClass && optional)
+	{
+		cls->ObjectFlags |= OF_Transient;	// since this flag has no meaning in class types, let's use it for marking the type optional.
+	}
 	return static_cast<PClassActor *>(cls);
 }
-static AAmmo::MetaClass *FindClassTentativeAmmo(const char *name)
+static AAmmo::MetaClass *FindClassTentativeAmmo(const char *name, bool optional = false)
 {
-	return static_cast<AAmmo::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(AAmmo)));
+	return static_cast<AAmmo::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(AAmmo), optional));
 }
-static AWeapon::MetaClass *FindClassTentativeWeapon(const char *name)
+static AWeapon::MetaClass *FindClassTentativeWeapon(const char *name, bool optional = false)
 {
-	return static_cast<AWeapon::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(AWeapon)));
+	return static_cast<AWeapon::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(AWeapon), optional));
 }
-static APowerup::MetaClass *FindClassTentativePowerup(const char *name)
+static APowerup::MetaClass *FindClassTentativePowerup(const char *name, bool optional = false)
 {
-	return static_cast<APowerup::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(APowerup)));
+	return static_cast<APowerup::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(APowerup), optional));
 }
-static APlayerPawn::MetaClass *FindClassTentativePlayerPawn(const char *name)
+static APlayerPawn::MetaClass *FindClassTentativePlayerPawn(const char *name, bool optional = false)
 {
-	return static_cast<APlayerPawn::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(APlayerPawn)));
+	return static_cast<APlayerPawn::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(APlayerPawn), optional));
 }
 
 //==========================================================================
@@ -2984,21 +2989,23 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, viewbob, F, PlayerPawn)
 }
 
 //==========================================================================
-//
+// (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(playerclass, S, MorphProjectile)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->PlayerClass = FName(str);
+	defaults->PlayerClass = FindClassTentativePlayerPawn(str, bag.fromDecorate);
+	if (bag.fromDecorate) OptionalClassPtrs.Push((PClassActor**)&defaults->PlayerClass);
 }
 
 //==========================================================================
-//
+// (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(monsterclass, S, MorphProjectile)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->MonsterClass = FName(str);
+	defaults->MonsterClass = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+	if (bag.fromDecorate) OptionalClassPtrs.Push(&defaults->MonsterClass);
 }
 
 //==========================================================================
@@ -3020,12 +3027,13 @@ DEFINE_CLASS_PROPERTY(morphstyle, M, MorphProjectile)
 }
 
 //==========================================================================
-//
+// (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(morphflash, S, MorphProjectile)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->MorphFlash = FName(str);
+	defaults->MorphFlash = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+	if (bag.fromDecorate) OptionalClassPtrs.Push(&defaults->MorphFlash);
 }
 
 //==========================================================================
@@ -3034,16 +3042,18 @@ DEFINE_CLASS_PROPERTY(morphflash, S, MorphProjectile)
 DEFINE_CLASS_PROPERTY(unmorphflash, S, MorphProjectile)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->UnMorphFlash = FName(str);
+	defaults->UnMorphFlash = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+	if (bag.fromDecorate) OptionalClassPtrs.Push(&defaults->UnMorphFlash);
 }
 
 //==========================================================================
-//
+// (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(playerclass, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->PlayerClass = FName(str);
+	defaults->PlayerClass = FindClassTentativePlayerPawn(str, bag.fromDecorate);
+	if (bag.fromDecorate) OptionalClassPtrs.Push((PClassActor**)&defaults->PlayerClass);
 }
 
 //==========================================================================
@@ -3056,21 +3066,23 @@ DEFINE_CLASS_PROPERTY(morphstyle, M, PowerMorph)
 }
 
 //==========================================================================
-//
+// (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(morphflash, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->MorphFlash = FName(str);
+	defaults->MorphFlash = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+	if (bag.fromDecorate) OptionalClassPtrs.Push(&defaults->MorphFlash);
 }
 
 //==========================================================================
-//
+// (non-fatal with non-existent types only in DECORATE)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(unmorphflash, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->UnMorphFlash = FName(str);
+	defaults->UnMorphFlash = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+	if (bag.fromDecorate) OptionalClassPtrs.Push(&defaults->UnMorphFlash);
 }
 
 

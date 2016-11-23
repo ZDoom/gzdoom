@@ -3298,6 +3298,7 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 				// see if we can reuse the existing class. This is only possible if the inheritance is identical. Otherwise it needs to be replaced.
 				if (this == existclass->ParentClass)
 				{
+					existclass->ObjectFlags &= OF_Transient;
 					return existclass;
 				}
 			}

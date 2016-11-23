@@ -620,17 +620,13 @@ IMPLEMENT_CLASS(AMorphProjectile, false, false, false, false)
 
 int AMorphProjectile::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
-	PClassActor *morph_flash = PClass::FindActor(MorphFlash);
-	PClassActor *unmorph_flash = PClass::FindActor(UnMorphFlash);
 	if (target->player)
 	{
-		PClassPlayerPawn *player_class = dyn_cast<PClassPlayerPawn>(PClass::FindClass(PlayerClass));
-		P_MorphPlayer (NULL, target->player, player_class, Duration, MorphStyle, morph_flash, unmorph_flash);
+		P_MorphPlayer (NULL, target->player, PlayerClass, Duration, MorphStyle, MorphFlash, UnMorphFlash);
 	}
 	else
 	{
-		PClassActor *monster_class = PClass::FindActor(MonsterClass);
-		P_MorphMonster (target, monster_class, Duration, MorphStyle, morph_flash, unmorph_flash);
+		P_MorphMonster (target, MonsterClass, Duration, MorphStyle, MorphFlash, UnMorphFlash);
 	}
 	return -1;
 }

@@ -192,7 +192,8 @@ public:
 	
 	void Serialize(FSerializer &arc);
 
-	FNameNoInit	PlayerClass, MonsterClass, MorphFlash, UnMorphFlash;
+	PClassPlayerPawn *PlayerClass;
+	PClassActor *MonsterClass, *MorphFlash, *UnMorphFlash;
 	int Duration, MorphStyle;
 };
 

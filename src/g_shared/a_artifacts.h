@@ -280,13 +280,14 @@ class APowerMorph : public APowerup
 public:
 	
 	virtual void Serialize(FSerializer &arc);
-	void SetNoCallUndoMorph() { bNoCallUndoMorph = true; }
+	void SetNoCallUndoMorph() { bInUndoMorph = true; }
 
 	// Variables
-	FNameNoInit	PlayerClass, MorphFlash, UnMorphFlash;
+	PClassPlayerPawn *PlayerClass;
+	PClassActor *MorphFlash, *UnMorphFlash;
 	int MorphStyle;
 	player_t *Player;
-	bool bNoCallUndoMorph;	// Because P_UndoPlayerMorph() can call EndEffect recursively
+	bool bInUndoMorph;	// Because P_UndoPlayerMorph() can call EndEffect recursively
 
 protected:
 	void InitEffect ();

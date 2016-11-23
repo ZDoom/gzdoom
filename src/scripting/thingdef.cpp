@@ -68,6 +68,7 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 void InitThingdef();
+TArray<PClassActor **> OptionalClassPtrs;
 
 // STATIC FUNCTION PROTOTYPES --------------------------------------------
 PClassActor *QuestItemClasses[31];
@@ -390,8 +391,21 @@ void LoadActors ()
 	{
 		if (ti->Size == TentativeClass)
 		{
-			Printf(TEXTCOLOR_RED "Class %s referenced but not defined\n", ti->TypeName.GetChars());
-			FScriptPosition::ErrorCounter++;
+			if (ti->ObjectFlags & OF_Transient)
+			{
+				Printf(TEXTCOLOR_ORANGE "Class %s referenced but not defined\n", ti->TypeName.GetChars());
+				FScriptPosition::WarnCounter++;
+				DObject::StaticPointerSubstitution(ti, nullptr);
+				for (auto op : OptionalClassPtrs)
+				{
+					if (*op == ti) *op = nullptr;
+				}
+			}
+			else
+			{
+				Printf(TEXTCOLOR_RED "Class %s referenced but not defined\n", ti->TypeName.GetChars());
+				FScriptPosition::ErrorCounter++;
+			}
 			continue;
 		}
 
@@ -431,4 +445,6 @@ void LoadActors ()
 		QuestItemClasses[i] = PClass::FindActor(fmt);
 	}
 	StateSourceLines.Clear();
+	OptionalClassPtrs.Clear();
+	OptionalClassPtrs.ShrinkToFit();
 }

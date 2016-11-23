@@ -466,3 +466,34 @@ ZCC_TreeNode *ZCCParseState::InitNode(size_t size, EZCCTreeNodeType type)
 	node->SourceLump = sc->LumpNum;
 	return node;
 }
+
+// Appends a sibling to this node's sibling list.
+void AppendTreeNodeSibling(ZCC_TreeNode *thisnode, ZCC_TreeNode *sibling)
+{
+		if (thisnode == nullptr)
+		{
+			// Some bad syntax can actually get here, so better abort so that the user can see the error which caused this.
+			I_FatalError("Internal script compiler error. Execution aborted.");
+		}
+		if (sibling == nullptr)
+		{
+			return;
+		}
+
+		ZCC_TreeNode *&SiblingPrev = thisnode->SiblingPrev;
+		ZCC_TreeNode *&SiblingNext = thisnode->SiblingNext;
+
+		// Check integrity of our sibling list.
+		assert(SiblingPrev->SiblingNext == thisnode);
+		assert(SiblingNext->SiblingPrev == thisnode);
+
+		// Check integrity of new sibling list.
+		assert(sibling->SiblingPrev->SiblingNext == sibling);
+		assert(sibling->SiblingNext->SiblingPrev == sibling);
+
+		ZCC_TreeNode *siblingend = sibling->SiblingPrev;
+		SiblingPrev->SiblingNext = sibling;
+		sibling->SiblingPrev = SiblingPrev;
+		SiblingPrev = siblingend;
+		siblingend->SiblingNext = thisnode;
+}

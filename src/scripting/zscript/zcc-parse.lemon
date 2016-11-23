@@ -22,7 +22,7 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 
 // If a is non-null, appends b to a. Otherwise, sets a to b.
 #define SAFE_APPEND(a,b) \
-	if (a == NULL) a = b; else a->AppendSibling(b);
+	if (a == NULL) a = b; else AppendTreeNodeSibling(a, b);
 
 #define UNARY_EXPR(X,T) NEW_AST_NODE(ExprUnary, expr1, X); expr1->Operation = T; expr1->Operand = X; expr1->Type = NULL
 #define BINARY_EXPR(X,Y,T) NEW_AST_NODE(ExprBinary, expr2, X); expr2->Operation = T; expr2->Type = NULL; expr2->Left = X; expr2->Right = Y
@@ -221,14 +221,14 @@ dottable_id(X) ::= dottable_id(A) DOT IDENTIFIER(B).
 {
 	NEW_AST_NODE(Identifier,id2,A);
 	id2->Id = B.Name();
-	A->AppendSibling(id2);
+	AppendTreeNodeSibling(A, id2);
 	X = A; /*X-overwrites-A*/
 }
 dottable_id(X) ::= dottable_id(A) DOT DEFAULT.
 {
 	NEW_AST_NODE(Identifier,id2,A);
 	id2->Id = NAME_Default;
-	A->AppendSibling(id2);
+	AppendTreeNodeSibling(A, id2);
 	X = A; /*X-overwrites-A*/
 }
 
@@ -239,7 +239,7 @@ dottable_id(X) ::= dottable_id(A) DOT COLOR.
 {
 	NEW_AST_NODE(Identifier,id2,A);
 	id2->Id = NAME_Color;
-	A->AppendSibling(id2);
+	AppendTreeNodeSibling(A, id2);
 	X = A; /*X-overwrites-A*/
 }
 
@@ -299,7 +299,7 @@ opt_struct_body(X) ::= error.							{ X = NULL; }
 
 
 struct_body(X) ::= struct_member(X).
-struct_body(X) ::= struct_member(A) struct_body(B).		{ X = A; /*X-overwrites-A*/ X->AppendSibling(B); }
+struct_body(X) ::= struct_member(A) struct_body(B).		{ X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
 
 struct_member(X) ::= declarator(A).						{ X = A; /*X-overwrites-A*/ }
 struct_member(X) ::= enum_def(A).						{ X = A; /*X-overwrites-A*/ }
@@ -375,11 +375,11 @@ enum_def(X) ::= ENUM(T) IDENTIFIER(A) enum_type(B) LBRACE opt_enum_list(C) RBRAC
 		}
 		// Add a new terminating node, to indicate that the ConstantDefs for this enum are done.
 		NEW_AST_NODE(EnumTerminator,term,U);
-		C->AppendSibling(term);
+		AppendTreeNodeSibling(C, term);
 	}
 	if (C != NULL)
 	{
-		def->AppendSibling(C);
+		AppendTreeNodeSibling(def, C);
 	}
 	X = def;
 }
@@ -389,7 +389,7 @@ enum_type(X) ::= COLON int_type(A).						{ X = A; /*X-overwrites-A*/ }
 
 enum_list(X) ::= error.									{ X = NULL; }
 enum_list(X) ::= enumerator(X).
-enum_list(X) ::= enum_list(A) COMMA enumerator(B).		{ X = A; /*X-overwrites-A*/ X->AppendSibling(B); }
+enum_list(X) ::= enum_list(A) COMMA enumerator(B).		{ X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
 
 opt_enum_list(X) ::= .									{ X = NULL; }
 opt_enum_list(X) ::= enum_list(X) opt_comma.
@@ -450,7 +450,7 @@ states_opt(X) ::= states_opt(A) COMMA IDENTIFIER(B).
 	NEW_AST_NODE(Identifier,id,B);
 	id->Id = B.Name();
 	X = A; /*X-overwrites-A*/
-	X->AppendSibling(id);
+	AppendTreeNodeSibling(X, id);
 }
 
 
@@ -545,7 +545,7 @@ state_opts(X) ::= state_opts(A) FAST.								{ A.Fast = true; X = A; /*X-overwri
 state_opts(X) ::= state_opts(A) SLOW.								{ A.Slow = true; X = A; /*X-overwrites-A*/ }
 state_opts(X) ::= state_opts(A) NODELAY.							{ A.NoDelay = true; X = A; /*X-overwrites-A*/ }
 state_opts(X) ::= state_opts(A) CANRAISE.							{ A.CanRaise = true; X = A; /*X-overwrites-A*/ }
-state_opts(X) ::= state_opts(A) OFFSET LPAREN expr(B) COMMA expr(C) RPAREN.	{ A.Offset = B; B->AppendSibling(C); X = A; /*X-overwrites-A*/ }
+state_opts(X) ::= state_opts(A) OFFSET LPAREN expr(B) COMMA expr(C) RPAREN.	{ A.Offset = B; AppendTreeNodeSibling(B, C); X = A; /*X-overwrites-A*/ }
 state_opts(X) ::= state_opts(A) LIGHT LPAREN light_list(B) RPAREN.		{ X = A; /*X-overwrites-A*/ X.Lights = B; }
 
 %type light_list {ZCC_ExprConstant *}
@@ -565,7 +565,7 @@ light_list(X) ::= light_list(A) COMMA STRCONST(B).
 	strconst->Operation = PEX_ConstValue;
 	strconst->Type = TypeString;
 	strconst->StringVal = B.String;
-	A->AppendSibling(strconst); 
+	AppendTreeNodeSibling(A, strconst); 
 	X = A; /*X-overwrites-A*/
 }
 
@@ -783,7 +783,7 @@ type_or_array(X) ::= type(X).
 type_or_array(X) ::= type(A) array_size(B).	{ X = A; /*X-overwrites-A*/ X->ArraySize = B; }
 
 type_list(X) ::= type_or_array(X).			/* A comma-separated list of types */
-type_list(X) ::= type_list(A) COMMA type_or_array(B). { X = A; /*X-overwrites-A*/ X->AppendSibling(B); }
+type_list(X) ::= type_list(A) COMMA type_or_array(B). { X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
 
 type_list_or_void(X) ::= VOID.				{ X = NULL; }
 type_list_or_void(X) ::= type_list(X).
@@ -805,7 +805,7 @@ array_size_expr(X) ::= LBRACKET(L) opt_expr(A) RBRACKET.
 array_size(X) ::= array_size_expr(X).
 array_size(X) ::= array_size(A) array_size_expr(B).
 {
-	A->AppendSibling(B);
+	AppendTreeNodeSibling(A, B);
 	X = A; /*X-overwrites-A*/
 }
 
@@ -911,7 +911,7 @@ variable_name(X) ::= IDENTIFIER(A) array_size(B).
 variable_list(X) ::= variable_name(X).
 variable_list(X) ::= variable_list(A) COMMA variable_name(B).
 {
-	A->AppendSibling(B);
+	AppendTreeNodeSibling(A, B);
 	X = A; /*X-overwrites-A*/
 }
 
@@ -984,11 +984,11 @@ func_params(X) ::= func_param_list(A) COMMA ELLIPSIS.
 	parm->Flags = 0;
 	parm->Default = nullptr;
 	X = A; /*X-overwrites-A*/ 
-	X->AppendSibling(parm);
+	AppendTreeNodeSibling(X, parm);
 }
 
 func_param_list(X) ::= func_param(X).
-func_param_list(X) ::= func_param_list(A) COMMA func_param(B).	{ X = A; /*X-overwrites-A*/ X->AppendSibling(B); }
+func_param_list(X) ::= func_param_list(A) COMMA func_param(B).	{ X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
 
 func_param(X) ::= func_param_flags(A) type(B) IDENTIFIER(C).
 {
@@ -1422,7 +1422,7 @@ expr_list(X) ::= expr(X).
 expr_list(X) ::= expr_list(A) COMMA expr(B).
 {
 	X = A;	/*X-overwrites-A*/
-	X->AppendSibling(B);
+	AppendTreeNodeSibling(X, B);
 }
 
 /*----- Function argument lists -----*/
@@ -1453,7 +1453,7 @@ func_expr_list(X) ::= func_expr_list(A) COMMA(T) func_expr_item(B).
 		B = nil_b;
 	}
 	X = A;	/*X-overwrites-A*/
-	X->AppendSibling(B);
+	AppendTreeNodeSibling(X, B);
 }
 
 func_expr_item(X) ::= .
@@ -1877,6 +1877,6 @@ var_init(X) ::= IDENTIFIER EQ  LBRACE error RBRACE.
 variable_list_with_init(X) ::= var_init(X).
 variable_list_with_init(X) ::= variable_list_with_init(A) COMMA var_init(B).
 {
-	A->AppendSibling(B);
+	AppendTreeNodeSibling(A, B);
 	X = A; /*X-overwrites-A*/
 }

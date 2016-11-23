@@ -161,40 +161,14 @@ struct ZCC_TreeNode
 	// one of the structures below.
 	EZCCTreeNodeType NodeType;
 
-	// Appends a sibling to this node's sibling list.
-	void AppendSibling(ZCC_TreeNode *sibling)
-	{
-		if (this == nullptr)
-		{
-			// Some bad syntax can actually get here, so better abort so that the user can see the error which caused this.
-			I_FatalError("Internal script compiler error. Execution aborted.");
-		}
-		if (sibling == NULL)
-		{
-			return;
-		}
-
-		// Check integrity of our sibling list.
-		assert(SiblingPrev->SiblingNext == this);
-		assert(SiblingNext->SiblingPrev == this);
-
-		// Check integrity of new sibling list.
-		assert(sibling->SiblingPrev->SiblingNext == sibling);
-		assert(sibling->SiblingNext->SiblingPrev == sibling);
-
-		ZCC_TreeNode *siblingend = sibling->SiblingPrev;
-		SiblingPrev->SiblingNext = sibling;
-		sibling->SiblingPrev = SiblingPrev;
-		SiblingPrev = siblingend;
-		siblingend->SiblingNext = this;
-	}
-
 	operator FScriptPosition()
 	{
 		return FScriptPosition(*SourceName, SourceLoc);
 	}
 
 };
+
+void AppendTreeNodeSibling(ZCC_TreeNode *thisnode, ZCC_TreeNode *sibling);
 
 struct ZCC_Identifier : ZCC_TreeNode
 {

@@ -7115,6 +7115,23 @@ DEFINE_ACTION_FUNCTION(AActor, AngleTo)
 	ACTION_RETURN_FLOAT(self->AngleTo(targ, absolute).Degrees);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, AngleToVector)
+{
+	PARAM_PROLOGUE;
+	PARAM_ANGLE(angle);
+	PARAM_FLOAT_DEF(length);
+	ACTION_RETURN_VEC2(angle.ToVector(length));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, RotateVector)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_ANGLE(angle);
+	ACTION_RETURN_VEC2(DVector2(x, y).Rotated(angle));
+}
+
 DEFINE_ACTION_FUNCTION(AActor, DistanceBySpeed)
 {
 	PARAM_SELF_PROLOGUE(AActor);

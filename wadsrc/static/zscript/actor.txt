@@ -4,6 +4,8 @@ class Actor : Thinker native
 	const ONFLOORZ = -2147483648.0;
 	const ONCEILINGZ = 2147483647.0;
 	const FLOATRANDZ = ONCEILINGZ-1;
+	const TELEFRAG_DAMAGE = 1000000;
+
 
 	// flags are not defined here, the native fields for those get synthesized from the internal tables.
 	
@@ -215,6 +217,13 @@ class Actor : Thinker native
 
 	// Functions
 
+	// 'parked' global functions.
+	native static double deltaangle(double ang1, double ang2);
+	native static double absangle(double ang1, double ang2);
+	native static Vector2 AngleToVector(double angle, double length = 1);
+	native static Vector2 RotateVector(Vector2 vec, double angle);
+	
+
 	bool IsPointerEqual(int ptr_select1, int ptr_select2)
 	{
 		return GetPointer(ptr_select1) == GetPointer(ptr_select2);
@@ -231,8 +240,6 @@ class Actor : Thinker native
 
 	native void AdjustPlayerAngle(FTranslatedLineTarget t);
 	native static readonly<Actor> GetDefaultByType(class<Actor> cls);
-	native static double deltaangle(double ang1, double ang2);
-	native static double absangle(double ang1, double ang2);
 	native static double GetDefaultSpeed(class<Actor> type);
 	native void RemoveFromHash();
 	native string GetTag(string defstr = "");

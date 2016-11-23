@@ -75,54 +75,6 @@
 #include <time.h>
 #include <zlib.h>
 
-#if defined(_WIN64) && defined(__GNUC__)
-struct KNONVOLATILE_CONTEXT_POINTERS {
-    union {
-        PDWORD64 IntegerContext[16];
-        struct {
-            PDWORD64 Rax;
-            PDWORD64 Rcx;
-            PDWORD64 Rdx;
-            PDWORD64 Rbx;
-            PDWORD64 Rsp;
-            PDWORD64 Rbp;
-            PDWORD64 Rsi;
-            PDWORD64 Rdi;
-            PDWORD64 R8;
-            PDWORD64 R9;
-            PDWORD64 R10;
-            PDWORD64 R11;
-            PDWORD64 R12;
-            PDWORD64 R13;
-            PDWORD64 R14;
-            PDWORD64 R15;
-        };
-    };
-};
-typedef
-EXCEPTION_DISPOSITION
-NTAPI
-EXCEPTION_ROUTINE (
-    struct _EXCEPTION_RECORD *ExceptionRecord,
-    PVOID EstablisherFrame,
-    struct _CONTEXT *ContextRecord,
-    PVOID DispatcherContext
-    );
-NTSYSAPI
-EXCEPTION_ROUTINE *
-NTAPI
-RtlVirtualUnwind (
-    DWORD HandlerType,
-    DWORD64 ImageBase,
-    DWORD64 ControlPc,
-    PRUNTIME_FUNCTION FunctionEntry,
-    PCONTEXT ContextRecord,
-    PVOID *HandlerData,
-    PDWORD64 EstablisherFrame,
-    KNONVOLATILE_CONTEXT_POINTERS *ContextPointers
-    );
-#endif
-
 // MACROS ------------------------------------------------------------------
 
 #define REMOTE_HOST		"localhost"

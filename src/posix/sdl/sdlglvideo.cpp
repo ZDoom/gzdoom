@@ -52,7 +52,7 @@ EXTERN_CVAR (Int, vid_renderer)
 EXTERN_CVAR (Int, vid_maxfps)
 EXTERN_CVAR (Bool, cl_capfps)
 
-DFrameBuffer *CreateGLSWFrameBuffer(int width, int height, bool fullscreen);
+DFrameBuffer *CreateGLSWFrameBuffer(int width, int height, bool bgra, bool fullscreen);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -200,7 +200,7 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 	if (vid_renderer == 1)
 		fb = new OpenGLFrameBuffer (0, width, height, 32, 60, fullscreen);
 	else
-		fb = (SDLGLFB*)CreateGLSWFrameBuffer (width, height, fullscreen);
+		fb = (SDLGLFB*)CreateGLSWFrameBuffer (width, height, bgra, fullscreen);
 
 	retry = 0;
 	

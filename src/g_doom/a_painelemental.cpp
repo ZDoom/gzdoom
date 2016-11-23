@@ -62,84 +62,86 @@ void A_PainShootSkull (VMFrameStack *stack, AActor *self, DAngle Angle, PClassAc
 	}
 
 	// okay, there's room for another one
-	prestep = 4 + (self->radius + GetDefaultByType(spawntype)->radius) * 1.5;
+	double otherradius = GetDefaultByType(spawntype)->radius;
+	prestep = 4 + (self->radius + otherradius) * 1.5;
 
-	// NOTE: The following code contains some advance work for line-to-line portals which is currenty inactive.
+	DVector2 move = Angle.ToVector(prestep);
+	DVector3 spawnpos = self->PosPlusZ(8.0);
+	DVector3 destpos = spawnpos + move;
 
-	DVector2 dist = Angle.ToVector(prestep);
-	DVector3 pos = self->Vec3Offset(dist.X, dist.Y, 8., true);
-	DVector3 src = self->Pos();
+	other = Spawn(spawntype, spawnpos, ALLOW_REPLACE);
 
-	for (int i = 0; i < 2; i++)
+	// Now check if the spawn is legal. Unlike Boom's hopeless attempt at fixing it, let's do it the same way
+	// P_XYMovement solves the line skipping: Spawn the Lost Soul near the PE's center and then use multiple
+	// smaller steps to get it to its intended position. This will also result in proper clipping, but
+	// it will avoid all the problems of the Boom method, which checked too many lines and despite some
+	// adjustments never worked with portals.
+
+	if (other != nullptr)
 	{
-		// Check whether the Lost Soul is being fired through a 1-sided	// phares
-		// wall or an impassible line, or a "monsters can't cross" line.//   |
-		// If it is, then we don't allow the spawn.						//   V
+		double maxmove = other->radius - 1;
 
-		FBoundingBox box(MIN(src.X, pos.X), MIN(src.Y, pos.Y), MAX(src.X, pos.X), MAX(src.Y, pos.Y));
-		FBlockLinesIterator it(box);
-		line_t *ld;
-		bool inportal = false;
+		if (maxmove <= 0) maxmove = MAXMOVE;
 
-		while ((ld = it.Next()))
+		const double xspeed = fabs(move.X);
+		const double yspeed = fabs(move.Y);
+
+		int steps = 1;
+
+		if (xspeed > yspeed)
 		{
-			if (ld->isLinePortal() && i == 0)
+			if (xspeed > maxmove)
 			{
-				if (P_PointOnLineSidePrecise(src, ld) == 0 &&
-					P_PointOnLineSidePrecise(pos, ld) == 1)
-				{
-					// crossed a portal line from front to back, we need to repeat the check on the other side as well.
-					inportal = true;
-				}
-			}
-			else if (!(ld->flags & ML_TWOSIDED) ||
-				(ld->flags & (ML_BLOCKING | ML_BLOCKMONSTERS | ML_BLOCKEVERYTHING)))
-			{
-				if (box.inRange(ld))
-				{
-					if (P_PointOnLineSidePrecise(src, ld) != P_PointOnLineSidePrecise(pos, ld))
-						return;  // line blocks trajectory				//   ^
-				}
+				steps = int(1 + xspeed / maxmove);
 			}
 		}
-		if (!inportal) break;
+		else
+		{
+			if (yspeed > maxmove)
+			{
+				steps = int(1 + yspeed / maxmove);
+			}
+		}
 
-		// recalculate position and redo the check on the other side of the portal
-		pos = self->Vec3Offset(dist.X, dist.Y, 8.);
-		src.X = pos.X - dist.X;
-		src.Y = pos.Y - dist.Y;
+		DVector2 stepmove = move / steps;
+		self->flags &= ~MF_SOLID;	// make it solid again
+		other->flags2 |= MF2_NOTELEPORT;	// we do not want the LS to teleport
+		for (int i = 0; i < steps; i++)
+		{
+			DVector2 ptry = other->Pos().XY() + stepmove;
+			DAngle oldangle = other->Angles.Yaw;
+			if (!P_TryMove(other, ptry, 0, nullptr))
+			{
+				// kill it immediately
+				other->ClearCounters();
+				P_DamageMobj(other, self, self, TELEFRAG_DAMAGE, NAME_None);
+				return;
+			}
 
-	}
+			if (other->Pos().XY() != ptry)
+			{
+				// If the new position does not match the desired position, the player
+				// must have gone through a portal.
+				// For that we need to adjust the movement vector for the following steps.
+				DAngle anglediff = deltaangle(oldangle, other->Angles.Yaw);
 
-	other = Spawn (spawntype, pos, ALLOW_REPLACE);
+				if (anglediff != 0)
+				{
+					stepmove = stepmove.Rotated(anglediff);
+				}
+			}
 
-	// Check to see if the new Lost Soul's z value is above the
-	// ceiling of its new sector, or below the floor. If so, kill it.
+		}
+		self->flags |= MF_SOLID;	// don't let the LS be stuck in the PE while checking the move
 
-	if (other->Top() > other->Sector->HighestCeilingAt(other) ||
-        other->Z() < other->Sector->LowestFloorAt(other))
-	{
-		// kill it immediately
-		P_DamageMobj (other, self, self, TELEFRAG_DAMAGE, NAME_None);//  ^
-		return;														//   |
-	}																// phares
+		// [RH] Lost souls hate the same things as their pain elementals
+		other->CopyFriendliness (self, !(flags & PAF_NOTARGET));
 
-	// Check for movements.
-
-	if (!P_CheckPosition (other, other->Pos()))
-	{
-		// kill it immediately
-		P_DamageMobj (other, self, self, TELEFRAG_DAMAGE, NAME_None);		
-		return;
-	}
-
-	// [RH] Lost souls hate the same things as their pain elementals
-	other->CopyFriendliness (self, !(flags & PAF_NOTARGET));
-
-	if (!(flags & PAF_NOSKULLATTACK))
-	{
-		DECLARE_VMFUNC(AActor, A_SkullAttack);
-		CallAction(stack, A_SkullAttack, other);
+		if (!(flags & PAF_NOSKULLATTACK))
+		{
+			DECLARE_VMFUNC(AActor, A_SkullAttack);
+			CallAction(stack, A_SkullAttack, other);
+		}
 	}
 }
 

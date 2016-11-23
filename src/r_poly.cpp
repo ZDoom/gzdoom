@@ -67,14 +67,21 @@ void RenderPolyScene::ClearBuffers()
 
 void RenderPolyScene::SetSceneViewport()
 {
-	int height;
-	if (screenblocks >= 10)
-		height = SCREENHEIGHT;
-	else
-		height = (screenblocks*SCREENHEIGHT / 10) & ~7;
+	if (RenderTarget == screen) // Rendering to screen
+	{
+		int height;
+		if (screenblocks >= 10)
+			height = SCREENHEIGHT;
+		else
+			height = (screenblocks*SCREENHEIGHT / 10) & ~7;
 
-	int bottom = SCREENHEIGHT - (height + viewwindowy - ((height - viewheight) / 2));
-	PolyTriangleDrawer::set_viewport(viewwindowx, SCREENHEIGHT - bottom - height, viewwidth, height, RenderTarget);
+		int bottom = SCREENHEIGHT - (height + viewwindowy - ((height - viewheight) / 2));
+		PolyTriangleDrawer::set_viewport(viewwindowx, SCREENHEIGHT - bottom - height, viewwidth, height, RenderTarget);
+	}
+	else // Rendering to camera texture
+	{
+		PolyTriangleDrawer::set_viewport(0, 0, RenderTarget->GetWidth(), RenderTarget->GetHeight(), RenderTarget);
+	}
 }
 
 void RenderPolyScene::SetupPerspectiveMatrix()

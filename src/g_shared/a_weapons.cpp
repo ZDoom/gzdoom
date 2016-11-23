@@ -868,6 +868,8 @@ FState *AWeapon::GetStateForButtonName (FName button)
 
 IMPLEMENT_CLASS(AWeaponGiver, false, false, false, false)
 
+DEFINE_FIELD(AWeaponGiver, DropAmmoFactor);
+
 void AWeaponGiver::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);

@@ -143,6 +143,7 @@ protected:
 	void Tick ();
 	void EndEffect ();
 
+private:
 	bool HitCenterFrame;
 };
 
@@ -281,15 +282,15 @@ public:
 	virtual void Serialize(FSerializer &arc);
 	void SetNoCallUndoMorph() { bNoCallUndoMorph = true; }
 
+	// Variables
 	FNameNoInit	PlayerClass, MorphFlash, UnMorphFlash;
 	int MorphStyle;
+	player_t *Player;
+	bool bNoCallUndoMorph;	// Because P_UndoPlayerMorph() can call EndEffect recursively
 
 protected:
 	void InitEffect ();
 	void EndEffect ();
-	// Variables
-	player_t *Player;
-	bool bNoCallUndoMorph;	// Because P_UndoPlayerMorph() can call EndEffect recursively
 };
 
 #endif //__A_ARTIFACTS_H__

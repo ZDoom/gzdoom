@@ -1801,6 +1801,8 @@ bool AHealth::TryPickup (AActor *&other)
 
 IMPLEMENT_CLASS(AHealthPickup, false, false, false, false)
 
+DEFINE_FIELD(AHealthPickup, autousemode)
+
 //===========================================================================
 //
 // AHealthPickup :: CreateCopy

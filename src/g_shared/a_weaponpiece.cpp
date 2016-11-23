@@ -6,6 +6,9 @@
 IMPLEMENT_CLASS(PClassWeaponPiece, false, false, false, false)
 IMPLEMENT_CLASS(AWeaponHolder, false, false, false, false)
 
+DEFINE_FIELD(AWeaponHolder, PieceMask);
+DEFINE_FIELD(AWeaponHolder, PieceWeapon);
+
 void PClassWeaponPiece::ReplaceClassRef(PClass *oldclass, PClass *newclass)
 {
 	Super::ReplaceClassRef(oldclass, newclass);

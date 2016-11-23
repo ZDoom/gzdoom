@@ -204,6 +204,8 @@ class Health : Inventory native
 
 class HealthPickup : Inventory native 
 {
+	native int autousemode;
+
 	Default
 	{
 		Inventory.DefMaxAmount;
@@ -213,6 +215,8 @@ class HealthPickup : Inventory native
 
 class Key : Inventory native
 {
+	native uint8 KeyNumber;
+
 	Default
 	{
 		+DONTGIB;		// Don't disappear due to a crusher
@@ -223,6 +227,13 @@ class Key : Inventory native
 
 class PowerupGiver : Inventory native
 {
+	
+	native Class<Actor> PowerupType;
+	native int EffectTics;		// Non-0 to override the powerup's default tics
+	native color BlendColor;	// Non-0 to override the powerup's default blend
+	native Name Mode;			// Meaning depends on powerup - used for Invulnerability and Invisibility
+	native double Strength;		// Meaning depends on powerup - currently used only by Invisibility
+	
 	Default
 	{
 		Inventory.DefMaxAmount;
@@ -232,7 +243,13 @@ class PowerupGiver : Inventory native
 	}
 }
 
-class Powerup : Inventory native {}
+class Powerup : Inventory native 
+{
+	native int EffectTics;	
+	native color BlendColor;
+	native Name Mode;			// Meaning depends on powerup - used for Invulnerability and Invisibility
+	native double Strength;		// Meaning depends on powerup - currently used only by Invisibility
+}
 
 class PowerInvulnerable : Powerup native
 {
@@ -337,6 +354,8 @@ class PowerWeaponLevel2 : Powerup native
 
 class PowerSpeed : Powerup native
 {
+	native int SpeedFlags;
+
 	Default
 	{
 		Powerup.Duration -45;
@@ -348,7 +367,7 @@ class PowerSpeed : Powerup native
 
 // Player Speed Trail (used by the Speed Powerup) ----------------------------
 
-class PlayerSpeedTrail native
+class PlayerSpeedTrail : Actor
 {
 	Default
 	{
@@ -356,6 +375,15 @@ class PlayerSpeedTrail native
 		+NOGRAVITY
 		Alpha 0.6;
 		RenderStyle "Translucent";
+	}
+	
+	override void Tick()
+	{
+		Alpha -= .6 / 8;
+		if (Alpha <= 0)
+		{
+			Destroy ();
+		}
 	}
 }
 
@@ -477,6 +505,8 @@ class MapRevealer : Inventory native {}
 
 class PuzzleItem : Inventory native 
 {
+	native int PuzzleItemNumber;
+
 	Default
 	{
 		+NOGRAVITY
@@ -549,6 +579,9 @@ class Weapon : StateProvider native
 
 class WeaponGiver : Weapon native
 {
+	
+	native double DropAmmoFactor;
+	
 	Default
 	{
 		Weapon.AmmoGive1 -1;
@@ -558,6 +591,9 @@ class WeaponGiver : Weapon native
 
 class WeaponHolder : Inventory native
 {
+	native int PieceMask;
+	native Class<Actor> PieceWeapon;
+	
 	Default
 	{
 		+NOBLOCKMAP

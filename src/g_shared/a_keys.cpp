@@ -472,6 +472,8 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 
 IMPLEMENT_CLASS(AKey, false, false, false, false)
 
+DEFINE_FIELD(AKey, KeyNumber)
+
 bool AKey::HandlePickup (AInventory *item)
 {
 	// In single player, you can pick up an infinite number of keys

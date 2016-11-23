@@ -56,6 +56,13 @@ void PClassPowerupGiver::ReplaceClassRef(PClass *oldclass, PClass *newclass)
 	}
 }
 
+
+DEFINE_FIELD(APowerupGiver, PowerupType)
+DEFINE_FIELD(APowerupGiver, EffectTics)
+DEFINE_FIELD(APowerupGiver, BlendColor)
+DEFINE_FIELD(APowerupGiver, Mode)
+DEFINE_FIELD(APowerupGiver, Strength)
+
 //===========================================================================
 //
 // APowerupGiver :: Use
@@ -113,6 +120,11 @@ void APowerupGiver::Serialize(FSerializer &arc)
 }
 
 // Powerup -------------------------------------------------------------------
+
+DEFINE_FIELD(APowerup, EffectTics)
+DEFINE_FIELD(APowerup, BlendColor)
+DEFINE_FIELD(APowerup, Mode)
+DEFINE_FIELD(APowerup, Strength)
 
 //===========================================================================
 //
@@ -1184,39 +1196,11 @@ void APowerWeaponLevel2::EndEffect ()
 	}
 }
 
-// Player Speed Trail (used by the Speed Powerup) ----------------------------
-
-class APlayerSpeedTrail : public AActor
-{
-	DECLARE_CLASS (APlayerSpeedTrail, AActor)
-public:
-	void Tick ();
-};
-
-IMPLEMENT_CLASS(APlayerSpeedTrail, false, false, false, false)
-
-//===========================================================================
-//
-// APlayerSpeedTrail :: Tick
-//
-//===========================================================================
-
-void APlayerSpeedTrail::Tick ()
-{
-	const double fade = .6 / 8;
-	if (Alpha <= fade)
-	{
-		Destroy ();
-	}
-	else
-	{
-		Alpha -= fade;
-	}
-}
-
 // Speed Powerup -------------------------------------------------------------
 
 IMPLEMENT_CLASS(APowerSpeed, false, false, false, false)
+
+DEFINE_FIELD(APowerSpeed, SpeedFlags)
 
 //===========================================================================
 //
@@ -1280,7 +1264,7 @@ void APowerSpeed::DoEffect ()
 	if (Owner->Vel.LengthSquared() <= 12*12)
 		return;
 
-	AActor *speedMo = Spawn<APlayerSpeedTrail> (Owner->Pos(), NO_REPLACE);
+	AActor *speedMo = Spawn("PlayerSpeedTrail", Owner->Pos(), NO_REPLACE);
 	if (speedMo)
 	{
 		speedMo->Angles.Yaw = Owner->Angles.Yaw;

@@ -94,7 +94,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, seg_t *line, secto
 
 		if ((bottomfloorz1 < bottomceilz1 || bottomfloorz2 < bottomceilz2) && line->sidedef)
 		{
-			wall.SetCoords(line->v1->fPos(), line->v2->fPos(), bottomceilz1, bottomfloorz2, bottomceilz2, bottomfloorz2);
+			wall.SetCoords(line->v1->fPos(), line->v2->fPos(), bottomceilz1, bottomfloorz1, bottomceilz2, bottomfloorz2);
 			wall.TopZ = bottomceilz1;
 			wall.BottomZ = bottomfloorz2;
 			wall.UnpeggedCeil = topceilz1;

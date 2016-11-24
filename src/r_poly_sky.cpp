@@ -61,7 +61,7 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 	args.uniforms = uniforms;
 	args.objectToClip = &objectToClip;
 	args.stenciltestvalue = 255;
-	args.stencilwritevalue = 1;
+	args.stencilwritevalue = 255;
 	args.SetTexture(frontskytex);
 	args.SetColormap(&NormalLight);
 

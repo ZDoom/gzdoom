@@ -27,10 +27,10 @@
 class RenderPolyPlane
 {
 public:
-	static void RenderPlanes(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, double skyCeilingHeight, double skyFloorHeight);
+	static void RenderPlanes(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight);
 
 private:
-	void Render3DFloor(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, bool ceiling, F3DFloor *fakefloor);
-	void Render(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, bool ceiling, double skyHeight);
+	void Render3DFloor(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, F3DFloor *fakefloor);
+	void Render(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, double skyHeight);
 	TriVertex PlaneVertex(vertex_t *v1, double height);
 };

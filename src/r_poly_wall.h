@@ -29,8 +29,8 @@ class PolyTranslucentObject;
 class RenderPolyWall
 {
 public:
-	static bool RenderLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, std::vector<PolyTranslucentObject> &translucentWallsOutput);
-	static void Render3DFloorLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject> &translucentWallsOutput);
+	static bool RenderLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject> &translucentWallsOutput);
+	static void Render3DFloorLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject> &translucentWallsOutput);
 
 	void SetCoords(const DVector2 &v1, const DVector2 &v2, double ceil1, double floor1, double ceil2, double floor2);
 	void Render(const TriMatrix &worldToClip);
@@ -52,6 +52,7 @@ public:
 	FSWColormap *Colormap = nullptr;
 	bool Masked = false;
 	uint32_t SubsectorDepth = 0;
+	uint32_t StencilValue = 0;
 
 private:
 	void ClampHeight(TriVertex &v1, TriVertex &v2);

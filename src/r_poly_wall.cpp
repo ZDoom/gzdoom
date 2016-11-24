@@ -30,7 +30,7 @@
 #include "r_poly.h"
 #include "r_sky.h" // for skyflatnum
 
-bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, std::vector<PolyTranslucentObject> &translucentWallsOutput)
+bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject> &translucentWallsOutput)
 {
 	RenderPolyWall wall;
 	wall.LineSeg = line;
@@ -120,7 +120,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, seg_t *line, secto
 	return false;
 }
 
-void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject> &translucentWallsOutput)
+void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject> &translucentWallsOutput)
 {
 	double frontceilz1 = fakeFloor->top.plane->ZatPoint(line->v1);
 	double frontfloorz1 = fakeFloor->bottom.plane->ZatPoint(line->v1);
@@ -211,8 +211,8 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	args.vcount = 4;
 	args.mode = TriangleDrawMode::Fan;
 	args.ccw = true;
-	args.stenciltestvalue = 0;
-	args.stencilwritevalue = 1;
+	args.stenciltestvalue = StencilValue;
+	args.stencilwritevalue = StencilValue + 1;
 	args.SetTexture(tex);
 	args.SetColormap(Line->frontsector->ColorMap);
 
@@ -231,7 +231,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Add);
 	}
 
-	RenderPolyDecal::RenderWallDecals(worldToClip, LineSeg, SubsectorDepth);
+	RenderPolyDecal::RenderWallDecals(worldToClip, LineSeg, SubsectorDepth, StencilValue);
 }
 
 void RenderPolyWall::ClampHeight(TriVertex &v1, TriVertex &v2)

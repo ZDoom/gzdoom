@@ -32,7 +32,7 @@
 
 EXTERN_CVAR(Int, r_3dfloors)
 
-void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, double skyCeilingHeight, double skyFloorHeight)
+void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight)
 {
 	RenderPolyPlane plane;
 
@@ -58,7 +58,7 @@ void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, subsector_t *su
 			double fakeHeight = fakeFloor->top.plane->ZatPoint(frontsector->centerspot);
 			if (fakeHeight < ViewPos.Z && fakeHeight > frontsector->floorplane.ZatPoint(frontsector->centerspot))
 			{
-				plane.Render3DFloor(worldToClip, sub, subsectorDepth, false, fakeFloor);
+				plane.Render3DFloor(worldToClip, sub, subsectorDepth, stencilValue, false, fakeFloor);
 			}
 		}
 
@@ -79,16 +79,16 @@ void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, subsector_t *su
 			double fakeHeight = fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot);
 			if (fakeHeight > ViewPos.Z && fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->centerspot))
 			{
-				plane.Render3DFloor(worldToClip, sub, subsectorDepth, true, fakeFloor);
+				plane.Render3DFloor(worldToClip, sub, subsectorDepth, stencilValue, true, fakeFloor);
 			}
 		}
 	}
 
-	plane.Render(worldToClip, sub, subsectorDepth, true, skyCeilingHeight);
-	plane.Render(worldToClip, sub, subsectorDepth, false, skyFloorHeight);
+	plane.Render(worldToClip, sub, subsectorDepth, stencilValue, true, skyCeilingHeight);
+	plane.Render(worldToClip, sub, subsectorDepth, stencilValue, false, skyFloorHeight);
 }
 
-void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, bool ceiling, F3DFloor *fakeFloor)
+void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, F3DFloor *fakeFloor)
 {
 	FTextureID picnum = ceiling ? *fakeFloor->bottom.texture : *fakeFloor->top.texture;
 	FTexture *tex = TexMan(picnum);
@@ -138,15 +138,15 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, subsector_t *s
 	args.vcount = sub->numlines;
 	args.mode = TriangleDrawMode::Fan;
 	args.ccw = true;
-	args.stenciltestvalue = 0;
-	args.stencilwritevalue = 1;
+	args.stenciltestvalue = stencilValue;
+	args.stencilwritevalue = stencilValue + 1;
 	args.SetTexture(tex);
 	args.SetColormap(sub->sector->ColorMap);
 	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawNormal, TriBlendMode::Copy);
 	PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
 }
 
-void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, bool ceiling, double skyHeight)
+void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, double skyHeight)
 {
 	sector_t *fakesector = sub->sector->heightsec;
 	if (fakesector && (fakesector == sub->sector || (fakesector->MoreFlags & SECF_IGNOREHEIGHTSEC) == SECF_IGNOREHEIGHTSEC))
@@ -231,8 +231,8 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 	args.vcount = sub->numlines;
 	args.mode = TriangleDrawMode::Fan;
 	args.ccw = ccw;
-	args.stenciltestvalue = 0;
-	args.stencilwritevalue = 1;
+	args.stenciltestvalue = stencilValue;
+	args.stencilwritevalue = stencilValue + 1;
 	args.SetColormap(frontsector->ColorMap);
 
 	if (!isSky)

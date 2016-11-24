@@ -28,5 +28,5 @@
 class RenderPolyParticle
 {
 public:
-	void Render(const TriMatrix &worldToClip, particle_t *particle, subsector_t *sub, uint32_t subsectorDepth);
+	void Render(const TriMatrix &worldToClip, particle_t *particle, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue);
 };

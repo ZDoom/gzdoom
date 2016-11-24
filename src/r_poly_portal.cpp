@@ -80,7 +80,7 @@ void RenderPolyPortal::RenderSubsector(subsector_t *sub)
 
 	if (sub->sector->CenterFloor() != sub->sector->CenterCeiling())
 	{
-		RenderPolyPlane::RenderPlanes(WorldToClip, sub, subsectorDepth, Cull.MaxCeilingHeight, Cull.MinFloorHeight);
+		RenderPolyPlane::RenderPlanes(WorldToClip, sub, subsectorDepth, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight);
 
 		FSectorPortal *ceilingPortal = frontsector->ValidatePortal(sector_t::ceiling);
 		FSectorPortal *floorPortal = frontsector->ValidatePortal(sector_t::floor);
@@ -167,12 +167,12 @@ void RenderPolyPortal::RenderLine(subsector_t *sub, seg_t *line, sector_t *front
 			if (!(fakeFloor->flags & FF_EXISTS)) continue;
 			if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
 			if (!fakeFloor->model) continue;
-			RenderPolyWall::Render3DFloorLine(WorldToClip, line, frontsector, subsectorDepth, fakeFloor, SubsectorTranslucentWalls);
+			RenderPolyWall::Render3DFloorLine(WorldToClip, line, frontsector, subsectorDepth, StencilValue, fakeFloor, SubsectorTranslucentWalls);
 		}
 	}
 
 	// Render wall, and update culling info if its an occlusion blocker
-	if (RenderPolyWall::RenderLine(WorldToClip, line, frontsector, subsectorDepth, SubsectorTranslucentWalls))
+	if (RenderPolyWall::RenderLine(WorldToClip, line, frontsector, subsectorDepth, StencilValue, SubsectorTranslucentWalls))
 	{
 		if (hasSegmentRange)
 			Cull.MarkSegmentCulled(sx1, sx2);
@@ -190,7 +190,7 @@ void RenderPolyPortal::RenderTranslucent()
 		if (obj.particle)
 		{
 			RenderPolyParticle spr;
-			spr.Render(WorldToClip, obj.particle, obj.sub, obj.subsectorDepth);
+			spr.Render(WorldToClip, obj.particle, obj.sub, obj.subsectorDepth, StencilValue + 1);
 		}
 		else if (!obj.thing)
 		{
@@ -199,12 +199,12 @@ void RenderPolyPortal::RenderTranslucent()
 		else if ((obj.thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 		{
 			RenderPolyWallSprite wallspr;
-			wallspr.Render(WorldToClip, obj.thing, obj.sub, obj.subsectorDepth);
+			wallspr.Render(WorldToClip, obj.thing, obj.sub, obj.subsectorDepth, StencilValue + 1);
 		}
 		else
 		{
 			RenderPolySprite spr;
-			spr.Render(WorldToClip, obj.thing, obj.sub, obj.subsectorDepth);
+			spr.Render(WorldToClip, obj.thing, obj.sub, obj.subsectorDepth, StencilValue + 1);
 		}
 	}
 }

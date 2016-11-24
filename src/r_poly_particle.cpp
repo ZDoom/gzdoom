@@ -28,7 +28,7 @@
 #include "r_poly_particle.h"
 #include "r_poly.h"
 
-void RenderPolyParticle::Render(const TriMatrix &worldToClip, particle_t *particle, subsector_t *sub, uint32_t subsectorDepth)
+void RenderPolyParticle::Render(const TriMatrix &worldToClip, particle_t *particle, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
 {
 	DVector3 pos = particle->Pos;
 	double psize = particle->size / 8.0;
@@ -102,8 +102,8 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, particle_t *partic
 	args.vcount = 4;
 	args.mode = TriangleDrawMode::Fan;
 	args.ccw = true;
-	args.stenciltestvalue = 0;
-	args.stencilwritevalue = 1;
+	args.stenciltestvalue = stencilValue;
+	args.stencilwritevalue = stencilValue;
 	args.SetColormap(sub->sector->ColorMap);
 	PolyTriangleDrawer::draw(args, TriDrawVariant::FillSubsector, TriBlendMode::AlphaBlend);
 }

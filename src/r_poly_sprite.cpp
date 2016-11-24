@@ -31,7 +31,7 @@
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, r_drawfuzz)
 
-void RenderPolySprite::Render(const TriMatrix &worldToClip, AActor *thing, subsector_t *sub, uint32_t subsectorDepth)
+void RenderPolySprite::Render(const TriMatrix &worldToClip, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
 {
 	if (IsThingCulled(thing))
 		return;
@@ -134,8 +134,8 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, AActor *thing, subse
 	args.vcount = 4;
 	args.mode = TriangleDrawMode::Fan;
 	args.ccw = true;
-	args.stenciltestvalue = 0;
-	args.stencilwritevalue = 1;
+	args.stenciltestvalue = stencilValue;
+	args.stencilwritevalue = stencilValue;
 	args.SetTexture(tex, thing->Translation);
 	args.SetColormap(sub->sector->ColorMap);
 

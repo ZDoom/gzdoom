@@ -278,7 +278,7 @@ namespace
 
 TriVertex *PolyVertexBuffer::GetVertices(int count)
 {
-	enum { VertexBufferSize = 16 * 1024 };
+	enum { VertexBufferSize = 64 * 1024 };
 	static TriVertex Vertex[VertexBufferSize];
 
 	if (NextBufferVertex + count > VertexBufferSize)

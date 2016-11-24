@@ -1314,7 +1314,7 @@ static HCURSOR CreateCompatibleCursor(FTexture *cursorpic)
 	HDC dc = GetDC(NULL);
 	if (dc == NULL)
 	{
-		return false;
+		return nullptr;
 	}
 	HDC and_mask_dc = CreateCompatibleDC(dc);
 	HDC xor_mask_dc = CreateCompatibleDC(dc);
@@ -1721,7 +1721,7 @@ FString I_GetLongPathName(FString shortpath)
 	using OptWin32::GetLongPathNameA;
 
 	// Doesn't exist on NT4
-	if (!GetLongPathName)
+	if (!GetLongPathNameA)
 		return shortpath;
 
 	DWORD buffsize = GetLongPathNameA(shortpath.GetChars(), NULL, 0);

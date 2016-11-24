@@ -72,7 +72,7 @@ FRenderer *Renderer;
 IMPLEMENT_ABSTRACT_CLASS (DCanvas)
 IMPLEMENT_ABSTRACT_CLASS (DFrameBuffer)
 
-#if defined(_DEBUG) && defined(_M_IX86)
+#if defined(_DEBUG) && defined(_M_IX86) && !defined(__MINGW32__)
 #define DBGBREAK	{ __asm int 3 }
 #else
 #define DBGBREAK

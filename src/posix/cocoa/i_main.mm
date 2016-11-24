@@ -156,7 +156,7 @@ static void I_DetectOS()
 		case 12: name = "macOS Sierra";          break;
 	}
 
-	char release[16] = {};
+	char release[16] = "unknown";
 	size_t size = sizeof release - 1;
 	sysctlbyname("kern.osversion", release, &size, nullptr, 0);
 	

@@ -1,19 +1,12 @@
 cmake_minimum_required( VERSION 2.8.7 )
 
 if( WIN32 )
-	if( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE OR ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-		add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/trustinfo.o
-			COMMAND windres -o ${CMAKE_CURRENT_BINARY_DIR}/trustinfo.o -i ${CMAKE_CURRENT_SOURCE_DIR}/trustinfo.rc
-			DEPENDS trustinfo.rc )
-		set( TRUSTINFO trustinfo.o )
+	if( MSVC_VERSION GREATER 1399 )
+		# VC 8+ adds a manifest automatically to the executable. We need to
+		# merge ours with it.
+		set( MT_MERGE ON )
 	else()
-		if( MSVC_VERSION GREATER 1399 )
-			# VC 8+ adds a manifest automatically to the executable. We need to
-			# merge ours with it.
-			set( MT_MERGE ON )
-		else( MSVC_VERSION GREATER 1399 )
-			set( TRUSTINFO trustinfo.rc )
-		endif( MSVC_VERSION GREATER 1399 )
+		set( TRUSTINFO trustinfo.rc )
 	endif()
 else( WIN32 )
 	set( TRUSTINFO "" )

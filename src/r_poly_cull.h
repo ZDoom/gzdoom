@@ -46,6 +46,7 @@ private:
 	};
 
 	void CullNode(void *node);
+	void CullSubsector(subsector_t *sub);
 	int PointOnSide(const DVector2 &pos, const node_t *node);
 
 	// Checks BSP node/subtree bounding box.

@@ -35,18 +35,12 @@ void PolyCull::CullScene(const TriMatrix &worldToClip)
 	frustumPlanes = FrustumPlanes(worldToClip);
 
 	// Cull front to back
+	MaxCeilingHeight = 0.0;
+	MinFloorHeight = 0.0;
 	if (numnodes == 0)
-	{
-		PvsSectors.push_back(subsectors);
-		MaxCeilingHeight = subsectors->sector->ceilingplane.Zat0();
-		MinFloorHeight = subsectors->sector->floorplane.Zat0();
-	}
+		CullSubsector(subsectors);
 	else
-	{
-		MaxCeilingHeight = 0.0;
-		MinFloorHeight = 0.0;
 		CullNode(nodes + numnodes - 1);	// The head node is the last node output.
-	}
 
 	ClearSolidSegments();
 }
@@ -65,16 +59,24 @@ void PolyCull::CullNode(void *node)
 
 		// Possibly divide back space (away from the viewer).
 		side ^= 1;
+
 		if (!CheckBBox(bsp->bbox[side]))
 			return;
 
 		node = bsp->children[side];
 	}
 
-	// Mark that we need to render this
 	subsector_t *sub = (subsector_t *)((BYTE *)node - 1);
+	CullSubsector(sub);
+}
+
+void PolyCull::CullSubsector(subsector_t *sub)
+{
+	// Update sky heights for the scene
 	MaxCeilingHeight = MAX(MaxCeilingHeight, sub->sector->ceilingplane.Zat0());
 	MinFloorHeight = MIN(MinFloorHeight, sub->sector->floorplane.Zat0());
+
+	// Mark that we need to render this
 	PvsSectors.push_back(sub);
 
 	// Update culling info for further bsp clipping

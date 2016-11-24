@@ -442,6 +442,16 @@ void SDLGLFB::SetVSync( bool vsync )
 #if defined (__APPLE__)
 	const GLint value = vsync ? 1 : 0;
 	CGLSetParameter( CGLGetCurrentContext(), kCGLCPSwapInterval, &value );
+#else
+	if (vsync)
+	{
+		if (SDL_GL_SetSwapInterval(-1) == -1)
+			SDL_GL_SetSwapInterval(1);
+	}
+	else
+	{
+		SDL_GL_SetSwapInterval(0);
+	}
 #endif
 }
 

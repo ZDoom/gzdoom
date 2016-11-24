@@ -26,6 +26,7 @@
 #include "sbar.h"
 #include "r_data/r_translate.h"
 #include "r_poly_plane.h"
+#include "r_poly_portal.h"
 #include "r_poly.h"
 #include "r_sky.h" // for skyflatnum
 
@@ -200,7 +201,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 	if (fixedlightlev >= 0 || fixedcolormap)
 		uniforms.light = 256;
 	uniforms.flags = 0;
-	uniforms.subsectorDepth = isSky ? RenderPolyScene::SkySubsectorDepth : subsectorDepth;
+	uniforms.subsectorDepth = isSky ? RenderPolyPortal::SkySubsectorDepth : subsectorDepth;
 
 	TriVertex *vertices = PolyVertexBuffer::GetVertices(sub->numlines);
 	if (!vertices)

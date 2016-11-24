@@ -523,3 +523,27 @@ TriVertex TriMatrix::operator*(TriVertex v) const
 	v.w = vw;
 	return v;
 }
+
+/////////////////////////////////////////////////////////////////////////////
+
+namespace
+{
+	int NextBufferVertex = 0;
+}
+
+TriVertex *PolyVertexBuffer::GetVertices(int count)
+{
+	enum { VertexBufferSize = 256 * 1024 };
+	static TriVertex Vertex[VertexBufferSize];
+
+	if (NextBufferVertex + count > VertexBufferSize)
+		return nullptr;
+	TriVertex *v = Vertex + NextBufferVertex;
+	NextBufferVertex += count;
+	return v;
+}
+
+void PolyVertexBuffer::Clear()
+{
+	NextBufferVertex = 0;
+}

@@ -220,3 +220,10 @@ private:
 	TriDrawVariant variant;
 	TriBlendMode blendmode;
 };
+
+class PolyVertexBuffer
+{
+public:
+	static TriVertex *GetVertices(int count);
+	static void Clear();
+};

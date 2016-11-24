@@ -25,7 +25,7 @@
 #include "sbar.h"
 #include "r_data/r_translate.h"
 #include "r_poly_sky.h"
-#include "r_poly.h"
+#include "r_poly_portal.h"
 #include "r_sky.h" // for skyflatnum
 
 PolySkyDome::PolySkyDome()
@@ -53,7 +53,7 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 	TriUniforms uniforms;
 	uniforms.light = 256;
 	uniforms.flags = 0;
-	uniforms.subsectorDepth = RenderPolyScene::SkySubsectorDepth;
+	uniforms.subsectorDepth = RenderPolyPortal::SkySubsectorDepth;
 
 	int rc = mRows + 1;
 

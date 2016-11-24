@@ -32,7 +32,7 @@
 
 EXTERN_CVAR(Int, r_3dfloors)
 
-void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight)
+void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
 	RenderPolyPlane plane;
 
@@ -84,8 +84,8 @@ void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, subsector_t *su
 		}
 	}
 
-	plane.Render(worldToClip, sub, subsectorDepth, stencilValue, true, skyCeilingHeight);
-	plane.Render(worldToClip, sub, subsectorDepth, stencilValue, false, skyFloorHeight);
+	plane.Render(worldToClip, sub, subsectorDepth, stencilValue, true, skyCeilingHeight, sectorPortals);
+	plane.Render(worldToClip, sub, subsectorDepth, stencilValue, false, skyFloorHeight, sectorPortals);
 }
 
 void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, F3DFloor *fakeFloor)
@@ -146,8 +146,14 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, subsector_t *s
 	PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
 }
 
-void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, double skyHeight)
+void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
+	FSectorPortal *portal = sub->sector->ValidatePortal(ceiling ? sector_t::ceiling : sector_t::floor);
+	if (portal && sectorPortals.empty())
+	{
+		sectorPortals.push_back(std::make_unique<PolyDrawSectorPortal>(portal, ceiling));
+	}
+
 	sector_t *fakesector = sub->sector->heightsec;
 	if (fakesector && (fakesector == sub->sector || (fakesector->MoreFlags & SECF_IGNOREHEIGHTSEC) == SECF_IGNOREHEIGHTSEC))
 		fakesector = nullptr;
@@ -237,13 +243,29 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 
 	if (!isSky)
 	{
-		args.SetTexture(tex);
-		PolyTriangleDrawer::draw(args, TriDrawVariant::DrawNormal, TriBlendMode::Copy);
-		PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
+		if (!portal)
+		{
+			args.SetTexture(tex);
+			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawNormal, TriBlendMode::Copy);
+			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
+		}
+		else
+		{
+			args.stencilwritevalue = 252;
+			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
+		}
 	}
 	else
 	{
-		args.stencilwritevalue = 255;
+		if (portal)
+		{
+			args.stencilwritevalue = 252;
+		}
+		else
+		{
+			args.stencilwritevalue = 255;
+		}
+
 		PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
 
 		for (uint32_t i = 0; i < sub->numlines; i++)

@@ -39,6 +39,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, seg_t *line, secto
 	wall.Colormap = frontsector->ColorMap;
 	wall.Masked = false;
 	wall.SubsectorDepth = subsectorDepth;
+	wall.StencilValue = stencilValue;
 
 	double frontceilz1 = frontsector->ceilingplane.ZatPoint(line->v1);
 	double frontfloorz1 = frontsector->floorplane.ZatPoint(line->v1);
@@ -134,6 +135,7 @@ void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, seg_t *line
 	wall.Colormap = frontsector->ColorMap;
 	wall.Masked = false;
 	wall.SubsectorDepth = subsectorDepth;
+	wall.StencilValue = stencilValue;
 	wall.SetCoords(line->v1->fPos(), line->v2->fPos(), frontceilz1, frontfloorz1, frontceilz2, frontfloorz2);
 	wall.TopZ = frontceilz1;
 	wall.BottomZ = frontfloorz1;

@@ -74,10 +74,15 @@ public:
 	int Count = 0;
 };
 
+class PolyDrawSectorPortal;
+class PolyDrawLinePortal;
+
 // Renders everything from a specific viewpoint
 class RenderPolyPortal
 {
 public:
+	RenderPolyPortal();
+	~RenderPolyPortal();
 	void SetViewpoint(const TriMatrix &worldToClip, uint32_t stencilValue);
 	void Render();
 	void RenderTranslucent();
@@ -101,5 +106,34 @@ private:
 	std::vector<PolyTranslucentObject> TranslucentObjects;
 	std::vector<PolyTranslucentObject> SubsectorTranslucentWalls;
 
-	std::vector<std::unique_ptr<RenderPolyPortal>> Portals;
+	std::vector<std::unique_ptr<PolyDrawSectorPortal>> SectorPortals;
+	std::vector<std::unique_ptr<PolyDrawLinePortal>> LinePortals;
+};
+
+class PolyDrawSectorPortal
+{
+public:
+	PolyDrawSectorPortal(FSectorPortal *portal, bool ceiling);
+
+	void Render();
+	void RenderTranslucent();
+
+private:
+	FSectorPortal *Portal;
+	bool Ceiling;
+	RenderPolyPortal RenderPortal;
+};
+
+class PolyDrawLinePortal
+{
+public:
+	PolyDrawLinePortal(line_t *src, line_t *dest, bool mirror);
+
+	void Render();
+	void RenderTranslucent();
+
+private:
+	line_t *Src;
+	line_t *Dest;
+	RenderPolyPortal RenderPortal;
 };

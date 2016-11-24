@@ -29,8 +29,17 @@
 #include "gl/data/gl_data.h"
 
 CVAR(Bool, r_debug_cull, 0, 0)
+EXTERN_CVAR(Int, r_portal_recursions)
 
 /////////////////////////////////////////////////////////////////////////////
+
+RenderPolyPortal::RenderPolyPortal()
+{
+}
+
+RenderPolyPortal::~RenderPolyPortal()
+{
+}
 
 void RenderPolyPortal::SetViewpoint(const TriMatrix &worldToClip, uint32_t stencilValue)
 {
@@ -43,7 +52,9 @@ void RenderPolyPortal::Render()
 	ClearBuffers();
 	Cull.CullScene(WorldToClip);
 	RenderSectors();
-	for (auto &portal : Portals)
+	for (auto &portal : SectorPortals)
+		portal->Render();
+	for (auto &portal : LinePortals)
 		portal->Render();
 }
 
@@ -53,7 +64,8 @@ void RenderPolyPortal::ClearBuffers()
 	SectorSpriteRanges.resize(numsectors);
 	SortedSprites.clear();
 	TranslucentObjects.clear();
-	Portals.clear();
+	SectorPortals.clear();
+	LinePortals.clear();
 	NextSubsectorDepth = 0;
 }
 
@@ -80,10 +92,7 @@ void RenderPolyPortal::RenderSubsector(subsector_t *sub)
 
 	if (sub->sector->CenterFloor() != sub->sector->CenterCeiling())
 	{
-		RenderPolyPlane::RenderPlanes(WorldToClip, sub, subsectorDepth, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight);
-
-		FSectorPortal *ceilingPortal = frontsector->ValidatePortal(sector_t::ceiling);
-		FSectorPortal *floorPortal = frontsector->ValidatePortal(sector_t::floor);
+		RenderPolyPlane::RenderPlanes(WorldToClip, sub, subsectorDepth, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
 	}
 
 	for (uint32_t i = 0; i < sub->numlines; i++)
@@ -181,7 +190,10 @@ void RenderPolyPortal::RenderLine(subsector_t *sub, seg_t *line, sector_t *front
 
 void RenderPolyPortal::RenderTranslucent()
 {
-	for (auto it = Portals.rbegin(); it != Portals.rend(); ++it)
+	for (auto it = SectorPortals.rbegin(); it != SectorPortals.rend(); ++it)
+		(*it)->RenderTranslucent();
+
+	for (auto it = LinePortals.rbegin(); it != LinePortals.rend(); ++it)
 		(*it)->RenderTranslucent();
 
 	for (auto it = TranslucentObjects.rbegin(); it != TranslucentObjects.rend(); ++it)
@@ -207,4 +219,95 @@ void RenderPolyPortal::RenderTranslucent()
 			spr.Render(WorldToClip, obj.thing, obj.sub, obj.subsectorDepth, StencilValue + 1);
 		}
 	}
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+PolyDrawSectorPortal::PolyDrawSectorPortal(FSectorPortal *portal, bool ceiling) : Portal(portal), Ceiling(ceiling)
+{
+}
+
+void PolyDrawSectorPortal::Render()
+{
+	if (Portal->mType != PORTS_SKYVIEWPOINT)
+		return;
+
+	static int recursion = 0;
+	if (recursion >= 1/*r_portal_recursions*/)
+		return;
+	recursion++;
+
+	int savedextralight = extralight;
+	DVector3 savedpos = ViewPos;
+	DAngle savedangle = ViewAngle;
+	double savedvisibility = R_GetVisibility();
+	AActor *savedcamera = camera;
+	sector_t *savedsector = viewsector;
+
+	// Don't let gun flashes brighten the sky box
+	ASkyViewpoint *sky = barrier_cast<ASkyViewpoint*>(Portal->mSkybox);
+	extralight = 0;
+	R_SetVisibility(sky->args[0] * 0.25f);
+	ViewPos = sky->InterpolatedPosition(r_TicFracF);
+	ViewAngle = savedangle + (sky->PrevAngles.Yaw + deltaangle(sky->PrevAngles.Yaw, sky->Angles.Yaw) * r_TicFracF);
+
+	camera = nullptr;
+	viewsector = Portal->mDestination;
+	R_SetViewAngle();
+
+	// To do: get this information from RenderPolyScene instead of duplicating the code..
+	double radPitch = ViewPitch.Normalized180().Radians();
+	double angx = cos(radPitch);
+	double angy = sin(radPitch) * glset.pixelstretch;
+	double alen = sqrt(angx*angx + angy*angy);
+	float adjustedPitch = (float)asin(angy / alen);
+	float adjustedViewAngle = (float)(ViewAngle - 90).Radians();
+	float ratio = WidescreenRatio;
+	float fovratio = (WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
+	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(FieldOfView.Radians() / 2) / fovratio)).Degrees);
+	TriMatrix worldToView =
+		TriMatrix::rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
+		TriMatrix::rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
+		TriMatrix::scale(1.0f, glset.pixelstretch, 1.0f) *
+		TriMatrix::swapYZ() *
+		TriMatrix::translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);
+	TriMatrix worldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
+
+	RenderPortal.SetViewpoint(worldToClip, 252);
+	RenderPortal.Render();
+
+	camera = savedcamera;
+	viewsector = savedsector;
+	ViewPos = savedpos;
+	R_SetVisibility(savedvisibility);
+	extralight = savedextralight;
+	ViewAngle = savedangle;
+	R_SetViewAngle();
+
+	recursion--;
+}
+
+void PolyDrawSectorPortal::RenderTranslucent()
+{
+	/*if (Portal->mType != PORTS_SKYVIEWPOINT)
+		return;
+
+	RenderPortal.RenderTranslucent();*/
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+PolyDrawLinePortal::PolyDrawLinePortal(line_t *src, line_t *dest, bool mirror) : Src(src), Dest(dest)
+{
+	// To do: do what R_EnterPortal and PortalDrawseg does
+}
+
+void PolyDrawLinePortal::Render()
+{
+	RenderPortal.Render();
+}
+
+void PolyDrawLinePortal::RenderTranslucent()
+{
+	RenderPortal.RenderTranslucent();
 }

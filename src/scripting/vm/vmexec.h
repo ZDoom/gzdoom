@@ -217,7 +217,7 @@ begin:
 		reg.atag[a] = ATAG_GENERIC;
 		NEXTOP;
 	OP(LV2):
-		ASSERTF(a+2); ASSERTA(B); ASSERTKD(C);
+		ASSERTF(a+1); ASSERTA(B); ASSERTKD(C);
 		GETADDR(PB,KC,X_READ_NIL);
 		{
 			auto v = (double *)ptr;
@@ -226,7 +226,7 @@ begin:
 		}
 		NEXTOP;
 	OP(LV2_R):
-		ASSERTF(a+2); ASSERTA(B); ASSERTD(C);
+		ASSERTF(a+1); ASSERTA(B); ASSERTD(C);
 		GETADDR(PB,RC,X_READ_NIL);
 		{
 			auto v = (double *)ptr;
@@ -331,7 +331,7 @@ begin:
 		*(void **)ptr = reg.a[B];
 		NEXTOP;
 	OP(SV2):
-		ASSERTA(a); ASSERTF(B+2); ASSERTKD(C);
+		ASSERTA(a); ASSERTF(B+1); ASSERTKD(C);
 		GETADDR(PA,KC,X_WRITE_NIL);
 		{
 			auto v = (double *)ptr;
@@ -340,7 +340,7 @@ begin:
 		}
 		NEXTOP;
 	OP(SV2_R):
-		ASSERTA(a); ASSERTF(B+2); ASSERTD(C);
+		ASSERTA(a); ASSERTF(B+1); ASSERTD(C);
 		GETADDR(PA,RC,X_WRITE_NIL);
 		{
 			auto v = (double *)ptr;

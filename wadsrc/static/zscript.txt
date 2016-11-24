@@ -99,6 +99,7 @@ zscript/heretic/weaponstaff.txt
 zscript/heretic/weaponwand.txt
 zscript/heretic/weaponcrossbow.txt
 zscript/heretic/weapongauntlets.txt
+zscript/heretic/weaponmace.txt
 
 zscript/hexen/baseweapons.txt
 zscript/hexen/korax.txt

@@ -2323,7 +2323,7 @@ ExpEmit FxAssignSelf::Emit(VMFunctionBuilder *build)
 	ExpEmit pointer = Assignment->Address; // FxAssign should have already emitted it
 	if (!pointer.Target)
 	{
-		ExpEmit out(build, ValueType->GetRegType());
+		ExpEmit out(build, ValueType->GetRegType(), ValueType->GetRegCount());
 		if (Assignment->IsBitWrite != -1)
 		{
 			build->Emit(OP_LBIT, out.RegNum, pointer.RegNum, 1 << Assignment->IsBitWrite);

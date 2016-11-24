@@ -385,6 +385,7 @@ enum ActorFlag7
 	MF7_USEKILLSCRIPTS	= 0x00800000,	// [JM] Use "KILL" Script on death if not forced by GameInfo.
 	MF7_NOKILLSCRIPTS	= 0x01000000,	// [JM] No "KILL" Script on death whatsoever, even if forced by GameInfo.
 	MF7_SPRITEANGLE		= 0x02000000,	// [MC] Utilize the SpriteAngle property and lock the rotation to the degrees specified.
+	MF7_SMASHABLE		= 0x04000000,	// dies if hitting the floor.
 };
 
 // --- mobj.renderflags ---
@@ -635,9 +636,6 @@ public:
 	// Centaurs and ettins squeal when electrocuted, poisoned, or "holy"-ed
 	// Made a metadata property so no longer virtual
 	void Howl ();
-
-	// Actor just hit the floor
-	virtual void HitFloor ();
 
 	// plays bouncing sound
 	void PlayBounceSound(bool onfloor);

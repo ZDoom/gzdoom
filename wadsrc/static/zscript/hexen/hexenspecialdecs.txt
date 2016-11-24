@@ -83,14 +83,14 @@ class TreeDestructible : Actor
 
 // Pottery1 ------------------------------------------------------------------
 
-class Pottery1 : Actor native
+class Pottery1 : Actor
 {
 	Default
 	{
 		Health 15;
 		Speed 10;
 		Height 32;
-		+SOLID +SHOOTABLE +NOBLOOD +DROPOFF
+		+SOLID +SHOOTABLE +NOBLOOD +DROPOFF +SMASHABLE
 		+SLIDESONWALLS +PUSHABLE +TELESTOMP +CANPASS
 		+NOICEDEATH
 	}

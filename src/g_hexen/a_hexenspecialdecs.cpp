@@ -32,21 +32,6 @@ void A_PotteryExplode (AActor *);
 void A_PotteryChooseBit (AActor *);
 void A_PotteryCheck (AActor *);
 
-class APottery1 : public AActor
-{
-	DECLARE_CLASS (APottery1, AActor)
-public:
-	void HitFloor ();
-};
-
-IMPLEMENT_CLASS(APottery1, false, false, false, false)
-
-void APottery1::HitFloor ()
-{
-	Super::HitFloor ();
-	P_DamageMobj (this, NULL, NULL, 25, NAME_None);
-}
-
 //============================================================================
 //
 // A_PotteryExplode

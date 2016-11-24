@@ -61,21 +61,3 @@ bool AArtiTeleport::Use (bool pickup)
 	return true;
 }
 
-//---------------------------------------------------------------------------
-//
-// FUNC P_AutoUseChaosDevice
-//
-//---------------------------------------------------------------------------
-
-bool P_AutoUseChaosDevice (player_t *player)
-{
-	AInventory *arti = player->mo->FindInventory(PClass::FindActor("ArtiTeleport"));
-
-	if (arti != NULL)
-	{
-		player->mo->UseInventory (arti);
-		player->health = player->mo->health = (player->health+1)/2;
-		return true;
-	}
-	return false;
-}

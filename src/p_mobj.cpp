@@ -948,6 +948,14 @@ bool AActor::UseInventory (AInventory *item)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, UseInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(item, AInventory);
+	self->VMSuperCall();
+	ACTION_RETURN_BOOL(self->UseInventory(item));
+}
+
 //===========================================================================
 //
 // AActor :: DropInventory
@@ -2741,7 +2749,10 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 					return;
 				}
 				// Let the actor do something special for hitting the floor
-				mo->HitFloor ();
+				if (mo->flags7 & MF7_SMASHABLE)
+				{
+					P_DamageMobj(mo, nullptr, nullptr, mo->health, NAME_Smash);
+				}
 				if (mo->player)
 				{
 					if (mo->player->jumpTics < 0 || mo->Vel.Z < minvel)
@@ -3228,10 +3239,6 @@ void AActor::Howl ()
 	{
 		S_Sound (this, CHAN_BODY, howl, 1, ATTN_NORM);
 	}
-}
-
-void AActor::HitFloor ()
-{
 }
 
 bool AActor::Slam (AActor *thing)
@@ -5945,6 +5952,12 @@ bool P_HitFloor (AActor *thing)
 	return P_HitWater (thing, m->m_sector, pos);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, HitFloor)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(P_HitFloor(self));
+}
+
 //---------------------------------------------------------------------------
 //
 // P_CheckSplash
@@ -6541,6 +6554,13 @@ bool AActor::IsTeammate (AActor *other)
 		return (myTeam != TEAM_NONE && myTeam == otherTeam);
 	}
 	return false;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, isTeammate)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	ACTION_RETURN_BOOL(self->IsTeammate(other));
 }
 
 //==========================================================================

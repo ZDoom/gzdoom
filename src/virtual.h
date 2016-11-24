@@ -39,6 +39,7 @@ VMEXPORTED_NATIVES_START
 	VMEXPORTED_NATIVES_FUNC(Activate)
 	VMEXPORTED_NATIVES_FUNC(Deactivate)
 	VMEXPORTED_NATIVES_FUNC(DoSpecialDamage)
+	VMEXPORTED_NATIVES_FUNC(UseInventory)
 VMEXPORTED_NATIVES_END
 
 
@@ -213,6 +214,26 @@ public:
 			return retval;
 		}
 	}
+	bool UseInventory(AInventory *item)
+	{
+		if (this->ObjectFlags & OF_SuperCall)
+		{
+			this->ObjectFlags &= ~OF_SuperCall;
+			return ExportedNatives<T>::Get()->template UseInventory<bool, T>(this, item);
+		}
+		else
+		{
+			VINDEX(AActor, UseInventory);
+			// Without the type cast this picks the 'void *' assignment...
+			VMValue params[2] = { (DObject*)this, (DObject*)item };
+			VMReturn ret;
+			VMFrameStack stack;
+			int retval;
+			ret.IntAt(&retval);
+			stack.Call(VFUNC, params, 2, &ret, 1, nullptr);
+			return !!retval;
+		}
+	}
 
 };
 
@@ -245,6 +266,7 @@ VMEXPORT_NATIVES_START(AActor, DThinker)
 	VMEXPORT_NATIVES_FUNC(Activate)
 	VMEXPORT_NATIVES_FUNC(Deactivate)
 	VMEXPORT_NATIVES_FUNC(DoSpecialDamage)
+	VMEXPORT_NATIVES_FUNC(UseInventory)
 VMEXPORT_NATIVES_END(AActor)
 
 /*

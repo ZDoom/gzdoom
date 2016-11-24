@@ -95,6 +95,8 @@ zscript/heretic/wizard.txt
 zscript/heretic/ironlich.txt
 zscript/heretic/dsparil.txt
 zscript/heretic/chicken.txt
+zscript/heretic/weaponstaff.txt
+zscript/heretic/weaponwand.txt
 
 zscript/hexen/baseweapons.txt
 zscript/hexen/korax.txt

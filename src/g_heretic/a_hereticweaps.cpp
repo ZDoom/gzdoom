@@ -15,10 +15,6 @@
 #include "doomstat.h"
 */
 
-static FRandom pr_sap ("StaffAtkPL1");
-static FRandom pr_sap2 ("StaffAtkPL2");
-static FRandom pr_fgw ("FireWandPL1");
-static FRandom pr_fgw2 ("FireWandPL2");
 static FRandom pr_boltspark ("BoltSpark");
 static FRandom pr_macerespawn ("MaceRespawn");
 static FRandom pr_maceatk ("FireMacePL1");
@@ -49,134 +45,6 @@ void P_DSparilTeleport (AActor *actor);
 #define USE_MACE_AMMO_2 5
 
 extern bool P_AutoUseChaosDevice (player_t *player);
-
-// --- Staff ----------------------------------------------------------------
-
-//----------------------------------------------------------------------------
-//
-// PROC A_StaffAttackPL1
-//
-//----------------------------------------------------------------------------
-
-DEFINE_ACTION_FUNCTION(AActor, A_StaffAttack)
-{
-	PARAM_ACTION_PROLOGUE(AActor);
-
-	DAngle angle;
-	DAngle slope;
-	player_t *player;
-	FTranslatedLineTarget t;
-
-	if (NULL == (player = self->player))
-	{
-		return 0;
-	}
-
-	PARAM_INT	(damage);
-	PARAM_CLASS	(puff, AActor);
-
-	AWeapon *weapon = player->ReadyWeapon;
-	if (weapon != NULL)
-	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return 0;
-	}
-	if (puff == NULL)
-	{
-		puff = PClass::FindActor(NAME_BulletPuff);	// just to be sure
-	}
-	angle = self->Angles.Yaw + pr_sap.Random2() * (5.625 / 256);
-	slope = P_AimLineAttack (self, angle, MELEERANGE);
-	P_LineAttack (self, angle, MELEERANGE, slope, damage, NAME_Melee, puff, true, &t);
-	if (t.linetarget)
-	{
-		//S_StartSound(player->mo, sfx_stfhit);
-		// turn to face target
-		self->Angles.Yaw = t.angleFromSource;
-	}
-	return 0;
-}
-
-
-//----------------------------------------------------------------------------
-//
-// PROC A_FireGoldWandPL1
-//
-//----------------------------------------------------------------------------
-
-DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL1)
-{
-	PARAM_ACTION_PROLOGUE(AActor);
-
-	DAngle angle;
-	int damage;
-	player_t *player;
-
-	if (NULL == (player = self->player))
-	{
-		return 0;
-	}
-
-	AWeapon *weapon = player->ReadyWeapon;
-	if (weapon != NULL)
-	{
-		if (!weapon->DepleteAmmo(weapon->bAltFire))
-			return 0;
-	}
-	DAngle pitch = P_BulletSlope(self);
-	damage = 7 + (pr_fgw() & 7);
-	angle = self->Angles.Yaw;
-	if (player->refire)
-	{
-		angle += pr_fgw.Random2() * (5.625 / 256);
-	}
-	P_LineAttack(self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, "GoldWandPuff1");
-	S_Sound(self, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
-	return 0;
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC A_FireGoldWandPL2
-//
-//----------------------------------------------------------------------------
-
-DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL2)
-{
-	PARAM_ACTION_PROLOGUE(AActor);
-
-	int i;
-	DAngle angle;
-	int damage;
-	double vz;
-	player_t *player;
-
-	if (NULL == (player = self->player))
-	{
-		return 0;
-	}
-
-	AWeapon *weapon = player->ReadyWeapon;
-	if (weapon != NULL)
-	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return 0;
-	}
-	DAngle pitch = P_BulletSlope(self);
-
-	vz = -GetDefaultByName("GoldWandFX2")->Speed * pitch.TanClamped();
-	P_SpawnMissileAngle(self, PClass::FindActor("GoldWandFX2"), self->Angles.Yaw - (45. / 8), vz);
-	P_SpawnMissileAngle(self, PClass::FindActor("GoldWandFX2"), self->Angles.Yaw + (45. / 8), vz);
-	angle = self->Angles.Yaw - (45. / 8);
-	for(i = 0; i < 5; i++)
-	{
-		damage = 1+(pr_fgw2()&7);
-		P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, "GoldWandPuff2");
-		angle += ((45. / 8) * 2) / 4;
-	}
-	S_Sound (self, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
-	return 0;
-}
 
 //----------------------------------------------------------------------------
 //
@@ -323,20 +191,20 @@ DEFINE_ACTION_FUNCTION(AActor, A_GauntletAttack)
 		S_Sound (self, CHAN_AUTO, "weapons/gauntletshit", 1, ATTN_NORM);
 	}
 	// turn to face target
-	DAngle angle = t.angleFromSource;
-	DAngle anglediff = deltaangle(self->Angles.Yaw, angle);
+	DAngle ang = t.angleFromSource;
+	DAngle anglediff = deltaangle(self->Angles.Yaw, ang);
 
 	if (anglediff < 0.0)
 	{
 		if (anglediff < -4.5)
-			self->Angles.Yaw = angle + 90.0 / 21;
+			self->Angles.Yaw = ang + 90.0 / 21;
 		else
 			self->Angles.Yaw -= 4.5;
 	}
 	else
 	{
 		if (anglediff > 4.5)
-			self->Angles.Yaw = angle - 90.0 / 21;
+			self->Angles.Yaw = ang - 90.0 / 21;
 		else
 			self->Angles.Yaw += 4.5;
 	}
@@ -477,9 +345,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_MacePL1Check)
 	// [RH] Avoid some precision loss by scaling the velocity directly
 #if 0
 	// This is the original code, for reference.
-	a.ngle_t angle = self->angle>>ANGLETOF.INESHIFT;
-	self->velx = F.ixedMul(7*F.RACUNIT, f.inecosine[angle]);
-	self->vely = F.ixedMul(7*F.RACUNIT, f.inesine[angle]);
+	a.ngle_t ang = self->ang>>ANGLETOF.INESHIFT;
+	self->velx = F.ixedMul(7*F.RACUNIT, f.inecosine[ang]);
+	self->vely = F.ixedMul(7*F.RACUNIT, f.inesine[ang]);
 #else
 	double velscale = 7 / self->Vel.XY().Length();
 	self->Vel.X *= velscale;
@@ -621,7 +489,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 
 	int i;
 	AActor *target;
-	DAngle angle = 0.;
+	DAngle ang = 0.;
 	bool newAngle;
 	FTranslatedLineTarget t;
 
@@ -648,29 +516,29 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 			}
 			else
 			{ // Seek
-				angle = self->AngleTo(target);
+				ang = self->AngleTo(target);
 				newAngle = true;
 			}
 		}
 		else
 		{ // Find new target
-			angle = 0.;
+			ang = 0.;
 			for (i = 0; i < 16; i++)
 			{
-				P_AimLineAttack (self, angle, 640., &t, 0., ALF_NOFRIENDS|ALF_PORTALRESTRICT, NULL, self->target);
+				P_AimLineAttack (self, ang, 640., &t, 0., ALF_NOFRIENDS|ALF_PORTALRESTRICT, NULL, self->target);
 				if (t.linetarget && self->target != t.linetarget)
 				{
 					self->tracer = t.linetarget;
-					angle = t.angleFromSource;
+					ang = t.angleFromSource;
 					newAngle = true;
 					break;
 				}
-				angle += 22.5;
+				ang += 22.5;
 			}
 		}
 		if (newAngle)
 		{
-			self->Angles.Yaw = angle;
+			self->Angles.Yaw = ang;
 			self->VelFromAngle();
 		}
 		self->SetState (self->SpawnState);
@@ -762,7 +630,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBlasterPL1)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 
-	DAngle angle;
+	DAngle ang;
 	int damage;
 	player_t *player;
 
@@ -779,12 +647,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBlasterPL1)
 	}
 	DAngle pitch = P_BulletSlope(self);
 	damage = pr_fb1.HitDice (4);
-	angle = self->Angles.Yaw;
+	ang = self->Angles.Yaw;
 	if (player->refire)
 	{
-		angle += pr_fb1.Random2() * (5.625 / 256);
+		ang += pr_fb1.Random2() * (5.625 / 256);
 	}
-	P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, "BlasterPuff");
+	P_LineAttack (self, ang, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, "BlasterPuff");
 	S_Sound (self, CHAN_WEAPON, "weapons/blastershoot", 1, ATTN_NORM);
 	return 0;
 }
@@ -800,15 +668,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnRippers)
 	PARAM_SELF_PROLOGUE(AActor);
 
 	unsigned int i;
-	DAngle angle;
+	DAngle ang;
 	AActor *ripper;
 
 	for(i = 0; i < 8; i++)
 	{
 		ripper = Spawn<ARipper> (self->Pos(), ALLOW_REPLACE);
-		angle = i*45.;
+		ang = i*45.;
 		ripper->target = self->target;
-		ripper->Angles.Yaw = angle;
+		ripper->Angles.Yaw = ang;
 		ripper->VelFromAngle();
 		P_CheckMissileSpawn (ripper, self->radius);
 	}
@@ -1207,17 +1075,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_PhoenixPuff)
 	PARAM_SELF_PROLOGUE(AActor);
 
 	AActor *puff;
-	DAngle angle;
+	DAngle ang;
 
 	//[RH] Heretic never sets the target for seeking
 	//P_SeekerMissile (self, 5, 10);
 	puff = Spawn("PhoenixPuff", self->Pos(), ALLOW_REPLACE);
-	angle = self->Angles.Yaw + 90;
-	puff->Vel = DVector3(angle.ToVector(1.3), 0);
+	ang = self->Angles.Yaw + 90;
+	puff->Vel = DVector3(ang.ToVector(1.3), 0);
 
 	puff = Spawn("PhoenixPuff", self->Pos(), ALLOW_REPLACE);
-	angle = self->Angles.Yaw - 90;
-	puff->Vel = DVector3(angle.ToVector(1.3), 0);
+	ang = self->Angles.Yaw - 90;
+	puff->Vel = DVector3(ang.ToVector(1.3), 0);
 	return 0;
 }
 

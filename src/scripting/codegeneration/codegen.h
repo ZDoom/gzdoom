@@ -286,6 +286,7 @@ enum EFxType
 	EFX_StaticArrayVariable,
 	EFX_CVar,
 	EFX_NamedNode,
+	EFX_GetClass,
 	EFX_COUNT
 };
 
@@ -320,6 +321,7 @@ public:
 	bool IsPointer() const { return ValueType->GetRegType() == REGT_POINTER; }
 	bool IsVector() const { return ValueType == TypeVector2 || ValueType == TypeVector3; };
 	bool IsBoolCompat() const { return ValueType->GetRegCount() == 1 && (ValueType->GetRegType() == REGT_INT || ValueType->GetRegType() == REGT_FLOAT || ValueType->GetRegType() == REGT_POINTER); }
+	bool IsObject() const { return ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && !ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)) && ValueType != TypeNullPtr && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PClass)); }
 
 	virtual ExpEmit Emit(VMFunctionBuilder *build);
 
@@ -1516,6 +1518,24 @@ public:
 
 	FxVectorBuiltin(FxExpression *self, FName name);
 	~FxVectorBuiltin();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxFlopFunctionCall
+//
+//==========================================================================
+
+class FxGetClass : public FxExpression
+{
+	FxExpression *Self;
+
+public:
+
+	FxGetClass(FxExpression *self);
+	~FxGetClass();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

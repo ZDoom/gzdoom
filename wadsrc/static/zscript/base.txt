@@ -7,7 +7,6 @@ class Object native
 	native static double G_SkillPropertyFloat(int p);
 
 	virtual native void Destroy();
-	native class<Object> GetClass();
 }
 
 class Thinker : Object native

@@ -5637,12 +5637,6 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PStruct *classct
 				return nullptr;
 			}
 
-			if (vsym->Flags & VARF_Static)
-			{
-				// todo. For now these cannot be defined so let's just exit.
-				ScriptPosition.Message(MSG_ERROR, "Static members not implemented yet.");
-				return nullptr;
-			}
 			auto x = isclass ? new FxClassMember(object, vsym, ScriptPosition) : new FxStructMember(object, vsym, ScriptPosition);
 			object = nullptr;
 			return x->Resolve(ctx);
@@ -5918,40 +5912,14 @@ FxExpression *FxClassDefaults::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-int BuiltinGetDefault(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
-{
-	assert(numparam == 1);
-	PARAM_POINTER_AT(0, obj, DObject);
-	ACTION_RETURN_OBJECT(obj->GetClass()->Defaults);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 ExpEmit FxClassDefaults::Emit(VMFunctionBuilder *build)
 {
-	EmitParameter(build, obj, ScriptPosition);
-	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinGetDefault, BuiltinGetDefault);
-
-	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
-	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
-	auto callfunc = ((PSymbolVMFunction *)sym)->Function;
-	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
-	build->Emit(opcode, build->GetConstantAddress(callfunc, ATAG_OBJECT), 1, 1);
-
-	if (EmitTail)
-	{
-		ExpEmit call;
-		call.Final = true;
-		return call;
-	}
-
-	ExpEmit out(build, REGT_POINTER);
-	build->Emit(OP_RESULT, 0, REGT_POINTER, out.RegNum);
-	return out;
+	ExpEmit ob = obj->Emit(build);
+	ob.Free(build);
+	ExpEmit meta(build, REGT_POINTER);
+	build->Emit(OP_META, meta.RegNum, ob.RegNum);
+	build->Emit(OP_LO, meta.RegNum, meta.RegNum, build->GetConstantInt(myoffsetof(PClass, Defaults)));
+	return meta;
 
 }
 
@@ -6272,6 +6240,11 @@ FxStructMember::~FxStructMember()
 
 bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 {
+	// Cannot take the address of metadata variables.
+	if (membervar->Flags & VARF_Static)
+	{
+		return false;
+	}
 	AddressRequested = true;
 	if (writable != nullptr) *writable = (AddressWritable && !ctx.CheckReadOnly(membervar->Flags) &&
 											(!classx->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) || !static_cast<PPointer*>(classx->ValueType)->IsConst));
@@ -6409,6 +6382,14 @@ ExpEmit FxStructMember::Emit(VMFunctionBuilder *build)
 		ExpEmit newobj(build, REGT_POINTER);
 		build->Emit(OP_LKP, newobj.RegNum, obj.RegNum);
 		obj = newobj;
+	}
+
+	if (membervar->Flags & VARF_Static)
+	{
+		obj.Free(build);
+		ExpEmit meta(build, REGT_POINTER);
+		build->Emit(OP_META, meta.RegNum, obj.RegNum);
+		obj = meta;
 	}
 
 	if (AddressRequested)
@@ -6953,6 +6934,13 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		}
 		break;
 
+	case NAME_GetClass:
+		if (CheckArgSize(NAME_GetClass, ArgList, 0, 0, ScriptPosition))
+		{
+			func = new FxGetClass(new FxSelf(ScriptPosition));
+		}
+		break;
+
 	case NAME_Random:
 		// allow calling Random without arguments to default to (0, 255)
 		if (ArgList.Size() == 0)
@@ -7132,6 +7120,12 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		// handle builtins: Vectors got 2: Length and Unit.
 		if (MethodName == NAME_Length || MethodName == NAME_Unit)
 		{
+			if (ArgList.Size() > 0)
+			{
+				ScriptPosition.Message(MSG_ERROR, "too many parameters in call to %s", MethodName.GetChars());
+				delete this;
+				return nullptr;
+			}
 			auto x = new FxVectorBuiltin(Self, MethodName);
 			Self = nullptr;
 			delete this;
@@ -7144,6 +7138,17 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		auto ptype = static_cast<PPointer *>(Self->ValueType)->PointedType;
 		if (ptype->IsKindOf(RUNTIME_CLASS(PStruct)))
 		{
+			if (ptype->IsKindOf(RUNTIME_CLASS(PClass)) && MethodName == NAME_GetClass)
+			{
+				if (ArgList.Size() > 0)
+				{
+					ScriptPosition.Message(MSG_ERROR, "too many parameters in call to %s", MethodName.GetChars());
+					delete this;
+					return nullptr;
+				}
+				auto x = new FxGetClass(Self);
+				return x->Resolve(ctx);
+			}
 			cls = static_cast<PStruct *>(ptype);
 		}
 		else
@@ -7973,6 +7978,44 @@ ExpEmit FxVectorBuiltin::Emit(VMFunctionBuilder *build)
 		len.Free(build);
 	}
 	op.Free(build);
+	return to;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+FxGetClass::FxGetClass(FxExpression *self)
+	:FxExpression(EFX_GetClass, self->ScriptPosition)
+{
+	Self = self;
+}
+
+FxGetClass::~FxGetClass()
+{
+	SAFE_DELETE(Self);
+}
+
+FxExpression *FxGetClass::Resolve(FCompileContext &ctx)
+{
+	SAFE_RESOLVE(Self, ctx);
+	if (!Self->IsObject())
+	{
+		ScriptPosition.Message(MSG_ERROR, "GetClass() requires an object");
+		delete this;
+		return nullptr;
+	}
+	ValueType = NewClassPointer(static_cast<PClass*>(static_cast<PPointer*>(Self->ValueType)->PointedType));
+	return this;
+}
+
+ExpEmit FxGetClass::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit op = Self->Emit(build);
+	op.Free(build);
+	ExpEmit to(build, REGT_POINTER);
+	build->Emit(OP_META, to.RegNum, op.RegNum);
 	return to;
 }
 

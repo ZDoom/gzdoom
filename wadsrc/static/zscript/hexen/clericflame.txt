@@ -170,7 +170,7 @@ class CircleFlame : Actor
 
 // Flame Missile ------------------------------------------------------------
 
-class CFlameMissile : FastProjectile native
+class CFlameMissile : FastProjectile
 {
 	Default
 	{
@@ -208,4 +208,28 @@ class CFlameMissile : FastProjectile native
 		CFFX M 3 Bright;
 		Stop;
 	}
+	
+	override void BeginPlay ()
+	{
+		special1 = 2;
+	}
+
+	override void Effect ()
+	{
+		if (!--special1)
+		{
+			special1 = 4;
+			double newz = pos.z - 12;
+			if (newz < floorz)
+			{
+				newz = floorz;
+			}
+			Actor mo = Spawn ("CFlameFloor", (pos.xy, newz), ALLOW_REPLACE);
+			if (mo)
+			{
+				mo.angle = angle;
+			}
+		}
+	}
+	
 }

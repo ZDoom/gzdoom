@@ -228,7 +228,6 @@ class AFastProjectile : public AActor
 	DECLARE_CLASS(AFastProjectile, AActor)
 public:
 	void Tick ();
-	virtual void Effect();
 };
 
 

@@ -6,6 +6,7 @@
 #include "p_lnspec.h"
 #include "b_bot.h"
 #include "p_checkposition.h"
+#include "virtual.h"
 
 IMPLEMENT_CLASS(AFastProjectile, false, false, false, false)
 
@@ -132,7 +133,13 @@ void AFastProjectile::Tick ()
 			if (!frac.isZero() && ripcount <= 0) 
 			{
 				ripcount = count >> 3;
-				Effect();
+
+				// call the scripted 'Effect' method.
+				VINDEX(AFastProjectile, Effect);
+				// Without the type cast this picks the 'void *' assignment...
+				VMValue params[1] = { (DObject*)this };
+				VMFrameStack stack;
+				stack.Call(VFUNC, params, 1, nullptr, 0, nullptr);
 			}
 		}
 	}
@@ -152,36 +159,4 @@ void AFastProjectile::Tick ()
 	}
 }
 
-
-void AFastProjectile::Effect()
-{
-	FName name = GetClass()->MissileName;
-	if (name != NAME_None)
-	{
-		double hitz = Z()-8;
-
-		if (hitz < floorz)
-		{
-			hitz = floorz;
-		}
-		// Do not clip this offset to the floor.
-		hitz += GetClass()->MissileHeight;
-		
-		PClassActor *trail = PClass::FindActor(name);
-		if (trail != NULL)
-		{
-			AActor *act = Spawn (trail, PosAtZ(hitz), ALLOW_REPLACE);
-			if (act != nullptr)
-			{
-				if ((flags5 & MF5_GETOWNER) && (target != nullptr))
-					act->target = target;
-				else
-					act->target = this;
-				
-				act->Angles.Pitch = Angles.Pitch;
-				act->Angles.Yaw = Angles.Yaw;
-			}
-		}
-	}
-}
 

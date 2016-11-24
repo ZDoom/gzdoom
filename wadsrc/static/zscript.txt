@@ -31,6 +31,7 @@ zscript/shared/setcolor.txt
 zscript/shared/sectoraction.txt
 zscript/shared/ice.txt
 zscript/shared/dog.txt
+zscript/shared/fastprojectile.txt
 
 zscript/doom/doomplayer.txt
 zscript/doom/possessed.txt
@@ -100,6 +101,7 @@ zscript/heretic/weaponwand.txt
 zscript/heretic/weaponcrossbow.txt
 zscript/heretic/weapongauntlets.txt
 zscript/heretic/weaponmace.txt
+zscript/heretic/weaponblaster.txt
 
 zscript/hexen/baseweapons.txt
 zscript/hexen/korax.txt

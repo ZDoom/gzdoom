@@ -230,7 +230,6 @@ PClassActor::PClassActor()
 	BurnHeight = -1;
 	GibHealth = INT_MIN;
 	WoundHealth = 6;
-	PoisonDamage = 0;
 	FastSpeed = -1.;
 	RDFactor = 1.;
 	CameraHeight = INT_MIN;
@@ -291,7 +290,6 @@ void PClassActor::DeriveData(PClass *newclass)
 	newa->BloodColor = BloodColor;
 	newa->GibHealth = GibHealth;
 	newa->WoundHealth = WoundHealth;
-	newa->PoisonDamage = PoisonDamage;
 	newa->FastSpeed = FastSpeed;
 	newa->RDFactor = RDFactor;
 	newa->CameraHeight = CameraHeight;

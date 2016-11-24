@@ -296,7 +296,6 @@ public:
 	PalEntry BloodColor;	// Colorized blood
 	int GibHealth;			// Negative health below which this monster dies an extreme death
 	int WoundHealth;		// Health needed to enter wound state
-	int PoisonDamage;		// Amount of poison damage
 	double FastSpeed;		// speed in fast mode
 	double RDFactor;		// Radius damage factor
 	double CameraHeight;	// Height of camera when used as such

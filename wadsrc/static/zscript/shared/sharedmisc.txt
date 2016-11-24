@@ -179,17 +179,6 @@ class RandomSpawner : Actor native
 	}
 }
 
-// Fast projectiles --------------------------------------------------------
-
-class FastProjectile : Actor native
-{
-	Default
-	{
-		Projectile;
-		MissileHeight 0;
-	}
-}
-
 // Sector flag setter ------------------------------------------------------
 
 class SectorFlagSetter : Actor native

@@ -75,6 +75,7 @@
 #define ASSERTF(x)		assert((unsigned)(x) < f->NumRegF)
 #define ASSERTA(x)		assert((unsigned)(x) < f->NumRegA)
 #define ASSERTS(x)		assert((unsigned)(x) < f->NumRegS)
+#define ASSERTO(x)		assert((unsigned)(x) < f->NumRegA && reg.atag[x] == ATAG_OBJECT)
 
 #define ASSERTKD(x)		assert(sfunc != NULL && (unsigned)(x) < sfunc->NumKonstD)
 #define ASSERTKF(x)		assert(sfunc != NULL && (unsigned)(x) < sfunc->NumKonstF)

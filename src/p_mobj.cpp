@@ -310,6 +310,28 @@ DEFINE_FIELD(AActor, ConversationRoot)
 DEFINE_FIELD(AActor, Conversation)
 DEFINE_FIELD(AActor, DecalGenerator)
 
+DEFINE_FIELD(PClassActor, Obituary)
+DEFINE_FIELD(PClassActor, HitObituary)
+DEFINE_FIELD(PClassActor, DeathHeight)
+DEFINE_FIELD(PClassActor, BurnHeight)
+DEFINE_FIELD(PClassActor, BloodColor)
+DEFINE_FIELD(PClassActor, GibHealth)
+DEFINE_FIELD(PClassActor, WoundHealth)
+DEFINE_FIELD(PClassActor, FastSpeed)
+DEFINE_FIELD(PClassActor, RDFactor)
+DEFINE_FIELD(PClassActor, CameraHeight)
+DEFINE_FIELD(PClassActor, HowlSound)
+DEFINE_FIELD(PClassActor, BloodType)
+DEFINE_FIELD(PClassActor, BloodType2)
+DEFINE_FIELD(PClassActor, BloodType3)
+DEFINE_FIELD(PClassActor, DontHurtShooter)
+DEFINE_FIELD(PClassActor, ExplosionRadius)
+DEFINE_FIELD(PClassActor, ExplosionDamage)
+DEFINE_FIELD(PClassActor, MeleeDamage)
+DEFINE_FIELD(PClassActor, MeleeSound)
+DEFINE_FIELD(PClassActor, MissileName)
+DEFINE_FIELD(PClassActor, MissileHeight)
+
 //==========================================================================
 //
 // AActor :: Serialize

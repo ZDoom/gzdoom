@@ -1,0 +1,41 @@
+// Fast projectiles --------------------------------------------------------
+
+class FastProjectile : Actor native
+{
+	Default
+	{
+		Projectile;
+		MissileHeight 0;
+	}
+	
+	
+	virtual void Effect()
+	{
+		class<Actor> trail = MissileName;
+		if (trail != null)
+		{
+			double hitz = pos.z - 8;
+
+			if (hitz < floorz)
+			{
+				hitz = floorz;
+			}
+			// Do not clip this offset to the floor.
+			hitz += MissileHeight;
+			
+			Actor act = Spawn (trail, (pos.xy, hitz), ALLOW_REPLACE);
+			if (act != null)
+			{
+				if (bGetOwner && target != null)
+					act.target = target;
+				else
+					act.target = self;
+				
+				act.angle = angle;
+				act.pitch = pitch;
+			}
+		}
+	}
+	
+}
+

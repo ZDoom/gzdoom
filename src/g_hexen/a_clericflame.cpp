@@ -25,38 +25,6 @@ void A_CFlameMissile (AActor *);
 
 // Flame Missile ------------------------------------------------------------
 
-class ACFlameMissile : public AFastProjectile
-{
-	DECLARE_CLASS (ACFlameMissile, AFastProjectile)
-public:
-	void BeginPlay ();
-	void Effect ();
-};
-
-IMPLEMENT_CLASS(ACFlameMissile, false, false, false, false)
-
-void ACFlameMissile::BeginPlay ()
-{
-	special1 = 2;
-}
-
-void ACFlameMissile::Effect ()
-{
-	if (!--special1)
-	{
-		special1 = 4;
-		double newz = Z() - 12;
-		if (newz < floorz)
-		{
-			newz = floorz;
-		}
-		AActor *mo = Spawn ("CFlameFloor", PosAtZ(newz), ALLOW_REPLACE);
-		if (mo)
-		{
-			mo->Angles.Yaw = Angles.Yaw;
-		}
-	}
-}
 
 //============================================================================
 //
@@ -80,7 +48,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameAttack)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	P_SpawnPlayerMissile (self, RUNTIME_CLASS(ACFlameMissile));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CFlameMissile"));
 	S_Sound (self, CHAN_WEAPON, "ClericFlameFire", 1, ATTN_NORM);
 	return 0;
 }

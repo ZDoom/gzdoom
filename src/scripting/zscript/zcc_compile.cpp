@@ -1298,8 +1298,12 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 
 		if (field->Flags & ZCC_Meta)
 		{
-			varflags |= VARF_ReadOnly;	// metadata implies readonly
-			// todo: this needs to go into the metaclass and needs some handling
+			varflags |= VARF_Static|VARF_ReadOnly;	// metadata implies readonly
+			if (!(field->Flags & ZCC_Native))
+			{
+				// Non-native meta data is not implemented yet and requires some groundwork in the class copy code.
+				Error(field, "Metadata member %s must be native", FName(field->Names->Name).GetChars());
+			}
 		}
 
 		if (field->Type->ArraySize != nullptr)
@@ -1320,7 +1324,8 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 				
 				if (varflags & VARF_Native)
 				{
-					fd = FindField(type, FName(name->Name).GetChars());
+					auto querytype = (varflags & VARF_Static) ? type->GetClass() : type;
+					fd = FindField(querytype, FName(name->Name).GetChars());
 					if (fd == nullptr)
 					{
 						Error(field, "The member variable '%s.%s' has not been exported from the executable.", type->TypeName.GetChars(), FName(name->Name).GetChars());

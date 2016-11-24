@@ -27,7 +27,6 @@ static FRandom pr_bfx1 ("BlasterFX1");
 static FRandom pr_ripd ("RipperD");
 static FRandom pr_fb1 ("FireBlasterPL1");
 static FRandom pr_bfx1t ("BlasterFX1Tick");
-static FRandom pr_hrfx2 ("HornRodFX2");
 static FRandom pr_rp ("RainPillar");
 static FRandom pr_fsr1 ("FireSkullRodPL1");
 static FRandom pr_storm ("SkullRodStorm");
@@ -819,27 +818,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnRippers)
 // --- Skull rod ------------------------------------------------------------
 
 
-// Horn Rod FX 2 ------------------------------------------------------------
-
-class AHornRodFX2 : public AActor
-{
-	DECLARE_CLASS (AHornRodFX2, AActor)
-public:
-	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
-};
-
-IMPLEMENT_CLASS(AHornRodFX2, false, false, false, false)
-
-int AHornRodFX2::DoSpecialDamage (AActor *target, int damage, FName damagetype)
-{
-	if (target->IsKindOf (PClass::FindClass("Sorcerer2")) && pr_hrfx2() < 96)
-	{ // D'Sparil teleports away
-		P_DSparilTeleport (target);
-		return -1;
-	}
-	return damage;
-}
-
 // Rain pillar 1 ------------------------------------------------------------
 
 class ARainPillar : public AActor
@@ -940,7 +918,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSkullRodPL2)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	P_SpawnPlayerMissile (self, 0,0,0, RUNTIME_CLASS(AHornRodFX2), self->Angles.Yaw, &t, &MissileActor);
+	P_SpawnPlayerMissile (self, 0,0,0, PClass::FindActor("HornRodFX2"), self->Angles.Yaw, &t, &MissileActor);
 	// Use MissileActor instead of the return value from
 	// P_SpawnPlayerMissile because we need to give info to the mobj
 	// even if it exploded immediately.
@@ -1170,25 +1148,6 @@ void APhoenixRodPowered::EndPowerup ()
 	P_SetPsprite(Owner->player, PSP_WEAPON, SisterWeapon->GetReadyState());
 }
 
-class APhoenixFX1 : public AActor
-{
-	DECLARE_CLASS (APhoenixFX1, AActor)
-public:
-	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
-};
-
-IMPLEMENT_CLASS(APhoenixFX1, false, false, false, false)
-
-int APhoenixFX1::DoSpecialDamage (AActor *target, int damage, FName damagetype)
-{
-	if (target->IsKindOf (PClass::FindClass("Sorcerer2")) && pr_hrfx2() < 96)
-	{ // D'Sparil teleports away
-		P_DSparilTeleport (target);
-		return -1;
-	}
-	return damage;
-}
-
 // Phoenix FX 2 -------------------------------------------------------------
 
 class APhoenixFX2 : public AActor
@@ -1232,7 +1191,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL1)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	P_SpawnPlayerMissile (self, RUNTIME_CLASS(APhoenixFX1));
+	P_SpawnPlayerMissile (self, PClass::FindActor("PhoenixFX1"));
 	self->Thrust(self->Angles.Yaw + 180, 4);
 	return 0;
 }

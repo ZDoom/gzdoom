@@ -1449,19 +1449,6 @@ DEFINE_ACTION_FUNCTION(AActor, AimTarget)
 	ACTION_RETURN_OBJECT(P_AimTarget(self));
 }
 
-
-DEFINE_ACTION_FUNCTION(AActor, A_Light)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(light);
-
-	if (self->player != NULL)
-	{
-		self->player->extralight = clamp<int>(light, -20, 20);
-	}
-	return 0;
-}
-
 //------------------------------------------------------------------------
 //
 // PROC P_SetupPsprites

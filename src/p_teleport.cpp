@@ -96,6 +96,18 @@ void P_SpawnTeleportFog(AActor *mobj, const DVector3 &pos, bool beforeTele, bool
 		mo->target = mobj;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SpawnTeleportFog)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_BOOL(before);
+	PARAM_BOOL(settarget);
+	P_SpawnTeleportFog(self, DVector3(x, y, z), before, settarget);
+	return 0;
+}
+
 //
 // TELEPORTATION
 //

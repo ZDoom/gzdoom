@@ -5593,6 +5593,22 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PStruct *classct
 	PSymbol *sym;
 	PSymbolTable *symtbl;
 	bool isclass = objtype->IsKindOf(RUNTIME_CLASS(PClass));
+
+	if (Identifier == NAME_Default)
+	{
+		if (!objtype->IsKindOf(RUNTIME_CLASS(PClassActor)))
+		{
+			ScriptPosition.Message(MSG_ERROR, "'Default' requires an actor type.");
+			delete this;
+			return nullptr;
+		}
+
+		FxExpression * x = new FxClassDefaults(object, ScriptPosition);
+		object = nullptr;
+		delete this;
+		return x->Resolve(ctx);
+	}
+
 	if ((sym = objtype->Symbols.FindSymbolInTable(Identifier, symtbl)) != nullptr)
 	{
 		if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))

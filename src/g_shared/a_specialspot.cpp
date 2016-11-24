@@ -344,6 +344,18 @@ ASpecialSpot *DSpotState::GetSpotWithMinMaxDistance(PClassActor *type, double x,
 	return NULL;
 }
 
+DEFINE_ACTION_FUNCTION(DSpotState, GetSpotWithMinMaxDistance)
+{
+	PARAM_SELF_PROLOGUE(DSpotState);
+	PARAM_CLASS(type, AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(mindist);
+	PARAM_FLOAT(maxdist);
+	ACTION_RETURN_OBJECT(self->GetSpotWithMinMaxDistance(type, x, y, mindist, maxdist));
+}
+
+
 //----------------------------------------------------------------------------
 //
 // 

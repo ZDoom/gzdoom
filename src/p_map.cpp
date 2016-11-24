@@ -1777,6 +1777,11 @@ bool P_TestMobjLocation(AActor *mobj)
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, TestMobjLocation)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(P_TestMobjLocation(self));
+}
 
 //=============================================================================
 //

@@ -1037,7 +1037,7 @@ class HornRodFX1 : Actor
 
 // Horn Rod FX 2 ------------------------------------------------------------
 
-class HornRodFX2 : Actor native
+class HornRodFX2 : Actor
 {
 	Default
 	{
@@ -1059,7 +1059,7 @@ class HornRodFX2 : Actor native
 
 	States
 	{
-	Spawn:
+	Spawn:	
 		FX00 C 3 BRIGHT;
 		FX00 D 3 BRIGHT A_SeekerMissile(10, 30);
 		FX00 E 3 BRIGHT;
@@ -1074,6 +1074,18 @@ class HornRodFX2 : Actor native
 		FX00 G 1 A_SkullRodStorm;
 		Wait;
 	}
+	
+	override int DoSpecialDamage (Actor target, int damage, Name damagetype)
+	{
+		Sorcerer2 s2 = Sorcerer2(target);
+		if (s2 != null && random[HornRodFX2]() < 96)
+		{ // D'Sparil teleports away
+			s2.DSparilTeleport ();
+			return -1;
+		}
+		return damage;
+	}
+	
 }
 
 // Rain pillar 1 ------------------------------------------------------------
@@ -1195,7 +1207,7 @@ class PhoenixRodPowered : PhoenixRod native
 
 // Phoenix FX 1 -------------------------------------------------------------
 
-class PhoenixFX1 : Actor native
+class PhoenixFX1 : Actor
 {
 	Default
 	{
@@ -1225,6 +1237,18 @@ class PhoenixFX1 : Actor native
 		FX08 DEFGH 4 BRIGHT;
 		Stop;
 	}
+	
+	override int DoSpecialDamage (Actor target, int damage, Name damagetype)
+	{
+		Sorcerer2 s2 = Sorcerer2(target);
+		if (s2 != null && random[HornRodFX2]() < 96)
+		{ // D'Sparil teleports away
+			s2.DSparilTeleport ();
+			return -1;
+		}
+		return damage;
+	}
+	
 }
 
 // Phoenix puff -------------------------------------------------------------

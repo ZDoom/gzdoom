@@ -6781,6 +6781,12 @@ int AActor::SpawnHealth() const
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SpawnHealth)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(self->SpawnHealth());
+}
+
 FState *AActor::GetRaiseState()
 {
 	if (!(flags & MF_CORPSE))

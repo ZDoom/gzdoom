@@ -111,6 +111,7 @@ extend class StateProvider
 	
 	action void A_CloseShotgun2() 
 	{ 
-		A_PlaySound("weapons/sshotc", CHAN_WEAPON); 
+		A_PlaySound("weapons/sshotc", CHAN_WEAPON);
+		A_Refire();
 	}
 }

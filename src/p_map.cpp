@@ -6758,7 +6758,7 @@ bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death)
 			thing->activationtype &= ~THINGSPEC_Activate; // Clear flag
 			if (thing->activationtype & THINGSPEC_Switch) // Set other flag if switching
 				thing->activationtype |= THINGSPEC_Deactivate;
-			thing->Activate(trigger);
+			thing->CallActivate(trigger);
 			res = true;
 		}
 		// If not, can it be deactivated?
@@ -6767,7 +6767,7 @@ bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death)
 			thing->activationtype &= ~THINGSPEC_Deactivate; // Clear flag
 			if (thing->activationtype & THINGSPEC_Switch)	// Set other flag if switching
 				thing->activationtype |= THINGSPEC_Activate;
-			thing->Deactivate(trigger);
+			thing->CallDeactivate(trigger);
 			res = true;
 		}
 	}

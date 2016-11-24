@@ -667,7 +667,7 @@ public:
 	bool Final = false;				// cannot be overridden
 	bool Unsafe = false;			// Contains references to class fields that are unsafe for psp and item state calls.
 	BYTE ImplicitArgs = 0;	// either 0 for static, 1 for method or 3 for action
-	int VirtualIndex = -1;
+	unsigned VirtualIndex = ~0u;
 	FName Name;
 	TArray<VMValue> DefaultArgs;
 	FString PrintableName;	// so that the VM can print meaningful info if something in this function goes wrong.

@@ -584,7 +584,7 @@ public:
 	AActor () throw();
 	AActor (const AActor &other) throw();
 	AActor &operator= (const AActor &other);
-	void Destroy ();
+	void Destroy () override;
 	~AActor ();
 
 	void Serialize(FSerializer &arc);
@@ -612,6 +612,7 @@ public:
 	bool CheckNoDelay();
 
 	virtual void BeginPlay();			// Called immediately after the actor is created
+	void CallBeginPlay();
 	virtual void PostBeginPlay();		// Called immediately before the actor's first tick
 	void LevelSpawned();				// Called after BeginPlay if this actor was spawned by the world
 	virtual void HandleSpawnFlags();	// Translates SpawnFlags into in-game flags.
@@ -620,6 +621,8 @@ public:
 
 	virtual void Activate (AActor *activator);
 	virtual void Deactivate (AActor *activator);
+	void CallActivate(AActor *activator);
+	void CallDeactivate(AActor *activator);
 
 	virtual void Tick ();
 
@@ -629,6 +632,7 @@ public:
 	// Perform some special damage action. Returns the amount of damage to do.
 	// Returning -1 signals the damage routine to exit immediately
 	virtual int DoSpecialDamage (AActor *target, int damage, FName damagetype);
+	int CallDoSpecialDamage(AActor *target, int damage, FName damagetype);
 
 	// Like DoSpecialDamage, but called on the actor receiving the damage.
 	virtual int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype);
@@ -684,7 +688,8 @@ public:
 	virtual bool TakeInventory (PClassActor *itemclass, int amount, bool fromdecorate = false, bool notakeinfinite = false);
 
 	// Uses an item and removes it from the inventory.
-	virtual bool UseInventory (AInventory *item);
+	virtual bool DoUseInventory (AInventory *item);
+	bool UseInventory(AInventory *item);
 
 	// Tosses an item out of the inventory.
 	virtual AInventory *DropInventory (AInventory *item);

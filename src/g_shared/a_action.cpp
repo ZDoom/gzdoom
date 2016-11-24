@@ -28,7 +28,7 @@ public:
 	void Deactivate (AActor *activator);
 };
 
-IMPLEMENT_CLASS(ASwitchableDecoration, false, false, false, false)
+IMPLEMENT_CLASS(ASwitchableDecoration, false, false)
 
 void ASwitchableDecoration::Activate (AActor *activator)
 {
@@ -49,7 +49,7 @@ public:
 	void Deactivate (AActor *activator) {}
 };
 
-IMPLEMENT_CLASS(ASwitchingDecoration, false, false, false, false)
+IMPLEMENT_CLASS(ASwitchingDecoration, false, false)
 
 //----------------------------------------------------------------------------
 //
@@ -295,7 +295,7 @@ class DCorpsePointer : public DThinker
 	HAS_OBJECT_POINTERS
 public:
 	DCorpsePointer (AActor *ptr);
-	void Destroy ();
+	void Destroy() override;
 	void Serialize(FSerializer &arc);
 	TObjPtr<AActor> Corpse;
 	DWORD Count;	// Only the first corpse pointer's count is valid.
@@ -303,7 +303,7 @@ private:
 	DCorpsePointer () {}
 };
 
-IMPLEMENT_CLASS(DCorpsePointer, false, true, false, false)
+IMPLEMENT_CLASS(DCorpsePointer, false, true)
 
 IMPLEMENT_POINTERS_START(DCorpsePointer)
 	IMPLEMENT_POINTER(Corpse)

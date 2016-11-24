@@ -834,6 +834,7 @@ public:
 		V_FreeBrokenLines(mDialogueLines);
 		mDialogueLines = NULL;
 		I_SetMusicVolume (1.f);
+		Super::Destroy();
 	}
 
 	bool DimAllowed()
@@ -1103,7 +1104,7 @@ public:
 
 };
 
-IMPLEMENT_CLASS(DConversationMenu, true, false, false, false)
+IMPLEMENT_CLASS(DConversationMenu, true, false)
 int DConversationMenu::mSelection;	// needs to be preserved if the same dialogue is restarted
 
 

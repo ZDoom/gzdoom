@@ -58,7 +58,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS(ARainPillar, false, false, false, false)
+IMPLEMENT_CLASS(ARainPillar, false, false)
 
 int ARainPillar::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
@@ -80,7 +80,7 @@ public:
 	TObjPtr<AActor> Rain1, Rain2;
 };
 
-IMPLEMENT_CLASS(ARainTracker, false, false, false, false)
+IMPLEMENT_CLASS(ARainTracker, false, false)
 	
 void ARainTracker::Serialize(FSerializer &arc)
 {
@@ -367,8 +367,8 @@ public:
 	void EndPowerup ();
 };
 
-IMPLEMENT_CLASS(APhoenixRod, false, false, false, false)
-IMPLEMENT_CLASS(APhoenixRodPowered, false, false, false, false)
+IMPLEMENT_CLASS(APhoenixRod, false, false)
+IMPLEMENT_CLASS(APhoenixRodPowered, false, false)
 
 void APhoenixRodPowered::EndPowerup ()
 {
@@ -388,7 +388,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS(APhoenixFX2, false, false, false, false)
+IMPLEMENT_CLASS(APhoenixFX2, false, false)
 
 int APhoenixFX2::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {

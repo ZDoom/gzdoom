@@ -25,7 +25,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS(ACStaffMissile, false, false, false, false)
+IMPLEMENT_CLASS(ACStaffMissile, false, false)
 
 int ACStaffMissile::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {

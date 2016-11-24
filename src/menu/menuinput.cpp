@@ -44,7 +44,7 @@
 // [TP] New #includes
 #include "v_text.h"
 
-IMPLEMENT_CLASS(DTextEnterMenu, true, false, false, false)
+IMPLEMENT_CLASS(DTextEnterMenu, true, false)
 
 #define INPUTGRID_WIDTH		13
 #define INPUTGRID_HEIGHT	5

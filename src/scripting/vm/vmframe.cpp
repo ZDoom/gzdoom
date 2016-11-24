@@ -34,15 +34,15 @@
 #include <new>
 #include "dobject.h"
 
-IMPLEMENT_CLASS(VMException, false, false, false, false)
-IMPLEMENT_CLASS(VMFunction, true, true, false, false)
+IMPLEMENT_CLASS(VMException, false, false)
+IMPLEMENT_CLASS(VMFunction, true, true)
 
 IMPLEMENT_POINTERS_START(VMFunction)
 	IMPLEMENT_POINTER(Proto)
 IMPLEMENT_POINTERS_END
 
-IMPLEMENT_CLASS(VMScriptFunction, false, false, false, false)
-IMPLEMENT_CLASS(VMNativeFunction, false, false, false, false)
+IMPLEMENT_CLASS(VMScriptFunction, false, false)
+IMPLEMENT_CLASS(VMNativeFunction, false, false)
 
 VMScriptFunction::VMScriptFunction(FName name)
 {

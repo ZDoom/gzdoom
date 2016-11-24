@@ -17,7 +17,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS(AArtiBoostArmor, false, false, false, false)
+IMPLEMENT_CLASS(AArtiBoostArmor, false, false)
 
 bool AArtiBoostArmor::Use (bool pickup)
 {

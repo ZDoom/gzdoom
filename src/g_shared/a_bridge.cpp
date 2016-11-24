@@ -37,10 +37,10 @@ class ACustomBridge : public AActor
 	DECLARE_CLASS (ACustomBridge, AActor)
 public:
 	void BeginPlay ();
-	void Destroy();
+	void Destroy() override;
 };
 
-IMPLEMENT_CLASS(ACustomBridge, false, false, false, false)
+IMPLEMENT_CLASS(ACustomBridge, false, false)
 
 void ACustomBridge::BeginPlay ()
 {
@@ -155,7 +155,7 @@ public:
 	void BeginPlay ();
 };
 
-IMPLEMENT_CLASS(AInvisibleBridge, false, false, false, false)
+IMPLEMENT_CLASS(AInvisibleBridge, false, false)
 
 void AInvisibleBridge::BeginPlay ()
 {

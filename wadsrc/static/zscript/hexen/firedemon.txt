@@ -4,7 +4,7 @@
 class FireDemon : Actor
 {
 	const FIREDEMON_ATTACK_RANGE = 64*8.;
-	int strafecount;
+	int fdstrafecount;
 
 	Default
 	{
@@ -77,7 +77,7 @@ class FireDemon : Actor
 	// Fire Demon AI
 	//
 	// special1			index into floatbob
-	// strafecount			whether strafing or not
+	// fdstrafecount			whether strafing or not
 	//============================================================================
 
 	//============================================================================
@@ -125,7 +125,7 @@ class FireDemon : Actor
 		}
 
 		// Initialize fire demon
-		strafecount = 0;
+		fdstrafecount = 0;
 		bJustAttacked = false;
 	}
 
@@ -188,13 +188,13 @@ class FireDemon : Actor
 		}
 
 		// Strafe
-		if (strafecount > 0)
+		if (fdstrafecount > 0)
 		{
-			strafecount--;
+			fdstrafecount--;
 		}
 		else
 		{
-			strafecount = 0;
+			fdstrafecount = 0;
 			Vel.X = Vel.Y = 0;
 			dist = Distance2D(target);
 			if (dist < FIREDEMON_ATTACK_RANGE)
@@ -207,7 +207,7 @@ class FireDemon : Actor
 					else
 						ang -= 90;
 					Thrust(8, ang);
-					strafecount = 3;		// strafe time
+					fdstrafecount = 3;		// strafe time
 				}
 			}
 		}
@@ -215,7 +215,7 @@ class FireDemon : Actor
 		FaceMovementDirection ();
 
 		// Normal movement
-		if (!strafecount)
+		if (!fdstrafecount)
 		{
 			if (--movecount<0 || !MonsterMove ())
 			{

@@ -47,7 +47,7 @@ extern void P_CalcHeight (player_t *player);
 
 CVAR (Bool, telezoom, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
-IMPLEMENT_CLASS(ATeleportFog, false, false, false, false)
+IMPLEMENT_CLASS(ATeleportFog, false, false)
 
 void ATeleportFog::PostBeginPlay ()
 {

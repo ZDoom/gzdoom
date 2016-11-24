@@ -46,14 +46,14 @@ public:
 	void Activate (AActor *deactivator);
 };
 
-IMPLEMENT_CLASS(ASoundEnvironment, false, false, false, false)
+IMPLEMENT_CLASS(ASoundEnvironment, false, false)
 
 void ASoundEnvironment::PostBeginPlay ()
 {
 	Super::PostBeginPlay ();
 	if (!(flags2 & MF2_DORMANT))
 	{
-		Activate (this);
+		CallActivate (this);
 	}
 }
 

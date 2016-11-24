@@ -159,7 +159,7 @@ public:
 
 	virtual void MarkPrecacheSounds() const;
 	virtual void BeginPlay ();
-	virtual void Destroy ();
+	virtual void Destroy () override;
 	virtual void DepleteOrDestroy ();
 	virtual void Tick ();
 	virtual bool ShouldRespawn ();
@@ -331,7 +331,7 @@ public:
 	virtual bool TryPickupRestricted (AActor *&toucher);
 	virtual bool PickupForAmmo (AWeapon *ownedWeapon);
 	virtual bool Use (bool pickup);
-	virtual void Destroy();
+	virtual void Destroy() override;
 
 	virtual FState *GetUpState ();
 	virtual FState *GetDownState ();

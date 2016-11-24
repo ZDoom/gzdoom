@@ -660,7 +660,7 @@ protected:
 	short LastLight;
 };
 
-IMPLEMENT_CLASS(DLightTransfer, false, false, false, false)
+IMPLEMENT_CLASS(DLightTransfer, false, false)
 
 void DLightTransfer::Serialize(FSerializer &arc)
 {
@@ -750,7 +750,7 @@ protected:
 	BYTE Flags;
 };
 
-IMPLEMENT_CLASS(DWallLightTransfer, false, false, false, false)
+IMPLEMENT_CLASS(DWallLightTransfer, false, false)
 
 void DWallLightTransfer::Serialize(FSerializer &arc)
 {

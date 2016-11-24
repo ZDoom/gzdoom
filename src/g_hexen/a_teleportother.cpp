@@ -34,7 +34,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS(AArtiTeleportOther, false, false, false, false)
+IMPLEMENT_CLASS(AArtiTeleportOther, false, false)
 
 // Teleport Other FX --------------------------------------------------------
 
@@ -45,7 +45,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS(ATelOtherFX1, false, false, false, false)
+IMPLEMENT_CLASS(ATelOtherFX1, false, false)
 
 static void TeloSpawn (AActor *source, const char *type)
 {

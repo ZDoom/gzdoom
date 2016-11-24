@@ -1531,7 +1531,7 @@ private:
 	SBarInfoMainBlock *lastPopup;
 };
 
-IMPLEMENT_CLASS(DSBarInfo, false, true, false, false)
+IMPLEMENT_CLASS(DSBarInfo, false, true)
 
 IMPLEMENT_POINTERS_START(DSBarInfo)
 	IMPLEMENT_POINTER(ammo1)

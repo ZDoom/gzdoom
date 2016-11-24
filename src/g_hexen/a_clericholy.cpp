@@ -58,11 +58,11 @@ public:
 	BYTE CHolyCount;
 };
 
-IMPLEMENT_CLASS(ACWeapWraithverge, false, false, false, false)
+IMPLEMENT_CLASS(ACWeapWraithverge, false, false)
 
 // Holy Spirit --------------------------------------------------------------
 
-IMPLEMENT_CLASS(AHolySpirit, false, false, false, false)
+IMPLEMENT_CLASS(AHolySpirit, false, false)
 
 bool AHolySpirit::Slam(AActor *thing)
 {

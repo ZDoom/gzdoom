@@ -69,8 +69,8 @@ int active_con_scale();
 
 FRenderer *Renderer;
 
-IMPLEMENT_CLASS(DCanvas, true, false, false, false)
-IMPLEMENT_CLASS(DFrameBuffer, true, false, false, false)
+IMPLEMENT_CLASS(DCanvas, true, false)
+IMPLEMENT_CLASS(DFrameBuffer, true, false)
 
 #if defined(_DEBUG) && defined(_M_IX86) && !defined(__MINGW32__)
 #define DBGBREAK	{ __asm int 3 }
@@ -106,11 +106,11 @@ public:
 
 	float Gamma;
 };
-IMPLEMENT_CLASS(DDummyFrameBuffer, true, false, false, false)
+IMPLEMENT_CLASS(DDummyFrameBuffer, true, false)
 
 // SimpleCanvas is not really abstract, but this macro does not
 // try to generate a CreateNew() function.
-IMPLEMENT_CLASS(DSimpleCanvas, true, false, false, false)
+IMPLEMENT_CLASS(DSimpleCanvas, true, false)
 
 class FPaletteTester : public FTexture
 {

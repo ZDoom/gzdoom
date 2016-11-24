@@ -616,7 +616,7 @@ void InitAllPowerupEffects(AInventory *item)
 
 // Base class for morphing projectiles --------------------------------------
 
-IMPLEMENT_CLASS(AMorphProjectile, false, false, false, false)
+IMPLEMENT_CLASS(AMorphProjectile, false, false)
 
 DEFINE_FIELD(AMorphProjectile, PlayerClass)
 DEFINE_FIELD(AMorphProjectile, MonsterClass)
@@ -653,7 +653,7 @@ void AMorphProjectile::Serialize(FSerializer &arc)
 
 // Morphed Monster (you must subclass this to do something useful) ---------
 
-IMPLEMENT_CLASS(AMorphedMonster, false, true, false, false)
+IMPLEMENT_CLASS(AMorphedMonster, false, true)
 
 IMPLEMENT_POINTERS_START(AMorphedMonster)
 	IMPLEMENT_POINTER(UnmorphedMe)

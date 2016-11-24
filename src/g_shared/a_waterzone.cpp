@@ -42,7 +42,7 @@ public:
 	void PostBeginPlay ();
 };
 
-IMPLEMENT_CLASS(AWaterZone, false, false, false, false)
+IMPLEMENT_CLASS(AWaterZone, false, false)
 
 void AWaterZone::PostBeginPlay ()
 {

@@ -35,7 +35,7 @@
 
 static FRandom pr_doplat ("DoPlat");
 
-IMPLEMENT_CLASS(DPlat, false, false, false, false)
+IMPLEMENT_CLASS(DPlat, false, false)
 
 DPlat::DPlat ()
 {

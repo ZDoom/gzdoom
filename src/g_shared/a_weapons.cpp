@@ -23,7 +23,7 @@
 
 extern FFlagDef WeaponFlagDefs[];
 
-IMPLEMENT_CLASS(AWeapon, false, true, true, false)
+IMPLEMENT_CLASS(AWeapon, false, true)
 
 IMPLEMENT_POINTERS_START(AWeapon)
 	IMPLEMENT_POINTER(Ammo1)
@@ -80,7 +80,7 @@ TMap<PClassWeapon *, int> Weapons_hton;
 
 static int ntoh_cmp(const void *a, const void *b);
 
-IMPLEMENT_CLASS(PClassWeapon, false, false, false, false)
+IMPLEMENT_CLASS(PClassWeapon, false, false)
 
 //===========================================================================
 //
@@ -866,7 +866,7 @@ FState *AWeapon::GetStateForButtonName (FName button)
 
 /* Weapon giver ***********************************************************/
 
-IMPLEMENT_CLASS(AWeaponGiver, false, false, false, false)
+IMPLEMENT_CLASS(AWeaponGiver, false, false)
 
 DEFINE_FIELD(AWeaponGiver, DropAmmoFactor);
 

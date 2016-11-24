@@ -45,7 +45,7 @@ public:
 	void Activate (AActor *activator);
 };
 
-IMPLEMENT_CLASS(ASpark, false, false, false, false)
+IMPLEMENT_CLASS(ASpark, false, false)
 
 void ASpark::Activate (AActor *activator)
 {

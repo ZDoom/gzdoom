@@ -184,7 +184,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS(APoisonBolt, false, false, false, false)
+IMPLEMENT_CLASS(APoisonBolt, false, false)
 
 int APoisonBolt::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
@@ -607,7 +607,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS(APhosphorousFire, false, false, false, false)
+IMPLEMENT_CLASS(APhosphorousFire, false, false)
 
 int APhosphorousFire::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
@@ -734,7 +734,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGrenade)
 
 // The Almighty Sigil! ------------------------------------------------------
 
-IMPLEMENT_CLASS(ASigil, false, false, false, false)
+IMPLEMENT_CLASS(ASigil, false, false)
 
 //============================================================================
 //

@@ -71,7 +71,7 @@
 //
 //==========================================================================
 
-IMPLEMENT_CLASS(DFsSection, false, true, false, false)
+IMPLEMENT_CLASS(DFsSection, false, true)
 
 IMPLEMENT_POINTERS_START(DFsSection)
 	IMPLEMENT_POINTER(next)

@@ -34,7 +34,7 @@ public:
 	int SpecialMissileHit (AActor *victim);
 };
 
-IMPLEMENT_CLASS(ALightning, false, false, false, false)
+IMPLEMENT_CLASS(ALightning, false, false)
 
 int ALightning::SpecialMissileHit (AActor *thing)
 {
@@ -87,7 +87,7 @@ public:
 	int SpecialMissileHit (AActor *thing);
 };
 
-IMPLEMENT_CLASS(ALightningZap, false, false, false, false)
+IMPLEMENT_CLASS(ALightningZap, false, false)
 
 int ALightningZap::SpecialMissileHit (AActor *thing)
 {

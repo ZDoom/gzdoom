@@ -99,7 +99,7 @@ static const FGenericButtons ButtonChecks[] =
 //
 //------------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DPSprite, false, true, false, false)
+IMPLEMENT_CLASS(DPSprite, false, true)
 
 IMPLEMENT_POINTERS_START(DPSprite)
 	IMPLEMENT_POINTER(Caller)

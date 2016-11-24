@@ -508,7 +508,7 @@ int player_t::GetSpawnClass()
 //
 //===========================================================================
 
-IMPLEMENT_CLASS(PClassPlayerPawn, false, false, false, false)
+IMPLEMENT_CLASS(PClassPlayerPawn, false, false)
 
 PClassPlayerPawn::PClassPlayerPawn()
 {
@@ -622,14 +622,14 @@ void player_t::SendPitchLimits() const
 //
 //===========================================================================
 
-IMPLEMENT_CLASS(APlayerPawn, false, true, false, true)
+IMPLEMENT_CLASS(APlayerPawn, false, true)
 
 IMPLEMENT_POINTERS_START(APlayerPawn)
 	IMPLEMENT_POINTER(InvFirst)
 	IMPLEMENT_POINTER(InvSel)
 IMPLEMENT_POINTERS_END
 
-IMPLEMENT_CLASS(APlayerChunk, false, false, false, false)
+IMPLEMENT_CLASS(APlayerChunk, false, false)
 
 void APlayerPawn::Serialize(FSerializer &arc)
 {
@@ -882,7 +882,7 @@ void APlayerPawn::RemoveInventory (AInventory *item)
 //
 //===========================================================================
 
-bool APlayerPawn::UseInventory (AInventory *item)
+bool APlayerPawn::DoUseInventory (AInventory *item)
 {
 	const PClass *itemtype = item->GetClass();
 
@@ -896,7 +896,7 @@ bool APlayerPawn::UseInventory (AInventory *item)
 		return false;
 	}
 
-	if (!Super::UseInventory (item))
+	if (!Super::DoUseInventory (item))
 	{
 		// Heretic and Hexen advance the inventory cursor if the use failed.
 		// Should this behavior be retained?
@@ -1280,18 +1280,22 @@ void APlayerPawn::PlayRunning ()
 
 void APlayerPawn::PlayAttacking ()
 {
-	VINDEX(APlayerPawn, PlayAttacking);
-	VMValue params[1] = { (DObject*)this };
-	VMFrameStack stack;
-	stack.Call(VFUNC, params, 1, nullptr, 0, nullptr);
+	IFVIRTUAL(APlayerPawn, PlayAttacking)
+	{
+		VMValue params[1] = { (DObject*)this };
+		VMFrameStack stack;
+		stack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
 }
 
 void APlayerPawn::PlayAttacking2 ()
 {
-	VINDEX(APlayerPawn, PlayAttacking2);
-	VMValue params[1] = { (DObject*)this };
-	VMFrameStack stack;
-	stack.Call(VFUNC, params, 1, nullptr, 0, nullptr);
+	IFVIRTUAL(APlayerPawn, PlayAttacking2)
+	{
+		VMValue params[1] = { (DObject*)this };
+		VMFrameStack stack;
+		stack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
 }
 
 void APlayerPawn::ThrowPoisonBag ()
@@ -1381,10 +1385,12 @@ void APlayerPawn::GiveDefaultInventory ()
 
 void APlayerPawn::MorphPlayerThink ()
 {
-	VINDEX(APlayerPawn, MorphPlayerThink);
-	VMValue params[1] = { (DObject*)this };
-	VMFrameStack stack;
-	stack.Call(VFUNC, params, 1, nullptr, 0, nullptr);
+	IFVIRTUAL(APlayerPawn, MorphPlayerThink)
+	{
+		VMValue params[1] = { (DObject*)this };
+		VMFrameStack stack;
+		stack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
 }
 
 void APlayerPawn::ActivateMorphWeapon ()

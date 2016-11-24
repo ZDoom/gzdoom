@@ -51,7 +51,7 @@
 //
 //--------------------------------------------------------------------------
 
-IMPLEMENT_CLASS(AMapMarker, false, false, false, false)
+IMPLEMENT_CLASS(AMapMarker, false, false)
 
 void AMapMarker::BeginPlay ()
 {

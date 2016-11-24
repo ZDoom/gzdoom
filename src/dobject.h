@@ -110,7 +110,7 @@ struct ClassReg
 	PClass *MyClass;
 	const char *Name;
 	ClassReg *ParentType;
-	ClassReg *VMExport;
+	ClassReg *_VMExport;
 	const size_t *Pointers;
 	void (*ConstructNative)(void *);
 	void(*InitNatives)();
@@ -157,23 +157,23 @@ protected: \
 #	define _DECLARE_TI(cls) ClassReg * const cls::RegistrationInfoPtr __attribute__((section(SECTION_CREG))) = &cls::RegistrationInfo;
 #endif
 
-#define _IMP_PCLASS(cls, ptrs, create, initn, vmexport) \
+#define _IMP_PCLASS(cls, ptrs, create) \
 	ClassReg cls::RegistrationInfo = {\
 		nullptr, \
 		#cls, \
 		&cls::Super::RegistrationInfo, \
-		vmexport, \
+		nullptr, \
 		ptrs, \
 		create, \
-		initn, \
+		nullptr, \
 		sizeof(cls), \
 		cls::MetaClassNum }; \
 	_DECLARE_TI(cls) \
 	PClass *cls::StaticType() const { return RegistrationInfo.MyClass; }
 
-#define IMPLEMENT_CLASS(cls, isabstract, ptrs, fields, vmexport) \
+#define IMPLEMENT_CLASS(cls, isabstract, ptrs) \
 	_X_CONSTRUCTOR_##isabstract(cls) \
-	_IMP_PCLASS(cls, _X_POINTERS_##ptrs(cls), _X_ABSTRACT_##isabstract(cls), _X_FIELDS_##fields(cls), _X_VMEXPORT_##vmexport(cls))
+	_IMP_PCLASS(cls, _X_POINTERS_##ptrs(cls), _X_ABSTRACT_##isabstract(cls))
 
 // Taking the address of a field in an object at address 1 instead of
 // address 0 keeps GCC from complaining about possible misuse of offsetof.
@@ -190,7 +190,7 @@ protected: \
 #define _X_CONSTRUCTOR_false(cls)	void cls::InPlaceConstructor(void *mem) { new((EInPlace *)mem) cls; }
 #define _X_ABSTRACT_true(cls)		nullptr
 #define _X_ABSTRACT_false(cls)		cls::InPlaceConstructor
-#define _X_VMEXPORT_true(cls)		&DVMObject<cls>::RegistrationInfo
+#define _X_VMEXPORT_true(cls)		nullptr
 #define _X_VMEXPORT_false(cls)		nullptr
 
 enum EObjectFlags
@@ -481,7 +481,7 @@ public:
 	// that don't call their base class.
 	void CheckIfSerialized () const;
 
-	virtual void Destroy ();
+	virtual void Destroy();
 
 	// If you need to replace one object with another and want to
 	// change any pointers from the old object to the new object,

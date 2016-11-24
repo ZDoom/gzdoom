@@ -1033,7 +1033,7 @@ public:
 	}
 };
 
-IMPLEMENT_CLASS(DSuicider, false, true, false, false)
+IMPLEMENT_CLASS(DSuicider, false, true)
 
 IMPLEMENT_POINTERS_START(DSuicider)
 	IMPLEMENT_POINTER(Pawn)

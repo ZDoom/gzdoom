@@ -19,7 +19,7 @@
 */
 // Degnin Ore ---------------------------------------------------------------
 
-IMPLEMENT_CLASS(ADegninOre, false, false, false, false)
+IMPLEMENT_CLASS(ADegninOre, false, false)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RemoveForceField)
 {
@@ -75,7 +75,7 @@ public:
 	bool TryPickup (AActor *&toucher);
 };
 
-IMPLEMENT_CLASS(AHealthTraining, false, false, false, false)
+IMPLEMENT_CLASS(AHealthTraining, false, false)
 
 bool AHealthTraining::TryPickup (AActor *&toucher)
 {
@@ -105,7 +105,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS(AScanner, false, false, false, false)
+IMPLEMENT_CLASS(AScanner, false, false)
 
 bool AScanner::Use (bool pickup)
 {
@@ -130,7 +130,7 @@ public:
 	bool SpecialDropAction (AActor *dropper);
 };
 
-IMPLEMENT_CLASS(APrisonPass, false, false, false, false)
+IMPLEMENT_CLASS(APrisonPass, false, false)
 
 bool APrisonPass::TryPickup (AActor *&toucher)
 {
@@ -163,7 +163,7 @@ bool APrisonPass::SpecialDropAction (AActor *dropper)
 // actions and cannot be held. ----------------------------------------------
 //---------------------------------------------------------------------------
 
-IMPLEMENT_CLASS(ADummyStrifeItem, false, false, false, false)
+IMPLEMENT_CLASS(ADummyStrifeItem, false, false)
 
 // Sound the alarm! ---------------------------------------------------------
 
@@ -175,7 +175,7 @@ public:
 	bool SpecialDropAction (AActor *dropper);
 };
 
-IMPLEMENT_CLASS(ARaiseAlarm, false, false, false, false)
+IMPLEMENT_CLASS(ARaiseAlarm, false, false)
 
 bool ARaiseAlarm::TryPickup (AActor *&toucher)
 {
@@ -209,7 +209,7 @@ public:
 	bool TryPickup (AActor *&toucher);
 };
 
-IMPLEMENT_CLASS(AOpenDoor222, false, false, false, false)
+IMPLEMENT_CLASS(AOpenDoor222, false, false)
 
 bool AOpenDoor222::TryPickup (AActor *&toucher)
 {
@@ -228,7 +228,7 @@ public:
 	bool SpecialDropAction (AActor *dropper);
 };
 
-IMPLEMENT_CLASS(ACloseDoor222, false, false, false, false)
+IMPLEMENT_CLASS(ACloseDoor222, false, false)
 
 bool ACloseDoor222::TryPickup (AActor *&toucher)
 {
@@ -262,7 +262,7 @@ public:
 	bool SpecialDropAction (AActor *dropper);
 };
 
-IMPLEMENT_CLASS(AOpenDoor224, false, false, false, false)
+IMPLEMENT_CLASS(AOpenDoor224, false, false)
 
 bool AOpenDoor224::TryPickup (AActor *&toucher)
 {
@@ -287,7 +287,7 @@ public:
 	bool TryPickup (AActor *&toucher);
 };
 
-IMPLEMENT_CLASS(AAmmoFillup, false, false, false, false)
+IMPLEMENT_CLASS(AAmmoFillup, false, false)
 
 bool AAmmoFillup::TryPickup (AActor *&toucher)
 {
@@ -325,7 +325,7 @@ public:
 	bool TryPickup (AActor *&toucher);
 };
 
-IMPLEMENT_CLASS(AHealthFillup, false, false, false, false)
+IMPLEMENT_CLASS(AHealthFillup, false, false)
 
 bool AHealthFillup::TryPickup (AActor *&toucher)
 {
@@ -342,7 +342,7 @@ bool AHealthFillup::TryPickup (AActor *&toucher)
 
 // Upgrade Stamina ----------------------------------------------------------
 
-IMPLEMENT_CLASS(AUpgradeStamina, false, false, false, false)
+IMPLEMENT_CLASS(AUpgradeStamina, false, false)
 
 bool AUpgradeStamina::TryPickup (AActor *&toucher)
 {
@@ -360,7 +360,7 @@ bool AUpgradeStamina::TryPickup (AActor *&toucher)
 
 // Upgrade Accuracy ---------------------------------------------------------
 
-IMPLEMENT_CLASS(AUpgradeAccuracy, false, false, false, false)
+IMPLEMENT_CLASS(AUpgradeAccuracy, false, false)
 
 bool AUpgradeAccuracy::TryPickup (AActor *&toucher)
 {
@@ -373,7 +373,7 @@ bool AUpgradeAccuracy::TryPickup (AActor *&toucher)
 
 // Start a slideshow --------------------------------------------------------
 
-IMPLEMENT_CLASS(ASlideshowStarter, false, false, false, false)
+IMPLEMENT_CLASS(ASlideshowStarter, false, false)
 
 bool ASlideshowStarter::TryPickup (AActor *&toucher)
 {

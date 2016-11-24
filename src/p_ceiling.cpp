@@ -38,7 +38,7 @@
 //
 //============================================================================
 
-IMPLEMENT_CLASS(DCeiling, false, false, false, false)
+IMPLEMENT_CLASS(DCeiling, false, false)
 
 DCeiling::DCeiling ()
 {

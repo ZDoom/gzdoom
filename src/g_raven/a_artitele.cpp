@@ -23,7 +23,7 @@ public:
 	bool Use (bool pickup);
 };
 
-IMPLEMENT_CLASS(AArtiTeleport, false, false, false, false)
+IMPLEMENT_CLASS(AArtiTeleport, false, false)
 
 bool AArtiTeleport::Use (bool pickup)
 {

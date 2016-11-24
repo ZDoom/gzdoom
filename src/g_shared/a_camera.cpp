@@ -64,7 +64,7 @@ protected:
 	DAngle Range;
 };
 
-IMPLEMENT_CLASS(ASecurityCamera, false, false, false, false)
+IMPLEMENT_CLASS(ASecurityCamera, false, false)
 
 void ASecurityCamera::Serialize(FSerializer &arc)
 {
@@ -124,7 +124,7 @@ protected:
 	DAngle MaxPitchChange;
 };
 
-IMPLEMENT_CLASS(AAimingCamera, false, false, false, false)
+IMPLEMENT_CLASS(AAimingCamera, false, false)
 
 void AAimingCamera::Serialize(FSerializer &arc)
 {

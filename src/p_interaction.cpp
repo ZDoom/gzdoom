@@ -1071,7 +1071,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 					}
 				}
 
-				damage = inflictor->DoSpecialDamage(target, damage, mod);
+				damage = inflictor->CallDoSpecialDamage(target, damage, mod);
 				if (damage < 0)
 				{
 					return -1;

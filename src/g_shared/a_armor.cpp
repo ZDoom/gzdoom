@@ -9,11 +9,11 @@
 #include "serializer.h"
 #include "cmdlib.h"
 
-IMPLEMENT_CLASS(AArmor, false, false, false, false)
-IMPLEMENT_CLASS(ABasicArmor, false, false, false, false)
-IMPLEMENT_CLASS(ABasicArmorPickup, false, false, false, false)
-IMPLEMENT_CLASS(ABasicArmorBonus, false, false, true, false)
-IMPLEMENT_CLASS(AHexenArmor, false, false, false, false)
+IMPLEMENT_CLASS(AArmor, false, false)
+IMPLEMENT_CLASS(ABasicArmor, false, false)
+IMPLEMENT_CLASS(ABasicArmorPickup, false, false)
+IMPLEMENT_CLASS(ABasicArmorBonus, false, false)
+IMPLEMENT_CLASS(AHexenArmor, false, false)
 
 
 DEFINE_FIELD(ABasicArmor, AbsorbCount)

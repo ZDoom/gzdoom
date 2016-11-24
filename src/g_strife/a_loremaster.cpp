@@ -17,7 +17,7 @@ public:
 	int DoSpecialDamage (AActor *victim, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS(ALoreShot, false, false, false, false)
+IMPLEMENT_CLASS(ALoreShot, false, false)
 
 int ALoreShot::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 {

@@ -96,7 +96,7 @@ public:
 	}
 };
 
-IMPLEMENT_CLASS(AFakeInventory, false, false, false, false)
+IMPLEMENT_CLASS(AFakeInventory, false, false)
 
 DEFINE_FIELD(AFakeInventory, Respawnable)
 

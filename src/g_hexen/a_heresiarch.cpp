@@ -72,7 +72,7 @@ public:
 	void Die (AActor *source, AActor *inflictor, int dmgflags);
 };
 
-IMPLEMENT_CLASS(AHeresiarch, false, false, false, false)
+IMPLEMENT_CLASS(AHeresiarch, false, false)
 
 void AHeresiarch::Serialize(FSerializer &arc)
 {
@@ -122,7 +122,7 @@ public:
 	}
 };
 
-IMPLEMENT_CLASS(ASorcBall, false, false, false, false)
+IMPLEMENT_CLASS(ASorcBall, false, false)
 
 // First ball (purple) - fires projectiles ----------------------------------
 
@@ -140,7 +140,7 @@ public:
 	virtual void CastSorcererSpell ();
 };
 
-IMPLEMENT_CLASS(ASorcBall1, false, false, false, false)
+IMPLEMENT_CLASS(ASorcBall1, false, false)
 
 // Second ball (blue) - generates the shield --------------------------------
 
@@ -156,7 +156,7 @@ public:
 	virtual void CastSorcererSpell ();
 };
 
-IMPLEMENT_CLASS(ASorcBall2, false, false, false, false)
+IMPLEMENT_CLASS(ASorcBall2, false, false)
 
 // Third ball (green) - summons Bishops -------------------------------------
 
@@ -172,7 +172,7 @@ public:
 	virtual void CastSorcererSpell ();
 };
 
-IMPLEMENT_CLASS(ASorcBall3, false, false, false, false)
+IMPLEMENT_CLASS(ASorcBall3, false, false)
 
 // Sorcerer spell 1 (The burning, bouncing head thing) ----------------------
 

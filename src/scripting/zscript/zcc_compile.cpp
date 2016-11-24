@@ -51,8 +51,6 @@
 #include "codegeneration/codegen.h"
 #include "vmbuilder.h"
 
-#define DEFAULTS_VMEXPORT ((BYTE *)(void *)1)
-
 //==========================================================================
 //
 // ZCCCompiler :: ProcessClass
@@ -505,26 +503,6 @@ void ZCCCompiler::CreateClassTypes()
 				}
 				else
 				{
-					// The parent was the last native class in the inheritance tree.
-					// There is probably a better place for this somewhere else
-					// TODO: Do this somewhere else or find a less hackish way to do it
-					if (!parent->bRuntimeClass)
-					{
-						//assert(parent->VMExported != nullptr); // Ideally the macro would be used on all inheritable-native classes
-						/**/ if (parent->VMExported != nullptr) { /**/ // remove the if condition when all done
-
-						parent = parent->VMExported;
-						assert(parent->bRuntimeClass == false);
-
-						if (parent->Defaults == nullptr)
-						{
-							// We have to manually do that since zscript knows nothing about these
-							parent->Defaults = DEFAULTS_VMEXPORT;
-						}
-
-						/**/ } /**/
-					}
-
 					// We will never get here if the name is a duplicate, so we can just do the assignment.
 					try
 					{
@@ -1980,15 +1958,6 @@ void ZCCCompiler::InitDefaults()
 				// Copy the parent's defaults and meta data.
 				auto ti = static_cast<PClassActor *>(c->Type());
 
-				// Hack for the DVMObjects as they weren't in the list originally
-				// TODO: process them in a non hackish way obviously
-				if (ti->ParentClass->Defaults == DEFAULTS_VMEXPORT)
-				{
-					ti->ParentClass->Defaults = nullptr;
-					ti->ParentClass->InitializeDefaults();
-					ti->ParentClass->ParentClass->DeriveData(ti->ParentClass);
-				}
-
 				ti->InitializeDefaults();
 				ti->ParentClass->DeriveData(ti);
 
@@ -2400,11 +2369,6 @@ void ZCCCompiler::InitFunctions()
 		// cannot be done earlier because it requires the parent class to be processed by this code, too.
 		if (c->Type()->ParentClass != nullptr)
 		{
-			if (c->Type()->ParentClass->Virtuals.Size() == 0)
-			{
-				// This a VMClass which didn't get processed here.
-				c->Type()->ParentClass->Virtuals = c->Type()->ParentClass->ParentClass->Virtuals;
-			}
 			c->Type()->Virtuals = c->Type()->ParentClass->Virtuals;
 		}
 		for (auto f : c->Functions)

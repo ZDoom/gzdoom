@@ -59,7 +59,7 @@ public:
 	int DoSpecialDamage(AActor *victim, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS(AFSwordMissile, false, false, false, false)
+IMPLEMENT_CLASS(AFSwordMissile, false, false)
 
 int AFSwordMissile::DoSpecialDamage(AActor *victim, int damage, FName damagetype)
 {

@@ -86,7 +86,7 @@ private:
 
 	void Serialize(FSerializer &arc);
 	void Tick();
-	void Destroy();
+	void Destroy() override;
 
 public:	// must be public to be able to generate the field export tables. Grrr...
 	TObjPtr<AActor> Caller;

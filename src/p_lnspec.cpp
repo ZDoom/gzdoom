@@ -1368,7 +1368,7 @@ void DoActivateThing(AActor * thing, AActor * activator)
 		if (thing->activationtype & THINGSPEC_Switch) // Set other flag if switching
 			thing->activationtype |= THINGSPEC_Deactivate;
 	}
-	thing->Activate (activator);
+	thing->CallActivate (activator);
 }
 
 void DoDeactivateThing(AActor * thing, AActor * activator)
@@ -1379,7 +1379,7 @@ void DoDeactivateThing(AActor * thing, AActor * activator)
 		if (thing->activationtype & THINGSPEC_Switch) // Set other flag if switching
 			thing->activationtype |= THINGSPEC_Activate;
 	}
-	thing->Deactivate (activator);
+	thing->CallDeactivate (activator);
 }
 
 FUNC(LS_Thing_Activate)

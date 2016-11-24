@@ -26,7 +26,7 @@ public:
 	void Deactivate (AActor *activator);
 };
 
-IMPLEMENT_CLASS(AThrustFloor, false, false, false, false)
+IMPLEMENT_CLASS(AThrustFloor, false, false)
 
 void AThrustFloor::Activate (AActor *activator)
 {

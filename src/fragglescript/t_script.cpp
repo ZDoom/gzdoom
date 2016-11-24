@@ -99,7 +99,7 @@ AActor *trigger_obj;
 //
 //==========================================================================
 
-IMPLEMENT_CLASS(DFsScript, false, true, false, false)
+IMPLEMENT_CLASS(DFsScript, false, true)
 
 IMPLEMENT_POINTERS_START(DFsScript)
 	IMPLEMENT_POINTER(parent)
@@ -269,7 +269,7 @@ void DFsScript::ParseScript(char *position)
 //
 //==========================================================================
 
-IMPLEMENT_CLASS(DRunningScript, false, true, false, false)
+IMPLEMENT_CLASS(DRunningScript, false, true)
 
 IMPLEMENT_POINTERS_START(DRunningScript)
 	IMPLEMENT_POINTER(prev)
@@ -380,7 +380,7 @@ void DRunningScript::Serialize(FSerializer &arc)
 //
 //==========================================================================
 
-IMPLEMENT_CLASS(DFraggleThinker, false, true, false, false)
+IMPLEMENT_CLASS(DFraggleThinker, false, true)
 
 IMPLEMENT_POINTERS_START(DFraggleThinker)
 	IMPLEMENT_POINTER(RunningScripts)

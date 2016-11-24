@@ -72,7 +72,7 @@ public:
 	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS(AForceFieldGuard, false, false, false, false)
+IMPLEMENT_CLASS(AForceFieldGuard, false, false)
 
 int AForceFieldGuard::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype)
 {
@@ -197,7 +197,7 @@ public:
 	void Die (AActor *source, AActor *inflictor, int dmgflags);
 };
 
-IMPLEMENT_CLASS(APowerCoupling, false, false, false, false)
+IMPLEMENT_CLASS(APowerCoupling, false, false)
 
 void APowerCoupling::Die (AActor *source, AActor *inflictor, int dmgflags)
 {
@@ -239,7 +239,7 @@ public:
 	}
 };
 
-IMPLEMENT_CLASS(AMeat, false, false, false, false)
+IMPLEMENT_CLASS(AMeat, false, false)
 
 //==========================================================================
 //

@@ -3,7 +3,7 @@
 #include "d_player.h"
 #include "serializer.h"
 
-IMPLEMENT_CLASS(DFlashFader, false, true, false, false)
+IMPLEMENT_CLASS(DFlashFader, false, true)
 
 IMPLEMENT_POINTERS_START(DFlashFader)
 	IMPLEMENT_POINTER(ForWho)

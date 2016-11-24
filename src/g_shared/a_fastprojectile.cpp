@@ -8,7 +8,7 @@
 #include "p_checkposition.h"
 #include "virtual.h"
 
-IMPLEMENT_CLASS(AFastProjectile, false, false, false, false)
+IMPLEMENT_CLASS(AFastProjectile, false, false)
 
 
 //----------------------------------------------------------------------------
@@ -135,11 +135,13 @@ void AFastProjectile::Tick ()
 				ripcount = count >> 3;
 
 				// call the scripted 'Effect' method.
-				VINDEX(AFastProjectile, Effect);
-				// Without the type cast this picks the 'void *' assignment...
-				VMValue params[1] = { (DObject*)this };
-				VMFrameStack stack;
-				stack.Call(VFUNC, params, 1, nullptr, 0, nullptr);
+				IFVIRTUAL(AFastProjectile, Effect)
+				{
+					// Without the type cast this picks the 'void *' assignment...
+					VMValue params[1] = { (DObject*)this };
+					VMFrameStack stack;
+					stack.Call(func, params, 1, nullptr, 0, nullptr);
+				}
 			}
 		}
 	}

@@ -121,7 +121,7 @@ public:
 	void PostBeginPlay ();
 };
 
-IMPLEMENT_CLASS(AZCorpseLynchedNoHeart, false, false, false, false)
+IMPLEMENT_CLASS(AZCorpseLynchedNoHeart, false, false)
 
 void AZCorpseLynchedNoHeart::PostBeginPlay ()
 {
@@ -329,7 +329,7 @@ public:
 	void Activate (AActor *activator);
 };
 
-IMPLEMENT_CLASS(AZBell, false, false, false, false)
+IMPLEMENT_CLASS(AZBell, false, false)
 
 void AZBell::Activate (AActor *activator)
 {

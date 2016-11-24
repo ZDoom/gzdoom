@@ -12,7 +12,7 @@ class DPolyAction : public DThinker
 public:
 	DPolyAction(int polyNum);
 	void Serialize(FSerializer &arc);
-	void Destroy();
+	void Destroy() override;
 	void Stop();
 	double GetSpeed() const { return m_Speed; }
 

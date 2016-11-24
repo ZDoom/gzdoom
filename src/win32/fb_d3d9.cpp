@@ -91,7 +91,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-IMPLEMENT_CLASS(D3DFB, false, false, false, false)
+IMPLEMENT_CLASS(D3DFB, false, false)
 
 struct D3DFB::PackedTexture
 {

@@ -37,7 +37,7 @@
 
 // The base class for sector actions ----------------------------------------
 
-IMPLEMENT_CLASS(ASectorAction, false, false, false, false)
+IMPLEMENT_CLASS(ASectorAction, false, false)
 
 ASectorAction::ASectorAction (bool activatedByUse) :
 	ActivatedByUse (activatedByUse) {}
@@ -142,7 +142,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActEnter, false, false, false, false)
+IMPLEMENT_CLASS(ASecActEnter, false, false)
 
 
 bool ASecActEnter::DoTriggerAction (AActor *triggerer, int activationType)
@@ -160,7 +160,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActExit, false, false, false, false)
+IMPLEMENT_CLASS(ASecActExit, false, false)
 
 
 bool ASecActExit::DoTriggerAction (AActor *triggerer, int activationType)
@@ -181,7 +181,7 @@ public:
 // Skull Tag uses 9999 for a special that is triggered whenever
 // the player is on the sector's floor. I think this is more useful.
 
-IMPLEMENT_CLASS(ASecActHitFloor, false, false, false, false)
+IMPLEMENT_CLASS(ASecActHitFloor, false, false)
 
 
 bool ASecActHitFloor::DoTriggerAction (AActor *triggerer, int activationType)
@@ -199,7 +199,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActHitCeil, false, false, false, false)
+IMPLEMENT_CLASS(ASecActHitCeil, false, false)
 
 
 bool ASecActHitCeil::DoTriggerAction (AActor *triggerer, int activationType)
@@ -218,7 +218,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActUse, false, false, false, false)
+IMPLEMENT_CLASS(ASecActUse, false, false)
 
 
 bool ASecActUse::DoTriggerAction (AActor *triggerer, int activationType)
@@ -237,7 +237,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActUseWall, false, false, false, false)
+IMPLEMENT_CLASS(ASecActUseWall, false, false)
 
 
 bool ASecActUseWall::DoTriggerAction (AActor *triggerer, int activationType)
@@ -255,7 +255,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActEyesDive, false, false, false, false)
+IMPLEMENT_CLASS(ASecActEyesDive, false, false)
 
 
 bool ASecActEyesDive::DoTriggerAction (AActor *triggerer, int activationType)
@@ -273,7 +273,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActEyesSurface, false, false, false, false)
+IMPLEMENT_CLASS(ASecActEyesSurface, false, false)
 
 
 bool ASecActEyesSurface::DoTriggerAction (AActor *triggerer, int activationType)
@@ -291,7 +291,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActEyesBelowC, false, false, false, false)
+IMPLEMENT_CLASS(ASecActEyesBelowC, false, false)
 
 
 bool ASecActEyesBelowC::DoTriggerAction (AActor *triggerer, int activationType)
@@ -309,7 +309,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActEyesAboveC, false, false, false, false)
+IMPLEMENT_CLASS(ASecActEyesAboveC, false, false)
 
 
 bool ASecActEyesAboveC::DoTriggerAction (AActor *triggerer, int activationType)
@@ -327,7 +327,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActHitFakeFloor, false, false, false, false)
+IMPLEMENT_CLASS(ASecActHitFakeFloor, false, false)
 
 
 bool ASecActHitFakeFloor::DoTriggerAction (AActor *triggerer, int activationType)

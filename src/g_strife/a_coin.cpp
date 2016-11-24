@@ -6,7 +6,7 @@
 
 // Coin ---------------------------------------------------------------------
 
-IMPLEMENT_CLASS(ACoin, false, false, false, false)
+IMPLEMENT_CLASS(ACoin, false, false)
 
 const char *ACoin::PickupMessage ()
 {

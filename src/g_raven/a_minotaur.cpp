@@ -31,7 +31,7 @@ void P_MinotaurSlam (AActor *source, AActor *target);
 
 DECLARE_ACTION(A_MinotaurLook)
 
-IMPLEMENT_CLASS(AMinotaur, false, false, false, false)
+IMPLEMENT_CLASS(AMinotaur, false, false)
 
 void AMinotaur::Tick ()
 {
@@ -72,7 +72,7 @@ int AMinotaur::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 
 // Minotaur Friend ----------------------------------------------------------
 
-IMPLEMENT_CLASS(AMinotaurFriend, false, false, false, false)
+IMPLEMENT_CLASS(AMinotaurFriend, false, false)
 
 void AMinotaurFriend::BeginPlay ()
 {

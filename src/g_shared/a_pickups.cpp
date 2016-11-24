@@ -23,7 +23,7 @@
 
 static FRandom pr_restore ("RestorePos");
 
-IMPLEMENT_CLASS(PClassInventory, false, false, false, false)
+IMPLEMENT_CLASS(PClassInventory, false, false)
 
 PClassInventory::PClassInventory()
 {
@@ -70,7 +70,7 @@ void PClassInventory::Finalize(FStateDefinitions &statedef)
 	((AActor*)Defaults)->flags |= MF_SPECIAL;
 }
 
-IMPLEMENT_CLASS(PClassAmmo, false, false, false, false)
+IMPLEMENT_CLASS(PClassAmmo, false, false)
 
 PClassAmmo::PClassAmmo()
 {
@@ -86,7 +86,7 @@ void PClassAmmo::DeriveData(PClass *newclass)
 	newc->DropAmount = DropAmount;
 }
 
-IMPLEMENT_CLASS(AAmmo, false, false, false, false)
+IMPLEMENT_CLASS(AAmmo, false, false)
 
 DEFINE_FIELD(AAmmo, BackpackAmount)
 DEFINE_FIELD(AAmmo, BackpackMaxAmount)
@@ -480,7 +480,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 int AInventory::StaticLastMessageTic;
 const char *AInventory::StaticLastMessage;
 
-IMPLEMENT_CLASS(AInventory, false, true, false, false)
+IMPLEMENT_CLASS(AInventory, false, true)
 
 IMPLEMENT_POINTERS_START(AInventory)
 	IMPLEMENT_POINTER(Owner)
@@ -1378,7 +1378,7 @@ bool AInventory::DrawPowerup (int x, int y)
 /* AArtifact implementation												   */
 /***************************************************************************/
 
-IMPLEMENT_CLASS(APowerupGiver, false, false, false, false)
+IMPLEMENT_CLASS(APowerupGiver, false, false)
 
 //===========================================================================
 //
@@ -1679,8 +1679,8 @@ void AInventory::DetachFromOwner ()
 {
 }
 
-IMPLEMENT_CLASS(AStateProvider, false, false, false, false)
-IMPLEMENT_CLASS(ACustomInventory, false, false, false, false)
+IMPLEMENT_CLASS(AStateProvider, false, false)
+IMPLEMENT_CLASS(ACustomInventory, false, false)
 
 //===========================================================================
 //
@@ -1725,7 +1725,7 @@ bool ACustomInventory::TryPickup (AActor *&toucher)
 	return useok;
 }
 
-IMPLEMENT_CLASS(PClassHealth, false, false, false, false)
+IMPLEMENT_CLASS(PClassHealth, false, false)
 
 //===========================================================================
 //
@@ -1754,7 +1754,7 @@ void PClassHealth::DeriveData(PClass *newclass)
 	newc->LowHealthMessage = LowHealthMessage;
 }
 
-IMPLEMENT_CLASS(AHealth, false, false, false, false)
+IMPLEMENT_CLASS(AHealth, false, false)
 
 DEFINE_FIELD(AHealth, PrevHealth)
 
@@ -1799,7 +1799,7 @@ bool AHealth::TryPickup (AActor *&other)
 	return false;
 }
 
-IMPLEMENT_CLASS(AHealthPickup, false, false, false, false)
+IMPLEMENT_CLASS(AHealthPickup, false, false)
 
 DEFINE_FIELD(AHealthPickup, autousemode)
 
@@ -1879,7 +1879,7 @@ void AHealthPickup::Serialize(FSerializer &arc)
 
 // Backpack -----------------------------------------------------------------
 
-IMPLEMENT_CLASS(ABackpackItem, false, false, false, false)
+IMPLEMENT_CLASS(ABackpackItem, false, false)
 
 DEFINE_FIELD(ABackpackItem, bDepleted)
 
@@ -2058,7 +2058,7 @@ void ABackpackItem::DetachFromOwner ()
 //
 //===========================================================================
 
-IMPLEMENT_CLASS(AMapRevealer, false, false, false, false)
+IMPLEMENT_CLASS(AMapRevealer, false, false)
 
 //===========================================================================
 //
@@ -2083,7 +2083,7 @@ bool AMapRevealer::TryPickup (AActor *&toucher)
 //
 //===========================================================================
 
-IMPLEMENT_CLASS(AScoreItem, false, false, false, false)
+IMPLEMENT_CLASS(AScoreItem, false, false)
 
 //===========================================================================
 //

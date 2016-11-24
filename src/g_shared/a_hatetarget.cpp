@@ -46,7 +46,7 @@ public:
 	int TakeSpecialDamage(AActor *inflictor, AActor *source, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS(AHateTarget, false, false, false, false)
+IMPLEMENT_CLASS(AHateTarget, false, false)
 
 void AHateTarget::BeginPlay()
 {

@@ -109,7 +109,7 @@ public:
 	virtual void Tick();
 	virtual void AddInventory (AInventory *item);
 	virtual void RemoveInventory (AInventory *item);
-	virtual bool UseInventory (AInventory *item);
+	virtual bool DoUseInventory (AInventory *item);
 	virtual void MarkPrecacheSounds () const;
 
 	virtual void PlayIdle ();

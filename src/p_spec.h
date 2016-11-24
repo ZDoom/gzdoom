@@ -243,7 +243,7 @@ public:
 
 	void Serialize(FSerializer &arc);
 	void Tick ();
-	void Destroy();
+	void Destroy() override;
 
 protected:
 	EPillar		m_Type;
@@ -572,7 +572,7 @@ public:
 
 	DElevator (sector_t *sec);
 
-	void Destroy();
+	void Destroy() override;
 	void Serialize(FSerializer &arc);
 	void Tick ();
 
@@ -617,7 +617,6 @@ protected:
 		int offset, int timer, bool ceiling);
 
 	void DoWaggle (bool ceiling);
-	void Destroy();
 	DWaggleBase ();
 };
 

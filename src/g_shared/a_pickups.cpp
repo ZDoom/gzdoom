@@ -20,6 +20,7 @@
 #include "d_player.h"
 #include "p_spec.h"
 #include "serializer.h"
+#include "virtual.h"
 
 static FRandom pr_restore ("RestorePos");
 
@@ -1005,6 +1006,30 @@ bool AInventory::Use (bool pickup)
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, Use)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	PARAM_BOOL(pickup);
+	ACTION_RETURN_BOOL(self->Use(pickup));
+}
+
+bool AInventory::CallUse(bool pickup)
+{
+	IFVIRTUAL(AInventory, Use)
+	{
+		VMValue params[2] = { (DObject*)this, pickup };
+		VMReturn ret;
+		VMFrameStack stack;
+		int retval;
+		ret.IntAt(&retval);
+		stack.Call(func, params, 2, &ret, 1, nullptr);
+		return !!retval;
+
+	}
+	else return Use(pickup);
+}
+
+
 //===========================================================================
 //
 // AInventory :: Hide
@@ -1494,7 +1519,7 @@ bool AInventory::TryPickup (AActor *&toucher)
 		copy->AttachToOwner (newtoucher);
 		if (ItemFlags & IF_AUTOACTIVATE)
 		{
-			if (copy->Use (true))
+			if (copy->CallUse (true))
 			{
 				if (--copy->Amount <= 0)
 				{

@@ -372,6 +372,15 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, UndoPlayerMorph)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_POINTER(player, player_t);
+	PARAM_INT_DEF(unmorphflag);
+	PARAM_BOOL_DEF(force);
+	ACTION_RETURN_BOOL(P_UndoPlayerMorph(self, player, unmorphflag, force));
+}
+
 //---------------------------------------------------------------------------
 //
 // FUNC P_MorphMonster

@@ -213,8 +213,10 @@ FWeaponSlots weapons;
 */
 	
 
+	native bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false);
 	native void SetPsprite(int id, State stat, bool pending = false);
 	native void SetSafeFlash(Weapon weap, State flashstate, int index);
 	native PSprite GetPSprite(int id);
 	native PSprite FindPSprite(int id);
+
 }

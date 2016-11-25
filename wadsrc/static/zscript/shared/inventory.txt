@@ -25,6 +25,9 @@ class Inventory : Actor native
 		Inventory.PickupMessage "$TXT_DEFAULTPICKUPMSG";
 	}
 	
+	virtual native bool Use (bool pickup);
+	
+	
 	// These are regular functions for the item itself.
 	private native void A_RestoreSpecialDoomThing();
 	private native void A_RestoreSpecialThing1();

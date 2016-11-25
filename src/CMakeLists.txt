@@ -824,7 +824,6 @@ endif()
 file( GLOB HEADER_FILES
 	${EXTRA_HEADER_DIRS}
 	fragglescript/*.h
-	g_heretic/*.h
 	g_hexen/*.h
 	g_raven/*.h
 	g_shared/*.h
@@ -857,7 +856,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	${OTHER_SYSTEM_SOURCES}
 	sc_man_scanner.h
 	sc_man_scanner.re
-	g_heretic/a_hereticartifacts.cpp
 	g_hexen/a_blastradius.cpp
 	g_hexen/a_boostarmor.cpp
 	g_hexen/a_clericflame.cpp
@@ -1148,7 +1146,6 @@ set (PCH_SOURCES
 	w_wad.cpp
 	wi_stuff.cpp
 	zstrformat.cpp
-	g_heretic/a_hereticmisc.cpp
 	g_hexen/a_hexenmisc.cpp
 	g_raven/a_artitele.cpp
 	g_raven/a_minotaur.cpp
@@ -1303,7 +1300,6 @@ endif()
 
 target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
 include_directories( .
-	g_heretic
 	g_hexen
 	g_raven
 	g_strife
@@ -1436,7 +1432,6 @@ source_group("External\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/m
 source_group("External\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rapidjson/.+")
 source_group("Externak\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sfmt/.+")
 source_group("FraggleScript" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/fragglescript/.+")
-source_group("Games\\Heretic Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_heretic/.+")
 source_group("Games\\Hexen Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_hexen/.+")
 source_group("Games\\Raven Shared" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_raven/.+")
 source_group("Games\\Strife Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_strife/.+")

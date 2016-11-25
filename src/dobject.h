@@ -467,11 +467,6 @@ public:
 	void SerializeUserVars(FSerializer &arc);
 	virtual void Serialize(FSerializer &arc);
 
-	void VMSuperCall()
-	{
-		ObjectFlags |= OF_SuperCall;
-	}
-
 	void ClearClass()
 	{
 		Class = NULL;

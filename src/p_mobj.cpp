@@ -955,7 +955,7 @@ bool AActor::DoUseInventory (AInventory *item)
 	{
 		return false;
 	}
-	if (!item->Use (false))
+	if (!item->CallUse (false))
 	{
 		return false;
 	}
@@ -974,7 +974,6 @@ DEFINE_ACTION_FUNCTION(AActor, UseInventory)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(item, AInventory);
-	self->VMSuperCall();
 	ACTION_RETURN_BOOL(self->DoUseInventory(item));
 }
 
@@ -4149,7 +4148,6 @@ void AActor::Tick ()
 DEFINE_ACTION_FUNCTION(AActor, Tick)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	self->VMSuperCall();
 	self->Tick();
 	return 0;
 }
@@ -4708,7 +4706,6 @@ DEFINE_ACTION_FUNCTION(AActor, Activate)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(activator, AActor);
-	self->VMSuperCall();
 	self->Activate(activator);
 	return 0;
 }
@@ -4756,7 +4753,6 @@ DEFINE_ACTION_FUNCTION(AActor, Deactivate)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(activator, AActor);
-	self->VMSuperCall();
 	self->Deactivate(activator);
 	return 0;
 }
@@ -6797,7 +6793,6 @@ DEFINE_ACTION_FUNCTION(AActor, DoSpecialDamage)
 	PARAM_OBJECT(target, AActor);
 	PARAM_INT(damage);
 	PARAM_NAME(damagetype);
-	self->VMSuperCall();
 	ACTION_RETURN_INT(self->DoSpecialDamage(target, damage, damagetype));
 }
 

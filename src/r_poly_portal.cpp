@@ -271,7 +271,7 @@ PolyDrawSectorPortal::PolyDrawSectorPortal(FSectorPortal *portal, bool ceiling) 
 
 void PolyDrawSectorPortal::Render(int portalDepth)
 {
-	if (Portal->mType != PORTS_SKYVIEWPOINT)
+	if (Portal->mType == PORTS_HORIZON || Portal->mType == PORTS_PLANE)
 		return;
 
 	SaveGlobals();
@@ -302,10 +302,14 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 
 void PolyDrawSectorPortal::RenderTranslucent(int portalDepth)
 {
-	if (Portal->mType != PORTS_SKYVIEWPOINT)
+	if (Portal->mType == PORTS_HORIZON || Portal->mType == PORTS_PLANE)
 		return;
+
+	SaveGlobals();
 		
 	RenderPortal.RenderTranslucent(portalDepth);
+
+	RestoreGlobals();
 }
 
 void PolyDrawSectorPortal::SaveGlobals()
@@ -317,20 +321,36 @@ void PolyDrawSectorPortal::SaveGlobals()
 	savedcamera = camera;
 	savedsector = viewsector;
 
-	// Don't let gun flashes brighten the sky box
-	ASkyViewpoint *sky = barrier_cast<ASkyViewpoint*>(Portal->mSkybox);
-	extralight = 0;
-	R_SetVisibility(sky->args[0] * 0.25f);
-	ViewPos = sky->InterpolatedPosition(r_TicFracF);
-	ViewAngle = savedangle + (sky->PrevAngles.Yaw + deltaangle(sky->PrevAngles.Yaw, sky->Angles.Yaw) * r_TicFracF);
+	if (Portal->mType == PORTS_SKYVIEWPOINT)
+	{
+		// Don't let gun flashes brighten the sky box
+		ASkyViewpoint *sky = barrier_cast<ASkyViewpoint*>(Portal->mSkybox);
+		extralight = 0;
+		R_SetVisibility(sky->args[0] * 0.25f);
+		ViewPos = sky->InterpolatedPosition(r_TicFracF);
+		ViewAngle = savedangle + (sky->PrevAngles.Yaw + deltaangle(sky->PrevAngles.Yaw, sky->Angles.Yaw) * r_TicFracF);
+	}
+	else //if (Portal->mType == PORTS_STACKEDSECTORTHING || Portal->mType == PORTS_PORTAL || Portal->mType == PORTS_LINKEDPORTAL)
+	{
+		//extralight = pl->extralight;
+		//R_SetVisibility(pl->visibility);
+		ViewPos.X += Portal->mDisplacement.X;
+		ViewPos.Y += Portal->mDisplacement.Y;
+	}
 
 	camera = nullptr;
 	viewsector = Portal->mDestination;
 	R_SetViewAngle();
+
+	Portal->mFlags |= PORTSF_INSKYBOX;
+	if (Portal->mPartner > 0) sectorPortals[Portal->mPartner].mFlags |= PORTSF_INSKYBOX;
 }
 
 void PolyDrawSectorPortal::RestoreGlobals()
 {
+	Portal->mFlags &= ~PORTSF_INSKYBOX;
+	if (Portal->mPartner > 0) sectorPortals[Portal->mPartner].mFlags &= ~PORTSF_INSKYBOX;
+
 	camera = savedcamera;
 	viewsector = savedsector;
 	ViewPos = savedpos;

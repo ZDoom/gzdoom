@@ -85,6 +85,12 @@ void PolyCull::CullSubsector(subsector_t *sub)
 		seg_t *line = &sub->firstline[i];
 		if ((line->sidedef == nullptr || !(line->sidedef->Flags & WALLF_POLYOBJ)) && line->backsector == nullptr)
 		{
+			// Skip lines not facing viewer
+			DVector2 pt1 = line->v1->fPos() - ViewPos;
+			DVector2 pt2 = line->v2->fPos() - ViewPos;
+			if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
+				continue;
+
 			int sx1, sx2;
 			if (GetSegmentRangeForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), sx1, sx2))
 			{

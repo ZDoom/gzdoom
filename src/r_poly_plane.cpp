@@ -150,6 +150,8 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 {
 	FSectorPortal *portal = sub->sector->ValidatePortal(ceiling ? sector_t::ceiling : sector_t::floor);
 	PolyDrawSectorPortal *polyportal = nullptr;
+	if (portal && (portal->mFlags & PORTSF_INSKYBOX) == PORTSF_INSKYBOX) // Do not recurse into portals we already recursed into
+		portal = nullptr;
 	if (portal)
 	{
 		for (auto &p : sectorPortals)

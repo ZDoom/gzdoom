@@ -3085,10 +3085,10 @@ void FinishDehPatch ()
 				StateVisited[state] = true;
 				for(unsigned j = 0; AmmoPerAttacks[j].func != NAME_None; j++)
 				{
-					if (AmmoPerAttacks[i].ptr == nullptr)
+					if (AmmoPerAttacks[j].ptr == nullptr)
 					{
-						auto p = dyn_cast<PFunction>(RUNTIME_CLASS(AStateProvider)->Symbols.FindSymbol(AmmoPerAttacks[i].func, true));
-						if (p != nullptr) AmmoPerAttacks[i].ptr = p->Variants[0].Implementation;
+						auto p = dyn_cast<PFunction>(RUNTIME_CLASS(AStateProvider)->Symbols.FindSymbol(AmmoPerAttacks[j].func, true));
+						if (p != nullptr) AmmoPerAttacks[j].ptr = p->Variants[0].Implementation;
 					}
 					if (state->ActionFunc == AmmoPerAttacks[j].ptr)
 					{

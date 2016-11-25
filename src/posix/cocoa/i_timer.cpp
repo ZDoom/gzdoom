@@ -37,8 +37,6 @@
 #include <pthread.h>
 #include <libkern/OSAtomic.h>
 
-#include "basictypes.h"
-#include "basicinlines.h"
 #include "doomdef.h"
 #include "i_system.h"
 #include "templates.h"

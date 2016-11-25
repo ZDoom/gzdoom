@@ -1536,6 +1536,23 @@ static FPlayerStart *SelectRandomDeathmatchSpot (int playernum, unsigned int sel
 	return &deathmatchstarts[i];
 }
 
+DEFINE_ACTION_FUNCTION(DObject, G_PickDeathmatchStart)
+{
+	PARAM_PROLOGUE;
+	unsigned int selections = deathmatchstarts.Size();
+	unsigned int i = pr_dmspawn() % selections;
+	if (numret > 1)
+	{
+		ret[1].SetInt(deathmatchstarts[i].angle);
+		numret = 2;
+	}
+	if (numret > 0)
+	{
+		ret[0].SetVector(deathmatchstarts[i].pos);
+	}
+	return numret;
+}
+
 void G_DeathMatchSpawnPlayer (int playernum)
 {
 	unsigned int selections;
@@ -1577,6 +1594,7 @@ void G_DeathMatchSpawnPlayer (int playernum)
 	if (mo != NULL) P_PlayerStartStomp(mo);
 }
 
+
 //
 // G_PickPlayerStart
 //
@@ -1612,6 +1630,24 @@ FPlayerStart *G_PickPlayerStart(int playernum, int flags)
 		return &AllPlayerStarts[pr_pspawn(AllPlayerStarts.Size())];
 	}
 	return &playerstarts[playernum];
+}
+
+DEFINE_ACTION_FUNCTION(DObject, G_PickPlayerStart)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(playernum);
+	PARAM_INT_DEF(flags);
+	auto ps = G_PickPlayerStart(playernum, flags);
+	if (numret > 1)
+	{
+		ret[1].SetInt(ps? ps->angle : 0);
+		numret = 2;
+	}
+	if (numret > 0)
+	{
+		ret[0].SetVector(ps ? ps->pos : DVector3(0, 0, 0));
+	}
+	return numret;
 }
 
 //

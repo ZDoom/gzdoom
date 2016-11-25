@@ -306,6 +306,7 @@ class Actor : Thinker native
 	native Actor OldSpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
 	native Actor SpawnPuff(class<Actor> pufftype, vector3 pos, double hitdir, double particledir, int updown, int flags = 0, Actor vict = null);
 	
+	native bool Teleport(Vector3 pos, double angle, int flags);
 	native void TraceBleed(int damage, Actor missile);
 	native bool CheckMeleeRange();
 	native int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags = 0, double angle = 0);
@@ -318,7 +319,7 @@ class Actor : Thinker native
 	native void NewChaseDir();
 	native bool CheckMissileRange();
 	native bool SetState(state st, bool nofunction = false);
-	native state FindState(statelabel st, bool exact = false);	// do we need exact later?
+	native state FindState(statelabel st, bool exact = false);
 	bool SetStateLabel(statelabel st, bool nofunction = false) { return SetState(FindState(st), nofunction); }
 	native action state ResolveState(statelabel st);	// this one, unlike FindState, is context aware.
 	native void LinkToWorld();

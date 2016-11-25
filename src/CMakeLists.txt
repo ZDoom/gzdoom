@@ -1147,7 +1147,6 @@ set (PCH_SOURCES
 	wi_stuff.cpp
 	zstrformat.cpp
 	g_hexen/a_hexenmisc.cpp
-	g_raven/a_artitele.cpp
 	g_raven/a_minotaur.cpp
 	g_strife/a_strifestuff.cpp
 	g_strife/strife_sbar.cpp

@@ -982,3 +982,14 @@ enum EFindFloorCeiling
 	FFCF_RESTRICTEDPORTAL = 128,	// current values in the iterator's return are through a restricted portal type (i.e. some features are blocked.)
 	FFCF_NODROPOFF = 256,			// Caller does not need a dropoff (saves some time when checking portals)
 };
+
+enum ETeleport
+{
+	TELF_DESTFOG			= 1,
+	TELF_SOURCEFOG			= 2,
+	TELF_KEEPORIENTATION	= 4,
+	TELF_KEEPVELOCITY		= 8,
+	TELF_KEEPHEIGHT			= 16,
+	TELF_ROTATEBOOM			= 32,
+	TELF_ROTATEBOOMINVERSE	= 64,
+};

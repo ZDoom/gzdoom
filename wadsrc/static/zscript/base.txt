@@ -5,6 +5,8 @@ class Object native
 	// These really should be global functions...
 	native static int G_SkillPropertyInt(int p);
 	native static double G_SkillPropertyFloat(int p);
+	native static vector3, int G_PickDeathmatchStart();
+	native static vector3, int G_PickPlayerStart(int pnum, int flags = 0);
 
 	/*virtual*/ native void Destroy();
 }

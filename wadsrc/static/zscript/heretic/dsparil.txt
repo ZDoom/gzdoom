@@ -345,7 +345,7 @@ class Sorcerer2 : Actor
 		{
 			return;
 		}
-		A_PlaySound (AttackSound, CHAN_BODY);
+		A_PlaySound (AttackSound, CHAN_BODY, 1, false, ATTN_NONE);
 		if (CheckMeleeRange())
 		{
 			int damage = random[Srcr2Atk](1, 8) * 20;

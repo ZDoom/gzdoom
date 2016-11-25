@@ -238,6 +238,17 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Teleport)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_ANGLE(an);
+	PARAM_INT(flags);
+	ACTION_RETURN_BOOL(P_Teleport(self, DVector3(x, y, z), an, flags));
+}
+
 static AActor *SelectTeleDest (int tid, int tag, bool norandom)
 {
 	AActor *searcher;

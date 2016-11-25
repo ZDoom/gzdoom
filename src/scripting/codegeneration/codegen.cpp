@@ -9150,15 +9150,19 @@ int BuiltinNameToClass(VMFrameStack *stack, VMValue *param, TArray<VMValue> &def
 	assert(ret->RegType == REGT_POINTER);
 
 	FName clsname = ENamedName(param[0].i);
-	const PClass *cls = PClass::FindClass(clsname);
-	const PClass *desttype = reinterpret_cast<PClass *>(param[1].a);
-
-	if (!cls->IsDescendantOf(desttype))
+	if (clsname != NAME_None)
 	{
-		Printf("class '%s' is not compatible with '%s'", clsname.GetChars(), desttype->TypeName.GetChars());
-		cls = nullptr;
+		const PClass *cls = PClass::FindClass(clsname);
+		const PClass *desttype = reinterpret_cast<PClass *>(param[1].a);
+
+		if (!cls->IsDescendantOf(desttype))
+		{
+			Printf("class '%s' is not compatible with '%s'\n", clsname.GetChars(), desttype->TypeName.GetChars());
+			cls = nullptr;
+		}
+		ret->SetPointer(const_cast<PClass *>(cls), ATAG_OBJECT);
 	}
-	ret->SetPointer(const_cast<PClass *>(cls), ATAG_OBJECT);
+	else ret->SetPointer(nullptr, ATAG_OBJECT);
 	return 1;
 }
 

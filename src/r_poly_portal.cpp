@@ -128,7 +128,7 @@ void RenderPolyPortal::RenderSubsector(subsector_t *sub)
 
 SpriteRange RenderPolyPortal::GetSpritesForSector(sector_t *sector)
 {
-	if (SectorSpriteRanges.size() < sector->sectornum || sector->sectornum < 0)
+	if ((int)SectorSpriteRanges.size() < sector->sectornum || sector->sectornum < 0)
 		return SpriteRange();
 
 	auto &range = SectorSpriteRanges[sector->sectornum];
@@ -191,10 +191,38 @@ void RenderPolyPortal::RenderLine(subsector_t *sub, seg_t *line, sector_t *front
 void RenderPolyPortal::RenderTranslucent()
 {
 	for (auto it = SectorPortals.rbegin(); it != SectorPortals.rend(); ++it)
+	{
 		(*it)->RenderTranslucent();
+		
+		PolyDrawArgs args;
+		args.objectToClip = &WorldToClip;
+		args.stenciltestvalue = 253;
+		args.stencilwritevalue = 1;
+		for (const auto &verts : (*it)->Shape)
+		{
+			args.vinput = verts.Vertices;
+			args.vcount = verts.Count;
+			args.ccw = verts.Ccw;
+			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
+		}
+	}
 
 	for (auto it = LinePortals.rbegin(); it != LinePortals.rend(); ++it)
+	{
 		(*it)->RenderTranslucent();
+		
+		PolyDrawArgs args;
+		args.objectToClip = &WorldToClip;
+		args.stenciltestvalue = 253;
+		args.stencilwritevalue = 1;
+		for (const auto &verts : (*it)->Shape)
+		{
+			args.vinput = verts.Vertices;
+			args.vcount = verts.Count;
+			args.ccw = verts.Ccw;
+			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
+		}
+	}
 
 	for (auto it = TranslucentObjects.rbegin(); it != TranslucentObjects.rend(); ++it)
 	{
@@ -237,23 +265,7 @@ void PolyDrawSectorPortal::Render()
 		return;
 	recursion++;
 
-	int savedextralight = extralight;
-	DVector3 savedpos = ViewPos;
-	DAngle savedangle = ViewAngle;
-	double savedvisibility = R_GetVisibility();
-	AActor *savedcamera = camera;
-	sector_t *savedsector = viewsector;
-
-	// Don't let gun flashes brighten the sky box
-	ASkyViewpoint *sky = barrier_cast<ASkyViewpoint*>(Portal->mSkybox);
-	extralight = 0;
-	R_SetVisibility(sky->args[0] * 0.25f);
-	ViewPos = sky->InterpolatedPosition(r_TicFracF);
-	ViewAngle = savedangle + (sky->PrevAngles.Yaw + deltaangle(sky->PrevAngles.Yaw, sky->Angles.Yaw) * r_TicFracF);
-
-	camera = nullptr;
-	viewsector = Portal->mDestination;
-	R_SetViewAngle();
+	SaveGlobals();
 
 	// To do: get this information from RenderPolyScene instead of duplicating the code..
 	double radPitch = ViewPitch.Normalized180().Radians();
@@ -275,7 +287,50 @@ void PolyDrawSectorPortal::Render()
 
 	RenderPortal.SetViewpoint(worldToClip, 252);
 	RenderPortal.Render();
+	
+	RestoreGlobals();
+	
+	recursion--;
+}
 
+void PolyDrawSectorPortal::RenderTranslucent()
+{
+	if (Portal->mType != PORTS_SKYVIEWPOINT)
+		return;
+		
+	static int recursion = 0;
+	if (recursion >= 1/*r_portal_recursions*/)
+		return;
+	recursion++;
+
+	RenderPortal.RenderTranslucent();
+	
+	recursion--;
+}
+
+void PolyDrawSectorPortal::SaveGlobals()
+{
+	int savedextralight = extralight;
+	DVector3 savedpos = ViewPos;
+	DAngle savedangle = ViewAngle;
+	double savedvisibility = R_GetVisibility();
+	AActor *savedcamera = camera;
+	sector_t *savedsector = viewsector;
+
+	// Don't let gun flashes brighten the sky box
+	ASkyViewpoint *sky = barrier_cast<ASkyViewpoint*>(Portal->mSkybox);
+	extralight = 0;
+	R_SetVisibility(sky->args[0] * 0.25f);
+	ViewPos = sky->InterpolatedPosition(r_TicFracF);
+	ViewAngle = savedangle + (sky->PrevAngles.Yaw + deltaangle(sky->PrevAngles.Yaw, sky->Angles.Yaw) * r_TicFracF);
+
+	camera = nullptr;
+	viewsector = Portal->mDestination;
+	R_SetViewAngle();
+}
+
+void PolyDrawSectorPortal::RestoreGlobals()
+{
 	camera = savedcamera;
 	viewsector = savedsector;
 	ViewPos = savedpos;
@@ -283,16 +338,6 @@ void PolyDrawSectorPortal::Render()
 	extralight = savedextralight;
 	ViewAngle = savedangle;
 	R_SetViewAngle();
-
-	recursion--;
-}
-
-void PolyDrawSectorPortal::RenderTranslucent()
-{
-	/*if (Portal->mType != PORTS_SKYVIEWPOINT)
-		return;
-
-	RenderPortal.RenderTranslucent();*/
 }
 
 /////////////////////////////////////////////////////////////////////////////

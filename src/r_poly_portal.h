@@ -110,6 +110,14 @@ private:
 	std::vector<std::unique_ptr<PolyDrawLinePortal>> LinePortals;
 };
 
+struct PolyPortalVertexRange
+{
+	PolyPortalVertexRange(const TriVertex *vertices, int count, bool ccw) : Vertices(vertices), Count(count), Ccw(ccw) { }
+	const TriVertex *Vertices;
+	int Count;
+	bool Ccw;
+};
+
 class PolyDrawSectorPortal
 {
 public:
@@ -117,11 +125,23 @@ public:
 
 	void Render();
 	void RenderTranslucent();
+	
+	FSectorPortal *Portal;
+	std::vector<PolyPortalVertexRange> Shape;
 
 private:
-	FSectorPortal *Portal;
+	void SaveGlobals();
+	void RestoreGlobals();
+
 	bool Ceiling;
 	RenderPolyPortal RenderPortal;
+	
+	int savedextralight;
+	DVector3 savedpos;
+	DAngle savedangle;
+	double savedvisibility;
+	AActor *savedcamera;
+	sector_t *savedsector;
 };
 
 class PolyDrawLinePortal
@@ -131,6 +151,8 @@ public:
 
 	void Render();
 	void RenderTranslucent();
+
+	std::vector<PolyPortalVertexRange> Shape;
 
 private:
 	line_t *Src;

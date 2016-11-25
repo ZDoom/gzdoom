@@ -312,7 +312,7 @@ void PolyWallTextureCoords::CalcU(FTexture *tex, const seg_t *lineseg, const lin
 	double lineLength = side->TexelLength;
 	double lineStart = 0.0;
 
-	bool entireSegment = ((lineseg->v1 == line->v1) && (lineseg->v2 == line->v2) || (lineseg->v2 == line->v1) && (lineseg->v1 == line->v2));
+	bool entireSegment = ((lineseg->v1 == line->v1) && (lineseg->v2 == line->v2)) || ((lineseg->v2 == line->v1) && (lineseg->v1 == line->v2));
 	if (!entireSegment)
 	{
 		lineLength = (lineseg->v2->fPos() - lineseg->v1->fPos()).Length();

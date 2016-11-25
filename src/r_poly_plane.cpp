@@ -149,11 +149,24 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, subsector_t *s
 void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
 	FSectorPortal *portal = sub->sector->ValidatePortal(ceiling ? sector_t::ceiling : sector_t::floor);
-	if (portal && sectorPortals.empty())
+	PolyDrawSectorPortal *polyportal = nullptr;
+	if (portal)
 	{
-		sectorPortals.push_back(std::make_unique<PolyDrawSectorPortal>(portal, ceiling));
+		for (auto &p : sectorPortals)
+		{
+			if (p->Portal == portal) // To do: what other criterias do we need to check for?
+			{
+				polyportal = p.get();
+				break;
+			}
+		}
+		if (!portal)
+		{
+			sectorPortals.push_back(std::make_unique<PolyDrawSectorPortal>(portal, ceiling));
+			polyportal = sectorPortals.back().get();
+		}
 	}
-
+	
 	sector_t *fakesector = sub->sector->heightsec;
 	if (fakesector && (fakesector == sub->sector || (fakesector->MoreFlags & SECF_IGNOREHEIGHTSEC) == SECF_IGNOREHEIGHTSEC))
 		fakesector = nullptr;
@@ -253,6 +266,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 		{
 			args.stencilwritevalue = 252;
 			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
+			polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw });
 		}
 	}
 	else
@@ -260,6 +274,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 		if (portal)
 		{
 			args.stencilwritevalue = 252;
+			polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw });
 		}
 		else
 		{
@@ -335,6 +350,9 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 			args.vinput = wallvert;
 			args.vcount = 4;
 			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
+			
+			if (portal)
+				polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw });
 		}
 	}
 }

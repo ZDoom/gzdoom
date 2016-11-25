@@ -671,48 +671,67 @@ SSAInt DrawTriangleCodegen::ProcessPixel8(SSAInt bg, SSAInt *varying)
 		break;
 	case TriBlendMode::AlphaBlend:
 		palindex = Sample8(uvoffset);
-		output = (palindex == SSAInt(0)).select(bg, Shade8(palindex));
+		output = Shade8(palindex);
+		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::AddSolid:
-		fg = ToBgra(Shade8(Sample8(uvoffset)));
+		palindex = Sample8(uvoffset);
+		fg = ToBgra(Shade8(palindex));
 		output = ToPal8(blend_add(fg, ToBgra(bg), srcalpha, destalpha));
+		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::Add:
-		fg = ToBgra(Shade8(Sample8(uvoffset)));
+		palindex = Sample8(uvoffset);
+		fg = ToBgra(Shade8(palindex));
 		output = ToPal8(blend_add(fg, ToBgra(bg), srcalpha, calc_blend_bgalpha(fg, destalpha)));
+		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::Sub:
-		fg = ToBgra(Shade8(Sample8(uvoffset)));
+		palindex = Sample8(uvoffset);
+		fg = ToBgra(Shade8(palindex));
 		output = ToPal8(blend_sub(fg, ToBgra(bg), srcalpha, calc_blend_bgalpha(fg, destalpha)));
+		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::RevSub:
-		fg = ToBgra(Shade8(Sample8(uvoffset)));
+		palindex = Sample8(uvoffset);
+		fg = ToBgra(Shade8(palindex));
 		output = ToPal8(blend_revsub(fg, ToBgra(bg), srcalpha, calc_blend_bgalpha(fg, destalpha)));
+		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::Stencil:
 		output = ToPal8(blend_stencil(ToBgra(Shade8(color)), (Sample8(uvoffset) == SSAInt(0)).select(SSAInt(0), SSAInt(256)), ToBgra(bg), srcalpha, destalpha));
 		break;
 	case TriBlendMode::Shaded:
-		output = ToPal8(blend_stencil(ToBgra(Shade8(color)), Sample8(uvoffset), ToBgra(bg), srcalpha, destalpha));
+		palindex = Sample8(uvoffset);
+		output = ToPal8(blend_stencil(ToBgra(Shade8(color)), palindex, ToBgra(bg), srcalpha, destalpha));
 		break;
 	case TriBlendMode::TranslateCopy:
-		output = Shade8(TranslateSample8(uvoffset));
+		palindex = TranslateSample8(uvoffset);
+		output = Shade8(palindex);
+		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::TranslateAlphaBlend:
 		palindex = TranslateSample8(uvoffset);
-		output = (palindex == SSAInt(0)).select(bg, Shade8(palindex));
+		output = Shade8(palindex);
+		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::TranslateAdd:
-		fg = ToBgra(Shade8(Sample8(uvoffset)));
+		palindex = TranslateSample8(uvoffset);
+		fg = ToBgra(Shade8(palindex));
 		output = ToPal8(blend_add(fg, ToBgra(bg), srcalpha, calc_blend_bgalpha(fg, destalpha)));
+		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::TranslateSub:
-		fg = ToBgra(Shade8(Sample8(uvoffset)));
+		palindex = TranslateSample8(uvoffset);
+		fg = ToBgra(Shade8(palindex));
 		output = ToPal8(blend_sub(fg, ToBgra(bg), srcalpha, calc_blend_bgalpha(fg, destalpha)));
+		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::TranslateRevSub:
-		fg = ToBgra(Shade8(Sample8(uvoffset)));
+		palindex = TranslateSample8(uvoffset);
+		fg = ToBgra(Shade8(palindex));
 		output = ToPal8(blend_revsub(fg, ToBgra(bg), srcalpha, calc_blend_bgalpha(fg, destalpha)));
+		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	}
 

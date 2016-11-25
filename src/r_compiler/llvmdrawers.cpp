@@ -127,7 +127,7 @@ LLVMDrawers *LLVMDrawers::Instance()
 
 LLVMDrawersImpl::LLVMDrawersImpl()
 {
-	int version = 6; // Increment this number if the drawer codegen is modified (forces recreation of the module).
+	int version = 7; // Increment this number if the drawer codegen is modified (forces recreation of the module).
 	std::string targetCPU = mProgram.GetTargetCPU();
 	bool loaded = mProgram.LoadCachedModule(version, targetCPU);
 	if (!loaded)

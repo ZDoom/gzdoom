@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include "templates.h"
 #include "doomdef.h"
+#include "p_maputl.h"
 #include "sbar.h"
 #include "r_data/r_translate.h"
 #include "r_poly_portal.h"
@@ -31,6 +32,8 @@
 
 CVAR(Bool, r_debug_cull, 0, 0)
 EXTERN_CVAR(Int, r_portal_recursions)
+
+extern bool r_showviewer;
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -185,7 +188,7 @@ void RenderPolyPortal::RenderLine(subsector_t *sub, seg_t *line, sector_t *front
 	}
 
 	// Render wall, and update culling info if its an occlusion blocker
-	if (RenderPolyWall::RenderLine(WorldToClip, line, frontsector, subsectorDepth, StencilValue, SubsectorTranslucentWalls))
+	if (RenderPolyWall::RenderLine(WorldToClip, line, frontsector, subsectorDepth, StencilValue, SubsectorTranslucentWalls, LinePortals))
 	{
 		if (hasSegmentRange)
 			Cull.MarkSegmentCulled(sx1, sx2);
@@ -362,19 +365,144 @@ void PolyDrawSectorPortal::RestoreGlobals()
 
 /////////////////////////////////////////////////////////////////////////////
 
-PolyDrawLinePortal::PolyDrawLinePortal(line_t *src, line_t *dest, bool mirror) : Src(src), Dest(dest)
+PolyDrawLinePortal::PolyDrawLinePortal(FLinePortal *portal) : Portal(portal)
 {
-	// To do: do what R_EnterPortal and PortalDrawseg does
-	
+	StencilValue = RenderPolyScene::Instance()->GetNextStencilValue();
+}
+
+PolyDrawLinePortal::PolyDrawLinePortal(line_t *mirror) : Mirror(mirror)
+{
 	StencilValue = RenderPolyScene::Instance()->GetNextStencilValue();
 }
 
 void PolyDrawLinePortal::Render(int portalDepth)
 {
+	SaveGlobals();
+
+	// To do: get this information from RenderPolyScene instead of duplicating the code..
+	double radPitch = ViewPitch.Normalized180().Radians();
+	double angx = cos(radPitch);
+	double angy = sin(radPitch) * glset.pixelstretch;
+	double alen = sqrt(angx*angx + angy*angy);
+	float adjustedPitch = (float)asin(angy / alen);
+	float adjustedViewAngle = (float)(ViewAngle - 90).Radians();
+	float ratio = WidescreenRatio;
+	float fovratio = (WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
+	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(FieldOfView.Radians() / 2) / fovratio)).Degrees);
+	TriMatrix worldToView =
+		TriMatrix::rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
+		TriMatrix::rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
+		TriMatrix::scale(1.0f, glset.pixelstretch, 1.0f) *
+		TriMatrix::swapYZ() *
+		TriMatrix::translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);
+	TriMatrix worldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
+
+	RenderPortal.SetViewpoint(worldToClip, StencilValue);
 	RenderPortal.Render(portalDepth);
+
+	RestoreGlobals();
 }
 
 void PolyDrawLinePortal::RenderTranslucent(int portalDepth)
 {
+	SaveGlobals();
 	RenderPortal.RenderTranslucent(portalDepth);
+	RestoreGlobals();
+}
+
+void PolyDrawLinePortal::SaveGlobals()
+{
+	savedextralight = extralight;
+	savedpos = ViewPos;
+	savedangle = ViewAngle;
+	savedcamera = camera;
+	savedsector = viewsector;
+	savedvisibility = camera ? camera->renderflags & RF_INVISIBLE : ActorRenderFlags::FromInt(0);
+	savedViewPath[0] = ViewPath[0];
+	savedViewPath[1] = ViewPath[1];
+
+	if (Mirror)
+	{
+		DAngle startang = ViewAngle;
+		DVector3 startpos = ViewPos;
+
+		vertex_t *v1 = Mirror->v1;
+
+		// Reflect the current view behind the mirror.
+		if (Mirror->Delta().X == 0)
+		{ // vertical mirror
+			ViewPos.X = v1->fX() - startpos.X + v1->fX();
+		}
+		else if (Mirror->Delta().Y == 0)
+		{ // horizontal mirror
+			ViewPos.Y = v1->fY() - startpos.Y + v1->fY();
+		}
+		else
+		{ // any mirror
+			vertex_t *v2 = Mirror->v2;
+
+			double dx = v2->fX() - v1->fX();
+			double dy = v2->fY() - v1->fY();
+			double x1 = v1->fX();
+			double y1 = v1->fY();
+			double x = startpos.X;
+			double y = startpos.Y;
+
+			// the above two cases catch len == 0
+			double r = ((x - x1)*dx + (y - y1)*dy) / (dx*dx + dy*dy);
+
+			ViewPos.X = (x1 + r * dx) * 2 - x;
+			ViewPos.Y = (y1 + r * dy) * 2 - y;
+		}
+		ViewAngle = Mirror->Delta().Angle() * 2 - startang;
+	}
+	else
+	{
+		auto src = Portal->mOrigin;
+		auto dst = Portal->mDestination;
+
+		P_TranslatePortalXY(src, ViewPos.X, ViewPos.Y);
+		P_TranslatePortalZ(src, ViewPos.Z);
+		P_TranslatePortalAngle(src, ViewAngle);
+		P_TranslatePortalXY(src, ViewPath[0].X, ViewPath[0].Y);
+		P_TranslatePortalXY(src, ViewPath[1].X, ViewPath[1].Y);
+
+		if (!r_showviewer && camera && P_PointOnLineSidePrecise(ViewPath[0], dst) != P_PointOnLineSidePrecise(ViewPath[1], dst))
+		{
+			double distp = (ViewPath[0] - ViewPath[1]).Length();
+			if (distp > EQUAL_EPSILON)
+			{
+				double dist1 = (ViewPos - ViewPath[0]).Length();
+				double dist2 = (ViewPos - ViewPath[1]).Length();
+
+				if (dist1 + dist2 < distp + 1)
+				{
+					camera->renderflags |= RF_INVISIBLE;
+				}
+			}
+		}
+
+		/*if (Portal->mirror)
+		{
+			if (MirrorFlags & RF_XFLIP) MirrorFlags &= ~RF_XFLIP;
+			else MirrorFlags |= RF_XFLIP;
+		}*/
+	}
+
+	camera = nullptr;
+	//viewsector = Portal->mDestination;
+	R_SetViewAngle();
+}
+
+void PolyDrawLinePortal::RestoreGlobals()
+{
+	if (!savedvisibility && camera) camera->renderflags &= ~RF_INVISIBLE;
+	camera = savedcamera;
+	viewsector = savedsector;
+	ViewPos = savedpos;
+	extralight = savedextralight;
+	ViewAngle = savedangle;
+	ViewPath[0] = savedViewPath[0];
+	ViewPath[1] = savedViewPath[1];
+	R_SetViewAngle();
 }

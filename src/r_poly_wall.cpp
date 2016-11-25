@@ -23,6 +23,9 @@
 #include <stdlib.h>
 #include "templates.h"
 #include "doomdef.h"
+#include "doomstat.h"
+#include "doomdata.h"
+#include "p_lnspec.h"
 #include "sbar.h"
 #include "r_data/r_translate.h"
 #include "r_poly_wall.h"
@@ -30,8 +33,82 @@
 #include "r_poly.h"
 #include "r_sky.h" // for skyflatnum
 
-bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject> &translucentWallsOutput)
+EXTERN_CVAR(Bool, r_drawmirrors)
+
+bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals)
 {
+	PolyDrawLinePortal *polyportal = nullptr;
+	if (line->backsector == nullptr && line->sidedef == line->linedef->sidedef[0] && (line->linedef->special == Line_Mirror && r_drawmirrors))
+	{
+		linePortals.push_back(std::make_unique<PolyDrawLinePortal>(line->linedef));
+		polyportal = linePortals.back().get();
+	}
+	else if (line->linedef && line->linedef->isVisualPortal())
+	{
+		FLinePortal *portal = line->linedef->getPortal();
+		for (auto &p : linePortals)
+		{
+			if (p->Portal == portal) // To do: what other criterias do we need to check for?
+			{
+				polyportal = p.get();
+				break;
+			}
+		}
+		if (!polyportal)
+		{
+			linePortals.push_back(std::make_unique<PolyDrawLinePortal>(portal));
+			polyportal = linePortals.back().get();
+		}
+	}
+
+	if (polyportal)
+	{
+		double ceil1 = frontsector->ceilingplane.ZatPoint(line->v1);
+		double floor1 = frontsector->floorplane.ZatPoint(line->v1);
+		double ceil2 = frontsector->ceilingplane.ZatPoint(line->v2);
+		double floor2 = frontsector->floorplane.ZatPoint(line->v2);
+		DVector2 v1 = line->v1->fPos();
+		DVector2 v2 = line->v2->fPos();
+
+		TriVertex *vertices = PolyVertexBuffer::GetVertices(4);
+		if (!vertices)
+			return true;
+
+		vertices[0].x = (float)v1.X;
+		vertices[0].y = (float)v1.Y;
+		vertices[0].z = (float)ceil1;
+		vertices[0].w = 1.0f;
+
+		vertices[1].x = (float)v2.X;
+		vertices[1].y = (float)v2.Y;
+		vertices[1].z = (float)ceil2;
+		vertices[1].w = 1.0f;
+
+		vertices[2].x = (float)v2.X;
+		vertices[2].y = (float)v2.Y;
+		vertices[2].z = (float)floor2;
+		vertices[2].w = 1.0f;
+
+		vertices[3].x = (float)v1.X;
+		vertices[3].y = (float)v1.Y;
+		vertices[3].z = (float)floor1;
+		vertices[3].w = 1.0f;
+
+		PolyDrawArgs args;
+		args.uniforms.flags = 0;
+		args.objectToClip = &worldToClip;
+		args.vinput = vertices;
+		args.vcount = 4;
+		args.mode = TriangleDrawMode::Fan;
+		args.ccw = true;
+		args.stenciltestvalue = stencilValue;
+		args.stencilwritevalue = polyportal->StencilValue;
+		PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
+
+		polyportal->Shape.push_back({ vertices, 4, true, subsectorDepth });
+		return true;
+	}
+
 	RenderPolyWall wall;
 	wall.LineSeg = line;
 	wall.Line = line->linedef;

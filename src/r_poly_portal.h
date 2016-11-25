@@ -127,7 +127,7 @@ public:
 	void Render(int portalDepth);
 	void RenderTranslucent(int portalDepth);
 	
-	FSectorPortal *Portal;
+	FSectorPortal *Portal = nullptr;
 	uint32_t StencilValue = 0;
 	std::vector<PolyPortalVertexRange> Shape;
 
@@ -149,16 +149,28 @@ private:
 class PolyDrawLinePortal
 {
 public:
-	PolyDrawLinePortal(line_t *src, line_t *dest, bool mirror);
+	PolyDrawLinePortal(FLinePortal *portal);
+	PolyDrawLinePortal(line_t *mirror);
 
 	void Render(int portalDepth);
 	void RenderTranslucent(int portalDepth);
 
+	FLinePortal *Portal = nullptr;
+	line_t *Mirror = nullptr;
 	uint32_t StencilValue = 0;
 	std::vector<PolyPortalVertexRange> Shape;
 
 private:
-	line_t *Src;
-	line_t *Dest;
+	void SaveGlobals();
+	void RestoreGlobals();
+
 	RenderPolyPortal RenderPortal;
+
+	int savedextralight;
+	DVector3 savedpos;
+	DAngle savedangle;
+	AActor *savedcamera;
+	sector_t *savedsector;
+	ActorRenderFlags savedvisibility;
+	DVector3 savedViewPath[2];
 };

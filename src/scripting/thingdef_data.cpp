@@ -706,6 +706,11 @@ void InitThingdef()
 	PField *levelf = new PField("level", lstruct, VARF_Native | VARF_Static, (intptr_t)&level);
 	GlobalSymbols.AddSymbol(levelf);
 
+	// set up a variable for the DEH data
+	PStruct *dstruct = NewNativeStruct("DehInfo", nullptr);
+	PField *dehi = new PField("deh", dstruct, VARF_Native | VARF_Static, (intptr_t)&deh);
+	GlobalSymbols.AddSymbol(dehi);
+
 	// set up a variable for the global players array.
 	PStruct *pstruct = NewNativeStruct("PlayerInfo", nullptr);
 	pstruct->Size = sizeof(player_t);

@@ -92,23 +92,34 @@ struct LevelLocals native
 // level_info_t *info cannot be done yet.
 }
 
+// a few values of this need to be readable by the play code.
+// Most are handled at load time and are omitted here.
+struct DehInfo native
+{
+	native int MaxSoulsphere;
+	native uint8 ExplosionStyle;
+	native double ExplosionAlpha;
+	native int NoAutofreeze;
+	native int BFGCells;
+}
+
 struct State native
 {
-	State NextState;
-	int sprite;
-	int16 Tics;
-	uint16 TicRange;
-	uint8 Frame;		
-	uint8 UseFlags;	
-	int Misc1;
-	int Misc2;
-	uint16 bSlow;
-	uint16 bFast;
-	bool bFullbright;
-	bool bNoDelay;
-	bool bSameFrame;
-	bool bCanRaise;
-	bool bDehacked;
+	native State NextState;
+	native int sprite;
+	native int16 Tics;
+	native uint16 TicRange;
+	native uint8 Frame;		
+	native uint8 UseFlags;	
+	native int Misc1;
+	native int Misc2;
+	native uint16 bSlow;
+	native uint16 bFast;
+	native bool bFullbright;
+	native bool bNoDelay;
+	native bool bSameFrame;
+	native bool bCanRaise;
+	native bool bDehacked;
 }
 
 struct Sector native

@@ -214,6 +214,12 @@ DehInfo deh =
 	40,		// BFG cells per shot
 };
 
+DEFINE_FIELD_X(DehInfo, DehInfo, MaxSoulsphere)
+DEFINE_FIELD_X(DehInfo, DehInfo, ExplosionStyle)
+DEFINE_FIELD_X(DehInfo, DehInfo, ExplosionAlpha)
+DEFINE_FIELD_X(DehInfo, DehInfo, NoAutofreeze)
+DEFINE_FIELD_X(DehInfo, DehInfo, BFGCells)
+
 // Doom identified pickup items by their sprites. ZDoom prefers to use their
 // class type to identify them instead. To support the traditional Doom
 // behavior, for every thing touched by dehacked that has the MF_PICKUP flag,

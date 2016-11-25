@@ -127,7 +127,7 @@ LLVMDrawers *LLVMDrawers::Instance()
 
 LLVMDrawersImpl::LLVMDrawersImpl()
 {
-	int version = 7; // Increment this number if the drawer codegen is modified (forces recreation of the module).
+	int version = 8; // Increment this number if the drawer codegen is modified (forces recreation of the module).
 	std::string targetCPU = mProgram.GetTargetCPU();
 	bool loaded = mProgram.LoadCachedModule(version, targetCPU);
 	if (!loaded)
@@ -208,6 +208,7 @@ LLVMDrawersImpl::LLVMDrawersImpl()
 			CodegenDrawTriangle("TriFillSubsector32_" + std::to_string(i), TriDrawVariant::FillSubsector, (TriBlendMode)i, true);
 		}
 		CodegenDrawTriangle("TriStencil", TriDrawVariant::Stencil, TriBlendMode::Copy, false);
+		CodegenDrawTriangle("TriStencilClose", TriDrawVariant::StencilClose, TriBlendMode::Copy, false);
 	}
 
 	mProgram.CreateEE(version, targetCPU, !loaded);
@@ -286,6 +287,7 @@ LLVMDrawersImpl::LLVMDrawersImpl()
 		TriFillSubsector32.push_back(mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriFillSubsector32_" + std::to_string(i)));
 	}
 	TriStencil = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriStencil");
+	TriStencilClose = mProgram.GetProcAddress<void(const TriDrawTriangleArgs *, WorkerThreadData *)>("TriStencilClose");
 
 #if 0
 	std::vector<uint32_t> foo(1024 * 4);

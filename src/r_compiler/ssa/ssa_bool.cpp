@@ -67,6 +67,11 @@ SSAVec4i SSABool::select(SSAVec4i a, SSAVec4i b)
 	return SSAValue::from_llvm(SSAScope::builder().CreateSelect(v, a.v, b.v, SSAScope::hint()));
 }
 
+SSABool SSABool::compare_uge(const SSAUByte &a, const SSAUByte &b)
+{
+	return SSABool::from_llvm(SSAScope::builder().CreateICmpUGE(a.v, b.v, SSAScope::hint()));
+}
+
 SSABool operator&&(const SSABool &a, const SSABool &b)
 {
 	return SSABool::from_llvm(SSAScope::builder().CreateAnd(a.v, b.v, SSAScope::hint()));

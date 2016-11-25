@@ -112,10 +112,11 @@ private:
 
 struct PolyPortalVertexRange
 {
-	PolyPortalVertexRange(const TriVertex *vertices, int count, bool ccw) : Vertices(vertices), Count(count), Ccw(ccw) { }
+	PolyPortalVertexRange(const TriVertex *vertices, int count, bool ccw, uint32_t subsectorDepth) : Vertices(vertices), Count(count), Ccw(ccw), SubsectorDepth(subsectorDepth) { }
 	const TriVertex *Vertices;
 	int Count;
 	bool Ccw;
+	uint32_t SubsectorDepth;
 };
 
 class PolyDrawSectorPortal

@@ -273,11 +273,7 @@ void DrawTriangleCodegen::LoopBlockX()
 
 		SetStencilBlock(x / 8 + y / 8 * stencilPitch);
 
-		SSABool covered = a == SSAInt(0xF) && b == SSAInt(0xF) && c == SSAInt(0xF) && !clipneeded;
-		if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector && variant != TriDrawVariant::FuzzSubsector)
-		{
-			covered = covered && StencilIsSingleValue();
-		}
+		SSABool covered = a == SSAInt(0xF) && b == SSAInt(0xF) && c == SSAInt(0xF) && !clipneeded && StencilIsSingleValue();
 
 		// Accept whole block when totally covered
 		SSAIfBlock branch_covered;
@@ -301,7 +297,11 @@ void DrawTriangleCodegen::LoopBlockX()
 void DrawTriangleCodegen::LoopFullBlock()
 {
 	SSAIfBlock branch_stenciltest;
-	if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector && variant != TriDrawVariant::FuzzSubsector)
+	if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector || variant == TriDrawVariant::StencilClose)
+	{
+		branch_stenciltest.if_block(SSABool::compare_uge(StencilGetSingle(), stencilTestValue));
+	}
+	else
 	{
 		branch_stenciltest.if_block(StencilGetSingle() == stencilTestValue);
 	}
@@ -309,6 +309,18 @@ void DrawTriangleCodegen::LoopFullBlock()
 	if (variant == TriDrawVariant::Stencil)
 	{
 		StencilClear(stencilWriteValue);
+	}
+	else if (variant == TriDrawVariant::StencilClose)
+	{
+		StencilClear(stencilWriteValue);
+		for (int iy = 0; iy < q; iy++)
+		{
+			SSAIntPtr subsectorbuffer = subsectorGBuffer[x + iy * pitch];
+			for (int ix = 0; ix < q; ix += 4)
+			{
+				subsectorbuffer[ix].store_unaligned_vec4i(SSAVec4i(subsectorDepth));
+			}
+		}
 	}
 	else
 	{
@@ -407,10 +419,7 @@ void DrawTriangleCodegen::LoopFullBlock()
 		}
 	}
 
-	if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector && variant != TriDrawVariant::FuzzSubsector)
-	{
-		branch_stenciltest.end_block();
-	}
+	branch_stenciltest.end_block();
 }
 
 void DrawTriangleCodegen::LoopPartialBlock()
@@ -468,7 +477,11 @@ void DrawTriangleCodegen::LoopPartialBlock()
 
 			if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
 			{
-				covered = covered && subsectorbuffer[ix].load(true) >= subsectorDepth;
+				covered = covered && SSABool::compare_uge(StencilGet(ix, iy), stencilTestValue) && subsectorbuffer[ix].load(true) >= subsectorDepth;
+			}
+			else if (variant == TriDrawVariant::StencilClose)
+			{
+				covered = covered && SSABool::compare_uge(StencilGet(ix, iy), stencilTestValue);
 			}
 			else
 			{
@@ -481,6 +494,11 @@ void DrawTriangleCodegen::LoopPartialBlock()
 				if (variant == TriDrawVariant::Stencil)
 				{
 					StencilSet(ix, iy, stencilWriteValue);
+				}
+				else if (variant == TriDrawVariant::StencilClose)
+				{
+					StencilSet(ix, iy, stencilWriteValue);
+					subsectorbuffer[ix].store(subsectorDepth);
 				}
 				else
 				{

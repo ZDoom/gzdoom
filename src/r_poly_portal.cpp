@@ -196,6 +196,7 @@ void RenderPolyPortal::RenderTranslucent()
 		
 		PolyDrawArgs args;
 		args.objectToClip = &WorldToClip;
+		args.mode = TriangleDrawMode::Fan;
 		args.stenciltestvalue = 253;
 		args.stencilwritevalue = 1;
 		for (const auto &verts : (*it)->Shape)
@@ -203,7 +204,8 @@ void RenderPolyPortal::RenderTranslucent()
 			args.vinput = verts.Vertices;
 			args.vcount = verts.Count;
 			args.ccw = verts.Ccw;
-			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
+			args.uniforms.subsectorDepth = verts.SubsectorDepth;
+			PolyTriangleDrawer::draw(args, TriDrawVariant::StencilClose, TriBlendMode::Copy);
 		}
 	}
 
@@ -213,6 +215,7 @@ void RenderPolyPortal::RenderTranslucent()
 		
 		PolyDrawArgs args;
 		args.objectToClip = &WorldToClip;
+		args.mode = TriangleDrawMode::Fan;
 		args.stenciltestvalue = 253;
 		args.stencilwritevalue = 1;
 		for (const auto &verts : (*it)->Shape)
@@ -220,7 +223,8 @@ void RenderPolyPortal::RenderTranslucent()
 			args.vinput = verts.Vertices;
 			args.vcount = verts.Count;
 			args.ccw = verts.Ccw;
-			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
+			args.uniforms.subsectorDepth = verts.SubsectorDepth;
+			PolyTriangleDrawer::draw(args, TriDrawVariant::StencilClose, TriBlendMode::Copy);
 		}
 	}
 
@@ -310,12 +314,12 @@ void PolyDrawSectorPortal::RenderTranslucent()
 
 void PolyDrawSectorPortal::SaveGlobals()
 {
-	int savedextralight = extralight;
-	DVector3 savedpos = ViewPos;
-	DAngle savedangle = ViewAngle;
-	double savedvisibility = R_GetVisibility();
-	AActor *savedcamera = camera;
-	sector_t *savedsector = viewsector;
+	savedextralight = extralight;
+	savedpos = ViewPos;
+	savedangle = ViewAngle;
+	savedvisibility = R_GetVisibility();
+	savedcamera = camera;
+	savedsector = viewsector;
 
 	// Don't let gun flashes brighten the sky box
 	ASkyViewpoint *sky = barrier_cast<ASkyViewpoint*>(Portal->mSkybox);

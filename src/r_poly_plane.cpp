@@ -160,7 +160,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 				break;
 			}
 		}
-		if (!portal)
+		if (!polyportal)
 		{
 			sectorPortals.push_back(std::make_unique<PolyDrawSectorPortal>(portal, ceiling));
 			polyportal = sectorPortals.back().get();
@@ -266,7 +266,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 		{
 			args.stencilwritevalue = 252;
 			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
-			polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw });
+			polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw, subsectorDepth });
 		}
 	}
 	else
@@ -274,7 +274,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 		if (portal)
 		{
 			args.stencilwritevalue = 252;
-			polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw });
+			polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw, subsectorDepth });
 		}
 		else
 		{
@@ -352,7 +352,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
 			
 			if (portal)
-				polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw });
+				polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw, subsectorDepth });
 		}
 	}
 }

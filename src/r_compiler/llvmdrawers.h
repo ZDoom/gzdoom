@@ -270,7 +270,8 @@ enum class TriDrawVariant
 	DrawSubsector,
 	FillSubsector,
 	FuzzSubsector,
-	Stencil
+	Stencil,
+	StencilClose
 };
 
 enum class TriBlendMode
@@ -376,6 +377,7 @@ public:
 	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriFillSubsector8;
 	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriFillSubsector32;
 	void(*TriStencil)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
+	void(*TriStencilClose)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
 
 private:
 	static LLVMDrawers *Singleton;

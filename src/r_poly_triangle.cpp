@@ -90,6 +90,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 	case TriDrawVariant::FuzzSubsector:
 	case TriDrawVariant::FillSubsector: drawfunc = dest_bgra ? llvm->TriFillSubsector32[bmode] : llvm->TriFillSubsector8[bmode]; break;
 	case TriDrawVariant::Stencil: drawfunc = llvm->TriStencil; break;
+	case TriDrawVariant::StencilClose: drawfunc = llvm->TriStencilClose; break;
 	}
 
 	TriDrawTriangleArgs args;

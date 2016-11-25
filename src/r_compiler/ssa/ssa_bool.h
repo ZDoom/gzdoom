@@ -45,6 +45,8 @@ public:
 	SSAUByte select(SSAUByte a, SSAUByte b);
 	SSAVec4i select(SSAVec4i a, SSAVec4i b);
 
+	static SSABool compare_uge(const SSAUByte &a, const SSAUByte &b);
+
 	llvm::Value *v;
 };
 

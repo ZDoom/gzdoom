@@ -6820,6 +6820,16 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	ABORT(ctx.Class);
 	bool error = false;
 
+	for (auto a : ArgList)
+	{
+		if (a == nullptr)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Empty function argument.");
+			delete this;
+			return nullptr;
+		}
+	}
+
 	PFunction *afd = FindClassMemberFunction(ctx.Class, ctx.Class, MethodName, ScriptPosition, &error);
 
 	if (afd != nullptr)
@@ -7070,6 +7080,16 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	bool novirtual = false;
 
 	PClass *ccls = nullptr;
+
+	for (auto a : ArgList)
+	{
+		if (a == nullptr)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Empty function argument.");
+			delete this;
+			return nullptr;
+		}
+	}
 
 	if (Self->ExprType == EFX_Identifier)
 	{

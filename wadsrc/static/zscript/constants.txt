@@ -954,3 +954,31 @@ enum EWeaponPos
 	WEAPONBOTTOM = 128,
 	WEAPONTOP = 32
 }
+
+enum ETranslationTable
+{
+	TRANSLATION_Invalid,
+	TRANSLATION_Players,
+	TRANSLATION_PlayersExtra,
+	TRANSLATION_Standard,
+	TRANSLATION_LevelScripted,
+	TRANSLATION_Decals,
+	TRANSLATION_PlayerCorpses,
+	TRANSLATION_Decorate,
+	TRANSLATION_Blood,
+	TRANSLATION_RainPillar,
+	TRANSLATION_Custom,
+};
+
+enum EFindFloorCeiling
+{
+	FFCF_ONLYSPAWNPOS = 1,
+	FFCF_SAMESECTOR = 2,
+	FFCF_ONLY3DFLOORS = 4,	// includes 3D midtexes
+	FFCF_3DRESTRICT = 8,	// ignore 3D midtexes and floors whose floorz are above thing's z
+	FFCF_NOPORTALS = 16,	// ignore portals (considers them impassable.)
+	FFCF_NOFLOOR = 32,
+	FFCF_NOCEILING = 64,
+	FFCF_RESTRICTEDPORTAL = 128,	// current values in the iterator's return are through a restricted portal type (i.e. some features are blocked.)
+	FFCF_NODROPOFF = 256,			// Caller does not need a dropoff (saves some time when checking portals)
+};

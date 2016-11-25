@@ -5,6 +5,7 @@ class Actor : Thinker native
 	const ONCEILINGZ = 2147483647.0;
 	const FLOATRANDZ = ONCEILINGZ-1;
 	const TELEFRAG_DAMAGE = 1000000;
+	const MinVel = 1./65536;
 
 
 	// flags are not defined here, the native fields for those get synthesized from the internal tables.
@@ -263,6 +264,7 @@ class Actor : Thinker native
 	virtual native int DoSpecialDamage (Actor target, int damage, Name damagetype);
 	virtual native bool UseInventory(Inventory item);
 
+
 	native void AdjustPlayerAngle(FTranslatedLineTarget t);
 	native static readonly<Actor> GetDefaultByType(class<Actor> cls);
 	native static double GetDefaultSpeed(class<Actor> type);
@@ -273,6 +275,7 @@ class Actor : Thinker native
 	native bool GiveBody (int num, int max=0);
 	native bool HitFloor();
 	native bool isTeammate(Actor other);
+	native int PlayerNumber();
 
 	native void RestoreDamage();
 	native int SpawnHealth();
@@ -342,6 +345,7 @@ class Actor : Thinker native
 	// DECORATE compatible functions
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
 	native Inventory FindInventory(class<Inventory> itemtype, bool subclass = false);
+	native Inventory GiveInventoryType(class<Inventory> itemtype);
 	native int	CountInv(class<Inventory> itemtype, int ptr_select = AAPTR_DEFAULT);
 	native double GetDistance(bool checkz, int ptr = AAPTR_TARGET);
 	native double GetAngle(int flags, int ptr = AAPTR_DEFAULT);
@@ -720,7 +724,7 @@ class Actor : Thinker native
 	native int A_ClearOverlays(int sstart = 0, int sstop = 0, bool safety = true);
 	native bool A_CopySpriteFrame(int from, int to, int flags = 0);
 	native bool A_SetVisibleRotation(double anglestart = 0, double angleend = 0, double pitchstart = 0, double pitchend = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
-	native void A_SetTranslation(string transname);
+	native void A_SetTranslation(name transname);
 
 	native void A_RearrangePointers(int newtarget, int newmaster = AAPTR_DEFAULT, int newtracer = AAPTR_DEFAULT, int flags=0);
 	native void A_TransferPointer(int ptr_source, int ptr_recepient, int sourcefield, int recepientfield=AAPTR_DEFAULT, int flags=0);

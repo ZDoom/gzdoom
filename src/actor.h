@@ -759,7 +759,7 @@ public:
 	virtual FName GetSpecies();
 
 	// set translation
-	void SetTranslation(const char *trname);
+	void SetTranslation(FName trname);
 
 	double GetBobOffset(double ticfrac = 0) const
 	{

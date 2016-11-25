@@ -122,6 +122,12 @@ struct State native
 	native bool bDehacked;
 }
 
-struct Sector native
+struct F3DFloor native
 {
 }
+
+struct Sector native
+{
+	native double, Sector, F3DFloor NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0);
+}
+

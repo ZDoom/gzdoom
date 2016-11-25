@@ -6802,7 +6802,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetVisibleRotation)
 DEFINE_ACTION_FUNCTION(AActor, A_SetTranslation)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STRING(trname);
+	PARAM_NAME(trname);
 
 	self->SetTranslation(trname);
 	return 0;

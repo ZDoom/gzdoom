@@ -7609,7 +7609,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 			{
 				bool writable;
 				ArgList[i] = ArgList[i]->Resolve(ctx);	// nust be resolved before the address is requested.
-				if (ArgList[i]->ValueType != TypeNullPtr)
+				if (ArgList[i] != nullptr && ArgList[i]->ValueType != TypeNullPtr)
 				{
 					ArgList[i]->RequestAddress(ctx, &writable);
 					ArgList[i]->ValueType = NewPointer(ArgList[i]->ValueType);

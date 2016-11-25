@@ -700,6 +700,10 @@ void InitThingdef()
 	PStruct *sstruct = NewNativeStruct("Sector", nullptr);
 	auto sptr = NewPointer(sstruct);
 	sstruct->AddNativeField("soundtarget", TypeActor, myoffsetof(sector_t, SoundTarget));
+	
+	// expose the glibal Multiplayer variable.
+	PField *multif = new PField("multiplayer", TypeBool, VARF_Native | VARF_ReadOnly | VARF_Static, (intptr_t)&multiplayer);
+	GlobalSymbols.AddSymbol(multif);
 
 	// set up a variable for the global level data structure
 	PStruct *lstruct = NewNativeStruct("LevelLocals", nullptr);
@@ -708,8 +712,9 @@ void InitThingdef()
 
 	// set up a variable for the DEH data
 	PStruct *dstruct = NewNativeStruct("DehInfo", nullptr);
-	PField *dehi = new PField("deh", dstruct, VARF_Native | VARF_Static, (intptr_t)&deh);
-	GlobalSymbols.AddSymbol(dehi);
+	PField *dehf = new PField("deh", dstruct, VARF_Native | VARF_Static, (intptr_t)&deh);
+
+	GlobalSymbols.AddSymbol(dehf);
 
 	// set up a variable for the global players array.
 	PStruct *pstruct = NewNativeStruct("PlayerInfo", nullptr);

@@ -110,7 +110,7 @@ extern TArray<PalEntry> BloodTranslationColors;
 
 int CreateBloodTranslation(PalEntry color);
 
-int R_FindCustomTranslation(const char *name);
+int R_FindCustomTranslation(FName name);
 void R_ParseTrnslate();
 
 

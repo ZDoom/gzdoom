@@ -960,7 +960,7 @@ double sector_t::NextHighestCeilingAt(double x, double y, double bottomz, double
 			}
 		}
 		if ((flags & FFCF_NOPORTALS) || sec->PortalBlocksMovement(ceiling) || planeheight >= sec->GetPortalPlaneZ(ceiling))
-		{ // Use sector's floor
+		{ // Use sector's ceiling
 			if (resultffloor) *resultffloor = NULL;
 			if (resultsec) *resultsec = sec;
 			return realceil;
@@ -974,6 +974,34 @@ double sector_t::NextHighestCeilingAt(double x, double y, double bottomz, double
 			sec = P_PointInSector(x, y);
 		}
 	}
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, NextHighestCeilingAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(bottomz);
+	PARAM_FLOAT(topz);
+	PARAM_INT_DEF(flags);
+	sector_t *resultsec;
+	F3DFloor *resultff;
+	double resultheight = self->NextHighestCeilingAt(x, y, bottomz, topz, flags, &resultsec, &resultff);
+
+	if (numret > 2)
+	{
+		ret[2].SetPointer(resultff, ATAG_GENERIC);
+		numret = 3;
+	}
+	if (numret > 1)
+	{
+		ret[1].SetPointer(resultsec, ATAG_GENERIC);
+	}
+	if (numret > 0)
+	{
+		ret[0].SetFloat(resultheight);
+	}
+	return numret;
 }
 
 double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, double steph, sector_t **resultsec, F3DFloor **resultffloor)

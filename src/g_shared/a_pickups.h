@@ -342,6 +342,7 @@ public:
 
 	virtual void PostMorphWeapon ();
 	virtual void EndPowerup ();
+	void CallEndPowerup();
 
 	enum
 	{

@@ -858,7 +858,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	sc_man_scanner.h
 	sc_man_scanner.re
 	g_heretic/a_hereticartifacts.cpp
-	g_heretic/a_hereticweaps.cpp
 	g_hexen/a_blastradius.cpp
 	g_hexen/a_boostarmor.cpp
 	g_hexen/a_clericflame.cpp

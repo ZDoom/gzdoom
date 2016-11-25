@@ -1185,7 +1185,7 @@ void APowerWeaponLevel2::EndEffect ()
 		if (player->ReadyWeapon != NULL &&
 			player->ReadyWeapon->WeaponFlags & WIF_POWERED_UP)
 		{
-			player->ReadyWeapon->EndPowerup ();
+			player->ReadyWeapon->CallEndPowerup ();
 		}
 		if (player->PendingWeapon != NULL && player->PendingWeapon != WP_NOCHANGE &&
 			player->PendingWeapon->WeaponFlags & WIF_POWERED_UP &&

@@ -20,4 +20,3 @@
 
 // Include all the other Heretic stuff here to reduce compile time
 #include "a_hereticartifacts.cpp"
-#include "a_hereticweaps.cpp"

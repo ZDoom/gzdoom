@@ -85,7 +85,6 @@ zscript/heretic/hereticartifacts.txt
 zscript/heretic/heretickeys.txt
 zscript/heretic/hereticdecorations.txt
 zscript/heretic/hereticmisc.txt
-zscript/heretic/hereticweaps.txt
 zscript/heretic/mummy.txt
 zscript/heretic/clink.txt
 zscript/heretic/beast.txt
@@ -103,6 +102,7 @@ zscript/heretic/weapongauntlets.txt
 zscript/heretic/weaponmace.txt
 zscript/heretic/weaponblaster.txt
 zscript/heretic/weaponskullrod.txt
+zscript/heretic/weaponphoenix.txt
 
 zscript/hexen/baseweapons.txt
 zscript/hexen/korax.txt

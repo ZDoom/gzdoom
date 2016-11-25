@@ -18,6 +18,7 @@
 #include "d_net.h"
 #include "serializer.h"
 #include "thingdef.h"
+#include "virtual.h"
 
 #define BONUSADD 6
 
@@ -788,6 +789,26 @@ void AWeapon::EndPowerup ()
 		}
 	}
 }
+
+DEFINE_ACTION_FUNCTION(AWeapon, EndPowerup)
+{
+	PARAM_SELF_PROLOGUE(AWeapon);
+	self->EndPowerup();
+	return 0;
+}
+
+void AWeapon::CallEndPowerup()
+{
+	IFVIRTUAL(AWeapon, EndPowerup)
+	{
+		// Without the type cast this picks the 'void *' assignment...
+		VMValue params[1] = { (DObject*)this };
+		VMFrameStack stack;
+		stack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
+	else EndPowerup();
+}
+
 
 //===========================================================================
 //

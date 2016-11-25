@@ -48,15 +48,18 @@ void RenderPolyPortal::SetViewpoint(const TriMatrix &worldToClip, uint32_t stenc
 	StencilValue = stencilValue;
 }
 
-void RenderPolyPortal::Render()
+void RenderPolyPortal::Render(int portalDepth)
 {
 	ClearBuffers();
 	Cull.CullScene(WorldToClip);
 	RenderSectors();
-	for (auto &portal : SectorPortals)
-		portal->Render();
-	for (auto &portal : LinePortals)
-		portal->Render();
+	if (portalDepth < r_portal_recursions)
+	{
+		for (auto &portal : SectorPortals)
+			portal->Render(portalDepth + 1);
+		for (auto &portal : LinePortals)
+			portal->Render(portalDepth + 1);
+	}
 }
 
 void RenderPolyPortal::ClearBuffers()
@@ -189,45 +192,48 @@ void RenderPolyPortal::RenderLine(subsector_t *sub, seg_t *line, sector_t *front
 	}
 }
 
-void RenderPolyPortal::RenderTranslucent()
+void RenderPolyPortal::RenderTranslucent(int portalDepth)
 {
-	for (auto it = SectorPortals.rbegin(); it != SectorPortals.rend(); ++it)
+	if (portalDepth < r_portal_recursions)
 	{
-		auto &portal = *it;
-		portal->RenderTranslucent();
-		
-		PolyDrawArgs args;
-		args.objectToClip = &WorldToClip;
-		args.mode = TriangleDrawMode::Fan;
-		args.stenciltestvalue = portal->StencilValue + 1;
-		args.stencilwritevalue = StencilValue;
-		for (const auto &verts : portal->Shape)
+		for (auto it = SectorPortals.rbegin(); it != SectorPortals.rend(); ++it)
 		{
-			args.vinput = verts.Vertices;
-			args.vcount = verts.Count;
-			args.ccw = verts.Ccw;
-			args.uniforms.subsectorDepth = verts.SubsectorDepth;
-			PolyTriangleDrawer::draw(args, TriDrawVariant::StencilClose, TriBlendMode::Copy);
+			auto &portal = *it;
+			portal->RenderTranslucent(portalDepth + 1);
+		
+			PolyDrawArgs args;
+			args.objectToClip = &WorldToClip;
+			args.mode = TriangleDrawMode::Fan;
+			args.stenciltestvalue = portal->StencilValue + 1;
+			args.stencilwritevalue = StencilValue;
+			for (const auto &verts : portal->Shape)
+			{
+				args.vinput = verts.Vertices;
+				args.vcount = verts.Count;
+				args.ccw = verts.Ccw;
+				args.uniforms.subsectorDepth = verts.SubsectorDepth;
+				PolyTriangleDrawer::draw(args, TriDrawVariant::StencilClose, TriBlendMode::Copy);
+			}
 		}
-	}
 
-	for (auto it = LinePortals.rbegin(); it != LinePortals.rend(); ++it)
-	{
-		auto &portal = *it;
-		portal->RenderTranslucent();
-		
-		PolyDrawArgs args;
-		args.objectToClip = &WorldToClip;
-		args.mode = TriangleDrawMode::Fan;
-		args.stenciltestvalue = portal->StencilValue + 1;
-		args.stencilwritevalue = StencilValue;
-		for (const auto &verts : portal->Shape)
+		for (auto it = LinePortals.rbegin(); it != LinePortals.rend(); ++it)
 		{
-			args.vinput = verts.Vertices;
-			args.vcount = verts.Count;
-			args.ccw = verts.Ccw;
-			args.uniforms.subsectorDepth = verts.SubsectorDepth;
-			PolyTriangleDrawer::draw(args, TriDrawVariant::StencilClose, TriBlendMode::Copy);
+			auto &portal = *it;
+			portal->RenderTranslucent(portalDepth + 1);
+		
+			PolyDrawArgs args;
+			args.objectToClip = &WorldToClip;
+			args.mode = TriangleDrawMode::Fan;
+			args.stenciltestvalue = portal->StencilValue + 1;
+			args.stencilwritevalue = StencilValue;
+			for (const auto &verts : portal->Shape)
+			{
+				args.vinput = verts.Vertices;
+				args.vcount = verts.Count;
+				args.ccw = verts.Ccw;
+				args.uniforms.subsectorDepth = verts.SubsectorDepth;
+				PolyTriangleDrawer::draw(args, TriDrawVariant::StencilClose, TriBlendMode::Copy);
+				}
 		}
 	}
 
@@ -263,15 +269,10 @@ PolyDrawSectorPortal::PolyDrawSectorPortal(FSectorPortal *portal, bool ceiling) 
 	StencilValue = RenderPolyScene::Instance()->GetNextStencilValue();
 }
 
-void PolyDrawSectorPortal::Render()
+void PolyDrawSectorPortal::Render(int portalDepth)
 {
 	if (Portal->mType != PORTS_SKYVIEWPOINT)
 		return;
-
-	static int recursion = 0;
-	if (recursion >= 1/*r_portal_recursions*/)
-		return;
-	recursion++;
 
 	SaveGlobals();
 
@@ -294,26 +295,17 @@ void PolyDrawSectorPortal::Render()
 	TriMatrix worldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
 
 	RenderPortal.SetViewpoint(worldToClip, StencilValue);
-	RenderPortal.Render();
+	RenderPortal.Render(portalDepth);
 	
 	RestoreGlobals();
-	
-	recursion--;
 }
 
-void PolyDrawSectorPortal::RenderTranslucent()
+void PolyDrawSectorPortal::RenderTranslucent(int portalDepth)
 {
 	if (Portal->mType != PORTS_SKYVIEWPOINT)
 		return;
 		
-	static int recursion = 0;
-	if (recursion >= 1/*r_portal_recursions*/)
-		return;
-	recursion++;
-
-	RenderPortal.RenderTranslucent();
-	
-	recursion--;
+	RenderPortal.RenderTranslucent(portalDepth);
 }
 
 void PolyDrawSectorPortal::SaveGlobals()
@@ -357,12 +349,12 @@ PolyDrawLinePortal::PolyDrawLinePortal(line_t *src, line_t *dest, bool mirror) :
 	StencilValue = RenderPolyScene::Instance()->GetNextStencilValue();
 }
 
-void PolyDrawLinePortal::Render()
+void PolyDrawLinePortal::Render(int portalDepth)
 {
-	RenderPortal.Render();
+	RenderPortal.Render(portalDepth);
 }
 
-void PolyDrawLinePortal::RenderTranslucent()
+void PolyDrawLinePortal::RenderTranslucent(int portalDepth)
 {
-	RenderPortal.RenderTranslucent();
+	RenderPortal.RenderTranslucent(portalDepth);
 }

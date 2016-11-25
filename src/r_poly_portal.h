@@ -84,8 +84,8 @@ public:
 	RenderPolyPortal();
 	~RenderPolyPortal();
 	void SetViewpoint(const TriMatrix &worldToClip, uint32_t stencilValue);
-	void Render();
-	void RenderTranslucent();
+	void Render(int portalDepth);
+	void RenderTranslucent(int portalDepth);
 
 	static const uint32_t SkySubsectorDepth = 0x7fffffff;
 
@@ -124,8 +124,8 @@ class PolyDrawSectorPortal
 public:
 	PolyDrawSectorPortal(FSectorPortal *portal, bool ceiling);
 
-	void Render();
-	void RenderTranslucent();
+	void Render(int portalDepth);
+	void RenderTranslucent(int portalDepth);
 	
 	FSectorPortal *Portal;
 	uint32_t StencilValue = 0;
@@ -151,8 +151,8 @@ class PolyDrawLinePortal
 public:
 	PolyDrawLinePortal(line_t *src, line_t *dest, bool mirror);
 
-	void Render();
-	void RenderTranslucent();
+	void Render(int portalDepth);
+	void RenderTranslucent(int portalDepth);
 
 	uint32_t StencilValue = 0;
 	std::vector<PolyPortalVertexRange> Shape;

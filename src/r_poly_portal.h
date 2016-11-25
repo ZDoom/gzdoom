@@ -128,6 +128,7 @@ public:
 	void RenderTranslucent();
 	
 	FSectorPortal *Portal;
+	uint32_t StencilValue = 0;
 	std::vector<PolyPortalVertexRange> Shape;
 
 private:
@@ -153,6 +154,7 @@ public:
 	void Render();
 	void RenderTranslucent();
 
+	uint32_t StencilValue = 0;
 	std::vector<PolyPortalVertexRange> Shape;
 
 private:

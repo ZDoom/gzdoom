@@ -44,7 +44,7 @@ void RenderPolyScene::Render()
 	ClearBuffers();
 	SetSceneViewport();
 	SetupPerspectiveMatrix();
-	MainPortal.SetViewpoint(WorldToClip, 0);
+	MainPortal.SetViewpoint(WorldToClip, GetNextStencilValue());
 	MainPortal.Render();
 	Skydome.Render(WorldToClip);
 	MainPortal.RenderTranslucent();
@@ -63,6 +63,7 @@ void RenderPolyScene::ClearBuffers()
 	PolyVertexBuffer::Clear();
 	PolyStencilBuffer::Instance()->Clear(RenderTarget->GetWidth(), RenderTarget->GetHeight(), 0);
 	PolySubsectorGBuffer::Instance()->Resize(RenderTarget->GetPitch(), RenderTarget->GetHeight());
+	NextStencilValue = 0;
 }
 
 void RenderPolyScene::SetSceneViewport()

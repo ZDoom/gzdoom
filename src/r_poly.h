@@ -41,6 +41,8 @@ public:
 	void RenderRemainingPlayerSprites();
 
 	static RenderPolyScene *Instance();
+	
+	uint32_t GetNextStencilValue() { uint32_t value = NextStencilValue; NextStencilValue += 2; return value; }
 
 private:
 	void ClearBuffers();
@@ -51,4 +53,5 @@ private:
 	RenderPolyPortal MainPortal;
 	PolySkyDome Skydome;
 	RenderPolyPlayerSprites PlayerSprites;
+	uint32_t NextStencilValue = 0;
 };

@@ -26,6 +26,7 @@
 #include "sbar.h"
 #include "r_data/r_translate.h"
 #include "r_poly_portal.h"
+#include "r_poly.h"
 #include "gl/data/gl_data.h"
 
 CVAR(Bool, r_debug_cull, 0, 0)
@@ -192,14 +193,15 @@ void RenderPolyPortal::RenderTranslucent()
 {
 	for (auto it = SectorPortals.rbegin(); it != SectorPortals.rend(); ++it)
 	{
-		(*it)->RenderTranslucent();
+		auto &portal = *it;
+		portal->RenderTranslucent();
 		
 		PolyDrawArgs args;
 		args.objectToClip = &WorldToClip;
 		args.mode = TriangleDrawMode::Fan;
-		args.stenciltestvalue = 253;
-		args.stencilwritevalue = 1;
-		for (const auto &verts : (*it)->Shape)
+		args.stenciltestvalue = portal->StencilValue + 1;
+		args.stencilwritevalue = StencilValue;
+		for (const auto &verts : portal->Shape)
 		{
 			args.vinput = verts.Vertices;
 			args.vcount = verts.Count;
@@ -211,14 +213,15 @@ void RenderPolyPortal::RenderTranslucent()
 
 	for (auto it = LinePortals.rbegin(); it != LinePortals.rend(); ++it)
 	{
-		(*it)->RenderTranslucent();
+		auto &portal = *it;
+		portal->RenderTranslucent();
 		
 		PolyDrawArgs args;
 		args.objectToClip = &WorldToClip;
 		args.mode = TriangleDrawMode::Fan;
-		args.stenciltestvalue = 253;
-		args.stencilwritevalue = 1;
-		for (const auto &verts : (*it)->Shape)
+		args.stenciltestvalue = portal->StencilValue + 1;
+		args.stencilwritevalue = StencilValue;
+		for (const auto &verts : portal->Shape)
 		{
 			args.vinput = verts.Vertices;
 			args.vcount = verts.Count;
@@ -257,6 +260,7 @@ void RenderPolyPortal::RenderTranslucent()
 
 PolyDrawSectorPortal::PolyDrawSectorPortal(FSectorPortal *portal, bool ceiling) : Portal(portal), Ceiling(ceiling)
 {
+	StencilValue = RenderPolyScene::Instance()->GetNextStencilValue();
 }
 
 void PolyDrawSectorPortal::Render()
@@ -289,7 +293,7 @@ void PolyDrawSectorPortal::Render()
 		TriMatrix::translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);
 	TriMatrix worldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
 
-	RenderPortal.SetViewpoint(worldToClip, 252);
+	RenderPortal.SetViewpoint(worldToClip, StencilValue);
 	RenderPortal.Render();
 	
 	RestoreGlobals();
@@ -349,6 +353,8 @@ void PolyDrawSectorPortal::RestoreGlobals()
 PolyDrawLinePortal::PolyDrawLinePortal(line_t *src, line_t *dest, bool mirror) : Src(src), Dest(dest)
 {
 	// To do: do what R_EnterPortal and PortalDrawseg does
+	
+	StencilValue = RenderPolyScene::Instance()->GetNextStencilValue();
 }
 
 void PolyDrawLinePortal::Render()

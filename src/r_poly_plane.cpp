@@ -264,7 +264,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 		}
 		else
 		{
-			args.stencilwritevalue = 252;
+			args.stencilwritevalue = polyportal->StencilValue;
 			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
 			polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw, subsectorDepth });
 		}
@@ -273,7 +273,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 	{
 		if (portal)
 		{
-			args.stencilwritevalue = 252;
+			args.stencilwritevalue = polyportal->StencilValue;
 			polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw, subsectorDepth });
 		}
 		else

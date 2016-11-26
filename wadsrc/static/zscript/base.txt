@@ -131,6 +131,72 @@ struct F3DFloor native
 
 struct Sector native
 {
+	//secplane_t	floorplane, ceilingplane;
+	//FDynamicColormap *ColorMap;	// [RH] Per-sector colormap
+
+	native Actor 		SoundTarget;
+
+	native int16 		special;
+	native int16 		lightlevel;
+	native int16		seqType;	
+
+	native int			sky;
+	native Name			SeqName;	
+
+	native readonly Vector2		centerspot;	
+	native int 			validcount;	
+	//AActor* 	thinglist;	
+
+	native double		friction, movefactor;
+	native int			terrainnum[2];
+
+	// thinker_t for reversable actions
+	//SectorEffect floordata;	
+	//SectorEffect ceilingdata;	
+	//SectorEffect lightingdata;
+
+	enum EInterpolationType
+	{
+		CeilingMove,
+		FloorMove,
+		CeilingScroll,
+		FloorScroll
+	};
+	//Interpolation interpolations[4];
+
+	native uint8 		soundtraversed;
+	native int8 		stairlock;
+	native int 			prevsec;
+	native int	 		nextsec;
+
+	native readonly int16 		linecount;
+	//line_t **lines;
+
+	native readonly Sector		heightsec;
+
+	native uint			bottommap, midmap, topmap;
+
+	//struct msecnode_t *touching_thinglist;
+	//struct msecnode_t *render_thinglist;
+
+	native double 		gravity;	
+	native Name 		damagetype;
+	native int 			damageamount;
+	native int16 		damageinterval;
+	native int16 		leakydamage;
+
+	native uint16		ZoneNumber;
+	native uint16		MoreFlags;
+	native uint			Flags;
+
+	native SectorAction		SecActTarget;
+
+	native readonly uint		Portals[2];
+	native readonly int			PortalGroup;
+
+	native readonly int			sectornum;
+
+
 	native double, Sector, F3DFloor NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0);
 }
 

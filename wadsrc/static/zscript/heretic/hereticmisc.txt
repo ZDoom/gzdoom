@@ -1,4 +1,12 @@
 
+class HereticWeapon : Weapon
+{
+	Default
+	{
+		Weapon.Kickback 150;
+	}
+}
+
 // Pod ----------------------------------------------------------------------
 
 class Pod : Actor

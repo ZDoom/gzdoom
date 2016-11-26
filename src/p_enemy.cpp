@@ -262,7 +262,15 @@ void P_NoiseAlert (AActor *target, AActor *emitter, bool splash, double maxdist)
 	}
 }
 
-
+DEFINE_ACTION_FUNCTION(AActor, NoiseAlert)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(emitter, AActor);
+	PARAM_BOOL_DEF(splash);
+	PARAM_FLOAT_DEF(maxdist);
+	P_NoiseAlert(self, emitter, splash, maxdist);
+	return 0;
+}
 
 
 //----------------------------------------------------------------------------

@@ -1,13 +1,3 @@
-
-class HereticWeapon : Weapon
-{
-	Default
-	{
-		Weapon.Kickback 150;
-	}
-}
-
-
 // Phoenix Rod --------------------------------------------------------------
 
 class PhoenixRod : Weapon

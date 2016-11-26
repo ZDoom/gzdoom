@@ -22,7 +22,6 @@
 //-----------------------------------------------------------------------------
 
 // HEADER FILES ------------------------------------------------------------
-
 #include <float.h>
 #include "templates.h"
 #include "i_system.h"
@@ -3341,6 +3340,16 @@ bool AActor::SpecialBlastHandling (AActor *source, double strength)
 {
 	return true;
 }
+
+// This only gets called from the script side so we do not need a native wrapper like for the other virtual methods.
+DEFINE_ACTION_FUNCTION(AActor, SpecialBlastHandling)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(source, AActor);
+	PARAM_FLOAT(strength);
+	ACTION_RETURN_BOOL(self->SpecialBlastHandling(source, strength));
+}
+
 
 int AActor::SpecialMissileHit (AActor *victim)
 {

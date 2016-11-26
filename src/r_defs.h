@@ -983,8 +983,8 @@ public:
 	BYTE 		soundtraversed;	// 0 = untraversed, 1,2 = sndlines -1
 	// jff 2/26/98 lockout machinery for stairbuilding
 	SBYTE stairlock;	// -2 on first locked -1 after thinker done 0 normally
-	SWORD prevsec;		// -1 or number of sector for previous step
-	SWORD nextsec;		// -1 or number of next step sector
+	int prevsec;		// -1 or number of sector for previous step
+		int nextsec;		// -1 or number of next step sector
 
 	short linecount;
 	struct line_t **lines;		// [linecount] size

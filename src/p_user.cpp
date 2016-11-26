@@ -1446,7 +1446,7 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor, int dmgflags)
 
 	if (player != NULL && player->mo != this)
 	{ // Make the real player die, too
-		player->mo->Die (source, inflictor, dmgflags);
+		player->mo->CallDie (source, inflictor, dmgflags);
 	}
 	else
 	{

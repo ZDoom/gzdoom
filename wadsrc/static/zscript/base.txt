@@ -7,6 +7,7 @@ class Object native
 	native static double G_SkillPropertyFloat(int p);
 	native static vector3, int G_PickDeathmatchStart();
 	native static vector3, int G_PickPlayerStart(int pnum, int flags = 0);
+	native static int GameType();
 
 	/*virtual*/ native void Destroy();
 }
@@ -133,3 +134,33 @@ struct Sector native
 	native double, Sector, F3DFloor NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0);
 }
 
+struct Wads
+{
+	enum WadNamespace
+	{
+		ns_hidden = -1,
+
+		ns_global = 0,
+		ns_sprites,
+		ns_flats,
+		ns_colormaps,
+		ns_acslibrary,
+		ns_newtextures,
+		ns_bloodraw,
+		ns_bloodsfx,
+		ns_bloodmisc,
+		ns_strifevoices,
+		ns_hires,
+		ns_voxels,
+
+		ns_specialzipdirectory,
+		ns_sounds,
+		ns_patches,
+		ns_graphics,
+		ns_music,
+
+		ns_firstskin,
+	}
+
+	native static int CheckNumForName(string name, int ns, int wadnum = -1, bool exact = false);
+}

@@ -43,6 +43,7 @@
 #include "d_player.h"
 #include "p_effect.h"
 #include "autosegs.h"
+#include "gi.h"
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;
@@ -721,7 +722,11 @@ void InitThingdef()
 	pstruct->Size = sizeof(player_t);
 	pstruct->Align = alignof(player_t);
 	PArray *parray = NewArray(pstruct, MAXPLAYERS);
-	PField *playerf = new PField("players", pstruct, VARF_Native | VARF_Static, (intptr_t)&players);
+	PField *playerf = new PField("players", parray, VARF_Native | VARF_Static, (intptr_t)&players);
+	GlobalSymbols.AddSymbol(playerf);
+
+	parray = NewArray(TypeBool, MAXPLAYERS);
+	playerf = new PField("playeringame", parray, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&playeringame);
 	GlobalSymbols.AddSymbol(playerf);
 
 
@@ -802,4 +807,10 @@ void InitThingdef()
 		qsort(&FieldTable[0], FieldTable.Size(), sizeof(FieldTable[0]), fieldcmp);
 	}
 
+}
+
+DEFINE_ACTION_FUNCTION(DObject, GameType)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_INT(gameinfo.gametype);
 }

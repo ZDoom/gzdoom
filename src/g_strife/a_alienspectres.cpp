@@ -136,7 +136,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AlienSpectreDeath)
 			if (oracle->health > 0)
 			{
 				oracle->health = 0;
-				oracle->Die (self, self);
+				oracle->CallDie (self, self);
 			}
 		}
 		player->GiveInventoryType (QuestItemClasses[22]);

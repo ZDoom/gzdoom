@@ -49,7 +49,6 @@
 #include "p_acs.h"
 #include "cmdlib.h"
 #include "decallib.h"
-#include "ravenshared.h"
 #include "a_action.h"
 #include "a_keys.h"
 #include "p_conversation.h"
@@ -1787,7 +1786,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 			if (flags & MF_MISSILE)
 				P_ExplodeMissile(this, NULL, NULL);
 			else
-				Die(NULL, NULL);
+				CallDie(NULL, NULL);
 			return true;
 		}
 		if (!(BounceFlags & BOUNCE_CanBounceWater))
@@ -1814,7 +1813,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 		if (flags & MF_MISSILE)
 			P_ExplodeMissile(this, NULL, NULL);
 		else
-			Die(NULL, NULL);
+			CallDie(NULL, NULL);
 		return true;
 	}
 
@@ -3312,6 +3311,31 @@ bool AActor::Slam (AActor *thing)
 	}
 	return false;			// stop moving
 }
+
+DEFINE_ACTION_FUNCTION(AActor, Slam)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(thing, AActor);
+	ACTION_RETURN_BOOL(self->Slam(thing));
+}
+
+bool AActor::CallSlam(AActor *thing)
+{
+	IFVIRTUAL(AActor, Slam)
+	{
+		VMValue params[2] = { (DObject*)this, thing };
+		VMReturn ret;
+		VMFrameStack stack;
+		int retval;
+		ret.IntAt(&retval);
+		stack.Call(func, params, 2, &ret, 1, nullptr);
+		return !!retval;
+
+	}
+	else return Slam(thing);
+}
+
+
 
 bool AActor::SpecialBlastHandling (AActor *source, double strength)
 {
@@ -5495,7 +5519,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	else
 		mobj->health = -mthing->health;
 	if (mthing->health == 0)
-		mobj->Die(NULL, NULL);
+		mobj->CallDie(NULL, NULL);
 	else if (mthing->health != 1)
 		mobj->StartHealth = mobj->health;
 
@@ -6902,6 +6926,14 @@ void AActor::SetIdle(bool nofunction)
 	SetState(idle, nofunction);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SetIdle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL_DEF(nofunction);
+	self->SetIdle(nofunction);
+	return 0;
+}
+
 int AActor::SpawnHealth() const
 {
 	int defhealth = StartHealth ? StartHealth : GetDefault()->health;
@@ -7351,6 +7383,13 @@ DEFINE_ACTION_FUNCTION(AActor, PlayerNumber)
 	ACTION_RETURN_INT(self->player ? int(self->player - players) : 0);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SetFriendPlayer)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(player, player_t);
+	self->SetFriendPlayer(player);
+	return 0;
+}
 //----------------------------------------------------------------------------
 //
 // DropItem handling

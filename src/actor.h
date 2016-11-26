@@ -628,6 +628,7 @@ public:
 
 	// Called when actor dies
 	virtual void Die (AActor *source, AActor *inflictor, int dmgflags = 0);
+	void CallDie(AActor *source, AActor *inflictor, int dmgflags = 0);
 
 	// Perform some special damage action. Returns the amount of damage to do.
 	// Returning -1 signals the damage routine to exit immediately
@@ -660,6 +661,7 @@ public:
 	// Actor had MF_SKULLFLY set and rammed into something
 	// Returns false to stop moving and true to keep moving
 	virtual bool Slam (AActor *victim);
+	bool CallSlam(AActor *victim);
 
 	// Called by PIT_CheckThing() and needed for some Hexen things.
 	// Returns -1 for normal behavior, 0 to return false, and 1 to return true.

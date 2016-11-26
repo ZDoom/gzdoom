@@ -262,6 +262,8 @@ class Actor : Thinker native
 	virtual native void Activate(Actor activator);
 	virtual native void Deactivate(Actor activator);
 	virtual native int DoSpecialDamage (Actor target, int damage, Name damagetype);
+	virtual native void Die(Actor source, Actor inflictor, int dmgflags);
+	virtual native bool Slam(Actor victim);
 	virtual native bool UseInventory(Inventory item);
 
 
@@ -276,6 +278,7 @@ class Actor : Thinker native
 	native bool HitFloor();
 	native bool isTeammate(Actor other);
 	native int PlayerNumber();
+	native void SetFriendPlayer(PlayerInfo player);
 
 	native void RestoreDamage();
 	native int SpawnHealth();
@@ -296,6 +299,7 @@ class Actor : Thinker native
 	native Actor SpawnMissileAngleZSpeed (double z, class<Actor> type, double angle, double vz, double speed, Actor owner = null, bool checkspawn = true);
 	native Actor, Actor SpawnPlayerMissile(class<Actor> type, double angle = 0, double x = 0, double y = 0, double z = 0, out FTranslatedLineTarget pLineTarget = null, bool nofreeaim = false, bool noautoaim = false, int aimflags = 0);
 	native void SpawnTeleportFog(Vector3 pos, bool beforeTele, bool setTarget);
+	native Actor RoughMonsterSearch(int distance, bool onlyseekable = false);
 
 	void A_Light(int extralight) { if (player) player.extralight = clamp(extralight, -20, 20); }
 	void A_Light0() { if (player) player.extralight = 0; }
@@ -308,6 +312,9 @@ class Actor : Thinker native
 	
 	native bool Teleport(Vector3 pos, double angle, int flags);
 	native void TraceBleed(int damage, Actor missile);
+	native void TraceBleedAngle(int damage, double angle, double pitch);
+
+	native void SetIdle(bool nofunction = false);
 	native bool CheckMeleeRange();
 	native int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags = 0, double angle = 0);
 	native double AimLineAttack(double angle, double distance, out FTranslatedLineTarget pLineTarget = null, double vrange = 0., int flags = 0, Actor target = null, Actor friender = null);

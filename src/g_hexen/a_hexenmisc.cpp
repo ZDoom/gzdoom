@@ -15,7 +15,6 @@
 #include "p_lnspec.h"
 #include "p_terrain.h"
 #include "m_bbox.h"
-#include "ravenshared.h"
 #include "v_palette.h"
 #include "g_game.h"
 #include "p_blockmap.h"
@@ -47,5 +46,4 @@
 #include "a_magestaff.cpp"
 #include "a_serpent.cpp"
 #include "a_spike.cpp"
-#include "a_summon.cpp"
 #include "a_teleportother.cpp"

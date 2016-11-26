@@ -704,7 +704,7 @@ void AMorphedMonster::Die (AActor *source, AActor *inflictor, int dmgflags)
 	if (UnmorphedMe != NULL && (UnmorphedMe->flags & MF_UNMORPHED))
 	{
 		UnmorphedMe->health = health;
-		UnmorphedMe->Die (source, inflictor, dmgflags);
+		UnmorphedMe->CallDie (source, inflictor, dmgflags);
 	}
 }
 

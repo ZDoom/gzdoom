@@ -1690,6 +1690,14 @@ AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable)
 	return P_BlockmapSearch (mo, distance, RoughBlockCheck, (void *)onlyseekable);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, RoughMonsterSearch)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(distance);
+	PARAM_BOOL_DEF(onlyseekable);
+	ACTION_RETURN_OBJECT(P_RoughMonsterSearch(self, distance, onlyseekable));
+}
+
 AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, int, void *), void *params)
 {
 	int blockX;

@@ -185,6 +185,16 @@ FxLocalVariableDeclaration *FCompileContext::FindLocalVariable(FName name)
 	}
 }
 
+static PStruct *FindStructType(FName name)
+{
+	PStruct *ccls = PClass::FindClass(name);
+	if (ccls == nullptr)
+	{
+		ccls = dyn_cast<PStruct>(TypeTable.FindType(RUNTIME_CLASS(PStruct), 0, (intptr_t)name, nullptr));
+		if (ccls == nullptr) ccls = dyn_cast<PStruct>(TypeTable.FindType(RUNTIME_CLASS(PNativeStruct), 0, (intptr_t)name, nullptr));
+	}
+	return ccls;
+}
 //==========================================================================
 //
 // ExpEmit
@@ -244,7 +254,7 @@ static PSymbol *FindBuiltinFunction(FName funcname, VMNativeFunction::NativeCall
 //
 //==========================================================================
 
-static bool AreCompatiblePointerTypes(PType *dest, PType *source)
+static bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompare = false)
 {
 	if (dest->IsKindOf(RUNTIME_CLASS(PPointer)) && source->IsKindOf(RUNTIME_CLASS(PPointer)))
 	{
@@ -252,12 +262,13 @@ static bool AreCompatiblePointerTypes(PType *dest, PType *source)
 		auto fromtype = static_cast<PPointer *>(source);
 		auto totype = static_cast<PPointer *>(dest);
 		if (fromtype == nullptr) return true;
-		if (totype->IsConst && !fromtype->IsConst) return false;
+		if (!forcompare && totype->IsConst && !fromtype->IsConst) return false;
 		if (fromtype == totype) return true;
 		if (fromtype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)) && totype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
 		{
 			auto fromcls = static_cast<PClass *>(fromtype->PointedType);
 			auto tocls = static_cast<PClass *>(totype->PointedType);
+			if (forcompare && tocls->IsDescendantOf(fromcls)) return true;
 			return (fromcls->IsDescendantOf(tocls));
 		}
 	}
@@ -2211,6 +2222,14 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 		}
 		// Both types are the same so this is ok.
 	}
+	else if (Right->ValueType->IsA(RUNTIME_CLASS(PNativeStruct)) && Base->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(Base->ValueType)->PointedType == Right->ValueType)
+	{
+		// allow conversion of native structs to pointers of the same type. This is necessary to assign elements from global arrays like players, sectors, etc. to local pointers.
+		// For all other types this is not needed. Structs are not assignable and classes can only exist as references.
+		bool writable;
+		Right->RequestAddress(ctx, &writable);
+		Right->ValueType = Base->ValueType;
+	}
 	else
 	{
 		// pass it to FxTypeCast for complete handling.
@@ -3267,7 +3286,7 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 		else if (left->ValueType->GetRegType() == REGT_POINTER && right->ValueType->GetRegType() == REGT_POINTER)
 		{
 			if (left->ValueType != right->ValueType && right->ValueType != TypeNullPtr && left->ValueType != TypeNullPtr &&
-				!AreCompatiblePointerTypes(left->ValueType, right->ValueType))
+				!AreCompatiblePointerTypes(left->ValueType, right->ValueType, true))
 			{
 				goto error;
 			}
@@ -5691,12 +5710,48 @@ FxMemberIdentifier::~FxMemberIdentifier()
 
 FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 {
+	PStruct *ccls = nullptr;
 	CHECKRESOLVED();
+
+	if (Object->ExprType == EFX_Identifier)
+	{
+		// If the left side is a class name for a static member function call it needs to be resolved manually 
+		// because the resulting value type would cause problems in nearly every other place where identifiers are being used.
+		ccls = FindStructType(static_cast<FxIdentifier *>(Object)->Identifier);
+		if (ccls != nullptr) static_cast<FxIdentifier *>(Object)->noglobal = true;
+	}
 
 	SAFE_RESOLVE(Object, ctx);
 
-	// allow accessing the color chanels by mapping the type to a matching struct which defines them.
-	if (Object->ValueType == TypeColor) 
+	// check for class or struct constants if the left side is a type name.
+	if (Object->ValueType == TypeError)
+	{
+		if (ccls != nullptr)
+		{
+			if (!ccls->IsKindOf(RUNTIME_CLASS(PClass)) || static_cast<PClass *>(ccls)->bExported)
+			{
+				PSymbol *sym;
+				if ((sym = ccls->Symbols.FindSymbol(Identifier, true)) != nullptr)
+				{
+					if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
+					{
+						ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s.%s' as constant\n", ccls->TypeName.GetChars(), Identifier.GetChars());
+						delete this;
+						return FxConstant::MakeConstant(sym, ScriptPosition);
+					}
+					else
+					{
+						ScriptPosition.Message(MSG_ERROR, "Unable to access '%s.%s' in a static context\n", ccls->TypeName.GetChars(), Identifier.GetChars());
+						delete this;
+						return nullptr;
+					}
+				}
+			}
+		}
+	}
+
+	// allow accessing the color channels by mapping the type to a matching struct which defines them.
+	if (Object->ValueType == TypeColor)
 		Object->ValueType = TypeColorStruct;
 
 	if (Object->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
@@ -6635,12 +6690,12 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 
 		if (!start.Konst)
 		{
-			ExpEmit indexwork = indexv.Fixed ? ExpEmit(build, indexv.RegType) : indexv;
 			int shiftbits = 0;
 			while (1u << shiftbits < arraytype->ElementSize)
 			{
 				shiftbits++;
 			}
+			ExpEmit indexwork = indexv.Fixed && arraytype->ElementSize > 1 ? ExpEmit(build, indexv.RegType) : indexv;
 			if (1u << shiftbits == arraytype->ElementSize)
 			{
 				if (shiftbits > 0)
@@ -7079,7 +7134,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	bool staticonly = false;
 	bool novirtual = false;
 
-	PClass *ccls = nullptr;
+	PStruct *ccls = nullptr;
 
 	for (auto a : ArgList)
 	{
@@ -7093,10 +7148,10 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 
 	if (Self->ExprType == EFX_Identifier)
 	{
-		ccls = PClass::FindClass(static_cast<FxIdentifier *>(Self)->Identifier);
 		// If the left side is a class name for a static member function call it needs to be resolved manually 
 		// because the resulting value type would cause problems in nearly every other place where identifiers are being used.
-		if (ccls != nullptr)static_cast<FxIdentifier *>(Self)->noglobal = true;
+		ccls = FindStructType(static_cast<FxIdentifier *>(Self)->Identifier);
+		if (ccls != nullptr) static_cast<FxIdentifier *>(Self)->noglobal = true;
 	}
 
 	SAFE_RESOLVE(Self, ctx);
@@ -7105,16 +7160,12 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	{
 		if (ccls != nullptr)
 		{
-			if (ccls->bExported)
+			if (!ccls->IsKindOf(RUNTIME_CLASS(PClass)) || static_cast<PClass *>(ccls)->bExported)
 			{
 				cls = ccls;
 				staticonly = true;
 				goto isresolved;
 			}
-		}
-		else
-		{
-			// Todo: static struct members need to work as well.
 		}
 	}
 

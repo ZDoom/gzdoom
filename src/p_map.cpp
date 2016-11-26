@@ -1245,7 +1245,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	// Check for skulls slamming into things
 	if (tm.thing->flags & MF_SKULLFLY)
 	{
-		bool res = tm.thing->Slam(tm.thing->BlockingMobj);
+		bool res = tm.thing->CallSlam(tm.thing->BlockingMobj);
 		tm.thing->BlockingMobj = NULL;
 		return res;
 	}
@@ -3278,7 +3278,7 @@ bool FSlide::BounceWall(AActor *mo)
 		if (mo->flags & MF_MISSILE)
 			P_ExplodeMissile(mo, line, NULL);
 		else
-			mo->Die(NULL, NULL);
+			mo->CallDie(NULL, NULL);
 		return true;
 	}
 
@@ -4610,6 +4610,18 @@ void P_TraceBleed(int damage, AActor *target, DAngle angle, DAngle pitch)
 {
 	P_TraceBleed(damage, target->PosPlusZ(target->Height/2), target, angle, pitch);
 }
+
+DEFINE_ACTION_FUNCTION(AActor, TraceBleedAngle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(damage);
+	PARAM_FLOAT(angle);
+	PARAM_FLOAT(pitch);
+
+	P_TraceBleed(damage, self, angle, pitch);
+	return 0;
+}
+
 
 //==========================================================================
 //

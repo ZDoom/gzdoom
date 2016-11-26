@@ -119,7 +119,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_GetHurt)
 	}
 	if (self->health <= 0)
 	{
-		self->Die (self->target, self->target);
+		self->CallDie (self->target, self->target);
 	}
 	return 0;
 }

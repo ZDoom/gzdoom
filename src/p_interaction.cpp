@@ -58,6 +58,7 @@
 #include "d_net.h"
 #include "d_netinf.h"
 #include "a_morph.h"
+#include "virtual.h"
 
 static FRandom pr_obituary ("Obituary");
 static FRandom pr_botrespawn ("BotRespawn");
@@ -342,7 +343,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 					realthis->health = realgibhealth -1; // if morphed was gibbed, so must original be (where allowed)l
 				}
 			}
-			realthis->Die(source, inflictor, dmgflags);
+			realthis->CallDie(source, inflictor, dmgflags);
 		}
 		return;
 	}
@@ -761,7 +762,26 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Die)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(source, AActor);
+	PARAM_OBJECT(inflictor, AActor);
+	PARAM_INT(dmgflags);
+	self->Die(source, inflictor, dmgflags);
+	return 0;
+}
 
+void AActor::CallDie(AActor *source, AActor *inflictor, int dmgflags)
+{
+	IFVIRTUAL(AActor, Die)
+	{
+		VMValue params[4] = { (DObject*)this, source, inflictor, dmgflags };
+		VMFrameStack stack;
+		stack.Call(func, params, 4, nullptr, 0, nullptr);
+	}
+	else return Die(source, inflictor, dmgflags);
+}
 
 
 //---------------------------------------------------------------------------
@@ -1443,7 +1463,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 					source = source->tracer;
 				}
 			}
-			target->Die (source, inflictor, flags);
+			target->CallDie (source, inflictor, flags);
 			return damage;
 		}
 	}
@@ -1794,7 +1814,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 					target->DamageType = player->poisontype;
 				}
 			}
-			target->Die(source, source);
+			target->CallDie(source, source);
 			return;
 		}
 	}

@@ -19,8 +19,6 @@ class FighterBoss : Actor
 		Obituary "$OB_FBOSS";
 	}
 
-	native void A_FighterAttack();
-
 	States
 	{
 	Spawn:
@@ -79,5 +77,23 @@ class FighterBoss : Actor
 		FDTH U 5 Bright;
 		FDTH V 4 Bright;
 		Stop;
+	}
+	
+	//============================================================================
+	//
+	// A_FighterAttack
+	//
+	//============================================================================
+
+	void A_FighterAttack()
+	{
+		if (!target) return;
+
+		SpawnMissileAngle("FSwordMissile", Angle + (45. / 4), 0);
+		SpawnMissileAngle("FSwordMissile", Angle + (45. / 8), 0);
+		SpawnMissileAngle("FSwordMissile", Angle, 0);
+		SpawnMissileAngle("FSwordMissile", Angle - (45. / 8), 0);
+		SpawnMissileAngle("FSwordMissile", Angle - (45. / 4), 0);
+		A_PlaySound ("FighterSwordFire", CHAN_WEAPON);
 	}
 }

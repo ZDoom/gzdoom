@@ -688,7 +688,6 @@ class Actor : Thinker native
 	native void A_DropFire();
 	native void A_GiveQuestItem(int itemno);
 	native void A_RemoveForcefield();
-	native void A_DropWeaponPieces(class<Actor> p1, class<Actor> p2, class<Actor> p3);
 	native void A_SetAngle(double angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetPitch(double pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetRoll(double roll, int flags = 0, int ptr = AAPTR_DEFAULT);

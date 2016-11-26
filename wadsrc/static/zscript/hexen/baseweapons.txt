@@ -61,4 +61,24 @@ extend class Actor
 			angle = t.angleFromSource;
 		}
 	}
+	
+	//============================================================================
+	//
+	// A_DropQuietusPieces
+	//
+	//============================================================================
+
+	void A_DropWeaponPieces(class<Actor> p1, class<Actor> p2, class<Actor> p3)
+	{
+		for (int i = 0, j = 0; i < 3; ++i)
+		{
+			Actor piece = Spawn (j == 0 ?  p1 : j == 1 ? p2 : p3, Pos, ALLOW_REPLACE);
+			if (piece != null)
+			{
+				piece.Vel = self.Vel + AngleToVector(i * 120., 1);
+				piece.bDropped = true;
+				j = (j == 0) ? (random[PieceDrop]() & 1) + 1 : 3-j;
+			}
+		}
+	}	
 }

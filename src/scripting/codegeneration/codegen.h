@@ -287,6 +287,7 @@ enum EFxType
 	EFX_CVar,
 	EFX_NamedNode,
 	EFX_GetClass,
+	EFX_ColorLiteral,
 	EFX_COUNT
 };
 
@@ -1536,6 +1537,24 @@ public:
 
 	FxGetClass(FxExpression *self);
 	~FxGetClass();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxColorLiteral
+//
+//==========================================================================
+
+class FxColorLiteral : public FxExpression
+{
+	FArgumentList ArgList;
+	int constval = 0;
+
+public:
+
+	FxColorLiteral(FArgumentList &args, FScriptPosition &sc);
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

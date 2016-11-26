@@ -189,8 +189,11 @@ void KSpiritInit (AActor *spirit, AActor *korax)
 	spirit->args[0] = 10; 						// initial turn value
 	spirit->args[1] = 0; 						// initial look angle
 
+#if 0 // Temporarily deactivated.
 	// Spawn a tail for spirit
-	SpawnSpiritTail (spirit);
+	HolyTail.SpawnSpiritTail (spirit);
+#endif
+
 }
 
 //============================================================================

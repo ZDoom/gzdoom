@@ -6969,13 +6969,19 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 
 	switch (MethodName)
 	{
+	case NAME_Color:
+		if (ArgList.Size() == 3 || ArgList.Size() == 4)
+		{
+			func = new FxColorLiteral(ArgList, ScriptPosition);
+			break;
+		}
+		// fall through
 	case NAME_Bool:
 	case NAME_Int:
 	case NAME_uInt:
 	case NAME_Float:
 	case NAME_Double:
 	case NAME_Name:
-	case NAME_Color:
 	case NAME_Sound:
 	case NAME_State:
 	case NAME_SpriteID:
@@ -8088,6 +8094,76 @@ ExpEmit FxGetClass::Emit(VMFunctionBuilder *build)
 	ExpEmit to(build, REGT_POINTER);
 	build->Emit(OP_META, to.RegNum, op.RegNum);
 	return to;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+FxColorLiteral::FxColorLiteral(FArgumentList &args, FScriptPosition &sc)
+	:FxExpression(EFX_ColorLiteral, sc)
+{
+	ArgList = std::move(args);
+}
+
+FxExpression *FxColorLiteral::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	unsigned constelements = 0;
+	assert(ArgList.Size() == 3 || ArgList.Size() == 4);
+	if (ArgList.Size() == 3) ArgList.Insert(0, nullptr);
+	for (int i = 0; i < 4; i++)
+	{
+		if (ArgList[i] != nullptr)
+		{
+			SAFE_RESOLVE(ArgList[i], ctx);
+			if (!ArgList[i]->IsInteger())
+			{
+				ScriptPosition.Message(MSG_ERROR, "Integer expected for color component");
+				delete this;
+				return nullptr;
+			}
+			if (ArgList[i]->isConstant())
+			{
+				constval += clamp(static_cast<FxConstant *>(ArgList[i])->GetValue().GetInt(), 0, 255) << (24 - i * 8);
+				delete ArgList[i];
+				ArgList[i] = nullptr;
+				constelements++;
+			}
+		}
+		else constelements++;
+	}
+	if (constelements == 4)
+	{
+		auto x = new FxConstant(constval, ScriptPosition);
+		x->ValueType = TypeColor;
+		delete this;
+		return x;
+	}
+	ValueType = TypeColor;
+	return this;
+}
+
+ExpEmit FxColorLiteral::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit out(build, REGT_INT);
+	build->Emit(OP_LK, out.RegNum, build->GetConstantInt(constval));
+	for (int i = 0; i < 4; i++)
+	{
+		if (ArgList[i] != nullptr)
+		{
+			assert(!ArgList[i]->isConstant());
+			ExpEmit in = ArgList[i]->Emit(build);
+			in.Free(build);
+			ExpEmit work(build, REGT_INT);
+			build->Emit(OP_MAX_RK, work.RegNum, in.RegNum, build->GetConstantInt(0));
+			build->Emit(OP_MIN_RK, work.RegNum, work.RegNum, build->GetConstantInt(255));
+			if (i != 3) build->Emit(OP_SLL_RI, work.RegNum, work.RegNum, 24 - (i * 8));
+			build->Emit(OP_OR_RR, out.RegNum, out.RegNum, work.RegNum);
+		}
+	}
+	return out;
 }
 
 //==========================================================================

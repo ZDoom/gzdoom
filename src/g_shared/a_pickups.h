@@ -215,6 +215,7 @@ public:
 	virtual int AlterWeaponSprite (visstyle_t *vis);
 
 	virtual PalEntry GetBlend ();
+	PalEntry CallGetBlend();
 
 protected:
 	virtual bool TryPickup (AActor *&toucher);

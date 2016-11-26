@@ -26,6 +26,7 @@ class Inventory : Actor native
 	}
 	
 	virtual native bool Use (bool pickup);
+	virtual native color GetBlend ();
 	
 	
 	// These are regular functions for the item itself.

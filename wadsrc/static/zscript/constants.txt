@@ -1007,3 +1007,11 @@ enum EGameType
 	GAME_DoomChex		= GAME_Doom|GAME_Chex,
 	GAME_DoomStrifeChex	= GAME_Doom|GAME_Strife|GAME_Chex
 }
+
+enum PaletteFlashFlags
+{
+	PF_HEXENWEAPONS		= 1,
+	PF_POISON			= 2,
+	PF_ICE				= 4,
+	PF_HAZARD			= 8,
+};

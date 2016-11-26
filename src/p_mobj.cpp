@@ -3284,6 +3284,13 @@ void AActor::Howl ()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Howl)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->Howl();
+	return 0;
+}
+
 bool AActor::Slam (AActor *thing)
 {
 	flags &= ~MF_SKULLFLY;
@@ -3367,8 +3374,7 @@ bool AActor::AdjustReflectionAngle (AActor *thing, DAngle &angle)
 		if (absangle(angle, thing->Angles.Yaw) > 45)
 			return true;	// Let missile explode
 
-		if (thing->IsKindOf (RUNTIME_CLASS(AHolySpirit)))	// shouldn't this be handled by another flag???
-			return true;
+		if (thing->flags7 & MF7_NOSHIELDREFLECT) return true;
 
 		if (pr_reflect () < 128)
 			angle += 45;
@@ -7348,6 +7354,16 @@ DEFINE_ACTION_FUNCTION(AActor, SetXYZ)
 	self->SetXYZ(x, y, z);
 	return 0; 
 }
+
+DEFINE_ACTION_FUNCTION(AActor, Vec2Angle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(length);
+	PARAM_ANGLE(angle);
+	PARAM_BOOL_DEF(absolute);
+	ACTION_RETURN_VEC2(self->Vec2Angle(length, angle, absolute));
+}
+
 
 DEFINE_ACTION_FUNCTION(AActor, Vec3Angle)
 {

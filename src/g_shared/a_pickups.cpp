@@ -1324,6 +1324,27 @@ PalEntry AInventory::GetBlend ()
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, GetBlend)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	ACTION_RETURN_INT(self->GetBlend());
+}
+
+PalEntry AInventory::CallGetBlend()
+{
+	IFVIRTUAL(AInventory, GetBlend)
+	{
+		VMValue params[1] = { (DObject*)this };
+		VMReturn ret;
+		VMFrameStack stack;
+		int retval;
+		ret.IntAt(&retval);
+		stack.Call(func, params, 1, &ret, 1, nullptr);
+		return retval;
+	}
+	else return GetBlend();
+}
+
 //===========================================================================
 //
 // AInventory :: PrevItem

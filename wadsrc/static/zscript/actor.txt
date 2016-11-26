@@ -339,6 +339,7 @@ class Actor : Thinker native
 	native void SetZ(double z);
 	native vector3 Vec3Offset(double x, double y, double z, bool absolute = false);
 	native vector3 Vec3Angle(double length, double angle, double z = 0, bool absolute = false);
+	native vector2 Vec2Angle(double length, double angle, bool absolute = false);
 	native vector3 Vec2OffsetZ(double x, double y, double atz, bool absolute = false);
 	native void VelFromAngle(double speed = 0, double angle = 0);
 	native void Thrust(double speed = 0, double angle = 0);
@@ -351,6 +352,7 @@ class Actor : Thinker native
 	native double DistanceBySpeed(Actor other, double speed);
 	native name GetSpecies();
 	native void PlayActiveSound();
+	native void Howl();
 
 	// DECORATE compatible functions
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);

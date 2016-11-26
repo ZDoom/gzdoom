@@ -2628,98 +2628,76 @@ int WallMost(short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	}
 }
 
-static void PrepWallRoundFix(fixed_t *lwall, fixed_t walxrepeat, int x1, int x2)
+void PrepWall(float *vstep, fixed_t *upos, double walxrepeat, int x1, int x2)
 {
-	// fix for rounding errors
-	walxrepeat = abs(walxrepeat);
-	fixed_t fix = (MirrorFlags & RF_XFLIP) ? walxrepeat-1 : 0;
-	int x;
+	float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - CenterX);
+	float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - CenterX);
+	float uGradient = WallT.UoverZstep;
+	float zGradient = WallT.InvZstep;
+	float xrepeat = (float)walxrepeat;
+	float depthScale = (float)(WallT.InvZstep * WallTMapScale2);
+	float depthOrg = (float)(-WallT.UoverZstep * WallTMapScale2);
 
-	if (x1 > 0)
+	if (xrepeat < 0.0f)
 	{
-		for (x = x1; x < x2; x++)
+		for (int x = x1; x < x2; x++)
 		{
-			if ((unsigned)lwall[x] >= (unsigned)walxrepeat)
-			{
-				lwall[x] = fix;
-			}
-			else
-			{
-				break;
-			}
+			float u = uOverZ / invZ;
+
+			upos[x] = (fixed_t)((xrepeat - u * xrepeat) * FRACUNIT);
+			vstep[x] = depthOrg + u * depthScale;
+
+			uOverZ += uGradient;
+			invZ += zGradient;
 		}
 	}
-	fix = walxrepeat - 1 - fix;
-	for (x = x2-1; x >= x1; x--)
+	else
 	{
-		if ((unsigned)lwall[x] >= (unsigned)walxrepeat)
+		for (int x = x1; x < x2; x++)
 		{
-			lwall[x] = fix;
-		}
-		else
-		{
-			break;
+			float u = uOverZ / invZ;
+
+			upos[x] = (fixed_t)(u * xrepeat * FRACUNIT);
+			vstep[x] = depthOrg + u * depthScale;
+
+			uOverZ += uGradient;
+			invZ += zGradient;
 		}
 	}
 }
 
-void PrepWall (float *swall, fixed_t *lwall, double walxrepeat, int x1, int x2)
-{ // swall = scale, lwall = texturecolumn
-	double top, bot, i;
-	double xrepeat = fabs(walxrepeat * 65536);
-	double depth_scale = WallT.InvZstep * WallTMapScale2;
-	double depth_org = -WallT.UoverZstep * WallTMapScale2;
+void PrepLWall(fixed_t *upos, double walxrepeat, int x1, int x2)
+{
+	float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - CenterX);
+	float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - CenterX);
+	float uGradient = WallT.UoverZstep;
+	float zGradient = WallT.InvZstep;
+	float xrepeat = (float)walxrepeat;
 
-	i = x1 - centerx;
-	top = WallT.UoverZorg + WallT.UoverZstep * i;
-	bot = WallT.InvZorg + WallT.InvZstep * i;
-
-	for (int x = x1; x < x2; x++)
+	if (xrepeat < 0.0f)
 	{
-		double frac = top / bot;
-		if (walxrepeat < 0)
+		for (int x = x1; x < x2; x++)
 		{
-			lwall[x] = xs_RoundToInt(xrepeat - frac * xrepeat);
+			float u = uOverZ / invZ * xrepeat - xrepeat;
+
+			upos[x] = (fixed_t)(u * FRACUNIT);
+
+			uOverZ += uGradient;
+			invZ += zGradient;
 		}
-		else
-		{
-			lwall[x] = xs_RoundToInt(frac * xrepeat);
-		}
-		swall[x] = float(frac * depth_scale + depth_org);
-		top += WallT.UoverZstep;
-		bot += WallT.InvZstep;
 	}
-	PrepWallRoundFix(lwall, FLOAT2FIXED(walxrepeat), x1, x2);
-}
-
-void PrepLWall (fixed_t *lwall, double walxrepeat, int x1, int x2)
-{ // lwall = texturecolumn
-	double top, bot, i;
-	double xrepeat = fabs(walxrepeat * 65536);
-	double topstep, botstep;
-
-	i = x1 - centerx;
-	top = WallT.UoverZorg + WallT.UoverZstep * i;
-	bot = WallT.InvZorg + WallT.InvZstep * i;
-
-	top *= xrepeat;
-	topstep = WallT.UoverZstep * xrepeat;
-	botstep = WallT.InvZstep;
-
-	for (int x = x1; x < x2; x++)
+	else
 	{
-		if (walxrepeat < 0)
+		for (int x = x1; x < x2; x++)
 		{
-			lwall[x] = xs_RoundToInt(xrepeat - top / bot);
+			float u = uOverZ / invZ * xrepeat;
+
+			upos[x] = (fixed_t)(u * FRACUNIT);
+
+			uOverZ += uGradient;
+			invZ += zGradient;
 		}
-		else
-		{
-			lwall[x] = xs_RoundToInt(top / bot);
-		}
-		top += topstep;
-		bot += botstep;
 	}
-	PrepWallRoundFix(lwall, FLOAT2FIXED(walxrepeat), x1, x2);
 }
 
 // pass = 0: when seg is first drawn

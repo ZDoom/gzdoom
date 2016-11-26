@@ -83,7 +83,7 @@ class RenderPolyPortal
 public:
 	RenderPolyPortal();
 	~RenderPolyPortal();
-	void SetViewpoint(const TriMatrix &worldToClip, uint32_t stencilValue);
+	void SetViewpoint(const TriMatrix &worldToClip, const Vec4f &portalPlane, uint32_t stencilValue);
 	void Render(int portalDepth);
 	void RenderTranslucent(int portalDepth);
 
@@ -99,6 +99,7 @@ private:
 	SpriteRange GetSpritesForSector(sector_t *sector);
 
 	TriMatrix WorldToClip;
+	Vec4f PortalPlane;
 	uint32_t StencilValue = 0;
 	PolyCull Cull;
 	uint32_t NextSubsectorDepth = 0;

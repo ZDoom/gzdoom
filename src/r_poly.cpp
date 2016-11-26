@@ -44,7 +44,7 @@ void RenderPolyScene::Render()
 	ClearBuffers();
 	SetSceneViewport();
 	SetupPerspectiveMatrix();
-	MainPortal.SetViewpoint(WorldToClip, GetNextStencilValue());
+	MainPortal.SetViewpoint(WorldToClip, Vec4f(0.0f), GetNextStencilValue());
 	MainPortal.Render(0);
 	Skydome.Render(WorldToClip);
 	MainPortal.RenderTranslucent(0);

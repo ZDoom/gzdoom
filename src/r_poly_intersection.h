@@ -26,6 +26,8 @@
 #include <algorithm>
 #include <cmath>
 
+class Vec3f;
+
 class Vec4f
 {
 public:
@@ -33,6 +35,7 @@ public:
 	Vec4f(const Vec4f &) = default;
 	Vec4f(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) { }
 	Vec4f(float v) : x(v), y(v), z(v), w(v) { }
+	Vec4f(const Vec3f &xyz, float w);
 
 	static float dot(const Vec4f &a, const Vec4f &b) { return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w; }
 	static float dot3(const Vec4f &a, const Vec4f &b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
@@ -50,6 +53,9 @@ public:
 
 	float x, y, z, w;
 };
+
+inline bool operator==(const Vec4f &a, const Vec4f &b) { return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w; }
+inline bool operator!=(const Vec4f &a, const Vec4f &b) { return a.x != b.x || a.y != b.y || a.z != b.z || a.w == b.w; }
 
 class Vec3f
 {
@@ -75,6 +81,9 @@ public:
 	float x, y, z;
 };
 
+inline bool operator==(const Vec3f &a, const Vec3f &b) { return a.x == b.x && a.y == b.y && a.z == b.z; }
+inline bool operator!=(const Vec3f &a, const Vec3f &b) { return a.x != b.x || a.y != b.y || a.z != b.z; }
+
 inline Vec3f operator+(const Vec3f &a, const Vec3f &b) { return Vec3f(a.x + b.x, a.y + b.y, a.z + b.z); }
 inline Vec3f operator-(const Vec3f &a, const Vec3f &b) { return Vec3f(a.x - b.x, a.y - b.y, a.z - b.z); }
 inline Vec3f operator*(const Vec3f &a, const Vec3f &b) { return Vec3f(a.x * b.x, a.y * b.y, a.z * b.z); }
@@ -89,6 +98,8 @@ inline Vec3f operator+(float a, const Vec3f &b) { return Vec3f(a + b.x, a + b.y,
 inline Vec3f operator-(float a, const Vec3f &b) { return Vec3f(a - b.x, a - b.y, a - b.z); }
 inline Vec3f operator*(float a, const Vec3f &b) { return Vec3f(a * b.x, a * b.y, a * b.z); }
 inline Vec3f operator/(float a, const Vec3f &b) { return Vec3f(a / b.x, a / b.y, a / b.z); }
+
+inline Vec4f::Vec4f(const Vec3f &xyz, float w) : x(xyz.x), y(xyz.y), z(xyz.z), w(w) { }
 
 typedef TriMatrix Mat4f;
 

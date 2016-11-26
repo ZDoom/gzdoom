@@ -28,11 +28,12 @@
 #include "r_poly_cull.h"
 #include "r_poly.h"
 
-void PolyCull::CullScene(const TriMatrix &worldToClip)
+void PolyCull::CullScene(const TriMatrix &worldToClip, const Vec4f &portalClipPlane)
 {
 	ClearSolidSegments();
 	PvsSectors.clear();
 	frustumPlanes = FrustumPlanes(worldToClip);
+	PortalClipPlane = portalClipPlane;
 
 	// Cull front to back
 	MaxCeilingHeight = 0.0;
@@ -174,6 +175,11 @@ bool PolyCull::CheckBBox(float *bspcoord)
 	if (result == IntersectionTest::outside)
 		return false;
 
+	// Skip if its in front of the portal:
+
+	if (PortalClipPlane != Vec4f(0.0f) && IntersectionTest::plane_aabb(PortalClipPlane, aabb) == IntersectionTest::outside)
+		return false;
+
 	// Occlusion test using solid segments:
 
 	static const int lines[4][4] =
@@ -218,6 +224,10 @@ bool PolyCull::CheckBBox(float *bspcoord)
 bool PolyCull::GetSegmentRangeForLine(double x1, double y1, double x2, double y2, int &sx1, int &sx2) const
 {
 	double znear = 5.0;
+
+	// Cull if entirely behind the portal clip plane (tbd: should we clip the segment?)
+	if (Vec4f::dot(PortalClipPlane, Vec4f((float)x1, (float)y1, 0.0f, 1.0f)) < 0.0f && Vec4f::dot(PortalClipPlane, Vec4f((float)x2, (float)y2, 0.0f, 1.0f)) < 0.0f)
+		return false;
 
 	// Transform to 2D view space:
 	x1 = x1 - ViewPos.X;

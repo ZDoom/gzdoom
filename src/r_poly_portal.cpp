@@ -45,16 +45,17 @@ RenderPolyPortal::~RenderPolyPortal()
 {
 }
 
-void RenderPolyPortal::SetViewpoint(const TriMatrix &worldToClip, uint32_t stencilValue)
+void RenderPolyPortal::SetViewpoint(const TriMatrix &worldToClip, const Vec4f &portalPlane, uint32_t stencilValue)
 {
 	WorldToClip = worldToClip;
 	StencilValue = stencilValue;
+	PortalPlane = portalPlane;
 }
 
 void RenderPolyPortal::Render(int portalDepth)
 {
 	ClearBuffers();
-	Cull.CullScene(WorldToClip);
+	Cull.CullScene(WorldToClip, PortalPlane);
 	RenderSectors();
 	RenderPortals(portalDepth);
 }
@@ -340,7 +341,7 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 		TriMatrix::translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);
 	TriMatrix worldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
 
-	RenderPortal.SetViewpoint(worldToClip, StencilValue);
+	RenderPortal.SetViewpoint(worldToClip, Vec4f(0.0f), StencilValue);
 	RenderPortal.Render(portalDepth);
 	
 	RestoreGlobals();
@@ -440,7 +441,14 @@ void PolyDrawLinePortal::Render(int portalDepth)
 		TriMatrix::translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);
 	TriMatrix worldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
 
-	RenderPortal.SetViewpoint(worldToClip, StencilValue);
+	// Calculate plane clipping
+	DVector2 planePos = Portal->mDestination->v1->fPos();
+	DVector2 planeNormal = (Portal->mDestination->v2->fPos() - Portal->mDestination->v1->fPos()).Rotated90CW();
+	planeNormal.MakeUnit();
+	double planeD = -(planeNormal | (planePos + planeNormal * 5.0));
+	Vec4f portalPlane((float)planeNormal.X, (float)planeNormal.Y, 0.0f, (float)planeD);
+
+	RenderPortal.SetViewpoint(worldToClip, portalPlane, StencilValue);
 	RenderPortal.Render(portalDepth);
 
 	RestoreGlobals();

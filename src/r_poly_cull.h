@@ -28,7 +28,7 @@
 class PolyCull
 {
 public:
-	void CullScene(const TriMatrix &worldToClip);
+	void CullScene(const TriMatrix &worldToClip, const Vec4f &portalClipPlane);
 
 	bool GetSegmentRangeForLine(double x1, double y1, double x2, double y2, int &sx1, int &sx2) const;
 	void MarkSegmentCulled(int x1, int x2);
@@ -59,4 +59,5 @@ private:
 	const int SolidCullScale = 3000;
 
 	FrustumPlanes frustumPlanes;
+	Vec4f PortalClipPlane;
 };

@@ -22,9 +22,6 @@ class IceGuy : Actor
 		Obituary "$OB_ICEGUY";
 	}
 
-	native void A_IceGuyLook();
-	native void A_IceGuyChase();
-	native void A_IceGuyAttack();
 
 	States
 	{
@@ -51,6 +48,84 @@ class IceGuy : Actor
 		ICEY A -1;
 		Goto See;
 	}
+	
+	//============================================================================
+	//
+	// SpawnWisp
+	//
+	//============================================================================
+
+	private void SpawnWisp()
+	{
+		static const class<Actor> WispTypes[] = { "IceGuyWisp1", "IceGuyWisp2" };
+
+		double dist = (random[IceGuyLook]() - 128) * radius / 128.;
+		double an = angle + 90;
+		Actor mo = Spawn(WispTypes[random[IceGuyLook]() & 1], Vec3Angle(dist, an, 60.), ALLOW_REPLACE);
+		if (mo)
+		{
+			mo.Vel = Vel;
+			mo.target = self;
+		}
+	}
+	
+	//============================================================================
+	//
+	// A_IceGuyLook
+	//
+	//============================================================================
+
+	void A_IceGuyLook()
+	{
+		A_Look();
+		if (random[IceGuyLook]() < 64) SpawnWisp();
+	}
+
+	//============================================================================
+	//
+	// A_IceGuyChase
+	//
+	//============================================================================
+
+	void A_IceGuyChase()
+	{
+		A_Chase();
+		if (random[IceGuyLook]() < 128) SpawnWisp();
+	}
+
+	//============================================================================
+	//
+	// A_IceGuyAttack
+	//
+	//============================================================================
+
+	void A_IceGuyAttack()
+	{
+		if(!target) 
+		{
+			return;
+		}
+		SpawnMissileXYZ(Vec3Angle(radius / 2, angle + 90, 40.), target, "IceGuyFX");
+		SpawnMissileXYZ(Vec3Angle(radius / 2, angle - 90, 40.), target, "IceGuyFX");
+		A_PlaySound (AttackSound, CHAN_WEAPON);
+	}
+}
+
+extend class Actor
+{
+	//============================================================================
+	//
+	// A_IceGuyDie (globally accessible)
+	//
+	//============================================================================
+
+	void A_IceGuyDie()
+	{
+		Vel = (0,0,0);
+		Height = Default.Height;
+		A_FreezeDeathChunks();
+	}
+
 }
 
 // Ice Guy Projectile -------------------------------------------------------
@@ -69,8 +144,6 @@ class IceGuyFX : Actor
 		DeathSound "IceGuyMissileExplode";
 	}
 
-	native void A_IceGuyMissileExplode();
-
 	States
 	{
 	Spawn:
@@ -82,6 +155,25 @@ class IceGuyFX : Actor
 		ICPR FG 4 Bright;
 		ICPR H 3 Bright;
 		Stop;
+	}
+	
+
+	//============================================================================
+	//
+	// A_IceGuyMissileExplode
+	//
+	//============================================================================
+
+	void A_IceGuyMissileExplode()
+	{
+		for (int i = 0; i < 8; i++)
+		{
+			Actor mo = SpawnMissileAngleZ (pos.z+3, "IceGuyFX2", i*45., -0.3);
+			if (mo)
+			{
+				mo.target = target;
+			}
+		}
 	}
 }
 
@@ -183,3 +275,4 @@ class IceGuyWisp2 : IceGuyWisp1
 		Stop;
 	}
 }
+

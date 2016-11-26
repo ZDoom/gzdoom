@@ -857,10 +857,8 @@ set( NOT_COMPILED_SOURCE_FILES
 	sc_man_scanner.re
 	g_hexen/a_flechette.cpp
 	g_hexen/a_flies.cpp
-	g_hexen/a_healingradius.cpp
 	g_hexen/a_heresiarch.cpp
 	g_hexen/a_hexenspecialdecs.cpp
-	g_hexen/a_iceguy.cpp
 	g_hexen/a_magecone.cpp
 	g_hexen/a_magelightning.cpp
 	g_hexen/a_magestaff.cpp

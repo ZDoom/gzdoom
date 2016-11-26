@@ -6375,6 +6375,20 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 	return (!checkspawn || P_CheckMissileSpawn (th, source->radius)) ? th : NULL;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SpawnMissileXYZ)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_OBJECT(dest, AActor);
+	PARAM_CLASS(type, AActor);
+	PARAM_BOOL_DEF(check);
+	PARAM_OBJECT_DEF(owner, AActor);
+	ACTION_RETURN_OBJECT(P_SpawnMissileXYZ(DVector3(x,y,z), self, dest, type, check, owner));
+}
+
+
 AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassActor *type)
 {
 	if (source == NULL)

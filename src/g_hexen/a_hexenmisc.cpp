@@ -28,7 +28,6 @@
 #include "a_flies.cpp"
 #include "a_heresiarch.cpp"
 #include "a_hexenspecialdecs.cpp"
-#include "a_iceguy.cpp"
 #include "a_magecone.cpp"
 #include "a_magelightning.cpp"
 #include "a_magestaff.cpp"

@@ -592,7 +592,6 @@ class Actor : Thinker native
 	native void A_FreezeDeathChunks();
 	native void A_GenericFreezeDeath();
 	native void A_IceGuyDie();
-	native void A_CStaffMissileSlither();
 	native void A_PlayerScream();
 	native void A_SkullPop(class<PlayerChunk> skulltype = "BloodySkull");
 	native void A_CheckPlayerDone();

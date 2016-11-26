@@ -1207,6 +1207,12 @@ int APlayerPawn::GetMaxHealth() const
 	return MaxHealth > 0? MaxHealth : ((i_compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth);
 }
 
+DEFINE_ACTION_FUNCTION(APlayerPawn, GetMaxHealth)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	ACTION_RETURN_INT(self->GetMaxHealth());
+}
+
 //===========================================================================
 //
 // APlayerPawn :: UpdateWaterLevel

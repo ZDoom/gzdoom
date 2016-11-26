@@ -78,7 +78,8 @@ class PlayerPawn : Actor native
 	virtual void MorphPlayerThink()
 	{
 	}
-	
+
+	native int GetMaxHealth();
 }
 
 class PlayerChunk : PlayerPawn native
@@ -214,6 +215,7 @@ FWeaponSlots weapons;
 	
 
 	native bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false);
+	native bool PoisonPlayer(Actor poisoner, Actor source, int poison);
 	native void SetPsprite(int id, State stat, bool pending = false);
 	native void SetSafeFlash(Weapon weap, State flashstate, int index);
 	native PSprite GetPSprite(int id);

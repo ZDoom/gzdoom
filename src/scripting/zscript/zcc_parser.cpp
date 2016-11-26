@@ -406,10 +406,12 @@ void ParseScripts()
 
 	int lump, lastlump = 0;
 	FScriptPosition::ResetErrorCounter();
+
 	while ((lump = Wads.FindLump("ZSCRIPT", &lastlump)) != -1)
 	{
 		DoParse(lump);
 	}
+
 }
 
 /*

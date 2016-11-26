@@ -1734,6 +1734,15 @@ bool P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poi
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, PoisonPlayer)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_OBJECT(poisoner, AActor);
+	PARAM_OBJECT(source, AActor);
+	PARAM_INT(poison);
+	ACTION_RETURN_BOOL(P_PoisonPlayer(self, poisoner, source, poison));
+}
+
 //==========================================================================
 //
 // P_PoisonDamage - Similar to P_DamageMobj

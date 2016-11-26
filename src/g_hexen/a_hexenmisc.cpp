@@ -24,7 +24,6 @@
 #include "serializer.h"
 
 // Include all the Hexen stuff here to reduce compile time
-#include "a_clericflame.cpp"
 #include "a_clericholy.cpp"
 #include "a_clericmace.cpp"
 #include "a_clericstaff.cpp"

@@ -580,6 +580,31 @@ class Weapon : StateProvider native
 		return FindState('Ready');
 	}
 	
+	virtual State GetUpState ()
+	{
+		return FindState('Select');
+	}
+
+	virtual State GetDownState ()
+	{
+		return FindState('Deselect');
+	}
+
+	virtual State GetAtkState (bool hold)
+	{
+		State s = null;
+		if (hold) s = FindState('Hold');
+		if (s == null) s = FindState('Fire');
+		return s;
+	}
+	
+	virtual State GetAltAtkState (bool hold)
+	{
+		State s = null;
+		if (hold) s = FindState('AltHold');
+		if (s == null) s = FindState('AltFire');
+		return s;
+	}
 	
 	native action void A_ZoomFactor(double scale = 1, int flags = 0);
 	native action void A_SetCrosshair(int xhair);

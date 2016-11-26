@@ -21,38 +21,6 @@ static FRandom pr_axeatk ("FAxeAtk");
 
 // The Fighter's Axe --------------------------------------------------------
 
-class AFWeapAxe : public AFighterWeapon
-{
-	DECLARE_CLASS (AFWeapAxe, AFighterWeapon)
-public:
-	FState *GetUpState ();
-	FState *GetDownState ();
-	FState *GetReadyState ();
-	FState *GetAtkState (bool hold);
-};
-
-IMPLEMENT_CLASS(AFWeapAxe, false, false)
-
-FState *AFWeapAxe::GetUpState ()
-{
-	return Ammo1->Amount ? FindState ("SelectGlow") : Super::GetUpState();
-}
-
-FState *AFWeapAxe::GetDownState ()
-{
-	return Ammo1->Amount ? FindState ("DeselectGlow") : Super::GetDownState();
-}
-
-FState *AFWeapAxe::GetReadyState ()
-{
-	return Ammo1->Amount ? FindState ("ReadyGlow") : Super::GetReadyState();
-}
-
-FState *AFWeapAxe::GetAtkState (bool hold)
-{
-	return Ammo1->Amount ? FindState ("FireGlow") :  Super::GetAtkState(hold);
-}
-
 //============================================================================
 //
 // A_FAxeCheckReady

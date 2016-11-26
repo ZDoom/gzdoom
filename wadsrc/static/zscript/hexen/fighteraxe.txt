@@ -1,7 +1,7 @@
 
 // The Fighter's Axe --------------------------------------------------------
 
-class FWeapAxe : FighterWeapon native
+class FWeapAxe : FighterWeapon
 {
 	Default
 	{
@@ -79,6 +79,28 @@ class FWeapAxe : FighterWeapon native
 		FAXE A 1;
 		Goto ReadyGlow;
 	}
+	
+	override State GetUpState ()
+	{
+		return Ammo1.Amount ? FindState ("SelectGlow") : Super.GetUpState();
+	}
+
+	override State GetDownState ()
+	{
+		return Ammo1.Amount ? FindState ("DeselectGlow") : Super.GetDownState();
+	}
+
+	override State GetReadyState ()
+	{
+		return Ammo1.Amount ? FindState ("ReadyGlow") : Super.GetReadyState();
+	}
+
+	override State GetAtkState (bool hold)
+	{
+		return Ammo1.Amount ? FindState ("FireGlow") :  Super.GetAtkState(hold);
+	}
+
+	
 }
 
 // Axe Puff -----------------------------------------------------------------

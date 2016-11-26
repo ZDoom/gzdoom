@@ -818,7 +818,16 @@ void AWeapon::CallEndPowerup()
 
 FState *AWeapon::GetUpState ()
 {
-	return FindState(NAME_Select);
+	IFVIRTUAL(AWeapon, GetUpState)
+	{
+		VMValue params[1] = { (DObject*)this };
+		VMReturn ret;
+		VMFrameStack stack;
+		FState *retval;
+		ret.PointerAt((void**)&retval);
+		stack.Call(func, params, 1, &ret, 1, nullptr);
+		return retval;
+	}
 }
 
 //===========================================================================
@@ -829,7 +838,16 @@ FState *AWeapon::GetUpState ()
 
 FState *AWeapon::GetDownState ()
 {
-	return FindState(NAME_Deselect);
+	IFVIRTUAL(AWeapon, GetDownState)
+	{
+		VMValue params[1] = { (DObject*)this };
+		VMReturn ret;
+		VMFrameStack stack;
+		FState *retval;
+		ret.PointerAt((void**)&retval);
+		stack.Call(func, params, 1, &ret, 1, nullptr);
+		return retval;
+	}
 }
 
 //===========================================================================
@@ -840,7 +858,16 @@ FState *AWeapon::GetDownState ()
 
 FState *AWeapon::GetReadyState ()
 {
-	return FindState(NAME_Ready);
+	IFVIRTUAL(AWeapon, GetReadyState)
+	{
+		VMValue params[1] = { (DObject*)this };
+		VMReturn ret;
+		VMFrameStack stack;
+		FState *retval;
+		ret.PointerAt((void**)&retval);
+		stack.Call(func, params, 1, &ret, 1, nullptr);
+		return retval;
+	}
 }
 
 //===========================================================================
@@ -851,11 +878,16 @@ FState *AWeapon::GetReadyState ()
 
 FState *AWeapon::GetAtkState (bool hold)
 {
-	FState * state=NULL;
-	
-	if (hold) state = FindState(NAME_Hold);
-	if (state == NULL) state = FindState(NAME_Fire);
-	return state;
+	IFVIRTUAL(AWeapon, GetAtkState)
+	{
+		VMValue params[2] = { (DObject*)this, hold };
+		VMReturn ret;
+		VMFrameStack stack;
+		FState *retval;
+		ret.PointerAt((void**)&retval);
+		stack.Call(func, params, 2, &ret, 1, nullptr);
+		return retval;
+	}
 }
 
 //===========================================================================
@@ -866,11 +898,16 @@ FState *AWeapon::GetAtkState (bool hold)
 
 FState *AWeapon::GetAltAtkState (bool hold)
 {
-	FState * state=NULL;
-	
-	if (hold) state = FindState(NAME_AltHold);
-	if (state == NULL) state = FindState(NAME_AltFire);
-	return state;
+	IFVIRTUAL(AWeapon, GetAltAtkState)
+	{
+		VMValue params[2] = { (DObject*)this, hold };
+		VMReturn ret;
+		VMFrameStack stack;
+		FState *retval;
+		ret.PointerAt((void**)&retval);
+		stack.Call(func, params, 2, &ret, 1, nullptr);
+		return retval;
+	}
 }
 
 //===========================================================================

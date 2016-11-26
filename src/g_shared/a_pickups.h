@@ -335,12 +335,12 @@ public:
 	virtual bool Use (bool pickup);
 	virtual void Destroy() override;
 
-	virtual FState *GetUpState ();
-	virtual FState *GetDownState ();
-	virtual FState *GetReadyState ();
-	virtual FState *GetAtkState (bool hold);
-	virtual FState *GetAltAtkState (bool hold);
-	virtual FState *GetStateForButtonName (FName button);
+	FState *GetUpState ();
+	FState *GetDownState ();
+	FState *GetReadyState ();
+	FState *GetAtkState (bool hold);
+	FState *GetAltAtkState (bool hold);
+	FState *GetStateForButtonName (FName button);
 
 	virtual void PostMorphWeapon ();
 	virtual void EndPowerup ();

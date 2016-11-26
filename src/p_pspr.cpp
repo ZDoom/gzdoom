@@ -409,7 +409,7 @@ void DPSprite::SetState(FState *newstate, bool pending)
 				// If an unsafe function (i.e. one that accesses user variables) is being detected, print a warning once and remove the bogus function. We may not call it because that would inevitably crash.
 				auto owner = FState::StaticFindStateOwner(newstate);
 				Printf(TEXTCOLOR_RED "Unsafe state call in state %s.%d to %s which accesses user variables. The action function has been removed from this state\n",
-					owner->TypeName.GetChars(), newstate - owner->OwnedStates, newstate->ActionFunc->PrintableName.GetChars());
+					owner->TypeName.GetChars(), int(newstate - owner->OwnedStates), newstate->ActionFunc->PrintableName.GetChars());
 				newstate->ActionFunc = nullptr;
 			}
 			if (newstate->CallAction(Owner->mo, Caller, &stp, &nextstate))

@@ -1469,6 +1469,9 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 				break;
 			}
 			break;
+
+		default:
+			break;
 		}
 		break;
 	}
@@ -1520,6 +1523,9 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 		}
 		break;
 	}
+
+	default:
+		break;
 	}
 	if (retval != TypeError && retval->MemberOnly && !formember)
 	{
@@ -1996,6 +2002,9 @@ void ZCCCompiler::InitDefaults()
 
 						case AST_FlagStmt:
 							ProcessDefaultFlag(ti, static_cast<ZCC_FlagStmt *>(content));
+							break;
+
+						default:
 							break;
 						}
 						content = static_cast<decltype(content)>(content->SiblingNext);
@@ -3215,6 +3224,9 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		}
 		return new FxMultiAssign(args, ConvertNode(ass->Sources), *ast);
 	}
+
+	default:
+		break;
 	}
 	// only for development. I_Error is more convenient here than a normal error.
 	I_Error("ConvertNode encountered unsupported node of type %d", ast->NodeType);

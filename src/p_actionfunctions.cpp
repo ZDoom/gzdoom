@@ -143,7 +143,7 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 				// If an unsafe function (i.e. one that accesses user variables) is being detected, print a warning once and remove the bogus function. We may not call it because that would inevitably crash.
 				auto owner = FState::StaticFindStateOwner(state);
 				Printf(TEXTCOLOR_RED "Unsafe state call in state %s.%d to %s which accesses user variables. The action function has been removed from this state\n",
-					owner->TypeName.GetChars(), state - owner->OwnedStates, state->ActionFunc->PrintableName.GetChars());
+					owner->TypeName.GetChars(), int(state - owner->OwnedStates), state->ActionFunc->PrintableName.GetChars());
 				state->ActionFunc = nullptr;
 			}
 

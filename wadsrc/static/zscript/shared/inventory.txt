@@ -529,6 +529,13 @@ class PuzzleItem : Inventory native
 
 class Weapon : StateProvider native
 {
+	enum EFireMode
+	{
+		PrimaryFire,
+		AltFire,
+		EitherFire
+	};
+
 	native uint WeaponFlags;
 	native class<Ammo> AmmoType1, AmmoType2;		// Types of ammo used by this weapon
 	native int AmmoGive1, AmmoGive2;				// Amount of each ammo to get when picking up weapon
@@ -572,6 +579,7 @@ class Weapon : StateProvider native
 		Stop;
 	}
 	
+	native bool CheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo = false, int ammocount = -1);
 	native bool DepleteAmmo(bool altFire, bool checkEnough = true, int ammouse = -1);
 	native virtual void EndPowerup();
 	

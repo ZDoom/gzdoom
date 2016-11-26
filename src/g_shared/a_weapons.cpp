@@ -664,6 +664,16 @@ bool AWeapon::CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo, int am
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(AWeapon, CheckAmmo)
+{
+	PARAM_SELF_PROLOGUE(AWeapon);
+	PARAM_INT(mode);
+	PARAM_BOOL(autoswitch);
+	PARAM_BOOL_DEF(require);
+	PARAM_INT_DEF(ammocnt);
+	ACTION_RETURN_BOOL(self->CheckAmmo(mode, autoswitch, require, ammocnt));
+}
+
 //===========================================================================
 //
 // AWeapon :: DepleteAmmo

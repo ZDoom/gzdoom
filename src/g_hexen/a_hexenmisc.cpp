@@ -26,7 +26,6 @@
 // Include all the Hexen stuff here to reduce compile time
 #include "a_flechette.cpp"
 #include "a_flies.cpp"
-#include "a_healingradius.cpp"
 #include "a_heresiarch.cpp"
 #include "a_hexenspecialdecs.cpp"
 #include "a_iceguy.cpp"

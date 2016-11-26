@@ -8338,7 +8338,7 @@ bool FxCompoundStatement::CheckLocalVariable(FName name)
 FxSwitchStatement::FxSwitchStatement(FxExpression *cond, FArgumentList &content, const FScriptPosition &pos)
 	: FxExpression(EFX_SwitchStatement, pos)
 {
-	Condition = new FxIntCast(cond, false);
+	Condition = cond;
 	Content = std::move(content);
 }
 
@@ -8351,6 +8351,12 @@ FxExpression *FxSwitchStatement::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(Condition, ctx);
+
+	if (Condition->ValueType != TypeName)
+	{
+		Condition = new FxIntCast(Condition, false);
+		SAFE_RESOLVE(Condition, ctx);
+	}
 
 	if (Content.Size() == 0)
 	{
@@ -8370,15 +8376,15 @@ FxExpression *FxSwitchStatement::Resolve(FCompileContext &ctx)
 		}
 	}
 
+	auto outerctrl = ctx.ControlStmt;
+	ctx.ControlStmt = this;
+
 	for (auto &line : Content)
 	{
-		// Do not resolve breaks, they need special treatment inside switch blocks.
-		if (line->ExprType != EFX_JumpStatement || static_cast<FxJumpStatement *>(line)->Token != TK_Break)
-		{
-			SAFE_RESOLVE(line, ctx);
-			line->NeedResult = false;
-		}
+		SAFE_RESOLVE(line, ctx);
+		line->NeedResult = false;
 	}
+	ctx.ControlStmt = outerctrl;
 
 	if (Condition->isConstant())
 	{
@@ -8398,6 +8404,12 @@ FxExpression *FxSwitchStatement::Resolve(FCompileContext &ctx)
 					auto casestmt = static_cast<FxCaseStatement *>(content[i]);
 					if (casestmt->Condition == nullptr) defaultindex = i;
 					else if (casestmt->CaseValue == static_cast<FxConstant *>(Condition)->GetValue().GetInt()) caseindex = i;
+					if (casestmt->Condition && casestmt->Condition->ValueType != Condition->ValueType)
+					{
+						casestmt->Condition->ScriptPosition.Message(MSG_ERROR, "Type mismatch in case statement");
+						delete this;
+						return nullptr;
+					}
 				}
 				if (content[i]->ExprType == EFX_JumpStatement && static_cast<FxJumpStatement *>(content[i])->Token == TK_Break)
 				{
@@ -8478,7 +8490,6 @@ ExpEmit FxSwitchStatement::Emit(VMFunctionBuilder *build)
 		ca.jumpaddress = build->Emit(OP_JMP, 0);
 	}
 	size_t DefaultAddress = build->Emit(OP_JMP, 0);
-	TArray<size_t> BreakAddresses;
 	bool defaultset = false;
 
 	for (auto line : Content)
@@ -8504,22 +8515,14 @@ ExpEmit FxSwitchStatement::Emit(VMFunctionBuilder *build)
 			}
 			break;
 
-		case EFX_JumpStatement:
-			if (static_cast<FxJumpStatement *>(line)->Token == TK_Break)
-			{
-				BreakAddresses.Push(build->Emit(OP_JMP, 0));
-				break;
-			}
-			// fall through for continue.
-
 		default:
 			line->Emit(build);
 			break;
 		}
 	}
-	for (auto addr : BreakAddresses)
+	for (auto addr : Breaks)
 	{
-		build->BackpatchToHere(addr);
+		build->BackpatchToHere(addr->Address);
 	}
 	if (!defaultset) build->BackpatchToHere(DefaultAddress);
 	Content.DeleteAndClear();
@@ -8555,7 +8558,7 @@ bool FxSwitchStatement::CheckReturn()
 FxCaseStatement::FxCaseStatement(FxExpression *cond, const FScriptPosition &pos)
 	: FxExpression(EFX_CaseStatement, pos)
 {
-	Condition = cond? new FxIntCast(cond, false) : nullptr;
+	Condition = cond;
 }
 
 FxCaseStatement::~FxCaseStatement()
@@ -8576,7 +8579,17 @@ FxExpression *FxCaseStatement::Resolve(FCompileContext &ctx)
 			delete this;
 			return nullptr;
 		}
-		CaseValue = static_cast<FxConstant *>(Condition)->GetValue().GetInt();
+		// Case labels can be ints or names.
+		if (Condition->ValueType != TypeName)
+		{
+			Condition = new FxIntCast(Condition, false);
+			SAFE_RESOLVE(Condition, ctx);
+			CaseValue = static_cast<FxConstant *>(Condition)->GetValue().GetInt();
+		}
+		else
+		{
+			CaseValue = static_cast<FxConstant *>(Condition)->GetValue().GetName();
+		}
 	}
 	return this;
 }
@@ -8747,10 +8760,13 @@ bool FxIfStatement::CheckReturn()
 
 FxExpression *FxLoopStatement::Resolve(FCompileContext &ctx)
 {
+	auto outerctrl = ctx.ControlStmt;
 	auto outer = ctx.Loop;
+	ctx.ControlStmt = this;
 	ctx.Loop = this;
 	auto x = DoResolve(ctx);
 	ctx.Loop = outer;
+	ctx.ControlStmt = outerctrl;
 	return x;
 }
 
@@ -9074,9 +9090,17 @@ FxExpression *FxJumpStatement::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 
-	if (ctx.Loop != nullptr)
+	if (ctx.ControlStmt != nullptr)
 	{
-		ctx.Loop->Jumps.Push(this);
+		if (ctx.ControlStmt == ctx.Loop || Token == TK_Continue)
+		{
+			ctx.Loop->Jumps.Push(this);
+		}
+		else
+		{
+			// break in switch.
+			static_cast<FxSwitchStatement*>(ctx.ControlStmt)->Breaks.Push(this);
+		}
 		return this;
 	}
 	else

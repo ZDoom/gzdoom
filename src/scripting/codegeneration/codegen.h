@@ -72,6 +72,7 @@ typedef TDeletingArray<FxExpression*> FArgumentList;
 
 struct FCompileContext
 {
+	FxExpression *ControlStmt = nullptr;
 	FxLoopStatement *Loop = nullptr;
 	FxCompoundStatement *Block = nullptr;
 	PPrototype *ReturnProto;
@@ -1656,6 +1657,8 @@ class FxSwitchStatement : public FxExpression
 	TArray<CaseAddr> CaseAddresses;
 
 public:
+	TArray<FxJumpStatement *> Breaks;
+
 	FxSwitchStatement(FxExpression *cond, FArgumentList &content, const FScriptPosition &pos);
 	~FxSwitchStatement();
 	FxExpression *Resolve(FCompileContext&);

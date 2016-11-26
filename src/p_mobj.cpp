@@ -1093,7 +1093,6 @@ DEFINE_ACTION_FUNCTION(AActor, GiveInventoryType)
 	ACTION_RETURN_OBJECT(self->GiveInventoryType(type));
 }
 
-
 //============================================================================
 //
 // AActor :: GiveAmmo
@@ -1120,6 +1119,14 @@ bool AActor::GiveAmmo (PClassAmmo *type, int amount)
 		}
 	}
 	return false;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GiveAmmo)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(type, AAmmo);
+	PARAM_INT(amount);
+	ACTION_RETURN_BOOL(self->GiveAmmo(type, amount));
 }
 
 //============================================================================

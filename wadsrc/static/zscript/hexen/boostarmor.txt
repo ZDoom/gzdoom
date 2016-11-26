@@ -1,7 +1,7 @@
 
 // Boost Armor Artifact (Dragonskin Bracers) --------------------------------
 
-class ArtiBoostArmor : Inventory native
+class ArtiBoostArmor : Inventory
 {
 	Default
 	{
@@ -21,4 +21,49 @@ class ArtiBoostArmor : Inventory native
 		BRAC ABCDEFGH 4 Bright;
 		Loop;
 	}
+	
+	override bool Use (bool pickup)
+	{
+		int count = 0;
+
+		if (gametype() == GAME_Hexen)
+		{
+			HexenArmor armor;
+
+			for (int i = 0; i < 4; ++i)
+			{
+				armor = HexenArmor(Spawn("HexenArmor"));
+				armor.bDropped = true;
+				armor.health = i;
+				armor.Amount = 1;
+				if (!armor.CallTryPickup (Owner))
+				{
+					armor.Destroy ();
+				}
+				else
+				{
+					count++;
+				}
+			}
+			return count != 0;
+		}
+		else
+		{
+			BasicArmorBonus armor = BasicArmorBonus(Spawn("BasicArmorBonus"));
+			armor.bDropped = true;
+			armor.SaveAmount = 50;
+			armor.MaxSaveAmount = 300;
+			if (!armor.CallTryPickup (Owner))
+			{
+				armor.Destroy ();
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+	}
+
+	
 }

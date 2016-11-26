@@ -855,7 +855,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	${OTHER_SYSTEM_SOURCES}
 	sc_man_scanner.h
 	sc_man_scanner.re
-	g_hexen/a_boostarmor.cpp
 	g_hexen/a_clericflame.cpp
 	g_hexen/a_clericholy.cpp
 	g_hexen/a_clericmace.cpp

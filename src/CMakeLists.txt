@@ -867,7 +867,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	g_hexen/a_heresiarch.cpp
 	g_hexen/a_hexenspecialdecs.cpp
 	g_hexen/a_iceguy.cpp
-	g_hexen/a_korax.cpp
 	g_hexen/a_magecone.cpp
 	g_hexen/a_magelightning.cpp
 	g_hexen/a_magestaff.cpp

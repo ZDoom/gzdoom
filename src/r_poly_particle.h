@@ -25,8 +25,10 @@
 #include "r_poly_triangle.h"
 #include "p_effect.h"
 
+class Vec4f;
+
 class RenderPolyParticle
 {
 public:
-	void Render(const TriMatrix &worldToClip, particle_t *particle, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue);
+	void Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, particle_t *particle, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue);
 };

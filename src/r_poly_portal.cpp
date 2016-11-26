@@ -94,7 +94,7 @@ void RenderPolyPortal::RenderSubsector(subsector_t *sub)
 
 	if (sub->sector->CenterFloor() != sub->sector->CenterCeiling())
 	{
-		RenderPolyPlane::RenderPlanes(WorldToClip, sub, subsectorDepth, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
+		RenderPolyPlane::RenderPlanes(WorldToClip, PortalPlane, sub, subsectorDepth, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
 	}
 
 	for (uint32_t i = 0; i < sub->numlines; i++)
@@ -178,12 +178,12 @@ void RenderPolyPortal::RenderLine(subsector_t *sub, seg_t *line, sector_t *front
 			if (!(fakeFloor->flags & FF_EXISTS)) continue;
 			if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
 			if (!fakeFloor->model) continue;
-			RenderPolyWall::Render3DFloorLine(WorldToClip, line, frontsector, subsectorDepth, StencilValue, fakeFloor, SubsectorTranslucentWalls);
+			RenderPolyWall::Render3DFloorLine(WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, fakeFloor, SubsectorTranslucentWalls);
 		}
 	}
 
 	// Render wall, and update culling info if its an occlusion blocker
-	if (RenderPolyWall::RenderLine(WorldToClip, line, frontsector, subsectorDepth, StencilValue, SubsectorTranslucentWalls, LinePortals))
+	if (RenderPolyWall::RenderLine(WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, SubsectorTranslucentWalls, LinePortals))
 	{
 		if (hasSegmentRange)
 			Cull.MarkSegmentCulled(sx1, sx2);
@@ -208,6 +208,7 @@ void RenderPolyPortal::RenderPortals(int portalDepth)
 		args.uniforms.color = 0;
 		args.uniforms.light = 256;
 		args.uniforms.flags = TriUniforms::fixed_light;
+		args.SetClipPlane(PortalPlane.x, PortalPlane.y, PortalPlane.z, PortalPlane.w);
 
 		for (auto &portal : SectorPortals)
 		{
@@ -253,6 +254,7 @@ void RenderPolyPortal::RenderTranslucent(int portalDepth)
 			args.mode = TriangleDrawMode::Fan;
 			args.stenciltestvalue = portal->StencilValue + 1;
 			args.stencilwritevalue = StencilValue;
+			args.SetClipPlane(PortalPlane.x, PortalPlane.y, PortalPlane.z, PortalPlane.w);
 			for (const auto &verts : portal->Shape)
 			{
 				args.vinput = verts.Vertices;
@@ -273,6 +275,7 @@ void RenderPolyPortal::RenderTranslucent(int portalDepth)
 			args.mode = TriangleDrawMode::Fan;
 			args.stenciltestvalue = portal->StencilValue + 1;
 			args.stencilwritevalue = StencilValue;
+			args.SetClipPlane(PortalPlane.x, PortalPlane.y, PortalPlane.z, PortalPlane.w);
 			for (const auto &verts : portal->Shape)
 			{
 				args.vinput = verts.Vertices;
@@ -290,21 +293,21 @@ void RenderPolyPortal::RenderTranslucent(int portalDepth)
 		if (obj.particle)
 		{
 			RenderPolyParticle spr;
-			spr.Render(WorldToClip, obj.particle, obj.sub, obj.subsectorDepth, StencilValue + 1);
+			spr.Render(WorldToClip, PortalPlane, obj.particle, obj.sub, obj.subsectorDepth, StencilValue + 1);
 		}
 		else if (!obj.thing)
 		{
-			obj.wall.Render(WorldToClip);
+			obj.wall.Render(WorldToClip, PortalPlane);
 		}
 		else if ((obj.thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 		{
 			RenderPolyWallSprite wallspr;
-			wallspr.Render(WorldToClip, obj.thing, obj.sub, obj.subsectorDepth, StencilValue + 1);
+			wallspr.Render(WorldToClip, PortalPlane, obj.thing, obj.sub, obj.subsectorDepth, StencilValue + 1);
 		}
 		else
 		{
 			RenderPolySprite spr;
-			spr.Render(WorldToClip, obj.thing, obj.sub, obj.subsectorDepth, StencilValue + 1);
+			spr.Render(WorldToClip, PortalPlane, obj.thing, obj.sub, obj.subsectorDepth, StencilValue + 1);
 		}
 	}
 }
@@ -341,7 +344,7 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 		TriMatrix::translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);
 	TriMatrix worldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
 
-	RenderPortal.SetViewpoint(worldToClip, Vec4f(0.0f), StencilValue);
+	RenderPortal.SetViewpoint(worldToClip, Vec4f(0.0f, 0.0f, 0.0f, 1.0f), StencilValue);
 	RenderPortal.Render(portalDepth);
 	
 	RestoreGlobals();
@@ -445,7 +448,7 @@ void PolyDrawLinePortal::Render(int portalDepth)
 	DVector2 planePos = Portal->mDestination->v1->fPos();
 	DVector2 planeNormal = (Portal->mDestination->v2->fPos() - Portal->mDestination->v1->fPos()).Rotated90CW();
 	planeNormal.MakeUnit();
-	double planeD = -(planeNormal | (planePos + planeNormal * 5.0));
+	double planeD = -(planeNormal | (planePos + planeNormal * 0.001));
 	Vec4f portalPlane((float)planeNormal.X, (float)planeNormal.Y, 0.0f, (float)planeD);
 
 	RenderPortal.SetViewpoint(worldToClip, portalPlane, StencilValue);

@@ -29,7 +29,7 @@
 #include "r_poly.h"
 #include "a_sharedglobal.h"
 
-void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue)
+void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const Vec4f &clipPlane, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue)
 {
 	if (line->linedef == nullptr && line->sidedef == nullptr)
 		return;
@@ -37,11 +37,11 @@ void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const seg_t
 	for (DBaseDecal *decal = line->sidedef->AttachedDecals; decal != nullptr; decal = decal->WallNext)
 	{
 		RenderPolyDecal render;
-		render.Render(worldToClip, decal, line, subsectorDepth, stencilValue);
+		render.Render(worldToClip, clipPlane, decal, line, subsectorDepth, stencilValue);
 	}
 }
 
-void RenderPolyDecal::Render(const TriMatrix &worldToClip, DBaseDecal *decal, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue)
+void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, DBaseDecal *decal, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue)
 {
 	if (decal->RenderFlags & RF_INVISIBLE || !viewactive || !decal->PicNum.isValid())
 		return;
@@ -166,5 +166,6 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, DBaseDecal *decal, co
 	args.stenciltestvalue = stencilValue;
 	args.stencilwritevalue = stencilValue;
 	//mode = R_SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
+	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
 	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Shaded);
 }

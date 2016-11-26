@@ -38,6 +38,7 @@ enum class TriangleDrawMode
 };
 
 struct TriDrawTriangleArgs;
+struct TriMatrix;
 
 class PolyDrawArgs
 {
@@ -55,6 +56,15 @@ public:
 	uint8_t stenciltestvalue = 0;
 	uint8_t stencilwritevalue = 0;
 	const uint8_t *colormaps = nullptr;
+	float clipPlane[4];
+
+	void SetClipPlane(float a, float b, float c, float d)
+	{
+		clipPlane[0] = a;
+		clipPlane[1] = b;
+		clipPlane[2] = c;
+		clipPlane[3] = d;
+	}
 
 	void SetTexture(FTexture *texture)
 	{
@@ -118,6 +128,31 @@ public:
 	}
 };
 
+struct ShadedTriVertex : public TriVertex
+{
+	float clipDistance0;
+};
+
+struct TriMatrix
+{
+	static TriMatrix null();
+	static TriMatrix identity();
+	static TriMatrix translate(float x, float y, float z);
+	static TriMatrix scale(float x, float y, float z);
+	static TriMatrix rotate(float angle, float x, float y, float z);
+	static TriMatrix swapYZ();
+	static TriMatrix perspective(float fovy, float aspect, float near, float far);
+	static TriMatrix frustum(float left, float right, float bottom, float top, float near, float far);
+
+	static TriMatrix worldToView(); // Software renderer world to view space transform
+	static TriMatrix viewToClip(); // Software renderer shearing projection
+
+	ShadedTriVertex operator*(TriVertex v) const;
+	TriMatrix operator*(const TriMatrix &m) const;
+
+	float matrix[16];
+};
+
 class PolyTriangleDrawer
 {
 public:
@@ -125,11 +160,11 @@ public:
 	static void draw(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode);
 
 private:
-	static TriVertex shade_vertex(const TriMatrix &objectToClip, TriVertex v);
+	static ShadedTriVertex shade_vertex(const TriMatrix &objectToClip, const float *clipPlane, const TriVertex &v);
 	static void draw_arrays(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode, WorkerThreadData *thread);
-	static void draw_shaded_triangle(const TriVertex *vertices, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *));
+	static void draw_shaded_triangle(const ShadedTriVertex *vertices, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *));
 	static bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2);
-	static void clipedge(const TriVertex *verts, TriVertex *clippedvert, int &numclipvert);
+	static void clipedge(const ShadedTriVertex *verts, TriVertex *clippedvert, int &numclipvert);
 
 	static int viewport_x, viewport_y, viewport_width, viewport_height, dest_pitch, dest_width, dest_height;
 	static bool dest_bgra;

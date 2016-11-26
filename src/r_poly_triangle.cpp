@@ -119,34 +119,34 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 	const TriVertex *vinput = drawargs.vinput;
 	int vcount = drawargs.vcount;
 
-	TriVertex vert[3];
+	ShadedTriVertex vert[3];
 	if (drawargs.mode == TriangleDrawMode::Normal)
 	{
 		for (int i = 0; i < vcount / 3; i++)
 		{
 			for (int j = 0; j < 3; j++)
-				vert[j] = shade_vertex(*drawargs.objectToClip, *(vinput++));
+				vert[j] = shade_vertex(*drawargs.objectToClip, drawargs.clipPlane, *(vinput++));
 			draw_shaded_triangle(vert, ccw, &args, thread, drawfunc);
 		}
 	}
 	else if (drawargs.mode == TriangleDrawMode::Fan)
 	{
-		vert[0] = shade_vertex(*drawargs.objectToClip, *(vinput++));
-		vert[1] = shade_vertex(*drawargs.objectToClip, *(vinput++));
+		vert[0] = shade_vertex(*drawargs.objectToClip, drawargs.clipPlane, *(vinput++));
+		vert[1] = shade_vertex(*drawargs.objectToClip, drawargs.clipPlane, *(vinput++));
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = shade_vertex(*drawargs.objectToClip, *(vinput++));
+			vert[2] = shade_vertex(*drawargs.objectToClip, drawargs.clipPlane, *(vinput++));
 			draw_shaded_triangle(vert, ccw, &args, thread, drawfunc);
 			vert[1] = vert[2];
 		}
 	}
 	else // TriangleDrawMode::Strip
 	{
-		vert[0] = shade_vertex(*drawargs.objectToClip, *(vinput++));
-		vert[1] = shade_vertex(*drawargs.objectToClip, *(vinput++));
+		vert[0] = shade_vertex(*drawargs.objectToClip, drawargs.clipPlane, *(vinput++));
+		vert[1] = shade_vertex(*drawargs.objectToClip, drawargs.clipPlane, *(vinput++));
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = shade_vertex(*drawargs.objectToClip, *(vinput++));
+			vert[2] = shade_vertex(*drawargs.objectToClip, drawargs.clipPlane, *(vinput++));
 			draw_shaded_triangle(vert, ccw, &args, thread, drawfunc);
 			vert[0] = vert[1];
 			vert[1] = vert[2];
@@ -155,13 +155,18 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 	}
 }
 
-TriVertex PolyTriangleDrawer::shade_vertex(const TriMatrix &objectToClip, TriVertex v)
+ShadedTriVertex PolyTriangleDrawer::shade_vertex(const TriMatrix &objectToClip, const float *clipPlane, const TriVertex &v)
 {
 	// Apply transform to get clip coordinates:
-	return objectToClip * v;
+	ShadedTriVertex sv = objectToClip * v;
+
+	// Calculate gl_ClipDistance[0]
+	sv.clipDistance0 = v.x * clipPlane[0] + v.y * clipPlane[1] + v.z * clipPlane[2] + v.w * clipPlane[3];
+
+	return sv;
 }
 
-void PolyTriangleDrawer::draw_shaded_triangle(const TriVertex *vert, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *))
+void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *))
 {
 	// Cull, clip and generate additional vertices as needed
 	TriVertex clippedvert[max_additional_vertices];
@@ -225,7 +230,7 @@ bool PolyTriangleDrawer::cullhalfspace(float clipdistance1, float clipdistance2,
 	return false;
 }
 
-void PolyTriangleDrawer::clipedge(const TriVertex *verts, TriVertex *clippedvert, int &numclipvert)
+void PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clippedvert, int &numclipvert)
 {
 	// Clip and cull so that the following is true for all vertices:
 	// -v.w <= v.x <= v.w
@@ -243,16 +248,18 @@ void PolyTriangleDrawer::clipedge(const TriVertex *verts, TriVertex *clippedvert
 	}
 	
 	// halfspace clip distances
-	float clipdistance[6 * 3];
+	static const int numclipdistances = 7;
+	float clipdistance[numclipdistances * 3];
 	for (int i = 0; i < 3; i++)
 	{
 		const auto &v = verts[i];
-		clipdistance[i * 6 + 0] = v.x + v.w;
-		clipdistance[i * 6 + 1] = v.w - v.x;
-		clipdistance[i * 6 + 2] = v.y + v.w;
-		clipdistance[i * 6 + 3] = v.w - v.y;
-		clipdistance[i * 6 + 4] = v.z + v.w;
-		clipdistance[i * 6 + 5] = v.w - v.z;
+		clipdistance[i * numclipdistances + 0] = v.x + v.w;
+		clipdistance[i * numclipdistances + 1] = v.w - v.x;
+		clipdistance[i * numclipdistances + 2] = v.y + v.w;
+		clipdistance[i * numclipdistances + 3] = v.w - v.y;
+		clipdistance[i * numclipdistances + 4] = v.z + v.w;
+		clipdistance[i * numclipdistances + 5] = v.w - v.z;
+		clipdistance[i * numclipdistances + 6] = v.clipDistance0;
 	}
 	
 	// Clip against each halfspace
@@ -260,7 +267,7 @@ void PolyTriangleDrawer::clipedge(const TriVertex *verts, TriVertex *clippedvert
 	float *output = weights + max_additional_vertices * 3;
 	int inputverts = 3;
 	int outputverts = 0;
-	for (int p = 0; p < 6; p++)
+	for (int p = 0; p < numclipdistances; p++)
 	{
 		// Clip each edge
 		outputverts = 0;
@@ -268,14 +275,14 @@ void PolyTriangleDrawer::clipedge(const TriVertex *verts, TriVertex *clippedvert
 		{
 			int j = (i + 1) % inputverts;
 			float clipdistance1 =
-				clipdistance[0 * 6 + p] * input[i * 3 + 0] +
-				clipdistance[1 * 6 + p] * input[i * 3 + 1] +
-				clipdistance[2 * 6 + p] * input[i * 3 + 2];
+				clipdistance[0 * numclipdistances + p] * input[i * 3 + 0] +
+				clipdistance[1 * numclipdistances + p] * input[i * 3 + 1] +
+				clipdistance[2 * numclipdistances + p] * input[i * 3 + 2];
 
 			float clipdistance2 =
-				clipdistance[0 * 6 + p] * input[j * 3 + 0] +
-				clipdistance[1 * 6 + p] * input[j * 3 + 1] +
-				clipdistance[2 * 6 + p] * input[j * 3 + 2];
+				clipdistance[0 * numclipdistances + p] * input[j * 3 + 0] +
+				clipdistance[1 * numclipdistances + p] * input[j * 3 + 1] +
+				clipdistance[2 * numclipdistances + p] * input[j * 3 + 2];
 				
 			float t1, t2;
 			if (!cullhalfspace(clipdistance1, clipdistance2, t1, t2) && outputverts + 1 < max_additional_vertices)
@@ -512,17 +519,20 @@ TriMatrix TriMatrix::operator*(const TriMatrix &mult) const
 	return result;
 }
 
-TriVertex TriMatrix::operator*(TriVertex v) const
+ShadedTriVertex TriMatrix::operator*(TriVertex v) const
 {
 	float vx = matrix[0 * 4 + 0] * v.x + matrix[1 * 4 + 0] * v.y + matrix[2 * 4 + 0] * v.z + matrix[3 * 4 + 0] * v.w;
 	float vy = matrix[0 * 4 + 1] * v.x + matrix[1 * 4 + 1] * v.y + matrix[2 * 4 + 1] * v.z + matrix[3 * 4 + 1] * v.w;
 	float vz = matrix[0 * 4 + 2] * v.x + matrix[1 * 4 + 2] * v.y + matrix[2 * 4 + 2] * v.z + matrix[3 * 4 + 2] * v.w;
 	float vw = matrix[0 * 4 + 3] * v.x + matrix[1 * 4 + 3] * v.y + matrix[2 * 4 + 3] * v.z + matrix[3 * 4 + 3] * v.w;
-	v.x = vx;
-	v.y = vy;
-	v.z = vz;
-	v.w = vw;
-	return v;
+	ShadedTriVertex sv;
+	sv.x = vx;
+	sv.y = vy;
+	sv.z = vz;
+	sv.w = vw;
+	for (int i = 0; i < TriVertex::NumVarying; i++)
+		sv.varying[i] = v.varying[i];
+	return sv;
 }
 
 /////////////////////////////////////////////////////////////////////////////

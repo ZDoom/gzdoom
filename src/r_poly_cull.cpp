@@ -177,7 +177,7 @@ bool PolyCull::CheckBBox(float *bspcoord)
 
 	// Skip if its in front of the portal:
 
-	if (PortalClipPlane != Vec4f(0.0f) && IntersectionTest::plane_aabb(PortalClipPlane, aabb) == IntersectionTest::outside)
+	if (IntersectionTest::plane_aabb(PortalClipPlane, aabb) == IntersectionTest::outside)
 		return false;
 
 	// Occlusion test using solid segments:

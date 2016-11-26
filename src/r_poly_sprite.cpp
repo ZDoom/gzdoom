@@ -27,11 +27,12 @@
 #include "r_data/r_translate.h"
 #include "r_poly_sprite.h"
 #include "r_poly.h"
+#include "r_poly_intersection.h"
 
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, r_drawfuzz)
 
-void RenderPolySprite::Render(const TriMatrix &worldToClip, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
+void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
 {
 	if (IsThingCulled(thing))
 		return;
@@ -138,6 +139,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, AActor *thing, subse
 	args.stencilwritevalue = stencilValue;
 	args.SetTexture(tex, thing->Translation);
 	args.SetColormap(sub->sector->ColorMap);
+	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
 
 	TriBlendMode blendmode;
 	

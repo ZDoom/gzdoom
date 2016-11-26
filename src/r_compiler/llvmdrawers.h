@@ -191,26 +191,6 @@ struct TriVertex
 	float varying[NumVarying];
 };
 
-struct TriMatrix
-{
-	static TriMatrix null();
-	static TriMatrix identity();
-	static TriMatrix translate(float x, float y, float z);
-	static TriMatrix scale(float x, float y, float z);
-	static TriMatrix rotate(float angle, float x, float y, float z);
-	static TriMatrix swapYZ();
-	static TriMatrix perspective(float fovy, float aspect, float near, float far);
-	static TriMatrix frustum(float left, float right, float bottom, float top, float near, float far);
-
-	static TriMatrix worldToView(); // Software renderer world to view space transform
-	static TriMatrix viewToClip(); // Software renderer shearing projection
-
-	TriVertex operator*(TriVertex v) const;
-	TriMatrix operator*(const TriMatrix &m) const;
-
-	float matrix[16];
-};
-
 struct TriUniforms
 {
 	uint32_t light;

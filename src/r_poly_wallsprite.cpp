@@ -28,7 +28,7 @@
 #include "r_poly_wallsprite.h"
 #include "r_poly.h"
 
-void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
+void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
 {
 	if (RenderPolySprite::IsThingCulled(thing))
 		return;
@@ -120,5 +120,6 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, AActor *thing, s
 	args.stencilwritevalue = stencilValue;
 	args.SetTexture(tex);
 	args.SetColormap(sub->sector->ColorMap);
+	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
 	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::AlphaBlend);
 }

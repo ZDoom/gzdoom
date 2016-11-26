@@ -35,7 +35,7 @@
 
 EXTERN_CVAR(Bool, r_drawmirrors)
 
-bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals)
+bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipPlane, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals)
 {
 	PolyDrawLinePortal *polyportal = nullptr;
 	if (line->backsector == nullptr && line->sidedef == line->linedef->sidedef[0] && (line->linedef->special == Line_Mirror && r_drawmirrors))
@@ -85,7 +85,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, seg_t *line, secto
 			wall.UnpeggedCeil = frontceilz1;
 			wall.Texpart = side_t::mid;
 			wall.Polyportal = polyportal;
-			wall.Render(worldToClip);
+			wall.Render(worldToClip, clipPlane);
 			return true;
 		}
 	}
@@ -120,7 +120,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, seg_t *line, secto
 			wall.BottomZ = topfloorz1;
 			wall.UnpeggedCeil = topceilz1;
 			wall.Texpart = side_t::top;
-			wall.Render(worldToClip);
+			wall.Render(worldToClip, clipPlane);
 		}
 
 		if ((bottomfloorz1 < bottomceilz1 || bottomfloorz2 < bottomceilz2) && line->sidedef)
@@ -130,7 +130,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, seg_t *line, secto
 			wall.BottomZ = bottomfloorz2;
 			wall.UnpeggedCeil = topceilz1;
 			wall.Texpart = side_t::bottom;
-			wall.Render(worldToClip);
+			wall.Render(worldToClip, clipPlane);
 		}
 
 		if (line->sidedef)
@@ -149,14 +149,14 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, seg_t *line, secto
 			if (polyportal)
 			{
 				wall.Polyportal = polyportal;
-				wall.Render(worldToClip);
+				wall.Render(worldToClip, clipPlane);
 			}
 		}
 	}
 	return polyportal != nullptr;
 }
 
-void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject> &translucentWallsOutput)
+void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const Vec4f &clipPlane, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject> &translucentWallsOutput)
 {
 	double frontceilz1 = fakeFloor->top.plane->ZatPoint(line->v1);
 	double frontfloorz1 = fakeFloor->bottom.plane->ZatPoint(line->v1);
@@ -176,7 +176,7 @@ void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, seg_t *line
 	wall.BottomZ = frontfloorz1;
 	wall.UnpeggedCeil = frontceilz1;
 	wall.Texpart = side_t::mid;
-	wall.Render(worldToClip);
+	wall.Render(worldToClip, clipPlane);
 }
 
 void RenderPolyWall::SetCoords(const DVector2 &v1, const DVector2 &v2, double ceil1, double floor1, double ceil2, double floor2)
@@ -189,7 +189,7 @@ void RenderPolyWall::SetCoords(const DVector2 &v1, const DVector2 &v2, double ce
 	this->floor2 = floor2;
 }
 
-void RenderPolyWall::Render(const TriMatrix &worldToClip)
+void RenderPolyWall::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane)
 {
 	FTexture *tex = GetTexture();
 	if (!tex && !Polyportal)
@@ -253,6 +253,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 	if (tex)
 		args.SetTexture(tex);
 	args.SetColormap(Line->frontsector->ColorMap);
+	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
 
 	if (Polyportal)
 	{
@@ -275,7 +276,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Add);
 	}
 
-	RenderPolyDecal::RenderWallDecals(worldToClip, LineSeg, SubsectorDepth, StencilValue);
+	RenderPolyDecal::RenderWallDecals(worldToClip, clipPlane, LineSeg, SubsectorDepth, StencilValue);
 }
 
 void RenderPolyWall::ClampHeight(TriVertex &v1, TriVertex &v2)

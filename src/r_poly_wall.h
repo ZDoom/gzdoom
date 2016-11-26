@@ -26,15 +26,16 @@
 
 class PolyTranslucentObject;
 class PolyDrawLinePortal;
+class Vec4f;
 
 class RenderPolyWall
 {
 public:
-	static bool RenderLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals);
-	static void Render3DFloorLine(const TriMatrix &worldToClip, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject> &translucentWallsOutput);
+	static bool RenderLine(const TriMatrix &worldToClip, const Vec4f &clipPlane, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals);
+	static void Render3DFloorLine(const TriMatrix &worldToClip, const Vec4f &clipPlane, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject> &translucentWallsOutput);
 
 	void SetCoords(const DVector2 &v1, const DVector2 &v2, double ceil1, double floor1, double ceil2, double floor2);
-	void Render(const TriMatrix &worldToClip);
+	void Render(const TriMatrix &worldToClip, const Vec4f &clipPlane);
 
 	DVector2 v1;
 	DVector2 v2;

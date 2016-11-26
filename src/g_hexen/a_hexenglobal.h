@@ -3,26 +3,6 @@
 
 #include "d_player.h"
 
-void AdjustPlayerAngle(AActor *pmo, FTranslatedLineTarget *t);
-
-class AFighterWeapon : public AWeapon
-{
-	DECLARE_CLASS (AFighterWeapon, AWeapon);
-public:
-};
-
-class AClericWeapon : public AWeapon
-{
-	DECLARE_CLASS (AClericWeapon, AWeapon);
-public:
-};
-
-class AMageWeapon : public AWeapon
-{
-	DECLARE_CLASS (AMageWeapon, AWeapon);
-public:
-};
-
 class AArtiPoisonBag : public AInventory
 {
 	DECLARE_CLASS (AArtiPoisonBag, AInventory)

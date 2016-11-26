@@ -838,6 +838,7 @@ FState *AWeapon::GetUpState ()
 		stack.Call(func, params, 1, &ret, 1, nullptr);
 		return retval;
 	}
+	return nullptr;
 }
 
 //===========================================================================
@@ -858,6 +859,7 @@ FState *AWeapon::GetDownState ()
 		stack.Call(func, params, 1, &ret, 1, nullptr);
 		return retval;
 	}
+	return nullptr;
 }
 
 //===========================================================================
@@ -878,6 +880,7 @@ FState *AWeapon::GetReadyState ()
 		stack.Call(func, params, 1, &ret, 1, nullptr);
 		return retval;
 	}
+	return nullptr;
 }
 
 //===========================================================================
@@ -898,6 +901,7 @@ FState *AWeapon::GetAtkState (bool hold)
 		stack.Call(func, params, 2, &ret, 1, nullptr);
 		return retval;
 	}
+	return nullptr;
 }
 
 //===========================================================================
@@ -918,6 +922,7 @@ FState *AWeapon::GetAltAtkState (bool hold)
 		stack.Call(func, params, 2, &ret, 1, nullptr);
 		return retval;
 	}
+	return nullptr;
 }
 
 //===========================================================================

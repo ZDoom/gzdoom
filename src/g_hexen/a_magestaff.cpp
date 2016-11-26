@@ -11,6 +11,14 @@
 #include "doomstat.h"
 */
 
+class AMageWeapon : public AWeapon
+{
+	DECLARE_CLASS (AMageWeapon, AWeapon);
+public:
+};
+
+IMPLEMENT_CLASS(AMageWeapon, false, false)
+
 static FRandom pr_mstafftrack ("MStaffTrack");
 static FRandom pr_bloodscourgedrop ("BloodScourgeDrop");
 

@@ -1,7 +1,7 @@
 // The Doom and Heretic players are not excluded from pickup in case
 // somebody wants to use these weapons with either of those games.
 
-class FighterWeapon : Weapon native
+class FighterWeapon : Weapon
 {
 	Default
 	{
@@ -10,7 +10,7 @@ class FighterWeapon : Weapon native
 	}
 }
 
-class ClericWeapon : Weapon native
+class ClericWeapon : Weapon
 {
 	Default
 	{
@@ -25,5 +25,40 @@ class MageWeapon : Weapon native
 	{
 		Weapon.Kickback 150;
 		Inventory.ForbiddenTo "FighterPlayer", "ClericPlayer";
+	}
+}
+
+extend class Actor
+{
+	//============================================================================
+	//
+	//	AdjustPlayerAngle
+	//
+	//============================================================================
+
+	const MAX_ANGLE_ADJUST = (5.);
+
+	void AdjustPlayerAngle(FTranslatedLineTarget t)
+	{
+		// normally this will adjust relative to the actual direction to the target,
+		// but with arbitrary portals that cannot be calculated so using the actual
+		// attack angle is the only option.
+		double atkangle = t.unlinked ? t.angleFromSource : AngleTo(t.linetarget);
+		double difference = deltaangle(Angle, atkangle);
+		if (abs(difference) > MAX_ANGLE_ADJUST)
+		{
+			if (difference > 0)
+			{
+				angle += MAX_ANGLE_ADJUST;
+			}
+			else
+			{
+				angle -= MAX_ANGLE_ADJUST;
+			}
+		}
+		else
+		{
+			angle = t.angleFromSource;
+		}
 	}
 }

@@ -13,8 +13,6 @@ class FWeapFist : FighterWeapon
 		Tag "$TAG_FWEAPFIST";
 	}
 
-	action native void A_FPunchAttack();
-
 	States
 	{
 	Select:
@@ -44,6 +42,85 @@ class FWeapFist : FighterWeapon
 		FPCH E 10 Offset (0, 150);
 		Goto Ready;
 	}
+	
+	//============================================================================
+	//
+	// TryPunch
+	//
+	// Returns true if an actor was punched, false if not.
+	//
+	//============================================================================
+
+	private action bool TryPunch(double angle, int damage, int power)
+	{
+		Class<Actor> pufftype;
+		FTranslatedLineTarget t;
+
+		double slope = AimLineAttack (angle, 2*MELEERANGE, t);
+		if (t.linetarget != null)
+		{
+			if (++weaponspecial >= 3)
+			{
+				damage <<= 1;
+				power *= 3;
+				pufftype = "HammerPuff";
+			}
+			else
+			{
+				pufftype = "PunchPuff";
+			}
+			LineAttack (angle, 2*MELEERANGE, slope, damage, 'Melee', pufftype, true, t);
+			if (t.linetarget != null)
+			{
+				// The mass threshold has been changed to CommanderKeen's value which has been used most often for 'unmovable' stuff.
+				if (t.linetarget.player != null || 
+					(t.linetarget.Mass < 10000000 && (t.linetarget.bIsMonster)))
+				{
+					if (!t.linetarget.bDontThrust)
+						t.linetarget.Thrust(power, t.angleFromSource);
+				}
+				AdjustPlayerAngle(t);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	//============================================================================
+	//
+	// A_FPunchAttack
+	//
+	//============================================================================
+
+	action void A_FPunchAttack()
+	{
+		if (player == null)
+		{
+			return;
+		}
+
+		int damage = 40 + (random[FighterAtk]() & 15);
+		for (int i = 0; i < 16; i++)
+		{
+			if (TryPunch(angle + i*(45./16), damage, 2) ||
+				TryPunch(angle - i*(45./16), damage, 2))
+			{ // hit something
+				if (weaponspecial >= 3)
+				{
+					weaponspecial = 0;
+					player.SetPsprite(PSP_WEAPON, player.ReadyWeapon.FindState("Fire2"));
+					A_PlaySound ("*fistgrunt", CHAN_VOICE);
+				}
+				return;
+			}
+		}
+		// didn't find any creatures, so try to strike any walls
+		weaponspecial = 0;
+
+		double slope = AimLineAttack (angle, MELEERANGE);
+		LineAttack (angle, MELEERANGE, slope, damage, 'Melee', "PunchPuff", true);
+	}
+	
 }
 
 // Punch puff ---------------------------------------------------------------

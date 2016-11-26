@@ -24,7 +24,6 @@
 #include "serializer.h"
 
 // Include all the Hexen stuff here to reduce compile time
-#include "a_fighteraxe.cpp"
 #include "a_fighterhammer.cpp"
 #include "a_fighterplayer.cpp"
 #include "a_fighterquietus.cpp"

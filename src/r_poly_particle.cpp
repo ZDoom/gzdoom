@@ -70,33 +70,32 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, particle_t *partic
 	// int color = (particle->color >> 24) & 0xff; // pal index, I think
 	bool fullbrightSprite = particle->bright != 0;
 
-	TriUniforms uniforms;
+	PolyDrawArgs args;
+
 	if (fullbrightSprite || fixedlightlev >= 0 || fixedcolormap)
 	{
-		uniforms.light = 256;
-		uniforms.flags = TriUniforms::fixed_light;
+		args.uniforms.light = 256;
+		args.uniforms.flags = TriUniforms::fixed_light;
 	}
 	else
 	{
-		uniforms.light = (uint32_t)((sub->sector->lightlevel + actualextralight) / 255.0f * 256.0f);
-		uniforms.flags = 0;
+		args.uniforms.light = (uint32_t)((sub->sector->lightlevel + actualextralight) / 255.0f * 256.0f);
+		args.uniforms.flags = 0;
 	}
-	uniforms.subsectorDepth = subsectorDepth;
+	args.uniforms.subsectorDepth = subsectorDepth;
 
 	if (r_swtruecolor)
 	{
 		uint32_t alpha = particle->trans;
-		uniforms.color = (alpha << 24) | (particle->color & 0xffffff);
+		args.uniforms.color = (alpha << 24) | (particle->color & 0xffffff);
 	}
 	else
 	{
-		uniforms.color = ((uint32_t)particle->color) >> 24;
-		uniforms.srcalpha = particle->trans;
-		uniforms.destalpha = 255 - particle->trans;
+		args.uniforms.color = ((uint32_t)particle->color) >> 24;
+		args.uniforms.srcalpha = particle->trans;
+		args.uniforms.destalpha = 255 - particle->trans;
 	}
 
-	PolyDrawArgs args;
-	args.uniforms = uniforms;
 	args.objectToClip = &worldToClip;
 	args.vinput = vertices;
 	args.vcount = 4;

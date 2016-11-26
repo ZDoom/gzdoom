@@ -239,13 +239,10 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip)
 		ClampHeight(vertices[1], vertices[2]);
 	}
 
-	TriUniforms uniforms;
-	uniforms.light = (uint32_t)(GetLightLevel() / 255.0f * 256.0f);
-	uniforms.flags = 0;
-	uniforms.subsectorDepth = SubsectorDepth;
-
 	PolyDrawArgs args;
-	args.uniforms = uniforms;
+	args.uniforms.light = (uint32_t)(GetLightLevel() / 255.0f * 256.0f);
+	args.uniforms.flags = 0;
+	args.uniforms.subsectorDepth = SubsectorDepth;
 	args.objectToClip = &worldToClip;
 	args.vinput = vertices;
 	args.vcount = 4;

@@ -103,12 +103,12 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, subsector_t *s
 		lightlevel = *light->p_lightlevel;
 	}
 
-	TriUniforms uniforms;
-	uniforms.light = (uint32_t)(lightlevel / 255.0f * 256.0f);
+	PolyDrawArgs args;
+	args.uniforms.light = (uint32_t)(lightlevel / 255.0f * 256.0f);
 	if (fixedlightlev >= 0 || fixedcolormap)
-		uniforms.light = 256;
-	uniforms.flags = 0;
-	uniforms.subsectorDepth = subsectorDepth;
+		args.uniforms.light = 256;
+	args.uniforms.flags = 0;
+	args.uniforms.subsectorDepth = subsectorDepth;
 
 	TriVertex *vertices = PolyVertexBuffer::GetVertices(sub->numlines);
 	if (!vertices)
@@ -131,8 +131,6 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, subsector_t *s
 		}
 	}
 
-	PolyDrawArgs args;
-	args.uniforms = uniforms;
 	args.objectToClip = &worldToClip;
 	args.vinput = vertices;
 	args.vcount = sub->numlines;
@@ -217,12 +215,12 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 
 	bool isSky = picnum == skyflatnum;
 
-	TriUniforms uniforms;
-	uniforms.light = (uint32_t)(frontsector->lightlevel / 255.0f * 256.0f);
+	PolyDrawArgs args;
+	args.uniforms.light = (uint32_t)(frontsector->lightlevel / 255.0f * 256.0f);
 	if (fixedlightlev >= 0 || fixedcolormap)
-		uniforms.light = 256;
-	uniforms.flags = 0;
-	uniforms.subsectorDepth = isSky ? RenderPolyPortal::SkySubsectorDepth : subsectorDepth;
+		args.uniforms.light = 256;
+	args.uniforms.flags = 0;
+	args.uniforms.subsectorDepth = isSky ? RenderPolyPortal::SkySubsectorDepth : subsectorDepth;
 
 	TriVertex *vertices = PolyVertexBuffer::GetVertices(sub->numlines);
 	if (!vertices)
@@ -245,8 +243,6 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, subsector_t *sub, uin
 		}
 	}
 
-	PolyDrawArgs args;
-	args.uniforms = uniforms;
 	args.objectToClip = &worldToClip;
 	args.vinput = vertices;
 	args.vcount = sub->numlines;

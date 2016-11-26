@@ -98,21 +98,19 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, AActor *thing, s
 
 	bool fullbrightSprite = ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 
-	TriUniforms uniforms;
+	PolyDrawArgs args;
 	if (fullbrightSprite || fixedlightlev >= 0 || fixedcolormap)
 	{
-		uniforms.light = 256;
-		uniforms.flags = TriUniforms::fixed_light;
+		args.uniforms.light = 256;
+		args.uniforms.flags = TriUniforms::fixed_light;
 	}
 	else
 	{
-		uniforms.light = (uint32_t)((thing->Sector->lightlevel + actualextralight) / 255.0f * 256.0f);
-		uniforms.flags = 0;
+		args.uniforms.light = (uint32_t)((thing->Sector->lightlevel + actualextralight) / 255.0f * 256.0f);
+		args.uniforms.flags = 0;
 	}
-	uniforms.subsectorDepth = subsectorDepth;
+	args.uniforms.subsectorDepth = subsectorDepth;
 
-	PolyDrawArgs args;
-	args.uniforms = uniforms;
 	args.objectToClip = &worldToClip;
 	args.vinput = vertices;
 	args.vcount = 4;

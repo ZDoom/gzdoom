@@ -50,15 +50,12 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 	TriMatrix objectToWorld = TriMatrix::translate((float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z);
 	objectToClip = worldToClip * objectToWorld;
 
-	TriUniforms uniforms;
-	uniforms.light = 256;
-	uniforms.flags = 0;
-	uniforms.subsectorDepth = RenderPolyPortal::SkySubsectorDepth;
-
 	int rc = mRows + 1;
 
 	PolyDrawArgs args;
-	args.uniforms = uniforms;
+	args.uniforms.light = 256;
+	args.uniforms.flags = 0;
+	args.uniforms.subsectorDepth = RenderPolyPortal::SkySubsectorDepth;
 	args.objectToClip = &objectToClip;
 	args.stenciltestvalue = 255;
 	args.stencilwritevalue = 255;

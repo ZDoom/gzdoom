@@ -621,8 +621,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetCrouchFactor)
 //
 //==========================================================================
 
-EXTERN_CVAR(Bool, sv_overridegetcvar)
-
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetCVar)
 {
 	if (numret > 0)
@@ -635,10 +633,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetCVar)
 		if (cvar == nullptr)
 		{
 			ret->SetFloat(0);
-		}
-		else if (sv_overridegetcvar && (cvar->GetFlags() & CVAR_OVERRIDEGET))
-		{
-			ret->SetFloat(cvar->GetGenericRepDefault(CVAR_Float).Float);
 		}
 		else
 		{

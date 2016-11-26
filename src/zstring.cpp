@@ -397,6 +397,7 @@ void FString::Remove(size_t index, size_t remlen)
 			if (Data()->RefCount == 1)
 			{ // Can do this in place
 				memmove(Chars + index, Chars + index + remlen, Len() - index - remlen);
+				memset(Chars + Len() - remlen, 0, remlen);
 				Data()->Len -= (unsigned)remlen;
 			}
 			else

@@ -323,9 +323,6 @@ class HolySpirit : Actor
 		Obituary "$OB_MPCWEAPWRAITHVERGE";
 	}
 
-	native void A_CHolySeek();
-	native void A_CHolyCheckScream();
-
 	States
 	{
 	Spawn:
@@ -401,7 +398,140 @@ class HolySpirit : Actor
 		return true;
 	}
 
-	
+	//============================================================================
+	//
+	// CHolyFindTarget
+	//
+	//============================================================================
+
+	private void CHolyFindTarget ()
+	{
+		Actor target;
+
+		if ( (target = RoughMonsterSearch (6, true)) )
+		{
+			tracer = target;
+			bNoClip = true;
+			bSkullFly = true;
+			bMissile = false;
+		}
+	}
+
+	//============================================================================
+	//
+	// CHolySeekerMissile
+	//
+	// 	 Similar to P_SeekerMissile, but seeks to a random Z on the target
+	//============================================================================
+
+	private void CHolySeekerMissile (double thresh, double turnMax)
+	{
+		Actor target = tracer;
+		if (target == NULL)
+		{
+			return;
+		}
+		if (!target.bShootable || (!target.bIsMonster && !target.player))
+		{ // Target died/target isn't a player or creature
+			tracer = null;
+			bNoClip = false;
+			bSkullFly = false;
+			bMissile = true;
+			CHolyFindTarget();
+			return;
+		}
+		double ang = deltaangle(angle, AngleTo(target));
+		double delta = abs(ang);
+		
+		if (delta > thresh)
+		{
+			delta /= 2;
+			if (delta > turnMax)
+			{
+				delta = turnMax;
+			}
+		}
+		if (ang > 0)
+		{ // Turn clockwise
+			angle += delta;
+		}
+		else
+		{ // Turn counter clockwise
+			angle -= delta;
+		}
+		VelFromAngle();
+
+		if (!(level.time&15) 
+			|| pos.z > target.pos.z + target.height
+			|| pos.z + height < target.pos.z)
+		{
+			double newZ = target.pos.z + ((random[HolySeeker]()*target.Height) / 256.);
+			double deltaZ = newZ - pos.z;
+			if (abs(deltaZ) > 15)
+			{
+				if (deltaZ > 0)
+				{
+					deltaZ = 15;
+				}
+				else
+				{
+					deltaZ = -15;
+				}
+			}
+			Vel.Z = deltaZ / DistanceBySpeed(target, Speed);
+		}
+	}
+
+	//============================================================================
+	//
+	// A_CHolySeek
+	//
+	//============================================================================
+
+	void A_CHolySeek()
+	{
+		health--;
+		if (health <= 0)
+		{
+			Vel.X /= 4;
+			Vel.Y /= 4;
+			Vel.Z = 0;
+			SetStateLabel ("Death");
+			tics -= random[HolySeeker]()&3;
+			return;
+		}
+		if (tracer)
+		{
+			CHolySeekerMissile (args[0], args[0]*2.);
+			if (!((level.time+7)&15))
+			{
+				args[0] = 5+(random[HolySeeker]()/20);
+			}
+		}
+
+		int xyspeed = (random[HolySeeker]() % 5);
+		int zspeed = (random[HolySeeker]() % 5);
+		A_Weave(xyspeed, zspeed, 4., 2.);
+	}
+
+	//============================================================================
+	//
+	// A_CHolyCheckScream
+	//
+	//============================================================================
+
+	void A_CHolyCheckScream()
+	{
+		A_CHolySeek();
+		if (random[HolyScream]() < 20)
+		{
+			A_PlaySound ("SpiritActive", CHAN_VOICE);
+		}
+		if (!tracer)
+		{
+			CHolyFindTarget();
+		}
+	}
 }
 
 // Holy Tail ----------------------------------------------------------------
@@ -513,7 +643,7 @@ class HolyTail : Actor
 
 	void A_CHolyTail()
 	{
-		Actor parent = self.target;
+		Actor parent = target;
 
 		if (parent == null || parent.health <= 0)	// better check for health than current state - it's safer!
 		{ // Ghost removed, so remove all tail parts
@@ -524,7 +654,7 @@ class HolyTail : Actor
 		{
 			if (TryMove(parent.Vec2Angle(14., parent.Angle, true), true))
 			{
-				self.SetZ(parent.pos.z - 5.);
+				SetZ(parent.pos.z - 5.);
 			}
 			CHolyTailFollow(10);
 		}

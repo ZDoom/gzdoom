@@ -56,13 +56,7 @@ void RenderPolyPortal::Render(int portalDepth)
 	ClearBuffers();
 	Cull.CullScene(WorldToClip);
 	RenderSectors();
-	if (portalDepth < r_portal_recursions)
-	{
-		for (auto &portal : SectorPortals)
-			portal->Render(portalDepth + 1);
-		for (auto &portal : LinePortals)
-			portal->Render(portalDepth + 1);
-	}
+	RenderPortals(portalDepth);
 }
 
 void RenderPolyPortal::ClearBuffers()
@@ -195,6 +189,55 @@ void RenderPolyPortal::RenderLine(subsector_t *sub, seg_t *line, sector_t *front
 	}
 }
 
+void RenderPolyPortal::RenderPortals(int portalDepth)
+{
+	if (portalDepth < r_portal_recursions)
+	{
+		for (auto &portal : SectorPortals)
+			portal->Render(portalDepth + 1);
+
+		for (auto &portal : LinePortals)
+			portal->Render(portalDepth + 1);
+	}
+	else // Fill with black
+	{
+		PolyDrawArgs args;
+		args.objectToClip = &WorldToClip;
+		args.mode = TriangleDrawMode::Fan;
+		args.uniforms.color = 0;
+		args.uniforms.light = 256;
+		args.uniforms.flags = TriUniforms::fixed_light;
+
+		for (auto &portal : SectorPortals)
+		{
+			args.stenciltestvalue = portal->StencilValue;
+			args.stencilwritevalue = portal->StencilValue + 1;
+			for (const auto &verts : portal->Shape)
+			{
+				args.vinput = verts.Vertices;
+				args.vcount = verts.Count;
+				args.ccw = verts.Ccw;
+				args.uniforms.subsectorDepth = verts.SubsectorDepth;
+				PolyTriangleDrawer::draw(args, TriDrawVariant::FillNormal, TriBlendMode::Copy);
+			}
+		}
+
+		for (auto &portal : LinePortals)
+		{
+			args.stenciltestvalue = portal->StencilValue;
+			args.stencilwritevalue = portal->StencilValue + 1;
+			for (const auto &verts : portal->Shape)
+			{
+				args.vinput = verts.Vertices;
+				args.vcount = verts.Count;
+				args.ccw = verts.Ccw;
+				args.uniforms.subsectorDepth = verts.SubsectorDepth;
+				PolyTriangleDrawer::draw(args, TriDrawVariant::FillNormal, TriBlendMode::Copy);
+			}
+		}
+	}
+}
+
 void RenderPolyPortal::RenderTranslucent(int portalDepth)
 {
 	if (portalDepth < r_portal_recursions)
@@ -236,7 +279,7 @@ void RenderPolyPortal::RenderTranslucent(int portalDepth)
 				args.ccw = verts.Ccw;
 				args.uniforms.subsectorDepth = verts.SubsectorDepth;
 				PolyTriangleDrawer::draw(args, TriDrawVariant::StencilClose, TriBlendMode::Copy);
-				}
+			}
 		}
 	}
 
@@ -490,7 +533,7 @@ void PolyDrawLinePortal::SaveGlobals()
 	}
 
 	camera = nullptr;
-	//viewsector = Portal->mDestination;
+	//viewsector = R_PointInSubsector(ViewPos)->sector;
 	R_SetViewAngle();
 }
 

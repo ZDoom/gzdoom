@@ -54,6 +54,7 @@ public:
 	bool Masked = false;
 	uint32_t SubsectorDepth = 0;
 	uint32_t StencilValue = 0;
+	PolyDrawLinePortal *Polyportal = nullptr;
 
 private:
 	void ClampHeight(TriVertex &v1, TriVertex &v2);

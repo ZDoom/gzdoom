@@ -289,6 +289,7 @@ class Actor : Thinker native
 	native void NoiseAlert(Actor emitter, bool splash = false, double maxdist = 0);
 	native void ClearBounce();
 
+	native void ExplodeMissile(line lin = null, Actor target = null);
 	native void RestoreDamage();
 	native int SpawnHealth();
 	native void SetDamage(int dmg);

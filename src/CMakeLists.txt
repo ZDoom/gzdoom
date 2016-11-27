@@ -860,8 +860,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	sc_man_scanner.h
 	sc_man_scanner.re
 	g_hexen/a_heresiarch.cpp
-	g_hexen/a_magecone.cpp
-	g_hexen/a_magelightning.cpp
 	g_hexen/a_magestaff.cpp
 	g_hexen/a_serpent.cpp
 	g_hexen/a_spike.cpp

@@ -1751,6 +1751,15 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, ExplodeMissile)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER_DEF(line, line_t);
+	PARAM_OBJECT_DEF(target, AActor);
+	P_ExplodeMissile(self, line, target);
+	return 0;
+}
+
 
 void AActor::PlayBounceSound(bool onfloor)
 {

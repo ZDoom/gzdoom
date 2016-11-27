@@ -24,9 +24,7 @@
 #include "a_pickups.h"
 
 // Include all the Hexen stuff here to reduce compile time
-#include "a_flies.cpp"
 #include "a_heresiarch.cpp"
-#include "a_hexenspecialdecs.cpp"
 #include "a_magecone.cpp"
 #include "a_magelightning.cpp"
 #include "a_magestaff.cpp"

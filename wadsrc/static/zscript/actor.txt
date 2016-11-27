@@ -270,6 +270,7 @@ class Actor : Thinker native
 
 
 	native static double GetDefaultSpeed(class<Actor> type);
+	native static class<Actor> GetSpawnableType(int spawnnum);
 	native void RemoveFromHash();
 	native string GetTag(string defstr = "");
 	native double GetBobOffset(double frac = 0);

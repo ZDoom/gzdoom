@@ -92,6 +92,7 @@ struct LevelLocals native
 	native bool monsterfallingdamage;
 	native bool checkswitchrange;
 	native bool polygrind;
+	native bool nomonsters;
 // level_info_t *info cannot be done yet.
 }
 

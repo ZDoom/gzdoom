@@ -95,7 +95,6 @@ class Pottery1 : Actor
 		+NOICEDEATH
 	}
 
-	native void A_PotteryExplode();
 
 	States
 	{
@@ -105,6 +104,40 @@ class Pottery1 : Actor
 	Death:
 		POT1 A 0 A_PotteryExplode;
 		Stop;
+	}
+	
+	//============================================================================
+	//
+	// A_PotteryExplode
+	//
+	//============================================================================
+
+	void A_PotteryExplode()
+	{
+		Actor mo = null;
+		int i;
+
+		for(i = (random[Pottery]()&3)+3; i; i--)
+		{
+			mo = Spawn ("PotteryBit", Pos, ALLOW_REPLACE);
+			if (mo)
+			{
+				mo.SetState (mo.SpawnState + (random[Pottery]()%5));
+				mo.Vel.X = random2[Pottery]() / 64.;
+				mo.Vel.Y = random2[Pottery]() / 64.;
+				mo.Vel.Z = ((random[Pottery]() & 7) + 5) * 0.75;
+			}
+		}
+		mo.A_PlaySound ("PotteryExplode", CHAN_BODY);
+		// Spawn an item?
+		Class<Actor> type = GetSpawnableType(args[0]);
+		if (type != null)
+		{
+			if (!(level.nomonsters || sv_nomonsters) || !(GetDefaultByType (type).bIsMonster))
+			{ // Only spawn monsters if not -nomonsters
+				Spawn (type, Pos, ALLOW_REPLACE);
+			}
+		}
 	}
 }
 
@@ -144,6 +177,8 @@ class Pottery3 : Pottery1
 
 class PotteryBit : Actor
 {
+	State LoopState;
+	
 	Default
 	{
 		Radius 5;
@@ -152,9 +187,6 @@ class PotteryBit : Actor
 		+NOTELEPORT
 		+NOICEDEATH
 	}
-
-	native void A_PotteryChooseBit();
-	native void A_PotteryCheck();
 
 	States
 	{
@@ -185,6 +217,42 @@ class PotteryBit : Actor
 		PBIT J 1 A_PotteryCheck;
 		Stop;
 	}
+	
+	//============================================================================
+	//
+	// A_PotteryChooseBit
+	//
+	//============================================================================
+
+	void A_PotteryChooseBit()
+	{
+		static const statelabel bits[] = { "Pottery1", "Pottery2", "Pottery3", "Pottery4", "Pottery5" };
+		LoopState = FindState(bits[random[PotteryBit]() % 5]);	// Save the state for jumping back to.
+		SetState (LoopState);
+		tics = 256 + (random[PotteryBit]() << 1);
+	}
+
+	//============================================================================
+	//
+	// A_PotteryCheck
+	//
+	//============================================================================
+
+	void A_PotteryCheck()
+	{
+		for(int i = 0; i < MAXPLAYERS; i++)
+		{
+			if (playeringame[i])
+			{
+				Actor pmo = players[i].mo;
+				if (CheckSight (pmo) && (absangle(pmo.AngleTo(self), pmo.Angle) <= 45))
+				{ // jump back to previpusly set state.
+					SetState (LoopState);
+					return;
+				}
+			}
+		}
+	}
 }
 
 
@@ -203,7 +271,7 @@ class BloodPool : Actor
 
 // Lynched corpse (no heart) ------------------------------------------------
 
-class ZCorpseLynchedNoHeart : Actor native
+class ZCorpseLynchedNoHeart : Actor
 {
 	Default
 	{
@@ -212,13 +280,31 @@ class ZCorpseLynchedNoHeart : Actor native
 		+SOLID +SPAWNCEILING +NOGRAVITY
 	}
 
-	native void A_CorpseBloodDrip();
-
 	States
 	{
 	Spawn:
 		CPS5 A 140 A_CorpseBloodDrip;
 		Loop;
+	}
+	
+	override void PostBeginPlay ()
+	{
+		Super.PostBeginPlay ();
+		Spawn ("BloodPool", (pos.xy, floorz), ALLOW_REPLACE);
+	}
+
+	//============================================================================
+	//
+	// A_CorpseBloodDrip
+	//
+	//============================================================================
+
+	void A_CorpseBloodDrip()
+	{
+		if (random[CorpseDrip]() <= 128)
+		{
+			Spawn ("CorpseBloodDrip", pos + (0, 0, Height / 2), ALLOW_REPLACE);
+		}
 	}
 }
 
@@ -289,8 +375,6 @@ class ZCorpseSitting : Actor
 		DeathSound "FireDemonDeath";
 	}
 
-	native void A_CorpseExplode();
-
 	States
 	{
 	Spawn:
@@ -299,6 +383,40 @@ class ZCorpseSitting : Actor
 	Death:
 		CPS6 A 1 A_CorpseExplode;
 		Stop;
+	}
+	
+	//============================================================================
+	//
+	// A_CorpseExplode
+	//
+	//============================================================================
+
+	void A_CorpseExplode()
+	{
+		Actor mo;
+
+		for (int i = (random[CorpseExplode]() & 3) + 3; i; i--)
+		{
+			mo = Spawn ("CorpseBit", Pos, ALLOW_REPLACE);
+			if (mo)
+			{
+				mo.SetState (mo.SpawnState + (random[CorpseExplode]() % 3));
+				mo.Vel.X = random2[CorpseExplode]() / 64.;
+				mo.Vel.Y = random2[CorpseExplode]() / 64.;
+				mo.Vel.Z = ((random[CorpseExplode]() & 7) + 5) * 0.75;
+			}
+		}
+		// Spawn a skull
+		mo = Spawn ("CorpseBit", Pos, ALLOW_REPLACE);
+		if (mo)
+		{
+			mo.SetState (mo.SpawnState + 3);
+			mo.Vel.X = random2[CorpseExplode]() / 64.;
+			mo.Vel.Y = random2[CorpseExplode]() / 64.;
+			mo.Vel.Z = ((random[CorpseExplode]() & 7) + 5) * 0.75;
+		}
+		A_PlaySound (DeathSound, CHAN_BODY);
+		Destroy ();
 	}
 }
 
@@ -313,13 +431,38 @@ class LeafSpawner : Actor
 		+INVISIBLE
 	}
 
-	native void A_LeafSpawn();
 
 	States
 	{
 	Spawn:
 		TNT1 A 20 A_LeafSpawn;
 		Loop;
+	}
+	
+	//============================================================================
+	//
+	// A_LeafSpawn
+	//
+	//============================================================================
+
+	void A_LeafSpawn()
+	{
+		static const class<Actor> leaves[] = { "Leaf1", "Leaf2" };
+
+		for (int i = (random[LeafSpawn]() & 3) + 1; i; i--)
+		{
+			double xo = random2[LeafSpawn]() / 4.;
+			double yo = random2[LeafSpawn]() / 4.;
+			double zo = random[LeafSpawn]() / 4.;
+			Actor mo = Spawn (leaves[random[LeafSpawn]()&1], Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
+
+			if (mo)
+			{
+				mo.Thrust(random[LeafSpawn]() / 128. + 3);
+				mo.target = self;
+				mo.special1 = 0;
+			}
+		}
 	}
 }
 
@@ -338,15 +481,13 @@ class Leaf1 : Actor
 		+NOICEDEATH
 	}
 
-	native void A_LeafThrust();
-	native void A_LeafCheck();
-
 	States
 	{
 	Spawn:
 		LEF1 ABC 4;
 		LEF1 D 4 A_LeafThrust;
 		LEF1 EFG 4;
+	Looping:
 		LEF1 H 4 A_LeafThrust;
 		LEF1 I 4;
 		LEF1 AB 4;
@@ -358,6 +499,49 @@ class Leaf1 : Actor
 	Death:
 		LEF3 D 10 A_LeafCheck;
 		Wait;
+	}
+	
+	//============================================================================
+	//
+	// A_LeafThrust
+	//
+	//============================================================================
+
+	void A_LeafThrust()
+	{
+		if (random[LeafThrust]() <= 96)
+		{
+			Vel.Z += random[LeafThrust]() / 128. + 1;
+		}
+	}
+
+	//============================================================================
+	//
+	// A_LeafCheck
+	//
+	//============================================================================
+
+	void A_LeafCheck()
+	{
+		special1++;
+		if (special1 >= 20)
+		{
+			Destroy();
+			return;
+		}
+		double ang = target ? target.angle : angle;
+		if (random[LeafCheck]() > 64)
+		{
+			if (Vel.X == 0 && Vel.Y == 0)
+			{
+				Thrust(random[LeafCheck]() / 128. + 1, ang);
+			}
+			return;
+		}
+		SetStateLabel ("Looping");
+		Vel.Z = random[LeafCheck]() / 128. + 1;
+		Thrust(random[LeafCheck]() / 128. + 2, ang);
+		bMissile = true;
 	}
 }
 
@@ -556,8 +740,6 @@ class ZSuitOfArmor : Actor
 		DeathSound "SuitofArmorBreak";
 	}
 
-	native void A_SoAExplode();
-
 	States
 	{
 	Spawn:
@@ -566,6 +748,41 @@ class ZSuitOfArmor : Actor
 	Death:
 		ZSUI A 1 A_SoAExplode;
 		Stop;
+	}
+	
+	//===========================================================================
+	//
+	// A_SoAExplode - Suit of Armor Explode
+	//
+	//===========================================================================
+
+	void A_SoAExplode()
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			double xo = (random[SoAExplode]() - 128) / 16.;
+			double yo = (random[SoAExplode]() - 128) / 16.;
+			double zo = random[SoAExplode]() * Height / 256.;
+			Actor mo = Spawn ("ZArmorChunk", Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
+			if (mo)
+			{
+				mo.SetState (mo.SpawnState + i);
+				mo.Vel.X = random2[SoAExplode]() / 64.;
+				mo.Vel.Y = random2[SoAExplode]() / 64.;
+				mo.Vel.Z = (random[SoAExplode]() & 7) + 5;
+			}
+		}
+		// Spawn an item?
+		Class<Actor> type = GetSpawnableType(args[0]);
+		if (type != null)
+		{
+			if (!(level.nomonsters || sv_nomonsters) || !(GetDefaultByType (type).bIsMonster))
+			{ // Only spawn monsters if not -nomonsters
+				Spawn (type, Pos, ALLOW_REPLACE);
+			}
+		}
+		A_PlaySound (DeathSound, CHAN_BODY);
+		Destroy ();
 	}
 }
 
@@ -608,7 +825,7 @@ class ZArmorChunk : Actor
 
 // Bell ---------------------------------------------------------------------
 
-class ZBell : Actor native
+class ZBell : Actor
 {
 	Default
 	{
@@ -620,9 +837,6 @@ class ZBell : Actor native
 		+NOICEDEATH
 		DeathSound "BellRing";
 	}
-
-	native void A_BellReset1();
-	native void A_BellReset2();
 
 	States
 	{
@@ -664,6 +878,45 @@ class ZBell : Actor native
 		BBLL E 14;
 		BBLL A 1 A_BellReset2;
 		Goto Spawn;
+	}
+	
+	override void Activate (Actor activator)
+	{
+		if (health > 0) A_Die();
+		{
+			DamageMobj (activator, activator, 10, 'Melee', DMG_THRUSTLESS); // 'ring' the bell
+		}
+	}
+
+	//===========================================================================
+	//
+	// A_BellReset1
+	//
+	//===========================================================================
+
+	void A_BellReset1()
+	{
+		bNoGravity = true;
+		Height = Default.Height;
+		if (special)
+		{ // Initiate death action
+			A_CallSpecial(special, args[0], args[1], args[2], args[3], args[4]);
+			special = 0;
+		}
+	}
+
+	//===========================================================================
+	//
+	// A_BellReset2
+	//
+	//===========================================================================
+
+	void A_BellReset2()
+	{
+		bShootable = true;
+		bCorpse = false;
+		bKilled = false;
+		health = 5;
 	}
 }
 

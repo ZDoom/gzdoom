@@ -164,6 +164,7 @@ bool	 		viewactive;
 
 bool 			netgame;				// only true if packets are broadcast 
 bool			multiplayer;
+bool			multiplayernext = false;		// [SP] Map coop/dm implementation
 player_t		players[MAXPLAYERS];
 bool			playeringame[MAXPLAYERS];
 
@@ -1171,7 +1172,7 @@ void G_Ticker ()
 			}
 
 			// check for turbo cheats
-			if (cmd->ucmd.forwardmove > TURBOTHRESHOLD &&
+			if (turbo > 100.f && cmd->ucmd.forwardmove > TURBOTHRESHOLD &&
 				!(gametic&31) && ((gametic>>5)&(MAXPLAYERS-1)) == i )
 			{
 				Printf ("%s is turbo!\n", players[i].userinfo.GetName());
@@ -1655,9 +1656,10 @@ static void G_QueueBody (AActor *body)
 //
 // G_DoReborn
 //
+EXTERN_CVAR(Bool, sv_singleplayerrespawn)
 void G_DoReborn (int playernum, bool freshbot)
 {
-	if (!multiplayer && !(level.flags2 & LEVEL2_ALLOWRESPAWN))
+	if (!multiplayer && !(level.flags2 & LEVEL2_ALLOWRESPAWN) && !sv_singleplayerrespawn)
 	{
 		if (BackupSaveName.Len() > 0 && FileExists (BackupSaveName.GetChars()))
 		{ // Load game from the last point it was saved

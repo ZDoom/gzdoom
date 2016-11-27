@@ -72,7 +72,7 @@ FRenderer *Renderer;
 IMPLEMENT_ABSTRACT_CLASS (DCanvas)
 IMPLEMENT_ABSTRACT_CLASS (DFrameBuffer)
 
-#if defined(_DEBUG) && defined(_M_IX86)
+#if defined(_DEBUG) && defined(_M_IX86) && !defined(__MINGW32__)
 #define DBGBREAK	{ __asm int 3 }
 #else
 #define DBGBREAK
@@ -877,8 +877,6 @@ void DFrameBuffer::DrawRateStuff ()
 			int rate_x;
 
 			int textScale = active_con_scale();
-			if (textScale == 0)
-				textScale = CleanXfac;
 
 			chars = mysnprintf (fpsbuff, countof(fpsbuff), "%2u ms (%3u fps)", howlong, LastCount);
 			rate_x = Width / textScale - ConFont->StringWidth(&fpsbuff[0]);

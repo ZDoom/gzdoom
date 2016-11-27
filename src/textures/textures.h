@@ -232,6 +232,7 @@ public:
 	int GetScaledTopOffset () { int foo = int((TopOffset * 2) / Scale.Y); return (foo >> 1) + (foo & 1); }
 	double GetScaledLeftOffsetDouble() { return LeftOffset / Scale.X; }
 	double GetScaledTopOffsetDouble() { return TopOffset / Scale.Y; }
+	virtual void ResolvePatches() {}
 
 	virtual void SetFrontSkyLayer();
 
@@ -411,7 +412,7 @@ public:
 
 	FTextureID CheckForTexture (const char *name, int usetype, BITFIELD flags=TEXMAN_TryAny);
 	FTextureID GetTexture (const char *name, int usetype, BITFIELD flags=0);
-	int ListTextures (const char *name, TArray<FTextureID> &list);
+	int ListTextures (const char *name, TArray<FTextureID> &list, bool listall = false);
 
 	void AddTexturesLump (const void *lumpdata, int lumpsize, int deflumpnum, int patcheslump, int firstdup=0, bool texture1=false);
 	void AddTexturesLumps (int lump1, int lump2, int patcheslump);

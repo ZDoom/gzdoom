@@ -198,7 +198,10 @@ SetTiltedSpanSize:
 	mov	[y8+2],cl
 	mov	[y9+2],cl
 	mov	[y10+2],cl
+	cmp	eax,0		; if x bits is 0, mask must be 0 too.
+	jz	.notted
 	not	eax
+.notted:
 	pop	ecx
 	
 	mov	[m1+2],eax

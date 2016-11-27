@@ -168,6 +168,9 @@ public:
 	// [CW] Fades for when you are being damaged.
 	PalEntry DamageFade;
 
+	// [SP] ViewBob Multiplier
+	double		ViewBob;
+
 	bool UpdateWaterLevel (bool splash);
 	bool ResetAirSupply (bool playgasp = true);
 

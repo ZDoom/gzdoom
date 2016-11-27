@@ -33,6 +33,7 @@
 **
 */
 
+#define _WIN32_WINNT 0x0601
 #include <windows.h>
 #include <lmcons.h>
 #include <shlobj.h>
@@ -43,7 +44,16 @@
 #include "version.h"	// for GAMENAME
 #include "i_system.h"
 
-typedef HRESULT (WINAPI *GKFP)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR *);
+#include "optwin32.h"
+
+// Vanilla MinGW does not have folder ids
+#if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
+static const GUID FOLDERID_LocalAppData = { 0xf1b32785, 0x6fba, 0x4fcf, 0x9d, 0x55, 0x7b, 0x8e, 0x7f, 0x15, 0x70, 0x91 };
+static const GUID FOLDERID_RoamingAppData = { 0x3eb685db, 0x65f9, 0x4cf6, 0xa0, 0x3a, 0xe3, 0xef, 0x65, 0x72, 0x9f, 0x3d };
+static const GUID FOLDERID_SavedGames = { 0x4c5c32ff, 0xbb9d, 0x43b0, 0xb5, 0xb4, 0x2d, 0x72, 0xe5, 0x4e, 0xaa, 0xa4 };
+static const GUID FOLDERID_Documents = { 0xfdd39ad0, 0x238f, 0x46af, 0xad, 0xb4, 0x6c, 0x85, 0x48, 0x03, 0x69, 0xc7 };
+static const GUID FOLDERID_Pictures = { 0x33e28130, 0x4e1e, 0x4676, 0x83, 0x5a, 0x98, 0x39, 0x5c, 0x3b, 0xc3, 0xbb };
+#endif
 
 //===========================================================================
 //
@@ -94,19 +104,17 @@ bool UseKnownFolders()
 
 bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create, FString &path)
 {
-	static TOptWin32Proc<GKFP> SHGetKnownFolderPath("shell32.dll", "SHGetKnownFolderPath");
+	using OptWin32::SHGetFolderPathA;
+	using OptWin32::SHGetKnownFolderPath;
 
 	char pathstr[MAX_PATH];
 
 	// SHGetKnownFolderPath knows about more folders than SHGetFolderPath, but is
 	// new to Vista, hence the reason we support both.
-	if (SHGetKnownFolderPath == NULL)
+	if (!SHGetKnownFolderPath)
 	{
-		static TOptWin32Proc<HRESULT(WINAPI*)(HWND, int, HANDLE, DWORD, LPTSTR)>
-			SHGetFolderPathA("shell32.dll", "SHGetFolderPathA");
-
 		// NT4 doesn't even have this function.
-		if (SHGetFolderPathA == NULL)
+		if (!SHGetFolderPathA)
 			return false;
 
 		if (shell_folder < 0)
@@ -117,7 +125,7 @@ bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create
 		{
 			shell_folder |= CSIDL_FLAG_CREATE;
 		}
-		if (FAILED(SHGetFolderPathA.Call(NULL, shell_folder, NULL, 0, pathstr)))
+		if (FAILED(SHGetFolderPathA(NULL, shell_folder, NULL, 0, pathstr)))
 		{
 			return false;
 		}
@@ -127,7 +135,7 @@ bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create
 	else
 	{
 		PWSTR wpath;
-		if (FAILED(SHGetKnownFolderPath.Call(known_folder, create ? KF_FLAG_CREATE : 0, NULL, &wpath)))
+		if (FAILED(SHGetKnownFolderPath(known_folder, create ? KF_FLAG_CREATE : 0, NULL, &wpath)))
 		{
 			return false;
 		}

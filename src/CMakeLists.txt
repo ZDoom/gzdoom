@@ -179,8 +179,12 @@ if( WIN32 )
 		comdlg32
 		ws2_32
 		setupapi
-		oleaut32 
-		DelayImp )
+		oleaut32 )
+
+	if( NOT ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+		set( ZDOOM_LIBS ${ZDOOM_LIBS} DelayImp )
+	endif()
+
 	if( DX_dxguid_LIBRARY )
 		list( APPEND ZDOOM_LIBS "${DX_dxguid_LIBRARY}" )
 	endif()
@@ -190,6 +194,7 @@ else()
 		set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
 		set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 		set( NO_GTK ON )
+		set( DYN_GTK OFF )
 
 		# Prevent inclusion of fp.h and FixMath.h from Carbon framework
 		# Declarations from these files are not used but cause the following conflicts:
@@ -198,6 +203,7 @@ else()
 		add_definitions( -D__FP__ -D__FIXMATH__ )
 	else()
 		option( NO_GTK "Disable GTK+ dialogs (Not applicable to Windows)" )
+		option( DYN_GTK "Load GTK+ at runtime instead of compile time" ON )
 		option( VALGRIND "Add special Valgrind sequences to self-modifying code" )
 
 		set( FMOD_SEARCH_PATHS
@@ -213,22 +219,37 @@ else()
 
 		# Use GTK+ for the IWAD picker, if available.
 		if( NOT NO_GTK )
-			pkg_check_modules( GTK2 gtk+-2.0 )
-			if( GTK2_FOUND )
-				set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GTK2_LIBRARIES} )
-				include_directories( ${GTK2_INCLUDE_DIRS} )
-				link_directories( ${GTK2_LIBRARY_DIRS} )
+			pkg_check_modules( GTK3 gtk+-3.0 )
+			if( GTK3_FOUND )
+				if( NOT DYN_GTK )
+					set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GTK3_LIBRARIES} )
+				endif()
+				include_directories( ${GTK3_INCLUDE_DIRS} )
+				link_directories( ${GTK3_LIBRARY_DIRS} )
 			else()
-				set( NO_GTK ON )
+				pkg_check_modules( GTK2 gtk+-2.0 )
+				if( GTK2_FOUND )
+					if( NOT DYN_GTK )
+						set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GTK2_LIBRARIES} )
+					endif()
+					include_directories( ${GTK2_INCLUDE_DIRS} )
+					link_directories( ${GTK2_LIBRARY_DIRS} )
+				else()
+					set( NO_GTK ON )
+				endif()
 			endif()
 		endif()
 	endif()
 	set( NASM_NAMES nasm )
 	
 	if( NO_GTK )
-		add_definitions( -DNO_GTK=1 )
+		add_definitions( -DNO_GTK )
+	elseif( DYN_GTK )
+		add_definitions( -DDYN_GTK=1 )
+	else()
+		add_definitions( -DDYN_GTK=0 )
 	endif()
-	
+
 	# Non-Windows version also needs SDL except native OS X backend
 	if( NOT APPLE OR NOT OSX_COCOA_BACKEND )
 		find_package( SDL2 REQUIRED )
@@ -291,6 +312,19 @@ if( NOT NO_FMOD )
 		
 		if( EXISTS "${FMOD_INCLUDE_DIR}/fmod_common.h" )
 			set( FMOD_STUDIO YES )
+			set( FMOD_VERSION_FILE "fmod_common.h" )
+		else()
+			set( FMOD_STUDIO NO )
+			set( FMOD_VERSION_FILE "fmod.h" )
+		endif()
+
+		file( STRINGS "${FMOD_INCLUDE_DIR}/${FMOD_VERSION_FILE}" FMOD_VERSION_LINE REGEX "^#define[ \t]+FMOD_VERSION[ \t]+0x[0-9]+$" )
+		string( REGEX REPLACE "^#define[ \t]+FMOD_VERSION[ \t]+0x([0-9][0-9][0-9][0-9])([0-9][0-9])([0-9][0-9])$" "\\1.\\2.\\3" FMOD_VERSION "${FMOD_VERSION_LINE}" )
+		message( STATUS "FMOD version: ${FMOD_VERSION}" )
+
+		# FMOD Ex didn't hide xiph symbols in the past (not applicable to Win32 since symbols are hidden by default there).
+		if( NOT WIN32 AND NOT FMOD_STUDIO AND NOT NO_OPENAL AND "${FMOD_VERSION}" VERSION_LESS "4.36.00")
+			message( SEND_ERROR "Use of FMOD Ex ${FMOD_VERSION} with OpenAL will result in crashes. Either update FMOD to 4.36 or later or set NO_OPENAL." )
 		endif()
 	else()
 		message( STATUS "Could not find FMOD include files" )
@@ -702,7 +736,8 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/sdlglvideo.cpp
 	posix/sdl/st_start.cpp )
 set( PLAT_UNIX_SOURCES
-	posix/unix/i_specialpaths.cpp )
+	posix/unix/i_specialpaths.cpp
+	posix/unix/iwadpicker_gtk.cpp )
 set( PLAT_OSX_SOURCES
 	posix/osx/iwadpicker_cocoa.mm
 	posix/osx/i_specialpaths.mm
@@ -724,15 +759,7 @@ if( WIN32 )
 	set( SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} )
 	set( OTHER_SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} ${PLAT_OSX_SOURCES} ${PLAT_COCOA_SOURCES} ${PLAT_UNIX_SOURCES} )
 	
-	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-		# CMake is not set up to compile and link rc files with GCC. :(
-		add_custom_command( OUTPUT zdoom-rc.o
-			COMMAND windres -o zdoom-rc.o -i ${CMAKE_CURRENT_SOURCE_DIR}/win32/zdoom.rc
-			DEPENDS win32/zdoom.rc )
-		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} zdoom-rc.o )
-	else()
-		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} win32/zdoom.rc )
-	endif()
+	set( SYSTEM_SOURCES ${SYSTEM_SOURCES} win32/zdoom.rc )
 elseif( APPLE )
 	if( OSX_COCOA_BACKEND )
 		set( SYSTEM_SOURCES_DIR posix posix/cocoa )
@@ -1210,6 +1237,7 @@ set (PCH_SOURCES
 	gi.cpp
 	gitinfo.cpp
 	hu_scores.cpp
+	i_module.cpp
 	i_net.cpp
 	info.cpp
 	keysections.cpp
@@ -1564,6 +1592,15 @@ if( APPLE )
 			COMMENT "Relinking FMOD Ex" )
 	endif()
 endif()
+
+if( WIN32 )
+	set( INSTALL_PATH . CACHE STRING "Directory where the zdoom executable will be placed during install." )
+else()
+	set( INSTALL_PATH bin CACHE STRING "Directory where the zdoom executable will be placed during install." )
+endif()
+install(TARGETS zdoom
+		DESTINATION ${INSTALL_PATH}
+		COMPONENT "Game executable")
 
 source_group("Assembly Files\\ia32" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/asm_ia32/.+")
 source_group("Assembly Files\\x86_64" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/asm_x86_64/.+")

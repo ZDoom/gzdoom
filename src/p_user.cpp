@@ -65,6 +65,9 @@ static FRandom pr_skullpop ("SkullPop");
 // [RH] # of ticks to complete a turn180
 #define TURN180_TICKS	((TICRATE / 4) + 1)
 
+// [SP] Allows respawn in single player
+CVAR(Bool, sv_singleplayerrespawn, false, CVAR_SERVERINFO | CVAR_LATCH)
+
 // Variables for prediction
 CVAR (Bool, cl_noprediction, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, cl_predict_specials, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -651,7 +654,8 @@ void APlayerPawn::Serialize(FSerializer &arc)
 		("fallingscreammaxn", FallingScreamMaxSpeed, def->FallingScreamMaxSpeed)
 		("userange", UseRange, def->UseRange)
 		("aircapacity", AirCapacity, def->AirCapacity)
-		("viewheight", ViewHeight, def->ViewHeight);
+		("viewheight", ViewHeight, def->ViewHeight)
+		("viewbob", ViewBob, def->ViewBob);
 }
 
 //===========================================================================
@@ -1891,7 +1895,7 @@ void P_CalcHeight (player_t *player)
 	{
 		bob = 0;
 	}
-	player->viewz = player->mo->Z() + player->viewheight + bob;
+	player->viewz = player->mo->Z() + player->viewheight + (bob * player->mo->ViewBob); // [SP] Allow DECORATE changes to view bobbing speed.
 	if (player->mo->Floorclip && player->playerstate != PST_DEAD
 		&& player->mo->Z() <= player->mo->floorz)
 	{
@@ -2210,7 +2214,9 @@ void P_DeathThink (player_t *player)
 		if (level.time >= player->respawn_time || ((player->cmd.ucmd.buttons & BT_USE) && player->Bot == NULL))
 		{
 			player->cls = NULL;		// Force a new class if the player is using a random class
-			player->playerstate = (multiplayer || (level.flags2 & LEVEL2_ALLOWRESPAWN)) ? PST_REBORN : PST_ENTER;
+			player->playerstate = 
+				(multiplayer || (level.flags2 & LEVEL2_ALLOWRESPAWN) || sv_singleplayerrespawn)
+				? PST_REBORN : PST_ENTER;
 			if (player->mo->special1 > 2)
 			{
 				player->mo->special1 = 0;
@@ -2671,10 +2677,11 @@ void P_PlayerThink (player_t *player)
 		// Apply degeneration.
 		if (dmflags2 & DF2_YES_DEGENERATION)
 		{
-			if ((level.time % TICRATE) == 0 && player->health > deh.MaxHealth)
+			int maxhealth = player->mo->GetMaxHealth() + player->mo->stamina;
+			if ((level.time % TICRATE) == 0 && player->health > maxhealth)
 			{
-				if (player->health - 5 < deh.MaxHealth)
-					player->health = deh.MaxHealth;
+				if (player->health - 5 < maxhealth)
+					player->health = maxhealth;
 				else
 					player->health--;
 

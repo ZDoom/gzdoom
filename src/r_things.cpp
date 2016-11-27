@@ -99,6 +99,7 @@ EXTERN_CVAR (Bool, st_scale)
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, r_drawfuzz)
 EXTERN_CVAR(Bool, r_deathcamera);
+CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 //
 // Sprite rotation 0 is facing the viewer,
@@ -249,18 +250,16 @@ double	 		sprtopscreen;
 
 bool			sprflipvert;
 
-void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span)
+void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span, bool useRt)
 {
-	const fixed_t centeryfrac = FLOAT2FIXED(CenterY);
-	const fixed_t texturemid = FLOAT2FIXED(dc_texturemid);
 	while (span->Length != 0)
 	{
 		const int length = span->Length;
 		const int top = span->TopOffset;
 
 		// calculate unclipped screen coordinates for post
-		dc_yl = xs_RoundToInt(sprtopscreen + spryscale * top);
-		dc_yh = xs_RoundToInt(sprtopscreen + spryscale * (top + length)) - 1;
+		dc_yl = (int)(sprtopscreen + spryscale * top + 0.5);
+		dc_yh = (int)(sprtopscreen + spryscale * (top + length) + 0.5) - 1;
 
 		if (sprflipvert)
 		{
@@ -278,56 +277,29 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span)
 
 		if (dc_yl <= dc_yh)
 		{
-			if (sprflipvert)
-			{
-				dc_texturefrac = (dc_yl*dc_iscale) - (top << FRACBITS)
-					- FixedMul (centeryfrac, dc_iscale) - texturemid;
-				const fixed_t maxfrac = length << FRACBITS;
-				while (dc_texturefrac >= maxfrac)
-				{
-					if (++dc_yl > dc_yh)
-						goto nextpost;
-					dc_texturefrac += dc_iscale;
-				}
-				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
-				while (endfrac < 0)
-				{
-					if (--dc_yh < dc_yl)
-						goto nextpost;
-					endfrac -= dc_iscale;
-				}
-			}
-			else
-			{
-				dc_texturefrac = texturemid - (top << FRACBITS)
-					+ (dc_yl*dc_iscale) - FixedMul (centeryfrac-FRACUNIT, dc_iscale);
-				while (dc_texturefrac < 0)
-				{
-					if (++dc_yl > dc_yh)
-						goto nextpost;
-					dc_texturefrac += dc_iscale;
-				}
-				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
-				const fixed_t maxfrac = length << FRACBITS;
-				if (dc_yh < mfloorclip[dc_x]-1 && endfrac < maxfrac - dc_iscale)
-				{
-					dc_yh++;
-				}
-				else while (endfrac >= maxfrac)
-				{
-					if (--dc_yh < dc_yl)
-						goto nextpost;
-					endfrac -= dc_iscale;
-				}
-			}
-			dc_source = column + top;
-			dc_dest = ylookup[dc_yl] + dc_x + dc_destorg;
+			dc_texturefrac = FLOAT2FIXED((dc_yl + 0.5 - sprtopscreen) / spryscale);
+			dc_source = column;
+			dc_dest = (ylookup[dc_yl] + dc_x) + dc_destorg;
 			dc_count = dc_yh - dc_yl + 1;
-			colfunc ();
+
+			fixed_t maxfrac = ((top + length) << FRACBITS) - 1;
+			dc_texturefrac = MAX(dc_texturefrac, 0);
+			dc_texturefrac = MIN(dc_texturefrac, maxfrac);
+			if (dc_iscale > 0)
+				dc_count = MIN(dc_count, (maxfrac - dc_texturefrac + dc_iscale - 1) / dc_iscale);
+			else if (dc_iscale < 0)
+				dc_count = MIN(dc_count, (dc_texturefrac - dc_iscale) / (-dc_iscale));
+
+			if (useRt)
+				hcolfunc_pre();
+			else
+				colfunc ();
 		}
-nextpost:
 		span++;
 	}
+
+	if (sprflipvert && useRt)
+		rt_flip_posts();
 }
 
 // [ZZ]
@@ -469,7 +441,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 			{
 				pixels = tex->GetColumn (frac >> FRACBITS, &spans);
 				if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-					R_DrawMaskedColumn (pixels, spans);
+					R_DrawMaskedColumn (pixels, spans, false);
 				dc_x++;
 				frac += xiscale;
 			}
@@ -481,7 +453,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 				{
 					pixels = tex->GetColumn (frac >> FRACBITS, &spans);
 					if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-						R_DrawMaskedColumnHoriz (pixels, spans);
+						R_DrawMaskedColumn (pixels, spans, true);
 					dc_x++;
 					frac += xiscale;
 				}
@@ -492,7 +464,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 			{
 				pixels = tex->GetColumn (frac >> FRACBITS, &spans);
 				if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-					R_DrawMaskedColumn (pixels, spans);
+					R_DrawMaskedColumn (pixels, spans, false);
 				dc_x++;
 				frac += xiscale;
 			}
@@ -548,7 +520,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 	else if (fixedcolormap != NULL)
 		dc_colormap = fixedcolormap;
 	else if (!foggy && (spr->renderflags & RF_FULLBRIGHT))
-		dc_colormap = usecolormap->Maps;
+		dc_colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : usecolormap->Maps;
 	else
 		calclighting = true;
 
@@ -602,7 +574,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 				dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, shade) << COLORMAPSHIFT);
 			}
 			if (!R_ClipSpriteColumnWithPortals(spr))
-				R_WallSpriteColumn(R_DrawMaskedColumn);
+				R_WallSpriteColumn(false);
 			dc_x++;
 		}
 
@@ -616,7 +588,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 			for (int zz = 4; zz; --zz)
 			{
 				if (!R_ClipSpriteColumnWithPortals(spr))
-					R_WallSpriteColumn(R_DrawMaskedColumnHoriz);
+					R_WallSpriteColumn(true);
 				dc_x++;
 			}
 			rt_draw4cols(dc_x - 4);
@@ -629,14 +601,14 @@ void R_DrawWallSprite(vissprite_t *spr)
 				dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, shade) << COLORMAPSHIFT);
 			}
 			if (!R_ClipSpriteColumnWithPortals(spr))
-				R_WallSpriteColumn(R_DrawMaskedColumn);
+				R_WallSpriteColumn(false);
 			dc_x++;
 		}
 	}
 	R_FinishSetPatchStyle();
 }
 
-void R_WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans))
+void R_WallSpriteColumn (bool useRt)
 {
 	float iscale = swall[dc_x] * MaskedScaleY;
 	dc_iscale = FLOAT2FIXED(iscale);
@@ -650,7 +622,7 @@ void R_WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Sp
 	const FTexture::Span *spans;
 	column = WallSpriteTile->GetColumn (lwall[dc_x] >> FRACBITS, &spans);
 	dc_texturefrac = 0;
-	drawfunc (column, spans);
+	R_DrawMaskedColumn(column, spans, useRt);
 	rw_light += rw_lightstep;
 }
 
@@ -983,7 +955,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		const double thingxscalemul = spriteScale.X / tex->Scale.X;
 
 		tx -= ((renderflags & RF_XFLIP) ? (tex->GetWidth() - tex->LeftOffset - 1) : tex->LeftOffset) * thingxscalemul;
-		x1 = centerx + xs_RoundToInt(tx * xscale);
+		double dtx1 = tx * xscale;
+		x1 = centerx + xs_RoundToInt(dtx1);
 
 		// off the right side?
 		if (x1 >= WindowRight)
@@ -997,7 +970,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			return;
 
 		xscale = spriteScale.X * xscale / tex->Scale.X;
-		iscale = (tex->GetWidth() << FRACBITS) / (x2 - x1);
+		iscale = (fixed_t)(FRACUNIT / xscale); // Round towards zero to avoid wrapping in edge cases
 
 		double yscale = spriteScale.Y / tex->Scale.Y;
 
@@ -1025,8 +998,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			vis->xiscale = iscale;
 		}
 
-		if (vis->x1 > x1)
-			vis->startfrac += vis->xiscale * (vis->x1 - x1);
+		vis->startfrac += (fixed_t)(vis->xiscale * (vis->x1 - centerx + 0.5 - dtx1));
 	}
 	else
 	{
@@ -1066,7 +1038,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	vis->deltax = float(pos.X - ViewPos.X);
 	vis->deltay = float(pos.Y - ViewPos.Y);
 	vis->renderflags = renderflags;
-	if(thing->flags5 & MF5_BRIGHT) vis->renderflags |= RF_FULLBRIGHT; // kg3D
+	if(thing->flags5 & MF5_BRIGHT)
+		vis->renderflags |= RF_FULLBRIGHT; // kg3D
 	vis->Style.RenderStyle = thing->RenderStyle;
 	vis->FillColor = thing->fillcolor;
 	vis->Translation = thing->Translation;		// [RH] thing translation table
@@ -1140,7 +1113,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		}
 		else if (!foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
 		{ // full bright
-			vis->Style.colormap = mybasecolormap->Maps;
+			vis->Style.colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : mybasecolormap->Maps;
 		}
 		else
 		{ // diminished light
@@ -1337,7 +1310,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	}
 
 	sx = pspr->oldx + (pspr->x - pspr->oldx) * ticfrac;
-	sy = pspr->oldy + (pspr->y - pspr->oldy) * ticfrac;
+	sy = pspr->oldy + (pspr->y - pspr->oldy) * ticfrac + WEAPON_FUDGE_Y;
 
 	if (pspr->Flags & PSPF_ADDBOB)
 	{
@@ -1462,11 +1435,11 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 			}
 			if (fixedlightlev >= 0)
 			{
-				vis->Style.colormap = mybasecolormap->Maps + fixedlightlev;
+				vis->Style.colormap = (r_fullbrightignoresectorcolor) ? (FullNormalLight.Maps + fixedlightlev) : (mybasecolormap->Maps + fixedlightlev);
 			}
 			else if (!foggy && pspr->GetState()->GetFullbright())
 			{ // full bright
-				vis->Style.colormap = mybasecolormap->Maps;	// [RH] use basecolormap
+				vis->Style.colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : mybasecolormap->Maps;	// [RH] use basecolormap
 			}
 			else
 			{ // local light
@@ -1516,6 +1489,11 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 		{
 			noaccel = true;
 		}
+		// [SP] If emulating GZDoom fullbright, disable acceleration
+		if (r_fullbrightignoresectorcolor && fixedlightlev >= 0)
+			mybasecolormap = &FullNormalLight;
+		if (r_fullbrightignoresectorcolor && !foggy && pspr->GetState()->GetFullbright())
+			mybasecolormap = &FullNormalLight;
 		colormap_to_use = mybasecolormap;
 	}
 	else
@@ -1640,7 +1618,7 @@ void R_DrawPlayerSprites ()
 			else
 			{
 				wx = weapon->oldx + (weapon->x - weapon->oldx) * r_TicFracF;
-				wy = weapon->oldy + (weapon->y - weapon->oldy) * r_TicFracF;
+				wy = weapon->oldy + (weapon->y - weapon->oldy) * r_TicFracF + WEAPON_FUDGE_Y;
 			}
 		}
 		else
@@ -2057,7 +2035,7 @@ void R_DrawSprite (vissprite_t *spr)
 			}
 			else if (!foggy && (spr->renderflags & RF_FULLBRIGHT))
 			{ // full bright
-				spr->Style.colormap = mybasecolormap->Maps;
+				spr->Style.colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : mybasecolormap->Maps;
 			}
 			else
 			{ // diminished light
@@ -2615,7 +2593,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	}
 	else if (particle->bright)
 	{
-		vis->Style.colormap = map;
+		vis->Style.colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : map;
 	}
 	else
 	{

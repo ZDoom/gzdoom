@@ -90,6 +90,8 @@
 
 #include "g_hub.h"
 
+#include <string.h>
+
 void STAT_StartNewGame(const char *lev);
 void STAT_ChangeLevel(const char *newl);
 
@@ -181,6 +183,16 @@ CCMD (map)
 			}
 			else
 			{
+				if (argv.argc() > 2 && stricmp(argv[2], "coop") == 0)
+				{
+					deathmatch = false;
+					multiplayernext = true;
+				}
+				else if (argv.argc() > 2 && stricmp(argv[2], "dm") == 0)
+				{
+					deathmatch = true;
+					multiplayernext = true;
+				}
 				G_DeferedInitNew (argv[1]);
 			}
 		}
@@ -192,7 +204,7 @@ CCMD (map)
 	}
 	else
 	{
-		Printf ("Usage: map <map name>\n");
+		Printf ("Usage: map <map name> [coop|dm]\n");
 	}
 }
 
@@ -218,6 +230,16 @@ CCMD(recordmap)
 			}
 			else
 			{
+				if (argv.argc() > 3 && stricmp(argv[3], "coop") == 0)
+				{
+					deathmatch = false;
+					multiplayernext = true;
+				}
+				else if (argv.argc() > 3 && stricmp(argv[3], "dm") == 0)
+				{
+					deathmatch = true;
+					multiplayernext = true;
+				}
 				G_DeferedInitNew(argv[2]);
 				gameaction = ga_recordgame;
 				newdemoname = argv[1];
@@ -232,7 +254,7 @@ CCMD(recordmap)
 	}
 	else
 	{
-		Printf("Usage: recordmap <filename> <map name>\n");
+		Printf("Usage: recordmap <filename> <map name> [coop|dm]\n");
 	}
 }
 
@@ -258,13 +280,23 @@ CCMD (open)
 		}
 		else
 		{
+			if (argv.argc() > 2 && stricmp(argv[2], "coop") == 0)
+			{
+				deathmatch = false;
+				multiplayernext = true;
+			}
+			else if (argv.argc() > 2 && stricmp(argv[2], "dm") == 0)
+			{
+				deathmatch = true;
+				multiplayernext = true;
+			}
 			gameaction = ga_newgame2;
 			d_skill = -1;
 		}
 	}
 	else
 	{
-		Printf ("Usage: open <map file>\n");
+		Printf ("Usage: open <map file> [coop|dm]\n");
 	}
 }
 
@@ -293,7 +325,8 @@ void G_NewInit ()
 	G_ClearSnapshots ();
 	ST_SetNeedRefresh();
 	netgame = false;
-	multiplayer = false;
+	multiplayer = multiplayernext;
+	multiplayernext = false;
 	if (demoplayback)
 	{
 		C_RestoreCVars ();
@@ -526,6 +559,8 @@ static bool		unloading;
 //
 //==========================================================================
 
+EXTERN_CVAR(Bool, sv_singleplayerrespawn)
+
 void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill)
 {
 	level_info_t *nextinfo = NULL;
@@ -634,7 +669,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 
 			// If this is co-op, respawn any dead players now so they can
 			// keep their inventory on the next map.
-			if ((multiplayer || level.flags2 & LEVEL2_ALLOWRESPAWN) && !deathmatch && player->playerstate == PST_DEAD)
+			if ((multiplayer || level.flags2 & LEVEL2_ALLOWRESPAWN || sv_singleplayerrespawn) && !deathmatch && player->playerstate == PST_DEAD)
 			{
 				// Copied from the end of P_DeathThink [[
 				player->cls = NULL;		// Force a new class if the player is using a random class

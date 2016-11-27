@@ -1,4 +1,4 @@
-// Emacs style mode select	 -*- C++ -*- 
+﻿// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -3373,11 +3373,14 @@ void AActor::Tick ()
 			}
 		}
 
-		UnlinkFromWorld ();
-		flags |= MF_NOBLOCKMAP;
-		SetXYZ(Vec3Offset(Vel));
-		CheckPortalTransition(false);
-		LinkToWorld ();
+		if (!Vel.isZero() || !(flags & MF_NOBLOCKMAP))
+		{
+			UnlinkFromWorld();
+			flags |= MF_NOBLOCKMAP;
+			SetXYZ(Vec3Offset(Vel));
+			CheckPortalTransition(false);
+			LinkToWorld();
+		}
 	}
 	else
 	{
@@ -4495,6 +4498,7 @@ void AActor::AdjustFloorClip ()
 // Most of the player structure stays unchanged between levels.
 //
 EXTERN_CVAR (Bool, chasedemo)
+EXTERN_CVAR(Bool, sv_singleplayerrespawn)
 
 extern bool demonew;
 
@@ -4682,7 +4686,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	{ // Give all cards in death match mode.
 		p->mo->GiveDeathmatchInventory ();
 	}
-	else if ((multiplayer || (level.flags2 & LEVEL2_ALLOWRESPAWN)) && state == PST_REBORN && oldactor != NULL)
+	else if ((multiplayer || (level.flags2 & LEVEL2_ALLOWRESPAWN) || sv_singleplayerrespawn) && state == PST_REBORN && oldactor != NULL)
 	{ // Special inventory handling for respawning in coop
 		p->mo->FilterCoopRespawnInventory (oldactor);
 	}
@@ -5059,7 +5063,11 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	if (mthing->FloatbobPhase >= 0 && mthing->FloatbobPhase < 64) mobj->FloatBobPhase = mthing->FloatbobPhase;
 	if (mthing->Gravity < 0) mobj->Gravity = -mthing->Gravity;
 	else if (mthing->Gravity > 0) mobj->Gravity *= mthing->Gravity;
-	else mobj->flags &= ~MF_NOGRAVITY;
+	else 
+	{
+		mobj->flags |= MF_NOGRAVITY;
+		mobj->Gravity = 0;
+	}
 
 	// For Hexen floatbob 'compatibility' we do not really want to alter the floorz.
 	if (mobj->specialf1 == 0 || !(mobj->flags2 & MF2_FLOATBOB) || !(ib_compatflags & BCOMPATF_FLOATBOB))

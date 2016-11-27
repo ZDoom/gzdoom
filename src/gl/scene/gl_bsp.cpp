@@ -140,12 +140,15 @@ static void AddLine (seg_t *seg, bool portalclip)
 	{
 		if (currentsector->sectornum == seg->backsector->sectornum)
 		{
-			FTexture * tex = TexMan(seg->sidedef->GetTexture(side_t::mid));
-			if (!tex || tex->UseType==FTexture::TEX_Null) 
+			if (!seg->linedef->isVisualPortal())
 			{
-				// nothing to do here!
-				seg->linedef->validcount=validcount;
-				return;
+				FTexture * tex = TexMan(seg->sidedef->GetTexture(side_t::mid));
+				if (!tex || tex->UseType==FTexture::TEX_Null) 
+				{
+					// nothing to do here!
+					seg->linedef->validcount=validcount;
+					return;
+				}
 			}
 			backsector=currentsector;
 		}

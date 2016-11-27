@@ -191,7 +191,7 @@ ACTOR Actor native //: Thinker
 	action native A_ComboAttack();
 	action native A_BulletAttack();
 	action native A_WolfAttack(int flags = 0, sound whattoplay = "weapons/pistol", float snipe = 1.0, int maxdamage = 64, int blocksize = 128, int pointblank = 2, int longrange = 4, float runspeed = 160.0, class<Actor> pufftype = "BulletPuff");
-	action native A_PlaySound(sound whattoplay = "weapons/pistol", int slot = CHAN_BODY, float volume = 1.0, bool looping = false, float attenuation = ATTN_NORM);
+	action native A_PlaySound(sound whattoplay = "weapons/pistol", int slot = CHAN_BODY, float volume = 1.0, bool looping = false, float attenuation = ATTN_NORM, bool local = false);
 	native void A_PlayWeaponSound(sound whattoplay);
 	action native A_FLoopActiveSound();
 	action native A_LoopActiveSound();

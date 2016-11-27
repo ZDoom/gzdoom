@@ -355,7 +355,7 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 	MaxVisForWall = (InvZtoScale * (SCREENWIDTH*r_Yaspect) /
 		(viewwidth*SCREENHEIGHT * FocalTangent));
 	MaxVisForWall = 32767.0 / MaxVisForWall;
-	MaxVisForFloor = 32767.0 / (viewheight * FocalLengthY / 160);
+	MaxVisForFloor = 32767.0 / (viewheight >> 2) * FocalLengthY / 160;
 
 	// Reset r_*Visibility vars
 	R_SetVisibility(R_GetVisibility());
@@ -455,6 +455,8 @@ void R_CopyStackedViewParameters()
 //
 //==========================================================================
 
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
+
 void R_SetupColormap(player_t *player)
 {
 	realfixedcolormap = NULL;
@@ -481,6 +483,11 @@ void R_SetupColormap(player_t *player)
 		else if (player->fixedlightlevel >= 0 && player->fixedlightlevel < NUMCOLORMAPS)
 		{
 			fixedlightlev = player->fixedlightlevel * 256;
+			// [SP] Emulate GZDoom's light-amp goggles.
+			if (r_fullbrightignoresectorcolor && fixedlightlev >= 0)
+			{
+				fixedcolormap = FullNormalLight.Maps;
+			}
 		}
 	}
 	// [RH] Inverse light for shooting the Sigil

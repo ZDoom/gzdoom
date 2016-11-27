@@ -116,7 +116,7 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 	data[4] = r;
 	data[5] = g;
 	data[6] = b;
-	data[7] = 0;
+	data[7] = !!(light->flags4 & MF4_ATTENUATE);
 	return true;
 }
 

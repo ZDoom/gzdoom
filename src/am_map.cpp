@@ -2046,7 +2046,8 @@ void AM_drawSubsectors()
 				scale / scaley,
 				rotation,
 				colormap,
-				floorlight
+				floorlight,
+				f_y + f_h
 				);
 		}
 	}

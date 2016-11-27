@@ -1024,7 +1024,8 @@ void P_CreateLinkedPortals()
 		{
 			if (sectors[i].GetPortalType(j) == PORTS_LINKEDPORTAL && sectors[i].PortalGroup == 0)
 			{
-				CollectSectors(sectors[i].GetOppositePortalGroup(j), &sectors[i]);
+				auto p = sectors[i].GetPortal(j);
+				CollectSectors(p->mOrigin->PortalGroup, &sectors[i]);
 			}
 		}
 	}

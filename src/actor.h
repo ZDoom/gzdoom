@@ -667,7 +667,7 @@ public:
 	// Called by PIT_CheckThing() and needed for some Hexen things.
 	// Returns -1 for normal behavior, 0 to return false, and 1 to return true.
 	// I'm not sure I like it this way, but it will do for now.
-	virtual int SpecialMissileHit (AActor *victim);
+	int SpecialMissileHit (AActor *victim);
 
 	// Returns true if it's okay to switch target to "other" after being attacked by it.
 	virtual bool OkayToSwitchTarget (AActor *other);

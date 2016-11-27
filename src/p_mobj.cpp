@@ -3357,6 +3357,7 @@ bool AActor::SpecialBlastHandling (AActor *source, double strength)
 }
 
 // This only gets called from the script side so we do not need a native wrapper like for the other virtual methods.
+// This will be removed, once all actors overriding this method are exported.
 DEFINE_ACTION_FUNCTION(AActor, SpecialBlastHandling)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -3365,10 +3366,20 @@ DEFINE_ACTION_FUNCTION(AActor, SpecialBlastHandling)
 	ACTION_RETURN_BOOL(self->SpecialBlastHandling(source, strength));
 }
 
-
+// This virtual method only exists on the script side.
 int AActor::SpecialMissileHit (AActor *victim)
 {
-	return -1;
+	IFVIRTUAL(AActor, SpecialMissileHit)
+	{
+		VMValue params[2] = { (DObject*)this, victim };
+		VMReturn ret;
+		int retval;
+		VMFrameStack stack;
+		ret.IntAt(&retval);
+		stack.Call(func, params, 2, &ret, 1, nullptr);
+		return retval;
+	}
+	else return -1;
 }
 
 bool AActor::AdjustReflectionAngle (AActor *thing, DAngle &angle)

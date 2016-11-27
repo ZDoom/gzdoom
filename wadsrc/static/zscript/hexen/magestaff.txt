@@ -157,4 +157,16 @@ class MageStaffFX2 : Actor native
 		MSP2 I 4 Bright;
 		Stop;
 	}
+	
+	override int SpecialMissileHit (Actor victim)
+	{
+		if (victim != target && !victim.player && !victim.bBoss)
+		{
+			victim.DamageMobj (self, target, 10, 'Fire');
+			return 1;	// Keep going
+		}
+		return -1;
+	}
+
+	
 }

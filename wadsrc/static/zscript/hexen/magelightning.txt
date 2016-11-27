@@ -54,7 +54,7 @@ class MWeapLightning : MageWeapon
 
 // Ceiling Lightning --------------------------------------------------------
 
-class Lightning : Actor native
+class Lightning : Actor
 {
 	Default
 	{
@@ -63,6 +63,45 @@ class Lightning : Actor native
 		ActiveSound "MageLightningContinuous";
 		Obituary "$OB_MPMWEAPLIGHTNING";
 	}
+	
+	override int SpecialMissileHit (Actor thing)
+	{
+		if (thing.bShootable && thing != target)
+		{
+			if (thing.Mass < LARGE_MASS)
+			{
+				thing.Vel.X += Vel.X / 16;
+				thing.Vel.Y += Vel.Y / 16;
+			}
+			if ((!thing.player && !thing.bBoss) || !(level.time&1))
+			{
+				thing.DamageMobj(self, target, 3, 'Electric');
+				A_PlaySound(self.AttackSound, CHAN_WEAPON, 1, true);
+				if (thing.bIsMonster && random[LightningHit]() < 64)
+				{
+					thing.Howl ();
+				}
+			}
+			health--;
+			if (health <= 0 || thing.health <= 0)
+			{
+				return 0;
+			}
+			if (bFloorHugger)
+			{
+				if (lastenemy && ! lastenemy.tracer)
+				{
+					lastenemy.tracer = thing;
+				}
+			}
+			else if (!tracer)
+			{
+				tracer = thing;
+			}
+		}
+		return 1; // lightning zaps through all sprites
+	}
+	
 }
 
 class LightningCeiling : Lightning
@@ -141,7 +180,7 @@ class LightningFloor : LightningCeiling
 
 // Lightning Zap ------------------------------------------------------------
 
-class LightningZap : Actor native
+class LightningZap : Actor
 {
 	Default
 	{
@@ -166,4 +205,34 @@ class LightningZap : Actor native
 		MLFX NOPQRSTU 2 Bright;
 		Stop;
 	}
+	
+	override int SpecialMissileHit (Actor thing)
+	{
+		Actor lmo;
+
+		if (thing.bShootable && thing != target)
+		{			
+			lmo = lastenemy;
+			if (lmo)
+			{
+				if (lmo.bFloorHugger)
+				{
+					if (lmo.lastenemy && !lmo.lastenemy.tracer)
+					{
+						lmo.lastenemy.tracer = thing;
+					}
+				}
+				else if (!lmo.tracer)
+				{
+					lmo.tracer = thing;
+				}
+				if (!(level.time&3))
+				{
+					lmo.health--;
+				}
+			}
+		}
+		return -1;
+	}
+	
 }

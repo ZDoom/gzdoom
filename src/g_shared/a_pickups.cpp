@@ -729,7 +729,7 @@ bool AInventory::CallHandlePickup(AInventory *item)
 	auto self = this;
 	while (self != nullptr)
 	{
-		IFVIRTUAL(AActor, HandlePickup)
+		IFVIRTUAL(AInventory, HandlePickup)
 		{
 			// Without the type cast this picks the 'void *' assignment...
 			VMValue params[2] = { (DObject*)self, (DObject*)item };
@@ -794,6 +794,14 @@ void AInventory::GoAwayAndDie ()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, GoAwayAndDie)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	self->GoAwayAndDie();
+	return 0;
+}
+
+
 //===========================================================================
 //
 // AInventory :: CreateCopy
@@ -831,7 +839,7 @@ DEFINE_ACTION_FUNCTION(AInventory, CreateCopy)
 
 AInventory *AInventory::CallCreateCopy(AActor *other)
 {
-	IFVIRTUAL(AActor, CreateCopy)
+	IFVIRTUAL(AInventory, CreateCopy)
 	{
 		VMValue params[2] = { (DObject*)this, (DObject*)other };
 		VMReturn ret;

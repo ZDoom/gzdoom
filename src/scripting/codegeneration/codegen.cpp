@@ -7192,6 +7192,52 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		}
 	}
 
+	// Note: These builtins would better be relegated to the actual type objects, instead of polluting this file, but that's a task for later.
+
+	// Texture builtins.
+	if (Self->ValueType == TypeTextureID)
+	{
+		if (MethodName == NAME_IsValid || MethodName == NAME_IsNull || MethodName == NAME_Exists || MethodName == NAME_SetInvalid || MethodName == NAME_SetNull)
+		{
+			if (ArgList.Size() > 0)
+			{
+				ScriptPosition.Message(MSG_ERROR, "too many parameters in call to %s", MethodName.GetChars());
+				delete this;
+				return nullptr;
+			}
+			// No need to create a dedicated node here, all builtins map directly to trivial operations.
+			Self->ValueType = TypeSInt32;	// all builtins treat the texture index as integer.
+			FxExpression *x;
+			switch (MethodName)
+			{
+			case NAME_IsValid:
+				x = new FxCompareRel('>', Self, new FxConstant(0, ScriptPosition));
+				break;
+
+			case NAME_IsNull:
+				x = new FxCompareEq(TK_Eq, Self, new FxConstant(0, ScriptPosition));
+				break;
+
+			case NAME_Exists:
+				x = new FxCompareRel(TK_Geq, Self, new FxConstant(0, ScriptPosition));
+				break;
+
+			case NAME_SetInvalid:
+				x = new FxAssign(Self, new FxConstant(-1, ScriptPosition));
+				break;
+
+			case NAME_SetNull:
+				x = new FxAssign(Self, new FxConstant(0, ScriptPosition));
+				break;
+			}
+			Self = nullptr;
+			SAFE_RESOLVE(x, ctx);
+			if (MethodName == NAME_SetInvalid || MethodName == NAME_SetNull) x->ValueType = TypeVoid; // override the default type of the assignment operator.
+			delete this;
+			return x;
+		}
+	}
+
 	if (Self->IsVector())
 	{
 		// handle builtins: Vectors got 2: Length and Unit.

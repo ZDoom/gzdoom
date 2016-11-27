@@ -30,6 +30,7 @@ class Inventory : Actor native
 	virtual native bool HandlePickup(Inventory item);
 	virtual native Inventory CreateCopy(Actor other);
 	
+	native void GoAwayAndDie();
 	
 	// These are regular functions for the item itself.
 	private native void A_RestoreSpecialDoomThing();

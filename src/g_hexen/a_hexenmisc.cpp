@@ -1,11 +1,10 @@
-#include "actor.h"
+#include "d_player.h"
 #include "info.h"
 #include "p_local.h"
 #include "s_sound.h"
 #include "a_action.h"
 #include "m_random.h"
 #include "a_sharedglobal.h"
-#include "a_hexenglobal.h"
 #include "i_system.h"
 #include "gi.h"
 #include "g_level.h"
@@ -22,9 +21,9 @@
 #include "p_maputl.h"
 #include "p_spec.h"
 #include "serializer.h"
+#include "a_pickups.h"
 
 // Include all the Hexen stuff here to reduce compile time
-#include "a_flechette.cpp"
 #include "a_flies.cpp"
 #include "a_heresiarch.cpp"
 #include "a_hexenspecialdecs.cpp"

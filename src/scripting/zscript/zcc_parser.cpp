@@ -302,12 +302,15 @@ static void DoParse(int lumpnum)
 
 	parser = ZCCParseAlloc(malloc);
 	ZCCParseState state;
-//#define TRACE
-#ifdef TRACE	// this costs a lot of time and should only be activated when it's really needed.
-	FILE *f = fopen("trace.txt", "w");
-	char prompt = '\0';
-	ZCCParseTrace(f, &prompt);
-#endif
+
+	FILE *f = nullptr;
+	const char *tracefile = Args->CheckValue("-tracefile");
+	if (tracefile != nullptr)
+	{
+		f = fopen(tracefile, "w");
+		char prompt = '\0';
+		ZCCParseTrace(f, &prompt);
+	}
 
 	sc.OpenLumpNum(lumpnum);
 	auto saved = sc.SavePos();
@@ -341,6 +344,7 @@ static void DoParse(int lumpnum)
 				}
 			}
 
+			if (f) fprintf(f, "Starting parsing %s\n", sc.String);
 			ParseSingleFile(sc.String, 0, parser, state);
 		}
 	}
@@ -356,12 +360,10 @@ static void DoParse(int lumpnum)
 		I_Error("%d errors while parsing %s", FScriptPosition::ErrorCounter, Wads.GetLumpFullPath(lumpnum).GetChars());
 	}
 
-#ifdef TRACE
-	if (f != NULL)
+	if (f != nullptr)
 	{
 		fclose(f);
 	}
-#endif
 
 	// Make a dump of the AST before running the compiler for diagnostic purposes.
 	if (Args->CheckParm("-dumpast"))

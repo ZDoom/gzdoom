@@ -299,7 +299,7 @@ opt_struct_body(X) ::= error.							{ X = NULL; }
 
 
 struct_body(X) ::= struct_member(X).
-struct_body(X) ::= struct_member(A) struct_body(B).		{ X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
+struct_body(X) ::= struct_body(A) struct_member(B).		{ X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
 
 struct_member(X) ::= declarator(A).						{ X = A; /*X-overwrites-A*/ }
 struct_member(X) ::= enum_def(A).						{ X = A; /*X-overwrites-A*/ }

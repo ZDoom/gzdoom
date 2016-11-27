@@ -228,7 +228,7 @@ FWeaponSlots weapons;
 
 	native bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false);
 	native bool PoisonPlayer(Actor poisoner, Actor source, int poison);
-	native PoisonDamage(Actor source, int damage, bool playPainSound)
+	native void PoisonDamage(Actor source, int damage, bool playPainSound);
 	native void SetPsprite(int id, State stat, bool pending = false);
 	native void SetSafeFlash(Weapon weap, State flashstate, int index);
 	native PSprite GetPSprite(int id);

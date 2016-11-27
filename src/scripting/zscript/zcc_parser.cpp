@@ -303,6 +303,7 @@ static void DoParse(int lumpnum)
 	parser = ZCCParseAlloc(malloc);
 	ZCCParseState state;
 
+#ifndef NDEBUG
 	FILE *f = nullptr;
 	const char *tracefile = Args->CheckValue("-tracefile");
 	if (tracefile != nullptr)
@@ -311,6 +312,7 @@ static void DoParse(int lumpnum)
 		char prompt = '\0';
 		ZCCParseTrace(f, &prompt);
 	}
+#endif
 
 	sc.OpenLumpNum(lumpnum);
 	auto saved = sc.SavePos();
@@ -360,10 +362,12 @@ static void DoParse(int lumpnum)
 		I_Error("%d errors while parsing %s", FScriptPosition::ErrorCounter, Wads.GetLumpFullPath(lumpnum).GetChars());
 	}
 
+#ifndef NDEBUG
 	if (f != nullptr)
 	{
 		fclose(f);
 	}
+#endif
 
 	// Make a dump of the AST before running the compiler for diagnostic purposes.
 	if (Args->CheckParm("-dumpast"))

@@ -1191,9 +1191,7 @@ struct side_t
 struct line_t
 {
 	vertex_t	*v1, *v2;	// vertices, from v1 to v2
-private:
 	DVector2	delta;		// precalculated v2 - v1 for side checking
-public:
 	uint32_t	flags;
 	uint32_t	activation;	// activation type
 	int			special;

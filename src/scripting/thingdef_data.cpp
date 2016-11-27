@@ -43,6 +43,7 @@
 #include "d_player.h"
 #include "p_effect.h"
 #include "autosegs.h"
+#include "p_maputl.h"
 #include "gi.h"
 
 static TArray<FPropertyInfo*> properties;
@@ -703,7 +704,11 @@ void InitThingdef()
 	auto sptr = NewPointer(sstruct);
 	sstruct->AddNativeField("soundtarget", TypeActor, myoffsetof(sector_t, SoundTarget));
 	
-	// expose the glibal Multiplayer variable.
+	// expose the global validcount variable.
+	PField *vcf = new PField("validcount", TypeSInt32, VARF_Native | VARF_Static, (intptr_t)&validcount);
+	GlobalSymbols.AddSymbol(vcf);
+
+	// expose the global Multiplayer variable.
 	PField *multif = new PField("multiplayer", TypeBool, VARF_Native | VARF_ReadOnly | VARF_Static, (intptr_t)&multiplayer);
 	GlobalSymbols.AddSymbol(multif);
 
@@ -725,6 +730,11 @@ void InitThingdef()
 	PArray *parray = NewArray(pstruct, MAXPLAYERS);
 	PField *playerf = new PField("players", parray, VARF_Native | VARF_Static, (intptr_t)&players);
 	GlobalSymbols.AddSymbol(playerf);
+
+	// set up the lines array in the sector struct. This is a bit messy because the type system is not prepared to handle a pointer to an array of pointers to a native struct even remotely well...
+	// As a result, the size has to be set to something large and arbritrary because it can change between maps. This will need some serious improvement when things get cleaned up.
+	pstruct = NewNativeStruct("Sector", nullptr);
+	pstruct->AddNativeField("lines", NewPointer(NewArray(NewPointer(NewNativeStruct("line", nullptr), false), 0x40000), false), myoffsetof(sector_t, lines), VARF_Native);
 
 	parray = NewArray(TypeBool, MAXPLAYERS);
 	playerf = new PField("playeringame", parray, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&playeringame);

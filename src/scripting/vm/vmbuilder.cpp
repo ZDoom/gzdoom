@@ -779,6 +779,7 @@ VMFunction *FFunctionBuildList::AddFunction(PFunction *functype, FxExpression *c
 	it.PrintableName = name;
 	it.Function = new VMScriptFunction;
 	it.Function->Name = functype->SymbolName;
+	it.Function->PrintableName = name;
 	it.Function->ImplicitArgs = functype->GetImplicitArgs();
 	it.Proto = nullptr;
 	it.FromDecorate = fromdecorate;
@@ -881,7 +882,6 @@ void FFunctionBuildList::Build()
 					DumpFunction(dump, sfunc, item.PrintableName.GetChars(), (int)item.PrintableName.Len());
 					codesize += sfunc->CodeSize;
 				}
-				sfunc->PrintableName = item.PrintableName;
 				sfunc->Unsafe = ctx.Unsafe;
 			}
 			catch (CRecoverableError &err)

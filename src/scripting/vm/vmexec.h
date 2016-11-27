@@ -713,11 +713,32 @@ begin:
 		assert(0);
 		NEXTOP;
 
+		// Fixme: This really needs to throw something more informative than a number. Printing the message here instead of passing it to the exception is not sufficient.
 	OP(BOUND):
 		if (reg.d[a] >= BC)
 		{
 			assert(false);
 			Printf("Array access out of bounds: Max. index = %u, current index = %u\n", BC, reg.d[a]);
+			THROW(X_ARRAY_OUT_OF_BOUNDS);
+		}
+		NEXTOP;
+
+	OP(BOUND_K):
+		ASSERTKD(BC);
+		if (reg.d[a] >= konstd[BC])
+		{
+			assert(false);
+			Printf("Array access out of bounds: Max. index = %u, current index = %u\n", konstd[BC], reg.d[a]);
+			THROW(X_ARRAY_OUT_OF_BOUNDS);
+		}
+		NEXTOP;
+
+	OP(BOUND_R):
+		ASSERTD(B);
+		if (reg.d[a] >= reg.d[B])
+		{
+			assert(false);
+			Printf("Array access out of bounds: Max. index = %u, current index = %u\n", reg.d[B], reg.d[a]);
 			THROW(X_ARRAY_OUT_OF_BOUNDS);
 		}
 		NEXTOP;

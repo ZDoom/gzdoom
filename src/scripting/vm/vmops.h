@@ -110,6 +110,8 @@ xx(CATCH,	catch,	CATCH,		NOP,	0, 0),		// A == 0: continue search on next try
 												// A == 3: (pkB == <type of exception thrown>) then pc++ ; next instruction must JMP to another CATCH
 												// for A > 0, exception is stored in pC
 xx(BOUND,	bound,	RII16,		NOP,	0, 0),		// if rA >= BC, throw exception
+xx(BOUND_K,	bound,	LKI,		NOP,	0, 0),		// if rA >= const[BC], throw exception
+xx(BOUND_R,	bound,	RIRI,		NOP,	0, 0),		// if rA >= rB, throw exception
 
 // String instructions.
 xx(CONCAT,		concat,	RSRSRS,		NOP,	0, 0),		// sA = sB..sC

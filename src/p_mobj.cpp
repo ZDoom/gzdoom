@@ -154,6 +154,7 @@ AActor::~AActor ()
 extern FFlagDef InternalActorFlagDefs[];
 extern FFlagDef ActorFlagDefs[];
 
+DEFINE_FIELD(AActor, snext)
 DEFINE_FIELD(AActor, player)
 DEFINE_FIELD_NAMED(AActor, __Pos, pos)
 DEFINE_FIELD_NAMED(AActor, __Pos.X, x)

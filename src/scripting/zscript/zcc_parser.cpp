@@ -346,7 +346,9 @@ static void DoParse(int lumpnum)
 				}
 			}
 
+#ifndef NDEBUG
 			if (f) fprintf(f, "Starting parsing %s\n", sc.String);
+#endif
 			ParseSingleFile(sc.String, 0, parser, state);
 		}
 	}

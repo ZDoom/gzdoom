@@ -6578,9 +6578,16 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 	PArray *arraytype = dyn_cast<PArray>(Array->ValueType);
 	if (arraytype == nullptr)
 	{
-		ScriptPosition.Message(MSG_ERROR, "'[]' can only be used with arrays.");
-		delete this;
-		return nullptr;
+		// Check if we got a pointer to an array. Some native data structures (like the line list in sectors) use this.
+		PPointer *ptype = dyn_cast<PPointer>(Array->ValueType);
+		if (ptype == nullptr || !ptype->PointedType->IsKindOf(RUNTIME_CLASS(PArray)))
+		{
+			ScriptPosition.Message(MSG_ERROR, "'[]' can only be used with arrays.");
+			delete this;
+			return nullptr;
+		}
+		arraytype = static_cast<PArray*>(ptype->PointedType);
+		arrayispointer = true;
 	}
 	if (index->isConstant())
 	{
@@ -6592,37 +6599,40 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 			return nullptr;
 		}
 
-		// if this is an array within a class or another struct we can simplify the expression by creating a new PField with a cumulative offset.
-		if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember)
+		if (!arrayispointer)
 		{
-			auto parentfield = static_cast<FxStructMember *>(Array)->membervar;
-			// PFields are garbage collected so this will be automatically taken care of later.
-			auto newfield = new PField(NAME_None, arraytype->ElementType, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
-			static_cast<FxStructMember *>(Array)->membervar = newfield;
-			Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
-			auto x = Array->Resolve(ctx);
-			Array = nullptr;
-			return x;
-		}
-		else if (Array->ExprType == EFX_GlobalVariable)
-		{
-			auto parentfield = static_cast<FxGlobalVariable *>(Array)->membervar;
-			auto newfield = new PField(NAME_None, arraytype->ElementType, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
-			static_cast<FxGlobalVariable *>(Array)->membervar = newfield;
-			Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
-			auto x = Array->Resolve(ctx);
-			Array = nullptr;
-			return x;
-		}
-		else if (Array->ExprType == EFX_StackVariable)
-		{
-			auto parentfield = static_cast<FxStackVariable *>(Array)->membervar;
-			auto newfield = new PField(NAME_None, arraytype->ElementType, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
-			static_cast<FxStackVariable *>(Array)->ReplaceField(newfield);
-			Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
-			auto x = Array->Resolve(ctx);
-			Array = nullptr;
-			return x;
+			// if this is an array within a class or another struct we can simplify the expression by creating a new PField with a cumulative offset.
+			if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember)
+			{
+				auto parentfield = static_cast<FxStructMember *>(Array)->membervar;
+				// PFields are garbage collected so this will be automatically taken care of later.
+				auto newfield = new PField(NAME_None, arraytype->ElementType, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
+				static_cast<FxStructMember *>(Array)->membervar = newfield;
+				Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
+				auto x = Array->Resolve(ctx);
+				Array = nullptr;
+				return x;
+			}
+			else if (Array->ExprType == EFX_GlobalVariable)
+			{
+				auto parentfield = static_cast<FxGlobalVariable *>(Array)->membervar;
+				auto newfield = new PField(NAME_None, arraytype->ElementType, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
+				static_cast<FxGlobalVariable *>(Array)->membervar = newfield;
+				Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
+				auto x = Array->Resolve(ctx);
+				Array = nullptr;
+				return x;
+			}
+			else if (Array->ExprType == EFX_StackVariable)
+			{
+				auto parentfield = static_cast<FxStackVariable *>(Array)->membervar;
+				auto newfield = new PField(NAME_None, arraytype->ElementType, parentfield->Flags, indexval * arraytype->ElementSize + parentfield->Offset);
+				static_cast<FxStackVariable *>(Array)->ReplaceField(newfield);
+				Array->isresolved = false;	// re-resolve the parent so it can also check if it can be optimized away.
+				auto x = Array->Resolve(ctx);
+				Array = nullptr;
+				return x;
+			}
 		}
 	}
 
@@ -6644,8 +6654,17 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 
 ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 {
+	PArray *arraytype;
+	
+	if (arrayispointer)
+	{
+		arraytype = static_cast<PArray*>(static_cast<PPointer*>(Array->ValueType)->PointedType);
+	}
+	else
+	{
+		arraytype = static_cast<PArray*>(Array->ValueType);
+	}
 	ExpEmit start = Array->Emit(build);
-	PArray *const arraytype = static_cast<PArray*>(Array->ValueType);
 
 	/* what was this for?
 	if (start.Konst)
@@ -6700,7 +6719,16 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	else
 	{
 		ExpEmit indexv(index->Emit(build));
-		build->Emit(OP_BOUND, indexv.RegNum, arraytype->ElementCount);
+		// Todo: For dynamically allocated arrays (like global sector and linedef tables) we need to get the bound value in here somehow.
+		// Right now their bounds are not properly checked for.
+		if (arraytype->ElementCount > 65535)
+		{
+			build->Emit(OP_BOUND_K, indexv.RegNum, build->GetConstantInt(arraytype->ElementCount));
+		}
+		else
+		{
+			build->Emit(OP_BOUND, indexv.RegNum, arraytype->ElementCount);
+		}
 
 		if (!start.Konst)
 		{

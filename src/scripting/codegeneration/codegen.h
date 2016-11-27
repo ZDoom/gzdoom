@@ -1416,6 +1416,7 @@ public:
 	FxExpression *index;
 	bool AddressRequested;
 	bool AddressWritable;
+	bool arrayispointer = false;
 
 	FxArrayElement(FxExpression*, FxExpression*);
 	~FxArrayElement();

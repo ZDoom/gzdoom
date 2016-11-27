@@ -103,6 +103,8 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 		lightlevel = *light->p_lightlevel;
 	}
 
+	UVTransform xform(ceiling ? fakeFloor->top.model->planes[sector_t::ceiling].xform : fakeFloor->top.model->planes[sector_t::floor].xform, tex);
+
 	PolyDrawArgs args;
 	args.uniforms.light = (uint32_t)(lightlevel / 255.0f * 256.0f);
 	if (fixedlightlev >= 0 || fixedcolormap)
@@ -119,7 +121,7 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
 			seg_t *line = &sub->firstline[i];
-			vertices[sub->numlines - 1 - i] = PlaneVertex(line->v1, fakeFloor->bottom.plane->ZatPoint(line->v1));
+			vertices[sub->numlines - 1 - i] = PlaneVertex(line->v1, fakeFloor->bottom.plane->ZatPoint(line->v1), xform);
 		}
 	}
 	else
@@ -127,7 +129,7 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
 			seg_t *line = &sub->firstline[i];
-			vertices[i] = PlaneVertex(line->v1, fakeFloor->top.plane->ZatPoint(line->v1));
+			vertices[i] = PlaneVertex(line->v1, fakeFloor->top.plane->ZatPoint(line->v1), xform);
 		}
 	}
 
@@ -172,36 +174,65 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	if (fakesector && (fakesector == sub->sector || (fakesector->MoreFlags & SECF_IGNOREHEIGHTSEC) == SECF_IGNOREHEIGHTSEC))
 		fakesector = nullptr;
 
-	bool fakeflooronly = fakesector && (fakesector->MoreFlags & SECF_FAKEFLOORONLY) != SECF_FAKEFLOORONLY;
+	bool fakeflooronly = fakesector && (fakesector->MoreFlags & SECF_FAKEFLOORONLY) == SECF_FAKEFLOORONLY;
 
 	FTextureID picnum;
 	bool ccw;
 	sector_t *frontsector;
-	if (ceiling && fakesector && ViewPos.Z < fakesector->floorplane.Zat0())
+	if (fakesector)
 	{
-		picnum = fakesector->GetTexture(sector_t::ceiling);
-		ccw = false;
-		ceiling = false;
-		frontsector = fakesector;
-	}
-	else if (!ceiling && fakesector && ViewPos.Z >= fakesector->floorplane.Zat0())
-	{
-		picnum = fakesector->GetTexture(sector_t::ceiling);
-		ccw = true;
-		frontsector = fakesector;
-	}
-	else if (ceiling && fakesector && ViewPos.Z > fakesector->ceilingplane.Zat0() && !fakeflooronly)
-	{
-		picnum = fakesector->GetTexture(sector_t::floor);
-		ccw = true;
-		frontsector = fakesector;
-	}
-	else if (!ceiling && fakesector && ViewPos.Z <= fakesector->ceilingplane.Zat0() && !fakeflooronly)
-	{
-		picnum = fakesector->GetTexture(sector_t::floor);
-		ccw = false;
-		ceiling = true;
-		frontsector = fakesector;
+		// Floor and ceiling texture needs to be swapped sometimes? Why?? :(
+
+		if (ViewPos.Z < fakesector->floorplane.Zat0()) // In water
+		{
+			if (ceiling)
+			{
+				picnum = fakesector->GetTexture(sector_t::ceiling);
+				ceiling = false;
+				frontsector = fakesector;
+				ccw = false;
+			}
+			else
+			{
+				picnum = fakesector->GetTexture(sector_t::floor);
+				frontsector = sub->sector;
+				ccw = true;
+			}
+		}
+		else if (ViewPos.Z >= fakesector->ceilingplane.Zat0() && !fakeflooronly) // In ceiling water
+		{
+			if (ceiling)
+			{
+				picnum = fakesector->GetTexture(sector_t::ceiling);
+				frontsector = sub->sector;
+				ccw = true;
+			}
+			else
+			{
+				picnum = fakesector->GetTexture(sector_t::floor);
+				frontsector = fakesector;
+				ccw = false;
+				ceiling = true;
+			}
+		}
+		else if (!ceiling) // Water surface
+		{
+			picnum = fakesector->GetTexture(sector_t::ceiling);
+			frontsector = fakesector;
+			ccw = true;
+		}
+		else if (!fakeflooronly) // Ceiling water surface
+		{
+			picnum = fakesector->GetTexture(sector_t::floor);
+			frontsector = fakesector;
+			ccw = true;
+		}
+		else // Upper ceiling
+		{
+			picnum = sub->sector->GetTexture(sector_t::ceiling);
+			ccw = true;
+			frontsector = sub->sector;
+		}
 	}
 	else
 	{
@@ -215,6 +246,8 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 		return;
 
 	bool isSky = picnum == skyflatnum;
+
+	UVTransform transform(ceiling ? frontsector->planes[sector_t::ceiling].xform : frontsector->planes[sector_t::floor].xform, tex);
 
 	PolyDrawArgs args;
 	args.uniforms.light = (uint32_t)(frontsector->lightlevel / 255.0f * 256.0f);
@@ -232,7 +265,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
 			seg_t *line = &sub->firstline[i];
-			vertices[sub->numlines - 1 - i] = PlaneVertex(line->v1, isSky ? skyHeight : frontsector->ceilingplane.ZatPoint(line->v1));
+			vertices[sub->numlines - 1 - i] = PlaneVertex(line->v1, isSky ? skyHeight : frontsector->ceilingplane.ZatPoint(line->v1), transform);
 		}
 	}
 	else
@@ -240,7 +273,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
 			seg_t *line = &sub->firstline[i];
-			vertices[i] = PlaneVertex(line->v1, isSky ? skyHeight : frontsector->floorplane.ZatPoint(line->v1));
+			vertices[i] = PlaneVertex(line->v1, isSky ? skyHeight : frontsector->floorplane.ZatPoint(line->v1), transform);
 		}
 	}
 
@@ -334,17 +367,17 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 
 			if (ceiling)
 			{
-				wallvert[0] = PlaneVertex(line->v1, skyHeight);
-				wallvert[1] = PlaneVertex(line->v2, skyHeight);
-				wallvert[2] = PlaneVertex(line->v2, skyBottomz2);
-				wallvert[3] = PlaneVertex(line->v1, skyBottomz1);
+				wallvert[0] = PlaneVertex(line->v1, skyHeight, transform);
+				wallvert[1] = PlaneVertex(line->v2, skyHeight, transform);
+				wallvert[2] = PlaneVertex(line->v2, skyBottomz2, transform);
+				wallvert[3] = PlaneVertex(line->v1, skyBottomz1, transform);
 			}
 			else
 			{
-				wallvert[0] = PlaneVertex(line->v1, frontsector->floorplane.ZatPoint(line->v1));
-				wallvert[1] = PlaneVertex(line->v2, frontsector->floorplane.ZatPoint(line->v2));
-				wallvert[2] = PlaneVertex(line->v2, skyHeight);
-				wallvert[3] = PlaneVertex(line->v1, skyHeight);
+				wallvert[0] = PlaneVertex(line->v1, frontsector->floorplane.ZatPoint(line->v1), transform);
+				wallvert[1] = PlaneVertex(line->v2, frontsector->floorplane.ZatPoint(line->v2), transform);
+				wallvert[2] = PlaneVertex(line->v2, skyHeight, transform);
+				wallvert[3] = PlaneVertex(line->v1, skyHeight, transform);
 			}
 
 			args.vinput = wallvert;
@@ -357,14 +390,49 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	}
 }
 
-TriVertex RenderPolyPlane::PlaneVertex(vertex_t *v1, double height)
+TriVertex RenderPolyPlane::PlaneVertex(vertex_t *v1, double height, const UVTransform &transform)
 {
 	TriVertex v;
 	v.x = (float)v1->fPos().X;
 	v.y = (float)v1->fPos().Y;
 	v.z = (float)height;
 	v.w = 1.0f;
-	v.varying[0] = v.x / 64.0f;
-	v.varying[1] = 1.0f - v.y / 64.0f;
+	v.varying[0] = transform.GetU(v.x, v.y);
+	v.varying[1] = transform.GetV(v.x, v.y);
 	return v;
+}
+
+RenderPolyPlane::UVTransform::UVTransform(const FTransform &transform, FTexture *tex)
+{
+	if (tex)
+	{
+		xscale = (float)(transform.xScale * tex->Scale.X / tex->GetWidth());
+		yscale = (float)(transform.yScale * tex->Scale.Y / tex->GetHeight());
+
+		double planeang = (transform.Angle + transform.baseAngle).Radians();
+		cosine = (float)cos(planeang);
+		sine = (float)sin(planeang);
+
+		xOffs = (float)transform.xOffs;
+		yOffs = (float)transform.yOffs;
+	}
+	else
+	{
+		xscale = 1.0f / 64.0f;
+		yscale = 1.0f / 64.0f;
+		cosine = 1.0f;
+		sine = 0.0f;
+		xOffs = 0.0f;
+		yOffs = 0.0f;
+	}
+}
+
+float RenderPolyPlane::UVTransform::GetU(float x, float y) const
+{
+	return (xOffs + x * cosine - y * sine) * xscale;
+}
+
+float RenderPolyPlane::UVTransform::GetV(float x, float y) const
+{
+	return (yOffs - x * sine - y * cosine) * yscale;
 }

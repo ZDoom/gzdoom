@@ -1040,7 +1040,11 @@ FString BuildString (int argc, FString *argv)
 
 		for (arg = 0; arg < argc; arg++)
 		{
-			if (strchr(argv[arg], '"'))
+			if (argv[arg][0] == '\0')
+			{ // It's an empty argument, we need to convert it to '""'
+				buf << "\"\" ";
+			}
+			else if (strchr(argv[arg], '"'))
 			{ // If it contains one or more quotes, we need to escape them.
 				buf << '"';
 				long substr_start = 0, quotepos;

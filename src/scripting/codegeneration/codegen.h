@@ -289,6 +289,7 @@ enum EFxType
 	EFX_NamedNode,
 	EFX_GetClass,
 	EFX_ColorLiteral,
+	EFX_GetDefaultByType,
 	EFX_COUNT
 };
 
@@ -1538,6 +1539,24 @@ public:
 
 	FxGetClass(FxExpression *self);
 	~FxGetClass();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxFlopFunctionCall
+//
+//==========================================================================
+
+class FxGetDefaultByType : public FxExpression
+{
+	FxExpression *Self;
+
+public:
+
+	FxGetDefaultByType(FxExpression *self);
+	~FxGetDefaultByType();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

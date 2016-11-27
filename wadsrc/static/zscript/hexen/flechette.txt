@@ -28,7 +28,7 @@ class PoisonBag : Actor
 
 	void A_PoisonBagInit()
 	{
-		Actor mo = Spawn("PoisonCloud", (pos.xy, 28), ALLOW_REPLACE);
+		Actor mo = Spawn("PoisonCloud", pos + (0, 0, 28), ALLOW_REPLACE);
 		if (mo)
 		{
 			mo.target = target;
@@ -184,8 +184,7 @@ class ArtiPoisonBag : Inventory
 		// If a subclass's specific icon is not defined, let it use the base class's.
 		if (!Icon.isValid())
 		{
-			Inventory defbag = Inventory(GetDefaultByType("ArtiPoisonBag"));
-			Icon = defbag.Icon;
+			Icon = GetDefaultByType("ArtiPoisonBag").Icon;
 		}
 	}
 
@@ -469,7 +468,7 @@ class PoisonCloud : Actor
 		special1 = 24+(random[PoisonCloud]() & 7);
 		special2 = 0;
 	}
-
+	
 	//===========================================================================
 	//
 	// 
@@ -482,7 +481,7 @@ class PoisonCloud : Actor
 		{
 			bool mate = (target != null && victim.player != target.player && victim.IsTeammate (target));
 			bool dopoison;
-
+			
 			if (!mate)
 			{
 				dopoison = victim.player.poisoncount < 4;
@@ -494,7 +493,7 @@ class PoisonCloud : Actor
 
 			if (dopoison)
 			{
-				int damage = 15 + (random[PoisonCloud]()&15);
+				damage = 15 + (random[PoisonCloud]() & 15);
 				if (mate)
 				{
 					damage = (int)(damage * level.teamdamage);

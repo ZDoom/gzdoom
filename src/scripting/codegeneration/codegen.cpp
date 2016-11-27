@@ -262,7 +262,7 @@ static bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompar
 		auto fromtype = static_cast<PPointer *>(source);
 		auto totype = static_cast<PPointer *>(dest);
 		if (fromtype == nullptr) return true;
-		if (!forcompare && totype->IsConst && !fromtype->IsConst) return false;
+		if (!forcompare && totype->IsConst != fromtype->IsConst) return false;
 		if (fromtype == totype) return true;
 		if (fromtype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)) && totype->PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
 		{
@@ -1874,10 +1874,13 @@ ExpEmit FxUnaryNotBoolean::Emit(VMFunctionBuilder *build)
 	assert(Operand->ValueType == TypeBool);
 	assert(ValueType == TypeBool || IsInteger());	// this may have been changed by an int cast.
 	ExpEmit from = Operand->Emit(build);
+	from.Free(build);
+	ExpEmit to(build, REGT_INT);
 	assert(!from.Konst);
 	// boolean not is the same as XOR-ing the lowest bit
-	build->Emit(OP_XOR_RK, from.RegNum, from.RegNum, build->GetConstantInt(1));
-	return from;
+
+	build->Emit(OP_XOR_RK, to.RegNum, from.RegNum, build->GetConstantInt(1));
+	return to;
 }
 
 //==========================================================================
@@ -4309,7 +4312,18 @@ FxExpression *FxDynamicCast::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(expr, ctx);
+	if (expr->ExprType == EFX_GetDefaultByType)
+	{
+		int a = 0;
+	}
 	bool constflag = expr->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer *>(expr->ValueType)->IsConst;
+	if (constflag)
+	{
+		// readonly pointers are normally only used for class defaults which lack type information to be cast properly, so we have to error out here.
+		ScriptPosition.Message(MSG_ERROR, "Cannot cast a readonly pointer");
+		delete this;
+		return nullptr;
+	}
 	expr = new FxTypeCast(expr, NewPointer(RUNTIME_CLASS(DObject), constflag), true, true);
 	expr = expr->Resolve(ctx);
 	if (expr == nullptr)
@@ -7012,6 +7026,14 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		}
 		break;
 
+	case NAME_GetDefaultByType:
+		if (CheckArgSize(NAME_GetDefaultByType, ArgList, 1, 1, ScriptPosition))
+		{
+			func = new FxGetDefaultByType(ArgList[0]);
+			ArgList[0] = nullptr;
+		}
+		break;
+
 	case NAME_Random:
 		// allow calling Random without arguments to default to (0, 255)
 		if (ArgList.Size() == 0)
@@ -8139,6 +8161,78 @@ ExpEmit FxGetClass::Emit(VMFunctionBuilder *build)
 	op.Free(build);
 	ExpEmit to(build, REGT_POINTER);
 	build->Emit(OP_META, to.RegNum, op.RegNum);
+	return to;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+FxGetDefaultByType::FxGetDefaultByType(FxExpression *self)
+	:FxExpression(EFX_GetDefaultByType, self->ScriptPosition)
+{
+	Self = self;
+}
+
+FxGetDefaultByType::~FxGetDefaultByType()
+{
+	SAFE_DELETE(Self);
+}
+
+FxExpression *FxGetDefaultByType::Resolve(FCompileContext &ctx)
+{
+	SAFE_RESOLVE(Self, ctx);
+	PClass *cls = nullptr;
+
+	if (Self->ValueType == TypeString || Self->ValueType == TypeName)
+	{
+		if (Self->isConstant())
+		{
+			cls = PClass::FindActor(static_cast<FxConstant *>(Self)->GetValue().GetName());
+			if (cls == nullptr)
+			{
+				ScriptPosition.Message(MSG_ERROR, "GetDefaultByType() requires an actor class type, but got %s", static_cast<FxConstant *>(Self)->GetValue().GetString().GetChars());
+				delete this;
+				return nullptr;
+			}
+			Self = new FxConstant(cls, NewClassPointer(cls), ScriptPosition);
+		}
+		else
+		{
+			// this is the ugly case. We do not know what we have and cannot do proper type casting.
+			// For now error out and let this case require explicit handling on the user side.
+			ScriptPosition.Message(MSG_ERROR, "GetDefaultByType() requires an actor class type", static_cast<FxConstant *>(Self)->GetValue().GetString().GetChars());
+			delete this;
+			return nullptr;
+		}
+	}
+	else
+	{
+		auto cp = dyn_cast<PClassPointer>(Self->ValueType);
+		if (cp == nullptr || !cp->ClassRestriction->IsDescendantOf(RUNTIME_CLASS(AActor)))
+		{
+			ScriptPosition.Message(MSG_ERROR, "GetDefaultByType() requires an actor class type");
+			delete this;
+			return nullptr;
+		}
+		cls = cp->ClassRestriction;
+	}
+	ValueType = NewPointer(cls, true);
+	return this;
+}
+
+ExpEmit FxGetDefaultByType::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit op = Self->Emit(build);
+	op.Free(build);
+	ExpEmit to(build, REGT_POINTER);
+	if (op.Konst)
+	{
+		build->Emit(OP_LKP, to.RegNum, op.RegNum);
+		op = to;
+	}
+	build->Emit(OP_LO, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, Defaults)));
 	return to;
 }
 

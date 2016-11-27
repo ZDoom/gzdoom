@@ -45,6 +45,7 @@
 #include "autosegs.h"
 #include "p_maputl.h"
 #include "gi.h"
+#include "p_terrain.h"
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;

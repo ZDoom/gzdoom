@@ -19,7 +19,7 @@ class ClericWeapon : Weapon
 	}
 }
 
-class MageWeapon : Weapon native
+class MageWeapon : Weapon
 {
 	Default
 	{

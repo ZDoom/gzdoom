@@ -5908,6 +5908,13 @@ int P_GetThingFloorType (AActor *thing)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, GetFloorTerrain)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_POINTER(&Terrains[P_GetThingFloorType(self)]);
+}
+
+
 //---------------------------------------------------------------------------
 //
 // FUNC P_HitWater

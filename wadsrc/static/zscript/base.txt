@@ -248,3 +248,22 @@ struct Wads
 
 	native static int CheckNumForName(string name, int ns, int wadnum = -1, bool exact = false);
 }
+
+struct TerrainDef native
+{
+	native Name TerrainName;
+	native int Splash;
+	native int DamageAmount;
+	native Name DamageMOD;
+	native int DamageTimeMask;
+	native double FootClip;
+	native float StepVolume;
+	native int WalkStepTics;
+	native int RunStepTics;
+	native Sound LeftStepSound;
+	native Sound RightStepSound;
+	native bool IsLiquid;
+	native bool AllowProtection;
+	native double Friction;
+	native double MoveFactor;
+};

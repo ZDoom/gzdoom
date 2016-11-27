@@ -365,6 +365,12 @@ bool P_CheckMeleeRange2 (AActor *actor)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CheckMeleeRange2)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(P_CheckMeleeRange2(self));
+}
+
 
 //=============================================================================
 //

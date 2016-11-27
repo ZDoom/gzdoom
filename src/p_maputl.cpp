@@ -45,7 +45,6 @@
 #include "templates.h"
 #include "po_man.h"
 
-static AActor *RoughBlockCheck (AActor *mo, int index, void *);
 sector_t *P_PointInSectorBuggy(double x, double y);
 int P_VanillaPointOnDivlineSide(double x, double y, const divline_t* line);
 
@@ -1685,19 +1684,6 @@ FPathTraverse::~FPathTraverse()
 //		distance is in MAPBLOCKUNITS
 //===========================================================================
 
-AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable)
-{
-	return P_BlockmapSearch (mo, distance, RoughBlockCheck, (void *)onlyseekable);
-}
-
-DEFINE_ACTION_FUNCTION(AActor, RoughMonsterSearch)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(distance);
-	PARAM_BOOL_DEF(onlyseekable);
-	ACTION_RETURN_OBJECT(P_RoughMonsterSearch(self, distance, onlyseekable));
-}
-
 AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, int, void *), void *params)
 {
 	int blockX;
@@ -1787,6 +1773,13 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 	return NULL;	
 }
 
+struct BlockCheckInfo
+{
+	bool onlyseekable;
+	bool frontonly;
+	divline_t frontline;
+};
+
 //===========================================================================
 //
 // RoughBlockCheck
@@ -1795,14 +1788,19 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 
 static AActor *RoughBlockCheck (AActor *mo, int index, void *param)
 {
-	bool onlyseekable = param != NULL;
+	BlockCheckInfo *info = (BlockCheckInfo *)param;
+
 	FBlockNode *link;
 
 	for (link = blocklinks[index]; link != NULL; link = link->NextActor)
 	{
 		if (link->Me != mo)
 		{
-			if (onlyseekable && !mo->CanSeek(link->Me))
+			if (info->onlyseekable && !mo->CanSeek(link->Me))
+			{
+				continue;
+			}
+			if (info->frontonly && P_PointOnDivlineSide(link->Me->X(), link->Me->Y(), &info->frontline) != 0)
 			{
 				continue;
 			}
@@ -1813,6 +1811,30 @@ static AActor *RoughBlockCheck (AActor *mo, int index, void *param)
 		}
 	}
 	return NULL;
+}
+
+AActor *P_RoughMonsterSearch(AActor *mo, int distance, bool onlyseekable, bool frontonly)
+{
+	BlockCheckInfo info;
+	info.onlyseekable = onlyseekable;
+	if ((info.frontonly = frontonly))
+	{
+		info.frontline.x = mo->X();
+		info.frontline.y = mo->Y();
+		info.frontline.dx = -mo->Angles.Yaw.Sin();
+		info.frontline.dy = -mo->Angles.Yaw.Cos();
+	}
+
+	return P_BlockmapSearch(mo, distance, RoughBlockCheck, (void *)&info);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, RoughMonsterSearch)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(distance);
+	PARAM_BOOL_DEF(onlyseekable);
+	PARAM_BOOL_DEF(frontonly);
+	ACTION_RETURN_OBJECT(P_RoughMonsterSearch(self, distance, onlyseekable, frontonly));
 }
 
 //==========================================================================

@@ -24,16 +24,6 @@ class Serpent : Actor
 		HitObituary "$OB_SERPENTHIT";
 	}
 
-	native void A_SerpentHumpDecide();
-	native void A_SerpentHide();
-	native void A_SerpentCheckForAttack();
-	native void A_SerpentSpawnGibs();
-	native void A_SerpentUnHide();
-	native void A_SerpentRaiseHump();
-	native void A_SerpentLowerHump();
-	native void A_SerpentChooseAttack();
-	native void A_SerpentMeleeAttack();
-
 	States
 	{
 	Spawn:
@@ -99,6 +89,203 @@ class Serpent : Actor
 		SSPT N 5 A_SerpentMeleeAttack;
 		Goto Dive;
 	}
+	
+	//============================================================================
+	//
+	// A_SerpentUnHide
+	//
+	//============================================================================
+
+	void A_SerpentUnHide()
+	{
+		bInvisible = false;
+		Floorclip = 24;
+	}
+
+	//============================================================================
+	//
+	// A_SerpentHide
+	//
+	//============================================================================
+
+	void A_SerpentHide()
+	{
+		bInvisible = true;
+		Floorclip = 0;
+	}
+
+	//============================================================================
+	//
+	// A_SerpentRaiseHump
+	// 
+	// Raises the hump above the surface by raising the floorclip level
+	//============================================================================
+
+	void A_SerpentRaiseHump()
+	{
+		Floorclip -= 4;
+	}
+
+	//============================================================================
+	//
+	// A_SerpentLowerHump
+	// 
+	//============================================================================
+
+	void A_SerpentLowerHump()
+	{
+		Floorclip += 4;
+	}
+
+	//============================================================================
+	//
+	// A_SerpentHumpDecide
+	//
+	//		Decided whether to hump up, or if the mobj is a serpent leader, 
+	//			to missile attack
+	//============================================================================
+
+	void A_SerpentHumpDecide()
+	{
+		if (MissileState != NULL)
+		{
+			if (random[SerpentHump]() > 30)
+			{
+				return;
+			}
+			else if (random[SerpentHump]() < 40)
+			{ // Missile attack
+				SetState (MeleeState);
+				return;
+			}
+		}
+		else if (random[SerpentHump]() > 3)
+		{
+			return;
+		}
+		if (!CheckMeleeRange ())
+		{ // The hump shouldn't occur when within melee range
+			if (MissileState != NULL && random[SerpentHump]() < 128)
+			{
+				SetState (MeleeState);
+			}
+			else
+			{	
+				SetStateLabel("Hump");
+				A_PlaySound ("SerpentActive", CHAN_BODY);
+			}
+		}
+	}
+
+	//============================================================================
+	//
+	// A_SerpentCheckForAttack
+	//
+	//============================================================================
+
+	void A_SerpentCheckForAttack()
+	{
+		if (!target)
+		{
+			return;
+		}
+		if (MissileState != NULL)
+		{
+			if (!CheckMeleeRange ())
+			{
+				SetStateLabel ("Attack");
+				return;
+			}
+		}
+		if (CheckMeleeRange2 ())
+		{
+			SetStateLabel ("Walk");
+		}
+		else if (CheckMeleeRange ())
+		{
+			if (random[SerpentAttack]() < 32)
+			{
+				SetStateLabel ("Walk");
+			}
+			else
+			{
+				SetStateLabel ("Attack");
+			}
+		}
+	}
+
+	//============================================================================
+	//
+	// A_SerpentChooseAttack
+	//
+	//============================================================================
+	
+	void A_SerpentChooseAttack()
+	{
+		if (!target || CheckMeleeRange())
+		{
+			return;
+		}
+		if (MissileState != NULL)
+		{
+			SetState (MissileState);
+		}
+	}
+		
+	//============================================================================
+	//
+	// A_SerpentMeleeAttack
+	//
+	//============================================================================
+
+	void A_SerpentMeleeAttack()
+	{
+		if (!target)
+		{
+			return;
+		}
+		if (CheckMeleeRange ())
+		{
+			int damage = random[SerpentAttack](1, 8) * 5;
+			int newdam = target.DamageMobj (self, self, damage, 'Melee');
+			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			A_PlaySound ("SerpentMeleeHit", CHAN_BODY);
+		}
+		if (random[SerpentAttack]() < 96)
+		{
+			A_SerpentCheckForAttack();
+		}
+	}
+
+	//============================================================================
+	//
+	// A_SerpentSpawnGibs
+	//
+	//============================================================================
+
+	void A_SerpentSpawnGibs()
+	{
+		static const class<Actor> GibTypes[] =
+		{
+			"SerpentGib3",
+			"SerpentGib2",
+			"SerpentGib1"
+		};
+
+		for (int i = 2; i >= 0; --i)
+		{
+			double x = (random[SerpentGibs]() - 128) / 16.;
+			double y = (random[SerpentGibs]() - 128) / 16.;
+
+			Actor mo = Spawn (GibTypes[i], Vec2OffsetZ(x, y, floorz + 1), ALLOW_REPLACE);
+			if (mo)
+			{
+				mo.Vel.X = (random[SerpentGibs]() - 128) / 1024.f;
+				mo.Vel.Y = (random[SerpentGibs]() - 128) / 1024.f;
+				mo.Floorclip = 6;
+			}
+		}
+	}
 }
 
 // Serpent Leader -----------------------------------------------------------
@@ -159,8 +346,6 @@ class SerpentHead : Actor
 		+NOBLOCKMAP
 	}
 
-	native void A_SerpentHeadCheck();
-
 	States
 	{
 	Spawn:
@@ -169,6 +354,28 @@ class SerpentHead : Actor
 	Death:
 		SSXD S -1;
 		Loop;
+	}
+	
+	//============================================================================
+	//
+	// A_SerpentHeadCheck
+	//
+	//============================================================================
+
+	void A_SerpentHeadCheck()
+	{
+		if (pos.z <= floorz)
+		{
+			if (GetFloorTerrain().IsLiquid)
+			{
+				HitFloor ();
+				Destroy();
+			}
+			else
+			{
+				SetStateLabel ("NAME_Death");
+			}
+		}
 	}
 }
 
@@ -183,10 +390,6 @@ class SerpentGib1 : Actor
 		+NOBLOCKMAP +NOGRAVITY
 	}
 
-	native void A_FloatGib();
-	native void A_DelayGib();
-	native void A_SinkGib();
-
 	States
 	{
 	Spawn:
@@ -199,6 +402,41 @@ class SerpentGib1 : Actor
 		SSXD QQQ 8 A_SinkGib;
 		Stop;
 	}
+	
+	//============================================================================
+	//
+	// A_FloatGib
+	//
+	//============================================================================
+
+	void A_FloatGib()
+	{
+		Floorclip -= 1;
+	}
+
+	//============================================================================
+	//
+	// A_SinkGib
+	//
+	//============================================================================
+
+	void A_SinkGib()
+	{
+		Floorclip += 1;
+	}
+
+	//============================================================================
+	//
+	// A_DelayGib
+	//
+	//============================================================================
+
+	void A_DelayGib()
+	{
+		tics -= random[DelayGib]() >> 2;
+	}
+
+	
 }
 
 // Serpent Gib 2 ------------------------------------------------------------

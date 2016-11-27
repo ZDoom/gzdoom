@@ -25,7 +25,5 @@
 
 // Include all the Hexen stuff here to reduce compile time
 #include "a_heresiarch.cpp"
-#include "a_magestaff.cpp"
-#include "a_serpent.cpp"
 #include "a_spike.cpp"
 #include "a_teleportother.cpp"

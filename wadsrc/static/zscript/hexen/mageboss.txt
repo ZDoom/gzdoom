@@ -18,8 +18,6 @@ class MageBoss : Actor
 		Obituary "$OB_MBOSS";
 	}
 
-	native void A_MageAttack();
-
 	States
 	{
 	Spawn:
@@ -83,4 +81,39 @@ class MageBoss : Actor
 		FDTH V 4 Bright;
 		Stop;
 	}
+
+	//============================================================================
+	//
+	// MStaffSpawn2 - for use by mage class boss
+	//
+	//============================================================================
+
+	void MStaffSpawn2 (double angle)
+	{
+		Actor mo = SpawnMissileAngleZ (pos.z + 40, "MageStaffFX2", angle, 0.);
+		if (mo)
+		{
+			mo.target = self;
+			mo.tracer = RoughMonsterSearch(10, true, true);
+		}
+	}
+
+	//============================================================================
+	//
+	// A_MStaffAttack2 - for use by mage class boss
+	//
+	//============================================================================
+
+	void A_MageAttack()
+	{
+		if (target == NULL)
+		{
+			return;
+		}
+		MStaffSpawn2(angle);
+		MStaffSpawn2(angle - 5);
+		MStaffSpawn2(angle + 5);
+		A_PlaySound("MageStaffFire", CHAN_WEAPON);
+	}
+	
 }

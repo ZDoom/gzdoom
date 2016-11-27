@@ -199,6 +199,7 @@ public:
 	virtual void AttachToOwner (AActor *other);
 	virtual void DetachFromOwner ();
 	virtual AInventory *CreateCopy (AActor *other);
+	AInventory *CallCreateCopy(AActor *other);
 	virtual AInventory *CreateTossable ();
 	virtual bool GoAway ();
 	virtual void GoAwayAndDie ();

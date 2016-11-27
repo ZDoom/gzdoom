@@ -1420,6 +1420,7 @@ public:
 	}
 
 	int ApplyDamageFactor(FName damagetype, int damage) const;
+	int GetModifiedDamage(FName damagetype, int damage, bool passive);
 
 };
 

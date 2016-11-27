@@ -1105,15 +1105,15 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				damage = int(damage * source->DamageMultiply);
 
 				// Handle active damage modifiers (e.g. PowerDamage)
-				if (damage > 0 && source->Inventory != NULL)
+				if (damage > 0)
 				{
-					source->Inventory->ModifyDamage(damage, mod, damage, false);
+					damage = source->GetModifiedDamage(mod, damage, false);
 				}
 			}
 			// Handle passive damage modifiers (e.g. PowerProtection), provided they are not afflicted with protection penetrating powers.
-			if (damage > 0 && (target->Inventory != NULL) && !(flags & DMG_NO_PROTECT))
+			if (damage > 0 && !(flags & DMG_NO_PROTECT))
 			{
-				target->Inventory->ModifyDamage(damage, mod, damage, true);
+				damage = target->GetModifiedDamage(mod, damage, true);
 			}
 			if (damage > 0 && !(flags & DMG_NO_FACTOR))
 			{
@@ -1749,8 +1749,7 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, PoisonPlayer)
 //
 //==========================================================================
 
-void P_PoisonDamage (player_t *player, AActor *source, int damage,
-	bool playPainSound)
+void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPainSound)
 {
 	AActor *target;
 
@@ -1771,10 +1770,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 	// Take half damage in trainer mode
 	damage = int(damage * G_SkillProperty(SKILLP_DamageFactor));
 	// Handle passive damage modifiers (e.g. PowerProtection)
-	if (target->Inventory != NULL)
-	{
-		target->Inventory->ModifyDamage(damage, player->poisontype, damage, true);
-	}
+	damage = target->GetModifiedDamage(player->poisontype, damage, true);
 	// Modify with damage factors
 	damage = target->ApplyDamageFactor(player->poisontype, damage);
 
@@ -1845,6 +1841,15 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 */
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, PoisonDamage)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_OBJECT(source, AActor);
+	PARAM_INT(damage);
+	PARAM_BOOL(playsound);
+	P_PoisonDamage(self, source, damage, playsound);
+	return 0;
+}
 
 CCMD (kill)
 {

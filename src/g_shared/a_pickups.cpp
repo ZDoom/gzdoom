@@ -822,6 +822,29 @@ AInventory *AInventory::CreateCopy (AActor *other)
 	return copy;
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, CreateCopy)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	PARAM_OBJECT(other, AActor);
+	ACTION_RETURN_OBJECT(self->CreateCopy(other));
+}
+
+AInventory *AInventory::CallCreateCopy(AActor *other)
+{
+	IFVIRTUAL(AActor, CreateCopy)
+	{
+		VMValue params[2] = { (DObject*)this, (DObject*)other };
+		VMReturn ret;
+		VMFrameStack stack;
+		AInventory *retval;
+		ret.PointerAt((void**)&retval);
+		stack.Call(func, params, 2, &ret, 1, nullptr);
+		return retval;
+	}
+	else return CreateCopy(other);
+}
+
+
 //===========================================================================
 //
 // AInventory::CreateTossable
@@ -1538,7 +1561,7 @@ bool AInventory::TryPickup (AActor *&toucher)
 	{
 		// Add the item to the inventory. It is not already there, or HandlePickup
 		// would have already taken care of it.
-		AInventory *copy = CreateCopy (toucher);
+		AInventory *copy = CallCreateCopy (toucher);
 		if (copy == NULL)
 		{
 			return false;

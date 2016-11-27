@@ -478,15 +478,15 @@ CCMD (useflechette)
 { // Select from one of arti_poisonbag1-3, whichever the player has
 	static const ENamedName bagnames[3] =
 	{
+		NAME_ArtiPoisonBag3,	// use type 3 first because that's the default when the player has none specified.
 		NAME_ArtiPoisonBag1,
-		NAME_ArtiPoisonBag2,
-		NAME_ArtiPoisonBag3
+		NAME_ArtiPoisonBag2
 	};
 
 	if (who == NULL)
 		return;
 
-	PClassActor *type = GetFlechetteType(who);
+	PClassActor *type = who->FlechetteType;
 	if (type != NULL)
 	{
 		AInventory *item;
@@ -497,7 +497,7 @@ CCMD (useflechette)
 		}
 	}
 
-	// The default flechette could not be found. Try all 3 types then.
+	// The default flechette could not be found, or the player had no default. Try all 3 types then.
 	for (int j = 0; j < 3; ++j)
 	{
 		AInventory *item;

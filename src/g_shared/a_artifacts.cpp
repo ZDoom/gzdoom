@@ -309,10 +309,6 @@ bool APowerup::HandlePickup (AInventory *item)
 		power->ItemFlags |= IF_PICKUPGOOD;
 		return true;
 	}
-	if (Inventory != NULL)
-	{
-		return Inventory->HandlePickup (item);
-	}
 	return false;
 }
 

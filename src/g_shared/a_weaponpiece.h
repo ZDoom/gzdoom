@@ -1,3 +1,5 @@
+#pragma once
+#include "a_pickups.h"
 
 // 
 class PClassWeaponPiece : public PClassInventory

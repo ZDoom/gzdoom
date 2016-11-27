@@ -115,10 +115,6 @@ bool ABasicArmor::HandlePickup (AInventory *item)
 
 		armor->SaveAmount = int(armor->SaveAmount * G_SkillProperty(SKILLP_ArmorFactor));
 	}
-	if (Inventory != NULL)
-	{
-		return Inventory->HandlePickup (item);
-	}
 	return false;
 }
 
@@ -473,10 +469,6 @@ bool AHexenArmor::HandlePickup (AInventory *item)
 			item->ItemFlags |= IF_PICKUPGOOD;
 		}
 		return true;
-	}
-	else if (Inventory != NULL)
-	{
-		return Inventory->HandlePickup (item);
 	}
 	return false;
 }

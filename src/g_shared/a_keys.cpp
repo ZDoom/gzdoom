@@ -487,10 +487,6 @@ bool AKey::HandlePickup (AInventory *item)
 		item->ItemFlags |= IF_PICKUPGOOD;
 		return true;
 	}
-	if (Inventory != NULL)
-	{
-		return Inventory->HandlePickup (item);
-	}
 	return false;
 }
 

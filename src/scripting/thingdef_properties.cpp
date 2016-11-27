@@ -39,7 +39,7 @@
 */
 
 #include "gi.h"
-#include "actor.h"
+#include "d_player.h"
 #include "info.h"
 #include "tarray.h"
 #include "w_wad.h"
@@ -57,8 +57,7 @@
 #include "p_effect.h"
 #include "v_palette.h"
 #include "doomerrors.h"
-#include "a_hexenglobal.h"
-#include "a_weaponpiece.h"
+#include "a_artifacts.h"
 #include "p_conversation.h"
 #include "v_text.h"
 #include "thingdef.h"
@@ -69,6 +68,7 @@
 #include "teaminfo.h"
 #include "v_video.h"
 #include "r_data/colormaps.h"
+#include "a_weaponpiece.h"
 #include "vmbuilder.h"
 
 extern TArray<PClassActor **> OptionalClassPtrs;
@@ -2800,7 +2800,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, morphweapon, S, PlayerPawn)
 DEFINE_CLASS_PROPERTY_PREFIX(player, flechettetype, S, PlayerPawn)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->FlechetteType = FindClassTentative(str, RUNTIME_CLASS(AArtiPoisonBag));
+	defaults->FlechetteType = FindClassTentative(str, PClass::FindActor("ArtiPoisonBag"));
 }
 
 //==========================================================================

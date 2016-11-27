@@ -786,10 +786,6 @@ bool ASigil::HandlePickup (AInventory *item)
 		}
 		return true;
 	}
-	if (Inventory != NULL)
-	{
-		return Inventory->HandlePickup (item);
-	}
 	return false;
 }
 

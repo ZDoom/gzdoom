@@ -41,7 +41,6 @@
 #include "c_dispatch.h"
 #include "b_bot.h"	//Added by MC:
 #include "stats.h"
-#include "a_hexenglobal.h"
 #include "a_sharedglobal.h"
 #include "gi.h"
 #include "sbar.h"
@@ -69,6 +68,7 @@
 #include "serializer.h"
 #include "r_utility.h"
 #include "thingdef.h"
+#include "d_player.h"
 #include "virtual.h"
 
 // MACROS ------------------------------------------------------------------
@@ -7436,6 +7436,15 @@ DEFINE_ACTION_FUNCTION(AActor, SetFriendPlayer)
 	self->SetFriendPlayer(player);
 	return 0;
 }
+
+DEFINE_ACTION_FUNCTION(AActor, ClearBounce)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->BounceFlags = 0;
+	return 0;
+}
+
+
 //----------------------------------------------------------------------------
 //
 // DropItem handling

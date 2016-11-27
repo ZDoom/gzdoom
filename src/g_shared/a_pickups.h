@@ -203,6 +203,7 @@ public:
 	virtual bool GoAway ();
 	virtual void GoAwayAndDie ();
 	virtual bool HandlePickup (AInventory *item);
+	bool CallHandlePickup(AInventory *item);
 	virtual bool Use (bool pickup);
 	bool CallUse(bool pickup);
 	virtual void Travelled ();

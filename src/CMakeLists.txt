@@ -863,7 +863,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	g_hexen/a_spike.cpp
 	g_strife/a_coin.cpp
 	g_strife/a_crusader.cpp
-	g_strife/a_entityboss.cpp
 	g_strife/a_inquisitor.cpp
 	g_strife/a_loremaster.cpp
 	g_strife/a_oracle.cpp

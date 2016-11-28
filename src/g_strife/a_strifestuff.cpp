@@ -26,7 +26,6 @@
 // Include all the other Strife stuff here to reduce compile time
 #include "a_coin.cpp"
 #include "a_crusader.cpp"
-#include "a_entityboss.cpp"
 #include "a_inquisitor.cpp"
 #include "a_loremaster.cpp"
 //#include "a_macil.cpp"

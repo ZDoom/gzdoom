@@ -131,6 +131,8 @@ struct State native
 	native bool bSameFrame;
 	native bool bCanRaise;
 	native bool bDehacked;
+	
+	native int DistanceTo(state other);
 }
 
 struct F3DFloor native

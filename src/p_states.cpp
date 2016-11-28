@@ -1078,3 +1078,16 @@ DEFINE_FIELD_BIT(FState, StateFlags, bNoDelay, STF_NODELAY)
 DEFINE_FIELD_BIT(FState, StateFlags, bSameFrame, STF_SAMEFRAME)
 DEFINE_FIELD_BIT(FState, StateFlags, bCanRaise, STF_CANRAISE)
 DEFINE_FIELD_BIT(FState, StateFlags, bDehacked, STF_DEHACKED)
+
+DEFINE_ACTION_FUNCTION(FState, DistanceTo)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FState);
+	PARAM_POINTER(other, FState);
+
+	// Safely calculate the distance between two states.
+	auto o1 = FState::StaticFindStateOwner(self);
+	int retv;
+	if (other < o1->OwnedStates || other >= o1->OwnedStates + o1->NumOwnedStates) retv =  INT_MIN;
+	else retv = int(other - self);
+	ACTION_RETURN_INT(retv);
+}

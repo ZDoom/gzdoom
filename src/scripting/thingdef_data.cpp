@@ -743,6 +743,12 @@ void InitThingdef()
 	playerf = new PField("playeringame", parray, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&playeringame);
 	GlobalSymbols.AddSymbol(playerf);
 
+	// Argh. It sucks when bad hacks need to be supported. WP_NOCHANGE is just a bogus pointer but it used everywhere as a special flag.
+	// It cannot be defined as constant because constants can either be numbers or strings but nothing else, so the only 'solution'
+	// is to create a static variable from it and reference that in the script. Yuck!!!
+	static AWeapon *wpnochg = WP_NOCHANGE;
+	playerf = new PField("WP_NOCHANGE", NewPointer(RUNTIME_CLASS(AWeapon), false), VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&wpnochg);
+	GlobalSymbols.AddSymbol(playerf);
 
 	// this needs to be done manually until it can be given a proper type.
 	RUNTIME_CLASS(AActor)->AddNativeField("DecalGenerator", NewPointer(TypeVoid), myoffsetof(AActor, DecalGenerator));

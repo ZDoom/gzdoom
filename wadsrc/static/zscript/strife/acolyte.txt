@@ -302,7 +302,7 @@ class AcolyteToBe : Acolyte
 		Door_Close(999, 64);
 		if (target != null && target.player != null)
 		{
-			target.NoiseAlert (self);
+			NoiseAlert (target);
 		}
 	}
 }

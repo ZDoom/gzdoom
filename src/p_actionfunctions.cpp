@@ -6807,3 +6807,32 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetTranslation)
 	self->SetTranslation(trname);
 	return 0;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+
+	sector_t *sec = self->Sector;
+
+	if (self->Z() == sec->floorplane.ZatPoint(self) && sec->PortalBlocksMovement(sector_t::floor))
+	{
+		if (sec->special == Damage_InstantDeath)
+		{
+			P_DamageMobj(self, NULL, NULL, 999, NAME_InstantDeath);
+		}
+		else if (sec->special == Scroll_StrifeCurrent)
+		{
+			int anglespeed = tagManager.GetFirstSectorTag(sec) - 100;
+			double speed = (anglespeed % 10) / 16.;
+			DAngle an = (anglespeed / 10) * (360 / 8.);
+			self->Thrust(an, speed);
+		}
+	}
+	return 0;
+}

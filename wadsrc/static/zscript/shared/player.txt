@@ -138,6 +138,15 @@ class PSprite : Object native
 
 }
 
+enum EPlayerState
+{
+	PST_LIVE,	// Playing or camping.
+	PST_DEAD,	// Dead on the ground, view follows killer.
+	PST_REBORN,	// Ready to restart/respawn???
+	PST_ENTER,	// [BC] Entered the game
+	PST_GONE	// Player has left the game
+}
+
 struct PlayerInfo native	// this is what internally is known as player_t
 {
 	native readonly PlayerPawn mo;

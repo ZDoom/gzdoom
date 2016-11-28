@@ -287,7 +287,7 @@ class Actor : Thinker native
 	native bool isTeammate(Actor other);
 	native int PlayerNumber();
 	native void SetFriendPlayer(PlayerInfo player);
-	native void NoiseAlert(Actor emitter, bool splash = false, double maxdist = 0);
+	native void NoiseAlert(Actor target, bool splash = false, double maxdist = 0);
 	native void ClearBounce();
 	native TerrainDef GetFloorTerrain();
 
@@ -615,16 +615,11 @@ class Actor : Thinker native
 	native void A_PlayerScream();
 	native void A_SkullPop(class<PlayerChunk> skulltype = "BloodySkull");
 	native void A_CheckPlayerDone();
+	native void A_CheckTerrain();
 
 	native void A_Wander(int flags = 0);
 	native void A_Look2();
-	native void A_TossGib();
-	native void A_TurretLook();
-	native void A_KlaxonBlare();
-	native void A_Countdown();
 	native void A_AlertMonsters(double maxdist = 0, int flags = 0);
-	native void A_ClearSoundTarget();
-	native void A_CheckTerrain();
 
 	deprecated native void A_MissileAttack();
 	deprecated native void A_MeleeAttack();
@@ -633,8 +628,6 @@ class Actor : Thinker native
 	native void A_WolfAttack(int flags = 0, sound whattoplay = "weapons/pistol", double snipe = 1.0, int maxdamage = 64, int blocksize = 128, int pointblank = 2, int longrange = 4, double runspeed = 160.0, class<Actor> pufftype = "BulletPuff");
 	native void A_PlaySound(sound whattoplay = "weapons/pistol", int slot = CHAN_BODY, double volume = 1.0, bool looping = false, double attenuation = ATTN_NORM, bool local = false);
 	deprecated void A_PlayWeaponSound(sound whattoplay) { A_PlaySound(whattoplay, CHAN_WEAPON); }
-	native void A_FLoopActiveSound();
-	native void A_LoopActiveSound();
 	native void A_StopSound(int slot = CHAN_VOICE);	// Bad default but that's what is originally was...
 	deprecated native void A_PlaySoundEx(sound whattoplay, name slot, bool looping = false, int attenuation = 0);
 	deprecated native void A_StopSoundEx(name slot);
@@ -698,7 +691,6 @@ class Actor : Thinker native
 	native bool A_SelectWeapon(class<Weapon> whichweapon, int flags = 0);
 	native void A_ClassBossHealth();
 	native void A_RocketInFlight();
-	native void A_DropFire();
 	native void A_RemoveForcefield();
 	native void A_SetAngle(double angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetPitch(double pitch, int flags = 0, int ptr = AAPTR_DEFAULT);

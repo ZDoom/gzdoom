@@ -166,6 +166,7 @@ zscript/strife/coin.txt
 zscript/strife/crusader.txt
 zscript/strife/entityboss.txt
 zscript/strife/inquisitor.txt
+zscript/strife/klaxon.txt
 zscript/strife/loremaster.txt
 zscript/strife/macil.txt
 zscript/strife/merchants.txt
@@ -181,6 +182,7 @@ zscript/strife/sentinel.txt
 zscript/strife/stalker.txt
 zscript/strife/strifeammo.txt
 zscript/strife/strifearmor.txt
+zscript/strife/strifefunctions.txt
 zscript/strife/strifeitems.txt
 zscript/strife/strifekeys.txt
 zscript/strife/strifestuff.txt

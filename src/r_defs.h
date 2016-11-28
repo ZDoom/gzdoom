@@ -625,6 +625,7 @@ public:
 	sector_t *NextSpecialSector (int type, sector_t *prev) const;		// [RH]
 	double FindLowestCeilingPoint(vertex_t **v) const;
 	double FindHighestFloorPoint(vertex_t **v) const;
+	void RemoveForceField();
 
 	void AdjustFloorClip () const;
 	void SetColor(int r, int g, int b, int desat);

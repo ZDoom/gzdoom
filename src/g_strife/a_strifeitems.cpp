@@ -21,26 +21,6 @@
 
 IMPLEMENT_CLASS(ADegninOre, false, false)
 
-DEFINE_ACTION_FUNCTION(AActor, A_RemoveForceField)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-
-	self->flags &= ~MF_SPECIAL;
-
-	for (int i = 0; i < self->Sector->linecount; ++i)
-	{
-		line_t *line = self->Sector->lines[i];
-		if (line->backsector != NULL && line->special == ForceField)
-		{
-			line->flags &= ~(ML_BLOCKING|ML_BLOCKEVERYTHING);
-			line->special = 0;
-			line->sidedef[0]->SetTexture(side_t::mid, FNullTextureID());
-			line->sidedef[1]->SetTexture(side_t::mid, FNullTextureID());
-		}
-	}
-	return 0;
-}
-
 bool ADegninOre::Use (bool pickup)
 {
 	if (pickup)

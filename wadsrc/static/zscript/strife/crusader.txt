@@ -52,11 +52,11 @@ class Crusader : Actor
 		ROB2 G 3 A_Scream;
 		ROB2 H 5 A_TossGib;
 		ROB2 I 4 Bright A_TossGib;
-		ROB2 J 4 Bright A_Explode(64,64,1,1);
+		ROB2 J 4 Bright A_Explode(64, 64, alert:true);
 		ROB2 K 4 Bright A_Fall;
-		ROB2 L 4 A_Explode(64,64,1,1);
+		ROB2 L 4 A_Explode(64, 64, alert:true);
 		ROB2 MN 4 A_TossGib;
-		ROB2 O 4 A_Explode(64,64,1,1);
+		ROB2 O 4 A_Explode(64, 64, alert:true);
 		ROB2 P -1 A_CrusaderDeath;
 		Stop;
 	}

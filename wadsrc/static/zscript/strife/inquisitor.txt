@@ -58,16 +58,16 @@ class Inquisitor : Actor
 		ROB3 L 4 A_TossGib;
 		ROB3 M 4 A_Scream;
 		ROB3 N 4 A_TossGib;
-		ROB3 O 4 Bright A_Explode(128,128,1,1);
+		ROB3 O 4 Bright A_Explode(128, 128, alert:true);
 		ROB3 P 4 Bright A_TossGib;
 		ROB3 Q 4 Bright A_NoBlocking;
 		ROB3 RSTUV 4 A_TossGib;
-		ROB3 W 4 Bright A_Explode(128,128,1,1);
+		ROB3 W 4 Bright A_Explode(128, 128, alert:true);
 		ROB3 XY 4 Bright A_TossGib;
 		ROB3 Z 4 A_TossGib;
 		ROB3 [ 4 A_TossGib;
 		ROB3 \ 3 A_TossGib;
-		ROB3 ] 3 Bright A_Explode(128,128,1,1);
+		ROB3 ] 3 Bright A_Explode(128, 128, alert:true);
 		RBB3 A 3 Bright A_TossArm;
 		RBB3 B 3 Bright A_TossGib;
 		RBB3 CD 3 A_TossGib;
@@ -206,7 +206,7 @@ class InquisitorShot : Actor
 		Loop;
 	Death:
 		BNG2 A 0 Bright A_SetRenderStyle(1, STYLE_Normal);
-		BNG2 A 4 Bright A_Explode(192, 192, 1, 1);
+		BNG2 A 4 Bright A_Explode(192, 192, alert:true);
 		BNG2 B 4 Bright;
 		BNG2 C 4 Bright;
 		BNG2 D 4 Bright;

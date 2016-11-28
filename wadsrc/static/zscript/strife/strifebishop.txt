@@ -47,7 +47,7 @@ class StrifeBishop : Actor
 		MLDR G 3 Bright;
 		MLDR H 5 Bright A_Scream;
 		MLDR I 4 Bright A_TossGib;
-		MLDR J 4 Bright A_Explode(64,64,1,1);
+		MLDR J 4 Bright A_Explode(64, 64, alert:true);
 		MLDR KL 3 Bright;
 		MLDR M 4 Bright A_NoBlocking;
 		MLDR N 4 Bright;
@@ -88,8 +88,8 @@ class BishopMissile : Actor
 		MISS B 3 Bright A_Tracer2;
 		Loop;
 	Death:
-		SMIS A 0 Bright A_SetTranslucent(1,1);
-		SMIS A 5 Bright A_Explode(64,64,1,1);
+		SMIS A 0 Bright A_SetRenderStyle(1, STYLE_Normal);
+		SMIS A 5 Bright A_Explode(64, 64, alert:true);
 		SMIS B 5 Bright;
 		SMIS C 4 Bright;
 		SMIS DEFG 2 Bright;

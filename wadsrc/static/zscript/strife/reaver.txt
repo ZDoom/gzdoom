@@ -49,7 +49,7 @@ class Reaver : Actor
 		ROB1 L 5;
 		ROB1 M 5 A_NoBlocking;
 		ROB1 NOP 5;
-		ROB1 Q 6 A_Explode(32,32,1,1);
+		ROB1 Q 6 A_Explode(32, 32, alert:true);
 		ROB1 R -1;
 		Stop;
 	XDeath:

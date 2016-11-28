@@ -117,4 +117,9 @@ extend class Actor
 		A_Explode(64, 64, XF_NOSPLASH, damagetype: 'Fire');
 	}	
 
+	void A_RemoveForceField()
+	{
+		bSpecial = false;
+		CurSector.RemoveForceField();
+	}
 }

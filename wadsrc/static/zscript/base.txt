@@ -247,6 +247,7 @@ struct Sector native
 
 
 	native double, Sector, F3DFloor NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0);
+	native void RemoveForceField();
 }
 
 struct Wads

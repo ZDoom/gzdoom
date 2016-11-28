@@ -22,6 +22,7 @@
 //-----------------------------------------------------------------------------
 
 #include "p_spec.h"
+#include "p_lnspec.h"
 #include "c_cvars.h"
 #include "doomstat.h"
 #include "g_level.h"
@@ -1075,6 +1076,33 @@ double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, doub
 	}
 }
 
+ //===========================================================================
+ //
+ // 
+ //
+ //===========================================================================
+
+ void sector_t::RemoveForceField()
+ {
+	 for (int i = 0; i < linecount; ++i)
+	 {
+		 line_t *line = lines[i];
+		 if (line->backsector != NULL && line->special == ForceField)
+		 {
+			 line->flags &= ~(ML_BLOCKING | ML_BLOCKEVERYTHING);
+			 line->special = 0;
+			 line->sidedef[0]->SetTexture(side_t::mid, FNullTextureID());
+			 line->sidedef[1]->SetTexture(side_t::mid, FNullTextureID());
+		 }
+	 }
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, RemoveForceField)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 self->RemoveForceField();
+	 return 0;
+ }
 //===========================================================================
 //
 // 

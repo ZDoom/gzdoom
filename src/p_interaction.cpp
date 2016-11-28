@@ -1121,7 +1121,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 
 			if (damage >= 0)
 			{
-				damage = target->TakeSpecialDamage(inflictor, source, damage, mod);
+				damage = target->CallTakeSpecialDamage(inflictor, source, damage, mod);
 			}
 
 			// '<0' is handled below. This only handles the case where damage gets reduced to 0.

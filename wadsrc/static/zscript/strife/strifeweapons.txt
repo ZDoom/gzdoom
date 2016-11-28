@@ -418,8 +418,8 @@ class MiniMissile : Actor
 		MICR A 6 Bright A_RocketInFlight;
 		Loop;
 	Death:
-		SMIS A 0 Bright A_SetTranslucent(1,1);
-		SMIS A 5 Bright A_Explode(64,64,1,1);
+		SMIS A 0 Bright A_SetRenderStyle(1, STYLE_Normal);
+		SMIS A 5 Bright A_Explode(64, 64, alert:true);
 		SMIS B 5 Bright;
 		SMIS C 4 Bright;
 		SMIS DEFG 2 Bright;
@@ -715,8 +715,8 @@ class HEGrenade : Actor
 		Loop;
 	Death:
 		BNG4 A 0 Bright A_NoGravity;
-		BNG4 A 0 Bright A_SetTranslucent(1,1);
-		BNG4 A 2 Bright A_Explode(192,192,1,1);
+		BNG4 A 0 Bright A_SetRenderStyle(1, STYLE_Normal);
+		BNG4 A 2 Bright A_Explode(192, 192, alert:true);
 		BNG4 BCDEFGHIJKLMN 3 Bright;
 		Stop;
 	}

@@ -192,7 +192,7 @@ class ExplosiveBarrel2 : Actor
 		BART B 2 Bright A_Scream;
 		BART CD 2 Bright;
 		BART E 2 Bright A_NoBlocking;
-		BART F 2 Bright A_Explode(64, 64, 1, 1);
+		BART F 2 Bright A_Explode(64, 64, alert:true);
 		BART GHIJ 2 Bright;
 		BART K 3 Bright;
 		BART L -1;
@@ -1726,7 +1726,7 @@ class TargetPractice : Actor
 
 // Force Field Guard --------------------------------------------------------
 
-class ForceFieldGuard : Actor native
+class ForceFieldGuard : Actor
 {
 	Default
 	{
@@ -1748,6 +1748,16 @@ class ForceFieldGuard : Actor native
 		TNT1 A 1 A_RemoveForceField;
 		Stop;
 	}
+	
+	override int TakeSpecialDamage (Actor inflictor, Actor source, int damage, Name damagetype)
+	{
+		if (inflictor == NULL || !(inflictor is "DegninOre"))
+		{
+			return -1;
+		}
+		return health;
+	}
+	
 }
 
 // Kneeling Guy -------------------------------------------------------------
@@ -1800,7 +1810,7 @@ class KneelingGuy : Actor
 
 // Power Coupling -----------------------------------------------------------
 
-class PowerCoupling : Actor native
+class PowerCoupling : Actor
 {
 	Default
 	{
@@ -1821,11 +1831,39 @@ class PowerCoupling : Actor native
 		COUP AB 5;
 		Loop;
 	}
+	
+	override void Die (Actor source, Actor inflictor, int dmgflags)
+	{
+		Super.Die (source, inflictor, dmgflags);
+
+		int i;
+
+		for (i = 0; i < MAXPLAYERS; ++i)
+			if (playeringame[i] && players[i].health > 0)
+				break;
+
+		if (i == MAXPLAYERS)
+			return;
+
+		// [RH] In case the player broke it with the dagger, alert the guards now.
+		if (LastHeard != source)
+		{
+			NoiseAlert (source);
+		}
+		Door_Close(225, 16);
+		Floor_LowerToHighestEE(44, 8);
+		players[i].mo.GiveInventoryType ("QuestItem6");
+		S_Sound ("svox/voc13", CHAN_VOICE);
+		players[i].SetLogNumber (13);
+		DoDropItem ("BrokenPowerCoupling", -1, 256);
+		Destroy ();
+	}
+	
 }
 
 // Gibs for things that bleed -----------------------------------------------
 
-class Meat : Actor native
+class Meat : Actor
 {
 	Default
 	{
@@ -1875,6 +1913,13 @@ class Meat : Actor native
 		MEAT T 700;
 		Stop;
 	}
+	
+	override void BeginPlay ()
+	{
+		// Strife used mod 19, but there are 20 states. Hmm.
+		SetState (SpawnState + random[GibTosser]() % 20);
+	}
+	
 }
 
 // Gibs for things that don't bleed -----------------------------------------

@@ -347,7 +347,7 @@ FUNC(LS_Floor_LowerToHighest)
 }
 
 FUNC(LS_Floor_LowerToHighestEE)
-// Floor_LowerToHighest (tag, speed, change)
+// Floor_LowerToHighestEE (tag, speed, change)
 {
 	return EV_DoFloor (DFloor::floorLowerToHighest, ln, arg0, SPEED(arg1), 0, -1, CHANGE(arg2), false);
 }
@@ -3152,17 +3152,7 @@ FUNC(LS_ClearForceField)
 		sector_t *sec = &sectors[secnum];
 		rtn = true;
 
-		for (int i = 0; i < sec->linecount; ++i)
-		{
-			line_t *line = sec->lines[i];
-			if (line->backsector != NULL && line->special == ForceField)
-			{
-				line->flags &= ~(ML_BLOCKING|ML_BLOCKEVERYTHING);
-				line->special = 0;
-				line->sidedef[0]->SetTexture(side_t::mid, FNullTextureID());
-				line->sidedef[1]->SetTexture(side_t::mid, FNullTextureID());
-			}
-		}
+		sec->RemoveForceField();
 	}
 	return rtn;
 }

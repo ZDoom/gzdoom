@@ -415,9 +415,9 @@ class DegninOre : Inventory native
 		Stop;
 	Death:
 		XPRK A 1 A_RemoveForceField;
-		BNG3 A 0 A_SetTranslucent(1,1);
+		BNG3 A 0 A_SetRenderStyle(1, STYLE_Normal);
 		BNG3 A 0 A_Scream;
-		BNG3 A 3 Bright A_Explode(192,192,1,1);
+		BNG3 A 3 Bright A_Explode(192, 192, alert:true);
 		BNG3 BCDEFGH 3 Bright;
 		Stop;
 	}

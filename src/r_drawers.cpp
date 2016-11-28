@@ -27,11 +27,6 @@
 #include "version.h"
 #include "m_misc.h"
 
-CUSTOM_CVAR(String, llvm_cpu, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL)
-{
-	Printf("You must restart " GAMENAME " for this change to take effect.\n");
-}
-
 /////////////////////////////////////////////////////////////////////////////
 
 extern "C"

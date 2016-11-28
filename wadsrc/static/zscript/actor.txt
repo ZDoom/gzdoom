@@ -619,9 +619,6 @@ class Actor : Thinker native
 	native void A_Wander(int flags = 0);
 	native void A_Look2();
 	native void A_TossGib();
-	native void A_SetShadow();
-	native void A_ClearShadow();
-	native void A_GetHurt();
 	native void A_TurretLook();
 	native void A_KlaxonBlare();
 	native void A_Countdown();
@@ -701,9 +698,7 @@ class Actor : Thinker native
 	native bool A_SelectWeapon(class<Weapon> whichweapon, int flags = 0);
 	native void A_ClassBossHealth();
 	native void A_RocketInFlight();
-	native void A_Bang4Cloud();
 	native void A_DropFire();
-	native void A_GiveQuestItem(int itemno);
 	native void A_RemoveForcefield();
 	native void A_SetAngle(double angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetPitch(double pitch, int flags = 0, int ptr = AAPTR_DEFAULT);

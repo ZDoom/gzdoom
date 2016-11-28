@@ -9512,7 +9512,8 @@ int BuiltinNameToClass(VMFrameStack *stack, VMValue *param, TArray<VMValue> &def
 
 		if (!cls->IsDescendantOf(desttype))
 		{
-			Printf("class '%s' is not compatible with '%s'\n", clsname.GetChars(), desttype->TypeName.GetChars());
+			// Let the caller check this. The message can be enabled for diagnostic purposes.
+			DPrintf(DMSG_SPAMMY, "class '%s' is not compatible with '%s'\n", clsname.GetChars(), desttype->TypeName.GetChars());
 			cls = nullptr;
 		}
 		ret->SetPointer(const_cast<PClass *>(cls), ATAG_OBJECT);

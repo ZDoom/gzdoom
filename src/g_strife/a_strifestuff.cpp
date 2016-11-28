@@ -26,7 +26,6 @@
 // Include all the other Strife stuff here to reduce compile time
 #include "a_strifeitems.cpp"
 #include "a_strifeweapons.cpp"
-#include "a_thingstoblowup.cpp"
 
 // Notes so I don't forget them:
 // Strife does some extra stuff in A_Explode if a player caused the explosion. (probably NoiseAlert)
@@ -65,47 +64,6 @@ int AForceFieldGuard::TakeSpecialDamage (AActor *inflictor, AActor *source, int 
 		return -1;
 	}
 	return health;
-}
-
-// Kneeling Guy -------------------------------------------------------------
-
-DEFINE_ACTION_FUNCTION(AActor, A_SetShadow)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-
-	self->flags |= MF_STRIFEx8000000|MF_SHADOW;
-	self->RenderStyle = STYLE_Translucent;
-	self->Alpha = HR_SHADOW;
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_ClearShadow)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-
-	self->flags &= ~(MF_STRIFEx8000000|MF_SHADOW);
-	self->RenderStyle = STYLE_Normal;
-	self->Alpha = 1.;
-	return 0;
-}
-
-static FRandom pr_gethurt ("HurtMe!");
-
-DEFINE_ACTION_FUNCTION(AActor, A_GetHurt)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-
-	self->flags4 |= MF4_INCOMBAT;
-	if ((pr_gethurt() % 5) == 0)
-	{
-		S_Sound (self, CHAN_VOICE, self->PainSound, 1, ATTN_NORM);
-		self->health--;
-	}
-	if (self->health <= 0)
-	{
-		self->CallDie (self->target, self->target);
-	}
-	return 0;
 }
 
 // Klaxon Warning Light -----------------------------------------------------

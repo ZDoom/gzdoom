@@ -492,6 +492,21 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(DFloor, CreateFloor)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(sec, sector_t);
+	PARAM_INT(floortype);
+	PARAM_POINTER(ln, line_t);
+	PARAM_FLOAT(speed);
+	PARAM_FLOAT_DEF(height);
+	PARAM_INT_DEF(crush);
+	PARAM_INT_DEF(change);
+	PARAM_BOOL_DEF(hereticlower);
+	PARAM_BOOL_DEF(hexencrush);
+	ACTION_RETURN_BOOL(P_CreateFloor(sec, (DFloor::EFloor)floortype, ln, speed, height, crush, change, hexencrush, hereticlower));
+}
+
 //==========================================================================
 //
 // HANDLE FLOOR TYPES

@@ -1,4 +1,42 @@
+extend class Actor
+{
 
+	void A_Bang4Cloud()
+	{
+		double xo = (random[Bang4Cloud]() & 3) * (10. / 64);
+		double yo = (random[Bang4Cloud]() & 3) * (10. / 64);
+		Spawn("Bang4Cloud", Vec3Offset(xo, yo, 0.), ALLOW_REPLACE);
+	}
+	
+	void A_GiveQuestItem(int questitem)
+	{
+		// Give one of these quest items to every player in the game
+		if (questitem >= 0)
+		{
+			String itemname = "QuestItem" .. questitem;
+			class<Inventory> item = itemname;
+			if (item != null)
+			{
+				for (int i = 0; i < MAXPLAYERS; ++i)
+				{
+					if (playeringame[i])
+					{
+						players[i].mo.GiveInventoryType(item);
+					}
+				}
+			}
+		}
+
+		String msgid = "TXT_QUEST_" .. questitem;
+		String msg = StringTable.Localize(msgid);
+
+		if (msg != msgid)	// if both are identical there was no message of this name in the stringtable.
+		{
+			C_MidPrint ("SmallFont", msg);
+		}
+	}
+	
+}
 
 // A Cloud used for varius explosions ---------------------------------------
 // This actor has no direct equivalent in strife. To create this, Strife
@@ -121,10 +159,6 @@ class PowerCrystal : Actor
 		ActiveSound "misc/reactor";
 	}
 
-	native void A_ExtraLightOff ();
-	native void A_Explode512 ();
-	native void A_LightGoesOut ();
-
 	States
 	{
 	Spawn:
@@ -150,4 +184,48 @@ class PowerCrystal : Actor
 		BOOM VWXY 3 Bright;
 		Stop;
 	}
+	
+	// PowerCrystal -------------------------------------------------------------------
+
+	void A_ExtraLightOff()
+	{
+		if (target != NULL && target.player != NULL)
+		{
+			target.player.extralight = 0;
+		}
+	}
+
+	void A_Explode512()
+	{
+		A_Explode(512, 512);
+		if (target != NULL && target.player != NULL)
+		{
+			target.player.extralight = 5;
+		}
+		A_SetRenderStyle(1, STYLE_Add);
+	}
+
+	void A_LightGoesOut()
+	{
+		sector sec = CurSector;
+
+		sec.Flags |= Sector.SECF_SILENTMOVE;
+		sec.lightlevel = 0;
+		// Do this right with proper checks instead of just hacking the floor height.
+		Floor.CreateFloor(sec, Floor.floorLowerToLowest, null, 65536.);
+		
+
+		for (int i = 0; i < 8; ++i)
+		{
+			Actor foo = Spawn("Rubble1", Pos, ALLOW_REPLACE);
+			if (foo != NULL)
+			{
+				int t = random[LightOut]() & 15;
+				foo.Vel.X = t - (random[LightOut]() & 7);
+				foo.Vel.Y = random2[LightOut]() & 7;
+				foo.Vel.Z = 7 + (random[LightOut]() & 3);
+			}
+		}
+	}
+	
 }

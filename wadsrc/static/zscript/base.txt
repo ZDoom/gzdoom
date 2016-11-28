@@ -212,6 +212,28 @@ struct Sector native
 
 	native uint16		ZoneNumber;
 	native uint16		MoreFlags;
+	
+	enum ESectorFlags
+	{
+		SECF_SILENT			= 1,	// actors in sector make no noise
+		SECF_NOFALLINGDAMAGE= 2,	// No falling damage in this sector
+		SECF_FLOORDROP		= 4,	// all actors standing on this floor will remain on it when it lowers very fast.
+		SECF_NORESPAWN		= 8,	// players can not respawn in this sector
+		SECF_FRICTION		= 16,	// sector has friction enabled
+		SECF_PUSH			= 32,	// pushers enabled
+		SECF_SILENTMOVE		= 64,	// Sector movement makes mo sound (Eternity got this so this may be useful for an extended cross-port standard.) 
+		SECF_DMGTERRAINFX	= 128,	// spawns terrain splash when inflicting damage
+		SECF_ENDGODMODE		= 256,	// getting damaged by this sector ends god mode
+		SECF_ENDLEVEL		= 512,	// ends level when health goes below 10
+		SECF_HAZARD			= 1024,	// Change to Strife's delayed damage handling.
+
+		SECF_WASSECRET		= 1 << 30,	// a secret that was discovered
+		SECF_SECRET			= 1 << 31,	// a secret sector
+
+		SECF_DAMAGEFLAGS = SECF_ENDGODMODE|SECF_ENDLEVEL|SECF_DMGTERRAINFX|SECF_HAZARD,
+		SECF_NOMODIFY = SECF_SECRET|SECF_WASSECRET,	// not modifiable by Sector_ChangeFlags
+		SECF_SPECIALFLAGS = SECF_DAMAGEFLAGS|SECF_FRICTION|SECF_PUSH,	// these flags originate from 'special and must be transferrable by floor thinkers
+	}
 	native uint			Flags;
 
 	native SectorAction		SecActTarget;
@@ -285,4 +307,50 @@ enum EPickStart
 struct String native
 {
 	native void Replace(String pattern, String replacement);
+}
+
+class Floor : Thinker native
+{
+	// only here so that some constants and functions can be added. Not directly usable yet.
+	enum EFloor
+	{
+		floorLowerToLowest,
+		floorLowerToNearest,
+		floorLowerToHighest,
+		floorLowerByValue,
+		floorRaiseByValue,
+		floorRaiseToHighest,
+		floorRaiseToNearest,
+		floorRaiseAndCrush,
+		floorRaiseAndCrushDoom,
+		floorCrushStop,
+		floorLowerInstant,
+		floorRaiseInstant,
+		floorMoveToValue,
+		floorRaiseToLowestCeiling,
+		floorRaiseByTexture,
+
+		floorLowerAndChange,
+		floorRaiseAndChange,
+
+		floorRaiseToLowest,
+		floorRaiseToCeiling,
+		floorLowerToLowestCeiling,
+		floorLowerByTexture,
+		floorLowerToCeiling,
+
+		donutRaise,
+
+		buildStair,
+		waitStair,
+		resetStair,
+
+		// Not to be used as parameters to EV_DoFloor()
+		genFloorChg0,
+		genFloorChgT,
+		genFloorChg
+	};
+
+	native static bool CreateFloor(sector sec, EFloor floortype, line ln, double speed, double height = 0, int crush = -1, int change = 0, bool hexencrush = false, bool hereticlower = false);
+	
 }

@@ -72,5 +72,32 @@ extend class Actor
 		double pitch = AimLineAttack (angle, MISSILERANGE);
 		LineAttack (Angle + Random2[ShootGun]() * (11.25 / 256), MISSILERANGE, pitch, 3*(random[ShootGun]() % 5 + 1), 'Hitscan', "StrifePuff");
 	}
+	
+	// Kneeling Guy -------------------------------------------------------------
 
+	void A_SetShadow()
+	{
+		bShadow = true;
+		A_SetRenderStyle(HR_SHADOW, STYLE_Translucent);
+	}
+
+	void A_ClearShadow()
+	{
+		bShadow = false;
+		A_SetRenderStyle(1, STYLE_Normal);
+	}
+
+	void A_GetHurt()
+	{
+		bInCombat = true;
+		if ((random[HurtMe]() % 5) == 0)
+		{
+			A_PlaySound (PainSound, CHAN_VOICE);
+			health--;
+		}
+		if (health <= 0)
+		{
+			Die (target, target);
+		}
+	}
 }

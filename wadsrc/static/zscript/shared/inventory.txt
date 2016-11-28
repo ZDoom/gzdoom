@@ -29,10 +29,13 @@ class Inventory : Actor native
 	virtual native color GetBlend ();
 	virtual native bool HandlePickup(Inventory item);
 	virtual native Inventory CreateCopy(Actor other);
+	virtual native Inventory CreateTossable();
 	virtual native bool SpecialDropAction (Actor dropper);
 	virtual native String PickupMessage();
 	
 	native void GoAwayAndDie();
+	native void BecomeItem();
+	native void BecomePickup();
 	
 	// These are regular functions for the item itself.
 	private native void A_RestoreSpecialDoomThing();

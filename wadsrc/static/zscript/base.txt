@@ -98,6 +98,11 @@ struct LevelLocals native
 // level_info_t *info cannot be done yet.
 }
 
+struct StringTable native
+{
+	native static String Localize(String val);
+}
+
 // a few values of this need to be readable by the play code.
 // Most are handled at load time and are omitted here.
 struct DehInfo native
@@ -274,4 +279,10 @@ enum EPickStart
 {
 	PPS_FORCERANDOM			= 1,
 	PPS_NOBLOCKINGCHECK		= 2,
+}
+
+// Although String is a builtin type, this is a convenient way to attach methods to it.
+struct String native
+{
+	native void Replace(String pattern, String replacement);
 }

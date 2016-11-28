@@ -46,6 +46,8 @@
 #include "p_maputl.h"
 #include "gi.h"
 #include "p_terrain.h"
+#include "gstrings.h"
+#include "zstring.h"
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;
@@ -825,4 +827,20 @@ DEFINE_ACTION_FUNCTION(DObject, GameType)
 {
 	PARAM_PROLOGUE;
 	ACTION_RETURN_INT(gameinfo.gametype);
+}
+
+DEFINE_ACTION_FUNCTION(FStringTable, Localize)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(label);
+	ACTION_RETURN_STRING(GStrings(label));
+}
+
+DEFINE_ACTION_FUNCTION(FString, Replace)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(s1);
+	PARAM_STRING(s2);
+	self->Substitute(*s1, *s2);
+	return 0;
 }

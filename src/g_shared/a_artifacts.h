@@ -16,6 +16,7 @@ public:
 	virtual bool HandlePickup (AInventory *item);
 	virtual AInventory *CreateCopy (AActor *other);
 	virtual AInventory *CreateTossable ();
+
 	
 	virtual void Serialize(FSerializer &arc);
 	virtual void OwnerDied ();

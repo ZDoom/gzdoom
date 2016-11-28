@@ -289,6 +289,10 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			a &= CMP_CHECK | CMP_APPROX;
 			cmp = true;
 		}
+		if (code[i].op == OP_PARAM && code[i].b & REGT_ADDROF)
+		{
+			name = "parama";
+		}
 		if (cmp)
 		{ // Comparison instruction. Modify name for inverted test.
 			if (!(a & CMP_CHECK))

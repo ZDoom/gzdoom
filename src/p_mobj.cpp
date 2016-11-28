@@ -1002,7 +1002,7 @@ bool AActor::UseInventory(AInventory *item)
 
 AInventory *AActor::DropInventory (AInventory *item)
 {
-	AInventory *drop = item->CreateTossable ();
+	AInventory *drop = item->CallCreateTossable ();
 
 	if (drop == NULL)
 	{

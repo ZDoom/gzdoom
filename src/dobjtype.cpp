@@ -89,6 +89,7 @@ PStateLabel *TypeStateLabel;
 PStruct *TypeVector2;
 PStruct *TypeVector3;
 PStruct *TypeColorStruct;
+PStruct *TypeStringStruct;
 PPointer *TypeNullPtr;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -587,7 +588,8 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeSpriteID = new PSpriteID);
 	TypeTable.AddType(TypeTextureID = new PTextureID);
 
-	TypeColorStruct = new PStruct("@ColorStruct", nullptr);	//This name is intentionally obfuscated so that it cannot be used explicitly. The point of this type is to gain access to the single channels of a color value.
+	TypeColorStruct = NewStruct("@ColorStruct", nullptr);	//This name is intentionally obfuscated so that it cannot be used explicitly. The point of this type is to gain access to the single channels of a color value.
+	TypeStringStruct = NewNativeStruct(NAME_String, nullptr);
 #ifdef __BIG_ENDIAN__
 	TypeColorStruct->AddField(NAME_a, TypeUInt8);
 	TypeColorStruct->AddField(NAME_r, TypeUInt8);

@@ -1053,18 +1053,22 @@ public:
 
 		if (ShowGold)
 		{
-			AInventory *coin = cp->ConversationPC->FindInventory (RUNTIME_CLASS(ACoin));
-			char goldstr[32];
+			auto cointype = PClass::FindActor("Coin");
+			if (cointype)
+			{
+				AInventory *coin = cp->ConversationPC->FindInventory(cointype);
+				char goldstr[32];
 
-			mysnprintf (goldstr, countof(goldstr), "%d", coin != NULL ? coin->Amount : 0);
-			screen->DrawText (SmallFont, CR_GRAY, 21, 191, goldstr, DTA_320x200, true,
-				DTA_FillColor, 0, DTA_AlphaF, HR_SHADOW, TAG_DONE);
-			screen->DrawTexture (TexMan(((AInventory *)GetDefaultByType (RUNTIME_CLASS(ACoin)))->Icon),
-				3, 190, DTA_320x200, true,
-				DTA_FillColor, 0, DTA_AlphaF, HR_SHADOW, TAG_DONE);
-			screen->DrawText (SmallFont, CR_GRAY, 20, 190, goldstr, DTA_320x200, true, TAG_DONE);
-			screen->DrawTexture (TexMan(((AInventory *)GetDefaultByType (RUNTIME_CLASS(ACoin)))->Icon),
-				2, 189, DTA_320x200, true, TAG_DONE);
+				mysnprintf(goldstr, countof(goldstr), "%d", coin != NULL ? coin->Amount : 0);
+				screen->DrawText(SmallFont, CR_GRAY, 21, 191, goldstr, DTA_320x200, true,
+					DTA_FillColor, 0, DTA_AlphaF, HR_SHADOW, TAG_DONE);
+				screen->DrawTexture(TexMan(((AInventory *)GetDefaultByType(cointype))->Icon),
+					3, 190, DTA_320x200, true,
+					DTA_FillColor, 0, DTA_AlphaF, HR_SHADOW, TAG_DONE);
+				screen->DrawText(SmallFont, CR_GRAY, 20, 190, goldstr, DTA_320x200, true, TAG_DONE);
+				screen->DrawTexture(TexMan(((AInventory *)GetDefaultByType(cointype))->Icon),
+					2, 189, DTA_320x200, true, TAG_DONE);
+			}
 		}
 
 		y = mYpos;

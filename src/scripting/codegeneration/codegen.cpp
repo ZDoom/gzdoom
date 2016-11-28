@@ -5766,9 +5766,11 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 
 	// allow accessing the color channels by mapping the type to a matching struct which defines them.
 	if (Object->ValueType == TypeColor)
+	{
 		Object->ValueType = TypeColorStruct;
+	}
 
-	if (Object->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
+	else if (Object->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
 	{
 		auto ptype = static_cast<PPointer *>(Object->ValueType)->PointedType;
 		if (ptype->IsKindOf(RUNTIME_CLASS(PStruct)))
@@ -7306,6 +7308,12 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		}
 	}
 
+	if (Self->ValueType == TypeString)
+	{
+		// same for String methods. It also uses a hidden struct type to define them.
+		Self->ValueType = TypeStringStruct;
+	}
+
 	if (Self->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))
 	{
 		auto ptype = static_cast<PPointer *>(Self->ValueType)->PointedType;
@@ -7876,8 +7884,16 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	{
 		assert(Self != nullptr);
 		selfemit = Self->Emit(build);
-		assert(selfemit.RegType == REGT_POINTER);
-		build->Emit(OP_PARAM, 0, selfemit.RegType, selfemit.RegNum);
+		assert((selfemit.RegType == REGT_POINTER) || (selfemit.Fixed && selfemit.Target));
+		if (selfemit.Fixed && selfemit.Target)
+		{
+			// Address of a local variable.
+			build->Emit(OP_PARAM, 0, selfemit.RegType | REGT_ADDROF, selfemit.RegNum);
+		}
+		else
+		{
+			build->Emit(OP_PARAM, 0, selfemit.RegType, selfemit.RegNum);
+		}
 		count += 1;
 		if (Function->Variants[0].Flags & VARF_Action)
 		{

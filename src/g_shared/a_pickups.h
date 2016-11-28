@@ -196,13 +196,14 @@ public:
 
 	FSoundIDNoInit PickupSound;
 
-	virtual void BecomeItem ();
-	virtual void BecomePickup ();
+	void BecomeItem ();
+	void BecomePickup ();
 	virtual void AttachToOwner (AActor *other);
 	virtual void DetachFromOwner ();
 	virtual AInventory *CreateCopy (AActor *other);
 	AInventory *CallCreateCopy(AActor *other);
 	virtual AInventory *CreateTossable ();
+	AInventory *CallCreateTossable();
 	virtual bool GoAway ();
 	virtual void GoAwayAndDie ();
 	virtual bool HandlePickup (AInventory *item);

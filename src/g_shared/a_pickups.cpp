@@ -919,6 +919,27 @@ AInventory *AInventory::CreateTossable ()
 	return copy;
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, CreateTossable)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	ACTION_RETURN_OBJECT(self->CreateTossable());
+}
+
+AInventory *AInventory::CallCreateTossable()
+{
+	IFVIRTUAL(AInventory, CreateTossable)
+	{
+		VMValue params[1] = { (DObject*)this };
+		VMReturn ret;
+		VMFrameStack stack;
+		AInventory *retval;
+		ret.PointerAt((void**)&retval);
+		stack.Call(func, params, 1, &ret, 1, nullptr);
+		return retval;
+	}
+	else return CreateTossable();
+}
+
 //===========================================================================
 //
 // AInventory :: BecomeItem
@@ -946,6 +967,13 @@ void AInventory::BecomeItem ()
 	SetState (FindState("Held"));
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, BecomeItem)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	self->BecomeItem();
+	return 0;
+}
+
 //===========================================================================
 //
 // AInventory :: BecomePickup
@@ -971,6 +999,13 @@ void AInventory::BecomePickup ()
 	renderflags &= ~RF_INVISIBLE;
 	ChangeStatNum(STAT_DEFAULT);
 	SetState (SpawnState);
+}
+
+DEFINE_ACTION_FUNCTION(AInventory, BecomePickup)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	self->BecomePickup();
+	return 0;
 }
 
 //===========================================================================

@@ -13,16 +13,6 @@ public:
 	bool Use (bool pickup);
 };
 
-class ACoin : public AInventory
-{
-	DECLARE_CLASS (ACoin, AInventory)
-public:
-	//const char *PickupMessage ();
-	bool HandlePickup (AInventory *item);
-	AInventory *CreateTossable ();
-	AInventory *CreateCopy (AActor *other);
-};
-
 class ADummyStrifeItem : public AInventory
 {
 	DECLARE_CLASS (ADummyStrifeItem, AInventory)

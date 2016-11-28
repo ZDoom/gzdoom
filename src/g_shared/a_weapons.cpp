@@ -424,7 +424,7 @@ AInventory *AWeapon::CreateTossable ()
 		(((AWeapon*)SisterWeapon->GetDefault())->AmmoGive1 > 0 ||
 		 ((AWeapon*)SisterWeapon->GetDefault())->AmmoGive2 > 0))
 	{
-		return SisterWeapon->CreateTossable ();
+		return SisterWeapon->CallCreateTossable ();
 	}
 	AWeapon *copy = static_cast<AWeapon *> (Super::CreateTossable ());
 

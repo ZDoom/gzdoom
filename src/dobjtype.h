@@ -945,6 +945,7 @@ extern PSpriteID *TypeSpriteID;
 extern PStruct *TypeVector2;
 extern PStruct *TypeVector3;
 extern PStruct *TypeColorStruct;
+extern PStruct *TypeStringStruct;
 extern PStatePointer *TypeState;
 extern PStateLabel *TypeStateLabel;
 extern PPointer *TypeNullPtr;

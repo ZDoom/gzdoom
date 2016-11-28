@@ -76,7 +76,7 @@ class Loremaster : Actor
 
 // Loremaster Projectile ----------------------------------------------------
 
-class LoreShot : Actor native
+class LoreShot : Actor
 {
 	Default
 	{
@@ -91,8 +91,6 @@ class LoreShot : Actor native
 		ActiveSound "loremaster/swish";
 	}
 
-	native void A_LoremasterChain ();
-
 	States
 	{
 	Spawn:
@@ -102,6 +100,26 @@ class LoreShot : Actor native
 		OCLW A 6;
 		Stop;
 	}
+	
+	override int DoSpecialDamage (Actor victim, int damage, Name damagetype)
+	{
+		
+		if (victim != NULL && target != NULL && !victim.bDontThrust)
+		{
+			Vector3 thrust = victim.Vec3To(target);
+			victim.Vel += thrust.Unit() * (255. * 50 / max(victim.Mass, 1));
+		}
+		return damage;
+	}
+
+	void A_LoremasterChain ()
+	{
+		A_PlaySound ("loremaster/active", CHAN_BODY);
+		Spawn("LoreShot2", Pos, ALLOW_REPLACE);
+		Spawn("LoreShot2", Vec3Offset(-Vel.x/2., -Vel.y/2., -Vel.z/2.), ALLOW_REPLACE);
+		Spawn("LoreShot2", Vec3Offset(-Vel.x, -Vel.y, -Vel.z), ALLOW_REPLACE);
+	}
+	
 }
 
 // Loremaster Subprojectile -------------------------------------------------

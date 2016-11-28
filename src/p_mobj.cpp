@@ -7509,13 +7509,20 @@ DEFINE_ACTION_FUNCTION(AActor, Vec2Angle)
 }
 
 
+DEFINE_ACTION_FUNCTION(AActor, Vec3To)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(t, AActor)
+	ACTION_RETURN_VEC3(self->Vec3To(t));
+}
+
 DEFINE_ACTION_FUNCTION(AActor, Vec3Angle)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(length)
-	PARAM_ANGLE(angle);
+		PARAM_ANGLE(angle);
 	PARAM_FLOAT(z);
-	PARAM_BOOL_DEF(absolute); 
+	PARAM_BOOL_DEF(absolute);
 	ACTION_RETURN_VEC3(self->Vec3Angle(length, angle, z, absolute));
 }
 

@@ -6520,6 +6520,15 @@ AActor *P_SpawnMissileZAimed (AActor *source, double z, AActor *dest, PClassActo
 	return P_SpawnMissileAngleZSpeed (source, z, type, an, vz, speed);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SpawnMissileZAimed)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(z);
+	PARAM_OBJECT(dest, AActor);
+	PARAM_CLASS(type, AActor);
+	ACTION_RETURN_OBJECT(P_SpawnMissileZAimed(self, z, dest, type));
+}
+
 //---------------------------------------------------------------------------
 //
 // FUNC P_SpawnMissileAngleZSpeed

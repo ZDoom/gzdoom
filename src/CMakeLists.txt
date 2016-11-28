@@ -861,7 +861,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	sc_man_scanner.re
 	g_hexen/a_heresiarch.cpp
 	g_hexen/a_spike.cpp
-	g_strife/a_coin.cpp
 	g_strife/a_crusader.cpp
 	g_strife/a_inquisitor.cpp
 	g_strife/a_loremaster.cpp

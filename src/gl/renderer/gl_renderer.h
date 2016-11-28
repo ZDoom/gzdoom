@@ -195,7 +195,7 @@ public:
 	void BloomScene();
 	void TonemapScene();
 	void ColormapScene();
-	void BindTonemapPalette(int texunit);
+	void CreateTonemapPalette();
 	void ClearTonemapPalette();
 	void LensDistortScene();
 	void ApplyFXAA();

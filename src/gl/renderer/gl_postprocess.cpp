@@ -468,7 +468,10 @@ void FGLRenderer::TonemapScene()
 
 	FGLDebug::PushGroup("TonemapScene");
 
+	CreateTonemapPalette();
+
 	FGLPostProcessState savedState;
+	savedState.SaveTextureBindings(2);
 
 	mBuffers->BindNextFB();
 	mBuffers->BindCurrentTexture(0);
@@ -477,12 +480,18 @@ void FGLRenderer::TonemapScene()
 
 	if (mTonemapShader->IsPaletteMode())
 	{
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, mTonemapPalette->GetTextureHandle(0));
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glActiveTexture(GL_TEXTURE0);
+
 		mTonemapShader->PaletteLUT.Set(1);
-		BindTonemapPalette(1);
 	}
 	else
 	{
-		savedState.SaveTextureBindings(2);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, mBuffers->ExposureTexture);
 		glActiveTexture(GL_TEXTURE0);
@@ -496,13 +505,9 @@ void FGLRenderer::TonemapScene()
 	FGLDebug::PopGroup();
 }
 
-void FGLRenderer::BindTonemapPalette(int texunit)
+void FGLRenderer::CreateTonemapPalette()
 {
-	if (mTonemapPalette)
-	{
-		mTonemapPalette->Bind(texunit, 0, false);
-	}
-	else
+	if (!mTonemapPalette)
 	{
 		TArray<unsigned char> lut;
 		lut.Resize(512 * 512 * 4);
@@ -523,14 +528,7 @@ void FGLRenderer::BindTonemapPalette(int texunit)
 		}
 
 		mTonemapPalette = new FHardwareTexture(512, 512, true);
-		mTonemapPalette->CreateTexture(&lut[0], 512, 512, texunit, false, 0, "mTonemapPalette");
-
-		glActiveTexture(GL_TEXTURE0 + texunit);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glActiveTexture(GL_TEXTURE0);
+		mTonemapPalette->CreateTexture(&lut[0], 512, 512, 0, false, 0, "mTonemapPalette");
 	}
 }
 

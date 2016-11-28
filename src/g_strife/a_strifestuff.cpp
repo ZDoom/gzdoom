@@ -24,9 +24,6 @@
 #include "vm.h"
 
 // Include all the other Strife stuff here to reduce compile time
-#include "a_oracle.cpp"
-#include "a_programmer.cpp"
-#include "a_rebels.cpp"
 #include "a_sentinel.cpp"
 #include "a_stalker.cpp"
 #include "a_strifeitems.cpp"

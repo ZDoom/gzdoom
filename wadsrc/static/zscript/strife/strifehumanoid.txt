@@ -56,3 +56,21 @@ class FireDroplet : Actor
 }
 	
 
+extend class Actor
+{
+	//============================================================================
+	//
+	// A_ShootGun
+	//
+	//============================================================================
+
+	void A_ShootGun()
+	{
+		if (!target) return;
+		A_PlaySound ("monsters/rifle", CHAN_WEAPON);
+		A_FaceTarget ();
+		double pitch = AimLineAttack (angle, MISSILERANGE);
+		LineAttack (Angle + Random2[ShootGun]() * (11.25 / 256), MISSILERANGE, pitch, 3*(random[ShootGun]() % 5 + 1), 'Hitscan', "StrifePuff");
+	}
+
+}

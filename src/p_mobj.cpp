@@ -1018,6 +1018,13 @@ AInventory *AActor::DropInventory (AInventory *item)
 	return drop;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, DropInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(item, AInventory);
+	ACTION_RETURN_OBJECT(self->DropInventory(item));
+}
+
 //============================================================================
 //
 // AActor :: FindInventory

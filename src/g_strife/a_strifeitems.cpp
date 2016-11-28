@@ -180,8 +180,18 @@ IMPLEMENT_CLASS(ARaiseAlarm, false, false)
 bool ARaiseAlarm::TryPickup (AActor *&toucher)
 {
 	P_NoiseAlert (toucher, toucher);
-	VMFrameStack stack1, *stack = &stack1;
-	CALL_ACTION(A_WakeOracleSpectre, toucher);
+	/*
+	ThinkerIterator it = ThinkerIterator.Create("AlienSpectre3");
+	Actor spectre = Actor(it.Next());
+
+	if (spectre != NULL && spectre.health > 0 && toucher != spectre)
+	{
+	spectre.CurSector.SoundTarget = spectre.LastHeard = toucher;
+	spectre.target = toucher;
+	spectre.SetState (spectre.SeeState);
+	}
+
+	*/
 	GoAwayAndDie ();
 	return true;
 }

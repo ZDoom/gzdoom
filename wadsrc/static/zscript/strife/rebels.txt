@@ -107,7 +107,7 @@ class Rebel6 : Rebel
 
 // Teleporter Beacon --------------------------------------------------------
 
-class TeleporterBeacon : Inventory native
+class TeleporterBeacon : Inventory
 {
 	Default
 	{
@@ -122,8 +122,6 @@ class TeleporterBeacon : Inventory native
 		Inventory.PickupMessage "$TXT_BEACON";
 	}
 
-	native void A_Beacon ();
-
 	States
 	{
 	Spawn:
@@ -136,5 +134,74 @@ class TeleporterBeacon : Inventory native
 	Death:
 		BEAC A 1 A_FadeOut(0.015);
 		Loop;
+	}
+	
+	// Teleporter Beacon --------------------------------------------------------
+
+	override bool Use (bool pickup)
+	{
+		// Increase the amount by one so that when DropInventory decrements it,
+		// the actor will have the same number of beacons that he started with.
+		// When we return to UseInventory, it will take care of decrementing
+		// Amount again and disposing of self item if there are no more.
+		Amount++;
+		Inventory drop = Owner.DropInventory (self);
+		if (drop == null)
+		{
+			Amount--;
+			return false;
+		}
+		else
+		{
+			drop.SetStateLabel("Drop");
+			drop.target = Owner;
+			return true;
+		}
+	}
+
+	void A_Beacon()
+	{
+		Actor owner = target;
+		Actor rebel = Spawn("Rebel1", (pos.xy, floorz), ALLOW_REPLACE);
+		if (!rebel.TryMove (rebel.Pos.xy, true))
+		{
+			rebel.Destroy ();
+			return;
+		}
+		// Once the rebels start teleporting in, you can't pick up the beacon anymore.
+		bSpecial = false;
+		Inventory(self).DropTime = 0;
+		// Set up the new rebel.
+		rebel.threshold = rebel.DefThreshold;
+		rebel.target = null;
+		rebel.bInCombat = true;
+		rebel.LastHeard = owner;	// Make sure the rebels look for targets
+		if (deathmatch)
+		{
+			rebel.health *= 2;
+		}
+		if (owner != null)
+		{
+			// Rebels are the same color as their owner (but only in multiplayer)
+			if (multiplayer)
+			{
+				rebel.Translation = owner.Translation;
+			}
+			rebel.SetFriendPlayer(owner.player);
+			// Set the rebel's target to whatever last hurt the player, so long as it's not
+			// one of the player's other rebels.
+			if (owner.target != null && !rebel.IsFriend (owner.target))
+			{
+				rebel.target = owner.target;
+			}
+		}
+
+		rebel.SetState (rebel.SeeState);
+		rebel.Angle = Angle;
+		rebel.SpawnTeleportFog(rebel.Vec3Angle(20., Angle, 0), false, true);
+		if (--health < 0)
+		{
+			SetStateLabel("Death");
+		}
 	}
 }

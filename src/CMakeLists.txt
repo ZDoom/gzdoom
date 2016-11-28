@@ -861,8 +861,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	sc_man_scanner.re
 	g_hexen/a_heresiarch.cpp
 	g_hexen/a_spike.cpp
-	g_strife/a_sentinel.cpp
-	g_strife/a_stalker.cpp
 	g_strife/a_strifeitems.cpp
 	g_strife/a_strifeweapons.cpp
 	g_strife/a_thingstoblowup.cpp

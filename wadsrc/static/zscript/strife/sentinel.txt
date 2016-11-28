@@ -28,8 +28,6 @@ class Sentinel : Actor
 		Obituary "$OB_SENTINEL";
 	}
 
-	native void A_SentinelAttack ();
-
 	States
 	{
 	Spawn:
@@ -56,6 +54,34 @@ class Sentinel : Actor
 		SEWR J 5;
 		Stop;
 	}
+	
+	void A_SentinelAttack ()
+	{
+		// [BB] Without a target the P_SpawnMissileZAimed call will crash.
+		if (!target)
+		{
+			return;
+		}
+
+		Actor missile = SpawnMissileZAimed (pos.z + 32, target, "SentinelFX2");
+
+		if (missile != NULL && (missile.Vel.X != 0 || missile.Vel.Y != 0))
+		{
+			for (int i = 8; i > 1; --i)
+			{
+				Actor trail = Spawn("SentinelFX1", Vec3Angle(missile.radius*i, missile.angle, 32 + missile.Vel.Z / 4 * i), ALLOW_REPLACE);
+				if (trail != NULL)
+				{
+					trail.target = self;
+					trail.Vel = missile.Vel;
+					trail.CheckMissileSpawn (radius);
+				}
+			}
+			missile.AddZ(missile.Vel.Z / 4);
+		}
+	}
+
+	
 }
 
 // Sentinel FX 1 ------------------------------------------------------------
@@ -102,3 +128,52 @@ class SentinelFX2 : SentinelFX1
 	}
 }
 
+
+extend class Actor
+{
+	// These are used elsewhere, too.
+	void A_SentinelBob()
+	{
+		if (bInFloat)
+		{
+			Vel.Z = 0;
+			return;
+		}
+		if (threshold != 0)
+			return;
+
+		double maxz =  ceilingz - Height - 16;
+		double minz = floorz + 96;
+		if (minz > maxz)
+		{
+			minz = maxz;
+		}
+		if (minz < pos.z)
+		{
+			Vel.Z -= 1;
+		}
+		else
+		{
+			Vel.Z += 1;
+		}
+		reactiontime = (minz >= pos.z) ? 4 : 0;
+	}
+
+	void A_SentinelRefire()
+	{
+		A_FaceTarget ();
+
+		if (random[SentinelRefire]() >= 30)
+		{
+			if (target == NULL ||
+				target.health <= 0 ||
+				!CheckSight (target, SF_SEEPASTBLOCKEVERYTHING|SF_SEEPASTSHOOTABLELINES) ||
+				HitFriend() ||
+				(MissileState == NULL && !CheckMeleeRange()) ||
+				random[SentinelRefire]() < 40)
+			{
+				SetState (SeeState);
+			}
+		}
+	}
+}

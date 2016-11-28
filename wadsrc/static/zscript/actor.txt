@@ -619,8 +619,6 @@ class Actor : Thinker native
 	native void A_Wander(int flags = 0);
 	native void A_Look2();
 	native void A_TossGib();
-	native void A_SentinelBob();
-	native void A_SentinelRefire();
 	native void A_SetShadow();
 	native void A_ClearShadow();
 	native void A_GetHurt();

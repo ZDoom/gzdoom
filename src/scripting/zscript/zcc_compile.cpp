@@ -2408,7 +2408,7 @@ static bool CheckRandom(ZCC_Expression *duration)
 // Sets up the action function call
 //
 //==========================================================================
-FxExpression *ZCCCompiler::SetupActionFunction(PClass *cls, ZCC_TreeNode *af)
+FxExpression *ZCCCompiler::SetupActionFunction(PClass *cls, ZCC_TreeNode *af, int StateFlags)
 {
 	// We have 3 cases to consider here:
 	// 1. A function without parameters. This can be called directly
@@ -2436,7 +2436,9 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClass *cls, ZCC_TreeNode *af)
 					// We can use this function directly without wrapping it in a caller.
 					auto selfclass = dyn_cast<PClass>(afd->Variants[0].SelfClass);
 					assert(selfclass != nullptr);	// non classes are not supposed to get here.
-					if ((afd->Variants[0].Flags & VARF_Action) || !cls->IsDescendantOf(RUNTIME_CLASS(AStateProvider)) || !selfclass->IsDescendantOf(RUNTIME_CLASS(AStateProvider)))
+
+					int comboflags = afd->Variants[0].UseFlags & StateFlags;
+					if (comboflags == StateFlags)	// the function must satisfy all the flags the state requires
 					{
 						return new FxVMFunctionCall(new FxSelf(*af), afd, argumentlist, *af, false);
 					}
@@ -2627,7 +2629,7 @@ void ZCCCompiler::CompileStates()
 
 					if (sl->Action != nullptr)
 					{
-						auto code = SetupActionFunction(static_cast<PClassActor *>(c->Type()), sl->Action);
+						auto code = SetupActionFunction(static_cast<PClassActor *>(c->Type()), sl->Action, state.UseFlags);
 						if (code != nullptr)
 						{
 							auto funcsym = CreateAnonymousFunction(c->Type(), nullptr, state.UseFlags);

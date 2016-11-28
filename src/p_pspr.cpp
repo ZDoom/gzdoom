@@ -439,6 +439,15 @@ void DPSprite::SetState(FState *newstate, bool pending)
 	return;
 }
 
+DEFINE_ACTION_FUNCTION(DPSprite, SetState)
+{
+	PARAM_SELF_PROLOGUE(DPSprite);
+	PARAM_POINTER(state, FState);
+	PARAM_BOOL_DEF(pending);
+	self->SetState(state, pending);
+	return 0;
+}
+
 //---------------------------------------------------------------------------
 //
 // PROC P_BringUpWeapon

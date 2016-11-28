@@ -646,7 +646,7 @@ static void TakeStrifeItem (player_t *player, PClassActor *itemtype, int amount)
 		return;
 
 	// Don't take the sigil.
-	if (itemtype == RUNTIME_CLASS(ASigil))
+	if (itemtype->GetClass()->TypeName == NAME_Sigil)
 		return;
 
 	player->mo->TakeInventory(itemtype, amount);

@@ -3209,7 +3209,7 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 				AInventory *inv = static_cast<AInventory *>(mo);
 				ModifyDropAmount(inv, dropamount);
 				inv->ItemFlags |= IF_TOSSED;
-				if (inv->SpecialDropAction (source))
+				if (inv->CallSpecialDropAction (source))
 				{
 					// The special action indicates that the item should not spawn
 					inv->Destroy();

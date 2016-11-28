@@ -589,6 +589,28 @@ bool AInventory::SpecialDropAction (AActor *dropper)
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, SpecialDropAction)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	PARAM_OBJECT(dropper, AActor);
+	ACTION_RETURN_BOOL(self->SpecialDropAction(dropper));
+}
+
+bool AInventory::CallSpecialDropAction(AActor *dropper)
+{
+	IFVIRTUAL(AInventory, SpecialDropAction)
+	{
+		VMValue params[2] = { (DObject*)this, (DObject*)dropper };
+		VMReturn ret;
+		VMFrameStack stack;
+		int retval;
+		ret.IntAt(&retval);
+		stack.Call(func, params, 2, &ret, 1, nullptr);
+		return !!retval;
+	}
+	return SpecialDropAction(dropper);
+}
+
 //===========================================================================
 //
 // AInventory :: ShouldRespawn

@@ -120,6 +120,11 @@ xx(ArtiPoisonBag3)
 
 // Strife quests
 xx(QuestItem)
+xx(Sigil)
+xx(ScriptedMarine)
+xx(GiveSigilPiece)
+xx(SetWeapon)
+xx(SetSprite)
 
 // Armor
 xx(BasicArmor)

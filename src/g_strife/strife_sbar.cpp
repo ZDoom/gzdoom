@@ -439,7 +439,7 @@ private:
 		}
 
 		// Sigil
-		item = CPlayer->mo->FindInventory<ASigil>();
+		item = CPlayer->mo->FindInventory(PClass::FindActor(NAME_Sigil));
 		if (item != NULL)
 		{
 			DrawImage (TexMan(item->Icon), 253, 7);

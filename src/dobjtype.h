@@ -859,6 +859,7 @@ public:
 	static PClassActor *FindActor(const FString &name)	{ return FindActor(FName(name, true)); }
 	static PClassActor *FindActor(ENamedName name)		{ return FindActor(FName(name)); }
 	static PClassActor *FindActor(FName name);
+	static VMFunction *FindFunction(FName cls, FName func);
 	PClass *FindClassTentative(FName name);
 
 	static TArray<PClass *> AllClasses;

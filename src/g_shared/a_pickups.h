@@ -168,6 +168,7 @@ public:
 	bool CallTryPickup (AActor *toucher, AActor **toucher_return = NULL);
 	virtual void DoPickupSpecial (AActor *toucher);
 	virtual bool SpecialDropAction (AActor *dropper);
+	bool CallSpecialDropAction(AActor *dropper);
 	virtual bool DrawPowerup (int x, int y);
 	virtual void DoEffect ();
 	virtual bool Grind(bool items);

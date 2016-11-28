@@ -3545,6 +3545,16 @@ const PClass *PClass::NativeClass() const
 	return cls;
 }
 
+VMFunction *PClass::FindFunction(FName clsname, FName funcname)
+{
+	auto cls = PClass::FindActor(clsname);
+	if (!cls) return nullptr;
+	auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(funcname, true));
+	if (!func) return nullptr;
+	return func->Variants[0].Implementation;
+}
+
+
 /* FTypeTable **************************************************************/
 
 //==========================================================================

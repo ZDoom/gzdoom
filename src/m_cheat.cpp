@@ -483,18 +483,28 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_LEGO:
 		if (player->mo != NULL && player->health >= 0)
 		{
-			int oldpieces = ASigil::GiveSigilPiece (player->mo);
-			item = player->mo->FindInventory (RUNTIME_CLASS(ASigil));
-
-			if (item != NULL)
+			static VMFunction *gsp = nullptr;
+			if (gsp == nullptr) gsp = PClass::FindFunction(NAME_Sigil, NAME_GiveSigilPiece);
+			if (gsp)
 			{
-				if (oldpieces == 5)
+				VMValue params[1] = { player->mo };
+				VMFrameStack stack;
+				VMReturn ret;
+				int oldpieces = 1;
+				ret.IntAt(&oldpieces);
+				stack.Call(gsp, params, 1, &ret, 1, nullptr);
+				item = player->mo->FindInventory(PClass::FindActor(NAME_Sigil));
+
+				if (item != NULL)
 				{
-					item->Destroy ();
-				}
-				else
-				{
-					player->PendingWeapon = static_cast<AWeapon *> (item);
+					if (oldpieces == 5)
+					{
+						item->Destroy();
+					}
+					else
+					{
+						player->PendingWeapon = static_cast<AWeapon *> (item);
+					}
 				}
 			}
 		}

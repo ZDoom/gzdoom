@@ -29,6 +29,7 @@ class Inventory : Actor native
 	virtual native color GetBlend ();
 	virtual native bool HandlePickup(Inventory item);
 	virtual native Inventory CreateCopy(Actor other);
+	virtual native bool SpecialDropAction (Actor dropper);
 	
 	native void GoAwayAndDie();
 	

@@ -6112,29 +6112,25 @@ static bool CharArrayParms(int &capacity, int &offset, int &a, int *Stack, int &
 static void SetMarineWeapon(AActor *marine, int weapon)
 {
 	static VMFunction *smw = nullptr;
-	if (smw == nullptr)
+	if (smw == nullptr) smw = PClass::FindFunction(NAME_ScriptedMarine, NAME_SetWeapon);
+	if (smw)
 	{
-		auto cls = PClass::FindActor("ScriptedMarine");
-		auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol("SetWeapon", true));
-		smw = func->Variants[0].Implementation;
+		VMValue params[2] = { marine, weapon };
+		VMFrameStack stack;
+		stack.Call(smw, params, 2, nullptr, 0, nullptr);
 	}
-	VMValue params[2] = { marine, weapon };
-	VMFrameStack stack;
-	stack.Call(smw, params, 2, nullptr, 0, nullptr);
 }
 
 static void SetMarineSprite(AActor *marine, PClassActor *source)
 {
 	static VMFunction *sms = nullptr;
-	if (sms == nullptr)
+	if (sms == nullptr) sms = PClass::FindFunction(NAME_ScriptedMarine, NAME_SetSprite);
+	if (sms)
 	{
-		auto cls = PClass::FindActor("ScriptedMarine");
-		auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol("SetSprite", true));
-		sms = func->Variants[0].Implementation;
+		VMValue params[2] = { marine, source };
+		VMFrameStack stack;
+		stack.Call(sms, params, 2, nullptr, 0, nullptr);
 	}
-	VMValue params[2] = { marine, source };
-	VMFrameStack stack;
-	stack.Call(sms, params, 2, nullptr, 0, nullptr);
 }
 
 int DLevelScript::RunScript ()
@@ -8577,15 +8573,15 @@ scriptwait:
 
 		case PCD_GETSIGILPIECES:
 			{
-				ASigil *sigil;
+				AInventory *sigil;
 
-				if (activator == NULL || (sigil = activator->FindInventory<ASigil>()) == NULL)
+				if (activator == NULL || (sigil = activator->FindInventory(PClass::FindActor(NAME_Sigil))) == NULL)
 				{
 					PushToStack (0);
 				}
 				else
 				{
-					PushToStack (sigil->NumPieces);
+					PushToStack (sigil->health);
 				}
 			}
 			break;

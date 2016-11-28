@@ -267,3 +267,9 @@ struct TerrainDef native
 	native double Friction;
 	native double MoveFactor;
 };
+
+enum EPickStart
+{
+	PPS_FORCERANDOM			= 1,
+	PPS_NOBLOCKINGCHECK		= 2,
+}

@@ -1540,15 +1540,28 @@ DEFINE_ACTION_FUNCTION(DObject, G_PickDeathmatchStart)
 {
 	PARAM_PROLOGUE;
 	unsigned int selections = deathmatchstarts.Size();
-	unsigned int i = pr_dmspawn() % selections;
+	DVector3 pos;
+	int angle;
+	if (selections == 0)
+	{
+		angle = INT_MAX;
+		pos = DVector3(0, 0, 0);
+	}
+	else
+	{
+		unsigned int i = pr_dmspawn() % selections;
+		angle = deathmatchstarts[i].angle;
+		pos = deathmatchstarts[i].pos;
+	}
+
 	if (numret > 1)
 	{
-		ret[1].SetInt(deathmatchstarts[i].angle);
+		ret[1].SetInt(angle);
 		numret = 2;
 	}
 	if (numret > 0)
 	{
-		ret[0].SetVector(deathmatchstarts[i].pos);
+		ret[0].SetVector(pos);
 	}
 	return numret;
 }

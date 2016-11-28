@@ -293,47 +293,6 @@ if( NOT NO_OPENAL )
 	endif()
 endif()
 
-
-# Path where it looks for the LLVM compiled files on Windows
-set( LLVM_PRECOMPILED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../llvm" )
-
-if( NOT WIN32 )
-	set( LLVM_COMPONENTS core support asmparser asmprinter bitreader bitwriter codegen ipo
-		irreader transformutils instrumentation profiledata runtimedyld
-		object instcombine linker analysis selectiondag scalaropts vectorize executionengine
-		mc mcdisassembler mcparser mcjit target x86asmprinter x86info x86desc x86utils x86codegen )
-
-	# Example LLVM_DIR folder: C:/Development/Environment/Src/llvm-3.9.0/build/lib/cmake/llvm
-	find_package(LLVM REQUIRED CONFIG)
-	message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-	message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-	llvm_map_components_to_libnames( llvm_libs ${LLVM_COMPONENTS} )
-	include_directories( ${LLVM_INCLUDE_DIRS} )
-	set( ZDOOM_LIBS ${ZDOOM_LIBS} ${llvm_libs} )
-else()
-	set( LLVM_COMPONENTS core support asmparser asmprinter bitreader bitwriter codegen passes ipo
-		irreader transformutils instrumentation profiledata debuginfocodeview runtimedyld
-		object instcombine linker analysis selectiondag scalaropts vectorize executionengine
-		mc mcdisassembler mcparser mcjit target x86asmprinter x86info x86desc x86utils x86codegen )
-
-	include_directories( "${LLVM_PRECOMPILED_DIR}/include" )
-	if( X64 )
-		include_directories( "${LLVM_PRECOMPILED_DIR}/64bit-include" )
-		set( llvm_libs_base "${LLVM_PRECOMPILED_DIR}/64bit-" )
-	else()
-		include_directories( "${LLVM_PRECOMPILED_DIR}/32bit-include" )
-		set( llvm_libs_base "${LLVM_PRECOMPILED_DIR}/32bit-" )
-	endif()
-	foreach(buildtype IN ITEMS RELEASE DEBUG)
-		set( llvm_libs_${buildtype} "${llvm_libs_base}${buildtype}" )
-		set( LLVM_${buildtype}_LIBS "" )
-		foreach( llvm_module ${LLVM_COMPONENTS} )
-			find_library( LLVM_${llvm_module}_LIBRARY_${buildtype} LLVM${llvm_module} PATHS ${llvm_libs_${buildtype}} )
-			set( LLVM_${buildtype}_LIBS ${LLVM_${buildtype}_LIBS} ${LLVM_${llvm_module}_LIBRARY_${buildtype}} )
-		endforeach( llvm_module )
-	endforeach(buildtype)
-endif()
-
 if( NOT NO_FMOD )
 	# Search for FMOD include files
 	if( NOT WIN32 )
@@ -644,11 +603,6 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set( CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++ ${CMAKE_EXE_LINKER_FLAGS}" )
 	endif ()
 
-	# Linux - add these flags for LLVM compatibility to prevent crashing
-	if ( UNIX AND NOT APPLE )
-		set( CMAKE_EXE_LINKER_FLAGS "-Wl,--exclude-libs,ALL ${CMAKE_EXE_LINKER_FLAGS}" )
-	endif()
-
 	# Remove extra warnings when using the official DirectX headers.
 	# Also, TDM-GCC 4.4.0 no longer accepts glibc-style printf formats as valid,
 	# which is a royal pain. The previous version I had been using was fine with them.
@@ -718,6 +672,20 @@ add_custom_target( revision_check ALL
 	COMMAND updaterevision src/gitinfo.h
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	DEPENDS updaterevision )
+
+# Run drawer codegen tool
+
+if ( WIN32 )
+	add_custom_target( drawergen_target ALL
+		COMMAND drawergen src/r_drawersasm.obj
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		DEPENDS drawergen )
+else()
+	add_custom_target( drawergen_target ALL
+		COMMAND drawergen src/r_drawersasm.o
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		DEPENDS drawergen )
+endif()
 
 # Libraries ZDoom needs
 
@@ -933,9 +901,6 @@ file( GLOB HEADER_FILES
 	posix/*.h
 	posix/cocoa/*.h
 	posix/sdl/*.h
-	r_compiler/*.h
-	r_compiler/ssa/*.h
-	r_compiler/fixedfunction/*.h
 	r_data/*.h
 	resourcefiles/*.h
 	sfmt/*.h
@@ -1083,6 +1048,7 @@ set( FASTMATH_PCH_SOURCES
 	r_draw_rgba.cpp
 	r_drawt.cpp
 	r_drawt_rgba.cpp
+	r_drawers.cpp
 	r_thread.cpp
 	r_main.cpp
 	r_plane.cpp
@@ -1485,33 +1451,6 @@ set (PCH_SOURCES
 	fragglescript/t_spec.cpp
 	fragglescript/t_variable.cpp
 	fragglescript/t_cmd.cpp
-	r_compiler/llvmdrawers.cpp
-	r_compiler/ssa/ssa_bool.cpp
-	r_compiler/ssa/ssa_float.cpp
-	r_compiler/ssa/ssa_float_ptr.cpp
-	r_compiler/ssa/ssa_for_block.cpp
-	r_compiler/ssa/ssa_function.cpp
-	r_compiler/ssa/ssa_if_block.cpp
-	r_compiler/ssa/ssa_int.cpp
-	r_compiler/ssa/ssa_int_ptr.cpp
-	r_compiler/ssa/ssa_short.cpp
-	r_compiler/ssa/ssa_scope.cpp
-	r_compiler/ssa/ssa_struct_type.cpp
-	r_compiler/ssa/ssa_ubyte.cpp
-	r_compiler/ssa/ssa_ubyte_ptr.cpp
-	r_compiler/ssa/ssa_value.cpp
-	r_compiler/ssa/ssa_vec4f.cpp
-	r_compiler/ssa/ssa_vec4f_ptr.cpp
-	r_compiler/ssa/ssa_vec4i.cpp
-	r_compiler/ssa/ssa_vec4i_ptr.cpp
-	r_compiler/ssa/ssa_vec8s.cpp
-	r_compiler/ssa/ssa_vec16ub.cpp
-	r_compiler/fixedfunction/drawercodegen.cpp
-	r_compiler/fixedfunction/drawspancodegen.cpp
-	r_compiler/fixedfunction/drawwallcodegen.cpp
-	r_compiler/fixedfunction/drawcolumncodegen.cpp
-	r_compiler/fixedfunction/drawskycodegen.cpp
-	r_compiler/fixedfunction/drawtrianglecodegen.cpp
 	r_data/sprites.cpp
 	r_data/voxels.cpp
 	r_data/renderstyle.cpp
@@ -1527,6 +1466,16 @@ set (PCH_SOURCES
 	zscript/zcc_parser.cpp
 )
 enable_precompiled_headers( g_pch.h PCH_SOURCES )
+
+if ( WIN32 )
+	set (CODEGENOBJ_SOURCES
+		r_drawersasm.obj
+	)
+else()
+	set (CODEGENOBJ_SOURCES
+		r_drawersasm.o
+	)
+endif()
 
 add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${HEADER_FILES}
@@ -1557,7 +1506,10 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	math/tanh.c
 	math/fastsin.cpp
 	zzautozend.cpp
+	r_drawersasm.obj
 )
+
+set_source_files_properties( ${CODEGENOBJ_SOURCES} PROPERTIES EXTERNAL_OBJECT true GENERATED true)
 
 set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )
@@ -1579,15 +1531,6 @@ endif()
 
 target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
 
-if( WIN32 )
-	foreach(debuglib ${LLVM_DEBUG_LIBS})
-		target_link_libraries( zdoom debug ${debuglib} )
-	endforeach(debuglib)
-	foreach(releaselib ${LLVM_RELEASE_LIBS})
-		target_link_libraries( zdoom optimized ${releaselib} )
-	endforeach(releaselib)
-endif()
-
 include_directories( .
 	g_doom
 	g_heretic
@@ -1608,7 +1551,7 @@ include_directories( .
 	${CMAKE_BINARY_DIR}/gdtoa
 	${SYSTEM_SOURCES_DIR} )
 
-add_dependencies( zdoom revision_check )
+add_dependencies( zdoom revision_check drawergen_target )
 
 # Due to some quirks, we need to do this in this order
 if( NOT ZDOOM_OUTPUT_OLDSTYLE )
@@ -1750,9 +1693,6 @@ source_group("Render Data\\Resource Headers" REGULAR_EXPRESSION "^${CMAKE_CURREN
 source_group("Render Data\\Resource Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+\\.cpp$")
 source_group("Render Data\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/textures/.+")
 source_group("Render Interface" FILES r_defs.h r_renderer.h r_sky.cpp r_sky.h r_state.h r_utility.cpp r_utility.h)
-source_group("Render Compiler" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_compiler/.+")
-source_group("Render Compiler\\SSA" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_compiler/ssa/.+")
-source_group("Render Compiler\\Fixed Function" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_compiler/fixedfunction/.+")
 source_group("Resource Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/resourcefiles/.+")
 source_group("POSIX Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix/.+")
 source_group("Cocoa Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix/cocoa/.+")

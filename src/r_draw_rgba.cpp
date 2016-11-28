@@ -38,7 +38,7 @@
 #include "r_data/colormaps.h"
 #include "r_plane.h"
 #include "r_draw_rgba.h"
-#include "r_compiler/llvmdrawers.h"
+#include "r_drawers.h"
 #include "gl/data/gl_matrix.h"
 
 #include "gi.h"
@@ -105,7 +105,7 @@ public:
 	{
 		if (thread->skipped_by_thread(args.y))
 			return;
-		LLVMDrawers::Instance()->DrawSpan(&args);
+		Drawers::Instance()->DrawSpan(&args);
 	}
 
 	FString DebugInfo() override
@@ -146,7 +146,7 @@ public:
 	{
 		if (thread->skipped_by_thread(args.y))
 			return;
-		LLVMDrawers::Instance()->DrawSpanMasked(&args);
+		Drawers::Instance()->DrawSpanMasked(&args);
 	}
 };
 
@@ -157,7 +157,7 @@ public:
 	{
 		if (thread->skipped_by_thread(args.y))
 			return;
-		LLVMDrawers::Instance()->DrawSpanTranslucent(&args);
+		Drawers::Instance()->DrawSpanTranslucent(&args);
 	}
 };
 
@@ -168,7 +168,7 @@ public:
 	{
 		if (thread->skipped_by_thread(args.y))
 			return;
-		LLVMDrawers::Instance()->DrawSpanMaskedTranslucent(&args);
+		Drawers::Instance()->DrawSpanMaskedTranslucent(&args);
 	}
 };
 
@@ -179,7 +179,7 @@ public:
 	{
 		if (thread->skipped_by_thread(args.y))
 			return;
-		LLVMDrawers::Instance()->DrawSpanAddClamp(&args);
+		Drawers::Instance()->DrawSpanAddClamp(&args);
 	}
 };
 
@@ -190,7 +190,7 @@ public:
 	{
 		if (thread->skipped_by_thread(args.y))
 			return;
-		LLVMDrawers::Instance()->DrawSpanMaskedAddClamp(&args);
+		Drawers::Instance()->DrawSpanMaskedAddClamp(&args);
 	}
 };
 
@@ -251,7 +251,7 @@ public:
 	void Execute(DrawerThread *thread) override
 	{
 		WorkerThreadData d = ThreadData(thread);
-		LLVMDrawers::Instance()->vlinec4(&args, &d);
+		Drawers::Instance()->vlinec4(&args, &d);
 	}
 
 	FString DebugInfo() override
@@ -312,7 +312,7 @@ public:
 	void Execute(DrawerThread *thread) override
 	{
 		WorkerThreadData d = ThreadData(thread);
-		LLVMDrawers::Instance()->vlinec1(&args, &d);
+		Drawers::Instance()->vlinec1(&args, &d);
 	}
 
 	FString DebugInfo() override
@@ -383,7 +383,7 @@ public:
 	void Execute(DrawerThread *thread) override
 	{
 		WorkerThreadData d = ThreadData(thread);
-		LLVMDrawers::Instance()->DrawColumn(&args, &d);
+		Drawers::Instance()->DrawColumn(&args, &d);
 	}
 };
 
@@ -438,7 +438,7 @@ public: \
 	void Execute(DrawerThread *thread) override \
 	{ \
 		WorkerThreadData d = ThreadData(thread); \
-		LLVMDrawers::Instance()->func(&args, &d); \
+		Drawers::Instance()->func(&args, &d); \
 	} \
 };
 

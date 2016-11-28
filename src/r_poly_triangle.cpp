@@ -78,7 +78,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 	if (drawargs.vcount < 3)
 		return;
 
-	auto llvm = LLVMDrawers::Instance();
+	auto llvm = Drawers::Instance();
 	void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *);
 	int bmode = (int)blendmode;
 	switch (variant)

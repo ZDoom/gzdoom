@@ -43,7 +43,7 @@
 #include "r_things.h"
 #include "v_video.h"
 #include "r_draw_rgba.h"
-#include "r_compiler/llvmdrawers.h"
+#include "r_drawers.h"
 
 extern unsigned int dc_tspans[4][MAXHEIGHT];
 extern unsigned int *dc_ctspan[4];
@@ -107,7 +107,7 @@ public:
 	void Execute(DrawerThread *thread) override
 	{
 		WorkerThreadData d = ThreadData(thread);
-		LLVMDrawers::Instance()->DrawColumnRt1(&args, &d);
+		Drawers::Instance()->DrawColumnRt1(&args, &d);
 	}
 
 	FString DebugInfo() override
@@ -124,7 +124,7 @@ public: \
 	void Execute(DrawerThread *thread) override \
 	{ \
 		WorkerThreadData d = ThreadData(thread); \
-		LLVMDrawers::Instance()->func(&args, &d); \
+		Drawers::Instance()->func(&args, &d); \
 	} \
 };
 

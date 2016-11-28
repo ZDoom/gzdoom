@@ -48,3 +48,5 @@
 /build_vc2015-64
 /build
 /llvm
+/src/r_drawersasm.obj
+/src/r_drawersasm.o

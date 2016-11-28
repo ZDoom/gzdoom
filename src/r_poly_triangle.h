@@ -24,7 +24,7 @@
 
 #include "r_draw.h"
 #include "r_thread.h"
-#include "r_compiler/llvmdrawers.h"
+#include "r_drawers.h"
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
 

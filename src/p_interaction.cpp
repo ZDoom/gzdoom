@@ -105,8 +105,7 @@ void P_TouchSpecialThing (AActor *special, AActor *toucher)
 		toucher->player->Bot->prev = toucher->player->Bot->dest;
 		toucher->player->Bot->dest = NULL;
 	}
-
-	special->Touch (toucher);
+	special->CallTouch (toucher);
 }
 
 

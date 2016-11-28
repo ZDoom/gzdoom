@@ -36,7 +36,6 @@ class Programmer : Actor
 	native void A_ProgrammerMelee ();
 	native void A_SpawnProgrammerBase ();
 	native void A_ProgrammerDeath ();
-	native void A_SpotLightning();
 	
 	States
 	{
@@ -80,6 +79,27 @@ class Programmer : Actor
 		PRGR X -1 Bright A_ProgrammerDeath;
 		Stop;
 	}
+	
+	//============================================================================
+	//
+	// A_SpotLightning
+	//
+	//============================================================================
+
+	void A_SpotLightning()
+	{
+		if (target == NULL) return;
+
+		Actor spot = Spawn("SpectralLightningSpot", (target.pos.xy, target.floorz), ALLOW_REPLACE);
+		if (spot != NULL)
+		{
+			spot.threshold = 25;
+			spot.target = self;
+			spot.FriendPlayer = 0;
+			spot.tracer = target;
+		}
+	}
+	
 }
 
 

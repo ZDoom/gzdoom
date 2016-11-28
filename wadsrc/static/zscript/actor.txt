@@ -268,6 +268,7 @@ class Actor : Thinker native
 	virtual native bool Slam(Actor victim);
 	virtual native bool UseInventory(Inventory item);
 	virtual native bool SpecialBlastHandling (Actor source, double strength);
+	virtual native void Touch(Actor toucher);
 
 	virtual int SpecialMissileHit (Actor victim)	// for this no native version exists
 	{
@@ -617,7 +618,6 @@ class Actor : Thinker native
 	native void A_TossGib();
 	native void A_SentinelBob();
 	native void A_SentinelRefire();
-	native void A_Tracer2();
 	native void A_SetShadow();
 	native void A_ClearShadow();
 	native void A_GetHurt();

@@ -1440,6 +1440,25 @@ void AActor::Touch (AActor *toucher)
 {
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Touch)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(toucher, AActor);
+	self->Touch(toucher);
+	return 0;
+}
+
+void AActor::CallTouch(AActor *toucher)
+{
+	IFVIRTUAL(AActor, Touch)
+	{
+		VMValue params[2] = { (DObject*)this, toucher };
+		VMFrameStack stack;
+		stack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+	else Touch(toucher);
+}
+
 //============================================================================
 //
 // AActor :: Grind

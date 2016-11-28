@@ -96,32 +96,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_ProgrammerMelee)
 
 //============================================================================
 //
-// A_SpotLightning
-//
-//============================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_SpotLightning)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-
-	AActor *spot;
-
-	if (self->target == NULL)
-		return 0;
-
-	spot = Spawn("SpectralLightningSpot", self->target->PosAtZ(self->target->floorz), ALLOW_REPLACE);
-	if (spot != NULL)
-	{
-		spot->threshold = 25;
-		spot->target = self;
-		spot->FriendPlayer = 0;
-		spot->tracer = self->target;
-	}
-	return 0;
-}
-
-//============================================================================
-//
 // A_SpawnProgrammerBase
 //
 //============================================================================

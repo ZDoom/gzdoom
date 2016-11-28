@@ -498,10 +498,13 @@ void player_t::SetLogText (const char *text)
 {
 	LogText = text;
 
-	// Print log text to console
-	AddToConsole(-1, TEXTCOLOR_GOLD);
-	AddToConsole(-1, LogText);
-	AddToConsole(-1, "\n");
+	if (mo->CheckLocalView(consoleplayer))
+	{
+		// Print log text to console
+		AddToConsole(-1, TEXTCOLOR_GOLD);
+		AddToConsole(-1, LogText);
+		AddToConsole(-1, "\n");
+	}
 }
 
 DEFINE_ACTION_FUNCTION(_PlayerInfo, SetLogText)

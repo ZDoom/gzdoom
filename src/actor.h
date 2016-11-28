@@ -674,6 +674,7 @@ public:
 
 	// Something just touched this actor.
 	virtual void Touch (AActor *toucher);
+	void CallTouch(AActor *toucher);
 
 	// Adds the item to this actor's inventory and sets its Owner.
 	virtual void AddInventory (AInventory *item);

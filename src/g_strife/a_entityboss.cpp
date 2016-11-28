@@ -36,7 +36,6 @@ void A_SpectralMissile (AActor *self, const char *missilename)
 	}
 }
 
-DECLARE_ACTION(A_SpotLightning)
 DECLARE_ACTION(A_Spectre3Attack)
 
 
@@ -49,7 +48,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_EntityAttack)
 	switch (pr_entity() % 5)
 	{
 	case 0:
-		CALL_ACTION(A_SpotLightning, self);
+		//CALL_ACTION(A_SpotLightning, self);
 		break;
 
 	case 2:
@@ -57,7 +56,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_EntityAttack)
 		break;
 
 	case 3:
-		CALL_ACTION(A_Spectre3Attack, self);
+		//CALL_ACTION(A_Spectre3Attack, self);
 		break;
 
 	case 4:

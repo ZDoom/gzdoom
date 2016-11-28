@@ -24,9 +24,7 @@
 #include "vm.h"
 
 // Include all the other Strife stuff here to reduce compile time
-#include "a_inquisitor.cpp"
 #include "a_loremaster.cpp"
-//#include "a_macil.cpp"
 #include "a_oracle.cpp"
 #include "a_programmer.cpp"
 #include "a_rebels.cpp"

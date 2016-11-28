@@ -98,21 +98,13 @@ class Acolyte : StrifeHumanoid
 				return;
 
 			// Make sure all the other blue acolytes are dead.
-			ThinkerIterator it = ThinkerIterator.Create("AcolyteBlue");
-			Actor other;
-
-			while ( (other = Actor(it.Next ())) )
+			if (CheckBossDeath())
 			{
-				if (other != self && other.health > 0)
-				{ // Found a living one
-					return;
-				}
+				players[i].mo.GiveInventoryType ("QuestItem7");
+				players[i].SetLogNumber (14);
+				A_StopSound (CHAN_VOICE);
+				A_PlaySound ("svox/voc14", CHAN_VOICE);
 			}
-
-			players[i].mo.GiveInventoryType ("QuestItem7");
-			players[i].SetLogNumber (14);
-			A_StopSound (CHAN_VOICE);
-			A_PlaySound ("svox/voc14", CHAN_VOICE);
 		}
 	}
 

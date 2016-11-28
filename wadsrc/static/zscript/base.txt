@@ -8,6 +8,8 @@ class Object native
 	native static vector3, int G_PickDeathmatchStart();
 	native static vector3, int G_PickPlayerStart(int pnum, int flags = 0);
 	native static int GameType();
+	native static void S_Sound (Sound sound_id, int channel, float volume = 1, float attenuation = ATTN_NORM);
+	native static void C_MidPrint(string fontname, string textlabel, bool bold = false);	// always uses the stringtable.
 
 	/*virtual*/ native void Destroy();
 }

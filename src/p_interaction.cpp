@@ -767,7 +767,7 @@ DEFINE_ACTION_FUNCTION(AActor, Die)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(source, AActor);
 	PARAM_OBJECT(inflictor, AActor);
-	PARAM_INT(dmgflags);
+	PARAM_INT_DEF(dmgflags);
 	self->Die(source, inflictor, dmgflags);
 	return 0;
 }

@@ -3339,6 +3339,12 @@ bool CheckBossDeath (AActor *actor)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CheckBossDeath)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(CheckBossDeath(self));
+}
+
 //
 // A_BossDeath
 // Possibly trigger special effects if on a boss level

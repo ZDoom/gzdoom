@@ -11,10 +11,66 @@ class SpectralMonster : Actor native
 		+SPECTRAL
 		+NOICEDEATH
 	}
+
+	//============================================================================
+
+	void A_SpectreChunkSmall ()
+	{
+		Actor foo = Spawn("AlienChunkSmall", pos + (0, 0, 10), ALLOW_REPLACE);
+
+		if (foo != null)
+		{
+			int t;
+
+			t = random[SpectreChunk]() & 15;
+			foo.Vel.X = (t - (random[SpectreChunk]() & 7));
+			
+			t = random[SpectreChunk]() & 15;
+			foo.Vel.Y = (t - (random[SpectreChunk]() & 7));
+
+			foo.Vel.Z = (random[SpectreChunk]() & 15);
+		}
+	}
+
+	void A_SpectreChunkLarge ()
+	{
+		Actor foo = Spawn("AlienChunkLarge", pos + (0, 0, 10), ALLOW_REPLACE);
+
+		if (foo != null)
+		{
+			int t;
+
+			t = random[SpectreChunk]() & 7;
+			foo.Vel.X = (t - (random[SpectreChunk]() & 15));
+			
+			t = random[SpectreChunk]() & 7;
+			foo.Vel.Y = (t - (random[SpectreChunk]() & 15));
+
+			foo.Vel.Z = (random[SpectreChunk]() & 7);
+		}
+	}
+
+	void A_Spectre3Attack ()
+	{
+		if (target == null)
+			return;
+
+		Actor foo = Spawn("SpectralLightningV2", Pos + (0, 0, 32), ALLOW_REPLACE);
+
+		foo.Vel.Z = -12;
+		foo.target = self;
+		foo.FriendPlayer = 0;
+		foo.tracer = target;
+
+		Angle -= 90.;
+		for (int i = 0; i < 20; ++i)
+		{
+			Angle += 9.;
+			SpawnSubMissile ("SpectralLightningBall2", self);
+		}
+		Angle -= 90.;
+	}
 	
-	native void A_SpectreChunkSmall ();
-	native void A_SpectreChunkLarge ();
-	native void A_Spectre3Attack ();
 	native void A_SpotLightning ();
 }
 

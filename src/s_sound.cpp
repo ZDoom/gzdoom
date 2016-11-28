@@ -1232,6 +1232,16 @@ void S_Sound (int channel, FSoundID sound_id, float volume, float attenuation)
 	S_StartSound (NULL, NULL, NULL, NULL, channel, sound_id, volume, attenuation);
 }
 
+DEFINE_ACTION_FUNCTION(DObject, S_Sound)
+{
+	PARAM_PROLOGUE;
+	PARAM_SOUND(id);
+	PARAM_INT(channel);
+	PARAM_FLOAT_DEF(volume);
+	PARAM_FLOAT_DEF(attn);
+	return 0;
+}
+
 //==========================================================================
 //
 // S_Sound - An actor is source

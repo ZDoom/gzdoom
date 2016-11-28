@@ -389,11 +389,6 @@ Drawers *Drawers::Instance()
 	return &drawers;
 }
 
-Drawers::Drawers()
-{
-	// To do: setup pointers
-}
-
 FString DrawWallArgs::ToString()
 {
 	FString info;

@@ -261,8 +261,6 @@ inline int NumTriBlendModes() { return (int)TriBlendMode::TranslateRevSub + 1; }
 class Drawers
 {
 public:
-	Drawers();
-
 	static Drawers *Instance();
 
 	void(*DrawColumn)(const DrawColumnArgs *, const WorkerThreadData *) = nullptr;

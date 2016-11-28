@@ -17,7 +17,7 @@ class ACoin : public AInventory
 {
 	DECLARE_CLASS (ACoin, AInventory)
 public:
-	const char *PickupMessage ();
+	//const char *PickupMessage ();
 	bool HandlePickup (AInventory *item);
 	AInventory *CreateTossable ();
 	AInventory *CreateCopy (AActor *other);

@@ -475,7 +475,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 }
 
 int AInventory::StaticLastMessageTic;
-const char *AInventory::StaticLastMessage;
+FString AInventory::StaticLastMessage;
 
 IMPLEMENT_CLASS(AInventory, false, true)
 
@@ -1205,10 +1205,10 @@ void AInventory::Touch (AActor *toucher)
 
 	if (!(ItemFlags & IF_QUIET))
 	{
-		const char * message = PickupMessage ();
+		FString message = GetPickupMessage ();
 
-		if (message != NULL && *message != 0 && localview
-			&& (StaticLastMessageTic != gametic || StaticLastMessage != message))
+		if (message.IsNotEmpty() && localview
+			&& (StaticLastMessageTic != gametic || StaticLastMessage.Compare(message)))
 		{
 			StaticLastMessageTic = gametic;
 			StaticLastMessage = message;
@@ -1283,9 +1283,30 @@ void AInventory::DoPickupSpecial (AActor *toucher)
 //
 //===========================================================================
 
-const char *AInventory::PickupMessage ()
+FString AInventory::PickupMessage ()
 {
 	return GetClass()->PickupMessage;
+}
+
+DEFINE_ACTION_FUNCTION(AInventory, PickupMessage)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	ACTION_RETURN_STRING(self->PickupMessage());
+}
+
+FString AInventory::GetPickupMessage()
+{
+	IFVIRTUAL(AInventory, PickupMessage)
+	{
+		VMValue params[1] = { (DObject*)this };
+		VMReturn ret;
+		VMFrameStack stack;
+		FString retval;
+		ret.StringAt(&retval);
+		stack.Call(func, params, 1, &ret, 1, nullptr);
+		return retval;
+	}
+	else return PickupMessage();
 }
 
 //===========================================================================
@@ -1884,7 +1905,7 @@ DEFINE_FIELD(AHealth, PrevHealth)
 // AHealth :: PickupMessage
 //
 //===========================================================================
-const char *AHealth::PickupMessage ()
+FString AHealth::PickupMessage ()
 {
 	int threshold = GetClass()->LowHealth;
 

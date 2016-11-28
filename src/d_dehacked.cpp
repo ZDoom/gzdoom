@@ -3144,7 +3144,7 @@ bool ADehackedPickup::TryPickup (AActor *&toucher)
 	return false;
 }
 
-const char *ADehackedPickup::PickupMessage ()
+FString ADehackedPickup::PickupMessage ()
 {
 	if (RealPickup != nullptr)
 		return RealPickup->PickupMessage ();

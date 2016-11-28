@@ -42,7 +42,7 @@ class ADehackedPickup : public AInventory
 	HAS_OBJECT_POINTERS
 public:
 	void Destroy() override;
-	const char *PickupMessage ();
+	FString PickupMessage ();
 	bool ShouldRespawn ();
 	bool ShouldStay ();
 	bool TryPickup (AActor *&toucher);

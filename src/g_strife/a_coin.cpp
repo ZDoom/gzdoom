@@ -8,6 +8,7 @@
 
 IMPLEMENT_CLASS(ACoin, false, false)
 
+/*
 const char *ACoin::PickupMessage ()
 {
 	if (Amount == 1)
@@ -22,6 +23,7 @@ const char *ACoin::PickupMessage ()
 		return msg;
 	}
 }
+*/
 
 bool ACoin::HandlePickup (AInventory *item)
 {

@@ -173,7 +173,8 @@ public:
 	virtual void DoEffect ();
 	virtual bool Grind(bool items);
 
-	virtual const char *PickupMessage ();
+	virtual FString PickupMessage ();
+	FString GetPickupMessage();
 	virtual void PlayPickupSound (AActor *toucher);
 
 	bool DoRespawn ();
@@ -228,7 +229,7 @@ protected:
 
 private:
 	static int StaticLastMessageTic;
-	static const char *StaticLastMessage;
+	static FString StaticLastMessage;
 };
 
 class AStateProvider : public AInventory
@@ -438,7 +439,7 @@ class AHealth : public AInventory
 public:
 	int PrevHealth;
 	virtual bool TryPickup (AActor *&other);
-	virtual const char *PickupMessage ();
+	virtual FString PickupMessage ();
 };
 
 // HealthPickup is some item that gives the player health when used.

@@ -1738,7 +1738,7 @@ DEFINE_ACTION_FUNCTION(DObject, C_MidPrint)
 	PARAM_BOOL_DEF(bold);
 
 	FFont *fnt = FFont::FindFont(font);
-	const char *txt = GStrings(text);
+	const char *txt = text[0] == '$'? GStrings(&text[1]) : text.GetChars();
 	if (!bold) C_MidPrint(fnt, txt);
 	else C_MidPrintBold(fnt, txt);
 	return 0;

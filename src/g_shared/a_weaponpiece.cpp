@@ -177,7 +177,7 @@ bool AWeaponPiece::PrivateShouldStay ()
 //
 //===========================================================================
 
-const char *AWeaponPiece::PickupMessage ()
+FString AWeaponPiece::PickupMessage ()
 {
 	if (FullWeapon) 
 	{

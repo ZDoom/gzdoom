@@ -22,7 +22,7 @@ public:
 	bool TryPickup (AActor *&toucher);
 	bool TryPickupRestricted (AActor *&toucher);
 	bool ShouldStay ();
-	virtual const char *PickupMessage ();
+	virtual FString PickupMessage ();
 	virtual void PlayPickupSound (AActor *toucher);
 
 	int PieceValue;

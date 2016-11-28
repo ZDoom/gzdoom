@@ -30,6 +30,7 @@ class Inventory : Actor native
 	virtual native bool HandlePickup(Inventory item);
 	virtual native Inventory CreateCopy(Actor other);
 	virtual native bool SpecialDropAction (Actor dropper);
+	virtual native String PickupMessage();
 	
 	native void GoAwayAndDie();
 	

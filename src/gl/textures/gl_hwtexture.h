@@ -83,6 +83,7 @@ public:
 
 	unsigned int Bind(int texunit, int translation, bool needmipmap);
 	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const FString &name);
+	unsigned int GetTextureHandle(int translation);
 
 	void Clean(bool all);
 	void CleanUnused(SpriteHits &usedtranslations);

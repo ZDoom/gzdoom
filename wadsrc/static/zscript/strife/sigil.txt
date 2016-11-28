@@ -448,7 +448,7 @@ class Sigil : Weapon
 			{
 				"Sigil1", "Sigil2", "Sigil3", "Sigil4", "Sigil5"
 			};
-			sigl.Icon = GetDefaultByType(sigils[clamp(sigl.health, 1, 5)]).Icon;
+			sigl.Icon = GetDefaultByType(sigils[clamp(sigl.health, 1, 5)-1]).Icon;
 			// If the player has the Sigil out, drop it and bring it back up.
 			if (sigl.Owner.player != null && sigl.Owner.player.ReadyWeapon == sigl)
 			{

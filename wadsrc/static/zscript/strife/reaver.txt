@@ -22,8 +22,6 @@ class Reaver : Actor
 		Obituary "$OB_REAVER";
 	}
 	
-	native void A_ReaverRanged ();
-	
 	States
 	{
 	Spawn:
@@ -65,3 +63,26 @@ class Reaver : Actor
 
 }
 		
+extend class Actor
+{
+	// The Inquisitor also uses this function
+	
+	void A_ReaverRanged ()
+	{
+		if (target != null)
+		{
+			A_FaceTarget ();
+			A_PlaySound ("reaver/attack", CHAN_WEAPON);
+			double bangle = Angle;
+			double pitch = AimLineAttack (bangle, MISSILERANGE);
+
+			for (int i = 0; i < 3; ++i)
+			{
+				double ang = bangle + Random2[ReaverAttack]() * (22.5 / 256);
+				int damage = ((random[ReaverAttack]() & 7) + 1) * 3;
+				LineAttack (ang, MISSILERANGE, pitch, damage, 'Hitscan', "StrifePuff");
+			}
+		}
+	}
+
+}

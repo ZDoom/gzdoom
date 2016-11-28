@@ -867,13 +867,11 @@ set( NOT_COMPILED_SOURCE_FILES
 	g_strife/a_loremaster.cpp
 	g_strife/a_oracle.cpp
 	g_strife/a_programmer.cpp
-	g_strife/a_reaver.cpp
 	g_strife/a_rebels.cpp
 	g_strife/a_sentinel.cpp
 	g_strife/a_stalker.cpp
 	g_strife/a_strifeitems.cpp
 	g_strife/a_strifeweapons.cpp
-	g_strife/a_templar.cpp
 	g_strife/a_thingstoblowup.cpp
 	g_shared/sbarinfo_commands.cpp
 	xlat/xlat_parser.y

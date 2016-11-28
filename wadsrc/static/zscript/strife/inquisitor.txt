@@ -31,7 +31,6 @@ class Inquisitor : Actor
 	native void A_InquisitorJump ();
 	native void A_InquisitorCheckLand ();
 	native void A_TossArm ();
-	native void A_ReaverRanged ();
 
 	States
 	{

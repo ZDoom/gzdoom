@@ -31,13 +31,11 @@
 //#include "a_macil.cpp"
 #include "a_oracle.cpp"
 #include "a_programmer.cpp"
-#include "a_reaver.cpp"
 #include "a_rebels.cpp"
 #include "a_sentinel.cpp"
 #include "a_stalker.cpp"
 #include "a_strifeitems.cpp"
 #include "a_strifeweapons.cpp"
-#include "a_templar.cpp"
 #include "a_thingstoblowup.cpp"
 
 // Notes so I don't forget them:

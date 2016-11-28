@@ -24,7 +24,6 @@
 #include "vm.h"
 
 // Include all the other Strife stuff here to reduce compile time
-#include "a_acolyte.cpp"
 #include "a_spectral.cpp"
 #include "a_alienspectres.cpp"
 #include "a_coin.cpp"

@@ -478,7 +478,8 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		// Set the initial quest log text for Strife.
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
-			players[i].SetLogText ("Find help");
+			if (playeringame[i])
+				players[i].SetLogText ("Find help");
 		}
 	}
 
@@ -1092,7 +1093,7 @@ void G_WorldDone (void)
 	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
 	{
 		FName endsequence = ENamedName(strtol(nextlevel.GetChars()+6, NULL, 16));
-		// Strife needs a special case here to choose between good and sad ending. Bad is handled elsewherw.
+		// Strife needs a special case here to choose between good and sad ending. Bad is handled elsewhere.
 		if (endsequence == NAME_Inter_Strife)
 		{
 			if (players[0].mo->FindInventory (QuestItemClasses[24]) ||

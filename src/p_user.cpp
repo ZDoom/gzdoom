@@ -486,6 +486,14 @@ void player_t::SetLogNumber (int num)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, SetLogNumber)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_INT(log);
+	self->SetLogNumber(log);
+	return 0;
+}
+
 void player_t::SetLogText (const char *text)
 {
 	LogText = text;
@@ -494,6 +502,14 @@ void player_t::SetLogText (const char *text)
 	AddToConsole(-1, TEXTCOLOR_GOLD);
 	AddToConsole(-1, LogText);
 	AddToConsole(-1, "\n");
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, SetLogText)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_STRING(log);
+	self->SetLogText(log);
+	return 0;
 }
 
 int player_t::GetSpawnClass()

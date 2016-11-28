@@ -233,5 +233,7 @@ FWeaponSlots weapons;
 	native void SetSafeFlash(Weapon weap, State flashstate, int index);
 	native PSprite GetPSprite(int id);
 	native PSprite FindPSprite(int id);
+	native void SetLogNumber (int text);
+	native void SetLogText (String text);
 
 }

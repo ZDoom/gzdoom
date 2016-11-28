@@ -26,8 +26,6 @@ class Acolyte : StrifeHumanoid
 		Obituary "$OB_ACOLYTE";
 	}
 
-	native void A_AcolyteDie ();
-
 	States
 	{
 	Spawn:
@@ -75,6 +73,49 @@ class Acolyte : StrifeHumanoid
 		Stop;
 	}
 	
+	//============================================================================
+	//
+	// A_AcolyteDie
+	//
+	//============================================================================
+
+	void A_AcolyteDie ()
+	{
+		// [RH] Disable translucency here.
+		A_SetRenderStyle(1, STYLE_Normal);
+
+		// Only the Blue Acolyte does extra stuff on death.
+		if (self is "AcolyteBlue")
+		{
+			int i;
+			// Make sure somebody is still alive
+			for (i = 0; i < MAXPLAYERS; ++i)
+			{
+				if (playeringame[i] && players[i].health > 0)
+					break;
+			}
+			if (i == MAXPLAYERS)
+				return;
+
+			// Make sure all the other blue acolytes are dead.
+			ThinkerIterator it = ThinkerIterator.Create("AcolyteBlue");
+			Actor other;
+
+			while ( (other = Actor(it.Next ())) )
+			{
+				if (other != self && other.health > 0)
+				{ // Found a living one
+					return;
+				}
+			}
+
+			players[i].mo.GiveInventoryType ("QuestItem7");
+			players[i].SetLogNumber (14);
+			A_StopSound (CHAN_VOICE);
+			A_PlaySound ("svox/voc14", CHAN_VOICE);
+		}
+	}
+
 	//============================================================================
 	//
 	// A_BeShadowyFoe
@@ -238,8 +279,6 @@ class AcolyteToBe : Acolyte
 		-ISMONSTER
 	}
 
-	native void A_HideDecepticon ();
-
 	States
 	{
 	Spawn:
@@ -250,5 +289,28 @@ class AcolyteToBe : Acolyte
 		Stop;
 	Death:
 		Goto XDeath;
+	}
+	
+	//============================================================================
+	//
+	// A_HideDecepticon
+	//
+	// Hide the Acolyte-to-be							->
+	// Hide the guy transforming into an Acolyte		->
+	// Hide the transformer								->
+	// Transformers are Autobots and Decepticons, and
+	// Decepticons are the bad guys, so...				->
+	//
+	// Hide the Decepticon!
+	//
+	//============================================================================
+
+	void A_HideDecepticon ()
+	{
+		Door_Close(999, 64);
+		if (target != null && target.player != null)
+		{
+			target.NoiseAlert (self);
+		}
 	}
 }

@@ -7,15 +7,14 @@ inline unsigned GetVirtualIndex(PClass *cls, const char *funcname)
 	return VIndex;
 }
 
-#define IFVIRTUAL(cls, funcname) \
+#define IFVIRTUALPTR(self, cls, funcname) \
 	static unsigned VIndex = ~0u; \
 	if (VIndex == ~0u) { \
 		VIndex = GetVirtualIndex(RUNTIME_CLASS(cls), #funcname); \
 		assert(VIndex != ~0u); \
 	} \
-	auto clss = GetClass(); \
+	auto clss = self->GetClass(); \
 	VMFunction *func = clss->Virtuals.Size() > VIndex? clss->Virtuals[VIndex] : nullptr;  \
 	if (func != nullptr)
 
-
-
+#define IFVIRTUAL(cls, funcname) IFVIRTUALPTR(this, cls, funcname)

@@ -5822,10 +5822,30 @@ bool FxLocalVariable::RequestAddress(FCompileContext &ctx, bool *writable)
 	
 ExpEmit FxLocalVariable::Emit(VMFunctionBuilder *build)
 {
-	ExpEmit ret(Variable->RegNum + RegOffset, Variable->ValueType->GetRegType(), false, true);
-	ret.RegCount = ValueType->GetRegCount();
-	if (AddressRequested) ret.Target = true;
-	return ret;
+	// 'Out' variables are actually pointers but this fact must be hidden to the script.
+	if (Variable->VarFlags & VARF_Out)
+	{
+		if (!AddressRequested)
+		{
+			ExpEmit reg(build, ValueType->GetRegType(), ValueType->GetRegCount());
+			build->Emit(ValueType->GetLoadOp(), reg.RegNum, Variable->RegNum, build->GetConstantInt(RegOffset));
+			return reg;
+		}
+		else
+		{
+			if (RegOffset == 0) return ExpEmit(Variable->RegNum, REGT_POINTER, false, true);
+			ExpEmit reg(build, REGT_POINTER);
+			build->Emit(OP_ADDA_RK, reg.RegNum, Variable->RegNum, build->GetConstantInt(RegOffset));
+			return reg;
+		}
+	}
+	else
+	{
+		ExpEmit ret(Variable->RegNum + RegOffset, Variable->ValueType->GetRegType(), false, true);
+		ret.RegCount = ValueType->GetRegCount();
+		if (AddressRequested) ret.Target = true;
+		return ret;
+	}
 }
 
 
@@ -7781,7 +7801,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 			}
 
 			FxExpression *x;
-			if (!(flag & VARF_Ref))
+			if (!(flag & (VARF_Ref|VARF_Out)))
 			{
 				x = new FxTypeCast(ArgList[i], type, false);
 				x = x->Resolve(ctx);
@@ -7793,7 +7813,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 				if (ArgList[i] != nullptr && ArgList[i]->ValueType != TypeNullPtr)
 				{
 					ArgList[i]->RequestAddress(ctx, &writable);
-					ArgList[i]->ValueType = NewPointer(ArgList[i]->ValueType);
+					if (flag & VARF_Ref) ArgList[i]->ValueType = NewPointer(ArgList[i]->ValueType);
 					// For a reference argument the types must match 100%.
 					if (type != ArgList[i]->ValueType)
 					{
@@ -9917,10 +9937,15 @@ ExpEmit FxLocalVariableDeclaration::Emit(VMFunctionBuilder *build)
 	{
 		if (Init == nullptr)
 		{
-			if (RegNum == -1) RegNum = build->Registers[ValueType->GetRegType()].Get(RegCount);
+			if (RegNum == -1)
+			{
+				if (!(VarFlags & VARF_Out)) RegNum = build->Registers[ValueType->GetRegType()].Get(RegCount);
+				else RegNum = build->Registers[REGT_POINTER].Get(1);
+			}
 		}
 		else
 		{
+			assert(!(VarFlags & VARF_Out));	// 'out' variables should never be initialized, they can only exist as function parameters.
 			ExpEmit emitval = Init->Emit(build);
 
 			int regtype = emitval.RegType;

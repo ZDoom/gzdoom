@@ -2169,17 +2169,16 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				{
 					auto type = DetermineType(c->Type(), p, f->Name, p->Type, false, false);
 					int flags = 0;
-					if (p->Flags & ZCC_In) flags |= VARF_In;
-					if (p->Flags & ZCC_Out) flags |= VARF_Out;
-					if ((type->IsA(RUNTIME_CLASS(PStruct))) || (flags & VARF_Out))
+					if (type->IsA(RUNTIME_CLASS(PStruct)) && type != TypeVector2 && type != TypeVector3)
 					{
-						// 'out' parameters and all structs except vectors are passed by reference
-						if ((flags & VARF_Out) || (type != TypeVector2 && type != TypeVector3))
-						{
-							type = NewPointer(type);
-							flags |= VARF_Ref;
-						}
-						else if (type == TypeVector2)
+						// Structs are being passed by pointer, but unless marked 'out' that pointer must be readonly.
+						type = NewPointer(type /*, !(p->Flags & ZCC_Out)*/);
+						flags |= VARF_Ref;
+					}
+					else if (type->GetRegType() != REGT_NIL)
+					{
+						if (p->Flags & ZCC_Out)	flags |= VARF_Out;
+						if (type == TypeVector2)
 						{
 							elementcount = 2;
 						}

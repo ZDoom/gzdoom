@@ -50,7 +50,6 @@
 #include "gi.h"
 #include "m_random.h"
 #include "p_conversation.h"
-#include "a_strifeglobal.h"
 #include "r_data/r_translate.h"
 #include "p_3dmidtex.h"
 #include "d_net.h"
@@ -3220,8 +3219,8 @@ FUNC(LS_GlassBreak)
 			if (it != NULL)
 			{
 				it->GiveInventoryType (QuestItemClasses[28]);
-				it->GiveInventoryType (RUNTIME_CLASS(AUpgradeAccuracy));
-				it->GiveInventoryType (RUNTIME_CLASS(AUpgradeStamina));
+				it->GiveInventoryType (PClass::FindActor("UpgradeAccuracy"));
+				it->GiveInventoryType (PClass::FindActor("UpgradeStamina"));
 			}
 		}
 	}

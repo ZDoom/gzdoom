@@ -41,7 +41,8 @@ class Inventory : Actor native
 	private native void A_RestoreSpecialDoomThing();
 	private native void A_RestoreSpecialThing1();
 	private native void A_RestoreSpecialThing2();
-	
+
+	virtual native bool TryPickup(in out Actor toucher);
 	native bool, Actor CallTryPickup(Actor toucher);
 
 	States(Actor, Overlay, Weapon, Item)

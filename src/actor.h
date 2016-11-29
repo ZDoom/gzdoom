@@ -648,7 +648,7 @@ public:
 	void PlayBounceSound(bool onfloor);
 
 	// Called when an actor with MF_MISSILE and MF2_FLOORBOUNCE hits the floor
-	virtual bool FloorBounceMissile (secplane_t &plane);
+	bool FloorBounceMissile (secplane_t &plane);
 
 	// Called when an actor is to be reflected by a disc of repulsion.
 	// Returns true to continue normal blast processing.
@@ -682,7 +682,7 @@ public:
 
 	// Give an item to the actor and pick it up.
 	// Returns true if the item pickup succeeded.
-	virtual bool GiveInventory (PClassInventory *type, int amount, bool givecheat = false);
+	bool GiveInventory (PClassInventory *type, int amount, bool givecheat = false);
 
 	// Removes the item from the inventory list.
 	virtual void RemoveInventory (AInventory *item);
@@ -693,8 +693,7 @@ public:
 	virtual bool TakeInventory (PClassActor *itemclass, int amount, bool fromdecorate = false, bool notakeinfinite = false);
 
 	// Uses an item and removes it from the inventory.
-	virtual bool DoUseInventory (AInventory *item);
-	bool UseInventory(AInventory *item);
+	virtual bool UseInventory (AInventory *item);
 
 	// Tosses an item out of the inventory.
 	AInventory *DropInventory (AInventory *item);

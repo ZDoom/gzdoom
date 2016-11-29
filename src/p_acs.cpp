@@ -58,7 +58,6 @@
 #include "sbar.h"
 #include "m_swap.h"
 #include "a_sharedglobal.h"
-#include "a_strifeglobal.h"
 #include "v_video.h"
 #include "w_wad.h"
 #include "r_sky.h"

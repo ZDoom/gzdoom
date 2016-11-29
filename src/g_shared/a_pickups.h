@@ -222,9 +222,9 @@ public:
 	virtual PalEntry GetBlend ();
 	PalEntry CallGetBlend();
 
-protected:
 	virtual bool TryPickup (AActor *&toucher);
 	virtual bool TryPickupRestricted (AActor *&toucher);
+protected:
 	bool CanPickup(AActor * toucher);
 	void GiveQuest(AActor * toucher);
 
@@ -599,6 +599,8 @@ class AScoreItem : public AInventory
 public:
 	bool TryPickup(AActor *&toucher);
 };
+
+extern PClassActor *QuestItemClasses[31];
 
 
 #endif //__A_PICKUPS_H__

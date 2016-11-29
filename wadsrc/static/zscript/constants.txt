@@ -1015,3 +1015,25 @@ enum PaletteFlashFlags
 	PF_ICE				= 4,
 	PF_HAZARD			= 8,
 };
+
+enum EGameAction
+{
+	ga_nothing,
+	ga_loadlevel,
+	ga_newgame,
+	ga_newgame2,
+	ga_recordgame,
+	ga_loadgame,
+	ga_loadgamehidecon,
+	ga_loadgameplaydemo,
+	ga_autoloadgame,
+	ga_savegame,
+	ga_autosave,
+	ga_playdemo,
+	ga_completed,
+	ga_slideshow,
+	ga_worlddone,
+	ga_screenshot,
+	ga_togglemap,
+	ga_fullconsole,
+};

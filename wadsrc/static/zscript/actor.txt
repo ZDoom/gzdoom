@@ -267,7 +267,6 @@ class Actor : Thinker native
 	virtual native int TakeSpecialDamage (Actor inflictor, Actor source, int damage, Name damagetype);
 	virtual native void Die(Actor source, Actor inflictor, int dmgflags = 0);
 	virtual native bool Slam(Actor victim);
-	virtual native bool UseInventory(Inventory item);
 	virtual native bool SpecialBlastHandling (Actor source, double strength);
 	virtual native void Touch(Actor toucher);
 
@@ -292,6 +291,7 @@ class Actor : Thinker native
 	native void ClearBounce();
 	native TerrainDef GetFloorTerrain();
 	native Inventory DoDropItem(Class<Actor> type, int dropamount, int chance);
+	native bool CheckLocalView(int consoleplayer);
 
 	native void ExplodeMissile(line lin = null, Actor target = null);
 	native void RestoreDamage();
@@ -378,6 +378,7 @@ class Actor : Thinker native
 	native Inventory FindInventory(class<Inventory> itemtype, bool subclass = false);
 	native Inventory GiveInventoryType(class<Inventory> itemtype);
 	native Inventory DropInventory (Inventory item);
+	native bool UseInventory(Inventory item);
 	native bool GiveAmmo (Class<Ammo> type, int amount);
 
 	// DECORATE compatible functions

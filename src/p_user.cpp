@@ -901,7 +901,7 @@ void APlayerPawn::RemoveInventory (AInventory *item)
 //
 //===========================================================================
 
-bool APlayerPawn::DoUseInventory (AInventory *item)
+bool APlayerPawn::UseInventory (AInventory *item)
 {
 	const PClass *itemtype = item->GetClass();
 
@@ -915,7 +915,7 @@ bool APlayerPawn::DoUseInventory (AInventory *item)
 		return false;
 	}
 
-	if (!Super::DoUseInventory (item))
+	if (!Super::UseInventory (item))
 	{
 		// Heretic and Hexen advance the inventory cursor if the use failed.
 		// Should this behavior be retained?

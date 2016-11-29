@@ -44,7 +44,6 @@
 #include "m_random.h"
 #include "gi.h"
 #include "templates.h"
-#include "a_strifeglobal.h"
 #include "a_keys.h"
 #include "p_enemy.h"
 #include "gstrings.h"
@@ -1357,7 +1356,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 				}
 			}
 		
-			if (reply->GiveType->IsDescendantOf(RUNTIME_CLASS(ASlideshowStarter)))
+			if (reply->GiveType->IsDescendantOf(PClass::FindActor("SlideshowStarter")))
 				gameaction = ga_slideshow;
 		}
 		else

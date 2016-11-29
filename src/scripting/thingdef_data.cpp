@@ -48,6 +48,7 @@
 #include "p_terrain.h"
 #include "gstrings.h"
 #include "zstring.h"
+#include "d_event.h"
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;
@@ -741,6 +742,12 @@ void InitThingdef()
 
 	parray = NewArray(TypeBool, MAXPLAYERS);
 	playerf = new PField("playeringame", parray, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&playeringame);
+	GlobalSymbols.AddSymbol(playerf);
+
+	playerf = new PField("gameaction", TypeUInt8, VARF_Native | VARF_Static, (intptr_t)&gameaction);
+	GlobalSymbols.AddSymbol(playerf);
+
+	playerf = new PField("consoleplayer", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&consoleplayer);
 	GlobalSymbols.AddSymbol(playerf);
 
 	// Argh. It sucks when bad hacks need to be supported. WP_NOCHANGE is just a bogus pointer but it used everywhere as a special flag.

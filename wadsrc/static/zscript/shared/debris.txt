@@ -187,7 +187,7 @@ class Dirt6 : Actor
 
 // Stained glass ------------------------------------------------------------
 
-class GlassShard : Actor native
+class GlassShard : Actor
 {
 	Default
 	{
@@ -199,6 +199,16 @@ class GlassShard : Actor native
 		BounceType "HexenCompat";
 		BounceFactor 0.3;
 	}
+	
+	override void Tick()
+	{
+		Super.Tick();
+		if (Vel.Z > 0 && Vel.Z < 0.5 && pos.z < floorz + 1)
+		{
+			Destroy ();
+		}
+	}
+	
 }
 
 class SGShard1 : GlassShard

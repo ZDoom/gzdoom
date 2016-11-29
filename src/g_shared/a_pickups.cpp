@@ -11,7 +11,6 @@
 #include "c_dispatch.h"
 #include "gstrings.h"
 #include "templates.h"
-#include "a_strifeglobal.h"
 #include "a_morph.h"
 #include "a_specialspot.h"
 #include "g_level.h"
@@ -751,7 +750,7 @@ bool AInventory::CallHandlePickup(AInventory *item)
 	auto self = this;
 	while (self != nullptr)
 	{
-		IFVIRTUAL(AInventory, HandlePickup)
+		IFVIRTUALPTR(self, AInventory, HandlePickup)
 		{
 			// Without the type cast this picks the 'void *' assignment...
 			VMValue params[2] = { (DObject*)self, (DObject*)item };
@@ -1684,6 +1683,13 @@ bool AInventory::TryPickup (AActor *&toucher)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, TryPickup)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	PARAM_POINTER(toucher, AActor*);
+	ACTION_RETURN_BOOL(self->TryPickup(*toucher));
+}
+
 //===========================================================================
 //
 // AInventory :: TryPickupRestricted
@@ -1710,7 +1716,20 @@ bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 
 	bool res;
 	if (CanPickup(toucher))
-		res = TryPickup(toucher);
+	{
+		bool res;
+		IFVIRTUAL(AInventory, TryPickup)
+		{
+			VMValue params[2] = { (DObject*)this, (void*)&toucher };
+			VMReturn ret;
+			VMFrameStack stack;
+			int retval;
+			ret.IntAt(&retval);
+			stack.Call(func, params, 2, &ret, 1, nullptr);
+			res = !!retval;
+		}
+		else res = TryPickup(toucher);
+	}
 	else if (!(ItemFlags & IF_RESTRICTABSOLUTELY))
 		res = TryPickupRestricted(toucher);	// let an item decide for itself how it will handle this
 	else

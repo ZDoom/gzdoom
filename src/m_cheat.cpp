@@ -30,7 +30,6 @@
 #include "doomstat.h"
 #include "gstrings.h"
 #include "p_local.h"
-#include "a_strifeglobal.h"
 #include "gi.h"
 #include "p_enemy.h"
 #include "sbar.h"

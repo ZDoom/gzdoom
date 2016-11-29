@@ -6,7 +6,6 @@
 #include "d_player.h"
 #include "a_action.h"
 #include "p_local.h"
-#include "a_strifeglobal.h"
 #include "p_enemy.h"
 #include "p_lnspec.h"
 #include "c_console.h"
@@ -24,7 +23,6 @@
 #include "vm.h"
 
 // Include all the other Strife stuff here to reduce compile time
-#include "a_strifeitems.cpp"
 #include "a_strifeweapons.cpp"
 
 // Notes so I don't forget them:

@@ -79,7 +79,6 @@
 #include "v_palette.h"
 #include "menu/menu.h"
 #include "a_sharedglobal.h"
-#include "a_strifeglobal.h"
 #include "r_data/colormaps.h"
 #include "r_renderer.h"
 #include "r_utility.h"

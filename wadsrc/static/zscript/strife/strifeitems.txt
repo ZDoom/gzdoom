@@ -389,7 +389,7 @@ class Communicator : Inventory
 
 // Degnin Ore ---------------------------------------------------------------
 
-class DegninOre : Inventory native
+class DegninOre : Inventory
 {
 	Default
 	{	
@@ -421,6 +421,32 @@ class DegninOre : Inventory native
 		BNG3 BCDEFGH 3 Bright;
 		Stop;
 	}
+	
+	override bool Use (bool pickup)
+	{
+		if (pickup)
+		{
+			return false;
+		}
+		else
+		{
+			Inventory drop;
+
+			// Increase the amount by one so that when DropInventory decrements it,
+			// the actor will have the same number of beacons that he started with.
+			// When we return to UseInventory, it will take care of decrementing
+			// Amount again and disposing of this item if there are no more.
+			Amount++;
+			drop = Owner.DropInventory (self);
+			if (drop == NULL)
+			{
+				Amount--;
+				return false;
+			}
+			return true;
+		}
+	}
+	
 }
 
 // Gun Training -------------------------------------------------------------
@@ -446,7 +472,7 @@ class GunTraining : Inventory
 
 // Health Training ----------------------------------------------------------
 
-class HealthTraining : Inventory native
+class HealthTraining : Inventory
 {
 	Default
 	{
@@ -463,13 +489,23 @@ class HealthTraining : Inventory native
 		HELT A -1;
 		Stop;
 	}
+	
+	override bool TryPickup (in out Actor toucher)
+	{
+		if (Super.TryPickup(toucher))
+		{
+			toucher.GiveInventoryType ("GunTraining");
+			toucher.A_GiveInventory("Coin", toucher.player.mo.accuracy*5 + 300);
+			return true;
+		}
+		return false;
+	}
+	
 }
-
-
 
 // Scanner ------------------------------------------------------------------
 
-class Scanner : PowerupGiver native
+class Scanner : PowerupGiver 
 {
 	Default
 	{
@@ -488,11 +524,25 @@ class Scanner : PowerupGiver native
 		PMUP AB 6;
 		Loop;
 	}
+	
+	override bool Use (bool pickup)
+	{
+		if (!level.AllMap)
+		{
+			if (Owner.CheckLocalView (consoleplayer))
+			{
+				C_MidPrint("SmallFont", "$TXT_NEEDMAP");
+			}
+			return false;
+		}
+		return Super.Use (pickup);
+	}
+	
 }
 
 // Prison Pass --------------------------------------------------------------
 
-class PrisonPass : Key native
+class PrisonPass : Key
 {
 	Default
 	{
@@ -506,6 +556,32 @@ class PrisonPass : Key native
 		TOKN A -1;
 		Stop;
 	}
+	
+	override bool TryPickup (in out Actor toucher)
+	{
+		Super.TryPickup (toucher);
+		Door_Open(223, 16);
+		toucher.GiveInventoryType ("QuestItem10");
+		return true;
+	}
+
+	//============================================================================
+	//
+	// APrisonPass :: SpecialDropAction
+	//
+	// Trying to make a monster that drops a prison pass turns it into an
+	// OpenDoor223 item instead. That means the only way to get it in Strife
+	// is through dialog, which is why it doesn't have its own sprite.
+	//
+	//============================================================================
+
+	override bool SpecialDropAction (Actor dropper)
+	{
+		Door_Open(223, 16);
+		Destroy ();
+		return true;
+	}
+	
 }
 
 //---------------------------------------------------------------------------
@@ -513,7 +589,7 @@ class PrisonPass : Key native
 // actions and cannot be held. ----------------------------------------------
 //---------------------------------------------------------------------------
 
-class DummyStrifeItem : Inventory native
+class DummyStrifeItem : Inventory
 {
 	States
 	{
@@ -525,73 +601,221 @@ class DummyStrifeItem : Inventory native
 
 // Sound the alarm! ---------------------------------------------------------
 
-class RaiseAlarm : DummyStrifeItem native
+class RaiseAlarm : DummyStrifeItem
 {
 	Default
 	{	
 		Tag "$TAG_ALARM";
 	}
+	
+	override bool TryPickup (in out Actor toucher)
+	{
+		toucher.NoiseAlert (toucher);
+
+		ThinkerIterator it = ThinkerIterator.Create("AlienSpectre3");
+		Actor spectre = Actor(it.Next());
+
+		if (spectre != NULL && spectre.health > 0 && toucher != spectre)
+		{
+			spectre.CurSector.SoundTarget = spectre.LastHeard = toucher;
+			spectre.target = toucher;
+			spectre.SetState (spectre.SeeState);
+		}
+		GoAwayAndDie ();
+		return true;
+	}
+
+	override bool SpecialDropAction (Actor dropper)
+	{
+		if (dropper.target != null)
+		{
+			dropper.target.NoiseAlert(dropper.target);
+			if (dropper.target.CheckLocalView(consoleplayer))
+			{
+				A_Log("You Fool!  You've set off the alarm.");
+			}
+		}
+		Destroy ();
+		return true;
+	}
+	
 }
 
 // Open door tag 222 --------------------------------------------------------
 
-class OpenDoor222 : DummyStrifeItem native
+class OpenDoor222 : DummyStrifeItem
 {
+	override bool TryPickup (in out Actor toucher)
+	{
+		Door_Open(222, 16);
+		GoAwayAndDie ();
+		return true;
+	}
+	
 }
 
 // Close door tag 222 -------------------------------------------------------
 
-class CloseDoor222 : DummyStrifeItem native
+class CloseDoor222 : DummyStrifeItem
 {
+	override bool TryPickup (in out Actor toucher)
+	{
+		Door_Close(222, 16);
+		GoAwayAndDie ();
+		return true;
+	}
+
+	override bool SpecialDropAction (Actor dropper)
+	{
+		Door_Close(222, 16);
+		if (dropper.target != null)
+		{
+			if (dropper.target.CheckLocalView(consoleplayer))
+			{
+				A_Log("You're dead!  You set off the alarm.");
+			}
+			dropper.target.NoiseAlert(dropper.target);
+		}
+		Destroy ();
+		return true;
+	}
+	
 }
 
 // Open door tag 224 --------------------------------------------------------
 
-class OpenDoor224 : DummyStrifeItem native
+class OpenDoor224 : DummyStrifeItem 
 {
+	override bool TryPickup (in out Actor toucher)
+	{
+		Door_Open(224, 16);
+		GoAwayAndDie ();
+		return true;
+	}
+	
+	override bool SpecialDropAction (Actor dropper)
+	{
+		Door_Open(224, 16);
+		Destroy ();
+		return true;
+	}
+	
 }
 
 // Ammo ---------------------------------------------------------------------
 
-class AmmoFillup : DummyStrifeItem native
+class AmmoFillup : DummyStrifeItem
 {
 	Default
 	{
 		Tag "$TAG_AMMOFILLUP";
 	}
+	
+	override bool TryPickup (in out Actor toucher)
+	{
+		Inventory item = toucher.FindInventory("ClipOfBullets");
+		if (item == NULL)
+		{
+			item = toucher.GiveInventoryType ("ClipOfBullets");
+			if (item != NULL)
+			{
+				item.Amount = 50;
+			}
+		}
+		else if (item.Amount < 50)
+		{
+			item.Amount = 50;
+		}
+		else
+		{
+			return false;
+		}
+		GoAwayAndDie ();
+		return true;
+	}
+	
 }
 
 // Health -------------------------------------------------------------------
 
-class HealthFillup : DummyStrifeItem native
+class HealthFillup : DummyStrifeItem
 {
 	Default
 	{
 		Tag "$TAG_HEALTHFILLUP";
 	}
+	
+	override bool TryPickup (in out Actor toucher)
+	{
+		static const int skillhealths[] = { -100, -75, -50, -50, -100 };
+
+		int index = clamp(skill, 0,4);
+		if (!toucher.GiveBody (skillhealths[index]))
+		{
+			return false;
+		}
+		GoAwayAndDie ();
+		return true;
+	}
+	
 }
 
 // Upgrade Stamina ----------------------------------------------------------
 
-class UpgradeStamina : DummyStrifeItem native
+class UpgradeStamina : DummyStrifeItem
 {
 	Default
 	{
 		Inventory.Amount 10;
 		Inventory.MaxAmount 100;
 	}
+	
+	override bool TryPickup (in out Actor toucher)
+	{
+		if (toucher.player == NULL)
+			return false;
+			
+		toucher.player.mo.stamina += Amount;
+		if (toucher.player.mo.stamina >= MaxAmount)
+			toucher.player.mo.stamina = MaxAmount;
+			
+		toucher.GiveBody (-100);
+		GoAwayAndDie ();
+		return true;
+	}
+	
 }
 
 // Upgrade Accuracy ---------------------------------------------------------
 
-class UpgradeAccuracy : DummyStrifeItem native
+class UpgradeAccuracy : DummyStrifeItem 
 {
+	override bool TryPickup (in out Actor toucher)
+	{
+		if (toucher.player == NULL || toucher.player.mo.accuracy >= 100)
+			return false;
+		toucher.player.mo.accuracy += 10;
+		GoAwayAndDie ();
+		return true;
+	}
+	
 }
 
 // Start a slideshow --------------------------------------------------------
 
-class SlideshowStarter : DummyStrifeItem native
+class SlideshowStarter : DummyStrifeItem
 {
+	override bool TryPickup (in out Actor toucher)
+	{
+		gameaction = ga_slideshow;
+		if (level.levelnum == 10)
+		{
+			toucher.GiveInventoryType ("QuestItem17");
+		}
+		GoAwayAndDie ();
+		return true;
+	}
+	
 }
 
 

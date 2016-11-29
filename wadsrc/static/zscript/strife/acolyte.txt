@@ -97,8 +97,8 @@ class Acolyte : StrifeHumanoid
 			if (i == MAXPLAYERS)
 				return;
 
-			// Make sure all the other blue acolytes are dead.
-			if (CheckBossDeath())
+			// Make sure all the other blue acolytes are dead, but do this only once in case of simultaneous kills.
+			if (CheckBossDeath() && !players[i].mo.FindInventory("QuestItem7"))
 			{
 				players[i].mo.GiveInventoryType ("QuestItem7");
 				players[i].SetLogNumber (14);

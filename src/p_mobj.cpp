@@ -942,7 +942,7 @@ AInventory *AActor::FirstInv ()
 //
 //============================================================================
 
-bool AActor::DoUseInventory (AInventory *item)
+bool AActor::UseInventory (AInventory *item)
 {
 	// No using items if you're dead.
 	if (health <= 0)
@@ -973,23 +973,7 @@ DEFINE_ACTION_FUNCTION(AActor, UseInventory)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(item, AInventory);
-	ACTION_RETURN_BOOL(self->DoUseInventory(item));
-}
-
-bool AActor::UseInventory(AInventory *item)
-{
-	IFVIRTUAL(AActor, UseInventory)
-	{
-		// Without the type cast this picks the 'void *' assignment...
-		VMValue params[2] = { (DObject*)this, (DObject*)item };
-		VMReturn ret;
-		VMFrameStack stack;
-		int retval;
-		ret.IntAt(&retval);
-		stack.Call(func, params, 2, &ret, 1, nullptr);
-		return !!retval;
-	}
-	else return DoUseInventory(item);
+	ACTION_RETURN_BOOL(self->UseInventory(item));
 }
 
 //===========================================================================
@@ -1302,6 +1286,13 @@ bool AActor::CheckLocalView (int playernum) const
 		return true;
 	}
 	return false;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, CheckLocalView)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(cp);
+	ACTION_RETURN_BOOL(self->CheckLocalView(cp));
 }
 
 //============================================================================

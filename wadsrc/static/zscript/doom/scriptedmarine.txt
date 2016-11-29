@@ -175,7 +175,7 @@ class ScriptedMarine : Actor
 	//
 	//============================================================================
 
-	private bool GetWeaponStates(int weap, WeaponStates wstates)
+	private bool GetWeaponStates(int weap, out WeaponStates wstates)
 	{
 		static const statelabel MeleeNames[] = 
 		{

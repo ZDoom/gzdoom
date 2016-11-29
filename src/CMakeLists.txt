@@ -678,12 +678,12 @@ add_custom_target( revision_check ALL
 if ( WIN32 )
 	add_custom_target( drawergen_target ALL
 		COMMAND drawergen src/r_drawersasm.obj
-		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 		DEPENDS drawergen )
 else()
 	add_custom_target( drawergen_target ALL
 		COMMAND drawergen src/r_drawersasm.o
-		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 		DEPENDS drawergen )
 endif()
 

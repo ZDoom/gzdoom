@@ -617,7 +617,8 @@ std::string LLVMProgram::DumpModule()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-
+#include <chrono>
+#include <thread>
 int main(int argc, char **argv)
 {
 	if (argc != 2)
@@ -659,6 +660,9 @@ int main(int argc, char **argv)
 	//LLVMDrawers drawersSSE4("core2");
 	//LLVMDrawers drawersAVX("sandybridge");
 	//LLVMDrawers drawersAVX2("haswell");
+
+	using namespace std::chrono_literals;
+	std::this_thread::sleep_for(2s); // Doh! Silly OS!
 
 	return 0;
 }

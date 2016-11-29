@@ -7598,6 +7598,11 @@ DEFINE_ACTION_FUNCTION(AActor, ClearBounce)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, AccuracyFactor)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_FLOAT(self->AccuracyFactor());
+}
 
 //----------------------------------------------------------------------------
 //

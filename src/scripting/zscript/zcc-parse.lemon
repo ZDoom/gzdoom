@@ -740,7 +740,7 @@ type_name(X) ::= DOT dottable_id(A).
 /* Type names can also be used as identifiers in contexts where type names
  * are not normally allowed. */
 %fallback IDENTIFIER
-	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR2 VECTOR3 NAME MAP ARRAY VOID STATE COLOR UINT8 INT8 UINT16 INT16.
+	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR2 VECTOR3 NAME MAP ARRAY VOID STATE COLOR SOUND UINT8 INT8 UINT16 INT16.
 
 /* Aggregate types */
 %type aggregate_type {ZCC_Type *}

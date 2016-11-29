@@ -273,6 +273,70 @@ DEFINE_ACTION_FUNCTION(AActor, NoiseAlert)
 	return 0;
 }
 
+//============================================================================
+//
+// P_DaggerAlert
+//
+//============================================================================
+
+void P_DaggerAlert(AActor *target, AActor *emitter)
+{
+	AActor *looker;
+	sector_t *sec = emitter->Sector;
+
+	if (emitter->LastHeard != NULL)
+		return;
+	if (emitter->health <= 0)
+		return;
+	if (!(emitter->flags3 & MF3_ISMONSTER))
+		return;
+	if (emitter->flags4 & MF4_INCOMBAT)
+		return;
+	emitter->flags4 |= MF4_INCOMBAT;
+
+	emitter->target = target;
+	FState *painstate = emitter->FindState(NAME_Pain, NAME_Dagger);
+	if (painstate != NULL)
+	{
+		emitter->SetState(painstate);
+	}
+
+	for (looker = sec->thinglist; looker != NULL; looker = looker->snext)
+	{
+		if (looker == emitter || looker == target)
+			continue;
+
+		if (looker->health <= 0)
+			continue;
+
+		if (!(looker->flags4 & MF4_SEESDAGGERS))
+			continue;
+
+		if (!(looker->flags4 & MF4_INCOMBAT))
+		{
+			if (!P_CheckSight(looker, target) && !P_CheckSight(looker, emitter))
+				continue;
+
+			looker->target = target;
+			if (looker->SeeSound)
+			{
+				S_Sound(looker, CHAN_VOICE, looker->SeeSound, 1, ATTN_NORM);
+			}
+			looker->SetState(looker->SeeState);
+			looker->flags4 |= MF4_INCOMBAT;
+		}
+	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, DaggerAlert)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(target, AActor);
+	// Note that the emitter is self, not the target of the alert! Target can be NULL.
+	P_DaggerAlert(target, self);
+	return 0;
+}
+
 
 //----------------------------------------------------------------------------
 //

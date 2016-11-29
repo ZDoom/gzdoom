@@ -71,7 +71,11 @@ extend class Actor
 		gib.Vel.Z = random[GibTosser]() & 15;
 	}
 
-		// A_ShootGun -------------------------------------------------------------
+	//==========================================================================
+	//
+	//
+	//
+	//==========================================================================
 
 	void A_ShootGun()
 	{
@@ -82,7 +86,11 @@ extend class Actor
 		LineAttack (Angle + Random2[ShootGun]() * (11.25 / 256), MISSILERANGE, pitch, 3*(random[ShootGun]() % 5 + 1), 'Hitscan', "StrifePuff");
 	}
 	
-	// Kneeling Guy -------------------------------------------------------------
+	//==========================================================================
+	//
+	//
+	//
+	//==========================================================================
 
 	void A_SetShadow()
 	{
@@ -95,6 +103,12 @@ extend class Actor
 		bShadow = false;
 		A_SetRenderStyle(1, STYLE_Normal);
 	}
+
+	//==========================================================================
+	//
+	//
+	//
+	//==========================================================================
 
 	void A_GetHurt()
 	{
@@ -110,6 +124,12 @@ extend class Actor
 		}
 	}
 	
+	//==========================================================================
+	//
+	//
+	//
+	//==========================================================================
+
 	void A_DropFire()
 	{
 		Actor drop = Spawn("FireDroplet", pos + (0,0,24), ALLOW_REPLACE);
@@ -117,9 +137,45 @@ extend class Actor
 		A_Explode(64, 64, XF_NOSPLASH, damagetype: 'Fire');
 	}	
 
+	//==========================================================================
+	//
+	//
+	//
+	//==========================================================================
+
 	void A_RemoveForceField()
 	{
 		bSpecial = false;
 		CurSector.RemoveForceField();
 	}
+	
+	//==========================================================================
+	//
+	//
+	//
+	//==========================================================================
+
+	void A_AlertMonsters(double maxdist = 0, int flags = 0)
+	{
+		Actor target = null;
+		Actor emitter = self;
+
+		if (player != null || (Flags & AMF_TARGETEMITTER))
+		{
+			target = self;
+		}
+		else if (target != null && (self.target.player != null || (Flags & AMF_TARGETNONPLAYER)))
+		{
+			target = self.target;
+		}
+
+		if (Flags & AMF_EMITFROMTARGET) emitter = target;
+
+		if (target != null && emitter != null)
+		{
+			emitter.NoiseAlert(target, false, maxdist);
+		}
+	}
+
+	
 }

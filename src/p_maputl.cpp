@@ -1154,6 +1154,75 @@ void FMultiBlockThingsIterator::Reset()
 
 //===========================================================================
 //
+// and the scriptable version
+//
+//===========================================================================
+
+class DBlockThingsIterator : public DObject, public FMultiBlockThingsIterator
+{
+	DECLARE_CLASS(DBlockThingsIterator, DObject);
+	FPortalGroupArray check;
+public:
+	FMultiBlockThingsIterator::CheckResult cres;
+
+public:
+	bool Next()
+	{
+		return FMultiBlockThingsIterator::Next(&cres);
+	}
+
+	DBlockThingsIterator(AActor *origin = nullptr, double checkradius = -1, bool ignorerestricted = false)
+		: FMultiBlockThingsIterator(check, origin, checkradius, ignorerestricted)
+	{
+		cres.thing = nullptr;
+		cres.Position.Zero();
+		cres.portalflags = 0;
+	}
+
+	DBlockThingsIterator(double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted, sector_t *newsec)
+		: FMultiBlockThingsIterator(check, checkx, checky, checkz, checkh, checkradius, ignorerestricted, newsec)
+	{
+		cres.thing = nullptr;
+		cres.Position.Zero();
+		cres.portalflags = 0;
+	}
+};
+
+IMPLEMENT_CLASS(DBlockThingsIterator, false, false);
+
+DEFINE_ACTION_FUNCTION(DBlockThingsIterator, Create)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(origin, AActor);
+	PARAM_FLOAT_DEF(radius);
+	PARAM_BOOL_DEF(ignore);
+	ACTION_RETURN_OBJECT(new DBlockThingsIterator(origin, radius, ignore));
+}
+
+DEFINE_ACTION_FUNCTION(DBlockThingsIterator, CreateFromPos)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_FLOAT(h);
+	PARAM_FLOAT(radius);
+	PARAM_BOOL(ignore);
+	ACTION_RETURN_OBJECT(new DBlockThingsIterator(x, y, z, h, radius, ignore, nullptr));
+}
+
+DEFINE_ACTION_FUNCTION(DBlockThingsIterator, Next)
+{
+	PARAM_SELF_PROLOGUE(DBlockThingsIterator);
+	ACTION_RETURN_BOOL(self->Next());
+}
+
+DEFINE_FIELD_NAMED(DBlockThingsIterator, cres.thing, thing);
+DEFINE_FIELD_NAMED(DBlockThingsIterator, cres.Position, position);
+DEFINE_FIELD_NAMED(DBlockThingsIterator, cres.portalflags, portalflags);
+
+//===========================================================================
+//
 // FPathTraverse :: Intercepts
 //
 //===========================================================================

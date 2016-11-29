@@ -18,15 +18,13 @@ class DirtClump : Actor
 
 // Spike (thrust floor) -----------------------------------------------------
 
-class ThrustFloor : Actor native
+class ThrustFloor : Actor 
 {
 	Default
 	{
 		Radius 20;
 		Height 128;
 	}
-
-	native void A_ThrustImpale();
 
 	States
 	{
@@ -76,6 +74,31 @@ class ThrustFloor : Actor native
 		TSPK B 3 A_SetSolid;
 		TSPK B 2 A_ThrustImpale;
 		Loop;
+	}
+	
+	override void Activate (Actor activator)
+	{
+		if (args[0] == 0)
+		{
+			A_PlaySound ("ThrustSpikeLower", CHAN_BODY);
+			bInvisible = false;
+			if (args[1])
+				SetStateLabel("BloodThrustRaise");
+			else
+				SetStateLabel("ThrustRaise");
+		}
+	}
+
+	override void Deactivate (Actor activator)
+	{
+		if (args[0] == 1)
+		{
+			A_PlaySound ("ThrustSpikeRaise", CHAN_BODY);
+			if (args[1])
+				SetStateLabel("BloodThrustLower");
+			else
+				SetStateLabel("ThrustLower");
+		}
 	}
 	
 	//===========================================================================
@@ -150,6 +173,33 @@ class ThrustFloor : Actor native
 	}
 
 	
+	void A_ThrustImpale()
+	{
+		BlockThingsIterator it = BlockThingsIterator.Create(self);
+		while (it.Next())
+		{
+			double blockdist = radius + it.thing.radius;
+			if (abs(it.thing.pos.x - it.Position.X) >= blockdist || abs(it.thing.pos.y - it.Position.Y) >= blockdist)
+				continue;
+
+			// Q: Make this z-aware for everything? It never was before.
+			if (it.thing.pos.z + it.thing.height < pos.z || it.thing.pos.z > pos.z + height)
+			{
+				if (CurSector.PortalGroup != it.thing.CurSector.PortalGroup)
+					continue;
+			}
+
+			if (!it.thing.bShootable)
+				continue;
+
+			if (it.thing == self)
+				continue;	// don't clip against self
+
+			int newdam = it.thing.DamageMobj (self, self, 10001, 'Crush');
+			it.thing.TraceBleed (newdam > 0 ? newdam : 10001, null);
+			args[1] = 1;	// Mark thrust thing as bloody
+		}
+	}
 }
 
 // Spike up -----------------------------------------------------------------

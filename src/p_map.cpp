@@ -4652,16 +4652,6 @@ void P_TraceBleed(int damage, AActor *target, AActor *missile)
 	P_TraceBleed(damage, target->PosPlusZ(target->Height/2), target, missile->AngleTo(target), pitch);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, TraceBleed)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(damage);
-	PARAM_OBJECT(missile, AActor);
-
-	P_TraceBleed(damage, self, missile);
-	return 0;
-}
-
 //==========================================================================
 //
 //
@@ -4705,6 +4695,18 @@ void P_TraceBleed(int damage, AActor *target)
 		P_TraceBleed(damage, target->PosPlusZ(target->Height / 2), target, angle, pitch);
 	}
 }
+
+DEFINE_ACTION_FUNCTION(AActor, TraceBleed)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(damage);
+	PARAM_OBJECT(missile, AActor);
+
+	if (missile) P_TraceBleed(damage, self, missile);
+	else P_TraceBleed(damage, self);
+	return 0;
+}
+
 
 //==========================================================================
 //

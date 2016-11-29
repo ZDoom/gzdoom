@@ -42,6 +42,17 @@ class ActorIterator : Object native
 	native void Reinit();
 }
 
+class BlockThingsIterator : Object native
+{
+	native Actor thing;
+	native Vector3 position;
+	native int portalflags;
+	
+	native static BlockThingsIterator Create(Actor origin, double checkradius = -1, bool ignorerestricted = false);
+	native static BlockThingsIterator CreateFromPos(double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted);
+	native bool Next();
+}
+
 class DropItem : Object native
 {
 	native readonly DropItem Next;

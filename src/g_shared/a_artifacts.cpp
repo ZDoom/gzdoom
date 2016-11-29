@@ -72,6 +72,7 @@ DEFINE_FIELD(APowerupGiver, Strength)
 bool APowerupGiver::Use (bool pickup)
 {
 	if (PowerupType == NULL) return true;	// item is useless
+	if (Owner == nullptr) return true;
 
 	APowerup *power = static_cast<APowerup *> (Spawn (PowerupType));
 

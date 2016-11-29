@@ -2,7 +2,7 @@
 
 // Hate Target --------------------------------------------------------------
 
-class HateTarget : Actor native
+class HateTarget : Actor
 {
 	default
 	{
@@ -19,4 +19,32 @@ class HateTarget : Actor native
 	Spawn:
 		TNT1 A -1;
 	}
+	
+	override void BeginPlay()
+	{
+		Super.BeginPlay();
+		if (SpawnAngle != 0)
+		{	// Each degree translates into 10 units of health
+			health = SpawnAngle * 10;
+		}
+		else
+		{
+			special2 = 1;
+			health = 1000001;
+		}
+	}
+
+	override int TakeSpecialDamage(Actor inflictor, Actor source, int damage, Name damagetype)
+	{
+		if (special2 != 0)
+		{
+			return 0;
+		}
+		else
+		{
+			return damage;
+		}
+	}
+
+	
 }

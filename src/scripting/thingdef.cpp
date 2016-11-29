@@ -50,7 +50,6 @@
 #include "s_sound.h"
 #include "cmdlib.h"
 #include "p_lnspec.h"
-#include "a_action.h"
 #include "decallib.h"
 #include "m_random.h"
 #include "i_system.h"

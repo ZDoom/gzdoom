@@ -1,7 +1,6 @@
 #include "actor.h"
 #include "p_conversation.h"
 #include "p_lnspec.h"
-#include "a_action.h"
 #include "m_random.h"
 #include "s_sound.h"
 #include "d_player.h"
@@ -17,39 +16,6 @@ static FRandom pr_freezedeath ("FreezeDeath");
 static FRandom pr_icesettics ("IceSetTics");
 static FRandom pr_freeze ("FreezeDeathChunks");
 
-
-// SwitchableDecoration: Activate and Deactivate change state ---------------
-
-class ASwitchableDecoration : public AActor
-{
-	DECLARE_CLASS (ASwitchableDecoration, AActor)
-public:
-	void Activate (AActor *activator);
-	void Deactivate (AActor *activator);
-};
-
-IMPLEMENT_CLASS(ASwitchableDecoration, false, false)
-
-void ASwitchableDecoration::Activate (AActor *activator)
-{
-	SetState (FindState(NAME_Active));
-}
-
-void ASwitchableDecoration::Deactivate (AActor *activator)
-{
-	SetState (FindState(NAME_Inactive));
-}
-
-// SwitchingDecoration: Only Activate changes state -------------------------
-
-class ASwitchingDecoration : public ASwitchableDecoration
-{
-	DECLARE_CLASS (ASwitchingDecoration, ASwitchableDecoration)
-public:
-	void Deactivate (AActor *activator) {}
-};
-
-IMPLEMENT_CLASS(ASwitchingDecoration, false, false)
 
 //----------------------------------------------------------------------------
 //
@@ -412,46 +378,3 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeQueueCorpse)
 	return 0;
 }
 
-//===========================================================================
-//
-// FaceMovementDirection
-//
-//===========================================================================
-
-void FaceMovementDirection(AActor *actor)
-{
-	switch (actor->movedir)
-	{
-	case DI_EAST:
-		actor->Angles.Yaw = 0.;
-		break;
-	case DI_NORTHEAST:
-		actor->Angles.Yaw = 45.;
-		break;
-	case DI_NORTH:
-		actor->Angles.Yaw = 90.;
-		break;
-	case DI_NORTHWEST:
-		actor->Angles.Yaw = 135.;
-		break;
-	case DI_WEST:
-		actor->Angles.Yaw = 180.;
-		break;
-	case DI_SOUTHWEST:
-		actor->Angles.Yaw = 225.;
-		break;
-	case DI_SOUTH:
-		actor->Angles.Yaw = 270.;
-		break;
-	case DI_SOUTHEAST:
-		actor->Angles.Yaw = 315.;
-		break;
-	}
-}
-
-DEFINE_ACTION_FUNCTION(AActor, FaceMovementDirection)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	FaceMovementDirection(self);
-	return 0;
-}

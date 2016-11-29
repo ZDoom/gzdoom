@@ -387,6 +387,13 @@ void DThinker::ChangeStatNum (int statnum)
 	list->AddTail(this);
 }
 
+DEFINE_ACTION_FUNCTION(DThinker, ChangeStatNum)
+{
+	PARAM_SELF_PROLOGUE(DThinker);
+	PARAM_INT(stat);
+	self->ChangeStatNum(stat);
+	return 0;
+}
 //==========================================================================
 //
 // Mark the first thinker of each list

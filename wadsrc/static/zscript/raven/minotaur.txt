@@ -757,3 +757,50 @@ class MinotaurSmokeExit : Actor
 	}
 }
 
+extend class Actor
+{
+	enum dirtype_t
+	{
+		DI_EAST,
+		DI_NORTHEAST,
+		DI_NORTH,
+		DI_NORTHWEST,
+		DI_WEST,
+		DI_SOUTHWEST,
+		DI_SOUTH,
+		DI_SOUTHEAST,
+		DI_NODIR,
+		NUMDIRS
+	};
+
+	void FaceMovementDirection()
+	{
+		switch (movedir)
+		{
+		case DI_EAST:
+			angle = 0.;
+			break;
+		case DI_NORTHEAST:
+			angle = 45.;
+			break;
+		case DI_NORTH:
+			angle = 90.;
+			break;
+		case DI_NORTHWEST:
+			angle = 135.;
+			break;
+		case DI_WEST:
+			angle = 180.;
+			break;
+		case DI_SOUTHWEST:
+			angle = 225.;
+			break;
+		case DI_SOUTH:
+			angle = 270.;
+			break;
+		case DI_SOUTHEAST:
+			angle = 315.;
+			break;
+		}
+	}
+}

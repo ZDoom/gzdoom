@@ -17,20 +17,47 @@ class Object native
 
 class Thinker : Object native
 {
+	enum EStatnums
+	{
+ 		// Thinkers that don't actually think
+		STAT_INFO,								// An info queue
+		STAT_DECAL,								// A decal
+		STAT_AUTODECAL,							// A decal that can be automatically deleted
+		STAT_CORPSEPOINTER,						// An entry in Hexen's corpse queue
+		STAT_TRAVELLING,						// An actor temporarily travelling to a new map
+
+		// Thinkers that do think
+		STAT_FIRST_THINKING=32,
+		STAT_SCROLLER=STAT_FIRST_THINKING,		// A DScroller thinker
+		STAT_PLAYER,							// A player actor
+		STAT_BOSSTARGET,						// A boss brain target
+		STAT_LIGHTNING,							// The lightning thinker
+		STAT_DECALTHINKER,						// An object that thinks for a decal
+		STAT_INVENTORY,							// An inventory item
+		STAT_LIGHT,								// A sector light effect
+		STAT_LIGHTTRANSFER,						// A sector light transfer. These must be ticked after the light effects.
+		STAT_EARTHQUAKE,						// Earthquake actors
+		STAT_MAPMARKER,							// Map marker actors
+
+		STAT_DEFAULT = 100,						// Thinkers go here unless specified otherwise.
+		STAT_SECTOREFFECT,						// All sector effects that cause floor and ceiling movement
+		STAT_ACTORMOVER,						// actor movers
+		STAT_SCRIPTS,							// The ACS thinker. This is to ensure that it can't tick before all actors called PostBeginPlay
+		STAT_BOT,								// Bot thinker
+		MAX_STATNUM = 127
+	}
+
 	const TICRATE = 35;
 	
 	virtual native void Tick();
 	virtual native void PostBeginPlay();
+	virtual native void ChangeStatNum(int stat);
 }
 
 class ThinkerIterator : Object native
 {
-	enum EStatnums
-	{
-		MAX_STATNUM = 127
-	}
 
-	native static ThinkerIterator Create(class<Object> type = "Actor", int statnum=MAX_STATNUM+1);
+	native static ThinkerIterator Create(class<Object> type = "Actor", int statnum=Thinker.MAX_STATNUM+1);
 	native Thinker Next(bool exact = false);
 	native void Reinit();
 }
@@ -87,11 +114,11 @@ struct LevelLocals native
 	native readonly int maptype;
 	native readonly String Music;
 	native readonly int musicorder;
-	native readonly int total_secrets;
+	native int total_secrets;
 	native int found_secrets;
-	native readonly int total_items;
+	native int total_items;
 	native int found_items;
-	native readonly int total_monsters;
+	native int total_monsters;
 	native int killed_monsters;
 	native double gravity;
 	native double aircontrol;
@@ -225,6 +252,19 @@ struct Sector native
 	native int16 		leakydamage;
 
 	native uint16		ZoneNumber;
+	
+	enum ESectorMoreFlags
+	{
+		SECMF_FAKEFLOORONLY	= 2,	// when used as heightsec in R_FakeFlat, only copies floor
+		SECMF_CLIPFAKEPLANES = 4,	// as a heightsec, clip planes to target sector's planes
+		SECMF_NOFAKELIGHT	= 8,	// heightsec does not change lighting
+		SECMF_IGNOREHEIGHTSEC= 16,	// heightsec is only for triggering sector actions
+		SECMF_UNDERWATER		= 32,	// sector is underwater
+		SECMF_FORCEDUNDERWATER= 64,	// sector is forced to be underwater
+		SECMF_UNDERWATERMASK	= 32+64,
+		SECMF_DRAWN			= 128,	// sector has been drawn at least once
+		SECMF_HIDDEN			= 256,	// Do not draw on textured automap
+	}
 	native uint16		MoreFlags;
 	
 	enum ESectorFlags
@@ -263,6 +303,8 @@ struct Sector native
 
 	native void RemoveForceField();
 	native static Sector PointInSector(Vector2 pt);
+	native void SetColor(color c, int desat = 0);
+	native void SetFade(color c);
 }
 
 struct Wads

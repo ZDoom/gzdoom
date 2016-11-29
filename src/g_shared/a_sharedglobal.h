@@ -214,15 +214,6 @@ public:
 	ActorFlags FlagsSave;
 };
 
-class AMapMarker : public AActor
-{
-	DECLARE_CLASS(AMapMarker, AActor)
-public:
-	void BeginPlay ();
-	void Activate (AActor *activator);
-	void Deactivate (AActor *activator);
-};
-
 class AFastProjectile : public AActor
 {
 	DECLARE_CLASS(AFastProjectile, AActor)

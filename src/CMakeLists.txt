@@ -1116,25 +1116,19 @@ set (PCH_SOURCES
 	g_shared/a_fastprojectile.cpp
 	g_shared/a_flashfader.cpp
 	g_shared/a_fountain.cpp
-	g_shared/a_hatetarget.cpp
 	g_shared/a_keys.cpp
 	g_shared/a_lightning.cpp
-	g_shared/a_mapmarker.cpp
 	g_shared/a_morph.cpp
 	g_shared/a_movingcamera.cpp
 	g_shared/a_pickups.cpp
 	g_shared/a_puzzleitems.cpp
 	g_shared/a_quake.cpp
 	g_shared/a_randomspawner.cpp
-	g_shared/a_secrettrigger.cpp
 	g_shared/a_sectoraction.cpp
-	g_shared/a_setcolor.cpp
 	g_shared/a_skies.cpp
 	g_shared/a_soundenvironment.cpp
 	g_shared/a_soundsequence.cpp
-	g_shared/a_spark.cpp
 	g_shared/a_specialspot.cpp
-	g_shared/a_waterzone.cpp
 	g_shared/a_weaponpiece.cpp
 	g_shared/a_weapons.cpp
 	g_shared/hudmessages.cpp

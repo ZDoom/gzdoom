@@ -47,7 +47,6 @@
 #include "p_acs.h"
 #include "cmdlib.h"
 #include "decallib.h"
-#include "a_action.h"
 #include "a_keys.h"
 #include "p_conversation.h"
 #include "g_game.h"

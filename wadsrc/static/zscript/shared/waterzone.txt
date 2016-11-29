@@ -1,4 +1,4 @@
-class WaterZone : Actor native
+class WaterZone : Actor
 {
 	default
 	{
@@ -7,4 +7,13 @@ class WaterZone : Actor native
 		+NOGRAVITY
 		+DONTSPLASH
 	}
+	
+	override void PostBeginPlay ()
+	{
+		Super.PostBeginPlay ();
+		CurSector.MoreFlags |= Sector.SECMF_UNDERWATER;
+		Destroy ();
+	}
+
+	
 }

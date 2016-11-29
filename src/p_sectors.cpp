@@ -700,12 +700,32 @@ void sector_t::SetColor(int r, int g, int b, int desat)
 	P_RecalculateAttachedLights(this);
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, SetColor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_COLOR(color);
+	PARAM_INT(desat);
+	self->ColorMap = GetSpecialLights(color, self->ColorMap->Fade, desat);
+	P_RecalculateAttachedLights(self);
+	return 0;
+}
+
 void sector_t::SetFade(int r, int g, int b)
 {
 	PalEntry fade = PalEntry (r,g,b);
 	ColorMap = GetSpecialLights (ColorMap->Color, fade, ColorMap->Desaturate);
 	P_RecalculateAttachedLights(this);
 }
+
+DEFINE_ACTION_FUNCTION(_Sector, SetFade)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_COLOR(fade);
+	self->ColorMap = GetSpecialLights(self->ColorMap->Color, fade, self->ColorMap->Desaturate);
+	P_RecalculateAttachedLights(self);
+	return 0;
+}
+
 
 //===========================================================================
 //

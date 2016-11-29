@@ -157,13 +157,25 @@ class CustomSprite : Actor native
 
 // SwitchableDecoration: Activate and Deactivate change state --------------
 
-class SwitchableDecoration : Actor native
+class SwitchableDecoration : Actor
 {
+	override void Activate (Actor activator)
+	{
+		SetStateLabel("Active");
+	}
+
+	override void Deactivate (Actor activator)
+	{
+		SetStateLabel("Inactive");
+	}
+	
 }
 
-
-class SwitchingDecoration : SwitchableDecoration native
+class SwitchingDecoration : SwitchableDecoration
 {
+	override void Deactivate (Actor activator)
+	{
+	}
 }
 
 // Random spawner ----------------------------------------------------------

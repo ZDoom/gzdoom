@@ -1,4 +1,4 @@
-class ColorSetter : Actor native
+class ColorSetter : Actor
 {
 	default
 	{
@@ -7,10 +7,18 @@ class ColorSetter : Actor native
 		+DONTSPLASH
 		RenderStyle "None";
 	}
+	
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+		CurSector.SetColor(color(args[0], args[1], args[2]), args[3]);
+		Destroy();
+	}
+	
 }
 
 
-class FadeSetter : Actor native
+class FadeSetter : Actor
 {
 	default
 	{
@@ -19,4 +27,13 @@ class FadeSetter : Actor native
 		+DONTSPLASH
 		RenderStyle "None";
 	}
+	
+	void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+		CurSector.SetFade(color(args[0], args[1], args[2]));
+		Destroy();
+	}
+
+	
 }

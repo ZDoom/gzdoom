@@ -45,7 +45,6 @@
 #include "templates.h"
 #include "cmdlib.h"
 #include "p_lnspec.h"
-#include "a_action.h"
 #include "p_local.h"
 #include "v_palette.h"
 #include "doomerrors.h"

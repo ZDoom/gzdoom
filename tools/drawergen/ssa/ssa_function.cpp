@@ -27,7 +27,7 @@
 #include "ssa_value.h"
 
 SSAFunction::SSAFunction(const std::string name)
-: name(name), return_type(llvm::Type::getVoidTy(SSAScope::context())), func()
+: func(), name(name), return_type(llvm::Type::getVoidTy(SSAScope::context()))
 {
 }
 

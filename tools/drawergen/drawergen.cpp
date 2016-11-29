@@ -42,7 +42,7 @@ class Exception : public std::exception
 {
 public:
 	Exception(const std::string &message) : message(message) { }
-	const char *what() const override { return message.c_str(); }
+	const char *what() const noexcept override { return message.c_str(); }
 
 private:
 	std::string message;

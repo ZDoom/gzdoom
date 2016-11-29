@@ -861,7 +861,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	sc_man_scanner.re
 	g_hexen/a_heresiarch.cpp
 	g_hexen/a_spike.cpp
-	g_strife/a_strifeweapons.cpp
 	g_shared/sbarinfo_commands.cpp
 	xlat/xlat_parser.y
 	xlat_parser.c
@@ -1111,7 +1110,6 @@ set (PCH_SOURCES
 	wi_stuff.cpp
 	zstrformat.cpp
 	g_hexen/a_hexenmisc.cpp
-	g_strife/a_strifestuff.cpp
 	g_strife/strife_sbar.cpp
 	g_shared/a_action.cpp
 	g_shared/a_armor.cpp

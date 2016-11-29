@@ -195,6 +195,7 @@ zscript/strife/weaponassault.txt
 zscript/strife/weaponmissile.txt
 zscript/strife/weaponflamer.txt
 zscript/strife/weapongrenade.txt
+zscript/strife/weaponmauler.txt
 zscript/strife/sigil.txt
 
 zscript/chex/chexmonsters.txt

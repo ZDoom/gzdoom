@@ -1506,7 +1506,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	math/tanh.c
 	math/fastsin.cpp
 	zzautozend.cpp
-	r_drawersasm.obj
+	${CMAKE_BINARY_DIR}/src/r_drawersasm.obj
 )
 
 set_source_files_properties( ${CODEGENOBJ_SOURCES} PROPERTIES EXTERNAL_OBJECT true GENERATED true)

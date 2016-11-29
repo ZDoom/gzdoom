@@ -2224,9 +2224,9 @@ bool OpenGLSWFrameBuffer::OpenGLPal::Update()
 	{
 		glGenBuffers(2, (GLuint*)Tex->Buffers);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, Tex->Buffers[0]);
-		glBufferData(GL_PIXEL_UNPACK_BUFFER, Remap->NumEntries * 4, nullptr, GL_STREAM_DRAW);
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, RoundedPaletteSize * 4, nullptr, GL_STREAM_DRAW);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, Tex->Buffers[1]);
-		glBufferData(GL_PIXEL_UNPACK_BUFFER, Remap->NumEntries * 4, nullptr, GL_STREAM_DRAW);
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, RoundedPaletteSize * 4, nullptr, GL_STREAM_DRAW);
 	}
 	else
 	{
@@ -2234,7 +2234,9 @@ bool OpenGLSWFrameBuffer::OpenGLPal::Update()
 		Tex->CurrentBuffer = (Tex->CurrentBuffer + 1) & 1;
 	}
 
-	buff = (uint32_t *)MapBuffer(GL_PIXEL_UNPACK_BUFFER, Remap->NumEntries * 4);
+	int numEntries = MIN(Remap->NumEntries, RoundedPaletteSize);
+
+	buff = (uint32_t *)MapBuffer(GL_PIXEL_UNPACK_BUFFER, numEntries * 4);
 	if (buff == nullptr)
 	{
 		return false;
@@ -2242,13 +2244,13 @@ bool OpenGLSWFrameBuffer::OpenGLPal::Update()
 	pal = Remap->Palette;
 
 	// See explanation in UploadPalette() for skipat rationale.
-	skipat = MIN(Remap->NumEntries, DoColorSkip ? 256 - 8 : 256);
+	skipat = MIN(numEntries, DoColorSkip ? 256 - 8 : 256);
 
 	for (i = 0; i < skipat; ++i)
 	{
 		buff[i] = ColorARGB(pal[i].a, pal[i].r, pal[i].g, pal[i].b);
 	}
-	for (++i; i < Remap->NumEntries; ++i)
+	for (++i; i < numEntries; ++i)
 	{
 		buff[i] = ColorARGB(pal[i].a, pal[i - 1].r, pal[i - 1].g, pal[i - 1].b);
 	}
@@ -2258,7 +2260,7 @@ bool OpenGLSWFrameBuffer::OpenGLPal::Update()
 	GLint oldBinding = 0;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
 	glBindTexture(GL_TEXTURE_2D, Tex->Texture);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Remap->NumEntries, 1, GL_BGRA, GL_UNSIGNED_BYTE, 0);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, numEntries, 1, GL_BGRA, GL_UNSIGNED_BYTE, 0);
 	glBindTexture(GL_TEXTURE_2D, oldBinding);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 

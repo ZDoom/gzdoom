@@ -1,8 +1,52 @@
 
 // The Heresiarch him/itself ------------------------------------------------
 
+//============================================================================
+//
+//	Sorcerer stuff
+//
+// Sorcerer Variables
+//		specialf1		Angle of ball 1 (all others relative to that)
+//		StopBall		which ball to stop at in stop mode (MT_???)
+//		args[0]			Defense time
+//		args[1]			Number of full rotations since stopping mode
+//		args[2]			Target orbit speed for acceleration/deceleration
+//		args[3]			Movement mode (see SORC_ macros)
+//		args[4]			Current ball orbit speed
+//	Sorcerer Ball Variables
+//		specialf1		Previous angle of ball (for woosh)
+//		special2		Countdown of rapid fire (FX4)
+//============================================================================
+
 class Heresiarch native
 {
+	
+	const SORCBALL_INITIAL_SPEED 		= 7;
+	const SORCBALL_TERMINAL_SPEED		= 25;
+	const SORCBALL_SPEED_ROTATIONS 		= 5;
+	const SORC_DEFENSE_TIME				= 255;
+	const SORC_DEFENSE_HEIGHT			= 45;
+	const BOUNCE_TIME_UNIT				= (35/2);
+	const SORCFX4_RAPIDFIRE_TIME		= (6*3);		// 3 seconds
+	const SORCFX4_SPREAD_ANGLE			= 20;
+
+	enum ESorc
+	{
+		SORC_DECELERATE,	
+		SORC_ACCELERATE, 
+		SORC_STOPPING,	
+		SORC_FIRESPELL,	
+		SORC_STOPPED,	
+		SORC_NORMAL,		
+		SORC_FIRING_SPELL
+	}
+
+	const BALL1_ANGLEOFFSET	= 0.;
+	const BALL2_ANGLEOFFSET	= 120.;
+	const BALL3_ANGLEOFFSET	= 240.;
+
+	native double BallAngle;
+	
 	Default
 	{
 		Health 5000;
@@ -26,11 +70,6 @@ class Heresiarch native
 		ActiveSound "SorcererActive";
 		Obituary "$OB_HERESIARCH";
 	}
-	
-	native void A_SorcSpinBalls();
-	native void A_SpeedBalls();
-	native void A_SorcBossAttack();
-	native void A_SpawnFizzle();
 	
 	States
 	{
@@ -71,6 +110,105 @@ class Heresiarch native
 		SORC Z -1 Bright;
 		Stop;
 	}
+	
+	//============================================================================
+	//
+	// A_SorcSpinBalls
+	//
+	// Spawn spinning balls above head - actor is sorcerer
+	//============================================================================
+
+	void A_SorcSpinBalls()
+	{
+		A_SlowBalls();
+		args[0] = 0;								// Currently no defense
+		args[3] = SORC_NORMAL;
+		args[4] = SORCBALL_INITIAL_SPEED;		// Initial orbit speed
+		BallAngle = 1.;
+
+		Vector3 ballpos = (pos.xy, -Floorclip + Height);
+		
+		Actor mo = Spawn("SorcBall1", pos, NO_REPLACE);
+		if (mo)
+		{
+			mo.target = self;
+			mo.special2 = SORCFX4_RAPIDFIRE_TIME;
+		}
+		mo = Spawn("SorcBall2", pos, NO_REPLACE);
+		if (mo) mo.target = self;
+		mo = Spawn("SorcBall3", pos, NO_REPLACE);
+		if (mo) mo.target = self;
+	}
+
+
+	//============================================================================
+	//
+	// A_SpeedBalls
+	//
+	// Set balls to speed mode - self is sorcerer
+	//
+	//============================================================================
+
+	void A_SpeedBalls()
+	{
+		args[3] = SORC_ACCELERATE;				// speed mode
+		args[2] = SORCBALL_TERMINAL_SPEED;		// target speed
+	}
+
+
+	//============================================================================
+	//
+	// A_SlowBalls
+	//
+	// Set balls to slow mode - actor is sorcerer
+	//
+	//============================================================================
+
+	void A_SlowBalls()
+	{
+		args[3] = SORC_DECELERATE;				// slow mode
+		args[2] = SORCBALL_INITIAL_SPEED;		// target speed
+	}
+
+	//============================================================================
+	//
+	// A_SorcBossAttack
+	//
+	// Resume ball spinning
+	//
+	//============================================================================
+
+	void A_SorcBossAttack()
+	{
+		args[3] = SORC_ACCELERATE;
+		args[2] = SORCBALL_INITIAL_SPEED;
+	}
+
+	//============================================================================
+	//
+	// A_SpawnFizzle
+	//
+	// spell cast magic fizzle
+	//
+	//============================================================================
+
+	void A_SpawnFizzle()
+	{
+		Vector3 pos = Vec3Angle(5., Angle, -Floorclip + Height / 2. );
+		for (int ix=0; ix<5; ix++)
+		{
+			Actor mo = Spawn("SorcSpark1", pos, ALLOW_REPLACE);
+			if (mo)
+			{
+				double rangle = Angle + (random[Heresiarch]() % 5) * (4096 / 360.);
+				mo.Vel.X = (random[Heresiarch]() % speed) * cos(rangle);
+				mo.Vel.Y = (random[Heresiarch]() % speed) * sin(rangle);
+				mo.Vel.Z = 2;
+			}
+		}
+	}
+
+	
 }
 
 // Base class for the balls flying around the Heresiarch's head -------------
@@ -94,14 +232,56 @@ class SorcBall native
 	}
 
 	native void A_SorcBallOrbit();
-	native void A_SorcBallPop();
-	native void A_BounceCheck ();
 	
 	void A_SorcBallExplode()
 	{
-		bNOBOUNCESOUND = true;
+		bNoBounceSound = true;
 		A_Explode(255, 255);
 	}
+	
+	//============================================================================
+	//
+	// A_SorcBallPop
+	//
+	// Ball death - bounce away in a random direction
+	//
+	//============================================================================
+
+	void A_SorcBallPop()
+	{
+		A_PlaySound ("SorcererBallPop", CHAN_BODY, 1, false, ATTN_NONE);
+		bNoGravity = false;
+		Gravity = 1. / 8;
+
+		Vel.X = ((random[Heresiarch]()%10)-5);
+		Vel.Y = ((random[Heresiarch]()%10)-5);
+		Vel.Z = (2+(random[Heresiarch]()%3));
+		args[4] = Heresiarch.BOUNCE_TIME_UNIT;	// Bounce time unit
+		args[3] = 5;					// Bounce time in seconds
+	}
+	
+	//============================================================================
+	//
+	// A_BounceCheck
+	//
+	//============================================================================
+
+	void A_BounceCheck ()
+	{
+		if (args[4]-- <= 0)
+		{
+			if (args[3]-- <= 0)
+			{
+				SetStateLabel("Death");
+				A_PlaySound ("SorcererBigBallExplode", CHAN_BODY, 1, false, ATTN_NONE);
+			}
+			else
+			{
+				args[4] = Heresiarch.BOUNCE_TIME_UNIT;
+			}
+		}
+	}
+	
 }
 
 // First ball (purple) - fires projectiles ----------------------------------
@@ -191,8 +371,6 @@ class SorcFX1 : Actor
 		DeathSound "SorcererHeadScream";
 	}
 
-	native void A_SorcFX1Seek();
-
 	States
 	{
 	Spawn:
@@ -204,6 +382,32 @@ class SorcFX1 : Actor
 		FHFX SS 6 Bright;
 		Stop;
 	}
+	
+	//============================================================================
+	//
+	// A_SorcFX1Seek
+	//
+	// Yellow spell - offense
+	//
+	//============================================================================
+
+	void A_SorcFX1Seek()
+	{
+		if (args[4]-- <= 0)
+		{
+			if (args[3]-- <= 0)
+			{
+				SetStateLabel("Death");
+				A_PlaySound ("SorcererHeadScream", CHAN_BODY, 1, false, ATTN_NONE);
+			}
+			else
+			{
+				args[4] = Heresiarch.BOUNCE_TIME_UNIT;
+			}
+		}
+		A_SeekerMissile(2, 6);
+	}
+	
 }
 
 
@@ -221,9 +425,6 @@ class SorcFX2 : Actor
 		+NOTELEPORT
 	}
 
-	native void A_SorcFX2Split();
-	native void A_SorcFX2Orbit ();
-
 	states
 	{
 	Spawn:
@@ -236,6 +437,106 @@ class SorcFX2 : Actor
 	Death:
 		SBS2 A 10;
 		Stop;
+	}
+	
+	//============================================================================
+	//
+	// A_SorcFX2Split
+	//
+	// Blue spell - defense
+	//
+	//============================================================================
+	//
+	// FX2 Variables
+	//		specialf1		current angle
+	//		special2
+	//		args[0]		0 = CW,  1 = CCW
+	//		args[1]		
+	//============================================================================
+
+	// Split ball in two
+	void A_SorcFX2Split()
+	{
+		Actor mo = Spawn(GetClass(), Pos, NO_REPLACE);
+		if (mo)
+		{
+			mo.target = target;
+			mo.args[0] = 0;									// CW
+			mo.specialf1 = Angle;							// Set angle
+			mo.SetStateLabel("Orbit");
+		}
+		mo = Spawn(GetClass(), Pos, NO_REPLACE);
+		if (mo)
+		{
+			mo.target = target;
+			mo.args[0] = 1;									// CCW
+			mo.specialf1 = Angle;							// Set angle
+			mo.SetStateLabel("Orbit");
+		}
+		Destroy ();
+	}
+
+	//============================================================================
+	//
+	// A_SorcFX2Orbit
+	//
+	// Orbit FX2 about sorcerer
+	//
+	//============================================================================
+
+	void A_SorcFX2Orbit ()
+	{
+		Actor parent = target;
+
+		// [RH] If no parent, then disappear
+		if (parent == NULL)
+		{
+			Destroy();
+			return;
+		}
+
+		double dist = parent.radius;
+
+		if ((parent.health <= 0) ||		// Sorcerer is dead
+			(!parent.args[0]))				// Time expired
+		{
+			SetStateLabel("Death");
+			parent.args[0] = 0;
+			parent.bReflective = false;
+			parent.bInvulnerable = false;
+		}
+
+		if (args[0] && (parent.args[0]-- <= 0))		// Time expired
+		{
+			SetStateLabel("Death");
+			parent.args[0] = 0;
+			parent.bReflective = false;
+		}
+
+		Vector3 posi;
+		// Move to new position based on angle
+		if (args[0])		// Counter clock-wise
+		{
+			specialf1 += 10;
+			angle = specialf1;
+			posi = parent.Vec3Angle(dist, angle, parent.Floorclip + Heresiarch.SORC_DEFENSE_HEIGHT);
+			posi.Z += 15 * cos(angle);
+			// Spawn trailer
+			Spawn("SorcFX2T1", pos, ALLOW_REPLACE);
+		}
+		else							// Clock wise
+		{
+			specialf1 -= 10;
+			angle = specialf1;
+			posi = parent.Vec3Angle(dist, angle, parent.Floorclip + Heresiarch.SORC_DEFENSE_HEIGHT);
+			posi.Z += 20 * sin(angle);
+			// Spawn trailer
+			Spawn("SorcFX2T1", pos, ALLOW_REPLACE);
+		}
+
+		SetOrigin (posi, true);
+		floorz = parent.floorz;
+		ceilingz = parent.ceilingz;
 	}
 }
 
@@ -271,9 +572,6 @@ class SorcFX3 : Actor
 		SeeSound "SorcererBishopSpawn";
 	}
 
-	native void A_SpawnBishop();
-	native void A_SorcererBishopEntry();
-
 	States
 	{
 	Spawn:
@@ -286,6 +584,45 @@ class SorcFX3 : Actor
 		BISH MLKJIH 3;
 		BISH G 3 A_SpawnBishop;
 		Stop;
+	}
+	
+	//============================================================================
+	//
+	// A_SorcererBishopEntry
+	//
+	//============================================================================
+
+	void A_SorcererBishopEntry()
+	{
+		Spawn("SorcFX3Explosion", Pos, ALLOW_REPLACE);
+		A_PlaySound (SeeSound, CHAN_VOICE);
+	}
+
+	//============================================================================
+	//
+	// A_SpawnBishop
+	//
+	// Green spell - spawn bishops
+	//
+	//============================================================================
+
+	void A_SpawnBishop()
+	{
+		Actor mo = Spawn("Bishop", Pos, ALLOW_REPLACE);
+		if (mo)
+		{
+			if (!mo.TestMobjLocation())
+			{
+				mo.ClearCounters();
+				mo.Destroy ();
+			}
+			else if (target != NULL)
+			{ // [RH] Make the new bishops inherit the Heriarch's target
+				mo.CopyFriendliness (target, true);
+				mo.master = target;
+			}
+		}
+		Destroy ();
 	}
 }
 
@@ -326,8 +663,6 @@ class SorcFX4 : Actor
 		DeathSound "SorcererBallExplode";
 	}
 
-	native void A_SorcFX4Check();
-
 	States
 	{
 	Spawn:
@@ -338,6 +673,22 @@ class SorcFX4 : Actor
 		SBS4 E 2 Bright A_Explode(20, 128);
 		SBS4 FGH 2 Bright;
 		Stop;
+	}
+	
+	//============================================================================
+	//
+	// A_SorcFX4Check
+	//
+	// FX4 - rapid fire balls
+	//
+	//============================================================================
+
+	void A_SorcFX4Check()
+	{
+		if (special2-- <= 0)
+		{
+			SetStateLabel ("Death");
+		}
 	}
 }
 

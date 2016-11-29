@@ -21,6 +21,7 @@
 */
 
 #include "precomp.h"
+#include "timestamp.h"
 #include "fixedfunction/drawskycodegen.h"
 #include "ssa/ssa_function.h"
 #include "ssa/ssa_scope.h"

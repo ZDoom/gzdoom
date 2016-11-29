@@ -21,6 +21,7 @@
 */
 
 #include "precomp.h"
+#include "timestamp.h"
 #include "fixedfunction/drawspancodegen.h"
 #include "fixedfunction/drawwallcodegen.h"
 #include "fixedfunction/drawcolumncodegen.h"
@@ -618,12 +619,43 @@ std::string LLVMProgram::DumpModule()
 
 /////////////////////////////////////////////////////////////////////////////
 
+std::string &AllTimestamps()
+{
+	static std::string timestamps;
+	return timestamps;
+}
+
+void AddSourceFileTimestamp(const char *timestamp)
+{
+	if (!AllTimestamps().empty()) AllTimestamps().push_back(' ');
+	AllTimestamps() += timestamp;
+}
+
 int main(int argc, char **argv)
 {
 	if (argc != 2)
 	{
 		std::cerr << "Usage: " << argv[0] << "<output filename>" << std::endl;
 		return 1;
+	}
+
+	std::string timestamp_filename = argv[1] + std::string(".timestamp");
+
+	FILE *file = fopen(timestamp_filename.c_str(), "rb");
+	if (file != nullptr)
+	{
+		char buffer[4096];
+		int bytes_read = fread(buffer, 1, 4096, file);
+		fclose(file);
+		std::string last_timestamp;
+		if (bytes_read > 0)
+			last_timestamp = std::string(buffer, bytes_read);
+
+		if (AllTimestamps() == last_timestamp)
+		{
+			std::cout << "Not recompiling drawers because the object file is already up to date." << std::endl;
+			exit(0);
+		}
 	}
 
 	llvm::install_fatal_error_handler([](void *user_data, const std::string& reason, bool gen_crash_diag)
@@ -640,7 +672,7 @@ int main(int argc, char **argv)
 
 	LLVMDrawers drawersSSE2(cpuName, "_SSE2");
 
-	FILE *file = fopen(argv[1], "wb");
+	file = fopen(argv[1], "wb");
 	if (file == nullptr)
 	{
 		std::cerr << "Unable to open " << argv[1] << " for writing." << std::endl;
@@ -653,6 +685,20 @@ int main(int argc, char **argv)
 	if (result != 1)
 	{
 		std::cerr << "Could not write data to " << argv[1] << std::endl;
+		return 1;
+	}
+
+	file = fopen(timestamp_filename.c_str(), "wb");
+	if (file == nullptr)
+	{
+		std::cerr << "Could not create timestamp file" << std::endl;
+		return 1;
+	}
+	result = fwrite(AllTimestamps().data(), AllTimestamps().length(), 1, file);
+	fclose(file);
+	if (result != 1)
+	{
+		std::cerr << "Could not write timestamp file" << std::endl;
 		return 1;
 	}
 

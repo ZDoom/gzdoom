@@ -694,7 +694,6 @@ class Actor : Thinker native
 	native void A_ClearLastHeard();
 	native bool A_SelectWeapon(class<Weapon> whichweapon, int flags = 0);
 	native void A_ClassBossHealth();
-	native void A_RocketInFlight();
 	native void A_SetAngle(double angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetPitch(double pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetRoll(double roll, int flags = 0, int ptr = AAPTR_DEFAULT);

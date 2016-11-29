@@ -1037,3 +1037,12 @@ enum EGameAction
 	ga_togglemap,
 	ga_fullconsole,
 };
+
+enum EPuffFlags
+{
+	PF_HITTHING = 1,
+	PF_MELEERANGE = 2,
+	PF_TEMPORARY = 4,
+	PF_HITTHINGBLEED = 8,
+	PF_NORANDOMZ = 16
+};

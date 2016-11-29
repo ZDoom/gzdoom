@@ -1717,7 +1717,6 @@ bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 	bool res;
 	if (CanPickup(toucher))
 	{
-		bool res;
 		IFVIRTUAL(AInventory, TryPickup)
 		{
 			VMValue params[2] = { (DObject*)this, (void*)&toucher };

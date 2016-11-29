@@ -83,7 +83,6 @@ class StateProvider : Inventory native
 	action native void A_ClearReFire();
 	action native void A_CheckReload();
 	action native void A_GunFlash(statelabel flash = null, int flags = 0);
-	action native void A_FireAssaultGun();
 	action native state A_CheckForReload(int counter, statelabel label, bool dontincrement = false);
 	action native void A_ResetReloadCounter();
 }

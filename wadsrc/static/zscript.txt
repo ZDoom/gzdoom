@@ -191,6 +191,8 @@ zscript/strife/templar.txt
 zscript/strife/zombie.txt
 zscript/strife/weapondagger.txt
 zscript/strife/weaponcrossbow.txt
+zscript/strife/weaponassault.txt
+zscript/strife/weaponmissile.txt
 zscript/strife/sigil.txt
 
 zscript/chex/chexmonsters.txt

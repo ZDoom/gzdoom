@@ -1,4 +1,4 @@
-// common Strife action functions.
+// common Strife action functions that are used by multiple different actors
 
 extend class Actor
 {
@@ -174,6 +174,23 @@ extend class Actor
 		if (target != null && emitter != null)
 		{
 			emitter.NoiseAlert(target, false, maxdist);
+		}
+	}
+
+	//============================================================================
+	//
+	// A_RocketInFlight
+	//
+	//============================================================================
+
+	void A_RocketInFlight()
+	{
+		A_PlaySound ("misc/missileinflight", CHAN_VOICE);
+		SpawnPuff ("MiniMissilePuff", Pos, Angle - 180, Angle - 180, 2, PF_HITTHING);
+		Actor trail = Spawn("RocketTrail", Vec3Offset(-Vel.X, -Vel.Y, 0.), ALLOW_REPLACE);
+		if (trail != null)
+		{
+			trail.Vel.Z = 1;
 		}
 	}
 

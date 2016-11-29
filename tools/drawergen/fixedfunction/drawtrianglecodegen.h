@@ -45,6 +45,7 @@ private:
 	void LoopBlockX();
 	void LoopFullBlock();
 	void LoopPartialBlock();
+	void SetupAffineBlock();
 
 	SSAVec4i ProcessPixel32(SSAVec4i bg, SSAInt *varying);
 	SSAInt ProcessPixel8(SSAInt bg, SSAInt *varying);
@@ -84,6 +85,9 @@ private:
 	SSAStack<SSAInt> stack_varying[TriVertex::NumVarying];
 	SSAStack<SSAInt> stack_CY1, stack_CY2, stack_CY3;
 	SSAStack<SSAInt> stack_CX1, stack_CX2, stack_CX3;
+
+	SSAStack<SSAFloat> stack_posy_w, stack_posy_varying[TriVertex::NumVarying];
+	SSAStack<SSAFloat> stack_posx_w, stack_posx_varying[TriVertex::NumVarying];
 
 	SSAUBytePtr dest;
 	SSAInt pitch;
@@ -131,8 +135,8 @@ private:
 	SSAInt FDY12, FDY23, FDY31;
 	SSAInt minx, maxx, miny, maxy;
 	SSAInt C1, C2, C3;
-	SSAFloat gradWX, gradWY, startW;
-	SSAFloat gradVaryingX[TriVertex::NumVarying], gradVaryingY[TriVertex::NumVarying], startVarying[TriVertex::NumVarying];
+	SSAFloat gradWX, gradWY;
+	SSAFloat gradVaryingX[TriVertex::NumVarying], gradVaryingY[TriVertex::NumVarying];
 
 	SSAInt x, y;
 	SSAInt x0, x1, y0, y1;
@@ -142,6 +146,9 @@ private:
 	SSAInt varyingStepY[TriVertex::NumVarying];
 	SSAInt varyingStartStepX[TriVertex::NumVarying];
 	SSAInt varyingIncrStepX[TriVertex::NumVarying];
+
+	SSAFloat posy_w, posy_varying[TriVertex::NumVarying];
+	SSAFloat posx_w, posx_varying[TriVertex::NumVarying];
 
 	SSAUBytePtr StencilBlock;
 	SSAIntPtr StencilBlockMask;

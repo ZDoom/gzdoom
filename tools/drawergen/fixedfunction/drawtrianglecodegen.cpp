@@ -134,12 +134,20 @@ void DrawTriangleCodegen::Setup()
 	v3.y = SSAFloat(Y3) * 0.0625f;
 	gradWX = gradx(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
 	gradWY = grady(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
-	startW = v1.w + gradWX * (SSAFloat(minx) - v1.x) + gradWY * (SSAFloat(miny) - v1.y);
+	stack_posy_w.store(v1.w + gradWX * (SSAFloat(minx) - v1.x) + gradWY * (SSAFloat(miny) - v1.y));
 	for (int i = 0; i < TriVertex::NumVarying; i++)
 	{
 		gradVaryingX[i] = gradx(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.varying[i] * v1.w, v2.varying[i] * v2.w, v3.varying[i] * v3.w);
 		gradVaryingY[i] = grady(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.varying[i] * v1.w, v2.varying[i] * v2.w, v3.varying[i] * v3.w);
-		startVarying[i] = v1.varying[i] * v1.w + gradVaryingX[i] * (SSAFloat(minx) - v1.x) + gradVaryingY[i] * (SSAFloat(miny) - v1.y);
+		stack_posy_varying[i].store(v1.varying[i] * v1.w + gradVaryingX[i] * (SSAFloat(minx) - v1.x) + gradVaryingY[i] * (SSAFloat(miny) - v1.y));
+	}
+
+	gradWX = gradWX * (float)q;
+	gradWY = gradWY * (float)q;
+	for (int i = 0; i < TriVertex::NumVarying; i++)
+	{
+		gradVaryingX[i] = gradVaryingX[i] * (float)q;
+		gradVaryingY[i] = gradVaryingY[i] * (float)q;
 	}
 }
 
@@ -161,26 +169,32 @@ void DrawTriangleCodegen::LoopBlockY()
 {
 	int pixelsize = truecolor ? 4 : 1;
 
-	stack_y.store(miny);
-	stack_dest.store(dest);
-	stack_subsectorGBuffer.store(subsectorGBuffer);
+	SSAInt blocks_skipped = skipped_by_thread(miny / q, thread);
+	stack_y.store(miny + blocks_skipped * q);
+	stack_dest.store(dest[blocks_skipped * q * pitch * pixelsize]);
+	stack_subsectorGBuffer.store(subsectorGBuffer[blocks_skipped * q * pitch]);
+	stack_posy_w.store(stack_posy_w.load() + gradWY * blocks_skipped);
+	for (int i = 0; i < TriVertex::NumVarying; i++)
+		stack_posy_varying[i].store(stack_posy_varying[i].load() + gradVaryingY[i] * blocks_skipped);
 
 	SSAForBlock loop;
 	y = stack_y.load();
 	dest = stack_dest.load();
 	subsectorGBuffer = stack_subsectorGBuffer.load();
+	posy_w = stack_posy_w.load();
+	for (int i = 0; i < TriVertex::NumVarying; i++)
+		posy_varying[i] = stack_posy_varying[i].load();
 	loop.loop_block(y < maxy, 0);
 	{
-		SSAIfBlock branch;
-		branch.if_block((y / q) % thread.num_cores == thread.core);
-		{
-			LoopBlockX();
-		}
-		branch.end_block();
+		LoopBlockX();
 
-		stack_dest.store(dest[q * pitch * pixelsize]);
-		stack_subsectorGBuffer.store(subsectorGBuffer[q * pitch]);
-		stack_y.store(y + q);
+		stack_posy_w.store(posy_w + gradWY * thread.num_cores);
+		for (int i = 0; i < TriVertex::NumVarying; i++)
+			stack_posy_varying[i].store(posy_varying[i] + gradVaryingY[i] * thread.num_cores);
+
+		stack_dest.store(dest[q * pitch * pixelsize * thread.num_cores]);
+		stack_subsectorGBuffer.store(subsectorGBuffer[q * pitch * thread.num_cores]);
+		stack_y.store(y + thread.num_cores * q);
 	}
 	loop.end_block();
 }
@@ -188,9 +202,15 @@ void DrawTriangleCodegen::LoopBlockY()
 void DrawTriangleCodegen::LoopBlockX()
 {
 	stack_x.store(minx);
+	stack_posx_w.store(posy_w);
+	for (int i = 0; i < TriVertex::NumVarying; i++)
+		stack_posx_varying[i].store(stack_posy_varying[i].load());
 
 	SSAForBlock loop;
 	x = stack_x.load();
+	posx_w = stack_posx_w.load();
+	for (int i = 0; i < TriVertex::NumVarying; i++)
+		posx_varying[i] = stack_posx_varying[i].load();
 	loop.loop_block(x < maxx, 0);
 	{
 		// Corners of block
@@ -226,51 +246,7 @@ void DrawTriangleCodegen::LoopBlockX()
 		// Check if block needs clipping
 		SSABool clipneeded = x < clipleft || (x + q) > clipright || y < cliptop || (y + q) > clipbottom;
 
-		// Calculate varying variables for affine block
-		SSAFloat offx0 = SSAFloat(x - minx);
-		SSAFloat offy0 = SSAFloat(y - miny);
-		SSAFloat offx1 = offx0 + SSAFloat(q);
-		SSAFloat offy1 = offy0 + SSAFloat(q);
-		SSAFloat rcpWTL = 1.0f / (startW + offx0 * gradWX + offy0 * gradWY);
-		SSAFloat rcpWTR = 1.0f / (startW + offx1 * gradWX + offy0 * gradWY);
-		SSAFloat rcpWBL = 1.0f / (startW + offx0 * gradWX + offy1 * gradWY);
-		SSAFloat rcpWBR = 1.0f / (startW + offx1 * gradWX + offy1 * gradWY);
-		for (int i = 0; i < TriVertex::NumVarying; i++)
-		{
-			SSAFloat varyingTL = (startVarying[i] + offx0 * gradVaryingX[i] + offy0 * gradVaryingY[i]) * rcpWTL;
-			SSAFloat varyingTR = (startVarying[i] + offx1 * gradVaryingX[i] + offy0 * gradVaryingY[i]) * rcpWTR;
-			SSAFloat varyingBL = (startVarying[i] + offx0 * gradVaryingX[i] + offy1 * gradVaryingY[i]) * rcpWBL;
-			SSAFloat varyingBR = (startVarying[i] + offx1 * gradVaryingX[i] + offy1 * gradVaryingY[i]) * rcpWBR;
-
-			SSAFloat startStepX = (varyingTR - varyingTL) * (1.0f / q);
-			SSAFloat endStepX = (varyingBR - varyingBL) * (1.0f / q);
-			SSAFloat incrStepX = (endStepX - startStepX) * (1.0f / q);
-			SSAFloat stepY = (varyingBL - varyingTL) * (1.0f / q);
-
-			varyingPos[i] = SSAInt(varyingTL * SSAFloat((float)0x01000000), false) << 8;
-			varyingStepY[i] = SSAInt(stepY * SSAFloat((float)0x01000000), false) << 8;
-			varyingStartStepX[i] = SSAInt(startStepX * SSAFloat((float)0x01000000), false) << 8;
-			varyingIncrStepX[i] = SSAInt(incrStepX * SSAFloat((float)0x01000000), false) << 8;
-		}
-
-		SSAFloat globVis = SSAFloat(1706.0f);
-		SSAFloat vis = globVis / rcpWTL;
-		SSAFloat shade = 64.0f - (SSAFloat(light * 255 / 256) + 12.0f) * 32.0f / 128.0f;
-		SSAFloat lightscale = SSAFloat::clamp((shade - SSAFloat::MIN(SSAFloat(24.0f), vis)) / 32.0f, SSAFloat(0.0f), SSAFloat(31.0f / 32.0f));
-		SSAInt diminishedlight = SSAInt(SSAFloat::clamp((1.0f - lightscale) * 256.0f + 0.5f, SSAFloat(0.0f), SSAFloat(256.0f)), false);
-
-		if (!truecolor)
-		{
-			SSAInt diminishedindex = SSAInt(lightscale * 32.0f, false);
-			SSAInt lightindex = SSAInt::MIN((256 - light) * 32 / 256, SSAInt(31));
-			SSAInt colormapindex = is_fixed_light.select(lightindex, diminishedindex);
-			currentcolormap = Colormaps[colormapindex << 8];
-		}
-		else
-		{
-			currentlight = is_fixed_light.select(light, diminishedlight);
-		}
-
+		SetupAffineBlock();
 		SetStencilBlock(x / 8 + y / 8 * stencilPitch);
 
 		SSABool covered = a == SSAInt(0xF) && b == SSAInt(0xF) && c == SSAInt(0xF) && !clipneeded && StencilIsSingleValue();
@@ -289,9 +265,53 @@ void DrawTriangleCodegen::LoopBlockX()
 
 		branch.end_block();
 
+		stack_posx_w.store(posx_w + gradWX);
+		for (int i = 0; i < TriVertex::NumVarying; i++)
+			stack_posx_varying[i].store(posx_varying[i] + gradVaryingX[i]);
+
 		stack_x.store(x + q);
 	}
 	loop.end_block();
+}
+
+void DrawTriangleCodegen::SetupAffineBlock()
+{
+	// Calculate varying variables for affine block
+	SSAVec4f rcpW = SSAVec4f::rcp(SSAVec4f(posx_w, posx_w + gradWX, posx_w + gradWY, posx_w + gradWX + gradWY));
+	for (int i = 0; i < TriVertex::NumVarying; i++)
+	{
+		// Top left, top right, bottom left, bottom right:
+		SSAVec4f varying = SSAVec4f(posx_varying[i], posx_varying[i] + gradVaryingX[i], posx_varying[i] + gradVaryingY[i], posx_varying[i] + gradVaryingX[i] + gradVaryingY[i]) * rcpW;
+
+		SSAFloat startStepX = (varying[1] - varying[0]) * (1.0f / q);
+		SSAFloat endStepX = (varying[3] - varying[2]) * (1.0f / q);
+		SSAFloat incrStepX = (endStepX - startStepX) * (1.0f / q);
+		SSAFloat stepY = (varying[2] - varying[0]) * (1.0f / q);
+
+		SSAVec4i ints = SSAVec4i(SSAVec4f(varying[0], stepY, startStepX, incrStepX) * (float)0x01000000) << 8;
+		varyingPos[i] = ints[0];
+		varyingStepY[i] = ints[1];
+		varyingStartStepX[i] = ints[2];
+		varyingIncrStepX[i] = ints[3];
+	}
+	
+	SSAFloat globVis = SSAFloat(1706.0f);
+	SSAFloat vis = globVis / rcpW[0];
+	SSAFloat shade = 64.0f - (SSAFloat(light * 255 / 256) + 12.0f) * 32.0f / 128.0f;
+	SSAFloat lightscale = SSAFloat::clamp((shade - SSAFloat::MIN(SSAFloat(24.0f), vis)) / 32.0f, SSAFloat(0.0f), SSAFloat(31.0f / 32.0f));
+	SSAInt diminishedlight = SSAInt(SSAFloat::clamp((1.0f - lightscale) * 256.0f + 0.5f, SSAFloat(0.0f), SSAFloat(256.0f)), false);
+
+	if (!truecolor)
+	{
+		SSAInt diminishedindex = SSAInt(lightscale * 32.0f, false);
+		SSAInt lightindex = SSAInt::MIN((256 - light) * 32 / 256, SSAInt(31));
+		SSAInt colormapindex = is_fixed_light.select(lightindex, diminishedindex);
+		currentcolormap = Colormaps[colormapindex << 8];
+	}
+	else
+	{
+		currentlight = is_fixed_light.select(light, diminishedlight);
+	}
 }
 
 void DrawTriangleCodegen::LoopFullBlock()
@@ -835,6 +855,8 @@ void DrawTriangleCodegen::LoadArgs(SSAValue args, SSAValue thread_data)
 
 	thread.core = thread_data[0][0].load(true);
 	thread.num_cores = thread_data[0][1].load(true);
+	thread.pass_start_y = SSAInt(0);
+	thread.pass_end_y = SSAInt(32000);
 }
 
 SSATriVertex DrawTriangleCodegen::LoadTriVertex(SSAValue ptr)

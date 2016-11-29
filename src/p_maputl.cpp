@@ -1971,4 +1971,3 @@ sector_t *P_PointInSectorBuggy(double x, double y)
 	subsector_t *ssec = (subsector_t *)((BYTE *)node - 1);
 	return ssec->sector;
 }
-

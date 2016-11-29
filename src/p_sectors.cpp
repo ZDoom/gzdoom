@@ -1050,6 +1050,35 @@ double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, doub
 	}
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_INT_DEF(flags);
+	PARAM_FLOAT_DEF(steph);
+	sector_t *resultsec;
+	F3DFloor *resultff;
+	double resultheight = self->NextLowestFloorAt(x, y, z, flags, steph, &resultsec, &resultff);
+
+	if (numret > 2)
+	{
+		ret[2].SetPointer(resultff, ATAG_GENERIC);
+		numret = 3;
+	}
+	if (numret > 1)
+	{
+		ret[1].SetPointer(resultsec, ATAG_GENERIC);
+	}
+	if (numret > 0)
+	{
+		ret[0].SetFloat(resultheight);
+	}
+	return numret;
+}
+
+
 //===========================================================================
 //
 // 
@@ -1103,6 +1132,16 @@ double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, doub
 	 self->RemoveForceField();
 	 return 0;
  }
+
+
+ DEFINE_ACTION_FUNCTION(_Sector, PointInSector)
+ {
+	 PARAM_PROLOGUE;
+	 PARAM_FLOAT(x);
+	 PARAM_FLOAT(y);
+	 ACTION_RETURN_POINTER(P_PointInSector(x, y));
+ }
+
 //===========================================================================
 //
 // 

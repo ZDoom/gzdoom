@@ -7560,6 +7560,15 @@ DEFINE_ACTION_FUNCTION(AActor, Vec2OffsetZ)
 	ACTION_RETURN_VEC3(self->Vec2OffsetZ(x, y, z, absolute));
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Vec2Offset)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_BOOL_DEF(absolute);
+	ACTION_RETURN_VEC2(self->Vec2Offset(x, y, absolute));
+}
+
 DEFINE_ACTION_FUNCTION(AActor, Vec3Offset)
 {
 	PARAM_SELF_PROLOGUE(AActor);

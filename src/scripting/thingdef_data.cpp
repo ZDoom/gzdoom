@@ -842,6 +842,13 @@ DEFINE_ACTION_FUNCTION(DObject, GameType)
 	ACTION_RETURN_INT(gameinfo.gametype);
 }
 
+DEFINE_ACTION_FUNCTION(DObject, BAM)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(ang);
+	ACTION_RETURN_INT(DAngle(ang).BAMs());
+}
+
 DEFINE_ACTION_FUNCTION(FStringTable, Localize)
 {
 	PARAM_PROLOGUE;
@@ -857,3 +864,4 @@ DEFINE_ACTION_FUNCTION(FString, Replace)
 	self->Substitute(*s1, *s2);
 	return 0;
 }
+

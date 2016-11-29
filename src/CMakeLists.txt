@@ -859,7 +859,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	${OTHER_SYSTEM_SOURCES}
 	sc_man_scanner.h
 	sc_man_scanner.re
-	g_hexen/a_heresiarch.cpp
 	g_hexen/a_spike.cpp
 	g_shared/sbarinfo_commands.cpp
 	xlat/xlat_parser.y

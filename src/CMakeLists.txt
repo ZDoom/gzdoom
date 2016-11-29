@@ -1111,7 +1111,6 @@ set (PCH_SOURCES
 	g_shared/a_armor.cpp
 	g_shared/a_artifacts.cpp
 	g_shared/a_bridge.cpp
-	g_shared/a_camera.cpp
 	g_shared/a_decals.cpp
 	g_shared/a_fastprojectile.cpp
 	g_shared/a_flashfader.cpp

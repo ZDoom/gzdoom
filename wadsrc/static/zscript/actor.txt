@@ -356,6 +356,7 @@ class Actor : Thinker native
 	native double AngleTo(Actor target, bool absolute = false);
 	native void AddZ(double zadd, bool moving = true);
 	native void SetZ(double z);
+	native vector2 Vec2To(Actor other);
 	native vector3 Vec3To(Actor other);
 	native vector3 Vec3Offset(double x, double y, double z, bool absolute = false);
 	native vector3 Vec3Angle(double length, double angle, double z = 0, bool absolute = false);

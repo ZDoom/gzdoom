@@ -5590,8 +5590,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		goto foundit;
 	}
 
-	auto cvar = FindCVar(Identifier.GetChars(), nullptr);
-	if (cvar != nullptr)
+	if (auto *cvar = FindCVar(Identifier.GetChars(), nullptr))
 	{
 		if (cvar->GetFlags() & CVAR_USERINFO)
 		{

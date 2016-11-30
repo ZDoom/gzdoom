@@ -151,6 +151,13 @@ int GetSpriteIndex(const char * spritename, bool add)
 	return (lastindex = (int)sprites.Push (temp));
 }
 
+DEFINE_ACTION_FUNCTION(AActor, GetSpriteIndex)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(sprt);
+	ACTION_RETURN_INT(GetSpriteIndex(sprt.GetChars(), false));
+}
+
 IMPLEMENT_CLASS(PClassActor, false, true)
 
 IMPLEMENT_POINTERS_START(PClassActor)

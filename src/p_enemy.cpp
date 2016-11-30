@@ -1283,6 +1283,14 @@ void P_RandomChaseDir (AActor *actor)
 	actor->movedir = DI_NODIR;	// cannot move
 }
 
+DEFINE_ACTION_FUNCTION(AActor, RandomChaseDir)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	P_RandomChaseDir(self);
+	return 0;
+}
+
+
 //---------------------------------------------------------------------------
 //
 // P_IsVisible
@@ -1333,6 +1341,15 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 
 	// P_CheckSight is by far the most expensive operation in here so let's do it last.
 	return P_CheckSight(lookee, other, SF_SEEPASTSHOOTABLELINES);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, IsVisible)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	PARAM_BOOL(allaround);
+	PARAM_POINTER_DEF(params, FLookExParams);
+	ACTION_RETURN_BOOL(P_IsVisible(self, other, allaround, params));
 }
 
 //---------------------------------------------------------------------------
@@ -1386,6 +1403,12 @@ bool P_LookForMonsters (AActor *actor)
 		return true;
 	}
 	return false;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, LookForMonsters)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(P_LookForMonsters(self));
 }
 
 //============================================================================
@@ -1560,6 +1583,14 @@ bool P_LookForTID (AActor *actor, INTBOOL allaround, FLookExParams *params)
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, LookForTID)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL(allaround);
+	PARAM_POINTER_DEF(params, FLookExParams);
+	ACTION_RETURN_BOOL(P_LookForTID(self, allaround, params));
+}
+
 //============================================================================
 //
 // LookForEnemiesinBlock
@@ -1698,6 +1729,15 @@ bool P_LookForEnemies (AActor *actor, INTBOOL allaround, FLookExParams *params)
 	}
 	return false;
 }
+
+DEFINE_ACTION_FUNCTION(AActor, LookForEnemies)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL(allaround);
+	PARAM_POINTER_DEF(params, FLookExParams);
+	ACTION_RETURN_BOOL(P_LookForEnemies(self, allaround, params));
+}
+
 
 /*
 ================
@@ -1886,7 +1926,8 @@ DEFINE_ACTION_FUNCTION(AActor, LookForPlayers)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL(allaround);
-	ACTION_RETURN_BOOL(P_LookForPlayers(self, allaround, nullptr));
+	PARAM_POINTER_DEF(params, FLookExParams);
+	ACTION_RETURN_BOOL(P_LookForPlayers(self, allaround, params));
 }
 
 //

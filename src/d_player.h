@@ -105,29 +105,36 @@ public:
 	
 	virtual void Serialize(FSerializer &arc);
 
-	virtual void PostBeginPlay();
-	virtual void Tick();
-	virtual void AddInventory (AInventory *item);
-	virtual void RemoveInventory (AInventory *item);
-	virtual bool UseInventory (AInventory *item);
-	virtual void MarkPrecacheSounds () const;
+	virtual void PostBeginPlay() override;
+	virtual void Tick() override;
+	virtual void AddInventory (AInventory *item) override;
+	virtual void RemoveInventory (AInventory *item) override;
+	virtual bool UseInventory (AInventory *item) override;
+	virtual void MarkPrecacheSounds () const override;
+	virtual void BeginPlay () override;
+	virtual void Die (AActor *source, AActor *inflictor, int dmgflags) override;
+	virtual bool UpdateWaterLevel (bool splash) override;
 
-	virtual void PlayIdle ();
-	virtual void PlayRunning ();
-	virtual void ThrowPoisonBag ();
-	virtual void TweakSpeeds (double &forwardmove, double &sidemove);
+	bool ResetAirSupply (bool playgasp = true);
+	int GetMaxHealth() const;
+	void TweakSpeeds (double &forwardmove, double &sidemove);
 	void MorphPlayerThink ();
-	virtual void ActivateMorphWeapon ();
+	void ActivateMorphWeapon ();
 	AWeapon *PickNewWeapon (PClassAmmo *ammotype);
 	AWeapon *BestWeapon (PClassAmmo *ammotype);
 	void CheckWeaponSwitch(PClassAmmo *ammotype);
-	virtual void GiveDeathmatchInventory ();
-	virtual void FilterCoopRespawnInventory (APlayerPawn *oldplayer);
+	void GiveDeathmatchInventory ();
+	void FilterCoopRespawnInventory (APlayerPawn *oldplayer);
 
 	void SetupWeaponSlots ();
 	void GiveDefaultInventory ();
+
+	// These are virtual on the script side only.
+	void PlayIdle();
+	void PlayRunning();
 	void PlayAttacking ();
 	void PlayAttacking2 ();
+
 	const char *GetSoundClass () const;
 
 	enum EInvulState
@@ -138,8 +145,6 @@ public:
 		INVUL_GetAlpha
 	};
 
-	void BeginPlay ();
-	void Die (AActor *source, AActor *inflictor, int dmgflags);
 
 	int			crouchsprite;
 	int			MaxHealth;
@@ -171,10 +176,6 @@ public:
 	// [SP] ViewBob Multiplier
 	double		ViewBob;
 
-	bool UpdateWaterLevel (bool splash);
-	bool ResetAirSupply (bool playgasp = true);
-
-	int GetMaxHealth() const;
 };
 
 class APlayerChunk : public APlayerPawn

@@ -33,7 +33,7 @@ class Actor : Thinker native
 	native vector2 Scale;
 	native TextureID picnum;
 	native double Alpha;
-	native color fillcolor;
+	native readonly color fillcolor;	// must be set with SetShade to initialize correctly.
 	native Sector CurSector;
 	native double CeilingZ;
 	native double FloorZ;
@@ -276,10 +276,16 @@ class Actor : Thinker native
 	}
 	
 
+	native static int GetSpriteIndex(name sprt);
 	native static double GetDefaultSpeed(class<Actor> type);
 	native static class<Actor> GetSpawnableType(int spawnnum);
 	native void RemoveFromHash();
+	native void ChangeTid(int newtid);
+	native static int FindUniqueTid(int start = 0, int limit = 0);
+	native void SetShade(color col);
+		
 	native string GetTag(string defstr = "");
+	native void SetTag(string defstr = "");
 	native double GetBobOffset(double frac = 0);
 	native void ClearCounters();
 	native bool GiveBody (int num, int max=0);
@@ -299,6 +305,7 @@ class Actor : Thinker native
 	native int SpawnHealth();
 	native void SetDamage(int dmg);
 	native double Distance2D(Actor other);
+	native double Distance3D(Actor other);
 	native void SetOrigin(vector3 newpos, bool moving);
 	native void SetXYZ(vector3 newpos);
 	native Actor GetPointer(int aaptr);
@@ -328,7 +335,12 @@ class Actor : Thinker native
 	void A_LightInverse() { if (player) player.extralight = 0x80000000; }
 	
 	native Actor OldSpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
-	native Actor SpawnPuff(class<Actor> pufftype, vector3 pos, double hitdir, double particledir, int updown, int flags = 0, Actor vict = null);
+	native Actor SpawnPuff(class<Actor> pufftype, vector3 pos, double hitdir, double particledir, int updown, int flags = 0, Actor victim = null);
+	native void SpawnBlood (Vector3 pos1, double dir, int damage);
+	native void BloodSplatter (Vector3 pos, double hitangle, bool axe = false);
+	native bool HitWater (sector sec, Vector3 pos, bool checkabove = false, bool alert = true, bool force = false);
+	native void PlaySpawnSound(Actor missile);
+	native bool CountsAsKill();
 	
 	native bool Teleport(Vector3 pos, double angle, int flags);
 	native void TraceBleed(int damage, Actor missile);
@@ -338,13 +350,32 @@ class Actor : Thinker native
 	native bool CheckMeleeRange();
 	native bool CheckMeleeRange2();
 	native int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags = 0, double angle = 0);
+	native void PoisonMobj (Actor inflictor, Actor source, int damage, int duration, int period, Name type);
 	native double AimLineAttack(double angle, double distance, out FTranslatedLineTarget pLineTarget = null, double vrange = 0., int flags = 0, Actor target = null, Actor friender = null);
 	native Actor, int LineAttack(double angle, double distance, double pitch, int damage, Name damageType, class<Actor> pufftype, int flags = 0, out FTranslatedLineTarget victim = null);
 	native bool CheckSight(Actor target, int flags = 0);
+	native bool IsVisible(Actor other, bool allaround, LookExParams params = null);
 	native bool HitFriend();
 	native bool MonsterMove();
+	
+	native void FindFloorCeiling(int flags = 0);
+	native double, double GetFriction();
+	native bool, Actor TestMobjZ(bool quick = false);
+	native bool InStateSequence(State newstate, State basestate);
+	
+	bool TryWalk ()
+	{
+		if (!MonsterMove ())
+		{
+			return false;
+		}
+		movecount = random[TryWalk]() & 15;
+		return true;
+	}
+	
 	native bool TryMove(vector2 newpos, int dropoff);
 	native void NewChaseDir();
+	native void RandomChaseDir();
 	native bool CheckMissileRange();
 	native bool SetState(state st, bool nofunction = false);
 	native state FindState(statelabel st, bool exact = false);
@@ -364,12 +395,17 @@ class Actor : Thinker native
 	native vector2 Vec2Offset(double x, double y, bool absolute = false);
 	native vector3 Vec2OffsetZ(double x, double y, double atz, bool absolute = false);
 	native void VelFromAngle(double speed = 0, double angle = 0);
+	native void Vel3DFromAngle(double speed, double angle, double pitch);
 	native void Thrust(double speed = 0, double angle = 0);
 	native bool isFriend(Actor other);
+	native bool isHostile(Actor other);
 	native void AdjustFloorClip();
 	native DropItem GetDropItems();
 	native void CopyFriendliness (Actor other, bool changeTarget, bool resetHealth = true);
-	native bool LookForPlayers(bool allaround);
+	native bool LookForMonsters();
+	native bool LookForTid(bool allaround, LookExParams params = null);
+	native bool LookForEnemies(bool allaround, LookExParams params = null);
+	native bool LookForPlayers(bool allaround, LookExParams params = null);
 	native bool TeleportMove(Vector3 pos, bool telefrag, bool modifyactor = true);
 	native double DistanceBySpeed(Actor other, double speed);
 	native name GetSpecies();
@@ -377,8 +413,13 @@ class Actor : Thinker native
 	native void Howl();
 	native void DrawSplash (int count, double angle, int kind);
 	native void GiveSecret(bool printmsg = true, bool playsound = true);
+	native void GetCameraHeight();
+	native void GetGravity();
 
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
+	native void AddInventory(Inventory inv);
+	native void RemoveInventory(Inventory inv);
+	native void ClearInventory();
 	native Inventory FindInventory(class<Inventory> itemtype, bool subclass = false);
 	native Inventory GiveInventoryType(class<Inventory> itemtype);
 	native Inventory DropInventory (Inventory item);

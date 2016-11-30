@@ -9,6 +9,7 @@ class Object native
 	native static vector3, int G_PickPlayerStart(int pnum, int flags = 0);
 	native static int GameType();
 	native static void S_Sound (Sound sound_id, int channel, float volume = 1, float attenuation = ATTN_NORM);
+	native static bool S_ChangeMusic(String music_name, int order = 0, bool looping = true, bool force = false);
 	native static void C_MidPrint(string fontname, string textlabel, bool bold = false);	// always uses the stringtable.
 	native static uint BAM(double angle);
 
@@ -180,6 +181,40 @@ struct F3DFloor native
 
 struct Line native
 {
+	enum ELineFlags
+	{
+		ML_BLOCKING					=0x00000001,	// solid, is an obstacle
+		ML_BLOCKMONSTERS			=0x00000002,	// blocks monsters only
+		ML_TWOSIDED					=0x00000004,	// backside will not be present at all if not two sided
+		ML_DONTPEGTOP				= 0x00000008,	// upper texture unpegged
+		ML_DONTPEGBOTTOM			= 0x00000010,	// lower texture unpegged
+		ML_SECRET					= 0x00000020,	// don't map as two sided: IT'S A SECRET!
+		ML_SOUNDBLOCK				= 0x00000040,	// don't let sound cross two of these
+		ML_DONTDRAW 				= 0x00000080,	// don't draw on the automap
+		ML_MAPPED					= 0x00000100,	// set if already drawn in automap
+		ML_REPEAT_SPECIAL			= 0x00000200,	// special is repeatable
+		ML_ADDTRANS					= 0x00000400,	// additive translucency (can only be set internally)
+
+		// Extended flags
+		ML_MONSTERSCANACTIVATE		= 0x00002000,	// [RH] Monsters (as well as players) can activate the line
+		ML_BLOCK_PLAYERS			= 0x00004000,
+		ML_BLOCKEVERYTHING			= 0x00008000,	// [RH] Line blocks everything
+		ML_ZONEBOUNDARY				= 0x00010000,
+		ML_RAILING					= 0x00020000,
+		ML_BLOCK_FLOATERS			= 0x00040000,
+		ML_CLIP_MIDTEX				= 0x00080000,	// Automatic for every Strife line
+		ML_WRAP_MIDTEX				= 0x00100000,
+		ML_3DMIDTEX					= 0x00200000,
+		ML_CHECKSWITCHRANGE			= 0x00400000,
+		ML_FIRSTSIDEONLY			= 0x00800000,	// activated only when crossed from front side
+		ML_BLOCKPROJECTILE			= 0x01000000,
+		ML_BLOCKUSE					= 0x02000000,	// blocks all use actions through this line
+		ML_BLOCKSIGHT				= 0x04000000,	// blocks monster line of sight
+		ML_BLOCKHITSCAN				= 0x08000000,	// blocks hitscan attacks
+		ML_3DMIDTEX_IMPASS			= 0x10000000,	// [TP] if 3D midtex, behaves like a height-restricted ML_BLOCKING
+	};
+
+
 	//native readonly vertex		v1, v2;		// vertices, from v1 to v2
 	native readonly Vector2			delta;		// precalculated v2 - v1 for side checking
 	native uint						flags;
@@ -411,6 +446,59 @@ class Floor : Thinker native
 		genFloorChg
 	};
 
-	native static bool CreateFloor(sector sec, EFloor floortype, line ln, double speed, double height = 0, int crush = -1, int change = 0, bool hexencrush = false, bool hereticlower = false);
+	native static bool CreateFloor(sector sec, EFloor floortype, line ln, double speed, double height = 0, int crush = -1, int change = 0, bool crushmode = false, bool hereticlower = false);
+}
+
+class Ceiling : Thinker native
+{
+	enum ECeiling
+	{
+		ceilLowerByValue,
+		ceilRaiseByValue,
+		ceilMoveToValue,
+		ceilLowerToHighestFloor,
+		ceilLowerInstant,
+		ceilRaiseInstant,
+		ceilCrushAndRaise,
+		ceilLowerAndCrush,
+		ceil_placeholder,
+		ceilCrushRaiseAndStay,
+		ceilRaiseToNearest,
+		ceilLowerToLowest,
+		ceilLowerToFloor,
+
+		// The following are only used by Generic_Ceiling
+		ceilRaiseToHighest,
+		ceilLowerToHighest,
+		ceilRaiseToLowest,
+		ceilLowerToNearest,
+		ceilRaiseToHighestFloor,
+		ceilRaiseToFloor,
+		ceilRaiseByTexture,
+		ceilLowerByTexture,
+
+		genCeilingChg0,
+		genCeilingChgT,
+		genCeilingChg
+	}
+
+	enum ECrushMode
+	{
+		crushDoom = 0,
+		crushHexen = 1,
+		crushSlowdown = 2
+	}
+	
+	native bool CreateCeiling(sector sec, int type, line ln, double speed, double speed2, double height = 0, int crush = -1, int silent = 0, int change = 0, int crushmode = crushDoom);
 	
 }
+
+struct LookExParams
+{
+	double Fov;
+	double minDist;
+	double maxDist;
+	double maxHeardist;
+	int flags;
+	State seestate;
+};

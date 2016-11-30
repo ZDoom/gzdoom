@@ -77,6 +77,18 @@ class PlayerPawn : Actor native
 		Obituary "$OB_MPDEFAULT";
 	}
 	
+	virtual void PlayIdle ()
+	{
+		if (InStateSequence(CurState, SeeState))
+			SetState (SpawnState);
+	}
+
+	virtual void PlayRunning ()
+	{
+		if (InStateSequence(CurState, SpawnState) && SeeState != NULL)
+			SetState (SeeState);
+	}
+	
 	virtual void PlayAttacking ()
 	{
 		if (MissileState != null) SetState (MissileState);
@@ -92,6 +104,7 @@ class PlayerPawn : Actor native
 	}
 
 	native int GetMaxHealth();
+	native bool ResetAirSupply (bool playgasp = false);
 }
 
 class PlayerChunk : PlayerPawn native

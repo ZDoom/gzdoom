@@ -845,8 +845,7 @@ void AWeapon::CallEndPowerup()
 	{
 		// Without the type cast this picks the 'void *' assignment...
 		VMValue params[1] = { (DObject*)this };
-		VMFrameStack stack;
-		stack.Call(func, params, 1, nullptr, 0, nullptr);
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
 	}
 	else EndPowerup();
 }
@@ -864,10 +863,9 @@ FState *AWeapon::GetUpState ()
 	{
 		VMValue params[1] = { (DObject*)this };
 		VMReturn ret;
-		VMFrameStack stack;
 		FState *retval;
 		ret.PointerAt((void**)&retval);
-		stack.Call(func, params, 1, &ret, 1, nullptr);
+		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
 		return retval;
 	}
 	return nullptr;
@@ -885,10 +883,9 @@ FState *AWeapon::GetDownState ()
 	{
 		VMValue params[1] = { (DObject*)this };
 		VMReturn ret;
-		VMFrameStack stack;
 		FState *retval;
 		ret.PointerAt((void**)&retval);
-		stack.Call(func, params, 1, &ret, 1, nullptr);
+		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
 		return retval;
 	}
 	return nullptr;
@@ -906,10 +903,9 @@ FState *AWeapon::GetReadyState ()
 	{
 		VMValue params[1] = { (DObject*)this };
 		VMReturn ret;
-		VMFrameStack stack;
 		FState *retval;
 		ret.PointerAt((void**)&retval);
-		stack.Call(func, params, 1, &ret, 1, nullptr);
+		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
 		return retval;
 	}
 	return nullptr;
@@ -927,10 +923,9 @@ FState *AWeapon::GetAtkState (bool hold)
 	{
 		VMValue params[2] = { (DObject*)this, hold };
 		VMReturn ret;
-		VMFrameStack stack;
 		FState *retval;
 		ret.PointerAt((void**)&retval);
-		stack.Call(func, params, 2, &ret, 1, nullptr);
+		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
 		return retval;
 	}
 	return nullptr;
@@ -948,10 +943,9 @@ FState *AWeapon::GetAltAtkState (bool hold)
 	{
 		VMValue params[2] = { (DObject*)this, hold };
 		VMReturn ret;
-		VMFrameStack stack;
 		FState *retval;
 		ret.PointerAt((void**)&retval);
-		stack.Call(func, params, 2, &ret, 1, nullptr);
+		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
 		return retval;
 	}
 	return nullptr;

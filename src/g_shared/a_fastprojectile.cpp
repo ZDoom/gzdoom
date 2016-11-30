@@ -139,8 +139,7 @@ void AFastProjectile::Tick ()
 				{
 					// Without the type cast this picks the 'void *' assignment...
 					VMValue params[1] = { (DObject*)this };
-					VMFrameStack stack;
-					stack.Call(func, params, 1, nullptr, 0, nullptr);
+					GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
 				}
 			}
 		}

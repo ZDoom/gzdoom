@@ -22,7 +22,6 @@
 #include "virtual.h"
 #include "a_ammo.h"
 
-static FRandom pr_restore ("RestorePos");
 EXTERN_CVAR(Bool, sv_unlimited_pickup)
 
 IMPLEMENT_CLASS(PClassInventory, false, false)
@@ -134,63 +133,6 @@ DEFINE_ACTION_FUNCTION(AInventory, A_RestoreSpecialDoomThing)
 		S_Sound (self, CHAN_VOICE, "misc/spawn", 1, ATTN_IDLE);
 		Spawn ("ItemFog", self->Pos(), ALLOW_REPLACE);
 	}
-	return 0;
-}
-
-//---------------------------------------------------------------------------
-//
-// PROP A_RestoreSpecialPosition
-//
-//---------------------------------------------------------------------------
-
-DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-
-	// Move item back to its original location
-	DVector2 sp = self->SpawnPoint;
-
-	self->UnlinkFromWorld();
-	self->SetXY(sp);
-	self->LinkToWorld(true);
-	self->SetZ(self->Sector->floorplane.ZatPoint(sp));
-	P_FindFloorCeiling(self, FFCF_ONLYSPAWNPOS | FFCF_NOPORTALS);	// no portal checks here so that things get spawned in this sector.
-
-	if (self->flags & MF_SPAWNCEILING)
-	{
-		self->SetZ(self->ceilingz - self->Height - self->SpawnPoint.Z);
-	}
-	else if (self->flags2 & MF2_SPAWNFLOAT)
-	{
-		double space = self->ceilingz - self->Height - self->floorz;
-		if (space > 48)
-		{
-			space -= 40;
-			self->SetZ((space * pr_restore()) / 256. + self->floorz + 40);
-		}
-		else
-		{
-			self->SetZ(self->floorz);
-		}
-	}
-	else
-	{
-		self->SetZ(self->SpawnPoint.Z + self->floorz);
-	}
-	// Redo floor/ceiling check, in case of 3D floors and portals
-	P_FindFloorCeiling(self, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
-	if (self->Z() < self->floorz)
-	{ // Do not reappear under the floor, even if that's where we were for the
-	  // initial spawn.
-		self->SetZ(self->floorz);
-	}
-	if ((self->flags & MF_SOLID) && (self->Top() > self->ceilingz))
-	{ // Do the same for the ceiling.
-		self->SetZ(self->ceilingz - self->Height);
-	}
-	// Do not interpolate from the position the actor was at when it was
-	// picked up, in case that is different from where it is now.
-	self->ClearInterpolation();
 	return 0;
 }
 
@@ -322,10 +264,9 @@ bool AInventory::CallSpecialDropAction(AActor *dropper)
 	{
 		VMValue params[2] = { (DObject*)this, (DObject*)dropper };
 		VMReturn ret;
-		VMFrameStack stack;
 		int retval;
 		ret.IntAt(&retval);
-		stack.Call(func, params, 2, &ret, 1, nullptr);
+		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
 		return !!retval;
 	}
 	return SpecialDropAction(dropper);
@@ -412,7 +353,7 @@ void AInventory::CallDoEffect()
 	{
 		VMValue params[1] = { (DObject*)this };
 		VMFrameStack stack;
-		stack.Call(func, params, 1, nullptr, 0, nullptr);
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
 	}
 	else DoEffect();
 }
@@ -495,10 +436,9 @@ bool AInventory::CallHandlePickup(AInventory *item)
 			// Without the type cast this picks the 'void *' assignment...
 			VMValue params[2] = { (DObject*)self, (DObject*)item };
 			VMReturn ret;
-			VMFrameStack stack;
 			int retval;
 			ret.IntAt(&retval);
-			stack.Call(func, params, 2, &ret, 1, nullptr);
+			GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
 			if (retval) return true;
 		}
 		else if (self->HandlePickup(item)) return true;
@@ -604,10 +544,9 @@ AInventory *AInventory::CallCreateCopy(AActor *other)
 	{
 		VMValue params[2] = { (DObject*)this, (DObject*)other };
 		VMReturn ret;
-		VMFrameStack stack;
 		AInventory *retval;
 		ret.PointerAt((void**)&retval);
-		stack.Call(func, params, 2, &ret, 1, nullptr);
+		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
 		return retval;
 	}
 	else return CreateCopy(other);
@@ -670,10 +609,9 @@ AInventory *AInventory::CallCreateTossable()
 	{
 		VMValue params[1] = { (DObject*)this };
 		VMReturn ret;
-		VMFrameStack stack;
 		AInventory *retval;
 		ret.PointerAt((void**)&retval);
-		stack.Call(func, params, 1, &ret, 1, nullptr);
+		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
 		return retval;
 	}
 	else return CreateTossable();
@@ -805,10 +743,9 @@ double AInventory::GetSpeedFactor()
 		{
 			VMValue params[2] = { (DObject*)self };
 			VMReturn ret;
-			VMFrameStack stack;
 			double retval;
 			ret.FloatAt(&retval);
-			stack.Call(func, params, 1, &ret, 1, nullptr);
+			GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
 			factor *= retval;
 		}
 		self = self->Inventory;
@@ -831,10 +768,9 @@ bool AInventory::GetNoTeleportFreeze ()
 		{
 			VMValue params[2] = { (DObject*)self };
 			VMReturn ret;
-			VMFrameStack stack;
 			int retval;
 			ret.IntAt(&retval);
-			stack.Call(func, params, 1, &ret, 1, nullptr);
+			GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
 			if (retval) return true;
 		}
 		self = self->Inventory;
@@ -884,10 +820,9 @@ bool AInventory::CallUse(bool pickup)
 	{
 		VMValue params[2] = { (DObject*)this, pickup };
 		VMReturn ret;
-		VMFrameStack stack;
 		int retval;
 		ret.IntAt(&retval);
-		stack.Call(func, params, 2, &ret, 1, nullptr);
+		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
 		return !!retval;
 
 	}
@@ -1090,10 +1025,9 @@ FString AInventory::GetPickupMessage()
 	{
 		VMValue params[1] = { (DObject*)this };
 		VMReturn ret;
-		VMFrameStack stack;
 		FString retval;
 		ret.StringAt(&retval);
-		stack.Call(func, params, 1, &ret, 1, nullptr);
+		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
 		return retval;
 	}
 	else return PickupMessage();
@@ -1150,8 +1084,7 @@ void AInventory::CallPlayPickupSound(AActor *other)
 	IFVIRTUAL(AInventory, PlayPickupSound)
 	{
 		VMValue params[2] = { (DObject*)this, (DObject*)other };
-		VMFrameStack stack;
-		stack.Call(func, params, 2, nullptr, 0, nullptr);
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
 	}
 	else PlayPickupSound(other);
 }
@@ -1182,10 +1115,9 @@ bool AInventory::CallShouldStay()
 	{
 		VMValue params[1] = { (DObject*)this };
 		VMReturn ret;
-		VMFrameStack stack;
 		int retval;
 		ret.IntAt(&retval);
-		stack.Call(func, params, 1, &ret, 1, nullptr);
+		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
 		return !!retval;
 	}
 	else return ShouldStay();
@@ -1264,10 +1196,9 @@ PalEntry AInventory::CallGetBlend()
 	{
 		VMValue params[1] = { (DObject*)this };
 		VMReturn ret;
-		VMFrameStack stack;
 		int retval;
 		ret.IntAt(&retval);
-		stack.Call(func, params, 1, &ret, 1, nullptr);
+		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
 		return retval;
 	}
 	else return GetBlend();
@@ -1521,10 +1452,9 @@ bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 		{
 			VMValue params[2] = { (DObject*)this, (void*)&toucher };
 			VMReturn ret;
-			VMFrameStack stack;
 			int retval;
 			ret.IntAt(&retval);
-			stack.Call(func, params, 2, &ret, 1, nullptr);
+			GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
 			res = !!retval;
 		}
 		else res = TryPickup(toucher);
@@ -1536,10 +1466,9 @@ bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 		{
 			VMValue params[2] = { (DObject*)this, (void*)&toucher };
 			VMReturn ret;
-			VMFrameStack stack;
 			int retval;
 			ret.IntAt(&retval);
-			stack.Call(func, params, 2, &ret, 1, nullptr);
+			GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
 			res = !!retval;
 		}
 		else res = TryPickupRestricted(toucher);
@@ -1687,8 +1616,7 @@ void AInventory::CallAttachToOwner(AActor *other)
 	IFVIRTUAL(AInventory, AttachToOwner)
 	{
 		VMValue params[2] = { (DObject*)this, (DObject*)other };
-		VMFrameStack stack;
-		stack.Call(func, params, 2, nullptr, 0, nullptr);
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
 	}
 	else AttachToOwner(other);
 }
@@ -1719,8 +1647,7 @@ void AInventory::CallDetachFromOwner()
 	IFVIRTUAL(AInventory, DetachFromOwner)
 	{
 		VMValue params[1] = { (DObject*)this };
-		VMFrameStack stack;
-		stack.Call(func, params, 1, nullptr, 0, nullptr);
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
 	}
 	else DetachFromOwner();
 }

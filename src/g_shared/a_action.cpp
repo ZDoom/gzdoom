@@ -121,35 +121,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeath)
 	return 0;
 }
 
-//==========================================================================
-//
-// A_GenericFreezeDeath
-//
-//==========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_GenericFreezeDeath)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-
-	self->Translation = TRANSLATION(TRANSLATION_Standard, 7);
-	CALL_ACTION(A_FreezeDeath, self);
-	return 0;
-}
-
 //============================================================================
 //
 // A_IceSetTics
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_IceSetTics)
+void IceSetTics(AActor *self)
 {
-	PARAM_SELF_PROLOGUE(AActor);
 
 	int floor;
 
-	self->tics = 70+(pr_icesettics()&63);
-	floor = P_GetThingFloorType (self);
+	self->tics = 70 + (pr_icesettics() & 63);
+	floor = P_GetThingFloorType(self);
 	if (Terrains[floor].DamageMOD == NAME_Fire)
 	{
 		self->tics >>= 2;
@@ -158,6 +142,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceSetTics)
 	{
 		self->tics <<= 1;
 	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, A_IceSetTics)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	IceSetTics(self);
 	return 0;
 }
 
@@ -203,7 +193,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 			mo->Vel.X = pr_freeze.Random2() / 128.;
 			mo->Vel.Y = pr_freeze.Random2() / 128.;
 			mo->Vel.Z = (mo->Z() - self->Z()) / self->Height * 4;
-			CALL_ACTION(A_IceSetTics, mo); // set a random tic wait
+			IceSetTics(mo); // set a random tic wait
 			mo->RenderStyle = self->RenderStyle;
 			mo->Alpha = self->Alpha;
 		}

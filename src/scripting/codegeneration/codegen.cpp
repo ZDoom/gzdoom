@@ -4228,7 +4228,7 @@ PPrototype *FxTypeCheck::ReturnProto()
 //
 //==========================================================================
 
-int BuiltinTypeCheck(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+int BuiltinTypeCheck(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam == 2);
 	PARAM_POINTER_AT(0, obj, DObject);
@@ -5030,7 +5030,7 @@ FxExpression *FxRandom::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-int BuiltinRandom(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+int BuiltinRandom(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam >= 1 && numparam <= 3);
 	FRandom *rng = reinterpret_cast<FRandom *>(param[0].a);
@@ -5284,7 +5284,7 @@ FxFRandom::FxFRandom(FRandom *r, FxExpression *mi, FxExpression *ma, const FScri
 //
 //==========================================================================
 
-int BuiltinFRandom(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+int BuiltinFRandom(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam == 1 || numparam == 3);
 	FRandom *rng = reinterpret_cast<FRandom *>(param[0].a);
@@ -7558,7 +7558,7 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-int BuiltinCallLineSpecial(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+int BuiltinCallLineSpecial(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam > 2 && numparam < 8);
 	assert(param[0].Type == REGT_INT);
@@ -9518,7 +9518,7 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-int BuiltinNameToClass(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+int BuiltinNameToClass(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam == 2);
 	assert(numret == 1);
@@ -9650,7 +9650,7 @@ FxExpression *FxClassPtrCast::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-int BuiltinClassCast(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
+int BuiltinClassCast(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
 	PARAM_PROLOGUE;
 	PARAM_CLASS(from, DObject);

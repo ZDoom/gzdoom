@@ -667,6 +667,8 @@ public:
 	// Plays the actor's ActiveSound if its voice isn't already making noise.
 	void PlayActiveSound ();
 
+	void RestoreSpecialPosition();
+
 	// Called by PIT_CheckThing() and needed for some Hexen things.
 	// Returns -1 for normal behavior, 0 to return false, and 1 to return true.
 	// I'm not sure I like it this way, but it will do for now.

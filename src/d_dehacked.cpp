@@ -174,8 +174,6 @@ struct AmmoPerAttack
 	VMFunction *ptr;
 };
 
-DECLARE_ACTION(A_Punch)
-
 // Default ammo use of the various weapon attacks
 static AmmoPerAttack AmmoPerAttacks[] = {
 	{ NAME_A_Punch, 0},

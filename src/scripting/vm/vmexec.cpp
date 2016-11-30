@@ -146,6 +146,12 @@ VMExec_Checked::Exec
 #endif
 ;
 
+// Note: If the VM is being used in multiple threads, this should be declared as thread_local.
+// ZDoom doesn't need this at the moment so this is disabled.
+
+thread_local VMFrameStack GlobalVMStack;
+
+
 //===========================================================================
 //
 // VMSelectEngine

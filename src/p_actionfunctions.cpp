@@ -148,7 +148,6 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 				state->ActionFunc = nullptr;
 			}
 
-			VMFrameStack stack;
 			PPrototype *proto = state->ActionFunc->Proto;
 			VMReturn *wantret;
 			FStateParamInfo stp = { state, STATE_StateChain, PSP_WEAPON };
@@ -184,7 +183,7 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 					numret = 2;
 				}
 			}
-			stack.Call(state->ActionFunc, params, state->ActionFunc->ImplicitArgs, wantret, numret);
+			GlobalVMStack.Call(state->ActionFunc, params, state->ActionFunc->ImplicitArgs, wantret, numret);
 			// As long as even one state succeeds, the whole chain succeeds unless aborted below.
 			// A state that wants to jump does not count as "succeeded".
 			if (nextstate == NULL)
@@ -3802,8 +3801,6 @@ static void CheckStopped(AActor *self)
 //
 //===========================================================================
 
-DECLARE_ACTION(A_RestoreSpecialPosition)
-
 enum RS_Flags
 {
 	RSF_FOG=1,
@@ -3822,7 +3819,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Respawn)
 	self->flags |= MF_SOLID;
 	self->Height = self->GetDefault()->Height;
 	self->radius = self->GetDefault()->radius;
-	CALL_ACTION(A_RestoreSpecialPosition, self);
+	self->RestoreSpecialPosition();
 
 	if (flags & RSF_TELEFRAG)
 	{

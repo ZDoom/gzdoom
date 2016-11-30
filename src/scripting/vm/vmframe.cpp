@@ -422,12 +422,13 @@ VMFrame *VMFrameStack::PopFrame()
 
 int VMFrameStack::Call(VMFunction *func, VMValue *params, int numparams, VMReturn *results, int numresults, VMException **trap)
 {
+	assert(this == VMGlobalStack);	// why would anyone even want to create a local stack?
 	bool allocated = false;
 	try
 	{	
 		if (func->Native)
 		{
-			return static_cast<VMNativeFunction *>(func)->NativeCall(this, params, func->DefaultArgs, numparams, results, numresults);
+			return static_cast<VMNativeFunction *>(func)->NativeCall(params, func->DefaultArgs, numparams, results, numresults);
 		}
 		else
 		{
@@ -502,12 +503,4 @@ int VMFrameStack::Call(VMFunction *func, VMValue *params, int numparams, VMRetur
 		}
 		throw;
 	}
-}
-
-class AActor;
-void CallAction(VMFrameStack *stack, VMFunction *vmfunc, AActor *self)
-{
-	// Without the type cast this picks the 'void *' assignment...
-	VMValue params[3] = { (DObject*)self, (DObject*)self, VMValue(nullptr, ATAG_GENERIC) };
-	stack->Call(vmfunc, params, vmfunc->ImplicitArgs, nullptr, 0, nullptr);
 }

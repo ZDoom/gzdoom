@@ -867,7 +867,7 @@ class VMNativeFunction : public VMFunction
 {
 	DECLARE_CLASS(VMNativeFunction, VMFunction);
 public:
-	typedef int (*NativeCallType)(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret);
+	typedef int (*NativeCallType)(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret);
 
 	VMNativeFunction() : NativeCall(NULL) { Native = true; }
 	VMNativeFunction(NativeCallType call) : NativeCall(call) { Native = true; }
@@ -930,6 +930,9 @@ enum EVMEngine
 	VMEngine_Checked
 };
 
+extern thread_local VMFrameStack GlobalVMStack;
+
+
 void VMSelectEngine(EVMEngine engine);
 extern int (*VMExec)(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret);
 void VMFillParams(VMValue *params, VMFrame *callee, int numparam);
@@ -938,8 +941,8 @@ void VMDumpConstants(FILE *out, const VMScriptFunction *func);
 void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction *func);
 
 // Use this in the prototype for a native function.
-#define VM_ARGS			VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret
-#define VM_ARGS_NAMES	stack, param, defaultparam, numparam, ret, numret
+#define VM_ARGS			VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret
+#define VM_ARGS_NAMES	param, defaultparam, numparam, ret, numret
 
 // Use these to collect the parameters in a native function.
 // variable name <x> at position <p>
@@ -1012,7 +1015,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_OBJECT_DEF(x,type)	++paramnum; PARAM_OBJECT_DEF_AT(paramnum,x,type)
 #define PARAM_CLASS_DEF(x,base)		++paramnum; PARAM_CLASS_DEF_AT(paramnum,x,base)
 
-typedef int(*actionf_p)(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret);/*(VM_ARGS)*/
+typedef int(*actionf_p)(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret);/*(VM_ARGS)*/
 
 struct FieldDesc
 {
@@ -1048,7 +1051,6 @@ struct AFuncDesc
 
 // Macros to handle action functions. These are here so that I don't have to
 // change every single use in case the parameters change.
-#define DECLARE_ACTION(name)	extern VMNativeFunction *AActor_##name##_VMPtr;
 
 #define DEFINE_ACTION_FUNCTION(cls, name) \
 	static int AF_##cls##_##name(VM_ARGS); \
@@ -1090,8 +1092,6 @@ struct AFuncDesc
 	MSVC_FSEG FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr GCC_FSEG = &VMField_##cls##_##scriptname;
 
 class AActor;
-void CallAction(VMFrameStack *stack, VMFunction *vmfunc, AActor *self);
-#define CALL_ACTION(name, self) CallAction(stack, AActor_##name##_VMPtr, self);
 
 
 #define ACTION_RETURN_STATE(v) do { FState *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_STATE); return 1; } return 0; } while(0)

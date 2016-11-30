@@ -489,11 +489,10 @@ void cht_DoCheat (player_t *player, int cheat)
 			if (gsp)
 			{
 				VMValue params[1] = { player->mo };
-				VMFrameStack stack;
 				VMReturn ret;
 				int oldpieces = 1;
 				ret.IntAt(&oldpieces);
-				stack.Call(gsp, params, 1, &ret, 1, nullptr);
+				GlobalVMStack.Call(gsp, params, 1, &ret, 1, nullptr);
 				item = player->mo->FindInventory(PClass::FindActor(NAME_Sigil));
 
 				if (item != NULL)

@@ -2285,12 +2285,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_Wander)
 	return 0;
 }
 
-// [MC] I had to move this out from within A_Wander in order to allow flags to 
-// pass into it. That meant replacing the CALL_ACTION(A_Wander) functions with
-// just straight up defining A_Wander in order to compile. Looking around though,
-// actors from the games themselves just do a straight A_Chase call itself so
-// I saw no harm in it.
-
 void A_Wander(AActor *self, int flags)
 {
 	// [RH] Strife probably clears this flag somewhere, but I couldn't find where.
@@ -2403,7 +2397,7 @@ nosee:
 //=============================================================================
 #define CLASS_BOSS_STRAFE_RANGE	64*10
 
-void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *meleestate, FState *missilestate, bool playactive, bool nightmarefast, bool dontmove, int flags)
+void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missilestate, bool playactive, bool nightmarefast, bool dontmove, int flags)
 {
 
 	if (actor->flags5 & MF5_INCONVERSATION)
@@ -2533,7 +2527,7 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 		{
 			if (actor->flags & MF_FRIENDLY)
 			{
-				//CALL_ACTION(A_Look, actor);
+				//A_Look(actor);
 				if (actor->target == NULL)
 				{
 					if (!dontmove) A_Wander(actor);
@@ -2931,12 +2925,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_Chase)
 		if ((flags & CHF_RESURRECT) && P_CheckForResurrection(self, false))
 			return 0;
 		
-		A_DoChase(stack, self, !!(flags&CHF_FASTCHASE), melee, missile, !(flags&CHF_NOPLAYACTIVE), 
+		A_DoChase(self, !!(flags&CHF_FASTCHASE), melee, missile, !(flags&CHF_NOPLAYACTIVE), 
 					!!(flags&CHF_NIGHTMAREFAST), !!(flags&CHF_DONTMOVE), flags);
 	}
 	else // this is the old default A_Chase
 	{
-		A_DoChase(stack, self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, flags);
+		A_DoChase(self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, flags);
 	}
 	return 0;
 }
@@ -2944,7 +2938,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Chase)
 DEFINE_ACTION_FUNCTION(AActor, A_FastChase)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	A_DoChase(stack, self, true, self->MeleeState, self->MissileState, true, true, false, 0);
+	A_DoChase(self, true, self->MeleeState, self->MissileState, true, true, false, 0);
 	return 0;
 }
 
@@ -2953,7 +2947,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VileChase)
 	PARAM_SELF_PROLOGUE(AActor);
 	if (!P_CheckForResurrection(self, true))
 	{
-		A_DoChase(stack, self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
+		A_DoChase(self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
 	}
 	return 0;
 }
@@ -2967,16 +2961,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_ExtChase)
 	PARAM_BOOL_DEF	(nightmarefast);
 
 	// Now that A_Chase can handle state label parameters, this function has become rather useless...
-	A_DoChase(stack, self, false,
+	A_DoChase(self, false,
 		domelee ? self->MeleeState : NULL, domissile ? self->MissileState : NULL,
 		playactive, nightmarefast, false, 0);
 	return 0;
 }
 
 // for internal use
-void A_Chase(VMFrameStack *stack, AActor *self)
+void A_Chase(AActor *self)
 {
-	A_DoChase(stack, self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
+	A_DoChase(self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
 }
 
 //=============================================================================

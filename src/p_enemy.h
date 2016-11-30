@@ -60,18 +60,10 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params);
 void A_Weave(AActor *self, int xyspeed, int zspeed, double xydist, double zdist);
 void A_Unblock(AActor *self, bool drop);
 
-DECLARE_ACTION(A_Look)
-DECLARE_ACTION(A_BossDeath)
-DECLARE_ACTION(A_Pain)
-DECLARE_ACTION(A_MonsterRail)
-DECLARE_ACTION(A_NoBlocking)
-DECLARE_ACTION(A_Scream)
-DECLARE_ACTION(A_FreezeDeath)
-DECLARE_ACTION(A_FreezeDeathChunks)
 void A_BossDeath(AActor *self);
 
 void A_Wander(AActor *self, int flags = 0);
-void A_Chase(VMFrameStack *stack, AActor *self);
+void A_Chase(AActor *self);
 void A_FaceTarget(AActor *actor);
 void A_Face(AActor *self, AActor *other, DAngle max_turn = 0., DAngle max_pitch = 270., DAngle ang_offset = 0., DAngle pitch_offset = 0., int flags = 0, double z_add = 0);
 

@@ -2362,7 +2362,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				{
 					if (vindex != -1)
 					{
-						Error(p, "Function %s attempts to override parent function without 'override' qualifier", FName(f->Name).GetChars());
+						Error(f, "Function %s attempts to override parent function without 'override' qualifier", FName(f->Name).GetChars());
 					}
 					sym->Variants[0].Implementation->VirtualIndex = clstype->Virtuals.Push(sym->Variants[0].Implementation);
 				}
@@ -3266,4 +3266,8 @@ FArgumentList &ZCCCompiler::ConvertNodeList(FArgumentList &args, ZCC_TreeNode *h
 		} while (node != head);
 	}
 	return args;
+}
+
+void func()
+{
 }

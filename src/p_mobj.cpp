@@ -1494,8 +1494,7 @@ void AActor::CallTouch(AActor *toucher)
 	IFVIRTUAL(AActor, Touch)
 	{
 		VMValue params[2] = { (DObject*)this, toucher };
-		VMFrameStack stack;
-		stack.Call(func, params, 2, nullptr, 0, nullptr);
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
 	}
 	else Touch(toucher);
 }
@@ -3360,7 +3359,6 @@ int AActor::GetMissileDamage (int mask, int add)
 		assert(false && "No damage function found");
 		return 0;
 	}
-	VMFrameStack stack;
 	VMValue param = this;
 	VMReturn result;
 
@@ -3368,7 +3366,7 @@ int AActor::GetMissileDamage (int mask, int add)
 
 	result.IntAt(&amount);
 
-	if (stack.Call(DamageFunc, &param, 1, &result, 1) < 1)
+	if (GlobalVMStack.Call(DamageFunc, &param, 1, &result, 1) < 1)
 	{ // No results
 		return 0;
 	}
@@ -3431,10 +3429,9 @@ bool AActor::CallSlam(AActor *thing)
 	{
 		VMValue params[2] = { (DObject*)this, thing };
 		VMReturn ret;
-		VMFrameStack stack;
 		int retval;
 		ret.IntAt(&retval);
-		stack.Call(func, params, 2, &ret, 1, nullptr);
+		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
 		return !!retval;
 
 	}
@@ -3451,9 +3448,8 @@ int AActor::SpecialMissileHit (AActor *victim)
 		VMValue params[2] = { (DObject*)this, victim };
 		VMReturn ret;
 		int retval;
-		VMFrameStack stack;
 		ret.IntAt(&retval);
-		stack.Call(func, params, 2, &ret, 1, nullptr);
+		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
 		return retval;
 	}
 	else return -1;
@@ -4777,8 +4773,7 @@ void AActor::CallBeginPlay()
 	{
 		// Without the type cast this picks the 'void *' assignment...
 		VMValue params[1] = { (DObject*)this };
-		VMFrameStack stack;
-		stack.Call(func, params, 1, nullptr, 0, nullptr);
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
 	}
 	else BeginPlay();
 }
@@ -4859,8 +4854,7 @@ void AActor::CallActivate(AActor *activator)
 	{
 		// Without the type cast this picks the 'void *' assignment...
 		VMValue params[2] = { (DObject*)this, (DObject*)activator };
-		VMFrameStack stack;
-		stack.Call(func, params, 2, nullptr, 0, nullptr);
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
 	}
 	else Activate(activator);
 }
@@ -4906,8 +4900,7 @@ void AActor::CallDeactivate(AActor *activator)
 	{
 		// Without the type cast this picks the 'void *' assignment...
 		VMValue params[2] = { (DObject*)this, (DObject*)activator };
-		VMFrameStack stack;
-		stack.Call(func, params, 2, nullptr, 0, nullptr);
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
 	}
 	else Deactivate(activator);
 }
@@ -7076,10 +7069,9 @@ int AActor::CallDoSpecialDamage(AActor *target, int damage, FName damagetype)
 		// Without the type cast this picks the 'void *' assignment...
 		VMValue params[4] = { (DObject*)this, (DObject*)target, damage, damagetype.GetIndex() };
 		VMReturn ret;
-		VMFrameStack stack;
 		int retval;
 		ret.IntAt(&retval);
-		stack.Call(func, params, 4, &ret, 1, nullptr);
+		GlobalVMStack.Call(func, params, 4, &ret, 1, nullptr);
 		return retval;
 	}
 	else return DoSpecialDamage(target, damage, damagetype);
@@ -7142,10 +7134,9 @@ int AActor::CallTakeSpecialDamage(AActor *inflictor, AActor *source, int damage,
 	{
 		VMValue params[5] = { (DObject*)this, inflictor, source, damage, damagetype.GetIndex() };
 		VMReturn ret;
-		VMFrameStack stack;
 		int retval;
 		ret.IntAt(&retval);
-		stack.Call(func, params, 5, &ret, 1, nullptr);
+		GlobalVMStack.Call(func, params, 5, &ret, 1, nullptr);
 		return retval;
 	}
 	else return TakeSpecialDamage(inflictor, source, damage, damagetype);
@@ -7467,6 +7458,70 @@ void AActor::SetTranslation(FName trname)
 	}
 	// silently ignore if the name does not exist, this would create some insane message spam otherwise.
 }
+
+//---------------------------------------------------------------------------
+//
+// PROP A_RestoreSpecialPosition
+//
+//---------------------------------------------------------------------------
+static FRandom pr_restore("RestorePos");
+
+void AActor::RestoreSpecialPosition()
+{
+	// Move item back to its original location
+	DVector2 sp = SpawnPoint;
+
+	UnlinkFromWorld();
+	SetXY(sp);
+	LinkToWorld(true);
+	SetZ(Sector->floorplane.ZatPoint(sp));
+	P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS | FFCF_NOPORTALS);	// no portal checks here so that things get spawned in this sector.
+
+	if (flags & MF_SPAWNCEILING)
+	{
+		SetZ(ceilingz - Height - SpawnPoint.Z);
+	}
+	else if (flags2 & MF2_SPAWNFLOAT)
+	{
+		double space = ceilingz - Height - floorz;
+		if (space > 48)
+		{
+			space -= 40;
+			SetZ((space * pr_restore()) / 256. + floorz + 40);
+		}
+		else
+		{
+			SetZ(floorz);
+		}
+	}
+	else
+	{
+		SetZ(SpawnPoint.Z + floorz);
+	}
+	// Redo floor/ceiling check, in case of 3D floors and portals
+	P_FindFloorCeiling(this, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
+	if (Z() < floorz)
+	{ // Do not reappear under the floor, even if that's where we were for the
+	  // initial spawn.
+		SetZ(floorz);
+	}
+	if ((flags & MF_SOLID) && (Top() > ceilingz))
+	{ // Do the same for the ceiling.
+		SetZ(ceilingz - Height);
+	}
+	// Do not interpolate from the position the actor was at when it was
+	// picked up, in case that is different from where it is now.
+	ClearInterpolation();
+}
+
+DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->RestoreSpecialPosition();
+	return 0;
+}
+
+
 
 
 class DActorIterator : public DObject, public NActorIterator

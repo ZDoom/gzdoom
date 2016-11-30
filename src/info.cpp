@@ -75,7 +75,6 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 	{
 		ActionCycles.Clock();
 
-		VMFrameStack stack;
 		VMValue params[3] = { self, stateowner, VMValue(info, ATAG_GENERIC) };
 		// If the function returns a state, store it at *stateret.
 		// If it doesn't return a state but stateret is non-NULL, we need
@@ -92,13 +91,13 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 		}
 		if (stateret == NULL)
 		{
-			stack.Call(ActionFunc, params, ActionFunc->ImplicitArgs, NULL, 0, NULL);
+			GlobalVMStack.Call(ActionFunc, params, ActionFunc->ImplicitArgs, NULL, 0, NULL);
 		}
 		else
 		{
 			VMReturn ret;
 			ret.PointerAt((void **)stateret);
-			stack.Call(ActionFunc, params, ActionFunc->ImplicitArgs, &ret, 1, NULL);
+			GlobalVMStack.Call(ActionFunc, params, ActionFunc->ImplicitArgs, &ret, 1, NULL);
 		}
 		ActionCycles.Unclock();
 		return true;

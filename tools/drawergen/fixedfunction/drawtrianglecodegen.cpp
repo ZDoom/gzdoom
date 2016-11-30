@@ -204,7 +204,7 @@ void DrawTriangleCodegen::LoopBlockX()
 	stack_x.store(minx);
 	stack_posx_w.store(posy_w);
 	for (int i = 0; i < TriVertex::NumVarying; i++)
-		stack_posx_varying[i].store(stack_posy_varying[i].load());
+		stack_posx_varying[i].store(posy_varying[i]);
 
 	SSAForBlock loop;
 	x = stack_x.load();
@@ -277,7 +277,7 @@ void DrawTriangleCodegen::LoopBlockX()
 void DrawTriangleCodegen::SetupAffineBlock()
 {
 	// Calculate varying variables for affine block
-	SSAVec4f rcpW = SSAVec4f::rcp(SSAVec4f(posx_w, posx_w + gradWX, posx_w + gradWY, posx_w + gradWX + gradWY));
+	SSAVec4f rcpW = SSAVec4f(1.0f) / SSAVec4f(posx_w, posx_w + gradWX, posx_w + gradWY, posx_w + gradWX + gradWY);
 	for (int i = 0; i < TriVertex::NumVarying; i++)
 	{
 		// Top left, top right, bottom left, bottom right:

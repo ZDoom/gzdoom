@@ -248,7 +248,7 @@ public:
 	PClassActor();
 	~PClassActor();
 
-	virtual void ReplaceClassRef(PClass *oldclass, PClass *newclass);
+	virtual size_t PointerSubstitution(DObject *oldclass, DObject *newclass);
 	void BuildDefaults();
 	void ApplyDefaults(BYTE *defaults);
 	void RegisterIDs();

@@ -613,7 +613,14 @@ void InitAllPowerupEffects(AInventory *item)
 
 // Base class for morphing projectiles --------------------------------------
 
-IMPLEMENT_CLASS(AMorphProjectile, false, false)
+IMPLEMENT_CLASS(AMorphProjectile, false, true)
+
+IMPLEMENT_POINTERS_START(AMorphProjectile)
+	IMPLEMENT_POINTER(PlayerClass)
+	IMPLEMENT_POINTER(MonsterClass)
+	IMPLEMENT_POINTER(MorphFlash)
+	IMPLEMENT_POINTER(UnMorphFlash)
+IMPLEMENT_POINTERS_END
 
 DEFINE_FIELD(AMorphProjectile, PlayerClass)
 DEFINE_FIELD(AMorphProjectile, MonsterClass)

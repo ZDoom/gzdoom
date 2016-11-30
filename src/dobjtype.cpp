@@ -3008,8 +3008,6 @@ PClass *ClassReg::RegisterClass()
 		&PClassPlayerPawn::RegistrationInfo,
 		&PClassType::RegistrationInfo,
 		&PClassClass::RegistrationInfo,
-		&PClassWeaponPiece::RegistrationInfo,
-		&PClassPowerupGiver::RegistrationInfo,
 	};
 
 	// Skip classes that have already been registered
@@ -3332,14 +3330,10 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 	}
 	else
 	{
-		PClassActor::AllActorClasses.Pop();	// remove the newly added class from the list
-		// todo: replace all affected fields
-		for (unsigned i = 0; i < PClassActor::AllActorClasses.Size(); i++)
-		{
-			PClassActor::AllActorClasses[i]->ReplaceClassRef(existclass, type);
-			if (PClassActor::AllActorClasses[i] == existclass)
-				PClassActor::AllActorClasses[i] = static_cast<PClassActor*>(type);
-		}
+		StaticPointerSubstitution(existclass, type, true);	// replace the old one, also in the actor defaults.
+		// Delete the old class from the actor classes list, if it is in there.
+		auto index = PClassActor::AllActorClasses.Find(static_cast<PClassActor*>(existclass));
+		if (index < PClassActor::AllActorClasses.Size()) PClassActor::AllActorClasses.Delete(index);
 		TypeTable.ReplaceType(type, existclass, bucket);
 	}
 	return type;

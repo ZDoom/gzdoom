@@ -45,9 +45,9 @@ void PClassInventory::DeriveData(PClass *newclass)
 	newc->RestrictedToPlayerClass = RestrictedToPlayerClass;
 }
 
-void PClassInventory::ReplaceClassRef(PClass *oldclass, PClass *newclass)
+size_t PClassInventory::PointerSubstitution(DObject *oldclass, DObject *newclass)
 {
-	Super::ReplaceClassRef(oldclass, newclass);
+	size_t changed = Super::PointerSubstitution(oldclass, newclass);
 	AInventory *def = (AInventory*)Defaults;
 	if (def != NULL)
 	{
@@ -55,14 +55,21 @@ void PClassInventory::ReplaceClassRef(PClass *oldclass, PClass *newclass)
 		for (unsigned i = 0; i < ForbiddenToPlayerClass.Size(); i++)
 		{
 			if (ForbiddenToPlayerClass[i] == oldclass)
+			{
 				ForbiddenToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+				changed++;
+			}
 		}
 		for (unsigned i = 0; i < RestrictedToPlayerClass.Size(); i++)
 		{
 			if (RestrictedToPlayerClass[i] == oldclass)
+			{
 				RestrictedToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+				changed++;
+			}
 		}
 	}
+	return changed;
 }
 
 void PClassInventory::Finalize(FStateDefinitions &statedef)

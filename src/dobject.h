@@ -482,7 +482,7 @@ public:
 	// change any pointers from the old object to the new object,
 	// use this method.
 	virtual size_t PointerSubstitution (DObject *old, DObject *notOld);
-	static size_t StaticPointerSubstitution (DObject *old, DObject *notOld);
+	static size_t StaticPointerSubstitution (DObject *old, DObject *notOld, bool scandefaults = false);
 
 	PClass *GetClass() const
 	{

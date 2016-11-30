@@ -423,7 +423,7 @@ size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
 //
 //==========================================================================
 
-size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld)
+size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld, bool scandefaults)
 {
 	DObject *probe;
 	size_t changed = 0;
@@ -436,6 +436,20 @@ size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld)
 		i++;
 		changed += probe->PointerSubstitution(old, notOld);
 		last = probe;
+	}
+
+	if (scandefaults)
+	{
+		for (auto p : PClassActor::AllActorClasses)
+		{
+			auto def = GetDefaultByType(p);
+			if (def != nullptr)
+			{
+				def->Class = p;
+				def->DObject::PointerSubstitution(old, notOld);
+				def->Class = nullptr;	// reset pointer. Defaults should not have a valid class pointer.
+			}
+		}
 	}
 
 	// Go through the bodyque.

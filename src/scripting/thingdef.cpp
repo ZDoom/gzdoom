@@ -68,7 +68,6 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 void InitThingdef();
-TArray<PClassActor **> OptionalClassPtrs;
 
 // STATIC FUNCTION PROTOTYPES --------------------------------------------
 PClassActor *QuestItemClasses[31];
@@ -365,7 +364,7 @@ static void CheckStates(PClassActor *obj)
 void ParseScripts();
 void ParseAllDecorate();
 
-void LoadActors ()
+void LoadActors()
 {
 	cycle_t timer;
 
@@ -387,7 +386,7 @@ void LoadActors ()
 	}
 	FScriptPosition::ResetErrorCounter();
 
-	for (int i = PClassActor::AllActorClasses.Size()-1; i>=0;i--)
+	for (int i = PClassActor::AllActorClasses.Size() - 1; i >= 0; i--)
 	{
 		auto ti = PClassActor::AllActorClasses[i];
 		if (ti->Size == TentativeClass)
@@ -397,10 +396,6 @@ void LoadActors ()
 				Printf(TEXTCOLOR_ORANGE "Class %s referenced but not defined\n", ti->TypeName.GetChars());
 				FScriptPosition::WarnCounter++;
 				DObject::StaticPointerSubstitution(ti, nullptr);
-				for (auto op : OptionalClassPtrs)
-				{
-					if (*op == ti) *op = nullptr;
-				}
 				PClassActor::AllActorClasses.Delete(i);
 			}
 			else
@@ -420,7 +415,7 @@ void LoadActors ()
 
 
 		CheckStates(ti);
-		
+
 		if (ti->bDecorateClass && ti->IsDescendantOf(RUNTIME_CLASS(AStateProvider)))
 		{
 			// either a DECORATE based weapon or CustomInventory. 
@@ -429,7 +424,7 @@ void LoadActors ()
 			// hits an unsafe state. If we can find something here it can be handled wuth a compile error rather than a runtime error.
 			CheckForUnsafeStates(ti);
 		}
-		
+
 	}
 	if (FScriptPosition::ErrorCounter > 0)
 	{
@@ -447,6 +442,4 @@ void LoadActors ()
 		QuestItemClasses[i] = PClass::FindActor(fmt);
 	}
 	StateSourceLines.Clear();
-	OptionalClassPtrs.Clear();
-	OptionalClassPtrs.ShrinkToFit();
 }

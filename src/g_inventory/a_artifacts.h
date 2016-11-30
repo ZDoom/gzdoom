@@ -35,19 +35,11 @@ protected:
 	friend void InitAllPowerupEffects(AInventory *item);
 };
 
-class PClassPowerupGiver: public PClassInventory
-{
-	DECLARE_CLASS(PClassPowerupGiver, PClassInventory)
-protected:
-public:
-	virtual void ReplaceClassRef(PClass *oldclass, PClass *newclass);
-};
-
-
 // An artifact is an item that gives the player a powerup when activated.
 class APowerupGiver : public AInventory
 {
-	DECLARE_CLASS_WITH_META (APowerupGiver, AInventory, PClassPowerupGiver)
+	DECLARE_CLASS (APowerupGiver, AInventory)
+	HAS_OBJECT_POINTERS
 public:
 	virtual bool Use (bool pickup) override;
 	virtual void Serialize(FSerializer &arc) override;
@@ -272,6 +264,7 @@ protected:
 class APowerMorph : public APowerup
 {
 	DECLARE_CLASS( APowerMorph, APowerup )
+	HAS_OBJECT_POINTERS
 public:
 	
 	virtual void Serialize(FSerializer &arc) override;

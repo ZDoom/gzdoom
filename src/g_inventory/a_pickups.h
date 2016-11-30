@@ -55,7 +55,7 @@ class PClassInventory : public PClassActor
 public:
 	PClassInventory();
 	virtual void DeriveData(PClass *newclass);
-	virtual void ReplaceClassRef(PClass *oldclass, PClass *newclass);
+	virtual size_t PointerSubstitution(DObject *oldclass, DObject *newclass);
 	void Finalize(FStateDefinitions &statedef);
 
 	FString PickupMessage;

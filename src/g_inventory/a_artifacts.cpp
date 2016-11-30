@@ -45,19 +45,12 @@ IMPLEMENT_CLASS(APowerup, false, false)
 
 // Powerup-Giver -------------------------------------------------------------
 
-IMPLEMENT_CLASS(PClassPowerupGiver, false, false)
 
-void PClassPowerupGiver::ReplaceClassRef(PClass *oldclass, PClass *newclass)
-{
-	Super::ReplaceClassRef(oldclass, newclass);
-	APowerupGiver *def = (APowerupGiver*)Defaults;
-	if (def != NULL)
-	{
-		if (def->PowerupType == oldclass) def->PowerupType = static_cast<PClassWeapon *>(newclass);
-	}
-}
+IMPLEMENT_CLASS(APowerupGiver, false, true)
 
-IMPLEMENT_CLASS(APowerupGiver, false, false)
+IMPLEMENT_POINTERS_START(APowerupGiver)
+IMPLEMENT_POINTER(PowerupType)
+IMPLEMENT_POINTERS_END
 
 DEFINE_FIELD(APowerupGiver, PowerupType)
 DEFINE_FIELD(APowerupGiver, EffectTics)
@@ -1855,7 +1848,14 @@ void APowerDoubleFiringSpeed::EndEffect( )
 
 // Morph powerup ------------------------------------------------------
 
-IMPLEMENT_CLASS(APowerMorph, false, false)
+IMPLEMENT_CLASS(APowerMorph, false, true)
+
+IMPLEMENT_POINTERS_START(APowerMorph)
+	IMPLEMENT_POINTER(PlayerClass)
+	IMPLEMENT_POINTER(MorphFlash)
+	IMPLEMENT_POINTER(UnMorphFlash)
+IMPLEMENT_POINTERS_END
+
 
 DEFINE_FIELD(APowerMorph, PlayerClass)
 DEFINE_FIELD(APowerMorph, MorphFlash)
@@ -1916,19 +1916,12 @@ void APowerMorph::EndEffect( )
 {
 	Super::EndEffect();
 
-	// Abort if owner already destroyed
-	if (Owner == NULL)
+	// Abort if owner already destroyed or unmorphed
+	if (Owner == nullptr || MorphedPlayer == nullptr)
 	{
-		assert(MorphedPlayer == NULL);
 		return;
 	}
 	
-	// Abort if owner already unmorphed
-	if (MorphedPlayer == NULL)
-	{
-		return;
-	}
-
 	// Abort if owner is dead; their Die() method will
 	// take care of any required unmorphing on death.
 	if (MorphedPlayer->health <= 0)

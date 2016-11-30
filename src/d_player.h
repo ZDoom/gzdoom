@@ -81,7 +81,6 @@ public:
 	FPlayerColorSet *GetColorSet(int setnum) { return ColorSets.CheckKey(setnum); }
 	void SetPainFlash(FName type, PalEntry color);
 	bool GetPainFlash(FName type, PalEntry *color) const;
-	virtual void ReplaceClassRef(PClass *oldclass, PClass *newclass);
 
 	FString DisplayName;	// Display name (used in menus, etc.)
 	FString SoundClass;		// Sound class

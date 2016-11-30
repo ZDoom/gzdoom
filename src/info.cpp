@@ -619,19 +619,18 @@ void PClassActor::SetPainChance(FName type, int chance)
 //
 //==========================================================================
 
-void PClassActor::ReplaceClassRef(PClass *oldclass, PClass *newclass)
+size_t PClassActor::PointerSubstitution(DObject *oldclass, DObject *newclass)
 {
+	auto changed = Super::PointerSubstitution(oldclass, newclass);
 	for (unsigned i = 0; i < VisibleToPlayerClass.Size(); i++)
 	{
 		if (VisibleToPlayerClass[i] == oldclass)
+		{
 			VisibleToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+			changed++;
+		}
 	}
-	AActor *def = (AActor*)Defaults;
-	if (def != NULL)
-	{
-		if (def->TeleFogSourceType == oldclass) def->TeleFogSourceType = static_cast<PClassActor *>(newclass);
-		if (def->TeleFogDestType == oldclass) def->TeleFogDestType = static_cast<PClassActor *>(newclass);
-	}
+	return changed;
 }
 
 //==========================================================================

@@ -297,6 +297,14 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, FindFloorCeiling)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT_DEF(flags); 
+	P_FindFloorCeiling(self, flags);
+	return 0;
+}
+
 // Debug CCMD for checking errors in the MultiBlockLinesIterator (needs to be removed when this code is complete)
 CCMD(ffcf)
 {
@@ -661,6 +669,21 @@ double P_GetMoveFactor(const AActor *mo, double *frictionp)
 	return movefactor;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, GetFriction)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	double friction, movefactor = P_GetMoveFactor(self, &friction);
+	if (numret > 1)
+	{
+		numret = 2;
+		ret[1].SetFloat(movefactor);
+	}
+	if (numret > 0)
+	{
+		ret[0].SetFloat(friction);
+	}
+	return numret;
+}
 
 //==========================================================================
 //
@@ -850,9 +873,11 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 
 	// If the floor planes on both sides match we should recalculate open.bottom at the actual position we are checking
 	// This is to avoid bumpy movement when crossing a linedef with the same slope on both sides.
+	// This should never narrow down the opening, though, only widen it.
 	if (open.frontfloorplane == open.backfloorplane && open.bottom > LINEOPEN_MIN)
 	{
-		open.bottom = open.frontfloorplane.ZatPoint(cres.Position);
+		auto newopen = open.frontfloorplane.ZatPoint(cres.Position);
+		if (newopen < open.bottom) open.bottom = newopen;
 	}
 
 	if (rail &&
@@ -1243,7 +1268,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	// Check for skulls slamming into things
 	if (tm.thing->flags & MF_SKULLFLY)
 	{
-		bool res = tm.thing->Slam(tm.thing->BlockingMobj);
+		bool res = tm.thing->CallSlam(tm.thing->BlockingMobj);
 		tm.thing->BlockingMobj = NULL;
 		return res;
 	}
@@ -1265,7 +1290,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		{
 			// ideally this should take the mass factor into account
 			thing->Vel += tm.thing->Vel.XY();
-			if ((thing->Vel.X + thing->Vel.Y) > 3.)
+			if (fabs(thing->Vel.X) + fabs(thing->Vel.Y) > 3.)
 			{
 				int newdam;
 				damage = (tm.thing->Mass / 100) + 1;
@@ -1738,6 +1763,15 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly)
 	return P_CheckPosition(thing, pos, tm, actorsonly);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CheckPosition)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_BOOL_DEF(actorsonly);
+	ACTION_RETURN_BOOL(P_CheckPosition(self, DVector2(x, y), actorsonly));
+}
+
 //----------------------------------------------------------------------------
 //
 // FUNC P_TestMobjLocation
@@ -1766,6 +1800,11 @@ bool P_TestMobjLocation(AActor *mobj)
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, TestMobjLocation)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(P_TestMobjLocation(self));
+}
 
 //=============================================================================
 //
@@ -1868,6 +1907,26 @@ bool P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 	if (pOnmobj) *pOnmobj = onmobj;
 	return onmobj == NULL;
 }
+
+DEFINE_ACTION_FUNCTION(AActor, TestMobjZ)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL_DEF(quick);
+	
+	AActor *on = nullptr;;
+	bool retv = P_TestMobjZ(self, quick, &on);
+	if (numret > 1)
+	{
+		numret = 2;
+		ret[1].SetPointer(on, ATAG_OBJECT);
+	}
+	if (numret > 0)
+	{
+		ret[0].SetInt(retv);
+	}
+	return numret;
+}
+
 
 //=============================================================================
 //
@@ -2498,6 +2557,14 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 	return P_TryMove(thing, pos, dropoff, onfloor, tm);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, TryMove)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_INT(dropoff);
+	ACTION_RETURN_BOOL(P_TryMove(self, DVector2(x, y), dropoff));
+}
 
 
 //==========================================================================
@@ -3254,7 +3321,7 @@ bool FSlide::BounceWall(AActor *mo)
 		if (mo->flags & MF_MISSILE)
 			P_ExplodeMissile(mo, line, NULL);
 		else
-			mo->Die(NULL, NULL);
+			mo->CallDie(NULL, NULL);
 		return true;
 	}
 
@@ -4587,6 +4654,18 @@ void P_TraceBleed(int damage, AActor *target, DAngle angle, DAngle pitch)
 	P_TraceBleed(damage, target->PosPlusZ(target->Height/2), target, angle, pitch);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, TraceBleedAngle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(damage);
+	PARAM_FLOAT(angle);
+	PARAM_FLOAT(pitch);
+
+	P_TraceBleed(damage, self, angle, pitch);
+	return 0;
+}
+
+
 //==========================================================================
 //
 //
@@ -4616,16 +4695,6 @@ void P_TraceBleed(int damage, AActor *target, AActor *missile)
 	P_TraceBleed(damage, target->PosPlusZ(target->Height/2), target, missile->AngleTo(target), pitch);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, TraceBleed)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(damage);
-	PARAM_OBJECT(missile, AActor);
-
-	P_TraceBleed(damage, self, missile);
-	return 0;
-}
-
 //==========================================================================
 //
 //
@@ -4643,6 +4712,17 @@ void P_TraceBleed(int damage, FTranslatedLineTarget *t, AActor *puff)
 	P_TraceBleed(damage, t->linetarget->PosPlusZ(t->linetarget->Height/2), t->linetarget, t->angleFromSource, pitch);
 }
 
+DEFINE_ACTION_FUNCTION(_FTranslatedLineTarget, TraceBleed)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FTranslatedLineTarget);
+	PARAM_INT(damage);
+	PARAM_OBJECT(missile, AActor);
+
+	P_TraceBleed(damage, self, missile);
+	return 0;
+}
+
+
 //==========================================================================
 //
 //
@@ -4658,6 +4738,18 @@ void P_TraceBleed(int damage, AActor *target)
 		P_TraceBleed(damage, target->PosPlusZ(target->Height / 2), target, angle, pitch);
 	}
 }
+
+DEFINE_ACTION_FUNCTION(AActor, TraceBleed)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(damage);
+	PARAM_OBJECT(missile, AActor);
+
+	if (missile) P_TraceBleed(damage, self, missile);
+	else P_TraceBleed(damage, self);
+	return 0;
+}
+
 
 //==========================================================================
 //
@@ -6723,7 +6815,7 @@ bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death)
 			thing->activationtype &= ~THINGSPEC_Activate; // Clear flag
 			if (thing->activationtype & THINGSPEC_Switch) // Set other flag if switching
 				thing->activationtype |= THINGSPEC_Deactivate;
-			thing->Activate(trigger);
+			thing->CallActivate(trigger);
 			res = true;
 		}
 		// If not, can it be deactivated?
@@ -6732,7 +6824,7 @@ bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death)
 			thing->activationtype &= ~THINGSPEC_Deactivate; // Clear flag
 			if (thing->activationtype & THINGSPEC_Switch)	// Set other flag if switching
 				thing->activationtype |= THINGSPEC_Activate;
-			thing->Deactivate(trigger);
+			thing->CallDeactivate(trigger);
 			res = true;
 		}
 	}

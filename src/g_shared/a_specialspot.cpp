@@ -37,7 +37,6 @@
 #include "p_local.h"
 #include "statnums.h"
 #include "i_system.h"
-#include "vm.h"
 #include "doomstat.h"
 #include "serializer.h"
 #include "a_pickups.h"
@@ -45,8 +44,8 @@
 static FRandom pr_spot ("SpecialSpot");
 static FRandom pr_spawnmace ("SpawnMace");
 
-IMPLEMENT_CLASS(DSpotState, false, false, false, false)
-IMPLEMENT_CLASS(ASpecialSpot, false, false, false, false)
+IMPLEMENT_CLASS(DSpotState, false, false)
+IMPLEMENT_CLASS(ASpecialSpot, false, false)
 TObjPtr<DSpotState> DSpotState::SpotState;
 
 //----------------------------------------------------------------------------
@@ -252,6 +251,12 @@ DSpotState *DSpotState::GetSpotState(bool create)
 	return SpotState;
 }
 
+DEFINE_ACTION_FUNCTION(DSpotState, GetSpotState)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_OBJECT(DSpotState::GetSpotState());
+}
+
 //----------------------------------------------------------------------------
 //
 // 
@@ -318,6 +323,14 @@ ASpecialSpot *DSpotState::GetNextInList(PClassActor *type, int skipcounter)
 	return NULL;
 }
 
+DEFINE_ACTION_FUNCTION(DSpotState, GetNextInList)
+{
+	PARAM_SELF_PROLOGUE(DSpotState);
+	PARAM_CLASS(type, AActor);
+	PARAM_INT(skipcounter);
+	ACTION_RETURN_OBJECT(self->GetNextInList(type, skipcounter));
+}
+
 //----------------------------------------------------------------------------
 //
 // 
@@ -330,6 +343,18 @@ ASpecialSpot *DSpotState::GetSpotWithMinMaxDistance(PClassActor *type, double x,
 	if (list != NULL) return list->GetSpotWithMinMaxDistance(x, y, mindist, maxdist);
 	return NULL;
 }
+
+DEFINE_ACTION_FUNCTION(DSpotState, GetSpotWithMinMaxDistance)
+{
+	PARAM_SELF_PROLOGUE(DSpotState);
+	PARAM_CLASS(type, AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(mindist);
+	PARAM_FLOAT(maxdist);
+	ACTION_RETURN_OBJECT(self->GetSpotWithMinMaxDistance(type, x, y, mindist, maxdist));
+}
+
 
 //----------------------------------------------------------------------------
 //
@@ -372,12 +397,11 @@ void ASpecialSpot::Destroy()
 
 // Mace spawn spot ----------------------------------------------------------
 
-
 // Every mace spawn spot will execute this action. The first one
 // will build a list of all mace spots in the level and spawn a
 // mace. The rest of the spots will do nothing.
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnSingleItem)
+DEFINE_ACTION_FUNCTION(AActor, A_SpawnSingleItem)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS		(cls, AActor);

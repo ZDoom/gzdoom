@@ -4,8 +4,8 @@
 ** Actor definitions - all parser related code
 **
 **---------------------------------------------------------------------------
-** Copyright 2002-2007 Christoph Oelckers
-** Copyright 2004-2007 Randy Heit
+** Copyright 2002-2016 Christoph Oelckers
+** Copyright 2004-2016 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

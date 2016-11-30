@@ -62,7 +62,7 @@ public:
 
 	DSectorPlaneInterpolation() {}
 	DSectorPlaneInterpolation(sector_t *sector, bool plane, bool attach);
-	void Destroy();
+	void Destroy() override;
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
@@ -91,7 +91,7 @@ public:
 
 	DSectorScrollInterpolation() {}
 	DSectorScrollInterpolation(sector_t *sector, bool plane);
-	void Destroy();
+	void Destroy() override;
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
@@ -119,7 +119,7 @@ public:
 
 	DWallScrollInterpolation() {}
 	DWallScrollInterpolation(side_t *side, int part);
-	void Destroy();
+	void Destroy() override;
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
@@ -146,7 +146,7 @@ public:
 
 	DPolyobjInterpolation() {}
 	DPolyobjInterpolation(FPolyObj *poly);
-	void Destroy();
+	void Destroy() override;
 	void UpdateInterpolation();
 	void Restore();
 	void Interpolate(double smoothratio);
@@ -161,17 +161,17 @@ public:
 //
 //==========================================================================
 
-IMPLEMENT_CLASS(DInterpolation, true, true, false, false)
+IMPLEMENT_CLASS(DInterpolation, true, true)
 
 IMPLEMENT_POINTERS_START(DInterpolation)
 	IMPLEMENT_POINTER(Next)
 	IMPLEMENT_POINTER(Prev)
 IMPLEMENT_POINTERS_END
 
-IMPLEMENT_CLASS(DSectorPlaneInterpolation, false, false, false, false)
-IMPLEMENT_CLASS(DSectorScrollInterpolation, false, false, false, false)
-IMPLEMENT_CLASS(DWallScrollInterpolation, false, false, false, false)
-IMPLEMENT_CLASS(DPolyobjInterpolation, false, false, false, false)
+IMPLEMENT_CLASS(DSectorPlaneInterpolation, false, false)
+IMPLEMENT_CLASS(DSectorScrollInterpolation, false, false)
+IMPLEMENT_CLASS(DWallScrollInterpolation, false, false)
+IMPLEMENT_CLASS(DPolyobjInterpolation, false, false)
 
 //==========================================================================
 //

@@ -22,7 +22,6 @@
 //-----------------------------------------------------------------------------
 
 // HEADER FILES ------------------------------------------------------------
-
 #include <float.h>
 #include "templates.h"
 #include "i_system.h"
@@ -42,18 +41,14 @@
 #include "c_dispatch.h"
 #include "b_bot.h"	//Added by MC:
 #include "stats.h"
-#include "a_hexenglobal.h"
 #include "a_sharedglobal.h"
 #include "gi.h"
 #include "sbar.h"
 #include "p_acs.h"
 #include "cmdlib.h"
 #include "decallib.h"
-#include "ravenshared.h"
-#include "a_action.h"
 #include "a_keys.h"
 #include "p_conversation.h"
-#include "vm.h"
 #include "g_game.h"
 #include "teaminfo.h"
 #include "r_data/r_translate.h"
@@ -72,7 +67,11 @@
 #include "serializer.h"
 #include "r_utility.h"
 #include "thingdef.h"
+#include "d_player.h"
 #include "virtual.h"
+#include "a_armor.h"
+#include "a_ammo.h"
+#include "a_health.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -132,7 +131,7 @@ CVAR (Int, cl_bloodtype, 0, CVAR_ARCHIVE);
 
 // CODE --------------------------------------------------------------------
 
-IMPLEMENT_CLASS(AActor, false, true, true, true)
+IMPLEMENT_CLASS(AActor, false, true)
 
 IMPLEMENT_POINTERS_START(AActor)
 	IMPLEMENT_POINTER(target)
@@ -157,182 +156,182 @@ AActor::~AActor ()
 extern FFlagDef InternalActorFlagDefs[];
 extern FFlagDef ActorFlagDefs[];
 
-void AActor::InitNativeFields()
-{
-	PType *TypePlayer = NewPointer(TypeVoid);	// placeholder
-	PType *TypeActor = NewPointer(RUNTIME_CLASS(AActor));
-	PType *TypeActorClass = NewClassPointer(RUNTIME_CLASS(AActor));
-	PType *TypeInventory = NewPointer(RUNTIME_CLASS(AInventory));
-	PStruct *sstruct = NewStruct("Sector", nullptr);
-	auto TypeSector = NewPointer(sstruct);
-	PType *array5 = NewArray(TypeSInt32, 5);
+DEFINE_FIELD(AActor, snext)
+DEFINE_FIELD(AActor, player)
+DEFINE_FIELD_NAMED(AActor, __Pos, pos)
+DEFINE_FIELD_NAMED(AActor, __Pos.X, x)
+DEFINE_FIELD_NAMED(AActor, __Pos.Y, y)
+DEFINE_FIELD_NAMED(AActor, __Pos.Z, z)
+DEFINE_FIELD(AActor, Prev)
+DEFINE_FIELD(AActor, SpriteAngle)
+DEFINE_FIELD(AActor, SpriteRotation)
+DEFINE_FIELD(AActor, VisibleStartAngle)
+DEFINE_FIELD(AActor, VisibleStartPitch)
+DEFINE_FIELD(AActor, VisibleEndAngle)
+DEFINE_FIELD(AActor, VisibleEndPitch)
+DEFINE_FIELD_NAMED(AActor, Angles.Yaw, angle)
+DEFINE_FIELD_NAMED(AActor, Angles.Pitch, pitch)
+DEFINE_FIELD_NAMED(AActor, Angles.Roll, roll)
+DEFINE_FIELD(AActor, Vel)
+DEFINE_FIELD_NAMED(AActor, Vel.X, velx)
+DEFINE_FIELD_NAMED(AActor, Vel.Y, vely)
+DEFINE_FIELD_NAMED(AActor, Vel.Z, velz)
+DEFINE_FIELD_NAMED(AActor, Vel.X, momx)
+DEFINE_FIELD_NAMED(AActor, Vel.Y, momy)
+DEFINE_FIELD_NAMED(AActor, Vel.Z, momz)
+DEFINE_FIELD(AActor, Speed)
+DEFINE_FIELD(AActor, FloatSpeed)
+DEFINE_FIELD(AActor, sprite)
+DEFINE_FIELD(AActor, frame)
+DEFINE_FIELD(AActor, Scale)
+DEFINE_FIELD_NAMED(AActor, Scale.X, scalex)
+DEFINE_FIELD_NAMED(AActor, Scale.Y, scaley)
+DEFINE_FIELD(AActor, RenderStyle)
+DEFINE_FIELD(AActor, picnum)
+DEFINE_FIELD(AActor, Alpha)
+DEFINE_FIELD(AActor, fillcolor)
+DEFINE_FIELD_NAMED(AActor, Sector, CurSector)	// clashes with type 'sector'.
+DEFINE_FIELD(AActor, subsector)
+DEFINE_FIELD(AActor, ceilingz)
+DEFINE_FIELD(AActor, floorz)
+DEFINE_FIELD(AActor, dropoffz)
+DEFINE_FIELD(AActor, floorsector)
+DEFINE_FIELD(AActor, floorpic)
+DEFINE_FIELD(AActor, floorterrain)
+DEFINE_FIELD(AActor, ceilingsector)
+DEFINE_FIELD(AActor, ceilingpic)
+DEFINE_FIELD(AActor, Height)
+DEFINE_FIELD(AActor, radius)
+DEFINE_FIELD(AActor, projectilepassheight)
+DEFINE_FIELD(AActor, tics)
+DEFINE_FIELD_NAMED(AActor, state, curstate)		// clashes with type 'state'.
+DEFINE_FIELD_NAMED(AActor, DamageVal, Damage)	// name differs for historic reasons
+DEFINE_FIELD(AActor, projectileKickback)
+DEFINE_FIELD(AActor, VisibleToTeam)
+DEFINE_FIELD(AActor, special1)
+DEFINE_FIELD(AActor, special2)
+DEFINE_FIELD(AActor, specialf1)
+DEFINE_FIELD(AActor, specialf2)
+DEFINE_FIELD(AActor, weaponspecial)
+DEFINE_FIELD(AActor, health)
+DEFINE_FIELD(AActor, movedir)
+DEFINE_FIELD(AActor, visdir)
+DEFINE_FIELD(AActor, movecount)
+DEFINE_FIELD(AActor, strafecount)
+DEFINE_FIELD(AActor, target)
+DEFINE_FIELD(AActor, master)
+DEFINE_FIELD(AActor, tracer)
+DEFINE_FIELD(AActor, LastHeard)
+DEFINE_FIELD(AActor, lastenemy)
+DEFINE_FIELD(AActor, LastLookActor)
+DEFINE_FIELD(AActor, reactiontime)
+DEFINE_FIELD(AActor, threshold)
+DEFINE_FIELD(AActor, DefThreshold)
+DEFINE_FIELD(AActor, SpawnPoint)
+DEFINE_FIELD(AActor, SpawnAngle)
+DEFINE_FIELD(AActor, StartHealth)
+DEFINE_FIELD(AActor, WeaveIndexXY)
+DEFINE_FIELD(AActor, WeaveIndexZ)
+DEFINE_FIELD(AActor, skillrespawncount)
+DEFINE_FIELD(AActor, args)
+DEFINE_FIELD(AActor, Mass)
+DEFINE_FIELD(AActor, special)
+DEFINE_FIELD(AActor, tid)
+DEFINE_FIELD(AActor, TIDtoHate)
+DEFINE_FIELD(AActor, waterlevel)
+DEFINE_FIELD(AActor, Score)
+DEFINE_FIELD(AActor, accuracy)
+DEFINE_FIELD(AActor, stamina)
+DEFINE_FIELD(AActor, meleerange)
+DEFINE_FIELD(AActor, PainThreshold)
+DEFINE_FIELD(AActor, Gravity)
+DEFINE_FIELD(AActor, Floorclip)
+DEFINE_FIELD(AActor, DamageType)
+DEFINE_FIELD(AActor, DamageTypeReceived)
+DEFINE_FIELD(AActor, FloatBobPhase)
+DEFINE_FIELD(AActor, RipperLevel)
+DEFINE_FIELD(AActor, RipLevelMin)
+DEFINE_FIELD(AActor, RipLevelMax)
+DEFINE_FIELD(AActor, Species)
+DEFINE_FIELD(AActor, alternative)
+DEFINE_FIELD(AActor, goal)
+DEFINE_FIELD(AActor, MinMissileChance)
+DEFINE_FIELD(AActor, LastLookPlayerNumber)
+DEFINE_FIELD(AActor, SpawnFlags)
+DEFINE_FIELD(AActor, meleethreshold)
+DEFINE_FIELD(AActor, maxtargetrange)
+DEFINE_FIELD(AActor, bouncefactor)
+DEFINE_FIELD(AActor, wallbouncefactor)
+DEFINE_FIELD(AActor, bouncecount)
+DEFINE_FIELD(AActor, Friction)
+DEFINE_FIELD(AActor, FastChaseStrafeCount)
+DEFINE_FIELD(AActor, pushfactor)
+DEFINE_FIELD(AActor, lastpush)
+DEFINE_FIELD(AActor, activationtype)
+DEFINE_FIELD(AActor, lastbump)
+DEFINE_FIELD(AActor, DesignatedTeam)
+DEFINE_FIELD(AActor, BlockingMobj)
+DEFINE_FIELD(AActor, BlockingLine)
+DEFINE_FIELD(AActor, PoisonDamage)
+DEFINE_FIELD(AActor, PoisonDamageType)
+DEFINE_FIELD(AActor, PoisonDuration)
+DEFINE_FIELD(AActor, PoisonPeriod)
+DEFINE_FIELD(AActor, PoisonDamageReceived)
+DEFINE_FIELD(AActor, PoisonDamageTypeReceived)
+DEFINE_FIELD(AActor, PoisonDurationReceived)
+DEFINE_FIELD(AActor, PoisonPeriodReceived)
+DEFINE_FIELD(AActor, Poisoner)
+DEFINE_FIELD_NAMED(AActor, Inventory, Inv)		// clashes with type 'Inventory'.
+DEFINE_FIELD(AActor, smokecounter)
+DEFINE_FIELD(AActor, FriendPlayer)
+DEFINE_FIELD(AActor, Translation)
+DEFINE_FIELD(AActor, AttackSound)
+DEFINE_FIELD(AActor, DeathSound)
+DEFINE_FIELD(AActor, SeeSound)
+DEFINE_FIELD(AActor, PainSound)
+DEFINE_FIELD(AActor, ActiveSound)
+DEFINE_FIELD(AActor, UseSound)
+DEFINE_FIELD(AActor, BounceSound)
+DEFINE_FIELD(AActor, WallBounceSound)
+DEFINE_FIELD(AActor, CrushPainSound)
+DEFINE_FIELD(AActor, MaxDropOffHeight)
+DEFINE_FIELD(AActor, MaxStepHeight)
+DEFINE_FIELD(AActor, PainChance)
+DEFINE_FIELD(AActor, PainType)
+DEFINE_FIELD(AActor, DeathType)
+DEFINE_FIELD(AActor, DamageFactor)
+DEFINE_FIELD(AActor, DamageMultiply)
+DEFINE_FIELD(AActor, TeleFogSourceType)
+DEFINE_FIELD(AActor, TeleFogDestType)
+DEFINE_FIELD(AActor, SpawnState)
+DEFINE_FIELD(AActor, SeeState)
+DEFINE_FIELD(AActor, MeleeState)
+DEFINE_FIELD(AActor, MissileState)
+DEFINE_FIELD(AActor, ConversationRoot)
+DEFINE_FIELD(AActor, Conversation)
+DEFINE_FIELD(AActor, DecalGenerator)
 
-	auto meta = RUNTIME_CLASS(AActor);
-
-	meta->AddNativeField("Player",				TypePlayer,		myoffsetof(AActor, player));
-	meta->AddNativeField("Pos",					TypeVector3,	myoffsetof(AActor, __Pos), VARF_ReadOnly);
-	meta->AddNativeField(NAME_X,				TypeFloat64,	myoffsetof(AActor, __Pos.X), VARF_ReadOnly | VARF_Deprecated);	// must remain read-only!
-	meta->AddNativeField(NAME_Y,				TypeFloat64,	myoffsetof(AActor, __Pos.Y), VARF_ReadOnly | VARF_Deprecated);	// must remain read-only!
-	meta->AddNativeField(NAME_Z,				TypeFloat64,	myoffsetof(AActor, __Pos.Z), VARF_ReadOnly | VARF_Deprecated);	// must remain read-only!
-	meta->AddNativeField("Prev",				TypeVector3,	myoffsetof(AActor, Prev));
-	meta->AddNativeField("spriteAngle",			TypeFloat64,	myoffsetof(AActor, SpriteAngle));
-	meta->AddNativeField("spriteRotation",		TypeFloat64,	myoffsetof(AActor, SpriteRotation));
-	meta->AddNativeField(NAME_VisibleStartAngle, TypeFloat64,	myoffsetof(AActor, VisibleStartAngle));
-	meta->AddNativeField(NAME_VisibleStartPitch, TypeFloat64,	myoffsetof(AActor, VisibleStartPitch));
-	meta->AddNativeField(NAME_VisibleEndAngle,	TypeFloat64,	myoffsetof(AActor, VisibleEndAngle));
-	meta->AddNativeField(NAME_VisibleEndPitch,	TypeFloat64,	myoffsetof(AActor, VisibleEndPitch));
-	meta->AddNativeField(NAME_Angle,			TypeFloat64,	myoffsetof(AActor, Angles.Yaw));
-	meta->AddNativeField(NAME_Pitch,			TypeFloat64,	myoffsetof(AActor, Angles.Pitch));
-	meta->AddNativeField(NAME_Roll,				TypeFloat64,	myoffsetof(AActor, Angles.Roll));
-	meta->AddNativeField("Vel",					TypeVector3,	myoffsetof(AActor, Vel));
-	meta->AddNativeField(NAME_VelX,				TypeFloat64,	myoffsetof(AActor, Vel.X), VARF_ReadOnly | VARF_Deprecated);
-	meta->AddNativeField(NAME_VelY,				TypeFloat64,	myoffsetof(AActor, Vel.Y), VARF_ReadOnly | VARF_Deprecated);
-	meta->AddNativeField(NAME_VelZ,				TypeFloat64,	myoffsetof(AActor, Vel.Z), VARF_ReadOnly | VARF_Deprecated);
-	meta->AddNativeField(NAME_MomX,				TypeFloat64,	myoffsetof(AActor, Vel.X), VARF_ReadOnly | VARF_Deprecated);
-	meta->AddNativeField(NAME_MomY,				TypeFloat64,	myoffsetof(AActor, Vel.Y), VARF_ReadOnly | VARF_Deprecated);
-	meta->AddNativeField(NAME_MomZ,				TypeFloat64,	myoffsetof(AActor, Vel.Z), VARF_ReadOnly | VARF_Deprecated);
-	meta->AddNativeField(NAME_Speed,			TypeFloat64,	myoffsetof(AActor, Speed));
-	meta->AddNativeField("FloatSpeed",			TypeFloat64,	myoffsetof(AActor, FloatSpeed));
-	meta->AddNativeField("sprite",				TypeSInt32,		myoffsetof(AActor, sprite));	// this is an index, not a name!
-	meta->AddNativeField("frame",				TypeUInt8,		myoffsetof(AActor, frame));
-	meta->AddNativeField("Scale",				TypeVector2,	myoffsetof(AActor, Scale));
-	meta->AddNativeField(NAME_ScaleX,			TypeFloat64,	myoffsetof(AActor, Scale.X), VARF_Deprecated);
-	meta->AddNativeField(NAME_ScaleY,			TypeFloat64,	myoffsetof(AActor, Scale.Y), VARF_Deprecated);
-	//FRenderStyle	RenderStyle;		// how do we expose this? 
-	meta->AddNativeField("picnum",				TypeSInt32,		myoffsetof(AActor, picnum));	// Do we need a variable type 'texture' to do this?
-	meta->AddNativeField(NAME_Alpha,			TypeFloat64,	myoffsetof(AActor, Alpha));
-	meta->AddNativeField("fillcolor",			TypeColor,		myoffsetof(AActor, fillcolor));
-	meta->AddNativeField("Sector",				TypeSector,		myoffsetof(AActor, Sector));
-	//meta->AddNativeField("Subsector",			TypeSubsector,	myoffsetof(AActor, subsector));
-	meta->AddNativeField(NAME_CeilingZ,			TypeFloat64,	myoffsetof(AActor, ceilingz), VARF_ReadOnly);
-	meta->AddNativeField(NAME_FloorZ,			TypeFloat64,	myoffsetof(AActor, floorz), VARF_ReadOnly);
-	meta->AddNativeField("DropoffZ",			TypeFloat64,	myoffsetof(AActor, dropoffz), VARF_ReadOnly);
-	meta->AddNativeField("floorsector",			TypeSector,		myoffsetof(AActor, floorsector));
-	meta->AddNativeField("floorpic",			TypeSInt32,		myoffsetof(AActor, floorpic));	// Do we need a variable type 'texture' to do this?
-	meta->AddNativeField("floorterrain",		TypeSInt32,		myoffsetof(AActor, floorterrain));
-	meta->AddNativeField("ceilingsector",		TypeSector,		myoffsetof(AActor, ceilingsector));
-	meta->AddNativeField("ceilingpic",			TypeSInt32,		myoffsetof(AActor, ceilingpic));	// Do we need a variable type 'texture' to do this?
-	meta->AddNativeField(NAME_Height,			TypeFloat64,	myoffsetof(AActor, Height));
-	meta->AddNativeField(NAME_Radius,			TypeFloat64,	myoffsetof(AActor, radius), VARF_ReadOnly);
-	meta->AddNativeField("projectilepassheight",TypeFloat64,	myoffsetof(AActor, projectilepassheight));
-	meta->AddNativeField("tics",				TypeSInt32,		myoffsetof(AActor, tics));
-	meta->AddNativeField("CurState",			TypeState,		myoffsetof(AActor, state), VARF_ReadOnly);	// has to be renamed on the script side because it clashes with the same named type.
-	meta->AddNativeField(NAME_Damage,			TypeSInt32,		myoffsetof(AActor, DamageVal), VARF_ReadOnly);
-	meta->AddNativeField("projectilekickback",	TypeSInt32,		myoffsetof(AActor, projectileKickback));
-	//DWORD			VisibleToTeam;
-	meta->AddNativeField("special1",			TypeSInt32,		myoffsetof(AActor, special1));
-	meta->AddNativeField("special2",			TypeSInt32,		myoffsetof(AActor, special2));
-	meta->AddNativeField("specialf1",			TypeFloat64,	myoffsetof(AActor, specialf1));
-	meta->AddNativeField("specialf2",			TypeFloat64,	myoffsetof(AActor, specialf2));
-	meta->AddNativeField("weaponspecial",		TypeSInt32,		myoffsetof(AActor, weaponspecial));
-	meta->AddNativeField(NAME_Health,			TypeSInt32,		myoffsetof(AActor, health), VARF_ReadOnly);
-	meta->AddNativeField("movedir",				TypeUInt8,		myoffsetof(AActor, movedir));
-	meta->AddNativeField("visdir",				TypeSInt8,		myoffsetof(AActor, visdir));
-	meta->AddNativeField("movecount",			TypeSInt16,		myoffsetof(AActor, movecount));
-	meta->AddNativeField("strafecount",			TypeSInt16,		myoffsetof(AActor, strafecount));
-	meta->AddNativeField(NAME_Target,			TypeActor,		myoffsetof(AActor, target));
-	meta->AddNativeField(NAME_Master,			TypeActor,		myoffsetof(AActor, master));
-	meta->AddNativeField(NAME_Tracer,			TypeActor,		myoffsetof(AActor, tracer));
-	meta->AddNativeField("LastHeard",			TypeActor,		myoffsetof(AActor, LastHeard));
-	meta->AddNativeField("LastEnemy",			TypeActor,		myoffsetof(AActor, lastenemy));
-	meta->AddNativeField("LastLookActor",		TypeActor,		myoffsetof(AActor, LastLookActor));
-	meta->AddNativeField(NAME_ReactionTime,		TypeSInt32,		myoffsetof(AActor, reactiontime));
-	meta->AddNativeField(NAME_Threshold,		TypeSInt32,		myoffsetof(AActor, threshold));
-	meta->AddNativeField(NAME_DefThreshold,		TypeSInt32,		myoffsetof(AActor, DefThreshold), VARF_ReadOnly);
-	meta->AddNativeField("SpawnPoint",			TypeVector3,	myoffsetof(AActor, SpawnPoint), VARF_ReadOnly);
-	meta->AddNativeField("SpawnAngle",			TypeUInt16,		myoffsetof(AActor, SpawnAngle), VARF_ReadOnly);
-	meta->AddNativeField("StartHealth",			TypeSInt32,		myoffsetof(AActor, StartHealth));
-	meta->AddNativeField("WeaveIndexXY",		TypeUInt16,		myoffsetof(AActor, WeaveIndexXY));
-	meta->AddNativeField("WeaveIndexZ",			TypeUInt16,		myoffsetof(AActor, WeaveIndexZ));
-	meta->AddNativeField("skillrespawncount",	TypeSInt32,		myoffsetof(AActor, skillrespawncount));
-	meta->AddNativeField(NAME_Args,				array5,			myoffsetof(AActor, args));
-	meta->AddNativeField(NAME_Mass,				TypeSInt32,		myoffsetof(AActor, Mass));
-	meta->AddNativeField(NAME_Special,			TypeSInt32,		myoffsetof(AActor, special));
-	meta->AddNativeField(NAME_TID,				TypeSInt32,		myoffsetof(AActor, tid), VARF_ReadOnly);
-	meta->AddNativeField(NAME_TIDtoHate,		TypeSInt32,		myoffsetof(AActor, TIDtoHate), VARF_ReadOnly);
-	meta->AddNativeField(NAME_WaterLevel,		TypeSInt32,		myoffsetof(AActor, waterlevel), VARF_ReadOnly);
-	meta->AddNativeField(NAME_Score,			TypeSInt32,		myoffsetof(AActor, Score));
-	meta->AddNativeField(NAME_Accuracy,			TypeSInt32,		myoffsetof(AActor, accuracy));
-	meta->AddNativeField(NAME_Stamina,			TypeSInt32,		myoffsetof(AActor, stamina));
-	meta->AddNativeField(NAME_MeleeRange,		TypeFloat64,	myoffsetof(AActor, meleerange));
-	meta->AddNativeField("PainThreshold",		TypeSInt32,		myoffsetof(AActor, PainThreshold));
-	meta->AddNativeField("Gravity",				TypeFloat64,	myoffsetof(AActor, Gravity));
-	meta->AddNativeField("FloorClip",			TypeFloat64,	myoffsetof(AActor, Floorclip));
-	meta->AddNativeField("DamageType",			TypeName,		myoffsetof(AActor, DamageType));
-	meta->AddNativeField("DamageTypeReceived",	TypeName,		myoffsetof(AActor, DamageTypeReceived));
-	meta->AddNativeField("FloatBobPhase",		TypeUInt8,		myoffsetof(AActor, FloatBobPhase));
-	meta->AddNativeField("RipperLevel",			TypeSInt32,		myoffsetof(AActor, RipperLevel));
-	meta->AddNativeField("RipLevelMin",			TypeSInt32,		myoffsetof(AActor, RipLevelMin));
-	meta->AddNativeField("RipLevelMax",			TypeSInt32,		myoffsetof(AActor, RipLevelMax));
-	meta->AddNativeField("Species",				TypeName,		myoffsetof(AActor, Species));
-	meta->AddNativeField("Alternative",			TypeActor,		myoffsetof(AActor, alternative));
-	meta->AddNativeField("goal",				TypeActor,		myoffsetof(AActor, goal));
-	meta->AddNativeField("MinMissileChance",	TypeUInt8,		myoffsetof(AActor, MinMissileChance));
-	meta->AddNativeField("LastLookPlayerNumber",TypeSInt8,		myoffsetof(AActor, LastLookPlayerNumber));
-	meta->AddNativeField("SpawnFlags",			TypeUInt32,		myoffsetof(AActor, SpawnFlags));
-	meta->AddNativeField("meleethreshold",		TypeFloat64,	myoffsetof(AActor, meleethreshold));
-	meta->AddNativeField("maxtargetrange",		TypeFloat64,	myoffsetof(AActor, maxtargetrange));
-	meta->AddNativeField("bouncefactor",		TypeFloat64,	myoffsetof(AActor, bouncefactor));
-	meta->AddNativeField("wallbouncefactor",	TypeFloat64,	myoffsetof(AActor, wallbouncefactor));
-	meta->AddNativeField("bouncecount",			TypeSInt32,		myoffsetof(AActor, bouncecount));
-	meta->AddNativeField("friction",			TypeFloat64,	myoffsetof(AActor, Friction));
-	meta->AddNativeField("FastChaseStrafeCount",TypeSInt32,		myoffsetof(AActor, FastChaseStrafeCount));
-	meta->AddNativeField("pushfactor",			TypeFloat64,	myoffsetof(AActor, pushfactor));
-	meta->AddNativeField("lastpush",			TypeSInt32,		myoffsetof(AActor, lastpush));
-	meta->AddNativeField("activationtype",		TypeSInt32,		myoffsetof(AActor, activationtype));
-	meta->AddNativeField("lastbump",			TypeSInt32,		myoffsetof(AActor, lastbump));
-	meta->AddNativeField("DesignatedTeam",		TypeSInt32,		myoffsetof(AActor, DesignatedTeam));
-	meta->AddNativeField("BlockingMobj",		TypeActor,		myoffsetof(AActor, BlockingMobj));
-	//line_t			*BlockingLine;	// Line that blocked the last move
-	meta->AddNativeField("PoisonDamage",		TypeSInt32,		myoffsetof(AActor, PoisonDamage));
-	meta->AddNativeField("PoisonDamageType",	TypeName,		myoffsetof(AActor, PoisonDamageType));
-	meta->AddNativeField("PoisonDuration",		TypeSInt32,		myoffsetof(AActor, PoisonDuration));
-	meta->AddNativeField("PoisonPeriod",		TypeSInt32,		myoffsetof(AActor, PoisonPeriod));
-	meta->AddNativeField("PoisonDamageReceived",TypeSInt32,		myoffsetof(AActor, PoisonDamageReceived));
-	meta->AddNativeField("PoisonDamageTypeReceived",	TypeName,		myoffsetof(AActor, PoisonDamageTypeReceived));
-	meta->AddNativeField("PoisonDurationReceived",		TypeSInt32,		myoffsetof(AActor, PoisonDurationReceived));
-	meta->AddNativeField("PoisonPeriodReceived",		TypeSInt32,		myoffsetof(AActor, PoisonPeriodReceived));
-	meta->AddNativeField("Poisoner",			TypeActor,		myoffsetof(AActor, Poisoner));
-	meta->AddNativeField("Inv",					TypeInventory,	myoffsetof(AActor, Inventory));	// Needs to be renamed because it hides the actual type.
-	meta->AddNativeField("smokecounter",		TypeUInt8,		myoffsetof(AActor, smokecounter));
-	meta->AddNativeField("FriendPlayer",		TypeUInt8,		myoffsetof(AActor, FriendPlayer));
-	meta->AddNativeField("Translation",			TypeUInt32,		myoffsetof(AActor, Translation));
-	meta->AddNativeField("AttackSound",			TypeSound,		myoffsetof(AActor, AttackSound));
-	meta->AddNativeField("DeathSound",			TypeSound,		myoffsetof(AActor, DeathSound));
-	meta->AddNativeField("SeeSound",			TypeSound,		myoffsetof(AActor, SeeSound));
-	meta->AddNativeField("PainSound",			TypeSound,		myoffsetof(AActor, PainSound));
-	meta->AddNativeField("ActiveSound",			TypeSound,		myoffsetof(AActor, ActiveSound));
-	meta->AddNativeField("UseSound",			TypeSound,		myoffsetof(AActor, UseSound));
-	meta->AddNativeField("BounceSound",			TypeSound,		myoffsetof(AActor, BounceSound));
-	meta->AddNativeField("WallBounceSound",		TypeSound,		myoffsetof(AActor, WallBounceSound));
-	meta->AddNativeField("CrushPainSound",		TypeSound,		myoffsetof(AActor, CrushPainSound));
-	meta->AddNativeField("MaxDropoffHeight",	TypeFloat64,	myoffsetof(AActor, MaxDropOffHeight));
-	meta->AddNativeField("MaxStepHeight",		TypeFloat64,	myoffsetof(AActor, MaxStepHeight));
-	meta->AddNativeField("PainChance",			TypeSInt16,		myoffsetof(AActor, PainChance));
-	meta->AddNativeField("PainType",			TypeName,		myoffsetof(AActor, PainType));
-	meta->AddNativeField("DeathType",			TypeName,		myoffsetof(AActor, DeathType));
-	meta->AddNativeField("DamageFactor",		TypeFloat64,	myoffsetof(AActor, DamageFactor));
-	meta->AddNativeField("DamageMultiply",		TypeFloat64,	myoffsetof(AActor, DamageMultiply));
-	meta->AddNativeField("TelefogSourceType",	TypeActorClass,	myoffsetof(AActor, TeleFogSourceType));
-	meta->AddNativeField("TelefogDestType",		TypeActorClass,	myoffsetof(AActor, TeleFogDestType));
-	meta->AddNativeField("SpawnState",			TypeState,		myoffsetof(AActor, SpawnState), VARF_ReadOnly);
-	meta->AddNativeField("SeeState",			TypeState,		myoffsetof(AActor, SeeState), VARF_ReadOnly);
-	meta->AddNativeField("MeleeState",			TypeState,		myoffsetof(AActor, MeleeState), VARF_ReadOnly);
-	meta->AddNativeField("MissileState",		TypeState,		myoffsetof(AActor, MissileState), VARF_ReadOnly);
-	//int ConversationRoot;				// THe root of the current dialogue
-	//FStrifeDialogueNode *Conversation;	// [RH] The dialogue to show when this actor is "used."
-	//FDecalBase *DecalGenerator;
-
-	// synthesize a symbol for each flag from the flag name tables to avoid redundant declaration of them.
-	for (size_t i = 0; ActorFlagDefs[i].flagbit != 0xffffffff; i++)
-	{
-		meta->AddNativeField(FStringf("b%s", ActorFlagDefs[i].name), (ActorFlagDefs[i].fieldsize == 4? TypeSInt32 : TypeSInt16), ActorFlagDefs[i].structoffset, ActorFlagDefs[i].varflags, ActorFlagDefs[i].flagbit);
-	}
-	for (size_t i = 0; InternalActorFlagDefs[i].flagbit != 0xffffffff; i++)
-	{
-		meta->AddNativeField(FStringf("b%s", InternalActorFlagDefs[i].name), (InternalActorFlagDefs[i].fieldsize == 4 ? TypeSInt32 : TypeSInt16), InternalActorFlagDefs[i].structoffset, InternalActorFlagDefs[i].varflags, InternalActorFlagDefs[i].flagbit);
-	}
-}
+DEFINE_FIELD(PClassActor, Obituary)
+DEFINE_FIELD(PClassActor, HitObituary)
+DEFINE_FIELD(PClassActor, DeathHeight)
+DEFINE_FIELD(PClassActor, BurnHeight)
+DEFINE_FIELD(PClassActor, BloodColor)
+DEFINE_FIELD(PClassActor, GibHealth)
+DEFINE_FIELD(PClassActor, WoundHealth)
+DEFINE_FIELD(PClassActor, FastSpeed)
+DEFINE_FIELD(PClassActor, RDFactor)
+DEFINE_FIELD(PClassActor, CameraHeight)
+DEFINE_FIELD(PClassActor, HowlSound)
+DEFINE_FIELD(PClassActor, BloodType)
+DEFINE_FIELD(PClassActor, BloodType2)
+DEFINE_FIELD(PClassActor, BloodType3)
+DEFINE_FIELD(PClassActor, DontHurtShooter)
+DEFINE_FIELD(PClassActor, ExplosionRadius)
+DEFINE_FIELD(PClassActor, ExplosionDamage)
+DEFINE_FIELD(PClassActor, MeleeDamage)
+DEFINE_FIELD(PClassActor, MeleeSound)
+DEFINE_FIELD(PClassActor, MissileName)
+DEFINE_FIELD(PClassActor, MissileHeight)
 
 //==========================================================================
 //
@@ -572,6 +571,13 @@ bool AActor::InStateSequence(FState * newstate, FState * basestate)
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, InStateSequence)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(newstate, FState);
+	PARAM_POINTER(basestate, FState);
+	ACTION_RETURN_BOOL(self->InStateSequence(newstate, basestate));
+}
 //==========================================================================
 //
 // AActor::GetTics
@@ -585,11 +591,11 @@ bool AActor::InStateSequence(FState * newstate, FState * basestate)
 int AActor::GetTics(FState * newstate)
 {
 	int tics = newstate->GetTics();
-	if (isFast() && newstate->Fast)
+	if (isFast() && newstate->GetFast())
 	{
 		return tics - (tics>>1);
 	}
-	else if (isSlow() && newstate->Slow)
+	else if (isSlow() && newstate->GetSlow())
 	{
 		return tics<<1;
 	}
@@ -740,6 +746,15 @@ void AActor::AddInventory (AInventory *item)
 	Inventory->InventoryID = InventoryID++;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, AddInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(item, AInventory);
+	self->AddInventory(item);
+	return 0;
+}
+
+
 //============================================================================
 //
 // AActor :: GiveInventory
@@ -799,6 +814,14 @@ bool AActor::GiveInventory(PClassInventory *type, int amount, bool givecheat)
 	return result;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Inventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(item, AInventory);
+	ACTION_RETURN_BOOL(self->UseInventory(item));
+}
+
+
 //============================================================================
 //
 // AActor :: RemoveInventory
@@ -825,6 +848,15 @@ void AActor::RemoveInventory(AInventory *item)
 		}
 	}
 }
+
+DEFINE_ACTION_FUNCTION(AActor, RemoveInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(item, AInventory);
+	self->RemoveInventory(item);
+	return 0;
+}
+
 
 //============================================================================
 //
@@ -957,7 +989,7 @@ bool AActor::UseInventory (AInventory *item)
 	{
 		return false;
 	}
-	if (!item->Use (false))
+	if (!item->CallUse (false))
 	{
 		return false;
 	}
@@ -972,6 +1004,13 @@ bool AActor::UseInventory (AInventory *item)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, UseInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(item, AInventory);
+	ACTION_RETURN_BOOL(self->UseInventory(item));
+}
+
 //===========================================================================
 //
 // AActor :: DropInventory
@@ -982,7 +1021,7 @@ bool AActor::UseInventory (AInventory *item)
 
 AInventory *AActor::DropInventory (AInventory *item)
 {
-	AInventory *drop = item->CreateTossable ();
+	AInventory *drop = item->CallCreateTossable ();
 
 	if (drop == NULL)
 	{
@@ -996,6 +1035,13 @@ AInventory *AActor::DropInventory (AInventory *item)
 	drop->flags &= ~MF_NOGRAVITY;	// Don't float
 	drop->ClearCounters();	// do not count for statistics again
 	return drop;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, DropInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(item, AInventory);
+	ACTION_RETURN_OBJECT(self->DropInventory(item));
 }
 
 //============================================================================
@@ -1037,6 +1083,14 @@ AInventory *AActor::FindInventory (FName type)
 	return FindInventory(PClass::FindActor(type));
 }
 
+DEFINE_ACTION_FUNCTION(AActor, FindInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(type, AInventory);
+	PARAM_BOOL_DEF(subclass);
+	ACTION_RETURN_OBJECT(self->FindInventory(type, subclass));
+}
+
 //============================================================================
 //
 // AActor :: GiveInventoryType
@@ -1057,6 +1111,13 @@ AInventory *AActor::GiveInventoryType (PClassActor *type)
 		}
 	}
 	return item;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GiveInventoryType)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(type, AInventory);
+	ACTION_RETURN_OBJECT(self->GiveInventoryType(type));
 }
 
 //============================================================================
@@ -1085,6 +1146,14 @@ bool AActor::GiveAmmo (PClassAmmo *type, int amount)
 		}
 	}
 	return false;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GiveAmmo)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(type, AAmmo);
+	PARAM_INT(amount);
+	ACTION_RETURN_BOOL(self->GiveAmmo(type, amount));
 }
 
 //============================================================================
@@ -1152,6 +1221,14 @@ void AActor::ClearInventory()
 		player->PendingWeapon = WP_NOCHANGE;
 	}
 }
+
+DEFINE_ACTION_FUNCTION(AActor, ClearInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->ClearInventory();
+	return 0;
+}
+
 
 //============================================================================
 //
@@ -1252,6 +1329,13 @@ bool AActor::CheckLocalView (int playernum) const
 		return true;
 	}
 	return false;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, CheckLocalView)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(cp);
+	ACTION_RETURN_BOOL(self->CheckLocalView(cp));
 }
 
 //============================================================================
@@ -1395,6 +1479,24 @@ void AActor::ConversationAnimation (int animnum)
 
 void AActor::Touch (AActor *toucher)
 {
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Touch)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(toucher, AActor);
+	self->Touch(toucher);
+	return 0;
+}
+
+void AActor::CallTouch(AActor *toucher)
+{
+	IFVIRTUAL(AActor, Touch)
+	{
+		VMValue params[2] = { (DObject*)this, toucher };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+	else Touch(toucher);
 }
 
 //============================================================================
@@ -1708,6 +1810,15 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, ExplodeMissile)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER_DEF(line, line_t);
+	PARAM_OBJECT_DEF(target, AActor);
+	P_ExplodeMissile(self, line, target);
+	return 0;
+}
+
 
 void AActor::PlayBounceSound(bool onfloor)
 {
@@ -1750,7 +1861,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 			if (flags & MF_MISSILE)
 				P_ExplodeMissile(this, NULL, NULL);
 			else
-				Die(NULL, NULL);
+				CallDie(NULL, NULL);
 			return true;
 		}
 		if (!(BounceFlags & BOUNCE_CanBounceWater))
@@ -1777,7 +1888,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 		if (flags & MF_MISSILE)
 			P_ExplodeMissile(this, NULL, NULL);
 		else
-			Die(NULL, NULL);
+			CallDie(NULL, NULL);
 		return true;
 	}
 
@@ -2757,7 +2868,10 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 					return;
 				}
 				// Let the actor do something special for hitting the floor
-				mo->HitFloor ();
+				if (mo->flags7 & MF7_SMASHABLE)
+				{
+					P_DamageMobj(mo, nullptr, nullptr, mo->health, NAME_Smash);
+				}
 				if (mo->player)
 				{
 					if (mo->player->jumpTics < 0 || mo->Vel.Z < minvel)
@@ -3098,6 +3212,25 @@ void AActor::RemoveFromHash ()
 	tid = 0;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, RemoveFromHash)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->RemoveFromHash();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, ChangeTid)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(tid);
+	self->RemoveFromHash();
+	self->tid = tid;
+	self->AddToHash();
+	return 0;
+}
+
+
+
 //==========================================================================
 //
 // P_IsTIDUsed
@@ -3180,6 +3313,17 @@ int P_FindUniqueTID(int start_tid, int limit)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, FindUniqueTid)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT_DEF(start);
+	PARAM_INT_DEF(limit);
+	ACTION_RETURN_INT(P_FindUniqueTID(start, limit));
+}
+
+
+
+
 CCMD(utid)
 {
 	Printf("%d\n",
@@ -3215,7 +3359,6 @@ int AActor::GetMissileDamage (int mask, int add)
 		assert(false && "No damage function found");
 		return 0;
 	}
-	VMFrameStack stack;
 	VMValue param = this;
 	VMReturn result;
 
@@ -3223,7 +3366,7 @@ int AActor::GetMissileDamage (int mask, int add)
 
 	result.IntAt(&amount);
 
-	if (stack.Call(DamageFunc, &param, 1, &result, 1) < 1)
+	if (GlobalVMStack.Call(DamageFunc, &param, 1, &result, 1) < 1)
 	{ // No results
 		return 0;
 	}
@@ -3239,8 +3382,11 @@ void AActor::Howl ()
 	}
 }
 
-void AActor::HitFloor ()
+DEFINE_ACTION_FUNCTION(AActor, Howl)
 {
+	PARAM_SELF_PROLOGUE(AActor);
+	self->Howl();
+	return 0;
 }
 
 bool AActor::Slam (AActor *thing)
@@ -3270,14 +3416,43 @@ bool AActor::Slam (AActor *thing)
 	return false;			// stop moving
 }
 
-bool AActor::SpecialBlastHandling (AActor *source, double strength)
+DEFINE_ACTION_FUNCTION(AActor, Slam)
 {
-	return true;
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(thing, AActor);
+	ACTION_RETURN_BOOL(self->Slam(thing));
 }
 
+bool AActor::CallSlam(AActor *thing)
+{
+	IFVIRTUAL(AActor, Slam)
+	{
+		VMValue params[2] = { (DObject*)this, thing };
+		VMReturn ret;
+		int retval;
+		ret.IntAt(&retval);
+		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+		return !!retval;
+
+	}
+	else return Slam(thing);
+}
+
+
+
+// This virtual method only exists on the script side.
 int AActor::SpecialMissileHit (AActor *victim)
 {
-	return -1;
+	IFVIRTUAL(AActor, SpecialMissileHit)
+	{
+		VMValue params[2] = { (DObject*)this, victim };
+		VMReturn ret;
+		int retval;
+		ret.IntAt(&retval);
+		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+		return retval;
+	}
+	else return -1;
 }
 
 bool AActor::AdjustReflectionAngle (AActor *thing, DAngle &angle)
@@ -3291,8 +3466,7 @@ bool AActor::AdjustReflectionAngle (AActor *thing, DAngle &angle)
 		if (absangle(angle, thing->Angles.Yaw) > 45)
 			return true;	// Let missile explode
 
-		if (thing->IsKindOf (RUNTIME_CLASS(AHolySpirit)))	// shouldn't this be handled by another flag???
-			return true;
+		if (thing->flags7 & MF7_NOSHIELDREFLECT) return true;
 
 		if (pr_reflect () < 128)
 			angle += 45;
@@ -3409,6 +3583,14 @@ void AActor::SetShade (DWORD rgb)
 void AActor::SetShade (int r, int g, int b)
 {
 	fillcolor = MAKEARGB(ColorMatcher.Pick (r, g, b), r, g, b);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SetShade)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(color);
+	self->SetShade(color);
+	return 0;
 }
 
 void AActor::SetPitch(DAngle p, bool interpolate, bool forceclamp)
@@ -3595,11 +3777,14 @@ void AActor::Tick ()
 			}
 		}
 
-		UnlinkFromWorld ();
-		flags |= MF_NOBLOCKMAP;
-		SetXYZ(Vec3Offset(Vel));
-		CheckPortalTransition(false);
-		LinkToWorld ();
+		if (!Vel.isZero() || !(flags & MF_NOBLOCKMAP))
+		{
+			UnlinkFromWorld();
+			flags |= MF_NOBLOCKMAP;
+			SetXYZ(Vec3Offset(Vel));
+			CheckPortalTransition(false);
+			LinkToWorld();
+		}
 	}
 	else
 	{
@@ -4099,6 +4284,14 @@ void AActor::Tick ()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Tick)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->Tick();
+	return 0;
+}
+
+
 //==========================================================================
 //
 // AActor :: CheckNoDelay
@@ -4443,7 +4636,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	actor->UpdateWaterLevel (false);
 	if (!SpawningMapThing)
 	{
-		actor->BeginPlay ();
+		actor->CallBeginPlay ();
 		if (actor->ObjectFlags & OF_EuthanizeMe)
 		{
 			return NULL;
@@ -4519,7 +4712,7 @@ void AActor::HandleSpawnFlags ()
 	}
 	if (SpawnFlags & MTF_DORMANT)
 	{
-		Deactivate (NULL);
+		CallDeactivate (NULL);
 	}
 	if (SpawnFlags & MTF_STANDSTILL)
 	{
@@ -4563,9 +4756,28 @@ void AActor::BeginPlay ()
 	if (flags2 & MF2_DORMANT)
 	{
 		flags2 &= ~MF2_DORMANT;
-		Deactivate (NULL);
+		CallDeactivate (NULL);
 	}
 }
+
+DEFINE_ACTION_FUNCTION(AActor, BeginPlay)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->BeginPlay();
+	return 0;
+}
+
+void AActor::CallBeginPlay()
+{
+	IFVIRTUAL(AActor, BeginPlay)
+	{
+		// Without the type cast this picks the 'void *' assignment...
+		VMValue params[1] = { (DObject*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
+	else BeginPlay();
+}
+
 
 void AActor::PostBeginPlay ()
 {
@@ -4602,6 +4814,12 @@ bool AActor::isSlow()
 	return !!G_SkillProperty(SKILLP_SlowMonsters);
 }
 
+//===========================================================================
+//
+// Activate
+//
+//===========================================================================
+
 void AActor::Activate (AActor *activator)
 {
 	if ((flags3 & MF3_ISMONSTER) && (health > 0 || (flags & MF_ICECORPSE)))
@@ -4621,6 +4839,32 @@ void AActor::Activate (AActor *activator)
 		}
 	}
 }
+
+DEFINE_ACTION_FUNCTION(AActor, Activate)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(activator, AActor);
+	self->Activate(activator);
+	return 0;
+}
+
+void AActor::CallActivate(AActor *activator)
+{
+	IFVIRTUAL(AActor, Activate)
+	{
+		// Without the type cast this picks the 'void *' assignment...
+		VMValue params[2] = { (DObject*)this, (DObject*)activator };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+	else Activate(activator);
+}
+
+
+//===========================================================================
+//
+// Deactivate
+//
+//===========================================================================
 
 void AActor::Deactivate (AActor *activator)
 {
@@ -4642,10 +4886,30 @@ void AActor::Deactivate (AActor *activator)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Deactivate)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(activator, AActor);
+	self->Deactivate(activator);
+	return 0;
+}
 
+void AActor::CallDeactivate(AActor *activator)
+{
+	IFVIRTUAL(AActor, Deactivate)
+	{
+		// Without the type cast this picks the 'void *' assignment...
+		VMValue params[2] = { (DObject*)this, (DObject*)activator };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+	else Deactivate(activator);
+}
+
+//===========================================================================
 //
-// P_RemoveMobj
+// Destroy
 //
+//===========================================================================
 
 void AActor::Destroy ()
 {
@@ -5300,7 +5564,11 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	if (mthing->FloatbobPhase >= 0 && mthing->FloatbobPhase < 64) mobj->FloatBobPhase = mthing->FloatbobPhase;
 	if (mthing->Gravity < 0) mobj->Gravity = -mthing->Gravity;
 	else if (mthing->Gravity > 0) mobj->Gravity *= mthing->Gravity;
-	else mobj->flags &= ~MF_NOGRAVITY;
+	else 
+	{
+		mobj->flags |= MF_NOGRAVITY;
+		mobj->Gravity = 0;
+	}
 
 	// For Hexen floatbob 'compatibility' we do not really want to alter the floorz.
 	if (mobj->specialf1 == 0 || !(mobj->flags2 & MF2_FLOATBOB) || !(ib_compatflags & BCOMPATF_FLOATBOB))
@@ -5352,7 +5620,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	if (mthing->fillcolor)
 		mobj->fillcolor = mthing->fillcolor;
 
-	mobj->BeginPlay ();
+	mobj->CallBeginPlay ();
 	if (!(mobj->ObjectFlags & OF_EuthanizeMe))
 	{
 		mobj->LevelSpawned ();
@@ -5363,7 +5631,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	else
 		mobj->health = -mthing->health;
 	if (mthing->health == 0)
-		mobj->Die(NULL, NULL);
+		mobj->CallDie(NULL, NULL);
 	else if (mthing->health != 1)
 		mobj->StartHealth = mobj->health;
 
@@ -5562,6 +5830,19 @@ void P_SpawnBlood (const DVector3 &pos1, DAngle dir, int damage, AActor *origina
 		P_DrawSplash2 (40, pos, dir, 2, bloodcolor);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SpawnBlood)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_ANGLE(dir);
+	PARAM_INT(damage);
+	P_SpawnBlood(DVector3(x, y, z), dir, damage, self);
+	return 0;
+}
+
+
 //---------------------------------------------------------------------------
 //
 // PROC P_BloodSplatter
@@ -5644,6 +5925,20 @@ void P_BloodSplatter2 (const DVector3 &pos, AActor *originator, DAngle hitangle)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, BloodSplatter)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_ANGLE(dir);
+	PARAM_BOOL_DEF(axe);
+	if (axe) P_BloodSplatter2(DVector3(x, y, z), self, dir);
+	else P_BloodSplatter(DVector3(x, y, z), self, dir);
+	return 0;
+}
+
+
 //---------------------------------------------------------------------------
 //
 // PROC P_RipperBlood
@@ -5708,6 +6003,13 @@ int P_GetThingFloorType (AActor *thing)
 		return thing->Sector->GetTerrain(sector_t::floor);
 	}
 }
+
+DEFINE_ACTION_FUNCTION(AActor, GetFloorTerrain)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_POINTER(&Terrains[P_GetThingFloorType(self)]);
+}
+
 
 //---------------------------------------------------------------------------
 //
@@ -5856,6 +6158,20 @@ foundone:
 	return plane == &sec->floorplane ? Terrains[terrainnum].IsLiquid : false;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, HitWater)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(sec, sector_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_BOOL_DEF(checkabove);
+	PARAM_BOOL_DEF(alert);
+	PARAM_BOOL_DEF(force);
+	ACTION_RETURN_BOOL(P_HitWater(self, sec, DVector3(x, y, z), checkabove, alert, force));
+}
+
+
 //---------------------------------------------------------------------------
 //
 // FUNC P_HitFloor
@@ -5909,6 +6225,12 @@ bool P_HitFloor (AActor *thing)
 	}
 
 	return P_HitWater (thing, m->m_sector, pos);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, HitFloor)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(P_HitFloor(self));
 }
 
 //---------------------------------------------------------------------------
@@ -6017,6 +6339,13 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CheckMissileSpawn)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(add);
+	ACTION_RETURN_BOOL(P_CheckMissileSpawn(self, add));
+}
+
 
 //---------------------------------------------------------------------------
 //
@@ -6048,6 +6377,15 @@ void P_PlaySpawnSound(AActor *missile, AActor *spawner)
 		}
 	}
 }
+
+DEFINE_ACTION_FUNCTION(AActor, PlaySpawnSound)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(missile, AActor);
+	P_PlaySpawnSound(missile, self);
+	return 0;
+}
+
 
 static double GetDefaultSpeed(PClassActor *type)
 {
@@ -6184,6 +6522,20 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 	return (!checkspawn || P_CheckMissileSpawn (th, source->radius)) ? th : NULL;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SpawnMissileXYZ)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_OBJECT(dest, AActor);
+	PARAM_CLASS(type, AActor);
+	PARAM_BOOL_DEF(check);
+	PARAM_OBJECT_DEF(owner, AActor);
+	ACTION_RETURN_OBJECT(P_SpawnMissileXYZ(DVector3(x,y,z), self, dest, type, check, owner));
+}
+
+
 AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassActor *type)
 {
 	if (source == NULL)
@@ -6268,6 +6620,15 @@ AActor *P_SpawnMissileZAimed (AActor *source, double z, AActor *dest, PClassActo
 	return P_SpawnMissileAngleZSpeed (source, z, type, an, vz, speed);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SpawnMissileZAimed)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(z);
+	PARAM_OBJECT(dest, AActor);
+	PARAM_CLASS(type, AActor);
+	ACTION_RETURN_OBJECT(P_SpawnMissileZAimed(self, z, dest, type));
+}
+
 //---------------------------------------------------------------------------
 //
 // FUNC P_SpawnMissileAngleZSpeed
@@ -6321,6 +6682,48 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnMissileAngleZSpeed)
 	ACTION_RETURN_OBJECT(P_SpawnMissileAngleZSpeed(self, z, type, angle, vz, speed, owner, checkspawn));
 }
 
+
+AActor *P_SpawnSubMissile(AActor *source, PClassActor *type, AActor *target)
+{
+	AActor *other = Spawn(type, source->Pos(), ALLOW_REPLACE);
+
+	if (other == NULL)
+	{
+		return NULL;
+	}
+
+	other->target = target;
+	other->Angles.Yaw = source->Angles.Yaw;
+	other->VelFromAngle();
+
+	if (other->flags4 & MF4_SPECTRAL)
+	{
+		if (source->flags & MF_MISSILE && source->flags4 & MF4_SPECTRAL)
+		{
+			other->FriendPlayer = source->FriendPlayer;
+		}
+		else
+		{
+			other->SetFriendPlayer(target->player);
+		}
+	}
+
+	if (P_CheckMissileSpawn(other, source->radius))
+	{
+		DAngle pitch = P_AimLineAttack(source, source->Angles.Yaw, 1024.);
+		other->Vel.Z = -other->Speed * pitch.Sin();
+		return other;
+	}
+	return NULL;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SpawnSubMissile)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(cls, AActor);
+	PARAM_OBJECT(target, AActor);
+	ACTION_RETURN_OBJECT(P_SpawnSubMissile(self, cls, target));
+}
 /*
 ================
 =
@@ -6443,6 +6846,27 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 	return NULL;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SpawnPlayerMissile)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(type, AActor);
+	PARAM_ANGLE_DEF(angle);
+	PARAM_FLOAT_DEF(x);
+	PARAM_FLOAT_DEF(y);
+	PARAM_FLOAT_DEF(z);
+	PARAM_POINTER_DEF(lt, FTranslatedLineTarget);
+	PARAM_BOOL_DEF(nofreeaim);
+	PARAM_BOOL_DEF(noautoaim);
+	PARAM_INT_DEF(aimflags);
+	AActor *missileactor;
+	if (numparam == 2) angle = self->Angles.Yaw;
+	AActor *misl = P_SpawnPlayerMissile(self, x, y, z, type, angle, lt, &missileactor, nofreeaim, noautoaim, aimflags);
+	if (numret > 0) ret[0].SetPointer(misl, ATAG_OBJECT);
+	if (numret > 1) ret[1].SetPointer(missileactor, ATAG_OBJECT), numret = 2;
+	return numret;
+}
+
+
 int AActor::GetTeam()
 {
 	if (player)
@@ -6479,6 +6903,13 @@ bool AActor::IsTeammate (AActor *other)
 		return (myTeam != TEAM_NONE && myTeam == otherTeam);
 	}
 	return false;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, isTeammate)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	ACTION_RETURN_BOOL(self->IsTeammate(other));
 }
 
 //==========================================================================
@@ -6583,6 +7014,22 @@ bool AActor::IsHostile (AActor *other)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, isHostile)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	ACTION_RETURN_BOOL(self->IsHostile(other));
+}
+
+
+//==========================================================================
+//
+// AActor :: DoSpecialDamage
+//
+// override this for special damage effects.
+//
+//==========================================================================
+
 int AActor::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if (target->player && target->player->mo == target && damage < 1000 &&
@@ -6605,6 +7052,37 @@ int AActor::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 		return damage;
 	}
 }
+
+DEFINE_ACTION_FUNCTION(AActor, DoSpecialDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(target, AActor);
+	PARAM_INT(damage);
+	PARAM_NAME(damagetype);
+	ACTION_RETURN_INT(self->DoSpecialDamage(target, damage, damagetype));
+}
+
+int AActor::CallDoSpecialDamage(AActor *target, int damage, FName damagetype)
+{
+	IFVIRTUAL(AActor, DoSpecialDamage)
+	{
+		// Without the type cast this picks the 'void *' assignment...
+		VMValue params[4] = { (DObject*)this, (DObject*)target, damage, damagetype.GetIndex() };
+		VMReturn ret;
+		int retval;
+		ret.IntAt(&retval);
+		GlobalVMStack.Call(func, params, 4, &ret, 1, nullptr);
+		return retval;
+	}
+	else return DoSpecialDamage(target, damage, damagetype);
+
+}
+
+//==========================================================================
+//
+// AActor :: TakeSpecialDamage
+//
+//==========================================================================
 
 int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype)
 {
@@ -6638,6 +7116,31 @@ int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FN
 		death = FindState (NAME_Death, damagetype);
 	}
 	return (death == NULL) ? -1 : damage;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, TakeSpecialDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(inflictor, AActor);
+	PARAM_OBJECT(source, AActor);
+	PARAM_INT(damage);
+	PARAM_NAME(damagetype);
+	ACTION_RETURN_INT(self->TakeSpecialDamage(inflictor, source, damage, damagetype));
+}
+
+int AActor::CallTakeSpecialDamage(AActor *inflictor, AActor *source, int damage, FName damagetype)
+{
+	IFVIRTUAL(AActor, TakeSpecialDamage)
+	{
+		VMValue params[5] = { (DObject*)this, inflictor, source, damage, damagetype.GetIndex() };
+		VMReturn ret;
+		int retval;
+		ret.IntAt(&retval);
+		GlobalVMStack.Call(func, params, 5, &ret, 1, nullptr);
+		return retval;
+	}
+	else return TakeSpecialDamage(inflictor, source, damage, damagetype);
+
 }
 
 void AActor::Crash()
@@ -6689,6 +7192,14 @@ void AActor::SetIdle(bool nofunction)
 	SetState(idle, nofunction);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SetIdle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL_DEF(nofunction);
+	self->SetIdle(nofunction);
+	return 0;
+}
+
 int AActor::SpawnHealth() const
 {
 	int defhealth = StartHealth ? StartHealth : GetDefault()->health;
@@ -6706,6 +7217,12 @@ int AActor::SpawnHealth() const
 		int adj = int(defhealth * G_SkillProperty(SKILLP_MonsterHealth));
 		return (adj <= 0) ? 1 : adj;
 	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SpawnHealth)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(self->SpawnHealth());
 }
 
 FState *AActor::GetRaiseState()
@@ -6771,6 +7288,13 @@ double AActor::GetCameraHeight() const
 	return GetClass()->CameraHeight == INT_MIN ? Height / 2 : GetClass()->CameraHeight;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, GetCameraHeight)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_FLOAT(self->GetCameraHeight());
+}
+
+
 DDropItem *AActor::GetDropItems() const
 {
 	return GetClass()->DropItems;
@@ -6787,6 +7311,13 @@ double AActor::GetGravity() const
 	if (flags & MF_NOGRAVITY) return 0;
 	return level.gravity * Sector->gravity * Gravity * 0.00125;
 }
+
+DEFINE_ACTION_FUNCTION(AActor, GetGravity)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_FLOAT(self->GetGravity());
+}
+
 
 // killough 11/98:
 // Whether an object is "sentient" or not. Used for environmental influences.
@@ -6823,16 +7354,26 @@ const char *AActor::GetTag(const char *def) const
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, GetTag)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_STRING(def);
+	ACTION_RETURN_STRING(self->GetTag(def.Len() == 0? nullptr : def.GetChars()));
+}
+
 void AActor::SetTag(const char *def)
 {
-	if (def == NULL || *def == 0) 
-	{
-		Tag = NULL;
-	}
-	else 
-	{
-		Tag = mStringPropertyData.Alloc(def);
-	}
+	if (def == NULL || *def == 0) Tag = nullptr;
+	else Tag = mStringPropertyData.Alloc(def);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SetTag)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_STRING(def);
+	if (def.IsEmpty()) self->Tag = nullptr;
+	else self->Tag = self->mStringPropertyData.Alloc(def);
+	return 0;
 }
 
 
@@ -6857,6 +7398,29 @@ void AActor::ClearCounters()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, ClearCounters)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->ClearCounters();
+	return 0;
+}
+
+int AActor::GetModifiedDamage(FName damagetype, int damage, bool passive)
+{
+	if (Inventory != nullptr)
+		Inventory->ModifyDamage(damage, damagetype, damage, false);
+
+	return damage;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetModifiedDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(type);
+	PARAM_INT(damage);
+	PARAM_BOOL(passive);
+	ACTION_RETURN_INT(self->GetModifiedDamage(type, damage, passive));
+}
 
 int AActor::ApplyDamageFactor(FName damagetype, int damage) const
 {
@@ -6868,10 +7432,19 @@ int AActor::ApplyDamageFactor(FName damagetype, int damage) const
 	return damage;
 }
 
-
-void AActor::SetTranslation(const char *trname)
+DEFINE_ACTION_FUNCTION(AActor, ApplyDamageFactor)
 {
-	if (*trname == 0)
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(type);
+	PARAM_INT(damage);
+	ACTION_RETURN_INT(self->ApplyDamageFactor(type, damage));
+}
+
+
+void AActor::SetTranslation(FName trname)
+{
+	// There is no constant for the empty name...
+	if (trname.GetChars()[0] == 0)
 	{
 		// an empty string resets to the default
 		Translation = GetDefault()->Translation;
@@ -6886,12 +7459,120 @@ void AActor::SetTranslation(const char *trname)
 	// silently ignore if the name does not exist, this would create some insane message spam otherwise.
 }
 
+//---------------------------------------------------------------------------
+//
+// PROP A_RestoreSpecialPosition
+//
+//---------------------------------------------------------------------------
+static FRandom pr_restore("RestorePos");
+
+void AActor::RestoreSpecialPosition()
+{
+	// Move item back to its original location
+	DVector2 sp = SpawnPoint;
+
+	UnlinkFromWorld();
+	SetXY(sp);
+	LinkToWorld(true);
+	SetZ(Sector->floorplane.ZatPoint(sp));
+	P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS | FFCF_NOPORTALS);	// no portal checks here so that things get spawned in this sector.
+
+	if (flags & MF_SPAWNCEILING)
+	{
+		SetZ(ceilingz - Height - SpawnPoint.Z);
+	}
+	else if (flags2 & MF2_SPAWNFLOAT)
+	{
+		double space = ceilingz - Height - floorz;
+		if (space > 48)
+		{
+			space -= 40;
+			SetZ((space * pr_restore()) / 256. + floorz + 40);
+		}
+		else
+		{
+			SetZ(floorz);
+		}
+	}
+	else
+	{
+		SetZ(SpawnPoint.Z + floorz);
+	}
+	// Redo floor/ceiling check, in case of 3D floors and portals
+	P_FindFloorCeiling(this, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
+	if (Z() < floorz)
+	{ // Do not reappear under the floor, even if that's where we were for the
+	  // initial spawn.
+		SetZ(floorz);
+	}
+	if ((flags & MF_SOLID) && (Top() > ceilingz))
+	{ // Do the same for the ceiling.
+		SetZ(ceilingz - Height);
+	}
+	// Do not interpolate from the position the actor was at when it was
+	// picked up, in case that is different from where it is now.
+	ClearInterpolation();
+}
+
+DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->RestoreSpecialPosition();
+	return 0;
+}
+
+
+
+
+class DActorIterator : public DObject, public NActorIterator
+{
+	DECLARE_CLASS(DActorIterator, DObject)
+
+public:
+	DActorIterator(PClassActor *cls= nullptr, int tid = 0)
+		: NActorIterator(cls, tid)
+	{
+	}
+};
+
+IMPLEMENT_CLASS(DActorIterator, false, false);
+DEFINE_ACTION_FUNCTION(DActorIterator, Create)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(tid);
+	PARAM_CLASS_DEF(type, AActor);
+	ACTION_RETURN_OBJECT(new DActorIterator(type, tid));
+}
+
+DEFINE_ACTION_FUNCTION(DActorIterator, Next)
+{
+	PARAM_SELF_PROLOGUE(DActorIterator);
+	ACTION_RETURN_OBJECT(self->Next());
+}
+
+DEFINE_ACTION_FUNCTION(DActorIterator, Reinit)
+{
+	PARAM_SELF_PROLOGUE(DActorIterator);
+	self->Reinit();
+	return 0;
+}
+
+
+
 DEFINE_ACTION_FUNCTION(AActor, deltaangle)	// should this be global?
 {
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(a1);
 	PARAM_FLOAT(a2);
 	ACTION_RETURN_FLOAT(deltaangle(DAngle(a1), DAngle(a2)).Degrees);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, absangle)	// should this be global?
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(a1);
+	PARAM_FLOAT(a2);
+	ACTION_RETURN_FLOAT(absangle(DAngle(a1), DAngle(a2)).Degrees);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, Distance2D)
@@ -6901,11 +7582,19 @@ DEFINE_ACTION_FUNCTION(AActor, Distance2D)
 	ACTION_RETURN_FLOAT(self->Distance2D(other));
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Distance3D)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	ACTION_RETURN_FLOAT(self->Distance3D(other));
+}
+
 DEFINE_ACTION_FUNCTION(AActor, AddZ)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(addz);
-	self->AddZ(addz);
+	PARAM_BOOL_DEF(moving);
+	self->AddZ(addz, moving);
 	return 0;
 }
 
@@ -6964,6 +7653,17 @@ DEFINE_ACTION_FUNCTION(AActor, VelFromAngle)
 }
 
 // This combines all 3 variations of the internal function
+DEFINE_ACTION_FUNCTION(AActor, Vel3DFromAngle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(speed);
+	PARAM_ANGLE(angle);
+	PARAM_ANGLE(pitch);
+	self->Vel3DFromAngle(pitch, angle, speed);
+	return 0;
+}
+
+// This combines all 3 variations of the internal function
 DEFINE_ACTION_FUNCTION(AActor, Thrust)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -6995,6 +7695,23 @@ DEFINE_ACTION_FUNCTION(AActor, AngleTo)
 	ACTION_RETURN_FLOAT(self->AngleTo(targ, absolute).Degrees);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, AngleToVector)
+{
+	PARAM_PROLOGUE;
+	PARAM_ANGLE(angle);
+	PARAM_FLOAT_DEF(length);
+	ACTION_RETURN_VEC2(angle.ToVector(length));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, RotateVector)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_ANGLE(angle);
+	ACTION_RETURN_VEC2(DVector2(x, y).Rotated(angle));
+}
+
 DEFINE_ACTION_FUNCTION(AActor, DistanceBySpeed)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -7013,13 +7730,37 @@ DEFINE_ACTION_FUNCTION(AActor, SetXYZ)
 	return 0; 
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Vec2Angle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(length);
+	PARAM_ANGLE(angle);
+	PARAM_BOOL_DEF(absolute);
+	ACTION_RETURN_VEC2(self->Vec2Angle(length, angle, absolute));
+}
+
+
+DEFINE_ACTION_FUNCTION(AActor, Vec3To)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(t, AActor)
+	ACTION_RETURN_VEC3(self->Vec3To(t));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Vec2To)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(t, AActor)
+		ACTION_RETURN_VEC2(self->Vec2To(t));
+}
+
 DEFINE_ACTION_FUNCTION(AActor, Vec3Angle)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(length)
-	PARAM_ANGLE(angle);
+		PARAM_ANGLE(angle);
 	PARAM_FLOAT(z);
-	PARAM_BOOL_DEF(absolute); 
+	PARAM_BOOL_DEF(absolute);
 	ACTION_RETURN_VEC3(self->Vec3Angle(length, angle, z, absolute));
 }
 
@@ -7033,6 +7774,15 @@ DEFINE_ACTION_FUNCTION(AActor, Vec2OffsetZ)
 	ACTION_RETURN_VEC3(self->Vec2OffsetZ(x, y, z, absolute));
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Vec2Offset)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_BOOL_DEF(absolute);
+	ACTION_RETURN_VEC2(self->Vec2Offset(x, y, absolute));
+}
+
 DEFINE_ACTION_FUNCTION(AActor, Vec3Offset)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -7043,27 +7793,62 @@ DEFINE_ACTION_FUNCTION(AActor, Vec3Offset)
 	ACTION_RETURN_VEC3(self->Vec3Offset(x, y, z, absolute));
 }
 
+DEFINE_ACTION_FUNCTION(AActor, RestoreDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->RestoreDamage();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, PlayerNumber)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(self->player ? int(self->player - players) : 0);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SetFriendPlayer)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(player, player_t);
+	self->SetFriendPlayer(player);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, ClearBounce)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->BounceFlags = 0;
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, AccuracyFactor)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_FLOAT(self->AccuracyFactor());
+}
+
+DEFINE_ACTION_FUNCTION(AActor, CountsAsKill)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_FLOAT(self->CountsAsKill());
+}
+
 //----------------------------------------------------------------------------
 //
 // DropItem handling
 //
 //----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DDropItem, false, true, true, false)
+IMPLEMENT_CLASS(DDropItem, false, true)
 
 IMPLEMENT_POINTERS_START(DDropItem)
-	IMPLEMENT_POINTER(Next)
+IMPLEMENT_POINTER(Next)
 IMPLEMENT_POINTERS_END
 
-void DDropItem::InitNativeFields()
-{
-	auto meta = RUNTIME_CLASS(DDropItem);
-	PType *TypeDropItem = NewPointer(RUNTIME_CLASS(DDropItem));
-	meta->AddNativeField("Next", TypeDropItem, myoffsetof(DDropItem, Next), VARF_ReadOnly);
-	meta->AddNativeField("Name", TypeName, myoffsetof(DDropItem, Name), VARF_ReadOnly);
-	meta->AddNativeField("Probability", TypeSInt32, myoffsetof(DDropItem, Probability), VARF_ReadOnly);
-	meta->AddNativeField("Amount", TypeSInt32, myoffsetof(DDropItem, Amount));
-}
+DEFINE_FIELD(DDropItem, Next)
+DEFINE_FIELD(DDropItem, Name)
+DEFINE_FIELD(DDropItem, Probability)
+DEFINE_FIELD(DDropItem, Amount)
 
 void PrintMiscActorInfo(AActor *query)
 {

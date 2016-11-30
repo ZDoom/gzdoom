@@ -97,8 +97,6 @@ class FWeapQuietus : FighterWeapon
 		Tag "$TAG_FWEAPQUIETUS";
 	}
 
-	action native void A_FSwordAttack();
-
 	States
 	{
 	Spawn:
@@ -127,11 +125,40 @@ class FWeapQuietus : FighterWeapon
 		FSRD B 1 Bright Offset (5, 40);
 		Goto Ready;
 	}
+	
+	//============================================================================
+	//
+	// A_FSwordAttack
+	//
+	//============================================================================
+
+	action void A_FSwordAttack()
+	{
+		if (player == null)
+		{
+			return;
+		}
+
+		Weapon weapon = player.ReadyWeapon;
+		if (weapon != null)
+		{
+			if (!weapon.DepleteAmmo (weapon.bAltFire))
+				return;
+		}
+		SpawnPlayerMissile ("FSwordMissile", Angle + (45./4),0, 0, -10);
+		SpawnPlayerMissile ("FSwordMissile", Angle + (45./8),0, 0,  -5);
+		SpawnPlayerMissile ("FSwordMissile", Angle          ,0, 0,   0);
+		SpawnPlayerMissile ("FSwordMissile", Angle - (45./8),0, 0,   5);
+		SpawnPlayerMissile ("FSwordMissile", Angle - (45./4),0, 0,  10);
+		A_PlaySound ("FighterSwordFire", CHAN_WEAPON);
+	}
+
+	
 }
 
 // Fighter Sword Missile ----------------------------------------------------
 
-class FSwordMissile : Actor native
+class FSwordMissile : Actor
 {
 	Default
 	{
@@ -145,8 +172,6 @@ class FSwordMissile : Actor native
 		DeathSound "FighterSwordExplode";
 		Obituary "$OB_MPFWEAPQUIETUS";
 	}
-
-	native void A_FSwordFlames();
 
 	States
 	{
@@ -163,6 +188,32 @@ class FSwordMissile : Actor native
 		FSFX J 4 Bright;
 		FSFX KLM 3 Bright;
 		Stop;
+	}
+	
+	override int DoSpecialDamage(Actor victim, int damage, Name damagetype)
+	{
+		if (victim.player)
+		{
+			damage -= damage >> 2;
+		}
+		return damage;
+	}
+		
+	//============================================================================
+	//
+	// A_FSwordFlames
+	//
+	//============================================================================
+
+	void A_FSwordFlames()
+	{
+		for (int i = 1+(random[FSwordFlame]()&3); i; i--)
+		{
+			double xo = (random[FSwordFlame]() - 128) / 16.;
+			double yo = (random[FSwordFlame]() - 128) / 16.;
+			double zo = (random[FSwordFlame]() - 128) / 8.;
+			Spawn ("FSwordFlame", Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
+		}
 	}
 }
 

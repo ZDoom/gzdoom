@@ -43,7 +43,6 @@
 #include "v_text.h"
 
 #include "gi.h"
-#include "vm.h"
 #include "actor.h"
 #include "r_state.h"
 #include "i_system.h"
@@ -52,7 +51,6 @@
 #include "cmdlib.h"
 #include "g_level.h"
 #include "stats.h"
-#include "vm.h"
 #include "thingdef.h"
 #include "d_player.h"
 #include "doomerrors.h"
@@ -77,7 +75,6 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 	{
 		ActionCycles.Clock();
 
-		VMFrameStack stack;
 		VMValue params[3] = { self, stateowner, VMValue(info, ATAG_GENERIC) };
 		// If the function returns a state, store it at *stateret.
 		// If it doesn't return a state but stateret is non-NULL, we need
@@ -94,13 +91,13 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 		}
 		if (stateret == NULL)
 		{
-			stack.Call(ActionFunc, params, ActionFunc->ImplicitArgs, NULL, 0, NULL);
+			GlobalVMStack.Call(ActionFunc, params, ActionFunc->ImplicitArgs, NULL, 0, NULL);
 		}
 		else
 		{
 			VMReturn ret;
 			ret.PointerAt((void **)stateret);
-			stack.Call(ActionFunc, params, ActionFunc->ImplicitArgs, &ret, 1, NULL);
+			GlobalVMStack.Call(ActionFunc, params, ActionFunc->ImplicitArgs, &ret, 1, NULL);
 		}
 		ActionCycles.Unclock();
 		return true;
@@ -153,7 +150,14 @@ int GetSpriteIndex(const char * spritename, bool add)
 	return (lastindex = (int)sprites.Push (temp));
 }
 
-IMPLEMENT_CLASS(PClassActor, false, true, false, false)
+DEFINE_ACTION_FUNCTION(AActor, GetSpriteIndex)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(sprt);
+	ACTION_RETURN_INT(GetSpriteIndex(sprt.GetChars(), false));
+}
+
+IMPLEMENT_CLASS(PClassActor, false, true)
 
 IMPLEMENT_POINTERS_START(PClassActor)
 	IMPLEMENT_POINTER(DropItems)
@@ -232,7 +236,6 @@ PClassActor::PClassActor()
 	BurnHeight = -1;
 	GibHealth = INT_MIN;
 	WoundHealth = 6;
-	PoisonDamage = 0;
 	FastSpeed = -1.;
 	RDFactor = 1.;
 	CameraHeight = INT_MIN;
@@ -293,7 +296,6 @@ void PClassActor::DeriveData(PClass *newclass)
 	newa->BloodColor = BloodColor;
 	newa->GibHealth = GibHealth;
 	newa->WoundHealth = WoundHealth;
-	newa->PoisonDamage = PoisonDamage;
 	newa->FastSpeed = FastSpeed;
 	newa->RDFactor = RDFactor;
 	newa->CameraHeight = CameraHeight;

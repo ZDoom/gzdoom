@@ -42,8 +42,6 @@
 #include "c_cvars.h"
 #include "p_enemy.h"
 #include "a_sharedglobal.h"
-#include "a_action.h"
-#include "vm.h"
 #include "d_dehacked.h"
 #include "g_level.h"
 #include "r_utility.h"
@@ -53,7 +51,7 @@
 #include "p_spec.h"
 #include "p_checkposition.h"
 #include "math/cmath.h"
-#include "vm.h"
+#include "a_ammo.h"
 
 #include "gi.h"
 
@@ -264,7 +262,80 @@ void P_NoiseAlert (AActor *target, AActor *emitter, bool splash, double maxdist)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, NoiseAlert)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(target, AActor);
+	PARAM_BOOL_DEF(splash);
+	PARAM_FLOAT_DEF(maxdist);
+	// Note that the emitter is self, not the target of the alert! Target can be NULL.
+	P_NoiseAlert(target, self, splash, maxdist);
+	return 0;
+}
 
+//============================================================================
+//
+// P_DaggerAlert
+//
+//============================================================================
+
+void P_DaggerAlert(AActor *target, AActor *emitter)
+{
+	AActor *looker;
+	sector_t *sec = emitter->Sector;
+
+	if (emitter->LastHeard != NULL)
+		return;
+	if (emitter->health <= 0)
+		return;
+	if (!(emitter->flags3 & MF3_ISMONSTER))
+		return;
+	if (emitter->flags4 & MF4_INCOMBAT)
+		return;
+	emitter->flags4 |= MF4_INCOMBAT;
+
+	emitter->target = target;
+	FState *painstate = emitter->FindState(NAME_Pain, NAME_Dagger);
+	if (painstate != NULL)
+	{
+		emitter->SetState(painstate);
+	}
+
+	for (looker = sec->thinglist; looker != NULL; looker = looker->snext)
+	{
+		if (looker == emitter || looker == target)
+			continue;
+
+		if (looker->health <= 0)
+			continue;
+
+		if (!(looker->flags4 & MF4_SEESDAGGERS))
+			continue;
+
+		if (!(looker->flags4 & MF4_INCOMBAT))
+		{
+			if (!P_CheckSight(looker, target) && !P_CheckSight(looker, emitter))
+				continue;
+
+			looker->target = target;
+			if (looker->SeeSound)
+			{
+				S_Sound(looker, CHAN_VOICE, looker->SeeSound, 1, ATTN_NORM);
+			}
+			looker->SetState(looker->SeeState);
+			looker->flags4 |= MF4_INCOMBAT;
+		}
+	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, DaggerAlert)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(target, AActor);
+	// Note that the emitter is self, not the target of the alert! Target can be NULL.
+	P_DaggerAlert(target, self);
+	return 0;
+}
 
 
 //----------------------------------------------------------------------------
@@ -357,6 +428,12 @@ bool P_CheckMeleeRange2 (AActor *actor)
 		return false;
 	}
 	return true;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, CheckMeleeRange2)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(P_CheckMeleeRange2(self));
 }
 
 
@@ -1207,6 +1284,14 @@ void P_RandomChaseDir (AActor *actor)
 	actor->movedir = DI_NODIR;	// cannot move
 }
 
+DEFINE_ACTION_FUNCTION(AActor, RandomChaseDir)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	P_RandomChaseDir(self);
+	return 0;
+}
+
+
 //---------------------------------------------------------------------------
 //
 // P_IsVisible
@@ -1257,6 +1342,15 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 
 	// P_CheckSight is by far the most expensive operation in here so let's do it last.
 	return P_CheckSight(lookee, other, SF_SEEPASTSHOOTABLELINES);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, IsVisible)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	PARAM_BOOL(allaround);
+	PARAM_POINTER_DEF(params, FLookExParams);
+	ACTION_RETURN_BOOL(P_IsVisible(self, other, allaround, params));
 }
 
 //---------------------------------------------------------------------------
@@ -1310,6 +1404,12 @@ bool P_LookForMonsters (AActor *actor)
 		return true;
 	}
 	return false;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, LookForMonsters)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(P_LookForMonsters(self));
 }
 
 //============================================================================
@@ -1484,6 +1584,14 @@ bool P_LookForTID (AActor *actor, INTBOOL allaround, FLookExParams *params)
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, LookForTID)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL(allaround);
+	PARAM_POINTER_DEF(params, FLookExParams);
+	ACTION_RETURN_BOOL(P_LookForTID(self, allaround, params));
+}
+
 //============================================================================
 //
 // LookForEnemiesinBlock
@@ -1622,6 +1730,15 @@ bool P_LookForEnemies (AActor *actor, INTBOOL allaround, FLookExParams *params)
 	}
 	return false;
 }
+
+DEFINE_ACTION_FUNCTION(AActor, LookForEnemies)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL(allaround);
+	PARAM_POINTER_DEF(params, FLookExParams);
+	ACTION_RETURN_BOOL(P_LookForEnemies(self, allaround, params));
+}
+
 
 /*
 ================
@@ -1810,7 +1927,8 @@ DEFINE_ACTION_FUNCTION(AActor, LookForPlayers)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL(allaround);
-	ACTION_RETURN_BOOL(P_LookForPlayers(self, allaround, nullptr));
+	PARAM_POINTER_DEF(params, FLookExParams);
+	ACTION_RETURN_BOOL(P_LookForPlayers(self, allaround, params));
 }
 
 //
@@ -1942,7 +2060,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
+DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT_DEF	(flags)			
@@ -2159,19 +2277,13 @@ enum ChaseFlags
 	CHF_STOPIFBLOCKED = 256,
 };
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Wander)
+DEFINE_ACTION_FUNCTION(AActor, A_Wander)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT_DEF(flags);
 	A_Wander(self, flags);
 	return 0;
 }
-
-// [MC] I had to move this out from within A_Wander in order to allow flags to 
-// pass into it. That meant replacing the CALL_ACTION(A_Wander) functions with
-// just straight up defining A_Wander in order to compile. Looking around though,
-// actors from the games themselves just do a straight A_Chase call itself so
-// I saw no harm in it.
 
 void A_Wander(AActor *self, int flags)
 {
@@ -2285,7 +2397,7 @@ nosee:
 //=============================================================================
 #define CLASS_BOSS_STRAFE_RANGE	64*10
 
-void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *meleestate, FState *missilestate, bool playactive, bool nightmarefast, bool dontmove, int flags)
+void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missilestate, bool playactive, bool nightmarefast, bool dontmove, int flags)
 {
 
 	if (actor->flags5 & MF5_INCONVERSATION)
@@ -2415,7 +2527,7 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 		{
 			if (actor->flags & MF_FRIENDLY)
 			{
-				//CALL_ACTION(A_Look, actor);
+				//A_Look(actor);
 				if (actor->target == NULL)
 				{
 					if (!dontmove) A_Wander(actor);
@@ -2801,7 +2913,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Chase)
+DEFINE_ACTION_FUNCTION(AActor, A_Chase)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_STATE_DEF	(melee)		
@@ -2813,12 +2925,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Chase)
 		if ((flags & CHF_RESURRECT) && P_CheckForResurrection(self, false))
 			return 0;
 		
-		A_DoChase(stack, self, !!(flags&CHF_FASTCHASE), melee, missile, !(flags&CHF_NOPLAYACTIVE), 
+		A_DoChase(self, !!(flags&CHF_FASTCHASE), melee, missile, !(flags&CHF_NOPLAYACTIVE), 
 					!!(flags&CHF_NIGHTMAREFAST), !!(flags&CHF_DONTMOVE), flags);
 	}
 	else // this is the old default A_Chase
 	{
-		A_DoChase(stack, self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, flags);
+		A_DoChase(self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, flags);
 	}
 	return 0;
 }
@@ -2826,7 +2938,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Chase)
 DEFINE_ACTION_FUNCTION(AActor, A_FastChase)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	A_DoChase(stack, self, true, self->MeleeState, self->MissileState, true, true, false, 0);
+	A_DoChase(self, true, self->MeleeState, self->MissileState, true, true, false, 0);
 	return 0;
 }
 
@@ -2835,12 +2947,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_VileChase)
 	PARAM_SELF_PROLOGUE(AActor);
 	if (!P_CheckForResurrection(self, true))
 	{
-		A_DoChase(stack, self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
+		A_DoChase(self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
 	}
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ExtChase)
+DEFINE_ACTION_FUNCTION(AActor, A_ExtChase)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL		(domelee);
@@ -2849,16 +2961,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ExtChase)
 	PARAM_BOOL_DEF	(nightmarefast);
 
 	// Now that A_Chase can handle state label parameters, this function has become rather useless...
-	A_DoChase(stack, self, false,
+	A_DoChase(self, false,
 		domelee ? self->MeleeState : NULL, domissile ? self->MissileState : NULL,
 		playactive, nightmarefast, false, 0);
 	return 0;
 }
 
 // for internal use
-void A_Chase(VMFrameStack *stack, AActor *self)
+void A_Chase(AActor *self)
 {
-	A_DoChase(stack, self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
+	A_DoChase(self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
 }
 
 //=============================================================================
@@ -2980,7 +3092,7 @@ void A_FaceTarget(AActor *self)
 	A_Face(self, self->target);
 }
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Face)
+DEFINE_ACTION_FUNCTION(AActor, A_Face)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(faceto, AActor)
@@ -3197,7 +3309,7 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 				AInventory *inv = static_cast<AInventory *>(mo);
 				ModifyDropAmount(inv, dropamount);
 				inv->ItemFlags |= IF_TOSSED;
-				if (inv->SpecialDropAction (source))
+				if (inv->CallSpecialDropAction (source))
 				{
 					// The special action indicates that the item should not spawn
 					inv->Destroy();
@@ -3209,6 +3321,15 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 		}
 	}
 	return NULL;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, DoDropItem)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(cls, AActor);
+	PARAM_INT(amt);
+	PARAM_INT(chance);
+	ACTION_RETURN_OBJECT(P_DropItem(self, cls, amt, chance));
 }
 
 //============================================================================
@@ -3325,6 +3446,12 @@ bool CheckBossDeath (AActor *actor)
 	}
 	// The boss death is good
 	return true;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, CheckBossDeath)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(CheckBossDeath(self));
 }
 
 //
@@ -3466,47 +3593,6 @@ int P_Massacre ()
 		}
 	}
 	return killcount;
-}
-
-//
-// A_SinkMobj
-// Sink a mobj incrementally into the floor
-//
-
-bool A_SinkMobj (AActor *actor, double speed)
-{
-	if (actor->Floorclip < actor->Height)
-	{
-		actor->Floorclip += speed;
-		return false;
-	}
-	return true;
-}
-
-//
-// A_RaiseMobj
-// Raise a mobj incrementally from the floor to 
-// 
-
-bool A_RaiseMobj (AActor *actor, double speed)
-{
-	bool done = true;
-
-	// Raise a mobj from the ground
-	if (actor->Floorclip > 0)
-	{
-		actor->Floorclip -= speed;
-		if (actor->Floorclip <= 0)
-		{
-			actor->Floorclip = 0;
-			done = true;
-		}
-		else
-		{
-			done = false;
-		}
-	}
-	return done;		// Reached target height
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_ClassBossHealth)

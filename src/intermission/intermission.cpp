@@ -54,12 +54,12 @@
 
 FIntermissionDescriptorList IntermissionDescriptors;
 
-IMPLEMENT_CLASS(DIntermissionScreen, false, false, false, false)
-IMPLEMENT_CLASS(DIntermissionScreenFader, false, false, false, false)
-IMPLEMENT_CLASS(DIntermissionScreenText, false, false, false, false)
-IMPLEMENT_CLASS(DIntermissionScreenCast, false, false, false, false)
-IMPLEMENT_CLASS(DIntermissionScreenScroller, false, false, false, false)
-IMPLEMENT_CLASS(DIntermissionController, false, true, false, false)
+IMPLEMENT_CLASS(DIntermissionScreen, false, false)
+IMPLEMENT_CLASS(DIntermissionScreenFader, false, false)
+IMPLEMENT_CLASS(DIntermissionScreenText, false, false)
+IMPLEMENT_CLASS(DIntermissionScreenCast, false, false)
+IMPLEMENT_CLASS(DIntermissionScreenScroller, false, false)
+IMPLEMENT_CLASS(DIntermissionController, false, true)
 
 IMPLEMENT_POINTERS_START(DIntermissionController)
 	IMPLEMENT_POINTER(mScreen)

@@ -12,7 +12,8 @@
 #include "m_swap.h"
 #include "templates.h"
 #include "a_keys.h"
-#include "a_strifeglobal.h"
+#include "a_armor.h"
+#include "a_ammo.h"
 #include "gi.h"
 #include "g_level.h"
 #include "colormatcher.h"
@@ -439,7 +440,7 @@ private:
 		}
 
 		// Sigil
-		item = CPlayer->mo->FindInventory<ASigil>();
+		item = CPlayer->mo->FindInventory(PClass::FindActor(NAME_Sigil));
 		if (item != NULL)
 		{
 			DrawImage (TexMan(item->Icon), 253, 7);
@@ -851,7 +852,7 @@ private:
 	double ItemFlash;
 };
 
-IMPLEMENT_CLASS(DStrifeStatusBar, false, false, false, false);
+IMPLEMENT_CLASS(DStrifeStatusBar, false, false);
 
 DBaseStatusBar *CreateStrifeStatusBar ()
 {

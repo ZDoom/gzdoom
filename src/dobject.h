@@ -110,7 +110,7 @@ struct ClassReg
 	PClass *MyClass;
 	const char *Name;
 	ClassReg *ParentType;
-	ClassReg *VMExport;
+	ClassReg *_VMExport;
 	const size_t *Pointers;
 	void (*ConstructNative)(void *);
 	void(*InitNatives)();
@@ -150,9 +150,6 @@ protected: \
 #define HAS_OBJECT_POINTERS \
 	static const size_t PointerOffsets[];
 
-#define HAS_FIELDS \
-	static void InitNativeFields();
-
 #if defined(_MSC_VER)
 #	pragma section(".creg$u",read)
 #	define _DECLARE_TI(cls) __declspec(allocate(".creg$u")) ClassReg * const cls::RegistrationInfoPtr = &cls::RegistrationInfo;
@@ -160,23 +157,23 @@ protected: \
 #	define _DECLARE_TI(cls) ClassReg * const cls::RegistrationInfoPtr __attribute__((section(SECTION_CREG))) = &cls::RegistrationInfo;
 #endif
 
-#define _IMP_PCLASS(cls, ptrs, create, initn, vmexport) \
+#define _IMP_PCLASS(cls, ptrs, create) \
 	ClassReg cls::RegistrationInfo = {\
 		nullptr, \
 		#cls, \
 		&cls::Super::RegistrationInfo, \
-		vmexport, \
+		nullptr, \
 		ptrs, \
 		create, \
-		initn, \
+		nullptr, \
 		sizeof(cls), \
 		cls::MetaClassNum }; \
 	_DECLARE_TI(cls) \
 	PClass *cls::StaticType() const { return RegistrationInfo.MyClass; }
 
-#define IMPLEMENT_CLASS(cls, isabstract, ptrs, fields, vmexport) \
+#define IMPLEMENT_CLASS(cls, isabstract, ptrs) \
 	_X_CONSTRUCTOR_##isabstract(cls) \
-	_IMP_PCLASS(cls, _X_POINTERS_##ptrs(cls), _X_ABSTRACT_##isabstract(cls), _X_FIELDS_##fields(cls), _X_VMEXPORT_##vmexport(cls))
+	_IMP_PCLASS(cls, _X_POINTERS_##ptrs(cls), _X_ABSTRACT_##isabstract(cls))
 
 // Taking the address of a field in an object at address 1 instead of
 // address 0 keeps GCC from complaining about possible misuse of offsetof.
@@ -187,13 +184,13 @@ protected: \
 // Possible arguments for the IMPLEMENT_CLASS macro
 #define _X_POINTERS_true(cls)		cls::PointerOffsets
 #define _X_POINTERS_false(cls)		nullptr
-#define _X_FIELDS_true(cls)			cls::InitNativeFields
+#define _X_FIELDS_true(cls)			nullptr
 #define _X_FIELDS_false(cls)		nullptr
 #define _X_CONSTRUCTOR_true(cls)
 #define _X_CONSTRUCTOR_false(cls)	void cls::InPlaceConstructor(void *mem) { new((EInPlace *)mem) cls; }
 #define _X_ABSTRACT_true(cls)		nullptr
 #define _X_ABSTRACT_false(cls)		cls::InPlaceConstructor
-#define _X_VMEXPORT_true(cls)		&DVMObject<cls>::RegistrationInfo
+#define _X_VMEXPORT_true(cls)		nullptr
 #define _X_VMEXPORT_false(cls)		nullptr
 
 enum EObjectFlags
@@ -445,7 +442,6 @@ public:
 	virtual PClass *StaticType() const { return RegistrationInfo.MyClass; }
 	static ClassReg RegistrationInfo, * const RegistrationInfoPtr;
 	static void InPlaceConstructor (void *mem);
-	static void InitNativeFields();
 	typedef PClass MetaClass;
 private:
 	typedef DObject ThisClass;
@@ -471,11 +467,6 @@ public:
 	void SerializeUserVars(FSerializer &arc);
 	virtual void Serialize(FSerializer &arc);
 
-	void VMSuperCall()
-	{
-		ObjectFlags |= OF_SuperCall;
-	}
-
 	void ClearClass()
 	{
 		Class = NULL;
@@ -485,7 +476,7 @@ public:
 	// that don't call their base class.
 	void CheckIfSerialized () const;
 
-	virtual void Destroy ();
+	virtual void Destroy();
 
 	// If you need to replace one object with another and want to
 	// change any pointers from the old object to the new object,

@@ -15,7 +15,7 @@
 #include "serializer.h"
 #include "d_player.h"
 
-IMPLEMENT_CLASS(DBot, false, true, false, false)
+IMPLEMENT_CLASS(DBot, false, true)
 
 IMPLEMENT_POINTERS_START(DBot)
 	IMPLEMENT_POINTER(dest)

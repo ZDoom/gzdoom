@@ -43,9 +43,16 @@
 #include "d_player.h"
 #include "p_effect.h"
 #include "autosegs.h"
+#include "p_maputl.h"
+#include "gi.h"
+#include "p_terrain.h"
+#include "gstrings.h"
+#include "zstring.h"
+#include "d_event.h"
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;
+static TArray<FieldDesc> FieldTable;
 
 //==========================================================================
 //
@@ -62,7 +69,7 @@ static TArray<AFuncDesc> AFTable;
 #define DEFINE_DUMMY_FLAG(name, deprec) { DEPF_UNUSED, #name, -1, 0, deprec? VARF_Deprecated:0 }
 
 // internal flags. These do not get exposed to actor definitions but scripts need to be able to access them as variables.
-FFlagDef InternalActorFlagDefs[]=
+static FFlagDef InternalActorFlagDefs[]=
 {
 	DEFINE_FLAG(MF, INCHASE, AActor, flags),
 	DEFINE_FLAG(MF, UNMORPHED, AActor, flags),
@@ -89,11 +96,10 @@ FFlagDef InternalActorFlagDefs[]=
 	DEFINE_FLAG(MF6, INTRYMOVE, AActor, flags6),
 	DEFINE_FLAG(MF7, HANDLENODELAY, AActor, flags7),
 	DEFINE_FLAG(MF7, FLYCHEAT, AActor, flags7),
-	{ 0xffffffff }
 };
 
 
-FFlagDef ActorFlagDefs[]=
+static FFlagDef ActorFlagDefs[]=
 {
 	DEFINE_FLAG(MF, PICKUP, APlayerPawn, flags),
 	DEFINE_FLAG(MF, SPECIAL, APlayerPawn, flags),
@@ -294,6 +300,8 @@ FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF7, USEKILLSCRIPTS, AActor, flags7),
 	DEFINE_FLAG(MF7, NOKILLSCRIPTS, AActor, flags7),
 	DEFINE_FLAG(MF7, SPRITEANGLE, AActor, flags7),
+	DEFINE_FLAG(MF7, SMASHABLE, AActor, flags7),
+	DEFINE_FLAG(MF7, NOSHIELDREFLECT, AActor, flags7),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -327,7 +335,6 @@ FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG2(BOUNCE_MBF, MBFBOUNCER, AActor, BounceFlags),
 	DEFINE_FLAG2(BOUNCE_AutoOffFloorOnly, BOUNCEAUTOOFFFLOORONLY, AActor, BounceFlags),
 	DEFINE_FLAG2(BOUNCE_UseBounceState, USEBOUNCESTATE, AActor, BounceFlags),
-	{ 0xffffffff }
 };
 
 // These won't be accessible through bitfield variables
@@ -411,11 +418,13 @@ static FFlagDef WeaponFlagDefs[] =
 	DEFINE_FLAG(WIF, NOAUTOAIM, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, NODEATHDESELECT, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, NODEATHINPUT, AWeapon, WeaponFlags),
-	
-	DEFINE_DUMMY_FLAG(NOLMS, false),
 	DEFINE_FLAG(WIF, ALT_USES_BOTH, AWeapon, WeaponFlags),
+
+	DEFINE_DUMMY_FLAG(NOLMS, false),
 	DEFINE_DUMMY_FLAG(ALLOW_WITH_RESPAWN_INVUL, false),
 };
+
+
 
 static FFlagDef PlayerPawnFlagDefs[] =
 {
@@ -431,14 +440,15 @@ static FFlagDef PowerSpeedFlagDefs[] =
 	DEFINE_FLAG(PSF, NOTRAIL, APowerSpeed, SpeedFlags),
 };
 
-static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int NumDefs; } FlagLists[] =
+static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int NumDefs; int Use; } FlagLists[] =
 {
-	{ &RUNTIME_CLASS_CASTLESS(AActor), 		ActorFlagDefs,		countof(ActorFlagDefs)-1 },	// -1 to account for the terminator
-	{ &RUNTIME_CLASS_CASTLESS(AActor), 		MoreFlagDefs,		countof(MoreFlagDefs) },
-	{ &RUNTIME_CLASS_CASTLESS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs) },
-	{ &RUNTIME_CLASS_CASTLESS(AWeapon), 	WeaponFlagDefs,		countof(WeaponFlagDefs) },
-	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs) },
-	{ &RUNTIME_CLASS_CASTLESS(APowerSpeed),	PowerSpeedFlagDefs,	countof(PowerSpeedFlagDefs) },
+	{ &RUNTIME_CLASS_CASTLESS(AActor), 		ActorFlagDefs,		countof(ActorFlagDefs), 3 },	// -1 to account for the terminator
+	{ &RUNTIME_CLASS_CASTLESS(AActor), 		MoreFlagDefs,		countof(MoreFlagDefs), 1 },
+	{ &RUNTIME_CLASS_CASTLESS(AActor), 	InternalActorFlagDefs,	countof(InternalActorFlagDefs), 2 },
+	{ &RUNTIME_CLASS_CASTLESS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs), 3 },
+	{ &RUNTIME_CLASS_CASTLESS(AWeapon), 	WeaponFlagDefs,		countof(WeaponFlagDefs), 3 },
+	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs), 3 },
+	{ &RUNTIME_CLASS_CASTLESS(APowerSpeed),	PowerSpeedFlagDefs,	countof(PowerSpeedFlagDefs), 3 },
 };
 #define NUM_FLAG_LISTS (countof(FlagLists))
 
@@ -486,7 +496,7 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bo
 		int max = strict ? 2 : NUM_FLAG_LISTS;
 		for (int i = 0; i < max; ++i)
 		{
-			if (type->IsDescendantOf (*FlagLists[i].Type))
+			if ((FlagLists[i].Use & 1) && type->IsDescendantOf (*FlagLists[i].Type))
 			{
 				def = FindFlag (FlagLists[i].Defs, FlagLists[i].NumDefs, part1);
 				if (def != NULL)
@@ -571,17 +581,60 @@ FPropertyInfo *FindProperty(const char * string)
 //
 //==========================================================================
 
-AFuncDesc *FindFunction(const char * string)
+AFuncDesc *FindFunction(PStruct *cls, const char * string)
 {
-	int min = 0, max = AFTable.Size()-1;
+	for (int i = 0; i < 2; i++)
+	{
+		// Since many functions have been declared with Actor as owning class, despite being members of something else, let's hack around this until they have been fixed or exported.
+		// Since most of these are expected to be scriptified anyway, there's no point fixing them all before they get exported.
+		if (i == 1)
+		{
+			if (!cls->IsKindOf(RUNTIME_CLASS(PClassActor))) break;
+			cls = RUNTIME_CLASS(AActor);
+		}
+
+		int min = 0, max = AFTable.Size() - 1;
+
+		while (min <= max)
+		{
+			int mid = (min + max) / 2;
+			int lexval = stricmp(cls->TypeName.GetChars(), AFTable[mid].ClassName + 1);
+			if (lexval == 0) lexval = stricmp(string, AFTable[mid].FuncName);
+			if (lexval == 0)
+			{
+				return &AFTable[mid];
+			}
+			else if (lexval > 0)
+			{
+				min = mid + 1;
+			}
+			else
+			{
+				max = mid - 1;
+			}
+		}
+	}
+	return nullptr;
+}
+
+//==========================================================================
+//
+// Find a function by name using a binary search
+//
+//==========================================================================
+
+FieldDesc *FindField(PStruct *cls, const char * string)
+{
+	int min = 0, max = FieldTable.Size() - 1;
 
 	while (min <= max)
 	{
 		int mid = (min + max) / 2;
-		int lexval = stricmp (string, AFTable[mid].Name);
+		int lexval = stricmp(cls->TypeName.GetChars(), FieldTable[mid].ClassName + 1);
+		if (lexval == 0) lexval = stricmp(string, FieldTable[mid].FieldName);
 		if (lexval == 0)
 		{
-			return &AFTable[mid];
+			return &FieldTable[mid];
 		}
 		else if (lexval > 0)
 		{
@@ -592,7 +645,7 @@ AFuncDesc *FindFunction(const char * string)
 			max = mid - 1;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 
@@ -627,7 +680,18 @@ static int propcmp(const void * a, const void * b)
 
 static int funccmp(const void * a, const void * b)
 {
-	return stricmp( ((AFuncDesc*)a)->Name, ((AFuncDesc*)b)->Name);
+	// +1 to get past the prefix letter of the native class name, which gets omitted by the FName for the class.
+	int res = stricmp(((AFuncDesc*)a)->ClassName + 1, ((AFuncDesc*)b)->ClassName + 1);
+	if (res == 0) res = stricmp(((AFuncDesc*)a)->FuncName, ((AFuncDesc*)b)->FuncName);
+	return res;
+}
+
+static int fieldcmp(const void * a, const void * b)
+{
+	// +1 to get past the prefix letter of the native class name, which gets omitted by the FName for the class.
+	int res = stricmp(((FieldDesc*)a)->ClassName + 1, ((FieldDesc*)b)->ClassName + 1);
+	if (res == 0) res = stricmp(((FieldDesc*)a)->FieldName, ((FieldDesc*)b)->FieldName);
+	return res;
 }
 
 //==========================================================================
@@ -635,10 +699,90 @@ static int funccmp(const void * a, const void * b)
 // Initialization
 //
 //==========================================================================
-void G_InitLevelLocalsForScript();
 
 void InitThingdef()
 {
+	PType *TypeActor = NewPointer(RUNTIME_CLASS(AActor));
+
+	PStruct *sstruct = NewNativeStruct("Sector", nullptr);
+	auto sptr = NewPointer(sstruct);
+	sstruct->AddNativeField("soundtarget", TypeActor, myoffsetof(sector_t, SoundTarget));
+	
+	// expose the global validcount variable.
+	PField *vcf = new PField("validcount", TypeSInt32, VARF_Native | VARF_Static, (intptr_t)&validcount);
+	GlobalSymbols.AddSymbol(vcf);
+
+	// expose the global Multiplayer variable.
+	PField *multif = new PField("multiplayer", TypeBool, VARF_Native | VARF_ReadOnly | VARF_Static, (intptr_t)&multiplayer);
+	GlobalSymbols.AddSymbol(multif);
+
+	// set up a variable for the global level data structure
+	PStruct *lstruct = NewNativeStruct("LevelLocals", nullptr);
+	PField *levelf = new PField("level", lstruct, VARF_Native | VARF_Static, (intptr_t)&level);
+	GlobalSymbols.AddSymbol(levelf);
+
+	// set up a variable for the DEH data
+	PStruct *dstruct = NewNativeStruct("DehInfo", nullptr);
+	PField *dehf = new PField("deh", dstruct, VARF_Native | VARF_Static, (intptr_t)&deh);
+
+	GlobalSymbols.AddSymbol(dehf);
+
+	// set up a variable for the global players array.
+	PStruct *pstruct = NewNativeStruct("PlayerInfo", nullptr);
+	pstruct->Size = sizeof(player_t);
+	pstruct->Align = alignof(player_t);
+	PArray *parray = NewArray(pstruct, MAXPLAYERS);
+	PField *playerf = new PField("players", parray, VARF_Native | VARF_Static, (intptr_t)&players);
+	GlobalSymbols.AddSymbol(playerf);
+
+	// set up the lines array in the sector struct. This is a bit messy because the type system is not prepared to handle a pointer to an array of pointers to a native struct even remotely well...
+	// As a result, the size has to be set to something large and arbritrary because it can change between maps. This will need some serious improvement when things get cleaned up.
+	pstruct = NewNativeStruct("Sector", nullptr);
+	pstruct->AddNativeField("lines", NewPointer(NewArray(NewPointer(NewNativeStruct("line", nullptr), false), 0x40000), false), myoffsetof(sector_t, lines), VARF_Native);
+
+	parray = NewArray(TypeBool, MAXPLAYERS);
+	playerf = new PField("playeringame", parray, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&playeringame);
+	GlobalSymbols.AddSymbol(playerf);
+
+	playerf = new PField("gameaction", TypeUInt8, VARF_Native | VARF_Static, (intptr_t)&gameaction);
+	GlobalSymbols.AddSymbol(playerf);
+
+	playerf = new PField("consoleplayer", TypeSInt32, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&consoleplayer);
+	GlobalSymbols.AddSymbol(playerf);
+
+	// Argh. It sucks when bad hacks need to be supported. WP_NOCHANGE is just a bogus pointer but it used everywhere as a special flag.
+	// It cannot be defined as constant because constants can either be numbers or strings but nothing else, so the only 'solution'
+	// is to create a static variable from it and reference that in the script. Yuck!!!
+	static AWeapon *wpnochg = WP_NOCHANGE;
+	playerf = new PField("WP_NOCHANGE", NewPointer(RUNTIME_CLASS(AWeapon), false), VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&wpnochg);
+	GlobalSymbols.AddSymbol(playerf);
+
+	// this needs to be done manually until it can be given a proper type.
+	RUNTIME_CLASS(AActor)->AddNativeField("DecalGenerator", NewPointer(TypeVoid), myoffsetof(AActor, DecalGenerator));
+
+	// synthesize a symbol for each flag from the flag name tables to avoid redundant declaration of them.
+	for (auto &fl : FlagLists)
+	{
+		if (fl.Use & 2)
+		{
+			for(int i=0;i<fl.NumDefs;i++)
+			{
+				if (fl.Defs[i].structoffset > 0) // skip the deprecated entries in this list
+				{
+					const_cast<PClass*>(*fl.Type)->AddNativeField(FStringf("b%s", fl.Defs[i].name), (fl.Defs[i].fieldsize == 4 ? TypeSInt32 : TypeSInt16), fl.Defs[i].structoffset, fl.Defs[i].varflags, fl.Defs[i].flagbit);
+				}
+			}
+		}
+	}
+
+	FAutoSegIterator probe(CRegHead, CRegTail);
+
+	while (*++probe != NULL)
+	{
+		if (((ClassReg *)*probe)->InitNatives)
+			((ClassReg *)*probe)->InitNatives();
+	}
+
 	// Sort the flag lists
 	for (size_t i = 0; i < NUM_FLAG_LISTS; ++i)
 	{
@@ -668,27 +812,56 @@ void InitThingdef()
 		{
 			AFuncDesc *afunc = (AFuncDesc *)*probe;
 			assert(afunc->VMPointer != NULL);
-			*(afunc->VMPointer) = new VMNativeFunction(afunc->Function, afunc->Name);
+			*(afunc->VMPointer) = new VMNativeFunction(afunc->Function, afunc->FuncName);
+			(*(afunc->VMPointer))->PrintableName.Format("%s.%s [Native]", afunc->ClassName+1, afunc->FuncName);
 			AFTable.Push(*afunc);
 		}
 		AFTable.ShrinkToFit();
 		qsort(&AFTable[0], AFTable.Size(), sizeof(AFTable[0]), funccmp);
 	}
 
-	PType *TypeActor = NewPointer(RUNTIME_CLASS(AActor));
-
-	PStruct *sstruct = NewStruct("Sector", nullptr);
-	auto sptr = NewPointer(sstruct);
-	sstruct->AddNativeField("soundtarget", TypeActor, myoffsetof(sector_t, SoundTarget));
-
-	G_InitLevelLocalsForScript();
-
-	FAutoSegIterator probe(CRegHead, CRegTail);
-
-	while (*++probe != NULL)
+	FieldTable.Clear();
+	if (FieldTable.Size() == 0)
 	{
-		if (((ClassReg *)*probe)->InitNatives) 
-			((ClassReg *)*probe)->InitNatives();
+		FAutoSegIterator probe(FRegHead, FRegTail);
+
+		while (*++probe != NULL)
+		{
+			FieldDesc *afield = (FieldDesc *)*probe;
+			FieldTable.Push(*afield);
+		}
+		FieldTable.ShrinkToFit();
+		qsort(&FieldTable[0], FieldTable.Size(), sizeof(FieldTable[0]), fieldcmp);
 	}
 
 }
+
+DEFINE_ACTION_FUNCTION(DObject, GameType)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_INT(gameinfo.gametype);
+}
+
+DEFINE_ACTION_FUNCTION(DObject, BAM)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(ang);
+	ACTION_RETURN_INT(DAngle(ang).BAMs());
+}
+
+DEFINE_ACTION_FUNCTION(FStringTable, Localize)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(label);
+	ACTION_RETURN_STRING(GStrings(label));
+}
+
+DEFINE_ACTION_FUNCTION(FString, Replace)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(s1);
+	PARAM_STRING(s2);
+	self->Substitute(*s1, *s2);
+	return 0;
+}
+

@@ -25,7 +25,6 @@
 
 // Basic data types.
 // Needs fixed point, and BAM angles.
-//#include "vm.h"
 
 #define WEAPONBOTTOM			128.
 
@@ -88,8 +87,9 @@ private:
 
 	void Serialize(FSerializer &arc);
 	void Tick();
-	void Destroy();
+	void Destroy() override;
 
+public:	// must be public to be able to generate the field export tables. Grrr...
 	TObjPtr<AActor> Caller;
 	TObjPtr<DPSprite> Next;
 	player_t *Owner;
@@ -112,8 +112,6 @@ void P_DropWeapon (player_t *player);
 void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac);
 DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget = NULL, int aimflags = 0);
 AActor *P_AimTarget(AActor *mo);
-
-void P_GunShot (AActor *mo, bool accurate, PClassActor *pufftype, DAngle pitch);
 
 void DoReadyWeapon(AActor *self);
 void DoReadyWeaponToBob(AActor *self);

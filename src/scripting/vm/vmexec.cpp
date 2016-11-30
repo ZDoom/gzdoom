@@ -34,8 +34,10 @@
 #include <math.h>
 #include <v_video.h>
 #include <s_sound.h>
-#include "vm.h"
+#include "dobject.h"
 #include "xs_Float.h"
+#include "r_state.h"
+#include "textures/textures.h"
 #include "math/cmath.h"
 
 #define IMPLEMENT_VMEXEC
@@ -73,6 +75,7 @@
 #define ASSERTF(x)		assert((unsigned)(x) < f->NumRegF)
 #define ASSERTA(x)		assert((unsigned)(x) < f->NumRegA)
 #define ASSERTS(x)		assert((unsigned)(x) < f->NumRegS)
+#define ASSERTO(x)		assert((unsigned)(x) < f->NumRegA && reg.atag[x] == ATAG_OBJECT)
 
 #define ASSERTKD(x)		assert(sfunc != NULL && (unsigned)(x) < sfunc->NumKonstD)
 #define ASSERTKF(x)		assert(sfunc != NULL && (unsigned)(x) < sfunc->NumKonstF)
@@ -142,6 +145,12 @@ VMExec_Unchecked::Exec
 VMExec_Checked::Exec
 #endif
 ;
+
+// Note: If the VM is being used in multiple threads, this should be declared as thread_local.
+// ZDoom doesn't need this at the moment so this is disabled.
+
+thread_local VMFrameStack GlobalVMStack;
+
 
 //===========================================================================
 //

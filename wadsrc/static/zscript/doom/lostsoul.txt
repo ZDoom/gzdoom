@@ -92,7 +92,7 @@ extend class Actor
 {
 	const SKULLSPEED = 20;
 	
-	void A_SkullAttack(float skullspeed = SKULLSPEED)
+	void A_SkullAttack(double skullspeed = SKULLSPEED)
 	{
 		if (target == null) return;
 

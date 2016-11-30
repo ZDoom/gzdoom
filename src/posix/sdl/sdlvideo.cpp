@@ -79,7 +79,7 @@ private:
 	SDLFB () {}
 };
 
-IMPLEMENT_CLASS(SDLFB, false, false, false, false)
+IMPLEMENT_CLASS(SDLFB, false, false)
 
 struct MiniModeInfo
 {

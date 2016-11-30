@@ -39,7 +39,6 @@
 #include "i_system.h"
 #include "c_dispatch.h"
 #include "v_text.h"
-#include "vm.h"
 #include "thingdef.h"
 
 // stores indices for symbolic state labels for some old-style DECORATE functions.
@@ -290,7 +289,7 @@ static bool VerifyJumpTarget(PClassActor *cls, FState *CallingState, int index)
 //
 //==========================================================================
 
-FState *FStateLabelStorage::GetState(int pos, PClassActor *cls)
+FState *FStateLabelStorage::GetState(int pos, PClassActor *cls, bool exact)
 {
 	if (pos > 0x10000000)
 	{
@@ -323,7 +322,7 @@ FState *FStateLabelStorage::GetState(int pos, PClassActor *cls)
 		else if (cls != nullptr)
 		{
 			FName *labels = (FName*)&Storage[pos + sizeof(int)];
-			return cls->FindState(val, labels, false);
+			return cls->FindState(val, labels, exact);
 		}
 	}
 	return nullptr;
@@ -338,12 +337,13 @@ FState *FStateLabelStorage::GetState(int pos, PClassActor *cls)
 DEFINE_ACTION_FUNCTION(AActor, FindState)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE(newstate);
-	ACTION_RETURN_STATE(newstate);
+	PARAM_INT(newstate);
+	PARAM_BOOL_DEF(exact)
+	ACTION_RETURN_STATE(StateLabels.GetState(newstate, self->GetClass(), exact));
 }
 
 // same as above but context aware.
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, ResolveState)
+DEFINE_ACTION_FUNCTION(AActor, ResolveState)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_STATE_ACTION(newstate);
@@ -924,9 +924,9 @@ int FStateDefinitions::AddStates(FState *state, const char *framechars, const FS
 
 		if (*framechars == '#')
 			noframe = true;
-		else if (*framechars == '^') 
+		else if (*framechars == '^')
 			frame = '\\' - 'A';
-		else 
+		else
 			frame = (*framechars & 223) - 'A';
 
 		framechars++;
@@ -937,13 +937,14 @@ int FStateDefinitions::AddStates(FState *state, const char *framechars, const FS
 		}
 
 		state->Frame = frame;
-		state->SameFrame = noframe;
+		if (noframe) state->StateFlags |= STF_SAMEFRAME;
+		else state->StateFlags &= ~STF_SAMEFRAME;
 		StateArray.Push(*state);
 		SourceLines.Push(sc);
 		++count;
 
 		// NODELAY flag is not carried past the first state
-		state->NoDelay = false;
+		state->StateFlags &= ~STF_NODELAY;
 	}
 	laststate = &StateArray[StateArray.Size() - 1];
 	laststatebeforelabel = laststate;
@@ -1054,4 +1055,39 @@ CCMD(dumpstates)
 		DumpStateHelper(info->StateList, "");
 		Printf(PRINT_LOG, "----------------------------\n");
 	}
+}
+
+//==========================================================================
+//
+// sets up the script-side version of states
+//
+//==========================================================================
+
+DEFINE_FIELD(FState, NextState)
+DEFINE_FIELD(FState, sprite)
+DEFINE_FIELD(FState, Tics)
+DEFINE_FIELD(FState, TicRange)
+DEFINE_FIELD(FState, Frame)
+DEFINE_FIELD(FState, UseFlags)
+DEFINE_FIELD(FState, Misc1)
+DEFINE_FIELD(FState, Misc2)
+DEFINE_FIELD_BIT(FState, StateFlags, bSlow, STF_SLOW)
+DEFINE_FIELD_BIT(FState, StateFlags, bFast, STF_FAST)
+DEFINE_FIELD_BIT(FState, StateFlags, bFullbright, STF_FULLBRIGHT)
+DEFINE_FIELD_BIT(FState, StateFlags, bNoDelay, STF_NODELAY)
+DEFINE_FIELD_BIT(FState, StateFlags, bSameFrame, STF_SAMEFRAME)
+DEFINE_FIELD_BIT(FState, StateFlags, bCanRaise, STF_CANRAISE)
+DEFINE_FIELD_BIT(FState, StateFlags, bDehacked, STF_DEHACKED)
+
+DEFINE_ACTION_FUNCTION(FState, DistanceTo)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FState);
+	PARAM_POINTER(other, FState);
+
+	// Safely calculate the distance between two states.
+	auto o1 = FState::StaticFindStateOwner(self);
+	int retv;
+	if (other < o1->OwnedStates || other >= o1->OwnedStates + o1->NumOwnedStates) retv =  INT_MIN;
+	else retv = int(other - self);
+	ACTION_RETURN_INT(retv);
 }

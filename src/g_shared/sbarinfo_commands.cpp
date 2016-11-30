@@ -268,7 +268,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			}
 			else if(type == SIGIL)
 			{
-				AInventory *item = statusBar->CPlayer->mo->FindInventory<ASigil>();
+				AInventory *item = statusBar->CPlayer->mo->FindInventory(PClass::FindActor(NAME_Sigil));
 				if (item != NULL)
 					texture = TexMan(item->Icon);
 			}

@@ -45,10 +45,13 @@
 #include "autosegs.h"
 #include "v_text.h"
 #include "a_pickups.h"
+#include "a_artifacts.h"
 #include "a_weaponpiece.h"
 #include "d_player.h"
 #include "doomerrors.h"
 #include "fragglescript/t_fs.h"
+#include "a_keys.h"
+#include "a_health.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -81,10 +84,14 @@ PString *TypeString;
 PName *TypeName;
 PSound *TypeSound;
 PColor *TypeColor;
+PTextureID *TypeTextureID;
+PSpriteID *TypeSpriteID;
 PStatePointer *TypeState;
 PStateLabel *TypeStateLabel;
 PStruct *TypeVector2;
 PStruct *TypeVector3;
+PStruct *TypeColorStruct;
+PStruct *TypeStringStruct;
 PPointer *TypeNullPtr;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -94,8 +101,8 @@ static const size_t TheEnd = ~(size_t)0;
 
 // CODE --------------------------------------------------------------------
 
-IMPLEMENT_CLASS(PErrorType, false, false, false, false)
-IMPLEMENT_CLASS(PVoidType, false, false, false, false)
+IMPLEMENT_CLASS(PErrorType, false, false)
+IMPLEMENT_CLASS(PVoidType, false, false)
 
 void DumpTypeTable()
 {
@@ -142,7 +149,7 @@ void DumpTypeTable()
 
 /* PClassType *************************************************************/
 
-IMPLEMENT_CLASS(PClassType, false, false, false, false)
+IMPLEMENT_CLASS(PClassType, false, false)
 
 //==========================================================================
 //
@@ -170,7 +177,7 @@ void PClassType::DeriveData(PClass *newclass)
 
 /* PClassClass ************************************************************/
 
-IMPLEMENT_CLASS(PClassClass, false, false, false, false)
+IMPLEMENT_CLASS(PClassClass, false, false)
 
 //==========================================================================
 //
@@ -188,7 +195,7 @@ PClassClass::PClassClass()
 
 /* PType ******************************************************************/
 
-IMPLEMENT_CLASS(PType, true, true, false, false)
+IMPLEMENT_CLASS(PType, true, true)
 
 IMPLEMENT_POINTERS_START(PType)
 	IMPLEMENT_POINTER(HashNext)
@@ -421,6 +428,16 @@ void PType::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> 
 
 //==========================================================================
 //
+// PType :: SetDefaultValue
+//
+//==========================================================================
+
+void PType::SetPointer(void *base, unsigned offset, TArray<size_t> *stroffs) const
+{
+}
+
+//==========================================================================
+//
 // PType :: InitializeValue
 //
 //==========================================================================
@@ -535,15 +552,17 @@ void PType::StaticInit()
 	RUNTIME_CLASS(PString)->TypeTableType = RUNTIME_CLASS(PString);
 	RUNTIME_CLASS(PName)->TypeTableType = RUNTIME_CLASS(PName);
 	RUNTIME_CLASS(PSound)->TypeTableType = RUNTIME_CLASS(PSound);
+	RUNTIME_CLASS(PSpriteID)->TypeTableType = RUNTIME_CLASS(PSpriteID);
+	RUNTIME_CLASS(PTextureID)->TypeTableType = RUNTIME_CLASS(PTextureID);
 	RUNTIME_CLASS(PColor)->TypeTableType = RUNTIME_CLASS(PColor);
 	RUNTIME_CLASS(PPointer)->TypeTableType = RUNTIME_CLASS(PPointer);
 	RUNTIME_CLASS(PClassPointer)->TypeTableType = RUNTIME_CLASS(PClassPointer);
 	RUNTIME_CLASS(PEnum)->TypeTableType = RUNTIME_CLASS(PEnum);
 	RUNTIME_CLASS(PArray)->TypeTableType = RUNTIME_CLASS(PArray);
 	RUNTIME_CLASS(PDynArray)->TypeTableType = RUNTIME_CLASS(PDynArray);
-	RUNTIME_CLASS(PVector)->TypeTableType = RUNTIME_CLASS(PVector);
 	RUNTIME_CLASS(PMap)->TypeTableType = RUNTIME_CLASS(PMap);
 	RUNTIME_CLASS(PStruct)->TypeTableType = RUNTIME_CLASS(PStruct);
+	RUNTIME_CLASS(PNativeStruct)->TypeTableType = RUNTIME_CLASS(PNativeStruct);
 	RUNTIME_CLASS(PPrototype)->TypeTableType = RUNTIME_CLASS(PPrototype);
 	RUNTIME_CLASS(PClass)->TypeTableType = RUNTIME_CLASS(PClass);
 	RUNTIME_CLASS(PStatePointer)->TypeTableType = RUNTIME_CLASS(PStatePointer);
@@ -568,6 +587,22 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeState = new PStatePointer);
 	TypeTable.AddType(TypeStateLabel = new PStateLabel);
 	TypeTable.AddType(TypeNullPtr = new PPointer);
+	TypeTable.AddType(TypeSpriteID = new PSpriteID);
+	TypeTable.AddType(TypeTextureID = new PTextureID);
+
+	TypeColorStruct = NewStruct("@ColorStruct", nullptr);	//This name is intentionally obfuscated so that it cannot be used explicitly. The point of this type is to gain access to the single channels of a color value.
+	TypeStringStruct = NewNativeStruct(NAME_String, nullptr);
+#ifdef __BIG_ENDIAN__
+	TypeColorStruct->AddField(NAME_a, TypeUInt8);
+	TypeColorStruct->AddField(NAME_r, TypeUInt8);
+	TypeColorStruct->AddField(NAME_g, TypeUInt8);
+	TypeColorStruct->AddField(NAME_b, TypeUInt8);
+#else
+	TypeColorStruct->AddField(NAME_b, TypeUInt8);
+	TypeColorStruct->AddField(NAME_g, TypeUInt8);
+	TypeColorStruct->AddField(NAME_r, TypeUInt8);
+	TypeColorStruct->AddField(NAME_a, TypeUInt8);
+#endif
 
 	TypeVector2 = new PStruct(NAME_Vector2, nullptr);
 	TypeVector2->AddField(NAME_X, TypeFloat64);
@@ -583,8 +618,8 @@ void PType::StaticInit()
 	TypeVector3->AddField(NAME_X, TypeFloat64);
 	TypeVector3->AddField(NAME_Y, TypeFloat64);
 	TypeVector3->AddField(NAME_Z, TypeFloat64);
-	// allow accessing xy as a vector2. This is marked native because it's not supposed to be serialized.
-	TypeVector3->Symbols.AddSymbol(new PField(NAME_XY, TypeVector2, VARF_Native, 0));
+	// allow accessing xy as a vector2. This is not supposed to be serialized so it's marked transient
+	TypeVector3->Symbols.AddSymbol(new PField(NAME_XY, TypeVector2, VARF_Transient, 0));
 	TypeTable.AddType(TypeVector3);
 	TypeVector3->loadOp = OP_LV3;
 	TypeVector3->storeOp = OP_SV3;
@@ -617,7 +652,7 @@ void PType::StaticInit()
 
 /* PBasicType *************************************************************/
 
-IMPLEMENT_CLASS(PBasicType, true, false, false, false)
+IMPLEMENT_CLASS(PBasicType, true, false)
 
 //==========================================================================
 //
@@ -643,11 +678,11 @@ PBasicType::PBasicType(unsigned int size, unsigned int align)
 
 /* PCompoundType **********************************************************/
 
-IMPLEMENT_CLASS(PCompoundType, true, false, false, false)
+IMPLEMENT_CLASS(PCompoundType, true, false)
 
 /* PNamedType *************************************************************/
 
-IMPLEMENT_CLASS(PNamedType, true, true, false, false)
+IMPLEMENT_CLASS(PNamedType, true, true)
 
 IMPLEMENT_POINTERS_START(PNamedType)
 	IMPLEMENT_POINTER(Outer)
@@ -695,7 +730,7 @@ FString PNamedType::QualifiedName() const
 
 /* PInt *******************************************************************/
 
-IMPLEMENT_CLASS(PInt, false, false, false, false)
+IMPLEMENT_CLASS(PInt, false, false)
 
 //==========================================================================
 //
@@ -934,7 +969,7 @@ double PInt::GetValueFloat(void *addr) const
 
 /* PBool ******************************************************************/
 
-IMPLEMENT_CLASS(PBool, false, false, false, false)
+IMPLEMENT_CLASS(PBool, false, false)
 
 //==========================================================================
 //
@@ -955,7 +990,7 @@ PBool::PBool()
 
 /* PFloat *****************************************************************/
 
-IMPLEMENT_CLASS(PFloat, false, false, false, false)
+IMPLEMENT_CLASS(PFloat, false, false)
 
 //==========================================================================
 //
@@ -1205,7 +1240,7 @@ void PFloat::SetOps()
 
 /* PString ****************************************************************/
 
-IMPLEMENT_CLASS(PString, false, false, false, false)
+IMPLEMENT_CLASS(PString, false, false)
 
 //==========================================================================
 //
@@ -1214,7 +1249,7 @@ IMPLEMENT_CLASS(PString, false, false, false, false)
 //==========================================================================
 
 PString::PString()
-: PBasicType(sizeof(FString), __alignof(FString))
+: PBasicType(sizeof(FString), alignof(FString))
 {
 	mDescriptiveName = "String";
 	storeOp = OP_SS;
@@ -1302,7 +1337,7 @@ void PString::DestroyValue(void *addr) const
 
 /* PName ******************************************************************/
 
-IMPLEMENT_CLASS(PName, false, false, false, false)
+IMPLEMENT_CLASS(PName, false, false)
 
 //==========================================================================
 //
@@ -1314,7 +1349,7 @@ PName::PName()
 : PInt(sizeof(FName), true, false)
 {
 	mDescriptiveName = "Name";
-	assert(sizeof(FName) == __alignof(FName));
+	assert(sizeof(FName) == alignof(FName));
 }
 
 //==========================================================================
@@ -1350,9 +1385,94 @@ bool PName::ReadValue(FSerializer &ar, const char *key, void *addr) const
 	}
 }
 
+/* PSpriteID ******************************************************************/
+
+IMPLEMENT_CLASS(PSpriteID, false, false)
+
+//==========================================================================
+//
+// PName Default Constructor
+//
+//==========================================================================
+
+PSpriteID::PSpriteID()
+	: PInt(sizeof(int), true, true)
+{
+	mDescriptiveName = "SpriteID";
+}
+
+//==========================================================================
+//
+// PName :: WriteValue
+//
+//==========================================================================
+
+void PSpriteID::WriteValue(FSerializer &ar, const char *key, const void *addr) const
+{
+	int32_t val = *(int*)addr;
+	ar.Sprite(key, val, nullptr);
+}
+
+//==========================================================================
+//
+// PName :: ReadValue
+//
+//==========================================================================
+
+bool PSpriteID::ReadValue(FSerializer &ar, const char *key, void *addr) const
+{
+	int32_t val;
+	ar.Sprite(key, val, nullptr);
+	*(int*)addr = val;
+	return true;
+}
+
+/* PTextureID ******************************************************************/
+
+IMPLEMENT_CLASS(PTextureID, false, false)
+
+//==========================================================================
+//
+// PTextureID Default Constructor
+//
+//==========================================================================
+
+PTextureID::PTextureID()
+	: PInt(sizeof(FTextureID), true, false)
+{
+	mDescriptiveName = "TextureID";
+	assert(sizeof(FTextureID) == alignof(FTextureID));
+}
+
+//==========================================================================
+//
+// PTextureID :: WriteValue
+//
+//==========================================================================
+
+void PTextureID::WriteValue(FSerializer &ar, const char *key, const void *addr) const
+{
+	FTextureID val = *(FTextureID*)addr;
+	ar(key, val);
+}
+
+//==========================================================================
+//
+// PTextureID :: ReadValue
+//
+//==========================================================================
+
+bool PTextureID::ReadValue(FSerializer &ar, const char *key, void *addr) const
+{
+	FTextureID val;
+	ar(key, val);
+	*(FTextureID*)addr = val;
+	return true;
+}
+
 /* PSound *****************************************************************/
 
-IMPLEMENT_CLASS(PSound, false, false, false, false)
+IMPLEMENT_CLASS(PSound, false, false)
 
 //==========================================================================
 //
@@ -1364,7 +1484,7 @@ PSound::PSound()
 : PInt(sizeof(FSoundID), true)
 {
 	mDescriptiveName = "Sound";
-	assert(sizeof(FSoundID) == __alignof(FSoundID));
+	assert(sizeof(FSoundID) == alignof(FSoundID));
 }
 
 //==========================================================================
@@ -1402,7 +1522,7 @@ bool PSound::ReadValue(FSerializer &ar, const char *key, void *addr) const
 
 /* PColor *****************************************************************/
 
-IMPLEMENT_CLASS(PColor, false, false, false, false)
+IMPLEMENT_CLASS(PColor, false, false)
 
 //==========================================================================
 //
@@ -1414,12 +1534,12 @@ PColor::PColor()
 : PInt(sizeof(PalEntry), true)
 {
 	mDescriptiveName = "Color";
-	assert(sizeof(PalEntry) == __alignof(PalEntry));
+	assert(sizeof(PalEntry) == alignof(PalEntry));
 }
 
 /* PStateLabel *****************************************************************/
 
-IMPLEMENT_CLASS(PStateLabel, false, false, false, false)
+IMPLEMENT_CLASS(PStateLabel, false, false)
 
 //==========================================================================
 //
@@ -1433,53 +1553,9 @@ PStateLabel::PStateLabel()
 	mDescriptiveName = "StateLabel";
 }
 
-/* PStatePointer **********************************************************/
-
-IMPLEMENT_CLASS(PStatePointer, false, false, false, false)
-
-//==========================================================================
-//
-// PStatePointer Default Constructor
-//
-//==========================================================================
-
-PStatePointer::PStatePointer()
-: PBasicType(sizeof(FState *), __alignof(FState *))
-{
-	mDescriptiveName = "State";
-	storeOp = OP_SP;
-	loadOp = OP_LP;
-	moveOp = OP_MOVEA;
-	RegType = REGT_POINTER;
-}
-
-//==========================================================================
-//
-// PStatePointer :: WriteValue
-//
-//==========================================================================
-
-void PStatePointer::WriteValue(FSerializer &ar, const char *key,const void *addr) const
-{
-	ar(key, *(FState **)addr);
-}
-
-//==========================================================================
-//
-// PStatePointer :: ReadValue
-//
-//==========================================================================
-
-bool PStatePointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
-{
-	bool res = false;
-	::Serialize(ar, key, *(FState **)addr, nullptr, &res);
-	return res;
-}
-
 /* PPointer ***************************************************************/
 
-IMPLEMENT_CLASS(PPointer, false, true, false, false)
+IMPLEMENT_CLASS(PPointer, false, true)
 
 IMPLEMENT_POINTERS_START(PPointer)
 	IMPLEMENT_POINTER(PointedType)
@@ -1492,7 +1568,7 @@ IMPLEMENT_POINTERS_END
 //==========================================================================
 
 PPointer::PPointer()
-: PBasicType(sizeof(void *), __alignof(void *)), PointedType(NULL), IsConst(false)
+: PBasicType(sizeof(void *), alignof(void *)), PointedType(NULL), IsConst(false)
 {
 	mDescriptiveName = "NullPointer";
 	SetOps();
@@ -1505,7 +1581,7 @@ PPointer::PPointer()
 //==========================================================================
 
 PPointer::PPointer(PType *pointsat, bool isconst)
-: PBasicType(sizeof(void *), __alignof(void *)), PointedType(pointsat), IsConst(isconst)
+: PBasicType(sizeof(void *), alignof(void *)), PointedType(pointsat), IsConst(isconst)
 {
 	mDescriptiveName.Format("Pointer<%s%s>", pointsat->DescriptiveName(), isconst? "readonly " : "");
 	SetOps();
@@ -1549,6 +1625,21 @@ void PPointer::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 {
 	id1 = (intptr_t)PointedType;
 	id2 = 0;
+}
+
+//==========================================================================
+//
+// PPointer :: SetDefaultValue
+//
+//==========================================================================
+
+void PPointer::SetPointer(void *base, unsigned offset, TArray<size_t> *special) const
+{
+	if (PointedType != nullptr && PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
+	{
+		// Add to the list of pointers for this class.
+		special->Push(offset);
+	}
 }
 
 //==========================================================================
@@ -1601,16 +1692,58 @@ PPointer *NewPointer(PType *type, bool isconst)
 	PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PPointer), (intptr_t)type, isconst ? 1 : 0, &bucket);
 	if (ptype == NULL)
 	{
-		ptype = new PPointer(type);
+		ptype = new PPointer(type, isconst);
 		TypeTable.AddType(ptype, RUNTIME_CLASS(PPointer), (intptr_t)type, isconst ? 1 : 0, bucket);
 	}
 	return static_cast<PPointer *>(ptype);
 }
 
+/* PStatePointer **********************************************************/
+
+IMPLEMENT_CLASS(PStatePointer, false, false)
+
+//==========================================================================
+//
+// PStatePointer Default Constructor
+//
+//==========================================================================
+
+PStatePointer::PStatePointer()
+{
+	mDescriptiveName = "Pointer<State>";
+	PointedType = NewNativeStruct(NAME_State, nullptr);
+	IsConst = true;
+}
+
+//==========================================================================
+//
+// PStatePointer :: WriteValue
+//
+//==========================================================================
+
+void PStatePointer::WriteValue(FSerializer &ar, const char *key, const void *addr) const
+{
+	ar(key, *(FState **)addr);
+}
+
+//==========================================================================
+//
+// PStatePointer :: ReadValue
+//
+//==========================================================================
+
+bool PStatePointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
+{
+	bool res = false;
+	::Serialize(ar, key, *(FState **)addr, nullptr, &res);
+	return res;
+}
+
+
 
 /* PClassPointer **********************************************************/
 
-IMPLEMENT_CLASS(PClassPointer, false, true, false, false)
+IMPLEMENT_CLASS(PClassPointer,false, true)
 
 IMPLEMENT_POINTERS_START(PClassPointer)
 	IMPLEMENT_POINTER(ClassRestriction)
@@ -1691,7 +1824,7 @@ PClassPointer *NewClassPointer(PClass *restrict)
 
 /* PEnum ******************************************************************/
 
-IMPLEMENT_CLASS(PEnum, false, true, false, false)
+IMPLEMENT_CLASS(PEnum, false, true)
 
 IMPLEMENT_POINTERS_START(PEnum)
 	IMPLEMENT_POINTER(ValueType)
@@ -1744,7 +1877,7 @@ PEnum *NewEnum(FName name, PTypeBase *outer)
 
 /* PArray *****************************************************************/
 
-IMPLEMENT_CLASS(PArray, false, true, false, false)
+IMPLEMENT_CLASS(PArray, false, true)
 
 IMPLEMENT_POINTERS_START(PArray)
 	IMPLEMENT_POINTER(ElementType)
@@ -1872,6 +2005,20 @@ void PArray::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset>
 
 //==========================================================================
 //
+// PArray :: SetDefaultValue
+//
+//==========================================================================
+
+void PArray::SetPointer(void *base, unsigned offset, TArray<size_t> *special) const
+{
+	for (unsigned i = 0; i < ElementCount; ++i)
+	{
+		ElementType->SetPointer(base, offset + i*ElementSize, special);
+	}
+}
+
+//==========================================================================
+//
 // NewArray
 //
 // Returns a PArray for the given type and size, making sure not to create
@@ -1891,59 +2038,9 @@ PArray *NewArray(PType *type, unsigned int count)
 	return (PArray *)atype;
 }
 
-/* PVector ****************************************************************/
-
-IMPLEMENT_CLASS(PVector, false, false, false, false)
-
-//==========================================================================
-//
-// PVector - Default Constructor
-//
-//==========================================================================
-
-PVector::PVector()
-: PArray(TypeFloat32, 3)
-{
-	mDescriptiveName = "Vector";
-}
-
-//==========================================================================
-//
-// PVector - Parameterized Constructor
-//
-//==========================================================================
-
-PVector::PVector(unsigned int size)
-: PArray(TypeFloat32, size)
-{
-	mDescriptiveName.Format("Vector<%d>", size);
-	assert(size >= 2 && size <= 4);
-}
-
-//==========================================================================
-//
-// NewVector
-//
-// Returns a PVector with the given dimension, making sure not to create
-// duplicates.
-//
-//==========================================================================
-
-PVector *NewVector(unsigned int size)
-{
-	size_t bucket;
-	PType *type = TypeTable.FindType(RUNTIME_CLASS(PVector), (intptr_t)TypeFloat32, size, &bucket);
-	if (type == NULL)
-	{
-		type = new PVector(size);
-		TypeTable.AddType(type, RUNTIME_CLASS(PVector), (intptr_t)TypeFloat32, size, bucket);
-	}
-	return (PVector *)type;
-}
-
 /* PDynArray **************************************************************/
 
-IMPLEMENT_CLASS(PDynArray, false, true, false, false)
+IMPLEMENT_CLASS(PDynArray, false, true)
 
 IMPLEMENT_POINTERS_START(PDynArray)
 	IMPLEMENT_POINTER(ElementType)
@@ -1960,7 +2057,7 @@ PDynArray::PDynArray()
 {
 	mDescriptiveName = "DynArray";
 	Size = sizeof(FArray);
-	Align = __alignof(FArray);
+	Align = alignof(FArray);
 }
 
 //==========================================================================
@@ -1974,7 +2071,7 @@ PDynArray::PDynArray(PType *etype)
 {
 	mDescriptiveName.Format("DynArray<%s>", etype->DescriptiveName());
 	Size = sizeof(FArray);
-	Align = __alignof(FArray);
+	Align = alignof(FArray);
 }
 
 //==========================================================================
@@ -2026,7 +2123,7 @@ PDynArray *NewDynArray(PType *type)
 
 /* PMap *******************************************************************/
 
-IMPLEMENT_CLASS(PMap, false, true, false, false)
+IMPLEMENT_CLASS(PMap, false, true)
 
 IMPLEMENT_POINTERS_START(PMap)
 	IMPLEMENT_POINTER(KeyType)
@@ -2044,7 +2141,7 @@ PMap::PMap()
 {
 	mDescriptiveName = "Map";
 	Size = sizeof(FMap);
-	Align = __alignof(FMap);
+	Align = alignof(FMap);
 }
 
 //==========================================================================
@@ -2058,7 +2155,7 @@ PMap::PMap(PType *keytype, PType *valtype)
 {
 	mDescriptiveName.Format("Map<%s, %s>", keytype->DescriptiveName(), valtype->DescriptiveName());
 	Size = sizeof(FMap);
-	Align = __alignof(FMap);
+	Align = alignof(FMap);
 }
 
 //==========================================================================
@@ -2110,7 +2207,7 @@ PMap *NewMap(PType *keytype, PType *valuetype)
 
 /* PStruct ****************************************************************/
 
-IMPLEMENT_CLASS(PStruct, false, false, false, false)
+IMPLEMENT_CLASS(PStruct, false, false)
 
 //==========================================================================
 //
@@ -2148,9 +2245,26 @@ void PStruct::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset
 {
 	for (const PField *field : Fields)
 	{
-		if (!(field->Flags & VARF_Native))
+		if (!(field->Flags & VARF_Transient))
 		{
 			field->Type->SetDefaultValue(base, unsigned(offset + field->Offset), special);
+		}
+	}
+}
+
+//==========================================================================
+//
+// PStruct :: SetPointer
+//
+//==========================================================================
+
+void PStruct::SetPointer(void *base, unsigned offset, TArray<size_t> *special) const
+{
+	for (const PField *field : Fields)
+	{
+		if (!(field->Flags & VARF_Transient))
+		{
+			field->Type->SetPointer(base, unsigned(offset + field->Offset), special);
 		}
 	}
 }
@@ -2198,8 +2312,8 @@ void PStruct::WriteFields(FSerializer &ar, const void *addr, const TArray<PField
 	for (unsigned i = 0; i < fields.Size(); ++i)
 	{
 		const PField *field = fields[i];
-		// Skip fields with native serialization
-		if (!(field->Flags & VARF_Native))
+		// Skip fields without or with native serialization
+		if (!(field->Flags & VARF_Transient))
 		{
 			field->Type->WriteValue(ar, field->SymbolName.GetChars(), (const BYTE *)addr + field->Offset);
 		}
@@ -2285,7 +2399,7 @@ PField *PStruct::AddField(FName name, PType *type, DWORD flags)
 
 PField *PStruct::AddNativeField(FName name, PType *type, size_t address, DWORD flags, int bitvalue)
 {
-	PField *field = new PField(name, type, flags|VARF_Native, address, bitvalue);
+	PField *field = new PField(name, type, flags|VARF_Native|VARF_Transient, address, bitvalue);
 
 	if (Symbols.AddSymbol(field) == nullptr)
 	{ // name is already in use
@@ -2329,9 +2443,47 @@ PStruct *NewStruct(FName name, PTypeBase *outer)
 	return static_cast<PStruct *>(stype);
 }
 
+/* PNativeStruct ****************************************************************/
+
+IMPLEMENT_CLASS(PNativeStruct, false, false)
+
+//==========================================================================
+//
+// PNativeStruct - Parameterized Constructor
+//
+//==========================================================================
+
+PNativeStruct::PNativeStruct(FName name)
+	: PStruct(name, nullptr)
+{
+	mDescriptiveName.Format("NativeStruct<%s>", name.GetChars());
+	Size = 0;
+	HasNativeFields = true;
+}
+
+//==========================================================================
+//
+// NewNativeStruct
+// Returns a PNativeStruct for the given name and container, making sure not to
+// create duplicates.
+//
+//==========================================================================
+
+PNativeStruct *NewNativeStruct(FName name, PTypeBase *outer)
+{
+	size_t bucket;
+	PType *stype = TypeTable.FindType(RUNTIME_CLASS(PNativeStruct), (intptr_t)outer, (intptr_t)name, &bucket);
+	if (stype == NULL)
+	{
+		stype = new PNativeStruct(name);
+		TypeTable.AddType(stype, RUNTIME_CLASS(PNativeStruct), (intptr_t)outer, (intptr_t)name, bucket);
+	}
+	return static_cast<PNativeStruct *>(stype);
+}
+
 /* PField *****************************************************************/
 
-IMPLEMENT_CLASS(PField, false, false, false, false)
+IMPLEMENT_CLASS(PField, false, false)
 
 //==========================================================================
 //
@@ -2348,8 +2500,7 @@ PField::PField()
 PField::PField(FName name, PType *type, DWORD flags, size_t offset, int bitvalue)
 	: PSymbol(name), Offset(offset), Type(type), Flags(flags)
 {
-	BitValue = bitvalue;
-	if (bitvalue != -1)
+	if (bitvalue != 0)
 	{
 		BitValue = 0;
 		unsigned val = bitvalue;
@@ -2369,14 +2520,15 @@ PField::PField(FName name, PType *type, DWORD flags, size_t offset, int bitvalue
 		else
 		{
 			// Just abort. Bit fields should only be defined internally.
-			I_FatalError("Trying to create an invalid bit field element: %s", name.GetChars());
+			I_Error("Trying to create an invalid bit field element: %s", name.GetChars());
 		}
 	}
+	else BitValue = -1;
 }
 
 /* PPrototype *************************************************************/
 
-IMPLEMENT_CLASS(PPrototype, false, false, false, false)
+IMPLEMENT_CLASS(PPrototype, false, false)
 
 //==========================================================================
 //
@@ -2462,7 +2614,7 @@ PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> 
 
 /* PFunction **************************************************************/
 
-IMPLEMENT_CLASS(PFunction, false, false, false, false)
+IMPLEMENT_CLASS(PFunction, false, false)
 
 //==========================================================================
 //
@@ -2489,7 +2641,7 @@ size_t PFunction::PropagateMark()
 //
 //==========================================================================
 
-unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags)
+unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags, int useflags)
 {
 	Variant variant;
 
@@ -2497,6 +2649,7 @@ unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArra
 	assert(Variants.Size() == 0);
 
 	variant.Flags = flags;
+	variant.UseFlags = useflags;
 	variant.Proto = proto;
 	variant.ArgFlags = std::move(argflags);
 	variant.ArgNames = std::move(argnames);
@@ -2511,7 +2664,7 @@ unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArra
 		assert(proto->ArgumentTypes.Size() > 0);
 		auto selftypeptr = dyn_cast<PPointer>(proto->ArgumentTypes[0]);
 		assert(selftypeptr != nullptr);
-		variant.SelfClass = dyn_cast<PClass>(selftypeptr->PointedType);
+		variant.SelfClass = dyn_cast<PStruct>(selftypeptr->PointedType);
 		assert(variant.SelfClass != nullptr);
 	}
 	else
@@ -2524,7 +2677,7 @@ unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArra
 
 /* PClass *****************************************************************/
 
-IMPLEMENT_CLASS(PClass, false, true, false, false)
+IMPLEMENT_CLASS(PClass, false, true)
 
 IMPLEMENT_POINTERS_START(PClass)
 	IMPLEMENT_POINTER(ParentClass)
@@ -2544,10 +2697,10 @@ static void RecurseWriteFields(const PClass *type, FSerializer &ar, const void *
 	if (type != NULL)
 	{
 		RecurseWriteFields(type->ParentClass, ar, addr);
-		// Don't write this part if it has no non-native variables
+		// Don't write this part if it has no non-transient variables
 		for (unsigned i = 0; i < type->Fields.Size(); ++i)
 		{
-			if (!(type->Fields[i]->Flags & VARF_Native))
+			if (!(type->Fields[i]->Flags & VARF_Transient))
 			{
 				// Tag this section with the class it came from in case
 				// a more-derived class has variables that shadow a less-
@@ -2741,6 +2894,7 @@ void PClass::StaticShutdown ()
 				uniqueFPs.Push(const_cast<size_t *>(type->FlatPointers));
 			}
 		}
+		type->Destroy();
 	}
 	for (i = 0; i < uniqueFPs.Size(); ++i)
 	{
@@ -2758,7 +2912,6 @@ void PClass::StaticShutdown ()
 	{
 		auto cr = ((ClassReg *)*probe);
 		cr->MyClass = nullptr;
-		if (cr->VMExport != nullptr) cr->VMExport->MyClass = nullptr;
 	}
 
 }
@@ -2884,10 +3037,6 @@ PClass *ClassReg::RegisterClass()
 	if (ParentType != nullptr)
 	{
 		cls->ParentClass = ParentType->RegisterClass();
-	}
-	if (VMExport != nullptr)
-	{
-		cls->VMExported = VMExport->RegisterClass();
 	}
 	return cls;
 }
@@ -3095,14 +3244,9 @@ void PClass::InitializeDefaults()
 		assert(ParentClass != NULL);
 		ParentClass->InitializeSpecials(Defaults);
 
-		// and initialize our own special values.
-		auto it = Symbols.GetIterator();
-		PSymbolTable::MapType::Pair *pair;
-
-		while (it.NextPair(pair))
+		for (const PField *field : Fields)
 		{
-			auto field = dyn_cast<PField>(pair->Value);
-			if (field != nullptr && !(field->Flags & VARF_Native))
+			if (!(field->Flags & VARF_Native))
 			{
 				field->Type->SetDefaultValue(Defaults, unsigned(field->Offset), &SpecialInits);
 			}
@@ -3154,6 +3298,7 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 				// see if we can reuse the existing class. This is only possible if the inheritance is identical. Otherwise it needs to be replaced.
 				if (this == existclass->ParentClass)
 				{
+					existclass->ObjectFlags &= OF_Transient;
 					return existclass;
 				}
 			}
@@ -3320,7 +3465,7 @@ void PClass::BuildFlatPointers ()
 		return;
 	}
 	else if (ParentClass == NULL)
-	{ // No parent: FlatPointers is the same as Pointers.
+	{ // No parent (i.e. DObject: FlatPointers is the same as Pointers.
 		if (Pointers == NULL)
 		{ // No pointers: Make FlatPointers a harmless non-NULL.
 			FlatPointers = &TheEnd;
@@ -3333,7 +3478,19 @@ void PClass::BuildFlatPointers ()
 	else
 	{
 		ParentClass->BuildFlatPointers ();
-		if (Pointers == NULL)
+
+		TArray<size_t> ScriptPointers;
+
+		// Collect all pointers in scripted fields. These are not part of the Pointers list.
+		for (auto field : Fields)
+		{
+			if (!(field->Flags & VARF_Native))
+			{
+				field->Type->SetPointer(Defaults, unsigned(field->Offset), &ScriptPointers);
+			}
+		}
+
+		if (Pointers == nullptr && ScriptPointers.Size() == 0)
 		{ // No new pointers: Just use the same FlatPointers as the parent.
 			FlatPointers = ParentClass->FlatPointers;
 		}
@@ -3341,20 +3498,34 @@ void PClass::BuildFlatPointers ()
 		{ // New pointers: Create a new FlatPointers array and add them.
 			int numPointers, numSuperPointers;
 
-			// Count pointers defined by this class.
-			for (numPointers = 0; Pointers[numPointers] != ~(size_t)0; numPointers++)
-			{ }
+			if (Pointers != nullptr)
+			{
+				// Count pointers defined by this class.
+				for (numPointers = 0; Pointers[numPointers] != ~(size_t)0; numPointers++)
+				{
+				}
+			}
+			else numPointers = 0;
+
 			// Count pointers defined by superclasses.
 			for (numSuperPointers = 0; ParentClass->FlatPointers[numSuperPointers] != ~(size_t)0; numSuperPointers++)
 			{ }
 
 			// Concatenate them into a new array
-			size_t *flat = new size_t[numPointers + numSuperPointers + 1];
+			size_t *flat = new size_t[numPointers + numSuperPointers + ScriptPointers.Size() + 1];
 			if (numSuperPointers > 0)
 			{
 				memcpy (flat, ParentClass->FlatPointers, sizeof(size_t)*numSuperPointers);
 			}
-			memcpy (flat + numSuperPointers, Pointers, sizeof(size_t)*(numPointers+1));
+			if (numPointers > 0)
+			{
+				memcpy(flat + numSuperPointers, Pointers, sizeof(size_t)*numPointers);
+			}
+			if (ScriptPointers.Size() > 0)
+			{
+				memcpy(flat + numSuperPointers + numPointers, &ScriptPointers[0], sizeof(size_t) * ScriptPointers.Size());
+			}
+			flat[numSuperPointers + numPointers + ScriptPointers.Size()] = ~(size_t)0;
 			FlatPointers = flat;
 		}
 	}
@@ -3377,6 +3548,16 @@ const PClass *PClass::NativeClass() const
 
 	return cls;
 }
+
+VMFunction *PClass::FindFunction(FName clsname, FName funcname)
+{
+	auto cls = PClass::FindActor(clsname);
+	if (!cls) return nullptr;
+	auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(funcname, true));
+	if (!func) return nullptr;
+	return func->Variants[0].Implementation;
+}
+
 
 /* FTypeTable **************************************************************/
 
@@ -3546,19 +3727,19 @@ CCMD(typetable)
 
 // Symbol tables ------------------------------------------------------------
 
-IMPLEMENT_CLASS(PTypeBase, true, false, false, false);
-IMPLEMENT_CLASS(PSymbol, true, false, false, false);
-IMPLEMENT_CLASS(PSymbolConst, false, false, false, false);
-IMPLEMENT_CLASS(PSymbolConstNumeric, false, false, false, false);
-IMPLEMENT_CLASS(PSymbolConstString, false, false, false, false);
-IMPLEMENT_CLASS(PSymbolTreeNode, false, false, false, false)
-IMPLEMENT_CLASS(PSymbolType, false, true, false, false)
+IMPLEMENT_CLASS(PTypeBase, true, false);
+IMPLEMENT_CLASS(PSymbol, true, false);
+IMPLEMENT_CLASS(PSymbolConst, false, false);
+IMPLEMENT_CLASS(PSymbolConstNumeric, false, false);
+IMPLEMENT_CLASS(PSymbolConstString, false, false);
+IMPLEMENT_CLASS(PSymbolTreeNode, false, false)
+IMPLEMENT_CLASS(PSymbolType, false, true)
 
 IMPLEMENT_POINTERS_START(PSymbolType)
 	IMPLEMENT_POINTER(Type)
 IMPLEMENT_POINTERS_END
 
-IMPLEMENT_CLASS(PSymbolVMFunction, false, true, false, false)
+IMPLEMENT_CLASS(PSymbolVMFunction, false, true)
 
 IMPLEMENT_POINTERS_START(PSymbolVMFunction)
 	IMPLEMENT_POINTER(Function)

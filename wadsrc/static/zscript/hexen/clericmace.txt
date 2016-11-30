@@ -13,8 +13,6 @@ class CWeapMace : ClericWeapon
 		Tag "$TAG_CWEAPMACE";
 	}
 
-	action native void A_CMaceAttack();
-
 	States
 	{
 	Select:
@@ -45,5 +43,45 @@ class CWeapMace : ClericWeapon
 		CMCE A 2 Offset (8, 50);
 		CMCE A 1 Offset (8, 45);
 		Goto Ready;
+	}
+	
+	//===========================================================================
+	//
+	// A_CMaceAttack
+	//
+	//===========================================================================
+
+	action void A_CMaceAttack()
+	{
+		FTranslatedLineTarget t;
+
+		if (player == null)
+		{
+			return;
+		}
+
+		int damage = 25+(random[MaceAtk]()&15);
+		for (int i = 0; i < 16; i++)
+		{
+			for (int j = 1; j >= -1; j -= 2)
+			{
+				double ang = angle + j*i*(45. / 16);
+				double slope = AimLineAttack(ang, 2 * MELEERANGE, t);
+				if (t.linetarget)
+				{
+					LineAttack(ang, 2 * MELEERANGE, slope, damage, 'Melee', "HammerPuff", true, t);
+					if (t.linetarget != null)
+					{
+						AdjustPlayerAngle(t);
+						return;
+					}
+				}
+			}
+		}
+		// didn't find any creatures, so try to strike any walls
+		weaponspecial = 0;
+
+		double slope = AimLineAttack (angle, MELEERANGE);
+		LineAttack (angle, MELEERANGE, slope, damage, 'Melee', "HammerPuff");
 	}
 }

@@ -7,8 +7,7 @@
 
 #include <SDL.h>
 
-#include "basictypes.h"
-#include "basicinlines.h"
+#include "m_fixed.h"
 #include "hardware.h"
 #include "i_system.h"
 #include "templates.h"

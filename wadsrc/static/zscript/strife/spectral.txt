@@ -2,7 +2,7 @@
 
 // base for all spectral monsters which hurt when being touched--------------
 
-class SpectralMonster : Actor native
+class SpectralMonster : Actor
 {
 	Default
 	{
@@ -12,10 +12,91 @@ class SpectralMonster : Actor native
 		+NOICEDEATH
 	}
 	
-	native void A_SpectreChunkSmall ();
-	native void A_SpectreChunkLarge ();
-	native void A_Spectre3Attack ();
-	native void A_SpotLightning ();
+	override void Touch (Actor toucher)
+	{
+		toucher.DamageMobj (self, self, 5, 'Melee');
+	}
+	
+
+	//============================================================================
+
+	void A_SpectreChunkSmall ()
+	{
+		Actor foo = Spawn("AlienChunkSmall", pos + (0, 0, 10), ALLOW_REPLACE);
+
+		if (foo != null)
+		{
+			int t;
+
+			t = random[SpectreChunk]() & 15;
+			foo.Vel.X = (t - (random[SpectreChunk]() & 7));
+			
+			t = random[SpectreChunk]() & 15;
+			foo.Vel.Y = (t - (random[SpectreChunk]() & 7));
+
+			foo.Vel.Z = (random[SpectreChunk]() & 15);
+		}
+	}
+
+	void A_SpectreChunkLarge ()
+	{
+		Actor foo = Spawn("AlienChunkLarge", pos + (0, 0, 10), ALLOW_REPLACE);
+
+		if (foo != null)
+		{
+			int t;
+
+			t = random[SpectreChunk]() & 7;
+			foo.Vel.X = (t - (random[SpectreChunk]() & 15));
+			
+			t = random[SpectreChunk]() & 7;
+			foo.Vel.Y = (t - (random[SpectreChunk]() & 15));
+
+			foo.Vel.Z = (random[SpectreChunk]() & 7);
+		}
+	}
+
+	void A_Spectre3Attack ()
+	{
+		if (target == null)
+			return;
+
+		Actor foo = Spawn("SpectralLightningV2", Pos + (0, 0, 32), ALLOW_REPLACE);
+
+		foo.Vel.Z = -12;
+		foo.target = self;
+		foo.FriendPlayer = 0;
+		foo.tracer = target;
+
+		Angle -= 90.;
+		for (int i = 0; i < 20; ++i)
+		{
+			Angle += 9.;
+			SpawnSubMissile ("SpectralLightningBall2", self);
+		}
+		Angle -= 90.;
+	}
+	
+	//============================================================================
+	//
+	// A_SpotLightning
+	//
+	//============================================================================
+
+	void A_SpotLightning()
+	{
+		if (target == null) return;
+
+		Actor spot = Spawn("SpectralLightningSpot", (target.pos.xy, target.floorz), ALLOW_REPLACE);
+		if (spot != null)
+		{
+			spot.threshold = 25;
+			spot.target = self;
+			spot.FriendPlayer = 0;
+			spot.tracer = target;
+		}
+	}
+
 }
 
 
@@ -124,7 +205,6 @@ class SpectralLightningH1 : SpectralLightningBase
 		+SPECTRAL
 	}
 
-	native void A_SpectralLightningTail ();
 
 	States
 	{
@@ -132,6 +212,14 @@ class SpectralLightningH1 : SpectralLightningBase
 		ZAP6 A 4 Bright;
 		ZAP6 BC 4 Bright A_SpectralLightningTail;
 		Loop;
+	}
+	
+	void A_SpectralLightningTail ()
+	{
+		Actor foo = Spawn("SpectralLightningHTail", Vec3Offset(-Vel.X, -Vel.Y, 0.), ALLOW_REPLACE);
+
+		foo.Angle = Angle;
+		foo.FriendPlayer = FriendPlayer;
 	}
 }
 
@@ -189,8 +277,6 @@ class SpectralLightningBigBall1 : SpectralLightningDeath2
 		+SPECTRAL
 	}
 
-	native void A_SpectralBigBallLightning ();
-
 	States
 	{
 	Spawn:
@@ -198,6 +284,21 @@ class SpectralLightningBigBall1 : SpectralLightningDeath2
 		ZAP7 CDE 6 Bright A_SpectralBigBallLightning;
 		Loop;
 	}
+	
+	void A_SpectralBigBallLightning ()
+	{
+		Class<Actor> cls = "SpectralLightningH3";
+		if (cls)
+		{
+			angle += 90.;
+			SpawnSubMissile (cls, target);
+			angle += 180.;
+			SpawnSubMissile (cls, target);
+			angle -= 270.;
+			SpawnSubMissile (cls, target);
+		}
+	}
+	
 }
 
 
@@ -259,8 +360,6 @@ class SpectralLightningSpot : SpectralLightningDeath1
 		Alpha 0.6;
 	}
 
-	native void A_SpectralLightning ();
-
 	States
 	{
 	Spawn:
@@ -269,6 +368,35 @@ class SpectralLightningSpot : SpectralLightningDeath1
 		ZAP5 CD 4 Bright A_Countdown;
 		Loop;
 	}
+	
+	void A_SpectralLightning ()
+	{
+		if (threshold != 0)
+			--threshold;
+
+		Vel.X += random2[Zap5](3);
+		Vel.Y += random2[Zap5](3);
+
+		double xo = random2[Zap5](3) * 50.;
+		double yo = random2[Zap5](3) * 50.;
+		
+		class<Actor> cls;
+		if (threshold > 25) cls = "SpectralLightningV2";
+		else cls = "SpectralLightningV1";
+
+		Actor flash = Spawn (cls, Vec2OffsetZ(xo, yo, ONCEILINGZ), ALLOW_REPLACE);
+
+		flash.target = target;
+		flash.Vel.Z = -18;
+		flash.FriendPlayer = FriendPlayer;
+
+		flash = Spawn("SpectralLightningV2", (pos.xy, ONCEILINGZ), ALLOW_REPLACE);
+
+		flash.target = target;
+		flash.Vel.Z = -18;
+		flash.FriendPlayer = FriendPlayer;
+	}
+	
 }
 
 // Sigil Lightning (Big Vertical #1) ----------------------------------------
@@ -301,7 +429,3 @@ class SpectralLightningBigV2 : SpectralLightningBigV1
 		Damage 60;
 	}
 }
-
-
-
-

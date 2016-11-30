@@ -28,12 +28,6 @@ class Crusader : Actor
 		Obituary "$OB_CRUSADER";
 	}
 
-	native void A_CrusaderChoose ();
-	native void A_CrusaderSweepLeft ();
-	native void A_CrusaderSweepRight ();
-	native void A_CrusaderRefire ();
-	native void A_CrusaderDeath ();
-
 	States
 	{
 	Spawn:
@@ -58,13 +52,90 @@ class Crusader : Actor
 		ROB2 G 3 A_Scream;
 		ROB2 H 5 A_TossGib;
 		ROB2 I 4 Bright A_TossGib;
-		ROB2 J 4 Bright A_Explode(64,64,1,1);
+		ROB2 J 4 Bright A_Explode(64, 64, alert:true);
 		ROB2 K 4 Bright A_Fall;
-		ROB2 L 4 A_Explode(64,64,1,1);
+		ROB2 L 4 A_Explode(64, 64, alert:true);
 		ROB2 MN 4 A_TossGib;
-		ROB2 O 4 A_Explode(64,64,1,1);
+		ROB2 O 4 A_Explode(64, 64, alert:true);
 		ROB2 P -1 A_CrusaderDeath;
 		Stop;
+	}
+	
+// Crusader -----------------------------------------------------------------
+
+	private bool CrusaderCheckRange ()
+	{
+		if (reactiontime == 0 && CheckSight (target))
+		{
+			return Distance2D (target) < 264.;
+		}
+		return false;
+	}
+
+	void A_CrusaderChoose ()
+	{
+		if (target == null)
+			return;
+
+		if (CrusaderCheckRange ())
+		{
+			A_FaceTarget ();
+			angle -= 180./16;
+			SpawnMissileZAimed (pos.z + 40, target, "FastFlameMissile");
+		}
+		else
+		{
+			if (CheckMissileRange ())
+			{
+				A_FaceTarget ();
+				SpawnMissileZAimed (pos.z + 56, target, "CrusaderMissile");
+				angle -= 45./32;
+				SpawnMissileZAimed (pos.z + 40, target, "CrusaderMissile");
+				angle += 45./16;
+				SpawnMissileZAimed (pos.z + 40, target, "CrusaderMissile");
+				angle -= 45./16;
+				reactiontime += 15;
+			}
+			SetState (SeeState);
+		}
+	}
+
+	void A_CrusaderSweepLeft ()
+	{
+		angle += 90./16;
+		Actor misl = SpawnMissileZAimed (pos.z + 48, target, "FastFlameMissile");
+		if (misl != null)
+		{
+			misl.Vel.Z += 1;
+		}
+	}
+
+	void A_CrusaderSweepRight ()
+	{
+		angle -= 90./16;
+		Actor misl = SpawnMissileZAimed (pos.z + 48, target, "FastFlameMissile");
+		if (misl != null)
+		{
+			misl.Vel.Z += 1;
+		}
+	}
+
+	void A_CrusaderRefire ()
+	{
+		if (target == null ||
+			target.health <= 0 ||
+			!CheckSight (target))
+		{
+			SetState (SeeState);
+		}
+	}
+
+	void A_CrusaderDeath ()
+	{
+		if (CheckBossDeath ())
+		{
+			Floor_LowerToLowest(667, 8);
+		}
 	}
 }
 
@@ -105,7 +176,7 @@ class CrusaderMissile : Actor
 		MICR A 6 Bright A_RocketInFlight;
 		Loop;
 	Death:
-		SMIS A 0 Bright A_SetTranslucent(1,1);
+		SMIS A 0 Bright A_SetRenderStyle(1, STYLE_Normal);
 		SMIS A 5 Bright;
 		SMIS B 5 Bright;
 		SMIS C 4 Bright;

@@ -62,7 +62,7 @@
 #define XHAIRPICKUPSIZE		(2+XHAIRSHRINKSIZE)
 #define POWERUPICONSIZE		32
 
-IMPLEMENT_CLASS(DBaseStatusBar, false, true, false, false)
+IMPLEMENT_CLASS(DBaseStatusBar, false, true)
 
 IMPLEMENT_POINTERS_START(DBaseStatusBar)
 	IMPLEMENT_POINTER(Messages[0])

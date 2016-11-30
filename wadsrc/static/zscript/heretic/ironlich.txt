@@ -27,7 +27,6 @@ class Ironlich : Actor
 		DropItem "ArtiEgg", 51, 0;
 	}
 
-	native void A_LichAttack ();
 	
 	States
 	{
@@ -54,6 +53,77 @@ class Ironlich : Actor
 		LICH I -1 A_BossDeath;
 		Stop;
 	}
+	
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_LichAttack
+	//
+	//----------------------------------------------------------------------------
+
+	void A_LichAttack ()
+	{
+		static const int atkResolve1[] = { 50, 150 };
+		static const int atkResolve2[] = { 150, 200 };
+
+		// Ice ball		(close 20% : far 60%)
+		// Fire column	(close 40% : far 20%)
+		// Whirlwind	(close 40% : far 20%)
+		// Distance threshold = 8 cells
+
+		if (target == null)
+		{
+			return;
+		}
+		A_FaceTarget ();
+		if (CheckMeleeRange ())
+		{
+			int damage = random[LichAttack](1, 8) * 6;
+			int newdam = target.DamageMobj (self, self, damage, 'Melee');
+			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			return;
+		}
+		int dist = Distance2D(target) > 8 * 64;
+		int randAttack = random[LichAttack]();
+		if (randAttack < atkResolve1[dist])
+		{ // Ice ball
+			SpawnMissile (target, "HeadFX1");
+			A_PlaySound ("ironlich/attack2", CHAN_BODY);
+		}
+		else if (randAttack < atkResolve2[dist])
+		{ // Fire column
+			Actor baseFire = SpawnMissile (target, "HeadFX3");
+			if (baseFire != null)
+			{
+				baseFire.SetStateLabel("NoGrow");
+				for (int i = 0; i < 5; i++)
+				{
+					Actor fire = Spawn("HeadFX3", baseFire.Pos, ALLOW_REPLACE);
+					if (i == 0)
+					{
+						A_PlaySound ("ironlich/attack1", CHAN_BODY);
+					}
+					fire.target = baseFire.target;
+					fire.angle = baseFire.angle;
+					fire.Vel = baseFire.Vel;
+					fire.SetDamage(0);
+					fire.health = (i+1) * 2;
+					fire.CheckMissileSpawn (radius);
+				}
+			}
+		}
+		else
+		{ // Whirlwind
+			Actor mo = SpawnMissile (target, "Whirlwind");
+			if (mo != null)
+			{
+				mo.AddZ(-32);
+				mo.tracer = target;
+				mo.health = 20*TICRATE; // Duration
+				A_PlaySound ("ironlich/attack3", CHAN_BODY);
+			}
+		}
+	}
+	
 }
 
 // Head FX 1 ----------------------------------------------------------------
@@ -74,7 +144,6 @@ class HeadFX1 : Actor
 		RenderStyle "Add";
 	}
 
-	native void A_LichIceImpact();
 
 	States
 	{
@@ -85,6 +154,25 @@ class HeadFX1 : Actor
 		FX05 D 5 BRIGHT A_LichIceImpact;
 		FX05 EFG 5 BRIGHT;
 		Stop;
+	}
+	
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_LichIceImpact
+	//
+	//----------------------------------------------------------------------------
+
+	void A_LichIceImpact()
+	{
+		for (int i = 0; i < 8; i++)
+		{
+			Actor shard = Spawn("HeadFX2", Pos, ALLOW_REPLACE);
+			shard.target = target;
+			shard.angle = i*45.;
+			shard.VelFromAngle();
+			shard.Vel.Z = -.6;
+			shard.CheckMissileSpawn (radius);
+		}
 	}
 }
 
@@ -135,8 +223,6 @@ class HeadFX3 : Actor
 		RenderStyle "Add";
 	}
 
-	native void A_LichFireGrow ();
-
 	States
 	{
 	Spawn:
@@ -149,12 +235,29 @@ class HeadFX3 : Actor
 		FX06 DEFG 5 BRIGHT;
 		Stop;
 	}
+	
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_LichFireGrow
+	//
+	//----------------------------------------------------------------------------
+
+	void A_LichFireGrow ()
+	{
+		health--;
+		AddZ(9.);
+		if (health == 0)
+		{
+			RestoreDamage();
+			SetStateLabel("NoGrow");
+		}
+	}
 }
 
 
 // Whirlwind ----------------------------------------------------------------
 
-class Whirlwind : Actor native
+class Whirlwind : Actor
 {
 	Default
 	{
@@ -174,8 +277,6 @@ class Whirlwind : Actor native
 		Alpha 0.4;
 	}
 
-	native void A_WhirlwindSeek();
-	
 	States
 	{
 	Spawn:
@@ -186,6 +287,64 @@ class Whirlwind : Actor native
 		FX07 GFED 4;
 		Stop;
 	}
+	
+	override int DoSpecialDamage (Actor target, int damage, Name damagetype)
+	{
+		int randVal;
+
+		if (!target.bDontThrust)
+		{
+			target.angle += Random2[WhirlwindDamage]() * (360 / 4096.);
+			target.Vel.X += Random2[WhirlwindDamage]() / 64.;
+			target.Vel.Y += Random2[WhirlwindDamage]() / 64.;
+		}
+
+		if ((level.time & 16) && !target.bBoss && !target.bDontThrust)
+		{
+			randVal = min(160, random[WhirlwindSeek]());
+			target.Vel.Z += randVal / 32.;
+			if (target.Vel.Z > 12)
+			{
+				target.Vel.Z = 12;
+			}
+		}
+		if (!(level.time & 7))
+		{
+			target.DamageMobj (null, target, 3, 'Melee');
+		}
+		return -1;
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_WhirlwindSeek
+	//
+	//----------------------------------------------------------------------------
+
+	void A_WhirlwindSeek()
+	{
+
+		health -= 3;
+		if (health < 0)
+		{
+			Vel = (0,0,0);
+			SetStateLabel("Death");
+			bMissile = false;
+			return;
+		}
+		if ((threshold -= 3) < 0)
+		{
+			threshold = 58 + (random[WhirlwindSeek]() & 31);
+			A_PlaySound("ironlich/attack3", CHAN_BODY);
+		}
+		if (tracer && tracer.bShadow)
+		{
+			return;
+		}
+		A_SeekerMissile(10, 30);
+	}
+	
 }
+
 
 

@@ -179,8 +179,12 @@ if( WIN32 )
 		comdlg32
 		ws2_32
 		setupapi
-		oleaut32 
-		DelayImp )
+		oleaut32 )
+
+	if( NOT ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+		set( ZDOOM_LIBS ${ZDOOM_LIBS} DelayImp )
+	endif()
+
 	if( DX_dxguid_LIBRARY )
 		list( APPEND ZDOOM_LIBS "${DX_dxguid_LIBRARY}" )
 	endif()
@@ -755,15 +759,7 @@ if( WIN32 )
 	set( SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} )
 	set( OTHER_SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} ${PLAT_OSX_SOURCES} ${PLAT_COCOA_SOURCES} ${PLAT_UNIX_SOURCES} )
 	
-	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-		# CMake is not set up to compile and link rc files with GCC. :(
-		add_custom_command( OUTPUT zdoom-rc.o
-			COMMAND windres -o zdoom-rc.o -i ${CMAKE_CURRENT_SOURCE_DIR}/win32/zdoom.rc
-			DEPENDS win32/zdoom.rc )
-		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} zdoom-rc.o )
-	else()
-		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} win32/zdoom.rc )
-	endif()
+	set( SYSTEM_SOURCES ${SYSTEM_SOURCES} win32/zdoom.rc )
 elseif( APPLE )
 	if( OSX_COCOA_BACKEND )
 		set( SYSTEM_SOURCES_DIR posix posix/cocoa )
@@ -878,11 +874,8 @@ endif()
 file( GLOB HEADER_FILES
 	${EXTRA_HEADER_DIRS}
 	fragglescript/*.h
-	g_doom/*.h
-	g_heretic/*.h
-	g_hexen/*.h
-	g_raven/*.h
 	g_shared/*.h
+	g_inventory/*.h
 	g_strife/*.h
 	intermission/*.h
 	menu/*.h
@@ -927,61 +920,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	${OTHER_SYSTEM_SOURCES}
 	sc_man_scanner.h
 	sc_man_scanner.re
-	g_doom/a_bossbrain.cpp
-	g_doom/a_doomweaps.cpp
-	g_doom/a_painelemental.cpp
-	g_doom/a_scriptedmarine.cpp
-	g_heretic/a_chicken.cpp
-	g_heretic/a_dsparil.cpp
-	g_heretic/a_hereticartifacts.cpp
-	g_heretic/a_hereticweaps.cpp
-	g_heretic/a_ironlich.cpp
-	g_hexen/a_blastradius.cpp
-	g_hexen/a_boostarmor.cpp
-	g_hexen/a_clericflame.cpp
-	g_hexen/a_clericholy.cpp
-	g_hexen/a_clericmace.cpp
-	g_hexen/a_clericstaff.cpp
-	g_hexen/a_dragon.cpp
-	g_hexen/a_fighteraxe.cpp
-	g_hexen/a_fighterhammer.cpp
-	g_hexen/a_fighterplayer.cpp
-	g_hexen/a_fighterquietus.cpp
-	g_hexen/a_flechette.cpp
-	g_hexen/a_flies.cpp
-	g_hexen/a_fog.cpp
-	g_hexen/a_healingradius.cpp
-	g_hexen/a_heresiarch.cpp
-	g_hexen/a_hexenspecialdecs.cpp
-	g_hexen/a_iceguy.cpp
-	g_hexen/a_korax.cpp
-	g_hexen/a_magecone.cpp
-	g_hexen/a_magelightning.cpp
-	g_hexen/a_magestaff.cpp
-	g_hexen/a_pig.cpp
-	g_hexen/a_serpent.cpp
-	g_hexen/a_spike.cpp
-	g_hexen/a_summon.cpp
-	g_hexen/a_teleportother.cpp
-	g_hexen/a_wraith.cpp
-	g_strife/a_acolyte.cpp
-	g_strife/a_alienspectres.cpp
-	g_strife/a_coin.cpp
-	g_strife/a_crusader.cpp
-	g_strife/a_entityboss.cpp
-	g_strife/a_inquisitor.cpp
-	g_strife/a_loremaster.cpp
-	g_strife/a_oracle.cpp
-	g_strife/a_programmer.cpp
-	g_strife/a_reaver.cpp
-	g_strife/a_rebels.cpp
-	g_strife/a_sentinel.cpp
-	g_strife/a_spectral.cpp
-	g_strife/a_stalker.cpp
-	g_strife/a_strifeitems.cpp
-	g_strife/a_strifeweapons.cpp
-	g_strife/a_templar.cpp
-	g_strife/a_thingstoblowup.cpp
 	g_shared/sbarinfo_commands.cpp
 	xlat/xlat_parser.y
 	xlat_parser.c
@@ -1314,44 +1252,32 @@ set (PCH_SOURCES
 	w_wad.cpp
 	wi_stuff.cpp
 	zstrformat.cpp
-	g_doom/a_doommisc.cpp
-	g_heretic/a_hereticmisc.cpp
-	g_hexen/a_hexenmisc.cpp
-	g_raven/a_artitele.cpp
-	g_raven/a_minotaur.cpp
-	g_strife/a_strifestuff.cpp
+	g_inventory/a_ammo.cpp
+	g_inventory/a_armor.cpp
+	g_inventory/a_artifacts.cpp
+	g_inventory/a_health.cpp
+	g_inventory/a_keys.cpp
+	g_inventory/a_pickups.cpp
+	g_inventory/a_puzzleitems.cpp
+	g_inventory/a_weaponpiece.cpp
+	g_inventory/a_weapons.cpp
 	g_strife/strife_sbar.cpp
 	g_shared/a_action.cpp
-	g_shared/a_armor.cpp
-	g_shared/a_artifacts.cpp
 	g_shared/a_bridge.cpp
-	g_shared/a_camera.cpp
-	g_shared/a_debris.cpp
 	g_shared/a_decals.cpp
 	g_shared/a_fastprojectile.cpp
 	g_shared/a_flashfader.cpp
 	g_shared/a_fountain.cpp
-	g_shared/a_hatetarget.cpp
-	g_shared/a_keys.cpp
 	g_shared/a_lightning.cpp
-	g_shared/a_mapmarker.cpp
 	g_shared/a_morph.cpp
 	g_shared/a_movingcamera.cpp
-	g_shared/a_pickups.cpp
-	g_shared/a_puzzleitems.cpp
 	g_shared/a_quake.cpp
 	g_shared/a_randomspawner.cpp
-	g_shared/a_secrettrigger.cpp
 	g_shared/a_sectoraction.cpp
-	g_shared/a_setcolor.cpp
 	g_shared/a_skies.cpp
 	g_shared/a_soundenvironment.cpp
 	g_shared/a_soundsequence.cpp
-	g_shared/a_spark.cpp
 	g_shared/a_specialspot.cpp
-	g_shared/a_waterzone.cpp
-	g_shared/a_weaponpiece.cpp
-	g_shared/a_weapons.cpp
 	g_shared/hudmessages.cpp
 	g_shared/sbarinfo.cpp
 	g_shared/sbar_mugshot.cpp
@@ -1470,12 +1396,9 @@ endif()
 
 target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
 include_directories( .
-	g_doom
-	g_heretic
-	g_hexen
-	g_raven
 	g_strife
 	g_shared
+	g_inventory
 	oplsynth
 	sound
 	textures
@@ -1604,12 +1527,9 @@ source_group("External\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/m
 source_group("External\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rapidjson/.+")
 source_group("Externak\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sfmt/.+")
 source_group("FraggleScript" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/fragglescript/.+")
-source_group("Games\\Doom Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_doom/.+")
-source_group("Games\\Heretic Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_heretic/.+")
-source_group("Games\\Hexen Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_hexen/.+")
-source_group("Games\\Raven Shared" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_raven/.+")
 source_group("Games\\Strife Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_strife/.+")
 source_group("Intermission" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/intermission/.+")
+source_group("Inventory" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_inventory/.+")
 source_group("Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/menu/.+")
 source_group("OpenGL Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/.+")
 source_group("OpenGL Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/data/.+")

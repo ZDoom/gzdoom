@@ -28,12 +28,6 @@ class Stalker : Actor
 		HitObituary "$OB_STALKER";
 	}
 
-	native void A_StalkerLookInit ();
-	native void A_StalkerChaseDecide ();
-	native void A_StalkerWalk ();
-	native void A_StalkerDrop ();
-	native void A_StalkerAttack ();
-
 	States
 	{
 	Spawn:
@@ -76,4 +70,66 @@ class Stalker : Actor
 		STLK "XYZ[" 4 Bright;
 		Stop;
 	}
+		
+	void A_StalkerChaseDecide ()
+	{
+		if (!bNoGravity)
+		{
+			SetStateLabel("SeeFloor");
+		}
+		else if (ceilingz > pos.z + height)
+		{
+			SetStateLabel("Drop");
+		}
+	}
+
+	void A_StalkerLookInit ()
+	{
+		State st;
+		if (!bNoGravity)
+		{
+			st = FindState("LookCeiling");
+		}
+		else
+		{
+			st = FindState("LookFloor");
+		}
+		if (st.NextState != st)
+		{
+			SetState (st);
+		}
+	}
+
+	void A_StalkerDrop ()
+	{
+		bNoVerticalMeleeRange = false;
+		bNoGravity = false;
+	}
+
+	void A_StalkerAttack ()
+	{
+		if (bNoGravity)
+		{
+			SetStateLabel("Drop");
+		}
+		else if (target != null)
+		{
+			A_FaceTarget ();
+			if (CheckMeleeRange ())
+			{
+				int damage = (random[Stalker]() & 7) * 2 + 2;
+
+				int newdam = target.DamageMobj (self, self, damage, 'Melee');
+				target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			}
+		}
+	}
+
+	void A_StalkerWalk ()
+	{
+		A_PlaySound ("stalker/walk", CHAN_BODY);
+		A_Chase ();
+	}
+
+	
 }

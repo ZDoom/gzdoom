@@ -32,17 +32,17 @@
 */
 
 #include <new>
-#include "vm.h"
+#include "dobject.h"
 
-IMPLEMENT_CLASS(VMException, false, false, false, false)
-IMPLEMENT_CLASS(VMFunction, true, true, false, false)
+IMPLEMENT_CLASS(VMException, false, false)
+IMPLEMENT_CLASS(VMFunction, true, true)
 
 IMPLEMENT_POINTERS_START(VMFunction)
 	IMPLEMENT_POINTER(Proto)
 IMPLEMENT_POINTERS_END
 
-IMPLEMENT_CLASS(VMScriptFunction, false, false, false, false)
-IMPLEMENT_CLASS(VMNativeFunction, false, false, false, false)
+IMPLEMENT_CLASS(VMScriptFunction, false, false)
+IMPLEMENT_CLASS(VMNativeFunction, false, false)
 
 VMScriptFunction::VMScriptFunction(FName name)
 {
@@ -86,10 +86,10 @@ void VMScriptFunction::Alloc(int numops, int numkonstd, int numkonstf, int numko
 {
 	assert(Code == NULL);
 	assert(numops > 0);
-	assert(numkonstd >= 0 && numkonstd <= 255);
-	assert(numkonstf >= 0 && numkonstf <= 255);
-	assert(numkonsts >= 0 && numkonsts <= 255);
-	assert(numkonsta >= 0 && numkonsta <= 255);
+	assert(numkonstd >= 0 && numkonstd <= 65535);
+	assert(numkonstf >= 0 && numkonstf <= 65535);
+	assert(numkonsts >= 0 && numkonsts <= 65535);
+	assert(numkonsta >= 0 && numkonsta <= 65535);
 	void *mem = M_Malloc(numops * sizeof(VMOP) +
 						 numkonstd * sizeof(int) +
 						 numkonstf * sizeof(double) +
@@ -162,6 +162,34 @@ size_t VMScriptFunction::PropagateMark()
 	return NumKonstA * sizeof(void *) + Super::PropagateMark();
 }
 
+void VMScriptFunction::InitExtra(void *addr)
+{
+	char *caddr = (char*)addr;
+
+	for (auto tao : SpecialInits)
+	{
+		tao.first->InitializeValue(caddr + tao.second, nullptr);
+	}
+}
+
+void VMScriptFunction::DestroyExtra(void *addr)
+{
+	char *caddr = (char*)addr;
+
+	for (auto tao : SpecialInits)
+	{
+		tao.first->DestroyValue(caddr + tao.second);
+	}
+}
+
+int VMScriptFunction::AllocExtraStack(PType *type)
+{
+	int address = ((ExtraSpace + type->Align - 1) / type->Align) * type->Align;
+	ExtraSpace = address + type->Size;
+	type->SetDefaultValue(nullptr, address, &SpecialInits);
+	return address;
+}
+
 //===========================================================================
 //
 // VMFrame :: InitRegS
@@ -227,34 +255,6 @@ VMFrameStack::~VMFrameStack()
 //
 // VMFrameStack :: AllocFrame
 //
-// Allocates a frame from the stack with the desired number of registers.
-//
-//===========================================================================
-
-VMFrame *VMFrameStack::AllocFrame(int numregd, int numregf, int numregs, int numrega)
-{
-	assert((unsigned)numregd < 255);
-	assert((unsigned)numregf < 255);
-	assert((unsigned)numregs < 255);
-	assert((unsigned)numrega < 255);
-	// To keep the arguments to this function simpler, it assumes that every
-	// register might be used as a parameter for a single call.
-	int numparam = numregd + numregf + numregs + numrega;
-	int size = VMFrame::FrameSize(numregd, numregf, numregs, numrega, numparam, 0);
-	VMFrame *frame = Alloc(size);
-	frame->NumRegD = numregd;
-	frame->NumRegF = numregf;
-	frame->NumRegS = numregs;
-	frame->NumRegA = numrega;
-	frame->MaxParam = numparam;
-	frame->InitRegS();
-	return frame;
-}
-
-//===========================================================================
-//
-// VMFrameStack :: AllocFrame
-//
 // Allocates a frame from the stack suitable for calling a particular
 // function.
 //
@@ -273,6 +273,10 @@ VMFrame *VMFrameStack::AllocFrame(VMScriptFunction *func)
 	frame->MaxParam = func->MaxParam;
 	frame->Func = func;
 	frame->InitRegS();
+	if (func->SpecialInits.Size())
+	{
+		func->InitExtra(frame->GetExtra());
+	}
 	return frame;
 }
 
@@ -358,6 +362,11 @@ VMFrame *VMFrameStack::PopFrame()
 	{
 		return NULL;
 	}
+	auto Func = static_cast<VMScriptFunction *>(frame->Func);
+	if (Func->SpecialInits.Size())
+	{
+		Func->DestroyExtra(frame->GetExtra());
+	}
 	// Free any string registers this frame had.
 	FString *regs = frame->GetRegS();
 	for (int i = frame->NumRegS; i != 0; --i)
@@ -413,12 +422,13 @@ VMFrame *VMFrameStack::PopFrame()
 
 int VMFrameStack::Call(VMFunction *func, VMValue *params, int numparams, VMReturn *results, int numresults, VMException **trap)
 {
+	assert(this == VMGlobalStack);	// why would anyone even want to create a local stack?
 	bool allocated = false;
 	try
-	{
+	{	
 		if (func->Native)
 		{
-			return static_cast<VMNativeFunction *>(func)->NativeCall(this, params, func->DefaultArgs, numparams, results, numresults);
+			return static_cast<VMNativeFunction *>(func)->NativeCall(params, func->DefaultArgs, numparams, results, numresults);
 		}
 		else
 		{
@@ -493,12 +503,4 @@ int VMFrameStack::Call(VMFunction *func, VMValue *params, int numparams, VMRetur
 		}
 		throw;
 	}
-}
-
-class AActor;
-void CallAction(VMFrameStack *stack, VMFunction *vmfunc, AActor *self)
-{
-	// Without the type cast this picks the 'void *' assignment...
-	VMValue params[3] = { (DObject*)self, (DObject*)self, VMValue(nullptr, ATAG_GENERIC) };
-	stack->Call(vmfunc, params, vmfunc->ImplicitArgs, nullptr, 0, nullptr);
 }

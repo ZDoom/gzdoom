@@ -2213,7 +2213,7 @@ private:
 	int NextCheck;
 };
 
-IMPLEMENT_CLASS(AAmbientSound, false, false, false, false)
+IMPLEMENT_CLASS(AAmbientSound, false, false)
 
 //==========================================================================
 //
@@ -2346,7 +2346,7 @@ void AAmbientSound::SetTicker (struct FAmbientSound *ambient)
 void AAmbientSound::BeginPlay ()
 {
 	Super::BeginPlay ();
-	Activate (NULL);
+	CallActivate (NULL);
 }
 
 //==========================================================================
@@ -2470,7 +2470,7 @@ public:
 	virtual void PostBeginPlay();
 };
 
-IMPLEMENT_CLASS(AMusicChanger, false, false, false, false)
+IMPLEMENT_CLASS(AMusicChanger, false, false)
 
 bool AMusicChanger::DoTriggerAction (AActor *triggerer, int activationType)
 {

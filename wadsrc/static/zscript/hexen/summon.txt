@@ -1,7 +1,7 @@
 
 // Dark Servant Artifact ----------------------------------------------------
 
-class ArtiDarkServant : Inventory native
+class ArtiDarkServant : Inventory
 {
 	Default
 	{
@@ -23,6 +23,26 @@ class ArtiDarkServant : Inventory native
 		SUMN A 350;
 		Loop;
 	}
+	
+	//============================================================================
+	//
+	// Activate the summoning artifact
+	//
+	//============================================================================
+
+	override bool Use (bool pickup)
+	{
+		Actor mo = Owner.SpawnPlayerMissile ("SummoningDoll");
+		if (mo)
+		{
+			mo.target = Owner;
+			mo.tracer = Owner;
+			mo.Vel.Z = 5;
+		}
+		return true;
+	}
+
+	
 }
 
 // Summoning Doll -----------------------------------------------------------
@@ -36,8 +56,6 @@ class SummoningDoll : Actor
 		+NOTELEPORT
 	}
 
-	native void A_Summon();
-
 	States
 	{
 	Spawn:
@@ -48,6 +66,49 @@ class SummoningDoll : Actor
 		SUMN A 4 A_Summon;
 		Stop;
 	}
+	
+	//============================================================================
+	//
+	// A_Summon
+	//
+	//============================================================================
+
+	void A_Summon()
+	{
+		Actor mo = Spawn("MinotaurFriend", pos, ALLOW_REPLACE);
+		if (mo)
+		{
+			if (mo.TestMobjLocation() == false || !tracer)
+			{ // Didn't fit - change back to artifact
+				mo.Destroy();
+				Actor arti = Spawn("ArtiDarkServant", Pos, ALLOW_REPLACE);
+				if (arti) arti.bDropped = true;
+				return;
+			}
+
+			// Careful! The Minotaur might have been replaced 
+			// so only set the time if we got a genuine one.
+			MinotaurFriend m = MinotaurFriend(mo);
+			if (m) m.StartTime = level.maptime;
+			
+			if (tracer.bCorpse)
+			{	// Master dead
+				mo.tracer = null;		// No master
+			}
+			else
+			{
+				mo.tracer = tracer;		// Pointer to master
+				Inventory power = Inventory(Spawn("PowerMinotaur"));
+				power.CallTryPickup(tracer);
+				mo.SetFriendPlayer(tracer.player);
+			}
+
+			// Make smoke puff
+			Spawn("MinotaurSmoke", Pos, ALLOW_REPLACE);
+			A_PlaySound(mo.ActiveSound, CHAN_VOICE);
+		}
+	}
+	
 }
 
 // Minotaur Smoke -----------------------------------------------------------
@@ -69,3 +130,4 @@ class MinotaurSmoke : Actor
 		Stop;
 	}
 }
+

@@ -137,6 +137,10 @@ static void InitTokenMap()
 	TOKENDEF2(TK_Byte,			ZCC_BYTE,		NAME_Byte);
 	TOKENDEF2(TK_Short,			ZCC_SHORT,		NAME_Short);
 	TOKENDEF2(TK_UShort,		ZCC_USHORT,		NAME_uShort);
+	TOKENDEF2(TK_Int8,			ZCC_SBYTE,		NAME_int8);
+	TOKENDEF2(TK_UInt8,			ZCC_BYTE,		NAME_uint8);
+	TOKENDEF2(TK_Int16,			ZCC_SHORT,		NAME_int16);
+	TOKENDEF2(TK_UInt16,		ZCC_USHORT,		NAME_uint16);
 	TOKENDEF2(TK_Int,			ZCC_INT,		NAME_Int);
 	TOKENDEF2(TK_UInt,			ZCC_UINT,		NAME_uInt);
 	TOKENDEF2(TK_Bool,			ZCC_BOOL,		NAME_Bool);
@@ -298,11 +302,16 @@ static void DoParse(int lumpnum)
 
 	parser = ZCCParseAlloc(malloc);
 	ZCCParseState state;
-//#define TRACE
-#ifdef TRACE	// this costs a lot of time and should only be activated when it's really needed.
-	FILE *f = fopen("trace.txt", "w");
-	char prompt = '\0';
-	ZCCParseTrace(f, &prompt);
+
+#ifndef NDEBUG
+	FILE *f = nullptr;
+	const char *tracefile = Args->CheckValue("-tracefile");
+	if (tracefile != nullptr)
+	{
+		f = fopen(tracefile, "w");
+		char prompt = '\0';
+		ZCCParseTrace(f, &prompt);
+	}
 #endif
 
 	sc.OpenLumpNum(lumpnum);
@@ -337,6 +346,9 @@ static void DoParse(int lumpnum)
 				}
 			}
 
+#ifndef NDEBUG
+			if (f) fprintf(f, "Starting parsing %s\n", sc.String);
+#endif
 			ParseSingleFile(sc.String, 0, parser, state);
 		}
 	}
@@ -352,8 +364,8 @@ static void DoParse(int lumpnum)
 		I_Error("%d errors while parsing %s", FScriptPosition::ErrorCounter, Wads.GetLumpFullPath(lumpnum).GetChars());
 	}
 
-#ifdef TRACE
-	if (f != NULL)
+#ifndef NDEBUG
+	if (f != nullptr)
 	{
 		fclose(f);
 	}
@@ -402,10 +414,12 @@ void ParseScripts()
 
 	int lump, lastlump = 0;
 	FScriptPosition::ResetErrorCounter();
+
 	while ((lump = Wads.FindLump("ZSCRIPT", &lastlump)) != -1)
 	{
 		DoParse(lump);
 	}
+
 }
 
 /*
@@ -461,4 +475,35 @@ ZCC_TreeNode *ZCCParseState::InitNode(size_t size, EZCCTreeNodeType type)
 	node->SourceName = Strings.Alloc(sc->ScriptName);
 	node->SourceLump = sc->LumpNum;
 	return node;
+}
+
+// Appends a sibling to this node's sibling list.
+void AppendTreeNodeSibling(ZCC_TreeNode *thisnode, ZCC_TreeNode *sibling)
+{
+		if (thisnode == nullptr)
+		{
+			// Some bad syntax can actually get here, so better abort so that the user can see the error which caused this.
+			I_FatalError("Internal script compiler error. Execution aborted.");
+		}
+		if (sibling == nullptr)
+		{
+			return;
+		}
+
+		ZCC_TreeNode *&SiblingPrev = thisnode->SiblingPrev;
+		ZCC_TreeNode *&SiblingNext = thisnode->SiblingNext;
+
+		// Check integrity of our sibling list.
+		assert(SiblingPrev->SiblingNext == thisnode);
+		assert(SiblingNext->SiblingPrev == thisnode);
+
+		// Check integrity of new sibling list.
+		assert(sibling->SiblingPrev->SiblingNext == sibling);
+		assert(sibling->SiblingNext->SiblingPrev == sibling);
+
+		ZCC_TreeNode *siblingend = sibling->SiblingPrev;
+		SiblingPrev->SiblingNext = sibling;
+		sibling->SiblingPrev = SiblingPrev;
+		SiblingPrev = siblingend;
+		siblingend->SiblingNext = thisnode;
 }

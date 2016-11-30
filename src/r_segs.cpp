@@ -2508,326 +2508,196 @@ void R_StoreWallRange (int start, int stop)
 	ds_p++;
 }
 
-int OWallMost (short *mostbuf, double z, const FWallCoords *wallc)
+int WallMostAny(short *mostbuf, double z1, double z2, const FWallCoords *wallc)
 {
-	int bad, ix1, ix2;
-	double y, iy1, iy2;
-	double s1, s2, s3, s4;
+	float y1 = (float)(CenterY - z1 * InvZtoScale / wallc->sz1);
+	float y2 = (float)(CenterY - z2 * InvZtoScale / wallc->sz2);
 
-	z = -z;
-	s1 = globaluclip * wallc->sz1; s2 = globaluclip * wallc->sz2;
-	s3 = globaldclip * wallc->sz1; s4 = globaldclip * wallc->sz2;
-	bad = (z<s1)+((z<s2)<<1)+((z>s3)<<2)+((z>s4)<<3);
-
-	if ((bad&3) == 3)
-	{ // entire line is above the screen
-		memset (&mostbuf[wallc->sx1], 0, (wallc->sx2 - wallc->sx1)*sizeof(mostbuf[0]));
-		return bad;
-	}
-
-	if ((bad&12) == 12)
-	{ // entire line is below the screen
-		clearbufshort (&mostbuf[wallc->sx1], wallc->sx2 - wallc->sx1, viewheight);
-		return bad;
-	}
-	ix1 = wallc->sx1; iy1 = wallc->sz1;
-	ix2 = wallc->sx2; iy2 = wallc->sz2;
-	if (bad & 3)
-	{ // the line intersects the top of the screen
-		double t = (z-s1) / (s2-s1);
-		double inty = wallc->sz1 + t * (wallc->sz2 - wallc->sz1);
-		int xcross = xs_RoundToInt(wallc->sx1 + (t * wallc->sz2 * (wallc->sx2 - wallc->sx1)) / inty);
-
-		if ((bad & 3) == 2)
-		{ // the right side is above the screen
-			if (wallc->sx1 <= xcross) { iy2 = inty; ix2 = xcross; }
-			if (wallc->sx2 > xcross) memset (&mostbuf[xcross], 0, (wallc->sx2-xcross)*sizeof(mostbuf[0]));
-		}
-		else
-		{ // the left side is above the screen
-			if (xcross <= wallc->sx2) { iy1 = inty; ix1 = xcross; }
-			if (xcross > wallc->sx1) memset (&mostbuf[wallc->sx1], 0, (xcross-wallc->sx1)*sizeof(mostbuf[0]));
-		}
-	}
-
-	if (bad & 12)
-	{ // the line intersects the bottom of the screen
-		double t = (z-s3) / (s4-s3);
-		double inty = wallc->sz1 + t * (wallc->sz2 - wallc->sz1);
-		int xcross = xs_RoundToInt(wallc->sx1 + (t * wallc->sz2 * (wallc->sx2 - wallc->sx1)) / inty);
-
-		if ((bad & 12) == 8)
-		{ // the right side is below the screen
-			if (wallc->sx1 <= xcross) { iy2 = inty; ix2 = xcross; }
-			if (wallc->sx2 > xcross) clearbufshort (&mostbuf[xcross], wallc->sx2 - xcross, viewheight);
-		}
-		else
-		{ // the left side is below the screen
-			if (xcross <= wallc->sx2) { iy1 = inty; ix1 = xcross; }
-			if (xcross > wallc->sx1) clearbufshort (&mostbuf[wallc->sx1], xcross - wallc->sx1, viewheight);
-		}
-	}
-
-	y = z * InvZtoScale / iy1;
-	if (ix2 == ix1)
+	if (y1 < 0 && y2 < 0) // entire line is above screen
 	{
-		mostbuf[ix1] = (short)xs_RoundToInt(y + CenterY);
+		memset(&mostbuf[wallc->sx1], 0, (wallc->sx2 - wallc->sx1) * sizeof(mostbuf[0]));
+		return 3;
+	}
+	else if (y1 > viewheight && y2 > viewheight) // entire line is below screen
+	{
+		clearbufshort(&mostbuf[wallc->sx1], wallc->sx2 - wallc->sx1, viewheight);
+		return 12;
+	}
+
+	if (wallc->sx2 <= wallc->sx1)
+		return 0;
+
+	float rcp_delta = 1.0f / (wallc->sx2 - wallc->sx1);
+	if (y1 >= 0.0f && y2 >= 0.0f && xs_RoundToInt(y1) <= viewheight && xs_RoundToInt(y2) <= viewheight)
+	{
+		for (int x = wallc->sx1; x < wallc->sx2; x++)
+		{
+			float t = (x - wallc->sx1) * rcp_delta;
+			float y = y1 * (1.0f - t) + y2 * t;
+			mostbuf[x] = (short)xs_RoundToInt(y);
+		}
 	}
 	else
 	{
-		fixed_t yinc = FLOAT2FIXED(((z * InvZtoScale / iy2) - y) / (ix2 - ix1));
-		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, FLOAT2FIXED(y + CenterY) + FRACUNIT/2, yinc);
+		for (int x = wallc->sx1; x < wallc->sx2; x++)
+		{
+			float t = (x - wallc->sx1) * rcp_delta;
+			float y = y1 * (1.0f - t) + y2 * t;
+			mostbuf[x] = (short)clamp(xs_RoundToInt(y), 0, viewheight);
+		}
 	}
-	return bad;
+
+	return 0;
 }
 
-int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
+int OWallMost(short *mostbuf, double z, const FWallCoords *wallc)
+{
+	return WallMostAny(mostbuf, z, z, wallc);
+}
+
+int WallMost(short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 {
 	if (!plane.isSlope())
 	{
 		return OWallMost(mostbuf, plane.Zat0() - ViewPos.Z, wallc);
 	}
-
-	double x, y, den, z1, z2, oz1, oz2;
-	double s1, s2, s3, s4;
-	int bad, ix1, ix2;
-	double iy1, iy2;
-
-	// Get Z coordinates at both ends of the line
-	if (MirrorFlags & RF_XFLIP)
-	{
-		x = curline->v2->fX();
-		y = curline->v2->fY();
-		if (wallc->sx1 == 0 && 0 != (den = wallc->tleft.X - wallc->tright.X + wallc->tleft.Y - wallc->tright.Y))
-		{
-			double frac = (wallc->tleft.Y + wallc->tleft.X) / den;
-			x -= frac * (x - curline->v1->fX());
-			y -= frac * (y - curline->v1->fY());
-		}
-		z1 = ViewPos.Z - plane.ZatPoint(x, y);
-
-		if (wallc->sx2 > wallc->sx1 + 1)
-		{
-			x = curline->v1->fX();
-			y = curline->v1->fY();
-			if (wallc->sx2 == viewwidth && 0 != (den = wallc->tleft.X - wallc->tright.X - wallc->tleft.Y + wallc->tright.Y))
-			{
-				double frac = (wallc->tright.Y - wallc->tright.X) / den;
-				x += frac * (curline->v2->fX() - x);
-				y += frac * (curline->v2->fY() - y);
-			}
-			z2 = ViewPos.Z - plane.ZatPoint(x, y);
-		}
-		else
-		{
-			z2 = z1;
-		}
-	}
 	else
 	{
-		x = curline->v1->fX();
-		y = curline->v1->fY();
-		if (wallc->sx1 == 0 && 0 != (den = wallc->tleft.X - wallc->tright.X + wallc->tleft.Y - wallc->tright.Y))
-		{
-			double frac = (wallc->tleft.Y + wallc->tleft.X) / den;
-			x += frac * (curline->v2->fX() - x);
-			y += frac * (curline->v2->fY() - y);
-		}
-		z1 = ViewPos.Z - plane.ZatPoint(x, y);
-
-		if (wallc->sx2 > wallc->sx1 + 1)
+		// Get Z coordinates at both ends of the line
+		double x, y, den, z1, z2;
+		if (MirrorFlags & RF_XFLIP)
 		{
 			x = curline->v2->fX();
 			y = curline->v2->fY();
-			if (wallc->sx2 == viewwidth && 0 != (den = wallc->tleft.X - wallc->tright.X - wallc->tleft.Y + wallc->tright.Y))
+			if (wallc->sx1 == 0 && 0 != (den = wallc->tleft.X - wallc->tright.X + wallc->tleft.Y - wallc->tright.Y))
 			{
-				double frac = (wallc->tright.Y - wallc->tright.X) / den;
+				double frac = (wallc->tleft.Y + wallc->tleft.X) / den;
 				x -= frac * (x - curline->v1->fX());
 				y -= frac * (y - curline->v1->fY());
 			}
-			z2 = ViewPos.Z - plane.ZatPoint(x, y);
-		}
-		else
-		{
-			z2 = z1;
-		}
-	}
+			z1 = plane.ZatPoint(x, y) - ViewPos.Z;
 
-	s1 = globaluclip * wallc->sz1; s2 = globaluclip * wallc->sz2;
-	s3 = globaldclip * wallc->sz1; s4 = globaldclip * wallc->sz2;
-	bad = (z1<s1)+((z2<s2)<<1)+((z1>s3)<<2)+((z2>s4)<<3);
-
-	ix1 = wallc->sx1; ix2 = wallc->sx2;
-	iy1 = wallc->sz1; iy2 = wallc->sz2;
-	oz1 = z1; oz2 = z2;
-
-	if ((bad&3) == 3)
-	{ // The entire line is above the screen
-		memset (&mostbuf[ix1], 0, (ix2-ix1)*sizeof(mostbuf[0]));
-		return bad;
-	}
-
-	if ((bad&12) == 12)
-	{ // The entire line is below the screen
-		clearbufshort (&mostbuf[ix1], ix2-ix1, viewheight);
-		return bad;
-
-	}
-
-	if (bad&3)
-	{ // The line intersects the top of the screen
-			//inty = intz / (globaluclip>>16)
-		double t = (oz1-s1) / (s2-s1+oz1-oz2);
-		double inty = wallc->sz1 + t * (wallc->sz2-wallc->sz1);
-		double intz = oz1 + t * (oz2-oz1);
-		int xcross = wallc->sx1 + xs_RoundToInt((t * wallc->sz2 * (wallc->sx2-wallc->sx1)) / inty);
-
-		//t = divscale30((x1<<4)-xcross*yb1[w],xcross*(yb2[w]-yb1[w])-((x2-x1)<<4));
-		//inty = yb1[w] + mulscale30(yb2[w]-yb1[w],t);
-		//intz = z1 + mulscale30(z2-z1,t);
-
-		if ((bad&3) == 2)
-		{ // The right side of the line is above the screen
-			if (wallc->sx1 <= xcross) { z2 = intz; iy2 = inty; ix2 = xcross; }
-			memset (&mostbuf[xcross], 0, (wallc->sx2-xcross)*sizeof(mostbuf[0]));
-		}
-		else
-		{ // The left side of the line is above the screen
-			if (xcross <= wallc->sx2) { z1 = intz; iy1 = inty; ix1 = xcross; }
-			memset (&mostbuf[wallc->sx1], 0, (xcross-wallc->sx1)*sizeof(mostbuf[0]));
-		}
-	}
-
-	if (bad&12)
-	{ // The line intersects the bottom of the screen
-			//inty = intz / (globaldclip>>16)
-		double t = (oz1-s3) / (s4-s3+oz1-oz2);
-		double inty = wallc->sz1 + t * (wallc->sz2-wallc->sz1);
-		double intz = oz1 + t * (oz2-oz1);
-		int xcross = wallc->sx1 + xs_RoundToInt((t * wallc->sz2 * (wallc->sx2-wallc->sx1)) / inty);
-
-		//t = divscale30((x1<<4)-xcross*yb1[w],xcross*(yb2[w]-yb1[w])-((x2-x1)<<4));
-		//inty = yb1[w] + mulscale30(yb2[w]-yb1[w],t);
-		//intz = z1 + mulscale30(z2-z1,t);
-
-		if ((bad&12) == 8)
-		{ // The right side of the line is below the screen
-			if (wallc->sx1 <= xcross) { z2 = intz; iy2 = inty; ix2 = xcross; }
-			if (wallc->sx2 > xcross) clearbufshort (&mostbuf[xcross], wallc->sx2-xcross, viewheight);
-		}
-		else
-		{ // The left side of the line is below the screen
-			if (xcross <= wallc->sx2) { z1 = intz; iy1 = inty; ix1 = xcross; }
-			if (xcross > wallc->sx1) clearbufshort (&mostbuf[wallc->sx1], xcross-wallc->sx1, viewheight);
-		}
-	}
-
-	y = z1 * InvZtoScale / iy1;
-	if (ix2 == ix1)
-	{
-		mostbuf[ix1] = (short)xs_RoundToInt(y + CenterY);
-	}
-	else
-	{
-		fixed_t yinc = FLOAT2FIXED(((z2 * InvZtoScale / iy2) - y) / (ix2-ix1));
-		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, FLOAT2FIXED(y + CenterY) + FRACUNIT/2, yinc);
-	}
-
-	return bad;
-}
-
-static void PrepWallRoundFix(fixed_t *lwall, fixed_t walxrepeat, int x1, int x2)
-{
-	// fix for rounding errors
-	walxrepeat = abs(walxrepeat);
-	fixed_t fix = (MirrorFlags & RF_XFLIP) ? walxrepeat-1 : 0;
-	int x;
-
-	if (x1 > 0)
-	{
-		for (x = x1; x < x2; x++)
-		{
-			if ((unsigned)lwall[x] >= (unsigned)walxrepeat)
+			if (wallc->sx2 > wallc->sx1 + 1)
 			{
-				lwall[x] = fix;
+				x = curline->v1->fX();
+				y = curline->v1->fY();
+				if (wallc->sx2 == viewwidth && 0 != (den = wallc->tleft.X - wallc->tright.X - wallc->tleft.Y + wallc->tright.Y))
+				{
+					double frac = (wallc->tright.Y - wallc->tright.X) / den;
+					x += frac * (curline->v2->fX() - x);
+					y += frac * (curline->v2->fY() - y);
+				}
+				z2 = plane.ZatPoint(x, y) - ViewPos.Z;
 			}
 			else
 			{
-				break;
+				z2 = z1;
 			}
 		}
-	}
-	fix = walxrepeat - 1 - fix;
-	for (x = x2-1; x >= x1; x--)
-	{
-		if ((unsigned)lwall[x] >= (unsigned)walxrepeat)
-		{
-			lwall[x] = fix;
-		}
 		else
 		{
-			break;
+			x = curline->v1->fX();
+			y = curline->v1->fY();
+			if (wallc->sx1 == 0 && 0 != (den = wallc->tleft.X - wallc->tright.X + wallc->tleft.Y - wallc->tright.Y))
+			{
+				double frac = (wallc->tleft.Y + wallc->tleft.X) / den;
+				x += frac * (curline->v2->fX() - x);
+				y += frac * (curline->v2->fY() - y);
+			}
+			z1 = plane.ZatPoint(x, y) - ViewPos.Z;
+
+			if (wallc->sx2 > wallc->sx1 + 1)
+			{
+				x = curline->v2->fX();
+				y = curline->v2->fY();
+				if (wallc->sx2 == viewwidth && 0 != (den = wallc->tleft.X - wallc->tright.X - wallc->tleft.Y + wallc->tright.Y))
+				{
+					double frac = (wallc->tright.Y - wallc->tright.X) / den;
+					x -= frac * (x - curline->v1->fX());
+					y -= frac * (y - curline->v1->fY());
+				}
+				z2 = plane.ZatPoint(x, y) - ViewPos.Z;
+			}
+			else
+			{
+				z2 = z1;
+			}
+		}
+
+		return WallMostAny(mostbuf, z1, z2, wallc);
+	}
+}
+
+void PrepWall(float *vstep, fixed_t *upos, double walxrepeat, int x1, int x2)
+{
+	float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - CenterX);
+	float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - CenterX);
+	float uGradient = WallT.UoverZstep;
+	float zGradient = WallT.InvZstep;
+	float xrepeat = (float)walxrepeat;
+	float depthScale = (float)(WallT.InvZstep * WallTMapScale2);
+	float depthOrg = (float)(-WallT.UoverZstep * WallTMapScale2);
+
+	if (xrepeat < 0.0f)
+	{
+		for (int x = x1; x < x2; x++)
+		{
+			float u = uOverZ / invZ;
+
+			upos[x] = (fixed_t)((xrepeat - u * xrepeat) * FRACUNIT);
+			vstep[x] = depthOrg + u * depthScale;
+
+			uOverZ += uGradient;
+			invZ += zGradient;
+		}
+	}
+	else
+	{
+		for (int x = x1; x < x2; x++)
+		{
+			float u = uOverZ / invZ;
+
+			upos[x] = (fixed_t)(u * xrepeat * FRACUNIT);
+			vstep[x] = depthOrg + u * depthScale;
+
+			uOverZ += uGradient;
+			invZ += zGradient;
 		}
 	}
 }
 
-void PrepWall (float *swall, fixed_t *lwall, double walxrepeat, int x1, int x2)
-{ // swall = scale, lwall = texturecolumn
-	double top, bot, i;
-	double xrepeat = fabs(walxrepeat * 65536);
-	double depth_scale = WallT.InvZstep * WallTMapScale2;
-	double depth_org = -WallT.UoverZstep * WallTMapScale2;
+void PrepLWall(fixed_t *upos, double walxrepeat, int x1, int x2)
+{
+	float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - CenterX);
+	float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - CenterX);
+	float uGradient = WallT.UoverZstep;
+	float zGradient = WallT.InvZstep;
+	float xrepeat = (float)walxrepeat;
 
-	i = x1 - centerx;
-	top = WallT.UoverZorg + WallT.UoverZstep * i;
-	bot = WallT.InvZorg + WallT.InvZstep * i;
-
-	for (int x = x1; x < x2; x++)
+	if (xrepeat < 0.0f)
 	{
-		double frac = top / bot;
-		if (walxrepeat < 0)
+		for (int x = x1; x < x2; x++)
 		{
-			lwall[x] = xs_RoundToInt(xrepeat - frac * xrepeat);
+			float u = uOverZ / invZ * xrepeat - xrepeat;
+
+			upos[x] = (fixed_t)(u * FRACUNIT);
+
+			uOverZ += uGradient;
+			invZ += zGradient;
 		}
-		else
-		{
-			lwall[x] = xs_RoundToInt(frac * xrepeat);
-		}
-		swall[x] = float(frac * depth_scale + depth_org);
-		top += WallT.UoverZstep;
-		bot += WallT.InvZstep;
 	}
-	PrepWallRoundFix(lwall, FLOAT2FIXED(walxrepeat), x1, x2);
-}
-
-void PrepLWall (fixed_t *lwall, double walxrepeat, int x1, int x2)
-{ // lwall = texturecolumn
-	double top, bot, i;
-	double xrepeat = fabs(walxrepeat * 65536);
-	double topstep, botstep;
-
-	i = x1 - centerx;
-	top = WallT.UoverZorg + WallT.UoverZstep * i;
-	bot = WallT.InvZorg + WallT.InvZstep * i;
-
-	top *= xrepeat;
-	topstep = WallT.UoverZstep * xrepeat;
-	botstep = WallT.InvZstep;
-
-	for (int x = x1; x < x2; x++)
+	else
 	{
-		if (walxrepeat < 0)
+		for (int x = x1; x < x2; x++)
 		{
-			lwall[x] = xs_RoundToInt(xrepeat - top / bot);
+			float u = uOverZ / invZ * xrepeat;
+
+			upos[x] = (fixed_t)(u * FRACUNIT);
+
+			uOverZ += uGradient;
+			invZ += zGradient;
 		}
-		else
-		{
-			lwall[x] = xs_RoundToInt(top / bot);
-		}
-		top += topstep;
-		bot += botstep;
 	}
-	PrepWallRoundFix(lwall, FLOAT2FIXED(walxrepeat), x1, x2);
 }
 
 // pass = 0: when seg is first drawn

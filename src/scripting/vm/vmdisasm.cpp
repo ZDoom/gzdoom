@@ -31,7 +31,7 @@
 **
 */
 
-#include "vm.h"
+#include "dobject.h"
 #include "c_console.h"
 #include "templates.h"
 
@@ -97,11 +97,13 @@
 
 #define RIRIRI	MODE_AI | MODE_BI | MODE_CI
 #define RIRII8	MODE_AI | MODE_BI | MODE_CIMMZ
+#define RFRII8	MODE_AF | MODE_BI | MODE_CIMMZ
+#define RPRII8	MODE_AP | MODE_BI | MODE_CIMMZ
+#define RSRII8	MODE_AS | MODE_BI | MODE_CIMMZ
 #define RIRIKI	MODE_AI | MODE_BI | MODE_CKI
 #define RIKIRI	MODE_AI | MODE_BKI | MODE_CI
 #define RIKII8	MODE_AI | MODE_BKI | MODE_CIMMZ
 #define RIRIIs	MODE_AI | MODE_BI | MODE_CIMMS
-#define RIRI	MODE_AI | MODE_BI | MODE_CUNUSED
 #define I8RIRI	MODE_AIMMZ | MODE_BI | MODE_CI
 #define I8RIKI	MODE_AIMMZ | MODE_BI | MODE_CKI
 #define I8KIRI	MODE_AIMMZ | MODE_BKI | MODE_CI
@@ -144,7 +146,7 @@
 
 const VMOpInfo OpInfo[NUM_OPS] =
 {
-#define xx(op, name, mode)	{ #name, mode }
+#define xx(op, name, mode, alt, kreg, ktype)	{ #name, mode }
 #include "vmops.h"
 };
 
@@ -258,7 +260,6 @@ void VMDumpConstants(FILE *out, const VMScriptFunction *func)
 void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction *func)
 {
 	VMFunction *callfunc;
-	const char *callname;
 	const char *name;
 	int col;
 	int mode;
@@ -287,6 +288,10 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			mode |= (a & CMP_CK) ? MODE_CKS : MODE_CS;
 			a &= CMP_CHECK | CMP_APPROX;
 			cmp = true;
+		}
+		if (code[i].op == OP_PARAM && code[i].b & REGT_ADDROF)
+		{
+			name = "parama";
 		}
 		if (cmp)
 		{ // Comparison instruction. Modify name for inverted test.
@@ -323,15 +328,15 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 
 		case OP_CALL_K:
 		case OP_TAIL_K:
+		{
 			callfunc = (VMFunction *)func->KonstA[code[i].a].o;
-			callname = callfunc->Name != NAME_None ? callfunc->Name : "[anonfunc]";
-			col = printf_wrapper(out, "%.23s,%d", callname, code[i].b);
+			col = printf_wrapper(out, "[%p],%d", callfunc, code[i].b);
 			if (code[i].op == OP_CALL_K)
 			{
 				col += printf_wrapper(out, ",%d", code[i].c);
 			}
 			break;
-
+		}
 		case OP_RET:
 			if (code[i].b != REGT_NIL)
 			{
@@ -381,18 +386,23 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 				switch (code[i].c)
 				{
 				case CAST_I2F:
+				case CAST_U2F:
 					mode = MODE_AF | MODE_BI | MODE_CUNUSED;
 					break;
 				case CAST_Co2S:
 				case CAST_So2S:
 				case CAST_N2S:
 				case CAST_I2S:
+				case CAST_U2S:
 					mode = MODE_AS | MODE_BI | MODE_CUNUSED;
 					break;
 				case CAST_F2I:
+				case CAST_F2U:
 					mode = MODE_AI | MODE_BF | MODE_CUNUSED;
 					break;
 				case CAST_F2S:
+				case CAST_V22S:
+				case CAST_V32S:
 					mode = MODE_AS | MODE_BF | MODE_CUNUSED;
 					break;
 				case CAST_P2S:
@@ -489,7 +499,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			}
 			else if (code[i].op == OP_CALL_K || code[i].op == OP_TAIL_K)
 			{
-				printf_wrapper(out, "  [%p]\n", callfunc);
+				printf_wrapper(out, "  [%s]\n", callfunc->PrintableName.GetChars());
 			}
 			else
 			{

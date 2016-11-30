@@ -8,7 +8,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 #if COMPGOTO
 	static const void * const ops[256] =
 	{
-#define xx(op,sym,mode) &&op
+#define xx(op,sym,mode,alt,kreg,ktype) &&op
 #include "vmops.h"
 	};
 #endif
@@ -84,10 +84,36 @@ begin:
 		reg.a[a] = konsta[BC].v;
 		reg.atag[a] = konstatag[BC];
 		NEXTOP;
+
+	OP(LK_R) :
+		ASSERTD(a); ASSERTD(B);
+		reg.d[a] = konstd[reg.d[B] + C];
+		NEXTOP;
+	OP(LKF_R) :
+		ASSERTF(a); ASSERTD(B);
+		reg.f[a] = konstf[reg.d[B] + C];
+		NEXTOP;
+	OP(LKS_R) :
+		ASSERTS(a); ASSERTD(B);
+		reg.s[a] = konsts[reg.d[B] + C];
+		NEXTOP;
+	OP(LKP_R) :
+		ASSERTA(a); ASSERTD(B);
+		b = reg.d[B] + C;
+		reg.a[a] = konsta[b].v;
+		reg.atag[a] = konstatag[b];
+		NEXTOP;
+
 	OP(LFP):
 		ASSERTA(a); assert(sfunc != NULL); assert(sfunc->ExtraSpace > 0);
 		reg.a[a] = f->GetExtra();
-		reg.atag[a] = ATAG_FRAMEPOINTER;
+		reg.atag[a] = ATAG_GENERIC;	// using ATAG_FRAMEPOINTER will cause endless asserts.
+		NEXTOP;
+
+	OP(META):
+		ASSERTA(a); ASSERTO(B);
+		reg.a[a] = ((DObject*)reg.a[B])->GetClass();	// I wish this could be done without a special opcode but there's really no good way to guarantee initialization of the Class pointer...
+		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 
 	OP(LB):
@@ -175,7 +201,7 @@ begin:
 	OP(LO):
 		ASSERTA(a); ASSERTA(B); ASSERTKD(C);
 		GETADDR(PB,KC,X_READ_NIL);
-		reg.a[a] = *(DObject **)ptr;
+		reg.a[a] = GC::ReadBarrier(*(DObject **)ptr);
 		reg.atag[a] = ATAG_OBJECT;
 		NEXTOP;
 	OP(LO_R):
@@ -197,7 +223,7 @@ begin:
 		reg.atag[a] = ATAG_GENERIC;
 		NEXTOP;
 	OP(LV2):
-		ASSERTF(a+2); ASSERTA(B); ASSERTKD(C);
+		ASSERTF(a+1); ASSERTA(B); ASSERTKD(C);
 		GETADDR(PB,KC,X_READ_NIL);
 		{
 			auto v = (double *)ptr;
@@ -206,7 +232,7 @@ begin:
 		}
 		NEXTOP;
 	OP(LV2_R):
-		ASSERTF(a+2); ASSERTA(B); ASSERTD(C);
+		ASSERTF(a+1); ASSERTA(B); ASSERTD(C);
 		GETADDR(PB,RC,X_READ_NIL);
 		{
 			auto v = (double *)ptr;
@@ -311,7 +337,7 @@ begin:
 		*(void **)ptr = reg.a[B];
 		NEXTOP;
 	OP(SV2):
-		ASSERTA(a); ASSERTF(B+2); ASSERTKD(C);
+		ASSERTA(a); ASSERTF(B+1); ASSERTKD(C);
 		GETADDR(PA,KC,X_WRITE_NIL);
 		{
 			auto v = (double *)ptr;
@@ -320,7 +346,7 @@ begin:
 		}
 		NEXTOP;
 	OP(SV2_R):
-		ASSERTA(a); ASSERTF(B+2); ASSERTD(C);
+		ASSERTA(a); ASSERTF(B+1); ASSERTD(C);
 		GETADDR(PA,RC,X_WRITE_NIL);
 		{
 			auto v = (double *)ptr;
@@ -405,12 +431,6 @@ begin:
 			DoCast(reg, f, a, B, C);
 		}
 		NEXTOP;
-	OP(DYNCAST_R):
-		// UNDONE
-		NEXTOP;
-	OP(DYNCAST_K):
-		// UNDONE
-		NEXTOP;
 	
 	OP(TEST):
 		ASSERTD(a);
@@ -461,7 +481,7 @@ begin:
 					break;
 				case REGT_INT | REGT_ADDROF:
 					assert(C < f->NumRegD);
-					::new(param) VMValue(&reg.d[C], ATAG_DREGISTER);
+					::new(param) VMValue(&reg.d[C], ATAG_GENERIC);
 					break;
 				case REGT_INT | REGT_KONST:
 					assert(C < sfunc->NumKonstD);
@@ -473,7 +493,7 @@ begin:
 					break;
 				case REGT_STRING | REGT_ADDROF:
 					assert(C < f->NumRegS);
-					::new(param) VMValue(&reg.s[C], ATAG_SREGISTER);
+					::new(param) VMValue(&reg.s[C], ATAG_GENERIC);
 					break;
 				case REGT_STRING | REGT_KONST:
 					assert(C < sfunc->NumKonstS);
@@ -485,7 +505,7 @@ begin:
 					break;
 				case REGT_POINTER | REGT_ADDROF:
 					assert(C < f->NumRegA);
-					::new(param) VMValue(&reg.a[C], ATAG_AREGISTER);
+					::new(param) VMValue(&reg.a[C], ATAG_GENERIC);
 					break;
 				case REGT_POINTER | REGT_KONST:
 					assert(C < sfunc->NumKonstA);
@@ -512,7 +532,7 @@ begin:
 					break;
 				case REGT_FLOAT | REGT_ADDROF:
 					assert(C < f->NumRegF);
-					::new(param) VMValue(&reg.f[C], ATAG_FREGISTER);
+					::new(param) VMValue(&reg.f[C], ATAG_GENERIC);
 					break;
 				case REGT_FLOAT | REGT_KONST:
 					assert(C < sfunc->NumKonstF);
@@ -553,7 +573,7 @@ begin:
 			FillReturns(reg, f, returns, pc+1, C);
 			if (call->Native)
 			{
-				numret = static_cast<VMNativeFunction *>(call)->NativeCall(stack, reg.param + f->NumParam - B, call->DefaultArgs, B, returns, C);
+				numret = static_cast<VMNativeFunction *>(call)->NativeCall(reg.param + f->NumParam - B, call->DefaultArgs, B, returns, C);
 			}
 			else
 			{
@@ -597,7 +617,7 @@ begin:
 
 			if (call->Native)
 			{
-				return static_cast<VMNativeFunction *>(call)->NativeCall(stack, reg.param + f->NumParam - B, call->DefaultArgs, B, ret, numret);
+				return static_cast<VMNativeFunction *>(call)->NativeCall(reg.param + f->NumParam - B, call->DefaultArgs, B, ret, numret);
 			}
 			else
 			{ // FIXME: Not a true tail call
@@ -693,25 +713,39 @@ begin:
 		assert(0);
 		NEXTOP;
 
+		// Fixme: This really needs to throw something more informative than a number. Printing the message here instead of passing it to the exception is not sufficient.
 	OP(BOUND):
 		if (reg.d[a] >= BC)
 		{
+			assert(false);
+			Printf("Array access out of bounds: Max. index = %u, current index = %u\n", BC, reg.d[a]);
+			THROW(X_ARRAY_OUT_OF_BOUNDS);
+		}
+		NEXTOP;
+
+	OP(BOUND_K):
+		ASSERTKD(BC);
+		if (reg.d[a] >= konstd[BC])
+		{
+			assert(false);
+			Printf("Array access out of bounds: Max. index = %u, current index = %u\n", konstd[BC], reg.d[a]);
+			THROW(X_ARRAY_OUT_OF_BOUNDS);
+		}
+		NEXTOP;
+
+	OP(BOUND_R):
+		ASSERTD(B);
+		if (reg.d[a] >= reg.d[B])
+		{
+			assert(false);
+			Printf("Array access out of bounds: Max. index = %u, current index = %u\n", reg.d[B], reg.d[a]);
 			THROW(X_ARRAY_OUT_OF_BOUNDS);
 		}
 		NEXTOP;
 
 	OP(CONCAT):
 		ASSERTS(a); ASSERTS(B); ASSERTS(C);
-		{
-			FString *rB = &reg.s[B];
-			FString *rC = &reg.s[C];
-			FString concat(*rB);
-			for (++rB; rB <= rC; ++rB)
-			{
-				concat += *rB;
-			}
-			reg.s[a] = concat;
-		}
+		reg.s[a] = reg.s[B] + reg.s[C];
 		NEXTOP;
 	OP(LENS):
 		ASSERTD(a); ASSERTS(B);
@@ -1302,41 +1336,22 @@ begin:
 	OP(ADDV2_RR):
 		ASSERTF(a+1); ASSERTF(B+1); ASSERTF(C+1);
 		fcp = &reg.f[C];
-	Do_ADDV2:
 		fbp = &reg.f[B];
 		reg.f[a] = fbp[0] + fcp[0];
 		reg.f[a+1] = fbp[1] + fcp[1];
 		NEXTOP;
-	OP(ADDV2_RK):
-		fcp = &konstf[C];
-		goto Do_ADDV2;
 
 	OP(SUBV2_RR):
 		ASSERTF(a+1); ASSERTF(B+1); ASSERTF(C+1);
 		fbp = &reg.f[B];
 		fcp = &reg.f[C];
-	Do_SUBV2:
 		reg.f[a] = fbp[0] - fcp[0];
 		reg.f[a+1] = fbp[1] - fcp[1];
 		NEXTOP;
-	OP(SUBV2_RK):
-		ASSERTF(a+1); ASSERTF(B+1); ASSERTKF(C+1);
-		fbp = &reg.f[B];
-		fcp = &konstf[C];
-		goto Do_SUBV2;
-	OP(SUBV2_KR):
-		ASSERTF(A+1); ASSERTKF(B+1); ASSERTF(C+1);
-		fbp = &konstf[B];
-		fcp = &reg.f[C];
-		goto Do_SUBV2;
 
 	OP(DOTV2_RR):
 		ASSERTF(a); ASSERTF(B+1); ASSERTF(C+1);
 		reg.f[a] = reg.f[B] * reg.f[C] + reg.f[B+1] * reg.f[C+1];
-		NEXTOP;
-	OP(DOTV2_RK):
-		ASSERTF(a); ASSERTF(B+1); ASSERTKF(C+1);
-		reg.f[a] = reg.f[B] * konstf[C] + reg.f[B+1] * konstf[C+1];
 		NEXTOP;
 
 	OP(MULVF2_RR):
@@ -1401,50 +1416,30 @@ begin:
 	OP(ADDV3_RR):
 		ASSERTF(a+2); ASSERTF(B+2); ASSERTF(C+2);
 		fcp = &reg.f[C];
-	Do_ADDV3:
 		fbp = &reg.f[B];
 		reg.f[a] = fbp[0] + fcp[0];
 		reg.f[a+1] = fbp[1] + fcp[1];
 		reg.f[a+2] = fbp[2] + fcp[2];
 		NEXTOP;
-	OP(ADDV3_RK):
-		fcp = &konstf[C];
-		goto Do_ADDV3;
 
 	OP(SUBV3_RR):
 		ASSERTF(a+2); ASSERTF(B+2); ASSERTF(C+2);
 		fbp = &reg.f[B];
 		fcp = &reg.f[C];
-	Do_SUBV3:
 		reg.f[a] = fbp[0] - fcp[0];
 		reg.f[a+1] = fbp[1] - fcp[1];
 		reg.f[a+2] = fbp[2] - fcp[2];
 		NEXTOP;
-	OP(SUBV3_RK):
-		ASSERTF(a+2); ASSERTF(B+2); ASSERTKF(C+2);
-		fbp = &reg.f[B];
-		fcp = &konstf[C];
-		goto Do_SUBV3;
-	OP(SUBV3_KR):
-		ASSERTF(A+2); ASSERTKF(B+2); ASSERTF(C+2);
-		fbp = &konstf[B];
-		fcp = &reg.f[C];
-		goto Do_SUBV3;
 
 	OP(DOTV3_RR):
 		ASSERTF(a); ASSERTF(B+2); ASSERTF(C+2);
 		reg.f[a] = reg.f[B] * reg.f[C] + reg.f[B+1] * reg.f[C+1] + reg.f[B+2] * reg.f[C+2];
-		NEXTOP;
-	OP(DOTV3_RK):
-		ASSERTF(a); ASSERTF(B+2); ASSERTKF(C+2);
-		reg.f[a] = reg.f[B] * konstf[C] + reg.f[B+1] * konstf[C+1] + reg.f[B+2] * konstf[C+2];
 		NEXTOP;
 
 	OP(CROSSV_RR):
 		ASSERTF(a+2); ASSERTF(B+2); ASSERTF(C+2);
 		fbp = &reg.f[B];
 		fcp = &reg.f[C];
-	Do_CROSSV:
 		{
 			double t[3];
 			t[2] = fbp[0] * fcp[1] - fbp[1] * fcp[0];
@@ -1453,16 +1448,6 @@ begin:
 			reg.f[a] = t[0]; reg.f[a+1] = t[1]; reg.f[a+2] = t[2];
 		}
 		NEXTOP;
-	OP(CROSSV_RK):
-		ASSERTF(a+2); ASSERTF(B+2); ASSERTKF(C+2);
-		fbp = &reg.f[B];
-		fcp = &konstf[C];
-		goto Do_CROSSV;
-	OP(CROSSV_KR):
-		ASSERTF(a+2); ASSERTKF(B+2); ASSERTF(C+2);
-		fbp = &reg.f[B];
-		fcp = &konstf[C];
-		goto Do_CROSSV;
 
 	OP(MULVF3_RR):
 		ASSERTF(a+2); ASSERTF(B+2); ASSERTF(C);
@@ -1656,23 +1641,43 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 		ASSERTF(a); ASSERTD(b);
 		reg.f[a] = reg.d[b];
 		break;
+	case CAST_U2F:
+		ASSERTF(a); ASSERTD(b);
+		reg.f[a] = unsigned(reg.d[b]);
+		break;
 	case CAST_I2S:
 		ASSERTS(a); ASSERTD(b);
 		reg.s[a].Format("%d", reg.d[b]);
+		break;
+	case CAST_U2S:
+		ASSERTS(a); ASSERTD(b);
+		reg.s[a].Format("%u", reg.d[b]);
 		break;
 
 	case CAST_F2I:
 		ASSERTD(a); ASSERTF(b);
 		reg.d[a] = (int)reg.f[b];
 		break;
+	case CAST_F2U:
+		ASSERTD(a); ASSERTF(b);
+		reg.d[a] = (int)(unsigned)reg.f[b];
+		break;
 	case CAST_F2S:
-		ASSERTS(a); ASSERTD(b);
-		reg.s[a].Format("%.14g", reg.f[b]);
+		ASSERTS(a); ASSERTF(b);
+		reg.s[a].Format("%.5f", reg.f[b]);	// keep this small. For more precise conversion there should be a conversion function.
+		break;
+	case CAST_V22S:
+		ASSERTS(a); ASSERTF(b+1);
+		reg.s[a].Format("(%.5f, %.5f)", reg.f[b], reg.f[b + 1]);
+		break;
+	case CAST_V32S:
+		ASSERTS(a); ASSERTF(b + 2);
+		reg.s[a].Format("(%.5f, %.5f, %.5f)", reg.f[b], reg.f[b + 1], reg.f[b + 2]);
 		break;
 
 	case CAST_P2S:
 		ASSERTS(a); ASSERTA(b);
-		reg.s[a].Format("%s<%p>", reg.atag[b] == ATAG_OBJECT ? "Object" : "Pointer", reg.a[b]);
+		reg.s[a].Format("%s<%p>", reg.atag[b] == ATAG_OBJECT ? (reg.a[b] == nullptr? "Object" : ((DObject*)reg.a[b])->GetClass()->TypeName.GetChars() ) : "Pointer", reg.a[b]);
 		break;
 
 	case CAST_S2I:
@@ -1716,6 +1721,19 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 		ASSERTS(a); ASSERTD(b);
 		reg.s[a] = S_sfx[reg.d[b]].name;
 		break;
+
+	case CAST_SID2S:
+		ASSERTS(a); ASSERTD(b);
+		reg.s[a] = unsigned(reg.d[b]) >= sprites.Size() ? "TNT1" : sprites[reg.d[b]].name;
+		break;
+
+	case CAST_TID2S:
+	{
+		ASSERTS(a); ASSERTD(b);
+		auto tex = TexMan[*(FTextureID*)&(reg.d[b])];
+		reg.s[a] = tex == nullptr ? "(null)" : tex->Name.GetChars(); 
+		break;
+	}
 
 	default:
 		assert(0);

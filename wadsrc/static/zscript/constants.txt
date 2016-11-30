@@ -1,5 +1,6 @@
 // for flag changer functions.
 const FLAG_NO_CHANGE = -1;
+const MAXPLAYERS = 8;
 
 enum EStateUseFlags
 {
@@ -711,6 +712,7 @@ enum EPSpriteFlags
 // Default psprite layers
 enum EPSPLayers
 {
+	PSP_STRIFEHANDS = -1,
 	PSP_WEAPON = 1,
 	PSP_FLASH = 1000,
 };
@@ -829,7 +831,7 @@ enum EStateType
 struct FStateParamInfo
 {
 	state mCallingState;
-	EStateType mStateType;
+	/*EStateType*/int mStateType;
 	int mPSPIndex;
 }
 
@@ -839,6 +841,8 @@ struct FTranslatedLineTarget
 	Actor linetarget;
 	double angleFromSource;
 	bool unlinked;	// found by a trace that went through an unlinked portal.
+	
+	native void TraceBleed(int damage, Actor missile);
 }
 
 enum EAimFlags
@@ -898,3 +902,147 @@ const HR_SHADOW = (0x6800 / 65536.);
 // Hexen's TINTTAB is the same as Heretic's, just reversed.
 const HX_SHADOW = (0x9800 / 65536.);
 const HX_ALTSHADOW = (0x6800 / 65536.);
+
+enum EMapThingFlags
+{
+	MTF_AMBUSH			= 0x0008,	// Thing is deaf
+	MTF_DORMANT			= 0x0010,	// Thing is dormant (use Thing_Activate)
+
+	MTF_SINGLE			= 0x0100,	// Thing appears in single-player games
+	MTF_COOPERATIVE		= 0x0200,	// Thing appears in cooperative games
+	MTF_DEATHMATCH		= 0x0400,	// Thing appears in deathmatch games
+
+	MTF_SHADOW			= 0x0800,
+	MTF_ALTSHADOW		= 0x1000,
+	MTF_FRIENDLY		= 0x2000,
+	MTF_STANDSTILL		= 0x4000,
+	MTF_STRIFESOMETHING	= 0x8000,
+
+	MTF_SECRET			= 0x080000,	// Secret pickup
+	MTF_NOINFIGHTING	= 0x100000,
+};
+
+enum ESkillProperty
+{
+	SKILLP_FastMonsters,
+	SKILLP_Respawn,
+	SKILLP_RespawnLimit,
+	SKILLP_DisableCheats,
+	SKILLP_AutoUseHealth,
+	SKILLP_SpawnFilter,
+	SKILLP_EasyBossBrain,
+	SKILLP_ACSReturn,
+	SKILLP_NoPain,
+	SKILLP_EasyKey,
+	SKILLP_SlowMonsters,
+	SKILLP_Infight,
+};
+enum EFSkillProperty	// floating point properties
+{
+	SKILLP_AmmoFactor,
+	SKILLP_DropAmmoFactor,
+	SKILLP_ArmorFactor,
+	SKILLP_HealthFactor,
+	SKILLP_DamageFactor,
+	SKILLP_Aggressiveness,
+	SKILLP_MonsterHealth,
+	SKILLP_FriendlyHealth,
+};
+
+enum EWeaponPos
+{
+	WEAPONBOTTOM = 128,
+	WEAPONTOP = 32
+}
+
+enum ETranslationTable
+{
+	TRANSLATION_Invalid,
+	TRANSLATION_Players,
+	TRANSLATION_PlayersExtra,
+	TRANSLATION_Standard,
+	TRANSLATION_LevelScripted,
+	TRANSLATION_Decals,
+	TRANSLATION_PlayerCorpses,
+	TRANSLATION_Decorate,
+	TRANSLATION_Blood,
+	TRANSLATION_RainPillar,
+	TRANSLATION_Custom,
+};
+
+enum EFindFloorCeiling
+{
+	FFCF_ONLYSPAWNPOS = 1,
+	FFCF_SAMESECTOR = 2,
+	FFCF_ONLY3DFLOORS = 4,	// includes 3D midtexes
+	FFCF_3DRESTRICT = 8,	// ignore 3D midtexes and floors whose floorz are above thing's z
+	FFCF_NOPORTALS = 16,	// ignore portals (considers them impassable.)
+	FFCF_NOFLOOR = 32,
+	FFCF_NOCEILING = 64,
+	FFCF_RESTRICTEDPORTAL = 128,	// current values in the iterator's return are through a restricted portal type (i.e. some features are blocked.)
+	FFCF_NODROPOFF = 256,			// Caller does not need a dropoff (saves some time when checking portals)
+};
+
+enum ETeleport
+{
+	TELF_DESTFOG			= 1,
+	TELF_SOURCEFOG			= 2,
+	TELF_KEEPORIENTATION	= 4,
+	TELF_KEEPVELOCITY		= 8,
+	TELF_KEEPHEIGHT			= 16,
+	TELF_ROTATEBOOM			= 32,
+	TELF_ROTATEBOOMINVERSE	= 64,
+};
+
+enum EGameType
+{
+	GAME_Any	 = 0,
+	GAME_Doom	 = 1,
+	GAME_Heretic = 2,
+	GAME_Hexen	 = 4,
+	GAME_Strife	 = 8,
+	GAME_Chex	 = 16, //Chex is basically Doom, but we need to have a different set of actors.
+
+	GAME_Raven			= GAME_Heretic|GAME_Hexen,
+	GAME_DoomChex		= GAME_Doom|GAME_Chex,
+	GAME_DoomStrifeChex	= GAME_Doom|GAME_Strife|GAME_Chex
+}
+
+enum PaletteFlashFlags
+{
+	PF_HEXENWEAPONS		= 1,
+	PF_POISON			= 2,
+	PF_ICE				= 4,
+	PF_HAZARD			= 8,
+};
+
+enum EGameAction
+{
+	ga_nothing,
+	ga_loadlevel,
+	ga_newgame,
+	ga_newgame2,
+	ga_recordgame,
+	ga_loadgame,
+	ga_loadgamehidecon,
+	ga_loadgameplaydemo,
+	ga_autoloadgame,
+	ga_savegame,
+	ga_autosave,
+	ga_playdemo,
+	ga_completed,
+	ga_slideshow,
+	ga_worlddone,
+	ga_screenshot,
+	ga_togglemap,
+	ga_fullconsole,
+};
+
+enum EPuffFlags
+{
+	PF_HITTHING = 1,
+	PF_MELEERANGE = 2,
+	PF_TEMPORARY = 4,
+	PF_HITTHINGBLEED = 8,
+	PF_NORANDOMZ = 16
+};

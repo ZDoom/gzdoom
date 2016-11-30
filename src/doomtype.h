@@ -264,12 +264,14 @@ char ( &_ArraySizeHelper( T (&array)[N] ))[N];
 #ifdef __MACH__
 #define SECTION_AREG "__DATA,areg"
 #define SECTION_CREG "__DATA,creg"
+#define SECTION_FREG "__DATA,freg"
 #define SECTION_GREG "__DATA,greg"
 #define SECTION_MREG "__DATA,mreg"
 #define SECTION_YREG "__DATA,yreg"
 #else
 #define SECTION_AREG "areg"
 #define SECTION_CREG "creg"
+#define SECTION_FREG "freg"
 #define SECTION_GREG "greg"
 #define SECTION_MREG "mreg"
 #define SECTION_YREG "yreg"

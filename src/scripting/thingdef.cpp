@@ -50,13 +50,13 @@
 #include "s_sound.h"
 #include "cmdlib.h"
 #include "p_lnspec.h"
-#include "a_action.h"
 #include "decallib.h"
 #include "m_random.h"
 #include "i_system.h"
 #include "m_argv.h"
 #include "p_local.h"
 #include "doomerrors.h"
+#include "a_artifacts.h"
 #include "a_weaponpiece.h"
 #include "p_conversation.h"
 #include "v_text.h"
@@ -68,6 +68,7 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 void InitThingdef();
+TArray<PClassActor **> OptionalClassPtrs;
 
 // STATIC FUNCTION PROTOTYPES --------------------------------------------
 PClassActor *QuestItemClasses[31];
@@ -104,7 +105,7 @@ FScriptPosition & GetStateSource(FState *state)
 //
 //==========================================================================
 
-void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FName> *argnames, PClass *cls, DWORD funcflags, int useflags)
+void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FName> *argnames, PStruct *cls, DWORD funcflags, int useflags)
 {
 	// Must be called before adding any other arguments.
 	assert(args == nullptr || args->Size() == 0);
@@ -131,7 +132,7 @@ void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FNam
 			{
 				args->Push(NewPointer(cls));
 			}
-			args->Push(TypeState/*Info*/);	// fixme: TypeState is not the correct type here!!!
+			args->Push(NewPointer(NewStruct("FStateParamInfo", nullptr)));
 		}
 		if (argflags != nullptr)
 		{
@@ -170,7 +171,7 @@ PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, i
 	SetImplicitArgs(&args, &argflags, &argnames, containingclass, fflags, flags);
 
 	PFunction *sym = new PFunction(containingclass, NAME_None);	// anonymous functions do not have names.
-	sym->AddVariant(NewPrototype(rets, args), argflags, argnames, nullptr, fflags);
+	sym->AddVariant(NewPrototype(rets, args), argflags, argnames, nullptr, fflags, flags);
 	return sym;
 }
 
@@ -182,7 +183,7 @@ PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, i
 //
 //==========================================================================
 
-PFunction *FindClassMemberFunction(PClass *selfcls, PClass *funccls, FName name, FScriptPosition &sc, bool *error)
+PFunction *FindClassMemberFunction(PStruct *selfcls, PStruct *funccls, FName name, FScriptPosition &sc, bool *error)
 {
 	// Skip ACS_NamedExecuteWithResult. Anything calling this should use the builtin instead.
 	if (name == NAME_ACS_NamedExecuteWithResult) return nullptr;
@@ -390,8 +391,21 @@ void LoadActors ()
 	{
 		if (ti->Size == TentativeClass)
 		{
-			Printf(TEXTCOLOR_RED "Class %s referenced but not defined\n", ti->TypeName.GetChars());
-			FScriptPosition::ErrorCounter++;
+			if (ti->ObjectFlags & OF_Transient)
+			{
+				Printf(TEXTCOLOR_ORANGE "Class %s referenced but not defined\n", ti->TypeName.GetChars());
+				FScriptPosition::WarnCounter++;
+				DObject::StaticPointerSubstitution(ti, nullptr);
+				for (auto op : OptionalClassPtrs)
+				{
+					if (*op == ti) *op = nullptr;
+				}
+			}
+			else
+			{
+				Printf(TEXTCOLOR_RED "Class %s referenced but not defined\n", ti->TypeName.GetChars());
+				FScriptPosition::ErrorCounter++;
+			}
 			continue;
 		}
 
@@ -431,4 +445,6 @@ void LoadActors ()
 		QuestItemClasses[i] = PClass::FindActor(fmt);
 	}
 	StateSourceLines.Clear();
+	OptionalClassPtrs.Clear();
+	OptionalClassPtrs.ShrinkToFit();
 }

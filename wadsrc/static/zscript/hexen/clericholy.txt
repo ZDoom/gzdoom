@@ -76,8 +76,10 @@ class WraithvergeDrop : Actor
 
 // Cleric's Wraithverge (Holy Symbol?) --------------------------------------
 
-class CWeapWraithverge : ClericWeapon native
+class CWeapWraithverge : ClericWeapon
 {
+	int CHolyCount;
+	
 	Default
 	{
 		Health 3;
@@ -96,8 +98,6 @@ class CWeapWraithverge : ClericWeapon native
 		Inventory.PickupSound "WeaponBuild";
 	}
 
-	action native void A_CHolyAttack();
-	action native void A_CHolyPalette();
 
 	States
 	{
@@ -122,6 +122,66 @@ class CWeapWraithverge : ClericWeapon native
 		CHLY G 2 Offset (0, 36) A_CHolyPalette;
 		Goto Ready;
 	}
+
+	override color GetBlend ()
+	{
+		if (paletteflash & PF_HEXENWEAPONS)
+		{
+			if (CHolyCount == 3)
+				return Color(128, 70, 70, 70);
+			else if (CHolyCount == 2)
+				return Color(128, 100, 100, 100);
+			else if (CHolyCount == 1)
+				return Color(128, 130, 130, 130);
+			else
+				return Color(0, 0, 0, 0);
+		}
+		else
+		{
+			return Color(CHolyCount * 128 / 3, 131, 131, 131);
+		}
+	}
+
+	//============================================================================
+	//
+	// A_CHolyAttack
+	//
+	//============================================================================
+
+	action void A_CHolyAttack()
+	{
+		FTranslatedLineTarget t;
+
+		if (player == null)
+		{
+			return;
+		}
+		Weapon weapon = player.ReadyWeapon;
+		if (weapon != null)
+		{
+			if (!weapon.DepleteAmmo (weapon.bAltFire))
+				return;
+		}
+		Actor missile = SpawnPlayerMissile ("HolyMissile", angle, pLineTarget:t);
+		if (missile != null && !t.unlinked)
+		{
+			missile.tracer = t.linetarget;
+		}
+
+		invoker.CHolyCount = 3;
+		A_PlaySound ("HolySymbolFire", CHAN_WEAPON);
+	}
+
+	//============================================================================
+	//
+	// A_CHolyPalette
+	//
+	//============================================================================
+
+	action void A_CHolyPalette()
+	{
+		if (invoker.CHolyCount > 0) invoker.CHolyCount--;
+	}
 }
 
 // Holy Missile -------------------------------------------------------------
@@ -139,8 +199,6 @@ class HolyMissile : Actor
 		+EXTREMEDEATH
 	}
 
-	native void A_CHolyAttack2();
-
 	States
 	{
 	Spawn:
@@ -148,6 +206,60 @@ class HolyMissile : Actor
 	Death:
 		SPIR P 1 Bright A_CHolyAttack2;
 		Stop;
+	}
+	
+	//============================================================================
+	//
+	// A_CHolyAttack2 
+	//
+	// 	Spawns the spirits
+	//============================================================================
+
+	void A_CHolyAttack2()
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			Actor mo = Spawn("HolySpirit", Pos, ALLOW_REPLACE);
+			if (!mo)
+			{
+				continue;
+			}
+			switch (j)
+			{ // float bob index
+
+				case 0:
+					mo.WeaveIndexZ = random[HolyAtk2]() & 7; // upper-left
+					break;
+				case 1:
+					mo.WeaveIndexZ = 32 + (random[HolyAtk2]() & 7); // upper-right
+					break;
+				case 2:
+					mo.WeaveIndexXY = 32 + (random[HolyAtk2]() & 7); // lower-left
+					break;
+				case 3:
+					mo.WeaveIndexXY = 32 + (random[HolyAtk2]() & 7);
+					mo.WeaveIndexZ = 32 + (random[HolyAtk2]() & 7);
+					break;
+			}
+			mo.SetZ(pos.z);
+			mo.angle = angle + 67.5 - 45.*j;
+			mo.Thrust();
+			mo.target = target;
+			mo.args[0] = 10; // initial turn value
+			mo.args[1] = 0; // initial look angle
+			if (deathmatch)
+			{ // Ghosts last slightly less longer in DeathMatch
+				mo.health = 85;
+			}
+			if (tracer)
+			{
+				mo.tracer = tracer;
+				mo.bNoClip = true;
+				mo.bSkullFly = true;
+				mo.bMissile = false;
+			}
+			HolyTail.SpawnSpiritTail (mo);
+		}
 	}
 }
 
@@ -192,7 +304,7 @@ class HolyPuff : Actor
 
 // Holy Spirit --------------------------------------------------------------
 
-class HolySpirit : Actor native
+class HolySpirit : Actor
 {
 	Default
 	{
@@ -204,15 +316,12 @@ class HolySpirit : Actor native
 		Projectile;
 		+RIPPER +SEEKERMISSILE
 		+FOILINVUL +SKYEXPLODE +NOEXPLODEFLOOR +CANBLAST
-		+EXTREMEDEATH
+		+EXTREMEDEATH +NOSHIELDREFLECT
 		RenderStyle "Translucent";
 		Alpha 0.4;
 		DeathSound "SpiritDie";
 		Obituary "$OB_MPCWEAPWRAITHVERGE";
 	}
-
-	native void A_CHolySeek();
-	native void A_CHolyCheckScream();
 
 	States
 	{
@@ -225,6 +334,203 @@ class HolySpirit : Actor native
 		SPIR E 4 A_Scream;
 		SPIR FGHI 4;
 		Stop;
+	}
+	
+	//============================================================================
+	//
+	//
+	//
+	//============================================================================
+
+	override bool Slam(Actor thing)
+	{
+		if (thing.bShootable && thing != target)
+		{
+			if (multiplayer && !deathmatch && thing.player && target.player)
+			{ // don't attack other co-op players
+				return true;
+			}
+			if (thing.bReflective && (thing.player || thing.bBoss))
+			{
+				tracer = target;
+				target = thing;
+				return true;
+			}
+			if (thing.bIsMonster || thing.player)
+			{
+				tracer = thing;
+			}
+			if (random[SpiritSlam]() < 96)
+			{
+				int dam = 12;
+				if (thing.player || thing.bBoss)
+				{
+					dam = 3;
+					// ghost burns out faster when attacking players/bosses
+					health -= 6;
+				}
+				thing.DamageMobj(self, target, dam, 'Melee');
+				if (random[SpiritSlam]() < 128)
+				{
+					Spawn("HolyPuff", Pos, ALLOW_REPLACE);
+					A_PlaySound("SpiritAttack", CHAN_WEAPON);
+					if (thing.bIsMonster && random[SpiritSlam]() < 128)
+					{
+						thing.Howl();
+					}
+				}
+			}
+			if (thing.health <= 0)
+			{
+				tracer = null;
+			}
+		}
+		return true;
+	}
+
+	override bool SpecialBlastHandling (Actor source, double strength)
+	{
+		if (tracer == source)
+		{
+			tracer = target;
+			target = source;
+		}
+		return true;
+	}
+
+	//============================================================================
+	//
+	// CHolyFindTarget
+	//
+	//============================================================================
+
+	private void CHolyFindTarget ()
+	{
+		Actor target;
+
+		if ( (target = RoughMonsterSearch (6, true)) )
+		{
+			tracer = target;
+			bNoClip = true;
+			bSkullFly = true;
+			bMissile = false;
+		}
+	}
+
+	//============================================================================
+	//
+	// CHolySeekerMissile
+	//
+	// 	 Similar to P_SeekerMissile, but seeks to a random Z on the target
+	//============================================================================
+
+	private void CHolySeekerMissile (double thresh, double turnMax)
+	{
+		Actor target = tracer;
+		if (target == NULL)
+		{
+			return;
+		}
+		if (!target.bShootable || (!target.bIsMonster && !target.player))
+		{ // Target died/target isn't a player or creature
+			tracer = null;
+			bNoClip = false;
+			bSkullFly = false;
+			bMissile = true;
+			CHolyFindTarget();
+			return;
+		}
+		double ang = deltaangle(angle, AngleTo(target));
+		double delta = abs(ang);
+		
+		if (delta > thresh)
+		{
+			delta /= 2;
+			if (delta > turnMax)
+			{
+				delta = turnMax;
+			}
+		}
+		if (ang > 0)
+		{ // Turn clockwise
+			angle += delta;
+		}
+		else
+		{ // Turn counter clockwise
+			angle -= delta;
+		}
+		VelFromAngle();
+
+		if (!(level.time&15) 
+			|| pos.z > target.pos.z + target.height
+			|| pos.z + height < target.pos.z)
+		{
+			double newZ = target.pos.z + ((random[HolySeeker]()*target.Height) / 256.);
+			double deltaZ = newZ - pos.z;
+			if (abs(deltaZ) > 15)
+			{
+				if (deltaZ > 0)
+				{
+					deltaZ = 15;
+				}
+				else
+				{
+					deltaZ = -15;
+				}
+			}
+			Vel.Z = deltaZ / DistanceBySpeed(target, Speed);
+		}
+	}
+
+	//============================================================================
+	//
+	// A_CHolySeek
+	//
+	//============================================================================
+
+	void A_CHolySeek()
+	{
+		health--;
+		if (health <= 0)
+		{
+			Vel.X /= 4;
+			Vel.Y /= 4;
+			Vel.Z = 0;
+			SetStateLabel ("Death");
+			tics -= random[HolySeeker]()&3;
+			return;
+		}
+		if (tracer)
+		{
+			CHolySeekerMissile (args[0], args[0]*2.);
+			if (!((level.time+7)&15))
+			{
+				args[0] = 5+(random[HolySeeker]()/20);
+			}
+		}
+
+		int xyspeed = (random[HolySeeker]() % 5);
+		int zspeed = (random[HolySeeker]() % 5);
+		A_Weave(xyspeed, zspeed, 4., 2.);
+	}
+
+	//============================================================================
+	//
+	// A_CHolyCheckScream
+	//
+	//============================================================================
+
+	void A_CHolyCheckScream()
+	{
+		A_CHolySeek();
+		if (random[HolyScream]() < 20)
+		{
+			A_PlaySound ("SpiritActive", CHAN_VOICE);
+		}
+		if (!tracer)
+		{
+			CHolyFindTarget();
+		}
 	}
 }
 
@@ -242,8 +548,6 @@ class HolyTail : Actor
 		Alpha 0.6;
 	}
 
-	native void A_CHolyTail();
-
 	States
 	{
 	Spawn:
@@ -252,6 +556,108 @@ class HolyTail : Actor
 	TailTrail:
 		SPIR D -1;
 		Stop;
+	}
+	
+	//============================================================================
+	//
+	// SpawnSpiritTail
+	//
+	//============================================================================
+
+	static void SpawnSpiritTail (Actor spirit)
+	{
+		Actor tail = Spawn ("HolyTail", spirit.Pos, ALLOW_REPLACE);
+		tail.target = spirit; // parent
+		for (int i = 1; i < 3; i++)
+		{
+			Actor next = Spawn ("HolyTailTrail", spirit.Pos, ALLOW_REPLACE);
+			tail.tracer = next;
+			tail = next;
+		}
+		tail.tracer = null; // last tail bit
+	}
+
+	//============================================================================
+	//
+	// CHolyTailFollow
+	//
+	//============================================================================
+
+	private void CHolyTailFollow(double dist)
+	{
+		Actor mo = self;
+		while (mo)
+		{
+			Actor child = mo.tracer;
+			if (child)
+			{
+				double an = mo.AngleTo(child);
+				double oldDistance = child.Distance2D(mo);
+				if (child.TryMove(mo.Pos.XY + AngleToVector(an, dist), true))
+				{
+					double newDistance = child.Distance2D(mo) - 1;
+					if (oldDistance < 1)
+					{
+						if (child.pos.z < mo.pos.z)
+						{
+							child.SetZ(mo.pos.z - dist);
+						}
+						else
+						{
+							child.SetZ(mo.pos.z + dist);
+						}
+					}
+					else
+					{
+						child.SetZ(mo.pos.z + (newDistance * (child.pos.z - mo.pos.z) / oldDistance));
+					}
+				}
+			}
+			mo = child;
+			dist -= 1;
+		}
+	}
+
+	//============================================================================
+	//
+	// CHolyTailRemove
+	//
+	//============================================================================
+
+	private void CHolyTailRemove ()
+	{
+		Actor mo = self;
+		while (mo)
+		{
+			Actor next = mo.tracer;
+			mo.Destroy ();
+			mo = next;
+		}
+	}
+
+	//============================================================================
+	//
+	// A_CHolyTail
+	//
+	//============================================================================
+
+	void A_CHolyTail()
+	{
+		Actor parent = target;
+
+		if (parent == null || parent.health <= 0)	// better check for health than current state - it's safer!
+		{ // Ghost removed, so remove all tail parts
+			CHolyTailRemove ();
+			return;
+		}
+		else
+		{
+			if (TryMove(parent.Vec2Angle(14., parent.Angle, true), true))
+			{
+				SetZ(parent.pos.z - 5.);
+			}
+			CHolyTailFollow(10);
+		}
 	}
 }
 

@@ -26,10 +26,6 @@ class Acolyte : StrifeHumanoid
 		Obituary "$OB_ACOLYTE";
 	}
 
-	native void A_BeShadowyFoe ();
-	native void A_AcolyteBits ();
-	native void A_AcolyteDie ();
-
 	States
 	{
 	Spawn:
@@ -76,6 +72,79 @@ class Acolyte : StrifeHumanoid
 		GIBS L 1400;
 		Stop;
 	}
+	
+	//============================================================================
+	//
+	// A_AcolyteDie
+	//
+	//============================================================================
+
+	void A_AcolyteDie ()
+	{
+		// [RH] Disable translucency here.
+		A_SetRenderStyle(1, STYLE_Normal);
+
+		// Only the Blue Acolyte does extra stuff on death.
+		if (self is "AcolyteBlue")
+		{
+			int i;
+			// Make sure somebody is still alive
+			for (i = 0; i < MAXPLAYERS; ++i)
+			{
+				if (playeringame[i] && players[i].health > 0)
+					break;
+			}
+			if (i == MAXPLAYERS)
+				return;
+
+			// Make sure all the other blue acolytes are dead, but do this only once in case of simultaneous kills.
+			if (CheckBossDeath() && !players[i].mo.FindInventory("QuestItem7"))
+			{
+				players[i].mo.GiveInventoryType ("QuestItem7");
+				players[i].SetLogNumber (14);
+				A_StopSound (CHAN_VOICE);
+				A_PlaySound ("svox/voc14", CHAN_VOICE);
+			}
+		}
+	}
+
+	//============================================================================
+	//
+	// A_BeShadowyFoe
+	//
+	//============================================================================
+
+	void A_BeShadowyFoe()
+	{
+		A_SetRenderStyle(HR_SHADOW, STYLE_Translucent);
+		bFriendly = false;
+	}
+
+	//============================================================================
+	//
+	// A_AcolyteBits
+	//
+	//============================================================================
+
+	void A_AcolyteBits()
+	{
+		if (SpawnFlags & MTF_SHADOW)
+		{
+			A_BeShadowyFoe();
+		}
+		if (SpawnFlags & MTF_ALTSHADOW)
+		{
+			if (bShadow)
+			{
+				// I dunno.
+			}
+			else
+			{
+				A_SetRenderStyle(0, STYLE_None);
+			}
+		}
+	}
+	
 }
 	
 
@@ -202,8 +271,6 @@ class AcolyteToBe : Acolyte
 		-ISMONSTER
 	}
 
-	native void A_HideDecepticon ();
-
 	States
 	{
 	Spawn:
@@ -214,5 +281,28 @@ class AcolyteToBe : Acolyte
 		Stop;
 	Death:
 		Goto XDeath;
+	}
+	
+	//============================================================================
+	//
+	// A_HideDecepticon
+	//
+	// Hide the Acolyte-to-be							->
+	// Hide the guy transforming into an Acolyte		->
+	// Hide the transformer								->
+	// Transformers are Autobots and Decepticons, and
+	// Decepticons are the bad guys, so...				->
+	//
+	// Hide the Decepticon!
+	//
+	//============================================================================
+
+	void A_HideDecepticon ()
+	{
+		Door_Close(999, 64);
+		if (target != null && target.player != null)
+		{
+			NoiseAlert (target);
+		}
 	}
 }

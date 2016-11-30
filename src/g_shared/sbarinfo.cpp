@@ -45,19 +45,21 @@
 #include "st_stuff.h"
 #include "m_swap.h"
 #include "a_keys.h"
+#include "a_armor.h"
 #include "templates.h"
 #include "i_system.h"
 #include "sbarinfo.h"
 #include "gi.h"
 #include "r_data/r_translate.h"
+#include "a_artifacts.h"
 #include "a_weaponpiece.h"
-#include "a_strifeglobal.h"
 #include "g_level.h"
 #include "v_palette.h"
 #include "p_acs.h"
 #include "gstrings.h"
 #include "version.h"
 #include "cmdlib.h"
+#include "a_ammo.h"
 
 #define ARTIFLASH_OFFSET (statusBar->invBarOffset+6)
 enum
@@ -1531,7 +1533,7 @@ private:
 	SBarInfoMainBlock *lastPopup;
 };
 
-IMPLEMENT_CLASS(DSBarInfo, false, true, false, false)
+IMPLEMENT_CLASS(DSBarInfo, false, true)
 
 IMPLEMENT_POINTERS_START(DSBarInfo)
 	IMPLEMENT_POINTER(ammo1)

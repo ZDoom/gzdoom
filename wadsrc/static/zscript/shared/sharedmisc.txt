@@ -157,13 +157,25 @@ class CustomSprite : Actor native
 
 // SwitchableDecoration: Activate and Deactivate change state --------------
 
-class SwitchableDecoration : Actor native
+class SwitchableDecoration : Actor
 {
+	override void Activate (Actor activator)
+	{
+		SetStateLabel("Active");
+	}
+
+	override void Deactivate (Actor activator)
+	{
+		SetStateLabel("Inactive");
+	}
+	
 }
 
-
-class SwitchingDecoration : SwitchableDecoration native
+class SwitchingDecoration : SwitchableDecoration
 {
+	override void Deactivate (Actor activator)
+	{
+	}
 }
 
 // Random spawner ----------------------------------------------------------
@@ -179,20 +191,9 @@ class RandomSpawner : Actor native
 	}
 }
 
-// Fast projectiles --------------------------------------------------------
-
-class FastProjectile : Actor native
-{
-	Default
-	{
-		Projectile;
-		MissileHeight 0;
-	}
-}
-
 // Sector flag setter ------------------------------------------------------
 
-class SectorFlagSetter : Actor native
+class SectorFlagSetter : Actor
 {
 	Default
 	{
@@ -200,6 +201,12 @@ class SectorFlagSetter : Actor native
 		+NOGRAVITY
 		+DONTSPLASH
 		RenderStyle "None";
+	}
+	
+	override void BeginPlay ()
+	{
+		Super.BeginPlay ();
+		CurSector.Flags |= args[0];
 	}
 }
 

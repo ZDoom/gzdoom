@@ -25,7 +25,6 @@ class Templar : Actor
 		Obituary "$OB_TEMPLAR";
 		DropItem "EnergyPod";
 	}
-	native void A_TemplarAttack();
 
 	States
 	{
@@ -63,6 +62,23 @@ class Templar : Actor
 		PGRD PQRSTUVWXYZ[ 4;
 		PGRD \ -1;
 		Stop;
+	}
+	
+	void A_TemplarAttack()
+	{
+		if (target != null)
+		{
+			A_PlaySound ("templar/shoot", CHAN_WEAPON);
+			A_FaceTarget ();
+			double pitch = AimLineAttack (angle, MISSILERANGE);
+
+			for (int i = 0; i < 10; ++i)
+			{
+				int damage = (random[Templar]() & 4) * 2;
+				double ang = angle + random2[Templar]() * (11.25 / 256);
+				LineAttack (ang, MISSILERANGE+64., pitch + random2[Templar]() * (7.097 / 256), damage, 'Hitscan', "MaulerPuff");
+			}
+		}
 	}
 }
 

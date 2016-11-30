@@ -65,6 +65,7 @@
 #include "g_level.h"
 #include "d_event.h"
 #include "d_player.h"
+#include "gstrings.h"
 #include "c_consolebuffer.h"
 
 #include "gi.h"
@@ -1727,6 +1728,20 @@ void C_MidPrintBold (FFont *font, const char *msg)
 	{
 		StatusBar->DetachMessage (MAKE_ID('C','N','T','R'));
 	}
+}
+
+DEFINE_ACTION_FUNCTION(DObject, C_MidPrint)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(font);
+	PARAM_STRING(text);
+	PARAM_BOOL_DEF(bold);
+
+	FFont *fnt = FFont::FindFont(font);
+	const char *txt = text[0] == '$'? GStrings(&text[1]) : text.GetChars();
+	if (!bold) C_MidPrint(fnt, txt);
+	else C_MidPrintBold(fnt, txt);
+	return 0;
 }
 
 /****** Tab completion code ******/

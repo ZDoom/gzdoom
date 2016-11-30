@@ -72,11 +72,11 @@ static inline void *RoundPointer(void *ptr)
 //
 //==========================================================================
 
-FMemArena::FMemArena(int bs)
+FMemArena::FMemArena(size_t blocksize)
 {
 	TopBlock = NULL;
 	FreeBlocks = NULL;
-	BlockSize = bs;
+	BlockSize = blocksize;
 }
 
 //==========================================================================

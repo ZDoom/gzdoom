@@ -526,7 +526,7 @@ void ProcessMouseMoveInGame(NSEvent* theEvent)
 	lastX = x;
 	lastY = y;
 
-	if (0 != event.x | 0 != event.y)
+	if (0 != event.x || 0 != event.y)
 	{
 		event.type = EV_Mouse;
 		

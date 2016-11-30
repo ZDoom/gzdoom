@@ -61,14 +61,17 @@ ClassReg DObject::RegistrationInfo =
 	nullptr,								// MyClass
 	"DObject",								// Name
 	nullptr,								// ParentType
-	&DVMObject<DObject>::RegistrationInfo,	// VMExport
+	nullptr,								
 	nullptr,								// Pointers
 	&DObject::InPlaceConstructor,			// ConstructNative
-	&DObject::InitNativeFields,				// InitNatives
+	nullptr,
 	sizeof(DObject),						// SizeOf
 	CLASSREG_PClass,						// MetaClassNum
 };
 _DECLARE_TI(DObject)
+
+// This bit is needed in the playsim - but give it a less crappy name.
+DEFINE_FIELD_BIT(DObject,ObjectFlags, bDestroyed, OF_EuthanizeMe)
 
 //==========================================================================
 //
@@ -347,18 +350,6 @@ DObject::~DObject ()
 //
 //==========================================================================
 
-void DObject::InitNativeFields()
-{
-	auto meta = RUNTIME_CLASS(DObject);
-	meta->AddNativeField("bDestroyed", TypeSInt32, myoffsetof(DObject, ObjectFlags), VARF_ReadOnly, OF_EuthanizeMe);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 void DObject::Destroy ()
 {
 	ObjectFlags = (ObjectFlags & ~OF_Fixed) | OF_EuthanizeMe;
@@ -367,15 +358,8 @@ void DObject::Destroy ()
 DEFINE_ACTION_FUNCTION(DObject, Destroy)
 {
 	PARAM_SELF_PROLOGUE(DObject);
-	self->VMSuperCall();
 	self->Destroy();
 	return 0;	
-}
-
-DEFINE_ACTION_FUNCTION(DObject, GetClass)
-{
-	PARAM_SELF_PROLOGUE(DObject);
-	ACTION_RETURN_OBJECT(self->GetClass());
 }
 
 //==========================================================================

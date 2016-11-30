@@ -8,6 +8,7 @@ xx(ConstValue,		TK_Const)
 xx(FuncCall,		'(')
 xx(ArrayAccess,		TK_Array)
 xx(MemberAccess,	'.')
+xx(ClassCast,		TK_Class)
 xx(TypeRef,			TK_Class)
 xx(Vector,			TK_Vector2)
 

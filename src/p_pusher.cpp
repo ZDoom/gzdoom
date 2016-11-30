@@ -74,7 +74,7 @@ protected:
 	friend bool PIT_PushThing (AActor *thing);
 };
 
-IMPLEMENT_CLASS(DPusher, false, true, false, false)
+IMPLEMENT_CLASS(DPusher, false, true)
 
 IMPLEMENT_POINTERS_START(DPusher)
 	IMPLEMENT_POINTER(m_Source)

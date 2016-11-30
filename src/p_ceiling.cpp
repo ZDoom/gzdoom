@@ -38,7 +38,7 @@
 //
 //============================================================================
 
-IMPLEMENT_CLASS(DCeiling, false, false, false, false)
+IMPLEMENT_CLASS(DCeiling, false, false)
 
 DCeiling::DCeiling ()
 {
@@ -456,6 +456,22 @@ bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int t
 
 	ceiling->PlayCeilingSound ();
 	return ceiling != NULL;
+}
+
+DEFINE_ACTION_FUNCTION(DCeiling, CreateCeiling)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(sec, sector_t);
+	PARAM_INT(type);
+	PARAM_POINTER(ln, line_t);
+	PARAM_FLOAT(speed);
+	PARAM_FLOAT(speed2);
+	PARAM_FLOAT_DEF(height);
+	PARAM_INT_DEF(crush);
+	PARAM_INT_DEF(silent);
+	PARAM_INT_DEF(change);
+	PARAM_INT_DEF(crushmode);
+	ACTION_RETURN_BOOL(P_CreateCeiling(sec, (DCeiling::ECeiling)type, ln, 0, speed, speed2, height, crush, silent, change, (DCeiling::ECrushMode)crushmode));
 }
 
 //============================================================================

@@ -585,6 +585,26 @@ static void PrintExprFuncCall(FLispString &out, ZCC_TreeNode *node)
 	out.Close();
 }
 
+static void PrintExprClassCast(FLispString &out, ZCC_TreeNode *node)
+{
+	ZCC_ClassCast *enode = (ZCC_ClassCast *)node;
+	assert(enode->Operation == PEX_ClassCast);
+	out.Open("expr-class-cast");
+	out.AddName(enode->ClassName);
+	PrintNodes(out, enode->Parameters, false);
+	out.Close();
+}
+
+static void PrintStaticArray(FLispString &out, ZCC_TreeNode *node)
+{
+	ZCC_StaticArrayStatement *enode = (ZCC_StaticArrayStatement *)node;
+	out.Open("static-array-stmt");
+	PrintNodes(out, enode->Type, false);
+	out.AddName(enode->Id);
+	PrintNodes(out, enode->Values, false);
+	out.Close();
+}
+
 static void PrintExprMemberAccess(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ExprMemberAccess *enode = (ZCC_ExprMemberAccess *)node;
@@ -820,10 +840,21 @@ static void PrintFuncDeclarator(FLispString &out, ZCC_TreeNode *node)
 	out.Break();
 	out.Open("func-declarator");
 	out.AddHex(dnode->Flags);
+	PrintNodes(out, dnode->UseFlags);
 	PrintNodes(out, dnode->Type);
 	out.AddName(dnode->Name);
 	PrintNodes(out, dnode->Params);
 	PrintNodes(out, dnode->Body, false);
+	out.Close();
+}
+
+static void PrintDeclFlags(FLispString &out, ZCC_TreeNode *node)
+{
+	auto dnode = (ZCC_DeclFlags *)node;
+	out.Break();
+	out.Open("decl-flags");
+	out.AddHex(dnode->Flags);
+	PrintNodes(out, dnode->Id);
 	out.Close();
 }
 
@@ -901,6 +932,8 @@ void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *
 	PrintFlagStmt,
 	PrintPropertyStmt,
 	PrintVectorInitializer,
+	PrintDeclFlags,
+	PrintExprClassCast,
 };
 
 FString ZCC_PrintAST(ZCC_TreeNode *root)

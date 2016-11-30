@@ -175,7 +175,7 @@ extend class Actor
 	// Original idea: Linguica
 	//
 	
-	void A_Mushroom(class<Actor> spawntype = "FatShot", int numspawns = 0, int flags = 0, float vrange = 4.0, float hrange = 0.5)
+	void A_Mushroom(class<Actor> spawntype = "FatShot", int numspawns = 0, int flags = 0, double vrange = 4.0, double hrange = 0.5)
 	{
 		int i, j;
 
@@ -192,7 +192,7 @@ extend class Actor
 		aimtarget.Height = Height;
 		
 		bool shootmode = ((flags & MSF_Classic) || // Flag explicitely set, or no flags and compat options
-					(flags == 0 && isDehState(CurState) && GetCVar("compat_mushroom")));
+					(flags == 0 && CurState.bDehacked && compat_mushroom));
 
 		for (i = -numspawns; i <= numspawns; i += 8)
 		{

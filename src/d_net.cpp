@@ -61,6 +61,7 @@
 #include "p_spec.h"
 #include "hardware.h"
 #include "r_utility.h"
+#include "a_keys.h"
 #include "intermission/intermission.h"
 
 EXTERN_CVAR (Int, disableautosave)

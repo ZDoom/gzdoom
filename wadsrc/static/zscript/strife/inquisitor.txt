@@ -25,14 +25,6 @@ class Inquisitor : Actor
 		Obituary "$OB_INQUISITOR";
 	}
 
-	native void A_InquisitorWalk ();
-	native void A_InquisitorDecide ();
-	native void A_InquisitorAttack ();
-	native void A_InquisitorJump ();
-	native void A_InquisitorCheckLand ();
-	native void A_TossArm ();
-	native void A_ReaverRanged ();
-
 	States
 	{
 	Spawn:
@@ -66,22 +58,125 @@ class Inquisitor : Actor
 		ROB3 L 4 A_TossGib;
 		ROB3 M 4 A_Scream;
 		ROB3 N 4 A_TossGib;
-		ROB3 O 4 Bright A_Explode(128,128,1,1);
+		ROB3 O 4 Bright A_Explode(128, 128, alert:true);
 		ROB3 P 4 Bright A_TossGib;
 		ROB3 Q 4 Bright A_NoBlocking;
 		ROB3 RSTUV 4 A_TossGib;
-		ROB3 W 4 Bright A_Explode(128,128,1,1);
+		ROB3 W 4 Bright A_Explode(128, 128, alert:true);
 		ROB3 XY 4 Bright A_TossGib;
 		ROB3 Z 4 A_TossGib;
 		ROB3 [ 4 A_TossGib;
 		ROB3 \ 3 A_TossGib;
-		ROB3 ] 3 Bright A_Explode(128,128,1,1);
+		ROB3 ] 3 Bright A_Explode(128, 128, alert:true);
 		RBB3 A 3 Bright A_TossArm;
 		RBB3 B 3 Bright A_TossGib;
 		RBB3 CD 3 A_TossGib;
 		RBB3 E -1;
 		Stop;
 	}
+	
+	
+	// Inquisitor ---------------------------------------------------------------
+
+	void A_InquisitorWalk ()
+	{
+		A_PlaySound ("inquisitor/walk", CHAN_BODY);
+		A_Chase ();
+	}
+
+	private bool InquisitorCheckDistance ()
+	{
+		if (reactiontime == 0 && CheckSight (target))
+		{
+			return Distance2D (target) < 264.;
+		}
+		return false;
+	}
+
+	void A_InquisitorDecide ()
+	{
+		if (target == null)
+			return;
+
+		A_FaceTarget ();
+		if (!InquisitorCheckDistance ())
+		{
+			SetStateLabel("Grenade");
+		}
+		if (target.pos.z != pos.z)
+		{
+			if (pos.z + height + 54 < ceilingz)
+			{
+				SetStateLabel("Jump");
+			}
+		}
+	}
+
+	void A_InquisitorAttack ()
+	{
+		if (target == null)
+			return;
+
+		A_FaceTarget ();
+
+		AddZ(32);
+		angle -= 45./32;
+		Actor proj = SpawnMissileZAimed (pos.z, target, "InquisitorShot");
+		if (proj != null)
+		{
+			proj.Vel.Z += 9;
+		}
+		angle += 45./16;
+		proj = SpawnMissileZAimed (pos.z, target, "InquisitorShot");
+		if (proj != null)
+		{
+			proj.Vel.Z += 16;
+		}
+		AddZ(-32);
+	}
+
+	void A_InquisitorJump ()
+	{
+		if (target == null)
+			return;
+
+		A_PlaySound ("inquisitor/jump", CHAN_ITEM, 1, true);
+		AddZ(64);
+		A_FaceTarget ();
+		speed = Speed * (2./3);
+		VelFromAngle(speed);
+		double dist = DistanceBySpeed(target, speed);
+		Vel.Z = (target.pos.z - pos.z) / dist;
+		reactiontime = 60;
+		bNoGravity = true;
+	}
+
+	void A_InquisitorCheckLand ()
+	{
+		reactiontime--;
+		if (reactiontime < 0 ||
+			Vel.X == 0 ||
+			Vel.Y == 0 ||
+			pos.z <= floorz)
+		{
+			SetState (SeeState);
+			reactiontime = 0;
+			bNoGravity = false;
+			A_StopSound (CHAN_ITEM);
+			return;
+		}
+		A_PlaySound ("inquisitor/jump", CHAN_ITEM, 1, true);
+	}
+
+	void A_TossArm ()
+	{
+		Actor foo = Spawn("InquisitorArm", Pos + (0,0,24), ALLOW_REPLACE);
+		foo.angle = angle - 90. + Random2[Inquisitor]() * (360./1024.);
+		foo.VelFromAngle(foo.Speed / 8);
+		foo.Vel.Z = random[Inquisitor]() / 64.;
+	}
+
+	
 }
 
 // Inquisitor Shot ----------------------------------------------------------
@@ -110,8 +205,8 @@ class InquisitorShot : Actor
 		UBAM AB 3 A_Countdown;
 		Loop;
 	Death:
-		BNG2 A 0 Bright A_SetTranslucent(1,1);
-		BNG2 A 4 Bright A_Explode(192, 192, 1, 1);
+		BNG2 A 0 Bright A_SetRenderStyle(1, STYLE_Normal);
+		BNG2 A 4 Bright A_Explode(192, 192, alert:true);
 		BNG2 B 4 Bright;
 		BNG2 C 4 Bright;
 		BNG2 D 4 Bright;

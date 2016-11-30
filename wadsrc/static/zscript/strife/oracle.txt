@@ -19,8 +19,6 @@ class Oracle : Actor
 		DropItem "Meat";
 	}
 
-	native void A_WakeOracleSpectre ();
-
 	States
 	{
 	Spawn:
@@ -35,4 +33,19 @@ class Oracle : Actor
 		ORCL Q -1;
 		Stop;
 	}
+	
+	void A_WakeOracleSpectre ()
+	{
+		ThinkerIterator it = ThinkerIterator.Create("AlienSpectre3");
+		Actor spectre = Actor(it.Next());
+
+		if (spectre != NULL && spectre.health > 0 && self.target != spectre)
+		{
+			spectre.CurSector.SoundTarget = spectre.LastHeard = self.LastHeard;
+			spectre.target = self.target;
+			spectre.SetState (spectre.SeeState);
+		}
+	}
+
+	
 }

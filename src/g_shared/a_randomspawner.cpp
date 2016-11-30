@@ -13,8 +13,6 @@
 #include "s_sound.h"
 #include "statnums.h"
 #include "gstrings.h"
-#include "a_action.h"
-#include "vm.h"
 #include "v_text.h"
 #include "doomstat.h"
 #include "doomdata.h"
@@ -231,4 +229,4 @@ class ARandomSpawner : public AActor
 
 };
 
-IMPLEMENT_CLASS(ARandomSpawner, false, false, false, false)
+IMPLEMENT_CLASS(ARandomSpawner, false, false)

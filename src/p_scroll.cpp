@@ -44,7 +44,7 @@ public:
 	
 	DScroller (EScroll type, double dx, double dy, int control, int affectee, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
 	DScroller (double dx, double dy, const line_t *l, int control, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
-	void Destroy();
+	void Destroy() override;
 
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -73,7 +73,7 @@ private:
 	}
 };
 
-IMPLEMENT_CLASS(DScroller, false, true, false, false)
+IMPLEMENT_CLASS(DScroller, false, true)
 
 IMPLEMENT_POINTERS_START(DScroller)
 	IMPLEMENT_POINTER(m_Interpolations[0])

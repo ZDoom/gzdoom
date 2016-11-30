@@ -40,7 +40,7 @@
 #include "serializer.h"
 #include "r_data/r_interpolate.h"
 
-IMPLEMENT_CLASS(DPillar, false, true, false, false)
+IMPLEMENT_CLASS(DPillar, false, true)
 
 IMPLEMENT_POINTERS_START(DPillar)
 	IMPLEMENT_POINTER(m_Interp_Floor)

@@ -5,9 +5,9 @@
 #error You must #include "dobject.h" to get dobjtype.h
 #endif
 
-#include "vm.h"
-
 typedef std::pair<const class PType *, unsigned> FTypeAndOffset;
+
+#include "vm.h"
 
 // Variable/parameter/field flags -------------------------------------------
 
@@ -19,7 +19,7 @@ enum
 	VARF_Optional		= (1<<0),	// func param is optional
 	VARF_Method			= (1<<1),	// func has an implied self parameter
 	VARF_Action			= (1<<2),	// func has implied owner and state parameters
-	VARF_Native			= (1<<3),	// func is native code/don't auto serialize field
+	VARF_Native			= (1<<3),	// func is native code, field is natively defined
 	VARF_ReadOnly		= (1<<4),	// field is read only, do not write to it
 	VARF_Private		= (1<<5),	// field is private to containing class
 	VARF_Protected		= (1<<6),	// field is only accessible by containing class and children.
@@ -32,6 +32,8 @@ enum
 	VARF_Static			= (1<<13),	// static class data (by necessity read only.)
 	VARF_InternalAccess	= (1<<14),	// overrides VARF_ReadOnly for internal script code.
 	VARF_Override		= (1<<15),	// overrides a virtual function from the parent class.
+	VARF_Ref			= (1<<16),	// argument is passed by reference.
+	VARF_Transient		= (1<<17)  // don't auto serialize field.
 };
 
 // Symbol information -------------------------------------------------------
@@ -252,6 +254,7 @@ public:
 	// initialization when the object is created and destruction when the
 	// object is destroyed.
 	virtual void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special=NULL) const;
+	virtual void SetPointer(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL) const;
 
 	// Initialize the value, if needed (e.g. strings)
 	virtual void InitializeValue(void *addr, const void *def) const;
@@ -513,6 +516,26 @@ public:
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
 };
 
+class PSpriteID : public PInt
+{
+	DECLARE_CLASS(PSpriteID, PInt);
+public:
+	PSpriteID();
+
+	void WriteValue(FSerializer &ar, const char *key, const void *addr) const override;
+	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
+};
+
+class PTextureID : public PInt
+{
+	DECLARE_CLASS(PTextureID, PInt);
+public:
+	PTextureID();
+
+	void WriteValue(FSerializer &ar, const char *key, const void *addr) const override;
+	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
+};
+
 class PColor : public PInt
 {
 	DECLARE_CLASS(PColor, PInt);
@@ -529,16 +552,6 @@ public:
 
 // Pointers -----------------------------------------------------------------
 
-class PStatePointer : public PBasicType
-{
-	DECLARE_CLASS(PStatePointer, PBasicType);
-public:
-	PStatePointer();
-
-	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
-	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
-};
-
 class PPointer : public PBasicType
 {
 	DECLARE_CLASS(PPointer, PBasicType);
@@ -552,6 +565,7 @@ public:
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
+	void SetPointer(void *base, unsigned offset, TArray<size_t> *special = NULL) const override;
 
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
@@ -559,6 +573,17 @@ public:
 protected:
 	void SetOps();
 };
+
+class PStatePointer : public PPointer
+{
+	DECLARE_CLASS(PStatePointer, PPointer);
+public:
+	PStatePointer();
+
+	void WriteValue(FSerializer &ar, const char *key, const void *addr) const override;
+	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
+};
+
 
 class PClassPointer : public PPointer
 {
@@ -568,6 +593,9 @@ public:
 	PClassPointer(class PClass *restrict);
 
 	class PClass *ClassRestriction;
+
+	// this is only here to block PPointer's implementation
+	void SetPointer(void *base, unsigned offset, TArray<size_t> *special = NULL) const override {}
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
@@ -583,7 +611,7 @@ class PField : public PSymbol
 	DECLARE_CLASS(PField, PSymbol);
 	HAS_OBJECT_POINTERS
 public:
-	PField(FName name, PType *type, DWORD flags = 0, size_t offset = 0, int bitvalue = -1);
+	PField(FName name, PType *type, DWORD flags = 0, size_t offset = 0, int bitvalue = 0);
 
 	size_t Offset;
 	PType *Type;
@@ -626,20 +654,10 @@ public:
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
 
 	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) const override;
+	void SetPointer(void *base, unsigned offset, TArray<size_t> *special) const override;
 
 protected:
 	PArray();
-};
-
-// A vector is an array with extra operations.
-class PVector : public PArray
-{
-	DECLARE_CLASS(PVector, PArray);
-	HAS_OBJECT_POINTERS;
-public:
-	PVector(unsigned int size);
-protected:
-	PVector();
 };
 
 class PDynArray : public PCompoundType
@@ -683,18 +701,28 @@ public:
 	bool HasNativeFields;
 
 	virtual PField *AddField(FName name, PType *type, DWORD flags=0);
-	virtual PField *AddNativeField(FName name, PType *type, size_t address, DWORD flags = 0, int bitvalue = -1);
+	virtual PField *AddNativeField(FName name, PType *type, size_t address, DWORD flags = 0, int bitvalue = 0);
 
 	size_t PropagateMark();
 
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
 	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *specials) const override;
+	void SetPointer(void *base, unsigned offset, TArray<size_t> *specials) const override;
 
 	static void WriteFields(FSerializer &ar, const void *addr, const TArray<PField *> &fields);
 	bool ReadFields(FSerializer &ar, void *addr) const;
 protected:
 	PStruct();
+};
+
+// a native struct will always be abstract and cannot be instantiated. All variables are references.
+// In addition, native structs can have methods (but no virtual ones.)
+class PNativeStruct : public PStruct
+{
+	DECLARE_CLASS(PNativeStruct, PStruct);
+public:
+	PNativeStruct(FName name = NAME_None);
 };
 
 class PPrototype : public PCompoundType
@@ -724,13 +752,14 @@ public:
 		VMFunction *Implementation;
 		TArray<DWORD> ArgFlags;		// Should be the same length as Proto->ArgumentTypes
 		TArray<FName> ArgNames;		// we need the names to access them later when the function gets compiled.
-		DWORD Flags;
-		PClass *SelfClass;
+		uint32_t Flags;
+		int UseFlags;
+		PStruct *SelfClass;
 	};
 	TArray<Variant> Variants;
-	PClass *OwningClass = nullptr;
+	PStruct *OwningClass = nullptr;
 
-	unsigned AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags);
+	unsigned AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags, int useflags);
 	int GetImplicitArgs()
 	{
 		if (Variants[0].Flags & VARF_Action) return 3;
@@ -740,7 +769,7 @@ public:
 
 	size_t PropagateMark();
 
-	PFunction(PClass *owner = nullptr, FName name = NAME_None) : PSymbol(name), OwningClass(owner) {}
+	PFunction(PStruct *owner = nullptr, FName name = NAME_None) : PSymbol(name), OwningClass(owner) {}
 };
 
 // Meta-info for every class derived from DObject ---------------------------
@@ -751,9 +780,9 @@ enum
 };
 
 class PClassClass;
-class PClass : public PStruct
+class PClass : public PNativeStruct
 {
-	DECLARE_CLASS(PClass, PStruct);
+	DECLARE_CLASS(PClass, PNativeStruct);
 	HAS_OBJECT_POINTERS;
 protected:
 	// We unravel _WITH_META here just as we did for PType.
@@ -780,7 +809,6 @@ public:
 
 	// Per-class information -------------------------------------
 	PClass				*ParentClass;	// the class this class derives from
-	PClass				*VMExported;	// this is here to allow script classes to override native virtual functions
 	const size_t		*Pointers;		// object pointers defined by this class *only*
 	const size_t		*FlatPointers;	// object pointers defined by this class and all its superclasses; not initialized by default
 	BYTE				*Defaults;
@@ -831,6 +859,7 @@ public:
 	static PClassActor *FindActor(const FString &name)	{ return FindActor(FName(name, true)); }
 	static PClassActor *FindActor(ENamedName name)		{ return FindActor(FName(name)); }
 	static PClassActor *FindActor(FName name);
+	static VMFunction *FindFunction(FName cls, FName func);
 	PClass *FindClassTentative(FName name);
 
 	static TArray<PClass *> AllClasses;
@@ -888,7 +917,6 @@ struct FTypeTable
 extern FTypeTable TypeTable;
 
 // Returns a type from the TypeTable. Will create one if it isn't present.
-PVector *NewVector(unsigned int size);
 PMap *NewMap(PType *keytype, PType *valuetype);
 PArray *NewArray(PType *type, unsigned int count);
 PDynArray *NewDynArray(PType *type);
@@ -896,6 +924,7 @@ PPointer *NewPointer(PType *type, bool isconst = false);
 PClassPointer *NewClassPointer(PClass *restrict);
 PEnum *NewEnum(FName name, PTypeBase *outer);
 PStruct *NewStruct(FName name, PTypeBase *outer);
+PNativeStruct *NewNativeStruct(FName name, PTypeBase *outer);
 PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> &argtypes);
 
 // Built-in types -----------------------------------------------------------
@@ -911,8 +940,12 @@ extern PString *TypeString;
 extern PName *TypeName;
 extern PSound *TypeSound;
 extern PColor *TypeColor;
+extern PTextureID *TypeTextureID;
+extern PSpriteID *TypeSpriteID;
 extern PStruct *TypeVector2;
 extern PStruct *TypeVector3;
+extern PStruct *TypeColorStruct;
+extern PStruct *TypeStringStruct;
 extern PStatePointer *TypeState;
 extern PStateLabel *TypeStateLabel;
 extern PPointer *TypeNullPtr;

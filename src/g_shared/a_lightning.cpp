@@ -13,7 +13,7 @@
 
 static FRandom pr_lightning ("Lightning");
 
-IMPLEMENT_CLASS(DLightningThinker, false, false, false, false)
+IMPLEMENT_CLASS(DLightningThinker, false, false)
 
 DLightningThinker::DLightningThinker ()
 	: DThinker (STAT_LIGHTNING)

@@ -1,8 +1,6 @@
 #include "actor.h"
-#include "vm.h"
 #include "p_conversation.h"
 #include "p_lnspec.h"
-#include "a_action.h"
 #include "m_random.h"
 #include "s_sound.h"
 #include "d_player.h"
@@ -18,39 +16,6 @@ static FRandom pr_freezedeath ("FreezeDeath");
 static FRandom pr_icesettics ("IceSetTics");
 static FRandom pr_freeze ("FreezeDeathChunks");
 
-
-// SwitchableDecoration: Activate and Deactivate change state ---------------
-
-class ASwitchableDecoration : public AActor
-{
-	DECLARE_CLASS (ASwitchableDecoration, AActor)
-public:
-	void Activate (AActor *activator);
-	void Deactivate (AActor *activator);
-};
-
-IMPLEMENT_CLASS(ASwitchableDecoration, false, false, false, false)
-
-void ASwitchableDecoration::Activate (AActor *activator)
-{
-	SetState (FindState(NAME_Active));
-}
-
-void ASwitchableDecoration::Deactivate (AActor *activator)
-{
-	SetState (FindState(NAME_Inactive));
-}
-
-// SwitchingDecoration: Only Activate changes state -------------------------
-
-class ASwitchingDecoration : public ASwitchableDecoration
-{
-	DECLARE_CLASS (ASwitchingDecoration, ASwitchableDecoration)
-public:
-	void Deactivate (AActor *activator) {}
-};
-
-IMPLEMENT_CLASS(ASwitchingDecoration, false, false, false, false)
 
 //----------------------------------------------------------------------------
 //
@@ -156,35 +121,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeath)
 	return 0;
 }
 
-//==========================================================================
-//
-// A_GenericFreezeDeath
-//
-//==========================================================================
-
-DEFINE_ACTION_FUNCTION(AActor, A_GenericFreezeDeath)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-
-	self->Translation = TRANSLATION(TRANSLATION_Standard, 7);
-	CALL_ACTION(A_FreezeDeath, self);
-	return 0;
-}
-
 //============================================================================
 //
 // A_IceSetTics
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_IceSetTics)
+void IceSetTics(AActor *self)
 {
-	PARAM_SELF_PROLOGUE(AActor);
 
 	int floor;
 
-	self->tics = 70+(pr_icesettics()&63);
-	floor = P_GetThingFloorType (self);
+	self->tics = 70 + (pr_icesettics() & 63);
+	floor = P_GetThingFloorType(self);
 	if (Terrains[floor].DamageMOD == NAME_Fire)
 	{
 		self->tics >>= 2;
@@ -193,6 +142,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceSetTics)
 	{
 		self->tics <<= 1;
 	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, A_IceSetTics)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	IceSetTics(self);
 	return 0;
 }
 
@@ -238,7 +193,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 			mo->Vel.X = pr_freeze.Random2() / 128.;
 			mo->Vel.Y = pr_freeze.Random2() / 128.;
 			mo->Vel.Z = (mo->Z() - self->Z()) / self->Height * 4;
-			CALL_ACTION(A_IceSetTics, mo); // set a random tic wait
+			IceSetTics(mo); // set a random tic wait
 			mo->RenderStyle = self->RenderStyle;
 			mo->Alpha = self->Alpha;
 		}
@@ -296,7 +251,7 @@ class DCorpsePointer : public DThinker
 	HAS_OBJECT_POINTERS
 public:
 	DCorpsePointer (AActor *ptr);
-	void Destroy ();
+	void Destroy() override;
 	void Serialize(FSerializer &arc);
 	TObjPtr<AActor> Corpse;
 	DWORD Count;	// Only the first corpse pointer's count is valid.
@@ -304,7 +259,7 @@ private:
 	DCorpsePointer () {}
 };
 
-IMPLEMENT_CLASS(DCorpsePointer, false, true, false, false)
+IMPLEMENT_CLASS(DCorpsePointer, false, true)
 
 IMPLEMENT_POINTERS_START(DCorpsePointer)
 	IMPLEMENT_POINTER(Corpse)
@@ -413,46 +368,3 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeQueueCorpse)
 	return 0;
 }
 
-//===========================================================================
-//
-// FaceMovementDirection
-//
-//===========================================================================
-
-void FaceMovementDirection(AActor *actor)
-{
-	switch (actor->movedir)
-	{
-	case DI_EAST:
-		actor->Angles.Yaw = 0.;
-		break;
-	case DI_NORTHEAST:
-		actor->Angles.Yaw = 45.;
-		break;
-	case DI_NORTH:
-		actor->Angles.Yaw = 90.;
-		break;
-	case DI_NORTHWEST:
-		actor->Angles.Yaw = 135.;
-		break;
-	case DI_WEST:
-		actor->Angles.Yaw = 180.;
-		break;
-	case DI_SOUTHWEST:
-		actor->Angles.Yaw = 225.;
-		break;
-	case DI_SOUTH:
-		actor->Angles.Yaw = 270.;
-		break;
-	case DI_SOUTHEAST:
-		actor->Angles.Yaw = 315.;
-		break;
-	}
-}
-
-DEFINE_ACTION_FUNCTION(AActor, FaceMovementDirection)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	FaceMovementDirection(self);
-	return 0;
-}

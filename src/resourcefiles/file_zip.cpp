@@ -585,7 +585,7 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 		dirend.DiskNumber = 0;
 		dirend.FirstDisk = 0;
 		dirend.NumEntriesOnAllDisks = dirend.NumEntries = LittleShort(filenames.Size());
-		dirend.DirectoryOffset = dirofs;
+		dirend.DirectoryOffset = LittleLong(dirofs);
 		dirend.DirectorySize = LittleLong(ftell(f) - dirofs);
 		dirend.ZipCommentLength = 0;
 		if (fwrite(&dirend, sizeof(dirend), 1, f) != 1)

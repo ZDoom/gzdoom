@@ -18,8 +18,6 @@ class ClericBoss : Actor
 		Obituary "$OBCBOSS";
 	}
 
-	native void A_ClericAttack();
-
 	States
 	{
 	Spawn:
@@ -78,5 +76,20 @@ class ClericBoss : Actor
 		FDTH U 5 Bright ;
 		FDTH V 4 Bright ;
 		Stop;
+	}
+		
+	//============================================================================
+	//
+	// A_ClericAttack
+	//
+	//============================================================================
+
+	void A_ClericAttack()
+	{
+		if (!target) return;
+
+		Actor missile = SpawnMissileZ (pos.z + 40., target, "HolyMissile");
+		if (missile != null) missile.tracer = null;	// No initial target
+		A_PlaySound ("HolySymbolFire", CHAN_WEAPON);
 	}
 }

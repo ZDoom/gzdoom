@@ -1,3 +1,12 @@
+// Notes so I don't forget them:
+//
+// When shooting missiles at something, if MF_SHADOW is set, the angle is adjusted with the formula:
+//		angle += pr_spawnmissile.Random2() << 21
+// When MF_STRIFEx4000000 is set, the angle is adjusted similarly:
+//		angle += pr_spawnmissile.Random2() << 22
+// Note that these numbers are different from those used by all the other Doom engine games.
+
+
 // Tank 1 Huge ------------------------------------------------------------
 
 class Tank1 : Actor
@@ -192,7 +201,7 @@ class ExplosiveBarrel2 : Actor
 		BART B 2 Bright A_Scream;
 		BART CD 2 Bright;
 		BART E 2 Bright A_NoBlocking;
-		BART F 2 Bright A_Explode(64, 64, 1, 1);
+		BART F 2 Bright A_Explode(64, 64, alert:true);
 		BART GHIJ 2 Bright;
 		BART K 3 Bright;
 		BART L -1;
@@ -1726,7 +1735,7 @@ class TargetPractice : Actor
 
 // Force Field Guard --------------------------------------------------------
 
-class ForceFieldGuard : Actor native
+class ForceFieldGuard : Actor
 {
 	Default
 	{
@@ -1748,6 +1757,16 @@ class ForceFieldGuard : Actor native
 		TNT1 A 1 A_RemoveForceField;
 		Stop;
 	}
+	
+	override int TakeSpecialDamage (Actor inflictor, Actor source, int damage, Name damagetype)
+	{
+		if (inflictor == NULL || !(inflictor is "DegninOre"))
+		{
+			return -1;
+		}
+		return health;
+	}
+	
 }
 
 // Kneeling Guy -------------------------------------------------------------
@@ -1796,84 +1815,11 @@ class KneelingGuy : Actor
 		NEAL J -1;
 		Stop;
 	}
-
-
 }
-
-// Klaxon Warning Light -----------------------------------------------------
-
-class KlaxonWarningLight : Actor
-{
-	Default
-	{
-		ReactionTime 60;
-		Radius 5;
-		+NOBLOCKMAP +AMBUSH
-		+SPAWNCEILING +NOGRAVITY
-		+FIXMAPTHINGPOS +NOSPLASHALERT
-		+SYNCHRONIZED
-	}
-	States
-	{
-	Spawn:
-		KLAX A 5 A_TurretLook;
-		Loop;
-	See:
-		KLAX B 6 A_KlaxonBlare;
-		KLAX C 60;
-		Loop;
-	}
-
-}
-
-// CeilingTurret ------------------------------------------------------------
-
-class CeilingTurret : Actor
-{
-	Default
-	{
-		Health 125;
-		Speed 0;
-		Painchance 0;
-		Mass 10000000;
-		Monster;
-		-SOLID
-		-CANPASS
-		+AMBUSH
-		+SPAWNCEILING
-		+NOGRAVITY
-		+NOBLOOD
-		+NOSPLASHALERT
-		+DONTFALL
-		MinMissileChance 150;
-		DeathSound "turret/death";
-	}
-	States
-	{
-	Spawn:
-		TURT A 5 A_TurretLook;
-		Loop;
-	See:
-		TURT A 2 A_Chase;
-		Loop;
-	Missile:
-	Pain:
-		TURT B 4 Slow A_ShootGun;
-		TURT D 3 Slow A_SentinelRefire;
-		TURT A 4 A_SentinelRefire;
-		Loop;
-	Death:
-		BALL A 6 Bright A_Scream;
-		BALL BCDE 6 Bright;
-		TURT C -1;
-		Stop;
-	}
-}
-
 
 // Power Coupling -----------------------------------------------------------
 
-class PowerCoupling : Actor native
+class PowerCoupling : Actor
 {
 	Default
 	{
@@ -1894,11 +1840,39 @@ class PowerCoupling : Actor native
 		COUP AB 5;
 		Loop;
 	}
+	
+	override void Die (Actor source, Actor inflictor, int dmgflags)
+	{
+		Super.Die (source, inflictor, dmgflags);
+
+		int i;
+
+		for (i = 0; i < MAXPLAYERS; ++i)
+			if (playeringame[i] && players[i].health > 0)
+				break;
+
+		if (i == MAXPLAYERS)
+			return;
+
+		// [RH] In case the player broke it with the dagger, alert the guards now.
+		if (LastHeard != source)
+		{
+			NoiseAlert (source);
+		}
+		Door_Close(225, 16);
+		Floor_LowerToHighestEE(44, 8);
+		players[i].mo.GiveInventoryType ("QuestItem6");
+		S_Sound ("svox/voc13", CHAN_VOICE);
+		players[i].SetLogNumber (13);
+		DoDropItem ("BrokenPowerCoupling", -1, 256);
+		Destroy ();
+	}
+	
 }
 
 // Gibs for things that bleed -----------------------------------------------
 
-class Meat : Actor native
+class Meat : Actor
 {
 	Default
 	{
@@ -1948,6 +1922,13 @@ class Meat : Actor native
 		MEAT T 700;
 		Stop;
 	}
+	
+	override void BeginPlay ()
+	{
+		// Strife used mod 19, but there are 20 states. Hmm.
+		SetState (SpawnState + random[GibTosser]() % 20);
+	}
+	
 }
 
 // Gibs for things that don't bleed -----------------------------------------

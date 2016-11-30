@@ -101,6 +101,9 @@ enum EZCCTreeNodeType
 	AST_FlagStmt,
 	AST_PropertyStmt,
 	AST_VectorValue,
+	AST_DeclFlags,
+	AST_ClassCast,
+	AST_StaticArrayStatement,
 
 	NUM_AST_NODE_TYPES
 };
@@ -110,13 +113,12 @@ enum EZCCBuiltinType
 	ZCC_SInt8,
 	ZCC_UInt8,
 	ZCC_SInt16,
-	ZCC_UInt16,
+	ZCC_UInt16,		// smaller than 32 bit types are only valid in structs, classes and arrays.
 	ZCC_SInt32,
 	ZCC_UInt32,
 	ZCC_IntAuto,	// for enums, autoselect appropriately sized int
 
 	ZCC_Bool,
-	ZCC_Float32,
 	ZCC_Float64,
 	ZCC_FloatAuto,	// 32-bit in structs/classes, 64-bit everywhere else
 	ZCC_String,
@@ -159,35 +161,14 @@ struct ZCC_TreeNode
 	// one of the structures below.
 	EZCCTreeNodeType NodeType;
 
-	// Appends a sibling to this node's sibling list.
-	void AppendSibling(ZCC_TreeNode *sibling)
-	{
-		if (sibling == NULL)
-		{
-			return;
-		}
-
-		// Check integrity of our sibling list.
-		assert(SiblingPrev->SiblingNext == this);
-		assert(SiblingNext->SiblingPrev == this);
-
-		// Check integrity of new sibling list.
-		assert(sibling->SiblingPrev->SiblingNext == sibling);
-		assert(sibling->SiblingNext->SiblingPrev == sibling);
-
-		ZCC_TreeNode *siblingend = sibling->SiblingPrev;
-		SiblingPrev->SiblingNext = sibling;
-		sibling->SiblingPrev = SiblingPrev;
-		SiblingPrev = siblingend;
-		siblingend->SiblingNext = this;
-	}
-
 	operator FScriptPosition()
 	{
 		return FScriptPosition(*SourceName, SourceLoc);
 	}
 
 };
+
+void AppendTreeNodeSibling(ZCC_TreeNode *thisnode, ZCC_TreeNode *sibling);
 
 struct ZCC_Identifier : ZCC_TreeNode
 {
@@ -200,19 +181,19 @@ struct ZCC_NamedNode : ZCC_TreeNode
 	PSymbolType *Symbol;
 };
 
-struct ZCC_Class : ZCC_NamedNode
+struct ZCC_Struct : ZCC_NamedNode
+{
+	VM_UWORD Flags;
+	ZCC_TreeNode *Body;
+	PStruct *Type;
+};
+
+struct ZCC_Class : ZCC_Struct
 {
 	ZCC_Identifier *ParentName;
 	ZCC_Identifier *Replaces;
-	VM_UWORD Flags;
-	ZCC_TreeNode *Body;
-	PClass *Type;
-};
 
-struct ZCC_Struct : ZCC_NamedNode
-{
-	ZCC_TreeNode *Body;
-	PStruct *Type;
+	PClass *CType() { return static_cast<PClass *>(Type); }
 };
 
 struct ZCC_Enum : ZCC_NamedNode
@@ -365,6 +346,12 @@ struct ZCC_ExprFuncCall : ZCC_Expression
 	ZCC_FuncParm *Parameters;
 };
 
+struct ZCC_ClassCast : ZCC_Expression
+{
+	ENamedName ClassName;
+	ZCC_FuncParm *Parameters;
+};
+
 struct ZCC_ExprMemberAccess : ZCC_Expression
 {
 	ZCC_Expression *Left;
@@ -396,6 +383,13 @@ struct ZCC_VectorValue : ZCC_Expression
 
 struct ZCC_Statement : ZCC_TreeNode
 {
+};
+
+struct ZCC_StaticArrayStatement : ZCC_Statement
+{
+	ZCC_Type *Type;
+	ENamedName Id;
+	ZCC_Expression *Values;
 };
 
 struct ZCC_CompoundStmt : ZCC_Statement
@@ -473,6 +467,12 @@ struct ZCC_FuncParamDecl : ZCC_TreeNode
 	int Flags;
 };
 
+struct ZCC_DeclFlags : ZCC_TreeNode
+{
+	ZCC_Identifier *Id;
+	int Flags;
+};
+
 struct ZCC_ConstantDef : ZCC_NamedNode
 {
 	ZCC_Expression *Value;
@@ -498,6 +498,7 @@ struct ZCC_FuncDeclarator : ZCC_Declarator
 	ZCC_FuncParamDecl *Params;
 	ENamedName Name;
 	ZCC_Statement *Body;
+	ZCC_Identifier *UseFlags;
 };
 
 struct ZCC_Default : ZCC_CompoundStmt

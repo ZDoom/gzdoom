@@ -105,7 +105,7 @@ class DSeqActorNode : public DSeqNode
 	HAS_OBJECT_POINTERS
 public:
 	DSeqActorNode(AActor *actor, int sequence, int modenum);
-	void Destroy();
+	void Destroy() override;
 	void Serialize(FSerializer &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
@@ -133,7 +133,7 @@ class DSeqPolyNode : public DSeqNode
 	DECLARE_CLASS(DSeqPolyNode, DSeqNode)
 public:
 	DSeqPolyNode(FPolyObj *poly, int sequence, int modenum);
-	void Destroy();
+	void Destroy() override;
 	void Serialize(FSerializer &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
@@ -161,7 +161,7 @@ class DSeqSectorNode : public DSeqNode
 	DECLARE_CLASS(DSeqSectorNode, DSeqNode)
 public:
 	DSeqSectorNode(sector_t *sec, int chan, int sequence, int modenum);
-	void Destroy();
+	void Destroy() override;
 	void Serialize(FSerializer &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
@@ -285,7 +285,7 @@ void DSeqNode::SerializeSequences (FSerializer &arc)
 	arc("sndseqlisthead", SequenceListHead);
 }
 
-IMPLEMENT_CLASS(DSeqNode, false, true, false, false)
+IMPLEMENT_CLASS(DSeqNode, false, true)
 
 IMPLEMENT_POINTERS_START(DSeqNode)
 	IMPLEMENT_POINTER(m_ChildSeqNode)
@@ -429,7 +429,7 @@ FName DSeqNode::GetSequenceName () const
 	return Sequences[m_Sequence]->SeqName;
 }
 
-IMPLEMENT_CLASS(DSeqActorNode, false, true, false, false)
+IMPLEMENT_CLASS(DSeqActorNode, false, true)
 
 IMPLEMENT_POINTERS_START(DSeqActorNode)
 	IMPLEMENT_POINTER(m_Actor)
@@ -441,7 +441,7 @@ void DSeqActorNode::Serialize(FSerializer &arc)
 	arc("actor", m_Actor);
 }
 
-IMPLEMENT_CLASS(DSeqPolyNode, false, false, false, false)
+IMPLEMENT_CLASS(DSeqPolyNode, false, false)
 
 void DSeqPolyNode::Serialize(FSerializer &arc)
 {
@@ -449,7 +449,7 @@ void DSeqPolyNode::Serialize(FSerializer &arc)
 	arc("poly", m_Poly);
 }
 
-IMPLEMENT_CLASS(DSeqSectorNode, false, false, false, false)
+IMPLEMENT_CLASS(DSeqSectorNode, false, false)
 
 void DSeqSectorNode::Serialize(FSerializer &arc)
 {

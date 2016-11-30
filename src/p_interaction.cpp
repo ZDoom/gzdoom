@@ -58,6 +58,8 @@
 #include "d_net.h"
 #include "d_netinf.h"
 #include "a_morph.h"
+#include "virtual.h"
+#include "a_health.h"
 
 static FRandom pr_obituary ("Obituary");
 static FRandom pr_botrespawn ("BotRespawn");
@@ -104,8 +106,7 @@ void P_TouchSpecialThing (AActor *special, AActor *toucher)
 		toucher->player->Bot->prev = toucher->player->Bot->dest;
 		toucher->player->Bot->dest = NULL;
 	}
-
-	special->Touch (toucher);
+	special->CallTouch (toucher);
 }
 
 
@@ -342,7 +343,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 					realthis->health = realgibhealth -1; // if morphed was gibbed, so must original be (where allowed)l
 				}
 			}
-			realthis->Die(source, inflictor, dmgflags);
+			realthis->CallDie(source, inflictor, dmgflags);
 		}
 		return;
 	}
@@ -761,7 +762,25 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Die)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(source, AActor);
+	PARAM_OBJECT(inflictor, AActor);
+	PARAM_INT_DEF(dmgflags);
+	self->Die(source, inflictor, dmgflags);
+	return 0;
+}
 
+void AActor::CallDie(AActor *source, AActor *inflictor, int dmgflags)
+{
+	IFVIRTUAL(AActor, Die)
+	{
+		VMValue params[4] = { (DObject*)this, source, inflictor, dmgflags };
+		GlobalVMStack.Call(func, params, 4, nullptr, 0, nullptr);
+	}
+	else return Die(source, inflictor, dmgflags);
+}
 
 
 //---------------------------------------------------------------------------
@@ -1071,7 +1090,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 					}
 				}
 
-				damage = inflictor->DoSpecialDamage(target, damage, mod);
+				damage = inflictor->CallDoSpecialDamage(target, damage, mod);
 				if (damage < 0)
 				{
 					return -1;
@@ -1085,15 +1104,15 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				damage = int(damage * source->DamageMultiply);
 
 				// Handle active damage modifiers (e.g. PowerDamage)
-				if (damage > 0 && source->Inventory != NULL)
+				if (damage > 0)
 				{
-					source->Inventory->ModifyDamage(damage, mod, damage, false);
+					damage = source->GetModifiedDamage(mod, damage, false);
 				}
 			}
 			// Handle passive damage modifiers (e.g. PowerProtection), provided they are not afflicted with protection penetrating powers.
-			if (damage > 0 && (target->Inventory != NULL) && !(flags & DMG_NO_PROTECT))
+			if (damage > 0 && !(flags & DMG_NO_PROTECT))
 			{
-				target->Inventory->ModifyDamage(damage, mod, damage, true);
+				damage = target->GetModifiedDamage(mod, damage, true);
 			}
 			if (damage > 0 && !(flags & DMG_NO_FACTOR))
 			{
@@ -1102,7 +1121,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 
 			if (damage >= 0)
 			{
-				damage = target->TakeSpecialDamage(inflictor, source, damage, mod);
+				damage = target->CallTakeSpecialDamage(inflictor, source, damage, mod);
 			}
 
 			// '<0' is handled below. This only handles the case where damage gets reduced to 0.
@@ -1443,7 +1462,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 					source = source->tracer;
 				}
 			}
-			target->Die (source, inflictor, flags);
+			target->CallDie (source, inflictor, flags);
 			return damage;
 		}
 	}
@@ -1617,6 +1636,20 @@ void P_PoisonMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 
 }
 
+DEFINE_ACTION_FUNCTION(AActor, PoisonMobj)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(inflictor, AActor);
+	PARAM_OBJECT(source, AActor);
+	PARAM_INT(damage);
+	PARAM_INT(duration);
+	PARAM_INT(period);
+	PARAM_NAME(mod);
+	P_PoisonMobj(self, inflictor, source, damage, duration, period, mod);
+	return 0;
+}
+
+
 bool AActor::OkayToSwitchTarget (AActor *other)
 {
 	if (other == this)
@@ -1714,14 +1747,22 @@ bool P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poi
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, PoisonPlayer)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_OBJECT(poisoner, AActor);
+	PARAM_OBJECT(source, AActor);
+	PARAM_INT(poison);
+	ACTION_RETURN_BOOL(P_PoisonPlayer(self, poisoner, source, poison));
+}
+
 //==========================================================================
 //
 // P_PoisonDamage - Similar to P_DamageMobj
 //
 //==========================================================================
 
-void P_PoisonDamage (player_t *player, AActor *source, int damage,
-	bool playPainSound)
+void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPainSound)
 {
 	AActor *target;
 
@@ -1742,10 +1783,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 	// Take half damage in trainer mode
 	damage = int(damage * G_SkillProperty(SKILLP_DamageFactor));
 	// Handle passive damage modifiers (e.g. PowerProtection)
-	if (target->Inventory != NULL)
-	{
-		target->Inventory->ModifyDamage(damage, player->poisontype, damage, true);
-	}
+	damage = target->GetModifiedDamage(player->poisontype, damage, true);
 	// Modify with damage factors
 	damage = target->ApplyDamageFactor(player->poisontype, damage);
 
@@ -1794,7 +1832,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 					target->DamageType = player->poisontype;
 				}
 			}
-			target->Die(source, source);
+			target->CallDie(source, source);
 			return;
 		}
 	}
@@ -1816,6 +1854,15 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 */
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, PoisonDamage)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_OBJECT(source, AActor);
+	PARAM_INT(damage);
+	PARAM_BOOL(playsound);
+	P_PoisonDamage(self, source, damage, playsound);
+	return 0;
+}
 
 CCMD (kill)
 {

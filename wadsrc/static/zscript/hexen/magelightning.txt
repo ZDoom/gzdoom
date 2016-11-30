@@ -16,9 +16,6 @@ class MWeapLightning : MageWeapon
 		Tag "$TAG_MWEAPLIGHTNING";
 	}
 
-	action native void A_LightningReady();
-	action native void A_MLightningAttack(class<Actor> floor = "LightningFloor", class<Actor> ceiling = "LightningCeiling");
-
 	States
 	{
 	Spawn:
@@ -50,11 +47,62 @@ class MWeapLightning : MageWeapon
 		MLNG B 2 Bright Offset (0, 40);
 		Goto Ready;
 	}
+	
+	//============================================================================
+	//
+	// A_LightningReady
+	//
+	//============================================================================
+
+	action void A_LightningReady()
+	{
+		A_WeaponReady();
+		if (random[LightningReady]() < 160)
+		{
+			A_PlaySound ("MageLightningReady", CHAN_WEAPON);
+		}
+	}
+
+	//============================================================================
+	//
+	// A_MLightningAttack
+	//
+	//============================================================================
+
+	action void A_MLightningAttack(class<Actor> floor = "LightningFloor", class<Actor> ceiling = "LightningCeiling")
+	{
+		LightningFloor fmo = LightningFloor(SpawnPlayerMissile (floor));
+		LightningCeiling cmo = LightningCeiling(SpawnPlayerMissile (ceiling));
+		if (fmo)
+		{
+			fmo.special1 = 0;
+			fmo.lastenemy = cmo;
+			fmo.A_LightningZap();
+		}
+		if (cmo)
+		{
+			cmo.tracer = NULL;
+			cmo.lastenemy = fmo;
+			cmo.A_LightningZap();
+		}
+		A_PlaySound ("MageLightningFire", CHAN_BODY);
+
+		if (player != NULL)
+		{
+			Weapon weapon = player.ReadyWeapon;
+			if (weapon != NULL)
+			{
+				weapon.DepleteAmmo (weapon.bAltFire);
+			}
+		}
+	}
+
+	
 }
 
 // Ceiling Lightning --------------------------------------------------------
 
-class Lightning : Actor native
+class Lightning : Actor
 {
 	Default
 	{
@@ -63,10 +111,51 @@ class Lightning : Actor native
 		ActiveSound "MageLightningContinuous";
 		Obituary "$OB_MPMWEAPLIGHTNING";
 	}
+	
+	override int SpecialMissileHit (Actor thing)
+	{
+		if (thing.bShootable && thing != target)
+		{
+			if (thing.Mass < LARGE_MASS)
+			{
+				thing.Vel.X += Vel.X / 16;
+				thing.Vel.Y += Vel.Y / 16;
+			}
+			if ((!thing.player && !thing.bBoss) || !(level.time&1))
+			{
+				thing.DamageMobj(self, target, 3, 'Electric');
+				A_PlaySound(AttackSound, CHAN_WEAPON, 1, true);
+				if (thing.bIsMonster && random[LightningHit]() < 64)
+				{
+					thing.Howl ();
+				}
+			}
+			health--;
+			if (health <= 0 || thing.health <= 0)
+			{
+				return 0;
+			}
+			if (bFloorHugger)
+			{
+				if (lastenemy && ! lastenemy.tracer)
+				{
+					lastenemy.tracer = thing;
+				}
+			}
+			else if (!tracer)
+			{
+				tracer = thing;
+			}
+		}
+		return 1; // lightning zaps through all sprites
+	}
+	
 }
 
 class LightningCeiling : Lightning
 {
+	const ZAGSPEED = 1;
+
 	Default
 	{
 		Health 144;
@@ -78,10 +167,6 @@ class LightningCeiling : Lightning
 		+CEILINGHUGGER
 		RenderStyle "Add";
 	}
-
-	native void A_LightningZap();
-	native void A_LightningClip();
-	native void A_LightningRemove();
 
 	States
 	{
@@ -104,6 +189,126 @@ class LightningCeiling : Lightning
 		ACLO E 1050;
 		Stop;
 	}
+	
+	//============================================================================
+	//
+	// A_LightningClip
+	//
+	//============================================================================
+
+	void A_LightningClip()
+	{
+		Actor cMo;
+		Actor target = NULL;
+		int zigZag;
+
+		if (bFloorHugger)
+		{
+			if (lastenemy == NULL)
+			{
+				return;
+			}
+			SetZ(floorz);
+			target = lastenemy.tracer;
+		}
+		else if (bCeilingHugger)
+		{
+			SetZ(ceilingz - Height);
+			target = tracer;
+		}
+		if (bFloorHugger)
+		{ // floor lightning zig-zags, and forces the ceiling lightning to mimic
+			cMo = lastenemy;
+			zigZag = random[LightningClip]();
+			if((zigZag > 128 && special1 < 2) || special1 < -2)
+			{
+				Thrust(ZAGSPEED, angle + 90);
+				if(cMo)
+				{
+					cMo.Thrust(ZAGSPEED, angle + 90);
+				}
+				special1++;
+			}
+			else
+			{
+				Thrust(ZAGSPEED,angle - 90);
+				if(cMo)
+				{
+					cMo.Thrust(ZAGSPEED, angle - 90);
+				}
+				special1--;
+			}
+		}
+		if(target)
+		{
+			if(target.health <= 0)
+			{
+				ExplodeMissile();
+			}
+			else
+			{
+				angle = AngleTo(target);
+				VelFromAngle(Speed / 2);
+			}
+		}
+	}
+
+
+	//============================================================================
+	//
+	// A_LightningZap
+	//
+	//============================================================================
+
+	void A_LightningZap()
+	{
+		Class<Actor> lightning = MissileName;
+		if (lightning == NULL) lightning = "LightningZap";
+
+		A_LightningClip();
+
+		health -= 8;
+		if (health <= 0)
+		{
+			SetStateLabel ("Death");
+			return;
+		}
+		double deltaX = (random[LightningZap]() - 128) * radius / 256;
+		double deltaY = (random[LightningZap]() - 128) * radius / 256;
+		double deltaZ = (bFloorHugger) ? 10 : -10;
+
+		Actor mo = Spawn(lightning, Vec3Offset(deltaX, deltaY, deltaZ), ALLOW_REPLACE);
+		if (mo)
+		{
+			mo.lastenemy = self;
+			mo.Vel.X = Vel.X;
+			mo.Vel.Y = Vel.Y;
+			mo.Vel.Z = (bFloorHugger) ? 20 : -20;
+			mo.target = target;
+		}
+		if (bFloorHugger && random[LightningZap]() < 160)
+		{
+			A_PlaySound (ActiveSound, CHAN_BODY);
+		}
+	}
+
+	//============================================================================
+	//
+	// A_LightningRemove
+	//
+	//============================================================================
+
+	void A_LightningRemove()
+	{
+		Actor mo = lastenemy;
+		if (mo)
+		{
+			bNoTarget = true;	// tell A_ZapMimic that we are dead. The original code did a state pointer compare which is not safe.
+			mo.lastenemy = NULL;
+			mo.ExplodeMissile ();
+		}
+	}
+	
 }
 
 // Floor Lightning ----------------------------------------------------------
@@ -116,8 +321,6 @@ class LightningFloor : LightningCeiling
 		+FLOORHUGGER
 		RenderStyle "Add";
 	}
-
-	native void A_LastZap();
 
 	States
 	{
@@ -137,11 +340,31 @@ class LightningFloor : LightningCeiling
 		MLF2 P 1 Bright A_HideThing;
 		Goto Super::Death + 19;
 	}
+	
+	//============================================================================
+	//
+	// A_LastZap
+	//
+	//============================================================================
+
+	void A_LastZap()
+	{
+		Class<Actor> lightning = MissileName;
+		if (lightning == NULL) lightning = "LightningZap";
+		
+		Actor mo = Spawn(lightning, self.Pos, ALLOW_REPLACE);
+		if (mo)
+		{
+			mo.SetStateLabel ("Death");
+			mo.Vel.Z = 40;
+			mo.SetDamage(0);
+		}
+	}
 }
 
 // Lightning Zap ------------------------------------------------------------
 
-class LightningZap : Actor native
+class LightningZap : Actor
 {
 	Default
 	{
@@ -155,8 +378,6 @@ class LightningZap : Actor native
 		Obituary "$OB_MPMWEAPLIGHTNING";
 	}
 
-	native void A_ZapMimic();
-
 	States
 	{
 	Spawn:
@@ -166,4 +387,58 @@ class LightningZap : Actor native
 		MLFX NOPQRSTU 2 Bright;
 		Stop;
 	}
+	
+	override int SpecialMissileHit (Actor thing)
+	{
+		Actor lmo;
+
+		if (thing.bShootable && thing != target)
+		{			
+			lmo = lastenemy;
+			if (lmo)
+			{
+				if (lmo.bFloorHugger)
+				{
+					if (lmo.lastenemy && !lmo.lastenemy.tracer)
+					{
+						lmo.lastenemy.tracer = thing;
+					}
+				}
+				else if (!lmo.tracer)
+				{
+					lmo.tracer = thing;
+				}
+				if (!(level.time&3))
+				{
+					lmo.health--;
+				}
+			}
+		}
+		return -1;
+	}
+	
+	//============================================================================
+	//
+	// A_ZapMimic
+	//
+	//============================================================================
+
+	void A_ZapMimic()
+	{
+		Actor mo = lastenemy;
+		if (mo)
+		{
+			if (mo.bNoTarget)
+			{
+				ExplodeMissile ();
+			}
+			else
+			{
+				Vel.X = mo.Vel.X;
+				Vel.Y = mo.Vel.Y;
+			}
+		}
+	}
+
+	
 }

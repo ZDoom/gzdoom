@@ -1,8 +1,10 @@
 
 // The Fighter's Axe --------------------------------------------------------
 
-class FWeapAxe : FighterWeapon native
+class FWeapAxe : FighterWeapon
 {
+	const AXERANGE = (2.25 * MELEERANGE);
+
 	Default
 	{
 		Weapon.SelectionOrder 1500;
@@ -16,13 +18,6 @@ class FWeapAxe : FighterWeapon native
 		Obituary "$OB_MPFWEAPAXE";
 		Tag "$TAG_FWEAPAXE";
 	}
-
-	action native void A_FAxeCheckUp();
-	action native void A_FAxeCheckReady();
-	action native void A_FAxeCheckAtk();
-	action native void A_FAxeAttack();
-	action native void A_FAxeCheckUpG();
-	action native void A_FAxeCheckReadyG();
 
 	States
 	{
@@ -45,6 +40,7 @@ class FWeapAxe : FighterWeapon native
 		FAXE D 1 Offset (-5, 70) A_FAxeAttack;
 		FAXE D 2 Offset (-25, 90);
 		FAXE E 1 Offset (15, 32);
+	EndAttack:
 		FAXE E 2 Offset (10, 54);
 		FAXE E 7 Offset (10, 150);
 		FAXE A 1 Offset (0, 60) A_ReFire;
@@ -78,6 +74,207 @@ class FWeapAxe : FighterWeapon native
 		FAXE A 1 Offset (0, 36);
 		FAXE A 1;
 		Goto ReadyGlow;
+	}
+	
+	override State GetUpState ()
+	{
+		return Ammo1.Amount ? FindState ("SelectGlow") : Super.GetUpState();
+	}
+
+	override State GetDownState ()
+	{
+		return Ammo1.Amount ? FindState ("DeselectGlow") : Super.GetDownState();
+	}
+
+	override State GetReadyState ()
+	{
+		return Ammo1.Amount ? FindState ("ReadyGlow") : Super.GetReadyState();
+	}
+
+	override State GetAtkState (bool hold)
+	{
+		return Ammo1.Amount ? FindState ("FireGlow") :  Super.GetAtkState(hold);
+	}
+
+	
+	
+	//============================================================================
+	//
+	// A_FAxeCheckReady
+	//
+	//============================================================================
+
+	action void A_FAxeCheckReady()
+	{
+		if (player == null)
+		{
+			return;
+		}
+		Weapon w = player.ReadyWeapon;
+		if (w.Ammo1 && w.Ammo1.Amount > 0)
+		{
+			player.SetPsprite(PSP_WEAPON, w.FindState("ReadyGlow"));
+		}
+		else
+		{
+			A_WeaponReady();
+		}
+	}
+
+	//============================================================================
+	//
+	// A_FAxeCheckReadyG
+	//
+	//============================================================================
+
+	action void A_FAxeCheckReadyG()
+	{
+		if (player == null)
+		{
+			return;
+		}
+		Weapon w = player.ReadyWeapon;
+		if (!w.Ammo1 || w.Ammo1.Amount <= 0)
+		{
+			player.SetPsprite(PSP_WEAPON, w.FindState("Ready"));
+		}
+		else
+		{
+			A_WeaponReady();
+		}
+	}
+
+	//============================================================================
+	//
+	// A_FAxeCheckUp
+	//
+	//============================================================================
+
+	action void A_FAxeCheckUp()
+	{
+		if (player == null)
+		{
+			return;
+		}
+		Weapon w = player.ReadyWeapon;
+		if (w.Ammo1 && w.Ammo1.Amount > 0)
+		{
+			player.SetPsprite(PSP_WEAPON, w.FindState("SelectGlow"));
+		}
+		else
+		{
+			A_Raise();
+		}
+	}
+
+	//============================================================================
+	//
+	// A_FAxeCheckUpG
+	//
+	//============================================================================
+
+	action void A_FAxeCheckUpG()
+	{
+		if (player == null)
+		{
+			return;
+		}
+		Weapon w = player.ReadyWeapon;
+		if (!w.Ammo1 || w.Ammo1.Amount <= 0)
+		{
+			player.SetPsprite(PSP_WEAPON, w.FindState("Select"));
+		}
+		else
+		{
+			A_Raise();
+		}
+	}
+
+	//============================================================================
+	//
+	// A_FAxeCheckAtk
+	//
+	//============================================================================
+
+	action void A_FAxeCheckAtk()
+	{
+		if (player == null)
+		{
+			return;
+		}
+		Weapon w = player.ReadyWeapon;
+		if (w.Ammo1 && w.Ammo1.Amount > 0)
+		{
+			player.SetPsprite(PSP_WEAPON, w.FindState("FireGlow"));
+		}
+	}
+
+	//============================================================================
+	//
+	// A_FAxeAttack
+	//
+	//============================================================================
+
+	action void A_FAxeAttack()
+	{
+		FTranslatedLineTarget t;
+
+		if (player == null)
+		{
+			return;
+		}
+
+		int damage = 40+(random[AxeAtk]() & 15);
+		damage += random[AxeAtk]() & 7;
+		int power = 0;
+		Weapon weapon = player.ReadyWeapon;
+		class<Actor> pufftype;
+		int usemana;
+		if ((usemana = (weapon.Ammo1 && weapon.Ammo1.Amount > 0)))
+		{
+			damage <<= 1;
+			power = 6;
+			pufftype = "AxePuffGlow";
+		}
+		else
+		{
+			pufftype = "AxePuff";
+		}
+		for (int i = 0; i < 16; i++)
+		{
+			for (int j = 1; j >= -1; j -= 2)
+			{
+				double ang = angle + j*i*(45. / 16);
+				double slope = AimLineAttack(ang, AXERANGE, t);
+				if (t.linetarget)
+				{
+					LineAttack(ang, AXERANGE, slope, damage, 'Melee', pufftype, true, t);
+					if (t.linetarget != null)
+					{
+						if (t.linetarget.bIsMonster || t.linetarget.player)
+						{
+							t.linetarget.Thrust(power, t.angleFromSource);
+						}
+						AdjustPlayerAngle(t);
+						
+						weapon.DepleteAmmo (weapon.bAltFire, false);
+
+						if ((weapon.Ammo1 == null || weapon.Ammo1.Amount == 0) &&
+							(!(weapon.bPrimary_Uses_Both) ||
+							  weapon.Ammo2 == null || weapon.Ammo2.Amount == 0))
+						{
+							player.SetPsprite(PSP_WEAPON, weapon.FindState("EndAttack"));
+						}
+						return;
+					}
+				}
+			}
+		}
+		// didn't find any creatures, so try to strike any walls
+		self.weaponspecial = 0;
+
+		double slope = AimLineAttack (angle, MELEERANGE);
+		LineAttack (angle, MELEERANGE, slope, damage, 'Melee', pufftype, true);
 	}
 }
 

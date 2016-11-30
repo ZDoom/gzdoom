@@ -129,8 +129,6 @@ class RevenantTracerSmoke : Actor
 
 extend class Actor
 {
-	const TRACEANGLE = (16.875);
-	
 	void A_SkelMissile()
 	{
 		if (target == null) return;
@@ -166,33 +164,12 @@ extend class Actor
 		}
 	}
 
-	void A_Tracer()
+	void A_Tracer2(double traceang = 19.6875)
 	{
 		double dist;
 		double slope;
 		Actor dest;
-		Actor smoke;
 				
-		// killough 1/18/98: this is why some missiles do not have smoke
-		// and some do. Also, internal demos start at random gametics, thus
-		// the bug in which revenants cause internal demos to go out of sync.
-		//
-		// killough 3/6/98: fix revenant internal demo bug by subtracting
-		// levelstarttic from gametic:
-		//
-		// [RH] level.time is always 0-based, so nothing special to do here.
-
-		if (level.time & 3)	return;
-	
-		// spawn a puff of smoke behind the rocket
-		SpawnPuff ("BulletPuff", pos, angle, angle, 3);
-		smoke = Spawn ("RevenantTracerSmoke", Vec3Offset(-Vel.X, -Vel.Y, 0.), ALLOW_REPLACE);
-	
-		smoke.Vel.Z = 1.;
-		smoke.tics -= random[Tracer](0, 3);
-		if (smoke.tics < 1)
-			smoke.tics = 1;
-	
 		// adjust direction
 		dest = tracer;
 		
@@ -205,13 +182,13 @@ extend class Actor
 
 		if (diff < 0)
 		{
-			angle -= TRACEANGLE;
+			angle -= traceang;
 			if (deltaangle(angle, exact) > 0)
 				angle = exact;
 		}
 		else if (diff > 0)
 		{
-			angle += TRACEANGLE;
+			angle += traceang;
 			if (deltaangle(angle, exact) < 0.)
 				angle = exact;
 		}
@@ -237,6 +214,32 @@ extend class Actor
 			else
 				Vel.Z += 1. / 8;
 		}
+	}
+	
+	void A_Tracer()
+	{
+		// killough 1/18/98: this is why some missiles do not have smoke
+		// and some do. Also, internal demos start at random gametics, thus
+		// the bug in which revenants cause internal demos to go out of sync.
+		//
+		// killough 3/6/98: fix revenant internal demo bug by subtracting
+		// levelstarttic from gametic:
+		//
+		// [RH] level.time is always 0-based, so nothing special to do here.
+
+		if (level.time & 3)	return;
+	
+		// spawn a puff of smoke behind the rocket
+		SpawnPuff ("BulletPuff", pos, angle, angle, 3);
+		Actor smoke = Spawn ("RevenantTracerSmoke", Vec3Offset(-Vel.X, -Vel.Y, 0.), ALLOW_REPLACE);
+	
+		smoke.Vel.Z = 1.;
+		smoke.tics -= random[Tracer](0, 3);
+		if (smoke.tics < 1)
+			smoke.tics = 1;
+
+		// The rest of this function was identical with Strife's version, except for the angle being used.
+		A_Tracer2(16.875);
 	}
 }
 

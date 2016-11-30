@@ -187,7 +187,7 @@ static const char *KeyConfCommands[] =
 
 // CODE --------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DWaitingCommand, false, false, false, false)
+IMPLEMENT_CLASS(DWaitingCommand, false, false)
 
 void DWaitingCommand::Serialize(FSerializer &arc)
 {
@@ -225,7 +225,7 @@ void DWaitingCommand::Tick ()
 	}
 }
 
-IMPLEMENT_CLASS(DStoredCommand, false, false, false, false)
+IMPLEMENT_CLASS(DStoredCommand, false, false)
 
 DStoredCommand::DStoredCommand ()
 {

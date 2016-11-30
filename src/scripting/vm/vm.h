@@ -2,9 +2,9 @@
 #define VM_H
 
 #include "zstring.h"
-#include "dobject.h"
 #include "autosegs.h"
 #include "vectors.h"
+#include "cmdlib.h"
 
 #define MAX_RETURNS		8	// Maximum number of results a function called by script code can return
 #define MAX_TRY_DEPTH	8	// Maximum number of nested TRYs in a single function
@@ -112,7 +112,10 @@ enum
 {
 	CAST_I2F,
 	CAST_I2S,
+	CAST_U2F,
+	CAST_U2S,
 	CAST_F2I,
+	CAST_F2U,
 	CAST_F2S,
 	CAST_P2S,
 	CAST_S2I,
@@ -123,6 +126,10 @@ enum
 	CAST_S2So,
 	CAST_Co2S,
 	CAST_So2S,
+	CAST_V22S,
+	CAST_V32S,
+	CAST_SID2S,
+	CAST_TID2S,
 };
 
 // Register types for VMParam
@@ -153,13 +160,15 @@ enum
 	ATAG_OBJECT,			// pointer to an object; will be followed by GC
 
 	// The following are all for documentation during debugging and are
-	// functionally no different than ATAG_GENERIC.
+	// functionally no different than ATAG_GENERIC (meaning they are useless because they trigger asserts all over the place.)
 
+	/*
 	ATAG_FRAMEPOINTER,		// pointer to extra stack frame space for this function
 	ATAG_DREGISTER,			// pointer to a data register
 	ATAG_FREGISTER,			// pointer to a float register
 	ATAG_SREGISTER,			// pointer to a string register
 	ATAG_AREGISTER,			// pointer to an address register
+	*/
 
 	ATAG_RNG,				// pointer to FRandom
 	ATAG_STATE  = ATAG_GENERIC,			// pointer to FState (cannot have its own type because there's no means to track inside the VM.)
@@ -658,9 +667,10 @@ public:
 	bool Final = false;				// cannot be overridden
 	bool Unsafe = false;			// Contains references to class fields that are unsafe for psp and item state calls.
 	BYTE ImplicitArgs = 0;	// either 0 for static, 1 for method or 3 for action
-	int VirtualIndex = -1;
+	unsigned VirtualIndex = ~0u;
 	FName Name;
 	TArray<VMValue> DefaultArgs;
+	FString PrintableName;	// so that the VM can print meaningful info if something in this function goes wrong.
 
 	class PPrototype *Proto;
 
@@ -808,13 +818,17 @@ public:
 	VM_UBYTE NumRegF;
 	VM_UBYTE NumRegS;
 	VM_UBYTE NumRegA;
-	VM_UBYTE NumKonstD;
-	VM_UBYTE NumKonstF;
-	VM_UBYTE NumKonstS;
-	VM_UBYTE NumKonstA;
+	VM_UHALF NumKonstD;
+	VM_UHALF NumKonstF;
+	VM_UHALF NumKonstS;
+	VM_UHALF NumKonstA;
 	VM_UHALF MaxParam;		// Maximum number of parameters this function has on the stack at once
 	VM_UBYTE NumArgs;		// Number of arguments this function takes
-	FString PrintableName;	// so that the VM can print meaningful info if something in this function goes wrong.
+	TArray<FTypeAndOffset> SpecialInits;	// list of all contents on the extra stack which require construction and destruction
+
+	void InitExtra(void *addr);
+	void DestroyExtra(void *addr);
+	int AllocExtraStack(PType *type);
 };
 
 class VMFrameStack
@@ -822,7 +836,6 @@ class VMFrameStack
 public:
 	VMFrameStack();
 	~VMFrameStack();
-	VMFrame *AllocFrame(int numregd, int numregf, int numregs, int numrega);
 	VMFrame *AllocFrame(VMScriptFunction *func);
 	VMFrame *PopFrame();
 	VMFrame *TopFrame()
@@ -854,7 +867,7 @@ class VMNativeFunction : public VMFunction
 {
 	DECLARE_CLASS(VMNativeFunction, VMFunction);
 public:
-	typedef int (*NativeCallType)(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret);
+	typedef int (*NativeCallType)(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret);
 
 	VMNativeFunction() : NativeCall(NULL) { Native = true; }
 	VMNativeFunction(NativeCallType call) : NativeCall(call) { Native = true; }
@@ -917,6 +930,9 @@ enum EVMEngine
 	VMEngine_Checked
 };
 
+extern thread_local VMFrameStack GlobalVMStack;
+
+
 void VMSelectEngine(EVMEngine engine);
 extern int (*VMExec)(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret);
 void VMFillParams(VMValue *params, VMFrame *callee, int numparam);
@@ -925,8 +941,8 @@ void VMDumpConstants(FILE *out, const VMScriptFunction *func);
 void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction *func);
 
 // Use this in the prototype for a native function.
-#define VM_ARGS			VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret
-#define VM_ARGS_NAMES	stack, param, defaultparam, numparam, ret, numret
+#define VM_ARGS			VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret
+#define VM_ARGS_NAMES	param, defaultparam, numparam, ret, numret
 
 // Use these to collect the parameters in a native function.
 // variable name <x> at position <p>
@@ -946,7 +962,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_OBJECT_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); type *x = (type *)param[p].a; assert(x == NULL || x->IsKindOf(RUNTIME_CLASS(type)));
 #define PARAM_CLASS_AT(p,x,base)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); base::MetaClass *x = (base::MetaClass *)param[p].a; assert(x == NULL || x->IsDescendantOf(RUNTIME_CLASS(base)));
 
-#define PARAM_EXISTS(p)					((p) < numparam && param[p].Type != REGT_NIL)
+#define PARAM_EXISTS(p)					((p) < numparam)
 #define ASSERTINT(p)					assert((p).Type == REGT_INT)
 #define ASSERTFLOAT(p)					assert((p).Type == REGT_FLOAT)
 #define ASSERTSTRING(p)					assert((p).Type == REGT_STRING)
@@ -999,55 +1015,94 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_OBJECT_DEF(x,type)	++paramnum; PARAM_OBJECT_DEF_AT(paramnum,x,type)
 #define PARAM_CLASS_DEF(x,base)		++paramnum; PARAM_CLASS_DEF_AT(paramnum,x,base)
 
-typedef int(*actionf_p)(VMFrameStack *stack, VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret);/*(VM_ARGS)*/
+typedef int(*actionf_p)(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret);/*(VM_ARGS)*/
+
+struct FieldDesc
+{
+	const char *ClassName;
+	const char *FieldName;
+	unsigned FieldOffset;
+	unsigned FieldSize;
+	int BitValue;
+};
 
 struct AFuncDesc
 {
-	const char *Name;
+	const char *ClassName;
+	const char *FuncName;
 	actionf_p Function;
 	VMNativeFunction **VMPointer;
 };
 
 #if defined(_MSC_VER)
 #pragma section(".areg$u",read)
+#pragma section(".freg$u",read)
 
 #define MSVC_ASEG __declspec(allocate(".areg$u"))
+#define MSVC_FSEG __declspec(allocate(".freg$u"))
 #define GCC_ASEG
+#define GCC_FSEG
 #else
 #define MSVC_ASEG
+#define MSVC_FSEG
 #define GCC_ASEG __attribute__((section(SECTION_AREG))) __attribute__((used))
+#define GCC_FSEG __attribute__((section(SECTION_FREG))) __attribute__((used))
 #endif
 
 // Macros to handle action functions. These are here so that I don't have to
 // change every single use in case the parameters change.
-#define DECLARE_ACTION(name)	extern VMNativeFunction *name##_VMPtr;
 
-// This distinction is here so that CALL_ACTION produces errors when trying to
-// access a function that requires parameters.
 #define DEFINE_ACTION_FUNCTION(cls, name) \
-	static int AF_##name(VM_ARGS); \
-	VMNativeFunction *name##_VMPtr; \
-	static const AFuncDesc cls##_##name##_Hook = { #name, AF_##name, &name##_VMPtr }; \
+	static int AF_##cls##_##name(VM_ARGS); \
+	VMNativeFunction *cls##_##name##_VMPtr; \
+	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr }; \
 	extern AFuncDesc const *const cls##_##name##_HookPtr; \
 	MSVC_ASEG AFuncDesc const *const cls##_##name##_HookPtr GCC_ASEG = &cls##_##name##_Hook; \
-	static int AF_##name(VM_ARGS)
+	static int AF_##cls##_##name(VM_ARGS)
 
-#define DEFINE_ACTION_FUNCTION_PARAMS(cls, name) DEFINE_ACTION_FUNCTION(cls, name)
+// cls is the scripted class name, icls the internal one (e.g. player_t vs. Player)
+#define DEFINE_FIELD_X(cls, icls, name) \
+	static const FieldDesc VMField_##icls##_##name = { "A" #cls, #name, (unsigned)myoffsetof(icls, name), (unsigned)sizeof(icls::name), 0 }; \
+	extern FieldDesc const *const VMField_##icls##_##name##_HookPtr; \
+	MSVC_FSEG FieldDesc const *const VMField_##icls##_##name##_HookPtr GCC_FSEG = &VMField_##icls##_##name;
 
-//#define DECLARE_PARAMINFO AActor *self, AActor *stateowner, FState *CallingState, int ParameterIndex, StateCallData *statecall
-//#define PUSH_PARAMINFO self, stateowner, CallingState, ParameterIndex, statecall
+#define DEFINE_FIELD_NAMED_X(cls, icls, name, scriptname) \
+	static const FieldDesc VMField_##icls##_##scriptname = { "A" #cls, #scriptname, (unsigned)myoffsetof(icls, name), (unsigned)sizeof(icls::name), 0 }; \
+	extern FieldDesc const *const VMField_##icls##_##scriptname##_HookPtr; \
+	MSVC_FSEG FieldDesc const *const VMField_##icls##_##scriptname##_HookPtr GCC_FSEG = &VMField_##icls##_##scriptname;
+
+#define DEFINE_FIELD_X_BIT(cls, icls, name, bitval) \
+	static const FieldDesc VMField_##icls##_##name = { "A" #cls, #name, (unsigned)myoffsetof(icls, name), (unsigned)sizeof(icls::name), bitval }; \
+	extern FieldDesc const *const VMField_##icls##_##name##_HookPtr; \
+	MSVC_FSEG FieldDesc const *const VMField_##icls##_##name##_HookPtr GCC_FSEG = &VMField_##cls##_##name;
+
+#define DEFINE_FIELD(cls, name) \
+	static const FieldDesc VMField_##cls##_##name = { #cls, #name, (unsigned)myoffsetof(cls, name), (unsigned)sizeof(cls::name), 0 }; \
+	extern FieldDesc const *const VMField_##cls##_##name##_HookPtr; \
+	MSVC_FSEG FieldDesc const *const VMField_##cls##_##name##_HookPtr GCC_FSEG = &VMField_##cls##_##name;
+
+#define DEFINE_FIELD_NAMED(cls, name, scriptname) \
+		static const FieldDesc VMField_##cls##_##scriptname = { #cls, #scriptname, (unsigned)myoffsetof(cls, name), (unsigned)sizeof(cls::name), 0 }; \
+	extern FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr; \
+	MSVC_FSEG FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr GCC_FSEG = &VMField_##cls##_##scriptname;
+
+#define DEFINE_FIELD_BIT(cls, name, scriptname, bitval) \
+		static const FieldDesc VMField_##cls##_##scriptname = { #cls, #scriptname, (unsigned)myoffsetof(cls, name), (unsigned)sizeof(cls::name), bitval }; \
+	extern FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr; \
+	MSVC_FSEG FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr GCC_FSEG = &VMField_##cls##_##scriptname;
 
 class AActor;
-void CallAction(VMFrameStack *stack, VMFunction *vmfunc, AActor *self);
-#define CALL_ACTION(name, self) CallAction(stack, name##_VMPtr, self);
 
 
 #define ACTION_RETURN_STATE(v) do { FState *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_STATE); return 1; } return 0; } while(0)
+#define ACTION_RETURN_POINTER(v) do { void *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_GENERIC); return 1; } return 0; } while(0)
 #define ACTION_RETURN_OBJECT(v) do { auto state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_OBJECT); return 1; } return 0; } while(0)
 #define ACTION_RETURN_FLOAT(v) do { double u = v; if (numret > 0) { assert(ret != nullptr); ret->SetFloat(u); return 1; } return 0; } while(0)
+#define ACTION_RETURN_VEC2(v) do { DVector2 u = v; if (numret > 0) { assert(ret != nullptr); ret[0].SetVector2(u); return 1; } return 0; } while(0)
 #define ACTION_RETURN_VEC3(v) do { DVector3 u = v; if (numret > 0) { assert(ret != nullptr); ret[0].SetVector(u); return 1; } return 0; } while(0)
 #define ACTION_RETURN_INT(v) do { int u = v; if (numret > 0) { assert(ret != NULL); ret->SetInt(u); return 1; } return 0; } while(0)
 #define ACTION_RETURN_BOOL(v) ACTION_RETURN_INT(v)
+#define ACTION_RETURN_STRING(v) do { FString u = v; if (numret > 0) { assert(ret != NULL); ret->SetString(u); return 1; } return 0; } while(0)
 
 // Checks to see what called the current action function
 #define ACTION_CALL_FROM_ACTOR() (stateinfo == nullptr || stateinfo->mStateType == STATE_Actor)
@@ -1071,6 +1126,10 @@ void CallAction(VMFrameStack *stack, VMFunction *vmfunc, AActor *self);
 	PARAM_PROLOGUE; \
 	PARAM_OBJECT(self, type);
 
+// for structs we need to check for ATAG_GENERIC instead of ATAG_OBJECT
+#define PARAM_SELF_STRUCT_PROLOGUE(type) \
+	PARAM_PROLOGUE; \
+	PARAM_POINTER(self, type);
 
 class PFunction;
 

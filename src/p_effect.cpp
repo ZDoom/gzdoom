@@ -574,6 +574,16 @@ void P_DrawSplash (int count, const DVector3 &pos, DAngle angle, int kind)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, DrawSplash)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(count);
+	PARAM_FLOAT(angle);
+	PARAM_INT(kind);
+	P_DrawSplash(count, self->Pos(), angle, kind);
+	return 0;
+}
+
 void P_DrawSplash2 (int count, const DVector3 &pos, DAngle angle, int updown, int kind)
 {
 	int color1, color2, zadd;

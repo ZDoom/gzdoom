@@ -69,6 +69,7 @@
 #include "p_setup.h"
 #include "p_spec.h"
 #include "r_utility.h"
+#include "a_ammo.h"
 #include "math/cmath.h"
 
 static FRandom pr_script("FScript");
@@ -1785,7 +1786,7 @@ public:
 	void		Destroy() { Super::Destroy(); m_Sector->lightingdata=NULL; }
 };
 
-IMPLEMENT_CLASS(DLightLevel, false, false, false, false)
+IMPLEMENT_CLASS(DLightLevel, false, false)
 
 void DLightLevel::Serialize(FSerializer &arc)
 {
@@ -2975,7 +2976,7 @@ void FParser::SF_ObjAwaken(void)
 
 	if(mo)
 	{
-		mo->Activate(Script->trigger);
+		mo->CallActivate(Script->trigger);
 	}
 }
 

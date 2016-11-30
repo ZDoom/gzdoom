@@ -1,0 +1,87 @@
+class ScoreItem : Inventory
+{
+	Default
+	{
+		Height 10;
+		+COUNTITEM
+		Inventory.Amount 1;
+		+Inventory.ALWAYSPICKUP
+	}
+	
+	override bool TryPickup (in out Actor toucher)
+	{
+		toucher.Score += Amount;
+		GoAwayAndDie();
+		return true;
+	}
+}
+
+class Health : Inventory native 
+{
+	native int PrevHealth;
+	
+	Default
+	{
+		Inventory.Amount 1;
+		Inventory.MaxAmount 0;
+		Inventory.PickupSound "misc/health_pkup";
+	}
+}
+
+class HealthPickup : Inventory native 
+{
+	native int autousemode;
+
+	Default
+	{
+		Inventory.DefMaxAmount;
+		+INVENTORY.INVBAR
+	}
+}
+
+class Key : Inventory native
+{
+	native uint8 KeyNumber;
+
+	Default
+	{
+		+DONTGIB;		// Don't disappear due to a crusher
+		Inventory.InterHubAmount 0;
+		Inventory.PickupSound "misc/k_pkup";
+	}
+}
+
+class MapRevealer : Inventory
+{
+	//===========================================================================
+	//
+	// AMapRevealer :: TryPickup
+	//
+	// A MapRevealer reveals the whole map for the player who picks it up.
+	// The MapRevealer doesn't actually go in your inventory. Instead, it sets
+	// a flag on the level.
+	//
+	//===========================================================================
+
+	override bool TryPickup (in out Actor toucher)
+	{
+		level.allmap = true;
+		GoAwayAndDie ();
+		return true;
+	}
+}
+
+class PuzzleItem : Inventory native 
+{
+	native int PuzzleItemNumber;
+
+	Default
+	{
+		+NOGRAVITY
+		+INVENTORY.INVBAR
+		Inventory.DefMaxAmount;
+		Inventory.UseSound "PuzzleSuccess";
+		Inventory.PickupSound "misc/i_pkup";
+	}
+}
+

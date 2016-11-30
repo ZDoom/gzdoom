@@ -22,7 +22,7 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 
 // If a is non-null, appends b to a. Otherwise, sets a to b.
 #define SAFE_APPEND(a,b) \
-	if (a == NULL) a = b; else a->AppendSibling(b);
+	if (a == NULL) a = b; else AppendTreeNodeSibling(a, b);
 
 #define UNARY_EXPR(X,T) NEW_AST_NODE(ExprUnary, expr1, X); expr1->Operation = T; expr1->Operand = X; expr1->Type = NULL
 #define BINARY_EXPR(X,Y,T) NEW_AST_NODE(ExprBinary, expr2, X); expr2->Operation = T; expr2->Type = NULL; expr2->Left = X; expr2->Right = Y
@@ -221,14 +221,14 @@ dottable_id(X) ::= dottable_id(A) DOT IDENTIFIER(B).
 {
 	NEW_AST_NODE(Identifier,id2,A);
 	id2->Id = B.Name();
-	A->AppendSibling(id2);
+	AppendTreeNodeSibling(A, id2);
 	X = A; /*X-overwrites-A*/
 }
 dottable_id(X) ::= dottable_id(A) DOT DEFAULT.
 {
 	NEW_AST_NODE(Identifier,id2,A);
 	id2->Id = NAME_Default;
-	A->AppendSibling(id2);
+	AppendTreeNodeSibling(A, id2);
 	X = A; /*X-overwrites-A*/
 }
 
@@ -239,7 +239,7 @@ dottable_id(X) ::= dottable_id(A) DOT COLOR.
 {
 	NEW_AST_NODE(Identifier,id2,A);
 	id2->Id = NAME_Color;
-	A->AppendSibling(id2);
+	AppendTreeNodeSibling(A, id2);
 	X = A; /*X-overwrites-A*/
 }
 
@@ -278,24 +278,30 @@ class_member(X) ::= const_def(A).						{ X = A; /*X-overwrites-A*/ }
 %type struct_body{ZCC_TreeNode *}
 %type struct_member{ZCC_TreeNode *}
 
-struct_def(X) ::= STRUCT(T) IDENTIFIER(A) LBRACE opt_struct_body(B) RBRACE opt_semicolon.
+struct_def(X) ::= STRUCT(T) IDENTIFIER(A) struct_flags(S) LBRACE opt_struct_body(B) RBRACE opt_semicolon.
 {
 	NEW_AST_NODE(Struct,def,T);
 	def->NodeName = A.Name();
 	def->Body = B;
 	def->Type = nullptr;
 	def->Symbol = nullptr;
+	def->Flags = S.Flags;
 	X = def;
 }
 
+%type struct_flags{ClassFlagsBlock}
+struct_flags(X) ::= .										{ X.Flags = 0; }
+struct_flags(X) ::= NATIVE.									{ X.Flags = ZCC_Native; }
+
 opt_struct_body(X) ::= .								{ X = NULL; }
 opt_struct_body(X) ::= struct_body(X).
+opt_struct_body(X) ::= error.							{ X = NULL; }
 
-struct_body(X) ::= error.								{ X = NULL; }
+
 struct_body(X) ::= struct_member(X).
-struct_body(X) ::= struct_member(A) struct_body(B).		{ X = A; /*X-overwrites-A*/ X->AppendSibling(B); }
+struct_body(X) ::= struct_body(A) struct_member(B).		{ X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
 
-struct_member(X) ::= declarator_no_fun(A).				{ X = A; /*X-overwrites-A*/ }
+struct_member(X) ::= declarator(A).						{ X = A; /*X-overwrites-A*/ }
 struct_member(X) ::= enum_def(A).						{ X = A; /*X-overwrites-A*/ }
 struct_member(X) ::= const_def(A).						{ X = A; /*X-overwrites-A*/ }
 
@@ -369,11 +375,11 @@ enum_def(X) ::= ENUM(T) IDENTIFIER(A) enum_type(B) LBRACE opt_enum_list(C) RBRAC
 		}
 		// Add a new terminating node, to indicate that the ConstantDefs for this enum are done.
 		NEW_AST_NODE(EnumTerminator,term,U);
-		C->AppendSibling(term);
+		AppendTreeNodeSibling(C, term);
 	}
 	if (C != NULL)
 	{
-		def->AppendSibling(C);
+		AppendTreeNodeSibling(def, C);
 	}
 	X = def;
 }
@@ -383,7 +389,7 @@ enum_type(X) ::= COLON int_type(A).						{ X = A; /*X-overwrites-A*/ }
 
 enum_list(X) ::= error.									{ X = NULL; }
 enum_list(X) ::= enumerator(X).
-enum_list(X) ::= enum_list(A) COMMA enumerator(B).		{ X = A; /*X-overwrites-A*/ X->AppendSibling(B); }
+enum_list(X) ::= enum_list(A) COMMA enumerator(B).		{ X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
 
 opt_enum_list(X) ::= .									{ X = NULL; }
 opt_enum_list(X) ::= enum_list(X) opt_comma.
@@ -444,7 +450,7 @@ states_opt(X) ::= states_opt(A) COMMA IDENTIFIER(B).
 	NEW_AST_NODE(Identifier,id,B);
 	id->Id = B.Name();
 	X = A; /*X-overwrites-A*/
-	X->AppendSibling(id);
+	AppendTreeNodeSibling(X, id);
 }
 
 
@@ -539,7 +545,7 @@ state_opts(X) ::= state_opts(A) FAST.								{ A.Fast = true; X = A; /*X-overwri
 state_opts(X) ::= state_opts(A) SLOW.								{ A.Slow = true; X = A; /*X-overwrites-A*/ }
 state_opts(X) ::= state_opts(A) NODELAY.							{ A.NoDelay = true; X = A; /*X-overwrites-A*/ }
 state_opts(X) ::= state_opts(A) CANRAISE.							{ A.CanRaise = true; X = A; /*X-overwrites-A*/ }
-state_opts(X) ::= state_opts(A) OFFSET LPAREN expr(B) COMMA expr(C) RPAREN.	{ A.Offset = B; B->AppendSibling(C); X = A; /*X-overwrites-A*/ }
+state_opts(X) ::= state_opts(A) OFFSET LPAREN expr(B) COMMA expr(C) RPAREN.	{ A.Offset = B; AppendTreeNodeSibling(B, C); X = A; /*X-overwrites-A*/ }
 state_opts(X) ::= state_opts(A) LIGHT LPAREN light_list(B) RPAREN.		{ X = A; /*X-overwrites-A*/ X.Lights = B; }
 
 %type light_list {ZCC_ExprConstant *}
@@ -559,7 +565,7 @@ light_list(X) ::= light_list(A) COMMA STRCONST(B).
 	strconst->Operation = PEX_ConstValue;
 	strconst->Type = TypeString;
 	strconst->StringVal = B.String;
-	A->AppendSibling(strconst); 
+	AppendTreeNodeSibling(A, strconst); 
 	X = A; /*X-overwrites-A*/
 }
 
@@ -734,7 +740,7 @@ type_name(X) ::= DOT dottable_id(A).
 /* Type names can also be used as identifiers in contexts where type names
  * are not normally allowed. */
 %fallback IDENTIFIER
-	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR2 VECTOR3 NAME MAP ARRAY VOID STATE.
+	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR2 VECTOR3 NAME MAP ARRAY VOID STATE COLOR SOUND UINT8 INT8 UINT16 INT16.
 
 /* Aggregate types */
 %type aggregate_type {ZCC_Type *}
@@ -777,16 +783,16 @@ type_or_array(X) ::= type(X).
 type_or_array(X) ::= type(A) array_size(B).	{ X = A; /*X-overwrites-A*/ X->ArraySize = B; }
 
 type_list(X) ::= type_or_array(X).			/* A comma-separated list of types */
-type_list(X) ::= type_list(A) COMMA type_or_array(B). { X = A; /*X-overwrites-A*/ X->AppendSibling(B); }
+type_list(X) ::= type_list(A) COMMA type_or_array(B). { X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
 
 type_list_or_void(X) ::= VOID.				{ X = NULL; }
 type_list_or_void(X) ::= type_list(X).
 
-array_size_expr(X) ::= LBRACKET opt_expr(A) RBRACKET.
+array_size_expr(X) ::= LBRACKET(L) opt_expr(A) RBRACKET.
 {
 	if (A == NULL)
 	{
-		NEW_AST_NODE(Expression,nil,A);
+		NEW_AST_NODE(Expression,nil,L.SourceLoc);
 		nil->Operation = PEX_Nil;
 		nil->Type = NULL;
 		X = nil;
@@ -799,7 +805,7 @@ array_size_expr(X) ::= LBRACKET opt_expr(A) RBRACKET.
 array_size(X) ::= array_size_expr(X).
 array_size(X) ::= array_size(A) array_size_expr(B).
 {
-	A->AppendSibling(B);
+	AppendTreeNodeSibling(A, B);
 	X = A; /*X-overwrites-A*/
 }
 
@@ -814,20 +820,21 @@ declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
 	}
 	else if (C.FuncName != NAME_None)
 	{ // A function
-		NEW_AST_NODE(FuncDeclarator, decl, A.SourceLoc);
+		NEW_AST_NODE(FuncDeclarator, decl, A == nullptr? C.SourceLoc : A->SourceLoc);
 		decl->Type = B;
 		decl->Params = C.FuncParams;
 		decl->Name = C.FuncName;
-		decl->Flags = A.Int | C.FuncFlags;
+		decl->UseFlags = A == nullptr? nullptr : A->Id;
+		decl->Flags = (A == nullptr? 0 : A->Flags) | C.FuncFlags;
 		decl->Body = C.FuncBody;
 		X = decl;
 	}
 	else if (B != NULL && B->SiblingNext == B)
 	{ // A variable
-		NEW_AST_NODE(VarDeclarator, decl, A.SourceLoc);
+		NEW_AST_NODE(VarDeclarator, decl, A == nullptr? B->SourceLoc : A->SourceLoc);
 		decl->Type = B;
 		decl->Names = C.VarNames;
-		decl->Flags = A.Int;
+		decl->Flags = (A == nullptr? 0 : A->Flags);
 		X = decl;
 	}
 	else
@@ -842,14 +849,6 @@ declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
 		}
 		X = NULL;
 	}
-}
-declarator_no_fun(X) ::= decl_flags(A) type(B) variable_list(C) SEMICOLON.
-{
-	NEW_AST_NODE(VarDeclarator, decl, A.SourceLoc ? A.SourceLoc : B->SourceLoc);
-	decl->Type = B;
-	decl->Names = C;
-	decl->Flags = A.Int;
-	X = decl;
 }
 
 // Need to split it up like this to avoid parsing conflicts.
@@ -912,23 +911,56 @@ variable_name(X) ::= IDENTIFIER(A) array_size(B).
 variable_list(X) ::= variable_name(X).
 variable_list(X) ::= variable_list(A) COMMA variable_name(B).
 {
-	A->AppendSibling(B);
+	AppendTreeNodeSibling(A, B);
 	X = A; /*X-overwrites-A*/
 }
 
-decl_flags(X) ::= .								{ X.Int = 0; X.SourceLoc = 0; }
-decl_flags(X) ::= decl_flags(A) NATIVE(T).		{ X.Int = A.Int | ZCC_Native; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) STATIC(T).		{ X.Int = A.Int | ZCC_Static; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) PRIVATE(T).		{ X.Int = A.Int | ZCC_Private; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) PROTECTED(T).	{ X.Int = A.Int | ZCC_Protected; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) LATENT(T).		{ X.Int = A.Int | ZCC_Latent; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) FINAL(T).		{ X.Int = A.Int | ZCC_Final; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) META(T).		{ X.Int = A.Int | ZCC_Meta; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) ACTION(T).		{ X.Int = A.Int | ZCC_Action; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) READONLY(T).	{ X.Int = A.Int | ZCC_ReadOnly; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) DEPRECATED(T).	{ X.Int = A.Int | ZCC_Deprecated; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) VIRTUAL(T).		{ X.Int = A.Int | ZCC_Virtual; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-decl_flags(X) ::= decl_flags(A) OVERRIDE(T).	{ X.Int = A.Int | ZCC_Override; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
+%type decl_flags { ZCC_DeclFlags * }
+decl_flags(X) ::= .								{ X = NULL; }
+decl_flags(X) ::= decl_flags(F) decl_flag(A).
+{
+	if (F == nullptr)
+	{
+		NEW_AST_NODE(DeclFlags,nil_f,A);
+		X = nil_f;
+		X->Id = nullptr;
+		X->Flags = A.Int;
+	}
+	else
+	{
+		X = F;
+		X->Flags |= A.Int;
+	}
+}
+
+
+decl_flags(X) ::= decl_flags(F) ACTION(B) states_opts(A).
+{
+	if (F == nullptr)
+	{
+		NEW_AST_NODE(DeclFlags,nil_f,B.SourceLoc);
+		X = nil_f;
+		X->Flags = ZCC_Action;
+	}
+	else
+	{
+		X = F;
+		X->Flags |= ZCC_Action;
+	}
+	X->Id = A;
+}
+
+decl_flag(X) ::= NATIVE(T).		{ X.Int = ZCC_Native; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= STATIC(T).		{ X.Int = ZCC_Static; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= PRIVATE(T).	{ X.Int = ZCC_Private; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= PROTECTED(T).	{ X.Int = ZCC_Protected; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= LATENT(T).		{ X.Int = ZCC_Latent; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= FINAL(T).		{ X.Int = ZCC_Final; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= META(T).		{ X.Int = ZCC_Meta; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= READONLY(T).	{ X.Int = ZCC_ReadOnly; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= DEPRECATED(T).	{ X.Int = ZCC_Deprecated; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= VIRTUAL(T).	{ X.Int = ZCC_Virtual; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= OVERRIDE(T).	{ X.Int = ZCC_Override; X.SourceLoc =  T.SourceLoc; }
 
 func_const(X) ::= .							{ X.Int = 0; X.SourceLoc = stat->sc->GetMessageLine(); }
 func_const(X) ::= CONST(T).					{ X.Int = ZCC_FuncConst; X.SourceLoc = T.SourceLoc; }
@@ -952,11 +984,11 @@ func_params(X) ::= func_param_list(A) COMMA ELLIPSIS.
 	parm->Flags = 0;
 	parm->Default = nullptr;
 	X = A; /*X-overwrites-A*/ 
-	X->AppendSibling(parm);
+	AppendTreeNodeSibling(X, parm);
 }
 
 func_param_list(X) ::= func_param(X).
-func_param_list(X) ::= func_param_list(A) COMMA func_param(B).	{ X = A; /*X-overwrites-A*/ X->AppendSibling(B); }
+func_param_list(X) ::= func_param_list(A) COMMA func_param(B).	{ X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
 
 func_param(X) ::= func_param_flags(A) type(B) IDENTIFIER(C).
 {
@@ -979,9 +1011,9 @@ func_param(X) ::= func_param_flags(A) type(B) IDENTIFIER(C) EQ expr(D).
 }
 
 func_param_flags(X) ::= .									{ X.Int = 0; X.SourceLoc = 0; }
-func_param_flags(X) ::= func_param_flags(A) IN(T).			{ X.Int = A.Int | ZCC_In; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-func_param_flags(X) ::= func_param_flags(A) OUT(T).			{ X.Int = A.Int | ZCC_Out; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
-func_param_flags(X) ::= func_param_flags(A) OPTIONAL(T).	{ X.Int = A.Int | ZCC_Optional; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
+func_param_flags(X) ::= func_param_flags(A) IN(T).			{ X.Int = A.Int | ZCC_In; X.SourceLoc =  T.SourceLoc; }
+func_param_flags(X) ::= func_param_flags(A) OUT(T).			{ X.Int = A.Int | ZCC_Out; X.SourceLoc =  T.SourceLoc; }
+func_param_flags(X) ::= func_param_flags(A) OPTIONAL(T).	{ X.Int = A.Int | ZCC_Optional; X.SourceLoc =  T.SourceLoc; }
 
 /************ Expressions ************/
 
@@ -1043,6 +1075,14 @@ primary(X) ::= primary(A) LPAREN func_expr_list(B) RPAREN. [DOT]		// Function ca
 	expr->Operation = PEX_FuncCall;
 	expr->Type = NULL;
 	expr->Function = A;
+	expr->Parameters = B;
+	X = expr;
+}
+primary(X) ::= LPAREN CLASS LT IDENTIFIER(A) GT RPAREN LPAREN func_expr_list(B) RPAREN. [DOT]		// class type cast
+{
+	NEW_AST_NODE(ClassCast, expr, A);
+	expr->Operation = PEX_ClassCast;
+	expr->ClassName = ENamedName(A.Int);
 	expr->Parameters = B;
 	X = expr;
 }
@@ -1382,7 +1422,7 @@ expr_list(X) ::= expr(X).
 expr_list(X) ::= expr_list(A) COMMA expr(B).
 {
 	X = A;	/*X-overwrites-A*/
-	X->AppendSibling(B);
+	AppendTreeNodeSibling(X, B);
 }
 
 /*----- Function argument lists -----*/
@@ -1413,7 +1453,7 @@ func_expr_list(X) ::= func_expr_list(A) COMMA(T) func_expr_item(B).
 		B = nil_b;
 	}
 	X = A;	/*X-overwrites-A*/
-	X->AppendSibling(B);
+	AppendTreeNodeSibling(X, B);
 }
 
 func_expr_item(X) ::= .
@@ -1517,9 +1557,32 @@ statement(X) ::= expression_statement(A) SEMICOLON.	{ X = A; /*X-overwrites-A*/ 
 statement(X) ::= selection_statement(X).
 statement(X) ::= iteration_statement(X).
 statement(X) ::= jump_statement(X).
-//statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
+statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= local_var(A) SEMICOLON.			{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= error SEMICOLON.					{ X = NULL; }
+statement(X) ::= staticarray_statement(A).			{ X = A; /*X-overwrites-A*/ }
+
+/*----- Static array Statements -----*/
+
+%type staticarray_statement{ZCC_StaticArrayStatement *}
+
+staticarray_statement(X) ::= STATIC CONST type(A) IDENTIFIER(B) LBRACKET RBRACKET EQ LBRACE expr_list(C) RBRACE.
+{
+	NEW_AST_NODE(StaticArrayStatement, stmt, A);
+	stmt->Type = A;
+	stmt->Id = ENamedName(B.Int);
+	stmt->Values = C;
+	X = stmt;
+}
+
+staticarray_statement(X) ::= STATIC CONST type(A) LBRACKET RBRACKET IDENTIFIER(B)  EQ LBRACE expr_list(C) RBRACE.
+{
+	NEW_AST_NODE(StaticArrayStatement, stmt, A);
+	stmt->Type = A;
+	stmt->Id = ENamedName(B.Int);
+	stmt->Values = C;
+	X = stmt;
+}
 
 /*----- Jump Statements -----*/
 
@@ -1728,11 +1791,11 @@ labeled_statement(X) ::= DEFAULT(T) COLON.
 
 /*----- Assignment Statements -----*/
 
-/* This is no longer being used, in favor of handling assignments as expressions, just like C and C++ do.
-   Keep this here in case some other parts require assignment syntax or Lua-style multi-assignments become a thing.
 %type assign_statement{ZCC_AssignStmt *}
 
-assign_statement(X) ::= expr_list(A) EQ expr_list(B). [EQ]
+// The grammar won't let this pass without some syntactic help. 
+// Parentheses and braces aren't accepted either so brackets are the only way to get this through the parser without a conflict.
+assign_statement(X) ::= LBRACKET expr_list(A) RBRACKET EQ expr(B). [EQ]
 {
 	NEW_AST_NODE(AssignStmt,stmt,A);
 	stmt->AssignOp = ZCC_EQ;
@@ -1740,7 +1803,6 @@ assign_statement(X) ::= expr_list(A) EQ expr_list(B). [EQ]
 	stmt->Sources = B;
 	X = stmt;
 }
-*/
 
 /*----- Local Variable Definition "Statements" -----*/
 
@@ -1815,6 +1877,6 @@ var_init(X) ::= IDENTIFIER EQ  LBRACE error RBRACE.
 variable_list_with_init(X) ::= var_init(X).
 variable_list_with_init(X) ::= variable_list_with_init(A) COMMA var_init(B).
 {
-	A->AppendSibling(B);
+	AppendTreeNodeSibling(A, B);
 	X = A; /*X-overwrites-A*/
 }

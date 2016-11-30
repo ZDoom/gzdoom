@@ -45,7 +45,6 @@
 #include "templates.h"
 #include "po_man.h"
 
-static AActor *RoughBlockCheck (AActor *mo, int index, void *);
 sector_t *P_PointInSectorBuggy(double x, double y);
 int P_VanillaPointOnDivlineSide(double x, double y, const divline_t* line);
 
@@ -1155,6 +1154,75 @@ void FMultiBlockThingsIterator::Reset()
 
 //===========================================================================
 //
+// and the scriptable version
+//
+//===========================================================================
+
+class DBlockThingsIterator : public DObject, public FMultiBlockThingsIterator
+{
+	DECLARE_CLASS(DBlockThingsIterator, DObject);
+	FPortalGroupArray check;
+public:
+	FMultiBlockThingsIterator::CheckResult cres;
+
+public:
+	bool Next()
+	{
+		return FMultiBlockThingsIterator::Next(&cres);
+	}
+
+	DBlockThingsIterator(AActor *origin = nullptr, double checkradius = -1, bool ignorerestricted = false)
+		: FMultiBlockThingsIterator(check, origin, checkradius, ignorerestricted)
+	{
+		cres.thing = nullptr;
+		cres.Position.Zero();
+		cres.portalflags = 0;
+	}
+
+	DBlockThingsIterator(double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted, sector_t *newsec)
+		: FMultiBlockThingsIterator(check, checkx, checky, checkz, checkh, checkradius, ignorerestricted, newsec)
+	{
+		cres.thing = nullptr;
+		cres.Position.Zero();
+		cres.portalflags = 0;
+	}
+};
+
+IMPLEMENT_CLASS(DBlockThingsIterator, false, false);
+
+DEFINE_ACTION_FUNCTION(DBlockThingsIterator, Create)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(origin, AActor);
+	PARAM_FLOAT_DEF(radius);
+	PARAM_BOOL_DEF(ignore);
+	ACTION_RETURN_OBJECT(new DBlockThingsIterator(origin, radius, ignore));
+}
+
+DEFINE_ACTION_FUNCTION(DBlockThingsIterator, CreateFromPos)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_FLOAT(h);
+	PARAM_FLOAT(radius);
+	PARAM_BOOL(ignore);
+	ACTION_RETURN_OBJECT(new DBlockThingsIterator(x, y, z, h, radius, ignore, nullptr));
+}
+
+DEFINE_ACTION_FUNCTION(DBlockThingsIterator, Next)
+{
+	PARAM_SELF_PROLOGUE(DBlockThingsIterator);
+	ACTION_RETURN_BOOL(self->Next());
+}
+
+DEFINE_FIELD_NAMED(DBlockThingsIterator, cres.thing, thing);
+DEFINE_FIELD_NAMED(DBlockThingsIterator, cres.Position, position);
+DEFINE_FIELD_NAMED(DBlockThingsIterator, cres.portalflags, portalflags);
+
+//===========================================================================
+//
 // FPathTraverse :: Intercepts
 //
 //===========================================================================
@@ -1685,11 +1753,6 @@ FPathTraverse::~FPathTraverse()
 //		distance is in MAPBLOCKUNITS
 //===========================================================================
 
-AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable)
-{
-	return P_BlockmapSearch (mo, distance, RoughBlockCheck, (void *)onlyseekable);
-}
-
 AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, int, void *), void *params)
 {
 	int blockX;
@@ -1779,6 +1842,13 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 	return NULL;	
 }
 
+struct BlockCheckInfo
+{
+	bool onlyseekable;
+	bool frontonly;
+	divline_t frontline;
+};
+
 //===========================================================================
 //
 // RoughBlockCheck
@@ -1787,14 +1857,19 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 
 static AActor *RoughBlockCheck (AActor *mo, int index, void *param)
 {
-	bool onlyseekable = param != NULL;
+	BlockCheckInfo *info = (BlockCheckInfo *)param;
+
 	FBlockNode *link;
 
 	for (link = blocklinks[index]; link != NULL; link = link->NextActor)
 	{
 		if (link->Me != mo)
 		{
-			if (onlyseekable && !mo->CanSeek(link->Me))
+			if (info->onlyseekable && !mo->CanSeek(link->Me))
+			{
+				continue;
+			}
+			if (info->frontonly && P_PointOnDivlineSide(link->Me->X(), link->Me->Y(), &info->frontline) != 0)
 			{
 				continue;
 			}
@@ -1805,6 +1880,30 @@ static AActor *RoughBlockCheck (AActor *mo, int index, void *param)
 		}
 	}
 	return NULL;
+}
+
+AActor *P_RoughMonsterSearch(AActor *mo, int distance, bool onlyseekable, bool frontonly)
+{
+	BlockCheckInfo info;
+	info.onlyseekable = onlyseekable;
+	if ((info.frontonly = frontonly))
+	{
+		info.frontline.x = mo->X();
+		info.frontline.y = mo->Y();
+		info.frontline.dx = -mo->Angles.Yaw.Sin();
+		info.frontline.dy = -mo->Angles.Yaw.Cos();
+	}
+
+	return P_BlockmapSearch(mo, distance, RoughBlockCheck, (void *)&info);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, RoughMonsterSearch)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(distance);
+	PARAM_BOOL_DEF(onlyseekable);
+	PARAM_BOOL_DEF(frontonly);
+	ACTION_RETURN_OBJECT(P_RoughMonsterSearch(self, distance, onlyseekable, frontonly));
 }
 
 //==========================================================================
@@ -1941,4 +2040,3 @@ sector_t *P_PointInSectorBuggy(double x, double y)
 	subsector_t *ssec = (subsector_t *)((BYTE *)node - 1);
 	return ssec->sector;
 }
-

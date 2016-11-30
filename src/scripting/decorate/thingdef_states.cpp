@@ -4,8 +4,8 @@
 ** Actor definitions - the state parser
 **
 **---------------------------------------------------------------------------
-** Copyright 2002-2007 Christoph Oelckers
-** Copyright 2004-2007 Randy Heit
+** Copyright 2002-2016 Christoph Oelckers
+** Copyright 2004-2016 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,6 @@
 #include "templates.h"
 #include "cmdlib.h"
 #include "p_lnspec.h"
-#include "a_action.h"
 #include "p_local.h"
 #include "v_palette.h"
 #include "doomerrors.h"
@@ -132,7 +131,7 @@ static FString ParseStateString(FScanner &sc)
 }
 
 //==========================================================================
-//***
+//
 // ParseStates
 // parses a state block
 //
@@ -274,24 +273,24 @@ do_stop:
 			{
 				if (sc.Compare("BRIGHT")) 
 				{
-					state.Fullbright = true;
+					state.StateFlags |= STF_FULLBRIGHT;
 					continue;
 				}
 				if (sc.Compare("FAST")) 
 				{
-					state.Fast = true;
+					state.StateFlags |= STF_FAST;
 					continue;
 				}
 				if (sc.Compare("SLOW")) 
 				{
-					state.Slow = true;
+					state.StateFlags |= STF_SLOW;
 					continue;
 				}
 				if (sc.Compare("NODELAY"))
 				{
 					if (bag.statedef.GetStateLabelIndex(NAME_Spawn) == bag.statedef.GetStateCount())
 					{
-						state.NoDelay = true;
+						state.StateFlags |= STF_NODELAY;
 					}
 					else
 					{
@@ -327,7 +326,7 @@ do_stop:
 				}
 				if (sc.Compare("CANRAISE"))
 				{
-					state.CanRaise = true;
+					state.StateFlags |= STF_CANRAISE;
 					continue;
 				}
 

@@ -238,8 +238,8 @@ static const FEnumList ResamplerNames[] =
 	{ "No Interpolation",		FMOD_DSP_RESAMPLER_NOINTERP },
 	{ "NoInterp",				FMOD_DSP_RESAMPLER_NOINTERP },
 	{ "Linear",					FMOD_DSP_RESAMPLER_LINEAR },
-	// [BL] 64-bit version of FMOD Ex 4.26 crashes with these resamplers.
-#if FMOD_STUDIO || !(defined(_M_X64) || defined(__amd64__)) || !(FMOD_VERSION >= 0x42600 && FMOD_VERSION <= 0x426FF)
+	// [BL] 64-bit versions of FMOD Ex between 4.24 and 4.26 crash with these resamplers.
+#if FMOD_STUDIO || !(defined(_M_X64) || defined(__amd64__)) || !(FMOD_VERSION >= 0x42400 && FMOD_VERSION <= 0x426FF)
 	{ "Cubic",					FMOD_DSP_RESAMPLER_CUBIC },
 	{ "Spline",					FMOD_DSP_RESAMPLER_SPLINE },
 #endif

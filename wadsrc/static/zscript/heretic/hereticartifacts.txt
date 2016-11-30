@@ -47,7 +47,7 @@ Class ArtiInvisibility : PowerupGiver
  
 // Tome of power ------------------------------------------------------------
 
-Class ArtiTomeOfPower : PowerupGiver native
+Class ArtiTomeOfPower : PowerupGiver
 {
 	Default
 	{
@@ -65,6 +65,31 @@ Class ArtiTomeOfPower : PowerupGiver native
 		PWBK A 350;
 		Loop;
 	}
+	
+	bool Use (bool pickup)
+	{
+		Playerinfo p = Owner.player;
+		if (p && p.morphTics && (p.MorphStyle & MRF_UNDOBYTOMEOFPOWER))
+		{ // Attempt to undo chicken
+			if (!p.UndoPlayerMorph (p, MRF_UNDOBYTOMEOFPOWER))
+			{ // Failed
+				if (!(p.MorphStyle & MRF_FAILNOTELEFRAG))
+				{
+					Owner.DamageMobj (null, null, TELEFRAG_DAMAGE, 'Telefrag');
+				}
+			}
+			else
+			{ // Succeeded
+				Owner.A_PlaySound ("*evillaugh", CHAN_VOICE);
+			}
+			return true;
+		}
+		else
+		{
+			return Super.Use (pickup);
+		}
+	}
+	
 }
 
 
@@ -80,8 +105,6 @@ Class ActivatedTimeBomb : Actor
 		DeathSound "misc/timebomb";
 	}
 		
-	native void A_Timebomb();
-	
 	States
 	{
 	Spawn:
@@ -91,10 +114,17 @@ Class ActivatedTimeBomb : Actor
 		XPL1 BCDEF 4 BRIGHT;
 		Stop;
 	}
+
+	void A_TimeBomb()
+	{
+		AddZ(32, false);
+		A_SetRenderStyle(1., STYLE_Add);
+		A_Explode();
+	}
 }
 
 
-Class ArtiTimeBomb : Inventory native
+Class ArtiTimeBomb : Inventory
 {
 	Default
 	{
@@ -115,4 +145,12 @@ Class ArtiTimeBomb : Inventory native
 		FBMB E 350;
 		Loop;
 	}
+	
+	override bool Use (bool pickup)
+	{
+		Actor mo = Spawn("ActivatedTimeBomb", Owner.Vec3Angle(24., Owner.angle, - Owner.Floorclip), ALLOW_REPLACE);
+		mo.target = Owner;
+		return true;
+	}
+	
 }

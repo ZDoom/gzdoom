@@ -33,11 +33,6 @@ class Programmer : Actor
 		DropItem "Sigil1";
 	}
 	
-	native void A_ProgrammerMelee ();
-	native void A_SpawnProgrammerBase ();
-	native void A_ProgrammerDeath ();
-	native void A_SpotLightning();
-	
 	States
 	{
 	Spawn:
@@ -80,6 +75,90 @@ class Programmer : Actor
 		PRGR X -1 Bright A_ProgrammerDeath;
 		Stop;
 	}
+	
+	//============================================================================
+	//
+	// A_ProgrammerMelee
+	//
+	//============================================================================
+
+	void A_ProgrammerMelee ()
+	{
+		if (target == null)
+			return;
+
+		A_FaceTarget ();
+
+		if (!CheckMeleeRange ())
+			return;
+
+		A_PlaySound("programmer/clank", CHAN_WEAPON);
+
+		int damage = ((random[Programmer]() % 10) + 1) * 6;
+		int newdam = DamageMobj (self, self, damage, 'Melee');
+		target.TraceBleed (newdam > 0 ? newdam : damage, self);
+	}
+
+	//============================================================================
+	//
+	// A_SpawnProgrammerBase
+	//
+	//============================================================================
+
+	void A_SpawnProgrammerBase ()
+	{
+		Actor foo = Spawn("ProgrammerBase", Pos + (0,0,24), ALLOW_REPLACE);
+		if (foo != null)
+		{
+			foo.Angle = Angle + 180. + Random2[Programmer]() * (360. / 1024.);
+			foo.VelFromAngle();
+			foo.Vel.Z = random[Programmer]() / 128.;
+		}
+	}
+
+	//============================================================================
+	//
+	// A_ProgrammerDeath
+	//
+	//============================================================================
+
+	void A_ProgrammerDeath ()
+	{
+		if (!CheckBossDeath ())
+			return;
+
+		for (int i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i] && players[i].health > 0)
+			{
+				players[i].mo.GiveInventoryType ("ProgLevelEnder");
+				break;
+			}
+		}
+		// the sky change scripts are now done as special actions in MAPINFO
+		A_BossDeath();
+	}
+	
+	//============================================================================
+	//
+	// A_SpotLightning
+	//
+	//============================================================================
+
+	void A_SpotLightning()
+	{
+		if (target == null) return;
+
+		Actor spot = Spawn("SpectralLightningSpot", (target.pos.xy, target.floorz), ALLOW_REPLACE);
+		if (spot != null)
+		{
+			spot.threshold = 25;
+			spot.target = self;
+			spot.FriendPlayer = 0;
+			spot.tracer = target;
+		}
+	}
+	
 }
 
 
@@ -107,10 +186,52 @@ class ProgrammerBase : Actor
 
 // The Programmer level ending thing ----------------------------------------
 
-class ProgLevelEnder : Inventory native
+class ProgLevelEnder : Inventory
 {
 	Default
 	{
 		+INVENTORY.UNDROPPABLE
+	}
+	
+
+	//============================================================================
+	//
+	// AProgLevelEnder :: Tick
+	//
+	// Fade to black, end the level, then unfade.
+	//
+	//============================================================================
+
+	override void Tick ()
+	{
+		if (special2 == 0)
+		{ // fade out over .66 second
+			special1 += 255 / (TICRATE*2/3);
+			if (++special1 >= 255)
+			{
+				special1 = 255;
+				special2 = 1;
+				Exit_Normal(0);
+			}
+		}
+		else
+		{ // fade in over two seconds
+			special1 -= 255 / (TICRATE*2);
+			if (special1 <= 0)
+			{
+				Destroy ();
+			}
+		}
+	}
+
+	//============================================================================
+	//
+	// AProgLevelEnder :: GetBlend
+	//
+	//============================================================================
+
+	override Color GetBlend ()
+	{
+		return Color(special1, 0, 0, 0);
 	}
 }

@@ -44,7 +44,6 @@
 #include "m_random.h"
 #include "gi.h"
 #include "templates.h"
-#include "a_strifeglobal.h"
 #include "a_keys.h"
 #include "p_enemy.h"
 #include "gstrings.h"
@@ -252,7 +251,7 @@ static bool LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool inc
 
 	if ((type == 1 && !isbinary) || (type == 2 && isbinary))
 	{
-		DPrintf(DMSG_ERROR, "Incorrect data format for %s.", Wads.GetLumpFullName(lumpnum));
+		DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", Wads.GetLumpFullName(lumpnum));
 		return false;
 	}
 
@@ -272,7 +271,7 @@ static bool LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool inc
 			// is exactly 1516 bytes long.
 			if (numnodes % 1516 != 0)
 			{
-				DPrintf(DMSG_ERROR, "Incorrect data format for %s.", Wads.GetLumpFullName(lumpnum));
+				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", Wads.GetLumpFullName(lumpnum));
 				return false;
 			}
 			numnodes /= 1516;
@@ -282,7 +281,7 @@ static bool LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool inc
 			// And the teaser version has 1488-byte entries.
 			if (numnodes % 1488 != 0)
 			{
-				DPrintf(DMSG_ERROR, "Incorrect data format for %s.", Wads.GetLumpFullName(lumpnum));
+				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", Wads.GetLumpFullName(lumpnum));
 				return false;
 			}
 			numnodes /= 1488;
@@ -646,7 +645,7 @@ static void TakeStrifeItem (player_t *player, PClassActor *itemtype, int amount)
 		return;
 
 	// Don't take the sigil.
-	if (itemtype == RUNTIME_CLASS(ASigil))
+	if (itemtype->GetClass()->TypeName == NAME_Sigil)
 		return;
 
 	player->mo->TakeInventory(itemtype, amount);
@@ -834,6 +833,7 @@ public:
 		V_FreeBrokenLines(mDialogueLines);
 		mDialogueLines = NULL;
 		I_SetMusicVolume (1.f);
+		Super::Destroy();
 	}
 
 	bool DimAllowed()
@@ -1052,18 +1052,22 @@ public:
 
 		if (ShowGold)
 		{
-			AInventory *coin = cp->ConversationPC->FindInventory (RUNTIME_CLASS(ACoin));
-			char goldstr[32];
+			auto cointype = PClass::FindActor("Coin");
+			if (cointype)
+			{
+				AInventory *coin = cp->ConversationPC->FindInventory(cointype);
+				char goldstr[32];
 
-			mysnprintf (goldstr, countof(goldstr), "%d", coin != NULL ? coin->Amount : 0);
-			screen->DrawText (SmallFont, CR_GRAY, 21, 191, goldstr, DTA_320x200, true,
-				DTA_FillColor, 0, DTA_AlphaF, HR_SHADOW, TAG_DONE);
-			screen->DrawTexture (TexMan(((AInventory *)GetDefaultByType (RUNTIME_CLASS(ACoin)))->Icon),
-				3, 190, DTA_320x200, true,
-				DTA_FillColor, 0, DTA_AlphaF, HR_SHADOW, TAG_DONE);
-			screen->DrawText (SmallFont, CR_GRAY, 20, 190, goldstr, DTA_320x200, true, TAG_DONE);
-			screen->DrawTexture (TexMan(((AInventory *)GetDefaultByType (RUNTIME_CLASS(ACoin)))->Icon),
-				2, 189, DTA_320x200, true, TAG_DONE);
+				mysnprintf(goldstr, countof(goldstr), "%d", coin != NULL ? coin->Amount : 0);
+				screen->DrawText(SmallFont, CR_GRAY, 21, 191, goldstr, DTA_320x200, true,
+					DTA_FillColor, 0, DTA_AlphaF, HR_SHADOW, TAG_DONE);
+				screen->DrawTexture(TexMan(((AInventory *)GetDefaultByType(cointype))->Icon),
+					3, 190, DTA_320x200, true,
+					DTA_FillColor, 0, DTA_AlphaF, HR_SHADOW, TAG_DONE);
+				screen->DrawText(SmallFont, CR_GRAY, 20, 190, goldstr, DTA_320x200, true, TAG_DONE);
+				screen->DrawTexture(TexMan(((AInventory *)GetDefaultByType(cointype))->Icon),
+					2, 189, DTA_320x200, true, TAG_DONE);
+			}
 		}
 
 		y = mYpos;
@@ -1103,7 +1107,7 @@ public:
 
 };
 
-IMPLEMENT_CLASS(DConversationMenu, true, false, false, false)
+IMPLEMENT_CLASS(DConversationMenu, true, false)
 int DConversationMenu::mSelection;	// needs to be preserved if the same dialogue is restarted
 
 
@@ -1352,7 +1356,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 				}
 			}
 		
-			if (reply->GiveType->IsDescendantOf(RUNTIME_CLASS(ASlideshowStarter)))
+			if (reply->GiveType->IsDescendantOf(PClass::FindActor("SlideshowStarter")))
 				gameaction = ga_slideshow;
 		}
 		else

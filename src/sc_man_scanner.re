@@ -111,6 +111,10 @@ std2:
 		'sbyte'						{ RET(TK_SByte); }
 		'short'						{ RET(TK_Short); }
 		'ushort'					{ RET(TK_UShort); }
+		'int8'						{ RET(TK_Int8); }
+		'uint8'						{ RET(TK_UInt8); }
+		'int16'						{ RET(TK_Int16); }
+		'uint16'					{ RET(TK_UInt16); }
 		'int'						{ RET(TK_Int); }
 		'uint'						{ RET(TK_UInt); }
 		'long'						{ RET(TK_Long); }
@@ -158,13 +162,11 @@ std2:
 		'private'					{ RET(TK_Private); }
 		'dot'						{ RET(TK_Dot); }
 		'cross'						{ RET(TK_Cross); }
-		'ignores'					{ RET(TK_Ignores); }
 		'localized'					{ RET(TK_Localized); }
 		'latent'					{ RET(TK_Latent); }
 		'singular'					{ RET(TK_Singular); }
 		'config'					{ RET(TK_Config); }
 		'coerce'					{ RET(TK_Coerce); }
-		'iterator'					{ RET(TK_Iterator); }
 		'optional'					{ RET(TK_Optional); }
 		'export'					{ RET(TK_Export); }
 		'virtual'					{ RET(TK_Virtual); }
@@ -236,6 +238,7 @@ std2:
 		"<>="						{ RET(TK_LtGtEq); }
 		"**"						{ RET(TK_MulMul); }
 		"::"						{ RET(TK_ColonColon); }
+		"->"						{ RET(TK_Arrow); }
 		";"							{ StateOptions = false; RET(';'); }
 		"{"							{ StateOptions = false; RET('{'); }
 		"}"							{ RET('}'); }

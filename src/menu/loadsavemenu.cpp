@@ -103,7 +103,7 @@ protected:
 	char savegamestring[SAVESTRINGSIZE];
 
 	DLoadSaveMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
-	void Destroy();
+	void Destroy() override;
 
 	int RemoveSaveSlot (int index);
 	void UnloadSaveData ();
@@ -119,7 +119,7 @@ public:
 
 };
 
-IMPLEMENT_CLASS(DLoadSaveMenu, false, false, false, false)
+IMPLEMENT_CLASS(DLoadSaveMenu, false, false)
 
 TArray<FSaveGameNode*> DLoadSaveMenu::SaveGames;
 int DLoadSaveMenu::LastSaved = -1;
@@ -466,6 +466,7 @@ void DLoadSaveMenu::Destroy()
 	if (currentSavePic != nullptr) delete currentSavePic;
 	currentSavePic = nullptr;
 	ClearSaveStuff ();
+	Super::Destroy();
 }
 
 //=============================================================================
@@ -927,14 +928,14 @@ class DSaveMenu : public DLoadSaveMenu
 public:
 
 	DSaveMenu(DMenu *parent = NULL, FListMenuDescriptor *desc = NULL);
-	void Destroy();
+	void Destroy() override;
 	void DoSave (FSaveGameNode *node);
 	bool Responder (event_t *ev);
 	bool MenuEvent (int mkey, bool fromcontroller);
 
 };
 
-IMPLEMENT_CLASS(DSaveMenu, false, false, false, false)
+IMPLEMENT_CLASS(DSaveMenu, false, false)
 
 
 //=============================================================================
@@ -975,6 +976,7 @@ void DSaveMenu::Destroy()
 		if (Selected == 0) Selected = -1;
 		else Selected--;
 	}
+	Super::Destroy();
 }
 
 //=============================================================================
@@ -1102,7 +1104,7 @@ public:
 	bool MenuEvent (int mkey, bool fromcontroller);
 };
 
-IMPLEMENT_CLASS(DLoadMenu, false, false, false, false)
+IMPLEMENT_CLASS(DLoadMenu, false, false)
 
 
 //=============================================================================

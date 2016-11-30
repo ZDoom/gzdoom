@@ -44,6 +44,7 @@
 #include "sc_man.h"
 #include "s_sound.h"
 #include "actor.h"
+#include "vmbuilder.h"
 
 
 #define CHECKRESOLVED() if (isresolved) return this; isresolved=true;
@@ -67,14 +68,16 @@ struct FScriptPosition;
 class FxLoopStatement;
 class FxCompoundStatement;
 class FxLocalVariableDeclaration;
+typedef TDeletingArray<FxExpression*> FArgumentList;
 
 struct FCompileContext
 {
+	FxExpression *ControlStmt = nullptr;
 	FxLoopStatement *Loop = nullptr;
 	FxCompoundStatement *Block = nullptr;
 	PPrototype *ReturnProto;
 	PFunction *Function;	// The function that is currently being compiled (or nullptr for constant evaluation.)
-	PClass *Class;			// The type of the owning class.
+	PStruct *Class;			// The type of the owning class.
 	bool FromDecorate;		// DECORATE must silence some warnings and demote some errors.
 	int StateIndex;			// index in actor's state table for anonymous functions, otherwise -1 (not used by DECORATE which pre-resolves state indices)
 	int StateCount;			// amount of states an anoymous function is being used on (must be 1 for state indices to be allowed.)
@@ -83,7 +86,7 @@ struct FCompileContext
 	TDeletingArray<FxLocalVariableDeclaration *> FunctionArgs;
 
 	FCompileContext(PFunction *func, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump);
-	FCompileContext(PClass *cls, bool fromdecorate);	// only to be used to resolve constants!
+	FCompileContext(PStruct *cls, bool fromdecorate);	// only to be used to resolve constants!
 
 	PSymbol *FindInClass(FName identifier, PSymbolTable *&symt);
 	PSymbol *FindInSelfClass(FName identifier, PSymbolTable *&symt);
@@ -168,10 +171,16 @@ struct ExpVal
 		return regtype == REGT_INT ? Int : regtype == REGT_FLOAT ? int(Float) : 0;
 	}
 
+	unsigned GetUInt() const
+	{
+		int regtype = Type->GetRegType();
+		return regtype == REGT_INT ? unsigned(Int) : regtype == REGT_FLOAT ? unsigned(Float) : 0;
+	}
+
 	double GetFloat() const
 	{
 		int regtype = Type->GetRegType();
-		return regtype == REGT_INT ? double(Int) : regtype == REGT_FLOAT ? Float : 0;
+		return regtype == REGT_INT ? (Type == TypeUInt32? double(unsigned(Int)) : double(Int)) : regtype == REGT_FLOAT ? Float : 0;
 	}
 
 	void *GetPointer() const
@@ -200,17 +209,6 @@ struct ExpVal
 		}
 		return Type == TypeName ? ENamedName(Int) : NAME_None;
 	}
-};
-
-struct ExpEmit
-{
-	ExpEmit() : RegNum(0), RegType(REGT_NIL), RegCount(1), Konst(false), Fixed(false), Final(false), Target(false) {}
-	ExpEmit(int reg, int type, bool konst = false, bool fixed = false)  : RegNum(reg), RegType(type), RegCount(1), Konst(konst), Fixed(fixed), Final(false), Target(false) {}
-	ExpEmit(VMFunctionBuilder *build, int type, int count = 1);
-	void Free(VMFunctionBuilder *build);
-	void Reuse(VMFunctionBuilder *build);
-
-	BYTE RegNum, RegType, RegCount, Konst:1, Fixed:1, Final:1, Target:1;
 };
 
 enum EFxType
@@ -268,6 +266,7 @@ enum EFxType
 	EFX_JumpStatement,
 	EFX_ReturnStatement,
 	EFX_ClassTypeCast,
+	EFX_ClassPtrCast,
 	EFX_StateByIndex,
 	EFX_RuntimeStateIndex,
 	EFX_MultiNameState,
@@ -282,6 +281,15 @@ enum EFxType
 	EFX_DynamicCast,
 	EFX_GlobalVariable,
 	EFX_Super,
+	EFX_StackVariable,
+	EFX_MultiAssign,
+	EFX_StaticArray,
+	EFX_StaticArrayVariable,
+	EFX_CVar,
+	EFX_NamedNode,
+	EFX_GetClass,
+	EFX_ColorLiteral,
+	EFX_GetDefaultByType,
 	EFX_COUNT
 };
 
@@ -310,12 +318,14 @@ public:
 	virtual PPrototype *ReturnProto();
 	virtual VMFunction *GetDirectFunction();
 	virtual bool CheckReturn() { return false; }
+	virtual int GetBitValue() { return -1; }
 	bool IsNumeric() const { return ValueType->isNumeric(); }
 	bool IsFloat() const { return ValueType->GetRegType() == REGT_FLOAT && ValueType->GetRegCount() == 1; }
 	bool IsInteger() const { return ValueType->isNumeric() && (ValueType->GetRegType() == REGT_INT); }
 	bool IsPointer() const { return ValueType->GetRegType() == REGT_POINTER; }
 	bool IsVector() const { return ValueType == TypeVector2 || ValueType == TypeVector3; };
 	bool IsBoolCompat() const { return ValueType->GetRegCount() == 1 && (ValueType->GetRegType() == REGT_INT || ValueType->GetRegType() == REGT_FLOAT || ValueType->GetRegType() == REGT_POINTER); }
+	bool IsObject() const { return ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && !ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)) && ValueType != TypeNullPtr && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PClass)); }
 
 	virtual ExpEmit Emit(VMFunctionBuilder *build);
 
@@ -345,10 +355,11 @@ class FxIdentifier : public FxExpression
 {
 public:
 	FName Identifier;
+	bool noglobal = false;
 
 	FxIdentifier(FName i, const FScriptPosition &p);
 	FxExpression *Resolve(FCompileContext&);
-	FxExpression *ResolveMember(FCompileContext&, PClass*, FxExpression*&, PStruct*);
+	FxExpression *ResolveMember(FCompileContext&, PStruct*, FxExpression*&, PStruct*);
 };
 
 
@@ -467,6 +478,31 @@ public:
 		value.pointer = nullptr;
 		ValueType = value.Type = TypeNullPtr;
 		isresolved = true;
+	}
+
+	FxConstant(PType *type, VMValue &vmval, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
+	{
+		ValueType = value.Type = type;
+		isresolved = true;
+		switch (vmval.Type)
+		{
+		default:
+		case REGT_INT:
+			value.Int = vmval.i;
+			break;
+
+		case REGT_FLOAT:
+			value.Float = vmval.f;
+			break;
+
+		case REGT_STRING:
+			value = ExpVal(vmval.s());
+			break;
+
+		case REGT_POINTER:
+			value.pointer = vmval.a;
+			break;
+		}
 	}
 	
 	static FxExpression *MakeConstant(PSymbol *sym, const FScriptPosition &pos);
@@ -786,6 +822,28 @@ public:
 
 //==========================================================================
 //
+//	FxAssign
+//
+//==========================================================================
+class FxCompoundStatement;
+
+class FxMultiAssign : public FxExpression
+{
+	FxCompoundStatement *LocalVarContainer;	// for handling the temporary variables of the results, which may need type casts.
+	FArgumentList Base;
+	FxExpression *Right;
+	bool AddressRequested = false;
+	bool AddressWritable = false;
+
+public:
+	FxMultiAssign(FArgumentList &base, FxExpression *right, const FScriptPosition &pos);
+	~FxMultiAssign();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
 //	FxAssignSelf
 //
 //==========================================================================
@@ -815,8 +873,7 @@ public:
 
 	FxBinary(int, FxExpression*, FxExpression*);
 	~FxBinary();
-	bool ResolveLR(FCompileContext& ctx, bool castnumeric);
-	void Promote(FCompileContext &ctx);
+	bool Promote(FCompileContext &ctx, bool forceint = false);
 };
 
 //==========================================================================
@@ -872,6 +929,7 @@ public:
 
 class FxCompareRel : public FxBinary
 {
+	PType *CompareType;
 public:
 
 	FxCompareRel(int, FxExpression*, FxExpression*);
@@ -900,11 +958,26 @@ public:
 //
 //==========================================================================
 
-class FxBinaryInt : public FxBinary
+class FxBitOp : public FxBinary
 {
 public:
 
-	FxBinaryInt(int, FxExpression*, FxExpression*);
+	FxBitOp(int, FxExpression*, FxExpression*);
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxBinary
+//
+//==========================================================================
+
+class FxShift : public FxBinary
+{
+public:
+
+	FxShift(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
@@ -919,6 +992,21 @@ class FxLtGtEq : public FxBinary
 {
 public:
 	FxLtGtEq(FxExpression*, FxExpression*);
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxConcat : public FxBinary
+{
+public:
+	FxConcat(FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpEmit Emit(VMFunctionBuilder *build);
@@ -1179,6 +1267,16 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 	bool RequestAddress(FCompileContext &ctx, bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
+	virtual int GetBitValue() { return membervar->BitValue; }
+};
+
+class FxCVar : public FxExpression
+{
+	FBaseCVar *CVar;
+public:
+	FxCVar(FBaseCVar*, const FScriptPosition&);
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -1200,6 +1298,7 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 	bool RequestAddress(FCompileContext &ctx, bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
+	virtual int GetBitValue() { return membervar->BitValue; }
 };
 
 //==========================================================================
@@ -1229,6 +1328,47 @@ public:
 	int RegOffset;
 
 	FxLocalVariable(FxLocalVariableDeclaration*, const FScriptPosition&);
+	FxExpression *Resolve(FCompileContext&);
+	bool RequestAddress(FCompileContext &ctx, bool *writable);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxLocalVariable
+//
+//==========================================================================
+
+class FxStackVariable : public FxExpression
+{
+public:
+	PField *membervar;
+	bool AddressRequested;
+	bool AddressWritable;
+
+	FxStackVariable(PType *type, int offset, const FScriptPosition&);
+	~FxStackVariable();
+	void ReplaceField(PField *newfield);
+	FxExpression *Resolve(FCompileContext&);
+	bool RequestAddress(FCompileContext &ctx, bool *writable);
+	ExpEmit Emit(VMFunctionBuilder *build);
+	virtual int GetBitValue() { return membervar->BitValue; }
+};
+
+//==========================================================================
+//
+//	FxLocalVariable
+//
+//==========================================================================
+class FxStaticArray;
+
+class FxStaticArrayVariable : public FxExpression
+{
+public:
+	FxStaticArray *Variable;
+	bool AddressRequested;
+
+	FxStaticArrayVariable(FxLocalVariableDeclaration*, const FScriptPosition&);
 	FxExpression *Resolve(FCompileContext&);
 	bool RequestAddress(FCompileContext &ctx, bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
@@ -1280,6 +1420,7 @@ public:
 	FxExpression *index;
 	bool AddressRequested;
 	bool AddressWritable;
+	bool arrayispointer = false;
 
 	FxArrayElement(FxExpression*, FxExpression*);
 	~FxArrayElement();
@@ -1294,8 +1435,6 @@ public:
 //	FxFunctionCall
 //
 //==========================================================================
-
-typedef TDeletingArray<FxExpression*> FArgumentList;
 
 class FxFunctionCall : public FxExpression
 {
@@ -1393,17 +1532,76 @@ public:
 
 //==========================================================================
 //
+//	FxFlopFunctionCall
+//
+//==========================================================================
+
+class FxGetClass : public FxExpression
+{
+	FxExpression *Self;
+
+public:
+
+	FxGetClass(FxExpression *self);
+	~FxGetClass();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxFlopFunctionCall
+//
+//==========================================================================
+
+class FxGetDefaultByType : public FxExpression
+{
+	FxExpression *Self;
+
+public:
+
+	FxGetDefaultByType(FxExpression *self);
+	~FxGetDefaultByType();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxColorLiteral
+//
+//==========================================================================
+
+class FxColorLiteral : public FxExpression
+{
+	FArgumentList ArgList;
+	int constval = 0;
+
+public:
+
+	FxColorLiteral(FArgumentList &args, FScriptPosition &sc);
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
 // FxVMFunctionCall
 //
 //==========================================================================
 
 class FxVMFunctionCall : public FxExpression
 {
+	friend class FxMultiAssign;
+
 	bool EmitTail;
 	bool NoVirtual;
 	FxExpression *Self;
 	PFunction *Function;
 	FArgumentList ArgList;
+	// for multi assignment
+	int AssignCount = 0;
+	TArray<ExpEmit> ReturnRegs;
 
 public:
 	FxVMFunctionCall(FxExpression *self, PFunction *func, FArgumentList &args, const FScriptPosition &pos, bool novirtual);
@@ -1413,6 +1611,10 @@ public:
 	VMFunction *GetDirectFunction();
 	ExpEmit Emit(VMFunctionBuilder *build);
 	bool CheckEmitCast(VMFunctionBuilder *build, bool returnit, ExpEmit &reg);
+	TArray<PType*> &GetReturnTypes() const
+	{
+		return Function->Variants[0].Proto->ReturnTypes;
+	}
 };
 
 //==========================================================================
@@ -1448,6 +1650,8 @@ class FxCompoundStatement : public FxSequence
 	FxCompoundStatement *Outer = nullptr;
 
 	friend class FxLocalVariableDeclaration;
+	friend class FxStaticArray;
+	friend class FxMultiAssign;
 
 public:
 	FxCompoundStatement(const FScriptPosition &pos) : FxSequence(pos) {}
@@ -1477,6 +1681,8 @@ class FxSwitchStatement : public FxExpression
 	TArray<CaseAddr> CaseAddresses;
 
 public:
+	TArray<FxJumpStatement *> Breaks;
+
 	FxSwitchStatement(FxExpression *cond, FArgumentList &content, const FScriptPosition &pos);
 	~FxSwitchStatement();
 	FxExpression *Resolve(FCompileContext&);
@@ -1658,6 +1864,25 @@ public:
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+class FxClassPtrCast : public FxExpression
+{
+	PClass *desttype;
+	FxExpression *basex;
+
+public:
+
+	FxClassPtrCast(PClass *dtype, FxExpression *x);
+	~FxClassPtrCast();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
 // Only used to resolve the old jump by index feature of DECORATE
 //
 //==========================================================================
@@ -1740,12 +1965,14 @@ class FxLocalVariableDeclaration : public FxExpression
 {
 	friend class FxCompoundStatement;
 	friend class FxLocalVariable;
+	friend class FxStaticArrayVariable;
 
 	FName Name;
 	FxExpression *Init;
 	int VarFlags;
 	int RegCount;
 public:
+	int StackOffset = -1;
 	int RegNum = -1;
 
 	FxLocalVariableDeclaration(PType *type, FName name, FxExpression *initval, int varflags, const FScriptPosition &p);
@@ -1753,7 +1980,48 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 	void Release(VMFunctionBuilder *build);
+	void SetReg(ExpEmit reginfo);
 
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxStaticArray : public FxLocalVariableDeclaration
+{
+	friend class FxStaticArrayVariable;
+
+	PType *ElementType;
+	FArgumentList values;
+
+public:
+
+	FxStaticArray(PType *type, FName name, FArgumentList &args, const FScriptPosition &pos);
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+class FxNamedNode : public FxExpression
+{
+public:
+	FName name;
+	FxExpression *value;
+	FxNamedNode(FName n, FxExpression *x, const FScriptPosition &pos)
+		: FxExpression(EFX_NamedNode, pos), name(n), value(x)
+	{
+	}
+
+	FxExpression *Resolve(FCompileContext&)
+	{
+		// This should never reach the backend in a supported context, 
+		// it's just needed to extend argument lists with the skipped parameters and needs to be resolved by the parent node.
+		ScriptPosition.Message(MSG_ERROR, "Named arguments not supported here");
+		delete this;
+		return nullptr;
+	}
 };
 
 #endif

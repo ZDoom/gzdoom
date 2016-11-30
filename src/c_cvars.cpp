@@ -1093,7 +1093,7 @@ BitVal (bitval)
 
 ECVarType FFlagCVar::GetRealType () const
 {
-	return CVAR_Dummy;
+	return CVAR_DummyBool;
 }
 
 UCVarValue FFlagCVar::GetGenericRep (ECVarType type) const
@@ -1197,7 +1197,7 @@ BitVal (bitval)
 
 ECVarType FMaskCVar::GetRealType () const
 {
-	return CVAR_Dummy;
+	return CVAR_DummyInt;
 }
 
 UCVarValue FMaskCVar::GetGenericRep (ECVarType type) const

@@ -25,11 +25,11 @@
 #include "gi.h"
 #include "p_pspr.h"
 #include "templates.h"
-#include "vm.h"
 #include "g_level.h"
 #include "d_player.h"
 #include "serializer.h"
 #include "v_text.h"
+#include "cmdlib.h"
 
 
 // MACROS ------------------------------------------------------------------
@@ -80,7 +80,6 @@ CVAR(Int, sv_fastweapons, false, CVAR_SERVERINFO);
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static FRandom pr_wpnreadysnd ("WpnReadySnd");
-static FRandom pr_gunshot ("GunShot");
 
 static const FGenericButtons ButtonChecks[] =
 {
@@ -100,12 +99,32 @@ static const FGenericButtons ButtonChecks[] =
 //
 //------------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DPSprite, false, true, false, false)
+IMPLEMENT_CLASS(DPSprite, false, true)
 
 IMPLEMENT_POINTERS_START(DPSprite)
 	IMPLEMENT_POINTER(Caller)
 	IMPLEMENT_POINTER(Next)
 IMPLEMENT_POINTERS_END
+
+DEFINE_FIELD_NAMED(DPSprite, State, CurState)	// deconflict with same named type
+DEFINE_FIELD(DPSprite, Caller)
+DEFINE_FIELD(DPSprite, Next)
+DEFINE_FIELD(DPSprite, Owner)
+DEFINE_FIELD(DPSprite, Sprite)
+DEFINE_FIELD(DPSprite, Frame)
+DEFINE_FIELD(DPSprite, ID)
+DEFINE_FIELD(DPSprite, processPending)
+DEFINE_FIELD(DPSprite, x)
+DEFINE_FIELD(DPSprite, y)
+DEFINE_FIELD(DPSprite, oldx)
+DEFINE_FIELD(DPSprite, oldy)
+DEFINE_FIELD(DPSprite, firstTic)
+DEFINE_FIELD(DPSprite, Tics)
+DEFINE_FIELD_BIT(DPSprite, Flags, bAddWeapon, PSPF_ADDWEAPON)
+DEFINE_FIELD_BIT(DPSprite, Flags, bAddBob, PSPF_ADDBOB)
+DEFINE_FIELD_BIT(DPSprite, Flags, bPowDouble, PSPF_POWDOUBLE)
+DEFINE_FIELD_BIT(DPSprite, Flags, bCVarFast, PSPF_CVARFAST)
+DEFINE_FIELD_BIT(DPSprite, Flags, bFlip, PSPF_FLIP)
 
 //------------------------------------------------------------------------
 //
@@ -173,6 +192,14 @@ DPSprite *player_t::FindPSprite(int layer)
 	return pspr;
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, FindPSprite)	// the underscore is needed to get past the name mangler which removes the first clas name character to match the class representation (needs to be fixed in a later commit)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_INT(id);
+	ACTION_RETURN_OBJECT(self->FindPSprite((PSPLayers)id));
+}
+
+
 //------------------------------------------------------------------------
 //
 //
@@ -183,6 +210,16 @@ void P_SetPsprite(player_t *player, PSPLayers id, FState *state, bool pending)
 {
 	if (player == nullptr) return;
 	player->GetPSprite(id)->SetState(state, pending);
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, SetPSprite)	// the underscore is needed to get past the name mangler which removes the first clas name character to match the class representation (needs to be fixed in a later commit)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_INT(id);
+	PARAM_POINTER(state, FState);
+	PARAM_BOOL_DEF(pending);
+	P_SetPsprite(self, (PSPLayers)id, state, pending);
+	return 0;
 }
 
 DPSprite *player_t::GetPSprite(PSPLayers layer)
@@ -245,6 +282,14 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 
 	return pspr;
 }
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetPSprite)	// the underscore is needed to get past the name mangler which removes the first clas name character to match the class representation (needs to be fixed in a later commit)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_INT(id);
+	ACTION_RETURN_OBJECT(self->GetPSprite((PSPLayers)id));
+}
+
 
 //---------------------------------------------------------------------------
 //
@@ -364,7 +409,7 @@ void DPSprite::SetState(FState *newstate, bool pending)
 				// If an unsafe function (i.e. one that accesses user variables) is being detected, print a warning once and remove the bogus function. We may not call it because that would inevitably crash.
 				auto owner = FState::StaticFindStateOwner(newstate);
 				Printf(TEXTCOLOR_RED "Unsafe state call in state %s.%d to %s which accesses user variables. The action function has been removed from this state\n",
-					owner->TypeName.GetChars(), newstate - owner->OwnedStates, static_cast<VMScriptFunction *>(newstate->ActionFunc)->PrintableName.GetChars());
+					owner->TypeName.GetChars(), int(newstate - owner->OwnedStates), newstate->ActionFunc->PrintableName.GetChars());
 				newstate->ActionFunc = nullptr;
 			}
 			if (newstate->CallAction(Owner->mo, Caller, &stp, &nextstate))
@@ -392,6 +437,15 @@ void DPSprite::SetState(FState *newstate, bool pending)
 	} while (!Tics); // An initial state of 0 could cycle through.
 
 	return;
+}
+
+DEFINE_ACTION_FUNCTION(DPSprite, SetState)
+{
+	PARAM_SELF_PROLOGUE(DPSprite);
+	PARAM_POINTER(state, FState);
+	PARAM_BOOL_DEF(pending);
+	self->SetState(state, pending);
+	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -772,7 +826,7 @@ void DoReadyWeapon(AActor *self)
 	DoReadyWeaponToGeneric(self, ~0);
 }
 
-DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_WeaponReady)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_WeaponReady)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT_DEF(flags);
@@ -904,7 +958,7 @@ static void P_CheckWeaponButtons (player_t *player)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_ReFire)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_ReFire)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_STATE_ACTION_DEF(state);
@@ -942,7 +996,7 @@ void A_ReFire(AActor *self, FState *state)
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AInventory, A_ClearReFire)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_ClearReFire)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	player_t *player = self->player;
@@ -964,7 +1018,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_ClearReFire)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AInventory, A_CheckReload)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_CheckReload)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 
@@ -1152,7 +1206,7 @@ DEFINE_ACTION_FUNCTION(AActor, OverlayID)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_Lower)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 
@@ -1200,7 +1254,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
+DEFINE_ACTION_FUNCTION(AActor, A_Raise)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 
@@ -1241,7 +1295,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Overlay)
+DEFINE_ACTION_FUNCTION(AActor, A_Overlay)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT		(layer);
@@ -1261,7 +1315,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Overlay)
 	ACTION_RETURN_BOOL(true);
 }
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ClearOverlays)
+DEFINE_ACTION_FUNCTION(AActor, A_ClearOverlays)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT_DEF(start);
@@ -1312,7 +1366,7 @@ enum GF_Flags
 	GFF_NOEXTCHANGE = 1,
 };
 
-DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_GunFlash)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_STATE_ACTION_DEF(flash);
@@ -1382,6 +1436,15 @@ DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfla
 	return pitch;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, BulletSlope)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER_DEF(t, FTranslatedLineTarget);
+	PARAM_INT_DEF(aimflags);
+	ACTION_RETURN_FLOAT(P_BulletSlope(self, t, aimflags).Degrees);
+}
+
+
 AActor *P_AimTarget(AActor *mo)
 {
 	FTranslatedLineTarget t;
@@ -1393,38 +1456,6 @@ DEFINE_ACTION_FUNCTION(AActor, AimTarget)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	ACTION_RETURN_OBJECT(P_AimTarget(self));
-}
-
-
-//
-// P_GunShot
-//
-void P_GunShot (AActor *mo, bool accurate, PClassActor *pufftype, DAngle pitch)
-{
-	DAngle 	angle;
-	int 		damage;
-		
-	damage = 5*(pr_gunshot()%3+1);
-	angle = mo->Angles.Yaw;
-
-	if (!accurate)
-	{
-		angle += pr_gunshot.Random2 () * (5.625 / 256);
-	}
-
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, pufftype);
-}
-
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Light)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(light);
-
-	if (self->player != NULL)
-	{
-		self->player->extralight = clamp<int>(light, -20, 20);
-	}
-	return 0;
 }
 
 //------------------------------------------------------------------------
@@ -1561,6 +1592,63 @@ void player_t::DestroyPSprites()
 		pspr->Destroy();
 		pspr = next;
 	}
+}
+
+//------------------------------------------------------------------------------------
+//
+// Setting a random flash like some of Doom's weapons can easily crash when the
+// definition is overridden incorrectly so let's check that the state actually exists.
+// Be aware though that this will not catch all DEHACKED related problems. But it will
+// find all DECORATE related ones.
+//
+//------------------------------------------------------------------------------------
+
+void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int index)
+{
+
+	PClassActor *cls = weapon->GetClass();
+	while (cls != RUNTIME_CLASS(AWeapon))
+	{
+		if (flashstate >= cls->OwnedStates && flashstate < cls->OwnedStates + cls->NumOwnedStates)
+		{
+			// The flash state belongs to this class.
+			// Now let's check if the actually wanted state does also
+			if (flashstate + index < cls->OwnedStates + cls->NumOwnedStates)
+			{
+				// we're ok so set the state
+				P_SetPsprite(player, PSP_FLASH, flashstate + index, true);
+				return;
+			}
+			else
+			{
+				// oh, no! The state is beyond the end of the state table so use the original flash state.
+				P_SetPsprite(player, PSP_FLASH, flashstate, true);
+				return;
+			}
+		}
+		// try again with parent class
+		cls = static_cast<PClassActor *>(cls->ParentClass);
+	}
+	// if we get here the state doesn't seem to belong to any class in the inheritance chain
+	// This can happen with Dehacked if the flash states are remapped. 
+	// The only way to check this would be to go through all Dehacked modifiable actors, convert
+	// their states into a single flat array and find the correct one.
+	// Rather than that, just check to make sure it belongs to something.
+	if (FState::StaticFindStateOwner(flashstate + index) == NULL)
+	{ // Invalid state. With no index offset, it should at least be valid.
+		index = 0;
+	}
+	P_SetPsprite(player, PSP_FLASH, flashstate + index, true);
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, SetSafeFlash)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_OBJECT(weapon, AWeapon);
+	PARAM_POINTER(state, FState);
+	PARAM_INT(index);
+	P_SetSafeFlash(weapon, self, state, index);
+	return 0;
 }
 
 //------------------------------------------------------------------------

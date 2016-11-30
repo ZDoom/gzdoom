@@ -38,7 +38,7 @@ extend class Actor
 {
 	void A_BarrelDestroy()
 	{
-		if (GetCVar("sv_barrelrespawn"))
+		if (sv_barrelrespawn)
 		{
 			Height = Default.Height;
 			bInvisible = true;

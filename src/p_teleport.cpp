@@ -47,7 +47,7 @@ extern void P_CalcHeight (player_t *player);
 
 CVAR (Bool, telezoom, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
-IMPLEMENT_CLASS(ATeleportFog, false, false, false, false)
+IMPLEMENT_CLASS(ATeleportFog, false, false)
 
 void ATeleportFog::PostBeginPlay ()
 {
@@ -94,6 +94,18 @@ void P_SpawnTeleportFog(AActor *mobj, const DVector3 &pos, bool beforeTele, bool
 
 	if (mo != NULL && setTarget)
 		mo->target = mobj;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SpawnTeleportFog)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_BOOL(before);
+	PARAM_BOOL(settarget);
+	P_SpawnTeleportFog(self, DVector3(x, y, z), before, settarget);
+	return 0;
 }
 
 //
@@ -224,6 +236,17 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 		if (player)	player->Vel.Zero();
 	}
 	return true;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Teleport)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_ANGLE(an);
+	PARAM_INT(flags);
+	ACTION_RETURN_BOOL(P_Teleport(self, DVector3(x, y, z), an, flags));
 }
 
 static AActor *SelectTeleDest (int tid, int tag, bool norandom)

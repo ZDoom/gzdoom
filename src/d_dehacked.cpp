@@ -70,11 +70,13 @@
 #include "doomerrors.h"
 #include "p_effect.h"
 #include "serializer.h"
-#include "vm.h"
 #include "thingdef.h"
 #include "info.h"
 #include "v_text.h"
 #include "vmbuilder.h"
+#include "a_armor.h"
+#include "a_ammo.h"
+#include "a_health.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -167,36 +169,25 @@ static TArray<CodePointerAlias> MBFCodePointers;
 
 struct AmmoPerAttack
 {
-	VMNativeFunction **func;
+	ENamedName func;
 	int ammocount;
+	VMFunction *ptr;
 };
-
-DECLARE_ACTION(A_Punch)
-DECLARE_ACTION(A_FirePistol)
-DECLARE_ACTION(A_FireShotgun)
-DECLARE_ACTION(A_FireShotgun2)
-DECLARE_ACTION(A_FireCGun)
-DECLARE_ACTION(A_FireMissile)
-DECLARE_ACTION(A_Saw)
-DECLARE_ACTION(A_FirePlasma)
-DECLARE_ACTION(A_FireBFG)
-DECLARE_ACTION(A_FireOldBFG)
-DECLARE_ACTION(A_FireRailgun)
 
 // Default ammo use of the various weapon attacks
 static AmmoPerAttack AmmoPerAttacks[] = {
-	{ &A_Punch_VMPtr, 0},
-	{ &A_FirePistol_VMPtr, 1},
-	{ &A_FireShotgun_VMPtr, 1}, 
-	{ &A_FireShotgun2_VMPtr, 2},
-	{ &A_FireCGun_VMPtr, 1},
-	{ &A_FireMissile_VMPtr, 1},
-	{ &A_Saw_VMPtr, 0},
-	{ &A_FirePlasma_VMPtr, 1},
-	{ &A_FireBFG_VMPtr, -1},	// uses deh.BFGCells
-	{ &A_FireOldBFG_VMPtr, 1},
-	{ &A_FireRailgun_VMPtr, 1},
-	{ NULL, 0}
+	{ NAME_A_Punch, 0},
+	{ NAME_A_FirePistol, 1},
+	{ NAME_A_FireShotgun, 1},
+	{ NAME_A_FireShotgun2, 2},
+	{ NAME_A_FireCGun, 1},
+	{ NAME_A_FireMissile, 1},
+	{ NAME_A_Saw, 0},
+	{ NAME_A_FirePlasma, 1},
+	{ NAME_A_FireBFG, -1},	// uses deh.BFGCells
+	{ NAME_A_FireOldBFG, 1},
+	{ NAME_A_FireRailgun, 1},
+	{ NAME_None, 0}
 };
 
 
@@ -224,6 +215,12 @@ DehInfo deh =
 	40,		// BFG cells per shot
 };
 
+DEFINE_FIELD_X(DehInfo, DehInfo, MaxSoulsphere)
+DEFINE_FIELD_X(DehInfo, DehInfo, ExplosionStyle)
+DEFINE_FIELD_X(DehInfo, DehInfo, ExplosionAlpha)
+DEFINE_FIELD_X(DehInfo, DehInfo, NoAutofreeze)
+DEFINE_FIELD_X(DehInfo, DehInfo, BFGCells)
+
 // Doom identified pickup items by their sprites. ZDoom prefers to use their
 // class type to identify them instead. To support the traditional Doom
 // behavior, for every thing touched by dehacked that has the MF_PICKUP flag,
@@ -231,7 +228,7 @@ DehInfo deh =
 // from the original actor's defaults. The original actor is then changed to
 // spawn the new class.
 
-IMPLEMENT_CLASS(ADehackedPickup, false, true, false, false)
+IMPLEMENT_CLASS(ADehackedPickup, false, true)
 
 IMPLEMENT_POINTERS_START(ADehackedPickup)
 	IMPLEMENT_POINTER(RealPickup)
@@ -1476,26 +1473,19 @@ static int PatchFrame (int frameNum)
 
 	if (info != &dummy)
 	{
-		info->DefineFlags |= SDF_DEHACKED;	// Signals the state has been modified by dehacked
+		info->StateFlags |= STF_DEHACKED;	// Signals the state has been modified by dehacked
 		if ((unsigned)(frame & 0x7fff) > 63)
 		{
-			Printf ("Frame %d: Subnumber must be in range [0,63]\n", frameNum);
+			Printf("Frame %d: Subnumber must be in range [0,63]\n", frameNum);
 		}
 		info->Tics = tics;
 		info->Misc1 = misc1;
 		info->Frame = frame & 0x3f;
-		info->Fullbright = frame & 0x8000 ? true : false;
+		if (frame & 0x8000) info->StateFlags |= STF_FULLBRIGHT;
+		else info->StateFlags &= ~STF_FULLBRIGHT;
 	}
 
 	return result;
-}
-
-// there is exactly one place where this is needed and we do not want to expose the state internals to ZSCRIPT.
-DEFINE_ACTION_FUNCTION(AActor, isDEHState)
-{
-	PARAM_PROLOGUE;
-	PARAM_POINTER(state, FState);
-	ACTION_RETURN_BOOL(state != nullptr && (state->DefineFlags & SDF_DEHACKED));
 }
 
 static int PatchSprite (int sprNum)
@@ -3094,9 +3084,14 @@ void FinishDehPatch ()
 					break;	// State has already been checked so we reached a loop
 				}
 				StateVisited[state] = true;
-				for(unsigned j = 0; AmmoPerAttacks[j].func != NULL; j++)
+				for(unsigned j = 0; AmmoPerAttacks[j].func != NAME_None; j++)
 				{
-					if (state->ActionFunc == *AmmoPerAttacks[j].func)
+					if (AmmoPerAttacks[j].ptr == nullptr)
+					{
+						auto p = dyn_cast<PFunction>(RUNTIME_CLASS(AStateProvider)->Symbols.FindSymbol(AmmoPerAttacks[j].func, true));
+						if (p != nullptr) AmmoPerAttacks[j].ptr = p->Variants[0].Implementation;
+					}
+					if (state->ActionFunc == AmmoPerAttacks[j].ptr)
 					{
 						found = true;
 						int use = AmmoPerAttacks[j].ammocount;
@@ -3150,7 +3145,7 @@ bool ADehackedPickup::TryPickup (AActor *&toucher)
 	return false;
 }
 
-const char *ADehackedPickup::PickupMessage ()
+FString ADehackedPickup::PickupMessage ()
 {
 	if (RealPickup != nullptr)
 		return RealPickup->PickupMessage ();
@@ -3160,7 +3155,7 @@ const char *ADehackedPickup::PickupMessage ()
 bool ADehackedPickup::ShouldStay ()
 {
 	if (RealPickup != nullptr)
-		return RealPickup->ShouldStay ();
+		return RealPickup->CallShouldStay ();
 	else return true;
 }
 

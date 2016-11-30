@@ -30,6 +30,7 @@
 #include "doomstat.h"
 
 #include "a_artifacts.h"
+#include "a_weapons.h"
 
 // The player data structure depends on a number
 // of other structs: items (internal inventory),
@@ -105,29 +106,36 @@ public:
 	
 	virtual void Serialize(FSerializer &arc);
 
-	virtual void PostBeginPlay();
-	virtual void Tick();
-	virtual void AddInventory (AInventory *item);
-	virtual void RemoveInventory (AInventory *item);
-	virtual bool UseInventory (AInventory *item);
-	virtual void MarkPrecacheSounds () const;
+	virtual void PostBeginPlay() override;
+	virtual void Tick() override;
+	virtual void AddInventory (AInventory *item) override;
+	virtual void RemoveInventory (AInventory *item) override;
+	virtual bool UseInventory (AInventory *item) override;
+	virtual void MarkPrecacheSounds () const override;
+	virtual void BeginPlay () override;
+	virtual void Die (AActor *source, AActor *inflictor, int dmgflags) override;
+	virtual bool UpdateWaterLevel (bool splash) override;
 
-	virtual void PlayIdle ();
-	virtual void PlayRunning ();
-	virtual void ThrowPoisonBag ();
-	virtual void TweakSpeeds (double &forwardmove, double &sidemove);
-	virtual void MorphPlayerThink ();
-	virtual void ActivateMorphWeapon ();
+	bool ResetAirSupply (bool playgasp = true);
+	int GetMaxHealth() const;
+	void TweakSpeeds (double &forwardmove, double &sidemove);
+	void MorphPlayerThink ();
+	void ActivateMorphWeapon ();
 	AWeapon *PickNewWeapon (PClassAmmo *ammotype);
 	AWeapon *BestWeapon (PClassAmmo *ammotype);
 	void CheckWeaponSwitch(PClassAmmo *ammotype);
-	virtual void GiveDeathmatchInventory ();
-	virtual void FilterCoopRespawnInventory (APlayerPawn *oldplayer);
+	void GiveDeathmatchInventory ();
+	void FilterCoopRespawnInventory (APlayerPawn *oldplayer);
 
 	void SetupWeaponSlots ();
 	void GiveDefaultInventory ();
+
+	// These are virtual on the script side only.
+	void PlayIdle();
+	void PlayRunning();
 	void PlayAttacking ();
 	void PlayAttacking2 ();
+
 	const char *GetSoundClass () const;
 
 	enum EInvulState
@@ -138,8 +146,6 @@ public:
 		INVUL_GetAlpha
 	};
 
-	void BeginPlay ();
-	void Die (AActor *source, AActor *inflictor, int dmgflags);
 
 	int			crouchsprite;
 	int			MaxHealth;
@@ -171,10 +177,6 @@ public:
 	// [SP] ViewBob Multiplier
 	double		ViewBob;
 
-	bool UpdateWaterLevel (bool splash);
-	bool ResetAirSupply (bool playgasp = true);
-
-	int GetMaxHealth() const;
 };
 
 class APlayerChunk : public APlayerPawn
@@ -253,11 +255,10 @@ enum
 	WF_USER4OK			= 1 << 11,
 };
 
-#define WPIECE1		1
-#define WPIECE2		2
-#define WPIECE3		4
-
-#define WP_NOCHANGE ((AWeapon*)~0)
+// The VM cannot deal with this as an invalid pointer because it performs a read barrier on every object pointer read.
+// This doesn't have to point to a valid weapon, though, because WP_NOCHANGE is never dereferenced, but it must point to a valid object
+// and the class descriptor just works fine for that.
+#define WP_NOCHANGE ((AWeapon*)RUNTIME_CLASS_CASTLESS(AWeapon))
 
 
 #define MAXPLAYERNAME	15

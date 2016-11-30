@@ -44,7 +44,6 @@
 #include "s_sound.h"
 #include "cmdlib.h"
 #include "p_lnspec.h"
-#include "a_action.h"
 #include "decallib.h"
 #include "i_system.h"
 #include "thingdef.h"
@@ -96,7 +95,9 @@ public:
 	}
 };
 
-IMPLEMENT_CLASS(AFakeInventory, false, false, false, false)
+IMPLEMENT_CLASS(AFakeInventory, false, false)
+
+DEFINE_FIELD(AFakeInventory, Respawnable)
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -699,7 +700,7 @@ static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, TArray
 				{
 					sc.ScriptError ("* must come after a frame");
 				}
-				state.Fullbright = true;
+				state.StateFlags |= STF_FULLBRIGHT;
 			}
 			else if (*token < 'A' || *token > ']')
 			{

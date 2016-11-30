@@ -22,6 +22,7 @@
 //-----------------------------------------------------------------------------
 
 #include "p_spec.h"
+#include "p_lnspec.h"
 #include "c_cvars.h"
 #include "doomstat.h"
 #include "g_level.h"
@@ -699,12 +700,32 @@ void sector_t::SetColor(int r, int g, int b, int desat)
 	P_RecalculateAttachedLights(this);
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, SetColor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_COLOR(color);
+	PARAM_INT(desat);
+	self->ColorMap = GetSpecialLights(color, self->ColorMap->Fade, desat);
+	P_RecalculateAttachedLights(self);
+	return 0;
+}
+
 void sector_t::SetFade(int r, int g, int b)
 {
 	PalEntry fade = PalEntry (r,g,b);
 	ColorMap = GetSpecialLights (ColorMap->Color, fade, ColorMap->Desaturate);
 	P_RecalculateAttachedLights(this);
 }
+
+DEFINE_ACTION_FUNCTION(_Sector, SetFade)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_COLOR(fade);
+	self->ColorMap = GetSpecialLights(self->ColorMap->Color, fade, self->ColorMap->Desaturate);
+	P_RecalculateAttachedLights(self);
+	return 0;
+}
+
 
 //===========================================================================
 //
@@ -960,7 +981,7 @@ double sector_t::NextHighestCeilingAt(double x, double y, double bottomz, double
 			}
 		}
 		if ((flags & FFCF_NOPORTALS) || sec->PortalBlocksMovement(ceiling) || planeheight >= sec->GetPortalPlaneZ(ceiling))
-		{ // Use sector's floor
+		{ // Use sector's ceiling
 			if (resultffloor) *resultffloor = NULL;
 			if (resultsec) *resultsec = sec;
 			return realceil;
@@ -974,6 +995,34 @@ double sector_t::NextHighestCeilingAt(double x, double y, double bottomz, double
 			sec = P_PointInSector(x, y);
 		}
 	}
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, NextHighestCeilingAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(bottomz);
+	PARAM_FLOAT(topz);
+	PARAM_INT_DEF(flags);
+	sector_t *resultsec;
+	F3DFloor *resultff;
+	double resultheight = self->NextHighestCeilingAt(x, y, bottomz, topz, flags, &resultsec, &resultff);
+
+	if (numret > 2)
+	{
+		ret[2].SetPointer(resultff, ATAG_GENERIC);
+		numret = 3;
+	}
+	if (numret > 1)
+	{
+		ret[1].SetPointer(resultsec, ATAG_GENERIC);
+	}
+	if (numret > 0)
+	{
+		ret[0].SetFloat(resultheight);
+	}
+	return numret;
 }
 
 double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, double steph, sector_t **resultsec, F3DFloor **resultffloor)
@@ -1021,6 +1070,35 @@ double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, doub
 	}
 }
 
+DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_INT_DEF(flags);
+	PARAM_FLOAT_DEF(steph);
+	sector_t *resultsec;
+	F3DFloor *resultff;
+	double resultheight = self->NextLowestFloorAt(x, y, z, flags, steph, &resultsec, &resultff);
+
+	if (numret > 2)
+	{
+		ret[2].SetPointer(resultff, ATAG_GENERIC);
+		numret = 3;
+	}
+	if (numret > 1)
+	{
+		ret[1].SetPointer(resultsec, ATAG_GENERIC);
+	}
+	if (numret > 0)
+	{
+		ret[0].SetFloat(resultheight);
+	}
+	return numret;
+}
+
+
 //===========================================================================
 //
 // 
@@ -1046,6 +1124,43 @@ double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, doub
 		return ORIG_FRICTION;
 	}
 }
+
+ //===========================================================================
+ //
+ // 
+ //
+ //===========================================================================
+
+ void sector_t::RemoveForceField()
+ {
+	 for (int i = 0; i < linecount; ++i)
+	 {
+		 line_t *line = lines[i];
+		 if (line->backsector != NULL && line->special == ForceField)
+		 {
+			 line->flags &= ~(ML_BLOCKING | ML_BLOCKEVERYTHING);
+			 line->special = 0;
+			 line->sidedef[0]->SetTexture(side_t::mid, FNullTextureID());
+			 line->sidedef[1]->SetTexture(side_t::mid, FNullTextureID());
+		 }
+	 }
+ }
+
+ DEFINE_ACTION_FUNCTION(_Sector, RemoveForceField)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 self->RemoveForceField();
+	 return 0;
+ }
+
+
+ DEFINE_ACTION_FUNCTION(_Sector, PointInSector)
+ {
+	 PARAM_PROLOGUE;
+	 PARAM_FLOAT(x);
+	 PARAM_FLOAT(y);
+	 ACTION_RETURN_POINTER(P_PointInSector(x, y));
+ }
 
 //===========================================================================
 //
@@ -1237,3 +1352,64 @@ int side_t::GetLightLevel (bool foggy, int baselight, bool is3dlight, int *pfake
 	}
 	return baselight;
 }
+
+
+DEFINE_FIELD_X(Sector, sector_t, floorplane)
+DEFINE_FIELD_X(Sector, sector_t, ceilingplane)
+DEFINE_FIELD_X(Sector, sector_t, ColorMap)
+DEFINE_FIELD_X(Sector, sector_t, SoundTarget)
+DEFINE_FIELD_X(Sector, sector_t, special)
+DEFINE_FIELD_X(Sector, sector_t, lightlevel)
+DEFINE_FIELD_X(Sector, sector_t, seqType)
+DEFINE_FIELD_X(Sector, sector_t, sky)
+DEFINE_FIELD_X(Sector, sector_t, SeqName)
+DEFINE_FIELD_X(Sector, sector_t, centerspot)
+DEFINE_FIELD_X(Sector, sector_t, validcount)
+DEFINE_FIELD_X(Sector, sector_t, thinglist)
+DEFINE_FIELD_X(Sector, sector_t, friction)
+DEFINE_FIELD_X(Sector, sector_t, movefactor)
+DEFINE_FIELD_X(Sector, sector_t, terrainnum)
+DEFINE_FIELD_X(Sector, sector_t, floordata)
+DEFINE_FIELD_X(Sector, sector_t, ceilingdata)
+DEFINE_FIELD_X(Sector, sector_t, lightingdata)
+DEFINE_FIELD_X(Sector, sector_t, interpolations)
+DEFINE_FIELD_X(Sector, sector_t, soundtraversed)
+DEFINE_FIELD_X(Sector, sector_t, stairlock)
+DEFINE_FIELD_X(Sector, sector_t, prevsec)
+DEFINE_FIELD_X(Sector, sector_t, nextsec)
+DEFINE_FIELD_X(Sector, sector_t, linecount)
+DEFINE_FIELD_X(Sector, sector_t, lines)
+DEFINE_FIELD_X(Sector, sector_t, heightsec)
+DEFINE_FIELD_X(Sector, sector_t, bottommap)
+DEFINE_FIELD_X(Sector, sector_t, midmap)
+DEFINE_FIELD_X(Sector, sector_t, topmap)
+DEFINE_FIELD_X(Sector, sector_t, touching_thinglist)
+DEFINE_FIELD_X(Sector, sector_t, render_thinglist)
+DEFINE_FIELD_X(Sector, sector_t, gravity)
+DEFINE_FIELD_X(Sector, sector_t, damagetype)
+DEFINE_FIELD_X(Sector, sector_t, damageamount)
+DEFINE_FIELD_X(Sector, sector_t, damageinterval)
+DEFINE_FIELD_X(Sector, sector_t, leakydamage)
+DEFINE_FIELD_X(Sector, sector_t, ZoneNumber)
+DEFINE_FIELD_X(Sector, sector_t, MoreFlags)
+DEFINE_FIELD_X(Sector, sector_t, Flags)
+DEFINE_FIELD_X(Sector, sector_t, SecActTarget)
+DEFINE_FIELD_X(Sector, sector_t, Portals)
+DEFINE_FIELD_X(Sector, sector_t, PortalGroup)
+DEFINE_FIELD_X(Sector, sector_t, sectornum)
+
+DEFINE_FIELD_X(Line, line_t, v1)
+DEFINE_FIELD_X(Line, line_t, v2)
+DEFINE_FIELD_X(Line, line_t, delta)
+DEFINE_FIELD_X(Line, line_t, flags)
+DEFINE_FIELD_X(Line, line_t, activation)
+DEFINE_FIELD_X(Line, line_t, special)
+DEFINE_FIELD_X(Line, line_t, args)
+DEFINE_FIELD_X(Line, line_t, alpha)
+DEFINE_FIELD_X(Line, line_t, sidedef)
+DEFINE_FIELD_X(Line, line_t, bbox)
+DEFINE_FIELD_X(Line, line_t, frontsector)
+DEFINE_FIELD_X(Line, line_t, backsector)
+DEFINE_FIELD_X(Line, line_t, validcount)
+DEFINE_FIELD_X(Line, line_t, locknumber)
+DEFINE_FIELD_X(Line, line_t, portalindex)

@@ -193,7 +193,7 @@ class RandomSpawner : Actor native
 
 // Sector flag setter ------------------------------------------------------
 
-class SectorFlagSetter : Actor native
+class SectorFlagSetter : Actor
 {
 	Default
 	{
@@ -201,6 +201,12 @@ class SectorFlagSetter : Actor native
 		+NOGRAVITY
 		+DONTSPLASH
 		RenderStyle "None";
+	}
+	
+	override void BeginPlay ()
+	{
+		Super.BeginPlay ();
+		CurSector.Flags |= args[0];
 	}
 }
 

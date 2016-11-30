@@ -80,14 +80,13 @@ private:
 	SSAStack<SSAUBytePtr> stack_buffer;
 	SSAStack<SSAIntPtr> stack_subsectorbuffer;
 	SSAStack<SSAInt> stack_iy, stack_ix;
-	SSAStack<SSAInt> stack_varyingLine[TriVertex::NumVarying];
-	SSAStack<SSAInt> stack_varyingStep[TriVertex::NumVarying];
-	SSAStack<SSAInt> stack_varying[TriVertex::NumVarying];
 	SSAStack<SSAInt> stack_CY1, stack_CY2, stack_CY3;
 	SSAStack<SSAInt> stack_CX1, stack_CX2, stack_CX3;
-
 	SSAStack<SSAFloat> stack_posy_w, stack_posy_varying[TriVertex::NumVarying];
 	SSAStack<SSAFloat> stack_posx_w, stack_posx_varying[TriVertex::NumVarying];
+	SSAStack<SSAFloat> stack_AffineW;
+	SSAStack<SSAFloat> stack_AffineVaryingPosY[TriVertex::NumVarying];
+	SSAStack<SSAInt> stack_AffineVaryingPosX[TriVertex::NumVarying];
 
 	SSAUBytePtr dest;
 	SSAInt pitch;
@@ -142,10 +141,10 @@ private:
 	SSAInt x0, x1, y0, y1;
 	SSAInt currentlight;
 	SSAUBytePtr currentcolormap;
-	SSAInt varyingPos[TriVertex::NumVarying];
-	SSAInt varyingStepY[TriVertex::NumVarying];
-	SSAInt varyingStartStepX[TriVertex::NumVarying];
-	SSAInt varyingIncrStepX[TriVertex::NumVarying];
+	SSAFloat AffineW;
+	SSAFloat AffineVaryingPosY[TriVertex::NumVarying];
+	SSAInt AffineVaryingPosX[TriVertex::NumVarying];
+	SSAInt AffineVaryingStepX[TriVertex::NumVarying];
 
 	SSAFloat posy_w, posy_varying[TriVertex::NumVarying];
 	SSAFloat posx_w, posx_varying[TriVertex::NumVarying];

@@ -143,12 +143,8 @@ void DrawTriangleCodegen::Setup()
 	}
 
 	gradWX = gradWX * (float)q;
-	gradWY = gradWY * (float)q;
 	for (int i = 0; i < TriVertex::NumVarying; i++)
-	{
 		gradVaryingX[i] = gradVaryingX[i] * (float)q;
-		gradVaryingY[i] = gradVaryingY[i] * (float)q;
-	}
 }
 
 SSAFloat DrawTriangleCodegen::gradx(SSAFloat x0, SSAFloat y0, SSAFloat x1, SSAFloat y1, SSAFloat x2, SSAFloat y2, SSAFloat c0, SSAFloat c1, SSAFloat c2)
@@ -173,9 +169,9 @@ void DrawTriangleCodegen::LoopBlockY()
 	stack_y.store(miny + blocks_skipped * q);
 	stack_dest.store(dest[blocks_skipped * q * pitch * pixelsize]);
 	stack_subsectorGBuffer.store(subsectorGBuffer[blocks_skipped * q * pitch]);
-	stack_posy_w.store(stack_posy_w.load() + gradWY * blocks_skipped);
+	stack_posy_w.store(stack_posy_w.load() + gradWY * (q * blocks_skipped));
 	for (int i = 0; i < TriVertex::NumVarying; i++)
-		stack_posy_varying[i].store(stack_posy_varying[i].load() + gradVaryingY[i] * blocks_skipped);
+		stack_posy_varying[i].store(stack_posy_varying[i].load() + gradVaryingY[i] * (blocks_skipped * q));
 
 	SSAForBlock loop;
 	y = stack_y.load();
@@ -188,9 +184,9 @@ void DrawTriangleCodegen::LoopBlockY()
 	{
 		LoopBlockX();
 
-		stack_posy_w.store(posy_w + gradWY * thread.num_cores);
+		stack_posy_w.store(posy_w + gradWY * (q * thread.num_cores));
 		for (int i = 0; i < TriVertex::NumVarying; i++)
-			stack_posy_varying[i].store(posy_varying[i] + gradVaryingY[i] * thread.num_cores);
+			stack_posy_varying[i].store(posy_varying[i] + gradVaryingY[i] * (q * thread.num_cores));
 
 		stack_dest.store(dest[q * pitch * pixelsize * thread.num_cores]);
 		stack_subsectorGBuffer.store(subsectorGBuffer[q * pitch * thread.num_cores]);
@@ -246,7 +242,24 @@ void DrawTriangleCodegen::LoopBlockX()
 		// Check if block needs clipping
 		SSABool clipneeded = x < clipleft || (x + q) > clipright || y < cliptop || (y + q) > clipbottom;
 
-		SetupAffineBlock();
+		SSAFloat globVis = SSAFloat(1706.0f);
+		SSAFloat vis = globVis * posx_w;
+		SSAFloat shade = 64.0f - (SSAFloat(light * 255 / 256) + 12.0f) * 32.0f / 128.0f;
+		SSAFloat lightscale = SSAFloat::clamp((shade - SSAFloat::MIN(SSAFloat(24.0f), vis)) / 32.0f, SSAFloat(0.0f), SSAFloat(31.0f / 32.0f));
+		SSAInt diminishedlight = SSAInt(SSAFloat::clamp((1.0f - lightscale) * 256.0f + 0.5f, SSAFloat(0.0f), SSAFloat(256.0f)), false);
+
+		if (!truecolor)
+		{
+			SSAInt diminishedindex = SSAInt(lightscale * 32.0f, false);
+			SSAInt lightindex = SSAInt::MIN((256 - light) * 32 / 256, SSAInt(31));
+			SSAInt colormapindex = is_fixed_light.select(lightindex, diminishedindex);
+			currentcolormap = Colormaps[colormapindex << 8];
+		}
+		else
+		{
+			currentlight = is_fixed_light.select(light, diminishedlight);
+		}
+
 		SetStencilBlock(x / 8 + y / 8 * stencilPitch);
 
 		SSABool covered = a == SSAInt(0xF) && b == SSAInt(0xF) && c == SSAInt(0xF) && !clipneeded && StencilIsSingleValue();
@@ -276,41 +289,15 @@ void DrawTriangleCodegen::LoopBlockX()
 
 void DrawTriangleCodegen::SetupAffineBlock()
 {
-	// Calculate varying variables for affine block
-	SSAVec4f rcpW = SSAVec4f(1.0f) / SSAVec4f(posx_w, posx_w + gradWX, posx_w + gradWY, posx_w + gradWX + gradWY);
+	SSAFloat rcpW0 = (float)0x01000000 / AffineW;
+	SSAFloat rcpW1 = (float)0x01000000 / (AffineW + gradWX);
+
 	for (int i = 0; i < TriVertex::NumVarying; i++)
 	{
-		// Top left, top right, bottom left, bottom right:
-		SSAVec4f varying = SSAVec4f(posx_varying[i], posx_varying[i] + gradVaryingX[i], posx_varying[i] + gradVaryingY[i], posx_varying[i] + gradVaryingX[i] + gradVaryingY[i]) * rcpW;
-
-		SSAFloat startStepX = (varying[1] - varying[0]) * (1.0f / q);
-		SSAFloat endStepX = (varying[3] - varying[2]) * (1.0f / q);
-		SSAFloat incrStepX = (endStepX - startStepX) * (1.0f / q);
-		SSAFloat stepY = (varying[2] - varying[0]) * (1.0f / q);
-
-		SSAVec4i ints = SSAVec4i(SSAVec4f(varying[0], stepY, startStepX, incrStepX) * (float)0x01000000) << 8;
-		varyingPos[i] = ints[0];
-		varyingStepY[i] = ints[1];
-		varyingStartStepX[i] = ints[2];
-		varyingIncrStepX[i] = ints[3];
-	}
-	
-	SSAFloat globVis = SSAFloat(1706.0f);
-	SSAFloat vis = globVis / rcpW[0];
-	SSAFloat shade = 64.0f - (SSAFloat(light * 255 / 256) + 12.0f) * 32.0f / 128.0f;
-	SSAFloat lightscale = SSAFloat::clamp((shade - SSAFloat::MIN(SSAFloat(24.0f), vis)) / 32.0f, SSAFloat(0.0f), SSAFloat(31.0f / 32.0f));
-	SSAInt diminishedlight = SSAInt(SSAFloat::clamp((1.0f - lightscale) * 256.0f + 0.5f, SSAFloat(0.0f), SSAFloat(256.0f)), false);
-
-	if (!truecolor)
-	{
-		SSAInt diminishedindex = SSAInt(lightscale * 32.0f, false);
-		SSAInt lightindex = SSAInt::MIN((256 - light) * 32 / 256, SSAInt(31));
-		SSAInt colormapindex = is_fixed_light.select(lightindex, diminishedindex);
-		currentcolormap = Colormaps[colormapindex << 8];
-	}
-	else
-	{
-		currentlight = is_fixed_light.select(light, diminishedlight);
+		AffineVaryingPosX[i] = SSAInt(AffineVaryingPosY[i] * rcpW0, false);
+		AffineVaryingStepX[i] = (SSAInt((AffineVaryingPosY[i] + gradVaryingX[i]) * rcpW1, false) - AffineVaryingPosX[i]) / q;
+		AffineVaryingPosX[i] = AffineVaryingPosX[i] << 8;
+		AffineVaryingStepX[i] = AffineVaryingStepX[i] << 8;
 	}
 }
 
@@ -346,22 +333,16 @@ void DrawTriangleCodegen::LoopFullBlock()
 	{
 		int pixelsize = truecolor ? 4 : 1;
 
-		SSAInt varyingLine[TriVertex::NumVarying];
-		SSAInt varyingStepX[TriVertex::NumVarying];
+		AffineW = posx_w;
 		for (int i = 0; i < TriVertex::NumVarying; i++)
-		{
-			varyingLine[i] = varyingPos[i];
-			varyingStepX[i] = varyingStartStepX[i];
-		}
+			AffineVaryingPosY[i] = posx_varying[i];
 
 		for (int iy = 0; iy < q; iy++)
 		{
 			SSAUBytePtr buffer = dest[(x + iy * pitch) * pixelsize];
 			SSAIntPtr subsectorbuffer = subsectorGBuffer[x + iy * pitch];
 
-			SSAInt varying[TriVertex::NumVarying];
-			for (int i = 0; i < TriVertex::NumVarying; i++)
-				varying[i] = varyingLine[i];
+			SetupAffineBlock();
 
 			for (int ix = 0; ix < q; ix += 4)
 			{
@@ -384,15 +365,15 @@ void DrawTriangleCodegen::LoopFullBlock()
 						if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
 						{
 							SSABool subsectorTest = subsectorbuffer[ix].load(true) >= subsectorDepth;
-							pixels[sse] = subsectorTest.select(ProcessPixel32(pixels[sse], varying), pixels[sse]);
+							pixels[sse] = subsectorTest.select(ProcessPixel32(pixels[sse], AffineVaryingPosX), pixels[sse]);
 						}
 						else
 						{
-							pixels[sse] = ProcessPixel32(pixels[sse], varying);
+							pixels[sse] = ProcessPixel32(pixels[sse], AffineVaryingPosX);
 						}
 
 						for (int i = 0; i < TriVertex::NumVarying; i++)
-							varying[i] = varying[i] + varyingStepX[i];
+							AffineVaryingPosX[i] = AffineVaryingPosX[i] + AffineVaryingStepX[i];
 					}
 
 					buf.store_unaligned_vec16ub(SSAVec16ub(SSAVec8s(pixels[0], pixels[1]), SSAVec8s(pixels[2], pixels[3])));
@@ -413,15 +394,15 @@ void DrawTriangleCodegen::LoopFullBlock()
 						if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
 						{
 							SSABool subsectorTest = subsectorbuffer[ix].load(true) >= subsectorDepth;
-							pixels[sse] = subsectorTest.select(ProcessPixel8(pixels[sse], varying), pixels[sse]);
+							pixels[sse] = subsectorTest.select(ProcessPixel8(pixels[sse], AffineVaryingPosX), pixels[sse]);
 						}
 						else
 						{
-							pixels[sse] = ProcessPixel8(pixels[sse], varying);
+							pixels[sse] = ProcessPixel8(pixels[sse], AffineVaryingPosX);
 						}
 
 						for (int i = 0; i < TriVertex::NumVarying; i++)
-							varying[i] = varying[i] + varyingStepX[i];
+							AffineVaryingPosX[i] = AffineVaryingPosX[i] + AffineVaryingStepX[i];
 					}
 
 					buf.store_vec4ub(SSAVec4i(pixels[0], pixels[1], pixels[2], pixels[3]));
@@ -431,11 +412,9 @@ void DrawTriangleCodegen::LoopFullBlock()
 					subsectorbuffer[ix].store_unaligned_vec4i(SSAVec4i(subsectorDepth));
 			}
 
+			AffineW = AffineW + gradWY;
 			for (int i = 0; i < TriVertex::NumVarying; i++)
-			{
-				varyingLine[i] = varyingLine[i] + varyingStepY[i];
-				varyingStepX[i] = varyingStepX[i] + varyingIncrStepX[i];
-			}
+				AffineVaryingPosY[i] = AffineVaryingPosY[i] + gradVaryingY[i];
 		}
 	}
 
@@ -452,10 +431,10 @@ void DrawTriangleCodegen::LoopPartialBlock()
 	stack_iy.store(SSAInt(0));
 	stack_buffer.store(dest[x * pixelsize]);
 	stack_subsectorbuffer.store(subsectorGBuffer[x]);
+	stack_AffineW.store(posx_w);
 	for (int i = 0; i < TriVertex::NumVarying; i++)
 	{
-		stack_varyingLine[i].store(varyingPos[i]);
-		stack_varyingStep[i].store(varyingStartStepX[i]);
+		stack_AffineVaryingPosY[i].store(posx_varying[i]);
 	}
 
 	SSAForBlock loopy;
@@ -465,17 +444,15 @@ void DrawTriangleCodegen::LoopPartialBlock()
 	SSAInt CY1 = stack_CY1.load();
 	SSAInt CY2 = stack_CY2.load();
 	SSAInt CY3 = stack_CY3.load();
-	SSAInt varyingLine[TriVertex::NumVarying];
-	SSAInt varyingStep[TriVertex::NumVarying];
+	AffineW = stack_AffineW.load();
 	for (int i = 0; i < TriVertex::NumVarying; i++)
-	{
-		varyingLine[i] = stack_varyingLine[i].load();
-		varyingStep[i] = stack_varyingStep[i].load();
-	}
+		AffineVaryingPosY[i] = stack_AffineVaryingPosY[i].load();
 	loopy.loop_block(iy < SSAInt(q), q);
 	{
+		SetupAffineBlock();
+
 		for (int i = 0; i < TriVertex::NumVarying; i++)
-			stack_varying[i].store(varyingLine[i]);
+			stack_AffineVaryingPosX[i].store(AffineVaryingPosX[i]);
 
 		stack_CX1.store(CY1);
 		stack_CX2.store(CY2);
@@ -487,9 +464,8 @@ void DrawTriangleCodegen::LoopPartialBlock()
 		SSAInt CX1 = stack_CX1.load();
 		SSAInt CX2 = stack_CX2.load();
 		SSAInt CX3 = stack_CX3.load();
-		SSAInt varying[TriVertex::NumVarying];
 		for (int i = 0; i < TriVertex::NumVarying; i++)
-			varying[i] = stack_varying[i].load();
+			AffineVaryingPosX[i] = stack_AffineVaryingPosX[i].load();
 		loopx.loop_block(ix < SSAInt(q), q);
 		{
 			SSABool visible = (ix + x >= clipleft) && (ix + x < clipright) && (iy + y >= cliptop) && (iy + y < clipbottom);
@@ -527,12 +503,12 @@ void DrawTriangleCodegen::LoopPartialBlock()
 					if (truecolor)
 					{
 						SSAVec4i bg = buf.load_vec4ub(false);
-						buf.store_vec4ub(ProcessPixel32(bg, varying));
+						buf.store_vec4ub(ProcessPixel32(bg, AffineVaryingPosX));
 					}
 					else
 					{
 						SSAUByte bg = buf.load(false);
-						buf.store(ProcessPixel8(bg.zext_int(), varying).trunc_ubyte());
+						buf.store(ProcessPixel8(bg.zext_int(), AffineVaryingPosX).trunc_ubyte());
 					}
 
 					if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector && variant != TriDrawVariant::FuzzSubsector)
@@ -542,7 +518,7 @@ void DrawTriangleCodegen::LoopPartialBlock()
 			branch.end_block();
 
 			for (int i = 0; i < TriVertex::NumVarying; i++)
-				stack_varying[i].store(varying[i] + varyingStep[i]);
+				stack_AffineVaryingPosX[i].store(AffineVaryingPosX[i] + AffineVaryingStepX[i]);
 
 			stack_CX1.store(CX1 - FDY12);
 			stack_CX2.store(CX2 - FDY23);
@@ -551,12 +527,9 @@ void DrawTriangleCodegen::LoopPartialBlock()
 		}
 		loopx.end_block();
 
+		stack_AffineW.store(AffineW + gradWY);
 		for (int i = 0; i < TriVertex::NumVarying; i++)
-		{
-			stack_varyingLine[i].store(varyingLine[i] + varyingStepY[i]);
-			stack_varyingStep[i].store(varyingStep[i] + varyingIncrStepX[i]);
-		}
-
+			stack_AffineVaryingPosY[i].store(AffineVaryingPosY[i] + gradVaryingY[i]);
 		stack_CY1.store(CY1 + FDX12);
 		stack_CY2.store(CY2 + FDX23);
 		stack_CY3.store(CY3 + FDX31);

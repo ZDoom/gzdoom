@@ -5521,6 +5521,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			self = self->Resolve(ctx);
 			newex = ResolveMember(ctx, ctx.Function->Variants[0].SelfClass, self, ctx.Function->Variants[0].SelfClass);
 			ABORT(newex);
+			goto foundit;
 		}
 	}
 
@@ -5531,8 +5532,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		{
 			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as class constant\n", Identifier.GetChars());
 			newex = FxConstant::MakeConstant(sym, ScriptPosition);
-			delete this;
-			return newex->Resolve(ctx);
+			goto foundit;
 		}
 		// Do this check for ZScript as well, so that a clearer error message can be printed. MSG_OPTERROR will default to MSG_ERROR there.
 		else if (ctx.Function->Variants[0].SelfClass != ctx.Class && sym->IsKindOf(RUNTIME_CLASS(PField)))
@@ -5543,6 +5543,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			ABORT(newex);
 			ScriptPosition.Message(MSG_OPTERROR, "Self pointer used in ambiguous context; VM execution may abort!");
 			ctx.Unsafe = true;
+			goto foundit;
 		}
 		else
 		{
@@ -5573,16 +5574,20 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		{
 			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as global constant\n", Identifier.GetChars());
 			newex = FxConstant::MakeConstant(sym, ScriptPosition);
+			goto foundit;
 		}
 		else if (sym->IsKindOf(RUNTIME_CLASS(PField)))
 		{
 			// internally defined global variable
 			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as global variable\n", Identifier.GetChars());
 			newex = new FxGlobalVariable(static_cast<PField *>(sym), ScriptPosition);
+			goto foundit;
 		}
 		else
 		{
 			ScriptPosition.Message(MSG_ERROR, "Invalid global identifier '%s'\n", Identifier.GetChars());
+			delete this;
+			return nullptr;
 		}
 	}
 
@@ -5591,6 +5596,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 	{
 		ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as line special %d\n", Identifier.GetChars(), num);
 		newex = new FxConstant(num, ScriptPosition);
+		goto foundit;
 	}
 
 	auto cvar = FindCVar(Identifier.GetChars(), nullptr);
@@ -5603,14 +5609,14 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			return nullptr;
 		}
 		newex = new FxCVar(cvar, ScriptPosition);
+		goto foundit;
 	}
 	
-	if (newex == nullptr)
-	{
-		ScriptPosition.Message(MSG_ERROR, "Unknown identifier '%s'", Identifier.GetChars());
-		delete this;
-		return nullptr;
-	}
+	ScriptPosition.Message(MSG_ERROR, "Unknown identifier '%s'", Identifier.GetChars());
+	delete this;
+	return nullptr;
+
+foundit:
 	delete this;
 	return newex? newex->Resolve(ctx) : nullptr;
 }
@@ -5733,6 +5739,10 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 		// because the resulting value type would cause problems in nearly every other place where identifiers are being used.
 		ccls = FindStructType(static_cast<FxIdentifier *>(Object)->Identifier);
 		if (ccls != nullptr) static_cast<FxIdentifier *>(Object)->noglobal = true;
+		if (ccls && ccls->TypeName == FName("Tracer"))
+		{
+			int a = 0;
+		}
 	}
 
 	SAFE_RESOLVE(Object, ctx);

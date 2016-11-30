@@ -54,8 +54,7 @@ public:
 	LLVMProgram();
 
 	void CreateModule();
-	std::string GenerateAssembly(std::string cpuName);
-	std::vector<uint8_t> GenerateObjectFile(std::string cpuName);
+	std::vector<uint8_t> GenerateObjectFile(const std::string &triple, const std::string &cpuName, const std::string &features);
 	std::string DumpModule();
 
 	llvm::LLVMContext &context() { return *mContext; }
@@ -70,7 +69,7 @@ private:
 class LLVMDrawers
 {
 public:
-	LLVMDrawers(const std::string &cpuName, const std::string namePostfix);
+	LLVMDrawers(const std::string &triple, const std::string &cpuName, const std::string &features, const std::string namePostfix);
 
 	std::vector<uint8_t> ObjectFile;
 
@@ -97,7 +96,7 @@ private:
 
 /////////////////////////////////////////////////////////////////////////////
 
-LLVMDrawers::LLVMDrawers(const std::string &cpuName, const std::string namePostfix) : mNamePostfix(namePostfix)
+LLVMDrawers::LLVMDrawers(const std::string &triple, const std::string &cpuName, const std::string &features, const std::string namePostfix) : mNamePostfix(namePostfix)
 {
 	mProgram.CreateModule();
 
@@ -177,7 +176,7 @@ LLVMDrawers::LLVMDrawers(const std::string &cpuName, const std::string namePostf
 	CodegenDrawTriangle("TriStencil", TriDrawVariant::Stencil, TriBlendMode::Copy, false);
 	CodegenDrawTriangle("TriStencilClose", TriDrawVariant::StencilClose, TriBlendMode::Copy, false);
 
-	ObjectFile = mProgram.GenerateObjectFile(cpuName);
+	ObjectFile = mProgram.GenerateObjectFile(triple, cpuName, features);
 }
 
 void LLVMDrawers::CodegenDrawColumn(const char *name, DrawColumnVariant variant, DrawColumnMethod method)
@@ -459,92 +458,57 @@ void LLVMProgram::CreateModule()
 	mModule = std::make_unique<llvm::Module>("render", context());
 }
 
-std::string LLVMProgram::GenerateAssembly(std::string cpuName)
+std::vector<uint8_t> LLVMProgram::GenerateObjectFile(const std::string &triple, const std::string &cpuName, const std::string &features)
 {
 	using namespace llvm;
 
 	std::string errorstring;
 
 	llvm::Module *module = mModule.get();
-	EngineBuilder engineBuilder(std::move(mModule));
-	engineBuilder.setErrorStr(&errorstring);
-	engineBuilder.setOptLevel(CodeGenOpt::Aggressive);
-	engineBuilder.setEngineKind(EngineKind::JIT);
-	engineBuilder.setMCPU(cpuName);
-	machine = engineBuilder.selectTarget();
-	if (!machine)
-		throw Exception("Could not create LLVM target machine");
 
-#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
-	std::string targetTriple = machine->getTargetTriple();
-#else
-	std::string targetTriple = machine->getTargetTriple().getTriple();
-#endif
+	const Target *target = TargetRegistry::lookupTarget(triple, errorstring);
+	Optional<Reloc::Model> relocationModel = Reloc::PIC_;
+	CodeModel::Model codeModel = CodeModel::Model::Default;
 
-	module->setTargetTriple(targetTriple);
-#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
-	module->setDataLayout(new DataLayout(*machine->getSubtargetImpl()->getDataLayout()));
-#else
-	module->setDataLayout(machine->createDataLayout());
-#endif
+	TargetOptions options;
+	options.LessPreciseFPMADOption = true;
+	options.AllowFPOpFusion = FPOpFusion::Fast;
+	options.Reciprocals = TargetRecip({ "all" });
+	options.UnsafeFPMath = true;
+	options.NoInfsFPMath = true;
+	options.NoNaNsFPMath = true;
+	options.HonorSignDependentRoundingFPMathOption = false;
+	options.NoZerosInBSS = false;
+	options.GuaranteedTailCallOpt = false;
+	options.StackAlignmentOverride = 0;
+	options.StackSymbolOrdering = true;
+	options.UseInitArray = true;
+	options.DataSections = false;
+	options.FunctionSections = false;
+	options.UniqueSectionNames = true;
+	options.EmulatedTLS = false;
+	options.ExceptionModel = ExceptionHandling::None;
+	options.JTType = JumpTable::Single; // Create a single table for all jumptable functions
+	options.ThreadModel = ThreadModel::POSIX;
+	options.EABIVersion = EABI::Default;
+	options.DebuggerTuning = DebuggerKind::Default;
+	options.DisableIntegratedAS = false;
+	options.MCOptions.SanitizeAddress = false;
+	options.MCOptions.MCRelaxAll = false; // relax all fixups in the emitted object file
+	options.MCOptions.MCIncrementalLinkerCompatible = false;
+	options.MCOptions.DwarfVersion = 0;
+	options.MCOptions.ShowMCInst = false;
+	options.MCOptions.ABIName = "";
+	options.MCOptions.MCFatalWarnings = false;
+	options.MCOptions.MCNoWarn = false;
+	options.MCOptions.ShowMCEncoding = false; // Show encoding in .s output
+	options.MCOptions.MCUseDwarfDirectory = false;
+	options.MCOptions.AsmVerbose = true;
+	options.MCOptions.PreserveAsmComments = true;
 
-	legacy::FunctionPassManager PerFunctionPasses(module);
-	legacy::PassManager PerModulePasses;
+	CodeGenOpt::Level optimizationLevel = CodeGenOpt::Aggressive;
+	machine = target->createTargetMachine(triple, cpuName, features, options, relocationModel, codeModel, optimizationLevel);
 
-#if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8)
-	PerFunctionPasses.add(createTargetTransformInfoWrapperPass(machine->getTargetIRAnalysis()));
-	PerModulePasses.add(createTargetTransformInfoWrapperPass(machine->getTargetIRAnalysis()));
-#endif
-
-	SmallString<16 * 1024> str;
-#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
-	raw_svector_ostream vecstream(str);
-	formatted_raw_ostream stream(vecstream);
-#else
-	raw_svector_ostream stream(str);
-#endif
-	machine->addPassesToEmitFile(PerModulePasses, stream, TargetMachine::CGFT_AssemblyFile);
-
-	PassManagerBuilder passManagerBuilder;
-	passManagerBuilder.OptLevel = 3;
-	passManagerBuilder.SizeLevel = 0;
-	passManagerBuilder.Inliner = createFunctionInliningPass();
-	passManagerBuilder.SLPVectorize = true;
-	passManagerBuilder.LoopVectorize = true;
-	passManagerBuilder.LoadCombine = true;
-	passManagerBuilder.populateModulePassManager(PerModulePasses);
-	passManagerBuilder.populateFunctionPassManager(PerFunctionPasses);
-
-	// Run function passes:
-	PerFunctionPasses.doInitialization();
-	for (llvm::Function &func : *module)
-	{
-		if (!func.isDeclaration())
-			PerFunctionPasses.run(func);
-	}
-	PerFunctionPasses.doFinalization();
-
-	// Run module passes:
-	PerModulePasses.run(*module);
-
-	return str.c_str();
-}
-
-std::vector<uint8_t> LLVMProgram::GenerateObjectFile(std::string cpuName)
-{
-	using namespace llvm;
-
-	std::string errorstring;
-
-	llvm::Module *module = mModule.get();
-	EngineBuilder engineBuilder(std::move(mModule));
-	engineBuilder.setErrorStr(&errorstring);
-	engineBuilder.setOptLevel(CodeGenOpt::Aggressive);
-	engineBuilder.setEngineKind(EngineKind::JIT);
-	engineBuilder.setMCPU(cpuName);
-	machine = engineBuilder.selectTarget();
-	if (!machine)
-		throw Exception("Could not create LLVM target machine");
 
 #if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
 	std::string targetTriple = machine->getTargetTriple();
@@ -599,8 +563,8 @@ std::vector<uint8_t> LLVMProgram::GenerateObjectFile(std::string cpuName)
 	PerModulePasses.run(*module);
 
 	// Return the resulting object file
-	stream.flush();
 #if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
+	stream.flush();
 	vecstream.flush();
 #endif
 	std::vector<uint8_t> data;
@@ -673,10 +637,14 @@ int main(int argc, char **argv)
 		llvm::InitializeNativeTarget();
 		llvm::InitializeNativeTargetAsmPrinter();
 
+		std::string triple = llvm::sys::getDefaultTargetTriple();
+		std::cout << "Target triple is " << triple << std::endl;
+
 		std::string cpuName = "pentium4";
+		std::string features;
 		std::cout << "Compiling drawer code for " << cpuName << ".." << std::endl;
 
-		LLVMDrawers drawersSSE2(cpuName, "_SSE2");
+		LLVMDrawers drawersSSE2(triple, cpuName, features, "_SSE2");
 
 		file = fopen(argv[1], "wb");
 		if (file == nullptr)

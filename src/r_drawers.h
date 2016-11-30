@@ -340,4 +340,7 @@ public:
 	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriFillSubsector32;
 	void(*TriStencil)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
 	void(*TriStencilClose)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
+	
+private:
+	Drawers();
 };

@@ -5739,10 +5739,6 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 		// because the resulting value type would cause problems in nearly every other place where identifiers are being used.
 		ccls = FindStructType(static_cast<FxIdentifier *>(Object)->Identifier);
 		if (ccls != nullptr) static_cast<FxIdentifier *>(Object)->noglobal = true;
-		if (ccls && ccls->TypeName == FName("Tracer"))
-		{
-			int a = 0;
-		}
 	}
 
 	SAFE_RESOLVE(Object, ctx);

@@ -373,18 +373,6 @@ void APowerup::OwnerDied ()
 	Destroy ();
 }
 
-//===========================================================================
-//
-// AInventory :: GetNoTeleportFreeze
-//
-//===========================================================================
-
-bool APowerup::GetNoTeleportFreeze ()
-{
-	if (ItemFlags & IF_NOTELEPORTFREEZE) return true;
-	return Super::GetNoTeleportFreeze();
-}
-
 // Invulnerability Powerup ---------------------------------------------------
 
 IMPLEMENT_CLASS(APowerInvulnerable, false, false)
@@ -1211,20 +1199,6 @@ void APowerSpeed::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
 	arc("speedflags", SpeedFlags);
-}
-
-//===========================================================================
-//
-// APowerSpeed :: GetSpeedFactor
-//
-//===========================================================================
-
-double APowerSpeed ::GetSpeedFactor ()
-{
-	if (Inventory != NULL)
-		return Speed * Inventory->GetSpeedFactor();
-	else
-		return Speed;
 }
 
 //===========================================================================

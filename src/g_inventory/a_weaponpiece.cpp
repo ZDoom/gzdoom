@@ -103,7 +103,7 @@ void AWeaponPiece::Serialize(FSerializer &arc)
 bool AWeaponPiece::TryPickupRestricted (AActor *&toucher)
 {
 	// Wrong class, but try to pick up for ammo
-	if (ShouldStay())
+	if (CallShouldStay())
 	{ // Can't pick up weapons for other classes in coop netplay
 		return false;
 	}

@@ -18,11 +18,11 @@ class AAmmo : public AInventory
 	DECLARE_CLASS_WITH_META(AAmmo, AInventory, PClassAmmo)
 public:
 	
-	void Serialize(FSerializer &arc);
-	AInventory *CreateCopy (AActor *other);
-	bool HandlePickup (AInventory *item);
+	virtual void Serialize(FSerializer &arc) override;
+	virtual AInventory *CreateCopy (AActor *other) override;
+	virtual bool HandlePickup (AInventory *item) override;
+	virtual AInventory *CreateTossable () override;
 	PClassActor *GetParentAmmo () const;
-	AInventory *CreateTossable ();
 
 	int BackpackAmount, BackpackMaxAmount;
 };
@@ -35,11 +35,11 @@ class ABackpackItem : public AInventory
 	DECLARE_CLASS (ABackpackItem, AInventory)
 public:
 	
-	void Serialize(FSerializer &arc);
-	bool HandlePickup (AInventory *item);
-	AInventory *CreateCopy (AActor *other);
-	AInventory *CreateTossable ();
-	void DetachFromOwner ();
+	virtual void Serialize(FSerializer &arc) override;
+	virtual bool HandlePickup (AInventory *item) override;
+	virtual AInventory *CreateCopy (AActor *other) override;
+	virtual AInventory *CreateTossable () override;
+	virtual void DetachFromOwner () override;
 
 	bool bDepleted;
 };

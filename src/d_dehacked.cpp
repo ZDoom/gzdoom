@@ -3157,7 +3157,7 @@ FString ADehackedPickup::PickupMessage ()
 bool ADehackedPickup::ShouldStay ()
 {
 	if (RealPickup != nullptr)
-		return RealPickup->ShouldStay ();
+		return RealPickup->CallShouldStay ();
 	else return true;
 }
 

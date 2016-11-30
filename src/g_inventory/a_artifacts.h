@@ -11,18 +11,15 @@ class APowerup : public AInventory
 {
 	DECLARE_CLASS (APowerup, AInventory)
 public:
-	virtual void Tick ();
+	virtual void Tick () override;
 	virtual void Destroy () override;
-	virtual bool HandlePickup (AInventory *item);
-	virtual AInventory *CreateCopy (AActor *other);
-	virtual AInventory *CreateTossable ();
-
-	
-	virtual void Serialize(FSerializer &arc);
-	virtual void OwnerDied ();
-	virtual bool GetNoTeleportFreeze();
-	virtual PalEntry GetBlend ();
-	virtual bool DrawPowerup (int x, int y);
+	virtual bool HandlePickup (AInventory *item) override;
+	virtual AInventory *CreateCopy (AActor *other) override;
+	virtual AInventory *CreateTossable () override;
+	virtual void Serialize(FSerializer &arc) override;
+	virtual void OwnerDied () override;
+	virtual PalEntry GetBlend () override;
+	virtual bool DrawPowerup (int x, int y) override;
 
 	int EffectTics;
 	PalEntry BlendColor;
@@ -31,7 +28,7 @@ public:
 
 protected:
 	virtual void InitEffect ();
-	virtual void DoEffect ();
+	virtual void DoEffect () override;
 	virtual void EndEffect ();
 
 	friend void EndAllPowerupEffects(AInventory *item);
@@ -52,9 +49,8 @@ class APowerupGiver : public AInventory
 {
 	DECLARE_CLASS_WITH_META (APowerupGiver, AInventory, PClassPowerupGiver)
 public:
-	virtual bool Use (bool pickup);
-	
-	virtual void Serialize(FSerializer &arc);
+	virtual bool Use (bool pickup) override;
+	virtual void Serialize(FSerializer &arc) override;
 
 
 	PClassActor *PowerupType;
@@ -68,10 +64,10 @@ class APowerInvulnerable : public APowerup
 {
 	DECLARE_CLASS (APowerInvulnerable, APowerup)
 protected:
-	void InitEffect ();
-	void DoEffect ();
-	void EndEffect ();
-	int AlterWeaponSprite (visstyle_t *vis);
+	virtual void InitEffect () override;
+	virtual void DoEffect () override;
+	virtual void EndEffect () override;
+	virtual int AlterWeaponSprite (visstyle_t *vis) override;
 };
 
 class APowerStrength : public APowerup
@@ -80,44 +76,44 @@ class APowerStrength : public APowerup
 public:
 	PalEntry GetBlend ();
 protected:
-	void InitEffect ();
-	void Tick ();
-	bool HandlePickup (AInventory *item);
+	virtual void InitEffect () override;
+	virtual void Tick () override;
+	virtual bool HandlePickup (AInventory *item) override;
 };
 
 class APowerInvisibility : public APowerup
 {
 	DECLARE_CLASS (APowerInvisibility, APowerup)
 protected:
-	bool HandlePickup (AInventory *item);
-	void InitEffect ();
-	void DoEffect ();
-	void EndEffect ();
-	int AlterWeaponSprite (visstyle_t *vis);
+	virtual bool HandlePickup (AInventory *item) override;
+	virtual void InitEffect () override;
+	virtual void DoEffect () override;
+	virtual void EndEffect () override;
+	virtual int AlterWeaponSprite (visstyle_t *vis) override;
 };
 
 class APowerIronFeet : public APowerup
 {
 	DECLARE_CLASS (APowerIronFeet, APowerup)
 public:
-	void AbsorbDamage (int damage, FName damageType, int &newdamage);
-	void DoEffect ();
+	virtual void AbsorbDamage (int damage, FName damageType, int &newdamage) override;
+	virtual void DoEffect () override;
 };
 
 class APowerMask : public APowerIronFeet
 {
 	DECLARE_CLASS (APowerMask, APowerIronFeet)
 public:
-	void AbsorbDamage (int damage, FName damageType, int &newdamage);
-	void DoEffect ();
+	virtual void AbsorbDamage (int damage, FName damageType, int &newdamage) override;
+	virtual void DoEffect () override;
 };
 
 class APowerLightAmp : public APowerup
 {
 	DECLARE_CLASS (APowerLightAmp, APowerup)
 protected:
-	void DoEffect ();
-	void EndEffect ();
+	virtual void DoEffect () override;
+	virtual void EndEffect () override;
 };
 
 class APowerTorch : public APowerLightAmp
@@ -125,9 +121,9 @@ class APowerTorch : public APowerLightAmp
 	DECLARE_CLASS (APowerTorch, APowerLightAmp)
 public:
 	
-	virtual void Serialize(FSerializer &arc);
+	virtual void Serialize(FSerializer &arc) override;
 protected:
-	void DoEffect ();
+	virtual void DoEffect () override;
 	int NewTorch, NewTorchDelta;
 };
 
@@ -135,14 +131,13 @@ class APowerFlight : public APowerup
 {
 	DECLARE_CLASS (APowerFlight, APowerup)
 public:
-	bool DrawPowerup (int x, int y);
-	
-	virtual void Serialize(FSerializer &arc);
+	virtual bool DrawPowerup (int x, int y) override;
+	virtual void Serialize(FSerializer &arc) override;
 
 protected:
-	void InitEffect ();
-	void Tick ();
-	void EndEffect ();
+	virtual void InitEffect () override;
+	virtual void Tick () override;
+	virtual void EndEffect () override;
 
 private:
 	bool HitCenterFrame;
@@ -152,18 +147,17 @@ class APowerWeaponLevel2 : public APowerup
 {
 	DECLARE_CLASS (APowerWeaponLevel2, APowerup)
 protected:
-	void InitEffect ();
-	void EndEffect ();
+	virtual void InitEffect () override;
+	virtual void EndEffect () override;
 };
 
 class APowerSpeed : public APowerup
 {
 	DECLARE_CLASS (APowerSpeed, APowerup)
 protected:
-	void DoEffect ();
+	virtual void DoEffect () override;
 	
-	virtual void Serialize(FSerializer &arc);
-	double GetSpeedFactor();
+	virtual void Serialize(FSerializer &arc) override;
 public:
 	int SpeedFlags;
 };
@@ -184,95 +178,95 @@ class APowerTargeter : public APowerup
 {
 	DECLARE_CLASS (APowerTargeter, APowerup)
 protected:
-	void InitEffect ();
-	void DoEffect ();
-	void EndEffect ();
+	virtual void InitEffect () override;
+	virtual void DoEffect () override;
+	virtual void EndEffect () override;
 	void PositionAccuracy ();
-	void Travelled ();
-	void AttachToOwner(AActor *other);
-	bool HandlePickup(AInventory *item);
+	virtual void Travelled () override;
+	virtual void AttachToOwner(AActor *other) override;
+	virtual bool HandlePickup(AInventory *item) override;
 };
 
 class APowerFrightener : public APowerup
 {
 	DECLARE_CLASS (APowerFrightener, APowerup)
 protected:
-	void InitEffect ();
-	void EndEffect ();
+	virtual void InitEffect () override;
+	virtual void EndEffect () override;
 };
 
 class APowerBuddha : public APowerup
 {
 	DECLARE_CLASS (APowerBuddha, APowerup)
 protected:
-	void InitEffect ();
-	void EndEffect ();
+	virtual void InitEffect () override;
+	virtual void EndEffect () override;
 };
 
 class APowerTimeFreezer : public APowerup
 {
 	DECLARE_CLASS( APowerTimeFreezer, APowerup )
 protected:
-	void InitEffect( );
-	void DoEffect( );
-	void EndEffect( );
+	virtual void InitEffect() override;
+	virtual void DoEffect() override;
+	virtual void EndEffect() override;
 };
 
 class APowerDamage : public APowerup
 {
 	DECLARE_CLASS( APowerDamage, APowerup )
 protected:
-	void InitEffect ();
-	void EndEffect ();
-	virtual void ModifyDamage (int damage, FName damageType, int &newdamage, bool passive);
+	virtual void InitEffect () override;
+	virtual void EndEffect () override;
+	virtual void ModifyDamage (int damage, FName damageType, int &newdamage, bool passive) override;
 };
 
 class APowerProtection : public APowerup
 {
 	DECLARE_CLASS( APowerProtection, APowerup )
 protected:
-	void InitEffect ();
-	void EndEffect ();
-	virtual void ModifyDamage (int damage, FName damageType, int &newdamage, bool passive);
+	virtual void InitEffect () override;
+	virtual void EndEffect () override;
+	virtual void ModifyDamage (int damage, FName damageType, int &newdamage, bool passive) override;
 };
 
 class APowerDrain : public APowerup
 {
 	DECLARE_CLASS( APowerDrain, APowerup )
 protected:
-	void InitEffect( );
-	void EndEffect( );
+	virtual void InitEffect() override;
+	virtual void EndEffect() override;
 };
 
 class APowerRegeneration : public APowerup
 {
 	DECLARE_CLASS( APowerRegeneration, APowerup )
 protected:
-	void DoEffect();
+	virtual void DoEffect() override;
 };
 
 class APowerHighJump : public APowerup
 {
 	DECLARE_CLASS( APowerHighJump, APowerup )
 protected:
-	void InitEffect( );
-	void EndEffect( );
+	virtual void InitEffect() override;
+	virtual void EndEffect() override;
 };
 
 class APowerDoubleFiringSpeed : public APowerup
 {
 	DECLARE_CLASS( APowerDoubleFiringSpeed, APowerup )
 protected:
-	void InitEffect( );
-	void EndEffect( );
+	virtual void InitEffect() override;
+	virtual void EndEffect() override;
 };
 
 class APowerInfiniteAmmo : public APowerup
 {
 	DECLARE_CLASS( APowerInfiniteAmmo, APowerup )
 protected:
-	void InitEffect( );
-	void EndEffect( );
+	virtual void InitEffect() override;
+	virtual void EndEffect() override;
 };
 
 class APowerMorph : public APowerup
@@ -280,7 +274,7 @@ class APowerMorph : public APowerup
 	DECLARE_CLASS( APowerMorph, APowerup )
 public:
 	
-	virtual void Serialize(FSerializer &arc);
+	virtual void Serialize(FSerializer &arc) override;
 	void SetNoCallUndoMorph() { bInUndoMorph = true; }
 
 	// Variables
@@ -291,8 +285,8 @@ public:
 	bool bInUndoMorph;	// Because P_UndoPlayerMorph() can call EndEffect recursively
 
 protected:
-	void InitEffect ();
-	void EndEffect ();
+	virtual void InitEffect () override;
+	virtual void EndEffect () override;
 };
 
 #endif //__A_ARTIFACTS_H__

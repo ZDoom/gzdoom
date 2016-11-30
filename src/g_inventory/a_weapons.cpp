@@ -275,7 +275,7 @@ void AWeapon::MarkPrecacheSounds() const
 bool AWeapon::TryPickupRestricted (AActor *&toucher)
 {
 	// Wrong class, but try to pick up for ammo
-	if (ShouldStay())
+	if (CallShouldStay())
 	{ // Can't pick up weapons for other classes in coop netplay
 		return false;
 	}
@@ -398,7 +398,7 @@ bool AWeapon::PickupForAmmo (AWeapon *ownedWeapon)
 	bool gotstuff = false;
 
 	// Don't take ammo if the weapon sticks around.
-	if (!ShouldStay ())
+	if (!CallShouldStay ())
 	{
 		int oldamount1 = 0;
 		int oldamount2 = 0;

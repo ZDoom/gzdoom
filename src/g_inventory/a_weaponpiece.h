@@ -19,12 +19,12 @@ protected:
 	bool PrivateShouldStay ();
 public:
 	
-	void Serialize(FSerializer &arc);
-	bool TryPickup (AActor *&toucher);
-	bool TryPickupRestricted (AActor *&toucher);
-	bool ShouldStay ();
-	virtual FString PickupMessage ();
-	virtual void PlayPickupSound (AActor *toucher);
+	virtual void Serialize(FSerializer &arc) override;
+	virtual bool TryPickup (AActor *&toucher) override;
+	virtual bool TryPickupRestricted (AActor *&toucher) override;
+	virtual bool ShouldStay () override;
+	virtual FString PickupMessage () override;
+	virtual void PlayPickupSound (AActor *toucher) override;
 
 	int PieceValue;
 	PClassActor *WeaponClass;
@@ -42,5 +42,5 @@ public:
 	PClassActor * PieceWeapon;
 
 	
-	void Serialize(FSerializer &arc);
+	virtual void Serialize(FSerializer &arc) override;
 };

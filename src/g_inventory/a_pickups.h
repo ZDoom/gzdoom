@@ -70,31 +70,87 @@ class AInventory : public AActor
 	DECLARE_CLASS_WITH_META(AInventory, AActor, PClassInventory)
 	HAS_OBJECT_POINTERS
 public:
-	virtual void Touch (AActor *toucher);
 	
-	virtual void Serialize(FSerializer &arc);
-
-	virtual void MarkPrecacheSounds() const;
-	virtual void BeginPlay ();
+	virtual void Touch (AActor *toucher) override;
+	virtual void Serialize(FSerializer &arc) override;
+	virtual void MarkPrecacheSounds() const override;
+	virtual void BeginPlay () override;
 	virtual void Destroy () override;
+	virtual void Tick() override;
+	virtual bool Grind(bool items) override;
+
+	// virtual methods that only get overridden by special internal classes, like DehackedPickup.
+	// There is no need to expose these to scripts.
 	virtual void DepleteOrDestroy ();
-	virtual void Tick ();
 	virtual bool ShouldRespawn ();
-	virtual bool ShouldStay ();
-	virtual void Hide ();
-	bool CallTryPickup (AActor *toucher, AActor **toucher_return = NULL);
 	virtual void DoPickupSpecial (AActor *toucher);
+
+	// methods that can be overridden by scripts, plus their callers.
 	virtual bool SpecialDropAction (AActor *dropper);
 	bool CallSpecialDropAction(AActor *dropper);
-	virtual bool DrawPowerup (int x, int y);
-	virtual void DoEffect ();
-	virtual bool Grind(bool items);
 
-	virtual FString PickupMessage ();
+	virtual bool TryPickup(AActor *&toucher);
+	virtual bool TryPickupRestricted(AActor *&toucher);
+	bool CallTryPickup(AActor *toucher, AActor **toucher_return = NULL);	// This wraps both virtual methods plus a few more checks. 
+
+	virtual AInventory *CreateCopy(AActor *other);
+	AInventory *CallCreateCopy(AActor *other);
+
+	virtual AInventory *CreateTossable();
+	AInventory *CallCreateTossable();
+
+	virtual FString PickupMessage();
 	FString GetPickupMessage();
-	virtual void PlayPickupSound (AActor *toucher);
 
-	bool DoRespawn ();
+	virtual bool HandlePickup(AInventory *item);
+	bool CallHandlePickup(AInventory *item);
+
+	virtual bool Use(bool pickup);
+	bool CallUse(bool pickup);
+
+	virtual PalEntry GetBlend();
+	PalEntry CallGetBlend();
+
+	virtual bool ShouldStay();
+	bool CallShouldStay();
+
+	virtual void DoEffect();
+	void CallDoEffect();
+
+	virtual void PlayPickupSound(AActor *toucher);
+	void CallPlayPickupSound(AActor *toucher);
+
+	virtual void AttachToOwner(AActor *other);
+	void CallAttachToOwner(AActor *other);
+
+	virtual void DetachFromOwner();
+	void CallDetachFromOwner();
+
+	// still need to be done.
+	virtual void AbsorbDamage(int damage, FName damageType, int &newdamage);
+	virtual void ModifyDamage(int damage, FName damageType, int &newdamage, bool passive);
+
+	// visual stuff is for later. Right now the VM has not yet access to the needed functionality.
+	virtual bool DrawPowerup(int x, int y);
+	virtual int AlterWeaponSprite(visstyle_t *vis);
+
+
+	// virtual on the script side only.
+	double GetSpeedFactor();
+	bool GetNoTeleportFreeze();
+	// Stuff for later when more features are exported.
+	virtual void Travelled();
+	virtual void OwnerDied();
+
+
+	bool GoAway();
+	void GoAwayAndDie();
+
+	void Hide();
+	void BecomeItem ();
+	void BecomePickup ();
+
+	bool DoRespawn();
 	AInventory *PrevItem();		// Returns the item preceding this one in the list.
 	AInventory *PrevInv();		// Returns the previous item with IF_INVBAR set.
 	AInventory *NextInv();		// Returns the next item with IF_INVBAR set.
@@ -113,34 +169,7 @@ public:
 
 	FSoundIDNoInit PickupSound;
 
-	void BecomeItem ();
-	void BecomePickup ();
-	virtual void AttachToOwner (AActor *other);
-	virtual void DetachFromOwner ();
-	virtual AInventory *CreateCopy (AActor *other);
-	AInventory *CallCreateCopy(AActor *other);
-	virtual AInventory *CreateTossable ();
-	AInventory *CallCreateTossable();
-	virtual bool GoAway ();
-	virtual void GoAwayAndDie ();
-	virtual bool HandlePickup (AInventory *item);
-	bool CallHandlePickup(AInventory *item);
-	virtual bool Use (bool pickup);
-	bool CallUse(bool pickup);
-	virtual void Travelled ();
-	virtual void OwnerDied ();
 
-	virtual void AbsorbDamage (int damage, FName damageType, int &newdamage);
-	virtual void ModifyDamage (int damage, FName damageType, int &newdamage, bool passive);
-	virtual double GetSpeedFactor();
-	virtual bool GetNoTeleportFreeze();
-	virtual int AlterWeaponSprite (visstyle_t *vis);
-
-	virtual PalEntry GetBlend ();
-	PalEntry CallGetBlend();
-
-	virtual bool TryPickup (AActor *&toucher);
-	virtual bool TryPickupRestricted (AActor *&toucher);
 protected:
 	bool CanPickup(AActor * toucher);
 	void GiveQuest(AActor * toucher);
@@ -164,9 +193,9 @@ public:
 	// This is used when an inventory item's use state sequence is executed.
 	bool CallStateChain (AActor *actor, FState *state);
 
-	bool TryPickup (AActor *&toucher);
-	bool Use (bool pickup);
-	bool SpecialDropAction (AActor *dropper);
+	virtual bool TryPickup (AActor *&toucher) override;
+	virtual bool Use (bool pickup) override;
+	virtual bool SpecialDropAction (AActor *dropper) override;
 };
 
 extern PClassActor *QuestItemClasses[31];

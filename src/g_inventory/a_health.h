@@ -21,8 +21,8 @@ class AHealth : public AInventory
 
 public:
 	int PrevHealth;
-	virtual bool TryPickup (AActor *&other);
-	virtual FString PickupMessage ();
+	virtual bool TryPickup (AActor *&other) override;
+	virtual FString PickupMessage () override;
 };
 
 // HealthPickup is some item that gives the player health when used.
@@ -33,10 +33,10 @@ public:
 	int autousemode;
 
 	
-	virtual void Serialize(FSerializer &arc);
-	virtual AInventory *CreateCopy (AActor *other);
-	virtual AInventory *CreateTossable ();
-	virtual bool HandlePickup (AInventory *item);
-	virtual bool Use (bool pickup);
+	virtual void Serialize(FSerializer &arc) override;
+	virtual AInventory *CreateCopy (AActor *other) override;
+	virtual AInventory *CreateTossable () override;
+	virtual bool HandlePickup (AInventory *item) override;
+	virtual bool Use (bool pickup) override;
 };
 

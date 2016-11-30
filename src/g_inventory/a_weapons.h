@@ -137,26 +137,30 @@ public:
 
 	virtual void MarkPrecacheSounds() const;
 	
-	virtual void Serialize(FSerializer &arc);
-	virtual bool ShouldStay ();
-	virtual void AttachToOwner (AActor *other);
-	virtual bool HandlePickup (AInventory *item);
-	virtual AInventory *CreateCopy (AActor *other);
-	virtual AInventory *CreateTossable ();
-	virtual bool TryPickup (AActor *&toucher);
-	virtual bool TryPickupRestricted (AActor *&toucher);
-	virtual bool PickupForAmmo (AWeapon *ownedWeapon);
-	virtual bool Use (bool pickup);
+	virtual void Serialize(FSerializer &arc) override;
+	virtual bool ShouldStay () override;
+	virtual void AttachToOwner (AActor *other) override;
+	virtual bool HandlePickup (AInventory *item) override;
+	virtual AInventory *CreateCopy (AActor *other) override;
+	virtual AInventory *CreateTossable () override;
+	virtual bool TryPickup (AActor *&toucher) override;
+	virtual bool TryPickupRestricted (AActor *&toucher) override;
+	virtual bool Use (bool pickup) override;
 	virtual void Destroy() override;
 
+	bool PickupForAmmo(AWeapon *ownedWeapon);
+	void PostMorphWeapon();
+
+	// scripted virtuals.
 	FState *GetUpState ();
 	FState *GetDownState ();
 	FState *GetReadyState ();
 	FState *GetAtkState (bool hold);
 	FState *GetAltAtkState (bool hold);
+	
 	FState *GetStateForButtonName (FName button);
 
-	virtual void PostMorphWeapon ();
+
 	virtual void EndPowerup ();
 	void CallEndPowerup();
 
@@ -221,9 +225,8 @@ class AWeaponGiver : public AWeapon
 	DECLARE_CLASS(AWeaponGiver, AWeapon)
 
 public:
-	bool TryPickup(AActor *&toucher);
-	
-	void Serialize(FSerializer &arc);
+	virtual bool TryPickup(AActor *&toucher) override;
+	virtual void Serialize(FSerializer &arc) override;
 
 	double DropAmmoFactor;
 };

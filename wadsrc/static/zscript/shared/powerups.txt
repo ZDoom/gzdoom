@@ -22,6 +22,10 @@ class Powerup : Inventory native
 	native color BlendColor;
 	native Name Mode;			// Meaning depends on powerup - used for Invulnerability and Invisibility
 	native double Strength;		// Meaning depends on powerup - currently used only by Invisibility
+
+	// Note, that while this is an inventory flag, it only has meaning on an active powerup.
+	virtual bool GetNoTeleportFreeze() { return bNoTeleportFreeze; }
+	
 }
 
 class PowerInvulnerable : Powerup native
@@ -136,6 +140,8 @@ class PowerSpeed : Powerup native
 		Inventory.Icon "SPBOOT0";
 		+INVENTORY.NOTELEPORTFREEZE
 	}
+	
+	override double GetSpeedFactor() { return Speed; }
 }
 
 // Player Speed Trail (used by the Speed Powerup) ----------------------------

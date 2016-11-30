@@ -16,11 +16,11 @@ class ABasicArmor : public AArmor
 	DECLARE_CLASS (ABasicArmor, AArmor)
 public:
 	
-	virtual void Serialize(FSerializer &arc);
-	virtual void Tick ();
-	virtual AInventory *CreateCopy (AActor *other);
-	virtual bool HandlePickup (AInventory *item);
-	virtual void AbsorbDamage (int damage, FName damageType, int &newdamage);
+	virtual void Serialize(FSerializer &arc) override;
+	virtual void Tick () override;
+	virtual AInventory *CreateCopy (AActor *other) override;
+	virtual bool HandlePickup (AInventory *item) override;
+	virtual void AbsorbDamage (int damage, FName damageType, int &newdamage) override;
 
 	int AbsorbCount;
 	double SavePercent;
@@ -37,9 +37,9 @@ class ABasicArmorPickup : public AArmor
 	DECLARE_CLASS (ABasicArmorPickup, AArmor)
 public:
 	
-	virtual void Serialize(FSerializer &arc);
-	virtual AInventory *CreateCopy (AActor *other);
-	virtual bool Use (bool pickup);
+	virtual void Serialize(FSerializer &arc) override;
+	virtual AInventory *CreateCopy (AActor *other) override;
+	virtual bool Use (bool pickup) override;
 
 	double SavePercent;
 	int MaxAbsorb;
@@ -53,9 +53,9 @@ class ABasicArmorBonus : public AArmor
 	DECLARE_CLASS (ABasicArmorBonus, AArmor)
 public:
 	
-	virtual void Serialize(FSerializer &arc);
-	virtual AInventory *CreateCopy (AActor *other);
-	virtual bool Use (bool pickup);
+	virtual void Serialize(FSerializer &arc) override;
+	virtual AInventory *CreateCopy (AActor *other) override;
+	virtual bool Use (bool pickup) override;
 
 	double SavePercent;	// The default, for when you don't already have armor
 	int MaxSaveAmount;
@@ -73,12 +73,12 @@ class AHexenArmor : public AArmor
 	DECLARE_CLASS (AHexenArmor, AArmor)
 public:
 	
-	virtual void Serialize(FSerializer &arc);
-	virtual AInventory *CreateCopy (AActor *other);
-	virtual AInventory *CreateTossable ();
-	virtual bool HandlePickup (AInventory *item);
-	virtual void AbsorbDamage (int damage, FName damageType, int &newdamage);
-	void DepleteOrDestroy();
+	virtual void Serialize(FSerializer &arc) override;
+	virtual AInventory *CreateCopy (AActor *other) override;
+	virtual AInventory *CreateTossable () override;
+	virtual bool HandlePickup (AInventory *item) override;
+	virtual void AbsorbDamage (int damage, FName damageType, int &newdamage) override;
+	virtual void DepleteOrDestroy() override;
 
 	double Slots[5];
 	double SlotsIncrement[4];

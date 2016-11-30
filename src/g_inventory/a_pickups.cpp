@@ -399,6 +399,25 @@ void AInventory::DoEffect ()
 {
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, DoEffect)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	self->DoEffect();
+	return 0;
+}
+
+void AInventory::CallDoEffect()
+{
+	IFVIRTUAL(AInventory, DoEffect)
+	{
+		VMValue params[1] = { (DObject*)this };
+		VMFrameStack stack;
+		stack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
+	else DoEffect();
+}
+
+
 //===========================================================================
 //
 // AInventory :: Travelled
@@ -437,7 +456,7 @@ bool AInventory::HandlePickup (AInventory *item)
 {
 	if (item->GetClass() == GetClass())
 	{
-		if (Amount < MaxAmount || (sv_unlimited_pickup && !item->ShouldStay()))
+		if (Amount < MaxAmount || (sv_unlimited_pickup && !item->CallShouldStay()))
 		{
 			if (Amount > 0 && Amount + item->Amount < 0)
 			{
@@ -506,7 +525,7 @@ bool AInventory::GoAway ()
 		return false;
 	}
 
-	if (!ShouldStay ())
+	if (!CallShouldStay ())
 	{
 		Hide ();
 		if (ShouldRespawn ())
@@ -776,16 +795,25 @@ void AInventory::ModifyDamage (int damage, FName damageType, int &newdamage, boo
 //
 //===========================================================================
 
-double AInventory::GetSpeedFactor ()
+double AInventory::GetSpeedFactor()
 {
-	if (Inventory != NULL)
+	double factor = 1.;
+	auto self = this;
+	while (self != nullptr)
 	{
-		return Inventory->GetSpeedFactor();
+		IFVIRTUALPTR(self, AInventory, GetSpeedFactor)
+		{
+			VMValue params[2] = { (DObject*)self };
+			VMReturn ret;
+			VMFrameStack stack;
+			double retval;
+			ret.FloatAt(&retval);
+			stack.Call(func, params, 1, &ret, 1, nullptr);
+			factor *= retval;
+		}
+		self = self->Inventory;
 	}
-	else
-	{
-		return 1.;
-	}
+	return factor;
 }
 
 //===========================================================================
@@ -796,15 +824,22 @@ double AInventory::GetSpeedFactor ()
 
 bool AInventory::GetNoTeleportFreeze ()
 {
-	// do not check the flag here because it's only active when used on PowerUps, not on PowerupGivers.
-	if (Inventory != NULL)
+	auto self = this;
+	while (self != nullptr)
 	{
-		return Inventory->GetNoTeleportFreeze();
+		IFVIRTUALPTR(self, AInventory, GetNoTeleportFreeze)
+		{
+			VMValue params[2] = { (DObject*)self };
+			VMReturn ret;
+			VMFrameStack stack;
+			int retval;
+			ret.IntAt(&retval);
+			stack.Call(func, params, 1, &ret, 1, nullptr);
+			if (retval) return true;
+		}
+		self = self->Inventory;
 	}
-	else
-	{
-		return false;
-	}
+	return false;
 }
 
 //===========================================================================
@@ -953,7 +988,7 @@ void AInventory::Touch (AActor *toucher)
 	if (!CallTryPickup (toucher, &toucher)) return;
 
 	// This is the only situation when a pickup flash should ever play.
-	if (PickupFlash != NULL && !ShouldStay())
+	if (PickupFlash != NULL && !CallShouldStay())
 	{
 		Spawn(PickupFlash, Pos(), ALLOW_REPLACE);
 	}
@@ -1102,6 +1137,26 @@ void AInventory::PlayPickupSound (AActor *toucher)
 	S_Sound (toucher, chan, PickupSound, 1, atten);
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, PlayPickupSound)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	PARAM_OBJECT(other, AActor);
+	self->PlayPickupSound(other);
+	return 0;
+}
+
+void AInventory::CallPlayPickupSound(AActor *other)
+{
+	IFVIRTUAL(AInventory, PlayPickupSound)
+	{
+		VMValue params[2] = { (DObject*)this, (DObject*)other };
+		VMFrameStack stack;
+		stack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+	else PlayPickupSound(other);
+}
+
+
 //===========================================================================
 //
 // AInventory :: ShouldStay
@@ -1114,6 +1169,28 @@ bool AInventory::ShouldStay ()
 {
 	return false;
 }
+
+DEFINE_ACTION_FUNCTION(AInventory, ShouldStay)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	ACTION_RETURN_BOOL(self->ShouldStay());
+}
+
+bool AInventory::CallShouldStay()
+{
+	IFVIRTUAL(AInventory, ShouldStay)
+	{
+		VMValue params[1] = { (DObject*)this };
+		VMReturn ret;
+		VMFrameStack stack;
+		int retval;
+		ret.IntAt(&retval);
+		stack.Call(func, params, 1, &ret, 1, nullptr);
+		return !!retval;
+	}
+	else return ShouldStay();
+}
+
 
 //===========================================================================
 //
@@ -1416,6 +1493,14 @@ bool AInventory::TryPickupRestricted (AActor *&toucher)
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, TryPickupRestricted)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	PARAM_POINTER(toucher, AActor*);
+	ACTION_RETURN_BOOL(self->TryPickupRestricted(*toucher));
+}
+
+
 //===========================================================================
 //
 // AInventory :: CallTryPickup
@@ -1445,14 +1530,27 @@ bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 		else res = TryPickup(toucher);
 	}
 	else if (!(ItemFlags & IF_RESTRICTABSOLUTELY))
-		res = TryPickupRestricted(toucher);	// let an item decide for itself how it will handle this
+	{
+		// let an item decide for itself how it will handle this
+		IFVIRTUAL(AInventory, TryPickupRestricted)
+		{
+			VMValue params[2] = { (DObject*)this, (void*)&toucher };
+			VMReturn ret;
+			VMFrameStack stack;
+			int retval;
+			ret.IntAt(&retval);
+			stack.Call(func, params, 2, &ret, 1, nullptr);
+			res = !!retval;
+		}
+		else res = TryPickupRestricted(toucher);
+	}
 	else
 		return false;
 
 	// Morph items can change the toucher so we need an option to return this info.
 	if (toucher_return != NULL) *toucher_return = toucher;
 
-	if (!res && (ItemFlags & IF_ALWAYSPICKUP) && !ShouldStay())
+	if (!res && (ItemFlags & IF_ALWAYSPICKUP) && !CallShouldStay())
 	{
 		res = true;
 		GoAwayAndDie();
@@ -1576,6 +1674,26 @@ void AInventory::AttachToOwner (AActor *other)
 	other->AddInventory (this);
 }
 
+DEFINE_ACTION_FUNCTION(AInventory, AttachToOwner)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	PARAM_OBJECT(other, AActor);
+	self->AttachToOwner(other);
+	return 0;
+}
+
+void AInventory::CallAttachToOwner(AActor *other)
+{
+	IFVIRTUAL(AInventory, AttachToOwner)
+	{
+		VMValue params[2] = { (DObject*)this, (DObject*)other };
+		VMFrameStack stack;
+		stack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+	else AttachToOwner(other);
+}
+
+
 //===========================================================================
 //
 // AInventory :: DetachFromOwner
@@ -1588,6 +1706,29 @@ void AInventory::AttachToOwner (AActor *other)
 void AInventory::DetachFromOwner ()
 {
 }
+
+DEFINE_ACTION_FUNCTION(AInventory, DetachFromOwner)
+{
+	PARAM_SELF_PROLOGUE(AInventory);
+	self->DetachFromOwner();
+	return 0;
+}
+
+void AInventory::CallDetachFromOwner()
+{
+	IFVIRTUAL(AInventory, DetachFromOwner)
+	{
+		VMValue params[1] = { (DObject*)this };
+		VMFrameStack stack;
+		stack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
+	else DetachFromOwner();
+}
+
+//===========================================================================
+//===========================================================================
+
+
 
 IMPLEMENT_CLASS(AStateProvider, false, false)
 IMPLEMENT_CLASS(ACustomInventory, false, false)

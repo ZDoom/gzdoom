@@ -32,7 +32,15 @@ class Inventory : Actor native
 	virtual native Inventory CreateTossable();
 	virtual native bool SpecialDropAction (Actor dropper);
 	virtual native String PickupMessage();
+	virtual native bool ShouldStay();
+	virtual native void DoEffect();
+	virtual native void PlayPickupSound(Actor user);
+	virtual native void AttachToOwner(Actor user);
+	virtual native void DetachFromOwner();
 	
+	virtual double GetSpeedFactor() { return 1; }
+	virtual bool GetNoTeleportFreeze() { return false; }
+
 	native void GoAwayAndDie();
 	native void BecomeItem();
 	native void BecomePickup();
@@ -42,7 +50,10 @@ class Inventory : Actor native
 	private native void A_RestoreSpecialThing1();
 	private native void A_RestoreSpecialThing2();
 
-	virtual native bool TryPickup(in out Actor toucher);
+	// In this case the caller function is more than a simple wrapper around the virtual method and
+	// is what must be actually called to pick up an item.
+	virtual protected native bool TryPickup(in out Actor toucher);
+	virtual protected native bool TryPickupRestricted(in out Actor toucher);
 	native bool, Actor CallTryPickup(Actor toucher);
 
 	States(Actor, Overlay, Weapon, Item)

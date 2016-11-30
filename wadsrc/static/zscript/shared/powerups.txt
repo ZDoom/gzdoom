@@ -24,7 +24,7 @@ class Powerup : Inventory native
 	native double Strength;		// Meaning depends on powerup - currently used only by Invisibility
 
 	// Note, that while this is an inventory flag, it only has meaning on an active powerup.
-	virtual bool GetNoTeleportFreeze() { return bNoTeleportFreeze; }
+	override bool GetNoTeleportFreeze() { return bNoTeleportFreeze; }
 	
 }
 

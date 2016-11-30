@@ -419,8 +419,8 @@ class Actor : Thinker native
 	native void Howl();
 	native void DrawSplash (int count, double angle, int kind);
 	native void GiveSecret(bool printmsg = true, bool playsound = true);
-	native void GetCameraHeight();
-	native void GetGravity();
+	native double GetCameraHeight();
+	native double GetGravity();
 
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
 	native void AddInventory(Inventory inv);

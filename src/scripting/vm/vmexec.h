@@ -1827,12 +1827,12 @@ static void SetReturn(const VMRegisters &reg, VMFrame *frame, VMReturn *ret, VM_
 	case REGT_FLOAT:
 		if (regtype & REGT_KONST)
 		{
-			assert(regnum + ((regtype & REGT_KONST) ? 2u : 0u) < func->NumKonstF);
+			assert(regnum < func->NumKonstF);
 			src = &func->KonstF[regnum];
 		}
 		else
 		{
-			assert(regnum + ((regtype & REGT_KONST) ? 2u : 0u) < frame->NumRegF);
+			assert(regnum < frame->NumRegF);
 			src = &reg.f[regnum];
 		}
 		if (regtype & REGT_MULTIREG3)

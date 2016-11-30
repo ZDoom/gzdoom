@@ -422,7 +422,7 @@ VMFrame *VMFrameStack::PopFrame()
 
 int VMFrameStack::Call(VMFunction *func, VMValue *params, int numparams, VMReturn *results, int numresults, VMException **trap)
 {
-	assert(this == VMGlobalStack);	// why would anyone even want to create a local stack?
+	assert(this == &GlobalVMStack);	// why would anyone even want to create a local stack?
 	bool allocated = false;
 	try
 	{	

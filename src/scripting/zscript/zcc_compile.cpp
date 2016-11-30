@@ -3267,7 +3267,3 @@ FArgumentList &ZCCCompiler::ConvertNodeList(FArgumentList &args, ZCC_TreeNode *h
 	}
 	return args;
 }
-
-void func()
-{
-}

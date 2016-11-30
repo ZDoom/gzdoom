@@ -25,11 +25,15 @@
 #include "doomdef.h"
 #include "sbar.h"
 #include "r_data/r_translate.h"
+#include "r_data/r_interpolate.h"
 #include "r_poly.h"
 #include "gl/data/gl_data.h"
+#include "d_net.h"
+#include "po_man.h"
 
 EXTERN_CVAR(Int, screenblocks)
 void InitGLRMapinfoData();
+extern bool r_showviewer;
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -39,8 +43,50 @@ RenderPolyScene *RenderPolyScene::Instance()
 	return &scene;
 }
 
-void RenderPolyScene::Render()
+void RenderPolyScene::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines)
 {
+	const bool savedviewactive = viewactive;
+	const bool savedoutputformat = r_swtruecolor;
+
+	viewwidth = width;
+	RenderTarget = canvas;
+	bRenderingToCanvas = true;
+	R_SetWindow(12, width, height, height, true);
+	viewwindowx = x;
+	viewwindowy = y;
+	viewactive = true;
+	r_swtruecolor = canvas->IsBgra();
+	
+	canvas->Lock(true);
+	
+	RenderActorView(actor, dontmaplines);
+	
+	canvas->Unlock();
+
+	RenderTarget = screen;
+	bRenderingToCanvas = false;
+	R_ExecuteSetViewSize();
+	viewactive = savedviewactive;
+	r_swtruecolor = savedoutputformat;
+}
+
+void RenderPolyScene::RenderActorView(AActor *actor, bool dontmaplines)
+{
+	NetUpdate();
+	
+	r_dontmaplines = dontmaplines;
+	
+	P_FindParticleSubsectors();
+	PO_LinkToSubsectors();
+	R_SetupFrame(actor);
+	
+	ActorRenderFlags savedflags = camera->renderflags;
+	// Never draw the player unless in chasecam mode
+	if (!r_showviewer)
+		camera->renderflags |= RF_INVISIBLE;
+
+	R_BeginDrawerCommands();
+
 	ClearBuffers();
 	SetSceneViewport();
 	SetupPerspectiveMatrix();
@@ -50,7 +96,14 @@ void RenderPolyScene::Render()
 	MainPortal.RenderTranslucent(0);
 	PlayerSprites.Render();
 
-	DrawerCommandQueue::WaitForWorkers();
+	camera->renderflags = savedflags;
+	interpolator.RestoreInterpolations ();
+	
+	NetUpdate();
+	
+	R_EndDrawerCommands();
+	
+	NetUpdate();
 }
 
 void RenderPolyScene::RenderRemainingPlayerSprites()

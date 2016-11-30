@@ -45,10 +45,18 @@
 #include "r_draw_rgba.h"
 #include "r_drawers.h"
 #include "r_poly.h"
+#include "p_setup.h"
 
 EXTERN_CVAR(Bool, r_shadercolormaps)
-EXTERN_CVAR(Bool, r_polyrenderer)	// [SP] dpJudas's new renderer
 EXTERN_CVAR(Float, maxviewpitch)	// [SP] CVAR from GZDoom
+
+CUSTOM_CVAR(Bool, r_polyrenderer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (self == 1 && !hasglnodes)
+	{
+		Printf("No GL BSP detected. You must restart the map before rendering will be correct\n");
+	}
+}
 
 void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio);
 void R_SetupColormap(player_t *);
@@ -175,6 +183,27 @@ void FSoftwareRenderer::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &act
 
 void FSoftwareRenderer::RenderView(player_t *player)
 {
+	if (r_polyrenderer)
+	{
+		bool saved_swtruecolor = r_swtruecolor;
+		r_swtruecolor = screen->IsBgra();
+		
+		RenderPolyScene::Instance()->RenderActorView(player->mo, false);
+		FCanvasTextureInfo::UpdateAll();
+		
+		// Apply special colormap if the target cannot do it
+		if (realfixedcolormap && r_swtruecolor && !(r_shadercolormaps && screen->Accel2D))
+		{
+			R_BeginDrawerCommands();
+			DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(realfixedcolormap, screen);
+			R_EndDrawerCommands();
+		}
+		
+		r_swtruecolor = saved_swtruecolor;
+		
+		return;
+	}
+
 	if (r_swtruecolor != screen->IsBgra())
 	{
 		r_swtruecolor = screen->IsBgra();
@@ -223,7 +252,10 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 	// Take a snapshot of the player's view
 	pic->ObjectFlags |= OF_Fixed;
 	pic->Lock ();
-	R_RenderViewToCanvas (player->mo, pic, 0, 0, width, height);
+	if (r_polyrenderer)
+		RenderPolyScene::Instance()->RenderViewToCanvas(player->mo, pic, 0, 0, width, height, true);
+	else
+		R_RenderViewToCanvas (player->mo, pic, 0, 0, width, height);
 	screen->GetFlashedPalette (palette);
 	M_CreatePNG (file, pic->GetBuffer(), palette, SS_PAL, width, height, pic->GetPitch());
 	pic->Unlock ();
@@ -373,7 +405,10 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 
 	DAngle savedfov = FieldOfView;
 	R_SetFOV ((double)fov);
-	R_RenderViewToCanvas (viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
+	if (r_polyrenderer)
+		RenderPolyScene::Instance()->RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
+	else
+		R_RenderViewToCanvas (viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 	R_SetFOV (savedfov);
 
 	if (Canvas->IsBgra())

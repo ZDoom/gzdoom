@@ -59,17 +59,8 @@
 #include "v_font.h"
 #include "r_data/colormaps.h"
 #include "p_maputl.h"
-#include "r_poly.h"
 #include "p_setup.h"
 #include "version.h"
-
-CUSTOM_CVAR(Bool, r_polyrenderer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	if (self == 1 && !hasglnodes)
-	{
-		Printf("No GL BSP detected. You must restart the map before rendering will be correct\n");
-	}
-}
 
 // MACROS ------------------------------------------------------------------
 
@@ -915,14 +906,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
 	PO_LinkToSubsectors();
 	InSubsector = NULL;
-	if (!r_polyrenderer)
-	{
-		R_RenderBSPNode(nodes + numnodes - 1);	// The head node is the last node output.
-	}
-	else
-	{
-		RenderPolyScene::Instance()->Render();
-	}
+	R_RenderBSPNode(nodes + numnodes - 1);	// The head node is the last node output.
 	R_3D_ResetClip(); // reset clips (floor/ceiling)
 	camera->renderflags = savedflags;
 	WallCycles.Unclock();
@@ -932,11 +916,8 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	if (viewactive)
 	{
 		PlaneCycles.Clock();
-		if (!r_polyrenderer)
-		{
-			R_DrawPlanes();
-			R_DrawPortals();
-		}
+		R_DrawPlanes();
+		R_DrawPortals();
 		PlaneCycles.Unclock();
 
 		// [RH] Walk through mirrors
@@ -953,8 +934,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 		NetUpdate ();
 		
 		MaskedCycles.Clock();
-		if (!r_polyrenderer)
-			R_DrawMasked ();
+		R_DrawMasked ();
 		MaskedCycles.Unclock();
 
 		NetUpdate ();

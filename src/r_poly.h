@@ -33,11 +33,15 @@
 #include "r_poly_playersprite.h"
 #include "r_poly_sky.h"
 
+class AActor;
+class DCanvas;
+
 // Renders a scene
 class RenderPolyScene
 {
 public:
-	void Render();
+	void RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines);
+	void RenderActorView(AActor *actor, bool dontmaplines);
 	void RenderRemainingPlayerSprites();
 
 	static RenderPolyScene *Instance();

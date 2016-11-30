@@ -468,7 +468,7 @@ std::vector<uint8_t> LLVMProgram::GenerateObjectFile(const std::string &triple, 
 
 	const Target *target = TargetRegistry::lookupTarget(triple, errorstring);
 	
-#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9)
 	Reloc::Model relocationModel = Reloc::PIC_;
 #else
 	Optional<Reloc::Model> relocationModel = Reloc::PIC_;
@@ -502,7 +502,7 @@ std::vector<uint8_t> LLVMProgram::GenerateObjectFile(const std::string &triple, 
 	options.MCOptions.MCUseDwarfDirectory = false;
 	options.MCOptions.AsmVerbose = true;
 
-#if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8)
+#if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9)
 	options.Reciprocals = TargetRecip({ "all" });
 	options.StackSymbolOrdering = true;
 	options.UniqueSectionNames = true;

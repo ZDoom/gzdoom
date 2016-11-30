@@ -467,13 +467,18 @@ std::vector<uint8_t> LLVMProgram::GenerateObjectFile(const std::string &triple, 
 	llvm::Module *module = mModule.get();
 
 	const Target *target = TargetRegistry::lookupTarget(triple, errorstring);
+	
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
+	Reloc::Model relocationModel = Reloc::PIC_;
+#else
 	Optional<Reloc::Model> relocationModel = Reloc::PIC_;
+#endif
+	
 	CodeModel::Model codeModel = CodeModel::Model::Default;
 
 	TargetOptions options;
 	options.LessPreciseFPMADOption = true;
 	options.AllowFPOpFusion = FPOpFusion::Fast;
-	options.Reciprocals = TargetRecip({ "all" });
 	options.UnsafeFPMath = true;
 	options.NoInfsFPMath = true;
 	options.NoNaNsFPMath = true;
@@ -481,30 +486,34 @@ std::vector<uint8_t> LLVMProgram::GenerateObjectFile(const std::string &triple, 
 	options.NoZerosInBSS = false;
 	options.GuaranteedTailCallOpt = false;
 	options.StackAlignmentOverride = 0;
-	options.StackSymbolOrdering = true;
 	options.UseInitArray = true;
 	options.DataSections = false;
 	options.FunctionSections = false;
-	options.UniqueSectionNames = true;
-	options.EmulatedTLS = false;
-	options.ExceptionModel = ExceptionHandling::None;
 	options.JTType = JumpTable::Single; // Create a single table for all jumptable functions
 	options.ThreadModel = ThreadModel::POSIX;
-	options.EABIVersion = EABI::Default;
-	options.DebuggerTuning = DebuggerKind::Default;
 	options.DisableIntegratedAS = false;
 	options.MCOptions.SanitizeAddress = false;
 	options.MCOptions.MCRelaxAll = false; // relax all fixups in the emitted object file
-	options.MCOptions.MCIncrementalLinkerCompatible = false;
 	options.MCOptions.DwarfVersion = 0;
 	options.MCOptions.ShowMCInst = false;
 	options.MCOptions.ABIName = "";
 	options.MCOptions.MCFatalWarnings = false;
-	options.MCOptions.MCNoWarn = false;
 	options.MCOptions.ShowMCEncoding = false; // Show encoding in .s output
 	options.MCOptions.MCUseDwarfDirectory = false;
 	options.MCOptions.AsmVerbose = true;
+
+#if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8)
+	options.Reciprocals = TargetRecip({ "all" });
+	options.StackSymbolOrdering = true;
+	options.UniqueSectionNames = true;
+	options.EmulatedTLS = false;
+	options.ExceptionModel = ExceptionHandling::None;
+	options.EABIVersion = EABI::Default;
+	options.DebuggerTuning = DebuggerKind::Default;
+	options.MCOptions.MCIncrementalLinkerCompatible = false;
+	options.MCOptions.MCNoWarn = false;
 	options.MCOptions.PreserveAsmComments = true;
+#endif
 
 	CodeGenOpt::Level optimizationLevel = CodeGenOpt::Aggressive;
 	machine = target->createTargetMachine(triple, cpuName, features, options, relocationModel, codeModel, optimizationLevel);
@@ -638,6 +647,16 @@ int main(int argc, char **argv)
 		llvm::InitializeNativeTargetAsmPrinter();
 
 		std::string triple = llvm::sys::getDefaultTargetTriple();
+		
+#ifdef __APPLE__
+		// Target triple is x86_64-apple-darwin15.6.0
+		auto pos = triple.find("-apple-darwin");
+		if (pos != std::string::npos)
+		{
+			triple = triple.substr(0, pos) + "-apple-darwin10.11.0";
+		}
+#endif
+		
 		std::cout << "Target triple is " << triple << std::endl;
 
 		std::string cpuName = "pentium4";

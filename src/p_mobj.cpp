@@ -3440,21 +3440,6 @@ bool AActor::CallSlam(AActor *thing)
 
 
 
-bool AActor::SpecialBlastHandling (AActor *source, double strength)
-{
-	return true;
-}
-
-// This only gets called from the script side so we do not need a native wrapper like for the other virtual methods.
-// This will be removed, once all actors overriding this method are exported.
-DEFINE_ACTION_FUNCTION(AActor, SpecialBlastHandling)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT(source, AActor);
-	PARAM_FLOAT(strength);
-	ACTION_RETURN_BOOL(self->SpecialBlastHandling(source, strength));
-}
-
 // This virtual method only exists on the script side.
 int AActor::SpecialMissileHit (AActor *victim)
 {

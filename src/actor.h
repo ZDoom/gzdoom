@@ -585,11 +585,13 @@ public:
 	AActor () throw();
 	AActor (const AActor &other) throw();
 	AActor &operator= (const AActor &other);
-	void Destroy () override;
 	~AActor ();
 
-	void Serialize(FSerializer &arc);
-	void PostSerialize();
+	virtual void Destroy() override;
+	virtual void Serialize(FSerializer &arc) override;
+	virtual void PostSerialize() override;
+	virtual void PostBeginPlay() override;		// Called immediately before the actor's first tick
+	virtual void Tick() override;
 
 	static AActor *StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t allowreplacement, bool SpawningMapThing = false);
 
@@ -614,18 +616,17 @@ public:
 
 	virtual void BeginPlay();			// Called immediately after the actor is created
 	void CallBeginPlay();
-	virtual void PostBeginPlay();		// Called immediately before the actor's first tick
+
 	void LevelSpawned();				// Called after BeginPlay if this actor was spawned by the world
 	virtual void HandleSpawnFlags();	// Translates SpawnFlags into in-game flags.
 
 	virtual void MarkPrecacheSounds() const;	// Marks sounds used by this actor for precaching.
 
 	virtual void Activate (AActor *activator);
-	virtual void Deactivate (AActor *activator);
 	void CallActivate(AActor *activator);
-	void CallDeactivate(AActor *activator);
 
-	virtual void Tick ();
+	virtual void Deactivate(AActor *activator);
+	void CallDeactivate(AActor *activator);
 
 	// Called when actor dies
 	virtual void Die (AActor *source, AActor *inflictor, int dmgflags = 0);
@@ -640,6 +641,16 @@ public:
 	virtual int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype);
 	int CallTakeSpecialDamage(AActor *inflictor, AActor *source, int damage, FName damagetype);
 
+	// Actor had MF_SKULLFLY set and rammed into something
+	// Returns false to stop moving and true to keep moving
+	virtual bool Slam(AActor *victim);
+	bool CallSlam(AActor *victim);
+
+	// Something just touched this actor.
+	virtual void Touch(AActor *toucher);
+	void CallTouch(AActor *toucher);
+
+
 	// Centaurs and ettins squeal when electrocuted, poisoned, or "holy"-ed
 	// Made a metadata property so no longer virtual
 	void Howl ();
@@ -650,32 +661,25 @@ public:
 	// Called when an actor with MF_MISSILE and MF2_FLOORBOUNCE hits the floor
 	bool FloorBounceMissile (secplane_t &plane);
 
-	// Called when an actor is to be reflected by a disc of repulsion.
-	// Returns true to continue normal blast processing.
-	virtual bool SpecialBlastHandling (AActor *source, double strength);
-
 	// Called by RoughBlockCheck
 	bool IsOkayToAttack (AActor *target);
 
 	// Plays the actor's ActiveSound if its voice isn't already making noise.
 	void PlayActiveSound ();
 
-	// Actor had MF_SKULLFLY set and rammed into something
-	// Returns false to stop moving and true to keep moving
-	virtual bool Slam (AActor *victim);
-	bool CallSlam(AActor *victim);
-
 	// Called by PIT_CheckThing() and needed for some Hexen things.
 	// Returns -1 for normal behavior, 0 to return false, and 1 to return true.
 	// I'm not sure I like it this way, but it will do for now.
+	// (virtual on the script side only)
 	int SpecialMissileHit (AActor *victim);
 
 	// Returns true if it's okay to switch target to "other" after being attacked by it.
-	virtual bool OkayToSwitchTarget (AActor *other);
+	bool OkayToSwitchTarget (AActor *other);
 
-	// Something just touched this actor.
-	virtual void Touch (AActor *toucher);
-	void CallTouch(AActor *toucher);
+	// Note: Although some of the inventory functions are virtual, this
+	// is not exposed to scripts, as the only class overriding them is 
+	// APlayerPawn for some specific handling for players. None of this
+	// should ever be overridden by custom classes.
 
 	// Adds the item to this actor's inventory and sets its Owner.
 	virtual void AddInventory (AInventory *item);
@@ -760,7 +764,7 @@ public:
 	DVector3 GetPortalTransition(double byoffset, sector_t **pSec = NULL);
 
 	// What species am I?
-	virtual FName GetSpecies();
+	FName GetSpecies();
 
 	// set translation
 	void SetTranslation(FName trname);

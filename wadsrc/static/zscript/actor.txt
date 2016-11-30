@@ -267,8 +267,14 @@ class Actor : Thinker native
 	virtual native int TakeSpecialDamage (Actor inflictor, Actor source, int damage, Name damagetype);
 	virtual native void Die(Actor source, Actor inflictor, int dmgflags = 0);
 	virtual native bool Slam(Actor victim);
-	virtual native bool SpecialBlastHandling (Actor source, double strength);
 	virtual native void Touch(Actor toucher);
+
+	// Called when an actor is to be reflected by a disc of repulsion.
+	// Returns true to continue normal blast processing.
+	virtual bool SpecialBlastHandling (Actor source, double strength)	// this is entirely on the script side with no native part at all.
+	{
+		return true;
+	}
 
 	virtual int SpecialMissileHit (Actor victim)	// for this no native version exists
 	{

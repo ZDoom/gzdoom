@@ -165,5 +165,5 @@ SSAVec4i DrawerCodegen::blend_add_srccolor_oneminussrccolor(SSAVec4i fg, SSAVec4
 {
 	SSAVec4i fgcolor = fg + (fg >> 7); // 255 -> 256
 	SSAVec4i inv_fgcolor = SSAVec4i(256) - fgcolor;
-	return fg + (bg * inv_fgcolor + 128) >> 8;
+	return fg + ((bg * inv_fgcolor + 128) >> 8);
 }

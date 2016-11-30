@@ -70,6 +70,7 @@
 #include "r_data/colormaps.h"
 #include "a_weaponpiece.h"
 #include "vmbuilder.h"
+#include "a_ammo.h"
 
 extern TArray<PClassActor **> OptionalClassPtrs;
 

@@ -44,6 +44,7 @@
 #include "w_wad.h"
 #include "a_keys.h"
 #include "a_armor.h"
+#include "a_ammo.h"
 #include "sbar.h"
 #include "sc_man.h"
 #include "templates.h"

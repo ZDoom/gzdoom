@@ -69,6 +69,7 @@
 #include "p_setup.h"
 #include "p_spec.h"
 #include "r_utility.h"
+#include "a_ammo.h"
 #include "math/cmath.h"
 
 static FRandom pr_script("FScript");

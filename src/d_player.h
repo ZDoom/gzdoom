@@ -30,6 +30,7 @@
 #include "doomstat.h"
 
 #include "a_artifacts.h"
+#include "a_weapons.h"
 
 // The player data structure depends on a number
 // of other structs: items (internal inventory),

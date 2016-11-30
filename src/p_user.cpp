@@ -60,6 +60,7 @@
 #include "p_spec.h"
 #include "virtual.h"
 #include "a_armor.h"
+#include "a_ammo.h"
 
 static FRandom pr_skullpop ("SkullPop");
 

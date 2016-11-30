@@ -1107,6 +1107,7 @@ set (PCH_SOURCES
 	w_wad.cpp
 	wi_stuff.cpp
 	zstrformat.cpp
+	g_inventory/a_ammo.cpp
 	g_inventory/a_armor.cpp
 	g_inventory/a_artifacts.cpp
 	g_inventory/a_keys.cpp

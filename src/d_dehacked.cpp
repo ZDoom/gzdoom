@@ -75,6 +75,7 @@
 #include "v_text.h"
 #include "vmbuilder.h"
 #include "a_armor.h"
+#include "a_ammo.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO

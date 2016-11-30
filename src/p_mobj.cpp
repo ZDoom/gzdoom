@@ -70,6 +70,7 @@
 #include "d_player.h"
 #include "virtual.h"
 #include "a_armor.h"
+#include "a_ammo.h"
 
 // MACROS ------------------------------------------------------------------
 

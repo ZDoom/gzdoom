@@ -84,6 +84,7 @@
 #include "thingdef.h"
 #include "a_pickups.h"
 #include "a_armor.h"
+#include "a_ammo.h"
 
 extern FILE *Logfile;
 

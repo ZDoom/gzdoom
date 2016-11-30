@@ -13,6 +13,7 @@
 #include "templates.h"
 #include "a_keys.h"
 #include "a_armor.h"
+#include "a_ammo.h"
 #include "gi.h"
 #include "g_level.h"
 #include "colormatcher.h"

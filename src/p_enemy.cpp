@@ -51,6 +51,7 @@
 #include "p_spec.h"
 #include "p_checkposition.h"
 #include "math/cmath.h"
+#include "a_ammo.h"
 
 #include "gi.h"
 

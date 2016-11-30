@@ -59,6 +59,7 @@
 #include "gstrings.h"
 #include "version.h"
 #include "cmdlib.h"
+#include "a_ammo.h"
 
 #define ARTIFLASH_OFFSET (statusBar->invBarOffset+6)
 enum

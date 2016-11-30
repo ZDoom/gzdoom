@@ -59,6 +59,7 @@
 #include "a_morph.h"
 #include "p_spec.h"
 #include "virtual.h"
+#include "a_armor.h"
 
 static FRandom pr_skullpop ("SkullPop");
 

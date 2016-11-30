@@ -14,6 +14,7 @@
 #include "serializer.h"
 #include "p_enemy.h"
 #include "d_player.h"
+#include "a_armor.h"
 #include "r_data/sprites.h"
 
 static FRandom pr_morphmonst ("MorphMonster");

@@ -47,6 +47,7 @@
 #include "serializer.h"
 #include "r_utility.h"
 #include "a_morph.h"
+#include "a_armor.h"
 
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code

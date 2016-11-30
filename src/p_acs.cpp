@@ -83,6 +83,7 @@
 #include "serializer.h"
 #include "thingdef.h"
 #include "a_pickups.h"
+#include "a_armor.h"
 
 extern FILE *Logfile;
 

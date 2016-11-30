@@ -69,6 +69,7 @@
 #include "thingdef.h"
 #include "d_player.h"
 #include "virtual.h"
+#include "a_armor.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -829,6 +829,7 @@ file( GLOB HEADER_FILES
 	${EXTRA_HEADER_DIRS}
 	fragglescript/*.h
 	g_shared/*.h
+	g_inventory/*.h
 	g_strife/*.h
 	intermission/*.h
 	menu/*.h
@@ -1106,21 +1107,23 @@ set (PCH_SOURCES
 	w_wad.cpp
 	wi_stuff.cpp
 	zstrformat.cpp
+	g_inventory/a_armor.cpp
+	g_inventory/a_artifacts.cpp
+	g_inventory/a_keys.cpp
+	g_inventory/a_pickups.cpp
+	g_inventory/a_puzzleitems.cpp
+	g_inventory/a_weaponpiece.cpp
+	g_inventory/a_weapons.cpp
 	g_strife/strife_sbar.cpp
 	g_shared/a_action.cpp
-	g_shared/a_armor.cpp
-	g_shared/a_artifacts.cpp
 	g_shared/a_bridge.cpp
 	g_shared/a_decals.cpp
 	g_shared/a_fastprojectile.cpp
 	g_shared/a_flashfader.cpp
 	g_shared/a_fountain.cpp
-	g_shared/a_keys.cpp
 	g_shared/a_lightning.cpp
 	g_shared/a_morph.cpp
 	g_shared/a_movingcamera.cpp
-	g_shared/a_pickups.cpp
-	g_shared/a_puzzleitems.cpp
 	g_shared/a_quake.cpp
 	g_shared/a_randomspawner.cpp
 	g_shared/a_sectoraction.cpp
@@ -1128,8 +1131,6 @@ set (PCH_SOURCES
 	g_shared/a_soundenvironment.cpp
 	g_shared/a_soundsequence.cpp
 	g_shared/a_specialspot.cpp
-	g_shared/a_weaponpiece.cpp
-	g_shared/a_weapons.cpp
 	g_shared/hudmessages.cpp
 	g_shared/sbarinfo.cpp
 	g_shared/sbar_mugshot.cpp
@@ -1250,6 +1251,7 @@ target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
 include_directories( .
 	g_strife
 	g_shared
+	g_inventory
 	oplsynth
 	sound
 	textures
@@ -1380,6 +1382,7 @@ source_group("Externak\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/s
 source_group("FraggleScript" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/fragglescript/.+")
 source_group("Games\\Strife Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_strife/.+")
 source_group("Intermission" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/intermission/.+")
+source_group("Inventory" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_inventory/.+")
 source_group("Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/menu/.+")
 source_group("Render Core\\Render Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_.+\\.h$")
 source_group("Render Core\\Render Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_.+\\.cpp$")

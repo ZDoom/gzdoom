@@ -82,8 +82,7 @@
 #include "i_music.h"
 #include "serializer.h"
 #include "thingdef.h"
-
-#include "g_shared/a_pickups.h"
+#include "a_pickups.h"
 
 extern FILE *Logfile;
 

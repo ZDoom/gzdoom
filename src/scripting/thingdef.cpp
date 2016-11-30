@@ -387,8 +387,9 @@ void LoadActors ()
 	}
 	FScriptPosition::ResetErrorCounter();
 
-	for (auto ti : PClassActor::AllActorClasses)
+	for (int i = PClassActor::AllActorClasses.Size()-1; i>=0;i--)
 	{
+		auto ti = PClassActor::AllActorClasses[i];
 		if (ti->Size == TentativeClass)
 		{
 			if (ti->ObjectFlags & OF_Transient)
@@ -400,6 +401,7 @@ void LoadActors ()
 				{
 					if (*op == ti) *op = nullptr;
 				}
+				PClassActor::AllActorClasses.Delete(i);
 			}
 			else
 			{

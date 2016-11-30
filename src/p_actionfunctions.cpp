@@ -79,6 +79,7 @@
 #include "thingdef.h"
 #include "math/cmath.h"
 #include "a_armor.h"
+#include "a_health.h"
 
 AActor *SingleActorFromTID(int tid, AActor *defactor);
 

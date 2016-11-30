@@ -40,6 +40,7 @@ static FRandom pr_torch ("Torch");
 #define	TIMEFREEZE_TICS	( 12 * TICRATE )
 */
 
+
 IMPLEMENT_CLASS(APowerup, false, false)
 
 // Powerup-Giver -------------------------------------------------------------
@@ -56,6 +57,7 @@ void PClassPowerupGiver::ReplaceClassRef(PClass *oldclass, PClass *newclass)
 	}
 }
 
+IMPLEMENT_CLASS(APowerupGiver, false, false)
 
 DEFINE_FIELD(APowerupGiver, PowerupType)
 DEFINE_FIELD(APowerupGiver, EffectTics)

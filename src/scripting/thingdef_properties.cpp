@@ -71,6 +71,8 @@
 #include "a_weaponpiece.h"
 #include "vmbuilder.h"
 #include "a_ammo.h"
+#include "a_health.h"
+#include "a_keys.h"
 
 extern TArray<PClassActor **> OptionalClassPtrs;
 

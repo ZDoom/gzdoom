@@ -2248,16 +2248,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 	}
 
 	// Special case: Assignment to a bitfield.
-	if (Base->ExprType == EFX_StructMember || Base->ExprType == EFX_ClassMember)
-	{
-		auto f = static_cast<FxStructMember *>(Base)->membervar;
-		if (f->BitValue != -1 && !ctx.CheckReadOnly(f->Flags))
-		{
-			IsBitWrite = f->BitValue;
-			return this;
-		}
-	}
-
+	IsBitWrite = Base->GetBitValue();
 	return this;
 }
 
@@ -5742,6 +5733,11 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 	}
 
 	SAFE_RESOLVE(Object, ctx);
+
+	if (Identifier == FName("allmap"))
+	{
+		int a = 2;
+	}
 
 	// check for class or struct constants if the left side is a type name.
 	if (Object->ValueType == TypeError)

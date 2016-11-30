@@ -4,6 +4,10 @@ zscript/actor.txt
 zscript/actor_checks.txt
 
 zscript/shared/inventory.txt
+zscript/shared/inv_misc.txt
+zscript/shared/weapons.txt
+zscript/shared/armor.txt
+zscript/shared/powerups.txt
 zscript/shared/player.txt
 zscript/shared/morph.txt
 zscript/shared/botstuff.txt
@@ -12,7 +16,7 @@ zscript/shared/blood.txt
 zscript/shared/debris.txt
 zscript/shared/decal.txt
 zscript/shared/splashes.txt
-zscript/shared/pickups.txt
+zscript/shared/itemeffects.txt
 zscript/shared/fountain.txt
 zscript/shared/spark.txt
 zscript/shared/soundsequence.txt

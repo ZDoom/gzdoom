@@ -76,6 +76,7 @@
 #include "vmbuilder.h"
 #include "a_armor.h"
 #include "a_ammo.h"
+#include "a_health.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO

@@ -318,6 +318,7 @@ public:
 	virtual PPrototype *ReturnProto();
 	virtual VMFunction *GetDirectFunction();
 	virtual bool CheckReturn() { return false; }
+	virtual int GetBitValue() { return -1; }
 	bool IsNumeric() const { return ValueType->isNumeric(); }
 	bool IsFloat() const { return ValueType->GetRegType() == REGT_FLOAT && ValueType->GetRegCount() == 1; }
 	bool IsInteger() const { return ValueType->isNumeric() && (ValueType->GetRegType() == REGT_INT); }
@@ -1266,6 +1267,7 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 	bool RequestAddress(FCompileContext &ctx, bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
+	virtual int GetBitValue() { return membervar->BitValue; }
 };
 
 class FxCVar : public FxExpression
@@ -1296,6 +1298,7 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 	bool RequestAddress(FCompileContext &ctx, bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
+	virtual int GetBitValue() { return membervar->BitValue; }
 };
 
 //==========================================================================
@@ -1349,6 +1352,7 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 	bool RequestAddress(FCompileContext &ctx, bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
+	virtual int GetBitValue() { return membervar->BitValue; }
 };
 
 //==========================================================================

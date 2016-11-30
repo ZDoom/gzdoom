@@ -42,6 +42,7 @@
 #include "c_console.h"
 #include "doomstat.h"
 #include "v_font.h"
+#include "a_keys.h"
 
 
 IMPLEMENT_CLASS(PClassPuzzleItem, false, false)

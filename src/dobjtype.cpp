@@ -50,6 +50,8 @@
 #include "d_player.h"
 #include "doomerrors.h"
 #include "fragglescript/t_fs.h"
+#include "a_keys.h"
+#include "a_health.h"
 
 // MACROS ------------------------------------------------------------------
 

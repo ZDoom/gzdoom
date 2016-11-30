@@ -599,6 +599,10 @@ std::vector<uint8_t> LLVMProgram::GenerateObjectFile(std::string cpuName)
 	PerModulePasses.run(*module);
 
 	// Return the resulting object file
+	stream.flush();
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 8)
+	vecstream.flush();
+#endif
 	std::vector<uint8_t> data;
 	data.resize(str.size());
 	memcpy(data.data(), str.data(), data.size());

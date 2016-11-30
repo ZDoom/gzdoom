@@ -150,6 +150,12 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 		args.uniforms.srcalpha = 256;
 		blendmode = args.translation ? TriBlendMode::TranslateAdd : TriBlendMode::Add;
 	}
+	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Add] && fullbrightSprite && thing->Alpha == 1.0 && args.translation == nullptr)
+	{
+		args.uniforms.destalpha = 256;
+		args.uniforms.srcalpha = 256;
+		blendmode = TriBlendMode::AddSrcColorOneMinusSrcColor;
+	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_Add])
 	{
 		args.uniforms.destalpha = (uint32_t)(1.0 * 256);

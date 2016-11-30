@@ -160,3 +160,10 @@ SSAVec4i DrawerCodegen::blend_stencil(SSAVec4i stencilcolor, SSAInt fgalpha, SSA
 	SSAVec4i color = (stencilcolor * srcalpha + bg * destalpha) / 256;
 	return color.insert(3, 255);
 }
+
+SSAVec4i DrawerCodegen::blend_add_srccolor_oneminussrccolor(SSAVec4i fg, SSAVec4i bg)
+{
+	SSAVec4i fgcolor = fg + (fg >> 7); // 255 -> 256
+	SSAVec4i inv_fgcolor = SSAVec4i(256) - fgcolor;
+	return fg + (bg * inv_fgcolor + 128) >> 8;
+}

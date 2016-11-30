@@ -670,6 +670,10 @@ SSAVec4i DrawTriangleCodegen::ProcessPixel32(SSAVec4i bg, SSAInt *varying)
 		fg = TranslateSample32(uvoffset);
 		output = blend_revsub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 		break;
+	case TriBlendMode::AddSrcColorOneMinusSrcColor:
+		fg = Sample32(uvoffset);
+		output = blend_add_srccolor_oneminussrccolor(shade_bgra_simple(fg, currentlight), bg);
+		break;
 	}
 
 	return output;
@@ -769,6 +773,12 @@ SSAInt DrawTriangleCodegen::ProcessPixel8(SSAInt bg, SSAInt *varying)
 		palindex = TranslateSample8(uvoffset);
 		fg = ToBgra(Shade8(palindex));
 		output = ToPal8(blend_revsub(fg, ToBgra(bg), srcalpha, calc_blend_bgalpha(fg, destalpha)));
+		output = (palindex == SSAInt(0)).select(bg, output);
+		break;
+	case TriBlendMode::AddSrcColorOneMinusSrcColor:
+		palindex = Sample8(uvoffset);
+		fg = ToBgra(Shade8(palindex));
+		output = ToPal8(blend_add_srccolor_oneminussrccolor(fg, ToBgra(bg)));
 		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	}

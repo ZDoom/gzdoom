@@ -253,10 +253,11 @@ enum class TriBlendMode
 	TranslateAlphaBlend, // blend_alpha_blend(shade(translate(fg)), bg)
 	TranslateAdd,   // blend_add(shade(translate(fg)), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
 	TranslateSub,   // blend_sub(shade(translate(fg)), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
-	TranslateRevSub // blend_revsub(shade(translate(fg)), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
+	TranslateRevSub,// blend_revsub(shade(translate(fg)), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
+	AddSrcColorOneMinusSrcColor // glBlendMode(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR) used by GZDoom's fullbright additive sprites
 };
 
-inline int NumTriBlendModes() { return (int)TriBlendMode::TranslateRevSub + 1; }
+inline int NumTriBlendModes() { return (int)TriBlendMode::AddSrcColorOneMinusSrcColor + 1; }
 
 class Drawers
 {

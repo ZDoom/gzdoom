@@ -376,6 +376,7 @@ FString DrawPolyTrianglesCommand::DebugInfo()
 	case TriBlendMode::TranslateAdd: blendmodestr = "TranslateAdd"; break;
 	case TriBlendMode::TranslateSub: blendmodestr = "TranslateSub"; break;
 	case TriBlendMode::TranslateRevSub: blendmodestr = "TranslateRevSub"; break;
+	case TriBlendMode::AddSrcColorOneMinusSrcColor: blendmodestr = "AddSrcColorOneMinusSrcColor"; break;
 	}
 
 	FString info;

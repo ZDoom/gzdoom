@@ -583,7 +583,6 @@ class SorcBall1 : SorcBall
 	{
 		Super.BeginPlay ();
 		AngleOffset = Heresiarch.BALL1_ANGLEOFFSET;
-		A_Log("Ball1 begins " .. AngleOffset);
 	}
 
 	//============================================================================
@@ -683,7 +682,6 @@ class SorcBall2 : SorcBall
 	{
 		Super.BeginPlay ();
 		AngleOffset = Heresiarch.BALL2_ANGLEOFFSET;
-		A_Log("Ball2 begins " .. AngleOffset);
 	}
 
 	//============================================================================
@@ -733,7 +731,6 @@ class SorcBall3 : SorcBall
 	{
 		Super.BeginPlay ();
 		AngleOffset = Heresiarch.BALL3_ANGLEOFFSET;
-		A_Log("Ball3 begins " .. AngleOffset);
 	}
 
 	//============================================================================

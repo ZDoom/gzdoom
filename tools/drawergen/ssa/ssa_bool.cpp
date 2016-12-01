@@ -31,12 +31,13 @@ SSABool::SSABool()
 : v(0)
 {
 }
-/*
+
 SSABool::SSABool(bool constant)
 : v(0)
 {
+	v = llvm::ConstantInt::get(SSAScope::context(), llvm::APInt(1, constant, false));
 }
-*/
+
 SSABool::SSABool(llvm::Value *v)
 : v(v)
 {

@@ -44,7 +44,7 @@ private:
 	void LoopBlockY();
 	void LoopBlockX();
 	void LoopFullBlock();
-	void LoopPartialBlock();
+	void LoopPartialBlock(bool isSingleStencilValue);
 	void SetupAffineBlock();
 
 	SSAVec4i ProcessPixel32(SSAVec4i bg, SSAInt *varying);
@@ -59,9 +59,7 @@ private:
 	SSAInt ToPal8(SSAVec4i c);
 
 	void SetStencilBlock(SSAInt block);
-	void StencilSet(SSAInt x, SSAInt y, SSAUByte value);
 	void StencilClear(SSAUByte value);
-	SSAUByte StencilGet(SSAInt x, SSAInt y);
 	SSAUByte StencilGetSingle();
 	SSABool StencilIsSingleValue();
 
@@ -87,6 +85,8 @@ private:
 	SSAStack<SSAFloat> stack_AffineW;
 	SSAStack<SSAFloat> stack_AffineVaryingPosY[TriVertex::NumVarying];
 	SSAStack<SSAInt> stack_AffineVaryingPosX[TriVertex::NumVarying];
+	SSAStack<SSABool> stack_stencilblock_restored;
+	SSAStack<SSAUByte> stack_stencilblock_lastval;
 
 	SSAUBytePtr dest;
 	SSAInt pitch;

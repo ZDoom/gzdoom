@@ -35,7 +35,7 @@ class SSABool
 {
 public:
 	SSABool();
-	//SSABool(bool constant);
+	explicit SSABool(bool constant);
 	explicit SSABool(llvm::Value *v);
 	static SSABool from_llvm(llvm::Value *v) { return SSABool(v); }
 	static llvm::Type *llvm_type();

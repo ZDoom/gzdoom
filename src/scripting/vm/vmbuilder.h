@@ -69,6 +69,8 @@ public:
 
 	void Backpatch(size_t addr, size_t target);
 	void BackpatchToHere(size_t addr);
+	void BackpatchList(TArray<size_t> &addrs, size_t target);
+	void BackpatchListToHere(TArray<size_t> &addrs);
 
 	// Write out complete constant tables.
 	void FillIntConstants(int *konst);

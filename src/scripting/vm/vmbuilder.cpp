@@ -734,6 +734,13 @@ void VMFunctionBuilder::Backpatch(size_t loc, size_t target)
 	Code[loc].i24 = offset;
 }
 
+void VMFunctionBuilder::BackpatchList(TArray<size_t> &locs, size_t target)
+{
+	for (auto loc : locs)
+		Backpatch(loc, target);
+}
+
+
 //==========================================================================
 //
 // VMFunctionBuilder :: BackpatchToHere
@@ -746,6 +753,12 @@ void VMFunctionBuilder::Backpatch(size_t loc, size_t target)
 void VMFunctionBuilder::BackpatchToHere(size_t loc)
 {
 	Backpatch(loc, Code.Size());
+}
+
+void VMFunctionBuilder::BackpatchListToHere(TArray<size_t> &locs)
+{
+	for (auto loc : locs)
+		Backpatch(loc, Code.Size());
 }
 
 //==========================================================================

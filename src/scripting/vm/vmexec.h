@@ -443,7 +443,7 @@ begin:
 			ASSERTD(a); ASSERTF(B);
 			reg.d[a] = reg.f[B] != 0;
 		}
-		else if (c == CASTB_A)
+		else if (C == CASTB_A)
 		{
 			ASSERTD(a); ASSERTA(B);
 			reg.d[a] = reg.a[B] != nullptr;

@@ -584,7 +584,7 @@ static ExpEmit EmitKonst(VMFunctionBuilder *build, ExpEmit &emit)
 
 ExpEmit FxVectorValue::Emit(VMFunctionBuilder *build)
 {
-	// no const handling here. Ultimstely it's too rarely used (i.e. the only fully constant vector ever allocated in ZDoom is the 0-vector in a very few places)
+	// no const handling here. Ultimately it's too rarely used (i.e. the only fully constant vector ever allocated in ZDoom is the 0-vector in a very few places)
 	// and the negatives (excessive allocation of float constants) outweigh the positives (saved a few instructions)
 	assert(xyz[0] != nullptr);
 	assert(xyz[1] != nullptr);
@@ -1770,10 +1770,11 @@ FxExpression *FxUnaryNotBitwise::Resolve(FCompileContext& ctx)
 	{
 		int result = ~static_cast<FxConstant *>(Operand)->GetValue().GetInt();
 		FxExpression *e = new FxConstant(result, ScriptPosition);
+		e->ValueType = Operand->ValueType == TypeUInt32 ? TypeUInt32 : TypeSInt32;
 		delete this;
 		return e;
 	}
-	ValueType = TypeSInt32;
+	ValueType = Operand->ValueType == TypeUInt32? TypeUInt32 : TypeSInt32;
 	return this;
 }
 

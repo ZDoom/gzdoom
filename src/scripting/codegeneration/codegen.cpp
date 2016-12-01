@@ -9279,7 +9279,7 @@ ExpEmit FxForLoop::Emit(VMFunctionBuilder *build)
 
 	size_t loopstart, loopend;
 	size_t codestart;
-	size_t jumpspot;
+	TArray<size_t> yes, no;
 
 	// Init statement (only used by DECORATE. ZScript is pulling it before the loop statement and enclosing the entire loop in a compound statement so that Init can have local variables.)
 	if (Init != nullptr)
@@ -9292,12 +9292,10 @@ ExpEmit FxForLoop::Emit(VMFunctionBuilder *build)
 	codestart = build->GetAddress();
 	if (Condition != nullptr)
 	{
-		ExpEmit cond = Condition->Emit(build);
-		build->Emit(OP_TEST, cond.RegNum, 0);
-		cond.Free(build);
-		jumpspot = build->Emit(OP_JMP, 0);
+		Condition->EmitCompare(build, false, yes, no);
 	}
 
+	build->BackpatchListToHere(yes);
 	// Execute the loop's content.
 	if (Code != nullptr)
 	{
@@ -9316,10 +9314,7 @@ ExpEmit FxForLoop::Emit(VMFunctionBuilder *build)
 
 	// End of loop.
 	loopend = build->GetAddress();
-	if (Condition != nullptr)
-	{
-		build->Backpatch(jumpspot, loopend);
-	}
+	build->BackpatchListToHere(no);
 
 	Backpatch(build, loopstart, loopend);
 	return ExpEmit();

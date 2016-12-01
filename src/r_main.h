@@ -33,10 +33,10 @@ extern double			ViewSin;
 extern int				viewwindowx;
 extern int				viewwindowy;
 
+typedef BYTE lighttable_t;	// This could be wider for >8 bit display.
+
 namespace swrenderer       
 {
-
-typedef BYTE lighttable_t;	// This could be wider for >8 bit display.
 
 //
 // POV related.

@@ -541,6 +541,131 @@ void DrawTriangleCodegen::LoopPartialBlock()
 	loopy.end_block();
 }
 
+#if 0
+void DrawTriangleCodegen::LoopMaskedStoreBlock()
+{
+	if (variant == TriDrawVariant::Stencil)
+	{
+	}
+	else if (variant == TriDrawVariant::StencilClose)
+	{
+	}
+	else
+	{
+		int pixelsize = truecolor ? 4 : 1;
+
+		AffineW = posx_w;
+		for (int i = 0; i < TriVertex::NumVarying; i++)
+			AffineVaryingPosY[i] = posx_varying[i];
+
+		SSAInt CY1 = C1 + DX12 * y0 - DY12 * x0;
+		SSAInt CY2 = C2 + DX23 * y0 - DY23 * x0;
+		SSAInt CY3 = C3 + DX31 * y0 - DY31 * x0;
+
+		for (int iy = 0; iy < q; iy++)
+		{
+			SSAUBytePtr buffer = dest[(x + iy * pitch) * pixelsize];
+			SSAIntPtr subsectorbuffer = subsectorGBuffer[x + iy * pitch];
+
+			SetupAffineBlock();
+
+			SSAInt CX1 = CY1;
+			SSAInt CX2 = CY2;
+			SSAInt CX3 = CY3;
+
+			for (int ix = 0; ix < q; ix += 4)
+			{
+				SSABool covered[4];
+				for (int maskindex = 0; maskindex < 4; maskindex++)
+				{
+					covered[maskindex] = CX1 > SSAInt(0) && CX2 > SSAInt(0) && CX3 > SSAInt(0);
+
+					if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
+					{
+						auto xx = SSAInt(ix + maskindex);
+						auto yy = SSAInt(iy);
+						covered[maskindex] = covered[maskindex] && SSABool::compare_uge(StencilGet(xx, yy), stencilTestValue) && subsectorbuffer[ix + maskindex].load(true) >= subsectorDepth;
+					}
+					else if (variant == TriDrawVariant::StencilClose)
+					{
+						auto xx = SSAInt(ix + maskindex);
+						auto yy = SSAInt(iy);
+						covered[maskindex] = covered[maskindex] && SSABool::compare_uge(StencilGet(xx, yy), stencilTestValue);
+					}
+					else
+					{
+						auto xx = SSAInt(ix + maskindex);
+						auto yy = SSAInt(iy);
+						covered[maskindex] = covered[maskindex] && StencilGet(xx, yy) == stencilTestValue;
+					}
+
+					CX1 = CX1 - FDY12;
+					CX2 = CX2 - FDY23;
+					CX3 = CX3 - FDY31;
+				}
+
+				SSAUBytePtr buf = buffer[ix * pixelsize];
+				if (truecolor)
+				{
+					SSAVec16ub pixels16 = buf.load_unaligned_vec16ub(false);
+					SSAVec8s pixels8hi = SSAVec8s::extendhi(pixels16);
+					SSAVec8s pixels8lo = SSAVec8s::extendlo(pixels16);
+					SSAVec4i pixels[4] =
+					{
+						SSAVec4i::extendlo(pixels8lo),
+						SSAVec4i::extendhi(pixels8lo),
+						SSAVec4i::extendlo(pixels8hi),
+						SSAVec4i::extendhi(pixels8hi)
+					};
+
+					for (int sse = 0; sse < 4; sse++)
+					{
+						pixels[sse] = ProcessPixel32(pixels[sse], AffineVaryingPosX);
+
+						for (int i = 0; i < TriVertex::NumVarying; i++)
+							AffineVaryingPosX[i] = AffineVaryingPosX[i] + AffineVaryingStepX[i];
+					}
+
+					buf.store_masked_vec16ub(SSAVec16ub(SSAVec8s(pixels[0], pixels[1]), SSAVec8s(pixels[2], pixels[3])), covered);
+				}
+				else
+				{
+					SSAVec4i pixelsvec = buf.load_vec4ub(false);
+					SSAInt pixels[4] =
+					{
+						pixelsvec[0],
+						pixelsvec[1],
+						pixelsvec[2],
+						pixelsvec[3]
+					};
+
+					for (int sse = 0; sse < 4; sse++)
+					{
+						pixels[sse] = ProcessPixel8(pixels[sse], AffineVaryingPosX);
+
+						for (int i = 0; i < TriVertex::NumVarying; i++)
+							AffineVaryingPosX[i] = AffineVaryingPosX[i] + AffineVaryingStepX[i];
+					}
+
+					buf.store_masked_vec4ub(SSAVec4i(pixels[0], pixels[1], pixels[2], pixels[3]), covered);
+				}
+
+				if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector && variant != TriDrawVariant::FuzzSubsector)
+					subsectorbuffer[ix].store_masked_vec4i(SSAVec4i(subsectorDepth), covered);
+			}
+
+			AffineW = AffineW + gradWY;
+			for (int i = 0; i < TriVertex::NumVarying; i++)
+				AffineVaryingPosY[i] = AffineVaryingPosY[i] + gradVaryingY[i];
+
+			CY1 = CY1 + FDX12;
+			CY2 = CY2 + FDX23;
+			CY3 = CY3 + FDX31;
+		}
+	}
+}
+#endif
+
 SSAVec4i DrawTriangleCodegen::TranslateSample32(SSAInt uvoffset)
 {
 	if (variant == TriDrawVariant::FillNormal || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)

@@ -29,6 +29,8 @@
 namespace llvm { class Value; }
 namespace llvm { class Type; }
 
+class SSABool;
+
 class SSAIntPtr
 {
 public:
@@ -44,6 +46,7 @@ public:
 	void store(const SSAInt &new_value);
 	void store_vec4i(const SSAVec4i &new_value);
 	void store_unaligned_vec4i(const SSAVec4i &new_value);
+	void store_masked_vec4i(const SSAVec4i &new_value, SSABool mask[4]);
 
 	llvm::Value *v;
 };

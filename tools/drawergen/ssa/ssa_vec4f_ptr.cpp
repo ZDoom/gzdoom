@@ -68,6 +68,6 @@ void SSAVec4fPtr::store(const SSAVec4f &new_value)
 
 void SSAVec4fPtr::store_unaligned(const SSAVec4f &new_value)
 {
-	auto inst = SSAScope::builder().CreateAlignedStore(new_value.v, v, 1, false);
+	auto inst = SSAScope::builder().CreateAlignedStore(new_value.v, v, 4, false);
 	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
 }

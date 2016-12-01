@@ -31,6 +31,8 @@
 namespace llvm { class Value; }
 namespace llvm { class Type; }
 
+class SSABool;
+
 class SSAUBytePtr
 {
 public:
@@ -46,8 +48,10 @@ public:
 	SSAVec16ub load_unaligned_vec16ub(bool constantScopeDomain) const;
 	void store(const SSAUByte &new_value);
 	void store_vec4ub(const SSAVec4i &new_value);
+	void store_masked_vec4ub(const SSAVec4i &new_value, SSABool mask[4]);
 	void store_vec16ub(const SSAVec16ub &new_value);
 	void store_unaligned_vec16ub(const SSAVec16ub &new_value);
+	void store_masked_vec16ub(const SSAVec16ub &new_value, SSABool mask[4]);
 
 	llvm::Value *v;
 };

@@ -86,6 +86,6 @@ void SSAFloatPtr::store_vec4f(const SSAVec4f &new_value)
 void SSAFloatPtr::store_unaligned_vec4f(const SSAVec4f &new_value)
 {
 	llvm::PointerType *m4xfloattypeptr = llvm::VectorType::get(llvm::Type::getFloatTy(SSAScope::context()), 4)->getPointerTo();
-	auto inst = SSAScope::builder().CreateAlignedStore(new_value.v, SSAScope::builder().CreateBitCast(v, m4xfloattypeptr, SSAScope::hint()), 1);
+	auto inst = SSAScope::builder().CreateAlignedStore(new_value.v, SSAScope::builder().CreateBitCast(v, m4xfloattypeptr, SSAScope::hint()), 4);
 	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
 }

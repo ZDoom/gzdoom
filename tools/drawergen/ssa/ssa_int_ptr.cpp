@@ -23,6 +23,7 @@
 #include "precomp.h"
 #include "ssa_int_ptr.h"
 #include "ssa_scope.h"
+#include "ssa_bool.h"
 
 SSAIntPtr::SSAIntPtr()
 : v(0)
@@ -86,6 +87,25 @@ void SSAIntPtr::store_vec4i(const SSAVec4i &new_value)
 void SSAIntPtr::store_unaligned_vec4i(const SSAVec4i &new_value)
 {
 	llvm::PointerType *m4xint32typeptr = llvm::VectorType::get(llvm::Type::getInt32Ty(SSAScope::context()), 4)->getPointerTo();
-	auto inst = SSAScope::builder().CreateAlignedStore(new_value.v, SSAScope::builder().CreateBitCast(v, m4xint32typeptr, SSAScope::hint()), 1);
+	auto inst = SSAScope::builder().CreateAlignedStore(new_value.v, SSAScope::builder().CreateBitCast(v, m4xint32typeptr, SSAScope::hint()), 4);
+	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
+}
+
+void SSAIntPtr::store_masked_vec4i(const SSAVec4i &new_value, SSABool mask[4])
+{
+	// Create mask vector
+	std::vector<llvm::Constant*> maskconstants;
+	maskconstants.resize(4, llvm::ConstantInt::get(SSAScope::context(), llvm::APInt(1, 0, false)));
+	llvm::Value *maskValue = llvm::ConstantVector::get(maskconstants);
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9)
+	for (int i = 0; i < 4; i++)
+		maskValue = SSAScope::builder().CreateInsertElement(maskValue, mask[i].v, SSAInt(i).v, SSAScope::hint());
+#else
+	for (int i = 0; i < 4; i++)
+		maskValue = SSAScope::builder().CreateInsertElement(maskValue, mask[i].v, (uint64_t)i, SSAScope::hint());
+#endif
+
+	llvm::PointerType *m4xint32typeptr = llvm::VectorType::get(llvm::Type::getInt32Ty(SSAScope::context()), 4)->getPointerTo();
+	auto inst = SSAScope::builder().CreateMaskedStore(new_value.v, SSAScope::builder().CreateBitCast(v, m4xint32typeptr, SSAScope::hint()), 1, maskValue);
 	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
 }

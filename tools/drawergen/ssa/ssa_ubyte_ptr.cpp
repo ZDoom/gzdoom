@@ -23,6 +23,7 @@
 #include "precomp.h"
 #include "ssa_ubyte_ptr.h"
 #include "ssa_scope.h"
+#include "ssa_bool.h"
 
 SSAUBytePtr::SSAUBytePtr()
 : v(0)
@@ -104,6 +105,37 @@ void SSAUBytePtr::store_vec4ub(const SSAVec4i &new_value)
 	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
 }
 
+void SSAUBytePtr::store_masked_vec4ub(const SSAVec4i &new_value, SSABool mask[4])
+{
+	// Store using saturate:
+	SSAVec8s v8s(new_value, new_value);
+	SSAVec16ub v16ub(v8s, v8s);
+
+	// Create mask vector
+	std::vector<llvm::Constant*> maskconstants;
+	maskconstants.resize(4, llvm::ConstantInt::get(SSAScope::context(), llvm::APInt(1, 0, false)));
+	llvm::Value *maskValue = llvm::ConstantVector::get(maskconstants);
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9)
+	for (int i = 0; i < 4; i++)
+		maskValue = SSAScope::builder().CreateInsertElement(maskValue, mask[i].v, SSAInt(i).v, SSAScope::hint());
+#else
+	for (int i = 0; i < 4; i++)
+		maskValue = SSAScope::builder().CreateInsertElement(maskValue, mask[i].v, (uint64_t)i, SSAScope::hint());
+#endif
+
+	llvm::Type *m16xint8type = llvm::VectorType::get(llvm::Type::getInt8Ty(SSAScope::context()), 16);
+	llvm::PointerType *m4xint8typeptr = llvm::VectorType::get(llvm::Type::getInt8Ty(SSAScope::context()), 4)->getPointerTo();
+	std::vector<llvm::Constant*> constants;
+	constants.push_back(llvm::ConstantInt::get(SSAScope::context(), llvm::APInt(32, 0)));
+	constants.push_back(llvm::ConstantInt::get(SSAScope::context(), llvm::APInt(32, 1)));
+	constants.push_back(llvm::ConstantInt::get(SSAScope::context(), llvm::APInt(32, 2)));
+	constants.push_back(llvm::ConstantInt::get(SSAScope::context(), llvm::APInt(32, 3)));
+	llvm::Value *shufflemask = llvm::ConstantVector::get(constants);
+	llvm::Value *val_vector = SSAScope::builder().CreateShuffleVector(v16ub.v, llvm::UndefValue::get(m16xint8type), shufflemask, SSAScope::hint());
+	llvm::CallInst *inst = SSAScope::builder().CreateMaskedStore(val_vector, SSAScope::builder().CreateBitCast(v, m4xint8typeptr, SSAScope::hint()), 1, maskValue);
+	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
+}
+
 void SSAUBytePtr::store_vec16ub(const SSAVec16ub &new_value)
 {
 	llvm::PointerType *m16xint8typeptr = llvm::VectorType::get(llvm::Type::getInt8Ty(SSAScope::context()), 16)->getPointerTo();
@@ -118,6 +150,24 @@ void SSAUBytePtr::store_vec16ub(const SSAVec16ub &new_value)
 void SSAUBytePtr::store_unaligned_vec16ub(const SSAVec16ub &new_value)
 {
 	llvm::PointerType *m16xint8typeptr = llvm::VectorType::get(llvm::Type::getInt8Ty(SSAScope::context()), 16)->getPointerTo();
-	llvm::StoreInst *inst = SSAScope::builder().CreateAlignedStore(new_value.v, SSAScope::builder().CreateBitCast(v, m16xint8typeptr, SSAScope::hint()), 1);
+	llvm::StoreInst *inst = SSAScope::builder().CreateAlignedStore(new_value.v, SSAScope::builder().CreateBitCast(v, m16xint8typeptr, SSAScope::hint()), 4);
+	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
+}
+
+void SSAUBytePtr::store_masked_vec16ub(const SSAVec16ub &new_value, SSABool mask[4])
+{
+	std::vector<llvm::Constant*> constants;
+	constants.resize(16, llvm::ConstantInt::get(SSAScope::context(), llvm::APInt(1, 0, false)));
+	llvm::Value *maskValue = llvm::ConstantVector::get(constants);
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9)
+	for (int i = 0; i < 16; i++)
+		maskValue = SSAScope::builder().CreateInsertElement(maskValue, mask[i / 4].v, SSAInt(i).v, SSAScope::hint());
+#else
+	for (int i = 0; i < 16; i++)
+		maskValue = SSAScope::builder().CreateInsertElement(maskValue, mask[i / 4].v, (uint64_t)i, SSAScope::hint());
+#endif
+
+	llvm::PointerType *m16xint8typeptr = llvm::VectorType::get(llvm::Type::getInt8Ty(SSAScope::context()), 16)->getPointerTo();
+	llvm::CallInst *inst = SSAScope::builder().CreateMaskedStore(new_value.v, SSAScope::builder().CreateBitCast(v, m16xint8typeptr, SSAScope::hint()), 1, maskValue);
 	inst->setMetadata(llvm::LLVMContext::MD_noalias, SSAScope::constant_scope_list());
 }

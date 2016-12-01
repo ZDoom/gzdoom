@@ -93,9 +93,7 @@ private:
 	SSATriVertex v1;
 	SSATriVertex v2;
 	SSATriVertex v3;
-	SSAInt clipleft;
 	SSAInt clipright;
-	SSAInt cliptop;
 	SSAInt clipbottom;
 	SSAUBytePtr texturePixels;
 	SSAInt textureWidth;

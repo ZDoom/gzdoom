@@ -81,9 +81,9 @@ void DrawTriangleCodegen::Setup()
 	FDY31 = DY31 << 4;
 
 	// Bounding rectangle
-	minx = SSAInt::MAX((SSAInt::MIN(SSAInt::MIN(X1, X2), X3) + 0xF).ashr(4), clipleft);
+	minx = SSAInt::MAX((SSAInt::MIN(SSAInt::MIN(X1, X2), X3) + 0xF).ashr(4), SSAInt(0));
 	maxx = SSAInt::MIN((SSAInt::MAX(SSAInt::MAX(X1, X2), X3) + 0xF).ashr(4), clipright - 1);
-	miny = SSAInt::MAX((SSAInt::MIN(SSAInt::MIN(Y1, Y2), Y3) + 0xF).ashr(4), cliptop);
+	miny = SSAInt::MAX((SSAInt::MIN(SSAInt::MIN(Y1, Y2), Y3) + 0xF).ashr(4), SSAInt(0));
 	maxy = SSAInt::MIN((SSAInt::MAX(SSAInt::MAX(Y1, Y2), Y3) + 0xF).ashr(4), clipbottom - 1);
 
 	SSAIfBlock if0;
@@ -242,7 +242,7 @@ void DrawTriangleCodegen::LoopBlockX()
 		branch.if_block(!(a == SSAInt(0) || b == SSAInt(0) || c == SSAInt(0)));
 
 		// Check if block needs clipping
-		SSABool clipneeded = x < clipleft || (x + q) > clipright || y < cliptop || (y + q) > clipbottom;
+		SSABool clipneeded = (x + q) > clipright || (y + q) > clipbottom;
 
 		SSAFloat globVis = SSAFloat(1706.0f);
 		SSAFloat vis = globVis * posx_w;
@@ -253,12 +253,12 @@ void DrawTriangleCodegen::LoopBlockX()
 		{
 			SSAInt diminishedindex = lightscale / 8;
 			SSAInt lightindex = SSAInt::MIN((256 - light) * 32 / 256, SSAInt(31));
-			SSAInt colormapindex = is_fixed_light.select(lightindex, diminishedindex);
+			SSAInt colormapindex = (!is_fixed_light).select(diminishedindex, lightindex);
 			currentcolormap = Colormaps[colormapindex << 8];
 		}
 		else
 		{
-			currentlight = is_fixed_light.select(light, diminishedlight);
+			currentlight = (!is_fixed_light).select(diminishedlight, light);
 		}
 
 		SetStencilBlock(x / 8 + y / 8 * stencilPitch);
@@ -469,7 +469,7 @@ void DrawTriangleCodegen::LoopPartialBlock()
 			AffineVaryingPosX[i] = stack_AffineVaryingPosX[i].load();
 		loopx.loop_block(ix < SSAInt(q), q);
 		{
-			SSABool visible = (ix + x >= clipleft) && (ix + x < clipright) && (iy + y >= cliptop) && (iy + y < clipbottom);
+			SSABool visible = (ix + x < clipright) && (iy + y < clipbottom);
 			SSABool covered = CX1 > SSAInt(0) && CX2 > SSAInt(0) && CX3 > SSAInt(0) && visible;
 
 			if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
@@ -815,9 +815,7 @@ void DrawTriangleCodegen::LoadArgs(SSAValue args, SSAValue thread_data)
 	v1 = LoadTriVertex(args[0][2].load(true));
 	v2 = LoadTriVertex(args[0][3].load(true));
 	v3 = LoadTriVertex(args[0][4].load(true));
-	clipleft = SSAInt(0);// args[0][5].load(true);
 	clipright = args[0][6].load(true);
-	cliptop = SSAInt(0);// args[0][7].load(true);
 	clipbottom = args[0][8].load(true);
 	texturePixels = args[0][9].load(true);
 	textureWidth = args[0][10].load(true);

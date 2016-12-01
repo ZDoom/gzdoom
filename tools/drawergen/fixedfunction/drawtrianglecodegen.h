@@ -136,6 +136,7 @@ private:
 	SSAInt C1, C2, C3;
 	SSAFloat gradWX, gradWY;
 	SSAFloat gradVaryingX[TriVertex::NumVarying], gradVaryingY[TriVertex::NumVarying];
+	SSAFloat shade;
 
 	SSAInt x, y;
 	SSAInt x0, x1, y0, y1;

@@ -145,6 +145,8 @@ void DrawTriangleCodegen::Setup()
 	gradWX = gradWX * (float)q;
 	for (int i = 0; i < TriVertex::NumVarying; i++)
 		gradVaryingX[i] = gradVaryingX[i] * (float)q;
+
+	shade = 64.0f - (SSAFloat(light * 255 / 256) + 12.0f) * 32.0f / 128.0f;
 }
 
 SSAFloat DrawTriangleCodegen::gradx(SSAFloat x0, SSAFloat y0, SSAFloat x1, SSAFloat y1, SSAFloat x2, SSAFloat y2, SSAFloat c0, SSAFloat c1, SSAFloat c2)
@@ -244,13 +246,12 @@ void DrawTriangleCodegen::LoopBlockX()
 
 		SSAFloat globVis = SSAFloat(1706.0f);
 		SSAFloat vis = globVis * posx_w;
-		SSAFloat shade = 64.0f - (SSAFloat(light * 255 / 256) + 12.0f) * 32.0f / 128.0f;
-		SSAFloat lightscale = SSAFloat::clamp((shade - SSAFloat::MIN(SSAFloat(24.0f), vis)) / 32.0f, SSAFloat(0.0f), SSAFloat(31.0f / 32.0f));
-		SSAInt diminishedlight = SSAInt(SSAFloat::clamp((1.0f - lightscale) * 256.0f + 0.5f, SSAFloat(0.0f), SSAFloat(256.0f)), false);
+		SSAInt lightscale = SSAInt(SSAFloat::clamp((shade - SSAFloat::MIN(SSAFloat(24.0f), vis)) / 32.0f, SSAFloat(0.0f), SSAFloat(31.0f / 32.0f)) * 256.0f, true);
+		SSAInt diminishedlight = 256 - lightscale;
 
 		if (!truecolor)
 		{
-			SSAInt diminishedindex = SSAInt(lightscale * 32.0f, false);
+			SSAInt diminishedindex = lightscale / 8;
 			SSAInt lightindex = SSAInt::MIN((256 - light) * 32 / 256, SSAInt(31));
 			SSAInt colormapindex = is_fixed_light.select(lightindex, diminishedindex);
 			currentcolormap = Colormaps[colormapindex << 8];

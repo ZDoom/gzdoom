@@ -758,25 +758,7 @@ ExpEmit FxBoolCast::Emit(VMFunctionBuilder *build)
 		ExpEmit to(build, REGT_INT);
 		from.Free(build);
 		// Preload result with 0.
-		build->Emit(OP_LI, to.RegNum, 0);
-
-		// Check source against 0.
-		if (from.RegType == REGT_INT)
-		{
-			build->Emit(OP_EQ_R, 1, from.RegNum, to.RegNum);
-		}
-		else if (from.RegType == REGT_FLOAT)
-		{
-			build->Emit(OP_EQF_K, 1, from.RegNum, build->GetConstantFloat(0.));
-		}
-		else if (from.RegType == REGT_POINTER)
-		{
-			build->Emit(OP_EQA_K, 1, from.RegNum, build->GetConstantAddress(nullptr, ATAG_GENERIC));
-		}
-		build->Emit(OP_JMP, 1);
-
-		// Reload result with 1 if the comparison fell through.
-		build->Emit(OP_LI, to.RegNum, 1);
+		build->Emit(OP_CASTB, to.RegNum, from.RegNum, from.RegType == REGT_INT ? CASTB_I : from.RegType == REGT_FLOAT ? CASTB_F : CASTB_A);
 		return to;
 	}
 	else

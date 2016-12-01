@@ -419,16 +419,39 @@ begin:
 		if (C == CAST_I2F)
 		{
 			ASSERTF(a); ASSERTD(B);
-			reg.f[A] = reg.d[B];
+			reg.f[a] = reg.d[B];
 		}
 		else if (C == CAST_F2I)
 		{
 			ASSERTD(a); ASSERTF(B);
-			reg.d[A] = (int)reg.f[B];
+			reg.d[a] = (int)reg.f[B];
 		}
 		else
 		{
 			DoCast(reg, f, a, B, C);
+		}
+		NEXTOP;
+	
+	OP(CASTB):
+		if (C == CASTB_I)
+		{
+			ASSERTD(a); ASSERTD(B);
+			reg.f[a] = !!reg.d[B];
+		}
+		else if (C == CASTB_F)
+		{
+			ASSERTD(a); ASSERTF(B);
+			reg.d[a] = reg.f[B] != 0;
+		}
+		else if (c == CASTB_A)
+		{
+			ASSERTD(a); ASSERTA(B);
+			reg.d[a] = reg.a[B] != nullptr;
+		}
+		else
+		{
+			ASSERTD(a); ASSERTS(B);
+			reg.d[a] = reg.s[B].Len() > 0;
 		}
 		NEXTOP;
 	

@@ -130,6 +130,11 @@ enum
 	CAST_V32S,
 	CAST_SID2S,
 	CAST_TID2S,
+
+	CASTB_I,
+	CASTB_F,
+	CASTB_A,
+	CASTB_S
 };
 
 // Register types for VMParam

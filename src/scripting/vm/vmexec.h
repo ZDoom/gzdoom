@@ -436,7 +436,7 @@ begin:
 		if (C == CASTB_I)
 		{
 			ASSERTD(a); ASSERTD(B);
-			reg.f[a] = !!reg.d[B];
+			reg.d[a] = !!reg.d[B];
 		}
 		else if (C == CASTB_F)
 		{

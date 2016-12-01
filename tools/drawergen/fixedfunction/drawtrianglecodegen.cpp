@@ -236,10 +236,24 @@ void DrawTriangleCodegen::LoopBlockX()
 		SSABool c01 = C3 + DX31 * y1 - DY31 * x0 > SSAInt(0);
 		SSABool c11 = C3 + DX31 * y1 - DY31 * x1 > SSAInt(0);
 		SSAInt c = (c00.zext_int() << 0) | (c10.zext_int() << 1) | (c01.zext_int() << 2) | (c11.zext_int() << 3);
-		
+
 		// Skip block when outside an edge
+		SSABool process_block = !(a == SSAInt(0) || b == SSAInt(0) || c == SSAInt(0));
+
+		SetStencilBlock(x / 8 + y / 8 * stencilPitch);
+
+		// Stencil test the whole block, if possible
+		if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector || variant == TriDrawVariant::StencilClose)
+		{
+			process_block = process_block && (!StencilIsSingleValue() || SSABool::compare_uge(StencilGetSingle(), stencilTestValue));
+		}
+		else
+		{
+			process_block = process_block && (!StencilIsSingleValue() || StencilGetSingle() == stencilTestValue);
+		}
+
 		SSAIfBlock branch;
-		branch.if_block(!(a == SSAInt(0) || b == SSAInt(0) || c == SSAInt(0)));
+		branch.if_block(process_block);
 
 		// Check if block needs clipping
 		SSABool clipneeded = (x + q) > clipright || (y + q) > clipbottom;
@@ -260,8 +274,6 @@ void DrawTriangleCodegen::LoopBlockX()
 		{
 			currentlight = (!is_fixed_light).select(diminishedlight, light);
 		}
-
-		SetStencilBlock(x / 8 + y / 8 * stencilPitch);
 
 		SSABool covered = a == SSAInt(0xF) && b == SSAInt(0xF) && c == SSAInt(0xF) && !clipneeded && StencilIsSingleValue();
 
@@ -304,16 +316,6 @@ void DrawTriangleCodegen::SetupAffineBlock()
 
 void DrawTriangleCodegen::LoopFullBlock()
 {
-	SSAIfBlock branch_stenciltest;
-	if (variant == TriDrawVariant::DrawSubsector || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector || variant == TriDrawVariant::StencilClose)
-	{
-		branch_stenciltest.if_block(SSABool::compare_uge(StencilGetSingle(), stencilTestValue));
-	}
-	else
-	{
-		branch_stenciltest.if_block(StencilGetSingle() == stencilTestValue);
-	}
-
 	if (variant == TriDrawVariant::Stencil)
 	{
 		StencilClear(stencilWriteValue);
@@ -418,8 +420,6 @@ void DrawTriangleCodegen::LoopFullBlock()
 				AffineVaryingPosY[i] = AffineVaryingPosY[i] + gradVaryingY[i];
 		}
 	}
-
-	branch_stenciltest.end_block();
 }
 
 void DrawTriangleCodegen::LoopPartialBlock()

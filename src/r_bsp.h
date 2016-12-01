@@ -27,6 +27,11 @@
 #include <stddef.h>
 #include "r_defs.h"
 
+EXTERN_CVAR (Bool, r_drawflat)		// [RH] Don't texture segs?
+
+namespace swrenderer       
+{
+
 // The 3072 below is just an arbitrary value picked to avoid
 // drawing lines the player is too close to that would overflow
 // the texture calculations.
@@ -109,8 +114,6 @@ extern WORD			MirrorFlags;
 
 typedef void (*drawfunc_t) (int start, int stop);
 
-EXTERN_CVAR (Bool, r_drawflat)		// [RH] Don't texture segs?
-
 // BSP?
 void R_ClearClipSegs (short left, short right);
 void R_ClearDrawSegs ();
@@ -119,5 +122,6 @@ void R_RenderBSPNode (void *node);
 // killough 4/13/98: fake floors/ceilings for deep water / fake ceilings:
 sector_t *R_FakeFlat(sector_t *, sector_t *, int *, int *, bool);
 
+}
 
 #endif

@@ -85,7 +85,7 @@ void PolySkyDome::RenderRow(PolyDrawArgs &args, int row)
 void PolySkyDome::RenderCapColorRow(PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap)
 {
 	uint32_t solid = skytex->GetSkyCapColor(bottomCap);
-	if (!r_swtruecolor)
+	if (!swrenderer::r_swtruecolor)
 		solid = RGB32k.RGB[(RPART(solid) >> 3)][(GPART(solid) >> 3)][(BPART(solid) >> 3)];
 
 	args.vinput = &mVertices[mPrimStart[row]];

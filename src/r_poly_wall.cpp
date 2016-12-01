@@ -31,7 +31,7 @@
 #include "r_poly_wall.h"
 #include "r_poly_decal.h"
 #include "r_poly.h"
-#include "r_sky.h" // for skyflatnum
+#include "r_sky.h"
 
 EXTERN_CVAR(Bool, r_drawmirrors)
 
@@ -330,7 +330,7 @@ FTexture *RenderPolyWall::GetTexture()
 
 int RenderPolyWall::GetLightLevel()
 {
-	if (fixedlightlev >= 0 || fixedcolormap)
+	if (swrenderer::fixedlightlev >= 0 || swrenderer::fixedcolormap)
 	{
 		return 255;
 	}

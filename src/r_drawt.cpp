@@ -47,6 +47,9 @@
 #include "r_things.h"
 #include "v_video.h"
 
+namespace swrenderer       
+{
+
 // I should have commented this stuff better.
 //
 // dc_temp is the buffer R_DrawColumnHoriz writes into.
@@ -1129,4 +1132,6 @@ void R_FillColumnHorizP_C (void)
 		dest[0] = color; dest[4] = color;
 		dest += 8;
 	} while (--count);
+}
+
 }

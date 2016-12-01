@@ -36,6 +36,9 @@ struct FSpecialColormap;
 EXTERN_CVAR(Bool, r_mipmap)
 EXTERN_CVAR(Float, r_lod_bias)
 
+namespace swrenderer       
+{
+
 /////////////////////////////////////////////////////////////////////////////
 // Drawer functions:
 
@@ -284,5 +287,7 @@ public:
 		return alpha | (red << 16) | (green << 8) | blue;
 	}
 };
+
+}
 
 #endif

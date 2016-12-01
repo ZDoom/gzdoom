@@ -45,6 +45,9 @@
 #include "r_draw_rgba.h"
 #include "r_drawers.h"
 
+namespace swrenderer       
+{
+
 extern unsigned int dc_tspans[4][MAXHEIGHT];
 extern unsigned int *dc_ctspan[4];
 extern unsigned int *horizspan[4];
@@ -505,4 +508,6 @@ void R_FillColumnHoriz_rgba (void)
 	*span += 2;
 
 	DrawerCommandQueue::QueueCommand<FillColumnHorizRGBACommand>();
+}
+
 }

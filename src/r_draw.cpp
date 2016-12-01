@@ -47,6 +47,14 @@
 
 #undef RANGECHECK
 
+EXTERN_CVAR (Int, r_drawfuzz)
+EXTERN_CVAR (Bool, r_drawtrans)
+EXTERN_CVAR (Float, transsouls)
+EXTERN_CVAR (Int, r_columnmethod)
+
+namespace swrenderer       
+{
+
 // status bar height at bottom of screen
 // [RH] status bar position at bottom of screen
 extern	int		ST_Y;
@@ -194,7 +202,6 @@ FDynamicColormap identitycolormap;
 
 bool drawer_needs_pal_input;
 
-EXTERN_CVAR (Int, r_columnmethod)
 
 void R_InitShadeMaps()
 {
@@ -2734,9 +2741,6 @@ void R_InitColumnDrawers ()
 }
 
 // [RH] Choose column drawers in a single place
-EXTERN_CVAR (Int, r_drawfuzz)
-EXTERN_CVAR (Bool, r_drawtrans)
-EXTERN_CVAR (Float, transsouls)
 
 static FDynamicColormap *basecolormapsave;
 
@@ -3121,4 +3125,6 @@ void R_SetDSColorMapLight(FSWColormap *base_colormap, float light, int shade)
 	{
 		ds_colormap = base_colormap->Maps + (GETPALOOKUP(light, shade) << COLORMAPSHIFT);
 	}
+}
+
 }

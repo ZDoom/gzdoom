@@ -143,14 +143,14 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 	double tx = sx - BaseXCenter;
 
 	tx -= tex->GetScaledLeftOffset();
-	int x1 = xs_RoundToInt(CenterX + tx * pspritexscale);
+	int x1 = xs_RoundToInt(swrenderer::CenterX + tx * swrenderer::pspritexscale);
 
 	// off the right side
 	if (x1 > viewwidth)
 		return;
 
 	tx += tex->GetScaledWidth();
-	int x2 = xs_RoundToInt(CenterX + tx * pspritexscale);
+	int x2 = xs_RoundToInt(swrenderer::CenterX + tx * swrenderer::pspritexscale);
 
 	// off the left side
 	if (x2 <= 0)
@@ -183,19 +183,19 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 
 	int clipped_x1 = MAX(x1, 0);
 	int clipped_x2 = MIN(x2, viewwidth);
-	double xscale = pspritexscale / tex->Scale.X;
-	double yscale = pspriteyscale / tex->Scale.Y;
+	double xscale = swrenderer::pspritexscale / tex->Scale.X;
+	double yscale = swrenderer::pspriteyscale / tex->Scale.Y;
 	uint32_t translation = 0; // [RH] Use default colors
 
 	double xiscale, startfrac;
 	if (flip)
 	{
-		xiscale = -pspritexiscale * tex->Scale.X;
+		xiscale = -swrenderer::pspritexiscale * tex->Scale.X;
 		startfrac = 1;
 	}
 	else
 	{
-		xiscale = pspritexiscale * tex->Scale.X;
+		xiscale = swrenderer::pspritexiscale * tex->Scale.X;
 		startfrac = 0;
 	}
 
@@ -217,7 +217,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, floa
 	int actualextralight = foggy ? 0 : extralight << 4;
 	int spriteshade = LIGHT2SHADE(owner->Sector->lightlevel + actualextralight);
 	double minz = double((2048 * 4) / double(1 << 20));
-	visstyle.ColormapNum = GETPALOOKUP(r_SpriteVisibility / minz, spriteshade);
+	visstyle.ColormapNum = GETPALOOKUP(swrenderer::r_SpriteVisibility / minz, spriteshade);
 
 	if (sprite->GetID() < PSP_TARGETCENTER)
 	{

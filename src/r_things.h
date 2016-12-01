@@ -25,6 +25,12 @@
 
 #include "r_bsp.h"
 
+struct particle_t;
+struct FVoxel;
+
+namespace swrenderer       
+{
+
 // A vissprite_t is a thing
 //	that will be drawn during a refresh.
 // I.e. a sprite object that is partly visible.
@@ -94,8 +100,6 @@ struct vissprite_t
 	vissprite_t() {}
 };
 
-struct particle_t;
-
 extern void(*R_DrawParticle)(vissprite_t *);
 void R_DrawParticle_C (vissprite_t *);
 void R_DrawParticle_rgba (vissprite_t *);
@@ -148,5 +152,6 @@ void R_DrawVoxel(const FVector3 &viewpos, FAngle viewangle,
 
 void R_ClipVisSprite (vissprite_t *vis, int xl, int xh);
 
+}
 
 #endif

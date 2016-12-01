@@ -64,10 +64,14 @@
 #pragma warning(disable:4244)
 #endif
 
+CVAR(Bool, r_linearsky, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, tilt, false, 0);
+CVAR(Bool, r_skyboxes, true, 0)
+
 EXTERN_CVAR(Int, r_skymode)
 
-//EXTERN_CVAR (Int, tx)
-//EXTERN_CVAR (Int, ty)
+namespace swrenderer       
+{
 
 extern subsector_t *InSubsector;
 
@@ -889,7 +893,6 @@ static DWORD lastskycol_bgra[MAXSKYBUF];
 static int skycolplace;
 static int skycolplace_bgra;
 
-CVAR(Bool, r_linearsky, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 // Get a column of sky when there is only one sky texture.
 static const BYTE *R_GetOneSkyColumn (FTexture *fronttex, int x)
@@ -1312,8 +1315,6 @@ static void R_DrawSkyStriped (visplane_t *pl)
 //
 //==========================================================================
 
-CVAR (Bool, tilt, false, 0);
-//CVAR (Int, pa, 0, 0)
 
 int R_DrawPlanes ()
 {
@@ -1450,7 +1451,6 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 //   9. Put the camera back where it was to begin with.
 //
 //==========================================================================
-CVAR (Bool, r_skyboxes, true, 0)
 static int numskyboxes;
 
 void R_DrawPortals ()
@@ -2189,4 +2189,6 @@ bool R_PlaneInitData ()
 	}
 
 	return true;
+}
+
 }

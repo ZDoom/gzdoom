@@ -58,6 +58,12 @@
 #include "po_man.h"
 #include "r_data/colormaps.h"
 
+CVAR (Bool, r_drawflat, false, 0)		// [RH] Don't texture segs?
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
+
+namespace swrenderer       
+{
+
 seg_t*			curline;
 side_t* 		sidedef;
 line_t* 		linedef;
@@ -104,8 +110,6 @@ TArray<PortalDrawseg> WallPortals(1000);	// note: this array needs to go away as
 
 subsector_t *InSubsector;
 
-CVAR (Bool, r_drawflat, false, 0)		// [RH] Don't texture segs?
-EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 
 void R_StoreWallRange (int start, int stop);
@@ -1395,4 +1399,6 @@ void R_RenderBSPNode (void *node)
 		node = bsp->children[side];
 	}
 	R_Subsector ((subsector_t *)((BYTE *)node - 1));
+}
+
 }

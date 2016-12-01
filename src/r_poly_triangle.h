@@ -70,7 +70,7 @@ public:
 	{
 		textureWidth = texture->GetWidth();
 		textureHeight = texture->GetHeight();
-		if (r_swtruecolor)
+		if (swrenderer::r_swtruecolor)
 			texturePixels = (const uint8_t *)texture->GetPixelsBgra();
 		else
 			texturePixels = texture->GetPixels();
@@ -84,7 +84,7 @@ public:
 			FRemapTable *table = TranslationToTable(translationID);
 			if (table != nullptr && !table->Inactive)
 			{
-				if (r_swtruecolor)
+				if (swrenderer::r_swtruecolor)
 					translation = (uint8_t*)table->Palette;
 				else
 					translation = table->Remap;

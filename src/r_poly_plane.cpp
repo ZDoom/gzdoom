@@ -28,7 +28,7 @@
 #include "r_poly_plane.h"
 #include "r_poly_portal.h"
 #include "r_poly.h"
-#include "r_sky.h" // for skyflatnum
+#include "r_sky.h"
 
 EXTERN_CVAR(Int, r_3dfloors)
 
@@ -96,10 +96,10 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 		return;
 
 	int lightlevel = 255;
-	if (fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size())
+	if (swrenderer::fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size())
 	{
 		lightlist_t *light = P_GetPlaneLight(sub->sector, &sub->sector->ceilingplane, false);
-		basecolormap = light->extra_colormap;
+		swrenderer::basecolormap = light->extra_colormap;
 		lightlevel = *light->p_lightlevel;
 	}
 
@@ -107,7 +107,7 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 
 	PolyDrawArgs args;
 	args.uniforms.light = (uint32_t)(lightlevel / 255.0f * 256.0f);
-	if (fixedlightlev >= 0 || fixedcolormap)
+	if (swrenderer::fixedlightlev >= 0 || swrenderer::fixedcolormap)
 		args.uniforms.light = 256;
 	args.uniforms.flags = 0;
 	args.uniforms.subsectorDepth = subsectorDepth;
@@ -251,7 +251,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 
 	PolyDrawArgs args;
 	args.uniforms.light = (uint32_t)(frontsector->lightlevel / 255.0f * 256.0f);
-	if (fixedlightlev >= 0 || fixedcolormap)
+	if (swrenderer::fixedlightlev >= 0 || swrenderer::fixedcolormap)
 		args.uniforms.light = 256;
 	args.uniforms.flags = 0;
 	args.uniforms.subsectorDepth = isSky ? RenderPolyPortal::SkySubsectorDepth : subsectorDepth;

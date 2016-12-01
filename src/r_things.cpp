@@ -66,6 +66,19 @@
 #include "p_local.h"
 #include "p_maputl.h"
 
+EXTERN_CVAR(Bool, st_scale)
+EXTERN_CVAR(Bool, r_shadercolormaps)
+EXTERN_CVAR(Int, r_drawfuzz)
+EXTERN_CVAR(Bool, r_deathcamera);
+EXTERN_CVAR(Bool, r_drawplayersprites)
+EXTERN_CVAR(Bool, r_drawvoxels)
+
+CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, r_splitsprites, true, CVAR_ARCHIVE)
+
+namespace swrenderer
+{
+
 // [RH] A c-buffer. Used for keeping track of offscreen voxel spans.
 
 struct FCoverageBuffer
@@ -95,12 +108,6 @@ extern float MaskedScaleY;
 #define MINZ			double((2048*4) / double(1 << 20))
 #define BASEXCENTER		(160)
 #define BASEYCENTER 	(100)
-
-EXTERN_CVAR (Bool, st_scale)
-EXTERN_CVAR(Bool, r_shadercolormaps)
-EXTERN_CVAR(Int, r_drawfuzz)
-EXTERN_CVAR(Bool, r_deathcamera);
-CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 //
 // Sprite rotation 0 is facing the viewer,
@@ -133,8 +140,6 @@ FTexture		*WallSpriteTile;
 short			zeroarray[MAXWIDTH];
 short			screenheightarray[MAXWIDTH];
 
-EXTERN_CVAR (Bool, r_drawplayersprites)
-EXTERN_CVAR (Bool, r_drawvoxels)
 
 //
 // INITIALIZATION FUNCTIONS
@@ -1903,8 +1908,6 @@ static int sd_comparex (const void *arg1, const void *arg2)
 	return (*(drawseg_t **)arg2)->x2 - (*(drawseg_t **)arg1)->x2;
 }
 
-CVAR (Bool, r_splitsprites, true, CVAR_ARCHIVE)
-
 // Split up vissprites that intersect drawsegs
 void R_SplitVisSprites ()
 {
@@ -3445,4 +3448,6 @@ void R_CheckOffscreenBuffer(int width, int height, bool spansonly)
 	}
 	OffscreenBufferWidth = width;
 	OffscreenBufferHeight = height;
+}
+
 }

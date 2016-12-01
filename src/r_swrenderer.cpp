@@ -58,10 +58,17 @@ CUSTOM_CVAR(Bool, r_polyrenderer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOI
 	}
 }
 
+namespace swrenderer       
+{
+
 void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio);
 void R_SetupColormap(player_t *);
 void R_SetupFreelook();
 void R_InitRenderer();
+
+}
+
+using namespace swrenderer;
 
 FSoftwareRenderer::FSoftwareRenderer()
 {

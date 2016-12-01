@@ -72,7 +72,7 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 
 	PolyDrawArgs args;
 
-	if (fullbrightSprite || fixedlightlev >= 0 || fixedcolormap)
+	if (fullbrightSprite || swrenderer::fixedlightlev >= 0 || swrenderer::fixedcolormap)
 	{
 		args.uniforms.light = 256;
 		args.uniforms.flags = TriUniforms::fixed_light;
@@ -84,7 +84,7 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 	}
 	args.uniforms.subsectorDepth = subsectorDepth;
 
-	if (r_swtruecolor)
+	if (swrenderer::r_swtruecolor)
 	{
 		uint32_t alpha = particle->trans;
 		args.uniforms.color = (alpha << 24) | (particle->color & 0xffffff);

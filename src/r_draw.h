@@ -25,13 +25,22 @@
 
 #include "r_defs.h"
 
+struct FSWColormap;
+
+EXTERN_CVAR(Bool, r_multithreaded);
+EXTERN_CVAR(Bool, r_magfilter);
+EXTERN_CVAR(Bool, r_minfilter);
+EXTERN_CVAR(Bool, r_mipmap);
+EXTERN_CVAR(Float, r_lod_bias);
+
+namespace swrenderer       
+{
+
 // Spectre/Invisibility.
 #define FUZZTABLE	50
 extern "C" int 	fuzzoffset[FUZZTABLE + 1];	// [RH] +1 for the assembly routine
 extern "C" int 	fuzzpos;
 extern "C" int	fuzzviewheight;
-
-struct FSWColormap;
 
 struct ShadeConstants
 {
@@ -395,10 +404,6 @@ void R_DrawDoubleSkyCol4_rgba(uint32_t solid_top, uint32_t solid_bottom);
 
 extern bool r_swtruecolor;
 
-EXTERN_CVAR(Bool, r_multithreaded);
-EXTERN_CVAR(Bool, r_magfilter);
-EXTERN_CVAR(Bool, r_minfilter);
-EXTERN_CVAR(Bool, r_mipmap);
-EXTERN_CVAR(Float, r_lod_bias);
+}
 
 #endif

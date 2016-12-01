@@ -62,6 +62,34 @@
 #include "p_setup.h"
 #include "version.h"
 
+CVAR (String, r_viewsize, "", CVAR_NOSET)
+CVAR (Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
+
+CUSTOM_CVAR (Int, r_columnmethod, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self != 0 && self != 1)
+	{
+		self = 1;
+	}
+	else
+	{ // Trigger the change
+		setsizeneeded = true;
+	}
+}
+
+CVAR(Int, r_portal_recursions, 4, CVAR_ARCHIVE)
+CVAR(Bool, r_highlight_portals, false, CVAR_ARCHIVE)
+
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
+
+extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
+extern cycle_t FrameCycles;
+
+extern bool r_showviewer;
+
+namespace swrenderer       
+{
+
 // MACROS ------------------------------------------------------------------
 
 #if 0
@@ -91,7 +119,6 @@ extern short *openings;
 extern bool r_fakingunderwater;
 extern "C" int fuzzviewheight;
 extern subsector_t *InSubsector;
-extern bool r_showviewer;
 
 
 // PRIVATE DATA DECLARATIONS -----------------------------------------------
@@ -102,9 +129,6 @@ static double MaxVisForFloor;
 bool r_dontmaplines;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-CVAR (String, r_viewsize, "", CVAR_NOSET)
-CVAR (Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
 
 bool			r_swtruecolor;
 
@@ -368,26 +392,6 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 
 //==========================================================================
 //
-// CVAR r_columnmethod
-//
-// Selects which version of the seg renderers to use.
-//
-//==========================================================================
-
-CUSTOM_CVAR (Int, r_columnmethod, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self != 0 && self != 1)
-	{
-		self = 1;
-	}
-	else
-	{ // Trigger the change
-		setsizeneeded = true;
-	}
-}
-
-//==========================================================================
-//
 // R_Init
 //
 //==========================================================================
@@ -449,8 +453,6 @@ void R_CopyStackedViewParameters()
 // Sets up special fixed colormaps
 //
 //==========================================================================
-
-EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 void R_SetupColormap(player_t *player)
 {
@@ -568,9 +570,6 @@ void R_SetupFreelook()
 // [ZZ] Merged with portal code, originally called R_EnterMirror
 //
 //==========================================================================
-
-CVAR(Int, r_portal_recursions, 4, CVAR_ARCHIVE)
-CVAR(Bool, r_highlight_portals, false, CVAR_ARCHIVE)
 
 void R_HighlightPortal (PortalDrawseg* pds)
 {
@@ -1023,8 +1022,6 @@ void R_MultiresInit ()
 // Displays statistics about rendering times
 //
 //==========================================================================
-extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
-extern cycle_t FrameCycles;
 
 ADD_STAT (fps)
 {
@@ -1104,3 +1101,5 @@ CCMD (clearscancycles)
 	bestscancycles = HUGE_VAL;
 }
 #endif
+
+}

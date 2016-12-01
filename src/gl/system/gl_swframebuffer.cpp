@@ -1377,15 +1377,16 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 		uint32_t color0, color1;
 		if (Accel2D)
 		{
-			if (realfixedcolormap == nullptr)
+			auto &map = swrenderer::realfixedcolormap;
+			if (map == nullptr)
 			{
 				color0 = 0;
 				color1 = 0xFFFFFFF;
 			}
 			else
 			{
-				color0 = ColorValue(realfixedcolormap->ColorizeStart[0] / 2, realfixedcolormap->ColorizeStart[1] / 2, realfixedcolormap->ColorizeStart[2] / 2, 0);
-				color1 = ColorValue(realfixedcolormap->ColorizeEnd[0] / 2, realfixedcolormap->ColorizeEnd[1] / 2, realfixedcolormap->ColorizeEnd[2] / 2, 1);
+				color0 = ColorValue(map->ColorizeStart[0] / 2, map->ColorizeStart[1] / 2, map->ColorizeStart[2] / 2, 0);
+				color1 = ColorValue(map->ColorizeEnd[0] / 2, map->ColorizeEnd[1] / 2, map->ColorizeEnd[2] / 2, 1);
 				if (IsBgra())
 					SetPixelShader(Shaders[SHADER_SpecialColormap]);
 				else

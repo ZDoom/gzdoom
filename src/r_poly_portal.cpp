@@ -163,7 +163,7 @@ void RenderPolyPortal::RenderLine(subsector_t *sub, seg_t *line, sector_t *front
 		return;
 
 	// Tell automap we saw this
-	if (!r_dontmaplines && line->linedef)
+	if (!swrenderer::r_dontmaplines && line->linedef)
 	{
 		line->linedef->flags |= ML_MAPPED;
 		sub->flags |= SSECF_DRAWN;
@@ -367,7 +367,7 @@ void PolyDrawSectorPortal::SaveGlobals()
 	savedextralight = extralight;
 	savedpos = ViewPos;
 	savedangle = ViewAngle;
-	savedvisibility = R_GetVisibility();
+	savedvisibility = swrenderer::R_GetVisibility();
 	savedcamera = camera;
 	savedsector = viewsector;
 
@@ -376,14 +376,14 @@ void PolyDrawSectorPortal::SaveGlobals()
 		// Don't let gun flashes brighten the sky box
 		ASkyViewpoint *sky = barrier_cast<ASkyViewpoint*>(Portal->mSkybox);
 		extralight = 0;
-		R_SetVisibility(sky->args[0] * 0.25f);
+		swrenderer::R_SetVisibility(sky->args[0] * 0.25f);
 		ViewPos = sky->InterpolatedPosition(r_TicFracF);
 		ViewAngle = savedangle + (sky->PrevAngles.Yaw + deltaangle(sky->PrevAngles.Yaw, sky->Angles.Yaw) * r_TicFracF);
 	}
 	else //if (Portal->mType == PORTS_STACKEDSECTORTHING || Portal->mType == PORTS_PORTAL || Portal->mType == PORTS_LINKEDPORTAL)
 	{
 		//extralight = pl->extralight;
-		//R_SetVisibility(pl->visibility);
+		//swrenderer::R_SetVisibility(pl->visibility);
 		ViewPos.X += Portal->mDisplacement.X;
 		ViewPos.Y += Portal->mDisplacement.Y;
 	}
@@ -404,7 +404,7 @@ void PolyDrawSectorPortal::RestoreGlobals()
 	camera = savedcamera;
 	viewsector = savedsector;
 	ViewPos = savedpos;
-	R_SetVisibility(savedvisibility);
+	swrenderer::R_SetVisibility(savedvisibility);
 	extralight = savedextralight;
 	ViewAngle = savedangle;
 	R_SetViewAngle();

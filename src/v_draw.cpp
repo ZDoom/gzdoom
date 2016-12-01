@@ -133,6 +133,8 @@ void DCanvas::DrawTexture (FTexture *img, double x, double y, int tags_first, ..
 void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 {
 #ifndef NO_SWRENDER
+        using namespace swrenderer;
+        
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
 	const BYTE *translation = NULL;
 
@@ -1026,7 +1028,7 @@ void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 	{
 		uint32_t *spot = (uint32_t*)GetBuffer() + oldyyshifted + xx;
 
-		uint32_t fg = LightBgra::shade_pal_index_simple(basecolor, LightBgra::calc_light_multiplier(0));
+		uint32_t fg = swrenderer::LightBgra::shade_pal_index_simple(basecolor, swrenderer::LightBgra::calc_light_multiplier(0));
 		uint32_t fg_red = (fg >> 16) & 0xff;
 		uint32_t fg_green = (fg >> 8) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
@@ -1359,6 +1361,8 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	FDynamicColormap *colormap, int lightlevel, int bottomclip)
 {
 #ifndef NO_SWRENDER
+        using namespace swrenderer;
+
 	// Use an equation similar to player sprites to determine shade
 	fixed_t shade = LIGHT2SHADE(lightlevel) - 12*FRACUNIT;
 	float topy, boty, leftx, rightx;

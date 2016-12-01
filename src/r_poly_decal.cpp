@@ -135,7 +135,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	args.uniforms.flags = 0;
 	args.SetColormap(front->ColorMap);
 	args.SetTexture(tex, decal->Translation, true);
-	if (fullbrightSprite || fixedlightlev >= 0 || fixedcolormap)
+	if (fullbrightSprite || swrenderer::fixedlightlev >= 0 || swrenderer::fixedcolormap)
 	{
 		args.uniforms.light = 256;
 		args.uniforms.flags |= TriUniforms::fixed_light;
@@ -146,7 +146,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	}
 	args.uniforms.subsectorDepth = subsectorDepth;
 
-	if (r_swtruecolor)
+	if (swrenderer::r_swtruecolor)
 	{
 		args.uniforms.color = 0xff000000 | decal->AlphaColor;
 	}

@@ -46,11 +46,6 @@
 #include "x86.h"
 #include <vector>
 
-extern "C" short spanend[MAXHEIGHT];
-extern float rw_light;
-extern float rw_lightstep;
-extern int wallshade;
-
 // Use linear filtering when scaling up
 CVAR(Bool, r_magfilter, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
@@ -62,6 +57,14 @@ CVAR(Bool, r_mipmap, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 // Level of detail texture bias
 CVAR(Float, r_lod_bias, -1.5, 0); // To do: add CVAR_ARCHIVE | CVAR_GLOBALCONFIG when a good default has been decided
+
+namespace swrenderer       
+{
+
+extern "C" short spanend[MAXHEIGHT];
+extern float rw_light;
+extern float rw_lightstep;
+extern int wallshade;
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -1621,4 +1624,6 @@ void R_DrawFogBoundary_rgba(int x1, int x2, short *uclip, short *dclip)
 	{
 		R_DrawFogBoundarySection_rgba(t2, b2, x1);
 	}
+}
+
 }

@@ -119,7 +119,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 
 	PolyDrawArgs args;
 	args.uniforms.flags = 0;
-	if (fullbrightSprite || fixedlightlev >= 0 || fixedcolormap)
+	if (fullbrightSprite || swrenderer::fixedlightlev >= 0 || swrenderer::fixedcolormap)
 	{
 		args.uniforms.light = 256;
 		args.uniforms.flags |= TriUniforms::fixed_light;
@@ -228,7 +228,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 		args.SetTexture(tex, thing->Translation, true);
 	}
 	
-	if (!r_swtruecolor)
+	if (!swrenderer::r_swtruecolor)
 	{
 		uint32_t r = (args.uniforms.color >> 16) & 0xff;
 		uint32_t g = (args.uniforms.color >> 8) & 0xff;
@@ -309,9 +309,9 @@ visstyle_t RenderPolySprite::GetSpriteVisStyle(AActor *thing, double z)
 	}
 
 	// get light level
-	if (fixedcolormap != nullptr)
+	if (swrenderer::fixedcolormap != nullptr)
 	{ // fixed map
-		visstyle.BaseColormap = fixedcolormap;
+		visstyle.BaseColormap = swrenderer::fixedcolormap;
 		visstyle.ColormapNum = 0;
 	}
 	else
@@ -320,10 +320,10 @@ visstyle_t RenderPolySprite::GetSpriteVisStyle(AActor *thing, double z)
 		{
 			mybasecolormap = GetSpecialLights(mybasecolormap->Color, mybasecolormap->Fade.InverseColor(), mybasecolormap->Desaturate);
 		}
-		if (fixedlightlev >= 0)
+		if (swrenderer::fixedlightlev >= 0)
 		{
 			visstyle.BaseColormap = mybasecolormap;
-			visstyle.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
+			visstyle.ColormapNum = swrenderer::fixedlightlev >> COLORMAPSHIFT;
 		}
 		else if (!foggy && ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
 		{ // full bright
@@ -333,7 +333,7 @@ visstyle_t RenderPolySprite::GetSpriteVisStyle(AActor *thing, double z)
 		else
 		{ // diminished light
 			double minz = double((2048 * 4) / double(1 << 20));
-			visstyle.ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(z, minz), spriteshade);
+			visstyle.ColormapNum = GETPALOOKUP(swrenderer::r_SpriteVisibility / MAX(z, minz), spriteshade);
 			visstyle.BaseColormap = mybasecolormap;
 		}
 	}

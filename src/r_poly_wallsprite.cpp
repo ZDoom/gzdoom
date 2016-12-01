@@ -99,7 +99,7 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const Vec4f &cli
 	bool fullbrightSprite = ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 
 	PolyDrawArgs args;
-	if (fullbrightSprite || fixedlightlev >= 0 || fixedcolormap)
+	if (fullbrightSprite || swrenderer::fixedlightlev >= 0 || swrenderer::fixedcolormap)
 	{
 		args.uniforms.light = 256;
 		args.uniforms.flags = TriUniforms::fixed_light;

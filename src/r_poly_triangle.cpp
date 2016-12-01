@@ -498,8 +498,8 @@ TriMatrix TriMatrix::viewToClip()
 	float near = 5.0f;
 	float far = 65536.0f;
 	float width = (float)(FocalTangent * near);
-	float top = (float)(CenterY / InvZtoScale * near);
-	float bottom = (float)(top - viewheight / InvZtoScale * near);
+	float top = (float)(swrenderer::CenterY / swrenderer::InvZtoScale * near);
+	float bottom = (float)(top - viewheight / swrenderer::InvZtoScale * near);
 	return frustum(-width, width, bottom, top, near, far);
 }
 

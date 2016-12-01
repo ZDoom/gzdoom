@@ -46,16 +46,16 @@ RenderPolyScene *RenderPolyScene::Instance()
 void RenderPolyScene::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines)
 {
 	const bool savedviewactive = viewactive;
-	const bool savedoutputformat = r_swtruecolor;
+	const bool savedoutputformat = swrenderer::r_swtruecolor;
 
 	viewwidth = width;
 	RenderTarget = canvas;
-	bRenderingToCanvas = true;
+	swrenderer::bRenderingToCanvas = true;
 	R_SetWindow(12, width, height, height, true);
 	viewwindowx = x;
 	viewwindowy = y;
 	viewactive = true;
-	r_swtruecolor = canvas->IsBgra();
+	swrenderer::r_swtruecolor = canvas->IsBgra();
 	
 	canvas->Lock(true);
 	
@@ -64,17 +64,17 @@ void RenderPolyScene::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, 
 	canvas->Unlock();
 
 	RenderTarget = screen;
-	bRenderingToCanvas = false;
+	swrenderer::bRenderingToCanvas = false;
 	R_ExecuteSetViewSize();
 	viewactive = savedviewactive;
-	r_swtruecolor = savedoutputformat;
+	swrenderer::r_swtruecolor = savedoutputformat;
 }
 
 void RenderPolyScene::RenderActorView(AActor *actor, bool dontmaplines)
 {
 	NetUpdate();
 	
-	r_dontmaplines = dontmaplines;
+	//swrenderer::r_dontmaplines = dontmaplines;
 	
 	P_FindParticleSubsectors();
 	PO_LinkToSubsectors();

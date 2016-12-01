@@ -2304,14 +2304,29 @@ ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 	ExpEmit pointer = Base->Emit(build);
 	Address = pointer;
 
-	ExpEmit result = Right->Emit(build);
+	ExpEmit result;
+	bool intconst = false;
+	int intconstval;
+
+	if (Right->isConstant() && Right->ValueType->GetRegType() == REGT_INT)
+	{
+		intconst = true;
+		intconstval = static_cast<FxConstant*>(Right)->GetValue().GetInt();
+		result.Konst = true;
+		result.RegType = REGT_INT;
+	}
+	else
+	{
+		result = Right->Emit(build);
+	}
 	assert(result.RegType <= REGT_TYPE);
 
 	if (pointer.Target)
 	{
 		if (result.Konst)
 		{
-			build->Emit(loadops[result.RegType], pointer.RegNum, result.RegNum);
+			if (intconst) build->EmitLoadInt(pointer.RegNum, intconstval);
+			else build->Emit(loadops[result.RegType], pointer.RegNum, result.RegNum);
 		}
 		else
 		{
@@ -2323,7 +2338,8 @@ ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 		if (result.Konst)
 		{
 			ExpEmit temp(build, result.RegType);
-			build->Emit(loadops[result.RegType], temp.RegNum, result.RegNum);
+			if (intconst) build->EmitLoadInt(temp.RegNum, intconstval);
+			else build->Emit(loadops[result.RegType], temp.RegNum, result.RegNum);
 			result.Free(build);
 			result = temp;
 		}

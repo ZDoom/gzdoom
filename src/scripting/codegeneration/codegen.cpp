@@ -4176,23 +4176,19 @@ void FxBinaryLogical::Flatten()
 
 ExpEmit FxBinaryLogical::Emit(VMFunctionBuilder *build)
 {
-	TArray<size_t> patchspots;
+	TArray<size_t> yes, no;
+	bool invert = Operator == TK_OrOr;
 
-	int zero = build->GetConstantInt(0);
 	for (unsigned i = 0; i < list.Size(); i++)
 	{
-		assert(list[i]->ValueType->GetRegType() == REGT_INT);
-		ExpEmit op1 = list[i]->Emit(build);
-		assert(!op1.Konst);
-		op1.Free(build);
-		build->Emit(OP_EQ_K, (Operator == TK_AndAnd) ? 1 : 0, op1.RegNum, zero);
-		patchspots.Push(build->Emit(OP_JMP, 0, 0, 0));
+		list[i]->EmitCompare(build, invert, yes, no);
 	}
+	build->BackpatchListToHere(yes);
 	ExpEmit to(build, REGT_INT);
 	build->Emit(OP_LI, to.RegNum, (Operator == TK_AndAnd) ? 1 : 0);
 	build->Emit(OP_JMP, 1);
+	build->BackpatchListToHere(no);
 	auto ctarget = build->Emit(OP_LI, to.RegNum, (Operator == TK_AndAnd) ? 0 : 1);
-	for (auto addr : patchspots) build->Backpatch(addr, ctarget);
 	list.DeleteAndClear();
 	list.ShrinkToFit();
 	return to;
@@ -4685,7 +4681,13 @@ FxExpression *FxAbs::Resolve(FCompileContext &ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(val, ctx);
 
-
+	if (val->ValueType == TypeBool)	// abs of a boolean is always the same as the operand
+	{
+		auto v = val;
+		val = nullptr;
+		delete this;
+		return v;
+	}
 	if (!val->IsNumeric())
 	{
 		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");

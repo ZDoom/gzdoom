@@ -38,40 +38,31 @@
 #include "r_poly_particle.h"
 #include "r_poly_plane.h"
 #include "r_poly_cull.h"
-
-// Used for sorting things by distance to the camera
-class PolySortedSprite
-{
-public:
-	PolySortedSprite(AActor *thing, double distanceSquared) : Thing(thing), DistanceSquared(distanceSquared) { }
-	bool operator<(const PolySortedSprite &other) const { return DistanceSquared < other.DistanceSquared; }
-
-	AActor *Thing;
-	double DistanceSquared;
-};
+#include <set>
+#include <unordered_map>
 
 class PolyTranslucentObject
 {
 public:
 	PolyTranslucentObject(particle_t *particle, subsector_t *sub, uint32_t subsectorDepth) : particle(particle), sub(sub), subsectorDepth(subsectorDepth) { }
-	PolyTranslucentObject(AActor *thing, subsector_t *sub, uint32_t subsectorDepth) : thing(thing), sub(sub), subsectorDepth(subsectorDepth) { }
+	PolyTranslucentObject(AActor *thing, subsector_t *sub, uint32_t subsectorDepth, double dist, float t1, float t2) : thing(thing), sub(sub), subsectorDepth(subsectorDepth), DistanceSquared(dist), SpriteLeft(t1), SpriteRight(t2) { }
 	PolyTranslucentObject(RenderPolyWall wall) : wall(wall) { }
+
+	bool operator<(const PolyTranslucentObject &other) const
+	{
+		return subsectorDepth != other.subsectorDepth ? subsectorDepth < other.subsectorDepth : DistanceSquared < other.DistanceSquared;
+	}
 
 	particle_t *particle = nullptr;
 	AActor *thing = nullptr;
 	subsector_t *sub = nullptr;
-	uint32_t subsectorDepth = 0;
 
 	RenderPolyWall wall;
-};
-
-class SpriteRange
-{
-public:
-	SpriteRange() = default;
-	SpriteRange(int start, int count) : Start(start), Count(count) { }
-	int Start = -1;
-	int Count = 0;
+	
+	uint32_t subsectorDepth = 0;
+	double DistanceSquared = 1.e6;
+	
+	float SpriteLeft = 0.0f, SpriteRight = 1.0f;
 };
 
 class PolyDrawSectorPortal;
@@ -95,18 +86,17 @@ private:
 	void RenderSectors();
 	void RenderSubsector(subsector_t *sub);
 	void RenderLine(subsector_t *sub, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth);
-
-	SpriteRange GetSpritesForSector(sector_t *sector);
+	void RenderSprite(AActor *thing, double sortDistance, const DVector2 &left, const DVector2 &right);
+	void RenderSprite(AActor *thing, double sortDistance, DVector2 left, DVector2 right, double t1, double t2, void *node);
 
 	TriMatrix WorldToClip;
 	Vec4f PortalPlane;
 	uint32_t StencilValue = 0;
 	PolyCull Cull;
 	uint32_t NextSubsectorDepth = 0;
-	std::vector<SpriteRange> SectorSpriteRanges;
-	std::vector<PolySortedSprite> SortedSprites;
+	std::set<sector_t *> SeenSectors;
+	std::unordered_map<subsector_t *, uint32_t> SubsectorDepths;
 	std::vector<PolyTranslucentObject> TranslucentObjects;
-	std::vector<PolyTranslucentObject> SubsectorTranslucentWalls;
 
 	std::vector<std::unique_ptr<PolyDrawSectorPortal>> SectorPortals;
 	std::vector<std::unique_ptr<PolyDrawLinePortal>> LinePortals;

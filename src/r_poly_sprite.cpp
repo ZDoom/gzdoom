@@ -32,11 +32,43 @@
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, r_drawfuzz)
 
-void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
+bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 {
 	if (IsThingCulled(thing))
-		return;
+		return false;
 
+	DVector3 pos = thing->InterpolatedPosition(r_TicFracF);
+
+	bool flipTextureX = false;
+	FTexture *tex = GetSpriteTexture(thing, flipTextureX);
+	if (tex == nullptr)
+		return false;
+
+	DVector2 spriteScale = thing->Scale;
+	double thingxscalemul = spriteScale.X / tex->Scale.X;
+	double thingyscalemul = spriteScale.Y / tex->Scale.Y;
+
+	if (flipTextureX)
+		pos.X -= (tex->GetWidth() - tex->LeftOffset) * thingxscalemul;
+	else
+		pos.X -= tex->LeftOffset * thingxscalemul;
+
+	double spriteHalfWidth = thingxscalemul * tex->GetWidth() * 0.5;
+	double spriteHeight = thingyscalemul * tex->GetHeight();
+
+	pos.X += spriteHalfWidth;
+
+	left = DVector2(pos.X - ViewSin * spriteHalfWidth, pos.Y + ViewCos * spriteHalfWidth);
+	right = DVector2(pos.X + ViewSin * spriteHalfWidth, pos.Y - ViewCos * spriteHalfWidth);
+	return true;
+}
+
+void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
+{
+	DVector2 points[2];
+	if (!GetLine(thing, points[0], points[1]))
+		return;
+	
 	DVector3 pos = thing->InterpolatedPosition(r_TicFracF);
 	pos.Z += thing->GetBobOffset(r_TicFracF);
 
@@ -44,6 +76,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 	FTexture *tex = GetSpriteTexture(thing, flipTextureX);
 	if (tex == nullptr)
 		return;
+
 	DVector2 spriteScale = thing->Scale;
 	double thingxscalemul = spriteScale.X / tex->Scale.X;
 	double thingyscalemul = spriteScale.Y / tex->Scale.Y;
@@ -60,26 +93,6 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 	double spriteHeight = thingyscalemul * tex->GetHeight();
 
 	pos.X += spriteHalfWidth;
-
-	DVector2 points[2] =
-	{
-		{ pos.X - ViewSin * spriteHalfWidth, pos.Y + ViewCos * spriteHalfWidth },
-		{ pos.X + ViewSin * spriteHalfWidth, pos.Y - ViewCos * spriteHalfWidth }
-	};
-
-	// Is this sprite inside? (To do: clip the points)
-	for (int i = 0; i < 2; i++)
-	{
-		for (uint32_t i = 0; i < sub->numlines; i++)
-		{
-			seg_t *line = &sub->firstline[i];
-			double nx = line->v1->fY() - line->v2->fY();
-			double ny = line->v2->fX() - line->v1->fX();
-			double d = -(line->v1->fX() * nx + line->v1->fY() * ny);
-			if (pos.X * nx + pos.Y * ny + d > 0.0)
-				return;
-		}
-	}
 
 	//double depth = 1.0;
 	//visstyle_t visstyle = GetSpriteVisStyle(thing, depth);

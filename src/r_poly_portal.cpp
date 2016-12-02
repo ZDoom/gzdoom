@@ -62,9 +62,8 @@ void RenderPolyPortal::Render(int portalDepth)
 
 void RenderPolyPortal::ClearBuffers()
 {
-	SectorSpriteRanges.clear();
-	SectorSpriteRanges.resize(numsectors);
-	SortedSprites.clear();
+	SeenSectors.clear();
+	SubsectorDepths.clear();
 	TranslucentObjects.clear();
 	SectorPortals.clear();
 	LinePortals.clear();
@@ -117,35 +116,61 @@ void RenderPolyPortal::RenderSubsector(subsector_t *sub)
 		}
 	}
 
-	SpriteRange sprites = GetSpritesForSector(sub->sector);
-	for (int i = 0; i < sprites.Count; i++)
-	{
-		AActor *thing = SortedSprites[sprites.Start + i].Thing;
-		TranslucentObjects.push_back({ thing, sub, subsectorDepth });
-	}
-
-	TranslucentObjects.insert(TranslucentObjects.end(), SubsectorTranslucentWalls.begin(), SubsectorTranslucentWalls.end());
-	SubsectorTranslucentWalls.clear();
+	SeenSectors.insert(sub->sector);
+	SubsectorDepths[sub] = subsectorDepth;
 }
 
-SpriteRange RenderPolyPortal::GetSpritesForSector(sector_t *sector)
+void RenderPolyPortal::RenderSprite(AActor *thing, double sortDistance, const DVector2 &left, const DVector2 &right)
 {
-	if ((int)SectorSpriteRanges.size() < sector->sectornum || sector->sectornum < 0)
-		return SpriteRange();
+	if (numnodes == 0)
+		RenderSprite(thing, sortDistance, left, right, 0.0, 1.0, subsectors);
+	else
+		RenderSprite(thing, sortDistance, left, right, 0.0, 1.0, nodes + numnodes - 1); // The head node is the last node output.
+}
 
-	auto &range = SectorSpriteRanges[sector->sectornum];
-	if (range.Start == -1)
+void RenderPolyPortal::RenderSprite(AActor *thing, double sortDistance, DVector2 left, DVector2 right, double t1, double t2, void *node)
+{
+	while (!((size_t)node & 1))  // Keep going until found a subsector
 	{
-		range.Start = (int)SortedSprites.size();
-		range.Count = 0;
-		for (AActor *thing = sector->thinglist; thing != nullptr; thing = thing->snext)
+		node_t *bsp = (node_t *)node;
+		
+		DVector2 planePos(FIXED2DBL(bsp->x), FIXED2DBL(bsp->y));
+		DVector2 planeNormal = DVector2(FIXED2DBL(-bsp->dy), FIXED2DBL(bsp->dx));
+		double planeD = planeNormal | planePos;
+		
+		int sideLeft = (left | planeNormal) > planeD;
+		int sideRight = (right | planeNormal) > planeD;
+		
+		if (sideLeft != sideRight)
 		{
-			SortedSprites.push_back({ thing, (thing->Pos() - ViewPos).LengthSquared() });
-			range.Count++;
+			double dotLeft = planeNormal | left;
+			double dotRight = planeNormal | right;
+			double t = (planeD - dotLeft) / (dotRight - dotLeft);
+			
+			DVector2 mid = left * (1.0 - t) + right * t;
+			double tmid = t1 * (1.0 - t) + t2 * t;
+			
+			if (sideLeft == 0)
+			{
+				RenderSprite(thing, sortDistance, mid, right, tmid, t2, bsp->children[sideRight]);
+				right = mid;
+				t2 = tmid;
+			}
+			else
+			{
+				RenderSprite(thing, sortDistance, left, mid, t1, tmid, bsp->children[sideLeft]);
+				left = mid;
+				t1 = tmid;
+			}
 		}
-		std::stable_sort(SortedSprites.begin() + range.Start, SortedSprites.begin() + range.Start + range.Count);
+		node = bsp->children[sideLeft];
 	}
-	return range;
+	
+	subsector_t *sub = (subsector_t *)((BYTE *)node - 1);
+	
+	auto it = SubsectorDepths.find(sub);
+	if (it != SubsectorDepths.end())
+		TranslucentObjects.push_back({ thing, sub, it->second, sortDistance, (float)t1, (float)t2 });
 }
 
 void RenderPolyPortal::RenderLine(subsector_t *sub, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth)
@@ -178,12 +203,12 @@ void RenderPolyPortal::RenderLine(subsector_t *sub, seg_t *line, sector_t *front
 			if (!(fakeFloor->flags & FF_EXISTS)) continue;
 			if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
 			if (!fakeFloor->model) continue;
-			RenderPolyWall::Render3DFloorLine(WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, fakeFloor, SubsectorTranslucentWalls);
+			RenderPolyWall::Render3DFloorLine(WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, fakeFloor, TranslucentObjects);
 		}
 	}
 
 	// Render wall, and update culling info if its an occlusion blocker
-	if (RenderPolyWall::RenderLine(WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, SubsectorTranslucentWalls, LinePortals))
+	if (RenderPolyWall::RenderLine(WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, TranslucentObjects, LinePortals))
 	{
 		if (hasSegmentRange)
 			Cull.MarkSegmentCulled(sx1, sx2);
@@ -286,6 +311,20 @@ void RenderPolyPortal::RenderTranslucent(int portalDepth)
 			}
 		}
 	}
+
+	for (sector_t *sector : SeenSectors)
+	{
+		for (AActor *thing = sector->thinglist; thing != nullptr; thing = thing->snext)
+		{
+			DVector2 left, right;
+			if (!RenderPolySprite::GetLine(thing, left, right))
+				continue;
+			double distanceSquared = (thing->Pos() - ViewPos).LengthSquared();
+			RenderSprite(thing, distanceSquared, left, right);
+		}
+	}
+
+	std::stable_sort(TranslucentObjects.begin(), TranslucentObjects.end());
 
 	for (auto it = TranslucentObjects.rbegin(); it != TranslucentObjects.rend(); ++it)
 	{

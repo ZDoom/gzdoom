@@ -31,6 +31,7 @@ class RenderPolySprite
 public:
 	void Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue);
 
+	static bool GetLine(AActor *thing, DVector2 &left, DVector2 &right);
 	static bool IsThingCulled(AActor *thing);
 	static FTexture *GetSpriteTexture(AActor *thing, /*out*/ bool &flipX);
 

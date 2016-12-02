@@ -46,7 +46,7 @@ class PolyTranslucentObject
 public:
 	PolyTranslucentObject(particle_t *particle, subsector_t *sub, uint32_t subsectorDepth) : particle(particle), sub(sub), subsectorDepth(subsectorDepth) { }
 	PolyTranslucentObject(AActor *thing, subsector_t *sub, uint32_t subsectorDepth, double dist, float t1, float t2) : thing(thing), sub(sub), subsectorDepth(subsectorDepth), DistanceSquared(dist), SpriteLeft(t1), SpriteRight(t2) { }
-	PolyTranslucentObject(RenderPolyWall wall) : wall(wall) { }
+	PolyTranslucentObject(RenderPolyWall wall) : wall(wall), subsectorDepth(wall.SubsectorDepth), DistanceSquared(1.e6) { }
 
 	bool operator<(const PolyTranslucentObject &other) const
 	{
@@ -60,7 +60,7 @@ public:
 	RenderPolyWall wall;
 	
 	uint32_t subsectorDepth = 0;
-	double DistanceSquared = 1.e6;
+	double DistanceSquared = 0.0;
 	
 	float SpriteLeft = 0.0f, SpriteRight = 1.0f;
 };

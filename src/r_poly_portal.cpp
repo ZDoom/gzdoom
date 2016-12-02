@@ -158,7 +158,7 @@ void RenderPolyPortal::RenderSprite(AActor *thing, double sortDistance, DVector2
 			}
 			else
 			{
-				RenderSprite(thing, sortDistance, left, mid, t1, tmid, bsp->children[sideLeft]);
+				RenderSprite(thing, sortDistance, left, mid, t1, tmid, bsp->children[sideRight]);
 				left = mid;
 				t1 = tmid;
 			}

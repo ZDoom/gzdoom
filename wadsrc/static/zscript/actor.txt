@@ -303,7 +303,6 @@ class Actor : Thinker native
 	native void DaggerAlert(Actor target);
 	native void ClearBounce();
 	native TerrainDef GetFloorTerrain();
-	native Inventory DoDropItem(Class<Actor> type, int dropamount, int chance);
 	native bool CheckLocalView(int consoleplayer);
 
 	native void ExplodeMissile(line lin = null, Actor target = null);

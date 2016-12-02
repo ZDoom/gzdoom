@@ -113,7 +113,7 @@ void FParser::NextToken()
 		}
 		if(!Section)
 		{
-			I_Error("section not found!\n");
+			script_error("section not found!\n");
 			return;
 		}
     }
@@ -708,6 +708,18 @@ void FParser::EvaluateExpression(svalue_t &result, int start, int stop)
 //
 //==========================================================================
 
+void FS_Error(const char *error, ...)
+{
+	va_list argptr;
+	char errortext[MAX_ERRORTEXT];
+
+	va_start(argptr, error);
+	myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
+	va_end(argptr);
+	throw CFraggleScriptError(errortext);
+}
+
+
 void FParser::ErrorMessage(FString msg)
 {
 	int linenum = 0;
@@ -721,7 +733,7 @@ void FParser::ErrorMessage(FString msg)
     }
 
 	//lineinfo.Format("Script %d, line %d: ", Script->scriptnum, linenum);
-	I_Error("Script %d, line %d: %s", Script->scriptnum, linenum, msg.GetChars());
+	FS_Error("Script %d, line %d: %s", Script->scriptnum, linenum, msg.GetChars());
 }
 
 //==========================================================================

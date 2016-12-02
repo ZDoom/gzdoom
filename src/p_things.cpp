@@ -608,6 +608,7 @@ static void ParseSpawnMap(FScanner &sc, SpawnMap & themap, const char *descript)
 			}
 			defined[ednum] = true;
 			editem.classname = sc.String;
+			editem.linenum = sc.Line;
 
 			themap.Insert(ednum, editem);
 		}

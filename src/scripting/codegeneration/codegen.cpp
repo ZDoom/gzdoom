@@ -290,6 +290,21 @@ ExpEmit FxExpression::Emit (VMFunctionBuilder *build)
 
 //==========================================================================
 //
+// Emits a statement and records its position in the source.
+//
+//==========================================================================
+
+void FxExpression::EmitStatement(VMFunctionBuilder *build)
+{
+	build->BeginStatement(this);
+	ExpEmit exp = Emit(build);
+	exp.Free(build);
+	build->EndStatement();
+}
+
+
+//==========================================================================
+//
 //
 //
 //==========================================================================
@@ -8519,9 +8534,7 @@ ExpEmit FxSequence::Emit(VMFunctionBuilder *build)
 {
 	for (unsigned i = 0; i < Expressions.Size(); ++i)
 	{
-		ExpEmit v = Expressions[i]->Emit(build);
-		// Throw away any result. We don't care about it.
-		v.Free(build);
+		Expressions[i]->EmitStatement(build);
 	}
 	return ExpEmit();
 }
@@ -8817,7 +8830,7 @@ ExpEmit FxSwitchStatement::Emit(VMFunctionBuilder *build)
 			break;
 
 		default:
-			line->Emit(build);
+			line->EmitStatement(build);
 			break;
 		}
 	}
@@ -8979,13 +8992,13 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 	if (WhenTrue != nullptr)
 	{
 		build->BackpatchListToHere(yes);
-		WhenTrue->Emit(build);
+		WhenTrue->EmitStatement(build);
 	}
 	if (WhenFalse != nullptr)
 	{
 		if (!WhenTrue->CheckReturn()) jumpspot = build->Emit(OP_JMP, 0);	// no need to emit a jump if the block returns.
 		build->BackpatchListToHere(no);
-		WhenFalse->Emit(build);
+		WhenFalse->EmitStatement(build);
 		if (jumpspot != ~0u) build->BackpatchToHere(jumpspot);
 		if (WhenTrue == nullptr) build->BackpatchListToHere(yes);
 	}
@@ -9114,8 +9127,7 @@ ExpEmit FxWhileLoop::Emit(VMFunctionBuilder *build)
 	// Execute the loop's content.
 	if (Code != nullptr)
 	{
-		ExpEmit code = Code->Emit(build);
-		code.Free(build);
+		Code->EmitStatement(build);
 	}
 
 	// Loop back.
@@ -9190,8 +9202,7 @@ ExpEmit FxDoWhileLoop::Emit(VMFunctionBuilder *build)
 	codestart = build->GetAddress();
 	if (Code != nullptr)
 	{
-		ExpEmit code = Code->Emit(build);
-		code.Free(build);
+		Code->EmitStatement(build);
 	}
 
 	// Evaluate the condition and execute/break out of the loop.
@@ -9301,8 +9312,7 @@ ExpEmit FxForLoop::Emit(VMFunctionBuilder *build)
 	// Execute the loop's content.
 	if (Code != nullptr)
 	{
-		ExpEmit code = Code->Emit(build);
-		code.Free(build);
+		Code->EmitStatement(build);
 	}
 
 	// Iteration statement.

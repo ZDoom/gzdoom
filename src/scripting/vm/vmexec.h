@@ -704,7 +704,7 @@ begin:
 		assert(try_depth < MAX_TRY_DEPTH);
 		if (try_depth >= MAX_TRY_DEPTH)
 		{
-			THROW(X_TOO_MANY_TRIES);
+			throw CVMAbortException(X_TOO_MANY_TRIES, nullptr);
 		}
 		assert((pc + JMPOFS(pc) + 1)->op == OP_CATCH);
 		exception_frames[try_depth++] = pc + JMPOFS(pc) + 1;
@@ -727,7 +727,7 @@ begin:
 		}
 		else
 		{
-			THROW(BC);
+			throw CVMAbortException(EVMAbortException(BC), nullptr);
 		}
 		NEXTOP;
 	OP(CATCH):
@@ -736,13 +736,10 @@ begin:
 		assert(0);
 		NEXTOP;
 
-		// Fixme: This really needs to throw something more informative than a number. Printing the message here instead of passing it to the exception is not sufficient.
 	OP(BOUND):
 		if (reg.d[a] >= BC)
 		{
-			assert(false);
-			Printf("Array access out of bounds: Max. index = %u, current index = %u\n", BC, reg.d[a]);
-			THROW(X_ARRAY_OUT_OF_BOUNDS);
+			throw CVMAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", BC, reg.d[a]);
 		}
 		NEXTOP;
 
@@ -750,9 +747,7 @@ begin:
 		ASSERTKD(BC);
 		if (reg.d[a] >= konstd[BC])
 		{
-			assert(false);
-			Printf("Array access out of bounds: Max. index = %u, current index = %u\n", konstd[BC], reg.d[a]);
-			THROW(X_ARRAY_OUT_OF_BOUNDS);
+			throw CVMAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", konstd[BC], reg.d[a]);
 		}
 		NEXTOP;
 
@@ -760,9 +755,7 @@ begin:
 		ASSERTD(B);
 		if (reg.d[a] >= reg.d[B])
 		{
-			assert(false);
-			Printf("Array access out of bounds: Max. index = %u, current index = %u\n", reg.d[B], reg.d[a]);
-			THROW(X_ARRAY_OUT_OF_BOUNDS);
+			throw CVMAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", reg.d[B], reg.d[a]);
 		}
 		NEXTOP;
 
@@ -909,7 +902,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = reg.d[B] / reg.d[C];
 		NEXTOP;
@@ -917,7 +910,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
 		if (konstd[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = reg.d[B] / konstd[C];
 		NEXTOP;
@@ -925,7 +918,7 @@ begin:
 		ASSERTD(a); ASSERTKD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = konstd[B] / reg.d[C];
 		NEXTOP;
@@ -934,7 +927,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)reg.d[B] / (unsigned)reg.d[C]);
 		NEXTOP;
@@ -942,7 +935,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
 		if (konstd[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)reg.d[B] / (unsigned)konstd[C]);
 		NEXTOP;
@@ -950,7 +943,7 @@ begin:
 		ASSERTD(a); ASSERTKD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)konstd[B] / (unsigned)reg.d[C]);
 		NEXTOP;
@@ -959,7 +952,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = reg.d[B] % reg.d[C];
 		NEXTOP;
@@ -967,7 +960,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
 		if (konstd[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = reg.d[B] % konstd[C];
 		NEXTOP;
@@ -975,7 +968,7 @@ begin:
 		ASSERTD(a); ASSERTKD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = konstd[B] % reg.d[C];
 		NEXTOP;
@@ -984,7 +977,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)reg.d[B] % (unsigned)reg.d[C]);
 		NEXTOP;
@@ -992,7 +985,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
 		if (konstd[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)reg.d[B] % (unsigned)konstd[C]);
 		NEXTOP;
@@ -1000,7 +993,7 @@ begin:
 		ASSERTD(a); ASSERTKD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)konstd[B] % (unsigned)reg.d[C]);
 		NEXTOP;
@@ -1178,7 +1171,7 @@ begin:
 		ASSERTF(a); ASSERTF(B); ASSERTF(C);
 		if (reg.f[C] == 0.)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.f[a] = reg.f[B] / reg.f[C];
 		NEXTOP;
@@ -1186,7 +1179,7 @@ begin:
 		ASSERTF(a); ASSERTF(B); ASSERTKF(C);
 		if (konstf[C] == 0.)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.f[a] = reg.f[B] / konstf[C];
 		NEXTOP;
@@ -1194,7 +1187,7 @@ begin:
 		ASSERTF(a); ASSERTKF(B); ASSERTF(C);
 		if (reg.f[C] == 0.)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.f[a] = konstf[B] / reg.f[C];
 		NEXTOP;
@@ -1205,7 +1198,7 @@ begin:
 	Do_MODF:
 		if (fc == 0.)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.f[a] = luai_nummod(fb, fc);
 		NEXTOP;

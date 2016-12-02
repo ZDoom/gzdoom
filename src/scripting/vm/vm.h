@@ -5,6 +5,7 @@
 #include "autosegs.h"
 #include "vectors.h"
 #include "cmdlib.h"
+#include "doomerrors.h"
 
 #define MAX_RETURNS		8	// Maximum number of results a function called by script code can return
 #define MAX_TRY_DEPTH	8	// Maximum number of nested TRYs in a single function
@@ -187,6 +188,13 @@ enum EVMAbortException
 	X_ARRAY_OUT_OF_BOUNDS,
 	X_DIVISION_BY_ZERO,
 	X_BAD_SELF,
+};
+
+class CVMAbortException : public CDoomError
+{
+public:
+	static FString stacktrace;
+	CVMAbortException(EVMAbortException reason, const char *moreinfo, ...);
 };
 
 enum EVMOpMode
@@ -813,6 +821,7 @@ public:
 	const VM_ATAG *KonstATags() const { return (VM_UBYTE *)(KonstA + NumKonstA); }
 
 	VMOP *Code;
+	FString SourceFileName;
 	int *KonstD;
 	double *KonstF;
 	FString *KonstS;

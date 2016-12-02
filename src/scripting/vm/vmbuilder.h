@@ -4,6 +4,7 @@
 #include "dobject.h"
 
 class VMFunctionBuilder;
+class FxExpression;
 
 struct ExpEmit
 {
@@ -42,6 +43,8 @@ public:
 	VMFunctionBuilder(int numimplicits);
 	~VMFunctionBuilder();
 
+	void BeginStatement(FxExpression *stmt);
+	void EndStatement();
 	void MakeFunction(VMScriptFunction *func);
 
 	// Returns the constant register holding the value.
@@ -96,6 +99,15 @@ private:
 		unsigned KonstNum;
 		VM_ATAG Tag;
 	};
+
+	struct StatementInfo
+	{
+		uint16_t InstructionIndex;
+		uint16_t LineNumber;
+	};
+
+	TArray<StatementInfo> LineNumbers;
+	TArray<FxExpression *> StatementStack;
 
 	TArray<int> IntConstantList;
 	TArray<double> FloatConstantList;

@@ -75,11 +75,37 @@ VMFunctionBuilder::~VMFunctionBuilder()
 
 //==========================================================================
 //
-// VMFunctionBuilder :: MakeFunction
+// VMFunctionBuilder :: BeginStatement
 //
-// Creates a new VMScriptFunction out of the data passed to this class.
+// Records the start of a new statement.
 //
 //==========================================================================
+
+void VMFunctionBuilder::BeginStatement(FxExpression *stmt)
+{
+	// pop empty statement records.
+	while (LineNumbers.Size() > 0 && LineNumbers.Last().InstructionIndex == Code.Size()) LineNumbers.Pop();
+	// only add a new entry if the line number differs.
+	if (LineNumbers.Size() == 0 || stmt->ScriptPosition.ScriptLine != LineNumbers.Last().LineNumber)
+	{
+		StatementInfo si = { (uint16_t)Code.Size(), (uint16_t)stmt->ScriptPosition.ScriptLine };
+		LineNumbers.Push(si);
+	}
+	StatementStack.Push(stmt);
+}
+
+void VMFunctionBuilder::EndStatement()
+{
+	// pop empty statement records.
+	while (LineNumbers.Size() > 0 && LineNumbers.Last().InstructionIndex == Code.Size()) LineNumbers.Pop();
+	StatementStack.Pop();
+	// Re-enter the previous statement.
+	if (StatementStack.Size() > 0)
+	{
+		StatementInfo si = { (uint16_t)Code.Size(), (uint16_t)StatementStack.Last()->ScriptPosition.ScriptLine };
+		LineNumbers.Push(si);
+	}
+}
 
 void VMFunctionBuilder::MakeFunction(VMScriptFunction *func)
 {
@@ -880,7 +906,10 @@ void FFunctionBuildList::Build()
 			// Emit code
 			try
 			{
+				sfunc->SourceFileName = item.Code->ScriptPosition.FileName;	// remember the file name for printing error messages if something goes wrong in the VM.
+				buildit.BeginStatement(item.Code);
 				item.Code->Emit(&buildit);
+				buildit.EndStatement();
 				buildit.MakeFunction(sfunc);
 				sfunc->NumArgs = 0;
 				// NumArgs for the VMFunction must be the amount of stack elements, which can differ from the amount of logical function arguments if vectors are in the list.

@@ -828,7 +828,7 @@ void DoReadyWeapon(AActor *self)
 
 DEFINE_ACTION_FUNCTION(AStateProvider, A_WeaponReady)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 	PARAM_INT_DEF(flags);
 
 													DoReadyWeaponToSwitch(self, !(flags & WRF_NoSwitch));
@@ -960,7 +960,7 @@ static void P_CheckWeaponButtons (player_t *player)
 
 DEFINE_ACTION_FUNCTION(AStateProvider, A_ReFire)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 	PARAM_STATE_ACTION_DEF(state);
 	A_ReFire(self, state);
 	return 0;
@@ -998,7 +998,7 @@ void A_ReFire(AActor *self, FState *state)
 
 DEFINE_ACTION_FUNCTION(AStateProvider, A_ClearReFire)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 	player_t *player = self->player;
 
 	if (NULL != player)
@@ -1020,7 +1020,7 @@ DEFINE_ACTION_FUNCTION(AStateProvider, A_ClearReFire)
 
 DEFINE_ACTION_FUNCTION(AStateProvider, A_CheckReload)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 
 	if (self->player != NULL)
 	{
@@ -1208,7 +1208,7 @@ DEFINE_ACTION_FUNCTION(AActor, OverlayID)
 
 DEFINE_ACTION_FUNCTION(AStateProvider, A_Lower)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 
 	player_t *player = self->player;
 	DPSprite *psp;
@@ -1254,9 +1254,9 @@ DEFINE_ACTION_FUNCTION(AStateProvider, A_Lower)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AActor, A_Raise)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_Raise)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 
 	if (self == nullptr)
 	{
@@ -1368,7 +1368,7 @@ enum GF_Flags
 
 DEFINE_ACTION_FUNCTION(AStateProvider, A_GunFlash)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 	PARAM_STATE_ACTION_DEF(flash);
 	PARAM_INT_DEF(flags);
 

@@ -1140,8 +1140,8 @@ class AActor;
 //   callingstate - State this action was called from
 #define PARAM_ACTION_PROLOGUE(type) \
 	PARAM_PROLOGUE; \
-	PARAM_OBJECT	 (self, type); \
-	PARAM_OBJECT (stateowner, AActor) \
+	PARAM_OBJECT	 (self, AActor); \
+	PARAM_OBJECT (stateowner, type) \
 	PARAM_POINTER  (stateinfo, FStateParamInfo) \
 
 // Number of action paramaters

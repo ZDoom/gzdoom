@@ -21,12 +21,24 @@ class IceChunk : Actor
 		+NOBLOCKMAP
 		+MOVEWITHSECTOR
 	}
-	native void A_IceSetTics ();
+	
+	void A_IceSetTics ()
+	{
+		tics = 70 + (random[IceTics]() & 63);
+		Name dtype = GetFloorTerrain().DamageMOD;
+		if (dtype == 'Fire')
+		{
+			tics >>= 2;
+		}
+		else if (dtype == 'Ice')
+		{
+			tics <<= 1;
+		}
+	}
 
 	States
 	{
 	Spawn:
-		ICEC A 1;
 		ICEC ABCD 10 A_IceSetTics;
 		Stop;
 	}

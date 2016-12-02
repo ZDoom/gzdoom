@@ -583,35 +583,24 @@ FPropertyInfo *FindProperty(const char * string)
 
 AFuncDesc *FindFunction(PStruct *cls, const char * string)
 {
-	for (int i = 0; i < 2; i++)
+	int min = 0, max = AFTable.Size() - 1;
+
+	while (min <= max)
 	{
-		// Since many functions have been declared with Actor as owning class, despite being members of something else, let's hack around this until they have been fixed or exported.
-		// Since most of these are expected to be scriptified anyway, there's no point fixing them all before they get exported.
-		if (i == 1)
+		int mid = (min + max) / 2;
+		int lexval = stricmp(cls->TypeName.GetChars(), AFTable[mid].ClassName + 1);
+		if (lexval == 0) lexval = stricmp(string, AFTable[mid].FuncName);
+		if (lexval == 0)
 		{
-			if (!cls->IsKindOf(RUNTIME_CLASS(PClassActor))) break;
-			cls = RUNTIME_CLASS(AActor);
+			return &AFTable[mid];
 		}
-
-		int min = 0, max = AFTable.Size() - 1;
-
-		while (min <= max)
+		else if (lexval > 0)
 		{
-			int mid = (min + max) / 2;
-			int lexval = stricmp(cls->TypeName.GetChars(), AFTable[mid].ClassName + 1);
-			if (lexval == 0) lexval = stricmp(string, AFTable[mid].FuncName);
-			if (lexval == 0)
-			{
-				return &AFTable[mid];
-			}
-			else if (lexval > 0)
-			{
-				min = mid + 1;
-			}
-			else
-			{
-				max = mid - 1;
-			}
+			min = mid + 1;
+		}
+		else
+		{
+			max = mid - 1;
 		}
 	}
 	return nullptr;

@@ -114,7 +114,7 @@ static void BridgeOrbit(AActor *self)
 	self->ceilingz = self->target->ceilingz;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
+DEFINE_ACTION_FUNCTION(ABridgeBall, A_BridgeOrbit)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	BridgeOrbit(self);
@@ -122,7 +122,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 }
 
 
-DEFINE_ACTION_FUNCTION(AActor, A_BridgeInit)
+DEFINE_ACTION_FUNCTION(ACustomBridge, A_BridgeInit)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_DEF(balltype, AActor);

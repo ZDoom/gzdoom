@@ -13,7 +13,6 @@
 #include "r_data/r_translate.h"
 
 static FRandom pr_freezedeath ("FreezeDeath");
-static FRandom pr_icesettics ("IceSetTics");
 static FRandom pr_freeze ("FreezeDeathChunks");
 
 
@@ -123,36 +122,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeath)
 
 //============================================================================
 //
-// A_IceSetTics
-//
-//============================================================================
-
-void IceSetTics(AActor *self)
-{
-
-	int floor;
-
-	self->tics = 70 + (pr_icesettics() & 63);
-	floor = P_GetThingFloorType(self);
-	if (Terrains[floor].DamageMOD == NAME_Fire)
-	{
-		self->tics >>= 2;
-	}
-	else if (Terrains[floor].DamageMOD == NAME_Ice)
-	{
-		self->tics <<= 1;
-	}
-}
-
-DEFINE_ACTION_FUNCTION(AActor, A_IceSetTics)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	IceSetTics(self);
-	return 0;
-}
-
-//============================================================================
-//
 // A_FreezeDeathChunks
 //
 //============================================================================
@@ -193,7 +162,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 			mo->Vel.X = pr_freeze.Random2() / 128.;
 			mo->Vel.Y = pr_freeze.Random2() / 128.;
 			mo->Vel.Z = (mo->Z() - self->Z()) / self->Height * 4;
-			IceSetTics(mo); // set a random tic wait
 			mo->RenderStyle = self->RenderStyle;
 			mo->Alpha = self->Alpha;
 		}

@@ -3330,11 +3330,15 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 	}
 	else
 	{
+		TypeTable.ReplaceType(type, existclass, bucket);
 		StaticPointerSubstitution(existclass, type, true);	// replace the old one, also in the actor defaults.
-		// Delete the old class from the actor classes list, if it is in there.
+		// Delete the old class from the class lists, both the full one and the actor list.
 		auto index = PClassActor::AllActorClasses.Find(static_cast<PClassActor*>(existclass));
 		if (index < PClassActor::AllActorClasses.Size()) PClassActor::AllActorClasses.Delete(index);
-		TypeTable.ReplaceType(type, existclass, bucket);
+		index = PClass::AllClasses.Find(existclass);
+		if (index < PClass::AllClasses.Size()) PClass::AllClasses.Delete(index);
+		// Now we can destroy the old class as nothing should reference it anymore
+		existclass->Destroy();
 	}
 	return type;
 }

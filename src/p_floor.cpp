@@ -495,7 +495,7 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 DEFINE_ACTION_FUNCTION(DFloor, CreateFloor)
 {
 	PARAM_PROLOGUE;
-	PARAM_POINTER(sec, sector_t);
+	PARAM_POINTER_NOT_NULL(sec, sector_t);
 	PARAM_INT(floortype);
 	PARAM_POINTER(ln, line_t);
 	PARAM_FLOAT(speed);

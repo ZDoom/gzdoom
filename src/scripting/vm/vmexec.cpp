@@ -228,3 +228,7 @@ void VMFillParams(VMValue *params, VMFrame *callee, int numparam)
 		}
 	}
 }
+
+void NullParam(const char *varname)
+{
+}

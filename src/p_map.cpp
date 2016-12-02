@@ -4513,6 +4513,7 @@ DEFINE_ACTION_FUNCTION(AActor, LineAttack)
 	PARAM_POINTER_DEF(victim, FTranslatedLineTarget);
 
 	int acdmg;
+	if (puffType == nullptr) puffType = PClass::FindActor("BulletPuff");	// P_LineAttack does not work without a puff to take info from.
 	auto puff = P_LineAttack(self, angle, distance, pitch, damage, damageType, puffType, flags, victim, &acdmg);
 	if (numret > 0) ret[0].SetPointer(puff, ATAG_OBJECT);
 	if (numret > 1) ret[1].SetInt(acdmg), numret = 2;
@@ -4716,7 +4717,7 @@ DEFINE_ACTION_FUNCTION(_FTranslatedLineTarget, TraceBleed)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FTranslatedLineTarget);
 	PARAM_INT(damage);
-	PARAM_OBJECT(missile, AActor);
+	PARAM_OBJECT_NOT_NULL(missile, AActor);
 
 	P_TraceBleed(damage, self, missile);
 	return 0;

@@ -9697,7 +9697,7 @@ int BuiltinClassCast(VMValue *param, TArray<VMValue> &defaultparam, int numparam
 	PARAM_PROLOGUE;
 	PARAM_CLASS(from, DObject);
 	PARAM_CLASS(to, DObject);
-	ACTION_RETURN_OBJECT(from->IsDescendantOf(to) ? from : nullptr);
+	ACTION_RETURN_OBJECT(from && to && from->IsDescendantOf(to) ? from : nullptr);
 }
 
 ExpEmit FxClassPtrCast::Emit(VMFunctionBuilder *build)

@@ -247,7 +247,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckClass)
 		PARAM_BOOL_DEF	(match_superclass);
 
 		self = COPY_AAPTR(self, pick_pointer);
-		if (self == NULL)
+		if (self == nullptr || checktype == nullptr)
 		{
 			ret->SetInt(false);
 		}

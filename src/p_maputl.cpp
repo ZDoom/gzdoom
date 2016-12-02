@@ -1193,7 +1193,7 @@ IMPLEMENT_CLASS(DBlockThingsIterator, false, false);
 DEFINE_ACTION_FUNCTION(DBlockThingsIterator, Create)
 {
 	PARAM_PROLOGUE;
-	PARAM_OBJECT(origin, AActor);
+	PARAM_OBJECT_NOT_NULL(origin, AActor);
 	PARAM_FLOAT_DEF(radius);
 	PARAM_BOOL_DEF(ignore);
 	ACTION_RETURN_OBJECT(new DBlockThingsIterator(origin, radius, ignore));

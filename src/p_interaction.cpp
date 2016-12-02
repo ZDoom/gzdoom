@@ -1639,7 +1639,7 @@ void P_PoisonMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 DEFINE_ACTION_FUNCTION(AActor, PoisonMobj)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT(inflictor, AActor);
+	PARAM_OBJECT_NOT_NULL(inflictor, AActor);
 	PARAM_OBJECT(source, AActor);
 	PARAM_INT(damage);
 	PARAM_INT(duration);

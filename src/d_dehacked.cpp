@@ -3020,6 +3020,7 @@ void FinishDehPatch ()
 		while (subclass == nullptr);
 		
 		AActor *defaults2 = GetDefaultByType (subclass);
+		memcpy ((void *)defaults2, (void *)defaults1, sizeof(AActor));
 
 		// Make a copy of the replaced class's state labels 
 		FStateDefinitions statedef;

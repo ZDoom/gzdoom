@@ -7913,5 +7913,6 @@ void PrintMiscActorInfo(AActor *query)
 			query->floorz, query->ceilingz);
 		Printf("\nSpeed= %f, velocity= x:%f, y:%f, z:%f, combined:%f.\n",
 			query->Speed, query->Vel.X, query->Vel.Y, query->Vel.Z, query->Vel.Length());
+		Printf("Scale: x:%f, y:%f\n", query->Scale.X, query->Scale.Y);
 	}
 }

@@ -63,10 +63,10 @@ bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 	return true;
 }
 
-void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
+void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, float t1, float t2)
 {
-	DVector2 points[2];
-	if (!GetLine(thing, points[0], points[1]))
+	DVector2 line[2];
+	if (!GetLine(thing, line[0], line[1]))
 		return;
 	
 	DVector3 pos = thing->InterpolatedPosition(r_TicFracF);
@@ -108,10 +108,16 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 
 	std::pair<float, float> offsets[4] =
 	{
-		{ 0.0f,  1.0f },
-		{ 1.0f,  1.0f },
-		{ 1.0f,  0.0f },
-		{ 0.0f,  0.0f },
+		{ t1,  1.0f },
+		{ t2,  1.0f },
+		{ t2,  0.0f },
+		{ t1,  0.0f },
+	};
+
+	DVector2 points[2] =
+	{
+		line[0] * (1.0 - t1) + line[1] * t1,
+		line[0] * (1.0 - t2) + line[1] * t2
 	};
 
 	for (int i = 0; i < 4; i++)

@@ -150,18 +150,9 @@ void RenderPolyPortal::RenderSprite(AActor *thing, double sortDistance, DVector2
 			DVector2 mid = left * (1.0 - t) + right * t;
 			double tmid = t1 * (1.0 - t) + t2 * t;
 			
-			if (sideLeft == 0)
-			{
-				RenderSprite(thing, sortDistance, mid, right, tmid, t2, bsp->children[sideRight]);
-				right = mid;
-				t2 = tmid;
-			}
-			else
-			{
-				RenderSprite(thing, sortDistance, left, mid, t1, tmid, bsp->children[sideRight]);
-				left = mid;
-				t1 = tmid;
-			}
+			RenderSprite(thing, sortDistance, mid, right, tmid, t2, bsp->children[sideRight]);
+			right = mid;
+			t2 = tmid;
 		}
 		node = bsp->children[sideLeft];
 	}
@@ -346,7 +337,7 @@ void RenderPolyPortal::RenderTranslucent(int portalDepth)
 		else
 		{
 			RenderPolySprite spr;
-			spr.Render(WorldToClip, PortalPlane, obj.thing, obj.sub, obj.subsectorDepth, StencilValue + 1);
+			spr.Render(WorldToClip, PortalPlane, obj.thing, obj.sub, obj.subsectorDepth, StencilValue + 1, obj.SpriteLeft, obj.SpriteRight);
 		}
 	}
 }

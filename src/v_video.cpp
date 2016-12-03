@@ -44,6 +44,7 @@
 #include "i_video.h"
 #include "v_video.h"
 #include "v_text.h"
+#include "sc_man.h"
 
 #include "w_wad.h"
 
@@ -437,7 +438,7 @@ void DCanvas::ReleaseScreenshotBuffer()
 //
 //==========================================================================
 
-int V_GetColorFromString (const DWORD *palette, const char *cstr)
+int V_GetColorFromString (const DWORD *palette, const char *cstr, FScriptPosition *sc)
 {
 	int c[3], i, p;
 	char val[3];
@@ -456,7 +457,7 @@ int V_GetColorFromString (const DWORD *palette, const char *cstr)
 			{
 				val[0] = cstr[1 + i*2];
 				val[1] = cstr[2 + i*2];
-				c[i] = ParseHex (val);
+				c[i] = ParseHex (val, sc);
 			}
 		}
 		else if (len == 4)
@@ -465,7 +466,7 @@ int V_GetColorFromString (const DWORD *palette, const char *cstr)
 			for (i = 0; i < 3; ++i)
 			{
 				val[1] = val[0] = cstr[1 + i];
-				c[i] = ParseHex (val);
+				c[i] = ParseHex (val, sc);
 			}
 		}
 		else
@@ -518,7 +519,7 @@ normal:
 					{
 						val[1] = val[0];
 					}
-					c[i] = ParseHex (val);
+					c[i] = ParseHex (val, sc);
 				}
 			}
 		}
@@ -538,7 +539,7 @@ normal:
 //
 //==========================================================================
 
-FString V_GetColorStringByName (const char *name)
+FString V_GetColorStringByName (const char *name, FScriptPosition *sc)
 {
 	FMemLump rgbNames;
 	char *rgbEnd;
@@ -552,7 +553,8 @@ FString V_GetColorStringByName (const char *name)
 	rgblump = Wads.CheckNumForName ("X11R6RGB");
 	if (rgblump == -1)
 	{
-		Printf ("X11R6RGB lump not found\n");
+		if (!sc) Printf ("X11R6RGB lump not found\n");
+		else sc->Message(MSG_WARNING, "X11R6RGB lump not found");
 		return FString();
 	}
 
@@ -614,7 +616,8 @@ FString V_GetColorStringByName (const char *name)
 	}
 	if (rgb < rgbEnd)
 	{
-		Printf ("X11R6RGB lump is corrupt\n");
+		if (!sc) Printf ("X11R6RGB lump is corrupt\n");
+		else sc->Message(MSG_WARNING, "X11R6RGB lump is corrupt");
 	}
 	return FString();
 }
@@ -627,20 +630,26 @@ FString V_GetColorStringByName (const char *name)
 //
 //==========================================================================
 
-int V_GetColor (const DWORD *palette, const char *str)
+int V_GetColor (const DWORD *palette, const char *str, FScriptPosition *sc)
 {
-	FString string = V_GetColorStringByName (str);
+	FString string = V_GetColorStringByName (str, sc);
 	int res;
 
 	if (!string.IsEmpty())
 	{
-		res = V_GetColorFromString (palette, string);
+		res = V_GetColorFromString (palette, string, sc);
 	}
 	else
 	{
-		res = V_GetColorFromString (palette, str);
+		res = V_GetColorFromString (palette, str, sc);
 	}
 	return res;
+}
+
+int V_GetColor(const DWORD *palette, FScanner &sc)
+{
+	FScriptPosition scc = sc;
+	return V_GetColor(palette, sc.String, &scc);
 }
 
 //==========================================================================

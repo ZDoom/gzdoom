@@ -15,6 +15,7 @@
 #include "cmdlib.h"
 #include "i_system.h"
 #include "v_text.h"
+#include "sc_man.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -324,7 +325,7 @@ FString ExtractFileBase (const char *path, bool include_extension)
 //
 //==========================================================================
 
-int ParseHex (const char *hex)
+int ParseHex (const char *hex, FScriptPosition *sc)
 {
 	const char *str;
 	int num;
@@ -342,28 +343,14 @@ int ParseHex (const char *hex)
 		else if (*str >= 'A' && *str <= 'F')
 			num += 10 + *str-'A';
 		else {
-			Printf ("Bad hex number: %s\n",hex);
+			if (!sc) Printf ("Bad hex number: %s\n",hex);
+			else sc->Message(MSG_WARNING, "Bad hex number: %s", hex);
 			return 0;
 		}
 		str++;
 	}
 
 	return num;
-}
-
-//==========================================================================
-//
-// ParseNum
-//
-//==========================================================================
-
-int ParseNum (const char *str)
-{
-	if (str[0] == '$')
-		return ParseHex (str+1);
-	if (str[0] == '0' && str[1] == 'x')
-		return ParseHex (str+2);
-	return atol (str);
 }
 
 //==========================================================================

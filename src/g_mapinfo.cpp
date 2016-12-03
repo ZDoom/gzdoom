@@ -860,14 +860,14 @@ DEFINE_MAP_OPTION(fade, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetString();
-	info->fadeto = V_GetColor(NULL, parse.sc.String);
+	info->fadeto = V_GetColor(NULL, parse.sc);
 }
 
 DEFINE_MAP_OPTION(outsidefog, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetString();
-	info->outsidefog = V_GetColor(NULL, parse.sc.String);
+	info->outsidefog = V_GetColor(NULL, parse.sc);
 }
 
 DEFINE_MAP_OPTION(titlepatch, true)

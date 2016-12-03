@@ -400,10 +400,10 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			int y = sc.Number;
 			sc.MustGetStringName(",");
 			sc.MustGetString();
-			PalEntry c1 = V_GetColor(NULL, sc.String);
+			PalEntry c1 = V_GetColor(NULL, sc);
 			sc.MustGetStringName(",");
 			sc.MustGetString();
-			PalEntry c2 = V_GetColor(NULL, sc.String);
+			PalEntry c2 = V_GetColor(NULL, sc);
 			if (sc.CheckString(","))
 			{
 				sc.MustGetNumber();

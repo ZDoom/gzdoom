@@ -193,10 +193,10 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize)
 				{
 					sc.MustGetStringName("=");
 					sc.MustGetString();
-					iwad->FgColor = V_GetColor(NULL, sc.String);
+					iwad->FgColor = V_GetColor(NULL, sc);
 					sc.MustGetStringName(",");
 					sc.MustGetString();
-					iwad->BkColor = V_GetColor(NULL, sc.String);
+					iwad->BkColor = V_GetColor(NULL, sc);
 				}
 				else if (sc.Compare("Load"))
 				{

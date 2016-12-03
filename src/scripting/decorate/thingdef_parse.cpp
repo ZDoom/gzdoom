@@ -165,7 +165,7 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool c
 		}
 		else
 		{
-			int c = V_GetColor (NULL, sc.String);
+			int c = V_GetColor (NULL, sc);
 			// 0 needs to be the default so we have to mark the color.
 			v = MAKEARGB(1, RPART(c), GPART(c), BPART(c));
 		}

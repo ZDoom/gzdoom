@@ -1256,7 +1256,7 @@ FxExpression *FxColorCast::Resolve(FCompileContext &ctx)
 			}
 			else
 			{
-				FxExpression *x = new FxConstant(V_GetColor(nullptr, constval.GetString()), ScriptPosition);
+				FxExpression *x = new FxConstant(V_GetColor(nullptr, constval.GetString(), &ScriptPosition), ScriptPosition);
 				delete this;
 				return x;
 			}

@@ -211,6 +211,7 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 	int i;
 
 	if (lumpnum == -1) fr = &lump;
+	else fr = nullptr;
 
 	UseType = TEX_MiscPatch;
 	LeftOffset = 0;

@@ -50,6 +50,7 @@
 #include "gdtoa.h"
 #include "codegeneration/codegen.h"
 #include "vmbuilder.h"
+#include "version.h"
 
 //==========================================================================
 //

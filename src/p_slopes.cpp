@@ -178,8 +178,8 @@ void P_SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi, const D
 	if (ib_compatflags & BCOMPATF_SETSLOPEOVERFLOW)
 	{
 		// We have to consider an integer multiplication overflow here.
-		norm[0] = FixedToFloat(FloatToFixed(zang.Cos()) * FloatToFixed(xyang.Cos()));
-		norm[1] = FixedToFloat(FloatToFixed(zang.Cos()) * FloatToFixed(xyang.Sin()));
+		norm[0] = FixedToFloat(FloatToFixed(zang.Cos()) * FloatToFixed(xyang.Cos())) / 65536.;
+		norm[1] = FixedToFloat(FloatToFixed(zang.Cos()) * FloatToFixed(xyang.Sin())) / 65536.;
 	}
 	else
 	{

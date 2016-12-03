@@ -25,12 +25,19 @@
 #include "r_poly_triangle.h"
 #include "r_poly_intersection.h"
 
+enum class LineSegmentRange
+{
+	NotVisible,
+	HasSegment,
+	AlwaysVisible
+};
+
 class PolyCull
 {
 public:
 	void CullScene(const TriMatrix &worldToClip, const Vec4f &portalClipPlane);
 
-	bool GetSegmentRangeForLine(double x1, double y1, double x2, double y2, int &sx1, int &sx2) const;
+	LineSegmentRange GetSegmentRangeForLine(double x1, double y1, double x2, double y2, int &sx1, int &sx2) const;
 	void MarkSegmentCulled(int x1, int x2);
 	bool IsSegmentCulled(int x1, int x2) const;
 

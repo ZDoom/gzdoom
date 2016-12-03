@@ -93,7 +93,7 @@ void PolyCull::CullSubsector(subsector_t *sub)
 				continue;
 
 			int sx1, sx2;
-			if (GetSegmentRangeForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), sx1, sx2))
+			if (GetSegmentRangeForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), sx1, sx2) == LineSegmentRange::HasSegment)
 			{
 				MarkSegmentCulled(sx1, sx2);
 			}
@@ -200,7 +200,8 @@ bool PolyCull::CheckBBox(float *bspcoord)
 		float x2 = bspcoord[lines[i][2]];
 		float y2 = bspcoord[lines[i][3]];
 		int sx1, sx2;
-		if (GetSegmentRangeForLine(x1, y1, x2, y2, sx1, sx2))
+		LineSegmentRange result = GetSegmentRangeForLine(x1, y1, x2, y2, sx1, sx2);
+		if (result == LineSegmentRange::HasSegment)
 		{
 			if (foundline)
 			{
@@ -214,6 +215,10 @@ bool PolyCull::CheckBBox(float *bspcoord)
 				foundline = true;
 			}
 		}
+		else if (result == LineSegmentRange::AlwaysVisible)
+		{
+			return true;
+		}
 	}
 	if (!foundline)
 		return false;
@@ -221,13 +226,14 @@ bool PolyCull::CheckBBox(float *bspcoord)
 	return !IsSegmentCulled(minsx1, maxsx2);
 }
 
-bool PolyCull::GetSegmentRangeForLine(double x1, double y1, double x2, double y2, int &sx1, int &sx2) const
+LineSegmentRange PolyCull::GetSegmentRangeForLine(double x1, double y1, double x2, double y2, int &sx1, int &sx2) const
 {
 	double znear = 5.0;
+	double updownnear = -400.0;
 
 	// Cull if entirely behind the portal clip plane (tbd: should we clip the segment?)
 	if (Vec4f::dot(PortalClipPlane, Vec4f((float)x1, (float)y1, 0.0f, 1.0f)) < 0.0f && Vec4f::dot(PortalClipPlane, Vec4f((float)x2, (float)y2, 0.0f, 1.0f)) < 0.0f)
-		return false;
+		return LineSegmentRange::NotVisible;
 
 	// Transform to 2D view space:
 	x1 = x1 - ViewPos.X;
@@ -239,8 +245,13 @@ bool PolyCull::GetSegmentRangeForLine(double x1, double y1, double x2, double y2
 	double ry1 = x1 * ViewCos + y1 * ViewSin;
 	double ry2 = x2 * ViewCos + y2 * ViewSin;
 
+	// Is it potentially visible when looking straight up or down?
+	if (!(ry1 < updownnear && ry2 < updownnear) && !(ry1 > znear && ry2 > znear))
+		return LineSegmentRange::AlwaysVisible;
+
 	// Cull if line is entirely behind view
-	if (ry1 < znear && ry2 < znear) return false;
+	if (ry1 < znear && ry2 < znear)
+		return LineSegmentRange::NotVisible;
 
 	// Clip line, if needed
 	double t1 = 0.0f, t2 = 1.0f;
@@ -265,5 +276,5 @@ bool PolyCull::GetSegmentRangeForLine(double x1, double y1, double x2, double y2
 
 	if (sx1 > sx2)
 		std::swap(sx1, sx2);
-	return sx1 != sx2;
+	return (sx1 != sx2) ? LineSegmentRange::HasSegment : LineSegmentRange::AlwaysVisible;
 }

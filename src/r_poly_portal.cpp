@@ -174,12 +174,12 @@ void RenderPolyPortal::RenderLine(subsector_t *sub, seg_t *line, sector_t *front
 
 	// Cull wall if not visible
 	int sx1, sx2;
-	bool hasSegmentRange = Cull.GetSegmentRangeForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), sx1, sx2);
-	if (!hasSegmentRange || Cull.IsSegmentCulled(sx1, sx2))
+	LineSegmentRange segmentRange = Cull.GetSegmentRangeForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), sx1, sx2);
+	if (segmentRange == LineSegmentRange::NotVisible || (segmentRange == LineSegmentRange::HasSegment && Cull.IsSegmentCulled(sx1, sx2)))
 		return;
 
 	// Tell automap we saw this
-	if (!swrenderer::r_dontmaplines && line->linedef)
+	if (!swrenderer::r_dontmaplines && line->linedef && segmentRange != LineSegmentRange::AlwaysVisible)
 	{
 		line->linedef->flags |= ML_MAPPED;
 		sub->flags |= SSECF_DRAWN;
@@ -201,7 +201,7 @@ void RenderPolyPortal::RenderLine(subsector_t *sub, seg_t *line, sector_t *front
 	// Render wall, and update culling info if its an occlusion blocker
 	if (RenderPolyWall::RenderLine(WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, TranslucentObjects, LinePortals))
 	{
-		if (hasSegmentRange)
+		if (segmentRange == LineSegmentRange::HasSegment)
 			Cull.MarkSegmentCulled(sx1, sx2);
 	}
 }

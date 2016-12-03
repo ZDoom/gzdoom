@@ -88,7 +88,7 @@ void VMFunctionBuilder::BeginStatement(FxExpression *stmt)
 	// only add a new entry if the line number differs.
 	if (LineNumbers.Size() == 0 || stmt->ScriptPosition.ScriptLine != LineNumbers.Last().LineNumber)
 	{
-		StatementInfo si = { (uint16_t)Code.Size(), (uint16_t)stmt->ScriptPosition.ScriptLine };
+		FStatementInfo si = { (uint16_t)Code.Size(), (uint16_t)stmt->ScriptPosition.ScriptLine };
 		LineNumbers.Push(si);
 	}
 	StatementStack.Push(stmt);
@@ -102,17 +102,18 @@ void VMFunctionBuilder::EndStatement()
 	// Re-enter the previous statement.
 	if (StatementStack.Size() > 0)
 	{
-		StatementInfo si = { (uint16_t)Code.Size(), (uint16_t)StatementStack.Last()->ScriptPosition.ScriptLine };
+		FStatementInfo si = { (uint16_t)Code.Size(), (uint16_t)StatementStack.Last()->ScriptPosition.ScriptLine };
 		LineNumbers.Push(si);
 	}
 }
 
 void VMFunctionBuilder::MakeFunction(VMScriptFunction *func)
 {
-	func->Alloc(Code.Size(), IntConstantList.Size(), FloatConstantList.Size(), StringConstantList.Size(), AddressConstantList.Size());
+	func->Alloc(Code.Size(), IntConstantList.Size(), FloatConstantList.Size(), StringConstantList.Size(), AddressConstantList.Size(), LineNumbers.Size());
 
 	// Copy code block.
 	memcpy(func->Code, &Code[0], Code.Size() * sizeof(VMOP));
+	memcpy(func->LineInfo, &LineNumbers[0], LineNumbers.Size() * sizeof(LineNumbers[0]));
 
 	// Create constant tables.
 	if (IntConstantList.Size() > 0)

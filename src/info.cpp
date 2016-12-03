@@ -89,16 +89,35 @@ bool FState::CallAction(AActor *self, AActor *stateowner, FStateParamInfo *info,
 				stateret = NULL;
 			}
 		}
-		if (stateret == NULL)
+		try
 		{
-			GlobalVMStack.Call(ActionFunc, params, ActionFunc->ImplicitArgs, NULL, 0, NULL);
+			if (stateret == NULL)
+			{
+				GlobalVMStack.Call(ActionFunc, params, ActionFunc->ImplicitArgs, NULL, 0, NULL);
+			}
+			else
+			{
+				VMReturn ret;
+				ret.PointerAt((void **)stateret);
+				GlobalVMStack.Call(ActionFunc, params, ActionFunc->ImplicitArgs, &ret, 1, NULL);
+			}
 		}
-		else
+		catch (CVMAbortException &err)
 		{
-			VMReturn ret;
-			ret.PointerAt((void **)stateret);
-			GlobalVMStack.Call(ActionFunc, params, ActionFunc->ImplicitArgs, &ret, 1, NULL);
+			err.MaybePrintMessage();
+			auto owner = FState::StaticFindStateOwner(this);
+			int offs = int(this - owner->OwnedStates);
+			const char *callinfo = "";
+			if (info != nullptr && info->mStateType == STATE_Psprite)
+			{
+				if (stateowner->IsKindOf(RUNTIME_CLASS(AWeapon)) && stateowner != self) callinfo = "weapon ";
+				else callinfo = "overlay ";
+			}
+			err.stacktrace.AppendFormat("Called from %sstate %s.%d in %s\n", callinfo, owner->TypeName.GetChars(), offs, stateowner->GetClass()->TypeName.GetChars());
+			throw;
+			throw;
 		}
+
 		ActionCycles.Unclock();
 		return true;
 	}

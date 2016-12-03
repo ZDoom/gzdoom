@@ -194,7 +194,8 @@ class CVMAbortException : public CDoomError
 {
 public:
 	static FString stacktrace;
-	CVMAbortException(EVMAbortException reason, const char *moreinfo, ...);
+	CVMAbortException(EVMAbortException reason, const char *moreinfo, va_list ap);
+	void MaybePrintMessage();
 };
 
 enum EVMOpMode
@@ -808,6 +809,12 @@ union FVoidObj
 	void *v;
 };
 
+struct FStatementInfo
+{
+	uint16_t InstructionIndex;
+	uint16_t LineNumber;
+};
+
 class VMScriptFunction : public VMFunction
 {
 	DECLARE_CLASS(VMScriptFunction, VMFunction);
@@ -815,12 +822,13 @@ public:
 	VMScriptFunction(FName name=NAME_None);
 	~VMScriptFunction();
 	size_t PropagateMark();
-	void Alloc(int numops, int numkonstd, int numkonstf, int numkonsts, int numkonsta);
+	void Alloc(int numops, int numkonstd, int numkonstf, int numkonsts, int numkonsta, int numlinenumbers);
 
 	VM_ATAG *KonstATags() { return (VM_UBYTE *)(KonstA + NumKonstA); }
 	const VM_ATAG *KonstATags() const { return (VM_UBYTE *)(KonstA + NumKonstA); }
 
 	VMOP *Code;
+	FStatementInfo *LineInfo;
 	FString SourceFileName;
 	int *KonstD;
 	double *KonstF;
@@ -828,6 +836,7 @@ public:
 	FVoidObj *KonstA;
 	int ExtraSpace;
 	int CodeSize;			// Size of code in instructions (not bytes)
+	unsigned LineInfoCount;
 	VM_UBYTE NumRegD;
 	VM_UBYTE NumRegF;
 	VM_UBYTE NumRegS;
@@ -843,6 +852,7 @@ public:
 	void InitExtra(void *addr);
 	void DestroyExtra(void *addr);
 	int AllocExtraStack(PType *type);
+	int PCToLine(const VMOP *pc);
 };
 
 class VMFrameStack

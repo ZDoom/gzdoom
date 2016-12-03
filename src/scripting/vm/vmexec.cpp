@@ -40,6 +40,11 @@
 #include "textures/textures.h"
 #include "math/cmath.h"
 
+// This must be a separate function because the VC compiler would otherwise allocate memory on the stack for every separate instance of the exception object that may get thrown.
+void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...);
+// intentionally implemented in a different source file tp prevent inlining.
+void ThrowVMException(VMException *x);
+
 #define IMPLEMENT_VMEXEC
 
 #if !defined(COMPGOTO) && defined(__GNUC__)
@@ -91,7 +96,7 @@
 	}
 
 #define GETADDR(a,o,x) \
-	if (a == NULL) { throw CVMAbortException(x, nullptr); } \
+	if (a == NULL) { ThrowAbortException(x, nullptr); } \
 	ptr = (VM_SBYTE *)a + o
 
 static const VM_UWORD ZapTable[16] =
@@ -227,57 +232,4 @@ void VMFillParams(VMValue *params, VMFrame *callee, int numparam)
 	}
 }
 
-void NullParam(const char *varname)
-{
-	throw CVMAbortException(X_READ_NIL, "In function parameter %s", varname);
-}
-
-FString CVMAbortException::stacktrace;
-
-CVMAbortException::CVMAbortException(EVMAbortException reason, const char *moreinfo, ...)
-{
-	SetMessage("VM execution aborted: ");
-	switch (reason)
-	{
-	case X_READ_NIL:
-		AppendMessage("tried to read from address zero.");
-		break;
-
-	case X_WRITE_NIL:
-		AppendMessage("tried to write to address zero.");
-		break;
-
-	case X_TOO_MANY_TRIES:
-		AppendMessage("too many try-catch blocks.");
-		break;
-
-	case X_ARRAY_OUT_OF_BOUNDS:
-		AppendMessage("array access out of bounds.");
-		break;
-
-	case X_DIVISION_BY_ZERO:
-		AppendMessage("division by zero.");
-		break;
-
-	case X_BAD_SELF:
-		AppendMessage("invalid self pointer.");
-		break;
-
-	default:
-	{
-		size_t len = strlen(m_Message);
-		mysnprintf(m_Message + len, MAX_ERRORTEXT - len, "Unknown reason %d", reason);
-		break;
-	}
-	}
-	if (moreinfo != nullptr)
-	{
-		AppendMessage(" ");
-		va_list ap;
-		va_start(ap, moreinfo);
-		size_t len = strlen(m_Message);
-		myvsnprintf(m_Message + len, MAX_ERRORTEXT - len, moreinfo, ap);
-		va_end(ap);
-	}
-}
 

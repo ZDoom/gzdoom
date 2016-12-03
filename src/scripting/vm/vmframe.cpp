@@ -3,6 +3,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright -2016 Randy Heit
+** Copyright 2016 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -33,6 +34,7 @@
 
 #include <new>
 #include "dobject.h"
+#include "v_text.h"
 
 IMPLEMENT_CLASS(VMException, false, false)
 IMPLEMENT_CLASS(VMFunction, true, true)
@@ -48,11 +50,13 @@ VMScriptFunction::VMScriptFunction(FName name)
 {
 	Native = false;
 	Name = name;
+	LineInfo = nullptr;
 	Code = NULL;
 	KonstD = NULL;
 	KonstF = NULL;
 	KonstS = NULL;
 	KonstA = NULL;
+	LineInfoCount = 0;
 	ExtraSpace = 0;
 	CodeSize = 0;
 	NumRegD = 0;
@@ -82,7 +86,7 @@ VMScriptFunction::~VMScriptFunction()
 	}
 }
 
-void VMScriptFunction::Alloc(int numops, int numkonstd, int numkonstf, int numkonsts, int numkonsta)
+void VMScriptFunction::Alloc(int numops, int numkonstd, int numkonstf, int numkonsts, int numkonsta, int numlinenumbers)
 {
 	assert(Code == NULL);
 	assert(numops > 0);
@@ -90,14 +94,27 @@ void VMScriptFunction::Alloc(int numops, int numkonstd, int numkonstf, int numko
 	assert(numkonstf >= 0 && numkonstf <= 65535);
 	assert(numkonsts >= 0 && numkonsts <= 65535);
 	assert(numkonsta >= 0 && numkonsta <= 65535);
+	assert(numlinenumbers >= 0 && numlinenumbers <= 65535);
 	void *mem = M_Malloc(numops * sizeof(VMOP) +
 						 numkonstd * sizeof(int) +
 						 numkonstf * sizeof(double) +
 						 numkonsts * sizeof(FString) +
-						 numkonsta * (sizeof(FVoidObj) + 1));
+						 numkonsta * (sizeof(FVoidObj) + 1) +
+						 numlinenumbers * sizeof(FStatementInfo));
 	Code = (VMOP *)mem;
 	mem = (void *)((VMOP *)mem + numops);
 
+	if (numlinenumbers > 0)
+	{
+		LineInfo = (FStatementInfo*)mem;
+		LineInfoCount = numlinenumbers;
+		mem = LineInfo + numlinenumbers;
+	}
+	else
+	{
+		LineInfo = nullptr;
+		LineInfoCount = 0;
+	}
 	if (numkonstd > 0)
 	{
 		KonstD = (int *)mem;
@@ -188,6 +205,20 @@ int VMScriptFunction::AllocExtraStack(PType *type)
 	ExtraSpace = address + type->Size;
 	type->SetDefaultValue(nullptr, address, &SpecialInits);
 	return address;
+}
+
+int VMScriptFunction::PCToLine(const VMOP *pc)
+{
+	int PCIndex = int(pc - Code);
+	if (LineInfoCount == 1) return LineInfo[0].LineNumber;
+	for (unsigned i = 1; i < LineInfoCount; i++)
+	{
+		if (LineInfo[i].InstructionIndex > PCIndex)
+		{
+			return LineInfo[i - 1].LineNumber;
+		}
+	}
+	return -1;
 }
 
 //===========================================================================
@@ -453,20 +484,6 @@ int VMFrameStack::Call(VMFunction *func, VMValue *params, int numparams, VMRetur
 		}
 		throw;
 	}
-	catch (CVMAbortException &exception)
-	{
-		if (allocated)
-		{
-			PopFrame();
-		}
-		if (trap != nullptr)
-		{
-			*trap = nullptr;
-		}
-
-		Printf("%s\n", exception.GetMessage());
-		return -1;
-	}
 	catch (...)
 	{
 		if (allocated)
@@ -475,4 +492,84 @@ int VMFrameStack::Call(VMFunction *func, VMValue *params, int numparams, VMRetur
 		}
 		throw;
 	}
+}
+
+// Exception stuff for the VM is intentionally placed there, because having this in vmexec.cpp would subject it to inlining
+// which we do not want because it increases the local stack requirements of Exec which are already too high.
+FString CVMAbortException::stacktrace;
+
+CVMAbortException::CVMAbortException(EVMAbortException reason, const char *moreinfo, va_list ap)
+{
+	SetMessage("VM execution aborted: ");
+	switch (reason)
+	{
+	case X_READ_NIL:
+		AppendMessage("tried to read from address zero.");
+		break;
+
+	case X_WRITE_NIL:
+		AppendMessage("tried to write to address zero.");
+		break;
+
+	case X_TOO_MANY_TRIES:
+		AppendMessage("too many try-catch blocks.");
+		break;
+
+	case X_ARRAY_OUT_OF_BOUNDS:
+		AppendMessage("array access out of bounds.");
+		break;
+
+	case X_DIVISION_BY_ZERO:
+		AppendMessage("division by zero.");
+		break;
+
+	case X_BAD_SELF:
+		AppendMessage("invalid self pointer.");
+		break;
+
+	default:
+	{
+		size_t len = strlen(m_Message);
+		mysnprintf(m_Message + len, MAX_ERRORTEXT - len, "Unknown reason %d", reason);
+		break;
+	}
+	}
+	if (moreinfo != nullptr)
+	{
+		AppendMessage(" ");
+		size_t len = strlen(m_Message);
+		myvsnprintf(m_Message + len, MAX_ERRORTEXT - len, moreinfo, ap);
+	}
+	stacktrace = "";
+}
+
+// Print this only once on the first catch block.
+void CVMAbortException::MaybePrintMessage()
+{
+	auto m = GetMessage();
+	if (m != nullptr)
+	{
+		Printf(TEXTCOLOR_RED);
+		Printf("%s\n", m);
+		SetMessage("");
+	}
+}
+
+
+void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...)
+{
+	va_list ap;
+	va_start(ap, moreinfo);
+	throw CVMAbortException(reason, moreinfo, ap);
+	va_end(ap);
+}
+
+void NullParam(const char *varname)
+{
+	ThrowAbortException(X_READ_NIL, "In function parameter %s", varname);
+}
+
+void ThrowVMException(VMException *x)
+{
+	throw x;
 }

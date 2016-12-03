@@ -183,7 +183,19 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 					numret = 2;
 				}
 			}
-			GlobalVMStack.Call(state->ActionFunc, params, state->ActionFunc->ImplicitArgs, wantret, numret);
+			try
+			{
+				GlobalVMStack.Call(state->ActionFunc, params, state->ActionFunc->ImplicitArgs, wantret, numret);
+			}
+			catch (CVMAbortException &err)
+			{
+				err.MaybePrintMessage();
+				auto owner = FState::StaticFindStateOwner(state);
+				int offs = int(state - owner->OwnedStates);
+				err.stacktrace.AppendFormat("Called from state %s.%d in inventory state chain in %s\n", owner->TypeName.GetChars(), offs, GetClass()->TypeName.GetChars());
+				throw;
+			}
+
 			// As long as even one state succeeds, the whole chain succeeds unless aborted below.
 			// A state that wants to jump does not count as "succeeded".
 			if (nextstate == NULL)

@@ -2,7 +2,6 @@
 #error vmexec.h must not be #included outside vmexec.cpp. Use vm.h instead.
 #endif
 
-
 static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 {
 #if COMPGOTO
@@ -596,7 +595,17 @@ begin:
 			FillReturns(reg, f, returns, pc+1, C);
 			if (call->Native)
 			{
-				numret = static_cast<VMNativeFunction *>(call)->NativeCall(reg.param + f->NumParam - B, call->DefaultArgs, B, returns, C);
+				try
+				{
+					numret = static_cast<VMNativeFunction *>(call)->NativeCall(reg.param + f->NumParam - B, call->DefaultArgs, B, returns, C);
+				}
+				catch (CVMAbortException &err)
+				{
+					err.MaybePrintMessage();
+					err.stacktrace.AppendFormat("Called from %s\n", call->PrintableName.GetChars());
+					// PrintParameters(reg.param + f->NumParam - B, B);
+					throw;
+				}
 			}
 			else
 			{
@@ -640,7 +649,17 @@ begin:
 
 			if (call->Native)
 			{
-				return static_cast<VMNativeFunction *>(call)->NativeCall(reg.param + f->NumParam - B, call->DefaultArgs, B, ret, numret);
+				try
+				{
+					return static_cast<VMNativeFunction *>(call)->NativeCall(reg.param + f->NumParam - B, call->DefaultArgs, B, ret, numret);
+				}
+				catch (CVMAbortException &err)
+				{
+					err.MaybePrintMessage();
+					err.stacktrace.AppendFormat("Called from %s\n", call->PrintableName.GetChars());
+					// PrintParameters(reg.param + f->NumParam - B, B);
+					throw;
+				}
 			}
 			else
 			{ // FIXME: Not a true tail call
@@ -704,7 +723,7 @@ begin:
 		assert(try_depth < MAX_TRY_DEPTH);
 		if (try_depth >= MAX_TRY_DEPTH)
 		{
-			throw CVMAbortException(X_TOO_MANY_TRIES, nullptr);
+			ThrowAbortException(X_TOO_MANY_TRIES, nullptr);
 		}
 		assert((pc + JMPOFS(pc) + 1)->op == OP_CATCH);
 		exception_frames[try_depth++] = pc + JMPOFS(pc) + 1;
@@ -717,17 +736,17 @@ begin:
 		if (a == 0)
 		{
 			ASSERTA(B);
-			throw((VMException *)reg.a[B]);
+			ThrowVMException((VMException *)reg.a[B]);
 		}
 		else if (a == 1)
 		{
 			ASSERTKA(B);
 			assert(konstatag[B] == ATAG_OBJECT);
-			throw((VMException *)konsta[B].o);
+			ThrowVMException((VMException *)konsta[B].o);
 		}
 		else
 		{
-			throw CVMAbortException(EVMAbortException(BC), nullptr);
+			ThrowAbortException(EVMAbortException(BC), nullptr);
 		}
 		NEXTOP;
 	OP(CATCH):
@@ -739,7 +758,7 @@ begin:
 	OP(BOUND):
 		if (reg.d[a] >= BC)
 		{
-			throw CVMAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", BC, reg.d[a]);
+			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", BC, reg.d[a]);
 		}
 		NEXTOP;
 
@@ -747,7 +766,7 @@ begin:
 		ASSERTKD(BC);
 		if (reg.d[a] >= konstd[BC])
 		{
-			throw CVMAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", konstd[BC], reg.d[a]);
+			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", konstd[BC], reg.d[a]);
 		}
 		NEXTOP;
 
@@ -755,7 +774,7 @@ begin:
 		ASSERTD(B);
 		if (reg.d[a] >= reg.d[B])
 		{
-			throw CVMAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", reg.d[B], reg.d[a]);
+			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", reg.d[B], reg.d[a]);
 		}
 		NEXTOP;
 
@@ -902,7 +921,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = reg.d[B] / reg.d[C];
 		NEXTOP;
@@ -910,7 +929,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
 		if (konstd[C] == 0)
 		{
-			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = reg.d[B] / konstd[C];
 		NEXTOP;
@@ -918,7 +937,7 @@ begin:
 		ASSERTD(a); ASSERTKD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = konstd[B] / reg.d[C];
 		NEXTOP;
@@ -927,7 +946,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)reg.d[B] / (unsigned)reg.d[C]);
 		NEXTOP;
@@ -935,7 +954,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
 		if (konstd[C] == 0)
 		{
-			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)reg.d[B] / (unsigned)konstd[C]);
 		NEXTOP;
@@ -943,7 +962,7 @@ begin:
 		ASSERTD(a); ASSERTKD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)konstd[B] / (unsigned)reg.d[C]);
 		NEXTOP;
@@ -952,7 +971,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = reg.d[B] % reg.d[C];
 		NEXTOP;
@@ -960,7 +979,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
 		if (konstd[C] == 0)
 		{
-			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = reg.d[B] % konstd[C];
 		NEXTOP;
@@ -968,7 +987,7 @@ begin:
 		ASSERTD(a); ASSERTKD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = konstd[B] % reg.d[C];
 		NEXTOP;
@@ -977,7 +996,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)reg.d[B] % (unsigned)reg.d[C]);
 		NEXTOP;
@@ -985,7 +1004,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
 		if (konstd[C] == 0)
 		{
-			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)reg.d[B] % (unsigned)konstd[C]);
 		NEXTOP;
@@ -993,7 +1012,7 @@ begin:
 		ASSERTD(a); ASSERTKD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)konstd[B] % (unsigned)reg.d[C]);
 		NEXTOP;
@@ -1171,7 +1190,7 @@ begin:
 		ASSERTF(a); ASSERTF(B); ASSERTF(C);
 		if (reg.f[C] == 0.)
 		{
-			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.f[a] = reg.f[B] / reg.f[C];
 		NEXTOP;
@@ -1179,7 +1198,7 @@ begin:
 		ASSERTF(a); ASSERTF(B); ASSERTKF(C);
 		if (konstf[C] == 0.)
 		{
-			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.f[a] = reg.f[B] / konstf[C];
 		NEXTOP;
@@ -1187,7 +1206,7 @@ begin:
 		ASSERTF(a); ASSERTKF(B); ASSERTF(C);
 		if (reg.f[C] == 0.)
 		{
-			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.f[a] = konstf[B] / reg.f[C];
 		NEXTOP;
@@ -1198,7 +1217,7 @@ begin:
 	Do_MODF:
 		if (fc == 0.)
 		{
-			throw CVMAbortException(X_DIVISION_BY_ZERO, nullptr);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.f[a] = luai_nummod(fb, fc);
 		NEXTOP;
@@ -1609,6 +1628,13 @@ begin:
 			// This frame failed. Try the next one out.
 		}
 		// Nothing caught it. Rethrow and let somebody else deal with it.
+		throw;
+	}
+	catch (CVMAbortException &err)
+	{
+		err.MaybePrintMessage();
+		err.stacktrace.AppendFormat("Called from %s at %s, line %d\n", sfunc->PrintableName.GetChars(), sfunc->SourceFileName.GetChars(), sfunc->PCToLine(pc));
+		// PrintParameters(reg.param + f->NumParam - B, B);
 		throw;
 	}
 	return 0;

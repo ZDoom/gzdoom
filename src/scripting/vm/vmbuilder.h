@@ -100,13 +100,7 @@ private:
 		VM_ATAG Tag;
 	};
 
-	struct StatementInfo
-	{
-		uint16_t InstructionIndex;
-		uint16_t LineNumber;
-	};
-
-	TArray<StatementInfo> LineNumbers;
+	TArray<FStatementInfo> LineNumbers;
 	TArray<FxExpression *> StatementStack;
 
 	TArray<int> IntConstantList;

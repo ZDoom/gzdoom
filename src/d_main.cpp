@@ -1027,6 +1027,12 @@ void D_DoomLoop ()
 			}
 			D_ErrorCleanup ();
 		}
+		catch (CVMAbortException &error)
+		{
+			error.MaybePrintMessage();
+			Printf("%s", error.stacktrace);
+			D_ErrorCleanup();
+		}
 	}
 }
 

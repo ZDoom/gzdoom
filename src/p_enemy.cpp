@@ -3100,7 +3100,7 @@ void A_FaceTarget(AActor *self)
 DEFINE_ACTION_FUNCTION(AActor, A_Face)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(faceto, AActor)
+	PARAM_OBJECT(faceto, AActor)
 	PARAM_ANGLE_DEF(max_turn)		
 	PARAM_ANGLE_DEF(max_pitch)		
 	PARAM_ANGLE_DEF(ang_offset)		

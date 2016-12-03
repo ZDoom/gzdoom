@@ -1842,7 +1842,7 @@ void ZCCCompiler::ProcessDefaultProperty(PClassActor *cls, ZCC_PropertyStmt *pro
 		if (namenode->Id == NAME_DamageFunction)
 		{
 			auto x = ConvertNode(prop->Values);
-			CreateDamageFunction(cls, (AActor *)bag.Info->Defaults, x, false);
+			CreateDamageFunction(cls, (AActor *)bag.Info->Defaults, x, false, Lump);
 			((AActor *)bag.Info->Defaults)->DamageVal = -1;
 			return;
 		}

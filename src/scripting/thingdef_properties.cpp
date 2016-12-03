@@ -664,7 +664,7 @@ DEFINE_PROPERTY(damage, X, Actor)
 
 	defaults->DamageVal = dmgval;
 	// Only DECORATE can get here with a valid expression.
-	CreateDamageFunction(bag.Info, defaults, id, true);
+	CreateDamageFunction(bag.Info, defaults, id, true, bag.Lumpnum);
 }
 
 //==========================================================================

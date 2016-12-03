@@ -254,7 +254,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	if (swrenderer::fixedlightlev >= 0 || swrenderer::fixedcolormap)
 		args.uniforms.light = 256;
 	args.uniforms.flags = 0;
-	args.uniforms.subsectorDepth = isSky ? RenderPolyPortal::SkySubsectorDepth : subsectorDepth;
+	args.uniforms.subsectorDepth = isSky ? RenderPolyScene::SkySubsectorDepth : subsectorDepth;
 
 	TriVertex *vertices = PolyVertexBuffer::GetVertices(sub->numlines);
 	if (!vertices)

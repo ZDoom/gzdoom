@@ -195,7 +195,7 @@ void FSoftwareRenderer::RenderView(player_t *player)
 		bool saved_swtruecolor = r_swtruecolor;
 		r_swtruecolor = screen->IsBgra();
 		
-		RenderPolyScene::Instance()->RenderActorView(player->mo, false);
+		PolyRenderer::Instance()->RenderActorView(player->mo, false);
 		FCanvasTextureInfo::UpdateAll();
 		
 		// Apply special colormap if the target cannot do it
@@ -260,7 +260,7 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 	pic->ObjectFlags |= OF_Fixed;
 	pic->Lock ();
 	if (r_polyrenderer)
-		RenderPolyScene::Instance()->RenderViewToCanvas(player->mo, pic, 0, 0, width, height, true);
+		PolyRenderer::Instance()->RenderViewToCanvas(player->mo, pic, 0, 0, width, height, true);
 	else
 		R_RenderViewToCanvas (player->mo, pic, 0, 0, width, height);
 	screen->GetFlashedPalette (palette);
@@ -285,7 +285,7 @@ void FSoftwareRenderer::DrawRemainingPlayerSprites()
 	}
 	else
 	{
-		RenderPolyScene::Instance()->RenderRemainingPlayerSprites();
+		PolyRenderer::Instance()->RenderRemainingPlayerSprites();
 	}
 }
 
@@ -413,7 +413,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	DAngle savedfov = FieldOfView;
 	R_SetFOV ((double)fov);
 	if (r_polyrenderer)
-		RenderPolyScene::Instance()->RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
+		PolyRenderer::Instance()->RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 	else
 		R_RenderViewToCanvas (viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 	R_SetFOV (savedfov);

@@ -55,7 +55,7 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 	PolyDrawArgs args;
 	args.uniforms.light = 256;
 	args.uniforms.flags = 0;
-	args.uniforms.subsectorDepth = RenderPolyPortal::SkySubsectorDepth;
+	args.uniforms.subsectorDepth = RenderPolyScene::SkySubsectorDepth;
 	args.objectToClip = &objectToClip;
 	args.stenciltestvalue = 255;
 	args.stencilwritevalue = 255;

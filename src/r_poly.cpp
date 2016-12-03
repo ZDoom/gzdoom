@@ -37,13 +37,13 @@ extern bool r_showviewer;
 
 /////////////////////////////////////////////////////////////////////////////
 
-RenderPolyScene *RenderPolyScene::Instance()
+PolyRenderer *PolyRenderer::Instance()
 {
-	static RenderPolyScene scene;
+	static PolyRenderer scene;
 	return &scene;
 }
 
-void RenderPolyScene::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines)
+void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines)
 {
 	const bool savedviewactive = viewactive;
 	const bool savedoutputformat = swrenderer::r_swtruecolor;
@@ -70,7 +70,7 @@ void RenderPolyScene::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, 
 	swrenderer::r_swtruecolor = savedoutputformat;
 }
 
-void RenderPolyScene::RenderActorView(AActor *actor, bool dontmaplines)
+void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 {
 	NetUpdate();
 	
@@ -106,12 +106,12 @@ void RenderPolyScene::RenderActorView(AActor *actor, bool dontmaplines)
 	NetUpdate();
 }
 
-void RenderPolyScene::RenderRemainingPlayerSprites()
+void PolyRenderer::RenderRemainingPlayerSprites()
 {
 	PlayerSprites.RenderRemainingSprites();
 }
 
-void RenderPolyScene::ClearBuffers()
+void PolyRenderer::ClearBuffers()
 {
 	PolyVertexBuffer::Clear();
 	PolyStencilBuffer::Instance()->Clear(RenderTarget->GetWidth(), RenderTarget->GetHeight(), 0);
@@ -119,7 +119,7 @@ void RenderPolyScene::ClearBuffers()
 	NextStencilValue = 0;
 }
 
-void RenderPolyScene::SetSceneViewport()
+void PolyRenderer::SetSceneViewport()
 {
 	if (RenderTarget == screen) // Rendering to screen
 	{
@@ -138,7 +138,7 @@ void RenderPolyScene::SetSceneViewport()
 	}
 }
 
-void RenderPolyScene::SetupPerspectiveMatrix()
+void PolyRenderer::SetupPerspectiveMatrix()
 {
 	static bool bDidSetup = false;
 

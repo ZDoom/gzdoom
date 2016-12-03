@@ -1030,6 +1030,7 @@ set( NOT_COMPILED_SOURCE_FILES
 set( FASTMATH_PCH_SOURCES
 	r_swrenderer.cpp
 	r_poly.cpp
+	r_poly_scene.cpp
 	r_poly_portal.cpp
 	r_poly_cull.cpp
 	r_poly_decal.cpp

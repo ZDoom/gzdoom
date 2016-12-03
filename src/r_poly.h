@@ -36,15 +36,14 @@
 class AActor;
 class DCanvas;
 
-// Renders a scene
-class RenderPolyScene
+class PolyRenderer
 {
 public:
 	void RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines);
 	void RenderActorView(AActor *actor, bool dontmaplines);
 	void RenderRemainingPlayerSprites();
 
-	static RenderPolyScene *Instance();
+	static PolyRenderer *Instance();
 	
 	uint32_t GetNextStencilValue() { uint32_t value = NextStencilValue; NextStencilValue += 2; return value; }
 
@@ -54,7 +53,7 @@ private:
 	void SetupPerspectiveMatrix();
 
 	TriMatrix WorldToClip;
-	RenderPolyPortal MainPortal;
+	RenderPolyScene MainPortal;
 	PolySkyDome Skydome;
 	RenderPolyPlayerSprites PlayerSprites;
 	uint32_t NextStencilValue = 0;

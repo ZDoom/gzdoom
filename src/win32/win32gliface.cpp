@@ -854,7 +854,7 @@ bool Win32GLVideo::SetFullscreen(const char *devicename, int w, int h, int bits,
 //
 //==========================================================================
 
-IMPLEMENT_CLASS(Win32GLFrameBuffer, true, false, false, false)
+IMPLEMENT_CLASS(Win32GLFrameBuffer, true, false)
 
 //==========================================================================
 //

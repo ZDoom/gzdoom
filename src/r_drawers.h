@@ -254,10 +254,11 @@ enum class TriBlendMode
 	TranslateAdd,   // blend_add(shade(translate(fg)), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
 	TranslateSub,   // blend_sub(shade(translate(fg)), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
 	TranslateRevSub,// blend_revsub(shade(translate(fg)), bg, srcalpha, calc_blend_bgalpha(fg, destalpha))
-	AddSrcColorOneMinusSrcColor // glBlendMode(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR) used by GZDoom's fullbright additive sprites
+	AddSrcColorOneMinusSrcColor, // glBlendMode(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR) used by GZDoom's fullbright additive sprites
+	Skycap          // Fade to sky color when the V texture coordinate go beyond the [-1, 1] range
 };
 
-inline int NumTriBlendModes() { return (int)TriBlendMode::AddSrcColorOneMinusSrcColor + 1; }
+inline int NumTriBlendModes() { return (int)TriBlendMode::Skycap + 1; }
 
 class Drawers
 {

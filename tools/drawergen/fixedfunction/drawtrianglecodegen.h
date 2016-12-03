@@ -58,6 +58,8 @@ private:
 	SSAVec4i ToBgra(SSAInt index);
 	SSAInt ToPal8(SSAVec4i c);
 
+	SSAVec4i FadeOut(SSAInt frac, SSAVec4i color);
+
 	void SetStencilBlock(SSAInt block);
 	void StencilClear(SSAUByte value);
 	SSAUByte StencilGetSingle();

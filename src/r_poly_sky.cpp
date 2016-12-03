@@ -66,20 +66,24 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 	RenderCapColorRow(args, frontskytex, 0, false);
 	RenderCapColorRow(args, frontskytex, rc, true);
 
+	uint32_t topcapcolor = frontskytex->GetSkyCapColor(false);
+	uint32_t bottomcapcolor = frontskytex->GetSkyCapColor(true);
+
 	for (int i = 1; i <= mRows; i++)
 	{
-		RenderRow(args, i);
-		RenderRow(args, rc + i);
+		RenderRow(args, i, topcapcolor);
+		RenderRow(args, rc + i, bottomcapcolor);
 	}
 }
 
-void PolySkyDome::RenderRow(PolyDrawArgs &args, int row)
+void PolySkyDome::RenderRow(PolyDrawArgs &args, int row, uint32_t capcolor)
 {
 	args.vinput = &mVertices[mPrimStart[row]];
 	args.vcount = mPrimStart[row + 1] - mPrimStart[row];
 	args.mode = TriangleDrawMode::Strip;
 	args.ccw = false;
-	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawNormal, TriBlendMode::Copy);
+	args.uniforms.color = capcolor;
+	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawNormal, TriBlendMode::Skycap);
 }
 
 void PolySkyDome::RenderCapColorRow(PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap)
@@ -129,18 +133,6 @@ void PolySkyDome::CreateSkyHemisphere(bool zflip)
 	}
 }
 
-TriVertex PolySkyDome::SetVertex(float xx, float yy, float zz, float uu, float vv)
-{
-	TriVertex v;
-	v.x = xx;
-	v.y = yy;
-	v.z = zz;
-	v.w = 1.0f;
-	v.varying[0] = uu;
-	v.varying[1] = vv;
-	return v;
-}
-
 TriVertex PolySkyDome::SetVertexXYZ(float xx, float yy, float zz, float uu, float vv)
 {
 	TriVertex v;
@@ -166,7 +158,6 @@ void PolySkyDome::SkyVertex(int r, int c, bool zflip)
 	float z = (!zflip) ? scale * height : -scale * height;
 
 	float u, v;
-	//uint32_t color = r == 0 ? 0xffffff : 0xffffffff;
 
 	// And the texture coordinates.
 	if (!zflip)	// Flipped Y is for the lower hemisphere.
@@ -184,6 +175,6 @@ void PolySkyDome::SkyVertex(int r, int c, bool zflip)
 
 	// And finally the vertex.
 	TriVertex vert;
-	vert = SetVertexXYZ(-pos.X, z - 1.f, pos.Y, u * 4.0f, v * 1.2f + 0.5f/*, color*/);
+	vert = SetVertexXYZ(-pos.X, z - 1.f, pos.Y, u * 4.0f, v * 1.2f - 0.5f);
 	mVertices.Push(vert);
 }

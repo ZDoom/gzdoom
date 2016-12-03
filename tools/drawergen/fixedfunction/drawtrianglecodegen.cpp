@@ -333,8 +333,6 @@ void DrawTriangleCodegen::SetupAffineBlock()
 	{
 		AffineVaryingPosX[i] = SSAInt(AffineVaryingPosY[i] * rcpW0, false);
 		AffineVaryingStepX[i] = (SSAInt((AffineVaryingPosY[i] + gradVaryingX[i]) * rcpW1, false) - AffineVaryingPosX[i]) / q;
-		AffineVaryingPosX[i] = AffineVaryingPosX[i] << 8;
-		AffineVaryingStepX[i] = AffineVaryingStepX[i] << 8;
 	}
 }
 
@@ -780,8 +778,8 @@ SSAInt DrawTriangleCodegen::Shade8(SSAInt c)
 
 SSAVec4i DrawTriangleCodegen::ProcessPixel32(SSAVec4i bg, SSAInt *varying)
 {
-	SSAInt ufrac = varying[0];
-	SSAInt vfrac = varying[1];
+	SSAInt ufrac = varying[0] << 8;
+	SSAInt vfrac = varying[1] << 8;
 
 	SSAInt upos = ((ufrac >> 16) * textureWidth) >> 16;
 	SSAInt vpos = ((vfrac >> 16) * textureHeight) >> 16;
@@ -848,6 +846,10 @@ SSAVec4i DrawTriangleCodegen::ProcessPixel32(SSAVec4i bg, SSAInt *varying)
 		fg = Sample32(uvoffset);
 		output = blend_add_srccolor_oneminussrccolor(shade_bgra_simple(fg, currentlight), bg);
 		break;
+	case TriBlendMode::Skycap:
+		fg = Sample32(uvoffset);
+		output = FadeOut(varying[1], fg);
+		break;
 	}
 
 	return output;
@@ -867,8 +869,8 @@ SSAInt DrawTriangleCodegen::ToPal8(SSAVec4i c)
 
 SSAInt DrawTriangleCodegen::ProcessPixel8(SSAInt bg, SSAInt *varying)
 {
-	SSAInt ufrac = varying[0];
-	SSAInt vfrac = varying[1];
+	SSAInt ufrac = varying[0] << 8;
+	SSAInt vfrac = varying[1] << 8;
 
 	SSAInt upos = ((ufrac >> 16) * textureWidth) >> 16;
 	SSAInt vpos = ((vfrac >> 16) * textureHeight) >> 16;
@@ -955,9 +957,26 @@ SSAInt DrawTriangleCodegen::ProcessPixel8(SSAInt bg, SSAInt *varying)
 		output = ToPal8(blend_add_srccolor_oneminussrccolor(fg, ToBgra(bg)));
 		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
+	case TriBlendMode::Skycap:
+		fg = ToBgra(Sample8(uvoffset));
+		output = ToPal8(FadeOut(varying[1], fg));
+		break;
 	}
 
 	return output;
+}
+
+SSAVec4i DrawTriangleCodegen::FadeOut(SSAInt frac, SSAVec4i fg)
+{
+	int start_fade = 2; // How fast it should fade out
+
+	SSAInt alpha_top = SSAInt::MAX(SSAInt::MIN(frac.ashr(16 - start_fade), SSAInt(256)), SSAInt(0));
+	SSAInt alpha_bottom = SSAInt::MAX(SSAInt::MIN(((2 << 24) - frac).ashr(16 - start_fade), SSAInt(256)), SSAInt(0));
+	SSAInt alpha = SSAInt::MIN(alpha_top, alpha_bottom);
+	SSAInt inv_alpha = 256 - alpha;
+
+	fg = (fg * alpha + SSAVec4i::unpack(color) * inv_alpha) / 256;
+	return fg.insert(3, 255);
 }
 
 void DrawTriangleCodegen::SetStencilBlock(SSAInt block)

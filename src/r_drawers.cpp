@@ -107,6 +107,7 @@ extern "C"
 	void TriDrawNormal8_11_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriDrawNormal8_12_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriDrawNormal8_13_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
+	void TriDrawNormal8_14_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriDrawNormal32_0_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriDrawNormal32_1_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriDrawNormal32_2_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
@@ -121,6 +122,7 @@ extern "C"
 	void TriDrawNormal32_11_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriDrawNormal32_12_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriDrawNormal32_13_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
+	void TriDrawNormal32_14_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillNormal8_0_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillNormal8_1_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillNormal8_2_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
@@ -135,6 +137,7 @@ extern "C"
 	void TriFillNormal8_11_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillNormal8_12_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillNormal8_13_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
+	void TriFillNormal8_14_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillNormal32_0_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillNormal32_1_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillNormal32_2_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
@@ -149,6 +152,7 @@ extern "C"
 	void TriFillNormal32_11_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillNormal32_12_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillNormal32_13_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
+	void TriFillNormal32_14_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriDrawSubsector8_0_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriDrawSubsector8_1_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriDrawSubsector8_2_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
@@ -163,6 +167,7 @@ extern "C"
 	void TriDrawSubsector8_11_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriDrawSubsector8_12_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriDrawSubsector8_13_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
+	void TriDrawSubsector8_14_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriDrawSubsector32_0_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriDrawSubsector32_1_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriDrawSubsector32_2_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
@@ -177,6 +182,7 @@ extern "C"
 	void TriDrawSubsector32_11_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriDrawSubsector32_12_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriDrawSubsector32_13_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
+	void TriDrawSubsector32_14_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillSubsector8_0_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillSubsector8_1_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillSubsector8_2_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
@@ -191,6 +197,7 @@ extern "C"
 	void TriFillSubsector8_11_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillSubsector8_12_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillSubsector8_13_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
+	void TriFillSubsector8_14_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillSubsector32_0_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillSubsector32_1_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillSubsector32_2_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
@@ -205,6 +212,7 @@ extern "C"
 	void TriFillSubsector32_11_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillSubsector32_12_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriFillSubsector32_13_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
+	void TriFillSubsector32_14_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriStencil_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 	void TriStencilClose_SSE2(const TriDrawTriangleArgs *, WorkerThreadData *);
 }
@@ -289,6 +297,7 @@ Drawers::Drawers()
 	TriDrawNormal8.push_back(TriDrawNormal8_11_SSE2);
 	TriDrawNormal8.push_back(TriDrawNormal8_12_SSE2);
 	TriDrawNormal8.push_back(TriDrawNormal8_13_SSE2);
+	TriDrawNormal8.push_back(TriDrawNormal8_14_SSE2);
 	TriDrawNormal32.push_back(TriDrawNormal32_0_SSE2);
 	TriDrawNormal32.push_back(TriDrawNormal32_1_SSE2);
 	TriDrawNormal32.push_back(TriDrawNormal32_2_SSE2);
@@ -303,6 +312,7 @@ Drawers::Drawers()
 	TriDrawNormal32.push_back(TriDrawNormal32_11_SSE2);
 	TriDrawNormal32.push_back(TriDrawNormal32_12_SSE2);
 	TriDrawNormal32.push_back(TriDrawNormal32_13_SSE2);
+	TriDrawNormal32.push_back(TriDrawNormal32_14_SSE2);
 	TriFillNormal8.push_back(TriFillNormal8_0_SSE2);
 	TriFillNormal8.push_back(TriFillNormal8_1_SSE2);
 	TriFillNormal8.push_back(TriFillNormal8_2_SSE2);
@@ -317,6 +327,7 @@ Drawers::Drawers()
 	TriFillNormal8.push_back(TriFillNormal8_11_SSE2);
 	TriFillNormal8.push_back(TriFillNormal8_12_SSE2);
 	TriFillNormal8.push_back(TriFillNormal8_13_SSE2);
+	TriFillNormal8.push_back(TriFillNormal8_14_SSE2);
 	TriFillNormal32.push_back(TriFillNormal32_0_SSE2);
 	TriFillNormal32.push_back(TriFillNormal32_1_SSE2);
 	TriFillNormal32.push_back(TriFillNormal32_2_SSE2);
@@ -331,6 +342,7 @@ Drawers::Drawers()
 	TriFillNormal32.push_back(TriFillNormal32_11_SSE2);
 	TriFillNormal32.push_back(TriFillNormal32_12_SSE2);
 	TriFillNormal32.push_back(TriFillNormal32_13_SSE2);
+	TriFillNormal32.push_back(TriFillNormal32_14_SSE2);
 	TriDrawSubsector8.push_back(TriDrawSubsector8_0_SSE2);
 	TriDrawSubsector8.push_back(TriDrawSubsector8_1_SSE2);
 	TriDrawSubsector8.push_back(TriDrawSubsector8_2_SSE2);
@@ -345,6 +357,7 @@ Drawers::Drawers()
 	TriDrawSubsector8.push_back(TriDrawSubsector8_11_SSE2);
 	TriDrawSubsector8.push_back(TriDrawSubsector8_12_SSE2);
 	TriDrawSubsector8.push_back(TriDrawSubsector8_13_SSE2);
+	TriDrawSubsector8.push_back(TriDrawSubsector8_14_SSE2);
 	TriDrawSubsector32.push_back(TriDrawSubsector32_0_SSE2);
 	TriDrawSubsector32.push_back(TriDrawSubsector32_1_SSE2);
 	TriDrawSubsector32.push_back(TriDrawSubsector32_2_SSE2);
@@ -359,6 +372,7 @@ Drawers::Drawers()
 	TriDrawSubsector32.push_back(TriDrawSubsector32_11_SSE2);
 	TriDrawSubsector32.push_back(TriDrawSubsector32_12_SSE2);
 	TriDrawSubsector32.push_back(TriDrawSubsector32_13_SSE2);
+	TriDrawSubsector32.push_back(TriDrawSubsector32_14_SSE2);
 	TriFillSubsector8.push_back(TriFillSubsector8_0_SSE2);
 	TriFillSubsector8.push_back(TriFillSubsector8_1_SSE2);
 	TriFillSubsector8.push_back(TriFillSubsector8_2_SSE2);
@@ -373,6 +387,7 @@ Drawers::Drawers()
 	TriFillSubsector8.push_back(TriFillSubsector8_11_SSE2);
 	TriFillSubsector8.push_back(TriFillSubsector8_12_SSE2);
 	TriFillSubsector8.push_back(TriFillSubsector8_13_SSE2);
+	TriFillSubsector8.push_back(TriFillSubsector8_14_SSE2);
 	TriFillSubsector32.push_back(TriFillSubsector32_0_SSE2);
 	TriFillSubsector32.push_back(TriFillSubsector32_1_SSE2);
 	TriFillSubsector32.push_back(TriFillSubsector32_2_SSE2);
@@ -387,6 +402,7 @@ Drawers::Drawers()
 	TriFillSubsector32.push_back(TriFillSubsector32_11_SSE2);
 	TriFillSubsector32.push_back(TriFillSubsector32_12_SSE2);
 	TriFillSubsector32.push_back(TriFillSubsector32_13_SSE2);
+	TriFillSubsector32.push_back(TriFillSubsector32_14_SSE2);
 	TriStencil = TriStencil_SSE2;
 	TriStencilClose = TriStencilClose_SSE2;
 }

@@ -2014,13 +2014,13 @@ void FParser::SF_CeilingTexture(void)
 
 void FParser::SF_ChangeHubLevel(void)
 {
-	I_Error("FS hub system permanently disabled\n");
+	script_error("FS hub system permanently disabled\n");
 }
 
 // for start map: start new game on a particular skill
 void FParser::SF_StartSkill(void)
 {
-	I_Error("startskill is not supported by this implementation!\n");
+	script_error("startskill is not supported by this implementation!\n");
 }
 
 //==========================================================================

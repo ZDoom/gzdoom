@@ -328,6 +328,8 @@ public:
 	bool IsObject() const { return ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && !ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)) && ValueType != TypeNullPtr && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PClass)); }
 
 	virtual ExpEmit Emit(VMFunctionBuilder *build);
+	void EmitStatement(VMFunctionBuilder *build);
+	virtual void EmitCompare(VMFunctionBuilder *build, bool invert, TArray<size_t> &patchspots_yes, TArray<size_t> &patchspots_no);
 
 	FScriptPosition ScriptPosition;
 	PType *ValueType = nullptr;
@@ -565,6 +567,7 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpEmit Emit(VMFunctionBuilder *build);
+	void EmitCompare(VMFunctionBuilder *build, bool invert, TArray<size_t> &patchspots_yes, TArray<size_t> &patchspots_no);
 };
 
 class FxIntCast : public FxExpression
@@ -734,6 +737,7 @@ public:
 	~FxUnaryNotBoolean();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
+	void EmitCompare(VMFunctionBuilder *build, bool invert, TArray<size_t> &patchspots_yes, TArray<size_t> &patchspots_no);
 };
 
 //==========================================================================
@@ -934,7 +938,9 @@ public:
 
 	FxCompareRel(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
+	ExpEmit EmitCommon(VMFunctionBuilder *build, bool forcompare, bool invert);
 	ExpEmit Emit(VMFunctionBuilder *build);
+	void EmitCompare(VMFunctionBuilder *build, bool invert, TArray<size_t> &patchspots_yes, TArray<size_t> &patchspots_no);
 };
 
 //==========================================================================
@@ -949,7 +955,9 @@ public:
 
 	FxCompareEq(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
+	ExpEmit EmitCommon(VMFunctionBuilder *build, bool forcompare, bool invert);
 	ExpEmit Emit(VMFunctionBuilder *build);
+	void EmitCompare(VMFunctionBuilder *build, bool invert, TArray<size_t> &patchspots_yes, TArray<size_t> &patchspots_no);
 };
 
 //==========================================================================

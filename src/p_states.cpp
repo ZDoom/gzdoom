@@ -1083,11 +1083,12 @@ DEFINE_ACTION_FUNCTION(FState, DistanceTo)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FState);
 	PARAM_POINTER(other, FState);
-
-	// Safely calculate the distance between two states.
-	auto o1 = FState::StaticFindStateOwner(self);
-	int retv;
-	if (other < o1->OwnedStates || other >= o1->OwnedStates + o1->NumOwnedStates) retv =  INT_MIN;
-	else retv = int(other - self);
+	int retv = INT_MIN;
+	if (other != nullptr)
+	{
+		// Safely calculate the distance between two states.
+		auto o1 = FState::StaticFindStateOwner(self);
+		if (other >= o1->OwnedStates && other < o1->OwnedStates + o1->NumOwnedStates) retv = int(other - self);
+	}
 	ACTION_RETURN_INT(retv);
 }

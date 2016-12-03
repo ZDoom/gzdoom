@@ -187,6 +187,7 @@ private:
 class AMorphProjectile : public AActor
 {
 	DECLARE_CLASS (AMorphProjectile, AActor)
+	HAS_OBJECT_POINTERS;
 public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 	

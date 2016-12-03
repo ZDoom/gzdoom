@@ -368,6 +368,9 @@ enum EActivationFlags
 	THINGSPEC_ClearSpecial = 32,
 	THINGSPEC_NoDeathSpecial = 64,
 	THINGSPEC_TriggerActs = 128,
+	THINGSPEC_Activate			= 1<<8,		// The thing is activated when triggered
+	THINGSPEC_Deactivate		= 1<<9,		// The thing is deactivated when triggered
+	THINGSPEC_Switch			= 1<<10,	// The thing is alternatively activated and deactivated when triggered
 	
 	// Shorter aliases for same
 	AF_Default = 0,
@@ -379,6 +382,9 @@ enum EActivationFlags
 	AF_ClearSpecial = 32,
 	AF_NoDeathSpecial = 64,
 	AF_TriggerActs = 128,
+	AF_Activate			= 1<<8,		// The thing is activated when triggered
+	AF_Deactivate		= 1<<9,		// The thing is deactivated when triggered
+	AF_Switch			= 1<<10,	// The thing is alternatively activated and deactivated when triggered
 	
 };
 

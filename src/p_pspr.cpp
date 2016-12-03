@@ -828,7 +828,7 @@ void DoReadyWeapon(AActor *self)
 
 DEFINE_ACTION_FUNCTION(AStateProvider, A_WeaponReady)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 	PARAM_INT_DEF(flags);
 
 													DoReadyWeaponToSwitch(self, !(flags & WRF_NoSwitch));
@@ -960,7 +960,7 @@ static void P_CheckWeaponButtons (player_t *player)
 
 DEFINE_ACTION_FUNCTION(AStateProvider, A_ReFire)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 	PARAM_STATE_ACTION_DEF(state);
 	A_ReFire(self, state);
 	return 0;
@@ -998,7 +998,7 @@ void A_ReFire(AActor *self, FState *state)
 
 DEFINE_ACTION_FUNCTION(AStateProvider, A_ClearReFire)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 	player_t *player = self->player;
 
 	if (NULL != player)
@@ -1020,7 +1020,7 @@ DEFINE_ACTION_FUNCTION(AStateProvider, A_ClearReFire)
 
 DEFINE_ACTION_FUNCTION(AStateProvider, A_CheckReload)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 
 	if (self->player != NULL)
 	{
@@ -1208,7 +1208,7 @@ DEFINE_ACTION_FUNCTION(AActor, OverlayID)
 
 DEFINE_ACTION_FUNCTION(AStateProvider, A_Lower)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 
 	player_t *player = self->player;
 	DPSprite *psp;
@@ -1254,9 +1254,9 @@ DEFINE_ACTION_FUNCTION(AStateProvider, A_Lower)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AActor, A_Raise)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_Raise)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 
 	if (self == nullptr)
 	{
@@ -1368,7 +1368,7 @@ enum GF_Flags
 
 DEFINE_ACTION_FUNCTION(AStateProvider, A_GunFlash)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 	PARAM_STATE_ACTION_DEF(flash);
 	PARAM_INT_DEF(flags);
 
@@ -1605,38 +1605,40 @@ void player_t::DestroyPSprites()
 
 void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int index)
 {
-
-	PClassActor *cls = weapon->GetClass();
-	while (cls != RUNTIME_CLASS(AWeapon))
+	if (flashstate != nullptr)
 	{
-		if (flashstate >= cls->OwnedStates && flashstate < cls->OwnedStates + cls->NumOwnedStates)
+		PClassActor *cls = weapon->GetClass();
+		while (cls != RUNTIME_CLASS(AWeapon))
 		{
-			// The flash state belongs to this class.
-			// Now let's check if the actually wanted state does also
-			if (flashstate + index < cls->OwnedStates + cls->NumOwnedStates)
+			if (flashstate >= cls->OwnedStates && flashstate < cls->OwnedStates + cls->NumOwnedStates)
 			{
-				// we're ok so set the state
-				P_SetPsprite(player, PSP_FLASH, flashstate + index, true);
-				return;
+				// The flash state belongs to this class.
+				// Now let's check if the actually wanted state does also
+				if (flashstate + index < cls->OwnedStates + cls->NumOwnedStates)
+				{
+					// we're ok so set the state
+					P_SetPsprite(player, PSP_FLASH, flashstate + index, true);
+					return;
+				}
+				else
+				{
+					// oh, no! The state is beyond the end of the state table so use the original flash state.
+					P_SetPsprite(player, PSP_FLASH, flashstate, true);
+					return;
+				}
 			}
-			else
-			{
-				// oh, no! The state is beyond the end of the state table so use the original flash state.
-				P_SetPsprite(player, PSP_FLASH, flashstate, true);
-				return;
-			}
+			// try again with parent class
+			cls = static_cast<PClassActor *>(cls->ParentClass);
 		}
-		// try again with parent class
-		cls = static_cast<PClassActor *>(cls->ParentClass);
-	}
-	// if we get here the state doesn't seem to belong to any class in the inheritance chain
-	// This can happen with Dehacked if the flash states are remapped. 
-	// The only way to check this would be to go through all Dehacked modifiable actors, convert
-	// their states into a single flat array and find the correct one.
-	// Rather than that, just check to make sure it belongs to something.
-	if (FState::StaticFindStateOwner(flashstate + index) == NULL)
-	{ // Invalid state. With no index offset, it should at least be valid.
-		index = 0;
+		// if we get here the state doesn't seem to belong to any class in the inheritance chain
+		// This can happen with Dehacked if the flash states are remapped. 
+		// The only way to check this would be to go through all Dehacked modifiable actors, convert
+		// their states into a single flat array and find the correct one.
+		// Rather than that, just check to make sure it belongs to something.
+		if (FState::StaticFindStateOwner(flashstate + index) == NULL)
+		{ // Invalid state. With no index offset, it should at least be valid.
+			index = 0;
+		}
 	}
 	P_SetPsprite(player, PSP_FLASH, flashstate + index, true);
 }
@@ -1644,7 +1646,7 @@ void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int i
 DEFINE_ACTION_FUNCTION(_PlayerInfo, SetSafeFlash)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
-	PARAM_OBJECT(weapon, AWeapon);
+	PARAM_OBJECT_NOT_NULL(weapon, AWeapon);
 	PARAM_POINTER(state, FState);
 	PARAM_INT(index);
 	P_SetSafeFlash(weapon, self, state, index);

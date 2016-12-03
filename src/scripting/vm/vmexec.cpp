@@ -40,6 +40,11 @@
 #include "textures/textures.h"
 #include "math/cmath.h"
 
+// This must be a separate function because the VC compiler would otherwise allocate memory on the stack for every separate instance of the exception object that may get thrown.
+void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...);
+// intentionally implemented in a different source file tp prevent inlining.
+void ThrowVMException(VMException *x);
+
 #define IMPLEMENT_VMEXEC
 
 #if !defined(COMPGOTO) && defined(__GNUC__)
@@ -82,8 +87,6 @@
 #define ASSERTKA(x)		assert(sfunc != NULL && (unsigned)(x) < sfunc->NumKonstA)
 #define ASSERTKS(x)		assert(sfunc != NULL && (unsigned)(x) < sfunc->NumKonstS)
 
-#define THROW(x)		throw(EVMAbortException(x))
-
 #define CMPJMP(test) \
 	if ((test) == (a & CMP_CHECK)) { \
 		assert(pc[1].op == OP_JMP); \
@@ -93,7 +96,7 @@
 	}
 
 #define GETADDR(a,o,x) \
-	if (a == NULL) { THROW(x); } \
+	if (a == NULL) { ThrowAbortException(x, nullptr); } \
 	ptr = (VM_SBYTE *)a + o
 
 static const VM_UWORD ZapTable[16] =
@@ -228,3 +231,5 @@ void VMFillParams(VMValue *params, VMFrame *callee, int numparam)
 		}
 	}
 }
+
+

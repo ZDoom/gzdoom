@@ -265,6 +265,7 @@ DEFINE_ACTION_FUNCTION(DSpotState, GetSpotState)
 
 FSpotList *DSpotState::FindSpotList(PClassActor *type)
 {
+	if (type == nullptr) return nullptr;
 	for(unsigned i = 0; i < SpotLists.Size(); i++)
 	{
 		if (SpotLists[i].Type == type) return &SpotLists[i];
@@ -401,10 +402,10 @@ void ASpecialSpot::Destroy()
 // will build a list of all mace spots in the level and spawn a
 // mace. The rest of the spots will do nothing.
 
-DEFINE_ACTION_FUNCTION(AActor, A_SpawnSingleItem)
+DEFINE_ACTION_FUNCTION(ASpecialSpot, A_SpawnSingleItem)
 {
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS		(cls, AActor);
+	PARAM_SELF_PROLOGUE(ASpecialSpot);
+	PARAM_CLASS_NOT_NULL(cls, AActor);
 	PARAM_INT_DEF	(fail_sp) 
 	PARAM_INT_DEF	(fail_co) 
 	PARAM_INT_DEF	(fail_dm) 

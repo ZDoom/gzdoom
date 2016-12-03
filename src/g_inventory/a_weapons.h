@@ -95,7 +95,6 @@ protected:
 	virtual void DeriveData(PClass *newclass);
 public:
 	PClassWeapon();
-	virtual void ReplaceClassRef(PClass *oldclass, PClass *newclass);
 	void Finalize(FStateDefinitions &statedef);
 
 	int SlotNumber;

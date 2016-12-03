@@ -45,9 +45,9 @@ void PClassInventory::DeriveData(PClass *newclass)
 	newc->RestrictedToPlayerClass = RestrictedToPlayerClass;
 }
 
-void PClassInventory::ReplaceClassRef(PClass *oldclass, PClass *newclass)
+size_t PClassInventory::PointerSubstitution(DObject *oldclass, DObject *newclass)
 {
-	Super::ReplaceClassRef(oldclass, newclass);
+	size_t changed = Super::PointerSubstitution(oldclass, newclass);
 	AInventory *def = (AInventory*)Defaults;
 	if (def != NULL)
 	{
@@ -55,14 +55,21 @@ void PClassInventory::ReplaceClassRef(PClass *oldclass, PClass *newclass)
 		for (unsigned i = 0; i < ForbiddenToPlayerClass.Size(); i++)
 		{
 			if (ForbiddenToPlayerClass[i] == oldclass)
+			{
 				ForbiddenToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+				changed++;
+			}
 		}
 		for (unsigned i = 0; i < RestrictedToPlayerClass.Size(); i++)
 		{
 			if (RestrictedToPlayerClass[i] == oldclass)
+			{
 				RestrictedToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+				changed++;
+			}
 		}
 	}
+	return changed;
 }
 
 void PClassInventory::Finalize(FStateDefinitions &statedef)
@@ -254,7 +261,7 @@ bool AInventory::SpecialDropAction (AActor *dropper)
 DEFINE_ACTION_FUNCTION(AInventory, SpecialDropAction)
 {
 	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_OBJECT(dropper, AActor);
+	PARAM_OBJECT_NOT_NULL(dropper, AActor);
 	ACTION_RETURN_BOOL(self->SpecialDropAction(dropper));
 }
 
@@ -422,7 +429,7 @@ bool AInventory::HandlePickup (AInventory *item)
 DEFINE_ACTION_FUNCTION(AInventory, HandlePickup)
 {
 	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_OBJECT(item, AInventory);
+	PARAM_OBJECT_NOT_NULL(item, AInventory);
 	ACTION_RETURN_BOOL(self->HandlePickup(item));
 }
 
@@ -1409,7 +1416,7 @@ bool AInventory::TryPickup (AActor *&toucher)
 DEFINE_ACTION_FUNCTION(AInventory, TryPickup)
 {
 	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_POINTER(toucher, AActor*);
+	PARAM_POINTER_NOT_NULL(toucher, AActor*);
 	ACTION_RETURN_BOOL(self->TryPickup(*toucher));
 }
 
@@ -1427,7 +1434,7 @@ bool AInventory::TryPickupRestricted (AActor *&toucher)
 DEFINE_ACTION_FUNCTION(AInventory, TryPickupRestricted)
 {
 	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_POINTER(toucher, AActor*);
+	PARAM_POINTER_NOT_NULL(toucher, AActor*);
 	ACTION_RETURN_BOOL(self->TryPickupRestricted(*toucher));
 }
 
@@ -1606,7 +1613,7 @@ void AInventory::AttachToOwner (AActor *other)
 DEFINE_ACTION_FUNCTION(AInventory, AttachToOwner)
 {
 	PARAM_SELF_PROLOGUE(AInventory);
-	PARAM_OBJECT(other, AActor);
+	PARAM_OBJECT_NOT_NULL(other, AActor);
 	self->AttachToOwner(other);
 	return 0;
 }

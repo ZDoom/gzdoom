@@ -290,6 +290,60 @@ ExpEmit FxExpression::Emit (VMFunctionBuilder *build)
 
 //==========================================================================
 //
+// Emits a statement and records its position in the source.
+//
+//==========================================================================
+
+void FxExpression::EmitStatement(VMFunctionBuilder *build)
+{
+	build->BeginStatement(this);
+	ExpEmit exp = Emit(build);
+	exp.Free(build);
+	build->EndStatement();
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FxExpression::EmitCompare(VMFunctionBuilder *build, bool invert, TArray<size_t> &patchspots_yes, TArray<size_t> &patchspots_no)
+{
+	ExpEmit op = Emit(build);
+	ExpEmit i;
+	assert(op.RegType != REGT_NIL && op.RegCount == 1 && !op.Konst);
+	switch (op.RegType)
+	{
+	case REGT_INT:
+		build->Emit(OP_EQ_K, !invert, op.RegNum, build->GetConstantInt(0));
+		break;
+
+	case REGT_FLOAT:
+		build->Emit(OP_EQF_K, !invert, op.RegNum, build->GetConstantFloat(0));
+		break;
+
+	case REGT_POINTER:
+		build->Emit(OP_EQA_K, !invert, op.RegNum, build->GetConstantAddress(0, ATAG_GENERIC));
+		break;
+
+	case REGT_STRING:
+		i = ExpEmit(build, REGT_INT);
+		build->Emit(OP_LENS, i.RegNum, op.RegNum);
+		build->Emit(OP_EQ_K, !invert, i.RegNum, build->GetConstantInt(0));
+		i.Free(build);
+		break;
+
+	default:
+		break;
+	}
+	patchspots_no.Push(build->Emit(OP_JMP, 0));
+	op.Free(build);
+}
+
+//==========================================================================
+//
 //
 //
 //==========================================================================
@@ -584,7 +638,7 @@ static ExpEmit EmitKonst(VMFunctionBuilder *build, ExpEmit &emit)
 
 ExpEmit FxVectorValue::Emit(VMFunctionBuilder *build)
 {
-	// no const handling here. Ultimstely it's too rarely used (i.e. the only fully constant vector ever allocated in ZDoom is the 0-vector in a very few places)
+	// no const handling here. Ultimately it's too rarely used (i.e. the only fully constant vector ever allocated in ZDoom is the 0-vector in a very few places)
 	// and the negatives (excessive allocation of float constants) outweigh the positives (saved a few instructions)
 	assert(xyz[0] != nullptr);
 	assert(xyz[1] != nullptr);
@@ -757,32 +811,24 @@ ExpEmit FxBoolCast::Emit(VMFunctionBuilder *build)
 	{
 		ExpEmit to(build, REGT_INT);
 		from.Free(build);
-		// Preload result with 0.
-		build->Emit(OP_LI, to.RegNum, 0);
-
-		// Check source against 0.
-		if (from.RegType == REGT_INT)
-		{
-			build->Emit(OP_EQ_R, 1, from.RegNum, to.RegNum);
-		}
-		else if (from.RegType == REGT_FLOAT)
-		{
-			build->Emit(OP_EQF_K, 1, from.RegNum, build->GetConstantFloat(0.));
-		}
-		else if (from.RegType == REGT_POINTER)
-		{
-			build->Emit(OP_EQA_K, 1, from.RegNum, build->GetConstantAddress(nullptr, ATAG_GENERIC));
-		}
-		build->Emit(OP_JMP, 1);
-
-		// Reload result with 1 if the comparison fell through.
-		build->Emit(OP_LI, to.RegNum, 1);
+		build->Emit(OP_CASTB, to.RegNum, from.RegNum, from.RegType == REGT_INT ? CASTB_I : from.RegType == REGT_FLOAT ? CASTB_F : CASTB_A);
 		return to;
 	}
 	else
 	{
 		return from;
 	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FxBoolCast::EmitCompare(VMFunctionBuilder *build, bool invert, TArray<size_t> &patchspots_yes, TArray<size_t> &patchspots_no)
+{
+	basex->EmitCompare(build, invert, patchspots_yes, patchspots_no);
 }
 
 //==========================================================================
@@ -1210,7 +1256,7 @@ FxExpression *FxColorCast::Resolve(FCompileContext &ctx)
 			}
 			else
 			{
-				FxExpression *x = new FxConstant(V_GetColor(nullptr, constval.GetString()), ScriptPosition);
+				FxExpression *x = new FxConstant(V_GetColor(nullptr, constval.GetString(), &ScriptPosition), ScriptPosition);
 				delete this;
 				return x;
 			}
@@ -1788,10 +1834,11 @@ FxExpression *FxUnaryNotBitwise::Resolve(FCompileContext& ctx)
 	{
 		int result = ~static_cast<FxConstant *>(Operand)->GetValue().GetInt();
 		FxExpression *e = new FxConstant(result, ScriptPosition);
+		e->ValueType = Operand->ValueType == TypeUInt32 ? TypeUInt32 : TypeSInt32;
 		delete this;
 		return e;
 	}
-	ValueType = TypeSInt32;
+	ValueType = Operand->ValueType == TypeUInt32? TypeUInt32 : TypeSInt32;
 	return this;
 }
 
@@ -1881,6 +1928,17 @@ ExpEmit FxUnaryNotBoolean::Emit(VMFunctionBuilder *build)
 
 	build->Emit(OP_XOR_RK, to.RegNum, from.RegNum, build->GetConstantInt(1));
 	return to;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FxUnaryNotBoolean::EmitCompare(VMFunctionBuilder *build, bool invert, TArray<size_t> &patchspots_yes, TArray<size_t> &patchspots_no)
+{
+	Operand->EmitCompare(build, !invert, patchspots_yes, patchspots_no);
 }
 
 //==========================================================================
@@ -2261,14 +2319,29 @@ ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 	ExpEmit pointer = Base->Emit(build);
 	Address = pointer;
 
-	ExpEmit result = Right->Emit(build);
+	ExpEmit result;
+	bool intconst = false;
+	int intconstval;
+
+	if (Right->isConstant() && Right->ValueType->GetRegType() == REGT_INT)
+	{
+		intconst = true;
+		intconstval = static_cast<FxConstant*>(Right)->GetValue().GetInt();
+		result.Konst = true;
+		result.RegType = REGT_INT;
+	}
+	else
+	{
+		result = Right->Emit(build);
+	}
 	assert(result.RegType <= REGT_TYPE);
 
 	if (pointer.Target)
 	{
 		if (result.Konst)
 		{
-			build->Emit(loadops[result.RegType], pointer.RegNum, result.RegNum);
+			if (intconst) build->EmitLoadInt(pointer.RegNum, intconstval);
+			else build->Emit(loadops[result.RegType], pointer.RegNum, result.RegNum);
 		}
 		else
 		{
@@ -2280,7 +2353,8 @@ ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 		if (result.Konst)
 		{
 			ExpEmit temp(build, result.RegType);
-			build->Emit(loadops[result.RegType], temp.RegNum, result.RegNum);
+			if (intconst) build->EmitLoadInt(temp.RegNum, intconstval);
+			else build->Emit(loadops[result.RegType], temp.RegNum, result.RegNum);
 			result.Free(build);
 			result = temp;
 		}
@@ -3141,7 +3215,7 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-ExpEmit FxCompareRel::Emit(VMFunctionBuilder *build)
+ExpEmit FxCompareRel::EmitCommon(VMFunctionBuilder *build, bool forcompare, bool invert)
 {
 	ExpEmit op1 = left->Emit(build);
 	ExpEmit op2 = right->Emit(build);
@@ -3171,11 +3245,15 @@ ExpEmit FxCompareRel::Emit(VMFunctionBuilder *build)
 		{
 			op2.Free(build);
 		}
+		if (invert) a ^= CMP_CHECK;
 
-		build->Emit(OP_LI, to.RegNum, 0, 0);
+		if (!forcompare) build->Emit(OP_LI, to.RegNum, 0, 0);
 		build->Emit(OP_CMPS, a, op1.RegNum, op2.RegNum);
-		build->Emit(OP_JMP, 1);
-		build->Emit(OP_LI, to.RegNum, 1);
+		if (!forcompare)
+		{
+			build->Emit(OP_JMP, 1);
+			build->Emit(OP_LI, to.RegNum, 1);
+		}
 		return to;
 	}
 	else
@@ -3214,14 +3292,30 @@ ExpEmit FxCompareRel::Emit(VMFunctionBuilder *build)
 		{
 			op1.Free(build);
 		}
+		if (invert) check ^= 1;
 
 		// See FxBoolCast for comments, since it's the same thing.
-		build->Emit(OP_LI, to.RegNum, 0, 0);
+		if (!forcompare) build->Emit(OP_LI, to.RegNum, 0, 0);
 		build->Emit(instr, check, op1.RegNum, op2.RegNum);
-		build->Emit(OP_JMP, 1);
-		build->Emit(OP_LI, to.RegNum, 1);
+		if (!forcompare)
+		{
+			build->Emit(OP_JMP, 1);
+			build->Emit(OP_LI, to.RegNum, 1);
+		}
 		return to;
 	}
+}
+
+ExpEmit FxCompareRel::Emit(VMFunctionBuilder *build)
+{
+	return EmitCommon(build, false, false);
+}
+
+void FxCompareRel::EmitCompare(VMFunctionBuilder *build, bool invert, TArray<size_t> &patchspots_yes, TArray<size_t> &patchspots_no)
+{
+	ExpEmit emit = EmitCommon(build, true, invert);
+	emit.Free(build);
+	patchspots_no.Push(build->Emit(OP_JMP, 0));
 }
 
 //==========================================================================
@@ -3421,7 +3515,7 @@ error:
 //
 //==========================================================================
 
-ExpEmit FxCompareEq::Emit(VMFunctionBuilder *build)
+ExpEmit FxCompareEq::EmitCommon(VMFunctionBuilder *build, bool forcompare, bool invert)
 {
 	ExpEmit op1 = left->Emit(build);
 	ExpEmit op2 = right->Emit(build);
@@ -3435,13 +3529,17 @@ ExpEmit FxCompareEq::Emit(VMFunctionBuilder *build)
 		int a = Operator == TK_Eq ? CMP_EQ :
 			Operator == TK_Neq ? CMP_EQ | CMP_CHECK : CMP_EQ | CMP_APPROX;
 
-		if (op1.Konst) a|= CMP_BK;
+		if (op1.Konst) a |= CMP_BK;
 		if (op2.Konst) a |= CMP_CK;
+		if (invert) a ^= CMP_CHECK;
 
-		build->Emit(OP_LI, to.RegNum, 0, 0);
+		if (!forcompare) build->Emit(OP_LI, to.RegNum, 0, 0);
 		build->Emit(OP_CMPS, a, op1.RegNum, op2.RegNum);
-		build->Emit(OP_JMP, 1);
-		build->Emit(OP_LI, to.RegNum, 1);
+		if (!forcompare)
+		{
+			build->Emit(OP_JMP, 1);
+			build->Emit(OP_LI, to.RegNum, 1);
+		}
 		op1.Free(build);
 		op2.Free(build);
 		return to;
@@ -3474,12 +3572,27 @@ ExpEmit FxCompareEq::Emit(VMFunctionBuilder *build)
 		}
 
 		// See FxUnaryNotBoolean for comments, since it's the same thing.
-		build->Emit(OP_LI, to.RegNum, 0, 0);
-		build->Emit(instr, Operator == TK_ApproxEq ? CMP_APPROX : ((Operator != TK_Eq) ? CMP_CHECK : 0), op1.RegNum, op2.RegNum);
-		build->Emit(OP_JMP, 1);
-		build->Emit(OP_LI, to.RegNum, 1);
+		if (!forcompare) build->Emit(OP_LI, to.RegNum, 0, 0);
+		build->Emit(instr, int(invert) ^ (Operator == TK_ApproxEq ? CMP_APPROX : ((Operator != TK_Eq) ? CMP_CHECK : 0)), op1.RegNum, op2.RegNum);
+		if (!forcompare)
+		{
+			build->Emit(OP_JMP, 1);
+			build->Emit(OP_LI, to.RegNum, 1);
+		}
 		return to;
 	}
+}
+
+ExpEmit FxCompareEq::Emit(VMFunctionBuilder *build)
+{
+	return EmitCommon(build, false, false);
+}
+
+void FxCompareEq::EmitCompare(VMFunctionBuilder *build, bool invert, TArray<size_t> &patchspots_yes, TArray<size_t> &patchspots_no)
+{
+	ExpEmit emit = EmitCommon(build, true, invert);
+	emit.Free(build);
+	patchspots_no.Push(build->Emit(OP_JMP, 0));
 }
 
 //==========================================================================
@@ -4078,23 +4191,19 @@ void FxBinaryLogical::Flatten()
 
 ExpEmit FxBinaryLogical::Emit(VMFunctionBuilder *build)
 {
-	TArray<size_t> patchspots;
+	TArray<size_t> yes, no;
+	bool invert = Operator == TK_OrOr;
 
-	int zero = build->GetConstantInt(0);
 	for (unsigned i = 0; i < list.Size(); i++)
 	{
-		assert(list[i]->ValueType->GetRegType() == REGT_INT);
-		ExpEmit op1 = list[i]->Emit(build);
-		assert(!op1.Konst);
-		op1.Free(build);
-		build->Emit(OP_EQ_K, (Operator == TK_AndAnd) ? 1 : 0, op1.RegNum, zero);
-		patchspots.Push(build->Emit(OP_JMP, 0, 0, 0));
+		list[i]->EmitCompare(build, invert, yes, no);
 	}
+	build->BackpatchListToHere(yes);
 	ExpEmit to(build, REGT_INT);
 	build->Emit(OP_LI, to.RegNum, (Operator == TK_AndAnd) ? 1 : 0);
 	build->Emit(OP_JMP, 1);
+	build->BackpatchListToHere(no);
 	auto ctarget = build->Emit(OP_LI, to.RegNum, (Operator == TK_AndAnd) ? 0 : 1);
-	for (auto addr : patchspots) build->Backpatch(addr, ctarget);
 	list.DeleteAndClear();
 	list.ShrinkToFit();
 	return to;
@@ -4464,21 +4573,17 @@ FxExpression *FxConditional::Resolve(FCompileContext& ctx)
 
 ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 {
-	size_t truejump, falsejump;
-	ExpEmit out;
+	size_t truejump;
+	ExpEmit out, falseout;
 
 	// The true and false expressions ought to be assigned to the
 	// same temporary instead of being copied to it. Oh well; good enough
 	// for now.
-	ExpEmit cond = condition->Emit(build);
-	assert(cond.RegType == REGT_INT && !cond.Konst);
+	TArray<size_t> yes, no;
+	condition->EmitCompare(build, false, yes, no);
 
-	// Test condition.
-	build->Emit(OP_EQ_K, 1, cond.RegNum, build->GetConstantInt(0));
-	falsejump = build->Emit(OP_JMP, 0);
-	cond.Free(build);
+	build->BackpatchListToHere(yes);
 
-	// Evaluate true expression.
 	if (truex->isConstant() && truex->ValueType->GetRegType() == REGT_INT)
 	{
 		out = ExpEmit(build, REGT_INT);
@@ -4518,7 +4623,7 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 	truejump = build->Emit(OP_JMP, 0);
 
 	// Evaluate false expression.
-	build->BackpatchToHere(falsejump);
+	build->BackpatchListToHere(no);
 	if (falsex->isConstant() && falsex->ValueType->GetRegType() == REGT_INT)
 	{
 		build->EmitLoadInt(out.RegNum, static_cast<FxConstant *>(falsex)->GetValue().GetInt());
@@ -4591,7 +4696,13 @@ FxExpression *FxAbs::Resolve(FCompileContext &ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(val, ctx);
 
-
+	if (val->ValueType == TypeBool)	// abs of a boolean is always the same as the operand
+	{
+		auto v = val;
+		val = nullptr;
+		delete this;
+		return v;
+	}
 	if (!val->IsNumeric())
 	{
 		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
@@ -5590,8 +5701,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		goto foundit;
 	}
 
-	auto cvar = FindCVar(Identifier.GetChars(), nullptr);
-	if (cvar != nullptr)
+	if (auto *cvar = FindCVar(Identifier.GetChars(), nullptr))
 	{
 		if (cvar->GetFlags() & CVAR_USERINFO)
 		{
@@ -8424,9 +8534,7 @@ ExpEmit FxSequence::Emit(VMFunctionBuilder *build)
 {
 	for (unsigned i = 0; i < Expressions.Size(); ++i)
 	{
-		ExpEmit v = Expressions[i]->Emit(build);
-		// Throw away any result. We don't care about it.
-		v.Free(build);
+		Expressions[i]->EmitStatement(build);
 	}
 	return ExpEmit();
 }
@@ -8722,7 +8830,7 @@ ExpEmit FxSwitchStatement::Emit(VMFunctionBuilder *build)
 			break;
 
 		default:
-			line->Emit(build);
+			line->EmitStatement(build);
 			break;
 		}
 	}
@@ -8876,68 +8984,28 @@ FxExpression *FxIfStatement::Resolve(FCompileContext &ctx)
 ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit v;
-	size_t jumpspot;
-	FxExpression *path1, *path2;
-	int condcheck;
+	size_t jumpspot = ~0u;
 
-	// This is pretty much copied from FxConditional, except we don't
-	// keep any results.
-	ExpEmit cond = Condition->Emit(build);
-	assert(cond.RegType != REGT_STRING && !cond.Konst);
+	TArray<size_t> yes, no;
+	Condition->EmitCompare(build, false, yes, no);
 
 	if (WhenTrue != nullptr)
 	{
-		path1 = WhenTrue;
-		path2 = WhenFalse;
-		condcheck = 1;
+		build->BackpatchListToHere(yes);
+		WhenTrue->EmitStatement(build);
+	}
+	if (WhenFalse != nullptr)
+	{
+		if (!WhenTrue->CheckReturn()) jumpspot = build->Emit(OP_JMP, 0);	// no need to emit a jump if the block returns.
+		build->BackpatchListToHere(no);
+		WhenFalse->EmitStatement(build);
+		if (jumpspot != ~0u) build->BackpatchToHere(jumpspot);
+		if (WhenTrue == nullptr) build->BackpatchListToHere(yes);
 	}
 	else
 	{
-		// When there is only a false path, reverse the condition so we can
-		// treat it as a true path.
-		assert(WhenFalse != nullptr);
-		path1 = WhenFalse;
-		path2 = nullptr;
-		condcheck = 0;
+		build->BackpatchListToHere(no);
 	}
-
-	// Test condition.
-
-	switch (cond.RegType)
-	{
-	default:
-	case REGT_INT:
-		build->Emit(OP_EQ_K, condcheck, cond.RegNum, build->GetConstantInt(0));
-		break;
-
-	case REGT_FLOAT:
-		build->Emit(OP_EQF_K, condcheck, cond.RegNum, build->GetConstantFloat(0));
-		break;
-
-	case REGT_POINTER:
-		build->Emit(OP_EQA_K, condcheck, cond.RegNum, build->GetConstantAddress(nullptr, ATAG_GENERIC));
-		break;
-	}
-	jumpspot = build->Emit(OP_JMP, 0);
-	cond.Free(build);
-
-	// Evaluate first path
-	v = path1->Emit(build);
-	v.Free(build);
-	if (path2 != nullptr)
-	{
-		size_t path1jump;
-		
-		// if the branch ends with a return we do not need a terminating jmp.
-		if (!path1->CheckReturn()) path1jump = build->Emit(OP_JMP, 0);
-		else path1jump = 0xffffffff;
-		// Evaluate second path
-		build->BackpatchToHere(jumpspot);
-		v = path2->Emit(build);
-		v.Free(build);
-		jumpspot = path1jump;
-	}
-	if (jumpspot != 0xffffffff) build->BackpatchToHere(jumpspot);
 	return ExpEmit();
 }
 
@@ -9045,35 +9113,27 @@ ExpEmit FxWhileLoop::Emit(VMFunctionBuilder *build)
 	assert(Condition->ValueType == TypeBool);
 
 	size_t loopstart, loopend;
-	size_t jumpspot;
+	TArray<size_t> yes, no;
 
 	// Evaluate the condition and execute/break out of the loop.
 	loopstart = build->GetAddress();
 	if (!Condition->isConstant())
 	{
-		ExpEmit cond = Condition->Emit(build);
-		build->Emit(OP_TEST, cond.RegNum, 0);
-		jumpspot = build->Emit(OP_JMP, 0);
-		cond.Free(build);
+		Condition->EmitCompare(build, false, yes, no);
 	}
 	else assert(static_cast<FxConstant *>(Condition)->GetValue().GetBool() == true);
 
+	build->BackpatchListToHere(yes);
 	// Execute the loop's content.
 	if (Code != nullptr)
 	{
-		ExpEmit code = Code->Emit(build);
-		code.Free(build);
+		Code->EmitStatement(build);
 	}
 
 	// Loop back.
 	build->Backpatch(build->Emit(OP_JMP, 0), loopstart);
+	build->BackpatchListToHere(no);
 	loopend = build->GetAddress();
-
-	if (!Condition->isConstant()) 
-	{
-		build->Backpatch(jumpspot, loopend);
-	}
-
 	Backpatch(build, loopstart, loopend);
 	return ExpEmit();
 }
@@ -9142,25 +9202,23 @@ ExpEmit FxDoWhileLoop::Emit(VMFunctionBuilder *build)
 	codestart = build->GetAddress();
 	if (Code != nullptr)
 	{
-		ExpEmit code = Code->Emit(build);
-		code.Free(build);
+		Code->EmitStatement(build);
 	}
 
 	// Evaluate the condition and execute/break out of the loop.
 	loopstart = build->GetAddress();
 	if (!Condition->isConstant())
 	{
-		ExpEmit cond = Condition->Emit(build);
-		build->Emit(OP_TEST, cond.RegNum, 1);
-		cond.Free(build);
-		build->Backpatch(build->Emit(OP_JMP, 0), codestart);
+		TArray<size_t> yes, no;
+		Condition->EmitCompare(build, true, yes, no);
+		build->BackpatchList(no, codestart);
+		build->BackpatchListToHere(yes);
 	}
 	else if (static_cast<FxConstant *>(Condition)->GetValue().GetBool() == true)
 	{ // Always looping
 		build->Backpatch(build->Emit(OP_JMP, 0), codestart);
 	}
 	loopend = build->GetAddress();
-
 	Backpatch(build, loopstart, loopend);
 
 	return ExpEmit();
@@ -9234,7 +9292,7 @@ ExpEmit FxForLoop::Emit(VMFunctionBuilder *build)
 
 	size_t loopstart, loopend;
 	size_t codestart;
-	size_t jumpspot;
+	TArray<size_t> yes, no;
 
 	// Init statement (only used by DECORATE. ZScript is pulling it before the loop statement and enclosing the entire loop in a compound statement so that Init can have local variables.)
 	if (Init != nullptr)
@@ -9247,17 +9305,14 @@ ExpEmit FxForLoop::Emit(VMFunctionBuilder *build)
 	codestart = build->GetAddress();
 	if (Condition != nullptr)
 	{
-		ExpEmit cond = Condition->Emit(build);
-		build->Emit(OP_TEST, cond.RegNum, 0);
-		cond.Free(build);
-		jumpspot = build->Emit(OP_JMP, 0);
+		Condition->EmitCompare(build, false, yes, no);
 	}
 
+	build->BackpatchListToHere(yes);
 	// Execute the loop's content.
 	if (Code != nullptr)
 	{
-		ExpEmit code = Code->Emit(build);
-		code.Free(build);
+		Code->EmitStatement(build);
 	}
 
 	// Iteration statement.
@@ -9271,10 +9326,7 @@ ExpEmit FxForLoop::Emit(VMFunctionBuilder *build)
 
 	// End of loop.
 	loopend = build->GetAddress();
-	if (Condition != nullptr)
-	{
-		build->Backpatch(jumpspot, loopend);
-	}
+	build->BackpatchListToHere(no);
 
 	Backpatch(build, loopstart, loopend);
 	return ExpEmit();
@@ -9655,7 +9707,7 @@ int BuiltinClassCast(VMValue *param, TArray<VMValue> &defaultparam, int numparam
 	PARAM_PROLOGUE;
 	PARAM_CLASS(from, DObject);
 	PARAM_CLASS(to, DObject);
-	ACTION_RETURN_OBJECT(from->IsDescendantOf(to) ? from : nullptr);
+	ACTION_RETURN_OBJECT(from && to && from->IsDescendantOf(to) ? from : nullptr);
 }
 
 ExpEmit FxClassPtrCast::Emit(VMFunctionBuilder *build)
@@ -9922,6 +9974,19 @@ FxExpression *FxLocalVariableDeclaration::Resolve(FCompileContext &ctx)
 	{
 		if (Init) Init = new FxTypeCast(Init, ValueType, false);
 		SAFE_RESOLVE_OPT(Init, ctx);
+	}
+	if (Name != NAME_None)
+	{
+		for (auto l : ctx.Block->LocalVars)
+		{
+			if (l->Name == Name)
+			{
+				ScriptPosition.Message(MSG_ERROR, "Local variable %s already defined", Name.GetChars());
+				l->ScriptPosition.Message(MSG_ERROR, "Original definition is here ");
+				delete this;
+				return nullptr;
+			}
+		}
 	}
 	ctx.Block->LocalVars.Push(this);
 	return this;

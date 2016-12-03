@@ -83,6 +83,7 @@ xx(MOVEA,	mov,	RPRP,		NOP,	0, 0),		// aA = aB
 xx(MOVEV2,	mov2,	RFRF,		NOP,	0, 0),		// fA = fB (2 elements)
 xx(MOVEV3,	mov3,	RFRF,		NOP,	0, 0),		// fA = fB (3 elements)
 xx(CAST,	cast,	CAST,		NOP,	0, 0),		// xA = xB, conversion specified by C
+xx(CASTB,	castb,	CAST,		NOP,	0, 0),		// xA = !!xB, type specified by C
 
 // Control flow.
 xx(TEST,	test,	RII16,		NOP,	0, 0),		// if (dA != BC) then pc++

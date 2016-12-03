@@ -183,7 +183,19 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 					numret = 2;
 				}
 			}
-			GlobalVMStack.Call(state->ActionFunc, params, state->ActionFunc->ImplicitArgs, wantret, numret);
+			try
+			{
+				GlobalVMStack.Call(state->ActionFunc, params, state->ActionFunc->ImplicitArgs, wantret, numret);
+			}
+			catch (CVMAbortException &err)
+			{
+				err.MaybePrintMessage();
+				auto owner = FState::StaticFindStateOwner(state);
+				int offs = int(state - owner->OwnedStates);
+				err.stacktrace.AppendFormat("Called from state %s.%d in inventory state chain in %s\n", owner->TypeName.GetChars(), offs, GetClass()->TypeName.GetChars());
+				throw;
+			}
+
 			// As long as even one state succeeds, the whole chain succeeds unless aborted below.
 			// A state that wants to jump does not count as "succeeded".
 			if (nextstate == NULL)
@@ -247,7 +259,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckClass)
 		PARAM_BOOL_DEF	(match_superclass);
 
 		self = COPY_AAPTR(self, pick_pointer);
-		if (self == NULL)
+		if (self == nullptr || checktype == nullptr)
 		{
 			ret->SetInt(false);
 		}
@@ -1773,9 +1785,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomComboAttack)
 // State jump function
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_JumpIfNoAmmo)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_JumpIfNoAmmo)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 	PARAM_STATE_ACTION(jump);
 
 	if (!ACTION_CALL_FROM_PSPRITE() || self->player->ReadyWeapon == nullptr)
@@ -1844,9 +1856,9 @@ static void AimBulletMissile(AActor *proj, AActor *puff, int flags, bool temp, b
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_FireBullets)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_FireBullets)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 	PARAM_ANGLE		(spread_xy);
 	PARAM_ANGLE		(spread_z);
 	PARAM_INT		(numbullets);
@@ -1974,9 +1986,9 @@ enum FP_Flags
 	FPF_TRANSFERTRANSLATION = 2,
 	FPF_NOAUTOAIM = 4,
 };
-DEFINE_ACTION_FUNCTION(AActor, A_FireCustomMissile)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_FireCustomMissile)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 	PARAM_CLASS		(ti, AActor);
 	PARAM_ANGLE_DEF	(angle);
 	PARAM_BOOL_DEF	(useammo);
@@ -2051,9 +2063,9 @@ enum
 	CPF_STEALARMOR = 32,
 };
 
-DEFINE_ACTION_FUNCTION(AActor, A_CustomPunch)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_CustomPunch)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 	PARAM_INT		(damage);
 	PARAM_BOOL_DEF	(norandom);
 	PARAM_INT_DEF	(flags);
@@ -2155,9 +2167,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomPunch)
 // customizable railgun attack function
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_RailAttack)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_RailAttack)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 	PARAM_INT		(damage);
 	PARAM_INT_DEF	(spawnofs_xy);
 	PARAM_BOOL_DEF	(useammo);
@@ -4443,9 +4455,9 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfInTargetLOS)
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_CheckForReload)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_CheckForReload)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 
 	if ( self->player == NULL || self->player->ReadyWeapon == NULL )
 	{
@@ -4496,9 +4508,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckForReload)
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_ResetReloadCounter)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_ResetReloadCounter)
 {
-	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE(AStateProvider);
 
 	if (self->player == NULL || self->player->ReadyWeapon == NULL)
 		return 0;

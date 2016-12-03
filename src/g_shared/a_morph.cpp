@@ -363,7 +363,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 DEFINE_ACTION_FUNCTION(_PlayerInfo, UndoPlayerMorph)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
-	PARAM_POINTER(player, player_t);
+	PARAM_POINTER_NOT_NULL(player, player_t);
 	PARAM_INT_DEF(unmorphflag);
 	PARAM_BOOL_DEF(force);
 	ACTION_RETURN_BOOL(P_UndoPlayerMorph(self, player, unmorphflag, force));
@@ -613,7 +613,14 @@ void InitAllPowerupEffects(AInventory *item)
 
 // Base class for morphing projectiles --------------------------------------
 
-IMPLEMENT_CLASS(AMorphProjectile, false, false)
+IMPLEMENT_CLASS(AMorphProjectile, false, true)
+
+IMPLEMENT_POINTERS_START(AMorphProjectile)
+	IMPLEMENT_POINTER(PlayerClass)
+	IMPLEMENT_POINTER(MonsterClass)
+	IMPLEMENT_POINTER(MorphFlash)
+	IMPLEMENT_POINTER(UnMorphFlash)
+IMPLEMENT_POINTERS_END
 
 DEFINE_FIELD(AMorphProjectile, PlayerClass)
 DEFINE_FIELD(AMorphProjectile, MonsterClass)

@@ -1775,7 +1775,14 @@ void PO_Init (void)
 			}
 		}
 	}
-
+	// clear all polyobj specials so that they do not obstruct using other lines.
+	for (int i = 0; i < numlines; i++)
+	{
+		if (lines[i].special == Polyobj_ExplicitLine || lines[i].special == Polyobj_StartLine)
+		{
+			lines[i].special = 0;
+		}
+	}
 }
 
 //==========================================================================

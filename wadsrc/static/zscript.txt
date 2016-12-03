@@ -1,212 +1,212 @@
-zscript/base.txt
-zscript/constants.txt
-zscript/actor.txt
-zscript/actor_checks.txt
+#include "zscript/base.txt"
+#include "zscript/constants.txt"
+#include "zscript/actor.txt"
+#include "zscript/actor_checks.txt"
 
-zscript/shared/inventory.txt
-zscript/shared/inv_misc.txt
-zscript/shared/weapons.txt
-zscript/shared/armor.txt
-zscript/shared/powerups.txt
-zscript/shared/player.txt
-zscript/shared/morph.txt
-zscript/shared/botstuff.txt
-zscript/shared/sharedmisc.txt
-zscript/shared/blood.txt
-zscript/shared/debris.txt
-zscript/shared/decal.txt
-zscript/shared/splashes.txt
-zscript/shared/itemeffects.txt
-zscript/shared/fountain.txt
-zscript/shared/spark.txt
-zscript/shared/soundsequence.txt
-zscript/shared/soundenvironment.txt
-zscript/shared/bridge.txt
-zscript/shared/specialspot.txt
-zscript/shared/teleport.txt
-zscript/shared/camera.txt
-zscript/shared/movingcamera.txt
-zscript/shared/mapmarker.txt
-zscript/shared/waterzone.txt
-zscript/shared/skies.txt
-zscript/shared/hatetarget.txt
-zscript/shared/secrettrigger.txt
-zscript/shared/setcolor.txt
-zscript/shared/sectoraction.txt
-zscript/shared/ice.txt
-zscript/shared/dog.txt
-zscript/shared/fastprojectile.txt
-zscript/shared/dynlights.txt
+#include "zscript/shared/inventory.txt"
+#include "zscript/shared/inv_misc.txt"
+#include "zscript/shared/weapons.txt"
+#include "zscript/shared/armor.txt"
+#include "zscript/shared/powerups.txt"
+#include "zscript/shared/player.txt"
+#include "zscript/shared/morph.txt"
+#include "zscript/shared/botstuff.txt"
+#include "zscript/shared/sharedmisc.txt"
+#include "zscript/shared/blood.txt"
+#include "zscript/shared/debris.txt"
+#include "zscript/shared/decal.txt"
+#include "zscript/shared/splashes.txt"
+#include "zscript/shared/itemeffects.txt"
+#include "zscript/shared/fountain.txt"
+#include "zscript/shared/spark.txt"
+#include "zscript/shared/soundsequence.txt"
+#include "zscript/shared/soundenvironment.txt"
+#include "zscript/shared/bridge.txt"
+#include "zscript/shared/specialspot.txt"
+#include "zscript/shared/teleport.txt"
+#include "zscript/shared/camera.txt"
+#include "zscript/shared/movingcamera.txt"
+#include "zscript/shared/mapmarker.txt"
+#include "zscript/shared/waterzone.txt"
+#include "zscript/shared/skies.txt"
+#include "zscript/shared/hatetarget.txt"
+#include "zscript/shared/secrettrigger.txt"
+#include "zscript/shared/setcolor.txt"
+#include "zscript/shared/sectoraction.txt"
+#include "zscript/shared/ice.txt"
+#include "zscript/shared/dog.txt"
+#include "zscript/shared/fastprojectile.txt"
+#include "zscript/shared/dynlights.txt"
 
-zscript/doom/doomplayer.txt
-zscript/doom/possessed.txt
-zscript/doom/doomimp.txt
-zscript/doom/demon.txt
-zscript/doom/lostsoul.txt
-zscript/doom/cacodemon.txt
-zscript/doom/bruiser.txt
-zscript/doom/revenant.txt
-zscript/doom/arachnotron.txt
-zscript/doom/fatso.txt
-zscript/doom/painelemental.txt
-zscript/doom/archvile.txt
-zscript/doom/cyberdemon.txt
-zscript/doom/spidermaster.txt
-zscript/doom/keen.txt
-zscript/doom/bossbrain.txt
-zscript/doom/weaponfist.txt
-zscript/doom/weaponpistol.txt
-zscript/doom/weaponshotgun.txt
-zscript/doom/weaponssg.txt
-zscript/doom/weaponchaingun.txt
-zscript/doom/weaponchainsaw.txt
-zscript/doom/weaponrlaunch.txt
-zscript/doom/weaponplasma.txt
-zscript/doom/weaponbfg.txt
+#include "zscript/doom/doomplayer.txt"
+#include "zscript/doom/possessed.txt"
+#include "zscript/doom/doomimp.txt"
+#include "zscript/doom/demon.txt"
+#include "zscript/doom/lostsoul.txt"
+#include "zscript/doom/cacodemon.txt"
+#include "zscript/doom/bruiser.txt"
+#include "zscript/doom/revenant.txt"
+#include "zscript/doom/arachnotron.txt"
+#include "zscript/doom/fatso.txt"
+#include "zscript/doom/painelemental.txt"
+#include "zscript/doom/archvile.txt"
+#include "zscript/doom/cyberdemon.txt"
+#include "zscript/doom/spidermaster.txt"
+#include "zscript/doom/keen.txt"
+#include "zscript/doom/bossbrain.txt"
+#include "zscript/doom/weaponfist.txt"
+#include "zscript/doom/weaponpistol.txt"
+#include "zscript/doom/weaponshotgun.txt"
+#include "zscript/doom/weaponssg.txt"
+#include "zscript/doom/weaponchaingun.txt"
+#include "zscript/doom/weaponchainsaw.txt"
+#include "zscript/doom/weaponrlaunch.txt"
+#include "zscript/doom/weaponplasma.txt"
+#include "zscript/doom/weaponbfg.txt"
 
-zscript/doom/deadthings.txt
-zscript/doom/doomammo.txt
-zscript/doom/doomarmor.txt
-zscript/doom/doomartifacts.txt
-zscript/doom/doomhealth.txt
-zscript/doom/doomkeys.txt
-zscript/doom/doommisc.txt
-zscript/doom/doomdecorations.txt
-zscript/doom/doomweapons.txt
-zscript/doom/stealthmonsters.txt
-zscript/doom/scriptedmarine.txt
+#include "zscript/doom/deadthings.txt"
+#include "zscript/doom/doomammo.txt"
+#include "zscript/doom/doomarmor.txt"
+#include "zscript/doom/doomartifacts.txt"
+#include "zscript/doom/doomhealth.txt"
+#include "zscript/doom/doomkeys.txt"
+#include "zscript/doom/doommisc.txt"
+#include "zscript/doom/doomdecorations.txt"
+#include "zscript/doom/doomweapons.txt"
+#include "zscript/doom/stealthmonsters.txt"
+#include "zscript/doom/scriptedmarine.txt"
 
-zscript/raven/artiegg.txt
-zscript/raven/artitele.txt
-zscript/raven/ravenartifacts.txt
-zscript/raven/ravenhealth.txt
-zscript/raven/ravenambient.txt
-zscript/raven/minotaur.txt
+#include "zscript/raven/artiegg.txt"
+#include "zscript/raven/artitele.txt"
+#include "zscript/raven/ravenartifacts.txt"
+#include "zscript/raven/ravenhealth.txt"
+#include "zscript/raven/ravenambient.txt"
+#include "zscript/raven/minotaur.txt"
 
-zscript/heretic/hereticplayer.txt
-zscript/heretic/hereticammo.txt
-zscript/heretic/hereticarmor.txt
-zscript/heretic/hereticartifacts.txt
-zscript/heretic/heretickeys.txt
-zscript/heretic/hereticdecorations.txt
-zscript/heretic/hereticmisc.txt
-zscript/heretic/mummy.txt
-zscript/heretic/clink.txt
-zscript/heretic/beast.txt
-zscript/heretic/snake.txt
-zscript/heretic/hereticimp.txt
-zscript/heretic/knight.txt
-zscript/heretic/wizard.txt
-zscript/heretic/ironlich.txt
-zscript/heretic/dsparil.txt
-zscript/heretic/chicken.txt
-zscript/heretic/weaponstaff.txt
-zscript/heretic/weaponwand.txt
-zscript/heretic/weaponcrossbow.txt
-zscript/heretic/weapongauntlets.txt
-zscript/heretic/weaponmace.txt
-zscript/heretic/weaponblaster.txt
-zscript/heretic/weaponskullrod.txt
-zscript/heretic/weaponphoenix.txt
+#include "zscript/heretic/hereticplayer.txt"
+#include "zscript/heretic/hereticammo.txt"
+#include "zscript/heretic/hereticarmor.txt"
+#include "zscript/heretic/hereticartifacts.txt"
+#include "zscript/heretic/heretickeys.txt"
+#include "zscript/heretic/hereticdecorations.txt"
+#include "zscript/heretic/hereticmisc.txt"
+#include "zscript/heretic/mummy.txt"
+#include "zscript/heretic/clink.txt"
+#include "zscript/heretic/beast.txt"
+#include "zscript/heretic/snake.txt"
+#include "zscript/heretic/hereticimp.txt"
+#include "zscript/heretic/knight.txt"
+#include "zscript/heretic/wizard.txt"
+#include "zscript/heretic/ironlich.txt"
+#include "zscript/heretic/dsparil.txt"
+#include "zscript/heretic/chicken.txt"
+#include "zscript/heretic/weaponstaff.txt"
+#include "zscript/heretic/weaponwand.txt"
+#include "zscript/heretic/weaponcrossbow.txt"
+#include "zscript/heretic/weapongauntlets.txt"
+#include "zscript/heretic/weaponmace.txt"
+#include "zscript/heretic/weaponblaster.txt"
+#include "zscript/heretic/weaponskullrod.txt"
+#include "zscript/heretic/weaponphoenix.txt"
 
-zscript/hexen/baseweapons.txt
-zscript/hexen/korax.txt
-zscript/hexen/fighterplayer.txt
-zscript/hexen/clericplayer.txt
-zscript/hexen/mageplayer.txt
-zscript/hexen/pig.txt
-zscript/hexen/flame.txt
-zscript/hexen/flies.txt
-zscript/hexen/hexenarmor.txt
-zscript/hexen/hexendecorations.txt
-zscript/hexen/hexenkeys.txt
-zscript/hexen/hexenspecialdecs.txt
-zscript/hexen/mana.txt
-zscript/hexen/puzzleitems.txt
-zscript/hexen/scriptprojectiles.txt
-zscript/hexen/speedboots.txt
-zscript/hexen/ettin.txt
-zscript/hexen/centaur.txt
-zscript/hexen/demons.txt
-zscript/hexen/firedemon.txt
-zscript/hexen/fog.txt
-zscript/hexen/summon.txt
-zscript/hexen/flechette.txt
-zscript/hexen/clericboss.txt
-zscript/hexen/fighterboss.txt
-zscript/hexen/mageboss.txt
-zscript/hexen/bats.txt
-zscript/hexen/bishop.txt
-zscript/hexen/blastradius.txt
-zscript/hexen/boostarmor.txt
-zscript/hexen/clericmace.txt
-zscript/hexen/clericflame.txt
-zscript/hexen/clericholy.txt
-zscript/hexen/clericstaff.txt
-zscript/hexen/magewand.txt
-zscript/hexen/magecone.txt
-zscript/hexen/magelightning.txt
-zscript/hexen/magestaff.txt
-zscript/hexen/fighterfist.txt
-zscript/hexen/fighteraxe.txt
-zscript/hexen/fighterhammer.txt
-zscript/hexen/fighterquietus.txt
-zscript/hexen/dragon.txt
-zscript/hexen/healingradius.txt
-zscript/hexen/teleportother.txt
-zscript/hexen/iceguy.txt
-zscript/hexen/serpent.txt
-zscript/hexen/spike.txt
-zscript/hexen/wraith.txt
-zscript/hexen/heresiarch.txt
+#include "zscript/hexen/baseweapons.txt"
+#include "zscript/hexen/korax.txt"
+#include "zscript/hexen/fighterplayer.txt"
+#include "zscript/hexen/clericplayer.txt"
+#include "zscript/hexen/mageplayer.txt"
+#include "zscript/hexen/pig.txt"
+#include "zscript/hexen/flame.txt"
+#include "zscript/hexen/flies.txt"
+#include "zscript/hexen/hexenarmor.txt"
+#include "zscript/hexen/hexendecorations.txt"
+#include "zscript/hexen/hexenkeys.txt"
+#include "zscript/hexen/hexenspecialdecs.txt"
+#include "zscript/hexen/mana.txt"
+#include "zscript/hexen/puzzleitems.txt"
+#include "zscript/hexen/scriptprojectiles.txt"
+#include "zscript/hexen/speedboots.txt"
+#include "zscript/hexen/ettin.txt"
+#include "zscript/hexen/centaur.txt"
+#include "zscript/hexen/demons.txt"
+#include "zscript/hexen/firedemon.txt"
+#include "zscript/hexen/fog.txt"
+#include "zscript/hexen/summon.txt"
+#include "zscript/hexen/flechette.txt"
+#include "zscript/hexen/clericboss.txt"
+#include "zscript/hexen/fighterboss.txt"
+#include "zscript/hexen/mageboss.txt"
+#include "zscript/hexen/bats.txt"
+#include "zscript/hexen/bishop.txt"
+#include "zscript/hexen/blastradius.txt"
+#include "zscript/hexen/boostarmor.txt"
+#include "zscript/hexen/clericmace.txt"
+#include "zscript/hexen/clericflame.txt"
+#include "zscript/hexen/clericholy.txt"
+#include "zscript/hexen/clericstaff.txt"
+#include "zscript/hexen/magewand.txt"
+#include "zscript/hexen/magecone.txt"
+#include "zscript/hexen/magelightning.txt"
+#include "zscript/hexen/magestaff.txt"
+#include "zscript/hexen/fighterfist.txt"
+#include "zscript/hexen/fighteraxe.txt"
+#include "zscript/hexen/fighterhammer.txt"
+#include "zscript/hexen/fighterquietus.txt"
+#include "zscript/hexen/dragon.txt"
+#include "zscript/hexen/healingradius.txt"
+#include "zscript/hexen/teleportother.txt"
+#include "zscript/hexen/iceguy.txt"
+#include "zscript/hexen/serpent.txt"
+#include "zscript/hexen/spike.txt"
+#include "zscript/hexen/wraith.txt"
+#include "zscript/hexen/heresiarch.txt"
 
-zscript/strife/strifehumanoid.txt
-zscript/strife/strifeplayer.txt
-zscript/strife/strifeweapons.txt
-zscript/strife/spectral.txt
-zscript/strife/acolyte.txt
-zscript/strife/alienspectres.txt
-zscript/strife/beggars.txt
-zscript/strife/coin.txt
-zscript/strife/crusader.txt
-zscript/strife/entityboss.txt
-zscript/strife/inquisitor.txt
-zscript/strife/klaxon.txt
-zscript/strife/loremaster.txt
-zscript/strife/macil.txt
-zscript/strife/merchants.txt
-zscript/strife/peasants.txt
-zscript/strife/strifebishop.txt
-zscript/strife/oracle.txt
-zscript/strife/programmer.txt
-zscript/strife/questitems.txt
-zscript/strife/ratbuddy.txt
-zscript/strife/rebels.txt
-zscript/strife/reaver.txt
-zscript/strife/sentinel.txt
-zscript/strife/stalker.txt
-zscript/strife/strifeammo.txt
-zscript/strife/strifearmor.txt
-zscript/strife/strifefunctions.txt
-zscript/strife/strifeitems.txt
-zscript/strife/strifekeys.txt
-zscript/strife/strifestuff.txt
-zscript/strife/thingstoblowup.txt
-zscript/strife/templar.txt
-zscript/strife/zombie.txt
-zscript/strife/weapondagger.txt
-zscript/strife/weaponcrossbow.txt
-zscript/strife/weaponassault.txt
-zscript/strife/weaponmissile.txt
-zscript/strife/weaponflamer.txt
-zscript/strife/weapongrenade.txt
-zscript/strife/weaponmauler.txt
-zscript/strife/sigil.txt
+#include "zscript/strife/strifehumanoid.txt"
+#include "zscript/strife/strifeplayer.txt"
+#include "zscript/strife/strifeweapons.txt"
+#include "zscript/strife/spectral.txt"
+#include "zscript/strife/acolyte.txt"
+#include "zscript/strife/alienspectres.txt"
+#include "zscript/strife/beggars.txt"
+#include "zscript/strife/coin.txt"
+#include "zscript/strife/crusader.txt"
+#include "zscript/strife/entityboss.txt"
+#include "zscript/strife/inquisitor.txt"
+#include "zscript/strife/klaxon.txt"
+#include "zscript/strife/loremaster.txt"
+#include "zscript/strife/macil.txt"
+#include "zscript/strife/merchants.txt"
+#include "zscript/strife/peasants.txt"
+#include "zscript/strife/strifebishop.txt"
+#include "zscript/strife/oracle.txt"
+#include "zscript/strife/programmer.txt"
+#include "zscript/strife/questitems.txt"
+#include "zscript/strife/ratbuddy.txt"
+#include "zscript/strife/rebels.txt"
+#include "zscript/strife/reaver.txt"
+#include "zscript/strife/sentinel.txt"
+#include "zscript/strife/stalker.txt"
+#include "zscript/strife/strifeammo.txt"
+#include "zscript/strife/strifearmor.txt"
+#include "zscript/strife/strifefunctions.txt"
+#include "zscript/strife/strifeitems.txt"
+#include "zscript/strife/strifekeys.txt"
+#include "zscript/strife/strifestuff.txt"
+#include "zscript/strife/thingstoblowup.txt"
+#include "zscript/strife/templar.txt"
+#include "zscript/strife/zombie.txt"
+#include "zscript/strife/weapondagger.txt"
+#include "zscript/strife/weaponcrossbow.txt"
+#include "zscript/strife/weaponassault.txt"
+#include "zscript/strife/weaponmissile.txt"
+#include "zscript/strife/weaponflamer.txt"
+#include "zscript/strife/weapongrenade.txt"
+#include "zscript/strife/weaponmauler.txt"
+#include "zscript/strife/sigil.txt"
 
-zscript/chex/chexmonsters.txt
-zscript/chex/chexkeys.txt
-zscript/chex/chexammo.txt
-zscript/chex/chexweapons.txt
-zscript/chex/chexitems.txt
-zscript/chex/chexdecorations.txt
-zscript/chex/chexplayer.txt
+#include "zscript/chex/chexmonsters.txt"
+#include "zscript/chex/chexkeys.txt"
+#include "zscript/chex/chexammo.txt"
+#include "zscript/chex/chexweapons.txt"
+#include "zscript/chex/chexitems.txt"
+#include "zscript/chex/chexdecorations.txt"
+#include "zscript/chex/chexplayer.txt"

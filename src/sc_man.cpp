@@ -1007,7 +1007,7 @@ void FScanner::CheckOpen()
 //==========================================================================
 int FScriptPosition::ErrorCounter;
 int FScriptPosition::WarnCounter;
-bool FScriptPosition::StrictErrors;	// makes all OPTERRPR messages real errors.
+bool FScriptPosition::StrictErrors;	// makes all OPTERROR messages real errors.
 
 FScriptPosition::FScriptPosition(const FScriptPosition &other)
 {

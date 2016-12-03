@@ -805,35 +805,30 @@ map E6M3 "Untitled"
 cluster 1
 {
 	flat = "FLOOR25"
-	music = "MUS_CPTD"
 	exittext = lookup, "HE1TEXT"
 }
 
 cluster 2
 {
 	flat = "FLATHUH1"
-	music = "MUS_CPTD"
 	exittext = lookup, "HE2TEXT"
 }
 
 cluster 3
 {
 	flat = "FLTWAWA2"
-	music = "MUS_CPTD"
 	exittext = lookup, "HE3TEXT"
 }
 
 cluster 4
 {
 	flat = "FLOOR28"
-	music = "MUS_CPTD"
 	exittext = lookup, "HE4TEXT"
 }
 
 cluster 5
 {
 	flat = "FLOOR08"
-	music = "MUS_CPTD"
 	exittext = lookup, "HE5TEXT"
 }
 

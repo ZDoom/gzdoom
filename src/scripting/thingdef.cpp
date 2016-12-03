@@ -68,7 +68,6 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 void InitThingdef();
-TArray<PClassActor **> OptionalClassPtrs;
 
 // STATIC FUNCTION PROTOTYPES --------------------------------------------
 PClassActor *QuestItemClasses[31];
@@ -220,7 +219,7 @@ PFunction *FindClassMemberFunction(PStruct *selfcls, PStruct *funccls, FName nam
 //
 //==========================================================================
 
-void CreateDamageFunction(PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate)
+void CreateDamageFunction(PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate, int lumpnum)
 {
 	if (id == nullptr)
 	{
@@ -230,7 +229,7 @@ void CreateDamageFunction(PClassActor *info, AActor *defaults, FxExpression *id,
 	{
 		auto dmg = new FxReturnStatement(new FxIntCast(id, true), id->ScriptPosition);
 		auto funcsym = CreateAnonymousFunction(info, TypeSInt32, 0);
-		defaults->DamageFunc = FunctionBuildList.AddFunction(funcsym, dmg, FStringf("%s.DamageFunction", info->TypeName.GetChars()), fromDecorate);
+		defaults->DamageFunc = FunctionBuildList.AddFunction(funcsym, dmg, FStringf("%s.DamageFunction", info->TypeName.GetChars()), fromDecorate, -1, 0, lumpnum);
 	}
 }
 
@@ -365,7 +364,7 @@ static void CheckStates(PClassActor *obj)
 void ParseScripts();
 void ParseAllDecorate();
 
-void LoadActors ()
+void LoadActors()
 {
 	cycle_t timer;
 
@@ -387,8 +386,9 @@ void LoadActors ()
 	}
 	FScriptPosition::ResetErrorCounter();
 
-	for (auto ti : PClassActor::AllActorClasses)
+	for (int i = PClassActor::AllActorClasses.Size() - 1; i >= 0; i--)
 	{
+		auto ti = PClassActor::AllActorClasses[i];
 		if (ti->Size == TentativeClass)
 		{
 			if (ti->ObjectFlags & OF_Transient)
@@ -396,10 +396,7 @@ void LoadActors ()
 				Printf(TEXTCOLOR_ORANGE "Class %s referenced but not defined\n", ti->TypeName.GetChars());
 				FScriptPosition::WarnCounter++;
 				DObject::StaticPointerSubstitution(ti, nullptr);
-				for (auto op : OptionalClassPtrs)
-				{
-					if (*op == ti) *op = nullptr;
-				}
+				PClassActor::AllActorClasses.Delete(i);
 			}
 			else
 			{
@@ -418,7 +415,7 @@ void LoadActors ()
 
 
 		CheckStates(ti);
-		
+
 		if (ti->bDecorateClass && ti->IsDescendantOf(RUNTIME_CLASS(AStateProvider)))
 		{
 			// either a DECORATE based weapon or CustomInventory. 
@@ -427,7 +424,7 @@ void LoadActors ()
 			// hits an unsafe state. If we can find something here it can be handled wuth a compile error rather than a runtime error.
 			CheckForUnsafeStates(ti);
 		}
-		
+
 	}
 	if (FScriptPosition::ErrorCounter > 0)
 	{
@@ -445,6 +442,4 @@ void LoadActors ()
 		QuestItemClasses[i] = PClass::FindActor(fmt);
 	}
 	StateSourceLines.Clear();
-	OptionalClassPtrs.Clear();
-	OptionalClassPtrs.ShrinkToFit();
 }

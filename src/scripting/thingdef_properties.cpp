@@ -74,8 +74,6 @@
 #include "a_health.h"
 #include "a_keys.h"
 
-extern TArray<PClassActor **> OptionalClassPtrs;
-
 //==========================================================================
 //
 // Gets a class pointer and performs an error check for correct type
@@ -666,7 +664,7 @@ DEFINE_PROPERTY(damage, X, Actor)
 
 	defaults->DamageVal = dmgval;
 	// Only DECORATE can get here with a valid expression.
-	CreateDamageFunction(bag.Info, defaults, id, true);
+	CreateDamageFunction(bag.Info, defaults, id, true, bag.Lumpnum);
 }
 
 //==========================================================================
@@ -2307,8 +2305,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 			*pBlendColor = MakeSpecialColormap(65535);
 			return;
 		}
-
-		color = V_GetColor(NULL, name);
+		color = V_GetColor(NULL, name, &bag.ScriptPosition);
 	}
 	if (PROP_PARM_COUNT > 2)
 	{
@@ -2998,7 +2995,6 @@ DEFINE_CLASS_PROPERTY(playerclass, S, MorphProjectile)
 {
 	PROP_STRING_PARM(str, 0);
 	defaults->PlayerClass = FindClassTentativePlayerPawn(str, bag.fromDecorate);
-	if (bag.fromDecorate) OptionalClassPtrs.Push((PClassActor**)&defaults->PlayerClass);
 }
 
 //==========================================================================
@@ -3008,7 +3004,6 @@ DEFINE_CLASS_PROPERTY(monsterclass, S, MorphProjectile)
 {
 	PROP_STRING_PARM(str, 0);
 	defaults->MonsterClass = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
-	if (bag.fromDecorate) OptionalClassPtrs.Push(&defaults->MonsterClass);
 }
 
 //==========================================================================
@@ -3036,7 +3031,6 @@ DEFINE_CLASS_PROPERTY(morphflash, S, MorphProjectile)
 {
 	PROP_STRING_PARM(str, 0);
 	defaults->MorphFlash = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
-	if (bag.fromDecorate) OptionalClassPtrs.Push(&defaults->MorphFlash);
 }
 
 //==========================================================================
@@ -3046,7 +3040,6 @@ DEFINE_CLASS_PROPERTY(unmorphflash, S, MorphProjectile)
 {
 	PROP_STRING_PARM(str, 0);
 	defaults->UnMorphFlash = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
-	if (bag.fromDecorate) OptionalClassPtrs.Push(&defaults->UnMorphFlash);
 }
 
 //==========================================================================
@@ -3056,7 +3049,6 @@ DEFINE_CLASS_PROPERTY(playerclass, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
 	defaults->PlayerClass = FindClassTentativePlayerPawn(str, bag.fromDecorate);
-	if (bag.fromDecorate) OptionalClassPtrs.Push((PClassActor**)&defaults->PlayerClass);
 }
 
 //==========================================================================
@@ -3075,7 +3067,6 @@ DEFINE_CLASS_PROPERTY(morphflash, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
 	defaults->MorphFlash = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
-	if (bag.fromDecorate) OptionalClassPtrs.Push(&defaults->MorphFlash);
 }
 
 //==========================================================================
@@ -3085,7 +3076,6 @@ DEFINE_CLASS_PROPERTY(unmorphflash, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
 	defaults->UnMorphFlash = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
-	if (bag.fromDecorate) OptionalClassPtrs.Push(&defaults->UnMorphFlash);
 }
 
 

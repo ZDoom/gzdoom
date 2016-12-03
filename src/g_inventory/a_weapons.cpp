@@ -66,6 +66,9 @@ IMPLEMENT_POINTERS_START(AWeapon)
 	IMPLEMENT_POINTER(Ammo1)
 	IMPLEMENT_POINTER(Ammo2)
 	IMPLEMENT_POINTER(SisterWeapon)
+	IMPLEMENT_POINTER(AmmoType1)
+	IMPLEMENT_POINTER(AmmoType2)
+	IMPLEMENT_POINTER(SisterWeaponType)
 IMPLEMENT_POINTERS_END
 
 DEFINE_FIELD(AWeapon, WeaponFlags)
@@ -147,24 +150,6 @@ void PClassWeapon::DeriveData(PClass *newclass)
 	newc->SlotPriority = SlotPriority;
 }
 
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-void PClassWeapon::ReplaceClassRef(PClass *oldclass, PClass *newclass)
-{
-	Super::ReplaceClassRef(oldclass, newclass);
-	AWeapon *def = (AWeapon*)Defaults;
-	if (def != NULL)
-	{
-		if (def->AmmoType1 == oldclass) def->AmmoType1 = static_cast<PClassAmmo *>(newclass);
-		if (def->AmmoType2 == oldclass) def->AmmoType2 = static_cast<PClassAmmo *>(newclass);
-		if (def->SisterWeaponType == oldclass) def->SisterWeaponType = static_cast<PClassWeapon *>(newclass);
-	}
-}
 
 //===========================================================================
 //

@@ -4,6 +4,7 @@
 #include "dobject.h"
 
 class VMFunctionBuilder;
+class FxExpression;
 
 struct ExpEmit
 {
@@ -42,6 +43,8 @@ public:
 	VMFunctionBuilder(int numimplicits);
 	~VMFunctionBuilder();
 
+	void BeginStatement(FxExpression *stmt);
+	void EndStatement();
 	void MakeFunction(VMScriptFunction *func);
 
 	// Returns the constant register holding the value.
@@ -69,6 +72,8 @@ public:
 
 	void Backpatch(size_t addr, size_t target);
 	void BackpatchToHere(size_t addr);
+	void BackpatchList(TArray<size_t> &addrs, size_t target);
+	void BackpatchListToHere(TArray<size_t> &addrs);
 
 	// Write out complete constant tables.
 	void FillIntConstants(int *konst);
@@ -94,6 +99,9 @@ private:
 		unsigned KonstNum;
 		VM_ATAG Tag;
 	};
+
+	TArray<FStatementInfo> LineNumbers;
+	TArray<FxExpression *> StatementStack;
 
 	TArray<int> IntConstantList;
 	TArray<double> FloatConstantList;
@@ -141,7 +149,7 @@ class FFunctionBuildList
 	TArray<Item> mItems;
 
 public:
-	VMFunction *AddFunction(PFunction *func, FxExpression *code, const FString &name, bool fromdecorate, int currentstate = -1, int statecnt = 0, int lumpnum = -1);
+	VMFunction *AddFunction(PFunction *func, FxExpression *code, const FString &name, bool fromdecorate, int currentstate, int statecnt, int lumpnum);
 	void Build();
 };
 

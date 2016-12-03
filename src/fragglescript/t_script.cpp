@@ -251,7 +251,7 @@ void DFsScript::ParseScript(char *position)
 		FParser parse(this);
 		parse.Run(position, data, data + len);
 	}
-	catch (CRecoverableError &err)
+	catch (CFraggleScriptError &err)
 	{
 		Printf ("%s\n", err.GetMessage());
 	}

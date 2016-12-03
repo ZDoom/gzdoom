@@ -75,18 +75,45 @@ VMFunctionBuilder::~VMFunctionBuilder()
 
 //==========================================================================
 //
-// VMFunctionBuilder :: MakeFunction
+// VMFunctionBuilder :: BeginStatement
 //
-// Creates a new VMScriptFunction out of the data passed to this class.
+// Records the start of a new statement.
 //
 //==========================================================================
 
+void VMFunctionBuilder::BeginStatement(FxExpression *stmt)
+{
+	// pop empty statement records.
+	while (LineNumbers.Size() > 0 && LineNumbers.Last().InstructionIndex == Code.Size()) LineNumbers.Pop();
+	// only add a new entry if the line number differs.
+	if (LineNumbers.Size() == 0 || stmt->ScriptPosition.ScriptLine != LineNumbers.Last().LineNumber)
+	{
+		FStatementInfo si = { (uint16_t)Code.Size(), (uint16_t)stmt->ScriptPosition.ScriptLine };
+		LineNumbers.Push(si);
+	}
+	StatementStack.Push(stmt);
+}
+
+void VMFunctionBuilder::EndStatement()
+{
+	// pop empty statement records.
+	while (LineNumbers.Size() > 0 && LineNumbers.Last().InstructionIndex == Code.Size()) LineNumbers.Pop();
+	StatementStack.Pop();
+	// Re-enter the previous statement.
+	if (StatementStack.Size() > 0)
+	{
+		FStatementInfo si = { (uint16_t)Code.Size(), (uint16_t)StatementStack.Last()->ScriptPosition.ScriptLine };
+		LineNumbers.Push(si);
+	}
+}
+
 void VMFunctionBuilder::MakeFunction(VMScriptFunction *func)
 {
-	func->Alloc(Code.Size(), IntConstantList.Size(), FloatConstantList.Size(), StringConstantList.Size(), AddressConstantList.Size());
+	func->Alloc(Code.Size(), IntConstantList.Size(), FloatConstantList.Size(), StringConstantList.Size(), AddressConstantList.Size(), LineNumbers.Size());
 
 	// Copy code block.
 	memcpy(func->Code, &Code[0], Code.Size() * sizeof(VMOP));
+	memcpy(func->LineInfo, &LineNumbers[0], LineNumbers.Size() * sizeof(LineNumbers[0]));
 
 	// Create constant tables.
 	if (IntConstantList.Size() > 0)
@@ -734,6 +761,13 @@ void VMFunctionBuilder::Backpatch(size_t loc, size_t target)
 	Code[loc].i24 = offset;
 }
 
+void VMFunctionBuilder::BackpatchList(TArray<size_t> &locs, size_t target)
+{
+	for (auto loc : locs)
+		Backpatch(loc, target);
+}
+
+
 //==========================================================================
 //
 // VMFunctionBuilder :: BackpatchToHere
@@ -746,6 +780,12 @@ void VMFunctionBuilder::Backpatch(size_t loc, size_t target)
 void VMFunctionBuilder::BackpatchToHere(size_t loc)
 {
 	Backpatch(loc, Code.Size());
+}
+
+void VMFunctionBuilder::BackpatchListToHere(TArray<size_t> &locs)
+{
+	for (auto loc : locs)
+		Backpatch(loc, Code.Size());
 }
 
 //==========================================================================
@@ -867,7 +907,10 @@ void FFunctionBuildList::Build()
 			// Emit code
 			try
 			{
+				sfunc->SourceFileName = item.Code->ScriptPosition.FileName;	// remember the file name for printing error messages if something goes wrong in the VM.
+				buildit.BeginStatement(item.Code);
 				item.Code->Emit(&buildit);
+				buildit.EndStatement();
 				buildit.MakeFunction(sfunc);
 				sfunc->NumArgs = 0;
 				// NumArgs for the VMFunction must be the amount of stack elements, which can differ from the amount of logical function arguments if vectors are in the list.

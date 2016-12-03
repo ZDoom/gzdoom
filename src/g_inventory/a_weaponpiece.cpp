@@ -38,27 +38,10 @@
 #include "doomstat.h"
 #include "serializer.h"
 
-IMPLEMENT_CLASS(PClassWeaponPiece, false, false)
 IMPLEMENT_CLASS(AWeaponHolder, false, false)
 
 DEFINE_FIELD(AWeaponHolder, PieceMask);
 DEFINE_FIELD(AWeaponHolder, PieceWeapon);
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-void PClassWeaponPiece::ReplaceClassRef(PClass *oldclass, PClass *newclass)
-{
-	Super::ReplaceClassRef(oldclass, newclass);
-	AWeaponPiece *def = (AWeaponPiece*)Defaults;
-	if (def != NULL)
-	{
-		if (def->WeaponClass == oldclass) def->WeaponClass = static_cast<PClassWeapon *>(newclass);
-	}
-}
 
 //===========================================================================
 //
@@ -77,6 +60,7 @@ IMPLEMENT_CLASS(AWeaponPiece, false, true)
 
 IMPLEMENT_POINTERS_START(AWeaponPiece)
 	IMPLEMENT_POINTER(FullWeapon)
+	IMPLEMENT_POINTER(WeaponClass)
 IMPLEMENT_POINTERS_END
 
 //===========================================================================

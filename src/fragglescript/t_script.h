@@ -41,11 +41,21 @@
 #include "p_lnspec.h"
 #include "m_fixed.h"
 #include "actor.h"
+#include "doomerrors.h"
 
 #ifdef _MSC_VER
 // This pragma saves 8kb of wasted code.
 #pragma pointers_to_members( full_generality, single_inheritance )
 #endif
+
+
+class CFraggleScriptError : public CDoomError
+{
+public:
+	CFraggleScriptError() : CDoomError() {}
+	CFraggleScriptError(const char *message) : CDoomError(message) {}
+};
+
 
 class DRunningScript;
 

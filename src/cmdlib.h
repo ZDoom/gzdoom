@@ -33,8 +33,8 @@ void 	DefaultExtension (FString &path, const char *extension);
 FString	ExtractFilePath (const char *path);
 FString	ExtractFileBase (const char *path, bool keep_extension=false);
 
-int		ParseHex (const char *str);
-int 	ParseNum (const char *str);
+struct FScriptPosition;
+int		ParseHex(const char *str, FScriptPosition *sc = nullptr);
 bool	IsNum (const char *str);		// [RH] added
 
 char	*copystring(const char *s);

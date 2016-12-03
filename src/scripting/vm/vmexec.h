@@ -2,7 +2,6 @@
 #error vmexec.h must not be #included outside vmexec.cpp. Use vm.h instead.
 #endif
 
-
 static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 {
 #if COMPGOTO
@@ -419,16 +418,39 @@ begin:
 		if (C == CAST_I2F)
 		{
 			ASSERTF(a); ASSERTD(B);
-			reg.f[A] = reg.d[B];
+			reg.f[a] = reg.d[B];
 		}
 		else if (C == CAST_F2I)
 		{
 			ASSERTD(a); ASSERTF(B);
-			reg.d[A] = (int)reg.f[B];
+			reg.d[a] = (int)reg.f[B];
 		}
 		else
 		{
 			DoCast(reg, f, a, B, C);
+		}
+		NEXTOP;
+	
+	OP(CASTB):
+		if (C == CASTB_I)
+		{
+			ASSERTD(a); ASSERTD(B);
+			reg.d[a] = !!reg.d[B];
+		}
+		else if (C == CASTB_F)
+		{
+			ASSERTD(a); ASSERTF(B);
+			reg.d[a] = reg.f[B] != 0;
+		}
+		else if (C == CASTB_A)
+		{
+			ASSERTD(a); ASSERTA(B);
+			reg.d[a] = reg.a[B] != nullptr;
+		}
+		else
+		{
+			ASSERTD(a); ASSERTS(B);
+			reg.d[a] = reg.s[B].Len() > 0;
 		}
 		NEXTOP;
 	
@@ -573,7 +595,17 @@ begin:
 			FillReturns(reg, f, returns, pc+1, C);
 			if (call->Native)
 			{
-				numret = static_cast<VMNativeFunction *>(call)->NativeCall(reg.param + f->NumParam - B, call->DefaultArgs, B, returns, C);
+				try
+				{
+					numret = static_cast<VMNativeFunction *>(call)->NativeCall(reg.param + f->NumParam - B, call->DefaultArgs, B, returns, C);
+				}
+				catch (CVMAbortException &err)
+				{
+					err.MaybePrintMessage();
+					err.stacktrace.AppendFormat("Called from %s\n", call->PrintableName.GetChars());
+					// PrintParameters(reg.param + f->NumParam - B, B);
+					throw;
+				}
 			}
 			else
 			{
@@ -617,7 +649,17 @@ begin:
 
 			if (call->Native)
 			{
-				return static_cast<VMNativeFunction *>(call)->NativeCall(reg.param + f->NumParam - B, call->DefaultArgs, B, ret, numret);
+				try
+				{
+					return static_cast<VMNativeFunction *>(call)->NativeCall(reg.param + f->NumParam - B, call->DefaultArgs, B, ret, numret);
+				}
+				catch (CVMAbortException &err)
+				{
+					err.MaybePrintMessage();
+					err.stacktrace.AppendFormat("Called from %s\n", call->PrintableName.GetChars());
+					// PrintParameters(reg.param + f->NumParam - B, B);
+					throw;
+				}
 			}
 			else
 			{ // FIXME: Not a true tail call
@@ -681,7 +723,7 @@ begin:
 		assert(try_depth < MAX_TRY_DEPTH);
 		if (try_depth >= MAX_TRY_DEPTH)
 		{
-			THROW(X_TOO_MANY_TRIES);
+			ThrowAbortException(X_TOO_MANY_TRIES, nullptr);
 		}
 		assert((pc + JMPOFS(pc) + 1)->op == OP_CATCH);
 		exception_frames[try_depth++] = pc + JMPOFS(pc) + 1;
@@ -694,17 +736,17 @@ begin:
 		if (a == 0)
 		{
 			ASSERTA(B);
-			throw((VMException *)reg.a[B]);
+			ThrowVMException((VMException *)reg.a[B]);
 		}
 		else if (a == 1)
 		{
 			ASSERTKA(B);
 			assert(konstatag[B] == ATAG_OBJECT);
-			throw((VMException *)konsta[B].o);
+			ThrowVMException((VMException *)konsta[B].o);
 		}
 		else
 		{
-			THROW(BC);
+			ThrowAbortException(EVMAbortException(BC), nullptr);
 		}
 		NEXTOP;
 	OP(CATCH):
@@ -713,13 +755,10 @@ begin:
 		assert(0);
 		NEXTOP;
 
-		// Fixme: This really needs to throw something more informative than a number. Printing the message here instead of passing it to the exception is not sufficient.
 	OP(BOUND):
 		if (reg.d[a] >= BC)
 		{
-			assert(false);
-			Printf("Array access out of bounds: Max. index = %u, current index = %u\n", BC, reg.d[a]);
-			THROW(X_ARRAY_OUT_OF_BOUNDS);
+			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", BC, reg.d[a]);
 		}
 		NEXTOP;
 
@@ -727,9 +766,7 @@ begin:
 		ASSERTKD(BC);
 		if (reg.d[a] >= konstd[BC])
 		{
-			assert(false);
-			Printf("Array access out of bounds: Max. index = %u, current index = %u\n", konstd[BC], reg.d[a]);
-			THROW(X_ARRAY_OUT_OF_BOUNDS);
+			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", konstd[BC], reg.d[a]);
 		}
 		NEXTOP;
 
@@ -737,9 +774,7 @@ begin:
 		ASSERTD(B);
 		if (reg.d[a] >= reg.d[B])
 		{
-			assert(false);
-			Printf("Array access out of bounds: Max. index = %u, current index = %u\n", reg.d[B], reg.d[a]);
-			THROW(X_ARRAY_OUT_OF_BOUNDS);
+			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", reg.d[B], reg.d[a]);
 		}
 		NEXTOP;
 
@@ -886,7 +921,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = reg.d[B] / reg.d[C];
 		NEXTOP;
@@ -894,7 +929,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
 		if (konstd[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = reg.d[B] / konstd[C];
 		NEXTOP;
@@ -902,7 +937,7 @@ begin:
 		ASSERTD(a); ASSERTKD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = konstd[B] / reg.d[C];
 		NEXTOP;
@@ -911,7 +946,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)reg.d[B] / (unsigned)reg.d[C]);
 		NEXTOP;
@@ -919,7 +954,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
 		if (konstd[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)reg.d[B] / (unsigned)konstd[C]);
 		NEXTOP;
@@ -927,7 +962,7 @@ begin:
 		ASSERTD(a); ASSERTKD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)konstd[B] / (unsigned)reg.d[C]);
 		NEXTOP;
@@ -936,7 +971,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = reg.d[B] % reg.d[C];
 		NEXTOP;
@@ -944,7 +979,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
 		if (konstd[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = reg.d[B] % konstd[C];
 		NEXTOP;
@@ -952,7 +987,7 @@ begin:
 		ASSERTD(a); ASSERTKD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = konstd[B] % reg.d[C];
 		NEXTOP;
@@ -961,7 +996,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)reg.d[B] % (unsigned)reg.d[C]);
 		NEXTOP;
@@ -969,7 +1004,7 @@ begin:
 		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
 		if (konstd[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)reg.d[B] % (unsigned)konstd[C]);
 		NEXTOP;
@@ -977,7 +1012,7 @@ begin:
 		ASSERTD(a); ASSERTKD(B); ASSERTD(C);
 		if (reg.d[C] == 0)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.d[a] = int((unsigned)konstd[B] % (unsigned)reg.d[C]);
 		NEXTOP;
@@ -1155,7 +1190,7 @@ begin:
 		ASSERTF(a); ASSERTF(B); ASSERTF(C);
 		if (reg.f[C] == 0.)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.f[a] = reg.f[B] / reg.f[C];
 		NEXTOP;
@@ -1163,7 +1198,7 @@ begin:
 		ASSERTF(a); ASSERTF(B); ASSERTKF(C);
 		if (konstf[C] == 0.)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.f[a] = reg.f[B] / konstf[C];
 		NEXTOP;
@@ -1171,7 +1206,7 @@ begin:
 		ASSERTF(a); ASSERTKF(B); ASSERTF(C);
 		if (reg.f[C] == 0.)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.f[a] = konstf[B] / reg.f[C];
 		NEXTOP;
@@ -1182,7 +1217,7 @@ begin:
 	Do_MODF:
 		if (fc == 0.)
 		{
-			THROW(X_DIVISION_BY_ZERO);
+			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
 		}
 		reg.f[a] = luai_nummod(fb, fc);
 		NEXTOP;
@@ -1595,6 +1630,13 @@ begin:
 		// Nothing caught it. Rethrow and let somebody else deal with it.
 		throw;
 	}
+	catch (CVMAbortException &err)
+	{
+		err.MaybePrintMessage();
+		err.stacktrace.AppendFormat("Called from %s at %s, line %d\n", sfunc->PrintableName.GetChars(), sfunc->SourceFileName.GetChars(), sfunc->PCToLine(pc));
+		// PrintParameters(reg.param + f->NumParam - B, B);
+		throw;
+	}
 	return 0;
 }
 
@@ -1827,12 +1869,12 @@ static void SetReturn(const VMRegisters &reg, VMFrame *frame, VMReturn *ret, VM_
 	case REGT_FLOAT:
 		if (regtype & REGT_KONST)
 		{
-			assert(regnum + ((regtype & REGT_KONST) ? 2u : 0u) < func->NumKonstF);
+			assert(regnum < func->NumKonstF);
 			src = &func->KonstF[regnum];
 		}
 		else
 		{
-			assert(regnum + ((regtype & REGT_KONST) ? 2u : 0u) < frame->NumRegF);
+			assert(regnum < frame->NumRegF);
 			src = &reg.f[regnum];
 		}
 		if (regtype & REGT_MULTIREG3)

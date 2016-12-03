@@ -1307,6 +1307,11 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 	double mindist;
 	DAngle fov;
 
+	if (other == nullptr)
+	{
+		return false;
+	}
+
 	if (params != NULL)
 	{
 		maxdist = params->maxDist;
@@ -3321,15 +3326,6 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 		}
 	}
 	return NULL;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, DoDropItem)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS(cls, AActor);
-	PARAM_INT(amt);
-	PARAM_INT(chance);
-	ACTION_RETURN_OBJECT(P_DropItem(self, cls, amt, chance));
 }
 
 //============================================================================

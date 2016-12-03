@@ -461,7 +461,7 @@ bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int t
 DEFINE_ACTION_FUNCTION(DCeiling, CreateCeiling)
 {
 	PARAM_PROLOGUE;
-	PARAM_POINTER(sec, sector_t);
+	PARAM_POINTER_NOT_NULL(sec, sector_t);
 	PARAM_INT(type);
 	PARAM_POINTER(ln, line_t);
 	PARAM_FLOAT(speed);

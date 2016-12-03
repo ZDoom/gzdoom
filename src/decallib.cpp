@@ -532,7 +532,7 @@ void FDecalLib::ParseDecal (FScanner &sc)
 			sc.MustGetString ();
 			if (!sc.Compare("BloodDefault"))
 			{
-				newdecal.ShadeColor = V_GetColor (NULL, sc.String);
+				newdecal.ShadeColor = V_GetColor (NULL, sc);
 			}
 			else
 			{
@@ -547,8 +547,8 @@ void FDecalLib::ParseDecal (FScanner &sc)
 		case DECAL_COLORS:
 			DWORD startcolor, endcolor;
 
-			sc.MustGetString (); startcolor = V_GetColor (NULL, sc.String);
-			sc.MustGetString (); endcolor   = V_GetColor (NULL, sc.String);
+			sc.MustGetString (); startcolor = V_GetColor (NULL, sc);
+			sc.MustGetString (); endcolor   = V_GetColor (NULL, sc);
 			newdecal.Translation = GenerateTranslation (startcolor, endcolor)->Index;
 			break;
 
@@ -819,7 +819,7 @@ void FDecalLib::ParseColorchanger (FScanner &sc)
 		else if (sc.Compare ("Color"))
 		{
 			sc.MustGetString ();
-			goal = V_GetColor (NULL, sc.String);
+			goal = V_GetColor (NULL, sc);
 		}
 		else
 		{

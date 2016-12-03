@@ -90,6 +90,7 @@
 #define THROW	MODE_AIMMZ | MODE_BCTHROW
 #define CATCH	MODE_AIMMZ | MODE_BCCATCH
 #define CAST	MODE_AX | MODE_BX | MODE_CIMMZ | MODE_BCCAST
+#define CASTB	MODE_AI | MODE_BX | MODE_CIMMZ | MODE_BCCAST
 
 #define RSRSRS	MODE_AS | MODE_BS | MODE_CS
 #define RIRS	MODE_AI | MODE_BS | MODE_CUNUSED
@@ -381,10 +382,18 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			break;
 
 		default:
+
+
 			if ((mode & MODE_BCTYPE) == MODE_BCCAST)
 			{
 				switch (code[i].c)
 				{
+				case CASTB_I:
+					mode = MODE_AI | MODE_BI | MODE_CUNUSED;
+					break;
+				case CASTB_A:
+					mode = MODE_AI | MODE_BP | MODE_CUNUSED;
+					break;
 				case CAST_I2F:
 				case CAST_U2F:
 					mode = MODE_AF | MODE_BI | MODE_CUNUSED;
@@ -398,6 +407,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 					break;
 				case CAST_F2I:
 				case CAST_F2U:
+				case CASTB_F:
 					mode = MODE_AI | MODE_BF | MODE_CUNUSED;
 					break;
 				case CAST_F2S:
@@ -412,6 +422,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 				case CAST_S2So:
 				case CAST_S2N:
 				case CAST_S2I:
+				case CASTB_S:
 					mode = MODE_AI | MODE_BS | MODE_CUNUSED;
 					break;
 				case CAST_S2F:

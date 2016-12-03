@@ -140,6 +140,7 @@ external_declaration(X) ::= class_definition(A).						{ X = A; /*X-overwrites-A*
 external_declaration(X) ::= struct_def(A).								{ X = A; /*X-overwrites-A*/ }
 external_declaration(X) ::= enum_def(A).								{ X = A; /*X-overwrites-A*/ }
 external_declaration(X) ::= const_def(A).								{ X = A; /*X-overwrites-A*/ }
+external_declaration(X) ::= include_def.								{ X = nullptr; }
 
 /* Optional bits. */
 opt_semicolon ::= .
@@ -155,6 +156,11 @@ opt_expr(X) ::= .
 }
 opt_expr(X) ::= expr(X).
 
+
+include_def ::= INCLUDE string_constant(A).
+{
+	AddInclude(A);
+}
 
 /************ Class Definition ************/
 /* Can only occur at global scope. */

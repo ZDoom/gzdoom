@@ -44,7 +44,19 @@
 #include "zcc_parser.h"
 #include "zcc_compile.h"
 
+TArray<FString> Includes;
+TArray<FScriptPosition> IncludeLocs;
+
 static FString ZCCTokenName(int terminal);
+void AddInclude(ZCC_ExprConstant *node)
+{
+	assert(node->Type == TypeString);
+	if (Includes.Find(*node->StringVal) >= Includes.Size())
+	{
+		Includes.Push(*node->StringVal);
+		IncludeLocs.Push(*node);
+	}
+}
 
 #include "zcc-parse.h"
 #include "zcc-parse.c"
@@ -152,6 +164,7 @@ static void InitTokenMap()
 	TOKENDEF2(TK_Name,			ZCC_NAME,		NAME_Name);
 	TOKENDEF2(TK_Map,			ZCC_MAP,		NAME_Map);
 	TOKENDEF2(TK_Array,			ZCC_ARRAY,		NAME_Array);
+	TOKENDEF2(TK_Include,		ZCC_INCLUDE,	NAME_Include);
 	TOKENDEF (TK_Void,			ZCC_VOID);
 	TOKENDEF (TK_True,			ZCC_TRUE);
 	TOKENDEF (TK_False,			ZCC_FALSE);
@@ -316,42 +329,24 @@ static void DoParse(int lumpnum)
 
 	sc.OpenLumpNum(lumpnum);
 	auto saved = sc.SavePos();
-	bool parsed = false;
-	if (sc.GetToken())
-	{
-		if (sc.TokenType == TK_Class || sc.TokenType == TK_Enum || sc.TokenType == TK_Struct || sc.TokenType == TK_Const || sc.TokenType == TK_Native)
-		{
-			if (sc.CheckToken(TK_Identifier))
-			{
-				// This looks like an actual definition file and not a file list.
-				ParseSingleFile(nullptr, lumpnum, parser, state);
-				parsed = true;
-			}
-		}
-	}
-	if (!parsed)
-	{
-		sc.RestorePos(saved);
-		// parse all files from this list in one go.
-		while (sc.GetString())
-		{
-			FixPathSeperator(sc.String);
-			if (Wads.GetLumpFile(sc.LumpNum) == 0)
-			{
-				int includefile = Wads.GetLumpFile(Wads.CheckNumForFullName(sc.String, true));
-				if (includefile != 0)
-				{
-					I_FatalError("File %s is overriding core lump %s.",
-						Wads.GetWadFullName(includefile), sc.String);
-				}
-			}
 
-#ifndef NDEBUG
-			if (f) fprintf(f, "Starting parsing %s\n", sc.String);
-#endif
-			ParseSingleFile(sc.String, 0, parser, state);
+	ParseSingleFile(nullptr, lumpnum, parser, state);
+	for (unsigned i = 0; i < Includes.Size(); i++)
+	{
+		lumpnum = Wads.CheckNumForFullName(Includes[i], true);
+		if (lumpnum == -1)
+		{
+			IncludeLocs[i].Message(MSG_ERROR, "Include script lump %s not found", Includes[i].GetChars());
+		}
+		else
+		{
+			ParseSingleFile(nullptr, lumpnum, parser, state);
 		}
 	}
+	Includes.Clear();
+	Includes.ShrinkToFit();
+	IncludeLocs.Clear();
+	IncludeLocs.ShrinkToFit();
 
 	value.Int = -1;
 	value.SourceLoc = sc.GetMessageLine();

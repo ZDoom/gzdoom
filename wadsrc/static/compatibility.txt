@@ -27,6 +27,7 @@
 	setwallyscale 717 front bot 1.090909
 
 	setslopeoverflow
+	polyobj
 }
 
 B2D8DA03489D1C67F60DC87FBC4EA338 // map01 - Massmouth 2

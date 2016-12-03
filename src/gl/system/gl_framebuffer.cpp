@@ -207,17 +207,20 @@ void OpenGLFrameBuffer::Update()
 //
 //==========================================================================
 
+CVAR(Bool, gl_finishbeforeswap, false, 0);
+
 void OpenGLFrameBuffer::Swap()
 {
 	Finish.Reset();
 	Finish.Clock();
-	if (needsetgamma) 
+	if (gl_finishbeforeswap) glFinish();
+	if (needsetgamma)
 	{
 		//DoSetGamma();
 		needsetgamma = false;
 	}
 	SwapBuffers();
-	glFinish();
+	if (!gl_finishbeforeswap) glFinish();
 	Finish.Unclock();
 	swapped = true;
 	FHardwareTexture::UnbindAll();

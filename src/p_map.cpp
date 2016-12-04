@@ -1243,7 +1243,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	// The checks here are to do this only for conditions that would later result in an action, calling this for everything would be too much of a drag if
 	// too many scripted overrides were being used, as PIT_CheckThing is even called for touching all the monster corpses lying around.
 	if (((thing->flags & MF_SOLID) || (thing->flags6 & (MF6_TOUCHY | MF6_BUMPSPECIAL))) && 
-		((tm.thing->flags & (MF_SOLID|MF_MISSILE)) || (tm.thing->flags6 & MF6_BLOCKEDBYSOLIDACTORS) || (tm.thing->BounceFlags & BOUNCE_MBF)))
+		((tm.thing->flags & (MF_SOLID|MF_MISSILE)) || (tm.thing->flags2 & MF2_BLASTED) || (tm.thing->flags6 & MF6_BLOCKEDBYSOLIDACTORS) || (tm.thing->BounceFlags & BOUNCE_MBF)))
 	{
 		static unsigned VIndex = ~0u;
 		if (VIndex == ~0u)

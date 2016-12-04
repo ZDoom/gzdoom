@@ -50,10 +50,10 @@ private:
 	SSAVec4i ProcessPixel32(SSAVec4i bg, SSAInt *varying);
 	SSAInt ProcessPixel8(SSAInt bg, SSAInt *varying);
 
-	SSAVec4i TranslateSample32(SSAInt uvoffset);
-	SSAInt TranslateSample8(SSAInt uvoffset);
-	SSAVec4i Sample32(SSAInt uvoffset);
-	SSAInt Sample8(SSAInt uvoffset);
+	SSAVec4i TranslateSample32(SSAInt *varying);
+	SSAInt TranslateSample8(SSAInt *varying);
+	SSAVec4i Sample32(SSAInt *varying);
+	SSAInt Sample8(SSAInt *varying);
 	SSAInt Shade8(SSAInt c);
 	SSAVec4i ToBgra(SSAInt index);
 	SSAInt ToPal8(SSAVec4i c);
@@ -143,6 +143,7 @@ private:
 	SSAInt currentlight;
 	SSAUBytePtr currentcolormap;
 	SSAFloat AffineW;
+	SSABool AffineLinear;
 	SSAFloat AffineVaryingPosY[TriVertex::NumVarying];
 	SSAInt AffineVaryingPosX[TriVertex::NumVarying];
 	SSAInt AffineVaryingStepX[TriVertex::NumVarying];

@@ -334,6 +334,9 @@ void DrawTriangleCodegen::SetupAffineBlock()
 		AffineVaryingPosX[i] = SSAInt(AffineVaryingPosY[i] * rcpW0, false);
 		AffineVaryingStepX[i] = (SSAInt((AffineVaryingPosY[i] + gradVaryingX[i]) * rcpW1, false) - AffineVaryingPosX[i]) / q;
 	}
+
+	// Min filter = linear, Mag filter = nearest:
+	AffineLinear = (gradVaryingX[0] / AffineW) > SSAFloat(1.0f) || (gradVaryingX[0] / AffineW) < SSAFloat(-1.0f);
 }
 
 void DrawTriangleCodegen::LoopFullBlock()
@@ -739,32 +742,97 @@ void DrawTriangleCodegen::LoopMaskedStoreBlock()
 }
 #endif
 
-SSAVec4i DrawTriangleCodegen::TranslateSample32(SSAInt uvoffset)
+SSAVec4i DrawTriangleCodegen::TranslateSample32(SSAInt *varying)
 {
+	SSAInt ufrac = varying[0] << 8;
+	SSAInt vfrac = varying[1] << 8;
+
+	SSAInt upos = ((ufrac >> 16) * textureWidth) >> 16;
+	SSAInt vpos = ((vfrac >> 16) * textureHeight) >> 16;
+	SSAInt uvoffset = upos * textureHeight + vpos;
+
 	if (variant == TriDrawVariant::FillNormal || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
 		return translation[color * 4].load_vec4ub(true);
 	else
 		return translation[texturePixels[uvoffset].load(true).zext_int() * 4].load_vec4ub(true);
 }
 
-SSAInt DrawTriangleCodegen::TranslateSample8(SSAInt uvoffset)
+SSAInt DrawTriangleCodegen::TranslateSample8(SSAInt *varying)
 {
+	SSAInt ufrac = varying[0] << 8;
+	SSAInt vfrac = varying[1] << 8;
+
+	SSAInt upos = ((ufrac >> 16) * textureWidth) >> 16;
+	SSAInt vpos = ((vfrac >> 16) * textureHeight) >> 16;
+	SSAInt uvoffset = upos * textureHeight + vpos;
+
 	if (variant == TriDrawVariant::FillNormal || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
 		return translation[color].load(true).zext_int();
 	else
 		return translation[texturePixels[uvoffset].load(true).zext_int()].load(true).zext_int();
 }
 
-SSAVec4i DrawTriangleCodegen::Sample32(SSAInt uvoffset)
+SSAVec4i DrawTriangleCodegen::Sample32(SSAInt *varying)
 {
 	if (variant == TriDrawVariant::FillNormal || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
 		return SSAVec4i::unpack(color);
-	else
-		return texturePixels[uvoffset * 4].load_vec4ub(true);
+
+	SSAInt ufrac = varying[0] << 8;
+	SSAInt vfrac = varying[1] << 8;
+
+	SSAVec4i nearest;
+	SSAVec4i linear;
+
+	{
+		SSAInt upos = ((ufrac >> 16) * textureWidth) >> 16;
+		SSAInt vpos = ((vfrac >> 16) * textureHeight) >> 16;
+		SSAInt uvoffset = upos * textureHeight + vpos;
+
+		nearest = texturePixels[uvoffset * 4].load_vec4ub(true);
+	}
+
+	{
+		SSAInt uone = (SSAInt(0x01000000) / textureWidth) << 8;
+		SSAInt vone = (SSAInt(0x01000000) / textureHeight) << 8;
+
+		ufrac = ufrac - (uone >> 1);
+		vfrac = vfrac - (vone >> 1);
+
+		SSAInt frac_x0 = (ufrac >> FRACBITS) * textureWidth;
+		SSAInt frac_x1 = ((ufrac + uone) >> FRACBITS) * textureWidth;
+		SSAInt frac_y0 = (vfrac >> FRACBITS) * textureHeight;
+		SSAInt frac_y1 = ((vfrac + vone) >> FRACBITS) * textureHeight;
+
+		SSAInt x0 = frac_x0 >> FRACBITS;
+		SSAInt x1 = frac_x1 >> FRACBITS;
+		SSAInt y0 = frac_y0 >> FRACBITS;
+		SSAInt y1 = frac_y1 >> FRACBITS;
+
+		SSAVec4i p00 = texturePixels[(x0 * textureHeight + y0) * 4].load_vec4ub(true);
+		SSAVec4i p01 = texturePixels[(x0 * textureHeight + y1) * 4].load_vec4ub(true);
+		SSAVec4i p10 = texturePixels[(x1 * textureHeight + y0) * 4].load_vec4ub(true);
+		SSAVec4i p11 = texturePixels[(x1 * textureHeight + y1) * 4].load_vec4ub(true);
+
+		SSAInt inv_b = (frac_x1 >> (FRACBITS - 4)) & 15;
+		SSAInt inv_a = (frac_y1 >> (FRACBITS - 4)) & 15;
+		SSAInt a = 16 - inv_a;
+		SSAInt b = 16 - inv_b;
+
+		linear = (p00 * (a * b) + p01 * (inv_a * b) + p10 * (a * inv_b) + p11 * (inv_a * inv_b) + 127) >> 8;
+	}
+
+	return AffineLinear.select(linear, nearest);
 }
 
-SSAInt DrawTriangleCodegen::Sample8(SSAInt uvoffset)
+SSAInt DrawTriangleCodegen::Sample8(SSAInt *varying)
 {
+	SSAInt ufrac = varying[0] << 8;
+	SSAInt vfrac = varying[1] << 8;
+
+	SSAInt upos = ((ufrac >> 16) * textureWidth) >> 16;
+	SSAInt vpos = ((vfrac >> 16) * textureHeight) >> 16;
+	SSAInt uvoffset = upos * textureHeight + vpos;
+
 	if (variant == TriDrawVariant::FillNormal || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
 		return color;
 	else
@@ -778,13 +846,6 @@ SSAInt DrawTriangleCodegen::Shade8(SSAInt c)
 
 SSAVec4i DrawTriangleCodegen::ProcessPixel32(SSAVec4i bg, SSAInt *varying)
 {
-	SSAInt ufrac = varying[0] << 8;
-	SSAInt vfrac = varying[1] << 8;
-
-	SSAInt upos = ((ufrac >> 16) * textureWidth) >> 16;
-	SSAInt vpos = ((vfrac >> 16) * textureHeight) >> 16;
-	SSAInt uvoffset = upos * textureHeight + vpos;
-
 	SSAVec4i fg;
 	SSAVec4i output;
 
@@ -792,62 +853,62 @@ SSAVec4i DrawTriangleCodegen::ProcessPixel32(SSAVec4i bg, SSAInt *varying)
 	{
 	default:
 	case TriBlendMode::Copy:
-		fg = Sample32(uvoffset);
+		fg = Sample32(varying);
 		output = blend_copy(shade_bgra_simple(fg, currentlight));
 		break;
 	case TriBlendMode::AlphaBlend:
-		fg = Sample32(uvoffset);
+		fg = Sample32(varying);
 		output = blend_alpha_blend(shade_bgra_simple(fg, currentlight), bg);
 		break;
 	case TriBlendMode::AddSolid:
-		fg = Sample32(uvoffset);
+		fg = Sample32(varying);
 		output = blend_add(shade_bgra_simple(fg, currentlight), bg, srcalpha, destalpha);
 		break;
 	case TriBlendMode::Add:
-		fg = Sample32(uvoffset);
+		fg = Sample32(varying);
 		output = blend_add(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 		break;
 	case TriBlendMode::Sub:
-		fg = Sample32(uvoffset);
+		fg = Sample32(varying);
 		output = blend_sub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 		break;
 	case TriBlendMode::RevSub:
-		fg = Sample32(uvoffset);
+		fg = Sample32(varying);
 		output = blend_revsub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 		break;
 	case TriBlendMode::Stencil:
-		fg = Sample32(uvoffset);
+		fg = Sample32(varying);
 		output = blend_stencil(shade_bgra_simple(SSAVec4i::unpack(color), currentlight), fg[3], bg, srcalpha, destalpha);
 		break;
 	case TriBlendMode::Shaded:
-		output = blend_stencil(shade_bgra_simple(SSAVec4i::unpack(color), currentlight), Sample8(uvoffset), bg, srcalpha, destalpha);
+		output = blend_stencil(shade_bgra_simple(SSAVec4i::unpack(color), currentlight), Sample8(varying), bg, srcalpha, destalpha);
 		break;
 	case TriBlendMode::TranslateCopy:
-		fg = TranslateSample32(uvoffset);
+		fg = TranslateSample32(varying);
 		output = blend_copy(shade_bgra_simple(fg, currentlight));
 		break;
 	case TriBlendMode::TranslateAlphaBlend:
-		fg = TranslateSample32(uvoffset);
+		fg = TranslateSample32(varying);
 		output = blend_alpha_blend(shade_bgra_simple(fg, currentlight), bg);
 		break;
 	case TriBlendMode::TranslateAdd:
-		fg = TranslateSample32(uvoffset);
+		fg = TranslateSample32(varying);
 		output = blend_add(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 		break;
 	case TriBlendMode::TranslateSub:
-		fg = TranslateSample32(uvoffset);
+		fg = TranslateSample32(varying);
 		output = blend_sub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 		break;
 	case TriBlendMode::TranslateRevSub:
-		fg = TranslateSample32(uvoffset);
+		fg = TranslateSample32(varying);
 		output = blend_revsub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 		break;
 	case TriBlendMode::AddSrcColorOneMinusSrcColor:
-		fg = Sample32(uvoffset);
+		fg = Sample32(varying);
 		output = blend_add_srccolor_oneminussrccolor(shade_bgra_simple(fg, currentlight), bg);
 		break;
 	case TriBlendMode::Skycap:
-		fg = Sample32(uvoffset);
+		fg = Sample32(varying);
 		output = FadeOut(varying[1], fg);
 		break;
 	}
@@ -869,13 +930,6 @@ SSAInt DrawTriangleCodegen::ToPal8(SSAVec4i c)
 
 SSAInt DrawTriangleCodegen::ProcessPixel8(SSAInt bg, SSAInt *varying)
 {
-	SSAInt ufrac = varying[0] << 8;
-	SSAInt vfrac = varying[1] << 8;
-
-	SSAInt upos = ((ufrac >> 16) * textureWidth) >> 16;
-	SSAInt vpos = ((vfrac >> 16) * textureHeight) >> 16;
-	SSAInt uvoffset = upos * textureHeight + vpos;
-
 	SSAVec4i fg;
 	SSAInt alpha, inv_alpha;
 	SSAInt output;
@@ -885,80 +939,80 @@ SSAInt DrawTriangleCodegen::ProcessPixel8(SSAInt bg, SSAInt *varying)
 	{
 	default:
 	case TriBlendMode::Copy:
-		output = Shade8(Sample8(uvoffset));
+		output = Shade8(Sample8(varying));
 		break;
 	case TriBlendMode::AlphaBlend:
-		palindex = Sample8(uvoffset);
+		palindex = Sample8(varying);
 		output = Shade8(palindex);
 		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::AddSolid:
-		palindex = Sample8(uvoffset);
+		palindex = Sample8(varying);
 		fg = ToBgra(Shade8(palindex));
 		output = ToPal8(blend_add(fg, ToBgra(bg), srcalpha, destalpha));
 		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::Add:
-		palindex = Sample8(uvoffset);
+		palindex = Sample8(varying);
 		fg = ToBgra(Shade8(palindex));
 		output = ToPal8(blend_add(fg, ToBgra(bg), srcalpha, calc_blend_bgalpha(fg, destalpha)));
 		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::Sub:
-		palindex = Sample8(uvoffset);
+		palindex = Sample8(varying);
 		fg = ToBgra(Shade8(palindex));
 		output = ToPal8(blend_sub(fg, ToBgra(bg), srcalpha, calc_blend_bgalpha(fg, destalpha)));
 		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::RevSub:
-		palindex = Sample8(uvoffset);
+		palindex = Sample8(varying);
 		fg = ToBgra(Shade8(palindex));
 		output = ToPal8(blend_revsub(fg, ToBgra(bg), srcalpha, calc_blend_bgalpha(fg, destalpha)));
 		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::Stencil:
-		output = ToPal8(blend_stencil(ToBgra(Shade8(color)), (Sample8(uvoffset) == SSAInt(0)).select(SSAInt(0), SSAInt(256)), ToBgra(bg), srcalpha, destalpha));
+		output = ToPal8(blend_stencil(ToBgra(Shade8(color)), (Sample8(varying) == SSAInt(0)).select(SSAInt(0), SSAInt(256)), ToBgra(bg), srcalpha, destalpha));
 		break;
 	case TriBlendMode::Shaded:
-		palindex = Sample8(uvoffset);
+		palindex = Sample8(varying);
 		output = ToPal8(blend_stencil(ToBgra(Shade8(color)), palindex, ToBgra(bg), srcalpha, destalpha));
 		break;
 	case TriBlendMode::TranslateCopy:
-		palindex = TranslateSample8(uvoffset);
+		palindex = TranslateSample8(varying);
 		output = Shade8(palindex);
 		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::TranslateAlphaBlend:
-		palindex = TranslateSample8(uvoffset);
+		palindex = TranslateSample8(varying);
 		output = Shade8(palindex);
 		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::TranslateAdd:
-		palindex = TranslateSample8(uvoffset);
+		palindex = TranslateSample8(varying);
 		fg = ToBgra(Shade8(palindex));
 		output = ToPal8(blend_add(fg, ToBgra(bg), srcalpha, calc_blend_bgalpha(fg, destalpha)));
 		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::TranslateSub:
-		palindex = TranslateSample8(uvoffset);
+		palindex = TranslateSample8(varying);
 		fg = ToBgra(Shade8(palindex));
 		output = ToPal8(blend_sub(fg, ToBgra(bg), srcalpha, calc_blend_bgalpha(fg, destalpha)));
 		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::TranslateRevSub:
-		palindex = TranslateSample8(uvoffset);
+		palindex = TranslateSample8(varying);
 		fg = ToBgra(Shade8(palindex));
 		output = ToPal8(blend_revsub(fg, ToBgra(bg), srcalpha, calc_blend_bgalpha(fg, destalpha)));
 		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::AddSrcColorOneMinusSrcColor:
-		palindex = Sample8(uvoffset);
+		palindex = Sample8(varying);
 		fg = ToBgra(Shade8(palindex));
 		output = ToPal8(blend_add_srccolor_oneminussrccolor(fg, ToBgra(bg)));
 		output = (palindex == SSAInt(0)).select(bg, output);
 		break;
 	case TriBlendMode::Skycap:
-		fg = ToBgra(Sample8(uvoffset));
+		fg = ToBgra(Sample8(varying));
 		output = ToPal8(FadeOut(varying[1], fg));
 		break;
 	}

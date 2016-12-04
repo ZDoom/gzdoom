@@ -73,7 +73,6 @@ void (*R_DrawTranslatedColumn)(void);
 void (*R_DrawShadedColumn)(void);
 void (*R_DrawSpan)(void);
 void (*R_DrawSpanMasked)(void);
-void (*rt_map4cols)(int,int,int);
 
 //
 // R_DrawColumn
@@ -2589,21 +2588,13 @@ void R_InitColumnDrawers ()
 	R_DrawShadedColumn			= R_DrawShadedColumnP_C;
 	R_DrawSpan					= R_DrawSpanP_ASM;
 	R_DrawSpanMasked			= R_DrawSpanMaskedP_ASM;
-	if (CPU.Family <= 5)
-	{
-		rt_map4cols				= rt_map4cols_asm2;
-	}
-	else
-	{
-		rt_map4cols				= rt_map4cols_asm1;
-	}
 #else
 	R_DrawColumnHoriz			= R_DrawColumnHorizP_C;
 	R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_C;
 	R_DrawShadedColumn			= R_DrawShadedColumnP_C;
 	R_DrawSpan					= R_DrawSpanP_C;
 	R_DrawSpanMasked			= R_DrawSpanMaskedP_C;
-	rt_map4cols					= rt_map4cols_c;
+	rt_map4cols					= rt_map4cols;
 #endif
 }
 

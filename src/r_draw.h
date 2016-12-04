@@ -120,16 +120,19 @@ extern void (*R_DrawColumnHoriz)(void);
 void R_InitColumnDrawers ();
 
 // [RH] Moves data from the temporary buffer to the screen.
+
+void rt_copy1col(int hx, int sx, int yl, int yh);
+void rt_copy4cols(int sx, int yl, int yh);
+void rt_map4cols(int sx, int yl, int yh);
+
 extern "C"
 {
-void rt_copy1col_c (int hx, int sx, int yl, int yh);
-void rt_copy4cols_c (int sx, int yl, int yh);
 
 void rt_shaded1col (int hx, int sx, int yl, int yh);
 void rt_shaded4cols_c (int sx, int yl, int yh);
 void rt_shaded4cols_asm (int sx, int yl, int yh);
 
-void rt_map1col_c (int hx, int sx, int yl, int yh);
+void rt_map1col (int hx, int sx, int yl, int yh);
 void rt_add1col (int hx, int sx, int yl, int yh);
 void rt_addclamp1col (int hx, int sx, int yl, int yh);
 void rt_subclamp1col (int hx, int sx, int yl, int yh);
@@ -141,7 +144,6 @@ void rt_tlateaddclamp1col (int hx, int sx, int yl, int yh);
 void rt_tlatesubclamp1col (int hx, int sx, int yl, int yh);
 void rt_tlaterevsubclamp1col (int hx, int sx, int yl, int yh);
 
-void rt_map4cols_c (int sx, int yl, int yh);
 void rt_add4cols_c (int sx, int yl, int yh);
 void rt_addclamp4cols_c (int sx, int yl, int yh);
 void rt_subclamp4cols (int sx, int yl, int yh);
@@ -153,29 +155,16 @@ void rt_tlateaddclamp4cols (int sx, int yl, int yh);
 void rt_tlatesubclamp4cols (int sx, int yl, int yh);
 void rt_tlaterevsubclamp4cols (int sx, int yl, int yh);
 
-void rt_copy1col_asm (int hx, int sx, int yl, int yh);
-void rt_map1col_asm (int hx, int sx, int yl, int yh);
-
-void rt_copy4cols_asm (int sx, int yl, int yh);
-void rt_map4cols_asm1 (int sx, int yl, int yh);
-void rt_map4cols_asm2 (int sx, int yl, int yh);
 void rt_add4cols_asm (int sx, int yl, int yh);
 void rt_addclamp4cols_asm (int sx, int yl, int yh);
 }
 
-extern void (*rt_map4cols)(int sx, int yl, int yh);
 
 #ifdef X86_ASM
-#define rt_copy1col			rt_copy1col_asm
-#define rt_copy4cols		rt_copy4cols_asm
-#define rt_map1col			rt_map1col_asm
 #define rt_shaded4cols		rt_shaded4cols_asm
 #define rt_add4cols			rt_add4cols_asm
 #define rt_addclamp4cols	rt_addclamp4cols_asm
 #else
-#define rt_copy1col			rt_copy1col_c
-#define rt_copy4cols		rt_copy4cols_c
-#define rt_map1col			rt_map1col_c
 #define rt_shaded4cols		rt_shaded4cols_c
 #define rt_add4cols			rt_add4cols_c
 #define rt_addclamp4cols	rt_addclamp4cols_c

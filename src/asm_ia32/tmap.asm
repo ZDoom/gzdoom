@@ -600,106 +600,6 @@ dmsdone	add esp,8
 
 ;*----------------------------------------------------------------------
 ;*
-;* R_DrawColumnP
-;*
-;*----------------------------------------------------------------------
-
-GLOBAL	@R_DrawColumnP_ASM@0
-GLOBAL	_R_DrawColumnP_ASM
-GLOBAL	R_DrawColumnP_ASM
-
-	align 16
-
-R_DrawColumnP_ASM:
-_R_DrawColumnP_ASM:
-@R_DrawColumnP_ASM@0:
-
-; count = dc_yh - dc_yl;
-
-	mov	ecx,[dc_count]
-	test	ecx,ecx
-	jle	near rdcpret		; count <= 0: nothing to do, so leave
-
-	push	ebp			; save registers
-	 push	ebx
-	push	edi
-	 push	esi
-
-; dest = ylookup[dc_yl] + dc_x + dc_destorg;
-
-	mov	edi,[dc_dest]
-	mov	ebp,ecx
-	mov	ebx,[dc_texturefrac]	; ebx = frac
-rdcp1:	sub	edi,SPACEFILLER4
-	mov	ecx,ebx
-	shr	ecx,16
-	mov	esi,[dc_source]
-	mov	edx,[dc_iscale]
-	mov	eax,[dc_colormap]
-
-	cmp	BYTE [CPU+66],byte 5
-	jg	rdcploop2
-
-	align 16
-
-; The registers should now look like this:
-;
-;	[31  ..  16][15 .. 8][7 .. 0]
-; eax	[colormap		    ]
-; ebx	[yi	   ][yf		    ]
-; ecx	[scratch		    ]
-; edx	[dyi	   ][dyf	    ]
-; esi	[source texture column	    ]
-; edi	[destination screen pointer ]
-; ebp	[counter		    ]
-;
-
-
-; Note the partial register stalls on anything better than a Pentium
-; That's why there are two versions of this loop.
-
-rdcploop:
-	mov	cl,[esi+ecx]		; Fetch texel
-	 xor	ch,ch
-	add	ebx,edx			; increment frac
-rdcp2:	 add	edi,SPACEFILLER4	; increment destination pointer
-	mov	cl,[eax+ecx]		; colormap texel
-	mov	[edi],cl		; Store texel
-	 mov	ecx,ebx
-	shr	ecx,16
-	 dec	ebp
-	jnz	rdcploop		; loop
-
-	pop	esi
-	 pop	edi
-	pop	ebx
-	 pop	ebp
-rdcpret:
-	ret
-	
-	align 16
-
-rdcploop2:
-	movzx	ecx,byte [esi+ecx]	; Fetch texel
-	add	ebx,edx			; increment frac
-	mov	cl,[eax+ecx]		; colormap texel
-rdcp3:	add	edi,SPACEFILLER4	; increment destination pointer
-	mov	[edi],cl		; Store texel
-	mov	ecx,ebx
-	shr	ecx,16
-	dec	ebp
-	jnz	rdcploop2		; loop
-
-	pop	esi
-	pop	edi
-	pop	ebx
-	pop	ebp
-	ret
-	
-
-
-;*----------------------------------------------------------------------
-;*
 ;* R_DrawFuzzColumnP
 ;*
 ;*----------------------------------------------------------------------
@@ -1648,9 +1548,6 @@ ASM_PatchPitch:
 _ASM_PatchPitch:
 @ASM_PatchPitch@0:
 		mov		eax,[dc_pitch]
-		mov		[rdcp1+2],eax
-		mov		[rdcp2+2],eax
-		mov		[rdcp3+2],eax
 		mov		[s4p+1],eax
 		mov		[a4p+1],eax
 		mov		[ac4p+1],eax

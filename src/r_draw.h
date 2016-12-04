@@ -65,7 +65,6 @@ extern "C" unsigned int	horizspans[4];
 
 // The span blitting interface.
 // Hook in assembler or system specific BLT here.
-extern void (*R_DrawColumn)(void);
 
 extern DWORD (*dovline1) ();
 extern DWORD (*doprevline1) ();
@@ -103,16 +102,16 @@ void R_SetSpanSource(const BYTE *pixels);
 extern void (*R_DrawSpanMasked)(void);
 
 // Span drawing for translucent textures.
-extern void (*R_DrawSpanTranslucent)(void);
+void R_DrawSpanTranslucent(void);
 
 // Span drawing for masked, translucent textures.
-extern void (*R_DrawSpanMaskedTranslucent)(void);
+void R_DrawSpanMaskedTranslucent(void);
 
 // Span drawing for translucent, additive textures.
-extern void (*R_DrawSpanAddClamp)(void);
+void R_DrawSpanAddClamp(void);
 
 // Span drawing for masked, translucent, additive textures.
-extern void (*R_DrawSpanMaskedAddClamp)(void);
+void R_DrawSpanMaskedAddClamp(void);
 
 // [RH] Span blit into an interleaved intermediate buffer
 extern void (*R_DrawColumnHoriz)(void);
@@ -193,8 +192,6 @@ void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip);
 
 #ifdef X86_ASM
 
-extern "C" void	R_DrawColumnP_Unrolled (void);
-extern "C" void	R_DrawColumnP_ASM (void);
 extern "C" void	R_DrawFuzzColumnP_ASM (void);
 		   void R_DrawShadedColumnP_C (void);
 extern "C" void	R_DrawSpanP_ASM (void);
@@ -204,7 +201,6 @@ void	R_DrawColumnHorizP_C(void);
 
 #else
 
-void	R_DrawColumnP_C (void);
 void	R_DrawFuzzColumnP_C (void);
 void	R_DrawShadedColumnP_C (void);
 void	R_DrawSpanP_C (void);
@@ -212,10 +208,11 @@ void	R_DrawSpanMaskedP_C (void);
 
 #endif
 
+void	R_DrawColumn();
 void	R_DrawColumnHorizP_C(void);
 void	R_DrawTranslatedColumnP_C(void);
-void	R_DrawSpanTranslucentP_C (void);
-void	R_DrawSpanMaskedTranslucentP_C (void);
+void	R_DrawSpanTranslucent (void);
+void	R_DrawSpanMaskedTranslucent (void);
 
 void	R_DrawTlatedLucentColumnP_C (void);
 #define R_DrawTlatedLucentColumn R_DrawTlatedLucentColumnP_C

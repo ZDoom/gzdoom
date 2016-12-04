@@ -69,16 +69,11 @@ int 			scaledviewwidth;
 //		These get changed depending on the current
 //		screen depth and asm/no asm.
 void (*R_DrawColumnHoriz)(void);
-void (*R_DrawColumn)(void);
 void (*R_DrawFuzzColumn)(void);
 void (*R_DrawTranslatedColumn)(void);
 void (*R_DrawShadedColumn)(void);
 void (*R_DrawSpan)(void);
 void (*R_DrawSpanMasked)(void);
-void (*R_DrawSpanTranslucent)(void);
-void (*R_DrawSpanMaskedTranslucent)(void);
-void (*R_DrawSpanAddClamp)(void);
-void (*R_DrawSpanMaskedAddClamp)(void);
 void (*rt_map4cols)(int,int,int);
 
 //
@@ -171,7 +166,6 @@ void R_InitShadeMaps()
 /*									*/
 /************************************/
 
-#ifndef	X86_ASM
 //
 // A column is a vertical slice/span from a wall texture that,
 //	given the DOOM style restrictions on the view orientation,
@@ -179,7 +173,7 @@ void R_InitShadeMaps()
 // Thus a special case loop for very fast rendering can
 //	be used. It has also been used with Wolfenstein 3D.
 // 
-void R_DrawColumnP_C (void)
+void R_DrawColumn (void)
 {
 	int 				count;
 	BYTE*				dest;
@@ -222,7 +216,7 @@ void R_DrawColumnP_C (void)
 		} while (--count);
 	}
 } 
-#endif
+
 
 // [RH] Just fills a column with a color
 void R_FillColumnP (void)
@@ -1192,7 +1186,7 @@ void R_DrawSpanMaskedP_C (void)
 }
 #endif
 
-void R_DrawSpanTranslucentP_C (void)
+void R_DrawSpanTranslucent (void)
 {
 	dsfixed_t			xfrac;
 	dsfixed_t			yfrac;
@@ -1252,7 +1246,7 @@ void R_DrawSpanTranslucentP_C (void)
 	}
 }
 
-void R_DrawSpanMaskedTranslucentP_C (void)
+void R_DrawSpanMaskedTranslucent (void)
 {
 	dsfixed_t			xfrac;
 	dsfixed_t			yfrac;
@@ -1326,7 +1320,7 @@ void R_DrawSpanMaskedTranslucentP_C (void)
 	}
 }
 
-void R_DrawSpanAddClampP_C (void)
+void R_DrawSpanAddClamp (void)
 {
 	dsfixed_t			xfrac;
 	dsfixed_t			yfrac;
@@ -1392,7 +1386,7 @@ void R_DrawSpanAddClampP_C (void)
 	}
 }
 
-void R_DrawSpanMaskedAddClampP_C (void)
+void R_DrawSpanMaskedAddClamp (void)
 {
 	dsfixed_t			xfrac;
 	dsfixed_t			yfrac;
@@ -2550,12 +2544,10 @@ const BYTE *R_GetColumn (FTexture *tex, int col)
 	return tex->GetColumn (col, NULL);
 }
 
-
 // [RH] Initialize the column drawer pointers
 void R_InitColumnDrawers ()
 {
 #ifdef X86_ASM
-	R_DrawColumn				= R_DrawColumnP_ASM;
 	R_DrawColumnHoriz			= R_DrawColumnHorizP_C;
 	R_DrawFuzzColumn			= R_DrawFuzzColumnP_ASM;
 	R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_C;
@@ -2572,7 +2564,6 @@ void R_InitColumnDrawers ()
 	}
 #else
 	R_DrawColumnHoriz			= R_DrawColumnHorizP_C;
-	R_DrawColumn				= R_DrawColumnP_C;
 	R_DrawFuzzColumn			= R_DrawFuzzColumnP_C;
 	R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_C;
 	R_DrawShadedColumn			= R_DrawShadedColumnP_C;
@@ -2580,10 +2571,6 @@ void R_InitColumnDrawers ()
 	R_DrawSpanMasked			= R_DrawSpanMaskedP_C;
 	rt_map4cols					= rt_map4cols_c;
 #endif
-	R_DrawSpanTranslucent		= R_DrawSpanTranslucentP_C;
-	R_DrawSpanMaskedTranslucent = R_DrawSpanMaskedTranslucentP_C;
-	R_DrawSpanAddClamp			= R_DrawSpanAddClampP_C;
-	R_DrawSpanMaskedAddClamp	= R_DrawSpanMaskedAddClampP_C;
 }
 
 // [RH] Choose column drawers in a single place

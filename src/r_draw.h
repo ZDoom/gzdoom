@@ -83,7 +83,7 @@ extern void setupmvline (int);
 extern void setuptmvline (int);
 
 // The Spectre/Invisibility effect.
-extern void (*R_DrawFuzzColumn)(void);
+extern void R_DrawFuzzColumn(void);
 
 // [RH] Draw shaded column
 extern void (*R_DrawShadedColumn)(void);
@@ -192,7 +192,6 @@ void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip);
 
 #ifdef X86_ASM
 
-extern "C" void	R_DrawFuzzColumnP_ASM (void);
 		   void R_DrawShadedColumnP_C (void);
 extern "C" void	R_DrawSpanP_ASM (void);
 extern "C" void R_DrawSpanMaskedP_ASM (void);
@@ -201,7 +200,6 @@ void	R_DrawColumnHorizP_C(void);
 
 #else
 
-void	R_DrawFuzzColumnP_C (void);
 void	R_DrawShadedColumnP_C (void);
 void	R_DrawSpanP_C (void);
 void	R_DrawSpanMaskedP_C (void);

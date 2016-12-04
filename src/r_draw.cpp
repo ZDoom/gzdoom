@@ -69,7 +69,6 @@ int 			scaledviewwidth;
 //		These get changed depending on the current
 //		screen depth and asm/no asm.
 void (*R_DrawColumnHoriz)(void);
-void (*R_DrawFuzzColumn)(void);
 void (*R_DrawTranslatedColumn)(void);
 void (*R_DrawShadedColumn)(void);
 void (*R_DrawSpan)(void);
@@ -408,13 +407,12 @@ void R_InitFuzzTable (int fuzzoff)
 	}
 }
 
-#ifndef X86_ASM
 //
 // Creates a fuzzy image by copying pixels from adjacent ones above and below.
 // Used with an all black colormap, this could create the SHADOW effect,
 // i.e. spectres and invisible players.
 //
-void R_DrawFuzzColumnP_C (void)
+void R_DrawFuzzColumn (void)
 {
 	int count;
 	BYTE *dest;
@@ -484,7 +482,6 @@ void R_DrawFuzzColumnP_C (void)
 		fuzzpos = fuzz;
 	}
 } 
-#endif
 
 //
 // R_DrawTranlucentColumn
@@ -2544,12 +2541,12 @@ const BYTE *R_GetColumn (FTexture *tex, int col)
 	return tex->GetColumn (col, NULL);
 }
 
+
 // [RH] Initialize the column drawer pointers
 void R_InitColumnDrawers ()
 {
 #ifdef X86_ASM
 	R_DrawColumnHoriz			= R_DrawColumnHorizP_C;
-	R_DrawFuzzColumn			= R_DrawFuzzColumnP_ASM;
 	R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_C;
 	R_DrawShadedColumn			= R_DrawShadedColumnP_C;
 	R_DrawSpan					= R_DrawSpanP_ASM;
@@ -2564,7 +2561,6 @@ void R_InitColumnDrawers ()
 	}
 #else
 	R_DrawColumnHoriz			= R_DrawColumnHorizP_C;
-	R_DrawFuzzColumn			= R_DrawFuzzColumnP_C;
 	R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_C;
 	R_DrawShadedColumn			= R_DrawShadedColumnP_C;
 	R_DrawSpan					= R_DrawSpanP_C;

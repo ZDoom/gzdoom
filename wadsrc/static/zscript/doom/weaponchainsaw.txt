@@ -148,14 +148,14 @@ extend class StateProvider
 			if (anglediff < 0.0)
 			{
 				if (anglediff < -4.5)
-					angle = ang + 90.0 / 21;
+					angle = t.angleFromSource + 90.0 / 21;
 				else
 					angle -= 4.5;
 			}
 			else
 			{
 				if (anglediff > 4.5)
-					angle = ang - 90.0 / 21;
+					angle = t.angleFromSource - 90.0 / 21;
 				else
 					angle += 4.5;
 			}

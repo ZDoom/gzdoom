@@ -1673,6 +1673,7 @@ DWORD vlinec1 ()
 	return frac;
 }
 
+#ifndef _M_X64
 void vlinec4 ()
 {
 	BYTE *dest = dc_dest;
@@ -1689,6 +1690,43 @@ void vlinec4 ()
 		dest += dc_pitch;
 	} while (--count);
 }
+#else
+// Optimized version for 64 bit. In 64 bit mode, accessing global variables is very expensive so even though
+// this exceeds the register count, loading all those values into a local variable is faster than not loading all of them.
+void vlinec4()
+{
+	BYTE *dest = dc_dest;
+	int count = dc_count;
+	int bits = vlinebits;
+	DWORD place;
+	auto pal0 = palookupoffse[0];
+	auto pal1 = palookupoffse[1];
+	auto pal2 = palookupoffse[2];
+	auto pal3 = palookupoffse[3];
+	auto buf0 = bufplce[0];
+	auto buf1 = bufplce[1];
+	auto buf2 = bufplce[2];
+	auto buf3 = bufplce[3];
+	const auto vince0 = vince[0];
+	const auto vince1 = vince[1];
+	const auto vince2 = vince[2];
+	const auto vince3 = vince[3];
+	auto vplce0 = vplce[0];
+	auto vplce1 = vplce[1];
+	auto vplce2 = vplce[2];
+	auto vplce3 = vplce[3];
+
+	do
+	{
+		dest[0] = pal0[buf0[(place = vplce0) >> bits]]; vplce0 = place + vince0;
+		dest[1] = pal1[buf1[(place = vplce1) >> bits]]; vplce1 = place + vince1;
+		dest[2] = pal2[buf2[(place = vplce2) >> bits]]; vplce2 = place + vince2;
+		dest[3] = pal3[buf3[(place = vplce3) >> bits]]; vplce3 = place + vince3;
+		dest += dc_pitch;
+	} while (--count);
+}
+#endif
+
 #endif
 
 void setupmvline (int fracbits)

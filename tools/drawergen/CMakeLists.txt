@@ -113,6 +113,8 @@ endif()
 
 set (SOURCES
 	drawergen.cpp
+	llvmprogram.cpp
+	llvmdrawers.cpp
 	ssa/ssa_bool.cpp
 	ssa/ssa_float.cpp
 	ssa/ssa_float_ptr.cpp

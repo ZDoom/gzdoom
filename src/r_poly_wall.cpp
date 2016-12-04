@@ -38,7 +38,7 @@ EXTERN_CVAR(Bool, r_drawmirrors)
 bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipPlane, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals)
 {
 	PolyDrawLinePortal *polyportal = nullptr;
-	if (line->backsector == nullptr && line->sidedef == line->linedef->sidedef[0] && (line->linedef->special == Line_Mirror && r_drawmirrors))
+	if (line->backsector == nullptr && line->linedef && line->sidedef == line->linedef->sidedef[0] && (line->linedef->special == Line_Mirror && r_drawmirrors))
 	{
 		linePortals.push_back(std::make_unique<PolyDrawLinePortal>(line->linedef));
 		polyportal = linePortals.back().get();

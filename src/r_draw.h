@@ -247,6 +247,8 @@ extern void (*R_DrawFogBoundary)(int x1, int x2, short *uclip, short *dclip);
 void R_DrawFogBoundary_C (int x1, int x2, short *uclip, short *dclip);
 
 
+void	R_DrawColumnHorizP_C(void);
+
 #ifdef X86_ASM
 
 extern "C" void	R_DrawColumnP_Unrolled (void);
@@ -260,7 +262,6 @@ extern "C" void R_DrawSpanMaskedP_ASM (void);
 
 #else
 
-void	R_DrawColumnHorizP_C (void);
 void	R_DrawColumnP_C (void);
 void	R_DrawFuzzColumnP_C (void);
 void	R_DrawTranslatedColumnP_C (void);

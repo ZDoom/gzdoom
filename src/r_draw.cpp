@@ -2556,7 +2556,7 @@ void R_InitColumnDrawers ()
 {
 #ifdef X86_ASM
 	R_DrawColumn				= R_DrawColumnP_ASM;
-	R_DrawColumnHoriz			= R_DrawColumnHorizP_ASM;
+	R_DrawColumnHoriz			= R_DrawColumnHorizP_C;
 	R_DrawFuzzColumn			= R_DrawFuzzColumnP_ASM;
 	R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_C;
 	R_DrawShadedColumn			= R_DrawShadedColumnP_C;

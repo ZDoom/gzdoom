@@ -2653,7 +2653,6 @@ void D_DoomMain (void)
 		}
 
 		D_DoomLoop ();		// this only returns if a 'restart' CCMD is given.
-maxberestart:
 		// 
 		// Clean up after a restart
 		//

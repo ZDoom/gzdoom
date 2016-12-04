@@ -650,7 +650,6 @@ public:
 	virtual void Touch(AActor *toucher);
 	void CallTouch(AActor *toucher);
 
-
 	// Centaurs and ettins squeal when electrocuted, poisoned, or "holy"-ed
 	// Made a metadata property so no longer virtual
 	void Howl ();

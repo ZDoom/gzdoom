@@ -46,6 +46,7 @@
 #include "r_utility.h"
 #include "p_blockmap.h"
 #include "p_3dmidtex.h"
+#include "virtual.h"
 
 #include "s_sound.h"
 #include "decallib.h"
@@ -1134,6 +1135,12 @@ static bool CanAttackHurt(AActor *victim, AActor *shooter)
 //
 //==========================================================================
 
+DEFINE_ACTION_FUNCTION(AActor, CanCollideWith)
+{
+	// No need to check the parameters, as they are not even used.
+	ACTION_RETURN_BOOL(true);
+}
+
 bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::CheckResult &cres, const FBoundingBox &box, FCheckPosition &tm)
 {
 	AActor *thing = cres.thing;
@@ -1222,14 +1229,54 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			(thing->flags5 & MF5_DONTRIP) ||
 			((tm.thing->flags6 & MF6_NOBOSSRIP) && (thing->flags2 & MF2_BOSS)))
 		{
-			if (tm.thing->flags3 & thing->flags3 & MF3_DONTOVERLAP)
-			{ // Some things prefer not to overlap each other, if possible
-				return unblocking;
+			// Some things prefer not to overlap each other, if possible (Q: Is this even needed anymore? It was just for dealing with some deficiencies in the code below in Heretic.)
+			if (!(tm.thing->flags3 & thing->flags3 & MF3_DONTOVERLAP))
+			{
+				if ((tm.thing->Z() >= topz) || (tm.thing->Top() <= thing->Z()))
+					return true;
 			}
-			if ((tm.thing->Z() >= topz) || (tm.thing->Top() <= thing->Z()))
-				return true;
+			// If they are not allowed to overlap, the rest of this function still needs to be executed.
 		}
 	}
+
+	// Call the script callback. This must be done before any other checks that perform some actual action or may already return a 'block'.
+	// The checks here are to do this only for conditions that would later result in an action, calling this for everything would be too much of a drag if
+	// too many scripted overrides were being used, as PIT_CheckThing is even called for touching all the monster corpses lying around.
+	if (((thing->flags & MF_SOLID) || (thing->flags6 & (MF6_TOUCHY | MF6_BUMPSPECIAL))) && 
+		((tm.thing->flags & (MF_SOLID|MF_MISSILE)) || (tm.thing->flags6 & MF6_BLOCKEDBYSOLIDACTORS) || (tm.thing->BounceFlags & BOUNCE_MBF)))
+	{
+		static unsigned VIndex = ~0u;
+		if (VIndex == ~0u)
+		{
+			VIndex = GetVirtualIndex(RUNTIME_CLASS(AActor), "CanCollideWith");
+			assert(VIndex != ~0u);
+		}
+
+		VMValue params[3] = { tm.thing, thing, false };
+		VMReturn ret;
+		int retval;
+		ret.IntAt(&retval);
+
+		auto clss = tm.thing->GetClass();
+		VMFunction *func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
+		if (func != nullptr)
+		{
+			GlobalVMStack.Call(func, params, 3, &ret, 1, nullptr);
+			if (!retval) return true;
+		}
+		std::swap(params[0].a, params[1].a);
+		params[2].i = true;
+
+		// re-get for the other actor.
+		clss = thing->GetClass();
+		func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
+		if (func != nullptr)
+		{
+			GlobalVMStack.Call(func, params, 3, &ret, 1, nullptr);
+			if (!retval) return true;
+		}
+	}
+
 
 	if (tm.thing->player == NULL || !(tm.thing->player->cheats & CF_PREDICTING))
 	{

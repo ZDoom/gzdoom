@@ -1144,7 +1144,7 @@ CCMD(currentpos)
 	}
 	else
 	{
-		Printf("You are not in game!");
+		Printf("You are not in game!\n");
 	}
 }
 

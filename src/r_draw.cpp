@@ -1037,7 +1037,7 @@ void R_SetupSpanBits(FTexture *tex)
 	{
 		ds_xbits--;
 	}
-	if ((1 << ds_ybits) > tex->GetHeight())
+		if ((1 << ds_ybits) > tex->GetHeight())
 	{
 		ds_ybits--;
 	}
@@ -1048,7 +1048,7 @@ void R_SetupSpanBits(FTexture *tex)
 
 //
 // Draws the actual span.
-#ifndef X86_ASM
+//#ifndef X86_ASM
 void R_DrawSpanP_C (void)
 {
 	dsfixed_t			xfrac;
@@ -1147,7 +1147,7 @@ void R_DrawSpanMaskedP_C (void)
 		// 64x64 is the most common case by far, so special case it.
 		do
 		{
-			BYTE texdata;
+			int texdata;
 
 			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
 			texdata = source[spot];
@@ -1167,7 +1167,7 @@ void R_DrawSpanMaskedP_C (void)
 		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
 		do
 		{
-			BYTE texdata;
+			int texdata;
 		
 			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 			texdata = source[spot];
@@ -1181,7 +1181,7 @@ void R_DrawSpanMaskedP_C (void)
 		} while (--count);
 	}
 }
-#endif
+//#endif
 
 void R_DrawSpanTranslucent (void)
 {

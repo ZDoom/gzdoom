@@ -2800,6 +2800,8 @@ void R_DrawParticle_C (vissprite_t *vis)
 
 	R_DrawMaskedSegsBehindParticle (vis);
 
+	DrawerCommandQueue::WaitForWorkers();
+
 	// vis->renderflags holds translucency level (0-255)
 	{
 		fixed_t fglevel, bglevel;

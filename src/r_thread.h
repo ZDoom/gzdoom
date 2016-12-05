@@ -84,7 +84,8 @@ public:
 	}
 
 	// Calculate the dest address for the first line to be rendered by this thread
-	uint32_t *dest_for_thread(int first_line, int pitch, uint32_t *dest)
+	template<typename T>
+	T *dest_for_thread(int first_line, int pitch, T *dest)
 	{
 		return dest + skipped_by_thread(first_line) * pitch;
 	}

@@ -102,6 +102,15 @@ namespace swrenderer
 		int bits = _vlinebits;
 		int pitch = _pitch;
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+
 		do
 		{
 			*dest = colormap[source[frac >> bits]];
@@ -124,15 +133,31 @@ namespace swrenderer
 		auto buf1 = _bufplce[1];
 		auto buf2 = _bufplce[2];
 		auto buf3 = _bufplce[3];
-		const auto vince0 = _vince[0];
-		const auto vince1 = _vince[1];
-		const auto vince2 = _vince[2];
-		const auto vince3 = _vince[3];
+		auto vince0 = _vince[0];
+		auto vince1 = _vince[1];
+		auto vince2 = _vince[2];
+		auto vince3 = _vince[3];
 		auto vplce0 = _vplce[0];
 		auto vplce1 = _vplce[1];
 		auto vplce2 = _vplce[2];
 		auto vplce3 = _vplce[3];
 		auto pitch = _pitch;
+
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int skipped = thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		vplce0 += vince0 * skipped;
+		vplce1 += vince1 * skipped;
+		vplce2 += vince2 * skipped;
+		vplce3 += vince3 * skipped;
+		vince0 *= thread->num_cores;
+		vince1 *= thread->num_cores;
+		vince2 *= thread->num_cores;
+		vince3 *= thread->num_cores;
+		pitch *= thread->num_cores;
 
 		do
 		{
@@ -154,6 +179,15 @@ namespace swrenderer
 		uint8_t *dest = _dest;
 		int bits = _mvlinebits;
 		int pitch = _pitch;
+
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
 
 		do
 		{
@@ -181,15 +215,31 @@ namespace swrenderer
 		auto buf1 = _bufplce[1];
 		auto buf2 = _bufplce[2];
 		auto buf3 = _bufplce[3];
-		const auto vince0 = _vince[0];
-		const auto vince1 = _vince[1];
-		const auto vince2 = _vince[2];
-		const auto vince3 = _vince[3];
+		auto vince0 = _vince[0];
+		auto vince1 = _vince[1];
+		auto vince2 = _vince[2];
+		auto vince3 = _vince[3];
 		auto vplce0 = _vplce[0];
 		auto vplce1 = _vplce[1];
 		auto vplce2 = _vplce[2];
 		auto vplce3 = _vplce[3];
 		auto pitch = _pitch;
+
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int skipped = thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		vplce0 += vince0 * skipped;
+		vplce1 += vince1 * skipped;
+		vplce2 += vince2 * skipped;
+		vplce3 += vince3 * skipped;
+		vince0 *= thread->num_cores;
+		vince1 *= thread->num_cores;
+		vince2 *= thread->num_cores;
+		vince3 *= thread->num_cores;
+		pitch *= thread->num_cores;
 
 		do
 		{
@@ -217,6 +267,15 @@ namespace swrenderer
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+
 		do
 		{
 			uint8_t pix = source[frac >> bits];
@@ -242,6 +301,21 @@ namespace swrenderer
 		uint32_t *bg2rgb = _destblend;
 
 		uint32_t vplce[4] = { _vplce[0], _vplce[1], _vplce[2], _vplce[3] };
+		uint32_t vince[4] = { _vince[0], _vince[1], _vince[2], _vince[3] };
+
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int pitch = _pitch;
+		int skipped = thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		for (int i = 0; i < 4; i++)
+		{
+			vplce[i] += vince[i] * skipped;
+			vince[i] *= thread->num_cores;
+		}
+		pitch *= thread->num_cores;
 
 		do
 		{
@@ -255,9 +329,9 @@ namespace swrenderer
 					fg = (fg + bg) | 0x1f07c1f;
 					dest[i] = RGB32k.All[fg & (fg >> 15)];
 				}
-				vplce[i] += _vince[i];
+				vplce[i] += vince[i];
 			}
-			dest += _pitch;
+			dest += pitch;
 		} while (--count);
 	}
 
@@ -274,6 +348,15 @@ namespace swrenderer
 
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
+
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
 
 		do
 		{
@@ -305,6 +388,21 @@ namespace swrenderer
 		uint32_t *bg2rgb = _destblend;
 
 		uint32_t vplce[4] = { _vplce[0], _vplce[1], _vplce[2], _vplce[3] };
+		uint32_t vince[4] = { _vince[0], _vince[1], _vince[2], _vince[3] };
+
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int pitch = _pitch;
+		int skipped = thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		for (int i = 0; i < 4; i++)
+		{
+			vplce[i] += vince[i] * skipped;
+			vince[i] *= thread->num_cores;
+		}
+		pitch *= thread->num_cores;
 
 		do
 		{
@@ -323,9 +421,9 @@ namespace swrenderer
 					a |= b;
 					dest[i] = RGB32k.All[a & (a >> 15)];
 				}
-				vplce[i] += _vince[i];
+				vplce[i] += vince[i];
 			}
-			dest += _pitch;
+			dest += pitch;
 		} while (--count);
 	}
 
@@ -342,6 +440,15 @@ namespace swrenderer
 
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
+
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
 
 		do
 		{
@@ -372,6 +479,21 @@ namespace swrenderer
 		uint32_t *bg2rgb = _destblend;
 
 		uint32_t vplce[4] = { _vplce[0], _vplce[1], _vplce[2], _vplce[3] };
+		uint32_t vince[4] = { _vince[0], _vince[1], _vince[2], _vince[3] };
+
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int pitch = _pitch;
+		int skipped = thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		for (int i = 0; i < 4; i++)
+		{
+			vplce[i] += vince[i] * skipped;
+			vince[i] *= thread->num_cores;
+		}
+		pitch *= thread->num_cores;
 
 		do
 		{
@@ -389,9 +511,9 @@ namespace swrenderer
 					a |= 0x01f07c1f;
 					dest[i] = RGB32k.All[a & (a >> 15)];
 				}
-				vplce[i] += _vince[i];
+				vplce[i] += vince[i];
 			}
-			dest += _pitch;
+			dest += pitch;
 		} while (--count);
 	}
 
@@ -408,6 +530,15 @@ namespace swrenderer
 
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
+
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
 
 		do
 		{
@@ -438,6 +569,21 @@ namespace swrenderer
 		uint32_t *bg2rgb = _destblend;
 
 		uint32_t vplce[4] = { _vplce[0], _vplce[1], _vplce[2], _vplce[3] };
+		uint32_t vince[4] = { _vince[0], _vince[1], _vince[2], _vince[3] };
+
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int pitch = _pitch;
+		int skipped = thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		for (int i = 0; i < 4; i++)
+		{
+			vplce[i] += vince[i] * skipped;
+			vince[i] *= thread->num_cores;
+		}
+		pitch *= thread->num_cores;
 
 		do
 		{
@@ -455,7 +601,7 @@ namespace swrenderer
 					a |= 0x01f07c1f;
 					dest[i] = RGB32k.All[a & (a >> 15)];
 				}
-				vplce[i] += _vince[i];
+				vplce[i] += vince[i];
 			}
 			dest += _pitch;
 		} while (--count);

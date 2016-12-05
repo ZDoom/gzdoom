@@ -388,7 +388,7 @@ class Minotaur : Actor
 		// In case pain caused him to skip his fade in.
 		A_SetRenderStyle(1, STYLE_Normal);
 
-		MinotaurFriend mf = MinotaurFriend(self);
+		let mf = MinotaurFriend(self);
 		if (mf)
 		{
 			if (mf.StartTime >= 0 && (level.maptime - mf.StartTime) >= MAULATORTICS)
@@ -501,7 +501,7 @@ class Minotaur : Actor
 
 	void A_MinotaurChase()
 	{
-		MinotaurFriend mf = MinotaurFriend(self);
+		let mf = MinotaurFriend(self);
 		if (!mf)
 		{
 			A_Chase();

@@ -1078,9 +1078,10 @@ public:
 	FxTypeCheck(FxExpression*, FxExpression*);
 	~FxTypeCheck();
 	FxExpression *Resolve(FCompileContext&);
-	PPrototype *ReturnProto();
 
+	ExpEmit EmitCommon(VMFunctionBuilder *build);
 	ExpEmit Emit(VMFunctionBuilder *build);
+	void EmitCompare(VMFunctionBuilder *build, bool invert, TArray<size_t> &patchspots_yes, TArray<size_t> &patchspots_no);
 };
 
 //==========================================================================

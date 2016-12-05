@@ -414,6 +414,18 @@ begin:
 		reg.f[a+1] = reg.f[B+1];
 		reg.f[a+2] = reg.f[B+2];
 		NEXTOP;
+	OP(DYNCAST_R) :
+		ASSERTA(a); ASSERTA(B);	ASSERTA(C);
+		b = B;
+		reg.a[a] = (reg.a[b] && ((DObject*)(reg.a[b]))->IsKindOf((PClass*)(reg.a[C]))) ? reg.a[b] : nullptr;
+		reg.atag[a] = ATAG_OBJECT;
+		NEXTOP;
+	OP(DYNCAST_K) :
+		ASSERTA(a); ASSERTA(B);	ASSERTKA(C);
+		b = B;
+		reg.a[a] = (reg.a[b] && ((DObject*)(reg.a[b]))->IsKindOf((PClass*)(konsta[C].o))) ? reg.a[b] : nullptr;
+		reg.atag[a] = ATAG_OBJECT;
+		NEXTOP;
 	OP(CAST):
 		if (C == CAST_I2F)
 		{

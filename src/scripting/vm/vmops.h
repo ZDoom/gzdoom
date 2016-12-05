@@ -84,6 +84,8 @@ xx(MOVEV2,	mov2,	RFRF,		NOP,	0, 0),		// fA = fB (2 elements)
 xx(MOVEV3,	mov3,	RFRF,		NOP,	0, 0),		// fA = fB (3 elements)
 xx(CAST,	cast,	CAST,		NOP,	0, 0),		// xA = xB, conversion specified by C
 xx(CASTB,	castb,	CAST,		NOP,	0, 0),		// xA = !!xB, type specified by C
+xx(DYNCAST_R,	dyncast, RPRPRP,	NOP,	0, 0),		// aA = dyn_cast<aC>(aB);
+xx(DYNCAST_K,	dyncast, RPRPKP,	NOP,	0, 0),		// aA = dyn_cast<aKC>(aB);
 
 // Control flow.
 xx(TEST,	test,	RII16,		NOP,	0, 0),		// if (dA != BC) then pc++

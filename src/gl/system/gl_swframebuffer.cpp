@@ -2316,7 +2316,11 @@ bool OpenGLSWFrameBuffer::OpenGLPal::Update()
 	{
 		buff[i] = ColorARGB(pal[i].a, pal[i - 1].r, pal[i - 1].g, pal[i - 1].b);
 	}
-	BorderColor = ColorARGB(pal[i].a, pal[i - 1].r, pal[i - 1].g, pal[i - 1].b);
+	if (numEntries > 1)
+	{
+		i = numEntries - 1;
+		BorderColor = ColorARGB(pal[i].a, pal[i - 1].r, pal[i - 1].g, pal[i - 1].b);
+	}
 
 	glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 	GLint oldBinding = 0;

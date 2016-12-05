@@ -56,6 +56,12 @@ CUSTOM_CVAR(Bool, r_polyrenderer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOI
 	{
 		Printf("No GL BSP detected. You must restart the map before rendering will be correct\n");
 	}
+
+	if (usergame)
+	{
+		// [SP] Update pitch limits to the netgame/gamesim.
+		players[consoleplayer].SendPitchLimits();
+	}
 }
 
 namespace swrenderer       

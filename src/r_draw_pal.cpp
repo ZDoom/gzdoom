@@ -1569,6 +1569,9 @@ namespace swrenderer
 
 	void DrawSpanPalCommand::Execute(DrawerThread *thread)
 	{
+		if (thread->skipped_by_thread(_dest_y))
+			return;
+
 		dsfixed_t xfrac;
 		dsfixed_t yfrac;
 		dsfixed_t xstep;
@@ -1630,6 +1633,9 @@ namespace swrenderer
 
 	void DrawSpanMaskedPalCommand::Execute(DrawerThread *thread)
 	{
+		if (thread->skipped_by_thread(_dest_y))
+			return;
+
 		dsfixed_t xfrac;
 		dsfixed_t yfrac;
 		dsfixed_t xstep;
@@ -1692,6 +1698,9 @@ namespace swrenderer
 
 	void DrawSpanTranslucentPalCommand::Execute(DrawerThread *thread)
 	{
+		if (thread->skipped_by_thread(_dest_y))
+			return;
+
 		dsfixed_t xfrac;
 		dsfixed_t yfrac;
 		dsfixed_t xstep;
@@ -1752,6 +1761,9 @@ namespace swrenderer
 
 	void DrawSpanMaskedTranslucentPalCommand::Execute(DrawerThread *thread)
 	{
+		if (thread->skipped_by_thread(_dest_y))
+			return;
+
 		dsfixed_t xfrac;
 		dsfixed_t yfrac;
 		dsfixed_t xstep;
@@ -1826,6 +1838,9 @@ namespace swrenderer
 
 	void DrawSpanAddClampPalCommand::Execute(DrawerThread *thread)
 	{
+		if (thread->skipped_by_thread(_dest_y))
+			return;
+
 		dsfixed_t xfrac;
 		dsfixed_t yfrac;
 		dsfixed_t xstep;
@@ -1892,6 +1907,9 @@ namespace swrenderer
 
 	void DrawSpanMaskedAddClampPalCommand::Execute(DrawerThread *thread)
 	{
+		if (thread->skipped_by_thread(_dest_y))
+			return;
+
 		dsfixed_t xfrac;
 		dsfixed_t yfrac;
 		dsfixed_t xstep;
@@ -1972,6 +1990,9 @@ namespace swrenderer
 
 	void FillSpanPalCommand::Execute(DrawerThread *thread)
 	{
+		if (thread->skipped_by_thread(_y))
+			return;
+
 		memset(ylookup[_y] + _x1 + _destorg, _color, _x2 - _x1 + 1);
 	}
 

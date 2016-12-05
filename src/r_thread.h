@@ -123,7 +123,10 @@ protected:
 public:
 	DrawerCommand()
 	{
-		_dest_y = static_cast<int>((swrenderer::drawerargs::dc_dest - swrenderer::drawerargs::dc_destorg) / (swrenderer::drawerargs::dc_pitch * 4));
+		if (swrenderer::r_swtruecolor)
+			_dest_y = static_cast<int>((swrenderer::drawerargs::dc_dest - swrenderer::drawerargs::dc_destorg) / (swrenderer::drawerargs::dc_pitch * 4));
+		else
+			_dest_y = static_cast<int>((swrenderer::drawerargs::dc_dest - swrenderer::drawerargs::dc_destorg) / (swrenderer::drawerargs::dc_pitch));
 	}
 	
 	virtual ~DrawerCommand() { }

@@ -1088,15 +1088,11 @@ namespace swrenderer
 	void DrawColumnPalCommand::Execute(DrawerThread *thread)
 	{
 		int count;
-		BYTE *dest;
+		uint8_t *dest;
 		fixed_t frac;
 		fixed_t fracstep;
 
 		count = _count;
-
-		// Zero length, column does not exceed a pixel.
-		if (count <= 0)
-			return;
 
 		// Framebuffer destination address.
 		dest = _dest;
@@ -1106,73 +1102,84 @@ namespace swrenderer
 		fracstep = _iscale;
 		frac = _texturefrac;
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int pitch = _pitch;
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+
+		// [RH] Get local copies of these variables so that the compiler
+		//		has a better chance of optimizing this well.
+		const uint8_t *colormap = _colormap;
+		const uint8_t *source = _source;
+
+		// Inner loop that does the actual texture mapping,
+		//	e.g. a DDA-lile scaling.
+		// This is as fast as it gets.
+		do
 		{
-			// [RH] Get local copies of these variables so that the compiler
-			//		has a better chance of optimizing this well.
-			const BYTE *colormap = _colormap;
-			const BYTE *source = _source;
-			int pitch = _pitch;
+			// Re-map color indices from wall texture column
+			//	using a lighting/special effects LUT.
+			*dest = colormap[source[frac >> FRACBITS]];
 
-			// Inner loop that does the actual texture mapping,
-			//	e.g. a DDA-lile scaling.
-			// This is as fast as it gets.
-			do
-			{
-				// Re-map color indices from wall texture column
-				//	using a lighting/special effects LUT.
-				*dest = colormap[source[frac >> FRACBITS]];
+			dest += pitch;
+			frac += fracstep;
 
-				dest += pitch;
-				frac += fracstep;
-
-			} while (--count);
-		}
+		} while (--count);
 	}
 
 	void FillColumnPalCommand::Execute(DrawerThread *thread)
 	{
 		int count;
-		BYTE *dest;
+		uint8_t *dest;
 
 		count = _count;
+		dest = _dest;
 
+		count = thread->count_for_thread(_dest_y, count);
 		if (count <= 0)
 			return;
 
-		dest = _dest;
+		int pitch = _pitch;
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		pitch *= thread->num_cores;
 
+		uint8_t color = _color;
+		do
 		{
-			int pitch = _pitch;
-			BYTE color = _color;
-
-			do
-			{
-				*dest = color;
-				dest += pitch;
-			} while (--count);
-		}
+			*dest = color;
+			dest += pitch;
+		} while (--count);
 	}
 
 	void FillColumnAddPalCommand::Execute(DrawerThread *thread)
 	{
 		int count;
-		BYTE *dest;
+		uint8_t *dest;
 
 		count = _count;
-		if (count <= 0)
-			return;
-
 		dest = _dest;
-		DWORD *bg2rgb;
-		DWORD fg;
+		uint32_t *bg2rgb;
+		uint32_t fg;
 
 		bg2rgb = _destblend;
 		fg = _srccolor;
 		int pitch = _pitch;
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		pitch *= thread->num_cores;
+
 		do
 		{
-			DWORD bg;
+			uint32_t bg;
 			bg = (fg + bg2rgb[*dest]) | 0x1f07c1f;
 			*dest = RGB32k.All[bg & (bg >> 15)];
 			dest += pitch;
@@ -1183,24 +1190,29 @@ namespace swrenderer
 	void FillColumnAddClampPalCommand::Execute(DrawerThread *thread)
 	{
 		int count;
-		BYTE *dest;
+		uint8_t *dest;
 
 		count = _count;
-		if (count <= 0)
-			return;
 
 		dest = _dest;
-		DWORD *bg2rgb;
-		DWORD fg;
+		uint32_t *bg2rgb;
+		uint32_t fg;
 
 		bg2rgb = _destblend;
 		fg = _srccolor;
 		int pitch = _pitch;
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		pitch *= thread->num_cores;
+
 		do
 		{
-			DWORD a = fg + bg2rgb[*dest];
-			DWORD b = a;
+			uint32_t a = fg + bg2rgb[*dest];
+			uint32_t b = a;
 
 			a |= 0x01f07c1f;
 			b &= 0x40100400;
@@ -1215,24 +1227,29 @@ namespace swrenderer
 	void FillColumnSubClampPalCommand::Execute(DrawerThread *thread)
 	{
 		int count;
-		BYTE *dest;
+		uint8_t *dest;
 
 		count = _count;
-		if (count <= 0)
-			return;
 
 		dest = _dest;
-		DWORD *bg2rgb;
-		DWORD fg;
+		uint32_t *bg2rgb;
+		uint32_t fg;
 
 		bg2rgb = _destblend;
 		fg = _srccolor | 0x40100400;
 		int pitch = _pitch;
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		pitch *= thread->num_cores;
+
 		do
 		{
-			DWORD a = fg - bg2rgb[*dest];
-			DWORD b = a;
+			uint32_t a = fg - bg2rgb[*dest];
+			uint32_t b = a;
 
 			b &= 0x40100400;
 			b = b - (b >> 5);
@@ -1246,24 +1263,31 @@ namespace swrenderer
 	void FillColumnRevSubClampPalCommand::Execute(DrawerThread *thread)
 	{
 		int count;
-		BYTE *dest;
+		uint8_t *dest;
 
 		count = _count;
 		if (count <= 0)
 			return;
 
 		dest = _dest;
-		DWORD *bg2rgb;
-		DWORD fg;
+		uint32_t *bg2rgb;
+		uint32_t fg;
 
 		bg2rgb = _destblend;
 		fg = _srccolor;
 		int pitch = _pitch;
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		pitch *= thread->num_cores;
+
 		do
 		{
-			DWORD a = (bg2rgb[*dest] | 0x40100400) - fg;
-			DWORD b = a;
+			uint32_t a = (bg2rgb[*dest] | 0x40100400) - fg;
+			uint32_t b = a;
 
 			b &= 0x40100400;
 			b = b - (b >> 5);
@@ -1277,385 +1301,425 @@ namespace swrenderer
 	void DrawColumnAddPalCommand::Execute(DrawerThread *thread)
 	{
 		int count;
-		BYTE *dest;
+		uint8_t *dest;
 		fixed_t frac;
 		fixed_t fracstep;
 
 		count = _count;
-		if (count <= 0)
-			return;
-
 		dest = _dest;
 
 		fracstep = _iscale;
 		frac = _texturefrac;
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int pitch = _pitch;
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
+		const uint8_t *colormap = _colormap;
+		const uint8_t *source = _source;
+
+		do
 		{
-			DWORD *fg2rgb = _srcblend;
-			DWORD *bg2rgb = _destblend;
-			const BYTE *colormap = _colormap;
-			const BYTE *source = _source;
-			int pitch = _pitch;
+			uint32_t fg = colormap[source[frac >> FRACBITS]];
+			uint32_t bg = *dest;
 
-			do
-			{
-				DWORD fg = colormap[source[frac >> FRACBITS]];
-				DWORD bg = *dest;
-
-				fg = fg2rgb[fg];
-				bg = bg2rgb[bg];
-				fg = (fg + bg) | 0x1f07c1f;
-				*dest = RGB32k.All[fg & (fg >> 15)];
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
+			fg = fg2rgb[fg];
+			bg = bg2rgb[bg];
+			fg = (fg + bg) | 0x1f07c1f;
+			*dest = RGB32k.All[fg & (fg >> 15)];
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
 	}
 
 	void DrawColumnTranslatedPalCommand::Execute(DrawerThread *thread)
 	{
 		int 				count;
-		BYTE*				dest;
+		uint8_t*				dest;
 		fixed_t 			frac;
 		fixed_t 			fracstep;
 
 		count = _count;
-		if (count <= 0)
-			return;
 
 		dest = _dest;
 
 		fracstep = _iscale;
 		frac = _texturefrac;
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int pitch = _pitch;
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+
+		// [RH] Local copies of global vars to improve compiler optimizations
+		const uint8_t *colormap = _colormap;
+		const uint8_t *translation = _translation;
+		const uint8_t *source = _source;
+
+		do
 		{
-			// [RH] Local copies of global vars to improve compiler optimizations
-			const BYTE *colormap = _colormap;
-			const BYTE *translation = _translation;
-			const BYTE *source = _source;
-			int pitch = _pitch;
+			*dest = colormap[translation[source[frac >> FRACBITS]]];
+			dest += pitch;
 
-			do
-			{
-				*dest = colormap[translation[source[frac >> FRACBITS]]];
-				dest += pitch;
-
-				frac += fracstep;
-			} while (--count);
-		}
+			frac += fracstep;
+		} while (--count);
 	}
 
 	void DrawColumnTlatedAddPalCommand::Execute(DrawerThread *thread)
 	{
 		int count;
-		BYTE *dest;
+		uint8_t *dest;
 		fixed_t frac;
 		fixed_t fracstep;
 
 		count = _count;
-		if (count <= 0)
-			return;
-
 		dest = _dest;
 
 		fracstep = _iscale;
 		frac = _texturefrac;
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int pitch = _pitch;
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
+		const uint8_t *translation = _translation;
+		const uint8_t *colormap = _colormap;
+		const uint8_t *source = _source;
+
+		do
 		{
-			DWORD *fg2rgb = _srcblend;
-			DWORD *bg2rgb = _destblend;
-			const BYTE *translation = _translation;
-			const BYTE *colormap = _colormap;
-			const BYTE *source = _source;
-			int pitch = _pitch;
+			uint32_t fg = colormap[translation[source[frac >> FRACBITS]]];
+			uint32_t bg = *dest;
 
-			do
-			{
-				DWORD fg = colormap[translation[source[frac >> FRACBITS]]];
-				DWORD bg = *dest;
-
-				fg = fg2rgb[fg];
-				bg = bg2rgb[bg];
-				fg = (fg + bg) | 0x1f07c1f;
-				*dest = RGB32k.All[fg & (fg >> 15)];
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
+			fg = fg2rgb[fg];
+			bg = bg2rgb[bg];
+			fg = (fg + bg) | 0x1f07c1f;
+			*dest = RGB32k.All[fg & (fg >> 15)];
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
 	}
 
 	void DrawColumnShadedPalCommand::Execute(DrawerThread *thread)
 	{
 		int  count;
-		BYTE *dest;
+		uint8_t *dest;
 		fixed_t frac, fracstep;
 
 		count = _count;
-
-		if (count <= 0)
-			return;
-
 		dest = _dest;
 
 		fracstep = _iscale;
 		frac = _texturefrac;
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int pitch = _pitch;
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+
+		const uint8_t *source = _source;
+		const uint8_t *colormap = _colormap;
+		uint32_t *fgstart = &Col2RGB8[0][_color];
+
+		do
 		{
-			const BYTE *source = _source;
-			const BYTE *colormap = _colormap;
-			int pitch = _pitch;
-			DWORD *fgstart = &Col2RGB8[0][_color];
+			uint32_t val = colormap[source[frac >> FRACBITS]];
+			uint32_t fg = fgstart[val << 8];
+			val = (Col2RGB8[64 - val][*dest] + fg) | 0x1f07c1f;
+			*dest = RGB32k.All[val & (val >> 15)];
 
-			do
-			{
-				DWORD val = colormap[source[frac >> FRACBITS]];
-				DWORD fg = fgstart[val << 8];
-				val = (Col2RGB8[64 - val][*dest] + fg) | 0x1f07c1f;
-				*dest = RGB32k.All[val & (val >> 15)];
-
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
 	}
 
 	void DrawColumnAddClampPalCommand::Execute(DrawerThread *thread)
 	{
 		int count;
-		BYTE *dest;
+		uint8_t *dest;
 		fixed_t frac;
 		fixed_t fracstep;
 
 		count = _count;
-		if (count <= 0)
-			return;
-
 		dest = _dest;
 
 		fracstep = _iscale;
 		frac = _texturefrac;
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int pitch = _pitch;
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+
+		const uint8_t *colormap = _colormap;
+		const uint8_t *source = _source;
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
+
+		do
 		{
-			const BYTE *colormap = _colormap;
-			const BYTE *source = _source;
-			int pitch = _pitch;
-			DWORD *fg2rgb = _srcblend;
-			DWORD *bg2rgb = _destblend;
+			uint32_t a = fg2rgb[colormap[source[frac >> FRACBITS]]] + bg2rgb[*dest];
+			uint32_t b = a;
 
-			do
-			{
-				DWORD a = fg2rgb[colormap[source[frac >> FRACBITS]]] + bg2rgb[*dest];
-				DWORD b = a;
-
-				a |= 0x01f07c1f;
-				b &= 0x40100400;
-				a &= 0x3fffffff;
-				b = b - (b >> 5);
-				a |= b;
-				*dest = RGB32k.All[a & (a >> 15)];
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
+			a |= 0x01f07c1f;
+			b &= 0x40100400;
+			a &= 0x3fffffff;
+			b = b - (b >> 5);
+			a |= b;
+			*dest = RGB32k.All[a & (a >> 15)];
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
 	}
 
 	void DrawColumnAddClampTranslatedPalCommand::Execute(DrawerThread *thread)
 	{
 		int count;
-		BYTE *dest;
+		uint8_t *dest;
 		fixed_t frac;
 		fixed_t fracstep;
 
 		count = _count;
-		if (count <= 0)
-			return;
-
 		dest = _dest;
 
 		fracstep = _iscale;
 		frac = _texturefrac;
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int pitch = _pitch;
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+
+		const uint8_t *translation = _translation;
+		const uint8_t *colormap = _colormap;
+		const uint8_t *source = _source;
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
+
+		do
 		{
-			const BYTE *translation = _translation;
-			const BYTE *colormap = _colormap;
-			const BYTE *source = _source;
-			int pitch = _pitch;
-			DWORD *fg2rgb = _srcblend;
-			DWORD *bg2rgb = _destblend;
+			uint32_t a = fg2rgb[colormap[translation[source[frac >> FRACBITS]]]] + bg2rgb[*dest];
+			uint32_t b = a;
 
-			do
-			{
-				DWORD a = fg2rgb[colormap[translation[source[frac >> FRACBITS]]]] + bg2rgb[*dest];
-				DWORD b = a;
-
-				a |= 0x01f07c1f;
-				b &= 0x40100400;
-				a &= 0x3fffffff;
-				b = b - (b >> 5);
-				a |= b;
-				*dest = RGB32k.All[(a >> 15) & a];
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
+			a |= 0x01f07c1f;
+			b &= 0x40100400;
+			a &= 0x3fffffff;
+			b = b - (b >> 5);
+			a |= b;
+			*dest = RGB32k.All[(a >> 15) & a];
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
 	}
 
 	void DrawColumnSubClampPalCommand::Execute(DrawerThread *thread)
 	{
 		int count;
-		BYTE *dest;
+		uint8_t *dest;
 		fixed_t frac;
 		fixed_t fracstep;
 
 		count = _count;
-		if (count <= 0)
-			return;
-
 		dest = _dest;
 
 		fracstep = _iscale;
 		frac = _texturefrac;
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int pitch = _pitch;
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+
+		const uint8_t *colormap = _colormap;
+		const uint8_t *source = _source;
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
+
+		do
 		{
-			const BYTE *colormap = _colormap;
-			const BYTE *source = _source;
-			int pitch = _pitch;
-			DWORD *fg2rgb = _srcblend;
-			DWORD *bg2rgb = _destblend;
+			uint32_t a = (fg2rgb[colormap[source[frac >> FRACBITS]]] | 0x40100400) - bg2rgb[*dest];
+			uint32_t b = a;
 
-			do
-			{
-				DWORD a = (fg2rgb[colormap[source[frac >> FRACBITS]]] | 0x40100400) - bg2rgb[*dest];
-				DWORD b = a;
-
-				b &= 0x40100400;
-				b = b - (b >> 5);
-				a &= b;
-				a |= 0x01f07c1f;
-				*dest = RGB32k.All[a & (a >> 15)];
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
+			b &= 0x40100400;
+			b = b - (b >> 5);
+			a &= b;
+			a |= 0x01f07c1f;
+			*dest = RGB32k.All[a & (a >> 15)];
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
 	}
 
 	void DrawColumnSubClampTranslatedPalCommand::Execute(DrawerThread *thread)
 	{
 		int count;
-		BYTE *dest;
+		uint8_t *dest;
 		fixed_t frac;
 		fixed_t fracstep;
 
 		count = _count;
-		if (count <= 0)
-			return;
-
 		dest = _dest;
 
 		fracstep = _iscale;
 		frac = _texturefrac;
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int pitch = _pitch;
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+
+		const uint8_t *translation = _translation;
+		const uint8_t *colormap = _colormap;
+		const uint8_t *source = _source;
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
+
+		do
 		{
-			const BYTE *translation = _translation;
-			const BYTE *colormap = _colormap;
-			const BYTE *source = _source;
-			int pitch = _pitch;
-			DWORD *fg2rgb = _srcblend;
-			DWORD *bg2rgb = _destblend;
+			uint32_t a = (fg2rgb[colormap[translation[source[frac >> FRACBITS]]]] | 0x40100400) - bg2rgb[*dest];
+			uint32_t b = a;
 
-			do
-			{
-				DWORD a = (fg2rgb[colormap[translation[source[frac >> FRACBITS]]]] | 0x40100400) - bg2rgb[*dest];
-				DWORD b = a;
-
-				b &= 0x40100400;
-				b = b - (b >> 5);
-				a &= b;
-				a |= 0x01f07c1f;
-				*dest = RGB32k.All[(a >> 15) & a];
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
+			b &= 0x40100400;
+			b = b - (b >> 5);
+			a &= b;
+			a |= 0x01f07c1f;
+			*dest = RGB32k.All[(a >> 15) & a];
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
 	}
 
 	void DrawColumnRevSubClampPalCommand::Execute(DrawerThread *thread)
 	{
 		int count;
-		BYTE *dest;
+		uint8_t *dest;
 		fixed_t frac;
 		fixed_t fracstep;
 
 		count = _count;
-		if (count <= 0)
-			return;
-
 		dest = _dest;
 
 		fracstep = _iscale;
 		frac = _texturefrac;
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int pitch = _pitch;
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+
+		const uint8_t *colormap = _colormap;
+		const uint8_t *source = _source;
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
+
+		do
 		{
-			const BYTE *colormap = _colormap;
-			const BYTE *source = _source;
-			int pitch = _pitch;
-			DWORD *fg2rgb = _srcblend;
-			DWORD *bg2rgb = _destblend;
+			uint32_t a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[source[frac >> FRACBITS]]];
+			uint32_t b = a;
 
-			do
-			{
-				DWORD a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[source[frac >> FRACBITS]]];
-				DWORD b = a;
-
-				b &= 0x40100400;
-				b = b - (b >> 5);
-				a &= b;
-				a |= 0x01f07c1f;
-				*dest = RGB32k.All[a & (a >> 15)];
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
+			b &= 0x40100400;
+			b = b - (b >> 5);
+			a &= b;
+			a |= 0x01f07c1f;
+			*dest = RGB32k.All[a & (a >> 15)];
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
 	}
 
 	void DrawColumnRevSubClampTranslatedPalCommand::Execute(DrawerThread *thread)
 	{
 		int count;
-		BYTE *dest;
+		uint8_t *dest;
 		fixed_t frac;
 		fixed_t fracstep;
 
 		count = _count;
-		if (count <= 0)
-			return;
-
 		dest = _dest;
 
 		fracstep = _iscale;
 		frac = _texturefrac;
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int pitch = _pitch;
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * thread->skipped_by_thread(_dest_y);
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+
+		const uint8_t *translation = _translation;
+		const uint8_t *colormap = _colormap;
+		const uint8_t *source = _source;
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
+
+		do
 		{
-			const BYTE *translation = _translation;
-			const BYTE *colormap = _colormap;
-			const BYTE *source = _source;
-			int pitch = _pitch;
-			DWORD *fg2rgb = _srcblend;
-			DWORD *bg2rgb = _destblend;
+			uint32_t a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[translation[source[frac >> FRACBITS]]]];
+			uint32_t b = a;
 
-			do
-			{
-				DWORD a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[translation[source[frac >> FRACBITS]]]];
-				DWORD b = a;
-
-				b &= 0x40100400;
-				b = b - (b >> 5);
-				a &= b;
-				a |= 0x01f07c1f;
-				*dest = RGB32k.All[(a >> 15) & a];
-				dest += pitch;
-				frac += fracstep;
-			} while (--count);
-		}
+			b &= 0x40100400;
+			b = b - (b >> 5);
+			a &= b;
+			a |= 0x01f07c1f;
+			*dest = RGB32k.All[(a >> 15) & a];
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
 	}
 
 	/////////////////////////////////////////////////////////////////////////
@@ -1674,7 +1738,7 @@ namespace swrenderer
 	void DrawFuzzColumnPalCommand::Execute(DrawerThread *thread)
 	{
 		int count;
-		BYTE *dest;
+		uint8_t *dest;
 
 		// Adjust borders. Low...
 		if (_yl == 0)
@@ -1701,7 +1765,7 @@ namespace swrenderer
 			int pitch = _pitch;
 			int fuzz = fuzzpos;
 			int cnt;
-			BYTE *map = &NormalLight.Maps[6 * 256];
+			uint8_t *map = &NormalLight.Maps[6 * 256];
 
 			// [RH] Split this into three separate loops to minimize
 			// the number of times fuzzpos needs to be clamped.
@@ -1767,7 +1831,7 @@ namespace swrenderer
 
 	void DrawSpanPalCommand::Execute(DrawerThread *thread)
 	{
-		if (thread->skipped_by_thread(_dest_y))
+		if (thread->skipped_by_thread(_y))
 			return;
 
 		dsfixed_t xfrac;
@@ -1831,7 +1895,7 @@ namespace swrenderer
 
 	void DrawSpanMaskedPalCommand::Execute(DrawerThread *thread)
 	{
-		if (thread->skipped_by_thread(_dest_y))
+		if (thread->skipped_by_thread(_y))
 			return;
 
 		dsfixed_t xfrac;
@@ -1896,7 +1960,7 @@ namespace swrenderer
 
 	void DrawSpanTranslucentPalCommand::Execute(DrawerThread *thread)
 	{
-		if (thread->skipped_by_thread(_dest_y))
+		if (thread->skipped_by_thread(_y))
 			return;
 
 		dsfixed_t xfrac;
@@ -1959,7 +2023,7 @@ namespace swrenderer
 
 	void DrawSpanMaskedTranslucentPalCommand::Execute(DrawerThread *thread)
 	{
-		if (thread->skipped_by_thread(_dest_y))
+		if (thread->skipped_by_thread(_y))
 			return;
 
 		dsfixed_t xfrac;
@@ -2036,7 +2100,7 @@ namespace swrenderer
 
 	void DrawSpanAddClampPalCommand::Execute(DrawerThread *thread)
 	{
-		if (thread->skipped_by_thread(_dest_y))
+		if (thread->skipped_by_thread(_y))
 			return;
 
 		dsfixed_t xfrac;
@@ -2105,7 +2169,7 @@ namespace swrenderer
 
 	void DrawSpanMaskedAddClampPalCommand::Execute(DrawerThread *thread)
 	{
-		if (thread->skipped_by_thread(_dest_y))
+		if (thread->skipped_by_thread(_y))
 			return;
 
 		dsfixed_t xfrac;

@@ -39,6 +39,8 @@
 #include "w_wad.h"
 #include "gi.h"
 #include "g_level.h"
+#include "doomstat.h"
+#include "d_player.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"

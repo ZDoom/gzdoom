@@ -511,9 +511,9 @@ void R_MapTiltedPlane_C (int y, int x1)
 #endif
 }
 
-void R_MapTiltedPlane_rgba (int y, int x1)
+void R_MapTiltedPlane (int y, int x1)
 {
-	R_DrawTiltedSpan_rgba(y, x1, spanend[y], plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
+	R_DrawTiltedSpan(y, x1, spanend[y], plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
 }
 
 //==========================================================================
@@ -527,9 +527,9 @@ void R_MapColoredPlane_C (int y, int x1)
 	memset (ylookup[y] + x1 + dc_destorg, ds_color, spanend[y] - x1 + 1);
 }
 
-void R_MapColoredPlane_rgba(int y, int x1)
+void R_MapColoredPlane(int y, int x1)
 {
-	R_DrawColoredSpan_rgba(y, x1, spanend[y]);
+	R_DrawColoredSpan(y, x1, spanend[y]);
 }
 
 //==========================================================================
@@ -1073,32 +1073,16 @@ static void R_DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, doub
 	uint32_t solid_top = frontskytex->GetSkyCapColor(false);
 	uint32_t solid_bottom = frontskytex->GetSkyCapColor(true);
 
-	if (r_swtruecolor)
-	{
-		if (columns == 4)
-			if (!backskytex)
-				R_DrawSingleSkyCol4_rgba(solid_top, solid_bottom);
-			else
-				R_DrawDoubleSkyCol4_rgba(solid_top, solid_bottom);
+	if (columns == 4)
+		if (!backskytex)
+			R_DrawSingleSkyCol4(solid_top, solid_bottom);
 		else
-			if (!backskytex)
-				R_DrawSingleSkyCol1_rgba(solid_top, solid_bottom);
-			else
-				R_DrawDoubleSkyCol1_rgba(solid_top, solid_bottom);
-	}
+			R_DrawDoubleSkyCol4(solid_top, solid_bottom);
 	else
-	{
-		if (columns == 4)
-			if (!backskytex)
-				R_DrawSingleSkyCol4(solid_top, solid_bottom);
-			else
-				R_DrawDoubleSkyCol4(solid_top, solid_bottom);
+		if (!backskytex)
+			R_DrawSingleSkyCol1(solid_top, solid_bottom);
 		else
-			if (!backskytex)
-				R_DrawSingleSkyCol1(solid_top, solid_bottom);
-			else
-				R_DrawDoubleSkyCol1(solid_top, solid_bottom);
-	}
+			R_DrawDoubleSkyCol1(solid_top, solid_bottom);
 }
 
 static void R_DrawSkyColumn(int start_x, int y1, int y2, int columns)

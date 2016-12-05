@@ -1,37 +1,23 @@
 /*
-** r_drawt_rgba.cpp
-** Faster column drawers for modern processors, true color edition
+**  Drawer commands for the RT family of drawers
+**  Copyright (c) 2016 Magnus Norddahl
 **
-**---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
-** All rights reserved.
+**  This software is provided 'as-is', without any express or implied
+**  warranty.  In no event will the authors be held liable for any damages
+**  arising from the use of this software.
 **
-** Redistribution and use in source and binary forms, with or without
-** modification, are permitted provided that the following conditions
-** are met:
+**  Permission is granted to anyone to use this software for any purpose,
+**  including commercial applications, and to alter it and redistribute it
+**  freely, subject to the following restrictions:
 **
-** 1. Redistributions of source code must retain the above copyright
-**    notice, this list of conditions and the following disclaimer.
-** 2. Redistributions in binary form must reproduce the above copyright
-**    notice, this list of conditions and the following disclaimer in the
-**    documentation and/or other materials provided with the distribution.
-** 3. The name of the author may not be used to endorse or promote products
-**    derived from this software without specific prior written permission.
+**  1. The origin of this software must not be misrepresented; you must not
+**     claim that you wrote the original software. If you use this software
+**     in a product, an acknowledgment in the product documentation would be
+**     appreciated but is not required.
+**  2. Altered source versions must be plainly marked as such, and must not be
+**     misrepresented as being the original software.
+**  3. This notice may not be removed or altered from any source distribution.
 **
-** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-**---------------------------------------------------------------------------
-**
-** True color versions of the similar functions in r_drawt.cpp
-** Please see r_drawt.cpp for a description of the globals used.
 */
 
 #include "templates.h"
@@ -47,15 +33,7 @@
 
 namespace swrenderer       
 {
-
-/////////////////////////////////////////////////////////////////////////////
-
-class DrawColumnRt1LLVMCommand : public DrawerCommand
-{
-protected:
-	DrawColumnArgs args;
-
-	WorkerThreadData ThreadData(DrawerThread *thread)
+	WorkerThreadData DrawColumnRt1LLVMCommand::ThreadData(DrawerThread *thread)
 	{
 		WorkerThreadData d;
 		d.core = thread->core;
@@ -66,8 +44,7 @@ protected:
 		return d;
 	}
 
-public:
-	DrawColumnRt1LLVMCommand(int hx, int sx, int yl, int yh)
+	DrawColumnRt1LLVMCommand::DrawColumnRt1LLVMCommand(int hx, int sx, int yl, int yh)
 	{
 		using namespace drawerargs;
 
@@ -105,90 +82,38 @@ public:
 		DetectRangeError(args.dest, args.dest_y, args.count);
 	}
 
-	void Execute(DrawerThread *thread) override
+	void DrawColumnRt1LLVMCommand::Execute(DrawerThread *thread)
 	{
 		WorkerThreadData d = ThreadData(thread);
 		Drawers::Instance()->DrawColumnRt1(&args, &d);
 	}
 
-	FString DebugInfo() override
+	FString DrawColumnRt1LLVMCommand::DebugInfo()
 	{
 		return "DrawColumnRt\n" + args.ToString();
 	}
-};
 
-#define DECLARE_DRAW_COMMAND(name, func, base) \
-class name##LLVMCommand : public base \
-{ \
-public: \
-	using base::base; \
-	void Execute(DrawerThread *thread) override \
-	{ \
-		WorkerThreadData d = ThreadData(thread); \
-		Drawers::Instance()->func(&args, &d); \
-	} \
-};
+	/////////////////////////////////////////////////////////////////////////////
 
-DECLARE_DRAW_COMMAND(DrawColumnRt1Copy, DrawColumnRt1Copy, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt1Add, DrawColumnRt1Add, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt1Shaded, DrawColumnRt1Shaded, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt1AddClamp, DrawColumnRt1AddClamp, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt1SubClamp, DrawColumnRt1SubClamp, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt1RevSubClamp, DrawColumnRt1RevSubClamp, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt1Translated, DrawColumnRt1Translated, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt1TlatedAdd, DrawColumnRt1TlatedAdd, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt1AddClampTranslated, DrawColumnRt1AddClampTranslated, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt1SubClampTranslated, DrawColumnRt1SubClampTranslated, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt1RevSubClampTranslated, DrawColumnRt1RevSubClampTranslated, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt4, DrawColumnRt4, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt4Copy, DrawColumnRt4Copy, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt4Add, DrawColumnRt4Add, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt4Shaded, DrawColumnRt4Shaded, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt4AddClamp, DrawColumnRt4AddClamp, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt4SubClamp, DrawColumnRt4SubClamp, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt4RevSubClamp, DrawColumnRt4RevSubClamp, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt4Translated, DrawColumnRt4Translated, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt4TlatedAdd, DrawColumnRt4TlatedAdd, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt4AddClampTranslated, DrawColumnRt4AddClampTranslated, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt4SubClampTranslated, DrawColumnRt4SubClampTranslated, DrawColumnRt1LLVMCommand);
-DECLARE_DRAW_COMMAND(DrawColumnRt4RevSubClampTranslated, DrawColumnRt4RevSubClampTranslated, DrawColumnRt1LLVMCommand);
-
-/////////////////////////////////////////////////////////////////////////////
-
-class RtInitColsRGBACommand : public DrawerCommand
-{
-	BYTE * RESTRICT buff;
-
-public:
-	RtInitColsRGBACommand(BYTE *buff)
+	RtInitColsRGBACommand::RtInitColsRGBACommand(BYTE *buff)
 	{
 		this->buff = buff;
 	}
 
-	void Execute(DrawerThread *thread) override
+	void RtInitColsRGBACommand::Execute(DrawerThread *thread)
 	{
 		thread->dc_temp_rgba = buff == NULL ? thread->dc_temp_rgbabuff_rgba : (uint32_t*)buff;
 	}
 
-	FString DebugInfo() override
+	FString RtInitColsRGBACommand::DebugInfo()
 	{
 		return "RtInitCols";
 	}
-};
 
-template<typename InputPixelType>
-class DrawColumnHorizRGBACommand : public DrawerCommand
-{
-	int _count;
-	fixed_t _iscale;
-	fixed_t _texturefrac;
-	const InputPixelType * RESTRICT _source;
-	int _x;
-	int _yl;
-	int _yh;
+	/////////////////////////////////////////////////////////////////////////////
 
-public:
-	DrawColumnHorizRGBACommand()
+	template<typename InputPixelType>
+	DrawColumnHorizRGBACommand<InputPixelType>::DrawColumnHorizRGBACommand()
 	{
 		using namespace drawerargs;
 
@@ -201,7 +126,8 @@ public:
 		_yh = dc_yh;
 	}
 
-	void Execute(DrawerThread *thread) override
+	template<typename InputPixelType>
+	void DrawColumnHorizRGBACommand<InputPixelType>::Execute(DrawerThread *thread)
 	{
 		int count = _count;
 		uint32_t *dest;
@@ -252,22 +178,19 @@ public:
 		} while (--count);
 	}
 
-	FString DebugInfo() override
+	template<typename InputPixelType>
+	FString DrawColumnHorizRGBACommand<InputPixelType>::DebugInfo()
 	{
 		return "DrawColumnHoriz";
 	}
-};
 
-class FillColumnHorizRGBACommand : public DrawerCommand
-{
-	int _x;
-	int _yl;
-	int _yh;
-	int _count;
-	uint32_t _color;
+	// Generate code for the versions we use:
+	template class DrawColumnHorizRGBACommand<uint8_t>;
+	template class DrawColumnHorizRGBACommand<uint32_t>;
 
-public:
-	FillColumnHorizRGBACommand()
+	/////////////////////////////////////////////////////////////////////////////
+
+	FillColumnHorizRGBACommand::FillColumnHorizRGBACommand()
 	{
 		using namespace drawerargs;
 
@@ -278,7 +201,7 @@ public:
 		_yh = dc_yh;
 	}
 
-	void Execute(DrawerThread *thread) override
+	void FillColumnHorizRGBACommand::Execute(DrawerThread *thread)
 	{
 		int count = _count;
 		uint32_t color = _color;
@@ -304,220 +227,8 @@ public:
 		} while (--count);
 	}
 
-	FString DebugInfo() override
+	FString FillColumnHorizRGBACommand::DebugInfo()
 	{
 		return "FillColumnHoriz";
 	}
-};
-
-/////////////////////////////////////////////////////////////////////////////
-
-// Copies one span at hx to the screen at sx.
-void rt_copy1col_rgba (int hx, int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt1CopyLLVMCommand>(hx, sx, yl, yh);
-}
-
-// Copies all four spans to the screen starting at sx.
-void rt_copy4cols_rgba (int sx, int yl, int yh)
-{
-	// To do: we could do this with SSE using __m128i
-	rt_copy1col_rgba(0, sx, yl, yh);
-	rt_copy1col_rgba(1, sx + 1, yl, yh);
-	rt_copy1col_rgba(2, sx + 2, yl, yh);
-	rt_copy1col_rgba(3, sx + 3, yl, yh);
-}
-
-// Maps one span at hx to the screen at sx.
-void rt_map1col_rgba (int hx, int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt1LLVMCommand>(hx, sx, yl, yh);
-}
-
-// Maps all four spans to the screen starting at sx.
-void rt_map4cols_rgba (int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt4LLVMCommand>(0, sx, yl, yh);
-}
-
-// Translates one span at hx to the screen at sx.
-void rt_tlate1col_rgba (int hx, int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedLLVMCommand>(hx, sx, yl, yh);
-}
-
-// Translates all four spans to the screen starting at sx.
-void rt_tlate4cols_rgba (int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedLLVMCommand>(0, sx, yl, yh);
-}
-
-// Adds one span at hx to the screen at sx without clamping.
-void rt_add1col_rgba (int hx, int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt1AddLLVMCommand>(hx, sx, yl, yh);
-}
-
-// Adds all four spans to the screen starting at sx without clamping.
-void rt_add4cols_rgba (int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt4AddLLVMCommand>(0, sx, yl, yh);
-}
-
-// Translates and adds one span at hx to the screen at sx without clamping.
-void rt_tlateadd1col_rgba (int hx, int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt1AddClampTranslatedLLVMCommand>(hx, sx, yl, yh);
-}
-
-// Translates and adds all four spans to the screen starting at sx without clamping.
-void rt_tlateadd4cols_rgba(int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt4AddClampTranslatedLLVMCommand>(0, sx, yl, yh);
-}
-
-// Shades one span at hx to the screen at sx.
-void rt_shaded1col_rgba (int hx, int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt1ShadedLLVMCommand>(hx, sx, yl, yh);
-}
-
-// Shades all four spans to the screen starting at sx.
-void rt_shaded4cols_rgba (int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt4ShadedLLVMCommand>(0, sx, yl, yh);
-}
-
-// Adds one span at hx to the screen at sx with clamping.
-void rt_addclamp1col_rgba (int hx, int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt1AddClampLLVMCommand>(hx, sx, yl, yh);
-}
-
-// Adds all four spans to the screen starting at sx with clamping.
-void rt_addclamp4cols_rgba (int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt4AddClampLLVMCommand>(0, sx, yl, yh);
-}
-
-// Translates and adds one span at hx to the screen at sx with clamping.
-void rt_tlateaddclamp1col_rgba (int hx, int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt1AddClampTranslatedLLVMCommand>(hx, sx, yl, yh);
-}
-
-// Translates and adds all four spans to the screen starting at sx with clamping.
-void rt_tlateaddclamp4cols_rgba (int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt4AddClampTranslatedLLVMCommand>(0, sx, yl, yh);
-}
-
-// Subtracts one span at hx to the screen at sx with clamping.
-void rt_subclamp1col_rgba (int hx, int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt1SubClampLLVMCommand>(hx, sx, yl, yh);
-}
-
-// Subtracts all four spans to the screen starting at sx with clamping.
-void rt_subclamp4cols_rgba (int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt4SubClampLLVMCommand>(0, sx, yl, yh);
-}
-
-// Translates and subtracts one span at hx to the screen at sx with clamping.
-void rt_tlatesubclamp1col_rgba (int hx, int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt1SubClampTranslatedLLVMCommand>(hx, sx, yl, yh);
-}
-
-// Translates and subtracts all four spans to the screen starting at sx with clamping.
-void rt_tlatesubclamp4cols_rgba (int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt4SubClampTranslatedLLVMCommand>(0, sx, yl, yh);
-}
-
-// Subtracts one span at hx from the screen at sx with clamping.
-void rt_revsubclamp1col_rgba (int hx, int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt1RevSubClampLLVMCommand>(hx, sx, yl, yh);
-}
-
-// Subtracts all four spans from the screen starting at sx with clamping.
-void rt_revsubclamp4cols_rgba (int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt4SubClampLLVMCommand>(0, sx, yl, yh);
-}
-
-// Translates and subtracts one span at hx from the screen at sx with clamping.
-void rt_tlaterevsubclamp1col_rgba (int hx, int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt1RevSubClampTranslatedLLVMCommand>(hx, sx, yl, yh);
-}
-
-// Translates and subtracts all four spans from the screen starting at sx with clamping.
-void rt_tlaterevsubclamp4cols_rgba (int sx, int yl, int yh)
-{
-	DrawerCommandQueue::QueueCommand<DrawColumnRt4RevSubClampTranslatedLLVMCommand>(0, sx, yl, yh);
-}
-
-// Before each pass through a rendering loop that uses these routines,
-// call this function to set up the span pointers.
-void rt_initcols_rgba (BYTE *buff)
-{
-	using namespace drawerargs;
-
-	for (int y = 3; y >= 0; y--)
-		horizspan[y] = dc_ctspan[y] = &dc_tspans[y][0];
-
-	DrawerCommandQueue::QueueCommand<RtInitColsRGBACommand>(buff);
-}
-
-void rt_span_coverage_rgba(int x, int start, int stop)
-{
-	using namespace drawerargs;
-
-	unsigned int **tspan = &dc_ctspan[x & 3];
-	(*tspan)[0] = start;
-	(*tspan)[1] = stop;
-	*tspan += 2;
-}
-
-// Stretches a column into a temporary buffer which is later
-// drawn to the screen along with up to three other columns.
-void R_DrawColumnHoriz_rgba (void)
-{
-	using namespace drawerargs;
-
-	if (dc_count <= 0)
-		return;
-
-	int x = dc_x & 3;
-	unsigned int **span = &dc_ctspan[x];
-	(*span)[0] = dc_yl;
-	(*span)[1] = dc_yh;
-	*span += 2;
-
-	if (drawer_needs_pal_input)
-		DrawerCommandQueue::QueueCommand<DrawColumnHorizRGBACommand<uint8_t>>();
-	else
-		DrawerCommandQueue::QueueCommand<DrawColumnHorizRGBACommand<uint32_t>>();
-}
-
-// [RH] Just fills a column with a given color
-void R_FillColumnHoriz_rgba (void)
-{
-	using namespace drawerargs;
-
-	if (dc_count <= 0)
-		return;
-
-	int x = dc_x & 3;
-	unsigned int **span = &dc_ctspan[x];
-	(*span)[0] = dc_yl;
-	(*span)[1] = dc_yh;
-	*span += 2;
-
-	DrawerCommandQueue::QueueCommand<FillColumnHorizRGBACommand>();
-}
-
 }

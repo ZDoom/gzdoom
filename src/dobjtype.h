@@ -370,7 +370,7 @@ class PErrorType : public PType
 {
 	DECLARE_CLASS(PErrorType, PType);
 public:
-	PErrorType() : PType(0, 1) {}
+	PErrorType(int which = 1) : PType(0, which) {}
 };
 
 class PVoidType : public PType
@@ -930,6 +930,7 @@ PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> 
 // Built-in types -----------------------------------------------------------
 
 extern PErrorType *TypeError;
+extern PErrorType *TypeAuto;
 extern PVoidType *TypeVoid;
 extern PInt *TypeSInt8,  *TypeUInt8;
 extern PInt *TypeSInt16, *TypeUInt16;

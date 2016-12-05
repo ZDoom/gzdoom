@@ -183,6 +183,7 @@ std2:
 		'deprecated'				{ RET(TK_Deprecated); }
 		'action'					{ RET(TK_Action); }
 		'readonly'					{ RET(TK_ReadOnly); }
+		'let'						{ RET(TK_Let); }
 
 		/* Actor state options */
 		'bright'					{ RET(StateOptions ? TK_Bright : TK_Identifier); }

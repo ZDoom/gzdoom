@@ -9964,16 +9964,42 @@ FxExpression *FxLocalVariableDeclaration::Resolve(FCompileContext &ctx)
 		delete this;
 		return nullptr;
 	}
-	if (ValueType->RegType == REGT_NIL)
+	if (ValueType->RegType == REGT_NIL && ValueType != TypeAuto)
 	{
 		auto sfunc = static_cast<VMScriptFunction *>(ctx.Function->Variants[0].Implementation);
 		StackOffset = sfunc->AllocExtraStack(ValueType);
 		// Todo: Process the compound initializer once implemented.
+		if (Init != nullptr)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Cannot initialize non-scalar variable %s here", Name.GetChars());
+			delete this;
+			return nullptr;
+		}
 	}
-	else
+	else if (ValueType !=TypeAuto)
 	{
 		if (Init) Init = new FxTypeCast(Init, ValueType, false);
 		SAFE_RESOLVE_OPT(Init, ctx);
+	}
+	else
+	{
+		if (Init == nullptr)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Automatic type deduction requires an initializer for variable %s", Name.GetChars());
+			delete this;
+			return nullptr;
+		}
+		SAFE_RESOLVE_OPT(Init, ctx);
+		if (Init->ValueType->RegType == REGT_NIL)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Cannot initialize non-scalar variable %s here", Name.GetChars());
+			delete this;
+			return nullptr;
+		}
+		ValueType = Init->ValueType;
+		// check for undersized ints and floats. These are not allowed as local variables.
+		if (IsInteger() && ValueType->Align < sizeof(int)) ValueType = TypeSInt32;
+		else if (IsFloat() && ValueType->Align < sizeof(double)) ValueType = TypeFloat64;
 	}
 	if (Name != NAME_None)
 	{

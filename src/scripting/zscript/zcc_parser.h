@@ -131,6 +131,7 @@ enum EZCCBuiltinType
 	ZCC_Sound,
 
 	ZCC_UserType,
+	ZCC_Let,
 
 	ZCC_NUM_BUILT_IN_TYPES
 };

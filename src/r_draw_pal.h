@@ -12,6 +12,20 @@ namespace swrenderer
 	public:
 		PalWall1Command();
 		FString DebugInfo() override { return "PalWallCommand"; }
+
+	protected:
+		uint32_t _iscale;
+		uint32_t _texturefrac;
+		uint8_t *_colormap;
+		int _count;
+		const uint8_t *_source;
+		uint8_t *_dest;
+		int _vlinebits;
+		int _mvlinebits;
+		int _tmvlinebits;
+		int _pitch;
+		uint32_t *_srcblend;
+		uint32_t *_destblend;
 	};
 
 	class PalWall4Command : public DrawerCommand
@@ -19,6 +33,20 @@ namespace swrenderer
 	public:
 		PalWall4Command();
 		FString DebugInfo() override { return "PalWallCommand"; }
+
+	protected:
+		uint8_t *_dest;
+		int _count;
+		int _pitch;
+		int _vlinebits;
+		int _mvlinebits;
+		int _tmvlinebits;
+		uint8_t *_palookupoffse[4];
+		const uint8_t *_bufplce[4];
+		uint32_t _vince[4];
+		uint32_t _vplce[4];
+		uint32_t *_srcblend;
+		uint32_t *_destblend;
 	};
 
 	class DrawWall1PalCommand : public PalWall1Command { public: void Execute(DrawerThread *thread) override; };

@@ -108,7 +108,25 @@ namespace swrenderer
 	class PalSpanCommand : public DrawerCommand
 	{
 	public:
+		PalSpanCommand();
 		FString DebugInfo() override { return "PalSpanCommand"; }
+
+	protected:
+		const uint8_t *_source;
+		const uint8_t *_colormap;
+		dsfixed_t _xfrac;
+		dsfixed_t _yfrac;
+		int _y;
+		int _x1;
+		int _x2;
+		uint8_t *_destorg;
+		dsfixed_t _xstep;
+		dsfixed_t _ystep;
+		int _xbits;
+		int _ybits;
+		uint32_t *_srcblend;
+		uint32_t *_destblend;
+		int _color;
 	};
 
 	class DrawSpanPalCommand : public PalSpanCommand { public: void Execute(DrawerThread *thread) override; };

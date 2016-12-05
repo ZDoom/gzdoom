@@ -420,6 +420,8 @@ namespace swrenderer
 		} while (--count);
 	}
 
+	/////////////////////////////////////////////////////////////////////////
+
 	PalSkyCommand::PalSkyCommand(uint32_t solid_top, uint32_t solid_bottom)
 	{
 	}
@@ -439,6 +441,8 @@ namespace swrenderer
 	void DrawDoubleSky4PalCommand::Execute(DrawerThread *thread)
 	{
 	}
+
+	/////////////////////////////////////////////////////////////////////////
 
 	PalColumnCommand::PalColumnCommand()
 	{
@@ -512,33 +516,438 @@ namespace swrenderer
 	{
 	}
 
+	/////////////////////////////////////////////////////////////////////////
+
+	PalSpanCommand::PalSpanCommand()
+	{
+		using namespace drawerargs;
+
+		_source = ds_source;
+		_colormap = ds_colormap;
+		_xfrac = ds_xfrac;
+		_yfrac = ds_yfrac;
+		_y = ds_y;
+		_x1 = ds_x1;
+		_x2 = ds_x2;
+		_destorg = dc_destorg;
+		_xstep = ds_xstep;
+		_ystep = ds_ystep;
+		_xbits = ds_xbits;
+		_ybits = ds_ybits;
+		_srcblend = dc_srcblend;
+		_destblend = dc_destblend;
+		_color = ds_color;
+	}
+
 	void DrawSpanPalCommand::Execute(DrawerThread *thread)
 	{
+		dsfixed_t xfrac;
+		dsfixed_t yfrac;
+		dsfixed_t xstep;
+		dsfixed_t ystep;
+		uint8_t *dest;
+		const uint8_t *source = _source;
+		const uint8_t *colormap = _colormap;
+		int count;
+		int spot;
+
+		xfrac = _xfrac;
+		yfrac = _yfrac;
+
+		dest = ylookup[_y] + _x1 + _destorg;
+
+		count = _x2 - _x1 + 1;
+
+		xstep = _xstep;
+		ystep = _ystep;
+
+		if (_xbits == 6 && _ybits == 6)
+		{
+			// 64x64 is the most common case by far, so special case it.
+			do
+			{
+				// Current texture index in u,v.
+				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+
+				// Lookup pixel from flat texture tile,
+				//  re-index using light/colormap.
+				*dest++ = colormap[source[spot]];
+
+				// Next step in u,v.
+				xfrac += xstep;
+				yfrac += ystep;
+			} while (--count);
+		}
+		else
+		{
+			uint8_t yshift = 32 - _ybits;
+			uint8_t xshift = yshift - _xbits;
+			int xmask = ((1 << _xbits) - 1) << _ybits;
+
+			do
+			{
+				// Current texture index in u,v.
+				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+
+				// Lookup pixel from flat texture tile,
+				//  re-index using light/colormap.
+				*dest++ = colormap[source[spot]];
+
+				// Next step in u,v.
+				xfrac += xstep;
+				yfrac += ystep;
+			} while (--count);
+		}
 	}
 
 	void DrawSpanMaskedPalCommand::Execute(DrawerThread *thread)
 	{
+		dsfixed_t xfrac;
+		dsfixed_t yfrac;
+		dsfixed_t xstep;
+		dsfixed_t ystep;
+		BYTE *dest;
+		const BYTE *source = _source;
+		const BYTE *colormap = _colormap;
+		int count;
+		int spot;
+
+		xfrac = _xfrac;
+		yfrac = _yfrac;
+
+		dest = ylookup[_y] + _x1 + _destorg;
+
+		count = _x2 - _x1 + 1;
+
+		xstep = _xstep;
+		ystep = _ystep;
+
+		if (_xbits == 6 && _ybits == 6)
+		{
+			// 64x64 is the most common case by far, so special case it.
+			do
+			{
+				int texdata;
+
+				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+				texdata = source[spot];
+				if (texdata != 0)
+				{
+					*dest = colormap[texdata];
+				}
+				dest++;
+				xfrac += xstep;
+				yfrac += ystep;
+			} while (--count);
+		}
+		else
+		{
+			BYTE yshift = 32 - _ybits;
+			BYTE xshift = yshift - _xbits;
+			int xmask = ((1 << _xbits) - 1) << _ybits;
+			do
+			{
+				int texdata;
+
+				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+				texdata = source[spot];
+				if (texdata != 0)
+				{
+					*dest = colormap[texdata];
+				}
+				dest++;
+				xfrac += xstep;
+				yfrac += ystep;
+			} while (--count);
+		}
 	}
 
 	void DrawSpanTranslucentPalCommand::Execute(DrawerThread *thread)
 	{
+		dsfixed_t xfrac;
+		dsfixed_t yfrac;
+		dsfixed_t xstep;
+		dsfixed_t ystep;
+		BYTE *dest;
+		const BYTE *source = _source;
+		const BYTE *colormap = _colormap;
+		int count;
+		int spot;
+		DWORD *fg2rgb = _srcblend;
+		DWORD *bg2rgb = _destblend;
+
+		xfrac = _xfrac;
+		yfrac = _yfrac;
+
+		dest = ylookup[_y] + _x1 + _destorg;
+
+		count = _x2 - _x1 + 1;
+
+		xstep = _xstep;
+		ystep = _ystep;
+
+		if (_xbits == 6 && _ybits == 6)
+		{
+			// 64x64 is the most common case by far, so special case it.
+			do
+			{
+				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+				DWORD fg = colormap[source[spot]];
+				DWORD bg = *dest;
+				fg = fg2rgb[fg];
+				bg = bg2rgb[bg];
+				fg = (fg + bg) | 0x1f07c1f;
+				*dest++ = RGB32k.All[fg & (fg >> 15)];
+				xfrac += xstep;
+				yfrac += ystep;
+			} while (--count);
+		}
+		else
+		{
+			BYTE yshift = 32 - _ybits;
+			BYTE xshift = yshift - _xbits;
+			int xmask = ((1 << _xbits) - 1) << _ybits;
+			do
+			{
+				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+				DWORD fg = colormap[source[spot]];
+				DWORD bg = *dest;
+				fg = fg2rgb[fg];
+				bg = bg2rgb[bg];
+				fg = (fg + bg) | 0x1f07c1f;
+				*dest++ = RGB32k.All[fg & (fg >> 15)];
+				xfrac += xstep;
+				yfrac += ystep;
+			} while (--count);
+		}
 	}
 
 	void DrawSpanMaskedTranslucentPalCommand::Execute(DrawerThread *thread)
 	{
+		dsfixed_t xfrac;
+		dsfixed_t yfrac;
+		dsfixed_t xstep;
+		dsfixed_t ystep;
+		BYTE *dest;
+		const BYTE *source = _source;
+		const BYTE *colormap = _colormap;
+		int count;
+		int spot;
+		DWORD *fg2rgb = _srcblend;
+		DWORD *bg2rgb = _destblend;
+
+		xfrac = _xfrac;
+		yfrac = _yfrac;
+
+		dest = ylookup[_y] + _x1 + _destorg;
+
+		count = _x2 - _x1 + 1;
+
+		xstep = _xstep;
+		ystep = _ystep;
+
+		if (_xbits == 6 && _ybits == 6)
+		{
+			// 64x64 is the most common case by far, so special case it.
+			do
+			{
+				BYTE texdata;
+
+				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+				texdata = source[spot];
+				if (texdata != 0)
+				{
+					DWORD fg = colormap[texdata];
+					DWORD bg = *dest;
+					fg = fg2rgb[fg];
+					bg = bg2rgb[bg];
+					fg = (fg + bg) | 0x1f07c1f;
+					*dest = RGB32k.All[fg & (fg >> 15)];
+				}
+				dest++;
+				xfrac += xstep;
+				yfrac += ystep;
+			} while (--count);
+		}
+		else
+		{
+			BYTE yshift = 32 - _ybits;
+			BYTE xshift = yshift - _xbits;
+			int xmask = ((1 << _xbits) - 1) << _ybits;
+			do
+			{
+				BYTE texdata;
+
+				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+				texdata = source[spot];
+				if (texdata != 0)
+				{
+					DWORD fg = colormap[texdata];
+					DWORD bg = *dest;
+					fg = fg2rgb[fg];
+					bg = bg2rgb[bg];
+					fg = (fg + bg) | 0x1f07c1f;
+					*dest = RGB32k.All[fg & (fg >> 15)];
+				}
+				dest++;
+				xfrac += xstep;
+				yfrac += ystep;
+			} while (--count);
+		}
 	}
 
 	void DrawSpanAddClampPalCommand::Execute(DrawerThread *thread)
 	{
+		dsfixed_t xfrac;
+		dsfixed_t yfrac;
+		dsfixed_t xstep;
+		dsfixed_t ystep;
+		BYTE *dest;
+		const BYTE *source = _source;
+		const BYTE *colormap = _colormap;
+		int count;
+		int spot;
+		DWORD *fg2rgb = _srcblend;
+		DWORD *bg2rgb = _destblend;
+
+		xfrac = _xfrac;
+		yfrac = _yfrac;
+
+		dest = ylookup[_y] + _x1 + _destorg;
+
+		count = _x2 - _x1 + 1;
+
+		xstep = _xstep;
+		ystep = _ystep;
+
+		if (_xbits == 6 && _ybits == 6)
+		{
+			// 64x64 is the most common case by far, so special case it.
+			do
+			{
+				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+				DWORD a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
+				DWORD b = a;
+
+				a |= 0x01f07c1f;
+				b &= 0x40100400;
+				a &= 0x3fffffff;
+				b = b - (b >> 5);
+				a |= b;
+				*dest++ = RGB32k.All[a & (a >> 15)];
+				xfrac += xstep;
+				yfrac += ystep;
+			} while (--count);
+		}
+		else
+		{
+			BYTE yshift = 32 - _ybits;
+			BYTE xshift = yshift - _xbits;
+			int xmask = ((1 << _xbits) - 1) << _ybits;
+			do
+			{
+				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+				DWORD a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
+				DWORD b = a;
+
+				a |= 0x01f07c1f;
+				b &= 0x40100400;
+				a &= 0x3fffffff;
+				b = b - (b >> 5);
+				a |= b;
+				*dest++ = RGB32k.All[a & (a >> 15)];
+				xfrac += xstep;
+				yfrac += ystep;
+			} while (--count);
+		}
 	}
 
 	void DrawSpanMaskedAddClampPalCommand::Execute(DrawerThread *thread)
 	{
+		dsfixed_t xfrac;
+		dsfixed_t yfrac;
+		dsfixed_t xstep;
+		dsfixed_t ystep;
+		BYTE *dest;
+		const BYTE *source = _source;
+		const BYTE *colormap = _colormap;
+		int count;
+		int spot;
+		DWORD *fg2rgb = _srcblend;
+		DWORD *bg2rgb = _destblend;
+
+		xfrac = _xfrac;
+		yfrac = _yfrac;
+
+		dest = ylookup[_y] + _x1 + _destorg;
+
+		count = _x2 - _x1 + 1;
+
+		xstep = _xstep;
+		ystep = _ystep;
+
+		if (_xbits == 6 && _ybits == 6)
+		{
+			// 64x64 is the most common case by far, so special case it.
+			do
+			{
+				BYTE texdata;
+
+				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+				texdata = source[spot];
+				if (texdata != 0)
+				{
+					DWORD a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
+					DWORD b = a;
+
+					a |= 0x01f07c1f;
+					b &= 0x40100400;
+					a &= 0x3fffffff;
+					b = b - (b >> 5);
+					a |= b;
+					*dest = RGB32k.All[a & (a >> 15)];
+				}
+				dest++;
+				xfrac += xstep;
+				yfrac += ystep;
+			} while (--count);
+		}
+		else
+		{
+			BYTE yshift = 32 - _ybits;
+			BYTE xshift = yshift - _xbits;
+			int xmask = ((1 << _xbits) - 1) << _ybits;
+			do
+			{
+				BYTE texdata;
+
+				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+				texdata = source[spot];
+				if (texdata != 0)
+				{
+					DWORD a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
+					DWORD b = a;
+
+					a |= 0x01f07c1f;
+					b &= 0x40100400;
+					a &= 0x3fffffff;
+					b = b - (b >> 5);
+					a |= b;
+					*dest = RGB32k.All[a & (a >> 15)];
+				}
+				dest++;
+				xfrac += xstep;
+				yfrac += ystep;
+			} while (--count);
+		}
 	}
 
 	void FillSpanPalCommand::Execute(DrawerThread *thread)
 	{
+		memset(ylookup[_y] + _x1 + _destorg, _color, _x2 - _x1 + 1);
 	}
+
+	/////////////////////////////////////////////////////////////////////////
 
 	DrawTiltedSpanPalCommand::DrawTiltedSpanPalCommand(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy)
 	{
@@ -548,6 +957,8 @@ namespace swrenderer
 	{
 	}
 
+	/////////////////////////////////////////////////////////////////////////
+
 	DrawColoredSpanPalCommand::DrawColoredSpanPalCommand(int y, int x1, int x2)
 	{
 	}
@@ -556,6 +967,8 @@ namespace swrenderer
 	{
 	}
 
+	/////////////////////////////////////////////////////////////////////////
+
 	DrawSlabPalCommand::DrawSlabPalCommand(int dx, fixed_t v, int dy, fixed_t vi, const uint8_t *vptr, uint8_t *p, const uint8_t *colormap)
 	{
 	}
@@ -563,6 +976,8 @@ namespace swrenderer
 	void DrawSlabPalCommand::Execute(DrawerThread *thread)
 	{
 	}
+
+	/////////////////////////////////////////////////////////////////////////
 
 	DrawFogBoundaryLinePalCommand::DrawFogBoundaryLinePalCommand(int y, int y2, int x1)
 	{

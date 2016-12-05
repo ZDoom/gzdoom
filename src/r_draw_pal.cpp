@@ -646,6 +646,16 @@ namespace swrenderer
 		int solid_bottom_g = GPART(solid_bottom);
 		int solid_bottom_b = BPART(solid_bottom);
 
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int skipped = thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * skipped;
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
+
 		for (int index = 0; index < count; index++)
 		{
 			uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
@@ -724,17 +734,29 @@ namespace swrenderer
 		start_fadebottom_y = clamp(start_fadebottom_y, 0, count);
 		end_fadebottom_y = clamp(end_fadebottom_y, 0, count);
 
+		int skipped = thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		for (int col = 0; col < 4; col++)
+		{
+			frac[col] += fracstep[col] * skipped;
+			fracstep[col] *= thread->num_cores;
+		}
+		pitch *= thread->num_cores;
+		int num_cores = thread->num_cores;
+		int index = skipped;
+
 		// Top solid color:
-		for (int index = 0; index < start_fadetop_y; index++)
+		while (index < start_fadetop_y)
 		{
 			*((uint32_t*)dest) = solid_top_fill;
 			dest += pitch;
 			for (int col = 0; col < 4; col++)
 				frac[col] += fracstep[col];
+			index += num_cores;
 		}
 
 		// Top fade:
-		for (int index = start_fadetop_y; index < end_fadetop_y; index++)
+		while (index < end_fadetop_y)
 		{
 			for (int col = 0; col < 4; col++)
 			{
@@ -756,10 +778,11 @@ namespace swrenderer
 			}
 			*((uint32_t*)dest) = *((uint32_t*)output);
 			dest += pitch;
+			index += num_cores;
 		}
 
 		// Textured center:
-		for (int index = end_fadetop_y; index < start_fadebottom_y; index++)
+		while (index < start_fadebottom_y)
 		{
 			for (int col = 0; col < 4; col++)
 			{
@@ -771,10 +794,11 @@ namespace swrenderer
 
 			*((uint32_t*)dest) = *((uint32_t*)output);
 			dest += pitch;
+			index += num_cores;
 		}
 
 		// Fade bottom:
-		for (int index = start_fadebottom_y; index < end_fadebottom_y; index++)
+		while (index < end_fadebottom_y)
 		{
 			for (int col = 0; col < 4; col++)
 			{
@@ -796,13 +820,15 @@ namespace swrenderer
 			}
 			*((uint32_t*)dest) = *((uint32_t*)output);
 			dest += pitch;
+			index += num_cores;
 		}
 
 		// Bottom solid color:
-		for (int index = end_fadebottom_y; index < count; index++)
+		while (index < count)
 		{
 			*((uint32_t*)dest) = solid_bottom_fill;
 			dest += pitch;
+			index += num_cores;
 		}
 	}
 
@@ -827,6 +853,16 @@ namespace swrenderer
 		int solid_bottom_r = RPART(solid_bottom);
 		int solid_bottom_g = GPART(solid_bottom);
 		int solid_bottom_b = BPART(solid_bottom);
+
+		count = thread->count_for_thread(_dest_y, count);
+		if (count <= 0)
+			return;
+
+		int skipped = thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		frac += fracstep * skipped;
+		fracstep *= thread->num_cores;
+		pitch *= thread->num_cores;
 
 		for (int index = 0; index < count; index++)
 		{
@@ -913,17 +949,29 @@ namespace swrenderer
 		start_fadebottom_y = clamp(start_fadebottom_y, 0, count);
 		end_fadebottom_y = clamp(end_fadebottom_y, 0, count);
 
+		int skipped = thread->skipped_by_thread(_dest_y);
+		dest = thread->dest_for_thread(_dest_y, pitch, dest);
+		for (int col = 0; col < 4; col++)
+		{
+			frac[col] += fracstep[col] * skipped;
+			fracstep[col] *= thread->num_cores;
+		}
+		pitch *= thread->num_cores;
+		int num_cores = thread->num_cores;
+		int index = skipped;
+
 		// Top solid color:
-		for (int index = 0; index < start_fadetop_y; index++)
+		while (index < start_fadetop_y)
 		{
 			*((uint32_t*)dest) = solid_top_fill;
 			dest += pitch;
 			for (int col = 0; col < 4; col++)
 				frac[col] += fracstep[col];
+			index += num_cores;
 		}
 
 		// Top fade:
-		for (int index = start_fadetop_y; index < end_fadetop_y; index++)
+		while (index < end_fadetop_y)
 		{
 			for (int col = 0; col < 4; col++)
 			{
@@ -951,10 +999,11 @@ namespace swrenderer
 			}
 			*((uint32_t*)dest) = *((uint32_t*)output);
 			dest += pitch;
+			index += num_cores;
 		}
 
 		// Textured center:
-		for (int index = end_fadetop_y; index < start_fadebottom_y; index++)
+		while (index < start_fadebottom_y)
 		{
 			for (int col = 0; col < 4; col++)
 			{
@@ -972,10 +1021,11 @@ namespace swrenderer
 
 			*((uint32_t*)dest) = *((uint32_t*)output);
 			dest += pitch;
+			index += num_cores;
 		}
 
 		// Fade bottom:
-		for (int index = start_fadebottom_y; index < end_fadebottom_y; index++)
+		while (index < end_fadebottom_y)
 		{
 			for (int col = 0; col < 4; col++)
 			{
@@ -1003,13 +1053,15 @@ namespace swrenderer
 			}
 			*((uint32_t*)dest) = *((uint32_t*)output);
 			dest += pitch;
+			index += num_cores;
 		}
 
 		// Bottom solid color:
-		for (int index = end_fadebottom_y; index < count; index++)
+		while (index < count)
 		{
 			*((uint32_t*)dest) = solid_bottom_fill;
 			dest += pitch;
+			index += num_cores;
 		}
 	}
 

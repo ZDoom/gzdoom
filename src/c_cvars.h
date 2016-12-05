@@ -63,6 +63,7 @@ enum
 	CVAR_NOSAVE			= 4096, // when used with CVAR_SERVERINFO, do not save var to savegame
 	CVAR_MOD			= 8192,	// cvar was defined by a mod
 	CVAR_IGNORE			= 16384,// do not send cvar across the network/inaccesible from ACS (dummy mod cvar)
+	CVAR_OVERRIDEGET	= 32768,// this cvar disguises its return value for GetCVAR
 };
 
 union UCVarValue

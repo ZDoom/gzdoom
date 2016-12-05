@@ -606,9 +606,9 @@ namespace swrenderer
 		dsfixed_t yfrac;
 		dsfixed_t xstep;
 		dsfixed_t ystep;
-		BYTE *dest;
-		const BYTE *source = _source;
-		const BYTE *colormap = _colormap;
+		uint8_t *dest;
+		const uint8_t *source = _source;
+		const uint8_t *colormap = _colormap;
 		int count;
 		int spot;
 
@@ -642,8 +642,8 @@ namespace swrenderer
 		}
 		else
 		{
-			BYTE yshift = 32 - _ybits;
-			BYTE xshift = yshift - _xbits;
+			uint8_t yshift = 32 - _ybits;
+			uint8_t xshift = yshift - _xbits;
 			int xmask = ((1 << _xbits) - 1) << _ybits;
 			do
 			{
@@ -668,13 +668,13 @@ namespace swrenderer
 		dsfixed_t yfrac;
 		dsfixed_t xstep;
 		dsfixed_t ystep;
-		BYTE *dest;
-		const BYTE *source = _source;
-		const BYTE *colormap = _colormap;
+		uint8_t *dest;
+		const uint8_t *source = _source;
+		const uint8_t *colormap = _colormap;
 		int count;
 		int spot;
-		DWORD *fg2rgb = _srcblend;
-		DWORD *bg2rgb = _destblend;
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
 
 		xfrac = _xfrac;
 		yfrac = _yfrac;
@@ -692,8 +692,8 @@ namespace swrenderer
 			do
 			{
 				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-				DWORD fg = colormap[source[spot]];
-				DWORD bg = *dest;
+				uint32_t fg = colormap[source[spot]];
+				uint32_t bg = *dest;
 				fg = fg2rgb[fg];
 				bg = bg2rgb[bg];
 				fg = (fg + bg) | 0x1f07c1f;
@@ -704,14 +704,14 @@ namespace swrenderer
 		}
 		else
 		{
-			BYTE yshift = 32 - _ybits;
-			BYTE xshift = yshift - _xbits;
+			uint8_t yshift = 32 - _ybits;
+			uint8_t xshift = yshift - _xbits;
 			int xmask = ((1 << _xbits) - 1) << _ybits;
 			do
 			{
 				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-				DWORD fg = colormap[source[spot]];
-				DWORD bg = *dest;
+				uint32_t fg = colormap[source[spot]];
+				uint32_t bg = *dest;
 				fg = fg2rgb[fg];
 				bg = bg2rgb[bg];
 				fg = (fg + bg) | 0x1f07c1f;
@@ -728,13 +728,13 @@ namespace swrenderer
 		dsfixed_t yfrac;
 		dsfixed_t xstep;
 		dsfixed_t ystep;
-		BYTE *dest;
-		const BYTE *source = _source;
-		const BYTE *colormap = _colormap;
+		uint8_t *dest;
+		const uint8_t *source = _source;
+		const uint8_t *colormap = _colormap;
 		int count;
 		int spot;
-		DWORD *fg2rgb = _srcblend;
-		DWORD *bg2rgb = _destblend;
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
 
 		xfrac = _xfrac;
 		yfrac = _yfrac;
@@ -751,14 +751,14 @@ namespace swrenderer
 			// 64x64 is the most common case by far, so special case it.
 			do
 			{
-				BYTE texdata;
+				uint8_t texdata;
 
 				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 				texdata = source[spot];
 				if (texdata != 0)
 				{
-					DWORD fg = colormap[texdata];
-					DWORD bg = *dest;
+					uint32_t fg = colormap[texdata];
+					uint32_t bg = *dest;
 					fg = fg2rgb[fg];
 					bg = bg2rgb[bg];
 					fg = (fg + bg) | 0x1f07c1f;
@@ -771,19 +771,19 @@ namespace swrenderer
 		}
 		else
 		{
-			BYTE yshift = 32 - _ybits;
-			BYTE xshift = yshift - _xbits;
+			uint8_t yshift = 32 - _ybits;
+			uint8_t xshift = yshift - _xbits;
 			int xmask = ((1 << _xbits) - 1) << _ybits;
 			do
 			{
-				BYTE texdata;
+				uint8_t texdata;
 
 				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 				texdata = source[spot];
 				if (texdata != 0)
 				{
-					DWORD fg = colormap[texdata];
-					DWORD bg = *dest;
+					uint32_t fg = colormap[texdata];
+					uint32_t bg = *dest;
 					fg = fg2rgb[fg];
 					bg = bg2rgb[bg];
 					fg = (fg + bg) | 0x1f07c1f;
@@ -802,13 +802,13 @@ namespace swrenderer
 		dsfixed_t yfrac;
 		dsfixed_t xstep;
 		dsfixed_t ystep;
-		BYTE *dest;
-		const BYTE *source = _source;
-		const BYTE *colormap = _colormap;
+		uint8_t *dest;
+		const uint8_t *source = _source;
+		const uint8_t *colormap = _colormap;
 		int count;
 		int spot;
-		DWORD *fg2rgb = _srcblend;
-		DWORD *bg2rgb = _destblend;
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
 
 		xfrac = _xfrac;
 		yfrac = _yfrac;
@@ -826,8 +826,8 @@ namespace swrenderer
 			do
 			{
 				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-				DWORD a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
-				DWORD b = a;
+				uint32_t a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
+				uint32_t b = a;
 
 				a |= 0x01f07c1f;
 				b &= 0x40100400;
@@ -841,14 +841,14 @@ namespace swrenderer
 		}
 		else
 		{
-			BYTE yshift = 32 - _ybits;
-			BYTE xshift = yshift - _xbits;
+			uint8_t yshift = 32 - _ybits;
+			uint8_t xshift = yshift - _xbits;
 			int xmask = ((1 << _xbits) - 1) << _ybits;
 			do
 			{
 				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-				DWORD a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
-				DWORD b = a;
+				uint32_t a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
+				uint32_t b = a;
 
 				a |= 0x01f07c1f;
 				b &= 0x40100400;
@@ -868,13 +868,13 @@ namespace swrenderer
 		dsfixed_t yfrac;
 		dsfixed_t xstep;
 		dsfixed_t ystep;
-		BYTE *dest;
-		const BYTE *source = _source;
-		const BYTE *colormap = _colormap;
+		uint8_t *dest;
+		const uint8_t *source = _source;
+		const uint8_t *colormap = _colormap;
 		int count;
 		int spot;
-		DWORD *fg2rgb = _srcblend;
-		DWORD *bg2rgb = _destblend;
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
 
 		xfrac = _xfrac;
 		yfrac = _yfrac;
@@ -891,14 +891,14 @@ namespace swrenderer
 			// 64x64 is the most common case by far, so special case it.
 			do
 			{
-				BYTE texdata;
+				uint8_t texdata;
 
 				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 				texdata = source[spot];
 				if (texdata != 0)
 				{
-					DWORD a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
-					DWORD b = a;
+					uint32_t a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
+					uint32_t b = a;
 
 					a |= 0x01f07c1f;
 					b &= 0x40100400;
@@ -914,19 +914,19 @@ namespace swrenderer
 		}
 		else
 		{
-			BYTE yshift = 32 - _ybits;
-			BYTE xshift = yshift - _xbits;
+			uint8_t yshift = 32 - _ybits;
+			uint8_t xshift = yshift - _xbits;
 			int xmask = ((1 << _xbits) - 1) << _ybits;
 			do
 			{
-				BYTE texdata;
+				uint8_t texdata;
 
 				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 				texdata = source[spot];
 				if (texdata != 0)
 				{
-					DWORD a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
-					DWORD b = a;
+					uint32_t a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
+					uint32_t b = a;
 
 					a |= 0x01f07c1f;
 					b &= 0x40100400;

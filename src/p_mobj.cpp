@@ -7418,7 +7418,7 @@ DEFINE_ACTION_FUNCTION(AActor, ClearCounters)
 int AActor::GetModifiedDamage(FName damagetype, int damage, bool passive)
 {
 	if (Inventory != nullptr)
-		Inventory->ModifyDamage(damage, damagetype, damage, false);
+		Inventory->ModifyDamage(damage, damagetype, damage, passive);
 
 	return damage;
 }

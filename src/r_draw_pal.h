@@ -92,6 +92,20 @@ namespace swrenderer
 	public:
 		PalColumnCommand();
 		FString DebugInfo() override { return "PalColumnCommand"; }
+
+	protected:
+		int _count;
+		uint8_t *_dest;
+		int _pitch;
+		fixed_t _iscale;
+		fixed_t _texturefrac;
+		const uint8_t *_colormap;
+		const uint8_t *_source;
+		const uint8_t *_translation;
+		int _color;
+		uint32_t *_srcblend;
+		uint32_t *_destblend;
+		uint32_t _srccolor;
 	};
 
 	class DrawColumnPalCommand : public PalColumnCommand { public: void Execute(DrawerThread *thread) override; };
@@ -114,8 +128,16 @@ namespace swrenderer
 	class DrawFuzzColumnPalCommand : public DrawerCommand
 	{
 	public:
+		DrawFuzzColumnPalCommand();
 		void Execute(DrawerThread *thread) override;
 		FString DebugInfo() override { return "DrawFuzzColumnPalCommand"; }
+
+	private:
+		int _yl;
+		int _yh;
+		int _x;
+		uint8_t *_destorg;
+		int _pitch;
 	};
 
 	class PalSpanCommand : public DrawerCommand

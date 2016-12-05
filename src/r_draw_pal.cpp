@@ -9,6 +9,47 @@
 #include "v_video.h"
 #include "r_draw_pal.h"
 
+/*
+	[RH] This translucency algorithm is based on DOSDoom 0.65's, but uses
+	a 32k RGB table instead of an 8k one. At least on my machine, it's
+	slightly faster (probably because it uses only one shift instead of
+	two), and it looks considerably less green at the ends of the
+	translucency range. The extra size doesn't appear to be an issue.
+
+	The following note is from DOSDoom 0.65:
+
+	New translucency algorithm, by Erik Sandberg:
+
+	Basically, we compute the red, green and blue values for each pixel, and
+	then use a RGB table to check which one of the palette colours that best
+	represents those RGB values. The RGB table is 8k big, with 4 R-bits,
+	5 G-bits and 4 B-bits. A 4k table gives a bit too bad precision, and a 32k
+	table takes up more memory and results in more cache misses, so an 8k
+	table seemed to be quite ultimate.
+
+	The computation of the RGB for each pixel is accelerated by using two
+	1k tables for each translucency level.
+	The xth element of one of these tables contains the r, g and b values for
+	the colour x, weighted for the current translucency level (for example,
+	the weighted rgb values for background colour at 75% translucency are 1/4
+	of the original rgb values). The rgb values are stored as three
+	low-precision fixed point values, packed into one long per colour:
+	Bit 0-4:   Frac part of blue  (5 bits)
+	Bit 5-8:   Int  part of blue  (4 bits)
+	Bit 9-13:  Frac part of red   (5 bits)
+	Bit 14-17: Int  part of red   (4 bits)
+	Bit 18-22: Frac part of green (5 bits)
+	Bit 23-27: Int  part of green (5 bits)
+	Bit 28-31: All zeros          (4 bits)
+
+	The point of this format is that the two colours now can be added, and
+	then be converted to a RGB table index very easily: First, we just set
+	all the frac bits and the four upper zero bits to 1. It's now possible
+	to get the RGB table index by anding the current value >> 5 with the
+	current value >> 19. When asm-optimised, this should be the fastest
+	algorithm that uses RGB tables.
+*/
+
 namespace swrenderer
 {
 	PalWall1Command::PalWall1Command()
@@ -830,74 +871,677 @@ namespace swrenderer
 
 	PalColumnCommand::PalColumnCommand()
 	{
+		using namespace drawerargs;
+
+		_count = dc_count;
+		_dest = dc_dest;
+		_pitch = dc_pitch;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_colormap = dc_colormap;
+		_source = dc_source;
+		_translation = dc_translation;
+		_color = dc_color;
+		_srcblend = dc_srcblend;
+		_destblend = dc_destblend;
+		_srccolor = dc_srccolor;
 	}
 
 	void DrawColumnPalCommand::Execute(DrawerThread *thread)
 	{
+		int count;
+		BYTE *dest;
+		fixed_t frac;
+		fixed_t fracstep;
+
+		count = _count;
+
+		// Zero length, column does not exceed a pixel.
+		if (count <= 0)
+			return;
+
+		// Framebuffer destination address.
+		dest = _dest;
+
+		// Determine scaling,
+		//	which is the only mapping to be done.
+		fracstep = _iscale;
+		frac = _texturefrac;
+
+		{
+			// [RH] Get local copies of these variables so that the compiler
+			//		has a better chance of optimizing this well.
+			const BYTE *colormap = _colormap;
+			const BYTE *source = _source;
+			int pitch = _pitch;
+
+			// Inner loop that does the actual texture mapping,
+			//	e.g. a DDA-lile scaling.
+			// This is as fast as it gets.
+			do
+			{
+				// Re-map color indices from wall texture column
+				//	using a lighting/special effects LUT.
+				*dest = colormap[source[frac >> FRACBITS]];
+
+				dest += pitch;
+				frac += fracstep;
+
+			} while (--count);
+		}
 	}
 
 	void FillColumnPalCommand::Execute(DrawerThread *thread)
 	{
+		int count;
+		BYTE *dest;
+
+		count = _count;
+
+		if (count <= 0)
+			return;
+
+		dest = _dest;
+
+		{
+			int pitch = _pitch;
+			BYTE color = _color;
+
+			do
+			{
+				*dest = color;
+				dest += pitch;
+			} while (--count);
+		}
 	}
 
 	void FillColumnAddPalCommand::Execute(DrawerThread *thread)
 	{
+		int count;
+		BYTE *dest;
+
+		count = _count;
+		if (count <= 0)
+			return;
+
+		dest = _dest;
+		DWORD *bg2rgb;
+		DWORD fg;
+
+		bg2rgb = _destblend;
+		fg = _srccolor;
+		int pitch = _pitch;
+
+		do
+		{
+			DWORD bg;
+			bg = (fg + bg2rgb[*dest]) | 0x1f07c1f;
+			*dest = RGB32k.All[bg & (bg >> 15)];
+			dest += pitch;
+		} while (--count);
+
 	}
 
 	void FillColumnAddClampPalCommand::Execute(DrawerThread *thread)
 	{
+		int count;
+		BYTE *dest;
+
+		count = _count;
+		if (count <= 0)
+			return;
+
+		dest = _dest;
+		DWORD *bg2rgb;
+		DWORD fg;
+
+		bg2rgb = _destblend;
+		fg = _srccolor;
+		int pitch = _pitch;
+
+		do
+		{
+			DWORD a = fg + bg2rgb[*dest];
+			DWORD b = a;
+
+			a |= 0x01f07c1f;
+			b &= 0x40100400;
+			a &= 0x3fffffff;
+			b = b - (b >> 5);
+			a |= b;
+			*dest = RGB32k.All[a & (a >> 15)];
+			dest += pitch;
+		} while (--count);
 	}
 
 	void FillColumnSubClampPalCommand::Execute(DrawerThread *thread)
 	{
+		int count;
+		BYTE *dest;
+
+		count = _count;
+		if (count <= 0)
+			return;
+
+		dest = _dest;
+		DWORD *bg2rgb;
+		DWORD fg;
+
+		bg2rgb = _destblend;
+		fg = _srccolor | 0x40100400;
+		int pitch = _pitch;
+
+		do
+		{
+			DWORD a = fg - bg2rgb[*dest];
+			DWORD b = a;
+
+			b &= 0x40100400;
+			b = b - (b >> 5);
+			a &= b;
+			a |= 0x01f07c1f;
+			*dest = RGB32k.All[a & (a >> 15)];
+			dest += pitch;
+		} while (--count);
 	}
 
 	void FillColumnRevSubClampPalCommand::Execute(DrawerThread *thread)
 	{
+		int count;
+		BYTE *dest;
+
+		count = _count;
+		if (count <= 0)
+			return;
+
+		dest = _dest;
+		DWORD *bg2rgb;
+		DWORD fg;
+
+		bg2rgb = _destblend;
+		fg = _srccolor;
+		int pitch = _pitch;
+
+		do
+		{
+			DWORD a = (bg2rgb[*dest] | 0x40100400) - fg;
+			DWORD b = a;
+
+			b &= 0x40100400;
+			b = b - (b >> 5);
+			a &= b;
+			a |= 0x01f07c1f;
+			*dest = RGB32k.All[a & (a >> 15)];
+			dest += pitch;
+		} while (--count);
 	}
 
 	void DrawColumnAddPalCommand::Execute(DrawerThread *thread)
 	{
+		int count;
+		BYTE *dest;
+		fixed_t frac;
+		fixed_t fracstep;
+
+		count = _count;
+		if (count <= 0)
+			return;
+
+		dest = _dest;
+
+		fracstep = _iscale;
+		frac = _texturefrac;
+
+		{
+			DWORD *fg2rgb = _srcblend;
+			DWORD *bg2rgb = _destblend;
+			const BYTE *colormap = _colormap;
+			const BYTE *source = _source;
+			int pitch = _pitch;
+
+			do
+			{
+				DWORD fg = colormap[source[frac >> FRACBITS]];
+				DWORD bg = *dest;
+
+				fg = fg2rgb[fg];
+				bg = bg2rgb[bg];
+				fg = (fg + bg) | 0x1f07c1f;
+				*dest = RGB32k.All[fg & (fg >> 15)];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnTranslatedPalCommand::Execute(DrawerThread *thread)
 	{
+		int 				count;
+		BYTE*				dest;
+		fixed_t 			frac;
+		fixed_t 			fracstep;
+
+		count = _count;
+		if (count <= 0)
+			return;
+
+		dest = _dest;
+
+		fracstep = _iscale;
+		frac = _texturefrac;
+
+		{
+			// [RH] Local copies of global vars to improve compiler optimizations
+			const BYTE *colormap = _colormap;
+			const BYTE *translation = _translation;
+			const BYTE *source = _source;
+			int pitch = _pitch;
+
+			do
+			{
+				*dest = colormap[translation[source[frac >> FRACBITS]]];
+				dest += pitch;
+
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnTlatedAddPalCommand::Execute(DrawerThread *thread)
 	{
+		int count;
+		BYTE *dest;
+		fixed_t frac;
+		fixed_t fracstep;
+
+		count = _count;
+		if (count <= 0)
+			return;
+
+		dest = _dest;
+
+		fracstep = _iscale;
+		frac = _texturefrac;
+
+		{
+			DWORD *fg2rgb = _srcblend;
+			DWORD *bg2rgb = _destblend;
+			const BYTE *translation = _translation;
+			const BYTE *colormap = _colormap;
+			const BYTE *source = _source;
+			int pitch = _pitch;
+
+			do
+			{
+				DWORD fg = colormap[translation[source[frac >> FRACBITS]]];
+				DWORD bg = *dest;
+
+				fg = fg2rgb[fg];
+				bg = bg2rgb[bg];
+				fg = (fg + bg) | 0x1f07c1f;
+				*dest = RGB32k.All[fg & (fg >> 15)];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnShadedPalCommand::Execute(DrawerThread *thread)
 	{
+		int  count;
+		BYTE *dest;
+		fixed_t frac, fracstep;
+
+		count = _count;
+
+		if (count <= 0)
+			return;
+
+		dest = _dest;
+
+		fracstep = _iscale;
+		frac = _texturefrac;
+
+		{
+			const BYTE *source = _source;
+			const BYTE *colormap = _colormap;
+			int pitch = _pitch;
+			DWORD *fgstart = &Col2RGB8[0][_color];
+
+			do
+			{
+				DWORD val = colormap[source[frac >> FRACBITS]];
+				DWORD fg = fgstart[val << 8];
+				val = (Col2RGB8[64 - val][*dest] + fg) | 0x1f07c1f;
+				*dest = RGB32k.All[val & (val >> 15)];
+
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnAddClampPalCommand::Execute(DrawerThread *thread)
 	{
+		int count;
+		BYTE *dest;
+		fixed_t frac;
+		fixed_t fracstep;
+
+		count = _count;
+		if (count <= 0)
+			return;
+
+		dest = _dest;
+
+		fracstep = _iscale;
+		frac = _texturefrac;
+
+		{
+			const BYTE *colormap = _colormap;
+			const BYTE *source = _source;
+			int pitch = _pitch;
+			DWORD *fg2rgb = _srcblend;
+			DWORD *bg2rgb = _destblend;
+
+			do
+			{
+				DWORD a = fg2rgb[colormap[source[frac >> FRACBITS]]] + bg2rgb[*dest];
+				DWORD b = a;
+
+				a |= 0x01f07c1f;
+				b &= 0x40100400;
+				a &= 0x3fffffff;
+				b = b - (b >> 5);
+				a |= b;
+				*dest = RGB32k.All[a & (a >> 15)];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnAddClampTranslatedPalCommand::Execute(DrawerThread *thread)
 	{
+		int count;
+		BYTE *dest;
+		fixed_t frac;
+		fixed_t fracstep;
+
+		count = _count;
+		if (count <= 0)
+			return;
+
+		dest = _dest;
+
+		fracstep = _iscale;
+		frac = _texturefrac;
+
+		{
+			const BYTE *translation = _translation;
+			const BYTE *colormap = _colormap;
+			const BYTE *source = _source;
+			int pitch = _pitch;
+			DWORD *fg2rgb = _srcblend;
+			DWORD *bg2rgb = _destblend;
+
+			do
+			{
+				DWORD a = fg2rgb[colormap[translation[source[frac >> FRACBITS]]]] + bg2rgb[*dest];
+				DWORD b = a;
+
+				a |= 0x01f07c1f;
+				b &= 0x40100400;
+				a &= 0x3fffffff;
+				b = b - (b >> 5);
+				a |= b;
+				*dest = RGB32k.All[(a >> 15) & a];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnSubClampPalCommand::Execute(DrawerThread *thread)
 	{
+		int count;
+		BYTE *dest;
+		fixed_t frac;
+		fixed_t fracstep;
+
+		count = _count;
+		if (count <= 0)
+			return;
+
+		dest = _dest;
+
+		fracstep = _iscale;
+		frac = _texturefrac;
+
+		{
+			const BYTE *colormap = _colormap;
+			const BYTE *source = _source;
+			int pitch = _pitch;
+			DWORD *fg2rgb = _srcblend;
+			DWORD *bg2rgb = _destblend;
+
+			do
+			{
+				DWORD a = (fg2rgb[colormap[source[frac >> FRACBITS]]] | 0x40100400) - bg2rgb[*dest];
+				DWORD b = a;
+
+				b &= 0x40100400;
+				b = b - (b >> 5);
+				a &= b;
+				a |= 0x01f07c1f;
+				*dest = RGB32k.All[a & (a >> 15)];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnSubClampTranslatedPalCommand::Execute(DrawerThread *thread)
 	{
+		int count;
+		BYTE *dest;
+		fixed_t frac;
+		fixed_t fracstep;
+
+		count = _count;
+		if (count <= 0)
+			return;
+
+		dest = _dest;
+
+		fracstep = _iscale;
+		frac = _texturefrac;
+
+		{
+			const BYTE *translation = _translation;
+			const BYTE *colormap = _colormap;
+			const BYTE *source = _source;
+			int pitch = _pitch;
+			DWORD *fg2rgb = _srcblend;
+			DWORD *bg2rgb = _destblend;
+
+			do
+			{
+				DWORD a = (fg2rgb[colormap[translation[source[frac >> FRACBITS]]]] | 0x40100400) - bg2rgb[*dest];
+				DWORD b = a;
+
+				b &= 0x40100400;
+				b = b - (b >> 5);
+				a &= b;
+				a |= 0x01f07c1f;
+				*dest = RGB32k.All[(a >> 15) & a];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnRevSubClampPalCommand::Execute(DrawerThread *thread)
 	{
+		int count;
+		BYTE *dest;
+		fixed_t frac;
+		fixed_t fracstep;
+
+		count = _count;
+		if (count <= 0)
+			return;
+
+		dest = _dest;
+
+		fracstep = _iscale;
+		frac = _texturefrac;
+
+		{
+			const BYTE *colormap = _colormap;
+			const BYTE *source = _source;
+			int pitch = _pitch;
+			DWORD *fg2rgb = _srcblend;
+			DWORD *bg2rgb = _destblend;
+
+			do
+			{
+				DWORD a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[source[frac >> FRACBITS]]];
+				DWORD b = a;
+
+				b &= 0x40100400;
+				b = b - (b >> 5);
+				a &= b;
+				a |= 0x01f07c1f;
+				*dest = RGB32k.All[a & (a >> 15)];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnRevSubClampTranslatedPalCommand::Execute(DrawerThread *thread)
 	{
+		int count;
+		BYTE *dest;
+		fixed_t frac;
+		fixed_t fracstep;
+
+		count = _count;
+		if (count <= 0)
+			return;
+
+		dest = _dest;
+
+		fracstep = _iscale;
+		frac = _texturefrac;
+
+		{
+			const BYTE *translation = _translation;
+			const BYTE *colormap = _colormap;
+			const BYTE *source = _source;
+			int pitch = _pitch;
+			DWORD *fg2rgb = _srcblend;
+			DWORD *bg2rgb = _destblend;
+
+			do
+			{
+				DWORD a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[translation[source[frac >> FRACBITS]]]];
+				DWORD b = a;
+
+				b &= 0x40100400;
+				b = b - (b >> 5);
+				a &= b;
+				a |= 0x01f07c1f;
+				*dest = RGB32k.All[(a >> 15) & a];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
+	}
+
+	/////////////////////////////////////////////////////////////////////////
+
+	DrawFuzzColumnPalCommand::DrawFuzzColumnPalCommand()
+	{
+		using namespace drawerargs;
+
+		_yl = dc_yl;
+		_yh = dc_yh;
+		_x = dc_x;
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
 	}
 
 	void DrawFuzzColumnPalCommand::Execute(DrawerThread *thread)
 	{
+		int count;
+		BYTE *dest;
+
+		// Adjust borders. Low...
+		if (_yl == 0)
+			_yl = 1;
+
+		// .. and high.
+		if (_yh > fuzzviewheight)
+			_yh = fuzzviewheight;
+
+		count = _yh - _yl;
+
+		// Zero length.
+		if (count < 0)
+			return;
+
+		count++;
+
+		dest = ylookup[_yl] + _x + _destorg;
+
+		// colormap #6 is used for shading (of 0-31, a bit brighter than average)
+		{
+			// [RH] Make local copies of global vars to try and improve
+			//		the optimizations made by the compiler.
+			int pitch = _pitch;
+			int fuzz = fuzzpos;
+			int cnt;
+			BYTE *map = &NormalLight.Maps[6 * 256];
+
+			// [RH] Split this into three separate loops to minimize
+			// the number of times fuzzpos needs to be clamped.
+			if (fuzz)
+			{
+				cnt = MIN(FUZZTABLE - fuzz, count);
+				count -= cnt;
+				do
+				{
+					*dest = map[dest[fuzzoffset[fuzz++]]];
+					dest += pitch;
+				} while (--cnt);
+			}
+			if (fuzz == FUZZTABLE || count > 0)
+			{
+				while (count >= FUZZTABLE)
+				{
+					fuzz = 0;
+					cnt = FUZZTABLE;
+					count -= FUZZTABLE;
+					do
+					{
+						*dest = map[dest[fuzzoffset[fuzz++]]];
+						dest += pitch;
+					} while (--cnt);
+				}
+				fuzz = 0;
+				if (count > 0)
+				{
+					do
+					{
+						*dest = map[dest[fuzzoffset[fuzz++]]];
+						dest += pitch;
+					} while (--count);
+				}
+			}
+			fuzzpos = fuzz;
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////

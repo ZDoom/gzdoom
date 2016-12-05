@@ -2594,7 +2594,6 @@ void R_InitColumnDrawers ()
 	R_DrawShadedColumn			= R_DrawShadedColumnP_C;
 	R_DrawSpan					= R_DrawSpanP_C;
 	R_DrawSpanMasked			= R_DrawSpanMaskedP_C;
-	rt_map4cols					= rt_map4cols;
 #endif
 }
 

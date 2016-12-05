@@ -422,24 +422,408 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	PalSkyCommand::PalSkyCommand(uint32_t solid_top, uint32_t solid_bottom)
+	PalSkyCommand::PalSkyCommand(uint32_t solid_top, uint32_t solid_bottom) : solid_top(solid_top), solid_bottom(solid_bottom)
 	{
+		using namespace drawerargs;
+
+		_dest = dc_dest;
+		_count = dc_count;
+		_pitch = dc_pitch;
+		for (int col = 0; col < 4; col++)
+		{
+			_bufplce[col] = bufplce[col];
+			_bufplce2[col] = bufplce2[col];
+			_bufheight[col] = bufheight[col];
+			_vince[col] = vince[col];
+			_vplce[col] = vplce[col];
+		}
 	}
 
 	void DrawSingleSky1PalCommand::Execute(DrawerThread *thread)
 	{
+		uint8_t *dest = _dest;
+		int count = _count;
+		int pitch = _pitch;
+		const uint8_t *source0 = _bufplce[0];
+		int textureheight0 = _bufheight[0];
+
+		int32_t frac = _vplce[0];
+		int32_t fracstep = _vince[0];
+
+		int start_fade = 2; // How fast it should fade out
+
+		int solid_top_r = RPART(solid_top);
+		int solid_top_g = GPART(solid_top);
+		int solid_top_b = BPART(solid_top);
+		int solid_bottom_r = RPART(solid_bottom);
+		int solid_bottom_g = GPART(solid_bottom);
+		int solid_bottom_b = BPART(solid_bottom);
+
+		for (int index = 0; index < count; index++)
+		{
+			uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+			uint8_t fg = source0[sample_index];
+
+			int alpha_top = MAX(MIN(frac >> (16 - start_fade), 256), 0);
+			int alpha_bottom = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
+
+			if (alpha_top == 256 && alpha_bottom == 256)
+			{
+				*dest = fg;
+			}
+			else
+			{
+				int inv_alpha_top = 256 - alpha_top;
+				int inv_alpha_bottom = 256 - alpha_bottom;
+
+				const auto &c = GPalette.BaseColors[fg];
+				int c_red = c.r;
+				int c_green = c.g;
+				int c_blue = c.b;
+				c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
+				c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
+				c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
+				c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
+				c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
+				c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
+				*dest = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+			}
+
+			frac += fracstep;
+			dest += pitch;
+		}
 	}
 
 	void DrawSingleSky4PalCommand::Execute(DrawerThread *thread)
 	{
+		uint8_t *dest = _dest;
+		int count = _count;
+		int pitch = _pitch;
+		const uint8_t *source0[4] = { _bufplce[0], _bufplce[1], _bufplce[2], _bufplce[3] };
+		int textureheight0 = _bufheight[0];
+		const uint32_t *palette = (const uint32_t *)GPalette.BaseColors;
+		int32_t frac[4] = { (int32_t)_vplce[0], (int32_t)_vplce[1], (int32_t)_vplce[2], (int32_t)_vplce[3] };
+		int32_t fracstep[4] = { (int32_t)_vince[0], (int32_t)_vince[1], (int32_t)_vince[2], (int32_t)_vince[3] };
+		uint8_t output[4];
+
+		int start_fade = 2; // How fast it should fade out
+
+		int solid_top_r = RPART(solid_top);
+		int solid_top_g = GPART(solid_top);
+		int solid_top_b = BPART(solid_top);
+		int solid_bottom_r = RPART(solid_bottom);
+		int solid_bottom_g = GPART(solid_bottom);
+		int solid_bottom_b = BPART(solid_bottom);
+		uint32_t solid_top_fill = RGB32k.RGB[(solid_top_r >> 3)][(solid_top_g >> 3)][(solid_top_b >> 3)];
+		uint32_t solid_bottom_fill = RGB32k.RGB[(solid_bottom_r >> 3)][(solid_bottom_g >> 3)][(solid_bottom_b >> 3)];
+		solid_top_fill = (solid_top_fill << 24) | (solid_top_fill << 16) | (solid_top_fill << 8) | solid_top_fill;
+		solid_bottom_fill = (solid_bottom_fill << 24) | (solid_bottom_fill << 16) | (solid_bottom_fill << 8) | solid_bottom_fill;
+
+		// Find bands for top solid color, top fade, center textured, bottom fade, bottom solid color:
+		int fade_length = (1 << (24 - start_fade));
+		int start_fadetop_y = (-frac[0]) / fracstep[0];
+		int end_fadetop_y = (fade_length - frac[0]) / fracstep[0];
+		int start_fadebottom_y = ((2 << 24) - fade_length - frac[0]) / fracstep[0];
+		int end_fadebottom_y = ((2 << 24) - frac[0]) / fracstep[0];
+		for (int col = 1; col < 4; col++)
+		{
+			start_fadetop_y = MIN(start_fadetop_y, (-frac[0]) / fracstep[0]);
+			end_fadetop_y = MAX(end_fadetop_y, (fade_length - frac[0]) / fracstep[0]);
+			start_fadebottom_y = MIN(start_fadebottom_y, ((2 << 24) - fade_length - frac[0]) / fracstep[0]);
+			end_fadebottom_y = MAX(end_fadebottom_y, ((2 << 24) - frac[0]) / fracstep[0]);
+		}
+		start_fadetop_y = clamp(start_fadetop_y, 0, count);
+		end_fadetop_y = clamp(end_fadetop_y, 0, count);
+		start_fadebottom_y = clamp(start_fadebottom_y, 0, count);
+		end_fadebottom_y = clamp(end_fadebottom_y, 0, count);
+
+		// Top solid color:
+		for (int index = 0; index < start_fadetop_y; index++)
+		{
+			*((uint32_t*)dest) = solid_top_fill;
+			dest += pitch;
+			for (int col = 0; col < 4; col++)
+				frac[col] += fracstep[col];
+		}
+
+		// Top fade:
+		for (int index = start_fadetop_y; index < end_fadetop_y; index++)
+		{
+			for (int col = 0; col < 4; col++)
+			{
+				uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+				uint8_t fg = source0[col][sample_index];
+
+				uint32_t c = palette[fg];
+				int alpha_top = MAX(MIN(frac[col] >> (16 - start_fade), 256), 0);
+				int inv_alpha_top = 256 - alpha_top;
+				int c_red = RPART(c);
+				int c_green = GPART(c);
+				int c_blue = BPART(c);
+				c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
+				c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
+				c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
+				output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+
+				frac[col] += fracstep[col];
+			}
+			*((uint32_t*)dest) = *((uint32_t*)output);
+			dest += pitch;
+		}
+
+		// Textured center:
+		for (int index = end_fadetop_y; index < start_fadebottom_y; index++)
+		{
+			for (int col = 0; col < 4; col++)
+			{
+				uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+				output[col] = source0[col][sample_index];
+
+				frac[col] += fracstep[col];
+			}
+
+			*((uint32_t*)dest) = *((uint32_t*)output);
+			dest += pitch;
+		}
+
+		// Fade bottom:
+		for (int index = start_fadebottom_y; index < end_fadebottom_y; index++)
+		{
+			for (int col = 0; col < 4; col++)
+			{
+				uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+				uint8_t fg = source0[col][sample_index];
+
+				uint32_t c = palette[fg];
+				int alpha_bottom = MAX(MIN(((2 << 24) - frac[col]) >> (16 - start_fade), 256), 0);
+				int inv_alpha_bottom = 256 - alpha_bottom;
+				int c_red = RPART(c);
+				int c_green = GPART(c);
+				int c_blue = BPART(c);
+				c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
+				c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
+				c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
+				output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+
+				frac[col] += fracstep[col];
+			}
+			*((uint32_t*)dest) = *((uint32_t*)output);
+			dest += pitch;
+		}
+
+		// Bottom solid color:
+		for (int index = end_fadebottom_y; index < count; index++)
+		{
+			*((uint32_t*)dest) = solid_bottom_fill;
+			dest += pitch;
+		}
 	}
 
 	void DrawDoubleSky1PalCommand::Execute(DrawerThread *thread)
 	{
+		uint8_t *dest = _dest;
+		int count = _count;
+		int pitch = _pitch;
+		const uint8_t *source0 = _bufplce[0];
+		const uint8_t *source1 = _bufplce2[0];
+		int textureheight0 = _bufheight[0];
+		uint32_t maxtextureheight1 = _bufheight[1] - 1;
+
+		int32_t frac = _vplce[0];
+		int32_t fracstep = _vince[0];
+
+		int start_fade = 2; // How fast it should fade out
+
+		int solid_top_r = RPART(solid_top);
+		int solid_top_g = GPART(solid_top);
+		int solid_top_b = BPART(solid_top);
+		int solid_bottom_r = RPART(solid_bottom);
+		int solid_bottom_g = GPART(solid_bottom);
+		int solid_bottom_b = BPART(solid_bottom);
+
+		for (int index = 0; index < count; index++)
+		{
+			uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+			uint8_t fg = source0[sample_index];
+			if (fg == 0)
+			{
+				uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+				fg = source1[sample_index2];
+			}
+
+			int alpha_top = MAX(MIN(frac >> (16 - start_fade), 256), 0);
+			int alpha_bottom = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
+
+			if (alpha_top == 256 && alpha_bottom == 256)
+			{
+				*dest = fg;
+			}
+			else
+			{
+				int inv_alpha_top = 256 - alpha_top;
+				int inv_alpha_bottom = 256 - alpha_bottom;
+
+				const auto &c = GPalette.BaseColors[fg];
+				int c_red = c.r;
+				int c_green = c.g;
+				int c_blue = c.b;
+				c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
+				c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
+				c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
+				c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
+				c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
+				c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
+				*dest = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+			}
+
+			frac += fracstep;
+			dest += pitch;
+		}
 	}
 
 	void DrawDoubleSky4PalCommand::Execute(DrawerThread *thread)
 	{
+		uint8_t *dest = _dest;
+		int count = _count;
+		int pitch = _pitch;
+		const uint8_t *source0[4] = { _bufplce[0], _bufplce[1], _bufplce[2], _bufplce[3] };
+		const uint8_t *source1[4] = { _bufplce2[0], _bufplce2[1], _bufplce2[2], _bufplce2[3] };
+		int textureheight0 = _bufheight[0];
+		uint32_t maxtextureheight1 = _bufheight[1] - 1;
+		const uint32_t *palette = (const uint32_t *)GPalette.BaseColors;
+		int32_t frac[4] = { (int32_t)_vplce[0], (int32_t)_vplce[1], (int32_t)_vplce[2], (int32_t)_vplce[3] };
+		int32_t fracstep[4] = { (int32_t)_vince[0], (int32_t)_vince[1], (int32_t)_vince[2], (int32_t)_vince[3] };
+		uint8_t output[4];
+
+		int start_fade = 2; // How fast it should fade out
+
+		int solid_top_r = RPART(solid_top);
+		int solid_top_g = GPART(solid_top);
+		int solid_top_b = BPART(solid_top);
+		int solid_bottom_r = RPART(solid_bottom);
+		int solid_bottom_g = GPART(solid_bottom);
+		int solid_bottom_b = BPART(solid_bottom);
+		uint32_t solid_top_fill = RGB32k.RGB[(solid_top_r >> 3)][(solid_top_g >> 3)][(solid_top_b >> 3)];
+		uint32_t solid_bottom_fill = RGB32k.RGB[(solid_bottom_r >> 3)][(solid_bottom_g >> 3)][(solid_bottom_b >> 3)];
+		solid_top_fill = (solid_top_fill << 24) | (solid_top_fill << 16) | (solid_top_fill << 8) | solid_top_fill;
+		solid_bottom_fill = (solid_bottom_fill << 24) | (solid_bottom_fill << 16) | (solid_bottom_fill << 8) | solid_bottom_fill;
+
+		// Find bands for top solid color, top fade, center textured, bottom fade, bottom solid color:
+		int fade_length = (1 << (24 - start_fade));
+		int start_fadetop_y = (-frac[0]) / fracstep[0];
+		int end_fadetop_y = (fade_length - frac[0]) / fracstep[0];
+		int start_fadebottom_y = ((2 << 24) - fade_length - frac[0]) / fracstep[0];
+		int end_fadebottom_y = ((2 << 24) - frac[0]) / fracstep[0];
+		for (int col = 1; col < 4; col++)
+		{
+			start_fadetop_y = MIN(start_fadetop_y, (-frac[0]) / fracstep[0]);
+			end_fadetop_y = MAX(end_fadetop_y, (fade_length - frac[0]) / fracstep[0]);
+			start_fadebottom_y = MIN(start_fadebottom_y, ((2 << 24) - fade_length - frac[0]) / fracstep[0]);
+			end_fadebottom_y = MAX(end_fadebottom_y, ((2 << 24) - frac[0]) / fracstep[0]);
+		}
+		start_fadetop_y = clamp(start_fadetop_y, 0, count);
+		end_fadetop_y = clamp(end_fadetop_y, 0, count);
+		start_fadebottom_y = clamp(start_fadebottom_y, 0, count);
+		end_fadebottom_y = clamp(end_fadebottom_y, 0, count);
+
+		// Top solid color:
+		for (int index = 0; index < start_fadetop_y; index++)
+		{
+			*((uint32_t*)dest) = solid_top_fill;
+			dest += pitch;
+			for (int col = 0; col < 4; col++)
+				frac[col] += fracstep[col];
+		}
+
+		// Top fade:
+		for (int index = start_fadetop_y; index < end_fadetop_y; index++)
+		{
+			for (int col = 0; col < 4; col++)
+			{
+				uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+				uint8_t fg = source0[col][sample_index];
+				if (fg == 0)
+				{
+					uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+					fg = source1[col][sample_index2];
+				}
+				output[col] = fg;
+
+				uint32_t c = palette[fg];
+				int alpha_top = MAX(MIN(frac[col] >> (16 - start_fade), 256), 0);
+				int inv_alpha_top = 256 - alpha_top;
+				int c_red = RPART(c);
+				int c_green = GPART(c);
+				int c_blue = BPART(c);
+				c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
+				c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
+				c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
+				output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+
+				frac[col] += fracstep[col];
+			}
+			*((uint32_t*)dest) = *((uint32_t*)output);
+			dest += pitch;
+		}
+
+		// Textured center:
+		for (int index = end_fadetop_y; index < start_fadebottom_y; index++)
+		{
+			for (int col = 0; col < 4; col++)
+			{
+				uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+				uint8_t fg = source0[col][sample_index];
+				if (fg == 0)
+				{
+					uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+					fg = source1[col][sample_index2];
+				}
+				output[col] = fg;
+
+				frac[col] += fracstep[col];
+			}
+
+			*((uint32_t*)dest) = *((uint32_t*)output);
+			dest += pitch;
+		}
+
+		// Fade bottom:
+		for (int index = start_fadebottom_y; index < end_fadebottom_y; index++)
+		{
+			for (int col = 0; col < 4; col++)
+			{
+				uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+				uint8_t fg = source0[col][sample_index];
+				if (fg == 0)
+				{
+					uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+					fg = source1[col][sample_index2];
+				}
+				output[col] = fg;
+
+				uint32_t c = palette[fg];
+				int alpha_bottom = MAX(MIN(((2 << 24) - frac[col]) >> (16 - start_fade), 256), 0);
+				int inv_alpha_bottom = 256 - alpha_bottom;
+				int c_red = RPART(c);
+				int c_green = GPART(c);
+				int c_blue = BPART(c);
+				c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
+				c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
+				c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
+				output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+
+				frac[col] += fracstep[col];
+			}
+			*((uint32_t*)dest) = *((uint32_t*)output);
+			dest += pitch;
+		}
+
+		// Bottom solid color:
+		for (int index = end_fadebottom_y; index < count; index++)
+		{
+			*((uint32_t*)dest) = solid_bottom_fill;
+			dest += pitch;
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////

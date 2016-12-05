@@ -39,6 +39,8 @@
 #include "w_wad.h"
 #include "gi.h"
 #include "g_level.h"
+#include "doomstat.h"
+#include "d_player.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
@@ -62,6 +64,11 @@ CUSTOM_CVAR(Float, maxviewpitch, 90.f, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
 	if (self>90.f) self=90.f;
 	else if (self<-90.f) self=-90.f;
+	if (usergame)
+	{
+		// [SP] Update pitch limits to the netgame/gamesim.
+		players[consoleplayer].SendPitchLimits();
+	}
 }
 
 CUSTOM_CVAR(Bool, gl_notexturefill, false, 0)

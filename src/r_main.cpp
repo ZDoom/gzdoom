@@ -811,6 +811,8 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 
 void R_SetupBuffer ()
 {
+	using namespace drawerargs;
+
 	static BYTE *lastbuff = NULL;
 
 	int pitch = RenderTarget->GetPitch();

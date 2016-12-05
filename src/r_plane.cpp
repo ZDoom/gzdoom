@@ -72,6 +72,7 @@ EXTERN_CVAR(Int, r_skymode)
 
 namespace swrenderer       
 {
+	using namespace drawerargs;
 
 extern subsector_t *InSubsector;
 

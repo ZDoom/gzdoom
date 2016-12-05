@@ -64,6 +64,7 @@ EXTERN_CVAR(Bool, r_mipmap)
 
 namespace swrenderer       
 {
+	using namespace drawerargs;
 
 #define HEIGHTBITS 12
 #define HEIGHTSHIFT (FRACBITS-HEIGHTBITS)

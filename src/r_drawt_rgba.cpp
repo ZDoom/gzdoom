@@ -48,10 +48,6 @@
 namespace swrenderer       
 {
 
-extern unsigned int dc_tspans[4][MAXHEIGHT];
-extern unsigned int *dc_ctspan[4];
-extern unsigned int *horizspan[4];
-
 /////////////////////////////////////////////////////////////////////////////
 
 class DrawColumnRt1LLVMCommand : public DrawerCommand
@@ -73,6 +69,8 @@ protected:
 public:
 	DrawColumnRt1LLVMCommand(int hx, int sx, int yl, int yh)
 	{
+		using namespace drawerargs;
+
 		args.dest = (uint32_t*)dc_destorg + ylookup[yl] + sx;
 		args.source = nullptr;
 		args.source2 = nullptr;
@@ -192,6 +190,8 @@ class DrawColumnHorizRGBACommand : public DrawerCommand
 public:
 	DrawColumnHorizRGBACommand()
 	{
+		using namespace drawerargs;
+
 		_count = dc_count;
 		_iscale = dc_iscale;
 		_texturefrac = dc_texturefrac;
@@ -269,6 +269,8 @@ class FillColumnHorizRGBACommand : public DrawerCommand
 public:
 	FillColumnHorizRGBACommand()
 	{
+		using namespace drawerargs;
+
 		_x = dc_x;
 		_count = dc_count;
 		_color = GPalette.BaseColors[dc_color].d | (uint32_t)0xff000000;
@@ -462,6 +464,8 @@ void rt_tlaterevsubclamp4cols_rgba (int sx, int yl, int yh)
 // call this function to set up the span pointers.
 void rt_initcols_rgba (BYTE *buff)
 {
+	using namespace drawerargs;
+
 	for (int y = 3; y >= 0; y--)
 		horizspan[y] = dc_ctspan[y] = &dc_tspans[y][0];
 
@@ -470,6 +474,8 @@ void rt_initcols_rgba (BYTE *buff)
 
 void rt_span_coverage_rgba(int x, int start, int stop)
 {
+	using namespace drawerargs;
+
 	unsigned int **tspan = &dc_ctspan[x & 3];
 	(*tspan)[0] = start;
 	(*tspan)[1] = stop;
@@ -480,6 +486,8 @@ void rt_span_coverage_rgba(int x, int start, int stop)
 // drawn to the screen along with up to three other columns.
 void R_DrawColumnHoriz_rgba (void)
 {
+	using namespace drawerargs;
+
 	if (dc_count <= 0)
 		return;
 
@@ -498,6 +506,8 @@ void R_DrawColumnHoriz_rgba (void)
 // [RH] Just fills a column with a given color
 void R_FillColumnHoriz_rgba (void)
 {
+	using namespace drawerargs;
+
 	if (dc_count <= 0)
 		return;
 

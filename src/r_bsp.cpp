@@ -63,6 +63,7 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer       
 {
+	using namespace drawerargs;
 
 seg_t*			curline;
 side_t* 		sidedef;

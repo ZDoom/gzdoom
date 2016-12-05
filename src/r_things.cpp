@@ -78,6 +78,7 @@ CVAR(Bool, r_splitsprites, true, CVAR_ARCHIVE)
 
 namespace swrenderer
 {
+	using namespace drawerargs;
 
 // [RH] A c-buffer. Used for keeping track of offscreen voxel spans.
 

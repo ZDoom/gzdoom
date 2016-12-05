@@ -73,6 +73,8 @@ class DrawSpanLLVMCommand : public DrawerCommand
 public:
 	DrawSpanLLVMCommand()
 	{
+		using namespace drawerargs;
+
 		args.xfrac = ds_xfrac;
 		args.yfrac = ds_yfrac;
 		args.xstep = ds_xstep;
@@ -122,6 +124,8 @@ protected:
 private:
 	inline static bool sampler_setup(const uint32_t * &source, int &xbits, int &ybits, bool mipmapped)
 	{
+		using namespace drawerargs;
+
 		bool magnifying = ds_lod < 0.0f;
 		if (r_mipmap && mipmapped)
 		{
@@ -217,6 +221,8 @@ protected:
 public:
 	DrawWall4LLVMCommand()
 	{
+		using namespace drawerargs;
+
 		args.dest = (uint32_t*)dc_dest;
 		args.dest_y = _dest_y;
 		args.count = dc_count;
@@ -281,6 +287,8 @@ protected:
 public:
 	DrawWall1LLVMCommand()
 	{
+		using namespace drawerargs;
+
 		args.dest = (uint32_t*)dc_dest;
 		args.dest_y = _dest_y;
 		args.pitch = dc_pitch;
@@ -347,6 +355,8 @@ protected:
 public:
 	DrawColumnLLVMCommand()
 	{
+		using namespace drawerargs;
+
 		args.dest = (uint32_t*)dc_dest;
 		args.source = dc_source;
 		args.source2 = dc_source2;
@@ -408,6 +418,8 @@ protected:
 public:
 	DrawSkyLLVMCommand(uint32_t solid_top, uint32_t solid_bottom)
 	{
+		using namespace drawerargs;
+
 		args.dest = (uint32_t*)dc_dest;
 		args.dest_y = _dest_y;
 		args.count = dc_count;
@@ -492,6 +504,8 @@ class DrawFuzzColumnRGBACommand : public DrawerCommand
 public:
 	DrawFuzzColumnRGBACommand()
 	{
+		using namespace drawerargs;
+
 		_x = dc_x;
 		_yl = dc_yl;
 		_yh = dc_yh;
@@ -609,6 +623,8 @@ class FillSpanRGBACommand : public DrawerCommand
 public:
 	FillSpanRGBACommand()
 	{
+		using namespace drawerargs;
+
 		_x1 = ds_x1;
 		_x2 = ds_x2;
 		_y = ds_y;
@@ -655,6 +671,8 @@ class DrawSlabRGBACommand : public DrawerCommand
 public:
 	DrawSlabRGBACommand(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p, ShadeConstants shade_constants, const BYTE *colormap, fixed_t light)
 	{
+		using namespace drawerargs;
+
 		_dx = dx;
 		_v = v;
 		_dy = dy;
@@ -774,6 +792,8 @@ class DrawFogBoundaryLineRGBACommand : public DrawerCommand
 public:
 	DrawFogBoundaryLineRGBACommand(int y, int x, int x2)
 	{
+		using namespace drawerargs;
+
 		_y = y;
 		_x = x;
 		_x2 = x2;
@@ -862,6 +882,8 @@ class DrawTiltedSpanRGBACommand : public DrawerCommand
 public:
 	DrawTiltedSpanRGBACommand(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy)
 	{
+		using namespace drawerargs;
+
 		_x1 = x1;
 		_x2 = x2;
 		_y = y;
@@ -1005,6 +1027,8 @@ class DrawColoredSpanRGBACommand : public DrawerCommand
 public:
 	DrawColoredSpanRGBACommand(int y, int x1, int x2)
 	{
+		using namespace drawerargs;
+
 		_y = y;
 		_x1 = x1;
 		_x2 = x2;
@@ -1051,6 +1075,8 @@ class FillTransColumnRGBACommand : public DrawerCommand
 public:
 	FillTransColumnRGBACommand(int x, int y1, int y2, int color, int a)
 	{
+		using namespace drawerargs;
+
 		_x = x;
 		_y1 = y1;
 		_y2 = y2;
@@ -1315,6 +1341,8 @@ void R_FillRevSubClampColumn_rgba()
 
 void R_DrawFuzzColumn_rgba()
 {
+	using namespace drawerargs;
+
 	DrawerCommandQueue::QueueCommand<DrawFuzzColumnRGBACommand>();
 
 	dc_yl = MAX(dc_yl, 1);
@@ -1445,12 +1473,16 @@ void R_DrawSlab_rgba(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BY
 
 DWORD vlinec1_rgba()
 {
+	using namespace drawerargs;
+
 	DrawerCommandQueue::QueueCommand<DrawWall1LLVMCommand>();
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
 void vlinec4_rgba()
 {
+	using namespace drawerargs;
+
 	DrawerCommandQueue::QueueCommand<DrawWall4LLVMCommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
@@ -1458,12 +1490,16 @@ void vlinec4_rgba()
 
 DWORD mvlinec1_rgba()
 {
+	using namespace drawerargs;
+
 	DrawerCommandQueue::QueueCommand<DrawWallMasked1LLVMCommand>();
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
 void mvlinec4_rgba()
 {
+	using namespace drawerargs;
+
 	DrawerCommandQueue::QueueCommand<DrawWallMasked4LLVMCommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
@@ -1471,12 +1507,16 @@ void mvlinec4_rgba()
 
 fixed_t tmvline1_add_rgba()
 {
+	using namespace drawerargs;
+
 	DrawerCommandQueue::QueueCommand<DrawWallAdd1LLVMCommand>();
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
 void tmvline4_add_rgba()
 {
+	using namespace drawerargs;
+
 	DrawerCommandQueue::QueueCommand<DrawWallAdd4LLVMCommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
@@ -1484,12 +1524,16 @@ void tmvline4_add_rgba()
 
 fixed_t tmvline1_addclamp_rgba()
 {
+	using namespace drawerargs;
+
 	DrawerCommandQueue::QueueCommand<DrawWallAddClamp1LLVMCommand>();
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
 void tmvline4_addclamp_rgba()
 {
+	using namespace drawerargs;
+
 	DrawerCommandQueue::QueueCommand<DrawWallAddClamp4LLVMCommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
@@ -1497,12 +1541,16 @@ void tmvline4_addclamp_rgba()
 
 fixed_t tmvline1_subclamp_rgba()
 {
+	using namespace drawerargs;
+
 	DrawerCommandQueue::QueueCommand<DrawWallSubClamp1LLVMCommand>();
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
 void tmvline4_subclamp_rgba()
 {
+	using namespace drawerargs;
+
 	DrawerCommandQueue::QueueCommand<DrawWallSubClamp4LLVMCommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
@@ -1510,12 +1558,16 @@ void tmvline4_subclamp_rgba()
 
 fixed_t tmvline1_revsubclamp_rgba()
 {
+	using namespace drawerargs;
+
 	DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1LLVMCommand>();
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
 void tmvline4_revsubclamp_rgba()
 {
+	using namespace drawerargs;
+
 	DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp4LLVMCommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;

@@ -1045,9 +1045,8 @@ set( FASTMATH_PCH_SOURCES
 	r_poly_intersection.cpp
 	r_3dfloors.cpp
 	r_bsp.cpp
-	r_draw.cpp
+	r_draw_tc.cpp
 	r_draw_rgba.cpp
-	r_drawt.cpp
 	r_drawt_rgba.cpp
 	r_drawers.cpp
 	r_thread.cpp

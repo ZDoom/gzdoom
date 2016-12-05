@@ -107,23 +107,23 @@ protected:
 		{
 			count += dest_y;
 			dest_y = 0;
-			dest = (uint32_t*)swrenderer::dc_destorg;
+			dest = (uint32_t*)swrenderer::drawerargs::dc_destorg;
 		}
-		else if (dest_y >= swrenderer::dc_destheight)
+		else if (dest_y >= swrenderer::drawerargs::dc_destheight)
 		{
 			dest_y = 0;
 			count = 0;
 		}
 
 		if (count < 0 || count > MAXHEIGHT) count = 0;
-		if (dest_y + count >= swrenderer::dc_destheight)
-			count = swrenderer::dc_destheight - dest_y;
+		if (dest_y + count >= swrenderer::drawerargs::dc_destheight)
+			count = swrenderer::drawerargs::dc_destheight - dest_y;
 	}
 
 public:
 	DrawerCommand()
 	{
-		_dest_y = static_cast<int>((swrenderer::dc_dest - swrenderer::dc_destorg) / (swrenderer::dc_pitch * 4));
+		_dest_y = static_cast<int>((swrenderer::drawerargs::dc_dest - swrenderer::drawerargs::dc_destorg) / (swrenderer::drawerargs::dc_pitch * 4));
 	}
 	
 	virtual ~DrawerCommand() { }

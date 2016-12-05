@@ -72,9 +72,8 @@ extern "C" void R_SetupAddCol();
 extern "C" void R_SetupAddClampCol();
 #endif
 
-#ifndef X86_ASM
 // Copies one span at hx to the screen at sx.
-void rt_copy1col_c (int hx, int sx, int yl, int yh)
+void rt_copy1col (int hx, int sx, int yl, int yh)
 {
 	BYTE *source;
 	BYTE *dest;
@@ -115,7 +114,7 @@ void rt_copy1col_c (int hx, int sx, int yl, int yh)
 }
 
 // Copies all four spans to the screen starting at sx.
-void rt_copy4cols_c (int sx, int yl, int yh)
+void rt_copy4cols (int sx, int yl, int yh)
 {
 	int *source;
 	int *dest;
@@ -148,7 +147,7 @@ void rt_copy4cols_c (int sx, int yl, int yh)
 }
 
 // Maps one span at hx to the screen at sx.
-void rt_map1col_c (int hx, int sx, int yl, int yh)
+void rt_map1col (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
 	BYTE *source;
@@ -183,7 +182,7 @@ void rt_map1col_c (int hx, int sx, int yl, int yh)
 }
 
 // Maps all four spans to the screen starting at sx.
-void rt_map4cols_c (int sx, int yl, int yh)
+void rt_map4cols (int sx, int yl, int yh)
 {
 	BYTE *colormap;
 	BYTE *source;
@@ -225,7 +224,6 @@ void rt_map4cols_c (int sx, int yl, int yh)
 		dest += pitch*2;
 	} while (--count);
 }
-#endif
 
 void rt_Translate1col(const BYTE *translation, int hx, int yl, int yh)
 {

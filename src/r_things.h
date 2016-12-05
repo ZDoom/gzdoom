@@ -100,7 +100,6 @@ struct vissprite_t
 	vissprite_t() {}
 };
 
-extern void(*R_DrawParticle)(vissprite_t *);
 void R_DrawParticle_C (vissprite_t *);
 void R_DrawParticle_rgba (vissprite_t *);
 

@@ -134,7 +134,8 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 {
 #ifndef NO_SWRENDER
         using namespace swrenderer;
-        
+		using namespace drawerargs;
+
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
 	const BYTE *translation = NULL;
 
@@ -1362,6 +1363,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 {
 #ifndef NO_SWRENDER
         using namespace swrenderer;
+		using namespace drawerargs;
 
 	// Use an equation similar to player sprites to determine shade
 	fixed_t shade = LIGHT2SHADE(lightlevel) - 12*FRACUNIT;

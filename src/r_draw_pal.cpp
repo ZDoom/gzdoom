@@ -2266,11 +2266,249 @@ namespace swrenderer
 	/////////////////////////////////////////////////////////////////////////
 
 	DrawTiltedSpanPalCommand::DrawTiltedSpanPalCommand(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy)
+		: y(y), x1(x1), x2(x2), plane_sz(plane_sz), plane_su(plane_su), plane_sv(plane_sv), plane_shade(plane_shade), planeshade(planeshade), planelightfloat(planelightfloat), pviewx(pviewx), pviewy(pviewy)
 	{
+		using namespace drawerargs;
+
+		_colormap = ds_colormap;
+		_destorg = dc_destorg;
+		_ybits = ds_ybits;
+		_xbits = ds_xbits;
+		_source = ds_source;
+		basecolormapdata = basecolormap->Maps;
 	}
 
 	void DrawTiltedSpanPalCommand::Execute(DrawerThread *thread)
 	{
+		if (thread->line_skipped_by_thread(y))
+			return;
+
+		const uint8_t **tiltlighting = thread->tiltlighting;
+
+		int width = x2 - x1;
+		double iz, uz, vz;
+		uint8_t *fb;
+		uint32_t u, v;
+		int i;
+
+		iz = plane_sz[2] + plane_sz[1] * (centery - y) + plane_sz[0] * (x1 - centerx);
+
+		// Lighting is simple. It's just linear interpolation from start to end
+		if (plane_shade)
+		{
+			uz = (iz + plane_sz[0] * width) * planelightfloat;
+			vz = iz * planelightfloat;
+			CalcTiltedLighting(vz, uz, width, thread);
+		}
+		else
+		{
+			for (int i = 0; i < width; ++i)
+			{
+				tiltlighting[i] = _colormap;
+			}
+		}
+
+		uz = plane_su[2] + plane_su[1] * (centery - y) + plane_su[0] * (x1 - centerx);
+		vz = plane_sv[2] + plane_sv[1] * (centery - y) + plane_sv[0] * (x1 - centerx);
+
+		fb = ylookup[y] + x1 + _destorg;
+
+		uint8_t vshift = 32 - _ybits;
+		uint8_t ushift = vshift - _xbits;
+		int umask = ((1 << _xbits) - 1) << _ybits;
+
+		#if 0
+		// The "perfect" reference version of this routine. Pretty slow.
+		// Use it only to see how things are supposed to look.
+		i = 0;
+		do
+		{
+			double z = 1.f / iz;
+
+			u = int64_t(uz*z) + pviewx;
+			v = int64_t(vz*z) + pviewy;
+			R_SetDSColorMapLight(tiltlighting[i], 0, 0);
+			fb[i++] = ds_colormap[ds_source[(v >> vshift) | ((u >> ushift) & umask)]];
+			iz += plane_sz[0];
+			uz += plane_su[0];
+			vz += plane_sv[0];
+		} while (--width >= 0);
+		#else
+		//#define SPANSIZE 32
+		//#define INVSPAN 0.03125f
+		//#define SPANSIZE 8
+		//#define INVSPAN 0.125f
+		#define SPANSIZE 16
+		#define INVSPAN	0.0625f
+
+		double startz = 1.f / iz;
+		double startu = uz*startz;
+		double startv = vz*startz;
+		double izstep, uzstep, vzstep;
+
+		izstep = plane_sz[0] * SPANSIZE;
+		uzstep = plane_su[0] * SPANSIZE;
+		vzstep = plane_sv[0] * SPANSIZE;
+		x1 = 0;
+		width++;
+
+		while (width >= SPANSIZE)
+		{
+			iz += izstep;
+			uz += uzstep;
+			vz += vzstep;
+
+			double endz = 1.f / iz;
+			double endu = uz*endz;
+			double endv = vz*endz;
+			uint32_t stepu = (uint32_t)int64_t((endu - startu) * INVSPAN);
+			uint32_t stepv = (uint32_t)int64_t((endv - startv) * INVSPAN);
+			u = (uint32_t)(int64_t(startu) + pviewx);
+			v = (uint32_t)(int64_t(startv) + pviewy);
+
+			for (i = SPANSIZE - 1; i >= 0; i--)
+			{
+				fb[x1] = *(tiltlighting[x1] + _source[(v >> vshift) | ((u >> ushift) & umask)]);
+				x1++;
+				u += stepu;
+				v += stepv;
+			}
+			startu = endu;
+			startv = endv;
+			width -= SPANSIZE;
+		}
+		if (width > 0)
+		{
+			if (width == 1)
+			{
+				u = (uint32_t)int64_t(startu);
+				v = (uint32_t)int64_t(startv);
+				fb[x1] = *(tiltlighting[x1] + _source[(v >> vshift) | ((u >> ushift) & umask)]);
+			}
+			else
+			{
+				double left = width;
+				iz += plane_sz[0] * left;
+				uz += plane_su[0] * left;
+				vz += plane_sv[0] * left;
+
+				double endz = 1.f / iz;
+				double endu = uz*endz;
+				double endv = vz*endz;
+				left = 1.f / left;
+				uint32_t stepu = (uint32_t)int64_t((endu - startu) * left);
+				uint32_t stepv = (uint32_t)int64_t((endv - startv) * left);
+				u = (uint32_t)(int64_t(startu) + pviewx);
+				v = (uint32_t)(int64_t(startv) + pviewy);
+
+				for (; width != 0; width--)
+				{
+					fb[x1] = *(tiltlighting[x1] + _source[(v >> vshift) | ((u >> ushift) & umask)]);
+					x1++;
+					u += stepu;
+					v += stepv;
+				}
+			}
+		}
+		#endif
+	}
+
+	// Calculates the lighting for one row of a tilted plane. If the definition
+	// of GETPALOOKUP changes, this needs to change, too.
+	void DrawTiltedSpanPalCommand::CalcTiltedLighting(double lval, double lend, int width, DrawerThread *thread)
+	{
+		const uint8_t **tiltlighting = thread->tiltlighting;
+
+		double lstep;
+		uint8_t *lightfiller;
+		int i = 0;
+
+		if (width == 0 || lval == lend)
+		{ // Constant lighting
+			lightfiller = basecolormapdata + (GETPALOOKUP(lval, planeshade) << COLORMAPSHIFT);
+		}
+		else
+		{
+			lstep = (lend - lval) / width;
+			if (lval >= MAXLIGHTVIS)
+			{ // lval starts "too bright".
+				lightfiller = basecolormapdata + (GETPALOOKUP(lval, planeshade) << COLORMAPSHIFT);
+				for (; i <= width && lval >= MAXLIGHTVIS; ++i)
+				{
+					tiltlighting[i] = lightfiller;
+					lval += lstep;
+				}
+			}
+			if (lend >= MAXLIGHTVIS)
+			{ // lend ends "too bright".
+				lightfiller = basecolormapdata + (GETPALOOKUP(lend, planeshade) << COLORMAPSHIFT);
+				for (; width > i && lend >= MAXLIGHTVIS; --width)
+				{
+					tiltlighting[width] = lightfiller;
+					lend -= lstep;
+				}
+			}
+			if (width > 0)
+			{
+				lval = FIXED2DBL(planeshade) - lval;
+				lend = FIXED2DBL(planeshade) - lend;
+				lstep = (lend - lval) / width;
+				if (lstep < 0)
+				{ // Going from dark to light
+					if (lval < 1.)
+					{ // All bright
+						lightfiller = basecolormapdata;
+					}
+					else
+					{
+						if (lval >= NUMCOLORMAPS)
+						{ // Starts beyond the dark end
+							uint8_t *clight = basecolormapdata + ((NUMCOLORMAPS - 1) << COLORMAPSHIFT);
+							while (lval >= NUMCOLORMAPS && i <= width)
+							{
+								tiltlighting[i++] = clight;
+								lval += lstep;
+							}
+							if (i > width)
+								return;
+						}
+						while (i <= width && lval >= 0)
+						{
+							tiltlighting[i++] = basecolormapdata + (xs_ToInt(lval) << COLORMAPSHIFT);
+							lval += lstep;
+						}
+						lightfiller = basecolormapdata;
+					}
+				}
+				else
+				{ // Going from light to dark
+					if (lval >= (NUMCOLORMAPS - 1))
+					{ // All dark
+						lightfiller = basecolormapdata + ((NUMCOLORMAPS - 1) << COLORMAPSHIFT);
+					}
+					else
+					{
+						while (lval < 0 && i <= width)
+						{
+							tiltlighting[i++] = basecolormapdata;
+							lval += lstep;
+						}
+						if (i > width)
+							return;
+						while (i <= width && lval < (NUMCOLORMAPS - 1))
+						{
+							tiltlighting[i++] = basecolormapdata + (xs_ToInt(lval) << COLORMAPSHIFT);
+							lval += lstep;
+						}
+						lightfiller = basecolormapdata + ((NUMCOLORMAPS - 1) << COLORMAPSHIFT);
+					}
+				}
+			}
+		}
+		for (; i <= width; i++)
+		{
+			tiltlighting[i] = lightfiller;
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////

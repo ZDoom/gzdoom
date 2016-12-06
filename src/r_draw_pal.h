@@ -180,6 +180,28 @@ namespace swrenderer
 		DrawTiltedSpanPalCommand(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy);
 		void Execute(DrawerThread *thread) override;
 		FString DebugInfo() override { return "DrawTiltedSpanPalCommand"; }
+
+	private:
+		void CalcTiltedLighting(double lval, double lend, int width, DrawerThread *thread);
+
+		int y;
+		int x1;
+		int x2;
+		FVector3 plane_sz;
+		FVector3 plane_su;
+		FVector3 plane_sv;
+		bool plane_shade;
+		int planeshade;
+		float planelightfloat;
+		fixed_t pviewx;
+		fixed_t pviewy;
+
+		const uint8_t *_colormap;
+		uint8_t *_destorg;
+		int _ybits;
+		int _xbits;
+		const uint8_t *_source;
+		uint8_t *basecolormapdata;
 	};
 
 	class DrawColoredSpanPalCommand : public PalSpanCommand

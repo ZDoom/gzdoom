@@ -138,15 +138,12 @@ extern "C" {
 // spanend holds the end of a plane span in each screen row
 //
 short					spanend[MAXHEIGHT];
-BYTE					*tiltlighting[MAXWIDTH];
 
 int						planeshade;
 FVector3				plane_sz, plane_su, plane_sv;
 float					planelightfloat;
 bool					plane_shade;
 fixed_t					pviewx, pviewy;
-
-void R_DrawTiltedPlane_ASM (int y, int x1);
 }
 
 float 					yslope[MAXHEIGHT];
@@ -154,13 +151,6 @@ static fixed_t			xscale, yscale;
 static double			xstepscale, ystepscale;
 static double			basexfrac, baseyfrac;
 
-#ifdef X86_ASM
-extern "C" void R_SetSpanSource_ASM (const BYTE *flat);
-extern "C" void R_SetSpanSize_ASM (int xbits, int ybits);
-extern "C" void R_SetSpanColormap_ASM (BYTE *colormap);
-extern "C" void R_SetTiltedSpanSource_ASM (const BYTE *flat);
-extern "C" BYTE *ds_curcolormap, *ds_cursource, *ds_curtiltedsource;
-#endif
 void					R_DrawSinglePlane (visplane_t *, fixed_t alpha, bool additive, bool masked);
 
 //==========================================================================
@@ -264,11 +254,6 @@ void R_MapPlane (int y, int x1)
 		R_SetDSColorMapLight(basecolormap, GlobVis * fabs(CenterY - y), planeshade);
 	}
 
-#ifdef X86_ASM
-	if (!r_swtruecolor && ds_colormap != ds_curcolormap)
-		R_SetSpanColormap_ASM (ds_colormap);
-#endif
-
 	ds_y = y;
 	ds_x1 = x1;
 	ds_x2 = x2;
@@ -278,238 +263,9 @@ void R_MapPlane (int y, int x1)
 
 //==========================================================================
 //
-// R_CalcTiltedLighting
-//
-// Calculates the lighting for one row of a tilted plane. If the definition
-// of GETPALOOKUP changes, this needs to change, too.
-//
-//==========================================================================
-
-extern "C" {
-void R_CalcTiltedLighting (double lval, double lend, int width)
-{
-	double lstep;
-	BYTE *lightfiller;
-	BYTE *basecolormapdata = basecolormap->Maps;
-	int i = 0;
-
-	if (width == 0 || lval == lend)
-	{ // Constant lighting
-		lightfiller = basecolormapdata + (GETPALOOKUP(lval, planeshade) << COLORMAPSHIFT);
-	}
-	else
-	{
-		lstep = (lend - lval) / width;
-		if (lval >= MAXLIGHTVIS)
-		{ // lval starts "too bright".
-			lightfiller = basecolormapdata + (GETPALOOKUP(lval, planeshade) << COLORMAPSHIFT);
-			for (; i <= width && lval >= MAXLIGHTVIS; ++i)
-			{
-				tiltlighting[i] = lightfiller;
-				lval += lstep;
-			}
-		}
-		if (lend >= MAXLIGHTVIS)
-		{ // lend ends "too bright".
-			lightfiller = basecolormapdata + (GETPALOOKUP(lend, planeshade) << COLORMAPSHIFT);
-			for (; width > i && lend >= MAXLIGHTVIS; --width)
-			{
-				tiltlighting[width] = lightfiller;
-				lend -= lstep;
-			}
-		}
-		if (width > 0)
-		{
-			lval = FIXED2DBL(planeshade) - lval;
-			lend = FIXED2DBL(planeshade) - lend;
-			lstep = (lend - lval) / width;
-			if (lstep < 0)
-			{ // Going from dark to light
-				if (lval < 1.)
-				{ // All bright
-					lightfiller = basecolormapdata;
-				}
-				else
-				{
-					if (lval >= NUMCOLORMAPS)
-					{ // Starts beyond the dark end
-						BYTE *clight = basecolormapdata + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
-						while (lval >= NUMCOLORMAPS && i <= width)
-						{
-							tiltlighting[i++] = clight;
-							lval += lstep;
-						}
-						if (i > width)
-							return;
-					}
-					while (i <= width && lval >= 0)
-					{
-						tiltlighting[i++] = basecolormapdata + (xs_ToInt(lval) << COLORMAPSHIFT);
-						lval += lstep;
-					}
-					lightfiller = basecolormapdata;
-				}
-			}
-			else
-			{ // Going from light to dark
-				if (lval >= (NUMCOLORMAPS-1))
-				{ // All dark
-					lightfiller = basecolormapdata + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
-				}
-				else
-				{
-					while (lval < 0 && i <= width)
-					{
-						tiltlighting[i++] = basecolormapdata;
-						lval += lstep;
-					}
-					if (i > width)
-						return;
-					while (i <= width && lval < (NUMCOLORMAPS-1))
-					{
-						tiltlighting[i++] = basecolormapdata + (xs_ToInt(lval) << COLORMAPSHIFT);
-						lval += lstep;
-					}
-					lightfiller = basecolormapdata + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
-				}
-			}
-		}
-	}
-	for (; i <= width; i++)
-	{
-		tiltlighting[i] = lightfiller;
-	}
-}
-}	// extern "C"
-
-//==========================================================================
-//
 // R_MapTiltedPlane
 //
 //==========================================================================
-
-void R_MapTiltedPlane_C (int y, int x1)
-{
-	int x2 = spanend[y];
-	int width = x2 - x1;
-	double iz, uz, vz;
-	BYTE *fb;
-	DWORD u, v;
-	int i;
-
-	iz = plane_sz[2] + plane_sz[1] * (centery - y) + plane_sz[0] * (x1 - centerx);
-
-	// Lighting is simple. It's just linear interpolation from start to end
-	if (plane_shade)
-	{
-		uz = (iz + plane_sz[0] * width) * planelightfloat;
-		vz = iz * planelightfloat;
-		R_CalcTiltedLighting(vz, uz, width);
-	}
-
-	uz = plane_su[2] + plane_su[1] * (centery - y) + plane_su[0] * (x1 - centerx);
-	vz = plane_sv[2] + plane_sv[1] * (centery - y) + plane_sv[0] * (x1 - centerx);
-
-	fb = ylookup[y] + x1 + dc_destorg;
-
-	BYTE vshift = 32 - ds_ybits;
-	BYTE ushift = vshift - ds_xbits;
-	int umask = ((1 << ds_xbits) - 1) << ds_ybits;
-
-#if 0		// The "perfect" reference version of this routine. Pretty slow.
-			// Use it only to see how things are supposed to look.
-	i = 0;
-	do
-	{
-		double z = 1.f/iz;
-
-		u = SQWORD(uz*z) + pviewx;
-		v = SQWORD(vz*z) + pviewy;
-		R_SetDSColorMapLight(tiltlighting[i], 0, 0);
-		fb[i++] = ds_colormap[ds_source[(v >> vshift) | ((u >> ushift) & umask)]];
-		iz += plane_sz[0];
-		uz += plane_su[0];
-		vz += plane_sv[0];
-	} while (--width >= 0);
-#else
-//#define SPANSIZE 32
-//#define INVSPAN 0.03125f
-//#define SPANSIZE 8
-//#define INVSPAN 0.125f
-#define SPANSIZE 16
-#define INVSPAN	0.0625f
-
-	double startz = 1.f/iz;
-	double startu = uz*startz;
-	double startv = vz*startz;
-	double izstep, uzstep, vzstep;
-
-	izstep = plane_sz[0] * SPANSIZE;
-	uzstep = plane_su[0] * SPANSIZE;
-	vzstep = plane_sv[0] * SPANSIZE;
-	x1 = 0;
-	width++;
-
-	while (width >= SPANSIZE)
-	{
-		iz += izstep;
-		uz += uzstep;
-		vz += vzstep;
-
-		double endz = 1.f/iz;
-		double endu = uz*endz;
-		double endv = vz*endz;
-		DWORD stepu = SQWORD((endu - startu) * INVSPAN);
-		DWORD stepv = SQWORD((endv - startv) * INVSPAN);
-		u = SQWORD(startu) + pviewx;
-		v = SQWORD(startv) + pviewy;
-
-		for (i = SPANSIZE-1; i >= 0; i--)
-		{
-			fb[x1] = *(tiltlighting[x1] + ds_source[(v >> vshift) | ((u >> ushift) & umask)]);
-			x1++;
-			u += stepu;
-			v += stepv;
-		}
-		startu = endu;
-		startv = endv;
-		width -= SPANSIZE;
-	}
-	if (width > 0)
-	{
-		if (width == 1)
-		{
-			u = SQWORD(startu);
-			v = SQWORD(startv);
-			fb[x1] = *(tiltlighting[x1] + ds_source[(v >> vshift) | ((u >> ushift) & umask)]);
-		}
-		else
-		{
-			double left = width;
-			iz += plane_sz[0] * left;
-			uz += plane_su[0] * left;
-			vz += plane_sv[0] * left;
-
-			double endz = 1.f/iz;
-			double endu = uz*endz;
-			double endv = vz*endz;
-			left = 1.f/left;
-			DWORD stepu = SQWORD((endu - startu) * left);
-			DWORD stepv = SQWORD((endv - startv) * left);
-			u = SQWORD(startu) + pviewx;
-			v = SQWORD(startv) + pviewy;
-
-			for (; width != 0; width--)
-			{
-				fb[x1] = *(tiltlighting[x1] + ds_source[(v >> vshift) | ((u >> ushift) & umask)]);
-				x1++;
-				u += stepu;
-				v += stepv;
-			}
-		}
-	}
-#endif
-}
 
 void R_MapTiltedPlane (int y, int x1)
 {
@@ -1779,13 +1535,6 @@ void R_DrawSkyPlane (visplane_t *pl)
 
 void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked)
 {
-#ifdef X86_ASM
-	if (!r_swtruecolor && ds_source != ds_cursource)
-	{
-		R_SetSpanSource_ASM (ds_source);
-	}
-#endif
-
 	if (alpha <= 0)
 	{
 		return;
@@ -2036,14 +1785,6 @@ void R_DrawTiltedPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 		plane_shade = true;
 	}
 
-	if (!plane_shade)
-	{
-		for (int i = 0; i < viewwidth; ++i)
-		{
-			tiltlighting[i] = ds_colormap;
-		}
-	}
-
 	// Hack in support for 1 x Z and Z x 1 texture sizes
 	if (ds_ybits == 0)
 	{
@@ -2053,20 +1794,8 @@ void R_DrawTiltedPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 	{
 		plane_su[2] = plane_su[1] = plane_su[0] = 0;
 	}
-#if defined(X86_ASM)
-	if (!r_swtruecolor)
-	{
-		if (ds_source != ds_curtiltedsource)
-			R_SetTiltedSpanSource_ASM(ds_source);
-		R_MapVisPlane(pl, R_DrawTiltedPlane_ASM);
-	}
-	else
-	{
-		R_MapVisPlane(pl, R_MapTiltedPlane);
-	}
-#else
+
 	R_MapVisPlane (pl, R_MapTiltedPlane);
-#endif
 }
 
 //==========================================================================

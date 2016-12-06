@@ -54,11 +54,16 @@ public:
 	int pass_start_y = 0;
 	int pass_end_y = MAXHEIGHT;
 
+	// Working buffer used by Rt drawers
 	uint8_t dc_temp_buff[MAXHEIGHT * 4];
 	uint8_t *dc_temp = nullptr;
 
+	// Working buffer used by Rt drawers, true color edition
 	uint32_t dc_temp_rgbabuff_rgba[MAXHEIGHT * 4];
 	uint32_t *dc_temp_rgba = nullptr;
+
+	// Working buffer used by the tilted (sloped) span drawer
+	const uint8_t *tiltlighting[MAXWIDTH];
 
 	// Checks if a line is rendered by this thread
 	bool line_skipped_by_thread(int line)

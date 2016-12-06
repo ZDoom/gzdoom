@@ -65,7 +65,6 @@ extern "C" unsigned int	horizspans[4];
 
 // The span blitting interface.
 // Hook in assembler or system specific BLT here.
-extern void (*R_DrawColumn)(void);
 
 extern DWORD (*dovline1) ();
 extern DWORD (*doprevline1) ();
@@ -84,7 +83,7 @@ extern void setupmvline (int);
 extern void setuptmvline (int);
 
 // The Spectre/Invisibility effect.
-extern void (*R_DrawFuzzColumn)(void);
+extern void R_DrawFuzzColumn(void);
 
 // [RH] Draw shaded column
 extern void (*R_DrawShadedColumn)(void);
@@ -103,16 +102,16 @@ void R_SetSpanSource(const BYTE *pixels);
 extern void (*R_DrawSpanMasked)(void);
 
 // Span drawing for translucent textures.
-extern void (*R_DrawSpanTranslucent)(void);
+void R_DrawSpanTranslucent(void);
 
 // Span drawing for masked, translucent textures.
-extern void (*R_DrawSpanMaskedTranslucent)(void);
+void R_DrawSpanMaskedTranslucent(void);
 
 // Span drawing for translucent, additive textures.
-extern void (*R_DrawSpanAddClamp)(void);
+void R_DrawSpanAddClamp(void);
 
 // Span drawing for masked, translucent, additive textures.
-extern void (*R_DrawSpanMaskedAddClamp)(void);
+void R_DrawSpanMaskedAddClamp(void);
 
 // [RH] Span blit into an interleaved intermediate buffer
 extern void (*R_DrawColumnHoriz)(void);
@@ -121,16 +120,19 @@ extern void (*R_DrawColumnHoriz)(void);
 void R_InitColumnDrawers ();
 
 // [RH] Moves data from the temporary buffer to the screen.
+
+void rt_copy1col(int hx, int sx, int yl, int yh);
+void rt_copy4cols(int sx, int yl, int yh);
+void rt_map4cols(int sx, int yl, int yh);
+
 extern "C"
 {
-void rt_copy1col_c (int hx, int sx, int yl, int yh);
-void rt_copy4cols_c (int sx, int yl, int yh);
 
 void rt_shaded1col (int hx, int sx, int yl, int yh);
 void rt_shaded4cols_c (int sx, int yl, int yh);
 void rt_shaded4cols_asm (int sx, int yl, int yh);
 
-void rt_map1col_c (int hx, int sx, int yl, int yh);
+void rt_map1col (int hx, int sx, int yl, int yh);
 void rt_add1col (int hx, int sx, int yl, int yh);
 void rt_addclamp1col (int hx, int sx, int yl, int yh);
 void rt_subclamp1col (int hx, int sx, int yl, int yh);
@@ -142,7 +144,6 @@ void rt_tlateaddclamp1col (int hx, int sx, int yl, int yh);
 void rt_tlatesubclamp1col (int hx, int sx, int yl, int yh);
 void rt_tlaterevsubclamp1col (int hx, int sx, int yl, int yh);
 
-void rt_map4cols_c (int sx, int yl, int yh);
 void rt_add4cols_c (int sx, int yl, int yh);
 void rt_addclamp4cols_c (int sx, int yl, int yh);
 void rt_subclamp4cols (int sx, int yl, int yh);
@@ -154,29 +155,16 @@ void rt_tlateaddclamp4cols (int sx, int yl, int yh);
 void rt_tlatesubclamp4cols (int sx, int yl, int yh);
 void rt_tlaterevsubclamp4cols (int sx, int yl, int yh);
 
-void rt_copy1col_asm (int hx, int sx, int yl, int yh);
-void rt_map1col_asm (int hx, int sx, int yl, int yh);
-
-void rt_copy4cols_asm (int sx, int yl, int yh);
-void rt_map4cols_asm1 (int sx, int yl, int yh);
-void rt_map4cols_asm2 (int sx, int yl, int yh);
 void rt_add4cols_asm (int sx, int yl, int yh);
 void rt_addclamp4cols_asm (int sx, int yl, int yh);
 }
 
-extern void (*rt_map4cols)(int sx, int yl, int yh);
 
 #ifdef X86_ASM
-#define rt_copy1col			rt_copy1col_asm
-#define rt_copy4cols		rt_copy4cols_asm
-#define rt_map1col			rt_map1col_asm
 #define rt_shaded4cols		rt_shaded4cols_asm
 #define rt_add4cols			rt_add4cols_asm
 #define rt_addclamp4cols	rt_addclamp4cols_asm
 #else
-#define rt_copy1col			rt_copy1col_c
-#define rt_copy4cols		rt_copy4cols_c
-#define rt_map1col			rt_map1col_c
 #define rt_shaded4cols		rt_shaded4cols_c
 #define rt_add4cols			rt_add4cols_c
 #define rt_addclamp4cols	rt_addclamp4cols_c
@@ -193,29 +181,25 @@ void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip);
 
 #ifdef X86_ASM
 
-extern "C" void	R_DrawColumnP_Unrolled (void);
-extern "C" void	R_DrawColumnHorizP_ASM (void);
-extern "C" void	R_DrawColumnP_ASM (void);
-extern "C" void	R_DrawFuzzColumnP_ASM (void);
-		   void R_DrawTranslatedColumnP_C (void);
 		   void R_DrawShadedColumnP_C (void);
 extern "C" void	R_DrawSpanP_ASM (void);
 extern "C" void R_DrawSpanMaskedP_ASM (void);
 
+void	R_DrawColumnHorizP_C(void);
+
 #else
 
-void	R_DrawColumnHorizP_C (void);
-void	R_DrawColumnP_C (void);
-void	R_DrawFuzzColumnP_C (void);
-void	R_DrawTranslatedColumnP_C (void);
 void	R_DrawShadedColumnP_C (void);
 void	R_DrawSpanP_C (void);
 void	R_DrawSpanMaskedP_C (void);
 
 #endif
 
-void	R_DrawSpanTranslucentP_C (void);
-void	R_DrawSpanMaskedTranslucentP_C (void);
+void	R_DrawColumn();
+void	R_DrawColumnHorizP_C(void);
+void	R_DrawTranslatedColumnP_C(void);
+void	R_DrawSpanTranslucent (void);
+void	R_DrawSpanMaskedTranslucent (void);
 
 void	R_DrawTlatedLucentColumnP_C (void);
 #define R_DrawTlatedLucentColumn R_DrawTlatedLucentColumnP_C

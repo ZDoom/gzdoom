@@ -704,6 +704,7 @@ type_name1(X) ::= NAME(T).					{ X.Int = ZCC_Name; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= SOUND(T).					{ X.Int = ZCC_Sound; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= STATE(T).					{ X.Int = ZCC_State; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= COLOR(T).					{ X.Int = ZCC_Color; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= LET(T).					{ X.Int = ZCC_Let; X.SourceLoc = T.SourceLoc; }
 
 type_name(X) ::= type_name1(A).
 {

@@ -268,6 +268,7 @@ class Actor : Thinker native
 	virtual native void Die(Actor source, Actor inflictor, int dmgflags = 0);
 	virtual native bool Slam(Actor victim);
 	virtual native void Touch(Actor toucher);
+	virtual native bool CanCollideWith(Actor other, bool passive);	// This is an empty native function, it's native for the sole reason of performance as this is in a performance critical spot.
 
 	// Called when an actor is to be reflected by a disc of repulsion.
 	// Returns true to continue normal blast processing.

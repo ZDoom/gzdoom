@@ -74,6 +74,7 @@ TArray<PClass *> PClass::AllClasses;
 bool PClass::bShutdown;
 
 PErrorType *TypeError;
+PErrorType *TypeAuto;
 PVoidType *TypeVoid;
 PInt *TypeSInt8,  *TypeUInt8;
 PInt *TypeSInt16, *TypeUInt16;
@@ -570,6 +571,7 @@ void PType::StaticInit()
 
 	// Create types and add them type the type table.
 	TypeTable.AddType(TypeError = new PErrorType);
+	TypeTable.AddType(TypeAuto = new PErrorType(2));
 	TypeTable.AddType(TypeVoid = new PVoidType);
 	TypeTable.AddType(TypeSInt8 = new PInt(1, false));
 	TypeTable.AddType(TypeUInt8 = new PInt(1, true));

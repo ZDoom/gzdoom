@@ -193,7 +193,7 @@ extend class Actor
 		if (sv_killbossmonst)
 		{
 			int count;	// Repeat until we have no more boss-spawned monsters.
-			ThinkerIterator it = ThinkerIterator.Create();
+			ThinkerIterator it = ThinkerIterator.Create("Actor");
 			do			// (e.g. Pain Elementals can spawn more to kill upon death.)
 			{
 				Actor mo;

@@ -252,9 +252,10 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 								// negative values are used as their absolute. Default = 1.
 								
 	  renderstyle = <string>;	// Set per-actor render style, overriding the class default. Possible values can be "normal",
-								// "none", "add" or "additive", "subtract" or "subtractive", "stencil", "translucentstencil",
-								// "translucent", "fuzzy", "optfuzzy", "soultrans". Default is an empty string for no change.
-	  fillcolor = <integer>;    // Fill color used by the "stencil" and "translucentstencil" rendestyles, as RRGGBB value, default = 0x000000.
+								// "none", "add" or "additive", "subtract" or "subtractive", "stencil", "translucentstencil", 
+								// "addstencil", "shaded", "addshaded", "translucent", "fuzzy", "optfuzzy", "soultrans" and "shadow". 
+								// Default is an empty string for no change.
+	  fillcolor = <integer>;    // Fill color used by the "stencil", "addstencil" and "translucentstencil" rendestyles, as RRGGBB value, default = 0x000000.
 	  alpha = <float>;          // Translucency of this actor (if applicable to renderstyle), default is 1.0.
 	  score = <int>;			// Score value of this actor, overriding the class default if not null. Default = 0.
       pitch = <integer>; 		// Pitch of thing in degrees. Default = 0 (horizontal).

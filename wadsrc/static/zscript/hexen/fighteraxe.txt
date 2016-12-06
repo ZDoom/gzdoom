@@ -253,7 +253,7 @@ class FWeapAxe : FighterWeapon
 					{
 						if (t.linetarget.bIsMonster || t.linetarget.player)
 						{
-							t.linetarget.Thrust(power, t.angleFromSource);
+							t.linetarget.Thrust(power, t.attackAngleFromSource);
 						}
 						AdjustPlayerAngle(t);
 						

@@ -4324,58 +4324,32 @@ FxExpression *FxTypeCheck::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-PPrototype *FxTypeCheck::ReturnProto()
+ExpEmit FxTypeCheck::EmitCommon(VMFunctionBuilder *build)
 {
-	EmitTail = true;
-	return FxExpression::ReturnProto();
+	ExpEmit castee = left->Emit(build);
+	ExpEmit casttype = right->Emit(build);
+	castee.Free(build);
+	casttype.Free(build);
+	ExpEmit ares(build, REGT_POINTER);
+	build->Emit(casttype.Konst ? OP_DYNCAST_K : OP_DYNCAST_R, ares.RegNum, castee.RegNum, casttype.RegNum);
+	return ares;
 }
-
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-int BuiltinTypeCheck(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
-{
-	assert(numparam == 2);
-	PARAM_POINTER_AT(0, obj, DObject);
-	PARAM_CLASS_AT(1, cls, DObject);
-	ACTION_RETURN_BOOL(obj && obj->IsKindOf(cls));
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
 
 ExpEmit FxTypeCheck::Emit(VMFunctionBuilder *build)
 {
-	EmitParameter(build, left, ScriptPosition);
-	EmitParameter(build, right, ScriptPosition);
+	ExpEmit ares = EmitCommon(build);
+	ares.Free(build);
+	ExpEmit bres(build, REGT_INT);
+	build->Emit(OP_CASTB, bres.RegNum, ares.RegNum, CASTB_A);
+	return bres;
+}
 
-
-	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinTypeCheck, BuiltinTypeCheck);
-
-	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
-	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
-	auto callfunc = ((PSymbolVMFunction *)sym)->Function;
-
-	int opcode = (EmitTail ? OP_TAIL_K : OP_CALL_K);
-	build->Emit(opcode, build->GetConstantAddress(callfunc, ATAG_OBJECT), 2, 1);
-
-	if (EmitTail)
-	{
-		ExpEmit call;
-		call.Final = true;
-		return call;
-	}
-
-	ExpEmit out(build, REGT_INT);
-	build->Emit(OP_RESULT, 0, REGT_INT, out.RegNum);
-	return out;
+void FxTypeCheck::EmitCompare(VMFunctionBuilder *build, bool invert, TArray<size_t> &patchspots_yes, TArray<size_t> &patchspots_no)
+{
+	ExpEmit ares = EmitCommon(build);
+	ares.Free(build);
+	build->Emit(OP_EQA_K, !invert, ares.RegNum, build->GetConstantAddress(nullptr, ATAG_OBJECT));
+	patchspots_no.Push(build->Emit(OP_JMP, 0));
 }
 
 //==========================================================================
@@ -4443,27 +4417,11 @@ FxExpression *FxDynamicCast::Resolve(FCompileContext& ctx)
 
 ExpEmit FxDynamicCast::Emit(VMFunctionBuilder *build)
 {
-	ExpEmit in = expr->Emit(build);
-	ExpEmit out = in.Fixed ? ExpEmit(build, in.RegType) : in;
-	ExpEmit check(build, REGT_INT);
-	assert(out.RegType == REGT_POINTER);
-
-	if (in.Fixed) build->Emit(OP_MOVEA, out.RegNum, in.RegNum);
-	build->Emit(OP_PARAM, 0, REGT_POINTER, in.RegNum);
-	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(CastType, ATAG_OBJECT));
-
-	PSymbol *sym = FindBuiltinFunction(NAME_BuiltinTypeCheck, BuiltinTypeCheck);
-	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
-	assert(((PSymbolVMFunction *)sym)->Function != nullptr);
-	auto callfunc = ((PSymbolVMFunction *)sym)->Function;
-
-	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 2, 1);
-	build->Emit(OP_RESULT, 0, REGT_INT, check.RegNum);
-	build->Emit(OP_EQ_K, 0, check.RegNum, build->GetConstantInt(0));
-	auto patch = build->Emit(OP_JMP, 0);
-	build->Emit(OP_LKP, out.RegNum, build->GetConstantAddress(nullptr, ATAG_OBJECT));
-	build->BackpatchToHere(patch);
-	return out;
+	ExpEmit castee = expr->Emit(build);
+	castee.Free(build);
+	ExpEmit ares(build, REGT_POINTER);
+	build->Emit(OP_DYNCAST_K, ares.RegNum, castee.RegNum, build->GetConstantAddress(CastType, ATAG_OBJECT));
+	return ares;
 }
 
 //==========================================================================
@@ -9586,8 +9544,7 @@ int BuiltinNameToClass(VMValue *param, TArray<VMValue> &defaultparam, int numpar
 
 		if (!cls->IsDescendantOf(desttype))
 		{
-			// Let the caller check this. The message can be enabled for diagnostic purposes.
-			DPrintf(DMSG_SPAMMY, "class '%s' is not compatible with '%s'\n", clsname.GetChars(), desttype->TypeName.GetChars());
+			// Let the caller check this. Making this an error with a message is only taking away options from the user.
 			cls = nullptr;
 		}
 		ret->SetPointer(const_cast<PClass *>(cls), ATAG_OBJECT);
@@ -9964,16 +9921,42 @@ FxExpression *FxLocalVariableDeclaration::Resolve(FCompileContext &ctx)
 		delete this;
 		return nullptr;
 	}
-	if (ValueType->RegType == REGT_NIL)
+	if (ValueType->RegType == REGT_NIL && ValueType != TypeAuto)
 	{
 		auto sfunc = static_cast<VMScriptFunction *>(ctx.Function->Variants[0].Implementation);
 		StackOffset = sfunc->AllocExtraStack(ValueType);
 		// Todo: Process the compound initializer once implemented.
+		if (Init != nullptr)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Cannot initialize non-scalar variable %s here", Name.GetChars());
+			delete this;
+			return nullptr;
+		}
 	}
-	else
+	else if (ValueType !=TypeAuto)
 	{
 		if (Init) Init = new FxTypeCast(Init, ValueType, false);
 		SAFE_RESOLVE_OPT(Init, ctx);
+	}
+	else
+	{
+		if (Init == nullptr)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Automatic type deduction requires an initializer for variable %s", Name.GetChars());
+			delete this;
+			return nullptr;
+		}
+		SAFE_RESOLVE_OPT(Init, ctx);
+		if (Init->ValueType->RegType == REGT_NIL)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Cannot initialize non-scalar variable %s here", Name.GetChars());
+			delete this;
+			return nullptr;
+		}
+		ValueType = Init->ValueType;
+		// check for undersized ints and floats. These are not allowed as local variables.
+		if (IsInteger() && ValueType->Align < sizeof(int)) ValueType = TypeSInt32;
+		else if (IsFloat() && ValueType->Align < sizeof(double)) ValueType = TypeFloat64;
 	}
 	if (Name != NAME_None)
 	{

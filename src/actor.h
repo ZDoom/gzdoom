@@ -650,7 +650,6 @@ public:
 	virtual void Touch(AActor *toucher);
 	void CallTouch(AActor *toucher);
 
-
 	// Centaurs and ettins squeal when electrocuted, poisoned, or "holy"-ed
 	// Made a metadata property so no longer virtual
 	void Howl ();
@@ -1549,6 +1548,7 @@ struct FTranslatedLineTarget
 {
 	AActor *linetarget;
 	DAngle angleFromSource;
+	DAngle attackAngleFromSource;
 	bool unlinked;	// found by a trace that went through an unlinked portal.
 };
 

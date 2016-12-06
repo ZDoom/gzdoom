@@ -80,7 +80,7 @@ class FWeapHammer : FighterWeapon
 						AdjustPlayerAngle(t);
 						if (t.linetarget.bIsMonster || t.linetarget.player)
 						{
-							t.linetarget.Thrust(10, t.angleFromSource);
+							t.linetarget.Thrust(10, t.attackAngleFromSource);
 						}
 						weaponspecial = false; // Don't throw a hammer
 						return;

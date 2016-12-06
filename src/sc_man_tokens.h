@@ -142,4 +142,5 @@ xx(TK_NoDelay,				"'nodelay'")
 xx(TK_Offset,				"'offset'")
 xx(TK_Slow,					"'slow'")
 xx(TK_Bright,				"'bright'")
+xx(TK_Let,					"'let'")
 #undef xx

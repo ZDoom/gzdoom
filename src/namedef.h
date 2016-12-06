@@ -721,6 +721,7 @@ xx(State)
 xx(Fixed)
 xx(Vector2)
 xx(Vector3)
+xx(let)
 
 xx(Min)
 xx(Max)

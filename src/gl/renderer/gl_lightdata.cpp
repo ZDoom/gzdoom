@@ -63,6 +63,7 @@ CUSTOM_CVAR(Bool, gl_enhanced_nightvision, true, CVAR_ARCHIVE|CVAR_NOINITCALL)
 	}
 }
 CVAR(Bool, gl_brightfog, false, CVAR_ARCHIVE);
+CVAR(Bool, lightadditivesurfaces, false, CVAR_ARCHIVE);
 
 
 

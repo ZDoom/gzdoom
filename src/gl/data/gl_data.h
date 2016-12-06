@@ -12,11 +12,13 @@ struct GLRenderSettings
 	bool nocoloredspritelighting;
 	bool notexturefill;
 	bool brightfog;
+	bool lightadditivesurfaces;
 
-	SBYTE map_lightmode;
-	SBYTE map_nocoloredspritelighting;
-	SBYTE map_notexturefill;
-	SBYTE map_brightfog;
+	int8_t map_lightmode;
+	int8_t map_nocoloredspritelighting;
+	int8_t map_notexturefill;
+	int8_t map_brightfog;
+	int8_t map_lightadditivesurfaces;
 
 	FVector3 skyrotatevector;
 	FVector3 skyrotatevector2;

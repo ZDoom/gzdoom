@@ -188,6 +188,13 @@ namespace swrenderer
 		DrawColoredSpanPalCommand(int y, int x1, int x2);
 		void Execute(DrawerThread *thread) override;
 		FString DebugInfo() override { return "DrawColoredSpanPalCommand"; }
+
+	private:
+		int y;
+		int x1;
+		int x2;
+		int color;
+		uint8_t *destorg;
 	};
 
 	class DrawSlabPalCommand : public PalSpanCommand
@@ -211,8 +218,13 @@ namespace swrenderer
 	class DrawFogBoundaryLinePalCommand : public PalSpanCommand
 	{
 	public:
-		DrawFogBoundaryLinePalCommand(int y, int y2, int x1);
+		DrawFogBoundaryLinePalCommand(int y, int x1, int x2);
 		void Execute(DrawerThread *thread) override;
+
+	private:
+		int y, x1, x2;
+		const uint8_t *_colormap;
+		uint8_t *_destorg;
 	};
 
 	class RtInitColsPalCommand : public DrawerCommand

@@ -522,11 +522,6 @@ void R_MapTiltedPlane (int y, int x1)
 //
 //==========================================================================
 
-void R_MapColoredPlane_C (int y, int x1)
-{
-	memset (ylookup[y] + x1 + dc_destorg, ds_color, spanend[y] - x1 + 1);
-}
-
 void R_MapColoredPlane(int y, int x1)
 {
 	R_DrawColoredSpan(y, x1, spanend[y]);

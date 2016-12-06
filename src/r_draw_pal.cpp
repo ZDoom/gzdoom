@@ -2275,12 +2275,19 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawColoredSpanPalCommand::DrawColoredSpanPalCommand(int y, int x1, int x2)
+	DrawColoredSpanPalCommand::DrawColoredSpanPalCommand(int y, int x1, int x2) : y(y), x1(x1), x2(x2)
 	{
+		using namespace drawerargs;
+		color = ds_color;
+		destorg = dc_destorg;
 	}
 
 	void DrawColoredSpanPalCommand::Execute(DrawerThread *thread)
 	{
+		if (thread->line_skipped_by_thread(y))
+			return;
+
+		memset(ylookup[y] + x1 + destorg, color, x2 - x1 + 1);
 	}
 
 	/////////////////////////////////////////////////////////////////////////
@@ -2325,11 +2332,24 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawFogBoundaryLinePalCommand::DrawFogBoundaryLinePalCommand(int y, int y2, int x1)
+	DrawFogBoundaryLinePalCommand::DrawFogBoundaryLinePalCommand(int y, int x1, int x2) : y(y), x1(x1), x2(x2)
 	{
+		using namespace drawerargs;
+		_colormap = dc_colormap;
+		_destorg = dc_destorg;
 	}
 
 	void DrawFogBoundaryLinePalCommand::Execute(DrawerThread *thread)
 	{
+		if (thread->line_skipped_by_thread(y))
+			return;
+
+		const uint8_t *colormap = _colormap;
+		uint8_t *dest = ylookup[y] + _destorg;
+		int x = x1;
+		do
+		{
+			dest[x] = colormap[dest[x]];
+		} while (++x <= x2);
 	}
 }

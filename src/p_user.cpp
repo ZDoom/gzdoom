@@ -48,7 +48,6 @@
 #include "doomdef.h"
 #include "c_dispatch.h"
 #include "tarray.h"
-#include "thingdef/thingdef.h"
 #include "g_level.h"
 #include "d_net.h"
 #include "gstrings.h"
@@ -59,6 +58,9 @@
 #include "p_blockmap.h"
 #include "a_morph.h"
 #include "p_spec.h"
+#include "virtual.h"
+#include "a_armor.h"
+#include "a_ammo.h"
 
 static FRandom pr_skullpop ("SkullPop");
 
@@ -486,14 +488,33 @@ void player_t::SetLogNumber (int num)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, SetLogNumber)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_INT(log);
+	self->SetLogNumber(log);
+	return 0;
+}
+
 void player_t::SetLogText (const char *text)
 {
 	LogText = text;
 
-	// Print log text to console
-	AddToConsole(-1, TEXTCOLOR_GOLD);
-	AddToConsole(-1, LogText);
-	AddToConsole(-1, "\n");
+	if (mo->CheckLocalView(consoleplayer))
+	{
+		// Print log text to console
+		AddToConsole(-1, TEXTCOLOR_GOLD);
+		AddToConsole(-1, LogText);
+		AddToConsole(-1, "\n");
+	}
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, SetLogText)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_STRING(log);
+	self->SetLogText(log);
+	return 0;
 }
 
 int player_t::GetSpawnClass()
@@ -508,7 +529,7 @@ int player_t::GetSpawnClass()
 //
 //===========================================================================
 
-IMPLEMENT_CLASS(PClassPlayerPawn)
+IMPLEMENT_CLASS(PClassPlayerPawn, false, false)
 
 PClassPlayerPawn::PClassPlayerPawn()
 {
@@ -586,16 +607,6 @@ bool PClassPlayerPawn::GetPainFlash(FName type, PalEntry *color) const
 	return false;
 }
 
-void PClassPlayerPawn::ReplaceClassRef(PClass *oldclass, PClass *newclass)
-{
-	Super::ReplaceClassRef(oldclass, newclass);
-	APlayerPawn *def = (APlayerPawn*)Defaults;
-	if (def != NULL)
-	{
-		if (def->FlechetteType == oldclass) def->FlechetteType = static_cast<PClassInventory *>(newclass);
-	}
-}
-
 //===========================================================================
 //
 // player_t :: SendPitchLimits
@@ -622,12 +633,15 @@ void player_t::SendPitchLimits() const
 //
 //===========================================================================
 
-IMPLEMENT_POINTY_CLASS (APlayerPawn)
- DECLARE_POINTER(InvFirst)
- DECLARE_POINTER(InvSel)
-END_POINTERS
+IMPLEMENT_CLASS(APlayerPawn, false, true)
 
-IMPLEMENT_CLASS (APlayerChunk)
+IMPLEMENT_POINTERS_START(APlayerPawn)
+	IMPLEMENT_POINTER(InvFirst)
+	IMPLEMENT_POINTER(InvSel)
+	IMPLEMENT_POINTER(FlechetteType)
+IMPLEMENT_POINTERS_END
+
+IMPLEMENT_CLASS(APlayerChunk, false, false)
 
 void APlayerPawn::Serialize(FSerializer &arc)
 {
@@ -1205,6 +1219,12 @@ int APlayerPawn::GetMaxHealth() const
 	return MaxHealth > 0? MaxHealth : ((i_compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth);
 }
 
+DEFINE_ACTION_FUNCTION(APlayerPawn, GetMaxHealth)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	ACTION_RETURN_INT(self->GetMaxHealth());
+}
+
 //===========================================================================
 //
 // APlayerPawn :: UpdateWaterLevel
@@ -1258,6 +1278,13 @@ bool APlayerPawn::ResetAirSupply (bool playgasp)
 	return wasdrowning;
 }
 
+DEFINE_ACTION_FUNCTION(APlayerPawn, ResetAirSupply)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	PARAM_BOOL_DEF(playgasp);
+	ACTION_RETURN_BOOL(self->ResetAirSupply(playgasp));
+}
+
 //===========================================================================
 //
 // Animations
@@ -1266,28 +1293,38 @@ bool APlayerPawn::ResetAirSupply (bool playgasp)
 
 void APlayerPawn::PlayIdle ()
 {
-	if (InStateSequence(state, SeeState))
-		SetState (SpawnState);
+	IFVIRTUAL(APlayerPawn, PlayIdle)
+	{
+		VMValue params[1] = { (DObject*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
 }
 
 void APlayerPawn::PlayRunning ()
 {
-	if (InStateSequence(state, SpawnState) && SeeState != NULL)
-		SetState (SeeState);
+	IFVIRTUAL(APlayerPawn, PlayRunning)
+	{
+		VMValue params[1] = { (DObject*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
 }
 
 void APlayerPawn::PlayAttacking ()
 {
-	if (MissileState != NULL) SetState (MissileState);
+	IFVIRTUAL(APlayerPawn, PlayAttacking)
+	{
+		VMValue params[1] = { (DObject*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
 }
 
 void APlayerPawn::PlayAttacking2 ()
 {
-	if (MeleeState != NULL) SetState (MeleeState);
-}
-
-void APlayerPawn::ThrowPoisonBag ()
-{
+	IFVIRTUAL(APlayerPawn, PlayAttacking2)
+	{
+		VMValue params[1] = { (DObject*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
 }
 
 //===========================================================================
@@ -1373,6 +1410,11 @@ void APlayerPawn::GiveDefaultInventory ()
 
 void APlayerPawn::MorphPlayerThink ()
 {
+	IFVIRTUAL(APlayerPawn, MorphPlayerThink)
+	{
+		VMValue params[1] = { (DObject*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
 }
 
 void APlayerPawn::ActivateMorphWeapon ()
@@ -1428,7 +1470,7 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor, int dmgflags)
 
 	if (player != NULL && player->mo != this)
 	{ // Make the real player die, too
-		player->mo->Die (source, inflictor, dmgflags);
+		player->mo->CallDie (source, inflictor, dmgflags);
 	}
 	else
 	{
@@ -1549,7 +1591,7 @@ void APlayerPawn::TweakSpeeds (double &forward, double &side)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	int sound = 0;
 	int chan = CHAN_VOICE;
@@ -1623,10 +1665,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 //
 //----------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
+DEFINE_ACTION_FUNCTION(AActor, A_SkullPop)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_CLASS_OPT(spawntype, APlayerChunk)	{ spawntype = NULL; }
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS_DEF(spawntype, APlayerChunk);
 
 	APlayerPawn *mo;
 	player_t *player;
@@ -1675,7 +1717,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CheckPlayerDone)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 
 	if (self->player == NULL)
 	{
@@ -3117,3 +3159,135 @@ bool P_IsPlayerTotallyFrozen(const player_t *player)
 		player->cheats & CF_TOTALLYFROZEN ||
 		((level.flags2 & LEVEL2_FROZEN) && player->timefreezer == 0);
 }
+
+
+//==========================================================================
+//
+// native members
+//
+//==========================================================================
+
+DEFINE_FIELD(APlayerPawn, crouchsprite)
+DEFINE_FIELD(APlayerPawn, MaxHealth)
+DEFINE_FIELD(APlayerPawn, MugShotMaxHealth)
+DEFINE_FIELD(APlayerPawn, RunHealth)
+DEFINE_FIELD(APlayerPawn, PlayerFlags)
+DEFINE_FIELD(APlayerPawn, InvFirst)
+DEFINE_FIELD(APlayerPawn, InvSel)
+DEFINE_FIELD(APlayerPawn, JumpZ)
+DEFINE_FIELD(APlayerPawn, GruntSpeed)
+DEFINE_FIELD(APlayerPawn, FallingScreamMinSpeed)
+DEFINE_FIELD(APlayerPawn, FallingScreamMaxSpeed)
+DEFINE_FIELD(APlayerPawn, ViewHeight)
+DEFINE_FIELD(APlayerPawn, ForwardMove1)
+DEFINE_FIELD(APlayerPawn, ForwardMove2)
+DEFINE_FIELD(APlayerPawn, SideMove1)
+DEFINE_FIELD(APlayerPawn, SideMove2)
+DEFINE_FIELD(APlayerPawn, ScoreIcon)
+DEFINE_FIELD(APlayerPawn, SpawnMask)
+DEFINE_FIELD(APlayerPawn, MorphWeapon)
+DEFINE_FIELD(APlayerPawn, AttackZOffset)
+DEFINE_FIELD(APlayerPawn, UseRange)
+DEFINE_FIELD(APlayerPawn, AirCapacity)
+DEFINE_FIELD(APlayerPawn, FlechetteType)
+DEFINE_FIELD(APlayerPawn, DamageFade)
+DEFINE_FIELD(APlayerPawn, ViewBob)
+
+DEFINE_FIELD(PClassPlayerPawn, HealingRadiusType)
+DEFINE_FIELD(PClassPlayerPawn, DisplayName)
+DEFINE_FIELD(PClassPlayerPawn, SoundClass)
+DEFINE_FIELD(PClassPlayerPawn, Face)
+DEFINE_FIELD(PClassPlayerPawn, Portrait)
+DEFINE_FIELD(PClassPlayerPawn, Slot)
+DEFINE_FIELD(PClassPlayerPawn, InvulMode)
+DEFINE_FIELD(PClassPlayerPawn, HexenArmor)
+DEFINE_FIELD(PClassPlayerPawn, ColorRangeStart)
+DEFINE_FIELD(PClassPlayerPawn, ColorRangeEnd)
+DEFINE_FIELD(PClassPlayerPawn, ColorSets)
+DEFINE_FIELD(PClassPlayerPawn, PainFlashes)
+
+DEFINE_FIELD_X(PlayerInfo, player_t, mo)
+DEFINE_FIELD_X(PlayerInfo, player_t, playerstate)
+DEFINE_FIELD_X(PlayerInfo, player_t, original_oldbuttons)
+DEFINE_FIELD_X(PlayerInfo, player_t, cls)
+DEFINE_FIELD_X(PlayerInfo, player_t, DesiredFOV)
+DEFINE_FIELD_X(PlayerInfo, player_t, FOV)
+DEFINE_FIELD_X(PlayerInfo, player_t, viewz)
+DEFINE_FIELD_X(PlayerInfo, player_t, viewheight)
+DEFINE_FIELD_X(PlayerInfo, player_t, deltaviewheight)
+DEFINE_FIELD_X(PlayerInfo, player_t, bob)
+DEFINE_FIELD_X(PlayerInfo, player_t, Vel)
+DEFINE_FIELD_X(PlayerInfo, player_t, centering)
+DEFINE_FIELD_X(PlayerInfo, player_t, turnticks)
+DEFINE_FIELD_X(PlayerInfo, player_t, attackdown)
+DEFINE_FIELD_X(PlayerInfo, player_t, usedown)
+DEFINE_FIELD_X(PlayerInfo, player_t, oldbuttons)
+DEFINE_FIELD_X(PlayerInfo, player_t, health)
+DEFINE_FIELD_X(PlayerInfo, player_t, inventorytics)
+DEFINE_FIELD_X(PlayerInfo, player_t, CurrentPlayerClass)
+DEFINE_FIELD_X(PlayerInfo, player_t, frags)
+DEFINE_FIELD_X(PlayerInfo, player_t, fragcount)
+DEFINE_FIELD_X(PlayerInfo, player_t, lastkilltime)
+DEFINE_FIELD_X(PlayerInfo, player_t, multicount)
+DEFINE_FIELD_X(PlayerInfo, player_t, spreecount)
+DEFINE_FIELD_X(PlayerInfo, player_t, WeaponState)
+DEFINE_FIELD_X(PlayerInfo, player_t, ReadyWeapon)
+DEFINE_FIELD_X(PlayerInfo, player_t, PendingWeapon)
+DEFINE_FIELD_X(PlayerInfo, player_t, psprites)
+DEFINE_FIELD_X(PlayerInfo, player_t, cheats)
+DEFINE_FIELD_X(PlayerInfo, player_t, timefreezer)
+DEFINE_FIELD_X(PlayerInfo, player_t, refire)
+DEFINE_FIELD_NAMED_X(PlayerInfo, player_t, inconsistant, inconsistent)
+DEFINE_FIELD_X(PlayerInfo, player_t, waiting)
+DEFINE_FIELD_X(PlayerInfo, player_t, killcount)
+DEFINE_FIELD_X(PlayerInfo, player_t, itemcount)
+DEFINE_FIELD_X(PlayerInfo, player_t, secretcount)
+DEFINE_FIELD_X(PlayerInfo, player_t, damagecount)
+DEFINE_FIELD_X(PlayerInfo, player_t, bonuscount)
+DEFINE_FIELD_X(PlayerInfo, player_t, hazardcount)
+DEFINE_FIELD_X(PlayerInfo, player_t, hazardinterval)
+DEFINE_FIELD_X(PlayerInfo, player_t, hazardtype)
+DEFINE_FIELD_X(PlayerInfo, player_t, poisoncount)
+DEFINE_FIELD_X(PlayerInfo, player_t, poisontype)
+DEFINE_FIELD_X(PlayerInfo, player_t, poisonpaintype)
+DEFINE_FIELD_X(PlayerInfo, player_t, poisoner)
+DEFINE_FIELD_X(PlayerInfo, player_t, attacker)
+DEFINE_FIELD_X(PlayerInfo, player_t, extralight)
+DEFINE_FIELD_X(PlayerInfo, player_t, fixedcolormap)
+DEFINE_FIELD_X(PlayerInfo, player_t, fixedlightlevel)
+DEFINE_FIELD_X(PlayerInfo, player_t, morphTics)
+DEFINE_FIELD_X(PlayerInfo, player_t, MorphedPlayerClass)
+DEFINE_FIELD_X(PlayerInfo, player_t, MorphStyle)
+DEFINE_FIELD_X(PlayerInfo, player_t, MorphExitFlash)
+DEFINE_FIELD_X(PlayerInfo, player_t, PremorphWeapon)
+DEFINE_FIELD_X(PlayerInfo, player_t, chickenPeck)
+DEFINE_FIELD_X(PlayerInfo, player_t, jumpTics)
+DEFINE_FIELD_X(PlayerInfo, player_t, onground)
+DEFINE_FIELD_X(PlayerInfo, player_t, respawn_time)
+DEFINE_FIELD_X(PlayerInfo, player_t, camera)
+DEFINE_FIELD_X(PlayerInfo, player_t, air_finished)
+DEFINE_FIELD_X(PlayerInfo, player_t, LastDamageType)
+DEFINE_FIELD_X(PlayerInfo, player_t, MUSINFOactor)
+DEFINE_FIELD_X(PlayerInfo, player_t, MUSINFOtics)
+DEFINE_FIELD_X(PlayerInfo, player_t, settings_controller)
+DEFINE_FIELD_X(PlayerInfo, player_t, crouching)
+DEFINE_FIELD_X(PlayerInfo, player_t, crouchdir)
+DEFINE_FIELD_X(PlayerInfo, player_t, Bot)
+DEFINE_FIELD_X(PlayerInfo, player_t, BlendR)
+DEFINE_FIELD_X(PlayerInfo, player_t, BlendG)
+DEFINE_FIELD_X(PlayerInfo, player_t, BlendB)
+DEFINE_FIELD_X(PlayerInfo, player_t, BlendA)
+DEFINE_FIELD_X(PlayerInfo, player_t, LogText)
+DEFINE_FIELD_X(PlayerInfo, player_t, MinPitch)
+DEFINE_FIELD_X(PlayerInfo, player_t, MaxPitch)
+DEFINE_FIELD_X(PlayerInfo, player_t, crouchfactor)
+DEFINE_FIELD_X(PlayerInfo, player_t, crouchoffset)
+DEFINE_FIELD_X(PlayerInfo, player_t, crouchviewdelta)
+DEFINE_FIELD_X(PlayerInfo, player_t, ConversationNPC)
+DEFINE_FIELD_X(PlayerInfo, player_t, ConversationPC)
+DEFINE_FIELD_X(PlayerInfo, player_t, ConversationNPCAngle)
+DEFINE_FIELD_X(PlayerInfo, player_t, ConversationFaceTalker)
+DEFINE_FIELD_X(PlayerInfo, player_t, cmd)
+DEFINE_FIELD_X(PlayerInfo, player_t, original_cmd)
+DEFINE_FIELD_X(PlayerInfo, player_t, userinfo)
+DEFINE_FIELD_X(PlayerInfo, player_t, weapons)

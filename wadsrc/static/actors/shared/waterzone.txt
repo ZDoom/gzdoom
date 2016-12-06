@@ -1,7 +1,0 @@
-ACTOR WaterZone native
-{
-	+NOSECTOR
-	+NOBLOCKMAP
-	+NOGRAVITY
-	+DONTSPLASH
-}

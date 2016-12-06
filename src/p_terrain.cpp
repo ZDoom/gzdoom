@@ -724,3 +724,18 @@ FName P_GetTerrainName(int terrainnum)
 	}
 }
 
+DEFINE_FIELD_NAMED(FTerrainDef, Name, TerrainName)
+DEFINE_FIELD(FTerrainDef, Splash)
+DEFINE_FIELD(FTerrainDef, DamageAmount)
+DEFINE_FIELD(FTerrainDef, DamageMOD)
+DEFINE_FIELD(FTerrainDef, DamageTimeMask)
+DEFINE_FIELD(FTerrainDef, FootClip)
+DEFINE_FIELD(FTerrainDef, StepVolume)
+DEFINE_FIELD(FTerrainDef, WalkStepTics)
+DEFINE_FIELD(FTerrainDef, RunStepTics)
+DEFINE_FIELD(FTerrainDef, LeftStepSound)
+DEFINE_FIELD(FTerrainDef, RightStepSound)
+DEFINE_FIELD(FTerrainDef, IsLiquid)
+DEFINE_FIELD(FTerrainDef, AllowProtection)
+DEFINE_FIELD(FTerrainDef, Friction)
+DEFINE_FIELD(FTerrainDef, MoveFactor)

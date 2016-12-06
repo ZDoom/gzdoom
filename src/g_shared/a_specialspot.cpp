@@ -37,7 +37,6 @@
 #include "p_local.h"
 #include "statnums.h"
 #include "i_system.h"
-#include "thingdef/thingdef.h"
 #include "doomstat.h"
 #include "serializer.h"
 #include "a_pickups.h"
@@ -45,9 +44,8 @@
 static FRandom pr_spot ("SpecialSpot");
 static FRandom pr_spawnmace ("SpawnMace");
 
-
-IMPLEMENT_CLASS(DSpotState)
-IMPLEMENT_CLASS (ASpecialSpot)
+IMPLEMENT_CLASS(DSpotState, false, false)
+IMPLEMENT_CLASS(ASpecialSpot, false, false)
 TObjPtr<DSpotState> DSpotState::SpotState;
 
 //----------------------------------------------------------------------------
@@ -253,6 +251,12 @@ DSpotState *DSpotState::GetSpotState(bool create)
 	return SpotState;
 }
 
+DEFINE_ACTION_FUNCTION(DSpotState, GetSpotState)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_OBJECT(DSpotState::GetSpotState());
+}
+
 //----------------------------------------------------------------------------
 //
 // 
@@ -261,6 +265,7 @@ DSpotState *DSpotState::GetSpotState(bool create)
 
 FSpotList *DSpotState::FindSpotList(PClassActor *type)
 {
+	if (type == nullptr) return nullptr;
 	for(unsigned i = 0; i < SpotLists.Size(); i++)
 	{
 		if (SpotLists[i].Type == type) return &SpotLists[i];
@@ -319,6 +324,14 @@ ASpecialSpot *DSpotState::GetNextInList(PClassActor *type, int skipcounter)
 	return NULL;
 }
 
+DEFINE_ACTION_FUNCTION(DSpotState, GetNextInList)
+{
+	PARAM_SELF_PROLOGUE(DSpotState);
+	PARAM_CLASS(type, AActor);
+	PARAM_INT(skipcounter);
+	ACTION_RETURN_OBJECT(self->GetNextInList(type, skipcounter));
+}
+
 //----------------------------------------------------------------------------
 //
 // 
@@ -331,6 +344,18 @@ ASpecialSpot *DSpotState::GetSpotWithMinMaxDistance(PClassActor *type, double x,
 	if (list != NULL) return list->GetSpotWithMinMaxDistance(x, y, mindist, maxdist);
 	return NULL;
 }
+
+DEFINE_ACTION_FUNCTION(DSpotState, GetSpotWithMinMaxDistance)
+{
+	PARAM_SELF_PROLOGUE(DSpotState);
+	PARAM_CLASS(type, AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(mindist);
+	PARAM_FLOAT(maxdist);
+	ACTION_RETURN_OBJECT(self->GetSpotWithMinMaxDistance(type, x, y, mindist, maxdist));
+}
+
 
 //----------------------------------------------------------------------------
 //
@@ -373,18 +398,17 @@ void ASpecialSpot::Destroy()
 
 // Mace spawn spot ----------------------------------------------------------
 
-
 // Every mace spawn spot will execute this action. The first one
 // will build a list of all mace spots in the level and spawn a
 // mace. The rest of the spots will do nothing.
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnSingleItem)
+DEFINE_ACTION_FUNCTION(ASpecialSpot, A_SpawnSingleItem)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_CLASS		(cls, AActor);
-	PARAM_INT_OPT	(fail_sp) { fail_sp = 0; }
-	PARAM_INT_OPT	(fail_co) { fail_co = 0; }
-	PARAM_INT_OPT	(fail_dm) { fail_dm = 0; }
+	PARAM_SELF_PROLOGUE(ASpecialSpot);
+	PARAM_CLASS_NOT_NULL(cls, AActor);
+	PARAM_INT_DEF	(fail_sp) 
+	PARAM_INT_DEF	(fail_co) 
+	PARAM_INT_DEF	(fail_dm) 
 
 	AActor *spot = NULL;
 	DSpotState *state = DSpotState::GetSpotState();

@@ -21,6 +21,8 @@
 #include "d_event.h"
 #include "d_player.h"
 #include "vectors.h"
+#include "a_ammo.h"
+#include "a_health.h"
 
 static FRandom pr_botmove ("BotMove");
 

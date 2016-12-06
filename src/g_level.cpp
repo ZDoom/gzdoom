@@ -79,7 +79,6 @@
 #include "v_palette.h"
 #include "menu/menu.h"
 #include "a_sharedglobal.h"
-#include "a_strifeglobal.h"
 #include "r_data/colormaps.h"
 #include "r_renderer.h"
 #include "r_utility.h"
@@ -478,7 +477,8 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		// Set the initial quest log text for Strife.
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
-			players[i].SetLogText ("Find help");
+			if (playeringame[i])
+				players[i].SetLogText ("Find help");
 		}
 	}
 
@@ -903,7 +903,7 @@ public:
 	void Tick ();
 };
 
-IMPLEMENT_CLASS (DAutosaver)
+IMPLEMENT_CLASS(DAutosaver, false, false)
 
 void DAutosaver::Tick ()
 {
@@ -1092,7 +1092,7 @@ void G_WorldDone (void)
 	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
 	{
 		FName endsequence = ENamedName(strtol(nextlevel.GetChars()+6, NULL, 16));
-		// Strife needs a special case here to choose between good and sad ending. Bad is handled elsewherw.
+		// Strife needs a special case here to choose between good and sad ending. Bad is handled elsewhere.
 		if (endsequence == NAME_Inter_Strife)
 		{
 			if (players[0].mo->FindInventory (QuestItemClasses[24]) ||
@@ -1847,6 +1847,49 @@ void FLevelLocals::AddScroller (int secnum)
 		memset (&Scrolls[0], 0, sizeof(Scrolls[0])*numsectors);
 	}
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DEFINE_FIELD(FLevelLocals, time)
+DEFINE_FIELD(FLevelLocals, maptime)
+DEFINE_FIELD(FLevelLocals, totaltime)
+DEFINE_FIELD(FLevelLocals, starttime)
+DEFINE_FIELD(FLevelLocals, partime)
+DEFINE_FIELD(FLevelLocals, sucktime)
+DEFINE_FIELD(FLevelLocals, cluster)
+DEFINE_FIELD(FLevelLocals, clusterflags)
+DEFINE_FIELD(FLevelLocals, levelnum)
+DEFINE_FIELD(FLevelLocals, LevelName)
+DEFINE_FIELD(FLevelLocals, MapName)
+DEFINE_FIELD(FLevelLocals, NextMap)
+DEFINE_FIELD(FLevelLocals, NextSecretMap)
+DEFINE_FIELD(FLevelLocals, maptype)
+DEFINE_FIELD(FLevelLocals, Music)
+DEFINE_FIELD(FLevelLocals, musicorder)
+DEFINE_FIELD(FLevelLocals, total_secrets)
+DEFINE_FIELD(FLevelLocals, found_secrets)
+DEFINE_FIELD(FLevelLocals, total_items)
+DEFINE_FIELD(FLevelLocals, found_items)
+DEFINE_FIELD(FLevelLocals, total_monsters)
+DEFINE_FIELD(FLevelLocals, killed_monsters)
+DEFINE_FIELD(FLevelLocals, gravity)
+DEFINE_FIELD(FLevelLocals, aircontrol)
+DEFINE_FIELD(FLevelLocals, airfriction)
+DEFINE_FIELD(FLevelLocals, airsupply)
+DEFINE_FIELD(FLevelLocals, teamdamage)
+DEFINE_FIELD_BIT(FLevelLocals, flags, monsterstelefrag, LEVEL_MONSTERSTELEFRAG)
+DEFINE_FIELD_BIT(FLevelLocals, flags, actownspecial, LEVEL_ACTOWNSPECIAL)
+DEFINE_FIELD_BIT(FLevelLocals, flags, sndseqtotalctrl, LEVEL_SNDSEQTOTALCTRL)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, allmap, LEVEL2_ALLMAP)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, missilesactivateimpact, LEVEL2_MISSILESACTIVATEIMPACT)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, monsterfallingdamage, LEVEL2_MONSTERFALLINGDAMAGE)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, checkswitchrange, LEVEL2_CHECKSWITCHRANGE)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, polygrind, LEVEL2_POLYGRIND)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, nomonsters, LEVEL2_NOMONSTERS)
 
 //==========================================================================
 //

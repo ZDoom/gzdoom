@@ -40,7 +40,6 @@
 #include "sbar.h"
 #include "po_man.h"
 #include "r_utility.h"
-#include "a_hexenglobal.h"
 #include "p_local.h"
 #include "colormatcher.h"
 #include "gl/gl_functions.h"

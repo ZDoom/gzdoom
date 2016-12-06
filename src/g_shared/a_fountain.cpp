@@ -46,13 +46,13 @@ public:
 	void Deactivate (AActor *activator);
 };
 
-IMPLEMENT_CLASS (AParticleFountain)
+IMPLEMENT_CLASS(AParticleFountain, false, false)
 
 void AParticleFountain::PostBeginPlay ()
 {
 	Super::PostBeginPlay ();
 	if (!(SpawnFlags & MTF_DORMANT))
-		Activate (NULL);
+		CallActivate (NULL);
 }
 
 void AParticleFountain::Activate (AActor *activator)

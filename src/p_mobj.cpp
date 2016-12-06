@@ -22,7 +22,6 @@
 //-----------------------------------------------------------------------------
 
 // HEADER FILES ------------------------------------------------------------
-
 #include <float.h>
 #include "templates.h"
 #include "i_system.h"
@@ -42,18 +41,14 @@
 #include "c_dispatch.h"
 #include "b_bot.h"	//Added by MC:
 #include "stats.h"
-#include "a_hexenglobal.h"
 #include "a_sharedglobal.h"
 #include "gi.h"
 #include "sbar.h"
 #include "p_acs.h"
 #include "cmdlib.h"
 #include "decallib.h"
-#include "ravenshared.h"
-#include "a_action.h"
 #include "a_keys.h"
 #include "p_conversation.h"
-#include "thingdef/thingdef.h"
 #include "g_game.h"
 #include "teaminfo.h"
 #include "r_data/r_translate.h"
@@ -71,6 +66,12 @@
 #include "p_checkposition.h"
 #include "serializer.h"
 #include "r_utility.h"
+#include "thingdef.h"
+#include "d_player.h"
+#include "virtual.h"
+#include "a_armor.h"
+#include "a_ammo.h"
+#include "a_health.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -130,25 +131,209 @@ CVAR (Int, cl_bloodtype, 0, CVAR_ARCHIVE);
 
 // CODE --------------------------------------------------------------------
 
-IMPLEMENT_POINTY_CLASS (AActor)
- DECLARE_POINTER (target)
- DECLARE_POINTER (lastenemy)
- DECLARE_POINTER (tracer)
- DECLARE_POINTER (goal)
- DECLARE_POINTER (LastLookActor)
- DECLARE_POINTER (Inventory)
- DECLARE_POINTER (LastHeard)
- DECLARE_POINTER (master)
- DECLARE_POINTER (Poisoner)
- DECLARE_POINTER (DamageFunc)
- DECLARE_POINTER (alternative)
-END_POINTERS
+IMPLEMENT_CLASS(AActor, false, true)
+
+IMPLEMENT_POINTERS_START(AActor)
+	IMPLEMENT_POINTER(target)
+	IMPLEMENT_POINTER(lastenemy)
+	IMPLEMENT_POINTER(tracer)
+	IMPLEMENT_POINTER(goal)
+	IMPLEMENT_POINTER(LastLookActor)
+	IMPLEMENT_POINTER(Inventory)
+	IMPLEMENT_POINTER(LastHeard)
+	IMPLEMENT_POINTER(master)
+	IMPLEMENT_POINTER(Poisoner)
+	IMPLEMENT_POINTER(DamageFunc)
+	IMPLEMENT_POINTER(alternative)
+	IMPLEMENT_POINTER(TeleFogSourceType)
+	IMPLEMENT_POINTER(TeleFogDestType)
+IMPLEMENT_POINTERS_END
 
 AActor::~AActor ()
 {
 	// Please avoid calling the destructor directly (or through delete)!
 	// Use Destroy() instead.
 }
+
+extern FFlagDef InternalActorFlagDefs[];
+extern FFlagDef ActorFlagDefs[];
+
+DEFINE_FIELD(AActor, snext)
+DEFINE_FIELD(AActor, player)
+DEFINE_FIELD_NAMED(AActor, __Pos, pos)
+DEFINE_FIELD_NAMED(AActor, __Pos.X, x)
+DEFINE_FIELD_NAMED(AActor, __Pos.Y, y)
+DEFINE_FIELD_NAMED(AActor, __Pos.Z, z)
+DEFINE_FIELD(AActor, Prev)
+DEFINE_FIELD(AActor, SpriteAngle)
+DEFINE_FIELD(AActor, SpriteRotation)
+DEFINE_FIELD(AActor, VisibleStartAngle)
+DEFINE_FIELD(AActor, VisibleStartPitch)
+DEFINE_FIELD(AActor, VisibleEndAngle)
+DEFINE_FIELD(AActor, VisibleEndPitch)
+DEFINE_FIELD_NAMED(AActor, Angles.Yaw, angle)
+DEFINE_FIELD_NAMED(AActor, Angles.Pitch, pitch)
+DEFINE_FIELD_NAMED(AActor, Angles.Roll, roll)
+DEFINE_FIELD(AActor, Vel)
+DEFINE_FIELD_NAMED(AActor, Vel.X, velx)
+DEFINE_FIELD_NAMED(AActor, Vel.Y, vely)
+DEFINE_FIELD_NAMED(AActor, Vel.Z, velz)
+DEFINE_FIELD_NAMED(AActor, Vel.X, momx)
+DEFINE_FIELD_NAMED(AActor, Vel.Y, momy)
+DEFINE_FIELD_NAMED(AActor, Vel.Z, momz)
+DEFINE_FIELD(AActor, Speed)
+DEFINE_FIELD(AActor, FloatSpeed)
+DEFINE_FIELD(AActor, sprite)
+DEFINE_FIELD(AActor, frame)
+DEFINE_FIELD(AActor, Scale)
+DEFINE_FIELD_NAMED(AActor, Scale.X, scalex)
+DEFINE_FIELD_NAMED(AActor, Scale.Y, scaley)
+DEFINE_FIELD(AActor, RenderStyle)
+DEFINE_FIELD(AActor, picnum)
+DEFINE_FIELD(AActor, Alpha)
+DEFINE_FIELD(AActor, fillcolor)
+DEFINE_FIELD_NAMED(AActor, Sector, CurSector)	// clashes with type 'sector'.
+DEFINE_FIELD(AActor, subsector)
+DEFINE_FIELD(AActor, ceilingz)
+DEFINE_FIELD(AActor, floorz)
+DEFINE_FIELD(AActor, dropoffz)
+DEFINE_FIELD(AActor, floorsector)
+DEFINE_FIELD(AActor, floorpic)
+DEFINE_FIELD(AActor, floorterrain)
+DEFINE_FIELD(AActor, ceilingsector)
+DEFINE_FIELD(AActor, ceilingpic)
+DEFINE_FIELD(AActor, Height)
+DEFINE_FIELD(AActor, radius)
+DEFINE_FIELD(AActor, projectilepassheight)
+DEFINE_FIELD(AActor, tics)
+DEFINE_FIELD_NAMED(AActor, state, curstate)		// clashes with type 'state'.
+DEFINE_FIELD_NAMED(AActor, DamageVal, Damage)	// name differs for historic reasons
+DEFINE_FIELD(AActor, projectileKickback)
+DEFINE_FIELD(AActor, VisibleToTeam)
+DEFINE_FIELD(AActor, special1)
+DEFINE_FIELD(AActor, special2)
+DEFINE_FIELD(AActor, specialf1)
+DEFINE_FIELD(AActor, specialf2)
+DEFINE_FIELD(AActor, weaponspecial)
+DEFINE_FIELD(AActor, health)
+DEFINE_FIELD(AActor, movedir)
+DEFINE_FIELD(AActor, visdir)
+DEFINE_FIELD(AActor, movecount)
+DEFINE_FIELD(AActor, strafecount)
+DEFINE_FIELD(AActor, target)
+DEFINE_FIELD(AActor, master)
+DEFINE_FIELD(AActor, tracer)
+DEFINE_FIELD(AActor, LastHeard)
+DEFINE_FIELD(AActor, lastenemy)
+DEFINE_FIELD(AActor, LastLookActor)
+DEFINE_FIELD(AActor, reactiontime)
+DEFINE_FIELD(AActor, threshold)
+DEFINE_FIELD(AActor, DefThreshold)
+DEFINE_FIELD(AActor, SpawnPoint)
+DEFINE_FIELD(AActor, SpawnAngle)
+DEFINE_FIELD(AActor, StartHealth)
+DEFINE_FIELD(AActor, WeaveIndexXY)
+DEFINE_FIELD(AActor, WeaveIndexZ)
+DEFINE_FIELD(AActor, skillrespawncount)
+DEFINE_FIELD(AActor, args)
+DEFINE_FIELD(AActor, Mass)
+DEFINE_FIELD(AActor, special)
+DEFINE_FIELD(AActor, tid)
+DEFINE_FIELD(AActor, TIDtoHate)
+DEFINE_FIELD(AActor, waterlevel)
+DEFINE_FIELD(AActor, Score)
+DEFINE_FIELD(AActor, accuracy)
+DEFINE_FIELD(AActor, stamina)
+DEFINE_FIELD(AActor, meleerange)
+DEFINE_FIELD(AActor, PainThreshold)
+DEFINE_FIELD(AActor, Gravity)
+DEFINE_FIELD(AActor, Floorclip)
+DEFINE_FIELD(AActor, DamageType)
+DEFINE_FIELD(AActor, DamageTypeReceived)
+DEFINE_FIELD(AActor, FloatBobPhase)
+DEFINE_FIELD(AActor, RipperLevel)
+DEFINE_FIELD(AActor, RipLevelMin)
+DEFINE_FIELD(AActor, RipLevelMax)
+DEFINE_FIELD(AActor, Species)
+DEFINE_FIELD(AActor, alternative)
+DEFINE_FIELD(AActor, goal)
+DEFINE_FIELD(AActor, MinMissileChance)
+DEFINE_FIELD(AActor, LastLookPlayerNumber)
+DEFINE_FIELD(AActor, SpawnFlags)
+DEFINE_FIELD(AActor, meleethreshold)
+DEFINE_FIELD(AActor, maxtargetrange)
+DEFINE_FIELD(AActor, bouncefactor)
+DEFINE_FIELD(AActor, wallbouncefactor)
+DEFINE_FIELD(AActor, bouncecount)
+DEFINE_FIELD(AActor, Friction)
+DEFINE_FIELD(AActor, FastChaseStrafeCount)
+DEFINE_FIELD(AActor, pushfactor)
+DEFINE_FIELD(AActor, lastpush)
+DEFINE_FIELD(AActor, activationtype)
+DEFINE_FIELD(AActor, lastbump)
+DEFINE_FIELD(AActor, DesignatedTeam)
+DEFINE_FIELD(AActor, BlockingMobj)
+DEFINE_FIELD(AActor, BlockingLine)
+DEFINE_FIELD(AActor, PoisonDamage)
+DEFINE_FIELD(AActor, PoisonDamageType)
+DEFINE_FIELD(AActor, PoisonDuration)
+DEFINE_FIELD(AActor, PoisonPeriod)
+DEFINE_FIELD(AActor, PoisonDamageReceived)
+DEFINE_FIELD(AActor, PoisonDamageTypeReceived)
+DEFINE_FIELD(AActor, PoisonDurationReceived)
+DEFINE_FIELD(AActor, PoisonPeriodReceived)
+DEFINE_FIELD(AActor, Poisoner)
+DEFINE_FIELD_NAMED(AActor, Inventory, Inv)		// clashes with type 'Inventory'.
+DEFINE_FIELD(AActor, smokecounter)
+DEFINE_FIELD(AActor, FriendPlayer)
+DEFINE_FIELD(AActor, Translation)
+DEFINE_FIELD(AActor, AttackSound)
+DEFINE_FIELD(AActor, DeathSound)
+DEFINE_FIELD(AActor, SeeSound)
+DEFINE_FIELD(AActor, PainSound)
+DEFINE_FIELD(AActor, ActiveSound)
+DEFINE_FIELD(AActor, UseSound)
+DEFINE_FIELD(AActor, BounceSound)
+DEFINE_FIELD(AActor, WallBounceSound)
+DEFINE_FIELD(AActor, CrushPainSound)
+DEFINE_FIELD(AActor, MaxDropOffHeight)
+DEFINE_FIELD(AActor, MaxStepHeight)
+DEFINE_FIELD(AActor, PainChance)
+DEFINE_FIELD(AActor, PainType)
+DEFINE_FIELD(AActor, DeathType)
+DEFINE_FIELD(AActor, DamageFactor)
+DEFINE_FIELD(AActor, DamageMultiply)
+DEFINE_FIELD(AActor, TeleFogSourceType)
+DEFINE_FIELD(AActor, TeleFogDestType)
+DEFINE_FIELD(AActor, SpawnState)
+DEFINE_FIELD(AActor, SeeState)
+DEFINE_FIELD(AActor, MeleeState)
+DEFINE_FIELD(AActor, MissileState)
+DEFINE_FIELD(AActor, ConversationRoot)
+DEFINE_FIELD(AActor, Conversation)
+DEFINE_FIELD(AActor, DecalGenerator)
+
+DEFINE_FIELD(PClassActor, Obituary)
+DEFINE_FIELD(PClassActor, HitObituary)
+DEFINE_FIELD(PClassActor, DeathHeight)
+DEFINE_FIELD(PClassActor, BurnHeight)
+DEFINE_FIELD(PClassActor, BloodColor)
+DEFINE_FIELD(PClassActor, GibHealth)
+DEFINE_FIELD(PClassActor, WoundHealth)
+DEFINE_FIELD(PClassActor, FastSpeed)
+DEFINE_FIELD(PClassActor, RDFactor)
+DEFINE_FIELD(PClassActor, CameraHeight)
+DEFINE_FIELD(PClassActor, HowlSound)
+DEFINE_FIELD(PClassActor, BloodType)
+DEFINE_FIELD(PClassActor, BloodType2)
+DEFINE_FIELD(PClassActor, BloodType3)
+DEFINE_FIELD(PClassActor, DontHurtShooter)
+DEFINE_FIELD(PClassActor, ExplosionRadius)
+DEFINE_FIELD(PClassActor, ExplosionDamage)
+DEFINE_FIELD(PClassActor, MeleeDamage)
+DEFINE_FIELD(PClassActor, MeleeSound)
+DEFINE_FIELD(PClassActor, MissileName)
+DEFINE_FIELD(PClassActor, MissileHeight)
 
 //==========================================================================
 //
@@ -388,6 +573,13 @@ bool AActor::InStateSequence(FState * newstate, FState * basestate)
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, InStateSequence)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(newstate, FState);
+	PARAM_POINTER(basestate, FState);
+	ACTION_RETURN_BOOL(self->InStateSequence(newstate, basestate));
+}
 //==========================================================================
 //
 // AActor::GetTics
@@ -401,11 +593,11 @@ bool AActor::InStateSequence(FState * newstate, FState * basestate)
 int AActor::GetTics(FState * newstate)
 {
 	int tics = newstate->GetTics();
-	if (isFast() && newstate->Fast)
+	if (isFast() && newstate->GetFast())
 	{
 		return tics - (tics>>1);
 	}
-	else if (isSlow() && newstate->Slow)
+	else if (isSlow() && newstate->GetSlow())
 	{
 		return tics<<1;
 	}
@@ -441,6 +633,14 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 		else
 		{
 			prevsprite = -1;
+		}
+		if (!(newstate->UseFlags & SUF_ACTOR))
+		{
+			auto so = FState::StaticFindStateOwner(newstate);
+			Printf(TEXTCOLOR_RED "State %s.%d in %s not flagged for use as an actor sprite\n", so->TypeName.GetChars(), int(newstate - so->OwnedStates), GetClass()->TypeName.GetChars());
+			state = nullptr;
+			Destroy();
+			return false;
 		}
 		state = newstate;
 		tics = GetTics(newstate);
@@ -509,6 +709,14 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SetState)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(state, FState);
+	PARAM_BOOL_DEF(nofunction);
+	ACTION_RETURN_BOOL(self->SetState(state, nofunction));
+};
+
 //============================================================================
 //
 // AActor :: AddInventory
@@ -539,6 +747,15 @@ void AActor::AddInventory (AInventory *item)
 	// might not be in the same state as it was when DEM_INVUSE was sent.
 	Inventory->InventoryID = InventoryID++;
 }
+
+DEFINE_ACTION_FUNCTION(AActor, AddInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(item, AInventory);
+	self->AddInventory(item);
+	return 0;
+}
+
 
 //============================================================================
 //
@@ -599,6 +816,14 @@ bool AActor::GiveInventory(PClassInventory *type, int amount, bool givecheat)
 	return result;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Inventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(item, AInventory);
+	ACTION_RETURN_BOOL(self->UseInventory(item));
+}
+
+
 //============================================================================
 //
 // AActor :: RemoveInventory
@@ -625,6 +850,15 @@ void AActor::RemoveInventory(AInventory *item)
 		}
 	}
 }
+
+DEFINE_ACTION_FUNCTION(AActor, RemoveInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(item, AInventory);
+	self->RemoveInventory(item);
+	return 0;
+}
+
 
 //============================================================================
 //
@@ -757,7 +991,7 @@ bool AActor::UseInventory (AInventory *item)
 	{
 		return false;
 	}
-	if (!item->Use (false))
+	if (!item->CallUse (false))
 	{
 		return false;
 	}
@@ -772,6 +1006,13 @@ bool AActor::UseInventory (AInventory *item)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, UseInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(item, AInventory);
+	ACTION_RETURN_BOOL(self->UseInventory(item));
+}
+
 //===========================================================================
 //
 // AActor :: DropInventory
@@ -782,7 +1023,7 @@ bool AActor::UseInventory (AInventory *item)
 
 AInventory *AActor::DropInventory (AInventory *item)
 {
-	AInventory *drop = item->CreateTossable ();
+	AInventory *drop = item->CallCreateTossable ();
 
 	if (drop == NULL)
 	{
@@ -796,6 +1037,13 @@ AInventory *AActor::DropInventory (AInventory *item)
 	drop->flags &= ~MF_NOGRAVITY;	// Don't float
 	drop->ClearCounters();	// do not count for statistics again
 	return drop;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, DropInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(item, AInventory);
+	ACTION_RETURN_OBJECT(self->DropInventory(item));
 }
 
 //============================================================================
@@ -837,6 +1085,14 @@ AInventory *AActor::FindInventory (FName type)
 	return FindInventory(PClass::FindActor(type));
 }
 
+DEFINE_ACTION_FUNCTION(AActor, FindInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(type, AInventory);
+	PARAM_BOOL_DEF(subclass);
+	ACTION_RETURN_OBJECT(self->FindInventory(type, subclass));
+}
+
 //============================================================================
 //
 // AActor :: GiveInventoryType
@@ -857,6 +1113,13 @@ AInventory *AActor::GiveInventoryType (PClassActor *type)
 		}
 	}
 	return item;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GiveInventoryType)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(type, AInventory);
+	ACTION_RETURN_OBJECT(self->GiveInventoryType(type));
 }
 
 //============================================================================
@@ -885,6 +1148,14 @@ bool AActor::GiveAmmo (PClassAmmo *type, int amount)
 		}
 	}
 	return false;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GiveAmmo)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(type, AAmmo);
+	PARAM_INT(amount);
+	ACTION_RETURN_BOOL(self->GiveAmmo(type, amount));
 }
 
 //============================================================================
@@ -953,6 +1224,14 @@ void AActor::ClearInventory()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, ClearInventory)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->ClearInventory();
+	return 0;
+}
+
+
 //============================================================================
 //
 // AActor :: CopyFriendliness
@@ -981,6 +1260,15 @@ void AActor::CopyFriendliness (AActor *other, bool changeTarget, bool resetHealt
 	level.total_monsters += CountsAsKill();
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CopyFriendliness)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(other, AActor);
+	PARAM_BOOL_DEF(changetarget);
+	PARAM_BOOL_DEF(resethealth);
+	self->CopyFriendliness(other, changetarget, resethealth);
+	return 0;
+}
 //============================================================================
 //
 // AActor :: ObtainInventory
@@ -1043,6 +1331,13 @@ bool AActor::CheckLocalView (int playernum) const
 		return true;
 	}
 	return false;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, CheckLocalView)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(cp);
+	ACTION_RETURN_BOOL(self->CheckLocalView(cp));
 }
 
 //============================================================================
@@ -1186,6 +1481,24 @@ void AActor::ConversationAnimation (int animnum)
 
 void AActor::Touch (AActor *toucher)
 {
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Touch)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(toucher, AActor);
+	self->Touch(toucher);
+	return 0;
+}
+
+void AActor::CallTouch(AActor *toucher)
+{
+	IFVIRTUAL(AActor, Touch)
+	{
+		VMValue params[2] = { (DObject*)this, toucher };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+	else Touch(toucher);
 }
 
 //============================================================================
@@ -1499,6 +1812,15 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, ExplodeMissile)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER_DEF(line, line_t);
+	PARAM_OBJECT_DEF(target, AActor);
+	P_ExplodeMissile(self, line, target);
+	return 0;
+}
+
 
 void AActor::PlayBounceSound(bool onfloor)
 {
@@ -1541,7 +1863,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 			if (flags & MF_MISSILE)
 				P_ExplodeMissile(this, NULL, NULL);
 			else
-				Die(NULL, NULL);
+				CallDie(NULL, NULL);
 			return true;
 		}
 		if (!(BounceFlags & BOUNCE_CanBounceWater))
@@ -1568,7 +1890,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 		if (flags & MF_MISSILE)
 			P_ExplodeMissile(this, NULL, NULL);
 		else
-			Die(NULL, NULL);
+			CallDie(NULL, NULL);
 		return true;
 	}
 
@@ -1673,6 +1995,13 @@ bool AActor::CanSeek(AActor *target) const
 		)
 	   ) return false;
 	return true;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, CanSeek)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(target, AActor);
+	ACTION_RETURN_BOOL(self->CanSeek(target));
 }
 
 //----------------------------------------------------------------------------
@@ -2541,7 +2870,10 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 					return;
 				}
 				// Let the actor do something special for hitting the floor
-				mo->HitFloor ();
+				if (mo->flags7 & MF7_SMASHABLE)
+				{
+					P_DamageMobj(mo, nullptr, nullptr, mo->health, NAME_Smash);
+				}
 				if (mo->player)
 				{
 					if (mo->player->jumpTics < 0 || mo->Vel.Z < minvel)
@@ -2882,6 +3214,25 @@ void AActor::RemoveFromHash ()
 	tid = 0;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, RemoveFromHash)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->RemoveFromHash();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, ChangeTid)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(tid);
+	self->RemoveFromHash();
+	self->tid = tid;
+	self->AddToHash();
+	return 0;
+}
+
+
+
 //==========================================================================
 //
 // P_IsTIDUsed
@@ -2964,6 +3315,17 @@ int P_FindUniqueTID(int start_tid, int limit)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, FindUniqueTid)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT_DEF(start);
+	PARAM_INT_DEF(limit);
+	ACTION_RETURN_INT(P_FindUniqueTID(start, limit));
+}
+
+
+
+
 CCMD(utid)
 {
 	Printf("%d\n",
@@ -2999,16 +3361,14 @@ int AActor::GetMissileDamage (int mask, int add)
 		assert(false && "No damage function found");
 		return 0;
 	}
-	VMFrameStack stack;
 	VMValue param = this;
-	VMReturn results[2];
+	VMReturn result;
 
-	int amount, calculated = false;
+	int amount;
 
-	results[0].IntAt(&amount);
-	results[1].IntAt(&calculated);
+	result.IntAt(&amount);
 
-	if (stack.Call(DamageFunc, &param, 1, results, 2) < 1)
+	if (GlobalVMStack.Call(DamageFunc, &param, 1, &result, 1) < 1)
 	{ // No results
 		return 0;
 	}
@@ -3024,8 +3384,11 @@ void AActor::Howl ()
 	}
 }
 
-void AActor::HitFloor ()
+DEFINE_ACTION_FUNCTION(AActor, Howl)
 {
+	PARAM_SELF_PROLOGUE(AActor);
+	self->Howl();
+	return 0;
 }
 
 bool AActor::Slam (AActor *thing)
@@ -3055,14 +3418,43 @@ bool AActor::Slam (AActor *thing)
 	return false;			// stop moving
 }
 
-bool AActor::SpecialBlastHandling (AActor *source, double strength)
+DEFINE_ACTION_FUNCTION(AActor, Slam)
 {
-	return true;
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(thing, AActor);
+	ACTION_RETURN_BOOL(self->Slam(thing));
 }
 
+bool AActor::CallSlam(AActor *thing)
+{
+	IFVIRTUAL(AActor, Slam)
+	{
+		VMValue params[2] = { (DObject*)this, thing };
+		VMReturn ret;
+		int retval;
+		ret.IntAt(&retval);
+		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+		return !!retval;
+
+	}
+	else return Slam(thing);
+}
+
+
+
+// This virtual method only exists on the script side.
 int AActor::SpecialMissileHit (AActor *victim)
 {
-	return -1;
+	IFVIRTUAL(AActor, SpecialMissileHit)
+	{
+		VMValue params[2] = { (DObject*)this, victim };
+		VMReturn ret;
+		int retval;
+		ret.IntAt(&retval);
+		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+		return retval;
+	}
+	else return -1;
 }
 
 bool AActor::AdjustReflectionAngle (AActor *thing, DAngle &angle)
@@ -3076,8 +3468,7 @@ bool AActor::AdjustReflectionAngle (AActor *thing, DAngle &angle)
 		if (absangle(angle, thing->Angles.Yaw) > 45)
 			return true;	// Let missile explode
 
-		if (thing->IsKindOf (RUNTIME_CLASS(AHolySpirit)))	// shouldn't this be handled by another flag???
-			return true;
+		if (thing->flags7 & MF7_NOSHIELDREFLECT) return true;
 
 		if (pr_reflect () < 128)
 			angle += 45;
@@ -3120,6 +3511,13 @@ void AActor::PlayActiveSound ()
 		S_Sound (this, CHAN_VOICE, ActiveSound, 1,
 			(flags3 & MF3_FULLVOLACTIVE) ? ATTN_NONE : ATTN_IDLE);
 	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, PlayActiveSound)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->PlayActiveSound();
+	return 0;
 }
 
 bool AActor::IsOkayToAttack (AActor *link)
@@ -3187,6 +3585,14 @@ void AActor::SetShade (DWORD rgb)
 void AActor::SetShade (int r, int g, int b)
 {
 	fillcolor = MAKEARGB(ColorMatcher.Pick (r, g, b), r, g, b);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SetShade)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(color);
+	self->SetShade(color);
+	return 0;
 }
 
 void AActor::SetPitch(DAngle p, bool interpolate, bool forceclamp)
@@ -3880,6 +4286,14 @@ void AActor::Tick ()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Tick)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->Tick();
+	return 0;
+}
+
+
 //==========================================================================
 //
 // AActor :: CheckNoDelay
@@ -4224,7 +4638,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	actor->UpdateWaterLevel (false);
 	if (!SpawningMapThing)
 	{
-		actor->BeginPlay ();
+		actor->CallBeginPlay ();
 		if (actor->ObjectFlags & OF_EuthanizeMe)
 		{
 			return NULL;
@@ -4250,6 +4664,17 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 		level.total_secrets++;
 	}
 	return actor;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Spawn)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS_NOT_NULL(type, AActor);
+	PARAM_FLOAT_DEF(x);
+	PARAM_FLOAT_DEF(y);
+	PARAM_FLOAT_DEF(z);
+	PARAM_INT_DEF(flags);
+	ACTION_RETURN_OBJECT(AActor::StaticSpawn(type, DVector3(x, y, z), replace_t(flags)));
 }
 
 PClassActor *ClassForSpawn(FName classname)
@@ -4289,7 +4714,7 @@ void AActor::HandleSpawnFlags ()
 	}
 	if (SpawnFlags & MTF_DORMANT)
 	{
-		Deactivate (NULL);
+		CallDeactivate (NULL);
 	}
 	if (SpawnFlags & MTF_STANDSTILL)
 	{
@@ -4333,9 +4758,28 @@ void AActor::BeginPlay ()
 	if (flags2 & MF2_DORMANT)
 	{
 		flags2 &= ~MF2_DORMANT;
-		Deactivate (NULL);
+		CallDeactivate (NULL);
 	}
 }
+
+DEFINE_ACTION_FUNCTION(AActor, BeginPlay)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->BeginPlay();
+	return 0;
+}
+
+void AActor::CallBeginPlay()
+{
+	IFVIRTUAL(AActor, BeginPlay)
+	{
+		// Without the type cast this picks the 'void *' assignment...
+		VMValue params[1] = { (DObject*)this };
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
+	else BeginPlay();
+}
+
 
 void AActor::PostBeginPlay ()
 {
@@ -4372,6 +4816,12 @@ bool AActor::isSlow()
 	return !!G_SkillProperty(SKILLP_SlowMonsters);
 }
 
+//===========================================================================
+//
+// Activate
+//
+//===========================================================================
+
 void AActor::Activate (AActor *activator)
 {
 	if ((flags3 & MF3_ISMONSTER) && (health > 0 || (flags & MF_ICECORPSE)))
@@ -4391,6 +4841,32 @@ void AActor::Activate (AActor *activator)
 		}
 	}
 }
+
+DEFINE_ACTION_FUNCTION(AActor, Activate)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(activator, AActor);
+	self->Activate(activator);
+	return 0;
+}
+
+void AActor::CallActivate(AActor *activator)
+{
+	IFVIRTUAL(AActor, Activate)
+	{
+		// Without the type cast this picks the 'void *' assignment...
+		VMValue params[2] = { (DObject*)this, (DObject*)activator };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+	else Activate(activator);
+}
+
+
+//===========================================================================
+//
+// Deactivate
+//
+//===========================================================================
 
 void AActor::Deactivate (AActor *activator)
 {
@@ -4412,10 +4888,30 @@ void AActor::Deactivate (AActor *activator)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Deactivate)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(activator, AActor);
+	self->Deactivate(activator);
+	return 0;
+}
 
+void AActor::CallDeactivate(AActor *activator)
+{
+	IFVIRTUAL(AActor, Deactivate)
+	{
+		// Without the type cast this picks the 'void *' assignment...
+		VMValue params[2] = { (DObject*)this, (DObject*)activator };
+		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+	}
+	else Deactivate(activator);
+}
+
+//===========================================================================
 //
-// P_RemoveMobj
+// Destroy
 //
+//===========================================================================
 
 void AActor::Destroy ()
 {
@@ -4490,6 +4986,13 @@ void AActor::AdjustFloorClip ()
 		player->viewheight -= (oldclip - Floorclip);
 		player->deltaviewheight = player->GetDeltaViewHeight();
 	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, AdjustFloorClip)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->AdjustFloorClip();
+	return 0;
 }
 
 //
@@ -5119,7 +5622,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	if (mthing->fillcolor)
 		mobj->fillcolor = mthing->fillcolor;
 
-	mobj->BeginPlay ();
+	mobj->CallBeginPlay ();
 	if (!(mobj->ObjectFlags & OF_EuthanizeMe))
 	{
 		mobj->LevelSpawned ();
@@ -5130,7 +5633,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	else
 		mobj->health = -mthing->health;
 	if (mthing->health == 0)
-		mobj->Die(NULL, NULL);
+		mobj->CallDie(NULL, NULL);
 	else if (mthing->health != 1)
 		mobj->StartHealth = mobj->health;
 
@@ -5152,6 +5655,8 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos1
 {
 	AActor *puff;
 	DVector3 pos = pos1;
+
+	if (pufftype == nullptr) return nullptr;
 
 	if (!(flags & PF_NORANDOMZ)) pos.Z += pr_spawnpuff.Random2() / 64.;
 	puff = Spawn(pufftype, pos, ALLOW_REPLACE);
@@ -5218,7 +5723,20 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos1
 	return puff;
 }
 
-
+DEFINE_ACTION_FUNCTION(AActor, SpawnPuff)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(pufftype, AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_ANGLE(hitdir);
+	PARAM_ANGLE(particledir);
+	PARAM_INT(updown);
+	PARAM_INT_DEF(flags);
+	PARAM_OBJECT_DEF(victim, AActor);
+	ACTION_RETURN_OBJECT(P_SpawnPuff(self, pufftype, DVector3(x, y, z), hitdir, particledir, updown, flags, victim));
+}
 
 //---------------------------------------------------------------------------
 //
@@ -5316,6 +5834,19 @@ void P_SpawnBlood (const DVector3 &pos1, DAngle dir, int damage, AActor *origina
 		P_DrawSplash2 (40, pos, dir, 2, bloodcolor);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SpawnBlood)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_ANGLE(dir);
+	PARAM_INT(damage);
+	P_SpawnBlood(DVector3(x, y, z), dir, damage, self);
+	return 0;
+}
+
+
 //---------------------------------------------------------------------------
 //
 // PROC P_BloodSplatter
@@ -5398,6 +5929,20 @@ void P_BloodSplatter2 (const DVector3 &pos, AActor *originator, DAngle hitangle)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, BloodSplatter)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_ANGLE(dir);
+	PARAM_BOOL_DEF(axe);
+	if (axe) P_BloodSplatter2(DVector3(x, y, z), self, dir);
+	else P_BloodSplatter(DVector3(x, y, z), self, dir);
+	return 0;
+}
+
+
 //---------------------------------------------------------------------------
 //
 // PROC P_RipperBlood
@@ -5462,6 +6007,13 @@ int P_GetThingFloorType (AActor *thing)
 		return thing->Sector->GetTerrain(sector_t::floor);
 	}
 }
+
+DEFINE_ACTION_FUNCTION(AActor, GetFloorTerrain)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_POINTER(&Terrains[P_GetThingFloorType(self)]);
+}
+
 
 //---------------------------------------------------------------------------
 //
@@ -5610,6 +6162,20 @@ foundone:
 	return plane == &sec->floorplane ? Terrains[terrainnum].IsLiquid : false;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, HitWater)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER_NOT_NULL(sec, sector_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_BOOL_DEF(checkabove);
+	PARAM_BOOL_DEF(alert);
+	PARAM_BOOL_DEF(force);
+	ACTION_RETURN_BOOL(P_HitWater(self, sec, DVector3(x, y, z), checkabove, alert, force));
+}
+
+
 //---------------------------------------------------------------------------
 //
 // FUNC P_HitFloor
@@ -5663,6 +6229,12 @@ bool P_HitFloor (AActor *thing)
 	}
 
 	return P_HitWater (thing, m->m_sector, pos);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, HitFloor)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(P_HitFloor(self));
 }
 
 //---------------------------------------------------------------------------
@@ -5771,6 +6343,13 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CheckMissileSpawn)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(add);
+	ACTION_RETURN_BOOL(P_CheckMissileSpawn(self, add));
+}
+
 
 //---------------------------------------------------------------------------
 //
@@ -5803,6 +6382,15 @@ void P_PlaySpawnSound(AActor *missile, AActor *spawner)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, PlaySpawnSound)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(missile, AActor);
+	P_PlaySpawnSound(missile, self);
+	return 0;
+}
+
+
 static double GetDefaultSpeed(PClassActor *type)
 {
 	if (type == NULL)
@@ -5811,6 +6399,13 @@ static double GetDefaultSpeed(PClassActor *type)
 		return type->FastSpeed;
 	else
 		return GetDefaultByType(type)->Speed;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetDefaultSpeed)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(type, AActor);
+	ACTION_RETURN_FLOAT(GetDefaultSpeed(type));
 }
 
 //---------------------------------------------------------------------------
@@ -5822,29 +6417,11 @@ static double GetDefaultSpeed(PClassActor *type)
 //
 //---------------------------------------------------------------------------
 
-AActor *P_SpawnMissile (AActor *source, AActor *dest, PClassActor *type, AActor *owner)
-{
-	if (source == NULL)
-	{
-		return NULL;
-	}
-	return P_SpawnMissileXYZ (source->PosPlusZ(32 + source->GetBobOffset()), source, dest, type, true, owner);
-}
-
-AActor *P_SpawnMissileZ (AActor *source, double z, AActor *dest, PClassActor *type)
-{
-	if (source == NULL)
-	{
-		return NULL;
-	}
-	return P_SpawnMissileXYZ (source->PosAtZ(z), source, dest, type);
-}
-
 AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassActor *type, bool checkspawn, AActor *owner)
 {
-	if (source == NULL)
+	if (source == nullptr || type == nullptr)
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	if (dest == NULL)
@@ -5913,11 +6490,62 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 	return (!checkspawn || P_CheckMissileSpawn (th, source->radius)) ? th : NULL;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SpawnMissileXYZ)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_OBJECT_NOT_NULL(dest, AActor);
+	PARAM_CLASS(type, AActor);
+	PARAM_BOOL_DEF(check);
+	PARAM_OBJECT_DEF(owner, AActor);
+	ACTION_RETURN_OBJECT(P_SpawnMissileXYZ(DVector3(x,y,z), self, dest, type, check, owner));
+}
+
+AActor *P_SpawnMissile(AActor *source, AActor *dest, PClassActor *type, AActor *owner)
+{
+	if (source == nullptr)
+	{
+		return nullptr;
+	}
+	return P_SpawnMissileXYZ(source->PosPlusZ(32 + source->GetBobOffset()), source, dest, type, true, owner);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SpawnMissile)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(dest, AActor);
+	PARAM_CLASS(type, AActor);
+	PARAM_OBJECT_DEF(owner, AActor);
+	ACTION_RETURN_OBJECT(P_SpawnMissile(self, dest, type, owner));
+}
+
+AActor *P_SpawnMissileZ(AActor *source, double z, AActor *dest, PClassActor *type)
+{
+	if (source == nullptr)
+	{
+		return nullptr;
+	}
+	return P_SpawnMissileXYZ(source->PosAtZ(z), source, dest, type);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SpawnMissileZ)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(z);
+	PARAM_OBJECT_NOT_NULL(dest, AActor);
+	PARAM_CLASS(type, AActor);
+	ACTION_RETURN_OBJECT(P_SpawnMissileZ(self, z, dest, type));
+}
+
+
+
 AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassActor *type)
 {
-	if (source == NULL)
+	if (source == nullptr || type == nullptr)
 	{
-		return NULL;
+		return nullptr;
 	}
 	AActor *th = Spawn (type, source->PosPlusZ(32.), ALLOW_REPLACE);
 
@@ -5940,6 +6568,16 @@ AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassAct
 	return th;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, OldSpawnMissile)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(dest, AActor);
+	PARAM_CLASS(type, AActor);
+	PARAM_OBJECT_DEF(owner, AActor);
+	ACTION_RETURN_OBJECT(P_OldSpawnMissile(self, owner, dest, type));
+}
+
+
 //---------------------------------------------------------------------------
 //
 // FUNC P_SpawnMissileAngle
@@ -5951,7 +6589,7 @@ AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassAct
 
 AActor *P_SpawnMissileAngle (AActor *source, PClassActor *type, DAngle angle, double vz)
 {
-	if (source == NULL)
+	if (source == nullptr || type == nullptr)
 	{
 		return NULL;
 	}
@@ -5960,14 +6598,18 @@ AActor *P_SpawnMissileAngle (AActor *source, PClassActor *type, DAngle angle, do
 
 AActor *P_SpawnMissileAngleZ (AActor *source, double z, PClassActor *type, DAngle angle, double vz)
 {
+	if (type == nullptr)
+	{
+		return nullptr;
+	}
 	return P_SpawnMissileAngleZSpeed (source, z, type, angle, vz, GetDefaultSpeed (type));
 }
 
 AActor *P_SpawnMissileZAimed (AActor *source, double z, AActor *dest, PClassActor *type)
 {
-	if (source == NULL)
+	if (source == nullptr || type == nullptr)
 	{
-		return NULL;
+		return nullptr;
 	}
 	DAngle an;
 	double dist;
@@ -5987,6 +6629,15 @@ AActor *P_SpawnMissileZAimed (AActor *source, double z, AActor *dest, PClassActo
 	return P_SpawnMissileAngleZSpeed (source, z, type, an, vz, speed);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SpawnMissileZAimed)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(z);
+	PARAM_OBJECT_NOT_NULL(dest, AActor);
+	PARAM_CLASS(type, AActor);
+	ACTION_RETURN_OBJECT(P_SpawnMissileZAimed(self, z, dest, type));
+}
+
 //---------------------------------------------------------------------------
 //
 // FUNC P_SpawnMissileAngleZSpeed
@@ -5999,9 +6650,9 @@ AActor *P_SpawnMissileZAimed (AActor *source, double z, AActor *dest, PClassActo
 AActor *P_SpawnMissileAngleZSpeed (AActor *source, double z,
 	PClassActor *type, DAngle angle, double vz, double speed, AActor *owner, bool checkspawn)
 {
-	if (source == NULL)
+	if (source == nullptr || type == nullptr)
 	{
-		return NULL;
+		return nullptr;
 	}
 	AActor *mo;
 
@@ -6027,6 +6678,61 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, double z,
 	return (!checkspawn || P_CheckMissileSpawn(mo, source->radius)) ? mo : NULL;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SpawnMissileAngleZSpeed)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(z);
+	PARAM_CLASS(type, AActor);
+	PARAM_ANGLE(angle);
+	PARAM_FLOAT(vz);
+	PARAM_FLOAT(speed);
+	PARAM_OBJECT_DEF(owner, AActor);
+	PARAM_BOOL_DEF(checkspawn);
+	ACTION_RETURN_OBJECT(P_SpawnMissileAngleZSpeed(self, z, type, angle, vz, speed, owner, checkspawn));
+}
+
+
+AActor *P_SpawnSubMissile(AActor *source, PClassActor *type, AActor *target)
+{
+	AActor *other = Spawn(type, source->Pos(), ALLOW_REPLACE);
+
+	if (source == nullptr || type == nullptr)
+	{
+		return nullptr;
+	}
+
+	other->target = target;
+	other->Angles.Yaw = source->Angles.Yaw;
+	other->VelFromAngle();
+
+	if (other->flags4 & MF4_SPECTRAL)
+	{
+		if (source->flags & MF_MISSILE && source->flags4 & MF4_SPECTRAL)
+		{
+			other->FriendPlayer = source->FriendPlayer;
+		}
+		else
+		{
+			other->SetFriendPlayer(target->player);
+		}
+	}
+
+	if (P_CheckMissileSpawn(other, source->radius))
+	{
+		DAngle pitch = P_AimLineAttack(source, source->Angles.Yaw, 1024.);
+		other->Vel.Z = -other->Speed * pitch.Sin();
+		return other;
+	}
+	return NULL;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SpawnSubMissile)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(cls, AActor);
+	PARAM_OBJECT_NOT_NULL(target, AActor);
+	ACTION_RETURN_OBJECT(P_SpawnSubMissile(self, cls, target));
+}
 /*
 ================
 =
@@ -6054,6 +6760,11 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 							  PClassActor *type, DAngle angle, FTranslatedLineTarget *pLineTarget, AActor **pMissileActor,
 							  bool nofreeaim, bool noautoaim, int aimflags)
 {
+	if (source == nullptr || type == nullptr)
+	{
+		return nullptr;
+	}
+
 	static const double angdiff[3] = { -5.625, 5.625, 0 };
 	DAngle an = angle;
 	DAngle pitch;
@@ -6061,10 +6772,6 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 	AActor *defaultobject = GetDefaultByType(type);
 	DAngle vrange = nofreeaim ? 35. : 0.;
 
-	if (source == NULL)
-	{
-		return NULL;
-	}
 	if (!pLineTarget) pLineTarget = &scratch;
 	if (source->player && source->player->ReadyWeapon && ((source->player->ReadyWeapon->WeaponFlags & WIF_NOAUTOAIM) || noautoaim))
 	{
@@ -6149,6 +6856,27 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 	return NULL;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SpawnPlayerMissile)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(type, AActor);
+	PARAM_ANGLE_DEF(angle);
+	PARAM_FLOAT_DEF(x);
+	PARAM_FLOAT_DEF(y);
+	PARAM_FLOAT_DEF(z);
+	PARAM_POINTER_DEF(lt, FTranslatedLineTarget);
+	PARAM_BOOL_DEF(nofreeaim);
+	PARAM_BOOL_DEF(noautoaim);
+	PARAM_INT_DEF(aimflags);
+	AActor *missileactor;
+	if (numparam == 2) angle = self->Angles.Yaw;
+	AActor *misl = P_SpawnPlayerMissile(self, x, y, z, type, angle, lt, &missileactor, nofreeaim, noautoaim, aimflags);
+	if (numret > 0) ret[0].SetPointer(misl, ATAG_OBJECT);
+	if (numret > 1) ret[1].SetPointer(missileactor, ATAG_OBJECT), numret = 2;
+	return numret;
+}
+
+
 int AActor::GetTeam()
 {
 	if (player)
@@ -6187,6 +6915,13 @@ bool AActor::IsTeammate (AActor *other)
 	return false;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, isTeammate)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(other, AActor);
+	ACTION_RETURN_BOOL(self->IsTeammate(other));
+}
+
 //==========================================================================
 //
 // AActor :: GetSpecies
@@ -6220,6 +6955,12 @@ FName AActor::GetSpecies()
 	return Species = thistype->TypeName; // [GZ] Speeds up future calls.
 }
 
+DEFINE_ACTION_FUNCTION(AActor, GetSpecies)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(self->GetSpecies());
+}
+
 //==========================================================================
 //
 // AActor :: IsFriend
@@ -6244,6 +6985,13 @@ bool AActor::IsFriend (AActor *other)
 			players[FriendPlayer-1].mo->IsTeammate(players[other->FriendPlayer-1].mo);
 	}
 	return false;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, isFriend)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(other, AActor);
+	ACTION_RETURN_BOOL(self->IsFriend(other));
 }
 
 //==========================================================================
@@ -6276,6 +7024,22 @@ bool AActor::IsHostile (AActor *other)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, isHostile)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(other, AActor);
+	ACTION_RETURN_BOOL(self->IsHostile(other));
+}
+
+
+//==========================================================================
+//
+// AActor :: DoSpecialDamage
+//
+// override this for special damage effects.
+//
+//==========================================================================
+
 int AActor::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if (target->player && target->player->mo == target && damage < 1000 &&
@@ -6298,6 +7062,37 @@ int AActor::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 		return damage;
 	}
 }
+
+DEFINE_ACTION_FUNCTION(AActor, DoSpecialDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(target, AActor);
+	PARAM_INT(damage);
+	PARAM_NAME(damagetype);
+	ACTION_RETURN_INT(self->DoSpecialDamage(target, damage, damagetype));
+}
+
+int AActor::CallDoSpecialDamage(AActor *target, int damage, FName damagetype)
+{
+	IFVIRTUAL(AActor, DoSpecialDamage)
+	{
+		// Without the type cast this picks the 'void *' assignment...
+		VMValue params[4] = { (DObject*)this, (DObject*)target, damage, damagetype.GetIndex() };
+		VMReturn ret;
+		int retval;
+		ret.IntAt(&retval);
+		GlobalVMStack.Call(func, params, 4, &ret, 1, nullptr);
+		return retval;
+	}
+	else return DoSpecialDamage(target, damage, damagetype);
+
+}
+
+//==========================================================================
+//
+// AActor :: TakeSpecialDamage
+//
+//==========================================================================
 
 int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype)
 {
@@ -6331,6 +7126,31 @@ int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FN
 		death = FindState (NAME_Death, damagetype);
 	}
 	return (death == NULL) ? -1 : damage;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, TakeSpecialDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(inflictor, AActor);
+	PARAM_OBJECT(source, AActor);
+	PARAM_INT(damage);
+	PARAM_NAME(damagetype);
+	ACTION_RETURN_INT(self->TakeSpecialDamage(inflictor, source, damage, damagetype));
+}
+
+int AActor::CallTakeSpecialDamage(AActor *inflictor, AActor *source, int damage, FName damagetype)
+{
+	IFVIRTUAL(AActor, TakeSpecialDamage)
+	{
+		VMValue params[5] = { (DObject*)this, inflictor, source, damage, damagetype.GetIndex() };
+		VMReturn ret;
+		int retval;
+		ret.IntAt(&retval);
+		GlobalVMStack.Call(func, params, 5, &ret, 1, nullptr);
+		return retval;
+	}
+	else return TakeSpecialDamage(inflictor, source, damage, damagetype);
+
 }
 
 void AActor::Crash()
@@ -6382,6 +7202,14 @@ void AActor::SetIdle(bool nofunction)
 	SetState(idle, nofunction);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SetIdle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL_DEF(nofunction);
+	self->SetIdle(nofunction);
+	return 0;
+}
+
 int AActor::SpawnHealth() const
 {
 	int defhealth = StartHealth ? StartHealth : GetDefault()->health;
@@ -6399,6 +7227,12 @@ int AActor::SpawnHealth() const
 		int adj = int(defhealth * G_SkillProperty(SKILLP_MonsterHealth));
 		return (adj <= 0) ? 1 : adj;
 	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SpawnHealth)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(self->SpawnHealth());
 }
 
 FState *AActor::GetRaiseState()
@@ -6464,9 +7298,22 @@ double AActor::GetCameraHeight() const
 	return GetClass()->CameraHeight == INT_MIN ? Height / 2 : GetClass()->CameraHeight;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, GetCameraHeight)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_FLOAT(self->GetCameraHeight());
+}
+
+
 DDropItem *AActor::GetDropItems() const
 {
 	return GetClass()->DropItems;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetDropItems)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_OBJECT(self->GetDropItems());
 }
 
 double AActor::GetGravity() const
@@ -6474,6 +7321,13 @@ double AActor::GetGravity() const
 	if (flags & MF_NOGRAVITY) return 0;
 	return level.gravity * Sector->gravity * Gravity * 0.00125;
 }
+
+DEFINE_ACTION_FUNCTION(AActor, GetGravity)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_FLOAT(self->GetGravity());
+}
+
 
 // killough 11/98:
 // Whether an object is "sentient" or not. Used for environmental influences.
@@ -6510,16 +7364,26 @@ const char *AActor::GetTag(const char *def) const
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, GetTag)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_STRING(def);
+	ACTION_RETURN_STRING(self->GetTag(def.Len() == 0? nullptr : def.GetChars()));
+}
+
 void AActor::SetTag(const char *def)
 {
-	if (def == NULL || *def == 0) 
-	{
-		Tag = NULL;
-	}
-	else 
-	{
-		Tag = mStringPropertyData.Alloc(def);
-	}
+	if (def == NULL || *def == 0) Tag = nullptr;
+	else Tag = mStringPropertyData.Alloc(def);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SetTag)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_STRING(def);
+	if (def.IsEmpty()) self->Tag = nullptr;
+	else self->Tag = self->mStringPropertyData.Alloc(def);
+	return 0;
 }
 
 
@@ -6544,6 +7408,29 @@ void AActor::ClearCounters()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, ClearCounters)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->ClearCounters();
+	return 0;
+}
+
+int AActor::GetModifiedDamage(FName damagetype, int damage, bool passive)
+{
+	if (Inventory != nullptr)
+		Inventory->ModifyDamage(damage, damagetype, damage, passive);
+
+	return damage;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetModifiedDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(type);
+	PARAM_INT(damage);
+	PARAM_BOOL(passive);
+	ACTION_RETURN_INT(self->GetModifiedDamage(type, damage, passive));
+}
 
 int AActor::ApplyDamageFactor(FName damagetype, int damage) const
 {
@@ -6555,10 +7442,19 @@ int AActor::ApplyDamageFactor(FName damagetype, int damage) const
 	return damage;
 }
 
-
-void AActor::SetTranslation(const char *trname)
+DEFINE_ACTION_FUNCTION(AActor, ApplyDamageFactor)
 {
-	if (*trname == 0)
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(type);
+	PARAM_INT(damage);
+	ACTION_RETURN_INT(self->ApplyDamageFactor(type, damage));
+}
+
+
+void AActor::SetTranslation(FName trname)
+{
+	// There is no constant for the empty name...
+	if (trname.GetChars()[0] == 0)
 	{
 		// an empty string resets to the default
 		Translation = GetDefault()->Translation;
@@ -6573,14 +7469,396 @@ void AActor::SetTranslation(const char *trname)
 	// silently ignore if the name does not exist, this would create some insane message spam otherwise.
 }
 
+//---------------------------------------------------------------------------
+//
+// PROP A_RestoreSpecialPosition
+//
+//---------------------------------------------------------------------------
+static FRandom pr_restore("RestorePos");
+
+void AActor::RestoreSpecialPosition()
+{
+	// Move item back to its original location
+	DVector2 sp = SpawnPoint;
+
+	UnlinkFromWorld();
+	SetXY(sp);
+	LinkToWorld(true);
+	SetZ(Sector->floorplane.ZatPoint(sp));
+	P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS | FFCF_NOPORTALS);	// no portal checks here so that things get spawned in this sector.
+
+	if (flags & MF_SPAWNCEILING)
+	{
+		SetZ(ceilingz - Height - SpawnPoint.Z);
+	}
+	else if (flags2 & MF2_SPAWNFLOAT)
+	{
+		double space = ceilingz - Height - floorz;
+		if (space > 48)
+		{
+			space -= 40;
+			SetZ((space * pr_restore()) / 256. + floorz + 40);
+		}
+		else
+		{
+			SetZ(floorz);
+		}
+	}
+	else
+	{
+		SetZ(SpawnPoint.Z + floorz);
+	}
+	// Redo floor/ceiling check, in case of 3D floors and portals
+	P_FindFloorCeiling(this, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
+	if (Z() < floorz)
+	{ // Do not reappear under the floor, even if that's where we were for the
+	  // initial spawn.
+		SetZ(floorz);
+	}
+	if ((flags & MF_SOLID) && (Top() > ceilingz))
+	{ // Do the same for the ceiling.
+		SetZ(ceilingz - Height);
+	}
+	// Do not interpolate from the position the actor was at when it was
+	// picked up, in case that is different from where it is now.
+	ClearInterpolation();
+}
+
+DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->RestoreSpecialPosition();
+	return 0;
+}
+
+
+
+
+class DActorIterator : public DObject, public NActorIterator
+{
+	DECLARE_CLASS(DActorIterator, DObject)
+
+public:
+	DActorIterator(PClassActor *cls= nullptr, int tid = 0)
+		: NActorIterator(cls, tid)
+	{
+	}
+};
+
+IMPLEMENT_CLASS(DActorIterator, false, false);
+DEFINE_ACTION_FUNCTION(DActorIterator, Create)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(tid);
+	PARAM_CLASS_DEF(type, AActor);
+	ACTION_RETURN_OBJECT(new DActorIterator(type, tid));
+}
+
+DEFINE_ACTION_FUNCTION(DActorIterator, Next)
+{
+	PARAM_SELF_PROLOGUE(DActorIterator);
+	ACTION_RETURN_OBJECT(self->Next());
+}
+
+DEFINE_ACTION_FUNCTION(DActorIterator, Reinit)
+{
+	PARAM_SELF_PROLOGUE(DActorIterator);
+	self->Reinit();
+	return 0;
+}
+
+
+
+DEFINE_ACTION_FUNCTION(AActor, deltaangle)	// should this be global?
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(a1);
+	PARAM_FLOAT(a2);
+	ACTION_RETURN_FLOAT(deltaangle(DAngle(a1), DAngle(a2)).Degrees);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, absangle)	// should this be global?
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(a1);
+	PARAM_FLOAT(a2);
+	ACTION_RETURN_FLOAT(absangle(DAngle(a1), DAngle(a2)).Degrees);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Distance2D)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(other, AActor);
+	ACTION_RETURN_FLOAT(self->Distance2D(other));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Distance3D)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(other, AActor);
+	ACTION_RETURN_FLOAT(self->Distance3D(other));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, AddZ)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(addz);
+	PARAM_BOOL_DEF(moving);
+	self->AddZ(addz, moving);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SetZ)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(z);
+	self->SetZ(z);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SetDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(dmg);
+	self->SetDamage(dmg);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetDefaultByType)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(cls, AActor);
+	ACTION_RETURN_OBJECT(cls == nullptr? nullptr : GetDefaultByType(cls));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetBobOffset)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT_DEF(frac);
+	ACTION_RETURN_FLOAT(self->GetBobOffset(frac));
+}
+
+// This combines all 3 variations of the internal function
+DEFINE_ACTION_FUNCTION(AActor, VelFromAngle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	if (numparam == 1)
+	{
+		self->VelFromAngle();
+	}
+	else
+	{
+		PARAM_FLOAT(speed);
+		if (numparam == 2)
+		{
+			self->VelFromAngle(speed);
+		}
+		else
+		{
+			PARAM_ANGLE(angle);
+			self->VelFromAngle(speed, angle);
+		}
+	}
+	return 0;
+}
+
+// This combines all 3 variations of the internal function
+DEFINE_ACTION_FUNCTION(AActor, Vel3DFromAngle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(speed);
+	PARAM_ANGLE(angle);
+	PARAM_ANGLE(pitch);
+	self->Vel3DFromAngle(pitch, angle, speed);
+	return 0;
+}
+
+// This combines all 3 variations of the internal function
+DEFINE_ACTION_FUNCTION(AActor, Thrust)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	if (numparam == 1)
+	{
+		self->Thrust();
+	}
+	else
+	{
+		PARAM_FLOAT(speed);
+		if (numparam == 2)
+		{
+			self->Thrust(speed);
+		}
+		else
+		{
+			PARAM_ANGLE(angle);
+			self->Thrust(angle, speed);
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, AngleTo)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(targ, AActor);
+	PARAM_BOOL_DEF(absolute);
+	ACTION_RETURN_FLOAT(self->AngleTo(targ, absolute).Degrees);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, AngleToVector)
+{
+	PARAM_PROLOGUE;
+	PARAM_ANGLE(angle);
+	PARAM_FLOAT_DEF(length);
+	ACTION_RETURN_VEC2(angle.ToVector(length));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, RotateVector)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_ANGLE(angle);
+	ACTION_RETURN_VEC2(DVector2(x, y).Rotated(angle));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, DistanceBySpeed)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(targ, AActor);
+	PARAM_FLOAT(speed);
+	ACTION_RETURN_FLOAT(self->DistanceBySpeed(targ, speed));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SetXYZ)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	self->SetXYZ(x, y, z);
+	return 0; 
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Vec2Angle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(length);
+	PARAM_ANGLE(angle);
+	PARAM_BOOL_DEF(absolute);
+	ACTION_RETURN_VEC2(self->Vec2Angle(length, angle, absolute));
+}
+
+
+DEFINE_ACTION_FUNCTION(AActor, Vec3To)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(t, AActor)
+	ACTION_RETURN_VEC3(self->Vec3To(t));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Vec2To)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(t, AActor)
+		ACTION_RETURN_VEC2(self->Vec2To(t));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Vec3Angle)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(length)
+		PARAM_ANGLE(angle);
+	PARAM_FLOAT(z);
+	PARAM_BOOL_DEF(absolute);
+	ACTION_RETURN_VEC3(self->Vec3Angle(length, angle, z, absolute));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Vec2OffsetZ)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_BOOL_DEF(absolute);
+	ACTION_RETURN_VEC3(self->Vec2OffsetZ(x, y, z, absolute));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Vec2Offset)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_BOOL_DEF(absolute);
+	ACTION_RETURN_VEC2(self->Vec2Offset(x, y, absolute));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Vec3Offset)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_BOOL_DEF(absolute);
+	ACTION_RETURN_VEC3(self->Vec3Offset(x, y, z, absolute));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, RestoreDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->RestoreDamage();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, PlayerNumber)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(self->player ? int(self->player - players) : 0);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SetFriendPlayer)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(player, player_t);
+	self->SetFriendPlayer(player);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, ClearBounce)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->BounceFlags = 0;
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, AccuracyFactor)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_FLOAT(self->AccuracyFactor());
+}
+
+DEFINE_ACTION_FUNCTION(AActor, CountsAsKill)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_FLOAT(self->CountsAsKill());
+}
+
 //----------------------------------------------------------------------------
 //
 // DropItem handling
 //
 //----------------------------------------------------------------------------
-IMPLEMENT_POINTY_CLASS(DDropItem)
- DECLARE_POINTER(Next)
-END_POINTERS
+
+IMPLEMENT_CLASS(DDropItem, false, true)
+
+IMPLEMENT_POINTERS_START(DDropItem)
+IMPLEMENT_POINTER(Next)
+IMPLEMENT_POINTERS_END
+
+DEFINE_FIELD(DDropItem, Next)
+DEFINE_FIELD(DDropItem, Name)
+DEFINE_FIELD(DDropItem, Probability)
+DEFINE_FIELD(DDropItem, Amount)
 
 void PrintMiscActorInfo(AActor *query)
 {
@@ -6643,5 +7921,6 @@ void PrintMiscActorInfo(AActor *query)
 			query->floorz, query->ceilingz);
 		Printf("\nSpeed= %f, velocity= x:%f, y:%f, z:%f, combined:%f.\n",
 			query->Speed, query->Vel.X, query->Vel.Y, query->Vel.Z, query->Vel.Length());
+		Printf("Scale: x:%f, y:%f\n", query->Scale.X, query->Scale.Y);
 	}
 }

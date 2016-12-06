@@ -95,7 +95,7 @@ public:
 		desc->CalcIndent();
 	}
 
-	void Destroy()
+	void Destroy() override
 	{
 		if (mStartItem >= 0)
 		{
@@ -331,7 +331,7 @@ public:
 	}
 };
 
-IMPLEMENT_ABSTRACT_CLASS(DColorPickerMenu)
+IMPLEMENT_CLASS(DColorPickerMenu, true, false)
 
 CCMD(undocolorpic)
 {

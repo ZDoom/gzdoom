@@ -1,0 +1,12 @@
+
+class SoundEnvironment : Actor native
+{
+	default
+	{
+		+NOSECTOR
+		+NOBLOCKMAP
+		+NOGRAVITY
+		+DONTSPLASH
+	}
+}
+

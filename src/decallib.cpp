@@ -119,9 +119,11 @@ protected:
 	DDecalThinker () : DThinker (STAT_DECALTHINKER) {}
 };
 
-IMPLEMENT_POINTY_CLASS (DDecalThinker)
- DECLARE_POINTER (TheDecal)
-END_POINTERS
+IMPLEMENT_CLASS(DDecalThinker, false, true)
+
+IMPLEMENT_POINTERS_START(DDecalThinker)
+	IMPLEMENT_POINTER(TheDecal)
+IMPLEMENT_POINTERS_END
 
 void DDecalThinker::Serialize(FSerializer &arc)
 {
@@ -530,7 +532,7 @@ void FDecalLib::ParseDecal (FScanner &sc)
 			sc.MustGetString ();
 			if (!sc.Compare("BloodDefault"))
 			{
-				newdecal.ShadeColor = V_GetColor (NULL, sc.String);
+				newdecal.ShadeColor = V_GetColor (NULL, sc);
 			}
 			else
 			{
@@ -545,8 +547,8 @@ void FDecalLib::ParseDecal (FScanner &sc)
 		case DECAL_COLORS:
 			DWORD startcolor, endcolor;
 
-			sc.MustGetString (); startcolor = V_GetColor (NULL, sc.String);
-			sc.MustGetString (); endcolor   = V_GetColor (NULL, sc.String);
+			sc.MustGetString (); startcolor = V_GetColor (NULL, sc);
+			sc.MustGetString (); endcolor   = V_GetColor (NULL, sc);
 			newdecal.Translation = GenerateTranslation (startcolor, endcolor)->Index;
 			break;
 
@@ -817,7 +819,7 @@ void FDecalLib::ParseColorchanger (FScanner &sc)
 		else if (sc.Compare ("Color"))
 		{
 			sc.MustGetString ();
-			goal = V_GetColor (NULL, sc.String);
+			goal = V_GetColor (NULL, sc);
 		}
 		else
 		{
@@ -1151,7 +1153,7 @@ FDecalAnimator::~FDecalAnimator ()
 {
 }
 
-IMPLEMENT_CLASS (DDecalFader)
+IMPLEMENT_CLASS(DDecalFader, false, false)
 
 void DDecalFader::Serialize(FSerializer &arc)
 {
@@ -1200,7 +1202,7 @@ DThinker *FDecalFaderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 	return fader;
 }
 
-IMPLEMENT_CLASS (DDecalStretcher)
+IMPLEMENT_CLASS(DDecalStretcher, false, false)
 
 void DDecalStretcher::Serialize(FSerializer &arc)
 {
@@ -1288,7 +1290,7 @@ void DDecalStretcher::Tick ()
 	}
 }
 
-IMPLEMENT_CLASS (DDecalSlider)
+IMPLEMENT_CLASS(DDecalSlider, false, false)
 
 void DDecalSlider::Serialize(FSerializer &arc)
 {
@@ -1368,8 +1370,7 @@ FDecalAnimator *FDecalLib::FindAnimator (const char *name)
 	return NULL;
 }
 
-
-IMPLEMENT_CLASS (DDecalColorer)
+IMPLEMENT_CLASS(DDecalColorer, false, false)
 
 void DDecalColorer::Serialize(FSerializer &arc)
 {

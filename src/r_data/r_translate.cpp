@@ -1205,20 +1205,37 @@ void R_GetPlayerTranslation (int color, const FPlayerColorSet *colorset, FPlayer
 //----------------------------------------------------------------------------
 static TMap<FName, int> customTranslationMap;
 
-int R_FindCustomTranslation(const char *name)
+int R_FindCustomTranslation(FName name)
 {
-	if (name == nullptr)
+	switch (name)
 	{
-		return -1;
-	}
-	// Ice is a special case which will remain in its original slot.
-	if (!stricmp(name, "Ice"))
-	{
+	case NAME_Ice:
+		// Ice is a special case which will remain in its original slot.
 		return TRANSLATION(TRANSLATION_Standard, 7);
-	}
-	else if (!stricmp(name, "None"))
-	{
+
+	case NAME_None:
 		return 0;
+
+	case NAME_RainPillar1:
+	case NAME_RainPillar2:
+	case NAME_RainPillar3:
+	case NAME_RainPillar4:
+	case NAME_RainPillar5:
+	case NAME_RainPillar6:
+	case NAME_RainPillar7:
+	case NAME_RainPillar8:
+		return TRANSLATION(TRANSLATION_RainPillar, name.GetIndex() - NAME_RainPillar1);
+
+	case NAME_Player1:
+	case NAME_Player2:
+	case NAME_Player3:
+	case NAME_Player4:
+	case NAME_Player5:
+	case NAME_Player6:
+	case NAME_Player7:
+	case NAME_Player8:
+		return TRANSLATION(TRANSLATION_Players, name.GetIndex() - NAME_Player1);
+
 	}
 	int *t = customTranslationMap.CheckKey(FName(name, true));
 	return (t != nullptr)? *t : -1;

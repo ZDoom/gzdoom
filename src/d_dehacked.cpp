@@ -70,7 +70,13 @@
 #include "doomerrors.h"
 #include "p_effect.h"
 #include "serializer.h"
+#include "thingdef.h"
+#include "info.h"
+#include "v_text.h"
 #include "vmbuilder.h"
+#include "a_armor.h"
+#include "a_ammo.h"
+#include "a_health.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -163,36 +169,25 @@ static TArray<CodePointerAlias> MBFCodePointers;
 
 struct AmmoPerAttack
 {
-	VMNativeFunction **func;
+	ENamedName func;
 	int ammocount;
+	VMFunction *ptr;
 };
-
-DECLARE_ACTION(A_Punch)
-DECLARE_ACTION(A_FirePistol)
-DECLARE_ACTION(A_FireShotgun)
-DECLARE_ACTION(A_FireShotgun2)
-DECLARE_ACTION(A_FireCGun)
-DECLARE_ACTION(A_FireMissile)
-DECLARE_ACTION(A_Saw)
-DECLARE_ACTION(A_FirePlasma)
-DECLARE_ACTION(A_FireBFG)
-DECLARE_ACTION(A_FireOldBFG)
-DECLARE_ACTION(A_FireRailgun)
 
 // Default ammo use of the various weapon attacks
 static AmmoPerAttack AmmoPerAttacks[] = {
-	{ &A_Punch_VMPtr, 0},
-	{ &A_FirePistol_VMPtr, 1},
-	{ &A_FireShotgun_VMPtr, 1}, 
-	{ &A_FireShotgun2_VMPtr, 2},
-	{ &A_FireCGun_VMPtr, 1},
-	{ &A_FireMissile_VMPtr, 1},
-	{ &A_Saw_VMPtr, 0},
-	{ &A_FirePlasma_VMPtr, 1},
-	{ &A_FireBFG_VMPtr, -1},	// uses deh.BFGCells
-	{ &A_FireOldBFG_VMPtr, 1},
-	{ &A_FireRailgun_VMPtr, 1},
-	{ NULL, 0}
+	{ NAME_A_Punch, 0},
+	{ NAME_A_FirePistol, 1},
+	{ NAME_A_FireShotgun, 1},
+	{ NAME_A_FireShotgun2, 2},
+	{ NAME_A_FireCGun, 1},
+	{ NAME_A_FireMissile, 1},
+	{ NAME_A_Saw, 0},
+	{ NAME_A_FirePlasma, 1},
+	{ NAME_A_FireBFG, -1},	// uses deh.BFGCells
+	{ NAME_A_FireOldBFG, 1},
+	{ NAME_A_FireRailgun, 1},
+	{ NAME_None, 0}
 };
 
 
@@ -220,6 +215,12 @@ DehInfo deh =
 	40,		// BFG cells per shot
 };
 
+DEFINE_FIELD_X(DehInfo, DehInfo, MaxSoulsphere)
+DEFINE_FIELD_X(DehInfo, DehInfo, ExplosionStyle)
+DEFINE_FIELD_X(DehInfo, DehInfo, ExplosionAlpha)
+DEFINE_FIELD_X(DehInfo, DehInfo, NoAutofreeze)
+DEFINE_FIELD_X(DehInfo, DehInfo, BFGCells)
+
 // Doom identified pickup items by their sprites. ZDoom prefers to use their
 // class type to identify them instead. To support the traditional Doom
 // behavior, for every thing touched by dehacked that has the MF_PICKUP flag,
@@ -227,9 +228,11 @@ DehInfo deh =
 // from the original actor's defaults. The original actor is then changed to
 // spawn the new class.
 
-IMPLEMENT_POINTY_CLASS (ADehackedPickup)
- DECLARE_POINTER (RealPickup)
-END_POINTERS
+IMPLEMENT_CLASS(ADehackedPickup, false, true)
+
+IMPLEMENT_POINTERS_START(ADehackedPickup)
+	IMPLEMENT_POINTER(RealPickup)
+IMPLEMENT_POINTERS_END
 
 TArray<PClassActor *> TouchedActors;
 
@@ -794,7 +797,7 @@ void SetDehParams(FState *state, int codepointer)
 	
 	// Let's identify the codepointer we're dealing with.
 	PFunction *sym;
-	sym = dyn_cast<PFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(FName(MBFCodePointers[codepointer].name), true));
+	sym = dyn_cast<PFunction>(RUNTIME_CLASS(AStateProvider)->Symbols.FindSymbol(FName(MBFCodePointers[codepointer].name), true));
 	if (sym == NULL) return;
 
 	if (codepointer < 0 || (unsigned)codepointer >= countof(MBFCodePointerFactories))
@@ -804,22 +807,26 @@ void SetDehParams(FState *state, int codepointer)
 	}
 	else
 	{
-		VMFunctionBuilder buildit;
+		int numargs = sym->GetImplicitArgs();
+		VMFunctionBuilder buildit(numargs);
 		// Allocate registers used to pass parameters in.
 		// self, stateowner, state (all are pointers)
-		buildit.Registers[REGT_POINTER].Get(NAP);
+		buildit.Registers[REGT_POINTER].Get(numargs);
 		// Emit code to pass the standard action function parameters.
-		for (int i = 0; i < NAP; i++)
+		for (int i = 0; i < numargs; i++)
 		{
 			buildit.Emit(OP_PARAM, 0, REGT_POINTER, i);
 		}
 		// Emit code for action parameters.
 		int argcount = MBFCodePointerFactories[codepointer](buildit, value1, value2);
-		buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(sym->Variants[0].Implementation, ATAG_OBJECT), NAP + argcount, 0);
+		buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(sym->Variants[0].Implementation, ATAG_OBJECT), numargs + argcount, 0);
 		// Attach it to the state.
-		VMScriptFunction *sfunc = buildit.MakeFunction();
-		sfunc->NumArgs = NAP;
+		VMScriptFunction *sfunc = new VMScriptFunction;
+		buildit.MakeFunction(sfunc);
+		sfunc->NumArgs = numargs;
+		sfunc->ImplicitArgs = numargs;
 		state->SetAction(sfunc);
+		sfunc->PrintableName.Format("Dehacked.%s.%d.%d", MBFCodePointers[codepointer].name.GetChars(), value1, value2);
 	}
 }
 
@@ -1466,15 +1473,16 @@ static int PatchFrame (int frameNum)
 
 	if (info != &dummy)
 	{
-		info->DefineFlags |= SDF_DEHACKED;	// Signals the state has been modified by dehacked
+		info->StateFlags |= STF_DEHACKED;	// Signals the state has been modified by dehacked
 		if ((unsigned)(frame & 0x7fff) > 63)
 		{
-			Printf ("Frame %d: Subnumber must be in range [0,63]\n", frameNum);
+			Printf("Frame %d: Subnumber must be in range [0,63]\n", frameNum);
 		}
 		info->Tics = tics;
 		info->Misc1 = misc1;
 		info->Frame = frame & 0x3f;
-		info->Fullbright = frame & 0x8000 ? true : false;
+		if (frame & 0x8000) info->StateFlags |= STF_FULLBRIGHT;
+		else info->StateFlags &= ~STF_FULLBRIGHT;
 	}
 
 	return result;
@@ -2101,23 +2109,24 @@ static int PatchCodePtrs (int dummy)
 					if (!symname.CompareNoCase(MBFCodePointers[i].alias))
 					{
 						symname = MBFCodePointers[i].name;
-						Printf("%s --> %s\n", MBFCodePointers[i].alias, MBFCodePointers[i].name.GetChars());
+						DPrintf(DMSG_SPAMMY, "%s --> %s\n", MBFCodePointers[i].alias, MBFCodePointers[i].name.GetChars());
 					}
 				}
 
 				// This skips the action table and goes directly to the internal symbol table
 				// DEH compatible functions are easy to recognize.
-				PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(symname, true));
+				PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AStateProvider)->Symbols.FindSymbol(symname, true));
 				if (sym == NULL)
 				{
-					Printf("Frame %d: Unknown code pointer '%s'\n", frame, Line2);
+					Printf(TEXTCOLOR_RED "Frame %d: Unknown code pointer '%s'\n", frame, Line2);
 				}
 				else
 				{
 					TArray<DWORD> &args = sym->Variants[0].ArgFlags;
-					if ((sym->Flags & (VARF_Method | VARF_Action)) != (VARF_Method | VARF_Action) || (args.Size() > NAP && !(args[NAP] & VARF_Optional)))
+					unsigned numargs = sym->GetImplicitArgs();
+					if ((sym->Variants[0].Flags & VARF_Virtual || (args.Size() > numargs && !(args[numargs] & VARF_Optional))))
 					{
-						Printf("Frame %d: Incompatible code pointer '%s'\n", frame, Line2);
+						Printf(TEXTCOLOR_RED "Frame %d: Incompatible code pointer '%s'\n", frame, Line2);
 						sym = NULL;
 					}
 				}
@@ -2715,11 +2724,11 @@ static bool LoadDehSupp ()
 					}
 					else
 					{
-						// all relevant code pointers are either defined in AInventory 
+						// all relevant code pointers are either defined in AStateProvider
 						// or AActor so this will find all of them.
 						FString name = "A_";
 						name << sc.String;
-						PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(name, true));
+						PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AStateProvider)->Symbols.FindSymbol(name, true));
 						if (sym == NULL)
 						{
 							sc.ScriptError("Unknown code pointer '%s'", sc.String);
@@ -2727,7 +2736,8 @@ static bool LoadDehSupp ()
 						else
 						{
 							TArray<DWORD> &args = sym->Variants[0].ArgFlags;
-							if ((sym->Flags & (VARF_Method|VARF_Action)) != (VARF_Method | VARF_Action) || (args.Size() > NAP && !(args[NAP] & VARF_Optional)))
+							unsigned numargs = sym->GetImplicitArgs();
+							if ((sym->Variants[0].Flags & VARF_Virtual || (args.Size() > numargs && !(args[numargs] & VARF_Optional))))
 							{
 								sc.ScriptMessage("Incompatible code pointer '%s'", sc.String);
 							}
@@ -3075,9 +3085,14 @@ void FinishDehPatch ()
 					break;	// State has already been checked so we reached a loop
 				}
 				StateVisited[state] = true;
-				for(unsigned j = 0; AmmoPerAttacks[j].func != NULL; j++)
+				for(unsigned j = 0; AmmoPerAttacks[j].func != NAME_None; j++)
 				{
-					if (state->ActionFunc == *AmmoPerAttacks[j].func)
+					if (AmmoPerAttacks[j].ptr == nullptr)
+					{
+						auto p = dyn_cast<PFunction>(RUNTIME_CLASS(AStateProvider)->Symbols.FindSymbol(AmmoPerAttacks[j].func, true));
+						if (p != nullptr) AmmoPerAttacks[j].ptr = p->Variants[0].Implementation;
+					}
+					if (state->ActionFunc == AmmoPerAttacks[j].ptr)
 					{
 						found = true;
 						int use = AmmoPerAttacks[j].ammocount;
@@ -3131,7 +3146,7 @@ bool ADehackedPickup::TryPickup (AActor *&toucher)
 	return false;
 }
 
-const char *ADehackedPickup::PickupMessage ()
+FString ADehackedPickup::PickupMessage ()
 {
 	if (RealPickup != nullptr)
 		return RealPickup->PickupMessage ();
@@ -3141,7 +3156,7 @@ const char *ADehackedPickup::PickupMessage ()
 bool ADehackedPickup::ShouldStay ()
 {
 	if (RealPickup != nullptr)
-		return RealPickup->ShouldStay ();
+		return RealPickup->CallShouldStay ();
 	else return true;
 }
 

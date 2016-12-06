@@ -1,0 +1,159 @@
+class DynamicLight : Actor native
+{
+	Default
+	{
+		Height 0;
+		Radius 0.1;
+		FloatBobPhase 0;
+		+NOBLOCKMAP
+		+NOGRAVITY
+		+FIXMAPTHINGPOS
+		+INVISIBLE
+	}
+}
+
+
+class PointLight : DynamicLight
+{
+	Default
+	{
+		DynamicLight.Type "Point";
+	}
+}
+
+class PointLightPulse : PointLight
+{
+	Default
+	{
+		DynamicLight.Type "Pulse";
+	}
+}
+
+class PointLightFlicker : PointLight
+{
+	Default
+	{
+		DynamicLight.Type "Flicker";
+	}
+}
+
+class SectorPointLight : PointLight
+{
+	Default
+	{
+		DynamicLight.Type "Sector";
+	}
+}
+
+class PointLightFlickerRandom : PointLight
+{
+	Default
+	{
+		DynamicLight.Type "RandomFlicker";
+	}
+}
+
+// MISSILEMORE and MISSILEEVENMORE are used by the lights for additive and subtractive lights
+
+class PointLightAdditive : PointLight
+{
+	Default
+	{
+		+MISSILEMORE
+	}
+}
+
+class PointLightPulseAdditive : PointLightPulse
+{
+	Default
+	{
+		+MISSILEMORE
+	}
+}
+
+class PointLightFlickerAdditive : PointLightFlicker
+{
+	Default
+	{
+		+MISSILEMORE
+	}
+}
+
+class SectorPointLightAdditive : SectorPointLight
+{
+	Default
+	{
+		+MISSILEMORE
+	}
+}
+
+class PointLightFlickerRandomAdditive :PointLightFlickerRandom
+{
+	Default
+	{
+		+MISSILEMORE
+	}
+}
+
+class PointLightSubtractive : PointLight
+{
+	Default
+	{
+		+MISSILEEVENMORE
+	}
+}
+
+class PointLightPulseSubtractive : PointLightPulse
+{
+	Default
+	{
+		+MISSILEEVENMORE
+	}
+}
+
+class PointLightFlickerSubtractive : PointLightFlicker
+{
+	Default
+	{
+		+MISSILEEVENMORE
+	}
+}
+
+class SectorPointLightSubtractive : SectorPointLight
+{
+	Default
+	{
+		+MISSILEEVENMORE
+	}
+}
+
+class PointLightFlickerRandomSubtractive : PointLightFlickerRandom
+{
+	Default
+	{
+		+MISSILEEVENMORE
+	}
+}
+
+
+class VavoomLight : DynamicLight native
+{
+	Default
+	{
+	}
+}
+
+class VavoomLightWhite : VavoomLight native
+{
+	Default
+	{
+	}
+}
+
+class VavoomLightColor : VavoomLight native
+{
+	Default
+	{
+	}
+}
+

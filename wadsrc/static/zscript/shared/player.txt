@@ -1,0 +1,264 @@
+class PlayerPawn : Actor native
+{
+	
+	native int			crouchsprite;
+	native int			MaxHealth;
+	native int			MugShotMaxHealth;
+	native int			RunHealth;
+	native int			PlayerFlags;
+	native Inventory	InvFirst;		// first inventory item displayed on inventory bar
+	native Inventory	InvSel;			// selected inventory item
+	native meta String 	DisplayName;	// Display name (used in menus, etc.)
+	native meta String 	SoundClass;		// Sound class
+	native meta String 	Face;			// Doom status bar face (when used)
+	native meta String 	Portrait;
+	native meta String 	Slot[10];
+	native meta Name	InvulMode;
+	native meta Name	HealingRadiusType;
+	native meta double 	HexenArmor[5];
+	native meta uint8	ColorRangeStart;	// Skin color range
+	native meta uint8	ColorRangeEnd;
+	//FPlayerColorSetMap ColorSets;
+	//PainFlashList PainFlashes;
+	
+	// [GRB] Player class properties
+	native double		JumpZ;
+	native double		GruntSpeed;
+	native double		FallingScreamMinSpeed, FallingScreamMaxSpeed;
+	native double		ViewHeight;
+	native double		ForwardMove1, ForwardMove2;
+	native double		SideMove1, SideMove2;
+	native TextureID	ScoreIcon;
+	native int			SpawnMask;
+	native Name			MorphWeapon;
+	native double		AttackZOffset;			// attack height, relative to player center
+	native double		UseRange;				// [NS] Distance at which player can +use
+	native double		AirCapacity;			// Multiplier for air supply underwater.
+	native Class<Actor> FlechetteType;
+	native color 		DamageFade;				// [CW] Fades for when you are being damaged.
+	native double		ViewBob;				// [SP] ViewBob Multiplier
+	
+	Default
+	{
+		Health 100;
+		Radius 16;
+		Height 56;
+		Mass 100;
+		Painchance 255;
+		Speed 1;
+		+SOLID
+		+SHOOTABLE
+		+DROPOFF
+		+PICKUP
+		+NOTDMATCH
+		+FRIENDLY
+		+SLIDESONWALLS
+		+CANPASS
+		+CANPUSHWALLS
+		+FLOORCLIP
+		+WINDTHRUST
+		+TELESTOMP
+		+NOBLOCKMONST
+		Player.AttackZOffset 8;
+		Player.JumpZ 8;
+		Player.GruntSpeed 12;
+		Player.FallingScreamSpeed 35,40;
+		Player.ViewHeight 41;
+		Player.UseRange 64;
+		Player.ForwardMove 1,1;
+		Player.SideMove 1,1;
+		Player.ColorRange 0,0;
+		Player.SoundClass "player";
+		Player.DamageScreenColor "ff 00 00";
+		Player.MugShotMaxHealth 0;
+		Player.FlechetteType "ArtiPoisonBag3";
+		Player.AirCapacity 1;
+		Player.ViewBob 1;
+		Obituary "$OB_MPDEFAULT";
+	}
+	
+	virtual void PlayIdle ()
+	{
+		if (InStateSequence(CurState, SeeState))
+			SetState (SpawnState);
+	}
+
+	virtual void PlayRunning ()
+	{
+		if (InStateSequence(CurState, SpawnState) && SeeState != NULL)
+			SetState (SeeState);
+	}
+	
+	virtual void PlayAttacking ()
+	{
+		if (MissileState != null) SetState (MissileState);
+	}
+
+	virtual void PlayAttacking2 ()
+	{
+		if (MeleeState != null) SetState (MeleeState);
+	}
+	
+	virtual void MorphPlayerThink()
+	{
+	}
+
+	native int GetMaxHealth();
+	native bool ResetAirSupply (bool playgasp = false);
+}
+
+class PlayerChunk : PlayerPawn native
+{
+	Default
+	{
+		+NOSKIN
+		-SOLID
+		-SHOOTABLE
+		-PICKUP
+		-NOTDMATCH
+		-FRIENDLY
+		-SLIDESONWALLS
+		-CANPUSHWALLS
+		-FLOORCLIP
+		-WINDTHRUST
+		-TELESTOMP
+	}
+}
+
+class PSprite : Object native
+{
+	native readonly State CurState; 
+	native readonly Actor Caller;
+	native readonly PSprite Next;
+	native readonly PlayerInfo Owner;
+	native SpriteID Sprite;
+	native int Frame;
+	native readonly int ID;
+	native Bool processPending;
+	native double x;
+	native double y;
+	native double oldx;
+	native double oldy;
+	native Bool firstTic;
+	native int Tics;
+	native bool bAddWeapon;
+	native bool bAddBob;
+	native bool bPowDouble;
+	native bool bCVarFast;
+	native bool bFlip;	
+	
+	native void SetState(State newstate, bool pending = false);
+
+}
+
+enum EPlayerState
+{
+	PST_LIVE,	// Playing or camping.
+	PST_DEAD,	// Dead on the ground, view follows killer.
+	PST_REBORN,	// Ready to restart/respawn???
+	PST_ENTER,	// [BC] Entered the game
+	PST_GONE	// Player has left the game
+}
+
+struct PlayerInfo native	// this is what internally is known as player_t
+{
+	native readonly PlayerPawn mo;
+	native uint8 playerstate;
+	native uint original_oldbuttons;
+	native readonly Class<PlayerPawn> cls;
+	native float DesiredFOV;
+	native readonly float FOV;
+	native double viewz;
+	native double viewheight;
+	native double deltaviewheight;
+	native double bob;
+	native vector2 vel;
+	native bool centering;
+	native uint8 turnticks;
+	native bool attackdown;
+	native bool usedown;
+	native uint oldbuttons;
+	native int health;
+	native int inventorytics;
+	native uint8 CurrentPlayerClass;
+	native int frags[MAXPLAYERS];
+	native int fragcount;
+	native int lastkilltime;
+	native uint8 multicount;
+	native uint8 spreecount;
+	native uint16 WeaponState;
+	native Weapon ReadyWeapon;
+	native Weapon PendingWeapon;
+	native PSprite psprites;
+	native int cheats;
+	native int timefreezer;
+	native int16 refire;
+	native int16 inconsistent;
+	native bool waiting;
+	native int killcount;
+	native int itemcount;
+	native int secretcount;
+	native int damagecount;
+	native int bonuscount;
+	native int hazardcount;
+	native int hazardinterval;
+	native Name hazardtype;
+	native int poisoncount;
+	native Name poisontype;
+	native Name poisonpaintype;
+	native Actor poisoner;
+	native Actor attacker;
+	native int extralight;
+	native int16 fixedcolormap;
+	native int16 fixedlightlevel;
+	native int morphtics;
+	native Class<PlayerPawn>MorphedPlayerClass;
+	native int MorphStyle;
+	native Class<Actor> MorphExitFlash;
+	native Class<Weapon> PremorphWeapon;
+	native int chickenPeck;
+	native int jumpTics;
+	native bool onground;
+	native int respawn_time;
+	native Actor camera;
+	native int air_finished;
+	native Name LastDamageType;
+	native Actor MUSINFOactor;
+	native int8 MUSINFOtics;
+	native bool settings_controller;
+	native int8 crouching;
+	native int8 crouchdir;
+	native Bot bot;
+	native float BlendR;
+	native float BlendG;
+	native float BlendB;
+	native float BlendA;
+	native String LogText;
+	native double MinPitch;
+	native double MaxPitch;
+	native double crouchfactor;
+	native double crouchoffset;
+	native double crouchviewdelta;
+	native Actor ConversationNPC;
+	native Actor ConversationPC;
+	native double ConversationNPCAngle;
+	native bool ConversationFaceTalker;
+/* these are not doable yet
+ticcmd_t	cmd;
+usercmd_t	original_cmd;
+userinfo_t	userinfo;				// [RH] who is this?
+FWeaponSlots weapons;
+*/
+	
+
+	native bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false);
+	native bool PoisonPlayer(Actor poisoner, Actor source, int poison);
+	native void PoisonDamage(Actor source, int damage, bool playPainSound);
+	native void SetPsprite(int id, State stat, bool pending = false);
+	native void SetSafeFlash(Weapon weap, State flashstate, int index);
+	native PSprite GetPSprite(int id);
+	native PSprite FindPSprite(int id);
+	native void SetLogNumber (int text);
+	native void SetLogText (String text);
+
+}

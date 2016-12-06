@@ -1027,6 +1027,12 @@ void D_DoomLoop ()
 			}
 			D_ErrorCleanup ();
 		}
+		catch (CVMAbortException &error)
+		{
+			error.MaybePrintMessage();
+			Printf("%s", error.stacktrace);
+			D_ErrorCleanup();
+		}
 	}
 }
 
@@ -1838,10 +1844,10 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 		else if (!nextKey.CompareNoCase("STARTUPCOLORS"))
 		{
 			sc.MustGetString();
-			DoomStartupInfo.FgColor = V_GetColor(NULL, sc.String);
+			DoomStartupInfo.FgColor = V_GetColor(NULL, sc);
 			sc.MustGetStringName(",");
 			sc.MustGetString();
-			DoomStartupInfo.BkColor = V_GetColor(NULL, sc.String);
+			DoomStartupInfo.BkColor = V_GetColor(NULL, sc);
 		}
 		else if (!nextKey.CompareNoCase("STARTUPTYPE"))
 		{
@@ -2647,7 +2653,6 @@ void D_DoomMain (void)
 		}
 
 		D_DoomLoop ();		// this only returns if a 'restart' CCMD is given.
-maxberestart:
 		// 
 		// Clean up after a restart
 		//

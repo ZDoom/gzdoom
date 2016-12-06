@@ -49,6 +49,10 @@ extern REGINFO ARegTail;
 extern REGINFO CRegHead;
 extern REGINFO CRegTail;
 
+// List of class fields
+extern REGINFO FRegHead;
+extern REGINFO FRegTail;
+
 // List of properties
 extern REGINFO GRegHead;
 extern REGINFO GRegTail;

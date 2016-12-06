@@ -58,8 +58,6 @@
 #include "sbar.h"
 #include "m_swap.h"
 #include "a_sharedglobal.h"
-#include "a_doomglobal.h"
-#include "a_strifeglobal.h"
 #include "v_video.h"
 #include "w_wad.h"
 #include "r_sky.h"
@@ -83,8 +81,10 @@
 #include "a_morph.h"
 #include "i_music.h"
 #include "serializer.h"
-
-#include "g_shared/a_pickups.h"
+#include "thingdef.h"
+#include "a_pickups.h"
+#include "a_armor.h"
+#include "a_ammo.h"
 
 extern FILE *Logfile;
 
@@ -1368,9 +1368,11 @@ private:
 	DPlaneWatcher() {}
 };
 
-IMPLEMENT_POINTY_CLASS (DPlaneWatcher)
- DECLARE_POINTER (Activator)
-END_POINTERS
+IMPLEMENT_CLASS(DPlaneWatcher, false, true)
+
+IMPLEMENT_POINTERS_START(DPlaneWatcher)
+	IMPLEMENT_POINTER(Activator)
+IMPLEMENT_POINTERS_END
 
 DPlaneWatcher::DPlaneWatcher (AActor *it, line_t *line, int lineSide, bool ceiling,
 	int tag, int height, int special,
@@ -2857,10 +2859,12 @@ void FBehavior::StaticStopMyScripts (AActor *actor)
 
 //---- The ACS Interpreter ----//
 
-IMPLEMENT_POINTY_CLASS (DACSThinker)
- DECLARE_POINTER(LastScript)
- DECLARE_POINTER(Scripts)
-END_POINTERS
+IMPLEMENT_CLASS(DACSThinker, false, true)
+
+IMPLEMENT_POINTERS_START(DACSThinker)
+	IMPLEMENT_POINTER(LastScript)
+	IMPLEMENT_POINTER(Scripts)
+IMPLEMENT_POINTERS_END
 
 TObjPtr<DACSThinker> DACSThinker::ActiveThinker;
 
@@ -2986,11 +2990,13 @@ void DACSThinker::StopScriptsFor (AActor *actor)
 	}
 }
 
-IMPLEMENT_POINTY_CLASS (DLevelScript)
- DECLARE_POINTER(next)
- DECLARE_POINTER(prev)
- DECLARE_POINTER(activator)
-END_POINTERS
+IMPLEMENT_CLASS(DLevelScript, false, true)
+
+IMPLEMENT_POINTERS_START(DLevelScript)
+	IMPLEMENT_POINTER(next)
+	IMPLEMENT_POINTER(prev)
+	IMPLEMENT_POINTER(activator)
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //
@@ -5388,11 +5394,11 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 						{
 							if (!looping)
 							{
-								S_PlaySound(spot, chan, sid, vol, atten, local);
+								S_PlaySound(spot, chan, sid, vol, atten, !!local);
 							}
 							else if (!S_IsActorPlayingSomething(spot, chan & 7, sid))
 							{
-								S_PlaySound(spot, chan | CHAN_LOOP, sid, vol, atten, local);
+								S_PlaySound(spot, chan | CHAN_LOOP, sid, vol, atten, !!local);
 							}
 						}
 					}
@@ -6101,6 +6107,28 @@ static bool CharArrayParms(int &capacity, int &offset, int &a, int *Stack, int &
 	offset += STACK(2);
 	sp -= 2;
 	return true;
+}
+
+static void SetMarineWeapon(AActor *marine, int weapon)
+{
+	static VMFunction *smw = nullptr;
+	if (smw == nullptr) smw = PClass::FindFunction(NAME_ScriptedMarine, NAME_SetWeapon);
+	if (smw)
+	{
+		VMValue params[2] = { marine, weapon };
+		GlobalVMStack.Call(smw, params, 2, nullptr, 0, nullptr);
+	}
+}
+
+static void SetMarineSprite(AActor *marine, PClassActor *source)
+{
+	static VMFunction *sms = nullptr;
+	if (sms == nullptr) sms = PClass::FindFunction(NAME_ScriptedMarine, NAME_SetSprite);
+	if (sms)
+	{
+		VMValue params[2] = { marine, source };
+		GlobalVMStack.Call(sms, params, 2, nullptr, 0, nullptr);
+	}
 }
 
 int DLevelScript::RunScript ()
@@ -8543,15 +8571,15 @@ scriptwait:
 
 		case PCD_GETSIGILPIECES:
 			{
-				ASigil *sigil;
+				AInventory *sigil;
 
-				if (activator == NULL || (sigil = activator->FindInventory<ASigil>()) == NULL)
+				if (activator == NULL || (sigil = activator->FindInventory(PClass::FindActor(NAME_Sigil))) == NULL)
 				{
 					PushToStack (0);
 				}
 				else
 				{
-					PushToStack (sigil->NumPieces);
+					PushToStack (sigil->health);
 				}
 			}
 			break;
@@ -8939,20 +8967,19 @@ scriptwait:
 		case PCD_SETMARINEWEAPON:
 			if (STACK(2) != 0)
 			{
-				AScriptedMarine *marine;
-				TActorIterator<AScriptedMarine> iterator (STACK(2));
+				AActor *marine;
+				NActorIterator iterator("ScriptedMarine", STACK(2));
 
 				while ((marine = iterator.Next()) != NULL)
 				{
-					marine->SetWeapon ((AScriptedMarine::EMarineWeapon)STACK(1));
+					SetMarineWeapon(marine, STACK(1));
 				}
 			}
 			else
 			{
-				if (activator != NULL && activator->IsKindOf (RUNTIME_CLASS(AScriptedMarine)))
+				if (activator != nullptr && activator->IsKindOf (PClass::FindClass("ScriptedMarine")))
 				{
-					barrier_cast<AScriptedMarine *>(activator)->SetWeapon (
-						(AScriptedMarine::EMarineWeapon)STACK(1));
+					SetMarineWeapon(activator, STACK(1));
 				}
 			}
 			sp -= 2;
@@ -8966,19 +8993,19 @@ scriptwait:
 				{
 					if (STACK(2) != 0)
 					{
-						AScriptedMarine *marine;
-						TActorIterator<AScriptedMarine> iterator (STACK(2));
+						AActor *marine;
+						NActorIterator iterator("ScriptedMarine", STACK(2));
 
 						while ((marine = iterator.Next()) != NULL)
 						{
-							marine->SetSprite (type);
+							SetMarineSprite(marine, type);
 						}
 					}
 					else
 					{
-						if (activator != NULL && activator->IsKindOf (RUNTIME_CLASS(AScriptedMarine)))
+						if (activator != nullptr && activator->IsKindOf(PClass::FindClass("ScriptedMarine")))
 						{
-							barrier_cast<AScriptedMarine *>(activator)->SetSprite (type);
+							SetMarineSprite(activator, type);
 						}
 					}
 				}

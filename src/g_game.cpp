@@ -478,15 +478,15 @@ CCMD (useflechette)
 { // Select from one of arti_poisonbag1-3, whichever the player has
 	static const ENamedName bagnames[3] =
 	{
+		NAME_ArtiPoisonBag3,	// use type 3 first because that's the default when the player has none specified.
 		NAME_ArtiPoisonBag1,
-		NAME_ArtiPoisonBag2,
-		NAME_ArtiPoisonBag3
+		NAME_ArtiPoisonBag2
 	};
 
 	if (who == NULL)
 		return;
 
-	PClassActor *type = GetFlechetteType(who);
+	PClassActor *type = who->FlechetteType;
 	if (type != NULL)
 	{
 		AInventory *item;
@@ -497,7 +497,7 @@ CCMD (useflechette)
 		}
 	}
 
-	// The default flechette could not be found. Try all 3 types then.
+	// The default flechette could not be found, or the player had no default. Try all 3 types then.
 	for (int j = 0; j < 3; ++j)
 	{
 		AInventory *item;
@@ -1536,6 +1536,36 @@ static FPlayerStart *SelectRandomDeathmatchSpot (int playernum, unsigned int sel
 	return &deathmatchstarts[i];
 }
 
+DEFINE_ACTION_FUNCTION(DObject, G_PickDeathmatchStart)
+{
+	PARAM_PROLOGUE;
+	unsigned int selections = deathmatchstarts.Size();
+	DVector3 pos;
+	int angle;
+	if (selections == 0)
+	{
+		angle = INT_MAX;
+		pos = DVector3(0, 0, 0);
+	}
+	else
+	{
+		unsigned int i = pr_dmspawn() % selections;
+		angle = deathmatchstarts[i].angle;
+		pos = deathmatchstarts[i].pos;
+	}
+
+	if (numret > 1)
+	{
+		ret[1].SetInt(angle);
+		numret = 2;
+	}
+	if (numret > 0)
+	{
+		ret[0].SetVector(pos);
+	}
+	return numret;
+}
+
 void G_DeathMatchSpawnPlayer (int playernum)
 {
 	unsigned int selections;
@@ -1577,6 +1607,7 @@ void G_DeathMatchSpawnPlayer (int playernum)
 	if (mo != NULL) P_PlayerStartStomp(mo);
 }
 
+
 //
 // G_PickPlayerStart
 //
@@ -1612,6 +1643,24 @@ FPlayerStart *G_PickPlayerStart(int playernum, int flags)
 		return &AllPlayerStarts[pr_pspawn(AllPlayerStarts.Size())];
 	}
 	return &playerstarts[playernum];
+}
+
+DEFINE_ACTION_FUNCTION(DObject, G_PickPlayerStart)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(playernum);
+	PARAM_INT_DEF(flags);
+	auto ps = G_PickPlayerStart(playernum, flags);
+	if (numret > 1)
+	{
+		ret[1].SetInt(ps? ps->angle : 0);
+		numret = 2;
+	}
+	if (numret > 0)
+	{
+		ret[0].SetVector(ps ? ps->pos : DVector3(0, 0, 0));
+	}
+	return numret;
 }
 
 //

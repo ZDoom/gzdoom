@@ -23,6 +23,7 @@ double c_tanh(double);
 double c_exp(double);
 double c_log(double);
 double c_log10(double);
+double c_pow(double, double);
 }
 
 
@@ -114,6 +115,7 @@ inline double cosdeg(double v)
 #define g_exp	exp
 #define g_log	log
 #define g_log10 log10
+#define g_pow	pow
 #else
 #define g_asin  c_asin
 #define g_acos  c_acos
@@ -139,6 +141,7 @@ inline double cosdeg(double v)
 #define g_exp	c_exp
 #define g_log	c_log
 #define g_log10 c_log10
+#define g_pow	c_pow
 #endif
 
 

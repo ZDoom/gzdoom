@@ -1,0 +1,1889 @@
+%include
+{
+// Allocates a new AST node off the parse state's arena.
+#define NEW_AST_NODE(type,name,tok) \
+	ZCC_##type *name = static_cast<ZCC_##type *>(stat->InitNode(sizeof(ZCC_##type), AST_##type)); \
+	SetNodeLine(name, tok)
+
+static void SetNodeLine(ZCC_TreeNode *name, ZCCToken &tok)
+{
+	name->SourceLoc = tok.SourceLoc;
+}
+
+static void SetNodeLine(ZCC_TreeNode *name, ZCC_TreeNode *node)
+{
+	name->SourceLoc = node->SourceLoc;
+}
+
+static void SetNodeLine(ZCC_TreeNode *name, int line)
+{
+	name->SourceLoc = line;
+}
+
+// If a is non-null, appends b to a. Otherwise, sets a to b.
+#define SAFE_APPEND(a,b) \
+	if (a == NULL) a = b; else AppendTreeNodeSibling(a, b);
+
+#define UNARY_EXPR(X,T) NEW_AST_NODE(ExprUnary, expr1, X); expr1->Operation = T; expr1->Operand = X; expr1->Type = NULL
+#define BINARY_EXPR(X,Y,T) NEW_AST_NODE(ExprBinary, expr2, X); expr2->Operation = T; expr2->Type = NULL; expr2->Left = X; expr2->Right = Y
+
+#define NEW_INTCONST_NODE(name,type,val,tok) \
+	NEW_AST_NODE(ExprConstant, name, tok); \
+	name->Operation = PEX_ConstValue; \
+	name->Type = type; \
+	name->IntVal = val
+
+	struct ClassFlagsBlock {
+		VM_UWORD Flags;
+		ZCC_Identifier *Replaces;
+	};
+
+	struct StateOpts {
+		ZCC_Expression *Offset;
+		ZCC_ExprConstant *Lights;
+		bool Bright;
+		bool Fast;
+		bool Slow;
+		bool NoDelay;
+		bool CanRaise;
+
+		void Zero() {
+			Offset = nullptr;
+			Lights = nullptr;
+			Bright = false;
+			Fast = false;
+			Slow = false;
+			NoDelay = false;
+			CanRaise = false;
+		}
+	};
+
+	struct VarOrFun
+	{
+		ZCC_VarName *VarNames;
+		ZCC_FuncParamDecl *FuncParams;
+		ZCC_CompoundStmt *FuncBody;
+		ENamedName FuncName;
+		int FuncFlags;
+		int SourceLoc;
+	};
+}
+
+%token_prefix ZCC_
+%token_type { ZCCToken }
+%token_destructor {}	// just to avoid a compiler warning
+%name ZCCParse
+%extra_argument { ZCCParseState *stat }
+%syntax_error
+{
+	FString unexpected, expecting;
+
+	int i;
+	int stateno = yypParser->yytos->stateno;
+
+	unexpected << "Unexpected " << ZCCTokenName(yymajor);
+
+	// Determine all the terminals that the parser would have accepted at this point
+	// (see yy_find_shift_action). This list can get quite long. Is it worthwhile to
+	// print it when not debugging the grammar, or would that be too confusing to
+	// the average user?
+	if (stateno < YY_SHIFT_MAX && (i = yy_shift_ofst[stateno])!=YY_SHIFT_USE_DFLT)
+	{
+		for (int j = 1; j < YYERRORSYMBOL; ++j)
+		{
+			int k = i + j;
+			if (k >= 0 && k < YY_ACTTAB_COUNT && yy_lookahead[k] == j)
+			{
+				expecting << (expecting.IsEmpty() ? "Expecting " : " or ") << ZCCTokenName(j);
+			}
+		}
+	}
+	stat->sc->ScriptMessage("%s\n%s\n", unexpected.GetChars(), expecting.GetChars());
+	FScriptPosition::ErrorCounter++;
+}
+%parse_accept { DPrintf(DMSG_SPAMMY, "Input accepted\n"); }
+%parse_failure { /**failed = true;*/ }
+
+%right EQ MULEQ DIVEQ MODEQ ADDEQ SUBEQ LSHEQ RSHEQ ANDEQ OREQ XOREQ URSHEQ.
+%right QUESTION COLON.
+%left OROR.
+%left ANDAND.
+%left EQEQ NEQ APPROXEQ.
+%left LT GT LTEQ GTEQ LTGTEQ IS.
+%left DOTDOT.
+%left OR.		/* Note that this is like the Ruby precedence for these */
+%left XOR.		/* three operators and not the C precedence, since */
+%left AND.		/* they are higher priority than the comparisons. */
+%left LSH RSH URSH.
+%left SUB ADD.
+%left MUL DIV MOD CROSSPROD DOTPROD.
+%left POW.
+%right UNARY ADDADD SUBSUB.
+%left DOT LPAREN LBRACKET.
+%left SCOPE.
+
+%type declarator {ZCC_Declarator *}
+%type declarator_no_fun {ZCC_Declarator *}
+%type opt_func_body {ZCC_CompoundStmt *}
+%type function_body {ZCC_CompoundStmt *}
+
+main ::= translation_unit(A). { stat->TopNode = A; DPrintf(DMSG_SPAMMY, "Parse complete\n"); }
+
+%type translation_unit {ZCC_TreeNode *}
+translation_unit(X) ::= .												{ X = NULL; }
+translation_unit(X) ::= translation_unit(X) external_declaration(B).	{ SAFE_APPEND(X,B); }
+translation_unit(X) ::= translation_unit(X) EOF.
+translation_unit(X) ::= error.											{ X = NULL; }
+
+%type external_declaration {ZCC_TreeNode *}
+external_declaration(X) ::= class_definition(A).						{ X = A; /*X-overwrites-A*/ }
+external_declaration(X) ::= struct_def(A).								{ X = A; /*X-overwrites-A*/ }
+external_declaration(X) ::= enum_def(A).								{ X = A; /*X-overwrites-A*/ }
+external_declaration(X) ::= const_def(A).								{ X = A; /*X-overwrites-A*/ }
+external_declaration(X) ::= include_def.								{ X = nullptr; }
+
+/* Optional bits. */
+opt_semicolon ::= .
+opt_semicolon ::= SEMICOLON.
+
+opt_comma ::= .
+opt_comma ::= COMMA.
+
+%type opt_expr{ZCC_Expression *}
+opt_expr(X) ::= .
+{
+	X = NULL;
+}
+opt_expr(X) ::= expr(X).
+
+
+include_def ::= INCLUDE string_constant(A).
+{
+	AddInclude(A);
+}
+
+/************ Class Definition ************/
+/* Can only occur at global scope. */
+
+%type class_definition{ZCC_Class *}
+%type class_head{ZCC_Class *}
+%type class_innards{ZCC_TreeNode *}
+%type class_member{ZCC_TreeNode *}
+%type class_body{ZCC_TreeNode *}
+
+class_definition(X) ::= class_head(A) class_body(B).
+{
+	A->Body = B;
+	X = A; /*X-overwrites-A*/
+}
+
+class_head(X) ::= EXTEND CLASS(T) IDENTIFIER(A).
+{
+	NEW_AST_NODE(Class,head,T);
+	head->NodeName = A.Name();
+	head->ParentName = nullptr;
+	head->Flags =  ZCC_Extension;
+	head->Replaces = nullptr;
+	head->Type = nullptr;
+	head->Symbol = nullptr;
+	X = head;
+}
+
+class_head(X) ::= CLASS(T) IDENTIFIER(A) class_ancestry(B) class_flags(C).
+{
+	NEW_AST_NODE(Class,head,T);
+	head->NodeName = A.Name();
+	head->ParentName = B;
+	head->Flags = C.Flags;
+	head->Replaces = C.Replaces;
+	head->Type = nullptr;
+	head->Symbol = nullptr;
+	X = head;
+}
+
+%type class_ancestry{ZCC_Identifier *}
+class_ancestry(X) ::= .						{ X = NULL; }
+class_ancestry(X) ::= COLON dottable_id(A).	{ X = A; /*X-overwrites-A*/ }
+
+%type class_flags{ClassFlagsBlock}
+class_flags(X) ::= .										{ X.Flags = 0; X.Replaces = NULL; }
+class_flags(X) ::= class_flags(A) ABSTRACT.					{ X.Flags = A.Flags | ZCC_Abstract; X.Replaces = A.Replaces; }
+class_flags(X) ::= class_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; X.Replaces = A.Replaces; }
+class_flags(X) ::= class_flags(A) ACTION.					{ X.Flags = A.Flags | ZCC_Action; X.Replaces = A.Replaces; }
+class_flags(X) ::= class_flags(A) REPLACES dottable_id(B).	{ X.Flags = A.Flags; X.Replaces = B; }
+
+/*----- Dottable Identifier -----*/
+// This can be either a single identifier or two identifiers connected by a .
+
+%type dottable_id{ZCC_Identifier *}
+
+dottable_id(X) ::= IDENTIFIER(A).
+{
+	NEW_AST_NODE(Identifier,id,A);
+	id->Id = A.Name();
+	X = id;
+}
+dottable_id(X) ::= dottable_id(A) DOT IDENTIFIER(B).
+{
+	NEW_AST_NODE(Identifier,id2,A);
+	id2->Id = B.Name();
+	AppendTreeNodeSibling(A, id2);
+	X = A; /*X-overwrites-A*/
+}
+dottable_id(X) ::= dottable_id(A) DOT DEFAULT.
+{
+	NEW_AST_NODE(Identifier,id2,A);
+	id2->Id = NAME_Default;
+	AppendTreeNodeSibling(A, id2);
+	X = A; /*X-overwrites-A*/
+}
+
+// a bit of a hack to allow the 'color' token to be used inside default properties.
+// as a variable name it is practically meaningless because it cannot defined
+// as such anywhere so it will always produce an error during processing.
+dottable_id(X) ::= dottable_id(A) DOT COLOR.
+{
+	NEW_AST_NODE(Identifier,id2,A);
+	id2->Id = NAME_Color;
+	AppendTreeNodeSibling(A, id2);
+	X = A; /*X-overwrites-A*/
+}
+
+/*------ Class Body ------*/
+// Body is a list of:
+//  * variable definitions
+//  * function definitions
+//  * enum definitions
+//  * struct definitions
+//  * state definitions
+//  * constants
+//  * defaults
+
+class_body(X) ::= SEMICOLON class_innards(A) EOF.		{ X = A; /*X-overwrites-A*/ }
+class_body(X) ::= LBRACE class_innards(A) RBRACE.		{ X = A; /*X-overwrites-A*/ }
+
+class_innards(X) ::= .									{ X = NULL; }
+class_innards(X) ::= class_innards(X) class_member(B).	{ SAFE_APPEND(X,B); }
+
+%type struct_def{ZCC_Struct *}
+%type enum_def {ZCC_Enum *}
+%type states_def {ZCC_States *}
+%type const_def {ZCC_ConstantDef *}
+
+class_member(X) ::= declarator(A).						{ X = A; /*X-overwrites-A*/ }
+class_member(X) ::= enum_def(A).						{ X = A; /*X-overwrites-A*/ }
+class_member(X) ::= struct_def(A).						{ X = A; /*X-overwrites-A*/ }
+class_member(X) ::= states_def(A).						{ X = A; /*X-overwrites-A*/ }
+class_member(X) ::= default_def(A).						{ X = A; /*X-overwrites-A*/ }
+class_member(X) ::= const_def(A).						{ X = A; /*X-overwrites-A*/ }
+
+/*----- Struct Definition -----*/
+/* Structs can define variables and enums. */
+
+%type opt_struct_body{ZCC_TreeNode *}
+%type struct_body{ZCC_TreeNode *}
+%type struct_member{ZCC_TreeNode *}
+
+struct_def(X) ::= STRUCT(T) IDENTIFIER(A) struct_flags(S) LBRACE opt_struct_body(B) RBRACE opt_semicolon.
+{
+	NEW_AST_NODE(Struct,def,T);
+	def->NodeName = A.Name();
+	def->Body = B;
+	def->Type = nullptr;
+	def->Symbol = nullptr;
+	def->Flags = S.Flags;
+	X = def;
+}
+
+%type struct_flags{ClassFlagsBlock}
+struct_flags(X) ::= .										{ X.Flags = 0; }
+struct_flags(X) ::= NATIVE.									{ X.Flags = ZCC_Native; }
+
+opt_struct_body(X) ::= .								{ X = NULL; }
+opt_struct_body(X) ::= struct_body(X).
+opt_struct_body(X) ::= error.							{ X = NULL; }
+
+
+struct_body(X) ::= struct_member(X).
+struct_body(X) ::= struct_body(A) struct_member(B).		{ X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
+
+struct_member(X) ::= declarator(A).						{ X = A; /*X-overwrites-A*/ }
+struct_member(X) ::= enum_def(A).						{ X = A; /*X-overwrites-A*/ }
+struct_member(X) ::= const_def(A).						{ X = A; /*X-overwrites-A*/ }
+
+/*----- Constant Definition ------*/
+/* Like UnrealScript, a constant's type is implied by its value's type. */
+const_def(X) ::= CONST(T) IDENTIFIER(A) EQ expr(B) SEMICOLON.
+{
+	NEW_AST_NODE(ConstantDef,def,T);
+	def->NodeName = A.Name();
+	def->Value = B;
+	def->Symbol = NULL;
+	X = def;
+}
+
+
+/*----- Enum Definition -----*/
+/* Enumerators are lists of named integers. */
+
+%type enum_list {ZCC_ConstantDef *}
+%type opt_enum_list {ZCC_ConstantDef *}
+%type enumerator {ZCC_ConstantDef *}
+
+enum_def(X) ::= ENUM(T) IDENTIFIER(A) enum_type(B) LBRACE opt_enum_list(C) RBRACE(U) opt_semicolon.
+{
+	NEW_AST_NODE(Enum,def,T);
+	def->NodeName = A.Name();
+	def->EnumType = (EZCCBuiltinType)B.Int;
+	def->Elements = C;
+	def->Symbol = nullptr;
+
+	// If the first element does not have an explicit value, make it 0.
+	if (C != NULL)
+	{
+		ZCC_ConstantDef *node = C, *prev = node;
+
+		if (node->Value == NULL)
+		{
+			NEW_INTCONST_NODE(zero, TypeSInt32, 0, C);
+			node->Value = zero;
+		}
+		for (node = static_cast<ZCC_ConstantDef *>(node->SiblingNext);
+			node != C;
+			prev = node, node = static_cast<ZCC_ConstantDef *>(node->SiblingNext))
+		{
+			assert(node->NodeType == AST_ConstantDef);
+			// Leave explicit values alone.
+			if (node->Value != NULL)
+			{
+				continue;
+			}
+			// Compute implicit values by adding one to the preceding value.
+			assert(prev->Value != NULL);
+			// If the preceding node is a constant, then we can do this now.
+			if (prev->Value->Operation == PEX_ConstValue && prev->Value->Type->IsA(RUNTIME_CLASS(PInt)))
+			{
+				NEW_INTCONST_NODE(cval, prev->Value->Type, static_cast<ZCC_ExprConstant *>(prev->Value)->IntVal + 1, node);
+				node->Value = cval;
+			}
+			// Otherwise, create a new addition expression to add 1.
+			else
+			{
+				NEW_INTCONST_NODE(one, TypeSInt32, 1, T);
+				NEW_AST_NODE(ExprID, label, node);
+				label->Operation = PEX_ID;
+				label->Identifier = prev->NodeName;
+				label->Type = NULL;
+
+				BINARY_EXPR(label, one, PEX_Add);
+				node->Value = expr2;
+			}
+		}
+		// Add a new terminating node, to indicate that the ConstantDefs for this enum are done.
+		NEW_AST_NODE(EnumTerminator,term,U);
+		AppendTreeNodeSibling(C, term);
+	}
+	if (C != NULL)
+	{
+		AppendTreeNodeSibling(def, C);
+	}
+	X = def;
+}
+
+enum_type(X) ::= .										{ X.Int = ZCC_IntAuto; X.SourceLoc = stat->sc->GetMessageLine(); }
+enum_type(X) ::= COLON int_type(A).						{ X = A; /*X-overwrites-A*/ }
+
+enum_list(X) ::= error.									{ X = NULL; }
+enum_list(X) ::= enumerator(X).
+enum_list(X) ::= enum_list(A) COMMA enumerator(B).		{ X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
+
+opt_enum_list(X) ::= .									{ X = NULL; }
+opt_enum_list(X) ::= enum_list(X) opt_comma.
+
+enumerator(X) ::= IDENTIFIER(A).
+{
+	NEW_AST_NODE(ConstantDef,node,A);
+	node->NodeName = A.Name();
+	node->Value = NULL;
+	node->Symbol = NULL;
+	X = node;
+}
+enumerator(X) ::= IDENTIFIER(A) EQ expr(B).			/* Expression must be constant. */
+{
+	NEW_AST_NODE(ConstantDef,node,A);
+	node->NodeName = A.Name();
+	node->Value = B;
+	node->Symbol = NULL;
+	X = node;
+}
+
+/************ States ************/
+
+%type states_body {ZCC_StatePart *}
+%type state_line {ZCC_StatePart *}
+%type state_label {ZCC_StatePart *}
+%type state_flow {ZCC_StatePart *}
+%type state_flow_type {ZCC_StatePart *}
+%type state_goto_offset {ZCC_Expression *}
+%type state_action {ZCC_TreeNode *}
+%type state_call {ZCC_ExprFuncCall *}
+%type state_call_params {ZCC_FuncParm *}
+
+%type state_opts {StateOpts}
+%type states_opts { ZCC_Identifier *}
+%type states_opt { ZCC_Identifier *}
+
+states_def(X) ::= STATES(T) states_opts(B) scanner_mode LBRACE states_body(A) RBRACE.
+{
+	NEW_AST_NODE(States,def,T);
+	def->Flags = B;
+	def->Body = A;
+	X = def;
+}
+
+states_opts(X) ::= . { X = nullptr; }
+states_opts(X) ::= LPAREN states_opt(A) RPAREN.  { X = A; /*X-overwrites-A*/ }
+
+states_opt(X) ::= IDENTIFIER(A).
+{
+	NEW_AST_NODE(Identifier,id,A);
+	id->Id = A.Name();
+	X = id;
+}
+
+states_opt(X) ::= states_opt(A) COMMA IDENTIFIER(B).
+{
+	NEW_AST_NODE(Identifier,id,B);
+	id->Id = B.Name();
+	X = A; /*X-overwrites-A*/
+	AppendTreeNodeSibling(X, id);
+}
+
+
+/* We use a special scanner mode to allow for sprite names and frame characters
+ * to not be quoted even if they contain special characters. The scanner_mode
+ * nonterminal is used to enter this mode. The scanner automatically leaves it
+ * upon pre-defined conditions. See the comments by FScanner::SetStateMode().
+ *
+ * Note that rules are reduced *after* one token of lookahead has been
+ * consumed, so this nonterminal must be placed one token before we want it to
+ * take effect. For example, in states_def above, the scanner mode will be
+ * set immediately after LBRACE is consumed, rather than immediately after
+ * STATES is consumed.
+ */
+scanner_mode ::= . { stat->sc->SetStateMode(true); }
+
+states_body(X) ::= .								{ X = NULL; }
+states_body(X) ::= error.							{ X = NULL; }
+states_body(X) ::= states_body(X) state_line(B).	{ SAFE_APPEND(X,B); }
+states_body(X) ::= states_body(X) state_label(B).	{ SAFE_APPEND(X,B); }
+states_body(X) ::= states_body(X) state_flow(B).	{ SAFE_APPEND(X,B); }
+
+state_label(X) ::= NWS(A) COLON.
+{
+	NEW_AST_NODE(StateLabel, label, A);
+	label->Label = A.Name();
+	X = label;
+}
+
+state_flow(X) ::= state_flow_type(X) scanner_mode SEMICOLON.
+
+state_flow_type(X) ::= STOP(A).			{ NEW_AST_NODE(StateStop, flow, A); X = flow; }
+state_flow_type(X) ::= WAIT(A).			{ NEW_AST_NODE(StateWait, flow, A); X = flow; }
+state_flow_type(X) ::= FAIL(A).			{ NEW_AST_NODE(StateFail, flow, A); X = flow; }
+state_flow_type(X) ::= LOOP(A).			{ NEW_AST_NODE(StateLoop, flow, A); X = flow; }
+state_flow_type(X) ::= GOTO(T) dottable_id(A) state_goto_offset(B).
+{
+	NEW_AST_NODE(StateGoto, flow, T);
+	flow->Label = A;
+	flow->Offset = B;
+	flow->Qualifier = nullptr;
+	X = flow;
+}
+
+state_flow_type(X) ::= GOTO(T) IDENTIFIER(C) SCOPE dottable_id(A) state_goto_offset(B).
+{
+	NEW_AST_NODE(StateGoto, flow, T);
+	flow->Label = A;
+	flow->Offset = B;
+
+	NEW_AST_NODE(Identifier,id,C);
+	id->Id = C.Name();
+	flow->Qualifier =id;
+	X = flow;
+}
+
+state_flow_type(X) ::= GOTO(T) SUPER(C) SCOPE dottable_id(A) state_goto_offset(B).
+{
+	NEW_AST_NODE(StateGoto, flow, T);
+	flow->Label = A;
+	flow->Offset = B;
+
+	NEW_AST_NODE(Identifier,id,C);
+	id->Id = NAME_Super;
+	flow->Qualifier =id;
+	X = flow;
+}
+
+state_goto_offset(X) ::= .				{ X = NULL; }
+state_goto_offset(X) ::= ADD expr(A).	{ X = A; /*X-overwrites-A*/ }	/* Must evaluate to a non-negative integer constant. */
+
+state_line(X) ::= NWS(A) NWS(B) expr(E) state_opts(C) state_action(D).
+{
+	NEW_AST_NODE(StateLine, line, A);
+	line->Sprite = stat->Strings.Alloc(FName(A.Name()).GetChars());
+	line->Frames = stat->Strings.Alloc(FName(B.Name()).GetChars());
+	line->Duration = E;
+	line->bBright = C.Bright;
+	line->bFast = C.Fast;
+	line->bSlow = C.Slow;
+	line->bNoDelay = C.NoDelay;
+	line->bCanRaise = C.CanRaise;
+	line->Offset = C.Offset;
+	line->Lights = C.Lights;
+	line->Action = D;
+	X = line;
+}
+
+state_opts(X) ::= .													{ StateOpts opts; opts.Zero(); X = opts; }
+state_opts(X) ::= state_opts(A) BRIGHT.								{ A.Bright = true; X = A; /*X-overwrites-A*/ }
+state_opts(X) ::= state_opts(A) FAST.								{ A.Fast = true; X = A; /*X-overwrites-A*/ }
+state_opts(X) ::= state_opts(A) SLOW.								{ A.Slow = true; X = A; /*X-overwrites-A*/ }
+state_opts(X) ::= state_opts(A) NODELAY.							{ A.NoDelay = true; X = A; /*X-overwrites-A*/ }
+state_opts(X) ::= state_opts(A) CANRAISE.							{ A.CanRaise = true; X = A; /*X-overwrites-A*/ }
+state_opts(X) ::= state_opts(A) OFFSET LPAREN expr(B) COMMA expr(C) RPAREN.	{ A.Offset = B; AppendTreeNodeSibling(B, C); X = A; /*X-overwrites-A*/ }
+state_opts(X) ::= state_opts(A) LIGHT LPAREN light_list(B) RPAREN.		{ X = A; /*X-overwrites-A*/ X.Lights = B; }
+
+%type light_list {ZCC_ExprConstant *}
+
+light_list(X) ::= STRCONST(A).
+{
+	NEW_AST_NODE(ExprConstant, strconst, A);
+	strconst->Operation = PEX_ConstValue;
+	strconst->Type = TypeString;
+	strconst->StringVal = A.String;
+	X = strconst;
+}
+
+light_list(X) ::= light_list(A) COMMA STRCONST(B).
+{
+	NEW_AST_NODE(ExprConstant, strconst, B);
+	strconst->Operation = PEX_ConstValue;
+	strconst->Type = TypeString;
+	strconst->StringVal = B.String;
+	AppendTreeNodeSibling(A, strconst); 
+	X = A; /*X-overwrites-A*/
+}
+
+/* A state action can be either a compound statement or a single action function call. */
+state_action(X) ::= LBRACE(T) statement_list(A) scanner_mode RBRACE.	
+{
+	NEW_AST_NODE(CompoundStmt,stmt,T);
+	stmt->Content = A;
+	X = stmt;
+}
+state_action(X) ::= LBRACE scanner_mode RBRACE.	
+{
+	X = NULL;
+}
+state_action(X) ::= LBRACE error scanner_mode RBRACE.				{ X = NULL; }
+state_action(X) ::= state_call(A) scanner_mode SEMICOLON.			{ X = A; /*X-overwrites-A*/ }
+
+state_call(X) ::= .											{ X = NULL; }
+state_call(X) ::= IDENTIFIER(A) state_call_params(B).
+{
+	NEW_AST_NODE(ExprFuncCall, expr, A);
+	NEW_AST_NODE(ExprID, func, A);
+
+	func->Operation = PEX_ID;
+	func->Identifier = A.Name();
+	expr->Operation = PEX_FuncCall;
+	expr->Function = func;
+	expr->Parameters = B;
+	X = expr;
+}
+
+state_call_params(X) ::= .									{ X = NULL; }
+state_call_params(X) ::= LPAREN func_expr_list(A) RPAREN.	{ X = A; /*X-overwrites-A*/ }
+
+/* Definition of a default class instance. */
+%type default_def {ZCC_Default *}
+%type default_statement_list{ZCC_Statement *}
+%type default_statement{ZCC_Statement *}
+
+default_def(X) ::= DEFAULT LBRACE(T) RBRACE.
+{
+	NEW_AST_NODE(Default,stmt,T);
+	stmt->Content = NULL;
+	X = stmt;
+}
+default_def(X) ::= DEFAULT LBRACE(T) default_statement_list(A) RBRACE.
+{
+	NEW_AST_NODE(Default,stmt,T);
+	stmt->Content = A;
+	X = stmt;
+}
+default_def(X) ::= DEFAULT LBRACE(T) error RBRACE.
+{
+	NEW_AST_NODE(Default,stmt,T);
+	stmt->Content = NULL;
+	X = stmt;
+}
+
+default_statement_list(X) ::= default_statement(A).
+{
+	X = A; /*X-overwrites-A*/
+}
+default_statement_list(X) ::= default_statement_list(X) default_statement(B).
+{
+	SAFE_APPEND(X,B);
+}
+
+
+default_statement(X) ::= SEMICOLON.							{ X = NULL; }
+default_statement(X) ::= error SEMICOLON.						{ X = NULL; }
+//default_statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
+default_statement(X) ::= property_statement(A).				{ X = A; /*X-overwrites-A*/ }
+default_statement(X) ::= flag_statement(A).					{ X = A; /*X-overwrites-A*/ }
+
+%type flag_statement { ZCC_FlagStmt *}
+
+flag_statement(X) ::= ADD dottable_id(A).
+{
+	NEW_AST_NODE(FlagStmt, type, A);
+	type->set = true;
+	type->name = A;
+	X = type;
+}
+flag_statement(X) ::= SUB dottable_id(A).
+{
+	NEW_AST_NODE(FlagStmt, type, A);
+	type->set = false;
+	type->name = A;
+	X = type;
+}
+
+%type property_statement{ZCC_PropertyStmt *}
+
+property_statement(X) ::= dottable_id(A) expr_list(B) SEMICOLON.
+{
+	NEW_AST_NODE(PropertyStmt,stmt,A);
+	stmt->Prop = A;
+	stmt->Values = B;
+	X = stmt;
+}
+
+property_statement(X) ::= dottable_id(A) SEMICOLON.
+{
+	NEW_AST_NODE(PropertyStmt,stmt,A);
+	stmt->Prop = A;
+	stmt->Values = nullptr;
+	X = stmt;
+}
+
+
+
+/* Type names */
+%type type_name {ZCC_BasicType *}
+
+int_type(X) ::= SBYTE(T).					{ X.Int = ZCC_SInt8; X.SourceLoc = T.SourceLoc; }
+int_type(X) ::= BYTE(T).					{ X.Int = ZCC_UInt8; X.SourceLoc = T.SourceLoc; }
+int_type(X) ::= SHORT(T).					{ X.Int = ZCC_SInt16; X.SourceLoc = T.SourceLoc; }
+int_type(X) ::= USHORT(T).					{ X.Int = ZCC_UInt16; X.SourceLoc = T.SourceLoc; }
+int_type(X) ::= INT(T).						{ X.Int = ZCC_SInt32; X.SourceLoc = T.SourceLoc; }
+int_type(X) ::= UINT(T).					{ X.Int = ZCC_UInt32; X.SourceLoc = T.SourceLoc; }
+
+type_name1(X) ::= BOOL(T).					{ X.Int = ZCC_Bool; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= int_type(X).
+type_name1(X) ::= FLOAT(T).					{ X.Int = ZCC_FloatAuto; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= DOUBLE(T).				{ X.Int = ZCC_Float64; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= STRING(T).				{ X.Int = ZCC_String; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= VECTOR2(T).				{ X.Int = ZCC_Vector2; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= VECTOR3(T).				{ X.Int = ZCC_Vector3; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= NAME(T).					{ X.Int = ZCC_Name; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= SOUND(T).					{ X.Int = ZCC_Sound; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= STATE(T).					{ X.Int = ZCC_State; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= COLOR(T).					{ X.Int = ZCC_Color; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= LET(T).					{ X.Int = ZCC_Let; X.SourceLoc = T.SourceLoc; }
+
+type_name(X) ::= type_name1(A).
+{
+	NEW_AST_NODE(BasicType, type, A);
+	type->Type = (EZCCBuiltinType)A.Int;
+	type->UserType = NULL;
+	type->isconst = false;
+	X = type;
+}
+type_name(X) ::= IDENTIFIER(A).			/* User-defined type (struct, enum, or class) */
+{
+	NEW_AST_NODE(BasicType, type, A);
+	NEW_AST_NODE(Identifier, id, A);
+	type->Type = ZCC_UserType;
+	type->UserType = id;
+	type->isconst = false;
+	id->Id = A.Name();
+	X = type;
+}
+type_name(X) ::= READONLY LT IDENTIFIER(A) GT.
+{
+	NEW_AST_NODE(BasicType, type, A);
+	NEW_AST_NODE(Identifier, id, A);
+	type->Type = ZCC_UserType;
+	type->UserType = id;
+	type->isconst = true;
+	id->Id = A.Name();
+	X = type;
+}
+
+type_name(X) ::= DOT dottable_id(A).
+{
+	NEW_AST_NODE(BasicType, type, A);
+	type->Type = ZCC_UserType;
+	type->UserType = A;
+	type->isconst = false;
+	X = type;
+}
+
+/* Type names can also be used as identifiers in contexts where type names
+ * are not normally allowed. */
+%fallback IDENTIFIER
+	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR2 VECTOR3 NAME MAP ARRAY VOID STATE COLOR SOUND UINT8 INT8 UINT16 INT16.
+
+/* Aggregate types */
+%type aggregate_type {ZCC_Type *}
+%type type {ZCC_Type *}
+%type type_list {ZCC_Type *}
+%type type_list_or_void {ZCC_Type *}
+%type type_or_array {ZCC_Type *}
+	%type class_restrictor {ZCC_Identifier *}
+%type array_size{ZCC_Expression *}
+%type array_size_expr{ZCC_Expression *}
+
+aggregate_type(X) ::= MAP(T) LT type_or_array(A) COMMA type_or_array(B) GT.	/* Hash table */
+{
+	NEW_AST_NODE(MapType,map,T);
+	map->KeyType = A;
+	map->ValueType = B;
+	X = map;
+}
+
+aggregate_type(X) ::= ARRAY(T) LT type_or_array(A) GT.							/* TArray<type> */
+{
+	NEW_AST_NODE(DynArrayType,arr,T);
+	arr->ElementType = A;
+	X = arr;
+}
+
+aggregate_type(X) ::= CLASS(T) class_restrictor(A).							/* class<type> */
+{
+	NEW_AST_NODE(ClassType,cls,T);
+	cls->Restriction = A;
+	X = cls;
+}
+class_restrictor(X) ::= .						{ X = NULL; }
+class_restrictor(X) ::= LT dottable_id(A) GT.	{ X = A; /*X-overwrites-A*/ }
+
+type(X) ::= type_name(A).					{ X = A; /*X-overwrites-A*/ X->ArraySize = NULL; }
+type(X) ::= aggregate_type(A).				{ X = A; /*X-overwrites-A*/ X->ArraySize = NULL; }
+
+type_or_array(X) ::= type(X).
+type_or_array(X) ::= type(A) array_size(B).	{ X = A; /*X-overwrites-A*/ X->ArraySize = B; }
+
+type_list(X) ::= type_or_array(X).			/* A comma-separated list of types */
+type_list(X) ::= type_list(A) COMMA type_or_array(B). { X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
+
+type_list_or_void(X) ::= VOID.				{ X = NULL; }
+type_list_or_void(X) ::= type_list(X).
+
+array_size_expr(X) ::= LBRACKET(L) opt_expr(A) RBRACKET.
+{
+	if (A == NULL)
+	{
+		NEW_AST_NODE(Expression,nil,L.SourceLoc);
+		nil->Operation = PEX_Nil;
+		nil->Type = NULL;
+		X = nil;
+	}
+	else
+	{
+		X = A;
+	}
+}
+array_size(X) ::= array_size_expr(X).
+array_size(X) ::= array_size(A) array_size_expr(B).
+{
+	AppendTreeNodeSibling(A, B);
+	X = A; /*X-overwrites-A*/
+}
+
+%type variables_or_function {VarOrFun}
+
+/* Multiple type names are only valid for functions. */
+declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
+{
+	if (C.FuncName == NAME_None && C.VarNames == NULL)
+	{ // An error. A message was already printed.
+		X = NULL;
+	}
+	else if (C.FuncName != NAME_None)
+	{ // A function
+		NEW_AST_NODE(FuncDeclarator, decl, A == nullptr? C.SourceLoc : A->SourceLoc);
+		decl->Type = B;
+		decl->Params = C.FuncParams;
+		decl->Name = C.FuncName;
+		decl->UseFlags = A == nullptr? nullptr : A->Id;
+		decl->Flags = (A == nullptr? 0 : A->Flags) | C.FuncFlags;
+		decl->Body = C.FuncBody;
+		X = decl;
+	}
+	else if (B != NULL && B->SiblingNext == B)
+	{ // A variable
+		NEW_AST_NODE(VarDeclarator, decl, A == nullptr? B->SourceLoc : A->SourceLoc);
+		decl->Type = B;
+		decl->Names = C.VarNames;
+		decl->Flags = (A == nullptr? 0 : A->Flags);
+		X = decl;
+	}
+	else
+	{ // An invalid
+		if (B == NULL)
+		{
+			stat->sc->ScriptMessage("Variables may not be of type void.\n");
+		}
+		else
+		{
+			stat->sc->ScriptMessage("Variables may be of only one type.\n");
+		}
+		X = NULL;
+	}
+}
+
+// Need to split it up like this to avoid parsing conflicts.
+variables_or_function(X) ::= IDENTIFIER(A) LPAREN func_params(B) RPAREN func_const(C) opt_func_body(D).	/* Function */
+{
+	VarOrFun fun;
+
+	fun.VarNames = NULL;
+	fun.FuncParams = B;
+	fun.FuncFlags = C.Int;
+	fun.FuncName = A.Name();
+	fun.FuncBody = D;
+	fun.SourceLoc = A.SourceLoc;
+	X = fun;
+}
+variables_or_function(X) ::= variable_list(A) SEMICOLON.
+{
+	VarOrFun var;
+
+	var.VarNames = A;
+	var.FuncParams = NULL;
+	var.FuncFlags = 0;
+	var.FuncName = NAME_None;
+	var.FuncBody = NULL;
+	var.SourceLoc = A->SourceLoc;
+	X = var;
+}
+variables_or_function(X) ::= error SEMICOLON(T).
+{
+	VarOrFun bad;
+	bad.VarNames = NULL;
+	bad.FuncParams = NULL;
+	bad.FuncFlags = 0;
+	bad.FuncName = NAME_None;
+	bad.FuncBody = NULL;
+	bad.SourceLoc = T.SourceLoc;
+	X = bad;
+}
+
+/*----- Variable Names -----*/
+
+%type variable_name{ZCC_VarName *}
+%type variable_list{ZCC_VarName *}
+
+variable_name(X) ::= IDENTIFIER(A).
+{
+	NEW_AST_NODE(VarName,var,A);
+	var->Name = ENamedName(A.Int);
+	var->ArraySize = NULL;
+	X = var;
+}
+variable_name(X) ::= IDENTIFIER(A) array_size(B).
+{
+	NEW_AST_NODE(VarName,var,A);
+	var->Name = ENamedName(A.Int);
+	var->ArraySize = B;
+	X = var;
+}
+
+variable_list(X) ::= variable_name(X).
+variable_list(X) ::= variable_list(A) COMMA variable_name(B).
+{
+	AppendTreeNodeSibling(A, B);
+	X = A; /*X-overwrites-A*/
+}
+
+%type decl_flags { ZCC_DeclFlags * }
+decl_flags(X) ::= .								{ X = NULL; }
+decl_flags(X) ::= decl_flags(F) decl_flag(A).
+{
+	if (F == nullptr)
+	{
+		NEW_AST_NODE(DeclFlags,nil_f,A);
+		X = nil_f;
+		X->Id = nullptr;
+		X->Flags = A.Int;
+	}
+	else
+	{
+		X = F;
+		X->Flags |= A.Int;
+	}
+}
+
+
+decl_flags(X) ::= decl_flags(F) ACTION(B) states_opts(A).
+{
+	if (F == nullptr)
+	{
+		NEW_AST_NODE(DeclFlags,nil_f,B.SourceLoc);
+		X = nil_f;
+		X->Flags = ZCC_Action;
+	}
+	else
+	{
+		X = F;
+		X->Flags |= ZCC_Action;
+	}
+	X->Id = A;
+}
+
+decl_flag(X) ::= NATIVE(T).		{ X.Int = ZCC_Native; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= STATIC(T).		{ X.Int = ZCC_Static; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= PRIVATE(T).	{ X.Int = ZCC_Private; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= PROTECTED(T).	{ X.Int = ZCC_Protected; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= LATENT(T).		{ X.Int = ZCC_Latent; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= FINAL(T).		{ X.Int = ZCC_Final; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= META(T).		{ X.Int = ZCC_Meta; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= READONLY(T).	{ X.Int = ZCC_ReadOnly; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= DEPRECATED(T).	{ X.Int = ZCC_Deprecated; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= VIRTUAL(T).	{ X.Int = ZCC_Virtual; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= OVERRIDE(T).	{ X.Int = ZCC_Override; X.SourceLoc =  T.SourceLoc; }
+
+func_const(X) ::= .							{ X.Int = 0; X.SourceLoc = stat->sc->GetMessageLine(); }
+func_const(X) ::= CONST(T).					{ X.Int = ZCC_FuncConst; X.SourceLoc = T.SourceLoc; }
+
+opt_func_body(X) ::= SEMICOLON.				{ X = NULL; }
+opt_func_body(X) ::= function_body(X).
+
+%type func_params {ZCC_FuncParamDecl *}
+%type func_param_list {ZCC_FuncParamDecl *}
+%type func_param {ZCC_FuncParamDecl *}
+
+func_params(X) ::= .	/* empty */			{ X = NULL; }
+func_params(X) ::= VOID.					{ X = NULL; }
+func_params(X) ::= func_param_list(X).
+
+func_params(X) ::= func_param_list(A) COMMA ELLIPSIS.
+{
+	NEW_AST_NODE(FuncParamDecl,parm,stat->sc->GetMessageLine());
+	parm->Type = nullptr;
+	parm->Name = NAME_None;
+	parm->Flags = 0;
+	parm->Default = nullptr;
+	X = A; /*X-overwrites-A*/ 
+	AppendTreeNodeSibling(X, parm);
+}
+
+func_param_list(X) ::= func_param(X).
+func_param_list(X) ::= func_param_list(A) COMMA func_param(B).	{ X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
+
+func_param(X) ::= func_param_flags(A) type(B) IDENTIFIER(C).
+{
+	NEW_AST_NODE(FuncParamDecl,parm,A.SourceLoc ? A.SourceLoc : B->SourceLoc);
+	parm->Type = B;
+	parm->Name = C.Name();
+	parm->Flags = A.Int;
+	parm->Default = nullptr;
+	X = parm;
+}
+
+func_param(X) ::= func_param_flags(A) type(B) IDENTIFIER(C) EQ expr(D).
+{
+	NEW_AST_NODE(FuncParamDecl,parm,A.SourceLoc ? A.SourceLoc : B->SourceLoc);
+	parm->Type = B;
+	parm->Name = C.Name();
+	parm->Flags = A.Int;
+	parm->Default = D;
+	X = parm;
+}
+
+func_param_flags(X) ::= .									{ X.Int = 0; X.SourceLoc = 0; }
+func_param_flags(X) ::= func_param_flags(A) IN(T).			{ X.Int = A.Int | ZCC_In; X.SourceLoc =  T.SourceLoc; }
+func_param_flags(X) ::= func_param_flags(A) OUT(T).			{ X.Int = A.Int | ZCC_Out; X.SourceLoc =  T.SourceLoc; }
+func_param_flags(X) ::= func_param_flags(A) OPTIONAL(T).	{ X.Int = A.Int | ZCC_Optional; X.SourceLoc =  T.SourceLoc; }
+
+/************ Expressions ************/
+
+/* We use default to access a class's default instance. */
+%fallback IDENTIFIER
+	DEFAULT.
+
+%type expr{ZCC_Expression *}
+%type primary{ZCC_Expression *}
+%type unary_expr{ZCC_Expression *}
+%type constant{ZCC_ExprConstant *}
+
+/*----- Primary Expressions -----*/
+
+primary(X) ::= IDENTIFIER(A).
+{
+	NEW_AST_NODE(ExprID, expr, A);
+	expr->Operation = PEX_ID;
+	expr->Identifier = A.Name();
+	expr->Type = NULL;
+	X = expr;
+}
+primary(X) ::= SUPER(T).
+{
+	NEW_AST_NODE(Expression, expr, T);
+	expr->Operation = PEX_Super;
+	expr->Type = NULL;
+	X = expr;
+}
+primary(X) ::= constant(A).				{ X = A; /*X-overwrites-A*/ }
+primary(XX) ::= LPAREN expr(A) COMMA expr(B) COMMA expr(C) RPAREN. [DOT]
+{
+	NEW_AST_NODE(VectorValue, expr, A);
+	expr->Operation = PEX_Vector;
+	expr->Type = TypeVector3;
+	expr->X = A;
+	expr->Y = B;
+	expr->Z = C;
+	XX = expr;
+}
+primary(XX) ::= LPAREN expr(A) COMMA expr(B) RPAREN. [DOT]
+{
+	NEW_AST_NODE(VectorValue, expr, A);
+	expr->Operation = PEX_Vector;
+	expr->Type = TypeVector2;
+	expr->X = A;
+	expr->Y = B;
+	expr->Z = nullptr;
+	XX = expr;
+}
+primary(X) ::= LPAREN expr(A) RPAREN.
+{
+	X = A; /*X-overwrites-A*/
+}
+primary ::= LPAREN error RPAREN.
+primary(X) ::= primary(A) LPAREN func_expr_list(B) RPAREN. [DOT]		// Function call
+{
+	NEW_AST_NODE(ExprFuncCall, expr, A);
+	expr->Operation = PEX_FuncCall;
+	expr->Type = NULL;
+	expr->Function = A;
+	expr->Parameters = B;
+	X = expr;
+}
+primary(X) ::= LPAREN CLASS LT IDENTIFIER(A) GT RPAREN LPAREN func_expr_list(B) RPAREN. [DOT]		// class type cast
+{
+	NEW_AST_NODE(ClassCast, expr, A);
+	expr->Operation = PEX_ClassCast;
+	expr->ClassName = ENamedName(A.Int);
+	expr->Parameters = B;
+	X = expr;
+}
+primary(X) ::= primary(A) LBRACKET expr(B) RBRACKET. [DOT]				// Array access
+{
+	NEW_AST_NODE(ExprBinary, expr, B);
+	expr->Operation = PEX_ArrayAccess;
+	expr->Type = NULL;
+	expr->Left = A;
+	expr->Right = B;
+	X = expr;
+}
+primary(X) ::= primary(A) DOT IDENTIFIER(B).							// Member access
+{
+	NEW_AST_NODE(ExprMemberAccess, expr, B);
+	expr->Operation = PEX_MemberAccess;
+	expr->Type = NULL;
+	expr->Left = A;
+	expr->Right = ENamedName(B.Int);
+	X = expr;
+}
+primary(X) ::= primary(A) ADDADD.		/* postfix++ */
+{
+	UNARY_EXPR(A,PEX_PostInc);
+	X = expr1;
+}
+primary(X) ::= primary(A) SUBSUB.		/* postfix-- */
+{
+	UNARY_EXPR(A,PEX_PostDec);
+	X = expr1;
+}
+/*
+primary(X) ::= SCOPE primary(B).
+{
+	BINARY_EXPR(NULL,B,PEX_Scope);
+	X = expr2;
+}
+*/
+
+/*----- Unary Expressions -----*/
+
+unary_expr(X) ::= primary(X).
+unary_expr(X) ::= SUB unary_expr(A). [UNARY]
+{
+	ZCC_ExprConstant *con = static_cast<ZCC_ExprConstant *>(A);
+	if (A->Operation == PEX_ConstValue && (con->Type->IsA(RUNTIME_CLASS(PInt)) || con->Type->IsA(RUNTIME_CLASS(PFloat))))
+	{ // For constants, manipulate the child node directly, and don't create a new node.
+		if (con->Type->IsA(RUNTIME_CLASS(PInt)))
+		{
+			con->IntVal = -con->IntVal;
+		}
+		else
+		{
+			con->DoubleVal = -con->DoubleVal;
+		}
+		X = A;
+	}
+	else
+	{ // For everything else, create a new node and do the negation later.
+		UNARY_EXPR(A,PEX_Negate);
+		X = expr1;
+	}
+}
+unary_expr(X) ::= ADD unary_expr(A). [UNARY]
+{
+	// Even though this is really a no-op, we still need to make a node for
+	// it so we can type check that it is being applied to something numeric.
+	// But we can do that right now for constant numerals.
+	ZCC_ExprConstant *con = static_cast<ZCC_ExprConstant *>(A);
+	if (A->Operation != PEX_ConstValue || (!con->Type->IsA(RUNTIME_CLASS(PInt)) && !con->Type->IsA(RUNTIME_CLASS(PFloat))))
+	{
+		UNARY_EXPR(A,PEX_AntiNegate);
+		X = expr1;
+	}
+	else
+	{
+		X = A;
+	}
+}
+unary_expr(X) ::= SUBSUB unary_expr(A). [UNARY]
+{
+	UNARY_EXPR(A,PEX_PreDec);
+	X = expr1;
+}
+unary_expr(X) ::= ADDADD unary_expr(A). [UNARY]
+{
+	UNARY_EXPR(A,PEX_PreInc);
+	X = expr1;
+}
+unary_expr(X) ::= TILDE unary_expr(A). [UNARY]
+{
+	UNARY_EXPR(A,PEX_BitNot);
+	X = expr1;
+}
+unary_expr(X) ::= BANG unary_expr(A). [UNARY]
+{
+	UNARY_EXPR(A,PEX_BoolNot);
+	X = expr1;
+}
+unary_expr(X) ::= SIZEOF unary_expr(A). [UNARY]
+{
+	UNARY_EXPR(A,PEX_SizeOf);
+	X = expr1;
+}
+unary_expr(X) ::= ALIGNOF unary_expr(A). [UNARY]
+{
+	UNARY_EXPR(A,PEX_AlignOf);
+	X = expr1;
+}
+
+/* Due to parsing conflicts, C-style casting is not supported. You
+ * must use C++ function call-style casting instead.
+ */
+
+/*----- Binary Expressions -----*/
+
+expr(X) ::= unary_expr(X).
+expr(X) ::= expr(A) ADD expr(B).		/* a + b */
+{
+	BINARY_EXPR(A,B,PEX_Add);
+	X = expr2;
+}
+expr(X) ::= expr(A) SUB expr(B).		/* a - b */
+{
+	BINARY_EXPR(A,B,PEX_Sub);
+	X = expr2;
+}
+expr(X) ::= expr(A) MUL expr(B).		/* a * b */
+{
+	BINARY_EXPR(A,B,PEX_Mul);
+	X = expr2;
+}
+expr(X) ::= expr(A) DIV expr(B).		/* a / b */
+{
+	BINARY_EXPR(A,B,PEX_Div);
+	X = expr2;
+}
+expr(X) ::= expr(A) MOD expr(B).		/* a % b */
+{
+	BINARY_EXPR(A,B,PEX_Mod);
+	X = expr2;
+}
+expr(X) ::= expr(A) POW expr(B).		/* a ** b */
+{
+	BINARY_EXPR(A,B,PEX_Pow);
+	X = expr2;
+}
+expr(X) ::= expr(A) CROSSPROD expr(B).	/* a cross b */
+{
+	BINARY_EXPR(A,B,PEX_CrossProduct);
+	X = expr2;
+}
+expr(X) ::= expr(A) DOTPROD expr(B).	/* a dot b */
+{
+	BINARY_EXPR(A,B,PEX_DotProduct);
+	X = expr2;
+}
+expr(X) ::= expr(A) LSH expr(B).		/* a << b */
+{
+	BINARY_EXPR(A,B,PEX_LeftShift);
+	X = expr2;
+}
+expr(X) ::= expr(A) RSH expr(B).		/* a >> b */
+{
+	BINARY_EXPR(A,B,PEX_RightShift);
+	X = expr2;
+}
+expr(X) ::= expr(A) URSH expr(B).		/* a >>> b */
+{
+	BINARY_EXPR(A,B,PEX_URightShift);
+	X = expr2;
+}
+expr(X) ::= expr(A) DOTDOT expr(B).		/* a .. b */
+{
+	BINARY_EXPR(A,B,PEX_Concat);
+	X = expr2;
+}
+
+expr(X) ::= expr(A) LT expr(B).			/* a < b */
+{
+	BINARY_EXPR(A,B,PEX_LT);
+	X = expr2;
+}
+expr(X) ::= expr(A) GT expr(B).			/* a > b */
+{
+	BINARY_EXPR(A,B,PEX_GT);
+	X = expr2;
+}
+expr(X) ::= expr(A) LTEQ expr(B).		/* a <= b */
+{
+	BINARY_EXPR(A,B,PEX_LTEQ);
+	X = expr2;
+}
+expr(X) ::= expr(A) GTEQ expr(B).		/* a >= b */
+{
+	BINARY_EXPR(A,B,PEX_GTEQ);
+	X = expr2;
+}
+expr(X) ::= expr(A) LTGTEQ expr(B).		/* a <>= b */
+{
+	BINARY_EXPR(A,B,PEX_LTGTEQ);
+	X = expr2;
+}
+expr(X) ::= expr(A) IS expr(B).			/* a is b */
+{
+	BINARY_EXPR(A,B,PEX_Is);
+	X = expr2;
+}
+
+expr(X) ::= expr(A) EQEQ expr(B).		/* a == b */
+{
+	BINARY_EXPR(A,B,PEX_EQEQ);
+	X = expr2;
+}
+expr(X) ::= expr(A) NEQ expr(B).		/* a != b */
+{
+	BINARY_EXPR(A,B,PEX_NEQ);
+	X = expr2;
+}
+expr(X) ::= expr(A) APPROXEQ expr(B).	/* a ~== b */
+{
+	BINARY_EXPR(A,B,PEX_APREQ);
+	X = expr2;
+}
+
+expr(X) ::= expr(A) AND expr(B).		/* a & b */
+{
+	BINARY_EXPR(A,B,PEX_BitAnd);
+	X = expr2;
+}
+expr(X) ::= expr(A) XOR expr(B).		/* a ^ b */
+{
+	BINARY_EXPR(A,B,PEX_BitXor);
+	X = expr2;
+}
+expr(X) ::= expr(A) OR expr(B).			/* a | b */
+{
+	BINARY_EXPR(A,B,PEX_BitOr);
+	X = expr2;
+}
+expr(X) ::= expr(A) ANDAND expr(B).		/* a && b */
+{
+	BINARY_EXPR(A,B,PEX_BoolAnd);
+	X = expr2;
+}
+expr(X) ::= expr(A) OROR expr(B).		/* a || b */
+{
+	BINARY_EXPR(A,B,PEX_BoolOr);
+	X = expr2;
+}
+expr(X) ::= expr(A) EQ expr(B).		/* a = b */
+{
+	BINARY_EXPR(A,B,PEX_Assign);
+	X = expr2;
+}
+expr(X) ::= expr(A) ADDEQ expr(B).		/* a += b */
+{
+	BINARY_EXPR(A,B,PEX_AddAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) SUBEQ expr(B).		/* a -= b */
+{
+	BINARY_EXPR(A,B,PEX_SubAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) MULEQ expr(B).		/* a *= b */
+{
+	BINARY_EXPR(A,B,PEX_MulAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) DIVEQ expr(B).		/* a /= b */
+{
+	BINARY_EXPR(A,B,PEX_DivAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) MODEQ expr(B).		/* a %= b */
+{
+	BINARY_EXPR(A,B,PEX_ModAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) LSHEQ expr(B).		/* a <<= b */
+{
+	BINARY_EXPR(A,B,PEX_LshAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) RSHEQ expr(B).		/* a >>= b */
+{
+	BINARY_EXPR(A,B,PEX_RshAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) URSHEQ expr(B).		/* a >>>= b */
+{
+	BINARY_EXPR(A,B,PEX_URshAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) ANDEQ expr(B).		/* a &= b */
+{
+	BINARY_EXPR(A,B,PEX_AndAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) OREQ expr(B).		/* a |= b */
+{
+	BINARY_EXPR(A,B,PEX_OrAssign);
+	X = expr2;
+}
+expr(X) ::= expr(A) XOREQ expr(B).		/* a ^= b */
+{
+	BINARY_EXPR(A,B,PEX_XorAssign);
+	X = expr2;
+}
+
+
+expr(X) ::= expr(A) SCOPE expr(B).
+{
+	BINARY_EXPR(A,B,PEX_Scope);
+	X = expr2;
+}
+
+/*----- Trinary Expression -----*/
+
+expr(X) ::= expr(A) QUESTION expr(B) COLON expr(C).
+{
+	NEW_AST_NODE(ExprTrinary, expr, A);
+	expr->Operation = PEX_Trinary;
+	expr->Type = NULL;
+	expr->Test = A;
+	expr->Left = B;
+	expr->Right = C;
+	X = expr;
+}
+
+/************ Expression Lists ***********/ 
+
+%type expr_list{ZCC_Expression *}
+
+expr_list(X) ::= expr(X).
+expr_list(X) ::= expr_list(A) COMMA expr(B).
+{
+	X = A;	/*X-overwrites-A*/
+	AppendTreeNodeSibling(X, B);
+}
+
+/*----- Function argument lists -----*/
+
+/* A function expression list can also specify a parameter's name,
+ * but once you do that, all remaining parameters must also be named.
+ * We let higher-level code handle this to keep this file simpler. */
+%type func_expr_list{ZCC_FuncParm *}
+%type func_expr_item{ZCC_FuncParm *}
+%type named_expr{ZCC_FuncParm *}
+
+func_expr_list(X) ::= func_expr_item(X).
+func_expr_list(X) ::= func_expr_list(A) COMMA(T) func_expr_item(B).
+{
+	// Omitted parameters still need to appear as nodes in the list.
+	if (A == NULL)
+	{
+		NEW_AST_NODE(FuncParm,nil_a,T);
+		nil_a->Value = NULL;
+		nil_a->Label = NAME_None;
+		A = nil_a;
+	}
+	if (B == NULL)
+	{
+		NEW_AST_NODE(FuncParm,nil_b,T);
+		nil_b->Value = NULL;
+		nil_b->Label = NAME_None;
+		B = nil_b;
+	}
+	X = A;	/*X-overwrites-A*/
+	AppendTreeNodeSibling(X, B);
+}
+
+func_expr_item(X) ::= .
+{
+	X = NULL;
+}
+func_expr_item(X) ::= named_expr(X).
+
+named_expr(X) ::= IDENTIFIER(A) COLON expr(B).
+{
+	NEW_AST_NODE(FuncParm, parm, A);
+	parm->Value = B;
+	parm->Label = ENamedName(A.Int);
+	X = parm;
+}
+named_expr(X) ::= expr(B).
+{
+	NEW_AST_NODE(FuncParm, parm, B);
+	parm->Value = B;
+	parm->Label = NAME_None;
+	X = parm;
+}
+
+/************ Constants ************/
+
+/* Allow C-like concatenation of adjacent string constants. */
+%type string_constant{ZCC_ExprConstant *}
+
+string_constant(X) ::= STRCONST(A).
+{
+	NEW_AST_NODE(ExprConstant, strconst, A);
+	strconst->Operation = PEX_ConstValue;
+	strconst->Type = TypeString;
+	strconst->StringVal = A.String;
+	X = strconst;
+}
+string_constant(X) ::= string_constant(A) STRCONST(B).
+{
+	NEW_AST_NODE(ExprConstant, strconst, A);
+	strconst->Operation = PEX_ConstValue;
+	strconst->Type = TypeString;
+	strconst->StringVal = stat->Strings.Alloc(*(A->StringVal) + *(B.String));
+	X = strconst;
+}
+
+constant(X) ::= string_constant(X).
+constant(X) ::= INTCONST(A).
+{
+	NEW_INTCONST_NODE(intconst, TypeSInt32, A.Int, A);
+	X = intconst;
+}
+constant(X) ::= UINTCONST(A).
+{
+	NEW_INTCONST_NODE(intconst, TypeUInt32, A.Int, A);
+	X = intconst;
+}
+constant(X) ::= FLOATCONST(A).
+{
+	NEW_AST_NODE(ExprConstant, floatconst, A);
+	floatconst->Operation = PEX_ConstValue;
+	floatconst->Type = TypeFloat64;
+	floatconst->DoubleVal = A.Float;
+	X = floatconst;
+}
+constant(X) ::= NAMECONST(A).
+{
+	NEW_AST_NODE(ExprConstant, floatconst, A);
+	floatconst->Operation = PEX_ConstValue;
+	floatconst->Type = TypeName;
+	floatconst->IntVal = A.Int;
+	X = floatconst;
+}
+constant(X) ::= FALSE(A).
+{
+	NEW_INTCONST_NODE(boolconst, TypeBool, false, A);
+	X = boolconst;
+}
+constant(X) ::= TRUE(A).
+{
+	NEW_INTCONST_NODE(boolconst, TypeBool, true, A);
+	X = boolconst;
+}
+constant(X) ::= NULLPTR(A).
+{
+	NEW_AST_NODE(ExprConstant, nullptrconst, A);
+	nullptrconst->Operation = PEX_ConstValue;
+	nullptrconst->Type = TypeNullPtr;
+	nullptrconst->StringVal = nullptr;
+	X = nullptrconst;
+}
+
+/************ Statements ************/
+
+function_body(X) ::= compound_statement(X).
+
+%type statement{ZCC_Statement *}
+statement(X) ::= SEMICOLON.							{ X = NULL; }
+statement(X) ::= labeled_statement(A).				{ X = A; /*X-overwrites-A*/ }
+statement(X) ::= compound_statement(A).				{ X = A; /*X-overwrites-A*/ }
+statement(X) ::= expression_statement(A) SEMICOLON.	{ X = A; /*X-overwrites-A*/ }
+statement(X) ::= selection_statement(X).
+statement(X) ::= iteration_statement(X).
+statement(X) ::= jump_statement(X).
+statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
+statement(X) ::= local_var(A) SEMICOLON.			{ X = A; /*X-overwrites-A*/ }
+statement(X) ::= error SEMICOLON.					{ X = NULL; }
+statement(X) ::= staticarray_statement(A).			{ X = A; /*X-overwrites-A*/ }
+
+/*----- Static array Statements -----*/
+
+%type staticarray_statement{ZCC_StaticArrayStatement *}
+
+staticarray_statement(X) ::= STATIC CONST type(A) IDENTIFIER(B) LBRACKET RBRACKET EQ LBRACE expr_list(C) RBRACE.
+{
+	NEW_AST_NODE(StaticArrayStatement, stmt, A);
+	stmt->Type = A;
+	stmt->Id = ENamedName(B.Int);
+	stmt->Values = C;
+	X = stmt;
+}
+
+staticarray_statement(X) ::= STATIC CONST type(A) LBRACKET RBRACKET IDENTIFIER(B)  EQ LBRACE expr_list(C) RBRACE.
+{
+	NEW_AST_NODE(StaticArrayStatement, stmt, A);
+	stmt->Type = A;
+	stmt->Id = ENamedName(B.Int);
+	stmt->Values = C;
+	X = stmt;
+}
+
+/*----- Jump Statements -----*/
+
+%type jump_statement{ZCC_Statement *}
+
+jump_statement(A) ::= CONTINUE(T) SEMICOLON.
+{
+	NEW_AST_NODE(ContinueStmt, stmt, T);
+	A = stmt;
+}
+jump_statement(A) ::= BREAK(T) SEMICOLON.
+{
+	NEW_AST_NODE(BreakStmt, stmt, T);
+	A = stmt;
+}
+jump_statement(A) ::= RETURN(T) SEMICOLON.
+{
+	NEW_AST_NODE(ReturnStmt, stmt, T);
+	stmt->Values = NULL;
+	A = stmt;
+}
+jump_statement(A) ::= RETURN(T) expr_list(X) SEMICOLON.
+{
+	NEW_AST_NODE(ReturnStmt, stmt, T);
+	stmt->Values = X;
+	A = stmt;
+}
+
+/*----- Compound Statements -----*/
+
+%type compound_statement{ZCC_CompoundStmt *}
+%type statement_list{ZCC_Statement *}
+
+compound_statement(X) ::= LBRACE(T) RBRACE.
+{
+	NEW_AST_NODE(CompoundStmt,stmt,T);
+	stmt->Content = NULL;
+	X = stmt;
+}
+compound_statement(X) ::= LBRACE(T) statement_list(A) RBRACE.
+{
+	NEW_AST_NODE(CompoundStmt,stmt,T);
+	stmt->Content = A;
+	X = stmt;
+}
+compound_statement(X) ::= LBRACE(T) error RBRACE.
+{
+	NEW_AST_NODE(CompoundStmt,stmt,T);
+	stmt->Content = NULL;
+	X = stmt;
+}
+
+statement_list(X) ::= statement(A).
+{
+	X = A; /*X-overwrites-A*/
+}
+statement_list(X) ::= statement_list(X) statement(B).
+{
+	SAFE_APPEND(X,B);
+}
+
+/*----- Expression Statements -----*/
+
+%type expression_statement{ZCC_ExpressionStmt *}
+
+expression_statement(X) ::= expr(A).
+{
+	NEW_AST_NODE(ExpressionStmt, stmt, A);
+	stmt->Expression = A;
+	X = stmt;
+}
+
+/*----- Iteration Statements -----*/
+
+%type iteration_statement{ZCC_Statement *}
+
+// while/until (expr) statement
+iteration_statement(X) ::= while_or_until(TY) LPAREN expr(EX) RPAREN statement(ST).
+{
+	NEW_AST_NODE(IterationStmt, iter, TY);
+	if (TY.Int == ZCC_UNTIL)
+	{ // Negate the loop condition
+		UNARY_EXPR(EX,PEX_BoolNot);
+		iter->LoopCondition = expr1;
+	}
+	else
+	{
+		iter->LoopCondition = EX;
+	}
+	iter->LoopStatement = ST;
+	iter->LoopBumper = NULL;
+	iter->CheckAt = ZCC_IterationStmt::Start;
+	X = iter;
+}
+// do statement while/until (expr)
+iteration_statement(X) ::= DO(T) statement(ST) while_or_until(TY) LPAREN expr(EX) RPAREN.
+{
+	NEW_AST_NODE(IterationStmt, iter, T);
+	if (TY.Int == ZCC_UNTIL)
+	{ // Negate the loop condition
+		UNARY_EXPR(EX,PEX_BoolNot);
+		iter->LoopCondition = expr1;
+	}
+	else
+	{
+		iter->LoopCondition = EX;
+	}
+	iter->LoopStatement = ST;
+	iter->LoopBumper = NULL;
+	iter->CheckAt = ZCC_IterationStmt::End;
+	X = iter;
+}
+// for (init; cond; bump) statement
+iteration_statement(X) ::= FOR(T) LPAREN for_init(IN) SEMICOLON opt_expr(EX) SEMICOLON for_bump(DO) RPAREN statement(ST).
+{
+	NEW_AST_NODE(IterationStmt, iter, T);
+	iter->LoopCondition = EX;
+	iter->LoopStatement = ST;
+	iter->LoopBumper = DO;
+	iter->CheckAt = ZCC_IterationStmt::Start;
+	// The initialization expression appears outside the loop
+	// for_init may be NULL if there is no initialization.
+	SAFE_APPEND(IN, iter);
+	// And the whole thing gets wrapped inside a compound statement in case the loop
+	// initializer defined any variables.
+	NEW_AST_NODE(CompoundStmt, wrap, T);
+	wrap->Content = IN;
+	X = wrap;
+}
+
+while_or_until(X) ::= WHILE(T).
+{
+	X.Int = ZCC_WHILE;
+	X.SourceLoc = T.SourceLoc;
+}
+while_or_until(X) ::= UNTIL(T).
+{
+	X.Int = ZCC_UNTIL;
+	X.SourceLoc = T.SourceLoc;
+}
+
+%type for_init{ZCC_Statement *}
+for_init(X) ::= local_var(A).						{ X = A /*X-overwrites-A*/; }
+for_init(X) ::= for_bump(A).						{ X = A /*X-overwrites-A*/; }
+
+%type for_bump{ZCC_Statement *}
+for_bump(X) ::= .									{ X = NULL; }
+for_bump(X) ::= expression_statement(A).			{ X = A; /*X-overwrites-A*/ }
+
+/*----- If Statements -----*/
+
+/* Resolve the shift-reduce conflict here in favor of the shift.
+ * This is the default behavior, but using precedence symbols
+ * lets us do it without warnings.
+ */
+%left IF.
+%left ELSE.
+%type selection_statement{ZCC_Statement *}
+%type if_front{ZCC_IfStmt *}
+
+selection_statement(X) ::= if_front(A). [IF]
+{
+	X = A; /*X-overwrites-A*/
+}
+selection_statement(X) ::= if_front(A) ELSE statement(B). [ELSE]
+{
+	A->FalsePath = B;
+	X = A; /*X-overwrites-A*/
+}
+
+if_front(X) ::= IF(T) LPAREN expr(A) RPAREN statement(B).
+{
+	NEW_AST_NODE(IfStmt,stmt,T);
+	stmt->Condition = A;
+	stmt->TruePath = B;
+	stmt->FalsePath = NULL;
+	X = stmt;
+}
+
+/*----- Switch Statements -----*/
+
+selection_statement(X) ::= SWITCH(T) LPAREN expr(A) RPAREN statement(B).
+{
+	NEW_AST_NODE(SwitchStmt,stmt,T);
+	stmt->Condition = A;
+	stmt->Content = B;
+	X = stmt;
+}
+
+/*----- Case Label "Statements" -----*/
+
+%type labeled_statement{ZCC_CaseStmt *}
+
+labeled_statement(X) ::= CASE(T) expr(A) COLON.
+{
+	NEW_AST_NODE(CaseStmt,stmt,T);
+	stmt->Condition = A;
+	X = stmt;
+}
+labeled_statement(X) ::= DEFAULT(T) COLON.
+{
+	NEW_AST_NODE(CaseStmt,stmt,T);
+	stmt->Condition = NULL;
+	X = stmt;
+}
+
+/*----- Assignment Statements -----*/
+
+%type assign_statement{ZCC_AssignStmt *}
+
+// The grammar won't let this pass without some syntactic help. 
+// Parentheses and braces aren't accepted either so brackets are the only way to get this through the parser without a conflict.
+assign_statement(X) ::= LBRACKET expr_list(A) RBRACKET EQ expr(B). [EQ]
+{
+	NEW_AST_NODE(AssignStmt,stmt,A);
+	stmt->AssignOp = ZCC_EQ;
+	stmt->Dests = A;
+	stmt->Sources = B;
+	X = stmt;
+}
+
+/*----- Local Variable Definition "Statements" -----*/
+
+%type local_var{ZCC_LocalVarStmt *}
+
+local_var(X) ::= type(A) variable_list_with_init(B).
+{
+	NEW_AST_NODE(LocalVarStmt,vardef,A);
+	vardef->Type = A;
+	vardef->Vars = B;
+	X = vardef;
+}
+
+%type var_init{ZCC_VarInit *}
+var_init(X) ::= IDENTIFIER(A).						
+{ 
+	NEW_AST_NODE(VarInit,var,A);
+	var->Name = ENamedName(A.Int);
+	var->ArraySize = NULL;
+	var->Init = NULL;
+	var->InitIsArray = false;
+	X = var;
+}
+
+var_init(X) ::= IDENTIFIER(A) array_size(B).
+{
+	NEW_AST_NODE(VarInit,var,A);
+	var->Name = ENamedName(A.Int);
+	var->ArraySize = B;
+	var->Init = NULL;
+	var->InitIsArray = false;
+	X = var;
+}
+
+var_init(X) ::= IDENTIFIER(A) EQ expr(B).						
+{ 
+	NEW_AST_NODE(VarInit,var,A);
+	var->Name = ENamedName(A.Int);
+	var->ArraySize = NULL;
+	var->Init = B;
+	var->InitIsArray = false;
+	X = var;
+}
+
+var_init(X) ::= IDENTIFIER(A) EQ  LBRACE expr_list(C) RBRACE.	// this is for arrays which declare the size with the type
+{ 
+	NEW_AST_NODE(VarInit,var,A);
+	var->Name = ENamedName(A.Int);
+	var->ArraySize = NULL;
+	var->Init = C;
+	var->InitIsArray = true;
+	X = var;
+}
+
+var_init(X) ::= IDENTIFIER(A) array_size(B) EQ  LBRACE expr_list(C) RBRACE.
+{ 
+	NEW_AST_NODE(VarInit,var,A);
+	var->Name = ENamedName(A.Int);
+	var->ArraySize = B;
+	var->Init = C;
+	var->InitIsArray = true;
+	X = var;
+}
+
+var_init(X) ::= IDENTIFIER EQ  LBRACE error RBRACE.
+{ 
+	X = NULL;
+}
+
+%type variable_list_with_init{ZCC_VarInit *}
+
+variable_list_with_init(X) ::= var_init(X).
+variable_list_with_init(X) ::= variable_list_with_init(A) COMMA var_init(B).
+{
+	AppendTreeNodeSibling(A, B);
+	X = A; /*X-overwrites-A*/
+}

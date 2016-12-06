@@ -1,0 +1,129 @@
+// Bridge ball -------------------------------------------------------------
+
+class BridgeBall : Actor
+{
+	default
+	{
+		+NOBLOCKMAP
+		+NOTELEPORT
+		+NOGRAVITY
+	}
+
+	native void A_BridgeOrbit();
+	
+	States
+	{
+	Spawn:
+		TLGL A 2 Bright;
+		TLGL A 1 Bright A_BridgeOrbit;
+		Wait;
+	}
+
+}
+
+// The bridge itself -------------------------------------------------------
+
+class CustomBridge : Actor native
+{
+	default
+	{
+		+SOLID
+		+NOGRAVITY
+		+NOLIFTDROP
+		+ACTLIKEBRIDGE
+		Radius 32;
+		Height 2;
+		RenderStyle "None";
+	}
+
+	native void A_BridgeInit(class<Actor> balltype = "BridgeBall");
+
+	states
+	{
+	Spawn:
+		TLGL ABCDE 3 Bright;
+		Loop;
+	See:
+		TLGL A 2;
+		TLGL A 2 A_BridgeInit;
+		TLGL A -1;
+		Stop;
+	Death:
+		TLGL A 2;
+		TLGL A 300;
+		Stop;
+	}
+}
+
+// The Hexen bridge -------------------------------------------------------
+
+class Bridge : CustomBridge
+{
+	default
+	{
+		RenderStyle "None";
+		Args 32, 2, 3, 0;
+	}
+}
+
+// The ZDoom bridge -------------------------------------------------------
+
+class ZBridge : CustomBridge
+{
+	default
+	{
+		Args 36, 4, 0, 0;
+	}
+}
+
+
+// Invisible bridge --------------------------------------------------------
+
+class InvisibleBridge : Actor native
+{
+	default
+	{
+		RenderStyle "None";
+		Radius 32;
+		Height 4;
+		+SOLID
+		+NOGRAVITY
+		+NOLIFTDROP
+		+ACTLIKEBRIDGE
+	}
+	States
+	{
+	Spawn:
+		TNT1 A -1;
+		Stop;
+	}
+}
+
+// And some invisible bridges from Skull Tag -------------------------------
+
+class InvisibleBridge32 : InvisibleBridge
+{
+	default
+	{
+		Radius 32;
+		Height 8;
+	}
+}
+
+class InvisibleBridge16 : InvisibleBridge
+{
+	default
+	{
+		Radius 16;
+		Height 8;
+	}
+}
+
+class InvisibleBridge8 : InvisibleBridge
+{
+	default
+	{
+		Radius 8;
+		Height 8;
+	}
+}

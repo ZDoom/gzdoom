@@ -110,6 +110,7 @@ struct FMapInfoParser
 	void ParseAMColors(bool);
 	FName CheckEndSequence();
 	FName ParseEndGame();
+	void ParseDamageDefinition();
 };
 
 #define DEFINE_MAP_OPTION(name, old) \
@@ -259,7 +260,7 @@ struct FOptionalMapinfoDataPtr
 typedef TMap<FName, FOptionalMapinfoDataPtr> FOptData;
 typedef TMap<int, FName> FMusicMap;
 
-enum EMapType
+enum EMapType : int
 {
 	MAPTYPE_UNKNOWN = 0,
 	MAPTYPE_DOOM,

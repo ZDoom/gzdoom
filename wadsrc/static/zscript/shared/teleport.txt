@@ -1,0 +1,54 @@
+
+class TeleportFog : Actor native
+{
+	default
+	{
+		+NOBLOCKMAP
+		+NOTELEPORT
+		+NOGRAVITY
+		RenderStyle "Add";
+	}
+	States
+	{
+	Spawn:
+		TFOG ABABCDEFGHIJ 6 Bright;
+		Stop;
+	
+	Raven:
+		TELE ABCDEFGHGFEDC 6 Bright;
+		Stop;
+
+	Strife:
+		TFOG ABCDEFEDCB 6 Bright;
+		Stop;
+	}
+}
+
+
+
+class TeleportDest : Actor
+{
+	default
+	{
+		+NOBLOCKMAP
+		+NOSECTOR
+		+DONTSPLASH
+	}
+}
+
+class TeleportDest2 : TeleportDest
+{
+	default
+	{
+		+NOGRAVITY
+	}
+}
+
+class TeleportDest3 : TeleportDest2
+{
+	default
+	{
+		-NOGRAVITY
+	}
+}
+

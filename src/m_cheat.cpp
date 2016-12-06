@@ -30,7 +30,6 @@
 #include "doomstat.h"
 #include "gstrings.h"
 #include "p_local.h"
-#include "a_strifeglobal.h"
 #include "gi.h"
 #include "p_enemy.h"
 #include "sbar.h"
@@ -48,6 +47,8 @@
 #include "serializer.h"
 #include "r_utility.h"
 #include "a_morph.h"
+#include "a_armor.h"
+#include "a_ammo.h"
 
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code
@@ -483,18 +484,27 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_LEGO:
 		if (player->mo != NULL && player->health >= 0)
 		{
-			int oldpieces = ASigil::GiveSigilPiece (player->mo);
-			item = player->mo->FindInventory (RUNTIME_CLASS(ASigil));
-
-			if (item != NULL)
+			static VMFunction *gsp = nullptr;
+			if (gsp == nullptr) gsp = PClass::FindFunction(NAME_Sigil, NAME_GiveSigilPiece);
+			if (gsp)
 			{
-				if (oldpieces == 5)
+				VMValue params[1] = { player->mo };
+				VMReturn ret;
+				int oldpieces = 1;
+				ret.IntAt(&oldpieces);
+				GlobalVMStack.Call(gsp, params, 1, &ret, 1, nullptr);
+				item = player->mo->FindInventory(PClass::FindActor(NAME_Sigil));
+
+				if (item != NULL)
 				{
-					item->Destroy ();
-				}
-				else
-				{
-					player->PendingWeapon = static_cast<AWeapon *> (item);
+					if (oldpieces == 5)
+					{
+						item->Destroy();
+					}
+					else
+					{
+						player->PendingWeapon = static_cast<AWeapon *> (item);
+					}
 				}
 			}
 		}
@@ -1033,9 +1043,11 @@ public:
 	}
 };
 
-IMPLEMENT_POINTY_CLASS(DSuicider)
- DECLARE_POINTER(Pawn)
-END_POINTERS
+IMPLEMENT_CLASS(DSuicider, false, true)
+
+IMPLEMENT_POINTERS_START(DSuicider)
+	IMPLEMENT_POINTER(Pawn)
+IMPLEMENT_POINTERS_END
 
 void cht_Suicide (player_t *plyr)
 {

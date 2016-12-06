@@ -53,50 +53,58 @@
 
 static bool UncompressZipLump(char *Cache, FileReader *Reader, int Method, int LumpSize, int CompressedSize, int GPFlags)
 {
-	switch (Method)
+	try
 	{
-	case METHOD_STORED:
-	{
-		Reader->Read(Cache, LumpSize);
-		break;
-	}
+		switch (Method)
+		{
+		case METHOD_STORED:
+		{
+			Reader->Read(Cache, LumpSize);
+			break;
+		}
 
-	case METHOD_DEFLATE:
-	{
-		FileReaderZ frz(*Reader, true);
-		frz.Read(Cache, LumpSize);
-		break;
-	}
+		case METHOD_DEFLATE:
+		{
+			FileReaderZ frz(*Reader, true);
+			frz.Read(Cache, LumpSize);
+			break;
+		}
 
-	case METHOD_BZIP2:
-	{
-		FileReaderBZ2 frz(*Reader);
-		frz.Read(Cache, LumpSize);
-		break;
-	}
+		case METHOD_BZIP2:
+		{
+			FileReaderBZ2 frz(*Reader);
+			frz.Read(Cache, LumpSize);
+			break;
+		}
 
-	case METHOD_LZMA:
-	{
-		FileReaderLZMA frz(*Reader, LumpSize, true);
-		frz.Read(Cache, LumpSize);
-		break;
-	}
+		case METHOD_LZMA:
+		{
+			FileReaderLZMA frz(*Reader, LumpSize, true);
+			frz.Read(Cache, LumpSize);
+			break;
+		}
 
-	case METHOD_IMPLODE:
-	{
-		FZipExploder exploder;
-		exploder.Explode((unsigned char *)Cache, LumpSize, Reader, CompressedSize, GPFlags);
-		break;
-	}
+		case METHOD_IMPLODE:
+		{
+			FZipExploder exploder;
+			exploder.Explode((unsigned char *)Cache, LumpSize, Reader, CompressedSize, GPFlags);
+			break;
+		}
 
-	case METHOD_SHRINK:
-	{
-		ShrinkLoop((unsigned char *)Cache, LumpSize, Reader, CompressedSize);
-		break;
-	}
+		case METHOD_SHRINK:
+		{
+			ShrinkLoop((unsigned char *)Cache, LumpSize, Reader, CompressedSize);
+			break;
+		}
 
-	default:
-		assert(0);
+		default:
+			assert(0);
+			return false;
+		}
+	}
+	catch (CRecoverableError &err)
+	{
+		Printf("%s\n", err.GetMessage());
 		return false;
 	}
 	return true;

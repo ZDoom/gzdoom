@@ -1356,7 +1356,6 @@ subsector_t *P_PointInSubsector (double x, double y)
 	return (subsector_t *)((BYTE *)node - 1);
 }
 
-
 //==========================================================================
 //
 // PointOnLine

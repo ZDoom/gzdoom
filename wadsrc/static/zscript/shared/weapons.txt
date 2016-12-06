@@ -1,0 +1,144 @@
+class Weapon : StateProvider native
+{
+	enum EFireMode
+	{
+		PrimaryFire,
+		AltFire,
+		EitherFire
+	};
+
+	native uint WeaponFlags;
+	native class<Ammo> AmmoType1, AmmoType2;		// Types of ammo used by this weapon
+	native int AmmoGive1, AmmoGive2;				// Amount of each ammo to get when picking up weapon
+	native int MinAmmo1, MinAmmo2;					// Minimum ammo needed to switch to this weapon
+	native int AmmoUse1, AmmoUse2;					// How much ammo to use with each shot
+	native int Kickback;
+	native float YAdjust;							// For viewing the weapon fullscreen (visual only so no need to be a double)
+	native sound UpSound, ReadySound;				// Sounds when coming up and idle
+	native class<Weapon> SisterWeaponType;			// Another weapon to pick up with this one
+	native class<Actor> ProjectileType;				// Projectile used by primary attack
+	native class<Actor> AltProjectileType;			// Projectile used by alternate attack
+	native int SelectionOrder;						// Lower-numbered weapons get picked first
+	native int MinSelAmmo1, MinSelAmmo2;			// Ignore in BestWeapon() if inadequate ammo
+	native double MoveCombatDist;					// Used by bots, but do they *really* need it?
+	native int ReloadCounter;						// For A_CheckForReload
+	native int BobStyle;							// [XA] Bobbing style. Defines type of bobbing (e.g. Normal, Alpha)  (visual only so no need to be a double)
+	native float BobSpeed;							// [XA] Bobbing speed. Defines how quickly a weapon bobs.
+	native float BobRangeX, BobRangeY;				// [XA] Bobbing range. Defines how far a weapon bobs in either direction.
+	native Ammo Ammo1, Ammo2;						// In-inventory instance variables
+	native Weapon SisterWeapon;
+	native float FOVScale;
+	native int Crosshair;							// 0 to use player's crosshair
+	native bool GivenAsMorphWeapon;
+	native bool bAltFire;							// Set when this weapon's alternate fire is used.
+	native readonly bool bDehAmmo;
+
+	Default
+	{
+		Inventory.PickupSound "misc/w_pkup";
+		Weapon.DefaultKickback;
+		Weapon.BobSpeed 1.0;
+		Weapon.BobRangeX 1.0;
+		Weapon.BobRangeY 1.0;
+		+WEAPONSPAWN
+		DefaultStateUsage SUF_ACTOR|SUF_OVERLAY|SUF_WEAPON;
+	}
+	States
+	{
+	LightDone:
+		SHTG E 0 A_Light0;
+		Stop;
+	}
+	
+	native bool CheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo = false, int ammocount = -1);
+	native bool DepleteAmmo(bool altFire, bool checkEnough = true, int ammouse = -1);
+	native virtual void EndPowerup();
+	
+	virtual State GetReadyState ()
+	{
+		return FindState('Ready');
+	}
+	
+	virtual State GetUpState ()
+	{
+		return FindState('Select');
+	}
+
+	virtual State GetDownState ()
+	{
+		return FindState('Deselect');
+	}
+
+	virtual State GetAtkState (bool hold)
+	{
+		State s = null;
+		if (hold) s = FindState('Hold');
+		if (s == null) s = FindState('Fire');
+		return s;
+	}
+	
+	virtual State GetAltAtkState (bool hold)
+	{
+		State s = null;
+		if (hold) s = FindState('AltHold');
+		if (s == null) s = FindState('AltFire');
+		return s;
+	}
+	
+	native action void A_ZoomFactor(double scale = 1, int flags = 0);
+	native action void A_SetCrosshair(int xhair);
+	const ZOOM_INSTANT = 1;
+	const ZOOM_NOSCALETURNING = 2;
+	
+}
+
+class WeaponGiver : Weapon native
+{
+	
+	native double DropAmmoFactor;
+	
+	Default
+	{
+		Weapon.AmmoGive1 -1;
+		Weapon.AmmoGive2 -1;
+	}
+}
+
+class WeaponHolder : Inventory native
+{
+	native int PieceMask;
+	native Class<Actor> PieceWeapon;
+	
+	Default
+	{
+		+NOBLOCKMAP
+		+NOSECTOR
+		+INVENTORY.UNDROPPABLE
+	}
+}
+
+class WeaponPiece : Inventory native 
+{
+	Default
+	{
+		+WEAPONSPAWN;
+	}
+}
+
+class Ammo : Inventory native
+{
+	native int BackpackAmount;
+	native int BackpackMaxAmount;
+	
+	Default
+	{
+		+INVENTORY.KEEPDEPLETED
+		Inventory.PickupSound "misc/ammo_pkup";
+	}
+}
+
+class BackpackItem : Inventory native
+{
+	native bool bDepleted;
+}
+

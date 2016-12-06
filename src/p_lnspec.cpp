@@ -50,7 +50,6 @@
 #include "gi.h"
 #include "m_random.h"
 #include "p_conversation.h"
-#include "a_strifeglobal.h"
 #include "r_data/r_translate.h"
 #include "p_3dmidtex.h"
 #include "d_net.h"
@@ -350,7 +349,7 @@ FUNC(LS_Floor_LowerToHighest)
 }
 
 FUNC(LS_Floor_LowerToHighestEE)
-// Floor_LowerToHighest (tag, speed, change)
+// Floor_LowerToHighestEE (tag, speed, change)
 {
 	return EV_DoFloor (DFloor::floorLowerToHighest, ln, arg0, SPEED(arg1), 0, -1, CHANGE(arg2), false);
 }
@@ -1371,7 +1370,7 @@ void DoActivateThing(AActor * thing, AActor * activator)
 		if (thing->activationtype & THINGSPEC_Switch) // Set other flag if switching
 			thing->activationtype |= THINGSPEC_Deactivate;
 	}
-	thing->Activate (activator);
+	thing->CallActivate (activator);
 }
 
 void DoDeactivateThing(AActor * thing, AActor * activator)
@@ -1382,7 +1381,7 @@ void DoDeactivateThing(AActor * thing, AActor * activator)
 		if (thing->activationtype & THINGSPEC_Switch) // Set other flag if switching
 			thing->activationtype |= THINGSPEC_Activate;
 	}
-	thing->Deactivate (activator);
+	thing->CallDeactivate (activator);
 }
 
 FUNC(LS_Thing_Activate)
@@ -3155,17 +3154,7 @@ FUNC(LS_ClearForceField)
 		sector_t *sec = &sectors[secnum];
 		rtn = true;
 
-		for (int i = 0; i < sec->linecount; ++i)
-		{
-			line_t *line = sec->lines[i];
-			if (line->backsector != NULL && line->special == ForceField)
-			{
-				line->flags &= ~(ML_BLOCKING|ML_BLOCKEVERYTHING);
-				line->special = 0;
-				line->sidedef[0]->SetTexture(side_t::mid, FNullTextureID());
-				line->sidedef[1]->SetTexture(side_t::mid, FNullTextureID());
-			}
-		}
+		sec->RemoveForceField();
 	}
 	return rtn;
 }
@@ -3233,8 +3222,8 @@ FUNC(LS_GlassBreak)
 			if (it != NULL)
 			{
 				it->GiveInventoryType (QuestItemClasses[28]);
-				it->GiveInventoryType (RUNTIME_CLASS(AUpgradeAccuracy));
-				it->GiveInventoryType (RUNTIME_CLASS(AUpgradeStamina));
+				it->GiveInventoryType (PClass::FindActor("UpgradeAccuracy"));
+				it->GiveInventoryType (PClass::FindActor("UpgradeStamina"));
 			}
 		}
 	}

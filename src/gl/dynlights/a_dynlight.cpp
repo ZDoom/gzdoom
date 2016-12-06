@@ -62,7 +62,7 @@
 #include "p_local.h"
 #include "c_dispatch.h"
 #include "g_level.h"
-#include "thingdef/thingdef.h"
+#include "scripting/thingdef.h"
 #include "i_system.h"
 #include "templates.h"
 #include "doomdata.h"
@@ -107,10 +107,10 @@ DEFINE_CLASS_PROPERTY(type, S, DynamicLight)
 // which is controlled by flags
 //
 //==========================================================================
-IMPLEMENT_CLASS (ADynamicLight)
-IMPLEMENT_CLASS (AVavoomLight)
-IMPLEMENT_CLASS (AVavoomLightWhite)
-IMPLEMENT_CLASS (AVavoomLightColor)
+IMPLEMENT_CLASS (ADynamicLight, false, false)
+IMPLEMENT_CLASS (AVavoomLight, false, false)
+IMPLEMENT_CLASS (AVavoomLightWhite, false, false)
+IMPLEMENT_CLASS (AVavoomLightColor, false, false)
 
 void AVavoomLight::BeginPlay ()
 {

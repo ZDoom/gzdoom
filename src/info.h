@@ -43,7 +43,6 @@
 
 #include "dobject.h"
 #include "doomdef.h"
-#include "vm.h"
 #include "s_sound.h"
 
 #include "m_fixed.h"
@@ -53,8 +52,39 @@ struct Baggage;
 class FScanner;
 struct FActorInfo;
 class FIntCVar;
+class FStateDefinitions;
 
-enum EStateType
+enum EStateDefineFlags
+{
+	SDF_NEXT = 0,
+	SDF_STATE = 1,
+	SDF_STOP = 2,
+	SDF_WAIT = 3,
+	SDF_LABEL = 4,
+	SDF_INDEX = 5,
+	SDF_MASK = 7,
+};
+
+enum EStateFlags
+{
+	STF_SLOW = 1,		// State duration is extended when slow monsters is on.
+	STF_FAST = 2,		// State duration is shortened when fast monsters is on.
+	STF_FULLBRIGHT = 4,	// State is fullbright
+	STF_NODELAY = 8,	// Spawn states executes its action normally
+	STF_SAMEFRAME = 16,	// Ignore Frame (except when spawning actor)
+	STF_CANRAISE = 32,	// Allows a monster to be resurrected without waiting for an infinate frame
+	STF_DEHACKED = 64,	// Modified by Dehacked
+};
+
+enum EStateUseFlags
+{
+	SUF_ACTOR = 1,
+	SUF_OVERLAY = 2,
+	SUF_WEAPON = 4,
+	SUF_ITEM = 8,
+};
+
+enum EStateType : int // this must ensure proper alignment.
 {
 	STATE_Actor,
 	STATE_Psprite,
@@ -81,32 +111,44 @@ struct FState
 {
 	FState		*NextState;
 	VMFunction	*ActionFunc;
-	WORD		sprite;
-	SWORD		Tics;
-	WORD		TicRange;
-	BYTE		Frame;
-	BYTE		DefineFlags;	// Unused byte so let's use it during state creation.
-	int			Misc1;			// Was changed to SBYTE, reverted to long for MBF compat
-	int			Misc2;			// Was changed to BYTE, reverted to long for MBF compat
-	short		Light;
-	BYTE		Fullbright:1;	// State is fullbright
-	BYTE		SameFrame:1;	// Ignore Frame (except when spawning actor)
-	BYTE		Fast:1;
-	BYTE		NoDelay:1;		// Spawn states executes its action normally
-	BYTE		CanRaise:1;		// Allows a monster to be resurrected without waiting for an infinate frame
-	BYTE		Slow:1;			// Inverse of fast
-
+	int32_t		sprite;
+	int16_t		Tics;
+	uint16_t	TicRange;
+	int16_t		Light;
+	uint16_t	StateFlags;
+	uint8_t		Frame;
+	uint8_t		UseFlags;		
+	uint8_t		DefineFlags;	// Unused byte so let's use it during state creation.
+	int32_t		Misc1;			// Was changed to SBYTE, reverted to long for MBF compat
+	int32_t		Misc2;			// Was changed to BYTE, reverted to long for MBF compat
+public:
 	inline int GetFrame() const
 	{
 		return Frame;
 	}
 	inline bool GetSameFrame() const
 	{
-		return SameFrame;
+		return !!(StateFlags & STF_SAMEFRAME);
 	}
 	inline int GetFullbright() const
 	{
-		return Fullbright ? 0x10 /*RF_FULLBRIGHT*/ : 0;
+		return (StateFlags & STF_FULLBRIGHT)? 0x10 /*RF_FULLBRIGHT*/ : 0;
+	}
+	inline bool GetFast() const
+	{
+		return !!(StateFlags & STF_FAST);
+	}
+	inline bool GetSlow() const
+	{
+		return !!(StateFlags & STF_SLOW);
+	}
+	inline bool GetNoDelay() const
+	{
+		return !!(StateFlags & STF_NODELAY);
+	}
+	inline bool GetCanRaise() const
+	{
+		return !!(StateFlags & STF_CANRAISE);
 	}
 	inline int GetTics() const
 	{
@@ -127,14 +169,6 @@ struct FState
 	inline FState *GetNextState() const
 	{
 		return NextState;
-	}
-	inline bool GetNoDelay() const
-	{
-		return NoDelay;
-	}
-	inline bool GetCanRaise() const
-	{
-		return CanRaise;
 	}
 	inline void SetFrame(BYTE frame)
 	{
@@ -214,14 +248,16 @@ public:
 	PClassActor();
 	~PClassActor();
 
-	virtual void ReplaceClassRef(PClass *oldclass, PClass *newclass);
+	virtual size_t PointerSubstitution(DObject *oldclass, DObject *newclass);
 	void BuildDefaults();
 	void ApplyDefaults(BYTE *defaults);
 	void RegisterIDs();
 	void SetDamageFactor(FName type, double factor);
 	void SetPainChance(FName type, int chance);
 	size_t PropagateMark();
-	void InitializeNativeDefaults();
+	bool SetReplacement(FName replaceName);
+	void SetDropItems(DDropItem *drops);
+	virtual void Finalize(FStateDefinitions &statedef);
 
 	FState *FindState(int numnames, FName *names, bool exact=false) const;
 	FState *FindStateByString(const char *name, bool exact=false);
@@ -243,6 +279,7 @@ public:
 	PClassActor *Replacee;
 	int NumOwnedStates;
 	BYTE GameFilter;
+	uint8_t DefaultStateUsage; // state flag defaults for blocks without a qualifier.
 	WORD SpawnID;
 	WORD ConversationID;
 	SWORD DoomEdNum;
@@ -259,7 +296,6 @@ public:
 	PalEntry BloodColor;	// Colorized blood
 	int GibHealth;			// Negative health below which this monster dies an extreme death
 	int WoundHealth;		// Health needed to enter wound state
-	int PoisonDamage;		// Amount of poison damage
 	double FastSpeed;		// speed in fast mode
 	double RDFactor;		// Radius damage factor
 	double CameraHeight;	// Height of camera when used as such
@@ -297,6 +333,44 @@ struct FDoomEdEntry
 	signed char ArgsDefined;
 	int Args[5];
 };
+
+struct FStateLabelStorage
+{
+	TArray<uint8_t> Storage;
+
+	int AddPointer(FState *ptr)
+	{
+		if (ptr != nullptr)
+		{
+			int pos = Storage.Reserve(sizeof(ptr) + sizeof(int));
+			memset(&Storage[pos], 0, sizeof(int));
+			memcpy(&Storage[pos + sizeof(int)], &ptr, sizeof(ptr));
+			return pos / 4 + 1;
+		}
+		else return 0;
+	}
+
+	int AddNames(TArray<FName> &names)
+	{
+		int siz = names.Size();
+		if (siz > 1)
+		{
+			int pos = Storage.Reserve(sizeof(int) + sizeof(FName) * names.Size());
+			memcpy(&Storage[pos], &siz, sizeof(int));
+			memcpy(&Storage[pos + sizeof(int)], &names[0], sizeof(FName) * names.Size());
+			return pos / 4 + 1;
+		}
+		else
+		{
+			// don't store single name states in the array.
+			return names[0].GetIndex() + 0x10000000;
+		}
+	}
+
+	FState *GetState(int pos, PClassActor *cls, bool exact = false);
+};
+
+extern FStateLabelStorage StateLabels;
 
 enum ESpecialMapthings
 {
@@ -339,24 +413,5 @@ void InitActorNumsFromMapinfo();
 int GetSpriteIndex(const char * spritename, bool add = true);
 TArray<FName> &MakeStateNameList(const char * fname);
 void AddStateLight(FState *state, const char *lname);
-
-// Standard parameters for all action functons
-//   self         - Actor this action is to operate on (player if a weapon)
-//   stateowner   - Actor this action really belongs to (may be an item)
-//   callingstate - State this action was called from
-#define PARAM_ACTION_PROLOGUE_TYPE(type) \
-	PARAM_PROLOGUE; \
-	PARAM_OBJECT	 (self, type); \
-	PARAM_OBJECT_OPT (stateowner, AActor) { stateowner = self; } \
-	PARAM_STATEINFO_OPT  (stateinfo) { stateinfo = nullptr; } \
-
-#define PARAM_ACTION_PROLOGUE	PARAM_ACTION_PROLOGUE_TYPE(AActor)
-
-// Number of action paramaters
-#define NAP 3
-
-#define PARAM_SELF_PROLOGUE(type) \
-	PARAM_PROLOGUE; \
-	PARAM_OBJECT(self, type);
 
 #endif	// __INFO_H__

@@ -80,7 +80,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-IMPLEMENT_ABSTRACT_CLASS(BaseWinFB)
+IMPLEMENT_CLASS(BaseWinFB, true, false)
 
 typedef IDirect3D9 *(WINAPI *DIRECT3DCREATE9FUNC)(UINT SDKVersion);
 typedef HRESULT (WINAPI *DIRECTDRAWCREATEFUNC)(GUID FAR *lpGUID, LPDIRECTDRAW FAR *lplpDD, IUnknown FAR *pUnkOuter);

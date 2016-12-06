@@ -1,0 +1,66 @@
+class ParticleFountain : Actor native
+{
+	default
+	{
+		Height 0;
+		+NOBLOCKMAP
+		+NOGRAVITY
+		+INVISIBLE
+	}
+}
+
+class RedParticleFountain : ParticleFountain
+{
+	default
+	{
+		Health 1;
+	}
+}
+
+class GreenParticleFountain : ParticleFountain
+{
+	default
+	{
+		Health 2;
+	}
+}
+
+class BlueParticleFountain : ParticleFountain
+{
+	default
+	{
+		Health 3;
+	}
+}
+
+class YellowParticleFountain : ParticleFountain
+{
+	default
+	{
+		Health 4;
+	}
+}
+
+class PurpleParticleFountain : ParticleFountain
+{
+	default
+	{
+		Health 5;
+	}
+}
+
+class BlackParticleFountain : ParticleFountain
+{
+	default
+	{
+		Health 6;
+	}
+}
+
+class WhiteParticleFountain : ParticleFountain
+{
+	default
+	{
+		Health 7;
+	}
+}

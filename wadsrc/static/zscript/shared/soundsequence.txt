@@ -1,0 +1,121 @@
+
+class AmbientSound : Actor native
+{
+	default
+	{
+		+NOBLOCKMAP
+		+NOSECTOR
+		+DONTSPLASH
+	}
+}
+
+class AmbientSoundNoGravity : AmbientSound
+{
+	default
+	{
+		+NOGRAVITY
+	}
+}
+
+class SoundSequenceSlot : Actor native
+{
+	default
+	{
+		+NOSECTOR
+		+NOBLOCKMAP
+		+DONTSPLASH
+	}
+}
+
+class SoundSequence : Actor native
+{
+	default
+	{
+		+NOSECTOR
+		+NOBLOCKMAP
+		+DONTSPLASH
+	}
+}
+
+// Heretic Sound sequences -----------------------------------------------------------
+
+class HereticSoundSequence1 : SoundSequence
+{
+	default
+	{
+		Args 0;
+	}
+}
+
+class HereticSoundSequence2 : SoundSequence
+{
+	default
+	{
+		Args 1;
+	}
+}
+
+class HereticSoundSequence3 : SoundSequence
+{
+	default
+	{
+		Args 2;
+	}
+}
+
+class HereticSoundSequence4 : SoundSequence
+{
+	default
+	{
+		Args 3;
+	}
+}
+
+class HereticSoundSequence5 : SoundSequence
+{
+	default
+	{
+		Args 4;
+	}
+}
+
+class HereticSoundSequence6 : SoundSequence
+{
+	default
+	{
+		Args 5;
+	}
+}
+
+class HereticSoundSequence7 : SoundSequence
+{
+	default
+	{
+		Args 6;
+	}
+}
+
+class HereticSoundSequence8 : SoundSequence
+{
+	default
+	{
+		Args 7;
+	}
+}
+
+class HereticSoundSequence9 : SoundSequence
+{
+	default
+	{
+		Args 8;
+	}
+}
+
+class HereticSoundSequence10 : SoundSequence
+{
+	default
+	{
+		Args 9;
+	}
+}
+

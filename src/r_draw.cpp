@@ -69,17 +69,10 @@ int 			scaledviewwidth;
 //		These get changed depending on the current
 //		screen depth and asm/no asm.
 void (*R_DrawColumnHoriz)(void);
-void (*R_DrawColumn)(void);
-void (*R_DrawFuzzColumn)(void);
 void (*R_DrawTranslatedColumn)(void);
 void (*R_DrawShadedColumn)(void);
 void (*R_DrawSpan)(void);
 void (*R_DrawSpanMasked)(void);
-void (*R_DrawSpanTranslucent)(void);
-void (*R_DrawSpanMaskedTranslucent)(void);
-void (*R_DrawSpanAddClamp)(void);
-void (*R_DrawSpanMaskedAddClamp)(void);
-void (*rt_map4cols)(int,int,int);
 
 //
 // R_DrawColumn
@@ -171,7 +164,6 @@ void R_InitShadeMaps()
 /*									*/
 /************************************/
 
-#ifndef	X86_ASM
 //
 // A column is a vertical slice/span from a wall texture that,
 //	given the DOOM style restrictions on the view orientation,
@@ -179,7 +171,7 @@ void R_InitShadeMaps()
 // Thus a special case loop for very fast rendering can
 //	be used. It has also been used with Wolfenstein 3D.
 // 
-void R_DrawColumnP_C (void)
+void R_DrawColumn (void)
 {
 	int 				count;
 	BYTE*				dest;
@@ -222,7 +214,7 @@ void R_DrawColumnP_C (void)
 		} while (--count);
 	}
 } 
-#endif
+
 
 // [RH] Just fills a column with a color
 void R_FillColumnP (void)
@@ -414,13 +406,12 @@ void R_InitFuzzTable (int fuzzoff)
 	}
 }
 
-#ifndef X86_ASM
 //
 // Creates a fuzzy image by copying pixels from adjacent ones above and below.
 // Used with an all black colormap, this could create the SHADOW effect,
 // i.e. spectres and invisible players.
 //
-void R_DrawFuzzColumnP_C (void)
+void R_DrawFuzzColumn (void)
 {
 	int count;
 	BYTE *dest;
@@ -490,7 +481,6 @@ void R_DrawFuzzColumnP_C (void)
 		fuzzpos = fuzz;
 	}
 } 
-#endif
 
 //
 // R_DrawTranlucentColumn
@@ -1046,7 +1036,7 @@ void R_SetupSpanBits(FTexture *tex)
 	{
 		ds_xbits--;
 	}
-	if ((1 << ds_ybits) > tex->GetHeight())
+		if ((1 << ds_ybits) > tex->GetHeight())
 	{
 		ds_ybits--;
 	}
@@ -1057,7 +1047,7 @@ void R_SetupSpanBits(FTexture *tex)
 
 //
 // Draws the actual span.
-#ifndef X86_ASM
+//#ifndef X86_ASM
 void R_DrawSpanP_C (void)
 {
 	dsfixed_t			xfrac;
@@ -1156,7 +1146,7 @@ void R_DrawSpanMaskedP_C (void)
 		// 64x64 is the most common case by far, so special case it.
 		do
 		{
-			BYTE texdata;
+			int texdata;
 
 			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
 			texdata = source[spot];
@@ -1176,7 +1166,7 @@ void R_DrawSpanMaskedP_C (void)
 		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
 		do
 		{
-			BYTE texdata;
+			int texdata;
 		
 			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 			texdata = source[spot];
@@ -1190,9 +1180,9 @@ void R_DrawSpanMaskedP_C (void)
 		} while (--count);
 	}
 }
-#endif
+//#endif
 
-void R_DrawSpanTranslucentP_C (void)
+void R_DrawSpanTranslucent (void)
 {
 	dsfixed_t			xfrac;
 	dsfixed_t			yfrac;
@@ -1252,7 +1242,7 @@ void R_DrawSpanTranslucentP_C (void)
 	}
 }
 
-void R_DrawSpanMaskedTranslucentP_C (void)
+void R_DrawSpanMaskedTranslucent (void)
 {
 	dsfixed_t			xfrac;
 	dsfixed_t			yfrac;
@@ -1326,7 +1316,7 @@ void R_DrawSpanMaskedTranslucentP_C (void)
 	}
 }
 
-void R_DrawSpanAddClampP_C (void)
+void R_DrawSpanAddClamp (void)
 {
 	dsfixed_t			xfrac;
 	dsfixed_t			yfrac;
@@ -1392,7 +1382,7 @@ void R_DrawSpanAddClampP_C (void)
 	}
 }
 
-void R_DrawSpanMaskedAddClampP_C (void)
+void R_DrawSpanMaskedAddClamp (void)
 {
 	dsfixed_t			xfrac;
 	dsfixed_t			yfrac;
@@ -1682,6 +1672,7 @@ DWORD vlinec1 ()
 	return frac;
 }
 
+#ifndef _M_X64
 void vlinec4 ()
 {
 	BYTE *dest = dc_dest;
@@ -1698,6 +1689,43 @@ void vlinec4 ()
 		dest += dc_pitch;
 	} while (--count);
 }
+#else
+// Optimized version for 64 bit. In 64 bit mode, accessing global variables is very expensive so even though
+// this exceeds the register count, loading all those values into a local variable is faster than not loading all of them.
+void vlinec4()
+{
+	BYTE *dest = dc_dest;
+	int count = dc_count;
+	int bits = vlinebits;
+	DWORD place;
+	auto pal0 = palookupoffse[0];
+	auto pal1 = palookupoffse[1];
+	auto pal2 = palookupoffse[2];
+	auto pal3 = palookupoffse[3];
+	auto buf0 = bufplce[0];
+	auto buf1 = bufplce[1];
+	auto buf2 = bufplce[2];
+	auto buf3 = bufplce[3];
+	const auto vince0 = vince[0];
+	const auto vince1 = vince[1];
+	const auto vince2 = vince[2];
+	const auto vince3 = vince[3];
+	auto vplce0 = vplce[0];
+	auto vplce1 = vplce[1];
+	auto vplce2 = vplce[2];
+	auto vplce3 = vplce[3];
+
+	do
+	{
+		dest[0] = pal0[buf0[(place = vplce0) >> bits]]; vplce0 = place + vince0;
+		dest[1] = pal1[buf1[(place = vplce1) >> bits]]; vplce1 = place + vince1;
+		dest[2] = pal2[buf2[(place = vplce2) >> bits]]; vplce2 = place + vince2;
+		dest[3] = pal3[buf3[(place = vplce3) >> bits]]; vplce3 = place + vince3;
+		dest += dc_pitch;
+	} while (--count);
+}
+#endif
+
 #endif
 
 void setupmvline (int fracbits)
@@ -2201,59 +2229,126 @@ void R_DrawSingleSkyCol1(uint32_t solid_top, uint32_t solid_bottom)
 
 void R_DrawSingleSkyCol4(uint32_t solid_top, uint32_t solid_bottom)
 {
-	for (int col = 0; col < 4; col++)
+	uint8_t *dest = dc_dest;
+	int count = dc_count;
+	int pitch = dc_pitch;
+	const uint8_t *source0[4] = { bufplce[0], bufplce[1], bufplce[2], bufplce[3] };
+	int textureheight0 = bufheight[0];
+	const uint32_t *palette = (const uint32_t *)GPalette.BaseColors;
+	int32_t frac[4] = { (int32_t)vplce[0], (int32_t)vplce[1], (int32_t)vplce[2], (int32_t)vplce[3] };
+	int32_t fracstep[4] = { (int32_t)vince[0], (int32_t)vince[1], (int32_t)vince[2], (int32_t)vince[3] };
+	uint8_t output[4];
+
+	int start_fade = 2; // How fast it should fade out
+
+	int solid_top_r = RPART(solid_top);
+	int solid_top_g = GPART(solid_top);
+	int solid_top_b = BPART(solid_top);
+	int solid_bottom_r = RPART(solid_bottom);
+	int solid_bottom_g = GPART(solid_bottom);
+	int solid_bottom_b = BPART(solid_bottom);
+	uint32_t solid_top_fill = RGB32k.RGB[(solid_top_r >> 3)][(solid_top_g >> 3)][(solid_top_b >> 3)];
+	uint32_t solid_bottom_fill = RGB32k.RGB[(solid_bottom_r >> 3)][(solid_bottom_g >> 3)][(solid_bottom_b >> 3)];
+	solid_top_fill = (solid_top_fill << 24) | (solid_top_fill << 16) | (solid_top_fill << 8) | solid_top_fill;
+	solid_bottom_fill = (solid_bottom_fill << 24) | (solid_bottom_fill << 16) | (solid_bottom_fill << 8) | solid_bottom_fill;
+
+	// Find bands for top solid color, top fade, center textured, bottom fade, bottom solid color:
+	int fade_length = (1 << (24 - start_fade));
+	int start_fadetop_y = (-frac[0]) / fracstep[0];
+	int end_fadetop_y = (fade_length - frac[0]) / fracstep[0];
+	int start_fadebottom_y = ((2 << 24) - fade_length - frac[0]) / fracstep[0];
+	int end_fadebottom_y = ((2 << 24) - frac[0]) / fracstep[0];
+	for (int col = 1; col < 4; col++)
 	{
-		uint8_t *dest = dc_dest + col;
-		int count = dc_count;
-		int pitch = dc_pitch;
-		const uint8_t *source0 = bufplce[col];
-		int textureheight0 = bufheight[0];
+		start_fadetop_y = MIN(start_fadetop_y, (-frac[0]) / fracstep[0]);
+		end_fadetop_y = MAX(end_fadetop_y, (fade_length - frac[0]) / fracstep[0]);
+		start_fadebottom_y = MIN(start_fadebottom_y, ((2 << 24) - fade_length - frac[0]) / fracstep[0]);
+		end_fadebottom_y = MAX(end_fadebottom_y, ((2 << 24) - frac[0]) / fracstep[0]);
+	}
+	start_fadetop_y = clamp(start_fadetop_y, 0, count);
+	end_fadetop_y = clamp(end_fadetop_y, 0, count);
+	start_fadebottom_y = clamp(start_fadebottom_y, 0, count);
+	end_fadebottom_y = clamp(end_fadebottom_y, 0, count);
 
-		int32_t frac = vplce[col];
-		int32_t fracstep = vince[col];
+	// Top solid color:
+	for (int index = 0; index < start_fadetop_y; index++)
+	{
+		*((uint32_t*)dest) = solid_top_fill;
+		dest += pitch;
+		for (int col = 0; col < 4; col++)
+			frac[col] += fracstep[col];
+	}
 
-		int start_fade = 2; // How fast it should fade out
-
-		int solid_top_r = RPART(solid_top);
-		int solid_top_g = GPART(solid_top);
-		int solid_top_b = BPART(solid_top);
-		int solid_bottom_r = RPART(solid_bottom);
-		int solid_bottom_g = GPART(solid_bottom);
-		int solid_bottom_b = BPART(solid_bottom);
-
-		for (int index = 0; index < count; index++)
+	// Top fade:
+	for (int index = start_fadetop_y; index < end_fadetop_y; index++)
+	{
+		for (int col = 0; col < 4; col++)
 		{
-			uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
-			uint8_t fg = source0[sample_index];
+			uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+			uint8_t fg = source0[col][sample_index];
 
-			int alpha_top = MAX(MIN(frac >> (16 - start_fade), 256), 0);
-			int alpha_bottom = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
+			uint32_t c = palette[fg];
+			int alpha_top = MAX(MIN(frac[col] >> (16 - start_fade), 256), 0);
+			int inv_alpha_top = 256 - alpha_top;
+			int c_red = RPART(c);
+			int c_green = GPART(c);
+			int c_blue = BPART(c);
+			c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
+			c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
+			c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
+			output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
 
-			if (alpha_top == 256 && alpha_bottom == 256)
-			{
-				*dest = fg;
-			}
-			else
-			{
-				int inv_alpha_top = 256 - alpha_top;
-				int inv_alpha_bottom = 256 - alpha_bottom;
-
-				const auto &c = GPalette.BaseColors[fg];
-				int c_red = c.r;
-				int c_green = c.g;
-				int c_blue = c.b;
-				c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
-				c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
-				c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
-				c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
-				c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
-				c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
-				*dest = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
-			}
-
-			frac += fracstep;
-			dest += pitch;
+			frac[col] += fracstep[col];
 		}
+		*((uint32_t*)dest) = *((uint32_t*)output);
+		dest += pitch;
+	}
+
+	// Textured center:
+	for (int index = end_fadetop_y; index < start_fadebottom_y; index++)
+	{
+		for (int col = 0; col < 4; col++)
+		{
+			uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+			output[col] = source0[col][sample_index];
+
+			frac[col] += fracstep[col];
+		}
+
+		*((uint32_t*)dest) = *((uint32_t*)output);
+		dest += pitch;
+	}
+
+	// Fade bottom:
+	for (int index = start_fadebottom_y; index < end_fadebottom_y; index++)
+	{
+		for (int col = 0; col < 4; col++)
+		{
+			uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+			uint8_t fg = source0[col][sample_index];
+
+			uint32_t c = palette[fg];
+			int alpha_bottom = MAX(MIN(((2 << 24) - frac[col]) >> (16 - start_fade), 256), 0);
+			int inv_alpha_bottom = 256 - alpha_bottom;
+			int c_red = RPART(c);
+			int c_green = GPART(c);
+			int c_blue = BPART(c);
+			c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
+			c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
+			c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
+			output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+
+			frac[col] += fracstep[col];
+		}
+		*((uint32_t*)dest) = *((uint32_t*)output);
+		dest += pitch;
+	}
+
+	// Bottom solid color:
+	for (int index = end_fadebottom_y; index < count; index++)
+	{
+		*((uint32_t*)dest) = solid_bottom_fill;
+		dest += pitch;
 	}
 }
 
@@ -2321,66 +2416,146 @@ void R_DrawDoubleSkyCol1(uint32_t solid_top, uint32_t solid_bottom)
 
 void R_DrawDoubleSkyCol4(uint32_t solid_top, uint32_t solid_bottom)
 {
-	for (int col = 0; col < 4; col++)
+	uint8_t *dest = dc_dest;
+	int count = dc_count;
+	int pitch = dc_pitch;
+	const uint8_t *source0[4] = { bufplce[0], bufplce[1], bufplce[2], bufplce[3] };
+	const uint8_t *source1[4] = { bufplce2[0], bufplce2[1], bufplce2[2], bufplce2[3] };
+	int textureheight0 = bufheight[0];
+	uint32_t maxtextureheight1 = bufheight[1] - 1;
+	const uint32_t *palette = (const uint32_t *)GPalette.BaseColors;
+	int32_t frac[4] = { (int32_t)vplce[0], (int32_t)vplce[1], (int32_t)vplce[2], (int32_t)vplce[3] };
+	int32_t fracstep[4] = { (int32_t)vince[0], (int32_t)vince[1], (int32_t)vince[2], (int32_t)vince[3] };
+	uint8_t output[4];
+
+	int start_fade = 2; // How fast it should fade out
+
+	int solid_top_r = RPART(solid_top);
+	int solid_top_g = GPART(solid_top);
+	int solid_top_b = BPART(solid_top);
+	int solid_bottom_r = RPART(solid_bottom);
+	int solid_bottom_g = GPART(solid_bottom);
+	int solid_bottom_b = BPART(solid_bottom);
+	uint32_t solid_top_fill = RGB32k.RGB[(solid_top_r >> 3)][(solid_top_g >> 3)][(solid_top_b >> 3)];
+	uint32_t solid_bottom_fill = RGB32k.RGB[(solid_bottom_r >> 3)][(solid_bottom_g >> 3)][(solid_bottom_b >> 3)];
+	solid_top_fill = (solid_top_fill << 24) | (solid_top_fill << 16) | (solid_top_fill << 8) | solid_top_fill;
+	solid_bottom_fill = (solid_bottom_fill << 24) | (solid_bottom_fill << 16) | (solid_bottom_fill << 8) | solid_bottom_fill;
+
+	// Find bands for top solid color, top fade, center textured, bottom fade, bottom solid color:
+	int fade_length = (1 << (24 - start_fade));
+	int start_fadetop_y = (-frac[0]) / fracstep[0];
+	int end_fadetop_y = (fade_length - frac[0]) / fracstep[0];
+	int start_fadebottom_y = ((2 << 24) - fade_length - frac[0]) / fracstep[0];
+	int end_fadebottom_y = ((2 << 24) - frac[0]) / fracstep[0];
+	for (int col = 1; col < 4; col++)
 	{
-		uint8_t *dest = dc_dest + col;
-		int count = dc_count;
-		int pitch = dc_pitch;
-		const uint8_t *source0 = bufplce[col];
-		const uint8_t *source1 = bufplce2[col];
-		int textureheight0 = bufheight[0];
-		uint32_t maxtextureheight1 = bufheight[1] - 1;
+		start_fadetop_y = MIN(start_fadetop_y, (-frac[0]) / fracstep[0]);
+		end_fadetop_y = MAX(end_fadetop_y, (fade_length - frac[0]) / fracstep[0]);
+		start_fadebottom_y = MIN(start_fadebottom_y, ((2 << 24) - fade_length - frac[0]) / fracstep[0]);
+		end_fadebottom_y = MAX(end_fadebottom_y, ((2 << 24) - frac[0]) / fracstep[0]);
+	}
+	start_fadetop_y = clamp(start_fadetop_y, 0, count);
+	end_fadetop_y = clamp(end_fadetop_y, 0, count);
+	start_fadebottom_y = clamp(start_fadebottom_y, 0, count);
+	end_fadebottom_y = clamp(end_fadebottom_y, 0, count);
 
-		int32_t frac = vplce[col];
-		int32_t fracstep = vince[col];
+	// Top solid color:
+	for (int index = 0; index < start_fadetop_y; index++)
+	{
+		*((uint32_t*)dest) = solid_top_fill;
+		dest += pitch;
+		for (int col = 0; col < 4; col++)
+			frac[col] += fracstep[col];
+	}
 
-		int start_fade = 2; // How fast it should fade out
-
-		int solid_top_r = RPART(solid_top);
-		int solid_top_g = GPART(solid_top);
-		int solid_top_b = BPART(solid_top);
-		int solid_bottom_r = RPART(solid_bottom);
-		int solid_bottom_g = GPART(solid_bottom);
-		int solid_bottom_b = BPART(solid_bottom);
-
-		for (int index = 0; index < count; index++)
+	// Top fade:
+	for (int index = start_fadetop_y; index < end_fadetop_y; index++)
+	{
+		for (int col = 0; col < 4; col++)
 		{
-			uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
-			uint8_t fg = source0[sample_index];
+			uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+			uint8_t fg = source0[col][sample_index];
 			if (fg == 0)
 			{
 				uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
-				fg = source1[sample_index2];
+				fg = source1[col][sample_index2];
 			}
+			output[col] = fg;
 
-			int alpha_top = MAX(MIN(frac >> (16 - start_fade), 256), 0);
-			int alpha_bottom = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
+			uint32_t c = palette[fg];
+			int alpha_top = MAX(MIN(frac[col] >> (16 - start_fade), 256), 0);
+			int inv_alpha_top = 256 - alpha_top;
+			int c_red = RPART(c);
+			int c_green = GPART(c);
+			int c_blue = BPART(c);
+			c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
+			c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
+			c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
+			output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
 
-			if (alpha_top == 256 && alpha_bottom == 256)
-			{
-				*dest = fg;
-			}
-			else
-			{
-				int inv_alpha_top = 256 - alpha_top;
-				int inv_alpha_bottom = 256 - alpha_bottom;
-
-				const auto &c = GPalette.BaseColors[fg];
-				int c_red = c.r;
-				int c_green = c.g;
-				int c_blue = c.b;
-				c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
-				c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
-				c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
-				c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
-				c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
-				c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
-				*dest = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
-			}
-
-			frac += fracstep;
-			dest += pitch;
+			frac[col] += fracstep[col];
 		}
+		*((uint32_t*)dest) = *((uint32_t*)output);
+		dest += pitch;
+	}
+
+	// Textured center:
+	for (int index = end_fadetop_y; index < start_fadebottom_y; index++)
+	{
+		for (int col = 0; col < 4; col++)
+		{
+			uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+			uint8_t fg = source0[col][sample_index];
+			if (fg == 0)
+			{
+				uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+				fg = source1[col][sample_index2];
+			}
+			output[col] = fg;
+
+			frac[col] += fracstep[col];
+		}
+
+		*((uint32_t*)dest) = *((uint32_t*)output);
+		dest += pitch;
+	}
+
+	// Fade bottom:
+	for (int index = start_fadebottom_y; index < end_fadebottom_y; index++)
+	{
+		for (int col = 0; col < 4; col++)
+		{
+			uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+			uint8_t fg = source0[col][sample_index];
+			if (fg == 0)
+			{
+				uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+				fg = source1[col][sample_index2];
+			}
+			output[col] = fg;
+
+			uint32_t c = palette[fg];
+			int alpha_bottom = MAX(MIN(((2 << 24) - frac[col]) >> (16 - start_fade), 256), 0);
+			int inv_alpha_bottom = 256 - alpha_bottom;
+			int c_red = RPART(c);
+			int c_green = GPART(c);
+			int c_blue = BPART(c);
+			c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
+			c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
+			c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
+			output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+
+			frac[col] += fracstep[col];
+		}
+		*((uint32_t*)dest) = *((uint32_t*)output);
+		dest += pitch;
+	}
+
+	// Bottom solid color:
+	for (int index = end_fadebottom_y; index < count; index++)
+	{
+		*((uint32_t*)dest) = solid_bottom_fill;
+		dest += pitch;
 	}
 }
 
@@ -2408,35 +2583,18 @@ const BYTE *R_GetColumn (FTexture *tex, int col)
 void R_InitColumnDrawers ()
 {
 #ifdef X86_ASM
-	R_DrawColumn				= R_DrawColumnP_ASM;
-	R_DrawColumnHoriz			= R_DrawColumnHorizP_ASM;
-	R_DrawFuzzColumn			= R_DrawFuzzColumnP_ASM;
+	R_DrawColumnHoriz			= R_DrawColumnHorizP_C;
 	R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_C;
 	R_DrawShadedColumn			= R_DrawShadedColumnP_C;
 	R_DrawSpan					= R_DrawSpanP_ASM;
 	R_DrawSpanMasked			= R_DrawSpanMaskedP_ASM;
-	if (CPU.Family <= 5)
-	{
-		rt_map4cols				= rt_map4cols_asm2;
-	}
-	else
-	{
-		rt_map4cols				= rt_map4cols_asm1;
-	}
 #else
 	R_DrawColumnHoriz			= R_DrawColumnHorizP_C;
-	R_DrawColumn				= R_DrawColumnP_C;
-	R_DrawFuzzColumn			= R_DrawFuzzColumnP_C;
 	R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_C;
 	R_DrawShadedColumn			= R_DrawShadedColumnP_C;
 	R_DrawSpan					= R_DrawSpanP_C;
 	R_DrawSpanMasked			= R_DrawSpanMaskedP_C;
-	rt_map4cols					= rt_map4cols_c;
 #endif
-	R_DrawSpanTranslucent		= R_DrawSpanTranslucentP_C;
-	R_DrawSpanMaskedTranslucent = R_DrawSpanMaskedTranslucentP_C;
-	R_DrawSpanAddClamp			= R_DrawSpanAddClampP_C;
-	R_DrawSpanMaskedAddClamp	= R_DrawSpanMaskedAddClampP_C;
 }
 
 // [RH] Choose column drawers in a single place

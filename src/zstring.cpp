@@ -397,6 +397,7 @@ void FString::Remove(size_t index, size_t remlen)
 			if (Data()->RefCount == 1)
 			{ // Can do this in place
 				memmove(Chars + index, Chars + index + remlen, Len() - index - remlen);
+				memset(Chars + Len() - remlen, 0, remlen);
 				Data()->Len -= (unsigned)remlen;
 			}
 			else
@@ -862,66 +863,34 @@ void FString::Insert (size_t index, const char *instr, size_t instrlen)
 
 void FString::ReplaceChars (char oldchar, char newchar)
 {
-	size_t i, j;
+	if (oldchar == '\0')
+		return;
 
-	LockBuffer();
-	for (i = 0, j = Len(); i < j; ++i)
-	{
-		if (Chars[i] == oldchar)
-		{
-			Chars[i] = newchar;
-		}
-	}
-	UnlockBuffer();
+	ReplaceChars([&oldchar](char c){ return c == oldchar; }, newchar);
 }
 
 void FString::ReplaceChars (const char *oldcharset, char newchar)
 {
-	size_t i, j;
+	if (oldcharset == NULL || oldcharset[0] == '\0')
+		return;
 
-	LockBuffer();
-	for (i = 0, j = Len(); i < j; ++i)
-	{
-		if (strchr (oldcharset, Chars[i]) != NULL)
-		{
-			Chars[i] = newchar;
-		}
-	}
-	UnlockBuffer();
+	ReplaceChars([&oldcharset](char c){ return strchr(oldcharset, c) != NULL; }, newchar);
 }
 
 void FString::StripChars (char killchar)
 {
-	size_t read, write, mylen;
+	if (killchar == '\0')
+		return;
 
-	LockBuffer();
-	for (read = write = 0, mylen = Len(); read < mylen; ++read)
-	{
-		if (Chars[read] != killchar)
-		{
-			Chars[write++] = Chars[read];
-		}
-	}
-	Chars[write] = '\0';
-	ReallocBuffer (write);
-	UnlockBuffer();
+	StripChars([&killchar](char c){ return c == killchar; });
 }
 
-void FString::StripChars (const char *killchars)
+void FString::StripChars (const char *killcharset)
 {
-	size_t read, write, mylen;
+	if (killcharset == NULL || killcharset[0] == '\0')
+		return;
 
-	LockBuffer();
-	for (read = write = 0, mylen = Len(); read < mylen; ++read)
-	{
-		if (strchr (killchars, Chars[read]) == NULL)
-		{
-			Chars[write++] = Chars[read];
-		}
-	}
-	Chars[write] = '\0';
-	ReallocBuffer (write);
-	UnlockBuffer();
+	StripChars([&killcharset](char c){ return strchr(killcharset, c) != NULL; });
 }
 
 void FString::MergeChars (char merger)

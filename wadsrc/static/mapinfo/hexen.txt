@@ -464,7 +464,6 @@ cluster 1
 	hub
 	exittext = "clus1msg"
 	exittextislump
-	music = "hub"
 	pic = "interpic"
 }
 
@@ -473,7 +472,6 @@ cluster 2
 	hub
 	exittext = "clus2msg"
 	exittextislump
-	music = "hub"
 	pic = "interpic"
 }
 
@@ -482,7 +480,6 @@ cluster 3
 	hub
 	exittext = "clus3msg"
 	exittextislump
-	music = "hub"
 	pic = "interpic"
 }
 
@@ -491,7 +488,6 @@ cluster 4
 	hub
 	exittext = "clus4msg"
 	exittextislump
-	music = "hub"
 	pic = "interpic"
 }
 

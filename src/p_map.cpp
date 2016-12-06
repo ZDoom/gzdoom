@@ -1256,7 +1256,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		{
 			// ideally this should take the mass factor into account
 			thing->Vel += tm.thing->Vel.XY();
-			if ((thing->Vel.X + thing->Vel.Y) > 3.)
+			if (fabs(thing->Vel.X) + fabs(thing->Vel.Y) > 3.)
 			{
 				int newdam;
 				damage = (tm.thing->Mass / 100) + 1;

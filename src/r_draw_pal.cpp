@@ -1733,76 +1733,81 @@ namespace swrenderer
 		_x = dc_x;
 		_destorg = dc_destorg;
 		_pitch = dc_pitch;
+		_fuzzpos = fuzzpos;
+		_fuzzviewheight = fuzzviewheight;
 	}
 
 	void DrawFuzzColumnPalCommand::Execute(DrawerThread *thread)
 	{
-		int count;
-		uint8_t *dest;
+		int yl = MAX(_yl, 1);
+		int yh = MIN(_yh, _fuzzviewheight);
 
-		// Adjust borders. Low...
-		if (_yl == 0)
-			_yl = 1;
-
-		// .. and high.
-		if (_yh > fuzzviewheight)
-			_yh = fuzzviewheight;
-
-		count = _yh - _yl;
+		int count = thread->count_for_thread(yl, yh - yl + 1);
 
 		// Zero length.
-		if (count < 0)
+		if (count <= 0)
 			return;
 
-		count++;
+		uint8_t *map = &NormalLight.Maps[6 * 256];
 
-		dest = ylookup[_yl] + _x + _destorg;
+		uint8_t *dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + _x + _destorg);
 
-		// colormap #6 is used for shading (of 0-31, a bit brighter than average)
+		int pitch = _pitch * thread->num_cores;
+		int fuzzstep = thread->num_cores;
+		int fuzz = (_fuzzpos + thread->skipped_by_thread(yl)) % FUZZTABLE;
+
+		yl += thread->skipped_by_thread(yl);
+
+		// Handle the case where we would go out of bounds at the top:
+		if (yl < fuzzstep)
 		{
-			// [RH] Make local copies of global vars to try and improve
-			//		the optimizations made by the compiler.
-			int pitch = _pitch;
-			int fuzz = fuzzpos;
-			int cnt;
-			uint8_t *map = &NormalLight.Maps[6 * 256];
+			uint8_t *srcdest = dest + fuzzoffset[fuzz] * fuzzstep + pitch;
+			//assert(static_cast<int>((srcdest - (uint8_t*)dc_destorg) / (_pitch)) < viewheight);
 
-			// [RH] Split this into three separate loops to minimize
-			// the number of times fuzzpos needs to be clamped.
-			if (fuzz)
+			*dest = map[*srcdest];
+			dest += pitch;
+			fuzz += fuzzstep;
+			fuzz %= FUZZTABLE;
+
+			count--;
+			if (count == 0)
+				return;
+		}
+
+		bool lowerbounds = (yl + (count + fuzzstep - 1) * fuzzstep > _fuzzviewheight);
+		if (lowerbounds)
+			count--;
+
+		// Fuzz where fuzzoffset stays within bounds
+		while (count > 0)
+		{
+			int available = (FUZZTABLE - fuzz);
+			int next_wrap = available / fuzzstep;
+			if (available % fuzzstep != 0)
+				next_wrap++;
+
+			int cnt = MIN(count, next_wrap);
+			count -= cnt;
+			do
 			{
-				cnt = MIN(FUZZTABLE - fuzz, count);
-				count -= cnt;
-				do
-				{
-					*dest = map[dest[fuzzoffset[fuzz++]]];
-					dest += pitch;
-				} while (--cnt);
-			}
-			if (fuzz == FUZZTABLE || count > 0)
-			{
-				while (count >= FUZZTABLE)
-				{
-					fuzz = 0;
-					cnt = FUZZTABLE;
-					count -= FUZZTABLE;
-					do
-					{
-						*dest = map[dest[fuzzoffset[fuzz++]]];
-						dest += pitch;
-					} while (--cnt);
-				}
-				fuzz = 0;
-				if (count > 0)
-				{
-					do
-					{
-						*dest = map[dest[fuzzoffset[fuzz++]]];
-						dest += pitch;
-					} while (--count);
-				}
-			}
-			fuzzpos = fuzz;
+				uint8_t *srcdest = dest + fuzzoffset[fuzz] * fuzzstep;
+				//assert(static_cast<int>((srcdest - (uint8_t*)dc_destorg) / (_pitch)) < viewheight);
+
+				*dest = map[*srcdest];
+				dest += pitch;
+				fuzz += fuzzstep;
+			} while (--cnt);
+
+			fuzz %= FUZZTABLE;
+		}
+
+		// Handle the case where we would go out of bounds at the bottom
+		if (lowerbounds)
+		{
+			uint8_t *srcdest = dest + fuzzoffset[fuzz] * fuzzstep - pitch;
+			//assert(static_cast<int>((srcdest - (uint8_t*)dc_destorg) / (_pitch)) < viewheight);
+
+			*dest = map[*srcdest];
 		}
 	}
 

@@ -138,6 +138,8 @@ namespace swrenderer
 		int _x;
 		uint8_t *_destorg;
 		int _pitch;
+		int _fuzzpos;
+		int _fuzzviewheight;
 	};
 
 	class PalSpanCommand : public DrawerCommand

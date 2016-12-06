@@ -40,10 +40,11 @@
 #include "d_gui.h"
 #include "v_font.h"
 #include "v_palette.h"
+#include "cmdlib.h"
 // [TP] New #includes
 #include "v_text.h"
 
-IMPLEMENT_ABSTRACT_CLASS(DTextEnterMenu)
+IMPLEMENT_CLASS(DTextEnterMenu, true, false)
 
 #define INPUTGRID_WIDTH		13
 #define INPUTGRID_HEIGHT	5

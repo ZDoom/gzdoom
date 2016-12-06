@@ -93,29 +93,30 @@ void gl_CreateSections();
 
 void AdjustSpriteOffsets()
 {
-	static bool done=false;
-	char name[30];
-
-	if (done) return;
-	done=true;
-
-	mysnprintf(name, countof(name), "sprofs/%s.sprofs", GameNames[gameinfo.gametype]);
-	int lump = Wads.CheckNumForFullName(name);
-	if (lump>=0)
+	int lump, lastlump = 0;
+	while ((lump = Wads.FindLump("SPROFS", &lastlump, false)) != -1)
 	{
 		FScanner sc;
 		sc.OpenLumpNum(lump);
+		sc.SetCMode(true);
 		GLRenderer->FlushTextures();
 		int ofslumpno = Wads.GetLumpFile(lump);
 		while (sc.GetString())
 		{
 			int x,y;
+			bool iwadonly = false;
 			FTextureID texno = TexMan.CheckForTexture(sc.String, FTexture::TEX_Sprite);
-			sc.GetNumber();
+			sc.MustGetStringName(",");
+			sc.MustGetNumber();
 			x=sc.Number;
-			sc.GetNumber();
+			sc.MustGetStringName(",");
+			sc.MustGetNumber();
 			y=sc.Number;
-
+			if (sc.CheckString(","))
+			{
+				sc.MustGetString();
+				if (sc.Compare("iwad")) iwadonly = true;
+			}
 			if (texno.isValid())
 			{
 				FTexture * tex = TexMan[texno];
@@ -125,7 +126,7 @@ void AdjustSpriteOffsets()
 				if (lumpnum >= 0 && lumpnum < Wads.GetNumLumps())
 				{
 					int wadno = Wads.GetLumpFile(lumpnum);
-					if (wadno==FWadCollection::IWAD_FILENUM || wadno == ofslumpno)
+					if ((iwadonly && wadno==FWadCollection::IWAD_FILENUM) || (!iwadonly && wadno == ofslumpno))
 					{
 						tex->LeftOffset=x;
 						tex->TopOffset=y;

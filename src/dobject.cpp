@@ -48,6 +48,7 @@
 #include "a_sharedglobal.h"
 #include "dsectoreffect.h"
 #include "serializer.h"
+#include "virtual.h"
 
 //==========================================================================
 //
@@ -57,15 +58,20 @@
 
 ClassReg DObject::RegistrationInfo =
 {
-	NULL,							// MyClass
-	"DObject",						// Name
-	NULL,							// ParentType
-	NULL,							// Pointers
-	&DObject::InPlaceConstructor,	// ConstructNative
-	sizeof(DObject),				// SizeOf
-	CLASSREG_PClass,				// MetaClassNum
+	nullptr,								// MyClass
+	"DObject",								// Name
+	nullptr,								// ParentType
+	nullptr,								
+	nullptr,								// Pointers
+	&DObject::InPlaceConstructor,			// ConstructNative
+	nullptr,
+	sizeof(DObject),						// SizeOf
+	CLASSREG_PClass,						// MetaClassNum
 };
 _DECLARE_TI(DObject)
+
+// This bit is needed in the playsim - but give it a less crappy name.
+DEFINE_FIELD_BIT(DObject,ObjectFlags, bDestroyed, OF_EuthanizeMe)
 
 //==========================================================================
 //
@@ -349,6 +355,13 @@ void DObject::Destroy ()
 	ObjectFlags = (ObjectFlags & ~OF_Fixed) | OF_EuthanizeMe;
 }
 
+DEFINE_ACTION_FUNCTION(DObject, Destroy)
+{
+	PARAM_SELF_PROLOGUE(DObject);
+	self->Destroy();
+	return 0;	
+}
+
 //==========================================================================
 //
 //
@@ -410,7 +423,7 @@ size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
 //
 //==========================================================================
 
-size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld)
+size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld, bool scandefaults)
 {
 	DObject *probe;
 	size_t changed = 0;
@@ -423,6 +436,20 @@ size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld)
 		i++;
 		changed += probe->PointerSubstitution(old, notOld);
 		last = probe;
+	}
+
+	if (scandefaults)
+	{
+		for (auto p : PClassActor::AllActorClasses)
+		{
+			auto def = GetDefaultByType(p);
+			if (def != nullptr)
+			{
+				def->Class = p;
+				def->DObject::PointerSubstitution(old, notOld);
+				def->Class = nullptr;	// reset pointer. Defaults should not have a valid class pointer.
+			}
+		}
 	}
 
 	// Go through the bodyque.

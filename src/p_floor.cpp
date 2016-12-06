@@ -64,7 +64,7 @@ static void StartFloorSound (sector_t *sec)
 //
 //==========================================================================
 
-IMPLEMENT_CLASS (DFloor)
+IMPLEMENT_CLASS(DFloor, false, false)
 
 DFloor::DFloor ()
 {
@@ -492,6 +492,21 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(DFloor, CreateFloor)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER_NOT_NULL(sec, sector_t);
+	PARAM_INT(floortype);
+	PARAM_POINTER(ln, line_t);
+	PARAM_FLOAT(speed);
+	PARAM_FLOAT_DEF(height);
+	PARAM_INT_DEF(crush);
+	PARAM_INT_DEF(change);
+	PARAM_BOOL_DEF(hereticlower);
+	PARAM_BOOL_DEF(hexencrush);
+	ACTION_RETURN_BOOL(P_CreateFloor(sec, (DFloor::EFloor)floortype, ln, speed, height, crush, change, hexencrush, hereticlower));
+}
+
 //==========================================================================
 //
 // HANDLE FLOOR TYPES
@@ -815,10 +830,12 @@ bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed)
 //
 //==========================================================================
 
-IMPLEMENT_POINTY_CLASS (DElevator)
-	DECLARE_POINTER(m_Interp_Floor)
-	DECLARE_POINTER(m_Interp_Ceiling)
-END_POINTERS
+IMPLEMENT_CLASS(DElevator, false, true)
+
+IMPLEMENT_POINTERS_START(DElevator)
+	IMPLEMENT_POINTER(m_Interp_Floor)
+	IMPLEMENT_POINTER(m_Interp_Ceiling)
+IMPLEMENT_POINTERS_END
 
 DElevator::DElevator ()
 {
@@ -1103,10 +1120,9 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag)
 //
 //==========================================================================
 
-IMPLEMENT_CLASS (DWaggleBase)
-
-IMPLEMENT_CLASS (DFloorWaggle)
-IMPLEMENT_CLASS (DCeilingWaggle)
+IMPLEMENT_CLASS(DWaggleBase, false, false)
+IMPLEMENT_CLASS(DFloorWaggle, false, false)
+IMPLEMENT_CLASS(DCeilingWaggle, false, false)
 
 DWaggleBase::DWaggleBase ()
 {
@@ -1138,11 +1154,6 @@ void DWaggleBase::Serialize(FSerializer &arc)
 DWaggleBase::DWaggleBase (sector_t *sec)
 	: Super (sec)
 {
-}
-
-void DWaggleBase::Destroy()
-{
-	Super::Destroy();
 }
 
 //==========================================================================

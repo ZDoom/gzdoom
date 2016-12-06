@@ -1,0 +1,72 @@
+class Armor : Inventory native
+{
+	Default
+	{
+		Inventory.PickupSound "misc/armor_pkup";
+	}
+}
+
+class BasicArmor : Armor native
+{
+	
+	native int AbsorbCount;
+	native double SavePercent;
+	native int MaxAbsorb;
+	native int MaxFullAbsorb;
+	native int BonusCount;
+	native Name ArmorType;
+	native int ActualSaveAmount;
+	
+	Default
+	{
+		+Inventory.KEEPDEPLETED
+	}
+}
+
+class BasicArmorBonus : Armor native
+{
+	native double SavePercent;	// The default, for when you don't already have armor
+	native int MaxSaveAmount;
+	native int MaxAbsorb;
+	native int MaxFullAbsorb;
+	native int SaveAmount;
+	native int BonusCount;
+	native int BonusMax;
+
+	Default
+	{
+		+Inventory.AUTOACTIVATE
+		+Inventory.ALWAYSPICKUP
+		Inventory.MaxAmount 0;
+		Armor.SavePercent 33.335;
+	}
+}
+
+class BasicArmorPickup : Armor native
+{
+
+	native double SavePercent;
+	native int MaxAbsorb;
+	native int MaxFullAbsorb;
+	native int SaveAmount;
+	
+	Default
+	{
+		+Inventory.AUTOACTIVATE;
+		Inventory.MaxAmount 0;
+	}
+}
+
+class HexenArmor : Armor native
+{
+	
+	native double Slots[5];
+	native double SlotsIncrement[4];
+	
+	Default
+	{
+		+Inventory.KEEPDEPLETED
+		+Inventory.UNDROPPABLE
+	}
+}
+

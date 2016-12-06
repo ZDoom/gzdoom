@@ -41,8 +41,8 @@ class ADehackedPickup : public AInventory
 	DECLARE_CLASS (ADehackedPickup, AInventory)
 	HAS_OBJECT_POINTERS
 public:
-	void Destroy ();
-	const char *PickupMessage ();
+	void Destroy() override;
+	FString PickupMessage ();
 	bool ShouldRespawn ();
 	bool ShouldStay ();
 	bool TryPickup (AActor *&toucher);

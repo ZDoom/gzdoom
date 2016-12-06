@@ -37,7 +37,7 @@
 #include "cmdlib.h"
 #include "i_system.h"
 
-IMPLEMENT_CLASS (DArgs)
+IMPLEMENT_CLASS(DArgs, false, false)
 
 //===========================================================================
 //

@@ -14,6 +14,7 @@
 #include "serializer.h"
 #include "p_enemy.h"
 #include "d_player.h"
+#include "a_armor.h"
 #include "r_data/sprites.h"
 
 static FRandom pr_morphmonst ("MorphMonster");
@@ -137,20 +138,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, PClassPlayerPawn *spawntyp
 		AInventory *next = item->Inventory;
 		if (item->IsKindOf (RUNTIME_CLASS(AArmor)))
 		{
-			if (item->IsKindOf (RUNTIME_CLASS(AHexenArmor)))
-			{
-				// Set the HexenArmor slots to 0, except the class slot.
-				AHexenArmor *hxarmor = static_cast<AHexenArmor *>(item);
-				hxarmor->Slots[0] = 0;
-				hxarmor->Slots[1] = 0;
-				hxarmor->Slots[2] = 0;
-				hxarmor->Slots[3] = 0;
-				hxarmor->Slots[4] = spawntype->HexenArmor[0];
-			}
-			else
-			{
-				item->DepleteOrDestroy();
-			}
+			item->DepleteOrDestroy();
 		}
 		item = next;
 	}
@@ -370,6 +358,15 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 		hxarmor->Slots[4] = mo->GetClass()->HexenArmor[0];
 	}
 	return true;
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, UndoPlayerMorph)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_POINTER_NOT_NULL(player, player_t);
+	PARAM_INT_DEF(unmorphflag);
+	PARAM_BOOL_DEF(force);
+	ACTION_RETURN_BOOL(P_UndoPlayerMorph(self, player, unmorphflag, force));
 }
 
 //---------------------------------------------------------------------------
@@ -616,21 +613,31 @@ void InitAllPowerupEffects(AInventory *item)
 
 // Base class for morphing projectiles --------------------------------------
 
-IMPLEMENT_CLASS(AMorphProjectile)
+IMPLEMENT_CLASS(AMorphProjectile, false, true)
+
+IMPLEMENT_POINTERS_START(AMorphProjectile)
+	IMPLEMENT_POINTER(PlayerClass)
+	IMPLEMENT_POINTER(MonsterClass)
+	IMPLEMENT_POINTER(MorphFlash)
+	IMPLEMENT_POINTER(UnMorphFlash)
+IMPLEMENT_POINTERS_END
+
+DEFINE_FIELD(AMorphProjectile, PlayerClass)
+DEFINE_FIELD(AMorphProjectile, MonsterClass)
+DEFINE_FIELD(AMorphProjectile, MorphFlash)
+DEFINE_FIELD(AMorphProjectile, UnMorphFlash)
+DEFINE_FIELD(AMorphProjectile, Duration)
+DEFINE_FIELD(AMorphProjectile, MorphStyle)
 
 int AMorphProjectile::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
-	PClassActor *morph_flash = PClass::FindActor(MorphFlash);
-	PClassActor *unmorph_flash = PClass::FindActor(UnMorphFlash);
 	if (target->player)
 	{
-		PClassPlayerPawn *player_class = dyn_cast<PClassPlayerPawn>(PClass::FindClass(PlayerClass));
-		P_MorphPlayer (NULL, target->player, player_class, Duration, MorphStyle, morph_flash, unmorph_flash);
+		P_MorphPlayer (NULL, target->player, PlayerClass, Duration, MorphStyle, MorphFlash, UnMorphFlash);
 	}
 	else
 	{
-		PClassActor *monster_class = PClass::FindActor(MonsterClass);
-		P_MorphMonster (target, monster_class, Duration, MorphStyle, morph_flash, unmorph_flash);
+		P_MorphMonster (target, MonsterClass, Duration, MorphStyle, MorphFlash, UnMorphFlash);
 	}
 	return -1;
 }
@@ -650,9 +657,16 @@ void AMorphProjectile::Serialize(FSerializer &arc)
 
 // Morphed Monster (you must subclass this to do something useful) ---------
 
-IMPLEMENT_POINTY_CLASS (AMorphedMonster)
- DECLARE_POINTER (UnmorphedMe)
-END_POINTERS
+IMPLEMENT_CLASS(AMorphedMonster, false, true)
+
+IMPLEMENT_POINTERS_START(AMorphedMonster)
+	IMPLEMENT_POINTER(UnmorphedMe)
+IMPLEMENT_POINTERS_END
+
+DEFINE_FIELD(AMorphedMonster, UnmorphedMe)
+DEFINE_FIELD(AMorphedMonster, UnmorphTime)
+DEFINE_FIELD(AMorphedMonster, MorphStyle)
+DEFINE_FIELD(AMorphedMonster, MorphExitFlash)
 
 void AMorphedMonster::Serialize(FSerializer &arc)
 {
@@ -685,7 +699,7 @@ void AMorphedMonster::Die (AActor *source, AActor *inflictor, int dmgflags)
 	if (UnmorphedMe != NULL && (UnmorphedMe->flags & MF_UNMORPHED))
 	{
 		UnmorphedMe->health = health;
-		UnmorphedMe->Die (source, inflictor, dmgflags);
+		UnmorphedMe->CallDie (source, inflictor, dmgflags);
 	}
 }
 

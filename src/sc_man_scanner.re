@@ -111,6 +111,10 @@ std2:
 		'sbyte'						{ RET(TK_SByte); }
 		'short'						{ RET(TK_Short); }
 		'ushort'					{ RET(TK_UShort); }
+		'int8'						{ RET(TK_Int8); }
+		'uint8'						{ RET(TK_UInt8); }
+		'int16'						{ RET(TK_Int16); }
+		'uint16'					{ RET(TK_UInt16); }
 		'int'						{ RET(TK_Int); }
 		'uint'						{ RET(TK_UInt); }
 		'long'						{ RET(TK_Long); }
@@ -118,14 +122,14 @@ std2:
 		'void'						{ RET(TK_Void); }
 		'struct'					{ RET(TK_Struct); }
 		'class'						{ RET(TK_Class); }
-		'mode'						{ RET(TK_Mode); }
 		'enum'						{ RET(TK_Enum); }
 		'name'						{ RET(TK_Name); }
 		'string'					{ RET(TK_String); }
 		'sound'						{ RET(TK_Sound); }
 		'state'						{ RET(TK_State); }
 		'color'						{ RET(TK_Color); }
-		'vector'					{ RET(TK_Vector); }
+		'vector2'					{ RET(TK_Vector2); }
+		'vector3'					{ RET(TK_Vector3); }
 		'map'						{ RET(TK_Map); }
 		'array'						{ RET(TK_Array); }
 		'in'						{ RET(TK_In); }
@@ -152,26 +156,25 @@ std2:
 		'transient'					{ RET(TK_Transient); }
 		'final'						{ RET(TK_Final); }
 		'throws'					{ RET(TK_Throws); }
-		'extends'					{ RET(TK_Extends); }
+		'extend'					{ RET(TK_Extend); }
 		'public'					{ RET(TK_Public); }
 		'protected'					{ RET(TK_Protected); }
 		'private'					{ RET(TK_Private); }
 		'dot'						{ RET(TK_Dot); }
 		'cross'						{ RET(TK_Cross); }
-		'ignores'					{ RET(TK_Ignores); }
 		'localized'					{ RET(TK_Localized); }
 		'latent'					{ RET(TK_Latent); }
 		'singular'					{ RET(TK_Singular); }
 		'config'					{ RET(TK_Config); }
 		'coerce'					{ RET(TK_Coerce); }
-		'iterator'					{ RET(TK_Iterator); }
 		'optional'					{ RET(TK_Optional); }
 		'export'					{ RET(TK_Export); }
 		'virtual'					{ RET(TK_Virtual); }
+		'override'					{ RET(TK_Override); }
 		'super'						{ RET(TK_Super); }
 		'global'					{ RET(TK_Global); }
-		'self'						{ RET(TK_Self); }
 		'stop'						{ RET(TK_Stop); }
+		'null'						{ RET(TK_Null); }
 
 		'is'						{ RET(TK_Is); }
 		'replaces'					{ RET(TK_Replaces); }
@@ -180,6 +183,7 @@ std2:
 		'deprecated'				{ RET(TK_Deprecated); }
 		'action'					{ RET(TK_Action); }
 		'readonly'					{ RET(TK_ReadOnly); }
+		'let'						{ RET(TK_Let); }
 
 		/* Actor state options */
 		'bright'					{ RET(StateOptions ? TK_Bright : TK_Identifier); }
@@ -235,6 +239,7 @@ std2:
 		"<>="						{ RET(TK_LtGtEq); }
 		"**"						{ RET(TK_MulMul); }
 		"::"						{ RET(TK_ColonColon); }
+		"->"						{ RET(TK_Arrow); }
 		";"							{ StateOptions = false; RET(';'); }
 		"{"							{ StateOptions = false; RET('{'); }
 		"}"							{ RET('}'); }

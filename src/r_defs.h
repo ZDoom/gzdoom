@@ -278,7 +278,7 @@ class ASectorAction : public AActor
 	DECLARE_CLASS (ASectorAction, AActor)
 public:
 	ASectorAction (bool activatedByUse = false);
-	void Destroy ();
+	void Destroy () override;
 	void BeginPlay ();
 	void Activate (AActor *source);
 	void Deactivate (AActor *source);
@@ -658,6 +658,7 @@ public:
 	sector_t *NextSpecialSector (int type, sector_t *prev) const;		// [RH]
 	double FindLowestCeilingPoint(vertex_t **v) const;
 	double FindHighestFloorPoint(vertex_t **v) const;
+	void RemoveForceField();
 
 	void AdjustFloorClip () const;
 	void SetColor(int r, int g, int b, int desat);
@@ -1030,8 +1031,8 @@ public:
 	BYTE 		soundtraversed;	// 0 = untraversed, 1,2 = sndlines -1
 	// jff 2/26/98 lockout machinery for stairbuilding
 	SBYTE stairlock;	// -2 on first locked -1 after thinker done 0 normally
-	SWORD prevsec;		// -1 or number of sector for previous step
-	SWORD nextsec;		// -1 or number of next step sector
+	int prevsec;		// -1 or number of sector for previous step
+		int nextsec;		// -1 or number of next step sector
 
 	short linecount;
 	struct line_t **lines;		// [linecount] size
@@ -1276,9 +1277,7 @@ struct side_t
 struct line_t
 {
 	vertex_t	*v1, *v2;	// vertices, from v1 to v2
-private:
 	DVector2	delta;		// precalculated v2 - v1 for side checking
-public:
 	uint32_t	flags;
 	uint32_t	activation;	// activation type
 	int			special;

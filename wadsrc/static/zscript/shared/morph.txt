@@ -1,0 +1,30 @@
+class MorphProjectile : Actor native
+{
+
+	native Class<PlayerPawn> PlayerClass;
+	native Class<Actor> MonsterClass, MorphFlash, UnMorphFlash;
+	native int Duration, MorphStyle;
+
+	Default
+	{
+		Damage 1;
+		Projectile;
+		-ACTIVATEIMPACT
+		-ACTIVATEPCROSS
+	}
+}
+
+class MorphedMonster : Actor native
+{
+	native Actor UnmorphedMe;
+	native int UnmorphTime, MorphStyle;
+	native Class<Actor> MorphExitFlash;
+
+	Default
+	{
+		Monster;
+		-COUNTKILL
+		+FLOORCLIP
+	}
+}
+

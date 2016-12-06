@@ -905,6 +905,14 @@ done:
 	return res;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CheckSight)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(target, AActor);
+	PARAM_INT_DEF(flags);
+	ACTION_RETURN_BOOL(P_CheckSight(self, target, flags));
+}
+
 ADD_STAT (sight)
 {
 	FString out;

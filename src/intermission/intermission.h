@@ -176,7 +176,7 @@ public:
 	virtual int Responder (event_t *ev);
 	virtual int Ticker ();
 	virtual void Drawer ();
-	void Destroy();
+	void Destroy() override;
 	FTextureID GetBackground(bool *fill)
 	{
 		*fill = mFlatfill;
@@ -301,7 +301,7 @@ public:
 	bool Responder (event_t *ev);
 	void Ticker ();
 	void Drawer ();
-	void Destroy();
+	void Destroy() override;
 
 	friend void F_AdvanceIntermission();
 };

@@ -520,6 +520,13 @@ PClassActor *P_GetSpawnableType(int spawnnum)
 	return NULL;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, GetSpawnableType)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(num);
+	ACTION_RETURN_OBJECT(P_GetSpawnableType(num));
+}
+
 struct MapinfoSpawnItem
 {
 	FName classname;	// DECORATE is read after MAPINFO so we do not have the actual classes available here yet.

@@ -1,0 +1,504 @@
+class Object native
+{
+	native bool bDestroyed;
+
+	// These really should be global functions...
+	native static int G_SkillPropertyInt(int p);
+	native static double G_SkillPropertyFloat(int p);
+	native static vector3, int G_PickDeathmatchStart();
+	native static vector3, int G_PickPlayerStart(int pnum, int flags = 0);
+	native static int GameType();
+	native static void S_Sound (Sound sound_id, int channel, float volume = 1, float attenuation = ATTN_NORM);
+	native static bool S_ChangeMusic(String music_name, int order = 0, bool looping = true, bool force = false);
+	native static void C_MidPrint(string fontname, string textlabel, bool bold = false);	// always uses the stringtable.
+	native static uint BAM(double angle);
+
+	/*virtual*/ native void Destroy();
+}
+
+class Thinker : Object native
+{
+	enum EStatnums
+	{
+ 		// Thinkers that don't actually think
+		STAT_INFO,								// An info queue
+		STAT_DECAL,								// A decal
+		STAT_AUTODECAL,							// A decal that can be automatically deleted
+		STAT_CORPSEPOINTER,						// An entry in Hexen's corpse queue
+		STAT_TRAVELLING,						// An actor temporarily travelling to a new map
+
+		// Thinkers that do think
+		STAT_FIRST_THINKING=32,
+		STAT_SCROLLER=STAT_FIRST_THINKING,		// A DScroller thinker
+		STAT_PLAYER,							// A player actor
+		STAT_BOSSTARGET,						// A boss brain target
+		STAT_LIGHTNING,							// The lightning thinker
+		STAT_DECALTHINKER,						// An object that thinks for a decal
+		STAT_INVENTORY,							// An inventory item
+		STAT_LIGHT,								// A sector light effect
+		STAT_LIGHTTRANSFER,						// A sector light transfer. These must be ticked after the light effects.
+		STAT_EARTHQUAKE,						// Earthquake actors
+		STAT_MAPMARKER,							// Map marker actors
+
+		STAT_DEFAULT = 100,						// Thinkers go here unless specified otherwise.
+		STAT_SECTOREFFECT,						// All sector effects that cause floor and ceiling movement
+		STAT_ACTORMOVER,						// actor movers
+		STAT_SCRIPTS,							// The ACS thinker. This is to ensure that it can't tick before all actors called PostBeginPlay
+		STAT_BOT,								// Bot thinker
+		MAX_STATNUM = 127
+	}
+
+	const TICRATE = 35;
+	
+	virtual native void Tick();
+	virtual native void PostBeginPlay();
+	virtual native void ChangeStatNum(int stat);
+}
+
+class ThinkerIterator : Object native
+{
+
+	native static ThinkerIterator Create(class<Object> type = "Actor", int statnum=Thinker.MAX_STATNUM+1);
+	native Thinker Next(bool exact = false);
+	native void Reinit();
+}
+
+class ActorIterator : Object native
+{
+	native static ActorIterator Create(int tid, class<Actor> type = "Actor");
+	native Actor Next();
+	native void Reinit();
+}
+
+class BlockThingsIterator : Object native
+{
+	native Actor thing;
+	native Vector3 position;
+	native int portalflags;
+	
+	native static BlockThingsIterator Create(Actor origin, double checkradius = -1, bool ignorerestricted = false);
+	native static BlockThingsIterator CreateFromPos(double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted);
+	native bool Next();
+}
+
+class DropItem : Object native
+{
+	native readonly DropItem Next;
+	native readonly name Name;
+	native readonly int Probability;
+	native int Amount;
+}
+
+class SpotState : Object native
+{
+	native static SpotState GetSpotState();
+	native SpecialSpot GetNextInList(class<Actor> type, int skipcounter);
+	native SpecialSpot GetSpotWithMinMaxDistance(Class<Actor> type, double x, double y, double mindist, double maxdist);
+	
+}
+
+struct LevelLocals native
+{
+	native readonly int time;
+	native readonly int maptime;
+	native readonly int totaltime;
+	native readonly int starttime;
+	native readonly int partime;
+	native readonly int sucktime;
+	native readonly int cluster;
+	native readonly int clusterflags;
+	native readonly int levelnum;
+	native readonly String LevelName;
+	native readonly String MapName;
+	native String NextMap;
+	native String NextSecretMap;
+	native readonly int maptype;
+	native readonly String Music;
+	native readonly int musicorder;
+	native int total_secrets;
+	native int found_secrets;
+	native int total_items;
+	native int found_items;
+	native int total_monsters;
+	native int killed_monsters;
+	native double gravity;
+	native double aircontrol;
+	native double airfriction;
+	native int airsupply;
+	native double teamdamage;
+	native bool monsterstelefrag;
+	native bool actownspecial;
+	native bool sndseqtotalctrl;
+	native bool allmap;
+	native bool missilesactivateimpact;
+	native bool monsterfallingdamage;
+	native bool checkswitchrange;
+	native bool polygrind;
+	native bool nomonsters;
+// level_info_t *info cannot be done yet.
+}
+
+struct StringTable native
+{
+	native static String Localize(String val);
+}
+
+// a few values of this need to be readable by the play code.
+// Most are handled at load time and are omitted here.
+struct DehInfo native
+{
+	native int MaxSoulsphere;
+	native uint8 ExplosionStyle;
+	native double ExplosionAlpha;
+	native int NoAutofreeze;
+	native int BFGCells;
+}
+
+struct State native
+{
+	native State NextState;
+	native int sprite;
+	native int16 Tics;
+	native uint16 TicRange;
+	native uint8 Frame;		
+	native uint8 UseFlags;	
+	native int Misc1;
+	native int Misc2;
+	native uint16 bSlow;
+	native uint16 bFast;
+	native bool bFullbright;
+	native bool bNoDelay;
+	native bool bSameFrame;
+	native bool bCanRaise;
+	native bool bDehacked;
+	
+	native int DistanceTo(state other);
+}
+
+struct F3DFloor native
+{
+}
+
+struct Line native
+{
+	enum ELineFlags
+	{
+		ML_BLOCKING					=0x00000001,	// solid, is an obstacle
+		ML_BLOCKMONSTERS			=0x00000002,	// blocks monsters only
+		ML_TWOSIDED					=0x00000004,	// backside will not be present at all if not two sided
+		ML_DONTPEGTOP				= 0x00000008,	// upper texture unpegged
+		ML_DONTPEGBOTTOM			= 0x00000010,	// lower texture unpegged
+		ML_SECRET					= 0x00000020,	// don't map as two sided: IT'S A SECRET!
+		ML_SOUNDBLOCK				= 0x00000040,	// don't let sound cross two of these
+		ML_DONTDRAW 				= 0x00000080,	// don't draw on the automap
+		ML_MAPPED					= 0x00000100,	// set if already drawn in automap
+		ML_REPEAT_SPECIAL			= 0x00000200,	// special is repeatable
+		ML_ADDTRANS					= 0x00000400,	// additive translucency (can only be set internally)
+
+		// Extended flags
+		ML_MONSTERSCANACTIVATE		= 0x00002000,	// [RH] Monsters (as well as players) can activate the line
+		ML_BLOCK_PLAYERS			= 0x00004000,
+		ML_BLOCKEVERYTHING			= 0x00008000,	// [RH] Line blocks everything
+		ML_ZONEBOUNDARY				= 0x00010000,
+		ML_RAILING					= 0x00020000,
+		ML_BLOCK_FLOATERS			= 0x00040000,
+		ML_CLIP_MIDTEX				= 0x00080000,	// Automatic for every Strife line
+		ML_WRAP_MIDTEX				= 0x00100000,
+		ML_3DMIDTEX					= 0x00200000,
+		ML_CHECKSWITCHRANGE			= 0x00400000,
+		ML_FIRSTSIDEONLY			= 0x00800000,	// activated only when crossed from front side
+		ML_BLOCKPROJECTILE			= 0x01000000,
+		ML_BLOCKUSE					= 0x02000000,	// blocks all use actions through this line
+		ML_BLOCKSIGHT				= 0x04000000,	// blocks monster line of sight
+		ML_BLOCKHITSCAN				= 0x08000000,	// blocks hitscan attacks
+		ML_3DMIDTEX_IMPASS			= 0x10000000,	// [TP] if 3D midtex, behaves like a height-restricted ML_BLOCKING
+	};
+
+
+	//native readonly vertex		v1, v2;		// vertices, from v1 to v2
+	native readonly Vector2			delta;		// precalculated v2 - v1 for side checking
+	native uint						flags;
+	native uint						activation;	// activation type
+	native int						special;
+	native int						args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
+	native double					alpha;		// <--- translucency (0=invisibile, FRACUNIT=opaque)
+	//native Side					sidedef[2];
+	native readonly double			bbox[4];	// bounding box, for the extent of the LineDef.
+	native readonly Sector			frontsector, backsector;
+	native int 						validcount;	// if == validcount, already checked
+	native int						locknumber;	// [Dusk] lock number for special
+	native readonly uint			portalindex;
+}
+
+struct Sector native
+{
+	//secplane_t	floorplane, ceilingplane;
+	//FDynamicColormap *ColorMap;	// [RH] Per-sector colormap
+
+	native Actor 		SoundTarget;
+
+	native int16 		special;
+	native int16 		lightlevel;
+	native int16		seqType;	
+
+	native int			sky;
+	native Name			SeqName;	
+
+	native readonly Vector2		centerspot;	
+	native int 			validcount;	
+	native Actor		thinglist;	
+
+	native double		friction, movefactor;
+	native int			terrainnum[2];
+
+	// thinker_t for reversable actions
+	//SectorEffect floordata;	
+	//SectorEffect ceilingdata;	
+	//SectorEffect lightingdata;
+
+	enum EInterpolationType
+	{
+		CeilingMove,
+		FloorMove,
+		CeilingScroll,
+		FloorScroll
+	};
+	//Interpolation interpolations[4];
+
+	native uint8 		soundtraversed;
+	native int8 		stairlock;
+	native int 			prevsec;
+	native int	 		nextsec;
+
+	native readonly int16 		linecount;
+	//line_t **lines; // this is defined internally to avoid exposing some overly complicated type to the parser
+
+	native readonly Sector		heightsec;
+
+	native uint			bottommap, midmap, topmap;
+
+	//struct msecnode_t *touching_thinglist;
+	//struct msecnode_t *render_thinglist;
+
+	native double 		gravity;	
+	native Name 		damagetype;
+	native int 			damageamount;
+	native int16 		damageinterval;
+	native int16 		leakydamage;
+
+	native uint16		ZoneNumber;
+	
+	enum ESectorMoreFlags
+	{
+		SECMF_FAKEFLOORONLY	= 2,	// when used as heightsec in R_FakeFlat, only copies floor
+		SECMF_CLIPFAKEPLANES = 4,	// as a heightsec, clip planes to target sector's planes
+		SECMF_NOFAKELIGHT	= 8,	// heightsec does not change lighting
+		SECMF_IGNOREHEIGHTSEC= 16,	// heightsec is only for triggering sector actions
+		SECMF_UNDERWATER		= 32,	// sector is underwater
+		SECMF_FORCEDUNDERWATER= 64,	// sector is forced to be underwater
+		SECMF_UNDERWATERMASK	= 32+64,
+		SECMF_DRAWN			= 128,	// sector has been drawn at least once
+		SECMF_HIDDEN			= 256,	// Do not draw on textured automap
+	}
+	native uint16		MoreFlags;
+	
+	enum ESectorFlags
+	{
+		SECF_SILENT			= 1,	// actors in sector make no noise
+		SECF_NOFALLINGDAMAGE= 2,	// No falling damage in this sector
+		SECF_FLOORDROP		= 4,	// all actors standing on this floor will remain on it when it lowers very fast.
+		SECF_NORESPAWN		= 8,	// players can not respawn in this sector
+		SECF_FRICTION		= 16,	// sector has friction enabled
+		SECF_PUSH			= 32,	// pushers enabled
+		SECF_SILENTMOVE		= 64,	// Sector movement makes mo sound (Eternity got this so this may be useful for an extended cross-port standard.) 
+		SECF_DMGTERRAINFX	= 128,	// spawns terrain splash when inflicting damage
+		SECF_ENDGODMODE		= 256,	// getting damaged by this sector ends god mode
+		SECF_ENDLEVEL		= 512,	// ends level when health goes below 10
+		SECF_HAZARD			= 1024,	// Change to Strife's delayed damage handling.
+
+		SECF_WASSECRET		= 1 << 30,	// a secret that was discovered
+		SECF_SECRET			= 1 << 31,	// a secret sector
+
+		SECF_DAMAGEFLAGS = SECF_ENDGODMODE|SECF_ENDLEVEL|SECF_DMGTERRAINFX|SECF_HAZARD,
+		SECF_NOMODIFY = SECF_SECRET|SECF_WASSECRET,	// not modifiable by Sector_ChangeFlags
+		SECF_SPECIALFLAGS = SECF_DAMAGEFLAGS|SECF_FRICTION|SECF_PUSH,	// these flags originate from 'special and must be transferrable by floor thinkers
+	}
+	native uint			Flags;
+
+	native SectorAction		SecActTarget;
+
+	native readonly uint		Portals[2];
+	native readonly int			PortalGroup;
+
+	native readonly int			sectornum;
+
+
+	native double, Sector, F3DFloor NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0);
+	native double, Sector, F3DFloor NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0);
+
+	native void RemoveForceField();
+	native static Sector PointInSector(Vector2 pt);
+	native void SetColor(color c, int desat = 0);
+	native void SetFade(color c);
+}
+
+struct Wads
+{
+	enum WadNamespace
+	{
+		ns_hidden = -1,
+
+		ns_global = 0,
+		ns_sprites,
+		ns_flats,
+		ns_colormaps,
+		ns_acslibrary,
+		ns_newtextures,
+		ns_bloodraw,
+		ns_bloodsfx,
+		ns_bloodmisc,
+		ns_strifevoices,
+		ns_hires,
+		ns_voxels,
+
+		ns_specialzipdirectory,
+		ns_sounds,
+		ns_patches,
+		ns_graphics,
+		ns_music,
+
+		ns_firstskin,
+	}
+
+	native static int CheckNumForName(string name, int ns, int wadnum = -1, bool exact = false);
+}
+
+struct TerrainDef native
+{
+	native Name TerrainName;
+	native int Splash;
+	native int DamageAmount;
+	native Name DamageMOD;
+	native int DamageTimeMask;
+	native double FootClip;
+	native float StepVolume;
+	native int WalkStepTics;
+	native int RunStepTics;
+	native Sound LeftStepSound;
+	native Sound RightStepSound;
+	native bool IsLiquid;
+	native bool AllowProtection;
+	native double Friction;
+	native double MoveFactor;
+};
+
+enum EPickStart
+{
+	PPS_FORCERANDOM			= 1,
+	PPS_NOBLOCKINGCHECK		= 2,
+}
+
+// Although String is a builtin type, this is a convenient way to attach methods to it.
+struct String native
+{
+	native void Replace(String pattern, String replacement);
+}
+
+class Floor : Thinker native
+{
+	// only here so that some constants and functions can be added. Not directly usable yet.
+	enum EFloor
+	{
+		floorLowerToLowest,
+		floorLowerToNearest,
+		floorLowerToHighest,
+		floorLowerByValue,
+		floorRaiseByValue,
+		floorRaiseToHighest,
+		floorRaiseToNearest,
+		floorRaiseAndCrush,
+		floorRaiseAndCrushDoom,
+		floorCrushStop,
+		floorLowerInstant,
+		floorRaiseInstant,
+		floorMoveToValue,
+		floorRaiseToLowestCeiling,
+		floorRaiseByTexture,
+
+		floorLowerAndChange,
+		floorRaiseAndChange,
+
+		floorRaiseToLowest,
+		floorRaiseToCeiling,
+		floorLowerToLowestCeiling,
+		floorLowerByTexture,
+		floorLowerToCeiling,
+
+		donutRaise,
+
+		buildStair,
+		waitStair,
+		resetStair,
+
+		// Not to be used as parameters to EV_DoFloor()
+		genFloorChg0,
+		genFloorChgT,
+		genFloorChg
+	};
+
+	native static bool CreateFloor(sector sec, EFloor floortype, line ln, double speed, double height = 0, int crush = -1, int change = 0, bool crushmode = false, bool hereticlower = false);
+}
+
+class Ceiling : Thinker native
+{
+	enum ECeiling
+	{
+		ceilLowerByValue,
+		ceilRaiseByValue,
+		ceilMoveToValue,
+		ceilLowerToHighestFloor,
+		ceilLowerInstant,
+		ceilRaiseInstant,
+		ceilCrushAndRaise,
+		ceilLowerAndCrush,
+		ceil_placeholder,
+		ceilCrushRaiseAndStay,
+		ceilRaiseToNearest,
+		ceilLowerToLowest,
+		ceilLowerToFloor,
+
+		// The following are only used by Generic_Ceiling
+		ceilRaiseToHighest,
+		ceilLowerToHighest,
+		ceilRaiseToLowest,
+		ceilLowerToNearest,
+		ceilRaiseToHighestFloor,
+		ceilRaiseToFloor,
+		ceilRaiseByTexture,
+		ceilLowerByTexture,
+
+		genCeilingChg0,
+		genCeilingChgT,
+		genCeilingChg
+	}
+
+	enum ECrushMode
+	{
+		crushDoom = 0,
+		crushHexen = 1,
+		crushSlowdown = 2
+	}
+	
+	native bool CreateCeiling(sector sec, int type, line ln, double speed, double speed2, double height = 0, int crush = -1, int silent = 0, int change = 0, int crushmode = crushDoom);
+	
+}
+
+struct LookExParams
+{
+	double Fov;
+	double minDist;
+	double maxDist;
+	double maxHeardist;
+	int flags;
+	State seestate;
+};

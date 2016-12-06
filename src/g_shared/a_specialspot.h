@@ -11,7 +11,7 @@ class ASpecialSpot : public AActor
 public:
 
 	void BeginPlay();
-	void Destroy();
+	void Destroy() override;
 };
 
 
@@ -28,7 +28,7 @@ public:
 
 
 	DSpotState ();
-	void Destroy ();
+	void Destroy() override;
 	void Tick ();
 	static DSpotState *GetSpotState(bool create = true);
 	FSpotList *FindSpotList(PClassActor *type);

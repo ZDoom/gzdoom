@@ -1099,7 +1099,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, TexInit &init)
 				if (!sc.CheckNumber())
 				{
 					sc.MustGetString();
-					part.Blend = V_GetColor(NULL, sc.String);
+					part.Blend = V_GetColor(NULL, sc);
 				}
 				else
 				{

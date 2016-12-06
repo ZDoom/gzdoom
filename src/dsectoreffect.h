@@ -12,7 +12,7 @@ public:
 
 	
 	void Serialize(FSerializer &arc);
-	void Destroy();
+	void Destroy() override;
 
 	sector_t *GetSector() const { return m_Sector; }
 
@@ -35,7 +35,7 @@ protected:
 	DMover ();
 	
 	void Serialize(FSerializer &arc);
-	void Destroy();
+	void Destroy() override;
 };
 
 class DMovingFloor : public DMover

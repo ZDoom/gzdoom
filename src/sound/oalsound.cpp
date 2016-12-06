@@ -59,6 +59,7 @@
 #include "i_music.h"
 #include "i_musicinterns.h"
 #include "tempfiles.h"
+#include "cmdlib.h"
 
 FModule OpenALModule{"OpenAL"};
 

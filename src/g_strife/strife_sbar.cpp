@@ -12,11 +12,13 @@
 #include "m_swap.h"
 #include "templates.h"
 #include "a_keys.h"
-#include "a_strifeglobal.h"
+#include "a_armor.h"
+#include "a_ammo.h"
 #include "gi.h"
 #include "g_level.h"
 #include "colormatcher.h"
 #include "v_palette.h"
+#include "cmdlib.h"
 
 // Number of tics to move the popscreen up and down.
 #define POP_TIME (TICRATE/8)
@@ -433,7 +435,7 @@ private:
 		}
 
 		// Sigil
-		item = CPlayer->mo->FindInventory<ASigil>();
+		item = CPlayer->mo->FindInventory(PClass::FindActor(NAME_Sigil));
 		if (item != NULL)
 		{
 			DrawImage (TexMan(item->Icon), 253, 7);
@@ -845,7 +847,7 @@ private:
 	double ItemFlash;
 };
 
-IMPLEMENT_CLASS(DStrifeStatusBar);
+IMPLEMENT_CLASS(DStrifeStatusBar, false, false);
 
 DBaseStatusBar *CreateStrifeStatusBar ()
 {

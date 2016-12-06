@@ -341,7 +341,7 @@ public:
 	};
 
 	DBaseStatusBar (int reltop, int hres=320, int vres=200);
-	void Destroy ();
+	void Destroy() override;
 
 	void SetScaled (bool scale, bool force=false);
 

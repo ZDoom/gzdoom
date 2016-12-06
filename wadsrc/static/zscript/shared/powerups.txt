@@ -1,0 +1,288 @@
+class PowerupGiver : Inventory native
+{
+	
+	native Class<Actor> PowerupType;
+	native int EffectTics;		// Non-0 to override the powerup's default tics
+	native color BlendColor;	// Non-0 to override the powerup's default blend
+	native Name Mode;			// Meaning depends on powerup - used for Invulnerability and Invisibility
+	native double Strength;		// Meaning depends on powerup - currently used only by Invisibility
+	
+	Default
+	{
+		Inventory.DefMaxAmount;
+		+INVENTORY.INVBAR
+		+INVENTORY.FANCYPICKUPSOUND
+		Inventory.PickupSound "misc/p_pkup";
+	}
+}
+
+class Powerup : Inventory native 
+{
+	native int EffectTics;	
+	native color BlendColor;
+	native Name Mode;			// Meaning depends on powerup - used for Invulnerability and Invisibility
+	native double Strength;		// Meaning depends on powerup - currently used only by Invisibility
+
+	// Note, that while this is an inventory flag, it only has meaning on an active powerup.
+	override bool GetNoTeleportFreeze() { return bNoTeleportFreeze; }
+	
+}
+
+class PowerInvulnerable : Powerup native
+{
+	Default
+	{
+		Powerup.Duration -30;
+		inventory.icon "SPSHLD0";
+	}
+}
+
+class PowerStrength : Powerup native
+{
+	Default
+	{
+		Powerup.Duration 1;
+		Powerup.Color "ff 00 00", 0.5;
+		+INVENTORY.HUBPOWER
+	}
+}
+
+class PowerInvisibility : Powerup native
+{
+	Default
+	{
+		+SHADOW;
+		Powerup.Duration -60;
+		Powerup.Strength 80;
+		Powerup.Mode "Fuzzy";
+	}
+}
+
+class PowerGhost : PowerInvisibility
+{
+	Default
+	{
+		+GHOST;
+		Powerup.Duration -60;
+		Powerup.Strength 60;
+		Powerup.Mode "None";
+	}
+}
+
+class PowerShadow : PowerInvisibility
+{
+	Default
+	{
+		+INVENTORY.HUBPOWER
+		Powerup.Duration -55;
+		Powerup.Strength 75;
+		Powerup.Mode "Cumulative";
+	}
+}
+
+class PowerIronFeet : Powerup native
+{
+	Default
+	{
+		Powerup.Duration -60;
+		Powerup.Color "00 ff 00", 0.125;
+	}
+}
+
+class PowerMask : PowerIronFeet native
+{
+	Default
+	{
+		Powerup.Duration -80;
+		Powerup.Color "00 00 00", 0;
+		+INVENTORY.HUBPOWER
+		Inventory.Icon "I_MASK";
+	}
+}
+
+class PowerLightAmp : Powerup native
+{
+	Default
+	{
+		Powerup.Duration -120;
+	}
+}
+
+class PowerTorch : PowerLightAmp native {}
+
+class PowerFlight : Powerup native
+{
+	Default
+	{
+		Powerup.Duration -60;
+		+INVENTORY.HUBPOWER
+	}
+}
+
+class PowerWeaponLevel2 : Powerup native
+{
+	Default
+	{
+		Powerup.Duration -40;
+		Inventory.Icon "SPINBK0";
+		+INVENTORY.NOTELEPORTFREEZE
+	}
+}
+
+class PowerSpeed : Powerup native
+{
+	native int SpeedFlags;
+
+	Default
+	{
+		Powerup.Duration -45;
+		Speed 1.5;
+		Inventory.Icon "SPBOOT0";
+		+INVENTORY.NOTELEPORTFREEZE
+	}
+	
+	override double GetSpeedFactor() { return Speed; }
+}
+
+// Player Speed Trail (used by the Speed Powerup) ----------------------------
+
+class PlayerSpeedTrail : Actor
+{
+	Default
+	{
+		+NOBLOCKMAP
+		+NOGRAVITY
+		Alpha 0.6;
+		RenderStyle "Translucent";
+	}
+	
+	override void Tick()
+	{
+		Alpha -= .6 / 8;
+		if (Alpha <= 0)
+		{
+			Destroy ();
+		}
+	}
+}
+
+class PowerMinotaur : Powerup native
+{
+	Default
+	{
+		Powerup.Duration -25;
+		Inventory.Icon "SPMINO0";
+	}
+}
+
+class PowerTargeter : Powerup native
+{
+	Default
+	{
+		Powerup.Duration -160;
+		+INVENTORY.HUBPOWER
+	}
+	States
+	{
+	Targeter:
+		TRGT A -1;
+		Stop;
+		TRGT B -1;
+		Stop;
+		TRGT C -1;
+		Stop;
+	}
+}
+
+class PowerFrightener : Powerup native
+{
+	Default
+	{
+		Powerup.Duration -60;
+	}
+}
+
+class PowerBuddha : Powerup native
+{
+	Default
+	{
+		Powerup.Duration -60;
+	}
+}
+
+class PowerScanner : Powerup native
+{
+	Default
+	{
+		Powerup.Duration -80;
+		+INVENTORY.HUBPOWER
+	}
+}
+
+class PowerTimeFreezer : Powerup native
+{
+	Default
+	{
+		Powerup.Duration -12;
+	}
+}
+
+class PowerDamage : Powerup native
+{
+	Default
+	{
+		Powerup.Duration -25;
+	}
+}
+
+class PowerProtection : Powerup native
+{
+	Default
+	{
+		Powerup.Duration -25;
+	}
+}
+
+class PowerDrain : Powerup native
+{
+	Default
+	{
+		Powerup.Duration -60;
+	}
+}
+
+class PowerRegeneration : Powerup native
+{
+	Default
+	{
+		Powerup.Duration -120;
+		Powerup.Strength 5;
+	}
+}
+
+class PowerHighJump : Powerup native {}
+
+class PowerDoubleFiringSpeed : Powerup native {}
+
+class PowerMorph : Powerup native
+{
+	native Class<PlayerPawn> PlayerClass;
+	native Class<Actor> MorphFlash, UnMorphFlash;
+	native int MorphStyle;
+	native PlayerInfo MorphedPlayer;
+	native bool bInUndoMorph;
+
+	Default
+	{
+		Powerup.Duration -40;
+	}
+}
+
+class PowerInfiniteAmmo : Powerup native
+{
+	Default
+	{
+		Powerup.Duration -30;
+	}
+}
+

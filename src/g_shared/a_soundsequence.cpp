@@ -80,9 +80,11 @@ public:
 	TObjPtr<DSeqNode> Sequence;
 };
 
-IMPLEMENT_POINTY_CLASS(ASoundSequenceSlot)
-	DECLARE_POINTER(Sequence)
-END_POINTERS
+IMPLEMENT_CLASS(ASoundSequenceSlot, false, true)
+
+IMPLEMENT_POINTERS_START(ASoundSequenceSlot)
+	IMPLEMENT_POINTER(Sequence)
+IMPLEMENT_POINTERS_END
 
 //==========================================================================
 //
@@ -102,14 +104,14 @@ class ASoundSequence : public AActor
 {
 	DECLARE_CLASS (ASoundSequence, AActor)
 public:
-	void Destroy ();
+	void Destroy() override;
 	void PostBeginPlay ();
 	void Activate (AActor *activator);
 	void Deactivate (AActor *activator);
 	void MarkPrecacheSounds () const;
 };
 
-IMPLEMENT_CLASS (ASoundSequence)
+IMPLEMENT_CLASS(ASoundSequence, false, false)
 
 //==========================================================================
 //

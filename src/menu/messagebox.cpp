@@ -32,6 +32,7 @@
 **
 */
 
+#include <ctype.h>
 #include "menu/menu.h"
 #include "d_event.h"
 #include "d_gui.h"
@@ -62,7 +63,7 @@ class DMessageBoxMenu : public DMenu
 public:
 
 	DMessageBoxMenu(DMenu *parent = NULL, const char *message = NULL, int messagemode = 0, bool playsound = false, FName action = NAME_None);
-	void Destroy();
+	void Destroy() override;
 	void Init(DMenu *parent, const char *message, int messagemode, bool playsound = false);
 	void Drawer();
 	bool Responder(event_t *ev);
@@ -72,7 +73,7 @@ public:
 	virtual void HandleResult(bool res);
 };
 
-IMPLEMENT_CLASS(DMessageBoxMenu)
+IMPLEMENT_CLASS(DMessageBoxMenu, false, false)
 
 //=============================================================================
 //
@@ -127,6 +128,7 @@ void DMessageBoxMenu::Destroy()
 {
 	if (mMessage != NULL) V_FreeBrokenLines(mMessage);
 	mMessage = NULL;
+	Super::Destroy();
 }
 
 //=============================================================================
@@ -364,7 +366,7 @@ public:
 	virtual void HandleResult(bool res);
 };
 
-IMPLEMENT_CLASS(DQuitMenu)
+IMPLEMENT_CLASS(DQuitMenu, false, false)
 
 //=============================================================================
 //
@@ -457,7 +459,7 @@ public:
 	virtual void HandleResult(bool res);
 };
 
-IMPLEMENT_CLASS(DEndGameMenu)
+IMPLEMENT_CLASS(DEndGameMenu, false, false)
 
 //=============================================================================
 //
@@ -535,7 +537,7 @@ public:
 	virtual void HandleResult(bool res);
 };
 
-IMPLEMENT_CLASS(DQuickSaveMenu)
+IMPLEMENT_CLASS(DQuickSaveMenu, false, false)
 
 //=============================================================================
 //
@@ -631,7 +633,7 @@ public:
 	virtual void HandleResult(bool res);
 };
 
-IMPLEMENT_CLASS(DQuickLoadMenu)
+IMPLEMENT_CLASS(DQuickLoadMenu, false, false)
 
 //=============================================================================
 //

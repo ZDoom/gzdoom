@@ -125,7 +125,9 @@ enum
 	MSG_FATAL,
 	MSG_ERROR,
 	MSG_OPTERROR,
-	MSG_DEBUG,
+	MSG_DEBUGERROR,
+	MSG_DEBUGWARN,
+	MSG_DEBUGMSG,
 	MSG_LOG,
 	MSG_DEBUGLOG,
 	MSG_MESSAGE
@@ -139,7 +141,9 @@ enum
 
 struct FScriptPosition
 {
+	static int WarnCounter;
 	static int ErrorCounter;
+	static bool StrictErrors;
 	FString FileName;
 	int ScriptLine;
 
@@ -154,6 +158,7 @@ struct FScriptPosition
 	void Message(int severity, const char *message,...) const;
 	static void ResetErrorCounter()
 	{
+		WarnCounter = 0;
 		ErrorCounter = 0;
 	}
 };

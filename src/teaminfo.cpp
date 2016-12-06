@@ -182,7 +182,7 @@ void FTeam::ParseTeamDefinition (FScanner &Scan)
 
 		case TEAMINFO_PlayerColor:
 			Scan.MustGetString ();
-			Team.m_iPlayerColor = V_GetColor (NULL, Scan.String);
+			Team.m_iPlayerColor = V_GetColor (NULL, Scan);
 			break;
 
 		case TEAMINFO_TextColor:

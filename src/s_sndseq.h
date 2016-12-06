@@ -22,7 +22,7 @@ class DSeqNode : public DObject
 public:
 	void Serialize(FSerializer &arc);
 	void StopAndDestroy ();
-	void Destroy ();
+	void Destroy() override;
 	void Tick ();
 	void ChangeData (int seqOffset, int delayTics, float volume, FSoundID currentSoundID);
 	void AddChoice (int seqnum, seqtype_t type);

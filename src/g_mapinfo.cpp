@@ -860,14 +860,14 @@ DEFINE_MAP_OPTION(fade, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetString();
-	info->fadeto = V_GetColor(NULL, parse.sc.String);
+	info->fadeto = V_GetColor(NULL, parse.sc);
 }
 
 DEFINE_MAP_OPTION(outsidefog, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetString();
-	info->outsidefog = V_GetColor(NULL, parse.sc.String);
+	info->outsidefog = V_GetColor(NULL, parse.sc);
 }
 
 DEFINE_MAP_OPTION(titlepatch, true)
@@ -1879,6 +1879,18 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 			else
 			{
 				sc.ScriptError("doomednums definitions not supported with old MAPINFO syntax");
+			}
+		}
+		else if (sc.Compare("damagetype"))
+		{
+			if (format_type != FMT_Old)
+			{
+				format_type = FMT_New;
+				ParseDamageDefinition();
+			}
+			else
+			{
+				sc.ScriptError("damagetype definitions not supported with old MAPINFO syntax");
 			}
 		}
 		else if (sc.Compare("spawnnums"))

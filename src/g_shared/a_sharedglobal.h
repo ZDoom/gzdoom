@@ -10,7 +10,6 @@ struct side_t;
 struct F3DFloor;
 class DBaseDecal;
 
-void P_SpawnDirt (AActor *actor, double radius);
 class DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *sec, double x, double y, double z, DAngle angle, double tracedist, bool permanent);
 
 class DBaseDecal : public DThinker
@@ -25,7 +24,7 @@ public:
 	DBaseDecal (const DBaseDecal *basis);
 
 	void Serialize(FSerializer &arc);
-	void Destroy ();
+	void Destroy() override;
 	FTextureID StickToWall(side_t *wall, double x, double y, F3DFloor * ffloor);
 	double GetRealZ (const side_t *wall) const;
 	void SetShade (DWORD rgb);
@@ -67,7 +66,7 @@ public:
 	static DImpactDecal *StaticCreate(const FDecalTemplate *tpl, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0);
 
 	void BeginPlay ();
-	void Destroy ();
+	void Destroy() override;
 
 protected:
 	DBaseDecal *CloneSelf(const FDecalTemplate *tpl, double x, double y, double z, side_t *wall, F3DFloor * ffloor) const;
@@ -89,7 +88,7 @@ class ASkyViewpoint : public AActor
 	DECLARE_CLASS (ASkyViewpoint, AActor)
 public:
 	void BeginPlay ();
-	void Destroy ();
+	void Destroy() override;
 };
 
 // For an EE compatible linedef based definition.
@@ -117,7 +116,7 @@ public:
 	DFlashFader (float r1, float g1, float b1, float a1,
 				 float r2, float g2, float b2, float a2,
 				 float time, AActor *who);
-	void Destroy ();
+	void Destroy() override;
 	void Serialize(FSerializer &arc);
 	void Tick ();
 	AActor *WhoFor() { return ForWho; }
@@ -188,12 +187,14 @@ private:
 class AMorphProjectile : public AActor
 {
 	DECLARE_CLASS (AMorphProjectile, AActor)
+	HAS_OBJECT_POINTERS;
 public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 	
 	void Serialize(FSerializer &arc);
 
-	FNameNoInit	PlayerClass, MonsterClass, MorphFlash, UnMorphFlash;
+	PClassPlayerPawn *PlayerClass;
+	PClassActor *MonsterClass, *MorphFlash, *UnMorphFlash;
 	int Duration, MorphStyle;
 };
 
@@ -206,7 +207,7 @@ public:
 	
 	void Serialize(FSerializer &arc);
 	void Die (AActor *source, AActor *inflictor, int dmgflags);
-	void Destroy ();
+	void Destroy() override;
 
 	TObjPtr<AActor> UnmorphedMe;
 	int UnmorphTime, MorphStyle;
@@ -214,21 +215,11 @@ public:
 	ActorFlags FlagsSave;
 };
 
-class AMapMarker : public AActor
-{
-	DECLARE_CLASS(AMapMarker, AActor)
-public:
-	void BeginPlay ();
-	void Activate (AActor *activator);
-	void Deactivate (AActor *activator);
-};
-
 class AFastProjectile : public AActor
 {
 	DECLARE_CLASS(AFastProjectile, AActor)
 public:
 	void Tick ();
-	virtual void Effect();
 };
 
 

@@ -1,0 +1,73 @@
+
+
+//==========================================================================
+//
+// Ice chunk
+//
+//==========================================================================
+
+class IceChunk : Actor
+{
+	Default
+	{
+		Radius 3;
+		Height 4;
+		Mass 5;
+		Gravity 0.125;
+		+DROPOFF
+		+CANNOTPUSH
+		+FLOORCLIP
+		+NOTELEPORT
+		+NOBLOCKMAP
+		+MOVEWITHSECTOR
+	}
+	
+	void A_IceSetTics ()
+	{
+		tics = 70 + (random[IceTics]() & 63);
+		Name dtype = GetFloorTerrain().DamageMOD;
+		if (dtype == 'Fire')
+		{
+			tics >>= 2;
+		}
+		else if (dtype == 'Ice')
+		{
+			tics <<= 1;
+		}
+	}
+
+	States
+	{
+	Spawn:
+		ICEC ABCD 10 A_IceSetTics;
+		Stop;
+	}
+}
+
+//==========================================================================
+//
+// A chunk of ice that is also a player
+//
+//==========================================================================
+
+class IceChunkHead : PlayerChunk
+{
+	Default
+	{
+		Radius 3;
+		Height 4;
+		Mass 5;
+		Gravity 0.125;
+		DamageType "Ice";
+		+DROPOFF
+		+CANNOTPUSH
+	}
+	States
+	{
+	Spawn:
+		ICEC A 0;
+		ICEC A 10 A_CheckPlayerDone;
+		wait;
+	}
+}
+

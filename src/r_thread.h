@@ -54,11 +54,11 @@ public:
 	int pass_start_y = 0;
 	int pass_end_y = MAXHEIGHT;
 
-	uint32_t dc_temp_rgbabuff_rgba[MAXHEIGHT * 4];
-	uint32_t *dc_temp_rgba;
+	uint8_t dc_temp_buff[MAXHEIGHT * 4];
+	uint8_t *dc_temp = nullptr;
 
-	short triangle_clip_top[MAXWIDTH];
-	short triangle_clip_bottom[MAXWIDTH];
+	uint32_t dc_temp_rgbabuff_rgba[MAXHEIGHT * 4];
+	uint32_t *dc_temp_rgba = nullptr;
 
 	// Checks if a line is rendered by this thread
 	bool line_skipped_by_thread(int line)
@@ -100,7 +100,7 @@ protected:
 	void DetectRangeError(uint32_t *&dest, int &dest_y, int &count)
 	{
 #if defined(_MSC_VER) && defined(_DEBUG)
-		if (dest_y < 0 || count < 0 || dest_y + count > swrenderer::dc_destheight)
+		if (dest_y < 0 || count < 0 || dest_y + count > swrenderer::drawerargs::dc_destheight)
 			__debugbreak(); // Buffer overrun detected!
 #endif
 

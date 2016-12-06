@@ -925,18 +925,28 @@ namespace swrenderer
 	void rt_tlate1col(int hx, int sx, int yl, int yh)
 	{
 		if (r_swtruecolor)
+		{
 			DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedLLVMCommand>(hx, sx, yl, yh);
+		}
 		else
+		{
 			DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
+			rt_map1col(hx, sx, yl, yh);
+		}
 	}
 
 	// Translates all four spans to the screen starting at sx.
 	void rt_tlate4cols(int sx, int yl, int yh)
 	{
 		if (r_swtruecolor)
+		{
 			DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedLLVMCommand>(0, sx, yl, yh);
+		}
 		else
+		{
 			DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
+			rt_map4cols(sx, yl, yh);
+		}
 	}
 
 	// Adds one span at hx to the screen at sx without clamping.

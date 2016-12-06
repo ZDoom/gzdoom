@@ -89,6 +89,12 @@ public:
 	{
 		return dest + skipped_by_thread(first_line) * pitch;
 	}
+
+	// The first line in the dc_temp buffer used this thread
+	int temp_line_for_thread(int first_line)
+	{
+		return (first_line + skipped_by_thread(first_line)) / num_cores;
+	}
 };
 
 // Task to be executed by each worker thread

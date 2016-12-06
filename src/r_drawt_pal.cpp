@@ -91,17 +91,19 @@ namespace swrenderer
 		fixed_t fracstep;
 		fixed_t frac;
 
+		count = thread->count_for_thread(_yl, count);
 		if (count <= 0)
 			return;
 
-		{
-			int x = _x & 3;
-			dest = &thread->dc_temp[x + 4 * _yl];
-		}
 		fracstep = _iscale;
 		frac = _texturefrac;
 
 		const uint8_t *source = _source;
+
+		int x = _x & 3;
+		dest = &thread->dc_temp[x + thread->temp_line_for_thread(_yl) * 4];
+		frac += fracstep * thread->skipped_by_thread(_yl);
+		fracstep *= thread->num_cores;
 
 		if (count & 1) {
 			*dest = source[frac >> FRACBITS]; dest += 4; frac += fracstep;
@@ -141,13 +143,12 @@ namespace swrenderer
 		uint8_t color = _color;
 		uint8_t *dest;
 
+		count = thread->count_for_thread(_yl, count);
 		if (count <= 0)
 			return;
 
-		{
-			int x = _x & 3;
-			dest = &thread->dc_temp[x + 4 * _yl];
-		}
+		int x = _x & 3;
+		dest = &thread->dc_temp[x + thread->temp_line_for_thread(_yl) * 4];
 
 		if (count & 1) {
 			*dest = color;
@@ -183,14 +184,15 @@ namespace swrenderer
 		int count;
 		int pitch;
 
-		count = yh-yl;
-		if (count < 0)
-			return;
-		count++;
+		count = yh - yl + 1;
 
-		dest = ylookup[yl] + sx + _destorg;
-		source = &thread->dc_temp[yl*4 + hx];
-		pitch = _pitch;
+		count = thread->count_for_thread(yl, count);
+		if (count <= 0)
+			return;
+
+		dest = ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg;
+		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4 + hx];
+		pitch = _pitch * thread->num_cores;
 
 		if (count & 1) {
 			*dest = *source;
@@ -223,14 +225,15 @@ namespace swrenderer
 		int count;
 		int pitch;
 
-		count = yh-yl;
-		if (count < 0)
-			return;
-		count++;
+		count = yh - yl + 1;
 
-		dest = (int *)(ylookup[yl] + sx + _destorg);
-		source = (int *)(&thread->dc_temp[yl*4]);
-		pitch = _pitch/sizeof(int);
+		count = thread->count_for_thread(yl, count);
+		if (count <= 0)
+			return;
+
+		dest = (int *)(ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg);
+		source = (int *)(&thread->dc_temp[thread->temp_line_for_thread(yl)*4]);
+		pitch = _pitch*thread->num_cores/sizeof(int);
 	
 		if (count & 1) {
 			*dest = *source;
@@ -256,15 +259,16 @@ namespace swrenderer
 		int count;
 		int pitch;
 
-		count = yh-yl;
-		if (count < 0)
+		count = yh - yl + 1;
+
+		count = thread->count_for_thread(yl, count);
+		if (count <= 0)
 			return;
-		count++;
 
 		colormap = _colormap;
-		dest = ylookup[yl] + sx + _destorg;
-		source = &thread->dc_temp[yl*4 + hx];
-		pitch = _pitch;
+		dest = ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg;
+		source = &thread->dc_temp[thread->temp_line_for_thread(yl) *4 + hx];
+		pitch = _pitch*thread->num_cores;
 
 		if (count & 1) {
 			*dest = colormap[*source];
@@ -290,15 +294,16 @@ namespace swrenderer
 		int count;
 		int pitch;
 
-		count = yh-yl;
-		if (count < 0)
+		count = yh - yl + 1;
+
+		count = thread->count_for_thread(yl, count);
+		if (count <= 0)
 			return;
-		count++;
 
 		colormap = _colormap;
-		dest = ylookup[yl] + sx + _destorg;
-		source = &thread->dc_temp[yl*4];
-		pitch = _pitch;
+		dest = ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg;
+		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4];
+		pitch = _pitch*thread->num_cores;
 	
 		if (count & 1) {
 			dest[0] = colormap[source[0]];
@@ -328,7 +333,11 @@ namespace swrenderer
 	void DrawColumnRt1TranslatedPalCommand::Execute(DrawerThread *thread)
 	{
 		int count = yh - yl + 1;
-		uint8_t *source = &thread->dc_temp[yl*4 + hx];
+		count = thread->count_for_thread(yl, count);
+		if (count <= 0)
+			return;
+
+		uint8_t *source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4 + hx];
 		const uint8_t *translation = _translation;
 
 		// Things we do to hit the compiler's optimizer with a clue bat:
@@ -376,7 +385,11 @@ namespace swrenderer
 	void DrawColumnRt4TranslatedPalCommand::Execute(DrawerThread *thread)
 	{
 		int count = yh - yl + 1;
-		uint8_t *source = &thread->dc_temp[yl*4];
+		count = thread->count_for_thread(yl, count);
+		if (count <= 0)
+			return;
+
+		uint8_t *source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4];
 		const uint8_t *translation = _translation;
 		int c0, c1;
 		uint8_t b0, b1;
@@ -420,19 +433,18 @@ namespace swrenderer
 		const uint8_t *colormap;
 		uint8_t *source;
 		uint8_t *dest;
-		int count;
 		int pitch;
 
-		count = yh-yl;
-		if (count < 0)
+		int count = yh - yl + 1;
+		count = thread->count_for_thread(yl, count);
+		if (count <= 0)
 			return;
-		count++;
 
 		const uint32_t *fg2rgb = _srcblend;
 		const uint32_t *bg2rgb = _destblend;
-		dest = ylookup[yl] + sx + _destorg;
-		source = &thread->dc_temp[yl*4 + hx];
-		pitch = _pitch;
+		dest = ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg;
+		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4 + hx];
+		pitch = _pitch * thread->num_cores;
 		colormap = _colormap;
 
 		do {
@@ -453,19 +465,18 @@ namespace swrenderer
 		const uint8_t *colormap;
 		uint8_t *source;
 		uint8_t *dest;
-		int count;
 		int pitch;
 
-		count = yh-yl;
-		if (count < 0)
+		int count = yh - yl + 1;
+		count = thread->count_for_thread(yl, count);
+		if (count <= 0)
 			return;
-		count++;
 
 		const uint32_t *fg2rgb = _srcblend;
 		const uint32_t *bg2rgb = _destblend;
-		dest = ylookup[yl] + sx + _destorg;
-		source = &thread->dc_temp[yl*4];
-		pitch = _pitch;
+		dest = ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg;
+		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4];
+		pitch = _pitch * thread->num_cores;
 		colormap = _colormap;
 
 		do {
@@ -509,19 +520,18 @@ namespace swrenderer
 		const uint8_t *colormap;
 		uint8_t *source;
 		uint8_t *dest;
-		int count;
 		int pitch;
 
-		count = yh-yl;
-		if (count < 0)
+		int count = yh - yl + 1;
+		count = thread->count_for_thread(yl, count);
+		if (count <= 0)
 			return;
-		count++;
 
 		fgstart = &Col2RGB8[0][_color];
 		colormap = _colormap;
-		dest = ylookup[yl] + sx + _destorg;
-		source = &thread->dc_temp[yl*4 + hx];
-		pitch = _pitch;
+		dest = ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg;
+		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4 + hx];
+		pitch = _pitch * thread->num_cores;
 
 		do {
 			uint32_t val = colormap[*source];
@@ -539,19 +549,18 @@ namespace swrenderer
 		const uint8_t *colormap;
 		uint8_t *source;
 		uint8_t *dest;
-		int count;
 		int pitch;
 
-		count = yh-yl;
-		if (count < 0)
+		int count = yh - yl + 1;
+		count = thread->count_for_thread(yl, count);
+		if (count <= 0)
 			return;
-		count++;
 
 		fgstart = &Col2RGB8[0][_color];
 		colormap = _colormap;
-		dest = ylookup[yl] + sx + _destorg;
-		source = &thread->dc_temp[yl*4];
-		pitch = _pitch;
+		dest = ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg;
+		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4];
+		pitch = _pitch * thread->num_cores;
 
 		do {
 			uint32_t val;
@@ -582,19 +591,18 @@ namespace swrenderer
 		const uint8_t *colormap;
 		uint8_t *source;
 		uint8_t *dest;
-		int count;
 		int pitch;
 
-		count = yh-yl;
-		if (count < 0)
+		int count = yh - yl + 1;
+		count = thread->count_for_thread(yl, count);
+		if (count <= 0)
 			return;
-		count++;
 
 		const uint32_t *fg2rgb = _srcblend;
 		const uint32_t *bg2rgb = _destblend;
-		dest = ylookup[yl] + sx + _destorg;
-		source = &thread->dc_temp[yl*4 + hx];
-		pitch = _pitch;
+		dest = ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg;
+		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4 + hx];
+		pitch = _pitch * thread->num_cores;
 		colormap = _colormap;
 
 		do {
@@ -617,17 +625,16 @@ namespace swrenderer
 		const uint8_t *colormap;
 		uint8_t *source;
 		uint8_t *dest;
-		int count;
 		int pitch;
 
-		count = yh-yl;
-		if (count < 0)
+		int count = yh - yl + 1;
+		count = thread->count_for_thread(yl, count);
+		if (count <= 0)
 			return;
-		count++;
 
-		dest = ylookup[yl] + sx + _destorg;
-		source = &thread->dc_temp[yl*4];
-		pitch = _pitch;
+		dest = ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg;
+		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4];
+		pitch = _pitch * thread->num_cores;
 		colormap = _colormap;
 
 		const uint32_t *fg2rgb = _srcblend;
@@ -681,19 +688,18 @@ namespace swrenderer
 		const uint8_t *colormap;
 		uint8_t *source;
 		uint8_t *dest;
-		int count;
 		int pitch;
 
-		count = yh-yl;
-		if (count < 0)
+		int count = yh - yl + 1;
+		count = thread->count_for_thread(yl, count);
+		if (count <= 0)
 			return;
-		count++;
 
 		const uint32_t *fg2rgb = _srcblend;
 		const uint32_t *bg2rgb = _destblend;
-		dest = ylookup[yl] + sx + _destorg;
-		source = &thread->dc_temp[yl*4 + hx];
-		pitch = _pitch;
+		dest = ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg;
+		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4 + hx];
+		pitch = _pitch * thread->num_cores;
 		colormap = _colormap;
 
 		do {
@@ -715,19 +721,18 @@ namespace swrenderer
 		const uint8_t *colormap;
 		uint8_t *source;
 		uint8_t *dest;
-		int count;
 		int pitch;
 
-		count = yh-yl;
-		if (count < 0)
+		int count = yh - yl + 1;
+		count = thread->count_for_thread(yl, count);
+		if (count <= 0)
 			return;
-		count++;
 
 		const uint32_t *fg2rgb = _srcblend;
 		const uint32_t *bg2rgb = _destblend;
-		dest = ylookup[yl] + sx + _destorg;
-		source = &thread->dc_temp[yl*4];
-		pitch = _pitch;
+		dest = ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg;
+		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4];
+		pitch = _pitch * thread->num_cores;
 		colormap = _colormap;
 
 		do {
@@ -774,19 +779,18 @@ namespace swrenderer
 		const uint8_t *colormap;
 		uint8_t *source;
 		uint8_t *dest;
-		int count;
 		int pitch;
 
-		count = yh-yl;
-		if (count < 0)
+		int count = yh - yl + 1;
+		count = thread->count_for_thread(yl, count);
+		if (count <= 0)
 			return;
-		count++;
 
 		const uint32_t *fg2rgb = _srcblend;
 		const uint32_t *bg2rgb = _destblend;
-		dest = ylookup[yl] + sx + _destorg;
-		source = &thread->dc_temp[yl*4 + hx];
-		pitch = _pitch;
+		dest = ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg;
+		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4 + hx];
+		pitch = _pitch * thread->num_cores;
 		colormap = _colormap;
 
 		do {
@@ -808,19 +812,18 @@ namespace swrenderer
 		const uint8_t *colormap;
 		uint8_t *source;
 		uint8_t *dest;
-		int count;
 		int pitch;
 
-		count = yh-yl;
-		if (count < 0)
+		int count = yh - yl + 1;
+		count = thread->count_for_thread(yl, count);
+		if (count <= 0)
 			return;
-		count++;
 
 		const uint32_t *fg2rgb = _srcblend;
 		const uint32_t *bg2rgb = _destblend;
-		dest = ylookup[yl] + sx + _destorg;
-		source = &thread->dc_temp[yl*4];
-		pitch = _pitch;
+		dest = ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg;
+		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4];
+		pitch = _pitch * thread->num_cores;
 		colormap = _colormap;
 
 		do {

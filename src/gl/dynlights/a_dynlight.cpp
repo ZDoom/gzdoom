@@ -67,6 +67,7 @@
 #include "templates.h"
 #include "doomdata.h"
 #include "r_utility.h"
+#include "p_local.h"
 #include "portal.h"
 #include "doomstat.h"
 #include "serializer.h"
@@ -192,6 +193,7 @@ void ADynamicLight::BeginPlay()
 
 	m_Radius[0] = args[LIGHT_INTENSITY];
 	m_Radius[1] = args[LIGHT_SECONDARY_INTENSITY];
+	specialf1 = DAngle(double(SpawnAngle)).Normalized360().Degrees;
 	visibletoplayer = true;
 }
 
@@ -228,7 +230,7 @@ void ADynamicLight::Activate(AActor *activator)
 
 	if (lighttype == PulseLight)
 	{
-		float pulseTime = Angles.Yaw.Degrees / TICRATE;
+		float pulseTime = specialf1 / TICRATE;
 		
 		m_lastUpdate = level.maptime;
 		m_cycler.SetParams(float(m_Radius[1]), float(m_Radius[0]), pulseTime);
@@ -293,7 +295,7 @@ void ADynamicLight::Tick()
 	case FlickerLight:
 	{
 		BYTE rnd = randLight();
-		float pct = Angles.Yaw.Degrees / 360.f;
+		float pct = specialf1 / 360.f;
 		
 		m_currentRadius = float(m_Radius[rnd >= pct * 255]);
 		break;
@@ -304,12 +306,13 @@ void ADynamicLight::Tick()
 		int flickerRange = m_Radius[1] - m_Radius[0];
 		float amt = randLight() / 255.f;
 		
-		m_tickCount++;
-		
-		if (m_tickCount > Angles.Yaw.Degrees)
+		if (m_tickCount > specialf1)
+		{
+			m_tickCount = 0;
+		}
+		if (m_tickCount++ == 0 || m_currentRadius > m_Radius[1])
 		{
 			m_currentRadius = float(m_Radius[0] + (amt * flickerRange));
-			m_tickCount = 0;
 		}
 		break;
 	}
@@ -319,7 +322,7 @@ void ADynamicLight::Tick()
 	case ColorFlickerLight:
 	{
 		BYTE rnd = randLight();
-		float pct = Angles.Yaw.Degrees/360.f;
+		float pct = specialf1/360.f;
 		
 		m_currentRadius = m_Radius[rnd >= pct * 255];
 		break;
@@ -332,7 +335,7 @@ void ADynamicLight::Tick()
 		
 		m_tickCount++;
 		
-		if (m_tickCount > Angles.Yaw.Degrees)
+		if (m_tickCount > specialf1)
 		{
 			m_currentRadius = m_Radius[0] + (amt * flickerRange);
 			m_tickCount = 0;
@@ -359,7 +362,6 @@ void ADynamicLight::Tick()
 		m_currentRadius = float(m_Radius[0]);
 		break;
 	}
-
 	UpdateLocation();
 }
 
@@ -416,6 +418,7 @@ void ADynamicLight::UpdateLocation()
 			intensity = m_currentRadius;
 		}
 		radius = intensity * 2.0f;
+		assert(radius >= m_currentRadius * 2);
 
 		if (X() != oldx || Y() != oldy || radius != oldradius)
 		{

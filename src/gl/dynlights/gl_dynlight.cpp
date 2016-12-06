@@ -164,7 +164,7 @@ FLightDefaults::FLightDefaults(FName name, ELightType type)
 void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 {
 	light->lighttype = m_type;
-	light->Angles.Yaw.Degrees = m_Param;
+	light->specialf1 = m_Param;
 	light->SetOffset(m_Pos);
 	light->halo = m_halo;
 	for (int a = 0; a < 3; a++) light->args[a] = clamp<int>((int)(m_Args[a]), 0, 255);
@@ -174,6 +174,7 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 	if (m_subtractive) light->flags4 |= MF4_SUBTRACTIVE;
 	if (m_additive) light->flags4 |= MF4_ADDITIVE;
 	if (m_dontlightself) light->flags4 |= MF4_DONTLIGHTSELF;
+	light->m_tickCount = 0;
 }
 
 
@@ -431,6 +432,14 @@ void gl_ParsePulseLight(FScanner &sc)
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
 			}
 		}
+		if (defaults->GetArg(LIGHT_INTENSITY) > defaults->GetArg(LIGHT_SECONDARY_INTENSITY))
+		{
+			auto i = defaults->GetArg(LIGHT_INTENSITY);
+			auto j = defaults->GetArg(LIGHT_SECONDARY_INTENSITY);
+			defaults->SetArg(LIGHT_INTENSITY, j);
+			defaults->SetArg(LIGHT_SECONDARY_INTENSITY, i);
+		}
+
 		gl_AddLightDefaults(defaults);
 	}
 	else
@@ -1082,7 +1091,7 @@ void gl_AttachLight(AActor *actor, unsigned int count, const FLightDefaults *lig
 		light->target = actor;
 		light->owned = true;
 		light->ObjectFlags |= OF_Transient;
-		light->flags4 |= MF4_ATTENUATE;
+		//light->flags4 |= MF4_ATTENUATE;
 		actor->dynamiclights.Push(light);
 	}
 	light->flags2&=~MF2_DORMANT;

@@ -40,11 +40,7 @@ extend class Actor
 
 	void AdjustPlayerAngle(FTranslatedLineTarget t)
 	{
-		// normally this will adjust relative to the actual direction to the target,
-		// but with arbitrary portals that cannot be calculated so using the actual
-		// attack angle is the only option.
-		double atkangle = t.unlinked ? t.angleFromSource : AngleTo(t.linetarget);
-		double difference = deltaangle(Angle, atkangle);
+		double difference = t.angleFromSource;
 		if (abs(difference) > MAX_ANGLE_ADJUST)
 		{
 			if (difference > 0)

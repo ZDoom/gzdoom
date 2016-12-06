@@ -3588,6 +3588,7 @@ struct aim_t
 			res.linetarget = th;
 			res.pitch = pitch;
 			res.angleFromSource = (th->Pos() - startpos).Angle();
+			res.attackAngleFromSource = res.angleFromSource;	// at this point we do not have an attack angle so it's the same as the actual angle between actors.
 			res.unlinked = unlinked;
 			res.frac = frac;
 		}
@@ -4506,7 +4507,9 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			if (victim != NULL)
 			{
 				victim->linetarget = trace.Actor;
-				victim->angleFromSource = trace.SrcAngleFromTarget;
+				victim->attackAngleFromSource = trace.SrcAngleFromTarget;
+				// With arbitrary portals this cannot be calculated so using the actual attack angle is the only option.
+				victim->angleFromSource = trace.unlinked? victim->attackAngleFromSource : t1->AngleTo(trace.Actor);
 				victim->unlinked = trace.unlinked;
 			}
 		}

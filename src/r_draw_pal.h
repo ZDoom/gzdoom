@@ -279,7 +279,7 @@ namespace swrenderer
 	{
 	public:
 		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override { return "FillColumnHorizPalCommand"; }
+		FString DebugInfo() override { return "DrawColumnHorizPalCommand"; }
 	};
 	
 	class FillColumnHorizPalCommand : public PalColumnHorizCommand

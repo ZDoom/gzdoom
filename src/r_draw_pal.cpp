@@ -2286,11 +2286,41 @@ namespace swrenderer
 	/////////////////////////////////////////////////////////////////////////
 
 	DrawSlabPalCommand::DrawSlabPalCommand(int dx, fixed_t v, int dy, fixed_t vi, const uint8_t *vptr, uint8_t *p, const uint8_t *colormap)
+		: _dx(dx), _v(v), _dy(dy), _vi(vi), _vptr(vptr), _p(p), _colormap(colormap)
 	{
+		using namespace drawerargs;
+		_pitch = dc_pitch;
+		_start_y = static_cast<int>((p - dc_destorg) / dc_pitch);
 	}
 
 	void DrawSlabPalCommand::Execute(DrawerThread *thread)
 	{
+		int count = _dy;
+		uint8_t *dest = _p;
+		int pitch = _pitch;
+		int width = _dx;
+		const uint8_t *colormap = _colormap;
+		const uint8_t *source = _vptr;
+		fixed_t fracpos = _v;
+		fixed_t iscale = _vi;
+
+		count = thread->count_for_thread(_start_y, count);
+		dest = thread->dest_for_thread(_start_y, pitch, dest);
+		fracpos += iscale * thread->skipped_by_thread(_start_y);
+		iscale *= thread->num_cores;
+		pitch *= thread->num_cores;
+
+		while (count > 0)
+		{
+			uint8_t color = colormap[source[fracpos >> FRACBITS]];
+
+			for (int x = 0; x < width; x++)
+				dest[x] = color;
+
+			dest += pitch;
+			fracpos += iscale;
+			count--;
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////

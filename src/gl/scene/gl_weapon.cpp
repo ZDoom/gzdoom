@@ -188,8 +188,6 @@ static bool isBright(DPSprite *psp)
 //
 //==========================================================================
 
-EXTERN_CVAR(Bool, gl_brightfog)
-
 void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 {
 	bool brightflash = false;

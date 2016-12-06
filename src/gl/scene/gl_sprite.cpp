@@ -142,6 +142,9 @@ void GLSprite::CalculateVertices(FVector3 *v)
 		v[1] = mat * FVector3(x1, z, y2);
 		v[2] = mat * FVector3(x2, z, y1);
 		v[3] = mat * FVector3(x1, z, y1);
+
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(-1.0f, -128.0f);
 		return;
 	}
 	
@@ -445,6 +448,11 @@ void GLSprite::Draw(int pass)
 		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.BlendEquation(GL_FUNC_ADD);
 		gl_RenderState.SetTextureMode(TM_MODULATE);
+		if (actor != nullptr && (actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
+		{
+			glPolygonOffset(0.0f, 0.0f);
+			glDisable(GL_POLYGON_OFFSET_FILL);
+		}
 	}
 	else if (modelframe == nullptr)
 	{

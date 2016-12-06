@@ -128,12 +128,12 @@ private:
 protected:
 	DVector3 m_off;
 	float m_currentRadius;
-	int m_tickCount;
 	unsigned int m_lastUpdate;
 	FCycler m_cycler;
 	subsector_t * subsector;
 
 public:
+	int m_tickCount;
 	int m_Radius[2];
 	BYTE lightflags;
 	BYTE lighttype;
@@ -143,11 +143,6 @@ public:
 	bool visibletoplayer;
 	int bufferindex;
 
-	// intermediate texture coordinate data
-	// this is stored in the light object to avoid recalculating it
-	// several times during rendering of a flat
-	Vector nearPt, up, right;
-	float scale;
 
 };
 

@@ -59,6 +59,7 @@ long gl_frameCount;
 
 EXTERN_CVAR(Int, gl_lightmode)
 EXTERN_CVAR(Bool, gl_brightfog)
+EXTERN_CVAR(Bool, gl_lightadditivesurfaces)
 
 CUSTOM_CVAR(Float, maxviewpitch, 90.f, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
@@ -210,6 +211,7 @@ struct FGLROptions : public FOptionalMapinfoData
 		skyrotatevector = FVector3(0,0,1);
 		skyrotatevector2 = FVector3(0,0,1);
 		pixelstretch = 1.2f;
+		lightadditivesurfaces = false;
 	}
 	virtual FOptionalMapinfoData *Clone() const
 	{
@@ -224,6 +226,7 @@ struct FGLROptions : public FOptionalMapinfoData
 		newopt->skyrotatevector = skyrotatevector;
 		newopt->skyrotatevector2 = skyrotatevector2;
 		newopt->pixelstretch = pixelstretch;
+		newopt->lightadditivesurfaces = lightadditivesurfaces;
 		return newopt;
 	}
 	int			fogdensity;
@@ -231,8 +234,9 @@ struct FGLROptions : public FOptionalMapinfoData
 	int			skyfog;
 	int			lightmode;
 	int			brightfog;
-	SBYTE		nocoloredspritelighting;
-	SBYTE		notexturefill;
+	int8_t		lightadditivesurfaces;
+	int8_t		nocoloredspritelighting;
+	int8_t		notexturefill;
 	FVector3	skyrotatevector;
 	FVector3	skyrotatevector2;
 	float		pixelstretch;
@@ -306,6 +310,20 @@ DEFINE_MAP_OPTION(notexturefill, false)
 	}
 }
 
+DEFINE_MAP_OPTION(lightadditivesurfaces, false)
+{
+	FGLROptions *opt = info->GetOptData<FGLROptions>("gl_renderer");
+	if (parse.CheckAssign())
+	{
+		parse.sc.MustGetNumber();
+		opt->lightadditivesurfaces = !!parse.sc.Number;
+	}
+	else
+	{
+		opt->lightadditivesurfaces = true;
+	}
+}
+
 DEFINE_MAP_OPTION(skyrotate, false)
 {
 	FGLROptions *opt = info->GetOptData<FGLROptions>("gl_renderer");
@@ -360,6 +378,7 @@ void InitGLRMapinfoData()
 	{
 		gl_SetFogParams(opt->fogdensity, level.info->outsidefog, opt->outsidefogdensity, opt->skyfog);
 		glset.map_lightmode = opt->lightmode;
+		glset.map_lightadditivesurfaces = opt->lightadditivesurfaces;
 		glset.map_brightfog = opt->brightfog;
 		glset.map_nocoloredspritelighting = opt->nocoloredspritelighting;
 		glset.map_notexturefill = opt->notexturefill;
@@ -371,6 +390,7 @@ void InitGLRMapinfoData()
 	{
 		gl_SetFogParams(0, level.info->outsidefog, 0, 0);
 		glset.map_lightmode = -1;
+		glset.map_lightadditivesurfaces = -1;
 		glset.map_brightfog = -1;
 		glset.map_nocoloredspritelighting = -1;
 		glset.map_notexturefill = -1;
@@ -387,6 +407,8 @@ void InitGLRMapinfoData()
 	else glset.notexturefill = !!glset.map_notexturefill;
 	if (glset.map_brightfog == -1) glset.brightfog = gl_brightfog;
 	else glset.brightfog = !!glset.map_brightfog;
+	if (glset.map_lightadditivesurfaces == -1) glset.brightfog = gl_brightfog;
+	else glset.lightadditivesurfaces = !!glset.map_lightadditivesurfaces;
 }
 
 CCMD(gl_resetmap)

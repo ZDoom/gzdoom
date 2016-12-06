@@ -115,7 +115,7 @@ DFrameBuffer *CreateGLSWFrameBuffer(int width, int height, bool bgra, bool fulls
 }
 #endif
 
-IMPLEMENT_CLASS(OpenGLSWFrameBuffer)
+IMPLEMENT_CLASS(OpenGLSWFrameBuffer, false, false)
 
 const char *const OpenGLSWFrameBuffer::ShaderDefines[OpenGLSWFrameBuffer::NUM_SHADERS] =
 {

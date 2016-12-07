@@ -14,12 +14,6 @@ include( CheckIncludeFiles )
 include( CheckLibraryExists )
 include( FindPkgConfig )
 
-if( NOT APPLE )
-	option( NO_ASM "Disable assembly code" OFF )
-else()
-	# At the moment asm code doesn't work with OS X, so disable by default
-	option( NO_ASM "Disable assembly code" ON )
-endif()
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	option( NO_STRIP "Do not strip Release or MinSizeRel builds" )
 	# At least some versions of Xcode fail if you strip with the linker
@@ -114,7 +108,6 @@ if( WIN32 )
 		)
 	set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
 	set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
-	set( NASM_NAMES nasmw nasm )
 	
 	find_path( D3D_INCLUDE_DIR d3d9.h
 		PATHS ENV DXSDK_DIR
@@ -239,7 +232,6 @@ else()
 			endif()
 		endif()
 	endif()
-	set( NASM_NAMES nasm )
 	
 	if( NO_GTK )
 		add_definitions( -DNO_GTK )
@@ -378,105 +370,6 @@ endif()
 # Search for FluidSynth
 
 find_package( FluidSynth )
-
-# Search for NASM
-
-if( NOT NO_ASM )
-	if( UNIX AND X64 )
-		find_program( GAS_PATH as )
-		
-		if( GAS_PATH )
-			set( ASSEMBLER ${GAS_PATH} )
-		else()
-			message( STATUS "Could not find as. Disabling assembly code." )
-			set( NO_ASM ON )
-		endif()
-	else()
-		find_program( NASM_PATH NAMES ${NASM_NAMES} )
-		find_program( YASM_PATH yasm )
-
-		if( X64 )
-			if( YASM_PATH )
-				set( ASSEMBLER ${YASM_PATH} )
-			else()
-				message( STATUS "Could not find YASM. Disabling assembly code." )
-				set( NO_ASM ON )
-			endif()
-		else()
-			if( NASM_PATH )
-				set( ASSEMBLER ${NASM_PATH} )
-			else()
-				message( STATUS "Could not find NASM. Disabling assembly code." )
-				set( NO_ASM ON )
-			endif()
-		endif()
-	endif()
-
-	# I think the only reason there was a version requirement was because the
-	# executable name for Windows changed from 0.x to 2.0, right? This is
-	# how to do it in case I need to do something similar later.
-	
-	#	execute_process( COMMAND ${NASM_PATH} -v
-	#		OUTPUT_VARIABLE NASM_VER_STRING )
-	#	string( REGEX REPLACE ".*version ([0-9]+[.][0-9]+).*" "\\1" NASM_VER "${NASM_VER_STRING}" )
-	#	if( NOT NASM_VER LESS 2 )
-	#		message( SEND_ERROR "NASM version should be 2 or later. (Installed version is ${NASM_VER}.)" )
-	#	endif()
-endif()
-
-if( NOT NO_ASM )
-	# Valgrind support is meaningless without assembly code.
-	if( VALGRIND )
-		add_definitions( -DVALGRIND_AWARE=1 )
-		# If you're Valgrinding, you probably want to keep symbols around.
-		set( NO_STRIP ON )
-	endif()
-
-	# Tell CMake how to assemble our files
-	if( UNIX )
-		set( ASM_OUTPUT_EXTENSION .o )
-		if( X64 )
-			set( ASM_FLAGS )
-			set( ASM_SOURCE_EXTENSION .s )
-		else()
-			if( APPLE )
-				set( ASM_FLAGS -fmacho -DM_TARGET_MACHO )
-			else()
-				set( ASM_FLAGS -felf -DM_TARGET_LINUX )
-			endif()
-			set( ASM_FLAGS "${ASM_FLAGS}" -i${CMAKE_CURRENT_SOURCE_DIR}/ )
-			set( ASM_SOURCE_EXTENSION .asm )
-		endif()
-	else()
-		set( ASM_OUTPUT_EXTENSION .obj )
-		set( ASM_SOURCE_EXTENSION .asm )
-		if( X64 )
-			set( ASM_FLAGS -f win64 -DWIN32 -DWIN64 )
-		else()
-			set( ASM_FLAGS -f win32 -DWIN32 -i${CMAKE_CURRENT_SOURCE_DIR}/ )
-		endif()
-	endif()
-	if( WIN32 AND NOT X64 )
-		set( FIXRTEXT fixrtext )
-	else()
-		set( FIXRTEXT "" )
-	endif()
-	message( STATUS "Selected assembler: ${ASSEMBLER}" )
-	MACRO( ADD_ASM_FILE indir infile )
-		set( ASM_OUTPUT_${infile} "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/zdoom.dir/${indir}/${infile}${ASM_OUTPUT_EXTENSION}" )
-		if( WIN32 AND NOT X64 )
-			set( FIXRTEXT_${infile} COMMAND ${FIXRTEXT} "${ASM_OUTPUT_${infile}}" )
-		else()
-			set( FIXRTEXT_${infile} COMMAND "" )
-		endif()
-		add_custom_command( OUTPUT ${ASM_OUTPUT_${infile}}
-			COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/zdoom.dir/${indir}
-			COMMAND ${ASSEMBLER} ${ASM_FLAGS} -o"${ASM_OUTPUT_${infile}}" "${CMAKE_CURRENT_SOURCE_DIR}/${indir}/${infile}${ASM_SOURCE_EXTENSION}"
-			${FIXRTEXT_${infile}}
-			DEPENDS ${indir}/${infile}.asm ${FIXRTEXT} )
-		set( ASM_SOURCES ${ASM_SOURCES} "${ASM_OUTPUT_${infile}}" )
-	ENDMACRO()
-endif()
 
 # Decide on SSE setup
 
@@ -756,24 +649,6 @@ else()
 	set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_OSX_SOURCES} ${PLAT_COCOA_SOURCES} )
 endif()
 
-if( NOT ASM_SOURCES )
-	set( ASM_SOURCES "" )
-endif()
-
-if( NO_ASM )
-	add_definitions( -DNOASM )
-else()
-	if( X64 )
-		ADD_ASM_FILE( asm_x86_64 tmap3 )
-	else()
-		ADD_ASM_FILE( asm_ia32 a )
-		ADD_ASM_FILE( asm_ia32 misc )
-		ADD_ASM_FILE( asm_ia32 tmap )
-		ADD_ASM_FILE( asm_ia32 tmap2 )
-		ADD_ASM_FILE( asm_ia32 tmap3 )
-	endif()
-endif()
-
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h
 	COMMAND lemon -C${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y
 	DEPENDS lemon ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y )
@@ -866,16 +741,6 @@ set( NOT_COMPILED_SOURCE_FILES
 	scripting/zscript/zcc-parse.lemon
 	zcc-parse.c
 	zcc-parse.h
-
-	# We could have the ASM macro add these files, but it wouldn't add all
-	# platforms.
-	asm_ia32/a.asm
-	asm_ia32/misc.asm
-	asm_ia32/tmap.asm
-	asm_ia32/tmap2.asm
-	asm_ia32/tmap3.asm
-	asm_x86_64/tmap3.asm
-	asm_x86_64/tmap3.s
 )
 
 set( FASTMATH_PCH_SOURCES
@@ -1208,7 +1073,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${HEADER_FILES}
 	${NOT_COMPILED_SOURCE_FILES}
 	__autostart.cpp
-	${ASM_SOURCES}
 	${SYSTEM_SOURCES}
 	${X86_SOURCES}
 	${FASTMATH_SOURCES}
@@ -1371,8 +1235,6 @@ install(TARGETS zdoom
 		DESTINATION ${INSTALL_PATH}
 		COMPONENT "Game executable")
 
-source_group("Assembly Files\\ia32" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/asm_ia32/.+")
-source_group("Assembly Files\\x86_64" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/asm_x86_64/.+")
 source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
 source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/oplsynth/.+")
 source_group("Audio Files\\OPL Synth\\DOSBox" FILES oplsynth/dosbox/opl.cpp oplsynth/dosbox/opl.h)

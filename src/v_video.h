@@ -516,10 +516,6 @@ void V_RefreshViewBorder ();
 
 void V_SetBorderNeedRefresh();
 
-#if defined(X86_ASM) || defined(X64_ASM)
-extern "C" void ASM_PatchPitch (void);
-#endif
-
 int CheckRatio (int width, int height, int *trueratio=NULL);
 static inline int CheckRatio (double width, double height) { return CheckRatio(int(width), int(height)); }
 inline bool IsRatioWidescreen(int ratio) { return (ratio & 3) != 0; }

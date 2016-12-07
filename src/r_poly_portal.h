@@ -85,6 +85,6 @@ private:
 	DAngle savedangle;
 	AActor *savedcamera;
 	sector_t *savedsector;
-	ActorRenderFlags savedvisibility;
+	bool savedinvisibility;
 	DVector3 savedViewPath[2];
 };

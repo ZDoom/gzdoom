@@ -162,11 +162,14 @@ void PolyDrawLinePortal::Render(int portalDepth)
 		TriMatrix::scale(1.0f, glset.pixelstretch, 1.0f) *
 		TriMatrix::swapYZ() *
 		TriMatrix::translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);
+	if (Mirror)
+		worldToView = TriMatrix::scale(-1.0f, 1.0f, 1.0f) * worldToView;
 	TriMatrix worldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
 
 	// Calculate plane clipping
-	DVector2 planePos = Portal->mDestination->v1->fPos();
-	DVector2 planeNormal = (Portal->mDestination->v2->fPos() - Portal->mDestination->v1->fPos()).Rotated90CW();
+	line_t *clipLine = Portal ? Portal->mDestination : Mirror;
+	DVector2 planePos = clipLine->v1->fPos();
+	DVector2 planeNormal = (clipLine->v2->fPos() - clipLine->v1->fPos()).Rotated90CW();
 	planeNormal.MakeUnit();
 	double planeD = -(planeNormal | (planePos + planeNormal * 0.001));
 	Vec4f portalPlane((float)planeNormal.X, (float)planeNormal.Y, 0.0f, (float)planeD);
@@ -191,7 +194,7 @@ void PolyDrawLinePortal::SaveGlobals()
 	savedangle = ViewAngle;
 	savedcamera = camera;
 	savedsector = viewsector;
-	savedvisibility = camera ? camera->renderflags & RF_INVISIBLE : ActorRenderFlags::FromInt(0);
+	savedinvisibility = camera ? (camera->renderflags & RF_INVISIBLE) == RF_INVISIBLE : false;
 	savedViewPath[0] = ViewPath[0];
 	savedViewPath[1] = ViewPath[1];
 
@@ -229,6 +232,9 @@ void PolyDrawLinePortal::SaveGlobals()
 			ViewPos.Y = (y1 + r * dy) * 2 - y;
 		}
 		ViewAngle = Mirror->Delta().Angle() * 2 - startang;
+
+		if (camera)
+			camera->renderflags &= ~RF_INVISIBLE;
 	}
 	else
 	{
@@ -255,22 +261,25 @@ void PolyDrawLinePortal::SaveGlobals()
 				}
 			}
 		}
-
-		/*if (Portal->mirror)
-		{
-			if (MirrorFlags & RF_XFLIP) MirrorFlags &= ~RF_XFLIP;
-			else MirrorFlags |= RF_XFLIP;
-		}*/
 	}
 
-	camera = nullptr;
+	//camera = nullptr;
 	//viewsector = R_PointInSubsector(ViewPos)->sector;
 	R_SetViewAngle();
+
+	if (Mirror)
+		PolyTriangleDrawer::toggle_mirror();
 }
 
 void PolyDrawLinePortal::RestoreGlobals()
 {
-	if (!savedvisibility && camera) camera->renderflags &= ~RF_INVISIBLE;
+	if (camera)
+	{
+		if (savedinvisibility)
+			camera->renderflags |= RF_INVISIBLE;
+		else
+			camera->renderflags &= ~RF_INVISIBLE;
+	}
 	camera = savedcamera;
 	viewsector = savedsector;
 	ViewPos = savedpos;
@@ -279,4 +288,7 @@ void PolyDrawLinePortal::RestoreGlobals()
 	ViewPath[0] = savedViewPath[0];
 	ViewPath[1] = savedViewPath[1];
 	R_SetViewAngle();
+
+	if (Mirror)
+		PolyTriangleDrawer::toggle_mirror();
 }

@@ -158,6 +158,7 @@ class PolyTriangleDrawer
 public:
 	static void set_viewport(int x, int y, int width, int height, DCanvas *canvas);
 	static void draw(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode);
+	static void toggle_mirror();
 
 private:
 	static ShadedTriVertex shade_vertex(const TriMatrix &objectToClip, const float *clipPlane, const TriVertex &v);
@@ -169,6 +170,7 @@ private:
 	static int viewport_x, viewport_y, viewport_width, viewport_height, dest_pitch, dest_width, dest_height;
 	static bool dest_bgra;
 	static uint8_t *dest;
+	static bool mirror;
 
 	enum { max_additional_vertices = 16 };
 
@@ -245,7 +247,7 @@ private:
 class DrawPolyTrianglesCommand : public DrawerCommand
 {
 public:
-	DrawPolyTrianglesCommand(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode);
+	DrawPolyTrianglesCommand(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode, bool mirror);
 
 	void Execute(DrawerThread *thread) override;
 	FString DebugInfo() override;

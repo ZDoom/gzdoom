@@ -45,6 +45,7 @@ int PolyTriangleDrawer::dest_width;
 int PolyTriangleDrawer::dest_height;
 uint8_t *PolyTriangleDrawer::dest;
 bool PolyTriangleDrawer::dest_bgra;
+bool PolyTriangleDrawer::mirror;
 
 void PolyTriangleDrawer::set_viewport(int x, int y, int width, int height, DCanvas *canvas)
 {
@@ -66,11 +67,18 @@ void PolyTriangleDrawer::set_viewport(int x, int y, int width, int height, DCanv
 	dest += (offsetx + offsety * dest_pitch) * pixelsize;
 	dest_width = clamp(viewport_x + viewport_width, 0, dest_width - offsetx);
 	dest_height = clamp(viewport_y + viewport_height, 0, dest_height - offsety);
+
+	mirror = false;
+}
+
+void PolyTriangleDrawer::toggle_mirror()
+{
+	mirror = !mirror;
 }
 
 void PolyTriangleDrawer::draw(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode)
 {
-	DrawerCommandQueue::QueueCommand<DrawPolyTrianglesCommand>(args, variant, blendmode);
+	DrawerCommandQueue::QueueCommand<DrawPolyTrianglesCommand>(args, variant, blendmode, mirror);
 }
 
 void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVariant variant, TriBlendMode blendmode, WorkerThreadData *thread)
@@ -328,9 +336,11 @@ void PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clipp
 
 /////////////////////////////////////////////////////////////////////////////
 
-DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode)
+DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode, bool mirror)
 	: args(args), variant(variant), blendmode(blendmode)
 {
+	if (mirror)
+		this->args.ccw = !this->args.ccw;
 }
 
 void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)

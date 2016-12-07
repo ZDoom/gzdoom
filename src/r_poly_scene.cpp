@@ -121,9 +121,16 @@ void RenderPolyScene::RenderSubsector(subsector_t *sub)
 void RenderPolyScene::RenderSprite(AActor *thing, double sortDistance, const DVector2 &left, const DVector2 &right)
 {
 	if (numnodes == 0)
-		RenderSprite(thing, sortDistance, left, right, 0.0, 1.0, subsectors);
+	{
+		subsector_t *sub = subsectors;
+		auto it = SubsectorDepths.find(sub);
+		if (it != SubsectorDepths.end())
+			TranslucentObjects.push_back({ thing, sub, it->second, sortDistance, 0.0f, 1.0f });
+	}
 	else
+	{
 		RenderSprite(thing, sortDistance, left, right, 0.0, 1.0, nodes + numnodes - 1); // The head node is the last node output.
+	}
 }
 
 void RenderPolyScene::RenderSprite(AActor *thing, double sortDistance, DVector2 left, DVector2 right, double t1, double t2, void *node)

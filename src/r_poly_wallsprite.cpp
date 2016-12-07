@@ -38,7 +38,7 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const Vec4f &cli
 
 	bool flipTextureX = false;
 	FTexture *tex = RenderPolySprite::GetSpriteTexture(thing, flipTextureX);
-	if (tex == nullptr)
+	if (tex == nullptr || tex->UseType == FTexture::TEX_Null)
 		return;
 
 	DVector2 spriteScale = thing->Scale;

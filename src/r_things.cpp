@@ -64,6 +64,21 @@
 #include "r_data/voxels.h"
 #include "p_local.h"
 #include "p_maputl.h"
+#include "r_thread.h"
+
+EXTERN_CVAR(Bool, st_scale)
+EXTERN_CVAR(Bool, r_shadercolormaps)
+EXTERN_CVAR(Int, r_drawfuzz)
+EXTERN_CVAR(Bool, r_deathcamera);
+EXTERN_CVAR(Bool, r_drawplayersprites)
+EXTERN_CVAR(Bool, r_drawvoxels)
+
+CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+//CVAR(Bool, r_splitsprites, true, CVAR_ARCHIVE)
+
+namespace swrenderer
+{
+	using namespace drawerargs;
 
 // [RH] A c-buffer. Used for keeping track of offscreen voxel spans.
 
@@ -95,12 +110,6 @@ extern float MaskedScaleY;
 #define BASEXCENTER		(160)
 #define BASEYCENTER 	(100)
 
-EXTERN_CVAR (Bool, st_scale)
-EXTERN_CVAR(Bool, r_shadercolormaps)
-EXTERN_CVAR(Int, r_drawfuzz)
-EXTERN_CVAR(Bool, r_deathcamera);
-CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-
 //
 // Sprite rotation 0 is facing the viewer,
 //	rotation 1 is one angle turn CLOCKWISE around the axis.
@@ -131,9 +140,6 @@ FTexture		*WallSpriteTile;
 //	used for psprite clipping and initializing clipping
 short			zeroarray[MAXWIDTH];
 short			screenheightarray[MAXWIDTH];
-
-EXTERN_CVAR (Bool, r_drawplayersprites)
-EXTERN_CVAR (Bool, r_drawvoxels)
 
 //
 // INITIALIZATION FUNCTIONS
@@ -639,7 +645,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 	{
 		return;
 	}
-	if (colfunc == fuzzcolfunc || colfunc == R_FillColumnP)
+	if (colfunc == fuzzcolfunc || colfunc == R_FillColumn)
 	{
 		flags = DVF_OFFSCREEN | DVF_SPANSONLY;
 	}
@@ -1758,8 +1764,6 @@ static int sd_comparex (const void *arg1, const void *arg2)
 	return (*(drawseg_t **)arg2)->x2 - (*(drawseg_t **)arg1)->x2;
 }
 
-CVAR (Bool, r_splitsprites, true, CVAR_ARCHIVE)
-
 // Split up vissprites that intersect drawsegs
 void R_SplitVisSprites ()
 {
@@ -2628,7 +2632,7 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 	}
 }
 
-void R_DrawParticle (vissprite_t *vis)
+void R_DrawParticle_C (vissprite_t *vis)
 {
 	DWORD *bg2rgb;
 	int spacing;
@@ -2641,6 +2645,8 @@ void R_DrawParticle (vissprite_t *vis)
 	int countbase = vis->x2 - x1;
 
 	R_DrawMaskedSegsBehindParticle (vis);
+
+	DrawerCommandQueue::WaitForWorkers();
 
 	// vis->renderflags holds translucency level (0-255)
 	{
@@ -3236,4 +3242,6 @@ void R_CheckOffscreenBuffer(int width, int height, bool spansonly)
 	}
 	OffscreenBufferWidth = width;
 	OffscreenBufferHeight = height;
+}
+
 }

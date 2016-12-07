@@ -132,6 +132,9 @@ void DCanvas::DrawTexture (FTexture *img, double x, double y, int tags_first, ..
 void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 {
 #ifndef NO_SWRENDER
+	using namespace swrenderer;
+	using namespace drawerargs;
+
 	FTexture::Span unmaskedSpan[2];
 	const FTexture::Span **spanptr, *spans;
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
@@ -1285,6 +1288,9 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	FDynamicColormap *colormap, int lightlevel, int bottomclip)
 {
 #ifndef NO_SWRENDER
+	using namespace swrenderer;
+	using namespace drawerargs;
+
 	// Use an equation similar to player sprites to determine shade
 	fixed_t shade = LIGHT2SHADE(lightlevel) - 12*FRACUNIT;
 	float topy, boty, leftx, rightx;
@@ -1352,7 +1358,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	// Setup constant texture mapping parameters.
 	R_SetupSpanBits(tex);
 	R_SetSpanColormap(colormap != NULL ? &colormap->Maps[clamp(shade >> FRACBITS, 0, NUMCOLORMAPS-1) * 256] : identitymap);
-	R_SetSpanSource(tex->GetPixels());
+	R_SetSpanSource(tex);
 	if (ds_xbits != 0)
 	{
 		scalex = double(1u << (32 - ds_xbits)) / scalex;

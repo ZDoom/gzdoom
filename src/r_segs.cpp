@@ -57,10 +57,13 @@
 
 
 CVAR(Bool, r_np2, true, 0)
+CVAR(Bool, r_fogboundary, true, 0)
+CVAR(Bool, r_drawmirrors, true, 0)
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
-//CVAR (Int, ty, 8, 0)
-//CVAR (Int, tx, 8, 0)
+namespace swrenderer
+{
+	using namespace drawerargs;
 
 #define HEIGHTBITS 12
 #define HEIGHTSHIFT (FRACBITS-HEIGHTBITS)
@@ -141,16 +144,6 @@ void wallscan_np2(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t
 static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat);
 static void call_wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, bool mask);
 
-//=============================================================================
-//
-// CVAR r_fogboundary
-//
-// If true, makes fog look more "real" by shading the walls separating two
-// sectors with different fog.
-//=============================================================================
-
-CVAR(Bool, r_fogboundary, true, 0)
-
 inline bool IsFogBoundary (sector_t *front, sector_t *back)
 {
 	return r_fogboundary && fixedcolormap == NULL && front->ColorMap->Fade &&
@@ -158,14 +151,6 @@ inline bool IsFogBoundary (sector_t *front, sector_t *back)
 		(front->GetTexture(sector_t::ceiling) != skyflatnum || back->GetTexture(sector_t::ceiling) != skyflatnum);
 }
 
-//=============================================================================
-//
-// CVAR r_drawmirrors
-//
-// Set to false to disable rendering of mirrors
-//=============================================================================
-
-CVAR(Bool, r_drawmirrors, true, 0)
 
 //
 // R_RenderMaskedSegRange
@@ -2993,4 +2978,6 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	R_FinishSetPatchStyle ();
 done:
 	WallC = savecoord;
+}
+
 }

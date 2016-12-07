@@ -1030,7 +1030,7 @@ void D_DoomLoop ()
 		catch (CVMAbortException &error)
 		{
 			error.MaybePrintMessage();
-			Printf("%s", error.stacktrace);
+			Printf("%s", error.stacktrace.GetChars());
 			D_ErrorCleanup();
 		}
 	}

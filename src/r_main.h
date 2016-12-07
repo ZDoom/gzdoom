@@ -28,23 +28,26 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 
+extern double			ViewCos;
+extern double			ViewSin;
+extern int				viewwindowx;
+extern int				viewwindowy;
 
 typedef BYTE lighttable_t;	// This could be wider for >8 bit display.
+
+namespace swrenderer
+{
 
 //
 // POV related.
 //
 extern bool				bRenderingToCanvas;
-extern double			ViewCos;
-extern double			ViewSin;
 extern fixed_t			viewingrangerecip;
 extern double			FocalLengthX, FocalLengthY;
 extern double			InvZtoScale;
 
 extern double			WallTMapScale2;
 
-extern int				viewwindowx;
-extern int				viewwindowy;
 
 extern double			CenterX;
 extern double			CenterY;
@@ -142,5 +145,6 @@ extern DAngle stacked_angle;
 
 extern void R_CopyStackedViewParameters();
 
+}
 
 #endif // __R_MAIN_H__

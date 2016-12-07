@@ -825,9 +825,6 @@ void R_SetupBuffer ()
 		{
 			dc_pitch = pitch;
 			R_InitFuzzTable (pitch);
-#if defined(X86_ASM) || defined(X64_ASM)
-			ASM_PatchPitch ();
-#endif
 		}
 		dc_destorg = lineptr;
 		dc_destheight = RenderTarget->GetHeight() - viewwindowy;

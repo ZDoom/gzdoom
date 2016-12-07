@@ -54,6 +54,7 @@
 #include "gl/textures/gl_skyboxtexture.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_convert.h"
+#include "gl/data/gl_data.h"
 
 int ScriptDepth;
 void gl_InitGlow(FScanner &sc);
@@ -128,6 +129,7 @@ public:
    void SetSubtractive(bool subtract) { m_subtractive = subtract; }
    void SetAdditive(bool add) { m_additive = add; }
    void SetDontLightSelf(bool add) { m_dontlightself = add; }
+   void SetAttenuate(bool on) { m_attenuate = on; }
    void SetHalo(bool halo) { m_halo = halo; }
 protected:
    FName m_Name;
@@ -135,6 +137,7 @@ protected:
    double m_Param;
    DVector3 m_Pos;
    ELightType m_type;
+   int8_t m_attenuate;
    bool m_subtractive, m_additive, m_halo, m_dontlightself;
 };
 
@@ -159,6 +162,7 @@ FLightDefaults::FLightDefaults(FName name, ELightType type)
 	m_additive = false;
 	m_halo = false;
 	m_dontlightself = false;
+	m_attenuate = -1;
 }
 
 void FLightDefaults::ApplyProperties(ADynamicLight * light) const
@@ -175,7 +179,13 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 	if (m_additive) light->flags4 |= MF4_ADDITIVE;
 	if (m_dontlightself) light->flags4 |= MF4_DONTLIGHTSELF;
 	light->m_tickCount = 0;
-}
+	switch (m_attenuate)
+	{
+		case 0: light->flags4 &= ~MF4_ATTENUATE; break;
+		case 1: light->flags4 |= MF4_ATTENUATE; break;
+		default: if (glset.attenuate)  light->flags4 |= MF4_ATTENUATE; else light->flags4 &= ~MF4_ATTENUATE; break;
+	}
+	}
 
 
 //==========================================================================
@@ -202,6 +212,7 @@ static const char *LightTags[]=
    "additive",
    "halo",
    "dontlightself",
+   "attenuate",
    NULL
 };
 
@@ -222,6 +233,7 @@ enum {
    LIGHTTAG_ADDITIVE,
    LIGHTTAG_HALO,
    LIGHTTAG_DONTLIGHTSELF,
+   LIGHTTAG_ATTENUATE
 };
 
 
@@ -349,6 +361,9 @@ void gl_ParsePointLight(FScanner &sc)
 			case LIGHTTAG_DONTLIGHTSELF:
 				defaults->SetDontLightSelf(gl_ParseInt(sc) != 0);
 				break;
+			case LIGHTTAG_ATTENUATE:
+				defaults->SetAttenuate(gl_ParseInt(sc) != 0);
+				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
 			}
@@ -427,6 +442,9 @@ void gl_ParsePulseLight(FScanner &sc)
 				break;
 			case LIGHTTAG_DONTLIGHTSELF:
 				defaults->SetDontLightSelf(gl_ParseInt(sc) != 0);
+				break;
+			case LIGHTTAG_ATTENUATE:
+				defaults->SetAttenuate(gl_ParseInt(sc) != 0);
 				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
@@ -515,6 +533,9 @@ void gl_ParseFlickerLight(FScanner &sc)
 			case LIGHTTAG_DONTLIGHTSELF:
 				defaults->SetDontLightSelf(gl_ParseInt(sc) != 0);
 				break;
+			case LIGHTTAG_ATTENUATE:
+				defaults->SetAttenuate(gl_ParseInt(sc) != 0);
+				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
 			}
@@ -594,6 +615,9 @@ void gl_ParseFlickerLight2(FScanner &sc)
 			case LIGHTTAG_DONTLIGHTSELF:
 				defaults->SetDontLightSelf(gl_ParseInt(sc) != 0);
 				break;
+			case LIGHTTAG_ATTENUATE:
+				defaults->SetAttenuate(gl_ParseInt(sc) != 0);
+				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
 			}
@@ -670,6 +694,9 @@ void gl_ParseSectorLight(FScanner &sc)
 				break;
 			case LIGHTTAG_DONTLIGHTSELF:
 				defaults->SetDontLightSelf(gl_ParseInt(sc) != 0);
+				break;
+			case LIGHTTAG_ATTENUATE:
+				defaults->SetAttenuate(gl_ParseInt(sc) != 0);
 				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);

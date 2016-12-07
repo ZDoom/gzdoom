@@ -60,6 +60,8 @@ long gl_frameCount;
 EXTERN_CVAR(Int, gl_lightmode)
 EXTERN_CVAR(Bool, gl_brightfog)
 EXTERN_CVAR(Bool, gl_lightadditivesurfaces)
+EXTERN_CVAR(Bool, gl_attenuate)
+
 
 CUSTOM_CVAR(Float, maxviewpitch, 90.f, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
@@ -207,6 +209,7 @@ struct FGLROptions : public FOptionalMapinfoData
 		skyfog = 0;
 		brightfog = false;
 		lightmode = -1;
+		attenuate = -1;
 		nocoloredspritelighting = -1;
 		notexturefill = -1;
 		skyrotatevector = FVector3(0,0,1);
@@ -222,6 +225,7 @@ struct FGLROptions : public FOptionalMapinfoData
 		newopt->outsidefogdensity = outsidefogdensity;
 		newopt->skyfog = skyfog;
 		newopt->lightmode = lightmode;
+		newopt->attenuate = attenuate;
 		newopt->nocoloredspritelighting = nocoloredspritelighting;
 		newopt->notexturefill = notexturefill;
 		newopt->skyrotatevector = skyrotatevector;
@@ -235,6 +239,7 @@ struct FGLROptions : public FOptionalMapinfoData
 	int			skyfog;
 	int			lightmode;
 	int			brightfog;
+	int8_t		attenuate;
 	int8_t		lightadditivesurfaces;
 	int8_t		nocoloredspritelighting;
 	int8_t		notexturefill;
@@ -325,6 +330,20 @@ DEFINE_MAP_OPTION(lightadditivesurfaces, false)
 	}
 }
 
+DEFINE_MAP_OPTION(attenuate, false)
+{
+	FGLROptions *opt = info->GetOptData<FGLROptions>("gl_renderer");
+	if (parse.CheckAssign())
+	{
+		parse.sc.MustGetNumber();
+		opt->attenuate = !!parse.sc.Number;
+	}
+	else
+	{
+		opt->attenuate = true;
+	}
+}
+
 DEFINE_MAP_OPTION(skyrotate, false)
 {
 	FGLROptions *opt = info->GetOptData<FGLROptions>("gl_renderer");
@@ -371,6 +390,22 @@ bool IsLightmodeValid()
 	return (glset.map_lightmode >= 0 && glset.map_lightmode <= 4) || glset.map_lightmode == 8;
 }
 
+static void ResetOpts()
+{
+	if (!IsLightmodeValid()) glset.lightmode = gl_lightmode;
+	else glset.lightmode = glset.map_lightmode;
+	if (glset.map_nocoloredspritelighting == -1) glset.nocoloredspritelighting = gl_nocoloredspritelighting;
+	else glset.nocoloredspritelighting = !!glset.map_nocoloredspritelighting;
+	if (glset.map_notexturefill == -1) glset.notexturefill = gl_notexturefill;
+	else glset.notexturefill = !!glset.map_notexturefill;
+	if (glset.map_brightfog == -1) glset.brightfog = gl_brightfog;
+	else glset.brightfog = !!glset.map_brightfog;
+	if (glset.map_lightadditivesurfaces == -1) glset.lightadditivesurfaces = gl_lightadditivesurfaces;
+	else glset.lightadditivesurfaces = !!glset.map_lightadditivesurfaces;
+	if (glset.map_attenuate == -1) glset.attenuate = gl_attenuate;
+	else glset.attenuate = !!glset.map_attenuate;
+}
+
 void InitGLRMapinfoData()
 {
 	FGLROptions *opt = level.info->GetOptData<FGLROptions>("gl_renderer", false);
@@ -380,6 +415,7 @@ void InitGLRMapinfoData()
 		gl_SetFogParams(opt->fogdensity, level.info->outsidefog, opt->outsidefogdensity, opt->skyfog);
 		glset.map_lightmode = opt->lightmode;
 		glset.map_lightadditivesurfaces = opt->lightadditivesurfaces;
+		glset.map_attenuate = opt->attenuate;
 		glset.map_brightfog = opt->brightfog;
 		glset.map_nocoloredspritelighting = opt->nocoloredspritelighting;
 		glset.map_notexturefill = opt->notexturefill;
@@ -393,35 +429,18 @@ void InitGLRMapinfoData()
 		glset.map_lightmode = -1;
 		glset.map_lightadditivesurfaces = -1;
 		glset.map_brightfog = -1;
+		glset.map_attenuate = -1;
 		glset.map_nocoloredspritelighting = -1;
 		glset.map_notexturefill = -1;
-		glset.skyrotatevector = FVector3(0,0,1);
-		glset.skyrotatevector2 = FVector3(0,0,1);
+		glset.skyrotatevector = FVector3(0, 0, 1);
+		glset.skyrotatevector2 = FVector3(0, 0, 1);
 		glset.pixelstretch = 1.2f;
 	}
-
-	if (!IsLightmodeValid()) glset.lightmode = gl_lightmode;
-	else glset.lightmode = glset.map_lightmode;
-	if (glset.map_nocoloredspritelighting == -1) glset.nocoloredspritelighting = gl_nocoloredspritelighting;
-	else glset.nocoloredspritelighting = !!glset.map_nocoloredspritelighting;
-	if (glset.map_notexturefill == -1) glset.notexturefill = gl_notexturefill;
-	else glset.notexturefill = !!glset.map_notexturefill;
-	if (glset.map_brightfog == -1) glset.brightfog = gl_brightfog;
-	else glset.brightfog = !!glset.map_brightfog;
-	if (glset.map_lightadditivesurfaces == -1) glset.brightfog = gl_brightfog;
-	else glset.lightadditivesurfaces = !!glset.map_lightadditivesurfaces;
+	ResetOpts();
 }
-
 CCMD(gl_resetmap)
 {
-	if (!IsLightmodeValid()) glset.lightmode = gl_lightmode;
-	else glset.lightmode = glset.map_lightmode;
-	if (glset.map_nocoloredspritelighting == -1) glset.nocoloredspritelighting = gl_nocoloredspritelighting;
-	else glset.nocoloredspritelighting = !!glset.map_nocoloredspritelighting;
-	if (glset.map_notexturefill == -1) glset.notexturefill = gl_notexturefill;
-	else glset.notexturefill = !!glset.map_notexturefill;
-	if (glset.map_brightfog == -1) glset.brightfog = gl_brightfog;
-	else glset.brightfog = !!glset.map_brightfog;
+	ResetOpts();
 }
 
 

@@ -104,6 +104,11 @@ DoomEdNums
   9823 = SectorPointLightSubtractive
   9824 = PointLightFlickerRandomSubtractive
   9825 = VavoomLight
+  9830 = PointLightAttenuated
+  9831 = PointLightPulseAttenuated
+  9832 = PointLightFlickerAttenuated
+  9833 = SectorPointLightAttenuated
+  9834 = PointLightFlickerRandomAttenuated
   9982 = SecActEyesAboveC
   9983 = SecActEyesBelowC
   9988 = CustomSprite

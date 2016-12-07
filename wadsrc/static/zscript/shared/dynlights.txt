@@ -157,3 +157,44 @@ class VavoomLightColor : VavoomLight native
 	}
 }
 
+
+class PointLightAttenuated : PointLight
+{
+	Default
+	{
+		+INCOMBAT
+	}
+}
+
+class PointLightPulseAttenuated : PointLightPulse
+{
+	Default
+	{
+		+INCOMBAT
+	}
+}
+
+class PointLightFlickerAttenuated : PointLightFlicker
+{
+	Default
+	{
+		+INCOMBAT
+	}
+}
+
+class SectorPointLightAttenuated : SectorPointLight
+{
+	Default
+	{
+		+INCOMBAT
+	}
+}
+
+class PointLightFlickerRandomAttenuated :PointLightFlickerRandom
+{
+	Default
+	{
+		+INCOMBAT
+	}
+}
+

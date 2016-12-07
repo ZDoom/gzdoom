@@ -883,7 +883,9 @@ set( FASTMATH_PCH_SOURCES
 	r_3dfloors.cpp
 	r_bsp.cpp
 	r_draw.cpp
-	r_drawt.cpp
+	r_draw_pal.cpp
+	r_drawt_pal.cpp
+	r_thread.cpp
 	r_main.cpp
 	r_plane.cpp
 	r_segs.cpp

@@ -1375,17 +1375,16 @@ void D3DFB::Draw3DPart(bool copy3d)
 		D3DCOLOR color0, color1;
 		if (Accel2D)
 		{
-			if (realfixedcolormap == NULL)
+			auto &map = swrenderer::realfixedcolormap;
+			if (map == NULL)
 			{
 				color0 = 0;
 				color1 = 0xFFFFFFF;
 			}
 			else
 			{
-				color0 = D3DCOLOR_COLORVALUE(realfixedcolormap->ColorizeStart[0]/2,
-					realfixedcolormap->ColorizeStart[1]/2, realfixedcolormap->ColorizeStart[2]/2, 0);
-				color1 = D3DCOLOR_COLORVALUE(realfixedcolormap->ColorizeEnd[0]/2,
-					realfixedcolormap->ColorizeEnd[1]/2, realfixedcolormap->ColorizeEnd[2]/2, 1);
+				color0 = D3DCOLOR_COLORVALUE(map->ColorizeStart[0] / 2, map->ColorizeStart[1] / 2, map->ColorizeStart[2] / 2, 0);
+				color1 = D3DCOLOR_COLORVALUE(map->ColorizeEnd[0] / 2, map->ColorizeEnd[1] / 2, map->ColorizeEnd[2] / 2, 1);
 				SetPixelShader(Shaders[SHADER_SpecialColormapPal]);
 			}
 		}

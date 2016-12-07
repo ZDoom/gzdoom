@@ -42,12 +42,19 @@
 #include "r_3dfloors.h"
 #include "textures/textures.h"
 #include "r_data/voxels.h"
+#include "r_thread.h"
 
+namespace swrenderer
+{
 
 void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio);
 void R_SetupColormap(player_t *);
 void R_SetupFreelook();
 void R_InitRenderer();
+
+}
+
+using namespace swrenderer;
 
 //==========================================================================
 //
@@ -154,9 +161,11 @@ void FSoftwareRenderer::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &act
 
 void FSoftwareRenderer::RenderView(player_t *player)
 {
+	R_BeginDrawerCommands();
 	R_RenderActorView (player->mo);
 	// [RH] Let cameras draw onto textures that were visible this frame.
 	FCanvasTextureInfo::UpdateAll ();
+	R_EndDrawerCommands();
 }
 
 //==========================================================================

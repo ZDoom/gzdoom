@@ -58,6 +58,38 @@
 #include "v_font.h"
 #include "r_data/colormaps.h"
 #include "p_maputl.h"
+#include "r_thread.h"
+
+CVAR (String, r_viewsize, "", CVAR_NOSET)
+CVAR (Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
+
+CUSTOM_CVAR (Int, r_columnmethod, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self != 0 && self != 1)
+	{
+		self = 1;
+	}
+	else
+	{ // Trigger the change
+		setsizeneeded = true;
+	}
+}
+
+CVAR(Int, r_portal_recursions, 4, CVAR_ARCHIVE)
+CVAR(Bool, r_highlight_portals, false, CVAR_ARCHIVE)
+
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
+
+extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
+extern cycle_t FrameCycles;
+
+extern bool r_showviewer;
+
+cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
+
+namespace swrenderer
+{
+	using namespace drawerargs;
 
 // MACROS ------------------------------------------------------------------
 
@@ -88,7 +120,6 @@ extern short *openings;
 extern bool r_fakingunderwater;
 extern "C" int fuzzviewheight;
 extern subsector_t *InSubsector;
-extern bool r_showviewer;
 
 
 // PRIVATE DATA DECLARATIONS -----------------------------------------------
@@ -99,9 +130,6 @@ static double MaxVisForFloor;
 bool r_dontmaplines;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-CVAR (String, r_viewsize, "", CVAR_NOSET)
-CVAR (Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
 
 double			r_BaseVisibility;
 double			r_WallVisibility;
@@ -156,8 +184,6 @@ void (*hcolfunc_pre) (void);
 void (*hcolfunc_post1) (int hx, int sx, int yl, int yh);
 void (*hcolfunc_post2) (int hx, int sx, int yl, int yh);
 void (*hcolfunc_post4) (int sx, int yl, int yh);
-
-cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -363,26 +389,6 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 
 //==========================================================================
 //
-// CVAR r_columnmethod
-//
-// Selects which version of the seg renderers to use.
-//
-//==========================================================================
-
-CUSTOM_CVAR (Int, r_columnmethod, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self != 0 && self != 1)
-	{
-		self = 1;
-	}
-	else
-	{ // Trigger the change
-		setsizeneeded = true;
-	}
-}
-
-//==========================================================================
-//
 // R_Init
 //
 //==========================================================================
@@ -454,8 +460,6 @@ void R_CopyStackedViewParameters()
 // Sets up special fixed colormaps
 //
 //==========================================================================
-
-EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 void R_SetupColormap(player_t *player)
 {
@@ -573,9 +577,6 @@ void R_SetupFreelook()
 // [ZZ] Merged with portal code, originally called R_EnterMirror
 //
 //==========================================================================
-
-CVAR(Int, r_portal_recursions, 4, CVAR_ARCHIVE)
-CVAR(Bool, r_highlight_portals, false, CVAR_ARCHIVE)
 
 void R_HighlightPortal (PortalDrawseg* pds)
 {
@@ -853,10 +854,10 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	// [RH] Show off segs if r_drawflat is 1
 	if (r_drawflat)
 	{
-		hcolfunc_pre = R_FillColumnHorizP;
+		hcolfunc_pre = R_FillColumnHoriz;
 		hcolfunc_post1 = rt_copy1col;
 		hcolfunc_post4 = rt_copy4cols;
-		colfunc = R_FillColumnP;
+		colfunc = R_FillColumn;
 		spanfunc = R_FillSpan;
 	}
 	else
@@ -950,6 +951,8 @@ void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas,
 {
 	const bool savedviewactive = viewactive;
 
+	R_BeginDrawerCommands();
+
 	viewwidth = width;
 	RenderTarget = canvas;
 	bRenderingToCanvas = true;
@@ -960,6 +963,8 @@ void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas,
 	viewactive = true;
 
 	R_RenderActorView (actor, dontmaplines);
+
+	R_EndDrawerCommands();
 
 	RenderTarget = screen;
 	bRenderingToCanvas = false;
@@ -991,8 +996,6 @@ void R_MultiresInit ()
 // Displays statistics about rendering times
 //
 //==========================================================================
-extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
-extern cycle_t FrameCycles;
 
 ADD_STAT (fps)
 {
@@ -1072,3 +1075,5 @@ CCMD (clearscancycles)
 	bestscancycles = HUGE_VAL;
 }
 #endif
+
+}

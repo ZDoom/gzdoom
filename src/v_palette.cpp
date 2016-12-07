@@ -384,8 +384,8 @@ void InitPalette ()
 	R_InitColormaps ();
 }
 
-extern "C" void DoBlending_MMX (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
-extern void DoBlending_SSE2 (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
+void DoBlending_MMX (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
+void DoBlending_SSE2 (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
 
 void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a)
 {
@@ -395,6 +395,7 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 		{
 			memcpy (to, from, count * sizeof(DWORD));
 		}
+		return;
 	}
 	else if (a == 256)
 	{
@@ -405,6 +406,7 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 		{
 			to[i] = t;
 		}
+		return;
 	}
 #if defined(_M_X64) || defined(_M_IX86) || defined(__i386__) || defined(__amd64__)
 	else if (CPU.bSSE2)
@@ -423,7 +425,7 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 		}
 	}
 #endif
-#ifdef X86_ASM
+#if defined(_M_IX86) || defined(__i386__)
 	else if (CPU.bMMX)
 	{
 		if (count >= 4)

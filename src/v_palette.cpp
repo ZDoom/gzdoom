@@ -106,20 +106,11 @@ CCMD (bumpgamma)
 /* Palette management stuff */
 /****************************/
 
-extern "C" BYTE BestColor_MMX (DWORD rgb, const DWORD *pal);
-
 int BestColor (const uint32 *pal_in, int r, int g, int b, int first, int num)
 {
-#ifdef X86_ASM
-	if (CPU.bMMX)
-	{
-		int pre = 256 - num - first;
-		return BestColor_MMX (((first+pre)<<24)|(r<<16)|(g<<8)|b, pal_in-pre) - pre;
-	}
-#endif
 	const PalEntry *pal = (const PalEntry *)pal_in;
 	int bestcolor = first;
-	int bestdist = 257*257+257*257+257*257;
+	int bestdist = 257 * 257 + 257 * 257 + 257 * 257;
 
 	for (int color = first; color < num; color++)
 	{

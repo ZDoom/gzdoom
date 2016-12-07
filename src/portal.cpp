@@ -1231,8 +1231,8 @@ bool P_CollectConnectedGroups(int startgroup, const DVector3 &position, double u
 		{
 			int othergroup = wsec->GetOppositePortalGroup(sector_t::floor);
 			DVector2 pos = Displacements.getOffset(startgroup, othergroup) + position;
-			processMask.setBit(othergroup | FPortalGroupArray::LOWER);
-			out.Add(othergroup);
+			processMask.setBit(othergroup);
+			out.Add(othergroup | FPortalGroupArray::LOWER);
 			wsec = P_PointInSector(pos);	// get lower sector at the exact spot we want to check and repeat
 			retval = true;
 		}

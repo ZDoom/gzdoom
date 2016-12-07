@@ -118,7 +118,7 @@ static void R_ShutdownRenderer();
 
 extern short *openings;
 extern bool r_fakingunderwater;
-extern "C" int fuzzviewheight;
+extern int fuzzviewheight;
 extern subsector_t *InSubsector;
 
 

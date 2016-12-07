@@ -230,7 +230,7 @@ namespace swrenderer
 		fixed_t _v;
 		int _dy;
 		fixed_t _vi;
-		const uint8_t *_vptr;
+		const uint8_t *_vvptr;
 		uint8_t *_p;
 		const uint8_t *_colormap;
 		int _pitch;

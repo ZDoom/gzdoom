@@ -16,6 +16,7 @@
 #include "r_data/colormaps.h"
 #include "r_plane.h"
 #include "r_draw.h"
+#include "r_draw_rgba.h"
 #include "r_draw_pal.h"
 #include "r_thread.h"
 
@@ -42,6 +43,9 @@ namespace swrenderer
 	{
 		int dc_pitch;
 		lighttable_t *dc_colormap;
+		FSWColormap *dc_fcolormap;
+		ShadeConstants dc_shade_constants;
+		fixed_t dc_light;
 		int dc_x;
 		int dc_yl;
 		int dc_yh;
@@ -78,6 +82,8 @@ namespace swrenderer
 		int ds_x1;
 		int ds_x2;
 		lighttable_t * ds_colormap;
+		FSWColormap *ds_fcolormap;
+		ShadeConstants ds_shade_constants;
 		dsfixed_t ds_light;
 		dsfixed_t ds_xfrac;
 		dsfixed_t ds_yfrac;
@@ -88,7 +94,9 @@ namespace swrenderer
 		fixed_t ds_alpha;
 		double ds_lod;
 		const uint8_t *ds_source;
+		bool ds_source_mipmapped;
 		int ds_color;
+		bool drawer_needs_pal_input;
 		unsigned int dc_tspans[4][MAXHEIGHT];
 		unsigned int *dc_ctspan[4];
 		unsigned int *horizspan[4];
@@ -199,6 +207,7 @@ namespace swrenderer
 					colfunc = transcolfunc;
 					hcolfunc_post1 = rt_tlate1col;
 					hcolfunc_post4 = rt_tlate4cols;
+					drawer_needs_pal_input = true;
 				}
 				return true;
 			}
@@ -249,6 +258,7 @@ namespace swrenderer
 						colfunc = R_DrawTlatedAddColumn;
 						hcolfunc_post1 = rt_tlateadd1col;
 						hcolfunc_post4 = rt_tlateadd4cols;
+						drawer_needs_pal_input = true;
 					}
 				}
 				else
@@ -270,6 +280,7 @@ namespace swrenderer
 						colfunc = R_DrawAddClampTranslatedColumn;
 						hcolfunc_post1 = rt_tlateaddclamp1col;
 						hcolfunc_post4 = rt_tlateaddclamp4cols;
+						drawer_needs_pal_input = true;
 					}
 				}
 				return true;
@@ -292,6 +303,7 @@ namespace swrenderer
 					colfunc = R_DrawSubClampTranslatedColumn;
 					hcolfunc_post1 = rt_tlatesubclamp1col;
 					hcolfunc_post4 = rt_tlatesubclamp4cols;
+					drawer_needs_pal_input = true;
 				}
 				return true;
 
@@ -317,6 +329,7 @@ namespace swrenderer
 					colfunc = R_DrawRevSubClampTranslatedColumn;
 					hcolfunc_post1 = rt_tlaterevsubclamp1col;
 					hcolfunc_post4 = rt_tlaterevsubclamp4cols;
+					drawer_needs_pal_input = true;
 				}
 				return true;
 
@@ -345,6 +358,8 @@ namespace swrenderer
 		using namespace drawerargs;
 
 		fixed_t fglevel, bglevel;
+
+		drawer_needs_pal_input = false;
 
 		style.CheckFuzz();
 
@@ -376,7 +391,10 @@ namespace swrenderer
 				FRemapTable *table = TranslationToTable(translation);
 				if (table != NULL && !table->Inactive)
 				{
-					dc_translation = table->Remap;
+					if (r_swtruecolor)
+						dc_translation = (uint8_t*)table->Palette;
+					else
+						dc_translation = table->Remap;
 				}
 			}
 		}
@@ -397,13 +415,19 @@ namespace swrenderer
 			colfunc = R_DrawShadedColumn;
 			hcolfunc_post1 = rt_shaded1col;
 			hcolfunc_post4 = rt_shaded4cols;
-			dc_color = fixedcolormap ? fixedcolormap[APART(color)] : basecolormap->Maps[APART(color)];
-			dc_colormap = (basecolormap = &ShadeFakeColormap[16 - alpha])->Maps;
+			drawer_needs_pal_input = true;
+			dc_color = fixedcolormap ? fixedcolormap->Maps[APART(color)] : basecolormap->Maps[APART(color)];
+			basecolormap = &ShadeFakeColormap[16 - alpha];
 			if (fixedlightlev >= 0 && fixedcolormap == NULL)
 			{
-				dc_colormap += fixedlightlev;
+				R_SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 			}
-			return r_columnmethod ? DoDraw1 : DoDraw0;
+			else
+			{
+				R_SetColorMapLight(basecolormap, 0, 0);
+			}
+			bool active_columnmethod = r_columnmethod && !r_swtruecolor;
+			return active_columnmethod ? DoDraw1 : DoDraw0;
 		}
 
 		fglevel = GetAlpha(style.SrcAlpha, alpha);
@@ -429,14 +453,15 @@ namespace swrenderer
 			// with the alpha.
 			dc_srccolor = ((((r*x) >> 4) << 20) | ((g*x) >> 4) | ((((b)*x) >> 4) << 10)) & 0x3feffbff;
 			hcolfunc_pre = R_FillColumnHoriz;
-			R_SetColorMapLight(identitycolormap.Maps, 0, 0);
+			R_SetColorMapLight(&identitycolormap, 0, 0);
 		}
 
 		if (!R_SetBlendFunc(style.BlendOp, fglevel, bglevel, style.Flags))
 		{
 			return DontDraw;
 		}
-		return r_columnmethod ? DoDraw1 : DoDraw0;
+		bool active_columnmethod = r_columnmethod && !r_swtruecolor;
+		return active_columnmethod ? DoDraw1 : DoDraw0;
 	}
 
 	ESPSResult R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color)
@@ -460,7 +485,10 @@ namespace swrenderer
 			col = width + (col % width);
 		}
 
-		return tex->GetColumn(col, nullptr);
+		if (r_swtruecolor)
+			return (const uint8_t *)tex->GetColumnBgra(col, nullptr);
+		else
+			return tex->GetColumn(col, nullptr);
 	}
 
 	bool R_GetTransMaskDrawers(fixed_t(**tmvline1)(), void(**tmvline4)())
@@ -507,25 +535,84 @@ namespace swrenderer
 		drawerargs::tmvlinebits = fracbits;
 	}
 
-	void R_SetColorMapLight(lighttable_t *base_colormap, float light, int shade)
+	void R_SetColorMapLight(FSWColormap *base_colormap, float light, int shade)
 	{
 		using namespace drawerargs;
 
-		dc_colormap = base_colormap + (GETPALOOKUP(light, shade) << COLORMAPSHIFT);
+		dc_fcolormap = base_colormap;
+		if (r_swtruecolor)
+		{
+			dc_shade_constants.light_red = dc_fcolormap->Color.r * 256 / 255;
+			dc_shade_constants.light_green = dc_fcolormap->Color.g * 256 / 255;
+			dc_shade_constants.light_blue = dc_fcolormap->Color.b * 256 / 255;
+			dc_shade_constants.light_alpha = dc_fcolormap->Color.a * 256 / 255;
+			dc_shade_constants.fade_red = dc_fcolormap->Fade.r;
+			dc_shade_constants.fade_green = dc_fcolormap->Fade.g;
+			dc_shade_constants.fade_blue = dc_fcolormap->Fade.b;
+			dc_shade_constants.fade_alpha = dc_fcolormap->Fade.a;
+			dc_shade_constants.desaturate = MIN(abs(dc_fcolormap->Desaturate), 255) * 255 / 256;
+			dc_shade_constants.simple_shade = (dc_fcolormap->Color.d == 0x00ffffff && dc_fcolormap->Fade.d == 0x00000000 && dc_fcolormap->Desaturate == 0);
+			dc_colormap = base_colormap->Maps;
+			dc_light = LIGHTSCALE(light, shade);
+		}
+		else
+		{
+			dc_colormap = base_colormap->Maps + (GETPALOOKUP(light, shade) << COLORMAPSHIFT);
+		}
 	}
 
-	void R_SetDSColorMapLight(lighttable_t *base_colormap, float light, int shade)
+	void R_SetDSColorMapLight(FSWColormap *base_colormap, float light, int shade)
 	{
 		using namespace drawerargs;
 	
-		ds_colormap = base_colormap + (GETPALOOKUP(light, shade) << COLORMAPSHIFT);
+		ds_fcolormap = base_colormap;
+		if (r_swtruecolor)
+		{
+			ds_shade_constants.light_red = ds_fcolormap->Color.r * 256 / 255;
+			ds_shade_constants.light_green = ds_fcolormap->Color.g * 256 / 255;
+			ds_shade_constants.light_blue = ds_fcolormap->Color.b * 256 / 255;
+			ds_shade_constants.light_alpha = ds_fcolormap->Color.a * 256 / 255;
+			ds_shade_constants.fade_red = ds_fcolormap->Fade.r;
+			ds_shade_constants.fade_green = ds_fcolormap->Fade.g;
+			ds_shade_constants.fade_blue = ds_fcolormap->Fade.b;
+			ds_shade_constants.fade_alpha = ds_fcolormap->Fade.a;
+			ds_shade_constants.desaturate = MIN(abs(ds_fcolormap->Desaturate), 255) * 255 / 256;
+			ds_shade_constants.simple_shade = (ds_fcolormap->Color.d == 0x00ffffff && ds_fcolormap->Fade.d == 0x00000000 && ds_fcolormap->Desaturate == 0);
+			ds_colormap = base_colormap->Maps;
+			ds_light = LIGHTSCALE(light, shade);
+		}
+		else
+		{
+			ds_colormap = base_colormap->Maps + (GETPALOOKUP(light, shade) << COLORMAPSHIFT);
+		}
 	}
 
 	void R_SetTranslationMap(lighttable_t *translation)
 	{
 		using namespace drawerargs;
 
-		dc_colormap = translation;
+		if (r_swtruecolor)
+		{
+			dc_fcolormap = nullptr;
+			dc_colormap = nullptr;
+			dc_translation = translation;
+			dc_shade_constants.light_red = 256;
+			dc_shade_constants.light_green = 256;
+			dc_shade_constants.light_blue = 256;
+			dc_shade_constants.light_alpha = 256;
+			dc_shade_constants.fade_red = 0;
+			dc_shade_constants.fade_green = 0;
+			dc_shade_constants.fade_blue = 0;
+			dc_shade_constants.fade_alpha = 256;
+			dc_shade_constants.desaturate = 0;
+			dc_shade_constants.simple_shade = true;
+			dc_light = 0;
+		}
+		else
+		{
+			dc_fcolormap = nullptr;
+			dc_colormap = translation;
+		}
 	}
 
 	void rt_initcols(uint8_t *buffer)
@@ -535,7 +622,10 @@ namespace swrenderer
 		for (int y = 3; y >= 0; y--)
 			horizspan[y] = dc_ctspan[y] = &dc_tspans[y][0];
 
-		DrawerCommandQueue::QueueCommand<RtInitColsPalCommand>(buffer);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<RtInitColsRGBACommand>(buffer);
+		else
+			DrawerCommandQueue::QueueCommand<RtInitColsPalCommand>(buffer);
 	}
 
 	void rt_span_coverage(int x, int start, int stop)
@@ -727,18 +817,17 @@ namespace swrenderer
 		}
 	}
 
-	void R_SetSpanColormap(lighttable_t *colormap)
+	void R_SetSpanColormap(FDynamicColormap *colormap, int shade)
 	{
-		using namespace drawerargs;
-
-		ds_colormap = colormap;
+		R_SetDSColorMapLight(colormap, 0, shade);
 	}
 
 	void R_SetSpanSource(FTexture *tex)
 	{
 		using namespace drawerargs;
 
-		ds_source = tex->GetPixels();
+		ds_source = r_swtruecolor ? (const uint8_t*)tex->GetPixelsBgra() : tex->GetPixels();
+		ds_source_mipmapped = tex->Mipmapped() && tex->GetWidth() > 1 && tex->GetHeight() > 1;
 	}
 
 	/////////////////////////////////////////////////////////////////////////
@@ -756,7 +845,10 @@ namespace swrenderer
 		(*span)[1] = dc_yh;
 		*span += 2;
 
-		DrawerCommandQueue::QueueCommand<FillColumnHorizPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<FillColumnHorizRGBACommand>();
+		else
+			DrawerCommandQueue::QueueCommand<FillColumnHorizPalCommand>();
 	}
 
 	void R_DrawColumnHoriz()
@@ -772,168 +864,301 @@ namespace swrenderer
 		(*span)[1] = dc_yh;
 		*span += 2;
 
-		DrawerCommandQueue::QueueCommand<DrawColumnHorizPalCommand>();
+		if (r_swtruecolor)
+		{
+			if (drawer_needs_pal_input)
+				DrawerCommandQueue::QueueCommand<DrawColumnHorizRGBACommand<uint8_t>>();
+			else
+				DrawerCommandQueue::QueueCommand<DrawColumnHorizRGBACommand<uint32_t>>();
+		}
+		else
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnHorizPalCommand>();
+		}
 	}
 
 	// Copies one span at hx to the screen at sx.
 	void rt_copy1col(int hx, int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt1CopyPalCommand>(hx, sx, yl, yh);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1CopyLLVMCommand>(hx, sx, yl, yh);
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1CopyPalCommand>(hx, sx, yl, yh);
 	}
 
 	// Copies all four spans to the screen starting at sx.
 	void rt_copy4cols(int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt4CopyPalCommand>(0, sx, yl, yh);
+		if (r_swtruecolor)
+		{
+			// To do: we could do this with SSE using __m128i
+			rt_copy1col(0, sx, yl, yh);
+			rt_copy1col(1, sx + 1, yl, yh);
+			rt_copy1col(2, sx + 2, yl, yh);
+			rt_copy1col(3, sx + 3, yl, yh);
+		}
+		else
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4CopyPalCommand>(0, sx, yl, yh);
+		}
 	}
 
 	// Maps one span at hx to the screen at sx.
 	void rt_map1col(int hx, int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt1PalCommand>(hx, sx, yl, yh);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1LLVMCommand>(hx, sx, yl, yh);
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1PalCommand>(hx, sx, yl, yh);
 	}
 
 	// Maps all four spans to the screen starting at sx.
 	void rt_map4cols(int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt4PalCommand>(0, sx, yl, yh);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4LLVMCommand>(0, sx, yl, yh);
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4PalCommand>(0, sx, yl, yh);
 	}
 
 	// Translates one span at hx to the screen at sx.
 	void rt_tlate1col(int hx, int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
-		rt_map1col(hx, sx, yl, yh);
+		if (r_swtruecolor)
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedLLVMCommand>(hx, sx, yl, yh);
+		}
+		else
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
+			rt_map1col(hx, sx, yl, yh);
+		}
 	}
 
 	// Translates all four spans to the screen starting at sx.
 	void rt_tlate4cols(int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
-		rt_map4cols(sx, yl, yh);
+		if (r_swtruecolor)
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedLLVMCommand>(0, sx, yl, yh);
+		}
+		else
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
+			rt_map4cols(sx, yl, yh);
+		}
 	}
 
 	// Adds one span at hx to the screen at sx without clamping.
 	void rt_add1col(int hx, int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt1AddPalCommand>(hx, sx, yl, yh);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1AddLLVMCommand>(hx, sx, yl, yh);
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1AddPalCommand>(hx, sx, yl, yh);
 	}
 
 	// Adds all four spans to the screen starting at sx without clamping.
 	void rt_add4cols(int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt4AddPalCommand>(0, sx, yl, yh);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4AddLLVMCommand>(0, sx, yl, yh);
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4AddPalCommand>(0, sx, yl, yh);
 	}
 
 	// Translates and adds one span at hx to the screen at sx without clamping.
 	void rt_tlateadd1col(int hx, int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
-		rt_add1col(hx, sx, yl, yh);
+		if (r_swtruecolor)
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1AddClampTranslatedLLVMCommand>(hx, sx, yl, yh);
+		}
+		else
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
+			rt_add1col(hx, sx, yl, yh);
+		}
 	}
 
 	// Translates and adds all four spans to the screen starting at sx without clamping.
 	void rt_tlateadd4cols(int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
-		rt_add4cols(sx, yl, yh);
+		if (r_swtruecolor)
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4AddClampTranslatedLLVMCommand>(0, sx, yl, yh);
+		}
+		else
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
+			rt_add4cols(sx, yl, yh);
+		}
 	}
 
 	// Shades one span at hx to the screen at sx.
 	void rt_shaded1col(int hx, int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt1ShadedPalCommand>(hx, sx, yl, yh);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1ShadedLLVMCommand>(hx, sx, yl, yh);
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1ShadedPalCommand>(hx, sx, yl, yh);
 	}
 
 	// Shades all four spans to the screen starting at sx.
 	void rt_shaded4cols(int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt4ShadedPalCommand>(0, sx, yl, yh);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4ShadedLLVMCommand>(0, sx, yl, yh);
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4ShadedPalCommand>(0, sx, yl, yh);
 	}
 
 	// Adds one span at hx to the screen at sx with clamping.
 	void rt_addclamp1col(int hx, int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt1AddClampPalCommand>(hx, sx, yl, yh);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1AddClampLLVMCommand>(hx, sx, yl, yh);
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1AddClampPalCommand>(hx, sx, yl, yh);
 	}
 
 	// Adds all four spans to the screen starting at sx with clamping.
 	void rt_addclamp4cols(int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt4AddClampPalCommand>(0, sx, yl, yh);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4AddClampLLVMCommand>(0, sx, yl, yh);
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4AddClampPalCommand>(0, sx, yl, yh);
 	}
 
 	// Translates and adds one span at hx to the screen at sx with clamping.
 	void rt_tlateaddclamp1col(int hx, int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
-		rt_addclamp1col(hx, sx, yl, yh);
+		if (r_swtruecolor)
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1AddClampTranslatedLLVMCommand>(hx, sx, yl, yh);
+		}
+		else
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
+			rt_addclamp1col(hx, sx, yl, yh);
+		}
 	}
 
 	// Translates and adds all four spans to the screen starting at sx with clamping.
 	void rt_tlateaddclamp4cols(int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
-		rt_addclamp4cols(sx, yl, yh);
+		if (r_swtruecolor)
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4AddClampTranslatedLLVMCommand>(0, sx, yl, yh);
+		}
+		else
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
+			rt_addclamp4cols(sx, yl, yh);
+		}
 	}
 
 	// Subtracts one span at hx to the screen at sx with clamping.
 	void rt_subclamp1col(int hx, int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt1SubClampPalCommand>(hx, sx, yl, yh);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1SubClampLLVMCommand>(hx, sx, yl, yh);
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1SubClampPalCommand>(hx, sx, yl, yh);
 	}
 
 	// Subtracts all four spans to the screen starting at sx with clamping.
 	void rt_subclamp4cols(int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt4SubClampPalCommand>(0, sx, yl, yh);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4SubClampLLVMCommand>(0, sx, yl, yh);
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4SubClampPalCommand>(0, sx, yl, yh);
 	}
 
 	// Translates and subtracts one span at hx to the screen at sx with clamping.
 	void rt_tlatesubclamp1col(int hx, int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
-		rt_subclamp1col(hx, sx, yl, yh);
+		if (r_swtruecolor)
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1SubClampTranslatedLLVMCommand>(hx, sx, yl, yh);
+		}
+		else
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
+			rt_subclamp1col(hx, sx, yl, yh);
+		}
 	}
 
 	// Translates and subtracts all four spans to the screen starting at sx with clamping.
 	void rt_tlatesubclamp4cols(int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
-		rt_subclamp4cols(sx, yl, yh);
+		if (r_swtruecolor)
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4SubClampTranslatedLLVMCommand>(0, sx, yl, yh);
+		}
+		else
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
+			rt_subclamp4cols(sx, yl, yh);
+		}
 	}
 
 	// Subtracts one span at hx from the screen at sx with clamping.
 	void rt_revsubclamp1col(int hx, int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt1RevSubClampPalCommand>(hx, sx, yl, yh);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1RevSubClampLLVMCommand>(hx, sx, yl, yh);
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1RevSubClampPalCommand>(hx, sx, yl, yh);
 	}
 
 	// Subtracts all four spans from the screen starting at sx with clamping.
 	void rt_revsubclamp4cols(int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt4RevSubClampPalCommand>(0, sx, yl, yh);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4RevSubClampLLVMCommand>(0, sx, yl, yh);
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4RevSubClampPalCommand>(0, sx, yl, yh);
 	}
 
 	// Translates and subtracts one span at hx from the screen at sx with clamping.
 	void rt_tlaterevsubclamp1col(int hx, int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
-		rt_revsubclamp1col(hx, sx, yl, yh);
+		if (r_swtruecolor)
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1RevSubClampTranslatedLLVMCommand>(hx, sx, yl, yh);
+		}
+		else
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
+			rt_revsubclamp1col(hx, sx, yl, yh);
+		}
 	}
 
 	// Translates and subtracts all four spans from the screen starting at sx with clamping.
 	void rt_tlaterevsubclamp4cols(int sx, int yl, int yh)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
-		rt_revsubclamp4cols(sx, yl, yh);
+		if (r_swtruecolor)
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4RevSubClampTranslatedLLVMCommand>(0, sx, yl, yh);
+		}
+		else
+		{
+			DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
+			rt_revsubclamp4cols(sx, yl, yh);
+		}
 	}
 
 	uint32_t vlinec1()
 	{
 		using namespace drawerargs;
 
-		DrawerCommandQueue::QueueCommand<DrawWall1PalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawWall1LLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawWall1PalCommand>();
 
 		return dc_texturefrac + dc_count * dc_iscale;
 	}
@@ -942,7 +1167,10 @@ namespace swrenderer
 	{
 		using namespace drawerargs;
 
-		DrawerCommandQueue::QueueCommand<DrawWall4PalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawWall4LLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawWall4PalCommand>();
 
 		for (int i = 0; i < 4; i++)
 			vplce[i] += vince[i] * dc_count;
@@ -952,7 +1180,10 @@ namespace swrenderer
 	{
 		using namespace drawerargs;
 
-		DrawerCommandQueue::QueueCommand<DrawWallMasked1PalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawWallMasked1LLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawWallMasked1PalCommand>();
 
 		return dc_texturefrac + dc_count * dc_iscale;
 	}
@@ -961,7 +1192,10 @@ namespace swrenderer
 	{
 		using namespace drawerargs;
 
-		DrawerCommandQueue::QueueCommand<DrawWallMasked4PalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawWallMasked4LLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawWallMasked4PalCommand>();
 
 		for (int i = 0; i < 4; i++)
 			vplce[i] += vince[i] * dc_count;
@@ -971,7 +1205,10 @@ namespace swrenderer
 	{
 		using namespace drawerargs;
 
-		DrawerCommandQueue::QueueCommand<DrawWallAdd1PalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawWallAdd1LLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawWallAdd1PalCommand>();
 
 		return dc_texturefrac + dc_count * dc_iscale;
 	}
@@ -980,7 +1217,10 @@ namespace swrenderer
 	{
 		using namespace drawerargs;
 
-		DrawerCommandQueue::QueueCommand<DrawWallAdd4PalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawWallAdd4LLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawWallAdd4PalCommand>();
 
 		for (int i = 0; i < 4; i++)
 			vplce[i] += vince[i] * dc_count;
@@ -990,7 +1230,10 @@ namespace swrenderer
 	{
 		using namespace drawerargs;
 
-		DrawerCommandQueue::QueueCommand<DrawWallAddClamp1PalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawWallAddClamp1LLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawWallAddClamp1PalCommand>();
 
 		return dc_texturefrac + dc_count * dc_iscale;
 	}
@@ -999,7 +1242,10 @@ namespace swrenderer
 	{
 		using namespace drawerargs;
 
-		DrawerCommandQueue::QueueCommand<DrawWallAddClamp4PalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawWallAddClamp4LLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawWallAddClamp4PalCommand>();
 
 		for (int i = 0; i < 4; i++)
 			vplce[i] += vince[i] * dc_count;
@@ -1009,7 +1255,10 @@ namespace swrenderer
 	{
 		using namespace drawerargs;
 
-		DrawerCommandQueue::QueueCommand<DrawWallSubClamp1PalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawWallSubClamp1LLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawWallSubClamp1PalCommand>();
 
 		return dc_texturefrac + dc_count * dc_iscale;
 	}
@@ -1018,7 +1267,10 @@ namespace swrenderer
 	{
 		using namespace drawerargs;
 
-		DrawerCommandQueue::QueueCommand<DrawWallSubClamp4PalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawWallSubClamp4LLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawWallSubClamp4PalCommand>();
 
 		for (int i = 0; i < 4; i++)
 			vplce[i] += vince[i] * dc_count;
@@ -1028,7 +1280,10 @@ namespace swrenderer
 	{
 		using namespace drawerargs;
 
-		DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1PalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1LLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1PalCommand>();
 
 		return dc_texturefrac + dc_count * dc_iscale;
 	}
@@ -1037,7 +1292,10 @@ namespace swrenderer
 	{
 		using namespace drawerargs;
 
-		DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp4PalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp4LLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp4PalCommand>();
 
 		for (int i = 0; i < 4; i++)
 			vplce[i] += vince[i] * dc_count;
@@ -1045,59 +1303,92 @@ namespace swrenderer
 
 	void R_DrawSingleSkyCol1(uint32_t solid_top, uint32_t solid_bottom)
 	{
-		DrawerCommandQueue::QueueCommand<DrawSingleSky1PalCommand>(solid_top, solid_bottom);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawSingleSky1LLVMCommand>(solid_top, solid_bottom);
+		else
+			DrawerCommandQueue::QueueCommand<DrawSingleSky1PalCommand>(solid_top, solid_bottom);
 	}
 
 	void R_DrawSingleSkyCol4(uint32_t solid_top, uint32_t solid_bottom)
 	{
-		DrawerCommandQueue::QueueCommand<DrawSingleSky4PalCommand>(solid_top, solid_bottom);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawSingleSky4LLVMCommand>(solid_top, solid_bottom);
+		else
+			DrawerCommandQueue::QueueCommand<DrawSingleSky4PalCommand>(solid_top, solid_bottom);
 	}
 
 	void R_DrawDoubleSkyCol1(uint32_t solid_top, uint32_t solid_bottom)
 	{
-		DrawerCommandQueue::QueueCommand<DrawDoubleSky1PalCommand>(solid_top, solid_bottom);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawDoubleSky1LLVMCommand>(solid_top, solid_bottom);
+		else
+			DrawerCommandQueue::QueueCommand<DrawDoubleSky1PalCommand>(solid_top, solid_bottom);
 	}
 
 	void R_DrawDoubleSkyCol4(uint32_t solid_top, uint32_t solid_bottom)
 	{
-		DrawerCommandQueue::QueueCommand<DrawDoubleSky4PalCommand>(solid_top, solid_bottom);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawDoubleSky4LLVMCommand>(solid_top, solid_bottom);
+		else
+			DrawerCommandQueue::QueueCommand<DrawDoubleSky4PalCommand>(solid_top, solid_bottom);
 	}
 
 	void R_DrawColumn()
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnPalCommand>();
 	}
 
 	void R_FillColumn()
 	{
-		DrawerCommandQueue::QueueCommand<FillColumnPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<FillColumnLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<FillColumnPalCommand>();
 	}
 
 	void R_FillAddColumn()
 	{
-		DrawerCommandQueue::QueueCommand<FillColumnAddPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<FillColumnAddLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<FillColumnAddPalCommand>();
 	}
 
 	void R_FillAddClampColumn()
 	{
-		DrawerCommandQueue::QueueCommand<FillColumnAddClampPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<FillColumnAddClampLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<FillColumnAddClampPalCommand>();
 	}
 
 	void R_FillSubClampColumn()
 	{
-		DrawerCommandQueue::QueueCommand<FillColumnSubClampPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<FillColumnSubClampLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<FillColumnSubClampPalCommand>();
 	}
 
 	void R_FillRevSubClampColumn()
 	{
-		DrawerCommandQueue::QueueCommand<FillColumnRevSubClampPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<FillColumnRevSubClampLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<FillColumnRevSubClampPalCommand>();
 	}
 
 	void R_DrawFuzzColumn()
 	{
 		using namespace drawerargs;
 
-		DrawerCommandQueue::QueueCommand<DrawFuzzColumnPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawFuzzColumnRGBACommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawFuzzColumnPalCommand>();
 
 		dc_yl = MAX(dc_yl, 1);
 		dc_yh = MIN(dc_yh, fuzzviewheight);
@@ -1107,112 +1398,185 @@ namespace swrenderer
 
 	void R_DrawAddColumn()
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnAddPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnAddLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnAddPalCommand>();
 	}
 
 	void R_DrawTranslatedColumn()
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnTranslatedPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnTranslatedLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnTranslatedPalCommand>();
 	}
 
 	void R_DrawTlatedAddColumn()
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnTlatedAddPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnTlatedAddLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnTlatedAddPalCommand>();
 	}
 
 	void R_DrawShadedColumn()
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnShadedPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnShadedLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnShadedPalCommand>();
 	}
 
 	void R_DrawAddClampColumn()
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnAddClampPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnAddClampLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnAddClampPalCommand>();
 	}
 
 	void R_DrawAddClampTranslatedColumn()
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnAddClampTranslatedPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnAddClampTranslatedLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnAddClampTranslatedPalCommand>();
 	}
 
 	void R_DrawSubClampColumn()
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnSubClampPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnSubClampLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnSubClampPalCommand>();
 	}
 
 	void R_DrawSubClampTranslatedColumn()
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnSubClampTranslatedPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnSubClampTranslatedLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnSubClampTranslatedPalCommand>();
 	}
 
 	void R_DrawRevSubClampColumn()
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampPalCommand>();
 	}
 
 	void R_DrawRevSubClampTranslatedColumn()
 	{
-		DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampTranslatedPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampTranslatedLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampTranslatedPalCommand>();
 	}
 
 	void R_DrawSpan()
 	{
-		DrawerCommandQueue::QueueCommand<DrawSpanPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawSpanLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawSpanPalCommand>();
 	}
 
 	void R_DrawSpanMasked()
 	{
-		DrawerCommandQueue::QueueCommand<DrawSpanMaskedPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawSpanMaskedLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawSpanMaskedPalCommand>();
 	}
 
 	void R_DrawSpanTranslucent()
 	{
-		DrawerCommandQueue::QueueCommand<DrawSpanTranslucentPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawSpanTranslucentLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawSpanTranslucentPalCommand>();
 	}
 
 	void R_DrawSpanMaskedTranslucent()
 	{
-		DrawerCommandQueue::QueueCommand<DrawSpanMaskedTranslucentPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawSpanMaskedTranslucentLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawSpanMaskedTranslucentPalCommand>();
 	}
 
 	void R_DrawSpanAddClamp()
 	{
-		DrawerCommandQueue::QueueCommand<DrawSpanAddClampPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawSpanAddClampLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawSpanAddClampPalCommand>();
 	}
 
 	void R_DrawSpanMaskedAddClamp()
 	{
-		DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampLLVMCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampPalCommand>();
 	}
 
 	void R_FillSpan()
 	{
-		DrawerCommandQueue::QueueCommand<FillSpanPalCommand>();
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<FillSpanRGBACommand>();
+		else
+			DrawerCommandQueue::QueueCommand<FillSpanPalCommand>();
 	}
 
 	void R_DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy)
 	{
-		DrawerCommandQueue::QueueCommand<DrawTiltedSpanPalCommand>(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawTiltedSpanRGBACommand>(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
+		else
+			DrawerCommandQueue::QueueCommand<DrawTiltedSpanPalCommand>(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
 	}
 
 	void R_DrawColoredSpan(int y, int x1, int x2)
 	{
-		DrawerCommandQueue::QueueCommand<DrawColoredSpanPalCommand>(y, x1, x2);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawColoredSpanRGBACommand>(y, x1, x2);
+		else
+			DrawerCommandQueue::QueueCommand<DrawColoredSpanPalCommand>(y, x1, x2);
 	}
 
 	namespace
 	{
-		const uint8_t *slab_colormap;
+		ShadeConstants slab_rgba_shade_constants;
+		const uint8_t *slab_rgba_colormap;
+		fixed_t slab_rgba_light;
 	}
 
-	void R_SetupDrawSlab(uint8_t *colormap)
+	void R_SetupDrawSlab(FSWColormap *base_colormap, float light, int shade)
 	{
-		slab_colormap = colormap;
+		slab_rgba_shade_constants.light_red = base_colormap->Color.r * 256 / 255;
+		slab_rgba_shade_constants.light_green = base_colormap->Color.g * 256 / 255;
+		slab_rgba_shade_constants.light_blue = base_colormap->Color.b * 256 / 255;
+		slab_rgba_shade_constants.light_alpha = base_colormap->Color.a * 256 / 255;
+		slab_rgba_shade_constants.fade_red = base_colormap->Fade.r;
+		slab_rgba_shade_constants.fade_green = base_colormap->Fade.g;
+		slab_rgba_shade_constants.fade_blue = base_colormap->Fade.b;
+		slab_rgba_shade_constants.fade_alpha = base_colormap->Fade.a;
+		slab_rgba_shade_constants.desaturate = MIN(abs(base_colormap->Desaturate), 255) * 255 / 256;
+		slab_rgba_shade_constants.simple_shade = (base_colormap->Color.d == 0x00ffffff && base_colormap->Fade.d == 0x00000000 && base_colormap->Desaturate == 0);
+		slab_rgba_colormap = base_colormap->Maps;
+		slab_rgba_light = LIGHTSCALE(light, shade);
 	}
 
 	void R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const uint8_t *vptr, uint8_t *p)
 	{
-		DrawerCommandQueue::QueueCommand<DrawSlabPalCommand>(dx, v, dy, vi, vptr, p, slab_colormap);
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawSlabRGBACommand>(dx, v, dy, vi, vptr, p, slab_rgba_shade_constants, slab_rgba_colormap, slab_rgba_light);
+		else
+			DrawerCommandQueue::QueueCommand<DrawSlabPalCommand>(dx, v, dy, vi, vptr, p, slab_rgba_colormap);
 	}
 
 	void R_DrawFogBoundarySection(int y, int y2, int x1)
@@ -1220,7 +1584,10 @@ namespace swrenderer
 		for (; y < y2; ++y)
 		{
 			int x2 = spanend[y];
-			DrawerCommandQueue::QueueCommand<DrawFogBoundaryLinePalCommand>(y, x1, x2);
+			if (r_swtruecolor)
+				DrawerCommandQueue::QueueCommand<DrawFogBoundaryLineRGBACommand>(y, x1, x2);
+			else
+				DrawerCommandQueue::QueueCommand<DrawFogBoundaryLinePalCommand>(y, x1, x2);
 		}
 	}
 
@@ -1244,7 +1611,7 @@ namespace swrenderer
 			clearbufshort(spanend + t2, b2 - t2, x);
 		}
 
-		R_SetColorMapLight(basecolormap->Maps, (float)light, wallshade);
+		R_SetColorMapLight(basecolormap, (float)light, wallshade);
 
 		uint8_t *fake_dc_colormap = basecolormap->Maps + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
 
@@ -1271,7 +1638,7 @@ namespace swrenderer
 					clearbufshort(spanend + t2, b2 - t2, x);
 				}
 				rcolormap = lcolormap;
-				R_SetColorMapLight(basecolormap->Maps, (float)light, wallshade);
+				R_SetColorMapLight(basecolormap, (float)light, wallshade);
 				fake_dc_colormap = basecolormap->Maps + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
 			}
 			else
@@ -1282,13 +1649,19 @@ namespace swrenderer
 					while (t2 < stop)
 					{
 						int y = t2++;
-						DrawerCommandQueue::QueueCommand<DrawFogBoundaryLinePalCommand>(y, xr, spanend[y]);
+						if (r_swtruecolor)
+							DrawerCommandQueue::QueueCommand<DrawFogBoundaryLineRGBACommand>(y, xr, spanend[y]);
+						else
+							DrawerCommandQueue::QueueCommand<DrawFogBoundaryLinePalCommand>(y, xr, spanend[y]);
 					}
 					stop = MAX(b1, t2);
 					while (b2 > stop)
 					{
 						int y = --b2;
-						DrawerCommandQueue::QueueCommand<DrawFogBoundaryLinePalCommand>(y, xr, spanend[y]);
+						if (r_swtruecolor)
+							DrawerCommandQueue::QueueCommand<DrawFogBoundaryLineRGBACommand>(y, xr, spanend[y]);
+						else
+							DrawerCommandQueue::QueueCommand<DrawFogBoundaryLinePalCommand>(y, xr, spanend[y]);
 					}
 				}
 				else
@@ -1320,6 +1693,9 @@ namespace swrenderer
 
 	void R_DrawParticle(vissprite_t *sprite)
 	{
-		R_DrawParticle_C(sprite);
+		if (r_swtruecolor)
+			R_DrawParticle_rgba(sprite);
+		else
+			R_DrawParticle_C(sprite);
 	}
 }

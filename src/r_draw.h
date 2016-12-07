@@ -3,7 +3,13 @@
 
 #include "r_defs.h"
 
+struct FSWColormap;
+
 EXTERN_CVAR(Bool, r_multithreaded);
+EXTERN_CVAR(Bool, r_magfilter);
+EXTERN_CVAR(Bool, r_minfilter);
+EXTERN_CVAR(Bool, r_mipmap);
+EXTERN_CVAR(Float, r_lod_bias);
 EXTERN_CVAR(Int, r_drawfuzz);
 EXTERN_CVAR(Bool, r_drawtrans);
 EXTERN_CVAR(Float, transsouls);
@@ -13,12 +19,29 @@ namespace swrenderer
 {
 	struct vissprite_t;
 
+	struct ShadeConstants
+	{
+		uint16_t light_alpha;
+		uint16_t light_red;
+		uint16_t light_green;
+		uint16_t light_blue;
+		uint16_t fade_alpha;
+		uint16_t fade_red;
+		uint16_t fade_green;
+		uint16_t fade_blue;
+		uint16_t desaturate;
+		bool simple_shade;
+	};
+
 	extern double dc_texturemid;
 
 	namespace drawerargs
 	{
 		extern int dc_pitch;
 		extern lighttable_t *dc_colormap;
+		extern FSWColormap *dc_fcolormap;
+		extern ShadeConstants dc_shade_constants;
+		extern fixed_t dc_light;
 		extern int dc_x;
 		extern int dc_yl;
 		extern int dc_yh;
@@ -41,6 +64,8 @@ namespace swrenderer
 		extern int dc_destheight;
 		extern int dc_count;
 
+		extern bool drawer_needs_pal_input;
+
 		extern uint32_t vplce[4];
 		extern uint32_t vince[4];
 		extern uint8_t *palookupoffse[4];
@@ -57,6 +82,8 @@ namespace swrenderer
 		extern int ds_x1;
 		extern int ds_x2;
 		extern lighttable_t * ds_colormap;
+		extern FSWColormap *ds_fcolormap;
+		extern ShadeConstants ds_shade_constants;
 		extern dsfixed_t ds_light;
 		extern dsfixed_t ds_xfrac;
 		extern dsfixed_t ds_yfrac;
@@ -67,6 +94,7 @@ namespace swrenderer
 		extern fixed_t ds_alpha;
 		extern double ds_lod;
 		extern const uint8_t *ds_source;
+		extern bool ds_source_mipmapped;
 		extern int ds_color;
 
 		extern unsigned int dc_tspans[4][MAXHEIGHT];
@@ -85,6 +113,8 @@ namespace swrenderer
 	extern int fuzzoffset[FUZZTABLE + 1];
 	extern int fuzzpos;
 	extern int fuzzviewheight;
+
+	extern bool r_swtruecolor;
 
 	void R_InitColumnDrawers();
 	void R_InitShadeMaps();
@@ -162,7 +192,7 @@ namespace swrenderer
 	void R_FillSpan();
 	void R_DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy);
 	void R_DrawColoredSpan(int y, int x1, int x2);
-	void R_SetupDrawSlab(uint8_t *colormap);
+	void R_SetupDrawSlab(FSWColormap *base_colormap, float light, int shade);
 	void R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const uint8_t *vptr, uint8_t *p);
 	void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip);
 	uint32_t vlinec1();
@@ -194,12 +224,13 @@ namespace swrenderer
 	void R_DrawDoubleSkyCol1(uint32_t solid_top, uint32_t solid_bottom);
 	void R_DrawDoubleSkyCol4(uint32_t solid_top, uint32_t solid_bottom);
 
-	void R_SetColorMapLight(lighttable_t *base_colormap, float light, int shade);
-	void R_SetDSColorMapLight(lighttable_t *base_colormap, float light, int shade);
+	// Sets dc_colormap and dc_light to their appropriate values depending on the output format (pal vs true color)
+	void R_SetColorMapLight(FSWColormap *base_colormap, float light, int shade);
+	void R_SetDSColorMapLight(FSWColormap *base_colormap, float light, int shade);
 	void R_SetTranslationMap(lighttable_t *translation);
 
 	void R_SetupSpanBits(FTexture *tex);
-	void R_SetSpanColormap(lighttable_t *colormap);
+	void R_SetSpanColormap(FDynamicColormap *colormap, int shade);
 	void R_SetSpanSource(FTexture *tex);
 
 	void R_MapTiltedPlane(int y, int x1);

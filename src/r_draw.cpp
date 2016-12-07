@@ -1,27 +1,3 @@
-// Emacs style mode select	 -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id:$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-// $Log:$
-//
-// DESCRIPTION:
-//		The actual span/column drawing functions.
-//		Here find the main potential for optimization,
-//		 e.g. inline assembly, different algorithms.
-//
-//-----------------------------------------------------------------------------
 
 #include <stddef.h>
 
@@ -38,2850 +14,1312 @@
 #include "r_data/r_translate.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
+#include "r_plane.h"
+#include "r_draw.h"
+#include "r_draw_pal.h"
+#include "r_thread.h"
 
-#include "gi.h"
-#include "stats.h"
-#include "x86.h"
-
-#undef RANGECHECK
-
-// status bar height at bottom of screen
-// [RH] status bar position at bottom of screen
-extern	int		ST_Y;
-
-//
-// All drawing to the view buffer is accomplished in this file.
-// The other refresh files only know about ccordinates,
-//	not the architecture of the frame buffer.
-// Conveniently, the frame buffer is a linear one,
-//	and we need only the base address,
-//	and the total size == width*height*depth/8.,
-//
-
-BYTE*			viewimage;
-extern "C" {
-int				ylookup[MAXHEIGHT];
-BYTE			*dc_destorg;
-}
-int 			scaledviewwidth;
-
-// [RH] Pointers to the different column drawers.
-//		These get changed depending on the current
-//		screen depth and asm/no asm.
-void (*R_DrawColumnHoriz)(void);
-void (*R_DrawTranslatedColumn)(void);
-void (*R_DrawShadedColumn)(void);
-void (*R_DrawSpan)(void);
-void (*R_DrawSpanMasked)(void);
-
-//
-// R_DrawColumn
-// Source is the top of the column to scale.
-//
-double 			dc_texturemid;
-extern "C" {
-int				dc_pitch=0xABadCafe;	// [RH] Distance between rows
-
-lighttable_t*	dc_colormap; 
-int 			dc_x; 
-int 			dc_yl; 
-int 			dc_yh; 
-fixed_t 		dc_iscale; 
-fixed_t			dc_texturefrac;
-int				dc_color;				// [RH] Color for column filler
-DWORD			dc_srccolor;
-DWORD			*dc_srcblend;			// [RH] Source and destination
-DWORD			*dc_destblend;			// blending lookups
-
-// first pixel in a column (possibly virtual) 
-const BYTE*		dc_source;				
-
-BYTE*			dc_dest;
-int				dc_count;
-
-DWORD			vplce[4];
-DWORD			vince[4];
-BYTE*			palookupoffse[4];
-const BYTE*		bufplce[4];
-const BYTE*		bufplce2[4];
-uint32_t		bufheight[4];
-
-// just for profiling 
-int 			dccount;
-}
-
-int dc_fillcolor;
-BYTE *dc_translation;
-BYTE shadetables[NUMCOLORMAPS*16*256];
-FDynamicColormap ShadeFakeColormap[16];
-BYTE identitymap[256];
-
-EXTERN_CVAR (Int, r_columnmethod)
-
-
-void R_InitShadeMaps()
+namespace swrenderer
 {
-	int i,j;
-	// set up shading tables for shaded columns
-	// 16 colormap sets, progressing from full alpha to minimum visible alpha
+	// Needed by R_DrawFogBoundary (which probably shouldn't be part of this file)
+	extern "C" short spanend[MAXHEIGHT];
+	extern float rw_light;
+	extern float rw_lightstep;
+	extern int wallshade;
 
-	BYTE *table = shadetables;
+	double dc_texturemid;
 
-	// Full alpha
-	for (i = 0; i < 16; ++i)
+	int ylookup[MAXHEIGHT];
+	uint8_t shadetables[NUMCOLORMAPS * 16 * 256];
+	FDynamicColormap ShadeFakeColormap[16];
+	uint8_t identitymap[256];
+	FDynamicColormap identitycolormap;
+	int fuzzoffset[FUZZTABLE + 1];
+	int fuzzpos;
+	int fuzzviewheight;
+
+	namespace drawerargs
 	{
-		ShadeFakeColormap[i].Color = ~0u;
-		ShadeFakeColormap[i].Desaturate = ~0u;
-		ShadeFakeColormap[i].Next = NULL;
-		ShadeFakeColormap[i].Maps = table;
+		int dc_pitch;
+		lighttable_t *dc_colormap;
+		int dc_x;
+		int dc_yl;
+		int dc_yh;
+		fixed_t dc_iscale;
+		fixed_t dc_texturefrac;
+		uint32_t dc_textureheight;
+		int dc_color;
+		uint32_t dc_srccolor;
+		uint32_t dc_srccolor_bgra;
+		uint32_t *dc_srcblend;
+		uint32_t *dc_destblend;
+		fixed_t dc_srcalpha;
+		fixed_t dc_destalpha;
+		const uint8_t *dc_source;
+		const uint8_t *dc_source2;
+		uint32_t dc_texturefracx;
+		uint8_t *dc_translation;
+		uint8_t *dc_dest;
+		uint8_t *dc_destorg;
+		int dc_destheight;
+		int dc_count;
+		uint32_t vplce[4];
+		uint32_t vince[4];
+		uint8_t *palookupoffse[4];
+		fixed_t palookuplight[4];
+		const uint8_t *bufplce[4];
+		const uint8_t *bufplce2[4];
+		uint32_t buftexturefracx[4];
+		uint32_t bufheight[4];
+		int vlinebits;
+		int mvlinebits;
+		int tmvlinebits;
+		int ds_y;
+		int ds_x1;
+		int ds_x2;
+		lighttable_t * ds_colormap;
+		dsfixed_t ds_light;
+		dsfixed_t ds_xfrac;
+		dsfixed_t ds_yfrac;
+		dsfixed_t ds_xstep;
+		dsfixed_t ds_ystep;
+		int ds_xbits;
+		int ds_ybits;
+		fixed_t ds_alpha;
+		double ds_lod;
+		const uint8_t *ds_source;
+		int ds_color;
+		unsigned int dc_tspans[4][MAXHEIGHT];
+		unsigned int *dc_ctspan[4];
+		unsigned int *horizspan[4];
+	}
 
-		for (j = 0; j < NUMCOLORMAPS; ++j)
+	void R_InitColumnDrawers()
+	{
+		colfunc = basecolfunc = R_DrawColumn;
+		fuzzcolfunc = R_DrawFuzzColumn;
+		transcolfunc = R_DrawTranslatedColumn;
+		spanfunc = R_DrawSpan;
+		hcolfunc_pre = R_DrawColumnHoriz;
+		hcolfunc_post1 = rt_map1col;
+		hcolfunc_post4 = rt_map4cols;
+	}
+
+	void R_InitShadeMaps()
+	{
+		int i, j;
+		// set up shading tables for shaded columns
+		// 16 colormap sets, progressing from full alpha to minimum visible alpha
+
+		uint8_t *table = shadetables;
+
+		// Full alpha
+		for (i = 0; i < 16; ++i)
 		{
-			int a = (NUMCOLORMAPS - j) * 256 / NUMCOLORMAPS * (16-i);
-			for (int k = 0; k < 256; ++k)
+			ShadeFakeColormap[i].Color = ~0u;
+			ShadeFakeColormap[i].Desaturate = ~0u;
+			ShadeFakeColormap[i].Next = NULL;
+			ShadeFakeColormap[i].Maps = table;
+
+			for (j = 0; j < NUMCOLORMAPS; ++j)
 			{
-				BYTE v = (((k+2) * a) + 256) >> 14;
-				table[k] = MIN<BYTE> (v, 64);
-			}
-			table += 256;
-		}
-	}
-	for (i = 0; i < NUMCOLORMAPS*16*256; ++i)
-	{
-		assert(shadetables[i] <= 64);
-	}
-
-	// Set up a guaranteed identity map
-	for (i = 0; i < 256; ++i)
-	{
-		identitymap[i] = i;
-	}
-}
-
-/************************************/
-/*									*/
-/* Palettized drawers (C versions)	*/
-/*									*/
-/************************************/
-
-//
-// A column is a vertical slice/span from a wall texture that,
-//	given the DOOM style restrictions on the view orientation,
-//	will always have constant z depth.
-// Thus a special case loop for very fast rendering can
-//	be used. It has also been used with Wolfenstein 3D.
-// 
-void R_DrawColumn (void)
-{
-	int 				count;
-	BYTE*				dest;
-	fixed_t 			frac;
-	fixed_t 			fracstep;
-
-	count = dc_count;
-
-	// Zero length, column does not exceed a pixel.
-	if (count <= 0)
-		return;
-
-	// Framebuffer destination address.
-	dest = dc_dest;
-
-	// Determine scaling,
-	//	which is the only mapping to be done.
-	fracstep = dc_iscale; 
-	frac = dc_texturefrac;
-
-	{
-		// [RH] Get local copies of these variables so that the compiler
-		//		has a better chance of optimizing this well.
-		BYTE *colormap = dc_colormap;
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch;
-
-		// Inner loop that does the actual texture mapping,
-		//	e.g. a DDA-lile scaling.
-		// This is as fast as it gets.
-		do
-		{
-			// Re-map color indices from wall texture column
-			//	using a lighting/special effects LUT.
-			*dest = colormap[source[frac>>FRACBITS]];
-
-			dest += pitch;
-			frac += fracstep;
-
-		} while (--count);
-	}
-} 
-
-
-// [RH] Just fills a column with a color
-void R_FillColumnP (void)
-{
-	int 				count;
-	BYTE*				dest;
-
-	count = dc_count;
-
-	if (count <= 0)
-		return;
-
-	dest = dc_dest;
-
-	{
-		int pitch = dc_pitch;
-		BYTE color = dc_color;
-
-		do
-		{
-			*dest = color;
-			dest += pitch;
-		} while (--count);
-	}
-}
-
-void R_FillAddColumn (void)
-{
-	int count;
-	BYTE *dest;
-
-	count = dc_count;
-	if (count <= 0)
-		return;
-
-	dest = dc_dest;
-	DWORD *bg2rgb;
-	DWORD fg;
-
-	bg2rgb = dc_destblend;
-	fg = dc_srccolor;
-	int pitch = dc_pitch;
-
-	do
-	{
-		DWORD bg;
-		bg = (fg + bg2rgb[*dest]) | 0x1f07c1f;
-		*dest = RGB32k.All[bg & (bg>>15)];
-		dest += pitch; 
-	} while (--count);
-
-}
-
-void R_FillAddClampColumn (void)
-{
-	int count;
-	BYTE *dest;
-
-	count = dc_count;
-	if (count <= 0)
-		return;
-
-	dest = dc_dest;
-	DWORD *bg2rgb;
-	DWORD fg;
-
-	bg2rgb = dc_destblend;
-	fg = dc_srccolor;
-	int pitch = dc_pitch;
-
-	do
-	{
-		DWORD a = fg + bg2rgb[*dest];
-		DWORD b = a;
-
-		a |= 0x01f07c1f;
-		b &= 0x40100400;
-		a &= 0x3fffffff;
-		b = b - (b >> 5);
-		a |= b;
-		*dest = RGB32k.All[a & (a>>15)];
-		dest += pitch; 
-	} while (--count);
-
-}
-
-void R_FillSubClampColumn (void)
-{
-	int count;
-	BYTE *dest;
-
-	count = dc_count;
-	if (count <= 0)
-		return;
-
-	dest = dc_dest;
-	DWORD *bg2rgb;
-	DWORD fg;
-
-	bg2rgb = dc_destblend;
-	fg = dc_srccolor | 0x40100400;
-	int pitch = dc_pitch;
-
-	do
-	{
-		DWORD a = fg - bg2rgb[*dest];
-		DWORD b = a;
-
-		b &= 0x40100400;
-		b = b - (b >> 5);
-		a &= b;
-		a |= 0x01f07c1f;
-		*dest = RGB32k.All[a & (a>>15)];
-		dest += pitch; 
-	} while (--count);
-
-}
-
-void R_FillRevSubClampColumn (void)
-{
-	int count;
-	BYTE *dest;
-
-	count = dc_count;
-	if (count <= 0)
-		return;
-
-	dest = dc_dest;
-	DWORD *bg2rgb;
-	DWORD fg;
-
-	bg2rgb = dc_destblend;
-	fg = dc_srccolor;
-	int pitch = dc_pitch;
-
-	do
-	{
-		DWORD a = (bg2rgb[*dest] | 0x40100400) - fg;
-		DWORD b = a;
-
-		b &= 0x40100400;
-		b = b - (b >> 5);
-		a &= b;
-		a |= 0x01f07c1f;
-		*dest = RGB32k.All[a & (a>>15)];
-		dest += pitch; 
-	} while (--count);
-
-}
-
-//
-// Spectre/Invisibility.
-//
-#define FUZZTABLE	50
-
-extern "C"
-{
-int 	fuzzoffset[FUZZTABLE+1];	// [RH] +1 for the assembly routine
-int 	fuzzpos = 0; 
-int		fuzzviewheight;
-}
-/*
-	FUZZOFF,-FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
-	FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
-	FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,
-	FUZZOFF,-FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
-	FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,-FUZZOFF,FUZZOFF,
-	FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,
-	FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF 
-*/
-
-static const signed char fuzzinit[FUZZTABLE] = {
-	1,-1, 1,-1, 1, 1,-1,
-	1, 1,-1, 1, 1, 1,-1,
-	1, 1, 1,-1,-1,-1,-1,
-	1,-1,-1, 1, 1, 1, 1,-1,
-	1,-1, 1, 1,-1,-1, 1,
-	1,-1,-1,-1,-1, 1, 1,
-	1, 1,-1, 1, 1,-1, 1 
-};
-
-void R_InitFuzzTable (int fuzzoff)
-{
-	int i;
-
-	for (i = 0; i < FUZZTABLE; i++)
-	{
-		fuzzoffset[i] = fuzzinit[i] * fuzzoff;
-	}
-}
-
-//
-// Creates a fuzzy image by copying pixels from adjacent ones above and below.
-// Used with an all black colormap, this could create the SHADOW effect,
-// i.e. spectres and invisible players.
-//
-void R_DrawFuzzColumn (void)
-{
-	int count;
-	BYTE *dest;
-
-	// Adjust borders. Low...
-	if (dc_yl == 0)
-		dc_yl = 1;
-
-	// .. and high.
-	if (dc_yh > fuzzviewheight)
-		dc_yh = fuzzviewheight;
-
-	count = dc_yh - dc_yl;
-
-	// Zero length.
-	if (count < 0)
-		return;
-
-	count++;
-
-	dest = ylookup[dc_yl] + dc_x + dc_destorg;
-
-	// colormap #6 is used for shading (of 0-31, a bit brighter than average)
-	{
-		// [RH] Make local copies of global vars to try and improve
-		//		the optimizations made by the compiler.
-		int pitch = dc_pitch;
-		int fuzz = fuzzpos;
-		int cnt;
-		BYTE *map = &NormalLight.Maps[6*256];
-
-		// [RH] Split this into three separate loops to minimize
-		// the number of times fuzzpos needs to be clamped.
-		if (fuzz)
-		{
-			cnt = MIN(FUZZTABLE-fuzz,count);
-			count -= cnt;
-			do
-			{
-				*dest = map[dest[fuzzoffset[fuzz++]]];
-				dest += pitch;
-			} while (--cnt);
-		}
-		if (fuzz == FUZZTABLE || count > 0)
-		{
-			while (count >= FUZZTABLE)
-			{
-				fuzz = 0;
-				cnt = FUZZTABLE;
-				count -= FUZZTABLE;
-				do
+				int a = (NUMCOLORMAPS - j) * 256 / NUMCOLORMAPS * (16 - i);
+				for (int k = 0; k < 256; ++k)
 				{
-					*dest = map[dest[fuzzoffset[fuzz++]]];
-					dest += pitch;
-				} while (--cnt);
-			}
-			fuzz = 0;
-			if (count > 0)
-			{
-				do
-				{
-					*dest = map[dest[fuzzoffset[fuzz++]]];
-					dest += pitch;
-				} while (--count);
-			}
-		}
-		fuzzpos = fuzz;
-	}
-} 
-
-//
-// R_DrawTranlucentColumn
-//
-
-/*
-[RH] This translucency algorithm is based on DOSDoom 0.65's, but uses
-a 32k RGB table instead of an 8k one. At least on my machine, it's
-slightly faster (probably because it uses only one shift instead of
-two), and it looks considerably less green at the ends of the
-translucency range. The extra size doesn't appear to be an issue.
-
-The following note is from DOSDoom 0.65:
-
-New translucency algorithm, by Erik Sandberg:
-
-Basically, we compute the red, green and blue values for each pixel, and
-then use a RGB table to check which one of the palette colours that best
-represents those RGB values. The RGB table is 8k big, with 4 R-bits,
-5 G-bits and 4 B-bits. A 4k table gives a bit too bad precision, and a 32k
-table takes up more memory and results in more cache misses, so an 8k
-table seemed to be quite ultimate.
-
-The computation of the RGB for each pixel is accelerated by using two
-1k tables for each translucency level.
-The xth element of one of these tables contains the r, g and b values for
-the colour x, weighted for the current translucency level (for example,
-the weighted rgb values for background colour at 75% translucency are 1/4
-of the original rgb values). The rgb values are stored as three
-low-precision fixed point values, packed into one long per colour:
-Bit 0-4:   Frac part of blue  (5 bits)
-Bit 5-8:   Int  part of blue  (4 bits)
-Bit 9-13:  Frac part of red   (5 bits)
-Bit 14-17: Int  part of red   (4 bits)
-Bit 18-22: Frac part of green (5 bits)
-Bit 23-27: Int  part of green (5 bits)
-Bit 28-31: All zeros          (4 bits)
-
-The point of this format is that the two colours now can be added, and
-then be converted to a RGB table index very easily: First, we just set
-all the frac bits and the four upper zero bits to 1. It's now possible
-to get the RGB table index by anding the current value >> 5 with the
-current value >> 19. When asm-optimised, this should be the fastest
-algorithm that uses RGB tables.
-
-*/
-
-void R_DrawAddColumnP_C (void)
-{
-	int count;
-	BYTE *dest;
-	fixed_t frac;
-	fixed_t fracstep;
-
-	count = dc_count;
-	if (count <= 0)
-		return;
-
-	dest = dc_dest;
-
-	fracstep = dc_iscale;
-	frac = dc_texturefrac;
-
-	{
-		DWORD *fg2rgb = dc_srcblend;
-		DWORD *bg2rgb = dc_destblend;
-		BYTE *colormap = dc_colormap;
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch;
-
-		do
-		{
-			DWORD fg = colormap[source[frac>>FRACBITS]];
-			DWORD bg = *dest;
-
-			fg = fg2rgb[fg];
-			bg = bg2rgb[bg];
-			fg = (fg+bg) | 0x1f07c1f;
-			*dest = RGB32k.All[fg & (fg>>15)];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-}
-
-//
-// R_DrawTranslatedColumn
-// Used to draw player sprites with the green colorramp mapped to others.
-// Could be used with different translation tables, e.g. the lighter colored
-// version of the BaronOfHell, the HellKnight, uses	identical sprites, kinda
-// brightened up.
-//
-
-void R_DrawTranslatedColumnP_C (void)
-{ 
-	int 				count;
-	BYTE*				dest;
-	fixed_t 			frac;
-	fixed_t 			fracstep;
-
-	count = dc_count;
-	if (count <= 0) 
-		return;
-
-	dest = dc_dest;
-
-	fracstep = dc_iscale;
-	frac = dc_texturefrac;
-
-	{
-		// [RH] Local copies of global vars to improve compiler optimizations
-		BYTE *colormap = dc_colormap;
-		BYTE *translation = dc_translation;
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch;
-
-		do
-		{
-			*dest = colormap[translation[source[frac>>FRACBITS]]];
-			dest += pitch;
-
-			frac += fracstep;
-		} while (--count);
-	}
-}
-
-// Draw a column that is both translated and translucent
-void R_DrawTlatedAddColumnP_C (void)
-{
-	int count;
-	BYTE *dest;
-	fixed_t frac;
-	fixed_t fracstep;
-
-	count = dc_count;
-	if (count <= 0)
-		return;
-
-	dest = dc_dest;
-
-	fracstep = dc_iscale;
-	frac = dc_texturefrac;
-
-	{
-		DWORD *fg2rgb = dc_srcblend;
-		DWORD *bg2rgb = dc_destblend;
-		BYTE *translation = dc_translation;
-		BYTE *colormap = dc_colormap;
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch;
-
-		do
-		{
-			DWORD fg = colormap[translation[source[frac>>FRACBITS]]];
-			DWORD bg = *dest;
-
-			fg = fg2rgb[fg];
-			bg = bg2rgb[bg];
-			fg = (fg+bg) | 0x1f07c1f;
-			*dest = RGB32k.All[fg & (fg>>15)];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-}
-
-// Draw a column whose "color" values are actually translucency
-// levels for a base color stored in dc_color.
-void R_DrawShadedColumnP_C (void)
-{
-	int  count;
-	BYTE *dest;
-	fixed_t frac, fracstep;
-
-	count = dc_count;
-
-	if (count <= 0)
-		return;
-
-	dest = dc_dest;
-
-	fracstep = dc_iscale; 
-	frac = dc_texturefrac;
-
-	{
-		const BYTE *source = dc_source;
-		BYTE *colormap = dc_colormap;
-		int pitch = dc_pitch;
-		DWORD *fgstart = &Col2RGB8[0][dc_color];
-
-		do
-		{
-			DWORD val = colormap[source[frac>>FRACBITS]];
-			DWORD fg = fgstart[val<<8];
-			val = (Col2RGB8[64-val][*dest] + fg) | 0x1f07c1f;
-			*dest = RGB32k.All[val & (val>>15)];
-
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-} 
-
-// Add source to destination, clamping it to white
-void R_DrawAddClampColumnP_C ()
-{
-	int count;
-	BYTE *dest;
-	fixed_t frac;
-	fixed_t fracstep;
-
-	count = dc_count;
-	if (count <= 0)
-		return;
-
-	dest = dc_dest;
-
-	fracstep = dc_iscale;
-	frac = dc_texturefrac;
-
-	{
-		BYTE *colormap = dc_colormap;
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch;
-		DWORD *fg2rgb = dc_srcblend;
-		DWORD *bg2rgb = dc_destblend;
-
-		do
-		{
-			DWORD a = fg2rgb[colormap[source[frac>>FRACBITS]]] + bg2rgb[*dest];
-			DWORD b = a;
-
-			a |= 0x01f07c1f;
-			b &= 0x40100400;
-			a &= 0x3fffffff;
-			b = b - (b >> 5);
-			a |= b;
-			*dest = RGB32k.All[a & (a>>15)];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-}
-
-// Add translated source to destination, clamping it to white
-void R_DrawAddClampTranslatedColumnP_C ()
-{
-	int count;
-	BYTE *dest;
-	fixed_t frac;
-	fixed_t fracstep;
-
-	count = dc_count;
-	if (count <= 0)
-		return;
-
-	dest = dc_dest;
-
-	fracstep = dc_iscale;
-	frac = dc_texturefrac;
-
-	{
-		BYTE *translation = dc_translation;
-		BYTE *colormap = dc_colormap;
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch;
-		DWORD *fg2rgb = dc_srcblend;
-		DWORD *bg2rgb = dc_destblend;
-
-		do
-		{
-			DWORD a = fg2rgb[colormap[translation[source[frac>>FRACBITS]]]] + bg2rgb[*dest];
-			DWORD b = a;
-
-			a |= 0x01f07c1f;
-			b &= 0x40100400;
-			a &= 0x3fffffff;
-			b = b - (b >> 5);
-			a |= b;
-			*dest = RGB32k.All[(a>>15) & a];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-}
-
-// Subtract destination from source, clamping it to black
-void R_DrawSubClampColumnP_C ()
-{
-	int count;
-	BYTE *dest;
-	fixed_t frac;
-	fixed_t fracstep;
-
-	count = dc_count;
-	if (count <= 0)
-		return;
-
-	dest = dc_dest;
-
-	fracstep = dc_iscale;
-	frac = dc_texturefrac;
-
-	{
-		BYTE *colormap = dc_colormap;
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch;
-		DWORD *fg2rgb = dc_srcblend;
-		DWORD *bg2rgb = dc_destblend;
-
-		do
-		{
-			DWORD a = (fg2rgb[colormap[source[frac>>FRACBITS]]] | 0x40100400) - bg2rgb[*dest];
-			DWORD b = a;
-
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[a & (a>>15)];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-}
-
-// Subtract destination from source, clamping it to black
-void R_DrawSubClampTranslatedColumnP_C ()
-{
-	int count;
-	BYTE *dest;
-	fixed_t frac;
-	fixed_t fracstep;
-
-	count = dc_count;
-	if (count <= 0)
-		return;
-
-	dest = dc_dest;
-
-	fracstep = dc_iscale;
-	frac = dc_texturefrac;
-
-	{
-		BYTE *translation = dc_translation;
-		BYTE *colormap = dc_colormap;
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch;
-		DWORD *fg2rgb = dc_srcblend;
-		DWORD *bg2rgb = dc_destblend;
-
-		do
-		{
-			DWORD a = (fg2rgb[colormap[translation[source[frac>>FRACBITS]]]] | 0x40100400) - bg2rgb[*dest];
-			DWORD b = a;
-
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[(a>>15) & a];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-}
-
-// Subtract source from destination, clamping it to black
-void R_DrawRevSubClampColumnP_C ()
-{
-	int count;
-	BYTE *dest;
-	fixed_t frac;
-	fixed_t fracstep;
-
-	count = dc_count;
-	if (count <= 0)
-		return;
-
-	dest = dc_dest;
-
-	fracstep = dc_iscale;
-	frac = dc_texturefrac;
-
-	{
-		BYTE *colormap = dc_colormap;
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch;
-		DWORD *fg2rgb = dc_srcblend;
-		DWORD *bg2rgb = dc_destblend;
-
-		do
-		{
-			DWORD a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[source[frac>>FRACBITS]]];
-			DWORD b = a;
-
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[a & (a>>15)];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-}
-
-// Subtract source from destination, clamping it to black
-void R_DrawRevSubClampTranslatedColumnP_C ()
-{
-	int count;
-	BYTE *dest;
-	fixed_t frac;
-	fixed_t fracstep;
-
-	count = dc_count;
-	if (count <= 0)
-		return;
-
-	dest = dc_dest;
-
-	fracstep = dc_iscale;
-	frac = dc_texturefrac;
-
-	{
-		BYTE *translation = dc_translation;
-		BYTE *colormap = dc_colormap;
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch;
-		DWORD *fg2rgb = dc_srcblend;
-		DWORD *bg2rgb = dc_destblend;
-
-		do
-		{
-			DWORD a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[translation[source[frac>>FRACBITS]]]];
-			DWORD b = a;
-
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[(a>>15) & a];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-}
-
-
-
-//
-// R_DrawSpan 
-// With DOOM style restrictions on view orientation,
-//	the floors and ceilings consist of horizontal slices
-//	or spans with constant z depth.
-// However, rotation around the world z axis is possible,
-//	thus this mapping, while simpler and faster than
-//	perspective correct texture mapping, has to traverse
-//	the texture at an angle in all but a few cases.
-// In consequence, flats are not stored by column (like walls),
-//	and the inner loop has to step in texture space u and v.
-//
-// [RH] I'm not sure who wrote this, but floor/ceiling mapping
-// *is* perspective correct for spans of constant z depth, which
-// Doom guarantees because it does not let you change your pitch.
-// Also, because of the new texture system, flats *are* stored by
-// column to make it easy to use them on walls too. To accomodate
-// this, the use of x/u and y/v in R_DrawSpan just needs to be
-// swapped.
-//
-extern "C" {
-int						ds_color;				// [RH] color for non-textured spans
-
-int 					ds_y;
-int 					ds_x1;
-int 					ds_x2;
-
-lighttable_t*			ds_colormap;
-
-dsfixed_t 				ds_xfrac;
-dsfixed_t 				ds_yfrac;
-dsfixed_t 				ds_xstep;
-dsfixed_t 				ds_ystep;
-int						ds_xbits;
-int						ds_ybits;
-
-// start of a floor/ceiling tile image 
-const BYTE*				ds_source;
-
-// just for profiling
-int 					dscount;
-
-#ifdef X86_ASM
-extern "C" void R_SetSpanSource_ASM (const BYTE *flat);
-extern "C" void R_SetSpanSize_ASM (int xbits, int ybits);
-extern "C" void R_SetSpanColormap_ASM (BYTE *colormap);
-extern "C" BYTE *ds_curcolormap, *ds_cursource, *ds_curtiltedsource;
-#endif
-}
-
-//==========================================================================
-//
-// R_SetSpanSource
-//
-// Sets the source bitmap for the span drawing routines.
-//
-//==========================================================================
-
-void R_SetSpanSource(const BYTE *pixels)
-{
-	ds_source = pixels;
-#ifdef X86_ASM
-	if (ds_cursource != ds_source)
-	{
-		R_SetSpanSource_ASM(pixels);
-	}
-#endif
-}
-
-//==========================================================================
-//
-// R_SetSpanColormap
-//
-// Sets the colormap for the span drawing routines.
-//
-//==========================================================================
-
-void R_SetSpanColormap(BYTE *colormap)
-{
-	ds_colormap = colormap;
-#ifdef X86_ASM
-	if (ds_colormap != ds_curcolormap)
-	{
-		R_SetSpanColormap_ASM (ds_colormap);
-	}
-#endif
-}
-
-//==========================================================================
-//
-// R_SetupSpanBits
-//
-// Sets the texture size for the span drawing routines.
-//
-//==========================================================================
-
-void R_SetupSpanBits(FTexture *tex)
-{
-	tex->GetWidth ();
-	ds_xbits = tex->WidthBits;
-	ds_ybits = tex->HeightBits;
-	if ((1 << ds_xbits) > tex->GetWidth())
-	{
-		ds_xbits--;
-	}
-		if ((1 << ds_ybits) > tex->GetHeight())
-	{
-		ds_ybits--;
-	}
-#ifdef X86_ASM
-	R_SetSpanSize_ASM (ds_xbits, ds_ybits);
-#endif
-}
-
-//
-// Draws the actual span.
-//#ifndef X86_ASM
-void R_DrawSpanP_C (void)
-{
-	dsfixed_t			xfrac;
-	dsfixed_t			yfrac;
-	dsfixed_t			xstep;
-	dsfixed_t			ystep;
-	BYTE*				dest;
-	const BYTE*			source = ds_source;
-	const BYTE*			colormap = ds_colormap;
-	int 				count;
-	int 				spot;
-
-#ifdef RANGECHECK 
-	if (ds_x2 < ds_x1 || ds_x1 < 0
-		|| ds_x2 >= screen->width || ds_y > screen->height)
-	{
-		I_Error ("R_DrawSpan: %i to %i at %i", ds_x1, ds_x2, ds_y);
-	}
-//		dscount++;
-#endif
-
-	xfrac = ds_xfrac;
-	yfrac = ds_yfrac;
-
-	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
-
-	count = ds_x2 - ds_x1 + 1;
-
-	xstep = ds_xstep;
-	ystep = ds_ystep;
-
-	if (ds_xbits == 6 && ds_ybits == 6)
-	{
-		// 64x64 is the most common case by far, so special case it.
-		do
-		{
-			// Current texture index in u,v.
-			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
-
-			// Lookup pixel from flat texture tile,
-			//  re-index using light/colormap.
-			*dest++ = colormap[source[spot]];
-
-			// Next step in u,v.
-			xfrac += xstep;
-			yfrac += ystep;
-		} while (--count);
-	}
-	else
-	{
-		BYTE yshift = 32 - ds_ybits;
-		BYTE xshift = yshift - ds_xbits;
-		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
-
-		do
-		{
-			// Current texture index in u,v.
-			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-
-			// Lookup pixel from flat texture tile,
-			//  re-index using light/colormap.
-			*dest++ = colormap[source[spot]];
-
-			// Next step in u,v.
-			xfrac += xstep;
-			yfrac += ystep;
-		} while (--count);
-	}
-}
-
-// [RH] Draw a span with holes
-void R_DrawSpanMaskedP_C (void)
-{
-	dsfixed_t			xfrac;
-	dsfixed_t			yfrac;
-	dsfixed_t			xstep;
-	dsfixed_t			ystep;
-	BYTE*				dest;
-	const BYTE*			source = ds_source;
-	const BYTE*			colormap = ds_colormap;
-	int 				count;
-	int 				spot;
-
-	xfrac = ds_xfrac;
-	yfrac = ds_yfrac;
-
-	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
-
-	count = ds_x2 - ds_x1 + 1;
-
-	xstep = ds_xstep;
-	ystep = ds_ystep;
-
-	if (ds_xbits == 6 && ds_ybits == 6)
-	{
-		// 64x64 is the most common case by far, so special case it.
-		do
-		{
-			int texdata;
-
-			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
-			texdata = source[spot];
-			if (texdata != 0)
-			{
-				*dest = colormap[texdata];
-			}
-			dest++;
-			xfrac += xstep;
-			yfrac += ystep;
-		} while (--count);
-	}
-	else
-	{
-		BYTE yshift = 32 - ds_ybits;
-		BYTE xshift = yshift - ds_xbits;
-		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
-		do
-		{
-			int texdata;
-		
-			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-			texdata = source[spot];
-			if (texdata != 0)
-			{
-				*dest = colormap[texdata];
-			}
-			dest++;
-			xfrac += xstep;
-			yfrac += ystep;
-		} while (--count);
-	}
-}
-//#endif
-
-void R_DrawSpanTranslucent (void)
-{
-	dsfixed_t			xfrac;
-	dsfixed_t			yfrac;
-	dsfixed_t			xstep;
-	dsfixed_t			ystep;
-	BYTE*				dest;
-	const BYTE*			source = ds_source;
-	const BYTE*			colormap = ds_colormap;
-	int 				count;
-	int 				spot;
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-
-	xfrac = ds_xfrac;
-	yfrac = ds_yfrac;
-
-	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
-
-	count = ds_x2 - ds_x1 + 1;
-
-	xstep = ds_xstep;
-	ystep = ds_ystep;
-
-	if (ds_xbits == 6 && ds_ybits == 6)
-	{
-		// 64x64 is the most common case by far, so special case it.
-		do
-		{
-			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
-			DWORD fg = colormap[source[spot]];
-			DWORD bg = *dest;
-			fg = fg2rgb[fg];
-			bg = bg2rgb[bg];
-			fg = (fg+bg) | 0x1f07c1f;
-			*dest++ = RGB32k.All[fg & (fg>>15)];
-			xfrac += xstep;
-			yfrac += ystep;
-		} while (--count);
-	}
-	else
-	{
-		BYTE yshift = 32 - ds_ybits;
-		BYTE xshift = yshift - ds_xbits;
-		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
-		do
-		{
-			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-			DWORD fg = colormap[source[spot]];
-			DWORD bg = *dest;
-			fg = fg2rgb[fg];
-			bg = bg2rgb[bg];
-			fg = (fg+bg) | 0x1f07c1f;
-			*dest++ = RGB32k.All[fg & (fg>>15)];
-			xfrac += xstep;
-			yfrac += ystep;
-		} while (--count);
-	}
-}
-
-void R_DrawSpanMaskedTranslucent (void)
-{
-	dsfixed_t			xfrac;
-	dsfixed_t			yfrac;
-	dsfixed_t			xstep;
-	dsfixed_t			ystep;
-	BYTE*				dest;
-	const BYTE*			source = ds_source;
-	const BYTE*			colormap = ds_colormap;
-	int 				count;
-	int 				spot;
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-
-	xfrac = ds_xfrac;
-	yfrac = ds_yfrac;
-
-	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
-
-	count = ds_x2 - ds_x1 + 1;
-
-	xstep = ds_xstep;
-	ystep = ds_ystep;
-
-	if (ds_xbits == 6 && ds_ybits == 6)
-	{
-		// 64x64 is the most common case by far, so special case it.
-		do
-		{
-			BYTE texdata;
-
-			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
-			texdata = source[spot];
-			if (texdata != 0)
-			{
-				DWORD fg = colormap[texdata];
-				DWORD bg = *dest;
-				fg = fg2rgb[fg];
-				bg = bg2rgb[bg];
-				fg = (fg+bg) | 0x1f07c1f;
-				*dest = RGB32k.All[fg & (fg>>15)];
-			}
-			dest++;
-			xfrac += xstep;
-			yfrac += ystep;
-		} while (--count);
-	}
-	else
-	{
-		BYTE yshift = 32 - ds_ybits;
-		BYTE xshift = yshift - ds_xbits;
-		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
-		do
-		{
-			BYTE texdata;
-		
-			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-			texdata = source[spot];
-			if (texdata != 0)
-			{
-				DWORD fg = colormap[texdata];
-				DWORD bg = *dest;
-				fg = fg2rgb[fg];
-				bg = bg2rgb[bg];
-				fg = (fg+bg) | 0x1f07c1f;
-				*dest = RGB32k.All[fg & (fg>>15)];
-			}
-			dest++;
-			xfrac += xstep;
-			yfrac += ystep;
-		} while (--count);
-	}
-}
-
-void R_DrawSpanAddClamp (void)
-{
-	dsfixed_t			xfrac;
-	dsfixed_t			yfrac;
-	dsfixed_t			xstep;
-	dsfixed_t			ystep;
-	BYTE*				dest;
-	const BYTE*			source = ds_source;
-	const BYTE*			colormap = ds_colormap;
-	int 				count;
-	int 				spot;
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-
-	xfrac = ds_xfrac;
-	yfrac = ds_yfrac;
-
-	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
-
-	count = ds_x2 - ds_x1 + 1;
-
-	xstep = ds_xstep;
-	ystep = ds_ystep;
-
-	if (ds_xbits == 6 && ds_ybits == 6)
-	{
-		// 64x64 is the most common case by far, so special case it.
-		do
-		{
-			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
-			DWORD a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
-			DWORD b = a;
-
-			a |= 0x01f07c1f;
-			b &= 0x40100400;
-			a &= 0x3fffffff;
-			b = b - (b >> 5);
-			a |= b;
-			*dest++ = RGB32k.All[a & (a>>15)];
-			xfrac += xstep;
-			yfrac += ystep;
-		} while (--count);
-	}
-	else
-	{
-		BYTE yshift = 32 - ds_ybits;
-		BYTE xshift = yshift - ds_xbits;
-		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
-		do
-		{
-			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-			DWORD a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
-			DWORD b = a;
-
-			a |= 0x01f07c1f;
-			b &= 0x40100400;
-			a &= 0x3fffffff;
-			b = b - (b >> 5);
-			a |= b;
-			*dest++ = RGB32k.All[a & (a>>15)];
-			xfrac += xstep;
-			yfrac += ystep;
-		} while (--count);
-	}
-}
-
-void R_DrawSpanMaskedAddClamp (void)
-{
-	dsfixed_t			xfrac;
-	dsfixed_t			yfrac;
-	dsfixed_t			xstep;
-	dsfixed_t			ystep;
-	BYTE*				dest;
-	const BYTE*			source = ds_source;
-	const BYTE*			colormap = ds_colormap;
-	int 				count;
-	int 				spot;
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-
-	xfrac = ds_xfrac;
-	yfrac = ds_yfrac;
-
-	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
-
-	count = ds_x2 - ds_x1 + 1;
-
-	xstep = ds_xstep;
-	ystep = ds_ystep;
-
-	if (ds_xbits == 6 && ds_ybits == 6)
-	{
-		// 64x64 is the most common case by far, so special case it.
-		do
-		{
-			BYTE texdata;
-
-			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
-			texdata = source[spot];
-			if (texdata != 0)
-			{
-				DWORD a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
-				DWORD b = a;
-
-				a |= 0x01f07c1f;
-				b &= 0x40100400;
-				a &= 0x3fffffff;
-				b = b - (b >> 5);
-				a |= b;
-				*dest = RGB32k.All[a & (a>>15)];
-			}
-			dest++;
-			xfrac += xstep;
-			yfrac += ystep;
-		} while (--count);
-	}
-	else
-	{
-		BYTE yshift = 32 - ds_ybits;
-		BYTE xshift = yshift - ds_xbits;
-		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
-		do
-		{
-			BYTE texdata;
-		
-			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-			texdata = source[spot];
-			if (texdata != 0)
-			{
-				DWORD a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
-				DWORD b = a;
-
-				a |= 0x01f07c1f;
-				b &= 0x40100400;
-				a &= 0x3fffffff;
-				b = b - (b >> 5);
-				a |= b;
-				*dest = RGB32k.All[a & (a>>15)];
-			}
-			dest++;
-			xfrac += xstep;
-			yfrac += ystep;
-		} while (--count);
-	}
-}
-
-// [RH] Just fill a span with a color
-void R_FillSpan (void)
-{
-	memset (ylookup[ds_y] + ds_x1 + dc_destorg, ds_color, ds_x2 - ds_x1 + 1);
-}
-
-// Draw a voxel slab
-//
-// "Build Engine & Tools" Copyright (c) 1993-1997 Ken Silverman
-// Ken Silverman's official web site: "http://www.advsys.net/ken"
-// See the included license file "BUILDLIC.TXT" for license info.
-
-// Actually, this is just R_DrawColumn with an extra width parameter.
-
-#ifndef X86_ASM
-static const BYTE *slabcolormap;
-
-extern "C" void R_SetupDrawSlabC(const BYTE *colormap)
-{
-	slabcolormap = colormap;
-}
-
-extern "C" void R_DrawSlabC(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p)
-{
-	int x;
-	const BYTE *colormap = slabcolormap;
-	int pitch = dc_pitch;
-
-	assert(dx > 0);
-
-	if (dx == 1)
-	{
-		while (dy > 0)
-		{
-			*p = colormap[vptr[v >> FRACBITS]];
-			p += pitch;
-			v += vi;
-			dy--;
-		}
-	}
-	else if (dx == 2)
-	{
-		while (dy > 0)
-		{
-			BYTE color = colormap[vptr[v >> FRACBITS]];
-			p[0] = color;
-			p[1] = color;
-			p += pitch;
-			v += vi;
-			dy--;
-		}
-	}
-	else if (dx == 3)
-	{
-		while (dy > 0)
-		{
-			BYTE color = colormap[vptr[v >> FRACBITS]];
-			p[0] = color;
-			p[1] = color;
-			p[2] = color;
-			p += pitch;
-			v += vi;
-			dy--;
-		}
-	}
-	else if (dx == 4)
-	{
-		while (dy > 0)
-		{
-			BYTE color = colormap[vptr[v >> FRACBITS]];
-			p[0] = color;
-			p[1] = color;
-			p[2] = color;
-			p[3] = color;
-			p += pitch;
-			v += vi;
-			dy--;
-		}
-	}
-	else while (dy > 0)
-	{
-		BYTE color = colormap[vptr[v >> FRACBITS]];
-		// The optimizer will probably turn this into a memset call.
-		// Since dx is not likely to be large, I'm not sure that's a good thing,
-		// hence the alternatives above.
-		for (x = 0; x < dx; x++)
-		{
-			p[x] = color;
-		}
-		p += pitch;
-		v += vi;
-		dy--;
-	}
-}
-#endif
-
-
-/****************************************************/
-/****************************************************/
-
-// wallscan stuff, in C
-
-#ifndef X86_ASM
-static DWORD vlinec1 ();
-static int vlinebits;
-
-DWORD (*dovline1)() = vlinec1;
-DWORD (*doprevline1)() = vlinec1;
-
-#ifdef X64_ASM
-extern "C" void vlinetallasm4();
-#define dovline4 vlinetallasm4
-extern "C" void setupvlinetallasm (int);
-#else
-static void vlinec4 ();
-void (*dovline4)() = vlinec4;
-#endif
-
-static DWORD mvlinec1();
-static void mvlinec4();
-static int mvlinebits;
-
-DWORD (*domvline1)() = mvlinec1;
-void (*domvline4)() = mvlinec4;
-
-#else
-
-extern "C"
-{
-DWORD vlineasm1 ();
-DWORD prevlineasm1 ();
-DWORD vlinetallasm1 ();
-DWORD prevlinetallasm1 ();
-void vlineasm4 ();
-void vlinetallasmathlon4 ();
-void vlinetallasm4 ();
-void setupvlineasm (int);
-void setupvlinetallasm (int);
-
-DWORD mvlineasm1();
-void mvlineasm4();
-void setupmvlineasm (int);
-}
-
-DWORD (*dovline1)() = vlinetallasm1;
-DWORD (*doprevline1)() = prevlinetallasm1;
-void (*dovline4)() = vlinetallasm4;
-
-DWORD (*domvline1)() = mvlineasm1;
-void (*domvline4)() = mvlineasm4;
-#endif
-
-void setupvline (int fracbits)
-{
-#ifdef X86_ASM
-	if (CPU.Family <= 5)
-	{
-		if (fracbits >= 24)
-		{
-			setupvlineasm (fracbits);
-			dovline4 = vlineasm4;
-			dovline1 = vlineasm1;
-			doprevline1 = prevlineasm1;
-		}
-		else
-		{
-			setupvlinetallasm (fracbits);
-			dovline1 = vlinetallasm1;
-			doprevline1 = prevlinetallasm1;
-			dovline4 = vlinetallasm4;
-		}
-	}
-	else
-	{
-		setupvlinetallasm (fracbits);
-		if (CPU.bIsAMD && CPU.AMDFamily >= 7)
-		{
-			dovline4 = vlinetallasmathlon4;
-		}
-	}
-#else
-	vlinebits = fracbits;
-#ifdef X64_ASM
-	setupvlinetallasm(fracbits);
-#endif
-#endif
-}
-
-#if !defined(X86_ASM)
-DWORD vlinec1 ()
-{
-	DWORD fracstep = dc_iscale;
-	DWORD frac = dc_texturefrac;
-	BYTE *colormap = dc_colormap;
-	int count = dc_count;
-	const BYTE *source = dc_source;
-	BYTE *dest = dc_dest;
-	int bits = vlinebits;
-	int pitch = dc_pitch;
-
-	do
-	{
-		*dest = colormap[source[frac>>bits]];
-		frac += fracstep;
-		dest += pitch;
-	} while (--count);
-
-	return frac;
-}
-
-#ifndef _M_X64
-void vlinec4 ()
-{
-	BYTE *dest = dc_dest;
-	int count = dc_count;
-	int bits = vlinebits;
-	DWORD place;
-
-	do
-	{
-		dest[0] = palookupoffse[0][bufplce[0][(place=vplce[0])>>bits]]; vplce[0] = place+vince[0];
-		dest[1] = palookupoffse[1][bufplce[1][(place=vplce[1])>>bits]]; vplce[1] = place+vince[1];
-		dest[2] = palookupoffse[2][bufplce[2][(place=vplce[2])>>bits]]; vplce[2] = place+vince[2];
-		dest[3] = palookupoffse[3][bufplce[3][(place=vplce[3])>>bits]]; vplce[3] = place+vince[3];
-		dest += dc_pitch;
-	} while (--count);
-}
-#else
-// Optimized version for 64 bit. In 64 bit mode, accessing global variables is very expensive so even though
-// this exceeds the register count, loading all those values into a local variable is faster than not loading all of them.
-void vlinec4()
-{
-	BYTE *dest = dc_dest;
-	int count = dc_count;
-	int bits = vlinebits;
-	DWORD place;
-	auto pal0 = palookupoffse[0];
-	auto pal1 = palookupoffse[1];
-	auto pal2 = palookupoffse[2];
-	auto pal3 = palookupoffse[3];
-	auto buf0 = bufplce[0];
-	auto buf1 = bufplce[1];
-	auto buf2 = bufplce[2];
-	auto buf3 = bufplce[3];
-	const auto vince0 = vince[0];
-	const auto vince1 = vince[1];
-	const auto vince2 = vince[2];
-	const auto vince3 = vince[3];
-	auto vplce0 = vplce[0];
-	auto vplce1 = vplce[1];
-	auto vplce2 = vplce[2];
-	auto vplce3 = vplce[3];
-
-	do
-	{
-		dest[0] = pal0[buf0[(place = vplce0) >> bits]]; vplce0 = place + vince0;
-		dest[1] = pal1[buf1[(place = vplce1) >> bits]]; vplce1 = place + vince1;
-		dest[2] = pal2[buf2[(place = vplce2) >> bits]]; vplce2 = place + vince2;
-		dest[3] = pal3[buf3[(place = vplce3) >> bits]]; vplce3 = place + vince3;
-		dest += dc_pitch;
-	} while (--count);
-}
-#endif
-
-#endif
-
-void setupmvline (int fracbits)
-{
-#if defined(X86_ASM)
-	setupmvlineasm (fracbits);
-	domvline1 = mvlineasm1;
-	domvline4 = mvlineasm4;
-#else
-	mvlinebits = fracbits;
-#endif
-}
-
-#if !defined(X86_ASM)
-DWORD mvlinec1 ()
-{
-	DWORD fracstep = dc_iscale;
-	DWORD frac = dc_texturefrac;
-	BYTE *colormap = dc_colormap;
-	int count = dc_count;
-	const BYTE *source = dc_source;
-	BYTE *dest = dc_dest;
-	int bits = mvlinebits;
-	int pitch = dc_pitch;
-
-	do
-	{
-		BYTE pix = source[frac>>bits];
-		if (pix != 0)
-		{
-			*dest = colormap[pix];
-		}
-		frac += fracstep;
-		dest += pitch;
-	} while (--count);
-
-	return frac;
-}
-
-void mvlinec4 ()
-{
-	BYTE *dest = dc_dest;
-	int count = dc_count;
-	int bits = mvlinebits;
-	DWORD place;
-
-	do
-	{
-		BYTE pix;
-
-		pix = bufplce[0][(place=vplce[0])>>bits]; if(pix) dest[0] = palookupoffse[0][pix]; vplce[0] = place+vince[0];
-		pix = bufplce[1][(place=vplce[1])>>bits]; if(pix) dest[1] = palookupoffse[1][pix]; vplce[1] = place+vince[1];
-		pix = bufplce[2][(place=vplce[2])>>bits]; if(pix) dest[2] = palookupoffse[2][pix]; vplce[2] = place+vince[2];
-		pix = bufplce[3][(place=vplce[3])>>bits]; if(pix) dest[3] = palookupoffse[3][pix]; vplce[3] = place+vince[3];
-		dest += dc_pitch;
-	} while (--count);
-}
-#endif
-
-extern "C" short spanend[MAXHEIGHT];
-extern float rw_light;
-extern float rw_lightstep;
-extern int wallshade;
-
-static void R_DrawFogBoundarySection (int y, int y2, int x1)
-{
-	BYTE *colormap = dc_colormap;
-	BYTE *dest = ylookup[y] + dc_destorg;
-
-	for (; y < y2; ++y)
-	{
-		int x2 = spanend[y];
-		int x = x1;
-		do
-		{
-			dest[x] = colormap[dest[x]];
-		} while (++x <= x2);
-		dest += dc_pitch;
-	}
-}
-
-static void R_DrawFogBoundaryLine (int y, int x)
-{
-	int x2 = spanend[y];
-	BYTE *colormap = dc_colormap;
-	BYTE *dest = ylookup[y] + dc_destorg;
-	do
-	{
-		dest[x] = colormap[dest[x]];
-	} while (++x <= x2);
-}
-
-void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip)
-{
-	// This is essentially the same as R_MapVisPlane but with an extra step
-	// to create new horizontal spans whenever the light changes enough that
-	// we need to use a new colormap.
-
-	double lightstep = rw_lightstep;
-	double light = rw_light + rw_lightstep*(x2-x1-1);
-	int x = x2-1;
-	int t2 = uclip[x];
-	int b2 = dclip[x];
-	int rcolormap = GETPALOOKUP(light, wallshade);
-	int lcolormap;
-	BYTE *basecolormapdata = basecolormap->Maps;
-
-	if (b2 > t2)
-	{
-		clearbufshort (spanend+t2, b2-t2, x);
-	}
-
-	dc_colormap = basecolormapdata + (rcolormap << COLORMAPSHIFT);
-
-	for (--x; x >= x1; --x)
-	{
-		int t1 = uclip[x];
-		int b1 = dclip[x];
-		const int xr = x+1;
-		int stop;
-
-		light -= rw_lightstep;
-		lcolormap = GETPALOOKUP(light, wallshade);
-		if (lcolormap != rcolormap)
-		{
-			if (t2 < b2 && rcolormap != 0)
-			{ // Colormap 0 is always the identity map, so rendering it is
-			  // just a waste of time.
-				R_DrawFogBoundarySection (t2, b2, xr);
-			}
-			if (t1 < t2) t2 = t1;
-			if (b1 > b2) b2 = b1;
-			if (t2 < b2)
-			{
-				clearbufshort (spanend+t2, b2-t2, x);
-			}
-			rcolormap = lcolormap;
-			dc_colormap = basecolormapdata + (lcolormap << COLORMAPSHIFT);
-		}
-		else
-		{
-			if (dc_colormap != basecolormapdata)
-			{
-				stop = MIN (t1, b2);
-				while (t2 < stop)
-				{
-					R_DrawFogBoundaryLine (t2++, xr);
+					uint8_t v = (((k + 2) * a) + 256) >> 14;
+					table[k] = MIN<uint8_t>(v, 64);
 				}
-				stop = MAX (b1, t2);
-				while (b2 > stop)
+				table += 256;
+			}
+		}
+		for (i = 0; i < NUMCOLORMAPS * 16 * 256; ++i)
+		{
+			assert(shadetables[i] <= 64);
+		}
+
+		// Set up a guaranteed identity map
+		for (i = 0; i < 256; ++i)
+		{
+			identitymap[i] = i;
+		}
+	}
+
+	void R_InitFuzzTable(int fuzzoff)
+	{
+		/*
+			FUZZOFF,-FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
+			FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
+			FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,
+			FUZZOFF,-FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
+			FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,-FUZZOFF,FUZZOFF,
+			FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,
+			FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF 
+		*/
+
+		static const int8_t fuzzinit[FUZZTABLE] = {
+			1,-1, 1,-1, 1, 1,-1,
+			1, 1,-1, 1, 1, 1,-1,
+			1, 1, 1,-1,-1,-1,-1,
+			1,-1,-1, 1, 1, 1, 1,-1,
+			1,-1, 1, 1,-1,-1, 1,
+			1,-1,-1,-1,-1, 1, 1,
+			1, 1,-1, 1, 1,-1, 1 
+		};
+
+		for (int i = 0; i < FUZZTABLE; i++)
+		{
+			fuzzoffset[i] = fuzzinit[i] * fuzzoff;
+		}
+	}
+
+	namespace
+	{
+		bool R_SetBlendFunc(int op, fixed_t fglevel, fixed_t bglevel, int flags)
+		{
+			using namespace drawerargs;
+
+			// r_drawtrans is a seriously bad thing to turn off. I wonder if I should
+			// just remove it completely.
+			if (!r_drawtrans || (op == STYLEOP_Add && fglevel == FRACUNIT && bglevel == 0 && !(flags & STYLEF_InvertSource)))
+			{
+				if (flags & STYLEF_ColorIsFixed)
 				{
-					R_DrawFogBoundaryLine (--b2, xr);
+					colfunc = R_FillColumn;
+					hcolfunc_post1 = rt_copy1col;
+					hcolfunc_post4 = rt_copy4cols;
+				}
+				else if (dc_translation == NULL)
+				{
+					colfunc = basecolfunc;
+					hcolfunc_post1 = rt_map1col;
+					hcolfunc_post4 = rt_map4cols;
+				}
+				else
+				{
+					colfunc = transcolfunc;
+					hcolfunc_post1 = rt_tlate1col;
+					hcolfunc_post4 = rt_tlate4cols;
+				}
+				return true;
+			}
+			if (flags & STYLEF_InvertSource)
+			{
+				dc_srcblend = Col2RGB8_Inverse[fglevel >> 10];
+				dc_destblend = Col2RGB8_LessPrecision[bglevel >> 10];
+				dc_srcalpha = fglevel;
+				dc_destalpha = bglevel;
+			}
+			else if (op == STYLEOP_Add && fglevel + bglevel <= FRACUNIT)
+			{
+				dc_srcblend = Col2RGB8[fglevel >> 10];
+				dc_destblend = Col2RGB8[bglevel >> 10];
+				dc_srcalpha = fglevel;
+				dc_destalpha = bglevel;
+			}
+			else
+			{
+				dc_srcblend = Col2RGB8_LessPrecision[fglevel >> 10];
+				dc_destblend = Col2RGB8_LessPrecision[bglevel >> 10];
+				dc_srcalpha = fglevel;
+				dc_destalpha = bglevel;
+			}
+			switch (op)
+			{
+			case STYLEOP_Add:
+				if (fglevel == 0 && bglevel == FRACUNIT)
+				{
+					return false;
+				}
+				if (fglevel + bglevel <= FRACUNIT)
+				{ // Colors won't overflow when added
+					if (flags & STYLEF_ColorIsFixed)
+					{
+						colfunc = R_FillAddColumn;
+						hcolfunc_post1 = rt_add1col;
+						hcolfunc_post4 = rt_add4cols;
+					}
+					else if (dc_translation == NULL)
+					{
+						colfunc = R_DrawAddColumn;
+						hcolfunc_post1 = rt_add1col;
+						hcolfunc_post4 = rt_add4cols;
+					}
+					else
+					{
+						colfunc = R_DrawTlatedAddColumn;
+						hcolfunc_post1 = rt_tlateadd1col;
+						hcolfunc_post4 = rt_tlateadd4cols;
+					}
+				}
+				else
+				{ // Colors might overflow when added
+					if (flags & STYLEF_ColorIsFixed)
+					{
+						colfunc = R_FillAddClampColumn;
+						hcolfunc_post1 = rt_addclamp1col;
+						hcolfunc_post4 = rt_addclamp4cols;
+					}
+					else if (dc_translation == NULL)
+					{
+						colfunc = R_DrawAddClampColumn;
+						hcolfunc_post1 = rt_addclamp1col;
+						hcolfunc_post4 = rt_addclamp4cols;
+					}
+					else
+					{
+						colfunc = R_DrawAddClampTranslatedColumn;
+						hcolfunc_post1 = rt_tlateaddclamp1col;
+						hcolfunc_post4 = rt_tlateaddclamp4cols;
+					}
+				}
+				return true;
+
+			case STYLEOP_Sub:
+				if (flags & STYLEF_ColorIsFixed)
+				{
+					colfunc = R_FillSubClampColumn;
+					hcolfunc_post1 = rt_subclamp1col;
+					hcolfunc_post4 = rt_subclamp4cols;
+				}
+				else if (dc_translation == NULL)
+				{
+					colfunc = R_DrawSubClampColumn;
+					hcolfunc_post1 = rt_subclamp1col;
+					hcolfunc_post4 = rt_subclamp4cols;
+				}
+				else
+				{
+					colfunc = R_DrawSubClampTranslatedColumn;
+					hcolfunc_post1 = rt_tlatesubclamp1col;
+					hcolfunc_post4 = rt_tlatesubclamp4cols;
+				}
+				return true;
+
+			case STYLEOP_RevSub:
+				if (fglevel == 0 && bglevel == FRACUNIT)
+				{
+					return false;
+				}
+				if (flags & STYLEF_ColorIsFixed)
+				{
+					colfunc = R_FillRevSubClampColumn;
+					hcolfunc_post1 = rt_subclamp1col;
+					hcolfunc_post4 = rt_subclamp4cols;
+				}
+				else if (dc_translation == NULL)
+				{
+					colfunc = R_DrawRevSubClampColumn;
+					hcolfunc_post1 = rt_revsubclamp1col;
+					hcolfunc_post4 = rt_revsubclamp4cols;
+				}
+				else
+				{
+					colfunc = R_DrawRevSubClampTranslatedColumn;
+					hcolfunc_post1 = rt_tlaterevsubclamp1col;
+					hcolfunc_post4 = rt_tlaterevsubclamp4cols;
+				}
+				return true;
+
+			default:
+				return false;
+			}
+		}
+
+		fixed_t GetAlpha(int type, fixed_t alpha)
+		{
+			switch (type)
+			{
+			case STYLEALPHA_Zero:		return 0;
+			case STYLEALPHA_One:		return OPAQUE;
+			case STYLEALPHA_Src:		return alpha;
+			case STYLEALPHA_InvSrc:		return OPAQUE - alpha;
+			default:					return 0;
+			}
+		}
+
+		FDynamicColormap *basecolormapsave;
+	}
+
+	ESPSResult R_SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color)
+	{
+		using namespace drawerargs;
+
+		fixed_t fglevel, bglevel;
+
+		style.CheckFuzz();
+
+		if (style.BlendOp == STYLEOP_Shadow)
+		{
+			style = LegacyRenderStyles[STYLE_TranslucentStencil];
+			alpha = TRANSLUC33;
+			color = 0;
+		}
+
+		if (style.Flags & STYLEF_TransSoulsAlpha)
+		{
+			alpha = fixed_t(transsouls * OPAQUE);
+		}
+		else if (style.Flags & STYLEF_Alpha1)
+		{
+			alpha = FRACUNIT;
+		}
+		else
+		{
+			alpha = clamp<fixed_t>(alpha, 0, OPAQUE);
+		}
+
+		if (translation != -1)
+		{
+			dc_translation = NULL;
+			if (translation != 0)
+			{
+				FRemapTable *table = TranslationToTable(translation);
+				if (table != NULL && !table->Inactive)
+				{
+					dc_translation = table->Remap;
 				}
 			}
-			else
+		}
+		basecolormapsave = basecolormap;
+		hcolfunc_pre = R_DrawColumnHoriz;
+
+		// Check for special modes
+		if (style.BlendOp == STYLEOP_Fuzz)
+		{
+			colfunc = fuzzcolfunc;
+			return DoDraw0;
+		}
+		else if (style == LegacyRenderStyles[STYLE_Shaded])
+		{
+			// Shaded drawer only gets 16 levels of alpha because it saves memory.
+			if ((alpha >>= 12) == 0)
+				return DontDraw;
+			colfunc = R_DrawShadedColumn;
+			hcolfunc_post1 = rt_shaded1col;
+			hcolfunc_post4 = rt_shaded4cols;
+			dc_color = fixedcolormap ? fixedcolormap[APART(color)] : basecolormap->Maps[APART(color)];
+			dc_colormap = (basecolormap = &ShadeFakeColormap[16 - alpha])->Maps;
+			if (fixedlightlev >= 0 && fixedcolormap == NULL)
 			{
-				t2 = MAX (t2, MIN (t1, b2));
-				b2 = MIN (b2, MAX (b1, t2));
+				dc_colormap += fixedlightlev;
 			}
+			return r_columnmethod ? DoDraw1 : DoDraw0;
+		}
 
-			stop = MIN (t2, b1);
-			while (t1 < stop)
+		fglevel = GetAlpha(style.SrcAlpha, alpha);
+		bglevel = GetAlpha(style.DestAlpha, alpha);
+
+		if (style.Flags & STYLEF_ColorIsFixed)
+		{
+			uint32_t x = fglevel >> 10;
+			uint32_t r = RPART(color);
+			uint32_t g = GPART(color);
+			uint32_t b = BPART(color);
+			// dc_color is used by the rt_* routines. It is indexed into dc_srcblend.
+			dc_color = RGB32k.RGB[r >> 3][g >> 3][b >> 3];
+			if (style.Flags & STYLEF_InvertSource)
 			{
-				spanend[t1++] = x;
+				r = 255 - r;
+				g = 255 - g;
+				b = 255 - b;
 			}
-			stop = MAX (b2, t2);
-			while (b1 > stop)
-			{
-				spanend[--b1] = x;
-			}
+			uint32_t alpha = clamp(fglevel >> (FRACBITS - 8), 0, 255);
+			dc_srccolor_bgra = (alpha << 24) | (r << 16) | (g << 8) | b;
+			// dc_srccolor is used by the R_Fill* routines. It is premultiplied
+			// with the alpha.
+			dc_srccolor = ((((r*x) >> 4) << 20) | ((g*x) >> 4) | ((((b)*x) >> 4) << 10)) & 0x3feffbff;
+			hcolfunc_pre = R_FillColumnHoriz;
+			R_SetColorMapLight(identitycolormap.Maps, 0, 0);
 		}
 
-		t2 = uclip[x];
-		b2 = dclip[x];
-	}
-	if (t2 < b2 && rcolormap != 0)
-	{
-		R_DrawFogBoundarySection (t2, b2, x1);
-	}
-}
-
-int tmvlinebits;
-
-void setuptmvline (int bits)
-{
-	tmvlinebits = bits;
-}
-
-fixed_t tmvline1_add ()
-{
-	DWORD fracstep = dc_iscale;
-	DWORD frac = dc_texturefrac;
-	BYTE *colormap = dc_colormap;
-	int count = dc_count;
-	const BYTE *source = dc_source;
-	BYTE *dest = dc_dest;
-	int bits = tmvlinebits;
-	int pitch = dc_pitch;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-
-	do
-	{
-		BYTE pix = source[frac>>bits];
-		if (pix != 0)
+		if (!R_SetBlendFunc(style.BlendOp, fglevel, bglevel, style.Flags))
 		{
-			DWORD fg = fg2rgb[colormap[pix]];
-			DWORD bg = bg2rgb[*dest];
-			fg = (fg+bg) | 0x1f07c1f;
-			*dest = RGB32k.All[fg & (fg>>15)];
-		}
-		frac += fracstep;
-		dest += pitch;
-	} while (--count);
-
-	return frac;
-}
-
-void tmvline4_add ()
-{
-	BYTE *dest = dc_dest;
-	int count = dc_count;
-	int bits = tmvlinebits;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-
-	do
-	{
-		for (int i = 0; i < 4; ++i)
-		{
-			BYTE pix = bufplce[i][vplce[i] >> bits];
-			if (pix != 0)
-			{
-				DWORD fg = fg2rgb[palookupoffse[i][pix]];
-				DWORD bg = bg2rgb[dest[i]];
-				fg = (fg+bg) | 0x1f07c1f;
-				dest[i] = RGB32k.All[fg & (fg>>15)];
-			}
-			vplce[i] += vince[i];
-		}
-		dest += dc_pitch;
-	} while (--count);
-}
-
-fixed_t tmvline1_addclamp ()
-{
-	DWORD fracstep = dc_iscale;
-	DWORD frac = dc_texturefrac;
-	BYTE *colormap = dc_colormap;
-	int count = dc_count;
-	const BYTE *source = dc_source;
-	BYTE *dest = dc_dest;
-	int bits = tmvlinebits;
-	int pitch = dc_pitch;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-
-	do
-	{
-		BYTE pix = source[frac>>bits];
-		if (pix != 0)
-		{
-			DWORD a = fg2rgb[colormap[pix]] + bg2rgb[*dest];
-			DWORD b = a;
-
-			a |= 0x01f07c1f;
-			b &= 0x40100400;
-			a &= 0x3fffffff;
-			b = b - (b >> 5);
-			a |= b;
-			*dest = RGB32k.All[a & (a>>15)];
-		}
-		frac += fracstep;
-		dest += pitch;
-	} while (--count);
-
-	return frac;
-}
-
-void tmvline4_addclamp ()
-{
-	BYTE *dest = dc_dest;
-	int count = dc_count;
-	int bits = tmvlinebits;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-
-	do
-	{
-		for (int i = 0; i < 4; ++i)
-		{
-			BYTE pix = bufplce[i][vplce[i] >> bits];
-			if (pix != 0)
-			{
-				DWORD a = fg2rgb[palookupoffse[i][pix]] + bg2rgb[dest[i]];
-				DWORD b = a;
-
-				a |= 0x01f07c1f;
-				b &= 0x40100400;
-				a &= 0x3fffffff;
-				b = b - (b >> 5);
-				a |= b;
-				dest[i] = RGB32k.All[a & (a>>15)];
-			}
-			vplce[i] += vince[i];
-		}
-		dest += dc_pitch;
-	} while (--count);
-}
-
-fixed_t tmvline1_subclamp ()
-{
-	DWORD fracstep = dc_iscale;
-	DWORD frac = dc_texturefrac;
-	BYTE *colormap = dc_colormap;
-	int count = dc_count;
-	const BYTE *source = dc_source;
-	BYTE *dest = dc_dest;
-	int bits = tmvlinebits;
-	int pitch = dc_pitch;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-
-	do
-	{
-		BYTE pix = source[frac>>bits];
-		if (pix != 0)
-		{
-			DWORD a = (fg2rgb[colormap[pix]] | 0x40100400) - bg2rgb[*dest];
-			DWORD b = a;
-
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[a & (a>>15)];
-		}
-		frac += fracstep;
-		dest += pitch;
-	} while (--count);
-
-	return frac;
-}
-
-void tmvline4_subclamp ()
-{
-	BYTE *dest = dc_dest;
-	int count = dc_count;
-	int bits = tmvlinebits;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-
-	do
-	{
-		for (int i = 0; i < 4; ++i)
-		{
-			BYTE pix = bufplce[i][vplce[i] >> bits];
-			if (pix != 0)
-			{
-				DWORD a = (fg2rgb[palookupoffse[i][pix]] | 0x40100400) - bg2rgb[dest[i]];
-				DWORD b = a;
-
-				b &= 0x40100400;
-				b = b - (b >> 5);
-				a &= b;
-				a |= 0x01f07c1f;
-				dest[i] = RGB32k.All[a & (a>>15)];
-			}
-			vplce[i] += vince[i];
-		}
-		dest += dc_pitch;
-	} while (--count);
-}
-
-fixed_t tmvline1_revsubclamp ()
-{
-	DWORD fracstep = dc_iscale;
-	DWORD frac = dc_texturefrac;
-	BYTE *colormap = dc_colormap;
-	int count = dc_count;
-	const BYTE *source = dc_source;
-	BYTE *dest = dc_dest;
-	int bits = tmvlinebits;
-	int pitch = dc_pitch;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-
-	do
-	{
-		BYTE pix = source[frac>>bits];
-		if (pix != 0)
-		{
-			DWORD a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[pix]];
-			DWORD b = a;
-
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[a & (a>>15)];
-		}
-		frac += fracstep;
-		dest += pitch;
-	} while (--count);
-
-	return frac;
-}
-
-void tmvline4_revsubclamp ()
-{
-	BYTE *dest = dc_dest;
-	int count = dc_count;
-	int bits = tmvlinebits;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-
-	do
-	{
-		for (int i = 0; i < 4; ++i)
-		{
-			BYTE pix = bufplce[i][vplce[i] >> bits];
-			if (pix != 0)
-			{
-				DWORD a = (bg2rgb[dest[i]] | 0x40100400) - fg2rgb[palookupoffse[i][pix]];
-				DWORD b = a;
-
-				b &= 0x40100400;
-				b = b - (b >> 5);
-				a &= b;
-				a |= 0x01f07c1f;
-				dest[i] = RGB32k.All[a & (a>>15)];
-			}
-			vplce[i] += vince[i];
-		}
-		dest += dc_pitch;
-	} while (--count);
-}
-
-void R_DrawSingleSkyCol1(uint32_t solid_top, uint32_t solid_bottom)
-{
-	uint8_t *dest = dc_dest;
-	int count = dc_count;
-	int pitch = dc_pitch;
-	const uint8_t *source0 = bufplce[0];
-	int textureheight0 = bufheight[0];
-
-	int32_t frac = vplce[0];
-	int32_t fracstep = vince[0];
-
-	int start_fade = 2; // How fast it should fade out
-
-	int solid_top_r = RPART(solid_top);
-	int solid_top_g = GPART(solid_top);
-	int solid_top_b = BPART(solid_top);
-	int solid_bottom_r = RPART(solid_bottom);
-	int solid_bottom_g = GPART(solid_bottom);
-	int solid_bottom_b = BPART(solid_bottom);
-
-	for (int index = 0; index < count; index++)
-	{
-		uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
-		uint8_t fg = source0[sample_index];
-
-		int alpha_top = MAX(MIN(frac >> (16 - start_fade), 256), 0);
-		int alpha_bottom = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
-
-		if (alpha_top == 256 && alpha_bottom == 256)
-		{
-			*dest = fg;
-		}
-		else
-		{
-			int inv_alpha_top = 256 - alpha_top;
-			int inv_alpha_bottom = 256 - alpha_bottom;
-
-			const auto &c = GPalette.BaseColors[fg];
-			int c_red = c.r;
-			int c_green = c.g;
-			int c_blue = c.b;
-			c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
-			c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
-			c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
-			c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
-			c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
-			c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
-			*dest = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
-		}
-
-		frac += fracstep;
-		dest += pitch;
-	}
-}
-
-void R_DrawSingleSkyCol4(uint32_t solid_top, uint32_t solid_bottom)
-{
-	uint8_t *dest = dc_dest;
-	int count = dc_count;
-	int pitch = dc_pitch;
-	const uint8_t *source0[4] = { bufplce[0], bufplce[1], bufplce[2], bufplce[3] };
-	int textureheight0 = bufheight[0];
-	const uint32_t *palette = (const uint32_t *)GPalette.BaseColors;
-	int32_t frac[4] = { (int32_t)vplce[0], (int32_t)vplce[1], (int32_t)vplce[2], (int32_t)vplce[3] };
-	int32_t fracstep[4] = { (int32_t)vince[0], (int32_t)vince[1], (int32_t)vince[2], (int32_t)vince[3] };
-	uint8_t output[4];
-
-	int start_fade = 2; // How fast it should fade out
-
-	int solid_top_r = RPART(solid_top);
-	int solid_top_g = GPART(solid_top);
-	int solid_top_b = BPART(solid_top);
-	int solid_bottom_r = RPART(solid_bottom);
-	int solid_bottom_g = GPART(solid_bottom);
-	int solid_bottom_b = BPART(solid_bottom);
-	uint32_t solid_top_fill = RGB32k.RGB[(solid_top_r >> 3)][(solid_top_g >> 3)][(solid_top_b >> 3)];
-	uint32_t solid_bottom_fill = RGB32k.RGB[(solid_bottom_r >> 3)][(solid_bottom_g >> 3)][(solid_bottom_b >> 3)];
-	solid_top_fill = (solid_top_fill << 24) | (solid_top_fill << 16) | (solid_top_fill << 8) | solid_top_fill;
-	solid_bottom_fill = (solid_bottom_fill << 24) | (solid_bottom_fill << 16) | (solid_bottom_fill << 8) | solid_bottom_fill;
-
-	// Find bands for top solid color, top fade, center textured, bottom fade, bottom solid color:
-	int fade_length = (1 << (24 - start_fade));
-	int start_fadetop_y = (-frac[0]) / fracstep[0];
-	int end_fadetop_y = (fade_length - frac[0]) / fracstep[0];
-	int start_fadebottom_y = ((2 << 24) - fade_length - frac[0]) / fracstep[0];
-	int end_fadebottom_y = ((2 << 24) - frac[0]) / fracstep[0];
-	for (int col = 1; col < 4; col++)
-	{
-		start_fadetop_y = MIN(start_fadetop_y, (-frac[0]) / fracstep[0]);
-		end_fadetop_y = MAX(end_fadetop_y, (fade_length - frac[0]) / fracstep[0]);
-		start_fadebottom_y = MIN(start_fadebottom_y, ((2 << 24) - fade_length - frac[0]) / fracstep[0]);
-		end_fadebottom_y = MAX(end_fadebottom_y, ((2 << 24) - frac[0]) / fracstep[0]);
-	}
-	start_fadetop_y = clamp(start_fadetop_y, 0, count);
-	end_fadetop_y = clamp(end_fadetop_y, 0, count);
-	start_fadebottom_y = clamp(start_fadebottom_y, 0, count);
-	end_fadebottom_y = clamp(end_fadebottom_y, 0, count);
-
-	// Top solid color:
-	for (int index = 0; index < start_fadetop_y; index++)
-	{
-		*((uint32_t*)dest) = solid_top_fill;
-		dest += pitch;
-		for (int col = 0; col < 4; col++)
-			frac[col] += fracstep[col];
-	}
-
-	// Top fade:
-	for (int index = start_fadetop_y; index < end_fadetop_y; index++)
-	{
-		for (int col = 0; col < 4; col++)
-		{
-			uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
-			uint8_t fg = source0[col][sample_index];
-
-			uint32_t c = palette[fg];
-			int alpha_top = MAX(MIN(frac[col] >> (16 - start_fade), 256), 0);
-			int inv_alpha_top = 256 - alpha_top;
-			int c_red = RPART(c);
-			int c_green = GPART(c);
-			int c_blue = BPART(c);
-			c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
-			c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
-			c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
-			output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
-
-			frac[col] += fracstep[col];
-		}
-		*((uint32_t*)dest) = *((uint32_t*)output);
-		dest += pitch;
-	}
-
-	// Textured center:
-	for (int index = end_fadetop_y; index < start_fadebottom_y; index++)
-	{
-		for (int col = 0; col < 4; col++)
-		{
-			uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
-			output[col] = source0[col][sample_index];
-
-			frac[col] += fracstep[col];
-		}
-
-		*((uint32_t*)dest) = *((uint32_t*)output);
-		dest += pitch;
-	}
-
-	// Fade bottom:
-	for (int index = start_fadebottom_y; index < end_fadebottom_y; index++)
-	{
-		for (int col = 0; col < 4; col++)
-		{
-			uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
-			uint8_t fg = source0[col][sample_index];
-
-			uint32_t c = palette[fg];
-			int alpha_bottom = MAX(MIN(((2 << 24) - frac[col]) >> (16 - start_fade), 256), 0);
-			int inv_alpha_bottom = 256 - alpha_bottom;
-			int c_red = RPART(c);
-			int c_green = GPART(c);
-			int c_blue = BPART(c);
-			c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
-			c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
-			c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
-			output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
-
-			frac[col] += fracstep[col];
-		}
-		*((uint32_t*)dest) = *((uint32_t*)output);
-		dest += pitch;
-	}
-
-	// Bottom solid color:
-	for (int index = end_fadebottom_y; index < count; index++)
-	{
-		*((uint32_t*)dest) = solid_bottom_fill;
-		dest += pitch;
-	}
-}
-
-void R_DrawDoubleSkyCol1(uint32_t solid_top, uint32_t solid_bottom)
-{
-	uint8_t *dest = dc_dest;
-	int count = dc_count;
-	int pitch = dc_pitch;
-	const uint8_t *source0 = bufplce[0];
-	const uint8_t *source1 = bufplce2[0];
-	int textureheight0 = bufheight[0];
-	uint32_t maxtextureheight1 = bufheight[1] - 1;
-
-	int32_t frac = vplce[0];
-	int32_t fracstep = vince[0];
-
-	int start_fade = 2; // How fast it should fade out
-
-	int solid_top_r = RPART(solid_top);
-	int solid_top_g = GPART(solid_top);
-	int solid_top_b = BPART(solid_top);
-	int solid_bottom_r = RPART(solid_bottom);
-	int solid_bottom_g = GPART(solid_bottom);
-	int solid_bottom_b = BPART(solid_bottom);
-
-	for (int index = 0; index < count; index++)
-	{
-		uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
-		uint8_t fg = source0[sample_index];
-		if (fg == 0)
-		{
-			uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
-			fg = source1[sample_index2];
-		}
-
-		int alpha_top = MAX(MIN(frac >> (16 - start_fade), 256), 0);
-		int alpha_bottom = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
-
-		if (alpha_top == 256 && alpha_bottom == 256)
-		{
-			*dest = fg;
-		}
-		else
-		{
-			int inv_alpha_top = 256 - alpha_top;
-			int inv_alpha_bottom = 256 - alpha_bottom;
-
-			const auto &c = GPalette.BaseColors[fg];
-			int c_red = c.r;
-			int c_green = c.g;
-			int c_blue = c.b;
-			c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
-			c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
-			c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
-			c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
-			c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
-			c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
-			*dest = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
-		}
-
-		frac += fracstep;
-		dest += pitch;
-	}
-}
-
-void R_DrawDoubleSkyCol4(uint32_t solid_top, uint32_t solid_bottom)
-{
-	uint8_t *dest = dc_dest;
-	int count = dc_count;
-	int pitch = dc_pitch;
-	const uint8_t *source0[4] = { bufplce[0], bufplce[1], bufplce[2], bufplce[3] };
-	const uint8_t *source1[4] = { bufplce2[0], bufplce2[1], bufplce2[2], bufplce2[3] };
-	int textureheight0 = bufheight[0];
-	uint32_t maxtextureheight1 = bufheight[1] - 1;
-	const uint32_t *palette = (const uint32_t *)GPalette.BaseColors;
-	int32_t frac[4] = { (int32_t)vplce[0], (int32_t)vplce[1], (int32_t)vplce[2], (int32_t)vplce[3] };
-	int32_t fracstep[4] = { (int32_t)vince[0], (int32_t)vince[1], (int32_t)vince[2], (int32_t)vince[3] };
-	uint8_t output[4];
-
-	int start_fade = 2; // How fast it should fade out
-
-	int solid_top_r = RPART(solid_top);
-	int solid_top_g = GPART(solid_top);
-	int solid_top_b = BPART(solid_top);
-	int solid_bottom_r = RPART(solid_bottom);
-	int solid_bottom_g = GPART(solid_bottom);
-	int solid_bottom_b = BPART(solid_bottom);
-	uint32_t solid_top_fill = RGB32k.RGB[(solid_top_r >> 3)][(solid_top_g >> 3)][(solid_top_b >> 3)];
-	uint32_t solid_bottom_fill = RGB32k.RGB[(solid_bottom_r >> 3)][(solid_bottom_g >> 3)][(solid_bottom_b >> 3)];
-	solid_top_fill = (solid_top_fill << 24) | (solid_top_fill << 16) | (solid_top_fill << 8) | solid_top_fill;
-	solid_bottom_fill = (solid_bottom_fill << 24) | (solid_bottom_fill << 16) | (solid_bottom_fill << 8) | solid_bottom_fill;
-
-	// Find bands for top solid color, top fade, center textured, bottom fade, bottom solid color:
-	int fade_length = (1 << (24 - start_fade));
-	int start_fadetop_y = (-frac[0]) / fracstep[0];
-	int end_fadetop_y = (fade_length - frac[0]) / fracstep[0];
-	int start_fadebottom_y = ((2 << 24) - fade_length - frac[0]) / fracstep[0];
-	int end_fadebottom_y = ((2 << 24) - frac[0]) / fracstep[0];
-	for (int col = 1; col < 4; col++)
-	{
-		start_fadetop_y = MIN(start_fadetop_y, (-frac[0]) / fracstep[0]);
-		end_fadetop_y = MAX(end_fadetop_y, (fade_length - frac[0]) / fracstep[0]);
-		start_fadebottom_y = MIN(start_fadebottom_y, ((2 << 24) - fade_length - frac[0]) / fracstep[0]);
-		end_fadebottom_y = MAX(end_fadebottom_y, ((2 << 24) - frac[0]) / fracstep[0]);
-	}
-	start_fadetop_y = clamp(start_fadetop_y, 0, count);
-	end_fadetop_y = clamp(end_fadetop_y, 0, count);
-	start_fadebottom_y = clamp(start_fadebottom_y, 0, count);
-	end_fadebottom_y = clamp(end_fadebottom_y, 0, count);
-
-	// Top solid color:
-	for (int index = 0; index < start_fadetop_y; index++)
-	{
-		*((uint32_t*)dest) = solid_top_fill;
-		dest += pitch;
-		for (int col = 0; col < 4; col++)
-			frac[col] += fracstep[col];
-	}
-
-	// Top fade:
-	for (int index = start_fadetop_y; index < end_fadetop_y; index++)
-	{
-		for (int col = 0; col < 4; col++)
-		{
-			uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
-			uint8_t fg = source0[col][sample_index];
-			if (fg == 0)
-			{
-				uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
-				fg = source1[col][sample_index2];
-			}
-			output[col] = fg;
-
-			uint32_t c = palette[fg];
-			int alpha_top = MAX(MIN(frac[col] >> (16 - start_fade), 256), 0);
-			int inv_alpha_top = 256 - alpha_top;
-			int c_red = RPART(c);
-			int c_green = GPART(c);
-			int c_blue = BPART(c);
-			c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
-			c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
-			c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
-			output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
-
-			frac[col] += fracstep[col];
-		}
-		*((uint32_t*)dest) = *((uint32_t*)output);
-		dest += pitch;
-	}
-
-	// Textured center:
-	for (int index = end_fadetop_y; index < start_fadebottom_y; index++)
-	{
-		for (int col = 0; col < 4; col++)
-		{
-			uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
-			uint8_t fg = source0[col][sample_index];
-			if (fg == 0)
-			{
-				uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
-				fg = source1[col][sample_index2];
-			}
-			output[col] = fg;
-
-			frac[col] += fracstep[col];
-		}
-
-		*((uint32_t*)dest) = *((uint32_t*)output);
-		dest += pitch;
-	}
-
-	// Fade bottom:
-	for (int index = start_fadebottom_y; index < end_fadebottom_y; index++)
-	{
-		for (int col = 0; col < 4; col++)
-		{
-			uint32_t sample_index = (((((uint32_t)frac[col]) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
-			uint8_t fg = source0[col][sample_index];
-			if (fg == 0)
-			{
-				uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
-				fg = source1[col][sample_index2];
-			}
-			output[col] = fg;
-
-			uint32_t c = palette[fg];
-			int alpha_bottom = MAX(MIN(((2 << 24) - frac[col]) >> (16 - start_fade), 256), 0);
-			int inv_alpha_bottom = 256 - alpha_bottom;
-			int c_red = RPART(c);
-			int c_green = GPART(c);
-			int c_blue = BPART(c);
-			c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
-			c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
-			c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
-			output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
-
-			frac[col] += fracstep[col];
-		}
-		*((uint32_t*)dest) = *((uint32_t*)output);
-		dest += pitch;
-	}
-
-	// Bottom solid color:
-	for (int index = end_fadebottom_y; index < count; index++)
-	{
-		*((uint32_t*)dest) = solid_bottom_fill;
-		dest += pitch;
-	}
-}
-
-//==========================================================================
-//
-// R_GetColumn
-//
-//==========================================================================
-
-const BYTE *R_GetColumn (FTexture *tex, int col)
-{
-	int width;
-
-	// If the texture's width isn't a power of 2, then we need to make it a
-	// positive offset for proper clamping.
-	if (col < 0 && (width = tex->GetWidth()) != (1 << tex->WidthBits))
-	{
-		col = width + (col % width);
-	}
-	return tex->GetColumn (col, NULL);
-}
-
-
-// [RH] Initialize the column drawer pointers
-void R_InitColumnDrawers ()
-{
-#ifdef X86_ASM
-	R_DrawColumnHoriz			= R_DrawColumnHorizP_C;
-	R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_C;
-	R_DrawShadedColumn			= R_DrawShadedColumnP_C;
-	R_DrawSpan					= R_DrawSpanP_ASM;
-	R_DrawSpanMasked			= R_DrawSpanMaskedP_ASM;
-#else
-	R_DrawColumnHoriz			= R_DrawColumnHorizP_C;
-	R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_C;
-	R_DrawShadedColumn			= R_DrawShadedColumnP_C;
-	R_DrawSpan					= R_DrawSpanP_C;
-	R_DrawSpanMasked			= R_DrawSpanMaskedP_C;
-#endif
-}
-
-// [RH] Choose column drawers in a single place
-EXTERN_CVAR (Int, r_drawfuzz)
-EXTERN_CVAR (Bool, r_drawtrans)
-EXTERN_CVAR (Float, transsouls)
-
-static FDynamicColormap *basecolormapsave;
-
-static bool R_SetBlendFunc (int op, fixed_t fglevel, fixed_t bglevel, int flags)
-{
-	// r_drawtrans is a seriously bad thing to turn off. I wonder if I should
-	// just remove it completely.
-	if (!r_drawtrans || (op == STYLEOP_Add && fglevel == FRACUNIT && bglevel == 0 && !(flags & STYLEF_InvertSource)))
-	{
-		if (flags & STYLEF_ColorIsFixed)
-		{
-			colfunc = R_FillColumnP;
-			hcolfunc_post1 = rt_copy1col;
-			hcolfunc_post4 = rt_copy4cols;
-		}
-		else if (dc_translation == NULL)
-		{
-			colfunc = basecolfunc;
-			hcolfunc_post1 = rt_map1col;
-			hcolfunc_post4 = rt_map4cols;
-		}
-		else
-		{
-			colfunc = transcolfunc;
-			hcolfunc_post1 = rt_tlate1col;
-			hcolfunc_post4 = rt_tlate4cols;
-		}
-		return true;
-	}
-	if (flags & STYLEF_InvertSource)
-	{
-		dc_srcblend = Col2RGB8_Inverse[fglevel>>10];
-		dc_destblend = Col2RGB8_LessPrecision[bglevel>>10];
-	}
-	else if (op == STYLEOP_Add && fglevel + bglevel <= FRACUNIT)
-	{
-		dc_srcblend = Col2RGB8[fglevel>>10];
-		dc_destblend = Col2RGB8[bglevel>>10];
-	}
-	else
-	{
-		dc_srcblend = Col2RGB8_LessPrecision[fglevel>>10];
-		dc_destblend = Col2RGB8_LessPrecision[bglevel>>10];
-	}
-	switch (op)
-	{
-	case STYLEOP_Add:
-		if (fglevel == 0 && bglevel == FRACUNIT)
-		{
-			return false;
-		}
-		if (fglevel + bglevel <= FRACUNIT)
-		{ // Colors won't overflow when added
-			if (flags & STYLEF_ColorIsFixed)
-			{
-				colfunc = R_FillAddColumn;
-				hcolfunc_post1 = rt_add1col;
-				hcolfunc_post4 = rt_add4cols;
-			}
-			else if (dc_translation == NULL)
-			{
-				colfunc = R_DrawAddColumnP_C;
-				hcolfunc_post1 = rt_add1col;
-				hcolfunc_post4 = rt_add4cols;
-			}
-			else
-			{
-				colfunc = R_DrawTlatedAddColumnP_C;
-				hcolfunc_post1 = rt_tlateadd1col;
-				hcolfunc_post4 = rt_tlateadd4cols;
-			}
-		}
-		else
-		{ // Colors might overflow when added
-			if (flags & STYLEF_ColorIsFixed)
-			{
-				colfunc = R_FillAddClampColumn;
-				hcolfunc_post1 = rt_addclamp1col;
-				hcolfunc_post4 = rt_addclamp4cols;
-			}
-			else if (dc_translation == NULL)
-			{
-				colfunc = R_DrawAddClampColumnP_C;
-				hcolfunc_post1 = rt_addclamp1col;
-				hcolfunc_post4 = rt_addclamp4cols;
-			}
-			else
-			{
-				colfunc = R_DrawAddClampTranslatedColumnP_C;
-				hcolfunc_post1 = rt_tlateaddclamp1col;
-				hcolfunc_post4 = rt_tlateaddclamp4cols;
-			}
-		}
-		return true;
-
-	case STYLEOP_Sub:
-		if (flags & STYLEF_ColorIsFixed)
-		{
-			colfunc = R_FillSubClampColumn;
-			hcolfunc_post1 = rt_subclamp1col;
-			hcolfunc_post4 = rt_subclamp4cols;
-		}
-		else if (dc_translation == NULL)
-		{
-			colfunc = R_DrawSubClampColumnP_C;
-			hcolfunc_post1 = rt_subclamp1col;
-			hcolfunc_post4 = rt_subclamp4cols;
-		}
-		else
-		{
-			colfunc = R_DrawSubClampTranslatedColumnP_C;
-			hcolfunc_post1 = rt_tlatesubclamp1col;
-			hcolfunc_post4 = rt_tlatesubclamp4cols;
-		}
-		return true;
-
-	case STYLEOP_RevSub:
-		if (fglevel == 0 && bglevel == FRACUNIT)
-		{
-			return false;
-		}
-		if (flags & STYLEF_ColorIsFixed)
-		{
-			colfunc = R_FillRevSubClampColumn;
-			hcolfunc_post1 = rt_subclamp1col;
-			hcolfunc_post4 = rt_subclamp4cols;
-		}
-		else if (dc_translation == NULL)
-		{
-			colfunc = R_DrawRevSubClampColumnP_C;
-			hcolfunc_post1 = rt_revsubclamp1col;
-			hcolfunc_post4 = rt_revsubclamp4cols;
-		}
-		else
-		{
-			colfunc = R_DrawRevSubClampTranslatedColumnP_C;
-			hcolfunc_post1 = rt_tlaterevsubclamp1col;
-			hcolfunc_post4 = rt_tlaterevsubclamp4cols;
-		}
-		return true;
-
-	default:
-		return false;
-	}
-}
-
-static fixed_t GetAlpha(int type, fixed_t alpha)
-{
-	switch (type)
-	{
-	case STYLEALPHA_Zero:		return 0;
-	case STYLEALPHA_One:		return OPAQUE;
-	case STYLEALPHA_Src:		return alpha;
-	case STYLEALPHA_InvSrc:		return OPAQUE - alpha;
-	default:					return 0;
-	}
-}
-
-ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, DWORD color)
-{
-	fixed_t fglevel, bglevel;
-
-	style.CheckFuzz();
-
-	if (style.BlendOp == STYLEOP_Shadow)
-	{
-		style = LegacyRenderStyles[STYLE_TranslucentStencil];
-		alpha = TRANSLUC33;
-		color = 0;
-	}
-
-	if (style.Flags & STYLEF_TransSoulsAlpha)
-	{
-		alpha = fixed_t(transsouls * OPAQUE);
-	}
-	else if (style.Flags & STYLEF_Alpha1)
-	{
-		alpha = FRACUNIT;
-	}
-	else
-	{
-		alpha = clamp<fixed_t> (alpha, 0, OPAQUE);
-	}
-
-	dc_translation = NULL;
-	if (translation != 0)
-	{
-		FRemapTable *table = TranslationToTable(translation);
-		if (table != NULL && !table->Inactive)
-		{
-			dc_translation = table->Remap;
-		}
-	}
-	basecolormapsave = basecolormap;
-	hcolfunc_pre = R_DrawColumnHoriz;
-
-	// Check for special modes
-	if (style.BlendOp == STYLEOP_Fuzz)
-	{
-		colfunc = fuzzcolfunc;
-		return DoDraw0;
-	}
-	else if (style == LegacyRenderStyles[STYLE_Shaded])
-	{
-		// Shaded drawer only gets 16 levels of alpha because it saves memory.
-		if ((alpha >>= 12) == 0)
 			return DontDraw;
-		colfunc = R_DrawShadedColumn;
-		hcolfunc_post1 = rt_shaded1col;
-		hcolfunc_post4 = rt_shaded4cols;
-		dc_color = fixedcolormap ? fixedcolormap[APART(color)] : basecolormap->Maps[APART(color)];
-		dc_colormap = (basecolormap = &ShadeFakeColormap[16-alpha])->Maps;
-		if (fixedlightlev >= 0 && fixedcolormap == NULL)
-		{
-			dc_colormap += fixedlightlev;
 		}
 		return r_columnmethod ? DoDraw1 : DoDraw0;
 	}
 
-	fglevel = GetAlpha(style.SrcAlpha, alpha);
-	bglevel = GetAlpha(style.DestAlpha, alpha);
-
-	if (style.Flags & STYLEF_ColorIsFixed)
+	ESPSResult R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color)
 	{
-		int x = fglevel >> 10;
-		int r = RPART(color);
-		int g = GPART(color);
-		int b = BPART(color);
-		// dc_color is used by the rt_* routines. It is indexed into dc_srcblend.
-		dc_color = RGB32k.RGB[r>>3][g>>3][b>>3];
-		if (style.Flags & STYLEF_InvertSource)
+		return R_SetPatchStyle(style, FLOAT2FIXED(alpha), translation, color);
+	}
+
+	void R_FinishSetPatchStyle()
+	{
+		basecolormap = basecolormapsave;
+	}
+
+	const uint8_t *R_GetColumn(FTexture *tex, int col)
+	{
+		int width;
+
+		// If the texture's width isn't a power of 2, then we need to make it a
+		// positive offset for proper clamping.
+		if (col < 0 && (width = tex->GetWidth()) != (1 << tex->WidthBits))
 		{
-			r = 255 - r;
-			g = 255 - g;
-			b = 255 - b;
+			col = width + (col % width);
 		}
-		// dc_srccolor is used by the R_Fill* routines. It is premultiplied
-		// with the alpha.
-		dc_srccolor = ((((r*x)>>4)<<20) | ((g*x)>>4) | ((((b)*x)>>4)<<10)) & 0x3feffbff;
-		hcolfunc_pre = R_FillColumnHorizP;
-		dc_colormap = identitymap;
+
+		return tex->GetColumn(col, nullptr);
 	}
 
-	if (!R_SetBlendFunc (style.BlendOp, fglevel, bglevel, style.Flags))
+	bool R_GetTransMaskDrawers(fixed_t(**tmvline1)(), void(**tmvline4)())
 	{
-		return DontDraw;
+		if (colfunc == R_DrawAddColumn)
+		{
+			*tmvline1 = tmvline1_add;
+			*tmvline4 = tmvline4_add;
+			return true;
+		}
+		if (colfunc == R_DrawAddClampColumn)
+		{
+			*tmvline1 = tmvline1_addclamp;
+			*tmvline4 = tmvline4_addclamp;
+			return true;
+		}
+		if (colfunc == R_DrawSubClampColumn)
+		{
+			*tmvline1 = tmvline1_subclamp;
+			*tmvline4 = tmvline4_subclamp;
+			return true;
+		}
+		if (colfunc == R_DrawRevSubClampColumn)
+		{
+			*tmvline1 = tmvline1_revsubclamp;
+			*tmvline4 = tmvline4_revsubclamp;
+			return true;
+		}
+		return false;
 	}
-	return r_columnmethod ? DoDraw1 : DoDraw0;
+
+	void setupvline(int fracbits)
+	{
+		drawerargs::vlinebits = fracbits;
+	}
+
+	void setupmvline(int fracbits)
+	{
+		drawerargs::mvlinebits = fracbits;
+	}
+
+	void setuptmvline(int fracbits)
+	{
+		drawerargs::tmvlinebits = fracbits;
+	}
+
+	void R_SetColorMapLight(lighttable_t *base_colormap, float light, int shade)
+	{
+		using namespace drawerargs;
+
+		dc_colormap = base_colormap + (GETPALOOKUP(light, shade) << COLORMAPSHIFT);
+	}
+
+	void R_SetDSColorMapLight(lighttable_t *base_colormap, float light, int shade)
+	{
+		using namespace drawerargs;
+	
+		ds_colormap = base_colormap + (GETPALOOKUP(light, shade) << COLORMAPSHIFT);
+	}
+
+	void R_SetTranslationMap(lighttable_t *translation)
+	{
+		using namespace drawerargs;
+
+		dc_colormap = translation;
+	}
+
+	void rt_initcols(uint8_t *buffer)
+	{
+		using namespace drawerargs;
+
+		for (int y = 3; y >= 0; y--)
+			horizspan[y] = dc_ctspan[y] = &dc_tspans[y][0];
+
+		DrawerCommandQueue::QueueCommand<RtInitColsPalCommand>(buffer);
+	}
+
+	void rt_span_coverage(int x, int start, int stop)
+	{
+		using namespace drawerargs;
+
+		unsigned int **tspan = &dc_ctspan[x & 3];
+		(*tspan)[0] = start;
+		(*tspan)[1] = stop;
+		*tspan += 2;
+	}
+
+	void rt_flip_posts()
+	{
+		using namespace drawerargs;
+
+		unsigned int *front = horizspan[dc_x & 3];
+		unsigned int *back = dc_ctspan[dc_x & 3] - 2;
+
+		while (front < back)
+		{
+			swapvalues(front[0], back[0]);
+			swapvalues(front[1], back[1]);
+			front += 2;
+			back -= 2;
+		}
+	}
+
+	void rt_draw4cols(int sx)
+	{
+		using namespace drawerargs;
+
+		int x, bad;
+		unsigned int maxtop, minbot, minnexttop;
+
+		// Place a dummy "span" in each column. These don't get
+		// drawn. They're just here to avoid special cases in the
+		// max/min calculations below.
+		for (x = 0; x < 4; ++x)
+		{
+			dc_ctspan[x][0] = screen->GetHeight()+1;
+			dc_ctspan[x][1] = screen->GetHeight();
+		}
+
+		for (;;)
+		{
+			// If a column is out of spans, mark it as such
+			bad = 0;
+			minnexttop = 0xffffffff;
+			for (x = 0; x < 4; ++x)
+			{
+				if (horizspan[x] >= dc_ctspan[x])
+				{
+					bad |= 1 << x;
+				}
+				else if ((horizspan[x]+2)[0] < minnexttop)
+				{
+					minnexttop = (horizspan[x]+2)[0];
+				}
+			}
+			// Once all columns are out of spans, we're done
+			if (bad == 15)
+			{
+				return;
+			}
+
+			// Find the largest shared area for the spans in each column
+			maxtop = MAX (MAX (horizspan[0][0], horizspan[1][0]),
+						  MAX (horizspan[2][0], horizspan[3][0]));
+			minbot = MIN (MIN (horizspan[0][1], horizspan[1][1]),
+						  MIN (horizspan[2][1], horizspan[3][1]));
+
+			// If there is no shared area with these spans, draw each span
+			// individually and advance to the next spans until we reach a shared area.
+			// However, only draw spans down to the highest span in the next set of
+			// spans. If we allow the entire height of a span to be drawn, it could
+			// prevent any more shared areas from being drawn in these four columns.
+			//
+			// Example: Suppose we have the following arrangement:
+			//			A CD
+			//			A CD
+			//			 B D
+			//			 B D
+			//			aB D
+			//			aBcD
+			//			aBcD
+			//			aBc
+			//
+			// If we draw the entire height of the spans, we end up drawing this first:
+			//			A CD
+			//			A CD
+			//			 B D
+			//			 B D
+			//			 B D
+			//			 B D
+			//			 B D
+			//			 B D
+			//			 B
+			//
+			// This leaves only the "a" and "c" columns to be drawn, and they are not
+			// part of a shared area, but if we can include B and D with them, we can
+			// get a shared area. So we cut off everything in the first set just
+			// above the "a" column and end up drawing this first:
+			//			A CD
+			//			A CD
+			//			 B D
+			//			 B D
+			//
+			// Then the next time through, we have the following arrangement with an
+			// easily shared area to draw:
+			//			aB D
+			//			aBcD
+			//			aBcD
+			//			aBc
+			if (bad != 0 || maxtop > minbot)
+			{
+				int drawcount = 0;
+				for (x = 0; x < 4; ++x)
+				{
+					if (!(bad & 1))
+					{
+						if (horizspan[x][1] < minnexttop)
+						{
+							hcolfunc_post1 (x, sx+x, horizspan[x][0], horizspan[x][1]);
+							horizspan[x] += 2;
+							drawcount++;
+						}
+						else if (minnexttop > horizspan[x][0])
+						{
+							hcolfunc_post1 (x, sx+x, horizspan[x][0], minnexttop-1);
+							horizspan[x][0] = minnexttop;
+							drawcount++;
+						}
+					}
+					bad >>= 1;
+				}
+				// Drawcount *should* always be non-zero. The reality is that some situations
+				// can make this not true. Unfortunately, I'm not sure what those situations are.
+				if (drawcount == 0)
+				{
+					return;
+				}
+				continue;
+			}
+
+			// Draw any span fragments above the shared area.
+			for (x = 0; x < 4; ++x)
+			{
+				if (maxtop > horizspan[x][0])
+				{
+					hcolfunc_post1 (x, sx+x, horizspan[x][0], maxtop-1);
+				}
+			}
+
+			// Draw the shared area.
+			hcolfunc_post4 (sx, maxtop, minbot);
+
+			// For each column, if part of the span is past the shared area,
+			// set its top to just below the shared area. Otherwise, advance
+			// to the next span in that column.
+			for (x = 0; x < 4; ++x)
+			{
+				if (minbot < horizspan[x][1])
+				{
+					horizspan[x][0] = minbot+1;
+				}
+				else
+				{
+					horizspan[x] += 2;
+				}
+			}
+		}
+	}
+
+	void R_SetupSpanBits(FTexture *tex)
+	{
+		using namespace drawerargs;
+
+		tex->GetWidth();
+		ds_xbits = tex->WidthBits;
+		ds_ybits = tex->HeightBits;
+		if ((1 << ds_xbits) > tex->GetWidth())
+		{
+			ds_xbits--;
+		}
+		if ((1 << ds_ybits) > tex->GetHeight())
+		{
+			ds_ybits--;
+		}
+	}
+
+	void R_SetSpanColormap(lighttable_t *colormap)
+	{
+		using namespace drawerargs;
+
+		ds_colormap = colormap;
+	}
+
+	void R_SetSpanSource(FTexture *tex)
+	{
+		using namespace drawerargs;
+
+		ds_source = tex->GetPixels();
+	}
+
+	/////////////////////////////////////////////////////////////////////////
+
+	void R_FillColumnHoriz()
+	{
+		using namespace drawerargs;
+
+		if (dc_count <= 0)
+			return;
+
+		int x = dc_x & 3;
+		unsigned int **span = &dc_ctspan[x];
+		(*span)[0] = dc_yl;
+		(*span)[1] = dc_yh;
+		*span += 2;
+
+		DrawerCommandQueue::QueueCommand<FillColumnHorizPalCommand>();
+	}
+
+	void R_DrawColumnHoriz()
+	{
+		using namespace drawerargs;
+
+		if (dc_count <= 0)
+			return;
+
+		int x = dc_x & 3;
+		unsigned int **span = &dc_ctspan[x];
+		(*span)[0] = dc_yl;
+		(*span)[1] = dc_yh;
+		*span += 2;
+
+		DrawerCommandQueue::QueueCommand<DrawColumnHorizPalCommand>();
+	}
+
+	// Copies one span at hx to the screen at sx.
+	void rt_copy1col(int hx, int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt1CopyPalCommand>(hx, sx, yl, yh);
+	}
+
+	// Copies all four spans to the screen starting at sx.
+	void rt_copy4cols(int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt4CopyPalCommand>(0, sx, yl, yh);
+	}
+
+	// Maps one span at hx to the screen at sx.
+	void rt_map1col(int hx, int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt1PalCommand>(hx, sx, yl, yh);
+	}
+
+	// Maps all four spans to the screen starting at sx.
+	void rt_map4cols(int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt4PalCommand>(0, sx, yl, yh);
+	}
+
+	// Translates one span at hx to the screen at sx.
+	void rt_tlate1col(int hx, int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
+		rt_map1col(hx, sx, yl, yh);
+	}
+
+	// Translates all four spans to the screen starting at sx.
+	void rt_tlate4cols(int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
+		rt_map4cols(sx, yl, yh);
+	}
+
+	// Adds one span at hx to the screen at sx without clamping.
+	void rt_add1col(int hx, int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt1AddPalCommand>(hx, sx, yl, yh);
+	}
+
+	// Adds all four spans to the screen starting at sx without clamping.
+	void rt_add4cols(int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt4AddPalCommand>(0, sx, yl, yh);
+	}
+
+	// Translates and adds one span at hx to the screen at sx without clamping.
+	void rt_tlateadd1col(int hx, int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
+		rt_add1col(hx, sx, yl, yh);
+	}
+
+	// Translates and adds all four spans to the screen starting at sx without clamping.
+	void rt_tlateadd4cols(int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
+		rt_add4cols(sx, yl, yh);
+	}
+
+	// Shades one span at hx to the screen at sx.
+	void rt_shaded1col(int hx, int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt1ShadedPalCommand>(hx, sx, yl, yh);
+	}
+
+	// Shades all four spans to the screen starting at sx.
+	void rt_shaded4cols(int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt4ShadedPalCommand>(0, sx, yl, yh);
+	}
+
+	// Adds one span at hx to the screen at sx with clamping.
+	void rt_addclamp1col(int hx, int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt1AddClampPalCommand>(hx, sx, yl, yh);
+	}
+
+	// Adds all four spans to the screen starting at sx with clamping.
+	void rt_addclamp4cols(int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt4AddClampPalCommand>(0, sx, yl, yh);
+	}
+
+	// Translates and adds one span at hx to the screen at sx with clamping.
+	void rt_tlateaddclamp1col(int hx, int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
+		rt_addclamp1col(hx, sx, yl, yh);
+	}
+
+	// Translates and adds all four spans to the screen starting at sx with clamping.
+	void rt_tlateaddclamp4cols(int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
+		rt_addclamp4cols(sx, yl, yh);
+	}
+
+	// Subtracts one span at hx to the screen at sx with clamping.
+	void rt_subclamp1col(int hx, int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt1SubClampPalCommand>(hx, sx, yl, yh);
+	}
+
+	// Subtracts all four spans to the screen starting at sx with clamping.
+	void rt_subclamp4cols(int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt4SubClampPalCommand>(0, sx, yl, yh);
+	}
+
+	// Translates and subtracts one span at hx to the screen at sx with clamping.
+	void rt_tlatesubclamp1col(int hx, int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
+		rt_subclamp1col(hx, sx, yl, yh);
+	}
+
+	// Translates and subtracts all four spans to the screen starting at sx with clamping.
+	void rt_tlatesubclamp4cols(int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
+		rt_subclamp4cols(sx, yl, yh);
+	}
+
+	// Subtracts one span at hx from the screen at sx with clamping.
+	void rt_revsubclamp1col(int hx, int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt1RevSubClampPalCommand>(hx, sx, yl, yh);
+	}
+
+	// Subtracts all four spans from the screen starting at sx with clamping.
+	void rt_revsubclamp4cols(int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt4RevSubClampPalCommand>(0, sx, yl, yh);
+	}
+
+	// Translates and subtracts one span at hx from the screen at sx with clamping.
+	void rt_tlaterevsubclamp1col(int hx, int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
+		rt_revsubclamp1col(hx, sx, yl, yh);
+	}
+
+	// Translates and subtracts all four spans from the screen starting at sx with clamping.
+	void rt_tlaterevsubclamp4cols(int sx, int yl, int yh)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
+		rt_revsubclamp4cols(sx, yl, yh);
+	}
+
+	uint32_t vlinec1()
+	{
+		using namespace drawerargs;
+
+		DrawerCommandQueue::QueueCommand<DrawWall1PalCommand>();
+
+		return dc_texturefrac + dc_count * dc_iscale;
+	}
+
+	void vlinec4()
+	{
+		using namespace drawerargs;
+
+		DrawerCommandQueue::QueueCommand<DrawWall4PalCommand>();
+
+		for (int i = 0; i < 4; i++)
+			vplce[i] += vince[i] * dc_count;
+	}
+
+	uint32_t mvlinec1()
+	{
+		using namespace drawerargs;
+
+		DrawerCommandQueue::QueueCommand<DrawWallMasked1PalCommand>();
+
+		return dc_texturefrac + dc_count * dc_iscale;
+	}
+
+	void mvlinec4()
+	{
+		using namespace drawerargs;
+
+		DrawerCommandQueue::QueueCommand<DrawWallMasked4PalCommand>();
+
+		for (int i = 0; i < 4; i++)
+			vplce[i] += vince[i] * dc_count;
+	}
+
+	fixed_t tmvline1_add()
+	{
+		using namespace drawerargs;
+
+		DrawerCommandQueue::QueueCommand<DrawWallAdd1PalCommand>();
+
+		return dc_texturefrac + dc_count * dc_iscale;
+	}
+
+	void tmvline4_add()
+	{
+		using namespace drawerargs;
+
+		DrawerCommandQueue::QueueCommand<DrawWallAdd4PalCommand>();
+
+		for (int i = 0; i < 4; i++)
+			vplce[i] += vince[i] * dc_count;
+	}
+
+	fixed_t tmvline1_addclamp()
+	{
+		using namespace drawerargs;
+
+		DrawerCommandQueue::QueueCommand<DrawWallAddClamp1PalCommand>();
+
+		return dc_texturefrac + dc_count * dc_iscale;
+	}
+
+	void tmvline4_addclamp()
+	{
+		using namespace drawerargs;
+
+		DrawerCommandQueue::QueueCommand<DrawWallAddClamp4PalCommand>();
+
+		for (int i = 0; i < 4; i++)
+			vplce[i] += vince[i] * dc_count;
+	}
+
+	fixed_t tmvline1_subclamp()
+	{
+		using namespace drawerargs;
+
+		DrawerCommandQueue::QueueCommand<DrawWallSubClamp1PalCommand>();
+
+		return dc_texturefrac + dc_count * dc_iscale;
+	}
+
+	void tmvline4_subclamp()
+	{
+		using namespace drawerargs;
+
+		DrawerCommandQueue::QueueCommand<DrawWallSubClamp4PalCommand>();
+
+		for (int i = 0; i < 4; i++)
+			vplce[i] += vince[i] * dc_count;
+	}
+
+	fixed_t tmvline1_revsubclamp()
+	{
+		using namespace drawerargs;
+
+		DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1PalCommand>();
+
+		return dc_texturefrac + dc_count * dc_iscale;
+	}
+
+	void tmvline4_revsubclamp()
+	{
+		using namespace drawerargs;
+
+		DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp4PalCommand>();
+
+		for (int i = 0; i < 4; i++)
+			vplce[i] += vince[i] * dc_count;
+	}
+
+	void R_DrawSingleSkyCol1(uint32_t solid_top, uint32_t solid_bottom)
+	{
+		DrawerCommandQueue::QueueCommand<DrawSingleSky1PalCommand>(solid_top, solid_bottom);
+	}
+
+	void R_DrawSingleSkyCol4(uint32_t solid_top, uint32_t solid_bottom)
+	{
+		DrawerCommandQueue::QueueCommand<DrawSingleSky4PalCommand>(solid_top, solid_bottom);
+	}
+
+	void R_DrawDoubleSkyCol1(uint32_t solid_top, uint32_t solid_bottom)
+	{
+		DrawerCommandQueue::QueueCommand<DrawDoubleSky1PalCommand>(solid_top, solid_bottom);
+	}
+
+	void R_DrawDoubleSkyCol4(uint32_t solid_top, uint32_t solid_bottom)
+	{
+		DrawerCommandQueue::QueueCommand<DrawDoubleSky4PalCommand>(solid_top, solid_bottom);
+	}
+
+	void R_DrawColumn()
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnPalCommand>();
+	}
+
+	void R_FillColumn()
+	{
+		DrawerCommandQueue::QueueCommand<FillColumnPalCommand>();
+	}
+
+	void R_FillAddColumn()
+	{
+		DrawerCommandQueue::QueueCommand<FillColumnAddPalCommand>();
+	}
+
+	void R_FillAddClampColumn()
+	{
+		DrawerCommandQueue::QueueCommand<FillColumnAddClampPalCommand>();
+	}
+
+	void R_FillSubClampColumn()
+	{
+		DrawerCommandQueue::QueueCommand<FillColumnSubClampPalCommand>();
+	}
+
+	void R_FillRevSubClampColumn()
+	{
+		DrawerCommandQueue::QueueCommand<FillColumnRevSubClampPalCommand>();
+	}
+
+	void R_DrawFuzzColumn()
+	{
+		using namespace drawerargs;
+
+		DrawerCommandQueue::QueueCommand<DrawFuzzColumnPalCommand>();
+
+		dc_yl = MAX(dc_yl, 1);
+		dc_yh = MIN(dc_yh, fuzzviewheight);
+		if (dc_yl <= dc_yh)
+			fuzzpos = (fuzzpos + dc_yh - dc_yl + 1) % FUZZTABLE;
+	}
+
+	void R_DrawAddColumn()
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnAddPalCommand>();
+	}
+
+	void R_DrawTranslatedColumn()
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnTranslatedPalCommand>();
+	}
+
+	void R_DrawTlatedAddColumn()
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnTlatedAddPalCommand>();
+	}
+
+	void R_DrawShadedColumn()
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnShadedPalCommand>();
+	}
+
+	void R_DrawAddClampColumn()
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnAddClampPalCommand>();
+	}
+
+	void R_DrawAddClampTranslatedColumn()
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnAddClampTranslatedPalCommand>();
+	}
+
+	void R_DrawSubClampColumn()
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnSubClampPalCommand>();
+	}
+
+	void R_DrawSubClampTranslatedColumn()
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnSubClampTranslatedPalCommand>();
+	}
+
+	void R_DrawRevSubClampColumn()
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampPalCommand>();
+	}
+
+	void R_DrawRevSubClampTranslatedColumn()
+	{
+		DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampTranslatedPalCommand>();
+	}
+
+	void R_DrawSpan()
+	{
+		DrawerCommandQueue::QueueCommand<DrawSpanPalCommand>();
+	}
+
+	void R_DrawSpanMasked()
+	{
+		DrawerCommandQueue::QueueCommand<DrawSpanMaskedPalCommand>();
+	}
+
+	void R_DrawSpanTranslucent()
+	{
+		DrawerCommandQueue::QueueCommand<DrawSpanTranslucentPalCommand>();
+	}
+
+	void R_DrawSpanMaskedTranslucent()
+	{
+		DrawerCommandQueue::QueueCommand<DrawSpanMaskedTranslucentPalCommand>();
+	}
+
+	void R_DrawSpanAddClamp()
+	{
+		DrawerCommandQueue::QueueCommand<DrawSpanAddClampPalCommand>();
+	}
+
+	void R_DrawSpanMaskedAddClamp()
+	{
+		DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampPalCommand>();
+	}
+
+	void R_FillSpan()
+	{
+		DrawerCommandQueue::QueueCommand<FillSpanPalCommand>();
+	}
+
+	void R_DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy)
+	{
+		DrawerCommandQueue::QueueCommand<DrawTiltedSpanPalCommand>(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
+	}
+
+	void R_DrawColoredSpan(int y, int x1, int x2)
+	{
+		DrawerCommandQueue::QueueCommand<DrawColoredSpanPalCommand>(y, x1, x2);
+	}
+
+	namespace
+	{
+		const uint8_t *slab_colormap;
+	}
+
+	void R_SetupDrawSlab(uint8_t *colormap)
+	{
+		slab_colormap = colormap;
+	}
+
+	void R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const uint8_t *vptr, uint8_t *p)
+	{
+		DrawerCommandQueue::QueueCommand<DrawSlabPalCommand>(dx, v, dy, vi, vptr, p, slab_colormap);
+	}
+
+	void R_DrawFogBoundarySection(int y, int y2, int x1)
+	{
+		for (; y < y2; ++y)
+		{
+			int x2 = spanend[y];
+			DrawerCommandQueue::QueueCommand<DrawFogBoundaryLinePalCommand>(y, x1, x2);
+		}
+	}
+
+	void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip)
+	{
+		// This is essentially the same as R_MapVisPlane but with an extra step
+		// to create new horizontal spans whenever the light changes enough that
+		// we need to use a new colormap.
+
+		double lightstep = rw_lightstep;
+		double light = rw_light + rw_lightstep*(x2 - x1 - 1);
+		int x = x2 - 1;
+		int t2 = uclip[x];
+		int b2 = dclip[x];
+		int rcolormap = GETPALOOKUP(light, wallshade);
+		int lcolormap;
+		uint8_t *basecolormapdata = basecolormap->Maps;
+
+		if (b2 > t2)
+		{
+			clearbufshort(spanend + t2, b2 - t2, x);
+		}
+
+		R_SetColorMapLight(basecolormap->Maps, (float)light, wallshade);
+
+		uint8_t *fake_dc_colormap = basecolormap->Maps + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
+
+		for (--x; x >= x1; --x)
+		{
+			int t1 = uclip[x];
+			int b1 = dclip[x];
+			const int xr = x + 1;
+			int stop;
+
+			light -= rw_lightstep;
+			lcolormap = GETPALOOKUP(light, wallshade);
+			if (lcolormap != rcolormap)
+			{
+				if (t2 < b2 && rcolormap != 0)
+				{ // Colormap 0 is always the identity map, so rendering it is
+				  // just a waste of time.
+					R_DrawFogBoundarySection(t2, b2, xr);
+				}
+				if (t1 < t2) t2 = t1;
+				if (b1 > b2) b2 = b1;
+				if (t2 < b2)
+				{
+					clearbufshort(spanend + t2, b2 - t2, x);
+				}
+				rcolormap = lcolormap;
+				R_SetColorMapLight(basecolormap->Maps, (float)light, wallshade);
+				fake_dc_colormap = basecolormap->Maps + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
+			}
+			else
+			{
+				if (fake_dc_colormap != basecolormapdata)
+				{
+					stop = MIN(t1, b2);
+					while (t2 < stop)
+					{
+						int y = t2++;
+						DrawerCommandQueue::QueueCommand<DrawFogBoundaryLinePalCommand>(y, xr, spanend[y]);
+					}
+					stop = MAX(b1, t2);
+					while (b2 > stop)
+					{
+						int y = --b2;
+						DrawerCommandQueue::QueueCommand<DrawFogBoundaryLinePalCommand>(y, xr, spanend[y]);
+					}
+				}
+				else
+				{
+					t2 = MAX(t2, MIN(t1, b2));
+					b2 = MIN(b2, MAX(b1, t2));
+				}
+
+				stop = MIN(t2, b1);
+				while (t1 < stop)
+				{
+					spanend[t1++] = x;
+				}
+				stop = MAX(b2, t2);
+				while (b1 > stop)
+				{
+					spanend[--b1] = x;
+				}
+			}
+
+			t2 = uclip[x];
+			b2 = dclip[x];
+		}
+		if (t2 < b2 && rcolormap != 0)
+		{
+			R_DrawFogBoundarySection(t2, b2, x1);
+		}
+	}
+
+	void R_DrawParticle(vissprite_t *sprite)
+	{
+		R_DrawParticle_C(sprite);
+	}
 }
-
-void R_FinishSetPatchStyle ()
-{
-	basecolormap = basecolormapsave;
-}
-
-bool R_GetTransMaskDrawers (fixed_t (**tmvline1)(), void (**tmvline4)())
-{
-	if (colfunc == R_DrawAddColumnP_C)
-	{
-		*tmvline1 = tmvline1_add;
-		*tmvline4 = tmvline4_add;
-		return true;
-	}
-	if (colfunc == R_DrawAddClampColumnP_C)
-	{
-		*tmvline1 = tmvline1_addclamp;
-		*tmvline4 = tmvline4_addclamp;
-		return true;
-	}
-	if (colfunc == R_DrawSubClampColumnP_C)
-	{
-		*tmvline1 = tmvline1_subclamp;
-		*tmvline4 = tmvline4_subclamp;
-		return true;
-	}
-	if (colfunc == R_DrawRevSubClampColumnP_C)
-	{
-		*tmvline1 = tmvline1_revsubclamp;
-		*tmvline4 = tmvline4_revsubclamp;
-		return true;
-	}
-	return false;
-}
-

@@ -2564,7 +2564,7 @@ namespace swrenderer
 	/////////////////////////////////////////////////////////////////////////
 
 	DrawSlabPalCommand::DrawSlabPalCommand(int dx, fixed_t v, int dy, fixed_t vi, const uint8_t *vptr, uint8_t *p, const uint8_t *colormap)
-		: _dx(dx), _v(v), _dy(dy), _vi(vi), _vptr(vptr), _p(p), _colormap(colormap)
+		: _dx(dx), _v(v), _dy(dy), _vi(vi), _vvptr(vptr), _p(p), _colormap(colormap)
 	{
 		using namespace drawerargs;
 		_pitch = dc_pitch;
@@ -2578,7 +2578,7 @@ namespace swrenderer
 		int pitch = _pitch;
 		int width = _dx;
 		const uint8_t *colormap = _colormap;
-		const uint8_t *source = _vptr;
+		const uint8_t *source = _vvptr;
 		fixed_t fracpos = _v;
 		fixed_t iscale = _vi;
 

@@ -860,6 +860,26 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	FLineOpening open;
 
 	P_LineOpening(open, tm.thing, ld, ref, &cres.Position, cres.portalflags);
+	if (!tm.thing->Sector->PortalBlocksMovement(sector_t::ceiling))
+	{
+		sector_t *oppsec = cres.line->frontsector == tm.thing->Sector ? cres.line->backsector : cres.line->frontsector;
+		if (oppsec->PortalBlocksMovement(sector_t::ceiling))
+		{
+			double portz = tm.thing->Sector->GetPortalPlaneZ(sector_t::ceiling);
+			if (tm.thing->Z() < portz && tm.thing->Z() + tm.thing->MaxStepHeight >= portz && tm.floorz < portz)
+			{
+				// Actor is stepping through a portal.
+				/*
+				tm.floorz = portz;
+				tm.floorsector = oppsec;
+				tm.floorpic = cres.line->sidedef[0]->GetTexture(side_t::mid);
+				tm.floorterrain = 0;
+				*/
+				tm.portalstep = true;
+				return true;
+			}
+		}
+	}
 
 	// [RH] Steep sectors count as dropoffs, if the actor touches the boundary between a steep slope and something else
 	if (!(tm.thing->flags & MF_DROPOFF) &&

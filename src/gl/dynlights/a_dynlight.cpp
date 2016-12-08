@@ -582,81 +582,107 @@ double ADynamicLight::DistToSeg(const DVector3 &pos, seg_t *seg)
 // to sidedefs and sector parts.
 //
 //==========================================================================
+struct LightLinkEntry
+{
+	subsector_t *sub;
+	DVector3 pos;
+};
+static TArray<LightLinkEntry> collected_ss;
 
-void ADynamicLight::CollectWithinRadius(const DVector3 &pos, subsector_t *subSec, float radius)
+void ADynamicLight::CollectWithinRadius(const DVector3 &opos, subsector_t *subSec, float radius)
 {
 	if (!subSec) return;
-
+	collected_ss.Clear();
+	collected_ss.Push({ subSec, opos });
 	subSec->validcount = ::validcount;
 
-	touching_subsectors = AddLightNode(&subSec->lighthead, subSec, this, touching_subsectors);
-	if (subSec->sector->validcount != ::validcount)
+	for (unsigned i = 0; i < collected_ss.Size(); i++)
 	{
-		touching_sector = AddLightNode(&subSec->render_sector->lighthead, subSec->sector, this, touching_sector);
-		subSec->sector->validcount = ::validcount;
-	}
+		subSec = collected_ss[i].sub;
+		auto &pos = collected_ss[i].pos;
 
-	for (unsigned int i = 0; i < subSec->numlines; i++)
-	{
-		seg_t * seg = subSec->firstline + i;
-
-		// check distance from x/y to seg and if within radius add this seg and, if present the opposing subsector (lather/rinse/repeat)
-		// If out of range we do not need to bother with this seg.
-		if (DistToSeg(pos, seg) <= radius)
+		touching_subsectors = AddLightNode(&subSec->lighthead, subSec, this, touching_subsectors);
+		if (subSec->sector->validcount != ::validcount)
 		{
-			if (seg->sidedef && seg->linedef && seg->linedef->validcount != ::validcount)
+			touching_sector = AddLightNode(&subSec->render_sector->lighthead, subSec->sector, this, touching_sector);
+			subSec->sector->validcount = ::validcount;
+		}
+
+		for (unsigned int i = 0; i < subSec->numlines; i++)
+		{
+			seg_t * seg = subSec->firstline + i;
+
+			// check distance from x/y to seg and if within radius add this seg and, if present the opposing subsector (lather/rinse/repeat)
+			// If out of range we do not need to bother with this seg.
+			if (DistToSeg(pos, seg) <= radius)
 			{
-				// light is in front of the seg
-				if ((pos.Y - seg->v1->fY()) * (seg->v2->fX() - seg->v1->fX()) + (seg->v1->fX() - pos.X) * (seg->v2->fY() - seg->v1->fY()) <= 0)
+				if (seg->sidedef && seg->linedef && seg->linedef->validcount != ::validcount)
 				{
-					seg->linedef->validcount = validcount;
-					touching_sides = AddLightNode(&seg->sidedef->lighthead, seg->sidedef, this, touching_sides);
-				}
-			}
-			if (seg->linedef)
-			{
-				FLinePortal *port = seg->linedef->getPortal();
-				if (port && port->mType == PORTT_LINKED)
-				{
-					line_t *other = port->mDestination;
-					if (other->validcount != ::validcount)
+					// light is in front of the seg
+					if ((pos.Y - seg->v1->fY()) * (seg->v2->fX() - seg->v1->fX()) + (seg->v1->fX() - pos.X) * (seg->v2->fY() - seg->v1->fY()) <= 0)
 					{
-						subsector_t *othersub = R_PointInSubsector(other->v1->fPos() + other->Delta() / 2);
-						if (othersub->validcount != ::validcount) CollectWithinRadius(PosRelative(other), othersub, radius);
+						seg->linedef->validcount = validcount;
+						touching_sides = AddLightNode(&seg->sidedef->lighthead, seg->sidedef, this, touching_sides);
+					}
+				}
+				if (seg->linedef)
+				{
+					FLinePortal *port = seg->linedef->getPortal();
+					if (port && port->mType == PORTT_LINKED)
+					{
+						line_t *other = port->mDestination;
+						if (other->validcount != ::validcount)
+						{
+							subsector_t *othersub = R_PointInSubsector(other->v1->fPos() + other->Delta() / 2);
+							if (othersub->validcount != ::validcount)
+							{
+								othersub->validcount = ::validcount;
+								collected_ss.Push({ othersub, PosRelative(other) });
+							}
+						}
+					}
+				}
+
+				seg_t *partner = seg->PartnerSeg;
+				if (partner)
+				{
+					subsector_t *sub = partner->Subsector;
+					if (sub != NULL && sub->validcount != ::validcount)
+					{
+						sub->validcount = ::validcount;
+						collected_ss.Push({ sub, pos });
 					}
 				}
 			}
-
-			seg_t *partner = seg->PartnerSeg;
-			if (partner)
+		}
+		sector_t *sec = subSec->sector;
+		if (!sec->PortalBlocksSight(sector_t::ceiling))
+		{
+			line_t *other = subSec->firstline->linedef;
+			if (sec->GetPortalPlaneZ(sector_t::ceiling) < Z() + radius)
 			{
-				subsector_t *sub = partner->Subsector;
-				if (sub != NULL && sub->validcount != ::validcount)
+				DVector2 refpos = other->v1->fPos() + other->Delta() / 2 + sec->GetPortalDisplacement(sector_t::ceiling);
+				subsector_t *othersub = R_PointInSubsector(refpos);
+				if (othersub->validcount != ::validcount)
 				{
-					CollectWithinRadius(pos, sub, radius);
+					othersub->validcount = ::validcount;
+					collected_ss.Push({ othersub, PosRelative(othersub->sector) });
 				}
 			}
 		}
-	}
-	sector_t *sec = subSec->sector;
-	if (!sec->PortalBlocksSight(sector_t::ceiling))
-	{
-		line_t *other = subSec->firstline->linedef;
-		if (sec->GetPortalPlaneZ(sector_t::ceiling) < Z() + radius)
+		if (!sec->PortalBlocksSight(sector_t::floor))
 		{
-			DVector2 refpos = other->v1->fPos() + other->Delta() / 2 + sec->GetPortalDisplacement(sector_t::ceiling);
-			subsector_t *othersub = R_PointInSubsector(refpos);
-			if (othersub->validcount != ::validcount) CollectWithinRadius(PosRelative(othersub->sector), othersub, radius);
-		}
-	}
-	if (!sec->PortalBlocksSight(sector_t::floor))
-	{
-		line_t *other = subSec->firstline->linedef;
-		if (sec->GetPortalPlaneZ(sector_t::floor) > Z() - radius)
-		{
-			DVector2 refpos = other->v1->fPos() + other->Delta() / 2 + sec->GetPortalDisplacement(sector_t::floor);
-			subsector_t *othersub = R_PointInSubsector(refpos);
-			if (othersub->validcount != ::validcount) CollectWithinRadius(PosRelative(othersub->sector), othersub, radius);
+			line_t *other = subSec->firstline->linedef;
+			if (sec->GetPortalPlaneZ(sector_t::floor) > Z() - radius)
+			{
+				DVector2 refpos = other->v1->fPos() + other->Delta() / 2 + sec->GetPortalDisplacement(sector_t::floor);
+				subsector_t *othersub = R_PointInSubsector(refpos);
+				if (othersub->validcount != ::validcount)
+				{
+					othersub->validcount = ::validcount;
+					collected_ss.Push({ othersub, PosRelative(othersub->sector) });
+				}
+			}
 		}
 	}
 }

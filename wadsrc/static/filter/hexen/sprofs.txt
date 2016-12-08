@@ -57,7 +57,7 @@ CLERW0, 37, 53, iwad
 CLERX0, 37, 43, iwad
 CLERY0, 38, 30, iwad
 CLERZ0, 38, 18, iwad
-CLER[0, 38, 12, iwad
+"CLER[0", 38, 12, iwad
 CPB1A0, 8, 7, iwad
 CPB2A0, 7, 6, iwad
 CPB3A0, 12, 4, iwad

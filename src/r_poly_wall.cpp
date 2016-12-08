@@ -40,24 +40,30 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipP
 	PolyDrawLinePortal *polyportal = nullptr;
 	if (line->backsector == nullptr && line->linedef && line->sidedef == line->linedef->sidedef[0] && (line->linedef->special == Line_Mirror && r_drawmirrors))
 	{
-		linePortals.push_back(std::make_unique<PolyDrawLinePortal>(line->linedef));
-		polyportal = linePortals.back().get();
+		if (PolyRenderer::Instance()->InsertSeenMirror(line->linedef))
+		{
+			linePortals.push_back(std::make_unique<PolyDrawLinePortal>(line->linedef));
+			polyportal = linePortals.back().get();
+		}
 	}
 	else if (line->linedef && line->linedef->isVisualPortal())
 	{
 		FLinePortal *portal = line->linedef->getPortal();
-		for (auto &p : linePortals)
+		if (PolyRenderer::Instance()->InsertSeenLinePortal(portal))
 		{
-			if (p->Portal == portal) // To do: what other criterias do we need to check for?
+			for (auto &p : linePortals)
 			{
-				polyportal = p.get();
-				break;
+				if (p->Portal == portal) // To do: what other criterias do we need to check for?
+				{
+					polyportal = p.get();
+					break;
+				}
 			}
-		}
-		if (!polyportal)
-		{
-			linePortals.push_back(std::make_unique<PolyDrawLinePortal>(portal));
-			polyportal = linePortals.back().get();
+			if (!polyportal)
+			{
+				linePortals.push_back(std::make_unique<PolyDrawLinePortal>(portal));
+				polyportal = linePortals.back().get();
+			}
 		}
 	}
 

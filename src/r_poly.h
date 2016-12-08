@@ -47,6 +47,9 @@ public:
 	
 	uint32_t GetNextStencilValue() { uint32_t value = NextStencilValue; NextStencilValue += 2; return value; }
 
+	bool InsertSeenLinePortal(FLinePortal *portal);
+	bool InsertSeenMirror(line_t *mirrorLine);
+
 private:
 	void ClearBuffers();
 	void SetSceneViewport();
@@ -57,4 +60,7 @@ private:
 	PolySkyDome Skydome;
 	RenderPolyPlayerSprites PlayerSprites;
 	uint32_t NextStencilValue = 0;
+
+	std::set<FLinePortal *> SeenLinePortals;
+	std::set<line_t *> SeenMirrors;
 };

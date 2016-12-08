@@ -274,7 +274,7 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 			args.objectToClip = &WorldToClip;
 			args.mode = TriangleDrawMode::Fan;
 			args.stenciltestvalue = portal->StencilValue + 1;
-			args.stencilwritevalue = StencilValue;
+			args.stencilwritevalue = StencilValue + 1;
 			args.SetClipPlane(PortalPlane.x, PortalPlane.y, PortalPlane.z, PortalPlane.w);
 			for (const auto &verts : portal->Shape)
 			{
@@ -295,7 +295,7 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 			args.objectToClip = &WorldToClip;
 			args.mode = TriangleDrawMode::Fan;
 			args.stenciltestvalue = portal->StencilValue + 1;
-			args.stencilwritevalue = StencilValue;
+			args.stencilwritevalue = StencilValue + 1;
 			args.SetClipPlane(PortalPlane.x, PortalPlane.y, PortalPlane.z, PortalPlane.w);
 			for (const auto &verts : portal->Shape)
 			{

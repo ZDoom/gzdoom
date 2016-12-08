@@ -3061,7 +3061,7 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 		double dist_z = target_z - source_z;
 		double ddist = g_sqrt(dist.X*dist.X + dist.Y*dist.Y + dist_z*dist_z);
 
-		DAngle other_pitch = DAngle::ToDegrees(g_asin(dist_z / ddist)).Normalized180();
+		DAngle other_pitch = -DAngle::ToDegrees(g_asin(dist_z / ddist)).Normalized180();
 		
 		if (max_pitch != 0)
 		{

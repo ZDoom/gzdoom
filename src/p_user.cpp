@@ -2609,11 +2609,7 @@ void P_PlayerThink (player_t *player)
 		else if (cmd->ucmd.upmove != 0)
 		{
 			// Clamp the speed to some reasonable maximum.
-			int magnitude = abs (cmd->ucmd.upmove);
-			if (magnitude > 0x300)
-			{
-				cmd->ucmd.upmove = ksgn (cmd->ucmd.upmove) * 0x300;
-			}
+			cmd->ucmd.upmove = clamp<short>(cmd->ucmd.upmove, -0x300, 0x300);
 			if (player->mo->waterlevel >= 2 || (player->mo->flags2 & MF2_FLY) || (player->cheats & CF_NOCLIP2))
 			{
 				player->mo->Vel.Z = player->mo->Speed * cmd->ucmd.upmove / 128.;

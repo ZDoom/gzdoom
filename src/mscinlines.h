@@ -339,13 +339,4 @@ __forceinline void clearbufshort (void *buff, unsigned int count, WORD clear)
 	}
 }
 
-__forceinline SDWORD ksgn (SDWORD a)
-{
-	__asm mov edx,a
-	__asm add edx,edx
-	__asm sbb eax,eax
-	__asm cmp eax,edx
-	__asm adc eax,0
-}
-
 #pragma warning (default: 4035)

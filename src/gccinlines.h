@@ -316,17 +316,3 @@ static inline void clearbufshort (void *buff, unsigned int count, WORD clear)
 		:"cc");
 }
 
-static inline SDWORD ksgn (SDWORD a)
-{
-	SDWORD result, dummy;
-
-	asm volatile
-		("add %0,%0\n\t"
-		 "sbb %1,%1\n\t"
-		 "cmp %0,%1\n\t"
-		 "adc $0,%1"
-		:"=r" (dummy), "=r" (result)
-		:"0" (a)
-		:"cc");
-	return result;
-}

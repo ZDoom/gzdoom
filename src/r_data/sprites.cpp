@@ -15,6 +15,8 @@
 #include "r_data/voxels.h"
 #include "textures/textures.h"
 
+void gl_InitModels();
+
 // variables used to look up
 //	and range check thing_t sprites patches
 TArray<spritedef_t> sprites;
@@ -24,10 +26,8 @@ DWORD			NumStdSprites;		// The first x sprites that don't belong to skins.
 struct spriteframewithrotate : public spriteframe_t
 {
 	int rotate;
-}
-sprtemp[MAX_SPRITE_FRAMES];
-int 			maxframe;
-char*			spritename;
+};
+
 
 // [RH] skin globals
 FPlayerSkin		*skins;
@@ -44,7 +44,7 @@ PalEntry		OtherGameSkinPalette[256];
 // [RH] Removed checks for coexistance of rotation 0 with other
 //		rotations and made it look more like BOOM's version.
 //
-static bool R_InstallSpriteLump (FTextureID lump, unsigned frame, char rot, bool flipped)
+static bool R_InstallSpriteLump (FTextureID lump, unsigned frame, char rot, bool flipped, spriteframewithrotate *sprtemp, int &maxframe)
 {
 	unsigned rotation;
 
@@ -117,7 +117,7 @@ static bool R_InstallSpriteLump (FTextureID lump, unsigned frame, char rot, bool
 
 
 // [RH] Seperated out of R_InitSpriteDefs()
-static void R_InstallSprite (int num)
+static void R_InstallSprite (int num, spriteframewithrotate *sprtemp, int &maxframe)
 {
 	int frame;
 	int framestart;
@@ -265,6 +265,8 @@ void R_InitSpriteDefs ()
 	unsigned int i, j, smax, vmax;
 	DWORD intname;
 
+	spriteframewithrotate sprtemp[MAX_SPRITE_FRAMES];
+
 	// Create a hash table to speed up the process
 	smax = TexMan.NumTextures();
 	hashes = new Hasher[smax];
@@ -346,7 +348,7 @@ void R_InitSpriteDefs ()
 			sprtemp[j].Voxel = NULL;
 		}
 				
-		maxframe = -1;
+		int maxframe = -1;
 		intname = sprites[i].dwName;
 
 		// scan the lumps, filling in the frames for whatever is found
@@ -356,10 +358,10 @@ void R_InitSpriteDefs ()
 			FTexture *tex = TexMan[hash];
 			if (TEX_DWNAME(tex) == intname)
 			{
-				bool res = R_InstallSpriteLump (FTextureID(hash), tex->Name[4] - 'A', tex->Name[5], false);
+				bool res = R_InstallSpriteLump (FTextureID(hash), tex->Name[4] - 'A', tex->Name[5], false, sprtemp, maxframe);
 
 				if (tex->Name[6] && res)
-					R_InstallSpriteLump (FTextureID(hash), tex->Name[6] - 'A', tex->Name[7], true);
+					R_InstallSpriteLump (FTextureID(hash), tex->Name[6] - 'A', tex->Name[7], true, sprtemp, maxframe);
 			}
 			hash = hashes[hash].Next;
 		}
@@ -396,7 +398,7 @@ void R_InitSpriteDefs ()
 			hash = vh->Next;
 		}
 		
-		R_InstallSprite ((int)i);
+		R_InstallSprite ((int)i, sprtemp, maxframe);
 	}
 
 	delete[] hashes;
@@ -760,13 +762,14 @@ void R_InitSkins (void)
 
 			for(int spr = 0; spr<2; spr++)
 			{
+				spriteframewithrotate sprtemp[MAX_SPRITE_FRAMES];
 				memset (sprtemp, 0xFFFF, sizeof(sprtemp));
 				for (k = 0; k < MAX_SPRITE_FRAMES; ++k)
 				{
 					sprtemp[k].Flip = 0;
 					sprtemp[k].Voxel = NULL;
 				}
-				maxframe = -1;
+				int maxframe = -1;
 
 				if (spr == 1)
 				{
@@ -790,10 +793,10 @@ void R_InitSkins (void)
 					if (lnameint == intname)
 					{
 						FTextureID picnum = TexMan.CreateTexture(k, FTexture::TEX_SkinSprite);
-						bool res = R_InstallSpriteLump (picnum, lname[4] - 'A', lname[5], false);
+						bool res = R_InstallSpriteLump (picnum, lname[4] - 'A', lname[5], false, sprtemp, maxframe);
 
 						if (lname[6] && res)
-							R_InstallSpriteLump (picnum, lname[6] - 'A', lname[7], true);
+							R_InstallSpriteLump (picnum, lname[6] - 'A', lname[7], true, sprtemp, maxframe);
 					}
 				}
 
@@ -809,7 +812,7 @@ void R_InitSkins (void)
 				int sprno = (int)sprites.Push (temp);
 				if (spr==0)	skins[i].sprite = sprno;
 				else skins[i].crouchsprite = sprno;
-				R_InstallSprite (sprno);
+				R_InstallSprite (sprno, sprtemp, maxframe);
 			}
 		}
 
@@ -985,6 +988,8 @@ void R_InitSprites ()
 
 	// [RH] Sort the skins, but leave base as skin 0
 	//qsort (&skins[PlayerClasses.Size ()], numskins-PlayerClasses.Size (), sizeof(FPlayerSkin), skinsorter);
+
+	gl_InitModels();
 }
 
 void R_DeinitSpriteData()

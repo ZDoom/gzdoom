@@ -390,13 +390,14 @@ void DPSprite::SetState(FState *newstate, bool pending)
 
 		if (ID != PSP_FLASH)
 		{ // It's still possible to set the flash layer's offsets with the action function.
+			// Anything going through here cannot be reliably interpolated so this has to reset the interpolation coordinates if it changes the values.
 			if (newstate->GetMisc1())
 			{ // Set coordinates.
-				x = newstate->GetMisc1();
+				oldx = x = newstate->GetMisc1();
 			}
 			if (newstate->GetMisc2())
 			{
-				y = newstate->GetMisc2();
+				oldy = y = newstate->GetMisc2();
 			}
 		}
 
@@ -1041,6 +1042,7 @@ enum WOFFlags
 	WOF_KEEPX =		1,
 	WOF_KEEPY =		1 << 1,
 	WOF_ADD =		1 << 2,
+	WOF_INTERPOLATE = 1 << 3,
 };
 
 void A_OverlayOffset(AActor *self, int layer, double wx, double wy, int flags)
@@ -1069,6 +1071,7 @@ void A_OverlayOffset(AActor *self, int layer, double wx, double wy, int flags)
 			else
 			{
 				psp->x = wx;
+				if (!(flags & WOF_INTERPOLATE)) psp->oldx = psp->x;
 			}
 		}
 		if (!(flags & WOF_KEEPY))
@@ -1080,6 +1083,7 @@ void A_OverlayOffset(AActor *self, int layer, double wx, double wy, int flags)
 			else
 			{
 				psp->y = wy;
+				if (!(flags & WOF_INTERPOLATE)) psp->oldy = psp->y;
 			}
 		}
 	}

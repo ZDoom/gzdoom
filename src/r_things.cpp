@@ -2907,6 +2907,11 @@ void R_DrawParticle_rgba(vissprite_t *vis)
 
 extern double BaseYaspectMul;;
 
+inline int sgn(int v)
+{
+	return v < 0 ? -1 : v > 0 ? 1 : 0;
+}
+
 void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 	const FVector3 &dasprpos, DAngle dasprang,
 	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
@@ -3048,7 +3053,7 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 			xe += xi; ye += yi;
 		}
 
-		i = ksgn(ys-backy)+ksgn(xs-backx)*3+4;
+		i = sgn(ys - backy) + sgn(xs - backx) * 3 + 4;
 		switch(i)
 		{
 			case 6: case 7: x1 = 0;				y1 = 0;				break;

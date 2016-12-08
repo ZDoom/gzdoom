@@ -716,6 +716,7 @@ bool SightCheck::P_SightPathTraverse ()
 // step through map blocks
 // Count is present to prevent a round off error from skipping the break
 
+	int itres;
 	for (count = 0 ; count < 1000 ; count++)
 	{
 		// end traversing when reaching the end of the blockmap
@@ -724,15 +725,15 @@ bool SightCheck::P_SightPathTraverse ()
 		{
 			break;
 		}
-		int res = P_SightBlockLinesIterator(mapx, mapy);
-		if (res == 0)
+		itres = P_SightBlockLinesIterator(mapx, mapy);
+		if (itres == 0)
 		{
 			sightcounts[1]++;
 			return false;	// early out
 		}
 
 		// either reached the end or had an early-out condition with portals left to check,
-		if (res == -1 || (mapxstep | mapystep) == 0)
+		if (itres == -1 || (mapxstep | mapystep) == 0)
 			break;
 
 		switch (((xs_FloorToInt(yintercept) == mapy) << 1) | (xs_FloorToInt(xintercept) == mapx))
@@ -787,7 +788,9 @@ sightcounts[1]++;
 //
 sightcounts[2]++;
 
-	return P_SightTraverseIntercepts ( );
+	bool traverseres = P_SightTraverseIntercepts ( );
+	if (itres == -1) return false;	// if the iterator had an early out there was no line of sight. The traverser was only called to collect more portals.
+	return traverseres;
 }
 
 /*

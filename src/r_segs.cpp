@@ -192,13 +192,13 @@ void ClipMidtex(int x1, int x2)
 {
 	short most[MAXWIDTH];
 
-	WallMost(most, curline->frontsector->ceilingplane, &WallC);
+	R_CreateWallSegmentYSloped(most, curline->frontsector->ceilingplane, &WallC);
 	for (int i = x1; i < x2; ++i)
 	{
 		if (wallupper[i] < most[i])
 			wallupper[i] = most[i];
 	}
-	WallMost(most, curline->frontsector->floorplane, &WallC);
+	R_CreateWallSegmentYSloped(most, curline->frontsector->floorplane, &WallC);
 	for (int i = x1; i < x2; ++i)
 	{
 		if (walllower[i] > most[i])
@@ -380,19 +380,19 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 		if (fake3D & FAKE3D_CLIPTOP)
 		{
-			OWallMost(wallupper, textop < sclipTop - ViewPos.Z ? textop : sclipTop - ViewPos.Z, &WallC);
+			R_CreateWallSegmentY(wallupper, textop < sclipTop - ViewPos.Z ? textop : sclipTop - ViewPos.Z, &WallC);
 		}
 		else
 		{
-			OWallMost(wallupper, textop, &WallC);
+			R_CreateWallSegmentY(wallupper, textop, &WallC);
 		}
 		if (fake3D & FAKE3D_CLIPBOTTOM)
 		{
-			OWallMost(walllower, textop - texheight > sclipBottom - ViewPos.Z ? textop - texheight : sclipBottom - ViewPos.Z, &WallC);
+			R_CreateWallSegmentY(walllower, textop - texheight > sclipBottom - ViewPos.Z ? textop - texheight : sclipBottom - ViewPos.Z, &WallC);
 		}
 		else
 		{
-			OWallMost(walllower, textop - texheight, &WallC);
+			R_CreateWallSegmentY(walllower, textop - texheight, &WallC);
 		}
 
 		for (i = x1; i < x2; i++)
@@ -495,7 +495,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 		if (fake3D & FAKE3D_CLIPTOP)
 		{
-			OWallMost(wallupper, sclipTop - ViewPos.Z, &WallC);
+			R_CreateWallSegmentY(wallupper, sclipTop - ViewPos.Z, &WallC);
 			for (i = x1; i < x2; i++)
 			{
 				if (wallupper[i] < mceilingclip[i])
@@ -505,7 +505,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		}
 		if (fake3D & FAKE3D_CLIPBOTTOM)
 		{
-			OWallMost(walllower, sclipBottom - ViewPos.Z, &WallC);
+			R_CreateWallSegmentY(walllower, sclipBottom - ViewPos.Z, &WallC);
 			for (i = x1; i < x2; i++)
 			{
 				if (walllower[i] > mfloorclip[i])
@@ -629,8 +629,8 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	WallC.tright.Y = ds->cy + ds->cdy;
 	WallT = ds->tmapvals;
 
-	OWallMost(wallupper, sclipTop - ViewPos.Z, &WallC);
-	OWallMost(walllower, sclipBottom - ViewPos.Z, &WallC);
+	R_CreateWallSegmentY(wallupper, sclipTop - ViewPos.Z, &WallC);
+	R_CreateWallSegmentY(walllower, sclipBottom - ViewPos.Z, &WallC);
 
 	for (i = x1; i < x2; i++)
 	{
@@ -1357,7 +1357,7 @@ void R_NewWall (bool needlights)
 				// wall but nothing to draw for it.
 				// Recalculate walltop so that the wall is clipped by the back sector's
 				// ceiling instead of the front sector's ceiling.
-				WallMost (walltop, backsector->ceilingplane, &WallC);
+				R_CreateWallSegmentYSloped (walltop, backsector->ceilingplane, &WallC);
 			}
 			// Putting sky ceilings on the front and back of a line alters the way unpegged
 			// positioning works.
@@ -1932,19 +1932,19 @@ void R_StoreWallRange (int start, int stop)
 	ds_p++;
 }
 
-int WallMostAny(short *mostbuf, double z1, double z2, const FWallCoords *wallc)
+int R_CreateWallSegmentY(short *outbuf, double z1, double z2, const FWallCoords *wallc)
 {
 	float y1 = (float)(CenterY - z1 * InvZtoScale / wallc->sz1);
 	float y2 = (float)(CenterY - z2 * InvZtoScale / wallc->sz2);
 
 	if (y1 < 0 && y2 < 0) // entire line is above screen
 	{
-		memset(&mostbuf[wallc->sx1], 0, (wallc->sx2 - wallc->sx1) * sizeof(mostbuf[0]));
+		memset(&outbuf[wallc->sx1], 0, (wallc->sx2 - wallc->sx1) * sizeof(outbuf[0]));
 		return 3;
 	}
 	else if (y1 > viewheight && y2 > viewheight) // entire line is below screen
 	{
-		fillshort(&mostbuf[wallc->sx1], wallc->sx2 - wallc->sx1, viewheight);
+		fillshort(&outbuf[wallc->sx1], wallc->sx2 - wallc->sx1, viewheight);
 		return 12;
 	}
 
@@ -1958,7 +1958,7 @@ int WallMostAny(short *mostbuf, double z1, double z2, const FWallCoords *wallc)
 		{
 			float t = (x - wallc->sx1) * rcp_delta;
 			float y = y1 * (1.0f - t) + y2 * t;
-			mostbuf[x] = (short)xs_RoundToInt(y);
+			outbuf[x] = (short)xs_RoundToInt(y);
 		}
 	}
 	else
@@ -1967,23 +1967,18 @@ int WallMostAny(short *mostbuf, double z1, double z2, const FWallCoords *wallc)
 		{
 			float t = (x - wallc->sx1) * rcp_delta;
 			float y = y1 * (1.0f - t) + y2 * t;
-			mostbuf[x] = (short)clamp(xs_RoundToInt(y), 0, viewheight);
+			outbuf[x] = (short)clamp(xs_RoundToInt(y), 0, viewheight);
 		}
 	}
 
 	return 0;
 }
 
-int OWallMost(short *mostbuf, double z, const FWallCoords *wallc)
-{
-	return WallMostAny(mostbuf, z, z, wallc);
-}
-
-int WallMost(short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
+int R_CreateWallSegmentYSloped(short *outbuf, const secplane_t &plane, const FWallCoords *wallc)
 {
 	if (!plane.isSlope())
 	{
-		return OWallMost(mostbuf, plane.Zat0() - ViewPos.Z, wallc);
+		return R_CreateWallSegmentY(outbuf, plane.Zat0() - ViewPos.Z, wallc);
 	}
 	else
 	{
@@ -2048,7 +2043,7 @@ int WallMost(short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 			}
 		}
 
-		return WallMostAny(mostbuf, z1, z2, wallc);
+		return R_CreateWallSegmentY(outbuf, z1, z2, wallc);
 	}
 }
 

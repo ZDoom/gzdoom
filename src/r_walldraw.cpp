@@ -430,7 +430,7 @@ static void ProcessStripedWall(int x1, int x2, short *uwal, short *dwal, float *
 	// kg3D - fake floors instead of zdoom light list
 	for (unsigned int i = 0; i < frontsector->e->XFloor.lightlist.Size(); i++)
 	{
-		int j = WallMost (most3, frontsector->e->XFloor.lightlist[i].plane, &WallC);
+		int j = R_CreateWallSegmentYSloped (most3, frontsector->e->XFloor.lightlist[i].plane, &WallC);
 		if (j != 3)
 		{
 			for (int j = x1; j < x2; ++j)
@@ -510,7 +510,7 @@ static void ProcessWallNP2(int x1, int x2, short *uwal, short *dwal, float *swal
 		dc_texturemid = (partition - ViewPos.Z) * yrepeat + texheight;
 		while (partition > bot)
 		{
-			int j = OWallMost(most3, partition - ViewPos.Z, &WallC);
+			int j = R_CreateWallSegmentY(most3, partition - ViewPos.Z, &WallC);
 			if (j != 3)
 			{
 				for (int j = x1; j < x2; ++j)
@@ -534,7 +534,7 @@ static void ProcessWallNP2(int x1, int x2, short *uwal, short *dwal, float *swal
 		dc_texturemid = (partition - ViewPos.Z) * yrepeat + texheight;
 		while (partition < top)
 		{
-			int j = OWallMost(most3, partition - ViewPos.Z, &WallC);
+			int j = R_CreateWallSegmentY(most3, partition - ViewPos.Z, &WallC);
 			if (j != 12)
 			{
 				for (int j = x1; j < x2; ++j)

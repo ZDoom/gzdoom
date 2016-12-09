@@ -828,7 +828,6 @@ set( FASTMATH_PCH_SOURCES
 	r_segs.cpp
 	r_sky.cpp
 	r_things.cpp
-	r_walldraw.cpp
 	s_advsound.cpp
 	s_environment.cpp
 	s_playlist.cpp

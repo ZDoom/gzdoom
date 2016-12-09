@@ -27,14 +27,6 @@ __forceinline SDWORD Scale (SDWORD a, SDWORD b, SDWORD c)
 	__asm idiv c
 }
 
-__forceinline SDWORD MulScale (SDWORD a, SDWORD b, SDWORD c)
-{
-	__asm mov eax,a
-	__asm mov ecx,c
-	__asm imul b
-	__asm shrd eax,edx,cl
-}
-
 #define MAKECONSTMulScale(s) \
 	__forceinline SDWORD MulScale##s (SDWORD a, SDWORD b) \
 	{ \
@@ -87,20 +79,6 @@ __forceinline DWORD UMulScale16(DWORD a, DWORD b)
 	__asm mov eax,a
 	__asm mul b
 	__asm shrd eax,edx,16
-}
-
-__forceinline SDWORD DMulScale (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD s)
-{
-	__asm mov eax,a
-	__asm imul b
-	__asm mov ebx,eax
-	__asm mov eax,c
-	__asm mov esi,edx
-	__asm mov ecx,s
-	__asm imul d
-	__asm add eax,ebx
-	__asm adc edx,esi
-	__asm shrd eax,edx,cl
 }
 
 #define MAKECONSTDMulScale(s) \
@@ -163,115 +141,6 @@ __forceinline SDWORD DMulScale32 (SDWORD a, SDWORD b, SDWORD c, SDWORD d)
 	__asm mov eax,edx
 }
 
-#define MAKECONSTTMulScale(s) \
-	__forceinline SDWORD TMulScale##s (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) \
-	{ \
-		__asm mov eax,a \
-		__asm imul b \
-		__asm mov ebx,eax \
-		__asm mov eax,d \
-		__asm mov ecx,edx \
-		__asm imul c \
-		__asm add ebx,eax \
-		__asm mov eax,e \
-		__asm adc ecx,edx \
-		__asm imul f \
-		__asm add eax,ebx \
-		__asm adc edx,ecx \
-		__asm shrd eax,edx,s \
-	}
-
-MAKECONSTTMulScale(1)
-MAKECONSTTMulScale(2)
-MAKECONSTTMulScale(3)
-MAKECONSTTMulScale(4)
-MAKECONSTTMulScale(5)
-MAKECONSTTMulScale(6)
-MAKECONSTTMulScale(7)
-MAKECONSTTMulScale(8)
-MAKECONSTTMulScale(9)
-MAKECONSTTMulScale(10)
-MAKECONSTTMulScale(11)
-MAKECONSTTMulScale(12)
-MAKECONSTTMulScale(13)
-MAKECONSTTMulScale(14)
-MAKECONSTTMulScale(15)
-MAKECONSTTMulScale(16)
-MAKECONSTTMulScale(17)
-MAKECONSTTMulScale(18)
-MAKECONSTTMulScale(19)
-MAKECONSTTMulScale(20)
-MAKECONSTTMulScale(21)
-MAKECONSTTMulScale(22)
-MAKECONSTTMulScale(23)
-MAKECONSTTMulScale(24)
-MAKECONSTTMulScale(25)
-MAKECONSTTMulScale(26)
-MAKECONSTTMulScale(27)
-MAKECONSTTMulScale(28)
-MAKECONSTTMulScale(29)
-MAKECONSTTMulScale(30)
-MAKECONSTTMulScale(31)
-#undef MAKECONSTTMulScale
-
-__forceinline SDWORD TMulScale32 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f)
-{
-	__asm mov eax,a
-	__asm imul b
-	__asm mov ebx,eax
-	__asm mov eax,c
-	__asm mov ecx,edx
-	__asm imul d
-	__asm add ebx,eax
-	__asm mov eax,e
-	__asm adc ecx,edx
-	__asm imul f
-	__asm add eax,ebx
-	__asm adc edx,ecx
-	__asm mov eax,edx
-}
-
-__forceinline SDWORD BoundMulScale (SDWORD a, SDWORD b, SDWORD c)
-{
-	__asm mov eax,a
-	__asm imul b
-	__asm mov ebx,edx
-	__asm mov ecx,c
-	__asm shrd eax,edx,cl
-	__asm sar edx,cl
-	__asm xor edx,eax
-	__asm js checkit
-	__asm xor edx,eax
-	__asm jz skipboundit
-	__asm cmp edx,0xffffffff
-	__asm je skipboundit
-checkit:
-	__asm mov eax,ebx
-	__asm sar eax,31
-	__asm xor eax,0x7fffffff
-skipboundit:
-	;
-}
-
-__forceinline SDWORD DivScale (SDWORD a, SDWORD b, SDWORD c)
-{
-	__asm mov eax,a
-	__asm mov ecx,c
-	__asm shl eax,cl
-	__asm mov edx,a
-	__asm neg cl
-	__asm sar edx,cl
-	__asm idiv b
-}
-
-__forceinline SDWORD DivScale1 (SDWORD a, SDWORD b)
-{
-	__asm mov eax,a
-	__asm add eax,eax
-	__asm sbb edx,edx
-	__asm idiv b
-}
-
 #define MAKECONSTDivScale(s) \
 	__forceinline SDWORD DivScale##s (SDWORD a, SDWORD b) \
 	{ \
@@ -313,12 +182,5 @@ MAKECONSTDivScale(29)
 MAKECONSTDivScale(30)
 MAKECONSTDivScale(31)
 #undef MAKECONSTDivScale
-
-__forceinline SDWORD DivScale32 (SDWORD a, SDWORD b)
-{
-	__asm mov edx,a
-	__asm xor eax,eax
-	__asm idiv b
-}
 
 #pragma warning (default: 4035)

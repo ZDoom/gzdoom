@@ -20,11 +20,6 @@ static __forceinline SDWORD Scale (SDWORD a, SDWORD b, SDWORD c)
 	return (SDWORD)(((SQWORD)a*b)/c);
 }
 
-static __forceinline SDWORD MulScale (SDWORD a, SDWORD b, SDWORD c)
-{
-	return (SDWORD)(((SQWORD)a*b)>>c);
-}
-
 static __forceinline SDWORD MulScale1 (SDWORD a, SDWORD b) { return (SDWORD)(((SQWORD)a * b) >> 1); }
 static __forceinline SDWORD MulScale2 (SDWORD a, SDWORD b) { return (SDWORD)(((SQWORD)a * b) >> 2); }
 static __forceinline SDWORD MulScale3 (SDWORD a, SDWORD b) { return (SDWORD)(((SQWORD)a * b) >> 3); }
@@ -60,11 +55,6 @@ static __forceinline SDWORD MulScale32 (SDWORD a, SDWORD b) { return (SDWORD)(((
 
 static __forceinline DWORD UMulScale16 (DWORD a, DWORD b) { return (DWORD)(((QWORD)a * b) >> 16); }
 
-static __forceinline SDWORD DMulScale (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD s)
-{
-	return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d) >> s);
-}
-
 static __forceinline SDWORD DMulScale1 (SDWORD a, SDWORD b, SDWORD c, SDWORD d) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d) >> 1); }
 static __forceinline SDWORD DMulScale2 (SDWORD a, SDWORD b, SDWORD c, SDWORD d) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d) >> 2); }
 static __forceinline SDWORD DMulScale3 (SDWORD a, SDWORD b, SDWORD c, SDWORD d) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d) >> 3); }
@@ -98,53 +88,6 @@ static __forceinline SDWORD DMulScale30 (SDWORD a, SDWORD b, SDWORD c, SDWORD d)
 static __forceinline SDWORD DMulScale31 (SDWORD a, SDWORD b, SDWORD c, SDWORD d) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d) >> 31); }
 static __forceinline SDWORD DMulScale32 (SDWORD a, SDWORD b, SDWORD c, SDWORD d) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d) >> 32); }
 
-static __forceinline SDWORD TMulScale1 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 1); }
-static __forceinline SDWORD TMulScale2 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 2); }
-static __forceinline SDWORD TMulScale3 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 3); }
-static __forceinline SDWORD TMulScale4 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 4); }
-static __forceinline SDWORD TMulScale5 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 5); }
-static __forceinline SDWORD TMulScale6 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 6); }
-static __forceinline SDWORD TMulScale7 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 7); }
-static __forceinline SDWORD TMulScale8 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 8); }
-static __forceinline SDWORD TMulScale9 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 9); }
-static __forceinline SDWORD TMulScale10 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 10); }
-static __forceinline SDWORD TMulScale11 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 11); }
-static __forceinline SDWORD TMulScale12 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 12); }
-static __forceinline SDWORD TMulScale13 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 13); }
-static __forceinline SDWORD TMulScale14 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 14); }
-static __forceinline SDWORD TMulScale15 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 15); }
-static __forceinline SDWORD TMulScale16 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 16); }
-static __forceinline SDWORD TMulScale17 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 17); }
-static __forceinline SDWORD TMulScale18 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 18); }
-static __forceinline SDWORD TMulScale19 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 19); }
-static __forceinline SDWORD TMulScale20 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 20); }
-static __forceinline SDWORD TMulScale21 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 21); }
-static __forceinline SDWORD TMulScale22 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 22); }
-static __forceinline SDWORD TMulScale23 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 23); }
-static __forceinline SDWORD TMulScale24 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 24); }
-static __forceinline SDWORD TMulScale25 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 25); }
-static __forceinline SDWORD TMulScale26 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 26); }
-static __forceinline SDWORD TMulScale27 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 27); }
-static __forceinline SDWORD TMulScale28 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 28); }
-static __forceinline SDWORD TMulScale29 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 29); }
-static __forceinline SDWORD TMulScale30 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 30); }
-static __forceinline SDWORD TMulScale31 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 31); }
-static __forceinline SDWORD TMulScale32 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) { return (SDWORD)(((SQWORD)a*b + (SQWORD)c*d + (SQWORD)e*f) >> 32); }
-
-static __forceinline SDWORD BoundMulScale (SDWORD a, SDWORD b, SDWORD c)
-{
-	SQWORD x = ((SQWORD)a * b) >> c;
-	return x >  0x7FFFFFFFll ? 0x7FFFFFFF :
-		   x < -0x80000000ll ? 0x80000000 :
-		   (SDWORD)x;
-}
-
-static inline SDWORD DivScale (SDWORD a, SDWORD b, SDWORD c)
-{
-	return (SDWORD)(((SQWORD)a << c) / b);
-}
-
-static inline SDWORD DivScale1 (SDWORD a, SDWORD b) { return (SDWORD)(((SQWORD)a << 1) / b); }
 static inline SDWORD DivScale2 (SDWORD a, SDWORD b) { return (SDWORD)(((SQWORD)a << 2) / b); }
 static inline SDWORD DivScale3 (SDWORD a, SDWORD b) { return (SDWORD)(((SQWORD)a << 3) / b); }
 static inline SDWORD DivScale4 (SDWORD a, SDWORD b) { return (SDWORD)(((SQWORD)a << 4) / b); }
@@ -175,5 +118,4 @@ static inline SDWORD DivScale28 (SDWORD a, SDWORD b) { return (SDWORD)(((SQWORD)
 static inline SDWORD DivScale29 (SDWORD a, SDWORD b) { return (SDWORD)(((SQWORD)a << 29) / b); }
 static inline SDWORD DivScale30 (SDWORD a, SDWORD b) { return (SDWORD)(((SQWORD)a << 30) / b); }
 static inline SDWORD DivScale31 (SDWORD a, SDWORD b) { return (SDWORD)(((SQWORD)a << 31) / b); }
-static inline SDWORD DivScale32 (SDWORD a, SDWORD b) { return (SDWORD)(((SQWORD)a << 32) / b); }
 

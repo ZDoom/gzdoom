@@ -30,7 +30,6 @@
 
 void PolyCull::CullScene(const TriMatrix &worldToClip, const Vec4f &portalClipPlane)
 {
-	ClearSolidSegments();
 	PvsSectors.clear();
 	frustumPlanes = FrustumPlanes(worldToClip);
 	PortalClipPlane = portalClipPlane;
@@ -42,8 +41,6 @@ void PolyCull::CullScene(const TriMatrix &worldToClip, const Vec4f &portalClipPl
 		CullSubsector(subsectors);
 	else
 		CullNode(nodes + numnodes - 1);	// The head node is the last node output.
-
-	ClearSolidSegments();
 }
 
 void PolyCull::CullNode(void *node)
@@ -107,6 +104,18 @@ void PolyCull::ClearSolidSegments()
 	SolidSegments.reserve(SolidCullScale + 2);
 	SolidSegments.push_back({ -0x7fff, -SolidCullScale });
 	SolidSegments.push_back({ SolidCullScale , 0x7fff });
+}
+
+void PolyCull::InvertSegments()
+{
+	TempInvertSolidSegments.swap(SolidSegments);
+	ClearSolidSegments();
+	int x = -0x7fff;
+	for (const auto &segment : TempInvertSolidSegments)
+	{
+		MarkSegmentCulled(x, segment.X1 - 1);
+		x = segment.X2 + 1;
+	}
 }
 
 bool PolyCull::IsSegmentCulled(int x1, int x2) const

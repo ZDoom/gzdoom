@@ -35,11 +35,13 @@ enum class LineSegmentRange
 class PolyCull
 {
 public:
+	void ClearSolidSegments();
 	void CullScene(const TriMatrix &worldToClip, const Vec4f &portalClipPlane);
 
 	LineSegmentRange GetSegmentRangeForLine(double x1, double y1, double x2, double y2, int &sx1, int &sx2) const;
 	void MarkSegmentCulled(int x1, int x2);
 	bool IsSegmentCulled(int x1, int x2) const;
+	void InvertSegments();
 
 	std::vector<subsector_t *> PvsSectors;
 	double MaxCeilingHeight = 0.0;
@@ -60,9 +62,8 @@ private:
 	// Returns true if some part of the bbox might be visible.
 	bool CheckBBox(float *bspcoord);
 
-	void ClearSolidSegments();
-
 	std::vector<SolidSegment> SolidSegments;
+	std::vector<SolidSegment> TempInvertSolidSegments;
 	const int SolidCullScale = 3000;
 
 	FrustumPlanes frustumPlanes;

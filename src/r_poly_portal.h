@@ -33,6 +33,13 @@ struct PolyPortalVertexRange
 	uint32_t SubsectorDepth;
 };
 
+class PolyPortalSegment
+{
+public:
+	PolyPortalSegment(int x1, int x2) : X1(x1), X2(x2) { }
+	int X1, X2;
+};
+
 class PolyDrawSectorPortal
 {
 public:
@@ -44,6 +51,8 @@ public:
 	FSectorPortal *Portal = nullptr;
 	uint32_t StencilValue = 0;
 	std::vector<PolyPortalVertexRange> Shape;
+	std::vector<PolyPortalSegment> Segments;
+	Vec4f PortalPlane = Vec4f(0.0f);
 
 private:
 	void SaveGlobals();
@@ -73,6 +82,7 @@ public:
 	line_t *Mirror = nullptr;
 	uint32_t StencilValue = 0;
 	std::vector<PolyPortalVertexRange> Shape;
+	std::vector<PolyPortalSegment> Segments;
 
 private:
 	void SaveGlobals();

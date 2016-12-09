@@ -67,6 +67,7 @@ public:
 
 class PolyDrawSectorPortal;
 class PolyDrawLinePortal;
+class PolyPortalSegment;
 
 // Renders everything from a specific viewpoint
 class RenderPolyScene
@@ -75,6 +76,7 @@ public:
 	RenderPolyScene();
 	~RenderPolyScene();
 	void SetViewpoint(const TriMatrix &worldToClip, const Vec4f &portalPlane, uint32_t stencilValue);
+	void SetPortalSegments(const std::vector<PolyPortalSegment> &segments);
 	void Render(int portalDepth);
 	void RenderTranslucent(int portalDepth);
 
@@ -100,4 +102,5 @@ private:
 
 	std::vector<std::unique_ptr<PolyDrawSectorPortal>> SectorPortals;
 	std::vector<std::unique_ptr<PolyDrawLinePortal>> LinePortals;
+	bool PortalSegmentsAdded = false;
 };

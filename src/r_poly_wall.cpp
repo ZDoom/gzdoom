@@ -35,7 +35,7 @@
 
 EXTERN_CVAR(Bool, r_drawmirrors)
 
-bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipPlane, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals)
+bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals)
 {
 	PolyDrawLinePortal *polyportal = nullptr;
 	if (line->backsector == nullptr && line->linedef && line->sidedef == line->linedef->sidedef[0] && (line->linedef->special == Line_Mirror && r_drawmirrors))
@@ -91,7 +91,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipP
 			wall.UnpeggedCeil = frontceilz1;
 			wall.Texpart = side_t::mid;
 			wall.Polyportal = polyportal;
-			wall.Render(worldToClip, clipPlane);
+			wall.Render(worldToClip, clipPlane, cull);
 			return true;
 		}
 	}
@@ -126,7 +126,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipP
 			wall.BottomZ = topfloorz1;
 			wall.UnpeggedCeil = topceilz1;
 			wall.Texpart = side_t::top;
-			wall.Render(worldToClip, clipPlane);
+			wall.Render(worldToClip, clipPlane, cull);
 		}
 
 		if ((bottomfloorz1 < bottomceilz1 || bottomfloorz2 < bottomceilz2) && line->sidedef)
@@ -136,7 +136,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipP
 			wall.BottomZ = bottomfloorz2;
 			wall.UnpeggedCeil = topceilz1;
 			wall.Texpart = side_t::bottom;
-			wall.Render(worldToClip, clipPlane);
+			wall.Render(worldToClip, clipPlane, cull);
 		}
 
 		if (line->sidedef)
@@ -155,14 +155,14 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const Vec4f &clipP
 			if (polyportal)
 			{
 				wall.Polyportal = polyportal;
-				wall.Render(worldToClip, clipPlane);
+				wall.Render(worldToClip, clipPlane, cull);
 			}
 		}
 	}
 	return polyportal != nullptr;
 }
 
-void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const Vec4f &clipPlane, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject> &translucentWallsOutput)
+void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject> &translucentWallsOutput)
 {
 	double frontceilz1 = fakeFloor->top.plane->ZatPoint(line->v1);
 	double frontfloorz1 = fakeFloor->bottom.plane->ZatPoint(line->v1);
@@ -182,7 +182,7 @@ void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const Vec4f
 	wall.BottomZ = frontfloorz1;
 	wall.UnpeggedCeil = frontceilz1;
 	wall.Texpart = side_t::mid;
-	wall.Render(worldToClip, clipPlane);
+	wall.Render(worldToClip, clipPlane, cull);
 }
 
 void RenderPolyWall::SetCoords(const DVector2 &v1, const DVector2 &v2, double ceil1, double floor1, double ceil2, double floor2)
@@ -195,7 +195,7 @@ void RenderPolyWall::SetCoords(const DVector2 &v1, const DVector2 &v2, double ce
 	this->floor2 = floor2;
 }
 
-void RenderPolyWall::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane)
+void RenderPolyWall::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull)
 {
 	FTexture *tex = GetTexture();
 	if (!tex && !Polyportal)
@@ -266,6 +266,11 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane
 		args.stencilwritevalue = Polyportal->StencilValue;
 		PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
 		Polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw, args.uniforms.subsectorDepth });
+
+		int sx1, sx2;
+		LineSegmentRange range = cull.GetSegmentRangeForLine(v1.X, v1.Y, v2.X, v2.Y, sx1, sx2);
+		if (range == LineSegmentRange::HasSegment)
+			Polyportal->Segments.push_back({ sx1, sx2 });
 	}
 	else if (!Masked)
 	{

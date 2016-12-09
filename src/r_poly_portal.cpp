@@ -64,7 +64,8 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 		TriMatrix::translate((float)-ViewPos.X, (float)-ViewPos.Y, (float)-ViewPos.Z);
 	TriMatrix worldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
 
-	RenderPortal.SetViewpoint(worldToClip, Vec4f(0.0f, 0.0f, 0.0f, 1.0f), StencilValue);
+	RenderPortal.SetViewpoint(worldToClip, PortalPlane, StencilValue);
+	RenderPortal.SetPortalSegments(Segments);
 	RenderPortal.Render(portalDepth);
 	
 	RestoreGlobals();
@@ -175,6 +176,7 @@ void PolyDrawLinePortal::Render(int portalDepth)
 	Vec4f portalPlane((float)planeNormal.X, (float)planeNormal.Y, 0.0f, (float)planeD);
 
 	RenderPortal.SetViewpoint(worldToClip, portalPlane, StencilValue);
+	RenderPortal.SetPortalSegments(Segments);
 	RenderPortal.Render(portalDepth);
 
 	RestoreGlobals();

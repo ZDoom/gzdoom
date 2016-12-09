@@ -32,7 +32,7 @@
 
 EXTERN_CVAR(Int, r_3dfloors)
 
-void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, const Vec4f &clipPlane, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
 	RenderPolyPlane plane;
 
@@ -84,8 +84,8 @@ void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, const Vec4f &cl
 		}
 	}
 
-	plane.Render(worldToClip, clipPlane, sub, subsectorDepth, stencilValue, true, skyCeilingHeight, sectorPortals);
-	plane.Render(worldToClip, clipPlane, sub, subsectorDepth, stencilValue, false, skyFloorHeight, sectorPortals);
+	plane.Render(worldToClip, clipPlane, cull, sub, subsectorDepth, stencilValue, true, skyCeilingHeight, sectorPortals);
+	plane.Render(worldToClip, clipPlane, cull, sub, subsectorDepth, stencilValue, false, skyFloorHeight, sectorPortals);
 }
 
 void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &clipPlane, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, F3DFloor *fakeFloor)
@@ -147,9 +147,10 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 	PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
 }
 
-void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
-	FSectorPortal *portal = sub->sector->ValidatePortal(ceiling ? sector_t::ceiling : sector_t::floor);
+	std::vector<PolyPortalSegment> portalSegments;
+	FSectorPortal *portal = nullptr;// sub->sector->ValidatePortal(ceiling ? sector_t::ceiling : sector_t::floor);
 	PolyDrawSectorPortal *polyportal = nullptr;
 	if (portal && (portal->mFlags & PORTSF_INSKYBOX) == PORTSF_INSKYBOX) // Do not recurse into portals we already recursed into
 		portal = nullptr;
@@ -157,7 +158,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	{
 		for (auto &p : sectorPortals)
 		{
-			if (p->Portal == portal) // To do: what other criterias do we need to check for?
+			if (p->Portal == portal) // To do: what other criteria do we need to check for?
 			{
 				polyportal = p.get();
 				break;
@@ -167,6 +168,54 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 		{
 			sectorPortals.push_back(std::make_unique<PolyDrawSectorPortal>(portal, ceiling));
 			polyportal = sectorPortals.back().get();
+		}
+
+		// Calculate portal clipping
+
+		DVector2 v;
+		bool inside = true;
+		double vdist = 1.0e10;
+
+		portalSegments.reserve(sub->numlines);
+		for (uint32_t i = 0; i < sub->numlines; i++)
+		{
+			seg_t *line = &sub->firstline[i];
+
+			DVector2 pt1 = line->v1->fPos() - ViewPos;
+			DVector2 pt2 = line->v2->fPos() - ViewPos;
+			if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
+				inside = false;
+
+			double dist = pt1.LengthSquared();
+			if (dist < vdist)
+			{
+				v = line->v1->fPos();
+				vdist = dist;
+			}
+			dist = pt2.LengthSquared();
+			if (dist < vdist)
+			{
+				v = line->v2->fPos();
+				vdist = dist;
+			}
+
+			int sx1, sx2;
+			LineSegmentRange range = cull.GetSegmentRangeForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), sx1, sx2);
+			if (range == LineSegmentRange::HasSegment)
+				portalSegments.push_back({ sx1, sx2 });
+		}
+
+		if (inside)
+		{
+			polyportal->PortalPlane = Vec4f(0.0f, 0.0f, 0.0f, 1.0f);
+		}
+		else if(polyportal->PortalPlane == Vec4f(0.0f) || Vec4f::dot(polyportal->PortalPlane, Vec4f((float)v.X, (float)v.Y, 0.0f, 1.0f)) > 0.0f)
+		{
+			DVector2 planePos = v;
+			DVector2 planeNormal = v - ViewPos;
+			planeNormal.MakeUnit();
+			double planeD = -(planeNormal | (planePos + planeNormal * 0.001));
+			polyportal->PortalPlane = Vec4f((float)planeNormal.X, (float)planeNormal.Y, 0.0f, (float)planeD);
 		}
 	}
 	
@@ -300,6 +349,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 			args.stencilwritevalue = polyportal->StencilValue;
 			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
 			polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw, subsectorDepth });
+			polyportal->Segments.insert(polyportal->Segments.end(), portalSegments.begin(), portalSegments.end());
 		}
 	}
 	else
@@ -308,6 +358,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 		{
 			args.stencilwritevalue = polyportal->StencilValue;
 			polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw, subsectorDepth });
+			polyportal->Segments.insert(polyportal->Segments.end(), portalSegments.begin(), portalSegments.end());
 		}
 		else
 		{
@@ -385,7 +436,10 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
 			
 			if (portal)
+			{
 				polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw, subsectorDepth });
+				polyportal->Segments.insert(polyportal->Segments.end(), portalSegments.begin(), portalSegments.end());
+			}
 		}
 	}
 }

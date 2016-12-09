@@ -50,10 +50,24 @@ void RenderPolyScene::SetViewpoint(const TriMatrix &worldToClip, const Vec4f &po
 	PortalPlane = portalPlane;
 }
 
+void RenderPolyScene::SetPortalSegments(const std::vector<PolyPortalSegment> &segments)
+{
+	Cull.ClearSolidSegments();
+	for (const auto &segment : segments)
+	{
+		Cull.MarkSegmentCulled(segment.X1, segment.X2);
+	}
+	Cull.InvertSegments();
+	PortalSegmentsAdded = true;
+}
+
 void RenderPolyScene::Render(int portalDepth)
 {
 	ClearBuffers();
+	if (!PortalSegmentsAdded)
+		Cull.ClearSolidSegments();
 	Cull.CullScene(WorldToClip, PortalPlane);
+	Cull.ClearSolidSegments();
 	RenderSectors();
 	RenderPortals(portalDepth);
 }
@@ -91,7 +105,7 @@ void RenderPolyScene::RenderSubsector(subsector_t *sub)
 
 	if (sub->sector->CenterFloor() != sub->sector->CenterCeiling())
 	{
-		RenderPolyPlane::RenderPlanes(WorldToClip, PortalPlane, sub, subsectorDepth, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
+		RenderPolyPlane::RenderPlanes(WorldToClip, PortalPlane, Cull, sub, subsectorDepth, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
 	}
 
 	for (uint32_t i = 0; i < sub->numlines; i++)
@@ -199,12 +213,12 @@ void RenderPolyScene::RenderLine(subsector_t *sub, seg_t *line, sector_t *fronts
 			if (!(fakeFloor->flags & FF_EXISTS)) continue;
 			if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
 			if (!fakeFloor->model) continue;
-			RenderPolyWall::Render3DFloorLine(WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, fakeFloor, TranslucentObjects);
+			RenderPolyWall::Render3DFloorLine(WorldToClip, PortalPlane, Cull, line, frontsector, subsectorDepth, StencilValue, fakeFloor, TranslucentObjects);
 		}
 	}
 
 	// Render wall, and update culling info if its an occlusion blocker
-	if (RenderPolyWall::RenderLine(WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, TranslucentObjects, LinePortals))
+	if (RenderPolyWall::RenderLine(WorldToClip, PortalPlane, Cull, line, frontsector, subsectorDepth, StencilValue, TranslucentObjects, LinePortals))
 	{
 		if (segmentRange == LineSegmentRange::HasSegment)
 			Cull.MarkSegmentCulled(sx1, sx2);
@@ -332,7 +346,7 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 		}
 		else if (!obj.thing)
 		{
-			obj.wall.Render(WorldToClip, PortalPlane);
+			obj.wall.Render(WorldToClip, PortalPlane, Cull);
 		}
 		else if ((obj.thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 		{

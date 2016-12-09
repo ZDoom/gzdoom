@@ -925,7 +925,7 @@ void FBlockThingsIterator::init(const FBoundingBox &box)
 
 void FBlockThingsIterator::ClearHash()
 {
-	clearbuf(Buckets, countof(Buckets), -1);
+	memset(Buckets, -1, sizeof(Buckets));
 	NumFixedHash = 0;
 	DynHash.Clear();
 }

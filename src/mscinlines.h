@@ -321,15 +321,6 @@ __forceinline SDWORD DivScale32 (SDWORD a, SDWORD b)
 	__asm idiv b
 }
 
-__forceinline void clearbuf (void *buff, unsigned int count, SDWORD clear)
-{
-	SDWORD *b2 = (SDWORD *)buff;
-	for (unsigned int i = 0; i != count; ++i)
-	{
-		b2[i] = clear;
-	}
-}
-
 __forceinline void clearbufshort (void *buff, unsigned int count, WORD clear)
 {
 	SWORD *b2 = (SWORD *)buff;

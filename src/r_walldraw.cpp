@@ -552,7 +552,7 @@ WallSampler::WallSampler(int y1, float swal, double yrepeat, fixed_t xoffset, do
 }
 
 // Draw a column with support for non-power-of-two ranges
-void Draw1Column(int x, int y1, int y2, WallSampler &sampler, DWORD(*draw1column)())
+static void Draw1Column(int x, int y1, int y2, WallSampler &sampler, DWORD(*draw1column)())
 {
 	if (r_swtruecolor)
 	{
@@ -625,7 +625,7 @@ void Draw1Column(int x, int y1, int y2, WallSampler &sampler, DWORD(*draw1column
 }
 
 // Draw four columns with support for non-power-of-two ranges
-void Draw4Columns(int x, int y1, int y2, WallSampler *sampler, void(*draw4columns)())
+static void Draw4Columns(int x, int y1, int y2, WallSampler *sampler, void(*draw4columns)())
 {
 	if (r_swtruecolor)
 	{
@@ -718,7 +718,7 @@ void Draw4Columns(int x, int y1, int y2, WallSampler *sampler, void(*draw4column
 typedef DWORD(*Draw1ColumnFuncPtr)();
 typedef void(*Draw4ColumnsFuncPtr)();
 
-void ProcessWallWorker(
+static void ProcessWallWorker(
 	int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat,
 	const BYTE *(*getcol)(FTexture *tex, int x),
 	void(setupProcessNormalWall(int bits, Draw1ColumnFuncPtr &draw1, Draw4ColumnsFuncPtr &draw2)))

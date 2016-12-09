@@ -50,63 +50,157 @@ namespace swrenderer
 	extern FTexture *rw_pic;
 	extern int wallshade;
 
+
 struct WallscanSampler
 {
 	WallscanSampler() { }
-	WallscanSampler(int y1, float swal, double yrepeat, fixed_t xoffset, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x));
+	WallscanSampler(int y1, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x));
 
 	uint32_t uv_pos;
 	uint32_t uv_step;
 	uint32_t uv_max;
 
 	const BYTE *source;
+	const BYTE *source2;
+	uint32_t texturefracx;
 	uint32_t height;
 };
 
-WallscanSampler::WallscanSampler(int y1, float swal, double yrepeat, fixed_t xoffset, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x))
+WallscanSampler::WallscanSampler(int y1, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x))
 {
-	height = texture->GetHeight();
+	xoffset += FLOAT2FIXED(xmagnitude * 0.5);
 
-	int uv_fracbits = 32 - texture->HeightBits;
-	if (uv_fracbits != 32)
+	if (!r_swtruecolor)
 	{
-		uv_max = height << uv_fracbits;
+		height = texture->GetHeight();
 
-		// Find start uv in [0-base_height[ range.
-		// Not using xs_ToFixed because it rounds the result and we need something that always rounds down to stay within the range.
-		double uv_stepd = swal * yrepeat;
-		double v = (dc_texturemid + uv_stepd * (y1 - CenterY + 0.5)) / height;
-		v = v - floor(v);
-		v *= height;
-		v *= (1 << uv_fracbits);
+		int uv_fracbits = 32 - texture->HeightBits;
+		if (uv_fracbits != 32)
+		{
+			uv_max = height << uv_fracbits;
 
-		uv_pos = (uint32_t)v;
-		uv_step = xs_ToFixed(uv_fracbits, uv_stepd);
-		if (uv_step == 0) // To prevent divide by zero elsewhere
-			uv_step = 1;
+			// Find start uv in [0-base_height[ range.
+			// Not using xs_ToFixed because it rounds the result and we need something that always rounds down to stay within the range.
+			double uv_stepd = swal * yrepeat;
+			double v = (dc_texturemid + uv_stepd * (y1 - CenterY + 0.5)) / height;
+			v = v - floor(v);
+			v *= height;
+			v *= (1 << uv_fracbits);
+
+			uv_pos = (uint32_t)v;
+			uv_step = xs_ToFixed(uv_fracbits, uv_stepd);
+			if (uv_step == 0) // To prevent divide by zero elsewhere
+				uv_step = 1;
+		}
+		else
+		{ // Hack for one pixel tall textures
+			uv_pos = 0;
+			uv_step = 0;
+			uv_max = 1;
+		}
+
+		source = getcol(texture, xoffset >> FRACBITS);
+		source2 = nullptr;
+		texturefracx = 0;
 	}
 	else
-	{ // Hack for one pixel tall textures
-		uv_pos = 0;
-		uv_step = 0;
-		uv_max = 1;
-	}
+	{
+		// Normalize to 0-1 range:
+		double uv_stepd = swal * yrepeat;
+		double v = (dc_texturemid + uv_stepd * (y1 - CenterY + 0.5)) / texture->GetHeight();
+		v = v - floor(v);
+		double v_step = uv_stepd / texture->GetHeight();
 
-	source = getcol(texture, xoffset >> FRACBITS);
+		if (isnan(v) || isnan(v_step)) // this should never happen, but it apparently does..
+		{
+			uv_stepd = 0.0;
+			v = 0.0;
+			v_step = 0.0;
+		}
+
+		// Convert to uint32:
+		uv_pos = (uint32_t)(v * 0x100000000LL);
+		uv_step = (uint32_t)(v_step * 0x100000000LL);
+		uv_max = 0;
+
+		// Texture mipmap and filter selection:
+		if (getcol != R_GetColumn)
+		{
+			source = getcol(texture, xoffset >> FRACBITS);
+			source2 = nullptr;
+			height = texture->GetHeight();
+			texturefracx = 0;
+		}
+		else
+		{
+			double ymagnitude = fabs(uv_stepd);
+			double magnitude = MAX(ymagnitude, xmagnitude);
+			double min_lod = -1000.0;
+			double lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
+			bool magnifying = lod < 0.0f;
+
+			int mipmap_offset = 0;
+			int mip_width = texture->GetWidth();
+			int mip_height = texture->GetHeight();
+			if (r_mipmap && texture->Mipmapped() && mip_width > 1 && mip_height > 1)
+			{
+				uint32_t xpos = (uint32_t)((((uint64_t)xoffset) << FRACBITS) / mip_width);
+
+				int level = (int)lod;
+				while (level > 0 && mip_width > 1 && mip_height > 1)
+				{
+					mipmap_offset += mip_width * mip_height;
+					level--;
+					mip_width = MAX(mip_width >> 1, 1);
+					mip_height = MAX(mip_height >> 1, 1);
+				}
+				xoffset = (xpos >> FRACBITS) * mip_width;
+			}
+
+			const uint32_t *pixels = texture->GetPixelsBgra() + mipmap_offset;
+
+			bool filter_nearest = (magnifying && !r_magfilter) || (!magnifying && !r_minfilter);
+			if (filter_nearest)
+			{
+				int tx = (xoffset >> FRACBITS) % mip_width;
+				if (tx < 0)
+					tx += mip_width;
+				source = (BYTE*)(pixels + tx * mip_height);
+				source2 = nullptr;
+				height = mip_height;
+				texturefracx = 0;
+			}
+			else
+			{
+				xoffset -= FRACUNIT / 2;
+				int tx0 = (xoffset >> FRACBITS) % mip_width;
+				if (tx0 < 0)
+					tx0 += mip_width;
+				int tx1 = (tx0 + 1) % mip_width;
+				source = (BYTE*)(pixels + tx0 * mip_height);
+				source2 = (BYTE*)(pixels + tx1 * mip_height);
+				height = mip_height;
+				texturefracx = (xoffset >> (FRACBITS - 4)) & 15;
+			}
+		}
+	}
 }
 
 // Draw a column with support for non-power-of-two ranges
 void wallscan_drawcol1(int x, int y1, int y2, WallscanSampler &sampler, DWORD(*draw1column)())
 {
-	if (sampler.uv_max == 0 || sampler.uv_step == 0) // power of two
+	if (r_swtruecolor)
 	{
 		int count = y2 - y1;
 
 		dc_source = sampler.source;
-		dc_dest = (ylookup[y1] + x) + dc_destorg;
+		dc_source2 = sampler.source2;
+		dc_texturefracx = sampler.texturefracx;
+		dc_dest = (ylookup[y1] + x) * 4 + dc_destorg;
 		dc_count = count;
 		dc_iscale = sampler.uv_step;
 		dc_texturefrac = sampler.uv_pos;
+		dc_textureheight = sampler.height;
 		draw1column();
 
 		uint64_t step64 = sampler.uv_step;
@@ -115,43 +209,68 @@ void wallscan_drawcol1(int x, int y1, int y2, WallscanSampler &sampler, DWORD(*d
 	}
 	else
 	{
-		uint32_t uv_pos = sampler.uv_pos;
-
-		uint32_t left = y2 - y1;
-		while (left > 0)
+		if (sampler.uv_max == 0 || sampler.uv_step == 0) // power of two
 		{
-			uint32_t available = sampler.uv_max - uv_pos;
-			uint32_t next_uv_wrap = available / sampler.uv_step;
-			if (available % sampler.uv_step != 0)
-				next_uv_wrap++;
-			uint32_t count = MIN(left, next_uv_wrap);
+			int count = y2 - y1;
 
 			dc_source = sampler.source;
+			dc_source2 = sampler.source2;
+			dc_texturefracx = sampler.texturefracx;
 			dc_dest = (ylookup[y1] + x) + dc_destorg;
 			dc_count = count;
 			dc_iscale = sampler.uv_step;
-			dc_texturefrac = uv_pos;
+			dc_texturefrac = sampler.uv_pos;
 			draw1column();
 
-			left -= count;
-			uv_pos += sampler.uv_step * count;
-			if (uv_pos >= sampler.uv_max)
-				uv_pos -= sampler.uv_max;
+			uint64_t step64 = sampler.uv_step;
+			uint64_t pos64 = sampler.uv_pos;
+			sampler.uv_pos = (uint32_t)(pos64 + step64 * count);
 		}
+		else
+		{
+			uint32_t uv_pos = sampler.uv_pos;
 
-		sampler.uv_pos = uv_pos;
+			uint32_t left = y2 - y1;
+			while (left > 0)
+			{
+				uint32_t available = sampler.uv_max - uv_pos;
+				uint32_t next_uv_wrap = available / sampler.uv_step;
+				if (available % sampler.uv_step != 0)
+					next_uv_wrap++;
+				uint32_t count = MIN(left, next_uv_wrap);
+
+				dc_source = sampler.source;
+				dc_source2 = sampler.source2;
+				dc_texturefracx = sampler.texturefracx;
+				dc_dest = (ylookup[y1] + x) + dc_destorg;
+				dc_count = count;
+				dc_iscale = sampler.uv_step;
+				dc_texturefrac = uv_pos;
+				draw1column();
+
+				left -= count;
+				uv_pos += sampler.uv_step * count;
+				if (uv_pos >= sampler.uv_max)
+					uv_pos -= sampler.uv_max;
+			}
+
+			sampler.uv_pos = uv_pos;
+		}
 	}
 }
 
 // Draw four columns with support for non-power-of-two ranges
 void wallscan_drawcol4(int x, int y1, int y2, WallscanSampler *sampler, void(*draw4columns)())
 {
-	if (sampler[0].uv_max == 0 || sampler[0].uv_step == 0) // power of two, no wrap handling needed
+	if (r_swtruecolor)
 	{
 		int count = y2 - y1;
 		for (int i = 0; i < 4; i++)
 		{
 			bufplce[i] = sampler[i].source;
+			bufplce2[i] = sampler[i].source2;
+			buftexturefracx[i] = sampler[i].texturefracx;
+			bufheight[i] = sampler[i].height;
 			vplce[i] = sampler[i].uv_pos;
 			vince[i] = sampler[i].uv_step;
 
@@ -159,50 +278,74 @@ void wallscan_drawcol4(int x, int y1, int y2, WallscanSampler *sampler, void(*dr
 			uint64_t pos64 = sampler[i].uv_pos;
 			sampler[i].uv_pos = (uint32_t)(pos64 + step64 * count);
 		}
-		dc_dest = (ylookup[y1] + x) + dc_destorg;
+		dc_dest = (ylookup[y1] + x) * 4 + dc_destorg;
 		dc_count = count;
 		draw4columns();
 	}
 	else
 	{
-		dc_dest = (ylookup[y1] + x) + dc_destorg;
-		for (int i = 0; i < 4; i++)
+		if (sampler[0].uv_max == 0 || sampler[0].uv_step == 0) // power of two, no wrap handling needed
 		{
-			bufplce[i] = sampler[i].source;
-		}
-
-		uint32_t left = y2 - y1;
-		while (left > 0)
-		{
-			// Find which column wraps first
-			uint32_t count = left;
+			int count = y2 - y1;
 			for (int i = 0; i < 4; i++)
 			{
-				uint32_t available = sampler[i].uv_max - sampler[i].uv_pos;
-				uint32_t next_uv_wrap = available / sampler[i].uv_step;
-				if (available % sampler[i].uv_step != 0)
-					next_uv_wrap++;
-				count = MIN(next_uv_wrap, count);
-			}
-
-			// Draw until that column wraps
-			for (int i = 0; i < 4; i++)
-			{
+				bufplce[i] = sampler[i].source;
+				bufplce2[i] = sampler[i].source2;
+				buftexturefracx[i] = sampler[i].texturefracx;
 				vplce[i] = sampler[i].uv_pos;
 				vince[i] = sampler[i].uv_step;
+
+				uint64_t step64 = sampler[i].uv_step;
+				uint64_t pos64 = sampler[i].uv_pos;
+				sampler[i].uv_pos = (uint32_t)(pos64 + step64 * count);
 			}
+			dc_dest = (ylookup[y1] + x) + dc_destorg;
 			dc_count = count;
 			draw4columns();
-
-			// Wrap the uv position
+		}
+		else
+		{
+			dc_dest = (ylookup[y1] + x) + dc_destorg;
 			for (int i = 0; i < 4; i++)
 			{
-				sampler[i].uv_pos += sampler[i].uv_step * count;
-				if (sampler[i].uv_pos >= sampler[i].uv_max)
-					sampler[i].uv_pos -= sampler[i].uv_max;
+				bufplce[i] = sampler[i].source;
+				bufplce2[i] = sampler[i].source2;
+				buftexturefracx[i] = sampler[i].texturefracx;
 			}
 
-			left -= count;
+			uint32_t left = y2 - y1;
+			while (left > 0)
+			{
+				// Find which column wraps first
+				uint32_t count = left;
+				for (int i = 0; i < 4; i++)
+				{
+					uint32_t available = sampler[i].uv_max - sampler[i].uv_pos;
+					uint32_t next_uv_wrap = available / sampler[i].uv_step;
+					if (available % sampler[i].uv_step != 0)
+						next_uv_wrap++;
+					count = MIN(next_uv_wrap, count);
+				}
+
+				// Draw until that column wraps
+				for (int i = 0; i < 4; i++)
+				{
+					vplce[i] = sampler[i].uv_pos;
+					vince[i] = sampler[i].uv_step;
+				}
+				dc_count = count;
+				draw4columns();
+
+				// Wrap the uv position
+				for (int i = 0; i < 4; i++)
+				{
+					sampler[i].uv_pos += sampler[i].uv_step * count;
+					if (sampler[i].uv_pos >= sampler[i].uv_max)
+						sampler[i].uv_pos -= sampler[i].uv_max;
+				}
+
+				left -= count;
+			}
 		}
 	}
 }
@@ -231,7 +374,7 @@ void wallscan_any(
 
 	DWORD(*draw1column)();
 	void(*draw4columns)();
-	setupwallscan(fracbits, draw1column, draw4columns);
+	setupwallscan(r_swtruecolor ? FRACBITS : fracbits, draw1column, draw4columns);
 
 	bool fixed = (fixedcolormap != NULL || fixedlightlev >= 0);
 	if (fixed)
@@ -240,18 +383,24 @@ void wallscan_any(
 		palookupoffse[1] = dc_colormap;
 		palookupoffse[2] = dc_colormap;
 		palookupoffse[3] = dc_colormap;
+		palookuplight[0] = 0;
+		palookuplight[1] = 0;
+		palookuplight[2] = 0;
+		palookuplight[3] = 0;
 	}
 
 	if (fixedcolormap)
-		dc_colormap = fixedcolormap;
+		R_SetColorMapLight(fixedcolormap, 0, 0);
 	else
-		dc_colormap = basecolormap->Maps;
+		R_SetColorMapLight(basecolormap, 0, 0);
 
 	float light = rw_light;
 
 	// Calculate where 4 column alignment begins and ends:
 	int aligned_x1 = clamp((x1 + 3) / 4 * 4, x1, x2);
 	int aligned_x2 = clamp(x2 / 4 * 4, x1, x2);
+
+	double xmagnitude = 1.0;
 
 	// First unaligned columns:
 	for (int x = x1; x < aligned_x1; x++, light += rw_lightstep)
@@ -262,9 +411,11 @@ void wallscan_any(
 			continue;
 
 		if (!fixed)
-			dc_colormap = basecolormap->Maps + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
+			R_SetColorMapLight(basecolormap, light, wallshade);
 
-		WallscanSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, rw_pic, getcol);
+		if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
+
+		WallscanSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic, getcol);
 		wallscan_drawcol1(x, y1, y2, sampler, draw1column);
 	}
 
@@ -284,7 +435,10 @@ void wallscan_any(
 
 		WallscanSampler sampler[4];
 		for (int i = 0; i < 4; i++)
-			sampler[i] = WallscanSampler(y1[i], swal[x + i], yrepeat, lwal[x + i] + xoffset, rw_pic, getcol);
+		{
+			if (x + i + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + i + 1]) - FIXED2DBL(lwal[x + i]));
+			sampler[i] = WallscanSampler(y1[i], swal[x + i], yrepeat, lwal[x + i] + xoffset, xmagnitude, rw_pic, getcol);
+		}
 
 		// Figure out where we vertically can start and stop drawing 4 columns in one go
 		int middle_y1 = y1[0];
@@ -297,13 +451,16 @@ void wallscan_any(
 
 		// If we got an empty column in our set we cannot draw 4 columns in one go:
 		bool empty_column_in_set = false;
+		int bilinear_count = 0;
 		for (int i = 0; i < 4; i++)
 		{
 			if (y2[i] <= y1[i])
 				empty_column_in_set = true;
+			if (sampler[i].source2)
+				bilinear_count++;
 		}
 
-		if (empty_column_in_set || middle_y2 <= middle_y1)
+		if (empty_column_in_set || middle_y2 <= middle_y1 || (bilinear_count > 0  && bilinear_count < 4))
 		{
 			for (int i = 0; i < 4; i++)
 			{
@@ -311,7 +468,7 @@ void wallscan_any(
 					continue;
 
 				if (!fixed)
-					dc_colormap = basecolormap->Maps + (GETPALOOKUP(lights[i], wallshade) << COLORMAPSHIFT);
+					R_SetColorMapLight(basecolormap, lights[i], wallshade);
 				wallscan_drawcol1(x + i, y1[i], y2[i], sampler[i], draw1column);
 			}
 			continue;
@@ -321,7 +478,7 @@ void wallscan_any(
 		for (int i = 0; i < 4; i++)
 		{
 			if (!fixed)
-				dc_colormap = basecolormap->Maps + (GETPALOOKUP(lights[i], wallshade) << COLORMAPSHIFT);
+				R_SetColorMapLight(basecolormap, lights[i], wallshade);
 
 			if (y1[i] < middle_y1)
 				wallscan_drawcol1(x + i, y1[i], middle_y1, sampler[i], draw1column);
@@ -332,7 +489,16 @@ void wallscan_any(
 		{
 			for (int i = 0; i < 4; i++)
 			{
-				palookupoffse[i] = basecolormap->Maps + (GETPALOOKUP(lights[i], wallshade) << COLORMAPSHIFT);
+				if (r_swtruecolor)
+				{
+					palookupoffse[i] = basecolormap->Maps;
+					palookuplight[i] = LIGHTSCALE(lights[i], wallshade);
+				}
+				else
+				{
+					palookupoffse[i] = basecolormap->Maps + (GETPALOOKUP(lights[i], wallshade) << COLORMAPSHIFT);
+					palookuplight[i] = 0;
+				}
 			}
 		}
 		wallscan_drawcol4(x, middle_y1, middle_y2, sampler, draw4columns);
@@ -341,7 +507,7 @@ void wallscan_any(
 		for (int i = 0; i < 4; i++)
 		{
 			if (!fixed)
-				dc_colormap = basecolormap->Maps + (GETPALOOKUP(lights[i], wallshade) << COLORMAPSHIFT);
+				R_SetColorMapLight(basecolormap, lights[i], wallshade);
 
 			if (middle_y2 < y2[i])
 				wallscan_drawcol1(x + i, middle_y2, y2[i], sampler[i], draw1column);
@@ -357,13 +523,15 @@ void wallscan_any(
 			continue;
 
 		if (!fixed)
-			dc_colormap = basecolormap->Maps + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
+			R_SetColorMapLight(basecolormap, light, wallshade);
 
-		WallscanSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, rw_pic, getcol);
+		if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
+
+		WallscanSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic, getcol);
 		wallscan_drawcol1(x, y1, y2, sampler, draw1column);
 	}
 
-	NetUpdate();
+	NetUpdate ();
 }
 
 void wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
@@ -376,7 +544,7 @@ void wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lw
 	});
 }
 
-void maskwallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
+void maskwallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
 {
 	if (!rw_pic->bMasked) // Textures that aren't masked can use the faster wallscan.
 	{
@@ -393,7 +561,7 @@ void maskwallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t
 	}
 }
 
-void transmaskwallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
+void transmaskwallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
 {
 	static fixed_t(*tmvline1)();
 	static void(*tmvline4)();
@@ -454,7 +622,7 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, float *swal, fi
 	wallshade = startshade;
 }
 
-void call_wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, bool mask)
+static void call_wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, bool mask)
 {
 	if (mask)
 	{
@@ -493,67 +661,74 @@ void call_wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 
 void wallscan_np2(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, double top, double bot, bool mask)
 {
-	short most1[MAXWIDTH], most2[MAXWIDTH], most3[MAXWIDTH];
-	short *up, *down;
-	double texheight = rw_pic->GetHeight();
-	double partition;
-	double scaledtexheight = texheight / yrepeat;
-
-	if (yrepeat >= 0)
-	{ // normal orientation: draw strips from top to bottom
-		partition = top - fmod(top - dc_texturemid / yrepeat - ViewPos.Z, scaledtexheight);
-		if (partition == top)
-		{
-			partition -= scaledtexheight;
-		}
-		up = uwal;
-		down = most1;
-		dc_texturemid = (partition - ViewPos.Z) * yrepeat + texheight;
-		while (partition > bot)
-		{
-			int j = OWallMost(most3, partition - ViewPos.Z, &WallC);
-			if (j != 3)
-			{
-				for (int j = x1; j < x2; ++j)
-				{
-					down[j] = clamp(most3[j], up[j], dwal[j]);
-				}
-				call_wallscan(x1, x2, up, down, swal, lwal, yrepeat, mask);
-				up = down;
-				down = (down == most1) ? most2 : most1;
-			}
-			partition -= scaledtexheight;
-			dc_texturemid -= texheight;
- 		}
-		call_wallscan(x1, x2, up, dwal, swal, lwal, yrepeat, mask);
+	if (!r_np2)
+	{
+		call_wallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat, mask);
 	}
 	else
-	{ // upside down: draw strips from bottom to top
-		partition = bot - fmod(bot - dc_texturemid / yrepeat - ViewPos.Z, scaledtexheight);
-		up = most1;
-		down = dwal;
-		dc_texturemid = (partition - ViewPos.Z) * yrepeat + texheight;
-		while (partition < top)
-		{
-			int j = OWallMost(most3, partition - ViewPos.Z, &WallC);
-			if (j != 12)
+	{
+		short most1[MAXWIDTH], most2[MAXWIDTH], most3[MAXWIDTH];
+		short *up, *down;
+		double texheight = rw_pic->GetHeight();
+		double partition;
+		double scaledtexheight = texheight / yrepeat;
+
+		if (yrepeat >= 0)
+		{ // normal orientation: draw strips from top to bottom
+			partition = top - fmod(top - dc_texturemid / yrepeat - ViewPos.Z, scaledtexheight);
+			if (partition == top)
 			{
-				for (int j = x1; j < x2; ++j)
-				{
-					up[j] = clamp(most3[j], uwal[j], down[j]);
-				}
-				call_wallscan(x1, x2, up, down, swal, lwal, yrepeat, mask);
-				down = up;
-				up = (up == most1) ? most2 : most1;
+				partition -= scaledtexheight;
 			}
-			partition -= scaledtexheight;
-			dc_texturemid -= texheight;
- 		}
-		call_wallscan(x1, x2, uwal, down, swal, lwal, yrepeat, mask);
+			up = uwal;
+			down = most1;
+			dc_texturemid = (partition - ViewPos.Z) * yrepeat + texheight;
+			while (partition > bot)
+			{
+				int j = OWallMost(most3, partition - ViewPos.Z, &WallC);
+				if (j != 3)
+				{
+					for (int j = x1; j < x2; ++j)
+					{
+						down[j] = clamp(most3[j], up[j], dwal[j]);
+					}
+					call_wallscan(x1, x2, up, down, swal, lwal, yrepeat, mask);
+					up = down;
+					down = (down == most1) ? most2 : most1;
+				}
+				partition -= scaledtexheight;
+				dc_texturemid -= texheight;
+ 			}
+			call_wallscan(x1, x2, up, dwal, swal, lwal, yrepeat, mask);
+		}
+		else
+		{ // upside down: draw strips from bottom to top
+			partition = bot - fmod(bot - dc_texturemid / yrepeat - ViewPos.Z, scaledtexheight);
+			up = most1;
+			down = dwal;
+			dc_texturemid = (partition - ViewPos.Z) * yrepeat + texheight;
+			while (partition < top)
+			{
+				int j = OWallMost(most3, partition - ViewPos.Z, &WallC);
+				if (j != 12)
+				{
+					for (int j = x1; j < x2; ++j)
+					{
+						up[j] = clamp(most3[j], uwal[j], down[j]);
+					}
+					call_wallscan(x1, x2, up, down, swal, lwal, yrepeat, mask);
+					down = up;
+					up = (up == most1) ? most2 : most1;
+				}
+				partition -= scaledtexheight;
+				dc_texturemid -= texheight;
+ 			}
+			call_wallscan(x1, x2, uwal, down, swal, lwal, yrepeat, mask);
+		}
 	}
 }
 
-void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat)
+static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat)
 {
 	if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 	{
@@ -578,6 +753,5 @@ void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, fl
 		call_wallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat, true);
 	}
 }
-
 
 }

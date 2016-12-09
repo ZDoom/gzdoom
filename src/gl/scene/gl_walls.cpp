@@ -1654,7 +1654,10 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 
 
 		/* mid texture */
-		bool drawfogboundary = gl_CheckFog(frontsector, backsector);
+		bool isportal = seg->linedef->isVisualPortal() && seg->sidedef == seg->linedef->sidedef[0];
+		sector_t *backsec = isportal? seg->linedef->getPortalDestination()->frontsector : backsector;
+
+		bool drawfogboundary = gl_CheckFog(frontsector, backsec);
 		FTexture *tex = TexMan(seg->sidedef->GetTexture(side_t::mid));
 		if (tex != NULL)
 		{
@@ -1672,7 +1675,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 				fch1, fch2, ffh1, ffh2, bch1, bch2, bfh1, bfh2);
 		}
 
-		if (seg->linedef->isVisualPortal() && seg->sidedef == seg->linedef->sidedef[0])
+		if (isportal)
 		{
 			lineportal = linePortalToGL[seg->linedef->portalindex];
 			ztop[0] = bch1;

@@ -198,7 +198,7 @@ void P_FindParticleSubsectors ()
 		ParticlesInSubsec.Reserve (numsubsectors - ParticlesInSubsec.Size());
 	}
 
-	clearbufshort (&ParticlesInSubsec[0], numsubsectors, NO_PARTICLE);
+	fillshort (&ParticlesInSubsec[0], numsubsectors, NO_PARTICLE);
 
 	if (!r_particles)
 	{

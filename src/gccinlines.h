@@ -290,16 +290,3 @@ static inline SDWORD DivScale32 (SDWORD a, SDWORD b)
 		: "cc");
 	return result;
 }
-
-static inline void clearbufshort (void *buff, unsigned int count, WORD clear)
-{
-	asm volatile
-		("shr $1,%%ecx\n\t"
-		 "rep stosl\n\t"
-		 "adc %%ecx,%%ecx\n\t"
-		 "rep stosw"
-		:"=D" (buff), "=c" (count)
-		:"D" (buff), "c" (count), "a" (clear|(clear<<16))
-		:"cc");
-}
-

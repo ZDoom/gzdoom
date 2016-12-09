@@ -270,7 +270,7 @@ void R_InitSpriteDefs ()
 	// Create a hash table to speed up the process
 	smax = TexMan.NumTextures();
 	hashes = new Hasher[smax];
-	clearbuf(hashes, sizeof(Hasher)*smax/4, -1);
+	memset(hashes, -1, sizeof(Hasher)*smax);
 	for (i = 0; i < smax; ++i)
 	{
 		FTexture *tex = TexMan.ByIndex(i);
@@ -285,7 +285,7 @@ void R_InitSpriteDefs ()
 	// Repeat, for voxels
 	vmax = Wads.GetNumLumps();
 	vhashes = new VHasher[vmax];
-	clearbuf(vhashes, sizeof(VHasher)*vmax/4, -1);
+	memset(vhashes, -1, sizeof(VHasher)*vmax);
 	for (i = 0; i < vmax; ++i)
 	{
 		if (Wads.GetLumpNamespace(i) == ns_voxels)

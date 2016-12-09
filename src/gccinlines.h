@@ -291,19 +291,6 @@ static inline SDWORD DivScale32 (SDWORD a, SDWORD b)
 	return result;
 }
 
-static inline void clearbuf (void *buff, int count, SDWORD clear)
-{
-	int dummy1, dummy2;
-	asm volatile
-		("rep stosl"
-		:"=D" (dummy1),
-		 "=c" (dummy2)
-		: "D" (buff),
-		  "c" (count),
-		  "a" (clear)
-		);
-}
-
 static inline void clearbufshort (void *buff, unsigned int count, WORD clear)
 {
 	asm volatile

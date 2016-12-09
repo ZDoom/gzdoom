@@ -1,5 +1,5 @@
 /*
-**  Replacement for Build's wallscan free of any Build licensing issues.
+**  Wall drawing stuff free of Build pollution
 **  Copyright (c) 2016 Magnus Norddahl
 **
 **  This software is provided 'as-is', without any express or implied

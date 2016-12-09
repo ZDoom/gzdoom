@@ -79,63 +79,6 @@ inline SDWORD SafeDivScale32 (SDWORD a, SDWORD b)
 #define FixedMul MulScale16
 #define FixedDiv SafeDivScale16
 
-inline void qinterpolatedown16 (SDWORD *out, DWORD count, SDWORD val, SDWORD delta)
-{
-	if (count & 1)
-	{
-		out[0] = val >> 16;
-		val += delta;
-	}
-	count >>= 1;
-	while (count-- != 0)
-	{
-		int temp = val + delta;
-		out[0] = val >> 16;
-		val = temp + delta;
-		out[1] = temp >> 16;
-		out += 2;
-	}
-}
-
-inline void qinterpolatedown16short (short *out, DWORD count, SDWORD val, SDWORD delta)
-{
-	if (count)
-	{
-		if ((size_t)out & 2)
-		{ // align to dword boundary
-			*out++ = (short)(val >> 16);
-			count--;
-			val += delta;
-		}
-		DWORD *o2 = (DWORD *)out;
-		DWORD c2 = count>>1;
-		while (c2-- != 0)
-		{
-			SDWORD temp = val + delta;
-			*o2++ = (temp & 0xffff0000) | ((DWORD)val >> 16);
-			val = temp + delta;
-		}
-		if (count & 1)
-		{
-			*(short *)o2 = (short)(val >> 16);
-		}
-	}
-}
-
-	//returns num/den, dmval = num%den
-inline SDWORD DivMod (SDWORD num, SDWORD den, SDWORD *dmval)
-{
-	*dmval = num % den;
-	return num / den;
-}
-
-	//returns num%den, dmval = num/den
-inline SDWORD ModDiv (SDWORD num, SDWORD den, SDWORD *dmval)
-{
-	*dmval = num / den;
-	return num % den;
-}
-
 inline fixed_t FloatToFixed(double f)
 {
 	return xs_Fix<16>::ToFix(f);

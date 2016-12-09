@@ -1583,12 +1583,19 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt)
 
 PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PSymbolTable *sym)
 {
-	// The duplicate Simplify call is necessary because if the head node gets replaced there is no way to detect the end of the list otherwise.
-	arraysize = Simplify(arraysize, sym, true);
-	ZCC_Expression *val;
+	TArray<ZCC_Expression *> indices;
+
+	// Simplify is too broken to resolve this inside the ring list so unravel the list into an array before starting to simplify its components.
+	auto node = arraysize;
 	do
 	{
-		val = Simplify(arraysize, sym, true);
+		indices.Push(node);
+		node = static_cast<ZCC_Expression*>(node->SiblingNext);
+	} while (node != arraysize);
+
+	for (auto node : indices)
+	{
+		auto val = Simplify(node, sym, true);
 		if (val->Operation != PEX_ConstValue || !val->Type->IsA(RUNTIME_CLASS(PInt)))
 		{
 			Error(arraysize, "Array index must be an integer constant");
@@ -1601,8 +1608,7 @@ PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize,
 			return TypeError;
 		}
 		baseType = NewArray(baseType, size);
-		val = static_cast<ZCC_Expression *>(val->SiblingNext);
-	} while (val != arraysize);
+	}
 	return baseType;
 }
 

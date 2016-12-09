@@ -34,8 +34,13 @@ extern short *openings;
 extern ptrdiff_t lastopening;
 extern size_t maxopenings;
 
-int OWallMost (short *mostbuf, double z, const FWallCoords *wallc);
-int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc);
+int R_CreateWallSegmentY (short *outbuf, double z1, double z2, const FWallCoords *wallc);
+int R_CreateWallSegmentYSloped (short *outbuf, const secplane_t &plane, const FWallCoords *wallc);
+inline int R_CreateWallSegmentY(short *outbuf, double z, const FWallCoords *wallc)
+{
+	return R_CreateWallSegmentY(outbuf, z, z, wallc);
+}
+
 void PrepWall (float *swall, fixed_t *lwall, double walxrepeat, int x1, int x2);
 void PrepLWall (fixed_t *lwall, double walxrepeat, int x1, int x2);
 

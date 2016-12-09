@@ -1524,7 +1524,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomMissile)
 						Pitch += missile->Vel.Pitch();
 					}
 					missilespeed = fabs(Pitch.Cos() * missile->Speed);
-					missile->Vel.Z = Pitch.Sin() * missile->Speed;
+					missile->Vel.Z = -Pitch.Sin() * missile->Speed;
 				}
 				else
 				{

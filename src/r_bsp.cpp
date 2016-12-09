@@ -639,12 +639,12 @@ void R_AddLine (seg_t *line)
 		if (rw_frontcz1 > rw_backcz1 || rw_frontcz2 > rw_backcz2)
 		{
 			rw_havehigh = true;
-			WallMost (wallupper, backsector->ceilingplane, &WallC);
+			R_CreateWallSegmentYSloped (wallupper, backsector->ceilingplane, &WallC);
 		}
 		if (rw_frontfz1 < rw_backfz1 || rw_frontfz2 < rw_backfz2)
 		{
 			rw_havelow = true;
-			WallMost (walllower, backsector->floorplane, &WallC);
+			R_CreateWallSegmentYSloped (walllower, backsector->floorplane, &WallC);
 		}
 
 		// Portal
@@ -745,8 +745,8 @@ void R_AddLine (seg_t *line)
 	}
 	else
 	{
-		rw_ceilstat = WallMost (walltop, frontsector->ceilingplane, &WallC);
-		rw_floorstat = WallMost (wallbottom, frontsector->floorplane, &WallC);
+		rw_ceilstat = R_CreateWallSegmentYSloped (walltop, frontsector->ceilingplane, &WallC);
+		rw_floorstat = R_CreateWallSegmentYSloped (wallbottom, frontsector->floorplane, &WallC);
 
 		// [RH] treat off-screen walls as solid
 #if 0	// Maybe later...

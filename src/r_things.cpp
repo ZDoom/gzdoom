@@ -2331,11 +2331,11 @@ void R_DrawSprite (vissprite_t *spr)
 		// for R_DrawVisVoxel().
 		if (x1 > 0)
 		{
-			clearbufshort(cliptop, x1, viewheight);
+			fillshort(cliptop, x1, viewheight);
 		}
 		if (x2 < viewwidth - 1)
 		{
-			clearbufshort(cliptop + x2, viewwidth - x2, viewheight);
+			fillshort(cliptop + x2, viewwidth - x2, viewheight);
 		}
 		int minvoxely = spr->gzt <= hzt ? 0 : xs_RoundToInt((spr->gzt - hzt) / spr->yscale);
 		int maxvoxely = spr->gzb > hzb ? INT_MAX : xs_RoundToInt((spr->gzt - hzb) / spr->yscale);
@@ -2701,6 +2701,11 @@ void R_DrawParticle_C (vissprite_t *vis)
 
 extern double BaseYaspectMul;;
 
+inline int sgn(int v)
+{
+	return v < 0 ? -1 : v > 0 ? 1 : 0;
+}
+
 void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 	const FVector3 &dasprpos, DAngle dasprang,
 	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
@@ -2840,7 +2845,7 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 			xe += xi; ye += yi;
 		}
 
-		i = ksgn(ys-backy)+ksgn(xs-backx)*3+4;
+		i = sgn(ys - backy) + sgn(xs - backx) * 3 + 4;
 		switch(i)
 		{
 			case 6: case 7: x1 = 0;				y1 = 0;				break;

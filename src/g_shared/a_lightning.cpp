@@ -23,7 +23,7 @@ DLightningThinker::DLightningThinker ()
 	NextLightningFlash = ((pr_lightning()&15)+5)*35; // don't flash at level start
 
 	LightningLightLevels.Resize(numsectors);
-	clearbufshort(&LightningLightLevels[0], numsectors, SHRT_MAX);
+	fillshort(&LightningLightLevels[0], numsectors, SHRT_MAX);
 }
 
 DLightningThinker::~DLightningThinker ()
@@ -87,7 +87,7 @@ void DLightningThinker::LightningFlash ()
 					tempSec->SetLightLevel(LightningLightLevels[j]);
 				}
 			}
-			clearbufshort(&LightningLightLevels[0], numsectors, SHRT_MAX);
+			fillshort(&LightningLightLevels[0], numsectors, SHRT_MAX);
 			level.flags &= ~LEVEL_SWAPSKIES;
 		}
 		return;

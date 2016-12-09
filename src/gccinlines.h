@@ -47,23 +47,6 @@ static inline SDWORD Scale (SDWORD a, SDWORD b, SDWORD c)
 	return result;
 }
 
-static inline SDWORD MulScale (SDWORD a, SDWORD b, SDWORD c)
-{
-	SDWORD result, dummy;
-
-	asm volatile
-		("imull %3\n\t"
-		 "shrdl %b4,%1,%0"
-		 : "=a,a,a,a" (result),
-		   "=d,d,d,d" (dummy)
-		 :  "a,a,a,a" (a),
-		    "m,r,m,r" (b),
-		    "c,c,I,I" (c)
-		 : "cc"
-			);
-	return result;
-}
-
 #define MAKECONSTMulScale(s) \
 static inline SDWORD MulScale##s (SDWORD a, SDWORD b) { return ((SQWORD)a * b) >> s; }
 
@@ -143,92 +126,6 @@ MAKECONSTDMulScale(31)
 MAKECONSTDMulScale(32)
 #undef MAKECONSTDMulScale
 
-#define MAKECONSTTMulScale(s) \
-	static inline SDWORD TMulScale##s (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD ee) \
-	{ \
-		return (((SQWORD)a * b) + ((SQWORD)c * d) + ((SQWORD)e * ee)) >> s; \
-	}
-
-MAKECONSTTMulScale(1)
-MAKECONSTTMulScale(2)
-MAKECONSTTMulScale(3)
-MAKECONSTTMulScale(4)
-MAKECONSTTMulScale(5)
-MAKECONSTTMulScale(6)
-MAKECONSTTMulScale(7)
-MAKECONSTTMulScale(8)
-MAKECONSTTMulScale(9)
-MAKECONSTTMulScale(10)
-MAKECONSTTMulScale(11)
-MAKECONSTTMulScale(12)
-MAKECONSTTMulScale(13)
-MAKECONSTTMulScale(14)
-MAKECONSTTMulScale(15)
-MAKECONSTTMulScale(16)
-MAKECONSTTMulScale(17)
-MAKECONSTTMulScale(18)
-MAKECONSTTMulScale(19)
-MAKECONSTTMulScale(20)
-MAKECONSTTMulScale(21)
-MAKECONSTTMulScale(22)
-MAKECONSTTMulScale(23)
-MAKECONSTTMulScale(24)
-MAKECONSTTMulScale(25)
-MAKECONSTTMulScale(26)
-MAKECONSTTMulScale(27)
-MAKECONSTTMulScale(28)
-MAKECONSTTMulScale(29)
-MAKECONSTTMulScale(30)
-MAKECONSTTMulScale(31)
-MAKECONSTTMulScale(32)
-#undef MAKECONSTTMulScale
-
-static inline SDWORD BoundMulScale (SDWORD a, SDWORD b, SDWORD c)
-{
-	union {
-		long long big;
-		struct
-		{
-			int l, h;
-		};
-	} u;
-	u.big = ((long long)a * b) >> c;
-	if ((u.h ^ u.l) < 0 || (unsigned int)(u.h+1) > 1) return (u.h >> 31) ^ 0x7fffffff;
-	return u.l;
-}
-
-static inline SDWORD DivScale (SDWORD a, SDWORD b, SDWORD c)
-{
-	SDWORD result, dummy;
-	SDWORD lo = a << c;
-	SDWORD hi = a >> (-c);
-
-	asm volatile
-		("idivl %4"
-		:"=a" (result),
-		 "=d" (dummy)
-		: "a" (lo),
-		  "d" (hi),
-		  "r" (b)
-		: "cc");
-	return result;
-}
-
-static inline SDWORD DivScale1 (SDWORD a, SDWORD b)
-{
-	SDWORD result, dummy;
-
-	asm volatile
-		("addl %%eax,%%eax\n\t"
-		 "sbbl %%edx,%%edx\n\t"
-		 "idivl %3"
-		:"=a,a" (result),
-		 "=&d,d" (dummy)
-		: "a,a" (a),
-		  "r,m" (b)
-		: "cc");
-	return result;
-}
 
 #define MAKECONSTDivScale(s) \
 	static inline SDWORD DivScale##s (SDWORD a, SDWORD b) \
@@ -277,56 +174,3 @@ MAKECONSTDivScale(30)
 MAKECONSTDivScale(31)
 #undef MAKECONSTDivScale
 
-static inline SDWORD DivScale32 (SDWORD a, SDWORD b)
-{
-	SDWORD result = 0, dummy;
-
-	asm volatile
-		("idivl %3"
-		:"+a,a" (result),
-		 "=d,d" (dummy)
-		: "d,d" (a),
-		  "r,m" (b)
-		: "cc");
-	return result;
-}
-
-static inline void clearbuf (void *buff, int count, SDWORD clear)
-{
-	int dummy1, dummy2;
-	asm volatile
-		("rep stosl"
-		:"=D" (dummy1),
-		 "=c" (dummy2)
-		: "D" (buff),
-		  "c" (count),
-		  "a" (clear)
-		);
-}
-
-static inline void clearbufshort (void *buff, unsigned int count, WORD clear)
-{
-	asm volatile
-		("shr $1,%%ecx\n\t"
-		 "rep stosl\n\t"
-		 "adc %%ecx,%%ecx\n\t"
-		 "rep stosw"
-		:"=D" (buff), "=c" (count)
-		:"D" (buff), "c" (count), "a" (clear|(clear<<16))
-		:"cc");
-}
-
-static inline SDWORD ksgn (SDWORD a)
-{
-	SDWORD result, dummy;
-
-	asm volatile
-		("add %0,%0\n\t"
-		 "sbb %1,%1\n\t"
-		 "cmp %0,%1\n\t"
-		 "adc $0,%1"
-		:"=r" (dummy), "=r" (result)
-		:"0" (a)
-		:"cc");
-	return result;
-}

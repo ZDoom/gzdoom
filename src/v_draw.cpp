@@ -235,13 +235,13 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 		if (bottomclipper[0] != parms.dclip)
 		{
-			clearbufshort(bottomclipper, screen->GetWidth(), (short)parms.dclip);
+			fillshort(bottomclipper, screen->GetWidth(), (short)parms.dclip);
 		}
 		if (parms.uclip != 0)
 		{
 			if (topclipper[0] != parms.uclip)
 			{
-				clearbufshort(topclipper, screen->GetWidth(), (short)parms.uclip);
+				fillshort(topclipper, screen->GetWidth(), (short)parms.uclip);
 			}
 			mceilingclip = topclipper;
 		}

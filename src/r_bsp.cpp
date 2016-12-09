@@ -17,12 +17,6 @@
 // DESCRIPTION:
 //		BSP traversal, handling of LineSegs for rendering.
 //
-// This file contains some code from the Build Engine.
-//
-// "Build Engine & Tools" Copyright (c) 1993-1997 Ken Silverman
-// Ken Silverman's official web site: "http://www.advsys.net/ken"
-// See the included license file "BUILDLIC.TXT" for license info.
-//
 //-----------------------------------------------------------------------------
 
 
@@ -746,8 +740,8 @@ void R_AddLine (seg_t *line)
 	if (line->linedef->special == Line_Horizon)
 	{
 		// Be aware: Line_Horizon does not work properly with sloped planes
-		clearbufshort (walltop+WallC.sx1, WallC.sx2 - WallC.sx1, centery);
-		clearbufshort (wallbottom+WallC.sx1, WallC.sx2 - WallC.sx1, centery);
+		fillshort (walltop+WallC.sx1, WallC.sx2 - WallC.sx1, centery);
+		fillshort (wallbottom+WallC.sx1, WallC.sx2 - WallC.sx1, centery);
 	}
 	else
 	{

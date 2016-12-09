@@ -197,7 +197,6 @@ else()
 	else()
 		option( NO_GTK "Disable GTK+ dialogs (Not applicable to Windows)" )
 		option( DYN_GTK "Load GTK+ at runtime instead of compile time" ON )
-		option( VALGRIND "Add special Valgrind sequences to self-modifying code" )
 
 		set( FMOD_SEARCH_PATHS
 			/usr/local/include
@@ -816,6 +815,7 @@ set( FASTMATH_PCH_SOURCES
 	r_segs.cpp
 	r_sky.cpp
 	r_things.cpp
+	r_walldraw.cpp
 	s_advsound.cpp
 	s_environment.cpp
 	s_playlist.cpp

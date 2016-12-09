@@ -321,13 +321,4 @@ __forceinline SDWORD DivScale32 (SDWORD a, SDWORD b)
 	__asm idiv b
 }
 
-__forceinline void clearbufshort (void *buff, unsigned int count, WORD clear)
-{
-	SWORD *b2 = (SWORD *)buff;
-	for (unsigned int i = 0; i != count; ++i)
-	{
-		b2[i] = clear;
-	}
-}
-
 #pragma warning (default: 4035)

@@ -740,8 +740,8 @@ void R_AddLine (seg_t *line)
 	if (line->linedef->special == Line_Horizon)
 	{
 		// Be aware: Line_Horizon does not work properly with sloped planes
-		clearbufshort (walltop+WallC.sx1, WallC.sx2 - WallC.sx1, centery);
-		clearbufshort (wallbottom+WallC.sx1, WallC.sx2 - WallC.sx1, centery);
+		fillshort (walltop+WallC.sx1, WallC.sx2 - WallC.sx1, centery);
+		fillshort (wallbottom+WallC.sx1, WallC.sx2 - WallC.sx1, centery);
 	}
 	else
 	{

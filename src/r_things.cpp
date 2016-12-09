@@ -2481,11 +2481,11 @@ void R_DrawSprite (vissprite_t *spr)
 		// for R_DrawVisVoxel().
 		if (x1 > 0)
 		{
-			clearbufshort(cliptop, x1, viewheight);
+			fillshort(cliptop, x1, viewheight);
 		}
 		if (x2 < viewwidth - 1)
 		{
-			clearbufshort(cliptop + x2, viewwidth - x2, viewheight);
+			fillshort(cliptop + x2, viewwidth - x2, viewheight);
 		}
 		int minvoxely = spr->gzt <= hzt ? 0 : xs_RoundToInt((spr->gzt - hzt) / spr->yscale);
 		int maxvoxely = spr->gzb > hzb ? INT_MAX : xs_RoundToInt((spr->gzt - hzb) / spr->yscale);

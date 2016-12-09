@@ -1641,7 +1641,7 @@ namespace swrenderer
 
 		if (b2 > t2)
 		{
-			clearbufshort(spanend + t2, b2 - t2, x);
+			fillshort(spanend + t2, b2 - t2, x);
 		}
 
 		R_SetColorMapLight(basecolormap, (float)light, wallshade);
@@ -1668,7 +1668,7 @@ namespace swrenderer
 				if (b1 > b2) b2 = b1;
 				if (t2 < b2)
 				{
-					clearbufshort(spanend + t2, b2 - t2, x);
+					fillshort(spanend + t2, b2 - t2, x);
 				}
 				rcolormap = lcolormap;
 				R_SetColorMapLight(basecolormap, (float)light, wallshade);

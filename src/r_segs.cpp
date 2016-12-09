@@ -531,7 +531,7 @@ clearfog:
 		}
 		else
 		{
-			clearbufshort(openings + ds->sprtopclip - ds->x1 + x1, x2 - x1, viewheight);
+			fillshort(openings + ds->sprtopclip - ds->x1 + x1, x2 - x1, viewheight);
 		}
 	}
 	return;
@@ -1881,8 +1881,8 @@ void R_RenderSegLoop ()
 				call_wallscan(x1, x2, walltop, wallbottom, swall, lwall, yscale, false);
 			}
 		}
-		clearbufshort (ceilingclip+x1, x2-x1, viewheight);
-		clearbufshort (floorclip+x1, x2-x1, 0xffff);
+		fillshort (ceilingclip+x1, x2-x1, viewheight);
+		fillshort (floorclip+x1, x2-x1, 0xffff);
 	}
 	else
 	{ // two sided line
@@ -2405,7 +2405,7 @@ void R_StoreWallRange (int start, int stop)
 	{
 		ds_p->sprtopclip = R_NewOpening (stop - start);
 		ds_p->sprbottomclip = R_NewOpening (stop - start);
-		clearbufshort (openings + ds_p->sprtopclip, stop-start, viewheight);
+		fillshort (openings + ds_p->sprtopclip, stop-start, viewheight);
 		memset (openings + ds_p->sprbottomclip, -1, (stop-start)*sizeof(short));
 		ds_p->silhouette = SIL_BOTH;
 	}
@@ -2445,7 +2445,7 @@ void R_StoreWallRange (int start, int stop)
 			if (doorclosed || (rw_backfz1 >= rw_frontcz1 && rw_backfz2 >= rw_frontcz2))
 			{						// killough 1/17/98, 2/8/98
 				ds_p->sprtopclip = R_NewOpening (stop - start);
-				clearbufshort (openings + ds_p->sprtopclip, stop - start, viewheight);
+				fillshort (openings + ds_p->sprtopclip, stop - start, viewheight);
 				ds_p->silhouette |= SIL_TOP;
 			}
 		}
@@ -2666,7 +2666,7 @@ int WallMostAny(short *mostbuf, double z1, double z2, const FWallCoords *wallc)
 	}
 	else if (y1 > viewheight && y2 > viewheight) // entire line is below screen
 	{
-		clearbufshort(&mostbuf[wallc->sx1], wallc->sx2 - wallc->sx1, viewheight);
+		fillshort(&mostbuf[wallc->sx1], wallc->sx2 - wallc->sx1, viewheight);
 		return 12;
 	}
 

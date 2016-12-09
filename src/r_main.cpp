@@ -377,7 +377,7 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 	pspritexiscale = 1 / pspritexscale;
 
 	// thing clipping
-	clearbufshort (screenheightarray, viewwidth, (short)viewheight);
+	fillshort (screenheightarray, viewwidth, (short)viewheight);
 
 	R_InitTextureMapping ();
 
@@ -400,7 +400,7 @@ void R_InitRenderer()
 {
 	atterm(R_ShutdownRenderer);
 	// viewwidth / viewheight are set by the defaults
-	clearbufshort (zeroarray, MAXWIDTH, 0);
+	fillshort (zeroarray, MAXWIDTH, 0);
 
 	R_InitPlanes ();
 	R_InitShadeMaps();

@@ -328,9 +328,9 @@ void R_ClearPlanes (bool fullclear)
 		}
 
 		// opening / clipping determination
-		clearbufshort (floorclip, viewwidth, viewheight);
+		fillshort (floorclip, viewwidth, viewheight);
 		// [RH] clip ceiling to console bottom
-		clearbufshort (ceilingclip, viewwidth,
+		fillshort (ceilingclip, viewwidth,
 			!screen->Accel2D && ConBottom > viewwindowy && !bRenderingToCanvas
 			? (ConBottom - viewwindowy) : 0);
 
@@ -503,7 +503,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 	check->MirrorFlags = MirrorFlags;
 	check->CurrentSkybox = CurrentSkybox;
 
-	clearbufshort (check->top, viewwidth, 0x7fff);
+	fillshort (check->top, viewwidth, 0x7fff);
 
 	return check;
 }
@@ -588,7 +588,7 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 		pl = new_pl;
 		pl->left = start;
 		pl->right = stop;
-		clearbufshort (pl->top, viewwidth, 0x7fff);
+		fillshort (pl->top, viewwidth, 0x7fff);
 	}
 	return pl;
 }
@@ -1816,7 +1816,7 @@ void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1))
 
 	if (b2 > t2)
 	{
-		clearbufshort (spanend+t2, b2-t2, x);
+		fillshort (spanend+t2, b2-t2, x);
 	}
 
 	for (--x; x >= pl->left; --x)

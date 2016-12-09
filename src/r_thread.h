@@ -42,6 +42,12 @@ void R_EndDrawerCommands();
 class DrawerThread
 {
 public:
+	DrawerThread()
+	{
+		dc_temp = dc_temp_buff;
+		dc_temp_rgba = dc_temp_rgbabuff_rgba;
+	}
+
 	std::thread thread;
 
 	// Thread line index of this thread

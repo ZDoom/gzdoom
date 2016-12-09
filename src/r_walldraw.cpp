@@ -50,10 +50,10 @@ namespace swrenderer
 	extern FTexture *rw_pic;
 	extern int wallshade;
 
-struct WallscanSampler
+struct WallSampler
 {
-	WallscanSampler() { }
-	WallscanSampler(int y1, float swal, double yrepeat, fixed_t xoffset, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x));
+	WallSampler() { }
+	WallSampler(int y1, float swal, double yrepeat, fixed_t xoffset, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x));
 
 	uint32_t uv_pos;
 	uint32_t uv_step;
@@ -63,7 +63,7 @@ struct WallscanSampler
 	uint32_t height;
 };
 
-WallscanSampler::WallscanSampler(int y1, float swal, double yrepeat, fixed_t xoffset, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x))
+WallSampler::WallSampler(int y1, float swal, double yrepeat, fixed_t xoffset, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x))
 {
 	height = texture->GetHeight();
 
@@ -96,7 +96,7 @@ WallscanSampler::WallscanSampler(int y1, float swal, double yrepeat, fixed_t xof
 }
 
 // Draw a column with support for non-power-of-two ranges
-void wallscan_drawcol1(int x, int y1, int y2, WallscanSampler &sampler, DWORD(*draw1column)())
+static void Draw1Column(int x, int y1, int y2, WallSampler &sampler, DWORD(*draw1column)())
 {
 	if (sampler.uv_max == 0 || sampler.uv_step == 0) // power of two
 	{
@@ -144,7 +144,7 @@ void wallscan_drawcol1(int x, int y1, int y2, WallscanSampler &sampler, DWORD(*d
 }
 
 // Draw four columns with support for non-power-of-two ranges
-void wallscan_drawcol4(int x, int y1, int y2, WallscanSampler *sampler, void(*draw4columns)())
+static void Draw4Columns(int x, int y1, int y2, WallSampler *sampler, void(*draw4columns)())
 {
 	if (sampler[0].uv_max == 0 || sampler[0].uv_step == 0) // power of two, no wrap handling needed
 	{
@@ -210,17 +210,16 @@ void wallscan_drawcol4(int x, int y1, int y2, WallscanSampler *sampler, void(*dr
 typedef DWORD(*Draw1ColumnFuncPtr)();
 typedef void(*Draw4ColumnsFuncPtr)();
 
-void wallscan_any(
+static void ProcessWallWorker(
 	int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat,
 	const BYTE *(*getcol)(FTexture *tex, int x),
-	void(setupwallscan(int bits, Draw1ColumnFuncPtr &draw1, Draw4ColumnsFuncPtr &draw2)))
+	void(setupProcessNormalWall(int bits, Draw1ColumnFuncPtr &draw1, Draw4ColumnsFuncPtr &draw2)))
 {
 	if (rw_pic->UseType == FTexture::TEX_Null)
 		return;
 
 	fixed_t xoffset = rw_offset;
 
-	rw_pic->GetHeight(); // To ensure that rw_pic->HeightBits has been set
 	int fracbits = 32 - rw_pic->HeightBits;
 	if (fracbits == 32)
 	{ // Hack for one pixel tall textures
@@ -231,7 +230,7 @@ void wallscan_any(
 
 	DWORD(*draw1column)();
 	void(*draw4columns)();
-	setupwallscan(fracbits, draw1column, draw4columns);
+	setupProcessNormalWall(fracbits, draw1column, draw4columns);
 
 	bool fixed = (fixedcolormap != NULL || fixedlightlev >= 0);
 	if (fixed)
@@ -264,8 +263,8 @@ void wallscan_any(
 		if (!fixed)
 			dc_colormap = basecolormap->Maps + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
 
-		WallscanSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, rw_pic, getcol);
-		wallscan_drawcol1(x, y1, y2, sampler, draw1column);
+		WallSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, rw_pic, getcol);
+		Draw1Column(x, y1, y2, sampler, draw1column);
 	}
 
 	// The aligned columns
@@ -282,9 +281,9 @@ void wallscan_any(
 			light += rw_lightstep;
 		}
 
-		WallscanSampler sampler[4];
+		WallSampler sampler[4];
 		for (int i = 0; i < 4; i++)
-			sampler[i] = WallscanSampler(y1[i], swal[x + i], yrepeat, lwal[x + i] + xoffset, rw_pic, getcol);
+			sampler[i] = WallSampler(y1[i], swal[x + i], yrepeat, lwal[x + i] + xoffset, rw_pic, getcol);
 
 		// Figure out where we vertically can start and stop drawing 4 columns in one go
 		int middle_y1 = y1[0];
@@ -312,7 +311,7 @@ void wallscan_any(
 
 				if (!fixed)
 					dc_colormap = basecolormap->Maps + (GETPALOOKUP(lights[i], wallshade) << COLORMAPSHIFT);
-				wallscan_drawcol1(x + i, y1[i], y2[i], sampler[i], draw1column);
+				Draw1Column(x + i, y1[i], y2[i], sampler[i], draw1column);
 			}
 			continue;
 		}
@@ -324,7 +323,7 @@ void wallscan_any(
 				dc_colormap = basecolormap->Maps + (GETPALOOKUP(lights[i], wallshade) << COLORMAPSHIFT);
 
 			if (y1[i] < middle_y1)
-				wallscan_drawcol1(x + i, y1[i], middle_y1, sampler[i], draw1column);
+				Draw1Column(x + i, y1[i], middle_y1, sampler[i], draw1column);
 		}
 
 		// Draw the area where all 4 columns are active
@@ -335,7 +334,7 @@ void wallscan_any(
 				palookupoffse[i] = basecolormap->Maps + (GETPALOOKUP(lights[i], wallshade) << COLORMAPSHIFT);
 			}
 		}
-		wallscan_drawcol4(x, middle_y1, middle_y2, sampler, draw4columns);
+		Draw4Columns(x, middle_y1, middle_y2, sampler, draw4columns);
 
 		// Draw the last rows where not all 4 columns are active
 		for (int i = 0; i < 4; i++)
@@ -344,7 +343,7 @@ void wallscan_any(
 				dc_colormap = basecolormap->Maps + (GETPALOOKUP(lights[i], wallshade) << COLORMAPSHIFT);
 
 			if (middle_y2 < y2[i])
-				wallscan_drawcol1(x + i, middle_y2, y2[i], sampler[i], draw1column);
+				Draw1Column(x + i, middle_y2, y2[i], sampler[i], draw1column);
 		}
 	}
 
@@ -359,16 +358,16 @@ void wallscan_any(
 		if (!fixed)
 			dc_colormap = basecolormap->Maps + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
 
-		WallscanSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, rw_pic, getcol);
-		wallscan_drawcol1(x, y1, y2, sampler, draw1column);
+		WallSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, rw_pic, getcol);
+		Draw1Column(x, y1, y2, sampler, draw1column);
 	}
 
 	NetUpdate();
 }
 
-void wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
+static void ProcessNormalWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
 {
-	wallscan_any(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, [](int bits, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
+	ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, [](int bits, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
 	{
 		setupvline(bits);
 		line1 = dovline1;
@@ -376,15 +375,15 @@ void wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lw
 	});
 }
 
-void maskwallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
+static void ProcessMaskedWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
 {
-	if (!rw_pic->bMasked) // Textures that aren't masked can use the faster wallscan.
+	if (!rw_pic->bMasked) // Textures that aren't masked can use the faster ProcessNormalWall.
 	{
-		wallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol);
+		ProcessNormalWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol);
 	}
 	else
 	{
-		wallscan_any(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, [](int bits, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
+		ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, [](int bits, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
 		{
 			setupmvline(bits);
 			line1 = domvline1;
@@ -393,18 +392,18 @@ void maskwallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t
 	}
 }
 
-void transmaskwallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
+static void ProcessTranslucentWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
 {
 	static fixed_t(*tmvline1)();
 	static void(*tmvline4)();
 	if (!R_GetTransMaskDrawers(&tmvline1, &tmvline4))
 	{
-		// The current translucency is unsupported, so draw with regular maskwallscan instead.
-		maskwallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol);
+		// The current translucency is unsupported, so draw with regular ProcessMaskedWall instead.
+		ProcessMaskedWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol);
 	}
 	else
 	{
-		wallscan_any(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, [](int bits, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
+		ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, [](int bits, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
 		{
 			setuptmvline(bits);
 			line1 = reinterpret_cast<DWORD(*)()>(tmvline1);
@@ -413,7 +412,7 @@ void transmaskwallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fi
 	}
 }
 
-void wallscan_striped (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat)
+static void ProcessStripedWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat)
 {
 	FDynamicColormap *startcolormap = basecolormap;
 	int startshade = wallshade;
@@ -438,7 +437,7 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, float *swal, fi
 			{
 				down[j] = clamp (most3[j], up[j], dwal[j]);
 			}
-			wallscan (x1, x2, up, down, swal, lwal, yrepeat);
+			ProcessNormalWall (x1, x2, up, down, swal, lwal, yrepeat);
 			up = down;
 			down = (down == most1) ? most2 : most1;
 		}
@@ -449,49 +448,49 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, float *swal, fi
 			*lit->p_lightlevel, lit->lightsource != NULL) + r_actualextralight);
  	}
 
-	wallscan (x1, x2, up, dwal, swal, lwal, yrepeat);
+	ProcessNormalWall (x1, x2, up, dwal, swal, lwal, yrepeat);
 	basecolormap = startcolormap;
 	wallshade = startshade;
 }
 
-void call_wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, bool mask)
+static void ProcessWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, bool mask)
 {
 	if (mask)
 	{
 		if (colfunc == basecolfunc)
 		{
-			maskwallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat);
+			ProcessMaskedWall(x1, x2, uwal, dwal, swal, lwal, yrepeat);
 		}
 		else
 		{
-			transmaskwallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat);
+			ProcessTranslucentWall(x1, x2, uwal, dwal, swal, lwal, yrepeat);
 		}
 	}
 	else
 	{
 		if (fixedcolormap != NULL || fixedlightlev >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
 		{
-			wallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat);
+			ProcessNormalWall(x1, x2, uwal, dwal, swal, lwal, yrepeat);
 		}
 		else
 		{
-			wallscan_striped(x1, x2, uwal, dwal, swal, lwal, yrepeat);
+			ProcessStripedWall(x1, x2, uwal, dwal, swal, lwal, yrepeat);
 		}
 	}
 }
 
 //=============================================================================
 //
-// wallscan_np2
+// ProcessWallNP2
 //
-// This is a wrapper around wallscan that helps it tile textures whose heights
+// This is a wrapper around ProcessWall that helps it tile textures whose heights
 // are not powers of 2. It divides the wall into texture-sized strips and calls
-// wallscan for each of those. Since only one repetition of the texture fits
-// in each strip, wallscan will not tile.
+// ProcessNormalWall for each of those. Since only one repetition of the texture fits
+// in each strip, ProcessWall will not tile.
 //
 //=============================================================================
 
-void wallscan_np2(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, double top, double bot, bool mask)
+static void ProcessWallNP2(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, double top, double bot, bool mask)
 {
 	short most1[MAXWIDTH], most2[MAXWIDTH], most3[MAXWIDTH];
 	short *up, *down;
@@ -518,14 +517,14 @@ void wallscan_np2(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t
 				{
 					down[j] = clamp(most3[j], up[j], dwal[j]);
 				}
-				call_wallscan(x1, x2, up, down, swal, lwal, yrepeat, mask);
+				ProcessWall(x1, x2, up, down, swal, lwal, yrepeat, mask);
 				up = down;
 				down = (down == most1) ? most2 : most1;
 			}
 			partition -= scaledtexheight;
 			dc_texturemid -= texheight;
  		}
-		call_wallscan(x1, x2, up, dwal, swal, lwal, yrepeat, mask);
+		ProcessWall(x1, x2, up, dwal, swal, lwal, yrepeat, mask);
 	}
 	else
 	{ // upside down: draw strips from bottom to top
@@ -542,18 +541,18 @@ void wallscan_np2(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t
 				{
 					up[j] = clamp(most3[j], uwal[j], down[j]);
 				}
-				call_wallscan(x1, x2, up, down, swal, lwal, yrepeat, mask);
+				ProcessWall(x1, x2, up, down, swal, lwal, yrepeat, mask);
 				down = up;
 				up = (up == most1) ? most2 : most1;
 			}
 			partition -= scaledtexheight;
 			dc_texturemid -= texheight;
  		}
-		call_wallscan(x1, x2, uwal, down, swal, lwal, yrepeat, mask);
+		ProcessWall(x1, x2, uwal, down, swal, lwal, yrepeat, mask);
 	}
 }
 
-void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat)
+void R_DrawDrawSeg(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat)
 {
 	if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 	{
@@ -571,13 +570,32 @@ void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, fl
 		{
 			bot = MAX(bot, sclipBottom);
 		}
-		wallscan_np2(x1, x2, uwal, dwal, swal, lwal, yrepeat, top, bot, true);
+		ProcessWallNP2(x1, x2, uwal, dwal, swal, lwal, yrepeat, top, bot, true);
 	}
 	else
 	{
-		call_wallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat, true);
+		ProcessWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, true);
 	}
 }
+
+
+void R_DrawWallSegment(FTexture *rw_pic, int x1, int x2, short *walltop, short *wallbottom, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask)
+{
+	if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
+	{
+		ProcessWallNP2(x1, x2, walltop, wallbottom, swall, lwall, yscale, top, bottom, false);
+	}
+	else
+	{
+		ProcessWall(x1, x2, walltop, wallbottom, swall, lwall, yscale, false);
+	}
+}
+
+void R_DrawSkySegment(visplane_t *pl, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
+{
+	ProcessNormalWall(pl->left, pl->right, uwal, dwal, swal, lwal, yrepeat, getcol);
+}
+
 
 
 }

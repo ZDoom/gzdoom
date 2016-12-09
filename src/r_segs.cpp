@@ -64,9 +64,8 @@ namespace swrenderer
 {
 	using namespace drawerargs;
 
-	void call_wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, bool mask);
-	void wallscan_np2(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, double top, double bot, bool mask);
-	void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat);
+	void R_DrawWallSegment(FTexture *rw_pic, int x1, int x2, short *walltop, short *wallbottom, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask);
+	void R_DrawDrawSeg(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat);
 
 #define HEIGHTBITS 12
 #define HEIGHTSHIFT (FRACBITS-HEIGHTBITS)
@@ -517,7 +516,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 		rw_offset = 0;
 		rw_pic = tex;
-		wallscan_np2_ds(ds, x1, x2, mceilingclip, mfloorclip, MaskedSWall, maskedtexturecol, ds->yscale);
+		R_DrawDrawSeg(ds, x1, x2, mceilingclip, mfloorclip, MaskedSWall, maskedtexturecol, ds->yscale);
 	}
 
 clearfog:
@@ -645,7 +644,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	}
 
 	PrepLWall (lwall, curline->sidedef->TexelLength*xscale, ds->sx1, ds->sx2);
-	wallscan_np2_ds(ds, x1, x2, wallupper, walllower, MaskedSWall, lwall, yscale);
+	R_DrawDrawSeg(ds, x1, x2, wallupper, walllower, MaskedSWall, lwall, yscale);
 	R_FinishSetPatchStyle();
 }
 
@@ -1057,9 +1056,6 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 // Can draw or mark the starting pixel of floor and ceiling textures.
 // CALLED: CORE LOOPING ROUTINE.
 //
-// [RH] Rewrote this to use Build's wallscan, so it's quite far
-// removed from the original Doom routine.
-//
 
 void R_RenderSegLoop ()
 {
@@ -1175,14 +1171,7 @@ void R_RenderSegLoop ()
 			{
 				rw_offset = -rw_offset;
 			}
-			if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
-			{
-				wallscan_np2(x1, x2, walltop, wallbottom, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false);
-			}
-			else
-			{
-				call_wallscan(x1, x2, walltop, wallbottom, swall, lwall, yscale, false);
-			}
+			R_DrawWallSegment(rw_pic, x1, x2, walltop, wallbottom, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false);
 		}
 		fillshort (ceilingclip+x1, x2-x1, viewheight);
 		fillshort (floorclip+x1, x2-x1, 0xffff);
@@ -1218,14 +1207,7 @@ void R_RenderSegLoop ()
 				{
 					rw_offset = -rw_offset;
 				}
-				if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
-				{
-					wallscan_np2(x1, x2, walltop, wallupper, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false);
-				}
-				else
-				{
-					call_wallscan(x1, x2, walltop, wallupper, swall, lwall, yscale, false);
-				}
+				R_DrawWallSegment(rw_pic, x1, x2, walltop, wallupper, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false);
 			}
 			memcpy (ceilingclip+x1, wallupper+x1, (x2-x1)*sizeof(short));
 		}
@@ -1264,14 +1246,7 @@ void R_RenderSegLoop ()
 				{
 					rw_offset = -rw_offset;
 				}
-				if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
-				{
-					wallscan_np2(x1, x2, walllower, wallbottom, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false);
-				}
-				else
-				{
-					call_wallscan(x1, x2, walllower, wallbottom, swall, lwall, yscale, false);
-				}
+				R_DrawWallSegment(rw_pic, x1, x2, walllower, wallbottom, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false);
 			}
 			memcpy (floorclip+x1, walllower+x1, (x2-x1)*sizeof(short));
 		}

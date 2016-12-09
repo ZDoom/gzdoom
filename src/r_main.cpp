@@ -1053,8 +1053,8 @@ CCMD (clearwallcycles)
 	bestwallcycles = HUGE_VAL;
 }
 
-#if 1
-// To use these, also uncomment the clock/unclock in wallscan
+#if 0
+// The replacement code for Build's wallscan doesn't have any timing calls so this does not work anymore.
 static double bestscancycles = HUGE_VAL;
 
 ADD_STAT (scancycles)

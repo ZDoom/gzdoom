@@ -103,8 +103,7 @@ namespace swrenderer
 	bool R_GetTransMaskDrawers(fixed_t(**tmvline1)(), void(**tmvline4)());
 
 	const uint8_t *R_GetColumn(FTexture *tex, int col);
-	void wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const uint8_t *(*getcol)(FTexture *tex, int col) = R_GetColumn);
-
+	
 	void rt_initcols(uint8_t *buffer = nullptr);
 	void rt_span_coverage(int x, int start, int stop);
 	void rt_draw4cols(int sx);

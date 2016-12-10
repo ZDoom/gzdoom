@@ -1375,10 +1375,16 @@ static HCURSOR CreateAlphaCursor(FTexture *cursorpic)
 	HBITMAP color, mono;
 	void *bits;
 
+	// Find closest integer scale factor for the monitor DPI
+	HDC screenDC = GetDC(0);
+	int dpi = GetDeviceCaps(screenDC, LOGPIXELSX);
+	int scale = MAX((dpi + 96 / 2 - 1) / 96, 1);
+	ReleaseDC(0, screenDC);
+
 	memset(&bi, 0, sizeof(bi));
 	bi.bV5Size = sizeof(bi);
-	bi.bV5Width = 32;
-	bi.bV5Height = 32;
+	bi.bV5Width = 32 * scale;
+	bi.bV5Height = 32 * scale;
 	bi.bV5Planes = 1;
 	bi.bV5BitCount = 32;
 	bi.bV5Compression = BI_BITFIELDS;
@@ -1403,7 +1409,7 @@ static HCURSOR CreateAlphaCursor(FTexture *cursorpic)
 	}
 
 	// Create an empty mask bitmap, since CreateIconIndirect requires this.
-	mono = CreateBitmap(32, 32, 1, 1, NULL);
+	mono = CreateBitmap(32 * scale, 32 * scale, 1, 1, NULL);
 	if (mono == NULL)
 	{
 		DeleteObject(color);
@@ -1413,10 +1419,28 @@ static HCURSOR CreateAlphaCursor(FTexture *cursorpic)
 	// Copy cursor to the color bitmap. Note that GDI bitmaps are upside down compared
 	// to normal conventions, so we create the FBitmap pointing at the last row and use
 	// a negative pitch so that CopyTrueColorPixels will use GDI's orientation.
-	FBitmap bmp((BYTE *)bits + 31*32*4, -32*4, 32, 32);
-	cursorpic->CopyTrueColorPixels(&bmp, 0, 0);
+	if (scale == 1)
+	{
+		FBitmap bmp((BYTE *)bits + 31 * 32 * 4, -32 * 4, 32, 32);
+		cursorpic->CopyTrueColorPixels(&bmp, 0, 0);
+	}
+	else
+	{
+		std::vector<uint32_t> unscaled;
+		unscaled.resize(32 * 32);
+		FBitmap bmp((BYTE *)unscaled.data() + 31 * 32 * 4, -32 * 4, 32, 32);
+		cursorpic->CopyTrueColorPixels(&bmp, 0, 0);
+		uint32_t *scaled = (uint32_t*)bits;
+		for (int y = 0; y < 32 * scale; y++)
+		{
+			for (int x = 0; x < 32 * scale; x++)
+			{
+				scaled[x + y * 32 * scale] = unscaled[x / scale + y / scale * 32];
+			}
+		}
+	}
 
-	return CreateBitmapCursor(cursorpic->LeftOffset, cursorpic->TopOffset, mono, color);
+	return CreateBitmapCursor(cursorpic->LeftOffset * scale, cursorpic->TopOffset * scale, mono, color);
 }
 
 //==========================================================================

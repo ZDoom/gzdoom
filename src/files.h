@@ -374,7 +374,7 @@ public:
 	static FileWriter *Open(const char *filename);
 
 	virtual size_t Write(const void *buffer, size_t len);
-	size_t Printf(const char *fmt, ...);
+	size_t Printf(const char *fmt, ...) GCCPRINTF(2,3);
 
 protected:
 

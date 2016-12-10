@@ -680,17 +680,23 @@ void I_SetWndProc()
 
 void RestoreConView()
 {
+	HDC screenDC = GetDC(0);
+	int dpi = GetDeviceCaps(screenDC, LOGPIXELSX);
+	ReleaseDC(0, screenDC);
+	int width = (512 * dpi + 96 / 2) / 96;
+	int height = (384 * dpi + 96 / 2) / 96;
+
 	// Make sure the window has a frame in case it was fullscreened.
 	SetWindowLongPtr (Window, GWL_STYLE, WS_VISIBLE|WS_OVERLAPPEDWINDOW);
 	if (GetWindowLong (Window, GWL_EXSTYLE) & WS_EX_TOPMOST)
 	{
-		SetWindowPos (Window, HWND_BOTTOM, 0, 0, 512, 384,
+		SetWindowPos (Window, HWND_BOTTOM, 0, 0, width, height,
 			SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE);
 		SetWindowPos (Window, HWND_TOP, 0, 0, 0, 0, SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOSIZE);
 	}
 	else
 	{
-		SetWindowPos (Window, NULL, 0, 0, 512, 384,
+		SetWindowPos (Window, NULL, 0, 0, width, height,
 			SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
 	}
 
@@ -935,8 +941,11 @@ void DoMain (HINSTANCE hInstance)
 		progdir.Truncate((long)strlen(program));
 		progdir.UnlockBuffer();
 
-		width = 512;
-		height = 384;
+		HDC screenDC = GetDC(0);
+		int dpi = GetDeviceCaps(screenDC, LOGPIXELSX);
+		ReleaseDC(0, screenDC);
+		width = (512 * dpi + 96 / 2) / 96;
+		height = (384 * dpi + 96 / 2) / 96;
 
 		// Many Windows structures that specify their size do so with the first
 		// element. DEVMODE is not one of those structures.

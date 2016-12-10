@@ -54,8 +54,8 @@ class Staff : HereticWeapon
 				return;
 		}
 		double ang = angle + Random2[StaffAtk]() * (5.625 / 256);
-		double slope = AimLineAttack (ang, MELEERANGE);
-		LineAttack (ang, MELEERANGE, slope, damage, 'Melee', puff, true, t);
+		double slope = AimLineAttack (ang, DEFMELEERANGE);
+		LineAttack (ang, DEFMELEERANGE, slope, damage, 'Melee', puff, true, t);
 		if (t.linetarget)
 		{
 			//S_StartSound(player.mo, sfx_stfhit);

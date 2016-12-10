@@ -74,10 +74,10 @@ class CWeapStaff : ClericWeapon
 			for (int j = 1; j >= -1; j -= 2)
 			{
 				double ang = angle + j*i*(45. / 16);
-				double slope = AimLineAttack(ang, 1.5 * MELEERANGE, t, 0., ALF_CHECK3D);
+				double slope = AimLineAttack(ang, 1.5 * DEFMELEERANGE, t, 0., ALF_CHECK3D);
 				if (t.linetarget)
 				{
-					LineAttack(ang, 1.5 * MELEERANGE, slope, damage, 'Melee', "CStaffPuff", false, t);
+					LineAttack(ang, 1.5 * DEFMELEERANGE, slope, damage, 'Melee', "CStaffPuff", false, t);
 					if (t.linetarget != null)
 					{
 						angle = t.angleFromSource;

@@ -61,8 +61,8 @@ public:
 	int MustMatchString(const char * const *strings, size_t stride = sizeof(char*));
 	int GetMessageLine();
 
-	void ScriptError(const char *message, ...);
-	void ScriptMessage(const char *message, ...);
+	void ScriptError(const char *message, ...) GCCPRINTF(2,3);
+	void ScriptMessage(const char *message, ...) GCCPRINTF(2,3);
 
 	bool isText();
 
@@ -155,7 +155,7 @@ struct FScriptPosition
 	FScriptPosition(FString fname, int line);
 	FScriptPosition(FScanner &sc);
 	FScriptPosition &operator=(const FScriptPosition &other);
-	void Message(int severity, const char *message,...) const;
+	void Message(int severity, const char *message,...) const GCCPRINTF(3,4);
 	static void ResetErrorCounter()
 	{
 		WarnCounter = 0;

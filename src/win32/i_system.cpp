@@ -1426,9 +1426,9 @@ static HCURSOR CreateAlphaCursor(FTexture *cursorpic)
 	}
 	else
 	{
-		std::vector<uint32_t> unscaled;
-		unscaled.resize(32 * 32);
-		FBitmap bmp((BYTE *)unscaled.data() + 31 * 32 * 4, -32 * 4, 32, 32);
+		TArray<uint32_t> unscaled;
+		unscaled.Resize(32 * 32);
+		FBitmap bmp((BYTE *)&unscaled[0] + 31 * 32 * 4, -32 * 4, 32, 32);
 		cursorpic->CopyTrueColorPixels(&bmp, 0, 0);
 		uint32_t *scaled = (uint32_t*)bits;
 		for (int y = 0; y < 32 * scale; y++)

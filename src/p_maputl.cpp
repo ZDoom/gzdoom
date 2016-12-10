@@ -2001,8 +2001,8 @@ int P_VanillaPointOnLineSide(double x, double y, const line_t* line)
 	auto dx = FloatToFixed(x - line->v1->fX());
 	auto dy = FloatToFixed(y - line->v1->fY());
 
-	auto left = MulScale16( int(delta.Y * 256) , dx );
-	auto right = MulScale16( dy , int(delta.X * 256) );
+	auto left = FixedMul( int(delta.Y * 256) , dx );
+	auto right = FixedMul( dy , int(delta.X * 256) );
 
 	if (right < left)
 		return 0;		// front side

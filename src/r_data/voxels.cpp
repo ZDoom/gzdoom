@@ -456,7 +456,7 @@ static bool VOX_ReadSpriteNames(FScanner &sc, TArray<DWORD> &vsprites)
 		}
 		else if (sc.StringLen == 5 && (sc.String[4] = toupper(sc.String[4]), sc.String[4] < 'A' || sc.String[4] >= 'A' + MAX_SPRITE_FRAMES))
 		{
-			sc.ScriptMessage("Sprite frame %s is invalid.\n", sc.String[4]);
+			sc.ScriptMessage("Sprite frame %c is invalid.\n", sc.String[4]);
 		}
 		else
 		{

@@ -718,7 +718,7 @@ public:
 
 #include "t_fs.h"
 
-void script_error(const char *s, ...);
+void script_error(const char *s, ...) GCCPRINTF(1,2);
 void FS_EmulateCmd(char * string);
 
 extern AActor *trigger_obj;

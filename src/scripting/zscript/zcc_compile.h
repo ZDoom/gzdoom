@@ -135,8 +135,8 @@ private:
 	ZCC_ExprTypeRef *NodeFromSymbolType(PSymbolType *sym, ZCC_Expression *idnode);
 
 
-	void Warn(ZCC_TreeNode *node, const char *msg, ...);
-	void Error(ZCC_TreeNode *node, const char *msg, ...);
+	void Warn(ZCC_TreeNode *node, const char *msg, ...) GCCPRINTF(3,4);
+	void Error(ZCC_TreeNode *node, const char *msg, ...) GCCPRINTF(3,4);
 	void MessageV(ZCC_TreeNode *node, const char *txtcolor, const char *msg, va_list argptr);
 
 	FxExpression *ConvertAST(PStruct *cclass, ZCC_TreeNode *ast);

@@ -1,10 +1,10 @@
 /*
-** thingdef_expression.cpp
+** codegen.cpp
 **
-** Expression evaluation
+** Compiler backend / code generation for ZScript and DECORATE
 **
 **---------------------------------------------------------------------------
-** Copyright 2008 Christoph Oelckers
+** Copyright 2008-2016 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -6586,8 +6586,7 @@ ExpEmit FxStructMember::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
-// not really needed at the moment but may become useful with meta properties
-// and some other class-specific extensions.
+//
 //
 //==========================================================================
 

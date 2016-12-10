@@ -74,7 +74,7 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 		}
 		if (cls == nullptr)
 		{
-			Error(cnode, "Class %s cannot be found in the current translation unit.");
+			Error(cnode, "Class %s cannot be found in the current translation unit.", FName(cnode->NodeName).GetChars());
 			return;
 		}
 	}

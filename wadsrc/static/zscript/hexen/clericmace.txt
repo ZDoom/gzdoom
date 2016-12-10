@@ -66,10 +66,10 @@ class CWeapMace : ClericWeapon
 			for (int j = 1; j >= -1; j -= 2)
 			{
 				double ang = angle + j*i*(45. / 16);
-				double slope = AimLineAttack(ang, 2 * MELEERANGE, t);
+				double slope = AimLineAttack(ang, 2 * DEFMELEERANGE, t);
 				if (t.linetarget)
 				{
-					LineAttack(ang, 2 * MELEERANGE, slope, damage, 'Melee', "HammerPuff", true, t);
+					LineAttack(ang, 2 * DEFMELEERANGE, slope, damage, 'Melee', "HammerPuff", true, t);
 					if (t.linetarget != null)
 					{
 						AdjustPlayerAngle(t);
@@ -81,7 +81,7 @@ class CWeapMace : ClericWeapon
 		// didn't find any creatures, so try to strike any walls
 		weaponspecial = 0;
 
-		double slope = AimLineAttack (angle, MELEERANGE);
-		LineAttack (angle, MELEERANGE, slope, damage, 'Melee', "HammerPuff");
+		double slope = AimLineAttack (angle, DEFMELEERANGE);
+		LineAttack (angle, DEFMELEERANGE, slope, damage, 'Melee', "HammerPuff");
 	}
 }

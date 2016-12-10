@@ -77,8 +77,8 @@ class Beak : Weapon
 
 		int damage = random[BeakAtk](1,3);
 		double ang = angle;
-		double slope = AimLineAttack (ang, MELEERANGE);
-		LineAttack (ang, MELEERANGE, slope, damage, 'Melee', "BeakPuff", true, t);
+		double slope = AimLineAttack (ang, DEFMELEERANGE);
+		LineAttack (ang, DEFMELEERANGE, slope, damage, 'Melee', "BeakPuff", true, t);
 		if (t.linetarget)
 		{
 			angle = t.angleFromSource;
@@ -125,8 +125,8 @@ class BeakPowered : Beak
 
 		int damage = random[BeakAtk](1,8) * 4;
 		double ang = angle;
-		double slope = AimLineAttack (ang, MELEERANGE);
-		LineAttack (ang, MELEERANGE, slope, damage, 'Melee', "BeakPuff", true, t);
+		double slope = AimLineAttack (ang, DEFMELEERANGE);
+		LineAttack (ang, DEFMELEERANGE, slope, damage, 'Melee', "BeakPuff", true, t);
 		if (t.linetarget)
 		{
 			angle = t.angleFromSource;

@@ -56,7 +56,7 @@ class FWeapFist : FighterWeapon
 		Class<Actor> pufftype;
 		FTranslatedLineTarget t;
 
-		double slope = AimLineAttack (angle, 2*MELEERANGE, t);
+		double slope = AimLineAttack (angle, 2*DEFMELEERANGE, t);
 		if (t.linetarget != null)
 		{
 			if (++weaponspecial >= 3)
@@ -69,7 +69,7 @@ class FWeapFist : FighterWeapon
 			{
 				pufftype = "PunchPuff";
 			}
-			LineAttack (angle, 2*MELEERANGE, slope, damage, 'Melee', pufftype, true, t);
+			LineAttack (angle, 2*DEFMELEERANGE, slope, damage, 'Melee', pufftype, true, t);
 			if (t.linetarget != null)
 			{
 				// The mass threshold has been changed to CommanderKeen's value which has been used most often for 'unmovable' stuff.
@@ -117,8 +117,8 @@ class FWeapFist : FighterWeapon
 		// didn't find any creatures, so try to strike any walls
 		weaponspecial = 0;
 
-		double slope = AimLineAttack (angle, MELEERANGE);
-		LineAttack (angle, MELEERANGE, slope, damage, 'Melee', "PunchPuff", true);
+		double slope = AimLineAttack (angle, DEFMELEERANGE);
+		LineAttack (angle, DEFMELEERANGE, slope, damage, 'Melee', "PunchPuff", true);
 	}
 	
 }

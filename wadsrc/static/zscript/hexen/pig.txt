@@ -70,8 +70,8 @@ class Snout : Weapon
 
 		int damage = random[SnoutAttack](3, 6);
 		double ang = angle;
-		double slope = AimLineAttack(ang, MELEERANGE);
-		Actor puff = LineAttack(ang, MELEERANGE, slope, damage, 'Melee', "SnoutPuff", true, t);
+		double slope = AimLineAttack(ang, DEFMELEERANGE);
+		Actor puff = LineAttack(ang, DEFMELEERANGE, slope, damage, 'Melee', "SnoutPuff", true, t);
 		A_PlaySound("PigActive", CHAN_VOICE);
 		if(t.linetarget)
 		{

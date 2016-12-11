@@ -372,8 +372,8 @@ class ScriptedMarine : Actor
 
 		A_FaceTarget ();
 		double ang = angle + random2[SMarinePunch]() * (5.625 / 256);
-		double pitch = AimLineAttack (ang, MELEERANGE);
-		LineAttack (ang, MELEERANGE, pitch, damage, 'Melee', "BulletPuff", true, t);
+		double pitch = AimLineAttack (ang, DEFMELEERANGE);
+		LineAttack (ang, DEFMELEERANGE, pitch, damage, 'Melee', "BulletPuff", true, t);
 
 		// turn to face target
 		if (t.linetarget)

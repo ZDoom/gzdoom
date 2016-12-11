@@ -74,7 +74,7 @@ class Gauntlets : Weapon
 		if (power)
 		{
 			damage = random[GauntletAtk](1, 8) * 2;
-			dist = 4*MELEERANGE;
+			dist = 4*DEFMELEERANGE;
 			ang += random2[GauntletAtk]() * (2.8125 / 256);
 			pufftype = "GauntletPuff2";
 		}

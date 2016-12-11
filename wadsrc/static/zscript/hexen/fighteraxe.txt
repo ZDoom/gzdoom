@@ -3,7 +3,7 @@
 
 class FWeapAxe : FighterWeapon
 {
-	const AXERANGE = (2.25 * MELEERANGE);
+	const AXERANGE = (2.25 * DEFMELEERANGE);
 
 	Default
 	{
@@ -273,8 +273,8 @@ class FWeapAxe : FighterWeapon
 		// didn't find any creatures, so try to strike any walls
 		self.weaponspecial = 0;
 
-		double slope = AimLineAttack (angle, MELEERANGE);
-		LineAttack (angle, MELEERANGE, slope, damage, 'Melee', pufftype, true);
+		double slope = AimLineAttack (angle, DEFMELEERANGE);
+		LineAttack (angle, DEFMELEERANGE, slope, damage, 'Melee', pufftype, true);
 	}
 }
 

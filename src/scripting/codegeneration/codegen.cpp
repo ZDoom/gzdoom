@@ -3371,6 +3371,17 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 		{
 			Promote(ctx);
 		}
+		// allows comparing state labels with null pointers.
+		else if (left->ValueType == TypeStateLabel && right->ValueType == TypeNullPtr)
+		{
+			right = new FxTypeCast(right, TypeStateLabel, false);
+			SAFE_RESOLVE(right, ctx);
+		}
+		else if (right->ValueType == TypeStateLabel && left->ValueType == TypeNullPtr)
+		{
+			left = new FxTypeCast(left, TypeStateLabel, false);
+			SAFE_RESOLVE(left, ctx);
+		}
 		else if (left->ValueType->GetRegType() == REGT_POINTER && right->ValueType->GetRegType() == REGT_POINTER)
 		{
 			if (left->ValueType != right->ValueType && right->ValueType != TypeNullPtr && left->ValueType != TypeNullPtr &&

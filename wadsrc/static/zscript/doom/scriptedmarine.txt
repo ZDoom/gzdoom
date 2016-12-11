@@ -282,7 +282,7 @@ class ScriptedMarine : Actor
 	//
 	//============================================================================
 
-	void A_M_Refire (bool ignoremissile, statelabel jumpto)
+	void A_M_Refire (bool ignoremissile, statelabel jumpto = null)
 	{
 		if (target == null || target.health <= 0)
 		{
@@ -293,13 +293,15 @@ class ScriptedMarine : Actor
 					return;
 				}
 			}
-			SetStateLabel (jumpto);
+			if (jumpto != null) SetStateLabel (jumpto);
+			else SetState(CurState + 1);
 			return;
 		}
 		if (((ignoremissile || MissileState == null) && !CheckMeleeRange ()) ||
 			!CheckSight (target) ||	random[SMarineRefire]() < 4)	// Small chance of stopping even when target not dead
 		{
-			SetStateLabel (jumpto);
+			if (jumpto != null) SetStateLabel (jumpto);
+			else SetState(CurState + 1);
 		}
 	}
 

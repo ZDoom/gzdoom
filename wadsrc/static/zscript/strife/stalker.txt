@@ -67,7 +67,7 @@ class Stalker : Actor
 		STLK QRST 4;
 		STLK U 4 A_NoBlocking;
 		STLK VW 4;
-		STLK "XYZ[" 4 Bright;
+		STLK XYZ[ 4 Bright;
 		Stop;
 	}
 		
@@ -86,7 +86,7 @@ class Stalker : Actor
 	void A_StalkerLookInit ()
 	{
 		State st;
-		if (!bNoGravity)
+		if (bNoGravity)
 		{
 			st = FindState("LookCeiling");
 		}
@@ -94,7 +94,7 @@ class Stalker : Actor
 		{
 			st = FindState("LookFloor");
 		}
-		if (st.NextState != st)
+		if (st != CurState.NextState)
 		{
 			SetState (st);
 		}

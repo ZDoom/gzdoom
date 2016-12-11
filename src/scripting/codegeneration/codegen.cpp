@@ -7083,7 +7083,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 			delete this;
 			return nullptr;
 		}
-		FxExpression *self = (ctx.Function && ctx.Function->Variants[0].Flags & VARF_Method) ? new FxSelf(ScriptPosition) : (FxExpression*)new FxConstant(ScriptPosition);
+		FxExpression *self = (ctx.Function && (ctx.Function->Variants[0].Flags & VARF_Method) && ctx.Class->IsKindOf(RUNTIME_CLASS(PClassActor))) ? new FxSelf(ScriptPosition) : (FxExpression*)new FxConstant(ScriptPosition);
 		FxExpression *x = new FxActionSpecialCall(self, special, ArgList, ScriptPosition);
 		delete this;
 		return x->Resolve(ctx);

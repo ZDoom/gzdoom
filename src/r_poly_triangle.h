@@ -264,3 +264,49 @@ public:
 	static TriVertex *GetVertices(int count);
 	static void Clear();
 };
+
+struct ScreenTriangleBlock
+{
+	float W;
+	float Varying[TriVertex::NumVarying];
+};
+
+struct ScreenTriangleFullSpan
+{
+	uint16_t X;
+	uint16_t Y;
+	uint32_t Length;
+};
+
+struct ScreenTrianglePartialBlock
+{
+	uint16_t X;
+	uint16_t Y;
+	uint32_t Mask0;
+	uint32_t Mask1;
+};
+
+class ScreenTriangle
+{
+public:
+	static void DrawFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
+	
+	ScreenTriangle();
+	
+	void Setup(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
+	void Draw(const TriDrawTriangleArgs *args);
+
+	ScreenTriangleFullSpan *FullSpans;
+	ScreenTrianglePartialBlock *PartialBlocks;
+	int NumFullSpans;
+	int NumPartialBlocks;
+	int StartX;
+	int StartY;
+	ScreenTriangleBlock Start;
+	ScreenTriangleBlock GradientX;
+	ScreenTriangleBlock GradientY;
+	
+private:
+	std::vector<ScreenTriangleFullSpan> FullSpansBuffer;
+	std::vector<ScreenTrianglePartialBlock> PartialBlocksBuffer;
+};

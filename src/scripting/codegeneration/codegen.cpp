@@ -3371,6 +3371,17 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 		{
 			Promote(ctx);
 		}
+		// allows comparing state labels with null pointers.
+		else if (left->ValueType == TypeStateLabel && right->ValueType == TypeNullPtr)
+		{
+			right = new FxTypeCast(right, TypeStateLabel, false);
+			SAFE_RESOLVE(right, ctx);
+		}
+		else if (right->ValueType == TypeStateLabel && left->ValueType == TypeNullPtr)
+		{
+			left = new FxTypeCast(left, TypeStateLabel, false);
+			SAFE_RESOLVE(left, ctx);
+		}
 		else if (left->ValueType->GetRegType() == REGT_POINTER && right->ValueType->GetRegType() == REGT_POINTER)
 		{
 			if (left->ValueType != right->ValueType && right->ValueType != TypeNullPtr && left->ValueType != TypeNullPtr &&
@@ -7072,7 +7083,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 			delete this;
 			return nullptr;
 		}
-		FxExpression *self = (ctx.Function && ctx.Function->Variants[0].Flags & VARF_Method) ? new FxSelf(ScriptPosition) : nullptr;
+		FxExpression *self = (ctx.Function && (ctx.Function->Variants[0].Flags & VARF_Method) && ctx.Class->IsKindOf(RUNTIME_CLASS(PClassActor))) ? new FxSelf(ScriptPosition) : (FxExpression*)new FxConstant(ScriptPosition);
 		FxExpression *x = new FxActionSpecialCall(self, special, ArgList, ScriptPosition);
 		delete this;
 		return x->Resolve(ctx);
@@ -7644,9 +7655,9 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 	unsigned i = 0;
 
 	build->Emit(OP_PARAMI, abs(Special));			// pass special number
-	// fixme: This really should use the Self pointer that got passed to this class instead of just using the first argument from the function. 
-	// Once static functions are possible, or specials can be called through a member access operator this won't work anymore.
-	build->Emit(OP_PARAM, 0, REGT_POINTER, 0);		// pass self 
+
+	ExpEmit selfemit(Self->Emit(build));
+	build->Emit(OP_PARAM, 0, selfemit.Konst ? REGT_POINTER | REGT_KONST : REGT_POINTER, selfemit.RegNum);			// pass special number
 	for (; i < ArgList.Size(); ++i)
 	{
 		FxExpression *argex = ArgList[i];

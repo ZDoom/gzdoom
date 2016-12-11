@@ -1857,7 +1857,7 @@ class PowerCoupling : Actor
 		// [RH] In case the player broke it with the dagger, alert the guards now.
 		if (LastHeard != source)
 		{
-			NoiseAlert (source);
+			SoundAlert (source);
 		}
 		Door_Close(225, 16);
 		Floor_LowerToHighestEE(44, 8);

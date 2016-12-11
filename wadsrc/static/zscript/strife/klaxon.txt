@@ -114,7 +114,7 @@ extend class Actor
 		if (reactiontime == 2)
 		{
 			// [RH] Unalert monsters near the alarm and not just those in the same sector as it.
-			NoiseAlert (NULL, false);
+			SoundAlert (NULL, false);
 		}
 		else if (reactiontime > 50)
 		{

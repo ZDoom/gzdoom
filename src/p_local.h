@@ -62,7 +62,7 @@ extern int bmapnegy;
 #define TALKRANGE		(128.)
 #define USERANGE		(64.)
 
-#define MELEERANGE		(64.)
+#define DEFMELEERANGE		(64.)
 #define SAWRANGE		(64.+(1./65536.))	// use meleerange + 1 so the puff doesn't skip the flash (i.e. plays all states)
 #define MISSILERANGE	(32*64.)
 #define PLAYERMISSILERANGE	(8192.)	// [RH] New MISSILERANGE for players

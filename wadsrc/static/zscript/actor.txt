@@ -300,7 +300,7 @@ class Actor : Thinker native
 	native bool isTeammate(Actor other);
 	native int PlayerNumber();
 	native void SetFriendPlayer(PlayerInfo player);
-	native void NoiseAlert(Actor target, bool splash = false, double maxdist = 0);
+	native void SoundAlert(Actor target, bool splash = false, double maxdist = 0);
 	native void DaggerAlert(Actor target);
 	native void ClearBounce();
 	native TerrainDef GetFloorTerrain();

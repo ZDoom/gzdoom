@@ -190,7 +190,7 @@ enum
 	VERB_DEBUG
 };
 
-void cmsg(int type, int verbosity_level, const char *fmt, ...);
+void cmsg(int type, int verbosity_level, const char *fmt, ...) GCCPRINTF(3,4);
 
 
 /*

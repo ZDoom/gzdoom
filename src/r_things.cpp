@@ -1624,7 +1624,7 @@ void R_DrawPlayerSprites ()
 			else
 			{
 				wx = weapon->oldx + (weapon->x - weapon->oldx) * r_TicFracF;
-				wy = weapon->oldy + (weapon->y - weapon->oldy) * r_TicFracF + WEAPON_FUDGE_Y;
+				wy = weapon->oldy + (weapon->y - weapon->oldy) * r_TicFracF;
 			}
 		}
 		else

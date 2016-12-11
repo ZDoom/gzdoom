@@ -150,6 +150,7 @@ static double			xstepscale, ystepscale;
 static double			basexfrac, baseyfrac;
 
 void					R_DrawSinglePlane (visplane_t *, fixed_t alpha, bool additive, bool masked);
+void R_DrawSkySegment(visplane_t *vis, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const uint8_t *(*getcol)(FTexture *tex, int col));
 
 //==========================================================================
 //
@@ -624,7 +625,7 @@ extern FTexture *rw_pic;
 
 // Allow for layer skies up to 512 pixels tall. This is overkill,
 // since the most anyone can ever see of the sky is 500 pixels.
-// We need 4 skybufs because wallscan can draw up to 4 columns at a time.
+// We need 4 skybufs because R_DrawSkySegment can draw up to 4 columns at a time.
 static BYTE skybuf[4][512];
 static DWORD lastskycol[4];
 static int skycolplace;
@@ -891,7 +892,7 @@ static void R_DrawSky (visplane_t *pl)
 		{
 			lastskycol[x] = 0xffffffff;
 		}
-		wallscan (pl->left, pl->right, (short *)pl->top, (short *)pl->bottom, swall, lwall,
+		R_DrawSkySegment (pl, (short *)pl->top, (short *)pl->bottom, swall, lwall,
 			frontyScale, backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
 	}
 	else
@@ -928,7 +929,7 @@ static void R_DrawSkyStriped (visplane_t *pl)
 		{
 			lastskycol[x] = 0xffffffff;
 		}
-		wallscan (pl->left, pl->right, top, bot, swall, lwall, rw_pic->Scale.Y,
+		R_DrawSkySegment (pl, top, bot, swall, lwall, rw_pic->Scale.Y,
 			backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
 		yl = yh;
 		yh += drawheight;

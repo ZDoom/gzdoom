@@ -610,7 +610,7 @@ class RaiseAlarm : DummyStrifeItem
 	
 	override bool TryPickup (in out Actor toucher)
 	{
-		toucher.NoiseAlert (toucher);
+		toucher.SoundAlert (toucher);
 
 		ThinkerIterator it = ThinkerIterator.Create("AlienSpectre3");
 		Actor spectre = Actor(it.Next());
@@ -629,7 +629,7 @@ class RaiseAlarm : DummyStrifeItem
 	{
 		if (dropper.target != null)
 		{
-			dropper.target.NoiseAlert(dropper.target);
+			dropper.target.SoundAlert(dropper.target);
 			if (dropper.target.CheckLocalView(consoleplayer))
 			{
 				A_Log("You Fool!  You've set off the alarm.");
@@ -674,7 +674,7 @@ class CloseDoor222 : DummyStrifeItem
 			{
 				A_Log("You're dead!  You set off the alarm.");
 			}
-			dropper.target.NoiseAlert(dropper.target);
+			dropper.target.SoundAlert(dropper.target);
 		}
 		Destroy ();
 		return true;

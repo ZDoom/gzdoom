@@ -2093,7 +2093,7 @@ DEFINE_ACTION_FUNCTION(AStateProvider, A_CustomPunch)
 		damage *= pr_cwpunch() % 8 + 1;
 
 	angle = self->Angles.Yaw + pr_cwpunch.Random2() * (5.625 / 256);
-	if (range == 0) range = MELEERANGE;
+	if (range == 0) range = DEFMELEERANGE;
 	pitch = P_AimLineAttack (self, angle, range, &t);
 
 	// only use ammo when actually hitting something!

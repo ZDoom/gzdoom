@@ -72,7 +72,7 @@ class MWeapFrost : MageWeapon
 		for (int i = 0; i < 16; i++)
 		{
 			double ang = angle + i*(45./16);
-			double slope = AimLineAttack (ang, MELEERANGE, t, 0., ALF_CHECK3D);
+			double slope = AimLineAttack (ang, DEFMELEERANGE, t, 0., ALF_CHECK3D);
 			if (t.linetarget)
 			{
 				t.linetarget.DamageMobj (self, self, damage, 'Ice', DMG_USEANGLE, t.angleFromSource);

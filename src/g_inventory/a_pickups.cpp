@@ -1598,6 +1598,30 @@ CCMD (printinv)
 	}
 }
 
+CCMD (targetinv)
+{
+	AInventory *item;
+	FTranslatedLineTarget t;
+
+	if (CheckCheatmode () || players[consoleplayer].mo == NULL)
+		return;
+
+	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->Angles.Yaw, MISSILERANGE,
+		&t, 0.,	ALF_CHECKNONSHOOTABLE|ALF_FORCENOSMART);
+
+	if (t.linetarget)
+	{
+		for (item = t.linetarget->Inventory; item != NULL; item = item->Inventory)
+		{
+			Printf ("%s #%u (%d/%d)\n", item->GetClass()->TypeName.GetChars(),
+				item->InventoryID,
+				item->Amount, item->MaxAmount);
+		}
+	}
+	else Printf("No target found. Targetinv cannot find actors that have "
+				"the NOBLOCKMAP flag or have height/radius of 0.\n");
+}
+
 //===========================================================================
 //
 // AInventory :: AttachToOwner

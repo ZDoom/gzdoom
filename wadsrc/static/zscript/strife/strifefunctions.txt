@@ -173,7 +173,7 @@ extend class Actor
 
 		if (target != null && emitter != null)
 		{
-			emitter.NoiseAlert(target, false, maxdist);
+			emitter.SoundAlert(target, false, maxdist);
 		}
 	}
 

@@ -26,6 +26,7 @@
 #include <vector>
 
 class FString;
+class DrawerThread;
 
 struct WorkerThreadData
 {
@@ -34,6 +35,7 @@ struct WorkerThreadData
 	int32_t pass_start_y;
 	int32_t pass_end_y;
 	uint32_t *temp;
+	DrawerThread *drawer_thread;
 };
 
 struct DrawWallArgs

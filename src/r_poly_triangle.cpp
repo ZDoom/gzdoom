@@ -572,7 +572,223 @@ void PolyVertexBuffer::Clear()
 }
 
 /////////////////////////////////////////////////////////////////////////////
+#if 1
+void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
+{
+	const TriVertex &v1 = *args->v1;
+	const TriVertex &v2 = *args->v2;
+	const TriVertex &v3 = *args->v3;
+	int clipright = args->clipright;
+	int clipbottom = args->clipbottom;
 
+	ScreenTriangleFullSpan *span = FullSpans;
+	ScreenTrianglePartialBlock *partial = PartialBlocks;
+	span->Length = 0;
+
+	// 28.4 fixed-point coordinates
+	const int Y1 = (int)round(16.0f * v1.y);
+	const int Y2 = (int)round(16.0f * v2.y);
+	const int Y3 = (int)round(16.0f * v3.y);
+
+	const int X1 = (int)round(16.0f * v1.x);
+	const int X2 = (int)round(16.0f * v2.x);
+	const int X3 = (int)round(16.0f * v3.x);
+
+	// Deltas
+	const int DX12 = X1 - X2;
+	const int DX23 = X2 - X3;
+	const int DX31 = X3 - X1;
+
+	const int DY12 = Y1 - Y2;
+	const int DY23 = Y2 - Y3;
+	const int DY31 = Y3 - Y1;
+
+	// Fixed-point deltas
+	const int FDX12 = DX12 << 4;
+	const int FDX23 = DX23 << 4;
+	const int FDX31 = DX31 << 4;
+
+	const int FDY12 = DY12 << 4;
+	const int FDY23 = DY23 << 4;
+	const int FDY31 = DY31 << 4;
+
+	// Bounding rectangle
+	int minx = MAX((MIN(MIN(X1, X2), X3) + 0xF) >> 4, 0);
+	int maxx = MIN((MAX(MAX(X1, X2), X3) + 0xF) >> 4, clipright - 1);
+	int miny = MAX((MIN(MIN(Y1, Y2), Y3) + 0xF) >> 4, 0);
+	int maxy = MIN((MAX(MAX(Y1, Y2), Y3) + 0xF) >> 4, clipbottom - 1);
+	if (minx >= maxx || miny >= maxy)
+		return;
+
+	// Block size, standard 8x8 (must be power of two)
+	const int q = 8;
+
+	// Start in corner of 8x8 block
+	minx &= ~(q - 1);
+	miny &= ~(q - 1);
+
+	// Half-edge constants
+	int C1 = DY12 * X1 - DX12 * Y1;
+	int C2 = DY23 * X2 - DX23 * Y2;
+	int C3 = DY31 * X3 - DX31 * Y3;
+
+	// Correct for fill convention
+	if (DY12 < 0 || (DY12 == 0 && DX12 > 0)) C1++;
+	if (DY23 < 0 || (DY23 == 0 && DX23 > 0)) C2++;
+	if (DY31 < 0 || (DY31 == 0 && DX31 > 0)) C3++;
+
+	// First block line for this thread
+	int core = thread->core;
+	int num_cores = thread->num_cores;
+	int core_skip = (num_cores - ((miny / q) - core) % num_cores) % num_cores;
+	miny += core_skip * q;
+
+	__m128i mC1 = _mm_set1_epi32(C1);
+	__m128i mC2 = _mm_set1_epi32(C2);
+	__m128i mC3 = _mm_set1_epi32(C3);
+	__m128i mDX12 = _mm_set1_epi32(DX12);
+	__m128i mDX23 = _mm_set1_epi32(DX23);
+	__m128i mDX31 = _mm_set1_epi32(DX31);
+	__m128i mDY12 = _mm_set1_epi32(DY12);
+	__m128i mDY23 = _mm_set1_epi32(DY23);
+	__m128i mDY31 = _mm_set1_epi32(DY31);
+
+	// Loop through blocks
+	for (int y = miny; y < maxy; y += q * num_cores)
+	{
+		// Corners of block
+		int x0 = minx << 4;
+		int x1 = (minx + q - 1) << 4;
+		int y0 = y << 4;
+		int y1 = (y + q - 1) << 4;
+
+		__m128i my0y1 = _mm_set_epi32(y0, y0, y1, y1);
+		__m128i mx0x1 = _mm_set_epi32(x0, x1, x0, x1);
+		__m128i mAxx = _mm_add_epi32(mC1, _mm_sub_epi32(_mm_mullo_epi32(mDX12, my0y1), _mm_mullo_epi32(mDY12, mx0x1)));
+		__m128i mBxx = _mm_add_epi32(mC2, _mm_sub_epi32(_mm_mullo_epi32(mDX23, my0y1), _mm_mullo_epi32(mDY23, mx0x1)));
+		__m128i mCxx = _mm_add_epi32(mC3, _mm_sub_epi32(_mm_mullo_epi32(mDX31, my0y1), _mm_mullo_epi32(mDY31, mx0x1)));
+
+		for (int x = minx; x < maxx; x += q)
+		{
+			// Evaluate half-space functions
+			int a = _mm_movemask_epi8(_mm_cmpgt_epi32(mAxx, _mm_setzero_si128()));
+			int b = _mm_movemask_epi8(_mm_cmpgt_epi32(mBxx, _mm_setzero_si128()));
+			int c = _mm_movemask_epi8(_mm_cmpgt_epi32(mCxx, _mm_setzero_si128()));
+
+			mAxx = _mm_sub_epi32(mAxx, _mm_slli_epi32(mDY12, 7));
+			mBxx = _mm_sub_epi32(mBxx, _mm_slli_epi32(mDY23, 7));
+			mCxx = _mm_sub_epi32(mCxx, _mm_slli_epi32(mDY31, 7));
+
+			// Skip block when outside an edge
+			if (a == 0 || b == 0 || c == 0) continue;
+
+			// Accept whole block when totally covered
+			if (a == 0xffff && b == 0xffff && c == 0xffff && x + q <= clipright && y + q <= clipbottom)
+			{
+				if (span->Length != 0)
+				{
+					span->Length++;
+				}
+				else
+				{
+					span->X = x;
+					span->Y = y;
+					span->Length = 1;
+				}
+			}
+			else // Partially covered block
+			{
+				x0 = x << 4;
+				x1 = (x + q - 1) << 4;
+				int CY1 = C1 + DX12 * y0 - DY12 * x0;
+				int CY2 = C2 + DX23 * y0 - DY23 * x0;
+				int CY3 = C3 + DX31 * y0 - DY31 * x0;
+
+				uint32_t mask0 = 0;
+				uint32_t mask1 = 0;
+
+				for (int iy = 0; iy < 4; iy++)
+				{
+					int CX1 = CY1;
+					int CX2 = CY2;
+					int CX3 = CY3;
+
+					for (int ix = x; ix < x + q; ix++)
+					{
+						bool covered = (CX1 > 0 && CX2 > 0 && CX3 > 0 && ix < clipright && iy < clipbottom);
+						mask0 <<= 1;
+						mask0 |= (uint32_t)covered;
+
+						CX1 -= FDY12;
+						CX2 -= FDY23;
+						CX3 -= FDY31;
+					}
+
+					CY1 += FDX12;
+					CY2 += FDX23;
+					CY3 += FDX31;
+				}
+
+				for (int iy = 4; iy < q; iy++)
+				{
+					int CX1 = CY1;
+					int CX2 = CY2;
+					int CX3 = CY3;
+
+					for (int ix = x; ix < x + q; ix++)
+					{
+						bool covered = (CX1 > 0 && CX2 > 0 && CX3 > 0 && ix < clipright && iy < clipbottom);
+						mask1 <<= 1;
+						mask1 |= (uint32_t)covered;
+
+						CX1 -= FDY12;
+						CX2 -= FDY23;
+						CX3 -= FDY31;
+					}
+
+					CY1 += FDX12;
+					CY2 += FDX23;
+					CY3 += FDX31;
+				}
+
+				if (mask0 != 0xffffffff || mask1 != 0xffffffff)
+				{
+					if (span->Length > 0)
+					{
+						span++;
+						span->Length = 0;
+					}
+
+					partial->X = x;
+					partial->Y = y;
+					partial->Mask0 = mask0;
+					partial->Mask1 = mask1;
+					partial++;
+				}
+				else if (span->Length != 0)
+				{
+					span->Length++;
+				}
+				else
+				{
+					span->X = x;
+					span->Y = y;
+					span->Length = 1;
+				}
+			}
+		}
+
+		if (span->Length > 0)
+		{
+			span++;
+			span->Length = 0;
+		}
+	}
+
+	NumFullSpans = (int)(span - FullSpans);
+	NumPartialBlocks = (int)(partial - PartialBlocks);
+}
+#else
 void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
 	const TriVertex &v1 = *args->v1;
@@ -583,8 +799,6 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 	
 	ScreenTriangleFullSpan *span = FullSpans;
 	ScreenTrianglePartialBlock *partial = PartialBlocks;
-	int curSpan = 0;
-	int curPartial = 0;
 	span->Length = 0;
 	
 	// 28.4 fixed-point coordinates
@@ -676,7 +890,15 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 			int c = (c00 << 0) | (c10 << 1) | (c01 << 2) | (c11 << 3);
 			
 			// Skip block when outside an edge
-			if (a == 0x0 || b == 0x0 || c == 0x0) continue;
+			if (a == 0x0 || b == 0x0 || c == 0x0)
+			{
+				if (span->Length != 0)
+				{
+					span++;
+					span->Length = 0;
+				}
+				continue;
+			}
 			
 			// Accept whole block when totally covered
 			if (a == 0xF && b == 0xF && c == 0xF && x + q <= clipright && y + q <= clipbottom)
@@ -710,7 +932,7 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 					{
 						bool covered = (CX1 > 0 && CX2 > 0 && CX3 > 0 && ix < clipright && iy < clipbottom);
 						mask <<= 1;
-						mask |= covered;
+						mask |= (uint64_t)covered;
 						
 						CX1 -= FDY12;
 						CX2 -= FDY23;
@@ -724,9 +946,8 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 				
 				if (mask != 0xffffffffffffffffLL)
 				{
-					if (span->Length > 0)
+					if (span->Length != 0)
 					{
-						curSpan++;
 						span++;
 						span->Length = 0;
 					}
@@ -736,7 +957,6 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 					partial->Mask0 = (uint32_t)(mask >> 32);
 					partial->Mask1 = (uint32_t)mask;
 					partial++;
-					curPartial++;
 				}
 				else if (span->Length != 0)
 				{
@@ -751,20 +971,32 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 			}
 		}
 		
-		if (span->Length > 0)
+		if (span->Length != 0)
 		{
-			curSpan++;
 			span++;
 			span->Length = 0;
 		}
 	}
 	
-	NumFullSpans = curSpan;
-	NumPartialBlocks = curPartial;
+	NumFullSpans = (int)(span - FullSpans);
+	NumPartialBlocks = (int)(partial - PartialBlocks);
 }
+#endif
 
 void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 {
+	float r = args->v1->x / 255.0f;
+	float g = args->v1->y / 255.0f;
+	float b = args->v1->z / 255.0f;
+	r = (r - floor(r)) * 255;
+	g = (g - floor(g)) * 255;
+	b = (b - floor(b)) * 255;
+
+	uint32_t red = (uint32_t)r;
+	uint32_t green = (uint32_t)g;
+	uint32_t blue = (uint32_t)b;
+	uint32_t solidcolor = 0xff000000 | (red << 16) | (green << 8) | blue;
+
 	for (int i = 0; i < NumFullSpans; i++)
 	{
 		const auto &span = FullSpans[i];
@@ -777,7 +1009,7 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 		{
 			for (int x = 0; x < width; x++)
 			{
-				dest[x] = 0xffffffff;
+				dest[x] = solidcolor;
 			}
 		
 			dest += pitch;
@@ -797,7 +1029,7 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 			for (int x = 0; x < 8; x++)
 			{
 				if (mask0 & (1<<31))
-					dest[x] = 0xffff0000;
+					dest[x] = solidcolor;
 				mask0 <<= 1;
 			}
 			dest += pitch;
@@ -807,7 +1039,7 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 			for (int x = 0; x < 8; x++)
 			{
 				if (mask1 & (1<<31))
-					dest[x] = 0xffff0000;
+					dest[x] = solidcolor;
 				mask1 <<= 1;
 			}
 			dest += pitch;

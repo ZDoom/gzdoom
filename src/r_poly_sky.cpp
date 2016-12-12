@@ -102,7 +102,7 @@ void PolySkyDome::RenderCapColorRow(PolyDrawArgs &args, FTexture *skytex, int ro
 
 void PolySkyDome::CreateDome()
 {
-	mColumns = 128;
+	mColumns = 16;// 128;
 	mRows = 4;
 	CreateSkyHemisphere(false);
 	CreateSkyHemisphere(true);

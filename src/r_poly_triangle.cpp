@@ -35,6 +35,7 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "r_poly_triangle.h"
+#include <immintrin.h>
 
 int PolyTriangleDrawer::viewport_x;
 int PolyTriangleDrawer::viewport_y;
@@ -572,7 +573,7 @@ void PolyVertexBuffer::Clear()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-#if 1
+#if 0
 void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
 	const TriVertex &v1 = *args->v1;
@@ -580,6 +581,11 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 	const TriVertex &v3 = *args->v3;
 	int clipright = args->clipright;
 	int clipbottom = args->clipbottom;
+	
+	int stencilPitch = args->stencilPitch;
+	uint8_t *stencilValues = args->stencilValues;
+	uint32_t *stencilMasks = args->stencilMasks;
+	uint8_t stencilTestValue = args->stencilTestValue;
 
 	ScreenTriangleFullSpan *span = FullSpans;
 	ScreenTrianglePartialBlock *partial = PartialBlocks;
@@ -678,12 +684,27 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 			mAxx = _mm_sub_epi32(mAxx, _mm_slli_epi32(mDY12, 7));
 			mBxx = _mm_sub_epi32(mBxx, _mm_slli_epi32(mDY23, 7));
 			mCxx = _mm_sub_epi32(mCxx, _mm_slli_epi32(mDY31, 7));
+			
+			// Stencil test the whole block, if possible
+			int block = x / 8 + y / 8 * stencilPitch;
+			uint8_t *stencilBlock = &stencilValues[block * 64];
+			uint32_t *stencilBlockMask = &stencilMasks[block];
+			bool blockIsSingleStencil = ((*stencilBlockMask) & 0xffffff00) == 0xffffff00;
+			bool skipBlock = blockIsSingleStencil && ((*stencilBlockMask) & 0xff) != stencilTestValue;
 
 			// Skip block when outside an edge
-			if (a == 0 || b == 0 || c == 0) continue;
+			if (a == 0 || b == 0 || c == 0 || skipBlock)
+			{
+				if (span->Length != 0)
+				{
+					span++;
+					span->Length = 0;
+				}
+				continue;
+			}
 
 			// Accept whole block when totally covered
-			if (a == 0xffff && b == 0xffff && c == 0xffff && x + q <= clipright && y + q <= clipbottom)
+			if (a == 0xffff && b == 0xffff && c == 0xffff && x + q <= clipright && y + q <= clipbottom && blockIsSingleStencil)
 			{
 				if (span->Length != 0)
 				{
@@ -713,9 +734,10 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 					int CX2 = CY2;
 					int CX3 = CY3;
 
-					for (int ix = x; ix < x + q; ix++)
+					for (int ix = 0; ix < q; ix++)
 					{
-						bool covered = (CX1 > 0 && CX2 > 0 && CX3 > 0 && ix < clipright && iy < clipbottom);
+						bool passStencilTest = blockIsSingleStencil || stencilBlock[ix + iy * q] == stencilTestValue;
+						bool covered = (CX1 > 0 && CX2 > 0 && CX3 > 0 && (x + ix) < clipright && (y + iy) < clipbottom && passStencilTest);
 						mask0 <<= 1;
 						mask0 |= (uint32_t)covered;
 
@@ -735,9 +757,10 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 					int CX2 = CY2;
 					int CX3 = CY3;
 
-					for (int ix = x; ix < x + q; ix++)
+					for (int ix = 0; ix < q; ix++)
 					{
-						bool covered = (CX1 > 0 && CX2 > 0 && CX3 > 0 && ix < clipright && iy < clipbottom);
+						bool passStencilTest = blockIsSingleStencil || stencilBlock[ix + iy * q] == stencilTestValue;
+						bool covered = (CX1 > 0 && CX2 > 0 && CX3 > 0 && (x + ix) < clipright && (y + iy) < clipbottom && passStencilTest);
 						mask1 <<= 1;
 						mask1 |= (uint32_t)covered;
 
@@ -796,6 +819,11 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 	const TriVertex &v3 = *args->v3;
 	int clipright = args->clipright;
 	int clipbottom = args->clipbottom;
+	
+	int stencilPitch = args->stencilPitch;
+	uint8_t *stencilValues = args->stencilValues;
+	uint32_t *stencilMasks = args->stencilMasks;
+	uint8_t stencilTestValue = args->stencilTestValue;
 	
 	ScreenTriangleFullSpan *span = FullSpans;
 	ScreenTrianglePartialBlock *partial = PartialBlocks;
@@ -889,8 +917,15 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 			bool c11 = C3 + DX31 * y1 - DY31 * x1 > 0;
 			int c = (c00 << 0) | (c10 << 1) | (c01 << 2) | (c11 << 3);
 			
+			// Stencil test the whole block, if possible
+			int block = x / 8 + y / 8 * stencilPitch;
+			uint8_t *stencilBlock = &stencilValues[block * 64];
+			uint32_t *stencilBlockMask = &stencilMasks[block];
+			bool blockIsSingleStencil = ((*stencilBlockMask) & 0xffffff00) == 0xffffff00;
+			bool skipBlock = blockIsSingleStencil && ((*stencilBlockMask) & 0xff) != stencilTestValue;
+
 			// Skip block when outside an edge
-			if (a == 0x0 || b == 0x0 || c == 0x0)
+			if (a == 0 || b == 0 || c == 0 || skipBlock)
 			{
 				if (span->Length != 0)
 				{
@@ -899,9 +934,9 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 				}
 				continue;
 			}
-			
+
 			// Accept whole block when totally covered
-			if (a == 0xF && b == 0xF && c == 0xF && x + q <= clipright && y + q <= clipbottom)
+			if (a == 0xf && b == 0xf && c == 0xf && x + q <= clipright && y + q <= clipbottom && blockIsSingleStencil)
 			{
 				if (span->Length != 0)
 				{
@@ -916,46 +951,73 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 			}
 			else // Partially covered block
 			{
+				x0 = x << 4;
+				x1 = (x + q - 1) << 4;
 				int CY1 = C1 + DX12 * y0 - DY12 * x0;
 				int CY2 = C2 + DX23 * y0 - DY23 * x0;
 				int CY3 = C3 + DX31 * y0 - DY31 * x0;
-				
-				uint64_t mask = 0;
-				
-				for (int iy = 0; iy < q; iy++)
+
+				uint32_t mask0 = 0;
+				uint32_t mask1 = 0;
+
+				for (int iy = 0; iy < 4; iy++)
 				{
 					int CX1 = CY1;
 					int CX2 = CY2;
 					int CX3 = CY3;
-					
-					for (int ix = x; ix < x + q; ix++)
+
+					for (int ix = 0; ix < q; ix++)
 					{
-						bool covered = (CX1 > 0 && CX2 > 0 && CX3 > 0 && ix < clipright && iy < clipbottom);
-						mask <<= 1;
-						mask |= (uint64_t)covered;
-						
+						bool passStencilTest = blockIsSingleStencil || stencilBlock[ix + iy * q] == stencilTestValue;
+						bool covered = (CX1 > 0 && CX2 > 0 && CX3 > 0 && (x + ix) < clipright && (y + iy) < clipbottom && passStencilTest);
+						mask0 <<= 1;
+						mask0 |= (uint32_t)covered;
+
 						CX1 -= FDY12;
 						CX2 -= FDY23;
 						CX3 -= FDY31;
 					}
-					
+
 					CY1 += FDX12;
 					CY2 += FDX23;
 					CY3 += FDX31;
 				}
-				
-				if (mask != 0xffffffffffffffffLL)
+
+				for (int iy = 4; iy < q; iy++)
 				{
-					if (span->Length != 0)
+					int CX1 = CY1;
+					int CX2 = CY2;
+					int CX3 = CY3;
+
+					for (int ix = 0; ix < q; ix++)
+					{
+						bool passStencilTest = blockIsSingleStencil || stencilBlock[ix + iy * q] == stencilTestValue;
+						bool covered = (CX1 > 0 && CX2 > 0 && CX3 > 0 && (x + ix) < clipright && (y + iy) < clipbottom && passStencilTest);
+						mask1 <<= 1;
+						mask1 |= (uint32_t)covered;
+
+						CX1 -= FDY12;
+						CX2 -= FDY23;
+						CX3 -= FDY31;
+					}
+
+					CY1 += FDX12;
+					CY2 += FDX23;
+					CY3 += FDX31;
+				}
+
+				if (mask0 != 0xffffffff || mask1 != 0xffffffff)
+				{
+					if (span->Length > 0)
 					{
 						span++;
 						span->Length = 0;
 					}
-					
+
 					partial->X = x;
 					partial->Y = y;
-					partial->Mask0 = (uint32_t)(mask >> 32);
-					partial->Mask1 = (uint32_t)mask;
+					partial->Mask0 = mask0;
+					partial->Mask1 = mask1;
 					partial++;
 				}
 				else if (span->Length != 0)

@@ -164,7 +164,7 @@ extend class Actor
 		{
 			target = self;
 		}
-		else if (target != null && (self.target.player != null || (Flags & AMF_TARGETNONPLAYER)))
+		else if (self.target != null && (self.target.player != null || (Flags & AMF_TARGETNONPLAYER)))
 		{
 			target = self.target;
 		}

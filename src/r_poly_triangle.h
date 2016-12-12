@@ -290,11 +290,13 @@ class ScreenTriangle
 {
 public:
 	static void DrawFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
+	static void StencilFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 	
 	ScreenTriangle();
 	
 	void Setup(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 	void Draw(const TriDrawTriangleArgs *args);
+	void StencilWrite(const TriDrawTriangleArgs *args);
 
 	ScreenTriangleFullSpan *FullSpans;
 	ScreenTrianglePartialBlock *PartialBlocks;

@@ -93,6 +93,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 	{
 	default:
 	//case TriDrawVariant::DrawNormal: drawfunc = dest_bgra ?  &ScreenTriangle::DrawFunc : llvm->TriDrawNormal8[bmode]; break;
+	//case TriDrawVariant::Stencil: drawfunc = &ScreenTriangle::StencilFunc; break;
 	case TriDrawVariant::DrawNormal: drawfunc = dest_bgra ? llvm->TriDrawNormal32[bmode] : llvm->TriDrawNormal8[bmode]; break;
 	case TriDrawVariant::FillNormal: drawfunc = dest_bgra ? llvm->TriFillNormal32[bmode] : llvm->TriFillNormal8[bmode]; break;
 	case TriDrawVariant::DrawSubsector: drawfunc = dest_bgra ? llvm->TriDrawSubsector32[bmode] : llvm->TriDrawSubsector8[bmode]; break;
@@ -825,6 +826,71 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 	NumPartialBlocks = (int)(partial - PartialBlocks);
 }
 
+void ScreenTriangle::StencilWrite(const TriDrawTriangleArgs *args)
+{
+	uint8_t *stencilValues = args->stencilValues;
+	uint32_t *stencilMasks = args->stencilMasks;
+	uint32_t stencilWriteValue = args->stencilWriteValue;
+	uint32_t stencilPitch = args->stencilPitch;
+
+	for (int i = 0; i < NumFullSpans; i++)
+	{
+		const auto &span = FullSpans[i];
+		
+		int block = span.X / 8 + span.Y / 8 * stencilPitch;
+		uint8_t *stencilBlock = &stencilValues[block * 64];
+		uint32_t *stencilBlockMask = &stencilMasks[block];
+		
+		int width = span.Length;
+		for (int x = 0; x < width; x++)
+			stencilBlockMask[x] = 0xffffff00 | stencilWriteValue;
+	}
+	
+	for (int i = 0; i < NumPartialBlocks; i++)
+	{
+		const auto &block = PartialBlocks[i];
+		
+		uint32_t mask0 = block.Mask0;
+		uint32_t mask1 = block.Mask1;
+		
+		int sblock = block.X / 8 + block.Y / 8 * stencilPitch;
+		uint8_t *stencilBlock = &stencilValues[sblock * 64];
+		uint32_t *stencilBlockMask = &stencilMasks[sblock];
+		
+		bool isSingleValue = ((*stencilBlockMask) & 0xffffff00) == 0xffffff00;
+		if (isSingleValue)
+		{
+			uint8_t value = (*stencilBlockMask) & 0xff;
+			for (int v = 0; v < 64; v++)
+				stencilBlock[v] = value;
+			*stencilBlockMask = 0;
+		}
+		
+		int count = 0;
+		for (int v = 0; v < 32; v++)
+		{
+			if ((mask0 & (1 << 31)) || stencilBlock[v] == stencilWriteValue)
+			{
+				stencilBlock[v] = stencilWriteValue;
+				count++;
+			}
+			mask0 <<= 1;
+		}
+		for (int v = 32; v < 64; v++)
+		{
+			if ((mask1 & (1 << 31)) || stencilBlock[v] == stencilWriteValue)
+			{
+				stencilBlock[v] = stencilWriteValue;
+				count++;
+			}
+			mask1 <<= 1;
+		}
+		
+		if (count == 64)
+			*stencilBlockMask = 0xffffff00 | stencilWriteValue;
+	}
+}
+
 float ScreenTriangle::FindGradientX(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2)
 {
 	float top = (c1 - c2) * (y0 - y2) - (c0 - c2) * (y1 - y2);
@@ -1078,12 +1144,18 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 	}
 }
 
+static ScreenTriangle triangle[8];
+
 void ScreenTriangle::DrawFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
-	static ScreenTriangle triangle[8];
-	
 	triangle[thread->core].Setup(args, thread);
 	triangle[thread->core].Draw(args);
+}
+
+void ScreenTriangle::StencilFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
+{
+	triangle[thread->core].Setup(args, thread);
+	triangle[thread->core].StencilWrite(args);
 }
 
 ScreenTriangle::ScreenTriangle()

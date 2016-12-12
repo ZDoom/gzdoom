@@ -198,6 +198,19 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 		v.y = viewport_y + viewport_height * (1.0f - v.y) * 0.5f;
 	}
 
+	// Keep varyings in -128 to 128 range if possible
+	if (numclipvert > 0)
+	{
+		for (int j = 0; j < TriVertex::NumVarying; j++)
+		{
+			float newOrigin = floorf(clippedvert[0].varying[j] * 0.1f) * 10.0f;
+			for (int i = 0; i < numclipvert; i++)
+			{
+				clippedvert[i].varying[j] -= newOrigin;
+			}
+		}
+	}
+
 	// Draw screen triangles
 	if (ccw)
 	{
@@ -651,6 +664,8 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 	int core_skip = (num_cores - ((miny / q) - core) % num_cores) % num_cores;
 	miny += core_skip * q;
 
+	StartX = minx;
+	StartY = miny;
 	span->Length = 0;
 
 	// Loop through blocks
@@ -810,39 +825,101 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 	NumPartialBlocks = (int)(partial - PartialBlocks);
 }
 
+float ScreenTriangle::FindGradientX(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2)
+{
+	float top = (c1 - c2) * (y0 - y2) - (c0 - c2) * (y1 - y2);
+	float bottom = (x1 - x2) * (y0 - y2) - (x0 - x2) * (y1 - y2);
+	return top / bottom;
+}
+
+float ScreenTriangle::FindGradientY(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2)
+{
+	float top = (c1 - c2) * (x0 - x2) - (c0 - c2) * (x1 - x2);
+	float bottom = (x0 - x2) * (y1 - y2) - (x1 - x2) * (y0 - y2);
+	return top / bottom;
+}
+
 void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 {
-	float r = args->v1->x / 255.0f;
-	float g = args->v1->y / 255.0f;
-	float b = args->v1->z / 255.0f;
-	r = (r - floor(r)) * 255;
-	g = (g - floor(g)) * 255;
-	b = (b - floor(b)) * 255;
+	// Calculate gradients
+	const TriVertex &v1 = *args->v1;
+	const TriVertex &v2 = *args->v2;
+	const TriVertex &v3 = *args->v3;
+	ScreenTriangleStepVariables gradientX;
+	ScreenTriangleStepVariables gradientY;
+	ScreenTriangleStepVariables start;
+	gradientX.W = FindGradientX(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
+	gradientY.W = FindGradientY(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
+	start.W = v1.w + gradientX.W * (StartX - v1.x) + gradientY.W * (StartY - v1.y);
+	for (int i = 0; i < TriVertex::NumVarying; i++)
+	{
+		gradientX.Varying[i] = FindGradientX(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.varying[i] * v1.w, v2.varying[i] * v2.w, v3.varying[i] * v3.w);
+		gradientY.Varying[i] = FindGradientY(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.varying[i] * v1.w, v2.varying[i] * v2.w, v3.varying[i] * v3.w);
+		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (StartX - v1.x) + gradientY.Varying[i] * (StartY - v1.y);
+	}
 
-	uint32_t red = (uint32_t)r;
-	uint32_t green = (uint32_t)g;
-	uint32_t blue = (uint32_t)b;
-	uint32_t solidcolor = 0xff000000 | (red << 16) | (green << 8) | blue;
+	const uint32_t *texPixels = (const uint32_t *)args->texturePixels;
+	uint32_t texWidth = args->textureWidth;
+	uint32_t texHeight = args->textureHeight;
 
 	uint32_t subsectorDepth = args->uniforms->subsectorDepth;
 
 	for (int i = 0; i < NumFullSpans; i++)
 	{
 		const auto &span = FullSpans[i];
-		
+
 		uint32_t *dest = (uint32_t*)args->dest + span.X + span.Y * args->pitch;
 		uint32_t *subsector = args->subsectorGBuffer + span.X + span.Y * args->pitch;
 		int pitch = args->pitch;
-		int width = span.Length * 8;
+		int width = span.Length;
 		int height = 8;
+
+		ScreenTriangleStepVariables blockPosY;
+		blockPosY.W = start.W + gradientX.W * (span.X - StartX) + gradientY.W * (span.Y - StartY);
+		for (int j = 0; j < TriVertex::NumVarying; j++)
+			blockPosY.Varying[j] = start.Varying[j] + gradientX.Varying[j] * (span.X - StartX) + gradientY.Varying[j] * (span.Y - StartY);
+
 		for (int y = 0; y < height; y++)
 		{
+			ScreenTriangleStepVariables blockPosX = blockPosY;
+
+			float rcpW = 0x01000000 / blockPosX.W;
+			int32_t varyingPos[TriVertex::NumVarying];
+			for (int j = 0; j < TriVertex::NumVarying; j++)
+				varyingPos[j] = (int32_t)(blockPosX.Varying[j] * rcpW);
+
 			for (int x = 0; x < width; x++)
 			{
-				dest[x] = solidcolor;
-				subsector[x] = subsectorDepth;
+				blockPosX.W += gradientX.W * 8;
+				for (int j = 0; j < TriVertex::NumVarying; j++)
+					blockPosX.Varying[j] += gradientX.Varying[j] * 8;
+
+				rcpW = 0x01000000 / blockPosX.W;
+				int32_t varyingStep[TriVertex::NumVarying];
+				for (int j = 0; j < TriVertex::NumVarying; j++)
+				{
+					int32_t nextPos = (int32_t)(blockPosX.Varying[j] * rcpW);
+					varyingStep[j] = (nextPos - varyingPos[j]) / 8;
+				}
+
+				for (int ix = 0; ix < 8; ix++)
+				{
+					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
+					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
+					uint32_t fg = texPixels[texelX * texHeight + texelY];
+
+					dest[x * 8 + ix] = fg;
+					subsector[x * 8 + ix] = subsectorDepth;
+
+					for (int j = 0; j < TriVertex::NumVarying; j++)
+						varyingPos[j] += varyingStep[j];
+				}
 			}
 		
+			blockPosY.W += gradientY.W;
+			for (int j = 0; j < TriVertex::NumVarying; j++)
+				blockPosY.Varying[j] += gradientY.Varying[j];
+
 			dest += pitch;
 			subsector += pitch;
 		}
@@ -851,7 +928,12 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 	for (int i = 0; i < NumPartialBlocks; i++)
 	{
 		const auto &block = PartialBlocks[i];
-		
+
+		ScreenTriangleStepVariables blockPosY;
+		blockPosY.W = start.W + gradientX.W * (block.X - StartX) + gradientY.W * (block.Y - StartY);
+		for (int j = 0; j < TriVertex::NumVarying; j++)
+			blockPosY.Varying[j] = start.Varying[j] + gradientX.Varying[j] * (block.X - StartX) + gradientY.Varying[j] * (block.Y - StartY);
+
 		uint32_t *dest = (uint32_t*)args->dest + block.X + block.Y * args->pitch;
 		uint32_t *subsector = args->subsectorGBuffer + block.X + block.Y * args->pitch;
 		int pitch = args->pitch;
@@ -859,29 +941,91 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 		uint32_t mask1 = block.Mask1;
 		for (int y = 0; y < 4; y++)
 		{
+			ScreenTriangleStepVariables blockPosX = blockPosY;
+
+			float rcpW = 0x01000000 / blockPosX.W;
+			int32_t varyingPos[TriVertex::NumVarying];
+			for (int j = 0; j < TriVertex::NumVarying; j++)
+				varyingPos[j] = (int32_t)(blockPosX.Varying[j] * rcpW);
+
+			blockPosX.W += gradientX.W * 8;
+			for (int j = 0; j < TriVertex::NumVarying; j++)
+				blockPosX.Varying[j] += gradientX.Varying[j] * 8;
+
+			rcpW = 0x01000000 / blockPosX.W;
+			int32_t varyingStep[TriVertex::NumVarying];
+			for (int j = 0; j < TriVertex::NumVarying; j++)
+			{
+				int32_t nextPos = (int32_t)(blockPosX.Varying[j] * rcpW);
+				varyingStep[j] = (nextPos - varyingPos[j]) / 8;
+			}
+
 			for (int x = 0; x < 8; x++)
 			{
 				if (mask0 & (1 << 31))
 				{
-					dest[x] = solidcolor;
+					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
+					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
+					uint32_t fg = texPixels[texelX * texHeight + texelY];
+
+					dest[x] = fg;
 					subsector[x] = subsectorDepth;
 				}
 				mask0 <<= 1;
+
+				for (int j = 0; j < TriVertex::NumVarying; j++)
+					varyingPos[j] += varyingStep[j];
 			}
+
+			blockPosY.W += gradientY.W;
+			for (int j = 0; j < TriVertex::NumVarying; j++)
+				blockPosY.Varying[j] += gradientY.Varying[j];
+
 			dest += pitch;
 			subsector += pitch;
 		}
 		for (int y = 4; y < 8; y++)
 		{
+			ScreenTriangleStepVariables blockPosX = blockPosY;
+
+			float rcpW = 0x01000000 / blockPosX.W;
+			int32_t varyingPos[TriVertex::NumVarying];
+			for (int j = 0; j < TriVertex::NumVarying; j++)
+				varyingPos[j] = (int32_t)(blockPosX.Varying[j] * rcpW);
+
+			blockPosX.W += gradientX.W * 8;
+			for (int j = 0; j < TriVertex::NumVarying; j++)
+				blockPosX.Varying[j] += gradientX.Varying[j] * 8;
+
+			rcpW = 0x01000000 / blockPosX.W;
+			int32_t varyingStep[TriVertex::NumVarying];
+			for (int j = 0; j < TriVertex::NumVarying; j++)
+			{
+				int32_t nextPos = (int32_t)(blockPosX.Varying[j] * rcpW);
+				varyingStep[j] = (nextPos - varyingPos[j]) / 8;
+			}
+
 			for (int x = 0; x < 8; x++)
 			{
 				if (mask1 & (1 << 31))
 				{
-					dest[x] = solidcolor;
+					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
+					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
+					uint32_t fg = texPixels[texelX * texHeight + texelY];
+
+					dest[x] = fg;
 					subsector[x] = subsectorDepth;
 				}
 				mask1 <<= 1;
+
+				for (int j = 0; j < TriVertex::NumVarying; j++)
+					varyingPos[j] += varyingStep[j];
 			}
+
+			blockPosY.W += gradientY.W;
+			for (int j = 0; j < TriVertex::NumVarying; j++)
+				blockPosY.Varying[j] += gradientY.Varying[j];
+
 			dest += pitch;
 			subsector += pitch;
 		}

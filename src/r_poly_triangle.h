@@ -265,7 +265,7 @@ public:
 	static void Clear();
 };
 
-struct ScreenTriangleBlock
+struct ScreenTriangleStepVariables
 {
 	float W;
 	float Varying[TriVertex::NumVarying];
@@ -302,11 +302,11 @@ public:
 	int NumPartialBlocks;
 	int StartX;
 	int StartY;
-	ScreenTriangleBlock Start;
-	ScreenTriangleBlock GradientX;
-	ScreenTriangleBlock GradientY;
 	
 private:
+	float FindGradientX(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2);
+	float FindGradientY(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2);
+
 	std::vector<ScreenTriangleFullSpan> FullSpansBuffer;
 	std::vector<ScreenTrianglePartialBlock> PartialBlocksBuffer;
 };

@@ -864,6 +864,10 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 
 	uint32_t subsectorDepth = args->uniforms->subsectorDepth;
 
+	uint32_t light = args->uniforms->light;
+	float shade = (64.0f - (light * 255 / 256 + 12.0f) * 32.0f / 128.0f) / 32.0f;
+	float globVis = 1706.0f;
+
 	for (int i = 0; i < NumFullSpans; i++)
 	{
 		const auto &span = FullSpans[i];
@@ -890,6 +894,8 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 
 			for (int x = 0; x < width; x++)
 			{
+				int lightpos = 256 - (int)(clamp(shade - MIN(24.0f, globVis * blockPosX.W) / 32.0f, 0.0f, 31.0f / 32.0f) * 256.0f);
+
 				blockPosX.W += gradientX.W * 8;
 				for (int j = 0; j < TriVertex::NumVarying; j++)
 					blockPosX.Varying[j] += gradientX.Varying[j] * 8;
@@ -902,17 +908,29 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 					varyingStep[j] = (nextPos - varyingPos[j]) / 8;
 				}
 
+				int lightnext = 256 - (int)(clamp(shade - MIN(24.0f, globVis * blockPosX.W) / 32.0f, 0.0f, 31.0f / 32.0f) * 256.0f);
+				int lightstep = (lightnext - lightpos) / 8;
+
 				for (int ix = 0; ix < 8; ix++)
 				{
 					int texelX = ((((uint32_t)varyingPos[0] << 8) >> 16) * texWidth) >> 16;
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
 
+					uint32_t r = RPART(fg);
+					uint32_t g = GPART(fg);
+					uint32_t b = BPART(fg);
+					r = r * lightpos / 256;
+					g = g * lightpos / 256;
+					b = b * lightpos / 256;
+					fg = 0xff000000 | (r << 16) | (g << 8) | b;
+
 					dest[x * 8 + ix] = fg;
 					subsector[x * 8 + ix] = subsectorDepth;
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
 						varyingPos[j] += varyingStep[j];
+					lightpos += lightstep;
 				}
 			}
 		
@@ -948,6 +966,8 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 			for (int j = 0; j < TriVertex::NumVarying; j++)
 				varyingPos[j] = (int32_t)(blockPosX.Varying[j] * rcpW);
 
+			int lightpos = 256 - (int)(clamp(shade - MIN(24.0f, globVis * blockPosX.W) / 32.0f, 0.0f, 31.0f / 32.0f) * 256.0f);
+
 			blockPosX.W += gradientX.W * 8;
 			for (int j = 0; j < TriVertex::NumVarying; j++)
 				blockPosX.Varying[j] += gradientX.Varying[j] * 8;
@@ -960,6 +980,9 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 				varyingStep[j] = (nextPos - varyingPos[j]) / 8;
 			}
 
+			int lightnext = 256 - (int)(clamp(shade - MIN(24.0f, globVis * blockPosX.W) / 32.0f, 0.0f, 31.0f / 32.0f) * 256.0f);
+			int lightstep = (lightnext - lightpos) / 8;
+
 			for (int x = 0; x < 8; x++)
 			{
 				if (mask0 & (1 << 31))
@@ -968,6 +991,14 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
 
+					uint32_t r = RPART(fg);
+					uint32_t g = GPART(fg);
+					uint32_t b = BPART(fg);
+					r = r * lightpos / 256;
+					g = g * lightpos / 256;
+					b = b * lightpos / 256;
+					fg = 0xff000000 | (r << 16) | (g << 8) | b;
+
 					dest[x] = fg;
 					subsector[x] = subsectorDepth;
 				}
@@ -975,6 +1006,7 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 
 				for (int j = 0; j < TriVertex::NumVarying; j++)
 					varyingPos[j] += varyingStep[j];
+				lightpos += lightstep;
 			}
 
 			blockPosY.W += gradientY.W;
@@ -993,6 +1025,8 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 			for (int j = 0; j < TriVertex::NumVarying; j++)
 				varyingPos[j] = (int32_t)(blockPosX.Varying[j] * rcpW);
 
+			int lightpos = 256 - (int)(clamp(shade - MIN(24.0f, globVis * blockPosX.W) / 32.0f, 0.0f, 31.0f / 32.0f) * 256.0f);
+
 			blockPosX.W += gradientX.W * 8;
 			for (int j = 0; j < TriVertex::NumVarying; j++)
 				blockPosX.Varying[j] += gradientX.Varying[j] * 8;
@@ -1005,6 +1039,9 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 				varyingStep[j] = (nextPos - varyingPos[j]) / 8;
 			}
 
+			int lightnext = 256 - (int)(clamp(shade - MIN(24.0f, globVis * blockPosX.W) / 32.0f, 0.0f, 31.0f / 32.0f) * 256.0f);
+			int lightstep = (lightnext - lightpos) / 8;
+
 			for (int x = 0; x < 8; x++)
 			{
 				if (mask1 & (1 << 31))
@@ -1013,6 +1050,14 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 					int texelY = ((((uint32_t)varyingPos[1] << 8) >> 16) * texHeight) >> 16;
 					uint32_t fg = texPixels[texelX * texHeight + texelY];
 
+					uint32_t r = RPART(fg);
+					uint32_t g = GPART(fg);
+					uint32_t b = BPART(fg);
+					r = r * lightpos / 256;
+					g = g * lightpos / 256;
+					b = b * lightpos / 256;
+					fg = 0xff000000 | (r << 16) | (g << 8) | b;
+
 					dest[x] = fg;
 					subsector[x] = subsectorDepth;
 				}
@@ -1020,6 +1065,7 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 
 				for (int j = 0; j < TriVertex::NumVarying; j++)
 					varyingPos[j] += varyingStep[j];
+				lightpos += lightstep;
 			}
 
 			blockPosY.W += gradientY.W;

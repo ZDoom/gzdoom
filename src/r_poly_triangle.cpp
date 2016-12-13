@@ -94,6 +94,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 	default:
 	//case TriDrawVariant::DrawNormal: drawfunc = dest_bgra ?  &ScreenTriangle::DrawFunc : llvm->TriDrawNormal8[bmode]; break;
 	//case TriDrawVariant::Stencil: drawfunc = &ScreenTriangle::StencilFunc; break;
+	//case TriDrawVariant::StencilClose: drawfunc = &ScreenTriangle::StencilCloseFunc; break;
 	case TriDrawVariant::DrawNormal: drawfunc = dest_bgra ? llvm->TriDrawNormal32[bmode] : llvm->TriDrawNormal8[bmode]; break;
 	case TriDrawVariant::FillNormal: drawfunc = dest_bgra ? llvm->TriFillNormal32[bmode] : llvm->TriFillNormal8[bmode]; break;
 	case TriDrawVariant::DrawSubsector: drawfunc = dest_bgra ? llvm->TriDrawSubsector32[bmode] : llvm->TriDrawSubsector8[bmode]; break;
@@ -891,6 +892,57 @@ void ScreenTriangle::StencilWrite(const TriDrawTriangleArgs *args)
 	}
 }
 
+void ScreenTriangle::SubsectorWrite(const TriDrawTriangleArgs *args)
+{
+	uint32_t subsectorDepth = args->uniforms->subsectorDepth;
+
+	for (int i = 0; i < NumFullSpans; i++)
+	{
+		const auto &span = FullSpans[i];
+
+		uint32_t *subsector = args->subsectorGBuffer + span.X + span.Y * args->pitch;
+		int pitch = args->pitch;
+		int width = span.Length * 8;
+		int height = 8;
+		for (int y = 0; y < height; y++)
+		{
+			for (int x = 0; x < width; x++)
+				subsector[x] = subsectorDepth;
+			subsector += pitch;
+		}
+	}
+	
+	for (int i = 0; i < NumPartialBlocks; i++)
+	{
+		const auto &block = PartialBlocks[i];
+
+		uint32_t *subsector = args->subsectorGBuffer + block.X + block.Y * args->pitch;
+		int pitch = args->pitch;
+		uint32_t mask0 = block.Mask0;
+		uint32_t mask1 = block.Mask1;
+		for (int y = 0; y < 4; y++)
+		{
+			for (int x = 0; x < 8; x++)
+			{
+				if (mask0 & (1 << 31))
+					subsector[x] = subsectorDepth;
+				mask0 <<= 1;
+			}
+			subsector += pitch;
+		}
+		for (int y = 4; y < 8; y++)
+		{
+			for (int x = 0; x < 8; x++)
+			{
+				if (mask1 & (1 << 31))
+					subsector[x] = subsectorDepth;
+				mask1 <<= 1;
+			}
+			subsector += pitch;
+		}
+	}
+}
+
 float ScreenTriangle::FindGradientX(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2)
 {
 	float top = (c1 - c2) * (y0 - y2) - (c0 - c2) * (y1 - y2);
@@ -1156,6 +1208,13 @@ void ScreenTriangle::StencilFunc(const TriDrawTriangleArgs *args, WorkerThreadDa
 {
 	triangle[thread->core].Setup(args, thread);
 	triangle[thread->core].StencilWrite(args);
+}
+
+void ScreenTriangle::StencilCloseFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
+{
+	triangle[thread->core].Setup(args, thread);
+	triangle[thread->core].StencilWrite(args);
+	triangle[thread->core].SubsectorWrite(args);
 }
 
 ScreenTriangle::ScreenTriangle()

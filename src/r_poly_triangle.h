@@ -271,21 +271,6 @@ struct ScreenTriangleStepVariables
 	float Varying[TriVertex::NumVarying];
 };
 
-struct ScreenTriangleFullSpan
-{
-	uint16_t X;
-	uint16_t Y;
-	uint32_t Length;
-};
-
-struct ScreenTrianglePartialBlock
-{
-	uint16_t X;
-	uint16_t Y;
-	uint32_t Mask0;
-	uint32_t Mask1;
-};
-
 class ScreenTriangle
 {
 public:
@@ -294,25 +279,13 @@ public:
 	static void StencilFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 	static void StencilCloseFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 	
-	ScreenTriangle();
-	
-	void SetupNormal(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
-	void SetupSubsector(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
-	void Draw(const TriDrawTriangleArgs *args);
-	void StencilWrite(const TriDrawTriangleArgs *args);
-	void SubsectorWrite(const TriDrawTriangleArgs *args);
-
-	ScreenTriangleFullSpan *FullSpans;
-	ScreenTrianglePartialBlock *PartialBlocks;
-	int NumFullSpans;
-	int NumPartialBlocks;
-	int StartX;
-	int StartY;
-	
 private:
-	float FindGradientX(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2);
-	float FindGradientY(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2);
+	static void SetupNormal(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
+	static void SetupSubsector(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
+	static void Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
+	static void StencilWrite(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
+	static void SubsectorWrite(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 
-	std::vector<ScreenTriangleFullSpan> FullSpansBuffer;
-	std::vector<ScreenTrianglePartialBlock> PartialBlocksBuffer;
+	static float FindGradientX(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2);
+	static float FindGradientY(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2);
 };

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "r_draw.h"
+#include "r_drawers.h"
 #include <vector>
 #include <memory>
 #include <thread>
@@ -46,6 +47,9 @@ public:
 	{
 		dc_temp = dc_temp_buff;
 		dc_temp_rgba = dc_temp_rgbabuff_rgba;
+
+		FullSpansBuffer.resize(MAXWIDTH / 8 * (MAXHEIGHT / 8));
+		PartialBlocksBuffer.resize(MAXWIDTH / 8 * (MAXHEIGHT / 8));
 	}
 
 	std::thread thread;
@@ -70,6 +74,10 @@ public:
 
 	// Working buffer used by the tilted (sloped) span drawer
 	const uint8_t *tiltlighting[MAXWIDTH];
+
+	// Working buffer used by the triangler drawer
+	std::vector<TriFullSpan> FullSpansBuffer;
+	std::vector<TriPartialBlock> PartialBlocksBuffer;
 
 	// Checks if a line is rendered by this thread
 	bool line_skipped_by_thread(int line)

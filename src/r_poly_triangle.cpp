@@ -35,6 +35,7 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "r_poly_triangle.h"
+#include "r_draw_rgba.h"
 
 int PolyTriangleDrawer::viewport_x;
 int PolyTriangleDrawer::viewport_y;
@@ -368,6 +369,8 @@ void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
 	thread_data.pass_start_y = thread->pass_start_y;
 	thread_data.pass_end_y = thread->pass_end_y;
 	thread_data.temp = thread->dc_temp_rgba;
+	thread_data.FullSpans = thread->FullSpansBuffer.data();
+	thread_data.PartialBlocks = thread->PartialBlocksBuffer.data();
 
 	PolyTriangleDrawer::draw_arrays(args, variant, blendmode, &thread_data);
 }
@@ -598,12 +601,12 @@ void ScreenTriangle::SetupNormal(const TriDrawTriangleArgs *args, WorkerThreadDa
 	int clipbottom = args->clipbottom;
 	
 	int stencilPitch = args->stencilPitch;
-	uint8_t *stencilValues = args->stencilValues;
-	uint32_t *stencilMasks = args->stencilMasks;
+	uint8_t * RESTRICT stencilValues = args->stencilValues;
+	uint32_t * RESTRICT stencilMasks = args->stencilMasks;
 	uint8_t stencilTestValue = args->stencilTestValue;
 	
-	ScreenTriangleFullSpan *span = FullSpans;
-	ScreenTrianglePartialBlock *partial = PartialBlocks;
+	TriFullSpan * RESTRICT span = thread->FullSpans;
+	TriPartialBlock * RESTRICT partial = thread->PartialBlocks;
 	
 	// 28.4 fixed-point coordinates
 	const int Y1 = (int)round(16.0f * v1.y);
@@ -639,8 +642,8 @@ void ScreenTriangle::SetupNormal(const TriDrawTriangleArgs *args, WorkerThreadDa
 	int maxy = MIN((MAX(MAX(Y1, Y2), Y3) + 0xF) >> 4, clipbottom - 1);
 	if (minx >= maxx || miny >= maxy)
 	{
-		NumFullSpans = 0;
-		NumPartialBlocks = 0;
+		thread->NumFullSpans = 0;
+		thread->NumPartialBlocks = 0;
 		return;
 	}
 	
@@ -667,8 +670,8 @@ void ScreenTriangle::SetupNormal(const TriDrawTriangleArgs *args, WorkerThreadDa
 	int core_skip = (num_cores - ((miny / q) - core) % num_cores) % num_cores;
 	miny += core_skip * q;
 
-	StartX = minx;
-	StartY = miny;
+	thread->StartX = minx;
+	thread->StartY = miny;
 	span->Length = 0;
 
 	// Loop through blocks
@@ -824,8 +827,8 @@ void ScreenTriangle::SetupNormal(const TriDrawTriangleArgs *args, WorkerThreadDa
 		}
 	}
 	
-	NumFullSpans = (int)(span - FullSpans);
-	NumPartialBlocks = (int)(partial - PartialBlocks);
+	thread->NumFullSpans = (int)(span - thread->FullSpans);
+	thread->NumPartialBlocks = (int)(partial - thread->PartialBlocks);
 }
 
 void ScreenTriangle::SetupSubsector(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
@@ -837,15 +840,16 @@ void ScreenTriangle::SetupSubsector(const TriDrawTriangleArgs *args, WorkerThrea
 	int clipbottom = args->clipbottom;
 
 	int stencilPitch = args->stencilPitch;
-	uint8_t *stencilValues = args->stencilValues;
-	uint32_t *stencilMasks = args->stencilMasks;
+	uint8_t * RESTRICT stencilValues = args->stencilValues;
+	uint32_t * RESTRICT stencilMasks = args->stencilMasks;
 	uint8_t stencilTestValue = args->stencilTestValue;
 
+	uint32_t * RESTRICT subsectorGBuffer = args->subsectorGBuffer;
 	uint32_t subsectorDepth = args->uniforms->subsectorDepth;
 	int32_t pitch = args->pitch;
 
-	ScreenTriangleFullSpan *span = FullSpans;
-	ScreenTrianglePartialBlock *partial = PartialBlocks;
+	TriFullSpan * RESTRICT span = thread->FullSpans;
+	TriPartialBlock * RESTRICT partial = thread->PartialBlocks;
 
 	// 28.4 fixed-point coordinates
 	const int Y1 = (int)round(16.0f * v1.y);
@@ -881,8 +885,8 @@ void ScreenTriangle::SetupSubsector(const TriDrawTriangleArgs *args, WorkerThrea
 	int maxy = MIN((MAX(MAX(Y1, Y2), Y3) + 0xF) >> 4, clipbottom - 1);
 	if (minx >= maxx || miny >= maxy)
 	{
-		NumFullSpans = 0;
-		NumPartialBlocks = 0;
+		thread->NumFullSpans = 0;
+		thread->NumPartialBlocks = 0;
 		return;
 	}
 
@@ -909,8 +913,8 @@ void ScreenTriangle::SetupSubsector(const TriDrawTriangleArgs *args, WorkerThrea
 	int core_skip = (num_cores - ((miny / q) - core) % num_cores) % num_cores;
 	miny += core_skip * q;
 
-	StartX = minx;
-	StartY = miny;
+	thread->StartX = minx;
+	thread->StartY = miny;
 	span->Length = 0;
 
 	// Loop through blocks
@@ -966,7 +970,7 @@ void ScreenTriangle::SetupSubsector(const TriDrawTriangleArgs *args, WorkerThrea
 			{
 				// Totally covered block still needs a subsector coverage test:
 
-				uint32_t *subsector = args->subsectorGBuffer + x + y * pitch;
+				uint32_t *subsector = subsectorGBuffer + x + y * pitch;
 
 				uint32_t mask0 = 0;
 				uint32_t mask1 = 0;
@@ -1026,7 +1030,7 @@ void ScreenTriangle::SetupSubsector(const TriDrawTriangleArgs *args, WorkerThrea
 				int CY2 = C2 + DX23 * y0 - DY23 * x0;
 				int CY3 = C3 + DX31 * y0 - DY31 * x0;
 
-				uint32_t *subsector = args->subsectorGBuffer + x + y * pitch;
+				uint32_t *subsector = subsectorGBuffer + x + y * pitch;
 
 				uint32_t mask0 = 0;
 				uint32_t mask1 = 0;
@@ -1113,20 +1117,25 @@ void ScreenTriangle::SetupSubsector(const TriDrawTriangleArgs *args, WorkerThrea
 		}
 	}
 
-	NumFullSpans = (int)(span - FullSpans);
-	NumPartialBlocks = (int)(partial - PartialBlocks);
+	thread->NumFullSpans = (int)(span - thread->FullSpans);
+	thread->NumPartialBlocks = (int)(partial - thread->PartialBlocks);
 }
 
-void ScreenTriangle::StencilWrite(const TriDrawTriangleArgs *args)
+void ScreenTriangle::StencilWrite(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
-	uint8_t *stencilValues = args->stencilValues;
-	uint32_t *stencilMasks = args->stencilMasks;
+	uint8_t * RESTRICT stencilValues = args->stencilValues;
+	uint32_t * RESTRICT stencilMasks = args->stencilMasks;
 	uint32_t stencilWriteValue = args->stencilWriteValue;
 	uint32_t stencilPitch = args->stencilPitch;
 
-	for (int i = 0; i < NumFullSpans; i++)
+	int numSpans = thread->NumFullSpans;
+	auto fullSpans = thread->FullSpans;
+	int numBlocks = thread->NumPartialBlocks;
+	auto partialBlocks = thread->PartialBlocks;
+
+	for (int i = 0; i < numSpans; i++)
 	{
-		const auto &span = FullSpans[i];
+		const auto &span = fullSpans[i];
 		
 		int block = span.X / 8 + span.Y / 8 * stencilPitch;
 		uint8_t *stencilBlock = &stencilValues[block * 64];
@@ -1137,9 +1146,9 @@ void ScreenTriangle::StencilWrite(const TriDrawTriangleArgs *args)
 			stencilBlockMask[x] = 0xffffff00 | stencilWriteValue;
 	}
 	
-	for (int i = 0; i < NumPartialBlocks; i++)
+	for (int i = 0; i < numBlocks; i++)
 	{
-		const auto &block = PartialBlocks[i];
+		const auto &block = partialBlocks[i];
 		
 		uint32_t mask0 = block.Mask0;
 		uint32_t mask1 = block.Mask1;
@@ -1182,16 +1191,22 @@ void ScreenTriangle::StencilWrite(const TriDrawTriangleArgs *args)
 	}
 }
 
-void ScreenTriangle::SubsectorWrite(const TriDrawTriangleArgs *args)
+void ScreenTriangle::SubsectorWrite(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
+	uint32_t * RESTRICT subsectorGBuffer = args->subsectorGBuffer;
 	uint32_t subsectorDepth = args->uniforms->subsectorDepth;
+	int pitch = args->pitch;
 
-	for (int i = 0; i < NumFullSpans; i++)
+	int numSpans = thread->NumFullSpans;
+	auto fullSpans = thread->FullSpans;
+	int numBlocks = thread->NumPartialBlocks;
+	auto partialBlocks = thread->PartialBlocks;
+
+	for (int i = 0; i < numSpans; i++)
 	{
-		const auto &span = FullSpans[i];
+		const auto &span = fullSpans[i];
 
-		uint32_t *subsector = args->subsectorGBuffer + span.X + span.Y * args->pitch;
-		int pitch = args->pitch;
+		uint32_t *subsector = subsectorGBuffer + span.X + span.Y * pitch;
 		int width = span.Length * 8;
 		int height = 8;
 		for (int y = 0; y < height; y++)
@@ -1202,12 +1217,11 @@ void ScreenTriangle::SubsectorWrite(const TriDrawTriangleArgs *args)
 		}
 	}
 	
-	for (int i = 0; i < NumPartialBlocks; i++)
+	for (int i = 0; i < numBlocks; i++)
 	{
-		const auto &block = PartialBlocks[i];
+		const auto &block = partialBlocks[i];
 
-		uint32_t *subsector = args->subsectorGBuffer + block.X + block.Y * args->pitch;
-		int pitch = args->pitch;
+		uint32_t *subsector = subsectorGBuffer + block.X + block.Y * pitch;
 		uint32_t mask0 = block.Mask0;
 		uint32_t mask1 = block.Mask1;
 		for (int y = 0; y < 4; y++)
@@ -1247,8 +1261,15 @@ float ScreenTriangle::FindGradientY(float x0, float y0, float x1, float y1, floa
 	return top / bottom;
 }
 
-void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
+void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
+	int numSpans = thread->NumFullSpans;
+	auto fullSpans = thread->FullSpans;
+	int numBlocks = thread->NumPartialBlocks;
+	auto partialBlocks = thread->PartialBlocks;
+	int startX = thread->StartX;
+	int startY = thread->StartY;
+
 	// Calculate gradients
 	const TriVertex &v1 = *args->v1;
 	const TriVertex &v2 = *args->v2;
@@ -1258,17 +1279,21 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 	ScreenTriangleStepVariables start;
 	gradientX.W = FindGradientX(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
 	gradientY.W = FindGradientY(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.w, v2.w, v3.w);
-	start.W = v1.w + gradientX.W * (StartX - v1.x) + gradientY.W * (StartY - v1.y);
+	start.W = v1.w + gradientX.W * (startX - v1.x) + gradientY.W * (startY - v1.y);
 	for (int i = 0; i < TriVertex::NumVarying; i++)
 	{
 		gradientX.Varying[i] = FindGradientX(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.varying[i] * v1.w, v2.varying[i] * v2.w, v3.varying[i] * v3.w);
 		gradientY.Varying[i] = FindGradientY(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v1.varying[i] * v1.w, v2.varying[i] * v2.w, v3.varying[i] * v3.w);
-		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (StartX - v1.x) + gradientY.Varying[i] * (StartY - v1.y);
+		start.Varying[i] = v1.varying[i] * v1.w + gradientX.Varying[i] * (startX - v1.x) + gradientY.Varying[i] * (startY - v1.y);
 	}
 
-	const uint32_t *texPixels = (const uint32_t *)args->texturePixels;
+	const uint32_t * RESTRICT texPixels = (const uint32_t *)args->texturePixels;
 	uint32_t texWidth = args->textureWidth;
 	uint32_t texHeight = args->textureHeight;
+
+	uint32_t * RESTRICT destOrg = (uint32_t*)args->dest;
+	uint32_t * RESTRICT subsectorGBuffer = (uint32_t*)args->subsectorGBuffer;
+	int pitch = args->pitch;
 
 	uint32_t subsectorDepth = args->uniforms->subsectorDepth;
 
@@ -1276,20 +1301,19 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 	float shade = (64.0f - (light * 255 / 256 + 12.0f) * 32.0f / 128.0f) / 32.0f;
 	float globVis = 1706.0f;
 
-	for (int i = 0; i < NumFullSpans; i++)
+	for (int i = 0; i < numSpans; i++)
 	{
-		const auto &span = FullSpans[i];
+		const auto &span = fullSpans[i];
 
-		uint32_t *dest = (uint32_t*)args->dest + span.X + span.Y * args->pitch;
-		uint32_t *subsector = args->subsectorGBuffer + span.X + span.Y * args->pitch;
-		int pitch = args->pitch;
+		uint32_t *dest = destOrg + span.X + span.Y * pitch;
+		uint32_t *subsector = subsectorGBuffer + span.X + span.Y * pitch;
 		int width = span.Length;
 		int height = 8;
 
 		ScreenTriangleStepVariables blockPosY;
-		blockPosY.W = start.W + gradientX.W * (span.X - StartX) + gradientY.W * (span.Y - StartY);
+		blockPosY.W = start.W + gradientX.W * (span.X - startX) + gradientY.W * (span.Y - startY);
 		for (int j = 0; j < TriVertex::NumVarying; j++)
-			blockPosY.Varying[j] = start.Varying[j] + gradientX.Varying[j] * (span.X - StartX) + gradientY.Varying[j] * (span.Y - StartY);
+			blockPosY.Varying[j] = start.Varying[j] + gradientX.Varying[j] * (span.X - startX) + gradientY.Varying[j] * (span.Y - startY);
 
 		for (int y = 0; y < height; y++)
 		{
@@ -1351,18 +1375,17 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 		}
 	}
 	
-	for (int i = 0; i < NumPartialBlocks; i++)
+	for (int i = 0; i < numBlocks; i++)
 	{
-		const auto &block = PartialBlocks[i];
+		const auto &block = partialBlocks[i];
 
 		ScreenTriangleStepVariables blockPosY;
-		blockPosY.W = start.W + gradientX.W * (block.X - StartX) + gradientY.W * (block.Y - StartY);
+		blockPosY.W = start.W + gradientX.W * (block.X - startX) + gradientY.W * (block.Y - startY);
 		for (int j = 0; j < TriVertex::NumVarying; j++)
-			blockPosY.Varying[j] = start.Varying[j] + gradientX.Varying[j] * (block.X - StartX) + gradientY.Varying[j] * (block.Y - StartY);
+			blockPosY.Varying[j] = start.Varying[j] + gradientX.Varying[j] * (block.X - startX) + gradientY.Varying[j] * (block.Y - startY);
 
-		uint32_t *dest = (uint32_t*)args->dest + block.X + block.Y * args->pitch;
-		uint32_t *subsector = args->subsectorGBuffer + block.X + block.Y * args->pitch;
-		int pitch = args->pitch;
+		uint32_t *dest = destOrg + block.X + block.Y * pitch;
+		uint32_t *subsector = subsectorGBuffer + block.X + block.Y * pitch;
 		uint32_t mask0 = block.Mask0;
 		uint32_t mask1 = block.Mask1;
 		for (int y = 0; y < 4; y++)
@@ -1486,37 +1509,27 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args)
 	}
 }
 
-static ScreenTriangle triangle[8];
-
 void ScreenTriangle::DrawFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
-	triangle[thread->core].SetupNormal(args, thread);
-	triangle[thread->core].Draw(args);
+	SetupNormal(args, thread);
+	Draw(args, thread);
 }
 
 void ScreenTriangle::DrawSubsectorFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
-	triangle[thread->core].SetupSubsector(args, thread);
-	triangle[thread->core].Draw(args);
+	SetupSubsector(args, thread);
+	Draw(args, thread);
 }
 
 void ScreenTriangle::StencilFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
-	triangle[thread->core].SetupNormal(args, thread);
-	triangle[thread->core].StencilWrite(args);
+	SetupNormal(args, thread);
+	StencilWrite(args, thread);
 }
 
 void ScreenTriangle::StencilCloseFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
-	triangle[thread->core].SetupNormal(args, thread);
-	triangle[thread->core].StencilWrite(args);
-	triangle[thread->core].SubsectorWrite(args);
-}
-
-ScreenTriangle::ScreenTriangle()
-{
-	FullSpansBuffer.resize(MAXWIDTH / 8 * (MAXHEIGHT / 8));
-	PartialBlocksBuffer.resize(MAXWIDTH / 8 * (MAXHEIGHT / 8));
-	FullSpans = FullSpansBuffer.data();
-	PartialBlocks = PartialBlocksBuffer.data();
+	SetupNormal(args, thread);
+	StencilWrite(args, thread);
+	SubsectorWrite(args, thread);
 }

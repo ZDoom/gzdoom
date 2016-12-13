@@ -26,7 +26,21 @@
 #include <vector>
 
 class FString;
-class DrawerThread;
+
+struct TriFullSpan
+{
+	uint16_t X;
+	uint16_t Y;
+	uint32_t Length;
+};
+
+struct TriPartialBlock
+{
+	uint16_t X;
+	uint16_t Y;
+	uint32_t Mask0;
+	uint32_t Mask1;
+};
 
 struct WorkerThreadData
 {
@@ -35,7 +49,14 @@ struct WorkerThreadData
 	int32_t pass_start_y;
 	int32_t pass_end_y;
 	uint32_t *temp;
-	DrawerThread *drawer_thread;
+
+	// Triangle working data:
+	TriFullSpan *FullSpans;
+	TriPartialBlock *PartialBlocks;
+	uint32_t NumFullSpans;
+	uint32_t NumPartialBlocks;
+	int32_t StartX;
+	int32_t StartY;
 };
 
 struct DrawWallArgs

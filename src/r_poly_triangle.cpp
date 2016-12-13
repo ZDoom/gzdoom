@@ -92,7 +92,8 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 	switch (variant)
 	{
 	default:
-	//case TriDrawVariant::DrawNormal: drawfunc = dest_bgra ?  &ScreenTriangle::DrawFunc : llvm->TriDrawNormal8[bmode]; break;
+	//case TriDrawVariant::DrawNormal: drawfunc = dest_bgra ? &ScreenTriangle::DrawFunc : llvm->TriDrawNormal8[bmode]; break;
+	//case TriDrawVariant::DrawSubsector: drawfunc = dest_bgra ? &ScreenTriangle::DrawSubsectorFunc : llvm->TriDrawSubsector8[bmode]; break;
 	//case TriDrawVariant::Stencil: drawfunc = &ScreenTriangle::StencilFunc; break;
 	//case TriDrawVariant::StencilClose: drawfunc = &ScreenTriangle::StencilCloseFunc; break;
 	case TriDrawVariant::DrawNormal: drawfunc = dest_bgra ? llvm->TriDrawNormal32[bmode] : llvm->TriDrawNormal8[bmode]; break;
@@ -588,7 +589,7 @@ void PolyVertexBuffer::Clear()
 
 /////////////////////////////////////////////////////////////////////////////
 
-void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
+void ScreenTriangle::SetupNormal(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
 	const TriVertex &v1 = *args->v1;
 	const TriVertex &v2 = *args->v2;
@@ -823,6 +824,295 @@ void ScreenTriangle::Setup(const TriDrawTriangleArgs *args, WorkerThreadData *th
 		}
 	}
 	
+	NumFullSpans = (int)(span - FullSpans);
+	NumPartialBlocks = (int)(partial - PartialBlocks);
+}
+
+void ScreenTriangle::SetupSubsector(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
+{
+	const TriVertex &v1 = *args->v1;
+	const TriVertex &v2 = *args->v2;
+	const TriVertex &v3 = *args->v3;
+	int clipright = args->clipright;
+	int clipbottom = args->clipbottom;
+
+	int stencilPitch = args->stencilPitch;
+	uint8_t *stencilValues = args->stencilValues;
+	uint32_t *stencilMasks = args->stencilMasks;
+	uint8_t stencilTestValue = args->stencilTestValue;
+
+	uint32_t subsectorDepth = args->uniforms->subsectorDepth;
+	int32_t pitch = args->pitch;
+
+	ScreenTriangleFullSpan *span = FullSpans;
+	ScreenTrianglePartialBlock *partial = PartialBlocks;
+
+	// 28.4 fixed-point coordinates
+	const int Y1 = (int)round(16.0f * v1.y);
+	const int Y2 = (int)round(16.0f * v2.y);
+	const int Y3 = (int)round(16.0f * v3.y);
+
+	const int X1 = (int)round(16.0f * v1.x);
+	const int X2 = (int)round(16.0f * v2.x);
+	const int X3 = (int)round(16.0f * v3.x);
+
+	// Deltas
+	const int DX12 = X1 - X2;
+	const int DX23 = X2 - X3;
+	const int DX31 = X3 - X1;
+
+	const int DY12 = Y1 - Y2;
+	const int DY23 = Y2 - Y3;
+	const int DY31 = Y3 - Y1;
+
+	// Fixed-point deltas
+	const int FDX12 = DX12 << 4;
+	const int FDX23 = DX23 << 4;
+	const int FDX31 = DX31 << 4;
+
+	const int FDY12 = DY12 << 4;
+	const int FDY23 = DY23 << 4;
+	const int FDY31 = DY31 << 4;
+
+	// Bounding rectangle
+	int minx = MAX((MIN(MIN(X1, X2), X3) + 0xF) >> 4, 0);
+	int maxx = MIN((MAX(MAX(X1, X2), X3) + 0xF) >> 4, clipright - 1);
+	int miny = MAX((MIN(MIN(Y1, Y2), Y3) + 0xF) >> 4, 0);
+	int maxy = MIN((MAX(MAX(Y1, Y2), Y3) + 0xF) >> 4, clipbottom - 1);
+	if (minx >= maxx || miny >= maxy)
+	{
+		NumFullSpans = 0;
+		NumPartialBlocks = 0;
+		return;
+	}
+
+	// Block size, standard 8x8 (must be power of two)
+	const int q = 8;
+
+	// Start in corner of 8x8 block
+	minx &= ~(q - 1);
+	miny &= ~(q - 1);
+
+	// Half-edge constants
+	int C1 = DY12 * X1 - DX12 * Y1;
+	int C2 = DY23 * X2 - DX23 * Y2;
+	int C3 = DY31 * X3 - DX31 * Y3;
+
+	// Correct for fill convention
+	if (DY12 < 0 || (DY12 == 0 && DX12 > 0)) C1++;
+	if (DY23 < 0 || (DY23 == 0 && DX23 > 0)) C2++;
+	if (DY31 < 0 || (DY31 == 0 && DX31 > 0)) C3++;
+
+	// First block line for this thread
+	int core = thread->core;
+	int num_cores = thread->num_cores;
+	int core_skip = (num_cores - ((miny / q) - core) % num_cores) % num_cores;
+	miny += core_skip * q;
+
+	StartX = minx;
+	StartY = miny;
+	span->Length = 0;
+
+	// Loop through blocks
+	for (int y = miny; y < maxy; y += q * num_cores)
+	{
+		for (int x = minx; x < maxx; x += q)
+		{
+			// Corners of block
+			int x0 = x << 4;
+			int x1 = (x + q - 1) << 4;
+			int y0 = y << 4;
+			int y1 = (y + q - 1) << 4;
+
+			// Evaluate half-space functions
+			bool a00 = C1 + DX12 * y0 - DY12 * x0 > 0;
+			bool a10 = C1 + DX12 * y0 - DY12 * x1 > 0;
+			bool a01 = C1 + DX12 * y1 - DY12 * x0 > 0;
+			bool a11 = C1 + DX12 * y1 - DY12 * x1 > 0;
+			int a = (a00 << 0) | (a10 << 1) | (a01 << 2) | (a11 << 3);
+
+			bool b00 = C2 + DX23 * y0 - DY23 * x0 > 0;
+			bool b10 = C2 + DX23 * y0 - DY23 * x1 > 0;
+			bool b01 = C2 + DX23 * y1 - DY23 * x0 > 0;
+			bool b11 = C2 + DX23 * y1 - DY23 * x1 > 0;
+			int b = (b00 << 0) | (b10 << 1) | (b01 << 2) | (b11 << 3);
+
+			bool c00 = C3 + DX31 * y0 - DY31 * x0 > 0;
+			bool c10 = C3 + DX31 * y0 - DY31 * x1 > 0;
+			bool c01 = C3 + DX31 * y1 - DY31 * x0 > 0;
+			bool c11 = C3 + DX31 * y1 - DY31 * x1 > 0;
+			int c = (c00 << 0) | (c10 << 1) | (c01 << 2) | (c11 << 3);
+
+			// Stencil test the whole block, if possible
+			int block = x / 8 + y / 8 * stencilPitch;
+			uint8_t *stencilBlock = &stencilValues[block * 64];
+			uint32_t *stencilBlockMask = &stencilMasks[block];
+			bool blockIsSingleStencil = ((*stencilBlockMask) & 0xffffff00) == 0xffffff00;
+			bool skipBlock = blockIsSingleStencil && ((*stencilBlockMask) & 0xff) != stencilTestValue;
+
+			// Skip block when outside an edge
+			if (a == 0 || b == 0 || c == 0 || skipBlock)
+			{
+				if (span->Length != 0)
+				{
+					span++;
+					span->Length = 0;
+				}
+				continue;
+			}
+
+			// Accept whole block when totally covered
+			if (a == 0xf && b == 0xf && c == 0xf && x + q <= clipright && y + q <= clipbottom && blockIsSingleStencil)
+			{
+				// Totally covered block still needs a subsector coverage test:
+
+				uint32_t *subsector = args->subsectorGBuffer + x + y * pitch;
+
+				uint32_t mask0 = 0;
+				uint32_t mask1 = 0;
+
+				for (int iy = 0; iy < 4; iy++)
+				{
+					for (int ix = 0; ix < q; ix++)
+					{
+						bool covered = subsector[ix] >= subsectorDepth;
+						mask0 <<= 1;
+						mask0 |= (uint32_t)covered;
+					}
+					subsector += pitch;
+				}
+
+				for (int iy = 4; iy < q; iy++)
+				{
+					for (int ix = 0; ix < q; ix++)
+					{
+						bool covered = subsector[ix] >= subsectorDepth;
+						mask1 <<= 1;
+						mask1 |= (uint32_t)covered;
+					}
+					subsector += pitch;
+				}
+
+				if (mask0 != 0xffffffff || mask1 != 0xffffffff)
+				{
+					if (span->Length > 0)
+					{
+						span++;
+						span->Length = 0;
+					}
+
+					partial->X = x;
+					partial->Y = y;
+					partial->Mask0 = mask0;
+					partial->Mask1 = mask1;
+					partial++;
+				}
+				else if (span->Length != 0)
+				{
+					span->Length++;
+				}
+				else
+				{
+					span->X = x;
+					span->Y = y;
+					span->Length = 1;
+				}
+			}
+			else // Partially covered block
+			{
+				x0 = x << 4;
+				x1 = (x + q - 1) << 4;
+				int CY1 = C1 + DX12 * y0 - DY12 * x0;
+				int CY2 = C2 + DX23 * y0 - DY23 * x0;
+				int CY3 = C3 + DX31 * y0 - DY31 * x0;
+
+				uint32_t *subsector = args->subsectorGBuffer + x + y * pitch;
+
+				uint32_t mask0 = 0;
+				uint32_t mask1 = 0;
+
+				for (int iy = 0; iy < 4; iy++)
+				{
+					int CX1 = CY1;
+					int CX2 = CY2;
+					int CX3 = CY3;
+
+					for (int ix = 0; ix < q; ix++)
+					{
+						bool passStencilTest = blockIsSingleStencil || stencilBlock[ix + iy * q] == stencilTestValue;
+						bool covered = (CX1 > 0 && CX2 > 0 && CX3 > 0 && (x + ix) < clipright && (y + iy) < clipbottom && passStencilTest && subsector[ix] >= subsectorDepth);
+						mask0 <<= 1;
+						mask0 |= (uint32_t)covered;
+
+						CX1 -= FDY12;
+						CX2 -= FDY23;
+						CX3 -= FDY31;
+					}
+
+					CY1 += FDX12;
+					CY2 += FDX23;
+					CY3 += FDX31;
+					subsector += pitch;
+				}
+
+				for (int iy = 4; iy < q; iy++)
+				{
+					int CX1 = CY1;
+					int CX2 = CY2;
+					int CX3 = CY3;
+
+					for (int ix = 0; ix < q; ix++)
+					{
+						bool passStencilTest = blockIsSingleStencil || stencilBlock[ix + iy * q] == stencilTestValue;
+						bool covered = (CX1 > 0 && CX2 > 0 && CX3 > 0 && (x + ix) < clipright && (y + iy) < clipbottom && passStencilTest && subsector[ix] >= subsectorDepth);
+						mask1 <<= 1;
+						mask1 |= (uint32_t)covered;
+
+						CX1 -= FDY12;
+						CX2 -= FDY23;
+						CX3 -= FDY31;
+					}
+
+					CY1 += FDX12;
+					CY2 += FDX23;
+					CY3 += FDX31;
+					subsector += pitch;
+				}
+
+				if (mask0 != 0xffffffff || mask1 != 0xffffffff)
+				{
+					if (span->Length > 0)
+					{
+						span++;
+						span->Length = 0;
+					}
+
+					partial->X = x;
+					partial->Y = y;
+					partial->Mask0 = mask0;
+					partial->Mask1 = mask1;
+					partial++;
+				}
+				else if (span->Length != 0)
+				{
+					span->Length++;
+				}
+				else
+				{
+					span->X = x;
+					span->Y = y;
+					span->Length = 1;
+				}
+			}
+		}
+
+		if (span->Length != 0)
+		{
+			span++;
+			span->Length = 0;
+		}
+	}
+
 	NumFullSpans = (int)(span - FullSpans);
 	NumPartialBlocks = (int)(partial - PartialBlocks);
 }
@@ -1200,19 +1490,25 @@ static ScreenTriangle triangle[8];
 
 void ScreenTriangle::DrawFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
-	triangle[thread->core].Setup(args, thread);
+	triangle[thread->core].SetupNormal(args, thread);
+	triangle[thread->core].Draw(args);
+}
+
+void ScreenTriangle::DrawSubsectorFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
+{
+	triangle[thread->core].SetupSubsector(args, thread);
 	triangle[thread->core].Draw(args);
 }
 
 void ScreenTriangle::StencilFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
-	triangle[thread->core].Setup(args, thread);
+	triangle[thread->core].SetupNormal(args, thread);
 	triangle[thread->core].StencilWrite(args);
 }
 
 void ScreenTriangle::StencilCloseFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
-	triangle[thread->core].Setup(args, thread);
+	triangle[thread->core].SetupNormal(args, thread);
 	triangle[thread->core].StencilWrite(args);
 	triangle[thread->core].SubsectorWrite(args);
 }

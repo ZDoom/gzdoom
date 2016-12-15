@@ -251,17 +251,6 @@ struct TriDrawTriangleArgs
 	const uint8_t *BaseColors;
 };
 
-enum class TriDrawVariant
-{
-	DrawNormal,
-	FillNormal,
-	DrawSubsector,
-	FillSubsector,
-	FuzzSubsector,
-	Stencil,
-	StencilClose
-};
-
 enum class TriBlendMode
 {
 	Copy,           // blend_copy(shade(fg))

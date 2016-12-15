@@ -255,7 +255,8 @@ void RenderPolyScene::RenderPortals(int portalDepth)
 				args.vcount = verts.Count;
 				args.ccw = verts.Ccw;
 				args.uniforms.subsectorDepth = verts.SubsectorDepth;
-				PolyTriangleDrawer::draw(args, TriDrawVariant::FillNormal, TriBlendMode::Copy);
+				args.blendmode = TriBlendMode::Copy;
+				PolyTriangleDrawer::draw(args);
 			}
 		}
 
@@ -269,7 +270,7 @@ void RenderPolyScene::RenderPortals(int portalDepth)
 				args.vcount = verts.Count;
 				args.ccw = verts.Ccw;
 				args.uniforms.subsectorDepth = verts.SubsectorDepth;
-				PolyTriangleDrawer::draw(args, TriDrawVariant::FillNormal, TriBlendMode::Copy);
+				PolyTriangleDrawer::draw(args);
 			}
 		}
 	}
@@ -296,7 +297,8 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 				args.vcount = verts.Count;
 				args.ccw = verts.Ccw;
 				args.uniforms.subsectorDepth = verts.SubsectorDepth;
-				PolyTriangleDrawer::draw(args, TriDrawVariant::StencilClose, TriBlendMode::Copy);
+				args.writeColor = false;
+				PolyTriangleDrawer::draw(args);
 			}
 		}
 
@@ -317,7 +319,8 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 				args.vcount = verts.Count;
 				args.ccw = verts.Ccw;
 				args.uniforms.subsectorDepth = verts.SubsectorDepth;
-				PolyTriangleDrawer::draw(args, TriDrawVariant::StencilClose, TriBlendMode::Copy);
+				args.writeColor = false;
+				PolyTriangleDrawer::draw(args);
 			}
 		}
 	}

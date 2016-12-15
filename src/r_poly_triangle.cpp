@@ -77,12 +77,12 @@ void PolyTriangleDrawer::toggle_mirror()
 	mirror = !mirror;
 }
 
-void PolyTriangleDrawer::draw(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode)
+void PolyTriangleDrawer::draw(const PolyDrawArgs &args)
 {
-	DrawerCommandQueue::QueueCommand<DrawPolyTrianglesCommand>(args, variant, blendmode, mirror);
+	DrawerCommandQueue::QueueCommand<DrawPolyTrianglesCommand>(args, mirror);
 }
 
-void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVariant variant, TriBlendMode blendmode, WorkerThreadData *thread)
+void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, WorkerThreadData *thread)
 {
 	if (drawargs.vcount < 3)
 		return;
@@ -92,46 +92,20 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 	PolyDrawFuncPtr drawfuncs[3];
 	int num_drawfuncs = 0;
 	
-	int bmode = (int)blendmode;
-	switch (variant)
-	{
-	case TriDrawVariant::DrawNormal:
-		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SetupNormal;
+	drawfuncs[num_drawfuncs++] = drawargs.subsectorTest ? &ScreenTriangle::SetupSubsector : &ScreenTriangle::SetupNormal;
+	
+	int bmode = (int)drawargs.blendmode;
+	if (drawargs.writeColor && drawargs.texturePixels)
 		drawfuncs[num_drawfuncs++] = dest_bgra ? llvm->TriDraw32[bmode] : llvm->TriDraw8[bmode];
-		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SubsectorWrite;
-		break;
-		
-	case TriDrawVariant::FillNormal:
-		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SetupNormal;
+	else if (drawargs.writeColor)
 		drawfuncs[num_drawfuncs++] = dest_bgra ? llvm->TriFill32[bmode] : llvm->TriFill8[bmode];
-		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SubsectorWrite;
-		break;
-		
-	case TriDrawVariant::DrawSubsector:
-		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SetupSubsector;
-		drawfuncs[num_drawfuncs++] = dest_bgra ? llvm->TriDraw32[bmode] : llvm->TriDraw8[bmode];
-		break;
-		
-	case TriDrawVariant::FillSubsector:
-		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SetupSubsector;
-		drawfuncs[num_drawfuncs++] = dest_bgra ? llvm->TriFill32[bmode] : llvm->TriFill8[bmode];
-		break;
-		
-	case TriDrawVariant::Stencil:
-		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SetupNormal;
+	
+	if (drawargs.writeStencil)
 		drawfuncs[num_drawfuncs++] = &ScreenTriangle::StencilWrite;
-		break;
-		
-	case TriDrawVariant::StencilClose:
-		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SetupNormal;
-		drawfuncs[num_drawfuncs++] = &ScreenTriangle::StencilWrite;
+	
+	if (drawargs.writeSubsector)
 		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SubsectorWrite;
-		break;
-		
-	default:
-		break;
-	}
-
+	
 	TriDrawTriangleArgs args;
 	args.dest = dest;
 	args.pitch = dest_pitch;
@@ -384,8 +358,8 @@ void PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clipp
 
 /////////////////////////////////////////////////////////////////////////////
 
-DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode, bool mirror)
-	: args(args), variant(variant), blendmode(blendmode)
+DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const PolyDrawArgs &args, bool mirror)
+	: args(args)
 {
 	if (mirror)
 		this->args.ccw = !this->args.ccw;
@@ -402,25 +376,13 @@ void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
 	thread_data.FullSpans = thread->FullSpansBuffer.data();
 	thread_data.PartialBlocks = thread->PartialBlocksBuffer.data();
 
-	PolyTriangleDrawer::draw_arrays(args, variant, blendmode, &thread_data);
+	PolyTriangleDrawer::draw_arrays(args, &thread_data);
 }
 
 FString DrawPolyTrianglesCommand::DebugInfo()
 {
-	FString variantstr;
-	switch (variant)
-	{
-	default: variantstr = "Unknown"; break;
-	case TriDrawVariant::DrawNormal: variantstr = "DrawNormal"; break;
-	case TriDrawVariant::FillNormal: variantstr = "FillNormal"; break;
-	case TriDrawVariant::DrawSubsector: variantstr = "DrawSubsector"; break;
-	case TriDrawVariant::FillSubsector: variantstr = "FillSubsector"; break;
-	case TriDrawVariant::FuzzSubsector: variantstr = "FuzzSubsector"; break;
-	case TriDrawVariant::Stencil: variantstr = "Stencil"; break;
-	}
-
 	FString blendmodestr;
-	switch (blendmode)
+	switch (args.blendmode)
 	{
 	default: blendmodestr = "Unknown"; break;
 	case TriBlendMode::Copy: blendmodestr = "Copy"; break;
@@ -440,8 +402,8 @@ FString DrawPolyTrianglesCommand::DebugInfo()
 	}
 
 	FString info;
-	info.Format("DrawPolyTriangles: variant = %s, blend mode = %s, color = %d, light = %d, textureWidth = %d, textureHeight = %d, texture = %s, translation = %s, colormaps = %s",
-		variantstr.GetChars(), blendmodestr.GetChars(), args.uniforms.color, args.uniforms.light, args.textureWidth, args.textureHeight,
+	info.Format("DrawPolyTriangles: blend mode = %s, color = %d, light = %d, textureWidth = %d, textureHeight = %d, texture = %s, translation = %s, colormaps = %s",
+		blendmodestr.GetChars(), args.uniforms.color, args.uniforms.light, args.textureWidth, args.textureHeight,
 		args.texturePixels ? "ptr" : "null", args.translation ? "ptr" : "null", args.colormaps ? "ptr" : "null");
 	return info;
 }

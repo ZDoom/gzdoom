@@ -258,7 +258,11 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 			blendmode = TriBlendMode::Add;
 	}
 
-	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, blendmode);
+	args.subsectorTest = true;
+	args.writeSubsector = false;
+	args.writeStencil = false;
+	args.blendmode = blendmode;
+	PolyTriangleDrawer::draw(args);
 }
 
 bool RenderPolySprite::IsThingCulled(AActor *thing)

@@ -49,6 +49,11 @@ public:
 	int vcount = 0;
 	TriangleDrawMode mode = TriangleDrawMode::Normal;
 	bool ccw = false;
+	// bool stencilTest = true; // Always true for now
+	bool subsectorTest = false;
+	bool writeStencil = true;
+	bool writeColor = true;
+	bool writeSubsector = true;
 	const uint8_t *texturePixels = nullptr;
 	int textureWidth = 0;
 	int textureHeight = 0;
@@ -57,6 +62,7 @@ public:
 	uint8_t stencilwritevalue = 0;
 	const uint8_t *colormaps = nullptr;
 	float clipPlane[4];
+	TriBlendMode blendmode = TriBlendMode::Copy;
 
 	void SetClipPlane(float a, float b, float c, float d)
 	{
@@ -159,12 +165,12 @@ class PolyTriangleDrawer
 {
 public:
 	static void set_viewport(int x, int y, int width, int height, DCanvas *canvas);
-	static void draw(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode);
+	static void draw(const PolyDrawArgs &args);
 	static void toggle_mirror();
 
 private:
 	static ShadedTriVertex shade_vertex(const TriMatrix &objectToClip, const float *clipPlane, const TriVertex &v);
-	static void draw_arrays(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode, WorkerThreadData *thread);
+	static void draw_arrays(const PolyDrawArgs &args, WorkerThreadData *thread);
 	static void draw_shaded_triangle(const ShadedTriVertex *vertices, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, PolyDrawFuncPtr *drawfuncs, int num_drawfuncs);
 	static bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2);
 	static void clipedge(const ShadedTriVertex *verts, TriVertex *clippedvert, int &numclipvert);
@@ -249,15 +255,13 @@ private:
 class DrawPolyTrianglesCommand : public DrawerCommand
 {
 public:
-	DrawPolyTrianglesCommand(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode, bool mirror);
+	DrawPolyTrianglesCommand(const PolyDrawArgs &args, bool mirror);
 
 	void Execute(DrawerThread *thread) override;
 	FString DebugInfo() override;
 
 private:
 	PolyDrawArgs args;
-	TriDrawVariant variant;
-	TriBlendMode blendmode;
 };
 
 class PolyVertexBuffer

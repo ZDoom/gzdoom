@@ -105,5 +105,9 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const Vec4f &clipP
 	args.stencilwritevalue = stencilValue;
 	args.SetColormap(sub->sector->ColorMap);
 	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
-	PolyTriangleDrawer::draw(args, TriDrawVariant::FillSubsector, TriBlendMode::AlphaBlend);
+	args.subsectorTest = true;
+	args.writeStencil = false;
+	args.writeSubsector = false;
+	args.blendmode = TriBlendMode::AlphaBlend;
+	PolyTriangleDrawer::draw(args);
 }

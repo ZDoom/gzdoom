@@ -264,7 +264,9 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane
 	if (Polyportal)
 	{
 		args.stencilwritevalue = Polyportal->StencilValue;
-		PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
+		args.writeColor = false;
+		args.writeSubsector = false;
+		PolyTriangleDrawer::draw(args);
 		Polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw, args.uniforms.subsectorDepth });
 
 		int sx1, sx2;
@@ -274,17 +276,21 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane
 	}
 	else if (!Masked)
 	{
-		PolyTriangleDrawer::draw(args, TriDrawVariant::DrawNormal, TriBlendMode::Copy);
-		PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
+		args.blendmode = TriBlendMode::Copy;
+		PolyTriangleDrawer::draw(args);
 	}
 	else
 	{
 		args.uniforms.destalpha = (Line->flags & ML_ADDTRANS) ? 256 : (uint32_t)(256 - Line->alpha * 256);
 		args.uniforms.srcalpha = (uint32_t)(Line->alpha * 256);
+		args.subsectorTest = true;
+		args.writeSubsector = false;
+		args.writeStencil = false;
 		if (args.uniforms.destalpha == 0 && args.uniforms.srcalpha == 256)
-			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::AlphaBlend);
+			args.blendmode = TriBlendMode::AlphaBlend;
 		else
-			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Add);
+			args.blendmode = TriBlendMode::Add;
+		PolyTriangleDrawer::draw(args);
 	}
 
 	RenderPolyDecal::RenderWallDecals(worldToClip, clipPlane, LineSeg, SubsectorDepth, StencilValue);

@@ -167,5 +167,9 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 	args.stencilwritevalue = stencilValue;
 	//mode = R_SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
 	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
-	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::Shaded);
+	args.blendmode = TriBlendMode::Shaded;
+	args.subsectorTest = true;
+	args.writeStencil = false;
+	args.writeSubsector = false;
+	PolyTriangleDrawer::draw(args);
 }

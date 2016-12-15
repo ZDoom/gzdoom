@@ -121,5 +121,9 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const Vec4f &cli
 	args.SetTexture(tex);
 	args.SetColormap(sub->sector->ColorMap);
 	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
-	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawSubsector, TriBlendMode::AlphaBlend);
+	args.subsectorTest = true;
+	args.writeSubsector = false;
+	args.writeStencil = false;
+	args.blendmode = TriBlendMode::AlphaBlend;
+	PolyTriangleDrawer::draw(args);
 }

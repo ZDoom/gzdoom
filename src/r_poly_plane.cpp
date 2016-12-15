@@ -143,8 +143,8 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const Vec4f &c
 	args.SetTexture(tex);
 	args.SetColormap(sub->sector->ColorMap);
 	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
-	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawNormal, TriBlendMode::Copy);
-	PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
+	args.blendmode = TriBlendMode::Copy;
+	PolyTriangleDrawer::draw(args);
 }
 
 void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
@@ -341,13 +341,15 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 		if (!portal)
 		{
 			args.SetTexture(tex);
-			PolyTriangleDrawer::draw(args, TriDrawVariant::DrawNormal, TriBlendMode::Copy);
-			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
+			args.blendmode = TriBlendMode::Copy;
+			PolyTriangleDrawer::draw(args);
 		}
 		else
 		{
 			args.stencilwritevalue = polyportal->StencilValue;
-			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
+			args.writeColor = false;
+			args.writeSubsector = false;
+			PolyTriangleDrawer::draw(args);
 			polyportal->Shape.push_back({ args.vinput, args.vcount, args.ccw, subsectorDepth });
 			polyportal->Segments.insert(polyportal->Segments.end(), portalSegments.begin(), portalSegments.end());
 		}
@@ -365,7 +367,9 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 			args.stencilwritevalue = 255;
 		}
 
-		PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
+		args.writeColor = false;
+		args.writeSubsector = false;
+		PolyTriangleDrawer::draw(args);
 
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
@@ -433,7 +437,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const Vec4f &clipPlan
 
 			args.vinput = wallvert;
 			args.vcount = 4;
-			PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
+			PolyTriangleDrawer::draw(args);
 			
 			if (portal)
 			{

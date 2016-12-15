@@ -204,6 +204,9 @@ void LLVMDrawers::CodegenDrawTriangle(const std::string &name, TriDrawVariant va
 
 llvm::Type *LLVMDrawers::GetDrawColumnArgsStruct(llvm::LLVMContext &context)
 {
+	if (DrawColumnArgsStruct)
+		return DrawColumnArgsStruct;
+
 	std::vector<llvm::Type *> elements;
 	elements.push_back(llvm::Type::getInt8PtrTy(context)); // uint32_t *dest;
 	elements.push_back(llvm::Type::getInt8PtrTy(context)); // const uint32_t *source;
@@ -233,11 +236,15 @@ llvm::Type *LLVMDrawers::GetDrawColumnArgsStruct(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_blue;
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t desaturate;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t flags;
-	return llvm::StructType::create(context, elements, "DrawColumnArgs", false)->getPointerTo();
+	DrawColumnArgsStruct = llvm::StructType::create(context, elements, "DrawColumnArgs", false)->getPointerTo();
+	return DrawColumnArgsStruct;
 }
 
 llvm::Type *LLVMDrawers::GetDrawSpanArgsStruct(llvm::LLVMContext &context)
 {
+	if (DrawSpanArgsStruct)
+		return DrawSpanArgsStruct;
+
 	std::vector<llvm::Type *> elements;
 	elements.push_back(llvm::Type::getInt8PtrTy(context)); // uint8_t *destorg;
 	elements.push_back(llvm::Type::getInt8PtrTy(context)); // const uint32_t *source;
@@ -264,11 +271,15 @@ llvm::Type *LLVMDrawers::GetDrawSpanArgsStruct(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_blue;
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t desaturate;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t flags;
-	return llvm::StructType::create(context, elements, "DrawSpanArgs", false)->getPointerTo();
+	DrawSpanArgsStruct = llvm::StructType::create(context, elements, "DrawSpanArgs", false)->getPointerTo();
+	return DrawSpanArgsStruct;
 }
 
 llvm::Type *LLVMDrawers::GetDrawWallArgsStruct(llvm::LLVMContext &context)
 {
+	if (DrawWallArgsStruct)
+		return DrawWallArgsStruct;
+
 	std::vector<llvm::Type *> elements;
 	elements.push_back(llvm::Type::getInt8PtrTy(context));
 	for (int i = 0; i < 8; i++)
@@ -285,47 +296,71 @@ llvm::Type *LLVMDrawers::GetDrawWallArgsStruct(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_blue;
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t desaturate;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t flags;
-	return llvm::StructType::create(context, elements, "DrawWallArgs", false)->getPointerTo();
+	DrawWallArgsStruct = llvm::StructType::create(context, elements, "DrawWallArgs", false)->getPointerTo();
+	return DrawWallArgsStruct;
 }
 
 llvm::Type *LLVMDrawers::GetDrawSkyArgsStruct(llvm::LLVMContext &context)
 {
+	if (DrawSkyArgsStruct)
+		return DrawSkyArgsStruct;
+
 	std::vector<llvm::Type *> elements;
 	elements.push_back(llvm::Type::getInt8PtrTy(context));
 	for (int i = 0; i < 8; i++)
 		elements.push_back(llvm::Type::getInt8PtrTy(context));
 	for (int i = 0; i < 15; i++)
 		elements.push_back(llvm::Type::getInt32Ty(context));
-	return llvm::StructType::create(context, elements, "DrawSkyArgs", false)->getPointerTo();
+	DrawSkyArgsStruct = llvm::StructType::create(context, elements, "DrawSkyArgs", false)->getPointerTo();
+	return DrawSkyArgsStruct;
 }
 
 llvm::Type *LLVMDrawers::GetWorkerThreadDataStruct(llvm::LLVMContext &context)
 {
+	if (WorkerThreadDataStruct)
+		return WorkerThreadDataStruct;
+
 	std::vector<llvm::Type *> elements;
 	for (int i = 0; i < 4; i++)
 		elements.push_back(llvm::Type::getInt32Ty(context));
 	elements.push_back(llvm::Type::getInt8PtrTy(context));
-	return llvm::StructType::create(context, elements, "ThreadData", false)->getPointerTo();
+	elements.push_back(GetTriFullSpanStruct(context));
+	elements.push_back(GetTriPartialBlockStruct(context));
+	for (int i = 0; i < 4; i++)
+		elements.push_back(llvm::Type::getInt32Ty(context));
+	WorkerThreadDataStruct = llvm::StructType::create(context, elements, "ThreadData", false)->getPointerTo();
+	return WorkerThreadDataStruct;
 }
 
 llvm::Type *LLVMDrawers::GetTriVertexStruct(llvm::LLVMContext &context)
 {
+	if (TriVertexStruct)
+		return TriVertexStruct;
+
 	std::vector<llvm::Type *> elements;
 	for (int i = 0; i < 4 + TriVertex::NumVarying; i++)
 		elements.push_back(llvm::Type::getFloatTy(context));
-	return llvm::StructType::create(context, elements, "TriVertex", false)->getPointerTo();
+	TriVertexStruct = llvm::StructType::create(context, elements, "TriVertex", false)->getPointerTo();
+	return TriVertexStruct;
 }
 
 llvm::Type *LLVMDrawers::GetTriMatrixStruct(llvm::LLVMContext &context)
 {
+	if (TriMatrixStruct)
+		return TriMatrixStruct;
+
 	std::vector<llvm::Type *> elements;
 	for (int i = 0; i < 4 * 4; i++)
 		elements.push_back(llvm::Type::getFloatTy(context));
-	return llvm::StructType::create(context, elements, "TriMatrix", false)->getPointerTo();
+	TriMatrixStruct = llvm::StructType::create(context, elements, "TriMatrix", false)->getPointerTo();
+	return TriMatrixStruct;
 }
 
 llvm::Type *LLVMDrawers::GetTriUniformsStruct(llvm::LLVMContext &context)
 {
+	if (TriUniformsStruct)
+		return TriUniformsStruct;
+
 	std::vector<llvm::Type *> elements;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t light;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t subsectorDepth;
@@ -343,11 +378,42 @@ llvm::Type *LLVMDrawers::GetTriUniformsStruct(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t desaturate;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t flags;
 	elements.push_back(GetTriMatrixStruct(context));     // TriMatrix objectToClip
-	return llvm::StructType::create(context, elements, "TriUniforms", false)->getPointerTo();
+	TriUniformsStruct = llvm::StructType::create(context, elements, "TriUniforms", false)->getPointerTo();
+	return TriUniformsStruct;
+}
+
+llvm::Type *LLVMDrawers::GetTriFullSpanStruct(llvm::LLVMContext &context)
+{
+	if (TriFullSpanStruct)
+		return TriFullSpanStruct;
+
+	std::vector<llvm::Type *> elements;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint32_t X;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint32_t Y;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t Length;
+	TriFullSpanStruct = llvm::StructType::create(context, elements, "TriFullSpan", false)->getPointerTo();
+	return TriFullSpanStruct;
+}
+
+llvm::Type *LLVMDrawers::GetTriPartialBlockStruct(llvm::LLVMContext &context)
+{
+	if (TriPartialBlockStruct)
+		return TriPartialBlockStruct;
+
+	std::vector<llvm::Type *> elements;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint32_t X;
+	elements.push_back(llvm::Type::getInt16Ty(context)); // uint32_t Y;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t Mask0;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t Mask1;
+	TriPartialBlockStruct = llvm::StructType::create(context, elements, "TriPartialBlock", false)->getPointerTo();
+	return TriPartialBlockStruct;
 }
 
 llvm::Type *LLVMDrawers::GetTriDrawTriangleArgs(llvm::LLVMContext &context)
 {
+	if (TriDrawTriangleArgs)
+		return TriDrawTriangleArgs;
+
 	std::vector<llvm::Type *> elements;
 	elements.push_back(llvm::Type::getInt8PtrTy(context));  // uint8_t *dest;
 	elements.push_back(llvm::Type::getInt32Ty(context));    // int32_t pitch;
@@ -372,5 +438,6 @@ llvm::Type *LLVMDrawers::GetTriDrawTriangleArgs(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt8PtrTy(context));  // const uint8_t *colormaps;
 	elements.push_back(llvm::Type::getInt8PtrTy(context));  // const uint8_t *RGB32k;
 	elements.push_back(llvm::Type::getInt8PtrTy(context));  // const uint8_t *BaseColors;
-	return llvm::StructType::create(context, elements, "TriDrawTriangle", false)->getPointerTo();
+	TriDrawTriangleArgs = llvm::StructType::create(context, elements, "TriDrawTriangle", false)->getPointerTo();
+	return TriDrawTriangleArgs;
 }

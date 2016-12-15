@@ -58,7 +58,7 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 	args.uniforms.subsectorDepth = RenderPolyScene::SkySubsectorDepth;
 	args.objectToClip = &objectToClip;
 	args.stenciltestvalue = 255;
-	args.stencilwritevalue = 255;
+	args.stencilwritevalue = 1;
 	args.SetTexture(frontskytex);
 	args.SetColormap(&NormalLight);
 	args.SetClipPlane(0.0f, 0.0f, 0.0f, 0.0f);
@@ -84,6 +84,7 @@ void PolySkyDome::RenderRow(PolyDrawArgs &args, int row, uint32_t capcolor)
 	args.ccw = false;
 	args.uniforms.color = capcolor;
 	PolyTriangleDrawer::draw(args, TriDrawVariant::DrawNormal, TriBlendMode::Skycap);
+	PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Skycap);
 }
 
 void PolySkyDome::RenderCapColorRow(PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap)
@@ -98,6 +99,7 @@ void PolySkyDome::RenderCapColorRow(PolyDrawArgs &args, FTexture *skytex, int ro
 	args.ccw = bottomCap;
 	args.uniforms.color = solid;
 	PolyTriangleDrawer::draw(args, TriDrawVariant::FillNormal, TriBlendMode::Copy);
+	PolyTriangleDrawer::draw(args, TriDrawVariant::Stencil, TriBlendMode::Copy);
 }
 
 void PolySkyDome::CreateDome()

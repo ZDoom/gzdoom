@@ -88,22 +88,19 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 		return;
 
 	auto llvm = Drawers::Instance();
-	void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *);
+	PolyDrawFuncPtr setupfunc = nullptr;
+	PolyDrawFuncPtr drawfunc = nullptr;
 	int bmode = (int)blendmode;
 	switch (variant)
 	{
 	default:
-	//case TriDrawVariant::DrawNormal: drawfunc = dest_bgra ? &ScreenTriangle::DrawFunc : llvm->TriDrawNormal8[bmode]; break;
-	//case TriDrawVariant::DrawSubsector: drawfunc = dest_bgra ? &ScreenTriangle::DrawSubsectorFunc : llvm->TriDrawSubsector8[bmode]; break;
-	//case TriDrawVariant::Stencil: drawfunc = &ScreenTriangle::StencilFunc; break;
-	//case TriDrawVariant::StencilClose: drawfunc = &ScreenTriangle::StencilCloseFunc; break;
-	case TriDrawVariant::DrawNormal: drawfunc = dest_bgra ? llvm->TriDrawNormal32[bmode] : llvm->TriDrawNormal8[bmode]; break;
-	case TriDrawVariant::FillNormal: drawfunc = dest_bgra ? llvm->TriFillNormal32[bmode] : llvm->TriFillNormal8[bmode]; break;
-	case TriDrawVariant::DrawSubsector: drawfunc = dest_bgra ? llvm->TriDrawSubsector32[bmode] : llvm->TriDrawSubsector8[bmode]; break;
+	case TriDrawVariant::DrawNormal: setupfunc = &ScreenTriangle::SetupNormal; drawfunc = dest_bgra ? llvm->TriDrawNormal32[bmode] : llvm->TriDrawNormal8[bmode]; break;
+	case TriDrawVariant::FillNormal: setupfunc = &ScreenTriangle::SetupNormal; drawfunc = dest_bgra ? llvm->TriFillNormal32[bmode] : llvm->TriFillNormal8[bmode]; break;
+	case TriDrawVariant::DrawSubsector: setupfunc = &ScreenTriangle::SetupSubsector; drawfunc = dest_bgra ? llvm->TriDrawSubsector32[bmode] : llvm->TriDrawSubsector8[bmode]; break;
 	case TriDrawVariant::FuzzSubsector:
-	case TriDrawVariant::FillSubsector: drawfunc = dest_bgra ? llvm->TriFillSubsector32[bmode] : llvm->TriFillSubsector8[bmode]; break;
-	case TriDrawVariant::Stencil: drawfunc = llvm->TriStencil; break;
-	case TriDrawVariant::StencilClose: drawfunc = llvm->TriStencilClose; break;
+	case TriDrawVariant::FillSubsector: setupfunc = &ScreenTriangle::SetupSubsector; drawfunc = dest_bgra ? llvm->TriFillSubsector32[bmode] : llvm->TriFillSubsector8[bmode]; break;
+	case TriDrawVariant::Stencil: drawfunc = &ScreenTriangle::StencilFunc; break;
+	case TriDrawVariant::StencilClose: drawfunc = &ScreenTriangle::StencilCloseFunc; break;
 	}
 
 	TriDrawTriangleArgs args;
@@ -139,7 +136,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 		{
 			for (int j = 0; j < 3; j++)
 				vert[j] = shade_vertex(*drawargs.objectToClip, drawargs.clipPlane, *(vinput++));
-			draw_shaded_triangle(vert, ccw, &args, thread, drawfunc);
+			draw_shaded_triangle(vert, ccw, &args, thread, setupfunc, drawfunc);
 		}
 	}
 	else if (drawargs.mode == TriangleDrawMode::Fan)
@@ -149,7 +146,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 		for (int i = 2; i < vcount; i++)
 		{
 			vert[2] = shade_vertex(*drawargs.objectToClip, drawargs.clipPlane, *(vinput++));
-			draw_shaded_triangle(vert, ccw, &args, thread, drawfunc);
+			draw_shaded_triangle(vert, ccw, &args, thread, setupfunc, drawfunc);
 			vert[1] = vert[2];
 		}
 	}
@@ -160,7 +157,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 		for (int i = 2; i < vcount; i++)
 		{
 			vert[2] = shade_vertex(*drawargs.objectToClip, drawargs.clipPlane, *(vinput++));
-			draw_shaded_triangle(vert, ccw, &args, thread, drawfunc);
+			draw_shaded_triangle(vert, ccw, &args, thread, setupfunc, drawfunc);
 			vert[0] = vert[1];
 			vert[1] = vert[2];
 			ccw = !ccw;
@@ -179,7 +176,7 @@ ShadedTriVertex PolyTriangleDrawer::shade_vertex(const TriMatrix &objectToClip, 
 	return sv;
 }
 
-void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *))
+void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, PolyDrawFuncPtr setupfunc, PolyDrawFuncPtr drawfunc)
 {
 	// Cull, clip and generate additional vertices as needed
 	TriVertex clippedvert[max_additional_vertices];
@@ -223,6 +220,7 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 			args->v1 = &clippedvert[numclipvert - 1];
 			args->v2 = &clippedvert[i - 1];
 			args->v3 = &clippedvert[i - 2];
+			if (setupfunc) setupfunc(args, thread);
 			drawfunc(args, thread);
 		}
 	}
@@ -233,6 +231,7 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 			args->v1 = &clippedvert[0];
 			args->v2 = &clippedvert[i - 1];
 			args->v3 = &clippedvert[i];
+			if (setupfunc) setupfunc(args, thread);
 			drawfunc(args, thread);
 		}
 	}
@@ -952,7 +951,7 @@ void ScreenTriangle::SetupSubsector(const TriDrawTriangleArgs *args, WorkerThrea
 			uint8_t *stencilBlock = &stencilValues[block * 64];
 			uint32_t *stencilBlockMask = &stencilMasks[block];
 			bool blockIsSingleStencil = ((*stencilBlockMask) & 0xffffff00) == 0xffffff00;
-			bool skipBlock = blockIsSingleStencil && ((*stencilBlockMask) & 0xff) != stencilTestValue;
+			bool skipBlock = blockIsSingleStencil && ((*stencilBlockMask) & 0xff) < stencilTestValue;
 
 			// Skip block when outside an edge
 			if (a == 0 || b == 0 || c == 0 || skipBlock)
@@ -1043,7 +1042,7 @@ void ScreenTriangle::SetupSubsector(const TriDrawTriangleArgs *args, WorkerThrea
 
 					for (int ix = 0; ix < q; ix++)
 					{
-						bool passStencilTest = blockIsSingleStencil || stencilBlock[ix + iy * q] == stencilTestValue;
+						bool passStencilTest = blockIsSingleStencil || stencilBlock[ix + iy * q] >= stencilTestValue;
 						bool covered = (CX1 > 0 && CX2 > 0 && CX3 > 0 && (x + ix) < clipright && (y + iy) < clipbottom && passStencilTest && subsector[ix] >= subsectorDepth);
 						mask0 <<= 1;
 						mask0 |= (uint32_t)covered;
@@ -1067,7 +1066,7 @@ void ScreenTriangle::SetupSubsector(const TriDrawTriangleArgs *args, WorkerThrea
 
 					for (int ix = 0; ix < q; ix++)
 					{
-						bool passStencilTest = blockIsSingleStencil || stencilBlock[ix + iy * q] == stencilTestValue;
+						bool passStencilTest = blockIsSingleStencil || stencilBlock[ix + iy * q] >= stencilTestValue;
 						bool covered = (CX1 > 0 && CX2 > 0 && CX3 > 0 && (x + ix) < clipright && (y + iy) < clipbottom && passStencilTest && subsector[ix] >= subsectorDepth);
 						mask1 <<= 1;
 						mask1 |= (uint32_t)covered;
@@ -1247,6 +1246,7 @@ void ScreenTriangle::SubsectorWrite(const TriDrawTriangleArgs *args, WorkerThrea
 	}
 }
 
+#if 0
 float ScreenTriangle::FindGradientX(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2)
 {
 	float top = (c1 - c2) * (y0 - y2) - (c0 - c2) * (y1 - y2);
@@ -1323,11 +1323,10 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 			int32_t varyingPos[TriVertex::NumVarying];
 			for (int j = 0; j < TriVertex::NumVarying; j++)
 				varyingPos[j] = (int32_t)(blockPosX.Varying[j] * rcpW);
+			int lightpos = 256 - (int)(clamp(shade - MIN(24.0f, globVis * blockPosX.W) / 32.0f, 0.0f, 31.0f / 32.0f) * 256.0f);
 
 			for (int x = 0; x < width; x++)
 			{
-				int lightpos = 256 - (int)(clamp(shade - MIN(24.0f, globVis * blockPosX.W) / 32.0f, 0.0f, 31.0f / 32.0f) * 256.0f);
-
 				blockPosX.W += gradientX.W * 8;
 				for (int j = 0; j < TriVertex::NumVarying; j++)
 					blockPosX.Varying[j] += gradientX.Varying[j] * 8;
@@ -1508,18 +1507,7 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 		}
 	}
 }
-
-void ScreenTriangle::DrawFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
-{
-	SetupNormal(args, thread);
-	Draw(args, thread);
-}
-
-void ScreenTriangle::DrawSubsectorFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
-{
-	SetupSubsector(args, thread);
-	Draw(args, thread);
-}
+#endif
 
 void ScreenTriangle::StencilFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {

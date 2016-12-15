@@ -53,15 +53,29 @@ private:
 	void CodegenDrawSky(const char *name, DrawSkyVariant variant, int columns);
 	void CodegenDrawTriangle(const std::string &name, TriDrawVariant variant, TriBlendMode blendmode, bool truecolor);
 
-	static llvm::Type *GetDrawColumnArgsStruct(llvm::LLVMContext &context);
-	static llvm::Type *GetDrawSpanArgsStruct(llvm::LLVMContext &context);
-	static llvm::Type *GetDrawWallArgsStruct(llvm::LLVMContext &context);
-	static llvm::Type *GetDrawSkyArgsStruct(llvm::LLVMContext &context);
-	static llvm::Type *GetWorkerThreadDataStruct(llvm::LLVMContext &context);
-	static llvm::Type *GetTriVertexStruct(llvm::LLVMContext &context);
-	static llvm::Type *GetTriMatrixStruct(llvm::LLVMContext &context);
-	static llvm::Type *GetTriUniformsStruct(llvm::LLVMContext &context);
-	static llvm::Type *GetTriDrawTriangleArgs(llvm::LLVMContext &context);
+	llvm::Type *GetDrawColumnArgsStruct(llvm::LLVMContext &context);
+	llvm::Type *GetDrawSpanArgsStruct(llvm::LLVMContext &context);
+	llvm::Type *GetDrawWallArgsStruct(llvm::LLVMContext &context);
+	llvm::Type *GetDrawSkyArgsStruct(llvm::LLVMContext &context);
+	llvm::Type *GetWorkerThreadDataStruct(llvm::LLVMContext &context);
+	llvm::Type *GetTriVertexStruct(llvm::LLVMContext &context);
+	llvm::Type *GetTriMatrixStruct(llvm::LLVMContext &context);
+	llvm::Type *GetTriUniformsStruct(llvm::LLVMContext &context);
+	llvm::Type *GetTriFullSpanStruct(llvm::LLVMContext &context);
+	llvm::Type *GetTriPartialBlockStruct(llvm::LLVMContext &context);
+	llvm::Type *GetTriDrawTriangleArgs(llvm::LLVMContext &context);
+
+	llvm::Type *DrawColumnArgsStruct = nullptr;
+	llvm::Type *DrawSpanArgsStruct = nullptr;
+	llvm::Type *DrawWallArgsStruct = nullptr;
+	llvm::Type *DrawSkyArgsStruct = nullptr;
+	llvm::Type *WorkerThreadDataStruct = nullptr;
+	llvm::Type *TriVertexStruct = nullptr;
+	llvm::Type *TriMatrixStruct = nullptr;
+	llvm::Type *TriUniformsStruct = nullptr;
+	llvm::Type *TriFullSpanStruct = nullptr;
+	llvm::Type *TriPartialBlockStruct = nullptr;
+	llvm::Type *TriDrawTriangleArgs = nullptr;
 
 	LLVMProgram mProgram;
 	std::string mNamePostfix;

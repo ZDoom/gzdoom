@@ -153,6 +153,8 @@ struct TriMatrix
 	float matrix[16];
 };
 
+typedef void(*PolyDrawFuncPtr)(const TriDrawTriangleArgs *, WorkerThreadData *);
+
 class PolyTriangleDrawer
 {
 public:
@@ -163,7 +165,7 @@ public:
 private:
 	static ShadedTriVertex shade_vertex(const TriMatrix &objectToClip, const float *clipPlane, const TriVertex &v);
 	static void draw_arrays(const PolyDrawArgs &args, TriDrawVariant variant, TriBlendMode blendmode, WorkerThreadData *thread);
-	static void draw_shaded_triangle(const ShadedTriVertex *vertices, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, void(*drawfunc)(const TriDrawTriangleArgs *, WorkerThreadData *));
+	static void draw_shaded_triangle(const ShadedTriVertex *vertices, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, PolyDrawFuncPtr setupfunc, PolyDrawFuncPtr drawfunc);
 	static bool cullhalfspace(float clipdistance1, float clipdistance2, float &t1, float &t2);
 	static void clipedge(const ShadedTriVertex *verts, TriVertex *clippedvert, int &numclipvert);
 
@@ -274,18 +276,11 @@ struct ScreenTriangleStepVariables
 class ScreenTriangle
 {
 public:
-	static void DrawFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
-	static void DrawSubsectorFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 	static void StencilFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 	static void StencilCloseFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 	
-private:
 	static void SetupNormal(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 	static void SetupSubsector(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
-	static void Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 	static void StencilWrite(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
 	static void SubsectorWrite(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
-
-	static float FindGradientX(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2);
-	static float FindGradientY(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2);
 };

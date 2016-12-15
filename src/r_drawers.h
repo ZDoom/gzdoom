@@ -354,16 +354,10 @@ public:
 	void(*DrawDoubleSky1)(const DrawSkyArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawDoubleSky4)(const DrawSkyArgs *, const WorkerThreadData *) = nullptr;
 
-	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDrawNormal8;
-	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDrawNormal32;
-	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriFillNormal8;
-	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriFillNormal32;
-	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDrawSubsector8;
-	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDrawSubsector32;
-	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriFillSubsector8;
-	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriFillSubsector32;
-	void(*TriStencil)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
-	void(*TriStencilClose)(const TriDrawTriangleArgs *, WorkerThreadData *) = nullptr;
+	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDraw8;
+	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDraw32;
+	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriFill8;
+	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriFill32;
 	
 private:
 	Drawers();

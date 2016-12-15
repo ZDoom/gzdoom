@@ -39,7 +39,7 @@ struct SSAStepVariables
 class DrawTriangleCodegen : public DrawerCodegen
 {
 public:
-	void Generate(TriDrawVariant variant, TriBlendMode blendmode, bool truecolor, SSAValue args, SSAValue thread_data);
+	void Generate(TriBlendMode blendmode, bool truecolor, bool colorfill, SSAValue args, SSAValue thread_data);
 
 private:
 	void LoadArgs(SSAValue args, SSAValue thread_data);
@@ -69,7 +69,6 @@ private:
 	SSAStack<SSAInt> stack_varyingPos[TriVertex::NumVarying];
 	SSAStack<SSAInt> stack_lightpos;
 	SSAStack<SSAUBytePtr> stack_dest;
-	SSAStack<SSAIntPtr> stack_subsector;
 
 	SSAStepVariables gradientX, gradientY, start;
 	SSAFloat shade, globVis;
@@ -78,7 +77,6 @@ private:
 	SSAUBytePtr currentcolormap;
 
 	SSAUBytePtr destOrg;
-	SSAIntPtr subsectorGBuffer;
 	SSAInt pitch;
 	SSATriVertex v1;
 	SSATriVertex v2;
@@ -90,7 +88,6 @@ private:
 	SSAInt color, srcalpha, destalpha;
 
 	SSAInt light;
-	SSAInt subsectorDepth;
 	SSAShadeConstants shade_constants;
 	SSABool is_simple_shade;
 	SSABool is_nearest_filter;
@@ -107,9 +104,9 @@ private:
 	SSAValue fullSpans; // TriFullSpan[]
 	SSAValue partialBlocks; // TriPartialBlock[]
 
-	TriDrawVariant variant;
 	TriBlendMode blendmode;
 	bool truecolor;
+	bool colorfill;
 	int pixelsize;
 };
 
@@ -160,10 +157,8 @@ private:
 	SSAStack<SSAInt> stack_C1, stack_C2, stack_C3;
 	SSAStack<SSAInt> stack_y;
 	SSAStack<SSAUBytePtr> stack_dest;
-	SSAStack<SSAIntPtr> stack_subsectorGBuffer;
 	SSAStack<SSAInt> stack_x;
 	SSAStack<SSAUBytePtr> stack_buffer;
-	SSAStack<SSAIntPtr> stack_subsectorbuffer;
 	SSAStack<SSAInt> stack_iy, stack_ix;
 	SSAStack<SSAInt> stack_CY1, stack_CY2, stack_CY3;
 	SSAStack<SSAInt> stack_CX1, stack_CX2, stack_CX3;
@@ -189,7 +184,6 @@ private:
 	SSAInt color, srcalpha, destalpha;
 
 	SSAInt light;
-	SSAInt subsectorDepth;
 	SSAShadeConstants shade_constants;
 	SSABool is_simple_shade;
 	SSABool is_nearest_filter;
@@ -200,7 +194,6 @@ private:
 	SSAInt stencilPitch;
 	SSAUByte stencilTestValue;
 	SSAUByte stencilWriteValue;
-	SSAIntPtr subsectorGBuffer;
 
 	SSAUBytePtr Colormaps;
 	SSAUBytePtr RGB32k;

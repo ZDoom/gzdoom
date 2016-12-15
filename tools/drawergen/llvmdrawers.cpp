@@ -93,17 +93,11 @@ LLVMDrawers::LLVMDrawers(const std::string &triple, const std::string &cpuName, 
 	CodegenDrawSky("DrawDoubleSky4", DrawSkyVariant::Double, 4);
 	for (int i = 0; i < NumTriBlendModes(); i++)
 	{
-		CodegenDrawTriangle("TriDrawNormal8_" + std::to_string(i), TriDrawVariant::DrawNormal, (TriBlendMode)i, false);
-		CodegenDrawTriangle("TriDrawNormal32_" + std::to_string(i), TriDrawVariant::DrawNormal, (TriBlendMode)i, true);
-		CodegenDrawTriangle("TriFillNormal8_" + std::to_string(i), TriDrawVariant::FillNormal, (TriBlendMode)i, false);
-		CodegenDrawTriangle("TriFillNormal32_" + std::to_string(i), TriDrawVariant::FillNormal, (TriBlendMode)i, true);
-		CodegenDrawTriangle("TriDrawSubsector8_" + std::to_string(i), TriDrawVariant::DrawSubsector, (TriBlendMode)i, false);
-		CodegenDrawTriangle("TriDrawSubsector32_" + std::to_string(i), TriDrawVariant::DrawSubsector, (TriBlendMode)i, true);
-		CodegenDrawTriangle("TriFillSubsector8_" + std::to_string(i), TriDrawVariant::FillSubsector, (TriBlendMode)i, false);
-		CodegenDrawTriangle("TriFillSubsector32_" + std::to_string(i), TriDrawVariant::FillSubsector, (TriBlendMode)i, true);
+		CodegenDrawTriangle("TriDraw8_" + std::to_string(i), (TriBlendMode)i, false, false);
+		CodegenDrawTriangle("TriDraw32_" + std::to_string(i), (TriBlendMode)i, true, false);
+		CodegenDrawTriangle("TriFill8_" + std::to_string(i), (TriBlendMode)i, false, true);
+		CodegenDrawTriangle("TriFill32_" + std::to_string(i), (TriBlendMode)i, true, true);
 	}
-	CodegenDrawTriangle("TriStencil", TriDrawVariant::Stencil, TriBlendMode::Copy, false);
-	CodegenDrawTriangle("TriStencilClose", TriDrawVariant::StencilClose, TriBlendMode::Copy, false);
 
 	ObjectFile = mProgram.GenerateObjectFile(triple, cpuName, features);
 }
@@ -183,7 +177,7 @@ void LLVMDrawers::CodegenDrawSky(const char *name, DrawSkyVariant variant, int c
 		throw Exception("verifyFunction failed for CodegenDrawSky()");
 }
 
-void LLVMDrawers::CodegenDrawTriangle(const std::string &name, TriDrawVariant variant, TriBlendMode blendmode, bool truecolor)
+void LLVMDrawers::CodegenDrawTriangle(const std::string &name, TriBlendMode blendmode, bool truecolor, bool colorfill)
 {
 	llvm::IRBuilder<> builder(mProgram.context());
 	SSAScope ssa_scope(&mProgram.context(), mProgram.module(), &builder);
@@ -194,12 +188,12 @@ void LLVMDrawers::CodegenDrawTriangle(const std::string &name, TriDrawVariant va
 	function.create_public();
 
 	DrawTriangleCodegen codegen;
-	codegen.Generate(variant, blendmode, truecolor, function.parameter(0), function.parameter(1));
+	codegen.Generate(blendmode, truecolor, colorfill, function.parameter(0), function.parameter(1));
 
 	builder.CreateRetVoid();
 
 	if (llvm::verifyFunction(*function.func))
-		throw Exception(std::string("verifyFunction failed for CodegenDrawTriangle(") + std::to_string((int)variant) + ", " + std::to_string((int)blendmode) + ", " + std::to_string((int)truecolor) + ")");
+		throw Exception("verifyFunction failed for CodegenDrawTriangle()");
 }
 
 llvm::Type *LLVMDrawers::GetDrawColumnArgsStruct(llvm::LLVMContext &context)

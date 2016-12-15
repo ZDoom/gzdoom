@@ -32,11 +32,11 @@
 #include "ssa/ssa_struct_type.h"
 #include "ssa/ssa_value.h"
 
-void DrawTriangleCodegen::Generate(TriDrawVariant variant, TriBlendMode blendmode, bool truecolor, SSAValue args, SSAValue thread_data)
+void DrawTriangleCodegen::Generate(TriBlendMode blendmode, bool truecolor, bool colorfill, SSAValue args, SSAValue thread_data)
 {
-	this->variant = variant;
 	this->blendmode = blendmode;
 	this->truecolor = truecolor;
+	this->colorfill = colorfill;
 	pixelsize = truecolor ? 4 : 1;
 
 	LoadArgs(args, thread_data);
@@ -60,7 +60,6 @@ void DrawTriangleCodegen::DrawFullSpans()
 		SSAInt height = SSAInt(8);
 
 		stack_dest.store(destOrg[(spanX + spanY * pitch) * pixelsize]);
-		stack_subsector.store(subsectorGBuffer[spanX + spanY * pitch]);
 		stack_posYW.store(start.W + gradientX.W * (spanX - startX) + gradientY.W * (spanY - startY));
 		for (int j = 0; j < TriVertex::NumVarying; j++)
 			stack_posYVarying[j].store(start.Varying[j] + gradientX.Varying[j] * (spanX - startX) + gradientY.Varying[j] * (spanY - startY));
@@ -69,7 +68,6 @@ void DrawTriangleCodegen::DrawFullSpans()
 		SSAForBlock loop_y;
 		SSAInt y = stack_y.load();
 		SSAUBytePtr dest = stack_dest.load();
-		SSAIntPtr subsector = stack_subsector.load();
 		SSAStepVariables blockPosY;
 		blockPosY.W = stack_posYW.load();
 		for (int j = 0; j < TriVertex::NumVarying; j++)
@@ -121,9 +119,6 @@ void DrawTriangleCodegen::DrawFullSpans()
 
 						SSAUBytePtr destptr = dest[(x * 8 + ix) * 4];
 						destptr.store_vec4ub(ProcessPixel32(destptr.load_vec4ub(false), varyingPos));
-
-						if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector && variant != TriDrawVariant::FuzzSubsector)
-							subsector[x * 8 + ix].store(subsectorDepth);
 					}
 					else
 					{
@@ -133,9 +128,6 @@ void DrawTriangleCodegen::DrawFullSpans()
 
 						SSAUBytePtr destptr = dest[(x * 8 + ix)];
 						destptr.store(ProcessPixel8(destptr.load(false).zext_int(), varyingPos).trunc_ubyte());
-
-						if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector && variant != TriDrawVariant::FuzzSubsector)
-							subsector[x * 8 + ix].store(subsectorDepth);
 					}
 
 					for (int j = 0; j < TriVertex::NumVarying; j++)
@@ -157,7 +149,6 @@ void DrawTriangleCodegen::DrawFullSpans()
 			for (int j = 0; j < TriVertex::NumVarying; j++)
 				stack_posYVarying[j].store(blockPosY.Varying[j] + gradientY.Varying[j]);
 			stack_dest.store(dest[pitch * pixelsize]);
-			stack_subsector.store(subsector[pitch]);
 			stack_y.store(y + 1);
 		}
 		loop_y.end_block();
@@ -180,7 +171,6 @@ void DrawTriangleCodegen::DrawPartialBlocks()
 		SSAInt mask1 = partialBlocks[i][3].load(true);
 
 		SSAUBytePtr dest = destOrg[(blockX + blockY * pitch) * pixelsize];
-		SSAIntPtr subsector = subsectorGBuffer[blockX + blockY * pitch];
 
 		SSAStepVariables blockPosY;
 		blockPosY.W = start.W + gradientX.W * (blockX - startX) + gradientY.W * (blockY - startY);
@@ -229,9 +219,6 @@ void DrawTriangleCodegen::DrawPartialBlocks()
 
 							SSAUBytePtr destptr = dest[x * 4];
 							destptr.store_vec4ub(ProcessPixel32(destptr.load_vec4ub(false), varyingPos));
-
-							if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector && variant != TriDrawVariant::FuzzSubsector)
-								subsector[x].store(subsectorDepth);
 						}
 						else
 						{
@@ -241,9 +228,6 @@ void DrawTriangleCodegen::DrawPartialBlocks()
 
 							SSAUBytePtr destptr = dest[x];
 							destptr.store(ProcessPixel8(destptr.load(false).zext_int(), varyingPos).trunc_ubyte());
-
-							if (variant != TriDrawVariant::DrawSubsector && variant != TriDrawVariant::FillSubsector && variant != TriDrawVariant::FuzzSubsector)
-								subsector[x].store(subsectorDepth);
 						}
 					}
 					branch.end_block();
@@ -258,7 +242,6 @@ void DrawTriangleCodegen::DrawPartialBlocks()
 					blockPosY.Varying[j] = blockPosY.Varying[j] + gradientY.Varying[j];
 
 				dest = dest[pitch * pixelsize];
-				subsector = subsector[pitch];
 			}
 		}
 
@@ -276,7 +259,7 @@ SSAVec4i DrawTriangleCodegen::TranslateSample32(SSAInt *varying)
 	SSAInt vpos = ((vfrac >> 16) * textureHeight) >> 16;
 	SSAInt uvoffset = upos * textureHeight + vpos;
 
-	if (variant == TriDrawVariant::FillNormal || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
+	if (colorfill)
 		return translation[color * 4].load_vec4ub(true);
 	else
 		return translation[texturePixels[uvoffset].load(true).zext_int() * 4].load_vec4ub(true);
@@ -291,7 +274,7 @@ SSAInt DrawTriangleCodegen::TranslateSample8(SSAInt *varying)
 	SSAInt vpos = ((vfrac >> 16) * textureHeight) >> 16;
 	SSAInt uvoffset = upos * textureHeight + vpos;
 
-	if (variant == TriDrawVariant::FillNormal || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
+	if (colorfill)
 		return translation[color].load(true).zext_int();
 	else
 		return translation[texturePixels[uvoffset].load(true).zext_int()].load(true).zext_int();
@@ -299,7 +282,7 @@ SSAInt DrawTriangleCodegen::TranslateSample8(SSAInt *varying)
 
 SSAVec4i DrawTriangleCodegen::Sample32(SSAInt *varying)
 {
-	if (variant == TriDrawVariant::FillNormal || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
+	if (colorfill)
 		return SSAVec4i::unpack(color);
 
 	SSAInt ufrac = varying[0] << 8;
@@ -362,7 +345,7 @@ SSAInt DrawTriangleCodegen::Sample8(SSAInt *varying)
 	SSAInt vpos = ((vfrac >> 16) * textureHeight) >> 16;
 	SSAInt uvoffset = upos * textureHeight + vpos;
 
-	if (variant == TriDrawVariant::FillNormal || variant == TriDrawVariant::FillSubsector || variant == TriDrawVariant::FuzzSubsector)
+	if (colorfill)
 		return color;
 	else
 		return texturePixels[uvoffset].load(true).zext_int();
@@ -593,7 +576,6 @@ void DrawTriangleCodegen::LoadArgs(SSAValue args, SSAValue thread_data)
 	textureHeight = args[0][11].load(true);
 	translation = args[0][12].load(true);
 	LoadUniforms(args[0][13].load(true));
-	subsectorGBuffer = args[0][19].load(true);
 	if (!truecolor)
 	{
 		Colormaps = args[0][20].load(true);
@@ -624,7 +606,6 @@ SSATriVertex DrawTriangleCodegen::LoadTriVertex(SSAValue ptr)
 void DrawTriangleCodegen::LoadUniforms(SSAValue uniforms)
 {
 	light = uniforms[0][0].load(true);
-	subsectorDepth = uniforms[0][1].load(true);
 	color = uniforms[0][2].load(true);
 	srcalpha = uniforms[0][3].load(true);
 	destalpha = uniforms[0][4].load(true);

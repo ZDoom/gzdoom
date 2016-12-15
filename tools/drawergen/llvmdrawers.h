@@ -51,7 +51,7 @@ private:
 	void CodegenDrawSpan(const char *name, DrawSpanVariant variant);
 	void CodegenDrawWall(const char *name, DrawWallVariant variant, int columns);
 	void CodegenDrawSky(const char *name, DrawSkyVariant variant, int columns);
-	void CodegenDrawTriangle(const std::string &name, TriDrawVariant variant, TriBlendMode blendmode, bool truecolor);
+	void CodegenDrawTriangle(const std::string &name, TriBlendMode blendmode, bool truecolor, bool colorfill);
 
 	llvm::Type *GetDrawColumnArgsStruct(llvm::LLVMContext &context);
 	llvm::Type *GetDrawSpanArgsStruct(llvm::LLVMContext &context);

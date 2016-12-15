@@ -88,19 +88,48 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 		return;
 
 	auto llvm = Drawers::Instance();
-	PolyDrawFuncPtr setupfunc = nullptr;
-	PolyDrawFuncPtr drawfunc = nullptr;
+	
+	PolyDrawFuncPtr drawfuncs[3];
+	int num_drawfuncs = 0;
+	
 	int bmode = (int)blendmode;
 	switch (variant)
 	{
+	case TriDrawVariant::DrawNormal:
+		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SetupNormal;
+		drawfuncs[num_drawfuncs++] = dest_bgra ? llvm->TriDraw32[bmode] : llvm->TriDraw8[bmode];
+		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SubsectorWrite;
+		break;
+		
+	case TriDrawVariant::FillNormal:
+		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SetupNormal;
+		drawfuncs[num_drawfuncs++] = dest_bgra ? llvm->TriFill32[bmode] : llvm->TriFill8[bmode];
+		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SubsectorWrite;
+		break;
+		
+	case TriDrawVariant::DrawSubsector:
+		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SetupSubsector;
+		drawfuncs[num_drawfuncs++] = dest_bgra ? llvm->TriDraw32[bmode] : llvm->TriDraw8[bmode];
+		break;
+		
+	case TriDrawVariant::FillSubsector:
+		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SetupSubsector;
+		drawfuncs[num_drawfuncs++] = dest_bgra ? llvm->TriFill32[bmode] : llvm->TriFill8[bmode];
+		break;
+		
+	case TriDrawVariant::Stencil:
+		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SetupNormal;
+		drawfuncs[num_drawfuncs++] = &ScreenTriangle::StencilWrite;
+		break;
+		
+	case TriDrawVariant::StencilClose:
+		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SetupNormal;
+		drawfuncs[num_drawfuncs++] = &ScreenTriangle::StencilWrite;
+		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SubsectorWrite;
+		break;
+		
 	default:
-	case TriDrawVariant::DrawNormal: setupfunc = &ScreenTriangle::SetupNormal; drawfunc = dest_bgra ? llvm->TriDrawNormal32[bmode] : llvm->TriDrawNormal8[bmode]; break;
-	case TriDrawVariant::FillNormal: setupfunc = &ScreenTriangle::SetupNormal; drawfunc = dest_bgra ? llvm->TriFillNormal32[bmode] : llvm->TriFillNormal8[bmode]; break;
-	case TriDrawVariant::DrawSubsector: setupfunc = &ScreenTriangle::SetupSubsector; drawfunc = dest_bgra ? llvm->TriDrawSubsector32[bmode] : llvm->TriDrawSubsector8[bmode]; break;
-	case TriDrawVariant::FuzzSubsector:
-	case TriDrawVariant::FillSubsector: setupfunc = &ScreenTriangle::SetupSubsector; drawfunc = dest_bgra ? llvm->TriFillSubsector32[bmode] : llvm->TriFillSubsector8[bmode]; break;
-	case TriDrawVariant::Stencil: drawfunc = &ScreenTriangle::StencilFunc; break;
-	case TriDrawVariant::StencilClose: drawfunc = &ScreenTriangle::StencilCloseFunc; break;
+		break;
 	}
 
 	TriDrawTriangleArgs args;
@@ -136,7 +165,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 		{
 			for (int j = 0; j < 3; j++)
 				vert[j] = shade_vertex(*drawargs.objectToClip, drawargs.clipPlane, *(vinput++));
-			draw_shaded_triangle(vert, ccw, &args, thread, setupfunc, drawfunc);
+			draw_shaded_triangle(vert, ccw, &args, thread, drawfuncs, num_drawfuncs);
 		}
 	}
 	else if (drawargs.mode == TriangleDrawMode::Fan)
@@ -146,7 +175,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 		for (int i = 2; i < vcount; i++)
 		{
 			vert[2] = shade_vertex(*drawargs.objectToClip, drawargs.clipPlane, *(vinput++));
-			draw_shaded_triangle(vert, ccw, &args, thread, setupfunc, drawfunc);
+			draw_shaded_triangle(vert, ccw, &args, thread, drawfuncs, num_drawfuncs);
 			vert[1] = vert[2];
 		}
 	}
@@ -157,7 +186,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, TriDrawVarian
 		for (int i = 2; i < vcount; i++)
 		{
 			vert[2] = shade_vertex(*drawargs.objectToClip, drawargs.clipPlane, *(vinput++));
-			draw_shaded_triangle(vert, ccw, &args, thread, setupfunc, drawfunc);
+			draw_shaded_triangle(vert, ccw, &args, thread, drawfuncs, num_drawfuncs);
 			vert[0] = vert[1];
 			vert[1] = vert[2];
 			ccw = !ccw;
@@ -176,7 +205,7 @@ ShadedTriVertex PolyTriangleDrawer::shade_vertex(const TriMatrix &objectToClip, 
 	return sv;
 }
 
-void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, PolyDrawFuncPtr setupfunc, PolyDrawFuncPtr drawfunc)
+void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread, PolyDrawFuncPtr *drawfuncs, int num_drawfuncs)
 {
 	// Cull, clip and generate additional vertices as needed
 	TriVertex clippedvert[max_additional_vertices];
@@ -220,8 +249,9 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 			args->v1 = &clippedvert[numclipvert - 1];
 			args->v2 = &clippedvert[i - 1];
 			args->v3 = &clippedvert[i - 2];
-			if (setupfunc) setupfunc(args, thread);
-			drawfunc(args, thread);
+			
+			for (int j = 0; j < num_drawfuncs; j++)
+				drawfuncs[j](args, thread);
 		}
 	}
 	else
@@ -231,8 +261,9 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 			args->v1 = &clippedvert[0];
 			args->v2 = &clippedvert[i - 1];
 			args->v3 = &clippedvert[i];
-			if (setupfunc) setupfunc(args, thread);
-			drawfunc(args, thread);
+			
+			for (int j = 0; j < num_drawfuncs; j++)
+				drawfuncs[j](args, thread);
 		}
 	}
 }
@@ -1508,16 +1539,3 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 	}
 }
 #endif
-
-void ScreenTriangle::StencilFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
-{
-	SetupNormal(args, thread);
-	StencilWrite(args, thread);
-}
-
-void ScreenTriangle::StencilCloseFunc(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
-{
-	SetupNormal(args, thread);
-	StencilWrite(args, thread);
-	SubsectorWrite(args, thread);
-}

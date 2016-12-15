@@ -454,7 +454,10 @@ SSAVec4i DrawTriangleCodegen::ToBgra(SSAInt index)
 
 SSAInt DrawTriangleCodegen::ToPal8(SSAVec4i c)
 {
-	return RGB32k[((c[2] >> 3) * 32 + (c[1] >> 3)) * 32 + (c[0] >> 3)].load(true).zext_int();
+	SSAInt red = SSAInt::clamp(c[0], SSAInt(0), SSAInt(255));
+	SSAInt green = SSAInt::clamp(c[1], SSAInt(0), SSAInt(255));
+	SSAInt blue = SSAInt::clamp(c[2], SSAInt(0), SSAInt(255));
+	return RGB32k[((blue >> 3) * 32 + (green >> 3)) * 32 + (red >> 3)].load(true).zext_int();
 }
 
 SSAInt DrawTriangleCodegen::ProcessPixel8(SSAInt bg, SSAInt *varying)

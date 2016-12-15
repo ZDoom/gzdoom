@@ -175,6 +175,7 @@ namespace swrenderer
 		{
 			identitymap[i] = i;
 		}
+		identitycolormap.Maps = identitymap;
 	}
 
 	void R_InitFuzzTable(int fuzzoff)

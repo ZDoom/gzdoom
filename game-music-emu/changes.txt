@@ -1,6 +1,12 @@
 Game_Music_Emu Change Log
 -------------------------
 
+Game_Music_Emu 0.6.1
+--------------------
+
+- Packaging improvements:
+    - Honor $LIB_SUFFIX for installed pkg-config metadata.
+
 Game_Music_Emu 0.6.0
 --------------------
 

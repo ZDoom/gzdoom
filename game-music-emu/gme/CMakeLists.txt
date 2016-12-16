@@ -164,7 +164,7 @@ install(TARGETS gme LIBRARY DESTINATION lib${LIB_SUFFIX}
                     ARCHIVE DESTINATION lib) # DLL platforms
 
 install(FILES ${EXPORTED_HEADERS} DESTINATION include/gme)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libgme.pc DESTINATION lib/pkgconfig)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libgme.pc DESTINATION lib${LIB_SUFFIX}/pkgconfig)
 endif()
 
 target_link_libraries(gme)

@@ -524,8 +524,13 @@ template<>
 inline bool Writer<StringBuffer>::WriteDouble(double d) {
     if (internal::Double(d).IsNanOrInf()) {
         // Note: This code path can only be reached if (RAPIDJSON_WRITE_DEFAULT_FLAGS & kWriteNanAndInfFlag).
-        if (!(kWriteDefaultFlags & kWriteNanAndInfFlag))
-            return false;
+		if (!(kWriteDefaultFlags & kWriteNanAndInfFlag))
+		{
+			// At least ensure that the output does not get broken.
+			PutReserve(*os_, 1);
+			PutUnsafe(*os_, '0');
+			return false;
+		}
         if (internal::Double(d).IsNan()) {
             PutReserve(*os_, 3);
             PutUnsafe(*os_, 'N'); PutUnsafe(*os_, 'a'); PutUnsafe(*os_, 'N');

@@ -76,8 +76,8 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 // TODO: remove non-wrapping versions?
 #define SPC_NO_SP_WRAPAROUND 0
 
-#define SET_SP( v )     (sp = ram + 0x101 + (v))
-#define GET_SP()        (int(sp - 0x101 - ram))
+#define SET_SP( v )     (sp = ram + 0x101 + ((uint8_t) v))
+#define GET_SP()        (uint8_t) (sp - 0x101 - ram)
 
 #if SPC_NO_SP_WRAPAROUND
 #define PUSH16( v )     (sp -= 2, SET_LE16( sp, v ))
@@ -485,7 +485,7 @@ loop:
 	
 	case 0xAF: // MOV (X)+,A
 		WRITE_DP( 0, x, a + no_read_before_write  );
-		x++;
+		x = (uint8_t) (x + 1);
 		goto loop;
 	
 // 5. 8-BIT LOGIC OPERATION COMMANDS
@@ -808,7 +808,7 @@ loop:
 		unsigned temp = y * a;
 		a = (uint8_t) temp;
 		nz = ((temp >> 1) | temp) & 0x7F;
-		y = temp >> 8;
+		y = (uint8_t) (temp >> 8);
 		nz |= y;
 		goto loop;
 	}
@@ -838,6 +838,7 @@ loop:
 		
 		nz = (uint8_t) a;
 		a = (uint8_t) a;
+		y = (uint8_t) y;
 		
 		goto loop;
 	}
@@ -1004,7 +1005,7 @@ loop:
 	case 0x7F: // RET1
 		temp = *sp;
 		SET_PC( GET_LE16( sp + 1 ) );
-		sp += 3;
+		SET_SP(GET_SP() + 3);
 		goto set_psw;
 	case 0x8E: // POP PSW
 		POP( temp );

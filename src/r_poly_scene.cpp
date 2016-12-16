@@ -198,7 +198,7 @@ void RenderPolyScene::RenderLine(subsector_t *sub, seg_t *line, sector_t *fronts
 		return;
 
 	// Tell automap we saw this
-	if (!swrenderer::r_dontmaplines && line->linedef && segmentRange != LineSegmentRange::AlwaysVisible)
+	if (!PolyRenderer::Instance()->DontMapLines && line->linedef && segmentRange != LineSegmentRange::AlwaysVisible)
 	{
 		line->linedef->flags |= ML_MAPPED;
 		sub->flags |= SSECF_DRAWN;

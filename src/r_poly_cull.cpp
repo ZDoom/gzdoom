@@ -239,10 +239,31 @@ LineSegmentRange PolyCull::GetSegmentRangeForLine(double x1, double y1, double x
 {
 	double znear = 5.0;
 	double updownnear = -400.0;
+	double sidenear = 400.0;
 
-	// Cull if entirely behind the portal clip plane (tbd: should we clip the segment?)
-	if (Vec4f::dot(PortalClipPlane, Vec4f((float)x1, (float)y1, 0.0f, 1.0f)) < 0.0f && Vec4f::dot(PortalClipPlane, Vec4f((float)x2, (float)y2, 0.0f, 1.0f)) < 0.0f)
+	// Clip line to the portal clip plane
+	float distance1 = Vec4f::dot(PortalClipPlane, Vec4f((float)x1, (float)y1, 0.0f, 1.0f));
+	float distance2 = Vec4f::dot(PortalClipPlane, Vec4f((float)x2, (float)y2, 0.0f, 1.0f));
+	if (distance1 < 0.0f && distance2 < 0.0f)
+	{
 		return LineSegmentRange::NotVisible;
+	}
+	else if (distance1 < 0.0f || distance2 < 0.0f)
+	{
+		double t1 = 0.0f, t2 = 1.0f;
+		if (distance1 < 0.0f)
+			t1 = clamp(distance1 / (distance1 - distance2), 0.0f, 1.0f);
+		else
+			t2 = clamp(distance2 / (distance1 - distance2), 0.0f, 1.0f);
+		double nx1 = x1 * (1.0 - t1) + x2 * t1;
+		double ny1 = y1 * (1.0 - t1) + y2 * t1;
+		double nx2 = x1 * (1.0 - t2) + x2 * t2;
+		double ny2 = y1 * (1.0 - t2) + y2 * t2;
+		x1 = nx1;
+		x2 = nx2;
+		y1 = ny1;
+		y2 = ny2;
+	}
 
 	// Transform to 2D view space:
 	x1 = x1 - ViewPos.X;
@@ -255,7 +276,8 @@ LineSegmentRange PolyCull::GetSegmentRangeForLine(double x1, double y1, double x
 	double ry2 = x2 * ViewCos + y2 * ViewSin;
 
 	// Is it potentially visible when looking straight up or down?
-	if (!(ry1 < updownnear && ry2 < updownnear) && !(ry1 > znear && ry2 > znear))
+	if (!(ry1 < updownnear && ry2 < updownnear) && !(ry1 > znear && ry2 > znear) &&
+		!(rx1 < -sidenear && rx2 < -sidenear) && !(rx1 > sidenear && rx2 > sidenear))
 		return LineSegmentRange::AlwaysVisible;
 
 	// Cull if line is entirely behind view
@@ -267,7 +289,7 @@ LineSegmentRange PolyCull::GetSegmentRangeForLine(double x1, double y1, double x
 	if (ry1 < znear)
 		t1 = clamp((znear - ry1) / (ry2 - ry1), 0.0, 1.0);
 	if (ry2 < znear)
-		t2 = clamp((znear - ry1) / (ry2 - ry1), 0.0, 1.0);
+		t2 = clamp((znear - ry2) / (ry2 - ry1), 0.0, 1.0);
 	if (t1 != 0.0 || t2 != 1.0)
 	{
 		double nx1 = rx1 * (1.0 - t1) + rx2 * t1;

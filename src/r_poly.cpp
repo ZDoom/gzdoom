@@ -74,7 +74,7 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 {
 	NetUpdate();
 	
-	//swrenderer::r_dontmaplines = dontmaplines;
+	DontMapLines = dontmaplines;
 	
 	P_FindParticleSubsectors();
 	PO_LinkToSubsectors();

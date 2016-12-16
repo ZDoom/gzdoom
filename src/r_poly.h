@@ -50,6 +50,8 @@ public:
 	bool InsertSeenLinePortal(FLinePortal *portal);
 	bool InsertSeenMirror(line_t *mirrorLine);
 
+	bool DontMapLines = false;
+
 private:
 	void ClearBuffers();
 	void SetSceneViewport();

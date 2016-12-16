@@ -41,8 +41,14 @@ public:
 	// Number of milliseconds (1000 msec = 1 second) played since beginning of track
 	long tell() const;
 	
+	// Number of samples generated since beginning of track
+	long tell_samples() const;
+
 	// Seek to new time in track. Seeking backwards or far forward can take a while.
 	blargg_err_t seek( long msec );
+	
+	// Equivalent to restarting track then skipping n samples
+	blargg_err_t seek_samples( long n );
 	
 	// Skip n samples
 	blargg_err_t skip( long n );

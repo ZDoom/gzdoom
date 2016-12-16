@@ -53,7 +53,7 @@ private:
 
 	SSAStack<SSAInt> stack_C1, stack_C2, stack_C3;
 	SSAStack<SSAInt> stack_y;
-	SSAStack<SSAUBytePtr> stack_subsectorGBuffer;
+	SSAStack<SSAIntPtr> stack_subsectorGBuffer;
 	SSAStack<SSAInt> stack_x;
 	SSAStack<SSAUBytePtr> stack_buffer;
 	SSAStack<SSAInt> stack_iy, stack_ix;
@@ -62,7 +62,7 @@ private:
 	//SSAStack<SSABool> stack_stencilblock_restored;
 	//SSAStack<SSAUByte> stack_stencilblock_lastval;
 
-	SSAUBytePtr subsectorGBuffer;
+	SSAIntPtr subsectorGBuffer;
 	SSAInt pitch;
 	SSASetupVertex v1;
 	SSASetupVertex v2;

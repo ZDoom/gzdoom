@@ -141,6 +141,7 @@ set (SOURCES
 	fixedfunction/drawcolumncodegen.cpp
 	fixedfunction/drawskycodegen.cpp
 	fixedfunction/drawtrianglecodegen.cpp
+	fixedfunction/setuptrianglecodegen.cpp
 )
 enable_precompiled_headers( precomp.h SOURCES )
 

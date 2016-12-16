@@ -7,6 +7,10 @@ include(../../precompiled_headers.cmake)
 # Path where it looks for the LLVM compiled files on Windows
 set( LLVM_PRECOMPILED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../llvm" )
 
+if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+	set( X64 64 )
+endif()
+
 if( NOT DRAWERGEN_LIBS )
 	set( DRAWERGEN_LIBS "" )
 endif()

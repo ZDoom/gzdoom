@@ -35,11 +35,8 @@ EXTERN_CVAR(Bool, st_scale)
 
 void RenderPolyPlayerSprites::Render()
 {
-	// In theory, everything in this function could be moved to RenderRemainingSprites.
-	// Just in case there's some hack elsewhere that relies on this happening as part
-	// of the main rendering we do it exactly as the old software renderer did.
-
-	ScreenSprites.clear();
+	// This code cannot be moved directly to RenderRemainingSprites because the engine
+	// draws the canvas textures between this call and the final call to RenderRemainingSprites..
 
 	if (!r_drawplayersprites ||
 		!camera ||
@@ -90,6 +87,7 @@ void RenderPolyPlayerSprites::RenderRemainingSprites()
 {
 	for (auto &sprite : ScreenSprites)
 		sprite.Render();
+	ScreenSprites.clear();
 }
 
 void RenderPolyPlayerSprites::RenderSprite(DPSprite *sprite, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac)

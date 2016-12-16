@@ -37,6 +37,8 @@
 #include "r_poly_triangle.h"
 #include "r_draw_rgba.h"
 
+CVAR(Bool, r_debug_trisetup, false, 0);
+
 int PolyTriangleDrawer::viewport_x;
 int PolyTriangleDrawer::viewport_y;
 int PolyTriangleDrawer::viewport_width;
@@ -93,19 +95,22 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, WorkerThreadD
 	int num_drawfuncs = 0;
 	
 	drawfuncs[num_drawfuncs++] = drawargs.subsectorTest ? &ScreenTriangle::SetupSubsector : &ScreenTriangle::SetupNormal;
-	
-	int bmode = (int)drawargs.blendmode;
-	if (drawargs.writeColor && drawargs.texturePixels)
-		drawfuncs[num_drawfuncs++] = dest_bgra ? llvm->TriDraw32[bmode] : llvm->TriDraw8[bmode];
-	else if (drawargs.writeColor)
-		drawfuncs[num_drawfuncs++] = dest_bgra ? llvm->TriFill32[bmode] : llvm->TriFill8[bmode];
-	
+
+	if (!r_debug_trisetup) // For profiling how much time is spent in setup vs drawal
+	{
+		int bmode = (int)drawargs.blendmode;
+		if (drawargs.writeColor && drawargs.texturePixels)
+			drawfuncs[num_drawfuncs++] = dest_bgra ? llvm->TriDraw32[bmode] : llvm->TriDraw8[bmode];
+		else if (drawargs.writeColor)
+			drawfuncs[num_drawfuncs++] = dest_bgra ? llvm->TriFill32[bmode] : llvm->TriFill8[bmode];
+	}
+
 	if (drawargs.writeStencil)
 		drawfuncs[num_drawfuncs++] = &ScreenTriangle::StencilWrite;
-	
+
 	if (drawargs.writeSubsector)
 		drawfuncs[num_drawfuncs++] = &ScreenTriangle::SubsectorWrite;
-	
+
 	TriDrawTriangleArgs args;
 	args.dest = dest;
 	args.pitch = dest_pitch;
@@ -793,6 +798,9 @@ void ScreenTriangle::SetupNormal(const TriDrawTriangleArgs *args, WorkerThreadDa
 						span->Length = 0;
 					}
 
+					if (mask0 == 0 && mask1 == 0)
+						continue;
+
 					partial->X = x;
 					partial->Y = y;
 					partial->Mask0 = mask0;
@@ -997,6 +1005,9 @@ void ScreenTriangle::SetupSubsector(const TriDrawTriangleArgs *args, WorkerThrea
 						span->Length = 0;
 					}
 
+					if (mask0 == 0 && mask1 == 0)
+						continue;
+
 					partial->X = x;
 					partial->Y = y;
 					partial->Mask0 = mask0;
@@ -1082,6 +1093,9 @@ void ScreenTriangle::SetupSubsector(const TriDrawTriangleArgs *args, WorkerThrea
 						span++;
 						span->Length = 0;
 					}
+
+					if (mask0 == 0 && mask1 == 0)
+						continue;
 
 					partial->X = x;
 					partial->Y = y;

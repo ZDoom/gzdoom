@@ -111,16 +111,38 @@ void DrawTriangleCodegen::DrawFullSpans()
 				SSAInt lightnext = FRACUNIT - SSAInt(SSAFloat::clamp(shade - SSAFloat::MIN(SSAFloat(24.0f), globVis * blockPosX.W) / 32.0f, SSAFloat(0.0f), SSAFloat(31.0f / 32.0f)) * (float)FRACUNIT, true);
 				SSAInt lightstep = (lightnext - lightpos) / 8;
 
-				for (int ix = 0; ix < 8; ix++)
+				if (truecolor)
 				{
-					if (truecolor)
+					for (int ix = 0; ix < 8; ix += 4)
 					{
-						currentlight = is_fixed_light.select(light, lightpos >> 8);
-
 						SSAUBytePtr destptr = dest[(x * 8 + ix) * 4];
-						destptr.store_vec4ub(ProcessPixel32(destptr.load_vec4ub(false), varyingPos));
+						SSAVec16ub pixels16 = destptr.load_unaligned_vec16ub(false);
+						SSAVec8s pixels8hi = SSAVec8s::extendhi(pixels16);
+						SSAVec8s pixels8lo = SSAVec8s::extendlo(pixels16);
+						SSAVec4i pixels[4] =
+						{
+							SSAVec4i::extendlo(pixels8lo),
+							SSAVec4i::extendhi(pixels8lo),
+							SSAVec4i::extendlo(pixels8hi),
+							SSAVec4i::extendhi(pixels8hi)
+						};
+
+						for (int sse = 0; sse < 4; sse++)
+						{
+							currentlight = is_fixed_light.select(light, lightpos >> 8);
+							pixels[sse] = ProcessPixel32(pixels[sse], varyingPos);
+
+							for (int j = 0; j < TriVertex::NumVarying; j++)
+								varyingPos[j] = varyingPos[j] + varyingStep[j];
+							lightpos = lightpos + lightstep;
+						}
+
+						destptr.store_unaligned_vec16ub(SSAVec16ub(SSAVec8s(pixels[0], pixels[1]), SSAVec8s(pixels[2], pixels[3])));
 					}
-					else
+				}
+				else
+				{
+					for (int ix = 0; ix < 8; ix++)
 					{
 						currentlight = is_fixed_light.select(light, lightpos >> 8);
 						SSAInt colormapindex = SSAInt::MIN((256 - currentlight) * 32 / 256, SSAInt(31));
@@ -128,11 +150,11 @@ void DrawTriangleCodegen::DrawFullSpans()
 
 						SSAUBytePtr destptr = dest[(x * 8 + ix)];
 						destptr.store(ProcessPixel8(destptr.load(false).zext_int(), varyingPos).trunc_ubyte());
-					}
 
-					for (int j = 0; j < TriVertex::NumVarying; j++)
-						varyingPos[j] = varyingPos[j] + varyingStep[j];
-					lightpos = lightpos + lightstep;
+						for (int j = 0; j < TriVertex::NumVarying; j++)
+							varyingPos[j] = varyingPos[j] + varyingStep[j];
+						lightpos = lightpos + lightstep;
+					}
 				}
 				
 				for (int j = 0; j < TriVertex::NumVarying; j++)

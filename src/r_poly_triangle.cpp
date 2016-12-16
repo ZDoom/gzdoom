@@ -89,7 +89,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, WorkerThreadD
 
 	auto llvm = Drawers::Instance();
 	
-	PolyDrawFuncPtr drawfuncs[3];
+	PolyDrawFuncPtr drawfuncs[4];
 	int num_drawfuncs = 0;
 	
 	drawfuncs[num_drawfuncs++] = drawargs.subsectorTest ? &ScreenTriangle::SetupSubsector : &ScreenTriangle::SetupNormal;

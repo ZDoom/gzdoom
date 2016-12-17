@@ -2634,10 +2634,8 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 
 void R_DrawParticle_C (vissprite_t *vis)
 {
-	DWORD *bg2rgb;
 	int spacing;
 	BYTE *dest;
-	DWORD fg;
 	BYTE color = vis->Style.colormap[vis->startfrac];
 	int yl = vis->y1;
 	int ycount = vis->y2 - yl + 1;
@@ -2649,33 +2647,10 @@ void R_DrawParticle_C (vissprite_t *vis)
 	DrawerCommandQueue::WaitForWorkers();
 
 	// vis->renderflags holds translucency level (0-255)
-	{
-		fixed_t fglevel, bglevel;
-		DWORD *fg2rgb;
+	fixed_t fglevel, bglevel;
 
-		fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
-		bglevel = FRACUNIT-fglevel;
-		fg2rgb = Col2RGB8[fglevel>>10];
-		bg2rgb = Col2RGB8[bglevel>>10];
-		fg = fg2rgb[color];
-	}
-
-	/*
-
-	spacing = RenderTarget->GetPitch() - countbase;
-	dest = ylookup[yl] + x1 + dc_destorg;
-
-	do
-	{
-		int count = countbase;
-		do
-		{
-			DWORD bg = bg2rgb[*dest];
-			bg = (fg+bg) | 0x1f07c1f;
-			*dest++ = RGB32k.All[bg & (bg>>15)];
-		} while (--count);
-		dest += spacing;
-	} while (--ycount);*/
+	fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
+	bglevel = FRACUNIT-fglevel;
 
 	// original was row-wise
 	// width = countbase
@@ -2691,9 +2666,11 @@ void R_DrawParticle_C (vissprite_t *vis)
 		dest = ylookup[yl] + x + dc_destorg;
 		for (int y = 0; y < ycount; y++)
 		{
-			DWORD bg = bg2rgb[*dest];
-			bg = (fg+bg) | 0x1f07c1f;
-			*dest = RGB32k.All[bg & (bg>>15)];
+			int dest_r = (GPalette.BaseColors[*dest].r * bglevel + GPalette.BaseColors[color].r * fglevel) >> 10;
+			int dest_g = (GPalette.BaseColors[*dest].g * bglevel + GPalette.BaseColors[color].g * fglevel) >> 10;
+			int dest_b = (GPalette.BaseColors[*dest].b * bglevel + GPalette.BaseColors[color].b * fglevel) >> 10;
+
+			*dest = RGB256k.RGB[dest_r][dest_g][dest_b];
 			dest += spacing;
 		}
 	}

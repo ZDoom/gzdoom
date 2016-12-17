@@ -349,8 +349,6 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 	if (damount == 0.f)
 		return;
 
-	DWORD *bg2rgb;
-	DWORD fg;
 	int gap;
 	BYTE *spot;
 	int x, y;
@@ -372,28 +370,23 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 		return;
 	}
 
-	{
-		int amount;
-
-		amount = (int)(damount * 64);
-		bg2rgb = Col2RGB8[64-amount];
-
-		fg = (((color.r * amount) >> 4) << 20) |
-			  ((color.g * amount) >> 4) |
-			 (((color.b * amount) >> 4) << 10);
-	}
 
 	spot = Buffer + x1 + y1*Pitch;
 	gap = Pitch - w;
+
+	int alpha = (int)((float)64 * damount);
+	int ialpha = 64 - alpha;
+	int dimmedcolor_r = color.r * alpha;
+	int dimmedcolor_g = color.g * alpha;
+	int dimmedcolor_b = color.b * alpha;
 	for (y = h; y != 0; y--)
 	{
 		for (x = w; x != 0; x--)
 		{
-			DWORD bg;
-
-			bg = bg2rgb[(*spot)&0xff];
-			bg = (fg+bg) | 0x1f07c1f;
-			*spot = RGB32k.All[bg&(bg>>15)];
+			uint32_t r = (dimmedcolor_r + GPalette.BaseColors[*spot].r * ialpha) >> 8;
+			uint32_t g = (dimmedcolor_g + GPalette.BaseColors[*spot].g * ialpha) >> 8;
+			uint32_t b = (dimmedcolor_b + GPalette.BaseColors[*spot].b * ialpha) >> 8;
+			*spot = (BYTE)RGB256k.RGB[r][g][b];
 			spot++;
 		}
 		spot += gap;
@@ -672,7 +665,8 @@ static void BuildTransTable (const PalEntry *palette)
 	for (r = 0; r < 32; r++)
 		for (g = 0; g < 32; g++)
 			for (b = 0; b < 32; b++)
-				RGB32k.RGB[r][g][b] = ColorMatcher.Pick ((r<<3)|(r>>2), (g<<3)|(g>>2), (b<<3)|(b>>2));
+				//RGB32k.RGB[r][g][b] = ColorMatcher.Pick ((r<<3)|(r>>2), (g<<3)|(g>>2), (b<<3)|(b>>2));
+				RGB32k.RGB[r][g][b] = 2;
 #ifndef NO_RGB666
 	// create the RGB666 lookup table
 	for (r = 0; r < 64; r++)

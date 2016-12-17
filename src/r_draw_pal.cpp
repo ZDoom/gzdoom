@@ -320,9 +320,9 @@ namespace swrenderer
 				fg = (fg + bg) | 0x1f07c1f;
 				*dest = RGB32k.All[fg & (fg >> 15)];
 #else
-				uint32_t r = clamp(GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 0, 255);
-				uint32_t g = clamp(GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 0, 255);
-				uint32_t b = clamp(GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 0, 255);
+				uint32_t r = MIN(GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 255);
+				uint32_t g = MIN(GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 255);
+				uint32_t b = MIN(GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 255);
 				*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
 #endif
 			}
@@ -370,9 +370,9 @@ namespace swrenderer
 					fg = (fg + bg) | 0x1f07c1f;
 					dest[i] = RGB32k.All[fg & (fg >> 15)];
 #else
-					uint32_t r = clamp(GPalette.BaseColors[_palookupoffse[i][pix]].r + GPalette.BaseColors[dest[i]].r, 0, 255);
-					uint32_t g = clamp(GPalette.BaseColors[_palookupoffse[i][pix]].g + GPalette.BaseColors[dest[i]].g, 0, 255);
-					uint32_t b = clamp(GPalette.BaseColors[_palookupoffse[i][pix]].b + GPalette.BaseColors[dest[i]].b, 0, 255);
+					uint32_t r = MIN(GPalette.BaseColors[_palookupoffse[i][pix]].r + GPalette.BaseColors[dest[i]].r, 255);
+					uint32_t g = MIN(GPalette.BaseColors[_palookupoffse[i][pix]].g + GPalette.BaseColors[dest[i]].g, 255);
+					uint32_t b = MIN(GPalette.BaseColors[_palookupoffse[i][pix]].b + GPalette.BaseColors[dest[i]].b, 255);
 					dest[i] = RGB256k.RGB[r>>2][g>>2][b>>2];
 #endif
 				}
@@ -410,22 +410,10 @@ namespace swrenderer
 			uint8_t pix = source[frac >> bits];
 			if (pix != 0)
 			{
-#ifdef NO_RGB666
-				uint32_t a = fg2rgb[colormap[pix]] + bg2rgb[*dest];
-				uint32_t b = a;
-
-				a |= 0x01f07c1f;
-				b &= 0x40100400;
-				a &= 0x3fffffff;
-				b = b - (b >> 5);
-				a |= b;
-				*dest = RGB32k.All[a & (a >> 15)];
-#else
-				uint32_t r = clamp(GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 0, 255);
-				uint32_t g = clamp(GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 0, 255);
-				uint32_t b = clamp(GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 0, 255);
+				uint32_t r = MIN(GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 255);
+				uint32_t g = MIN(GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 255);
+				uint32_t b = MIN(GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 255);
 				*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
-#endif
 			}
 			frac += fracstep;
 			dest += pitch;
@@ -465,22 +453,10 @@ namespace swrenderer
 				uint8_t pix = _bufplce[i][vplce[i] >> bits];
 				if (pix != 0)
 				{
-#ifdef NO_RGB666
-					uint32_t a = fg2rgb[_palookupoffse[i][pix]] + bg2rgb[dest[i]];
-					uint32_t b = a;
-
-					a |= 0x01f07c1f;
-					b &= 0x40100400;
-					a &= 0x3fffffff;
-					b = b - (b >> 5);
-					a |= b;
-					dest[i] = RGB32k.All[a & (a >> 15)];
-#else
-					uint32_t r = clamp(GPalette.BaseColors[_palookupoffse[i][pix]].r + GPalette.BaseColors[dest[i]].r, 0, 255);
-					uint32_t g = clamp(GPalette.BaseColors[_palookupoffse[i][pix]].g + GPalette.BaseColors[dest[i]].g, 0, 255);
-					uint32_t b = clamp(GPalette.BaseColors[_palookupoffse[i][pix]].b + GPalette.BaseColors[dest[i]].b, 0, 255);
+					uint32_t r = MIN(GPalette.BaseColors[_palookupoffse[i][pix]].r + GPalette.BaseColors[dest[i]].r, 255);
+					uint32_t g = MIN(GPalette.BaseColors[_palookupoffse[i][pix]].g + GPalette.BaseColors[dest[i]].g, 255);
+					uint32_t b = MIN(GPalette.BaseColors[_palookupoffse[i][pix]].b + GPalette.BaseColors[dest[i]].b, 255);
 					dest[i] = RGB256k.RGB[r>>2][g>>2][b>>2];
-#endif
 				}
 				vplce[i] += vince[i];
 			}
@@ -516,21 +492,10 @@ namespace swrenderer
 			uint8_t pix = source[frac >> bits];
 			if (pix != 0)
 			{
-#ifdef NO_RGB666
-				uint32_t a = (fg2rgb[colormap[pix]] | 0x40100400) - bg2rgb[*dest];
-				uint32_t b = a;
-
-				b &= 0x40100400;
-				b = b - (b >> 5);
-				a &= b;
-				a |= 0x01f07c1f;
-				*dest = RGB32k.All[a & (a >> 15)];
-#else
-				uint32_t r = clamp(-GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 0, 255);
-				uint32_t g = clamp(-GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 0, 255);
-				uint32_t b = clamp(-GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 0, 255);
+				int r = clamp(-GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 0, 255);
+				int g = clamp(-GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 0, 255);
+				int b = clamp(-GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 0, 255);
 				*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
-#endif
 			}
 			frac += fracstep;
 			dest += pitch;
@@ -570,21 +535,10 @@ namespace swrenderer
 				uint8_t pix = _bufplce[i][vplce[i] >> bits];
 				if (pix != 0)
 				{
-#ifdef NO_RGB666
-					uint32_t a = (fg2rgb[_palookupoffse[i][pix]] | 0x40100400) - bg2rgb[dest[i]];
-					uint32_t b = a;
-
-					b &= 0x40100400;
-					b = b - (b >> 5);
-					a &= b;
-					a |= 0x01f07c1f;
-					dest[i] = RGB32k.All[a & (a >> 15)];
-#else
-					uint32_t r = clamp(-GPalette.BaseColors[_palookupoffse[i][pix]].r + GPalette.BaseColors[dest[i]].r, 0, 255);
-					uint32_t g = clamp(-GPalette.BaseColors[_palookupoffse[i][pix]].g + GPalette.BaseColors[dest[i]].g, 0, 255);
-					uint32_t b = clamp(-GPalette.BaseColors[_palookupoffse[i][pix]].b + GPalette.BaseColors[dest[i]].b, 0, 255);
+					int r = clamp(-GPalette.BaseColors[_palookupoffse[i][pix]].r + GPalette.BaseColors[dest[i]].r, 0, 255);
+					int g = clamp(-GPalette.BaseColors[_palookupoffse[i][pix]].g + GPalette.BaseColors[dest[i]].g, 0, 255);
+					int b = clamp(-GPalette.BaseColors[_palookupoffse[i][pix]].b + GPalette.BaseColors[dest[i]].b, 0, 255);
 					dest[i] = RGB256k.RGB[r>>2][g>>2][b>>2];
-#endif
 				}
 				vplce[i] += vince[i];
 			}
@@ -620,21 +574,10 @@ namespace swrenderer
 			uint8_t pix = source[frac >> bits];
 			if (pix != 0)
 			{
-#ifdef NO_RGB666
-				uint32_t a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[pix]];
-				uint32_t b = a;
-
-				b &= 0x40100400;
-				b = b - (b >> 5);
-				a &= b;
-				a |= 0x01f07c1f;
-				*dest = RGB32k.All[a & (a >> 15)];
-#else
-				uint32_t r = clamp(GPalette.BaseColors[colormap[pix]].r - GPalette.BaseColors[*dest].r, 0, 255);
-				uint32_t g = clamp(GPalette.BaseColors[colormap[pix]].g - GPalette.BaseColors[*dest].g, 0, 255);
-				uint32_t b = clamp(GPalette.BaseColors[colormap[pix]].b - GPalette.BaseColors[*dest].b, 0, 255);
+				int r = clamp(GPalette.BaseColors[colormap[pix]].r - GPalette.BaseColors[*dest].r, 0, 255);
+				int g = clamp(GPalette.BaseColors[colormap[pix]].g - GPalette.BaseColors[*dest].g, 0, 255);
+				int b = clamp(GPalette.BaseColors[colormap[pix]].b - GPalette.BaseColors[*dest].b, 0, 255);
 				*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
-#endif
 			}
 			frac += fracstep;
 			dest += pitch;

@@ -85,6 +85,9 @@ extern bool				r_dontmaplines;
 // Change R_CalcTiltedLighting() when this changes.
 #define GETPALOOKUP(vis,shade)	(clamp<int> (((shade)-FLOAT2FIXED(MIN(MAXLIGHTVIS,double(vis))))>>FRACBITS, 0, NUMCOLORMAPS-1))
 
+// Converts fixedlightlev into a shade value
+#define FIXEDLIGHT2SHADE(lightlev) (((lightlev) >> COLORMAPSHIFT) << FRACBITS)
+
 extern double			GlobVis;
 
 void R_SetVisibility(double visibility);

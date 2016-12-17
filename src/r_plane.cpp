@@ -240,8 +240,7 @@ void R_MapPlane (int y, int x1)
 	if (plane_shade)
 	{
 		// Determine lighting based on the span's distance from the viewer.
-		ds_colormap = basecolormap->Maps + (GETPALOOKUP (
-			GlobVis * fabs(CenterY - y), planeshade) << COLORMAPSHIFT);
+		R_SetDSColorMapLight(basecolormap, GlobVis * fabs(CenterY - y), planeshade);
 	}
 
 	ds_y = y;
@@ -1043,7 +1042,7 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 		R_SetupSpanBits(tex);
 		double xscale = pl->xform.xScale * tex->Scale.X;
 		double yscale = pl->xform.yScale * tex->Scale.Y;
-		ds_source = tex->GetPixels ();
+		R_SetSpanSource(tex);
 
 		basecolormap = pl->colormap;
 		planeshade = LIGHT2SHADE(pl->lightlevel);
@@ -1405,12 +1404,13 @@ void R_DrawSkyPlane (visplane_t *pl)
 	bool fakefixed = false;
 	if (fixedcolormap)
 	{
-		dc_colormap = fixedcolormap;
+		R_SetColorMapLight(fixedcolormap, 0, 0);
 	}
 	else
 	{
 		fakefixed = true;
-		fixedcolormap = dc_colormap = NormalLight.Maps;
+		fixedcolormap = NormalLight.Maps;
+		R_SetColorMapLight(fixedcolormap, 0, 0);
 	}
 
 	R_DrawSky (pl);
@@ -1484,12 +1484,21 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 	planeheight = fabs(pl->height.Zat0() - ViewPos.Z);
 
 	GlobVis = r_FloorVisibility / planeheight;
+	ds_light = 0;
 	if (fixedlightlev >= 0)
-		ds_colormap = basecolormap->Maps + fixedlightlev, plane_shade = false;
+	{
+		R_SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		plane_shade = false;
+	}
 	else if (fixedcolormap)
-		ds_colormap = fixedcolormap, plane_shade = false;
+	{
+		R_SetDSColorMapLight(fixedcolormap, 0, 0);
+		plane_shade = false;
+	}
 	else
+	{
 		plane_shade = true;
+	}
 
 	if (spanfunc != R_FillSpan)
 	{
@@ -1645,11 +1654,20 @@ void R_DrawTiltedPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 		planelightfloat = -planelightfloat;
 
 	if (fixedlightlev >= 0)
-		ds_colormap = basecolormap->Maps + fixedlightlev, plane_shade = false;
+	{
+		R_SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		plane_shade = false;
+	}
 	else if (fixedcolormap)
-		ds_colormap = fixedcolormap, plane_shade = false;
+	{
+		R_SetDSColorMapLight(fixedcolormap, 0, 0);
+		plane_shade = false;
+	}
 	else
-		ds_colormap = basecolormap->Maps, plane_shade = true;
+	{
+		R_SetDSColorMapLight(basecolormap, 0, 0);
+		plane_shade = true;
+	}
 
 	// Hack in support for 1 x Z and Z x 1 texture sizes
 	if (ds_ybits == 0)

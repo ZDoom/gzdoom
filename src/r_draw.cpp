@@ -548,11 +548,21 @@ namespace swrenderer
 		dc_colormap = base_colormap + (GETPALOOKUP(light, shade) << COLORMAPSHIFT);
 	}
 
+	void R_SetColorMapLight(FDynamicColormap *base_colormap, float light, int shade)
+	{
+		R_SetColorMapLight(base_colormap->Maps, light, shade);
+	}
+
 	void R_SetDSColorMapLight(lighttable_t *base_colormap, float light, int shade)
 	{
 		using namespace drawerargs;
 	
 		ds_colormap = base_colormap + (GETPALOOKUP(light, shade) << COLORMAPSHIFT);
+	}
+
+	void R_SetDSColorMapLight(FDynamicColormap *base_colormap, float light, int shade)
+	{
+		R_SetDSColorMapLight(base_colormap->Maps, light, shade);
 	}
 
 	void R_SetTranslationMap(lighttable_t *translation)

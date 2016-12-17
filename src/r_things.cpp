@@ -3241,12 +3241,12 @@ void R_CheckOffscreenBuffer(int width, int height, bool spansonly)
 	{
 		if (OffscreenColorBuffer == NULL)
 		{
-			OffscreenColorBuffer = new BYTE[width * height * 4];
+			OffscreenColorBuffer = new BYTE[width * height];
 		}
 		else if (OffscreenBufferWidth != width || OffscreenBufferHeight != height)
 		{
 			delete[] OffscreenColorBuffer;
-			OffscreenColorBuffer = new BYTE[width * height * 4];
+			OffscreenColorBuffer = new BYTE[width * height];
 		}
 	}
 	OffscreenBufferWidth = width;

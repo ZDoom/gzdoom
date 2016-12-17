@@ -6846,3 +6846,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 	}
 	return 0;
 }
+
+DEFINE_ACTION_FUNCTION(AActor, A_SetSize)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(newradius);
+	PARAM_FLOAT_DEF(newheight);
+
+	if (newradius < 0.)		newradius = self->radius;
+	if (newheight < 0.)		newheight = self->Height;
+
+	self->UnlinkFromWorld();
+	self->radius = newradius;
+	self->Height = newheight;
+	self->LinkToWorld();
+	return 0;
+}

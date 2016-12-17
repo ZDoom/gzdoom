@@ -144,7 +144,11 @@ DWORD Col2RGB8[65][256];
 DWORD *Col2RGB8_LessPrecision[65];
 DWORD Col2RGB8_Inverse[65][256];
 ColorTable32k RGB32k;
+#ifndef NO_RGB666
+ColorTable256k RGB256k;
+#endif
 }
+
 
 static DWORD Col2RGB8_2[63][256];
 
@@ -669,6 +673,13 @@ static void BuildTransTable (const PalEntry *palette)
 		for (g = 0; g < 32; g++)
 			for (b = 0; b < 32; b++)
 				RGB32k.RGB[r][g][b] = ColorMatcher.Pick ((r<<3)|(r>>2), (g<<3)|(g>>2), (b<<3)|(b>>2));
+#ifndef NO_RGB666
+	// create the RGB666 lookup table
+	for (r = 0; r < 64; r++)
+		for (g = 0; g < 64; g++)
+			for (b = 0; b < 64; b++)
+				RGB256k.RGB[r][g][b] = ColorMatcher.Pick ((r<<2)|(r>>4), (g<<2)|(g>>4), (b<<2)|(b>>4));
+#endif
 
 	int x, y;
 

@@ -462,6 +462,16 @@ union ColorTable32k
 };
 extern "C" ColorTable32k RGB32k;
 
+// [SP] RGB666 support
+#ifndef NO_RGB666
+union ColorTable256k
+{
+	BYTE RGB[64][64][64];
+	BYTE All[64 *64 *64];
+};
+extern "C" ColorTable256k RGB256k;
+#endif
+
 // Col2RGB8 is a pre-multiplied palette for color lookup. It is stored in a
 // special R10B10G10 format for efficient blending computation.
 //		--RRRRRrrr--BBBBBbbb--GGGGGggg--   at level 64

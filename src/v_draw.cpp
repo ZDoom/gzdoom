@@ -1031,7 +1031,7 @@ void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 	DWORD *fg2rgb = Col2RGB8[63-level];
 	DWORD fg = fg2rgb[basecolor];
 	DWORD bg = bg2rgb[*spot];
-	bg = (fg+bg) | 0x1f07c1f;
+	bg = (fg+bg) | 0x01f07c1f;
 	*spot = RGB32k.All[bg&(bg>>15)];
 }
 

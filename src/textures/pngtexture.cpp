@@ -536,7 +536,12 @@ void FPNGTexture::MakeTexture ()
 					{
 						if (!HaveTrans)
 						{
+#ifdef NO_RGB666
 							*out++ = RGB32k.RGB[in[0]>>3][in[1]>>3][in[2]>>3];
+#else
+							*out++ = RGB256k.RGB[in[0]>>2][in[1]>>2][in[2]>>2];
+#endif
+
 						}
 						else
 						{
@@ -548,7 +553,11 @@ void FPNGTexture::MakeTexture ()
 							}
 							else
 							{
+#ifdef NO_RGB666
 								*out++ = RGB32k.RGB[in[0]>>3][in[1]>>3][in[2]>>3];
+#else
+								*out++ = RGB256k.RGB[in[0]>>2][in[1]>>2][in[2]>>2];
+#endif
 							}
 						}
 						in += pitch;
@@ -593,7 +602,11 @@ void FPNGTexture::MakeTexture ()
 				{
 					for (y = Height; y > 0; --y)
 					{
+#ifdef NO_RGB666
 						*out++ = in[3] < 128 ? 0 : RGB32k.RGB[in[0]>>3][in[1]>>3][in[2]>>3];
+#else
+						*out++ = in[3] < 128 ? 0 : RGB256k.RGB[in[0]>>2][in[1]>>2][in[2]>>2];
+#endif
 						in += pitch;
 					}
 					in -= backstep;

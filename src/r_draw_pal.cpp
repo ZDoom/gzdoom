@@ -314,10 +314,17 @@ namespace swrenderer
 			uint8_t pix = source[frac >> bits];
 			if (pix != 0)
 			{
+#ifdef NO_RGB666
 				uint32_t fg = fg2rgb[colormap[pix]];
 				uint32_t bg = bg2rgb[*dest];
 				fg = (fg + bg) | 0x1f07c1f;
 				*dest = RGB32k.All[fg & (fg >> 15)];
+#else
+				uint32_t r = clamp(GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 0, 255);
+				uint32_t g = clamp(GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 0, 255);
+				uint32_t b = clamp(GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 0, 255);
+				*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
+#endif
 			}
 			frac += fracstep;
 			dest += pitch;
@@ -357,10 +364,17 @@ namespace swrenderer
 				uint8_t pix = _bufplce[i][vplce[i] >> bits];
 				if (pix != 0)
 				{
+#ifdef NO_RGB666
 					uint32_t fg = fg2rgb[_palookupoffse[i][pix]];
 					uint32_t bg = bg2rgb[dest[i]];
 					fg = (fg + bg) | 0x1f07c1f;
 					dest[i] = RGB32k.All[fg & (fg >> 15)];
+#else
+					uint32_t r = clamp(GPalette.BaseColors[_palookupoffse[i][pix]].r + GPalette.BaseColors[dest[i]].r, 0, 255);
+					uint32_t g = clamp(GPalette.BaseColors[_palookupoffse[i][pix]].g + GPalette.BaseColors[dest[i]].g, 0, 255);
+					uint32_t b = clamp(GPalette.BaseColors[_palookupoffse[i][pix]].b + GPalette.BaseColors[dest[i]].b, 0, 255);
+					dest[i] = RGB256k.RGB[r>>2][g>>2][b>>2];
+#endif
 				}
 				vplce[i] += vince[i];
 			}
@@ -396,6 +410,7 @@ namespace swrenderer
 			uint8_t pix = source[frac >> bits];
 			if (pix != 0)
 			{
+#ifdef NO_RGB666
 				uint32_t a = fg2rgb[colormap[pix]] + bg2rgb[*dest];
 				uint32_t b = a;
 
@@ -405,6 +420,12 @@ namespace swrenderer
 				b = b - (b >> 5);
 				a |= b;
 				*dest = RGB32k.All[a & (a >> 15)];
+#else
+				uint32_t r = clamp(GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 0, 255);
+				uint32_t g = clamp(GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 0, 255);
+				uint32_t b = clamp(GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 0, 255);
+				*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
+#endif
 			}
 			frac += fracstep;
 			dest += pitch;
@@ -444,6 +465,7 @@ namespace swrenderer
 				uint8_t pix = _bufplce[i][vplce[i] >> bits];
 				if (pix != 0)
 				{
+#ifdef NO_RGB666
 					uint32_t a = fg2rgb[_palookupoffse[i][pix]] + bg2rgb[dest[i]];
 					uint32_t b = a;
 
@@ -453,6 +475,12 @@ namespace swrenderer
 					b = b - (b >> 5);
 					a |= b;
 					dest[i] = RGB32k.All[a & (a >> 15)];
+#else
+					uint32_t r = clamp(GPalette.BaseColors[_palookupoffse[i][pix]].r + GPalette.BaseColors[dest[i]].r, 0, 255);
+					uint32_t g = clamp(GPalette.BaseColors[_palookupoffse[i][pix]].g + GPalette.BaseColors[dest[i]].g, 0, 255);
+					uint32_t b = clamp(GPalette.BaseColors[_palookupoffse[i][pix]].b + GPalette.BaseColors[dest[i]].b, 0, 255);
+					dest[i] = RGB256k.RGB[r>>2][g>>2][b>>2];
+#endif
 				}
 				vplce[i] += vince[i];
 			}
@@ -488,6 +516,7 @@ namespace swrenderer
 			uint8_t pix = source[frac >> bits];
 			if (pix != 0)
 			{
+#ifdef NO_RGB666
 				uint32_t a = (fg2rgb[colormap[pix]] | 0x40100400) - bg2rgb[*dest];
 				uint32_t b = a;
 
@@ -496,6 +525,12 @@ namespace swrenderer
 				a &= b;
 				a |= 0x01f07c1f;
 				*dest = RGB32k.All[a & (a >> 15)];
+#else
+				uint32_t r = clamp(-GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 0, 255);
+				uint32_t g = clamp(-GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 0, 255);
+				uint32_t b = clamp(-GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 0, 255);
+				*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
+#endif
 			}
 			frac += fracstep;
 			dest += pitch;
@@ -535,6 +570,7 @@ namespace swrenderer
 				uint8_t pix = _bufplce[i][vplce[i] >> bits];
 				if (pix != 0)
 				{
+#ifdef NO_RGB666
 					uint32_t a = (fg2rgb[_palookupoffse[i][pix]] | 0x40100400) - bg2rgb[dest[i]];
 					uint32_t b = a;
 
@@ -543,6 +579,12 @@ namespace swrenderer
 					a &= b;
 					a |= 0x01f07c1f;
 					dest[i] = RGB32k.All[a & (a >> 15)];
+#else
+					uint32_t r = clamp(-GPalette.BaseColors[_palookupoffse[i][pix]].r + GPalette.BaseColors[dest[i]].r, 0, 255);
+					uint32_t g = clamp(-GPalette.BaseColors[_palookupoffse[i][pix]].g + GPalette.BaseColors[dest[i]].g, 0, 255);
+					uint32_t b = clamp(-GPalette.BaseColors[_palookupoffse[i][pix]].b + GPalette.BaseColors[dest[i]].b, 0, 255);
+					dest[i] = RGB256k.RGB[r>>2][g>>2][b>>2];
+#endif
 				}
 				vplce[i] += vince[i];
 			}
@@ -578,6 +620,7 @@ namespace swrenderer
 			uint8_t pix = source[frac >> bits];
 			if (pix != 0)
 			{
+#ifdef NO_RGB666
 				uint32_t a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[pix]];
 				uint32_t b = a;
 
@@ -586,6 +629,12 @@ namespace swrenderer
 				a &= b;
 				a |= 0x01f07c1f;
 				*dest = RGB32k.All[a & (a >> 15)];
+#else
+				uint32_t r = clamp(GPalette.BaseColors[colormap[pix]].r - GPalette.BaseColors[*dest].r, 0, 255);
+				uint32_t g = clamp(GPalette.BaseColors[colormap[pix]].g - GPalette.BaseColors[*dest].g, 0, 255);
+				uint32_t b = clamp(GPalette.BaseColors[colormap[pix]].b - GPalette.BaseColors[*dest].b, 0, 255);
+				*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
+#endif
 			}
 			frac += fracstep;
 			dest += pitch;
@@ -625,6 +674,7 @@ namespace swrenderer
 				uint8_t pix = _bufplce[i][vplce[i] >> bits];
 				if (pix != 0)
 				{
+#ifdef NO_RGB666
 					uint32_t a = (bg2rgb[dest[i]] | 0x40100400) - fg2rgb[_palookupoffse[i][pix]];
 					uint32_t b = a;
 
@@ -633,6 +683,12 @@ namespace swrenderer
 					a &= b;
 					a |= 0x01f07c1f;
 					dest[i] = RGB32k.All[a & (a >> 15)];
+#else
+					uint32_t r = clamp(GPalette.BaseColors[_palookupoffse[i][pix]].r - GPalette.BaseColors[dest[i]].r, 0, 255);
+					uint32_t g = clamp(GPalette.BaseColors[_palookupoffse[i][pix]].g - GPalette.BaseColors[dest[i]].g, 0, 255);
+					uint32_t b = clamp(GPalette.BaseColors[_palookupoffse[i][pix]].b - GPalette.BaseColors[dest[i]].b, 0, 255);
+					dest[i] = RGB256k.RGB[r>>2][g>>2][b>>2];
+#endif
 				}
 				vplce[i] += vince[i];
 			}
@@ -716,7 +772,11 @@ namespace swrenderer
 				c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
 				c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
 				c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
+#ifdef NO_RGB666
 				*dest = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+#else
+				*dest = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
+#endif
 			}
 
 			frac += fracstep;
@@ -744,8 +804,13 @@ namespace swrenderer
 		int solid_bottom_r = RPART(solid_bottom);
 		int solid_bottom_g = GPART(solid_bottom);
 		int solid_bottom_b = BPART(solid_bottom);
+#ifdef NO_RGB666
 		uint32_t solid_top_fill = RGB32k.RGB[(solid_top_r >> 3)][(solid_top_g >> 3)][(solid_top_b >> 3)];
 		uint32_t solid_bottom_fill = RGB32k.RGB[(solid_bottom_r >> 3)][(solid_bottom_g >> 3)][(solid_bottom_b >> 3)];
+#else
+		uint32_t solid_top_fill = RGB256k.RGB[(solid_top_r >> 2)][(solid_top_g >> 2)][(solid_top_b >> 2)];
+		uint32_t solid_bottom_fill = RGB256k.RGB[(solid_bottom_r >> 2)][(solid_bottom_g >> 2)][(solid_bottom_b >> 2)];
+#endif
 		solid_top_fill = (solid_top_fill << 24) | (solid_top_fill << 16) | (solid_top_fill << 8) | solid_top_fill;
 		solid_bottom_fill = (solid_bottom_fill << 24) | (solid_bottom_fill << 16) | (solid_bottom_fill << 8) | solid_bottom_fill;
 
@@ -805,8 +870,11 @@ namespace swrenderer
 				c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
 				c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
 				c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
+#ifdef NO_RGB666
 				output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
-
+#else
+				output[col] = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
+#endif
 				frac[col] += fracstep[col];
 			}
 			*((uint32_t*)dest) = *((uint32_t*)output);
@@ -847,7 +915,11 @@ namespace swrenderer
 				c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
 				c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
 				c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
+#ifdef NO_RGB666
 				output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+#else
+				output[col] = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
+#endif
 
 				frac[col] += fracstep[col];
 			}
@@ -929,7 +1001,11 @@ namespace swrenderer
 				c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
 				c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
 				c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
+#ifdef NO_RGB666
 				*dest = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+#else
+				*dest = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
+#endif
 			}
 
 			frac += fracstep;
@@ -959,8 +1035,13 @@ namespace swrenderer
 		int solid_bottom_r = RPART(solid_bottom);
 		int solid_bottom_g = GPART(solid_bottom);
 		int solid_bottom_b = BPART(solid_bottom);
+#ifdef NO_RGB666
 		uint32_t solid_top_fill = RGB32k.RGB[(solid_top_r >> 3)][(solid_top_g >> 3)][(solid_top_b >> 3)];
 		uint32_t solid_bottom_fill = RGB32k.RGB[(solid_bottom_r >> 3)][(solid_bottom_g >> 3)][(solid_bottom_b >> 3)];
+#else
+		uint32_t solid_top_fill = RGB256k.RGB[(solid_top_r >> 2)][(solid_top_g >> 2)][(solid_top_b >> 2)];
+		uint32_t solid_bottom_fill = RGB256k.RGB[(solid_bottom_r >> 2)][(solid_bottom_g >> 2)][(solid_bottom_b >> 2)];
+#endif
 		solid_top_fill = (solid_top_fill << 24) | (solid_top_fill << 16) | (solid_top_fill << 8) | solid_top_fill;
 		solid_bottom_fill = (solid_bottom_fill << 24) | (solid_bottom_fill << 16) | (solid_bottom_fill << 8) | solid_bottom_fill;
 
@@ -1026,7 +1107,11 @@ namespace swrenderer
 				c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
 				c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
 				c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
+#ifdef NO_RGB666
 				output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+#else
+				output[col] = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
+#endif
 
 				frac[col] += fracstep[col];
 			}
@@ -1080,7 +1165,11 @@ namespace swrenderer
 				c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
 				c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
 				c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
+#ifdef NO_RGB666
 				output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+#else
+				output[col] = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
+#endif
 
 				frac[col] += fracstep[col];
 			}

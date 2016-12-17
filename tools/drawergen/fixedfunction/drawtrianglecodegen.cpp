@@ -41,11 +41,30 @@ void DrawTriangleCodegen::Generate(TriBlendMode blendmode, bool truecolor, bool 
 
 	LoadArgs(args, thread_data);
 	CalculateGradients();
-	DrawFullSpans();
-	DrawPartialBlocks();
+
+	if (truecolor)
+	{
+		SSAIfBlock branch;
+		branch.if_block(is_simple_shade);
+		{
+			DrawFullSpans(true);
+			DrawPartialBlocks(true);
+		}
+		branch.else_block();
+		{
+			DrawFullSpans(false);
+			DrawPartialBlocks(false);
+		}
+		branch.end_block();
+	}
+	else
+	{
+		DrawFullSpans(true);
+		DrawPartialBlocks(true);
+	}
 }
 
-void DrawTriangleCodegen::DrawFullSpans()
+void DrawTriangleCodegen::DrawFullSpans(bool isSimpleShade)
 {
 	stack_i.store(SSAInt(0));
 	SSAForBlock loop;
@@ -130,7 +149,7 @@ void DrawTriangleCodegen::DrawFullSpans()
 						for (int sse = 0; sse < 4; sse++)
 						{
 							currentlight = is_fixed_light.select(light, lightpos >> 8);
-							pixels[sse] = ProcessPixel32(pixels[sse], varyingPos);
+							pixels[sse] = ProcessPixel32(pixels[sse], varyingPos, isSimpleShade);
 
 							for (int j = 0; j < TriVertex::NumVarying; j++)
 								varyingPos[j] = varyingPos[j] + varyingStep[j];
@@ -180,7 +199,7 @@ void DrawTriangleCodegen::DrawFullSpans()
 	loop.end_block();
 }
 
-void DrawTriangleCodegen::DrawPartialBlocks()
+void DrawTriangleCodegen::DrawPartialBlocks(bool isSimpleShade)
 {
 	stack_i.store(SSAInt(0));
 	SSAForBlock loop;
@@ -240,7 +259,7 @@ void DrawTriangleCodegen::DrawPartialBlocks()
 							currentlight = is_fixed_light.select(light, lightpos >> 8);
 
 							SSAUBytePtr destptr = dest[x * 4];
-							destptr.store_vec4ub(ProcessPixel32(destptr.load_vec4ub(false), varyingPos));
+							destptr.store_vec4ub(ProcessPixel32(destptr.load_vec4ub(false), varyingPos, isSimpleShade));
 						}
 						else
 						{
@@ -381,7 +400,15 @@ SSAInt DrawTriangleCodegen::Shade8(SSAInt c)
 	return currentcolormap[c].load(true).zext_int();
 }
 
-SSAVec4i DrawTriangleCodegen::ProcessPixel32(SSAVec4i bg, SSAInt *varying)
+SSAVec4i DrawTriangleCodegen::Shade32(SSAVec4i fg, SSAInt light, bool isSimpleShade)
+{
+	if (isSimpleShade)
+		return shade_bgra_simple(fg, currentlight);
+	else
+		return shade_bgra_advanced(fg, currentlight, shade_constants);
+}
+
+SSAVec4i DrawTriangleCodegen::ProcessPixel32(SSAVec4i bg, SSAInt *varying, bool isSimpleShade)
 {
 	SSAVec4i fg;
 	SSAVec4i output;
@@ -391,58 +418,58 @@ SSAVec4i DrawTriangleCodegen::ProcessPixel32(SSAVec4i bg, SSAInt *varying)
 	default:
 	case TriBlendMode::Copy:
 		fg = Sample32(varying);
-		output = blend_copy(shade_bgra_simple(fg, currentlight));
+		output = blend_copy(Shade32(fg, currentlight, isSimpleShade));
 		break;
 	case TriBlendMode::AlphaBlend:
 		fg = Sample32(varying);
-		output = blend_alpha_blend(shade_bgra_simple(fg, currentlight), bg);
+		output = blend_alpha_blend(Shade32(fg, currentlight, isSimpleShade), bg);
 		break;
 	case TriBlendMode::AddSolid:
 		fg = Sample32(varying);
-		output = blend_add(shade_bgra_simple(fg, currentlight), bg, srcalpha, destalpha);
+		output = blend_add(Shade32(fg, currentlight, isSimpleShade), bg, srcalpha, destalpha);
 		break;
 	case TriBlendMode::Add:
 		fg = Sample32(varying);
-		output = blend_add(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
+		output = blend_add(Shade32(fg, currentlight, isSimpleShade), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 		break;
 	case TriBlendMode::Sub:
 		fg = Sample32(varying);
-		output = blend_sub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
+		output = blend_sub(Shade32(fg, currentlight, isSimpleShade), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 		break;
 	case TriBlendMode::RevSub:
 		fg = Sample32(varying);
-		output = blend_revsub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
+		output = blend_revsub(Shade32(fg, currentlight, isSimpleShade), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 		break;
 	case TriBlendMode::Stencil:
 		fg = Sample32(varying);
-		output = blend_stencil(shade_bgra_simple(SSAVec4i::unpack(color), currentlight), fg[3], bg, srcalpha, destalpha);
+		output = blend_stencil(Shade32(SSAVec4i::unpack(color), currentlight, isSimpleShade), fg[3], bg, srcalpha, destalpha);
 		break;
 	case TriBlendMode::Shaded:
-		output = blend_stencil(shade_bgra_simple(SSAVec4i::unpack(color), currentlight), Sample8(varying), bg, srcalpha, destalpha);
+		output = blend_stencil(Shade32(SSAVec4i::unpack(color), currentlight, isSimpleShade), Sample8(varying), bg, srcalpha, destalpha);
 		break;
 	case TriBlendMode::TranslateCopy:
 		fg = TranslateSample32(varying);
-		output = blend_copy(shade_bgra_simple(fg, currentlight));
+		output = blend_copy(Shade32(fg, currentlight, isSimpleShade));
 		break;
 	case TriBlendMode::TranslateAlphaBlend:
 		fg = TranslateSample32(varying);
-		output = blend_alpha_blend(shade_bgra_simple(fg, currentlight), bg);
+		output = blend_alpha_blend(Shade32(fg, currentlight, isSimpleShade), bg);
 		break;
 	case TriBlendMode::TranslateAdd:
 		fg = TranslateSample32(varying);
-		output = blend_add(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
+		output = blend_add(Shade32(fg, currentlight, isSimpleShade), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 		break;
 	case TriBlendMode::TranslateSub:
 		fg = TranslateSample32(varying);
-		output = blend_sub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
+		output = blend_sub(Shade32(fg, currentlight, isSimpleShade), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 		break;
 	case TriBlendMode::TranslateRevSub:
 		fg = TranslateSample32(varying);
-		output = blend_revsub(shade_bgra_simple(fg, currentlight), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
+		output = blend_revsub(Shade32(fg, currentlight, isSimpleShade), bg, srcalpha, calc_blend_bgalpha(fg, destalpha));
 		break;
 	case TriBlendMode::AddSrcColorOneMinusSrcColor:
 		fg = Sample32(varying);
-		output = blend_add_srccolor_oneminussrccolor(shade_bgra_simple(fg, currentlight), bg);
+		output = blend_add_srccolor_oneminussrccolor(Shade32(fg, currentlight, isSimpleShade), bg);
 		break;
 	case TriBlendMode::Skycap:
 		fg = Sample32(varying);

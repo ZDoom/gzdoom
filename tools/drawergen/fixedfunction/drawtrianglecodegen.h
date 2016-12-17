@@ -48,15 +48,16 @@ private:
 	void CalculateGradients();
 	SSAFloat FindGradientX(SSAFloat x0, SSAFloat y0, SSAFloat x1, SSAFloat y1, SSAFloat x2, SSAFloat y2, SSAFloat c0, SSAFloat c1, SSAFloat c2);
 	SSAFloat FindGradientY(SSAFloat x0, SSAFloat y0, SSAFloat x1, SSAFloat y1, SSAFloat x2, SSAFloat y2, SSAFloat c0, SSAFloat c1, SSAFloat c2);
-	void DrawFullSpans();
-	void DrawPartialBlocks();
+	void DrawFullSpans(bool isSimpleShade);
+	void DrawPartialBlocks(bool isSimpleShade);
 
-	SSAVec4i ProcessPixel32(SSAVec4i bg, SSAInt *varying);
+	SSAVec4i ProcessPixel32(SSAVec4i bg, SSAInt *varying, bool isSimpleShade);
 	SSAInt ProcessPixel8(SSAInt bg, SSAInt *varying);
 	SSAVec4i TranslateSample32(SSAInt *varying);
 	SSAInt TranslateSample8(SSAInt *varying);
 	SSAVec4i Sample32(SSAInt *varying);
 	SSAInt Sample8(SSAInt *varying);
+	SSAVec4i Shade32(SSAVec4i fg, SSAInt light, bool isSimpleShade);
 	SSAInt Shade8(SSAInt c);
 	SSAVec4i ToBgra(SSAInt index);
 	SSAInt ToPal8(SSAVec4i c);

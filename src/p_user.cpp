@@ -1366,42 +1366,49 @@ void APlayerPawn::GiveDefaultInventory ()
 		PClassActor *ti = PClass::FindActor (di->Name);
 		if (ti)
 		{
-			AInventory *item = FindInventory (ti);
-			if (item != NULL)
+			if (!ti->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 			{
-				item->Amount = clamp<int>(
-					item->Amount + (di->Amount ? di->Amount : ((AInventory *)item->GetDefault ())->Amount),
-					0, item->MaxAmount);
+				Printf(TEXTCOLOR_ORANGE "%s is not an inventory item and cannot be given to a player as start item.\n", ti->TypeName.GetChars());
 			}
 			else
 			{
-				item = static_cast<AInventory *>(Spawn (ti));
-				item->ItemFlags |= IF_IGNORESKILL;	// no skill multiplicators here
-				item->Amount = di->Amount;
-				if (item->IsKindOf (RUNTIME_CLASS (AWeapon)))
+				AInventory *item = FindInventory(ti);
+				if (item != NULL)
 				{
-					// To allow better control any weapon is emptied of
-					// ammo before being given to the player.
-					static_cast<AWeapon*>(item)->AmmoGive1 =
-					static_cast<AWeapon*>(item)->AmmoGive2 = 0;
+					item->Amount = clamp<int>(
+						item->Amount + (di->Amount ? di->Amount : ((AInventory *)item->GetDefault())->Amount),
+						0, item->MaxAmount);
 				}
-				AActor *check;
-				if (!item->CallTryPickup(this, &check))
+				else
 				{
-					if (check != this)
+					item = static_cast<AInventory *>(Spawn(ti));
+					item->ItemFlags |= IF_IGNORESKILL;	// no skill multiplicators here
+					item->Amount = di->Amount;
+					if (item->IsKindOf(RUNTIME_CLASS(AWeapon)))
 					{
-						// Player was morphed. This is illegal at game start.
-						// This problem is only detectable when it's too late to do something about it...
-						I_Error("Cannot give morph items when starting a game");
+						// To allow better control any weapon is emptied of
+						// ammo before being given to the player.
+						static_cast<AWeapon*>(item)->AmmoGive1 =
+							static_cast<AWeapon*>(item)->AmmoGive2 = 0;
 					}
-					item->Destroy ();
-					item = NULL;
+					AActor *check;
+					if (!item->CallTryPickup(this, &check))
+					{
+						if (check != this)
+						{
+							// Player was morphed. This is illegal at game start.
+							// This problem is only detectable when it's too late to do something about it...
+							I_Error("Cannot give morph items when starting a game");
+						}
+						item->Destroy();
+						item = NULL;
+					}
 				}
-			}
-			if (item != NULL && item->IsKindOf (RUNTIME_CLASS (AWeapon)) &&
-				static_cast<AWeapon*>(item)->CheckAmmo(AWeapon::EitherFire, false))
-			{
-				player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *> (item);
+				if (item != NULL && item->IsKindOf(RUNTIME_CLASS(AWeapon)) &&
+					static_cast<AWeapon*>(item)->CheckAmmo(AWeapon::EitherFire, false))
+				{
+					player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *> (item);
+				}
 			}
 		}
 		di = di->Next;

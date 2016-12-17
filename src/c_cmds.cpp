@@ -906,6 +906,16 @@ CCMD(info)
 				"the NOBLOCKMAP flag or have height/radius of 0.\n");
 }
 
+CCMD(myinfo)
+{
+	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
+	Printf("Target=%s, Health=%d, Spawnhealth=%d\n",
+		players[consoleplayer].mo->GetClass()->TypeName.GetChars(),
+		players[consoleplayer].mo->health,
+		players[consoleplayer].mo->SpawnHealth());
+	PrintMiscActorInfo(players[consoleplayer].mo);
+}
+
 typedef bool (*ActorTypeChecker) (AActor *);
 
 static bool IsActorAMonster(AActor *mo)

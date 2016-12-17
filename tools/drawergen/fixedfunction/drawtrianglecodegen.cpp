@@ -98,7 +98,7 @@ void DrawTriangleCodegen::DrawFullSpans(bool isSimpleShade)
 				stack_posXVarying[j].store(blockPosY.Varying[j]);
 
 			SSAFloat rcpW = SSAFloat((float)0x01000000) / blockPosY.W;
-			stack_lightpos.store(FRACUNIT - SSAInt(SSAFloat::clamp(shade - SSAFloat::MIN(SSAFloat(24.0f), globVis * blockPosY.W) / 32.0f, SSAFloat(0.0f), SSAFloat(31.0f / 32.0f)) * (float)FRACUNIT, true));
+			stack_lightpos.store(FRACUNIT - SSAInt(SSAFloat::clamp(shade - SSAFloat::MIN(SSAFloat(24.0f / 32.0f), globVis * blockPosY.W), SSAFloat(0.0f), SSAFloat(31.0f / 32.0f)) * (float)FRACUNIT, true));
 			for (int j = 0; j < TriVertex::NumVarying; j++)
 				stack_varyingPos[j].store(SSAInt(blockPosY.Varying[j] * rcpW, false));
 			stack_x.store(SSAInt(0));
@@ -127,7 +127,7 @@ void DrawTriangleCodegen::DrawFullSpans(bool isSimpleShade)
 					varyingStep[j] = (nextPos - varyingPos[j]) / 8;
 				}
 
-				SSAInt lightnext = FRACUNIT - SSAInt(SSAFloat::clamp(shade - SSAFloat::MIN(SSAFloat(24.0f), globVis * blockPosX.W) / 32.0f, SSAFloat(0.0f), SSAFloat(31.0f / 32.0f)) * (float)FRACUNIT, true);
+				SSAInt lightnext = FRACUNIT - SSAInt(SSAFloat::clamp(shade - SSAFloat::MIN(SSAFloat(24.0f / 32.0f), globVis * blockPosX.W), SSAFloat(0.0f), SSAFloat(31.0f / 32.0f)) * (float)FRACUNIT, true);
 				SSAInt lightstep = (lightnext - lightpos) / 8;
 
 				if (truecolor)
@@ -231,7 +231,7 @@ void DrawTriangleCodegen::DrawPartialBlocks(bool isSimpleShade)
 				for (int j = 0; j < TriVertex::NumVarying; j++)
 					varyingPos[j] = SSAInt(blockPosX.Varying[j] * rcpW, false);
 
-				SSAInt lightpos = FRACUNIT - SSAInt(SSAFloat::clamp(shade - SSAFloat::MIN(SSAFloat(24.0f), globVis * blockPosX.W) / 32.0f, SSAFloat(0.0f), SSAFloat(31.0f / 32.0f)) * (float)FRACUNIT, true);
+				SSAInt lightpos = FRACUNIT - SSAInt(SSAFloat::clamp(shade - SSAFloat::MIN(SSAFloat(24.0f / 32.0f), globVis * blockPosX.W), SSAFloat(0.0f), SSAFloat(31.0f / 32.0f)) * (float)FRACUNIT, true);
 
 				blockPosX.W = blockPosX.W + gradientX.W * 8.0f;
 				for (int j = 0; j < TriVertex::NumVarying; j++)
@@ -245,7 +245,7 @@ void DrawTriangleCodegen::DrawPartialBlocks(bool isSimpleShade)
 					varyingStep[j] = (nextPos - varyingPos[j]) / 8;
 				}
 
-				SSAInt lightnext = FRACUNIT - SSAInt(SSAFloat::clamp(shade - SSAFloat::MIN(SSAFloat(24.0f), globVis * blockPosX.W) / 32.0f, SSAFloat(0.0f), SSAFloat(31.0f / 32.0f)) * (float)FRACUNIT, true);
+				SSAInt lightnext = FRACUNIT - SSAInt(SSAFloat::clamp(shade - SSAFloat::MIN(SSAFloat(24.0f / 32.0f), globVis * blockPosX.W), SSAFloat(0.0f), SSAFloat(31.0f / 32.0f)) * (float)FRACUNIT, true);
 				SSAInt lightstep = (lightnext - lightpos) / 8;
 
 				for (int x = 0; x < 8; x++)
@@ -613,7 +613,7 @@ void DrawTriangleCodegen::CalculateGradients()
 	}
 
 	shade = (64.0f - (SSAFloat(light * 255 / 256) + 12.0f) * 32.0f / 128.0f) / 32.0f;
-	globVis = SSAFloat(1706.0f);
+	globVis = SSAFloat(1706.0f / 32.0f);
 }
 
 void DrawTriangleCodegen::LoadArgs(SSAValue args, SSAValue thread_data)

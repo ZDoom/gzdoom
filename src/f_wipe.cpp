@@ -28,6 +28,7 @@
 #include "f_wipe.h"
 #include "c_cvars.h"
 #include "templates.h"
+#include "v_palette.h"
 
 //
 //		SCREEN WIPE PACKAGE
@@ -299,12 +300,15 @@ bool wipe_doBurn (int ticks)
 			else
 			{
 				int bglevel = 64-fglevel;
-				DWORD *fg2rgb = Col2RGB8[fglevel];
-				DWORD *bg2rgb = Col2RGB8[bglevel];
-				DWORD fg = fg2rgb[fromnew[x]];
-				DWORD bg = bg2rgb[fromold[x]];
-				fg = (fg+bg) | 0x1f07c1f;
-				to[x] = RGB32k.All[fg & (fg>>15)];
+
+				const PalEntry* pal = GPalette.BaseColors;
+
+				DWORD fg = fromnew[x];
+				DWORD bg = fromold[x];
+				int r = MIN((pal[fg].r * fglevel + pal[bg].r * bglevel) >> 8, 63);
+				int g = MIN((pal[fg].g * fglevel + pal[bg].g * bglevel) >> 8, 63);
+				int b = MIN((pal[fg].b * fglevel + pal[bg].b * bglevel) >> 8, 63);
+				to[x] = RGB256k.RGB[r][g][b];
 				done = false;
 			}
 		}
@@ -342,20 +346,21 @@ bool wipe_doFade (int ticks)
 	{
 		int x, y;
 		int bglevel = 64 - fade;
-		DWORD *fg2rgb = Col2RGB8[fade];
-		DWORD *bg2rgb = Col2RGB8[bglevel];
 		BYTE *fromnew = (BYTE *)wipe_scr_end;
 		BYTE *fromold = (BYTE *)wipe_scr_start;
 		BYTE *to = screen->GetBuffer();
+		const PalEntry *pal = GPalette.BaseColors;
 
 		for (y = 0; y < SCREENHEIGHT; y++)
 		{
 			for (x = 0; x < SCREENWIDTH; x++)
 			{
-				DWORD fg = fg2rgb[fromnew[x]];
-				DWORD bg = bg2rgb[fromold[x]];
-				fg = (fg+bg) | 0x1f07c1f;
-				to[x] = RGB32k.All[fg & (fg>>15)];
+				DWORD fg = fromnew[x];
+				DWORD bg = fromold[x];
+				int r = MIN((pal[fg].r * (64-bglevel) + pal[bg].r * bglevel) >> 8, 63);
+				int g = MIN((pal[fg].g * (64-bglevel) + pal[bg].g * bglevel) >> 8, 63);
+				int b = MIN((pal[fg].b * (64-bglevel) + pal[bg].b * bglevel) >> 8, 63);
+				to[x] = RGB256k.RGB[r][g][b];
 			}
 			fromnew += SCREENWIDTH;
 			fromold += SCREENWIDTH;

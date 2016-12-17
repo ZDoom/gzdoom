@@ -143,8 +143,9 @@ extern "C" {
 DWORD Col2RGB8[65][256];
 DWORD *Col2RGB8_LessPrecision[65];
 DWORD Col2RGB8_Inverse[65][256];
-ColorTable32k RGB32k;
+ColorTable256k RGB256k;
 }
+
 
 static DWORD Col2RGB8_2[63][256];
 
@@ -345,8 +346,6 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 	if (damount == 0.f)
 		return;
 
-	DWORD *bg2rgb;
-	DWORD fg;
 	int gap;
 	BYTE *spot;
 	int x, y;
@@ -368,28 +367,23 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 		return;
 	}
 
-	{
-		int amount;
-
-		amount = (int)(damount * 64);
-		bg2rgb = Col2RGB8[64-amount];
-
-		fg = (((color.r * amount) >> 4) << 20) |
-			  ((color.g * amount) >> 4) |
-			 (((color.b * amount) >> 4) << 10);
-	}
 
 	spot = Buffer + x1 + y1*Pitch;
 	gap = Pitch - w;
+
+	int alpha = (int)((float)64 * damount);
+	int ialpha = 64 - alpha;
+	int dimmedcolor_r = color.r * alpha;
+	int dimmedcolor_g = color.g * alpha;
+	int dimmedcolor_b = color.b * alpha;
 	for (y = h; y != 0; y--)
 	{
 		for (x = w; x != 0; x--)
 		{
-			DWORD bg;
-
-			bg = bg2rgb[(*spot)&0xff];
-			bg = (fg+bg) | 0x1f07c1f;
-			*spot = RGB32k.All[bg&(bg>>15)];
+			uint32_t r = (dimmedcolor_r + GPalette.BaseColors[*spot].r * ialpha) >> 8;
+			uint32_t g = (dimmedcolor_g + GPalette.BaseColors[*spot].g * ialpha) >> 8;
+			uint32_t b = (dimmedcolor_b + GPalette.BaseColors[*spot].b * ialpha) >> 8;
+			*spot = (BYTE)RGB256k.RGB[r][g][b];
 			spot++;
 		}
 		spot += gap;
@@ -664,42 +658,12 @@ static void BuildTransTable (const PalEntry *palette)
 {
 	int r, g, b;
 
-	// create the RGB555 lookup table
-	for (r = 0; r < 32; r++)
-		for (g = 0; g < 32; g++)
-			for (b = 0; b < 32; b++)
-				RGB32k.RGB[r][g][b] = ColorMatcher.Pick ((r<<3)|(r>>2), (g<<3)|(g>>2), (b<<3)|(b>>2));
+	// create the RGB666 lookup table
+	for (r = 0; r < 64; r++)
+		for (g = 0; g < 64; g++)
+			for (b = 0; b < 64; b++)
+				RGB256k.RGB[r][g][b] = ColorMatcher.Pick ((r<<2)|(r>>4), (g<<2)|(g>>4), (b<<2)|(b>>4));
 
-	int x, y;
-
-	// create the swizzled palette
-	for (x = 0; x < 65; x++)
-		for (y = 0; y < 256; y++)
-			Col2RGB8[x][y] = (((palette[y].r*x)>>4)<<20) |
-							  ((palette[y].g*x)>>4) |
-							 (((palette[y].b*x)>>4)<<10);
-
-	// create the swizzled palette with the lsb of red and blue forced to 0
-	// (for green, a 1 is okay since it never gets added into)
-	for (x = 1; x < 64; x++)
-	{
-		Col2RGB8_LessPrecision[x] = Col2RGB8_2[x-1];
-		for (y = 0; y < 256; y++)
-		{
-			Col2RGB8_2[x-1][y] = Col2RGB8[x][y] & 0x3feffbff;
-		}
-	}
-	Col2RGB8_LessPrecision[0] = Col2RGB8[0];
-	Col2RGB8_LessPrecision[64] = Col2RGB8[64];
-
-	// create the inverse swizzled palette
-	for (x = 0; x < 65; x++)
-		for (y = 0; y < 256; y++)
-		{
-			Col2RGB8_Inverse[x][y] = (((((255-palette[y].r)*x)>>4)<<20) |
-									  (((255-palette[y].g)*x)>>4) |
-									  ((((255-palette[y].b)*x)>>4)<<10)) & 0x3feffbff;
-		}
 }
 
 //==========================================================================

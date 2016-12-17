@@ -965,27 +965,6 @@ void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 	static int oldyy;
 	static int oldyyshifted;
 
-#if 0
-	if(xx < 32)
-		cc += 7-(xx>>2);
-	else if(xx > (finit_width - 32))
-		cc += 7-((finit_width-xx) >> 2);
-//	if(cc==oldcc) //make sure that we don't double fade the corners.
-//	{
-		if(yy < 32)
-			cc += 7-(yy>>2);
-		else if(yy > (finit_height - 32))
-			cc += 7-((finit_height-yy) >> 2);
-//	}
-	if(cc > cm && cm != NULL)
-	{
-		cc = cm;
-	}
-	else if(cc > oldcc+6) // don't let the color escape from the fade table...
-	{
-		cc=oldcc+6;
-	}
-#endif
 	if (yy == oldyy+1)
 	{
 		oldyy++;
@@ -1003,12 +982,12 @@ void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 	}
 
 	BYTE *spot = GetBuffer() + oldyyshifted + xx;
-	DWORD *bg2rgb = Col2RGB8[1+level];
-	DWORD *fg2rgb = Col2RGB8[63-level];
-	DWORD fg = fg2rgb[basecolor];
-	DWORD bg = bg2rgb[*spot];
-	bg = (fg+bg) | 0x1f07c1f;
-	*spot = RGB32k.All[bg&(bg>>15)];
+
+	uint32_t r = (GPalette.BaseColors[*spot].r * (64 - level) + GPalette.BaseColors[basecolor].r * level) / 64;
+	uint32_t g = (GPalette.BaseColors[*spot].g * (64 - level) + GPalette.BaseColors[basecolor].g * level) / 64;
+	uint32_t b = (GPalette.BaseColors[*spot].b * (64 - level) + GPalette.BaseColors[basecolor].b * level) / 64;
+
+	*spot = (BYTE)RGB256k.RGB[r][g][b];
 }
 
 void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor)

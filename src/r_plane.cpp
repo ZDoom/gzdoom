@@ -1509,14 +1509,14 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 				if (!additive)
 				{
 					spanfunc = R_DrawSpanMaskedTranslucent;
-					dc_srcblend = Col2RGB8[alpha>>10];
-					dc_destblend = Col2RGB8[(OPAQUE-alpha)>>10];
+					dc_srcalpha = alpha;
+					dc_destalpha = OPAQUE-alpha;
 				}
 				else
 				{
 					spanfunc = R_DrawSpanMaskedAddClamp;
-					dc_srcblend = Col2RGB8_LessPrecision[alpha>>10];
-					dc_destblend = Col2RGB8_LessPrecision[FRACUNIT>>10];
+					dc_srcalpha = alpha;
+					dc_destalpha = FRACUNIT;
 				}
 			}
 			else
@@ -1531,14 +1531,14 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 				if (!additive)
 				{
 					spanfunc = R_DrawSpanTranslucent;
-					dc_srcblend = Col2RGB8[alpha>>10];
-					dc_destblend = Col2RGB8[(OPAQUE-alpha)>>10];
+					dc_srcalpha = alpha;
+					dc_destalpha = OPAQUE-alpha;
 				}
 				else
 				{
 					spanfunc = R_DrawSpanAddClamp;
-					dc_srcblend = Col2RGB8_LessPrecision[alpha>>10];
-					dc_destblend = Col2RGB8_LessPrecision[FRACUNIT>>10];
+					dc_srcalpha = alpha;
+					dc_destalpha = FRACUNIT;
 				}
 			}
 			else

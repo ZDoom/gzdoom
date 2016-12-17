@@ -203,5 +203,4 @@ namespace swrenderer
 
 	void R_MapTiltedPlane(int y, int x1);
 	void R_MapColoredPlane(int y, int x1);
-	void R_DrawParticle(vissprite_t *);
 }

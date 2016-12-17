@@ -256,8 +256,23 @@ double	 		sprtopscreen;
 
 bool			sprflipvert;
 
-void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span, bool useRt)
+void R_DrawMaskedColumn (FTexture *tex, fixed_t col, bool useRt, bool unmasked)
 {
+	const FTexture::Span *span;
+	const BYTE *column;
+
+	column = tex->GetColumn(col >> FRACBITS, &span);
+
+	FTexture::Span unmaskedSpan[2];
+	if (unmasked)
+	{
+		span = unmaskedSpan;
+		unmaskedSpan[0].TopOffset = 0;
+		unmaskedSpan[0].Length = tex->GetHeight();
+		unmaskedSpan[1].TopOffset = 0;
+		unmaskedSpan[1].Length = 0;
+	}
+
 	while (span->Length != 0)
 	{
 		const int length = span->Length;
@@ -377,8 +392,6 @@ static inline bool R_ClipSpriteColumnWithPortals(vissprite_t* spr)
 //
 void R_DrawVisSprite (vissprite_t *vis)
 {
-	const BYTE *pixels;
-	const FTexture::Span *spans;
 	fixed_t 		frac;
 	FTexture		*tex;
 	int				x2, stop4;
@@ -392,7 +405,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 	}
 
 	fixed_t centeryfrac = FLOAT2FIXED(CenterY);
-	dc_colormap = vis->Style.colormap;
+	R_SetColorMapLight(vis->Style.colormap, 0.0f, 0);
 
 	mode = R_SetPatchStyle (vis->Style.RenderStyle, vis->Style.Alpha, vis->Translation, vis->FillColor);
 
@@ -400,7 +413,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 	{ // For shaded sprites, R_SetPatchStyle sets a dc_colormap to an alpha table, but
 	  // it is the brightest one. We need to get back to the proper light level for
 	  // this sprite.
-		dc_colormap += vis->ColormapNum << COLORMAPSHIFT;
+		R_SetColorMapLight(dc_colormap, 0, vis->ColormapNum << FRACBITS);
 	}
 
 	if (mode != DontDraw)
@@ -445,21 +458,19 @@ void R_DrawVisSprite (vissprite_t *vis)
 		{
 			while ((dc_x < stop4) && (dc_x & 3))
 			{
-				pixels = tex->GetColumn (frac >> FRACBITS, &spans);
 				if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-					R_DrawMaskedColumn (pixels, spans, false);
+					R_DrawMaskedColumn (tex, frac, false);
 				dc_x++;
 				frac += xiscale;
 			}
 
 			while (dc_x < stop4)
 			{
-				rt_initcols();
+				rt_initcols(nullptr);
 				for (int zz = 4; zz; --zz)
 				{
-					pixels = tex->GetColumn (frac >> FRACBITS, &spans);
 					if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-						R_DrawMaskedColumn (pixels, spans, true);
+						R_DrawMaskedColumn (tex, frac, true);
 					dc_x++;
 					frac += xiscale;
 				}
@@ -468,9 +479,8 @@ void R_DrawVisSprite (vissprite_t *vis)
 
 			while (dc_x < x2)
 			{
-				pixels = tex->GetColumn (frac >> FRACBITS, &spans);
 				if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-					R_DrawMaskedColumn (pixels, spans, false);
+					R_DrawMaskedColumn (tex, frac, false);
 				dc_x++;
 				frac += xiscale;
 			}
@@ -522,11 +532,11 @@ void R_DrawWallSprite(vissprite_t *spr)
 	rw_lightstep = float((GlobVis / spr->wallc.sz2 - rw_lightleft) / (spr->wallc.sx2 - spr->wallc.sx1));
 	rw_light = rw_lightleft + (x1 - spr->wallc.sx1) * rw_lightstep;
 	if (fixedlightlev >= 0)
-		dc_colormap = usecolormap->Maps + fixedlightlev;
+		R_SetColorMapLight(usecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
-		dc_colormap = fixedcolormap;
+		R_SetColorMapLight(fixedcolormap, 0, 0);
 	else if (!foggy && (spr->renderflags & RF_FULLBRIGHT))
-		dc_colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : usecolormap->Maps;
+		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, 0);
 	else
 		calclighting = true;
 
@@ -577,7 +587,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 		{
 			if (calclighting)
 			{ // calculate lighting
-				dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, shade) << COLORMAPSHIFT);
+				R_SetColorMapLight(usecolormap, rw_light, shade);
 			}
 			if (!R_ClipSpriteColumnWithPortals(spr))
 				R_WallSpriteColumn(false);
@@ -588,9 +598,9 @@ void R_DrawWallSprite(vissprite_t *spr)
 		{
 			if (calclighting)
 			{ // calculate lighting
-				dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, shade) << COLORMAPSHIFT);
+				R_SetColorMapLight(usecolormap, rw_light, shade);
 			}
-			rt_initcols();
+			rt_initcols(nullptr);
 			for (int zz = 4; zz; --zz)
 			{
 				if (!R_ClipSpriteColumnWithPortals(spr))
@@ -604,7 +614,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 		{
 			if (calclighting)
 			{ // calculate lighting
-				dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, shade) << COLORMAPSHIFT);
+				R_SetColorMapLight(usecolormap, rw_light, shade);
 			}
 			if (!R_ClipSpriteColumnWithPortals(spr))
 				R_WallSpriteColumn(false);
@@ -624,11 +634,8 @@ void R_WallSpriteColumn (bool useRt)
 	else
 		sprtopscreen = CenterY - dc_texturemid * spryscale;
 
-	const BYTE *column;
-	const FTexture::Span *spans;
-	column = WallSpriteTile->GetColumn (lwall[dc_x] >> FRACBITS, &spans);
 	dc_texturefrac = 0;
-	R_DrawMaskedColumn(column, spans, useRt);
+	R_DrawMaskedColumn(WallSpriteTile, lwall[dc_x], useRt);
 	rw_light += rw_lightstep;
 }
 
@@ -638,7 +645,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 	int flags = 0;
 
 	// Do setup for blending.
-	dc_colormap = spr->Style.colormap;
+	R_SetColorMapLight(spr->Style.colormap, 0.0f, 0);
 	mode = R_SetPatchStyle(spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
 
 	if (mode == DontDraw)
@@ -689,10 +696,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 				}
 				else
 				{
-					unsigned int **tspan = &dc_ctspan[x & 3];
-					(*tspan)[0] = span->Start;
-					(*tspan)[1] = span->Stop - 1;
-					*tspan += 2;
+					rt_span_coverage(x, span->Start, span->Stop - 1);
 				}
 			}
 			if (!(flags & DVF_SPANSONLY) && (x & 3) == 3)
@@ -2044,7 +2048,7 @@ void R_DrawSprite (vissprite_t *spr)
 			else
 			{ // diminished light
 				spriteshade = LIGHT2SHADE(sec->lightlevel + r_actualextralight);
-				spr->Style.colormap = mybasecolormap->Maps + (GETPALOOKUP (
+				spr->Style.colormap = mybasecolormap->Maps + (GETPALOOKUP(
 					r_SpriteVisibility / MAX(MINZ, (double)spr->depth), spriteshade) << COLORMAPSHIFT);
 			}
 		}
@@ -3237,12 +3241,12 @@ void R_CheckOffscreenBuffer(int width, int height, bool spansonly)
 	{
 		if (OffscreenColorBuffer == NULL)
 		{
-			OffscreenColorBuffer = new BYTE[width * height];
+			OffscreenColorBuffer = new BYTE[width * height * 4];
 		}
 		else if (OffscreenBufferWidth != width || OffscreenBufferHeight != height)
 		{
 			delete[] OffscreenColorBuffer;
-			OffscreenColorBuffer = new BYTE[width * height];
+			OffscreenColorBuffer = new BYTE[width * height * 4];
 		}
 	}
 	OffscreenBufferWidth = width;

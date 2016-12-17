@@ -128,7 +128,7 @@ extern double			pspriteyscale;
 extern FTexture			*WallSpriteTile;
 
 
-void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *spans, bool useRt);
+void R_DrawMaskedColumn (FTexture *texture, fixed_t column, bool useRt, bool unmasked = false);
 void R_WallSpriteColumn (bool useRt);
 
 void R_CacheSprite (spritedef_t *sprite);

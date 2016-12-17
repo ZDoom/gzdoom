@@ -192,7 +192,9 @@ namespace swrenderer
 	void R_DrawDoubleSkyCol4(uint32_t solid_top, uint32_t solid_bottom);
 
 	void R_SetColorMapLight(lighttable_t *base_colormap, float light, int shade);
+	void R_SetColorMapLight(FDynamicColormap *base_colormap, float light, int shade);
 	void R_SetDSColorMapLight(lighttable_t *base_colormap, float light, int shade);
+	void R_SetDSColorMapLight(FDynamicColormap *base_colormap, float light, int shade);
 	void R_SetTranslationMap(lighttable_t *translation);
 
 	void R_SetupSpanBits(FTexture *tex);

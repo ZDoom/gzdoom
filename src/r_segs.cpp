@@ -44,6 +44,7 @@
 #include "r_plane.h"
 #include "r_segs.h"
 #include "r_3dfloors.h"
+#include "r_draw.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 
@@ -53,8 +54,9 @@
 CVAR(Bool, r_fogboundary, true, 0)
 CVAR(Bool, r_drawmirrors, true, 0)
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
+EXTERN_CVAR(Bool, r_mipmap)
 
-namespace swrenderer
+namespace swrenderer       
 {
 	using namespace drawerargs;
 
@@ -156,7 +158,7 @@ static void BlastMaskedColumn (FTexture *tex, bool useRt)
 	// calculate lighting
 	if (fixedcolormap == NULL && fixedlightlev < 0)
 	{
-		dc_colormap = basecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+		R_SetColorMapLight(basecolormap, rw_light, wallshade);
 	}
 
 	dc_iscale = xs_Fix<16>::ToFix(MaskedSWall[dc_x] * MaskedScaleY);
@@ -174,9 +176,7 @@ static void BlastMaskedColumn (FTexture *tex, bool useRt)
 	// when forming multipatched textures (see r_data.c).
 
 	// draw the texture
-	const FTexture::Span *spans;
-	const BYTE *pixels = tex->GetColumn (maskedtexturecol[dc_x] >> FRACBITS, &spans);
-	R_DrawMaskedColumn(pixels, spans, useRt);
+	R_DrawMaskedColumn(tex, maskedtexturecol[dc_x], useRt);
 	rw_light += rw_lightstep;
 	spryscale += rw_scalestep;
 }
@@ -292,9 +292,9 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	rw_scalestep = ds->iscalestep;
 
 	if (fixedlightlev >= 0)
-		dc_colormap = (r_fullbrightignoresectorcolor) ? (FullNormalLight.Maps + fixedlightlev) : (basecolormap->Maps + fixedlightlev);
+		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
-		dc_colormap = fixedcolormap;
+		R_SetColorMapLight(fixedcolormap, 0, 0);
 
 	// find positioning
 	texheight = tex->GetScaledHeightDouble();
@@ -440,7 +440,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 			while (dc_x < stop)
 			{
-				rt_initcols();
+				rt_initcols(nullptr);
 				BlastMaskedColumn (tex, true); dc_x++;
 				BlastMaskedColumn (tex, true); dc_x++;
 				BlastMaskedColumn (tex, true); dc_x++;
@@ -609,9 +609,9 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	}
 
 	if (fixedlightlev >= 0)
-		dc_colormap = (r_fullbrightignoresectorcolor) ? (FullNormalLight.Maps + fixedlightlev) : (basecolormap->Maps + fixedlightlev);
+		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
-		dc_colormap = fixedcolormap;
+		R_SetColorMapLight(fixedcolormap, 0, 0);
 
 	WallC.sz1 = ds->sz1;
 	WallC.sz2 = ds->sz2;
@@ -1061,9 +1061,9 @@ void R_RenderSegLoop ()
 	fixed_t xoffset = rw_offset;
 
 	if (fixedlightlev >= 0)
-		dc_colormap = (r_fullbrightignoresectorcolor) ? (FullNormalLight.Maps + fixedlightlev) : (basecolormap->Maps + fixedlightlev);
+		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
-		dc_colormap = fixedcolormap;
+		R_SetColorMapLight(fixedcolormap, 0, 0);
 
 	// clip wall to the floor and ceiling
 	for (x = x1; x < x2; ++x)
@@ -2304,11 +2304,11 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 
 	rw_light = rw_lightleft + (x1 - savecoord.sx1) * rw_lightstep;
 	if (fixedlightlev >= 0)
-		dc_colormap = (r_fullbrightignoresectorcolor) ? (FullNormalLight.Maps + fixedlightlev) : (usecolormap->Maps + fixedlightlev);
+		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
-		dc_colormap = fixedcolormap;
+		R_SetColorMapLight(fixedcolormap, 0, 0);
 	else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
-		dc_colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : usecolormap->Maps;
+		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : usecolormap, 0, 0);
 	else
 		calclighting = true;
 
@@ -2359,7 +2359,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+					R_SetColorMapLight(usecolormap, rw_light, wallshade);
 				}
 				R_WallSpriteColumn (false);
 				dc_x++;
@@ -2369,9 +2369,9 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+					R_SetColorMapLight(usecolormap, rw_light, wallshade);
 				}
-				rt_initcols();
+				rt_initcols(nullptr);
 				for (int zz = 4; zz; --zz)
 				{
 					R_WallSpriteColumn (true);
@@ -2384,7 +2384,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+					R_SetColorMapLight(usecolormap, rw_light, wallshade);
 				}
 				R_WallSpriteColumn (false);
 				dc_x++;

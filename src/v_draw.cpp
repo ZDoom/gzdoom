@@ -135,19 +135,8 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	using namespace swrenderer;
 	using namespace drawerargs;
 
-	FTexture::Span unmaskedSpan[2];
-	const FTexture::Span **spanptr, *spans;
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
 	const BYTE *translation = NULL;
-
-	if (parms.masked)
-	{
-		spanptr = &spans;
-	}
-	else
-	{
-		spanptr = NULL;
-	}
 
 	if (APART(parms.colorOverlay) != 0)
 	{
@@ -198,17 +187,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 	if (mode != DontDraw)
 	{
-		const BYTE *pixels;
 		int stop4;
-
-		if (spanptr == NULL)
-		{ // Create a single span for forced unmasked images
-			spans = unmaskedSpan;
-			unmaskedSpan[0].TopOffset = 0;
-			unmaskedSpan[0].Length = img->GetHeight();
-			unmaskedSpan[1].TopOffset = 0;
-			unmaskedSpan[1].Length = 0;
-		}
 
 		double centeryback = CenterY;
 		CenterY = 0;
@@ -301,8 +280,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 		{
 			while ((dc_x < stop4) && (dc_x & 3))
 			{
-				pixels = img->GetColumn(frac >> FRACBITS, spanptr);
-				R_DrawMaskedColumn(pixels, spans, false);
+				R_DrawMaskedColumn(img, frac, false, !parms.masked);
 				dc_x++;
 				frac += xiscale_i;
 			}
@@ -312,8 +290,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 				rt_initcols();
 				for (int zz = 4; zz; --zz)
 				{
-					pixels = img->GetColumn(frac >> FRACBITS, spanptr);
-					R_DrawMaskedColumn(pixels, spans, true);
+					R_DrawMaskedColumn(img, frac, true, !parms.masked);
 					dc_x++;
 					frac += xiscale_i;
 				}
@@ -322,8 +299,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 			while (dc_x < x2_i)
 			{
-				pixels = img->GetColumn(frac >> FRACBITS, spanptr);
-				R_DrawMaskedColumn(pixels, spans, false);
+				R_DrawMaskedColumn(img, frac, false, !parms.masked);
 				dc_x++;
 				frac += xiscale_i;
 			}

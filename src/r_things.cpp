@@ -2632,7 +2632,9 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 	}
 }
 
-void R_DrawParticle_C (vissprite_t *vis)
+//inline int clamp(int x, int y, int z) { return ((x < y) ? x : (z < y) ? z : y); }
+
+void R_DrawParticle (vissprite_t *vis)
 {
 	int spacing;
 	BYTE *dest;
@@ -2666,9 +2668,9 @@ void R_DrawParticle_C (vissprite_t *vis)
 		dest = ylookup[yl] + x + dc_destorg;
 		for (int y = 0; y < ycount; y++)
 		{
-			int dest_r = (GPalette.BaseColors[*dest].r * bglevel + GPalette.BaseColors[color].r * fglevel) >> 10;
-			int dest_g = (GPalette.BaseColors[*dest].g * bglevel + GPalette.BaseColors[color].g * fglevel) >> 10;
-			int dest_b = (GPalette.BaseColors[*dest].b * bglevel + GPalette.BaseColors[color].b * fglevel) >> 10;
+			uint32_t dest_r = MIN((GPalette.BaseColors[*dest].r * bglevel + GPalette.BaseColors[color].r * fglevel) >> 18, 63);
+			uint32_t dest_g = MIN((GPalette.BaseColors[*dest].g * bglevel + GPalette.BaseColors[color].g * fglevel) >> 18, 63);
+			uint32_t dest_b = MIN((GPalette.BaseColors[*dest].b * bglevel + GPalette.BaseColors[color].b * fglevel) >> 18, 63);
 
 			*dest = RGB256k.RGB[dest_r][dest_g][dest_b];
 			dest += spacing;

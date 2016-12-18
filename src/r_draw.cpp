@@ -1352,8 +1352,4 @@ namespace swrenderer
 		}
 	}
 
-	void R_DrawParticle(vissprite_t *sprite)
-	{
-		R_DrawParticle_C(sprite);
-	}
 }

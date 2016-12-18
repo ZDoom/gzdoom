@@ -303,6 +303,8 @@ namespace swrenderer
 		const uint32_t *_srcblend;
 		const uint32_t *_destblend;
 		const uint8_t *_translation;
+		fixed_t _srcalpha;
+		fixed_t _destalpha;
 		int _color;
 	};
 

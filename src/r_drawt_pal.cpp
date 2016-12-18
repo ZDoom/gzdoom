@@ -446,14 +446,15 @@ namespace swrenderer
 		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4 + hx];
 		pitch = _pitch * thread->num_cores;
 		colormap = _colormap;
+		const PalEntry *palette = GPalette.BaseColors;
 
 		do {
 			uint32_t fg = colormap[*source];
 			uint32_t bg = *dest;
 
-			int r = MIN((GPalette.BaseColors[fg].r * _srcalpha + GPalette.BaseColors[bg].r * _destalpha)>>18, 63);
-			int g = MIN((GPalette.BaseColors[fg].g * _srcalpha + GPalette.BaseColors[bg].g * _destalpha)>>18, 63);
-			int b = MIN((GPalette.BaseColors[fg].b * _srcalpha + GPalette.BaseColors[bg].b * _destalpha)>>18, 63);
+			int r = MIN((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 63);
+			int g = MIN((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 63);
+			int b = MIN((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 63);
 			*dest = RGB256k.RGB[r][g][b];
 			source += 4;
 			dest += pitch;
@@ -476,15 +477,16 @@ namespace swrenderer
 		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4];
 		pitch = _pitch * thread->num_cores;
 		colormap = _colormap;
+		const PalEntry *palette = GPalette.BaseColors;
 
 		do {
 			for (int ks = 0; ks < 4; ks++)
 			{	// [SP] this 4col function was a block of copy-pasted code. 4 times. I regret nothing.
 				uint32_t fg = colormap[source[ks]];
 				uint32_t bg = dest[ks];
-				int r = MIN((GPalette.BaseColors[fg].r * _srcalpha + GPalette.BaseColors[bg].r * _destalpha)>>18, 63);
-				int g = MIN((GPalette.BaseColors[fg].g * _srcalpha + GPalette.BaseColors[bg].g * _destalpha)>>18, 63);
-				int b = MIN((GPalette.BaseColors[fg].b * _srcalpha + GPalette.BaseColors[bg].b * _destalpha)>>18, 63);
+				int r = MIN((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 63);
+				int g = MIN((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 63);
+				int b = MIN((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 63);
 				dest[ks] = RGB256k.RGB[r][g][b];
 			}
 
@@ -511,13 +513,14 @@ namespace swrenderer
 		dest = ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg;
 		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4 + hx];
 		pitch = _pitch * thread->num_cores;
+		const PalEntry *palette = GPalette.BaseColors;
 
 		do {
 			uint32_t val = *source;
-			int r = (GPalette.BaseColors[*dest].r * (63-val) + GPalette.BaseColors[_color].r * val) >> 8;
-			int g = (GPalette.BaseColors[*dest].g * (63-val) + GPalette.BaseColors[_color].g * val) >> 8;
-			int b = (GPalette.BaseColors[*dest].b * (63-val) + GPalette.BaseColors[_color].b * val) >> 8;
-			*dest = RGB256k.RGB[MIN(r,63)][MIN(g,63)][MIN(b,63)];
+			int r = (palette[*dest].r * (255-val)) >> 10;
+			int g = (palette[*dest].g * (255-val)) >> 10;
+			int b = (palette[*dest].b * (255-val)) >> 10;
+			*dest = RGB256k.RGB[clamp(r,0,63)][clamp(g,0,63)][clamp(b,0,63)];
 			source += 4;
 			dest += pitch;
 		} while (--count);
@@ -541,6 +544,7 @@ namespace swrenderer
 		dest = ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg;
 		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4];
 		pitch = _pitch * thread->num_cores;
+		const PalEntry *palette = GPalette.BaseColors;
 
 		do {
 			uint32_t val;
@@ -548,10 +552,10 @@ namespace swrenderer
 			for (int ks = 0; ks < 4; ks++)
 			{
 				val = source[ks];
-				int r = (GPalette.BaseColors[dest[ks]].r * (63-val) + GPalette.BaseColors[_color].r * val) >> 8;
-				int g = (GPalette.BaseColors[dest[ks]].g * (63-val) + GPalette.BaseColors[_color].g * val) >> 8;
-				int b = (GPalette.BaseColors[dest[ks]].b * (63-val) + GPalette.BaseColors[_color].b * val) >> 8;
-				dest[ks] = RGB256k.RGB[MIN(r,63)][MIN(g,63)][MIN(b,63)];
+				int r = (palette[dest[ks]].r * (255-val)) >> 10;
+				int g = (palette[dest[ks]].g * (255-val)) >> 10;
+				int b = (palette[dest[ks]].b * (255-val)) >> 10;
+				dest[ks] = RGB256k.RGB[clamp(r,0,63)][clamp(g,0,63)][clamp(b,0,63)];
 			}
 
 			source += 4;
@@ -575,13 +579,14 @@ namespace swrenderer
 		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4 + hx];
 		pitch = _pitch * thread->num_cores;
 		colormap = _colormap;
+		const PalEntry *palette = GPalette.BaseColors;
 
 		do {
 			int fg = *source;
 			int bg = *dest;
-			int r = MIN((GPalette.BaseColors[fg].r * _srcalpha + GPalette.BaseColors[bg].r * _destalpha)>>18, 63);
-			int g = MIN((GPalette.BaseColors[fg].g * _srcalpha + GPalette.BaseColors[bg].g * _destalpha)>>18, 63);
-			int b = MIN((GPalette.BaseColors[fg].b * _srcalpha + GPalette.BaseColors[bg].b * _destalpha)>>18, 63);
+			int r = MIN((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 63);
+			int g = MIN((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 63);
+			int b = MIN((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 63);
 			*dest = RGB256k.RGB[r][g][b];
 			source += 4;
 			dest += pitch;
@@ -604,15 +609,16 @@ namespace swrenderer
 		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4];
 		pitch = _pitch * thread->num_cores;
 		colormap = _colormap;
+		const PalEntry *palette = GPalette.BaseColors;
 
 		do {
 			for (int ks = 0; ks < 4; ks++)
 			{
 				int fg = source[ks];
 				int bg = dest[ks];
-				int r = MIN((GPalette.BaseColors[fg].r * _srcalpha + GPalette.BaseColors[bg].r * _destalpha)>>18, 63);
-				int g = MIN((GPalette.BaseColors[fg].g * _srcalpha + GPalette.BaseColors[bg].g * _destalpha)>>18, 63);
-				int b = MIN((GPalette.BaseColors[fg].b * _srcalpha + GPalette.BaseColors[bg].b * _destalpha)>>18, 63);
+				int r = MIN((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 63);
+				int g = MIN((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 63);
+				int b = MIN((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 63);
 				dest[ks] = RGB256k.RGB[r][g][b];
 			}
 
@@ -639,16 +645,15 @@ namespace swrenderer
 		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4 + hx];
 		pitch = _pitch * thread->num_cores;
 		colormap = _colormap;
+		const PalEntry *palette = GPalette.BaseColors;
 
 		do {
-			uint32_t a = (fg2rgb[colormap[*source]] | 0x40100400) - bg2rgb[*dest];
-			uint32_t b = a;
-
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[(a>>15) & a];
+			int fg = *source;
+			int bg = *dest;
+			int r = MAX((palette[fg].r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
+			int g = MAX((palette[fg].g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
+			int b = MAX((palette[fg].b * _srcalpha - palette[bg].b * _destalpha)>>18, 0);
+			*dest = RGB256k.RGB[r][g][b];
 			source += 4;
 			dest += pitch;
 		} while (--count);
@@ -672,40 +677,18 @@ namespace swrenderer
 		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4];
 		pitch = _pitch * thread->num_cores;
 		colormap = _colormap;
+		const PalEntry *palette = GPalette.BaseColors;
 
 		do {
-			uint32_t a = (fg2rgb[colormap[source[0]]] | 0x40100400) - bg2rgb[dest[0]];
-			uint32_t b = a;
-
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			dest[0] = RGB32k.All[(a>>15) & a];
-
-			a = (fg2rgb[colormap[source[1]]] | 0x40100400) - bg2rgb[dest[1]];
-			b = a;
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			dest[1] = RGB32k.All[(a>>15) & a];
-
-			a = (fg2rgb[colormap[source[2]]] | 0x40100400) - bg2rgb[dest[2]];
-			b = a;
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			dest[2] = RGB32k.All[(a>>15) & a];
-
-			a = (fg2rgb[colormap[source[3]]] | 0x40100400) - bg2rgb[dest[3]];
-			b = a;
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			dest[3] = RGB32k.All[(a>>15) & a];
+			for (int ks = 0; ks < 4; ks++)
+			{
+				int fg = source[ks];
+				int bg = dest[ks];
+				int r = MAX((palette[fg].r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
+				int g = MAX((palette[fg].g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
+				int b = MAX((palette[fg].b * _srcalpha - palette[bg].b * _destalpha)>>18, 0);
+				dest[ks] = RGB256k.RGB[r][g][b];
+			}
 
 			source += 4;
 			dest += pitch;
@@ -730,16 +713,15 @@ namespace swrenderer
 		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4 + hx];
 		pitch = _pitch * thread->num_cores;
 		colormap = _colormap;
+		const PalEntry *palette = GPalette.BaseColors;
 
 		do {
-			uint32_t a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[*source]];
-			uint32_t b = a;
-
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[(a>>15) & a];
+			int fg = *source;
+			int bg = *dest;
+			int r = MAX((-palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+			int g = MAX((-palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+			int b = MAX((-palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+			*dest = RGB256k.RGB[r][g][b];
 			source += 4;
 			dest += pitch;
 		} while (--count);
@@ -763,40 +745,18 @@ namespace swrenderer
 		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4];
 		pitch = _pitch * thread->num_cores;
 		colormap = _colormap;
+		const PalEntry *palette = GPalette.BaseColors;
 
 		do {
-			uint32_t a = (bg2rgb[dest[0]] | 0x40100400) - fg2rgb[colormap[source[0]]];
-			uint32_t b = a;
-
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			dest[0] = RGB32k.All[(a>>15) & a];
-
-			a = (bg2rgb[dest[1]] | 0x40100400) - fg2rgb[colormap[source[1]]];
-			b = a;
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			dest[1] = RGB32k.All[(a>>15) & a];
-
-			a = (bg2rgb[dest[2]] | 0x40100400) - fg2rgb[colormap[source[2]]];
-			b = a;
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			dest[2] = RGB32k.All[(a>>15) & a];
-
-			a = (bg2rgb[dest[3]] | 0x40100400) - fg2rgb[colormap[source[3]]];
-			b = a;
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			dest[3] = RGB32k.All[(a>>15) & a];
+			for (int ks = 0; ks < 4; ks++)
+			{
+				int fg = source[ks];
+				int bg = dest[ks];
+				int r = MAX((-palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+				int g = MAX((-palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+				int b = MAX((-palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+				dest[ks] = RGB256k.RGB[r][g][b];
+			}
 
 			source += 4;
 			dest += pitch;

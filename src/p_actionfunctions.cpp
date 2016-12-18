@@ -6852,13 +6852,27 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetSize)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(newradius);
 	PARAM_FLOAT_DEF(newheight);
+	PARAM_BOOL_DEF(testpos);
 
 	if (newradius < 0.)		newradius = self->radius;
 	if (newheight < 0.)		newheight = self->Height;
+
+	double oldradius = self->radius;
+	double oldheight = self->Height;
 
 	self->UnlinkFromWorld();
 	self->radius = newradius;
 	self->Height = newheight;
 	self->LinkToWorld();
-	return 0;
+
+	if (testpos && !P_TestMobjLocation(self))
+	{
+		self->UnlinkFromWorld();
+		self->radius = oldradius;
+		self->Height = oldheight;
+		self->LinkToWorld();
+		ACTION_RETURN_BOOL(false);
+	}
+
+	ACTION_RETURN_BOOL(true);
 }

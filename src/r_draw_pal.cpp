@@ -1187,9 +1187,9 @@ namespace swrenderer
 		int _srcalpha = 32768, _destalpha = 32768;
 		do
 		{
-			int src_r = ((_srccolor << 3) & 0x78) * _srcalpha;
-			int src_g = ((_srccolor >> 17) & 0x78) * _srcalpha;
-			int src_b = ((_srccolor >> 7) & 0x78) * _srcalpha;
+			int src_r = ((_srccolor >> 16) & 0xff) * _srcalpha;
+			int src_g = ((_srccolor >> 0) & 0xff) * _srcalpha;
+			int src_b = ((_srccolor >> 8) & 0xff) * _srcalpha;
 			int r = clamp((src_r + pal[*dest].r * _destalpha)>>18, 0, 255);
 			int g = clamp((src_g + pal[*dest].g * _destalpha)>>18, 0, 255);
 			int b = clamp((src_b + pal[*dest].b * _destalpha)>>18, 0, 255);
@@ -1221,12 +1221,17 @@ namespace swrenderer
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		pitch *= thread->num_cores;
 
+		const PalEntry* pal = GPalette.BaseColors;
+		int _srcalpha = 32768, _destalpha = 32768;
+
 		do
 		{
-			const PalEntry* pal = GPalette.BaseColors;
-			int r = clamp(pal[*dest].r + pal[fg].r, 0, 255) >> 2;
-			int g = clamp(pal[*dest].g + pal[fg].g, 0, 255) >> 2;
-			int b = clamp(pal[*dest].b + pal[fg].b, 0, 255) >> 2;
+			int src_r = ((_srccolor >> 16) & 0xff) * _srcalpha;
+			int src_g = ((_srccolor >> 0) & 0xff) * _srcalpha;
+			int src_b = ((_srccolor >> 8) & 0xff) * _srcalpha;
+			int r = clamp((src_r + pal[*dest].r * _destalpha)>>18, 0, 255);
+			int g = clamp((src_g + pal[*dest].g * _destalpha)>>18, 0, 255);
+			int b = clamp((src_b + pal[*dest].b * _destalpha)>>18, 0, 255);
 			*dest = RGB256k.RGB[r][g][b];
 			dest += pitch;
 		} while (--count);

@@ -106,6 +106,8 @@ namespace swrenderer
 		uint32_t *_srcblend;
 		uint32_t *_destblend;
 		uint32_t _srccolor;
+		fixed_t _srcalpha;
+		fixed_t _destalpha;
 	};
 
 	class DrawColumnPalCommand : public PalColumnCommand { public: void Execute(DrawerThread *thread) override; };

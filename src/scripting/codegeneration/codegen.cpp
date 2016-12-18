@@ -8964,7 +8964,7 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 	}
 	if (WhenFalse != nullptr)
 	{
-		if (!WhenTrue->CheckReturn()) jumpspot = build->Emit(OP_JMP, 0);	// no need to emit a jump if the block returns.
+		if (WhenTrue != nullptr && !WhenTrue->CheckReturn()) jumpspot = build->Emit(OP_JMP, 0);	// no need to emit a jump if the block returns.
 		build->BackpatchListToHere(no);
 		WhenFalse->EmitStatement(build);
 		if (jumpspot != ~0u) build->BackpatchToHere(jumpspot);

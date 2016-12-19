@@ -166,6 +166,8 @@ namespace swrenderer
 		uint32_t *_srcblend;
 		uint32_t *_destblend;
 		int _color;
+		fixed_t _srcalpha;
+		fixed_t _destalpha;
 	};
 
 	class DrawSpanPalCommand : public PalSpanCommand { public: void Execute(DrawerThread *thread) override; };

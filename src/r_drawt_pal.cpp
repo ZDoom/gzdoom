@@ -4,6 +4,8 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit
+** Copyright 2016 Magnus Norddahl
+** Copyright 2016 Rachael Alexanderson
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

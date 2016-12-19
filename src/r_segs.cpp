@@ -54,6 +54,7 @@
 CVAR(Bool, r_fogboundary, true, 0)
 CVAR(Bool, r_drawmirrors, true, 0)
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
+EXTERN_CVAR(Bool, r_mipmap)
 
 namespace swrenderer
 {

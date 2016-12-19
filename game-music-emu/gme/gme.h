@@ -1,6 +1,6 @@
 /* Game music emulator library C interface (also usable from C++) */
 
-/* Game_Music_Emu 0.6.0 */
+/* Game_Music_Emu 0.6.1 */
 #ifndef GME_H
 #define GME_H
 
@@ -8,7 +8,7 @@
 	extern "C" {
 #endif
 
-#define GME_VERSION 0x000600 /* 1 byte major, 1 byte minor, 1 byte patch-level */
+#define GME_VERSION 0x000601 /* 1 byte major, 1 byte minor, 1 byte patch-level */
 
 /* Error string returned by library functions, or NULL if no error (success) */
 typedef const char* gme_err_t;
@@ -47,8 +47,14 @@ int gme_track_ended( Music_Emu const* );
 /* Number of milliseconds (1000 = one second) played since beginning of track */
 int gme_tell( Music_Emu const* );
 
+/* Number of samples generated since beginning of track */
+int gme_tell_samples( Music_Emu const* );
+
 /* Seek to new time in track. Seeking backwards or far forward can take a while. */
 gme_err_t gme_seek( Music_Emu*, int msec );
+
+/* Equivalent to restarting track then skipping n samples */
+gme_err_t gme_seek_samples( Music_Emu*, int n );
 
 
 /******** Informational ********/

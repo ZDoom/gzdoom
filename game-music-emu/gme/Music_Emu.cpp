@@ -178,6 +178,11 @@ blargg_long Music_Emu::msec_to_samples( blargg_long msec ) const
 	return (sec * sample_rate() + msec * sample_rate() / 1000) * stereo;
 }
 
+long Music_Emu::tell_samples() const
+{
+	return out_time;
+}
+
 long Music_Emu::tell() const
 {
 	blargg_long rate = sample_rate() * stereo;
@@ -185,12 +190,16 @@ long Music_Emu::tell() const
 	return sec * 1000 + (out_time - sec * rate) * 1000 / rate;
 }
 
-blargg_err_t Music_Emu::seek( long msec )
+blargg_err_t Music_Emu::seek_samples( long time )
 {
-	blargg_long time = msec_to_samples( msec );
 	if ( time < out_time )
 		RETURN_ERR( start_track( current_track_ ) );
 	return skip( time - out_time );
+}
+
+blargg_err_t Music_Emu::seek( long msec )
+{
+	return seek_samples( msec_to_samples( msec ) );
 }
 
 blargg_err_t Music_Emu::skip( long count )

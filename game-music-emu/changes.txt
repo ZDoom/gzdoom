@@ -1,6 +1,18 @@
 Game_Music_Emu Change Log
 -------------------------
 
+Game_Music_Emu 0.6.1
+--------------------
+
+- Moved repository to Bitbucket since Google Code announced they would
+  shutdown this year.
+
+- Packaging improvements:
+    - Honor $LIB_SUFFIX for installed pkg-config metadata.
+    - Support setting BUILD_SHARED_LIBS to OFF to build libgme as a static
+      library. (Pass -DBUILD_SHARED_LIBS=OFF when running cmake).
+      Thanks to lachs0r.
+
 Game_Music_Emu 0.6.0
 --------------------
 

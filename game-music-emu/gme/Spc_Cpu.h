@@ -77,7 +77,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 #define SPC_NO_SP_WRAPAROUND 0
 
 #define SET_SP( v )     (sp = ram + 0x101 + ((uint8_t) v))
-#define GET_SP()        (uint8_t) (sp - 0x101 - ram)
+#define GET_SP()        (uint8_t (sp - 0x101 - ram))
 
 #if SPC_NO_SP_WRAPAROUND
 #define PUSH16( v )     (sp -= 2, SET_LE16( sp, v ))

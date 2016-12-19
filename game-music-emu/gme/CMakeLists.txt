@@ -131,6 +131,12 @@ set (EXPORTED_HEADERS gme.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gme_types.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/gme_types.h)
 
+# [ZDoom] Not needed.
+if( FALSE )
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libgme.pc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/libgme.pc @ONLY)
+endif()
+
 # On some platforms we may need to change headers or whatnot based on whether
 # we're building the library or merely using the library. The following is
 # only defined when building the library to allow us to tell which is which.
@@ -147,7 +153,18 @@ add_library(gme ${libgme_SRCS})
 # to the API), the SOVERSION should be the same even when bumping up VERSION.
 # The way gme.h is designed, SOVERSION should very rarely be bumped, if ever.
 # Hopefully the API can stay compatible with old versions.
-#set_target_properties(gme
-#    PROPERTIES VERSION ${GME_VERSION}
-#               SOVERSION 0)
+# [ZDoom] Not needed.
+if( FALSE )
+set_target_properties(gme
+    PROPERTIES VERSION ${GME_VERSION}
+               SOVERSION 0)
+
+install(TARGETS gme LIBRARY DESTINATION lib${LIB_SUFFIX}
+                    RUNTIME DESTINATION bin  # DLL platforms
+                    ARCHIVE DESTINATION lib) # DLL platforms
+
+install(FILES ${EXPORTED_HEADERS} DESTINATION include/gme)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libgme.pc DESTINATION lib${LIB_SUFFIX}/pkgconfig)
+endif()
+
 target_link_libraries(gme)

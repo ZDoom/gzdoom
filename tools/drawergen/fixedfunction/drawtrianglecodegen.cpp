@@ -492,7 +492,7 @@ SSAInt DrawTriangleCodegen::ToPal8(SSAVec4i c)
 	SSAInt red = SSAInt::clamp(c[0], SSAInt(0), SSAInt(255));
 	SSAInt green = SSAInt::clamp(c[1], SSAInt(0), SSAInt(255));
 	SSAInt blue = SSAInt::clamp(c[2], SSAInt(0), SSAInt(255));
-	return RGB32k[((blue >> 3) * 32 + (green >> 3)) * 32 + (red >> 3)].load(true).zext_int();
+	return RGB256k[((blue >> 2) * 64 + (green >> 2)) * 64 + (red >> 2)].load(true).zext_int();
 }
 
 SSAInt DrawTriangleCodegen::ProcessPixel8(SSAInt bg, SSAInt *varying)
@@ -631,7 +631,7 @@ void DrawTriangleCodegen::LoadArgs(SSAValue args, SSAValue thread_data)
 	if (!truecolor)
 	{
 		Colormaps = args[0][20].load(true);
-		RGB32k = args[0][21].load(true);
+		RGB256k = args[0][21].load(true);
 		BaseColors = args[0][22].load(true);
 	}
 

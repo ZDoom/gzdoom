@@ -95,7 +95,7 @@ private:
 	SSABool is_fixed_light;
 
 	SSAUBytePtr Colormaps;
-	SSAUBytePtr RGB32k;
+	SSAUBytePtr RGB256k;
 	SSAUBytePtr BaseColors;
 
 	SSAInt numSpans;

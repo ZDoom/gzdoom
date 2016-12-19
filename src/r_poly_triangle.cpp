@@ -130,7 +130,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, WorkerThreadD
 	args.stencilMasks = PolyStencilBuffer::Instance()->Masks();
 	args.subsectorGBuffer = PolySubsectorGBuffer::Instance()->Values();
 	args.colormaps = drawargs.colormaps;
-	args.RGB32k = RGB32k.All;
+	args.RGB256k = RGB256k.All;
 	args.BaseColors = (const uint8_t *)GPalette.BaseColors;
 
 	bool ccw = drawargs.ccw;

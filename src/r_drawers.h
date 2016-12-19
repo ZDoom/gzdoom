@@ -247,7 +247,7 @@ struct TriDrawTriangleArgs
 	uint8_t stencilWriteValue;
 	uint32_t *subsectorGBuffer;
 	const uint8_t *colormaps;
-	const uint8_t *RGB32k;
+	const uint8_t *RGB256k;
 	const uint8_t *BaseColors;
 };
 

@@ -430,7 +430,7 @@ llvm::Type *LLVMDrawers::GetTriDrawTriangleArgs(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt8Ty(context));     // uint8_t stencilWriteValue;
 	elements.push_back(llvm::Type::getInt32PtrTy(context)); // uint32_t *subsectorGBuffer;
 	elements.push_back(llvm::Type::getInt8PtrTy(context));  // const uint8_t *colormaps;
-	elements.push_back(llvm::Type::getInt8PtrTy(context));  // const uint8_t *RGB32k;
+	elements.push_back(llvm::Type::getInt8PtrTy(context));  // const uint8_t *RGB256k;
 	elements.push_back(llvm::Type::getInt8PtrTy(context));  // const uint8_t *BaseColors;
 	TriDrawTriangleArgs = llvm::StructType::create(context, elements, "TriDrawTriangle", false)->getPointerTo();
 	return TriDrawTriangleArgs;

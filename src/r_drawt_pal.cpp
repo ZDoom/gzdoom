@@ -516,9 +516,9 @@ namespace swrenderer
 
 		do {
 			uint32_t val = *source;
-			int r = (palette[*dest].r * (255-val)) >> 10;
-			int g = (palette[*dest].g * (255-val)) >> 10;
-			int b = (palette[*dest].b * (255-val)) >> 10;
+			int r = (palette[*dest].r * (255-val) + palette[_color].r * val) >> 10;
+			int g = (palette[*dest].g * (255-val) + palette[_color].g * val) >> 10;
+			int b = (palette[*dest].b * (255-val) + palette[_color].b * val) >> 10;
 			*dest = RGB256k.RGB[clamp(r,0,63)][clamp(g,0,63)][clamp(b,0,63)];
 			source += 4;
 			dest += pitch;
@@ -550,9 +550,9 @@ namespace swrenderer
 			for (int ks = 0; ks < 4; ks++)
 			{
 				val = source[ks];
-				int r = (palette[dest[ks]].r * (255-val)) >> 10;
-				int g = (palette[dest[ks]].g * (255-val)) >> 10;
-				int b = (palette[dest[ks]].b * (255-val)) >> 10;
+				int r = (palette[dest[ks]].r * (255-val) + palette[_color].r * val) >> 10;
+				int g = (palette[dest[ks]].g * (255-val) + palette[_color].g * val) >> 10;
+				int b = (palette[dest[ks]].b * (255-val) + palette[_color].b * val) >> 10;
 				dest[ks] = RGB256k.RGB[clamp(r,0,63)][clamp(g,0,63)][clamp(b,0,63)];
 			}
 

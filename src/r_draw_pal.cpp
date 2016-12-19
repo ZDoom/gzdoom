@@ -1462,9 +1462,9 @@ namespace swrenderer
 		{
 			uint32_t val = source[frac >> FRACBITS];
 
-			int r = (palette[*dest].r * (255-val)) >> 10;
-			int g = (palette[*dest].g * (255-val)) >> 10;
-			int b = (palette[*dest].b * (255-val)) >> 10;
+			int r = (palette[*dest].r * (255-val) + palette[_color].r * val) >> 10;
+			int g = (palette[*dest].g * (255-val) + palette[_color].g * val) >> 10;
+			int b = (palette[*dest].b * (255-val) + palette[_color].b * val) >> 10;
 			*dest = RGB256k.RGB[clamp(r,0,63)][clamp(g,0,63)][clamp(b,0,63)];
 
 			dest += pitch;

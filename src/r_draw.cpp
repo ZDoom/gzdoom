@@ -238,22 +238,16 @@ namespace swrenderer
 			}
 			if (flags & STYLEF_InvertSource)
 			{
-				dc_srcblend = Col2RGB8_Inverse[fglevel >> 10];
-				dc_destblend = Col2RGB8_LessPrecision[bglevel >> 10];
 				dc_srcalpha = fglevel;
 				dc_destalpha = bglevel;
 			}
 			else if (op == STYLEOP_Add && fglevel + bglevel <= FRACUNIT)
 			{
-				dc_srcblend = Col2RGB8[fglevel >> 10];
-				dc_destblend = Col2RGB8[bglevel >> 10];
 				dc_srcalpha = fglevel;
 				dc_destalpha = bglevel;
 			}
 			else
 			{
-				dc_srcblend = Col2RGB8_LessPrecision[fglevel >> 10];
-				dc_destblend = Col2RGB8_LessPrecision[bglevel >> 10];
 				dc_srcalpha = fglevel;
 				dc_destalpha = bglevel;
 			}

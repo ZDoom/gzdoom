@@ -346,8 +346,6 @@ bool wipe_doFade (int ticks)
 	{
 		int x, y;
 		int bglevel = 64 - fade;
-		DWORD *fg2rgb = Col2RGB8[fade];
-		DWORD *bg2rgb = Col2RGB8[bglevel];
 		BYTE *fromnew = (BYTE *)wipe_scr_end;
 		BYTE *fromold = (BYTE *)wipe_scr_start;
 		BYTE *to = screen->GetBuffer();

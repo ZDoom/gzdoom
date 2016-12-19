@@ -508,7 +508,6 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		fgstart = &Col2RGB8[0][_color];
 		colormap = _colormap;
 		dest = ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg;
 		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4 + hx];
@@ -539,7 +538,6 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		fgstart = &Col2RGB8[0][_color];
 		colormap = _colormap;
 		dest = ylookup[yl + thread->skipped_by_thread(yl)] + sx + _destorg;
 		source = &thread->dc_temp[thread->temp_line_for_thread(yl)*4];

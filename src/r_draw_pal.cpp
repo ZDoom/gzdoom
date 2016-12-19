@@ -1455,7 +1455,6 @@ namespace swrenderer
 
 		const uint8_t *source = _source;
 		const uint8_t *colormap = _colormap;
-		uint32_t *fgstart = &Col2RGB8[0][_color];
 
 		const PalEntry *palette = GPalette.BaseColors;
 

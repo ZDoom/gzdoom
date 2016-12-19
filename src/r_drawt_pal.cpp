@@ -582,7 +582,7 @@ namespace swrenderer
 		const PalEntry *palette = GPalette.BaseColors;
 
 		do {
-			int fg = *source;
+			int fg = colormap[*source];
 			int bg = *dest;
 			int r = MIN((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 63);
 			int g = MIN((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 63);
@@ -614,7 +614,7 @@ namespace swrenderer
 		do {
 			for (int ks = 0; ks < 4; ks++)
 			{
-				int fg = source[ks];
+				int fg = colormap[source[ks]];
 				int bg = dest[ks];
 				int r = MIN((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 63);
 				int g = MIN((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 63);
@@ -648,7 +648,7 @@ namespace swrenderer
 		const PalEntry *palette = GPalette.BaseColors;
 
 		do {
-			int fg = *source;
+			int fg = colormap[*source];
 			int bg = *dest;
 			int r = MAX((palette[fg].r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
 			int g = MAX((palette[fg].g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
@@ -682,7 +682,7 @@ namespace swrenderer
 		do {
 			for (int ks = 0; ks < 4; ks++)
 			{
-				int fg = source[ks];
+				int fg = colormap[source[ks]];
 				int bg = dest[ks];
 				int r = MAX((palette[fg].r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
 				int g = MAX((palette[fg].g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
@@ -716,7 +716,7 @@ namespace swrenderer
 		const PalEntry *palette = GPalette.BaseColors;
 
 		do {
-			int fg = *source;
+			int fg = colormap[*source];
 			int bg = *dest;
 			int r = MAX((-palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 			int g = MAX((-palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
@@ -750,7 +750,7 @@ namespace swrenderer
 		do {
 			for (int ks = 0; ks < 4; ks++)
 			{
-				int fg = source[ks];
+				int fg = colormap[source[ks]];
 				int bg = dest[ks];
 				int r = MAX((-palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 				int g = MAX((-palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);

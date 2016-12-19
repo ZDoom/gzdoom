@@ -95,9 +95,7 @@ namespace swrenderer
 		_count = dc_count;
 		_source = dc_source;
 		_dest = dc_dest;
-		_vlinebits = vlinebits;
-		_mvlinebits = mvlinebits;
-		_tmvlinebits = tmvlinebits;
+		_fracbits = dc_wall_fracbits;
 		_pitch = dc_pitch;
 		_srcblend = dc_srcblend;
 		_destblend = dc_destblend;
@@ -110,15 +108,13 @@ namespace swrenderer
 		_dest = dc_dest;
 		_count = dc_count;
 		_pitch = dc_pitch;
-		_vlinebits = vlinebits;
-		_mvlinebits = mvlinebits;
-		_tmvlinebits = tmvlinebits;
+		_fracbits = dc_wall_fracbits;
 		for (int col = 0; col < 4; col++)
 		{
-			_palookupoffse[col] = palookupoffse[col];
-			_bufplce[col] = bufplce[col];
-			_vince[col] = vince[col];
-			_vplce[col] = vplce[col];
+			_colormap[col] = dc_wall_colormap[col];
+			_source[col] = dc_wall_source[col];
+			_iscale[col] = dc_wall_iscale[col];
+			_texturefrac[col] = dc_wall_texturefrac[col];
 		}
 		_srcblend = dc_srcblend;
 		_destblend = dc_destblend;
@@ -132,7 +128,7 @@ namespace swrenderer
 		int count = _count;
 		const uint8_t *source = _source;
 		uint8_t *dest = _dest;
-		int bits = _vlinebits;
+		int bits = _fracbits;
 		int pitch = _pitch;
 
 		count = thread->count_for_thread(_dest_y, count);
@@ -156,24 +152,24 @@ namespace swrenderer
 	{
 		uint8_t *dest = _dest;
 		int count = _count;
-		int bits = _vlinebits;
+		int bits = _fracbits;
 		uint32_t place;
-		auto pal0 = _palookupoffse[0];
-		auto pal1 = _palookupoffse[1];
-		auto pal2 = _palookupoffse[2];
-		auto pal3 = _palookupoffse[3];
-		auto buf0 = _bufplce[0];
-		auto buf1 = _bufplce[1];
-		auto buf2 = _bufplce[2];
-		auto buf3 = _bufplce[3];
-		auto vince0 = _vince[0];
-		auto vince1 = _vince[1];
-		auto vince2 = _vince[2];
-		auto vince3 = _vince[3];
-		auto vplce0 = _vplce[0];
-		auto vplce1 = _vplce[1];
-		auto vplce2 = _vplce[2];
-		auto vplce3 = _vplce[3];
+		auto pal0 = _colormap[0];
+		auto pal1 = _colormap[1];
+		auto pal2 = _colormap[2];
+		auto pal3 = _colormap[3];
+		auto buf0 = _source[0];
+		auto buf1 = _source[1];
+		auto buf2 = _source[2];
+		auto buf3 = _source[3];
+		auto dc_wall_iscale0 = _iscale[0];
+		auto dc_wall_iscale1 = _iscale[1];
+		auto dc_wall_iscale2 = _iscale[2];
+		auto dc_wall_iscale3 = _iscale[3];
+		auto dc_wall_texturefrac0 = _texturefrac[0];
+		auto dc_wall_texturefrac1 = _texturefrac[1];
+		auto dc_wall_texturefrac2 = _texturefrac[2];
+		auto dc_wall_texturefrac3 = _texturefrac[3];
 		auto pitch = _pitch;
 
 		count = thread->count_for_thread(_dest_y, count);
@@ -182,22 +178,22 @@ namespace swrenderer
 
 		int skipped = thread->skipped_by_thread(_dest_y);
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		vplce0 += vince0 * skipped;
-		vplce1 += vince1 * skipped;
-		vplce2 += vince2 * skipped;
-		vplce3 += vince3 * skipped;
-		vince0 *= thread->num_cores;
-		vince1 *= thread->num_cores;
-		vince2 *= thread->num_cores;
-		vince3 *= thread->num_cores;
+		dc_wall_texturefrac0 += dc_wall_iscale0 * skipped;
+		dc_wall_texturefrac1 += dc_wall_iscale1 * skipped;
+		dc_wall_texturefrac2 += dc_wall_iscale2 * skipped;
+		dc_wall_texturefrac3 += dc_wall_iscale3 * skipped;
+		dc_wall_iscale0 *= thread->num_cores;
+		dc_wall_iscale1 *= thread->num_cores;
+		dc_wall_iscale2 *= thread->num_cores;
+		dc_wall_iscale3 *= thread->num_cores;
 		pitch *= thread->num_cores;
 
 		do
 		{
-			dest[0] = pal0[buf0[(place = vplce0) >> bits]]; vplce0 = place + vince0;
-			dest[1] = pal1[buf1[(place = vplce1) >> bits]]; vplce1 = place + vince1;
-			dest[2] = pal2[buf2[(place = vplce2) >> bits]]; vplce2 = place + vince2;
-			dest[3] = pal3[buf3[(place = vplce3) >> bits]]; vplce3 = place + vince3;
+			dest[0] = pal0[buf0[(place = dc_wall_texturefrac0) >> bits]]; dc_wall_texturefrac0 = place + dc_wall_iscale0;
+			dest[1] = pal1[buf1[(place = dc_wall_texturefrac1) >> bits]]; dc_wall_texturefrac1 = place + dc_wall_iscale1;
+			dest[2] = pal2[buf2[(place = dc_wall_texturefrac2) >> bits]]; dc_wall_texturefrac2 = place + dc_wall_iscale2;
+			dest[3] = pal3[buf3[(place = dc_wall_texturefrac3) >> bits]]; dc_wall_texturefrac3 = place + dc_wall_iscale3;
 			dest += pitch;
 		} while (--count);
 	}
@@ -210,7 +206,7 @@ namespace swrenderer
 		int count = _count;
 		const uint8_t *source = _source;
 		uint8_t *dest = _dest;
-		int bits = _mvlinebits;
+		int bits = _fracbits;
 		int pitch = _pitch;
 
 		count = thread->count_for_thread(_dest_y, count);
@@ -238,24 +234,24 @@ namespace swrenderer
 	{
 		uint8_t *dest = _dest;
 		int count = _count;
-		int bits = _mvlinebits;
+		int bits = _fracbits;
 		uint32_t place;
-		auto pal0 = _palookupoffse[0];
-		auto pal1 = _palookupoffse[1];
-		auto pal2 = _palookupoffse[2];
-		auto pal3 = _palookupoffse[3];
-		auto buf0 = _bufplce[0];
-		auto buf1 = _bufplce[1];
-		auto buf2 = _bufplce[2];
-		auto buf3 = _bufplce[3];
-		auto vince0 = _vince[0];
-		auto vince1 = _vince[1];
-		auto vince2 = _vince[2];
-		auto vince3 = _vince[3];
-		auto vplce0 = _vplce[0];
-		auto vplce1 = _vplce[1];
-		auto vplce2 = _vplce[2];
-		auto vplce3 = _vplce[3];
+		auto pal0 = _colormap[0];
+		auto pal1 = _colormap[1];
+		auto pal2 = _colormap[2];
+		auto pal3 = _colormap[3];
+		auto buf0 = _source[0];
+		auto buf1 = _source[1];
+		auto buf2 = _source[2];
+		auto buf3 = _source[3];
+		auto dc_wall_iscale0 = _iscale[0];
+		auto dc_wall_iscale1 = _iscale[1];
+		auto dc_wall_iscale2 = _iscale[2];
+		auto dc_wall_iscale3 = _iscale[3];
+		auto dc_wall_texturefrac0 = _texturefrac[0];
+		auto dc_wall_texturefrac1 = _texturefrac[1];
+		auto dc_wall_texturefrac2 = _texturefrac[2];
+		auto dc_wall_texturefrac3 = _texturefrac[3];
 		auto pitch = _pitch;
 
 		count = thread->count_for_thread(_dest_y, count);
@@ -264,24 +260,24 @@ namespace swrenderer
 
 		int skipped = thread->skipped_by_thread(_dest_y);
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
-		vplce0 += vince0 * skipped;
-		vplce1 += vince1 * skipped;
-		vplce2 += vince2 * skipped;
-		vplce3 += vince3 * skipped;
-		vince0 *= thread->num_cores;
-		vince1 *= thread->num_cores;
-		vince2 *= thread->num_cores;
-		vince3 *= thread->num_cores;
+		dc_wall_texturefrac0 += dc_wall_iscale0 * skipped;
+		dc_wall_texturefrac1 += dc_wall_iscale1 * skipped;
+		dc_wall_texturefrac2 += dc_wall_iscale2 * skipped;
+		dc_wall_texturefrac3 += dc_wall_iscale3 * skipped;
+		dc_wall_iscale0 *= thread->num_cores;
+		dc_wall_iscale1 *= thread->num_cores;
+		dc_wall_iscale2 *= thread->num_cores;
+		dc_wall_iscale3 *= thread->num_cores;
 		pitch *= thread->num_cores;
 
 		do
 		{
 			uint8_t pix;
 
-			pix = buf0[(place = vplce0) >> bits]; if (pix) dest[0] = pal0[pix]; vplce0 = place + vince0;
-			pix = buf1[(place = vplce1) >> bits]; if (pix) dest[1] = pal1[pix]; vplce1 = place + vince1;
-			pix = buf2[(place = vplce2) >> bits]; if (pix) dest[2] = pal2[pix]; vplce2 = place + vince2;
-			pix = buf3[(place = vplce3) >> bits]; if (pix) dest[3] = pal3[pix]; vplce3 = place + vince3;
+			pix = buf0[(place = dc_wall_texturefrac0) >> bits]; if (pix) dest[0] = pal0[pix]; dc_wall_texturefrac0 = place + dc_wall_iscale0;
+			pix = buf1[(place = dc_wall_texturefrac1) >> bits]; if (pix) dest[1] = pal1[pix]; dc_wall_texturefrac1 = place + dc_wall_iscale1;
+			pix = buf2[(place = dc_wall_texturefrac2) >> bits]; if (pix) dest[2] = pal2[pix]; dc_wall_texturefrac2 = place + dc_wall_iscale2;
+			pix = buf3[(place = dc_wall_texturefrac3) >> bits]; if (pix) dest[3] = pal3[pix]; dc_wall_texturefrac3 = place + dc_wall_iscale3;
 			dest += pitch;
 		} while (--count);
 	}
@@ -294,7 +290,7 @@ namespace swrenderer
 		int count = _count;
 		const uint8_t *source = _source;
 		uint8_t *dest = _dest;
-		int bits = _tmvlinebits;
+		int bits = _fracbits;
 		int pitch = _pitch;
 
 		uint32_t *fg2rgb = _srcblend;
@@ -328,13 +324,13 @@ namespace swrenderer
 	{
 		uint8_t *dest = _dest;
 		int count = _count;
-		int bits = _tmvlinebits;
+		int bits = _fracbits;
 
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
 
-		uint32_t vplce[4] = { _vplce[0], _vplce[1], _vplce[2], _vplce[3] };
-		uint32_t vince[4] = { _vince[0], _vince[1], _vince[2], _vince[3] };
+		uint32_t dc_wall_texturefrac[4] = { _texturefrac[0], _texturefrac[1], _texturefrac[2], _texturefrac[3] };
+		uint32_t dc_wall_iscale[4] = { _iscale[0], _iscale[1], _iscale[2], _iscale[3] };
 
 		count = thread->count_for_thread(_dest_y, count);
 		if (count <= 0)
@@ -345,8 +341,8 @@ namespace swrenderer
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		for (int i = 0; i < 4; i++)
 		{
-			vplce[i] += vince[i] * skipped;
-			vince[i] *= thread->num_cores;
+			dc_wall_texturefrac[i] += dc_wall_iscale[i] * skipped;
+			dc_wall_iscale[i] *= thread->num_cores;
 		}
 		pitch *= thread->num_cores;
 
@@ -354,15 +350,15 @@ namespace swrenderer
 		{
 			for (int i = 0; i < 4; ++i)
 			{
-				uint8_t pix = _bufplce[i][vplce[i] >> bits];
+				uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
 				if (pix != 0)
 				{
-					uint32_t fg = fg2rgb[_palookupoffse[i][pix]];
+					uint32_t fg = fg2rgb[_colormap[i][pix]];
 					uint32_t bg = bg2rgb[dest[i]];
 					fg = (fg + bg) | 0x1f07c1f;
 					dest[i] = RGB32k.All[fg & (fg >> 15)];
 				}
-				vplce[i] += vince[i];
+				dc_wall_texturefrac[i] += dc_wall_iscale[i];
 			}
 			dest += pitch;
 		} while (--count);
@@ -376,7 +372,7 @@ namespace swrenderer
 		int count = _count;
 		const uint8_t *source = _source;
 		uint8_t *dest = _dest;
-		int bits = _tmvlinebits;
+		int bits = _fracbits;
 		int pitch = _pitch;
 
 		uint32_t *fg2rgb = _srcblend;
@@ -415,13 +411,13 @@ namespace swrenderer
 	{
 		uint8_t *dest = _dest;
 		int count = _count;
-		int bits = _tmvlinebits;
+		int bits = _fracbits;
 
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
 
-		uint32_t vplce[4] = { _vplce[0], _vplce[1], _vplce[2], _vplce[3] };
-		uint32_t vince[4] = { _vince[0], _vince[1], _vince[2], _vince[3] };
+		uint32_t dc_wall_texturefrac[4] = { _texturefrac[0], _texturefrac[1], _texturefrac[2], _texturefrac[3] };
+		uint32_t dc_wall_iscale[4] = { _iscale[0], _iscale[1], _iscale[2], _iscale[3] };
 
 		count = thread->count_for_thread(_dest_y, count);
 		if (count <= 0)
@@ -432,8 +428,8 @@ namespace swrenderer
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		for (int i = 0; i < 4; i++)
 		{
-			vplce[i] += vince[i] * skipped;
-			vince[i] *= thread->num_cores;
+			dc_wall_texturefrac[i] += dc_wall_iscale[i] * skipped;
+			dc_wall_iscale[i] *= thread->num_cores;
 		}
 		pitch *= thread->num_cores;
 
@@ -441,10 +437,10 @@ namespace swrenderer
 		{
 			for (int i = 0; i < 4; ++i)
 			{
-				uint8_t pix = _bufplce[i][vplce[i] >> bits];
+				uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
 				if (pix != 0)
 				{
-					uint32_t a = fg2rgb[_palookupoffse[i][pix]] + bg2rgb[dest[i]];
+					uint32_t a = fg2rgb[_colormap[i][pix]] + bg2rgb[dest[i]];
 					uint32_t b = a;
 
 					a |= 0x01f07c1f;
@@ -454,7 +450,7 @@ namespace swrenderer
 					a |= b;
 					dest[i] = RGB32k.All[a & (a >> 15)];
 				}
-				vplce[i] += vince[i];
+				dc_wall_texturefrac[i] += dc_wall_iscale[i];
 			}
 			dest += pitch;
 		} while (--count);
@@ -468,7 +464,7 @@ namespace swrenderer
 		int count = _count;
 		const uint8_t *source = _source;
 		uint8_t *dest = _dest;
-		int bits = _tmvlinebits;
+		int bits = _fracbits;
 		int pitch = _pitch;
 
 		uint32_t *fg2rgb = _srcblend;
@@ -506,13 +502,13 @@ namespace swrenderer
 	{
 		uint8_t *dest = _dest;
 		int count = _count;
-		int bits = _tmvlinebits;
+		int bits = _fracbits;
 
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
 
-		uint32_t vplce[4] = { _vplce[0], _vplce[1], _vplce[2], _vplce[3] };
-		uint32_t vince[4] = { _vince[0], _vince[1], _vince[2], _vince[3] };
+		uint32_t dc_wall_texturefrac[4] = { _texturefrac[0], _texturefrac[1], _texturefrac[2], _texturefrac[3] };
+		uint32_t dc_wall_iscale[4] = { _iscale[0], _iscale[1], _iscale[2], _iscale[3] };
 
 		count = thread->count_for_thread(_dest_y, count);
 		if (count <= 0)
@@ -523,8 +519,8 @@ namespace swrenderer
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		for (int i = 0; i < 4; i++)
 		{
-			vplce[i] += vince[i] * skipped;
-			vince[i] *= thread->num_cores;
+			dc_wall_texturefrac[i] += dc_wall_iscale[i] * skipped;
+			dc_wall_iscale[i] *= thread->num_cores;
 		}
 		pitch *= thread->num_cores;
 
@@ -532,10 +528,10 @@ namespace swrenderer
 		{
 			for (int i = 0; i < 4; ++i)
 			{
-				uint8_t pix = _bufplce[i][vplce[i] >> bits];
+				uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
 				if (pix != 0)
 				{
-					uint32_t a = (fg2rgb[_palookupoffse[i][pix]] | 0x40100400) - bg2rgb[dest[i]];
+					uint32_t a = (fg2rgb[_colormap[i][pix]] | 0x40100400) - bg2rgb[dest[i]];
 					uint32_t b = a;
 
 					b &= 0x40100400;
@@ -544,7 +540,7 @@ namespace swrenderer
 					a |= 0x01f07c1f;
 					dest[i] = RGB32k.All[a & (a >> 15)];
 				}
-				vplce[i] += vince[i];
+				dc_wall_texturefrac[i] += dc_wall_iscale[i];
 			}
 			dest += pitch;
 		} while (--count);
@@ -558,7 +554,7 @@ namespace swrenderer
 		int count = _count;
 		const uint8_t *source = _source;
 		uint8_t *dest = _dest;
-		int bits = _tmvlinebits;
+		int bits = _fracbits;
 		int pitch = _pitch;
 
 		uint32_t *fg2rgb = _srcblend;
@@ -596,13 +592,13 @@ namespace swrenderer
 	{
 		uint8_t *dest = _dest;
 		int count = _count;
-		int bits = _tmvlinebits;
+		int bits = _fracbits;
 
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
 
-		uint32_t vplce[4] = { _vplce[0], _vplce[1], _vplce[2], _vplce[3] };
-		uint32_t vince[4] = { _vince[0], _vince[1], _vince[2], _vince[3] };
+		uint32_t dc_wall_texturefrac[4] = { _texturefrac[0], _texturefrac[1], _texturefrac[2], _texturefrac[3] };
+		uint32_t dc_wall_iscale[4] = { _iscale[0], _iscale[1], _iscale[2], _iscale[3] };
 
 		count = thread->count_for_thread(_dest_y, count);
 		if (count <= 0)
@@ -613,8 +609,8 @@ namespace swrenderer
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		for (int i = 0; i < 4; i++)
 		{
-			vplce[i] += vince[i] * skipped;
-			vince[i] *= thread->num_cores;
+			dc_wall_texturefrac[i] += dc_wall_iscale[i] * skipped;
+			dc_wall_iscale[i] *= thread->num_cores;
 		}
 		pitch *= thread->num_cores;
 
@@ -622,10 +618,10 @@ namespace swrenderer
 		{
 			for (int i = 0; i < 4; ++i)
 			{
-				uint8_t pix = _bufplce[i][vplce[i] >> bits];
+				uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
 				if (pix != 0)
 				{
-					uint32_t a = (bg2rgb[dest[i]] | 0x40100400) - fg2rgb[_palookupoffse[i][pix]];
+					uint32_t a = (bg2rgb[dest[i]] | 0x40100400) - fg2rgb[_colormap[i][pix]];
 					uint32_t b = a;
 
 					b &= 0x40100400;
@@ -634,7 +630,7 @@ namespace swrenderer
 					a |= 0x01f07c1f;
 					dest[i] = RGB32k.All[a & (a >> 15)];
 				}
-				vplce[i] += vince[i];
+				dc_wall_texturefrac[i] += dc_wall_iscale[i];
 			}
 			dest += _pitch;
 		} while (--count);
@@ -651,11 +647,11 @@ namespace swrenderer
 		_pitch = dc_pitch;
 		for (int col = 0; col < 4; col++)
 		{
-			_bufplce[col] = bufplce[col];
-			_bufplce2[col] = bufplce2[col];
-			_bufheight[col] = bufheight[col];
-			_vince[col] = vince[col];
-			_vplce[col] = vplce[col];
+			_source[col] = dc_wall_source[col];
+			_source2[col] = dc_wall_source2[col];
+			_sourceheight[col] = dc_wall_sourceheight[col];
+			_iscale[col] = dc_wall_iscale[col];
+			_texturefrac[col] = dc_wall_texturefrac[col];
 		}
 	}
 
@@ -664,11 +660,11 @@ namespace swrenderer
 		uint8_t *dest = _dest;
 		int count = _count;
 		int pitch = _pitch;
-		const uint8_t *source0 = _bufplce[0];
-		int textureheight0 = _bufheight[0];
+		const uint8_t *source0 = _source[0];
+		int textureheight0 = _sourceheight[0];
 
-		int32_t frac = _vplce[0];
-		int32_t fracstep = _vince[0];
+		int32_t frac = _texturefrac[0];
+		int32_t fracstep = _iscale[0];
 
 		int start_fade = 2; // How fast it should fade out
 
@@ -729,11 +725,11 @@ namespace swrenderer
 		uint8_t *dest = _dest;
 		int count = _count;
 		int pitch = _pitch;
-		const uint8_t *source0[4] = { _bufplce[0], _bufplce[1], _bufplce[2], _bufplce[3] };
-		int textureheight0 = _bufheight[0];
+		const uint8_t *source0[4] = { _source[0], _source[1], _source[2], _source[3] };
+		int textureheight0 = _sourceheight[0];
 		const uint32_t *palette = (const uint32_t *)GPalette.BaseColors;
-		int32_t frac[4] = { (int32_t)_vplce[0], (int32_t)_vplce[1], (int32_t)_vplce[2], (int32_t)_vplce[3] };
-		int32_t fracstep[4] = { (int32_t)_vince[0], (int32_t)_vince[1], (int32_t)_vince[2], (int32_t)_vince[3] };
+		int32_t frac[4] = { (int32_t)_texturefrac[0], (int32_t)_texturefrac[1], (int32_t)_texturefrac[2], (int32_t)_texturefrac[3] };
+		int32_t fracstep[4] = { (int32_t)_iscale[0], (int32_t)_iscale[1], (int32_t)_iscale[2], (int32_t)_iscale[3] };
 		uint8_t output[4];
 
 		int start_fade = 2; // How fast it should fade out
@@ -870,13 +866,13 @@ namespace swrenderer
 		uint8_t *dest = _dest;
 		int count = _count;
 		int pitch = _pitch;
-		const uint8_t *source0 = _bufplce[0];
-		const uint8_t *source1 = _bufplce2[0];
-		int textureheight0 = _bufheight[0];
-		uint32_t maxtextureheight1 = _bufheight[1] - 1;
+		const uint8_t *source0 = _source[0];
+		const uint8_t *source1 = _source2[0];
+		int textureheight0 = _sourceheight[0];
+		uint32_t maxtextureheight1 = _sourceheight[1] - 1;
 
-		int32_t frac = _vplce[0];
-		int32_t fracstep = _vince[0];
+		int32_t frac = _texturefrac[0];
+		int32_t fracstep = _iscale[0];
 
 		int start_fade = 2; // How fast it should fade out
 
@@ -942,13 +938,13 @@ namespace swrenderer
 		uint8_t *dest = _dest;
 		int count = _count;
 		int pitch = _pitch;
-		const uint8_t *source0[4] = { _bufplce[0], _bufplce[1], _bufplce[2], _bufplce[3] };
-		const uint8_t *source1[4] = { _bufplce2[0], _bufplce2[1], _bufplce2[2], _bufplce2[3] };
-		int textureheight0 = _bufheight[0];
-		uint32_t maxtextureheight1 = _bufheight[1] - 1;
+		const uint8_t *source0[4] = { _source[0], _source[1], _source[2], _source[3] };
+		const uint8_t *source1[4] = { _source2[0], _source2[1], _source2[2], _source2[3] };
+		int textureheight0 = _sourceheight[0];
+		uint32_t maxtextureheight1 = _sourceheight[1] - 1;
 		const uint32_t *palette = (const uint32_t *)GPalette.BaseColors;
-		int32_t frac[4] = { (int32_t)_vplce[0], (int32_t)_vplce[1], (int32_t)_vplce[2], (int32_t)_vplce[3] };
-		int32_t fracstep[4] = { (int32_t)_vince[0], (int32_t)_vince[1], (int32_t)_vince[2], (int32_t)_vince[3] };
+		int32_t frac[4] = { (int32_t)_texturefrac[0], (int32_t)_texturefrac[1], (int32_t)_texturefrac[2], (int32_t)_texturefrac[3] };
+		int32_t fracstep[4] = { (int32_t)_iscale[0], (int32_t)_iscale[1], (int32_t)_iscale[2], (int32_t)_iscale[3] };
 		uint8_t output[4];
 
 		int start_fade = 2; // How fast it should fade out

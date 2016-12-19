@@ -454,6 +454,49 @@ D7F6E9F08C39A17026349A04F8C0B0BE // Return to Hadron, e1m9
 	pointonline
 }
 
+// Remove unreachable secrets
+F6EE16F770AD309D608EA0B1F1E249FC // Ultimate Doom, e4m3
+{
+	setsectorspecial 124 0
+	setsectorspecial 125 0
+	// clear staircase to secret area
+	setsectorspecial 127 0
+	setsectorspecial 128 0
+	setsectorspecial 129 0
+	setsectorspecial 130 0
+	setsectorspecial 131 0
+	setsectorspecial 132 0
+	setsectorspecial 133 0
+	setsectorspecial 134 0
+	setsectorspecial 136 0
+	setsectorspecial 137 0
+	setsectorspecial 138 0
+	setsectorspecial 147 0
+	setsectorspecial 148 0
+	setsectorspecial 149 0
+	setsectorspecial 150 0
+	setsectorspecial 151 0
+	setsectorspecial 152 0
+	setsectorspecial 155 0
+}
+94D4C869A0C02EF4F7375022B36AAE45 // Ultimate Doom, e4m7
+{
+	setsectorspecial 263 0
+	setsectorspecial 264 0
+}
+1A540BA717BF9EC85F8522594C352F2A // Doom II, map15
+{
+	setsectorspecial 147 0
+}
+110F84DE041052B59307FAF0293E6BC0 // Doom II, map27
+{
+	setsectorspecial 93 0
+}
+ABC4EB5A1535ECCD0061AD14F3547908 // Plutonia Experiment, map26
+{
+	setsectorspecial 156 0
+}
+
 712BB4CFBD0753178CA0C6814BE4C288 // map12 BTSX_E1 - patch some rendering glitches that are problematic to detect
 {
 	setsectortag 545 32000

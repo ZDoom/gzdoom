@@ -406,7 +406,7 @@ void FJPEGTexture::MakeTexture ()
 			case JCS_RGB:
 				for (int x = Width; x > 0; --x)
 				{
-					*out = RGB32k.RGB[in[0]>>3][in[1]>>3][in[2]>>3];
+					*out = RGB256k.RGB[in[0]>>2][in[1]>>2][in[2]>>2];
 					out += Height;
 					in += 3;
 				}
@@ -430,7 +430,7 @@ void FJPEGTexture::MakeTexture ()
 					int r = in[3] - (((256-in[0])*in[3]) >> 8);
 					int g = in[3] - (((256-in[1])*in[3]) >> 8);
 					int b = in[3] - (((256-in[2])*in[3]) >> 8);
-					*out = RGB32k.RGB[r >> 3][g >> 3][b >> 3];
+					*out = RGB256k.RGB[r >> 2][g >> 2][b >> 2];
 					out += Height;
 					in += 4;
 				}

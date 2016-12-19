@@ -393,7 +393,7 @@ void FTGATexture::MakeTexture ()
 				for(int x=0;x<Width;x++)
 				{
 					int v = LittleLong(*p);
-					Pixels[x*Height+y] = RGB32k.RGB[(v>>10) & 0x1f][(v>>5) & 0x1f][v & 0x1f];
+					Pixels[x*Height+y] = RGB256k.RGB[((v>>10) & 0x1f)*2][((v>>5) & 0x1f)*2][(v & 0x1f)*2];
 					p+=step_x;
 				}
 			}
@@ -405,7 +405,7 @@ void FTGATexture::MakeTexture ()
 				BYTE * p = ptr + y * Pitch;
 				for(int x=0;x<Width;x++)
 				{
-					Pixels[x*Height+y] = RGB32k.RGB[p[2]>>3][p[1]>>3][p[0]>>3];
+					Pixels[x*Height+y] = RGB256k.RGB[p[2]>>2][p[1]>>2][p[0]>>2];
 					p+=step_x;
 				}
 			}
@@ -419,7 +419,7 @@ void FTGATexture::MakeTexture ()
 					BYTE * p = ptr + y * Pitch;
 					for(int x=0;x<Width;x++)
 					{
-						Pixels[x*Height+y] = RGB32k.RGB[p[2]>>3][p[1]>>3][p[0]>>3];
+						Pixels[x*Height+y] = RGB256k.RGB[p[2]>>2][p[1]>>2][p[0]>>2];
 						p+=step_x;
 					}
 				}
@@ -431,7 +431,7 @@ void FTGATexture::MakeTexture ()
 					BYTE * p = ptr + y * Pitch;
 					for(int x=0;x<Width;x++)
 					{
-						Pixels[x*Height+y] = p[3] >= 128? RGB32k.RGB[p[2]>>3][p[1]>>3][p[0]>>3] : 0;
+						Pixels[x*Height+y] = p[3] >= 128? RGB256k.RGB[p[2]>>2][p[1]>>2][p[0]>>2] : 0;
 						p+=step_x;
 					}
 				}

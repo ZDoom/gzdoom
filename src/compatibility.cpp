@@ -80,6 +80,7 @@ enum
 	CP_CLEARSPECIAL,
 	CP_SETACTIVATION,
 	CP_SECTORFLOOROFFSET,
+	CP_SETSECTORSPECIAL,
 	CP_SETWALLYSCALE,
 	CP_SETTHINGZ,
 	CP_SETTAG,
@@ -293,6 +294,15 @@ void ParseCompatibility()
 				CompatParams.Push(sc.Number);
 				sc.MustGetFloat();
 				CompatParams.Push(int(sc.Float*65536.));
+			}
+			else if (sc.Compare("setsectorspecial"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETSECTORSPECIAL);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
 			}
 			else if (sc.Compare("setwallyscale"))
 			{
@@ -525,6 +535,16 @@ void SetCompatibilityParams()
 						sector_t *sec = &sectors[CompatParams[i+1]];
 						sec->floorplane.ChangeHeight(CompatParams[i+2]);
 						sec->ChangePlaneTexZ(sector_t::floor, CompatParams[i+2] / 65536.);
+					}
+					i += 3;
+					break;
+				}
+				case CP_SETSECTORSPECIAL:
+				{
+					const int index = CompatParams[i + 1];
+					if (index < numsectors)
+					{
+						sectors[index].special = CompatParams[i + 2];
 					}
 					i += 3;
 					break;

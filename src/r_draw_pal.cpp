@@ -1994,9 +1994,9 @@ namespace swrenderer
 				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 				uint32_t fg = colormap[source[spot]];
 				uint32_t bg = *dest;
-				int r = MAX((palette[fg].r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
-				int g = MAX((palette[fg].g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
-				int b = MAX((palette[fg].b * _srcalpha - palette[bg].b * _destalpha)>>18, 0);
+				int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+				int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+				int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
 				*dest++ = RGB256k.RGB[r][g][b];
 
 				xfrac += xstep;
@@ -2013,9 +2013,9 @@ namespace swrenderer
 				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 				uint32_t fg = colormap[source[spot]];
 				uint32_t bg = *dest;
-				int r = MAX((palette[fg].r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
-				int g = MAX((palette[fg].g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
-				int b = MAX((palette[fg].b * _srcalpha - palette[bg].b * _destalpha)>>18, 0);
+				int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+				int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+				int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
 				*dest++ = RGB256k.RGB[r][g][b];
 
 				xfrac += xstep;
@@ -2064,9 +2064,9 @@ namespace swrenderer
 				{
 					uint32_t fg = colormap[texdata];
 					uint32_t bg = *dest;
-					int r = MAX((palette[fg].r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
-					int g = MAX((palette[fg].g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
-					int b = MAX((palette[fg].b * _srcalpha - palette[bg].b * _destalpha)>>18, 0);
+					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+					int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
 					*dest = RGB256k.RGB[r][g][b];
 				}
 				dest++;
@@ -2089,9 +2089,9 @@ namespace swrenderer
 				{
 					uint32_t fg = colormap[texdata];
 					uint32_t bg = *dest;
-					int r = MAX((palette[fg].r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
-					int g = MAX((palette[fg].g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
-					int b = MAX((palette[fg].b * _srcalpha - palette[bg].b * _destalpha)>>18, 0);
+					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+					int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
 					*dest = RGB256k.RGB[r][g][b];
 				}
 				dest++;
@@ -2135,9 +2135,9 @@ namespace swrenderer
 				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 				uint32_t fg = colormap[source[spot]];
 				uint32_t bg = *dest;
-				int r = MAX((palette[fg].r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
-				int g = MAX((palette[fg].g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
-				int b = MAX((palette[fg].b * _srcalpha - palette[bg].b * _destalpha)>>18, 0);
+				int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+				int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+				int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
 				*dest++ = RGB256k.RGB[r][g][b];
 
 				xfrac += xstep;
@@ -2154,9 +2154,9 @@ namespace swrenderer
 				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 				uint32_t fg = colormap[source[spot]];
 				uint32_t bg = *dest;
-				int r = MAX((palette[fg].r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
-				int g = MAX((palette[fg].g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
-				int b = MAX((palette[fg].b * _srcalpha - palette[bg].b * _destalpha)>>18, 0);
+				int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+				int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+				int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
 				*dest++ = RGB256k.RGB[r][g][b];
 
 				xfrac += xstep;
@@ -2204,9 +2204,9 @@ namespace swrenderer
 				{
 					uint32_t fg = colormap[texdata];
 					uint32_t bg = *dest;
-					int r = MAX((palette[fg].r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
-					int g = MAX((palette[fg].g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
-					int b = MAX((palette[fg].b * _srcalpha - palette[bg].b * _destalpha)>>18, 0);
+					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+					int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
 					*dest = RGB256k.RGB[r][g][b];
 				}
 				dest++;
@@ -2229,9 +2229,9 @@ namespace swrenderer
 				{
 					uint32_t fg = colormap[texdata];
 					uint32_t bg = *dest;
-					int r = MAX((palette[fg].r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
-					int g = MAX((palette[fg].g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
-					int b = MAX((palette[fg].b * _srcalpha - palette[bg].b * _destalpha)>>18, 0);
+					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+					int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
 					*dest = RGB256k.RGB[r][g][b];
 				}
 				dest++;

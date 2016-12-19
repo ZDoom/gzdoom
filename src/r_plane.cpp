@@ -1529,7 +1529,7 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 				{
 					spanfunc = R_DrawSpanAddClamp;
 					dc_srcalpha = alpha;
-					dc_destalpha = OPAQUE-alpha;
+					dc_destalpha = FRACUNIT;
 				}
 			}
 			else

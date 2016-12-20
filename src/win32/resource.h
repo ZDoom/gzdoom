@@ -164,3 +164,10 @@
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
+
+// [SP] Upstreamed from Zandronum
+#define IDC_WELCOME_VERSION				4019 // [RC] "Welcome" screen.
+#define IDC_WELCOME_OPENGL				4020
+#define IDC_WELCOME_SOFTWARE			4021
+#define IDC_WELCOME_FULLSCREEN			4022
+#define IDI_ICONST			151

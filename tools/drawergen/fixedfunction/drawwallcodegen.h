@@ -47,7 +47,9 @@ private:
 	SSAVec4i Shade(SSAVec4i fg, int index, bool isSimpleShade);
 	SSAVec4i Blend(SSAVec4i fg, SSAVec4i bg, DrawWallVariant variant);
 
-	SSAStack<SSAInt> stack_index, stack_frac[4];
+	SSAStack<SSAInt> stack_index, stack_frac[4], stack_light_index;
+	SSAStack<SSAVec4i> stack_lit_color;
+	SSAStack<SSAFloat> stack_z;
 
 	SSAUBytePtr dest;
 	SSAUBytePtr source[4];
@@ -69,4 +71,10 @@ private:
 
 	SSAInt fracstep[4];
 	SSAInt one[4];
+
+	SSAFloat start_z, step_z;
+
+	SSAValue dynlights; // TriLight*
+	SSAInt num_dynlights;
+	SSAFloat z;
 };

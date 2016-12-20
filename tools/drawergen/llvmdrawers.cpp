@@ -290,6 +290,11 @@ llvm::Type *LLVMDrawers::GetDrawWallArgsStruct(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_blue;
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t desaturate;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t flags;
+	elements.push_back(llvm::Type::getFloatTy(context)); // float z;
+	elements.push_back(llvm::Type::getFloatTy(context)); // float step_z;
+	elements.push_back(GetTriLightStruct(context));      // TriLight *dynlights;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t num_dynlights;
+
 	DrawWallArgsStruct = llvm::StructType::create(context, elements, "DrawWallArgs", false)->getPointerTo();
 	return DrawWallArgsStruct;
 }
@@ -324,6 +329,19 @@ llvm::Type *LLVMDrawers::GetWorkerThreadDataStruct(llvm::LLVMContext &context)
 		elements.push_back(llvm::Type::getInt32Ty(context));
 	WorkerThreadDataStruct = llvm::StructType::create(context, elements, "ThreadData", false)->getPointerTo();
 	return WorkerThreadDataStruct;
+}
+
+llvm::Type *LLVMDrawers::GetTriLightStruct(llvm::LLVMContext &context)
+{
+	if (TriLightStruct)
+		return TriLightStruct;
+
+	std::vector<llvm::Type *> elements;
+	elements.push_back(llvm::Type::getInt32Ty(context));
+	for (int i = 0; i < 4 + TriVertex::NumVarying; i++)
+		elements.push_back(llvm::Type::getFloatTy(context));
+	TriLightStruct = llvm::StructType::create(context, elements, "TriLight", false)->getPointerTo();
+	return TriLightStruct;
 }
 
 llvm::Type *LLVMDrawers::GetTriVertexStruct(llvm::LLVMContext &context)

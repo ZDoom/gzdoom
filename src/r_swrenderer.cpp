@@ -47,6 +47,9 @@
 #include "r_poly.h"
 #include "p_setup.h"
 
+void gl_ParseDefs();
+void gl_InitData();
+
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Float, maxviewpitch)	// [SP] CVAR from GZDoom
 
@@ -92,6 +95,8 @@ FSoftwareRenderer::~FSoftwareRenderer()
 
 void FSoftwareRenderer::Init()
 {
+	gl_ParseDefs();
+
 	r_swtruecolor = screen->IsBgra();
 	R_InitRenderer();
 }
@@ -310,7 +315,7 @@ int FSoftwareRenderer::GetMaxViewPitch(bool down)
 
 bool FSoftwareRenderer::RequireGLNodes()
 {
-	return r_polyrenderer;
+	return true;
 }
 
 //==========================================================================

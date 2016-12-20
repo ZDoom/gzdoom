@@ -59,6 +59,13 @@ struct WorkerThreadData
 	int32_t StartY;
 };
 
+struct TriLight
+{
+	uint32_t color;
+	float x, y, z;
+	float radius;
+};
+
 struct DrawWallArgs
 {
 	uint32_t *dest;
@@ -90,6 +97,10 @@ struct DrawWallArgs
 		simple_shade = 1,
 		nearest_filter = 2
 	};
+
+	float z, step_z;
+	TriLight *dynlights;
+	uint32_t num_dynlights;
 
 	FString ToString();
 };

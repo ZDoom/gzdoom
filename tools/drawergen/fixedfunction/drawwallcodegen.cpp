@@ -78,6 +78,10 @@ void DrawWallCodegen::Generate(DrawWallVariant variant, bool fourColumns, SSAVal
 	SSAShort fade_blue = args[0][41].load(true);
 	SSAShort desaturate = args[0][42].load(true);
 	SSAInt flags = args[0][43].load(true);
+	start_z = args[0][44].load(true);
+	step_z = args[0][45].load(true);
+	dynlights = args[0][46].load(true);
+	num_dynlights = args[0][47].load(true);
 	shade_constants.light = SSAVec4i(light_blue.zext_int(), light_green.zext_int(), light_red.zext_int(), light_alpha.zext_int());
 	shade_constants.fade = SSAVec4i(fade_blue.zext_int(), fade_green.zext_int(), fade_red.zext_int(), fade_alpha.zext_int());
 	shade_constants.desaturate = desaturate.zext_int();
@@ -129,9 +133,11 @@ void DrawWallCodegen::Loop(DrawWallVariant variant, bool fourColumns, bool isSim
 	int numColumns = fourColumns ? 4 : 1;
 
 	stack_index.store(SSAInt(0));
+	stack_z.store(start_z);
 	{
 		SSAForBlock loop;
 		SSAInt index = stack_index.load();
+		z = stack_z.load();
 		loop.loop_block(index < count);
 
 		SSAInt frac[4];
@@ -167,6 +173,7 @@ void DrawWallCodegen::Loop(DrawWallVariant variant, bool fourColumns, bool isSim
 			dest[offset].store_vec4ub(color);
 		}
 
+		stack_z.store(z + step_z);
 		stack_index.store(index.add(SSAInt(1), true, true));
 		for (int i = 0; i < numColumns; i++)
 			stack_frac[i].store(frac[i] + fracstep[i]);
@@ -209,10 +216,41 @@ SSAVec4i DrawWallCodegen::SampleLinear(SSAUBytePtr col0, SSAUBytePtr col1, SSAIn
 
 SSAVec4i DrawWallCodegen::Shade(SSAVec4i fg, int index, bool isSimpleShade)
 {
+	SSAVec4i c;
 	if (isSimpleShade)
-		return shade_bgra_simple(fg, light[index]);
+		c = shade_bgra_simple(fg, light[index]);
 	else
-		return shade_bgra_advanced(fg, light[index], shade_constants);
+		c = shade_bgra_advanced(fg, light[index], shade_constants);
+
+	stack_lit_color.store(c);
+	stack_light_index.store(SSAInt(0));
+
+	SSAForBlock block;
+	SSAInt light_index = stack_light_index.load();
+	SSAVec4i lit_color = stack_lit_color.load();
+	block.loop_block(light_index < num_dynlights);
+	{
+		SSAVec4i light_color = SSAUBytePtr(dynlights[light_index][0].v).load_vec4ub(true);
+		SSAFloat light_x = dynlights[light_index][1].load(true);
+		//SSAFloat light_y = dynlights[light_index][2].load(true);
+		SSAFloat light_z = dynlights[light_index][3].load(true);
+		SSAFloat light_rcp_radius = dynlights[light_index][4].load(true);
+
+		// L = light-pos
+		// dist = sqrt(dot(L, L))
+		// attenuation = 1 - MIN(dist * (1/radius), 1)
+		SSAFloat Lxy2 = light_x; // L.x*L.x + L.y*L.y
+		SSAFloat Lz = light_z - z;
+		SSAFloat dist = SSAFloat::sqrt(Lxy2 + Lz * Lz);
+		SSAInt attenuation = SSAInt(SSAFloat(256.0f) - SSAFloat::MIN(dist * light_rcp_radius, SSAFloat(256.0f)), true);
+		SSAVec4i contribution = (light_color * fg * attenuation) >> 16;
+
+		stack_lit_color.store(lit_color + contribution);
+		stack_light_index.store(light_index + 1);
+	}
+	block.end_block();
+
+	return stack_lit_color.load();
 }
 
 SSAVec4i DrawWallCodegen::Blend(SSAVec4i fg, SSAVec4i bg, DrawWallVariant variant)

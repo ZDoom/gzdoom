@@ -261,6 +261,9 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const Vec4f &clipPlane
 	args.SetColormap(Line->frontsector->ColorMap);
 	args.SetClipPlane(clipPlane.x, clipPlane.y, clipPlane.z, clipPlane.w);
 
+	//if (Side && Side->lighthead)
+	//	args.uniforms.light = 255; // Make walls touched by a light fullbright!
+
 	if (Polyportal)
 	{
 		args.stencilwritevalue = Polyportal->StencilValue;

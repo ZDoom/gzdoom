@@ -3,6 +3,10 @@
 
 #include "r_renderer.h"
 
+void gl_SetActorLights(AActor *);
+void gl_PreprocessLevel();
+void gl_CleanLevelData();
+
 struct FSoftwareRenderer : public FRenderer
 {
 	FSoftwareRenderer();
@@ -39,6 +43,21 @@ struct FSoftwareRenderer : public FRenderer
 	void CopyStackedViewParameters() override;
 	void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov) override;
 	sector_t *FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel, bool back) override;
+
+	void StateChanged(AActor *actor) override
+	{
+		gl_SetActorLights(actor);
+	}
+
+	void PreprocessLevel() override
+	{
+		gl_PreprocessLevel();
+	}
+
+	void CleanLevelData() override
+	{
+		gl_CleanLevelData();
+	}
 
 };
 

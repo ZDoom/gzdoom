@@ -58,6 +58,7 @@ private:
 	llvm::Type *GetDrawWallArgsStruct(llvm::LLVMContext &context);
 	llvm::Type *GetDrawSkyArgsStruct(llvm::LLVMContext &context);
 	llvm::Type *GetWorkerThreadDataStruct(llvm::LLVMContext &context);
+	llvm::Type *GetTriLightStruct(llvm::LLVMContext &context);
 	llvm::Type *GetTriVertexStruct(llvm::LLVMContext &context);
 	llvm::Type *GetTriMatrixStruct(llvm::LLVMContext &context);
 	llvm::Type *GetTriUniformsStruct(llvm::LLVMContext &context);
@@ -70,6 +71,7 @@ private:
 	llvm::Type *DrawWallArgsStruct = nullptr;
 	llvm::Type *DrawSkyArgsStruct = nullptr;
 	llvm::Type *WorkerThreadDataStruct = nullptr;
+	llvm::Type *TriLightStruct = nullptr;
 	llvm::Type *TriVertexStruct = nullptr;
 	llvm::Type *TriMatrixStruct = nullptr;
 	llvm::Type *TriUniformsStruct = nullptr;

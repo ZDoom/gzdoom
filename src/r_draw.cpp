@@ -100,17 +100,15 @@ namespace swrenderer
 		uint8_t *dc_destorg;
 		int dc_destheight;
 		int dc_count;
-		uint32_t vplce[4];
-		uint32_t vince[4];
-		uint8_t *palookupoffse[4];
-		fixed_t palookuplight[4];
-		const uint8_t *bufplce[4];
-		const uint8_t *bufplce2[4];
-		uint32_t buftexturefracx[4];
-		uint32_t bufheight[4];
-		int vlinebits;
-		int mvlinebits;
-		int tmvlinebits;
+		uint32_t dc_wall_texturefrac[4];
+		uint32_t dc_wall_iscale[4];
+		uint8_t *dc_wall_colormap[4];
+		fixed_t dc_wall_light[4];
+		const uint8_t *dc_wall_source[4];
+		const uint8_t *dc_wall_source2[4];
+		uint32_t dc_wall_texturefracx[4];
+		uint32_t dc_wall_sourceheight[4];
+		int dc_wall_fracbits;
 		int ds_y;
 		int ds_x1;
 		int ds_x2;
@@ -525,48 +523,33 @@ namespace swrenderer
 			return tex->GetColumn(col, nullptr);
 	}
 
-	bool R_GetTransMaskDrawers(fixed_t(**tmvline1)(), void(**tmvline4)())
+	bool R_GetTransMaskDrawers(void(**drawCol1)(), void(**drawCol4)())
 	{
 		if (colfunc == R_DrawAddColumn)
 		{
-			*tmvline1 = tmvline1_add;
-			*tmvline4 = tmvline4_add;
+			*drawCol1 = R_DrawWallAddCol1;
+			*drawCol4 = R_DrawWallAddCol4;
 			return true;
 		}
 		if (colfunc == R_DrawAddClampColumn)
 		{
-			*tmvline1 = tmvline1_addclamp;
-			*tmvline4 = tmvline4_addclamp;
+			*drawCol1 = R_DrawWallAddClampCol1;
+			*drawCol4 = R_DrawWallAddClampCol4;
 			return true;
 		}
 		if (colfunc == R_DrawSubClampColumn)
 		{
-			*tmvline1 = tmvline1_subclamp;
-			*tmvline4 = tmvline4_subclamp;
+			*drawCol1 = R_DrawWallSubClampCol1;
+			*drawCol4 = R_DrawWallSubClampCol4;
 			return true;
 		}
 		if (colfunc == R_DrawRevSubClampColumn)
 		{
-			*tmvline1 = tmvline1_revsubclamp;
-			*tmvline4 = tmvline4_revsubclamp;
+			*drawCol1 = R_DrawWallRevSubClampCol1;
+			*drawCol4 = R_DrawWallRevSubClampCol4;
 			return true;
 		}
 		return false;
-	}
-
-	void setupvline(int fracbits)
-	{
-		drawerargs::vlinebits = fracbits;
-	}
-
-	void setupmvline(int fracbits)
-	{
-		drawerargs::mvlinebits = fracbits;
-	}
-
-	void setuptmvline(int fracbits)
-	{
-		drawerargs::tmvlinebits = fracbits;
 	}
 
 	void R_SetColorMapLight(FSWColormap *base_colormap, float light, int shade)
@@ -1185,154 +1168,100 @@ namespace swrenderer
 		}
 	}
 
-	uint32_t vlinec1()
+	void R_DrawWallCol1()
 	{
-		using namespace drawerargs;
-
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWall1LLVMCommand>();
 		else
 			DrawerCommandQueue::QueueCommand<DrawWall1PalCommand>();
-
-		return dc_texturefrac + dc_count * dc_iscale;
 	}
 
-	void vlinec4()
+	void R_DrawWallCol4()
 	{
-		using namespace drawerargs;
-
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWall4LLVMCommand>();
 		else
 			DrawerCommandQueue::QueueCommand<DrawWall4PalCommand>();
-
-		for (int i = 0; i < 4; i++)
-			vplce[i] += vince[i] * dc_count;
 	}
 
-	uint32_t mvlinec1()
+	void R_DrawWallMaskedCol1()
 	{
-		using namespace drawerargs;
-
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWallMasked1LLVMCommand>();
 		else
 			DrawerCommandQueue::QueueCommand<DrawWallMasked1PalCommand>();
-
-		return dc_texturefrac + dc_count * dc_iscale;
 	}
 
-	void mvlinec4()
+	void R_DrawWallMaskedCol4()
 	{
-		using namespace drawerargs;
-
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWallMasked4LLVMCommand>();
 		else
 			DrawerCommandQueue::QueueCommand<DrawWallMasked4PalCommand>();
-
-		for (int i = 0; i < 4; i++)
-			vplce[i] += vince[i] * dc_count;
 	}
 
-	fixed_t tmvline1_add()
+	void R_DrawWallAddCol1()
 	{
-		using namespace drawerargs;
-
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWallAdd1LLVMCommand>();
 		else
 			DrawerCommandQueue::QueueCommand<DrawWallAdd1PalCommand>();
-
-		return dc_texturefrac + dc_count * dc_iscale;
 	}
 
-	void tmvline4_add()
+	void R_DrawWallAddCol4()
 	{
-		using namespace drawerargs;
-
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWallAdd4LLVMCommand>();
 		else
 			DrawerCommandQueue::QueueCommand<DrawWallAdd4PalCommand>();
-
-		for (int i = 0; i < 4; i++)
-			vplce[i] += vince[i] * dc_count;
 	}
 
-	fixed_t tmvline1_addclamp()
+	void R_DrawWallAddClampCol1()
 	{
-		using namespace drawerargs;
-
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWallAddClamp1LLVMCommand>();
 		else
 			DrawerCommandQueue::QueueCommand<DrawWallAddClamp1PalCommand>();
-
-		return dc_texturefrac + dc_count * dc_iscale;
 	}
 
-	void tmvline4_addclamp()
+	void R_DrawWallAddClampCol4()
 	{
-		using namespace drawerargs;
-
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWallAddClamp4LLVMCommand>();
 		else
 			DrawerCommandQueue::QueueCommand<DrawWallAddClamp4PalCommand>();
-
-		for (int i = 0; i < 4; i++)
-			vplce[i] += vince[i] * dc_count;
 	}
 
-	fixed_t tmvline1_subclamp()
+	void R_DrawWallSubClampCol1()
 	{
-		using namespace drawerargs;
-
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWallSubClamp1LLVMCommand>();
 		else
 			DrawerCommandQueue::QueueCommand<DrawWallSubClamp1PalCommand>();
-
-		return dc_texturefrac + dc_count * dc_iscale;
 	}
 
-	void tmvline4_subclamp()
+	void R_DrawWallSubClampCol4()
 	{
-		using namespace drawerargs;
-
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWallSubClamp4LLVMCommand>();
 		else
 			DrawerCommandQueue::QueueCommand<DrawWallSubClamp4PalCommand>();
-
-		for (int i = 0; i < 4; i++)
-			vplce[i] += vince[i] * dc_count;
 	}
 
-	fixed_t tmvline1_revsubclamp()
+	void R_DrawWallRevSubClampCol1()
 	{
-		using namespace drawerargs;
-
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1LLVMCommand>();
 		else
 			DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1PalCommand>();
-
-		return dc_texturefrac + dc_count * dc_iscale;
 	}
 
-	void tmvline4_revsubclamp()
+	void R_DrawWallRevSubClampCol4()
 	{
-		using namespace drawerargs;
-
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp4LLVMCommand>();
 		else
 			DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp4PalCommand>();
-
-		for (int i = 0; i < 4; i++)
-			vplce[i] += vince[i] * dc_count;
 	}
 
 	void R_DrawSingleSkyCol1(uint32_t solid_top, uint32_t solid_bottom)

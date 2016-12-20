@@ -205,13 +205,13 @@ namespace swrenderer
 		args.desaturate = dc_shade_constants.desaturate;
 		for (int i = 0; i < 4; i++)
 		{
-			args.texturefrac[i] = vplce[i];
-			args.iscale[i] = vince[i];
-			args.texturefracx[i] = buftexturefracx[i];
-			args.textureheight[i] = bufheight[i];
-			args.source[i] = (const uint32_t *)bufplce[i];
-			args.source2[i] = (const uint32_t *)bufplce2[i];
-			args.light[i] = LightBgra::calc_light_multiplier(palookuplight[i]);
+			args.texturefrac[i] = dc_wall_texturefrac[i];
+			args.iscale[i] = dc_wall_iscale[i];
+			args.texturefracx[i] = dc_wall_texturefracx[i];
+			args.textureheight[i] = dc_wall_sourceheight[i];
+			args.source[i] = (const uint32_t *)dc_wall_source[i];
+			args.source2[i] = (const uint32_t *)dc_wall_source2[i];
+			args.light[i] = LightBgra::calc_light_multiplier(dc_wall_light[i]);
 		}
 		args.srcalpha = dc_srcalpha >> (FRACBITS - 8);
 		args.destalpha = dc_destalpha >> (FRACBITS - 8);
@@ -378,13 +378,13 @@ namespace swrenderer
 		args.pitch = dc_pitch;
 		for (int i = 0; i < 4; i++)
 		{
-			args.texturefrac[i] = vplce[i];
-			args.iscale[i] = vince[i];
-			args.source0[i] = (const uint32_t *)bufplce[i];
-			args.source1[i] = (const uint32_t *)bufplce2[i];
+			args.texturefrac[i] = dc_wall_texturefrac[i];
+			args.iscale[i] = dc_wall_iscale[i];
+			args.source0[i] = (const uint32_t *)dc_wall_source[i];
+			args.source1[i] = (const uint32_t *)dc_wall_source2[i];
 		}
-		args.textureheight0 = bufheight[0];
-		args.textureheight1 = bufheight[1];
+		args.textureheight0 = dc_wall_sourceheight[0];
+		args.textureheight1 = dc_wall_sourceheight[1];
 		args.top_color = solid_top;
 		args.bottom_color = solid_bottom;
 

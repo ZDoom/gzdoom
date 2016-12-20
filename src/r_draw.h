@@ -66,17 +66,15 @@ namespace swrenderer
 
 		extern bool drawer_needs_pal_input;
 
-		extern uint32_t vplce[4];
-		extern uint32_t vince[4];
-		extern uint8_t *palookupoffse[4];
-		extern fixed_t palookuplight[4];
-		extern const uint8_t *bufplce[4];
-		extern const uint8_t *bufplce2[4];
-		extern uint32_t buftexturefracx[4];
-		extern uint32_t bufheight[4];
-		extern int vlinebits;
-		extern int mvlinebits;
-		extern int tmvlinebits;
+		extern uint32_t dc_wall_texturefrac[4];
+		extern uint32_t dc_wall_iscale[4];
+		extern uint8_t *dc_wall_colormap[4];
+		extern fixed_t dc_wall_light[4];
+		extern const uint8_t *dc_wall_source[4];
+		extern const uint8_t *dc_wall_source2[4];
+		extern uint32_t dc_wall_texturefracx[4];
+		extern uint32_t dc_wall_sourceheight[4];
+		extern int dc_wall_fracbits;
 
 		extern int ds_y;
 		extern int ds_x1;
@@ -130,7 +128,7 @@ namespace swrenderer
 	ESPSResult R_SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color);
 	ESPSResult R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color);
 	void R_FinishSetPatchStyle(); // Call this after finished drawing the current thing, in case its style was STYLE_Shade
-	bool R_GetTransMaskDrawers(fixed_t(**tmvline1)(), void(**tmvline4)());
+	bool R_GetTransMaskDrawers(void(**drawCol1)(), void(**drawCol4)());
 
 	const uint8_t *R_GetColumn(FTexture *tex, int col);
 	
@@ -192,29 +190,21 @@ namespace swrenderer
 	void R_SetupDrawSlab(FSWColormap *base_colormap, float light, int shade);
 	void R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const uint8_t *vptr, uint8_t *p);
 	void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip);
-	uint32_t vlinec1();
-	void vlinec4();
-	uint32_t mvlinec1();
-	void mvlinec4();
-	fixed_t tmvline1_add();
-	void tmvline4_add();
-	fixed_t tmvline1_addclamp();
-	void tmvline4_addclamp();
-	fixed_t tmvline1_subclamp();
-	void tmvline4_subclamp();
-	fixed_t tmvline1_revsubclamp();
-	void tmvline4_revsubclamp();
 	void R_FillColumnHoriz();
 	void R_FillSpan();
 
-	inline uint32_t dovline1() { return vlinec1(); }
-	inline void dovline4() { vlinec4(); }
-	inline uint32_t domvline1() { return mvlinec1(); }
-	inline void domvline4() { mvlinec4(); }
-
-	void setupvline(int fracbits);
-	void setupmvline(int fracbits);
-	void setuptmvline(int fracbits);
+	void R_DrawWallCol1();
+	void R_DrawWallCol4();
+	void R_DrawWallMaskedCol1();
+	void R_DrawWallMaskedCol4();
+	void R_DrawWallAddCol1();
+	void R_DrawWallAddCol4();
+	void R_DrawWallAddClampCol1();
+	void R_DrawWallAddClampCol4();
+	void R_DrawWallSubClampCol1();
+	void R_DrawWallSubClampCol4();
+	void R_DrawWallRevSubClampCol1();
+	void R_DrawWallRevSubClampCol4();
 
 	void R_DrawSingleSkyCol1(uint32_t solid_top, uint32_t solid_bottom);
 	void R_DrawSingleSkyCol4(uint32_t solid_top, uint32_t solid_bottom);

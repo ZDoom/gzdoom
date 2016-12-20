@@ -803,21 +803,21 @@ static void R_DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, doub
 
 		if (r_swtruecolor)
 		{
-			bufplce[i] = (const BYTE *)frontskytex->GetColumnBgra(angle1, nullptr);
-			bufplce2[i] = backskytex ? (const BYTE *)backskytex->GetColumnBgra(angle2, nullptr) : nullptr;
+			dc_wall_source[i] = (const BYTE *)frontskytex->GetColumnBgra(angle1, nullptr);
+			dc_wall_source2[i] = backskytex ? (const BYTE *)backskytex->GetColumnBgra(angle2, nullptr) : nullptr;
 		}
 		else
 		{
-			bufplce[i] = (const BYTE *)frontskytex->GetColumn(angle1, nullptr);
-			bufplce2[i] = backskytex ? (const BYTE *)backskytex->GetColumn(angle2, nullptr) : nullptr;
+			dc_wall_source[i] = (const BYTE *)frontskytex->GetColumn(angle1, nullptr);
+			dc_wall_source2[i] = backskytex ? (const BYTE *)backskytex->GetColumn(angle2, nullptr) : nullptr;
 		}
 
-		vince[i] = uv_step;
-		vplce[i] = uv_pos;
+		dc_wall_iscale[i] = uv_step;
+		dc_wall_texturefrac[i] = uv_pos;
 	}
 
-	bufheight[0] = height;
-	bufheight[1] = backskytex ? backskytex->GetHeight() : height;
+	dc_wall_sourceheight[0] = height;
+	dc_wall_sourceheight[1] = backskytex ? backskytex->GetHeight() : height;
 	int pixelsize = r_swtruecolor ? 4 : 1;
 	dc_dest = (ylookup[y1] + start_x) * pixelsize + dc_destorg;
 	dc_count = y2 - y1;

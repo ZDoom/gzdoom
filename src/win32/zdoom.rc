@@ -220,6 +220,7 @@ END
 // Dialog
 //
 
+/*
 IDD_IWADDIALOG DIALOGEX 0, 0, 212, 186
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_APPWINDOW
@@ -232,6 +233,36 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,155,165,50,14
     LTEXT           "ZDoom found more than one IWAD present.",IDC_STATIC,5,5,140,8
     LTEXT           "Select from the list below to determine which one to use:",IDC_STATIC,5,15,200,8
+END
+*/
+// [SP] Upstreamed from Zandronum
+IDD_IWADDIALOG DIALOGEX 0, 0, 224, 236
+STYLE DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "Welcome"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+	ICON            IDI_ICON1,IDC_STATIC,7,7,32,32
+	LTEXT           "Welcome to QZDoom!",IDC_STATIC,42,8,180,8
+	LTEXT           "<Version info>",IDC_WELCOME_VERSION,42,18,180,8
+	GROUPBOX        "IWAD selection",IDC_STATIC,8,32,224-16,102
+	LTEXT           "Select which game file (IWAD) to run.", IDC_STATIC,12,32+12,190,8
+    LISTBOX         IDC_IWADLIST,12,32+24,224-24,72,LBS_NOINTEGRALHEIGHT | 
+                    WS_VSCROLL | WS_TABSTOP
+	GROUPBOX        "Video settings",IDC_STATIC,8,138,224-16,48
+	LTEXT           "Choose how QZDoom will render the game.", IDC_STATIC,12,148,190,8
+	CONTROL         "Hardware (OpenGL)",IDC_WELCOME_OPENGL,"Button",
+                    BS_AUTORADIOBUTTON,12,170,93,10
+	CONTROL         "Software (Doom)",IDC_WELCOME_SOFTWARE,"Button",
+                    BS_AUTORADIOBUTTON,12,160,93,10
+	CONTROL         "Fullscreen",IDC_WELCOME_FULLSCREEN,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP, 124,160,48,10
+	CONTROL         "Don't ask me this again",IDC_DONTASKIWAD,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,72,192,87,10
+    DEFPUSHBUTTON   "Play QZDoom",IDOK,8,236-18,90,14
+    PUSHBUTTON      "Exit",IDCANCEL,224-58,236-18,50,14
+
 END
 
 IDD_EAXPROPERTYLIST DIALOGEX 0, 0, 265, 404

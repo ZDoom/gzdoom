@@ -127,6 +127,9 @@ static void DestroyCustomCursor();
 
 EXTERN_CVAR(String, language);
 EXTERN_CVAR (Bool, queryiwad);
+// Used on welcome/IWAD screen.
+EXTERN_CVAR (Int, vid_renderer)
+EXTERN_CVAR (Bool, fullscreen)
 
 extern HWND Window, ConWindow, GameTitleWindow;
 extern HANDLE StdOut;
@@ -1159,6 +1162,18 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 			newlabel.Format(GAMESIG " %s: %s", GetVersionString(), label);
 			SetWindowText(hDlg, newlabel.GetChars());
 		}
+
+		// [SP] Upstreamed from Zandronum
+		char	szString[256];
+
+		// Check the current video settings.
+		SendDlgItemMessage( hDlg, vid_renderer ? IDC_WELCOME_OPENGL : IDC_WELCOME_SOFTWARE, BM_SETCHECK, BST_CHECKED, 0 );
+		SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_SETCHECK, fullscreen ? BST_CHECKED : BST_UNCHECKED, 0 );
+
+		// Set up our version string.
+		sprintf(szString, "Version %s.", GetVersionString());
+		SetDlgItemText (hDlg, IDC_WELCOME_VERSION, szString);
+
 		// Populate the list with all the IWADs found
 		ctrl = GetDlgItem(hDlg, IDC_IWADLIST);
 		for (i = 0; i < NumWads; i++)
@@ -1192,6 +1207,9 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 			(LOWORD(wParam) == IDC_IWADLIST && HIWORD(wParam) == LBN_DBLCLK))
 		{
 			SetQueryIWad(hDlg);
+			// [SP] Upstreamed from Zandronum
+			vid_renderer = SendDlgItemMessage( hDlg, IDC_WELCOME_OPENGL, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
+			fullscreen = SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
 			ctrl = GetDlgItem (hDlg, IDC_IWADLIST);
 			EndDialog(hDlg, SendMessage (ctrl, LB_GETCURSEL, 0, 0));
 		}

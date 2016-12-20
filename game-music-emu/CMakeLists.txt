@@ -80,7 +80,7 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZD_FASTMATH_FLAG}" )
 #endif()
 
 # [ZDoom] Set always to OFF.
-set(BUILD_SHARED_LIBS 0 BOOL "Build shared library (set to OFF for static library)")
+set(BUILD_SHARED_LIBS OFF)
 
 # Check for GCC "visibility" support.
 if (CMAKE_COMPILER_IS_GNUCXX)

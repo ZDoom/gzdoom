@@ -244,14 +244,14 @@ CAPTION "Welcome"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
 	ICON            IDI_ICON1,IDC_STATIC,7,7,32,32
-	LTEXT           "Welcome to QZDoom!",IDC_STATIC,42,8,180,8
+	LTEXT           "Welcome to GZDoom!",IDC_STATIC,42,8,180,8
 	LTEXT           "<Version info>",IDC_WELCOME_VERSION,42,18,180,8
 	GROUPBOX        "IWAD selection",IDC_STATIC,8,32,224-16,102
 	LTEXT           "Select which game file (IWAD) to run.", IDC_STATIC,12,32+12,190,8
     LISTBOX         IDC_IWADLIST,12,32+24,224-24,72,LBS_NOINTEGRALHEIGHT | 
                     WS_VSCROLL | WS_TABSTOP
 	GROUPBOX        "Video settings",IDC_STATIC,8,138,224-16,48
-	LTEXT           "Choose how QZDoom will render the game.", IDC_STATIC,12,148,190,8
+	LTEXT           "Choose how GZDoom will render the game.", IDC_STATIC,12,148,190,8
 	CONTROL         "Hardware (OpenGL)",IDC_WELCOME_OPENGL,"Button",
                     BS_AUTORADIOBUTTON,12,170,93,10
 	CONTROL         "Software (Doom)",IDC_WELCOME_SOFTWARE,"Button",
@@ -262,7 +262,7 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,72,192,87,10
 	CONTROL "Don't ask me this again",IDC_DONTASKIWAD,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,72,202,87,10
-	DEFPUSHBUTTON "Play QZDoom",IDOK,8,246-18,90,14
+	DEFPUSHBUTTON "Play GZDoom",IDOK,8,246-18,90,14
 	PUSHBUTTON "Exit",IDCANCEL,224-58,246-18,50,14
 END
 

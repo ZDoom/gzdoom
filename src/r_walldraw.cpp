@@ -561,24 +561,27 @@ static void Draw1Column(int x, int y1, int y2, WallSampler &sampler, void(*draw1
 		FLightNode *cur_node = dc_light_list;
 		while (cur_node && nextlightindex < 64 * 1024)
 		{
-			uint32_t red = cur_node->lightsource->GetRed();
-			uint32_t green = cur_node->lightsource->GetGreen();
-			uint32_t blue = cur_node->lightsource->GetBlue();
+			if (!(cur_node->lightsource->flags2&MF2_DORMANT))
+			{
+				uint32_t red = cur_node->lightsource->GetRed();
+				uint32_t green = cur_node->lightsource->GetGreen();
+				uint32_t blue = cur_node->lightsource->GetBlue();
 
-			double lightX = cur_node->lightsource->X() - ViewPos.X;
-			double lightY = cur_node->lightsource->Y() - ViewPos.Y;
-			double lightZ = cur_node->lightsource->Z() - ViewPos.Z;
+				double lightX = cur_node->lightsource->X() - ViewPos.X;
+				double lightY = cur_node->lightsource->Y() - ViewPos.Y;
+				double lightZ = cur_node->lightsource->Z() - ViewPos.Z;
 
-			nextlightindex++;
-			auto &light = dc_lights[dc_num_lights++];
-			light.x = (float)(lightX * ViewSin - lightY * ViewCos) - dc_viewpos.X;
-			light.y = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - dc_viewpos.Y;
-			light.z = (float)lightZ;
-			light.radius = 256.0f / cur_node->lightsource->GetRadius();
-			light.color = 0xff000000 | (red << 16) | (green << 8) | blue;
+				nextlightindex++;
+				auto &light = dc_lights[dc_num_lights++];
+				light.x = (float)(lightX * ViewSin - lightY * ViewCos) - dc_viewpos.X;
+				light.y = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - dc_viewpos.Y;
+				light.z = (float)lightZ;
+				light.radius = 256.0f / cur_node->lightsource->GetRadius();
+				light.color = 0xff000000 | (red << 16) | (green << 8) | blue;
 
-			// Precalculate the constant part of the dot here so the drawer doesn't have to.
-			light.x = light.x * light.x + light.y * light.y;
+				// Precalculate the constant part of the dot here so the drawer doesn't have to.
+				light.x = light.x * light.x + light.y * light.y;
+			}
 
 			cur_node = cur_node->nextLight;
 		}

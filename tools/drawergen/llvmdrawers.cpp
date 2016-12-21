@@ -338,7 +338,7 @@ llvm::Type *LLVMDrawers::GetTriLightStruct(llvm::LLVMContext &context)
 
 	std::vector<llvm::Type *> elements;
 	elements.push_back(llvm::Type::getInt32Ty(context));
-	for (int i = 0; i < 4 + TriVertex::NumVarying; i++)
+	for (int i = 0; i < 4; i++)
 		elements.push_back(llvm::Type::getFloatTy(context));
 	TriLightStruct = llvm::StructType::create(context, elements, "TriLight", false)->getPointerTo();
 	return TriLightStruct;

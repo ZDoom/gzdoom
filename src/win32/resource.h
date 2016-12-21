@@ -171,3 +171,6 @@
 #define IDC_WELCOME_SOFTWARE			4021
 #define IDC_WELCOME_FULLSCREEN			4022
 #define IDI_ICONST			151
+
+// [SP] This is our's.
+#define IDC_WELCOME_NOAUTOLOAD			4023

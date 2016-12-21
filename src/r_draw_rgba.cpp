@@ -221,26 +221,11 @@ namespace swrenderer
 		if (args.source2[0] == nullptr)
 			args.flags |= DrawWallArgs::nearest_filter;
 
+		args.z = 0.0f;
+		args.step_z = 0.0f;
 		args.dynlights = nullptr;
 		args.num_dynlights = 0;
-		/*
-		static TriLight fakelight;
-		static bool first = true;
-		if (first)
-		{
-			fakelight.x = 100.0f;
-			fakelight.y = 0.0f;
-			fakelight.z = 100.0f;
-			fakelight.color = 0xffffff00;
-			fakelight.radius = 256.0f / 1000.0f;
-			first = false;
-		}
 
-		args.z = 0.0f;
-		args.step_z = 1.0f;
-		args.dynlights = &fakelight;
-		args.num_dynlights = 1;
-		*/
 		DetectRangeError(args.dest, args.dest_y, args.count);
 	}
 
@@ -299,10 +284,10 @@ namespace swrenderer
 		if (args.source2[0] == nullptr)
 			args.flags |= DrawWallArgs::nearest_filter;
 
-		args.z = 0.0f;
-		args.step_z = 0.0f;
-		args.dynlights = nullptr;
-		args.num_dynlights = 0;
+		args.z = dc_viewpos.Z;
+		args.step_z = dc_viewpos_step.Z;
+		args.dynlights = dc_lights;
+		args.num_dynlights = dc_num_lights;
 
 		DetectRangeError(args.dest, args.dest_y, args.count);
 	}

@@ -62,6 +62,7 @@ namespace swrenderer
 	extern int wallshade;
 
 	double dc_texturemid;
+	FLightNode *dc_light_list;
 
 	int ylookup[MAXHEIGHT];
 	uint8_t shadetables[NUMCOLORMAPS * 16 * 256];
@@ -100,6 +101,10 @@ namespace swrenderer
 		uint8_t *dc_destorg;
 		int dc_destheight;
 		int dc_count;
+		FVector3 dc_viewpos;
+		FVector3 dc_viewpos_step;
+		TriLight *dc_lights;
+		int dc_num_lights;
 		uint32_t dc_wall_texturefrac[4];
 		uint32_t dc_wall_iscale[4];
 		uint8_t *dc_wall_colormap[4];

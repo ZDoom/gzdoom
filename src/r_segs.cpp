@@ -60,7 +60,7 @@ namespace swrenderer
 {
 	using namespace drawerargs;
 
-	void R_DrawWallSegment(FTexture *rw_pic, int x1, int x2, short *walltop, short *wallbottom, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask);
+	void R_DrawWallSegment(FTexture *rw_pic, int x1, int x2, short *walltop, short *wallbottom, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, FLightNode *light_list = nullptr);
 	void R_DrawDrawSeg(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat);
 
 #define HEIGHTBITS 12
@@ -1139,6 +1139,8 @@ void R_RenderSegLoop ()
 	}
 	if(fake3D & 7) return;
 
+	FLightNode *light_list = (curline && curline->sidedef) ? curline->sidedef->lighthead : nullptr;
+
 	// draw the wall tiers
 	if (midtexture)
 	{ // one sided line
@@ -1165,7 +1167,7 @@ void R_RenderSegLoop ()
 			{
 				rw_offset = -rw_offset;
 			}
-			R_DrawWallSegment(rw_pic, x1, x2, walltop, wallbottom, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false);
+			R_DrawWallSegment(rw_pic, x1, x2, walltop, wallbottom, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false, light_list);
 		}
 		fillshort (ceilingclip+x1, x2-x1, viewheight);
 		fillshort (floorclip+x1, x2-x1, 0xffff);
@@ -1201,7 +1203,7 @@ void R_RenderSegLoop ()
 				{
 					rw_offset = -rw_offset;
 				}
-				R_DrawWallSegment(rw_pic, x1, x2, walltop, wallupper, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false);
+				R_DrawWallSegment(rw_pic, x1, x2, walltop, wallupper, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false, light_list);
 			}
 			memcpy (ceilingclip+x1, wallupper+x1, (x2-x1)*sizeof(short));
 		}
@@ -1240,7 +1242,7 @@ void R_RenderSegLoop ()
 				{
 					rw_offset = -rw_offset;
 				}
-				R_DrawWallSegment(rw_pic, x1, x2, walllower, wallbottom, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false);
+				R_DrawWallSegment(rw_pic, x1, x2, walllower, wallbottom, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false, light_list);
 			}
 			memcpy (floorclip+x1, walllower+x1, (x2-x1)*sizeof(short));
 		}

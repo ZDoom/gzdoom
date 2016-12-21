@@ -42,6 +42,8 @@
 #include "r_3dfloors.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
+#include "gl/dynlights/gl_dynlight.h"
+#include "r_drawers.h"
 
 namespace swrenderer
 {
@@ -537,6 +539,53 @@ static void Draw1Column(int x, int y1, int y2, WallSampler &sampler, void(*draw1
 {
 	if (r_swtruecolor)
 	{
+		// Find column position in view space
+		float w1 = 1.0f / WallC.sz1;
+		float w2 = 1.0f / WallC.sz2;
+		float t = (x - WallC.sx1 + 0.5f) / (WallC.sx2 - WallC.sx1);
+		float wcol = w1 * (1.0f - t) + w2 * t;
+		float zcol = 1.0f / wcol;
+		float xcol = (WallC.tleft.X * w1 * (1.0f - t) + WallC.tright.X * w2 * t) * zcol;
+		float ycol = (WallC.tleft.Y * w1 * (1.0f - t) + WallC.tright.Y * w2 * t) * zcol;
+		dc_viewpos.X = xcol;
+		dc_viewpos.Y = ycol;
+		dc_viewpos.Z = (float)((CenterY - y1 - 0.5) / InvZtoScale * zcol);
+		dc_viewpos_step.Z = (float)(-zcol / InvZtoScale);
+
+		static TriLight lightbuffer[64 * 1024];
+		static int nextlightindex = 0;
+
+		// Setup lights for column
+		dc_num_lights = 0;
+		dc_lights = lightbuffer + nextlightindex;
+		FLightNode *cur_node = dc_light_list;
+		while (cur_node && nextlightindex < 64 * 1024)
+		{
+			uint32_t red = cur_node->lightsource->GetRed();
+			uint32_t green = cur_node->lightsource->GetGreen();
+			uint32_t blue = cur_node->lightsource->GetBlue();
+
+			double lightX = cur_node->lightsource->X() - ViewPos.X;
+			double lightY = cur_node->lightsource->Y() - ViewPos.Y;
+			double lightZ = cur_node->lightsource->Z() - ViewPos.Z;
+
+			nextlightindex++;
+			auto &light = dc_lights[dc_num_lights++];
+			light.x = (float)(lightX * ViewSin - lightY * ViewCos) - dc_viewpos.X;
+			light.y = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - dc_viewpos.Y;
+			light.z = (float)lightZ;
+			light.radius = 256.0f / cur_node->lightsource->GetRadius();
+			light.color = 0xff000000 | (red << 16) | (green << 8) | blue;
+
+			// Precalculate the constant part of the dot here so the drawer doesn't have to.
+			light.x = light.x * light.x + light.y * light.y;
+
+			cur_node = cur_node->nextLight;
+		}
+
+		if (nextlightindex == 64 * 1024)
+			nextlightindex = 0;
+
 		int count = y2 - y1;
 
 		dc_source = sampler.source;
@@ -738,6 +787,25 @@ static void ProcessWallWorker(
 
 	float light = rw_light;
 
+	double xmagnitude = 1.0;
+
+#if !defined(NO_DYNAMIC_SWLIGHTS)
+	for (int x = x1; x < x2; x++, light += rw_lightstep)
+	{
+		int y1 = uwal[x];
+		int y2 = dwal[x];
+		if (y2 <= y1)
+			continue;
+
+		if (!fixed)
+			R_SetColorMapLight(basecolormap, light, wallshade);
+
+		if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
+
+		WallSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic, getcol);
+		Draw1Column(x, y1, y2, sampler, draw1column);
+	}
+#else
 	// Calculate where 4 column alignment begins and ends:
 	int aligned_x1 = clamp((x1 + 3) / 4 * 4, x1, x2);
 	int aligned_x2 = clamp(x2 / 4 * 4, x1, x2);
@@ -872,6 +940,7 @@ static void ProcessWallWorker(
 		WallSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic, getcol);
 		Draw1Column(x, y1, y2, sampler, draw1column);
 	}
+#endif
 
 	NetUpdate();
 }
@@ -1077,8 +1146,9 @@ void R_DrawDrawSeg(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, floa
 }
 
 
-void R_DrawWallSegment(FTexture *rw_pic, int x1, int x2, short *walltop, short *wallbottom, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask)
+void R_DrawWallSegment(FTexture *rw_pic, int x1, int x2, short *walltop, short *wallbottom, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, FLightNode *light_list)
 {
+	dc_light_list = light_list;
 	if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 	{
 		ProcessWallNP2(x1, x2, walltop, wallbottom, swall, lwall, yscale, top, bottom, false);
@@ -1087,6 +1157,7 @@ void R_DrawWallSegment(FTexture *rw_pic, int x1, int x2, short *walltop, short *
 	{
 		ProcessWall(x1, x2, walltop, wallbottom, swall, lwall, yscale, false);
 	}
+	dc_light_list = nullptr;
 }
 
 void R_DrawSkySegment(visplane_t *pl, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))

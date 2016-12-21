@@ -4,6 +4,8 @@
 #include "r_defs.h"
 
 struct FSWColormap;
+struct FLightNode;
+struct TriLight;
 
 EXTERN_CVAR(Bool, r_multithreaded);
 EXTERN_CVAR(Bool, r_magfilter);
@@ -34,6 +36,7 @@ namespace swrenderer
 	};
 
 	extern double dc_texturemid;
+	extern FLightNode *dc_light_list;
 
 	namespace drawerargs
 	{
@@ -63,6 +66,10 @@ namespace swrenderer
 		extern uint8_t *dc_destorg;
 		extern int dc_destheight;
 		extern int dc_count;
+		extern FVector3 dc_viewpos;
+		extern FVector3 dc_viewpos_step;
+		extern TriLight *dc_lights;
+		extern int dc_num_lights;
 
 		extern bool drawer_needs_pal_input;
 

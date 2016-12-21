@@ -107,6 +107,9 @@ void DrawWallCodegen::Generate(DrawWallVariant variant, bool fourColumns, SSAVal
 		one[i] = ((0x80000000 + textureheight[i] - 1) / textureheight[i]) * 2 + 1;
 	}
 
+	start_z = start_z + step_z * SSAFloat(skipped_by_thread(dest_y, thread));
+	step_z = step_z * SSAFloat(thread.num_cores);
+
 	SSAIfBlock branch;
 	branch.if_block(is_simple_shade);
 	LoopShade(variant, fourColumns, true);

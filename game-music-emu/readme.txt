@@ -1,4 +1,4 @@
-Game_Music_Emu 0.6.0: Game Music Emulators
+Game_Music_Emu 0.6.1: Game Music Emulators
 ------------------------------------------
 Game_Music_Emu is a collection of video game music file emulators that
 support the following formats and systems:
@@ -38,25 +38,41 @@ Website: http://www.slack.net/~ant/
 Forum  : http://groups.google.com/group/blargg-sound-libs
 License: GNU Lesser General Public License (LGPL)
 
+Current Maintainer: Michael Pyne <mpyne@purinchu.net>
 
 Getting Started
 ---------------
 Build a program consisting of demo/basics.c, demo/Wave_Writer.cpp, and
-all source files in gme/. If you have CMake 2.6 or later, execute
+all source files in gme/.
 
-	run cmake
-	cd demo
-	run make
+Or, if you have CMake 2.6 or later, execute at a command prompt (from the
+extracted source directory):
 
-Be sure "test.nsf" is in the same directory as the program. Running it
+    mkdir build
+    cd build
+    cmake ../         # <-- Pass any needed CMake flags here
+    make              # To build the library
+    cd demo
+    make              # To build the demo itself
+
+Be sure "test.nsf" is in the same directory as the demo program. Running it
 should generate the recording "out.wav".
+
+You can use "make install" to install the library. To choose where to install
+the library to, use the CMake argument "-DCMAKE_INSTALL_PREFIX=/usr/local"
+(and replace /usr/local with the base path you wish to use). Alternately, you
+can specify the base path to install to when you run "make install" by passing
+'DESTDIR=/usr/local' on the make install command line (again, replace
+/usr/local as appropriate).
+
+To build a static library instead of shared (the default), pass
+-DBUILD_SHARED_LIBS=OFF to the cmake command when running cmake.
 
 A slightly more extensive demo application is available in the player/
 directory.  It requires SDL to build.
 
 Read gme.txt for more information. Post to the discussion forum for
 assistance.
-
 
 Files
 -----

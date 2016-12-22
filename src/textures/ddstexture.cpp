@@ -551,7 +551,7 @@ void FDDSTexture::ReadRGB (FWadLump &lump, BYTE *tcbuf)
 					DWORD r = (c & RMask) << RShiftL; r |= r >> RShiftR;
 					DWORD g = (c & GMask) << GShiftL; g |= g >> GShiftR;
 					DWORD b = (c & BMask) << BShiftL; b |= b >> BShiftR;
-					*pixelp = RGB32k.RGB[r >> 27][g >> 27][b >> 27];
+					*pixelp = RGB256k.RGB[r >> 26][g >> 26][b >> 26];
 				}
 				else
 				{
@@ -637,7 +637,7 @@ void FDDSTexture::DecompressDXT1 (FWadLump &lump, BYTE *tcbuf)
 			// Pick colors from the palette for each of the four colors.
 			/*if (!tcbuf)*/ for (i = 3; i >= 0; --i)
 			{
-				palcol[i] = color[i].a ? RGB32k.RGB[color[i].r >> 3][color[i].g >> 3][color[i].b >> 3] : 0;
+				palcol[i] = color[i].a ? RGB256k.RGB[color[i].r >> 2][color[i].g >> 2][color[i].b >> 2] : 0;
 			}
 			// Now decode this 4x4 block to the pixel buffer.
 			for (y = 0; y < 4; ++y)
@@ -717,7 +717,7 @@ void FDDSTexture::DecompressDXT3 (FWadLump &lump, bool premultiplied, BYTE *tcbu
 			// Pick colors from the palette for each of the four colors.
 			if (!tcbuf) for (i = 3; i >= 0; --i)
 			{
-				palcol[i] = RGB32k.RGB[color[i].r >> 3][color[i].g >> 3][color[i].b >> 3];
+				palcol[i] = RGB256k.RGB[color[i].r >> 2][color[i].g >> 2][color[i].b >> 2];
 			}
 			// Now decode this 4x4 block to the pixel buffer.
 			for (y = 0; y < 4; ++y)
@@ -822,7 +822,7 @@ void FDDSTexture::DecompressDXT5 (FWadLump &lump, bool premultiplied, BYTE *tcbu
 			// Pick colors from the palette for each of the four colors.
 			if (!tcbuf) for (i = 3; i >= 0; --i)
 			{
-				palcol[i] = RGB32k.RGB[color[i].r >> 3][color[i].g >> 3][color[i].b >> 3];
+				palcol[i] = RGB256k.RGB[color[i].r >> 2][color[i].g >> 2][color[i].b >> 2];
 			}
 			// Now decode this 4x4 block to the pixel buffer.
 			for (y = 0; y < 4; ++y)

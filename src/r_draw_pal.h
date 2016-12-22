@@ -20,9 +20,7 @@ namespace swrenderer
 		int _count;
 		const uint8_t *_source;
 		uint8_t *_dest;
-		int _vlinebits;
-		int _mvlinebits;
-		int _tmvlinebits;
+		int _fracbits;
 		int _pitch;
 		uint32_t *_srcblend;
 		uint32_t *_destblend;
@@ -38,13 +36,11 @@ namespace swrenderer
 		uint8_t *_dest;
 		int _count;
 		int _pitch;
-		int _vlinebits;
-		int _mvlinebits;
-		int _tmvlinebits;
-		uint8_t *_palookupoffse[4];
-		const uint8_t *_bufplce[4];
-		uint32_t _vince[4];
-		uint32_t _vplce[4];
+		int _fracbits;
+		uint8_t *_colormap[4];
+		const uint8_t *_source[4];
+		uint32_t _iscale[4];
+		uint32_t _texturefrac[4];
 		uint32_t *_srcblend;
 		uint32_t *_destblend;
 	};
@@ -75,11 +71,11 @@ namespace swrenderer
 		uint8_t *_dest;
 		int _count;
 		int _pitch;
-		const uint8_t *_bufplce[4];
-		const uint8_t *_bufplce2[4];
-		int _bufheight[4];
-		uint32_t _vince[4];
-		uint32_t _vplce[4];
+		const uint8_t *_source[4];
+		const uint8_t *_source2[4];
+		int _sourceheight[4];
+		uint32_t _iscale[4];
+		uint32_t _texturefrac[4];
 	};
 
 	class DrawSingleSky1PalCommand : public PalSkyCommand { public: using PalSkyCommand::PalSkyCommand; void Execute(DrawerThread *thread) override; };

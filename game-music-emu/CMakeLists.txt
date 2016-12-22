@@ -4,7 +4,7 @@ project(libgme)
 include (CheckCXXCompilerFlag)
 
 # When version is changed, also change the one in gme/gme.h to match
-set(GME_VERSION 0.6.0 CACHE INTERNAL "libgme Version")
+set(GME_VERSION 0.6.1 CACHE INTERNAL "libgme Version")
 
 # 2.6+ always assumes FATAL_ERROR, but 2.4 and below don't.
 # Of course, 2.4 might work, in which case you're welcome to drop
@@ -79,6 +79,9 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZD_FASTMATH_FLAG}" )
     SET(USE_GME_NSF 1 BOOL "Enable NES NSF music emulation")
 #endif()
 
+# [ZDoom] Set always to OFF.
+set(BUILD_SHARED_LIBS OFF)
+
 # Check for GCC "visibility" support.
 if (CMAKE_COMPILER_IS_GNUCXX)
    check_cxx_compiler_flag (-fvisibility=hidden __LIBGME_TEST_VISIBILITY)
@@ -101,10 +104,17 @@ if (CMAKE_COMPILER_IS_GNUCXX)
          endif()
       endif()
    endif() # test visibility
-endif()
 
-# Cache this result
-set( LIBGME_HAVE_GCC_VISIBILITY ${ENABLE_VISIBILITY} CACHE BOOL "GCC support for hidden visibility")
+    # Cache this result
+    set( LIBGME_HAVE_GCC_VISIBILITY ${ENABLE_VISIBILITY} CACHE BOOL "GCC support for hidden visibility")
+endif()
 
 # Shared library defined here
 add_subdirectory(gme)
+
+# EXCLUDE_FROM_ALL adds build rules but keeps it out of default build
+# [ZDoom] Not needed.
+if( FALSE )
+add_subdirectory(player EXCLUDE_FROM_ALL)
+add_subdirectory(demo EXCLUDE_FROM_ALL)
+endif()

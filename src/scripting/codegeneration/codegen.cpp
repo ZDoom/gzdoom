@@ -8955,7 +8955,7 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 	size_t jumpspot = ~0u;
 
 	TArray<size_t> yes, no;
-	Condition->EmitCompare(build, false, yes, no);
+	Condition->EmitCompare(build, WhenTrue == nullptr, yes, no);
 
 	if (WhenTrue != nullptr)
 	{
@@ -8964,11 +8964,14 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 	}
 	if (WhenFalse != nullptr)
 	{
-		if (!WhenTrue->CheckReturn()) jumpspot = build->Emit(OP_JMP, 0);	// no need to emit a jump if the block returns.
-		build->BackpatchListToHere(no);
+		if (WhenTrue != nullptr)
+		{
+			if (!WhenTrue->CheckReturn()) jumpspot = build->Emit(OP_JMP, 0);	// no need to emit a jump if the block returns.
+			build->BackpatchListToHere(no);
+		}
 		WhenFalse->EmitStatement(build);
 		if (jumpspot != ~0u) build->BackpatchToHere(jumpspot);
-		if (WhenTrue == nullptr) build->BackpatchListToHere(yes);
+		if (WhenTrue == nullptr) build->BackpatchListToHere(no);
 	}
 	else
 	{

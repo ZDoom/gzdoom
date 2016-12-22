@@ -129,6 +129,8 @@ private:
 };
 
 #ifdef HAVE_ZLIB_H
+#include <zlib.h>
+
 // Gzip compressed file reader
 class Gzip_File_Reader : public File_Reader {
 public:
@@ -143,7 +145,7 @@ public:
 	long tell() const;
 	blargg_err_t seek( long );
 private:
-	void* file_;
+	gzFile file_;
 	long size_;
 };
 #endif

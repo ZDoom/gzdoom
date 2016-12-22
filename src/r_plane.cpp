@@ -240,8 +240,7 @@ void R_MapPlane (int y, int x1)
 	if (plane_shade)
 	{
 		// Determine lighting based on the span's distance from the viewer.
-		ds_colormap = basecolormap->Maps + (GETPALOOKUP (
-			GlobVis * fabs(CenterY - y), planeshade) << COLORMAPSHIFT);
+		R_SetDSColorMapLight(basecolormap, GlobVis * fabs(CenterY - y), planeshade);
 	}
 
 	ds_y = y;
@@ -706,15 +705,15 @@ static void R_DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, doub
 		angle1 = (DWORD)((UMulScale16(ang, frontcyl) + frontpos) >> FRACBITS);
 		angle2 = (DWORD)((UMulScale16(ang, backcyl) + backpos) >> FRACBITS);
 
-		bufplce[i] = (const BYTE *)frontskytex->GetColumn(angle1, nullptr);
-		bufplce2[i] = backskytex ? (const BYTE *)backskytex->GetColumn(angle2, nullptr) : nullptr;
+		dc_wall_source[i] = (const BYTE *)frontskytex->GetColumn(angle1, nullptr);
+		dc_wall_source2[i] = backskytex ? (const BYTE *)backskytex->GetColumn(angle2, nullptr) : nullptr;
 
-		vince[i] = uv_step;
-		vplce[i] = uv_pos;
+		dc_wall_iscale[i] = uv_step;
+		dc_wall_texturefrac[i] = uv_pos;
 	}
 
-	bufheight[0] = height;
-	bufheight[1] = backskytex ? backskytex->GetHeight() : height;
+	dc_wall_sourceheight[0] = height;
+	dc_wall_sourceheight[1] = backskytex ? backskytex->GetHeight() : height;
 	dc_dest = (ylookup[y1] + start_x) + dc_destorg;
 	dc_count = y2 - y1;
 
@@ -1043,7 +1042,7 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 		R_SetupSpanBits(tex);
 		double xscale = pl->xform.xScale * tex->Scale.X;
 		double yscale = pl->xform.yScale * tex->Scale.Y;
-		ds_source = tex->GetPixels ();
+		R_SetSpanSource(tex);
 
 		basecolormap = pl->colormap;
 		planeshade = LIGHT2SHADE(pl->lightlevel);
@@ -1405,12 +1404,13 @@ void R_DrawSkyPlane (visplane_t *pl)
 	bool fakefixed = false;
 	if (fixedcolormap)
 	{
-		dc_colormap = fixedcolormap;
+		R_SetColorMapLight(fixedcolormap, 0, 0);
 	}
 	else
 	{
 		fakefixed = true;
-		fixedcolormap = dc_colormap = NormalLight.Maps;
+		fixedcolormap = NormalLight.Maps;
+		R_SetColorMapLight(fixedcolormap, 0, 0);
 	}
 
 	R_DrawSky (pl);
@@ -1484,12 +1484,21 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 	planeheight = fabs(pl->height.Zat0() - ViewPos.Z);
 
 	GlobVis = r_FloorVisibility / planeheight;
+	ds_light = 0;
 	if (fixedlightlev >= 0)
-		ds_colormap = basecolormap->Maps + fixedlightlev, plane_shade = false;
+	{
+		R_SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		plane_shade = false;
+	}
 	else if (fixedcolormap)
-		ds_colormap = fixedcolormap, plane_shade = false;
+	{
+		R_SetDSColorMapLight(fixedcolormap, 0, 0);
+		plane_shade = false;
+	}
 	else
+	{
 		plane_shade = true;
+	}
 
 	if (spanfunc != R_FillSpan)
 	{
@@ -1645,11 +1654,20 @@ void R_DrawTiltedPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 		planelightfloat = -planelightfloat;
 
 	if (fixedlightlev >= 0)
-		ds_colormap = basecolormap->Maps + fixedlightlev, plane_shade = false;
+	{
+		R_SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		plane_shade = false;
+	}
 	else if (fixedcolormap)
-		ds_colormap = fixedcolormap, plane_shade = false;
+	{
+		R_SetDSColorMapLight(fixedcolormap, 0, 0);
+		plane_shade = false;
+	}
 	else
-		ds_colormap = basecolormap->Maps, plane_shade = true;
+	{
+		R_SetDSColorMapLight(basecolormap, 0, 0);
+		plane_shade = true;
+	}
 
 	// Hack in support for 1 x Z and Z x 1 texture sizes
 	if (ds_ybits == 0)

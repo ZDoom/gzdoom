@@ -1129,6 +1129,9 @@ void R_Subsector (subsector_t *sub)
 					portal
 					) : NULL;
 
+	if (ceilingplane)
+		R_AddPlaneLights(ceilingplane, frontsector->lighthead);
+
 	if (fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
 	{
 		light = P_GetPlaneLight(frontsector, &frontsector->floorplane, false);
@@ -1165,6 +1168,9 @@ void R_Subsector (subsector_t *sub)
 					frontsector->sky,
 					portal
 					) : NULL;
+
+	if (floorplane)
+		R_AddPlaneLights(floorplane, frontsector->lighthead);
 
 	// kg3D - fake planes rendering
 	if (r_3dfloors && frontsector->e && frontsector->e->XFloor.ffloors.Size())
@@ -1222,6 +1228,9 @@ void R_Subsector (subsector_t *sub)
 					frontsector->planes[position].xform,
 					frontsector->sky,
 					NULL);
+
+				if (floorplane)
+					R_AddPlaneLights(floorplane, frontsector->lighthead);
 
 				R_FakeDrawLoop(sub);
 				fake3D = 0;
@@ -1283,6 +1292,9 @@ void R_Subsector (subsector_t *sub)
 					frontsector->planes[position].xform,
 					frontsector->sky,
 					NULL);
+
+				if (ceilingplane)
+					R_AddPlaneLights(ceilingplane, frontsector->lighthead);
 
 				R_FakeDrawLoop(sub);
 				fake3D = 0;

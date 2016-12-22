@@ -59,6 +59,7 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "r_draw_rgba.h"
+#include "gl/dynlights/gl_dynlight.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
@@ -255,6 +256,50 @@ void R_MapPlane (int y, int x1)
 		R_SetDSColorMapLight(basecolormap, GlobVis * fabs(CenterY - y), planeshade);
 	}
 
+	if (r_swtruecolor)
+	{
+		// Find row position in view space
+		float zspan = (float)((CenterY - y - 0.5) * InvZtoScale / planeheight);
+		dc_viewpos.X = (float)((x1 + 0.5 - CenterX) / CenterX * zspan);
+		dc_viewpos.Y = zspan;
+		dc_viewpos.Z = (float)planeheight;
+		dc_viewpos_step.X = (float)(-zspan / InvZtoScale);
+
+		static TriLight lightbuffer[64 * 1024];
+		static int nextlightindex = 0;
+
+		// Setup lights for column
+		dc_num_lights = 0;
+		dc_lights = lightbuffer + nextlightindex;
+		visplane_light *cur_node = ds_light_list;
+		while (cur_node && nextlightindex < 64 * 1024)
+		{
+			uint32_t red = cur_node->lightsource->GetRed();
+			uint32_t green = cur_node->lightsource->GetGreen();
+			uint32_t blue = cur_node->lightsource->GetBlue();
+
+			double lightX = cur_node->lightsource->X() - ViewPos.X;
+			double lightY = cur_node->lightsource->Y() - ViewPos.Y;
+			double lightZ = cur_node->lightsource->Z() - ViewPos.Z;
+
+			nextlightindex++;
+			auto &light = dc_lights[dc_num_lights++];
+			light.x = (float)(lightX * ViewSin - lightY * ViewCos);
+			light.y = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - dc_viewpos.Y;
+			light.z = (float)(lightZ - dc_viewpos.Z);
+			light.radius = 256.0f / cur_node->lightsource->GetRadius();
+			light.color = 0xff000000 | (red << 16) | (green << 8) | blue;
+
+			// Precalculate the constant part of the dot here so the drawer doesn't have to.
+			light.y = light.y * light.y + light.z * light.z;
+
+			cur_node = cur_node->next;
+		}
+
+		if (nextlightindex == 64 * 1024)
+			nextlightindex = 0;
+	}
+
 	ds_y = y;
 	ds_x1 = x1;
 	ds_x2 = x2;
@@ -282,6 +327,47 @@ void R_MapTiltedPlane (int y, int x1)
 void R_MapColoredPlane(int y, int x1)
 {
 	R_DrawColoredSpan(y, x1, spanend[y]);
+}
+
+//==========================================================================
+
+namespace
+{
+	enum { max_plane_lights = 32 * 1024 };
+	visplane_light plane_lights[max_plane_lights];
+	int next_plane_light = 0;
+}
+
+void R_AddPlaneLights(visplane_t *plane, FLightNode *node)
+{
+	while (node)
+	{
+		if (!(node->lightsource->flags2&MF2_DORMANT))
+		{
+			bool found = false;
+			visplane_light *light_node = plane->lights;
+			while (light_node)
+			{
+				if (light_node->lightsource == node->lightsource)
+				{
+					found = true;
+					break;
+				}
+				light_node = light_node->next;
+			}
+			if (!found)
+			{
+				if (next_plane_light == max_plane_lights)
+					return;
+
+				visplane_light *newlight = &plane_lights[next_plane_light++];
+				newlight->next = plane->lights;
+				newlight->lightsource = node->lightsource;
+				plane->lights = newlight;
+			}
+		}
+		node = node->nextLight;
+	}
 }
 
 //==========================================================================
@@ -336,6 +422,8 @@ void R_ClearPlanes (bool fullclear)
 			? (ConBottom - viewwindowy) : 0);
 
 		lastopening = 0;
+
+		next_plane_light = 0;
 	}
 }
 
@@ -362,6 +450,8 @@ static visplane_t *new_visplane (unsigned hash)
 	{
 		freehead = &freetail;
 	}
+
+	check->lights = nullptr;
 
 	check->next = visplanes[hash];
 	visplanes[hash] = check;
@@ -1815,6 +1905,8 @@ void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1))
 	int t2 = pl->top[x];
 	int b2 = pl->bottom[x];
 
+	ds_light_list = pl->lights;
+
 	if (b2 > t2)
 	{
 		fillshort (spanend+t2, b2-t2, x);
@@ -1861,6 +1953,8 @@ void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1))
 	{
 		mapfunc (--b2, pl->left);
 	}
+
+	ds_light_list = nullptr;
 }
 
 //==========================================================================

@@ -20,6 +20,7 @@ EXTERN_CVAR(Int, r_columnmethod);
 namespace swrenderer
 {
 	struct vissprite_t;
+	struct visplane_light;
 
 	struct ShadeConstants
 	{
@@ -37,6 +38,7 @@ namespace swrenderer
 
 	extern double dc_texturemid;
 	extern FLightNode *dc_light_list;
+	extern visplane_light *ds_light_list;
 
 	namespace drawerargs
 	{

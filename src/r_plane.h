@@ -26,9 +26,17 @@
 #include <stddef.h>
 
 class ASkyViewpoint;
+class ADynamicLight;
+struct FLightNode;
 
 namespace swrenderer
 {
+
+struct visplane_light
+{
+	ADynamicLight *lightsource;
+	visplane_light *next;
+};
 
 //
 // The infamous visplane
@@ -39,6 +47,7 @@ struct visplane_s
 
 	FDynamicColormap *colormap;		// [RH] Support multiple colormaps
 	FSectorPortal *portal;			// [RH] Support sky boxes
+	visplane_light *lights;
 
 	FTransform	xform;
 	secplane_t	height;
@@ -88,6 +97,8 @@ extern float			yslope[MAXHEIGHT];
 void R_InitPlanes ();
 void R_DeinitPlanes ();
 void R_ClearPlanes (bool fullclear);
+
+void R_AddPlaneLights(visplane_t *plane, FLightNode *light_head);
 
 int R_DrawPlanes ();
 void R_DrawPortals ();

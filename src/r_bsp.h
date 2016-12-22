@@ -29,7 +29,7 @@
 
 EXTERN_CVAR (Bool, r_drawflat)		// [RH] Don't texture segs?
 
-namespace swrenderer       
+namespace swrenderer
 {
 
 // The 3072 below is just an arbitrary value picked to avoid

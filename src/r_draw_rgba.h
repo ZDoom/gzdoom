@@ -36,7 +36,7 @@ struct FSpecialColormap;
 EXTERN_CVAR(Bool, r_mipmap)
 EXTERN_CVAR(Float, r_lod_bias)
 
-namespace swrenderer       
+namespace swrenderer
 {
 	// Give the compiler a strong hint we want these functions inlined:
 	#ifndef FORCEINLINE

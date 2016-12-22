@@ -31,7 +31,7 @@
 #include "r_draw_rgba.h"
 #include "r_drawers.h"
 
-namespace swrenderer       
+namespace swrenderer
 {
 	WorkerThreadData DrawColumnRt1LLVMCommand::ThreadData(DrawerThread *thread)
 	{

@@ -28,7 +28,7 @@
 struct particle_t;
 struct FVoxel;
 
-namespace swrenderer       
+namespace swrenderer
 {
 
 // A vissprite_t is a thing

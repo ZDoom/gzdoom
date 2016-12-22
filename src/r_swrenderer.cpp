@@ -67,7 +67,7 @@ CUSTOM_CVAR(Bool, r_polyrenderer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOI
 	}
 }
 
-namespace swrenderer       
+namespace swrenderer
 {
 
 void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio);

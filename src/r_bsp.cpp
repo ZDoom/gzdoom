@@ -55,7 +55,7 @@
 CVAR (Bool, r_drawflat, false, 0)		// [RH] Don't texture segs?
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
-namespace swrenderer       
+namespace swrenderer
 {
 	using namespace drawerargs;
 

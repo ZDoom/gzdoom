@@ -87,7 +87,7 @@ extern cycle_t FrameCycles;
 
 extern bool r_showviewer;
 
-namespace swrenderer       
+namespace swrenderer
 {
 
 // MACROS ------------------------------------------------------------------

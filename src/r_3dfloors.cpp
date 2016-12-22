@@ -17,7 +17,7 @@
 
 CVAR(Int, r_3dfloors, true, 0);
 
-namespace swrenderer       
+namespace swrenderer
 {
 
 // external variables

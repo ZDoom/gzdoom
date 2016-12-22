@@ -23,7 +23,7 @@
 #ifndef __R_SEGS_H__
 #define __R_SEGS_H__
 
-namespace swrenderer       
+namespace swrenderer
 {
 
 struct drawseg_t;

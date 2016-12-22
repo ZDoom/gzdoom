@@ -35,7 +35,7 @@ extern int				viewwindowy;
 
 typedef BYTE lighttable_t;	// This could be wider for >8 bit display.
 
-namespace swrenderer       
+namespace swrenderer
 {
 
 //

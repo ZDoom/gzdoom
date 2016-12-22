@@ -70,7 +70,7 @@ CVAR(Bool, r_skyboxes, true, 0)
 
 EXTERN_CVAR(Int, r_skymode)
 
-namespace swrenderer       
+namespace swrenderer
 {
 	using namespace drawerargs;
 

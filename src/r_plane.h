@@ -27,7 +27,7 @@
 
 class ASkyViewpoint;
 
-namespace swrenderer       
+namespace swrenderer
 {
 
 //

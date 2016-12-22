@@ -58,7 +58,7 @@ CVAR(Bool, r_mipmap, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 // Level of detail texture bias
 CVAR(Float, r_lod_bias, -1.5, 0); // To do: add CVAR_ARCHIVE | CVAR_GLOBALCONFIG when a good default has been decided
 
-namespace swrenderer       
+namespace swrenderer
 {
 	extern "C" short spanend[MAXHEIGHT];
 	extern float rw_light;

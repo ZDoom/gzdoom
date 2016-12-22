@@ -25,6 +25,7 @@
 #include "ssa_int.h"
 #include "ssa_scope.h"
 #include "ssa_bool.h"
+#include "ssa_vec4f.h"
 
 SSAFloat::SSAFloat()
 : v(0)
@@ -58,6 +59,18 @@ SSAFloat SSAFloat::sqrt(SSAFloat f)
 	std::vector<llvm::Type *> params;
 	params.push_back(SSAFloat::llvm_type());
 	return SSAFloat::from_llvm(SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::sqrt, params), f.v, SSAScope::hint()));
+}
+
+SSAFloat SSAFloat::fastsqrt(SSAFloat f)
+{
+	return f * rsqrt(f);
+}
+
+SSAFloat SSAFloat::rsqrt(SSAFloat f)
+{
+	llvm::Value *f_ss = SSAScope::builder().CreateInsertElement(llvm::UndefValue::get(SSAVec4f::llvm_type()), f.v, llvm::ConstantInt::get(SSAScope::context(), llvm::APInt(32, (uint64_t)0)));
+	f_ss = SSAScope::builder().CreateCall(SSAScope::intrinsic(llvm::Intrinsic::x86_sse_rsqrt_ss), f_ss, SSAScope::hint());
+	return SSAFloat::from_llvm(SSAScope::builder().CreateExtractElement(f_ss, SSAInt(0).v, SSAScope::hint()));
 }
 
 SSAFloat SSAFloat::sin(SSAFloat val)

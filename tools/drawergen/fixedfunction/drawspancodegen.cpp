@@ -256,7 +256,7 @@ SSAVec4i DrawSpanCodegen::Shade(SSAVec4i fg, bool isSimpleShade)
 		// attenuation = 1 - MIN(dist * (1/radius), 1)
 		SSAFloat Lyz2 = light_y; // L.y*L.y + L.z*L.z
 		SSAFloat Lx = light_x - viewpos_x;
-		SSAFloat dist = SSAFloat::sqrt(Lyz2 + Lx * Lx);
+		SSAFloat dist = SSAFloat::fastsqrt(Lyz2 + Lx * Lx);
 		SSAInt attenuation = SSAInt(SSAFloat(256.0f) - SSAFloat::MIN(dist * light_rcp_radius, SSAFloat(256.0f)), true);
 		SSAVec4i contribution = (light_color * fg * attenuation) >> 16;
 

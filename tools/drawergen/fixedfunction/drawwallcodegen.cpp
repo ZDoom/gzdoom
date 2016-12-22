@@ -244,7 +244,7 @@ SSAVec4i DrawWallCodegen::Shade(SSAVec4i fg, int index, bool isSimpleShade)
 		// attenuation = 1 - MIN(dist * (1/radius), 1)
 		SSAFloat Lxy2 = light_x; // L.x*L.x + L.y*L.y
 		SSAFloat Lz = light_z - z;
-		SSAFloat dist = SSAFloat::sqrt(Lxy2 + Lz * Lz);
+		SSAFloat dist = SSAFloat::fastsqrt(Lxy2 + Lz * Lz);
 		SSAInt attenuation = SSAInt(SSAFloat(256.0f) - SSAFloat::MIN(dist * light_rcp_radius, SSAFloat(256.0f)), true);
 		SSAVec4i contribution = (light_color * fg * attenuation) >> 16;
 

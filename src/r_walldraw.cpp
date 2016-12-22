@@ -561,24 +561,32 @@ static void Draw1Column(int x, int y1, int y2, WallSampler &sampler, void(*draw1
 		{
 			if (!(cur_node->lightsource->flags2&MF2_DORMANT))
 			{
-				uint32_t red = cur_node->lightsource->GetRed();
-				uint32_t green = cur_node->lightsource->GetGreen();
-				uint32_t blue = cur_node->lightsource->GetBlue();
-
 				double lightX = cur_node->lightsource->X() - ViewPos.X;
 				double lightY = cur_node->lightsource->Y() - ViewPos.Y;
 				double lightZ = cur_node->lightsource->Z() - ViewPos.Z;
 
-				nextlightindex++;
-				auto &light = dc_lights[dc_num_lights++];
-				light.x = (float)(lightX * ViewSin - lightY * ViewCos) - dc_viewpos.X;
-				light.y = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - dc_viewpos.Y;
-				light.z = (float)lightZ;
-				light.radius = 256.0f / cur_node->lightsource->GetRadius();
-				light.color = (red << 16) | (green << 8) | blue;
+				float lx = (float)(lightX * ViewSin - lightY * ViewCos) - dc_viewpos.X;
+				float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - dc_viewpos.Y;
+				float lz = (float)lightZ;
 
 				// Precalculate the constant part of the dot here so the drawer doesn't have to.
-				light.x = light.x * light.x + light.y * light.y;
+				float lconstant = lx * lx + ly * ly;
+
+				// Include light only if it touches this column
+				float radius = cur_node->lightsource->GetRadius();
+				if (radius * radius >= lconstant)
+				{
+					uint32_t red = cur_node->lightsource->GetRed();
+					uint32_t green = cur_node->lightsource->GetGreen();
+					uint32_t blue = cur_node->lightsource->GetBlue();
+
+					nextlightindex++;
+					auto &light = dc_lights[dc_num_lights++];
+					light.x = lconstant;
+					light.z = lz;
+					light.radius = 256.0f / cur_node->lightsource->GetRadius();
+					light.color = (red << 16) | (green << 8) | blue;
+				}
 			}
 
 			cur_node = cur_node->nextLight;

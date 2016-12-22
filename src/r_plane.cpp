@@ -274,24 +274,32 @@ void R_MapPlane (int y, int x1)
 		visplane_light *cur_node = ds_light_list;
 		while (cur_node && nextlightindex < 64 * 1024)
 		{
-			uint32_t red = cur_node->lightsource->GetRed();
-			uint32_t green = cur_node->lightsource->GetGreen();
-			uint32_t blue = cur_node->lightsource->GetBlue();
-
 			double lightX = cur_node->lightsource->X() - ViewPos.X;
 			double lightY = cur_node->lightsource->Y() - ViewPos.Y;
 			double lightZ = cur_node->lightsource->Z() - ViewPos.Z;
 
-			nextlightindex++;
-			auto &light = dc_lights[dc_num_lights++];
-			light.x = (float)(lightX * ViewSin - lightY * ViewCos);
-			light.y = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - dc_viewpos.Y;
-			light.z = (float)lightZ - dc_viewpos.Z;
-			light.radius = 256.0f / cur_node->lightsource->GetRadius();
-			light.color = (red << 16) | (green << 8) | blue;
+			float lx = (float)(lightX * ViewSin - lightY * ViewCos);
+			float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - dc_viewpos.Y;
+			float lz = (float)lightZ - dc_viewpos.Z;
 
 			// Precalculate the constant part of the dot here so the drawer doesn't have to.
-			light.y = light.y * light.y + light.z * light.z;
+			float lconstant = ly * ly + lz * lz;
+
+			// Include light only if it touches this row
+			float radius = cur_node->lightsource->GetRadius();
+			if (radius * radius >= lconstant)
+			{
+				uint32_t red = cur_node->lightsource->GetRed();
+				uint32_t green = cur_node->lightsource->GetGreen();
+				uint32_t blue = cur_node->lightsource->GetBlue();
+
+				nextlightindex++;
+				auto &light = dc_lights[dc_num_lights++];
+				light.x = lx;
+				light.y = lconstant;
+				light.radius = 256.0f / radius;
+				light.color = (red << 16) | (green << 8) | blue;
+			}
 
 			cur_node = cur_node->next;
 		}

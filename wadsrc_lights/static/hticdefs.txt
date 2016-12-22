@@ -9,25 +9,25 @@
 // Wand puffs
 pointlight WANDPUFF1
 {
-    color 1.0 1.0 0.0
+    color 0.9 0.9 0.5
     size 32
 }
 
 pointlight WANDPUFF2
 {
-    color 0.7 0.7 0.0
+    color 0.6 0.6 0.35
     size 24
 }
 
 pointlight WANDPUFF3
 {
-    color 0.4 0.4 0.0
+    color 0.3 0.3 0.2
     size 16
 }
 
 pointlight WANDPUFF4
 {
-    color 0.2 0.2 0.0
+    color 0.15 0.15 0.1
     size 8
 }
 
@@ -48,31 +48,31 @@ object GoldWandPuff2
 // Tomed wand projectile
 pointlight WANDBALL
 {
-    color 1.0 1.0 0.0
+    color 0.9 0.9 0.5
     size 24
 }
 
 pointlight WANDBALL_X1
 {
-    color 0.8 0.8 0.0
+    color 0.72 0.72 0.4
     size 32
 }
 
 pointlight WANDBALL_X2
 {
-    color 0.6 0.6 0.0
+    color 0.54 0.54 0.3
     size 34
 }
 
 pointlight WANDBALL_X3
 {
-    color 0.4 0.4 0.0
+    color 0.36 0.36 0.2
     size 36
 }
 
 pointlight WANDBALL_X4
 {
-    color 0.2 0.2 0.0
+    color 0.18 0.18 0.1
     size 38
 }
 
@@ -90,13 +90,13 @@ object GoldWandFX2
 // Crossbow secondary projectile
 pointlight SMALLBOWBOLT
 {
-    color 0.0 1.0 0.0
+    color 0.5 1.0 0.5
     size 40
 }
 
 flickerlight SMALLBOWBOLT_X1
 {
-    color 0.0 0.7 0.0
+    color 0.35 0.7 0.35
     size 48
     secondarySize 52
     chance 0.3
@@ -104,7 +104,7 @@ flickerlight SMALLBOWBOLT_X1
 
 flickerlight SMALLBOWBOLT_X2
 {
-    color 0.0 0.4 0.0
+    color 0.2 0.4 0.2
     size 40
     secondarySize 44
     chance 0.3
@@ -112,7 +112,7 @@ flickerlight SMALLBOWBOLT_X2
 
 flickerlight SMALLBOWBOLT_X3
 {
-    color 0.0 0.2 0.0
+    color 0.1 0.2 0.1
     size 32
     secondarySize 36
     chance 0.3
@@ -130,13 +130,13 @@ object CrossbowFX3
 // Crossbow primary proectile
 pointlight BIGBOWBOLT
 {
-    color 0.7 1.0 0.0
+    color 0.8 1.0 0.5
     size 64
 }
 
 flickerlight BIGBOWBOLT_X1
 {
-    color 0.4 0.8 0.0
+    color 0.48 0.8 0.4
     size 72
     secondarySize 74
     chance 0.3
@@ -144,7 +144,7 @@ flickerlight BIGBOWBOLT_X1
 
 flickerlight BIGBOWBOLT_X2
 {
-    color 0.4 0.6 0.0
+    color 0.44 0.6 0.3
     size 56
     secondarySize 64
     chance 0.3
@@ -152,7 +152,7 @@ flickerlight BIGBOWBOLT_X2
 
 flickerlight BIGBOWBOLT_X3
 {
-    color 0.2 0.4 0.0
+    color 0.22 0.4 0.2
     size 32
     secondarySize 40
     chance 0.3
@@ -276,13 +276,13 @@ object BlasterFX1
 // Hellstaff bolt
 pointlight HELLSTAFFBALL
 {
-    color 1.0 0.2 0.2
+    color 1.0 0.5 0.5
     size 56
 }
 
 flickerlight HELLSTAFFBALL_X1
 {
-    color 1.0 0.4 0.4
+    color 1.0 0.7 0.7
     size 56
     secondarySize 64
     chance 0.3
@@ -290,7 +290,7 @@ flickerlight HELLSTAFFBALL_X1
 
 flickerlight HELLSTAFFBALL_X2
 {
-    color 0.8 0.3 0.3
+    color 0.8 0.5 0.5
     size 64
     secondarySize 72
     chance 0.3
@@ -298,7 +298,7 @@ flickerlight HELLSTAFFBALL_X2
 
 flickerlight HELLSTAFFBALL_X3
 {
-    color 0.6 0.2 0.2
+    color 0.6 0.3 0.3
     size 80
     secondarySize 88
     chance 0.3
@@ -306,7 +306,7 @@ flickerlight HELLSTAFFBALL_X3
 
 flickerlight HELLSTAFFBALL_X4
 {
-    color 0.4 0.1 0.1
+    color 0.4 0.2 0.2
     size 88
     secondarySize 96
     chance 0.3
@@ -314,7 +314,7 @@ flickerlight HELLSTAFFBALL_X4
 
 flickerlight HELLSTAFFBALL_X5
 {
-    color 0.2 0.0 0.0
+    color 0.2 0.1 0.1
     size 96
     secondarySize 104
     chance 0.3
@@ -391,7 +391,7 @@ object RainPillar
 // Phoenix rod shot
 pointlight PHOENIXSHOT
 {
-    color 1.0 0.6 0.0
+    color 1.0 0.6 0.4
     size 64
 }
 
@@ -405,7 +405,7 @@ flickerlight PHOENIX_X1
 
 flickerlight PHOENIX_X2
 {
-    color 1.0 0.6 0.0
+    color 1.0 0.6 0.3
     size 88
     secondarySize 96
     chance 0.3
@@ -413,7 +413,7 @@ flickerlight PHOENIX_X2
 
 flickerlight PHOENIX_X3
 {
-    color 0.8 0.6 0.0
+    color 0.8 0.6 0.25
     size 72
     secondarySize 80
     chance 0.3
@@ -421,7 +421,7 @@ flickerlight PHOENIX_X3
 
 flickerlight PHOENIX_X4
 {
-    color 0.6 0.4 0.0
+    color 0.6 0.4 0.2
     size 56
     secondarySize 64
     chance 0.3
@@ -429,7 +429,7 @@ flickerlight PHOENIX_X4
 
 flickerlight PHOENIX_X5
 {
-    color 0.4 0.2 0.0
+    color 0.4 0.2 0.1
     size 40
     secondarySize 48
     chance 0.3
@@ -437,7 +437,7 @@ flickerlight PHOENIX_X5
 
 flickerlight PHOENIX_X6
 {
-    color 0.2 0.0 0.0
+    color 0.2 0.1 0.0
     size 24
     secondarySize 32
     chance 0.3
@@ -460,7 +460,7 @@ object PhoenixFX1
 // Phoenix rod flamethrower
 flickerlight PHOENIXFLAME
 {
-    color 0.7 0.4 0.0
+    color 0.7 0.4 0.2
     size 48
     secondarySize 56
     chance 0.5
@@ -468,7 +468,7 @@ flickerlight PHOENIXFLAME
 
 flickerlight PHOENIXFLAME2
 {
-    color 0.5 0.2 0.0
+    color 0.5 0.2 0.1
     size 24
     secondarySize 32
     chance 0.5
@@ -494,7 +494,7 @@ object PhoenixFX2
 // Mace ball explosion
 flickerlight MACEBALL_X1
 {
-    color 0.8 0.8 0.2
+    color 0.8 0.8 0.4
     size 64
     secondarySize 72
     chance 0.3
@@ -502,7 +502,7 @@ flickerlight MACEBALL_X1
 
 flickerlight MACEBALL_X2
 {
-    color 0.6 0.6 0.1
+    color 0.6 0.6 0.3
     size 48
     secondarySize 56
     chance 0.3
@@ -510,7 +510,7 @@ flickerlight MACEBALL_X2
 
 flickerlight MACEBALL_X3
 {
-    color 0.4 0.4 0.0
+    color 0.4 0.4 0.2
     size 32
     secondarySize 40
     chance 0.3
@@ -518,7 +518,7 @@ flickerlight MACEBALL_X3
 
 flickerlight MACEBALL_X4
 {
-    color 0.2 0.2 0.0
+    color 0.2 0.2 0.1
     size 16
     secondarySize 24
     chance 0.3
@@ -563,13 +563,13 @@ object MaceFX4
 // Heretic imp fireball
 pointlight HIMPBALL
 {
-    color 1.0 0.8 0.0
+    color 1.0 0.8 0.4
     size 32
 }
 
 flickerlight HIMPBALL_X1
 {
-    color 0.8 0.5 0.0
+    color 0.8 0.5 0.33
     size 48
     secondarySize 56
     chance 0.3
@@ -577,7 +577,7 @@ flickerlight HIMPBALL_X1
 
 flickerlight HIMPBALL_X2
 {
-    color 0.6 0.3 0.0
+    color 0.6 0.4 0.27
     size 40
     secondarySize 48
     chance 0.3
@@ -606,7 +606,7 @@ object HereticImpBall
 // Mummy
 flickerlight MUMMYATK
 {
-    color 1.0 1.0 0.0
+    color 1.0 1.0 0.5
     size 48
     secondarySize 56
     chance 0.4
@@ -625,7 +625,7 @@ object MummyLeaderGhost
 // Mummy fireball
 flickerlight MUMMYBALL
 {
-    color 1.0 1.0 0.0
+    color 1.0 1.0 0.5
     size 40
     secondarySize 48
     chance 0.4
@@ -633,7 +633,7 @@ flickerlight MUMMYBALL
 
 flickerlight MUMMYBALL_X1
 {
-    color 0.7 0.7 0.0
+    color 0.7 0.7 0.35
     size 48
     secondarySize 56
     chance 0.4
@@ -641,7 +641,7 @@ flickerlight MUMMYBALL_X1
 
 flickerlight MUMMYBALL_X2
 {
-    color 0.4 0.4 0.0
+    color 0.4 0.4 0.2
     size 56
     secondarySize 64
     chance 0.4
@@ -649,7 +649,7 @@ flickerlight MUMMYBALL_X2
 
 flickerlight MUMMYBALL_X3
 {
-    color 0.2 0.2 0.0
+    color 0.2 0.2 0.1
     size 64
     secondarySize 72
     chance 0.4
@@ -669,13 +669,13 @@ object MummyFX1
 // Green flying axe
 pointlight GREENAXE
 {
-    color 0.0 1.0 0.0
+    color 0.4 1.0 0.4
     size 32
 }
 
 flickerlight GREENAXE_X1
 {
-    color 0.0 0.7 0.0
+    color 0.3 0.7 0.3
     size 32
     secondarySize 48
     chance 0.3
@@ -683,7 +683,7 @@ flickerlight GREENAXE_X1
 
 flickerlight GREENAXE_X2
 {
-    color 0.0 0.4 0.0
+    color 0.2 0.4 0.2
     size 48
     secondarySize 56
     chance 0.3
@@ -711,13 +711,13 @@ object KnightAxe
 // Red flying axe
 pointlight REDAXE
 {
-    color 1.0 0.0 0.0
+    color 1.0 0.5 0.5
     size 32
 }
 
 flickerlight REDAXE_X1
 {
-    color 0.7 0.0 0.0
+    color 0.7 0.3 0.3
     size 32
     secondarySize 48
     chance 0.3
@@ -725,7 +725,7 @@ flickerlight REDAXE_X1
 
 flickerlight REDAXE_X2
 {
-    color 0.4 0.0 0.0
+    color 0.4 0.2 0.2
     size 48
     secondarySize 56
     chance 0.3
@@ -733,7 +733,7 @@ flickerlight REDAXE_X2
 
 flickerlight REDAXE_X3
 {
-    color 0.2 0.0 0.0
+    color 0.2 0.1 0.1
     size 56
     secondarySize 64
     chance 0.3
@@ -752,7 +752,7 @@ object RedAxe
 // Disciple fireball
 flickerlight DISCIPLEBALL
 {
-    color 1.0 0.0 1.0
+    color 1.0 0.5 1.0
     size 32
     secondarySize 40
     chance 0.3
@@ -760,7 +760,7 @@ flickerlight DISCIPLEBALL
 
 flickerlight DISCIPLEBALL_X1
 {
-    color 0.7 0.0 0.7
+    color 0.7 0.3 0.7
     size 16
     secondarySize 24
     chance 0.3
@@ -768,7 +768,7 @@ flickerlight DISCIPLEBALL_X1
 
 flickerlight DISCIPLEBALL_X2
 {
-    color 0.3 0.0 0.3
+    color 0.3 0.17 0.3
     size 8
     secondarySize 16
     chance 0.3
@@ -852,7 +852,7 @@ pointlight FROSTBALL_X2
 
 pointlight FROSTBALL_X3
 {
-    color 0.0 0.0 0.4
+    color 0.1 0.1 0.4
     size 48
 }
 
@@ -891,7 +891,7 @@ object HeadFX2
 // Ironlich fire wall
 flickerlight LICHFIRE
 {
-    color 1.0 0.7 0.0
+    color 1.0 0.7 0.4
     size 48
     secondarySize 56
     chance 0.5
@@ -899,7 +899,7 @@ flickerlight LICHFIRE
 
 flickerlight LICHFIRE_X1
 {
-    color 0.9 0.4 0.0
+    color 0.9 0.4 0.3
     size 56
     secondarySize 64
     chance 0.5
@@ -907,7 +907,7 @@ flickerlight LICHFIRE_X1
 
 flickerlight LICHFIRE_X2
 {
-    color 0.7 0.1 0.0
+    color 0.7 0.1 0.2
     size 48
     secondarySize 56
     chance 0.5
@@ -915,7 +915,7 @@ flickerlight LICHFIRE_X2
 
 flickerlight LICHFIRE_X3
 {
-    color 0.4 0.0 0.0
+    color 0.4 0.1 0.1
     size 40
     secondarySize 48
     chance 0.5
@@ -1000,7 +1000,7 @@ object Beast
 // Weredragon fireball
 flickerlight BEASTBALL
 {
-    color 1.0 0.4 0.0
+    color 1.0 0.5 0.3
     size 48
     secondarySize 56
     chance 0.3
@@ -1008,7 +1008,7 @@ flickerlight BEASTBALL
 
 flickerlight BEASTBALL_X1
 {
-    color 0.8 0.2 0.0
+    color 0.8 0.4 0.24
     size 48
     secondarySize 56
     chance 0.3
@@ -1016,7 +1016,7 @@ flickerlight BEASTBALL_X1
 
 flickerlight BEASTBALL_X2
 {
-    color 0.6 0.0 0.0
+    color 0.6 0.3 0.2
     size 40
     secondarySize 48
     chance 0.3
@@ -1024,7 +1024,7 @@ flickerlight BEASTBALL_X2
 
 flickerlight BEASTBALL_X3
 {
-    color 0.4 0.0 0.0
+    color 0.4 0.2 0.1
     size 32
     secondarySize 40
     chance 0.3
@@ -1067,7 +1067,7 @@ flickerlight SNAKESHOT1_X1
 
 flickerlight SNAKESHOT1_X2
 {
-    color 0.4 0.1 0.7
+    color 0.4 0.2 0.7
     size 24
     secondarySize 26
     chance 0.3
@@ -1075,7 +1075,7 @@ flickerlight SNAKESHOT1_X2
 
 flickerlight SNAKESHOT1_X3
 {
-    color 0.3 0.0 0.5
+    color 0.3 0.1 0.5
     size 28
     secondarySize 30
     chance 0.3
@@ -1105,13 +1105,13 @@ object SnakeProjA
 // Large ophidian shot
 pointlight SNAKESHOT2
 {
-    color 1.0 0.6 0.0
+    color 1.0 0.6 0.4
     size 32
 }
 
 flickerlight SNAKESHOT2_X1
 {
-    color 1.0 0.6 0.0
+    color 1.0 0.6 0.4
     size 40
     secondarySize 48
     chance 0.3
@@ -1119,7 +1119,7 @@ flickerlight SNAKESHOT2_X1
 
 flickerlight SNAKESHOT2_X2
 {
-    color 0.6 0.3 0.0
+    color 0.6 0.3 0.25
     size 48
     secondarySize 52
     chance 0.3
@@ -1127,7 +1127,7 @@ flickerlight SNAKESHOT2_X2
 
 flickerlight SNAKESHOT2_X3
 {
-    color 0.3 0.0 0.0
+    color 0.3 0.1 0.1
     size 44
     secondarySize 48
     chance 0.3
@@ -1146,7 +1146,7 @@ object SnakeProjB
 // Maulotaur fireball
 flickerlight MAULBALL
 {
-    color 1.0 0.7 0.0
+    color 1.0 0.7 0.5
     size 40
     secondarySize 48
     chance 0.5
@@ -1154,7 +1154,7 @@ flickerlight MAULBALL
 
 flickerlight MAULBALL_X1
 {
-    color 0.8 0.6 0.0
+    color 0.8 0.6 0.4
     size 56
     secondarySize 64
     chance 0.3
@@ -1162,7 +1162,7 @@ flickerlight MAULBALL_X1
 
 flickerlight MAULBALL_X2
 {
-    color 0.8 0.4 0.0
+    color 0.8 0.4 0.3
     size 56
     secondarySize 64
     chance 0.3
@@ -1170,7 +1170,7 @@ flickerlight MAULBALL_X2
 
 flickerlight MAULBALL_X3
 {
-    color 0.6 0.2 0.0
+    color 0.6 0.3 0.2
     size 40
     secondarySize 48
     chance 0.3
@@ -1200,7 +1200,7 @@ object MinotaurFX1
 // Maulotaur ground flame
 pulselight MAULFLAME
 {
-    color 1.0 0.7 0.0
+    color 1.0 0.7 0.5
     size 1
     secondarySize 64
     interval 6.0
@@ -1208,7 +1208,7 @@ pulselight MAULFLAME
 
 flickerlight MAULFLAME_X1
 {
-    color 1.0 0.7 0.0
+    color 1.0 0.7 0.5
     size 48
     secondarySize 56
     chance 0.3
@@ -1216,7 +1216,7 @@ flickerlight MAULFLAME_X1
 
 flickerlight MAULFLAME_X2
 {
-    color 1.0 0.7 0.0
+    color 1.0 0.7 0.5
     size 56
     secondarySize 64
     chance 0.3
@@ -1224,7 +1224,7 @@ flickerlight MAULFLAME_X2
 
 flickerlight MAULFLAME_X3
 {
-    color 0.7 0.4 0.0
+    color 0.7 0.4 0.3
     size 64
     secondarySize 68
     chance 0.3
@@ -1232,7 +1232,7 @@ flickerlight MAULFLAME_X3
 
 flickerlight MAULFLAME_X4
 {
-    color 0.5 0.1 0.0
+    color 0.5 0.3 0.1
     size 68
     secondarySize 72
     chance 0.3
@@ -1266,7 +1266,7 @@ object MinotaurFX3
 // D'Sparil serpent fireball
 flickerlight SERPENTBALL
 {
-    color 1.0 0.95 0.0
+    color 1.0 0.95 0.5
     size 56
     secondarySize 64
     chance 0.5
@@ -1274,7 +1274,7 @@ flickerlight SERPENTBALL
 
 flickerlight SERPENTBALL_X1
 {
-    color 1.0 0.95 0.0
+    color 1.0 0.95 0.5
     size 64
     secondarySize 72
     chance 0.5
@@ -1282,7 +1282,7 @@ flickerlight SERPENTBALL_X1
 
 flickerlight SERPENTBALL_X2
 {
-    color 0.8 0.8 0.0
+    color 0.8 0.8 0.4
     size 72
     secondarySize 80
     chance 0.5
@@ -1290,7 +1290,7 @@ flickerlight SERPENTBALL_X2
 
 flickerlight SERPENTBALL_X3
 {
-    color 0.5 0.5 0.0
+    color 0.5 0.5 0.25
     size 88
     secondarySize 96
     chance 0.5
@@ -1298,7 +1298,7 @@ flickerlight SERPENTBALL_X3
 
 flickerlight SERPENTBALL_X4
 {
-    color 0.2 0.2 0.0
+    color 0.2 0.2 0.1
     size 96
     secondarySize 104
     chance 0.5
@@ -1320,7 +1320,7 @@ object SorcererFX1
 // D'Sparil blue bolt
 flickerlight DSPARILBALL
 {
-    color 0.3 0.3 1.0
+    color 0.5 0.5 1.0
     size 56
     secondarySize 64
     chance 0.5
@@ -1328,7 +1328,7 @@ flickerlight DSPARILBALL
 
 flickerlight DSPARILBALL_X1
 {
-    color 0.3 0.3 1.0
+    color 0.5 0.5 1.0
     size 64
     secondarySize 72
     chance 0.3
@@ -1336,7 +1336,7 @@ flickerlight DSPARILBALL_X1
 
 flickerlight DSPARILBALL_X2
 {
-    color 0.2 0.2 0.8
+    color 0.4 0.4 0.8
     size 80
     secondarySize 88
     chance 0.3
@@ -1344,7 +1344,7 @@ flickerlight DSPARILBALL_X2
 
 flickerlight DSPARILBALL_X3
 {
-    color 0.1 0.1 0.6
+    color 0.3 0.3 0.6
     size 88
     secondarySize 92
     chance 0.3
@@ -1352,7 +1352,7 @@ flickerlight DSPARILBALL_X3
 
 flickerlight DSPARILBALL_X4
 {
-    color 0.0 0.0 0.4
+    color 0.2 0.2 0.4
     size 82
     secondarySize 86
     chance 0.3
@@ -1360,7 +1360,7 @@ flickerlight DSPARILBALL_X4
 
 flickerlight DSPARILBALL_X5
 {
-    color 0.0 0.0 0.2
+    color 0.1 0.1 0.2
     size 82
     secondarySize 86
     chance 0.3
@@ -1503,7 +1503,7 @@ object Pod
 // Big volcano fireball
 flickerlight VOLCANOBALL1
 {
-    color 1.0 0.5 0.0
+    color 1.0 0.7 0.5
     size 56
     secondarySize 64
     chance 0.5
@@ -1574,7 +1574,7 @@ object KeyGizmoGreen
 // Time bomb explosion
 flickerlight TIMEBOMB_X1
 {
-    color 1.0 0.6 0.0
+    color 1.0 0.6 0.4
     size 48
     secondarySize 56
     chance 0.3
@@ -1582,7 +1582,7 @@ flickerlight TIMEBOMB_X1
 
 flickerlight TIMEBOMB_X1
 {
-    color 0.8 0.4 0.0
+    color 0.8 0.4 0.3
     size 56
     secondarySize 64
     chance 0.3
@@ -1590,7 +1590,7 @@ flickerlight TIMEBOMB_X1
 
 flickerlight TIMEBOMB_X1
 {
-    color 0.6 0.2 0.0
+    color 0.6 0.3 0.2
     size 64
     secondarySize 72
     chance 0.3
@@ -1598,7 +1598,7 @@ flickerlight TIMEBOMB_X1
 
 flickerlight TIMEBOMB_X1
 {
-    color 0.4 0.0 0.0
+    color 0.4 0.2 0.1
     size 72
     secondarySize 80
     chance 0.3
@@ -1606,7 +1606,7 @@ flickerlight TIMEBOMB_X1
 
 flickerlight TIMEBOMB_X1
 {
-    color 0.2 0.0 0.0
+    color 0.2 0.1 0.0
     size 80
     secondarySize 88
     chance 0.3

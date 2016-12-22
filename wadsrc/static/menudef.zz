@@ -239,7 +239,6 @@ OptionMenu "GLPrefOptions"
 	Option "$GLPREFMNU_SPRBILLBOARD",			gl_billboard_mode,				"BillboardModes"
 	Option "$GLPREFMNU_SPRBILLFACECAMERA",		gl_billboard_faces_camera,		"OnOff"
 	Option "$GLPREFMNU_PARTICLESTYLE",			gl_particles_style,				"Particles"
-	Slider "$GLPREFMNU_AMBLIGHT",				gl_light_ambient,				1.0, 255.0, 5.0
 	Option "$GLPREFMNU_RENDERQUALITY",			gl_render_precise,				"Precision"
 	Option "$GLPREFMNU_VRMODE",					vr_mode, 						"VRMode"
 	Option "$GLPREFMNU_VRQUADSTEREO",			vr_enable_quadbuffered,			"OnOff"

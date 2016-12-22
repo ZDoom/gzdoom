@@ -38,7 +38,7 @@ pointlight ROCKET
 
 flickerlight ROCKET_X1
 {
-    color 1.0 0.7 0.0
+    color 1.0 0.7 0.5
     size 64
     secondarySize 72
     chance 0.3
@@ -46,7 +46,7 @@ flickerlight ROCKET_X1
 
 flickerlight ROCKET_X2
 {
-    color 0.5 0.1 0.0
+    color 0.5 0.3 0.2
     size 80
     secondarySize 88
     chance 0.3
@@ -54,7 +54,7 @@ flickerlight ROCKET_X2
 
 flickerlight ROCKET_X3
 {
-    color 0.3 0.0 0.0
+    color 0.3 0.1 0.1
     size 96
     secondarySize 104
     chance 0.3
@@ -72,13 +72,13 @@ object Rocket
 // Plasma
 pointlight PLASMABALL
 {
-    color 0.0 0.1 1.0
+    color 0.5 0.5 1.0
     size 56
 }
 
 flickerlight PLASMA_X1
 {
-    color 0.2 0.2 1.0
+    color 0.5 0.5 1.0
     size 64
     secondarySize 72
     chance 0.4
@@ -86,7 +86,7 @@ flickerlight PLASMA_X1
 
 flickerlight PLASMA_X2
 {
-    color 0.2 0.2 0.8
+    color 0.4 0.4 0.8
     size 80
     secondarySize 88
     chance 0.4
@@ -94,7 +94,7 @@ flickerlight PLASMA_X2
 
 flickerlight PLASMA_X3
 {
-    color 0.1 0.1 0.5
+    color 0.25 0.25 0.5
     size 64
     secondarySize 72
     chance 0.4
@@ -102,7 +102,7 @@ flickerlight PLASMA_X3
 
 flickerlight PLASMA_X4
 {
-    color 0.0 0.0 0.2
+    color 0.1 0.1 0.2
     size 8
     secondarySize 16
     chance 0.4
@@ -215,13 +215,13 @@ object PlasmaBall2
 // BFG
 pointlight BFGBALL
 {
-    color 0.0 1.0 0.0
+    color 0.5 1.0 0.5
     size 80
 }
 
 flickerlight BFGBALL_X1
 {
-    color 0.2 1.0 0.2
+    color 0.5 1.0 0.5
     size 80
     secondarySize 88
     chance 0.3
@@ -229,7 +229,7 @@ flickerlight BFGBALL_X1
 
 flickerlight BFGBALL_X2
 {
-    color 0.3 1.0 0.3
+    color 0.6 1.0 0.6
     size 104
     secondarySize 112
     chance 0.3
@@ -237,7 +237,7 @@ flickerlight BFGBALL_X2
 
 flickerlight BFGBALL_X3
 {
-    color 0.5 1.0 0.5
+    color 0.7 1.0 0.7
     size 120
     secondarySize 128
     chance 0.3
@@ -245,7 +245,7 @@ flickerlight BFGBALL_X3
 
 flickerlight BFGBALL_X4
 {
-    color 0.2 0.7 0.2
+    color 0.4 0.7 0.4
     size 56
     secondarySize 64
     chance 0.3
@@ -353,7 +353,7 @@ object TechLamp
 // Tall red torch
 flickerlight2 BIGREDTORCH
 {
-    color 1.0 0.3 0.0
+    color 1.0 0.5 0.2
     size 64
     secondarySize 72
     interval 0.1
@@ -368,7 +368,7 @@ object RedTorch
 // Tall green torch
 flickerlight2 BIGGREENTORCH
 {
-    color 0.0 1.0 0.0
+    color 0.3 1.0 0.3
     size 64
     secondarySize 72
     interval 0.1
@@ -383,7 +383,7 @@ object GreenTorch
 // Tall blue torch
 flickerlight2 BIGBLUETORCH
 {
-    color 0.0 0.0 1.0
+    color 0.3 0.3 1.0
     size 64
     secondarySize 72
     interval 0.1
@@ -398,7 +398,7 @@ object BlueTorch
 // Small red torch
 flickerlight2 SMALLREDTORCH
 {
-    color 1.0 0.3 0.0
+    color 1.0 0.5 0.2
     size 48
     secondarySize 54
     interval 0.1
@@ -413,7 +413,7 @@ object ShortRedTorch
 // Small green torch
 flickerlight2 SMALLGREENTORCH
 {
-    color 0.0 1.0 0.0
+    color 0.3 1.0 0.3
     size 48
     secondarySize 54
     interval 0.1
@@ -428,7 +428,7 @@ object ShortGreenTorch
 // Small blue torch
 flickerlight2 SMALLBLUETORCH
 {
-    color 0.0 0.0 1.0
+    color 0.3 0.3 1.0
     size 48
     secondarySize 54
     interval 0.1
@@ -443,7 +443,7 @@ object ShortBlueTorch
 // Burning barrel
 flickerlight2 FIREBARREL
 {
-    color 1.0 0.9 0.0
+    color 1.0 0.9 0.4
     size 48
     secondarySize 54
     interval 0.1
@@ -458,7 +458,7 @@ object BurningBarrel
 // Skulls w/candles
 flickerlight2 SKULLCANDLES
 {
-    color 1.0 1.0 0.0
+    color 1.0 1.0 0.3
     size 32
     secondarySize 34
     interval 0.1
@@ -473,7 +473,7 @@ object HeadCandles
 // Candle
 pointlight CANDLE
 {
-    color 1.0 1.0 0.0
+    color 1.0 1.0 0.3
     size 16
     offset 0 16 0
 }
@@ -486,7 +486,7 @@ object Candlestick
 // Candelabra
 pointlight CANDELABRA
 {
-    color 1.0 1.0 0.0
+    color 1.0 1.0 0.3
     size 48
     offset 0 52 0
 }
@@ -505,7 +505,7 @@ object Candelabra
 // Soul Sphere
 pulselight SOULSPHERE
 {
-    color 0.0 0.0 1.0
+    color 0.3 0.3 1.0
     size 40
     secondarySize 42
     interval 2.0
@@ -520,7 +520,7 @@ object SoulSphere
 // Invulnerability Sphere
 pulselight INVULN
 {
-    color 0.0 1.0 0.0
+    color 0.3 1.0 0.3
     size 40
     secondarySize 42
     interval 2.0
@@ -595,7 +595,7 @@ object HealthBonus
 // Armour Helmet
 pulselight ARMORBONUS
 {
-    color 0.0 0.6 0.0
+    color 0.2 0.6 0.2
     size 16
     secondarySize 14
     interval 1.0
@@ -735,14 +735,14 @@ object DoomPlayer
 // Doom Imp Fireball
 pointlight IMPBALL
 {
-    color 1.0 0.5 0.0
+    color 1.0 0.7 0.4
     size 64
 }
 
 // Doom imp fireball explosion
 flickerlight IMPBALL_X1
 {
-    color 0.7 0.2 0.0
+    color 0.7 0.4 0.25
     size 80
     secondarySize 88
     chance 0.25
@@ -750,7 +750,7 @@ flickerlight IMPBALL_X1
 
 flickerlight IMPBALL_X2
 {
-    color 0.4 0.0 0.0
+    color 0.4 0.2 0.1
     size 96
     secondarySize 104
     chance 0.25
@@ -758,7 +758,7 @@ flickerlight IMPBALL_X2
 
 flickerlight IMPBALL_X3
 {
-    color 0.2 0.0 0.0
+    color 0.2 0.1 0.0
     size 112
     secondarySize 120
     chance 0.25
@@ -792,7 +792,7 @@ object Spectre
 // Cacodemon fireball
 flickerlight CACOBALL
 {
-    color 1.0 0.2 0.6
+    color 1.0 0.5 0.8
     size 56
     secondarySize 64
     chance 0.5
@@ -800,7 +800,7 @@ flickerlight CACOBALL
 
 flickerlight CACOBALL_X1
 {
-    color 0.9 0.1 0.4
+    color 0.9 0.4 0.7
     size 72
     secondarySize 80
     chance 0.25
@@ -808,7 +808,7 @@ flickerlight CACOBALL_X1
 
 flickerlight CACOBALL_X2
 {
-    color 0.6 0.0 0.1
+    color 0.6 0.3 0.5
     size 88
     secondarySize 96
     chance 0.25
@@ -816,7 +816,7 @@ flickerlight CACOBALL_X2
 
 flickerlight CACOBALL_X3
 {
-    color 0.3 0.0 0.0
+    color 0.3 0.1 0.1
     size 104
     secondarySize 112
     chance 0.25
@@ -841,7 +841,7 @@ pointlight BARONBALL
 
 flickerlight BARONBALL_X1
 {
-    color 0.0 0.7 0.0
+    color 0.6 0.9 0.6
     size 80
     secondarySize 88
     chance 0.25
@@ -849,7 +849,7 @@ flickerlight BARONBALL_X1
 
 flickerlight BARONBALL_X2
 {
-    color 0.0 0.4 0.0
+    color 0.45 0.6 0.45
     size 96
     secondarySize 104
     chance 0.25
@@ -857,7 +857,7 @@ flickerlight BARONBALL_X2
 
 flickerlight BARONBALL_X3
 {
-    color 0.0 0.2 0.0
+    color 0.2 0.3 0.2
     size 112
     secondarySize 120
     chance 0.25
@@ -876,7 +876,7 @@ object BaronBall
 // Lost Soul
 flickerlight LOSTSOUL
 {
-    color 1.0 0.3 0.0
+    color 1.0 0.6 0.3
     size 56
     secondarysize 64
     chance 0.1
@@ -884,7 +884,7 @@ flickerlight LOSTSOUL
 
 flickerlight LOSTSOUL_X1
 {
-    color 0.8 0.3 0.0
+    color 0.8 0.5 0.3
     size 72
     secondarySize 80
     chance 0.25
@@ -892,7 +892,7 @@ flickerlight LOSTSOUL_X1
 
 flickerlight LOSTSOUL_X2
 {
-    color 0.6 0.2 0.0
+    color 0.6 0.3 0.2
     size 88
     secondarySize 96
     chance 0.25
@@ -944,13 +944,13 @@ object FatShot
 // Arachnotron Fireball
 pointlight ARACHPLAS
 {
-    color 0.6 1.0 0.0
+    color 0.6 1.0 0.4
     size 56
 }
 
 flickerlight ARACHPLAS_X1
 {
-    color 0.4 0.8 0.0
+    color 0.4 0.8 0.3
     size 72
     secondarySize 80
     chance 0.3
@@ -958,7 +958,7 @@ flickerlight ARACHPLAS_X1
 
 flickerlight ARACHPLAS_X2
 {
-    color 0.6 0.6 0.0
+    color 0.6 0.6 0.3
     size 88
     secondarySize 96
     chance 0.3
@@ -966,7 +966,7 @@ flickerlight ARACHPLAS_X2
 
 flickerlight ARACHPLAS_X3
 {
-    color 0.4 0.4 0.0
+    color 0.4 0.4 0.2
     size 48
     secondarySize 32
     chance 0.3
@@ -974,7 +974,7 @@ flickerlight ARACHPLAS_X3
 
 flickerlight ARACHPLAS_X4
 {
-    color 0.2 0.2 0.0
+    color 0.2 0.2 0.1
     size 24
     secondarySize 16
     chance 0.3
@@ -995,13 +995,13 @@ object ArachnotronPlasma
 // Revenant tracer
 pointlight TRACER
 {
-    color 1.0 0.3 0.0
+    color 1.0 0.5 0.3
     size 48
 }
 
 flickerlight TRACER_X1
 {
-    color 1.0 0.2 0.0
+    color 1.0 0.5 0.2
     size 64
     secondarySize 72
     chance 0.25
@@ -1009,7 +1009,7 @@ flickerlight TRACER_X1
 
 flickerlight TRACER_X2
 {
-    color 0.6 0.0 0.0
+    color 0.6 0.3 0.1
     size 80
     secondarySize 88
     chance 0.25
@@ -1017,7 +1017,7 @@ flickerlight TRACER_X2
 
 flickerlight TRACER_X3
 {
-    color 0.3 0.0 0.0
+    color 0.3 0.1 0.0
     size 96
     secondarySize 104
     chance 0.25
@@ -1036,7 +1036,7 @@ object RevenantTracer
 // Arch Vile Fire
 flickerlight ARCHFIRE1
 {
-    color 1.0 1.0 0.0
+    color 1.0 1.0 0.5
     size 24
     secondarySize 32
     chance 0.3
@@ -1045,7 +1045,7 @@ flickerlight ARCHFIRE1
 
 flickerlight ARCHFIRE2
 {
-    color 1.0 1.0 0.0
+    color 1.0 1.0 0.5
     size 40
     secondarySize 48
     chance 0.3
@@ -1054,7 +1054,7 @@ flickerlight ARCHFIRE2
 
 flickerlight ARCHFIRE3
 {
-    color 1.0 1.0 0.0
+    color 1.0 1.0 0.5
     size 64
     secondarySize 72
     chance 0.3
@@ -1063,7 +1063,7 @@ flickerlight ARCHFIRE3
 
 flickerlight ARCHFIRE4
 {
-    color 0.8 0.8 0.0
+    color 0.8 0.8 0.4
     size 64
     secondarySize 72
     chance 0.3
@@ -1072,7 +1072,7 @@ flickerlight ARCHFIRE4
 
 flickerlight ARCHFIRE5
 {
-    color 0.8 0.8 0.0
+    color 0.8 0.8 0.4
     size 64
     secondarySize 72
     chance 0.3
@@ -1081,7 +1081,7 @@ flickerlight ARCHFIRE5
 
 flickerlight ARCHFIRE6
 {
-    color 0.6 0.6 0.0
+    color 0.6 0.6 0.3
     size 48
     secondarySize 56
     chance 0.3
@@ -1090,7 +1090,7 @@ flickerlight ARCHFIRE6
 
 flickerlight ARCHFIRE7
 {
-    color 0.4 0.4 0.0
+    color 0.4 0.4 0.2
     size 32
     secondarySize 40
     chance 0.3
@@ -1099,7 +1099,7 @@ flickerlight ARCHFIRE7
 
 flickerlight ARCHFIRE8
 {
-    color 0.2 0.2 0.0
+    color 0.2 0.2 0.1
     size 16
     secondarySize 24
     chance 0.3
@@ -1121,7 +1121,7 @@ object ArchvileFire
 // Arch-vile
 flickerlight ARCHATK1
 {
-    color 1.0 1.0 0.0
+    color 1.0 1.0 0.4
     size 32
     secondarySize 48
     chance 0.3
@@ -1130,7 +1130,7 @@ flickerlight ARCHATK1
 
 flickerlight ARCHATK2
 {
-    color 1.0 1.0 0.0
+    color 1.0 1.0 0.4
     size 56
     secondarySize 64
     chance 0.3
@@ -1139,7 +1139,7 @@ flickerlight ARCHATK2
 
 flickerlight ARCHATK3
 {
-    color 1.0 1.0 0.0
+    color 1.0 1.0 0.4
     size 56
     secondarySize 64
     chance 0.3
@@ -1148,7 +1148,7 @@ flickerlight ARCHATK3
 
 flickerlight ARCHATK4
 {
-    color 1.0 1.0 0.0
+    color 1.0 1.0 0.4
     size 64
     secondarySize 72
     chance 0.3
@@ -1157,7 +1157,7 @@ flickerlight ARCHATK4
 
 flickerlight ARCHATK5
 {
-    color 1.0 1.0 0.0
+    color 1.0 1.0 0.4
     size 80
     secondarySize 88
     chance 0.3
@@ -1166,7 +1166,7 @@ flickerlight ARCHATK5
 
 flickerlight ARCHATK6
 {
-    color 0.7 0.7 0.0
+    color 0.7 0.7 0.3
     size 96
     secondarySize 104
     chance 0.3
@@ -1175,7 +1175,7 @@ flickerlight ARCHATK6
 
 flickerlight ARCHATK7
 {
-    color 0.3 0.3 0.0
+    color 0.3 0.3 0.1
     size 104
     secondarySize 112
     chance 0.3
@@ -1184,7 +1184,7 @@ flickerlight ARCHATK7
 
 pulselight ARCHRES
 {
-    color 0.6 0.0 0.0
+    color 0.6 0.3 0.3
     size 64
     secondarySize 70
     interval 0.5

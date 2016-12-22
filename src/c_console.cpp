@@ -1527,8 +1527,6 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 
 			buffer.Text.StripLeftRight();
 			Printf(127, TEXTCOLOR_WHITE "]%s\n", buffer.Text.GetChars());
-			AddCommandString(buffer.Text.LockBuffer());
-			buffer.Text.UnlockBuffer();
 
 			if (buffer.Text.Len() == 0)
 			{
@@ -1572,7 +1570,21 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 				}
 			}
 			HistPos = NULL;
-			buffer.SetString("");
+			{
+				// Work with a copy of command to avoid side effects caused by
+				// exception raised during execution, like with 'error' CCMD.
+				// It's problematic to maintain FString's lock symmetry.
+				static TArray<char> command;
+				const size_t length = buffer.Text.Len();
+
+				command.Resize(length + 1);
+				memcpy(&command[0], buffer.Text.GetChars(), length);
+				command[length] = '\0';
+
+				buffer.SetString("");
+
+				AddCommandString(&command[0]);
+			}
 			TabbedLast = false;
 			TabbedList = false;
 			break;

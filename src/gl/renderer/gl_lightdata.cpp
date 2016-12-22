@@ -46,12 +46,6 @@ int fogdensity;
 int outsidefogdensity;
 int skyfog;
 
-CUSTOM_CVAR (Int, gl_light_ambient, 20, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	// ambient of 0 does not work correctly because light level 0 is special.
-	if (self < 1) self = 1;
-}
-
 CVAR(Int, gl_weaponlight, 8, CVAR_ARCHIVE);
 CUSTOM_CVAR(Bool, gl_enhanced_nightvision, true, CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
@@ -209,11 +203,6 @@ int gl_CalcLightLevel(int lightlevel, int rellight, bool weapon)
 		light=lightlevel;
 	}
 
-	if (light<gl_light_ambient && glset.lightmode != 8)		// ambient clipping only if not using software lighting model.
-	{
-		light = gl_light_ambient;
-		if (rellight<0) rellight>>=1;
-	}
 	return clamp(light+rellight, 0, 255);
 }
 

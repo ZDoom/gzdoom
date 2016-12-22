@@ -2,25 +2,25 @@
 {
 	// Slightly squash the pillars in the starting room with "stimpacks"
 	// floating on them so that they can be obtained.
-	sectorflooroffset 62 -8
+	setsectoroffset 62 floor -8
 	setwallyscale 286 front bot 1.090909
 	setwallyscale 287 front bot 1.090909
 	setwallyscale 288 front bot 1.090909
 	setwallyscale 289 front bot 1.090909
 	
-	sectorflooroffset 63 -8
+	setsectoroffset 63 floor -8
 	setwallyscale 290 front bot 1.090909
 	setwallyscale 291 front bot 1.090909
 	setwallyscale 292 front bot 1.090909
 	setwallyscale 293 front bot 1.090909
 	
-	sectorflooroffset 118 -8
+	setsectoroffset 118 floor -8
 	setwallyscale 710 front bot 1.090909
 	setwallyscale 711 front bot 1.090909
 	setwallyscale 712 front bot 1.090909
 	setwallyscale 713 front bot 1.090909
 	
-	sectorflooroffset 119 -8
+	setsectoroffset 119 floor -8
 	setwallyscale 714 front bot 1.090909
 	setwallyscale 715 front bot 1.090909
 	setwallyscale 716 front bot 1.090909

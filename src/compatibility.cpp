@@ -83,6 +83,7 @@ enum
 	CP_SECTORFLOOROFFSET,
 	CP_SETSECTORSPECIAL,
 	CP_SETWALLYSCALE,
+	CP_SETWALLTEXTURE,
 	CP_SETTHINGZ,
 	CP_SETTAG,
 	CP_SETTHINGFLAGS,
@@ -169,6 +170,7 @@ static const char *const WallTiers[] =
 
 static TArray<int> CompatParams;
 static int ii_compatparams;
+static TArray<FString> TexNames;
 
 // CODE --------------------------------------------------------------------
 
@@ -319,6 +321,26 @@ void ParseCompatibility()
 				CompatParams.Push(sc.MustMatchString(WallTiers));
 				sc.MustGetFloat();
 				CompatParams.Push(int(sc.Float*65536.));
+			}
+			else if (sc.Compare("setwalltexture"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETWALLTEXTURE);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetString();
+				CompatParams.Push(sc.MustMatchString(LineSides));
+				sc.MustGetString();
+				CompatParams.Push(sc.MustMatchString(WallTiers));
+				sc.MustGetString();
+				const FString texName = sc.String;
+				const unsigned int texIndex = TexNames.Find(texName);
+				const unsigned int texCount = TexNames.Size();
+				if (texIndex == texCount)
+				{
+					TexNames.Push(texName);
+				}
+				CompatParams.Push(texIndex);
 			}
 			else if (sc.Compare("setthingz"))
 			{
@@ -582,6 +604,21 @@ void SetCompatibilityParams()
 						if (side != NULL)
 						{
 							side->SetTextureYScale(CompatParams[i+3], CompatParams[i+4] / 65536.);
+						}
+					}
+					i += 5;
+					break;
+				}
+				case CP_SETWALLTEXTURE:
+				{
+					if (CompatParams[i + 1] < numlines)
+					{
+						side_t *side = lines[CompatParams[i + 1]].sidedef[CompatParams[i + 2]];
+						if (side != NULL)
+						{
+							assert(TexNames.Size() > (unsigned int)CompatParams[i + 4]);
+							const FTextureID texID = TexMan.GetTexture(TexNames[CompatParams[i + 4]], FTexture::TEX_Any);
+							side->SetTexture(CompatParams[i + 3], texID);
 						}
 					}
 					i += 5;

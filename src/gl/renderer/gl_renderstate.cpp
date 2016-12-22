@@ -105,6 +105,7 @@ void FRenderState::Reset()
 	mViewMatrix.loadIdentity();
 	mModelMatrix.loadIdentity();
 	mTextureMatrix.loadIdentity();
+	mPassType = NORMAL_PASS;
 }
 
 //==========================================================================
@@ -118,11 +119,11 @@ bool FRenderState::ApplyShader()
 	static const float nulvec[] = { 0.f, 0.f, 0.f, 0.f };
 	if (mSpecialEffect > EFF_NONE)
 	{
-		activeShader = GLRenderer->mShaderManager->BindEffect(mSpecialEffect);
+		activeShader = GLRenderer->mShaderManager->BindEffect(mSpecialEffect, mPassType);
 	}
 	else
 	{
-		activeShader = GLRenderer->mShaderManager->Get(mTextureEnabled ? mEffectState : 4, mAlphaThreshold >= 0.f);
+		activeShader = GLRenderer->mShaderManager->Get(mTextureEnabled ? mEffectState : 4, mAlphaThreshold >= 0.f, mPassType);
 		activeShader->Bind();
 	}
 
@@ -347,7 +348,7 @@ void FRenderState::ApplyMatrices()
 {
 	if (GLRenderer->mShaderManager != NULL)
 	{
-		GLRenderer->mShaderManager->ApplyMatrices(&mProjectionMatrix, &mViewMatrix);
+		GLRenderer->mShaderManager->ApplyMatrices(&mProjectionMatrix, &mViewMatrix, mPassType);
 	}
 }
 

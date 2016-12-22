@@ -374,6 +374,11 @@ unsigned int FHardwareTexture::Bind(int texunit, int translation, bool needmipma
 	return 0;
 }
 
+unsigned int FHardwareTexture::GetTextureHandle(int translation)
+{
+	TranslatedTexture *pTex = GetTexID(translation);
+	return pTex->glTexID;
+}
 
 void FHardwareTexture::Unbind(int texunit)
 {

@@ -41,8 +41,10 @@ public:
 		gl_RenderState.GetColorMask(saved[0], saved[1], saved[2], saved[3]);
 		gl_RenderState.SetColorMask(r, g, b, a);
 		gl_RenderState.ApplyColorMask();
+		gl_RenderState.EnableDrawBuffers(1);
 	}
 	~ScopedColorMask() {
+		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		gl_RenderState.SetColorMask(saved[0], saved[1], saved[2], saved[3]);
 		gl_RenderState.ApplyColorMask();
 	}

@@ -2171,6 +2171,9 @@ NETMNU_TICBALANCE				= "Latency balancing";
 // Option Values
 OPTVAL_OFF					= "Off";
 OPTVAL_ON					= "On";
+OPTVAL_LOW					= "Low";
+OPTVAL_MEDIUM				= "Medium";
+OPTVAL_HIGH					= "High";
 OPTVAL_MALE					= "Male";
 OPTVAL_FEMALE				= "Female";
 OPTVAL_OTHER				= "Other";
@@ -2640,6 +2643,8 @@ GLPREFMNU_MULTISAMPLE			= "Multisample";
 GLPREFMNU_TONEMAP				= "Tonemap Mode";
 GLPREFMNU_BLOOM					= "Bloom effect";
 GLPREFMNU_LENS					= "Lens distortion effect";
+GLPREFMNU_SSAO					= "Ambient occlusion quality";
+GLPREFMNU_SSAO_PORTALS			= "Portals with AO";
 GLPREFMNU_FXAA					= "FXAA Quality";
 
 // Option Values

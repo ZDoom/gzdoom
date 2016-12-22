@@ -158,7 +158,11 @@ void FGLRenderer::Set3DViewport(bool mainview)
 {
 	if (mainview && mBuffers->Setup(mScreenViewport.width, mScreenViewport.height, mSceneViewport.width, mSceneViewport.height))
 	{
-		mBuffers->BindSceneFB();
+		bool useSSAO = (gl_ssao != 0);
+		mBuffers->BindSceneFB(useSSAO);
+		gl_RenderState.SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
+		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
+		gl_RenderState.Apply();
 	}
 
 	// Always clear all buffers with scissor test disabled.
@@ -209,7 +213,7 @@ void FGLRenderer::SetProjection(float fov, float ratio, float fovratio)
 {
 
 	float fovy = 2 * RAD2DEG(atan(tan(DEG2RAD(fov) / 2) / fovratio));
-	gl_RenderState.mProjectionMatrix.perspective(fovy, ratio, 5.f, 65536.f);
+	gl_RenderState.mProjectionMatrix.perspective(fovy, ratio, GetZNear(), GetZFar());
 }
 
 // raw matrix input from stereo 3d modes
@@ -472,6 +476,23 @@ void FGLRenderer::RenderTranslucent()
 void FGLRenderer::DrawScene(int drawmode)
 {
 	static int recursion=0;
+	static int ssao_portals_available = 0;
+
+	bool applySSAO = false;
+	if (drawmode == DM_MAINVIEW)
+	{
+		ssao_portals_available = gl_ssao_portals;
+		applySSAO = true;
+	}
+	else if (drawmode == DM_OFFSCREEN)
+	{
+		ssao_portals_available = 0;
+	}
+	else if (ssao_portals_available > 0)
+	{
+		applySSAO = true;
+		ssao_portals_available--;
+	}
 
 	if (camera != nullptr)
 	{
@@ -490,6 +511,16 @@ void FGLRenderer::DrawScene(int drawmode)
 	GLRenderer->mClipPortal = NULL;	// this must be reset before any portal recursion takes place.
 
 	RenderScene(recursion);
+
+	if (applySSAO && gl_RenderState.GetPassType() == GBUFFER_PASS)
+	{
+		gl_RenderState.EnableDrawBuffers(1);
+		AmbientOccludeScene();
+		mBuffers->BindSceneFB(true);
+		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
+		gl_RenderState.Apply();
+		gl_RenderState.ApplyMatrices();
+	}
 
 	// Handle all portals after rendering the opaque objects but before
 	// doing all translucent stuff
@@ -830,13 +861,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		if (mainview && toscreen) EndDrawScene(lviewsector); // do not call this for camera textures.
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
-			mBuffers->BlitSceneToTexture();
-			UpdateCameraExposure();
-			BloomScene();
-			TonemapScene();
-			ColormapScene();
-			LensDistortScene();
-			ApplyFXAA();
+			PostProcessScene();
 
 			// This should be done after postprocessing, not before.
 			mBuffers->BindCurrentFB();

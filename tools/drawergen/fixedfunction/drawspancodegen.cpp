@@ -59,6 +59,10 @@ void DrawSpanCodegen::Generate(DrawSpanVariant variant, SSAValue args)
 	SSAShort fade_blue = args[0][22].load(true);
 	SSAShort desaturate = args[0][23].load(true);
 	SSAInt flags = args[0][24].load(true);
+	start_viewpos_x = args[0][25].load(true);
+	step_viewpos_x = args[0][26].load(true);
+	dynlights = args[0][27].load(true);
+	num_dynlights = args[0][28].load(true);
 	shade_constants.light = SSAVec4i(light_blue.zext_int(), light_green.zext_int(), light_red.zext_int(), light_alpha.zext_int());
 	shade_constants.fade = SSAVec4i(fade_blue.zext_int(), fade_green.zext_int(), fade_red.zext_int(), fade_alpha.zext_int());
 	shade_constants.desaturate = desaturate.zext_int();
@@ -115,6 +119,7 @@ SSAInt DrawSpanCodegen::Loop4x(DrawSpanVariant variant, bool isSimpleShade, bool
 {
 	SSAInt sseLength = count / 4;
 	stack_index.store(SSAInt(0));
+	stack_viewpos_x.store(start_viewpos_x);
 	{
 		SSAForBlock loop;
 		SSAInt index = stack_index.load();
@@ -136,9 +141,11 @@ SSAInt DrawSpanCodegen::Loop4x(DrawSpanVariant variant, bool isSimpleShade, bool
 		{
 			SSAInt xfrac = stack_xfrac.load();
 			SSAInt yfrac = stack_yfrac.load();
+			viewpos_x = stack_viewpos_x.load();
 
 			colors[i] = Blend(Shade(Sample(xfrac, yfrac, isNearestFilter, is64x64), isSimpleShade), bgcolors[i], variant);
 
+			stack_viewpos_x.store(viewpos_x + step_viewpos_x);
 			stack_xfrac.store(xfrac + xstep);
 			stack_yfrac.store(yfrac + ystep);
 		}
@@ -158,6 +165,7 @@ void DrawSpanCodegen::Loop(SSAInt start, DrawSpanVariant variant, bool isSimpleS
 	{
 		SSAForBlock loop;
 		SSAInt index = stack_index.load();
+		viewpos_x = stack_viewpos_x.load();
 		loop.loop_block(index < count);
 
 		SSAInt xfrac = stack_xfrac.load();
@@ -167,6 +175,7 @@ void DrawSpanCodegen::Loop(SSAInt start, DrawSpanVariant variant, bool isSimpleS
 		SSAVec4i color = Blend(Shade(Sample(xfrac, yfrac, isNearestFilter, is64x64), isSimpleShade), bgcolor, variant);
 		data[index * 4].store_vec4ub(color);
 
+		stack_viewpos_x.store(viewpos_x + step_viewpos_x);
 		stack_index.store(index.add(SSAInt(1), true, true));
 		stack_xfrac.store(xfrac + xstep);
 		stack_yfrac.store(yfrac + ystep);
@@ -222,10 +231,41 @@ SSAVec4i DrawSpanCodegen::SampleLinear(SSAUBytePtr texture, SSAInt xfrac, SSAInt
 
 SSAVec4i DrawSpanCodegen::Shade(SSAVec4i fg, bool isSimpleShade)
 {
+	SSAVec4i c;
 	if (isSimpleShade)
-		return shade_bgra_simple(fg, light);
+		c = shade_bgra_simple(fg, light);
 	else
-		return shade_bgra_advanced(fg, light, shade_constants);
+		c = shade_bgra_advanced(fg, light, shade_constants);
+
+	stack_lit_color.store(c);
+	stack_light_index.store(SSAInt(0));
+
+	SSAForBlock block;
+	SSAInt light_index = stack_light_index.load();
+	SSAVec4i lit_color = stack_lit_color.load();
+	block.loop_block(light_index < num_dynlights);
+	{
+		SSAVec4i light_color = SSAUBytePtr(dynlights[light_index][0].v).load_vec4ub(true);
+		SSAFloat light_x = dynlights[light_index][1].load(true);
+		SSAFloat light_y = dynlights[light_index][2].load(true);
+		//SSAFloat light_z = dynlights[light_index][3].load(true);
+		SSAFloat light_rcp_radius = dynlights[light_index][4].load(true);
+
+		// L = light-pos
+		// dist = sqrt(dot(L, L))
+		// attenuation = 1 - MIN(dist * (1/radius), 1)
+		SSAFloat Lyz2 = light_y; // L.y*L.y + L.z*L.z
+		SSAFloat Lx = light_x - viewpos_x;
+		SSAFloat dist = SSAFloat::sqrt(Lyz2 + Lx * Lx);
+		SSAInt attenuation = SSAInt(SSAFloat(256.0f) - SSAFloat::MIN(dist * light_rcp_radius, SSAFloat(256.0f)), true);
+		SSAVec4i contribution = (light_color * fg * attenuation) >> 16;
+
+		stack_lit_color.store(lit_color + contribution);
+		stack_light_index.store(light_index + 1);
+	}
+	block.end_block();
+
+	return stack_lit_color.load();
 }
 
 SSAVec4i DrawSpanCodegen::Blend(SSAVec4i fg, SSAVec4i bg, DrawSpanVariant variant)

@@ -265,6 +265,10 @@ llvm::Type *LLVMDrawers::GetDrawSpanArgsStruct(llvm::LLVMContext &context)
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t fade_blue;
 	elements.push_back(llvm::Type::getInt16Ty(context)); // uint16_t desaturate;
 	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t flags;
+	elements.push_back(llvm::Type::getFloatTy(context)); // float viewpos_x;
+	elements.push_back(llvm::Type::getFloatTy(context)); // float step_viewpos_x;
+	elements.push_back(GetTriLightStruct(context));      // TriLight *dynlights;
+	elements.push_back(llvm::Type::getInt32Ty(context)); // uint32_t num_dynlights;
 	DrawSpanArgsStruct = llvm::StructType::create(context, elements, "DrawSpanArgs", false)->getPointerTo();
 	return DrawSpanArgsStruct;
 }

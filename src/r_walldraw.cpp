@@ -575,7 +575,7 @@ static void Draw1Column(int x, int y1, int y2, WallSampler &sampler, void(*draw1
 				light.y = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - dc_viewpos.Y;
 				light.z = (float)lightZ;
 				light.radius = 256.0f / cur_node->lightsource->GetRadius();
-				light.color = 0xff000000 | (red << 16) | (green << 8) | blue;
+				light.color = (red << 16) | (green << 8) | blue;
 
 				// Precalculate the constant part of the dot here so the drawer doesn't have to.
 				light.x = light.x * light.x + light.y * light.y;

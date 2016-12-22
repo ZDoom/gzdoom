@@ -49,7 +49,9 @@ private:
 	SSAVec4i Shade(SSAVec4i fg, bool isSimpleShade);
 	SSAVec4i Blend(SSAVec4i fg, SSAVec4i bg, DrawSpanVariant variant);
 
-	SSAStack<SSAInt> stack_index, stack_xfrac, stack_yfrac;
+	SSAStack<SSAInt> stack_index, stack_xfrac, stack_yfrac, stack_light_index;
+	SSAStack<SSAVec4i> stack_lit_color;
+	SSAStack<SSAFloat> stack_viewpos_x;
 
 	SSAUBytePtr destorg;
 	SSAUBytePtr source;
@@ -73,4 +75,9 @@ private:
 	SSABool is_simple_shade;
 	SSABool is_nearest_filter;
 	SSAShadeConstants shade_constants;
+
+	SSAFloat start_viewpos_x, step_viewpos_x;
+	SSAValue dynlights; // TriLight*
+	SSAInt num_dynlights;
+	SSAFloat viewpos_x;
 };

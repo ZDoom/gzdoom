@@ -100,6 +100,11 @@ namespace swrenderer
 			args.flags |= DrawSpanArgs::simple_shade;
 		if (!sampler_setup(args.source, args.xbits, args.ybits, ds_source_mipmapped))
 			args.flags |= DrawSpanArgs::nearest_filter;
+
+		args.viewpos_x = dc_viewpos.X;
+		args.step_viewpos_x = dc_viewpos_step.X;
+		args.dynlights = dc_lights;
+		args.num_dynlights = dc_num_lights;
 	}
 
 	void DrawSpanLLVMCommand::Execute(DrawerThread *thread)

@@ -139,6 +139,10 @@ struct DrawSpanArgs
 		nearest_filter = 2
 	};
 
+	float viewpos_x, step_viewpos_x;
+	TriLight *dynlights;
+	uint32_t num_dynlights;
+
 	FString ToString();
 };
 

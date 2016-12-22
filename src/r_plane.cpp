@@ -259,11 +259,11 @@ void R_MapPlane (int y, int x1)
 	if (r_swtruecolor)
 	{
 		// Find row position in view space
-		float zspan = (float)((CenterY - y - 0.5) * InvZtoScale / planeheight);
+		float zspan = planeheight / (fabs(y + 0.5 - CenterY) / InvZtoScale);
 		dc_viewpos.X = (float)((x1 + 0.5 - CenterX) / CenterX * zspan);
 		dc_viewpos.Y = zspan;
-		dc_viewpos.Z = (float)planeheight;
-		dc_viewpos_step.X = (float)(-zspan / InvZtoScale);
+		dc_viewpos.Z = (float)((CenterY - y - 0.5) / InvZtoScale * zspan);
+		dc_viewpos_step.X = (float)(zspan / CenterX);
 
 		static TriLight lightbuffer[64 * 1024];
 		static int nextlightindex = 0;
@@ -286,9 +286,9 @@ void R_MapPlane (int y, int x1)
 			auto &light = dc_lights[dc_num_lights++];
 			light.x = (float)(lightX * ViewSin - lightY * ViewCos);
 			light.y = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - dc_viewpos.Y;
-			light.z = (float)(lightZ - dc_viewpos.Z);
+			light.z = (float)lightZ - dc_viewpos.Z;
 			light.radius = 256.0f / cur_node->lightsource->GetRadius();
-			light.color = 0xff000000 | (red << 16) | (green << 8) | blue;
+			light.color = (red << 16) | (green << 8) | blue;
 
 			// Precalculate the constant part of the dot here so the drawer doesn't have to.
 			light.y = light.y * light.y + light.z * light.z;

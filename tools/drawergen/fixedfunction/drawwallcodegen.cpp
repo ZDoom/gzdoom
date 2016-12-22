@@ -233,7 +233,7 @@ SSAVec4i DrawWallCodegen::Shade(SSAVec4i fg, int index, bool isSimpleShade)
 	SSAVec4i lit_color = stack_lit_color.load();
 	block.loop_block(light_index < num_dynlights);
 	{
-		SSAVec4i light_color = SSAUBytePtr(dynlights[light_index][0].v).load_vec4ub(true);
+		SSAVec4i light_color = SSAUBytePtr(SSAValue(dynlights[light_index][0]).v).load_vec4ub(true);
 		SSAFloat light_x = dynlights[light_index][1].load(true);
 		//SSAFloat light_y = dynlights[light_index][2].load(true);
 		SSAFloat light_z = dynlights[light_index][3].load(true);

@@ -545,10 +545,8 @@ static void Draw1Column(int x, int y1, int y2, WallSampler &sampler, void(*draw1
 		float t = (x - WallC.sx1 + 0.5f) / (WallC.sx2 - WallC.sx1);
 		float wcol = w1 * (1.0f - t) + w2 * t;
 		float zcol = 1.0f / wcol;
-		float xcol = (WallC.tleft.X * w1 * (1.0f - t) + WallC.tright.X * w2 * t) * zcol;
-		float ycol = (WallC.tleft.Y * w1 * (1.0f - t) + WallC.tright.Y * w2 * t) * zcol;
-		dc_viewpos.X = xcol;
-		dc_viewpos.Y = ycol;
+		dc_viewpos.X = (float)((x + 0.5 - CenterX) / CenterX * zcol);
+		dc_viewpos.Y = zcol;
 		dc_viewpos.Z = (float)((CenterY - y1 - 0.5) / InvZtoScale * zcol);
 		dc_viewpos_step.Z = (float)(-zcol / InvZtoScale);
 

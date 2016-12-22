@@ -185,7 +185,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const Vec4f &clipPla
 	{
 		args.uniforms.destalpha = (uint32_t)(1.0 * 256);
 		args.uniforms.srcalpha = (uint32_t)(thing->Alpha * 256);
-		blendmode = args.translation ? TriBlendMode::TranslateSub : TriBlendMode::Sub;
+		blendmode = args.translation ? TriBlendMode::TranslateRevSub : TriBlendMode::RevSub;
 	}
 	else if (thing->RenderStyle == LegacyRenderStyles[STYLE_SoulTrans])
 	{

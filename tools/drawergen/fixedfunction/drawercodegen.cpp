@@ -119,7 +119,7 @@ SSAVec4i DrawerCodegen::blend_sub(SSAVec4i fg, SSAVec4i bg, SSAInt srcalpha, SSA
 	SSAInt alpha = fg[3];
 	alpha = alpha + (alpha >> 7); // 255 -> 256
 	srcalpha = (alpha * srcalpha + 128) >> 8;
-	SSAVec4i color = (bg * destalpha - fg * srcalpha) / 256;
+	SSAVec4i color = (fg * srcalpha - bg * destalpha) / 256;
 	return color.insert(3, 255);
 }
 
@@ -128,7 +128,7 @@ SSAVec4i DrawerCodegen::blend_revsub(SSAVec4i fg, SSAVec4i bg, SSAInt srcalpha, 
 	SSAInt alpha = fg[3];
 	alpha = alpha + (alpha >> 7); // 255 -> 256
 	srcalpha = (alpha * srcalpha + 128) >> 8;
-	SSAVec4i color = (fg * srcalpha - bg * destalpha) / 256;
+	SSAVec4i color = (bg * destalpha - fg * srcalpha) / 256;
 	return color.insert(3, 255);
 }
 

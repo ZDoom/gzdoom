@@ -113,6 +113,7 @@ public:
 	void SetOffset(const DVector3 &pos);
 	void UpdateLocation();
 	bool IsOwned() const { return owned; }
+	void ResetCycler();
 	bool IsActive() const { return !(flags2&MF2_DORMANT); }
 	bool IsSubtractive() { return !!(flags4&MF4_SUBTRACTIVE); }
 	bool IsAdditive() { return !!(flags4&MF4_ADDITIVE); }

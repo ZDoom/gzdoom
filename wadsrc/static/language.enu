@@ -2754,4 +2754,5 @@ TCMNU_TRUECOLOR				= "True color output";
 TCMNU_MINFILTER				= "Linear filter when downscaling";
 TCMNU_MAGFILTER				= "Linear filter when upscaling";
 TCMNU_MIPMAP					= "Use mipmapped textures";
+TCMNU_DYNLIGHTS				= "Dynamic lights";
 

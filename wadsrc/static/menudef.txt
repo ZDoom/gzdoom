@@ -675,6 +675,7 @@ OptionMenu "TrueColorOptions"
 	Option "$TCMNU_MINFILTER",				"r_minfilter", "OnOff"
 	Option "$TCMNU_MAGFILTER",				"r_magfilter", "OnOff"
 	Option "$TCMNU_MIPMAP",					"r_mipmap", "OnOff"
+	Option "$TCMNU_DYNLIGHTS",				"r_dynlights", "OnOff"
 }
 
 OptionMenu "VideoOptions"

@@ -53,6 +53,8 @@
 #include "r_draw_pal.h"
 #include "r_thread.h"
 
+CVAR(Bool, r_dynlights, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
 namespace swrenderer
 {
 	// Needed by R_DrawFogBoundary (which probably shouldn't be part of this file)

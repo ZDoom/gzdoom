@@ -16,6 +16,7 @@ EXTERN_CVAR(Int, r_drawfuzz);
 EXTERN_CVAR(Bool, r_drawtrans);
 EXTERN_CVAR(Float, transsouls);
 EXTERN_CVAR(Int, r_columnmethod);
+EXTERN_CVAR(Bool, r_dynlights);
 
 namespace swrenderer
 {

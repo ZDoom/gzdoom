@@ -539,61 +539,68 @@ static void Draw1Column(int x, int y1, int y2, WallSampler &sampler, void(*draw1
 {
 	if (r_swtruecolor)
 	{
-		// Find column position in view space
-		float w1 = 1.0f / WallC.sz1;
-		float w2 = 1.0f / WallC.sz2;
-		float t = (x - WallC.sx1 + 0.5f) / (WallC.sx2 - WallC.sx1);
-		float wcol = w1 * (1.0f - t) + w2 * t;
-		float zcol = 1.0f / wcol;
-		dc_viewpos.X = (float)((x + 0.5 - CenterX) / CenterX * zcol);
-		dc_viewpos.Y = zcol;
-		dc_viewpos.Z = (float)((CenterY - y1 - 0.5) / InvZtoScale * zcol);
-		dc_viewpos_step.Z = (float)(-zcol / InvZtoScale);
-
-		static TriLight lightbuffer[64 * 1024];
-		static int nextlightindex = 0;
-
-		// Setup lights for column
-		dc_num_lights = 0;
-		dc_lights = lightbuffer + nextlightindex;
-		FLightNode *cur_node = dc_light_list;
-		while (cur_node && nextlightindex < 64 * 1024)
+		if (r_dynlights)
 		{
-			if (!(cur_node->lightsource->flags2&MF2_DORMANT))
+			// Find column position in view space
+			float w1 = 1.0f / WallC.sz1;
+			float w2 = 1.0f / WallC.sz2;
+			float t = (x - WallC.sx1 + 0.5f) / (WallC.sx2 - WallC.sx1);
+			float wcol = w1 * (1.0f - t) + w2 * t;
+			float zcol = 1.0f / wcol;
+			dc_viewpos.X = (float)((x + 0.5 - CenterX) / CenterX * zcol);
+			dc_viewpos.Y = zcol;
+			dc_viewpos.Z = (float)((CenterY - y1 - 0.5) / InvZtoScale * zcol);
+			dc_viewpos_step.Z = (float)(-zcol / InvZtoScale);
+
+			static TriLight lightbuffer[64 * 1024];
+			static int nextlightindex = 0;
+
+			// Setup lights for column
+			dc_num_lights = 0;
+			dc_lights = lightbuffer + nextlightindex;
+			FLightNode *cur_node = dc_light_list;
+			while (cur_node && nextlightindex < 64 * 1024)
 			{
-				double lightX = cur_node->lightsource->X() - ViewPos.X;
-				double lightY = cur_node->lightsource->Y() - ViewPos.Y;
-				double lightZ = cur_node->lightsource->Z() - ViewPos.Z;
-
-				float lx = (float)(lightX * ViewSin - lightY * ViewCos) - dc_viewpos.X;
-				float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - dc_viewpos.Y;
-				float lz = (float)lightZ;
-
-				// Precalculate the constant part of the dot here so the drawer doesn't have to.
-				float lconstant = lx * lx + ly * ly;
-
-				// Include light only if it touches this column
-				float radius = cur_node->lightsource->GetRadius();
-				if (radius * radius >= lconstant)
+				if (!(cur_node->lightsource->flags2&MF2_DORMANT))
 				{
-					uint32_t red = cur_node->lightsource->GetRed();
-					uint32_t green = cur_node->lightsource->GetGreen();
-					uint32_t blue = cur_node->lightsource->GetBlue();
+					double lightX = cur_node->lightsource->X() - ViewPos.X;
+					double lightY = cur_node->lightsource->Y() - ViewPos.Y;
+					double lightZ = cur_node->lightsource->Z() - ViewPos.Z;
 
-					nextlightindex++;
-					auto &light = dc_lights[dc_num_lights++];
-					light.x = lconstant;
-					light.z = lz;
-					light.radius = 256.0f / cur_node->lightsource->GetRadius();
-					light.color = (red << 16) | (green << 8) | blue;
+					float lx = (float)(lightX * ViewSin - lightY * ViewCos) - dc_viewpos.X;
+					float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - dc_viewpos.Y;
+					float lz = (float)lightZ;
+
+					// Precalculate the constant part of the dot here so the drawer doesn't have to.
+					float lconstant = lx * lx + ly * ly;
+
+					// Include light only if it touches this column
+					float radius = cur_node->lightsource->GetRadius();
+					if (radius * radius >= lconstant)
+					{
+						uint32_t red = cur_node->lightsource->GetRed();
+						uint32_t green = cur_node->lightsource->GetGreen();
+						uint32_t blue = cur_node->lightsource->GetBlue();
+
+						nextlightindex++;
+						auto &light = dc_lights[dc_num_lights++];
+						light.x = lconstant;
+						light.z = lz;
+						light.radius = 256.0f / cur_node->lightsource->GetRadius();
+						light.color = (red << 16) | (green << 8) | blue;
+					}
 				}
+
+				cur_node = cur_node->nextLight;
 			}
 
-			cur_node = cur_node->nextLight;
+			if (nextlightindex == 64 * 1024)
+				nextlightindex = 0;
 		}
-
-		if (nextlightindex == 64 * 1024)
-			nextlightindex = 0;
+		else
+		{
+			dc_num_lights = 0;
+		}
 
 		int count = y2 - y1;
 

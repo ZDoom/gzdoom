@@ -31,6 +31,7 @@
 
 #include "p_lnspec.h"
 #include "doomstat.h"
+#include "p_maputl.h"
 
 // State.
 #include "r_state.h"
@@ -914,7 +915,7 @@ void DPhased::Tick ()
 
 int DPhased::PhaseHelper (sector_t *sector, int index, int light, sector_t *prev)
 {
-	if (!sector)
+	if (!sector || sector->validcount == validcount)
 	{
 		return index;
 	}
@@ -922,6 +923,7 @@ int DPhased::PhaseHelper (sector_t *sector, int index, int light, sector_t *prev
 	{
 		DPhased *l;
 		int baselevel = sector->lightlevel ? sector->lightlevel : light;
+		sector->validcount = validcount;
 
 		if (index == 0)
 		{
@@ -958,6 +960,7 @@ DPhased::DPhased (sector_t *sector, int baselevel)
 DPhased::DPhased (sector_t *sector)
 	: DLighting (sector)
 {
+	validcount++;
 	PhaseHelper (sector, 0, 0, NULL);
 }
 

@@ -527,7 +527,9 @@ inline bool Writer<StringBuffer>::WriteDouble(double d) {
 		if (!(kWriteDefaultFlags & kWriteNanAndInfFlag))
 		{
 			// At least ensure that the output does not get broken.
-			PutReserve(*os_, 1);
+			PutReserve(*os_, 3);
+			PutUnsafe(*os_, '0');
+			PutUnsafe(*os_, '.');
 			PutUnsafe(*os_, '0');
 			return false;
 		}

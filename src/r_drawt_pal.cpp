@@ -499,7 +499,6 @@ namespace swrenderer
 
 	void DrawColumnRt1ShadedPalCommand::Execute(DrawerThread *thread)
 	{
-		uint32_t *fgstart;
 		const uint8_t *colormap;
 		uint8_t *source;
 		uint8_t *dest;
@@ -529,7 +528,6 @@ namespace swrenderer
 
 	void DrawColumnRt4ShadedPalCommand::Execute(DrawerThread *thread)
 	{
-		uint32_t *fgstart;
 		const uint8_t *colormap;
 		uint8_t *source;
 		uint8_t *dest;

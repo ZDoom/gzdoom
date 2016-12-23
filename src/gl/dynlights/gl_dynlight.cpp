@@ -185,7 +185,9 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 		case 1: light->flags4 |= MF4_ATTENUATE; break;
 		default: if (glset.attenuate)  light->flags4 |= MF4_ATTENUATE; else light->flags4 &= ~MF4_ATTENUATE; break;
 	}
-	}
+
+	light->ResetCycler();
+}
 
 
 //==========================================================================

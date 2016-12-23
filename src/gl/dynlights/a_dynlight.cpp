@@ -228,16 +228,7 @@ void ADynamicLight::Activate(AActor *activator)
 	m_currentRadius = float(m_Radius[0]);
 	m_tickCount = 0;
 
-	if (lighttype == PulseLight)
-	{
-		float pulseTime = specialf1 / TICRATE;
-		
-		m_lastUpdate = level.maptime;
-		m_cycler.SetParams(float(m_Radius[1]), float(m_Radius[0]), pulseTime);
-		m_cycler.ShouldCycle(true);
-		m_cycler.SetCycleType(CYCLE_Sin);
-		m_currentRadius = (BYTE)m_cycler.GetVal();
-	}
+	ResetCycler();
 }
 
 
@@ -428,6 +419,25 @@ void ADynamicLight::UpdateLocation()
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void ADynamicLight::ResetCycler()
+{
+	if (lighttype == PulseLight)
+	{
+		float pulseTime = specialf1 / TICRATE;
+
+		m_lastUpdate = level.maptime;
+		m_cycler.SetParams(float(m_Radius[1]), float(m_Radius[0]), pulseTime);
+		m_cycler.ShouldCycle(true);
+		m_cycler.SetCycleType(CYCLE_Sin);
+		m_currentRadius = (BYTE)m_cycler.GetVal();
+	}
+}
 
 //==========================================================================
 //

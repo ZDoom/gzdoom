@@ -533,8 +533,9 @@ void SetCompatibilityParams()
 					if (CompatParams[i+1] < numsectors)
 					{
 						sector_t *sec = &sectors[CompatParams[i+1]];
-						sec->floorplane.ChangeHeight(CompatParams[i+2]);
-						sec->ChangePlaneTexZ(sector_t::floor, CompatParams[i+2] / 65536.);
+						const double delta = CompatParams[i + 2] / 65536.0;
+						sec->floorplane.ChangeHeight(delta);
+						sec->ChangePlaneTexZ(sector_t::floor, delta);
 					}
 					i += 3;
 					break;

@@ -684,6 +684,7 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 		new_pl->CurrentPortalUniq = pl->CurrentPortalUniq;
 		new_pl->MirrorFlags = pl->MirrorFlags;
 		new_pl->CurrentSkybox = pl->CurrentSkybox;
+		new_pl->lights = pl->lights;
 		pl = new_pl;
 		pl->left = start;
 		pl->right = stop;

@@ -167,6 +167,8 @@ FLightDefaults::FLightDefaults(FName name, ELightType type)
 
 void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 {
+	auto oldtype = light->lighttype;
+
 	light->lighttype = m_type;
 	light->specialf1 = m_Param;
 	light->SetOffset(m_Pos);
@@ -179,6 +181,17 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 	if (m_additive) light->flags4 |= MF4_ADDITIVE;
 	if (m_dontlightself) light->flags4 |= MF4_DONTLIGHTSELF;
 	light->m_tickCount = 0;
+	if (m_type == PulseLight)
+	{
+		float pulseTime = float(m_Param / TICRATE);
+
+		light->m_lastUpdate = level.maptime;
+		light->m_cycler.SetParams(float(light->m_Radius[1]), float(light->m_Radius[0]), pulseTime, oldtype == PulseLight);
+		light->m_cycler.ShouldCycle(true);
+		light->m_cycler.SetCycleType(CYCLE_Sin);
+		light->m_currentRadius = light->m_cycler.GetVal();
+	}
+
 	switch (m_attenuate)
 	{
 		case 0: light->flags4 &= ~MF4_ATTENUATE; break;

@@ -66,7 +66,7 @@
 #include "menu/menu.h"
 #include "r_data/voxels.h"
 
-EXTERN_CVAR(Bool, r_blendmode)
+EXTERN_CVAR(Bool, r_blendmethod)
 
 int active_con_scale();
 
@@ -392,7 +392,7 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 	int dimmedcolor_g = color.g * alpha;
 	int dimmedcolor_b = color.b * alpha;
 
-	if (!r_blendmode)
+	if (!r_blendmethod)
 	{
 		for (y = h; y != 0; y--)
 		{

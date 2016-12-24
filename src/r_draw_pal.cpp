@@ -43,8 +43,8 @@
 #include "v_video.h"
 #include "r_draw_pal.h"
 
-// [SP] r_blendmode - false = rgb555 matching (ZDoom classic), true = rgb666 (refactored)
-CVAR(Bool, r_blendmode, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
+// [SP] r_blendmethod - false = rgb555 matching (ZDoom classic), true = rgb666 (refactored)
+CVAR(Bool, r_blendmethod, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 
 /*
 	[RH] This translucency algorithm is based on DOSDoom 0.65's, but uses
@@ -309,7 +309,7 @@ namespace swrenderer
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		if (!r_blendmode)
+		if (!r_blendmethod)
 		{
 			do
 			{
@@ -370,7 +370,7 @@ namespace swrenderer
 		}
 		pitch *= thread->num_cores;
 
-		if (!r_blendmode)
+		if (!r_blendmethod)
 		{
 			do
 			{
@@ -433,7 +433,7 @@ namespace swrenderer
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		if (!r_blendmode)
+		if (!r_blendmethod)
 		{
 			do
 			{
@@ -539,7 +539,7 @@ namespace swrenderer
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		if (!r_blendmode)
+		if (!r_blendmethod)
 		{
 			do
 			{
@@ -603,7 +603,7 @@ namespace swrenderer
 		}
 		pitch *= thread->num_cores;
 
-		if (!r_blendmode)
+		if (!r_blendmethod)
 		{
 			do
 			{
@@ -667,19 +667,42 @@ namespace swrenderer
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		do
+		if (!r_blendmethod)
 		{
-			uint8_t pix = source[frac >> bits];
-			if (pix != 0)
+			do
 			{
-				int r = clamp(GPalette.BaseColors[colormap[pix]].r - GPalette.BaseColors[*dest].r, 0, 255);
-				int g = clamp(GPalette.BaseColors[colormap[pix]].g - GPalette.BaseColors[*dest].g, 0, 255);
-				int b = clamp(GPalette.BaseColors[colormap[pix]].b - GPalette.BaseColors[*dest].b, 0, 255);
-				*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
-			}
-			frac += fracstep;
-			dest += pitch;
-		} while (--count);
+				uint8_t pix = source[frac >> bits];
+				if (pix != 0)
+				{
+					uint32_t a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[pix]];
+					uint32_t b = a;
+
+					b &= 0x40100400;
+					b = b - (b >> 5);
+					a &= b;
+					a |= 0x01f07c1f;
+					*dest = RGB32k.All[a & (a >> 15)];
+				}
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				uint8_t pix = source[frac >> bits];
+				if (pix != 0)
+				{
+					int r = clamp(GPalette.BaseColors[colormap[pix]].r - GPalette.BaseColors[*dest].r, 0, 255);
+					int g = clamp(GPalette.BaseColors[colormap[pix]].g - GPalette.BaseColors[*dest].g, 0, 255);
+					int b = clamp(GPalette.BaseColors[colormap[pix]].b - GPalette.BaseColors[*dest].b, 0, 255);
+					*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
+				}
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+		}
 	}
 
 	void DrawWallRevSubClamp4PalCommand::Execute(DrawerThread *thread)

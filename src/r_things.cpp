@@ -72,6 +72,7 @@ EXTERN_CVAR(Int, r_drawfuzz)
 EXTERN_CVAR(Bool, r_deathcamera);
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_drawvoxels)
+EXTERN_CVAR(Bool, r_blendmethod)
 
 CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 //CVAR(Bool, r_splitsprites, true, CVAR_ARCHIVE)
@@ -2640,8 +2641,10 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 
 void R_DrawParticle (vissprite_t *vis)
 {
+	DWORD *bg2rgb;
 	int spacing;
 	BYTE *dest;
+	DWORD fg;
 	BYTE color = vis->Style.colormap[vis->startfrac];
 	int yl = vis->y1;
 	int ycount = vis->y2 - yl + 1;
@@ -2655,8 +2658,32 @@ void R_DrawParticle (vissprite_t *vis)
 	// vis->renderflags holds translucency level (0-255)
 	fixed_t fglevel, bglevel;
 
-	fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
-	bglevel = FRACUNIT-fglevel;
+	{
+		DWORD *fg2rgb;
+
+		fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
+		bglevel = FRACUNIT-fglevel;
+		fg2rgb = Col2RGB8[fglevel>>10];
+		bg2rgb = Col2RGB8[bglevel>>10];
+		fg = fg2rgb[color];
+	}
+
+	/*
+
+	spacing = RenderTarget->GetPitch() - countbase;
+	dest = ylookup[yl] + x1 + dc_destorg;
+
+	do
+	{
+		int count = countbase;
+		do
+		{
+			DWORD bg = bg2rgb[*dest];
+			bg = (fg+bg) | 0x1f07c1f;
+			*dest++ = RGB32k.All[bg & (bg>>15)];
+		} while (--count);
+		dest += spacing;
+	} while (--ycount);*/
 
 	// original was row-wise
 	// width = countbase
@@ -2664,20 +2691,40 @@ void R_DrawParticle (vissprite_t *vis)
 
 	spacing = RenderTarget->GetPitch();
 
-	for (int x = x1; x < (x1+countbase); x++)
+	if (!r_blendmethod)
 	{
-		dc_x = x;
-		if (R_ClipSpriteColumnWithPortals(vis))
-			continue;
-		dest = ylookup[yl] + x + dc_destorg;
-		for (int y = 0; y < ycount; y++)
+		for (int x = x1; x < (x1+countbase); x++)
 		{
-			uint32_t dest_r = MIN((GPalette.BaseColors[*dest].r * bglevel + GPalette.BaseColors[color].r * fglevel) >> 18, 63);
-			uint32_t dest_g = MIN((GPalette.BaseColors[*dest].g * bglevel + GPalette.BaseColors[color].g * fglevel) >> 18, 63);
-			uint32_t dest_b = MIN((GPalette.BaseColors[*dest].b * bglevel + GPalette.BaseColors[color].b * fglevel) >> 18, 63);
+			dc_x = x;
+			if (R_ClipSpriteColumnWithPortals(vis))
+				continue;
+			dest = ylookup[yl] + x + dc_destorg;
+			for (int y = 0; y < ycount; y++)
+			{
+				DWORD bg = bg2rgb[*dest];
+				bg = (fg+bg) | 0x1f07c1f;
+				*dest = RGB32k.All[bg & (bg>>15)];
+				dest += spacing;
+			}
+		}
+	}
+	else
+	{
+		for (int x = x1; x < (x1+countbase); x++)
+		{
+			dc_x = x;
+			if (R_ClipSpriteColumnWithPortals(vis))
+				continue;
+			dest = ylookup[yl] + x + dc_destorg;
+			for (int y = 0; y < ycount; y++)
+			{
+				uint32_t dest_r = MIN((GPalette.BaseColors[*dest].r * bglevel + GPalette.BaseColors[color].r * fglevel) >> 18, 63);
+				uint32_t dest_g = MIN((GPalette.BaseColors[*dest].g * bglevel + GPalette.BaseColors[color].g * fglevel) >> 18, 63);
+				uint32_t dest_b = MIN((GPalette.BaseColors[*dest].b * bglevel + GPalette.BaseColors[color].b * fglevel) >> 18, 63);
 
-			*dest = RGB256k.RGB[dest_r][dest_g][dest_b];
-			dest += spacing;
+				*dest = RGB256k.RGB[dest_r][dest_g][dest_b];
+				dest += spacing;
+			}
 		}
 	}
 }

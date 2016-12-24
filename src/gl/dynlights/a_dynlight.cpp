@@ -235,7 +235,7 @@ void ADynamicLight::Activate(AActor *activator)
 		m_cycler.SetParams(float(m_Radius[1]), float(m_Radius[0]), pulseTime);
 		m_cycler.ShouldCycle(true);
 		m_cycler.SetCycleType(CYCLE_Sin);
-		m_currentRadius = (BYTE)m_cycler.GetVal();
+		m_currentRadius = m_cycler.GetVal();
 	}
 }
 

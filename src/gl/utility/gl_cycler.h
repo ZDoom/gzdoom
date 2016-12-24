@@ -22,7 +22,7 @@ class FCycler
 public:
    FCycler();
    void Update(float diff);
-   void SetParams(float start, float end, float cycle);
+   void SetParams(float start, float end, float cycle, bool update = false);
    void ShouldCycle(bool sc) { m_shouldCycle = sc; }
    void SetCycleType(CycleType ct) { m_cycleType = ct; }
    float GetVal() { return m_current; }

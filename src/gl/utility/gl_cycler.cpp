@@ -83,13 +83,23 @@ FCycler::FCycler()
 //
 //==========================================================================
 
-void FCycler::SetParams(float start, float end, float cycle)
+void FCycler::SetParams(float start, float end, float cycle, bool update)
 {
-	m_cycle = cycle;
-	m_time = 0.f;
-	m_start = m_current = start;
+	if (!update || cycle != m_cycle)
+	{
+		m_cycle = cycle;
+		m_time = 0.f;
+		m_increment = true;
+		m_current = start;
+	}
+	else
+	{
+		// When updating and keeping the same cycle, scale the current light size to the new dimensions.
+		float fact = (m_current - m_start) / (m_end - m_start);
+		m_current = start + fact *(end - start);
+	}
+	m_start = start;
 	m_end = end;
-	m_increment = true;
 }
 
 

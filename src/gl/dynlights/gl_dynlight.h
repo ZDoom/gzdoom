@@ -33,7 +33,7 @@ EXTERN_CVAR(Bool, gl_attachedlights)
 
 class ADynamicLight;
 class FSerializer;
-
+class FLightDefaults;
 
 
 enum
@@ -91,6 +91,7 @@ struct FLightNode
 
 class ADynamicLight : public AActor
 {
+	friend class FLightDefaults;
 	DECLARE_CLASS (ADynamicLight, AActor)
 public:
 	virtual void Tick();

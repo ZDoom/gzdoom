@@ -525,7 +525,7 @@ DEFINE_PROPERTY(skip_super, 0, Actor)
 	if (info->Size != actorclass->Size)
 	{
 		bag.ScriptPosition.Message(MSG_OPTERROR,
-			"'skip_super' is only allowed in subclasses of AActor with no additional fields and will be ignored.", info->TypeName.GetChars());
+			"'skip_super' is only allowed in subclasses of AActor with no additional fields and will be ignored in type %s.", info->TypeName.GetChars());
 		return;
 	}
 	if (bag.StateSet)

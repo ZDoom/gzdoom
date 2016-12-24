@@ -246,7 +246,7 @@ void FMapInfoParser::ParseDoomEdNums()
 	}
 	if (error > 0)
 	{
-		sc.ScriptError("%d errors encountered in DoomEdNum definition");
+		sc.ScriptError("%d errors encountered in DoomEdNum definition", error);
 	}
 }
 

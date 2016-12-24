@@ -1780,6 +1780,8 @@ DSPLYMNU_BRIGHTNESS				= "Brightness";
 DSPLYMNU_VSYNC					= "Vertical Sync";
 DSPLYMNU_CAPFPS					= "Rendering Interpolation";
 DSPLYMNU_COLUMNMETHOD			= "Column render mode";
+DSPLYMNU_BLENDMETHOD			= "Transparency render mode";
+
 DSPLYMNU_WIPETYPE				= "Screen wipe style";
 DSPLYMNU_SHOWENDOOM				= "Show ENDOOM screen";
 DSPLYMNU_BLOODFADE				= "Blood Flash Intensity";
@@ -2189,6 +2191,8 @@ OPTVAL_INVERTED				= "Inverted";
 OPTVAL_NOTINVERTED			= "Not Inverted";
 OPTVAL_ORIGINAL				= "Original";
 OPTVAL_OPTIMIZED			= "Optimized";
+OPTVAL_CLASSIC				= "Classic (Faster)";
+OPTVAL_PRECISE				= "Precise";
 OPTVAL_NORMAL				= "Normal";
 OPTVAL_STRETCH				= "Stretch";
 OPTVAL_CAPPED				= "Capped";

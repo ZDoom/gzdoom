@@ -1833,7 +1833,7 @@ static void AimBulletMissile(AActor *proj, AActor *puff, int flags, bool temp, b
 			// Aim for the base of the puff as that's where blood puffs will spawn... roughly.
 
 			A_Face(proj, puff, 0., 0., 0., 0., 1);
-			proj->Vel3DFromAngle(-proj->Angles.Pitch, proj->Speed);
+			proj->Vel3DFromAngle(proj->Angles.Pitch, proj->Speed);
 
 			if (!temp)
 			{

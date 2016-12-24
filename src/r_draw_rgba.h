@@ -441,6 +441,23 @@ namespace swrenderer
 	};
 
 	/////////////////////////////////////////////////////////////////////////////
+
+	class DrawParticleColumnRGBACommand : public DrawerCommand
+	{
+	public:
+		DrawParticleColumnRGBACommand(uint32_t *dest, int dest_y, int pitch, int count, uint32_t fg, uint32_t alpha);
+		void Execute(DrawerThread *thread) override;
+		FString DebugInfo() override;
+
+	private:
+		uint32_t *_dest;
+		int _pitch;
+		int _count;
+		uint32_t _fg;
+		uint32_t _alpha;
+	};
+
+	/////////////////////////////////////////////////////////////////////////////
 	// Pixel shading inline functions:
 
 	class LightBgra

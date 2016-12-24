@@ -2865,21 +2865,11 @@ void R_DrawParticle_rgba(vissprite_t *vis)
 
 	R_DrawMaskedSegsBehindParticle(vis);
 	
-	DrawerCommandQueue::WaitForWorkers();
-
 	uint32_t fg = LightBgra::shade_pal_index_simple(color, LightBgra::calc_light_multiplier(LIGHTSCALE(0, vis->Style.ColormapNum << FRACBITS)));
-	uint32_t fg_red = (fg >> 16) & 0xff;
-	uint32_t fg_green = (fg >> 8) & 0xff;
-	uint32_t fg_blue = fg & 0xff;
 
 	// vis->renderflags holds translucency level (0-255)
 	fixed_t fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
 	uint32_t alpha = fglevel * 256 / FRACUNIT;
-	uint32_t inv_alpha = 256 - alpha;
-
-	fg_red *= alpha;
-	fg_green *= alpha;
-	fg_blue *= alpha;
 
 	spacing = RenderTarget->GetPitch();
 
@@ -2889,19 +2879,7 @@ void R_DrawParticle_rgba(vissprite_t *vis)
 		if (R_ClipSpriteColumnWithPortals(vis))
 			continue;
 		dest = ylookup[yl] + x + (uint32_t*)dc_destorg;
-		for (int y = 0; y < ycount; y++)
-		{
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = (fg_red + bg_red * inv_alpha) / 256;
-			uint32_t green = (fg_green + bg_green * inv_alpha) / 256;
-			uint32_t blue = (fg_blue + bg_blue * inv_alpha) / 256;
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			dest += spacing;
-		}
+		DrawerCommandQueue::QueueCommand<DrawParticleColumnRGBACommand>(dest, yl, spacing, ycount, fg, alpha);
 	}
 }
 

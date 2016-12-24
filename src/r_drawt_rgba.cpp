@@ -231,4 +231,56 @@ namespace swrenderer
 	{
 		return "FillColumnHoriz";
 	}
+
+	/////////////////////////////////////////////////////////////////////////////
+
+	DrawParticleColumnRGBACommand::DrawParticleColumnRGBACommand(uint32_t *dest, int dest_y, int pitch, int count, uint32_t fg, uint32_t alpha)
+	{
+		_dest = dest;
+		_pitch = pitch;
+		_count = count;
+		_fg = fg;
+		_alpha = alpha;
+		_dest_y = dest_y;
+	}
+
+	void DrawParticleColumnRGBACommand::Execute(DrawerThread *thread)
+	{
+		int count = thread->count_for_thread(_dest_y, _count);
+		if (count <= 0)
+			return;
+
+		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, _dest);
+		int pitch = _pitch * thread->num_cores;
+
+		uint32_t alpha = _alpha;
+		uint32_t inv_alpha = 256 - alpha;
+
+		uint32_t fg_red = (_fg >> 16) & 0xff;
+		uint32_t fg_green = (_fg >> 8) & 0xff;
+		uint32_t fg_blue = _fg & 0xff;
+
+		fg_red *= alpha;
+		fg_green *= alpha;
+		fg_blue *= alpha;
+
+		for (int y = 0; y < count; y++)
+		{
+			uint32_t bg_red = (*dest >> 16) & 0xff;
+			uint32_t bg_green = (*dest >> 8) & 0xff;
+			uint32_t bg_blue = (*dest) & 0xff;
+
+			uint32_t red = (fg_red + bg_red * inv_alpha) / 256;
+			uint32_t green = (fg_green + bg_green * inv_alpha) / 256;
+			uint32_t blue = (fg_blue + bg_blue * inv_alpha) / 256;
+
+			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+			dest += pitch;
+		}
+	}
+
+	FString DrawParticleColumnRGBACommand::DebugInfo()
+	{
+		return "DrawParticle";
+	}
 }

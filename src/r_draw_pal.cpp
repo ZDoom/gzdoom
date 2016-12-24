@@ -527,6 +527,9 @@ namespace swrenderer
 		int bits = _fracbits;
 		int pitch = _pitch;
 
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
+
 		count = thread->count_for_thread(_dest_y, count);
 		if (count <= 0)
 			return;
@@ -536,19 +539,42 @@ namespace swrenderer
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		do
+		if (!r_blendmode)
 		{
-			uint8_t pix = source[frac >> bits];
-			if (pix != 0)
+			do
 			{
-				int r = clamp(-GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 0, 255);
-				int g = clamp(-GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 0, 255);
-				int b = clamp(-GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 0, 255);
-				*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
-			}
-			frac += fracstep;
-			dest += pitch;
-		} while (--count);
+				uint8_t pix = source[frac >> bits];
+				if (pix != 0)
+				{
+					uint32_t a = (fg2rgb[colormap[pix]] | 0x40100400) - bg2rgb[*dest];
+					uint32_t b = a;
+
+					b &= 0x40100400;
+					b = b - (b >> 5);
+					a &= b;
+					a |= 0x01f07c1f;
+					*dest = RGB32k.All[a & (a >> 15)];
+				}
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				uint8_t pix = source[frac >> bits];
+				if (pix != 0)
+				{
+					int r = clamp(-GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 0, 255);
+					int g = clamp(-GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 0, 255);
+					int b = clamp(-GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 0, 255);
+					*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
+				}
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+		}
 	}
 
 	void DrawWallSubClamp4PalCommand::Execute(DrawerThread *thread)
@@ -556,6 +582,9 @@ namespace swrenderer
 		uint8_t *dest = _dest;
 		int count = _count;
 		int bits = _fracbits;
+
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
 
 		uint32_t dc_wall_texturefrac[4] = { _texturefrac[0], _texturefrac[1], _texturefrac[2], _texturefrac[3] };
 		uint32_t dc_wall_iscale[4] = { _iscale[0], _iscale[1], _iscale[2], _iscale[3] };
@@ -574,22 +603,48 @@ namespace swrenderer
 		}
 		pitch *= thread->num_cores;
 
-		do
+		if (!r_blendmode)
 		{
-			for (int i = 0; i < 4; ++i)
+			do
 			{
-				uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
-				if (pix != 0)
+				for (int i = 0; i < 4; ++i)
 				{
-					int r = clamp(-GPalette.BaseColors[_colormap[i][pix]].r + GPalette.BaseColors[dest[i]].r, 0, 255);
-					int g = clamp(-GPalette.BaseColors[_colormap[i][pix]].g + GPalette.BaseColors[dest[i]].g, 0, 255);
-					int b = clamp(-GPalette.BaseColors[_colormap[i][pix]].b + GPalette.BaseColors[dest[i]].b, 0, 255);
-					dest[i] = RGB256k.RGB[r>>2][g>>2][b>>2];
+					uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
+					if (pix != 0)
+					{
+						uint32_t a = (fg2rgb[_colormap[i][pix]] | 0x40100400) - bg2rgb[dest[i]];
+						uint32_t b = a;
+
+						b &= 0x40100400;
+						b = b - (b >> 5);
+						a &= b;
+						a |= 0x01f07c1f;
+						dest[i] = RGB32k.All[a & (a >> 15)];
+					}
+					dc_wall_texturefrac[i] += dc_wall_iscale[i];
 				}
-				dc_wall_texturefrac[i] += dc_wall_iscale[i];
-			}
-			dest += pitch;
-		} while (--count);
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				for (int i = 0; i < 4; ++i)
+				{
+					uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
+					if (pix != 0)
+					{
+						int r = clamp(-GPalette.BaseColors[_colormap[i][pix]].r + GPalette.BaseColors[dest[i]].r, 0, 255);
+						int g = clamp(-GPalette.BaseColors[_colormap[i][pix]].g + GPalette.BaseColors[dest[i]].g, 0, 255);
+						int b = clamp(-GPalette.BaseColors[_colormap[i][pix]].b + GPalette.BaseColors[dest[i]].b, 0, 255);
+						dest[i] = RGB256k.RGB[r>>2][g>>2][b>>2];
+					}
+					dc_wall_texturefrac[i] += dc_wall_iscale[i];
+				}
+				dest += pitch;
+			} while (--count);
+		}
 	}
 
 	void DrawWallRevSubClamp1PalCommand::Execute(DrawerThread *thread)

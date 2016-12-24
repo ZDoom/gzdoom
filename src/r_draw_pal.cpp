@@ -2756,7 +2756,7 @@ namespace swrenderer
 		xstep = _xstep;
 		ystep = _ystep;
 
-		if (!r_columnmethod)
+		if (!r_blendmethod)
 		{
 			if (_xbits == 6 && _ybits == 6)
 			{

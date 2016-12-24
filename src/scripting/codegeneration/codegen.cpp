@@ -9511,7 +9511,7 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 				/* lax */
 				// Since this happens in released WADs it must pass without a terminal error... :(
 				ScriptPosition.Message(MSG_OPTERROR,
-					"Unknown class name '%s'",
+					"Unknown class name '%s' of type '%s'",
 					clsname.GetChars(), desttype->TypeName.GetChars());
 			}
 			else

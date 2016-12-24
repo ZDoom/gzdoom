@@ -38,7 +38,7 @@ class StrifeBishop : Actor
 		Loop;
 	Missile:
 		MLDR E 3 A_FaceTarget;
-		MLDR F 2 Bright A_CustomMissile("BishopMissile", 64, 0, 0, CMF_AIMOFFSET);
+		MLDR F 2 Bright A_SpawnProjectile("BishopMissile", 64, 0, 0, CMF_AIMOFFSET);
 		Goto See;
 	Pain:
 		MLDR D 1 A_Pain;

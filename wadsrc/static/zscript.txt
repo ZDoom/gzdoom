@@ -2,7 +2,6 @@
 #include "zscript/constants.txt"
 #include "zscript/actor.txt"
 #include "zscript/actor_checks.txt"
-#include "zscript/compatibility.txt"
 
 #include "zscript/shared/inventory.txt"
 #include "zscript/shared/inv_misc.txt"
@@ -37,6 +36,8 @@
 #include "zscript/shared/ice.txt"
 #include "zscript/shared/dog.txt"
 #include "zscript/shared/fastprojectile.txt"
+
+#include "zscript/compatibility.txt"
 
 #include "zscript/doom/doomplayer.txt"
 #include "zscript/doom/possessed.txt"

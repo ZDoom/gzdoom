@@ -87,7 +87,7 @@ class BlasterPowered : Blaster
 	Fire:
 		BLSR BC 0;
 	Hold:
-		BLSR D 3 A_FireCustomMissile("BlasterFX1");
+		BLSR D 3 A_FireProjectile("BlasterFX1");
 		BLSR CB 4;
 		BLSR A 0 A_ReFire;
 		Goto Ready;

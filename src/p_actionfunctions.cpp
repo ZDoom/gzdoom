@@ -1988,7 +1988,7 @@ enum FP_Flags
 	FPF_TRANSFERTRANSLATION = 2,
 	FPF_NOAUTOAIM = 4,
 };
-DEFINE_ACTION_FUNCTION(AStateProvider, A_FireCustomMissile)
+DEFINE_ACTION_FUNCTION(AStateProvider, A_FireProjectile)
 {
 	PARAM_ACTION_PROLOGUE(AStateProvider);
 	PARAM_CLASS		(ti, AActor);

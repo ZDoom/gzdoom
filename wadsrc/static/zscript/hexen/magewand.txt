@@ -23,7 +23,7 @@ class MWeapWand : MageWeapon
 		Loop;
 	Fire:
 		MWND A 6;
-		MWND B 6 Bright Offset (0, 48) A_FireCustomMissile ("MageWandMissile");
+		MWND B 6 Bright Offset (0, 48) A_FireProjectile ("MageWandMissile");
 		MWND A 3 Offset (0, 40);
 		MWND A 3 Offset (0, 36) A_ReFire;
 		Goto Ready;

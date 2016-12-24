@@ -43,6 +43,9 @@
 #include "v_video.h"
 #include "r_draw_pal.h"
 
+// [SP] r_blendmode - false = rgb555 matching (ZDoom classic), true = rgb666 (refactored)
+CVAR(Bool, r_blendmode, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
+
 /*
 	[RH] This translucency algorithm is based on DOSDoom 0.65's, but uses
 	a 32k RGB table instead of an 8k one. At least on my machine, it's
@@ -303,19 +306,39 @@ namespace swrenderer
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		do
+		if (!r_blendmode)
 		{
-			uint8_t pix = source[frac >> bits];
-			if (pix != 0)
+			do
 			{
-				uint32_t r = MIN(GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 255);
-				uint32_t g = MIN(GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 255);
-				uint32_t b = MIN(GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 255);
-				*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
-			}
-			frac += fracstep;
-			dest += pitch;
-		} while (--count);
+				uint8_t pix = source[frac >> bits];
+				if (pix != 0)
+				{
+					uint32_t fg = fg2rgb[colormap[pix]];
+					uint32_t bg = bg2rgb[*dest];
+					fg = (fg + bg) | 0x1f07c1f;
+					*dest = RGB32k.All[fg & (fg >> 15)];
+				}
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+
+		}
+		else
+		{
+			do
+			{
+				uint8_t pix = source[frac >> bits];
+				if (pix != 0)
+				{
+					uint32_t r = MIN(GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 255);
+					uint32_t g = MIN(GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 255);
+					uint32_t b = MIN(GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 255);
+					*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
+				}
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+		}
 	}
 
 	void DrawWallAdd4PalCommand::Execute(DrawerThread *thread)
@@ -341,22 +364,44 @@ namespace swrenderer
 		}
 		pitch *= thread->num_cores;
 
-		do
+		if (!r_blendmode)
 		{
-			for (int i = 0; i < 4; ++i)
+			do
 			{
-				uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
-				if (pix != 0)
+				for (int i = 0; i < 4; ++i)
 				{
-					uint32_t r = MIN(GPalette.BaseColors[_colormap[i][pix]].r + GPalette.BaseColors[dest[i]].r, 255);
-					uint32_t g = MIN(GPalette.BaseColors[_colormap[i][pix]].g + GPalette.BaseColors[dest[i]].g, 255);
-					uint32_t b = MIN(GPalette.BaseColors[_colormap[i][pix]].b + GPalette.BaseColors[dest[i]].b, 255);
-					dest[i] = RGB256k.RGB[r>>2][g>>2][b>>2];
+					uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
+					if (pix != 0)
+					{
+						uint32_t fg = fg2rgb[_colormap[i][pix]];
+						uint32_t bg = bg2rgb[dest[i]];
+						fg = (fg + bg) | 0x1f07c1f;
+						dest[i] = RGB32k.All[fg & (fg >> 15)];
+					}
+					dc_wall_texturefrac[i] += dc_wall_iscale[i];
 				}
-				dc_wall_texturefrac[i] += dc_wall_iscale[i];
-			}
-			dest += pitch;
-		} while (--count);
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				for (int i = 0; i < 4; ++i)
+				{
+					uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
+					if (pix != 0)
+					{
+						uint32_t r = MIN(GPalette.BaseColors[_colormap[i][pix]].r + GPalette.BaseColors[dest[i]].r, 255);
+						uint32_t g = MIN(GPalette.BaseColors[_colormap[i][pix]].g + GPalette.BaseColors[dest[i]].g, 255);
+						uint32_t b = MIN(GPalette.BaseColors[_colormap[i][pix]].b + GPalette.BaseColors[dest[i]].b, 255);
+						dest[i] = RGB256k.RGB[r>>2][g>>2][b>>2];
+					}
+					dc_wall_texturefrac[i] += dc_wall_iscale[i];
+				}
+				dest += pitch;
+			} while (--count);
+		}
 	}
 
 	void DrawWallAddClamp1PalCommand::Execute(DrawerThread *thread)
@@ -379,19 +424,43 @@ namespace swrenderer
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		do
+		if (!r_blendmode)
 		{
-			uint8_t pix = source[frac >> bits];
-			if (pix != 0)
+			do
 			{
-				uint32_t r = MIN(GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 255);
-				uint32_t g = MIN(GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 255);
-				uint32_t b = MIN(GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 255);
-				*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
-			}
-			frac += fracstep;
-			dest += pitch;
-		} while (--count);
+				uint8_t pix = source[frac >> bits];
+				if (pix != 0)
+				{
+					uint32_t a = fg2rgb[colormap[pix]] + bg2rgb[*dest];
+					uint32_t b = a;
+
+					a |= 0x01f07c1f;
+					b &= 0x40100400;
+					a &= 0x3fffffff;
+					b = b - (b >> 5);
+					a |= b;
+					*dest = RGB32k.All[a & (a >> 15)];
+				}
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				uint8_t pix = source[frac >> bits];
+				if (pix != 0)
+				{
+					uint32_t r = MIN(GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 255);
+					uint32_t g = MIN(GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 255);
+					uint32_t b = MIN(GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 255);
+					*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
+				}
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+		}
 	}
 
 	void DrawWallAddClamp4PalCommand::Execute(DrawerThread *thread)

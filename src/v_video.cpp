@@ -66,6 +66,8 @@
 #include "menu/menu.h"
 #include "r_data/voxels.h"
 
+EXTERN_CVAR(Bool, r_blendmode)
+
 int active_con_scale();
 
 FRenderer *Renderer;

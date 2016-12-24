@@ -297,6 +297,9 @@ namespace swrenderer
 		int bits = _fracbits;
 		int pitch = _pitch;
 
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
+
 		count = thread->count_for_thread(_dest_y, count);
 		if (count <= 0)
 			return;
@@ -346,6 +349,9 @@ namespace swrenderer
 		uint8_t *dest = _dest;
 		int count = _count;
 		int bits = _fracbits;
+
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
 
 		uint32_t dc_wall_texturefrac[4] = { _texturefrac[0], _texturefrac[1], _texturefrac[2], _texturefrac[3] };
 		uint32_t dc_wall_iscale[4] = { _iscale[0], _iscale[1], _iscale[2], _iscale[3] };
@@ -415,6 +421,9 @@ namespace swrenderer
 		int bits = _fracbits;
 		int pitch = _pitch;
 
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
+
 		count = thread->count_for_thread(_dest_y, count);
 		if (count <= 0)
 			return;
@@ -468,6 +477,9 @@ namespace swrenderer
 		uint8_t *dest = _dest;
 		int count = _count;
 		int bits = _fracbits;
+
+		uint32_t *fg2rgb = _srcblend;
+		uint32_t *bg2rgb = _destblend;
 
 		uint32_t dc_wall_texturefrac[4] = { _texturefrac[0], _texturefrac[1], _texturefrac[2], _texturefrac[3] };
 		uint32_t dc_wall_iscale[4] = { _iscale[0], _iscale[1], _iscale[2], _iscale[3] };

@@ -125,25 +125,26 @@ extend class Actor
 	
 	void A_VileAttack(sound snd = "vile/stop", int initialdmg = 20, int blastdmg = 70, int blastradius = 70, double thrust = 1.0, name damagetype = "Fire", int flags = 0)
 	{
-		if (target)
+		Actor targ = target;
+		if (targ)
 		{
 			A_FaceTarget();
-			if (!CheckSight(target, 0)) return;
+			if (!CheckSight(targ, 0)) return;
 			A_PlaySound(snd, CHAN_WEAPON);
-			int newdam = target.DamageMobj (self, self, initialdmg, (flags & VAF_DMGTYPEAPPLYTODIRECT)? damagetype : 'none');
+			int newdam = targ.DamageMobj (self, self, initialdmg, (flags & VAF_DMGTYPEAPPLYTODIRECT)? damagetype : 'none');
 
-			TraceBleed (newdam > 0 ? newdam : initialdmg, target);
+			TraceBleed (newdam > 0 ? newdam : initialdmg, targ);
 			
 			Actor fire = tracer;
 			if (fire)
 			{
 				// move the fire between the vile and the player
-				fire.SetOrigin(target.Vec3Angle(-24., angle, 0), true);
+				fire.SetOrigin(targ.Vec3Angle(-24., angle, 0), true);
 				fire.A_Explode(blastdmg, blastradius, XF_NOSPLASH, false, 0, 0, 0, "BulletPuff", damagetype);
 			}
-			if (!target.bDontThrust)
+			if (!targ.bDontThrust)
 			{
-				target.Vel.z = thrust * 1000 / max(1, target.Mass);
+				targ.Vel.z = thrust * 1000 / max(1, targ.Mass);
 			}
 		}
 	}

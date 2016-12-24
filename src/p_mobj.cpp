@@ -6321,7 +6321,7 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 		// [RH] Don't explode ripping missiles that spawn inside something
 		if (th->BlockingMobj == NULL || !(th->flags2 & MF2_RIP) || (th->BlockingMobj->flags5 & MF5_DONTRIP))
 		{
-			// If this is a monster spawned by A_CustomMissile subtract it from the counter.
+			// If this is a monster spawned by A_SpawnProjectile subtract it from the counter.
 			th->ClearCounters();
 			// [RH] Don't explode missiles that spawn on top of horizon lines
 			if (th->BlockingLine != NULL && th->BlockingLine->special == Line_Horizon)

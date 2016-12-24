@@ -47,7 +47,7 @@ class Wraith : Actor
 	Missile:
 		WRTH E 6 A_FaceTarget;
 		WRTH F 6;
-		WRTH G 6 A_CustomMissile("WraithFX1");
+		WRTH G 6 A_SpawnProjectile("WraithFX1");
 		Goto See;
 	Death:
 		WRTH I 4;

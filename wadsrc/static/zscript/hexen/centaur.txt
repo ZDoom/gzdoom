@@ -112,9 +112,9 @@ class CentaurLeader : Centaur
 	{
 	Missile:
 		CENT E 10 A_FaceTarget;
-		CENT F 8 Bright A_CustomMissile("CentaurFX", 45, 0, 0, CMF_AIMOFFSET);
+		CENT F 8 Bright A_SpawnProjectile("CentaurFX", 45, 0, 0, CMF_AIMOFFSET);
 		CENT E 10 A_FaceTarget;
-		CENT F 8 Bright A_CustomMissile("CentaurFX", 45, 0, 0, CMF_AIMOFFSET);
+		CENT F 8 Bright A_SpawnProjectile("CentaurFX", 45, 0, 0, CMF_AIMOFFSET);
 		Goto See;
 	}
 }		

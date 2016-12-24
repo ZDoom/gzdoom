@@ -44,7 +44,7 @@ class Demon1 : Actor
 	Missile:
 		DEMN E 5 A_FaceTarget;
 		DEMN F 6 A_FaceTarget;
-		DEMN G 5 A_CustomMissile("Demon1FX1", 62, 0);
+		DEMN G 5 A_SpawnProjectile("Demon1FX1", 62, 0);
 		Goto See;
 	Death:
 		DEMN HI 6;
@@ -250,7 +250,7 @@ class Demon2 : Demon1
 	Missile:
 		DEM2 E 5 A_FaceTarget;
 		DEM2 F 6 A_FaceTarget;
-		DEM2 G 5 A_CustomMissile("Demon2FX1", 62, 0);
+		DEM2 G 5 A_SpawnProjectile("Demon2FX1", 62, 0);
 		Goto See;
 	Death:
 		DEM2 HI 6;

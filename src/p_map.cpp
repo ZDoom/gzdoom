@@ -4920,10 +4920,10 @@ void P_RailAttack(FRailParams *p)
 	}
 
 	AActor *source = p->source;
-	DAngle pitch = -source->Angles.Pitch + p->pitchoffset;
+	DAngle pitch = source->Angles.Pitch + p->pitchoffset;
 	DAngle angle = source->Angles.Yaw + p->angleoffset;
 
-	DVector3 vec(DRotator(pitch, angle, angle));
+	DVector3 vec(DRotator(-pitch, angle, angle));
 	double shootz = source->Center() - source->FloatSpeed + p->offset_z;
 
 	if (!(p->flags & RAF_CENTERZ))

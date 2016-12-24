@@ -1323,7 +1323,7 @@ bool ZCCCompiler::CompileFields(PStruct *type, TArray<ZCC_VarDeclarator *> &Fiel
 				}
 				else if (hasnativechildren)
 				{
-					Error(field, "Cannot add field %s to %s. %s has native children which means it size may not change.", type->TypeName.GetChars(), fd->FieldSize, FName(name->Name).GetChars());
+					Error(field, "Cannot add field %s to %s. %s has native children which means it size may not change.", FName(name->Name).GetChars(), type->TypeName.GetChars(), type->TypeName.GetChars());
 				}
 				else
 				{

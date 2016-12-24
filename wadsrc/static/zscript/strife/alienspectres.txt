@@ -202,7 +202,7 @@ class AlienSpectre2 : AlienSpectre1
 	{
 	Missile:
 		ALN1 F 4 A_FaceTarget;
-		ALN1 I 4 A_CustomMissile("SpectralLightningH3", 32, 0);
+		ALN1 I 4 A_SpawnProjectile("SpectralLightningH3", 32, 0);
 		ALN1 E 4;
 		Goto See+10;
 	}
@@ -267,7 +267,7 @@ class AlienSpectre4 : AlienSpectre1
 	{
 	Missile:
 		ALN1 F 4 A_FaceTarget;
-		ALN1 I 4 A_CustomMissile("SpectralLightningBigV2", 32, 0);
+		ALN1 I 4 A_SpawnProjectile("SpectralLightningBigV2", 32, 0);
 		ALN1 E 4;
 		Goto See+10;
 	}
@@ -289,7 +289,7 @@ class AlienSpectre5 : AlienSpectre1
 	{
 	Missile:
 		ALN1 F 4 A_FaceTarget;
-		ALN1 I 4 A_CustomMissile("SpectralLightningBigBall2", 32, 0);
+		ALN1 I 4 A_SpawnProjectile("SpectralLightningBigBall2", 32, 0);
 		ALN1 E 4;
 		Goto See+10;
 	}

@@ -2302,7 +2302,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
 		DVector2 xydiff = self->Vec2To(self->target);
 		double zdiff = self->target->Center() - self->Center() - self->Floorclip;
-		self->Angles.Pitch = VecToAngle(xydiff.Length(), zdiff);
+		self->Angles.Pitch = -VecToAngle(xydiff.Length(), zdiff);
 	}
 	// Let the aim trail behind the player
 	if (aim)
@@ -6690,10 +6690,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_FaceMovementDirection)
 	{
 		DAngle current = mobj->Angles.Pitch;
 		const DVector2 velocity = mobj->Vel.XY();
-		DAngle pitch = VecToAngle(velocity.Length(), mobj->Vel.Z);
+		DAngle pitch = -VecToAngle(velocity.Length(), mobj->Vel.Z);
 		if (pitchlimit > 0)
 		{
-			DAngle pdelta = deltaangle(-current, pitch);
+			DAngle pdelta = deltaangle(current, pitch);
 
 			if (fabs(pdelta) > pitchlimit)
 			{

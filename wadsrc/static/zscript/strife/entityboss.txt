@@ -265,7 +265,7 @@ class EntitySecond : SpectralMonster
 		Goto See+1;
 	Missile:
 		MNAL W 4 Bright A_FaceTarget;
-		MNAL U 4 Bright A_CustomMissile("SpectralLightningH3",32,0);
+		MNAL U 4 Bright A_SpawnProjectile("SpectralLightningH3",32,0);
 		MNAL V 4 Bright A_SentinelBob;
 		Goto See+4;
 	Pain:

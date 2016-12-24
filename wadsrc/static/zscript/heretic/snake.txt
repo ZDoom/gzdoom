@@ -28,9 +28,9 @@ class Snake : Actor
 		Loop;
 	Missile:
 		SNKE FF 5 A_FaceTarget;
-		SNKE FFF 4 A_CustomMissile("SnakeProjA", 32, 0, 0, CMF_CHECKTARGETDEAD);
+		SNKE FFF 4 A_SpawnProjectile("SnakeProjA", 32, 0, 0, CMF_CHECKTARGETDEAD);
 		SNKE FFF 5 A_FaceTarget;
-		SNKE F 4 A_CustomMissile("SnakeProjB", 32, 0, 0, CMF_CHECKTARGETDEAD);
+		SNKE F 4 A_SpawnProjectile("SnakeProjB", 32, 0, 0, CMF_CHECKTARGETDEAD);
 		Goto See;
 	Pain:
 		SNKE E 3;

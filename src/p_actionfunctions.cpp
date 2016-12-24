@@ -1454,10 +1454,11 @@ enum CM_Flags
 	CMF_OFFSETPITCH = 32,
 	CMF_SAVEPITCH = 64,
 
-	CMF_ABSOLUTEANGLE = 128
+	CMF_ABSOLUTEANGLE = 128,
+	CMF_BADPITCH = 256
 };
 
-DEFINE_ACTION_FUNCTION(AActor, A_CustomMissile)
+DEFINE_ACTION_FUNCTION(AActor, A_SpawnProjectile)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS		(ti, AActor);
@@ -1525,6 +1526,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomMissile)
 					}
 					missilespeed = fabs(Pitch.Cos() * missile->Speed);
 					missile->Vel.Z = Pitch.Sin() * missile->Speed;
+					if (!(flags & CMF_BADPITCH)) missile->Vel.Z *= -1;
 				}
 				else
 				{
@@ -1831,7 +1833,7 @@ static void AimBulletMissile(AActor *proj, AActor *puff, int flags, bool temp, b
 			// Aim for the base of the puff as that's where blood puffs will spawn... roughly.
 
 			A_Face(proj, puff, 0., 0., 0., 0., 1);
-			proj->Vel3DFromAngle(-proj->Angles.Pitch, proj->Speed);
+			proj->Vel3DFromAngle(proj->Angles.Pitch, proj->Speed);
 
 			if (!temp)
 			{

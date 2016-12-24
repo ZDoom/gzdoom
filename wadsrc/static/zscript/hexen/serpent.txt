@@ -300,7 +300,7 @@ class SerpentLeader : Serpent
 	States
 	{
 	Missile:
-		SSPT N 5 A_CustomMissile("SerpentFX", 32, 0);
+		SSPT N 5 A_SpawnProjectile("SerpentFX", 32, 0);
 		Goto Dive;
 	}
 }

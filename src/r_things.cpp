@@ -2863,6 +2863,9 @@ void R_DrawParticle_rgba(vissprite_t *vis)
 	int x1 = vis->x1;
 	int countbase = vis->x2 - x1;
 
+	if (ycount <= 0 || countbase <= 0)
+		return;
+
 	R_DrawMaskedSegsBehindParticle(vis);
 	
 	uint32_t fg = LightBgra::shade_pal_index_simple(color, LightBgra::calc_light_multiplier(LIGHTSCALE(0, vis->Style.ColormapNum << FRACBITS)));
@@ -2873,13 +2876,16 @@ void R_DrawParticle_rgba(vissprite_t *vis)
 
 	spacing = RenderTarget->GetPitch();
 
-	for (int x = x1; x < (x1 + countbase); x++)
+	uint32_t fracstepx = 16 * FRACUNIT / countbase;
+	uint32_t fracposx = fracstepx / 2;
+
+	for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
 	{
 		dc_x = x;
 		if (R_ClipSpriteColumnWithPortals(vis))
 			continue;
 		dest = ylookup[yl] + x + (uint32_t*)dc_destorg;
-		DrawerCommandQueue::QueueCommand<DrawParticleColumnRGBACommand>(dest, yl, spacing, ycount, fg, alpha);
+		DrawerCommandQueue::QueueCommand<DrawParticleColumnRGBACommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);
 	}
 }
 

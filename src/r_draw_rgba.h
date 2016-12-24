@@ -445,7 +445,7 @@ namespace swrenderer
 	class DrawParticleColumnRGBACommand : public DrawerCommand
 	{
 	public:
-		DrawParticleColumnRGBACommand(uint32_t *dest, int dest_y, int pitch, int count, uint32_t fg, uint32_t alpha);
+		DrawParticleColumnRGBACommand(uint32_t *dest, int dest_y, int pitch, int count, uint32_t fg, uint32_t alpha, uint32_t fracposx);
 		void Execute(DrawerThread *thread) override;
 		FString DebugInfo() override;
 
@@ -455,6 +455,7 @@ namespace swrenderer
 		int _count;
 		uint32_t _fg;
 		uint32_t _alpha;
+		uint32_t _fracposx;
 	};
 
 	/////////////////////////////////////////////////////////////////////////////

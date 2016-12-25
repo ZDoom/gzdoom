@@ -72,6 +72,7 @@ EXTERN_CVAR(Int, r_drawfuzz)
 EXTERN_CVAR(Bool, r_deathcamera);
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_drawvoxels)
+EXTERN_CVAR(Bool, r_blendmethod)
 
 CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR(Bool, r_splitsprites, true, CVAR_ARCHIVE)
@@ -2786,8 +2787,13 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 	}
 }
 
-void R_DrawParticle_C (vissprite_t *vis)
+//inline int clamp(int x, int y, int z) { return ((x < y) ? x : (z < y) ? z : y); }
+
+void R_DrawParticle (vissprite_t *vis)
 {
+	if (r_swtruecolor)
+		return R_DrawParticle_rgba(vis);
+		
 	DWORD *bg2rgb;
 	int spacing;
 	BYTE *dest;
@@ -2803,8 +2809,9 @@ void R_DrawParticle_C (vissprite_t *vis)
 	DrawerCommandQueue::WaitForWorkers();
 
 	// vis->renderflags holds translucency level (0-255)
+	fixed_t fglevel, bglevel;
+
 	{
-		fixed_t fglevel, bglevel;
 		DWORD *fg2rgb;
 
 		fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
@@ -2837,18 +2844,40 @@ void R_DrawParticle_C (vissprite_t *vis)
 
 	spacing = RenderTarget->GetPitch();
 
-	for (int x = x1; x < (x1+countbase); x++)
+	if (!r_blendmethod)
 	{
-		dc_x = x;
-		if (R_ClipSpriteColumnWithPortals(vis))
-			continue;
-		dest = ylookup[yl] + x + dc_destorg;
-		for (int y = 0; y < ycount; y++)
+		for (int x = x1; x < (x1+countbase); x++)
 		{
-			DWORD bg = bg2rgb[*dest];
-			bg = (fg+bg) | 0x1f07c1f;
-			*dest = RGB32k.All[bg & (bg>>15)];
-			dest += spacing;
+			dc_x = x;
+			if (R_ClipSpriteColumnWithPortals(vis))
+				continue;
+			dest = ylookup[yl] + x + dc_destorg;
+			for (int y = 0; y < ycount; y++)
+			{
+				DWORD bg = bg2rgb[*dest];
+				bg = (fg+bg) | 0x1f07c1f;
+				*dest = RGB32k.All[bg & (bg>>15)];
+				dest += spacing;
+			}
+		}
+	}
+	else
+	{
+		for (int x = x1; x < (x1+countbase); x++)
+		{
+			dc_x = x;
+			if (R_ClipSpriteColumnWithPortals(vis))
+				continue;
+			dest = ylookup[yl] + x + dc_destorg;
+			for (int y = 0; y < ycount; y++)
+			{
+				uint32_t dest_r = MIN((GPalette.BaseColors[*dest].r * bglevel + GPalette.BaseColors[color].r * fglevel) >> 18, 63);
+				uint32_t dest_g = MIN((GPalette.BaseColors[*dest].g * bglevel + GPalette.BaseColors[color].g * fglevel) >> 18, 63);
+				uint32_t dest_b = MIN((GPalette.BaseColors[*dest].b * bglevel + GPalette.BaseColors[color].b * fglevel) >> 18, 63);
+
+				*dest = RGB256k.RGB[dest_r][dest_g][dest_b];
+				dest += spacing;
+			}
 		}
 	}
 }

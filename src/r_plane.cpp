@@ -1738,7 +1738,7 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 					dc_srcblend = Col2RGB8_LessPrecision[alpha>>10];
 					dc_destblend = Col2RGB8_LessPrecision[FRACUNIT>>10];
 					dc_srcalpha = alpha;
-					dc_destalpha = OPAQUE - alpha;
+					dc_destalpha = FRACUNIT;
 				}
 			}
 			else
@@ -1764,7 +1764,7 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 					dc_srcblend = Col2RGB8_LessPrecision[alpha>>10];
 					dc_destblend = Col2RGB8_LessPrecision[FRACUNIT>>10];
 					dc_srcalpha = alpha;
-					dc_destalpha = OPAQUE - alpha;
+					dc_destalpha = FRACUNIT;
 				}
 			}
 			else

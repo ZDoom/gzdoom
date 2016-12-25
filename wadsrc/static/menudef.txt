@@ -601,6 +601,12 @@ OptionValue ColumnMethods
 	1.0, "$OPTVAL_OPTIMIZED"
 }
 
+OptionValue BlendMethods
+{
+	0.0, "$OPTVAL_CLASSIC"
+	1.0, "$OPTVAL_PRECISE"
+}
+
 OptionValue SkyModes
 {
 	0.0, "$OPTVAL_NORMAL"
@@ -699,6 +705,7 @@ OptionMenu "VideoOptions"
 	Slider "$DSPLYMNU_PICKUPFADE",				"pickup_fade_scalar", 0.0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_WATERFADE",				"underwater_fade_scalar", 0.0, 1.0, 0.05, 2
 	Option "$DSPLYMNU_COLUMNMETHOD",			"r_columnmethod", "ColumnMethods"
+	Option "$DSPLYMNU_BLENDMETHOD",				"r_blendmethod", "BlendMethods"
 
 	StaticText " "
 	Option "$DSPLYMNU_WIPETYPE",				"wipetype", "Wipes"

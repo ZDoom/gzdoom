@@ -4,6 +4,7 @@
 **---------------------------------------------------------------------------
 ** Copyright 1998-2016 Randy Heit
 ** Copyright 2016 Magnus Norddahl
+** Copyright 2016 Rachael Alexanderson
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -41,6 +42,9 @@
 #include "r_things.h"
 #include "v_video.h"
 #include "r_draw_pal.h"
+
+// [SP] r_blendmethod - false = rgb555 matching (ZDoom classic), true = rgb666 (refactored)
+CVAR(Bool, r_blendmethod, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 
 /*
 	[RH] This translucency algorithm is based on DOSDoom 0.65's, but uses
@@ -305,19 +309,39 @@ namespace swrenderer
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		do
+		if (!r_blendmethod)
 		{
-			uint8_t pix = source[frac >> bits];
-			if (pix != 0)
+			do
 			{
-				uint32_t fg = fg2rgb[colormap[pix]];
-				uint32_t bg = bg2rgb[*dest];
-				fg = (fg + bg) | 0x1f07c1f;
-				*dest = RGB32k.All[fg & (fg >> 15)];
-			}
-			frac += fracstep;
-			dest += pitch;
-		} while (--count);
+				uint8_t pix = source[frac >> bits];
+				if (pix != 0)
+				{
+					uint32_t fg = fg2rgb[colormap[pix]];
+					uint32_t bg = bg2rgb[*dest];
+					fg = (fg + bg) | 0x1f07c1f;
+					*dest = RGB32k.All[fg & (fg >> 15)];
+				}
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+
+		}
+		else
+		{
+			do
+			{
+				uint8_t pix = source[frac >> bits];
+				if (pix != 0)
+				{
+					uint32_t r = MIN(GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 255);
+					uint32_t g = MIN(GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 255);
+					uint32_t b = MIN(GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 255);
+					*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
+				}
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+		}
 	}
 
 	void DrawWallAdd4PalCommand::Execute(DrawerThread *thread)
@@ -346,22 +370,44 @@ namespace swrenderer
 		}
 		pitch *= thread->num_cores;
 
-		do
+		if (!r_blendmethod)
 		{
-			for (int i = 0; i < 4; ++i)
+			do
 			{
-				uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
-				if (pix != 0)
+				for (int i = 0; i < 4; ++i)
 				{
-					uint32_t fg = fg2rgb[_colormap[i][pix]];
-					uint32_t bg = bg2rgb[dest[i]];
-					fg = (fg + bg) | 0x1f07c1f;
-					dest[i] = RGB32k.All[fg & (fg >> 15)];
+					uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
+					if (pix != 0)
+					{
+						uint32_t fg = fg2rgb[_colormap[i][pix]];
+						uint32_t bg = bg2rgb[dest[i]];
+						fg = (fg + bg) | 0x1f07c1f;
+						dest[i] = RGB32k.All[fg & (fg >> 15)];
+					}
+					dc_wall_texturefrac[i] += dc_wall_iscale[i];
 				}
-				dc_wall_texturefrac[i] += dc_wall_iscale[i];
-			}
-			dest += pitch;
-		} while (--count);
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				for (int i = 0; i < 4; ++i)
+				{
+					uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
+					if (pix != 0)
+					{
+						uint32_t r = MIN(GPalette.BaseColors[_colormap[i][pix]].r + GPalette.BaseColors[dest[i]].r, 255);
+						uint32_t g = MIN(GPalette.BaseColors[_colormap[i][pix]].g + GPalette.BaseColors[dest[i]].g, 255);
+						uint32_t b = MIN(GPalette.BaseColors[_colormap[i][pix]].b + GPalette.BaseColors[dest[i]].b, 255);
+						dest[i] = RGB256k.RGB[r>>2][g>>2][b>>2];
+					}
+					dc_wall_texturefrac[i] += dc_wall_iscale[i];
+				}
+				dest += pitch;
+			} while (--count);
+		}
 	}
 
 	void DrawWallAddClamp1PalCommand::Execute(DrawerThread *thread)
@@ -387,24 +433,43 @@ namespace swrenderer
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		do
+		if (!r_blendmethod)
 		{
-			uint8_t pix = source[frac >> bits];
-			if (pix != 0)
+			do
 			{
-				uint32_t a = fg2rgb[colormap[pix]] + bg2rgb[*dest];
-				uint32_t b = a;
+				uint8_t pix = source[frac >> bits];
+				if (pix != 0)
+				{
+					uint32_t a = fg2rgb[colormap[pix]] + bg2rgb[*dest];
+					uint32_t b = a;
 
-				a |= 0x01f07c1f;
-				b &= 0x40100400;
-				a &= 0x3fffffff;
-				b = b - (b >> 5);
-				a |= b;
-				*dest = RGB32k.All[a & (a >> 15)];
-			}
-			frac += fracstep;
-			dest += pitch;
-		} while (--count);
+					a |= 0x01f07c1f;
+					b &= 0x40100400;
+					a &= 0x3fffffff;
+					b = b - (b >> 5);
+					a |= b;
+					*dest = RGB32k.All[a & (a >> 15)];
+				}
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				uint8_t pix = source[frac >> bits];
+				if (pix != 0)
+				{
+					uint32_t r = MIN(GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 255);
+					uint32_t g = MIN(GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 255);
+					uint32_t b = MIN(GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 255);
+					*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
+				}
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+		}
 	}
 
 	void DrawWallAddClamp4PalCommand::Execute(DrawerThread *thread)
@@ -440,15 +505,10 @@ namespace swrenderer
 				uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
 				if (pix != 0)
 				{
-					uint32_t a = fg2rgb[_colormap[i][pix]] + bg2rgb[dest[i]];
-					uint32_t b = a;
-
-					a |= 0x01f07c1f;
-					b &= 0x40100400;
-					a &= 0x3fffffff;
-					b = b - (b >> 5);
-					a |= b;
-					dest[i] = RGB32k.All[a & (a >> 15)];
+					uint32_t r = MIN(GPalette.BaseColors[_colormap[i][pix]].r + GPalette.BaseColors[dest[i]].r, 255);
+					uint32_t g = MIN(GPalette.BaseColors[_colormap[i][pix]].g + GPalette.BaseColors[dest[i]].g, 255);
+					uint32_t b = MIN(GPalette.BaseColors[_colormap[i][pix]].b + GPalette.BaseColors[dest[i]].b, 255);
+					dest[i] = RGB256k.RGB[r>>2][g>>2][b>>2];
 				}
 				dc_wall_texturefrac[i] += dc_wall_iscale[i];
 			}
@@ -479,23 +539,42 @@ namespace swrenderer
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		do
+		if (!r_blendmethod)
 		{
-			uint8_t pix = source[frac >> bits];
-			if (pix != 0)
+			do
 			{
-				uint32_t a = (fg2rgb[colormap[pix]] | 0x40100400) - bg2rgb[*dest];
-				uint32_t b = a;
+				uint8_t pix = source[frac >> bits];
+				if (pix != 0)
+				{
+					uint32_t a = (fg2rgb[colormap[pix]] | 0x40100400) - bg2rgb[*dest];
+					uint32_t b = a;
 
-				b &= 0x40100400;
-				b = b - (b >> 5);
-				a &= b;
-				a |= 0x01f07c1f;
-				*dest = RGB32k.All[a & (a >> 15)];
-			}
-			frac += fracstep;
-			dest += pitch;
-		} while (--count);
+					b &= 0x40100400;
+					b = b - (b >> 5);
+					a &= b;
+					a |= 0x01f07c1f;
+					*dest = RGB32k.All[a & (a >> 15)];
+				}
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				uint8_t pix = source[frac >> bits];
+				if (pix != 0)
+				{
+					int r = clamp(-GPalette.BaseColors[colormap[pix]].r + GPalette.BaseColors[*dest].r, 0, 255);
+					int g = clamp(-GPalette.BaseColors[colormap[pix]].g + GPalette.BaseColors[*dest].g, 0, 255);
+					int b = clamp(-GPalette.BaseColors[colormap[pix]].b + GPalette.BaseColors[*dest].b, 0, 255);
+					*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
+				}
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+		}
 	}
 
 	void DrawWallSubClamp4PalCommand::Execute(DrawerThread *thread)
@@ -524,26 +603,48 @@ namespace swrenderer
 		}
 		pitch *= thread->num_cores;
 
-		do
+		if (!r_blendmethod)
 		{
-			for (int i = 0; i < 4; ++i)
+			do
 			{
-				uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
-				if (pix != 0)
+				for (int i = 0; i < 4; ++i)
 				{
-					uint32_t a = (fg2rgb[_colormap[i][pix]] | 0x40100400) - bg2rgb[dest[i]];
-					uint32_t b = a;
+					uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
+					if (pix != 0)
+					{
+						uint32_t a = (fg2rgb[_colormap[i][pix]] | 0x40100400) - bg2rgb[dest[i]];
+						uint32_t b = a;
 
-					b &= 0x40100400;
-					b = b - (b >> 5);
-					a &= b;
-					a |= 0x01f07c1f;
-					dest[i] = RGB32k.All[a & (a >> 15)];
+						b &= 0x40100400;
+						b = b - (b >> 5);
+						a &= b;
+						a |= 0x01f07c1f;
+						dest[i] = RGB32k.All[a & (a >> 15)];
+					}
+					dc_wall_texturefrac[i] += dc_wall_iscale[i];
 				}
-				dc_wall_texturefrac[i] += dc_wall_iscale[i];
-			}
-			dest += pitch;
-		} while (--count);
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				for (int i = 0; i < 4; ++i)
+				{
+					uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
+					if (pix != 0)
+					{
+						int r = clamp(-GPalette.BaseColors[_colormap[i][pix]].r + GPalette.BaseColors[dest[i]].r, 0, 255);
+						int g = clamp(-GPalette.BaseColors[_colormap[i][pix]].g + GPalette.BaseColors[dest[i]].g, 0, 255);
+						int b = clamp(-GPalette.BaseColors[_colormap[i][pix]].b + GPalette.BaseColors[dest[i]].b, 0, 255);
+						dest[i] = RGB256k.RGB[r>>2][g>>2][b>>2];
+					}
+					dc_wall_texturefrac[i] += dc_wall_iscale[i];
+				}
+				dest += pitch;
+			} while (--count);
+		}
 	}
 
 	void DrawWallRevSubClamp1PalCommand::Execute(DrawerThread *thread)
@@ -569,23 +670,42 @@ namespace swrenderer
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
 
-		do
+		if (!r_blendmethod)
 		{
-			uint8_t pix = source[frac >> bits];
-			if (pix != 0)
+			do
 			{
-				uint32_t a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[pix]];
-				uint32_t b = a;
+				uint8_t pix = source[frac >> bits];
+				if (pix != 0)
+				{
+					uint32_t a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[pix]];
+					uint32_t b = a;
 
-				b &= 0x40100400;
-				b = b - (b >> 5);
-				a &= b;
-				a |= 0x01f07c1f;
-				*dest = RGB32k.All[a & (a >> 15)];
-			}
-			frac += fracstep;
-			dest += pitch;
-		} while (--count);
+					b &= 0x40100400;
+					b = b - (b >> 5);
+					a &= b;
+					a |= 0x01f07c1f;
+					*dest = RGB32k.All[a & (a >> 15)];
+				}
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				uint8_t pix = source[frac >> bits];
+				if (pix != 0)
+				{
+					int r = clamp(GPalette.BaseColors[colormap[pix]].r - GPalette.BaseColors[*dest].r, 0, 255);
+					int g = clamp(GPalette.BaseColors[colormap[pix]].g - GPalette.BaseColors[*dest].g, 0, 255);
+					int b = clamp(GPalette.BaseColors[colormap[pix]].b - GPalette.BaseColors[*dest].b, 0, 255);
+					*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
+				}
+				frac += fracstep;
+				dest += pitch;
+			} while (--count);
+		}
 	}
 
 	void DrawWallRevSubClamp4PalCommand::Execute(DrawerThread *thread)
@@ -614,26 +734,48 @@ namespace swrenderer
 		}
 		pitch *= thread->num_cores;
 
-		do
+		if (!r_blendmethod)
 		{
-			for (int i = 0; i < 4; ++i)
+			do
 			{
-				uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
-				if (pix != 0)
+				for (int i = 0; i < 4; ++i)
 				{
-					uint32_t a = (bg2rgb[dest[i]] | 0x40100400) - fg2rgb[_colormap[i][pix]];
-					uint32_t b = a;
+					uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
+					if (pix != 0)
+					{
+						uint32_t a = (bg2rgb[dest[i]] | 0x40100400) - fg2rgb[_colormap[i][pix]];
+						uint32_t b = a;
 
-					b &= 0x40100400;
-					b = b - (b >> 5);
-					a &= b;
-					a |= 0x01f07c1f;
-					dest[i] = RGB32k.All[a & (a >> 15)];
+						b &= 0x40100400;
+						b = b - (b >> 5);
+						a &= b;
+						a |= 0x01f07c1f;
+						dest[i] = RGB32k.All[a & (a >> 15)];
+					}
+					dc_wall_texturefrac[i] += dc_wall_iscale[i];
 				}
-				dc_wall_texturefrac[i] += dc_wall_iscale[i];
-			}
-			dest += _pitch;
-		} while (--count);
+				dest += _pitch;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				for (int i = 0; i < 4; ++i)
+				{
+					uint8_t pix = _source[i][dc_wall_texturefrac[i] >> bits];
+					if (pix != 0)
+					{
+						uint32_t r = clamp(GPalette.BaseColors[_colormap[i][pix]].r - GPalette.BaseColors[dest[i]].r, 0, 255);
+						uint32_t g = clamp(GPalette.BaseColors[_colormap[i][pix]].g - GPalette.BaseColors[dest[i]].g, 0, 255);
+						uint32_t b = clamp(GPalette.BaseColors[_colormap[i][pix]].b - GPalette.BaseColors[dest[i]].b, 0, 255);
+						dest[i] = RGB256k.RGB[r>>2][g>>2][b>>2];
+					}
+					dc_wall_texturefrac[i] += dc_wall_iscale[i];
+				}
+				dest += _pitch;
+			} while (--count);
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////
@@ -712,7 +854,7 @@ namespace swrenderer
 				c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
 				c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
 				c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
-				*dest = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+				*dest = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
 			}
 
 			frac += fracstep;
@@ -740,8 +882,8 @@ namespace swrenderer
 		int solid_bottom_r = RPART(solid_bottom);
 		int solid_bottom_g = GPART(solid_bottom);
 		int solid_bottom_b = BPART(solid_bottom);
-		uint32_t solid_top_fill = RGB32k.RGB[(solid_top_r >> 3)][(solid_top_g >> 3)][(solid_top_b >> 3)];
-		uint32_t solid_bottom_fill = RGB32k.RGB[(solid_bottom_r >> 3)][(solid_bottom_g >> 3)][(solid_bottom_b >> 3)];
+		uint32_t solid_top_fill = RGB256k.RGB[(solid_top_r >> 2)][(solid_top_g >> 2)][(solid_top_b >> 2)];
+		uint32_t solid_bottom_fill = RGB256k.RGB[(solid_bottom_r >> 2)][(solid_bottom_g >> 2)][(solid_bottom_b >> 2)];
 		solid_top_fill = (solid_top_fill << 24) | (solid_top_fill << 16) | (solid_top_fill << 8) | solid_top_fill;
 		solid_bottom_fill = (solid_bottom_fill << 24) | (solid_bottom_fill << 16) | (solid_bottom_fill << 8) | solid_bottom_fill;
 
@@ -801,8 +943,7 @@ namespace swrenderer
 				c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
 				c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
 				c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
-				output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
-
+				output[col] = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
 				frac[col] += fracstep[col];
 			}
 			*((uint32_t*)dest) = *((uint32_t*)output);
@@ -843,7 +984,7 @@ namespace swrenderer
 				c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
 				c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
 				c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
-				output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+				output[col] = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
 
 				frac[col] += fracstep[col];
 			}
@@ -925,7 +1066,7 @@ namespace swrenderer
 				c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
 				c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
 				c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
-				*dest = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+				*dest = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
 			}
 
 			frac += fracstep;
@@ -955,8 +1096,8 @@ namespace swrenderer
 		int solid_bottom_r = RPART(solid_bottom);
 		int solid_bottom_g = GPART(solid_bottom);
 		int solid_bottom_b = BPART(solid_bottom);
-		uint32_t solid_top_fill = RGB32k.RGB[(solid_top_r >> 3)][(solid_top_g >> 3)][(solid_top_b >> 3)];
-		uint32_t solid_bottom_fill = RGB32k.RGB[(solid_bottom_r >> 3)][(solid_bottom_g >> 3)][(solid_bottom_b >> 3)];
+		uint32_t solid_top_fill = RGB256k.RGB[(solid_top_r >> 2)][(solid_top_g >> 2)][(solid_top_b >> 2)];
+		uint32_t solid_bottom_fill = RGB256k.RGB[(solid_bottom_r >> 2)][(solid_bottom_g >> 2)][(solid_bottom_b >> 2)];
 		solid_top_fill = (solid_top_fill << 24) | (solid_top_fill << 16) | (solid_top_fill << 8) | solid_top_fill;
 		solid_bottom_fill = (solid_bottom_fill << 24) | (solid_bottom_fill << 16) | (solid_bottom_fill << 8) | solid_bottom_fill;
 
@@ -1022,7 +1163,7 @@ namespace swrenderer
 				c_red = (c_red * alpha_top + solid_top_r * inv_alpha_top) >> 8;
 				c_green = (c_green * alpha_top + solid_top_g * inv_alpha_top) >> 8;
 				c_blue = (c_blue * alpha_top + solid_top_b * inv_alpha_top) >> 8;
-				output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+				output[col] = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
 
 				frac[col] += fracstep[col];
 			}
@@ -1076,7 +1217,7 @@ namespace swrenderer
 				c_red = (c_red * alpha_bottom + solid_bottom_r * inv_alpha_bottom) >> 8;
 				c_green = (c_green * alpha_bottom + solid_bottom_g * inv_alpha_bottom) >> 8;
 				c_blue = (c_blue * alpha_bottom + solid_bottom_b * inv_alpha_bottom) >> 8;
-				output[col] = RGB32k.RGB[(c_red >> 3)][(c_green >> 3)][(c_blue >> 3)];
+				output[col] = RGB256k.RGB[(c_red >> 2)][(c_green >> 2)][(c_blue >> 2)];
 
 				frac[col] += fracstep[col];
 			}
@@ -1112,6 +1253,8 @@ namespace swrenderer
 		_srcblend = dc_srcblend;
 		_destblend = dc_destblend;
 		_srccolor = dc_srccolor;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void DrawColumnPalCommand::Execute(DrawerThread *thread)
@@ -1206,14 +1349,32 @@ namespace swrenderer
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		pitch *= thread->num_cores;
 
-		do
-		{
-			uint32_t bg;
-			bg = (fg + bg2rgb[*dest]) | 0x1f07c1f;
-			*dest = RGB32k.All[bg & (bg >> 15)];
-			dest += pitch;
-		} while (--count);
+		const PalEntry* pal = GPalette.BaseColors;
 
+		if (!r_blendmethod)
+		{
+			do
+			{
+				uint32_t bg;
+				bg = (fg + bg2rgb[*dest]) | 0x1f07c1f;
+				*dest = RGB32k.All[bg & (bg >> 15)];
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				int src_r = ((_srccolor >> 16) & 0xff) * _srcalpha;
+				int src_g = ((_srccolor >> 0) & 0xff) * _srcalpha;
+				int src_b = ((_srccolor >> 8) & 0xff) * _srcalpha;
+				int r = clamp((src_r + pal[*dest].r * _destalpha)>>18, 0, 255);
+				int g = clamp((src_g + pal[*dest].g * _destalpha)>>18, 0, 255);
+				int b = clamp((src_b + pal[*dest].b * _destalpha)>>18, 0, 255);
+				*dest = RGB256k.RGB[r][g][b];
+				dest += pitch;
+			} while (--count);
+		}
 	}
 
 	void FillColumnAddClampPalCommand::Execute(DrawerThread *thread)
@@ -1238,19 +1399,38 @@ namespace swrenderer
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		pitch *= thread->num_cores;
 
-		do
-		{
-			uint32_t a = fg + bg2rgb[*dest];
-			uint32_t b = a;
+		const PalEntry* pal = GPalette.BaseColors;
 
-			a |= 0x01f07c1f;
-			b &= 0x40100400;
-			a &= 0x3fffffff;
-			b = b - (b >> 5);
-			a |= b;
-			*dest = RGB32k.All[a & (a >> 15)];
-			dest += pitch;
-		} while (--count);
+		if (!r_blendmethod)
+		{
+			do
+			{
+				uint32_t a = fg + bg2rgb[*dest];
+				uint32_t b = a;
+
+				a |= 0x01f07c1f;
+				b &= 0x40100400;
+				a &= 0x3fffffff;
+				b = b - (b >> 5);
+				a |= b;
+				*dest = RGB32k.All[a & (a >> 15)];
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				int src_r = ((_srccolor >> 16) & 0xff) * _srcalpha;
+				int src_g = ((_srccolor >> 0) & 0xff) * _srcalpha;
+				int src_b = ((_srccolor >> 8) & 0xff) * _srcalpha;
+				int r = clamp((src_r + pal[*dest].r * _destalpha)>>18, 0, 255);
+				int g = clamp((src_g + pal[*dest].g * _destalpha)>>18, 0, 255);
+				int b = clamp((src_b + pal[*dest].b * _destalpha)>>18, 0, 255);
+				*dest = RGB256k.RGB[r][g][b];
+				dest += pitch;
+			} while (--count);
+		}
 	}
 
 	void FillColumnSubClampPalCommand::Execute(DrawerThread *thread)
@@ -1261,11 +1441,9 @@ namespace swrenderer
 		count = _count;
 
 		dest = _dest;
-		uint32_t *bg2rgb;
-		uint32_t fg;
+		uint32_t *bg2rgb = _destblend;
+		uint32_t fg = _srccolor;
 
-		bg2rgb = _destblend;
-		fg = _srccolor | 0x40100400;
 		int pitch = _pitch;
 
 		count = thread->count_for_thread(_dest_y, count);
@@ -1275,18 +1453,39 @@ namespace swrenderer
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		pitch *= thread->num_cores;
 
-		do
-		{
-			uint32_t a = fg - bg2rgb[*dest];
-			uint32_t b = a;
+		const PalEntry* palette = GPalette.BaseColors;
 
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[a & (a >> 15)];
-			dest += pitch;
-		} while (--count);
+		if (!r_blendmethod)
+		{
+			do
+			{
+				uint32_t a = fg - bg2rgb[*dest];
+				uint32_t b = a;
+
+				b &= 0x40100400;
+				b = b - (b >> 5);
+				a &= b;
+				a |= 0x01f07c1f;
+				*dest = RGB32k.All[a & (a >> 15)];
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				int src_r = ((_srccolor >> 16) & 0xff) * _srcalpha;
+				int src_g = ((_srccolor >> 0) & 0xff) * _srcalpha;
+				int src_b = ((_srccolor >> 8) & 0xff) * _srcalpha;
+				int bg = *dest;
+				int r = MAX((src_r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
+				int g = MAX((src_g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
+				int b = MAX((src_b * _srcalpha - palette[bg].b * _destalpha)>>18, 0);
+
+				*dest = RGB256k.RGB[r][g][b];
+				dest += pitch;
+			} while (--count);
+		}
 	}
 
 	void FillColumnRevSubClampPalCommand::Execute(DrawerThread *thread)
@@ -1299,11 +1498,9 @@ namespace swrenderer
 			return;
 
 		dest = _dest;
-		uint32_t *bg2rgb;
-		uint32_t fg;
+		uint32_t *bg2rgb = _destblend;
+		uint32_t fg = _srccolor;
 
-		bg2rgb = _destblend;
-		fg = _srccolor;
 		int pitch = _pitch;
 
 		count = thread->count_for_thread(_dest_y, count);
@@ -1313,18 +1510,39 @@ namespace swrenderer
 		dest = thread->dest_for_thread(_dest_y, pitch, dest);
 		pitch *= thread->num_cores;
 
-		do
-		{
-			uint32_t a = (bg2rgb[*dest] | 0x40100400) - fg;
-			uint32_t b = a;
+		const PalEntry *palette = GPalette.BaseColors;
 
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[a & (a >> 15)];
-			dest += pitch;
-		} while (--count);
+		if (!r_blendmethod)
+		{
+			do
+			{
+				uint32_t a = (bg2rgb[*dest] | 0x40100400) - fg;
+				uint32_t b = a;
+
+				b &= 0x40100400;
+				b = b - (b >> 5);
+				a &= b;
+				a |= 0x01f07c1f;
+				*dest = RGB32k.All[a & (a >> 15)];
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				int src_r = ((_srccolor >> 16) & 0xff) * _srcalpha;
+				int src_g = ((_srccolor >> 0) & 0xff) * _srcalpha;
+				int src_b = ((_srccolor >> 8) & 0xff) * _srcalpha;
+				int bg = *dest;
+				int r = MAX((src_r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
+				int g = MAX((src_g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
+				int b = MAX((src_b * _srcalpha - palette[bg].b * _destalpha)>>18, 0);
+
+				*dest = RGB256k.RGB[r][g][b];
+				dest += pitch;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnAddPalCommand::Execute(DrawerThread *thread)
@@ -1354,19 +1572,37 @@ namespace swrenderer
 		uint32_t *bg2rgb = _destblend;
 		const uint8_t *colormap = _colormap;
 		const uint8_t *source = _source;
+		const PalEntry *palette = GPalette.BaseColors;
 
-		do
+		if (!r_blendmethod)
 		{
-			uint32_t fg = colormap[source[frac >> FRACBITS]];
-			uint32_t bg = *dest;
+			do
+			{
+				uint32_t fg = colormap[source[frac >> FRACBITS]];
+				uint32_t bg = *dest;
 
-			fg = fg2rgb[fg];
-			bg = bg2rgb[bg];
-			fg = (fg + bg) | 0x1f07c1f;
-			*dest = RGB32k.All[fg & (fg >> 15)];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
+				fg = fg2rgb[fg];
+				bg = bg2rgb[bg];
+				fg = (fg + bg) | 0x1f07c1f;
+				*dest = RGB32k.All[fg & (fg >> 15)];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				uint32_t fg = colormap[source[frac >> FRACBITS]];
+				uint32_t bg = *dest;
+				uint32_t r = MIN((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 63);
+				uint32_t g = MIN((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 63);
+				uint32_t b = MIN((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 63);
+				*dest = RGB256k.RGB[r][g][b];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnTranslatedPalCommand::Execute(DrawerThread *thread)
@@ -1436,18 +1672,37 @@ namespace swrenderer
 		const uint8_t *colormap = _colormap;
 		const uint8_t *source = _source;
 
-		do
-		{
-			uint32_t fg = colormap[translation[source[frac >> FRACBITS]]];
-			uint32_t bg = *dest;
+		const PalEntry *palette = GPalette.BaseColors;
 
-			fg = fg2rgb[fg];
-			bg = bg2rgb[bg];
-			fg = (fg + bg) | 0x1f07c1f;
-			*dest = RGB32k.All[fg & (fg >> 15)];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
+		if (!r_blendmethod)
+		{
+			do
+			{
+				uint32_t fg = colormap[translation[source[frac >> FRACBITS]]];
+				uint32_t bg = *dest;
+
+				fg = fg2rgb[fg];
+				bg = bg2rgb[bg];
+				fg = (fg + bg) | 0x1f07c1f;
+				*dest = RGB32k.All[fg & (fg >> 15)];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				uint32_t fg = colormap[translation[source[frac >> FRACBITS]]];
+				uint32_t bg = *dest;
+				uint32_t r = MIN((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 63);
+				uint32_t g = MIN((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 63);
+				uint32_t b = MIN((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 63);
+				*dest = RGB256k.RGB[r][g][b];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnShadedPalCommand::Execute(DrawerThread *thread)
@@ -1475,17 +1730,36 @@ namespace swrenderer
 		const uint8_t *source = _source;
 		const uint8_t *colormap = _colormap;
 		uint32_t *fgstart = &Col2RGB8[0][_color];
+		const PalEntry *palette = GPalette.BaseColors;
 
-		do
+		if (!r_blendmethod)
 		{
-			uint32_t val = colormap[source[frac >> FRACBITS]];
-			uint32_t fg = fgstart[val << 8];
-			val = (Col2RGB8[64 - val][*dest] + fg) | 0x1f07c1f;
-			*dest = RGB32k.All[val & (val >> 15)];
+			do
+			{
+				uint32_t val = colormap[source[frac >> FRACBITS]];
+				uint32_t fg = fgstart[val << 8];
+				val = (Col2RGB8[64 - val][*dest] + fg) | 0x1f07c1f;
+				*dest = RGB32k.All[val & (val >> 15)];
 
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				uint32_t val = source[frac >> FRACBITS];
+
+				int r = (palette[*dest].r * (255-val) + palette[_color].r * val) >> 10;
+				int g = (palette[*dest].g * (255-val) + palette[_color].g * val) >> 10;
+				int b = (palette[*dest].b * (255-val) + palette[_color].b * val) >> 10;
+				*dest = RGB256k.RGB[clamp(r,0,63)][clamp(g,0,63)][clamp(b,0,63)];
+
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnAddClampPalCommand::Execute(DrawerThread *thread)
@@ -1515,21 +1789,39 @@ namespace swrenderer
 		const uint8_t *source = _source;
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
+		const PalEntry *palette = GPalette.BaseColors;
 
-		do
+		if (!r_blendmethod)
 		{
-			uint32_t a = fg2rgb[colormap[source[frac >> FRACBITS]]] + bg2rgb[*dest];
-			uint32_t b = a;
+			do
+			{
+				uint32_t a = fg2rgb[colormap[source[frac >> FRACBITS]]] + bg2rgb[*dest];
+				uint32_t b = a;
 
-			a |= 0x01f07c1f;
-			b &= 0x40100400;
-			a &= 0x3fffffff;
-			b = b - (b >> 5);
-			a |= b;
-			*dest = RGB32k.All[a & (a >> 15)];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
+				a |= 0x01f07c1f;
+				b &= 0x40100400;
+				a &= 0x3fffffff;
+				b = b - (b >> 5);
+				a |= b;
+				*dest = RGB32k.All[a & (a >> 15)];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				int fg = colormap[source[frac >> FRACBITS]];
+				int bg = *dest;
+				int r = MIN((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 63);
+				int g = MIN((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 63);
+				int b = MIN((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 63);
+				*dest = RGB256k.RGB[r][g][b];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnAddClampTranslatedPalCommand::Execute(DrawerThread *thread)
@@ -1560,21 +1852,39 @@ namespace swrenderer
 		const uint8_t *source = _source;
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
+		const PalEntry *palette = GPalette.BaseColors;
 
-		do
+		if (!r_blendmethod)
 		{
-			uint32_t a = fg2rgb[colormap[translation[source[frac >> FRACBITS]]]] + bg2rgb[*dest];
-			uint32_t b = a;
+			do
+			{
+				uint32_t a = fg2rgb[colormap[translation[source[frac >> FRACBITS]]]] + bg2rgb[*dest];
+				uint32_t b = a;
 
-			a |= 0x01f07c1f;
-			b &= 0x40100400;
-			a &= 0x3fffffff;
-			b = b - (b >> 5);
-			a |= b;
-			*dest = RGB32k.All[(a >> 15) & a];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
+				a |= 0x01f07c1f;
+				b &= 0x40100400;
+				a &= 0x3fffffff;
+				b = b - (b >> 5);
+				a |= b;
+				*dest = RGB32k.All[(a >> 15) & a];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				int fg = colormap[translation[source[frac >> FRACBITS]]];
+				int bg = *dest;
+				int r = MIN((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 63);
+				int g = MIN((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 63);
+				int b = MIN((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 63);
+				*dest = RGB256k.RGB[r][g][b];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnSubClampPalCommand::Execute(DrawerThread *thread)
@@ -1604,20 +1914,38 @@ namespace swrenderer
 		const uint8_t *source = _source;
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
+		const PalEntry *palette = GPalette.BaseColors;
 
-		do
+		if (!r_blendmethod)
 		{
-			uint32_t a = (fg2rgb[colormap[source[frac >> FRACBITS]]] | 0x40100400) - bg2rgb[*dest];
-			uint32_t b = a;
+			do
+			{
+				uint32_t a = (fg2rgb[colormap[source[frac >> FRACBITS]]] | 0x40100400) - bg2rgb[*dest];
+				uint32_t b = a;
 
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[a & (a >> 15)];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
+				b &= 0x40100400;
+				b = b - (b >> 5);
+				a &= b;
+				a |= 0x01f07c1f;
+				*dest = RGB32k.All[a & (a >> 15)];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				int fg = colormap[source[frac >> FRACBITS]];
+				int bg = *dest;
+				int r = MAX((palette[fg].r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
+				int g = MAX((palette[fg].g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
+				int b = MAX((palette[fg].b * _srcalpha - palette[bg].b * _destalpha)>>18, 0);
+				*dest = RGB256k.RGB[r][g][b];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnSubClampTranslatedPalCommand::Execute(DrawerThread *thread)
@@ -1648,20 +1976,38 @@ namespace swrenderer
 		const uint8_t *source = _source;
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
+		const PalEntry *palette = GPalette.BaseColors;
 
-		do
+		if (!r_blendmethod)
 		{
-			uint32_t a = (fg2rgb[colormap[translation[source[frac >> FRACBITS]]]] | 0x40100400) - bg2rgb[*dest];
-			uint32_t b = a;
+			do
+			{
+				uint32_t a = (fg2rgb[colormap[translation[source[frac >> FRACBITS]]]] | 0x40100400) - bg2rgb[*dest];
+				uint32_t b = a;
 
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[(a >> 15) & a];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
+				b &= 0x40100400;
+				b = b - (b >> 5);
+				a &= b;
+				a |= 0x01f07c1f;
+				*dest = RGB32k.All[(a >> 15) & a];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				int fg = colormap[translation[source[frac >> FRACBITS]]];
+				int bg = *dest;
+				int r = MAX((palette[fg].r * _srcalpha - palette[bg].r * _destalpha)>>18, 0);
+				int g = MAX((palette[fg].g * _srcalpha - palette[bg].g * _destalpha)>>18, 0);
+				int b = MAX((palette[fg].b * _srcalpha - palette[bg].b * _destalpha)>>18, 0);
+				*dest = RGB256k.RGB[r][g][b];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnRevSubClampPalCommand::Execute(DrawerThread *thread)
@@ -1691,20 +2037,38 @@ namespace swrenderer
 		const uint8_t *source = _source;
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
+		const PalEntry *palette = GPalette.BaseColors;
 
-		do
+		if (!r_blendmethod)
 		{
-			uint32_t a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[source[frac >> FRACBITS]]];
-			uint32_t b = a;
+			do
+			{
+				uint32_t a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[source[frac >> FRACBITS]]];
+				uint32_t b = a;
 
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[a & (a >> 15)];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
+				b &= 0x40100400;
+				b = b - (b >> 5);
+				a &= b;
+				a |= 0x01f07c1f;
+				*dest = RGB32k.All[a & (a >> 15)];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				int fg = colormap[source[frac >> FRACBITS]];
+				int bg = *dest;
+				int r = MAX((-palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+				int g = MAX((-palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+				int b = MAX((-palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+				*dest = RGB256k.RGB[r][g][b];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	void DrawColumnRevSubClampTranslatedPalCommand::Execute(DrawerThread *thread)
@@ -1735,20 +2099,38 @@ namespace swrenderer
 		const uint8_t *source = _source;
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
+		const PalEntry *palette = GPalette.BaseColors;
 
-		do
+		if (!r_blendmethod)
 		{
-			uint32_t a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[translation[source[frac >> FRACBITS]]]];
-			uint32_t b = a;
+			do
+			{
+				uint32_t a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[translation[source[frac >> FRACBITS]]]];
+				uint32_t b = a;
 
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[(a >> 15) & a];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
+				b &= 0x40100400;
+				b = b - (b >> 5);
+				a &= b;
+				a |= 0x01f07c1f;
+				*dest = RGB32k.All[(a >> 15) & a];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
+		else
+		{
+			do
+			{
+				int fg = colormap[translation[source[frac >> FRACBITS]]];
+				int bg = *dest;
+				int r = MAX((-palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+				int g = MAX((-palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+				int b = MAX((-palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+				*dest = RGB256k.RGB[r][g][b];
+				dest += pitch;
+				frac += fracstep;
+			} while (--count);
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////
@@ -1861,6 +2243,8 @@ namespace swrenderer
 		_srcblend = dc_srcblend;
 		_destblend = dc_destblend;
 		_color = ds_color;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void DrawSpanPalCommand::Execute(DrawerThread *thread)
@@ -2019,39 +2403,83 @@ namespace swrenderer
 		xstep = _xstep;
 		ystep = _ystep;
 
-		if (_xbits == 6 && _ybits == 6)
+		const PalEntry *palette = GPalette.BaseColors;
+
+		if (!r_blendmethod)
 		{
-			// 64x64 is the most common case by far, so special case it.
-			do
+			if (_xbits == 6 && _ybits == 6)
 			{
-				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-				uint32_t fg = colormap[source[spot]];
-				uint32_t bg = *dest;
-				fg = fg2rgb[fg];
-				bg = bg2rgb[bg];
-				fg = (fg + bg) | 0x1f07c1f;
-				*dest++ = RGB32k.All[fg & (fg >> 15)];
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+				// 64x64 is the most common case by far, so special case it.
+				do
+				{
+					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+					uint32_t fg = colormap[source[spot]];
+					uint32_t bg = *dest;
+					fg = fg2rgb[fg];
+					bg = bg2rgb[bg];
+					fg = (fg + bg) | 0x1f07c1f;
+					*dest++ = RGB32k.All[fg & (fg >> 15)];
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
+			else
+			{
+				uint8_t yshift = 32 - _ybits;
+				uint8_t xshift = yshift - _xbits;
+				int xmask = ((1 << _xbits) - 1) << _ybits;
+				do
+				{
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					uint32_t fg = colormap[source[spot]];
+					uint32_t bg = *dest;
+					fg = fg2rgb[fg];
+					bg = bg2rgb[bg];
+					fg = (fg + bg) | 0x1f07c1f;
+					*dest++ = RGB32k.All[fg & (fg >> 15)];
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
 		}
 		else
 		{
-			uint8_t yshift = 32 - _ybits;
-			uint8_t xshift = yshift - _xbits;
-			int xmask = ((1 << _xbits) - 1) << _ybits;
-			do
+			if (_xbits == 6 && _ybits == 6)
 			{
-				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-				uint32_t fg = colormap[source[spot]];
-				uint32_t bg = *dest;
-				fg = fg2rgb[fg];
-				bg = bg2rgb[bg];
-				fg = (fg + bg) | 0x1f07c1f;
-				*dest++ = RGB32k.All[fg & (fg >> 15)];
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+				// 64x64 is the most common case by far, so special case it.
+				do
+				{
+					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+					uint32_t fg = colormap[source[spot]];
+					uint32_t bg = *dest;
+					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+					int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+					*dest++ = RGB256k.RGB[r][g][b];
+
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
+			else
+			{
+				uint8_t yshift = 32 - _ybits;
+				uint8_t xshift = yshift - _xbits;
+				int xmask = ((1 << _xbits) - 1) << _ybits;
+				do
+				{
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					uint32_t fg = colormap[source[spot]];
+					uint32_t bg = *dest;
+					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+					int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+					*dest++ = RGB256k.RGB[r][g][b];
+
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
 		}
 	}
 
@@ -2072,6 +2500,8 @@ namespace swrenderer
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
 
+		const PalEntry *palette = GPalette.BaseColors;
+
 		xfrac = _xfrac;
 		yfrac = _yfrac;
 
@@ -2082,53 +2512,107 @@ namespace swrenderer
 		xstep = _xstep;
 		ystep = _ystep;
 
-		if (_xbits == 6 && _ybits == 6)
+		if (!r_blendmethod)
 		{
-			// 64x64 is the most common case by far, so special case it.
-			do
+			if (_xbits == 6 && _ybits == 6)
 			{
-				uint8_t texdata;
-
-				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-				texdata = source[spot];
-				if (texdata != 0)
+				// 64x64 is the most common case by far, so special case it.
+				do
 				{
-					uint32_t fg = colormap[texdata];
-					uint32_t bg = *dest;
-					fg = fg2rgb[fg];
-					bg = bg2rgb[bg];
-					fg = (fg + bg) | 0x1f07c1f;
-					*dest = RGB32k.All[fg & (fg >> 15)];
-				}
-				dest++;
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+					uint8_t texdata;
+
+					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+					texdata = source[spot];
+					if (texdata != 0)
+					{
+						uint32_t fg = colormap[texdata];
+						uint32_t bg = *dest;
+						fg = fg2rgb[fg];
+						bg = bg2rgb[bg];
+						fg = (fg + bg) | 0x1f07c1f;
+						*dest = RGB32k.All[fg & (fg >> 15)];
+					}
+					dest++;
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
+			else
+			{
+				uint8_t yshift = 32 - _ybits;
+				uint8_t xshift = yshift - _xbits;
+				int xmask = ((1 << _xbits) - 1) << _ybits;
+				do
+				{
+					uint8_t texdata;
+
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					texdata = source[spot];
+					if (texdata != 0)
+					{
+						uint32_t fg = colormap[texdata];
+						uint32_t bg = *dest;
+						fg = fg2rgb[fg];
+						bg = bg2rgb[bg];
+						fg = (fg + bg) | 0x1f07c1f;
+						*dest = RGB32k.All[fg & (fg >> 15)];
+					}
+					dest++;
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
 		}
 		else
 		{
-			uint8_t yshift = 32 - _ybits;
-			uint8_t xshift = yshift - _xbits;
-			int xmask = ((1 << _xbits) - 1) << _ybits;
-			do
+			if (_xbits == 6 && _ybits == 6)
 			{
-				uint8_t texdata;
-
-				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-				texdata = source[spot];
-				if (texdata != 0)
+				// 64x64 is the most common case by far, so special case it.
+				do
 				{
-					uint32_t fg = colormap[texdata];
-					uint32_t bg = *dest;
-					fg = fg2rgb[fg];
-					bg = bg2rgb[bg];
-					fg = (fg + bg) | 0x1f07c1f;
-					*dest = RGB32k.All[fg & (fg >> 15)];
-				}
-				dest++;
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+					uint8_t texdata;
+
+					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+					texdata = source[spot];
+					if (texdata != 0)
+					{
+						uint32_t fg = colormap[texdata];
+						uint32_t bg = *dest;
+						int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+						int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+						int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+						*dest = RGB256k.RGB[r][g][b];
+					}
+					dest++;
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
+			else
+			{
+				uint8_t yshift = 32 - _ybits;
+				uint8_t xshift = yshift - _xbits;
+				int xmask = ((1 << _xbits) - 1) << _ybits;
+				do
+				{
+					uint8_t texdata;
+
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					texdata = source[spot];
+					if (texdata != 0)
+					{
+						uint32_t fg = colormap[texdata];
+						uint32_t bg = *dest;
+						int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+						int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+						int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+						*dest = RGB256k.RGB[r][g][b];
+					}
+					dest++;
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
 		}
 	}
 
@@ -2148,6 +2632,7 @@ namespace swrenderer
 		int spot;
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
+		const PalEntry *palette = GPalette.BaseColors;
 
 		xfrac = _xfrac;
 		yfrac = _yfrac;
@@ -2159,45 +2644,87 @@ namespace swrenderer
 		xstep = _xstep;
 		ystep = _ystep;
 
-		if (_xbits == 6 && _ybits == 6)
+		if (!r_blendmethod)
 		{
-			// 64x64 is the most common case by far, so special case it.
-			do
+			if (_xbits == 6 && _ybits == 6)
 			{
-				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-				uint32_t a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
-				uint32_t b = a;
+				// 64x64 is the most common case by far, so special case it.
+				do
+				{
+					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+					uint32_t a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
+					uint32_t b = a;
 
-				a |= 0x01f07c1f;
-				b &= 0x40100400;
-				a &= 0x3fffffff;
-				b = b - (b >> 5);
-				a |= b;
-				*dest++ = RGB32k.All[a & (a >> 15)];
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+					a |= 0x01f07c1f;
+					b &= 0x40100400;
+					a &= 0x3fffffff;
+					b = b - (b >> 5);
+					a |= b;
+					*dest++ = RGB32k.All[a & (a >> 15)];
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
+			else
+			{
+				uint8_t yshift = 32 - _ybits;
+				uint8_t xshift = yshift - _xbits;
+				int xmask = ((1 << _xbits) - 1) << _ybits;
+				do
+				{
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					uint32_t a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
+					uint32_t b = a;
+
+					a |= 0x01f07c1f;
+					b &= 0x40100400;
+					a &= 0x3fffffff;
+					b = b - (b >> 5);
+					a |= b;
+					*dest++ = RGB32k.All[a & (a >> 15)];
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
 		}
 		else
 		{
-			uint8_t yshift = 32 - _ybits;
-			uint8_t xshift = yshift - _xbits;
-			int xmask = ((1 << _xbits) - 1) << _ybits;
-			do
+			if (_xbits == 6 && _ybits == 6)
 			{
-				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-				uint32_t a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
-				uint32_t b = a;
+				// 64x64 is the most common case by far, so special case it.
+				do
+				{
+					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+					uint32_t fg = colormap[source[spot]];
+					uint32_t bg = *dest;
+					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+					int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+					*dest++ = RGB256k.RGB[r][g][b];
 
-				a |= 0x01f07c1f;
-				b &= 0x40100400;
-				a &= 0x3fffffff;
-				b = b - (b >> 5);
-				a |= b;
-				*dest++ = RGB32k.All[a & (a >> 15)];
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
+			else
+			{
+				uint8_t yshift = 32 - _ybits;
+				uint8_t xshift = yshift - _xbits;
+				int xmask = ((1 << _xbits) - 1) << _ybits;
+				do
+				{
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					uint32_t fg = colormap[source[spot]];
+					uint32_t bg = *dest;
+					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+					int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+					*dest++ = RGB256k.RGB[r][g][b];
+
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
 		}
 	}
 
@@ -2217,6 +2744,7 @@ namespace swrenderer
 		int spot;
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
+		const PalEntry *palette = GPalette.BaseColors;
 
 		xfrac = _xfrac;
 		yfrac = _yfrac;
@@ -2228,59 +2756,113 @@ namespace swrenderer
 		xstep = _xstep;
 		ystep = _ystep;
 
-		if (_xbits == 6 && _ybits == 6)
+		if (!r_blendmethod)
 		{
-			// 64x64 is the most common case by far, so special case it.
-			do
+			if (_xbits == 6 && _ybits == 6)
 			{
-				uint8_t texdata;
-
-				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-				texdata = source[spot];
-				if (texdata != 0)
+				// 64x64 is the most common case by far, so special case it.
+				do
 				{
-					uint32_t a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
-					uint32_t b = a;
+					uint8_t texdata;
 
-					a |= 0x01f07c1f;
-					b &= 0x40100400;
-					a &= 0x3fffffff;
-					b = b - (b >> 5);
-					a |= b;
-					*dest = RGB32k.All[a & (a >> 15)];
-				}
-				dest++;
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+					texdata = source[spot];
+					if (texdata != 0)
+					{
+						uint32_t a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
+						uint32_t b = a;
+	
+						a |= 0x01f07c1f;
+						b &= 0x40100400;
+						a &= 0x3fffffff;
+						b = b - (b >> 5);
+						a |= b;
+						*dest = RGB32k.All[a & (a >> 15)];
+					}
+					dest++;
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
+			else
+			{
+				uint8_t yshift = 32 - _ybits;
+				uint8_t xshift = yshift - _xbits;
+				int xmask = ((1 << _xbits) - 1) << _ybits;
+				do
+				{
+					uint8_t texdata;
+
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					texdata = source[spot];
+					if (texdata != 0)
+					{
+						uint32_t a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
+						uint32_t b = a;
+	
+						a |= 0x01f07c1f;
+						b &= 0x40100400;
+						a &= 0x3fffffff;
+						b = b - (b >> 5);
+						a |= b;
+						*dest = RGB32k.All[a & (a >> 15)];
+					}
+					dest++;
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
 		}
 		else
 		{
-			uint8_t yshift = 32 - _ybits;
-			uint8_t xshift = yshift - _xbits;
-			int xmask = ((1 << _xbits) - 1) << _ybits;
-			do
+			if (_xbits == 6 && _ybits == 6)
 			{
-				uint8_t texdata;
-
-				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-				texdata = source[spot];
-				if (texdata != 0)
+				// 64x64 is the most common case by far, so special case it.
+				do
 				{
-					uint32_t a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
-					uint32_t b = a;
+					uint8_t texdata;
 
-					a |= 0x01f07c1f;
-					b &= 0x40100400;
-					a &= 0x3fffffff;
-					b = b - (b >> 5);
-					a |= b;
-					*dest = RGB32k.All[a & (a >> 15)];
-				}
-				dest++;
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
+					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+					texdata = source[spot];
+					if (texdata != 0)
+					{
+						uint32_t fg = colormap[texdata];
+						uint32_t bg = *dest;
+						int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+						int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+						int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+						*dest = RGB256k.RGB[r][g][b];
+					}
+					dest++;
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
+			else
+			{
+				uint8_t yshift = 32 - _ybits;
+				uint8_t xshift = yshift - _xbits;
+				int xmask = ((1 << _xbits) - 1) << _ybits;
+				do
+				{
+					uint8_t texdata;
+
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					texdata = source[spot];
+					if (texdata != 0)
+					{
+						uint32_t fg = colormap[texdata];
+						uint32_t bg = *dest;
+						int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+						int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+						int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+						*dest = RGB256k.RGB[r][g][b];
+					}
+					dest++;
+					xfrac += xstep;
+					yfrac += ystep;
+				} while (--count);
+			}
 		}
 	}
 

@@ -366,18 +366,12 @@ void R_DrawMaskedColumnBgra(FTexture *tex, fixed_t col, bool useRt, bool unmaske
 			double v = ((dc_yl + 0.5 - sprtopscreen) / spryscale) / tex->GetHeight();
 			dc_texturefrac = (uint32_t)(v * (1 << 30));
 
-			if (useRt)
-				hcolfunc_pre();
-			else
-				colfunc();
+			colfunc();
 		}
 		span++;
 	}
 
 	dc_iscale = saved_iscale;
-
-	if (sprflipvert && useRt)
-		rt_flip_posts();
 }
 
 void R_DrawMaskedColumn (FTexture *tex, fixed_t col, bool useRt, bool unmasked)
@@ -447,16 +441,10 @@ void R_DrawMaskedColumn (FTexture *tex, fixed_t col, bool useRt, bool unmasked)
 			else if (dc_iscale < 0)
 				dc_count = MIN(dc_count, (dc_texturefrac - dc_iscale) / (-dc_iscale));
 
-			if (useRt)
-				hcolfunc_pre();
-			else
-				colfunc ();
+			colfunc ();
 		}
 		span++;
 	}
-
-	if (sprflipvert && useRt)
-		rt_flip_posts();
 }
 
 // [ZZ]
@@ -705,6 +693,7 @@ void R_WallSpriteColumn (bool useRt)
 
 void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop, short *clipbot)
 {
+#if 0
 	int flags = 0;
 
 	// Do setup for blending.
@@ -772,6 +761,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 
 	R_FinishSetPatchStyle();
 	NetUpdate();
+#endif
 }
 
 //
@@ -2857,6 +2847,7 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
 	FSWColormap *colormap, int colormapnum, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags)
 {
+#if 0
 	int i, j, k, x, y, syoff, ggxstart, ggystart, nxoff;
 	fixed_t cosang, sinang, sprcosang, sprsinang;
 	int backx, backy, gxinc, gyinc;
@@ -3184,6 +3175,7 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 			}
 		}
 	}
+#endif
 }
 
 //==========================================================================

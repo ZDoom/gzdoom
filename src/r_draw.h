@@ -134,35 +134,6 @@ namespace swrenderer
 
 	const uint8_t *R_GetColumn(FTexture *tex, int col);
 	
-	void rt_initcols(uint8_t *buffer = nullptr);
-	void rt_span_coverage(int x, int start, int stop);
-	void rt_draw4cols(int sx);
-	void rt_flip_posts();
-	void rt_copy1col(int hx, int sx, int yl, int yh);
-	void rt_copy4cols(int sx, int yl, int yh);
-	void rt_shaded1col(int hx, int sx, int yl, int yh);
-	void rt_shaded4cols(int sx, int yl, int yh);
-	void rt_map1col(int hx, int sx, int yl, int yh);
-	void rt_add1col(int hx, int sx, int yl, int yh);
-	void rt_addclamp1col(int hx, int sx, int yl, int yh);
-	void rt_subclamp1col(int hx, int sx, int yl, int yh);
-	void rt_revsubclamp1col(int hx, int sx, int yl, int yh);
-	void rt_tlate1col(int hx, int sx, int yl, int yh);
-	void rt_tlateadd1col(int hx, int sx, int yl, int yh);
-	void rt_tlateaddclamp1col(int hx, int sx, int yl, int yh);
-	void rt_tlatesubclamp1col(int hx, int sx, int yl, int yh);
-	void rt_tlaterevsubclamp1col(int hx, int sx, int yl, int yh);
-	void rt_map4cols(int sx, int yl, int yh);
-	void rt_add4cols(int sx, int yl, int yh);
-	void rt_addclamp4cols(int sx, int yl, int yh);
-	void rt_subclamp4cols(int sx, int yl, int yh);
-	void rt_revsubclamp4cols(int sx, int yl, int yh);
-	void rt_tlate4cols(int sx, int yl, int yh);
-	void rt_tlateadd4cols(int sx, int yl, int yh);
-	void rt_tlateaddclamp4cols(int sx, int yl, int yh);
-	void rt_tlatesubclamp4cols(int sx, int yl, int yh);
-	void rt_tlaterevsubclamp4cols(int sx, int yl, int yh);
-	void R_DrawColumnHoriz();
 	void R_DrawColumn();
 	void R_DrawFuzzColumn();
 	void R_DrawTranslatedColumn();
@@ -192,7 +163,6 @@ namespace swrenderer
 	void R_SetupDrawSlab(FSWColormap *base_colormap, float light, int shade);
 	void R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const uint8_t *vptr, uint8_t *p);
 	void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip);
-	void R_FillColumnHoriz();
 	void R_FillSpan();
 
 	void R_DrawWallCol1();

@@ -124,12 +124,6 @@ extern void				(*transcolfunc) (void);
 // No shadow effects on floors.
 extern void 			(*spanfunc) (void);
 
-// [RH] Function pointers for the horizontal column drawers.
-extern void (*hcolfunc_pre) (void);
-extern void (*hcolfunc_post1) (int hx, int sx, int yl, int yh);
-extern void (*hcolfunc_post2) (int hx, int sx, int yl, int yh);
-extern void (*hcolfunc_post4) (int sx, int yl, int yh);
-
 void R_InitTextureMapping ();
 
 

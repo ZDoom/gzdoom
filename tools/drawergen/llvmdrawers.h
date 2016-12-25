@@ -47,7 +47,7 @@ public:
 	std::vector<uint8_t> ObjectFile;
 
 private:
-	void CodegenDrawColumn(const char *name, DrawColumnVariant variant, DrawColumnMethod method);
+	void CodegenDrawColumn(const char *name, DrawColumnVariant variant);
 	void CodegenDrawSpan(const char *name, DrawSpanVariant variant);
 	void CodegenDrawWall(const char *name, DrawWallVariant variant, int columns);
 	void CodegenDrawSky(const char *name, DrawSkyVariant variant, int columns);

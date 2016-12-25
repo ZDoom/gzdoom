@@ -45,9 +45,6 @@ class DrawerThread
 public:
 	DrawerThread()
 	{
-		dc_temp = dc_temp_buff;
-		dc_temp_rgba = dc_temp_rgbabuff_rgba;
-
 		FullSpansBuffer.resize(MAXWIDTH / 8 * (MAXHEIGHT / 8));
 		PartialBlocksBuffer.resize(MAXWIDTH / 8 * (MAXHEIGHT / 8));
 	}
@@ -63,14 +60,6 @@ public:
 	// Range of rows processed this pass
 	int pass_start_y = 0;
 	int pass_end_y = MAXHEIGHT;
-
-	// Working buffer used by Rt drawers
-	uint8_t dc_temp_buff[MAXHEIGHT * 4];
-	uint8_t *dc_temp = nullptr;
-
-	// Working buffer used by Rt drawers, true color edition
-	uint32_t dc_temp_rgbabuff_rgba[MAXHEIGHT * 4];
-	uint32_t *dc_temp_rgba = nullptr;
 
 	// Working buffer used by the tilted (sloped) span drawer
 	const uint8_t *tiltlighting[MAXWIDTH];

@@ -45,24 +45,17 @@ enum class DrawColumnVariant
 	DrawRevSubClampTranslated
 };
 
-enum class DrawColumnMethod
-{
-	Normal,
-	Rt1,
-	Rt4
-};
-
 class DrawColumnCodegen : public DrawerCodegen
 {
 public:
-	void Generate(DrawColumnVariant variant, DrawColumnMethod method, SSAValue args, SSAValue thread_data);
+	void Generate(DrawColumnVariant variant, SSAValue args, SSAValue thread_data);
 
 private:
-	void LoopShade(DrawColumnVariant variant, DrawColumnMethod method, bool isSimpleShade);
-	void Loop(DrawColumnVariant variant, DrawColumnMethod method, bool isSimpleShade, bool isNearestFilter);
-	SSAVec4i ProcessPixel(SSAInt sample_index, SSAVec4i bgcolor, DrawColumnVariant variant, DrawColumnMethod method, bool isSimpleShade, bool isNearestFilter);
+	void LoopShade(DrawColumnVariant variant, bool isSimpleShade);
+	void Loop(DrawColumnVariant variant, bool isSimpleShade, bool isNearestFilter);
+	SSAVec4i ProcessPixel(SSAInt sample_index, SSAVec4i bgcolor, DrawColumnVariant variant, bool isSimpleShade, bool isNearestFilter);
 	SSAVec4i ProcessPixelPal(SSAInt sample_index, SSAVec4i bgcolor, DrawColumnVariant variant, bool isSimpleShade);
-	SSAVec4i Sample(SSAInt frac, DrawColumnMethod method, bool isNearestFilter);
+	SSAVec4i Sample(SSAInt frac, bool isNearestFilter);
 	SSAVec4i SampleLinear(SSAUBytePtr col0, SSAUBytePtr col1, SSAInt texturefracx, SSAInt texturefracy, SSAInt one, SSAInt height);
 	SSAInt ColormapSample(SSAInt frac);
 	SSAVec4i TranslateSample(SSAInt frac);

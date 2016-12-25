@@ -2323,8 +2323,6 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	} while (needrepeat--);
 
 	colfunc = basecolfunc;
-	hcolfunc_post1 = rt_map1col;
-	hcolfunc_post4 = rt_map4cols;
 
 	R_FinishSetPatchStyle ();
 done:

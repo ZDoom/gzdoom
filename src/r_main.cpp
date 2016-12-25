@@ -169,11 +169,6 @@ void (*fuzzcolfunc) (void);
 void (*transcolfunc) (void);
 void (*spanfunc) (void);
 
-void (*hcolfunc_pre) (void);
-void (*hcolfunc_post1) (int hx, int sx, int yl, int yh);
-void (*hcolfunc_post2) (int hx, int sx, int yl, int yh);
-void (*hcolfunc_post4) (int sx, int yl, int yh);
-
 cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -853,17 +848,11 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	// [RH] Show off segs if r_drawflat is 1
 	if (r_drawflat)
 	{
-		hcolfunc_pre = R_FillColumnHoriz;
-		hcolfunc_post1 = rt_copy1col;
-		hcolfunc_post4 = rt_copy4cols;
 		colfunc = R_FillColumn;
 		spanfunc = R_FillSpan;
 	}
 	else
 	{
-		hcolfunc_pre = R_DrawColumnHoriz;
-		hcolfunc_post1 = rt_map1col;
-		hcolfunc_post4 = rt_map4cols;
 		colfunc = basecolfunc;
 		spanfunc = R_DrawSpan;
 	}

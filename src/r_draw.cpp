@@ -147,9 +147,6 @@ namespace swrenderer
 		fuzzcolfunc = R_DrawFuzzColumn;
 		transcolfunc = R_DrawTranslatedColumn;
 		spanfunc = R_DrawSpan;
-		hcolfunc_pre = R_DrawColumnHoriz;
-		hcolfunc_post1 = rt_map1col;
-		hcolfunc_post4 = rt_map4cols;
 	}
 
 	void R_InitShadeMaps()
@@ -233,20 +230,14 @@ namespace swrenderer
 				if (flags & STYLEF_ColorIsFixed)
 				{
 					colfunc = R_FillColumn;
-					hcolfunc_post1 = rt_copy1col;
-					hcolfunc_post4 = rt_copy4cols;
 				}
 				else if (dc_translation == NULL)
 				{
 					colfunc = basecolfunc;
-					hcolfunc_post1 = rt_map1col;
-					hcolfunc_post4 = rt_map4cols;
 				}
 				else
 				{
 					colfunc = transcolfunc;
-					hcolfunc_post1 = rt_tlate1col;
-					hcolfunc_post4 = rt_tlate4cols;
 					drawer_needs_pal_input = true;
 				}
 				return true;
@@ -284,20 +275,14 @@ namespace swrenderer
 					if (flags & STYLEF_ColorIsFixed)
 					{
 						colfunc = R_FillAddColumn;
-						hcolfunc_post1 = rt_add1col;
-						hcolfunc_post4 = rt_add4cols;
 					}
 					else if (dc_translation == NULL)
 					{
 						colfunc = R_DrawAddColumn;
-						hcolfunc_post1 = rt_add1col;
-						hcolfunc_post4 = rt_add4cols;
 					}
 					else
 					{
 						colfunc = R_DrawTlatedAddColumn;
-						hcolfunc_post1 = rt_tlateadd1col;
-						hcolfunc_post4 = rt_tlateadd4cols;
 						drawer_needs_pal_input = true;
 					}
 				}
@@ -306,20 +291,14 @@ namespace swrenderer
 					if (flags & STYLEF_ColorIsFixed)
 					{
 						colfunc = R_FillAddClampColumn;
-						hcolfunc_post1 = rt_addclamp1col;
-						hcolfunc_post4 = rt_addclamp4cols;
 					}
 					else if (dc_translation == NULL)
 					{
 						colfunc = R_DrawAddClampColumn;
-						hcolfunc_post1 = rt_addclamp1col;
-						hcolfunc_post4 = rt_addclamp4cols;
 					}
 					else
 					{
 						colfunc = R_DrawAddClampTranslatedColumn;
-						hcolfunc_post1 = rt_tlateaddclamp1col;
-						hcolfunc_post4 = rt_tlateaddclamp4cols;
 						drawer_needs_pal_input = true;
 					}
 				}
@@ -329,20 +308,14 @@ namespace swrenderer
 				if (flags & STYLEF_ColorIsFixed)
 				{
 					colfunc = R_FillSubClampColumn;
-					hcolfunc_post1 = rt_subclamp1col;
-					hcolfunc_post4 = rt_subclamp4cols;
 				}
 				else if (dc_translation == NULL)
 				{
 					colfunc = R_DrawSubClampColumn;
-					hcolfunc_post1 = rt_subclamp1col;
-					hcolfunc_post4 = rt_subclamp4cols;
 				}
 				else
 				{
 					colfunc = R_DrawSubClampTranslatedColumn;
-					hcolfunc_post1 = rt_tlatesubclamp1col;
-					hcolfunc_post4 = rt_tlatesubclamp4cols;
 					drawer_needs_pal_input = true;
 				}
 				return true;
@@ -355,20 +328,14 @@ namespace swrenderer
 				if (flags & STYLEF_ColorIsFixed)
 				{
 					colfunc = R_FillRevSubClampColumn;
-					hcolfunc_post1 = rt_subclamp1col;
-					hcolfunc_post4 = rt_subclamp4cols;
 				}
 				else if (dc_translation == NULL)
 				{
 					colfunc = R_DrawRevSubClampColumn;
-					hcolfunc_post1 = rt_revsubclamp1col;
-					hcolfunc_post4 = rt_revsubclamp4cols;
 				}
 				else
 				{
 					colfunc = R_DrawRevSubClampTranslatedColumn;
-					hcolfunc_post1 = rt_tlaterevsubclamp1col;
-					hcolfunc_post4 = rt_tlaterevsubclamp4cols;
 					drawer_needs_pal_input = true;
 				}
 				return true;
@@ -439,7 +406,6 @@ namespace swrenderer
 			}
 		}
 		basecolormapsave = basecolormap;
-		hcolfunc_pre = R_DrawColumnHoriz;
 
 		// Check for special modes
 		if (style.BlendOp == STYLEOP_Fuzz)
@@ -453,8 +419,6 @@ namespace swrenderer
 			if ((alpha >>= 12) == 0)
 				return false;
 			colfunc = R_DrawShadedColumn;
-			hcolfunc_post1 = rt_shaded1col;
-			hcolfunc_post4 = rt_shaded4cols;
 			drawer_needs_pal_input = true;
 			dc_color = fixedcolormap ? fixedcolormap->Maps[APART(color)] : basecolormap->Maps[APART(color)];
 			basecolormap = &ShadeFakeColormap[16 - alpha];
@@ -491,7 +455,6 @@ namespace swrenderer
 			// dc_srccolor is used by the R_Fill* routines. It is premultiplied
 			// with the alpha.
 			dc_srccolor = ((((r*x) >> 4) << 20) | ((g*x) >> 4) | ((((b)*x) >> 4) << 10)) & 0x3feffbff;
-			hcolfunc_pre = R_FillColumnHoriz;
 			R_SetColorMapLight(&identitycolormap, 0, 0);
 		}
 
@@ -638,191 +601,6 @@ namespace swrenderer
 		}
 	}
 
-	void rt_initcols(uint8_t *buffer)
-	{
-		using namespace drawerargs;
-
-		for (int y = 3; y >= 0; y--)
-			horizspan[y] = dc_ctspan[y] = &dc_tspans[y][0];
-
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<RtInitColsRGBACommand>(buffer);
-		else
-			DrawerCommandQueue::QueueCommand<RtInitColsPalCommand>(buffer);
-	}
-
-	void rt_span_coverage(int x, int start, int stop)
-	{
-		using namespace drawerargs;
-
-		unsigned int **tspan = &dc_ctspan[x & 3];
-		(*tspan)[0] = start;
-		(*tspan)[1] = stop;
-		*tspan += 2;
-	}
-
-	void rt_flip_posts()
-	{
-		using namespace drawerargs;
-
-		unsigned int *front = horizspan[dc_x & 3];
-		unsigned int *back = dc_ctspan[dc_x & 3] - 2;
-
-		while (front < back)
-		{
-			swapvalues(front[0], back[0]);
-			swapvalues(front[1], back[1]);
-			front += 2;
-			back -= 2;
-		}
-	}
-
-	void rt_draw4cols(int sx)
-	{
-		using namespace drawerargs;
-
-		int x, bad;
-		unsigned int maxtop, minbot, minnexttop;
-
-		// Place a dummy "span" in each column. These don't get
-		// drawn. They're just here to avoid special cases in the
-		// max/min calculations below.
-		for (x = 0; x < 4; ++x)
-		{
-			dc_ctspan[x][0] = screen->GetHeight()+1;
-			dc_ctspan[x][1] = screen->GetHeight();
-		}
-
-		for (;;)
-		{
-			// If a column is out of spans, mark it as such
-			bad = 0;
-			minnexttop = 0xffffffff;
-			for (x = 0; x < 4; ++x)
-			{
-				if (horizspan[x] >= dc_ctspan[x])
-				{
-					bad |= 1 << x;
-				}
-				else if ((horizspan[x]+2)[0] < minnexttop)
-				{
-					minnexttop = (horizspan[x]+2)[0];
-				}
-			}
-			// Once all columns are out of spans, we're done
-			if (bad == 15)
-			{
-				return;
-			}
-
-			// Find the largest shared area for the spans in each column
-			maxtop = MAX (MAX (horizspan[0][0], horizspan[1][0]),
-						  MAX (horizspan[2][0], horizspan[3][0]));
-			minbot = MIN (MIN (horizspan[0][1], horizspan[1][1]),
-						  MIN (horizspan[2][1], horizspan[3][1]));
-
-			// If there is no shared area with these spans, draw each span
-			// individually and advance to the next spans until we reach a shared area.
-			// However, only draw spans down to the highest span in the next set of
-			// spans. If we allow the entire height of a span to be drawn, it could
-			// prevent any more shared areas from being drawn in these four columns.
-			//
-			// Example: Suppose we have the following arrangement:
-			//			A CD
-			//			A CD
-			//			 B D
-			//			 B D
-			//			aB D
-			//			aBcD
-			//			aBcD
-			//			aBc
-			//
-			// If we draw the entire height of the spans, we end up drawing this first:
-			//			A CD
-			//			A CD
-			//			 B D
-			//			 B D
-			//			 B D
-			//			 B D
-			//			 B D
-			//			 B D
-			//			 B
-			//
-			// This leaves only the "a" and "c" columns to be drawn, and they are not
-			// part of a shared area, but if we can include B and D with them, we can
-			// get a shared area. So we cut off everything in the first set just
-			// above the "a" column and end up drawing this first:
-			//			A CD
-			//			A CD
-			//			 B D
-			//			 B D
-			//
-			// Then the next time through, we have the following arrangement with an
-			// easily shared area to draw:
-			//			aB D
-			//			aBcD
-			//			aBcD
-			//			aBc
-			if (bad != 0 || maxtop > minbot)
-			{
-				int drawcount = 0;
-				for (x = 0; x < 4; ++x)
-				{
-					if (!(bad & 1))
-					{
-						if (horizspan[x][1] < minnexttop)
-						{
-							hcolfunc_post1 (x, sx+x, horizspan[x][0], horizspan[x][1]);
-							horizspan[x] += 2;
-							drawcount++;
-						}
-						else if (minnexttop > horizspan[x][0])
-						{
-							hcolfunc_post1 (x, sx+x, horizspan[x][0], minnexttop-1);
-							horizspan[x][0] = minnexttop;
-							drawcount++;
-						}
-					}
-					bad >>= 1;
-				}
-				// Drawcount *should* always be non-zero. The reality is that some situations
-				// can make this not true. Unfortunately, I'm not sure what those situations are.
-				if (drawcount == 0)
-				{
-					return;
-				}
-				continue;
-			}
-
-			// Draw any span fragments above the shared area.
-			for (x = 0; x < 4; ++x)
-			{
-				if (maxtop > horizspan[x][0])
-				{
-					hcolfunc_post1 (x, sx+x, horizspan[x][0], maxtop-1);
-				}
-			}
-
-			// Draw the shared area.
-			hcolfunc_post4 (sx, maxtop, minbot);
-
-			// For each column, if part of the span is past the shared area,
-			// set its top to just below the shared area. Otherwise, advance
-			// to the next span in that column.
-			for (x = 0; x < 4; ++x)
-			{
-				if (minbot < horizspan[x][1])
-				{
-					horizspan[x][0] = minbot+1;
-				}
-				else
-				{
-					horizspan[x] += 2;
-				}
-			}
-		}
-	}
-
 	void R_SetupSpanBits(FTexture *tex)
 	{
 		using namespace drawerargs;
@@ -854,325 +632,6 @@ namespace swrenderer
 	}
 
 	/////////////////////////////////////////////////////////////////////////
-
-	void R_FillColumnHoriz()
-	{
-		using namespace drawerargs;
-
-		if (dc_count <= 0)
-			return;
-
-		int x = dc_x & 3;
-		unsigned int **span = &dc_ctspan[x];
-		(*span)[0] = dc_yl;
-		(*span)[1] = dc_yh;
-		*span += 2;
-
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<FillColumnHorizRGBACommand>();
-		else
-			DrawerCommandQueue::QueueCommand<FillColumnHorizPalCommand>();
-	}
-
-	void R_DrawColumnHoriz()
-	{
-		using namespace drawerargs;
-
-		if (dc_count <= 0)
-			return;
-
-		int x = dc_x & 3;
-		unsigned int **span = &dc_ctspan[x];
-		(*span)[0] = dc_yl;
-		(*span)[1] = dc_yh;
-		*span += 2;
-
-		if (r_swtruecolor)
-		{
-			if (drawer_needs_pal_input)
-				DrawerCommandQueue::QueueCommand<DrawColumnHorizRGBACommand<uint8_t>>();
-			else
-				DrawerCommandQueue::QueueCommand<DrawColumnHorizRGBACommand<uint32_t>>();
-		}
-		else
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnHorizPalCommand>();
-		}
-	}
-
-	// Copies one span at hx to the screen at sx.
-	void rt_copy1col(int hx, int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1CopyLLVMCommand>(hx, sx, yl, yh);
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1CopyPalCommand>(hx, sx, yl, yh);
-	}
-
-	// Copies all four spans to the screen starting at sx.
-	void rt_copy4cols(int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-		{
-			// To do: we could do this with SSE using __m128i
-			rt_copy1col(0, sx, yl, yh);
-			rt_copy1col(1, sx + 1, yl, yh);
-			rt_copy1col(2, sx + 2, yl, yh);
-			rt_copy1col(3, sx + 3, yl, yh);
-		}
-		else
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4CopyPalCommand>(0, sx, yl, yh);
-		}
-	}
-
-	// Maps one span at hx to the screen at sx.
-	void rt_map1col(int hx, int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1LLVMCommand>(hx, sx, yl, yh);
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1PalCommand>(hx, sx, yl, yh);
-	}
-
-	// Maps all four spans to the screen starting at sx.
-	void rt_map4cols(int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4LLVMCommand>(0, sx, yl, yh);
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4PalCommand>(0, sx, yl, yh);
-	}
-
-	// Translates one span at hx to the screen at sx.
-	void rt_tlate1col(int hx, int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedLLVMCommand>(hx, sx, yl, yh);
-		}
-		else
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
-			rt_map1col(hx, sx, yl, yh);
-		}
-	}
-
-	// Translates all four spans to the screen starting at sx.
-	void rt_tlate4cols(int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedLLVMCommand>(0, sx, yl, yh);
-		}
-		else
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
-			rt_map4cols(sx, yl, yh);
-		}
-	}
-
-	// Adds one span at hx to the screen at sx without clamping.
-	void rt_add1col(int hx, int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1AddLLVMCommand>(hx, sx, yl, yh);
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1AddPalCommand>(hx, sx, yl, yh);
-	}
-
-	// Adds all four spans to the screen starting at sx without clamping.
-	void rt_add4cols(int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4AddLLVMCommand>(0, sx, yl, yh);
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4AddPalCommand>(0, sx, yl, yh);
-	}
-
-	// Translates and adds one span at hx to the screen at sx without clamping.
-	void rt_tlateadd1col(int hx, int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1AddClampTranslatedLLVMCommand>(hx, sx, yl, yh);
-		}
-		else
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
-			rt_add1col(hx, sx, yl, yh);
-		}
-	}
-
-	// Translates and adds all four spans to the screen starting at sx without clamping.
-	void rt_tlateadd4cols(int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4AddClampTranslatedLLVMCommand>(0, sx, yl, yh);
-		}
-		else
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
-			rt_add4cols(sx, yl, yh);
-		}
-	}
-
-	// Shades one span at hx to the screen at sx.
-	void rt_shaded1col(int hx, int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1ShadedLLVMCommand>(hx, sx, yl, yh);
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1ShadedPalCommand>(hx, sx, yl, yh);
-	}
-
-	// Shades all four spans to the screen starting at sx.
-	void rt_shaded4cols(int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4ShadedLLVMCommand>(0, sx, yl, yh);
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4ShadedPalCommand>(0, sx, yl, yh);
-	}
-
-	// Adds one span at hx to the screen at sx with clamping.
-	void rt_addclamp1col(int hx, int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1AddClampLLVMCommand>(hx, sx, yl, yh);
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1AddClampPalCommand>(hx, sx, yl, yh);
-	}
-
-	// Adds all four spans to the screen starting at sx with clamping.
-	void rt_addclamp4cols(int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4AddClampLLVMCommand>(0, sx, yl, yh);
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4AddClampPalCommand>(0, sx, yl, yh);
-	}
-
-	// Translates and adds one span at hx to the screen at sx with clamping.
-	void rt_tlateaddclamp1col(int hx, int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1AddClampTranslatedLLVMCommand>(hx, sx, yl, yh);
-		}
-		else
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
-			rt_addclamp1col(hx, sx, yl, yh);
-		}
-	}
-
-	// Translates and adds all four spans to the screen starting at sx with clamping.
-	void rt_tlateaddclamp4cols(int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4AddClampTranslatedLLVMCommand>(0, sx, yl, yh);
-		}
-		else
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
-			rt_addclamp4cols(sx, yl, yh);
-		}
-	}
-
-	// Subtracts one span at hx to the screen at sx with clamping.
-	void rt_subclamp1col(int hx, int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1SubClampLLVMCommand>(hx, sx, yl, yh);
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1SubClampPalCommand>(hx, sx, yl, yh);
-	}
-
-	// Subtracts all four spans to the screen starting at sx with clamping.
-	void rt_subclamp4cols(int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4SubClampLLVMCommand>(0, sx, yl, yh);
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4SubClampPalCommand>(0, sx, yl, yh);
-	}
-
-	// Translates and subtracts one span at hx to the screen at sx with clamping.
-	void rt_tlatesubclamp1col(int hx, int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1SubClampTranslatedLLVMCommand>(hx, sx, yl, yh);
-		}
-		else
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
-			rt_subclamp1col(hx, sx, yl, yh);
-		}
-	}
-
-	// Translates and subtracts all four spans to the screen starting at sx with clamping.
-	void rt_tlatesubclamp4cols(int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4SubClampTranslatedLLVMCommand>(0, sx, yl, yh);
-		}
-		else
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
-			rt_subclamp4cols(sx, yl, yh);
-		}
-	}
-
-	// Subtracts one span at hx from the screen at sx with clamping.
-	void rt_revsubclamp1col(int hx, int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1RevSubClampLLVMCommand>(hx, sx, yl, yh);
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1RevSubClampPalCommand>(hx, sx, yl, yh);
-	}
-
-	// Subtracts all four spans from the screen starting at sx with clamping.
-	void rt_revsubclamp4cols(int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4RevSubClampLLVMCommand>(0, sx, yl, yh);
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4RevSubClampPalCommand>(0, sx, yl, yh);
-	}
-
-	// Translates and subtracts one span at hx from the screen at sx with clamping.
-	void rt_tlaterevsubclamp1col(int hx, int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1RevSubClampTranslatedLLVMCommand>(hx, sx, yl, yh);
-		}
-		else
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt1TranslatedPalCommand>(hx, sx, yl, yh);
-			rt_revsubclamp1col(hx, sx, yl, yh);
-		}
-	}
-
-	// Translates and subtracts all four spans from the screen starting at sx with clamping.
-	void rt_tlaterevsubclamp4cols(int sx, int yl, int yh)
-	{
-		if (r_swtruecolor)
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4RevSubClampTranslatedLLVMCommand>(0, sx, yl, yh);
-		}
-		else
-		{
-			DrawerCommandQueue::QueueCommand<DrawColumnRt4TranslatedPalCommand>(0, sx, yl, yh);
-			rt_revsubclamp4cols(sx, yl, yh);
-		}
-	}
 
 	void R_DrawWallCol1()
 	{

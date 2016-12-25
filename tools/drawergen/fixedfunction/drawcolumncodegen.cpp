@@ -32,7 +32,7 @@
 #include "ssa/ssa_struct_type.h"
 #include "ssa/ssa_value.h"
 
-void DrawColumnCodegen::Generate(DrawColumnVariant variant, DrawColumnMethod method, SSAValue args, SSAValue thread_data)
+void DrawColumnCodegen::Generate(DrawColumnVariant variant, SSAValue args, SSAValue thread_data)
 {
 	dest = args[0][0].load(true);
 	source = args[0][1].load(true);
@@ -43,12 +43,9 @@ void DrawColumnCodegen::Generate(DrawColumnVariant variant, DrawColumnMethod met
 	pitch = args[0][6].load(true);
 	count = args[0][7].load(true);
 	dest_y = args[0][8].load(true);
-	if (method == DrawColumnMethod::Normal)
-	{
-		iscale = args[0][9].load(true);
-		texturefracx = args[0][10].load(true);
-		textureheight = args[0][11].load(true);
-	}
+	iscale = args[0][9].load(true);
+	texturefracx = args[0][10].load(true);
+	textureheight = args[0][11].load(true);
 	texturefrac = args[0][12].load(true);
 	light = args[0][13].load(true);
 	color = SSAVec4i::unpack(args[0][14].load(true));
@@ -81,49 +78,32 @@ void DrawColumnCodegen::Generate(DrawColumnVariant variant, DrawColumnMethod met
 	count = count_for_thread(dest_y, count, thread);
 	dest = dest_for_thread(dest_y, pitch, dest, thread);
 	pitch = pitch * thread.num_cores;
-	if (method == DrawColumnMethod::Normal)
-	{
-		stack_frac.store(texturefrac + iscale * skipped_by_thread(dest_y, thread));
-		iscale = iscale * thread.num_cores;
-		one = (1 << 30) / textureheight;
 
-		SSAIfBlock branch;
-		branch.if_block(is_simple_shade);
-		LoopShade(variant, method, true);
-		branch.else_block();
-		LoopShade(variant, method, false);
-		branch.end_block();
-	}
-	else
-	{
-		source = thread.temp[((dest_y + skipped_by_thread(dest_y, thread)) * 4 + texturefrac) * 4];
+	stack_frac.store(texturefrac + iscale * skipped_by_thread(dest_y, thread));
+	iscale = iscale * thread.num_cores;
+	one = (1 << 30) / textureheight;
 
-		SSAIfBlock branch;
-		branch.if_block(is_simple_shade);
-		Loop(variant, method, true, true);
-		branch.else_block();
-		Loop(variant, method, false, true);
-		branch.end_block();
-	}
-}
-
-void DrawColumnCodegen::LoopShade(DrawColumnVariant variant, DrawColumnMethod method, bool isSimpleShade)
-{
 	SSAIfBlock branch;
-	branch.if_block(is_nearest_filter);
-	Loop(variant, method, isSimpleShade, true);
+	branch.if_block(is_simple_shade);
+	LoopShade(variant, true);
 	branch.else_block();
-	stack_frac.store(stack_frac.load() - (one >> 1));
-	Loop(variant, method, isSimpleShade, false);
+	LoopShade(variant, false);
 	branch.end_block();
 }
 
-void DrawColumnCodegen::Loop(DrawColumnVariant variant, DrawColumnMethod method, bool isSimpleShade, bool isNearestFilter)
+void DrawColumnCodegen::LoopShade(DrawColumnVariant variant, bool isSimpleShade)
 {
-	SSAInt sincr;
-	if (method != DrawColumnMethod::Normal)
-		sincr = thread.num_cores * 4;
+	SSAIfBlock branch;
+	branch.if_block(is_nearest_filter);
+	Loop(variant, isSimpleShade, true);
+	branch.else_block();
+	stack_frac.store(stack_frac.load() - (one >> 1));
+	Loop(variant, isSimpleShade, false);
+	branch.end_block();
+}
 
+void DrawColumnCodegen::Loop(DrawColumnVariant variant, bool isSimpleShade, bool isNearestFilter)
+{
 	stack_index.store(SSAInt(0));
 	{
 		SSAForBlock loop;
@@ -131,56 +111,21 @@ void DrawColumnCodegen::Loop(DrawColumnVariant variant, DrawColumnMethod method,
 		loop.loop_block(index < count);
 
 		SSAInt sample_index, frac;
-		if (method == DrawColumnMethod::Normal)
-		{
-			frac = stack_frac.load();
-			if (IsPaletteInput(variant))
-				sample_index = frac >> FRACBITS;
-			else
-				sample_index = frac;
-		}
+		frac = stack_frac.load();
+		if (IsPaletteInput(variant))
+			sample_index = frac >> FRACBITS;
 		else
-		{
-			sample_index = index * sincr * 4;
-		}
+			sample_index = frac;
 
 		SSAInt offset = index * pitch * 4;
-		SSAVec4i bgcolor[4];
+		SSAVec4i bgcolor = dest[offset].load_vec4ub(false);
 
-		int numColumns = (method == DrawColumnMethod::Rt4) ? 4 : 1;
+		SSAVec4i outcolor = ProcessPixel(sample_index, bgcolor, variant, isSimpleShade, isNearestFilter);
 
-		if (numColumns == 4)
-		{
-			SSAVec16ub bg = dest[offset].load_unaligned_vec16ub(false);
-			SSAVec8s bg0 = SSAVec8s::extendlo(bg);
-			SSAVec8s bg1 = SSAVec8s::extendhi(bg);
-			bgcolor[0] = SSAVec4i::extendlo(bg0);
-			bgcolor[1] = SSAVec4i::extendhi(bg0);
-			bgcolor[2] = SSAVec4i::extendlo(bg1);
-			bgcolor[3] = SSAVec4i::extendhi(bg1);
-		}
-		else
-		{
-			bgcolor[0] = dest[offset].load_vec4ub(false);
-		}
-
-		SSAVec4i outcolor[4];
-		for (int i = 0; i < numColumns; i++)
-			outcolor[i] = ProcessPixel(sample_index + i * 4, bgcolor[i], variant, method, isSimpleShade, isNearestFilter);
-
-		if (numColumns == 4)
-		{
-			SSAVec16ub packedcolor(SSAVec8s(outcolor[0], outcolor[1]), SSAVec8s(outcolor[2], outcolor[3]));
-			dest[offset].store_unaligned_vec16ub(packedcolor);
-		}
-		else
-		{
-			dest[offset].store_vec4ub(outcolor[0]);
-		}
+		dest[offset].store_vec4ub(outcolor);
 
 		stack_index.store(index.add(SSAInt(1), true, true));
-		if (method == DrawColumnMethod::Normal)
-			stack_frac.store(frac + iscale);
+		stack_frac.store(frac + iscale);
 		loop.end_block();
 	}
 }
@@ -212,7 +157,7 @@ bool DrawColumnCodegen::IsPaletteInput(DrawColumnVariant variant)
 	}
 }
 
-SSAVec4i DrawColumnCodegen::ProcessPixel(SSAInt sample_index, SSAVec4i bgcolor, DrawColumnVariant variant, DrawColumnMethod method, bool isSimpleShade, bool isNearestFilter)
+SSAVec4i DrawColumnCodegen::ProcessPixel(SSAInt sample_index, SSAVec4i bgcolor, DrawColumnVariant variant, bool isSimpleShade, bool isNearestFilter)
 {
 	SSAInt alpha, inv_alpha;
 	SSAVec4i fg;
@@ -220,22 +165,22 @@ SSAVec4i DrawColumnCodegen::ProcessPixel(SSAInt sample_index, SSAVec4i bgcolor, 
 	{
 	default:
 	case DrawColumnVariant::DrawCopy:
-		return blend_copy(Sample(sample_index, method, isNearestFilter));
+		return blend_copy(Sample(sample_index, isNearestFilter));
 	case DrawColumnVariant::Draw:
-		return blend_copy(Shade(Sample(sample_index, method, isNearestFilter), isSimpleShade));
+		return blend_copy(Shade(Sample(sample_index, isNearestFilter), isSimpleShade));
 	case DrawColumnVariant::DrawAdd:
 	case DrawColumnVariant::DrawAddClamp:
-		fg = Shade(Sample(sample_index, method, isNearestFilter), isSimpleShade);
+		fg = Shade(Sample(sample_index, isNearestFilter), isSimpleShade);
 		return blend_add(fg, bgcolor, srcalpha, calc_blend_bgalpha(fg, destalpha));
 	case DrawColumnVariant::DrawShaded:
 		alpha = SSAInt::MAX(SSAInt::MIN(ColormapSample(sample_index), SSAInt(64)), SSAInt(0)) * 4;
 		inv_alpha = 256 - alpha;
 		return blend_add(color, bgcolor, alpha, inv_alpha);
 	case DrawColumnVariant::DrawSubClamp:
-		fg = Shade(Sample(sample_index, method, isNearestFilter), isSimpleShade);
+		fg = Shade(Sample(sample_index, isNearestFilter), isSimpleShade);
 		return blend_sub(fg, bgcolor, srcalpha, calc_blend_bgalpha(fg, destalpha));
 	case DrawColumnVariant::DrawRevSubClamp:
-		fg = Shade(Sample(sample_index, method, isNearestFilter), isSimpleShade);
+		fg = Shade(Sample(sample_index, isNearestFilter), isSimpleShade);
 		return blend_revsub(fg, bgcolor, srcalpha, calc_blend_bgalpha(fg, destalpha));
 	case DrawColumnVariant::DrawTranslated:
 		return blend_copy(Shade(TranslateSample(sample_index), isSimpleShade));
@@ -311,23 +256,16 @@ SSAVec4i DrawColumnCodegen::ProcessPixelPal(SSAInt sample_index, SSAVec4i bgcolo
 	}
 }
 
-SSAVec4i DrawColumnCodegen::Sample(SSAInt frac, DrawColumnMethod method, bool isNearestFilter)
+SSAVec4i DrawColumnCodegen::Sample(SSAInt frac, bool isNearestFilter)
 {
-	if (method == DrawColumnMethod::Normal)
+	if (isNearestFilter)
 	{
-		if (isNearestFilter)
-		{
-			SSAInt sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
-			return source[sample_index * 4].load_vec4ub(false);
-		}
-		else
-		{
-			return SampleLinear(source, source2, texturefracx, frac, one, textureheight);
-		}
+		SSAInt sample_index = (((frac << 2) >> FRACBITS) * textureheight) >> FRACBITS;
+		return source[sample_index * 4].load_vec4ub(false);
 	}
 	else
 	{
-		return source[frac].load_vec4ub(true);
+		return SampleLinear(source, source2, texturefracx, frac, one, textureheight);
 	}
 }
 

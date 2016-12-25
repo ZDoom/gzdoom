@@ -1,0 +1,18 @@
+// This file contains compatibility wrappers for DECORATE functions with bad parameters.
+
+extend class Actor
+{
+	deprecated void A_CustomMissile(class<Actor> missiletype, double spawnheight = 32, double spawnofs_xy = 0, double angle = 0, int flags = 0, double pitch = 0, int ptr = AAPTR_TARGET)
+	{
+		A_SpawnProjectile(missiletype, spawnheight, spawnofs_xy, angle, flags|CMF_BADPITCH, pitch, ptr);
+	}
+}
+
+extend class StateProvider
+{
+	deprecated action void A_FireCustomMissile(class<Actor> missiletype, double angle = 0, bool useammo = true, double spawnofs_xy = 0, double spawnheight = 0, int flags = 0, double pitch = 0)
+	{
+		A_FireProjectile(missiletype, angle, useammo, spawnofs_xy, spawnheight, flags, -pitch);
+	}
+}
+

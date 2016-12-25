@@ -636,14 +636,9 @@ void AInventory::BecomeItem ()
 {
 	if (!(flags & (MF_NOBLOCKMAP|MF_NOSECTOR)))
 	{
-		UnlinkFromWorld ();
-		if (sector_list)
-		{
-			P_DelSeclist (sector_list);
-			sector_list = NULL;
-		}
+		UnlinkFromWorld (nullptr);
 		flags |= MF_NOBLOCKMAP|MF_NOSECTOR;
-		LinkToWorld ();
+		LinkToWorld (nullptr);
 	}
 	RemoveFromHash ();
 	flags &= ~MF_SPECIAL;
@@ -674,9 +669,9 @@ void AInventory::BecomePickup ()
 	}
 	if (flags & (MF_NOBLOCKMAP|MF_NOSECTOR))
 	{
-		UnlinkFromWorld ();
+		UnlinkFromWorld (nullptr);
 		flags &= ~(MF_NOBLOCKMAP|MF_NOSECTOR);
-		LinkToWorld ();
+		LinkToWorld (nullptr);
 		P_FindFloorCeiling (this);
 	}
 	flags = (GetDefault()->flags | MF_DROPPED) & ~MF_COUNTITEM;

@@ -2677,13 +2677,13 @@ void FParser::SF_PlayerWeapon()
 		if (playernum==-1) return;
 		if (weaponnum<0 || weaponnum>9)
 		{
-			script_error("weaponnum out of range! %s\n", weaponnum);
+			script_error("weaponnum out of range! %d\n", weaponnum);
 			return;
 		}
 		PClassWeapon * ti = static_cast<PClassWeapon *>(PClass::FindActor(WeaponNames[weaponnum]));
 		if (!ti)
 		{
-			script_error("incompatibility in playerweapon\n", weaponnum);
+			script_error("incompatibility in playerweapon %d\n", weaponnum);
 			return;
 		}
 		
@@ -2758,13 +2758,13 @@ void FParser::SF_PlayerSelectedWeapon()
 
 			if (weaponnum<0 || weaponnum>=9)
 			{
-				script_error("weaponnum out of range! %s\n", weaponnum);
+				script_error("weaponnum out of range! %d\n", weaponnum);
 				return;
 			}
 			PClassWeapon * ti = static_cast<PClassWeapon *>(PClass::FindActor(WeaponNames[weaponnum]));
 			if (!ti)
 			{
-				script_error("incompatibility in playerweapon\n", weaponnum);
+				script_error("incompatibility in playerweapon %d\n", weaponnum);
 				return;
 			}
 

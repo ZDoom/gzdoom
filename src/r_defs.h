@@ -23,6 +23,7 @@
 #ifndef __R_DEFS_H__
 #define __R_DEFS_H__
 
+#include <forward_list>
 #include "doomdef.h"
 #include "templates.h"
 #include "memarena.h"
@@ -1048,6 +1049,7 @@ public:
 	// thinglist is a subset of touching_thinglist
 	struct msecnode_t *touching_thinglist;				// phares 3/14/98
 	struct msecnode_t *render_thinglist;				// for cross-portal rendering.
+	std::forward_list<AActor*>* touching_render_things; // this is used to allow wide things to be rendered not only from their main sector.
 
 	double gravity;			// [RH] Sector gravity (1.0 is normal)
 	FNameNoInit damagetype;		// [RH] Means-of-death for applied damage

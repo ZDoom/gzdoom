@@ -24,6 +24,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <algorithm>
 
 #include "templates.h"
 
@@ -80,9 +81,6 @@ static FRandom pr_crunch("DoCrunch");
 // but don't process them until the move is proven valid
 TArray<spechit_t> spechit;
 TArray<spechit_t> portalhit;
-
-// Temporary holder for thing_sectorlist threads
-msecnode_t* sector_list = NULL;		// phares 3/16/98
 
 //==========================================================================
 //
@@ -2389,10 +2387,11 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 			FLinePortal *port = ld->getPortal();
 			if (port->mType == PORTT_LINKED)
 			{
-				thing->UnlinkFromWorld();
+				FLinkContext ctx;
+				thing->UnlinkFromWorld(&ctx);
 				thing->SetXY(tm.pos + port->mDisplacement);
 				thing->Prev += port->mDisplacement;
-				thing->LinkToWorld();
+				thing->LinkToWorld(&ctx);
 				P_FindFloorCeiling(thing);
 				portalcrossed = true;
 				tm.portalstep = false;
@@ -2413,11 +2412,12 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 					thing->flags6 &= ~MF6_INTRYMOVE;
 					return false;
 				}
-				thing->UnlinkFromWorld();
+				FLinkContext ctx;
+				thing->UnlinkFromWorld(&ctx);
 				thing->SetXYZ(pos);
 				P_TranslatePortalVXVY(ld, thing->Vel.X, thing->Vel.Y);
 				P_TranslatePortalAngle(ld, thing->Angles.Yaw);
-				thing->LinkToWorld();
+				thing->LinkToWorld(&ctx);
 				P_FindFloorCeiling(thing);
 				thing->ClearInterpolation();
 				portalcrossed = true;
@@ -2458,7 +2458,8 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 	if (!portalcrossed)
 	{
 		// the move is ok, so link the thing into its new position
-		thing->UnlinkFromWorld();
+		FLinkContext ctx;
+		thing->UnlinkFromWorld(&ctx);
 
 		oldsector = thing->Sector;
 		thing->floorz = tm.floorz;
@@ -2471,7 +2472,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 		thing->ceilingsector = tm.ceilingsector;
 		thing->SetXY(pos);
 
-		thing->LinkToWorld();
+		thing->LinkToWorld(&ctx);
 	}
 
 	if (thing->flags2 & MF2_FLOORCLIP)
@@ -2564,13 +2565,14 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 	// If the actor stepped through a ceiling portal we need to reacquire the actual position info after the transition
 	if (tm.portalstep)
 	{
+		FLinkContext ctx;
 		DVector3 oldpos = thing->Pos();
-		thing->UnlinkFromWorld();
+		thing->UnlinkFromWorld(&ctx);
 		thing->SetXYZ(thing->PosRelative(thing->Sector->GetOppositePortalGroup(sector_t::ceiling)));
 		thing->Prev = thing->Pos() - oldpos;
 		thing->Sector = P_PointInSector(thing->Pos());
 		thing->PrevPortalGroup = thing->Sector->PortalGroup;
-		thing->LinkToWorld();
+		thing->LinkToWorld(&ctx);
 
 		P_FindFloorCeiling(thing);
 	}
@@ -4920,10 +4922,10 @@ void P_RailAttack(FRailParams *p)
 	}
 
 	AActor *source = p->source;
-	DAngle pitch = -source->Angles.Pitch + p->pitchoffset;
+	DAngle pitch = source->Angles.Pitch + p->pitchoffset;
 	DAngle angle = source->Angles.Yaw + p->angleoffset;
 
-	DVector3 vec(DRotator(pitch, angle, angle));
+	DVector3 vec(DRotator(-pitch, angle, angle));
 	double shootz = source->Center() - source->FloatSpeed + p->offset_z;
 
 	if (!(p->flags & RAF_CENTERZ))
@@ -6533,23 +6535,6 @@ msecnode_t *P_DelSecnode(msecnode_t *node, msecnode_t *sector_t::*listhead)
 
 //=============================================================================
 //
-// P_DelSector_List
-//
-// Deletes the sector_list and NULLs it.
-//
-//=============================================================================
-
-void P_DelSector_List()
-{
-	if (sector_list != NULL)
-	{
-		P_DelSeclist(sector_list);
-		sector_list = NULL;
-	}
-}
-
-//=============================================================================
-//
 // P_DelSeclist
 //
 // Delete an entire sector list
@@ -6571,7 +6556,7 @@ void P_DelSeclist(msecnode_t *node)
 //
 //=============================================================================
 
-void P_CreateSecNodeList(AActor *thing)
+msecnode_t *P_CreateSecNodeList(AActor *thing, msecnode_t *sector_list)
 {
 	msecnode_t *node;
 
@@ -6635,6 +6620,103 @@ void P_CreateSecNodeList(AActor *thing)
 		else
 		{
 			node = node->m_tnext;
+		}
+	}
+	return sector_list;
+}
+
+
+//=============================================================================
+//
+// P_LinkRenderSectors
+//
+// Alters/creates the list of touched sectors for thing's render radius.
+//
+//=============================================================================
+
+void P_LinkRenderSectors(AActor* thing)
+{
+	// if this thing has RenderStyle None, don't link it anywhere.
+	if (thing->renderradius >= 0)
+	{
+		FBoundingBox box(thing->X(), thing->Y(), std::max(thing->radius, thing->renderradius));
+		FBlockLinesIterator it(box);
+		line_t *ld;
+
+		// add to surrounding sectors
+		while ((ld = it.Next()))
+		{
+			if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
+				continue;
+
+			// 
+			// create necessary lists.
+			if (!thing->touching_render_sectors) thing->touching_render_sectors = new std::forward_list<sector_t*>();
+
+			//
+			if (ld->frontsector != thing->Sector)
+			{
+				if (std::find(thing->touching_render_sectors->begin(), thing->touching_render_sectors->end(), ld->frontsector) == thing->touching_render_sectors->end())
+					thing->touching_render_sectors->push_front(ld->frontsector);
+				if (!ld->frontsector->touching_render_things) ld->frontsector->touching_render_things = new std::forward_list<AActor*>();
+				ld->frontsector->touching_render_things->push_front(thing);
+			}
+
+			if (ld->backsector && ld->backsector != thing->Sector)
+			{
+				if (std::find(thing->touching_render_sectors->begin(), thing->touching_render_sectors->end(), ld->backsector) == thing->touching_render_sectors->end())
+					thing->touching_render_sectors->push_front(ld->backsector);
+				if (!ld->backsector->touching_render_things) ld->backsector->touching_render_things = new std::forward_list<AActor*>();
+				ld->backsector->touching_render_things->push_front(thing);
+			}
+		}
+	}
+
+	// add to own sector
+	if (!thing->Sector->touching_render_things) thing->Sector->touching_render_things = new std::forward_list<AActor*>();
+	thing->Sector->touching_render_things->push_front(thing);
+}
+
+
+//=============================================================================
+//
+// P_UnlinkRenderSectors
+//
+// Reverses P_LinkRenderSectors.
+//
+//=============================================================================
+
+void P_UnlinkRenderSectors(AActor* thing)
+{
+	if (thing->renderradius >= 0)
+	{
+		if (thing->touching_render_sectors)
+		{
+			for (auto sec : *thing->touching_render_sectors)
+			{
+				if (sec->touching_render_things)
+				{
+					sec->touching_render_things->remove(thing);
+					if (sec->touching_render_things->empty())
+					{
+						delete sec->touching_render_things;
+						sec->touching_render_things = NULL;
+					}
+				}
+			}
+
+			delete thing->touching_render_sectors;
+			thing->touching_render_sectors = NULL;
+		}
+	}
+
+	if (thing->Sector->touching_render_things)
+	{
+		thing->Sector->touching_render_things->remove(thing);
+		if (thing->Sector->touching_render_things->empty())
+		{
+			delete thing->Sector->touching_render_things;
+			thing->Sector->touching_render_things = NULL;
 		}
 	}
 }

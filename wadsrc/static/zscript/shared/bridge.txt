@@ -85,6 +85,7 @@ class InvisibleBridge : Actor native
 	{
 		RenderStyle "None";
 		Radius 32;
+		RenderRadius -1;
 		Height 4;
 		+SOLID
 		+NOGRAVITY

@@ -7493,7 +7493,7 @@ isresolved:
 		else
 		{
 			// Todo: If this is a qualified call to a parent class function, let it through (but this needs to disable virtual calls later.)
-			ScriptPosition.Message(MSG_ERROR, "Qualified member call to parent class not yet implemented\n", cls->TypeName.GetChars(), MethodName.GetChars());
+			ScriptPosition.Message(MSG_ERROR, "Qualified member call to parent class %s::%s is not yet implemented\n", cls->TypeName.GetChars(), MethodName.GetChars());
 			delete this;
 			return nullptr;
 		}
@@ -7897,7 +7897,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 					// For a reference argument the types must match 100%.
 					if (type != ArgList[i]->ValueType)
 					{
-						ScriptPosition.Message(MSG_ERROR, "Type mismatch in reference argument", Function->SymbolName.GetChars());
+						ScriptPosition.Message(MSG_ERROR, "Type mismatch in reference argument %s", Function->SymbolName.GetChars());
 						x = nullptr;
 					}
 					else
@@ -8346,7 +8346,7 @@ FxExpression *FxGetDefaultByType::Resolve(FCompileContext &ctx)
 		{
 			// this is the ugly case. We do not know what we have and cannot do proper type casting.
 			// For now error out and let this case require explicit handling on the user side.
-			ScriptPosition.Message(MSG_ERROR, "GetDefaultByType() requires an actor class type", static_cast<FxConstant *>(Self)->GetValue().GetString().GetChars());
+			ScriptPosition.Message(MSG_ERROR, "GetDefaultByType() requires an actor class type, but got %s", static_cast<FxConstant *>(Self)->GetValue().GetString().GetChars());
 			delete this;
 			return nullptr;
 		}
@@ -9511,7 +9511,7 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 				/* lax */
 				// Since this happens in released WADs it must pass without a terminal error... :(
 				ScriptPosition.Message(MSG_OPTERROR,
-					"Unknown class name '%s'",
+					"Unknown class name '%s' of type '%s'",
 					clsname.GetChars(), desttype->TypeName.GetChars());
 			}
 			else

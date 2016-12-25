@@ -1297,6 +1297,7 @@ public:
 		sec->thinglist = NULL;
 		sec->touching_thinglist = NULL;		// phares 3/14/98
 		sec->render_thinglist = NULL;
+		sec->touching_render_things = NULL;
 		sec->seqType = (level.flags & LEVEL_SNDSEQTOTALCTRL) ? 0 : -1;
 		sec->nextsec = -1;	//jff 2/26/98 add fields to support locking out
 		sec->prevsec = -1;	// stair retriggering until build completes

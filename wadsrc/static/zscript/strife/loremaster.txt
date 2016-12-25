@@ -55,7 +55,7 @@ class Loremaster : Actor
 		Goto See;
 	Missile:
 		PRST E 4 A_FaceTarget;
-		PRST F 4 A_CustomMissile("LoreShot", 32, 0);
+		PRST F 4 A_SpawnProjectile("LoreShot", 32, 0);
 		PRST E 4 A_SentinelBob;
 		Goto See;
 	Death:

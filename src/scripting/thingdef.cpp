@@ -272,7 +272,7 @@ static void CheckForUnsafeStates(PClassActor *obj)
 				// If an unsafe function (i.e. one that accesses user variables) is being detected, print a warning once and remove the bogus function. We may not call it because that would inevitably crash.
 				auto owner = FState::StaticFindStateOwner(state);
 				GetStateSource(state).Message(MSG_ERROR, TEXTCOLOR_RED "Unsafe state call in state %s.%d which accesses user variables, reached by %s.%s.\n",
-					owner->TypeName.GetChars(), state - owner->OwnedStates, obj->TypeName.GetChars(), FName(*test).GetChars());
+					owner->TypeName.GetChars(), int(state - owner->OwnedStates), obj->TypeName.GetChars(), FName(*test).GetChars());
 			}
 			state = state->NextState;
 		}

@@ -2567,7 +2567,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	if (x1 >= x2)
 		return;
 
-	yscale = YaspectMul * xscale;
+	yscale = xscale; // YaspectMul is not needed for particles as they should always be square
 	ty = particle->Pos.Z - ViewPos.Z;
 	y1 = xs_RoundToInt(CenterY - (ty + psize) * yscale);
 	y2 = xs_RoundToInt(CenterY - (ty - psize) * yscale);

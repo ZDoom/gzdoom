@@ -91,6 +91,7 @@ extern bool r_showviewer;
 DWORD			gl_fixedcolormap;
 area_t			in_area;
 TArray<BYTE> currentmapsection;
+int camtexcount;
 
 void gl_ParseDefs();
 
@@ -1356,6 +1357,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 	}
 
 	tex->SetUpdated();
+	camtexcount++;
 }
 
 //==========================================================================

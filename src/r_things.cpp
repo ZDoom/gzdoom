@@ -532,7 +532,6 @@ void R_DrawVisSprite (vissprite_t *vis)
 	FTexture		*tex;
 	int				x2;
 	fixed_t			xiscale;
-	ESPSResult		mode;
 	bool			ispsprite = (!vis->sector && vis->gpos != FVector3(0, 0, 0));
 
 	if (vis->xscale == 0 || fabs(vis->yscale) < (1.0f / 32000.0f))
@@ -543,7 +542,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 	fixed_t centeryfrac = FLOAT2FIXED(CenterY);
 	R_SetColorMapLight(vis->Style.BaseColormap, 0, vis->Style.ColormapNum << FRACBITS);
 
-	mode = R_SetPatchStyle (vis->Style.RenderStyle, vis->Style.Alpha, vis->Translation, vis->FillColor);
+	bool visible = R_SetPatchStyle (vis->Style.RenderStyle, vis->Style.Alpha, vis->Translation, vis->FillColor);
 
 	if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Shaded])
 	{ // For shaded sprites, R_SetPatchStyle sets a dc_colormap to an alpha table, but
@@ -552,7 +551,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 		R_SetColorMapLight(dc_fcolormap, 0, vis->Style.ColormapNum << FRACBITS);
 	}
 
-	if (mode != DontDraw)
+	if (visible)
 	{
 		tex = vis->pic;
 		spryscale = vis->yscale;
@@ -660,9 +659,8 @@ void R_DrawWallSprite(vissprite_t *spr)
 	MaskedScaleY = (float)iyscale;
 
 	dc_x = x1;
-	ESPSResult mode;
 
-	mode = R_SetPatchStyle (spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
+	bool visible = R_SetPatchStyle (spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
 
 	// R_SetPatchStyle can modify basecolormap.
 	if (rereadcolormap)
@@ -670,7 +668,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 		usecolormap = basecolormap;
 	}
 
-	if (mode == DontDraw)
+	if (!visible)
 	{
 		return;
 	}
@@ -707,14 +705,13 @@ void R_WallSpriteColumn (bool useRt)
 
 void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop, short *clipbot)
 {
-	ESPSResult mode;
 	int flags = 0;
 
 	// Do setup for blending.
 	R_SetColorMapLight(spr->Style.BaseColormap, 0, spr->Style.ColormapNum << FRACBITS);
-	mode = R_SetPatchStyle(spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
+	bool visible = R_SetPatchStyle(spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
 
-	if (mode == DontDraw)
+	if (!visible)
 	{
 		return;
 	}

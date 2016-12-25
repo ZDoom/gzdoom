@@ -127,14 +127,8 @@ namespace swrenderer
 	void R_InitShadeMaps();
 	void R_InitFuzzTable(int fuzzoff);
 
-	enum ESPSResult
-	{
-		DontDraw,	// not useful to draw this
-		DoDraw		// draw this
-	};
-
-	ESPSResult R_SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color);
-	ESPSResult R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color);
+	bool R_SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color);
+	bool R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color);
 	void R_FinishSetPatchStyle(); // Call this after finished drawing the current thing, in case its style was STYLE_Shade
 	bool R_GetTransMaskDrawers(void(**drawCol1)(), void(**drawCol4)());
 

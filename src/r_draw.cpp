@@ -393,7 +393,7 @@ namespace swrenderer
 		FDynamicColormap *basecolormapsave;
 	}
 
-	ESPSResult R_SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color)
+	bool R_SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color)
 	{
 		using namespace drawerargs;
 
@@ -445,13 +445,13 @@ namespace swrenderer
 		if (style.BlendOp == STYLEOP_Fuzz)
 		{
 			colfunc = fuzzcolfunc;
-			return DoDraw;
+			return true;
 		}
 		else if (style == LegacyRenderStyles[STYLE_Shaded])
 		{
 			// Shaded drawer only gets 16 levels of alpha because it saves memory.
 			if ((alpha >>= 12) == 0)
-				return DontDraw;
+				return false;
 			colfunc = R_DrawShadedColumn;
 			hcolfunc_post1 = rt_shaded1col;
 			hcolfunc_post4 = rt_shaded4cols;
@@ -466,7 +466,7 @@ namespace swrenderer
 			{
 				R_SetColorMapLight(basecolormap, 0, 0);
 			}
-			return DoDraw;
+			return true;
 		}
 
 		fglevel = GetAlpha(style.SrcAlpha, alpha);
@@ -497,12 +497,12 @@ namespace swrenderer
 
 		if (!R_SetBlendFunc(style.BlendOp, fglevel, bglevel, style.Flags))
 		{
-			return DontDraw;
+			return false;
 		}
-		return DoDraw;
+		return true;
 	}
 
-	ESPSResult R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color)
+	bool R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color)
 	{
 		return R_SetPatchStyle(style, FLOAT2FIXED(alpha), translation, color);
 	}

@@ -218,14 +218,10 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 	curline = ds->curline;
 
-	// killough 4/11/98: draw translucent 2s normal textures
-	// [RH] modified because we don't use user-definable translucency maps
-	ESPSResult drawmode;
-
-	drawmode = R_SetPatchStyle (LegacyRenderStyles[curline->linedef->flags & ML_ADDTRANS ? STYLE_Add : STYLE_Translucent],
+	bool visible = R_SetPatchStyle (LegacyRenderStyles[curline->linedef->flags & ML_ADDTRANS ? STYLE_Add : STYLE_Translucent],
 		(float)MIN(curline->linedef->alpha, 1.),	0, 0);
 
-	if ((drawmode == DontDraw && !ds->bFogBoundary && !ds->bFakeBoundary))
+	if (!visible && !ds->bFogBoundary && !ds->bFakeBoundary)
 	{
 		return;
 	}
@@ -280,7 +276,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 			goto clearfog;
 		}
 	}
-	if ((ds->bFakeBoundary && !(ds->bFakeBoundary & 4)) || drawmode == DontDraw)
+	if ((ds->bFakeBoundary && !(ds->bFakeBoundary & 4)) || !visible)
 	{
 		goto clearfog;
 	}
@@ -415,7 +411,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		mceilingclip = wallupper;
 
 		// draw the columns one at a time
-		if (drawmode == DoDraw)
+		if (visible)
 		{
 			for (dc_x = x1; dc_x < x2; ++dc_x)
 			{
@@ -512,11 +508,10 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	double yscale;
 
 	fixed_t Alpha = Scale(rover->alpha, OPAQUE, 255);
-	ESPSResult drawmode;
-	drawmode = R_SetPatchStyle (LegacyRenderStyles[rover->flags & FF_ADDITIVETRANS ? STYLE_Add : STYLE_Translucent],
+	bool visible = R_SetPatchStyle (LegacyRenderStyles[rover->flags & FF_ADDITIVETRANS ? STYLE_Add : STYLE_Translucent],
 		Alpha, 0, 0);
 
-	if(drawmode == DontDraw) {
+	if(!visible) {
 		R_FinishSetPatchStyle();
 		return;
 	}
@@ -2297,9 +2292,8 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	do
 	{
 		dc_x = x1;
-		ESPSResult mode;
 
-		mode = R_SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
+		bool visible = R_SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
 
 		// R_SetPatchStyle can modify basecolormap.
 		if (rereadcolormap)
@@ -2307,11 +2301,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			usecolormap = basecolormap;
 		}
 
-		if (mode == DontDraw)
-		{
-			needrepeat = 0;
-		}
-		else
+		if (visible)
 		{
 			while (dc_x < x2)
 			{

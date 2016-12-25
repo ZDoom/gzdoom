@@ -65,6 +65,7 @@
 #include "r_data/voxels.h"
 #include "p_local.h"
 #include "p_maputl.h"
+#include "r_voxel.h"
 
 EXTERN_CVAR(Bool, st_scale)
 EXTERN_CVAR(Bool, r_shadercolormaps)
@@ -691,9 +692,9 @@ void R_WallSpriteColumn ()
 	rw_light += rw_lightstep;
 }
 
+#if 0
 void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop, short *clipbot)
 {
-#if 0
 	int flags = 0;
 
 	// Do setup for blending.
@@ -761,8 +762,8 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 
 	R_FinishSetPatchStyle();
 	NetUpdate();
-#endif
 }
+#endif
 
 //
 // R_ProjectSprite
@@ -2842,12 +2843,12 @@ inline int sgn(int v)
 	return v < 0 ? -1 : v > 0 ? 1 : 0;
 }
 
+#if 0
 void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 	const FVector3 &dasprpos, DAngle dasprang,
 	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
 	FSWColormap *colormap, int colormapnum, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags)
 {
-#if 0
 	int i, j, k, x, y, syoff, ggxstart, ggystart, nxoff;
 	fixed_t cosang, sinang, sprcosang, sprsinang;
 	int backx, backy, gxinc, gyinc;
@@ -3175,8 +3176,8 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 			}
 		}
 	}
-#endif
 }
+#endif
 
 //==========================================================================
 //

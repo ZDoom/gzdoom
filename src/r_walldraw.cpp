@@ -805,28 +805,30 @@ static void ProcessWallWorker(
 
 	double xmagnitude = 1.0;
 
-#if !defined(NO_DYNAMIC_SWLIGHTS)
-	for (int x = x1; x < x2; x++, light += rw_lightstep)
+	if (r_dynlights)
 	{
-		int y1 = uwal[x];
-		int y2 = dwal[x];
-		if (y2 <= y1)
-			continue;
+		for (int x = x1; x < x2; x++, light += rw_lightstep)
+		{
+			int y1 = uwal[x];
+			int y2 = dwal[x];
+			if (y2 <= y1)
+				continue;
 
-		if (!fixed)
-			R_SetColorMapLight(basecolormap, light, wallshade);
+			if (!fixed)
+				R_SetColorMapLight(basecolormap, light, wallshade);
 
-		if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
+			if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
 
-		WallSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic, getcol);
-		Draw1Column(x, y1, y2, sampler, draw1column);
+			WallSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic, getcol);
+			Draw1Column(x, y1, y2, sampler, draw1column);
+		}
+		NetUpdate();
+		return;
 	}
-#else
+
 	// Calculate where 4 column alignment begins and ends:
 	int aligned_x1 = clamp((x1 + 3) / 4 * 4, x1, x2);
 	int aligned_x2 = clamp(x2 / 4 * 4, x1, x2);
-
-	double xmagnitude = 1.0;
 
 	// First unaligned columns:
 	for (int x = x1; x < aligned_x1; x++, light += rw_lightstep)
@@ -956,7 +958,6 @@ static void ProcessWallWorker(
 		WallSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic, getcol);
 		Draw1Column(x, y1, y2, sampler, draw1column);
 	}
-#endif
 
 	NetUpdate();
 }

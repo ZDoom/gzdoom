@@ -6651,9 +6651,9 @@ void P_CreateSecNodeList(AActor *thing)
 void P_LinkRenderSectors(AActor* thing)
 {
 	// if this thing has RenderStyle None, don't link it anywhere.
-	if (thing->renderradius != 0)
+	if (thing->renderradius >= 0)
 	{
-		FBoundingBox box(thing->X(), thing->Y(), thing->renderradius > 0 ? thing->renderradius : thing->renderradius);
+		FBoundingBox box(thing->X(), thing->Y(), std::max(thing->radius, thing->renderradius));
 		FBlockLinesIterator it(box);
 		line_t *ld;
 
@@ -6702,7 +6702,7 @@ void P_LinkRenderSectors(AActor* thing)
 
 void P_UnlinkRenderSectors(AActor* thing)
 {
-	if (thing->renderradius != 0)
+	if (thing->renderradius >= 0)
 	{
 		if (thing->touching_render_sectors)
 		{

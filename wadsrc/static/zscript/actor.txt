@@ -202,7 +202,7 @@ class Actor : Thinker native
 		Health DEFAULT_HEALTH;
 		Reactiontime 8;
 		Radius 20;
-                RenderRadius -1;
+                RenderRadius 0;
 		Height 16;
 		Mass 100;
 		RenderStyle 'Normal';

@@ -1234,10 +1234,8 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 	spriteshade = LIGHT2SHADE(lightlevel + r_actualextralight);
 
 	// Handle all things in sector.
-	for (std::forward_list<AActor*>::iterator it = sec->touching_render_things->begin();
-		 it != sec->touching_render_things->end(); it++)
+	for (auto thing : *sec->touching_render_things)
 	{
-		thing = (*it);
 		if (thing->validcount == validcount) continue;
 		thing->validcount = validcount;
 		

@@ -6707,10 +6707,8 @@ void P_UnlinkRenderSectors(AActor* thing)
 	{
 		if (thing->touching_render_sectors)
 		{
-			for (std::forward_list<sector_t*>::iterator it = thing->touching_render_sectors->begin();
-				it != thing->touching_render_sectors->end(); it++)
+			for (auto sec : *thing->touching_render_sectors)
 			{
-				sector_t* sec = (*it);
 				if (sec->touching_render_things)
 				{
 					sec->touching_render_things->remove(thing);

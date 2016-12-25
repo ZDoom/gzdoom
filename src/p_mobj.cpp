@@ -204,6 +204,7 @@ DEFINE_FIELD(AActor, ceilingsector)
 DEFINE_FIELD(AActor, ceilingpic)
 DEFINE_FIELD(AActor, Height)
 DEFINE_FIELD(AActor, radius)
+DEFINE_FIELD(AActor, renderradius)
 DEFINE_FIELD(AActor, projectilepassheight)
 DEFINE_FIELD(AActor, tics)
 DEFINE_FIELD_NAMED(AActor, state, curstate)		// clashes with type 'state'.

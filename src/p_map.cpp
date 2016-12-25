@@ -6664,6 +6664,8 @@ void P_LinkRenderSectors(AActor* thing)
 		// create necessary lists.
 		if (!thing->touching_render_sectors) thing->touching_render_sectors = new std::forward_list<sector_t*>();
 		thing->touching_render_sectors->push_front(ld->frontsector);
+
+		//
 		if (!ld->frontsector->touching_render_things) ld->frontsector->touching_render_things = new std::forward_list<AActor*>();
 		ld->frontsector->touching_render_things->push_front(thing);
 		
@@ -6706,10 +6708,10 @@ void P_UnlinkRenderSectors(AActor* thing)
 				}
 			}
 		}
-	}
 
-	delete thing->touching_render_sectors;
-	thing->touching_render_sectors = NULL;
+		delete thing->touching_render_sectors;
+		thing->touching_render_sectors = NULL;
+	}
 
 	if (thing->Sector->touching_render_things)
 	{

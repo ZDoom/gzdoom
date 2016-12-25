@@ -70,6 +70,7 @@ CUSTOM_CVAR(Int, uiscale, 2, CVAR_ARCHIVE | CVAR_NOINITCALL)
 		StatusBar->ScreenSizeChanged();
 	}
 }
+EXTERN_CVAR(Bool, r_blendmethod)
 
 // [RH] Stretch values to make a 320x200 image best fit the screen
 // without using fractional steppings
@@ -1009,17 +1010,17 @@ void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 		uint32_t *spot = (uint32_t*)GetBuffer() + oldyyshifted + xx;
 
 		uint32_t fg = swrenderer::LightBgra::shade_pal_index_simple(basecolor, swrenderer::LightBgra::calc_light_multiplier(0));
-		uint32_t fg_red = (fg >> 16) & 0xff;
-		uint32_t fg_green = (fg >> 8) & 0xff;
-		uint32_t fg_blue = fg & 0xff;
+		uint32_t fg_red = (((fg >> 16) & 0xff) * (63 - level)) >> 6;
+		uint32_t fg_green = (((fg >> 8) & 0xff) * (63 - level)) >> 6;
+		uint32_t fg_blue = ((fg & 0xff) * (63 - level)) >> 6;
 
-		uint32_t bg_red = (*spot >> 16) & 0xff;
-		uint32_t bg_green = (*spot >> 8) & 0xff;
-		uint32_t bg_blue = (*spot) & 0xff;
+		uint32_t bg_red = (((*spot >> 16) & 0xff) * level) >> 6;
+		uint32_t bg_green = (((*spot >> 8) & 0xff) * level) >> 6;
+		uint32_t bg_blue = (((*spot) & 0xff) * level) >> 6;
 
-		uint32_t red = (fg_red + bg_red + 1) / 2;
-		uint32_t green = (fg_green + bg_green + 1) / 2;
-		uint32_t blue = (fg_blue + bg_blue + 1) / 2;
+		uint32_t red = fg_red + bg_red;
+		uint32_t green = fg_green + bg_green;
+		uint32_t blue = fg_blue + bg_blue;
 
 		*spot = 0xff000000 | (red << 16) | (green << 8) | blue;
 	}

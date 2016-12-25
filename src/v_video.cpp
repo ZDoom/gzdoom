@@ -424,6 +424,17 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 
 		if (!r_blendmethod)
 		{
+			{
+				int amount;
+
+				amount = (int)(damount * 64);
+				bg2rgb = Col2RGB8[64 - amount];
+
+				fg = (((color.r * amount) >> 4) << 20) |
+					((color.g * amount) >> 4) |
+					(((color.b * amount) >> 4) << 10);
+			}
+
 			for (y = h; y != 0; y--)
 			{
 				for (x = w; x != 0; x--)

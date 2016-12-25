@@ -63,7 +63,7 @@ static void UnclipSubsector(subsector_t *sub)
 		angle_t endAngle = seg->v1->GetClipAngle();
 
 		// Back side, i.e. backface culling	- read: endAngle >= startAngle!
-		if (startAngle-endAngle >= ANGLE_180)  
+		if (startAngle - endAngle >= ANGLE_180)
 		{
 			clipper.SafeRemoveClipRange(startAngle, endAngle);
 			clipper.SetBlocked(false);
@@ -84,7 +84,7 @@ static void UnclipSubsector(subsector_t *sub)
 static subsector_t *currentsubsector;
 static sector_t *currentsector;
 
-static void AddLine (seg_t *seg, bool portalclip)
+static void AddLine(seg_t *seg, bool portalclip)
 {
 #ifdef _DEBUG
 	if (seg->linedef - lines == 38)
@@ -107,7 +107,7 @@ static void AddLine (seg_t *seg, bool portalclip)
 	endAngle = seg->v1->GetClipAngle();
 
 	// Back side, i.e. backface culling	- read: endAngle >= startAngle!
-	if (startAngle-endAngle<ANGLE_180)  
+	if (startAngle - endAngle<ANGLE_180)
 	{
 		return;
 	}
@@ -116,7 +116,7 @@ static void AddLine (seg_t *seg, bool portalclip)
 	{
 		if (!(currentsubsector->flags & SSECF_DRAWN))
 		{
-			if (clipper.SafeCheckRange(startAngle, endAngle)) 
+			if (clipper.SafeCheckRange(startAngle, endAngle))
 			{
 				currentsubsector->flags |= SSECF_DRAWN;
 			}
@@ -124,7 +124,7 @@ static void AddLine (seg_t *seg, bool portalclip)
 		return;
 	}
 
-	if (!clipper.SafeCheckRange(startAngle, endAngle)) 
+	if (!clipper.SafeCheckRange(startAngle, endAngle))
 	{
 		return;
 	}
@@ -143,14 +143,14 @@ static void AddLine (seg_t *seg, bool portalclip)
 			if (!seg->linedef->isVisualPortal())
 			{
 				FTexture * tex = TexMan(seg->sidedef->GetTexture(side_t::mid));
-				if (!tex || tex->UseType==FTexture::TEX_Null) 
+				if (!tex || tex->UseType == FTexture::TEX_Null)
 				{
 					// nothing to do here!
-					seg->linedef->validcount=validcount;
+					seg->linedef->validcount = validcount;
 					return;
 				}
 			}
-			backsector=currentsector;
+			backsector = currentsector;
 		}
 		else
 		{
@@ -165,7 +165,7 @@ static void AddLine (seg_t *seg, bool portalclip)
 			}
 		}
 	}
-	else 
+	else
 	{
 		// Backsector for polyobj segs is always the containing sector itself
 		backsector = currentsector;
@@ -173,9 +173,9 @@ static void AddLine (seg_t *seg, bool portalclip)
 
 	seg->linedef->flags |= ML_MAPPED;
 
-	if (ispoly || seg->linedef->validcount!=validcount) 
+	if (ispoly || seg->linedef->validcount != validcount)
 	{
-		if (!ispoly) seg->linedef->validcount=validcount;
+		if (!ispoly) seg->linedef->validcount = validcount;
 
 		if (gl_render_walls)
 		{
@@ -209,7 +209,7 @@ static void PolySubsector(subsector_t * sub)
 	{
 		if (line->linedef)
 		{
-			AddLine (line, GLRenderer->mClipPortal != NULL);
+			AddLine(line, GLRenderer->mClipPortal != NULL);
 		}
 		line++;
 	}
@@ -224,7 +224,7 @@ static void PolySubsector(subsector_t * sub)
 //
 //==========================================================================
 
-static void RenderPolyBSPNode (void *node)
+static void RenderPolyBSPNode(void *node)
 {
 	while (!((size_t)node & 1))  // Keep going until found a subsector
 	{
@@ -234,7 +234,7 @@ static void RenderPolyBSPNode (void *node)
 		int side = R_PointOnSide(viewx, viewy, bsp);
 
 		// Recursively divide front space (toward the viewer).
-		RenderPolyBSPNode (bsp->children[side]);
+		RenderPolyBSPNode(bsp->children[side]);
 
 		// Possibly divide back space (away from the viewer).
 		side ^= 1;
@@ -247,7 +247,7 @@ static void RenderPolyBSPNode (void *node)
 
 		node = bsp->children[side];
 	}
-	PolySubsector ((subsector_t *)((BYTE *)node - 1));
+	PolySubsector((subsector_t *)((BYTE *)node - 1));
 }
 
 //==========================================================================
@@ -304,11 +304,11 @@ static inline void AddLines(subsector_t * sub, sector_t * sector)
 		{
 			if (seg->linedef == NULL)
 			{
-				if (!(sub->flags & SSECF_DRAWN)) AddLine (seg, GLRenderer->mClipPortal != NULL);
+				if (!(sub->flags & SSECF_DRAWN)) AddLine(seg, GLRenderer->mClipPortal != NULL);
 			}
-			else if (!(seg->sidedef->Flags & WALLF_POLYOBJ)) 
+			else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
 			{
-				AddLine (seg, GLRenderer->mClipPortal != NULL);
+				AddLine(seg, GLRenderer->mClipPortal != NULL);
 			}
 			seg++;
 		}
@@ -361,22 +361,28 @@ static inline void RenderThings(subsector_t * sub, sector_t * sector)
 {
 
 	SetupSprite.Clock();
-	sector_t * sec=sub->sector;
+	sector_t * sec = sub->sector;
 	// Handle all things in sector.
-	for (AActor * thing = sec->thinglist; thing; thing = thing->snext)
+	if (sec->touching_render_things != NULL)
 	{
-		FIntCVar *cvar = thing->GetClass()->distancecheck;
-		if (cvar != NULL && *cvar >= 0)
+		for (auto thing : *sec->touching_render_things)
 		{
-			double dist = (thing->Pos() - ViewPos).LengthSquared();
-			double check = (double)**cvar;
-			if (dist >= check * check)
-			{
-				continue;
-			}
-		}
+			if (thing->validcount == validcount) continue;
+			thing->validcount = validcount;
 
-		GLRenderer->ProcessSprite(thing, sector, false);
+			FIntCVar *cvar = thing->GetClass()->distancecheck;
+			if (cvar != NULL && *cvar >= 0)
+			{
+				double dist = (thing->Pos() - ViewPos).LengthSquared();
+				double check = (double)**cvar;
+				if (dist >= check * check)
+				{
+					continue;
+				}
+			}
+
+			GLRenderer->ProcessSprite(thing, sector, false);
+		}
 	}
 	for (msecnode_t *node = sec->render_thinglist; node; node = node->m_snext)
 	{
@@ -413,22 +419,22 @@ static void DoSubsector(subsector_t * sub)
 	sector_t * sector;
 	sector_t * fakesector;
 	sector_t fake;
-	
+
 #ifdef _DEBUG
-	if (sub->sector-sectors==931)
+	if (sub->sector - sectors == 931)
 	{
 		int a = 0;
 	}
 #endif
 
-	sector=sub->sector;
+	sector = sub->sector;
 	if (!sector) return;
 
 	// If the mapsections differ this subsector can't possibly be visible from the current view point
-	if (!(currentmapsection[sub->mapsection>>3] & (1 << (sub->mapsection & 7)))) return;
+	if (!(currentmapsection[sub->mapsection >> 3] & (1 << (sub->mapsection & 7)))) return;
 	if (sub->flags & SSECF_POLYORG) return;	// never render polyobject origin subsectors because their vertices no longer are where one may expect.
 
-	if (gl_drawinfo->ss_renderflags[sub-subsectors] & SSRF_SEEN)
+	if (gl_drawinfo->ss_renderflags[sub - subsectors] & SSRF_SEEN)
 	{
 		// This means that we have reached a subsector in a portal that has been marked 'seen'
 		// from the other side of the portal. This means we must clear the clipper for the
@@ -437,7 +443,7 @@ static void DoSubsector(subsector_t * sub)
 	}
 	if (clipper.IsBlocked()) return;	// if we are inside a stacked sector portal which hasn't unclipped anything yet.
 
-	fakesector=gl_FakeFlat(sector, &fake, false);
+	fakesector = gl_FakeFlat(sector, &fake, false);
 
 	if (GLRenderer->mClipPortal)
 	{
@@ -462,7 +468,7 @@ static void DoSubsector(subsector_t * sub)
 	{
 		SetupSprite.Clock();
 
-		for (i = ParticlesInSubsec[DWORD(sub-subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
+		for (i = ParticlesInSubsec[DWORD(sub - subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
 		{
 			GLRenderer->ProcessParticle(&Particles[i], fakesector);
 		}
@@ -490,13 +496,13 @@ static void DoSubsector(subsector_t * sub)
 	if (gl_render_flats)
 	{
 		// Subsectors with only 2 lines cannot have any area
-		if (sub->numlines>2 || (sub->hacked&1)) 
+		if (sub->numlines>2 || (sub->hacked & 1))
 		{
 			// Exclude the case when it tries to render a sector with a heightsec
 			// but undetermined heightsec state. This can only happen if the
 			// subsector is obstructed but not excluded due to a large bounding box.
 			// Due to the way a BSP works such a subsector can never be visible
-			if (!sector->heightsec || sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC || in_area!=area_default)
+			if (!sector->heightsec || sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC || in_area != area_default)
 			{
 				if (sector != sub->render_sector)
 				{
@@ -516,8 +522,8 @@ static void DoSubsector(subsector_t * sub)
 					SetupFlat.Unclock();
 				}
 				// mark subsector as processed - but mark for rendering only if it has an actual area.
-				gl_drawinfo->ss_renderflags[sub-subsectors] = 
-					(sub->numlines > 2) ? SSRF_PROCESSED|SSRF_RENDERALL : SSRF_PROCESSED;
+				gl_drawinfo->ss_renderflags[sub - subsectors] =
+					(sub->numlines > 2) ? SSRF_PROCESSED | SSRF_RENDERALL : SSRF_PROCESSED;
 				if (sub->hacked & 1) gl_drawinfo->AddHackedSubsector(sub);
 
 				FPortal *portal;
@@ -552,11 +558,11 @@ static void DoSubsector(subsector_t * sub)
 //
 //==========================================================================
 
-void gl_RenderBSPNode (void *node)
+void gl_RenderBSPNode(void *node)
 {
 	if (numnodes == 0)
 	{
-		DoSubsector (subsectors);
+		DoSubsector(subsectors);
 		return;
 	}
 	while (!((size_t)node & 1))  // Keep going until found a subsector
@@ -567,7 +573,7 @@ void gl_RenderBSPNode (void *node)
 		int side = R_PointOnSide(viewx, viewy, bsp);
 
 		// Recursively divide front space (toward the viewer).
-		gl_RenderBSPNode (bsp->children[side]);
+		gl_RenderBSPNode(bsp->children[side]);
 
 		// Possibly divide back space (away from the viewer).
 		side ^= 1;
@@ -575,13 +581,13 @@ void gl_RenderBSPNode (void *node)
 		// It is not necessary to use the slower precise version here
 		if (!clipper.CheckBox(bsp->bbox[side]))
 		{
-			if (!(gl_drawinfo->no_renderflags[bsp-nodes] & SSRF_SEEN))
+			if (!(gl_drawinfo->no_renderflags[bsp - nodes] & SSRF_SEEN))
 				return;
 		}
 
 		node = bsp->children[side];
 	}
-	DoSubsector ((subsector_t *)((BYTE *)node - 1));
+	DoSubsector((subsector_t *)((BYTE *)node - 1));
 }
 
 

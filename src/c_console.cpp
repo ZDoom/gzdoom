@@ -1577,7 +1577,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 				static TArray<char> command;
 				const size_t length = buffer.Text.Len();
 
-				command.Resize(length + 1);
+				command.Resize(unsigned(length + 1));
 				memcpy(&command[0], buffer.Text.GetChars(), length);
 				command[length] = '\0';
 

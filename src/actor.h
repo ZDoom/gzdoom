@@ -562,7 +562,13 @@ inline T *GetDefault ()
 
 struct line_t;
 struct secplane_t;
+struct msecnode_t;
 struct FStrifeDialogueNode;
+
+struct FLinkContext
+{
+	msecnode_t *sector_list = nullptr;
+};
 
 class DDropItem : public DObject
 {
@@ -1220,8 +1226,8 @@ private:
 	bool FixMapthingPos();
 
 public:
-	void LinkToWorld (bool spawningmapthing=false, sector_t *sector = NULL);
-	void UnlinkFromWorld ();
+	void LinkToWorld (FLinkContext *ctx, bool spawningmapthing=false, sector_t *sector = NULL);
+	void UnlinkFromWorld(FLinkContext *ctx);
 	void AdjustFloorClip ();
 	bool InStateSequence(FState * newstate, FState * basestate);
 	int GetTics(FState * newstate);

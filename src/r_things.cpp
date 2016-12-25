@@ -1217,7 +1217,6 @@ static void R_ProjectWallSprite(AActor *thing, const DVector3 &pos, FTextureID p
 // [RH] Save which side of heightsec sprite is on here.
 void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 {
-	AActor *thing;
 	F3DFloor *fakeceiling = NULL;
 	F3DFloor *fakefloor = NULL;
 

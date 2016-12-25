@@ -514,7 +514,7 @@ void AActor::PostSerialize()
 	touching_sectorlist = NULL;
 	if (touching_render_sectors) delete touching_render_sectors;
 	touching_render_sectors = NULL;
-	LinkToWorld(false, Sector);
+	LinkToWorld(nullptr, false, Sector);
 
 	AddToHash();
 	if (player)
@@ -3690,12 +3690,13 @@ DVector3 AActor::GetPortalTransition(double byoffset, sector_t **pSec)
 void AActor::CheckPortalTransition(bool islinked)
 {
 	bool moved = false;
+	FLinkContext ctx;
 	while (!Sector->PortalBlocksMovement(sector_t::ceiling))
 	{
 		if (Z() >= Sector->GetPortalPlaneZ(sector_t::ceiling))
 		{
 			DVector3 oldpos = Pos();
-			if (islinked && !moved) UnlinkFromWorld();
+			if (islinked && !moved) UnlinkFromWorld(&ctx);
 			SetXYZ(PosRelative(Sector->GetOppositePortalGroup(sector_t::ceiling)));
 			Prev = Pos() - oldpos;
 			Sector = P_PointInSector(Pos());
@@ -3712,7 +3713,7 @@ void AActor::CheckPortalTransition(bool islinked)
 			if (Z() < portalz && floorz < portalz)
 			{
 				DVector3 oldpos = Pos();
-				if (islinked && !moved) UnlinkFromWorld();
+				if (islinked && !moved) UnlinkFromWorld(&ctx);
 				SetXYZ(PosRelative(Sector->GetOppositePortalGroup(sector_t::floor)));
 				Prev = Pos() - oldpos;
 				Sector = P_PointInSector(Pos());
@@ -3722,7 +3723,7 @@ void AActor::CheckPortalTransition(bool islinked)
 			else break;
 		}
 	}
-	if (islinked && moved) LinkToWorld();
+	if (islinked && moved) LinkToWorld(&ctx);
 }
 
 //
@@ -3785,11 +3786,12 @@ void AActor::Tick ()
 
 		if (!Vel.isZero() || !(flags & MF_NOBLOCKMAP))
 		{
-			UnlinkFromWorld();
+			FLinkContext ctx;
+			UnlinkFromWorld(&ctx);
 			flags |= MF_NOBLOCKMAP;
 			SetXYZ(Vec3Offset(Vel));
 			CheckPortalTransition(false);
-			LinkToWorld();
+			LinkToWorld(&ctx);
 		}
 	}
 	else
@@ -4553,7 +4555,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	actor->Speed = actor->GetClass()->FastSpeed;
 
 	// set subsector and/or block links
-	actor->LinkToWorld (SpawningMapThing);
+	actor->LinkToWorld (nullptr, SpawningMapThing);
 	actor->ClearInterpolation();
 
 	actor->dropoffz = actor->floorz = actor->Sector->floorplane.ZatPoint(pos);
@@ -4930,11 +4932,8 @@ void AActor::Destroy ()
 	RemoveFromHash ();
 
 	// unlink from sector and block lists
-	UnlinkFromWorld ();
+	UnlinkFromWorld (nullptr);
 	flags |= MF_NOSECTOR|MF_NOBLOCKMAP;
-
-	// Delete all nodes on the current sector_list			phares 3/16/98
-	P_DelSector_List();
 
 	// Transform any playing sound into positioned, non-actor sounds.
 	S_RelinkSound (this, NULL);
@@ -7486,9 +7485,10 @@ void AActor::RestoreSpecialPosition()
 	// Move item back to its original location
 	DVector2 sp = SpawnPoint;
 
-	UnlinkFromWorld();
+	FLinkContext ctx;
+	UnlinkFromWorld(&ctx);
 	SetXY(sp);
-	LinkToWorld(true);
+	LinkToWorld(&ctx, true);
 	SetZ(Sector->floorplane.ZatPoint(sp));
 	P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS | FFCF_NOPORTALS);	// no portal checks here so that things get spawned in this sector.
 

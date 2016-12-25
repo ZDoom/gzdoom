@@ -216,9 +216,10 @@ bool ModActorFlag(AActor *actor, FString &flagname, bool set, bool printerror)
 				// If these 2 flags get changed we need to update the blockmap and sector links.
 				bool linkchange = flagp == &actor->flags && (fd->flagbit == MF_NOBLOCKMAP || fd->flagbit == MF_NOSECTOR);
 
-				if (linkchange) actor->UnlinkFromWorld();
+				FLinkContext ctx;
+				if (linkchange) actor->UnlinkFromWorld(&ctx);
 				ModActorFlag(actor, fd, set);
-				if (linkchange) actor->LinkToWorld();
+				if (linkchange) actor->LinkToWorld(&ctx);
 			}
 
 			if (actor->CountsAsKill() && actor->health > 0) ++level.total_monsters;

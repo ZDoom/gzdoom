@@ -364,6 +364,7 @@ void APathFollower::NewNode ()
 bool APathFollower::Interpolate ()
 {
 	DVector3 dpos(0, 0, 0);
+	FLinkContext ctx;
 
 	if ((args[2] & 8) && Time > 0.f)
 	{
@@ -372,7 +373,7 @@ bool APathFollower::Interpolate ()
 
 	if (CurrNode->Next==NULL) return false;
 
-	UnlinkFromWorld ();
+	UnlinkFromWorld (&ctx);
 	DVector3 newpos;
 	if (args[2] & 1)
 	{	// linear
@@ -389,7 +390,7 @@ bool APathFollower::Interpolate ()
 		newpos.Z = Splerp(PrevNode->Z(), CurrNode->Z(), CurrNode->Next->Z(), CurrNode->Next->Next->Z());
 	}
 	SetXYZ(newpos);
-	LinkToWorld ();
+	LinkToWorld (&ctx);
 
 	if (args[2] & 6)
 	{
@@ -541,10 +542,11 @@ void AActorMover::Activate (AActor *activator)
 	tracer->flags |= MF_NOGRAVITY;
 	if (args[2] & 128)
 	{
-		tracer->UnlinkFromWorld ();
+		FLinkContext ctx;
+		tracer->UnlinkFromWorld (&ctx);
 		tracer->flags |= MF_NOBLOCKMAP;
 		tracer->flags &= ~MF_SOLID;
-		tracer->LinkToWorld ();
+		tracer->LinkToWorld (&ctx);
 	}
 	if (tracer->flags3 & MF3_ISMONSTER)
 	{
@@ -563,9 +565,10 @@ void AActorMover::Deactivate (AActor *activator)
 		Super::Deactivate (activator);
 		if (tracer != NULL)
 		{
-			tracer->UnlinkFromWorld ();
+			FLinkContext ctx;
+			tracer->UnlinkFromWorld (&ctx);
 			tracer->flags = ActorFlags::FromInt (special1);
-			tracer->LinkToWorld ();
+			tracer->LinkToWorld (&ctx);
 			tracer->flags2 = ActorFlags2::FromInt (special2);
 		}
 	}

@@ -32,7 +32,6 @@ class CustomBridge : Actor native
 		+NOLIFTDROP
 		+ACTLIKEBRIDGE
 		Radius 32;
-		RenderRadius -1;
 		Height 2;
 		RenderStyle "None";
 	}

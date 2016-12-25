@@ -33,6 +33,7 @@
 **
 */
 
+#include <xmmintrin.h>
 #include "templates.h"
 #include "doomtype.h"
 #include "doomdef.h"

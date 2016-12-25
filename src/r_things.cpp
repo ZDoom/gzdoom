@@ -1225,7 +1225,7 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 	// A sector might have been split into several
 	//	subsectors during BSP building.
 	// Thus we check whether it was already added.
-	if (sec->thinglist == NULL || sec->validcount == validcount)
+	if (sec->touching_render_things == NULL || sec->validcount == validcount)
 		return;
 
 	// Well, now it will be done.
@@ -1234,8 +1234,13 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 	spriteshade = LIGHT2SHADE(lightlevel + r_actualextralight);
 
 	// Handle all things in sector.
-	for (thing = sec->thinglist; thing; thing = thing->snext)
+	for (std::forward_list<AActor*>::iterator it = sec->touching_render_things->begin();
+		 it != sec->touching_render_things->end(); it++)
 	{
+		thing = (*it);
+		if (thing->validcount == validcount) continue;
+		thing->validcount = validcount;
+		
 		FIntCVar *cvar = thing->GetClass()->distancecheck;
 		if (cvar != NULL && *cvar >= 0)
 		{

@@ -277,6 +277,8 @@ void AActor::UnlinkFromWorld ()
 
 			sector_list = touching_sectorlist;
 			touching_sectorlist = NULL; //to be restored by P_SetThingPosition
+
+			P_UnlinkRenderSectors(this);
 		}
 	}
 		
@@ -456,6 +458,8 @@ void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
 		P_CreateSecNodeList(this);
 		touching_sectorlist = sector_list;	// Attach to thing
 		sector_list = NULL;		// clear for next time
+
+		P_LinkRenderSectors(this);
 	}
 
 

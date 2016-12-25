@@ -204,6 +204,7 @@ DEFINE_FIELD(AActor, ceilingsector)
 DEFINE_FIELD(AActor, ceilingpic)
 DEFINE_FIELD(AActor, Height)
 DEFINE_FIELD(AActor, radius)
+DEFINE_FIELD(AActor, renderradius)
 DEFINE_FIELD(AActor, projectilepassheight)
 DEFINE_FIELD(AActor, tics)
 DEFINE_FIELD_NAMED(AActor, state, curstate)		// clashes with type 'state'.
@@ -510,6 +511,8 @@ void AActor::Serialize(FSerializer &arc)
 void AActor::PostSerialize()
 {
 	touching_sectorlist = NULL;
+	if (touching_render_sectors) delete touching_render_sectors;
+	touching_render_sectors = NULL;
 	LinkToWorld(false, Sector);
 
 	AddToHash();
@@ -4544,6 +4547,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	actor->frame = st->GetFrame();
 	actor->renderflags = (actor->renderflags & ~RF_FULLBRIGHT) | ActorRenderFlags::FromInt (st->GetFullbright());
 	actor->touching_sectorlist = NULL;	// NULL head of sector list // phares 3/13/98
+	actor->touching_render_sectors = NULL;
 	if (G_SkillProperty(SKILLP_FastMonsters) && actor->GetClass()->FastSpeed >= 0)
 	actor->Speed = actor->GetClass()->FastSpeed;
 

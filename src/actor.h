@@ -33,6 +33,7 @@
 // States are tied to finite states are tied to animation frames.
 #include "info.h"
 
+#include <forward_list>
 #include "doomdef.h"
 #include "textures/textures.h"
 #include "r_data/renderstyle.h"
@@ -1035,6 +1036,7 @@ public:
 	struct sector_t	*ceilingsector;
 	FTextureID		ceilingpic;			// contacted sec ceilingpic
 	double			radius, Height;		// for movement checking
+	double			renderradius;
 
 	double			projectilepassheight;	// height for clipping projectile movement against this actor
 	
@@ -1141,6 +1143,8 @@ public:
 	struct msecnode_t	*touching_sectorlist;				// phares 3/14/98
 	struct msecnode_t	*render_sectorlist;		// same for cross-sectorportal rendering
 	struct portnode_t	*render_portallist;		// and for cross-lineportal
+	std::forward_list<sector_t*>* touching_render_sectors; // this is the list of sectors that this thing interesects with it's max(radius, renderradius).
+	int validcount;
 
 
 	TObjPtr<AInventory>	Inventory;		// [RH] This actor's inventory

@@ -6663,14 +6663,15 @@ void P_LinkRenderSectors(AActor* thing)
 		// 
 		// create necessary lists.
 		if (!thing->touching_render_sectors) thing->touching_render_sectors = new std::forward_list<sector_t*>();
-		thing->touching_render_sectors->push_front(ld->frontsector);
 
 		//
+		thing->touching_render_sectors->push_front(ld->frontsector);
 		if (!ld->frontsector->touching_render_things) ld->frontsector->touching_render_things = new std::forward_list<AActor*>();
 		ld->frontsector->touching_render_things->push_front(thing);
 		
 		if (ld->backsector)
 		{
+			thing->touching_render_sectors->push_front(ld->backsector);
 			if (!ld->backsector->touching_render_things) ld->backsector->touching_render_things = new std::forward_list<AActor*>();
 			ld->backsector->touching_render_things->push_front(thing);
 		}

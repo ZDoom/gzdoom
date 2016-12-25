@@ -256,63 +256,60 @@ void R_MapPlane (int y, int x1)
 		R_SetDSColorMapLight(basecolormap, GlobVis * fabs(CenterY - y), planeshade);
 	}
 
-	if (r_swtruecolor)
+	if (r_dynlights)
 	{
-		if (r_dynlights)
+		// Find row position in view space
+		float zspan = planeheight / (fabs(y + 0.5 - CenterY) / InvZtoScale);
+		dc_viewpos.X = (float)((x1 + 0.5 - CenterX) / CenterX * zspan);
+		dc_viewpos.Y = zspan;
+		dc_viewpos.Z = (float)((CenterY - y - 0.5) / InvZtoScale * zspan);
+		dc_viewpos_step.X = (float)(zspan / CenterX);
+
+		static TriLight lightbuffer[64 * 1024];
+		static int nextlightindex = 0;
+
+		// Setup lights for column
+		dc_num_lights = 0;
+		dc_lights = lightbuffer + nextlightindex;
+		visplane_light *cur_node = ds_light_list;
+		while (cur_node && nextlightindex < 64 * 1024)
 		{
-			// Find row position in view space
-			float zspan = planeheight / (fabs(y + 0.5 - CenterY) / InvZtoScale);
-			dc_viewpos.X = (float)((x1 + 0.5 - CenterX) / CenterX * zspan);
-			dc_viewpos.Y = zspan;
-			dc_viewpos.Z = (float)((CenterY - y - 0.5) / InvZtoScale * zspan);
-			dc_viewpos_step.X = (float)(zspan / CenterX);
+			double lightX = cur_node->lightsource->X() - ViewPos.X;
+			double lightY = cur_node->lightsource->Y() - ViewPos.Y;
+			double lightZ = cur_node->lightsource->Z() - ViewPos.Z;
 
-			static TriLight lightbuffer[64 * 1024];
-			static int nextlightindex = 0;
+			float lx = (float)(lightX * ViewSin - lightY * ViewCos);
+			float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - dc_viewpos.Y;
+			float lz = (float)lightZ - dc_viewpos.Z;
 
-			// Setup lights for column
-			dc_num_lights = 0;
-			dc_lights = lightbuffer + nextlightindex;
-			visplane_light *cur_node = ds_light_list;
-			while (cur_node && nextlightindex < 64 * 1024)
+			// Precalculate the constant part of the dot here so the drawer doesn't have to.
+			float lconstant = ly * ly + lz * lz;
+
+			// Include light only if it touches this row
+			float radius = cur_node->lightsource->GetRadius();
+			if (radius * radius >= lconstant)
 			{
-				double lightX = cur_node->lightsource->X() - ViewPos.X;
-				double lightY = cur_node->lightsource->Y() - ViewPos.Y;
-				double lightZ = cur_node->lightsource->Z() - ViewPos.Z;
+				uint32_t red = cur_node->lightsource->GetRed();
+				uint32_t green = cur_node->lightsource->GetGreen();
+				uint32_t blue = cur_node->lightsource->GetBlue();
 
-				float lx = (float)(lightX * ViewSin - lightY * ViewCos);
-				float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - dc_viewpos.Y;
-				float lz = (float)lightZ - dc_viewpos.Z;
-
-				// Precalculate the constant part of the dot here so the drawer doesn't have to.
-				float lconstant = ly * ly + lz * lz;
-
-				// Include light only if it touches this row
-				float radius = cur_node->lightsource->GetRadius();
-				if (radius * radius >= lconstant)
-				{
-					uint32_t red = cur_node->lightsource->GetRed();
-					uint32_t green = cur_node->lightsource->GetGreen();
-					uint32_t blue = cur_node->lightsource->GetBlue();
-
-					nextlightindex++;
-					auto &light = dc_lights[dc_num_lights++];
-					light.x = lx;
-					light.y = lconstant;
-					light.radius = 256.0f / radius;
-					light.color = (red << 16) | (green << 8) | blue;
-				}
-
-				cur_node = cur_node->next;
+				nextlightindex++;
+				auto &light = dc_lights[dc_num_lights++];
+				light.x = lx;
+				light.y = lconstant;
+				light.radius = 256.0f / radius;
+				light.color = (red << 16) | (green << 8) | blue;
 			}
 
-			if (nextlightindex == 64 * 1024)
-				nextlightindex = 0;
+			cur_node = cur_node->next;
 		}
-		else
-		{
-			dc_num_lights = 0;
-		}
+
+		if (nextlightindex == 64 * 1024)
+			nextlightindex = 0;
+	}
+	else
+	{
+		dc_num_lights = 0;
 	}
 
 	ds_y = y;

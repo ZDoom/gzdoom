@@ -2384,6 +2384,47 @@ namespace swrenderer
 		_color = ds_color;
 		_srcalpha = dc_srcalpha;
 		_destalpha = dc_destalpha;
+		_dynlights = dc_lights;
+		_num_dynlights = dc_num_lights;
+		_viewpos_x = dc_viewpos.X;
+		_step_viewpos_x = dc_viewpos_step.X;
+	}
+
+	uint8_t PalSpanCommand::AddLights(const TriLight *lights, int num_lights, float viewpos_x, uint8_t fg, uint8_t material)
+	{
+		uint32_t lit_r = GPalette.BaseColors[fg].r;
+		uint32_t lit_g = GPalette.BaseColors[fg].g;
+		uint32_t lit_b = GPalette.BaseColors[fg].b;
+
+		uint32_t material_r = GPalette.BaseColors[material].r;
+		uint32_t material_g = GPalette.BaseColors[material].g;
+		uint32_t material_b = GPalette.BaseColors[material].b;
+
+		for (int i = 0; i < num_lights; i++)
+		{
+			uint32_t light_color_r = RPART(lights[i].color);
+			uint32_t light_color_g = GPART(lights[i].color);
+			uint32_t light_color_b = BPART(lights[i].color);
+
+			// L = light-pos
+			// dist = sqrt(dot(L, L))
+			// attenuation = 1 - MIN(dist * (1/radius), 1)
+			float Lyz2 = lights[i].y; // L.y*L.y + L.z*L.z
+			float Lx = lights[i].x - viewpos_x;
+			float dist2 = Lyz2 + Lx * Lx;
+			float dist = dist2 * _mm_cvtss_f32(_mm_rsqrt_ss(_mm_load_ss(&dist2)));
+			uint32_t attenuation = (uint32_t)(256.0f - MIN(dist * lights[i].radius, 256.0f));
+
+			lit_r += (light_color_r * material_r * attenuation) >> 16;
+			lit_g += (light_color_g * material_g * attenuation) >> 16;
+			lit_b += (light_color_b * material_b * attenuation) >> 16;
+		}
+
+		lit_r = MIN<uint32_t>(lit_r, 255);
+		lit_g = MIN<uint32_t>(lit_g, 255);
+		lit_b = MIN<uint32_t>(lit_b, 255);
+
+		return RGB256k.All[((lit_r >> 2) << 12) | ((lit_g >> 2) << 6) | (lit_b >> 2)];
 	}
 
 	void DrawSpanPalCommand::Execute(DrawerThread *thread)
@@ -2411,7 +2452,12 @@ namespace swrenderer
 		xstep = _xstep;
 		ystep = _ystep;
 
-		if (_xbits == 6 && _ybits == 6)
+		const TriLight *dynlights = _dynlights;
+		int num_dynlights = _num_dynlights;
+		float viewpos_x = _viewpos_x;
+		float step_viewpos_x = _step_viewpos_x;
+
+		if (_xbits == 6 && _ybits == 6 && num_dynlights == 0)
 		{
 			// 64x64 is the most common case by far, so special case it.
 			do
@@ -2428,6 +2474,24 @@ namespace swrenderer
 				yfrac += ystep;
 			} while (--count);
 		}
+		else if (_xbits == 6 && _ybits == 6)
+		{
+			// 64x64 is the most common case by far, so special case it.
+			do
+			{
+				// Current texture index in u,v.
+				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+
+				// Lookup pixel from flat texture tile,
+				//  re-index using light/colormap.
+				*dest++ = AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]);
+
+				// Next step in u,v.
+				xfrac += xstep;
+				yfrac += ystep;
+				viewpos_x += step_viewpos_x;
+			} while (--count);
+		}
 		else
 		{
 			uint8_t yshift = 32 - _ybits;
@@ -2441,11 +2505,12 @@ namespace swrenderer
 
 				// Lookup pixel from flat texture tile,
 				//  re-index using light/colormap.
-				*dest++ = colormap[source[spot]];
+				*dest++ = AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]);
 
 				// Next step in u,v.
 				xfrac += xstep;
 				yfrac += ystep;
+				viewpos_x += step_viewpos_x;
 			} while (--count);
 		}
 	}
@@ -2475,6 +2540,11 @@ namespace swrenderer
 		xstep = _xstep;
 		ystep = _ystep;
 
+		const TriLight *dynlights = _dynlights;
+		int num_dynlights = _num_dynlights;
+		float viewpos_x = _viewpos_x;
+		float step_viewpos_x = _step_viewpos_x;
+
 		if (_xbits == 6 && _ybits == 6)
 		{
 			// 64x64 is the most common case by far, so special case it.
@@ -2486,11 +2556,12 @@ namespace swrenderer
 				texdata = source[spot];
 				if (texdata != 0)
 				{
-					*dest = colormap[texdata];
+					*dest = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 				}
 				dest++;
 				xfrac += xstep;
 				yfrac += ystep;
+				viewpos_x += step_viewpos_x;
 			} while (--count);
 		}
 		else
@@ -2506,11 +2577,12 @@ namespace swrenderer
 				texdata = source[spot];
 				if (texdata != 0)
 				{
-					*dest = colormap[texdata];
+					*dest = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 				}
 				dest++;
 				xfrac += xstep;
 				yfrac += ystep;
+				viewpos_x += step_viewpos_x;
 			} while (--count);
 		}
 	}
@@ -2544,6 +2616,11 @@ namespace swrenderer
 
 		const PalEntry *palette = GPalette.BaseColors;
 
+		const TriLight *dynlights = _dynlights;
+		int num_dynlights = _num_dynlights;
+		float viewpos_x = _viewpos_x;
+		float step_viewpos_x = _step_viewpos_x;
+
 		if (!r_blendmethod)
 		{
 			if (_xbits == 6 && _ybits == 6)
@@ -2552,7 +2629,7 @@ namespace swrenderer
 				do
 				{
 					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t fg = colormap[source[spot]];
+					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
 					fg = fg2rgb[fg];
 					bg = bg2rgb[bg];
@@ -2560,6 +2637,7 @@ namespace swrenderer
 					*dest++ = RGB32k.All[fg & (fg >> 15)];
 					xfrac += xstep;
 					yfrac += ystep;
+					viewpos_x += step_viewpos_x;
 				} while (--count);
 			}
 			else
@@ -2570,7 +2648,7 @@ namespace swrenderer
 				do
 				{
 					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t fg = colormap[source[spot]];
+					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
 					fg = fg2rgb[fg];
 					bg = bg2rgb[bg];
@@ -2578,6 +2656,7 @@ namespace swrenderer
 					*dest++ = RGB32k.All[fg & (fg >> 15)];
 					xfrac += xstep;
 					yfrac += ystep;
+					viewpos_x += step_viewpos_x;
 				} while (--count);
 			}
 		}
@@ -2589,7 +2668,7 @@ namespace swrenderer
 				do
 				{
 					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t fg = colormap[source[spot]];
+					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
 					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
@@ -2598,6 +2677,7 @@ namespace swrenderer
 
 					xfrac += xstep;
 					yfrac += ystep;
+					viewpos_x += step_viewpos_x;
 				} while (--count);
 			}
 			else
@@ -2608,7 +2688,7 @@ namespace swrenderer
 				do
 				{
 					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t fg = colormap[source[spot]];
+					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
 					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
@@ -2617,6 +2697,7 @@ namespace swrenderer
 
 					xfrac += xstep;
 					yfrac += ystep;
+					viewpos_x += step_viewpos_x;
 				} while (--count);
 			}
 		}
@@ -2641,6 +2722,11 @@ namespace swrenderer
 
 		const PalEntry *palette = GPalette.BaseColors;
 
+		const TriLight *dynlights = _dynlights;
+		int num_dynlights = _num_dynlights;
+		float viewpos_x = _viewpos_x;
+		float step_viewpos_x = _step_viewpos_x;
+
 		xfrac = _xfrac;
 		yfrac = _yfrac;
 
@@ -2664,7 +2750,7 @@ namespace swrenderer
 					texdata = source[spot];
 					if (texdata != 0)
 					{
-						uint32_t fg = colormap[texdata];
+						uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t bg = *dest;
 						fg = fg2rgb[fg];
 						bg = bg2rgb[bg];
@@ -2674,6 +2760,7 @@ namespace swrenderer
 					dest++;
 					xfrac += xstep;
 					yfrac += ystep;
+					viewpos_x += step_viewpos_x;
 				} while (--count);
 			}
 			else
@@ -2689,7 +2776,7 @@ namespace swrenderer
 					texdata = source[spot];
 					if (texdata != 0)
 					{
-						uint32_t fg = colormap[texdata];
+						uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t bg = *dest;
 						fg = fg2rgb[fg];
 						bg = bg2rgb[bg];
@@ -2699,6 +2786,7 @@ namespace swrenderer
 					dest++;
 					xfrac += xstep;
 					yfrac += ystep;
+					viewpos_x += step_viewpos_x;
 				} while (--count);
 			}
 		}
@@ -2715,7 +2803,7 @@ namespace swrenderer
 					texdata = source[spot];
 					if (texdata != 0)
 					{
-						uint32_t fg = colormap[texdata];
+						uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t bg = *dest;
 						int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 						int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
@@ -2725,6 +2813,7 @@ namespace swrenderer
 					dest++;
 					xfrac += xstep;
 					yfrac += ystep;
+					viewpos_x += step_viewpos_x;
 				} while (--count);
 			}
 			else
@@ -2740,7 +2829,7 @@ namespace swrenderer
 					texdata = source[spot];
 					if (texdata != 0)
 					{
-						uint32_t fg = colormap[texdata];
+						uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t bg = *dest;
 						int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 						int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
@@ -2750,6 +2839,7 @@ namespace swrenderer
 					dest++;
 					xfrac += xstep;
 					yfrac += ystep;
+					viewpos_x += step_viewpos_x;
 				} while (--count);
 			}
 		}
@@ -2773,6 +2863,11 @@ namespace swrenderer
 		uint32_t *bg2rgb = _destblend;
 		const PalEntry *palette = GPalette.BaseColors;
 
+		const TriLight *dynlights = _dynlights;
+		int num_dynlights = _num_dynlights;
+		float viewpos_x = _viewpos_x;
+		float step_viewpos_x = _step_viewpos_x;
+
 		xfrac = _xfrac;
 		yfrac = _yfrac;
 
@@ -2791,7 +2886,8 @@ namespace swrenderer
 				do
 				{
 					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
+					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
+					uint32_t a = fg2rgb[fg] + bg2rgb[*dest];
 					uint32_t b = a;
 
 					a |= 0x01f07c1f;
@@ -2802,6 +2898,7 @@ namespace swrenderer
 					*dest++ = RGB32k.All[a & (a >> 15)];
 					xfrac += xstep;
 					yfrac += ystep;
+					viewpos_x += step_viewpos_x;
 				} while (--count);
 			}
 			else
@@ -2812,7 +2909,8 @@ namespace swrenderer
 				do
 				{
 					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
+					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
+					uint32_t a = fg2rgb[fg] + bg2rgb[*dest];
 					uint32_t b = a;
 
 					a |= 0x01f07c1f;
@@ -2823,6 +2921,7 @@ namespace swrenderer
 					*dest++ = RGB32k.All[a & (a >> 15)];
 					xfrac += xstep;
 					yfrac += ystep;
+					viewpos_x += step_viewpos_x;
 				} while (--count);
 			}
 		}
@@ -2834,7 +2933,7 @@ namespace swrenderer
 				do
 				{
 					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t fg = colormap[source[spot]];
+					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
 					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
@@ -2843,6 +2942,7 @@ namespace swrenderer
 
 					xfrac += xstep;
 					yfrac += ystep;
+					viewpos_x += step_viewpos_x;
 				} while (--count);
 			}
 			else
@@ -2853,7 +2953,7 @@ namespace swrenderer
 				do
 				{
 					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t fg = colormap[source[spot]];
+					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
 					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
@@ -2862,6 +2962,7 @@ namespace swrenderer
 
 					xfrac += xstep;
 					yfrac += ystep;
+					viewpos_x += step_viewpos_x;
 				} while (--count);
 			}
 		}
@@ -2885,6 +2986,11 @@ namespace swrenderer
 		uint32_t *bg2rgb = _destblend;
 		const PalEntry *palette = GPalette.BaseColors;
 
+		const TriLight *dynlights = _dynlights;
+		int num_dynlights = _num_dynlights;
+		float viewpos_x = _viewpos_x;
+		float step_viewpos_x = _step_viewpos_x;
+
 		xfrac = _xfrac;
 		yfrac = _yfrac;
 
@@ -2908,7 +3014,8 @@ namespace swrenderer
 					texdata = source[spot];
 					if (texdata != 0)
 					{
-						uint32_t a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
+						uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
+						uint32_t a = fg2rgb[fg] + bg2rgb[*dest];
 						uint32_t b = a;
 	
 						a |= 0x01f07c1f;
@@ -2921,6 +3028,7 @@ namespace swrenderer
 					dest++;
 					xfrac += xstep;
 					yfrac += ystep;
+					viewpos_x += step_viewpos_x;
 				} while (--count);
 			}
 			else
@@ -2936,7 +3044,8 @@ namespace swrenderer
 					texdata = source[spot];
 					if (texdata != 0)
 					{
-						uint32_t a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
+						uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
+						uint32_t a = fg2rgb[fg] + bg2rgb[*dest];
 						uint32_t b = a;
 	
 						a |= 0x01f07c1f;
@@ -2949,6 +3058,7 @@ namespace swrenderer
 					dest++;
 					xfrac += xstep;
 					yfrac += ystep;
+					viewpos_x += step_viewpos_x;
 				} while (--count);
 			}
 		}
@@ -2965,7 +3075,7 @@ namespace swrenderer
 					texdata = source[spot];
 					if (texdata != 0)
 					{
-						uint32_t fg = colormap[texdata];
+						uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t bg = *dest;
 						int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 						int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
@@ -2975,6 +3085,7 @@ namespace swrenderer
 					dest++;
 					xfrac += xstep;
 					yfrac += ystep;
+					viewpos_x += step_viewpos_x;
 				} while (--count);
 			}
 			else
@@ -2990,7 +3101,7 @@ namespace swrenderer
 					texdata = source[spot];
 					if (texdata != 0)
 					{
-						uint32_t fg = colormap[texdata];
+						uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t bg = *dest;
 						int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 						int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
@@ -3000,6 +3111,7 @@ namespace swrenderer
 					dest++;
 					xfrac += xstep;
 					yfrac += ystep;
+					viewpos_x += step_viewpos_x;
 				} while (--count);
 			}
 		}

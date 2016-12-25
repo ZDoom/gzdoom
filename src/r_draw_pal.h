@@ -153,6 +153,8 @@ namespace swrenderer
 		FString DebugInfo() override { return "PalSpanCommand"; }
 
 	protected:
+		inline static uint8_t AddLights(const TriLight *lights, int num_lights, float viewpos_x, uint8_t fg, uint8_t material);
+
 		const uint8_t *_source;
 		const uint8_t *_colormap;
 		dsfixed_t _xfrac;
@@ -170,6 +172,10 @@ namespace swrenderer
 		int _color;
 		fixed_t _srcalpha;
 		fixed_t _destalpha;
+		TriLight *_dynlights;
+		int _num_dynlights;
+		float _viewpos_x;
+		float _step_viewpos_x;
 	};
 
 	class DrawSpanPalCommand : public PalSpanCommand { public: void Execute(DrawerThread *thread) override; };

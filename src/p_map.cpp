@@ -6642,6 +6642,90 @@ void P_CreateSecNodeList(AActor *thing)
 
 //=============================================================================
 //
+// P_LinkRenderSectors
+//
+// Alters/creates the list of touched sectors for thing's render radius.
+//
+//=============================================================================
+
+void P_LinkRenderSectors(AActor* thing)
+{
+	FBoundingBox box(thing->X(), thing->Y(), std::max(thing->renderradius, thing->radius));
+	FBlockLinesIterator it(box);
+	line_t *ld;
+
+	// add to surrounding sectors
+	while ((ld = it.Next()))
+	{
+		if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
+			continue;
+
+		// 
+		// create necessary lists.
+		if (!thing->touching_render_sectors) thing->touching_render_sectors = new std::forward_list<sector_t*>();
+		thing->touching_render_sectors->push_front(ld->frontsector);
+		if (!ld->frontsector->touching_render_things) ld->frontsector->touching_render_things = new std::forward_list<AActor*>();
+		ld->frontsector->touching_render_things->push_front(thing);
+		
+		if (ld->backsector)
+		{
+			if (!ld->backsector->touching_render_things) ld->backsector->touching_render_things = new std::forward_list<AActor*>();
+			ld->backsector->touching_render_things->push_front(thing);
+		}
+	}
+
+	// add to own sector
+	if (!thing->Sector->touching_render_things) thing->Sector->touching_render_things = new std::forward_list<AActor*>();
+	thing->Sector->touching_render_things->push_front(thing);
+}
+
+
+//=============================================================================
+//
+// P_UnlinkRenderSectors
+//
+// Reverses P_LinkRenderSectors.
+//
+//=============================================================================
+
+void P_UnlinkRenderSectors(AActor* thing)
+{
+	if (thing->touching_render_sectors)
+	{
+		for (std::forward_list<sector_t*>::iterator it = thing->touching_render_sectors->begin();
+			it != thing->touching_render_sectors->end(); it++)
+		{
+			sector_t* sec = (*it);
+			if (sec->touching_render_things)
+			{
+				sec->touching_render_things->remove(thing);
+				if (sec->touching_render_things->empty())
+				{
+					delete sec->touching_render_things;
+					sec->touching_render_things = NULL;
+				}
+			}
+		}
+	}
+
+	delete thing->touching_render_sectors;
+	thing->touching_render_sectors = NULL;
+
+	if (thing->Sector->touching_render_things)
+	{
+		thing->Sector->touching_render_things->remove(thing);
+		if (thing->Sector->touching_render_things->empty())
+		{
+			delete thing->Sector->touching_render_things;
+			thing->Sector->touching_render_things = NULL;
+		}
+	}
+}
+
+
+
+//=============================================================================
+//
 // P_DelPortalnode
 //
 // Same for line portal nodes

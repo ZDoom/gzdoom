@@ -416,7 +416,7 @@ void ParseScripts()
 		DoParse(lump);
 		if (!Args->CheckParm("-zscript"))
 		{
-			//return;
+			return;
 		}
 	}
 	Printf(TEXTCOLOR_PURPLE "WARNING!!!\n");

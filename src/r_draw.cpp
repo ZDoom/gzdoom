@@ -445,7 +445,7 @@ namespace swrenderer
 		if (style.BlendOp == STYLEOP_Fuzz)
 		{
 			colfunc = fuzzcolfunc;
-			return DoDraw0;
+			return DoDraw;
 		}
 		else if (style == LegacyRenderStyles[STYLE_Shaded])
 		{
@@ -466,8 +466,7 @@ namespace swrenderer
 			{
 				R_SetColorMapLight(basecolormap, 0, 0);
 			}
-			bool active_columnmethod = r_columnmethod && !r_swtruecolor;
-			return active_columnmethod ? DoDraw1 : DoDraw0;
+			return DoDraw;
 		}
 
 		fglevel = GetAlpha(style.SrcAlpha, alpha);
@@ -500,8 +499,7 @@ namespace swrenderer
 		{
 			return DontDraw;
 		}
-		bool active_columnmethod = r_columnmethod && !r_swtruecolor;
-		return active_columnmethod ? DoDraw1 : DoDraw0;
+		return DoDraw;
 	}
 
 	ESPSResult R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color)

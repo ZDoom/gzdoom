@@ -415,44 +415,11 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		mceilingclip = wallupper;
 
 		// draw the columns one at a time
-		if (drawmode == DoDraw0)
+		if (drawmode == DoDraw)
 		{
 			for (dc_x = x1; dc_x < x2; ++dc_x)
 			{
 				BlastMaskedColumn (tex, false);
-			}
-		}
-		else
-		{
-			// [RH] Draw up to four columns at once
-			int stop = x2 & ~3;
-
-			if (x1 >= x2)
-				goto clearfog;
-
-			dc_x = x1;
-
-			while ((dc_x < stop) && (dc_x & 3))
-			{
-				BlastMaskedColumn (tex, false);
-				dc_x++;
-			}
-
-			while (dc_x < stop)
-			{
-				rt_initcols(nullptr);
-				BlastMaskedColumn (tex, true); dc_x++;
-				BlastMaskedColumn (tex, true); dc_x++;
-				BlastMaskedColumn (tex, true); dc_x++;
-				BlastMaskedColumn (tex, true);
-				rt_draw4cols (dc_x - 3);
-				dc_x++;
-			}
-
-			while (dc_x < x2)
-			{
-				BlastMaskedColumn (tex, false);
-				dc_x++;
 			}
 		}
 	}
@@ -2346,42 +2313,6 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		}
 		else
 		{
-			int stop4;
-
-			if (mode == DoDraw0)
-			{ // 1 column at a time
-				stop4 = dc_x;
-			}
-			else	 // DoDraw1
-			{ // up to 4 columns at a time
-				stop4 = x2 & ~3;
-			}
-
-			while ((dc_x < stop4) && (dc_x & 3))
-			{
-				if (calclighting)
-				{ // calculate lighting
-					R_SetColorMapLight(usecolormap, rw_light, wallshade);
-				}
-				R_WallSpriteColumn (false);
-				dc_x++;
-			}
-
-			while (dc_x < stop4)
-			{
-				if (calclighting)
-				{ // calculate lighting
-					R_SetColorMapLight(usecolormap, rw_light, wallshade);
-				}
-				rt_initcols(nullptr);
-				for (int zz = 4; zz; --zz)
-				{
-					R_WallSpriteColumn (true);
-					dc_x++;
-				}
-				rt_draw4cols (dc_x - 4);
-			}
-
 			while (dc_x < x2)
 			{
 				if (calclighting)

@@ -530,7 +530,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 {
 	fixed_t 		frac;
 	FTexture		*tex;
-	int				x2, stop4;
+	int				x2;
 	fixed_t			xiscale;
 	ESPSResult		mode;
 	bool			ispsprite = (!vis->sector && vis->gpos != FVector3(0, 0, 0));
@@ -554,17 +554,6 @@ void R_DrawVisSprite (vissprite_t *vis)
 
 	if (mode != DontDraw)
 	{
-		if (mode == DoDraw0)
-		{
-			// One column at a time
-			stop4 = vis->x1;
-		}
-		else	 // DoDraw1
-		{
-			// Up to four columns at a time
-			stop4 = vis->x2 & ~3;
-		}
-
 		tex = vis->pic;
 		spryscale = vis->yscale;
 		sprflipvert = false;
@@ -592,27 +581,6 @@ void R_DrawVisSprite (vissprite_t *vis)
 
 		if (dc_x < x2)
 		{
-			while ((dc_x < stop4) && (dc_x & 3))
-			{
-				if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-					R_DrawMaskedColumn (tex, frac, false);
-				dc_x++;
-				frac += xiscale;
-			}
-
-			while (dc_x < stop4)
-			{
-				rt_initcols(nullptr);
-				for (int zz = 4; zz; --zz)
-				{
-					if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-						R_DrawMaskedColumn (tex, frac, true);
-					dc_x++;
-					frac += xiscale;
-				}
-				rt_draw4cols (dc_x - 4);
-			}
-
 			while (dc_x < x2)
 			{
 				if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
@@ -708,44 +676,6 @@ void R_DrawWallSprite(vissprite_t *spr)
 	}
 	else
 	{
-		int stop4;
-
-		if (mode == DoDraw0)
-		{ // 1 column at a time
-			stop4 = dc_x;
-		}
-		else	 // DoDraw1
-		{ // up to 4 columns at a time
-			stop4 = x2 & ~3;
-		}
-
-		while ((dc_x < stop4) && (dc_x & 3))
-		{
-			if (calclighting)
-			{ // calculate lighting
-				R_SetColorMapLight(usecolormap, rw_light, shade);
-			}
-			if (!R_ClipSpriteColumnWithPortals(spr))
-				R_WallSpriteColumn(false);
-			dc_x++;
-		}
-
-		while (dc_x < stop4)
-		{
-			if (calclighting)
-			{ // calculate lighting
-				R_SetColorMapLight(usecolormap, rw_light, shade);
-			}
-			rt_initcols(nullptr);
-			for (int zz = 4; zz; --zz)
-			{
-				if (!R_ClipSpriteColumnWithPortals(spr))
-					R_WallSpriteColumn(true);
-				dc_x++;
-			}
-			rt_draw4cols(dc_x - 4);
-		}
-
 		while (dc_x < x2)
 		{
 			if (calclighting)

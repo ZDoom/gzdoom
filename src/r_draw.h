@@ -15,7 +15,6 @@ EXTERN_CVAR(Float, r_lod_bias);
 EXTERN_CVAR(Int, r_drawfuzz);
 EXTERN_CVAR(Bool, r_drawtrans);
 EXTERN_CVAR(Float, transsouls);
-EXTERN_CVAR(Int, r_columnmethod);
 EXTERN_CVAR(Bool, r_dynlights);
 
 namespace swrenderer
@@ -131,8 +130,7 @@ namespace swrenderer
 	enum ESPSResult
 	{
 		DontDraw,	// not useful to draw this
-		DoDraw0,	// draw this as if r_columnmethod is 0
-		DoDraw1,	// draw this as if r_columnmethod is 1
+		DoDraw		// draw this
 	};
 
 	ESPSResult R_SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color);

@@ -65,18 +65,6 @@
 CVAR (String, r_viewsize, "", CVAR_NOSET)
 CVAR (Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
 
-CUSTOM_CVAR (Int, r_columnmethod, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self != 0 && self != 1)
-	{
-		self = 1;
-	}
-	else
-	{ // Trigger the change
-		setsizeneeded = true;
-	}
-}
-
 CVAR(Int, r_portal_recursions, 4, CVAR_ARCHIVE)
 CVAR(Bool, r_highlight_portals, false, CVAR_ARCHIVE)
 

@@ -210,8 +210,6 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 	if (mode != DontDraw)
 	{
-		int stop4;
-
 		double centeryback = CenterY;
 		CenterY = 0;
 
@@ -277,56 +275,17 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			x2 = parms.rclip;
 		}
 
-		// Drawing short output ought to fit in the data cache well enough
-		// if we draw one column at a time, so do that, since it's simpler.
-		if (parms.destheight < 32 || (parms.dclip - parms.uclip) < 32)
-		{
-			mode = DoDraw0;
-		}
-
 		dc_x = int(x0);
 		int x2_i = int(x2);
 		fixed_t xiscale_i = FLOAT2FIXED(xiscale);
 
-		if (mode == DoDraw0)
+		while (dc_x < x2_i)
 		{
-			// One column at a time
-			stop4 = dc_x;
-		}
-		else	 // DoDraw1`
-		{
-			// Up to four columns at a time
-			stop4 = x2_i & ~3;
+			R_DrawMaskedColumn(img, frac, false, !parms.masked);
+			dc_x++;
+			frac += xiscale_i;
 		}
 
-		if (dc_x < x2_i)
-		{
-			while ((dc_x < stop4) && (dc_x & 3))
-			{
-				R_DrawMaskedColumn(img, frac, false, !parms.masked);
-				dc_x++;
-				frac += xiscale_i;
-			}
-
-			while (dc_x < stop4)
-			{
-				rt_initcols(nullptr);
-				for (int zz = 4; zz; --zz)
-				{
-					R_DrawMaskedColumn(img, frac, true, !parms.masked);
-					dc_x++;
-					frac += xiscale_i;
-				}
-				rt_draw4cols(dc_x - 4);
-			}
-
-			while (dc_x < x2_i)
-			{
-				R_DrawMaskedColumn(img, frac, false, !parms.masked);
-				dc_x++;
-				frac += xiscale_i;
-			}
-		}
 		CenterY = centeryback;
 	}
 	R_FinishSetPatchStyle ();

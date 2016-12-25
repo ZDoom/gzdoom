@@ -24,6 +24,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <algorithm>
 
 #include "templates.h"
 
@@ -6665,13 +6666,18 @@ void P_LinkRenderSectors(AActor* thing)
 		if (!thing->touching_render_sectors) thing->touching_render_sectors = new std::forward_list<sector_t*>();
 
 		//
-		thing->touching_render_sectors->push_front(ld->frontsector);
-		if (!ld->frontsector->touching_render_things) ld->frontsector->touching_render_things = new std::forward_list<AActor*>();
-		ld->frontsector->touching_render_things->push_front(thing);
-		
-		if (ld->backsector)
+		if (ld->frontsector != thing->Sector)
 		{
-			thing->touching_render_sectors->push_front(ld->backsector);
+			if (std::find(thing->touching_render_sectors->begin(), thing->touching_render_sectors->end(), ld->frontsector) == thing->touching_render_sectors->end())
+				thing->touching_render_sectors->push_front(ld->frontsector);
+			if (!ld->frontsector->touching_render_things) ld->frontsector->touching_render_things = new std::forward_list<AActor*>();
+			ld->frontsector->touching_render_things->push_front(thing);
+		}
+		
+		if (ld->backsector && ld->backsector != thing->Sector)
+		{
+			if (std::find(thing->touching_render_sectors->begin(), thing->touching_render_sectors->end(), ld->backsector) == thing->touching_render_sectors->end())
+				thing->touching_render_sectors->push_front(ld->backsector);
 			if (!ld->backsector->touching_render_things) ld->backsector->touching_render_things = new std::forward_list<AActor*>();
 			ld->backsector->touching_render_things->push_front(thing);
 		}

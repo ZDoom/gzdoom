@@ -6651,38 +6651,38 @@ void P_CreateSecNodeList(AActor *thing)
 void P_LinkRenderSectors(AActor* thing)
 {
 	// if this thing has RenderStyle None, don't link it anywhere.
-	if (thing->renderradius == 0)
-		return;
-
-	FBoundingBox box(thing->X(), thing->Y(), thing->renderradius > 0 ? thing->renderradius : thing->renderradius);
-	FBlockLinesIterator it(box);
-	line_t *ld;
-
-	// add to surrounding sectors
-	while ((ld = it.Next()))
+	if (thing->renderradius != 0)
 	{
-		if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
-			continue;
+		FBoundingBox box(thing->X(), thing->Y(), thing->renderradius > 0 ? thing->renderradius : thing->renderradius);
+		FBlockLinesIterator it(box);
+		line_t *ld;
 
-		// 
-		// create necessary lists.
-		if (!thing->touching_render_sectors) thing->touching_render_sectors = new std::forward_list<sector_t*>();
-
-		//
-		if (ld->frontsector != thing->Sector)
+		// add to surrounding sectors
+		while ((ld = it.Next()))
 		{
-			if (std::find(thing->touching_render_sectors->begin(), thing->touching_render_sectors->end(), ld->frontsector) == thing->touching_render_sectors->end())
-				thing->touching_render_sectors->push_front(ld->frontsector);
-			if (!ld->frontsector->touching_render_things) ld->frontsector->touching_render_things = new std::forward_list<AActor*>();
-			ld->frontsector->touching_render_things->push_front(thing);
-		}
+			if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
+				continue;
 
-		if (ld->backsector && ld->backsector != thing->Sector)
-		{
-			if (std::find(thing->touching_render_sectors->begin(), thing->touching_render_sectors->end(), ld->backsector) == thing->touching_render_sectors->end())
-				thing->touching_render_sectors->push_front(ld->backsector);
-			if (!ld->backsector->touching_render_things) ld->backsector->touching_render_things = new std::forward_list<AActor*>();
-			ld->backsector->touching_render_things->push_front(thing);
+			// 
+			// create necessary lists.
+			if (!thing->touching_render_sectors) thing->touching_render_sectors = new std::forward_list<sector_t*>();
+
+			//
+			if (ld->frontsector != thing->Sector)
+			{
+				if (std::find(thing->touching_render_sectors->begin(), thing->touching_render_sectors->end(), ld->frontsector) == thing->touching_render_sectors->end())
+					thing->touching_render_sectors->push_front(ld->frontsector);
+				if (!ld->frontsector->touching_render_things) ld->frontsector->touching_render_things = new std::forward_list<AActor*>();
+				ld->frontsector->touching_render_things->push_front(thing);
+			}
+
+			if (ld->backsector && ld->backsector != thing->Sector)
+			{
+				if (std::find(thing->touching_render_sectors->begin(), thing->touching_render_sectors->end(), ld->backsector) == thing->touching_render_sectors->end())
+					thing->touching_render_sectors->push_front(ld->backsector);
+				if (!ld->backsector->touching_render_things) ld->backsector->touching_render_things = new std::forward_list<AActor*>();
+				ld->backsector->touching_render_things->push_front(thing);
+			}
 		}
 	}
 
@@ -6702,25 +6702,28 @@ void P_LinkRenderSectors(AActor* thing)
 
 void P_UnlinkRenderSectors(AActor* thing)
 {
-	if (thing->touching_render_sectors)
+	if (thing->renderradius != 0)
 	{
-		for (std::forward_list<sector_t*>::iterator it = thing->touching_render_sectors->begin();
-			it != thing->touching_render_sectors->end(); it++)
+		if (thing->touching_render_sectors)
 		{
-			sector_t* sec = (*it);
-			if (sec->touching_render_things)
+			for (std::forward_list<sector_t*>::iterator it = thing->touching_render_sectors->begin();
+				it != thing->touching_render_sectors->end(); it++)
 			{
-				sec->touching_render_things->remove(thing);
-				if (sec->touching_render_things->empty())
+				sector_t* sec = (*it);
+				if (sec->touching_render_things)
 				{
-					delete sec->touching_render_things;
-					sec->touching_render_things = NULL;
+					sec->touching_render_things->remove(thing);
+					if (sec->touching_render_things->empty())
+					{
+						delete sec->touching_render_things;
+						sec->touching_render_things = NULL;
+					}
 				}
 			}
-		}
 
-		delete thing->touching_render_sectors;
-		thing->touching_render_sectors = NULL;
+			delete thing->touching_render_sectors;
+			thing->touching_render_sectors = NULL;
+		}
 	}
 
 	if (thing->Sector->touching_render_things)

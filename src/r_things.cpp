@@ -258,7 +258,7 @@ double	 		sprtopscreen;
 
 bool			sprflipvert;
 
-void R_DrawMaskedColumnBgra(FTexture *tex, fixed_t col, bool useRt, bool unmasked)
+void R_DrawMaskedColumnBgra(FTexture *tex, fixed_t col, bool unmasked)
 {
 	fixed_t saved_iscale = dc_iscale; // Save this because we need to modify it for mipmaps
 
@@ -374,12 +374,12 @@ void R_DrawMaskedColumnBgra(FTexture *tex, fixed_t col, bool useRt, bool unmaske
 	dc_iscale = saved_iscale;
 }
 
-void R_DrawMaskedColumn (FTexture *tex, fixed_t col, bool useRt, bool unmasked)
+void R_DrawMaskedColumn (FTexture *tex, fixed_t col, bool unmasked)
 {
 	// Handle the linear filtered version in a different function to reduce chances of merge conflicts from zdoom.
-	if (r_swtruecolor && !drawer_needs_pal_input && !useRt) // To do: add support to R_DrawColumnHoriz_rgba
+	if (r_swtruecolor && !drawer_needs_pal_input) // To do: add support to R_DrawColumnHoriz_rgba
 	{
-		R_DrawMaskedColumnBgra(tex, col, useRt, unmasked);
+		R_DrawMaskedColumnBgra(tex, col, unmasked);
 		return;
 	}
 
@@ -669,14 +669,14 @@ void R_DrawWallSprite(vissprite_t *spr)
 				R_SetColorMapLight(usecolormap, rw_light, shade);
 			}
 			if (!R_ClipSpriteColumnWithPortals(spr))
-				R_WallSpriteColumn(false);
+				R_WallSpriteColumn();
 			dc_x++;
 		}
 	}
 	R_FinishSetPatchStyle();
 }
 
-void R_WallSpriteColumn (bool useRt)
+void R_WallSpriteColumn ()
 {
 	float iscale = swall[dc_x] * MaskedScaleY;
 	dc_iscale = FLOAT2FIXED(iscale);
@@ -687,7 +687,7 @@ void R_WallSpriteColumn (bool useRt)
 		sprtopscreen = CenterY - dc_texturemid * spryscale;
 
 	dc_texturefrac = 0;
-	R_DrawMaskedColumn(WallSpriteTile, lwall[dc_x], useRt);
+	R_DrawMaskedColumn(WallSpriteTile, lwall[dc_x]);
 	rw_light += rw_lightstep;
 }
 

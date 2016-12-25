@@ -281,7 +281,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 		while (dc_x < x2_i)
 		{
-			R_DrawMaskedColumn(img, frac, false, !parms.masked);
+			R_DrawMaskedColumn(img, frac, !parms.masked);
 			dc_x++;
 			frac += xiscale_i;
 		}

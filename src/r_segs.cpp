@@ -153,7 +153,7 @@ inline bool IsFogBoundary (sector_t *front, sector_t *back)
 float *MaskedSWall;
 float MaskedScaleY;
 
-static void BlastMaskedColumn (FTexture *tex, bool useRt)
+static void BlastMaskedColumn (FTexture *tex)
 {
 	// calculate lighting
 	if (fixedcolormap == NULL && fixedlightlev < 0)
@@ -176,7 +176,7 @@ static void BlastMaskedColumn (FTexture *tex, bool useRt)
 	// when forming multipatched textures (see r_data.c).
 
 	// draw the texture
-	R_DrawMaskedColumn(tex, maskedtexturecol[dc_x], useRt);
+	R_DrawMaskedColumn(tex, maskedtexturecol[dc_x]);
 	rw_light += rw_lightstep;
 	spryscale += rw_scalestep;
 }
@@ -415,7 +415,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		{
 			for (dc_x = x1; dc_x < x2; ++dc_x)
 			{
-				BlastMaskedColumn (tex, false);
+				BlastMaskedColumn (tex);
 			}
 		}
 	}
@@ -2309,7 +2309,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 				{ // calculate lighting
 					R_SetColorMapLight(usecolormap, rw_light, wallshade);
 				}
-				R_WallSpriteColumn (false);
+				R_WallSpriteColumn ();
 				dc_x++;
 			}
 		}

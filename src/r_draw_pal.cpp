@@ -387,10 +387,6 @@ namespace swrenderer
 		uint8_t *dest = _dest;
 		int bits = _fracbits;
 		int pitch = _pitch;
-		TriLight *dynlights = _dynlights;
-		int num_dynlights = _num_dynlights;
-		float viewpos_z = _viewpos_z;
-		float step_viewpos_z = _step_viewpos_z;
 
 		uint32_t *fg2rgb = _srcblend;
 		uint32_t *bg2rgb = _destblend;
@@ -403,8 +399,6 @@ namespace swrenderer
 		frac += fracstep * thread->skipped_by_thread(_dest_y);
 		fracstep *= thread->num_cores;
 		pitch *= thread->num_cores;
-		viewpos_z += step_viewpos_z * thread->skipped_by_thread(_dest_y);
-		step_viewpos_z *= thread->num_cores;
 
 		if (!r_blendmethod)
 		{
@@ -413,14 +407,13 @@ namespace swrenderer
 				uint8_t pix = source[frac >> bits];
 				if (pix != 0)
 				{
-					uint8_t lit = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_z, colormap[pix], pix) : colormap[pix];
+					uint8_t lit = colormap[pix];
 
 					uint32_t fg = fg2rgb[lit];
 					uint32_t bg = bg2rgb[*dest];
 					fg = (fg + bg) | 0x1f07c1f;
 					*dest = RGB32k.All[fg & (fg >> 15)];
 				}
-				viewpos_z += step_viewpos_z;
 				frac += fracstep;
 				dest += pitch;
 			} while (--count);
@@ -433,14 +426,13 @@ namespace swrenderer
 				uint8_t pix = source[frac >> bits];
 				if (pix != 0)
 				{
-					uint8_t lit = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_z, colormap[pix], pix) : colormap[pix];
+					uint8_t lit = colormap[pix];
 
 					uint32_t r = MIN(GPalette.BaseColors[lit].r + GPalette.BaseColors[*dest].r, 255);
 					uint32_t g = MIN(GPalette.BaseColors[lit].g + GPalette.BaseColors[*dest].g, 255);
 					uint32_t b = MIN(GPalette.BaseColors[lit].b + GPalette.BaseColors[*dest].b, 255);
 					*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
 				}
-				viewpos_z += step_viewpos_z;
 				frac += fracstep;
 				dest += pitch;
 			} while (--count);

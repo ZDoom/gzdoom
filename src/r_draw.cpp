@@ -669,8 +669,10 @@ namespace swrenderer
 	{
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWallAdd1LLVMCommand>();
-		else
+		else if (drawerargs::dc_num_lights == 0)
 			DrawerCommandQueue::QueueCommand<DrawWallAdd1PalCommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawWallAddClamp1PalCommand>();
 	}
 
 	void R_DrawWallAddCol4()

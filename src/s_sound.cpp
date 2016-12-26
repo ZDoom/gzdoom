@@ -917,6 +917,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	// the referenced sound so some additional checks are required
 	int near_limit = sfx->NearLimit;
 	float limit_range = sfx->LimitRange;
+	auto pitchmask = sfx->PitchMask;
 	rolloff = &sfx->Rolloff;
 
 	// Resolve player sounds, random sounds, and aliases
@@ -1081,9 +1082,9 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	}
 
 	// Vary the sfx pitches.
-	if (sfx->PitchMask != 0)
+	if (pitchmask != 0)
 	{
-		pitch = NORM_PITCH - (M_Random() & sfx->PitchMask) + (M_Random() & sfx->PitchMask);
+		pitch = NORM_PITCH - (M_Random() & pitchmask) + (M_Random() & pitchmask);
 	}
 	else
 	{

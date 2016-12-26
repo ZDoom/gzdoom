@@ -1294,9 +1294,10 @@ public:
 		sec->SetYScale(sector_t::ceiling, 1.);
 		sec->SetAlpha(sector_t::floor, 1.);
 		sec->SetAlpha(sector_t::ceiling, 1.);
-		sec->thinglist = NULL;
-		sec->touching_thinglist = NULL;		// phares 3/14/98
-		sec->render_thinglist = NULL;
+		sec->thinglist = nullptr;
+		sec->touching_thinglist = nullptr;		// phares 3/14/98
+		sec->render_thinglist = nullptr;
+		sec->touching_renderthings = nullptr;
 		sec->seqType = (level.flags & LEVEL_SNDSEQTOTALCTRL) ? 0 : -1;
 		sec->nextsec = -1;	//jff 2/26/98 add fields to support locking out
 		sec->prevsec = -1;	// stair retriggering until build completes

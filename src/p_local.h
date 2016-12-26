@@ -245,10 +245,6 @@ AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable=false,
 //
 
 
-// If "floatok" true, move would be ok
-// if within "tmfloorz - tmceilingz".
-extern msecnode_t		*sector_list;		// phares 3/16/98
-
 struct spechit_t
 {
 	line_t *line;
@@ -395,11 +391,10 @@ enum
 int	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, 
 						FName damageType, int flags, int fulldamagedistance=0);
 
-void	P_DelSector_List();
-void	P_DelSeclist(msecnode_t *);							// phares 3/16/98
+void	P_DelSeclist(msecnode_t *, msecnode_t *sector_t::*seclisthead);
 msecnode_t *P_AddSecnode(sector_t *s, AActor *thing, msecnode_t *nextnode, msecnode_t *&sec_thinglist);
 msecnode_t*	P_DelSecnode(msecnode_t *, msecnode_t *sector_t::*head);
-void	P_CreateSecNodeList(AActor*);		// phares 3/14/98
+msecnode_t *P_CreateSecNodeList(AActor *thing, double radius, msecnode_t *sector_list, msecnode_t *sector_t::*seclisthead);
 double	P_GetMoveFactor(const AActor *mo, double *frictionp);	// phares  3/6/98
 double		P_GetFriction(const AActor *mo, double *frictionfactor);
 

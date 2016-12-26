@@ -242,9 +242,9 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef, co
 //
 //==========================================================================
 
-void AActor::UnlinkFromWorld ()
+void AActor::UnlinkFromWorld (FLinkContext *ctx)
 {
-	sector_list = NULL;
+	if (ctx != nullptr) ctx->sector_list = nullptr;
 	if (!(flags & MF_NOSECTOR))
 	{
 		// invisible things don't need to be in sector list
@@ -271,12 +271,19 @@ void AActor::UnlinkFromWorld ()
 			// put it back into touching_sectorlist. It's done this way to
 			// avoid a lot of deleting/creating for nodes, when most of the
 			// time you just get back what you deleted anyway.
-			//
-			// If this Thing is being removed entirely, then the calling
-			// routine will clear out the nodes in sector_list.
 
-			sector_list = touching_sectorlist;
-			touching_sectorlist = NULL; //to be restored by P_SetThingPosition
+			if (ctx != nullptr)
+			{
+				ctx->sector_list = touching_sectorlist;
+				ctx->render_list = touching_rendersectors;
+			}
+			else
+			{
+				P_DelSeclist(touching_sectorlist, &sector_t::touching_thinglist);
+				P_DelSeclist(touching_rendersectors, &sector_t::touching_renderthings);
+			}
+			touching_sectorlist = nullptr; //to be restored by P_SetThingPosition
+			touching_rendersectors = nullptr;
 		}
 	}
 		
@@ -388,7 +395,7 @@ bool AActor::FixMapthingPos()
 DEFINE_ACTION_FUNCTION(AActor, UnlinkFromWorld)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	self->UnlinkFromWorld();
+	self->UnlinkFromWorld(nullptr); // fixme
 	return 0;
 }
 
@@ -401,7 +408,7 @@ DEFINE_ACTION_FUNCTION(AActor, UnlinkFromWorld)
 //
 //==========================================================================
 
-void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
+void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sector)
 {
 	bool spawning = spawningmapthing;
 
@@ -453,9 +460,13 @@ void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
 		// When a node is deleted, its sector links (the links starting
 		// at sector_t->touching_thinglist) are broken. When a node is
 		// added, new sector links are created.
-		P_CreateSecNodeList(this);
-		touching_sectorlist = sector_list;	// Attach to thing
-		sector_list = NULL;		// clear for next time
+		touching_sectorlist = P_CreateSecNodeList(this, radius, ctx != nullptr? ctx->sector_list : nullptr, &sector_t::touching_thinglist);	// Attach to thing
+		if (renderradius >= 0) touching_rendersectors = P_CreateSecNodeList(this, MAX(radius, renderradius), ctx != nullptr ? ctx->render_list : nullptr, &sector_t::touching_renderthings);
+		else
+		{
+			touching_rendersectors = nullptr;
+			if (ctx != nullptr) P_DelSeclist(ctx->render_list, &sector_t::touching_renderthings);
+		}
 	}
 
 
@@ -518,15 +529,16 @@ void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
 DEFINE_ACTION_FUNCTION(AActor, LinkToWorld)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	self->LinkToWorld();
+	self->LinkToWorld(nullptr);	// fixme
 	return 0;
 }
 
 void AActor::SetOrigin(double x, double y, double z, bool moving)
 {
-	UnlinkFromWorld ();
+	FLinkContext ctx;
+	UnlinkFromWorld (&ctx);
 	SetXYZ(x, y, z);
-	LinkToWorld ();
+	LinkToWorld (&ctx);
 	P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS);
 	if (!moving) ClearInterpolation();
 }

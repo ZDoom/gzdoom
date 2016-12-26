@@ -2940,7 +2940,8 @@ void P_UnPredictPlayer ()
 		// could cause it to change during prediction.
 		player->camera = savedcamera;
 
-		act->UnlinkFromWorld();
+		FLinkContext ctx;
+		act->UnlinkFromWorld(&ctx);
 		memcpy(&act->snext, PredictionActorBackup, sizeof(APlayerPawn) - ((BYTE *)&act->snext - (BYTE *)act));
 
 		// The blockmap ordering needs to remain unchanged, too.
@@ -2969,7 +2970,7 @@ void P_UnPredictPlayer ()
 			}
 
 			// Destroy old refrences
-			msecnode_t *node = sector_list;
+			msecnode_t *node = ctx.sector_list;
 			while (node)
 			{
 				node->m_thing = NULL;
@@ -2977,22 +2978,23 @@ void P_UnPredictPlayer ()
 			}
 
 			// Make the sector_list match the player's touching_sectorlist before it got predicted.
-			P_DelSeclist(sector_list);
-			sector_list = NULL;
+			P_DelSeclist(ctx.sector_list, &sector_t::touching_thinglist);
+			ctx.sector_list = NULL;
 			for (i = PredictionTouchingSectorsBackup.Size(); i-- > 0;)
 			{
-				sector_list = P_AddSecnode(PredictionTouchingSectorsBackup[i], act, sector_list, PredictionTouchingSectorsBackup[i]->touching_thinglist);
+				ctx.sector_list = P_AddSecnode(PredictionTouchingSectorsBackup[i], act, ctx.sector_list, PredictionTouchingSectorsBackup[i]->touching_thinglist);
 			}
-			act->touching_sectorlist = sector_list;	// Attach to thing
-			sector_list = NULL;		// clear for next time
+			act->touching_sectorlist = ctx.sector_list;	// Attach to thing
+			ctx.sector_list = NULL;		// clear for next time
 
-			node = sector_list;
+			// Huh???
+			node = ctx.sector_list;
 			while (node)
 			{
 				if (node->m_thing == NULL)
 				{
-					if (node == sector_list)
-						sector_list = node->m_tnext;
+					if (node == ctx.sector_list)
+						ctx.sector_list = node->m_tnext;
 					node = P_DelSecnode(node, &sector_t::touching_thinglist);
 				}
 				else

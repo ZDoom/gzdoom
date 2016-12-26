@@ -24,6 +24,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <algorithm>
 
 #include "templates.h"
 
@@ -80,9 +81,6 @@ static FRandom pr_crunch("DoCrunch");
 // but don't process them until the move is proven valid
 TArray<spechit_t> spechit;
 TArray<spechit_t> portalhit;
-
-// Temporary holder for thing_sectorlist threads
-msecnode_t* sector_list = NULL;		// phares 3/16/98
 
 //==========================================================================
 //
@@ -2389,10 +2387,11 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 			FLinePortal *port = ld->getPortal();
 			if (port->mType == PORTT_LINKED)
 			{
-				thing->UnlinkFromWorld();
+				FLinkContext ctx;
+				thing->UnlinkFromWorld(&ctx);
 				thing->SetXY(tm.pos + port->mDisplacement);
 				thing->Prev += port->mDisplacement;
-				thing->LinkToWorld();
+				thing->LinkToWorld(&ctx);
 				P_FindFloorCeiling(thing);
 				portalcrossed = true;
 				tm.portalstep = false;
@@ -2413,11 +2412,12 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 					thing->flags6 &= ~MF6_INTRYMOVE;
 					return false;
 				}
-				thing->UnlinkFromWorld();
+				FLinkContext ctx;
+				thing->UnlinkFromWorld(&ctx);
 				thing->SetXYZ(pos);
 				P_TranslatePortalVXVY(ld, thing->Vel.X, thing->Vel.Y);
 				P_TranslatePortalAngle(ld, thing->Angles.Yaw);
-				thing->LinkToWorld();
+				thing->LinkToWorld(&ctx);
 				P_FindFloorCeiling(thing);
 				thing->ClearInterpolation();
 				portalcrossed = true;
@@ -2458,7 +2458,8 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 	if (!portalcrossed)
 	{
 		// the move is ok, so link the thing into its new position
-		thing->UnlinkFromWorld();
+		FLinkContext ctx;
+		thing->UnlinkFromWorld(&ctx);
 
 		oldsector = thing->Sector;
 		thing->floorz = tm.floorz;
@@ -2471,7 +2472,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 		thing->ceilingsector = tm.ceilingsector;
 		thing->SetXY(pos);
 
-		thing->LinkToWorld();
+		thing->LinkToWorld(&ctx);
 	}
 
 	if (thing->flags2 & MF2_FLOORCLIP)
@@ -2564,13 +2565,14 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 	// If the actor stepped through a ceiling portal we need to reacquire the actual position info after the transition
 	if (tm.portalstep)
 	{
+		FLinkContext ctx;
 		DVector3 oldpos = thing->Pos();
-		thing->UnlinkFromWorld();
+		thing->UnlinkFromWorld(&ctx);
 		thing->SetXYZ(thing->PosRelative(thing->Sector->GetOppositePortalGroup(sector_t::ceiling)));
 		thing->Prev = thing->Pos() - oldpos;
 		thing->Sector = P_PointInSector(thing->Pos());
 		thing->PrevPortalGroup = thing->Sector->PortalGroup;
-		thing->LinkToWorld();
+		thing->LinkToWorld(&ctx);
 
 		P_FindFloorCeiling(thing);
 	}
@@ -6533,33 +6535,16 @@ msecnode_t *P_DelSecnode(msecnode_t *node, msecnode_t *sector_t::*listhead)
 
 //=============================================================================
 //
-// P_DelSector_List
-//
-// Deletes the sector_list and NULLs it.
-//
-//=============================================================================
-
-void P_DelSector_List()
-{
-	if (sector_list != NULL)
-	{
-		P_DelSeclist(sector_list);
-		sector_list = NULL;
-	}
-}
-
-//=============================================================================
-//
 // P_DelSeclist
 //
 // Delete an entire sector list
 //
 //=============================================================================
 
-void P_DelSeclist(msecnode_t *node)
+void P_DelSeclist(msecnode_t *node, msecnode_t *sector_t::*sechead)
 {
 	while (node)
-		node = P_DelSecnode(node, &sector_t::touching_thinglist);
+		node = P_DelSecnode(node, sechead);
 }
 
 //=============================================================================
@@ -6571,7 +6556,7 @@ void P_DelSeclist(msecnode_t *node)
 //
 //=============================================================================
 
-void P_CreateSecNodeList(AActor *thing)
+msecnode_t *P_CreateSecNodeList(AActor *thing, double radius, msecnode_t *sector_list, msecnode_t *sector_t::*seclisthead)
 {
 	msecnode_t *node;
 
@@ -6587,7 +6572,7 @@ void P_CreateSecNodeList(AActor *thing)
 		node = node->m_tnext;
 	}
 
-	FBoundingBox box(thing->X(), thing->Y(), thing->radius);
+	FBoundingBox box(thing->X(), thing->Y(), radius);
 	FBlockLinesIterator it(box);
 	line_t *ld;
 
@@ -6603,7 +6588,7 @@ void P_CreateSecNodeList(AActor *thing)
 		// allowed to move to this position, then the sector_list
 		// will be attached to the Thing's AActor at touching_sectorlist.
 
-		sector_list = P_AddSecnode(ld->frontsector, thing, sector_list, ld->frontsector->touching_thinglist);
+		sector_list = P_AddSecnode(ld->frontsector, thing, sector_list, ld->frontsector->*seclisthead);
 
 		// Don't assume all lines are 2-sided, since some Things
 		// like MT_TFOG are allowed regardless of whether their radius takes
@@ -6613,12 +6598,12 @@ void P_CreateSecNodeList(AActor *thing)
 		// Use sidedefs instead of 2s flag to determine two-sidedness.
 
 		if (ld->backsector)
-			sector_list = P_AddSecnode(ld->backsector, thing, sector_list, ld->backsector->touching_thinglist);
+			sector_list = P_AddSecnode(ld->backsector, thing, sector_list, ld->backsector->*seclisthead);
 	}
 
 	// Add the sector of the (x,y) point to sector_list.
 
-	sector_list = P_AddSecnode(thing->Sector, thing, sector_list, thing->Sector->touching_thinglist);
+	sector_list = P_AddSecnode(thing->Sector, thing, sector_list, thing->Sector->*seclisthead);
 
 	// Now delete any nodes that won't be used. These are the ones where
 	// m_thing is still NULL.
@@ -6630,15 +6615,15 @@ void P_CreateSecNodeList(AActor *thing)
 		{
 			if (node == sector_list)
 				sector_list = node->m_tnext;
-			node = P_DelSecnode(node, &sector_t::touching_thinglist);
+			node = P_DelSecnode(node, seclisthead);
 		}
 		else
 		{
 			node = node->m_tnext;
 		}
 	}
+	return sector_list;
 }
-
 
 //=============================================================================
 //
@@ -6770,6 +6755,7 @@ void AActor::UpdateRenderSectorList()
 			sec = P_PointInSector(newpos);
 			render_sectorlist = P_AddSecnode(sec, this, render_sectorlist, sec->render_thinglist);
 		}
+		sec = Sector;
 		lasth = FLT_MAX;
 		while (!sec->PortalBlocksMovement(sector_t::floor))
 		{

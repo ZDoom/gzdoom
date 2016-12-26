@@ -6755,6 +6755,7 @@ void AActor::UpdateRenderSectorList()
 			sec = P_PointInSector(newpos);
 			render_sectorlist = P_AddSecnode(sec, this, render_sectorlist, sec->render_thinglist);
 		}
+		sec = Sector;
 		lasth = FLT_MAX;
 		while (!sec->PortalBlocksMovement(sector_t::floor))
 		{

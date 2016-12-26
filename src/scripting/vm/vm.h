@@ -21,27 +21,35 @@ typedef VM_UBYTE			VM_ATAG;
 
 #define VM_EPSILON			(1/65536.0)
 
+#ifdef __BIG_ENDIAN__
+#define VM_DEFINE_OP2(TYPE, ARG1, ARG2) TYPE ARG2, ARG1
+#define VM_DEFINE_OP4(TYPE, ARG1, ARG2, ARG3, ARG4) TYPE ARG4, ARG3, ARG2, ARG1
+#else // little endian
+#define VM_DEFINE_OP2(TYPE, ARG1, ARG2) TYPE ARG1, ARG2
+#define VM_DEFINE_OP4(TYPE, ARG1, ARG2, ARG3, ARG4) TYPE ARG1, ARG2, ARG3, ARG4
+#endif // __BIG_ENDIAN__
+
 union VMOP
 {
 	struct
 	{
-		VM_UBYTE op, a, b, c;
+		VM_DEFINE_OP4(VM_UBYTE, op, a, b, c);
 	};
 	struct
 	{
-		VM_SBYTE pad0, as, bs, cs;
+		VM_DEFINE_OP4(VM_SBYTE, pad0, as, bs, cs);
 	};
 	struct
 	{
-		VM_SWORD pad1:8, i24:24;
+		VM_DEFINE_OP2(VM_SWORD, pad1:8, i24:24);
 	};
 	struct
 	{
-		VM_SWORD pad2:16, i16:16;
+		VM_DEFINE_OP2(VM_SWORD, pad2:16, i16:16);
 	};
 	struct
 	{
-		VM_UHALF pad3, i16u;
+		VM_DEFINE_OP2(VM_UHALF, pad3, i16u);
 	};
 	VM_UWORD word;
 
@@ -55,6 +63,9 @@ union VMOP
 	//		mov		eax,dword ptr [op]		; As a bitfield
 	//		sar		eax,10h
 };
+
+#undef VM_DEFINE_OP4
+#undef VM_DEFINE_OP2
 
 enum
 {

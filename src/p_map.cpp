@@ -4476,7 +4476,9 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 					puff = P_SpawnPuff(t1, pufftype, bleedpos, 0., 0., 2, puffFlags | PF_HITTHING | PF_TEMPORARY);
 					killPuff = true;
 				}
-				newdam = P_DamageMobj(trace.Actor, puff ? puff : t1, t1, damage, damageType, dmgflags|DMG_USEANGLE, trace.SrcAngleFromTarget);
+				auto src = t1;
+				if ((flags & LAF_TARGETISSOURCE) && t1 && t1->target) src = t1->target;
+				newdam = P_DamageMobj(trace.Actor, puff ? puff : t1, src, damage, damageType, dmgflags|DMG_USEANGLE, trace.SrcAngleFromTarget);
 				if (actualdamage != NULL)
 				{
 					*actualdamage = newdam;

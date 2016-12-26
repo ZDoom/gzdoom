@@ -425,6 +425,15 @@ void LoadActors()
 			CheckForUnsafeStates(ti);
 		}
 
+		// ensure that all actor bouncers have PASSMOBJ set.
+		auto defaults = GetDefaultByType(ti);
+		if (defaults->BounceFlags & (BOUNCE_Actors | BOUNCE_AllActors))
+		{
+			// PASSMOBJ is irrelevant for normal missiles, but not for bouncers.
+			defaults->flags2 |= MF2_PASSMOBJ;
+		}
+
+
 	}
 	if (FScriptPosition::ErrorCounter > 0)
 	{

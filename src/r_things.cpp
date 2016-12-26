@@ -1293,6 +1293,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	FTexture*			tex;
 	vissprite_t*		vis;
 	bool				noaccel;
+	double				alpha = owner->Alpha;
 	static TArray<vissprite_t> avis;
 
 	if (avis.Size() < vispspindex + 1)
@@ -1316,7 +1317,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	flip = sprframe->Flip & 1;
 	tex = TexMan(picnum);
 
-	if (tex->UseType == FTexture::TEX_Null)
+	if (tex->UseType == FTexture::TEX_Null || pspr->RenderStyle == STYLE_None)
 		return;
 
 	if (pspr->firstTic)
@@ -1353,10 +1354,10 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 
 	tx += tex->GetScaledWidth();
 	x2 = xs_RoundToInt(CenterX + tx * pspritexscale);
-
+	
 	// off the left side
 	if (x2 <= 0)
-		return;
+		return;	
 
 	// store information in a vissprite
 	vis = &avis[vispspindex];
@@ -1394,6 +1395,8 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	vis->pic = tex;
 	vis->ColormapNum = 0;
 
+	// If flip is used, provided that it's not already flipped (that would just invert itself)
+	// (It's an XOR...)
 	if (!(flip) != !(pspr->Flags & PSPF_FLIP))
 	{
 		vis->xiscale = -FLOAT2FIXED(pspritexiscale * tex->Scale.X);
@@ -1412,8 +1415,114 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	FDynamicColormap *colormap_to_use = nullptr;
 	if (pspr->GetID() < PSP_TARGETCENTER)
 	{
-		vis->Style.Alpha = float(owner->Alpha);
-		vis->Style.RenderStyle = owner->RenderStyle;
+		// [MC] Set the render style 
+
+		if (pspr->Flags & PSPF_RENDERSTYLE)
+		{
+			const int rs = clamp<int>(pspr->RenderStyle, 0, STYLE_Count);
+
+			if (pspr->Flags & PSPF_FORCESTYLE)
+			{
+				vis->Style.RenderStyle = LegacyRenderStyles[rs];
+			}
+			else if (owner->RenderStyle == LegacyRenderStyles[STYLE_Fuzzy])
+			{
+				vis->Style.RenderStyle = LegacyRenderStyles[STYLE_Fuzzy];
+			}
+			else if (owner->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy])
+			{
+				vis->Style.RenderStyle = LegacyRenderStyles[STYLE_OptFuzzy];
+				vis->Style.RenderStyle.CheckFuzz();
+			}
+			else if (owner->RenderStyle == LegacyRenderStyles[STYLE_Subtract])
+			{
+				vis->Style.RenderStyle = LegacyRenderStyles[STYLE_Subtract];
+			}
+			else
+			{
+				vis->Style.RenderStyle = LegacyRenderStyles[rs];
+			}
+		}
+ 		else
+ 		{
+			vis->Style.RenderStyle = owner->RenderStyle;
+ 		}
+
+		// Set the alpha based on if using the overlay's own or not. Also adjust
+		// and override the alpha if not forced.
+		if (pspr->Flags & PSPF_ALPHA)
+		{
+			if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Fuzzy])
+			{
+				alpha = owner->Alpha;
+			}
+			else if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy])
+			{
+				FRenderStyle style = vis->Style.RenderStyle;
+				style.CheckFuzz();
+				switch (style.BlendOp)
+				{
+				default:
+					alpha = pspr->alpha * owner->Alpha;
+					break;
+				case STYLEOP_Fuzz:
+				case STYLEOP_Sub:
+					alpha = owner->Alpha;
+					break;
+				}
+
+			}
+			else if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Subtract])
+			{
+				alpha = owner->Alpha;
+			}
+			else if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Add] ||
+					vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Translucent] ||
+					vis->Style.RenderStyle == LegacyRenderStyles[STYLE_TranslucentStencil] || 
+					vis->Style.RenderStyle == LegacyRenderStyles[STYLE_AddStencil] || 
+					vis->Style.RenderStyle == LegacyRenderStyles[STYLE_AddShaded])
+			{
+				alpha = owner->Alpha * pspr->alpha;
+			}
+			else
+			{
+				alpha = owner->Alpha;
+			}
+		}
+
+		// Should normal renderstyle come out on top at the end and we desire alpha,
+		// switch it to translucent. Normal never applies any sort of alpha.
+		if ((pspr->Flags & PSPF_ALPHA) &&
+			vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Normal] && 
+			vis->Style.Alpha < 1.0)
+		{
+			vis->Style.RenderStyle = LegacyRenderStyles[STYLE_Translucent];
+			alpha = owner->Alpha * pspr->alpha;
+		}
+
+		// ALWAYS take priority if asked for, except fuzz. Fuzz does absolutely nothing
+		// no matter what way it's changed.
+		if (pspr->Flags & PSPF_FORCEALPHA)
+		{
+			//Due to lack of != operators...
+			if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Fuzzy] ||
+				vis->Style.RenderStyle == LegacyRenderStyles[STYLE_SoulTrans] ||
+				vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Stencil])
+			{	}
+			else
+			{
+				alpha = pspr->alpha;
+				vis->Style.RenderStyle.Flags |= STYLEF_ForceAlpha;
+			}
+		}
+		vis->Style.Alpha = clamp<float>(float(alpha), 0.f, 1.f);
+
+		// Due to how some of the effects are handled, going to 0 or less causes some
+		// weirdness to display. There's no point rendering it anyway if it's 0.
+		if (vis->Style.Alpha <= 0.)
+			return;
+
+		//-----------------------------------------------------------------------------
 
 		// The software renderer cannot invert the source without inverting the overlay
 		// too. That means if the source is inverted, we need to do the reverse of what
@@ -1517,7 +1626,6 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	{
 		colormap_to_use = basecolormap;
 		vis->Style.colormap = basecolormap->Maps;
-		vis->Style.RenderStyle = STYLE_Normal;
 	}
 
 	// Check for hardware-assisted 2D. If it's available, and this sprite is not
@@ -1538,6 +1646,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 			return;
 		}
 	}
+
 	R_DrawVisSprite(vis);
 }
 
@@ -1652,6 +1761,7 @@ void R_DrawPlayerSprites ()
 			// It's possible this psprite's caller is now null but the layer itself hasn't been destroyed
 			// because it didn't tick yet (if we typed 'take all' while in the console for example).
 			// In this case let's simply not draw it to avoid crashing.
+
 			if ((psp->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr) && psp->GetCaller() != nullptr)
 			{
 				R_DrawPSprite(psp, camera, bobx, boby, wx, wy, r_TicFracF);

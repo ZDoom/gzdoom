@@ -594,7 +594,6 @@ void ADynamicLight::CollectWithinRadius(const DVector3 &opos, subsector_t *subSe
 	for (unsigned i = 0; i < collected_ss.Size(); i++)
 	{
 		subSec = collected_ss[i].sub;
-		auto &pos = collected_ss[i].pos;
 
 		touching_subsectors = AddLightNode(&subSec->lighthead, subSec, this, touching_subsectors);
 		if (subSec->sector->validcount != ::validcount)
@@ -603,9 +602,10 @@ void ADynamicLight::CollectWithinRadius(const DVector3 &opos, subsector_t *subSe
 			subSec->sector->validcount = ::validcount;
 		}
 
-		for (unsigned int i = 0; i < subSec->numlines; i++)
+		for (unsigned int j = 0; j < subSec->numlines; ++j)
 		{
-			seg_t * seg = subSec->firstline + i;
+			auto &pos = collected_ss[i].pos;
+			seg_t *seg = subSec->firstline + j;
 
 			// check distance from x/y to seg and if within radius add this seg and, if present the opposing subsector (lather/rinse/repeat)
 			// If out of range we do not need to bother with this seg.

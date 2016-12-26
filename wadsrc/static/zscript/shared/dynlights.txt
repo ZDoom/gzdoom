@@ -5,6 +5,7 @@ class DynamicLight : Actor native
 		Height 0;
 		Radius 0.1;
 		FloatBobPhase 0;
+		RenderRadius -1;
 		+NOBLOCKMAP
 		+NOGRAVITY
 		+FIXMAPTHINGPOS

@@ -363,8 +363,12 @@ static inline void RenderThings(subsector_t * sub, sector_t * sector)
 	SetupSprite.Clock();
 	sector_t * sec=sub->sector;
 	// Handle all things in sector.
-	for (AActor * thing = sec->thinglist; thing; thing = thing->snext)
+	for (auto p = sec->touching_renderthings; p != nullptr; p = p->m_snext)
 	{
+		auto thing = p->m_thing;
+		if (thing->validcount == validcount) continue;
+		thing->validcount = validcount;
+
 		FIntCVar *cvar = thing->GetClass()->distancecheck;
 		if (cvar != NULL && *cvar >= 0)
 		{
@@ -378,6 +382,7 @@ static inline void RenderThings(subsector_t * sub, sector_t * sector)
 
 		GLRenderer->ProcessSprite(thing, sector, false);
 	}
+	
 	for (msecnode_t *node = sec->render_thinglist; node; node = node->m_snext)
 	{
 		AActor *thing = node->m_thing;

@@ -196,14 +196,30 @@ int gl_CalcLightLevel(int lightlevel, int rellight, bool weapon)
 
 	if ((glset.lightmode & 2) && lightlevel < 192 && !weapon) 
 	{
-		light = xs_CRoundToInt(192.f - (192-lightlevel)* 1.95f);
+		if (lightlevel > 100)
+		{
+			light = xs_CRoundToInt(192.f - (192 - lightlevel)* 1.87f);
+			if (light + rellight < 20)
+			{
+				light = 20 + (light + rellight - 20) / 5;
+			}
+			else
+			{
+				light += rellight;
+			}
+		}
+		else
+		{
+			light = (lightlevel + rellight) / 5;
+		}
+
 	}
 	else
 	{
-		light=lightlevel;
+		light=lightlevel+rellight;
 	}
 
-	return clamp(light+rellight, 0, 255);
+	return clamp(light, 0, 255);
 }
 
 //==========================================================================

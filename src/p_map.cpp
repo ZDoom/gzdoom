@@ -6541,10 +6541,10 @@ msecnode_t *P_DelSecnode(msecnode_t *node, msecnode_t *sector_t::*listhead)
 //
 //=============================================================================
 
-void P_DelSeclist(msecnode_t *node)
+void P_DelSeclist(msecnode_t *node, msecnode_t *sector_t::*sechead)
 {
 	while (node)
-		node = P_DelSecnode(node, &sector_t::touching_thinglist);
+		node = P_DelSecnode(node, sechead);
 }
 
 //=============================================================================
@@ -6556,7 +6556,7 @@ void P_DelSeclist(msecnode_t *node)
 //
 //=============================================================================
 
-msecnode_t *P_CreateSecNodeList(AActor *thing, msecnode_t *sector_list)
+msecnode_t *P_CreateSecNodeList(AActor *thing, double radius, msecnode_t *sector_list, msecnode_t *sector_t::*seclisthead)
 {
 	msecnode_t *node;
 
@@ -6572,7 +6572,7 @@ msecnode_t *P_CreateSecNodeList(AActor *thing, msecnode_t *sector_list)
 		node = node->m_tnext;
 	}
 
-	FBoundingBox box(thing->X(), thing->Y(), thing->radius);
+	FBoundingBox box(thing->X(), thing->Y(), radius);
 	FBlockLinesIterator it(box);
 	line_t *ld;
 
@@ -6588,7 +6588,7 @@ msecnode_t *P_CreateSecNodeList(AActor *thing, msecnode_t *sector_list)
 		// allowed to move to this position, then the sector_list
 		// will be attached to the Thing's AActor at touching_sectorlist.
 
-		sector_list = P_AddSecnode(ld->frontsector, thing, sector_list, ld->frontsector->touching_thinglist);
+		sector_list = P_AddSecnode(ld->frontsector, thing, sector_list, ld->frontsector->*seclisthead);
 
 		// Don't assume all lines are 2-sided, since some Things
 		// like MT_TFOG are allowed regardless of whether their radius takes
@@ -6598,12 +6598,12 @@ msecnode_t *P_CreateSecNodeList(AActor *thing, msecnode_t *sector_list)
 		// Use sidedefs instead of 2s flag to determine two-sidedness.
 
 		if (ld->backsector)
-			sector_list = P_AddSecnode(ld->backsector, thing, sector_list, ld->backsector->touching_thinglist);
+			sector_list = P_AddSecnode(ld->backsector, thing, sector_list, ld->backsector->*seclisthead);
 	}
 
 	// Add the sector of the (x,y) point to sector_list.
 
-	sector_list = P_AddSecnode(thing->Sector, thing, sector_list, thing->Sector->touching_thinglist);
+	sector_list = P_AddSecnode(thing->Sector, thing, sector_list, thing->Sector->*seclisthead);
 
 	// Now delete any nodes that won't be used. These are the ones where
 	// m_thing is still NULL.
@@ -6615,7 +6615,7 @@ msecnode_t *P_CreateSecNodeList(AActor *thing, msecnode_t *sector_list)
 		{
 			if (node == sector_list)
 				sector_list = node->m_tnext;
-			node = P_DelSecnode(node, &sector_t::touching_thinglist);
+			node = P_DelSecnode(node, seclisthead);
 		}
 		else
 		{
@@ -6624,103 +6624,6 @@ msecnode_t *P_CreateSecNodeList(AActor *thing, msecnode_t *sector_list)
 	}
 	return sector_list;
 }
-
-
-//=============================================================================
-//
-// P_LinkRenderSectors
-//
-// Alters/creates the list of touched sectors for thing's render radius.
-//
-//=============================================================================
-
-void P_LinkRenderSectors(AActor* thing)
-{
-	// if this thing has RenderStyle None, don't link it anywhere.
-	if (thing->renderradius >= 0)
-	{
-		FBoundingBox box(thing->X(), thing->Y(), std::max(thing->radius, thing->renderradius));
-		FBlockLinesIterator it(box);
-		line_t *ld;
-
-		// add to surrounding sectors
-		while ((ld = it.Next()))
-		{
-			if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
-				continue;
-
-			// 
-			// create necessary lists.
-			if (!thing->touching_render_sectors) thing->touching_render_sectors = new std::forward_list<sector_t*>();
-
-			//
-			if (ld->frontsector != thing->Sector)
-			{
-				if (std::find(thing->touching_render_sectors->begin(), thing->touching_render_sectors->end(), ld->frontsector) == thing->touching_render_sectors->end())
-					thing->touching_render_sectors->push_front(ld->frontsector);
-				if (!ld->frontsector->touching_render_things) ld->frontsector->touching_render_things = new std::forward_list<AActor*>();
-				ld->frontsector->touching_render_things->push_front(thing);
-			}
-
-			if (ld->backsector && ld->backsector != thing->Sector)
-			{
-				if (std::find(thing->touching_render_sectors->begin(), thing->touching_render_sectors->end(), ld->backsector) == thing->touching_render_sectors->end())
-					thing->touching_render_sectors->push_front(ld->backsector);
-				if (!ld->backsector->touching_render_things) ld->backsector->touching_render_things = new std::forward_list<AActor*>();
-				ld->backsector->touching_render_things->push_front(thing);
-			}
-		}
-	}
-
-	// add to own sector
-	if (!thing->Sector->touching_render_things) thing->Sector->touching_render_things = new std::forward_list<AActor*>();
-	thing->Sector->touching_render_things->push_front(thing);
-}
-
-
-//=============================================================================
-//
-// P_UnlinkRenderSectors
-//
-// Reverses P_LinkRenderSectors.
-//
-//=============================================================================
-
-void P_UnlinkRenderSectors(AActor* thing)
-{
-	if (thing->renderradius >= 0)
-	{
-		if (thing->touching_render_sectors)
-		{
-			for (auto sec : *thing->touching_render_sectors)
-			{
-				if (sec->touching_render_things)
-				{
-					sec->touching_render_things->remove(thing);
-					if (sec->touching_render_things->empty())
-					{
-						delete sec->touching_render_things;
-						sec->touching_render_things = NULL;
-					}
-				}
-			}
-
-			delete thing->touching_render_sectors;
-			thing->touching_render_sectors = NULL;
-		}
-	}
-
-	if (thing->Sector->touching_render_things)
-	{
-		thing->Sector->touching_render_things->remove(thing);
-		if (thing->Sector->touching_render_things->empty())
-		{
-			delete thing->Sector->touching_render_things;
-			thing->Sector->touching_render_things = NULL;
-		}
-	}
-}
-
 
 //=============================================================================
 //

@@ -568,6 +568,7 @@ struct FStrifeDialogueNode;
 struct FLinkContext
 {
 	msecnode_t *sector_list = nullptr;
+	msecnode_t *render_list = nullptr;
 };
 
 class DDropItem : public DObject
@@ -1149,7 +1150,7 @@ public:
 	struct msecnode_t	*touching_sectorlist;				// phares 3/14/98
 	struct msecnode_t	*render_sectorlist;		// same for cross-sectorportal rendering
 	struct portnode_t	*render_portallist;		// and for cross-lineportal
-	std::forward_list<sector_t*>* touching_render_sectors; // this is the list of sectors that this thing interesects with it's max(radius, renderradius).
+	struct msecnode_t	*touching_rendersectors; // this is the list of sectors that this thing interesects with it's max(radius, renderradius).
 	int validcount;
 
 

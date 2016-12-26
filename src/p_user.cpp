@@ -2977,7 +2977,7 @@ void P_UnPredictPlayer ()
 			}
 
 			// Make the sector_list match the player's touching_sectorlist before it got predicted.
-			P_DelSeclist(ctx.sector_list);
+			P_DelSeclist(ctx.sector_list, &sector_t::touching_thinglist);
 			ctx.sector_list = NULL;
 			for (i = PredictionTouchingSectorsBackup.Size(); i-- > 0;)
 			{

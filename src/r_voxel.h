@@ -22,10 +22,15 @@
 
 #pragma once
 
+struct kvxslab_t;
+
 namespace swrenderer
 {
 	struct vissprite_t;
 
 	void R_DrawVisVoxel(vissprite_t *sprite, int minZ, int maxZ, short *cliptop, short *clipbottom);
 	void R_FillBox(DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch);
+	kvxslab_t *R_GetSlabStart(const FVoxelMipLevel &mip, int x, int y);
+	kvxslab_t *R_GetSlabEnd(const FVoxelMipLevel &mip, int x, int y);
+	kvxslab_t *R_NextSlab(kvxslab_t *slab);
 }

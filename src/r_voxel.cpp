@@ -54,20 +54,68 @@ namespace swrenderer
 		double sprite_yscale = sprite->yscale;
 		FVoxel *voxel = sprite->voxel;
 
+		// To do: calculate the mipmap level based on distance, sprite scale and voxel extents
 		int miplevel = 0;//voxel->NumMips;
+		
 		const FVoxelMipLevel &mip = voxel->Mips[miplevel];
 		if (mip.SlabData == nullptr)
 			return;
 
-		/*
 		double spriteSin = sprite_angle.Sin();
 		double spriteCos = sprite_angle.Cos();
-		double pivotX = (mip.Pivot.X * spriteSin - mip.Pivot.Y * spriteCos);
-		double pivotY = (mip.Pivot.X * spriteCos + mip.Pivot.Y * spriteSin);
-		double pivotZ = -mip.Pivot.Z;
-		*/
+		
+		DVector2 dirX(spriteSin * sprite_xscale, -spriteCos * sprite_xscale);
+		DVector2 dirY(spriteCos * sprite_xscale, spriteSin * sprite_xscale);
+		float dirZ = -sprite_yscale;
+		
+		DVector3 voxel_origin = sprite_origin;
+		voxel_origin.X -= dirX.X * mip.Pivot.X + dirX.Y * mip.Pivot.Y;
+		voxel_origin.Y -= dirY.X * mip.Pivot.X + dirY.Y * mip.Pivot.Y;
+		voxel_origin.Z -= dirZ * mip.Pivot.Z;
+		
+		// To do: do this loop sorted back to front:
+		
+		for (int x = 0; x < mip.SizeX; x++)
+		{
+			for (int y = 0; y < mip.SizeY; y++)
+			{
+				kvxslab_t *slab_start = R_GetSlabStart(mip, x, y);
+				kvxslab_t *slab_end = R_GetSlabEnd(mip, x, y);
+				
+				for (kvxslab_t *slab = slab_start; slab != slab_end; slab = R_NextSlab(slab))
+				{
+					// To do: check slab->backfacecull
+				
+					for (int i = 0; i < slab->zleng; i++)
+					{
+						int z = slab->ztop + i;
+						uint8_t color = slab->col[i];
+						
+						DVector3 voxel_pos = voxel_origin;
+						voxel_pos.X += dirX.X * x + dirX.Y * y;
+						voxel_pos.Y += dirY.X * x + dirY.Y * y;
+						voxel_pos.Z += dirZ * z;
+						
+						R_FillBox(voxel_pos, sprite_xscale, sprite_yscale, color, cliptop, clipbottom, false, false);
+					}
+				}
+			}
+		}
+	}
+	
+	kvxslab_t *R_GetSlabStart(const FVoxelMipLevel &mip, int x, int y)
+	{
+		return (kvxslab_t *)&mip.SlabData[mip.OffsetX[x] + (int)mip.OffsetXY[x * (mip.SizeY + 1) + y]];
+	}
 
-		R_FillBox(sprite_origin, 5.0 * sprite_xscale, 5.0 * sprite_yscale, 16, cliptop, clipbottom, false, false);
+	kvxslab_t *R_GetSlabEnd(const FVoxelMipLevel &mip, int x, int y)
+	{
+		return R_GetSlabStart(mip, x, y + 1);
+	}
+	
+	kvxslab_t *R_NextSlab(kvxslab_t *slab)
+	{
+		return (kvxslab_t*)(((uint8_t*)slab) + 3 + slab->zleng);
 	}
 
 	void R_FillBox(DVector3 origin, double extentX, double extentY, int color, short *cliptop, short *clipbottom, bool viewspace, bool pixelstretch)

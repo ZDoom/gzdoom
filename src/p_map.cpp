@@ -82,6 +82,56 @@ static FRandom pr_crunch("DoCrunch");
 TArray<spechit_t> spechit;
 TArray<spechit_t> portalhit;
 
+
+//==========================================================================
+//
+// CanCollideWith
+//
+// Checks if an actor can collide with another one, calling virtual script functions to check.
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(AActor, CanCollideWith)
+{
+	// No need to check the parameters, as they are not even used.
+	ACTION_RETURN_BOOL(true);
+}
+
+bool P_CanCollideWith(AActor *tmthing, AActor *thing)
+{
+	static unsigned VIndex = ~0u;
+	if (VIndex == ~0u)
+	{
+		VIndex = GetVirtualIndex(RUNTIME_CLASS(AActor), "CanCollideWith");
+		assert(VIndex != ~0u);
+	}
+
+	VMValue params[3] = { tmthing, thing, false };
+	VMReturn ret;
+	int retval;
+	ret.IntAt(&retval);
+
+	auto clss = tmthing->GetClass();
+	VMFunction *func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
+	if (func != nullptr)
+	{
+		GlobalVMStack.Call(func, params, 3, &ret, 1, nullptr);
+		if (!retval) return false;
+	}
+	std::swap(params[0].a, params[1].a);
+	params[2].i = true;
+
+	// re-get for the other actor.
+	clss = thing->GetClass();
+	func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
+	if (func != nullptr)
+	{
+		GlobalVMStack.Call(func, params, 3, &ret, 1, nullptr);
+		if (!retval) return false;
+	}
+	return true;
+}
+
 //==========================================================================
 //
 // FindRefPoint
@@ -401,6 +451,9 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 					continue;
 			}
 		}
+
+		if (!P_CanCollideWith(tmf.thing, th))
+			continue;
 
 		// monsters don't stomp things except on boss level
 		// [RH] Some Heretic/Hexen monsters can telestomp
@@ -1147,12 +1200,6 @@ static bool CanAttackHurt(AActor *victim, AActor *shooter)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, CanCollideWith)
-{
-	// No need to check the parameters, as they are not even used.
-	ACTION_RETURN_BOOL(true);
-}
-
 bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::CheckResult &cres, const FBoundingBox &box, FCheckPosition &tm)
 {
 	AActor *thing = cres.thing;
@@ -1257,36 +1304,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	if (((thing->flags & MF_SOLID) || (thing->flags6 & (MF6_TOUCHY | MF6_BUMPSPECIAL))) && 
 		((tm.thing->flags & (MF_SOLID|MF_MISSILE)) || (tm.thing->flags2 & MF2_BLASTED) || (tm.thing->flags6 & MF6_BLOCKEDBYSOLIDACTORS) || (tm.thing->BounceFlags & BOUNCE_MBF)))
 	{
-		static unsigned VIndex = ~0u;
-		if (VIndex == ~0u)
-		{
-			VIndex = GetVirtualIndex(RUNTIME_CLASS(AActor), "CanCollideWith");
-			assert(VIndex != ~0u);
-		}
-
-		VMValue params[3] = { tm.thing, thing, false };
-		VMReturn ret;
-		int retval;
-		ret.IntAt(&retval);
-
-		auto clss = tm.thing->GetClass();
-		VMFunction *func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
-		if (func != nullptr)
-		{
-			GlobalVMStack.Call(func, params, 3, &ret, 1, nullptr);
-			if (!retval) return true;
-		}
-		std::swap(params[0].a, params[1].a);
-		params[2].i = true;
-
-		// re-get for the other actor.
-		clss = thing->GetClass();
-		func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
-		if (func != nullptr)
-		{
-			GlobalVMStack.Call(func, params, 3, &ret, 1, nullptr);
-			if (!retval) return true;
-		}
+		if (!P_CanCollideWith(tm.thing, thing)) return true;
 	}
 
 
@@ -1959,6 +1977,12 @@ bool P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 		{ // something higher is in the way
 			continue;
 		}
+		else if (!P_CanCollideWith(actor, thing))
+		{ // If they cannot collide, they cannot block each other.
+			continue;
+		}
+
+
 		onmobj = thing;
 		if (quick) break;
 	}
@@ -5945,6 +5969,9 @@ int P_PushUp(AActor *thing, FChangePosition *cpos)
 			continue;
 		if ((thing->flags & MF_MISSILE) && (intersect->flags2 & MF2_REFLECTIVE) && (intersect->flags7 & MF7_THRUREFLECT))
 			continue;
+		if (!P_CanCollideWith(thing, intersect))
+			continue;
+
 		if (!(intersect->flags2 & MF2_PASSMOBJ) ||
 			(!(intersect->flags3 & MF3_ISMONSTER) && intersect->Mass > mymass) ||
 			(intersect->flags4 & MF4_ACTLIKEBRIDGE)
@@ -5991,6 +6018,18 @@ int P_PushDown(AActor *thing, FChangePosition *cpos)
 	for (; firstintersect < lastintersect; firstintersect++)
 	{
 		AActor *intersect = intersectors[firstintersect];
+
+		// [GZ] Skip this iteration for THRUSPECIES things
+		// Should there be MF2_THRUGHOST / MF3_GHOST checks there too for consistency?
+		// Or would that risk breaking established behavior? THRUGHOST, like MTHRUSPECIES,
+		// is normally for projectiles which would have exploded by now anyway...
+		if (thing->flags6 & MF6_THRUSPECIES && thing->GetSpecies() == intersect->GetSpecies())
+			continue;
+		if ((thing->flags & MF_MISSILE) && (intersect->flags2 & MF2_REFLECTIVE) && (intersect->flags7 & MF7_THRUREFLECT))
+			continue;
+		if (!P_CanCollideWith(thing, intersect))
+			continue;
+
 		if (!(intersect->flags2 & MF2_PASSMOBJ) ||
 			(!(intersect->flags3 & MF3_ISMONSTER) && intersect->Mass > mymass) ||
 			(intersect->flags4 & MF4_ACTLIKEBRIDGE)

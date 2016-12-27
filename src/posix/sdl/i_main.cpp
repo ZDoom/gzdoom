@@ -41,10 +41,6 @@
 #include <new>
 #include <sys/param.h>
 #include <locale.h>
-#if defined(__MACH__) && !defined(NOASM)
-#include <sys/types.h>
-#include <sys/mman.h>
-#endif
 
 #include "doomerrors.h"
 #include "m_argv.h"
@@ -185,46 +181,6 @@ static int DoomSpecificInfo (char *buffer, char *end)
 	return p;
 }
 
-#if defined(__MACH__) && !defined(NOASM)
-// NASM won't let us create custom sections for Mach-O. Whether that's a limitation of NASM
-// or of Mach-O, I don't know, but since we're using NASM for the assembly, it doesn't much
-// matter.
-extern "C"
-{
-	extern void *rtext_a_start, *rtext_a_end;
-	extern void *rtext_tmap_start, *rtext_tmap_end;
-	extern void *rtext_tmap2_start, *rtext_tmap2_end;
-	extern void *rtext_tmap3_start, *rtext_tmap3_end;
-};
-
-static void unprotect_pages(long pagesize, void *start, void *end)
-{
-	char *page = (char *)((intptr_t)start & ~(pagesize - 1));
-	size_t len = (char *)end - (char *)start;
-	if (mprotect(page, len, PROT_READ|PROT_WRITE|PROT_EXEC) != 0)
-	{
-		fprintf(stderr, "mprotect failed\n");
-		exit(1);
-	}
-}
-
-static void unprotect_rtext()
-{
-	static void *const pages[] =
-	{
-		rtext_a_start, rtext_a_end,
-		rtext_tmap_start, rtext_tmap_end,
-		rtext_tmap2_start, rtext_tmap2_end,
-		rtext_tmap3_start, rtext_tmap3_end
-	};
-	long pagesize = sysconf(_SC_PAGESIZE);
-	for (void *const *p = pages; p < &pages[countof(pages)]; p += 2)
-	{
-		unprotect_pages(pagesize, p[0], p[1]);
-	}
-}
-#endif
-
 void I_StartupJoysticks();
 void I_ShutdownJoysticks();
 
@@ -242,10 +198,6 @@ int main (int argc, char **argv)
 
 	seteuid (getuid ());
     std::set_new_handler (NewFailure);
-
-#if defined(__MACH__) && !defined(NOASM)
-	unprotect_rtext();
-#endif
 
 	// Set LC_NUMERIC environment variable in case some library decides to
 	// clear the setlocale call at least this will be correct.

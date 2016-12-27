@@ -48,7 +48,7 @@
 #include "m_argv.h"
 #include "m_png.h"
 #include "r_renderer.h"
-#include "r_swrenderer.h"
+#include "swrenderer/r_swrenderer.h"
 #include "st_console.h"
 #include "stats.h"
 #include "textures.h"

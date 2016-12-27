@@ -130,7 +130,7 @@ namespace swrenderer
 	bool R_SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color);
 	bool R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color);
 	void R_FinishSetPatchStyle(); // Call this after finished drawing the current thing, in case its style was STYLE_Shade
-	bool R_GetTransMaskDrawers(void(**drawCol1)(), void(**drawCol4)());
+	bool R_GetTransMaskDrawers(void(**drawColumn)());
 
 	const uint8_t *R_GetColumn(FTexture *tex, int col);
 	
@@ -165,23 +165,15 @@ namespace swrenderer
 	void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip);
 	void R_FillSpan();
 
-	void R_DrawWallCol1();
-	void R_DrawWallCol4();
-	void R_DrawWallMaskedCol1();
-	void R_DrawWallMaskedCol4();
-	void R_DrawWallAddCol1();
-	void R_DrawWallAddCol4();
-	void R_DrawWallAddClampCol1();
-	void R_DrawWallAddClampCol4();
-	void R_DrawWallSubClampCol1();
-	void R_DrawWallSubClampCol4();
-	void R_DrawWallRevSubClampCol1();
-	void R_DrawWallRevSubClampCol4();
+	void R_DrawWallColumn();
+	void R_DrawWallMaskedColumn();
+	void R_DrawWallAddColumn();
+	void R_DrawWallAddClampColumn();
+	void R_DrawWallSubClampColumn();
+	void R_DrawWallRevSubClampColumn();
 
-	void R_DrawSingleSkyCol1(uint32_t solid_top, uint32_t solid_bottom);
-	void R_DrawSingleSkyCol4(uint32_t solid_top, uint32_t solid_bottom);
-	void R_DrawDoubleSkyCol1(uint32_t solid_top, uint32_t solid_bottom);
-	void R_DrawDoubleSkyCol4(uint32_t solid_top, uint32_t solid_bottom);
+	void R_DrawSingleSkyColumn(uint32_t solid_top, uint32_t solid_bottom);
+	void R_DrawDoubleSkyColumn(uint32_t solid_top, uint32_t solid_bottom);
 
 	// Sets dc_colormap and dc_light to their appropriate values depending on the output format (pal vs true color)
 	void R_SetColorMapLight(FSWColormap *base_colormap, float light, int shade);

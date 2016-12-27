@@ -51,22 +51,14 @@ LLVMDrawers::LLVMDrawers(const std::string &triple, const std::string &cpuName, 
 	CodegenDrawSpan("DrawSpanMaskedTranslucent", DrawSpanVariant::MaskedTranslucent);
 	CodegenDrawSpan("DrawSpanAddClamp", DrawSpanVariant::AddClamp);
 	CodegenDrawSpan("DrawSpanMaskedAddClamp", DrawSpanVariant::MaskedAddClamp);
-	CodegenDrawWall("vlinec1", DrawWallVariant::Opaque, 1);
-	CodegenDrawWall("vlinec4", DrawWallVariant::Opaque, 4);
-	CodegenDrawWall("mvlinec1", DrawWallVariant::Masked, 1);
-	CodegenDrawWall("mvlinec4", DrawWallVariant::Masked, 4);
-	CodegenDrawWall("tmvline1_add", DrawWallVariant::Add, 1);
-	CodegenDrawWall("tmvline4_add", DrawWallVariant::Add, 4);
-	CodegenDrawWall("tmvline1_addclamp", DrawWallVariant::AddClamp, 1);
-	CodegenDrawWall("tmvline4_addclamp", DrawWallVariant::AddClamp, 4);
-	CodegenDrawWall("tmvline1_subclamp", DrawWallVariant::SubClamp, 1);
-	CodegenDrawWall("tmvline4_subclamp", DrawWallVariant::SubClamp, 4);
-	CodegenDrawWall("tmvline1_revsubclamp", DrawWallVariant::RevSubClamp, 1);
-	CodegenDrawWall("tmvline4_revsubclamp", DrawWallVariant::RevSubClamp, 4);
-	CodegenDrawSky("DrawSky1", DrawSkyVariant::Single, 1);
-	CodegenDrawSky("DrawSky4", DrawSkyVariant::Single, 4);
-	CodegenDrawSky("DrawDoubleSky1", DrawSkyVariant::Double, 1);
-	CodegenDrawSky("DrawDoubleSky4", DrawSkyVariant::Double, 4);
+	CodegenDrawWall("vlinec1", DrawWallVariant::Opaque);
+	CodegenDrawWall("mvlinec1", DrawWallVariant::Masked);
+	CodegenDrawWall("tmvline1_add", DrawWallVariant::Add);
+	CodegenDrawWall("tmvline1_addclamp", DrawWallVariant::AddClamp);
+	CodegenDrawWall("tmvline1_subclamp", DrawWallVariant::SubClamp);
+	CodegenDrawWall("tmvline1_revsubclamp", DrawWallVariant::RevSubClamp);
+	CodegenDrawSky("DrawSky1", DrawSkyVariant::Single);
+	CodegenDrawSky("DrawDoubleSky1", DrawSkyVariant::Double);
 	for (int i = 0; i < NumTriBlendModes(); i++)
 	{
 		CodegenDrawTriangle("TriDraw8_" + std::to_string(i), (TriBlendMode)i, false, false);
@@ -115,7 +107,7 @@ void LLVMDrawers::CodegenDrawSpan(const char *name, DrawSpanVariant variant)
 		throw Exception("verifyFunction failed for CodegenDrawSpan()");
 }
 
-void LLVMDrawers::CodegenDrawWall(const char *name, DrawWallVariant variant, int columns)
+void LLVMDrawers::CodegenDrawWall(const char *name, DrawWallVariant variant)
 {
 	llvm::IRBuilder<> builder(mProgram.context());
 	SSAScope ssa_scope(&mProgram.context(), mProgram.module(), &builder);
@@ -126,7 +118,7 @@ void LLVMDrawers::CodegenDrawWall(const char *name, DrawWallVariant variant, int
 	function.create_public();
 
 	DrawWallCodegen codegen;
-	codegen.Generate(variant, columns == 4, function.parameter(0), function.parameter(1));
+	codegen.Generate(variant, function.parameter(0), function.parameter(1));
 
 	builder.CreateRetVoid();
 
@@ -134,7 +126,7 @@ void LLVMDrawers::CodegenDrawWall(const char *name, DrawWallVariant variant, int
 		throw Exception("verifyFunction failed for CodegenDrawWall()");
 }
 
-void LLVMDrawers::CodegenDrawSky(const char *name, DrawSkyVariant variant, int columns)
+void LLVMDrawers::CodegenDrawSky(const char *name, DrawSkyVariant variant)
 {
 	llvm::IRBuilder<> builder(mProgram.context());
 	SSAScope ssa_scope(&mProgram.context(), mProgram.module(), &builder);
@@ -145,7 +137,7 @@ void LLVMDrawers::CodegenDrawSky(const char *name, DrawSkyVariant variant, int c
 	function.create_public();
 
 	DrawSkyCodegen codegen;
-	codegen.Generate(variant, columns == 4, function.parameter(0), function.parameter(1));
+	codegen.Generate(variant, function.parameter(0), function.parameter(1));
 
 	builder.CreateRetVoid();
 

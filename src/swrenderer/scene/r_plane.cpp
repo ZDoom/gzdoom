@@ -931,16 +931,10 @@ static void R_DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, doub
 	uint32_t solid_top = frontskytex->GetSkyCapColor(false);
 	uint32_t solid_bottom = frontskytex->GetSkyCapColor(true);
 
-	if (columns == 4)
-		if (!backskytex)
-			R_DrawSingleSkyCol4(solid_top, solid_bottom);
-		else
-			R_DrawDoubleSkyCol4(solid_top, solid_bottom);
+	if (!backskytex)
+		R_DrawSingleSkyColumn(solid_top, solid_bottom);
 	else
-		if (!backskytex)
-			R_DrawSingleSkyCol1(solid_top, solid_bottom);
-		else
-			R_DrawDoubleSkyCol1(solid_top, solid_bottom);
+		R_DrawDoubleSkyColumn(solid_top, solid_bottom);
 }
 
 static void R_DrawSkyColumn(int start_x, int y1, int y2, int columns)
@@ -970,76 +964,7 @@ static void R_DrawCapSky(visplane_t *pl)
 	short *uwal = (short *)pl->top;
 	short *dwal = (short *)pl->bottom;
 
-	// Calculate where 4 column alignment begins and ends:
-	int aligned_x1 = clamp((x1 + 3) / 4 * 4, x1, x2);
-	int aligned_x2 = clamp(x2 / 4 * 4, x1, x2);
-
-	// First unaligned columns:
-	for (int x = x1; x < aligned_x1; x++)
-	{
-		int y1 = uwal[x];
-		int y2 = dwal[x];
-		if (y2 <= y1)
-			continue;
-
-		R_DrawSkyColumn(x, y1, y2, 1);
-	}
-
-	// The aligned columns
-	for (int x = aligned_x1; x < aligned_x2; x += 4)
-	{
-		// Find y1, y2, light and uv values for four columns:
-		int y1[4] = { uwal[x], uwal[x + 1], uwal[x + 2], uwal[x + 3] };
-		int y2[4] = { dwal[x], dwal[x + 1], dwal[x + 2], dwal[x + 3] };
-
-		// Figure out where we vertically can start and stop drawing 4 columns in one go
-		int middle_y1 = y1[0];
-		int middle_y2 = y2[0];
-		for (int i = 1; i < 4; i++)
-		{
-			middle_y1 = MAX(y1[i], middle_y1);
-			middle_y2 = MIN(y2[i], middle_y2);
-		}
-
-		// If we got an empty column in our set we cannot draw 4 columns in one go:
-		bool empty_column_in_set = false;
-		for (int i = 0; i < 4; i++)
-		{
-			if (y2[i] <= y1[i])
-				empty_column_in_set = true;
-		}
-		if (empty_column_in_set || middle_y2 <= middle_y1)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				if (y2[i] <= y1[i])
-					continue;
-
-				R_DrawSkyColumn(x + i, y1[i], y2[i], 1);
-			}
-			continue;
-		}
-
-		// Draw the first rows where not all 4 columns are active
-		for (int i = 0; i < 4; i++)
-		{
-			if (y1[i] < middle_y1)
-				R_DrawSkyColumn(x + i, y1[i], middle_y1, 1);
-		}
-
-		// Draw the area where all 4 columns are active
-		R_DrawSkyColumn(x, middle_y1, middle_y2, 4);
-
-		// Draw the last rows where not all 4 columns are active
-		for (int i = 0; i < 4; i++)
-		{
-			if (middle_y2 < y2[i])
-				R_DrawSkyColumn(x + i, middle_y2, y2[i], 1);
-		}
-	}
-
-	// The last unaligned columns:
-	for (int x = aligned_x2; x < x2; x++)
+	for (int x = x1; x < x2; x++)
 	{
 		int y1 = uwal[x];
 		int y2 = dwal[x];

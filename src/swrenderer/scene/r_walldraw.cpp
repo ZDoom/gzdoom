@@ -670,102 +670,11 @@ static void Draw1Column(int x, int y1, int y2, WallSampler &sampler, void(*draw1
 	}
 }
 
-// Draw four columns with support for non-power-of-two ranges
-static void Draw4Columns(int x, int y1, int y2, WallSampler *sampler, void(*draw4columns)())
-{
-	if (r_swtruecolor)
-	{
-		int count = y2 - y1;
-		for (int i = 0; i < 4; i++)
-		{
-			dc_wall_source[i] = sampler[i].source;
-			dc_wall_source2[i] = sampler[i].source2;
-			dc_wall_texturefracx[i] = sampler[i].texturefracx;
-			dc_wall_sourceheight[i] = sampler[i].height;
-			dc_wall_texturefrac[i] = sampler[i].uv_pos;
-			dc_wall_iscale[i] = sampler[i].uv_step;
-
-			uint64_t step64 = sampler[i].uv_step;
-			uint64_t pos64 = sampler[i].uv_pos;
-			sampler[i].uv_pos = (uint32_t)(pos64 + step64 * count);
-		}
-		dc_dest = (ylookup[y1] + x) * 4 + dc_destorg;
-		dc_count = count;
-		draw4columns();
-	}
-	else
-	{
-		if (sampler[0].uv_max == 0 || sampler[0].uv_step == 0) // power of two, no wrap handling needed
-		{
-			int count = y2 - y1;
-			for (int i = 0; i < 4; i++)
-			{
-				dc_wall_source[i] = sampler[i].source;
-				dc_wall_source2[i] = sampler[i].source2;
-				dc_wall_texturefracx[i] = sampler[i].texturefracx;
-				dc_wall_texturefrac[i] = sampler[i].uv_pos;
-				dc_wall_iscale[i] = sampler[i].uv_step;
-
-				uint64_t step64 = sampler[i].uv_step;
-				uint64_t pos64 = sampler[i].uv_pos;
-				sampler[i].uv_pos = (uint32_t)(pos64 + step64 * count);
-			}
-			dc_dest = (ylookup[y1] + x) + dc_destorg;
-			dc_count = count;
-			draw4columns();
-		}
-		else
-		{
-			dc_dest = (ylookup[y1] + x) + dc_destorg;
-			for (int i = 0; i < 4; i++)
-			{
-				dc_wall_source[i] = sampler[i].source;
-				dc_wall_source2[i] = sampler[i].source2;
-				dc_wall_texturefracx[i] = sampler[i].texturefracx;
-			}
-
-			uint32_t left = y2 - y1;
-			while (left > 0)
-			{
-				// Find which column wraps first
-				uint32_t count = left;
-				for (int i = 0; i < 4; i++)
-				{
-					uint32_t available = sampler[i].uv_max - sampler[i].uv_pos;
-					uint32_t next_uv_wrap = available / sampler[i].uv_step;
-					if (available % sampler[i].uv_step != 0)
-						next_uv_wrap++;
-					count = MIN(next_uv_wrap, count);
-				}
-
-				// Draw until that column wraps
-				for (int i = 0; i < 4; i++)
-				{
-					dc_wall_texturefrac[i] = sampler[i].uv_pos;
-					dc_wall_iscale[i] = sampler[i].uv_step;
-				}
-				dc_count = count;
-				draw4columns();
-
-				// Wrap the uv position
-				for (int i = 0; i < 4; i++)
-				{
-					sampler[i].uv_pos += sampler[i].uv_step * count;
-					if (sampler[i].uv_pos >= sampler[i].uv_max)
-						sampler[i].uv_pos -= sampler[i].uv_max;
-				}
-
-				left -= count;
-			}
-		}
-	}
-}
-
 typedef void(*DrawColumnFuncPtr)();
 
 static void ProcessWallWorker(
 	int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat,
-	const BYTE *(*getcol)(FTexture *tex, int x), DrawColumnFuncPtr draw1column, DrawColumnFuncPtr draw4columns)
+	const BYTE *(*getcol)(FTexture *tex, int x), DrawColumnFuncPtr drawcolumn)
 {
 	if (rw_pic->UseType == FTexture::TEX_Null)
 		return;
@@ -805,33 +714,7 @@ static void ProcessWallWorker(
 
 	double xmagnitude = 1.0;
 
-	if (r_dynlights)
-	{
-		for (int x = x1; x < x2; x++, light += rw_lightstep)
-		{
-			int y1 = uwal[x];
-			int y2 = dwal[x];
-			if (y2 <= y1)
-				continue;
-
-			if (!fixed)
-				R_SetColorMapLight(basecolormap, light, wallshade);
-
-			if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
-
-			WallSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic, getcol);
-			Draw1Column(x, y1, y2, sampler, draw1column);
-		}
-		NetUpdate();
-		return;
-	}
-
-	// Calculate where 4 column alignment begins and ends:
-	int aligned_x1 = clamp((x1 + 3) / 4 * 4, x1, x2);
-	int aligned_x2 = clamp(x2 / 4 * 4, x1, x2);
-
-	// First unaligned columns:
-	for (int x = x1; x < aligned_x1; x++, light += rw_lightstep)
+	for (int x = x1; x < x2; x++, light += rw_lightstep)
 	{
 		int y1 = uwal[x];
 		int y2 = dwal[x];
@@ -844,119 +727,7 @@ static void ProcessWallWorker(
 		if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
 
 		WallSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic, getcol);
-		Draw1Column(x, y1, y2, sampler, draw1column);
-	}
-
-	// The aligned columns
-	for (int x = aligned_x1; x < aligned_x2; x += 4)
-	{
-		// Find y1, y2, light and uv values for four columns:
-		int y1[4] = { uwal[x], uwal[x + 1], uwal[x + 2], uwal[x + 3] };
-		int y2[4] = { dwal[x], dwal[x + 1], dwal[x + 2], dwal[x + 3] };
-
-		float lights[4];
-		for (int i = 0; i < 4; i++)
-		{
-			lights[i] = light;
-			light += rw_lightstep;
-		}
-
-		WallSampler sampler[4];
-		for (int i = 0; i < 4; i++)
-		{
-			if (x + i + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + i + 1]) - FIXED2DBL(lwal[x + i]));
-			sampler[i] = WallSampler(y1[i], swal[x + i], yrepeat, lwal[x + i] + xoffset, xmagnitude, rw_pic, getcol);
-		}
-
-		// Figure out where we vertically can start and stop drawing 4 columns in one go
-		int middle_y1 = y1[0];
-		int middle_y2 = y2[0];
-		for (int i = 1; i < 4; i++)
-		{
-			middle_y1 = MAX(y1[i], middle_y1);
-			middle_y2 = MIN(y2[i], middle_y2);
-		}
-
-		// If we got an empty column in our set we cannot draw 4 columns in one go:
-		bool empty_column_in_set = false;
-		int bilinear_count = 0;
-		for (int i = 0; i < 4; i++)
-		{
-			if (y2[i] <= y1[i])
-				empty_column_in_set = true;
-			if (sampler[i].source2)
-				bilinear_count++;
-		}
-
-		if (empty_column_in_set || middle_y2 <= middle_y1 || (bilinear_count > 0 && bilinear_count < 4))
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				if (y2[i] <= y1[i])
-					continue;
-
-				if (!fixed)
-					R_SetColorMapLight(basecolormap, lights[i], wallshade);
-				Draw1Column(x + i, y1[i], y2[i], sampler[i], draw1column);
-			}
-			continue;
-		}
-
-		// Draw the first rows where not all 4 columns are active
-		for (int i = 0; i < 4; i++)
-		{
-			if (!fixed)
-				R_SetColorMapLight(basecolormap, lights[i], wallshade);
-
-			if (y1[i] < middle_y1)
-				Draw1Column(x + i, y1[i], middle_y1, sampler[i], draw1column);
-		}
-
-		// Draw the area where all 4 columns are active
-		if (!fixed)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				if (r_swtruecolor)
-				{
-					dc_wall_colormap[i] = basecolormap->Maps;
-					dc_wall_light[i] = LIGHTSCALE(lights[i], wallshade);
-				}
-				else
-				{
-					dc_wall_colormap[i] = basecolormap->Maps + (GETPALOOKUP(lights[i], wallshade) << COLORMAPSHIFT);
-					dc_wall_light[i] = 0;
-				}
-			}
-		}
-		Draw4Columns(x, middle_y1, middle_y2, sampler, draw4columns);
-
-		// Draw the last rows where not all 4 columns are active
-		for (int i = 0; i < 4; i++)
-		{
-			if (!fixed)
-				R_SetColorMapLight(basecolormap, lights[i], wallshade);
-
-			if (middle_y2 < y2[i])
-				Draw1Column(x + i, middle_y2, y2[i], sampler[i], draw1column);
-		}
-	}
-
-	// The last unaligned columns:
-	for (int x = aligned_x2; x < x2; x++, light += rw_lightstep)
-	{
-		int y1 = uwal[x];
-		int y2 = dwal[x];
-		if (y2 <= y1)
-			continue;
-
-		if (!fixed)
-			R_SetColorMapLight(basecolormap, light, wallshade);
-
-		if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
-
-		WallSampler sampler(y1, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic, getcol);
-		Draw1Column(x, y1, y2, sampler, draw1column);
+		Draw1Column(x, y1, y2, sampler, drawcolumn);
 	}
 
 	NetUpdate();
@@ -964,7 +735,7 @@ static void ProcessWallWorker(
 
 static void ProcessNormalWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
 {
-	ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, R_DrawWallCol1, R_DrawWallCol4);
+	ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, R_DrawWallColumn);
 }
 
 static void ProcessMaskedWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
@@ -975,22 +746,21 @@ static void ProcessMaskedWall(int x1, int x2, short *uwal, short *dwal, float *s
 	}
 	else
 	{
-		ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, R_DrawWallMaskedCol1, R_DrawWallMaskedCol4);
+		ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, R_DrawWallMaskedColumn);
 	}
 }
 
 static void ProcessTranslucentWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
 {
-	static void(*drawcol1)();
-	static void(*drawcol4)();
-	if (!R_GetTransMaskDrawers(&drawcol1, &drawcol4))
+	void(*drawcol1)();
+	if (!R_GetTransMaskDrawers(&drawcol1))
 	{
 		// The current translucency is unsupported, so draw with regular ProcessMaskedWall instead.
 		ProcessMaskedWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol);
 	}
 	else
 	{
-		ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, drawcol1, drawcol4);
+		ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, drawcol1);
 	}
 }
 

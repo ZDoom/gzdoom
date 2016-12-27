@@ -32,40 +32,19 @@
 #include "ssa/ssa_struct_type.h"
 #include "ssa/ssa_value.h"
 
-void DrawWallCodegen::Generate(DrawWallVariant variant, bool fourColumns, SSAValue args, SSAValue thread_data)
+void DrawWallCodegen::Generate(DrawWallVariant variant, SSAValue args, SSAValue thread_data)
 {
 	dest = args[0][0].load(true);
-	source[0] = args[0][1].load(true);
-	source[1] = args[0][2].load(true);
-	source[2] = args[0][3].load(true);
-	source[3] = args[0][4].load(true);
-	source2[0] = args[0][5].load(true);
-	source2[1] = args[0][6].load(true);
-	source2[2] = args[0][7].load(true);
-	source2[3] = args[0][8].load(true);
+	source = args[0][1].load(true);
+	source2 = args[0][5].load(true);
 	pitch = args[0][9].load(true);
 	count = args[0][10].load(true);
 	dest_y = args[0][11].load(true);
-	texturefrac[0] = args[0][12].load(true);
-	texturefrac[1] = args[0][13].load(true);
-	texturefrac[2] = args[0][14].load(true);
-	texturefrac[3] = args[0][15].load(true);
-	texturefracx[0] = args[0][16].load(true);
-	texturefracx[1] = args[0][17].load(true);
-	texturefracx[2] = args[0][18].load(true);
-	texturefracx[3] = args[0][19].load(true);
-	iscale[0] = args[0][20].load(true);
-	iscale[1] = args[0][21].load(true);
-	iscale[2] = args[0][22].load(true);
-	iscale[3] = args[0][23].load(true);
-	textureheight[0] = args[0][24].load(true);
-	textureheight[1] = args[0][25].load(true);
-	textureheight[2] = args[0][26].load(true);
-	textureheight[3] = args[0][27].load(true);
-	light[0] = args[0][28].load(true);
-	light[1] = args[0][29].load(true);
-	light[2] = args[0][30].load(true);
-	light[3] = args[0][31].load(true);
+	texturefrac = args[0][12].load(true);
+	texturefracx = args[0][16].load(true);
+	iscale = args[0][20].load(true);
+	textureheight = args[0][24].load(true);
+	light = args[0][28].load(true);
 	srcalpha = args[0][32].load(true);
 	destalpha = args[0][33].load(true);
 	SSAShort light_alpha = args[0][34].load(true);
@@ -99,42 +78,34 @@ void DrawWallCodegen::Generate(DrawWallVariant variant, bool fourColumns, SSAVal
 
 	pitch = pitch * thread.num_cores;
 
-	int numColumns = fourColumns ? 4 : 1;
-	for (int i = 0; i < numColumns; i++)
-	{
-		stack_frac[i].store(texturefrac[i] + iscale[i] * skipped_by_thread(dest_y, thread));
-		fracstep[i] = iscale[i] * thread.num_cores;
-		one[i] = ((0x80000000 + textureheight[i] - 1) / textureheight[i]) * 2 + 1;
-	}
+	stack_frac.store(texturefrac + iscale * skipped_by_thread(dest_y, thread));
+	fracstep = iscale * thread.num_cores;
+	one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
 
 	start_z = start_z + step_z * SSAFloat(skipped_by_thread(dest_y, thread));
 	step_z = step_z * SSAFloat(thread.num_cores);
 
 	SSAIfBlock branch;
 	branch.if_block(is_simple_shade);
-	LoopShade(variant, fourColumns, true);
+	LoopShade(variant, true);
 	branch.else_block();
-	LoopShade(variant, fourColumns, false);
+	LoopShade(variant, false);
 	branch.end_block();
 }
 
-void DrawWallCodegen::LoopShade(DrawWallVariant variant, bool fourColumns, bool isSimpleShade)
+void DrawWallCodegen::LoopShade(DrawWallVariant variant, bool isSimpleShade)
 {
 	SSAIfBlock branch;
 	branch.if_block(is_nearest_filter);
-	Loop(variant, fourColumns, isSimpleShade, true);
+	Loop(variant, isSimpleShade, true);
 	branch.else_block();
-	int numColumns = fourColumns ? 4 : 1;
-	for (int i = 0; i < numColumns; i++)
-		stack_frac[i].store(stack_frac[i].load() - (one[i] / 2));
-	Loop(variant, fourColumns, isSimpleShade, false);
+	stack_frac.store(stack_frac.load() - (one / 2));
+	Loop(variant, isSimpleShade, false);
 	branch.end_block();
 }
 
-void DrawWallCodegen::Loop(DrawWallVariant variant, bool fourColumns, bool isSimpleShade, bool isNearestFilter)
+void DrawWallCodegen::Loop(DrawWallVariant variant, bool isSimpleShade, bool isNearestFilter)
 {
-	int numColumns = fourColumns ? 4 : 1;
-
 	stack_index.store(SSAInt(0));
 	stack_z.store(start_z);
 	{
@@ -143,57 +114,30 @@ void DrawWallCodegen::Loop(DrawWallVariant variant, bool fourColumns, bool isSim
 		z = stack_z.load();
 		loop.loop_block(index < count);
 
-		SSAInt frac[4];
-		for (int i = 0; i < numColumns; i++)
-			frac[i] = stack_frac[i].load();
-
+		SSAInt frac = stack_frac.load();
 		SSAInt offset = index * pitch * 4;
 
-		if (fourColumns)
-		{
-			SSAVec16ub bg = dest[offset].load_unaligned_vec16ub(false);
-			SSAVec8s bg0 = SSAVec8s::extendlo(bg);
-			SSAVec8s bg1 = SSAVec8s::extendhi(bg);
-			SSAVec4i bgcolors[4] =
-			{
-				SSAVec4i::extendlo(bg0),
-				SSAVec4i::extendhi(bg0),
-				SSAVec4i::extendlo(bg1),
-				SSAVec4i::extendhi(bg1)
-			};
-
-			SSAVec4i colors[4];
-			for (int i = 0; i < 4; i++)
-				colors[i] = Blend(Shade(Sample(frac[i], i, isNearestFilter), i, isSimpleShade), bgcolors[i], variant);
-
-			SSAVec16ub color(SSAVec8s(colors[0], colors[1]), SSAVec8s(colors[2], colors[3]));
-			dest[offset].store_unaligned_vec16ub(color);
-		}
-		else
-		{
-			SSAVec4i bgcolor = dest[offset].load_vec4ub(false);
-			SSAVec4i color = Blend(Shade(Sample(frac[0], 0, isNearestFilter), 0, isSimpleShade), bgcolor, variant);
-			dest[offset].store_vec4ub(color);
-		}
+		SSAVec4i bgcolor = dest[offset].load_vec4ub(false);
+		SSAVec4i color = Blend(Shade(Sample(frac, isNearestFilter), isSimpleShade), bgcolor, variant);
+		dest[offset].store_vec4ub(color);
 
 		stack_z.store(z + step_z);
 		stack_index.store(index.add(SSAInt(1), true, true));
-		for (int i = 0; i < numColumns; i++)
-			stack_frac[i].store(frac[i] + fracstep[i]);
+		stack_frac.store(frac + fracstep);
 		loop.end_block();
 	}
 }
 
-SSAVec4i DrawWallCodegen::Sample(SSAInt frac, int index, bool isNearestFilter)
+SSAVec4i DrawWallCodegen::Sample(SSAInt frac, bool isNearestFilter)
 {
 	if (isNearestFilter)
 	{
-		SSAInt sample_index = ((frac >> FRACBITS) * textureheight[index]) >> FRACBITS;
-		return source[index][sample_index * 4].load_vec4ub(false);
+		SSAInt sample_index = ((frac >> FRACBITS) * textureheight) >> FRACBITS;
+		return source[sample_index * 4].load_vec4ub(false);
 	}
 	else
 	{
-		return SampleLinear(source[index], source2[index], texturefracx[index], frac, one[index], textureheight[index]);
+		return SampleLinear(source, source2, texturefracx, frac, one, textureheight);
 	}
 }
 
@@ -217,13 +161,13 @@ SSAVec4i DrawWallCodegen::SampleLinear(SSAUBytePtr col0, SSAUBytePtr col1, SSAIn
 	return (p00 * (a * b) + p01 * (inv_a * b) + p10 * (a * inv_b) + p11 * (inv_a * inv_b) + 127) >> 8;
 }
 
-SSAVec4i DrawWallCodegen::Shade(SSAVec4i fg, int index, bool isSimpleShade)
+SSAVec4i DrawWallCodegen::Shade(SSAVec4i fg, bool isSimpleShade)
 {
 	SSAVec4i c;
 	if (isSimpleShade)
-		c = shade_bgra_simple(fg, light[index]);
+		c = shade_bgra_simple(fg, light);
 	else
-		c = shade_bgra_advanced(fg, light[index], shade_constants);
+		c = shade_bgra_advanced(fg, light, shade_constants);
 
 	stack_lit_color.store(c);
 	stack_light_index.store(SSAInt(0));

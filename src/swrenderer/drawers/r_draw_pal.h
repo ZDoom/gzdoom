@@ -32,37 +32,12 @@ namespace swrenderer
 		float _step_viewpos_z;
 	};
 
-	class PalWall4Command : public DrawerCommand
-	{
-	public:
-		PalWall4Command();
-		FString DebugInfo() override { return "PalWallCommand"; }
-
-	protected:
-		uint8_t *_dest;
-		int _count;
-		int _pitch;
-		int _fracbits;
-		uint8_t *_colormap[4];
-		const uint8_t *_source[4];
-		uint32_t _iscale[4];
-		uint32_t _texturefrac[4];
-		uint32_t *_srcblend;
-		uint32_t *_destblend;
-	};
-
 	class DrawWall1PalCommand : public PalWall1Command { public: void Execute(DrawerThread *thread) override; };
-	class DrawWall4PalCommand : public PalWall4Command { public: void Execute(DrawerThread *thread) override; };
 	class DrawWallMasked1PalCommand : public PalWall1Command { public: void Execute(DrawerThread *thread) override; };
-	class DrawWallMasked4PalCommand : public PalWall4Command { public: void Execute(DrawerThread *thread) override; };
 	class DrawWallAdd1PalCommand : public PalWall1Command { public: void Execute(DrawerThread *thread) override; };
-	class DrawWallAdd4PalCommand : public PalWall4Command { public: void Execute(DrawerThread *thread) override; };
 	class DrawWallAddClamp1PalCommand : public PalWall1Command { public: void Execute(DrawerThread *thread) override; };
-	class DrawWallAddClamp4PalCommand : public PalWall4Command { public: void Execute(DrawerThread *thread) override; };
 	class DrawWallSubClamp1PalCommand : public PalWall1Command { public: void Execute(DrawerThread *thread) override; };
-	class DrawWallSubClamp4PalCommand : public PalWall4Command { public: void Execute(DrawerThread *thread) override; };
 	class DrawWallRevSubClamp1PalCommand : public PalWall1Command { public: void Execute(DrawerThread *thread) override; };
-	class DrawWallRevSubClamp4PalCommand : public PalWall4Command { public: void Execute(DrawerThread *thread) override; };
 
 	class PalSkyCommand : public DrawerCommand
 	{
@@ -85,9 +60,7 @@ namespace swrenderer
 	};
 
 	class DrawSingleSky1PalCommand : public PalSkyCommand { public: using PalSkyCommand::PalSkyCommand; void Execute(DrawerThread *thread) override; };
-	class DrawSingleSky4PalCommand : public PalSkyCommand { public: using PalSkyCommand::PalSkyCommand; void Execute(DrawerThread *thread) override; };
 	class DrawDoubleSky1PalCommand : public PalSkyCommand { public: using PalSkyCommand::PalSkyCommand; void Execute(DrawerThread *thread) override; };
-	class DrawDoubleSky4PalCommand : public PalSkyCommand { public: using PalSkyCommand::PalSkyCommand; void Execute(DrawerThread *thread) override; };
 
 	class PalColumnCommand : public DrawerCommand
 	{

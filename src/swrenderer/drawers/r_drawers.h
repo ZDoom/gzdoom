@@ -317,22 +317,14 @@ public:
 	void(*DrawSpanMaskedAddClamp)(const DrawSpanArgs *) = nullptr;
 
 	void(*vlinec1)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
-	void(*vlinec4)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
 	void(*mvlinec1)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
-	void(*mvlinec4)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
 	void(*tmvline1_add)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
-	void(*tmvline4_add)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
 	void(*tmvline1_addclamp)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
-	void(*tmvline4_addclamp)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
 	void(*tmvline1_subclamp)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
-	void(*tmvline4_subclamp)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
 	void(*tmvline1_revsubclamp)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
-	void(*tmvline4_revsubclamp)(const DrawWallArgs *, const WorkerThreadData *) = nullptr;
 
 	void(*DrawSky1)(const DrawSkyArgs *, const WorkerThreadData *) = nullptr;
-	void(*DrawSky4)(const DrawSkyArgs *, const WorkerThreadData *) = nullptr;
 	void(*DrawDoubleSky1)(const DrawSkyArgs *, const WorkerThreadData *) = nullptr;
-	void(*DrawDoubleSky4)(const DrawSkyArgs *, const WorkerThreadData *) = nullptr;
 
 	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDraw8;
 	std::vector<void(*)(const TriDrawTriangleArgs *, WorkerThreadData *)> TriDraw32;

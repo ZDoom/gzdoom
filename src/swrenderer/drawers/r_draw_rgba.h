@@ -117,20 +117,6 @@ namespace swrenderer
 		void Execute(DrawerThread *thread) override;
 	};
 
-	class DrawWall4LLVMCommand : public DrawerCommand
-	{
-	protected:
-		DrawWallArgs args;
-
-		WorkerThreadData ThreadData(DrawerThread *thread);
-
-	public:
-		DrawWall4LLVMCommand();
-
-		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override;
-	};
-
 	class DrawWall1LLVMCommand : public DrawerCommand
 	{
 	protected:
@@ -171,11 +157,6 @@ namespace swrenderer
 		FString DebugInfo() override;
 	};
 
-	DECLARE_DRAW_COMMAND(DrawWallMasked4, mvlinec4, DrawWall4LLVMCommand);
-	DECLARE_DRAW_COMMAND(DrawWallAdd4, tmvline4_add, DrawWall4LLVMCommand);
-	DECLARE_DRAW_COMMAND(DrawWallAddClamp4, tmvline4_addclamp, DrawWall4LLVMCommand);
-	DECLARE_DRAW_COMMAND(DrawWallSubClamp4, tmvline4_subclamp, DrawWall4LLVMCommand);
-	DECLARE_DRAW_COMMAND(DrawWallRevSubClamp4, tmvline4_revsubclamp, DrawWall4LLVMCommand);
 	DECLARE_DRAW_COMMAND(DrawWallMasked1, mvlinec1, DrawWall1LLVMCommand);
 	DECLARE_DRAW_COMMAND(DrawWallAdd1, tmvline1_add, DrawWall1LLVMCommand);
 	DECLARE_DRAW_COMMAND(DrawWallAddClamp1, tmvline1_addclamp, DrawWall1LLVMCommand);
@@ -197,9 +178,7 @@ namespace swrenderer
 	DECLARE_DRAW_COMMAND(FillColumnSubClamp, FillColumnSubClamp, DrawColumnLLVMCommand);
 	DECLARE_DRAW_COMMAND(FillColumnRevSubClamp, FillColumnRevSubClamp, DrawColumnLLVMCommand);
 	DECLARE_DRAW_COMMAND(DrawSingleSky1, DrawSky1, DrawSkyLLVMCommand);
-	DECLARE_DRAW_COMMAND(DrawSingleSky4, DrawSky4, DrawSkyLLVMCommand);
 	DECLARE_DRAW_COMMAND(DrawDoubleSky1, DrawDoubleSky1, DrawSkyLLVMCommand);
-	DECLARE_DRAW_COMMAND(DrawDoubleSky4, DrawDoubleSky4, DrawSkyLLVMCommand);
 
 	class DrawFuzzColumnRGBACommand : public DrawerCommand
 	{

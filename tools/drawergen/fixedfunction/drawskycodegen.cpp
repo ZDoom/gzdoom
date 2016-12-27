@@ -32,28 +32,16 @@
 #include "ssa/ssa_struct_type.h"
 #include "ssa/ssa_value.h"
 
-void DrawSkyCodegen::Generate(DrawSkyVariant variant, bool fourColumns, SSAValue args, SSAValue thread_data)
+void DrawSkyCodegen::Generate(DrawSkyVariant variant, SSAValue args, SSAValue thread_data)
 {
 	dest = args[0][0].load(true);
-	source0[0] = args[0][1].load(true);
-	source0[1] = args[0][2].load(true);
-	source0[2] = args[0][3].load(true);
-	source0[3] = args[0][4].load(true);
-	source1[0] = args[0][5].load(true);
-	source1[1] = args[0][6].load(true);
-	source1[2] = args[0][7].load(true);
-	source1[3] = args[0][8].load(true);
+	source0 = args[0][1].load(true);
+	source1 = args[0][5].load(true);
 	pitch = args[0][9].load(true);
 	count = args[0][10].load(true);
 	dest_y = args[0][11].load(true);
-	texturefrac[0] = args[0][12].load(true);
-	texturefrac[1] = args[0][13].load(true);
-	texturefrac[2] = args[0][14].load(true);
-	texturefrac[3] = args[0][15].load(true);
-	iscale[0] = args[0][16].load(true);
-	iscale[1] = args[0][17].load(true);
-	iscale[2] = args[0][18].load(true);
-	iscale[3] = args[0][19].load(true);
+	texturefrac = args[0][12].load(true);
+	iscale = args[0][16].load(true);
 	textureheight0 = args[0][20].load(true);
 	SSAInt textureheight1 = args[0][21].load(true);
 	maxtextureheight1 = textureheight1 - 1;
@@ -70,66 +58,45 @@ void DrawSkyCodegen::Generate(DrawSkyVariant variant, bool fourColumns, SSAValue
 
 	pitch = pitch * thread.num_cores;
 
-	int numColumns = fourColumns ? 4 : 1;
-	for (int i = 0; i < numColumns; i++)
-	{
-		stack_frac[i].store(texturefrac[i] + iscale[i] * skipped_by_thread(dest_y, thread));
-		fracstep[i] = iscale[i] * thread.num_cores;
-	}
+	stack_frac.store(texturefrac + iscale * skipped_by_thread(dest_y, thread));
+	fracstep = iscale * thread.num_cores;
 
-	Loop(variant, fourColumns);
+	Loop(variant);
 }
 
-void DrawSkyCodegen::Loop(DrawSkyVariant variant, bool fourColumns)
+void DrawSkyCodegen::Loop(DrawSkyVariant variant)
 {
-	int numColumns = fourColumns ? 4 : 1;
-
 	stack_index.store(SSAInt(0));
 	{
 		SSAForBlock loop;
 		SSAInt index = stack_index.load();
 		loop.loop_block(index < count);
 
-		SSAInt frac[4];
-		for (int i = 0; i < numColumns; i++)
-			frac[i] = stack_frac[i].load();
+		SSAInt frac = stack_frac.load();
 
 		SSAInt offset = index * pitch * 4;
 
-		if (fourColumns)
-		{
-			SSAVec4i colors[4];
-			for (int i = 0; i < 4; i++)
-				colors[i] = FadeOut(frac[i], Sample(frac[i], i, variant));
-
-			SSAVec16ub color(SSAVec8s(colors[0], colors[1]), SSAVec8s(colors[2], colors[3]));
-			dest[offset].store_unaligned_vec16ub(color);
-		}
-		else
-		{
-			SSAVec4i color = FadeOut(frac[0], Sample(frac[0], 0, variant));
-			dest[offset].store_vec4ub(color);
-		}
+		SSAVec4i color = FadeOut(frac, Sample(frac, variant));
+		dest[offset].store_vec4ub(color);
 
 		stack_index.store(index.add(SSAInt(1), true, true));
-		for (int i = 0; i < numColumns; i++)
-			stack_frac[i].store(frac[i] + fracstep[i]);
+		stack_frac.store(frac + fracstep);
 		loop.end_block();
 	}
 }
 
-SSAVec4i DrawSkyCodegen::Sample(SSAInt frac, int index, DrawSkyVariant variant)
+SSAVec4i DrawSkyCodegen::Sample(SSAInt frac, DrawSkyVariant variant)
 {
 	SSAInt sample_index = (((frac << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
 	if (variant == DrawSkyVariant::Single)
 	{
-		return source0[index][sample_index * 4].load_vec4ub(false);
+		return source0[sample_index * 4].load_vec4ub(false);
 	}
 	else
 	{
 		SSAInt sample_index2 = SSAInt::MIN(sample_index, maxtextureheight1);
-		SSAVec4i color0 = source0[index][sample_index * 4].load_vec4ub(false);
-		SSAVec4i color1 = source1[index][sample_index2 * 4].load_vec4ub(false);
+		SSAVec4i color0 = source0[sample_index * 4].load_vec4ub(false);
+		SSAVec4i color1 = source1[sample_index2 * 4].load_vec4ub(false);
 		return blend_alpha_blend(color0, color1);
 	}
 }

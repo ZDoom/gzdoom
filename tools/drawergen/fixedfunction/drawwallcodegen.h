@@ -37,31 +37,31 @@ enum class DrawWallVariant
 class DrawWallCodegen : public DrawerCodegen
 {
 public:
-	void Generate(DrawWallVariant variant, bool fourColumns, SSAValue args, SSAValue thread_data);
+	void Generate(DrawWallVariant variant, SSAValue args, SSAValue thread_data);
 
 private:
-	void LoopShade(DrawWallVariant variant, bool fourColumns, bool isSimpleShade);
-	void Loop(DrawWallVariant variant, bool fourColumns, bool isSimpleShade, bool isNearestFilter);
-	SSAVec4i Sample(SSAInt frac, int index, bool isNearestFilter);
+	void LoopShade(DrawWallVariant variant, bool isSimpleShade);
+	void Loop(DrawWallVariant variant, bool isSimpleShade, bool isNearestFilter);
+	SSAVec4i Sample(SSAInt frac, bool isNearestFilter);
 	SSAVec4i SampleLinear(SSAUBytePtr col0, SSAUBytePtr col1, SSAInt texturefracx, SSAInt texturefracy, SSAInt one, SSAInt height);
-	SSAVec4i Shade(SSAVec4i fg, int index, bool isSimpleShade);
+	SSAVec4i Shade(SSAVec4i fg, bool isSimpleShade);
 	SSAVec4i Blend(SSAVec4i fg, SSAVec4i bg, DrawWallVariant variant);
 
-	SSAStack<SSAInt> stack_index, stack_frac[4], stack_light_index;
+	SSAStack<SSAInt> stack_index, stack_frac, stack_light_index;
 	SSAStack<SSAVec4i> stack_lit_color;
 	SSAStack<SSAFloat> stack_z;
 
 	SSAUBytePtr dest;
-	SSAUBytePtr source[4];
-	SSAUBytePtr source2[4];
+	SSAUBytePtr source;
+	SSAUBytePtr source2;
 	SSAInt pitch;
 	SSAInt count;
 	SSAInt dest_y;
-	SSAInt texturefrac[4];
-	SSAInt texturefracx[4];
-	SSAInt iscale[4];
-	SSAInt textureheight[4];
-	SSAInt light[4];
+	SSAInt texturefrac;
+	SSAInt texturefracx;
+	SSAInt iscale;
+	SSAInt textureheight;
+	SSAInt light;
 	SSAInt srcalpha;
 	SSAInt destalpha;
 	SSABool is_simple_shade;
@@ -69,8 +69,8 @@ private:
 	SSAShadeConstants shade_constants;
 	SSAWorkerThread thread;
 
-	SSAInt fracstep[4];
-	SSAInt one[4];
+	SSAInt fracstep;
+	SSAInt one;
 
 	SSAFloat start_z, step_z;
 

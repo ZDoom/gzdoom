@@ -496,30 +496,26 @@ namespace swrenderer
 			return tex->GetColumn(col, nullptr);
 	}
 
-	bool R_GetTransMaskDrawers(void(**drawCol1)(), void(**drawCol4)())
+	bool R_GetTransMaskDrawers(void(**drawColumn)())
 	{
 		if (colfunc == R_DrawAddColumn)
 		{
-			*drawCol1 = R_DrawWallAddCol1;
-			*drawCol4 = R_DrawWallAddCol4;
+			*drawColumn = R_DrawWallAddColumn;
 			return true;
 		}
 		if (colfunc == R_DrawAddClampColumn)
 		{
-			*drawCol1 = R_DrawWallAddClampCol1;
-			*drawCol4 = R_DrawWallAddClampCol4;
+			*drawColumn = R_DrawWallAddClampColumn;
 			return true;
 		}
 		if (colfunc == R_DrawSubClampColumn)
 		{
-			*drawCol1 = R_DrawWallSubClampCol1;
-			*drawCol4 = R_DrawWallSubClampCol4;
+			*drawColumn = R_DrawWallSubClampColumn;
 			return true;
 		}
 		if (colfunc == R_DrawRevSubClampColumn)
 		{
-			*drawCol1 = R_DrawWallRevSubClampCol1;
-			*drawCol4 = R_DrawWallRevSubClampCol4;
+			*drawColumn = R_DrawWallRevSubClampColumn;
 			return true;
 		}
 		return false;
@@ -637,7 +633,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	void R_DrawWallCol1()
+	void R_DrawWallColumn()
 	{
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWall1LLVMCommand>();
@@ -645,15 +641,7 @@ namespace swrenderer
 			DrawerCommandQueue::QueueCommand<DrawWall1PalCommand>();
 	}
 
-	void R_DrawWallCol4()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawWall4LLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawWall4PalCommand>();
-	}
-
-	void R_DrawWallMaskedCol1()
+	void R_DrawWallMaskedColumn()
 	{
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWallMasked1LLVMCommand>();
@@ -661,15 +649,7 @@ namespace swrenderer
 			DrawerCommandQueue::QueueCommand<DrawWallMasked1PalCommand>();
 	}
 
-	void R_DrawWallMaskedCol4()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawWallMasked4LLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawWallMasked4PalCommand>();
-	}
-
-	void R_DrawWallAddCol1()
+	void R_DrawWallAddColumn()
 	{
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWallAdd1LLVMCommand>();
@@ -679,15 +659,7 @@ namespace swrenderer
 			DrawerCommandQueue::QueueCommand<DrawWallAddClamp1PalCommand>();
 	}
 
-	void R_DrawWallAddCol4()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawWallAdd4LLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawWallAdd4PalCommand>();
-	}
-
-	void R_DrawWallAddClampCol1()
+	void R_DrawWallAddClampColumn()
 	{
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWallAddClamp1LLVMCommand>();
@@ -695,15 +667,7 @@ namespace swrenderer
 			DrawerCommandQueue::QueueCommand<DrawWallAddClamp1PalCommand>();
 	}
 
-	void R_DrawWallAddClampCol4()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawWallAddClamp4LLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawWallAddClamp4PalCommand>();
-	}
-
-	void R_DrawWallSubClampCol1()
+	void R_DrawWallSubClampColumn()
 	{
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWallSubClamp1LLVMCommand>();
@@ -711,15 +675,7 @@ namespace swrenderer
 			DrawerCommandQueue::QueueCommand<DrawWallSubClamp1PalCommand>();
 	}
 
-	void R_DrawWallSubClampCol4()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawWallSubClamp4LLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawWallSubClamp4PalCommand>();
-	}
-
-	void R_DrawWallRevSubClampCol1()
+	void R_DrawWallRevSubClampColumn()
 	{
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1LLVMCommand>();
@@ -727,15 +683,7 @@ namespace swrenderer
 			DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1PalCommand>();
 	}
 
-	void R_DrawWallRevSubClampCol4()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp4LLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp4PalCommand>();
-	}
-
-	void R_DrawSingleSkyCol1(uint32_t solid_top, uint32_t solid_bottom)
+	void R_DrawSingleSkyColumn(uint32_t solid_top, uint32_t solid_bottom)
 	{
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawSingleSky1LLVMCommand>(solid_top, solid_bottom);
@@ -743,28 +691,12 @@ namespace swrenderer
 			DrawerCommandQueue::QueueCommand<DrawSingleSky1PalCommand>(solid_top, solid_bottom);
 	}
 
-	void R_DrawSingleSkyCol4(uint32_t solid_top, uint32_t solid_bottom)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawSingleSky4LLVMCommand>(solid_top, solid_bottom);
-		else
-			DrawerCommandQueue::QueueCommand<DrawSingleSky4PalCommand>(solid_top, solid_bottom);
-	}
-
-	void R_DrawDoubleSkyCol1(uint32_t solid_top, uint32_t solid_bottom)
+	void R_DrawDoubleSkyColumn(uint32_t solid_top, uint32_t solid_bottom)
 	{
 		if (r_swtruecolor)
 			DrawerCommandQueue::QueueCommand<DrawDoubleSky1LLVMCommand>(solid_top, solid_bottom);
 		else
 			DrawerCommandQueue::QueueCommand<DrawDoubleSky1PalCommand>(solid_top, solid_bottom);
-	}
-
-	void R_DrawDoubleSkyCol4(uint32_t solid_top, uint32_t solid_bottom)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawDoubleSky4LLVMCommand>(solid_top, solid_bottom);
-		else
-			DrawerCommandQueue::QueueCommand<DrawDoubleSky4PalCommand>(solid_top, solid_bottom);
 	}
 
 	void R_DrawColumn()

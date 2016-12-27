@@ -82,7 +82,7 @@ namespace swrenderer
 		
 		DVector2 dirX(spriteSin * sprite_xscale, -spriteCos * sprite_xscale);
 		DVector2 dirY(spriteCos * sprite_xscale, spriteSin * sprite_xscale);
-		float dirZ = -sprite_yscale;
+		double dirZ = -sprite_yscale;
 		
 		DVector3 voxel_origin = sprite_origin;
 		voxel_origin.X -= dirX.X * mip.Pivot.X + dirX.Y * mip.Pivot.Y;

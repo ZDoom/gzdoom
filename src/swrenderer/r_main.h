@@ -112,18 +112,6 @@ extern int				fixedlightlev;
 extern FSWColormap*		fixedcolormap;
 extern FSpecialColormap*realfixedcolormap;
 
-
-//
-// Function pointers to switch refresh/drawing functions.
-// Used to select shadow mode etc.
-//
-extern void 			(*colfunc) (void);
-extern void 			(*basecolfunc) (void);
-extern void 			(*fuzzcolfunc) (void);
-extern void				(*transcolfunc) (void);
-// No shadow effects on floors.
-extern void 			(*spanfunc) (void);
-
 void R_InitTextureMapping ();
 
 

@@ -70,6 +70,12 @@ namespace swrenderer
 	int fuzzpos;
 	int fuzzviewheight;
 
+	DrawerFunc colfunc;
+	DrawerFunc basecolfunc;
+	DrawerFunc fuzzcolfunc;
+	DrawerFunc transcolfunc;
+	DrawerFunc spanfunc;
+
 	namespace drawerargs
 	{
 		int dc_pitch;
@@ -154,10 +160,10 @@ namespace swrenderer
 		else
 			active_drawers = &pal_drawers;
 
-		colfunc = basecolfunc = R_DrawColumn;
-		fuzzcolfunc = R_DrawFuzzColumn;
-		transcolfunc = R_DrawTranslatedColumn;
-		spanfunc = R_DrawSpan;
+		colfunc = basecolfunc = &SWPixelFormatDrawers::DrawColumn;
+		fuzzcolfunc = &SWPixelFormatDrawers::DrawFuzzColumn;
+		transcolfunc = &SWPixelFormatDrawers::DrawTranslatedColumn;
+		spanfunc = &SWPixelFormatDrawers::DrawSpan;
 	}
 
 	void R_InitShadeMaps()
@@ -240,7 +246,7 @@ namespace swrenderer
 			{
 				if (flags & STYLEF_ColorIsFixed)
 				{
-					colfunc = R_FillColumn;
+					colfunc = &SWPixelFormatDrawers::FillColumn;
 				}
 				else if (dc_translation == NULL)
 				{
@@ -285,15 +291,15 @@ namespace swrenderer
 				{ // Colors won't overflow when added
 					if (flags & STYLEF_ColorIsFixed)
 					{
-						colfunc = R_FillAddColumn;
+						colfunc = &SWPixelFormatDrawers::FillAddColumn;
 					}
 					else if (dc_translation == NULL)
 					{
-						colfunc = R_DrawAddColumn;
+						colfunc = &SWPixelFormatDrawers::DrawAddColumn;
 					}
 					else
 					{
-						colfunc = R_DrawTlatedAddColumn;
+						colfunc = &SWPixelFormatDrawers::DrawTranslatedAddColumn;
 						drawer_needs_pal_input = true;
 					}
 				}
@@ -301,15 +307,15 @@ namespace swrenderer
 				{ // Colors might overflow when added
 					if (flags & STYLEF_ColorIsFixed)
 					{
-						colfunc = R_FillAddClampColumn;
+						colfunc = &SWPixelFormatDrawers::FillAddClampColumn;
 					}
 					else if (dc_translation == NULL)
 					{
-						colfunc = R_DrawAddClampColumn;
+						colfunc = &SWPixelFormatDrawers::DrawAddClampColumn;
 					}
 					else
 					{
-						colfunc = R_DrawAddClampTranslatedColumn;
+						colfunc = &SWPixelFormatDrawers::DrawAddClampTranslatedColumn;
 						drawer_needs_pal_input = true;
 					}
 				}
@@ -318,15 +324,15 @@ namespace swrenderer
 			case STYLEOP_Sub:
 				if (flags & STYLEF_ColorIsFixed)
 				{
-					colfunc = R_FillSubClampColumn;
+					colfunc = &SWPixelFormatDrawers::FillSubClampColumn;
 				}
 				else if (dc_translation == NULL)
 				{
-					colfunc = R_DrawSubClampColumn;
+					colfunc = &SWPixelFormatDrawers::DrawSubClampColumn;
 				}
 				else
 				{
-					colfunc = R_DrawSubClampTranslatedColumn;
+					colfunc = &SWPixelFormatDrawers::DrawSubClampTranslatedColumn;
 					drawer_needs_pal_input = true;
 				}
 				return true;
@@ -338,15 +344,15 @@ namespace swrenderer
 				}
 				if (flags & STYLEF_ColorIsFixed)
 				{
-					colfunc = R_FillRevSubClampColumn;
+					colfunc = &SWPixelFormatDrawers::FillRevSubClampColumn;
 				}
 				else if (dc_translation == NULL)
 				{
-					colfunc = R_DrawRevSubClampColumn;
+					colfunc = &SWPixelFormatDrawers::DrawRevSubClampColumn;
 				}
 				else
 				{
-					colfunc = R_DrawRevSubClampTranslatedColumn;
+					colfunc = &SWPixelFormatDrawers::DrawRevSubClampTranslatedColumn;
 					drawer_needs_pal_input = true;
 				}
 				return true;
@@ -433,7 +439,7 @@ namespace swrenderer
 			// Shaded drawer only gets 16 levels of alpha because it saves memory.
 			if ((alpha >>= 12) == 0)
 				return false;
-			colfunc = R_DrawShadedColumn;
+			colfunc = &SWPixelFormatDrawers::DrawShadedColumn;
 			drawer_needs_pal_input = true;
 			dc_color = fixedcolormap ? fixedcolormap->Maps[APART(color)] : basecolormap->Maps[APART(color)];
 			basecolormap = &ShadeFakeColormap[16 - alpha];
@@ -507,29 +513,25 @@ namespace swrenderer
 			return tex->GetColumn(col, nullptr);
 	}
 
-	bool R_GetTransMaskDrawers(void(**drawColumn)())
+	DrawerFunc R_GetTransMaskDrawer()
 	{
-		if (colfunc == R_DrawAddColumn)
+		if (colfunc == &SWPixelFormatDrawers::DrawAddColumn)
 		{
-			*drawColumn = R_DrawWallAddColumn;
-			return true;
+			return &SWPixelFormatDrawers::DrawWallAddColumn;
 		}
-		if (colfunc == R_DrawAddClampColumn)
+		if (colfunc == &SWPixelFormatDrawers::DrawAddClampColumn)
 		{
-			*drawColumn = R_DrawWallAddClampColumn;
-			return true;
+			return &SWPixelFormatDrawers::DrawWallAddClampColumn;
 		}
-		if (colfunc == R_DrawSubClampColumn)
+		if (colfunc == &SWPixelFormatDrawers::DrawSubClampColumn)
 		{
-			*drawColumn = R_DrawWallSubClampColumn;
-			return true;
+			return &SWPixelFormatDrawers::DrawWallSubClampColumn;
 		}
-		if (colfunc == R_DrawRevSubClampColumn)
+		if (colfunc == &SWPixelFormatDrawers::DrawRevSubClampColumn)
 		{
-			*drawColumn = R_DrawWallRevSubClampColumn;
-			return true;
+			return &SWPixelFormatDrawers::DrawWallRevSubClampColumn;
 		}
-		return false;
+		return nullptr;
 	}
 
 	void R_SetColorMapLight(FSWColormap *base_colormap, float light, int shade)

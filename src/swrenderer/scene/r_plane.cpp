@@ -318,7 +318,7 @@ void R_MapPlane (int y, int x1)
 	ds_x1 = x1;
 	ds_x2 = x2;
 
-	spanfunc ();
+	(R_Drawers()->*spanfunc)();
 }
 
 //==========================================================================
@@ -329,7 +329,7 @@ void R_MapPlane (int y, int x1)
 
 void R_MapTiltedPlane (int y, int x1)
 {
-	R_DrawTiltedSpan(y, x1, spanend[y], plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
+	R_Drawers()->DrawTiltedSpan(y, x1, spanend[y], plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
 }
 
 //==========================================================================
@@ -340,14 +340,14 @@ void R_MapTiltedPlane (int y, int x1)
 
 void R_MapColoredPlane(int y, int x1)
 {
-	R_DrawColoredSpan(y, x1, spanend[y]);
+	R_Drawers()->DrawColoredSpan(y, x1, spanend[y]);
 }
 
 void R_DrawFogBoundarySection(int y, int y2, int x1)
 {
 	for (; y < y2; ++y)
 	{
-		R_DrawFogBoundaryLine(y, x1, spanend[y]);
+		R_Drawers()->DrawFogBoundaryLine(y, x1, spanend[y]);
 	}
 }
 
@@ -411,13 +411,13 @@ void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip)
 				while (t2 < stop)
 				{
 					int y = t2++;
-					R_DrawFogBoundaryLine(y, xr, spanend[y]);
+					R_Drawers()->DrawFogBoundaryLine(y, xr, spanend[y]);
 				}
 				stop = MAX(b1, t2);
 				while (b2 > stop)
 				{
 					int y = --b2;
-					R_DrawFogBoundaryLine(y, xr, spanend[y]);
+					R_Drawers()->DrawFogBoundaryLine(y, xr, spanend[y]);
 				}
 			}
 			else
@@ -1038,9 +1038,9 @@ static void R_DrawSkyColumnStripe(int start_x, int y1, int y2, int columns, doub
 	uint32_t solid_bottom = frontskytex->GetSkyCapColor(true);
 
 	if (!backskytex)
-		R_DrawSingleSkyColumn(solid_top, solid_bottom);
+		R_Drawers()->DrawSingleSkyColumn(solid_top, solid_bottom);
 	else
-		R_DrawDoubleSkyColumn(solid_top, solid_bottom);
+		R_Drawers()->DrawDoubleSkyColumn(solid_top, solid_bottom);
 }
 
 static void R_DrawSkyColumn(int start_x, int y1, int y2, int columns)
@@ -1745,7 +1745,7 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 		plane_shade = true;
 	}
 
-	if (spanfunc != R_FillSpan)
+	if (spanfunc != &SWPixelFormatDrawers::FillSpan)
 	{
 		if (masked)
 		{
@@ -1753,7 +1753,7 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 			{
 				if (!additive)
 				{
-					spanfunc = R_DrawSpanMaskedTranslucent;
+					spanfunc = &SWPixelFormatDrawers::DrawSpanMaskedTranslucent;
 					dc_srcblend = Col2RGB8[alpha>>10];
 					dc_destblend = Col2RGB8[(OPAQUE-alpha)>>10];
 					dc_srcalpha = alpha;
@@ -1761,7 +1761,7 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 				}
 				else
 				{
-					spanfunc = R_DrawSpanMaskedAddClamp;
+					spanfunc = &SWPixelFormatDrawers::DrawSpanMaskedAddClamp;
 					dc_srcblend = Col2RGB8_LessPrecision[alpha>>10];
 					dc_destblend = Col2RGB8_LessPrecision[FRACUNIT>>10];
 					dc_srcalpha = alpha;
@@ -1770,7 +1770,7 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 			}
 			else
 			{
-				spanfunc = R_DrawSpanMasked;
+				spanfunc = &SWPixelFormatDrawers::DrawSpanMasked;
 			}
 		}
 		else
@@ -1779,7 +1779,7 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 			{
 				if (!additive)
 				{
-					spanfunc = R_DrawSpanTranslucent;
+					spanfunc = &SWPixelFormatDrawers::DrawSpanTranslucent;
 					dc_srcblend = Col2RGB8[alpha>>10];
 					dc_destblend = Col2RGB8[(OPAQUE-alpha)>>10];
 					dc_srcalpha = alpha;
@@ -1787,7 +1787,7 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 				}
 				else
 				{
-					spanfunc = R_DrawSpanAddClamp;
+					spanfunc = &SWPixelFormatDrawers::DrawSpanAddClamp;
 					dc_srcblend = Col2RGB8_LessPrecision[alpha>>10];
 					dc_destblend = Col2RGB8_LessPrecision[FRACUNIT>>10];
 					dc_srcalpha = alpha;
@@ -1796,7 +1796,7 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 			}
 			else
 			{
-				spanfunc = R_DrawSpan;
+				spanfunc = &SWPixelFormatDrawers::DrawSpan;
 			}
 		}
 	}

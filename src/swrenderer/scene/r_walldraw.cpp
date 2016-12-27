@@ -188,7 +188,7 @@ WallSampler::WallSampler(int y1, float swal, double yrepeat, fixed_t xoffset, do
 }
 
 // Draw a column with support for non-power-of-two ranges
-static void Draw1Column(int x, int y1, int y2, WallSampler &sampler, void(*draw1column)())
+static void Draw1Column(int x, int y1, int y2, WallSampler &sampler, DrawerFunc draw1column)
 {
 	if (r_dynlights)
 	{
@@ -265,7 +265,7 @@ static void Draw1Column(int x, int y1, int y2, WallSampler &sampler, void(*draw1
 		dc_iscale = sampler.uv_step;
 		dc_texturefrac = sampler.uv_pos;
 		dc_textureheight = sampler.height;
-		draw1column();
+		(R_Drawers()->*draw1column)();
 
 		uint64_t step64 = sampler.uv_step;
 		uint64_t pos64 = sampler.uv_pos;
@@ -284,7 +284,7 @@ static void Draw1Column(int x, int y1, int y2, WallSampler &sampler, void(*draw1
 			dc_count = count;
 			dc_iscale = sampler.uv_step;
 			dc_texturefrac = sampler.uv_pos;
-			draw1column();
+			(R_Drawers()->*draw1column)();
 
 			uint64_t step64 = sampler.uv_step;
 			uint64_t pos64 = sampler.uv_pos;
@@ -310,7 +310,7 @@ static void Draw1Column(int x, int y1, int y2, WallSampler &sampler, void(*draw1
 				dc_count = count;
 				dc_iscale = sampler.uv_step;
 				dc_texturefrac = uv_pos;
-				draw1column();
+				(R_Drawers()->*draw1column)();
 
 				left -= count;
 				uv_pos += sampler.uv_step * count;
@@ -323,11 +323,9 @@ static void Draw1Column(int x, int y1, int y2, WallSampler &sampler, void(*draw1
 	}
 }
 
-typedef void(*DrawColumnFuncPtr)();
-
 static void ProcessWallWorker(
 	int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat,
-	const BYTE *(*getcol)(FTexture *tex, int x), DrawColumnFuncPtr drawcolumn)
+	const BYTE *(*getcol)(FTexture *tex, int x), DrawerFunc drawcolumn)
 {
 	if (rw_pic->UseType == FTexture::TEX_Null)
 		return;
@@ -388,7 +386,7 @@ static void ProcessWallWorker(
 
 static void ProcessNormalWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
 {
-	ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, R_DrawWallColumn);
+	ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, &SWPixelFormatDrawers::DrawWallColumn);
 }
 
 static void ProcessMaskedWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
@@ -399,14 +397,14 @@ static void ProcessMaskedWall(int x1, int x2, short *uwal, short *dwal, float *s
 	}
 	else
 	{
-		ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, R_DrawWallMaskedColumn);
+		ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, &SWPixelFormatDrawers::DrawWallMaskedColumn);
 	}
 }
 
 static void ProcessTranslucentWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
 {
-	void(*drawcol1)();
-	if (!R_GetTransMaskDrawers(&drawcol1))
+	DrawerFunc drawcol1 = R_GetTransMaskDrawer();
+	if (drawcol1 == nullptr)
 	{
 		// The current translucency is unsupported, so draw with regular ProcessMaskedWall instead.
 		ProcessMaskedWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol);

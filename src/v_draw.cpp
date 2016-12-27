@@ -1481,7 +1481,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 					ds_xfrac = xs_RoundToInt(tex.X * scalex);
 					ds_yfrac = xs_RoundToInt(tex.Y * scaley);
 
-					R_DrawSpan();
+					R_Drawers()->DrawSpan();
 #endif
 				}
 				x += xinc;

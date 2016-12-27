@@ -209,7 +209,7 @@ namespace swrenderer
 					dc_dest = dc_destorg + (dc_pitch * columnY1 + x) * pixelsize;
 					dc_color = color;
 					dc_count = columnY2 - columnY1;
-					R_FillColumn();
+					R_Drawers()->FillColumn();
 				}
 			}
 		}

@@ -368,7 +368,7 @@ void R_DrawMaskedColumnBgra(FTexture *tex, fixed_t col, bool unmasked)
 			double v = ((dc_yl + 0.5 - sprtopscreen) / spryscale) / tex->GetHeight();
 			dc_texturefrac = (uint32_t)(v * (1 << 30));
 
-			colfunc();
+			(R_Drawers()->*colfunc)();
 		}
 		span++;
 	}
@@ -443,7 +443,7 @@ void R_DrawMaskedColumn (FTexture *tex, fixed_t col, bool unmasked)
 			else if (dc_iscale < 0)
 				dc_count = MIN(dc_count, (dc_texturefrac - dc_iscale) / (-dc_iscale));
 
-			colfunc ();
+			(R_Drawers()->*colfunc)();
 		}
 		span++;
 	}

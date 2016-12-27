@@ -163,12 +163,6 @@ angle_t 		xtoviewangle[MAXWIDTH+1];
 bool			foggy;			// [RH] ignore extralight and fullbright?
 int				r_actualextralight;
 
-void (*colfunc) (void);
-void (*basecolfunc) (void);
-void (*fuzzcolfunc) (void);
-void (*transcolfunc) (void);
-void (*spanfunc) (void);
-
 cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -848,13 +842,13 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	// [RH] Show off segs if r_drawflat is 1
 	if (r_drawflat)
 	{
-		colfunc = R_FillColumn;
-		spanfunc = R_FillSpan;
+		colfunc = &SWPixelFormatDrawers::FillColumn;
+		spanfunc = &SWPixelFormatDrawers::FillSpan;
 	}
 	else
 	{
 		colfunc = basecolfunc;
-		spanfunc = R_DrawSpan;
+		spanfunc = &SWPixelFormatDrawers::DrawSpan;
 	}
 
 	WindowLeft = 0;

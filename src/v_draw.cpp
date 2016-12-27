@@ -43,10 +43,10 @@
 #include "r_defs.h"
 #include "r_utility.h"
 #ifndef NO_SWRENDER
-#include "r_draw.h"
-#include "r_draw_rgba.h"
-#include "r_main.h"
-#include "r_things.h"
+#include "swrenderer/drawers/r_draw.h"
+#include "swrenderer/drawers/r_draw_rgba.h"
+#include "swrenderer/r_main.h"
+#include "swrenderer/scene/r_things.h"
 #endif
 #include "r_data/r_translate.h"
 #include "doomstat.h"

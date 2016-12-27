@@ -765,6 +765,13 @@ file( GLOB HEADER_FILES
 	scripting/zscript/*.h
 	scripting/vm/*.h
 	xlat/*.h
+	swrenderer/*.h
+	swrenderer/drawers/*.h
+	swrenderer/scene/*.h
+	polyrenderer/*.h
+	polyrenderer/math/*.h
+	polyrenderer/drawers/*.h
+	polyrenderer/scene/*.h
 	gl/*.h
 	gl/api/*.h
 	gl/data/*.h
@@ -799,35 +806,35 @@ set( NOT_COMPILED_SOURCE_FILES
 )
 
 set( FASTMATH_PCH_SOURCES
-	r_swrenderer.cpp
-	r_poly.cpp
-	r_poly_scene.cpp
-	r_poly_portal.cpp
-	r_poly_cull.cpp
-	r_poly_decal.cpp
-	r_poly_particle.cpp
-	r_poly_plane.cpp
-	r_poly_playersprite.cpp
-	r_poly_wall.cpp
-	r_poly_wallsprite.cpp
-	r_poly_sprite.cpp
-	r_poly_sky.cpp
-	r_poly_triangle.cpp
-	r_poly_intersection.cpp
-	r_3dfloors.cpp
-	r_bsp.cpp
-	r_draw.cpp
-	r_draw_pal.cpp
-	r_draw_rgba.cpp
-	r_drawers.cpp
-	r_thread.cpp
-	r_main.cpp
-	r_plane.cpp
-	r_segs.cpp
+	swrenderer/r_swrenderer.cpp
+	swrenderer/r_main.cpp
+	swrenderer/drawers/r_draw.cpp
+	swrenderer/drawers/r_draw_pal.cpp
+	swrenderer/drawers/r_draw_rgba.cpp
+	swrenderer/drawers/r_drawers.cpp
+	swrenderer/drawers/r_thread.cpp
+	swrenderer/scene/r_3dfloors.cpp
+	swrenderer/scene/r_bsp.cpp
+	swrenderer/scene/r_plane.cpp
+	swrenderer/scene/r_segs.cpp
+	swrenderer/scene/r_things.cpp
+	swrenderer/scene/r_voxel.cpp
+	swrenderer/scene/r_walldraw.cpp
+	polyrenderer/poly_renderer.cpp
+	polyrenderer/scene/poly_scene.cpp
+	polyrenderer/scene/poly_portal.cpp
+	polyrenderer/scene/poly_cull.cpp
+	polyrenderer/scene/poly_decal.cpp
+	polyrenderer/scene/poly_particle.cpp
+	polyrenderer/scene/poly_plane.cpp
+	polyrenderer/scene/poly_playersprite.cpp
+	polyrenderer/scene/poly_wall.cpp
+	polyrenderer/scene/poly_wallsprite.cpp
+	polyrenderer/scene/poly_sprite.cpp
+	polyrenderer/scene/poly_sky.cpp
+	polyrenderer/drawers/poly_triangle.cpp
+	polyrenderer/math/poly_intersection.cpp
 	r_sky.cpp
-	r_things.cpp
-	r_voxel.cpp
-	r_walldraw.cpp
 	s_advsound.cpp
 	s_environment.cpp
 	s_playlist.cpp
@@ -1441,8 +1448,13 @@ source_group("OpenGL Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOU
 source_group("OpenGL Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/system/.+")
 source_group("OpenGL Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/textures/.+")
 source_group("OpenGL Renderer\\Utilities" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/utility/.+")
-source_group("Render Core\\Render Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_.+\\.h$")
-source_group("Render Core\\Render Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_.+\\.cpp$")
+source_group("Software Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/.+")
+source_group("Software Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/drawers/.+")
+source_group("Software Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/scene/.+")
+source_group("Poly Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/.+")
+source_group("Poly Renderer\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/math/.+")
+source_group("Poly Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/drawers/.+")
+source_group("Poly Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/scene/.+")
 source_group("Render Data\\Resource Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+\\.h$")
 source_group("Render Data\\Resource Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+\\.cpp$")
 source_group("Render Data\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/textures/.+")

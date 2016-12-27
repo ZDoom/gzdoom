@@ -1568,7 +1568,7 @@ void G_UnSnapshotLevel (bool hubLoad)
 				// If this isn't the unmorphed original copy of a player, destroy it, because it's extra.
 				for (i = 0; i < MAXPLAYERS; ++i)
 				{
-					if (playeringame[i] && players[i].morphTics && players[i].mo->tracer == pawn)
+					if (playeringame[i] && players[i].morphTics && players[i].mo->alternative == pawn)
 					{
 						break;
 					}

@@ -110,6 +110,8 @@ void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1));
 void R_MapTiltedPlane(int y, int x1);
 void R_MapColoredPlane(int y, int x1);
 
+void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip);
+
 visplane_t *R_FindPlane
 ( const secplane_t &height,
   FTextureID	picnum,

@@ -142,7 +142,7 @@ namespace swrenderer
 		SWTruecolorDrawers tc_drawers;
 	}
 
-	SWPixelFormatDrawers *R_ActiveDrawers()
+	SWPixelFormatDrawers *R_Drawers()
 	{
 		return active_drawers;
 	}

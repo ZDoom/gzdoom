@@ -736,19 +736,24 @@ namespace swrenderer
 			DrawerCommandQueue::QueueCommand<FillColumnRevSubClampPalCommand>();
 	}
 
-	void R_DrawFuzzColumn()
+	void R_UpdateFuzzPos()
 	{
 		using namespace drawerargs;
-
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawFuzzColumnRGBACommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawFuzzColumnPalCommand>();
 
 		dc_yl = MAX(dc_yl, 1);
 		dc_yh = MIN(dc_yh, fuzzviewheight);
 		if (dc_yl <= dc_yh)
 			fuzzpos = (fuzzpos + dc_yh - dc_yl + 1) % FUZZTABLE;
+	}
+
+	void R_DrawFuzzColumn()
+	{
+		if (r_swtruecolor)
+			DrawerCommandQueue::QueueCommand<DrawFuzzColumnRGBACommand>();
+		else
+			DrawerCommandQueue::QueueCommand<DrawFuzzColumnPalCommand>();
+
+		R_UpdateFuzzPos();
 	}
 
 	void R_DrawAddColumn()

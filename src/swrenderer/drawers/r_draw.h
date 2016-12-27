@@ -133,7 +133,9 @@ namespace swrenderer
 	bool R_GetTransMaskDrawers(void(**drawColumn)());
 
 	const uint8_t *R_GetColumn(FTexture *tex, int col);
-	
+
+	void R_UpdateFuzzPos();
+
 	void R_DrawColumn();
 	void R_DrawFuzzColumn();
 	void R_DrawTranslatedColumn();

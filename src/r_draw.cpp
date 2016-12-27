@@ -377,7 +377,11 @@ namespace swrenderer
 			color = 0;
 		}
 
-		if (style.Flags & STYLEF_TransSoulsAlpha)
+		if (style.Flags & STYLEF_ForceAlpha)
+		{
+			alpha = clamp<fixed_t>(alpha, 0, OPAQUE);
+		}
+		else if (style.Flags & STYLEF_TransSoulsAlpha)
 		{
 			alpha = fixed_t(transsouls * OPAQUE);
 		}
@@ -1020,7 +1024,7 @@ namespace swrenderer
 				DrawerCommandQueue::QueueCommand<DrawFogBoundaryLinePalCommand>(y, x1, x2);
 		}
 	}
-
+	
 	void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip)
 	{
 		// This is essentially the same as R_MapVisPlane but with an extra step

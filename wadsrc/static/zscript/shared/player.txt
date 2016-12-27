@@ -133,12 +133,14 @@ class PSprite : Object native
 	native readonly PlayerInfo Owner;
 	native SpriteID Sprite;
 	native int Frame;
+	native readonly int RenderStyle;
 	native readonly int ID;
 	native Bool processPending;
 	native double x;
 	native double y;
 	native double oldx;
 	native double oldy;
+	native double alpha;
 	native Bool firstTic;
 	native int Tics;
 	native bool bAddWeapon;

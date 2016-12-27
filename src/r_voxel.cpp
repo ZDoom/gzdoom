@@ -46,20 +46,36 @@ namespace swrenderer
 		if (!visible)
 			return;
 
-		FVector3 view_origin = sprite->pa.vpos;
+		DVector3 view_origin = { sprite->pa.vpos.X, sprite->pa.vpos.Y, sprite->pa.vpos.Z };
 		FAngle view_angle = sprite->pa.vang;
 		DVector3 sprite_origin = { sprite->gpos.X, sprite->gpos.Y, sprite->gpos.Z };
 		DAngle sprite_angle = sprite->Angle;
 		double sprite_xscale = FIXED2DBL(sprite->xscale);
 		double sprite_yscale = sprite->yscale;
 		FVoxel *voxel = sprite->voxel;
-
-		// To do: calculate the mipmap level based on distance, sprite scale and voxel extents
-		int miplevel = 0;//voxel->NumMips;
+		
+		// Select mipmap level:
+		
+		double viewSin = view_angle.Cos();
+		double viewCos = view_angle.Sin();
+		double logmip = fabs((view_origin.X - sprite_origin.X) * viewCos - (view_origin.Y - sprite_origin.Y) * viewSin);
+		int miplevel = 0;
+		while (miplevel < voxel->NumMips - 1 && logmip >= FocalLengthX)
+		{
+			logmip *= 0.5;
+			miplevel++;
+		}
 		
 		const FVoxelMipLevel &mip = voxel->Mips[miplevel];
 		if (mip.SlabData == nullptr)
 			return;
+
+		minZ >>= miplevel;
+		maxZ >>= miplevel;
+		sprite_xscale *= (1 << miplevel);
+		sprite_yscale *= (1 << miplevel);
+		
+		// Find voxel cube eigenvectors and origin in world space:
 
 		double spriteSin = sprite_angle.Sin();
 		double spriteCos = sprite_angle.Cos();
@@ -73,30 +89,59 @@ namespace swrenderer
 		voxel_origin.Y -= dirY.X * mip.Pivot.X + dirY.Y * mip.Pivot.Y;
 		voxel_origin.Z -= dirZ * mip.Pivot.Z;
 		
-		// To do: do this loop sorted back to front:
+		// Voxel cube walking directions:
 		
-		for (int x = 0; x < mip.SizeX; x++)
+		int startX[4] = { 0, mip.SizeX - 1,             0, mip.SizeX - 1 };
+		int startY[4] = { 0,             0, mip.SizeY - 1, mip.SizeY - 1 };
+		int stepX[4] = { 1, -1,  1, -1 };
+		int stepY[4] = { 1,  1, -1, -1 };
+		
+		// The point in cube mipmap local space where voxel sides change from front to backfacing:
+		
+		double dx = (view_origin.X - sprite_origin.X) / sprite_xscale;
+		double dy = (view_origin.Y - sprite_origin.Y) / sprite_xscale;
+		int backX = (int)(dx * spriteCos - dy * spriteSin + mip.Pivot.X);
+		int backY = (int)(dy * spriteCos + dx * spriteSin + mip.Pivot.Y);
+		int endX = clamp(backX, 0, mip.SizeX - 1);
+		int endY = clamp(backY, 0, mip.SizeY - 1);
+		
+		// Draw the voxel cube:
+		
+		for (int index = 0; index < 4; index++)
 		{
-			for (int y = 0; y < mip.SizeY; y++)
+			if ((stepX[index] < 0 && endX >= startX[index]) ||
+			    (stepX[index] > 0 && endX <= startX[index]) ||
+			    (stepY[index] < 0 && endY >= startY[index]) ||
+			    (stepY[index] > 0 && endY <= startY[index])) continue;
+		
+			for (int x = startX[index]; x != endX; x += stepX[index])
 			{
-				kvxslab_t *slab_start = R_GetSlabStart(mip, x, y);
-				kvxslab_t *slab_end = R_GetSlabEnd(mip, x, y);
-				
-				for (kvxslab_t *slab = slab_start; slab != slab_end; slab = R_NextSlab(slab))
+				for (int y = startY[index]; y != endY; y += stepY[index])
 				{
-					// To do: check slab->backfacecull
+					kvxslab_t *slab_start = R_GetSlabStart(mip, x, y);
+					kvxslab_t *slab_end = R_GetSlabEnd(mip, x, y);
 				
-					for (int i = 0; i < slab->zleng; i++)
+					for (kvxslab_t *slab = slab_start; slab != slab_end; slab = R_NextSlab(slab))
 					{
-						int z = slab->ztop + i;
-						uint8_t color = slab->col[i];
+						// To do: check slab->backfacecull
 						
-						DVector3 voxel_pos = voxel_origin;
-						voxel_pos.X += dirX.X * x + dirX.Y * y;
-						voxel_pos.Y += dirY.X * x + dirY.Y * y;
-						voxel_pos.Z += dirZ * z;
+						int ztop = slab->ztop;
+						int zbottom = ztop + slab->zleng;
 						
-						R_FillBox(voxel_pos, sprite_xscale, sprite_yscale, color, cliptop, clipbottom, false, false);
+						//ztop = MAX(ztop, minZ);
+						//zbottom = MIN(zbottom, maxZ);
+						
+						for (int z = ztop; z < zbottom; z++)
+						{
+							uint8_t color = slab->col[z - slab->ztop];
+						
+							DVector3 voxel_pos = voxel_origin;
+							voxel_pos.X += dirX.X * x + dirX.Y * y;
+							voxel_pos.Y += dirY.X * x + dirY.Y * y;
+							voxel_pos.Z += dirZ * z;
+						
+							R_FillBox(voxel_pos, sprite_xscale, sprite_yscale, color, cliptop, clipbottom, false, false);
+						}
 					}
 				}
 			}

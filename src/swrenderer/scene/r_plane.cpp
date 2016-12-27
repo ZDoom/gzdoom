@@ -1179,10 +1179,9 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 		{ // Don't waste time on a masked texture if it isn't really masked.
 			masked = false;
 		}
-		R_SetupSpanBits(tex);
+		R_SetSpanTexture(tex);
 		double xscale = pl->xform.xScale * tex->Scale.X;
 		double yscale = pl->xform.yScale * tex->Scale.Y;
-		R_SetSpanSource(tex);
 
 		basecolormap = pl->colormap;
 		planeshade = LIGHT2SHADE(pl->lightlevel);

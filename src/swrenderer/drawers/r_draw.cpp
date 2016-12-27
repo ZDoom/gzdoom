@@ -601,7 +601,7 @@ namespace swrenderer
 		}
 	}
 
-	void R_SetupSpanBits(FTexture *tex)
+	void R_SetSpanTexture(FTexture *tex)
 	{
 		using namespace drawerargs;
 
@@ -616,19 +616,14 @@ namespace swrenderer
 		{
 			ds_ybits--;
 		}
+
+		ds_source = r_swtruecolor ? (const uint8_t*)tex->GetPixelsBgra() : tex->GetPixels();
+		ds_source_mipmapped = tex->Mipmapped() && tex->GetWidth() > 1 && tex->GetHeight() > 1;
 	}
 
 	void R_SetSpanColormap(FDynamicColormap *colormap, int shade)
 	{
 		R_SetDSColorMapLight(colormap, 0, shade);
-	}
-
-	void R_SetSpanSource(FTexture *tex)
-	{
-		using namespace drawerargs;
-
-		ds_source = r_swtruecolor ? (const uint8_t*)tex->GetPixelsBgra() : tex->GetPixels();
-		ds_source_mipmapped = tex->Mipmapped() && tex->GetWidth() > 1 && tex->GetHeight() > 1;
 	}
 
 	/////////////////////////////////////////////////////////////////////////

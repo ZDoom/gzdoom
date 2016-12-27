@@ -1379,12 +1379,11 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	sinrot = sin(rotation.Radians());
 
 	// Setup constant texture mapping parameters.
-	R_SetupSpanBits(tex);
+	R_SetSpanTexture(tex);
 	if (colormap)
 		R_SetSpanColormap(colormap, clamp(shade >> FRACBITS, 0, NUMCOLORMAPS - 1));
 	else
 		R_SetSpanColormap(&identitycolormap, 0);
-	R_SetSpanSource(tex);
 	if (ds_xbits != 0)
 	{
 		scalex = double(1u << (32 - ds_xbits)) / scalex;

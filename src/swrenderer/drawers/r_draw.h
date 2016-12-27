@@ -178,9 +178,8 @@ namespace swrenderer
 	void R_SetDSColorMapLight(FSWColormap *base_colormap, float light, int shade);
 	void R_SetTranslationMap(lighttable_t *translation);
 
-	void R_SetupSpanBits(FTexture *tex);
+	void R_SetSpanTexture(FTexture *tex);
 	void R_SetSpanColormap(FDynamicColormap *colormap, int shade);
-	void R_SetSpanSource(FTexture *tex);
 
 	void R_MapTiltedPlane(int y, int x1);
 	void R_MapColoredPlane(int y, int x1);

@@ -227,7 +227,12 @@ void MusInfo::Start(bool loop, float rel_vol, int subsong)
 {
 	if (nomusic) return;
 
-	if (rel_vol > 0.f) saved_relative_volume = relative_volume = rel_vol;
+	if (rel_vol > 0.f)
+	{
+		float factor = relative_volume / saved_relative_volume;
+		saved_relative_volume = rel_vol;
+		relative_volume = saved_relative_volume * factor;
+	}
 	Stop ();
 	Play (loop, subsong);
 	m_NotStartedYet = false;

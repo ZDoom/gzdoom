@@ -204,24 +204,6 @@ namespace swrenderer
 		uint8_t *destorg;
 	};
 
-	class DrawSlabPalCommand : public PalSpanCommand
-	{
-	public:
-		DrawSlabPalCommand(int dx, fixed_t v, int dy, fixed_t vi, const uint8_t *vptr, uint8_t *p, const uint8_t *colormap);
-		void Execute(DrawerThread *thread) override;
-
-	private:
-		int _dx;
-		fixed_t _v;
-		int _dy;
-		fixed_t _vi;
-		const uint8_t *_vvptr;
-		uint8_t *_p;
-		const uint8_t *_colormap;
-		int _pitch;
-		int _start_y;
-	};
-
 	class DrawFogBoundaryLinePalCommand : public PalSpanCommand
 	{
 	public:

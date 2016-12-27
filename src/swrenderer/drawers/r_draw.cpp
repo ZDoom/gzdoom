@@ -914,37 +914,6 @@ namespace swrenderer
 			DrawerCommandQueue::QueueCommand<DrawColoredSpanPalCommand>(y, x1, x2);
 	}
 
-	namespace
-	{
-		ShadeConstants slab_rgba_shade_constants;
-		const uint8_t *slab_rgba_colormap;
-		fixed_t slab_rgba_light;
-	}
-
-	void R_SetupDrawSlab(FSWColormap *base_colormap, float light, int shade)
-	{
-		slab_rgba_shade_constants.light_red = base_colormap->Color.r * 256 / 255;
-		slab_rgba_shade_constants.light_green = base_colormap->Color.g * 256 / 255;
-		slab_rgba_shade_constants.light_blue = base_colormap->Color.b * 256 / 255;
-		slab_rgba_shade_constants.light_alpha = base_colormap->Color.a * 256 / 255;
-		slab_rgba_shade_constants.fade_red = base_colormap->Fade.r;
-		slab_rgba_shade_constants.fade_green = base_colormap->Fade.g;
-		slab_rgba_shade_constants.fade_blue = base_colormap->Fade.b;
-		slab_rgba_shade_constants.fade_alpha = base_colormap->Fade.a;
-		slab_rgba_shade_constants.desaturate = MIN(abs(base_colormap->Desaturate), 255) * 255 / 256;
-		slab_rgba_shade_constants.simple_shade = (base_colormap->Color.d == 0x00ffffff && base_colormap->Fade.d == 0x00000000 && base_colormap->Desaturate == 0);
-		slab_rgba_colormap = base_colormap->Maps;
-		slab_rgba_light = LIGHTSCALE(light, shade);
-	}
-
-	void R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const uint8_t *vptr, uint8_t *p)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawSlabRGBACommand>(dx, v, dy, vi, vptr, p, slab_rgba_shade_constants, slab_rgba_colormap, slab_rgba_light);
-		else
-			DrawerCommandQueue::QueueCommand<DrawSlabPalCommand>(dx, v, dy, vi, vptr, p, slab_rgba_colormap);
-	}
-
 	void R_DrawFogBoundarySection(int y, int y2, int x1)
 	{
 		for (; y < y2; ++y)

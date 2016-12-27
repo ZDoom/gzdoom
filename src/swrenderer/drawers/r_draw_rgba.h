@@ -211,26 +211,6 @@ namespace swrenderer
 		FString DebugInfo() override;
 	};
 
-	class DrawSlabRGBACommand : public DrawerCommand
-	{
-		int _dx;
-		fixed_t _v;
-		int _dy;
-		fixed_t _vi;
-		const uint8_t *_voxelptr;
-		uint32_t *_p;
-		ShadeConstants _shade_constants;
-		const uint8_t *_colormap;
-		fixed_t _light;
-		int _pitch;
-		int _start_y;
-
-	public:
-		DrawSlabRGBACommand(int dx, fixed_t v, int dy, fixed_t vi, const uint8_t *vptr, uint8_t *p, ShadeConstants shade_constants, const uint8_t *colormap, fixed_t light);
-		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override;
-	};
-
 	class DrawFogBoundaryLineRGBACommand : public DrawerCommand
 	{
 		int _y;

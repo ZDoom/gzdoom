@@ -161,7 +161,6 @@ namespace swrenderer
 	void R_DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy);
 	void R_DrawColoredSpan(int y, int x1, int x2);
 	void R_DrawFogBoundaryLine(int y, int x1, int x2);
-	void R_FillSpan();
 
 	void R_DrawWallColumn();
 	void R_DrawWallMaskedColumn();

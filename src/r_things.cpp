@@ -59,6 +59,7 @@
 #include "r_segs.h"
 #include "r_3dfloors.h"
 #include "r_draw_rgba.h"
+#include "r_draw_pal.h"
 #include "v_palette.h"
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
@@ -2712,105 +2713,9 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 	}
 }
 
-//inline int clamp(int x, int y, int z) { return ((x < y) ? x : (z < y) ? z : y); }
-
-void R_DrawParticle (vissprite_t *vis)
-{
-	if (r_swtruecolor)
-		return R_DrawParticle_rgba(vis);
-		
-	DWORD *bg2rgb;
-	int spacing;
-	BYTE *dest;
-	DWORD fg;
-	BYTE color = vis->Style.BaseColormap->Maps[(vis->Style.ColormapNum << COLORMAPSHIFT) + vis->startfrac];
-	int yl = vis->y1;
-	int ycount = vis->y2 - yl + 1;
-	int x1 = vis->x1;
-	int countbase = vis->x2 - x1;
-
-	R_DrawMaskedSegsBehindParticle (vis);
-
-	DrawerCommandQueue::WaitForWorkers();
-
-	// vis->renderflags holds translucency level (0-255)
-	fixed_t fglevel, bglevel;
-
-	{
-		DWORD *fg2rgb;
-
-		fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
-		bglevel = FRACUNIT-fglevel;
-		fg2rgb = Col2RGB8[fglevel>>10];
-		bg2rgb = Col2RGB8[bglevel>>10];
-		fg = fg2rgb[color];
-	}
-
-	/*
-
-	spacing = RenderTarget->GetPitch() - countbase;
-	dest = ylookup[yl] + x1 + dc_destorg;
-
-	do
-	{
-		int count = countbase;
-		do
-		{
-			DWORD bg = bg2rgb[*dest];
-			bg = (fg+bg) | 0x1f07c1f;
-			*dest++ = RGB32k.All[bg & (bg>>15)];
-		} while (--count);
-		dest += spacing;
-	} while (--ycount);*/
-
-	// original was row-wise
-	// width = countbase
-	// height = ycount
-
-	spacing = RenderTarget->GetPitch();
-
-	if (!r_blendmethod)
-	{
-		for (int x = x1; x < (x1+countbase); x++)
-		{
-			dc_x = x;
-			if (R_ClipSpriteColumnWithPortals(vis))
-				continue;
-			dest = ylookup[yl] + x + dc_destorg;
-			for (int y = 0; y < ycount; y++)
-			{
-				DWORD bg = bg2rgb[*dest];
-				bg = (fg+bg) | 0x1f07c1f;
-				*dest = RGB32k.All[bg & (bg>>15)];
-				dest += spacing;
-			}
-		}
-	}
-	else
-	{
-		for (int x = x1; x < (x1+countbase); x++)
-		{
-			dc_x = x;
-			if (R_ClipSpriteColumnWithPortals(vis))
-				continue;
-			dest = ylookup[yl] + x + dc_destorg;
-			for (int y = 0; y < ycount; y++)
-			{
-				uint32_t dest_r = MIN((GPalette.BaseColors[*dest].r * bglevel + GPalette.BaseColors[color].r * fglevel) >> 18, 63);
-				uint32_t dest_g = MIN((GPalette.BaseColors[*dest].g * bglevel + GPalette.BaseColors[color].g * fglevel) >> 18, 63);
-				uint32_t dest_b = MIN((GPalette.BaseColors[*dest].b * bglevel + GPalette.BaseColors[color].b * fglevel) >> 18, 63);
-
-				*dest = RGB256k.RGB[dest_r][dest_g][dest_b];
-				dest += spacing;
-			}
-		}
-	}
-}
-
-void R_DrawParticle_rgba(vissprite_t *vis)
+void R_DrawParticle(vissprite_t *vis)
 {
 	int spacing;
-	uint32_t *dest;
 	BYTE color = vis->Style.BaseColormap->Maps[vis->startfrac];
 	int yl = vis->y1;
 	int ycount = vis->y2 - yl + 1;
@@ -2833,13 +2738,27 @@ void R_DrawParticle_rgba(vissprite_t *vis)
 	uint32_t fracstepx = 16 * FRACUNIT / countbase;
 	uint32_t fracposx = fracstepx / 2;
 
-	for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
+	if (r_swtruecolor)
 	{
-		dc_x = x;
-		if (R_ClipSpriteColumnWithPortals(vis))
-			continue;
-		dest = ylookup[yl] + x + (uint32_t*)dc_destorg;
-		DrawerCommandQueue::QueueCommand<DrawParticleColumnRGBACommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);
+		for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
+		{
+			dc_x = x;
+			if (R_ClipSpriteColumnWithPortals(vis))
+				continue;
+			uint32_t *dest = ylookup[yl] + x + (uint32_t*)dc_destorg;
+			DrawerCommandQueue::QueueCommand<DrawParticleColumnRGBACommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);
+		}
+	}
+	else
+	{
+		for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
+		{
+			dc_x = x;
+			if (R_ClipSpriteColumnWithPortals(vis))
+				continue;
+			uint8_t *dest = ylookup[yl] + x + dc_destorg;
+			DrawerCommandQueue::QueueCommand<DrawParticleColumnPalCommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);
+		}
 	}
 }
 

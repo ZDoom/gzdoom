@@ -3445,4 +3445,85 @@ namespace swrenderer
 			dest[x] = colormap[dest[x]];
 		} while (++x <= x2);
 	}
+	
+	/////////////////////////////////////////////////////////////////////////////
+
+	namespace
+	{
+		static uint32_t particle_texture[16 * 16] =
+		{
+			1 * 1, 2 * 1, 3 * 1, 4 * 1, 5 * 1, 6 * 1, 7 * 1, 8 * 1, 8 * 1, 7 * 1, 6 * 1, 5 * 1, 4 * 1, 3 * 1, 2 * 1, 1 * 1,
+			1 * 2, 2 * 2, 3 * 2, 4 * 2, 5 * 2, 6 * 2, 7 * 2, 8 * 2, 8 * 2, 7 * 2, 6 * 2, 5 * 2, 4 * 2, 3 * 2, 2 * 2, 1 * 2,
+			1 * 3, 2 * 3, 3 * 3, 4 * 3, 5 * 3, 6 * 3, 7 * 3, 8 * 3, 8 * 3, 7 * 3, 6 * 3, 5 * 3, 4 * 3, 3 * 3, 2 * 3, 1 * 3,
+			1 * 4, 2 * 4, 3 * 4, 4 * 4, 5 * 4, 6 * 4, 7 * 4, 8 * 4, 8 * 4, 7 * 4, 6 * 4, 5 * 4, 4 * 4, 3 * 4, 2 * 4, 1 * 4,
+			1 * 5, 2 * 5, 3 * 5, 4 * 5, 5 * 5, 6 * 5, 7 * 5, 8 * 5, 8 * 5, 7 * 5, 6 * 5, 5 * 5, 4 * 5, 3 * 5, 2 * 5, 1 * 5,
+			1 * 6, 2 * 6, 3 * 6, 4 * 6, 5 * 6, 6 * 6, 7 * 6, 8 * 6, 8 * 6, 7 * 6, 6 * 6, 5 * 6, 4 * 6, 3 * 6, 2 * 6, 1 * 6,
+			1 * 7, 2 * 7, 3 * 7, 4 * 7, 5 * 7, 6 * 7, 7 * 7, 8 * 7, 8 * 7, 7 * 7, 6 * 7, 5 * 7, 4 * 7, 3 * 7, 2 * 7, 1 * 7,
+			1 * 8, 2 * 8, 3 * 8, 4 * 8, 5 * 8, 6 * 8, 7 * 8, 8 * 8, 8 * 8, 7 * 8, 6 * 8, 5 * 8, 4 * 8, 3 * 8, 2 * 8, 1 * 8,
+			1 * 8, 2 * 8, 3 * 8, 4 * 8, 5 * 8, 6 * 8, 7 * 8, 8 * 8, 8 * 8, 7 * 8, 6 * 8, 5 * 8, 4 * 8, 3 * 8, 2 * 8, 1 * 8,
+			1 * 7, 2 * 7, 3 * 7, 4 * 7, 5 * 7, 6 * 7, 7 * 7, 8 * 7, 8 * 7, 7 * 7, 6 * 7, 5 * 7, 4 * 7, 3 * 7, 2 * 7, 1 * 7,
+			1 * 6, 2 * 6, 3 * 6, 4 * 6, 5 * 6, 6 * 6, 7 * 6, 8 * 6, 8 * 6, 7 * 6, 6 * 6, 5 * 6, 4 * 6, 3 * 6, 2 * 6, 1 * 6,
+			1 * 5, 2 * 5, 3 * 5, 4 * 5, 5 * 5, 6 * 5, 7 * 5, 8 * 5, 8 * 5, 7 * 5, 6 * 5, 5 * 5, 4 * 5, 3 * 5, 2 * 5, 1 * 5,
+			1 * 4, 2 * 4, 3 * 4, 4 * 4, 5 * 4, 6 * 4, 7 * 4, 8 * 4, 8 * 4, 7 * 4, 6 * 4, 5 * 4, 4 * 4, 3 * 4, 2 * 4, 1 * 4,
+			1 * 3, 2 * 3, 3 * 3, 4 * 3, 5 * 3, 6 * 3, 7 * 3, 8 * 3, 8 * 3, 7 * 3, 6 * 3, 5 * 3, 4 * 3, 3 * 3, 2 * 3, 1 * 3,
+			1 * 2, 2 * 2, 3 * 2, 4 * 2, 5 * 2, 6 * 2, 7 * 2, 8 * 2, 8 * 2, 7 * 2, 6 * 2, 5 * 2, 4 * 2, 3 * 2, 2 * 2, 1 * 2,
+			1 * 1, 2 * 1, 3 * 1, 4 * 1, 5 * 1, 6 * 1, 7 * 1, 8 * 1, 8 * 1, 7 * 1, 6 * 1, 5 * 1, 4 * 1, 3 * 1, 2 * 1, 1 * 1
+		};
+	}
+
+	DrawParticleColumnPalCommand::DrawParticleColumnPalCommand(uint8_t *dest, int dest_y, int pitch, int count, uint32_t fg, uint32_t alpha, uint32_t fracposx)
+	{
+		_dest = dest;
+		_pitch = pitch;
+		_count = count;
+		_fg = fg;
+		_alpha = alpha;
+		_fracposx = fracposx;
+		_dest_y = dest_y;
+	}
+
+	void DrawParticleColumnPalCommand::Execute(DrawerThread *thread)
+	{
+		int count = thread->count_for_thread(_dest_y, _count);
+		if (count <= 0)
+			return;
+
+		uint8_t *dest = thread->dest_for_thread(_dest_y, _pitch, _dest);
+		int pitch = _pitch * thread->num_cores;
+
+		const uint32_t *source = &particle_texture[(_fracposx >> FRACBITS) * 16];
+		uint32_t particle_alpha = _alpha;
+
+		uint32_t fracstep = 16 * FRACUNIT / _count;
+		uint32_t fracpos = fracstep * thread->skipped_by_thread(_dest_y) + fracstep / 2;
+		fracstep *= thread->num_cores;
+
+		uint32_t fg_red = (_fg >> 16) & 0xff;
+		uint32_t fg_green = (_fg >> 8) & 0xff;
+		uint32_t fg_blue = _fg & 0xff;
+
+		for (int y = 0; y < count; y++)
+		{
+			uint32_t alpha = (source[fracpos >> FRACBITS] * particle_alpha) >> 6;
+			uint32_t inv_alpha = 256 - alpha;
+
+			int bg = *dest;
+			uint32_t bg_red = GPalette.BaseColors[bg].r;
+			uint32_t bg_green = GPalette.BaseColors[bg].g;
+			uint32_t bg_blue = GPalette.BaseColors[bg].b;
+
+			uint32_t red = (fg_red * alpha + bg_red * inv_alpha) / 256;
+			uint32_t green = (fg_green * alpha + bg_green * inv_alpha) / 256;
+			uint32_t blue = (fg_blue * alpha + bg_blue * inv_alpha) / 256;
+
+			*dest = RGB256k.All[((red >> 2) << 12) | ((green >> 2) << 6) | (blue >> 2)];
+			dest += pitch;
+			fracpos += fracstep;
+		}
+	}
+
+	FString DrawParticleColumnPalCommand::DebugInfo()
+	{
+		return "DrawParticle";
+	}
 }

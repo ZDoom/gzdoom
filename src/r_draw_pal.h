@@ -260,4 +260,20 @@ namespace swrenderer
 		const uint8_t *_colormap;
 		uint8_t *_destorg;
 	};
+	
+	class DrawParticleColumnPalCommand : public DrawerCommand
+	{
+	public:
+		DrawParticleColumnPalCommand(uint8_t *dest, int dest_y, int pitch, int count, uint32_t fg, uint32_t alpha, uint32_t fracposx);
+		void Execute(DrawerThread *thread) override;
+		FString DebugInfo() override;
+
+	private:
+		uint8_t *_dest;
+		int _pitch;
+		int _count;
+		uint32_t _fg;
+		uint32_t _alpha;
+		uint32_t _fracposx;
+	};
 }

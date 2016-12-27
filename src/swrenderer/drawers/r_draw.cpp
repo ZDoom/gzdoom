@@ -135,8 +135,25 @@ namespace swrenderer
 		unsigned int *horizspan[4];
 	}
 
+	namespace
+	{
+		SWPixelFormatDrawers *active_drawers;
+		SWPalDrawers pal_drawers;
+		SWTruecolorDrawers tc_drawers;
+	}
+
+	SWPixelFormatDrawers *R_ActiveDrawers()
+	{
+		return active_drawers;
+	}
+
 	void R_InitColumnDrawers()
 	{
+		if (r_swtruecolor)
+			active_drawers = &tc_drawers;
+		else
+			active_drawers = &pal_drawers;
+
 		colfunc = basecolfunc = R_DrawColumn;
 		fuzzcolfunc = R_DrawFuzzColumn;
 		transcolfunc = R_DrawTranslatedColumn;
@@ -620,122 +637,6 @@ namespace swrenderer
 		R_SetDSColorMapLight(colormap, 0, shade);
 	}
 
-	/////////////////////////////////////////////////////////////////////////
-
-	void R_DrawWallColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawWall1LLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawWall1PalCommand>();
-	}
-
-	void R_DrawWallMaskedColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawWallMasked1LLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawWallMasked1PalCommand>();
-	}
-
-	void R_DrawWallAddColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawWallAdd1LLVMCommand>();
-		else if (drawerargs::dc_num_lights == 0)
-			DrawerCommandQueue::QueueCommand<DrawWallAdd1PalCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawWallAddClamp1PalCommand>();
-	}
-
-	void R_DrawWallAddClampColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawWallAddClamp1LLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawWallAddClamp1PalCommand>();
-	}
-
-	void R_DrawWallSubClampColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawWallSubClamp1LLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawWallSubClamp1PalCommand>();
-	}
-
-	void R_DrawWallRevSubClampColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1LLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1PalCommand>();
-	}
-
-	void R_DrawSingleSkyColumn(uint32_t solid_top, uint32_t solid_bottom)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawSingleSky1LLVMCommand>(solid_top, solid_bottom);
-		else
-			DrawerCommandQueue::QueueCommand<DrawSingleSky1PalCommand>(solid_top, solid_bottom);
-	}
-
-	void R_DrawDoubleSkyColumn(uint32_t solid_top, uint32_t solid_bottom)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawDoubleSky1LLVMCommand>(solid_top, solid_bottom);
-		else
-			DrawerCommandQueue::QueueCommand<DrawDoubleSky1PalCommand>(solid_top, solid_bottom);
-	}
-
-	void R_DrawColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnPalCommand>();
-	}
-
-	void R_FillColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<FillColumnLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<FillColumnPalCommand>();
-	}
-
-	void R_FillAddColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<FillColumnAddLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<FillColumnAddPalCommand>();
-	}
-
-	void R_FillAddClampColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<FillColumnAddClampLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<FillColumnAddClampPalCommand>();
-	}
-
-	void R_FillSubClampColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<FillColumnSubClampLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<FillColumnSubClampPalCommand>();
-	}
-
-	void R_FillRevSubClampColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<FillColumnRevSubClampLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<FillColumnRevSubClampPalCommand>();
-	}
-
 	void R_UpdateFuzzPos()
 	{
 		using namespace drawerargs;
@@ -744,175 +645,5 @@ namespace swrenderer
 		dc_yh = MIN(dc_yh, fuzzviewheight);
 		if (dc_yl <= dc_yh)
 			fuzzpos = (fuzzpos + dc_yh - dc_yl + 1) % FUZZTABLE;
-	}
-
-	void R_DrawFuzzColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawFuzzColumnRGBACommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawFuzzColumnPalCommand>();
-
-		R_UpdateFuzzPos();
-	}
-
-	void R_DrawAddColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnAddLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnAddPalCommand>();
-	}
-
-	void R_DrawTranslatedColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnTranslatedLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnTranslatedPalCommand>();
-	}
-
-	void R_DrawTlatedAddColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnTlatedAddLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnTlatedAddPalCommand>();
-	}
-
-	void R_DrawShadedColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnShadedLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnShadedPalCommand>();
-	}
-
-	void R_DrawAddClampColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnAddClampLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnAddClampPalCommand>();
-	}
-
-	void R_DrawAddClampTranslatedColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnAddClampTranslatedLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnAddClampTranslatedPalCommand>();
-	}
-
-	void R_DrawSubClampColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnSubClampLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnSubClampPalCommand>();
-	}
-
-	void R_DrawSubClampTranslatedColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnSubClampTranslatedLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnSubClampTranslatedPalCommand>();
-	}
-
-	void R_DrawRevSubClampColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampPalCommand>();
-	}
-
-	void R_DrawRevSubClampTranslatedColumn()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampTranslatedLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampTranslatedPalCommand>();
-	}
-
-	void R_DrawSpan()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawSpanLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawSpanPalCommand>();
-	}
-
-	void R_DrawSpanMasked()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawSpanMaskedLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawSpanMaskedPalCommand>();
-	}
-
-	void R_DrawSpanTranslucent()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawSpanTranslucentLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawSpanTranslucentPalCommand>();
-	}
-
-	void R_DrawSpanMaskedTranslucent()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawSpanMaskedTranslucentLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawSpanMaskedTranslucentPalCommand>();
-	}
-
-	void R_DrawSpanAddClamp()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawSpanAddClampLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawSpanAddClampPalCommand>();
-	}
-
-	void R_DrawSpanMaskedAddClamp()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampLLVMCommand>();
-		else
-			DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampPalCommand>();
-	}
-
-	void R_FillSpan()
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<FillSpanRGBACommand>();
-		else
-			DrawerCommandQueue::QueueCommand<FillSpanPalCommand>();
-	}
-
-	void R_DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawTiltedSpanRGBACommand>(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
-		else
-			DrawerCommandQueue::QueueCommand<DrawTiltedSpanPalCommand>(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
-	}
-
-	void R_DrawColoredSpan(int y, int x1, int x2)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawColoredSpanRGBACommand>(y, x1, x2);
-		else
-			DrawerCommandQueue::QueueCommand<DrawColoredSpanPalCommand>(y, x1, x2);
-	}
-
-	void R_DrawFogBoundaryLine(int y, int x1, int x2)
-	{
-		if (r_swtruecolor)
-			DrawerCommandQueue::QueueCommand<DrawFogBoundaryLineRGBACommand>(y, x1, x2);
-		else
-			DrawerCommandQueue::QueueCommand<DrawFogBoundaryLinePalCommand>(y, x1, x2);
 	}
 }

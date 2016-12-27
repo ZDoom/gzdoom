@@ -123,6 +123,49 @@ namespace swrenderer
 
 	extern bool r_swtruecolor;
 
+	class SWPixelFormatDrawers
+	{
+	public:
+		virtual ~SWPixelFormatDrawers() { }
+		virtual void DrawWallColumn() = 0;
+		virtual void DrawWallMaskedColumn() = 0;
+		virtual void DrawWallAddColumn() = 0;
+		virtual void DrawWallAddClampColumn() = 0;
+		virtual void DrawWallSubClampColumn() = 0;
+		virtual void DrawWallRevSubClampColumn() = 0;
+		virtual void DrawSingleSkyColumn(uint32_t solid_top, uint32_t solid_bottom) = 0;
+		virtual void DrawDoubleSkyColumn(uint32_t solid_top, uint32_t solid_bottom) = 0;
+		virtual void DrawColumn() = 0;
+		virtual void FillColumn() = 0;
+		virtual void FillAddColumn() = 0;
+		virtual void FillAddClampColumn() = 0;
+		virtual void FillSubClampColumn() = 0;
+		virtual void FillRevSubClampColumn() = 0;
+		virtual void DrawFuzzColumn() = 0;
+		virtual void DrawAddColumn() = 0;
+		virtual void DrawTranslatedColumn() = 0;
+		virtual void DrawTranslatedAddColumn() = 0;
+		virtual void DrawShadedColumn() = 0;
+		virtual void DrawAddClampColumn() = 0;
+		virtual void DrawAddClampTranslatedColumn() = 0;
+		virtual void DrawSubClampColumn() = 0;
+		virtual void DrawSubClampTranslatedColumn() = 0;
+		virtual void DrawRevSubClampColumn() = 0;
+		virtual void DrawRevSubClampTranslatedColumn() = 0;
+		virtual void DrawSpan() = 0;
+		virtual void DrawSpanMasked() = 0;
+		virtual void DrawSpanTranslucent() = 0;
+		virtual void DrawSpanMaskedTranslucent() = 0;
+		virtual void DrawSpanAddClamp() = 0;
+		virtual void DrawSpanMaskedAddClamp() = 0;
+		virtual void FillSpan() = 0;
+		virtual void DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy) = 0;
+		virtual void DrawColoredSpan(int y, int x1, int x2) = 0;
+		virtual void DrawFogBoundaryLine(int y, int x1, int x2) = 0;
+	};
+
+	SWPixelFormatDrawers *R_ActiveDrawers();
+
 	void R_InitColumnDrawers();
 	void R_InitShadeMaps();
 	void R_InitFuzzTable(int fuzzoff);
@@ -136,44 +179,6 @@ namespace swrenderer
 
 	void R_UpdateFuzzPos();
 
-	void R_DrawColumn();
-	void R_DrawFuzzColumn();
-	void R_DrawTranslatedColumn();
-	void R_DrawShadedColumn();
-	void R_FillColumn();
-	void R_FillAddColumn();
-	void R_FillAddClampColumn();
-	void R_FillSubClampColumn();
-	void R_FillRevSubClampColumn();
-	void R_DrawAddColumn();
-	void R_DrawTlatedAddColumn();
-	void R_DrawAddClampColumn();
-	void R_DrawAddClampTranslatedColumn();
-	void R_DrawSubClampColumn();
-	void R_DrawSubClampTranslatedColumn();
-	void R_DrawRevSubClampColumn();
-	void R_DrawRevSubClampTranslatedColumn();
-	void R_DrawSpan();
-	void R_DrawSpanMasked();
-	void R_DrawSpanTranslucent();
-	void R_DrawSpanMaskedTranslucent();
-	void R_DrawSpanAddClamp();
-	void R_DrawSpanMaskedAddClamp();
-	void R_FillSpan();
-	void R_DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy);
-	void R_DrawColoredSpan(int y, int x1, int x2);
-	void R_DrawFogBoundaryLine(int y, int x1, int x2);
-
-	void R_DrawWallColumn();
-	void R_DrawWallMaskedColumn();
-	void R_DrawWallAddColumn();
-	void R_DrawWallAddClampColumn();
-	void R_DrawWallSubClampColumn();
-	void R_DrawWallRevSubClampColumn();
-
-	void R_DrawSingleSkyColumn(uint32_t solid_top, uint32_t solid_bottom);
-	void R_DrawDoubleSkyColumn(uint32_t solid_top, uint32_t solid_bottom);
-
 	// Sets dc_colormap and dc_light to their appropriate values depending on the output format (pal vs true color)
 	void R_SetColorMapLight(FSWColormap *base_colormap, float light, int shade);
 	void R_SetDSColorMapLight(FSWColormap *base_colormap, float light, int shade);
@@ -181,4 +186,43 @@ namespace swrenderer
 
 	void R_SetSpanTexture(FTexture *tex);
 	void R_SetSpanColormap(FDynamicColormap *colormap, int shade);
+
+	inline void R_DrawWallColumn() { R_ActiveDrawers()->DrawWallColumn(); }
+	inline void R_DrawWallMaskedColumn() { R_ActiveDrawers()->DrawWallMaskedColumn(); }
+	inline void R_DrawWallAddColumn() { R_ActiveDrawers()->DrawWallAddColumn(); }
+	inline void R_DrawWallAddClampColumn() { R_ActiveDrawers()->DrawWallAddClampColumn(); }
+	inline void R_DrawWallSubClampColumn() { R_ActiveDrawers()->DrawWallSubClampColumn(); }
+	inline void R_DrawWallRevSubClampColumn() { R_ActiveDrawers()->DrawWallRevSubClampColumn(); }
+	inline void R_DrawSingleSkyColumn(uint32_t solid_top, uint32_t solid_bottom) { R_ActiveDrawers()->DrawSingleSkyColumn(solid_top, solid_bottom); }
+	inline void R_DrawDoubleSkyColumn(uint32_t solid_top, uint32_t solid_bottom) { R_ActiveDrawers()->DrawDoubleSkyColumn(solid_top, solid_bottom); }
+	inline void R_DrawColumn() { R_ActiveDrawers()->DrawColumn(); }
+	inline void R_FillColumn() { R_ActiveDrawers()->FillColumn(); }
+	inline void R_FillAddColumn() { R_ActiveDrawers()->FillAddColumn(); }
+	inline void R_FillAddClampColumn() { R_ActiveDrawers()->FillAddClampColumn(); }
+	inline void R_FillSubClampColumn() { R_ActiveDrawers()->FillSubClampColumn(); }
+	inline void R_FillRevSubClampColumn() { R_ActiveDrawers()->FillRevSubClampColumn(); }
+	inline void R_DrawFuzzColumn() { R_ActiveDrawers()->DrawFuzzColumn(); }
+	inline void R_DrawAddColumn() { R_ActiveDrawers()->DrawAddColumn(); }
+	inline void R_DrawTranslatedColumn() { R_ActiveDrawers()->DrawTranslatedColumn(); }
+	inline void R_DrawTlatedAddColumn() { R_ActiveDrawers()->DrawTranslatedAddColumn(); }
+	inline void R_DrawShadedColumn() { R_ActiveDrawers()->DrawShadedColumn(); }
+	inline void R_DrawAddClampColumn() { R_ActiveDrawers()->DrawAddClampColumn(); }
+	inline void R_DrawAddClampTranslatedColumn() { R_ActiveDrawers()->DrawAddClampTranslatedColumn(); }
+	inline void R_DrawSubClampColumn() { R_ActiveDrawers()->DrawSubClampColumn(); }
+	inline void R_DrawSubClampTranslatedColumn() { R_ActiveDrawers()->DrawSubClampTranslatedColumn(); }
+	inline void R_DrawRevSubClampColumn() { R_ActiveDrawers()->DrawRevSubClampColumn(); }
+	inline void R_DrawRevSubClampTranslatedColumn() { R_ActiveDrawers()->DrawRevSubClampTranslatedColumn(); }
+	inline void R_DrawSpan() { R_ActiveDrawers()->DrawSpan(); }
+	inline void R_DrawSpanMasked() { R_ActiveDrawers()->DrawSpanMasked(); }
+	inline void R_DrawSpanTranslucent() { R_ActiveDrawers()->DrawSpanTranslucent(); }
+	inline void R_DrawSpanMaskedTranslucent() { R_ActiveDrawers()->DrawSpanMaskedTranslucent(); }
+	inline void R_DrawSpanAddClamp() { R_ActiveDrawers()->DrawSpanAddClamp(); }
+	inline void R_DrawSpanMaskedAddClamp() { R_ActiveDrawers()->DrawSpanMaskedAddClamp(); }
+	inline void R_FillSpan() { R_ActiveDrawers()->FillSpan(); }
+	inline void R_DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy)
+	{
+		R_ActiveDrawers()->DrawTiltedSpan(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
+	}
+	inline void R_DrawColoredSpan(int y, int x1, int x2) { R_ActiveDrawers()->DrawColoredSpan(y, x1, x2); }
+	inline void R_DrawFogBoundaryLine(int y, int x1, int x2) { R_ActiveDrawers()->DrawFogBoundaryLine(y, x1, x2); }
 }

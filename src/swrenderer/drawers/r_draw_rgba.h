@@ -339,6 +339,53 @@ namespace swrenderer
 	};
 
 	/////////////////////////////////////////////////////////////////////////////
+
+	class SWTruecolorDrawers : public SWPixelFormatDrawers
+	{
+	public:
+		void DrawWallColumn() override { DrawerCommandQueue::QueueCommand<DrawWall1LLVMCommand>(); }
+		void DrawWallMaskedColumn() override { DrawerCommandQueue::QueueCommand<DrawWallMasked1LLVMCommand>(); }
+		void DrawWallAddColumn() override { DrawerCommandQueue::QueueCommand<DrawWallAdd1LLVMCommand>(); }
+		void DrawWallAddClampColumn() override { DrawerCommandQueue::QueueCommand<DrawWallAddClamp1LLVMCommand>(); }
+		void DrawWallSubClampColumn() override { DrawerCommandQueue::QueueCommand<DrawWallSubClamp1LLVMCommand>(); }
+		void DrawWallRevSubClampColumn() override { DrawerCommandQueue::QueueCommand<DrawWallRevSubClamp1LLVMCommand>(); }
+		void DrawSingleSkyColumn(uint32_t solid_top, uint32_t solid_bottom) override { DrawerCommandQueue::QueueCommand<DrawSingleSky1LLVMCommand>(solid_top, solid_bottom); }
+		void DrawDoubleSkyColumn(uint32_t solid_top, uint32_t solid_bottom) override { DrawerCommandQueue::QueueCommand<DrawDoubleSky1LLVMCommand>(solid_top, solid_bottom); }
+		void DrawColumn() override { DrawerCommandQueue::QueueCommand<DrawColumnLLVMCommand>(); }
+		void FillColumn() override { DrawerCommandQueue::QueueCommand<FillColumnLLVMCommand>(); }
+		void FillAddColumn() override { DrawerCommandQueue::QueueCommand<FillColumnAddLLVMCommand>(); }
+		void FillAddClampColumn() override { DrawerCommandQueue::QueueCommand<FillColumnAddClampLLVMCommand>(); }
+		void FillSubClampColumn() override { DrawerCommandQueue::QueueCommand<FillColumnSubClampLLVMCommand>(); }
+		void FillRevSubClampColumn() override { DrawerCommandQueue::QueueCommand<FillColumnRevSubClampLLVMCommand>(); }
+		void DrawFuzzColumn() override { DrawerCommandQueue::QueueCommand<DrawFuzzColumnRGBACommand>(); R_UpdateFuzzPos(); }
+		void DrawAddColumn() override { DrawerCommandQueue::QueueCommand<DrawColumnAddLLVMCommand>(); }
+		void DrawTranslatedColumn() override { DrawerCommandQueue::QueueCommand<DrawColumnTranslatedLLVMCommand>(); }
+		void DrawTranslatedAddColumn() override { DrawerCommandQueue::QueueCommand<DrawColumnTlatedAddLLVMCommand>(); }
+		void DrawShadedColumn() override { DrawerCommandQueue::QueueCommand<DrawColumnShadedLLVMCommand>(); }
+		void DrawAddClampColumn() override { DrawerCommandQueue::QueueCommand<DrawColumnAddClampLLVMCommand>(); }
+		void DrawAddClampTranslatedColumn() override { DrawerCommandQueue::QueueCommand<DrawColumnAddClampTranslatedLLVMCommand>(); }
+		void DrawSubClampColumn() override { DrawerCommandQueue::QueueCommand<DrawColumnSubClampLLVMCommand>(); }
+		void DrawSubClampTranslatedColumn() override { DrawerCommandQueue::QueueCommand<DrawColumnSubClampTranslatedLLVMCommand>(); }
+		void DrawRevSubClampColumn() override { DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampLLVMCommand>(); }
+		void DrawRevSubClampTranslatedColumn() override { DrawerCommandQueue::QueueCommand<DrawColumnRevSubClampTranslatedLLVMCommand>(); }
+		void DrawSpan() override { DrawerCommandQueue::QueueCommand<DrawSpanLLVMCommand>(); }
+		void DrawSpanMasked() override { DrawerCommandQueue::QueueCommand<DrawSpanMaskedLLVMCommand>(); }
+		void DrawSpanTranslucent() override { DrawerCommandQueue::QueueCommand<DrawSpanTranslucentLLVMCommand>(); }
+		void DrawSpanMaskedTranslucent() override { DrawerCommandQueue::QueueCommand<DrawSpanMaskedTranslucentLLVMCommand>(); }
+		void DrawSpanAddClamp() override { DrawerCommandQueue::QueueCommand<DrawSpanAddClampLLVMCommand>(); }
+		void DrawSpanMaskedAddClamp() override { DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampLLVMCommand>(); }
+		void FillSpan() override { DrawerCommandQueue::QueueCommand<FillSpanRGBACommand>(); }
+
+		void DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy) override
+		{
+			DrawerCommandQueue::QueueCommand<DrawTiltedSpanRGBACommand>(y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
+		}
+
+		void DrawColoredSpan(int y, int x1, int x2) override { DrawerCommandQueue::QueueCommand<DrawColoredSpanRGBACommand>(y, x1, x2); }
+		void DrawFogBoundaryLine(int y, int x1, int x2) override { DrawerCommandQueue::QueueCommand<DrawFogBoundaryLineRGBACommand>(y, x1, x2); }
+	};
+
+	/////////////////////////////////////////////////////////////////////////////
 	// Pixel shading inline functions:
 
 	class LightBgra

@@ -37,7 +37,6 @@ public:
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
 	bool CheckModified ();
-	void Unload ();
 
 	void SetVial (int level);
 
@@ -90,10 +89,6 @@ FHealthBar::FHealthBar ()
 bool FHealthBar::CheckModified ()
 {
 	return NeedRefresh;
-}
-
-void FHealthBar::Unload ()
-{
 }
 
 const BYTE *FHealthBar::GetColumn (unsigned int column, const Span **spans_out)

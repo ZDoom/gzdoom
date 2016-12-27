@@ -41,17 +41,17 @@ const char *GetVersionString();
 
 /** Lots of different version numbers **/
 
-#define VERSIONSTR "2.9pre"
+#define VERSIONSTR "1.2pre"
 
 // The version as seen in the Windows resource
-#define RC_FILEVERSION 2,8,9999,0
-#define RC_PRODUCTVERSION 2,8,9999,0
-#define RC_PRODUCTVERSION2 "2.9pre"
+#define RC_FILEVERSION 1,1,9999,0
+#define RC_PRODUCTVERSION 1,1,9999,0
+#define RC_PRODUCTVERSION2 "1.2pre"
 
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you
 // didn't change anything that will affect sync.
-#define NETGAMEVERSION 232
+#define NETGAMEVERSION 235
 
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to
@@ -81,15 +81,17 @@ const char *GetVersionString();
 // SVN revision ever got.
 #define SAVEVER 4550
 
+#define DYNLIGHT
+
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
-#define GAMESIG "ZDOOM"
-#define BASEWAD "zdoom.pk3"
+#define GAMESIG "QZDOOM"
+#define BASEWAD "qzdoom.pk3"
 
 // More stuff that needs to be different for derivatives.
-#define GAMENAME "ZDoom"
-#define GAMENAMELOWERCASE "zdoom"
-#define FORUM_URL "http://forum.zdoom.org"
-#define BUGS_FORUM_URL	"http://forum.zdoom.org/index.php?c=3"
+#define GAMENAME "QZDoom"
+#define GAMENAMELOWERCASE "qzdoom"
+#define FORUM_URL "http://forum.drdteam.org/viewforum.php?f=196"
+#define BUGS_FORUM_URL	"http://forum.drdteam.org/viewforum.php?f=197"
 
 #if defined(__APPLE__) || defined(_WIN32)
 #define GAME_DIR GAMENAME

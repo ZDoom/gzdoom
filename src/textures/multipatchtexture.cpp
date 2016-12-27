@@ -359,6 +359,7 @@ void FMultiPatchTexture::Unload ()
 		delete[] Pixels;
 		Pixels = NULL;
 	}
+	FTexture::Unload();
 }
 
 //==========================================================================
@@ -625,8 +626,9 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 		{
 			ret = Parts[i].Texture->CopyTrueColorPixels(bmp, x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate, &info);
 		}
-
-		if (ret > retv) retv = ret;
+		// treat -1 (i.e. unknown) as absolute. We have no idea if this may have overwritten previous info so a real check needs to be done.
+		if (ret == -1) retv = ret;
+		else if (retv != -1 && ret > retv) retv = ret;
 	}
 	// Restore previous clipping rectangle.
 	bmp->SetClipRect(saved_cr);

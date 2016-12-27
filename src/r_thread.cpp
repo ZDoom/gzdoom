@@ -291,7 +291,11 @@ void DrawerCommandQueue::ReportDrawerError(DrawerCommand *command, bool worker_t
 	}
 }
 
+#ifndef WIN32
+
 void VectoredTryCatch(void *data, void(*tryBlock)(void *data), void(*catchBlock)(void *data, const char *reason, bool fatal))
 {
 	tryBlock(data);
 }
+
+#endif

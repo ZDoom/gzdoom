@@ -1286,9 +1286,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Explode)
 		{
 			ang = i*360./nails;
 			// Comparing the results of a test wad with Eternity, it seems A_NailBomb does not aim
-			P_LineAttack (self, ang, MISSILERANGE, 0.,
+			P_LineAttack(self, ang, MISSILERANGE, 0.,
 				//P_AimLineAttack (self, ang, MISSILERANGE), 
-				naildamage, NAME_Hitscan, pufftype);
+				naildamage, NAME_Hitscan, pufftype, (self->flags & MF_MISSILE) ? LAF_TARGETISSOURCE : 0);
 		}
 	}
 

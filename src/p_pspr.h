@@ -73,6 +73,7 @@ public:
 	int			GetID()		const { return ID; }
 	int			GetSprite()	const { return Sprite; }
 	int			GetFrame()	const { return Frame; }
+	int			GetTics()   const {	return Tics; }
 	FState*		GetState()	const { return State; }
 	DPSprite*	GetNext()	      { return Next; }
 	AActor*		GetCaller()	      { return Caller; }

@@ -13,6 +13,7 @@ include( CheckIncludeFile )
 include( CheckIncludeFiles )
 include( CheckLibraryExists )
 include( FindPkgConfig )
+include( FindOpenGL )
 
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	option( NO_STRIP "Do not strip Release or MinSizeRel builds" )
@@ -254,6 +255,14 @@ else()
 	endif()
 endif()
 
+# Check if we have OpenGL
+
+if( NOT OPENGL_FOUND )
+	message( FATAL_ERROR "OpenGL is required for building." )
+endif( NOT OPENGL_FOUND )
+
+set( ZDOOM_LIBS ${ZDOOM_LIBS} ${OPENGL_LIBRARIES} )
+include_directories( ${OPENGL_INCLUDE_DIR} )
 
 if( NOT NO_OPENAL )
 	find_package( OpenAL )
@@ -408,6 +417,22 @@ else()
 	set( BACKPATCH 0 )
 endif()
 
+if( X64 )
+	set( HAVE_MMX 1 )
+else( X64 )
+	set( SAFE_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} )
+
+	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmmx")
+	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+
+	CHECK_CXX_SOURCE_COMPILES("#include <mmintrin.h>
+		int main(void) { __m64 v = _m_from_int(0); }"
+		HAVE_MMX)
+
+	set( CMAKE_CXX_FLAGS ${SAFE_CMAKE_CXX_FLAGS} )
+endif( X64 )
+
 # Set up flags for GCC
 
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
@@ -540,6 +565,20 @@ add_custom_target( revision_check ALL
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	DEPENDS updaterevision )
 
+# Run drawer codegen tool
+
+if ( WIN32 )
+	add_custom_target( drawergen_target ALL
+		COMMAND drawergen src/r_drawersasm.obj
+		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+		DEPENDS drawergen )
+else()
+	add_custom_target( drawergen_target ALL
+		COMMAND drawergen src/r_drawersasm.o
+		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+		DEPENDS drawergen )
+endif()
+
 # Libraries ZDoom needs
 
 message( STATUS "Fluid synth libs: ${FLUIDSYNTH_LIBRARIES}" )
@@ -584,6 +623,7 @@ set( PLAT_WIN32_SOURCES
 	win32/i_system.cpp
 	win32/i_specialpaths.cpp
 	win32/st_start.cpp
+	win32/win32gliface.cpp
 	win32/win32video.cpp )
 set( PLAT_POSIX_SOURCES
 	posix/i_cd.cpp
@@ -599,6 +639,7 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/i_system.cpp
 	posix/sdl/i_timer.cpp
 	posix/sdl/sdlvideo.cpp
+	posix/sdl/sdlglvideo.cpp
 	posix/sdl/st_start.cpp )
 set( PLAT_UNIX_SOURCES
 	posix/unix/i_specialpaths.cpp
@@ -724,6 +765,21 @@ file( GLOB HEADER_FILES
 	scripting/zscript/*.h
 	scripting/vm/*.h
 	xlat/*.h
+	gl/*.h
+	gl/api/*.h
+	gl/data/*.h
+	gl/dynlights/*.h
+	gl/hqnx/*.h
+	gl/hqnx_asm/*.h
+	gl/xbr/*.h
+	gl/models/*.h
+	gl/renderer/*.h
+	gl/scene/*.h
+	gl/stereo3d/*.h
+	gl/shaders/*.h
+	gl/system/*.h
+	gl/textures/*.h
+	gl/utility/*.h
 	*.h
 )
 
@@ -744,17 +800,33 @@ set( NOT_COMPILED_SOURCE_FILES
 
 set( FASTMATH_PCH_SOURCES
 	r_swrenderer.cpp
+	r_poly.cpp
+	r_poly_scene.cpp
+	r_poly_portal.cpp
+	r_poly_cull.cpp
+	r_poly_decal.cpp
+	r_poly_particle.cpp
+	r_poly_plane.cpp
+	r_poly_playersprite.cpp
+	r_poly_wall.cpp
+	r_poly_wallsprite.cpp
+	r_poly_sprite.cpp
+	r_poly_sky.cpp
+	r_poly_triangle.cpp
+	r_poly_intersection.cpp
 	r_3dfloors.cpp
 	r_bsp.cpp
 	r_draw.cpp
 	r_draw_pal.cpp
-	r_drawt_pal.cpp
+	r_draw_rgba.cpp
+	r_drawers.cpp
 	r_thread.cpp
 	r_main.cpp
 	r_plane.cpp
 	r_segs.cpp
 	r_sky.cpp
 	r_things.cpp
+	r_voxel.cpp
 	r_walldraw.cpp
 	s_advsound.cpp
 	s_environment.cpp
@@ -835,6 +907,92 @@ set( FASTMATH_SOURCES
 	sound/sndfile_decoder.cpp
 	sound/music_pseudo_mididevice.cpp
 	wildmidi/wildmidi_lib.cpp
+	gl/compatibility/gl_20.cpp
+	gl/data/gl_data.cpp
+	gl/data/gl_portaldata.cpp
+	gl/data/gl_setup.cpp
+	gl/data/gl_matrix.cpp
+	gl/data/gl_vertexbuffer.cpp
+	gl/dynlights/a_dynlight.cpp
+	gl/utility/gl_clock.cpp
+	gl/utility/gl_cycler.cpp
+	gl/utility/gl_geometric.cpp
+	gl/renderer/gl_2ddrawer.cpp
+	gl/renderer/gl_quaddrawer.cpp
+	gl/renderer/gl_renderer.cpp
+	gl/renderer/gl_renderstate.cpp
+	gl/renderer/gl_renderbuffers.cpp
+	gl/renderer/gl_lightdata.cpp
+	gl/renderer/gl_postprocess.cpp
+	gl/renderer/gl_postprocessstate.cpp
+	gl/hqnx/init.cpp
+	gl/hqnx/hq2x.cpp
+	gl/hqnx/hq3x.cpp
+	gl/hqnx/hq4x.cpp
+	gl/xbr/xbrz.cpp
+	gl/xbr/xbrz_old.cpp
+	gl/textures/gl_hwtexture.cpp
+	gl/textures/gl_texture.cpp
+	gl/textures/gl_material.cpp
+	gl/textures/gl_hirestex.cpp
+	gl/textures/gl_bitmap.cpp
+	gl/textures/gl_samplers.cpp
+	gl/textures/gl_translate.cpp
+	gl/textures/gl_hqresize.cpp
+	gl/textures/gl_skyboxtexture.cpp
+	gl/scene/gl_bsp.cpp
+	gl/scene/gl_fakeflat.cpp
+	gl/scene/gl_clipper.cpp
+	gl/scene/gl_decal.cpp
+	gl/scene/gl_drawinfo.cpp
+	gl/scene/gl_flats.cpp
+	gl/scene/gl_walls.cpp
+	gl/scene/gl_sprite.cpp
+	gl/scene/gl_skydome.cpp
+	gl/scene/gl_renderhacks.cpp
+	gl/scene/gl_weapon.cpp
+	gl/scene/gl_scene.cpp
+	gl/scene/gl_sky.cpp
+	gl/scene/gl_portal.cpp
+	gl/scene/gl_walls_draw.cpp
+	gl/scene/gl_vertex.cpp
+	gl/scene/gl_spritelight.cpp
+	gl/stereo3d/gl_stereo3d.cpp
+	gl/stereo3d/gl_stereo_cvars.cpp
+	gl/stereo3d/gl_stereo_leftright.cpp
+	gl/stereo3d/scoped_view_shifter.cpp
+	gl/stereo3d/gl_anaglyph.cpp
+	gl/stereo3d/gl_quadstereo.cpp
+	gl/stereo3d/gl_sidebyside3d.cpp
+	gl/stereo3d/gl_interleaved3d.cpp
+	gl/dynlights/gl_dynlight.cpp
+	gl/dynlights/gl_glow.cpp
+	gl/dynlights/gl_dynlight1.cpp
+	gl/dynlights/gl_lightbuffer.cpp
+	gl/shaders/gl_shader.cpp
+	gl/shaders/gl_texshader.cpp
+	gl/shaders/gl_shaderprogram.cpp
+	gl/shaders/gl_presentshader.cpp
+	gl/shaders/gl_present3dRowshader.cpp
+	gl/shaders/gl_bloomshader.cpp
+	gl/shaders/gl_ambientshader.cpp
+	gl/shaders/gl_blurshader.cpp
+	gl/shaders/gl_colormapshader.cpp
+	gl/shaders/gl_tonemapshader.cpp
+	gl/shaders/gl_lensshader.cpp
+	gl/shaders/gl_fxaashader.cpp
+	gl/system/gl_interface.cpp
+	gl/system/gl_framebuffer.cpp
+	gl/system/gl_swframebuffer.cpp
+	gl/system/gl_swwipe.cpp
+	gl/system/gl_debug.cpp
+	gl/system/gl_menu.cpp
+	gl/system/gl_wipe.cpp
+	gl/system/gl_load.c
+	gl/models/gl_models_md3.cpp
+	gl/models/gl_models_md2.cpp
+	gl/models/gl_models.cpp
+	gl/models/gl_voxels.cpp
 )
 
 set (PCH_SOURCES
@@ -929,6 +1087,7 @@ set (PCH_SOURCES
 	p_mobj.cpp
 	p_pillar.cpp
 	p_plats.cpp
+	p_portals.cpp
 	p_pspr.cpp
 	p_pusher.cpp
 	p_saveg.cpp
@@ -1069,6 +1228,16 @@ set (PCH_SOURCES
 )
 enable_precompiled_headers( g_pch.h PCH_SOURCES )
 
+if ( WIN32 )
+	set (CODEGENOBJ_SOURCES
+		r_drawersasm.obj
+	)
+else()
+	set (CODEGENOBJ_SOURCES
+		r_drawersasm.o
+	)
+endif()
+
 add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${HEADER_FILES}
 	${NOT_COMPILED_SOURCE_FILES}
@@ -1099,7 +1268,10 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	math/tanh.c
 	math/fastsin.cpp
 	zzautozend.cpp
+	${CMAKE_BINARY_DIR}/src/${CODEGENOBJ_SOURCES}
 )
+
+set_source_files_properties( ${CODEGENOBJ_SOURCES} PROPERTIES EXTERNAL_OBJECT true GENERATED true)
 
 set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )
@@ -1107,6 +1279,10 @@ set_source_files_properties( sc_man.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRE
 set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE_ONLY TRUE )
 if ( WIN32 )
 	set_source_files_properties( win32/fb_d3d9.cpp win32/fb_d3d9_wipe.cpp PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
+
+	# Supress C4244: 'initializing': conversion from '__int64' to 'unsigned int', possible loss of data
+	# For some reason using #pragma warning(disable: 4244) is not working..
+	set_source_files_properties( ${PCH_SOURCES} PROPERTIES COMPILE_FLAGS /wd4244 )
 endif()
 
 
@@ -1116,6 +1292,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 endif()
 
 target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
+
 include_directories( .
 	g_strife
 	g_shared
@@ -1133,7 +1310,7 @@ include_directories( .
 	${CMAKE_BINARY_DIR}/gdtoa
 	${SYSTEM_SOURCES_DIR} )
 
-add_dependencies( zdoom revision_check )
+add_dependencies( zdoom revision_check drawergen_target )
 
 # Due to some quirks, we need to do this in this order
 if( NOT ZDOOM_OUTPUT_OLDSTYLE )
@@ -1250,6 +1427,20 @@ source_group("Games\\Strife Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DI
 source_group("Intermission" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/intermission/.+")
 source_group("Inventory" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_inventory/.+")
 source_group("Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/menu/.+")
+source_group("OpenGL Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/.+")
+source_group("OpenGL Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/data/.+")
+source_group("OpenGL Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/dynlights/.+")
+source_group("OpenGL Renderer\\HQ Resize" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/hqnx/.+")
+source_group("OpenGL Renderer\\HQ Resize MMX version" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/hqnx_asm/.+")
+source_group("OpenGL Renderer\\XBRZ" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/hqnx_asm/.+")
+source_group("OpenGL Renderer\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/models/.+")
+source_group("OpenGL Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/renderer/.+")
+source_group("OpenGL Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/scene/.+")
+source_group("OpenGL Renderer\\Stereo3D" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/stereo3d/.+")
+source_group("OpenGL Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/shaders/.+")
+source_group("OpenGL Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/system/.+")
+source_group("OpenGL Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/textures/.+")
+source_group("OpenGL Renderer\\Utilities" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/utility/.+")
 source_group("Render Core\\Render Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_.+\\.h$")
 source_group("Render Core\\Render Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_.+\\.cpp$")
 source_group("Render Data\\Resource Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+\\.h$")

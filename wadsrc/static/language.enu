@@ -1656,6 +1656,7 @@ OPTMNU_NETWORK				= "Network Options";
 OPTMNU_SOUND				= "Sound Options";
 OPTMNU_DISPLAY				= "Display Options";
 OPTMNU_VIDEO				= "Set video mode";
+OPTMNU_CHANGERENDER		= "Change Rendering Output";
 OPTMNU_DEFAULTS				= "Reset to defaults";
 OPTMNU_RESETTOSAVED			= "Reset to last saved";
 OPTMNU_CONSOLE				= "Go to console";
@@ -1780,6 +1781,8 @@ DSPLYMNU_BRIGHTNESS				= "Brightness";
 DSPLYMNU_VSYNC					= "Vertical Sync";
 DSPLYMNU_CAPFPS					= "Rendering Interpolation";
 DSPLYMNU_COLUMNMETHOD			= "Column render mode";
+DSPLYMNU_BLENDMETHOD			= "Transparency render mode";
+
 DSPLYMNU_WIPETYPE				= "Screen wipe style";
 DSPLYMNU_SHOWENDOOM				= "Show ENDOOM screen";
 DSPLYMNU_BLOODFADE				= "Blood Flash Intensity";
@@ -1788,6 +1791,7 @@ DSPLYMNU_WATERFADE				= "Underwater Blend Intensity";
 DSPLYMNU_PALLETEHACK			= "DirectDraw palette hack"; // Not used
 DSPLYMNU_ATTACHEDSURFACES		= "Use attached surfaces"; // Not used
 DSPLYMNU_SKYMODE				= "Sky render mode";
+DSPLYMNU_LINEARSKY				= "Linear skies";
 DSPLYMNU_GZDFULLBRIGHT			= "Fullbright overrides sector color";
 DSPLYMNU_DRAWFUZZ				= "Use fuzz effect";
 DSPLYMNU_TRANSSOUL				= "Lost Soul translucency";
@@ -2146,6 +2150,13 @@ MODMNU_QUALITY			= "Quality";
 MODMNU_VOLUMERAMPING	= "Volume ramping";
 MODMNU_CHIPOMATIC		= "Chip-o-matic";
 
+// Renderer Options
+RNDMNU_TITLE			= "CHANGE RENDERER";
+RNDMNU_RENDERER			= "Hardware Acceleration";
+RNDMNU_TRUECOLOR		= "Software Truecolor Mode";
+RNDMNU_POLY				= "Poly Renderer (experimental)";
+RNDMNU_CANVAS			= "Software Canvas";
+
 // Video Options
 VIDMNU_TITLE			= "VIDEO MODE";
 VIDMNU_FULLSCREEN		= "Fullscreen";
@@ -2189,6 +2200,8 @@ OPTVAL_INVERTED				= "Inverted";
 OPTVAL_NOTINVERTED			= "Not Inverted";
 OPTVAL_ORIGINAL				= "Original";
 OPTVAL_OPTIMIZED			= "Optimized";
+OPTVAL_CLASSIC				= "Classic (Faster)";
+OPTVAL_PRECISE				= "Precise";
 OPTVAL_NORMAL				= "Normal";
 OPTVAL_STRETCH				= "Stretch";
 OPTVAL_CAPPED				= "Capped";
@@ -2303,6 +2316,12 @@ OPTVAL_ERRORS				= "Errors";
 OPTVAL_WARNINGS				= "Warnings";
 OPTVAL_NOTIFICATIONS		= "Notifications";
 OPTVAL_EVERYTHING			= "Everything";
+OPTVAL_FULLSCREENONLY		= "Fullscreen only";
+OPTVAL_GL 					= "OpenGL";
+OPTVAL_D3D					= "Direct3D";
+OPTVAL_HWPOLY				= "OpenGL-Accelerated";
+OPTVAL_SWDOOM				= "Doom Software Renderer";
+
 // Colors
 C_BRICK					= "\cabrick";
 C_TAN					= "\cbtan";
@@ -2578,3 +2597,166 @@ MUSIC_ULTIMA = "ultima";
 MUSIC_READ_M = "read_m";
 MUSIC_DM2TTL = "dm2ttl";
 MUSIC_DM2INT = "dm2int";
+
+// GZDoom exclusive:
+
+DSPLYMNU_GLOPT		= "OpenGL Options";
+DSPLYMNU_GAMMA		= "Gamma correction";
+DSPLYMNU_CONTRAST 	="Contrast";
+DSPLYMNU_HWGAMMA	= "Hardware Gamma";
+
+// OpenGL Options
+GLMNU_TITLE		= "OPENGL OPTIONS";
+GLMNU_DYNLIGHT	= "Dynamic Light Options";
+GLMNU_TEXOPT	= "Texture Options";
+GLMNU_PREFS		= "Preferences";
+
+// Texture Options
+GLTEXMNU_TITLE			= "TEXTURE OPTIONS";
+GLTEXMNU_TEXENABLED 	= "Textures enabled";
+GLTEXMNU_TEXFILTER 		= "Texture Filter mode";
+GLTEXMNU_ANISOTROPIC	= "Anisotropic filter";
+GLTEXMNU_TEXFORMAT 		= "Texture Format";
+GLTEXMNU_ENABLEHIRES 	= "Enable hires textures";
+GLTEXMNU_HQRESIZE 		= "High Quality Resize mode";
+GLTEXMNU_RESIZETEX 		= "Resize textures";
+GLTEXMNU_RESIZESPR 		= "Resize sprites";
+GLTEXMNU_RESIZEFNT 		= "Resize fonts";
+GLTEXMNU_PRECACHETEX 	= "Precache GL textures";
+GLTEXMNU_TRIMSPREDGE	= "Trim sprite edges";
+GLTEXMNU_SORTDRAWLIST 	= "Sort draw lists by texture";
+
+// Dynamic Light Options
+GLLIGHTMNU_TITLE 			= "DYNAMIC LIGHTS";
+GLLIGHTMNU_LIGHTSENABLED 	= "Dynamic Lights enabled";
+GLLIGHTMNU_LIGHTDEFS		= "Enable light definitions";
+GLLIGHTMNU_CLIPLIGHTS 		= "Clip lights";
+GLLIGHTMNU_LIGHTSPRITES 	= "Lights affect sprites";
+GLLIGHTMNU_LIGHTPARTICLES 	= "Lights affect particles";
+GLLIGHTMNU_LIGHTMATH 		= "Light quality";
+
+// OpenGL Preferences
+GLPREFMNU_TITLE 				= "OPENGL PREFERENCES";
+GLPREFMNU_SECLIGHTMODE 			= "Sector light mode";
+GLPREFMNU_FOGMODE 				= "Fog mode";
+GLPREFMNU_FOGFORCEFULLBRIGHT 	= "Fog forces fullbright";
+GLPREFMNU_WPNLIGHTSTR 			= "Weapon light strength";
+GLPREFMNU_ENVIRONMENTMAPMIRROR 	= "Environment map on mirrors";
+GLPREFMNU_ENV 					= "Enhanced night vision mode";
+GLPREFMNU_ENVSTEALTH 			= "ENV shows stealth monsters";
+GLPREFMNU_SPRBRIGHTFOG 			= "Force brightness in fog";
+GLPREFMNU_SPRCLIP 				= "Adjust sprite clipping";
+GLPREFMNU_SPRBLEND 				= "Smooth sprite edges";
+GLPREFMNU_FUZZSTYLE 			= "Fuzz Style";
+GLPREFMNU_SPRBILLBOARD 			= "Sprite billboard";
+GLPREFMNU_SPRBILLFACECAMERA 	= "Sprites face camera";
+GLPREFMNU_PARTICLESTYLE 		= "Particle style";
+GLPREFMNU_AMBLIGHT 				= "Ambient light level";
+GLPREFMNU_RENDERQUALITY 		= "Rendering quality";
+GLPREFMNU_VRMODE 				= "Stereo 3D VR";
+GLPREFMNU_VRQUADSTEREO 			= "Enable Quad Stereo";
+GLPREFMNU_MULTISAMPLE			= "Multisample";
+GLPREFMNU_TONEMAP				= "Tonemap Mode";
+GLPREFMNU_BLOOM					= "Bloom effect";
+GLPREFMNU_LENS					= "Lens distortion effect";
+GLPREFMNU_SSAO					= "Ambient occlusion quality";
+GLPREFMNU_SSAO_PORTALS			= "Portals with AO";
+GLPREFMNU_FXAA					= "FXAA Quality";
+
+// Option Values
+OPTVAL_SMART 				= "Smart";
+OPTVAL_SMARTER 				= "Smarter";
+OPTVAL_INFRAREDONLY 		= "Infrared only";
+OPTVAL_INFRAREDANDTORCH 	= "Infrared and torch";
+OPTVAL_ANYFIXEDCOLORMAP 	= "Any fixed colormap";
+OPTVAL_NONENEARESTMIPMAP 	= "None (nearest mipmap)";
+OPTVAL_NONELINEARMIPMAP 	= "None (linear mipmap)";
+OPTVAL_NONETRILINEAR		= "None (trilinear)";
+OPTVAL_BILINEAR 			= "Bilinear";
+OPTVAL_TRILINEAR 			= "Trilinear";
+OPTVAL_RGBA8 				= "RGBA8";
+OPTVAL_RGB5A1 				= "RGB5_A1";
+OPTVAL_RGBA4 				= "RGBA4";
+OPTVAL_RGBA2 				= "RGBA2";
+OPTVAL_COMPRRGBA 			= "COMPR_RGBA";
+OPTVAL_S3TCDXT1 			= "S3TC_DXT1";
+OPTVAL_S3TCDXT3 			= "S3TC_DXT3";
+OPTVAL_S3TCDXT5 			= "S3TC_DXT5";
+OPTVAL_2X 					= "2x";
+OPTVAL_4X 					= "4x";
+OPTVAL_8X 					= "8x";
+OPTVAL_16X 					= "16x";
+OPTVAL_32X 					= "32x";
+OPTVAL_USEASPALETTE 		= "Use as palette";
+OPTVAL_BLEND 				= "Blend";
+OPTVAL_STANDARD 			= "Standard";
+OPTVAL_BRIGHT 				= "Bright";
+OPTVAL_DARK 				= "Dark";
+OPTVAL_LEGACY 				= "Legacy";
+OPTVAL_SOFTWARE 			= "Software";
+OPTVAL_SPEED 				= "Speed";
+OPTVAL_QUALITY 				= "Quality";
+OPTVAL_OPTIMAL 				= "Optimal";
+OPTVAL_60 					= "60";
+OPTVAL_70 					= "70";
+OPTVAL_72 					= "72";
+OPTVAL_75 					= "75";
+OPTVAL_85 					= "85";
+OPTVAL_100 					= "100";
+OPTVAL_YAXIS 				= "Y Axis";
+OPTVAL_XYAXIS 				= "X/Y Axis";
+OPTVAL_SQUARE 				= "Square";
+OPTVAL_ROUND 				= "Round";
+OPTVAL_SCALE2X 				= "Scale2x";
+OPTVAL_SCALE3X 				= "Scale3x";
+OPTVAL_SCALE4X 				= "Scale4x";
+OPTVAL_HQ2X 				= "hq2x";
+OPTVAL_HQ3X 				= "hq3x";
+OPTVAL_HQ4X 				= "hq4x";
+OPTVAL_HQ2XMMX 				= "hq2x MMX";
+OPTVAL_HQ3XMMX 				= "hq3x MMX";
+OPTVAL_HQ4XMMX 				= "hq4x MMX";
+OPTVAL_RADIAL 				= "Radial";
+OPTVAL_PIXELFUZZ 			= "Pixel fuzz";
+OPTVAL_SMOOTHFUZZ 			= "Smooth fuzz";
+OPTVAL_SWIRLYFUZZ 			= "Swirly fuzz";
+OPTVAL_TRANSLUCENTFUZZ 		= "Translucent fuzz";
+OPTVAL_NOISE 				= "Noise";
+OPTVAL_SMOOTHNOISE 			= "Smooth Noise";
+OPTVAL_JAGGEDFUZZ 			= "Jagged fuzz";
+OPTVAL_NORMAL 				= "Normal";
+OPTVAL_GREENMAGENTA 		= "Green/Magenta";
+OPTVAL_REDCYAN 				= "Red/Cyan";
+OPTVAL_AMBERBLUE 			= "Amber/Blue";
+OPTVAL_LEFTEYE 				= "Left Eye";
+OPTVAL_RIGHTEYE 			= "Right Eye";
+OPTVAL_SBSFULL		    	= "Side-by-side Full";
+OPTVAL_SBSNARROW			= "Side-by-side Narrow";
+OPTVAL_TOPBOTTOM			= "Top/Bottom";
+OPTVAL_ROWINTERLEAVED		= "Row Interleaved";
+OPTVAL_COLUMNINTERLEAVED	= "Column Interleaved";
+OPTVAL_CHECKERBOARD			= "Checkerboard";
+OPTVAL_QUADBUFFERED 		= "Quad-buffered";
+OPTVAL_UNCHARTED2			= "Uncharted 2";
+OPTVAL_HEJLDAWSON			= "Hejl Dawson";
+OPTVAL_REINHARD				= "Reinhard";
+OPTVAL_PALETTE				= "Palette";
+OPTVAL_LOW					= "Low";
+OPTVAL_MEDIUM				= "Medium";
+OPTVAL_HIGH					= "High";
+OPTVAL_EXTREME				= "Extreme";
+
+// QZDoom exclusive:
+
+DSPLYMNU_TCOPT		= "TrueColor Options";
+
+TCMNU_TITLE		= "TRUECOLOR OPTIONS";
+
+
+TCMNU_MULTITHREADED		= "Multithreaded Drawing";
+TCMNU_TRUECOLOR				= "True color output";
+TCMNU_MINFILTER				= "Linear filter when downscaling";
+TCMNU_MAGFILTER				= "Linear filter when upscaling";
+TCMNU_MIPMAP					= "Use mipmapped textures";
+TCMNU_DYNLIGHTS				= "Dynamic lights";
+

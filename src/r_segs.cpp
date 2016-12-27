@@ -54,12 +54,13 @@
 CVAR(Bool, r_fogboundary, true, 0)
 CVAR(Bool, r_drawmirrors, true, 0)
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
+EXTERN_CVAR(Bool, r_mipmap)
 
 namespace swrenderer
 {
 	using namespace drawerargs;
 
-	void R_DrawWallSegment(FTexture *rw_pic, int x1, int x2, short *walltop, short *wallbottom, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask);
+	void R_DrawWallSegment(FTexture *rw_pic, int x1, int x2, short *walltop, short *wallbottom, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, FLightNode *light_list = nullptr);
 	void R_DrawDrawSeg(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat);
 
 #define HEIGHTBITS 12
@@ -152,7 +153,7 @@ inline bool IsFogBoundary (sector_t *front, sector_t *back)
 float *MaskedSWall;
 float MaskedScaleY;
 
-static void BlastMaskedColumn (FTexture *tex, bool useRt)
+static void BlastMaskedColumn (FTexture *tex)
 {
 	// calculate lighting
 	if (fixedcolormap == NULL && fixedlightlev < 0)
@@ -175,7 +176,7 @@ static void BlastMaskedColumn (FTexture *tex, bool useRt)
 	// when forming multipatched textures (see r_data.c).
 
 	// draw the texture
-	R_DrawMaskedColumn(tex, maskedtexturecol[dc_x], useRt);
+	R_DrawMaskedColumn(tex, maskedtexturecol[dc_x]);
 	rw_light += rw_lightstep;
 	spryscale += rw_scalestep;
 }
@@ -217,14 +218,10 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 	curline = ds->curline;
 
-	// killough 4/11/98: draw translucent 2s normal textures
-	// [RH] modified because we don't use user-definable translucency maps
-	ESPSResult drawmode;
-
-	drawmode = R_SetPatchStyle (LegacyRenderStyles[curline->linedef->flags & ML_ADDTRANS ? STYLE_Add : STYLE_Translucent],
+	bool visible = R_SetPatchStyle (LegacyRenderStyles[curline->linedef->flags & ML_ADDTRANS ? STYLE_Add : STYLE_Translucent],
 		(float)MIN(curline->linedef->alpha, 1.),	0, 0);
 
-	if ((drawmode == DontDraw && !ds->bFogBoundary && !ds->bFakeBoundary))
+	if (!visible && !ds->bFogBoundary && !ds->bFakeBoundary)
 	{
 		return;
 	}
@@ -279,7 +276,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 			goto clearfog;
 		}
 	}
-	if ((ds->bFakeBoundary && !(ds->bFakeBoundary & 4)) || drawmode == DontDraw)
+	if ((ds->bFakeBoundary && !(ds->bFakeBoundary & 4)) || !visible)
 	{
 		goto clearfog;
 	}
@@ -414,44 +411,11 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		mceilingclip = wallupper;
 
 		// draw the columns one at a time
-		if (drawmode == DoDraw0)
+		if (visible)
 		{
 			for (dc_x = x1; dc_x < x2; ++dc_x)
 			{
-				BlastMaskedColumn (tex, false);
-			}
-		}
-		else
-		{
-			// [RH] Draw up to four columns at once
-			int stop = x2 & ~3;
-
-			if (x1 >= x2)
-				goto clearfog;
-
-			dc_x = x1;
-
-			while ((dc_x < stop) && (dc_x & 3))
-			{
-				BlastMaskedColumn (tex, false);
-				dc_x++;
-			}
-
-			while (dc_x < stop)
-			{
-				rt_initcols(nullptr);
-				BlastMaskedColumn (tex, true); dc_x++;
-				BlastMaskedColumn (tex, true); dc_x++;
-				BlastMaskedColumn (tex, true); dc_x++;
-				BlastMaskedColumn (tex, true);
-				rt_draw4cols (dc_x - 3);
-				dc_x++;
-			}
-
-			while (dc_x < x2)
-			{
-				BlastMaskedColumn (tex, false);
-				dc_x++;
+				BlastMaskedColumn (tex);
 			}
 		}
 	}
@@ -544,11 +508,10 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	double yscale;
 
 	fixed_t Alpha = Scale(rover->alpha, OPAQUE, 255);
-	ESPSResult drawmode;
-	drawmode = R_SetPatchStyle (LegacyRenderStyles[rover->flags & FF_ADDITIVETRANS ? STYLE_Add : STYLE_Translucent],
+	bool visible = R_SetPatchStyle (LegacyRenderStyles[rover->flags & FF_ADDITIVETRANS ? STYLE_Add : STYLE_Translucent],
 		Alpha, 0, 0);
 
-	if(drawmode == DontDraw) {
+	if(!visible) {
 		R_FinishSetPatchStyle();
 		return;
 	}
@@ -1138,6 +1101,8 @@ void R_RenderSegLoop ()
 	}
 	if(fake3D & 7) return;
 
+	FLightNode *light_list = (curline && curline->sidedef) ? curline->sidedef->lighthead : nullptr;
+
 	// draw the wall tiers
 	if (midtexture)
 	{ // one sided line
@@ -1164,7 +1129,7 @@ void R_RenderSegLoop ()
 			{
 				rw_offset = -rw_offset;
 			}
-			R_DrawWallSegment(rw_pic, x1, x2, walltop, wallbottom, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false);
+			R_DrawWallSegment(rw_pic, x1, x2, walltop, wallbottom, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false, light_list);
 		}
 		fillshort (ceilingclip+x1, x2-x1, viewheight);
 		fillshort (floorclip+x1, x2-x1, 0xffff);
@@ -1200,7 +1165,7 @@ void R_RenderSegLoop ()
 				{
 					rw_offset = -rw_offset;
 				}
-				R_DrawWallSegment(rw_pic, x1, x2, walltop, wallupper, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false);
+				R_DrawWallSegment(rw_pic, x1, x2, walltop, wallupper, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false, light_list);
 			}
 			memcpy (ceilingclip+x1, wallupper+x1, (x2-x1)*sizeof(short));
 		}
@@ -1239,7 +1204,7 @@ void R_RenderSegLoop ()
 				{
 					rw_offset = -rw_offset;
 				}
-				R_DrawWallSegment(rw_pic, x1, x2, walllower, wallbottom, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false);
+				R_DrawWallSegment(rw_pic, x1, x2, walllower, wallbottom, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false, light_list);
 			}
 			memcpy (floorclip+x1, walllower+x1, (x2-x1)*sizeof(short));
 		}
@@ -2327,9 +2292,8 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	do
 	{
 		dc_x = x1;
-		ESPSResult mode;
 
-		mode = R_SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
+		bool visible = R_SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
 
 		// R_SetPatchStyle can modify basecolormap.
 		if (rereadcolormap)
@@ -2337,55 +2301,15 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			usecolormap = basecolormap;
 		}
 
-		if (mode == DontDraw)
+		if (visible)
 		{
-			needrepeat = 0;
-		}
-		else
-		{
-			int stop4;
-
-			if (mode == DoDraw0)
-			{ // 1 column at a time
-				stop4 = dc_x;
-			}
-			else	 // DoDraw1
-			{ // up to 4 columns at a time
-				stop4 = x2 & ~3;
-			}
-
-			while ((dc_x < stop4) && (dc_x & 3))
-			{
-				if (calclighting)
-				{ // calculate lighting
-					R_SetColorMapLight(usecolormap, rw_light, wallshade);
-				}
-				R_WallSpriteColumn (false);
-				dc_x++;
-			}
-
-			while (dc_x < stop4)
-			{
-				if (calclighting)
-				{ // calculate lighting
-					R_SetColorMapLight(usecolormap, rw_light, wallshade);
-				}
-				rt_initcols(nullptr);
-				for (int zz = 4; zz; --zz)
-				{
-					R_WallSpriteColumn (true);
-					dc_x++;
-				}
-				rt_draw4cols (dc_x - 4);
-			}
-
 			while (dc_x < x2)
 			{
 				if (calclighting)
 				{ // calculate lighting
 					R_SetColorMapLight(usecolormap, rw_light, wallshade);
 				}
-				R_WallSpriteColumn (false);
+				R_WallSpriteColumn ();
 				dc_x++;
 			}
 		}
@@ -2399,8 +2323,6 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	} while (needrepeat--);
 
 	colfunc = basecolfunc;
-	hcolfunc_post1 = rt_map1col;
-	hcolfunc_post4 = rt_map4cols;
 
 	R_FinishSetPatchStyle ();
 done:

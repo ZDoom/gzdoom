@@ -187,7 +187,7 @@ class DCanvas : public DObject
 {
 	DECLARE_ABSTRACT_CLASS (DCanvas, DObject)
 public:
-	DCanvas (int width, int height);
+	DCanvas (int width, int height, bool bgra);
 	virtual ~DCanvas ();
 
 	// Member variable access
@@ -195,6 +195,7 @@ public:
 	inline int GetWidth () const { return Width; }
 	inline int GetHeight () const { return Height; }
 	inline int GetPitch () const { return Pitch; }
+	inline bool IsBgra() const { return Bgra; }
 
 	virtual bool IsValid ();
 
@@ -272,6 +273,7 @@ protected:
 	int Height;
 	int Pitch;
 	int LockCount;
+	bool Bgra;
 
 	bool ClipBox (int &left, int &top, int &width, int &height, const BYTE *&src, const int srcpitch) const;
 	void DrawTextureV(FTexture *img, double x, double y, uint32 tag, va_list tags) = delete;
@@ -294,7 +296,7 @@ class DSimpleCanvas : public DCanvas
 {
 	DECLARE_CLASS (DSimpleCanvas, DCanvas)
 public:
-	DSimpleCanvas (int width, int height);
+	DSimpleCanvas (int width, int height, bool bgra);
 	~DSimpleCanvas ();
 
 	bool IsValid ();
@@ -334,7 +336,7 @@ class DFrameBuffer : public DSimpleCanvas
 {
 	DECLARE_ABSTRACT_CLASS (DFrameBuffer, DSimpleCanvas)
 public:
-	DFrameBuffer (int width, int height);
+	DFrameBuffer (int width, int height, bool bgra);
 
 	// Force the surface to use buffered output if true is passed.
 	virtual bool Lock (bool buffered) = 0;
@@ -429,6 +431,7 @@ public:
 protected:
 	void DrawRateStuff ();
 	void CopyFromBuff (BYTE *src, int srcPitch, int width, int height, BYTE *dest);
+	void CopyWithGammaBgra(void *output, int pitch, const BYTE *gammared, const BYTE *gammagreen, const BYTE *gammablue, PalEntry flash, int flash_amount);
 
 	DFrameBuffer () {}
 

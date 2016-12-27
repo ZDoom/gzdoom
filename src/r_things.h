@@ -92,7 +92,6 @@ struct vissprite_t
 	BYTE			bSplitSprite:1;	// [RH] Sprite was split by a drawseg
 	BYTE			bInMirror:1;	// [RH] Sprite is "inside" a mirror
 	BYTE			FakeFlatStat;	// [RH] which side of fake/floor ceiling sprite is on
-	BYTE			ColormapNum;	// Which colormap is rendered (needed for shaded drawer)
 	short 			renderflags;
 	DWORD			Translation;	// [RH] for color translation
 	visstyle_t		Style;
@@ -101,7 +100,8 @@ struct vissprite_t
 	vissprite_t() {}
 };
 
-void R_DrawParticle_C (vissprite_t *);
+void R_DrawParticle (vissprite_t *);
+
 void R_ProjectParticle (particle_t *, const sector_t *sector, int shade, int fakeside);
 
 extern int MaxVisSprites;
@@ -128,8 +128,8 @@ extern double			pspriteyscale;
 extern FTexture			*WallSpriteTile;
 
 
-void R_DrawMaskedColumn (FTexture *texture, fixed_t column, bool useRt, bool unmasked = false);
-void R_WallSpriteColumn (bool useRt);
+void R_DrawMaskedColumn (FTexture *texture, fixed_t column, bool unmasked = false);
+void R_WallSpriteColumn ();
 
 void R_CacheSprite (spritedef_t *sprite);
 void R_SortVisSprites (int (*compare)(const void *, const void *), size_t first);
@@ -142,11 +142,6 @@ void R_DrawRemainingPlayerSprites ();
 void R_CheckOffscreenBuffer(int width, int height, bool spansonly);
 
 enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4 };
-
-void R_DrawVoxel(const FVector3 &viewpos, FAngle viewangle,
-	const FVector3 &sprpos, DAngle dasprang,
-	fixed_t daxscale, fixed_t dayscale, struct FVoxel *voxobj,
-	lighttable_t *colormap, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags);
 
 void R_ClipVisSprite (vissprite_t *vis, int xl, int xh);
 

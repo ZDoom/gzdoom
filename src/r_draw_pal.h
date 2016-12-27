@@ -14,6 +14,8 @@ namespace swrenderer
 		FString DebugInfo() override { return "PalWallCommand"; }
 
 	protected:
+		inline static uint8_t AddLights(const TriLight *lights, int num_lights, float viewpos_z, uint8_t fg, uint8_t material);
+
 		uint32_t _iscale;
 		uint32_t _texturefrac;
 		uint8_t *_colormap;
@@ -24,6 +26,10 @@ namespace swrenderer
 		int _pitch;
 		uint32_t *_srcblend;
 		uint32_t *_destblend;
+		TriLight *_dynlights;
+		int _num_dynlights;
+		float _viewpos_z;
+		float _step_viewpos_z;
 	};
 
 	class PalWall4Command : public DrawerCommand
@@ -102,6 +108,8 @@ namespace swrenderer
 		uint32_t *_srcblend;
 		uint32_t *_destblend;
 		uint32_t _srccolor;
+		fixed_t _srcalpha;
+		fixed_t _destalpha;
 	};
 
 	class DrawColumnPalCommand : public PalColumnCommand { public: void Execute(DrawerThread *thread) override; };
@@ -145,6 +153,8 @@ namespace swrenderer
 		FString DebugInfo() override { return "PalSpanCommand"; }
 
 	protected:
+		inline static uint8_t AddLights(const TriLight *lights, int num_lights, float viewpos_x, uint8_t fg, uint8_t material);
+
 		const uint8_t *_source;
 		const uint8_t *_colormap;
 		dsfixed_t _xfrac;
@@ -160,6 +170,12 @@ namespace swrenderer
 		uint32_t *_srcblend;
 		uint32_t *_destblend;
 		int _color;
+		fixed_t _srcalpha;
+		fixed_t _destalpha;
+		TriLight *_dynlights;
+		int _num_dynlights;
+		float _viewpos_x;
+		float _step_viewpos_x;
 	};
 
 	class DrawSpanPalCommand : public PalSpanCommand { public: void Execute(DrawerThread *thread) override; };
@@ -244,86 +260,20 @@ namespace swrenderer
 		const uint8_t *_colormap;
 		uint8_t *_destorg;
 	};
-
-	class RtInitColsPalCommand : public DrawerCommand
+	
+	class DrawParticleColumnPalCommand : public DrawerCommand
 	{
 	public:
-		RtInitColsPalCommand(uint8_t *buff);
+		DrawParticleColumnPalCommand(uint8_t *dest, int dest_y, int pitch, int count, uint32_t fg, uint32_t alpha, uint32_t fracposx);
 		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override { return "RtInitColsPalCommand"; }
-		
+		FString DebugInfo() override;
+
 	private:
-		uint8_t *buff;
-	};
-	
-	class PalColumnHorizCommand : public DrawerCommand
-	{
-	public:
-		PalColumnHorizCommand();
-		
-	protected:
-		const uint8_t *_source;
-		fixed_t _iscale;
-		fixed_t _texturefrac;
-		int _count;
-		int _color;
-		int _x;
-		int _yl;
-	};
-
-	class DrawColumnHorizPalCommand : public PalColumnHorizCommand
-	{
-	public:
-		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override { return "DrawColumnHorizPalCommand"; }
-	};
-	
-	class FillColumnHorizPalCommand : public PalColumnHorizCommand
-	{
-	public:
-		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override { return "FillColumnHorizPalCommand"; }
-	};
-	
-	class PalRtCommand : public DrawerCommand
-	{
-	public:
-		PalRtCommand(int hx, int sx, int yl, int yh);
-		FString DebugInfo() override { return "PalRtCommand"; }
-		
-	protected:
-		int hx, sx, yl, yh;
-		uint8_t *_destorg;
+		uint8_t *_dest;
 		int _pitch;
-		const uint8_t *_colormap;
-		const uint32_t *_srcblend;
-		const uint32_t *_destblend;
-		const uint8_t *_translation;
-		int _color;
+		int _count;
+		uint32_t _fg;
+		uint32_t _alpha;
+		uint32_t _fracposx;
 	};
-
-	class DrawColumnRt1CopyPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	class DrawColumnRt4CopyPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	class DrawColumnRt1PalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	class DrawColumnRt4PalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	class DrawColumnRt1TranslatedPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	class DrawColumnRt4TranslatedPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	class DrawColumnRt1AddPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	class DrawColumnRt4AddPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	//class DrawColumnRt1AddTranslatedPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	//class DrawColumnRt4AddTranslatedPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	class DrawColumnRt1ShadedPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	class DrawColumnRt4ShadedPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	class DrawColumnRt1AddClampPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	class DrawColumnRt4AddClampPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	//class DrawColumnRt1AddClampTranslatedPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	//class DrawColumnRt4AddClampTranslatedPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	class DrawColumnRt1SubClampPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	class DrawColumnRt4SubClampPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	//class DrawColumnRt1SubClampTranslatedPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	//class DrawColumnRt4SubClampTranslatedPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	class DrawColumnRt1RevSubClampPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	class DrawColumnRt4RevSubClampPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	//class DrawColumnRt1RevSubClampTranslatedPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
-	//class DrawColumnRt4RevSubClampTranslatedPalCommand : public PalRtCommand { public: using PalRtCommand::PalRtCommand; void Execute(DrawerThread *thread) override; };
 }

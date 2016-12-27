@@ -982,6 +982,23 @@ static void CopyPortal(int sectortag, int plane, unsigned pnum, double alpha, bo
 				}
 			}
 		}
+		if (tolines && lines[j].special == Sector_SetPortal &&
+			lines[j].args[1] == 5 &&
+			lines[j].args[3] == sectortag)
+		{
+			if (lines[j].args[0] == 0)
+			{
+				lines[j].portaltransferred = pnum;
+			}
+			else
+			{
+				FLineIdIterator itr(lines[j].args[0]);
+				while ((s = itr.Next()) >= 0)
+				{
+					lines[s].portaltransferred = pnum;
+				}
+			}
+		}
 	}
 }
 
@@ -1232,6 +1249,7 @@ void P_SpawnSpecials (void)
 
 	//	Init special SECTORs.
 	sector = sectors;
+
 	for (i = 0; i < numsectors; i++, sector++)
 	{
 		if (sector->special == 0)

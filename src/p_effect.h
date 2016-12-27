@@ -31,6 +31,8 @@
 **
 */
 
+#pragma once
+
 #include "vectors.h"
 
 #define FX_ROCKET			0x00000001

@@ -1,0 +1,92 @@
+
+in vec4 aPosition;
+in vec2 aTexCoord;
+in vec4 aColor;
+#ifndef SIMPLE	// we do not need these for simple shaders
+in vec4 aVertex2;
+in vec4 aNormal;
+out vec4 pixelpos;
+out vec2 glowdist;
+
+out vec4 vWorldNormal;
+out vec4 vEyeNormal;
+#endif
+
+out vec4 vTexCoord;
+out vec4 vColor;
+
+void main()
+{
+	vec2 parmTexCoord;
+	vec4 parmPosition;
+	
+	#ifndef USE_QUAD_DRAWER
+		parmTexCoord = aTexCoord;
+		parmPosition = aPosition;
+	#else
+		if (uQuadMode == 0)
+		{
+			parmTexCoord = aTexCoord;
+			parmPosition = aPosition;
+		}
+		else
+		{
+			parmPosition = uQuadVertices[int(aPosition.x)];
+			parmTexCoord = uQuadTexCoords[int(aPosition.x)].st;
+		}
+	#endif
+	
+	#ifndef SIMPLE
+		vec4 worldcoord = ModelMatrix * mix(parmPosition, aVertex2, uInterpolationFactor);
+	#else
+		vec4 worldcoord = ModelMatrix * parmPosition;
+	#endif
+
+	vec4 eyeCoordPos = ViewMatrix * worldcoord;
+
+	vColor = aColor;
+
+	#ifndef SIMPLE
+		pixelpos.xyz = worldcoord.xyz;
+		pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;
+
+		glowdist.x = -((uGlowTopPlane.w + uGlowTopPlane.x * worldcoord.x + uGlowTopPlane.y * worldcoord.z) * uGlowTopPlane.z) - worldcoord.y;
+		glowdist.y = worldcoord.y + ((uGlowBottomPlane.w + uGlowBottomPlane.x * worldcoord.x + uGlowBottomPlane.y * worldcoord.z) * uGlowBottomPlane.z);
+
+		if (uSplitBottomPlane.z != 0.0)
+		{
+			gl_ClipDistance[3] = -((uSplitTopPlane.w + uSplitTopPlane.x * worldcoord.x + uSplitTopPlane.y * worldcoord.z) * uSplitTopPlane.z) - worldcoord.y;
+			gl_ClipDistance[4] = worldcoord.y + ((uSplitBottomPlane.w + uSplitBottomPlane.x * worldcoord.x + uSplitBottomPlane.y * worldcoord.z) * uSplitBottomPlane.z);
+		}
+
+		vWorldNormal = NormalModelMatrix * aNormal;
+		vEyeNormal = NormalViewMatrix * vWorldNormal;
+	#endif
+	
+	#ifdef SPHEREMAP
+		vec3 u = normalize(eyeCoordPos.xyz);
+		vec4 n = normalize(TextureMatrix * vec4(parmTexCoord.x, 0.0, parmTexCoord.y, 0.0));	// use texture matrix and coordinates for our normal. Since this is only used on walls, the normal's y coordinate is always 0.
+		vec3 r = reflect(u, n.xyz);
+		float m = 2.0 * sqrt( r.x*r.x + r.y*r.y + (r.z+1.0)*(r.z+1.0) );
+		vec2 sst = vec2(r.x/m + 0.5,  r.y/m + 0.5);
+		vTexCoord.xy = sst;
+	#else
+		vTexCoord = TextureMatrix * vec4(parmTexCoord, 0.0, 1.0);
+	#endif
+	
+	gl_Position = ProjectionMatrix * eyeCoordPos;
+		
+	if (uClipHeightDirection != 0.0) // clip planes used for reflective flats
+	{
+		gl_ClipDistance[0] = (worldcoord.y - uClipHeight) * uClipHeightDirection;
+	}
+	else if (uClipLine.x > -1000000.0) // and for line portals - this will never be active at the same time as the reflective planes clipping so it can use the same hardware clip plane.
+	{
+		gl_ClipDistance[0] = -( (worldcoord.z - uClipLine.y) * uClipLine.z + (uClipLine.x - worldcoord.x) * uClipLine.w ) + 1.0/32768.0;	// allow a tiny bit of imprecisions for colinear linedefs.
+	}
+
+	// clip planes used for translucency splitting
+	gl_ClipDistance[1] = worldcoord.y - uClipSplit.x;
+	gl_ClipDistance[2] = uClipSplit.y - worldcoord.y;
+	
+}

@@ -72,13 +72,13 @@ BEGIN
     "        BEGIN\r\n"
     "            VALUE ""Comments"", ""Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which ZDoom is partially based on. Includes code based on the Cajun Bot 0.97 by Martin Collberg.""\r\n"
     "            VALUE ""CompanyName"", "" ""\r\n"
-    "            VALUE ""FileDescription"", ""ZDoom""\r\n"
+    "            VALUE ""FileDescription"", ""QZDoom""\r\n"
     "            VALUE ""FileVersion"", RC_FILEVERSION2\r\n"
-    "            VALUE ""InternalName"", ""ZDoom""\r\n"
+    "            VALUE ""InternalName"", ""QZDoom""\r\n"
     "            VALUE ""LegalCopyright"", ""Copyright \\u00A9 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al.""\r\n"
     "            VALUE ""LegalTrademarks"", ""DoomR is a Registered Trademark of id Software, Inc.""\r\n"
-    "            VALUE ""OriginalFilename"", ""zdoom.exe""\r\n"
-    "            VALUE ""ProductName"", ""ZDoom""\r\n"
+    "            VALUE ""OriginalFilename"", ""qzdoom.exe""\r\n"
+    "            VALUE ""ProductName"", ""QZDoom""\r\n"
     "            VALUE ""ProductVersion"", RC_PRODUCTVERSION2\r\n"
     "        END\r\n"
     "    END\r\n"
@@ -86,7 +86,7 @@ BEGIN
     "    BEGIN\r\n"
     "        VALUE ""Translation"", 0x409, 1200\r\n"
     "    END\r\n"
-    "EN\0"
+    "END\r\n"
 END
 
 #endif    // APSTUDIO_INVOKED
@@ -120,9 +120,9 @@ BEGIN
     IDD_IWADDIALOG, DIALOG
     BEGIN
         LEFTMARGIN, 5
-        RIGHTMARGIN, 205
+        RIGHTMARGIN, 222
         TOPMARGIN, 7
-        BOTTOMMARGIN, 179
+        BOTTOMMARGIN, 242
     END
 
     IDD_EAXPROPERTYLIST, DIALOG
@@ -220,6 +220,7 @@ END
 // Dialog
 //
 
+/*
 IDD_IWADDIALOG DIALOGEX 0, 0, 212, 186
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_APPWINDOW
@@ -232,6 +233,32 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,155,165,50,14
     LTEXT           "ZDoom found more than one IWAD present.",IDC_STATIC,5,5,140,8
     LTEXT           "Select from the list below to determine which one to use:",IDC_STATIC,5,15,200,8
+END
+*/
+// [SP] Upstreamed from Zandronum
+IDD_IWADDIALOG DIALOGEX 0, 0, 224, 246
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "Welcome"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    ICON            IDI_ICON1,IDC_STATIC,7,7,21,20
+    LTEXT           "Welcome to QZDoom!",IDC_STATIC,42,8,180,8
+    LTEXT           "<Version info>",IDC_WELCOME_VERSION,42,18,180,8
+    GROUPBOX        "IWAD selection",IDC_STATIC,8,32,208,102
+    LTEXT           "Select which game file (IWAD) to run.",IDC_STATIC,12,44,190,8
+    LISTBOX         IDC_IWADLIST,12,56,200,72,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Video settings",IDC_STATIC,8,138,208,48
+    LTEXT           "Choose how QZDoom will render the game.",IDC_STATIC,12,148,190,8
+    CONTROL         "Hardware (OpenGL)",IDC_WELCOME_OPENGL,"Button",BS_AUTORADIOBUTTON,12,170,93,10
+    CONTROL         "Software (Doom)",IDC_WELCOME_SOFTWARE,"Button",BS_AUTORADIOBUTTON,12,160,93,10
+    CONTROL         "Fullscreen",IDC_WELCOME_FULLSCREEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,124,160,48,10
+    CONTROL         "Disable autoload",IDC_WELCOME_NOAUTOLOAD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,39,65,10
+    CONTROL         "Lights.pk3",IDC_WELCOME_LIGHTS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,46,192,51,10
+    CONTROL         "Brightmaps.pk3",IDC_WELCOME_BRIGHTMAPS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,111,192,65,10
+    CONTROL         "Don't ask me this again",IDC_DONTASKIWAD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,73,211,87,10
+    DEFPUSHBUTTON   "Play QZDoom",IDOK,8,228,90,14
+    PUSHBUTTON      "Exit",IDCANCEL,166,228,50,14
 END
 
 IDD_EAXPROPERTYLIST DIALOGEX 0, 0, 265, 404
@@ -464,7 +491,7 @@ IDB_DEADGUY             BITMAP                  "deadguy.bmp"
 // Generated from the TEXTINCLUDE 3 resource.
 //
 #ifndef NO_MANIFEST
-   CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "zdoom.exe.manifest"
+//   CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "zdoom.exe.manifest"
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
@@ -492,13 +519,13 @@ BEGIN
         BEGIN
             VALUE "Comments", "Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which ZDoom is partially based on. Includes code based on the Cajun Bot 0.97 by Martin Collberg."
             VALUE "CompanyName", " "
-            VALUE "FileDescription", "ZDoom"
+            VALUE "FileDescription", "QZDoom"
             VALUE "FileVersion", RC_FILEVERSION2
-            VALUE "InternalName", "ZDoom"
+            VALUE "InternalName", "QZDoom"
             VALUE "LegalCopyright", "Copyright \u00A9 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al."
             VALUE "LegalTrademarks", "DoomR is a Registered Trademark of id Software, Inc."
-            VALUE "OriginalFilename", "zdoom.exe"
-            VALUE "ProductName", "ZDoom"
+            VALUE "OriginalFilename", "qzdoom.exe"
+            VALUE "ProductName", "QZDoom"
             VALUE "ProductVersion", RC_PRODUCTVERSION2
         END
     END

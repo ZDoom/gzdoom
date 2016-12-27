@@ -3,6 +3,28 @@
 
 #include "doomtype.h"
 #include "vectors.h"
+#include <vector>
+
+struct FloatRect
+{
+	float left,top;
+	float width,height;
+
+
+	void Offset(float xofs,float yofs)
+	{
+		left+=xofs;
+		top+=yofs;
+	}
+	void Scale(float xfac,float yfac)
+	{
+		left*=xfac;
+		width*=xfac;
+		top*=yfac;
+		height*=yfac;
+	}
+};
+
 
 class FBitmap;
 struct FRemapTable;
@@ -13,6 +35,8 @@ class PClassInventory;
 // Texture IDs
 class FTextureManager;
 class FTerrainTypeArray;
+class FGLTexture;
+class FMaterial;
 
 class FNullTextureID : public FTextureID
 {
@@ -172,9 +196,18 @@ public:
 	// Returns a single column of the texture
 	virtual const BYTE *GetColumn (unsigned int column, const Span **spans_out) = 0;
 
+	// Returns a single column of the texture, in BGRA8 format
+	virtual const uint32_t *GetColumnBgra(unsigned int column, const Span **spans_out);
+
 	// Returns the whole texture, stored in column-major order
 	virtual const BYTE *GetPixels () = 0;
-	
+
+	// Returns the whole texture, stored in column-major order, in BGRA8 format
+	virtual const uint32_t *GetPixelsBgra();
+
+	// Returns true if GetPixelsBgra includes mipmaps
+	virtual bool Mipmapped() { return true; }
+
 	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
 	int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, FRemapTable *remap, FCopyInfo *inf = NULL);
 	virtual bool UseBasePalette();
@@ -182,7 +215,7 @@ public:
 	virtual FTexture *GetRedirect(bool wantwarped);
 	virtual FTexture *GetRawTexture();		// for FMultiPatchTexture to override
 
-	virtual void Unload () = 0;
+	virtual void Unload ();
 
 	// Returns the native pixel format for this image
 	virtual FTextureFormat GetFormat();
@@ -259,7 +292,18 @@ protected:
 		CopySize(other);
 		bNoDecals = other->bNoDecals;
 		Rotations = other->Rotations;
+		gl_info = other->gl_info;
+		gl_info.Brightmap = NULL;
+		gl_info.areas = NULL;
 	}
+
+	std::vector<uint32_t> PixelsBgra;
+
+	void GenerateBgraFromBitmap(const FBitmap &bitmap);
+	void CreatePixelsBgraWithMipmaps();
+	void GenerateBgraMipmaps();
+	void GenerateBgraMipmapsFast();
+	int MipmapLevels() const;
 
 private:
 	bool bSWSkyColorDone = false;
@@ -268,13 +312,52 @@ private:
 
 public:
 	static void FlipSquareBlock (BYTE *block, int x, int y);
+	static void FlipSquareBlockBgra (uint32_t *block, int x, int y);
 	static void FlipSquareBlockRemap (BYTE *block, int x, int y, const BYTE *remap);
 	static void FlipNonSquareBlock (BYTE *blockto, const BYTE *blockfrom, int x, int y, int srcpitch);
+	static void FlipNonSquareBlockBgra (uint32_t *blockto, const uint32_t *blockfrom, int x, int y, int srcpitch);
 	static void FlipNonSquareBlockRemap (BYTE *blockto, const BYTE *blockfrom, int x, int y, int srcpitch, const BYTE *remap);
 
 	friend class D3DTex;
-};
+	friend class OpenGLSWFrameBuffer;
 
+public:
+
+	struct MiscGLInfo
+	{
+		FMaterial *Material[2];
+		FGLTexture *SystemTexture[2];
+		FTexture *Brightmap;
+		PalEntry GlowColor;
+		int GlowHeight;
+		FloatRect *areas;
+		int areacount;
+		int shaderindex;
+		float shaderspeed;
+		int mIsTransparent:2;
+		bool bGlowing:1;						// Texture glows
+		bool bFullbright:1;						// always draw fullbright
+		bool bSkybox:1;							// This is a skybox
+		char bBrightmapChecked:1;				// Set to 1 if brightmap has been checked
+		bool bDisableFullbright:1;				// This texture will not be displayed as fullbright sprite
+		bool bNoFilter:1;
+		bool bNoCompress:1;
+		bool bNoExpand:1;
+
+		MiscGLInfo() throw ();
+		~MiscGLInfo();
+	};
+	MiscGLInfo gl_info;
+
+	void GetGlowColor(float *data);
+	bool isGlowing() { return gl_info.bGlowing; }
+	bool isFullbright() { return gl_info.bFullbright; }
+	void CreateDefaultBrightmap();
+	bool FindHoles(const unsigned char * buffer, int w, int h);
+	static bool SmoothEdges(unsigned char * buffer,int w, int h);
+	void CheckTrans(unsigned char * buffer, int size, int trans);
+	bool ProcessData(unsigned char * buffer, int w, int h, bool ispatch);
+};
 
 // Texture manager
 class FTextureManager
@@ -461,7 +544,6 @@ public:
 	FDummyTexture ();
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
-	void Unload ();
 	void SetSize (int width, int height);
 };
 
@@ -475,6 +557,7 @@ public:
 	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
+	const uint32_t *GetPixelsBgra() override;
 	void Unload ();
 	bool CheckModified ();
 
@@ -484,12 +567,12 @@ public:
 	FTexture *GetRedirect(bool wantwarped);
 
 	DWORD GenTime;
+	float Speed;
+	int WidthOffsetMultiplier, HeightOffsetMultiplier;  // [mxd]
 protected:
 	FTexture *SourcePic;
 	BYTE *Pixels;
 	Span **Spans;
-	float Speed;
-	int WidthOffsetMultiplier, HeightOffsetMultiplier;  // [mxd]
 
 	virtual void MakeTexture (DWORD time);
 	int NextPo2 (int v); // [mxd]
@@ -508,21 +591,28 @@ public:
 
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
+	const uint32_t *GetPixelsBgra() override;
 	void Unload ();
 	bool CheckModified ();
 	void NeedUpdate() { bNeedsUpdate=true; }
 	void SetUpdated() { bNeedsUpdate = false; bDidUpdate = true; bFirstUpdate = false; }
 	DSimpleCanvas *GetCanvas() { return Canvas; }
+	DSimpleCanvas *GetCanvasBgra() { return CanvasBgra; }
+	bool Mipmapped() override { return false; }
 	void MakeTexture ();
+	void MakeTextureBgra ();
 
 protected:
 
-	DSimpleCanvas *Canvas;
-	BYTE *Pixels;
+	DSimpleCanvas *Canvas = nullptr;
+	DSimpleCanvas *CanvasBgra = nullptr;
+	BYTE *Pixels = nullptr;
+	uint32_t *PixelsBgra = nullptr;
 	Span DummySpans[2];
-	bool bNeedsUpdate;
-	bool bDidUpdate;
-	bool bPixelsAllocated;
+	bool bNeedsUpdate = true;
+	bool bDidUpdate = false;
+	bool bPixelsAllocated = false;
+	bool bPixelsAllocatedBgra = false;
 public:
 	bool bFirstUpdate;
 

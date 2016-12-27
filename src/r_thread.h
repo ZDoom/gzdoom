@@ -23,6 +23,7 @@
 #pragma once
 
 #include "r_draw.h"
+#include "r_drawers.h"
 #include <vector>
 #include <memory>
 #include <thread>
@@ -44,8 +45,8 @@ class DrawerThread
 public:
 	DrawerThread()
 	{
-		dc_temp = dc_temp_buff;
-		dc_temp_rgba = dc_temp_rgbabuff_rgba;
+		FullSpansBuffer.resize(MAXWIDTH / 8 * (MAXHEIGHT / 8));
+		PartialBlocksBuffer.resize(MAXWIDTH / 8 * (MAXHEIGHT / 8));
 	}
 
 	std::thread thread;
@@ -60,16 +61,12 @@ public:
 	int pass_start_y = 0;
 	int pass_end_y = MAXHEIGHT;
 
-	// Working buffer used by Rt drawers
-	uint8_t dc_temp_buff[MAXHEIGHT * 4];
-	uint8_t *dc_temp = nullptr;
-
-	// Working buffer used by Rt drawers, true color edition
-	uint32_t dc_temp_rgbabuff_rgba[MAXHEIGHT * 4];
-	uint32_t *dc_temp_rgba = nullptr;
-
 	// Working buffer used by the tilted (sloped) span drawer
 	const uint8_t *tiltlighting[MAXWIDTH];
+
+	// Working buffer used by the triangler drawer
+	std::vector<TriFullSpan> FullSpansBuffer;
+	std::vector<TriPartialBlock> PartialBlocksBuffer;
 
 	// Checks if a line is rendered by this thread
 	bool line_skipped_by_thread(int line)
@@ -141,7 +138,10 @@ protected:
 public:
 	DrawerCommand()
 	{
-		_dest_y = static_cast<int>((swrenderer::drawerargs::dc_dest - swrenderer::drawerargs::dc_destorg) / (swrenderer::drawerargs::dc_pitch));
+		if (swrenderer::r_swtruecolor)
+			_dest_y = static_cast<int>((swrenderer::drawerargs::dc_dest - swrenderer::drawerargs::dc_destorg) / (swrenderer::drawerargs::dc_pitch * 4));
+		else
+			_dest_y = static_cast<int>((swrenderer::drawerargs::dc_dest - swrenderer::drawerargs::dc_destorg) / (swrenderer::drawerargs::dc_pitch));
 	}
 	
 	virtual ~DrawerCommand() { }

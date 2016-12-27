@@ -78,7 +78,6 @@ public:
 
 	const BYTE *GetColumn(unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels();
-	void Unload();
 	bool CheckModified();
 
 protected:
@@ -210,10 +209,6 @@ FBackdropTexture::FBackdropTexture()
 bool FBackdropTexture::CheckModified()
 {
 	return LastRenderTic != gametic;
-}
-
-void FBackdropTexture::Unload()
-{
 }
 
 //=============================================================================

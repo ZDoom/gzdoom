@@ -3,8 +3,15 @@
 
 #include "r_renderer.h"
 
+void gl_SetActorLights(AActor *);
+void gl_PreprocessLevel();
+void gl_CleanLevelData();
+
 struct FSoftwareRenderer : public FRenderer
 {
+	FSoftwareRenderer();
+	~FSoftwareRenderer();
+
 	// Can be overridden so that the colormaps for sector color/fade won't be built.
 	virtual bool UsesColormap() const override;
 
@@ -25,6 +32,7 @@ struct FSoftwareRenderer : public FRenderer
 	virtual void DrawRemainingPlayerSprites() override;
 
 	virtual int GetMaxViewPitch(bool down) override;
+	bool RequireGLNodes() override;
 
 	void OnModeSet () override;
 	void ErrorCleanup () override;
@@ -35,6 +43,21 @@ struct FSoftwareRenderer : public FRenderer
 	void CopyStackedViewParameters() override;
 	void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov) override;
 	sector_t *FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel, bool back) override;
+
+	void StateChanged(AActor *actor) override
+	{
+		gl_SetActorLights(actor);
+	}
+
+	void PreprocessLevel() override
+	{
+		gl_PreprocessLevel();
+	}
+
+	void CleanLevelData() override
+	{
+		gl_CleanLevelData();
+	}
 
 };
 

@@ -496,3 +496,17 @@ ABC4EB5A1535ECCD0061AD14F3547908 // Plutonia Experiment, map26
 {
 	setsectorspecial 156 0
 }
+
+712BB4CFBD0753178CA0C6814BE4C288 // map12 BTSX_E1 - patch some rendering glitches that are problematic to detect
+{
+	setsectortag 545 32000
+	setsectortag 1618 32000
+	setlinespecial 2853 Sector_Set3DFloor 32000 4 0 0 0
+	setsectortag 439 32001
+	setsectortag 458 32001
+	setlinespecial 2182 Sector_Set3DFloor 32001 4 0 0 0
+	setsectortag 454 32002
+	setsectortag 910 32002
+	setlinespecial 2410 Sector_Set3DFloor 32002 4 1 0 0
+}
+

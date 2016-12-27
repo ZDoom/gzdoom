@@ -85,8 +85,15 @@ extern bool				r_dontmaplines;
 // Change R_CalcTiltedLighting() when this changes.
 #define GETPALOOKUP(vis,shade)	(clamp<int> (((shade)-FLOAT2FIXED(MIN(MAXLIGHTVIS,double(vis))))>>FRACBITS, 0, NUMCOLORMAPS-1))
 
+// Calculate the light multiplier for dc_light/ds_light
+// This is used instead of GETPALOOKUP when ds_colormap/dc_colormap is set to the base colormap
+// Returns a value between 0 and 1 in fixed point
+#define LIGHTSCALE(vis,shade) FLOAT2FIXED(clamp((FIXED2DBL(shade) - (MIN(MAXLIGHTVIS,double(vis)))) / NUMCOLORMAPS, 0.0, (NUMCOLORMAPS-1)/(double)NUMCOLORMAPS))
+
 // Converts fixedlightlev into a shade value
 #define FIXEDLIGHT2SHADE(lightlev) (((lightlev) >> COLORMAPSHIFT) << FRACBITS)
+
+extern bool				r_swtruecolor;
 
 extern double			GlobVis;
 
@@ -102,7 +109,7 @@ extern double			r_SpriteVisibility;
 extern int				r_actualextralight;
 extern bool				foggy;
 extern int				fixedlightlev;
-extern lighttable_t*	fixedcolormap;
+extern FSWColormap*		fixedcolormap;
 extern FSpecialColormap*realfixedcolormap;
 
 
@@ -116,13 +123,6 @@ extern void 			(*fuzzcolfunc) (void);
 extern void				(*transcolfunc) (void);
 // No shadow effects on floors.
 extern void 			(*spanfunc) (void);
-
-// [RH] Function pointers for the horizontal column drawers.
-extern void (*hcolfunc_pre) (void);
-extern void (*hcolfunc_post1) (int hx, int sx, int yl, int yh);
-extern void (*hcolfunc_post2) (int hx, int sx, int yl, int yh);
-extern void (*hcolfunc_post4) (int sx, int yl, int yh);
-
 
 void R_InitTextureMapping ();
 

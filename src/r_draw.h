@@ -3,22 +3,50 @@
 
 #include "r_defs.h"
 
+struct FSWColormap;
+struct FLightNode;
+struct TriLight;
+
 EXTERN_CVAR(Bool, r_multithreaded);
+EXTERN_CVAR(Bool, r_magfilter);
+EXTERN_CVAR(Bool, r_minfilter);
+EXTERN_CVAR(Bool, r_mipmap);
+EXTERN_CVAR(Float, r_lod_bias);
 EXTERN_CVAR(Int, r_drawfuzz);
 EXTERN_CVAR(Bool, r_drawtrans);
 EXTERN_CVAR(Float, transsouls);
-EXTERN_CVAR(Int, r_columnmethod);
+EXTERN_CVAR(Bool, r_dynlights);
 
 namespace swrenderer
 {
 	struct vissprite_t;
+	struct visplane_light;
+
+	struct ShadeConstants
+	{
+		uint16_t light_alpha;
+		uint16_t light_red;
+		uint16_t light_green;
+		uint16_t light_blue;
+		uint16_t fade_alpha;
+		uint16_t fade_red;
+		uint16_t fade_green;
+		uint16_t fade_blue;
+		uint16_t desaturate;
+		bool simple_shade;
+	};
 
 	extern double dc_texturemid;
+	extern FLightNode *dc_light_list;
+	extern visplane_light *ds_light_list;
 
 	namespace drawerargs
 	{
 		extern int dc_pitch;
 		extern lighttable_t *dc_colormap;
+		extern FSWColormap *dc_fcolormap;
+		extern ShadeConstants dc_shade_constants;
+		extern fixed_t dc_light;
 		extern int dc_x;
 		extern int dc_yl;
 		extern int dc_yh;
@@ -40,6 +68,12 @@ namespace swrenderer
 		extern uint8_t *dc_destorg;
 		extern int dc_destheight;
 		extern int dc_count;
+		extern FVector3 dc_viewpos;
+		extern FVector3 dc_viewpos_step;
+		extern TriLight *dc_lights;
+		extern int dc_num_lights;
+
+		extern bool drawer_needs_pal_input;
 
 		extern uint32_t dc_wall_texturefrac[4];
 		extern uint32_t dc_wall_iscale[4];
@@ -55,6 +89,8 @@ namespace swrenderer
 		extern int ds_x1;
 		extern int ds_x2;
 		extern lighttable_t * ds_colormap;
+		extern FSWColormap *ds_fcolormap;
+		extern ShadeConstants ds_shade_constants;
 		extern dsfixed_t ds_light;
 		extern dsfixed_t ds_xfrac;
 		extern dsfixed_t ds_yfrac;
@@ -65,6 +101,7 @@ namespace swrenderer
 		extern fixed_t ds_alpha;
 		extern double ds_lod;
 		extern const uint8_t *ds_source;
+		extern bool ds_source_mipmapped;
 		extern int ds_color;
 
 		extern unsigned int dc_tspans[4][MAXHEIGHT];
@@ -84,53 +121,19 @@ namespace swrenderer
 	extern int fuzzpos;
 	extern int fuzzviewheight;
 
+	extern bool r_swtruecolor;
+
 	void R_InitColumnDrawers();
 	void R_InitShadeMaps();
 	void R_InitFuzzTable(int fuzzoff);
 
-	enum ESPSResult
-	{
-		DontDraw,	// not useful to draw this
-		DoDraw0,	// draw this as if r_columnmethod is 0
-		DoDraw1,	// draw this as if r_columnmethod is 1
-	};
-
-	ESPSResult R_SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color);
-	ESPSResult R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color);
+	bool R_SetPatchStyle(FRenderStyle style, fixed_t alpha, int translation, uint32_t color);
+	bool R_SetPatchStyle(FRenderStyle style, float alpha, int translation, uint32_t color);
 	void R_FinishSetPatchStyle(); // Call this after finished drawing the current thing, in case its style was STYLE_Shade
 	bool R_GetTransMaskDrawers(void(**drawCol1)(), void(**drawCol4)());
 
 	const uint8_t *R_GetColumn(FTexture *tex, int col);
 	
-	void rt_initcols(uint8_t *buffer = nullptr);
-	void rt_span_coverage(int x, int start, int stop);
-	void rt_draw4cols(int sx);
-	void rt_flip_posts();
-	void rt_copy1col(int hx, int sx, int yl, int yh);
-	void rt_copy4cols(int sx, int yl, int yh);
-	void rt_shaded1col(int hx, int sx, int yl, int yh);
-	void rt_shaded4cols(int sx, int yl, int yh);
-	void rt_map1col(int hx, int sx, int yl, int yh);
-	void rt_add1col(int hx, int sx, int yl, int yh);
-	void rt_addclamp1col(int hx, int sx, int yl, int yh);
-	void rt_subclamp1col(int hx, int sx, int yl, int yh);
-	void rt_revsubclamp1col(int hx, int sx, int yl, int yh);
-	void rt_tlate1col(int hx, int sx, int yl, int yh);
-	void rt_tlateadd1col(int hx, int sx, int yl, int yh);
-	void rt_tlateaddclamp1col(int hx, int sx, int yl, int yh);
-	void rt_tlatesubclamp1col(int hx, int sx, int yl, int yh);
-	void rt_tlaterevsubclamp1col(int hx, int sx, int yl, int yh);
-	void rt_map4cols(int sx, int yl, int yh);
-	void rt_add4cols(int sx, int yl, int yh);
-	void rt_addclamp4cols(int sx, int yl, int yh);
-	void rt_subclamp4cols(int sx, int yl, int yh);
-	void rt_revsubclamp4cols(int sx, int yl, int yh);
-	void rt_tlate4cols(int sx, int yl, int yh);
-	void rt_tlateadd4cols(int sx, int yl, int yh);
-	void rt_tlateaddclamp4cols(int sx, int yl, int yh);
-	void rt_tlatesubclamp4cols(int sx, int yl, int yh);
-	void rt_tlaterevsubclamp4cols(int sx, int yl, int yh);
-	void R_DrawColumnHoriz();
 	void R_DrawColumn();
 	void R_DrawFuzzColumn();
 	void R_DrawTranslatedColumn();
@@ -157,10 +160,9 @@ namespace swrenderer
 	void R_FillSpan();
 	void R_DrawTiltedSpan(int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy);
 	void R_DrawColoredSpan(int y, int x1, int x2);
-	void R_SetupDrawSlab(uint8_t *colormap);
+	void R_SetupDrawSlab(FSWColormap *base_colormap, float light, int shade);
 	void R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const uint8_t *vptr, uint8_t *p);
 	void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip);
-	void R_FillColumnHoriz();
 	void R_FillSpan();
 
 	void R_DrawWallCol1();
@@ -181,17 +183,15 @@ namespace swrenderer
 	void R_DrawDoubleSkyCol1(uint32_t solid_top, uint32_t solid_bottom);
 	void R_DrawDoubleSkyCol4(uint32_t solid_top, uint32_t solid_bottom);
 
-	void R_SetColorMapLight(lighttable_t *base_colormap, float light, int shade);
-	void R_SetColorMapLight(FDynamicColormap *base_colormap, float light, int shade);
-	void R_SetDSColorMapLight(lighttable_t *base_colormap, float light, int shade);
-	void R_SetDSColorMapLight(FDynamicColormap *base_colormap, float light, int shade);
+	// Sets dc_colormap and dc_light to their appropriate values depending on the output format (pal vs true color)
+	void R_SetColorMapLight(FSWColormap *base_colormap, float light, int shade);
+	void R_SetDSColorMapLight(FSWColormap *base_colormap, float light, int shade);
 	void R_SetTranslationMap(lighttable_t *translation);
 
 	void R_SetupSpanBits(FTexture *tex);
-	void R_SetSpanColormap(lighttable_t *colormap);
+	void R_SetSpanColormap(FDynamicColormap *colormap, int shade);
 	void R_SetSpanSource(FTexture *tex);
 
 	void R_MapTiltedPlane(int y, int x1);
 	void R_MapColoredPlane(int y, int x1);
-	void R_DrawParticle(vissprite_t *);
 }

@@ -380,7 +380,7 @@ struct bCopyAlpha
 };
 
 struct bOverlay
-{
+{	
 	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = (s*a + d*(255-a))/255; }
 	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = MAX(s,d); }
 	static __forceinline bool ProcessAlpha0() { return false; }

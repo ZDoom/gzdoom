@@ -44,6 +44,7 @@
 #include "r_utility.h"
 #ifndef NO_SWRENDER
 #include "r_draw.h"
+#include "r_draw_rgba.h"
 #include "r_main.h"
 #include "r_things.h"
 #endif
@@ -69,6 +70,7 @@ CUSTOM_CVAR(Int, uiscale, 2, CVAR_ARCHIVE | CVAR_NOINITCALL)
 		StatusBar->ScreenSizeChanged();
 	}
 }
+EXTERN_CVAR(Bool, r_blendmethod)
 
 // [RH] Stretch values to make a 320x200 image best fit the screen
 // without using fractional steppings
@@ -132,11 +134,17 @@ void DCanvas::DrawTexture (FTexture *img, double x, double y, int tags_first, ..
 void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 {
 #ifndef NO_SWRENDER
-	using namespace swrenderer;
-	using namespace drawerargs;
+        using namespace swrenderer;
+		using namespace drawerargs;
 
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
 	const BYTE *translation = NULL;
+
+	if (r_swtruecolor != IsBgra())
+	{
+		r_swtruecolor = IsBgra();
+		R_InitColumnDrawers();
+	}
 
 	if (APART(parms.colorOverlay) != 0)
 	{
@@ -154,29 +162,44 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			parms.colorOverlay = PalEntry(parms.colorOverlay).InverseColor();
 		}
 		// Note that this overrides DTA_Translation in software, but not in hardware.
-		FDynamicColormap *colormap = GetSpecialLights(MAKERGB(255,255,255),
-			parms.colorOverlay & MAKEARGB(0,255,255,255), 0);
-		translation = &colormap->Maps[(APART(parms.colorOverlay)*NUMCOLORMAPS/255)*256];
+		if (!r_swtruecolor)
+		{
+			FDynamicColormap *colormap = GetSpecialLights(MAKERGB(255, 255, 255),
+				parms.colorOverlay & MAKEARGB(0, 255, 255, 255), 0);
+			translation = &colormap->Maps[(APART(parms.colorOverlay)*NUMCOLORMAPS / 255) * 256];
+		}
 	}
 	else if (parms.remap != NULL)
 	{
-		translation = parms.remap->Remap;
+		if (r_swtruecolor)
+			translation = (const BYTE*)parms.remap->Palette;
+		else
+			translation = parms.remap->Remap;
 	}
 
 	if (translation != NULL)
 	{
-		dc_colormap = (lighttable_t *)translation;
+		R_SetTranslationMap((lighttable_t *)translation);
 	}
 	else
 	{
-		dc_colormap = identitymap;
+		if (r_swtruecolor)
+			R_SetTranslationMap(nullptr);
+		else
+			R_SetTranslationMap(identitymap);
 	}
 
-	fixedcolormap = dc_colormap;
-	ESPSResult mode = R_SetPatchStyle (parms.style, parms.Alpha, 0, parms.fillcolor);
+	fixedcolormap = dc_fcolormap;
+	bool visible;
+	if (r_swtruecolor)
+		visible = R_SetPatchStyle(parms.style, parms.Alpha, -1, parms.fillcolor);
+	else
+		visible = R_SetPatchStyle(parms.style, parms.Alpha, 0, parms.fillcolor);
 
 	BYTE *destorgsave = dc_destorg;
+	int destheightsave = dc_destheight;
 	dc_destorg = screen->GetBuffer();
+	dc_destheight = screen->GetHeight();
 	if (dc_destorg == NULL)
 	{
 		I_FatalError("Attempt to write to buffer of hardware canvas");
@@ -185,10 +208,8 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	double x0 = parms.x - parms.left * parms.destwidth / parms.texwidth;
 	double y0 = parms.y - parms.top * parms.destheight / parms.texheight;
 
-	if (mode != DontDraw)
+	if (visible)
 	{
-		int stop4;
-
 		double centeryback = CenterY;
 		CenterY = 0;
 
@@ -254,61 +275,23 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			x2 = parms.rclip;
 		}
 
-		// Drawing short output ought to fit in the data cache well enough
-		// if we draw one column at a time, so do that, since it's simpler.
-		if (parms.destheight < 32 || (parms.dclip - parms.uclip) < 32)
-		{
-			mode = DoDraw0;
-		}
-
 		dc_x = int(x0);
 		int x2_i = int(x2);
 		fixed_t xiscale_i = FLOAT2FIXED(xiscale);
 
-		if (mode == DoDraw0)
+		while (dc_x < x2_i)
 		{
-			// One column at a time
-			stop4 = dc_x;
-		}
-		else	 // DoDraw1`
-		{
-			// Up to four columns at a time
-			stop4 = x2_i & ~3;
+			R_DrawMaskedColumn(img, frac, !parms.masked);
+			dc_x++;
+			frac += xiscale_i;
 		}
 
-		if (dc_x < x2_i)
-		{
-			while ((dc_x < stop4) && (dc_x & 3))
-			{
-				R_DrawMaskedColumn(img, frac, false, !parms.masked);
-				dc_x++;
-				frac += xiscale_i;
-			}
-
-			while (dc_x < stop4)
-			{
-				rt_initcols();
-				for (int zz = 4; zz; --zz)
-				{
-					R_DrawMaskedColumn(img, frac, true, !parms.masked);
-					dc_x++;
-					frac += xiscale_i;
-				}
-				rt_draw4cols(dc_x - 4);
-			}
-
-			while (dc_x < x2_i)
-			{
-				R_DrawMaskedColumn(img, frac, false, !parms.masked);
-				dc_x++;
-				frac += xiscale_i;
-			}
-		}
 		CenterY = centeryback;
 	}
 	R_FinishSetPatchStyle ();
 
 	dc_destorg = destorgsave;
+	dc_destheight = destheightsave;
 
 	if (ticdup != 0 && menuactive == MENU_Off)
 	{
@@ -965,27 +948,6 @@ void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 	static int oldyy;
 	static int oldyyshifted;
 
-#if 0
-	if(xx < 32)
-		cc += 7-(xx>>2);
-	else if(xx > (finit_width - 32))
-		cc += 7-((finit_width-xx) >> 2);
-//	if(cc==oldcc) //make sure that we don't double fade the corners.
-//	{
-		if(yy < 32)
-			cc += 7-(yy>>2);
-		else if(yy > (finit_height - 32))
-			cc += 7-((finit_height-yy) >> 2);
-//	}
-	if(cc > cm && cm != NULL)
-	{
-		cc = cm;
-	}
-	else if(cc > oldcc+6) // don't let the color escape from the fade table...
-	{
-		cc=oldcc+6;
-	}
-#endif
 	if (yy == oldyy+1)
 	{
 		oldyy++;
@@ -1002,13 +964,45 @@ void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 		oldyyshifted = yy * GetPitch();
 	}
 
-	BYTE *spot = GetBuffer() + oldyyshifted + xx;
-	DWORD *bg2rgb = Col2RGB8[1+level];
-	DWORD *fg2rgb = Col2RGB8[63-level];
-	DWORD fg = fg2rgb[basecolor];
-	DWORD bg = bg2rgb[*spot];
-	bg = (fg+bg) | 0x1f07c1f;
-	*spot = RGB32k.All[bg&(bg>>15)];
+	if (IsBgra())
+	{
+		uint32_t *spot = (uint32_t*)GetBuffer() + oldyyshifted + xx;
+
+		uint32_t fg = swrenderer::LightBgra::shade_pal_index_simple(basecolor, swrenderer::LightBgra::calc_light_multiplier(0));
+		uint32_t fg_red = (((fg >> 16) & 0xff) * (63 - level)) >> 6;
+		uint32_t fg_green = (((fg >> 8) & 0xff) * (63 - level)) >> 6;
+		uint32_t fg_blue = ((fg & 0xff) * (63 - level)) >> 6;
+
+		uint32_t bg_red = (((*spot >> 16) & 0xff) * level) >> 6;
+		uint32_t bg_green = (((*spot >> 8) & 0xff) * level) >> 6;
+		uint32_t bg_blue = (((*spot) & 0xff) * level) >> 6;
+
+		uint32_t red = fg_red + bg_red;
+		uint32_t green = fg_green + bg_green;
+		uint32_t blue = fg_blue + bg_blue;
+
+		*spot = 0xff000000 | (red << 16) | (green << 8) | blue;
+	}
+	else if (!r_blendmethod)
+	{
+		BYTE *spot = GetBuffer() + oldyyshifted + xx;
+		DWORD *bg2rgb = Col2RGB8[1+level];
+		DWORD *fg2rgb = Col2RGB8[63-level];
+		DWORD fg = fg2rgb[basecolor];
+		DWORD bg = bg2rgb[*spot];
+		bg = (fg+bg) | 0x1f07c1f;
+		*spot = RGB32k.All[bg&(bg>>15)];
+	}
+	else
+	{
+		BYTE *spot = GetBuffer() + oldyyshifted + xx;
+
+		uint32_t r = (GPalette.BaseColors[*spot].r * (64 - level) + GPalette.BaseColors[basecolor].r * level) / 64;
+		uint32_t g = (GPalette.BaseColors[*spot].g * (64 - level) + GPalette.BaseColors[basecolor].g * level) / 64;
+		uint32_t b = (GPalette.BaseColors[*spot].b * (64 - level) + GPalette.BaseColors[basecolor].b * level) / 64;
+
+		*spot = (BYTE)RGB256k.RGB[r][g][b];
+	}
 }
 
 void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor)
@@ -1052,27 +1046,65 @@ void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 real
 		{
 			swapvalues (x0, x1);
 		}
-		memset (GetBuffer() + y0*GetPitch() + x0, palColor, deltaX+1);
+		if (IsBgra())
+		{
+			uint32_t fillColor = GPalette.BaseColors[palColor].d;
+			uint32_t *spot = (uint32_t*)GetBuffer() + y0*GetPitch() + x0;
+			for (int i = 0; i <= deltaX; i++)
+				spot[i] = fillColor;
+		}
+		else
+		{
+			memset (GetBuffer() + y0*GetPitch() + x0, palColor, deltaX+1);
+		}
 	}
 	else if (deltaX == 0)
 	{ // vertical line
-		BYTE *spot = GetBuffer() + y0*GetPitch() + x0;
-		int pitch = GetPitch ();
-		do
+		if (IsBgra())
 		{
-			*spot = palColor;
-			spot += pitch;
-		} while (--deltaY != 0);
+			uint32_t fillColor = GPalette.BaseColors[palColor].d;
+			uint32_t *spot = (uint32_t*)GetBuffer() + y0*GetPitch() + x0;
+			int pitch = GetPitch();
+			do
+			{
+				*spot = fillColor;
+				spot += pitch;
+			} while (--deltaY != 0);
+		}
+		else
+		{
+			BYTE *spot = GetBuffer() + y0*GetPitch() + x0;
+			int pitch = GetPitch();
+			do
+			{
+				*spot = palColor;
+				spot += pitch;
+			} while (--deltaY != 0);
+		}
 	}
 	else if (deltaX == deltaY)
 	{ // diagonal line.
-		BYTE *spot = GetBuffer() + y0*GetPitch() + x0;
-		int advance = GetPitch() + xDir;
-		do
+		if (IsBgra())
 		{
-			*spot = palColor;
-			spot += advance;
-		} while (--deltaY != 0);
+			uint32_t fillColor = GPalette.BaseColors[palColor].d;
+			uint32_t *spot = (uint32_t*)GetBuffer() + y0*GetPitch() + x0;
+			int advance = GetPitch() + xDir;
+			do
+			{
+				*spot = fillColor;
+				spot += advance;
+			} while (--deltaY != 0);
+		}
+		else
+		{
+			BYTE *spot = GetBuffer() + y0*GetPitch() + x0;
+			int advance = GetPitch() + xDir;
+			do
+			{
+				*spot = palColor;
+				spot += advance;
+			} while (--deltaY != 0);
+		}
 	}
 	else
 	{
@@ -1192,7 +1224,6 @@ void DCanvas::DrawPixel(int x, int y, int palColor, uint32 realcolor)
 void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uint32 color)
 {
 	int x, y;
-	BYTE *dest;
 
 	if (left == right || top == bottom)
 	{
@@ -1222,12 +1253,28 @@ void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uin
 		palcolor = PalFromRGB(color);
 	}
 
-	dest = Buffer + top * Pitch + left;
-	x = right - left;
-	for (y = top; y < bottom; y++)
+	if (IsBgra())
 	{
-		memset(dest, palcolor, x);
-		dest += Pitch;
+		uint32_t fill_color = GPalette.BaseColors[palcolor];
+
+		uint32_t *dest = (uint32_t*)Buffer + top * Pitch + left;
+		x = right - left;
+		for (y = top; y < bottom; y++)
+		{
+			for (int i = 0; i < x; i++)
+				dest[i] = fill_color;
+			dest += Pitch;
+		}
+	}
+	else
+	{
+		BYTE *dest = Buffer + top * Pitch + left;
+		x = right - left;
+		for (y = top; y < bottom; y++)
+		{
+			memset(dest, palcolor, x);
+			dest += Pitch;
+		}
 	}
 }
 
@@ -1264,8 +1311,8 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	FDynamicColormap *colormap, int lightlevel, int bottomclip)
 {
 #ifndef NO_SWRENDER
-	using namespace swrenderer;
-	using namespace drawerargs;
+        using namespace swrenderer;
+		using namespace drawerargs;
 
 	// Use an equation similar to player sprites to determine shade
 	fixed_t shade = LIGHT2SHADE(lightlevel) - 12*FRACUNIT;
@@ -1333,7 +1380,10 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 
 	// Setup constant texture mapping parameters.
 	R_SetupSpanBits(tex);
-	R_SetSpanColormap(colormap != NULL ? &colormap->Maps[clamp(shade >> FRACBITS, 0, NUMCOLORMAPS-1) * 256] : identitymap);
+	if (colormap)
+		R_SetSpanColormap(colormap, clamp(shade >> FRACBITS, 0, NUMCOLORMAPS - 1));
+	else
+		R_SetSpanColormap(&identitycolormap, 0);
 	R_SetSpanSource(tex);
 	if (ds_xbits != 0)
 	{
@@ -1460,6 +1510,9 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 //
 void DCanvas::DrawBlock (int x, int y, int _width, int _height, const BYTE *src) const
 {
+	if (IsBgra())
+		return;
+
 	int srcpitch = _width;
 	int destpitch;
 	BYTE *dest;
@@ -1486,6 +1539,9 @@ void DCanvas::DrawBlock (int x, int y, int _width, int _height, const BYTE *src)
 //
 void DCanvas::GetBlock (int x, int y, int _width, int _height, BYTE *dest) const
 {
+	if (IsBgra())
+		return;
+
 	const BYTE *src;
 
 #ifdef RANGECHECK 

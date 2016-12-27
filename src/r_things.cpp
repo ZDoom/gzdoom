@@ -58,13 +58,15 @@
 #include "r_plane.h"
 #include "r_segs.h"
 #include "r_3dfloors.h"
+#include "r_draw_rgba.h"
+#include "r_draw_pal.h"
 #include "v_palette.h"
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
 #include "r_data/voxels.h"
 #include "p_local.h"
 #include "p_maputl.h"
-#include "r_thread.h"
+#include "r_voxel.h"
 
 EXTERN_CVAR(Bool, st_scale)
 EXTERN_CVAR(Bool, r_shadercolormaps)
@@ -72,9 +74,10 @@ EXTERN_CVAR(Int, r_drawfuzz)
 EXTERN_CVAR(Bool, r_deathcamera);
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_drawvoxels)
+EXTERN_CVAR(Bool, r_blendmethod)
 
 CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-//CVAR(Bool, r_splitsprites, true, CVAR_ARCHIVE)
+CVAR(Bool, r_splitsprites, true, CVAR_ARCHIVE)
 
 namespace swrenderer
 {
@@ -140,6 +143,7 @@ FTexture		*WallSpriteTile;
 //	used for psprite clipping and initializing clipping
 short			zeroarray[MAXWIDTH];
 short			screenheightarray[MAXWIDTH];
+
 
 //
 // INITIALIZATION FUNCTIONS
@@ -256,12 +260,137 @@ double	 		sprtopscreen;
 
 bool			sprflipvert;
 
-void R_DrawMaskedColumn (FTexture *tex, fixed_t col, bool useRt, bool unmasked)
+void R_DrawMaskedColumnBgra(FTexture *tex, fixed_t col, bool unmasked)
 {
+	fixed_t saved_iscale = dc_iscale; // Save this because we need to modify it for mipmaps
+
+	// Normalize to 0-1 range:
+	double uv_stepd = FIXED2DBL(dc_iscale);
+	double v_step = uv_stepd / tex->GetHeight();
+
+	// Convert to uint32:
+	dc_iscale = (uint32_t)(v_step * (1 << 30));
+
+	// Texture mipmap and filter selection:
+	fixed_t xoffset = col;
+
+	double xmagnitude = 1.0; // To do: pass this into R_DrawMaskedColumn
+	double ymagnitude = fabs(uv_stepd);
+	double magnitude = MAX(ymagnitude, xmagnitude);
+	double min_lod = -1000.0;
+	double lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
+	bool magnifying = lod < 0.0f;
+
+	int mipmap_offset = 0;
+	int mip_width = tex->GetWidth();
+	int mip_height = tex->GetHeight();
+	uint32_t xpos = (uint32_t)((((uint64_t)xoffset) << FRACBITS) / mip_width);
+	if (r_mipmap && tex->Mipmapped() && mip_width > 1 && mip_height > 1)
+	{
+		int level = (int)lod;
+		while (level > 0 && mip_width > 1 && mip_height > 1)
+		{
+			mipmap_offset += mip_width * mip_height;
+			level--;
+			mip_width = MAX(mip_width >> 1, 1);
+			mip_height = MAX(mip_height >> 1, 1);
+		}
+	}
+	xoffset = (xpos >> FRACBITS) * mip_width;
+
+	const uint32_t *pixels = tex->GetPixelsBgra() + mipmap_offset;
+
+	bool filter_nearest = (magnifying && !r_magfilter) || (!magnifying && !r_minfilter);
+	if (filter_nearest)
+	{
+		xoffset = MAX(MIN(xoffset, (mip_width << FRACBITS) - 1), 0);
+
+		int tx = xoffset >> FRACBITS;
+		dc_source = (BYTE*)(pixels + tx * mip_height);
+		dc_source2 = nullptr;
+		dc_textureheight = mip_height;
+		dc_texturefracx = 0;
+	}
+	else
+	{
+		xoffset = MAX(MIN(xoffset - (FRACUNIT / 2), (mip_width << FRACBITS) - 1), 0);
+
+		int tx0 = xoffset >> FRACBITS;
+		int tx1 = MIN(tx0 + 1, mip_width - 1);
+		dc_source = (BYTE*)(pixels + tx0 * mip_height);
+		dc_source2 = (BYTE*)(pixels + tx1 * mip_height);
+		dc_textureheight = mip_height;
+		dc_texturefracx = (xoffset >> (FRACBITS - 4)) & 15;
+	}
+
+	// Grab the posts we need to draw
+	const FTexture::Span *span;
+	tex->GetColumnBgra(col >> FRACBITS, &span);
+	FTexture::Span unmaskedSpan[2];
+	if (unmasked)
+	{
+		span = unmaskedSpan;
+		unmaskedSpan[0].TopOffset = 0;
+		unmaskedSpan[0].Length = tex->GetHeight();
+		unmaskedSpan[1].TopOffset = 0;
+		unmaskedSpan[1].Length = 0;
+	}
+
+	// Draw each span post
+	while (span->Length != 0)
+	{
+		const int length = span->Length;
+		const int top = span->TopOffset;
+
+		// calculate unclipped screen coordinates for post
+		dc_yl = (int)(sprtopscreen + spryscale * top + 0.5);
+		dc_yh = (int)(sprtopscreen + spryscale * (top + length) + 0.5) - 1;
+
+		if (sprflipvert)
+		{
+			swapvalues(dc_yl, dc_yh);
+		}
+
+		if (dc_yh >= mfloorclip[dc_x])
+		{
+			dc_yh = mfloorclip[dc_x] - 1;
+		}
+		if (dc_yl < mceilingclip[dc_x])
+		{
+			dc_yl = mceilingclip[dc_x];
+		}
+
+		if (dc_yl <= dc_yh)
+		{
+			dc_dest = (ylookup[dc_yl] + dc_x) * 4 + dc_destorg;
+			dc_count = dc_yh - dc_yl + 1;
+
+			double v = ((dc_yl + 0.5 - sprtopscreen) / spryscale) / tex->GetHeight();
+			dc_texturefrac = (uint32_t)(v * (1 << 30));
+
+			colfunc();
+		}
+		span++;
+	}
+
+	dc_iscale = saved_iscale;
+}
+
+void R_DrawMaskedColumn (FTexture *tex, fixed_t col, bool unmasked)
+{
+	// Handle the linear filtered version in a different function to reduce chances of merge conflicts from zdoom.
+	if (r_swtruecolor && !drawer_needs_pal_input) // To do: add support to R_DrawColumnHoriz_rgba
+	{
+		R_DrawMaskedColumnBgra(tex, col, unmasked);
+		return;
+	}
+
 	const FTexture::Span *span;
 	const BYTE *column;
-
-	column = tex->GetColumn(col >> FRACBITS, &span);
+	if (r_swtruecolor && !drawer_needs_pal_input)
+		column = (const BYTE *)tex->GetColumnBgra(col >> FRACBITS, &span);
+	else
+		column = tex->GetColumn(col >> FRACBITS, &span);
 
 	FTexture::Span unmaskedSpan[2];
 	if (unmasked)
@@ -272,6 +401,8 @@ void R_DrawMaskedColumn (FTexture *tex, fixed_t col, bool useRt, bool unmasked)
 		unmaskedSpan[1].TopOffset = 0;
 		unmaskedSpan[1].Length = 0;
 	}
+
+	int pixelsize = r_swtruecolor ? 4 : 1;
 
 	while (span->Length != 0)
 	{
@@ -300,7 +431,8 @@ void R_DrawMaskedColumn (FTexture *tex, fixed_t col, bool useRt, bool unmasked)
 		{
 			dc_texturefrac = FLOAT2FIXED((dc_yl + 0.5 - sprtopscreen) / spryscale);
 			dc_source = column;
-			dc_dest = (ylookup[dc_yl] + dc_x) + dc_destorg;
+			dc_source2 = nullptr;
+			dc_dest = (ylookup[dc_yl] + dc_x) * pixelsize + dc_destorg;
 			dc_count = dc_yh - dc_yl + 1;
 
 			fixed_t maxfrac = ((top + length) << FRACBITS) - 1;
@@ -311,16 +443,10 @@ void R_DrawMaskedColumn (FTexture *tex, fixed_t col, bool useRt, bool unmasked)
 			else if (dc_iscale < 0)
 				dc_count = MIN(dc_count, (dc_texturefrac - dc_iscale) / (-dc_iscale));
 
-			if (useRt)
-				hcolfunc_pre();
-			else
-				colfunc ();
+			colfunc ();
 		}
 		span++;
 	}
-
-	if (sprflipvert && useRt)
-		rt_flip_posts();
 }
 
 // [ZZ]
@@ -394,9 +520,8 @@ void R_DrawVisSprite (vissprite_t *vis)
 {
 	fixed_t 		frac;
 	FTexture		*tex;
-	int				x2, stop4;
+	int				x2;
 	fixed_t			xiscale;
-	ESPSResult		mode;
 	bool			ispsprite = (!vis->sector && vis->gpos != FVector3(0, 0, 0));
 
 	if (vis->xscale == 0 || fabs(vis->yscale) < (1.0f / 32000.0f))
@@ -405,30 +530,19 @@ void R_DrawVisSprite (vissprite_t *vis)
 	}
 
 	fixed_t centeryfrac = FLOAT2FIXED(CenterY);
-	R_SetColorMapLight(vis->Style.colormap, 0.0f, 0);
+	R_SetColorMapLight(vis->Style.BaseColormap, 0, vis->Style.ColormapNum << FRACBITS);
 
-	mode = R_SetPatchStyle (vis->Style.RenderStyle, vis->Style.Alpha, vis->Translation, vis->FillColor);
+	bool visible = R_SetPatchStyle (vis->Style.RenderStyle, vis->Style.Alpha, vis->Translation, vis->FillColor);
 
 	if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Shaded])
 	{ // For shaded sprites, R_SetPatchStyle sets a dc_colormap to an alpha table, but
 	  // it is the brightest one. We need to get back to the proper light level for
 	  // this sprite.
-		R_SetColorMapLight(dc_colormap, 0, vis->ColormapNum << FRACBITS);
+		R_SetColorMapLight(dc_fcolormap, 0, vis->Style.ColormapNum << FRACBITS);
 	}
 
-	if (mode != DontDraw)
+	if (visible)
 	{
-		if (mode == DoDraw0)
-		{
-			// One column at a time
-			stop4 = vis->x1;
-		}
-		else	 // DoDraw1
-		{
-			// Up to four columns at a time
-			stop4 = vis->x2 & ~3;
-		}
-
 		tex = vis->pic;
 		spryscale = vis->yscale;
 		sprflipvert = false;
@@ -456,27 +570,6 @@ void R_DrawVisSprite (vissprite_t *vis)
 
 		if (dc_x < x2)
 		{
-			while ((dc_x < stop4) && (dc_x & 3))
-			{
-				if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-					R_DrawMaskedColumn (tex, frac, false);
-				dc_x++;
-				frac += xiscale;
-			}
-
-			while (dc_x < stop4)
-			{
-				rt_initcols(nullptr);
-				for (int zz = 4; zz; --zz)
-				{
-					if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-						R_DrawMaskedColumn (tex, frac, true);
-					dc_x++;
-					frac += xiscale;
-				}
-				rt_draw4cols (dc_x - 4);
-			}
-
 			while (dc_x < x2)
 			{
 				if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
@@ -556,9 +649,8 @@ void R_DrawWallSprite(vissprite_t *spr)
 	MaskedScaleY = (float)iyscale;
 
 	dc_x = x1;
-	ESPSResult mode;
 
-	mode = R_SetPatchStyle (spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
+	bool visible = R_SetPatchStyle (spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
 
 	// R_SetPatchStyle can modify basecolormap.
 	if (rereadcolormap)
@@ -566,50 +658,12 @@ void R_DrawWallSprite(vissprite_t *spr)
 		usecolormap = basecolormap;
 	}
 
-	if (mode == DontDraw)
+	if (!visible)
 	{
 		return;
 	}
 	else
 	{
-		int stop4;
-
-		if (mode == DoDraw0)
-		{ // 1 column at a time
-			stop4 = dc_x;
-		}
-		else	 // DoDraw1
-		{ // up to 4 columns at a time
-			stop4 = x2 & ~3;
-		}
-
-		while ((dc_x < stop4) && (dc_x & 3))
-		{
-			if (calclighting)
-			{ // calculate lighting
-				R_SetColorMapLight(usecolormap, rw_light, shade);
-			}
-			if (!R_ClipSpriteColumnWithPortals(spr))
-				R_WallSpriteColumn(false);
-			dc_x++;
-		}
-
-		while (dc_x < stop4)
-		{
-			if (calclighting)
-			{ // calculate lighting
-				R_SetColorMapLight(usecolormap, rw_light, shade);
-			}
-			rt_initcols(nullptr);
-			for (int zz = 4; zz; --zz)
-			{
-				if (!R_ClipSpriteColumnWithPortals(spr))
-					R_WallSpriteColumn(true);
-				dc_x++;
-			}
-			rt_draw4cols(dc_x - 4);
-		}
-
 		while (dc_x < x2)
 		{
 			if (calclighting)
@@ -617,14 +671,14 @@ void R_DrawWallSprite(vissprite_t *spr)
 				R_SetColorMapLight(usecolormap, rw_light, shade);
 			}
 			if (!R_ClipSpriteColumnWithPortals(spr))
-				R_WallSpriteColumn(false);
+				R_WallSpriteColumn();
 			dc_x++;
 		}
 	}
 	R_FinishSetPatchStyle();
 }
 
-void R_WallSpriteColumn (bool useRt)
+void R_WallSpriteColumn ()
 {
 	float iscale = swall[dc_x] * MaskedScaleY;
 	dc_iscale = FLOAT2FIXED(iscale);
@@ -635,20 +689,20 @@ void R_WallSpriteColumn (bool useRt)
 		sprtopscreen = CenterY - dc_texturemid * spryscale;
 
 	dc_texturefrac = 0;
-	R_DrawMaskedColumn(WallSpriteTile, lwall[dc_x], useRt);
+	R_DrawMaskedColumn(WallSpriteTile, lwall[dc_x]);
 	rw_light += rw_lightstep;
 }
 
+#if 0
 void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop, short *clipbot)
 {
-	ESPSResult mode;
 	int flags = 0;
 
 	// Do setup for blending.
-	R_SetColorMapLight(spr->Style.colormap, 0.0f, 0);
-	mode = R_SetPatchStyle(spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
+	R_SetColorMapLight(spr->Style.BaseColormap, 0, spr->Style.ColormapNum << FRACBITS);
+	bool visible = R_SetPatchStyle(spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
 
-	if (mode == DontDraw)
+	if (!visible)
 	{
 		return;
 	}
@@ -671,12 +725,13 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 
 	// Render the voxel, either directly to the screen or offscreen.
 	R_DrawVoxel(spr->pa.vpos, spr->pa.vang, spr->gpos, spr->Angle,
-		spr->xscale, FLOAT2FIXED(spr->yscale), spr->voxel, spr->Style.colormap, cliptop, clipbot,
+		spr->xscale, FLOAT2FIXED(spr->yscale), spr->voxel, spr->Style.BaseColormap, spr->Style.ColormapNum, cliptop, clipbot,
 		minslabz, maxslabz, flags);
 
 	// Blend the voxel, if that's what we need to do.
 	if ((flags & ~DVF_MIRRORED) != 0)
 	{
+		int pixelsize = r_swtruecolor ? 4 : 1;
 		for (int x = 0; x < viewwidth; ++x)
 		{
 			if (!(flags & DVF_SPANSONLY) && (x & 3) == 0)
@@ -691,7 +746,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 					dc_yl = span->Start;
 					dc_yh = span->Stop - 1;
 					dc_count = span->Stop - span->Start;
-					dc_dest = ylookup[span->Start] + x + dc_destorg;
+					dc_dest = (ylookup[span->Start] + x) * pixelsize + dc_destorg;
 					colfunc();
 				}
 				else
@@ -709,6 +764,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 	R_FinishSetPatchStyle();
 	NetUpdate();
 }
+#endif
 
 //
 // R_ProjectSprite
@@ -1057,7 +1113,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	vis->Style.Alpha = float(thing->Alpha);
 	vis->fakefloor = fakefloor;
 	vis->fakeceiling = fakeceiling;
-	vis->ColormapNum = 0;
+	vis->Style.ColormapNum = 0;
 	vis->bInMirror = MirrorFlags & RF_XFLIP;
 	vis->bSplitSprite = false;
 
@@ -1113,7 +1169,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	// get light level
 	if (fixedcolormap != NULL)
 	{ // fixed map
-		vis->Style.colormap = fixedcolormap;
+		vis->Style.BaseColormap = fixedcolormap;
+		vis->Style.ColormapNum = 0;
 	}
 	else
 	{
@@ -1123,17 +1180,19 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		}
 		if (fixedlightlev >= 0)
 		{
-			vis->Style.colormap = mybasecolormap->Maps + fixedlightlev;
+			vis->Style.BaseColormap = mybasecolormap;
+			vis->Style.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
 		}
 		else if (!foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
 		{ // full bright
-			vis->Style.colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : mybasecolormap->Maps;
+			vis->Style.BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
+			vis->Style.ColormapNum = 0;
 		}
 		else
 		{ // diminished light
-			vis->ColormapNum = GETPALOOKUP(
+			vis->Style.ColormapNum = GETPALOOKUP(
 				r_SpriteVisibility / MAX(tz, MINZ), spriteshade);
-			vis->Style.colormap = mybasecolormap->Maps + (vis->ColormapNum << COLORMAPSHIFT);
+			vis->Style.BaseColormap = mybasecolormap;
 		}
 	}
 }
@@ -1202,14 +1261,13 @@ static void R_ProjectWallSprite(AActor *thing, const DVector3 &pos, FTextureID p
 	vis->Style.Alpha = float(thing->Alpha);
 	vis->fakefloor = NULL;
 	vis->fakeceiling = NULL;
-	vis->ColormapNum = 0;
 	vis->bInMirror = MirrorFlags & RF_XFLIP;
 	vis->pic = pic;
 	vis->bIsVoxel = false;
 	vis->bWallSprite = true;
-	vis->ColormapNum = GETPALOOKUP(
+	vis->Style.ColormapNum = GETPALOOKUP(
 		r_SpriteVisibility / MAX(tz, MINZ), spriteshade);
-	vis->Style.colormap = basecolormap->Maps + (vis->ColormapNum << COLORMAPSHIFT);
+	vis->Style.BaseColormap = basecolormap;
 	vis->wallc = wallc;
 }
 
@@ -1393,7 +1451,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	vis->yscale = float(pspriteyscale / tex->Scale.Y);
 	vis->Translation = 0;		// [RH] Use default colors
 	vis->pic = tex;
-	vis->ColormapNum = 0;
+	vis->Style.ColormapNum = 0;
 
 	// If flip is used, provided that it's not already flipped (that would just invert itself)
 	// (It's an XOR...)
@@ -1549,9 +1607,10 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 			}
 		}
 
-		if (realfixedcolormap != nullptr)
+		if (realfixedcolormap != nullptr && (!r_swtruecolor || (r_shadercolormaps && screen->Accel2D)))
 		{ // fixed color
-			vis->Style.colormap = realfixedcolormap->Colormap;
+			vis->Style.BaseColormap = realfixedcolormap;
+			vis->Style.ColormapNum = 0;
 		}
 		else
 		{
@@ -1561,35 +1620,38 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 			}
 			if (fixedlightlev >= 0)
 			{
-				vis->Style.colormap = (r_fullbrightignoresectorcolor) ? (FullNormalLight.Maps + fixedlightlev) : (mybasecolormap->Maps + fixedlightlev);
+				vis->Style.BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
+				vis->Style.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
 			}
 			else if (!foggy && pspr->GetState()->GetFullbright())
 			{ // full bright
-				vis->Style.colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : mybasecolormap->Maps;	// [RH] use basecolormap
+				vis->Style.BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;	// [RH] use basecolormap
+				vis->Style.ColormapNum = 0;
 			}
 			else
 			{ // local light
-				vis->Style.colormap = mybasecolormap->Maps + (GETPALOOKUP(0, spriteshade) << COLORMAPSHIFT);
+				vis->Style.BaseColormap = mybasecolormap;
+				vis->Style.ColormapNum = GETPALOOKUP(0, spriteshade);
 			}
 		}
 		if (camera->Inventory != nullptr)
 		{
-			lighttable_t *oldcolormap = vis->Style.colormap;
-			camera->Inventory->AlterWeaponSprite(&vis->Style);
-			if (vis->Style.colormap != oldcolormap)
+			BYTE oldcolormapnum = vis->Style.ColormapNum;
+			FSWColormap *oldcolormap = vis->Style.BaseColormap;
+			camera->Inventory->AlterWeaponSprite (&vis->Style);
+			if (vis->Style.BaseColormap != oldcolormap || vis->Style.ColormapNum != oldcolormapnum)
 			{
 				// The colormap has changed. Is it one we can easily identify?
 				// If not, then don't bother trying to identify it for
 				// hardware accelerated drawing.
-				if (vis->Style.colormap < SpecialColormaps[0].Colormap ||
-					vis->Style.colormap > SpecialColormaps.Last().Colormap)
+				if (vis->Style.BaseColormap < &SpecialColormaps[0] ||
+					vis->Style.BaseColormap > &SpecialColormaps.Last())
 				{
 					noaccel = true;
 				}
 				// Has the basecolormap changed? If so, we can't hardware accelerate it,
 				// since we don't know what it is anymore.
-				else if (vis->Style.colormap < mybasecolormap->Maps ||
-					vis->Style.colormap >= mybasecolormap->Maps + NUMCOLORMAPS * 256)
+				else if (vis->Style.BaseColormap != mybasecolormap)
 				{
 					noaccel = true;
 				}
@@ -1597,13 +1659,13 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 		}
 		// If we're drawing with a special colormap, but shaders for them are disabled, do
 		// not accelerate.
-		if (!r_shadercolormaps && (vis->Style.colormap >= SpecialColormaps[0].Colormap &&
-			vis->Style.colormap <= SpecialColormaps.Last().Colormap))
+		if (!r_shadercolormaps && (vis->Style.BaseColormap >= &SpecialColormaps[0] &&
+			vis->Style.BaseColormap <= &SpecialColormaps.Last()))
 		{
 			noaccel = true;
 		}
 		// If drawing with a BOOM colormap, disable acceleration.
-		if (mybasecolormap == &NormalLight && NormalLight.Maps != realcolormaps)
+		if (mybasecolormap == &NormalLight && NormalLight.Maps != realcolormaps.Maps)
 		{
 			noaccel = true;
 		}
@@ -1625,7 +1687,9 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	else
 	{
 		colormap_to_use = basecolormap;
-		vis->Style.colormap = basecolormap->Maps;
+
+		vis->Style.BaseColormap = basecolormap;
+		vis->Style.ColormapNum = 0;
 	}
 
 	// Check for hardware-assisted 2D. If it's available, and this sprite is not
@@ -1797,18 +1861,16 @@ void R_DrawRemainingPlayerSprites()
 		FColormapStyle colormapstyle;
 		bool usecolormapstyle = false;
 
-		if (vis->Style.colormap >= SpecialColormaps[0].Colormap && 
-			vis->Style.colormap < SpecialColormaps[SpecialColormaps.Size()].Colormap)
+		if (vis->Style.BaseColormap >= &SpecialColormaps[0] && 
+			vis->Style.BaseColormap < &SpecialColormaps[SpecialColormaps.Size()])
 		{
-			// Yuck! There needs to be a better way to store colormaps in the vissprite... :(
-			ptrdiff_t specialmap = (vis->Style.colormap - SpecialColormaps[0].Colormap) / sizeof(FSpecialColormap);
-			special = &SpecialColormaps[specialmap];
+			special = static_cast<FSpecialColormap*>(vis->Style.BaseColormap);
 		}
 		else if (colormap->Color == PalEntry(255,255,255) &&
 			colormap->Desaturate == 0)
 		{
 			overlay = colormap->Fade;
-			overlay.a = BYTE(((vis->Style.colormap - colormap->Maps) >> 8) * 255 / NUMCOLORMAPS);
+			overlay.a = BYTE(vis->Style.ColormapNum * 255 / NUMCOLORMAPS);
 		}
 		else
 		{
@@ -1816,7 +1878,7 @@ void R_DrawRemainingPlayerSprites()
 			colormapstyle.Color = colormap->Color;
 			colormapstyle.Fade = colormap->Fade;
 			colormapstyle.Desaturate = colormap->Desaturate;
-			colormapstyle.FadeLevel = ((vis->Style.colormap - colormap->Maps) >> 8) / float(NUMCOLORMAPS);
+			colormapstyle.FadeLevel = vis->Style.ColormapNum / float(NUMCOLORMAPS);
 		}
 		screen->DrawTexture(vis->pic,
 			viewwindowx + vispsprites[i].x1,
@@ -2059,7 +2121,8 @@ void R_DrawSprite (vissprite_t *spr)
 	int r1, r2;
 	short topclip, botclip;
 	short *clip1, *clip2;
-	lighttable_t *colormap = spr->Style.colormap;
+	FSWColormap *colormap = spr->Style.BaseColormap;
+	int colormapnum = spr->Style.ColormapNum;
 	F3DFloor *rover;
 	FDynamicColormap *mybasecolormap;
 
@@ -2156,17 +2219,19 @@ void R_DrawSprite (vissprite_t *spr)
 			}
 			if (fixedlightlev >= 0)
 			{
-				spr->Style.colormap = mybasecolormap->Maps + fixedlightlev;
+				spr->Style.BaseColormap = mybasecolormap;
+				spr->Style.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
 			}
 			else if (!foggy && (spr->renderflags & RF_FULLBRIGHT))
 			{ // full bright
-				spr->Style.colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : mybasecolormap->Maps;
+				spr->Style.BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : mybasecolormap;
+				spr->Style.ColormapNum = 0;
 			}
 			else
 			{ // diminished light
 				spriteshade = LIGHT2SHADE(sec->lightlevel + r_actualextralight);
-				spr->Style.colormap = mybasecolormap->Maps + (GETPALOOKUP(
-					r_SpriteVisibility / MAX(MINZ, (double)spr->depth), spriteshade) << COLORMAPSHIFT);
+				spr->Style.BaseColormap = mybasecolormap;
+				spr->Style.ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(MINZ, (double)spr->depth), spriteshade);
 			}
 		}
 	}
@@ -2314,7 +2379,8 @@ void R_DrawSprite (vissprite_t *spr)
 
 	if (topclip >= botclip)
 	{
-		spr->Style.colormap = colormap;
+		spr->Style.BaseColormap = colormap;
+		spr->Style.ColormapNum = colormapnum;
 		return;
 	}
 
@@ -2444,7 +2510,8 @@ void R_DrawSprite (vissprite_t *spr)
 			}
 			if (i == x2)
 			{
-				spr->Style.colormap = colormap;
+				spr->Style.BaseColormap = colormap;
+				spr->Style.ColormapNum = colormapnum;
 				return;
 			}
 		}
@@ -2462,7 +2529,8 @@ void R_DrawSprite (vissprite_t *spr)
 		int maxvoxely = spr->gzb > hzb ? INT_MAX : xs_RoundToInt((spr->gzt - hzb) / spr->yscale);
 		R_DrawVisVoxel(spr, minvoxely, maxvoxely, cliptop, clipbot);
 	}
-	spr->Style.colormap = colormap;
+	spr->Style.BaseColormap = colormap;
+	spr->Style.ColormapNum = colormapnum;
 }
 
 // kg3D:
@@ -2579,7 +2647,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	int 				x1, x2, y1, y2;
 	vissprite_t*		vis;
 	sector_t*			heightsec = NULL;
-	BYTE*				map;
+	FSWColormap*			map;
 
 	// [ZZ] Particle not visible through the portal plane
 	if (CurrentPortal && !!P_PointOnLineSide(particle->Pos, CurrentPortal->dst))
@@ -2619,7 +2687,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	if (x1 >= x2)
 		return;
 
-	yscale = YaspectMul * xscale;
+	yscale = xscale; // YaspectMul is not needed for particles as they should always be square
 	ty = particle->Pos.Z - ViewPos.Z;
 	y1 = xs_RoundToInt(CenterY - (ty + psize) * yscale);
 	y2 = xs_RoundToInt(CenterY - (ty - psize) * yscale);
@@ -2652,7 +2720,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 			botplane = &heightsec->ceilingplane;
 			toppic = sector->GetTexture(sector_t::ceiling);
 			botpic = heightsec->GetTexture(sector_t::ceiling);
-			map = heightsec->ColorMap->Maps;
+			map = heightsec->ColorMap;
 		}
 		else if (fakeside == FAKED_BelowFloor)
 		{
@@ -2660,7 +2728,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 			botplane = &sector->floorplane;
 			toppic = heightsec->GetTexture(sector_t::floor);
 			botpic = sector->GetTexture(sector_t::floor);
-			map = heightsec->ColorMap->Maps;
+			map = heightsec->ColorMap;
 		}
 		else
 		{
@@ -2668,7 +2736,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 			botplane = &heightsec->floorplane;
 			toppic = heightsec->GetTexture(sector_t::ceiling);
 			botpic = heightsec->GetTexture(sector_t::floor);
-			map = sector->ColorMap->Maps;
+			map = sector->ColorMap;
 		}
 	}
 	else
@@ -2677,7 +2745,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 		botplane = &sector->floorplane;
 		toppic = sector->GetTexture(sector_t::ceiling);
 		botpic = sector->GetTexture(sector_t::floor);
-		map = sector->ColorMap->Maps;
+		map = sector->ColorMap;
 	}
 
 	if (botpic != skyflatnum && particle->Pos.Z < botplane->ZatPoint (particle->Pos))
@@ -2706,25 +2774,28 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	vis->renderflags = particle->trans;
 	vis->FakeFlatStat = fakeside;
 	vis->floorclip = 0;
-	vis->ColormapNum = 0;
+	vis->Style.ColormapNum = 0;
 
 	if (fixedlightlev >= 0)
 	{
-		vis->Style.colormap = map + fixedlightlev;
+		vis->Style.BaseColormap = map;
+		vis->Style.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
 	}
 	else if (fixedcolormap)
 	{
-		vis->Style.colormap = fixedcolormap;
+		vis->Style.BaseColormap = fixedcolormap;
+		vis->Style.ColormapNum = 0;
 	}
 	else if (particle->bright)
 	{
-		vis->Style.colormap = (r_fullbrightignoresectorcolor) ? FullNormalLight.Maps : map;
+		vis->Style.BaseColormap = (r_fullbrightignoresectorcolor) ? &FullNormalLight : map;
+		vis->Style.ColormapNum = 0;
 	}
 	else
 	{
 		// Particles are slightly more visible than regular sprites.
-		vis->ColormapNum = GETPALOOKUP(tiz * r_SpriteVisibility * 0.5, shade);
-		vis->Style.colormap = map + (vis->ColormapNum << COLORMAPSHIFT);
+		vis->Style.ColormapNum = GETPALOOKUP(tiz * r_SpriteVisibility * 0.5, shade);
+		vis->Style.BaseColormap = map;
 	}
 }
 
@@ -2753,69 +2824,51 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 	}
 }
 
-void R_DrawParticle_C (vissprite_t *vis)
+void R_DrawParticle(vissprite_t *vis)
 {
-	DWORD *bg2rgb;
 	int spacing;
-	BYTE *dest;
-	DWORD fg;
-	BYTE color = vis->Style.colormap[vis->startfrac];
+	BYTE color = vis->Style.BaseColormap->Maps[vis->startfrac];
 	int yl = vis->y1;
 	int ycount = vis->y2 - yl + 1;
 	int x1 = vis->x1;
 	int countbase = vis->x2 - x1;
 
-	R_DrawMaskedSegsBehindParticle (vis);
+	if (ycount <= 0 || countbase <= 0)
+		return;
 
-	DrawerCommandQueue::WaitForWorkers();
+	R_DrawMaskedSegsBehindParticle(vis);
+	
+	uint32_t fg = LightBgra::shade_pal_index_simple(color, LightBgra::calc_light_multiplier(LIGHTSCALE(0, vis->Style.ColormapNum << FRACBITS)));
 
 	// vis->renderflags holds translucency level (0-255)
-	{
-		fixed_t fglevel, bglevel;
-		DWORD *fg2rgb;
-
-		fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
-		bglevel = FRACUNIT-fglevel;
-		fg2rgb = Col2RGB8[fglevel>>10];
-		bg2rgb = Col2RGB8[bglevel>>10];
-		fg = fg2rgb[color];
-	}
-
-	/*
-
-	spacing = RenderTarget->GetPitch() - countbase;
-	dest = ylookup[yl] + x1 + dc_destorg;
-
-	do
-	{
-		int count = countbase;
-		do
-		{
-			DWORD bg = bg2rgb[*dest];
-			bg = (fg+bg) | 0x1f07c1f;
-			*dest++ = RGB32k.All[bg & (bg>>15)];
-		} while (--count);
-		dest += spacing;
-	} while (--ycount);*/
-
-	// original was row-wise
-	// width = countbase
-	// height = ycount
+	fixed_t fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
+	uint32_t alpha = fglevel * 256 / FRACUNIT;
 
 	spacing = RenderTarget->GetPitch();
 
-	for (int x = x1; x < (x1+countbase); x++)
+	uint32_t fracstepx = 16 * FRACUNIT / countbase;
+	uint32_t fracposx = fracstepx / 2;
+
+	if (r_swtruecolor)
 	{
-		dc_x = x;
-		if (R_ClipSpriteColumnWithPortals(vis))
-			continue;
-		dest = ylookup[yl] + x + dc_destorg;
-		for (int y = 0; y < ycount; y++)
+		for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
 		{
-			DWORD bg = bg2rgb[*dest];
-			bg = (fg+bg) | 0x1f07c1f;
-			*dest = RGB32k.All[bg & (bg>>15)];
-			dest += spacing;
+			dc_x = x;
+			if (R_ClipSpriteColumnWithPortals(vis))
+				continue;
+			uint32_t *dest = ylookup[yl] + x + (uint32_t*)dc_destorg;
+			DrawerCommandQueue::QueueCommand<DrawParticleColumnRGBACommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);
+		}
+	}
+	else
+	{
+		for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
+		{
+			dc_x = x;
+			if (R_ClipSpriteColumnWithPortals(vis))
+				continue;
+			uint8_t *dest = ylookup[yl] + x + dc_destorg;
+			DrawerCommandQueue::QueueCommand<DrawParticleColumnPalCommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);
 		}
 	}
 }
@@ -2827,10 +2880,11 @@ inline int sgn(int v)
 	return v < 0 ? -1 : v > 0 ? 1 : 0;
 }
 
+#if 0
 void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 	const FVector3 &dasprpos, DAngle dasprang,
 	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
-	lighttable_t *colormap, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags)
+	FSWColormap *colormap, int colormapnum, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags)
 {
 	int i, j, k, x, y, syoff, ggxstart, ggystart, nxoff;
 	fixed_t cosang, sinang, sprcosang, sprsinang;
@@ -2872,7 +2926,9 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 	sprcosang = FLOAT2FIXED(dasprang.Cos()) >> 2;
 	sprsinang = FLOAT2FIXED(-dasprang.Sin()) >> 2;
 
-	R_SetupDrawSlab(colormap);
+	R_SetupDrawSlab(colormap, 0.0f, colormapnum << FRACBITS);
+
+	int pixelsize = r_swtruecolor ? 4 : 1;
 
 	// Select mip level
 	i = abs(DMulScale6(dasprx - globalposx, cosang, daspry - globalposy, sinang));
@@ -3127,7 +3183,7 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 							if (!(flags & DVF_OFFSCREEN))
 							{
 								// Draw directly to the screen.
-								R_DrawSlab(xxr - xxl, yplc[xxl], z2 - z1, yinc, col, ylookup[z1] + lxt + xxl + dc_destorg);
+								R_DrawSlab(xxr - xxl, yplc[xxl], z2 - z1, yinc, col, (ylookup[z1] + lxt + xxl) * pixelsize + dc_destorg);
 							}
 							else
 							{
@@ -3144,6 +3200,7 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 										dc_x = lxt + x;
 										rt_initcols(OffscreenColorBuffer + (dc_x & ~3) * OffscreenBufferHeight);
 										dc_source = col;
+										dc_source2 = nullptr;
 										dc_texturefrac = yplc[xxl];
 										hcolfunc_pre();
 									}
@@ -3157,6 +3214,7 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 		}
 	}
 }
+#endif
 
 //==========================================================================
 //
@@ -3358,12 +3416,12 @@ void R_CheckOffscreenBuffer(int width, int height, bool spansonly)
 	{
 		if (OffscreenColorBuffer == NULL)
 		{
-			OffscreenColorBuffer = new BYTE[width * height];
+			OffscreenColorBuffer = new BYTE[width * height * 4];
 		}
 		else if (OffscreenBufferWidth != width || OffscreenBufferHeight != height)
 		{
 			delete[] OffscreenColorBuffer;
-			OffscreenColorBuffer = new BYTE[width * height];
+			OffscreenColorBuffer = new BYTE[width * height * 4];
 		}
 	}
 	OffscreenBufferWidth = width;

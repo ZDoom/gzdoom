@@ -40,6 +40,7 @@
 #include "r_segs.h"
 #include "r_3dfloors.h"
 #include "r_sky.h"
+#include "r_draw_rgba.h"
 #include "st_stuff.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
@@ -58,22 +59,11 @@
 #include "v_font.h"
 #include "r_data/colormaps.h"
 #include "p_maputl.h"
-#include "r_thread.h"
+#include "p_setup.h"
+#include "version.h"
 
 CVAR (String, r_viewsize, "", CVAR_NOSET)
 CVAR (Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
-
-CUSTOM_CVAR (Int, r_columnmethod, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self != 0 && self != 1)
-	{
-		self = 1;
-	}
-	else
-	{ // Trigger the change
-		setsizeneeded = true;
-	}
-}
 
 CVAR(Int, r_portal_recursions, 4, CVAR_ARCHIVE)
 CVAR(Bool, r_highlight_portals, false, CVAR_ARCHIVE)
@@ -85,11 +75,8 @@ extern cycle_t FrameCycles;
 
 extern bool r_showviewer;
 
-cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
-
 namespace swrenderer
 {
-	using namespace drawerargs;
 
 // MACROS ------------------------------------------------------------------
 
@@ -131,6 +118,8 @@ bool r_dontmaplines;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+bool			r_swtruecolor;
+
 double			r_BaseVisibility;
 double			r_WallVisibility;
 double			r_FloorVisibility;
@@ -144,7 +133,7 @@ double			FocalLengthX;
 double			FocalLengthY;
 FDynamicColormap*basecolormap;		// [RH] colormap currently drawing with
 int				fixedlightlev;
-lighttable_t	*fixedcolormap;
+FSWColormap		*fixedcolormap;
 FSpecialColormap *realfixedcolormap;
 double			WallTMapScale2;
 
@@ -180,10 +169,7 @@ void (*fuzzcolfunc) (void);
 void (*transcolfunc) (void);
 void (*spanfunc) (void);
 
-void (*hcolfunc_pre) (void);
-void (*hcolfunc_post1) (int hx, int sx, int yl, int yh);
-void (*hcolfunc_post2) (int hx, int sx, int yl, int yh);
-void (*hcolfunc_post4) (int sx, int yl, int yh);
+cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -402,16 +388,6 @@ void R_InitRenderer()
 	R_InitPlanes ();
 	R_InitShadeMaps();
 	R_InitColumnDrawers ();
-
-	colfunc = basecolfunc = R_DrawColumn;
-	fuzzcolfunc = R_DrawFuzzColumn;
-	transcolfunc = R_DrawTranslatedColumn;
-	spanfunc = R_DrawSpan;
-
-	// [RH] Horizontal column drawers
-	hcolfunc_pre = R_DrawColumnHoriz;
-	hcolfunc_post1 = rt_map1col;
-	hcolfunc_post4 = rt_map4cols;
 }
 
 //==========================================================================
@@ -472,16 +448,16 @@ void R_SetupColormap(player_t *player)
 		if (player->fixedcolormap >= 0 && player->fixedcolormap < (int)SpecialColormaps.Size())
 		{
 			realfixedcolormap = &SpecialColormaps[player->fixedcolormap];
-			if (RenderTarget == screen && (DFrameBuffer *)screen->Accel2D && r_shadercolormaps)
+			if (RenderTarget == screen && (r_swtruecolor || ((DFrameBuffer *)screen->Accel2D && r_shadercolormaps)))
 			{
 				// Render everything fullbright. The copy to video memory will
 				// apply the special colormap, so it won't be restricted to the
 				// palette.
-				fixedcolormap = realcolormaps;
+				fixedcolormap = &realcolormaps;
 			}
 			else
 			{
-				fixedcolormap = SpecialColormaps[player->fixedcolormap].Colormap;
+				fixedcolormap = &SpecialColormaps[player->fixedcolormap];
 			}
 		}
 		else if (player->fixedlightlevel >= 0 && player->fixedlightlevel < NUMCOLORMAPS)
@@ -490,14 +466,14 @@ void R_SetupColormap(player_t *player)
 			// [SP] Emulate GZDoom's light-amp goggles.
 			if (r_fullbrightignoresectorcolor && fixedlightlev >= 0)
 			{
-				fixedcolormap = FullNormalLight.Maps;
+				fixedcolormap = &FullNormalLight;
 			}
 		}
 	}
 	// [RH] Inverse light for shooting the Sigil
 	if (fixedcolormap == NULL && extralight == INT_MIN)
 	{
-		fixedcolormap = SpecialColormaps[INVERSECOLORMAP].Colormap;
+		fixedcolormap = &SpecialColormaps[INVERSECOLORMAP];
 		extralight = 0;
 	}
 }
@@ -583,6 +559,9 @@ void R_HighlightPortal (PortalDrawseg* pds)
 	// [ZZ] NO OVERFLOW CHECKS HERE
 	//      I believe it won't break. if it does, blame me. :(
 
+	if (r_swtruecolor) // Assuming this is just a debug function
+		return;
+
 	BYTE color = (BYTE)BestColor((DWORD *)GPalette.BaseColors, 255, 0, 0, 0, 255);
 
 	BYTE* pixels = RenderTarget->GetBuffer();
@@ -630,12 +609,26 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 			int Ytop = pds->ceilingclip[x-pds->x1];
 			int Ybottom = pds->floorclip[x-pds->x1];
 
-			BYTE *dest = RenderTarget->GetBuffer() + x + Ytop * spacing;
-
-			for (int y = Ytop; y <= Ybottom; y++)
+			if (r_swtruecolor)
 			{
-				*dest = color;
-				dest += spacing;
+				uint32_t *dest = (uint32_t*)RenderTarget->GetBuffer() + x + Ytop * spacing;
+
+				uint32_t c = GPalette.BaseColors[color].d;
+				for (int y = Ytop; y <= Ybottom; y++)
+				{
+					*dest = c;
+					dest += spacing;
+				}
+			}
+			else
+			{
+				BYTE *dest = RenderTarget->GetBuffer() + x + Ytop * spacing;
+
+				for (int y = Ytop; y <= Ybottom; y++)
+				{
+					*dest = color;
+					dest += spacing;
+				}
 			}
 		}
 
@@ -801,10 +794,13 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 
 void R_SetupBuffer ()
 {
+	using namespace drawerargs;
+
 	static BYTE *lastbuff = NULL;
 
 	int pitch = RenderTarget->GetPitch();
-	BYTE *lineptr = RenderTarget->GetBuffer() + viewwindowy*pitch + viewwindowx;
+	int pixelsize = r_swtruecolor ? 4 : 1;
+	BYTE *lineptr = RenderTarget->GetBuffer() + (viewwindowy*pitch + viewwindowx) * pixelsize;
 
 	if (dc_pitch != pitch || lineptr != lastbuff)
 	{
@@ -814,6 +810,7 @@ void R_SetupBuffer ()
 			R_InitFuzzTable (pitch);
 		}
 		dc_destorg = lineptr;
+		dc_destheight = RenderTarget->GetHeight() - viewwindowy;
 		for (int i = 0; i < RenderTarget->GetHeight(); i++)
 		{
 			ylookup[i] = i * pitch;
@@ -851,17 +848,11 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	// [RH] Show off segs if r_drawflat is 1
 	if (r_drawflat)
 	{
-		hcolfunc_pre = R_FillColumnHoriz;
-		hcolfunc_post1 = rt_copy1col;
-		hcolfunc_post4 = rt_copy4cols;
 		colfunc = R_FillColumn;
 		spanfunc = R_FillSpan;
 	}
 	else
 	{
-		hcolfunc_pre = R_DrawColumnHoriz;
-		hcolfunc_post1 = rt_map1col;
-		hcolfunc_post4 = rt_map4cols;
 		colfunc = basecolfunc;
 		spanfunc = R_DrawSpan;
 	}
@@ -890,7 +881,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
 	PO_LinkToSubsectors();
 	InSubsector = NULL;
-	R_RenderBSPNode (nodes + numnodes - 1);	// The head node is the last node output.
+	R_RenderBSPNode(nodes + numnodes - 1);	// The head node is the last node output.
 	R_3D_ResetClip(); // reset clips (floor/ceiling)
 	camera->renderflags = savedflags;
 	WallCycles.Unclock();
@@ -900,8 +891,8 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	if (viewactive)
 	{
 		PlaneCycles.Clock();
-		R_DrawPlanes ();
-		R_DrawPortals ();
+		R_DrawPlanes();
+		R_DrawPortals();
 		PlaneCycles.Unclock();
 
 		// [RH] Walk through mirrors
@@ -929,7 +920,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 
 	// If we don't want shadered colormaps, NULL it now so that the
 	// copy to the screen does not use a special colormap shader.
-	if (!r_shadercolormaps)
+	if (!r_shadercolormaps && !r_swtruecolor)
 	{
 		realfixedcolormap = NULL;
 	}
@@ -947,7 +938,14 @@ void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas,
 	int x, int y, int width, int height, bool dontmaplines)
 {
 	const bool savedviewactive = viewactive;
+	const bool savedoutputformat = r_swtruecolor;
 
+	if (r_swtruecolor != canvas->IsBgra())
+	{
+		r_swtruecolor = canvas->IsBgra();
+		R_InitColumnDrawers();
+	}
+	
 	R_BeginDrawerCommands();
 
 	viewwidth = width;
@@ -969,7 +967,14 @@ void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas,
 	screen->Lock (true);
 	R_SetupBuffer ();
 	screen->Unlock ();
+
 	viewactive = savedviewactive;
+	r_swtruecolor = savedoutputformat;
+
+	if (r_swtruecolor != canvas->IsBgra())
+	{
+		R_InitColumnDrawers();
+	}
 }
 
 //==========================================================================

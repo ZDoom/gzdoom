@@ -158,9 +158,20 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        150
+#define _APS_NEXT_RESOURCE_VALUE        151
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1084
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
+
+// [SP] Upstreamed from Zandronum
+#define IDC_WELCOME_VERSION				4019 // [RC] "Welcome" screen.
+#define IDC_WELCOME_OPENGL				4020
+#define IDC_WELCOME_SOFTWARE			4021
+#define IDC_WELCOME_FULLSCREEN			4022
+
+// [SP] This is our's.
+#define IDC_WELCOME_NOAUTOLOAD			4023
+#define IDC_WELCOME_LIGHTS              4024
+#define IDC_WELCOME_BRIGHTMAPS          4025

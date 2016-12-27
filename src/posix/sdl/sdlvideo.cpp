@@ -28,7 +28,7 @@ class SDLFB : public DFrameBuffer
 {
 	DECLARE_CLASS(SDLFB, DFrameBuffer)
 public:
-	SDLFB (int width, int height, bool fullscreen, SDL_Window *oldwin);
+	SDLFB (int width, int height, bool bgra, bool fullscreen, SDL_Window *oldwin);
 	~SDLFB ();
 
 	bool Lock (bool buffer);
@@ -258,7 +258,7 @@ bool SDLVideo::NextMode (int *width, int *height, bool *letterbox)
 	return false;
 }
 
-DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscreen, DFrameBuffer *old)
+DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool bgra, bool fullscreen, DFrameBuffer *old)
 {
 	static int retry = 0;
 	static int owidth, oheight;
@@ -272,7 +272,8 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscree
 	{ // Reuse the old framebuffer if its attributes are the same
 		SDLFB *fb = static_cast<SDLFB *> (old);
 		if (fb->Width == width &&
-			fb->Height == height)
+			fb->Height == height &&
+			fb->Bgra == bgra)
 		{
 			bool fsnow = (SDL_GetWindowFlags (fb->Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
 	
@@ -297,7 +298,7 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscree
 		flashAmount = 0;
 	}
 	
-	SDLFB *fb = new SDLFB (width, height, fullscreen, oldwin);
+	SDLFB *fb = new SDLFB (width, height, bgra, fullscreen, oldwin);
 	
 	// If we could not create the framebuffer, try again with slightly
 	// different parameters in this order:
@@ -336,7 +337,7 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscree
 		}
 
 		++retry;
-		fb = static_cast<SDLFB *>(CreateFrameBuffer (width, height, fullscreen, NULL));
+		fb = static_cast<SDLFB *>(CreateFrameBuffer (width, height, bgra, fullscreen, NULL));
 	}
 	retry = 0;
 
@@ -351,8 +352,8 @@ void SDLVideo::SetWindowedScale (float scale)
 
 // FrameBuffer implementation -----------------------------------------------
 
-SDLFB::SDLFB (int width, int height, bool fullscreen, SDL_Window *oldwin)
-	: DFrameBuffer (width, height)
+SDLFB::SDLFB (int width, int height, bool bgra, bool fullscreen, SDL_Window *oldwin)
+	: DFrameBuffer (width, height, bgra)
 {
 	int i;
 	
@@ -495,7 +496,11 @@ void SDLFB::Update ()
 		pitch = Surface->pitch;
 	}
 
-	if (NotPaletted)
+	if (Bgra)
+	{
+		CopyWithGammaBgra(pixels, pitch, GammaTable[0], GammaTable[1], GammaTable[2], Flash, FlashAmount);
+	}
+	else if (NotPaletted)
 	{
 		GPfx.Convert (MemBuffer, Pitch,
 			pixels, pitch, Width, Height,
@@ -675,13 +680,20 @@ void SDLFB::ResetSDLRenderer ()
 		SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
 
 		Uint32 fmt;
-		switch(vid_displaybits)
+		if (Bgra)
 		{
-			default: fmt = SDL_PIXELFORMAT_ARGB8888; break;
-			case 30: fmt = SDL_PIXELFORMAT_ARGB2101010; break;
-			case 24: fmt = SDL_PIXELFORMAT_RGB888; break;
-			case 16: fmt = SDL_PIXELFORMAT_RGB565; break;
-			case 15: fmt = SDL_PIXELFORMAT_ARGB1555; break;
+			fmt = SDL_PIXELFORMAT_ARGB8888;
+		}
+		else
+		{
+			switch (vid_displaybits)
+			{
+				default: fmt = SDL_PIXELFORMAT_ARGB8888; break;
+				case 30: fmt = SDL_PIXELFORMAT_ARGB2101010; break;
+				case 24: fmt = SDL_PIXELFORMAT_RGB888; break;
+				case 16: fmt = SDL_PIXELFORMAT_RGB565; break;
+				case 15: fmt = SDL_PIXELFORMAT_ARGB1555; break;
+			}
 		}
 		Texture = SDL_CreateTexture (Renderer, fmt, SDL_TEXTUREACCESS_STREAMING, Width, Height);
 

@@ -72,8 +72,8 @@ struct FakeCmap
 };
 
 TArray<FakeCmap> fakecmaps;
-BYTE *realcolormaps;
-BYTE *realfbcolormaps; //[SP] For fullbright use
+FSWColormap realcolormaps;
+FSWColormap realfbcolormaps; //[SP] For fullbright use
 size_t numfakecmaps;
 
 
@@ -410,7 +410,7 @@ void R_SetDefaultColormap (const char *name)
 
 			foo.Color = 0xFFFFFF;
 			foo.Fade = 0;
-			foo.Maps = realcolormaps;
+			foo.Maps = realcolormaps.Maps;
 			foo.Desaturate = 0;
 			foo.Next = NULL;
 			foo.BuildLights ();
@@ -432,7 +432,7 @@ void R_SetDefaultColormap (const char *name)
 			remap[0] = 0;
 			for (i = 0; i < NUMCOLORMAPS; ++i)
 			{
-				BYTE *map2 = &realcolormaps[i*256];
+				BYTE *map2 = &realcolormaps.Maps[i*256];
 				lumpr.Read (map, 256);
 				for (j = 0; j < 256; ++j)
 				{
@@ -456,15 +456,11 @@ void R_DeinitColormaps ()
 {
 	SpecialColormaps.Clear();
 	fakecmaps.Clear();
-	if (realcolormaps != NULL)
+	delete[] realcolormaps.Maps;
+	if (realfbcolormaps.Maps)
 	{
-		delete[] realcolormaps;
-		realcolormaps = NULL;
-	}
-	if (realfbcolormaps != NULL)
-	{
-		delete[] realfbcolormaps;
-		realfbcolormaps = NULL;
+		delete[] realfbcolormaps.Maps;
+		realfbcolormaps.Maps = nullptr;
 	}
 	FreeSpecialLights();
 }
@@ -508,7 +504,7 @@ void R_InitColormaps ()
 			}
 		}
 	}
-	realcolormaps = new BYTE[256*NUMCOLORMAPS*fakecmaps.Size()];
+	realcolormaps.Maps = new BYTE[256*NUMCOLORMAPS*fakecmaps.Size()];
 	R_SetDefaultColormap ("COLORMAP");
 
 	if (fakecmaps.Size() > 1)
@@ -530,7 +526,7 @@ void R_InitColormaps ()
 			{
 				int k, r, g, b;
 				FWadLump lump = Wads.OpenLumpNum (fakecmaps[j].lump);
-				BYTE *const map = realcolormaps + NUMCOLORMAPS*256*j;
+				BYTE *const map = realcolormaps.Maps + NUMCOLORMAPS*256*j;
 
 				for (k = 0; k < NUMCOLORMAPS; ++k)
 				{
@@ -557,19 +553,19 @@ void R_InitColormaps ()
 	}
 
 	// [SP] Create a copy of the colormap
-	if (!realfbcolormaps)
+	if (!realfbcolormaps.Maps)
 	{
-		realfbcolormaps = new BYTE[256*NUMCOLORMAPS*fakecmaps.Size()];
-		memcpy(realfbcolormaps, realcolormaps, 256*NUMCOLORMAPS*fakecmaps.Size());
+		realfbcolormaps.Maps = new BYTE[256*NUMCOLORMAPS*fakecmaps.Size()];
+		memcpy(realfbcolormaps.Maps, realcolormaps.Maps, 256*NUMCOLORMAPS*fakecmaps.Size());
 	}
 
 	NormalLight.Color = PalEntry (255, 255, 255);
 	NormalLight.Fade = 0;
-	NormalLight.Maps = realcolormaps;
+	NormalLight.Maps = realcolormaps.Maps;
 	FullNormalLight.Color = PalEntry (255, 255, 255);
 	FullNormalLight.Fade = 0;
-	FullNormalLight.Maps = realfbcolormaps;
-	NormalLightHasFixedLights = R_CheckForFixedLights(realcolormaps);
+	FullNormalLight.Maps = realfbcolormaps.Maps;
+	NormalLightHasFixedLights = R_CheckForFixedLights(realcolormaps.Maps);
 	numfakecmaps = fakecmaps.Size();
 
 	// build default special maps (e.g. invulnerability)

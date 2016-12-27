@@ -190,6 +190,9 @@ typedef NSInteger NSApplicationActivationPolicy;
 
 static const NSWindowCollectionBehavior NSWindowCollectionBehaviorFullScreenAuxiliary = NSWindowCollectionBehavior(1 << 8);
 
+static const NSOpenGLPixelFormatAttribute NSOpenGLPFAOpenGLProfile(96);
+static const NSOpenGLPixelFormatAttribute NSOpenGLProfileVersion3_2Core(0x3200);
+
 #endif // prior to 10.7
 
 #endif // COCOA_I_COMMON_INCLUDED

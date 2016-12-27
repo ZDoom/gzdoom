@@ -1,0 +1,11 @@
+
+in vec4 PositionInProjection;
+in vec2 UV;
+uniform vec2 UVScale;
+out vec2 TexCoord;
+
+void main()
+{
+	gl_Position = PositionInProjection;
+	TexCoord = UV * UVScale;
+}

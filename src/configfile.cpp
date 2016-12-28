@@ -643,15 +643,21 @@ bool FConfigFile::ReadConfig (void *file)
 		{
 			continue;
 		}
-		// Remove white space at end of line
-		endpt = start + strlen (start) - 1;
-		while (endpt > start && *endpt <= ' ')
+		// Do not process tail of long line
+		const bool longline = 255 == strlen(readbuf) && '\n' != readbuf[254];
+		if (!longline)
 		{
-			endpt--;
+			// Remove white space at end of line
+			endpt = start + strlen (start) - 1;
+			while (endpt > start && *endpt <= ' ')
+			{
+				endpt--;
+			}
+			// Remove line feed '\n' character
+			endpt[1] = 0;
+			if (endpt <= start)
+				continue;	// Nothing here
 		}
-		endpt[1] = 0;
-		if (endpt <= start)
-			continue;	// Nothing here
 
 		if (*start == '[')
 		{ // Section header
@@ -686,6 +692,31 @@ bool FConfigFile::ReadConfig (void *file)
 				if (whiteprobe[0] == '<' && whiteprobe[1] == '<' && whiteprobe[2] == '<' && whiteprobe[3] != '\0')
 				{
 					ReadMultiLineValue (file, section, start, whiteprobe + 3);
+				}
+				else if (longline)
+				{
+					const FString key = start;
+					FString value = whiteprobe;
+					
+					while (ReadLine (readbuf, READBUFFERSIZE, file) != NULL)
+					{
+						const size_t endpos = (0 == readbuf[0]) ? 0 : (strlen(readbuf) - 1);
+						const bool endofline = '\n' == readbuf[endpos];
+						
+						if (endofline)
+						{
+							readbuf[endpos] = 0;
+						}
+						
+						value += readbuf;
+						
+						if (endofline)
+						{
+							break;
+						}
+					}
+					
+					NewConfigEntry (section, key.GetChars(), value.GetChars());
 				}
 				else
 				{

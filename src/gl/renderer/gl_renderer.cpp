@@ -72,7 +72,7 @@
 
 EXTERN_CVAR(Int, screenblocks)
 
-CVAR(Bool, gl_scale_viewport, true, 0);
+CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
 
 //===========================================================================
 // 
@@ -286,7 +286,7 @@ void FGLRenderer::SetOutputViewport(GL_IRECT *bounds)
 	mSceneViewport.height = height;
 
 	// Scale viewports to fit letterbox
-	if (gl_scale_viewport || !FGLRenderBuffers::IsEnabled())
+	if ((gl_scale_viewport && !framebuffer->IsFullscreen()) || !FGLRenderBuffers::IsEnabled())
 	{
 		mScreenViewport.width = mOutputLetterbox.width;
 		mScreenViewport.height = mOutputLetterbox.height;

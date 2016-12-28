@@ -699,6 +699,10 @@ void FMapInfoParser::ParseCluster()
 		{
 			clusterinfo->flags |= CLUSTER_HUB;
 		}
+		else if (sc.Compare("allowintermission"))
+		{
+			clusterinfo->flags |= CLUSTER_ALLOWINTERMISSION;
+		}
 		else if (sc.Compare("cdtrack"))
 		{
 			ParseAssign();

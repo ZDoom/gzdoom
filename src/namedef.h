@@ -577,6 +577,10 @@ xx(floorterrain)
 xx(ceilingterrain)
 xx(floor_reflect)
 xx(ceiling_reflect)
+xx(floorglowcolor)
+xx(floorglowheight)
+xx(ceilingglowcolor)
+xx(ceilingglowheight)
 
 // USDF keywords
 xx(Amount)

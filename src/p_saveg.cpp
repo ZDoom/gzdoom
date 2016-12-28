@@ -181,6 +181,8 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t::splane &p, s
 			("texture", p.Texture, def->Texture)
 			("texz", p.TexZ, def->TexZ)
 			("alpha", p.alpha, def->alpha)
+			("glowcolor", p.GlowColor, def->GlowColor)
+			("glowheight", p.GlowHeight, def->GlowHeight)
 			.EndObject();
 	}
 	return arc;

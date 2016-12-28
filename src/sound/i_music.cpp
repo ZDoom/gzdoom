@@ -680,6 +680,14 @@ void I_SetMusicVolume (float factor)
 	snd_musicvolume.Callback();
 }
 
+DEFINE_ACTION_FUNCTION(DObject, SetMusicVolume)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(vol);
+	I_SetMusicVolume((float)vol);
+	return 0;
+}
+
 //==========================================================================
 //
 // test a relative music volume

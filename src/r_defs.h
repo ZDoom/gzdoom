@@ -687,8 +687,10 @@ public:
 		int Flags;
 		int Light;
 		double alpha;
-		FTextureID Texture;
 		double TexZ;
+		PalEntry GlowColor;
+		float GlowHeight;
+		FTextureID Texture;
 	};
 
 
@@ -1029,11 +1031,11 @@ public:
 	};
 	TObjPtr<DInterpolation> interpolations[4];
 
+	int prevsec;		// -1 or number of sector for previous step
+	int nextsec;		// -1 or number of next step sector
 	BYTE 		soundtraversed;	// 0 = untraversed, 1,2 = sndlines -1
 	// jff 2/26/98 lockout machinery for stairbuilding
 	SBYTE stairlock;	// -2 on first locked -1 after thinker done 0 normally
-	int prevsec;		// -1 or number of sector for previous step
-		int nextsec;		// -1 or number of next step sector
 
 	short linecount;
 	struct line_t **lines;		// [linecount] size

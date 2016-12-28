@@ -336,6 +336,7 @@ public:
 		float shaderspeed;
 		int mIsTransparent:2;
 		bool bGlowing:1;						// Texture glows
+		bool bAutoGlowing : 1;					// Glow info is determined from texture image.
 		bool bFullbright:1;						// always draw fullbright
 		bool bSkybox:1;							// This is a skybox
 		char bBrightmapChecked:1;				// Set to 1 if brightmap has been checked

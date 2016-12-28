@@ -96,148 +96,6 @@ WORD MirrorFlags;
 
 subsector_t *InSubsector;
 
-
-
-void R_StoreWallRange (int start, int stop);
-
-//==========================================================================
-//
-// R_ClipWallSegment
-//
-// Clips the given range of columns, possibly including it in the clip list.
-// Handles both windows (e.g. LineDefs with upper and lower textures) and
-// solid walls (e.g. single sided LineDefs [middle texture]) that entirely
-// block the view.
-//
-//==========================================================================
-
-bool R_ClipWallSegment (int first, int last, bool solid)
-{
-	cliprange_t *next, *start;
-	int i, j;
-	bool res = false;
-
-	// Find the first range that touches the range
-	// (adjacent pixels are touching).
-	start = solidsegs;
-	while (start->last < first)
-		start++;
-
-	if (first < start->first)
-	{
-		res = true;
-		if (last <= start->first)
-		{
-			// Post is entirely visible (above start).
-			R_StoreWallRange (first, last);
-			if (fake3D & FAKE3D_FAKEMASK)
-			{
-				return true;
-			}
-
-			// Insert a new clippost for solid walls.
-			if (solid)
-			{
-				if (last == start->first)
-				{
-					start->first = first;
-				}
-				else
-				{
-					next = newend;
-					newend++;
-					while (next != start)
-					{
-						*next = *(next-1);
-						next--;
-					}
-					next->first = first;
-					next->last = last;
-				}
-			}
-			return true;
-		}
-
-		// There is a fragment above *start.
-		R_StoreWallRange (first, start->first);
-
-		// Adjust the clip size for solid walls
-		if (solid && !(fake3D & FAKE3D_FAKEMASK))
-		{
-			start->first = first;
-		}
-	}
-
-	// Bottom contained in start?
-	if (last <= start->last)
-		return res;
-
-	next = start;
-	while (last >= (next+1)->first)
-	{
-		// There is a fragment between two posts.
-		R_StoreWallRange (next->last, (next+1)->first);
-		next++;
-		
-		if (last <= next->last)
-		{
-			// Bottom is contained in next.
-			last = next->last;
-			goto crunch;
-		}
-	}
-
-	// There is a fragment after *next.
-	R_StoreWallRange (next->last, last);
-
-crunch:
-	if (fake3D & FAKE3D_FAKEMASK)
-	{
-		return true;
-	}
-	if (solid)
-	{
-		// Adjust the clip size.
-		start->last = last;
-
-		if (next != start)
-		{
-			// Remove start+1 to next from the clip list,
-			// because start now covers their area.
-			for (i = 1, j = (int)(newend - next); j > 0; i++, j--)
-			{
-				start[i] = next[i];
-			}
-			newend = start+i;
-		}
-	}
-	return true;
-}
-
-bool R_CheckClipWallSegment (int first, int last)
-{
-	cliprange_t *start;
-
-	// Find the first range that touches the range
-	// (adjacent pixels are touching).
-	start = solidsegs;
-	while (start->last < first)
-		start++;
-
-	if (first < start->first)
-	{
-		return true;
-	}
-
-	// Bottom contained in start?
-	if (last > start->last)
-	{
-		return true;
-	}
-
-	return false;
-}
-
 //
 // killough 3/7/98: Hack floor/ceiling heights for deep water etc.
 //
@@ -703,7 +561,7 @@ void R_AddLine (seg_t *line)
 #endif
 	}
 
-	if (R_ClipWallSegment (WallC.sx1, WallC.sx2, solid))
+	if (R_ClipWallSegment(WallC.sx1, WallC.sx2, solid, R_StoreWallRange))
 	{
 		InSubsector->flags |= SSECF_DRAWN;
 	}
@@ -836,8 +694,6 @@ static bool R_CheckBBox (float *bspcoord)	// killough 1/28/98: static
 	double				rx1, ry1, rx2, ry2;
 	int					sx1, sx2;
 	
-	cliprange_t*		start;
-
 	// Find the corners of the box
 	// that define the edges from current viewpoint.
 	if (ViewPos.X <= bspcoord[BOXLEFT])
@@ -911,21 +767,7 @@ static bool R_CheckBBox (float *bspcoord)	// killough 1/28/98: static
 	// Find the first clippost that touches the source post
 	//	(adjacent pixels are touching).
 
-	// Does not cross a pixel.
-	if (sx2 <= sx1)
-		return false;
-
-	start = solidsegs;
-	while (start->last < sx2)
-		start++;
-
-	if (sx1 >= start->first && sx2 <= start->last)
-	{
-		// The clippost contains the new span.
-		return false;
-	}
-
-	return true;
+	return R_IsWallSegmentVisible(sx1, sx2);
 }
 
 

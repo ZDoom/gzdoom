@@ -1587,7 +1587,7 @@ ptrdiff_t R_NewOpening (ptrdiff_t len)
 // A wall segment will be drawn between start and stop pixels (inclusive).
 //
 
-void R_StoreWallRange (int start, int stop)
+bool R_StoreWallRange (int start, int stop)
 {
 	int i;
 	bool maskedtexture = false;
@@ -1827,7 +1827,8 @@ void R_StoreWallRange (int start, int stop)
 
 	if(fake3D & 7) {
 		ds_p++;
-		return;
+
+		return !(fake3D & FAKE3D_FAKEMASK);
 	}
 
 	// save sprite clipping info
@@ -1888,6 +1889,8 @@ void R_StoreWallRange (int start, int stop)
 	}
 
 	ds_p++;
+
+	return !(fake3D & FAKE3D_FAKEMASK);
 }
 
 int R_CreateWallSegmentY(short *outbuf, double z1, double z2, const FWallCoords *wallc)

@@ -28,6 +28,7 @@ namespace swrenderer
 
 struct drawseg_t;
 
+bool R_StoreWallRange(int start, int stop);
 void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2);
 
 extern short *openings;

@@ -33,7 +33,8 @@
 */
 
 
-#include "r_local.h"
+#include "r_main.h"
+#include "swrenderer/scene/r_things.h"
 #include "v_palette.h"
 #include "v_video.h"
 #include "m_png.h"

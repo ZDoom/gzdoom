@@ -38,7 +38,6 @@
 #include "doomdef.h"
 #include "i_system.h"
 #include "w_wad.h"
-#include "swrenderer/r_local.h"
 #include "v_video.h"
 #include "doomstat.h"
 #include "st_stuff.h"
@@ -47,11 +46,11 @@
 #include "r_data/r_translate.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
-#include "swrenderer/scene/r_plane.h"
 #include "r_draw.h"
 #include "r_draw_rgba.h"
 #include "r_draw_pal.h"
 #include "r_thread.h"
+#include "swrenderer/r_main.h"
 
 CVAR(Bool, r_dynlights, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 

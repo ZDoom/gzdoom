@@ -32,7 +32,6 @@
 #include "p_lnspec.h"
 #include "p_setup.h"
 
-#include "swrenderer/r_local.h"
 #include "swrenderer/r_main.h"
 #include "r_plane.h"
 #include "swrenderer/drawers/r_draw.h"

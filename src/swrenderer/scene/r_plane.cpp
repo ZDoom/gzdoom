@@ -42,7 +42,8 @@
 #include "doomdef.h"
 #include "doomstat.h"
 
-#include "swrenderer/r_local.h"
+#include "swrenderer/r_main.h"
+#include "swrenderer/scene/r_things.h"
 #include "r_sky.h"
 #include "stats.h"
 

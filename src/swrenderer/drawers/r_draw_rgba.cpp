@@ -27,7 +27,7 @@
 #include "doomdef.h"
 #include "i_system.h"
 #include "w_wad.h"
-#include "swrenderer/r_local.h"
+#include "swrenderer/r_main.h"
 #include "v_video.h"
 #include "doomstat.h"
 #include "st_stuff.h"

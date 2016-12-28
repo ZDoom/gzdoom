@@ -9,7 +9,7 @@
 #include "doomdef.h"
 #include "p_local.h"
 #include "c_dispatch.h"
-#include "swrenderer/r_local.h"
+#include "swrenderer/r_main.h"
 #include "r_bsp.h"
 #include "r_plane.h"
 #include "c_cvars.h"

@@ -27,7 +27,7 @@
 #include "doomstat.h"
 #include "doomdata.h"
 
-#include "swrenderer/r_local.h"
+#include "swrenderer/r_main.h"
 #include "r_sky.h"
 #include "v_video.h"
 

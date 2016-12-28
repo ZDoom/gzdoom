@@ -575,6 +575,8 @@ xx(damageterraineffect)
 xx(damagehazard)
 xx(floorterrain)
 xx(ceilingterrain)
+xx(floor_reflect)
+xx(ceiling_reflect)
 
 // USDF keywords
 xx(Amount)

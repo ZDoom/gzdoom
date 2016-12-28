@@ -214,6 +214,9 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       damagehazard = <bool>;          // Changes damage model to Strife's delayed damage for the given sector. Default = false.
       floorterrain = <string>;        // Sets the terrain for the sector's floor. Default = 'use the flat texture's terrain definition.'
       ceilingterrain = <string>;      // Sets the terrain for the sector's ceiling. Default = 'use the flat texture's terrain definition.'
+	  
+	  floor_reflect = <float>;        // reflectiveness of floor (OpenGL only, not functional on sloped sectors)
+	  ceiling_reflect = <float>;      // reflectiveness of ceiling (OpenGL only, not functional on sloped sectors)
 
       portal_ceil_alpha = <float>     // translucency of ceiling portal (default is 0 (not visible))
       portal_ceil_blocksound = <bool> // ceiling portal blocks sound.
@@ -405,6 +408,9 @@ Added 'moreids' for linedefs and sectors.
 1.26 05.01.2016
 added clarification about character encoding
 added sector damage properties.
+
+1.27 05.01.2016
+floor_reflect and ceiling_reflect.
 
 ===============================================================================
 EOF

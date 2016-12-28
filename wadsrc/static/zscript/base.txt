@@ -13,6 +13,8 @@ class Object native
 	native static void C_MidPrint(string fontname, string textlabel, bool bold = false);	// always uses the stringtable.
 	native static uint BAM(double angle);
 
+	native Name GetClassName();
+
 	/*virtual*/ native void Destroy();
 }
 

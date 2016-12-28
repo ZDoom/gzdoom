@@ -95,6 +95,7 @@ public:
 	void PurgeStrings();
 	void Clear();
 	void Dump() const;
+	void UnlockForLevel(int level)	;
 	void ReadStrings(FSerializer &file, const char *key);
 	void WriteStrings(FSerializer &file, const char *key) const;
 
@@ -112,7 +113,11 @@ private:
 		FString Str;
 		unsigned int Hash;
 		unsigned int Next;
-		unsigned int LockCount;
+		bool Mark;
+		TArray<int> Locks;
+
+		void Lock();
+		void Unlock();
 	};
 	TArray<PoolEntry> Pool;
 	unsigned int PoolBuckets[NUM_BUCKETS];

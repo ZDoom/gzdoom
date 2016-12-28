@@ -343,6 +343,23 @@ FACSStack::~FACSStack()
 
 ACSStringPool GlobalACSStrings;
 
+void ACSStringPool::PoolEntry::Lock()
+{
+	if (Locks.Find(level.levelnum) == Locks.Size())
+	{
+		Locks.Push(level.levelnum);
+	}
+}
+
+void ACSStringPool::PoolEntry::Unlock()
+{
+	auto ndx = Locks.Find(level.levelnum);
+	if (ndx < Locks.Size())
+	{
+		Locks.Delete(ndx);
+	}
+}
+
 ACSStringPool::ACSStringPool()
 {
 	memset(PoolBuckets, 0xFF, sizeof(PoolBuckets));
@@ -430,7 +447,7 @@ void ACSStringPool::LockString(int strnum)
 	assert((strnum & LIBRARYID_MASK) == STRPOOL_LIBRARYID_OR);
 	strnum &= ~LIBRARYID_MASK;
 	assert((unsigned)strnum < Pool.Size());
-	Pool[strnum].LockCount++;
+	Pool[strnum].Lock();
 }
 
 //============================================================================
@@ -446,8 +463,7 @@ void ACSStringPool::UnlockString(int strnum)
 	assert((strnum & LIBRARYID_MASK) == STRPOOL_LIBRARYID_OR);
 	strnum &= ~LIBRARYID_MASK;
 	assert((unsigned)strnum < Pool.Size());
-	assert(Pool[strnum].LockCount > 0);
-	Pool[strnum].LockCount--;
+	Pool[strnum].Unlock();
 }
 
 //============================================================================
@@ -464,7 +480,7 @@ void ACSStringPool::MarkString(int strnum)
 	assert((strnum & LIBRARYID_MASK) == STRPOOL_LIBRARYID_OR);
 	strnum &= ~LIBRARYID_MASK;
 	assert((unsigned)strnum < Pool.Size());
-	Pool[strnum].LockCount |= 0x80000000;
+	Pool[strnum].Mark = true;
 }
 
 //============================================================================
@@ -489,7 +505,7 @@ void ACSStringPool::LockStringArray(const int *strnum, unsigned int count)
 			num &= ~LIBRARYID_MASK;
 			if ((unsigned)num < Pool.Size())
 			{
-				Pool[num].LockCount++;
+				Pool[num].Lock();
 			}
 		}
 	}
@@ -513,8 +529,7 @@ void ACSStringPool::UnlockStringArray(const int *strnum, unsigned int count)
 			num &= ~LIBRARYID_MASK;
 			if ((unsigned)num < Pool.Size())
 			{
-				assert(Pool[num].LockCount > 0);
-				Pool[num].LockCount--;
+				Pool[num].Unlock();
 			}
 		}
 	}
@@ -538,7 +553,7 @@ void ACSStringPool::MarkStringArray(const int *strnum, unsigned int count)
 			num &= ~LIBRARYID_MASK;
 			if ((unsigned)num < Pool.Size())
 			{
-				Pool[num].LockCount |= 0x80000000;
+				Pool[num].Mark = true;
 			}
 		}
 	}
@@ -565,7 +580,7 @@ void ACSStringPool::MarkStringMap(const FWorldGlobalArray &aray)
 			num &= ~LIBRARYID_MASK;
 			if ((unsigned)num < Pool.Size())
 			{
-				Pool[num].LockCount |= 0x80000000;
+				Pool[num].Mark |= true;
 			}
 		}
 	}
@@ -584,7 +599,8 @@ void ACSStringPool::UnlockAll()
 {
 	for (unsigned int i = 0; i < Pool.Size(); ++i)
 	{
-		Pool[i].LockCount = 0;
+		Pool[i].Mark = false;
+		Pool[i].Locks.Clear();
 	}
 }
 
@@ -607,7 +623,7 @@ void ACSStringPool::PurgeStrings()
 		PoolEntry *entry = &Pool[i];
 		if (entry->Next != FREE_ENTRY)
 		{
-			if (entry->LockCount == 0)
+			if (entry->Locks.Size() == 0 && !entry->Mark)
 			{
 				freedcount++;
 				// Mark this entry as free.
@@ -627,7 +643,7 @@ void ACSStringPool::PurgeStrings()
 				entry->Next = PoolBuckets[h];
 				PoolBuckets[h] = i;
 				// Remove MarkString's mark.
-				entry->LockCount &= 0x7FFFFFFF;
+				entry->Mark = false;
 			}
 		}
 	}
@@ -692,7 +708,8 @@ int ACSStringPool::InsertString(FString &str, unsigned int h, unsigned int bucke
 	entry->Str = str;
 	entry->Hash = h;
 	entry->Next = PoolBuckets[bucketnum];
-	entry->LockCount = 0;
+	entry->Mark = false;
+	entry->Locks.Clear();
 	PoolBuckets[bucketnum] = index;
 	return index | STRPOOL_LIBRARYID_OR;
 }
@@ -735,7 +752,8 @@ void ACSStringPool::ReadStrings(FSerializer &file, const char *key)
 		for (auto &p : Pool)
 		{
 			p.Next = FREE_ENTRY;
-			p.LockCount = 0;
+			p.Mark = false;
+			p.Locks.Clear();
 		}
 		if (file.BeginArray("pool"))
 		{
@@ -749,7 +767,7 @@ void ACSStringPool::ReadStrings(FSerializer &file, const char *key)
 					if (ii < Pool.Size())
 					{
 						file("string", Pool[ii].Str)
-							("lockcount", Pool[ii].LockCount);
+							("locks", Pool[ii].Locks);
 
 						unsigned h = SuperFastHash(Pool[ii].Str, Pool[ii].Str.Len());
 						unsigned bucketnum = h % NUM_BUCKETS;
@@ -792,13 +810,9 @@ void ACSStringPool::WriteStrings(FSerializer &file, const char *key) const
 				{
 					if (file.BeginObject(nullptr))
 					{
-						if (i == 430)
-						{
-							int a = 0;
-						}
 						file("index", i)
 							("string", entry->Str)
-							("lockcount", entry->LockCount)
+							("locks", entry->Locks)
 							.EndObject();
 					}
 				}
@@ -823,10 +837,26 @@ void ACSStringPool::Dump() const
 	{
 		if (Pool[i].Next != FREE_ENTRY)
 		{
-			Printf("%4u. (%2d) \"%s\"\n", i, Pool[i].LockCount, Pool[i].Str.GetChars());
+			Printf("%4u. (%2d) \"%s\"\n", i, Pool[i].Locks.Size(), Pool[i].Str.GetChars());
 		}
 	}
 	Printf("First free %u\n", FirstFreeEntry);
+}
+
+
+void ACSStringPool::UnlockForLevel(int lnum)
+{
+	for (unsigned int i = 0; i < Pool.Size(); ++i)
+	{
+		if (Pool[i].Next != FREE_ENTRY)
+		{
+			auto ndx = Pool[i].Locks.Find(lnum);
+			if (ndx < Pool[i].Locks.Size())
+			{
+				Pool[i].Locks.Delete(ndx);
+			}
+		}
+	}
 }
 
 //============================================================================
@@ -1573,19 +1603,7 @@ void FBehavior::StaticLockLevelVarStrings()
 
 void FBehavior::StaticUnlockLevelVarStrings()
 {
-	// Unlock map variables.
-	for (DWORD modnum = 0; modnum < StaticModules.Size(); ++modnum)
-	{
-		StaticModules[modnum]->UnlockMapVarStrings();
-	}
-	// Unlock running scripts' local variables.
-	if (DACSThinker::ActiveThinker != NULL)
-	{
-		for (DLevelScript *script = DACSThinker::ActiveThinker->Scripts; script != NULL; script = script->GetNext())
-		{
-			script->UnlockLocalVarStrings();
-		}
-	}
+	GlobalACSStrings.UnlockForLevel(level.levelnum);
 }
 
 void FBehavior::MarkMapVarStrings() const

@@ -5713,6 +5713,7 @@ struct FChangePosition
 	int crushchange;
 	bool nofit;
 	bool movemidtex;
+	bool instant;
 };
 
 TArray<AActor *> intersectors;
@@ -5993,6 +5994,12 @@ int P_PushUp(AActor *thing, FChangePosition *cpos)
 			intersect->SetZ(oldz);
 			return 2;
 		}
+		if (cpos->instant)
+		{
+			intersect->Prev.Z += intersect->Z() - oldz;
+			if (intersect->CheckLocalView(consoleplayer)) R_ResetViewInterpolation();
+		}
+
 		intersect->UpdateRenderSectorList();
 	}
 	thing->CheckPortalTransition(true);
@@ -6084,6 +6091,11 @@ void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 			(((cpos->sector->Flags & SECF_FLOORDROP) || cpos->moveamt < 9)
 			&& thing->Z() - thing->floorz <= cpos->moveamt))
 		{
+			if (cpos->instant)
+			{
+				thing->Prev.Z += thing->floorz - oldz;
+				if (thing->CheckLocalView(consoleplayer)) R_ResetViewInterpolation();
+			}
 			thing->SetZ(thing->floorz);
 			P_CheckFakeFloorTriggers(thing, oldz);
 			thing->UpdateRenderSectorList();
@@ -6093,6 +6105,11 @@ void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 	{
 		if ((thing->flags & MF_NOGRAVITY) && (thing->flags6 & MF6_RELATIVETOFLOOR))
 		{
+			if (cpos->instant)
+			{
+				thing->Prev.Z += -oldfloorz + thing->floorz;
+				if (thing->CheckLocalView(consoleplayer)) R_ResetViewInterpolation();
+			}
 			thing->AddZ(-oldfloorz + thing->floorz);
 			P_CheckFakeFloorTriggers(thing, oldz);
 			thing->UpdateRenderSectorList();
@@ -6128,6 +6145,12 @@ void PIT_FloorRaise(AActor *thing, FChangePosition *cpos)
 			return; // do not move bridge things
 		}
 		intersectors.Clear();
+		if (cpos->instant)
+		{
+			thing->Prev.Z += thing->floorz - thing->Z();
+			if (thing->CheckLocalView(consoleplayer)) R_ResetViewInterpolation();
+		}
+
 		thing->SetZ(thing->floorz);
 	}
 	else
@@ -6136,6 +6159,11 @@ void PIT_FloorRaise(AActor *thing, FChangePosition *cpos)
 		{
 			intersectors.Clear();
 			thing->AddZ(-oldfloorz + thing->floorz);
+			if (cpos->instant)
+			{
+				thing->Prev.Z += -oldfloorz + thing->floorz;
+				if (thing->CheckLocalView(consoleplayer)) R_ResetViewInterpolation();
+			}
 		}
 		else return;
 	}
@@ -6268,7 +6296,7 @@ void PIT_CeilingRaise(AActor *thing, FChangePosition *cpos)
 //
 //=============================================================================
 
-bool P_ChangeSector(sector_t *sector, int crunch, double amt, int floorOrCeil, bool isreset)
+bool P_ChangeSector(sector_t *sector, int crunch, double amt, int floorOrCeil, bool isreset, bool instant)
 {
 	FChangePosition cpos;
 	void(*iterator)(AActor *, FChangePosition *);
@@ -6280,6 +6308,7 @@ bool P_ChangeSector(sector_t *sector, int crunch, double amt, int floorOrCeil, b
 	cpos.moveamt = fabs(amt);
 	cpos.movemidtex = false;
 	cpos.sector = sector;
+	cpos.instant = instant;
 
 	// Also process all sectors that have 3D floors transferred from the
 	// changed sector.

@@ -1563,6 +1563,14 @@ public:
 					sec->terrainnum[sector_t::ceiling] = P_FindTerrain(CheckString(key));
 					break;
 
+				case NAME_floor_reflect:
+					sec->reflect[sector_t::floor] = (float)CheckFloat(key);
+					break;
+
+				case NAME_ceiling_reflect:
+					sec->reflect[sector_t::ceiling] = (float)CheckFloat(key);
+					break;
+
 				case NAME_MoreIds:
 					// delay parsing of the tag string until parsing of the sector is complete
 					// This ensures that the ID is always the first tag in the list.

@@ -1894,7 +1894,7 @@ void APowerMorph::InitEffect( )
 	if (Owner != nullptr && Owner->player != nullptr && PlayerClass != nullptr)
 	{
 		player_t *realplayer = Owner->player;	// Remember the identity of the player
-		if (P_MorphPlayer(realplayer, realplayer, PlayerClass, -1/*INDEFINITELY*/, MorphStyle, MorphFlash, UnMorphFlash))
+		if (P_MorphPlayer(realplayer, realplayer, PlayerClass, INT_MAX/*INDEFINITELY*/, MorphStyle, MorphFlash, UnMorphFlash))
 		{
 			Owner = realplayer->mo;				// Replace the new owner in our owner; safe because we are not attached to anything yet
 			ItemFlags |= IF_CREATECOPYMOVED;	// Let the caller know the "real" owner has changed (to the morphed actor)

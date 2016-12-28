@@ -177,8 +177,6 @@ namespace swrenderer
 	void R_FinishSetPatchStyle(); // Call this after finished drawing the current thing, in case its style was STYLE_Shade
 	DrawerFunc R_GetTransMaskDrawer();
 
-	const uint8_t *R_GetColumn(FTexture *tex, int col);
-
 	void R_UpdateFuzzPos();
 
 	// Sets dc_colormap and dc_light to their appropriate values depending on the output format (pal vs true color)

@@ -49,6 +49,8 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "r_walldraw.h"
+#include "r_draw_segment.h"
+#include "r_portal_segment.h"
 
 #define WALLYREPEAT 8
 
@@ -69,9 +71,6 @@ namespace swrenderer
 
 extern double globaluclip, globaldclip;
 
-PortalDrawseg* CurrentPortal = NULL;
-int CurrentPortalUniq = 0;
-bool CurrentPortalInSkybox = false;
 
 // OPTIMIZE: closed two sided lines as single sided
 

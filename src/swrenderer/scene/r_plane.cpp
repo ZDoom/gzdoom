@@ -62,6 +62,9 @@
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "r_walldraw.h"
+#include "r_clip_segment.h"
+#include "r_draw_segment.h"
+#include "r_portal_segment.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)

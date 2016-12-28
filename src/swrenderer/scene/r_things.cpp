@@ -68,6 +68,8 @@
 #include "p_local.h"
 #include "p_maputl.h"
 #include "r_voxel.h"
+#include "r_draw_segment.h"
+#include "r_portal_segment.h"
 
 EXTERN_CVAR(Bool, st_scale)
 EXTERN_CVAR(Bool, r_shadercolormaps)

@@ -37,6 +37,8 @@
 #include "swrenderer/drawers/r_draw.h"
 #include "r_things.h"
 #include "r_3dfloors.h"
+#include "r_clip_segment.h"
+#include "r_portal_segment.h"
 #include "a_sharedglobal.h"
 #include "g_level.h"
 #include "p_effect.h"
@@ -83,15 +85,6 @@ double			rw_backfz1, rw_backfz2;
 double			rw_frontcz1, rw_frontcz2;
 double			rw_frontfz1, rw_frontfz2;
 
-
-size_t			MaxDrawSegs;
-drawseg_t		*drawsegs;
-drawseg_t*		firstdrawseg;
-drawseg_t*		ds_p;
-
-size_t			FirstInterestingDrawseg;
-TArray<size_t>	InterestingDrawsegs;
-
 FWallCoords		WallC;
 FWallTmapVals	WallT;
 
@@ -99,7 +92,6 @@ static BYTE		FakeSide;
 
 int WindowLeft, WindowRight;
 WORD MirrorFlags;
-TArray<PortalDrawseg> WallPortals(1000);	// note: this array needs to go away as reallocation can cause crashes.
 
 
 subsector_t *InSubsector;
@@ -107,45 +99,6 @@ subsector_t *InSubsector;
 
 
 void R_StoreWallRange (int start, int stop);
-
-//
-// R_ClearDrawSegs
-//
-void R_ClearDrawSegs (void)
-{
-	if (drawsegs == NULL)
-	{
-		MaxDrawSegs = 256;		// [RH] Default. Increased as needed.
-		firstdrawseg = drawsegs = (drawseg_t *)M_Malloc (MaxDrawSegs * sizeof(drawseg_t));
-	}
-	FirstInterestingDrawseg = 0;
-	InterestingDrawsegs.Clear ();
-	ds_p = drawsegs;
-}
-
-
-
-//
-// ClipWallSegment
-// Clips the given range of columns
-// and includes it in the new clip list.
-//
-//
-// 1/11/98 killough: Since a type "short" is sufficient, we
-// should use it, since smaller arrays fit better in cache.
-//
-
-struct cliprange_t
-{
-	short first, last;		// killough
-};
-
-
-// newend is one past the last valid seg
-static cliprange_t     *newend;
-static cliprange_t		solidsegs[MAXWIDTH/2+2];
-
-
 
 //==========================================================================
 //
@@ -284,21 +237,6 @@ bool R_CheckClipWallSegment (int first, int last)
 
 	return false;
 }
-
-
-
-//
-// R_ClearClipSegs
-//
-void R_ClearClipSegs (short left, short right)
-{
-	solidsegs[0].first = -0x7fff;	// new short limit --  killough
-	solidsegs[0].last = left;
-	solidsegs[1].first = right;
-	solidsegs[1].last = 0x7fff;		// new short limit --  killough
-	newend = solidsegs+2;
-}
-
 
 //
 // killough 3/7/98: Hack floor/ceiling heights for deep water etc.

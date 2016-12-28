@@ -51,7 +51,7 @@
 //
 //============================================================================
 
-bool P_Scroll3dMidtex(sector_t *sector, int crush, double move, bool ceiling)
+bool P_Scroll3dMidtex(sector_t *sector, int crush, double move, bool ceiling, bool instant)
 {
 	extsector_t::midtex::plane &scrollplane = ceiling? sector->e->Midtex.Ceiling : sector->e->Midtex.Floor;
 
@@ -69,7 +69,7 @@ bool P_Scroll3dMidtex(sector_t *sector, int crush, double move, bool ceiling)
 
 	for(unsigned i = 0; i < scrollplane.AttachedSectors.Size(); i++)
 	{
-		res |= P_ChangeSector(scrollplane.AttachedSectors[i], crush, move, 2, true);
+		res |= P_ChangeSector(scrollplane.AttachedSectors[i], crush, move, 2, true, instant);
 	}
 	return !res;
 }

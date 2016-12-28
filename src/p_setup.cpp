@@ -4080,6 +4080,13 @@ void P_SetupLevel (const char *lumpname, int position)
 	// set up world state
 	P_SpawnSpecials ();
 
+	// disable reflective planes on sloped sectors.
+	for (auto i = 0; i < numsectors; i++)
+	{
+		if (sectors[i].floorplane.isSlope()) sectors[i].reflect[sector_t::floor] = 0;
+		if (sectors[i].ceilingplane.isSlope()) sectors[i].reflect[sector_t::ceiling] = 0;
+	}
+
 	// This must be done BEFORE the PolyObj Spawn!!!
 	Renderer->PreprocessLevel();
 

@@ -515,6 +515,7 @@ public:
 	EFloor	 	m_Type;
 	int 		m_Crush;
 	bool		m_Hexencrush;
+	bool		m_Instant;
 	int 		m_Direction;
 	secspecial_t m_NewSpecial;
 	FTextureID	m_Texture;

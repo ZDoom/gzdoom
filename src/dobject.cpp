@@ -552,3 +552,9 @@ void DObject::CheckIfSerialized () const
 	}
 }
 
+
+DEFINE_ACTION_FUNCTION(DObject, GetClassName)
+{
+	PARAM_SELF_PROLOGUE(DObject);
+	ACTION_RETURN_INT(self->GetClass()->TypeName);
+}

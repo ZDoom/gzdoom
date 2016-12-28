@@ -134,17 +134,17 @@ DMovingCeiling::DMovingCeiling (sector_t *sector, bool interpolate)
 	if (interpolate) interpolation = sector->SetInterpolation(sector_t::CeilingMove, true);
 }
 
-bool sector_t::MoveAttached(int crush, double move, int floorOrCeiling, bool resetfailed)
+bool sector_t::MoveAttached(int crush, double move, int floorOrCeiling, bool resetfailed, bool instant)
 {
-	if (!P_Scroll3dMidtex(this, crush, move, !!floorOrCeiling) && resetfailed)
+	if (!P_Scroll3dMidtex(this, crush, move, !!floorOrCeiling, instant) && resetfailed)
 	{
-		P_Scroll3dMidtex(this, crush, -move, !!floorOrCeiling);
+		P_Scroll3dMidtex(this, crush, -move, !!floorOrCeiling, instant);
 		return false;
 	}
-	if (!P_MoveLinkedSectors(this, crush, move, !!floorOrCeiling) && resetfailed)
+	if (!P_MoveLinkedSectors(this, crush, move, !!floorOrCeiling, instant) && resetfailed)
 	{
-		P_MoveLinkedSectors(this, crush, -move, !!floorOrCeiling);
-		P_Scroll3dMidtex(this, crush, -move, !!floorOrCeiling);
+		P_MoveLinkedSectors(this, crush, -move, !!floorOrCeiling, instant);
+		P_Scroll3dMidtex(this, crush, -move, !!floorOrCeiling, instant);
 		return false;
 	}
 	return true;
@@ -156,7 +156,7 @@ bool sector_t::MoveAttached(int crush, double move, int floorOrCeiling, bool res
 //		(Use -1 to prevent it from trying to crush)
 //		dest is the desired d value for the plane
 //
-EMoveResult sector_t::MoveFloor(double speed, double dest, int crush, int direction, bool hexencrush)
+EMoveResult sector_t::MoveFloor(double speed, double dest, int crush, int direction, bool hexencrush, bool instant)
 {
 	bool	 	flag;
 	double 	lastpos;
@@ -174,15 +174,15 @@ EMoveResult sector_t::MoveFloor(double speed, double dest, int crush, int direct
 		{
 			move = floorplane.HeightDiff(lastpos, dest);
 
-			if (!MoveAttached(crush, move, 0, true)) return EMoveResult::crushed;
+			if (!MoveAttached(crush, move, 0, true, instant)) return EMoveResult::crushed;
 
 			floorplane.setD(dest);
-			flag = P_ChangeSector(this, crush, move, 0, false);
+			flag = P_ChangeSector(this, crush, move, 0, false, instant);
 			if (flag)
 			{
 				floorplane.setD(lastpos);
-				P_ChangeSector(this, crush, -move, 0, true);
-				MoveAttached(crush, -move, 0, false);
+				P_ChangeSector(this, crush, -move, 0, true, instant);
+				MoveAttached(crush, -move, 0, false, instant);
 			}
 			else
 			{
@@ -193,16 +193,16 @@ EMoveResult sector_t::MoveFloor(double speed, double dest, int crush, int direct
 		}
 		else
 		{
-			if (!MoveAttached(crush, -speed, 0, true)) return EMoveResult::crushed;
+			if (!MoveAttached(crush, -speed, 0, true, instant)) return EMoveResult::crushed;
 
 			floorplane.setD(movedest);
 
-			flag = P_ChangeSector(this, crush, -speed, 0, false);
+			flag = P_ChangeSector(this, crush, -speed, 0, false, instant);
 			if (flag)
 			{
 				floorplane.setD(lastpos);
-				P_ChangeSector(this, crush, speed, 0, true);
-				MoveAttached(crush, speed, 0, false);
+				P_ChangeSector(this, crush, speed, 0, true, instant);
+				MoveAttached(crush, speed, 0, false, instant);
 				return EMoveResult::crushed;
 			}
 			else
@@ -231,16 +231,16 @@ EMoveResult sector_t::MoveFloor(double speed, double dest, int crush, int direct
 		{
 			move = floorplane.HeightDiff(lastpos, dest);
 
-			if (!MoveAttached(crush, move, 0, true)) return EMoveResult::crushed;
+			if (!MoveAttached(crush, move, 0, true, instant)) return EMoveResult::crushed;
 
 			floorplane.setD(dest);
 
-			flag = P_ChangeSector(this, crush, move, 0, false);
+			flag = P_ChangeSector(this, crush, move, 0, false, instant);
 			if (flag)
 			{
 				floorplane.setD(lastpos);
-				P_ChangeSector(this, crush, -move, 0, true);
-				MoveAttached(crush, -move, 0, false);
+				P_ChangeSector(this, crush, -move, 0, true, instant);
+				MoveAttached(crush, -move, 0, false, instant);
 			}
 			else
 			{
@@ -251,12 +251,12 @@ EMoveResult sector_t::MoveFloor(double speed, double dest, int crush, int direct
 		}
 		else
 		{
-			if (!MoveAttached(crush, speed, 0, true)) return EMoveResult::crushed;
+			if (!MoveAttached(crush, speed, 0, true, instant)) return EMoveResult::crushed;
 
 			floorplane.setD(movedest);
 
 			// COULD GET CRUSHED
-			flag = P_ChangeSector(this, crush, speed, 0, false);
+			flag = P_ChangeSector(this, crush, speed, 0, false, instant);
 			if (flag)
 			{
 				if (crush >= 0 && !hexencrush)
@@ -266,8 +266,8 @@ EMoveResult sector_t::MoveFloor(double speed, double dest, int crush, int direct
 					return EMoveResult::crushed;
 				}
 				floorplane.setD(lastpos);
-				P_ChangeSector(this, crush, -speed, 0, true);
-				MoveAttached(crush, -speed, 0, false);
+				P_ChangeSector(this, crush, -speed, 0, true, instant);
+				MoveAttached(crush, -speed, 0, false, instant);
 				return EMoveResult::crushed;
 			}
 			ChangePlaneTexZ(sector_t::floor, floorplane.HeightDiff(lastpos));

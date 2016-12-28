@@ -60,6 +60,7 @@
 #include "r_data/colormaps.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "gl/dynlights/gl_dynlight.h"
+#include "r_walldraw.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
@@ -155,7 +156,6 @@ static double			xstepscale, ystepscale;
 static double			basexfrac, baseyfrac;
 
 void					R_DrawSinglePlane (visplane_t *, fixed_t alpha, bool additive, bool masked);
-void R_DrawSkySegment(visplane_t *vis, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const uint8_t *(*getcol)(FTexture *tex, int col));
 
 //==========================================================================
 //
@@ -1135,7 +1135,7 @@ static void R_DrawSky (visplane_t *pl)
 			lastskycol[x] = 0xffffffff;
 			lastskycol_bgra[x] = 0xffffffff;
 		}
-		R_DrawSkySegment (pl, (short *)pl->top, (short *)pl->bottom, swall, lwall,
+		R_DrawSkySegment (pl->left, pl->right, (short *)pl->top, (short *)pl->bottom, swall, lwall,
 			frontyScale, backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
 	}
 	else
@@ -1173,7 +1173,7 @@ static void R_DrawSkyStriped (visplane_t *pl)
 			lastskycol[x] = 0xffffffff;
 			lastskycol_bgra[x] = 0xffffffff;
 		}
-		R_DrawSkySegment (pl, top, bot, swall, lwall, rw_pic->Scale.Y,
+		R_DrawSkySegment (pl->left, pl->right, top, bot, swall, lwall, rw_pic->Scale.Y,
 			backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
 		yl = yh;
 		yh += drawheight;

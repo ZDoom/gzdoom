@@ -47,6 +47,7 @@
 #include "swrenderer/drawers/r_draw.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
+#include "r_walldraw.h"
 
 #define WALLYREPEAT 8
 
@@ -60,7 +61,6 @@ namespace swrenderer
 {
 	using namespace drawerargs;
 
-	void R_DrawWallSegment(FTexture *rw_pic, int x1, int x2, short *walltop, short *wallbottom, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, FLightNode *light_list = nullptr);
 	void R_DrawDrawSeg(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat);
 
 #define HEIGHTBITS 12

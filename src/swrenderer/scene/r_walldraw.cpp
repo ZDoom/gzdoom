@@ -44,6 +44,7 @@
 #include "r_data/colormaps.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "swrenderer/drawers/r_drawers.h"
+#include "r_walldraw.h"
 
 namespace swrenderer
 {
@@ -52,20 +53,22 @@ namespace swrenderer
 	extern FTexture *rw_pic;
 	extern int wallshade;
 
-struct WallSampler
+static const uint8_t *R_GetColumn(FTexture *tex, int col)
 {
-	WallSampler() { }
-	WallSampler(int y1, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x));
+	int width;
 
-	uint32_t uv_pos;
-	uint32_t uv_step;
-	uint32_t uv_max;
+	// If the texture's width isn't a power of 2, then we need to make it a
+	// positive offset for proper clamping.
+	if (col < 0 && (width = tex->GetWidth()) != (1 << tex->WidthBits))
+	{
+		col = width + (col % width);
+	}
 
-	const BYTE *source;
-	const BYTE *source2;
-	uint32_t texturefracx;
-	uint32_t height;
-};
+	if (r_swtruecolor)
+		return (const uint8_t *)tex->GetColumnBgra(col, nullptr);
+	else
+		return tex->GetColumn(col, nullptr);
+}
 
 WallSampler::WallSampler(int y1, float swal, double yrepeat, fixed_t xoffset, double xmagnitude, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x))
 {
@@ -596,11 +599,9 @@ void R_DrawWallSegment(FTexture *rw_pic, int x1, int x2, short *walltop, short *
 	dc_light_list = nullptr;
 }
 
-void R_DrawSkySegment(visplane_t *pl, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
+void R_DrawSkySegment(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
 {
-	ProcessNormalWall(pl->left, pl->right, uwal, dwal, swal, lwal, yrepeat, getcol);
+	ProcessNormalWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol);
 }
-
-
 
 }

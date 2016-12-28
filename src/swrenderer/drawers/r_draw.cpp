@@ -496,23 +496,6 @@ namespace swrenderer
 		basecolormap = basecolormapsave;
 	}
 
-	const uint8_t *R_GetColumn(FTexture *tex, int col)
-	{
-		int width;
-
-		// If the texture's width isn't a power of 2, then we need to make it a
-		// positive offset for proper clamping.
-		if (col < 0 && (width = tex->GetWidth()) != (1 << tex->WidthBits))
-		{
-			col = width + (col % width);
-		}
-
-		if (r_swtruecolor)
-			return (const uint8_t *)tex->GetColumnBgra(col, nullptr);
-		else
-			return tex->GetColumn(col, nullptr);
-	}
-
 	DrawerFunc R_GetTransMaskDrawer()
 	{
 		if (colfunc == &SWPixelFormatDrawers::DrawAddColumn)

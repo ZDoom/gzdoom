@@ -75,6 +75,7 @@ EXTERN_CVAR (Float, transsouls)
 extern TArray<spritedef_t> sprites;
 extern TArray<spriteframe_t> SpriteFrames;
 extern TArray<PalEntry> BloodTranslationColors;
+extern bool r_showviewer;
 
 enum HWRenderStyle
 {
@@ -655,7 +656,6 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		if (!(thing->flags & MF_STEALTH) || !gl_fixedcolormap || !gl_enhanced_nightvision || thing == camera)
 			return;
 	}
-
 	int spritenum = thing->sprite;
 	DVector2 sprscale = thing->Scale;
 	if (thing->player != NULL)
@@ -669,6 +669,14 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	// [RH] Interpolate the sprite's position to make it look smooth
 	DVector3 thingpos = thing->InterpolatedPosition(r_TicFracF);
 	if (thruportal == 1) thingpos += Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
+
+	// Some added checks if the camera actor is not supposed to be seen. It can happen that some portal setup has this actor in view in which case it may not be skipped here
+	if (thing == camera && !r_showviewer)
+	{
+		DVector3 thingorigin = thing->Pos();
+		if (thruportal == 1) thingorigin += Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
+		if (fabs(thingorigin.X - ViewActorPos.X) < 2 && fabs(thingorigin.Y - ViewActorPos.Y) < 2) return;
+	}
 
 	// Too close to the camera. This doesn't look good if it is a sprite.
 	if (fabs(thingpos.X - ViewPos.X) < 2 && fabs(thingpos.Y - ViewPos.Y) < 2)
@@ -1202,9 +1210,7 @@ void gl_RenderActorsInPortal(FGLLinePortal *glport)
 					th->Prev += newpos - savedpos;
 
 					GLSprite spr;
-					th->fillcolor = 0xff0000ff;
 					spr.Process(th, gl_FakeFlat(th->Sector, &fakesector, false), 2);
-					th->fillcolor = 0xffffffff;
 					th->Angles.Yaw = savedangle;
 					th->SetXYZ(savedpos);
 					th->Prev -= newpos - savedpos;

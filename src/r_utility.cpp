@@ -106,6 +106,7 @@ int 			viewwindowx;
 int 			viewwindowy;
 
 DVector3		ViewPos;
+DVector3		ViewActorPos;	// the actual position of the viewing actor, without interpolation and quake offsets.
 DAngle			ViewAngle;
 DAngle			ViewPitch;
 DAngle			ViewRoll;
@@ -743,10 +744,11 @@ void R_SetupFrame (AActor *actor)
 			iview->Old = iview->New;
 			r_NoInterpolate = true;
 		}
+		ViewActorPos = campos;
 	}
 	else
 	{
-		iview->New.Pos = { camera->Pos().XY(), camera->player ? camera->player->viewz : camera->Z() + camera->GetCameraHeight() };
+		ViewActorPos = iview->New.Pos = { camera->Pos().XY(), camera->player ? camera->player->viewz : camera->Z() + camera->GetCameraHeight() };
 		viewsector = camera->Sector;
 		r_showviewer = false;
 	}

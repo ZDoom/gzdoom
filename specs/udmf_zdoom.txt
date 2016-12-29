@@ -224,13 +224,11 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 	                                  // 0 meaning that the default is to be used, 2 equalling the density of a light level of 250, and 255 equalling the density of
 	                                  // a light level of 0.
 
-      portal_ceil_alpha = <float>     // translucency of ceiling portal (default is 0 (not visible))
       portal_ceil_blocksound = <bool> // ceiling portal blocks sound.
       portal_ceil_disabled = <bool>   // ceiling portal disabled.
       portal_ceil_nopass = <bool>     // ceiling portal blocks movement if true.
       portal_ceil_norender = <bool>   // ceiling portal not rendered.
       portal_ceil_overlaytype = <string> // defines translucency style, can either be "translucent" or "additive". Default is "translucent".
-      portal_floor_alpha = <float>     // translucency of floor portal (default is 0 (not visible))
       portal_floor_blocksound = <bool> // floor portal blocks sound.
       portal_floor_disabled = <bool>   // floor portal disabled.
       portal_floor_nopass = <bool>     // ceiling portal blocks movement if true.

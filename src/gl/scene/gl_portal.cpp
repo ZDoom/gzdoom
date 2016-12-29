@@ -777,6 +777,8 @@ void GLPlaneMirrorPortal::DrawContents()
 		ClearScreen();
 		return;
 	}
+	// A plane mirror needs to flip the portal exclusion logic because inside the mirror, up is down and down is up.
+	std::swap(instack[sector_t::floor], instack[sector_t::ceiling]);
 
 	int old_pm=PlaneMirrorMode;
 
@@ -794,6 +796,7 @@ void GLPlaneMirrorPortal::DrawContents()
 	gl_RenderState.SetClipHeight(0.f, 0.f);
 	PlaneMirrorFlag--;
 	PlaneMirrorMode=old_pm;
+	std::swap(instack[sector_t::floor], instack[sector_t::ceiling]);
 }
 
 void GLPlaneMirrorPortal::PushState()

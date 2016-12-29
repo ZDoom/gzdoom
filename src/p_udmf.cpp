@@ -1279,8 +1279,9 @@ public:
 
 	void ParseSector(sector_t *sec, int index)
 	{
-		int lightcolor = -1;
-		int fadecolor = -1;
+		PalEntry lightcolor = -1;
+		PalEntry fadecolor = -1;
+		int fogdensity = -1;
 		int desaturation = -1;
 		int fplaneflags = 0, cplaneflags = 0;
 		double fp[4] = { 0 }, cp[4] = { 0 };
@@ -1460,6 +1461,10 @@ public:
 				case NAME_Desaturation:
 					desaturation = int(255*CheckFloat(key));
 					continue;
+
+				case NAME_fogdensity:
+					fogdensity = clamp(CheckInt(key), 0, 511);
+					break;
 
 				case NAME_Silent:
 					Flag(sec->Flags, SECF_SILENT, key);
@@ -1682,7 +1687,7 @@ public:
 			sec->ceilingplane.set(n.X, n.Y, n.Z, cp[3]);
 		}
 
-		if (lightcolor == -1 && fadecolor == -1 && desaturation == -1)
+		if (lightcolor == -1 && fadecolor == -1 && desaturation == -1 && fogdensity == -1)
 		{
 			// [RH] Sectors default to white light with the default fade.
 			//		If they are outside (have a sky ceiling), they use the outside fog.
@@ -1710,6 +1715,8 @@ public:
 					fadecolor = level.fadeto;
 			}
 			if (desaturation == -1) desaturation = NormalLight.Desaturate;
+			if (fogdensity != -1) fadecolor.a = fogdensity / 2;
+			else fadecolor.a = 0;
 
 			sec->ColorMap = GetSpecialLights (lightcolor, fadecolor, desaturation);
 		}

@@ -85,6 +85,7 @@
 #include "a_pickups.h"
 #include "a_armor.h"
 #include "a_ammo.h"
+#include "r_data/colormaps.h"
 
 extern FILE *Logfile;
 
@@ -4411,6 +4412,11 @@ enum EACSFunctions
 	ACSF_SetActorFlag,
 	ACSF_SetTranslation,
 
+
+	// OpenGL stuff
+	ACSF_SetSectorGlow = 400,
+	ACSF_SetFogDensity,
+
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
 	ACSF_SetTeamScore,			// (int team, int value
@@ -6064,6 +6070,38 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			}
 			return 1;
 		}
+
+		// OpenGL exclusive functions
+		case ACSF_SetSectorGlow:
+		{
+			int which = !!args[1];
+			PalEntry color(args[2], args[3], args[4]);
+			float height = float(args[5]);
+			if (args[2] == -1) color = -1;
+
+			FSectorTagIterator it(args[0]);
+			int s;
+			while ((s = it.Next()) >= 0)
+			{
+				sectors[s].planes[which].GlowColor = color;
+				sectors[s].planes[which].GlowHeight = height;
+			}
+			break;
+		}
+
+		case ACSF_SetFogDensity:
+		{
+			FSectorTagIterator it(args[0]);
+			int s;
+			int d = clamp(args[1]/2, 0, 255);
+			while ((s = it.Next()) >= 0)
+			{
+				auto f = sectors[s].ColorMap->Fade;
+				sectors[s].ColorMap = GetSpecialLights(sectors[s].ColorMap->Color, PalEntry(d, f.r, f.g, f.b), sectors[s].ColorMap->Desaturate);
+			}
+			break;
+		}
+
 
 		default:
 			break;

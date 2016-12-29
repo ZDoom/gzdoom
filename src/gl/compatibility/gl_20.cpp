@@ -515,7 +515,7 @@ void GLWall::RenderFogBoundaryCompat()
 {
 	// without shaders some approximation is needed. This won't look as good
 	// as the shader version but it's an acceptable compromise.
-	float fogdensity = gl_GetFogDensity(lightlevel, Colormap.FadeColor);
+	float fogdensity = gl_GetFogDensity(lightlevel, Colormap.FadeColor, Colormap.fogdensity);
 
 	float dist1 = Dist2(ViewPos.X, ViewPos.Y, glseg.x1, glseg.y1);
 	float dist2 = Dist2(ViewPos.X, ViewPos.Y, glseg.x2, glseg.y2);

@@ -32,6 +32,7 @@ struct FColormap
 	PalEntry		FadeColor;		// a is fadedensity>>1
 	int				desaturation;
 	int				blendfactor;
+	int				fogdensity;
 
 	void Clear()
 	{
@@ -39,6 +40,7 @@ struct FColormap
 		FadeColor=0;
 		desaturation = 0;
 		blendfactor=0;
+		fogdensity = 0;
 	}
 
 	void ClearColor()
@@ -55,6 +57,7 @@ struct FColormap
 		desaturation = from->Desaturate;
 		FadeColor = from->Fade;
 		blendfactor = from->Color.a;
+		fogdensity = from->Fade.a*2;
 		return * this;
 	}
 

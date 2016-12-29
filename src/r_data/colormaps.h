@@ -17,6 +17,7 @@ struct FDynamicColormap
 	void ChangeFade (PalEntry fadecolor);
 	void ChangeColor (PalEntry lightcolor, int desaturate);
 	void ChangeColorFade (PalEntry lightcolor, PalEntry fadecolor);
+	void ChangeFogDensity(int newdensity);
 	void BuildLights ();
 	static void RebuildAllLights();
 

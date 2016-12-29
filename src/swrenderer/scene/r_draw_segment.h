@@ -40,4 +40,6 @@ namespace swrenderer
 	extern size_t FirstInterestingDrawseg;
 	
 	void R_ClearDrawSegs();
+	void R_CheckDrawSegs();
+	ptrdiff_t R_NewOpening(ptrdiff_t len);
 }

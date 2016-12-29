@@ -1542,46 +1542,6 @@ void R_NewWall (bool needlights)
 	}
 }
 
-
-//
-// R_CheckDrawSegs
-//
-
-void R_CheckDrawSegs ()
-{
-	if (ds_p == &drawsegs[MaxDrawSegs])
-	{ // [RH] Grab some more drawsegs
-		size_t newdrawsegs = MaxDrawSegs ? MaxDrawSegs*2 : 32;
-		ptrdiff_t firstofs = firstdrawseg - drawsegs;
-		drawsegs = (drawseg_t *)M_Realloc (drawsegs, newdrawsegs * sizeof(drawseg_t));
-		firstdrawseg = drawsegs + firstofs;
-		ds_p = drawsegs + MaxDrawSegs;
-		MaxDrawSegs = newdrawsegs;
-		DPrintf (DMSG_NOTIFY, "MaxDrawSegs increased to %zu\n", MaxDrawSegs);
-	}
-}
-
-//
-// R_CheckOpenings
-//
-
-ptrdiff_t R_NewOpening (ptrdiff_t len)
-{
-	ptrdiff_t res = lastopening;
-	len = (len + 1) & ~1;	// only return DWORD aligned addresses because some code stores fixed_t's and floats in openings... 
-	lastopening += len;
-	if ((size_t)lastopening > maxopenings)
-	{
-		do
-			maxopenings = maxopenings ? maxopenings*2 : 16384;
-		while ((size_t)lastopening > maxopenings);
-		openings = (short *)M_Realloc (openings, maxopenings * sizeof(*openings));
-		DPrintf (DMSG_NOTIFY, "MaxOpenings increased to %zu\n", maxopenings);
-	}
-	return res;
-}
-
-
 //
 // R_StoreWallRange
 // A wall segment will be drawn between start and stop pixels (inclusive).

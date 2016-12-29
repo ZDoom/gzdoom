@@ -45,10 +45,6 @@ inline int R_CreateWallSegmentY(short *outbuf, double z, const FWallCoords *wall
 void PrepWall (float *swall, fixed_t *lwall, double walxrepeat, int x1, int x2);
 void PrepLWall (fixed_t *lwall, double walxrepeat, int x1, int x2);
 
-ptrdiff_t R_NewOpening (ptrdiff_t len);
-
-void R_CheckDrawSegs ();
-
 void R_RenderSegLoop ();
 
 extern float	swall[MAXWIDTH];

@@ -187,6 +187,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 {
 	unsigned char * buffer;
 	int W, H;
+	int isTransparent = -1;
 
 
 	// Textures that are already scaled in the texture lump will not get replaced
@@ -224,14 +225,16 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 			int trans = tex->CopyTrueColorPixels(&imgCreate, exx, exx);
 			bmp.CopyPixelDataRGB(0, 0, imgCreate.GetPixels(), W, H, 4, W * 4, 0, CF_BGRA);
 			tex->CheckTrans(buffer, W*H, trans);
-			bIsTransparent = tex->gl_info.mIsTransparent;
+			isTransparent = tex->gl_info.mIsTransparent;
+			if (bIsTransparent == -1) bIsTransparent = isTransparent;
 		}
 	}
 	else if (translation<=0)
 	{
 		int trans = tex->CopyTrueColorPixels(&bmp, exx, exx);
 		tex->CheckTrans(buffer, W*H, trans);
-		bIsTransparent = tex->gl_info.mIsTransparent;
+		isTransparent = tex->gl_info.mIsTransparent;
+		if (bIsTransparent == -1) bIsTransparent = isTransparent;
 	}
 	else
 	{
@@ -239,7 +242,8 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 		// Since FTexture's method is doing exactly that by calling GetPixels let's use that here
 		// to do all the dirty work for us. ;)
 		tex->FTexture::CopyTrueColorPixels(&bmp, exx, exx);
-		bIsTransparent = 0;
+		isTransparent = 0;
+		// This is not conclusive for setting the texture's transparency info.
 	}
 
 	// if we just want the texture for some checks there's no need for upsampling.
@@ -247,7 +251,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 
 	// [BB] The hqnx upsampling (not the scaleN one) destroys partial transparency, don't upsamle textures using it.
 	// [BB] Potentially upsample the buffer.
-	return gl_CreateUpsampledTextureBuffer ( tex, buffer, W, H, w, h, !!bIsTransparent);
+	return gl_CreateUpsampledTextureBuffer ( tex, buffer, W, H, w, h, !!isTransparent);
 }
 
 

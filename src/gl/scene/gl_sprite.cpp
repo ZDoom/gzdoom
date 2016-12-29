@@ -916,7 +916,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 				RenderStyle = LegacyRenderStyles[STYLE_Translucent];
 				OverrideShader = gl_fuzztype + 4;
 				trans = 0.99f;	// trans may not be 1 here
-				hw_styleflags |= STYLEHW_NoAlphaTest;
+				hw_styleflags = STYLEHW_NoAlphaTest;
 			}
 			else
 			{

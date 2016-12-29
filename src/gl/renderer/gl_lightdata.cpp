@@ -294,43 +294,48 @@ void gl_SetColor(int sectorlightlevel, int rellight, const FColormap &cm, float 
 //
 //==========================================================================
 
-float gl_GetFogDensity(int lightlevel, PalEntry fogcolor)
+float gl_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity)
 {
 	float density;
 
-	if (glset.lightmode&4)
+	if (glset.lightmode & 4)
 	{
 		// uses approximations of Legacy's default settings.
-		density = fogdensity? fogdensity : 18;
+		density = fogdensity ? fogdensity : 18;
 	}
 	else if ((fogcolor.d & 0xffffff) == 0)
 	{
 		// case 1: black fog
 		if (glset.lightmode != 8)
 		{
-			density=distfogtable[glset.lightmode!=0][gl_ClampLight(lightlevel)];
+			density = distfogtable[glset.lightmode != 0][gl_ClampLight(lightlevel)];
 		}
 		else
 		{
 			density = 0;
 		}
 	}
-	else if (outsidefogdensity != 0 && outsidefogcolor.a!=0xff && (fogcolor.d & 0xffffff) == (outsidefogcolor.d & 0xffffff))
+	else if (sectorfogdensity != 0)
 	{
-		// case 2. outsidefogdensity has already been set as needed
-		density=outsidefogdensity;
+		// case 2: Sector has an explicit fog density set.
+		density = sectorfogdensity;
 	}
-	else  if (fogdensity!=0)
+	else if (outsidefogdensity != 0 && outsidefogcolor.a != 0xff && (fogcolor.d & 0xffffff) == (outsidefogcolor.d & 0xffffff))
 	{
-		// case 3: level has fog density set
-		density=fogdensity;
+		// case 3. outsidefogdensity has already been set as needed
+		density = outsidefogdensity;
+	}
+	else  if (fogdensity != 0)
+	{
+		// case 4: level has fog density set
+		density = fogdensity;
 	}
 	else if (lightlevel < 248)
 	{
-		// case 4: use light level
-		density=clamp<int>(255-lightlevel,30,255);
+		// case 5: use light level
+		density = clamp<int>(255 - lightlevel, 30, 255);
 	}
-	else 
+	else
 	{
 		density = 0.f;
 	}
@@ -487,7 +492,7 @@ void gl_SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isaddit
 	else if (cmap != NULL && gl_fixedcolormap == 0)
 	{
 		fogcolor = cmap->FadeColor;
-		fogdensity = gl_GetFogDensity(lightlevel, fogcolor);
+		fogdensity = gl_GetFogDensity(lightlevel, fogcolor, cmap->fogdensity);
 		fogcolor.a=0;
 	}
 	else

@@ -71,6 +71,7 @@
 #include "v_video.h"
 #include "r_utility.h"
 #include "r_data/r_interpolate.h"
+#include "c_functions.h"
 
 extern FILE *Logfile;
 extern bool insave;
@@ -870,20 +871,17 @@ CCMD (wdir)
 //
 //
 //-----------------------------------------------------------------------------
+
 CCMD(linetarget)
 {
 	FTranslatedLineTarget t;
 
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
-	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->Angles.Yaw, MISSILERANGE, &t, 0.);
+	C_AimLine(&t, false);
 	if (t.linetarget)
-	{
-		Printf("Target=%s, Health=%d, Spawnhealth=%d\n",
-			t.linetarget->GetClass()->TypeName.GetChars(),
-			t.linetarget->health,
-			t.linetarget->SpawnHealth());
-	}
-	else Printf("No target found\n");
+		C_PrintInfo(t.linetarget);
+	else
+		Printf("No target found\n");
 }
 
 // As linetarget, but also give info about non-shootable actors
@@ -892,28 +890,18 @@ CCMD(info)
 	FTranslatedLineTarget t;
 
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
-	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->Angles.Yaw, MISSILERANGE,
-		&t, 0.,	ALF_CHECKNONSHOOTABLE|ALF_FORCENOSMART);
+	C_AimLine(&t, true);
 	if (t.linetarget)
-	{
-		Printf("Target=%s, Health=%d, Spawnhealth=%d\n",
-			t.linetarget->GetClass()->TypeName.GetChars(),
-			t.linetarget->health,
-			t.linetarget->SpawnHealth());
-		PrintMiscActorInfo(t.linetarget);
-	}
-	else Printf("No target found. Info cannot find actors that have "
+		C_PrintInfo(t.linetarget);
+	else
+		Printf("No target found. Info cannot find actors that have "
 				"the NOBLOCKMAP flag or have height/radius of 0.\n");
 }
 
 CCMD(myinfo)
 {
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
-	Printf("Target=%s, Health=%d, Spawnhealth=%d\n",
-		players[consoleplayer].mo->GetClass()->TypeName.GetChars(),
-		players[consoleplayer].mo->health,
-		players[consoleplayer].mo->SpawnHealth());
-	PrintMiscActorInfo(players[consoleplayer].mo);
+	C_PrintInfo(players[consoleplayer].mo);
 }
 
 typedef bool (*ActorTypeChecker) (AActor *);

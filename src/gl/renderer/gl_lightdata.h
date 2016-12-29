@@ -18,7 +18,7 @@ void gl_SetFogParams(int _fogdensity, PalEntry _outsidefogcolor, int _outsidefog
 int gl_CalcLightLevel(int lightlevel, int rellight, bool weapon);
 void gl_SetColor(int light, int rellight, const FColormap &cm, float alpha, bool weapon=false);
 
-float gl_GetFogDensity(int lightlevel, PalEntry fogcolor);
+float gl_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity);
 struct sector_t;
 bool gl_CheckFog(FColormap *cm, int lightlevel);
 bool gl_CheckFog(sector_t *frontsector, sector_t *backsector);

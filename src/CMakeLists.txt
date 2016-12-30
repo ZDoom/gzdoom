@@ -828,6 +828,7 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/scene/r_visible_plane.cpp
 	swrenderer/scene/r_visible_sprite.cpp
 	swrenderer/scene/r_particle.cpp
+	swrenderer/scene/r_playersprite.cpp
 	polyrenderer/poly_renderer.cpp
 	polyrenderer/scene/poly_scene.cpp
 	polyrenderer/scene/poly_portal.cpp

@@ -55,6 +55,8 @@ extern double			pspriteyscale;
 
 extern FTexture			*WallSpriteTile;
 
+extern int spriteshade;
+
 bool R_ClipSpriteColumnWithPortals(vissprite_t* spr);
 
 void R_DrawMaskedColumn (FTexture *texture, fixed_t column, bool unmasked = false);
@@ -66,13 +68,13 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside);
 void R_DrawSprites ();
 void R_ClearSprites ();
 void R_DrawMasked ();
-void R_DrawRemainingPlayerSprites ();
 
 void R_CheckOffscreenBuffer(int width, int height, bool spansonly);
 
 enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4 };
 
 void R_ClipVisSprite (vissprite_t *vis, int xl, int xh);
+void R_DrawVisSprite(vissprite_t *vis);
 
 }
 

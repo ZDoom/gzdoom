@@ -126,6 +126,7 @@ namespace swrenderer
 		decal_pos = { dcx, dcy };
 
 		DVector2 angvec = (curline->v2->fPos() - curline->v1->fPos()).Unit();
+		float maskedScaleY;
 
 		decal_left = decal_pos - edge_left * angvec - ViewPos;
 		decal_right = decal_pos + edge_right * angvec - ViewPos;
@@ -253,7 +254,7 @@ namespace swrenderer
 			sprflipvert = false;
 		}
 
-		float maskedScaleY = float(1 / yscale);
+		maskedScaleY = float(1 / yscale);
 		do
 		{
 			int x = x1;

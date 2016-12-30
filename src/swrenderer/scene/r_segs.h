@@ -43,12 +43,18 @@ void PrepLWall (fixed_t *lwall, double walxrepeat, int x1, int x2);
 
 void R_RenderSegLoop ();
 
+extern short	walltop[MAXWIDTH];	// [RH] record max extents of wall
+extern short	wallbottom[MAXWIDTH];
+extern short	wallupper[MAXWIDTH];
+extern short	walllower[MAXWIDTH];
 extern float	swall[MAXWIDTH];
 extern fixed_t	lwall[MAXWIDTH];
+extern double	lwallscale;
 extern float	rw_light;		// [RH] Scale lights with viewsize adjustments
 extern float	rw_lightstep;
 extern float	rw_lightleft;
 extern fixed_t	rw_offset;
+extern int wallshade;
 
 }
 

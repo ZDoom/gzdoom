@@ -60,13 +60,6 @@ CVAR(Float, r_lod_bias, -1.5, 0); // To do: add CVAR_ARCHIVE | CVAR_GLOBALCONFIG
 
 namespace swrenderer
 {
-	extern "C" short spanend[MAXHEIGHT];
-	extern float rw_light;
-	extern float rw_lightstep;
-	extern int wallshade;
-
-	/////////////////////////////////////////////////////////////////////////////
-
 	DrawSpanLLVMCommand::DrawSpanLLVMCommand()
 	{
 		using namespace drawerargs;

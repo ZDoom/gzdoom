@@ -161,12 +161,6 @@ FCoverageBuffer *OffscreenCoverageBuffer;
 
 // GAME FUNCTIONS
 //
-int				MaxVisSprites;
-vissprite_t 	**vissprites;
-vissprite_t		**firstvissprite;
-vissprite_t		**vissprite_p;
-vissprite_t		**lastvissprite;
-int 			newvissprite;
 bool			DrewAVoxel;
 
 static vissprite_t **spritesorter;
@@ -179,15 +173,7 @@ static void R_ProjectWallSprite(AActor *thing, const DVector3 &pos, FTextureID p
 
 void R_DeinitSprites()
 {
-	// Free vissprites
-	for (int i = 0; i < MaxVisSprites; ++i)
-	{
-		delete vissprites[i];
-	}
-	free (vissprites);
-	vissprites = NULL;
-	vissprite_p = lastvissprite = NULL;
-	MaxVisSprites = 0;
+	R_DeinitVisSprites();
 
 	// Free vissprites sorter
 	if (spritesorter != NULL)
@@ -217,37 +203,8 @@ void R_DeinitSprites()
 //
 void R_ClearSprites (void)
 {
-	vissprite_p = firstvissprite;
+	R_ClearVisSprites();
 	DrewAVoxel = false;
-}
-
-
-//
-// R_NewVisSprite
-//
-vissprite_t *R_NewVisSprite (void)
-{
-	if (vissprite_p == lastvissprite)
-	{
-		ptrdiff_t firstvisspritenum = firstvissprite - vissprites;
-		ptrdiff_t prevvisspritenum = vissprite_p - vissprites;
-
-		MaxVisSprites = MaxVisSprites ? MaxVisSprites * 2 : 128;
-		vissprites = (vissprite_t **)M_Realloc (vissprites, MaxVisSprites * sizeof(vissprite_t));
-		lastvissprite = &vissprites[MaxVisSprites];
-		firstvissprite = &vissprites[firstvisspritenum];
-		vissprite_p = &vissprites[prevvisspritenum];
-		DPrintf (DMSG_NOTIFY, "MaxVisSprites increased to %d\n", MaxVisSprites);
-
-		// Allocate sprites from the new pile
-		for (vissprite_t **p = vissprite_p; p < lastvissprite; ++p)
-		{
-			*p = new vissprite_t;
-		}
-	}
-
-	vissprite_p++;
-	return *(vissprite_p-1);
 }
 
 //

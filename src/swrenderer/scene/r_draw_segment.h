@@ -43,5 +43,4 @@ namespace swrenderer
 	void R_FreeDrawSegs();
 
 	drawseg_t *R_AddDrawSegment();
-	ptrdiff_t R_NewOpening(ptrdiff_t len);
 }

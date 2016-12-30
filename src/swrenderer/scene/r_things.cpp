@@ -70,6 +70,7 @@
 #include "r_voxel.h"
 #include "r_draw_segment.h"
 #include "r_portal_segment.h"
+#include "swrenderer\r_memory.h"
 
 EXTERN_CVAR(Bool, st_scale)
 EXTERN_CVAR(Bool, r_shadercolormaps)

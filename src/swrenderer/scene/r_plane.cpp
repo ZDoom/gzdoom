@@ -65,6 +65,7 @@
 #include "r_clip_segment.h"
 #include "r_draw_segment.h"
 #include "r_portal_segment.h"
+#include "swrenderer\r_memory.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
@@ -117,15 +118,6 @@ int stacked_extralight;
 double stacked_visibility;
 DVector3 stacked_viewpos;
 DAngle stacked_angle;
-
-
-//
-// opening
-//
-
-size_t					maxopenings;
-short					*openings;
-ptrdiff_t				lastopening;
 
 //
 // Clip values are the solid pixel bounding the range.
@@ -546,7 +538,7 @@ void R_ClearPlanes (bool fullclear)
 			!screen->Accel2D && ConBottom > viewwindowy && !bRenderingToCanvas
 			? (ConBottom - viewwindowy) : 0);
 
-		lastopening = 0;
+		R_FreeOpenings();
 
 		next_plane_light = 0;
 	}
@@ -1351,7 +1343,6 @@ void R_DrawPortals ()
 	DAngle savedangle = ViewAngle;
 	ptrdiff_t savedvissprite_p = vissprite_p - vissprites;
 	ptrdiff_t savedds_p = ds_p - drawsegs;
-	ptrdiff_t savedlastopening = lastopening;
 	size_t savedinteresting = FirstInterestingDrawseg;
 	double savedvisibility = R_GetVisibility();
 	AActor *savedcamera = camera;
@@ -1519,8 +1510,6 @@ void R_DrawPortals ()
 	ds_p = drawsegs + savedds_p;
 	InterestingDrawsegs.Resize ((unsigned int)FirstInterestingDrawseg);
 	FirstInterestingDrawseg = savedinteresting;
-
-	lastopening = savedlastopening;
 
 	camera = savedcamera;
 	viewsector = savedsector;

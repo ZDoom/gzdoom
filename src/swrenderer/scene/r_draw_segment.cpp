@@ -74,20 +74,4 @@ namespace swrenderer
 
 		return ds_p++;
 	}
-
-	ptrdiff_t R_NewOpening(ptrdiff_t len)
-	{
-		ptrdiff_t res = lastopening;
-		len = (len + 1) & ~1;	// only return DWORD aligned addresses because some code stores fixed_t's and floats in openings... 
-		lastopening += len;
-		if ((size_t)lastopening > maxopenings)
-		{
-			do
-				maxopenings = maxopenings ? maxopenings * 2 : 16384;
-			while ((size_t)lastopening > maxopenings);
-			openings = (short *)M_Realloc(openings, maxopenings * sizeof(*openings));
-			DPrintf(DMSG_NOTIFY, "MaxOpenings increased to %zu\n", maxopenings);
-		}
-		return res;
-	}
 }

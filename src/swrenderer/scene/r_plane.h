@@ -80,10 +80,6 @@ typedef struct visplane_s visplane_t;
 
 
 
-// Visplane related.
-extern ptrdiff_t		lastopening;	// type short
-
-
 typedef void (*planefunction_t) (int top, int bottom);
 
 extern planefunction_t	floorfunc;

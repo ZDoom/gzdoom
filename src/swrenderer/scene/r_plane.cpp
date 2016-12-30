@@ -64,7 +64,7 @@
 #include "r_walldraw.h"
 #include "r_clip_segment.h"
 #include "r_draw_segment.h"
-#include "r_portal_segment.h"
+#include "r_portal.h"
 #include "swrenderer\r_memory.h"
 
 #ifdef _MSC_VER

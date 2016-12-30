@@ -49,6 +49,10 @@ CVAR(Bool, r_skyboxes, true, 0)
 
 namespace swrenderer
 {
+	PortalDrawseg *CurrentPortal = nullptr;
+	int CurrentPortalUniq = 0;
+	bool CurrentPortalInSkybox = false;
+
 	namespace
 	{
 		int numskyboxes; // For ADD_STAT(skyboxes)

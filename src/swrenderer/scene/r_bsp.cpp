@@ -38,7 +38,7 @@
 #include "r_things.h"
 #include "r_3dfloors.h"
 #include "r_clip_segment.h"
-#include "r_portal_segment.h"
+#include "r_portal.h"
 #include "a_sharedglobal.h"
 #include "g_level.h"
 #include "p_effect.h"

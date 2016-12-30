@@ -19,8 +19,5 @@ namespace swrenderer
 		bool mirror; // true if this is a mirror (src should equal dst)
 	};
 	
-	extern PortalDrawseg* CurrentPortal;
-	extern int CurrentPortalUniq;
-	extern bool CurrentPortalInSkybox;
 	extern TArray<PortalDrawseg> WallPortals;
 }

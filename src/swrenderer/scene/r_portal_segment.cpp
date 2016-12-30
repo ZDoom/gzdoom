@@ -26,9 +26,5 @@
 
 namespace swrenderer
 {
-	PortalDrawseg *CurrentPortal = nullptr;
-	int CurrentPortalUniq = 0;
-	bool CurrentPortalInSkybox = false;
-	
 	TArray<PortalDrawseg> WallPortals(1000);	// note: this array needs to go away as reallocation can cause crashes.
 }

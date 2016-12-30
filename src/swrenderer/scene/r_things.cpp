@@ -69,7 +69,7 @@
 #include "p_maputl.h"
 #include "r_voxel.h"
 #include "r_draw_segment.h"
-#include "r_portal_segment.h"
+#include "r_portal.h"
 #include "swrenderer\r_memory.h"
 
 EXTERN_CVAR(Bool, st_scale)

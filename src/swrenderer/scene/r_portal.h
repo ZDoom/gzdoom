@@ -5,6 +5,10 @@
 
 namespace swrenderer
 {
+	extern PortalDrawseg* CurrentPortal;
+	extern int CurrentPortalUniq;
+	extern bool CurrentPortalInSkybox;
+
 	void R_DrawPortals();
 	void R_DrawWallPortals();
 	void R_EnterPortal(PortalDrawseg* pds, int depth);

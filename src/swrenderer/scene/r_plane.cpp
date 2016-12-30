@@ -89,19 +89,8 @@ static void R_DrawSkyStriped (visplane_t *pl);
 planefunction_t 		floorfunc;
 planefunction_t 		ceilingfunc;
 
-// [RH] Allocate one extra for sky box planes.
-visplane_t *visplanes[MAXVISPLANES+1];
-visplane_t *freetail;
-visplane_t **freehead = &freetail;
-
 visplane_t 				*floorplane;
 visplane_t 				*ceilingplane;
-
-// killough -- hash function for visplanes
-// Empirically verified to be fairly uniform:
-
-#define visplane_hash(picnum,lightlevel,height) \
-  ((unsigned)((picnum)*3+(lightlevel)+(FLOAT2FIXED((height).fD()))*7) & (MAXVISPLANES-1))
 
 // These are copies of the main parameters used when drawing stacked sectors.
 // When you change the main parameters, you should copy them here too *unless*
@@ -145,44 +134,6 @@ static double			xstepscale, ystepscale;
 static double			basexfrac, baseyfrac;
 
 void					R_DrawSinglePlane (visplane_t *, fixed_t alpha, bool additive, bool masked);
-
-//==========================================================================
-//
-// R_InitPlanes
-//
-// Called at game startup.
-//
-//==========================================================================
-
-void R_InitPlanes ()
-{
-}
-
-//==========================================================================
-//
-// R_DeinitPlanes
-//
-//==========================================================================
-
-void R_DeinitPlanes ()
-{
-	fakeActive = 0;
-
-	// do not use R_ClearPlanes because at this point the screen pointer is no longer valid.
-	for (int i = 0; i <= MAXVISPLANES; i++)	// new code -- killough
-	{
-		for (*freehead = visplanes[i], visplanes[i] = NULL; *freehead; )
-		{
-			freehead = &(*freehead)->next;
-		}
-	}
-	for (visplane_t *pl = freetail; pl != NULL; )
-	{
-		visplane_t *next = pl->next;
-		free (pl);
-		pl = next;
-	}
-}
 
 //==========================================================================
 //
@@ -536,38 +487,6 @@ void R_ClearPlanes (bool fullclear)
 		next_plane_light = 0;
 	}
 }
-
-//==========================================================================
-//
-// new_visplane
-//
-// New function, by Lee Killough
-// [RH] top and bottom buffers get allocated immediately after the visplane.
-//
-//==========================================================================
-
-static visplane_t *new_visplane (unsigned hash)
-{
-	visplane_t *check = freetail;
-
-	if (check == NULL)
-	{
-		check = (visplane_t *)M_Malloc (sizeof(*check) + 3 + sizeof(*check->top)*(MAXWIDTH*2));
-		memset(check, 0, sizeof(*check) + 3 + sizeof(*check->top)*(MAXWIDTH*2));
-		check->bottom = check->top + MAXWIDTH+2;
-	}
-	else if (NULL == (freetail = freetail->next))
-	{
-		freehead = &freetail;
-	}
-
-	check->lights = nullptr;
-
-	check->next = visplanes[hash];
-	visplanes[hash] = check;
-	return check;
-}
-
 
 //==========================================================================
 //
@@ -1752,44 +1671,6 @@ void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1))
 	}
 
 	ds_light_list = nullptr;
-}
-
-//==========================================================================
-//
-// R_PlaneInitData
-//
-//==========================================================================
-
-bool R_PlaneInitData ()
-{
-	int i;
-	visplane_t *pl;
-
-	// Free all visplanes and let them be re-allocated as needed.
-	pl = freetail;
-
-	while (pl)
-	{
-		visplane_t *next = pl->next;
-		M_Free (pl);
-		pl = next;
-	}
-	freetail = NULL;
-	freehead = &freetail;
-
-	for (i = 0; i < MAXVISPLANES; i++)
-	{
-		pl = visplanes[i];
-		visplanes[i] = NULL;
-		while (pl)
-		{
-			visplane_t *next = pl->next;
-			M_Free (pl);
-			pl = next;
-		}
-	}
-
-	return true;
 }
 
 }

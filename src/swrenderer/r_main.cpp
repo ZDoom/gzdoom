@@ -377,7 +377,6 @@ void R_InitRenderer()
 	// viewwidth / viewheight are set by the defaults
 	fillshort (zeroarray, MAXWIDTH, 0);
 
-	R_InitPlanes ();
 	R_InitShadeMaps();
 	R_InitColumnDrawers ();
 }
@@ -392,6 +391,7 @@ static void R_ShutdownRenderer()
 {
 	R_DeinitSprites();
 	R_DeinitPlanes();
+	fakeActive = 0;
 	// Free openings
 	if (openings != NULL)
 	{

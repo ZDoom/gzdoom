@@ -259,7 +259,7 @@ DEFINE_ACTION_FUNCTION(APowerup, EndEffect)
 
 void APowerup::CallEndEffect()
 {
-	IFVIRTUAL(APowerup, InitEffect)
+	IFVIRTUAL(APowerup, EndEffect)
 	{
 		VMValue params[1] = { (DObject*)this };
 		VMFrameStack stack;
@@ -1991,44 +1991,5 @@ void APowerMorph::EndEffect( )
 	}
 	// Unmorph suceeded
 	MorphedPlayer = NULL;
-}
-
-// Infinite Ammo Powerup -----------------------------------------------------
-
-IMPLEMENT_CLASS(APowerInfiniteAmmo, false, false)
-
-//===========================================================================
-//
-// APowerInfiniteAmmo :: InitEffect
-//
-//===========================================================================
-
-void APowerInfiniteAmmo::InitEffect( )
-{
-	Super::InitEffect();
-
-	if (Owner== NULL || Owner->player == NULL)
-		return;
-
-	// Give the player infinite ammo
-	Owner->player->cheats |= CF_INFINITEAMMO;
-}
-
-//===========================================================================
-//
-// APowerInfiniteAmmo :: EndEffect
-//
-//===========================================================================
-
-void APowerInfiniteAmmo::EndEffect( )
-{
-	Super::EndEffect();
-
-	// Nothing to do if there's no owner.
-	if (Owner != NULL && Owner->player != NULL)
-	{
-		// Take away the limitless ammo
-		Owner->player->cheats &= ~CF_INFINITEAMMO;
-	}
 }
 

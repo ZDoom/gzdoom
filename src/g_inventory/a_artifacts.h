@@ -257,14 +257,6 @@ protected:
 	virtual void EndEffect() override;
 };
 
-class APowerInfiniteAmmo : public APowerup
-{
-	DECLARE_CLASS( APowerInfiniteAmmo, APowerup )
-protected:
-	virtual void InitEffect() override;
-	virtual void EndEffect() override;
-};
-
 class APowerMorph : public APowerup
 {
 	DECLARE_CLASS( APowerMorph, APowerup )

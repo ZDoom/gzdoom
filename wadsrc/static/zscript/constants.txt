@@ -1055,3 +1055,32 @@ enum EPuffFlags
 	PF_HITTHINGBLEED = 8,
 	PF_NORANDOMZ = 16
 };
+
+enum EPlayerCheats
+{
+	CF_NOCLIP			= 1 << 0,		// No clipping, walk through barriers.
+	CF_GODMODE			= 1 << 1,		// No damage, no health loss.
+	CF_NOVELOCITY		= 1 << 2,		// Not really a cheat, just a debug aid.
+	CF_NOTARGET			= 1 << 3,		// [RH] Monsters don't target
+	CF_FLY				= 1 << 4,		// [RH] Flying player
+	CF_CHASECAM			= 1 << 5,		// [RH] Put camera behind player
+	CF_FROZEN			= 1 << 6,		// [RH] Don't let the player move
+	CF_REVERTPLEASE		= 1 << 7,		// [RH] Stick camera in player's head if (s)he moves
+	CF_STEPLEFT			= 1 << 9,		// [RH] Play left footstep sound next time
+	CF_FRIGHTENING		= 1 << 10,		// [RH] Scare monsters away
+	CF_INSTANTWEAPSWITCH= 1 << 11,		// [RH] Switch weapons instantly
+	CF_TOTALLYFROZEN	= 1 << 12,		// [RH] All players can do is press +use
+	CF_PREDICTING		= 1 << 13,		// [RH] Player movement is being predicted
+	CF_INTERPVIEW		= 1 << 14,		// [RH] view was changed outside of input, so interpolate one frame
+	CF_DRAIN			= 1 << 16,		// Player owns a drain powerup
+	CF_HIGHJUMP			= 1 << 18,		// more Skulltag flags. Implementation not guaranteed though. ;)
+	CF_REFLECTION		= 1 << 19,
+	CF_PROSPERITY		= 1 << 20,
+	CF_DOUBLEFIRINGSPEED= 1 << 21,		// Player owns a double firing speed artifact
+	CF_EXTREMELYDEAD	= 1 << 22,		// [RH] Reliably let the status bar know about extreme deaths.
+	CF_INFINITEAMMO		= 1 << 23,		// Player owns an infinite ammo artifact
+	CF_BUDDHA2			= 1 << 24,		// [MC] Absolute buddha. No voodoo can kill it either.
+	CF_GODMODE2			= 1 << 25,		// [MC] Absolute godmode. No voodoo can kill it either.
+	CF_BUDDHA			= 1 << 27,		// [SP] Buddha mode - take damage, but don't die
+	CF_NOCLIP2			= 1 << 30,		// [RH] More Quake-like noclip
+};

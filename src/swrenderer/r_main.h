@@ -35,8 +35,12 @@ extern int				viewwindowy;
 
 typedef BYTE lighttable_t;	// This could be wider for >8 bit display.
 
+extern cycle_t FrameCycles;
+
 namespace swrenderer
 {
+
+extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 
 //
 // POV related.

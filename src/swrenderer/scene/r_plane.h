@@ -97,7 +97,7 @@ void R_ClearPlanes (bool fullclear);
 void R_AddPlaneLights(visplane_t *plane, FLightNode *light_head);
 
 int R_DrawPlanes ();
-void R_DrawPortals ();
+void R_DrawSinglePlane(visplane_t *pl, fixed_t alpha, bool additive, bool masked);
 void R_DrawSkyPlane (visplane_t *pl);
 void R_DrawNormalPlane (visplane_t *pl, double xscale, double yscale, fixed_t alpha, bool additive, bool masked);
 void R_DrawTiltedPlane (visplane_t *pl, double xscale, double yscale, fixed_t alpha, bool additive, bool masked);
@@ -127,6 +127,12 @@ bool R_PlaneInitData (void);
 
 extern visplane_t*		floorplane;
 extern visplane_t*		ceilingplane;
+
+#define MAXVISPLANES 128    /* must be a power of 2 */
+
+extern visplane_t *visplanes[MAXVISPLANES + 1];
+extern visplane_t *freetail;
+extern visplane_t **freehead;
 
 }
 

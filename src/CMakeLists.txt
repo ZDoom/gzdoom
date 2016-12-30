@@ -824,6 +824,7 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/scene/r_clip_segment.cpp
 	swrenderer/scene/r_draw_segment.cpp
 	swrenderer/scene/r_portal_segment.cpp
+	swrenderer/scene/r_portal.cpp
 	polyrenderer/poly_renderer.cpp
 	polyrenderer/scene/poly_scene.cpp
 	polyrenderer/scene/poly_portal.cpp

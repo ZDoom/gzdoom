@@ -44,6 +44,8 @@ extern unsigned int		R_OldBlend;
 
 const double			r_Yaspect = 200.0;		// Why did I make this a variable? It's never set anywhere.
 
+extern bool r_showviewer;
+
 //==========================================================================
 //
 // R_PointOnSide

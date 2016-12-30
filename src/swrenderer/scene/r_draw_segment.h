@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "r_bsp.h"
+
 namespace swrenderer
 {
 	struct drawseg_t

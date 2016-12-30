@@ -51,6 +51,7 @@
 #include "r_walldraw.h"
 #include "r_draw_segment.h"
 #include "r_portal.h"
+#include "r_wallsprite.h"
 #include "swrenderer/r_memory.h"
 
 #define WALLYREPEAT 8
@@ -138,7 +139,6 @@ FTexture		*rw_pic;
 static fixed_t	*maskedtexturecol;
 
 static void R_RenderDecal (side_t *wall, DBaseDecal *first, drawseg_t *clipper, int pass);
-static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans));
 
 inline bool IsFogBoundary (sector_t *front, sector_t *back)
 {
@@ -2246,10 +2246,10 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		sprflipvert = false;
 	}
 
-	MaskedScaleY = float(1 / yscale);
+	float maskedScaleY = float(1 / yscale);
 	do
 	{
-		dc_x = x1;
+		int x = x1;
 
 		bool visible = R_SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
 
@@ -2261,14 +2261,14 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 
 		if (visible)
 		{
-			while (dc_x < x2)
+			while (x < x2)
 			{
 				if (calclighting)
 				{ // calculate lighting
 					R_SetColorMapLight(usecolormap, rw_light, wallshade);
 				}
-				R_WallSpriteColumn ();
-				dc_x++;
+				R_WallSpriteColumn(x, maskedScaleY);
+				x++;
 			}
 		}
 

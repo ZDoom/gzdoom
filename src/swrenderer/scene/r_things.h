@@ -60,7 +60,6 @@ extern int spriteshade;
 bool R_ClipSpriteColumnWithPortals(vissprite_t* spr);
 
 void R_DrawMaskedColumn (FTexture *texture, fixed_t column, bool unmasked = false);
-void R_WallSpriteColumn ();
 
 void R_CacheSprite (spritedef_t *sprite);
 void R_SortVisSprites (int (*compare)(const void *, const void *), size_t first);

@@ -28,12 +28,14 @@
 struct particle_t;
 struct FVoxel;
 
+#define MINZ			double((2048*4) / double(1 << 20))
+#define BASEXCENTER		(160)
+#define BASEYCENTER 	(100)
+
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
+
 namespace swrenderer
 {
-
-void R_DrawParticle (vissprite_t *);
-
-void R_ProjectParticle (particle_t *, const sector_t *sector, int shade, int fakeside);
 
 // Constant arrays used for psprite clipping
 //	and initializing clipping.
@@ -53,6 +55,7 @@ extern double			pspriteyscale;
 
 extern FTexture			*WallSpriteTile;
 
+bool R_ClipSpriteColumnWithPortals(vissprite_t* spr);
 
 void R_DrawMaskedColumn (FTexture *texture, fixed_t column, bool unmasked = false);
 void R_WallSpriteColumn ();

@@ -36,6 +36,7 @@
 #include "r_plane.h"
 #include "swrenderer/drawers/r_draw.h"
 #include "r_things.h"
+#include "r_particle.h"
 #include "r_3dfloors.h"
 #include "r_clip_segment.h"
 #include "r_portal.h"

@@ -51,7 +51,7 @@
 #include "r_walldraw.h"
 #include "r_draw_segment.h"
 #include "r_portal.h"
-#include "swrenderer\r_memory.h"
+#include "swrenderer/r_memory.h"
 
 #define WALLYREPEAT 8
 

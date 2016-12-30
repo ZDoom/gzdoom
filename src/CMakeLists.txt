@@ -836,6 +836,10 @@ set( FASTMATH_PCH_SOURCES
 	polyrenderer/scene/poly_sprite.cpp
 	polyrenderer/scene/poly_sky.cpp
 	polyrenderer/drawers/poly_triangle.cpp
+	polyrenderer/drawers/poly_buffer.cpp
+	polyrenderer/drawers/poly_draw_args.cpp
+	polyrenderer/drawers/screen_triangle.cpp
+	polyrenderer/math/tri_matrix.cpp
 	polyrenderer/math/poly_intersection.cpp
 	r_sky.cpp
 	s_advsound.cpp

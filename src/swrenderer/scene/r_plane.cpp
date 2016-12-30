@@ -1446,26 +1446,26 @@ void R_DrawPortals ()
 		}
 
 		// Create a drawseg to clip sprites to the sky plane
-		R_CheckDrawSegs ();
-		ds_p->CurrentPortalUniq = CurrentPortalUniq;
-		ds_p->siz1 = INT_MAX;
-		ds_p->siz2 = INT_MAX;
-		ds_p->sz1 = 0;
-		ds_p->sz2 = 0;
-		ds_p->x1 = pl->left;
-		ds_p->x2 = pl->right;
-		ds_p->silhouette = SIL_BOTH;
-		ds_p->sprbottomclip = R_NewOpening (pl->right - pl->left);
-		ds_p->sprtopclip = R_NewOpening (pl->right - pl->left);
-		ds_p->maskedtexturecol = ds_p->swall = -1;
-		ds_p->bFogBoundary = false;
-		ds_p->curline = NULL;
-		ds_p->fake = 0;
-		memcpy (openings + ds_p->sprbottomclip, floorclip + pl->left, (pl->right - pl->left)*sizeof(short));
-		memcpy (openings + ds_p->sprtopclip, ceilingclip + pl->left, (pl->right - pl->left)*sizeof(short));
+		drawseg_t *draw_segment = R_AddDrawSegment();
+		draw_segment->CurrentPortalUniq = CurrentPortalUniq;
+		draw_segment->siz1 = INT_MAX;
+		draw_segment->siz2 = INT_MAX;
+		draw_segment->sz1 = 0;
+		draw_segment->sz2 = 0;
+		draw_segment->x1 = pl->left;
+		draw_segment->x2 = pl->right;
+		draw_segment->silhouette = SIL_BOTH;
+		draw_segment->sprbottomclip = R_NewOpening (pl->right - pl->left);
+		draw_segment->sprtopclip = R_NewOpening (pl->right - pl->left);
+		draw_segment->maskedtexturecol = ds_p->swall = -1;
+		draw_segment->bFogBoundary = false;
+		draw_segment->curline = NULL;
+		draw_segment->fake = 0;
+		memcpy (openings + draw_segment->sprbottomclip, floorclip + pl->left, (pl->right - pl->left)*sizeof(short));
+		memcpy (openings + draw_segment->sprtopclip, ceilingclip + pl->left, (pl->right - pl->left)*sizeof(short));
 
 		firstvissprite = vissprite_p;
-		firstdrawseg = ds_p++;
+		firstdrawseg = draw_segment;
 		FirstInterestingDrawseg = InterestingDrawsegs.Size();
 
 		interestingStack.Push (FirstInterestingDrawseg);

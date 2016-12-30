@@ -32,14 +32,16 @@ namespace swrenderer
 		int CurrentPortalUniq; // [ZZ] to identify the portal that this drawseg is in. used for sprite clipping.
 	};
 	
-	extern drawseg_t *drawsegs;
 	extern drawseg_t *firstdrawseg;
 	extern drawseg_t *ds_p;
+	extern drawseg_t *drawsegs;
 
 	extern TArray<size_t> InterestingDrawsegs; // drawsegs that have something drawn on them
 	extern size_t FirstInterestingDrawseg;
 	
 	void R_ClearDrawSegs();
-	void R_CheckDrawSegs();
+	void R_FreeDrawSegs();
+
+	drawseg_t *R_AddDrawSegment();
 	ptrdiff_t R_NewOpening(ptrdiff_t len);
 }

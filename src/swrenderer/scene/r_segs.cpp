@@ -1557,9 +1557,8 @@ bool R_StoreWallRange (int start, int stop)
 		I_FatalError ("Bad R_StoreWallRange: %i to %i", start , stop);
 #endif
 
-	// don't overflow and crash
-	R_CheckDrawSegs ();
-	
+	drawseg_t *draw_segment = R_AddDrawSegment();
+
 	if (!rw_prepped)
 	{
 		rw_prepped = true;
@@ -1569,57 +1568,56 @@ bool R_StoreWallRange (int start, int stop)
 	rw_offset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
 	rw_light = rw_lightleft + rw_lightstep * (start - WallC.sx1);
 
-	ds_p->CurrentPortalUniq = CurrentPortalUniq;
-	ds_p->sx1 = WallC.sx1;
-	ds_p->sx2 = WallC.sx2;
-	ds_p->sz1 = WallC.sz1;
-	ds_p->sz2 = WallC.sz2;
-	ds_p->cx = WallC.tleft.X;;
-	ds_p->cy = WallC.tleft.Y;
-	ds_p->cdx = WallC.tright.X - WallC.tleft.X;
-	ds_p->cdy = WallC.tright.Y - WallC.tleft.Y;
-	ds_p->tmapvals = WallT;
-	ds_p->siz1 = 1 / WallC.sz1;
-	ds_p->siz2 = 1 / WallC.sz2;
-	ds_p->x1 = rw_x = start;
-	ds_p->x2 = stop;
-	ds_p->curline = curline;
+	draw_segment->CurrentPortalUniq = CurrentPortalUniq;
+	draw_segment->sx1 = WallC.sx1;
+	draw_segment->sx2 = WallC.sx2;
+	draw_segment->sz1 = WallC.sz1;
+	draw_segment->sz2 = WallC.sz2;
+	draw_segment->cx = WallC.tleft.X;;
+	draw_segment->cy = WallC.tleft.Y;
+	draw_segment->cdx = WallC.tright.X - WallC.tleft.X;
+	draw_segment->cdy = WallC.tright.Y - WallC.tleft.Y;
+	draw_segment->tmapvals = WallT;
+	draw_segment->siz1 = 1 / WallC.sz1;
+	draw_segment->siz2 = 1 / WallC.sz2;
+	draw_segment->x1 = rw_x = start;
+	draw_segment->x2 = stop;
+	draw_segment->curline = curline;
 	rw_stopx = stop;
-	ds_p->bFogBoundary = false;
-	ds_p->bFakeBoundary = false;
-	if(fake3D & 7) ds_p->fake = 1;
-	else ds_p->fake = 0;
+	draw_segment->bFogBoundary = false;
+	draw_segment->bFakeBoundary = false;
+	if(fake3D & 7) draw_segment->fake = 1;
+	else draw_segment->fake = 0;
 
-	// killough 1/6/98, 2/1/98: remove limit on openings
-	ds_p->sprtopclip = ds_p->sprbottomclip = ds_p->maskedtexturecol = ds_p->bkup = ds_p->swall = -1;
+	draw_segment->sprtopclip = draw_segment->sprbottomclip = draw_segment->maskedtexturecol = draw_segment->bkup = draw_segment->swall = -1;
 
 	if (rw_markportal)
 	{
-		ds_p->silhouette = SIL_BOTH;
+		draw_segment->silhouette = SIL_BOTH;
 	}
 	else if (backsector == NULL)
 	{
-		ds_p->sprtopclip = R_NewOpening (stop - start);
-		ds_p->sprbottomclip = R_NewOpening (stop - start);
-		fillshort (openings + ds_p->sprtopclip, stop-start, viewheight);
-		memset (openings + ds_p->sprbottomclip, -1, (stop-start)*sizeof(short));
-		ds_p->silhouette = SIL_BOTH;
+		draw_segment->sprtopclip = R_NewOpening (stop - start);
+		draw_segment->sprbottomclip = R_NewOpening (stop - start);
+		fillshort (openings + draw_segment->sprtopclip, stop-start, viewheight);
+		memset (openings + draw_segment->sprbottomclip, -1, (stop-start)*sizeof(short));
+		draw_segment->silhouette = SIL_BOTH;
 	}
 	else
 	{
 		// two sided line
-		ds_p->silhouette = 0;
+		draw_segment->silhouette = 0;
 
 		if (rw_frontfz1 > rw_backfz1 || rw_frontfz2 > rw_backfz2 ||
 			backsector->floorplane.PointOnSide(ViewPos) < 0)
 		{
-			ds_p->silhouette = SIL_BOTTOM;
+			draw_segment->silhouette = SIL_BOTTOM;
 		}
 
 		if (rw_frontcz1 < rw_backcz1 || rw_frontcz2 < rw_backcz2 ||
 			backsector->ceilingplane.PointOnSide(ViewPos) < 0)
 		{
-			ds_p->silhouette |= SIL_TOP;
+			draw_segment->silhouette |= SIL_TOP;
 		}
 
 		// killough 1/17/98: this test is required if the fix
@@ -1634,41 +1632,41 @@ bool R_StoreWallRange (int start, int stop)
 			extern int doorclosed;	// killough 1/17/98, 2/8/98, 4/7/98
 			if (doorclosed || (rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2))
 			{
-				ds_p->sprbottomclip = R_NewOpening (stop - start);
-				memset (openings + ds_p->sprbottomclip, -1, (stop-start)*sizeof(short));
-				ds_p->silhouette |= SIL_BOTTOM;
+				draw_segment->sprbottomclip = R_NewOpening (stop - start);
+				memset (openings + draw_segment->sprbottomclip, -1, (stop-start)*sizeof(short));
+				draw_segment->silhouette |= SIL_BOTTOM;
 			}
 			if (doorclosed || (rw_backfz1 >= rw_frontcz1 && rw_backfz2 >= rw_frontcz2))
 			{						// killough 1/17/98, 2/8/98
-				ds_p->sprtopclip = R_NewOpening (stop - start);
-				fillshort (openings + ds_p->sprtopclip, stop - start, viewheight);
-				ds_p->silhouette |= SIL_TOP;
+				draw_segment->sprtopclip = R_NewOpening (stop - start);
+				fillshort (openings + draw_segment->sprtopclip, stop - start, viewheight);
+				draw_segment->silhouette |= SIL_TOP;
 			}
 		}
 
-		if(!ds_p->fake && r_3dfloors && backsector->e && backsector->e->XFloor.ffloors.Size()) {
+		if(!draw_segment->fake && r_3dfloors && backsector->e && backsector->e->XFloor.ffloors.Size()) {
 			for(i = 0; i < (int)backsector->e->XFloor.ffloors.Size(); i++) {
 				F3DFloor *rover = backsector->e->XFloor.ffloors[i];
 				if(rover->flags & FF_RENDERSIDES && (!(rover->flags & FF_INVERTSIDES) || rover->flags & FF_ALLSIDES)) {
-					ds_p->bFakeBoundary |= 1;
+					draw_segment->bFakeBoundary |= 1;
 					break;
 				}
 			}
 		}
-		if(!ds_p->fake && r_3dfloors && frontsector->e && frontsector->e->XFloor.ffloors.Size()) {
+		if(!draw_segment->fake && r_3dfloors && frontsector->e && frontsector->e->XFloor.ffloors.Size()) {
 			for(i = 0; i < (int)frontsector->e->XFloor.ffloors.Size(); i++) {
 				F3DFloor *rover = frontsector->e->XFloor.ffloors[i];
 				if(rover->flags & FF_RENDERSIDES && (rover->flags & FF_ALLSIDES || rover->flags & FF_INVERTSIDES)) {
-					ds_p->bFakeBoundary |= 2;
+					draw_segment->bFakeBoundary |= 2;
 					break;
 				}
 			}
 		}
 		// kg3D - no for fakes
-		if(!ds_p->fake)
+		if(!draw_segment->fake)
 		// allocate space for masked texture tables, if needed
 		// [RH] Don't just allocate the space; fill it in too.
-		if ((TexMan(sidedef->GetTexture(side_t::mid), true)->UseType != FTexture::TEX_Null || ds_p->bFakeBoundary || IsFogBoundary (frontsector, backsector)) &&
+		if ((TexMan(sidedef->GetTexture(side_t::mid), true)->UseType != FTexture::TEX_Null || draw_segment->bFakeBoundary || IsFogBoundary (frontsector, backsector)) &&
 			(rw_ceilstat != 12 || !sidedef->GetTexture(side_t::top).isValid()) &&
 			(rw_floorstat != 3 || !sidedef->GetTexture(side_t::bottom).isValid()) &&
 			(WallC.sz1 >= TOO_CLOSE_Z && WallC.sz2 >= TOO_CLOSE_Z))
@@ -1680,21 +1678,21 @@ bool R_StoreWallRange (int start, int stop)
 			maskedtexture = true;
 
 			// kg3D - backup for mid and fake walls
-			ds_p->bkup = R_NewOpening(stop - start);
-			memcpy(openings + ds_p->bkup, &ceilingclip[start], sizeof(short)*(stop - start));
+			draw_segment->bkup = R_NewOpening(stop - start);
+			memcpy(openings + draw_segment->bkup, &ceilingclip[start], sizeof(short)*(stop - start));
 
-			ds_p->bFogBoundary = IsFogBoundary (frontsector, backsector);
-			if (sidedef->GetTexture(side_t::mid).isValid() || ds_p->bFakeBoundary)
+			draw_segment->bFogBoundary = IsFogBoundary (frontsector, backsector);
+			if (sidedef->GetTexture(side_t::mid).isValid() || draw_segment->bFakeBoundary)
 			{
 				if(sidedef->GetTexture(side_t::mid).isValid())
-					ds_p->bFakeBoundary |= 4; // it is also mid texture
+					draw_segment->bFakeBoundary |= 4; // it is also mid texture
 
 				// note: This should never have used the openings array to store its data!
-				ds_p->maskedtexturecol = R_NewOpening ((stop - start) * 2);
-				ds_p->swall = R_NewOpening ((stop - start) * 2);
+				draw_segment->maskedtexturecol = R_NewOpening ((stop - start) * 2);
+				draw_segment->swall = R_NewOpening ((stop - start) * 2);
 
-				lwal = (fixed_t *)(openings + ds_p->maskedtexturecol);
-				swal = (float *)(openings + ds_p->swall);
+				lwal = (fixed_t *)(openings + draw_segment->maskedtexturecol);
+				swal = (float *)(openings + draw_segment->swall);
 				FTexture *pic = TexMan(sidedef->GetTexture(side_t::mid), true);
 				double yscale = pic->Scale.Y * sidedef->GetTextureYScale(side_t::mid);
 				fixed_t xoffset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
@@ -1710,7 +1708,7 @@ bool R_StoreWallRange (int start, int stop)
 					*swal++ = swall[i];
 				}
 
-				double istart = *((float *)(openings + ds_p->swall)) * yscale;
+				double istart = *((float *)(openings + draw_segment->swall)) * yscale;
 				double iend = *(swal - 1) * yscale;
 #if 0
 				///This was for avoiding overflow when using fixed point. It might not be needed anymore.
@@ -1722,19 +1720,19 @@ bool R_StoreWallRange (int start, int stop)
 #endif
 				istart = 1 / istart;
 				iend = 1 / iend;
-				ds_p->yscale = (float)yscale;
-				ds_p->iscale = (float)istart;
+				draw_segment->yscale = (float)yscale;
+				draw_segment->iscale = (float)istart;
 				if (stop - start > 0)
 				{
-					ds_p->iscalestep = float((iend - istart) / (stop - start));
+					draw_segment->iscalestep = float((iend - istart) / (stop - start));
 				}
 				else
 				{
-					ds_p->iscalestep = 0;
+					draw_segment->iscalestep = 0;
 				}
 			}
-			ds_p->light = rw_light;
-			ds_p->lightstep = rw_lightstep;
+			draw_segment->light = rw_light;
+			draw_segment->lightstep = rw_lightstep;
 
 			// Masked midtextures should get the light level from the sector they reference,
 			// not from the current subsector, which is what the current wallshade value
@@ -1742,17 +1740,17 @@ bool R_StoreWallRange (int start, int stop)
 			// sector should be whichever one they move into.
 			if (curline->sidedef->Flags & WALLF_POLYOBJ)
 			{
-				ds_p->shade = wallshade;
+				draw_segment->shade = wallshade;
 			}
 			else
 			{
-				ds_p->shade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, curline->frontsector->lightlevel)
+				draw_segment->shade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, curline->frontsector->lightlevel)
 					+ r_actualextralight);
 			}
 
-			if (ds_p->bFogBoundary || ds_p->maskedtexturecol != -1)
+			if (draw_segment->bFogBoundary || draw_segment->maskedtexturecol != -1)
 			{
-				size_t drawsegnum = ds_p - drawsegs;
+				size_t drawsegnum = draw_segment - drawsegs;
 				InterestingDrawsegs.Push (drawsegnum);
 			}
 		}
@@ -1786,27 +1784,25 @@ bool R_StoreWallRange (int start, int stop)
 	R_RenderSegLoop ();
 
 	if(fake3D & 7) {
-		ds_p++;
-
 		return !(fake3D & FAKE3D_FAKEMASK);
 	}
 
 	// save sprite clipping info
-	if ( ((ds_p->silhouette & SIL_TOP) || maskedtexture) && ds_p->sprtopclip == -1)
+	if ( ((draw_segment->silhouette & SIL_TOP) || maskedtexture) && draw_segment->sprtopclip == -1)
 	{
-		ds_p->sprtopclip = R_NewOpening (stop - start);
-		memcpy (openings + ds_p->sprtopclip, &ceilingclip[start], sizeof(short)*(stop-start));
+		draw_segment->sprtopclip = R_NewOpening (stop - start);
+		memcpy (openings + draw_segment->sprtopclip, &ceilingclip[start], sizeof(short)*(stop-start));
 	}
 
-	if ( ((ds_p->silhouette & SIL_BOTTOM) || maskedtexture) && ds_p->sprbottomclip == -1)
+	if ( ((draw_segment->silhouette & SIL_BOTTOM) || maskedtexture) && draw_segment->sprbottomclip == -1)
 	{
-		ds_p->sprbottomclip = R_NewOpening (stop - start);
-		memcpy (openings + ds_p->sprbottomclip, &floorclip[start], sizeof(short)*(stop-start));
+		draw_segment->sprbottomclip = R_NewOpening (stop - start);
+		memcpy (openings + draw_segment->sprbottomclip, &floorclip[start], sizeof(short)*(stop-start));
 	}
 
 	if (maskedtexture && curline->sidedef->GetTexture(side_t::mid).isValid())
 	{
-		ds_p->silhouette |= SIL_TOP | SIL_BOTTOM;
+		draw_segment->silhouette |= SIL_TOP | SIL_BOTTOM;
 	}
 
 	// [RH] Draw any decals bound to the seg
@@ -1815,7 +1811,7 @@ bool R_StoreWallRange (int start, int stop)
 	{
 		for (DBaseDecal *decal = curline->sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
 		{
-			R_RenderDecal (curline->sidedef, decal, ds_p, 0);
+			R_RenderDecal (curline->sidedef, decal, draw_segment, 0);
 		}
 	}
 
@@ -1824,13 +1820,13 @@ bool R_StoreWallRange (int start, int stop)
 		PortalDrawseg pds;
 		pds.src = curline->linedef;
 		pds.dst = curline->linedef->special == Line_Mirror? curline->linedef : curline->linedef->getPortalDestination();
-		pds.x1 = ds_p->x1;
-		pds.x2 = ds_p->x2;
+		pds.x1 = draw_segment->x1;
+		pds.x2 = draw_segment->x2;
 		pds.len = pds.x2 - pds.x1;
 		pds.ceilingclip.Resize(pds.len);
-		memcpy(&pds.ceilingclip[0], openings + ds_p->sprtopclip, pds.len*sizeof(*openings));
+		memcpy(&pds.ceilingclip[0], openings + draw_segment->sprtopclip, pds.len*sizeof(*openings));
 		pds.floorclip.Resize(pds.len);
-		memcpy(&pds.floorclip[0], openings + ds_p->sprbottomclip, pds.len*sizeof(*openings));
+		memcpy(&pds.floorclip[0], openings + draw_segment->sprbottomclip, pds.len*sizeof(*openings));
 
 		for (int i = 0; i < pds.x2-pds.x1; i++)
 		{
@@ -1847,8 +1843,6 @@ bool R_StoreWallRange (int start, int stop)
 		pds.mirror = curline->linedef->special == Line_Mirror;
 		WallPortals.Push(pds);
 	}
-
-	ds_p++;
 
 	return !(fake3D & FAKE3D_FAKEMASK);
 }

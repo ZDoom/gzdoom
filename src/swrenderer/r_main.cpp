@@ -406,12 +406,7 @@ static void R_ShutdownRenderer()
 		openings = NULL;
 	}
 
-	// Free drawsegs
-	if (drawsegs != NULL)
-	{
-		M_Free (drawsegs);
-		drawsegs = NULL;
-	}
+	R_FreeDrawSegs();
 }
 
 //==========================================================================

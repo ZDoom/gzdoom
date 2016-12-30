@@ -498,10 +498,6 @@ void FGLRenderer::DrawScene(int drawmode)
 	if (camera != nullptr)
 	{
 		ActorRenderFlags savedflags = camera->renderflags;
-		if (drawmode != DM_PORTAL && !r_showviewer)
-		{
-			camera->renderflags |= RF_INVISIBLE;
-		}
 		CreateScene();
 		camera->renderflags = savedflags;
 	}

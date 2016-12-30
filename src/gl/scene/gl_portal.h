@@ -102,11 +102,12 @@ private:
 	void DrawPortalStencil();
 
 	DVector3 savedViewPos;
+	DVector3 savedViewActorPos;
 	DAngle savedAngle;
+	bool savedshowviewer;
 	AActor * savedviewactor;
 	area_t savedviewarea;
 	ActorRenderFlags savedvisibility;
-	DVector3 savedviewpath[2];
 	GLPortal *PrevPortal;
 	GLPortal *PrevClipPortal;
 	TArray<BYTE> savedmapsection;

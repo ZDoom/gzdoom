@@ -283,11 +283,11 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 
 	// save viewpoint
 	savedViewPos = ViewPos;
+	savedViewActorPos = ViewActorPos;
+	savedshowviewer = r_showviewer;
 	savedAngle = ViewAngle;
 	savedviewactor=GLRenderer->mViewActor;
 	savedviewarea=in_area;
-	savedviewpath[0] = ViewPath[0];
-	savedviewpath[1] = ViewPath[1];
 	savedvisibility = camera ? camera->renderflags & RF_INVISIBLE : ActorRenderFlags::FromInt(0);
 
 
@@ -350,9 +350,9 @@ void GLPortal::End(bool usestencil)
 		if (needdepth) FDrawInfo::EndDrawInfo();
 
 		// Restore the old view
-		ViewPath[0] = savedviewpath[0];
-		ViewPath[1] = savedviewpath[1];
 		ViewPos = savedViewPos;
+		r_showviewer = savedshowviewer;
+		ViewActorPos = savedViewActorPos;
 		ViewAngle = savedAngle;
 		GLRenderer->mViewActor=savedviewactor;
 		in_area=savedviewarea;
@@ -409,6 +409,8 @@ void GLPortal::End(bool usestencil)
 			glDepthMask(true);
 		}
 		// Restore the old view
+		r_showviewer = savedshowviewer;
+		ViewActorPos = savedViewActorPos;
 		ViewPos = savedViewPos;
 		ViewAngle = savedAngle;
 		GLRenderer->mViewActor=savedviewactor;
@@ -628,6 +630,7 @@ void GLSkyboxPortal::DrawContents()
 
 	bool oldclamp = gl_RenderState.SetDepthClamp(false);
 	ViewPos = origin->InterpolatedPosition(r_TicFracF);
+	ViewActorPos = origin->Pos();
 	ViewAngle += (origin->PrevAngles.Yaw + deltaangle(origin->PrevAngles.Yaw, origin->Angles.Yaw) * r_TicFracF);
 
 	// Don't let the viewpoint be too close to a floor or ceiling
@@ -729,6 +732,7 @@ void GLSectorStackPortal::DrawContents()
 	FPortal *portal = origin;
 
 	ViewPos += origin->mDisplacement;
+	ViewActorPos += origin->mDisplacement;
 	GLRenderer->mViewActor = NULL;
 
 	// avoid recursions!
@@ -772,7 +776,7 @@ void GLSectorStackPortal::DrawContents()
 
 void GLPlaneMirrorPortal::DrawContents()
 {
-	if (renderdepth>r_mirror_recursions) 
+	if (renderdepth > r_mirror_recursions)
 	{
 		ClearScreen();
 		return;
@@ -780,22 +784,25 @@ void GLPlaneMirrorPortal::DrawContents()
 	// A plane mirror needs to flip the portal exclusion logic because inside the mirror, up is down and down is up.
 	std::swap(instack[sector_t::floor], instack[sector_t::ceiling]);
 
-	int old_pm=PlaneMirrorMode;
+	int old_pm = PlaneMirrorMode;
+
+	// the player is always visible in a mirror.
+	r_showviewer = true;
 
 	double planez = origin->ZatPoint(ViewPos);
 	ViewPos.Z = 2 * planez - ViewPos.Z;
 	GLRenderer->mViewActor = NULL;
 	PlaneMirrorMode = origin->fC() < 0 ? -1 : 1;
-	
+
 	PlaneMirrorFlag++;
-	GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+	GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 	ClearClipper();
 
-	gl_RenderState.SetClipHeight(planez, PlaneMirrorMode < 0? -1.f : 1.f);
+	gl_RenderState.SetClipHeight(planez, PlaneMirrorMode < 0 ? -1.f : 1.f);
 	GLRenderer->DrawScene(DM_PORTAL);
 	gl_RenderState.SetClipHeight(0.f, 0.f);
 	PlaneMirrorFlag--;
-	PlaneMirrorMode=old_pm;
+	PlaneMirrorMode = old_pm;
 	std::swap(instack[sector_t::floor], instack[sector_t::ceiling]);
 }
 
@@ -903,6 +910,8 @@ void GLMirrorPortal::DrawContents()
 	vertex_t *v1 = linedef->v1;
 	vertex_t *v2 = linedef->v2;
 
+	// the player is always visible in a mirror.
+	r_showviewer = true;
 	// Reflect the current view behind the mirror.
 	if (linedef->Delta().X == 0)
 	{
@@ -999,25 +1008,9 @@ void GLLineToLinePortal::DrawContents()
 
 	line_t *origin = glport->lines[0]->mOrigin;
 	P_TranslatePortalXY(origin, ViewPos.X, ViewPos.Y);
+	P_TranslatePortalXY(origin, ViewActorPos.X, ViewActorPos.Y);
 	P_TranslatePortalAngle(origin, ViewAngle);
 	P_TranslatePortalZ(origin, ViewPos.Z);
-	P_TranslatePortalXY(origin, ViewPath[0].X, ViewPath[0].Y);
-	P_TranslatePortalXY(origin, ViewPath[1].X, ViewPath[1].Y);
-	if (!r_showviewer && camera != nullptr && P_PointOnLineSidePrecise(ViewPath[0], glport->lines[0]->mDestination) != P_PointOnLineSidePrecise(ViewPath[1], glport->lines[0]->mDestination))
-	{
-		double distp = (ViewPath[0] - ViewPath[1]).Length();
-		if (distp > EQUAL_EPSILON)
-		{
-			double dist1 = (ViewPos - ViewPath[0]).Length();
-			double dist2 = (ViewPos - ViewPath[1]).Length();
-
-			if (dist1 + dist2 < distp + 1)
-			{
-				camera->renderflags |= RF_INVISIBLE;
-			}
-		}
-	}
-
 
 	SaveMapSection();
 

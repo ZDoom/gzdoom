@@ -15,6 +15,7 @@ class FSerializer;
 extern DCanvas			*RenderTarget;
 
 extern DVector3			ViewPos;
+extern DVector3			ViewActorPos;
 extern DAngle			ViewAngle;
 extern DAngle			ViewPitch;
 extern DAngle			ViewRoll;

@@ -447,6 +447,11 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	}
 	else if (tx->bHasCanvas)
 	{
+		if (tx->gl_info.shaderindex >= FIRST_USER_SHADER)
+		{
+			mShaderIndex = tx->gl_info.shaderindex;
+		}
+		// no brightmap for cameratexture
 	}
 	else
 	{

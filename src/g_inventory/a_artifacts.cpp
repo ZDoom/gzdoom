@@ -21,6 +21,7 @@
 #include "v_palette.h"
 #include "serializer.h"
 #include "r_utility.h"
+#include "virtual.h"
 
 #include "r_data/colormaps.h"
 
@@ -182,6 +183,25 @@ void APowerup::InitEffect ()
 {
 }
 
+DEFINE_ACTION_FUNCTION(APowerup, InitEffect)
+{
+	PARAM_SELF_PROLOGUE(APowerup);
+	self->InitEffect();
+	return 0;
+}
+
+void APowerup::CallInitEffect()
+{
+	IFVIRTUAL(APowerup, InitEffect)
+	{
+		VMValue params[1] = { (DObject*)this };
+		VMFrameStack stack;
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
+	else InitEffect();
+}
+
+
 //===========================================================================
 //
 // APowerup :: DoEffect
@@ -230,6 +250,25 @@ void APowerup::EndEffect ()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(APowerup, EndEffect)
+{
+	PARAM_SELF_PROLOGUE(APowerup);
+	self->EndEffect();
+	return 0;
+}
+
+void APowerup::CallEndEffect()
+{
+	IFVIRTUAL(APowerup, InitEffect)
+	{
+		VMValue params[1] = { (DObject*)this };
+		VMFrameStack stack;
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
+	else EndEffect();
+}
+
+
 //===========================================================================
 //
 // APowerup :: Destroy
@@ -238,7 +277,7 @@ void APowerup::EndEffect ()
 
 void APowerup::Destroy ()
 {
-	EndEffect ();
+	CallEndEffect ();
 	Super::Destroy ();
 }
 
@@ -325,7 +364,7 @@ AInventory *APowerup::CreateCopy (AActor *other)
 	// properly attached to anything yet.
 	Owner = other;
 	// Actually activate the powerup.
-	InitEffect ();
+	CallInitEffect ();
 	// Clear the Owner field, unless it was
 	// changed by the activation, for example,
 	// if this instance is a morph powerup;
@@ -599,7 +638,7 @@ void APowerInvisibility::InitEffect ()
 		flags5 &= ~(Owner->flags5 & INVISIBILITY_FLAGS5);
 		Owner->flags5 |= flags5 & INVISIBILITY_FLAGS5;
 
-		DoEffect();
+		CallDoEffect();
 	}
 }
 
@@ -1261,7 +1300,7 @@ IMPLEMENT_CLASS(APowerTargeter, false, false)
 
 void APowerTargeter::Travelled ()
 {
-	InitEffect ();
+	CallInitEffect ();
 }
 
 void APowerTargeter::InitEffect ()
@@ -1299,14 +1338,14 @@ void APowerTargeter::AttachToOwner(AActor *other)
 	Super::AttachToOwner(other);
 
 	// Let's actually properly call this for the targeters.
-	InitEffect();
+	CallInitEffect();
 }
 
 bool APowerTargeter::HandlePickup(AInventory *item)
 {
 	if (Super::HandlePickup(item))
 	{
-		InitEffect();	// reset the HUD sprites
+		CallInitEffect();	// reset the HUD sprites
 		return true;
 	}
 	return false;

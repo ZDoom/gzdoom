@@ -585,7 +585,7 @@ void EndAllPowerupEffects(AInventory *item)
 	{
 		if (item->IsKindOf(RUNTIME_CLASS(APowerup)))
 		{
-			static_cast<APowerup *>(item)->EndEffect();
+			static_cast<APowerup *>(item)->CallEndEffect();
 		}
 		item = item->Inventory;
 	}
@@ -605,7 +605,7 @@ void InitAllPowerupEffects(AInventory *item)
 	{
 		if (item->IsKindOf(RUNTIME_CLASS(APowerup)))
 		{
-			static_cast<APowerup *>(item)->InitEffect();
+			static_cast<APowerup *>(item)->CallInitEffect();
 		}
 		item = item->Inventory;
 	}

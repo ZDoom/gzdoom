@@ -26,10 +26,14 @@ public:
 	FNameNoInit Mode;
 	double Strength;
 
-protected:
+public:
 	virtual void InitEffect ();
 	virtual void DoEffect () override;
 	virtual void EndEffect ();
+
+protected:
+	void CallInitEffect();
+	void CallEndEffect();
 
 	friend void EndAllPowerupEffects(AInventory *item);
 	friend void InitAllPowerupEffects(AInventory *item);

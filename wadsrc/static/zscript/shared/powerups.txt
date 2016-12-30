@@ -25,6 +25,9 @@ class Powerup : Inventory native
 
 	// Note, that while this is an inventory flag, it only has meaning on an active powerup.
 	override bool GetNoTeleportFreeze() { return bNoTeleportFreeze; }
+
+	native virtual void InitEffect();
+	native virtual void EndEffect();
 	
 }
 

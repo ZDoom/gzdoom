@@ -315,17 +315,20 @@ class Korax : Actor
 	private void SpawnKoraxMissile (Vector3 pos, Actor dest, Class<Actor> type)
 	{
 		Actor th = Spawn (type, pos, ALLOW_REPLACE);
-		th.target = self; // Originator
-		double an = th.AngleTo(dest);
-		if (dest.bShadow)
-		{ // Invisible target
-			an += Random2[KoraxMissile]() * (45/256.);
+		if (th != null)
+		{
+			th.target = self; // Originator
+			double an = th.AngleTo(dest);
+			if (dest.bShadow)
+			{ // Invisible target
+				an += Random2[KoraxMissile]() * (45/256.);
+			}
+			th.angle = an;
+			th.VelFromAngle();
+			double dist = dest.DistanceBySpeed(th, th.Speed);
+			th.Vel.Z = (dest.pos.z - pos.Z + 30) / dist;
+			th.CheckMissileSpawn(radius);
 		}
-		th.angle = an;
-		th.VelFromAngle();
-		double dist = dest.DistanceBySpeed(th, th.Speed);
-		th.Vel.Z = (dest.pos.z - pos.Z + 30) / dist;
-		th.CheckMissileSpawn(radius);
 	}
 
 	//============================================================================

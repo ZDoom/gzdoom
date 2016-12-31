@@ -133,7 +133,10 @@ extend class Actor
 	void A_DropFire()
 	{
 		Actor drop = Spawn("FireDroplet", pos + (0,0,24), ALLOW_REPLACE);
-		drop.Vel.Z = -1.;
+		if (drop != null)
+		{
+			drop.Vel.Z = -1.;
+		}
 		A_Explode(64, 64, XF_NOSPLASH, damagetype: 'Fire');
 	}	
 

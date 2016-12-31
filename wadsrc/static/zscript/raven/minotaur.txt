@@ -262,7 +262,7 @@ class Minotaur : Actor
 				type = "PunchPuff";
 			}
 			Actor puff = Spawn (type, Pos, ALLOW_REPLACE);
-			puff.Vel.Z = 2;
+			if (puff != null) puff.Vel.Z = 2;
 			special1--;
 		}
 		else
@@ -710,9 +710,12 @@ class MinotaurFX2 : MinotaurFX1
 		double y = Random2[MntrFloorFire]() / 64.;
 		
 		Actor mo = Spawn("MinotaurFX3", Vec2OffsetZ(x, y, floorz), ALLOW_REPLACE);
-		mo.target = target;
-		mo.Vel.X = MinVel; // Force block checking
-		mo.CheckMissileSpawn (radius);
+		if (mo != null)
+		{
+			mo.target = target;
+			mo.Vel.X = MinVel; // Force block checking
+			mo.CheckMissileSpawn (radius);
+		}
 	}
 }
 

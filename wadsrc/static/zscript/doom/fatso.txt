@@ -188,6 +188,7 @@ extend class Actor
 
 		// Now launch mushroom cloud
 		Actor aimtarget = Spawn("Mapspot", pos, NO_REPLACE);	// We need something to aim at.
+		if (aimtarget == null) return;
 		Actor owner = (flags & MSF_DontHurt) ? target : self;
 		aimtarget.Height = Height;
 		

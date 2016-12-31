@@ -268,7 +268,7 @@ class Sigil : Weapon
 
 	action void A_FireSigil1 ()
 	{
-		Actor spot;
+		Actor spot = null;
 		FTranslatedLineTarget t;
 
 		if (player == null || player.ReadyWeapon == null)

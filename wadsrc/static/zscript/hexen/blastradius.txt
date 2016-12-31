@@ -70,7 +70,8 @@ extend class Actor
 			// [RH] Floor and ceiling huggers should not be blasted vertically.
 			if (!victim.bFloorHugger && !victim.bCeilingHugger)
 			{
-				mo.Vel.Z = victim.Vel.Z = 8;
+				victim.Vel.Z = 8;
+				if (mo != null) mo.Vel.Z = 8;
 			}
 		}
 		else

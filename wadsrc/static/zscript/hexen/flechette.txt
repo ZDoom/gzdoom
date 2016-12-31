@@ -255,10 +255,13 @@ class ArtiPoisonBag : Inventory
 		}
 
 		class<Actor> spawntype = GetFlechetteType(other);
-		Inventory copy = Inventory(Spawn (spawntype));
-		copy.Amount = Amount;
-		copy.MaxAmount = MaxAmount;
-		GoAwayAndDie ();
+		let copy = Inventory(Spawn (spawntype));
+		if (copy != null)
+		{
+			copy.Amount = Amount;
+			copy.MaxAmount = MaxAmount;
+			GoAwayAndDie ();
+		}
 		return copy;
 	}
 }

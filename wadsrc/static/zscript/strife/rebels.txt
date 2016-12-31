@@ -163,6 +163,10 @@ class TeleporterBeacon : Inventory
 	{
 		Actor owner = target;
 		Actor rebel = Spawn("Rebel1", (pos.xy, floorz), ALLOW_REPLACE);
+		if (rebel == null)
+		{
+			return;
+		}
 		if (!rebel.TryMove (rebel.Pos.xy, true))
 		{
 			rebel.Destroy ();

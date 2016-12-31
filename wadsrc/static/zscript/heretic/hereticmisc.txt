@@ -60,10 +60,13 @@ class Pod : Actor
 		for (int count = chance > 240 ? 2 : 1; count; count--)
 		{
 			Actor goo = Spawn(gootype, pos + (0, 0, 48), ALLOW_REPLACE);
-			goo.target = self;
-			goo.Vel.X = Random2[PodPain]() / 128.;
-			goo.Vel.Y = Random2[PodPain]() / 128.;
-			goo.Vel.Z = 0.5 + random[PodPain]() / 128.;
+			if (goo != null)
+			{
+				goo.target = self;
+				goo.Vel.X = Random2[PodPain]() / 128.;
+				goo.Vel.Y = Random2[PodPain]() / 128.;
+				goo.Vel.Z = 0.5 + random[PodPain]() / 128.;
+			}
 		}
 	}
 
@@ -295,12 +298,15 @@ class Volcano : Actor
 		for (int i = 0; i < count; i++)
 		{
 			Actor blast = Spawn("VolcanoBlast", pos + (0, 0, 44), ALLOW_REPLACE);
-			blast.target = self;
-			blast.Angle = random[VolcanoBlast]() * (360 / 256.);
-			blast.VelFromAngle(1.);
-			blast.Vel.Z = 2.5 + random[VolcanoBlast]() / 64.;
-			blast.A_PlaySound ("world/volcano/shoot", CHAN_BODY);
-			blast.CheckMissileSpawn (radius);
+			if (blast != null)
+			{
+				blast.target = self;
+				blast.Angle = random[VolcanoBlast]() * (360 / 256.);
+				blast.VelFromAngle(1.);
+				blast.Vel.Z = 2.5 + random[VolcanoBlast]() / 64.;
+				blast.A_PlaySound ("world/volcano/shoot", CHAN_BODY);
+				blast.CheckMissileSpawn (radius);
+			}
 		}
 	}
 }

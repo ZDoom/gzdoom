@@ -116,10 +116,13 @@ extend class Actor
 			A_FaceTarget ();
 
 			Actor fog = Spawn (fire, target.Pos, ALLOW_REPLACE);
-			tracer = fog;
-			fog.target = self;
-			fog.tracer = self.target;
-			fog.A_Fire(0);
+			if (fog != null)
+			{
+				tracer = fog;
+				fog.target = self;
+				fog.tracer = self.target;
+				fog.A_Fire(0);
+			}
 		}
 	}
 	

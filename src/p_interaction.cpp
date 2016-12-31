@@ -1545,7 +1545,7 @@ dopain:
 				target->SetState (target->SeeState);
 			}
 		}
-		else if ((damage > 0 || fakedPain) && source != target->target && target->OkayToSwitchTarget (source))
+		else if (source != target->target && target->OkayToSwitchTarget (source))
 		{
 			// Target actor is not intent on another actor,
 			// so make him chase after source

@@ -25,6 +25,9 @@ class Powerup : Inventory native
 
 	// Note, that while this is an inventory flag, it only has meaning on an active powerup.
 	override bool GetNoTeleportFreeze() { return bNoTeleportFreeze; }
+
+	native virtual void InitEffect();
+	native virtual void EndEffect();
 	
 }
 
@@ -210,7 +213,13 @@ class PowerBuddha : Powerup native
 	}
 }
 
-class PowerScanner : Powerup native
+//===========================================================================
+//
+// Scanner (this is active just by being present)
+//
+//===========================================================================
+
+class PowerScanner : Powerup
 {
 	Default
 	{
@@ -243,26 +252,177 @@ class PowerProtection : Powerup native
 	}
 }
 
-class PowerDrain : Powerup native
+//===========================================================================
+//
+// Drain
+//
+//===========================================================================
+
+class PowerDrain : Powerup
 {
 	Default
 	{
 		Powerup.Duration -60;
 	}
+	
+	override void InitEffect()
+	{
+		Super.InitEffect();
+
+		if (Owner!= null && Owner.player != null)
+		{
+			// Give the player the power to drain life from opponents when he damages them.
+			Owner.player.cheats |= CF_DRAIN;
+		}
+	}
+
+	override void EndEffect()
+	{
+		Super.EndEffect();
+
+		// Nothing to do if there's no owner.
+		if (Owner!= null && Owner.player != null)
+		{
+			// Take away the drain power.
+			Owner.player.cheats &= ~CF_DRAIN;
+		}
+	}
+	
 }
 
-class PowerRegeneration : Powerup native
+//===========================================================================
+//
+// Regeneration
+//
+//===========================================================================
+
+class PowerRegeneration : Powerup
 {
 	Default
 	{
 		Powerup.Duration -120;
 		Powerup.Strength 5;
 	}
+	
+	override void DoEffect()
+	{
+		Super.DoEffect();
+		if (Owner != null && Owner.health > 0 && (level.time & 31) == 0)
+		{
+			if (Owner.GiveBody(int(Strength)))
+			{
+				Owner.A_PlaySound("*regenerate", CHAN_ITEM);
+			}
+		}
+	}
 }
 
-class PowerHighJump : Powerup native {}
+//===========================================================================
+//
+// HighJump
+//
+//===========================================================================
 
-class PowerDoubleFiringSpeed : Powerup native {}
+class PowerHighJump : Powerup
+{
+	override void InitEffect()
+	{
+		Super.InitEffect();
+
+		if (Owner!= null && Owner.player != null)
+		{
+			// Give the player the power to jump much higher.
+			Owner.player.cheats |= CF_HIGHJUMP;
+		}
+	}
+
+	override void EndEffect()
+	{
+		Super.EndEffect();
+
+		// Nothing to do if there's no owner.
+		if (Owner!= null && Owner.player != null)
+		{
+			// Take away the high jump power.
+			Owner.player.cheats &= ~CF_HIGHJUMP;
+		}
+	}
+}
+
+//===========================================================================
+//
+// DoubleFiringSpeed
+//
+//===========================================================================
+
+class PowerDoubleFiringSpeed : Powerup
+{
+	override void InitEffect()
+	{
+		Super.InitEffect();
+
+		if (Owner!= null && Owner.player != null)
+		{
+			// Give the player the power to shoot twice as fast.
+			Owner.player.cheats |= CF_DOUBLEFIRINGSPEED;
+		}
+	}
+
+	override void EndEffect()
+	{
+		Super.EndEffect();
+
+		// Nothing to do if there's no owner.
+		if (Owner!= null && Owner.player != null)
+		{
+			// Take away the shooting twice as fast power.
+			Owner.player.cheats &= ~CF_DOUBLEFIRINGSPEED;
+		}
+	}
+}
+
+//===========================================================================
+//
+// InfiniteAmmo
+//
+//===========================================================================
+
+class PowerInfiniteAmmo : Powerup
+{
+	Default
+	{
+		Powerup.Duration -30;
+	}
+	
+	override void InitEffect()
+	{
+		Super.InitEffect();
+
+		if (Owner!= null && Owner.player != null)
+		{
+			// Give the player infinite ammo
+			Owner.player.cheats |= CF_INFINITEAMMO;
+		}
+	}
+
+	override void EndEffect()
+	{
+		Super.EndEffect();
+
+		// Nothing to do if there's no owner.
+		if (Owner!= null && Owner.player != null)
+		{
+			// Take away the limitless ammo
+			Owner.player.cheats &= ~CF_INFINITEAMMO;
+		}
+	}
+}
+
+//===========================================================================
+//
+// PowerMorph
+//
+//===========================================================================
 
 class PowerMorph : Powerup native
 {
@@ -275,14 +435,6 @@ class PowerMorph : Powerup native
 	Default
 	{
 		Powerup.Duration -40;
-	}
-}
-
-class PowerInfiniteAmmo : Powerup native
-{
-	Default
-	{
-		Powerup.Duration -30;
 	}
 }
 

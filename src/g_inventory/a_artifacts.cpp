@@ -21,6 +21,7 @@
 #include "v_palette.h"
 #include "serializer.h"
 #include "r_utility.h"
+#include "virtual.h"
 
 #include "r_data/colormaps.h"
 
@@ -182,6 +183,25 @@ void APowerup::InitEffect ()
 {
 }
 
+DEFINE_ACTION_FUNCTION(APowerup, InitEffect)
+{
+	PARAM_SELF_PROLOGUE(APowerup);
+	self->InitEffect();
+	return 0;
+}
+
+void APowerup::CallInitEffect()
+{
+	IFVIRTUAL(APowerup, InitEffect)
+	{
+		VMValue params[1] = { (DObject*)this };
+		VMFrameStack stack;
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
+	else InitEffect();
+}
+
+
 //===========================================================================
 //
 // APowerup :: DoEffect
@@ -230,6 +250,25 @@ void APowerup::EndEffect ()
 	}
 }
 
+DEFINE_ACTION_FUNCTION(APowerup, EndEffect)
+{
+	PARAM_SELF_PROLOGUE(APowerup);
+	self->EndEffect();
+	return 0;
+}
+
+void APowerup::CallEndEffect()
+{
+	IFVIRTUAL(APowerup, EndEffect)
+	{
+		VMValue params[1] = { (DObject*)this };
+		VMFrameStack stack;
+		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+	}
+	else EndEffect();
+}
+
+
 //===========================================================================
 //
 // APowerup :: Destroy
@@ -238,7 +277,7 @@ void APowerup::EndEffect ()
 
 void APowerup::Destroy ()
 {
-	EndEffect ();
+	CallEndEffect ();
 	Super::Destroy ();
 }
 
@@ -325,7 +364,7 @@ AInventory *APowerup::CreateCopy (AActor *other)
 	// properly attached to anything yet.
 	Owner = other;
 	// Actually activate the powerup.
-	InitEffect ();
+	CallInitEffect ();
 	// Clear the Owner field, unless it was
 	// changed by the activation, for example,
 	// if this instance is a morph powerup;
@@ -599,7 +638,7 @@ void APowerInvisibility::InitEffect ()
 		flags5 &= ~(Owner->flags5 & INVISIBILITY_FLAGS5);
 		Owner->flags5 |= flags5 & INVISIBILITY_FLAGS5;
 
-		DoEffect();
+		CallDoEffect();
 	}
 }
 
@@ -1262,7 +1301,7 @@ IMPLEMENT_CLASS(APowerTargeter, false, false)
 
 void APowerTargeter::Travelled ()
 {
-	InitEffect ();
+	CallInitEffect ();
 }
 
 void APowerTargeter::InitEffect ()
@@ -1300,14 +1339,14 @@ void APowerTargeter::AttachToOwner(AActor *other)
 	Super::AttachToOwner(other);
 
 	// Let's actually properly call this for the targeters.
-	InitEffect();
+	CallInitEffect();
 }
 
 bool APowerTargeter::HandlePickup(AInventory *item)
 {
 	if (Super::HandlePickup(item))
 	{
-		InitEffect();	// reset the HUD sprites
+		CallInitEffect();	// reset the HUD sprites
 		return true;
 	}
 	return false;
@@ -1442,10 +1481,6 @@ void APowerBuddha::EndEffect ()
 
 	Owner->player->cheats &= ~CF_BUDDHA;
 }
-
-// Scanner powerup ----------------------------------------------------------
-
-IMPLEMENT_CLASS(APowerScanner, false, false)
 
 // Time freezer powerup -----------------------------------------------------
 
@@ -1709,144 +1744,6 @@ void APowerProtection::ModifyDamage(int damage, FName damageType, int &newdamage
 	}
 }
 
-// Drain rune -------------------------------------------------------
-
-IMPLEMENT_CLASS(APowerDrain, false, false)
-
-//===========================================================================
-//
-// ARuneDrain :: InitEffect
-//
-//===========================================================================
-
-void APowerDrain::InitEffect( )
-{
-	Super::InitEffect();
-
-	if (Owner== NULL || Owner->player == NULL)
-		return;
-
-	// Give the player the power to drain life from opponents when he damages them.
-	Owner->player->cheats |= CF_DRAIN;
-}
-
-//===========================================================================
-//
-// ARuneDrain :: EndEffect
-//
-//===========================================================================
-
-void APowerDrain::EndEffect( )
-{
-	Super::EndEffect();
-
-	// Nothing to do if there's no owner.
-	if (Owner != NULL && Owner->player != NULL)
-	{
-		// Take away the drain power.
-		Owner->player->cheats &= ~CF_DRAIN;
-	}
-}
-
-
-// Regeneration rune -------------------------------------------------------
-
-IMPLEMENT_CLASS(APowerRegeneration, false, false)
-
-//===========================================================================
-//
-// APowerRegeneration :: DoEffect
-//
-//===========================================================================
-
-void APowerRegeneration::DoEffect()
-{
-	Super::DoEffect();
-	if (Owner != NULL && Owner->health > 0 && (level.time & 31) == 0)
-	{
-		if (P_GiveBody(Owner, int(Strength)))
-		{
-			S_Sound(Owner, CHAN_ITEM, "*regenerate", 1, ATTN_NORM );
-		}
-	}
-}
-
-// High jump rune -------------------------------------------------------
-
-IMPLEMENT_CLASS(APowerHighJump, false, false)
-
-//===========================================================================
-//
-// ARuneHighJump :: InitEffect
-//
-//===========================================================================
-
-void APowerHighJump::InitEffect( )
-{
-	Super::InitEffect();
-
-	if (Owner== NULL || Owner->player == NULL)
-		return;
-
-	// Give the player the power to jump much higher.
-	Owner->player->cheats |= CF_HIGHJUMP;
-}
-
-//===========================================================================
-//
-// ARuneHighJump :: EndEffect
-//
-//===========================================================================
-
-void APowerHighJump::EndEffect( )
-{
-	Super::EndEffect();
-	// Nothing to do if there's no owner.
-	if (Owner != NULL && Owner->player != NULL)
-	{
-		// Take away the high jump power.
-		Owner->player->cheats &= ~CF_HIGHJUMP;
-	}
-}
-
-// Double firing speed rune ---------------------------------------------
-
-IMPLEMENT_CLASS(APowerDoubleFiringSpeed, false, false)
-
-//===========================================================================
-//
-// APowerDoubleFiringSpeed :: InitEffect
-//
-//===========================================================================
-
-void APowerDoubleFiringSpeed::InitEffect( )
-{
-	Super::InitEffect();
-
-	if (Owner== NULL || Owner->player == NULL)
-		return;
-
-	// Give the player the power to shoot twice as fast.
-	Owner->player->cheats |= CF_DOUBLEFIRINGSPEED;
-}
-
-//===========================================================================
-//
-// APowerDoubleFiringSpeed :: EndEffect
-//
-//===========================================================================
-
-void APowerDoubleFiringSpeed::EndEffect( )
-{
-	Super::EndEffect();
-	// Nothing to do if there's no owner.
-	if (Owner != NULL && Owner->player != NULL)
-	{
-		// Take away the shooting twice as fast power.
-		Owner->player->cheats &= ~CF_DOUBLEFIRINGSPEED;
-	}
-}
-
 // Morph powerup ------------------------------------------------------
 
 IMPLEMENT_CLASS(APowerMorph, false, true)
@@ -1953,44 +1850,5 @@ void APowerMorph::EndEffect( )
 	}
 	// Unmorph suceeded
 	MorphedPlayer = NULL;
-}
-
-// Infinite Ammo Powerup -----------------------------------------------------
-
-IMPLEMENT_CLASS(APowerInfiniteAmmo, false, false)
-
-//===========================================================================
-//
-// APowerInfiniteAmmo :: InitEffect
-//
-//===========================================================================
-
-void APowerInfiniteAmmo::InitEffect( )
-{
-	Super::InitEffect();
-
-	if (Owner== NULL || Owner->player == NULL)
-		return;
-
-	// Give the player infinite ammo
-	Owner->player->cheats |= CF_INFINITEAMMO;
-}
-
-//===========================================================================
-//
-// APowerInfiniteAmmo :: EndEffect
-//
-//===========================================================================
-
-void APowerInfiniteAmmo::EndEffect( )
-{
-	Super::EndEffect();
-
-	// Nothing to do if there's no owner.
-	if (Owner != NULL && Owner->player != NULL)
-	{
-		// Take away the limitless ammo
-		Owner->player->cheats &= ~CF_INFINITEAMMO;
-	}
 }
 

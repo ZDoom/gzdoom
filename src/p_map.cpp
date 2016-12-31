@@ -1298,7 +1298,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 				if ((tm.thing->Z() >= topz) || (tm.thing->Top() <= thing->Z()))
 					return true;
 			}
-			// If they are not allowed to overlap, the rest of this function still needs to be executed.
+			else return unblocking;	// This may not really make sense, but Heretic depends on the broken implementation.
 		}
 	}
 

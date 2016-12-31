@@ -17,8 +17,8 @@
 #include "cmdlib.h"
 #include "d_net.h"
 #include "g_level.h"
-#include "r_bsp.h"
-#include "r_visible_plane.h"
+#include "swrenderer/scene/r_bsp.h"
+#include "r_visibleplane.h"
 
 namespace swrenderer
 {

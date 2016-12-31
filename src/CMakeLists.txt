@@ -768,6 +768,9 @@ file( GLOB HEADER_FILES
 	swrenderer/*.h
 	swrenderer/drawers/*.h
 	swrenderer/scene/*.h
+	swrenderer/segments/*.h
+	swrenderer/plane/*.h
+	swrenderer/things/*.h
 	polyrenderer/*.h
 	polyrenderer/math/*.h
 	polyrenderer/drawers/*.h
@@ -819,22 +822,22 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/scene/r_plane.cpp
 	swrenderer/scene/r_segs.cpp
 	swrenderer/scene/r_things.cpp
-	swrenderer/scene/r_voxel.cpp
 	swrenderer/scene/r_walldraw.cpp
-	swrenderer/scene/r_clip_segment.cpp
-	swrenderer/scene/r_draw_segment.cpp
-	swrenderer/scene/r_portal_segment.cpp
 	swrenderer/scene/r_portal.cpp
-	swrenderer/scene/r_visible_plane.cpp
-	swrenderer/scene/r_visible_sprite.cpp
-	swrenderer/scene/r_particle.cpp
-	swrenderer/scene/r_playersprite.cpp
-	swrenderer/scene/r_wallsprite.cpp
-	swrenderer/scene/r_decal.cpp
-	swrenderer/scene/r_skyplane.cpp
-	swrenderer/scene/r_flatplane.cpp
-	swrenderer/scene/r_slopeplane.cpp
-	swrenderer/scene/r_fogboundary.cpp
+	swrenderer/segments/r_clipsegment.cpp
+	swrenderer/segments/r_drawsegment.cpp
+	swrenderer/segments/r_portalsegment.cpp
+	swrenderer/things/r_visiblesprite.cpp
+	swrenderer/things/r_voxel.cpp
+	swrenderer/things/r_particle.cpp
+	swrenderer/things/r_playersprite.cpp
+	swrenderer/things/r_wallsprite.cpp
+	swrenderer/things/r_decal.cpp
+	swrenderer/plane/r_visibleplane.cpp
+	swrenderer/plane/r_skyplane.cpp
+	swrenderer/plane/r_flatplane.cpp
+	swrenderer/plane/r_slopeplane.cpp
+	swrenderer/plane/r_fogboundary.cpp
 	polyrenderer/poly_renderer.cpp
 	polyrenderer/scene/poly_scene.cpp
 	polyrenderer/scene/poly_portal.cpp
@@ -1471,6 +1474,9 @@ source_group("OpenGL Renderer\\Utilities" REGULAR_EXPRESSION "^${CMAKE_CURRENT_S
 source_group("Software Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/.+")
 source_group("Software Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/drawers/.+")
 source_group("Software Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/scene/.+")
+source_group("Software Renderer\\Segments" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/segments/.+")
+source_group("Software Renderer\\Plane" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/plane/.+")
+source_group("Software Renderer\\Things" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/things/.+")
 source_group("Poly Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/.+")
 source_group("Poly Renderer\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/math/.+")
 source_group("Poly Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/drawers/.+")

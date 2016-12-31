@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "r_bsp.h"
+#include "swrenderer/scene/r_bsp.h"
 
 namespace swrenderer
 {

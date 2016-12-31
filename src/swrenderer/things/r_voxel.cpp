@@ -30,7 +30,7 @@
 #include "r_data/sprites.h"
 #include "d_net.h"
 #include "po_man.h"
-#include "r_things.h"
+#include "swrenderer/scene/r_things.h"
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/drawers/r_thread.h"
 #include "r_utility.h"

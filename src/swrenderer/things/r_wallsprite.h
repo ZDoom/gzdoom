@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "r_visible_sprite.h"
+#include "r_visiblesprite.h"
 
 namespace swrenderer
 {

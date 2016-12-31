@@ -23,7 +23,7 @@
 #ifndef __R_PLANE_H__
 #define __R_PLANE_H__
 
-#include "r_visible_plane.h"
+#include "swrenderer/plane/r_visibleplane.h"
 
 namespace swrenderer
 {

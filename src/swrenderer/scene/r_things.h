@@ -23,7 +23,7 @@
 #ifndef __R_THINGS__
 #define __R_THINGS__
 
-#include "r_visible_sprite.h"
+#include "swrenderer/things/r_visiblesprite.h"
 
 struct particle_t;
 struct FVoxel;

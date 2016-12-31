@@ -45,7 +45,7 @@
 #include "gl/dynlights/gl_dynlight.h"
 #include "swrenderer/drawers/r_drawers.h"
 #include "r_walldraw.h"
-#include "r_draw_segment.h"
+#include "swrenderer/segments/r_drawsegment.h"
 
 namespace swrenderer
 {

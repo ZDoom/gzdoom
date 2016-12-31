@@ -9,7 +9,7 @@
 #include "i_system.h"
 #include "w_wad.h"
 #include "swrenderer/r_main.h"
-#include "swrenderer/scene/r_visible_sprite.h"
+#include "swrenderer/things/r_visiblesprite.h"
 
 namespace swrenderer
 {

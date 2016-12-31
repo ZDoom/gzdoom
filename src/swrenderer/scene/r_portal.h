@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "r_portal_segment.h"
+#include "swrenderer/segments/r_portalsegment.h"
 
 namespace swrenderer
 {

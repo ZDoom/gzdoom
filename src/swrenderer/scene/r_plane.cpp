@@ -62,12 +62,12 @@
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "r_walldraw.h"
-#include "r_clip_segment.h"
-#include "r_draw_segment.h"
+#include "swrenderer/segments/r_clipsegment.h"
+#include "swrenderer/segments/r_drawsegment.h"
 #include "r_portal.h"
-#include "r_skyplane.h"
-#include "r_flatplane.h"
-#include "r_slopeplane.h"
+#include "swrenderer/plane/r_skyplane.h"
+#include "swrenderer/plane/r_flatplane.h"
+#include "swrenderer/plane/r_slopeplane.h"
 #include "swrenderer/r_memory.h"
 
 #ifdef _MSC_VER

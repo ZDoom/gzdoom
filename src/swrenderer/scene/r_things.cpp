@@ -67,12 +67,12 @@
 #include "r_data/voxels.h"
 #include "p_local.h"
 #include "p_maputl.h"
-#include "r_voxel.h"
-#include "r_draw_segment.h"
+#include "swrenderer/things/r_voxel.h"
+#include "swrenderer/segments/r_drawsegment.h"
 #include "r_portal.h"
-#include "r_particle.h"
-#include "r_playersprite.h"
-#include "r_wallsprite.h"
+#include "swrenderer/things/r_particle.h"
+#include "swrenderer/things/r_playersprite.h"
+#include "swrenderer/things/r_wallsprite.h"
 #include "swrenderer/r_memory.h"
 
 EXTERN_CVAR(Int, r_drawfuzz)

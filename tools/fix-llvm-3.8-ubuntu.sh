@@ -1,4 +1,9 @@
-read -p "This tool adds in missing CMAKE stuff to your llvm-3.8 package. This requires super-user access. This tool is only meant for convenience and is possibly very dangerous. Rude things may tend to occur when using this tool. Are you sure you want to use this tool?" -n 1 -r
+echo This tool adds in missing CMAKE stuff to your llvm-3.8 package.
+echo This requires super-user access. This tool is only meant for
+echo convenience and is possibly very dangerous. Rude things may tend
+echo to occur when using this tool.
+echo
+read -p "Are you sure you want to use this tool? " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then

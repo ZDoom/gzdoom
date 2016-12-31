@@ -80,12 +80,7 @@ namespace swrenderer
 {
 	using namespace drawerargs;
 
-extern int wallshade;
-
 extern subsector_t *InSubsector;
-
-planefunction_t 		floorfunc;
-planefunction_t 		ceilingfunc;
 
 visplane_t 				*floorplane;
 visplane_t 				*ceilingplane;

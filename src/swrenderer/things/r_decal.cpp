@@ -33,11 +33,11 @@
 
 namespace swrenderer
 {
-	void R_RenderDecals(side_t *sidedef, drawseg_t *draw_segment)
+	void R_RenderDecals(side_t *sidedef, drawseg_t *draw_segment, int wallshade)
 	{
 		for (DBaseDecal *decal = sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
 		{
-			R_RenderDecal(sidedef, decal, draw_segment, 0);
+			R_RenderDecal(sidedef, decal, draw_segment, wallshade, 0);
 		}
 	}
 
@@ -45,7 +45,7 @@ namespace swrenderer
 	//		= 1: drawing masked textures (including sprites)
 	// Currently, only pass = 0 is done or used
 
-	void R_RenderDecal(side_t *wall, DBaseDecal *decal, drawseg_t *clipper, int pass)
+	void R_RenderDecal(side_t *wall, DBaseDecal *decal, drawseg_t *clipper, int wallshade, int pass)
 	{
 		DVector2 decal_left, decal_right, decal_pos;
 		int x1, x2;

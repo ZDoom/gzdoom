@@ -1811,7 +1811,7 @@ bool R_StoreWallRange (int start, int stop)
 	// [ZZ] Only if not an active mirror
 	if (!rw_markportal)
 	{
-		R_RenderDecals(curline->sidedef, draw_segment);
+		R_RenderDecals(curline->sidedef, draw_segment, wallshade);
 	}
 
 	if (rw_markportal)

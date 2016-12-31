@@ -609,7 +609,9 @@ begin:
 			{
 				try
 				{
+					VMCycles[0].Unclock();
 					numret = static_cast<VMNativeFunction *>(call)->NativeCall(reg.param + f->NumParam - B, call->DefaultArgs, B, returns, C);
+					VMCycles[0].Clock();
 				}
 				catch (CVMAbortException &err)
 				{
@@ -621,6 +623,7 @@ begin:
 			}
 			else
 			{
+				VMCalls[0]++;
 				VMScriptFunction *script = static_cast<VMScriptFunction *>(call);
 				VMFrame *newf = stack->AllocFrame(script);
 				VMFillParams(reg.param + f->NumParam - B, newf, B);
@@ -663,7 +666,10 @@ begin:
 			{
 				try
 				{
-					return static_cast<VMNativeFunction *>(call)->NativeCall(reg.param + f->NumParam - B, call->DefaultArgs, B, ret, numret);
+					VMCycles[0].Unclock();
+					auto r = static_cast<VMNativeFunction *>(call)->NativeCall(reg.param + f->NumParam - B, call->DefaultArgs, B, ret, numret);
+					VMCycles[0].Clock();
+					return r;
 				}
 				catch (CVMAbortException &err)
 				{
@@ -675,6 +681,7 @@ begin:
 			}
 			else
 			{ // FIXME: Not a true tail call
+				VMCalls[0]++;
 				VMScriptFunction *script = static_cast<VMScriptFunction *>(call);
 				VMFrame *newf = stack->AllocFrame(script);
 				VMFillParams(reg.param + f->NumParam - B, newf, B);

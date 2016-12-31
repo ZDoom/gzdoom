@@ -37,7 +37,6 @@
 #include "g_level.h"
 #include "swrenderer/drawers/r_draw.h"
 #include "r_bsp.h"
-#include "r_plane.h"
 #include "r_segs.h"
 #include "r_3dfloors.h"
 #include "v_palette.h"

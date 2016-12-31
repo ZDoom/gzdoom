@@ -28,7 +28,6 @@
 #include "swrenderer/segments/r_clipsegment.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/scene/r_portal.h"
-#include "swrenderer/scene/r_plane.h"
 #include "swrenderer/r_memory.h"
 
 namespace swrenderer
@@ -43,6 +42,7 @@ namespace swrenderer
 		fixed_t xscale, yscale;
 		double xstepscale, ystepscale;
 		double basexfrac, baseyfrac;
+		visplane_light *ds_light_list;
 	}
 
 	void R_DrawNormalPlane(visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked)
@@ -178,6 +178,9 @@ namespace swrenderer
 				}
 			}
 		}
+
+		ds_light_list = pl->lights;
+
 		R_MapVisPlane(pl, R_MapPlane, R_StepPlane);
 	}
 

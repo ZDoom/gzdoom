@@ -37,7 +37,6 @@
 #include "r_main.h"
 #include "scene/r_things.h"
 #include "drawers/r_draw.h"
-#include "scene/r_plane.h"
 #include "plane/r_flatplane.h"
 #include "scene/r_bsp.h"
 #include "segments/r_drawsegment.h"

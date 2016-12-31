@@ -28,7 +28,6 @@
 #include "d_netinf.h"
 #include "p_effect.h"
 #include "swrenderer/scene/r_bsp.h"
-#include "swrenderer/scene/r_plane.h"
 #include "swrenderer/scene/r_segs.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "swrenderer/drawers/r_draw_rgba.h"

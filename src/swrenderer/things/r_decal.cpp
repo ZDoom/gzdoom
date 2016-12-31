@@ -18,7 +18,6 @@
 #include "d_net.h"
 #include "g_level.h"
 #include "swrenderer/scene/r_bsp.h"
-#include "swrenderer/scene/r_plane.h"
 #include "r_decal.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "swrenderer/drawers/r_draw.h"

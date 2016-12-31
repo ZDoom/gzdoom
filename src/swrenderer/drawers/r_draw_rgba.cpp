@@ -36,7 +36,6 @@
 #include "r_data/r_translate.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
-#include "swrenderer/scene/r_plane.h"
 #include "r_draw_rgba.h"
 #include "r_drawers.h"
 #include "gl/data/gl_matrix.h"

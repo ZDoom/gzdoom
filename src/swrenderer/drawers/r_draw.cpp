@@ -58,7 +58,6 @@ namespace swrenderer
 {
 	double dc_texturemid;
 	FLightNode *dc_light_list;
-	visplane_light *ds_light_list;
 
 	int ylookup[MAXHEIGHT];
 	uint8_t shadetables[NUMCOLORMAPS * 16 * 256];

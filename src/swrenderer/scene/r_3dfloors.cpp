@@ -11,7 +11,6 @@
 #include "c_dispatch.h"
 #include "swrenderer/r_main.h"
 #include "r_bsp.h"
-#include "r_plane.h"
 #include "r_segs.h"
 #include "c_cvars.h"
 #include "r_3dfloors.h"

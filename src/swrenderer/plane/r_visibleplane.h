@@ -63,5 +63,17 @@ namespace swrenderer
 
 	void R_DeinitPlanes();
 	visplane_t *new_visplane(unsigned hash);
+
 	void R_PlaneInitData();
+	void R_ClearPlanes(bool fullclear);
+
+	void R_AddPlaneLights(visplane_t *plane, FLightNode *node);
+
+	visplane_t *R_FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal);
+	visplane_t *R_CheckPlane(visplane_t *pl, int start, int stop);
+
+	int R_DrawPlanes();
+	void R_DrawHeightPlanes(double height);
+	void R_DrawSinglePlane(visplane_t *pl, fixed_t alpha, bool additive, bool masked);
+	void R_MapVisPlane(visplane_t *pl, void(*mapfunc)(int y, int x1, int x2), void(*stepfunc)());
 }

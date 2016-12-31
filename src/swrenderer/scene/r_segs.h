@@ -27,6 +27,7 @@ namespace swrenderer
 {
 
 struct drawseg_t;
+struct visplane_t;
 
 bool R_StoreWallRange(int start, int stop);
 void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2);

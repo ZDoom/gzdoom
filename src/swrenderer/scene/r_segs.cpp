@@ -42,7 +42,6 @@
 #include "d_net.h"
 #include "g_level.h"
 #include "r_bsp.h"
-#include "r_plane.h"
 #include "swrenderer/plane/r_fogboundary.h"
 #include "r_segs.h"
 #include "r_3dfloors.h"

@@ -56,7 +56,6 @@
 #include "d_netinf.h"
 #include "p_effect.h"
 #include "r_bsp.h"
-#include "r_plane.h"
 #include "r_segs.h"
 #include "r_3dfloors.h"
 #include "swrenderer/drawers/r_draw_rgba.h"

@@ -1,0 +1,146 @@
+
+#include <stdlib.h>
+#include <float.h>
+#include "templates.h"
+#include "i_system.h"
+#include "w_wad.h"
+#include "doomdef.h"
+#include "doomstat.h"
+#include "swrenderer/r_main.h"
+#include "swrenderer/scene/r_things.h"
+#include "r_sky.h"
+#include "stats.h"
+#include "v_video.h"
+#include "a_sharedglobal.h"
+#include "c_console.h"
+#include "cmdlib.h"
+#include "d_net.h"
+#include "g_level.h"
+#include "r_bsp.h"
+#include "r_fogboundary.h"
+#include "r_segs.h"
+#include "r_3dfloors.h"
+#include "v_palette.h"
+#include "r_data/colormaps.h"
+#include "swrenderer/drawers/r_draw_rgba.h"
+#include "gl/dynlights/gl_dynlight.h"
+#include "r_walldraw.h"
+#include "r_clip_segment.h"
+#include "r_draw_segment.h"
+#include "r_portal.h"
+#include "r_plane.h"
+#include "swrenderer/r_memory.h"
+
+#ifdef _MSC_VER
+#pragma warning(disable:4244)
+#endif
+
+namespace swrenderer
+{
+	namespace
+	{
+		short spanend[MAXHEIGHT];
+	}
+
+	void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip)
+	{
+		// This is essentially the same as R_MapVisPlane but with an extra step
+		// to create new horizontal spans whenever the light changes enough that
+		// we need to use a new colormap.
+
+		double lightstep = rw_lightstep;
+		double light = rw_light + rw_lightstep*(x2 - x1 - 1);
+		int x = x2 - 1;
+		int t2 = uclip[x];
+		int b2 = dclip[x];
+		int rcolormap = GETPALOOKUP(light, wallshade);
+		int lcolormap;
+		uint8_t *basecolormapdata = basecolormap->Maps;
+
+		if (b2 > t2)
+		{
+			fillshort(spanend + t2, b2 - t2, x);
+		}
+
+		R_SetColorMapLight(basecolormap, (float)light, wallshade);
+
+		uint8_t *fake_dc_colormap = basecolormap->Maps + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
+
+		for (--x; x >= x1; --x)
+		{
+			int t1 = uclip[x];
+			int b1 = dclip[x];
+			const int xr = x + 1;
+			int stop;
+
+			light -= rw_lightstep;
+			lcolormap = GETPALOOKUP(light, wallshade);
+			if (lcolormap != rcolormap)
+			{
+				if (t2 < b2 && rcolormap != 0)
+				{ // Colormap 0 is always the identity map, so rendering it is
+				  // just a waste of time.
+					R_DrawFogBoundarySection(t2, b2, xr);
+				}
+				if (t1 < t2) t2 = t1;
+				if (b1 > b2) b2 = b1;
+				if (t2 < b2)
+				{
+					fillshort(spanend + t2, b2 - t2, x);
+				}
+				rcolormap = lcolormap;
+				R_SetColorMapLight(basecolormap, (float)light, wallshade);
+				fake_dc_colormap = basecolormap->Maps + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
+			}
+			else
+			{
+				if (fake_dc_colormap != basecolormapdata)
+				{
+					stop = MIN(t1, b2);
+					while (t2 < stop)
+					{
+						int y = t2++;
+						R_Drawers()->DrawFogBoundaryLine(y, xr, spanend[y]);
+					}
+					stop = MAX(b1, t2);
+					while (b2 > stop)
+					{
+						int y = --b2;
+						R_Drawers()->DrawFogBoundaryLine(y, xr, spanend[y]);
+					}
+				}
+				else
+				{
+					t2 = MAX(t2, MIN(t1, b2));
+					b2 = MIN(b2, MAX(b1, t2));
+				}
+
+				stop = MIN(t2, b1);
+				while (t1 < stop)
+				{
+					spanend[t1++] = x;
+				}
+				stop = MAX(b2, t2);
+				while (b1 > stop)
+				{
+					spanend[--b1] = x;
+				}
+			}
+
+			t2 = uclip[x];
+			b2 = dclip[x];
+		}
+		if (t2 < b2 && rcolormap != 0)
+		{
+			R_DrawFogBoundarySection(t2, b2, x1);
+		}
+	}
+
+	void R_DrawFogBoundarySection(int y, int y2, int x1)
+	{
+		for (; y < y2; ++y)
+		{
+			R_Drawers()->DrawFogBoundaryLine(y, x1, spanend[y]);
+		}
+	}
+}

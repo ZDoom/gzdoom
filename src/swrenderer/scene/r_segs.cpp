@@ -43,6 +43,7 @@
 #include "g_level.h"
 #include "r_bsp.h"
 #include "r_plane.h"
+#include "r_fogboundary.h"
 #include "r_segs.h"
 #include "r_3dfloors.h"
 #include "swrenderer/drawers/r_draw.h"

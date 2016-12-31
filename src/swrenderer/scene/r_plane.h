@@ -44,8 +44,6 @@ int R_DrawPlanes ();
 void R_DrawSinglePlane(visplane_t *pl, fixed_t alpha, bool additive, bool masked);
 void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1, int x2), void (*stepfunc)());
 
-void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip);
-
 visplane_t *R_FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double alpha, bool additive, const FTransform &xform, int sky, FSectorPortal *portal);
 visplane_t *R_CheckPlane(visplane_t *pl, int start, int stop);
 

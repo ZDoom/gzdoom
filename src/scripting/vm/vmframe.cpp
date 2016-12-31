@@ -35,6 +35,10 @@
 #include <new>
 #include "dobject.h"
 #include "v_text.h"
+#include "stats.h"
+
+cycle_t VMCycles[10];
+int VMCalls[10];
 
 IMPLEMENT_CLASS(VMException, false, false)
 IMPLEMENT_CLASS(VMFunction, true, true)
@@ -463,11 +467,14 @@ int VMFrameStack::Call(VMFunction *func, VMValue *params, int numparams, VMRetur
 		}
 		else
 		{
+			VMCycles[0].Clock();
+			VMCalls[0]++;
 			AllocFrame(static_cast<VMScriptFunction *>(func));
 			allocated = true;
 			VMFillParams(params, TopFrame(), numparams);
 			int numret = VMExec(this, static_cast<VMScriptFunction *>(func)->Code, results, numresults);
 			PopFrame();
+			VMCycles[0].Unclock();
 			return numret;
 		}
 	}
@@ -572,4 +579,18 @@ void NullParam(const char *varname)
 void ThrowVMException(VMException *x)
 {
 	throw x;
+}
+
+
+ADD_STAT(VM)
+{
+	double added = 0;
+	int addedc = 0;
+	for (auto d : VMCycles) added += d.TimeMS();
+	for (auto d : VMCalls) addedc += d;
+	memmove(&VMCycles[1], &VMCycles[0], 9 * sizeof(cycle_t));
+	memmove(&VMCalls[1], &VMCalls[0], 9 * sizeof(int));
+	VMCycles[0].Reset();
+	VMCalls[0] = 0;
+	return FStringf("VM time in last 10 tics: %f ms, %d calls", added, addedc);
 }

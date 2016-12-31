@@ -39,6 +39,10 @@
 #include "r_state.h"
 #include "textures/textures.h"
 #include "math/cmath.h"
+#include "stats.h"
+
+extern cycle_t VMCycles[10];
+extern int VMCalls[10];
 
 // This must be a separate function because the VC compiler would otherwise allocate memory on the stack for every separate instance of the exception object that may get thrown.
 void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...);

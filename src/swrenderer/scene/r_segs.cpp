@@ -272,7 +272,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	// [RH] Draw fog partition
 	if (ds->bFogBoundary)
 	{
-		R_DrawFogBoundary (x1, x2, mceilingclip, mfloorclip);
+		R_DrawFogBoundary (x1, x2, mceilingclip, mfloorclip, wallshade);
 		if (ds->maskedtexturecol == -1)
 		{
 			goto clearfog;

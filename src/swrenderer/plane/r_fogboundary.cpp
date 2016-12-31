@@ -42,7 +42,7 @@ namespace swrenderer
 		short spanend[MAXHEIGHT];
 	}
 
-	void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip)
+	void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip, int wallshade)
 	{
 		// This is essentially the same as R_MapVisPlane but with an extra step
 		// to create new horizontal spans whenever the light changes enough that

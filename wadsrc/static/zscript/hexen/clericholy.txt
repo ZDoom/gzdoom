@@ -567,14 +567,17 @@ class HolyTail : Actor
 	static void SpawnSpiritTail (Actor spirit)
 	{
 		Actor tail = Spawn ("HolyTail", spirit.Pos, ALLOW_REPLACE);
-		tail.target = spirit; // parent
-		for (int i = 1; i < 3; i++)
+		if (tail != null)
 		{
-			Actor next = Spawn ("HolyTailTrail", spirit.Pos, ALLOW_REPLACE);
-			tail.tracer = next;
-			tail = next;
+			tail.target = spirit; // parent
+			for (int i = 1; i < 3; i++)
+			{
+				Actor next = Spawn ("HolyTailTrail", spirit.Pos, ALLOW_REPLACE);
+				tail.tracer = next;
+				tail = next;
+			}
+			tail.tracer = null; // last tail bit
 		}
-		tail.tracer = null; // last tail bit
 	}
 
 	//============================================================================

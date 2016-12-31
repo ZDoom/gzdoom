@@ -160,10 +160,13 @@ class BlasterFX1 : FastProjectile
 		for(int i = 0; i < 8; i++)
 		{
 			Actor ripper = Spawn("Ripper", pos, ALLOW_REPLACE);
-			ripper.target = target;
-			ripper.angle = i*45;
-			ripper.VelFromAngle();
-			ripper.CheckMissileSpawn (radius);
+			if (ripper != null)
+			{
+				ripper.target = target;
+				ripper.angle = i*45;
+				ripper.VelFromAngle();
+				ripper.CheckMissileSpawn (radius);
+			}
 		}
 	}
 }

@@ -60,14 +60,17 @@ class Mace : HereticWeapon
 		if (random[MaceAtk]() < 28)
 		{
 			Actor ball = Spawn("MaceFX2", Pos + (0, 0, 28 - Floorclip), ALLOW_REPLACE);
-			ball.Vel.Z = 2 - clamp(tan(pitch), -5, 5);
-			ball.target = self;
-			ball.angle = self.angle;
-			ball.AddZ(ball.Vel.Z);
-			ball.VelFromAngle();
-			ball.Vel += Vel.xy / 2;
-			ball.A_PlaySound ("weapons/maceshoot", CHAN_BODY);
-			ball.CheckMissileSpawn (radius);
+			if (ball != null)
+			{
+				ball.Vel.Z = 2 - clamp(tan(pitch), -5, 5);
+				ball.target = self;
+				ball.angle = self.angle;
+				ball.AddZ(ball.Vel.Z);
+				ball.VelFromAngle();
+				ball.Vel += Vel.xy / 2;
+				ball.A_PlaySound ("weapons/maceshoot", CHAN_BODY);
+				ball.CheckMissileSpawn (radius);
+			}
 		}
 		else
 		{
@@ -260,18 +263,24 @@ class MaceFX2 : MaceFX1
 				SetState (SpawnState);
 
 				Actor tiny = Spawn("MaceFX3", Pos, ALLOW_REPLACE);
-				tiny.target = target;
-				tiny.angle = angle + 90.;
-				tiny.VelFromAngle(Vel.Z - 1.);
-				tiny.Vel += (Vel.XY * .5, Vel.Z);
-				tiny.CheckMissileSpawn (radius);
+				if (tiny != null)
+				{
+					tiny.target = target;
+					tiny.angle = angle + 90.;
+					tiny.VelFromAngle(Vel.Z - 1.);
+					tiny.Vel += (Vel.XY * .5, Vel.Z);
+					tiny.CheckMissileSpawn (radius);
+				}
 
 				tiny = Spawn("MaceFX3", Pos, ALLOW_REPLACE);
-				tiny.target = target;
-				tiny.angle = angle - 90.;
-				tiny.VelFromAngle(Vel.Z - 1.);
-				tiny.Vel += (Vel.XY * .5, Vel.Z);
-				tiny.CheckMissileSpawn (radius);
+				if (tiny != null)
+				{
+					tiny.target = target;
+					tiny.angle = angle - 90.;
+					tiny.VelFromAngle(Vel.Z - 1.);
+					tiny.Vel += (Vel.XY * .5, Vel.Z);
+					tiny.CheckMissileSpawn (radius);
+				}
 				return;
 			}
 		}

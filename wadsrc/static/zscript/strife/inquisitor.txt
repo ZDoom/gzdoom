@@ -171,9 +171,12 @@ class Inquisitor : Actor
 	void A_TossArm ()
 	{
 		Actor foo = Spawn("InquisitorArm", Pos + (0,0,24), ALLOW_REPLACE);
-		foo.angle = angle - 90. + Random2[Inquisitor]() * (360./1024.);
-		foo.VelFromAngle(foo.Speed / 8);
-		foo.Vel.Z = random[Inquisitor]() / 64.;
+		if (foo != null)
+		{
+			foo.angle = angle - 90. + Random2[Inquisitor]() * (360./1024.);
+			foo.VelFromAngle(foo.Speed / 8);
+			foo.Vel.Z = random[Inquisitor]() / 64.;
+		}
 	}
 
 	

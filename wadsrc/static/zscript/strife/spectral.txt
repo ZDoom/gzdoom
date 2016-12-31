@@ -62,11 +62,13 @@ class SpectralMonster : Actor
 			return;
 
 		Actor foo = Spawn("SpectralLightningV2", Pos + (0, 0, 32), ALLOW_REPLACE);
-
-		foo.Vel.Z = -12;
-		foo.target = self;
-		foo.FriendPlayer = 0;
-		foo.tracer = target;
+		if (foo != null)
+		{
+			foo.Vel.Z = -12;
+			foo.target = self;
+			foo.FriendPlayer = 0;
+			foo.tracer = target;
+		}
 
 		Angle -= 90.;
 		for (int i = 0; i < 20; ++i)
@@ -217,9 +219,11 @@ class SpectralLightningH1 : SpectralLightningBase
 	void A_SpectralLightningTail ()
 	{
 		Actor foo = Spawn("SpectralLightningHTail", Vec3Offset(-Vel.X, -Vel.Y, 0.), ALLOW_REPLACE);
-
-		foo.Angle = Angle;
-		foo.FriendPlayer = FriendPlayer;
+		if (foo != null)
+		{
+			foo.Angle = Angle;
+			foo.FriendPlayer = FriendPlayer;
+		}
 	}
 }
 
@@ -386,15 +390,21 @@ class SpectralLightningSpot : SpectralLightningDeath1
 
 		Actor flash = Spawn (cls, Vec2OffsetZ(xo, yo, ONCEILINGZ), ALLOW_REPLACE);
 
-		flash.target = target;
-		flash.Vel.Z = -18;
-		flash.FriendPlayer = FriendPlayer;
+		if (flash != null)
+		{
+			flash.target = target;
+			flash.Vel.Z = -18;
+			flash.FriendPlayer = FriendPlayer;
+		}
 
 		flash = Spawn("SpectralLightningV2", (pos.xy, ONCEILINGZ), ALLOW_REPLACE);
 
-		flash.target = target;
-		flash.Vel.Z = -18;
-		flash.FriendPlayer = FriendPlayer;
+		if (flash != null)
+		{
+			flash.target = target;
+			flash.Vel.Z = -18;
+			flash.FriendPlayer = FriendPlayer;
+		}
 	}
 	
 }

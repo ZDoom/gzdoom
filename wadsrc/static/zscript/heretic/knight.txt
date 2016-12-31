@@ -163,8 +163,11 @@ class RedAxe : KnightAxe
 		double xo = random2[DripBlood]() / 32.0;
 		double yo = random2[DripBlood]() / 32.0;
 		Actor mo = Spawn ("Blood", Vec3Offset(xo, yo, 0.), ALLOW_REPLACE);
-		mo.Vel.X = random2[DripBlood]() / 64.0;
-		mo.Vel.Y = random2[DripBlood]() / 64.0;
-		mo.Gravity = 1./8;
+		if (mo != null)
+		{
+			mo.Vel.X = random2[DripBlood]() / 64.0;
+			mo.Vel.Y = random2[DripBlood]() / 64.0;
+			mo.Gravity = 1./8;
+		}
 	}
 }

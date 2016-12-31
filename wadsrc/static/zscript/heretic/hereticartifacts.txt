@@ -149,7 +149,7 @@ Class ArtiTimeBomb : Inventory
 	override bool Use (bool pickup)
 	{
 		Actor mo = Spawn("ActivatedTimeBomb", Owner.Vec3Angle(24., Owner.angle, - Owner.Floorclip), ALLOW_REPLACE);
-		mo.target = Owner;
+		if (mo != null) mo.target = Owner;
 		return true;
 	}
 	

@@ -151,16 +151,19 @@ class PhoenixRodPowered : PhoenixRod
 
 		slope += 0.1;
 		Actor mo = Spawn("PhoenixFX2", spawnpos, ALLOW_REPLACE);
-		mo.target = self;
-		mo.Angle = Angle;
-		mo.VelFromAngle();
-		mo.Vel.XY += Vel.XY;
-		mo.Vel.Z = mo.Speed * slope;
+		if (mo != null)
+		{
+			mo.target = self;
+			mo.Angle = Angle;
+			mo.VelFromAngle();
+			mo.Vel.XY += Vel.XY;
+			mo.Vel.Z = mo.Speed * slope;
+			mo.CheckMissileSpawn (radius);
+		}
 		if (!player.refire)
 		{
 			A_PlaySound("weapons/phoenixpowshoot", CHAN_WEAPON, 1, true);
 		}	
-		mo.CheckMissileSpawn (radius);
 	}
 
 	//----------------------------------------------------------------------------
@@ -239,10 +242,16 @@ class PhoenixFX1 : Actor
 		//[RH] Heretic never sets the target for seeking
 		//P_SeekerMissile (self, 5, 10);
 		Actor puff = Spawn("PhoenixPuff", Pos, ALLOW_REPLACE);
-		puff.Vel.XY = AngleToVector(Angle + 90, 1.3);
+		if (puff != null)
+		{
+			puff.Vel.XY = AngleToVector(Angle + 90, 1.3);
+		}
 
 		puff = Spawn("PhoenixPuff", Pos, ALLOW_REPLACE);
-		puff.Vel.XY = AngleToVector(Angle - 90, 1.3);
+		if (puff != null)
+		{
+			puff.Vel.XY = AngleToVector(Angle - 90, 1.3);
+		}
 	}
 
 	

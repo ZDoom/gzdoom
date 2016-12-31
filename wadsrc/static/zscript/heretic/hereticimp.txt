@@ -102,14 +102,20 @@ class HereticImp : Actor
 		bNoGravity = false;
 
 		chunk = Spawn("HereticImpChunk1", pos, ALLOW_REPLACE);
-		chunk.vel.x = random2[ImpExplode]() / 64.;
-		chunk.vel.y = random2[ImpExplode]() / 64.;
-		chunk.vel.z = 9;
+		if (chunk != null)
+		{
+			chunk.vel.x = random2[ImpExplode]() / 64.;
+			chunk.vel.y = random2[ImpExplode]() / 64.;
+			chunk.vel.z = 9;
+		}
 
 		chunk = Spawn("HereticImpChunk2", pos, ALLOW_REPLACE);
-		chunk.vel.x = random2[ImpExplode]() / 64.;
-		chunk.vel.y = random2[ImpExplode]() / 64.;
-		chunk.vel.z = 9;
+		if (chunk != null)
+		{
+			chunk.vel.x = random2[ImpExplode]() / 64.;
+			chunk.vel.y = random2[ImpExplode]() / 64.;
+			chunk.vel.z = 9;
+		}
 		
 		if (extremecrash)
 		{

@@ -102,12 +102,15 @@ class Ironlich : Actor
 					{
 						A_PlaySound ("ironlich/attack1", CHAN_BODY);
 					}
-					fire.target = baseFire.target;
-					fire.angle = baseFire.angle;
-					fire.Vel = baseFire.Vel;
-					fire.SetDamage(0);
-					fire.health = (i+1) * 2;
-					fire.CheckMissileSpawn (radius);
+					if (fire != null)
+					{
+						fire.target = baseFire.target;
+						fire.angle = baseFire.angle;
+						fire.Vel = baseFire.Vel;
+						fire.SetDamage(0);
+						fire.health = (i+1) * 2;
+						fire.CheckMissileSpawn (radius);
+					}
 				}
 			}
 		}
@@ -167,11 +170,14 @@ class HeadFX1 : Actor
 		for (int i = 0; i < 8; i++)
 		{
 			Actor shard = Spawn("HeadFX2", Pos, ALLOW_REPLACE);
-			shard.target = target;
-			shard.angle = i*45.;
-			shard.VelFromAngle();
-			shard.Vel.Z = -.6;
-			shard.CheckMissileSpawn (radius);
+			if (shard != null)
+			{
+				shard.target = target;
+				shard.angle = i*45.;
+				shard.VelFromAngle();
+				shard.Vel.Z = -.6;
+				shard.CheckMissileSpawn (radius);
+			}
 		}
 	}
 }

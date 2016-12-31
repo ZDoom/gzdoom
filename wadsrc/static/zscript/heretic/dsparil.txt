@@ -166,13 +166,14 @@ class Sorcerer1 : Actor
 	{
 		bSolid = false;
 		Actor mo = Spawn("Sorcerer2", Pos, ALLOW_REPLACE);
-		mo.Translation = Translation;
-		mo.SetStateLabel("Rise");
-		mo.angle = angle;
-		mo.CopyFriendliness (self, true);
+		if (mo != null)
+		{
+			mo.Translation = Translation;
+			mo.SetStateLabel("Rise");
+			mo.angle = angle;
+			mo.CopyFriendliness (self, true);
+		}
 	}
-
-	
 }
 
 
@@ -434,9 +435,12 @@ class Sorcerer2FX1 : Actor
 		for (int i = 0; i < 2; i++)
 		{
 			Actor mo = Spawn("Sorcerer2FXSpark", pos, ALLOW_REPLACE);
-			mo.Vel.X = Random2[BlueSpark]() / 128.;
-			mo.Vel.Y = Random2[BlueSpark]() / 128.;
-			mo.Vel.Z = 1. + Random[BlueSpark]() / 256.;
+			if (mo != null)
+			{
+				mo.Vel.X = Random2[BlueSpark]() / 128.;
+				mo.Vel.Y = Random2[BlueSpark]() / 128.;
+				mo.Vel.Z = 1. + Random[BlueSpark]() / 256.;
+			}
 		}
 	}
 }

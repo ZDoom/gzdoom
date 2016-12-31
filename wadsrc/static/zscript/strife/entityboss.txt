@@ -202,9 +202,12 @@ class EntityBoss : SpectralMonster
 			Vector3 pos = spot.Vec3Angle(secondRadius, an, tracer ? 70. : 0.);
 
 			second = Spawn("EntitySecond", pos, ALLOW_REPLACE);
-			second.CopyFriendliness(self, true);
-			second.A_FaceTarget();
-			second.VelFromAngle(i == 0? 4.8828125 : secondRadius * 4., an);
+			if (second != null)
+			{
+				second.CopyFriendliness(self, true);
+				second.A_FaceTarget();
+				second.VelFromAngle(i == 0? 4.8828125 : secondRadius * 4., an);
+			}
 		}
 	}
 	

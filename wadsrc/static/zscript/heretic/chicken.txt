@@ -335,11 +335,14 @@ extend class Actor
 		for (int i = 0; i < count; i++)
 		{
 			Actor mo = Spawn("Feather", pos + (0, 0, 20), NO_REPLACE);
-			mo.target = self;
-			mo.Vel.X = Random2[Feathers]() / 256.;
-			mo.Vel.Y = Random2[Feathers]() / 256.;
-			mo.Vel.Z = 1. + random[Feathers]() / 128.;
-			mo.SetState (mo.SpawnState + (random[Feathers]()&7));
+			if (mo != null)
+			{
+				mo.target = self;
+				mo.Vel.X = Random2[Feathers]() / 256.;
+				mo.Vel.Y = Random2[Feathers]() / 256.;
+				mo.Vel.Z = 1. + random[Feathers]() / 128.;
+				mo.SetState (mo.SpawnState + (random[Feathers]()&7));
+			}
 		}
 	}
 

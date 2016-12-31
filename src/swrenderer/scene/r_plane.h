@@ -44,7 +44,6 @@ void R_AddPlaneLights(visplane_t *plane, FLightNode *light_head);
 
 int R_DrawPlanes ();
 void R_DrawSinglePlane(visplane_t *pl, fixed_t alpha, bool additive, bool masked);
-void R_DrawSkyPlane (visplane_t *pl);
 void R_DrawNormalPlane (visplane_t *pl, double xscale, double yscale, fixed_t alpha, bool additive, bool masked);
 void R_DrawTiltedPlane (visplane_t *pl, double xscale, double yscale, fixed_t alpha, bool additive, bool masked);
 void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1));

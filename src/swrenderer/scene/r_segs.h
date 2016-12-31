@@ -54,6 +54,7 @@ extern float	rw_light;		// [RH] Scale lights with viewsize adjustments
 extern float	rw_lightstep;
 extern float	rw_lightleft;
 extern fixed_t	rw_offset;
+extern FTexture *rw_pic;
 extern int wallshade;
 
 }

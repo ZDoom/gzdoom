@@ -28,9 +28,6 @@
 namespace swrenderer
 {
 
-extern short			floorclip[MAXWIDTH];
-extern short			ceilingclip[MAXWIDTH];
-
 void R_ClearPlanes (bool fullclear);
 
 void R_AddPlaneLights(visplane_t *plane, FLightNode *light_head);
@@ -41,9 +38,6 @@ void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1, int x2), void
 
 visplane_t *R_FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double alpha, bool additive, const FTransform &xform, int sky, FSectorPortal *portal);
 visplane_t *R_CheckPlane(visplane_t *pl, int start, int stop);
-
-extern visplane_t*		floorplane;
-extern visplane_t*		ceilingplane;
 
 }
 

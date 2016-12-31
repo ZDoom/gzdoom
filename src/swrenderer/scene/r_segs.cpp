@@ -141,6 +141,16 @@ FTexture		*rw_pic;
 
 static fixed_t	*maskedtexturecol;
 
+visplane_t *floorplane;
+visplane_t *ceilingplane;
+
+// Clip values are the solid pixel bounding the range.
+//	floorclip starts out SCREENHEIGHT and is just outside the range
+//	ceilingclip starts out 0 and is just inside the range
+//
+short floorclip[MAXWIDTH];
+short ceilingclip[MAXWIDTH];
+
 
 inline bool IsFogBoundary (sector_t *front, sector_t *back)
 {

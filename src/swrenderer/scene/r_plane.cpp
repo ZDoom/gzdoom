@@ -82,8 +82,6 @@ namespace swrenderer
 
 extern subsector_t *InSubsector;
 
-visplane_t 				*floorplane;
-visplane_t 				*ceilingplane;
 
 // These are copies of the main parameters used when drawing stacked sectors.
 // When you change the main parameters, you should copy them here too *unless*
@@ -93,14 +91,6 @@ int stacked_extralight;
 double stacked_visibility;
 DVector3 stacked_viewpos;
 DAngle stacked_angle;
-
-//
-// Clip values are the solid pixel bounding the range.
-//	floorclip starts out SCREENHEIGHT and is just outside the range
-//	ceilingclip starts out 0 and is just inside the range
-//
-short					floorclip[MAXWIDTH];
-short					ceilingclip[MAXWIDTH];
 
 //
 // texture mapping

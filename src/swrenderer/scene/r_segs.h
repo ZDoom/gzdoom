@@ -56,6 +56,11 @@ extern float	rw_lightleft;
 extern fixed_t	rw_offset;
 extern FTexture *rw_pic;
 
+extern short floorclip[MAXWIDTH];
+extern short ceilingclip[MAXWIDTH];
+extern visplane_t *floorplane;
+extern visplane_t *ceilingplane;
+
 }
 
 #endif

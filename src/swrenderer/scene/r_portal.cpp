@@ -37,6 +37,7 @@
 #include "swrenderer/segments/r_drawsegment.h"
 #include "r_things.h"
 #include "r_3dfloors.h"
+#include "r_segs.h"
 #include "swrenderer/r_main.h"
 #include "swrenderer/r_memory.h"
 

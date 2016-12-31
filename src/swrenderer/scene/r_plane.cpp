@@ -66,6 +66,8 @@
 #include "r_draw_segment.h"
 #include "r_portal.h"
 #include "r_skyplane.h"
+#include "r_flatplane.h"
+#include "r_slopeplane.h"
 #include "swrenderer/r_memory.h"
 
 #ifdef _MSC_VER
@@ -109,175 +111,9 @@ short					ceilingclip[MAXWIDTH];
 // texture mapping
 //
 
-static double			planeheight;
-
-extern "C" {
-//
-// spanend holds the end of a plane span in each screen row
-//
 short					spanend[MAXHEIGHT];
 
-int						planeshade;
-FVector3				plane_sz, plane_su, plane_sv;
-float					planelightfloat;
-bool					plane_shade;
-fixed_t					pviewx, pviewy;
-}
-
-float 					yslope[MAXHEIGHT];
-static fixed_t			xscale, yscale;
-static double			xstepscale, ystepscale;
-static double			basexfrac, baseyfrac;
-
 void					R_DrawSinglePlane (visplane_t *, fixed_t alpha, bool additive, bool masked);
-
-//==========================================================================
-//
-// R_MapPlane
-//
-// Globals used: planeheight, ds_source, basexscale, baseyscale,
-// pviewx, pviewy, xoffs, yoffs, basecolormap, xscale, yscale.
-//
-//==========================================================================
-
-void R_MapPlane (int y, int x1)
-{
-	int x2 = spanend[y];
-	double distance;
-
-#ifdef RANGECHECK
-	if (x2 < x1 || x1<0 || x2>=viewwidth || (unsigned)y>=(unsigned)viewheight)
-	{
-		I_FatalError ("R_MapPlane: %i, %i at %i", x1, x2, y);
-	}
-#endif
-
-	// [RH] Notice that I dumped the caching scheme used by Doom.
-	// It did not offer any appreciable speedup.
-
-	distance = planeheight * yslope[y];
-
-	if (ds_xbits != 0)
-	{
-		ds_xstep = xs_ToFixed(32 - ds_xbits, distance * xstepscale);
-		ds_xfrac = xs_ToFixed(32 - ds_xbits, distance * basexfrac) + pviewx;
-	}
-	else
-	{
-		ds_xstep = 0;
-		ds_xfrac = 0;
-	}
-	if (ds_ybits != 0)
-	{
-		ds_ystep = xs_ToFixed(32 - ds_ybits, distance * ystepscale);
-		ds_yfrac = xs_ToFixed(32 - ds_ybits, distance * baseyfrac) + pviewy;
-	}
-	else
-	{
-		ds_ystep = 0;
-		ds_yfrac = 0;
-	}
-
-	if (r_swtruecolor)
-	{
-		double distance2 = planeheight * yslope[(y + 1 < viewheight) ? y + 1 : y - 1];
-		double xmagnitude = fabs(ystepscale * (distance2 - distance) * FocalLengthX);
-		double ymagnitude = fabs(xstepscale * (distance2 - distance) * FocalLengthX);
-		double magnitude = MAX(ymagnitude, xmagnitude);
-		double min_lod = -1000.0;
-		ds_lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
-	}
-
-	if (plane_shade)
-	{
-		// Determine lighting based on the span's distance from the viewer.
-		R_SetDSColorMapLight(basecolormap, GlobVis * fabs(CenterY - y), planeshade);
-	}
-
-	if (r_dynlights)
-	{
-		// Find row position in view space
-		float zspan = planeheight / (fabs(y + 0.5 - CenterY) / InvZtoScale);
-		dc_viewpos.X = (float)((x1 + 0.5 - CenterX) / CenterX * zspan);
-		dc_viewpos.Y = zspan;
-		dc_viewpos.Z = (float)((CenterY - y - 0.5) / InvZtoScale * zspan);
-		dc_viewpos_step.X = (float)(zspan / CenterX);
-
-		static TriLight lightbuffer[64 * 1024];
-		static int nextlightindex = 0;
-
-		// Setup lights for column
-		dc_num_lights = 0;
-		dc_lights = lightbuffer + nextlightindex;
-		visplane_light *cur_node = ds_light_list;
-		while (cur_node && nextlightindex < 64 * 1024)
-		{
-			double lightX = cur_node->lightsource->X() - ViewPos.X;
-			double lightY = cur_node->lightsource->Y() - ViewPos.Y;
-			double lightZ = cur_node->lightsource->Z() - ViewPos.Z;
-
-			float lx = (float)(lightX * ViewSin - lightY * ViewCos);
-			float ly = (float)(lightX * ViewTanCos + lightY * ViewTanSin) - dc_viewpos.Y;
-			float lz = (float)lightZ - dc_viewpos.Z;
-
-			// Precalculate the constant part of the dot here so the drawer doesn't have to.
-			float lconstant = ly * ly + lz * lz;
-
-			// Include light only if it touches this row
-			float radius = cur_node->lightsource->GetRadius();
-			if (radius * radius >= lconstant)
-			{
-				uint32_t red = cur_node->lightsource->GetRed();
-				uint32_t green = cur_node->lightsource->GetGreen();
-				uint32_t blue = cur_node->lightsource->GetBlue();
-
-				nextlightindex++;
-				auto &light = dc_lights[dc_num_lights++];
-				light.x = lx;
-				light.y = lconstant;
-				light.radius = 256.0f / radius;
-				light.color = (red << 16) | (green << 8) | blue;
-			}
-
-			cur_node = cur_node->next;
-		}
-
-		if (nextlightindex == 64 * 1024)
-			nextlightindex = 0;
-	}
-	else
-	{
-		dc_num_lights = 0;
-	}
-
-	ds_y = y;
-	ds_x1 = x1;
-	ds_x2 = x2;
-
-	(R_Drawers()->*spanfunc)();
-}
-
-//==========================================================================
-//
-// R_MapTiltedPlane
-//
-//==========================================================================
-
-void R_MapTiltedPlane (int y, int x1)
-{
-	R_Drawers()->DrawTiltedSpan(y, x1, spanend[y], plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
-}
-
-//==========================================================================
-//
-// R_MapColoredPlane
-//
-//==========================================================================
-
-void R_MapColoredPlane(int y, int x1)
-{
-	R_Drawers()->DrawColoredSpan(y, x1, spanend[y]);
-}
 
 void R_DrawFogBoundarySection(int y, int y2, int x1)
 {
@@ -790,7 +626,7 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 	if (r_drawflat)
 	{ // [RH] no texture mapping
 		ds_color += 4;
-		R_MapVisPlane (pl, R_MapColoredPlane);
+		R_DrawColoredPlane(pl);
 	}
 	else if (pl->picnum == skyflatnum)
 	{ // sky flat
@@ -818,7 +654,6 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 		double yscale = pl->xform.yScale * tex->Scale.Y;
 
 		basecolormap = pl->colormap;
-		planeshade = LIGHT2SHADE(pl->lightlevel);
 
 		if (r_drawflat || (!pl->height.isSlope() && !tilt))
 		{
@@ -834,277 +669,6 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 
 //==========================================================================
 //
-// R_DrawNormalPlane
-//
-//==========================================================================
-
-void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked)
-{
-	if (alpha <= 0)
-	{
-		return;
-	}
-
-	double planeang = (pl->xform.Angle + pl->xform.baseAngle).Radians();
-	double xstep, ystep, leftxfrac, leftyfrac, rightxfrac, rightyfrac;
-	double x;
-
-	xscale = xs_ToFixed(32 - ds_xbits, _xscale);
-	yscale = xs_ToFixed(32 - ds_ybits, _yscale);
-	if (planeang != 0)
-	{
-		double cosine = cos(planeang), sine = sin(planeang);
-		pviewx = FLOAT2FIXED(pl->xform.xOffs + ViewPos.X * cosine - ViewPos.Y * sine);
-		pviewy = FLOAT2FIXED(pl->xform.yOffs - ViewPos.X * sine - ViewPos.Y * cosine);
-	}
-	else
-	{
-		pviewx = FLOAT2FIXED(pl->xform.xOffs + ViewPos.X);
-		pviewy = FLOAT2FIXED(pl->xform.yOffs - ViewPos.Y);
-	}
-
-	pviewx = FixedMul (xscale, pviewx);
-	pviewy = FixedMul (yscale, pviewy);
-	
-	// left to right mapping
-	planeang += (ViewAngle - 90).Radians();
-
-	// Scale will be unit scale at FocalLengthX (normally SCREENWIDTH/2) distance
-	xstep = cos(planeang) / FocalLengthX;
-	ystep = -sin(planeang) / FocalLengthX;
-
-	// [RH] flip for mirrors
-	if (MirrorFlags & RF_XFLIP)
-	{
-		xstep = -xstep;
-		ystep = -ystep;
-	}
-
-	planeang += M_PI/2;
-	double cosine = cos(planeang), sine = -sin(planeang);
-	x = pl->right - centerx - 0.5;
-	rightxfrac = _xscale * (cosine + x * xstep);
-	rightyfrac = _yscale * (sine + x * ystep);
-	x = pl->left - centerx - 0.5;
-	leftxfrac = _xscale * (cosine + x * xstep);
-	leftyfrac = _yscale * (sine + x * ystep);
-
-	basexfrac = rightxfrac;
-	baseyfrac = rightyfrac;
-	xstepscale = (rightxfrac - leftxfrac) / (pl->right - pl->left);
-	ystepscale = (rightyfrac - leftyfrac) / (pl->right - pl->left);
-
-	planeheight = fabs(pl->height.Zat0() - ViewPos.Z);
-
-	GlobVis = r_FloorVisibility / planeheight;
-	ds_light = 0;
-	if (fixedlightlev >= 0)
-	{
-		R_SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
-		plane_shade = false;
-	}
-	else if (fixedcolormap)
-	{
-		R_SetDSColorMapLight(fixedcolormap, 0, 0);
-		plane_shade = false;
-	}
-	else
-	{
-		plane_shade = true;
-	}
-
-	if (spanfunc != &SWPixelFormatDrawers::FillSpan)
-	{
-		if (masked)
-		{
-			if (alpha < OPAQUE || additive)
-			{
-				if (!additive)
-				{
-					spanfunc = &SWPixelFormatDrawers::DrawSpanMaskedTranslucent;
-					dc_srcblend = Col2RGB8[alpha>>10];
-					dc_destblend = Col2RGB8[(OPAQUE-alpha)>>10];
-					dc_srcalpha = alpha;
-					dc_destalpha = OPAQUE - alpha;
-				}
-				else
-				{
-					spanfunc = &SWPixelFormatDrawers::DrawSpanMaskedAddClamp;
-					dc_srcblend = Col2RGB8_LessPrecision[alpha>>10];
-					dc_destblend = Col2RGB8_LessPrecision[FRACUNIT>>10];
-					dc_srcalpha = alpha;
-					dc_destalpha = FRACUNIT;
-				}
-			}
-			else
-			{
-				spanfunc = &SWPixelFormatDrawers::DrawSpanMasked;
-			}
-		}
-		else
-		{
-			if (alpha < OPAQUE || additive)
-			{
-				if (!additive)
-				{
-					spanfunc = &SWPixelFormatDrawers::DrawSpanTranslucent;
-					dc_srcblend = Col2RGB8[alpha>>10];
-					dc_destblend = Col2RGB8[(OPAQUE-alpha)>>10];
-					dc_srcalpha = alpha;
-					dc_destalpha = OPAQUE - alpha;
-				}
-				else
-				{
-					spanfunc = &SWPixelFormatDrawers::DrawSpanAddClamp;
-					dc_srcblend = Col2RGB8_LessPrecision[alpha>>10];
-					dc_destblend = Col2RGB8_LessPrecision[FRACUNIT>>10];
-					dc_srcalpha = alpha;
-					dc_destalpha = FRACUNIT;
-				}
-			}
-			else
-			{
-				spanfunc = &SWPixelFormatDrawers::DrawSpan;
-			}
-		}
-	}
-	R_MapVisPlane (pl, R_MapPlane);
-}
-
-//==========================================================================
-//
-// R_DrawTiltedPlane
-//
-//==========================================================================
-
-void R_DrawTiltedPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked)
-{
-	static const float ifloatpow2[16] =
-	{
-		// ifloatpow2[i] = 1 / (1 << i)
-		64.f, 32.f, 16.f, 8.f, 4.f, 2.f, 1.f, 0.5f,
-		0.25f, 0.125f, 0.0625f, 0.03125f, 0.015625f, 0.0078125f,
-		0.00390625f, 0.001953125f
-		/*, 0.0009765625f, 0.00048828125f, 0.000244140625f,
-		1.220703125e-4f, 6.103515625e-5, 3.0517578125e-5*/
-	};
-	double lxscale, lyscale;
-	double xscale, yscale;
-	FVector3 p, m, n;
-	double ang, planeang, cosine, sine;
-	double zeroheight;
-
-	if (alpha <= 0)
-	{
-		return;
-	}
-
-	lxscale = _xscale * ifloatpow2[ds_xbits];
-	lyscale = _yscale * ifloatpow2[ds_ybits];
-	xscale = 64.f / lxscale;
-	yscale = 64.f / lyscale;
-	zeroheight = pl->height.ZatPoint(ViewPos);
-
-	pviewx = xs_ToFixed(32 - ds_xbits, pl->xform.xOffs * pl->xform.xScale);
-	pviewy = xs_ToFixed(32 - ds_ybits, pl->xform.yOffs * pl->xform.yScale);
-	planeang = (pl->xform.Angle + pl->xform.baseAngle).Radians();
-
-	// p is the texture origin in view space
-	// Don't add in the offsets at this stage, because doing so can result in
-	// errors if the flat is rotated.
-	ang = M_PI*3/2 - ViewAngle.Radians();
-	cosine = cos(ang), sine = sin(ang);
-	p[0] = ViewPos.X * cosine - ViewPos.Y * sine;
-	p[2] = ViewPos.X * sine + ViewPos.Y * cosine;
-	p[1] = pl->height.ZatPoint(0.0, 0.0) - ViewPos.Z;
-
-	// m is the v direction vector in view space
-	ang = ang - M_PI / 2 - planeang;
-	cosine = cos(ang), sine = sin(ang);
-	m[0] = yscale * cosine;
-	m[2] = yscale * sine;
-//	m[1] = pl->height.ZatPointF (0, iyscale) - pl->height.ZatPointF (0,0));
-//	VectorScale2 (m, 64.f/VectorLength(m));
-
-	// n is the u direction vector in view space
-#if 0
-	//let's use the sin/cosine we already know instead of computing new ones
-	ang += M_PI/2
-	n[0] = -xscale * cos(ang);
-	n[2] = -xscale * sin(ang);
-#else
-	n[0] = xscale * sine;
-	n[2] = -xscale * cosine;
-#endif
-//	n[1] = pl->height.ZatPointF (ixscale, 0) - pl->height.ZatPointF (0,0));
-//	VectorScale2 (n, 64.f/VectorLength(n));
-
-	// This code keeps the texture coordinates constant across the x,y plane no matter
-	// how much you slope the surface. Use the commented-out code above instead to keep
-	// the textures a constant size across the surface's plane instead.
-	cosine = cos(planeang), sine = sin(planeang);
-	m[1] = pl->height.ZatPoint(ViewPos.X + yscale * sine, ViewPos.Y + yscale * cosine) - zeroheight;
-	n[1] = -(pl->height.ZatPoint(ViewPos.X - xscale * cosine, ViewPos.Y + xscale * sine) - zeroheight);
-
-	plane_su = p ^ m;
-	plane_sv = p ^ n;
-	plane_sz = m ^ n;
-
-	plane_su.Z *= FocalLengthX;
-	plane_sv.Z *= FocalLengthX;
-	plane_sz.Z *= FocalLengthX;
-
-	plane_su.Y *= IYaspectMul;
-	plane_sv.Y *= IYaspectMul;
-	plane_sz.Y *= IYaspectMul;
-
-	// Premultiply the texture vectors with the scale factors
-	plane_su *= 4294967296.f;
-	plane_sv *= 4294967296.f;
-
-	if (MirrorFlags & RF_XFLIP)
-	{
-		plane_su[0] = -plane_su[0];
-		plane_sv[0] = -plane_sv[0];
-		plane_sz[0] = -plane_sz[0];
-	}
-
-	planelightfloat = (r_TiltVisibility * lxscale * lyscale) / (fabs(pl->height.ZatPoint(ViewPos) - ViewPos.Z)) / 65536.f;
-
-	if (pl->height.fC() > 0)
-		planelightfloat = -planelightfloat;
-
-	if (fixedlightlev >= 0)
-	{
-		R_SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
-		plane_shade = false;
-	}
-	else if (fixedcolormap)
-	{
-		R_SetDSColorMapLight(fixedcolormap, 0, 0);
-		plane_shade = false;
-	}
-	else
-	{
-		R_SetDSColorMapLight(basecolormap, 0, 0);
-		plane_shade = true;
-	}
-
-	// Hack in support for 1 x Z and Z x 1 texture sizes
-	if (ds_ybits == 0)
-	{
-		plane_sv[2] = plane_sv[1] = plane_sv[0] = 0;
-	}
-	if (ds_xbits == 0)
-	{
-		plane_su[2] = plane_su[1] = plane_su[0] = 0;
-	}
-
-	R_MapVisPlane (pl, R_MapTiltedPlane);
-}
-
-//==========================================================================
-//
 // R_MapVisPlane
 //
 // t1/b1 are at x
@@ -1113,7 +677,7 @@ void R_DrawTiltedPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 //
 //==========================================================================
 
-void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1))
+void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1, int x2), void(*stepfunc)())
 {
 	int x = pl->right - 1;
 	int t2 = pl->top[x];
@@ -1137,12 +701,16 @@ void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1))
 		stop = MIN (t1, b2);
 		while (t2 < stop)
 		{
-			mapfunc (t2++, xr);
+			int y = t2++;
+			int x2 = spanend[y];
+			mapfunc (y, xr, x2);
 		}
 		stop = MAX (b1, t2);
 		while (b2 > stop)
 		{
-			mapfunc (--b2, xr);
+			int y = --b2;
+			int x2 = spanend[y];
+			mapfunc (y, xr, x2);
 		}
 
 		// Mark any spans that have just opened
@@ -1159,13 +727,16 @@ void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1))
 
 		t2 = pl->top[x];
 		b2 = pl->bottom[x];
-		basexfrac -= xstepscale;
-		baseyfrac -= ystepscale;
+
+		if (stepfunc)
+			stepfunc();
 	}
 	// Draw any spans that are still open
 	while (t2 < b2)
 	{
-		mapfunc (--b2, pl->left);
+		int y = --b2;
+		int x2 = spanend[y];
+		mapfunc (y, pl->left, x2);
 	}
 
 	ds_light_list = nullptr;

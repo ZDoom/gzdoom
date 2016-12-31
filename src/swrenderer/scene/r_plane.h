@@ -36,20 +36,13 @@ extern planefunction_t	ceilingfunc_t;
 extern short			floorclip[MAXWIDTH];
 extern short			ceilingclip[MAXWIDTH];
 
-extern float			yslope[MAXHEIGHT];
-
 void R_ClearPlanes (bool fullclear);
 
 void R_AddPlaneLights(visplane_t *plane, FLightNode *light_head);
 
 int R_DrawPlanes ();
 void R_DrawSinglePlane(visplane_t *pl, fixed_t alpha, bool additive, bool masked);
-void R_DrawNormalPlane (visplane_t *pl, double xscale, double yscale, fixed_t alpha, bool additive, bool masked);
-void R_DrawTiltedPlane (visplane_t *pl, double xscale, double yscale, fixed_t alpha, bool additive, bool masked);
-void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1));
-
-void R_MapTiltedPlane(int y, int x1);
-void R_MapColoredPlane(int y, int x1);
+void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1, int x2), void (*stepfunc)());
 
 void R_DrawFogBoundary(int x1, int x2, short *uclip, short *dclip);
 

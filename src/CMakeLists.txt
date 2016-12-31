@@ -832,6 +832,8 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/scene/r_wallsprite.cpp
 	swrenderer/scene/r_decal.cpp
 	swrenderer/scene/r_skyplane.cpp
+	swrenderer/scene/r_flatplane.cpp
+	swrenderer/scene/r_slopeplane.cpp
 	polyrenderer/poly_renderer.cpp
 	polyrenderer/scene/poly_scene.cpp
 	polyrenderer/scene/poly_portal.cpp

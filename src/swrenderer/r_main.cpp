@@ -38,6 +38,7 @@
 #include "scene/r_things.h"
 #include "drawers/r_draw.h"
 #include "scene/r_plane.h"
+#include "scene/r_flatplane.h"
 #include "scene/r_bsp.h"
 #include "scene/r_draw_segment.h"
 #include "scene/r_portal_segment.h"
@@ -491,45 +492,7 @@ void R_SetupFreelook()
 	globaluclip = -CenterY / InvZtoScale;
 	globaldclip = (viewheight - CenterY) / InvZtoScale;
 
-	//centeryfrac &= 0xffff0000;
-	int e, i;
-
-	i = 0;
-	e = viewheight;
-	float focus = float(FocalLengthY);
-	float den;
-	float cy = float(CenterY);
-	if (i < centery)
-	{
-		den = cy - i - 0.5f;
-		if (e <= centery)
-		{
-			do {
-				yslope[i] = focus / den;
-				den -= 1;
-			} while (++i < e);
-		}
-		else
-		{
-			do {
-				yslope[i] = focus / den;
-				den -= 1;
-			} while (++i < centery);
-			den = i - cy + 0.5f;
-			do {
-				yslope[i] = focus / den;
-				den += 1;
-			} while (++i < e);
-		}
-	}
-	else
-	{
-		den = i - cy + 0.5f;
-		do {
-			yslope[i] = focus / den;
-			den += 1;
-		} while (++i < e);
-	}
+	R_SetupPlaneSlope();
 }
 
 //==========================================================================

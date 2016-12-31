@@ -82,9 +82,6 @@ int CleanWidth, CleanHeight;
 // Above minus 1 (or 1, if they are already 1)
 int CleanXfac_1, CleanYfac_1, CleanWidth_1, CleanHeight_1;
 
-// FillSimplePoly uses this
-extern "C" short spanend[MAXHEIGHT];
-
 CVAR (Bool, hud_scale, true, CVAR_ARCHIVE);
 
 // For routines that take RGB colors, cache the previous lookup in case there
@@ -1406,6 +1403,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	}
 
 	// Travel down the right edge and create an outline of that edge.
+	static short spanend[MAXHEIGHT];
 	pt1 = toppt;
 	pt2 = toppt + 1;	if (pt2 > npoints) pt2 = 0;
 	y1 = xs_RoundToInt(points[pt1].Y + 0.5f);

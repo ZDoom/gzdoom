@@ -133,10 +133,6 @@ void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas, int x, int y, int wid
 void R_MultiresInit (void);
 
 
-extern int stacked_extralight;
-extern double stacked_visibility;
-extern DVector3 stacked_viewpos;
-extern DAngle stacked_angle;
 
 extern void R_CopyStackedViewParameters();
 

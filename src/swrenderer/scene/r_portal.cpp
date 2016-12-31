@@ -54,6 +54,15 @@ namespace swrenderer
 	int CurrentPortalUniq = 0;
 	bool CurrentPortalInSkybox = false;
 
+	// These are copies of the main parameters used when drawing stacked sectors.
+	// When you change the main parameters, you should copy them here too *unless*
+	// you are changing them to draw a stacked sector. Otherwise, stacked sectors
+	// won't draw in skyboxes properly.
+	int stacked_extralight;
+	double stacked_visibility;
+	DVector3 stacked_viewpos;
+	DAngle stacked_angle;
+
 	namespace
 	{
 		int numskyboxes; // For ADD_STAT(skyboxes)

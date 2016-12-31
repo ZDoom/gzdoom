@@ -68,6 +68,8 @@
 #include "p_maputl.h"
 #include "p_setup.h"
 #include "version.h"
+#include "c_console.h"
+#include "r_memory.h"
 
 CVAR (String, r_viewsize, "", CVAR_NOSET)
 CVAR (Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
@@ -553,6 +555,12 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	R_ClearDrawSegs ();
 	R_ClearPlanes (true);
 	R_ClearSprites ();
+
+	// opening / clipping determination
+	// [RH] clip ceiling to console bottom
+	fillshort(floorclip, viewwidth, viewheight);
+	fillshort(ceilingclip, viewwidth, !screen->Accel2D && ConBottom > viewwindowy && !bRenderingToCanvas ? (ConBottom - viewwindowy) : 0);
+	R_FreeOpenings();
 
 	NetUpdate ();
 

@@ -80,23 +80,11 @@ namespace swrenderer
 {
 	using namespace drawerargs;
 
-extern subsector_t *InSubsector;
 
-
-// These are copies of the main parameters used when drawing stacked sectors.
-// When you change the main parameters, you should copy them here too *unless*
-// you are changing them to draw a stacked sector. Otherwise, stacked sectors
-// won't draw in skyboxes properly.
-int stacked_extralight;
-double stacked_visibility;
-DVector3 stacked_viewpos;
-DAngle stacked_angle;
-
-//
-// texture mapping
-//
-
-short					spanend[MAXHEIGHT];
+namespace
+{
+	short spanend[MAXHEIGHT];
+}
 
 void					R_DrawSinglePlane (visplane_t *, fixed_t alpha, bool additive, bool masked);
 
@@ -191,15 +179,6 @@ void R_ClearPlanes (bool fullclear)
 				freehead = &(*freehead)->next;
 			}
 		}
-
-		// opening / clipping determination
-		fillshort (floorclip, viewwidth, viewheight);
-		// [RH] clip ceiling to console bottom
-		fillshort (ceilingclip, viewwidth,
-			!screen->Accel2D && ConBottom > viewwindowy && !bRenderingToCanvas
-			? (ConBottom - viewwindowy) : 0);
-
-		R_FreeOpenings();
 
 		next_plane_light = 0;
 	}

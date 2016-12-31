@@ -52,7 +52,6 @@ namespace swrenderer
 	using namespace drawerargs;
 
 	extern FTexture *rw_pic;
-	extern int wallshade;
 
 static const uint8_t *R_GetColumn(FTexture *tex, int col)
 {
@@ -328,7 +327,7 @@ static void Draw1Column(int x, int y1, int y2, WallSampler &sampler, DrawerFunc 
 }
 
 static void ProcessWallWorker(
-	int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat,
+	int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, int wallshade,
 	const BYTE *(*getcol)(FTexture *tex, int x), DrawerFunc drawcolumn)
 {
 	if (rw_pic->UseType == FTexture::TEX_Null)
@@ -388,41 +387,40 @@ static void ProcessWallWorker(
 	NetUpdate();
 }
 
-static void ProcessNormalWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
+static void ProcessNormalWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, int wallshade, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
 {
-	ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, &SWPixelFormatDrawers::DrawWallColumn);
+	ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, wallshade, getcol, &SWPixelFormatDrawers::DrawWallColumn);
 }
 
-static void ProcessMaskedWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
+static void ProcessMaskedWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, int wallshade, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
 {
 	if (!rw_pic->bMasked) // Textures that aren't masked can use the faster ProcessNormalWall.
 	{
-		ProcessNormalWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol);
+		ProcessNormalWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, wallshade, getcol);
 	}
 	else
 	{
-		ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, &SWPixelFormatDrawers::DrawWallMaskedColumn);
+		ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, wallshade, getcol, &SWPixelFormatDrawers::DrawWallMaskedColumn);
 	}
 }
 
-static void ProcessTranslucentWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
+static void ProcessTranslucentWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, int wallshade, const BYTE *(*getcol)(FTexture *tex, int x) = R_GetColumn)
 {
 	DrawerFunc drawcol1 = R_GetTransMaskDrawer();
 	if (drawcol1 == nullptr)
 	{
 		// The current translucency is unsupported, so draw with regular ProcessMaskedWall instead.
-		ProcessMaskedWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol);
+		ProcessMaskedWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, wallshade, getcol);
 	}
 	else
 	{
-		ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, drawcol1);
+		ProcessWallWorker(x1, x2, uwal, dwal, swal, lwal, yrepeat, wallshade, getcol, drawcol1);
 	}
 }
 
-static void ProcessStripedWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat)
+static void ProcessStripedWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, int wallshade)
 {
 	FDynamicColormap *startcolormap = basecolormap;
-	int startshade = wallshade;
 	bool fogginess = foggy;
 
 	short most1[MAXWIDTH], most2[MAXWIDTH], most3[MAXWIDTH];
@@ -444,44 +442,42 @@ static void ProcessStripedWall(int x1, int x2, short *uwal, short *dwal, float *
 			{
 				down[j] = clamp (most3[j], up[j], dwal[j]);
 			}
-			ProcessNormalWall (x1, x2, up, down, swal, lwal, yrepeat);
+			ProcessNormalWall (x1, x2, up, down, swal, lwal, yrepeat, wallshade);
 			up = down;
 			down = (down == most1) ? most2 : most1;
 		}
 
 		lightlist_t *lit = &frontsector->e->XFloor.lightlist[i];
 		basecolormap = lit->extra_colormap;
-		wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(fogginess,
-			*lit->p_lightlevel, lit->lightsource != NULL) + r_actualextralight);
+		wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(fogginess, *lit->p_lightlevel, lit->lightsource != NULL) + r_actualextralight);
  	}
 
-	ProcessNormalWall (x1, x2, up, dwal, swal, lwal, yrepeat);
+	ProcessNormalWall (x1, x2, up, dwal, swal, lwal, yrepeat, wallshade);
 	basecolormap = startcolormap;
-	wallshade = startshade;
 }
 
-static void ProcessWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, bool mask)
+static void ProcessWall(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, int wallshade, bool mask)
 {
 	if (mask)
 	{
 		if (colfunc == basecolfunc)
 		{
-			ProcessMaskedWall(x1, x2, uwal, dwal, swal, lwal, yrepeat);
+			ProcessMaskedWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, wallshade);
 		}
 		else
 		{
-			ProcessTranslucentWall(x1, x2, uwal, dwal, swal, lwal, yrepeat);
+			ProcessTranslucentWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, wallshade);
 		}
 	}
 	else
 	{
 		if (fixedcolormap != NULL || fixedlightlev >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
 		{
-			ProcessNormalWall(x1, x2, uwal, dwal, swal, lwal, yrepeat);
+			ProcessNormalWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, wallshade);
 		}
 		else
 		{
-			ProcessStripedWall(x1, x2, uwal, dwal, swal, lwal, yrepeat);
+			ProcessStripedWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, wallshade);
 		}
 	}
 }
@@ -497,7 +493,7 @@ static void ProcessWall(int x1, int x2, short *uwal, short *dwal, float *swal, f
 //
 //=============================================================================
 
-static void ProcessWallNP2(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, double top, double bot, bool mask)
+static void ProcessWallNP2(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, double top, double bot, int wallshade, bool mask)
 {
 	short most1[MAXWIDTH], most2[MAXWIDTH], most3[MAXWIDTH];
 	short *up, *down;
@@ -524,14 +520,14 @@ static void ProcessWallNP2(int x1, int x2, short *uwal, short *dwal, float *swal
 				{
 					down[j] = clamp(most3[j], up[j], dwal[j]);
 				}
-				ProcessWall(x1, x2, up, down, swal, lwal, yrepeat, mask);
+				ProcessWall(x1, x2, up, down, swal, lwal, yrepeat, wallshade, mask);
 				up = down;
 				down = (down == most1) ? most2 : most1;
 			}
 			partition -= scaledtexheight;
 			dc_texturemid -= texheight;
  		}
-		ProcessWall(x1, x2, up, dwal, swal, lwal, yrepeat, mask);
+		ProcessWall(x1, x2, up, dwal, swal, lwal, yrepeat, wallshade, mask);
 	}
 	else
 	{ // upside down: draw strips from bottom to top
@@ -548,18 +544,18 @@ static void ProcessWallNP2(int x1, int x2, short *uwal, short *dwal, float *swal
 				{
 					up[j] = clamp(most3[j], uwal[j], down[j]);
 				}
-				ProcessWall(x1, x2, up, down, swal, lwal, yrepeat, mask);
+				ProcessWall(x1, x2, up, down, swal, lwal, yrepeat, wallshade, mask);
 				down = up;
 				up = (up == most1) ? most2 : most1;
 			}
 			partition -= scaledtexheight;
 			dc_texturemid -= texheight;
  		}
-		ProcessWall(x1, x2, uwal, down, swal, lwal, yrepeat, mask);
+		ProcessWall(x1, x2, uwal, down, swal, lwal, yrepeat, wallshade, mask);
 	}
 }
 
-void R_DrawDrawSeg(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat)
+void R_DrawDrawSeg(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, int wallshade)
 {
 	if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 	{
@@ -577,32 +573,32 @@ void R_DrawDrawSeg(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, floa
 		{
 			bot = MAX(bot, sclipBottom);
 		}
-		ProcessWallNP2(x1, x2, uwal, dwal, swal, lwal, yrepeat, top, bot, true);
+		ProcessWallNP2(x1, x2, uwal, dwal, swal, lwal, yrepeat, top, bot, wallshade, true);
 	}
 	else
 	{
-		ProcessWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, true);
+		ProcessWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, wallshade, true);
 	}
 }
 
 
-void R_DrawWallSegment(FTexture *rw_pic, int x1, int x2, short *walltop, short *wallbottom, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, FLightNode *light_list)
+void R_DrawWallSegment(FTexture *rw_pic, int x1, int x2, short *walltop, short *wallbottom, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, int wallshade, FLightNode *light_list)
 {
 	dc_light_list = light_list;
 	if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 	{
-		ProcessWallNP2(x1, x2, walltop, wallbottom, swall, lwall, yscale, top, bottom, false);
+		ProcessWallNP2(x1, x2, walltop, wallbottom, swall, lwall, yscale, top, bottom, wallshade, false);
 	}
 	else
 	{
-		ProcessWall(x1, x2, walltop, wallbottom, swall, lwall, yscale, false);
+		ProcessWall(x1, x2, walltop, wallbottom, swall, lwall, yscale, wallshade, false);
 	}
 	dc_light_list = nullptr;
 }
 
-void R_DrawSkySegment(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
+void R_DrawSkySegment(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, int wallshade, const BYTE *(*getcol)(FTexture *tex, int x))
 {
-	ProcessNormalWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol);
+	ProcessNormalWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, wallshade, getcol);
 }
 
 }

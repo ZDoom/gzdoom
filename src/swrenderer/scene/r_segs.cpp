@@ -68,7 +68,10 @@ namespace swrenderer
 {
 	using namespace drawerargs;
 
-	void R_DrawDrawSeg(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat);
+	namespace
+	{
+		int wallshade;
+	}
 
 #define HEIGHTBITS 12
 #define HEIGHTSHIFT (FRACBITS-HEIGHTBITS)
@@ -90,8 +93,6 @@ fixed_t rw_offset_top;
 fixed_t rw_offset_mid;
 fixed_t rw_offset_bottom;
 
-
-int		wallshade;
 
 short	walltop[MAXWIDTH];	// [RH] record max extents of wall
 short	wallbottom[MAXWIDTH];
@@ -475,7 +476,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 		rw_offset = 0;
 		rw_pic = tex;
-		R_DrawDrawSeg(ds, x1, x2, mceilingclip, mfloorclip, MaskedSWall, maskedtexturecol, ds->yscale);
+		R_DrawDrawSeg(ds, x1, x2, mceilingclip, mfloorclip, MaskedSWall, maskedtexturecol, ds->yscale, wallshade);
 	}
 
 clearfog:
@@ -602,7 +603,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	}
 
 	PrepLWall (lwall, curline->sidedef->TexelLength*xscale, ds->sx1, ds->sx2);
-	R_DrawDrawSeg(ds, x1, x2, wallupper, walllower, MaskedSWall, lwall, yscale);
+	R_DrawDrawSeg(ds, x1, x2, wallupper, walllower, MaskedSWall, lwall, yscale, wallshade);
 	R_FinishSetPatchStyle();
 }
 
@@ -1131,7 +1132,7 @@ void R_RenderSegLoop ()
 			{
 				rw_offset = -rw_offset;
 			}
-			R_DrawWallSegment(rw_pic, x1, x2, walltop, wallbottom, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false, light_list);
+			R_DrawWallSegment(rw_pic, x1, x2, walltop, wallbottom, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, light_list);
 		}
 		fillshort (ceilingclip+x1, x2-x1, viewheight);
 		fillshort (floorclip+x1, x2-x1, 0xffff);
@@ -1167,7 +1168,7 @@ void R_RenderSegLoop ()
 				{
 					rw_offset = -rw_offset;
 				}
-				R_DrawWallSegment(rw_pic, x1, x2, walltop, wallupper, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false, light_list);
+				R_DrawWallSegment(rw_pic, x1, x2, walltop, wallupper, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false, wallshade, light_list);
 			}
 			memcpy (ceilingclip+x1, wallupper+x1, (x2-x1)*sizeof(short));
 		}
@@ -1206,7 +1207,7 @@ void R_RenderSegLoop ()
 				{
 					rw_offset = -rw_offset;
 				}
-				R_DrawWallSegment(rw_pic, x1, x2, walllower, wallbottom, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false, light_list);
+				R_DrawWallSegment(rw_pic, x1, x2, walllower, wallbottom, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false, wallshade, light_list);
 			}
 			memcpy (floorclip+x1, walllower+x1, (x2-x1)*sizeof(short));
 		}

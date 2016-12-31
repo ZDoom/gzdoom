@@ -354,6 +354,7 @@ xx(MapSpot)
 xx(PatrolPoint)
 xx(PatrolSpecial)
 xx(Communicator)
+xx(PowerScanner)
 
 // Textmap properties
 //xx(X)

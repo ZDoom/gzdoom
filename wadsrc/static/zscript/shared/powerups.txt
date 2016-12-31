@@ -213,7 +213,13 @@ class PowerBuddha : Powerup native
 	}
 }
 
-class PowerScanner : Powerup native
+//===========================================================================
+//
+// Scanner (this is active just by being present)
+//
+//===========================================================================
+
+class PowerScanner : Powerup
 {
 	Default
 	{
@@ -246,44 +252,138 @@ class PowerProtection : Powerup native
 	}
 }
 
-class PowerDrain : Powerup native
+//===========================================================================
+//
+// Drain
+//
+//===========================================================================
+
+class PowerDrain : Powerup
 {
 	Default
 	{
 		Powerup.Duration -60;
 	}
+	
+	override void InitEffect()
+	{
+		Super.InitEffect();
+
+		if (Owner!= null && Owner.player != null)
+		{
+			// Give the player the power to drain life from opponents when he damages them.
+			Owner.player.cheats |= CF_DRAIN;
+		}
+	}
+
+	override void EndEffect()
+	{
+		Super.EndEffect();
+
+		// Nothing to do if there's no owner.
+		if (Owner!= null && Owner.player != null)
+		{
+			// Take away the drain power.
+			Owner.player.cheats &= ~CF_DRAIN;
+		}
+	}
+	
 }
 
-class PowerRegeneration : Powerup native
+//===========================================================================
+//
+// Regeneration
+//
+//===========================================================================
+
+class PowerRegeneration : Powerup
 {
 	Default
 	{
 		Powerup.Duration -120;
 		Powerup.Strength 5;
 	}
-}
-
-class PowerHighJump : Powerup native {}
-
-class PowerDoubleFiringSpeed : Powerup native {}
-
-class PowerMorph : Powerup native
-{
-	native Class<PlayerPawn> PlayerClass;
-	native Class<Actor> MorphFlash, UnMorphFlash;
-	native int MorphStyle;
-	native PlayerInfo MorphedPlayer;
-	native bool bInUndoMorph;
-
-	Default
+	
+	override void DoEffect()
 	{
-		Powerup.Duration -40;
+		Super.DoEffect();
+		if (Owner != null && Owner.health > 0 && (level.time & 31) == 0)
+		{
+			if (Owner.GiveBody(int(Strength)))
+			{
+				Owner.A_PlaySound("*regenerate", CHAN_ITEM);
+			}
+		}
 	}
 }
 
 //===========================================================================
 //
-// PowerInfiniteAmmo
+// HighJump
+//
+//===========================================================================
+
+class PowerHighJump : Powerup
+{
+	override void InitEffect()
+	{
+		Super.InitEffect();
+
+		if (Owner!= null && Owner.player != null)
+		{
+			// Give the player the power to jump much higher.
+			Owner.player.cheats |= CF_HIGHJUMP;
+		}
+	}
+
+	override void EndEffect()
+	{
+		Super.EndEffect();
+
+		// Nothing to do if there's no owner.
+		if (Owner!= null && Owner.player != null)
+		{
+			// Take away the high jump power.
+			Owner.player.cheats &= ~CF_HIGHJUMP;
+		}
+	}
+}
+
+//===========================================================================
+//
+// DoubleFiringSpeed
+//
+//===========================================================================
+
+class PowerDoubleFiringSpeed : Powerup
+{
+	override void InitEffect()
+	{
+		Super.InitEffect();
+
+		if (Owner!= null && Owner.player != null)
+		{
+			// Give the player the power to shoot twice as fast.
+			Owner.player.cheats |= CF_DOUBLEFIRINGSPEED;
+		}
+	}
+
+	override void EndEffect()
+	{
+		Super.EndEffect();
+
+		// Nothing to do if there's no owner.
+		if (Owner!= null && Owner.player != null)
+		{
+			// Take away the shooting twice as fast power.
+			Owner.player.cheats &= ~CF_DOUBLEFIRINGSPEED;
+		}
+	}
+}
+
+//===========================================================================
+//
+// InfiniteAmmo
 //
 //===========================================================================
 
@@ -315,6 +415,26 @@ class PowerInfiniteAmmo : Powerup
 			// Take away the limitless ammo
 			Owner.player.cheats &= ~CF_INFINITEAMMO;
 		}
+	}
+}
+
+//===========================================================================
+//
+// PowerMorph
+//
+//===========================================================================
+
+class PowerMorph : Powerup native
+{
+	native Class<PlayerPawn> PlayerClass;
+	native Class<Actor> MorphFlash, UnMorphFlash;
+	native int MorphStyle;
+	native PlayerInfo MorphedPlayer;
+	native bool bInUndoMorph;
+
+	Default
+	{
+		Powerup.Duration -40;
 	}
 }
 

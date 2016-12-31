@@ -165,11 +165,6 @@ class APowerMinotaur : public APowerup
 	DECLARE_CLASS (APowerMinotaur, APowerup)
 };
 
-class APowerScanner : public APowerup
-{
-	DECLARE_CLASS (APowerScanner, APowerup)
-};
-
 class APowerTargeter : public APowerup
 {
 	DECLARE_CLASS (APowerTargeter, APowerup)
@@ -224,37 +219,6 @@ protected:
 	virtual void InitEffect () override;
 	virtual void EndEffect () override;
 	virtual void ModifyDamage (int damage, FName damageType, int &newdamage, bool passive) override;
-};
-
-class APowerDrain : public APowerup
-{
-	DECLARE_CLASS( APowerDrain, APowerup )
-protected:
-	virtual void InitEffect() override;
-	virtual void EndEffect() override;
-};
-
-class APowerRegeneration : public APowerup
-{
-	DECLARE_CLASS( APowerRegeneration, APowerup )
-protected:
-	virtual void DoEffect() override;
-};
-
-class APowerHighJump : public APowerup
-{
-	DECLARE_CLASS( APowerHighJump, APowerup )
-protected:
-	virtual void InitEffect() override;
-	virtual void EndEffect() override;
-};
-
-class APowerDoubleFiringSpeed : public APowerup
-{
-	DECLARE_CLASS( APowerDoubleFiringSpeed, APowerup )
-protected:
-	virtual void InitEffect() override;
-	virtual void EndEffect() override;
 };
 
 class APowerMorph : public APowerup

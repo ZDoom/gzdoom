@@ -282,7 +282,7 @@ class ScriptedMarine : Actor
 	//
 	//============================================================================
 
-	void A_M_Refire (bool ignoremissile, statelabel jumpto = null)
+	void A_M_Refire (bool ignoremissile = false, statelabel jumpto = null)
 	{
 		if (target == null || target.health <= 0)
 		{

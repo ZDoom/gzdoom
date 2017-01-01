@@ -251,6 +251,7 @@ FWeaponSlots weapons;
 */
 	
 
+	native bool MorphPlayer(playerinfo p, Class<PlayerPawn> spawntype, int duration, int style, Class<Actor> enter_flash = null, Class<Actor> exit_flash = null);
 	native bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false);
 	native bool PoisonPlayer(Actor poisoner, Actor source, int poison);
 	native void PoisonDamage(Actor source, int damage, bool playPainSound);

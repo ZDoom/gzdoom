@@ -1759,7 +1759,6 @@ DEFINE_FIELD(APowerMorph, MorphFlash)
 DEFINE_FIELD(APowerMorph, UnMorphFlash)
 DEFINE_FIELD(APowerMorph, MorphStyle)
 DEFINE_FIELD(APowerMorph, MorphedPlayer)
-DEFINE_FIELD(APowerMorph, bInUndoMorph)
 
 //===========================================================================
 //
@@ -1775,79 +1774,5 @@ void APowerMorph::Serialize(FSerializer &arc)
 		("morphflash", MorphFlash)
 		("unmorphflash", UnMorphFlash)
 		("morphedplayer", MorphedPlayer);
-}
-
-//===========================================================================
-//
-// APowerMorph :: InitEffect
-//
-//===========================================================================
-
-void APowerMorph::InitEffect( )
-{
-	Super::InitEffect();
-
-	if (Owner != nullptr && Owner->player != nullptr && PlayerClass != nullptr)
-	{
-		player_t *realplayer = Owner->player;	// Remember the identity of the player
-		if (P_MorphPlayer(realplayer, realplayer, PlayerClass, INT_MAX/*INDEFINITELY*/, MorphStyle, MorphFlash, UnMorphFlash))
-		{
-			Owner = realplayer->mo;				// Replace the new owner in our owner; safe because we are not attached to anything yet
-			ItemFlags |= IF_CREATECOPYMOVED;	// Let the caller know the "real" owner has changed (to the morphed actor)
-			MorphedPlayer = realplayer;				// Store the player identity (morphing clears the unmorphed actor's "player" field)
-		}
-		else // morph failed - give the caller an opportunity to fail the pickup completely
-		{
-			ItemFlags |= IF_INITEFFECTFAILED;	// Let the caller know that the activation failed (can fail the pickup if appropriate)
-		}
-	}
-}
-
-//===========================================================================
-//
-// APowerMorph :: EndEffect
-//
-//===========================================================================
-
-void APowerMorph::EndEffect( )
-{
-	Super::EndEffect();
-
-	// Abort if owner already destroyed or unmorphed
-	if (Owner == nullptr || MorphedPlayer == nullptr)
-	{
-		return;
-	}
-	
-	// Abort if owner is dead; their Die() method will
-	// take care of any required unmorphing on death.
-	if (MorphedPlayer->health <= 0)
-	{
-		return;
-	}
-
-	// Unmorph if possible
-	if (!bInUndoMorph)
-	{
-		int savedMorphTics = MorphedPlayer->morphTics;
-		P_UndoPlayerMorph (MorphedPlayer, MorphedPlayer, 0, !!(MorphedPlayer->MorphStyle & MORPH_UNDOALWAYS));
-
-		// Abort if unmorph failed; in that case,
-		// set the usual retry timer and return.
-		if (MorphedPlayer != NULL && MorphedPlayer->morphTics)
-		{
-			// Transfer retry timeout
-			// to the powerup's timer.
-			EffectTics = MorphedPlayer->morphTics;
-			// Reload negative morph tics;
-			// use actual value; it may
-			// be in use for animation.
-			MorphedPlayer->morphTics = savedMorphTics;
-			// Try again some time later
-			return;
-		}
-	}
-	// Unmorph suceeded
-	MorphedPlayer = NULL;
 }
 

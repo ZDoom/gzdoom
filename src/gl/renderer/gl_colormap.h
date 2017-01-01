@@ -56,6 +56,7 @@ struct FColormap
 		LightColor = from->Color;
 		desaturation = from->Desaturate;
 		FadeColor = from->Fade;
+		FadeColor.a = 0;
 		blendfactor = from->Color.a;
 		fogdensity = from->Fade.a*2;
 		return * this;

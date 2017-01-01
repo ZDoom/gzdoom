@@ -357,13 +357,30 @@ static FFlagDef MoreFlagDefs[] =
 	DEFINE_DUMMY_FLAG(FASTER, true),				// obsolete, replaced by 'Fast' state flag
 	DEFINE_DUMMY_FLAG(FASTMELEE, true),			// obsolete, replaced by 'Fast' state flag
 
+	// Deprecated name as an alias
+	DEFINE_FLAG2_DEPRECATED(MF4_DONTHARMCLASS, DONTHURTSPECIES, AActor, flags4),
+
 	// Various Skulltag flags that are quite irrelevant to ZDoom
-	DEFINE_DUMMY_FLAG(NONETID, false),				// netcode-based
-	DEFINE_DUMMY_FLAG(ALLOWCLIENTSPAWN, false),	// netcode-based
-	DEFINE_DUMMY_FLAG(CLIENTSIDEONLY, false),	    // netcode-based
-	DEFINE_DUMMY_FLAG(SERVERSIDEONLY, false),		// netcode-based
-	DEFINE_DUMMY_FLAG(EXPLODEONDEATH, true),	    // seems useless
-	DEFINE_FLAG2_DEPRECATED(MF4_DONTHARMCLASS, DONTHURTSPECIES, AActor, flags4), // Deprecated name as an alias
+	// [BC] New DECORATE flag defines here.
+	DEFINE_DUMMY_FLAG(BLUETEAM, false),
+	DEFINE_DUMMY_FLAG(REDTEAM, false),
+	DEFINE_DUMMY_FLAG(USESPECIAL, false),
+	DEFINE_DUMMY_FLAG(BASEHEALTH, false),
+	DEFINE_DUMMY_FLAG(SUPERHEALTH, false),
+	DEFINE_DUMMY_FLAG(BASEARMOR, false),
+	DEFINE_DUMMY_FLAG(SUPERARMOR, false),
+	DEFINE_DUMMY_FLAG(SCOREPILLAR, false),
+	DEFINE_DUMMY_FLAG(NODE, false),
+	DEFINE_DUMMY_FLAG(USESTBOUNCESOUND, false),
+	DEFINE_DUMMY_FLAG(EXPLODEONDEATH, true),
+	DEFINE_DUMMY_FLAG(DONTIDENTIFYTARGET, false), // [CK]
+
+	// Skulltag netcode-based flags.
+	// [BB] New DECORATE network related flag defines here.
+	DEFINE_DUMMY_FLAG(NONETID, false),
+	DEFINE_DUMMY_FLAG(ALLOWCLIENTSPAWN, false),
+	DEFINE_DUMMY_FLAG(CLIENTSIDEONLY, false),
+	DEFINE_DUMMY_FLAG(SERVERSIDEONLY, false),
 };
 
 static FFlagDef InventoryFlagDefs[] =
@@ -390,6 +407,8 @@ static FFlagDef InventoryFlagDefs[] =
 	DEFINE_FLAG(IF, ALWAYSRESPAWN, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, TRANSFER, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, NOTELEPORTFREEZE, AInventory, ItemFlags),
+
+	DEFINE_DUMMY_FLAG(FORCERESPAWNINSURVIVAL, false),
 
 	DEFINE_DEPRECATED_FLAG(PICKUPFLASH),
 	DEFINE_DEPRECATED_FLAG(INTERHUBSTRIP),

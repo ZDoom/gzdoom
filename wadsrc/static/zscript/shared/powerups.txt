@@ -236,19 +236,157 @@ class PowerTimeFreezer : Powerup native
 	}
 }
 
-class PowerDamage : Powerup native
+//===========================================================================
+//
+// Damage
+//
+//===========================================================================
+
+class PowerDamage : Powerup
 {
 	Default
 	{
 		Powerup.Duration -25;
 	}
+	
+	//===========================================================================
+	//
+	// InitEffect
+	//
+	//===========================================================================
+
+	override void InitEffect()
+	{
+		Super.InitEffect();
+
+		if (Owner != null)
+		{
+			Owner.A_PlaySound(SeeSound, CHAN_5, 1.0, false, ATTN_NONE);
+		}
+	}
+
+	//===========================================================================
+	//
+	// EndEffect
+	//
+	//===========================================================================
+
+	override void EndEffect()
+	{
+		Super.EndEffect();
+		if (Owner != null)
+		{
+			Owner.A_PlaySound(DeathSound, CHAN_5, 1.0, false, ATTN_NONE);
+		}
+	}
+
+	//===========================================================================
+	//
+	// ModifyDamage
+	//
+	//===========================================================================
+
+	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive)
+	{
+		if (!passive && damage > 0)
+		{
+			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage * 4));
+			if (Owner != null && newdamage > damage) Owner.A_PlaySound(ActiveSound, CHAN_AUTO, 1.0, false, ATTN_NONE);
+		}
+	}
 }
 
-class PowerProtection : Powerup native
+//===========================================================================
+//
+// Protection
+//
+//===========================================================================
+
+class PowerProtection : Powerup
 {
 	Default
 	{
 		Powerup.Duration -25;
+	}
+	
+	//===========================================================================
+	//
+	// InitEffect
+	//
+	//===========================================================================
+
+	override void InitEffect()
+	{
+		Super.InitEffect();
+
+		let o = Owner;	// copy to a local variable for quicker access.
+		if (o != null)
+		{
+			o.A_PlaySound(SeeSound, CHAN_AUTO, 1.0, false, ATTN_NONE);
+
+			// Transfer various protection flags if owner does not already have them.
+			// If the owner already has the flag, clear it from the powerup.
+			// If the powerup still has a flag set, add it to the owner.
+			bNoRadiusDmg &= !o.bNoRadiusDmg;
+			o.bNoRadiusDmg |= bNoRadiusDmg;
+
+			bDontMorph &= !o.bDontMorph;
+			o.bDontMorph |= bDontMorph;
+			
+			bDontSquash &= !o.bDontSquash;
+			o.bDontSquash |= bDontSquash;
+
+			bDontBlast &= !o.bDontBlast;
+			o.bDontBlast |= bDontBlast;
+			
+			bNoTeleOther &= !o.bNoTeleOther;
+			o.bNoTeleOther |= bNoTeleOther;
+			
+			bNoPain &= !o.bNoPain;
+			o.bNoPain |= bNoPain;
+
+			bDontRip &= !o.bDontRip;
+			o.bDontRip |= bDontRip;
+		}
+	}
+
+	//===========================================================================
+	//
+	// EndEffect
+	//
+	//===========================================================================
+
+	override void EndEffect()
+	{
+		Super.EndEffect();
+		let o = Owner;	// copy to a local variable for quicker access.
+		if (o != null)
+		{
+			o.A_PlaySound(DeathSound, CHAN_AUTO, 1.0, false, ATTN_NONE);
+			
+			o.bNoRadiusDmg &= !bNoRadiusDmg;
+			o.bDontMorph &= !bDontMorph;
+			o.bDontSquash &= !bDontSquash;
+			o.bDontBlast &= !bDontBlast;
+			o.bNoTeleOther &= !bNoTeleOther;
+			o.bNoPain &= !bNoPain;
+			o.bDontRip &= !bDontRip;
+		}
+	}
+
+	//===========================================================================
+	//
+	// AbsorbDamage
+	//
+	//===========================================================================
+
+	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive)
+	{
+		if (passive && damage > 0)
+		{
+			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage / 4));
+			if (Owner != null && newdamage < damage) Owner.A_PlaySound(ActiveSound, CHAN_AUTO, 1.0, false, ATTN_NONE);
+		}
 	}
 }
 

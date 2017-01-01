@@ -270,16 +270,22 @@ class Actor : Thinker native
 	virtual native void Die(Actor source, Actor inflictor, int dmgflags = 0);
 	virtual native bool Slam(Actor victim);
 	virtual native void Touch(Actor toucher);
-	virtual native bool CanCollideWith(Actor other, bool passive);	// This is an empty native function, it's native for the sole reason of performance as this is in a performance critical spot.
 
-	// Called when an actor is to be reflected by a disc of repulsion.
-	// Returns true to continue normal blast processing.
-	virtual bool SpecialBlastHandling (Actor source, double strength)	// this is entirely on the script side with no native part at all.
+	// Called by PIT_CheckThing to check if two actos actually can collide.
+	virtual bool CanCollideWith(Actor other, bool passive)
 	{
 		return true;
 	}
 
-	virtual int SpecialMissileHit (Actor victim)	// for this no native version exists
+	// Called when an actor is to be reflected by a disc of repulsion.
+	// Returns true to continue normal blast processing.
+	virtual bool SpecialBlastHandling (Actor source, double strength)
+	{
+		return true;
+	}
+
+	// This is called before a missile gets exploded.
+	virtual int SpecialMissileHit (Actor victim)
 	{
 		return -1;
 	}
@@ -288,6 +294,7 @@ class Actor : Thinker native
 	native static int GetSpriteIndex(name sprt);
 	native static double GetDefaultSpeed(class<Actor> type);
 	native static class<Actor> GetSpawnableType(int spawnnum);
+	native static int ApplyDamageFactors(class<Inventory> itemcls, Name damagetype, int damage, int defdamage);
 	native void RemoveFromHash();
 	native void ChangeTid(int newtid);
 	native static int FindUniqueTid(int start = 0, int limit = 0);

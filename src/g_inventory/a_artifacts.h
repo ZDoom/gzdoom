@@ -203,24 +203,6 @@ protected:
 	virtual void EndEffect() override;
 };
 
-class APowerDamage : public APowerup
-{
-	DECLARE_CLASS( APowerDamage, APowerup )
-protected:
-	virtual void InitEffect () override;
-	virtual void EndEffect () override;
-	virtual void ModifyDamage (int damage, FName damageType, int &newdamage, bool passive) override;
-};
-
-class APowerProtection : public APowerup
-{
-	DECLARE_CLASS( APowerProtection, APowerup )
-protected:
-	virtual void InitEffect () override;
-	virtual void EndEffect () override;
-	virtual void ModifyDamage (int damage, FName damageType, int &newdamage, bool passive) override;
-};
-
 class APowerMorph : public APowerup
 {
 	DECLARE_CLASS( APowerMorph, APowerup )

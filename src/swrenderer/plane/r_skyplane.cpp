@@ -24,9 +24,10 @@
 #include "r_data/colormaps.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "gl/dynlights/gl_dynlight.h"
-#include "swrenderer/scene/r_walldraw.h"
 #include "swrenderer/segments/r_clipsegment.h"
 #include "swrenderer/segments/r_drawsegment.h"
+#include "swrenderer/line/r_wallsetup.h"
+#include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/r_memory.h"
 

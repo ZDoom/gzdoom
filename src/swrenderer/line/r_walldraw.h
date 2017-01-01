@@ -6,6 +6,8 @@ struct FLightNode;
 
 namespace swrenderer
 {
+	struct drawseg_t;
+
 	struct WallSampler
 	{
 		WallSampler() { }

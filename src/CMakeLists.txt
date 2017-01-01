@@ -769,6 +769,7 @@ file( GLOB HEADER_FILES
 	swrenderer/drawers/*.h
 	swrenderer/scene/*.h
 	swrenderer/segments/*.h
+	swrenderer/line/*.h
 	swrenderer/plane/*.h
 	swrenderer/things/*.h
 	polyrenderer/*.h
@@ -821,8 +822,10 @@ set( FASTMATH_PCH_SOURCES
 	swrenderer/scene/r_bsp.cpp
 	swrenderer/scene/r_segs.cpp
 	swrenderer/scene/r_things.cpp
-	swrenderer/scene/r_walldraw.cpp
 	swrenderer/scene/r_portal.cpp
+	swrenderer/line/r_line.cpp
+	swrenderer/line/r_walldraw.cpp
+	swrenderer/line/r_wallsetup.cpp
 	swrenderer/segments/r_clipsegment.cpp
 	swrenderer/segments/r_drawsegment.cpp
 	swrenderer/segments/r_portalsegment.cpp
@@ -1474,6 +1477,7 @@ source_group("Software Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR
 source_group("Software Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/drawers/.+")
 source_group("Software Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/scene/.+")
 source_group("Software Renderer\\Segments" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/segments/.+")
+source_group("Software Renderer\\Line" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/line/.+")
 source_group("Software Renderer\\Plane" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/plane/.+")
 source_group("Software Renderer\\Things" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/things/.+")
 source_group("Poly Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/.+")

@@ -37,6 +37,7 @@
 #include "swrenderer/plane/r_visibleplane.h"
 #include "swrenderer/things/r_particle.h"
 #include "swrenderer/segments/r_clipsegment.h"
+#include "swrenderer/line/r_wallsetup.h"
 #include "r_things.h"
 #include "r_3dfloors.h"
 #include "r_portal.h"
@@ -76,18 +77,11 @@ extern bool		rw_prepped;
 extern bool		rw_havehigh, rw_havelow;
 extern int		rw_floorstat, rw_ceilstat;
 extern bool		rw_mustmarkfloor, rw_mustmarkceiling;
-extern short	walltop[MAXWIDTH];	// [RH] record max extents of wall
-extern short	wallbottom[MAXWIDTH];
-extern short	wallupper[MAXWIDTH];
-extern short	walllower[MAXWIDTH];
 
 double			rw_backcz1, rw_backcz2;
 double			rw_backfz1, rw_backfz2;
 double			rw_frontcz1, rw_frontcz2;
 double			rw_frontfz1, rw_frontfz2;
-
-FWallCoords		WallC;
-FWallTmapVals	WallT;
 
 static BYTE		FakeSide;
 
@@ -435,12 +429,12 @@ void R_AddLine (seg_t *line)
 		if (rw_frontcz1 > rw_backcz1 || rw_frontcz2 > rw_backcz2)
 		{
 			rw_havehigh = true;
-			R_CreateWallSegmentYSloped (wallupper, backsector->ceilingplane, &WallC);
+			R_CreateWallSegmentYSloped (wallupper, backsector->ceilingplane, &WallC, curline, MirrorFlags & RF_XFLIP);
 		}
 		if (rw_frontfz1 < rw_backfz1 || rw_frontfz2 < rw_backfz2)
 		{
 			rw_havelow = true;
-			R_CreateWallSegmentYSloped (walllower, backsector->floorplane, &WallC);
+			R_CreateWallSegmentYSloped (walllower, backsector->floorplane, &WallC, curline, MirrorFlags & RF_XFLIP);
 		}
 
 		// Portal
@@ -541,8 +535,8 @@ void R_AddLine (seg_t *line)
 	}
 	else
 	{
-		rw_ceilstat = R_CreateWallSegmentYSloped (walltop, frontsector->ceilingplane, &WallC);
-		rw_floorstat = R_CreateWallSegmentYSloped (wallbottom, frontsector->floorplane, &WallC);
+		rw_ceilstat = R_CreateWallSegmentYSloped (walltop, frontsector->ceilingplane, &WallC, curline, MirrorFlags & RF_XFLIP);
+		rw_floorstat = R_CreateWallSegmentYSloped (wallbottom, frontsector->floorplane, &WallC, curline, MirrorFlags & RF_XFLIP);
 
 		// [RH] treat off-screen walls as solid
 #if 0	// Maybe later...
@@ -568,125 +562,26 @@ void R_AddLine (seg_t *line)
 	}
 }
 
-//
-// FWallCoords :: Init
-//
-// Transform and clip coordinates. Returns true if it was clipped away
-//
-bool FWallCoords::Init(const DVector2 &pt1, const DVector2 &pt2, double too_close)
-{
-	tleft.X =  float(pt1.X * ViewSin - pt1.Y * ViewCos);
-	tright.X = float(pt2.X * ViewSin - pt2.Y * ViewCos);
 
-	tleft.Y =  float(pt1.X * ViewTanCos + pt1.Y * ViewTanSin);
-	tright.Y = float(pt2.X * ViewTanCos + pt2.Y * ViewTanSin);
-
-	if (MirrorFlags & RF_XFLIP)
-	{
-		float t = -tleft.X;
-		tleft.X = -tright.X;
-		tright.X = t;
-		swapvalues(tleft.Y, tright.Y);
-	}
-
-	if (tleft.X >= -tleft.Y)
-	{
-		if (tleft.X > tleft.Y) return true;	// left edge is off the right side
-		if (tleft.Y == 0) return true;
-		sx1 = xs_RoundToInt(CenterX + tleft.X * CenterX / tleft.Y);
-		sz1 = tleft.Y;
-	}
-	else
-	{
-		if (tright.X < -tright.Y) return true;	// wall is off the left side
-		float den = tleft.X - tright.X - tright.Y + tleft.Y;
-		if (den == 0) return true;
-		sx1 = 0;
-		sz1 = tleft.Y + (tright.Y - tleft.Y) * (tleft.X + tleft.Y) / den;
-	}
-
-	if (sz1 < too_close)
-		return true;
-
-	if (tright.X <= tright.Y)
-	{
-		if (tright.X < -tright.Y) return true;	// right edge is off the left side
-		if (tright.Y == 0) return true;
-		sx2 = xs_RoundToInt(CenterX + tright.X * CenterX / tright.Y);
-		sz2 = tright.Y;
-	}
-	else
-	{
-		if (tleft.X > tleft.Y) return true;	// wall is off the right side
-		float den = tright.Y - tleft.Y - tright.X + tleft.X;
-		if (den == 0) return true;
-		sx2 = viewwidth;
-		sz2 = tleft.Y + (tright.Y - tleft.Y) * (tleft.X - tleft.Y) / den;
-	}
-
-	if (sz2 < too_close || sx2 <= sx1)
-		return true;
-
-	return false;
-}
-
-void FWallTmapVals::InitFromWallCoords(const FWallCoords *wallc)
-{
-	const FVector2 *left = &wallc->tleft;
-	const FVector2 *right = &wallc->tright;
-
-	if (MirrorFlags & RF_XFLIP)
-	{
-		swapvalues(left, right);
-	}
-	UoverZorg = left->X * centerx;
-	UoverZstep = -left->Y;
-	InvZorg = (left->X - right->X) * centerx;
-	InvZstep = right->Y - left->Y;
-}
-
-void FWallTmapVals::InitFromLine(const DVector2 &left, const DVector2 &right)
-{ // Coordinates should have already had viewx,viewy subtracted
-	double fullx1 = left.X * ViewSin - left.Y * ViewCos;
-	double fullx2 = right.X * ViewSin - right.Y * ViewCos;
-	double fully1 = left.X * ViewTanCos + left.Y * ViewTanSin;
-	double fully2 = right.X * ViewTanCos + right.Y * ViewTanSin;
-
-	if (MirrorFlags & RF_XFLIP)
-	{
-		fullx1 = -fullx1;
-		fullx2 = -fullx2;
-	}
-
-	UoverZorg = float(fullx1 * centerx);
-	UoverZstep = float(-fully1);
-	InvZorg = float((fullx1 - fullx2) * centerx);
-	InvZstep = float(fully2 - fully1);
-}
-
-//
-// R_CheckBBox
 // Checks BSP node/subtree bounding box.
 // Returns true if some part of the bbox might be visible.
-//
-extern "C" const int checkcoord[12][4] =
-{
-	{3,0,2,1},
-	{3,0,2,0},
-	{3,1,2,0},
-	{0},
-	{2,0,2,1},
-	{0,0,0,0},
-	{3,1,3,0},
-	{0},
-	{2,0,3,1},
-	{2,1,3,1},
-	{2,1,3,0}
-};
-
-
 static bool R_CheckBBox (float *bspcoord)	// killough 1/28/98: static
 {
+	static const int checkcoord[12][4] =
+	{
+		{ 3,0,2,1 },
+		{ 3,0,2,0 },
+		{ 3,1,2,0 },
+		{ 0 },
+		{ 2,0,2,1 },
+		{ 0,0,0,0 },
+		{ 3,1,3,0 },
+		{ 0 },
+		{ 2,0,3,1 },
+		{ 2,1,3,1 },
+		{ 2,1,3,0 }
+	};
+
 	int 				boxx;
 	int 				boxy;
 	int 				boxpos;

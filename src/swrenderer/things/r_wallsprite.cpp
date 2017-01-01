@@ -41,6 +41,8 @@
 #include "r_voxel.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/scene/r_portal.h"
+#include "swrenderer/line/r_wallsetup.h"
+#include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/r_memory.h"
 
 namespace swrenderer

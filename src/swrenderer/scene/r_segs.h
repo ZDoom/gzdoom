@@ -32,25 +32,10 @@ struct visplane_t;
 bool R_StoreWallRange(int start, int stop);
 void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2);
 
-int R_CreateWallSegmentY (short *outbuf, double z1, double z2, const FWallCoords *wallc);
-int R_CreateWallSegmentYSloped (short *outbuf, const secplane_t &plane, const FWallCoords *wallc);
-inline int R_CreateWallSegmentY(short *outbuf, double z, const FWallCoords *wallc)
-{
-	return R_CreateWallSegmentY(outbuf, z, z, wallc);
-}
 
-void PrepWall (float *swall, fixed_t *lwall, double walxrepeat, int x1, int x2);
-void PrepLWall (fixed_t *lwall, double walxrepeat, int x1, int x2);
 
 void R_RenderSegLoop ();
 
-extern short	walltop[MAXWIDTH];	// [RH] record max extents of wall
-extern short	wallbottom[MAXWIDTH];
-extern short	wallupper[MAXWIDTH];
-extern short	walllower[MAXWIDTH];
-extern float	swall[MAXWIDTH];
-extern fixed_t	lwall[MAXWIDTH];
-extern double	lwallscale;
 extern float	rw_light;		// [RH] Scale lights with viewsize adjustments
 extern float	rw_lightstep;
 extern float	rw_lightleft;

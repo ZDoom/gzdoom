@@ -733,7 +733,7 @@ void FString::StripRight (const char *charset)
 		if (!strchr (charset, Chars[i]))
 			break;
 	}
-	if (i == max-1)
+	if (i == max)
 	{ // Nothing to strip.
 		return;
 	}

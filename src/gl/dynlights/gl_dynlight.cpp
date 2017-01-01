@@ -181,7 +181,9 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 	if (m_additive) light->flags4 |= MF4_ADDITIVE;
 	if (m_dontlightself) light->flags4 |= MF4_DONTLIGHTSELF;
 	light->m_tickCount = 0;
-	if (m_type == PulseLight)
+	switch (m_type)
+	{
+	case PulseLight:
 	{
 		float pulseTime = float(m_Param / TICRATE);
 
@@ -190,6 +192,36 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 		light->m_cycler.ShouldCycle(true);
 		light->m_cycler.SetCycleType(CYCLE_Sin);
 		light->m_currentRadius = light->m_cycler.GetVal();
+		break;
+	}
+
+	case FlickerLight:
+	case RandomFlickerLight:
+	{
+		float minrad = float(MIN(light->m_Radius[0], light->m_Radius[1]));
+		float maxrad = float(MAX(light->m_Radius[0], light->m_Radius[1]));
+		light->m_currentRadius = clamp(light->m_currentRadius, minrad, maxrad);
+		break;
+	}
+
+	case PointLight:
+		light->m_currentRadius = float(light->m_Radius[0]);
+		break;
+
+	case SectorLight:
+	{
+		float intensity;
+		float scale = light->args[LIGHT_SCALE] / 8.f;
+
+		if (scale == 0.f) scale = 1.f;
+
+		intensity = light->Sector->lightlevel * scale;
+		intensity = clamp<float>(intensity, 0.f, 255.f);
+
+		light->m_currentRadius = intensity;
+		break;
+	}
+
 	}
 
 	switch (m_attenuate)

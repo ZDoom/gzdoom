@@ -32,13 +32,13 @@ object BulletPuff
 // Rocket
 pointlight ROCKET
 {
-    color 1.0 0.7 0.0
+    color 1.0 1.0 0.0
     size 56
 }
 
 flickerlight ROCKET_X1
 {
-    color 1.0 0.7 0.5
+    color 1.0 1.0 0.5
     size 64
     secondarySize 72
     chance 0.3
@@ -46,7 +46,7 @@ flickerlight ROCKET_X1
 
 flickerlight ROCKET_X2
 {
-    color 0.5 0.3 0.2
+    color 0.5 0.5 0.2
     size 80
     secondarySize 88
     chance 0.3
@@ -54,7 +54,7 @@ flickerlight ROCKET_X2
 
 flickerlight ROCKET_X3
 {
-    color 0.3 0.1 0.1
+    color 0.3 0.3 0.1
     size 96
     secondarySize 104
     chance 0.3
@@ -215,13 +215,13 @@ object PlasmaBall2
 // BFG
 pointlight BFGBALL
 {
-    color 0.5 1.0 0.5
+    color 0.5 0.5 1.0
     size 80
 }
 
 flickerlight BFGBALL_X1
 {
-    color 0.5 1.0 0.5
+    color 0.5 0.5 1.0
     size 80
     secondarySize 88
     chance 0.3
@@ -229,7 +229,7 @@ flickerlight BFGBALL_X1
 
 flickerlight BFGBALL_X2
 {
-    color 0.6 1.0 0.6
+    color 0.6 0.6 1.0
     size 104
     secondarySize 112
     chance 0.3
@@ -237,7 +237,7 @@ flickerlight BFGBALL_X2
 
 flickerlight BFGBALL_X3
 {
-    color 0.7 1.0 0.7
+    color 0.7 0.7 1.0
     size 120
     secondarySize 128
     chance 0.3
@@ -245,7 +245,7 @@ flickerlight BFGBALL_X3
 
 flickerlight BFGBALL_X4
 {
-    color 0.4 0.7 0.4
+    color 0.4 0.4 0.7
     size 56
     secondarySize 64
     chance 0.3
@@ -253,7 +253,7 @@ flickerlight BFGBALL_X4
 
 flickerlight BFGBALL_X5
 {
-    color 0.1 0.3 0.1
+    color 0.1 0.1 0.3
     size 48
     secondarySize 56
     chance 0.3
@@ -311,8 +311,8 @@ object ExplosiveBarrel
 pointlight LAMP
 {
     color 1.0 1.0 0.8
-    size 56
-    offset 0 44 0
+    size 66
+    offset 0 40 0
 }
 
 object Column
@@ -353,9 +353,9 @@ object TechLamp
 // Tall red torch
 flickerlight2 BIGREDTORCH
 {
-    color 1.0 0.5 0.2
-    size 64
-    secondarySize 72
+    color 1.0 0.9 0.2
+    size 60
+    secondarySize 66
     interval 0.1
     offset 0 60 0
 }
@@ -369,8 +369,8 @@ object RedTorch
 flickerlight2 BIGGREENTORCH
 {
     color 0.3 1.0 0.3
-    size 64
-    secondarySize 72
+    size 60
+    secondarySize 66
     interval 0.1
     offset 0 60 0
 }
@@ -384,10 +384,10 @@ object GreenTorch
 flickerlight2 BIGBLUETORCH
 {
     color 0.3 0.3 1.0
-    size 64
-    secondarySize 72
+    size 60
+    secondarySize 66
     interval 0.1
-    offset 0 60 0
+    offset 0 50 0
 }
 
 object BlueTorch
@@ -444,8 +444,8 @@ object ShortBlueTorch
 flickerlight2 FIREBARREL
 {
     color 1.0 0.9 0.4
-    size 48
-    secondarySize 54
+    size 54
+    secondarySize 60
     interval 0.1
     offset 0 32 0
 }
@@ -483,21 +483,6 @@ object Candlestick
     frame CAND { light CANDLE }
 }
 
-// Candelabra
-pointlight CANDELABRA
-{
-    color 1.0 1.0 0.3
-    size 48
-    offset 0 52 0
-}
-
-object Candelabra
-{
-    frame CBRA { light CANDELABRA }
-}
-
-
-
 // ----------------
 // -- Doom Items --
 // ----------------
@@ -520,7 +505,7 @@ object SoulSphere
 // Invulnerability Sphere
 pulselight INVULN
 {
-    color 0.3 1.0 0.3
+    color 1.0 0.6 1.0
     size 40
     secondarySize 42
     interval 2.0
@@ -595,7 +580,7 @@ object HealthBonus
 // Armour Helmet
 pulselight ARMORBONUS
 {
-    color 0.2 0.6 0.2
+    color 0.6 0.2 0.2
     size 16
     secondarySize 14
     interval 1.0
@@ -656,44 +641,16 @@ object RedSkull
     frame RSKU { light REDKEY }
 }
 
-// Green armour
-pointlight GREENARMOR1
-{
-    color 0.0 0.6 0.0
-    size 48
-}
-
 pointlight GREENARMOR2
 {
-    color 0.0 0.6 0.0
-    size 32
+    color 0.4 0.0 0.0
+    size 20
 }
 
 object GreenArmor
 {
-    frame ARM1A { light GREENARMOR1 }
     frame ARM1B { light GREENARMOR2 }
 }
-
-// Blue armour
-pointlight BLUEARMOR1
-{
-    color 0.0 0.0 0.6
-    size 48
-}
-
-pointlight BLUEARMOR2
-{
-    color 0.0 0.0 0.6
-    size 32
-}
-
-object BlueArmor
-{
-    frame ARM2A { light BLUEARMOR1 }
-    frame ARM2B { light BLUEARMOR2 }
-}
-
 
 
 // ------------------
@@ -742,7 +699,7 @@ pointlight IMPBALL
 // Doom imp fireball explosion
 flickerlight IMPBALL_X1
 {
-    color 0.7 0.4 0.25
+    color 0.7 0.7 0.25
     size 80
     secondarySize 88
     chance 0.25
@@ -750,7 +707,7 @@ flickerlight IMPBALL_X1
 
 flickerlight IMPBALL_X2
 {
-    color 0.4 0.2 0.1
+    color 0.4 0.4 0.1
     size 96
     secondarySize 104
     chance 0.25
@@ -758,7 +715,7 @@ flickerlight IMPBALL_X2
 
 flickerlight IMPBALL_X3
 {
-    color 0.2 0.1 0.0
+    color 0.2 0.2 0.0
     size 112
     secondarySize 120
     chance 0.25
@@ -800,7 +757,7 @@ flickerlight CACOBALL
 
 flickerlight CACOBALL_X1
 {
-    color 0.9 0.4 0.7
+    color 0.7 0.4 0.9
     size 72
     secondarySize 80
     chance 0.25
@@ -808,7 +765,7 @@ flickerlight CACOBALL_X1
 
 flickerlight CACOBALL_X2
 {
-    color 0.6 0.3 0.5
+    color 0.5 0.3 0.6
     size 88
     secondarySize 96
     chance 0.25
@@ -816,7 +773,7 @@ flickerlight CACOBALL_X2
 
 flickerlight CACOBALL_X3
 {
-    color 0.3 0.1 0.1
+    color 0.1 0.1 0.3
     size 104
     secondarySize 112
     chance 0.25
@@ -931,10 +888,17 @@ object LostSoul
 }
 
 // Mancubus Fireball
+pointlight MANCBALL
+{
+    color 0.8 0.4 0.4
+    size 64
+}
+
+
 object FatShot
 {
-    frame MANFA { light IMPBALL   }
-    frame MANFB { light IMPBALL   }
+    frame MANFA { light MANCBALL   }
+    frame MANFB { light MANCBALL   }
 
     frame MISLB { light ROCKET_X1 }
     frame MISLC { light ROCKET_X2 }
@@ -944,13 +908,13 @@ object FatShot
 // Arachnotron Fireball
 pointlight ARACHPLAS
 {
-    color 0.6 1.0 0.4
+    color 0.4 1.0 0.4
     size 56
 }
 
 flickerlight ARACHPLAS_X1
 {
-    color 0.4 0.8 0.3
+    color 0.3 0.8 0.3
     size 72
     secondarySize 80
     chance 0.3
@@ -958,7 +922,7 @@ flickerlight ARACHPLAS_X1
 
 flickerlight ARACHPLAS_X2
 {
-    color 0.6 0.6 0.3
+    color 0.3 0.6 0.3
     size 88
     secondarySize 96
     chance 0.3
@@ -966,7 +930,7 @@ flickerlight ARACHPLAS_X2
 
 flickerlight ARACHPLAS_X3
 {
-    color 0.4 0.4 0.2
+    color 0.2 0.4 0.2
     size 48
     secondarySize 32
     chance 0.3
@@ -974,7 +938,7 @@ flickerlight ARACHPLAS_X3
 
 flickerlight ARACHPLAS_X4
 {
-    color 0.2 0.2 0.1
+    color 0.1 0.2 0.1
     size 24
     secondarySize 16
     chance 0.3
@@ -1001,7 +965,7 @@ pointlight TRACER
 
 flickerlight TRACER_X1
 {
-    color 1.0 0.5 0.2
+    color 1.0 0.7 0.2
     size 64
     secondarySize 72
     chance 0.25
@@ -1009,7 +973,7 @@ flickerlight TRACER_X1
 
 flickerlight TRACER_X2
 {
-    color 0.6 0.3 0.1
+    color 0.6 0.4 0.1
     size 80
     secondarySize 88
     chance 0.25
@@ -1017,7 +981,7 @@ flickerlight TRACER_X2
 
 flickerlight TRACER_X3
 {
-    color 0.3 0.1 0.0
+    color 0.3 0.2 0.0
     size 96
     secondarySize 104
     chance 0.25
@@ -1116,96 +1080,6 @@ object ArchvileFire
     frame FIREF { light ARCHFIRE6 }
     frame FIREG { light ARCHFIRE7 }
     frame FIREH { light ARCHFIRE8 }
-}
-
-// Arch-vile
-flickerlight ARCHATK1
-{
-    color 1.0 1.0 0.4
-    size 32
-    secondarySize 48
-    chance 0.3
-    offset 0 80 0
-}
-
-flickerlight ARCHATK2
-{
-    color 1.0 1.0 0.4
-    size 56
-    secondarySize 64
-    chance 0.3
-    offset 0 80 0
-}
-
-flickerlight ARCHATK3
-{
-    color 1.0 1.0 0.4
-    size 56
-    secondarySize 64
-    chance 0.3
-    offset 0 64 0
-}
-
-flickerlight ARCHATK4
-{
-    color 1.0 1.0 0.4
-    size 64
-    secondarySize 72
-    chance 0.3
-    offset 0 48 0
-}
-
-flickerlight ARCHATK5
-{
-    color 1.0 1.0 0.4
-    size 80
-    secondarySize 88
-    chance 0.3
-    offset 0 40 0
-}
-
-flickerlight ARCHATK6
-{
-    color 0.7 0.7 0.3
-    size 96
-    secondarySize 104
-    chance 0.3
-    offset 0 40 0
-}
-
-flickerlight ARCHATK7
-{
-    color 0.3 0.3 0.1
-    size 104
-    secondarySize 112
-    chance 0.3
-    offset 0 40 0
-}
-
-pulselight ARCHRES
-{
-    color 0.6 0.3 0.3
-    size 64
-    secondarySize 70
-    interval 0.5
-    offset 0 36 0
-}
-
-object Archvile
-{
-    frame VILEH { light ARCHATK1 }
-    frame VILEI { light ARCHATK2 }
-    frame VILEJ { light ARCHATK3 }
-    frame VILEK { light ARCHATK4 }
-    frame VILEL { light ARCHATK4 }
-    frame VILEM { light ARCHATK4 }
-    frame VILEN { light ARCHATK5 }
-    frame VILEO { light ARCHATK6 }
-    frame VILEP { light ARCHATK7 }
-
-    frame VILE[ { light ARCHRES }
-    frame VILE\ { light ARCHRES }
-    frame VILE] { light ARCHRES }
 }
 
 // ------------------

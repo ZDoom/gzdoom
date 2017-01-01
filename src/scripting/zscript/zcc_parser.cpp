@@ -414,15 +414,7 @@ void ParseScripts()
 	while ((lump = Wads.FindLump("ZSCRIPT", &lastlump)) != -1)
 	{
 		DoParse(lump);
-		if (!Args->CheckParm("-zscript"))
-		{
-			return;
-		}
 	}
-	Printf(TEXTCOLOR_PURPLE "WARNING!!!\n");
-	Printf(TEXTCOLOR_PURPLE "As of this version, Zscript is still considered a feature in development which can change " TEXTCOLOR_RED "WITHOUT WARNING!!!\n");
-	Printf(TEXTCOLOR_PURPLE "Use at your own risk!\n");
-
 }
 
 /*

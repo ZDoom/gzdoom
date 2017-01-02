@@ -540,9 +540,9 @@ void EV_TurnTagLightsOff (int tag)
 		sector_t *sector = sectors + secnum;
 		int min = sector->lightlevel;
 
-		for (int i = 0; i < sector->linecount; i++)
+		for (auto ln : sector->Lines)
 		{
-			sector_t *tsec = getNextSector (sector->lines[i],sector);
+			sector_t *tsec = getNextSector (ln, sector);
 			if (!tsec)
 				continue;
 			if (tsec->lightlevel < min)
@@ -574,11 +574,9 @@ void EV_LightTurnOn (int tag, int bright)
 		// surrounding sector
 		if (bright < 0)
 		{
-			int j;
-
-			for (j = 0; j < sector->linecount; j++)
+			for (auto ln : sector->Lines)
 			{
-				sector_t *temp = getNextSector (sector->lines[j], sector);
+				sector_t *temp = getNextSector(ln, sector);
 
 				if (!temp)
 					continue;
@@ -622,11 +620,11 @@ void EV_LightTurnOnPartway (int tag, double frac)
 	while ((secnum = it.Next()) >= 0)
 	{
 		sector_t *temp, *sector = &sectors[secnum];
-		int j, bright = 0, min = sector->lightlevel;
+		int bright = 0, min = sector->lightlevel;
 
-		for (j = 0; j < sector->linecount; ++j)
+		for (auto ln : sector->Lines)
 		{
-			if ((temp = getNextSector (sector->lines[j], sector)) != NULL)
+			if ((temp = getNextSector (ln, sector)) != nullptr)
 			{
 				if (temp->lightlevel > bright)
 				{

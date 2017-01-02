@@ -305,7 +305,6 @@ static void PrepareTransparentDoors(sector_t * sector)
 	int notextures=0;
 	int nobtextures=0;
 	int selfref=0;
-	int i;
 	sector_t * nextsec=NULL;
 
 #ifdef _DEBUG
@@ -323,15 +322,15 @@ static void PrepareTransparentDoors(sector_t * sector)
 
 	if (sector->transdoor)
 	{
-		for (i=0; i<sector->linecount; i++)
+		for (auto ln : sector->Lines)
 		{
-			if (sector->lines[i]->frontsector==sector->lines[i]->backsector) 
+			if (ln->frontsector == ln->backsector)
 			{
 				selfref++;
 				continue;
 			}
 
-			sector_t * sec=getNextSector(sector->lines[i], sector);
+			sector_t * sec=getNextSector(ln, sector);
 			if (sec==NULL) 
 			{
 				solidwall=true;
@@ -341,15 +340,15 @@ static void PrepareTransparentDoors(sector_t * sector)
 			{
 				nextsec=sec;
 
-				int side = sector->lines[i]->sidedef[0]->sector == sec;
+				int side = ln->sidedef[0]->sector == sec;
 
 				if (sector->GetPlaneTexZ(sector_t::floor)!=sec->GetPlaneTexZ(sector_t::floor)+1. || sec->floorplane.isSlope())
 				{
 					sector->transdoor=false;
 					return;
 				}
-				if (!sector->lines[i]->sidedef[1-side]->GetTexture(side_t::top).isValid()) notextures++;
-				if (!sector->lines[i]->sidedef[1-side]->GetTexture(side_t::bottom).isValid()) nobtextures++;
+				if (!ln->sidedef[1-side]->GetTexture(side_t::top).isValid()) notextures++;
+				if (!ln->sidedef[1-side]->GetTexture(side_t::bottom).isValid()) nobtextures++;
 			}
 		}
 		if (sector->GetTexture(sector_t::ceiling)==skyflatnum)
@@ -358,19 +357,19 @@ static void PrepareTransparentDoors(sector_t * sector)
 			return;
 		}
 
-		if (selfref+nobtextures!=sector->linecount)
+		if (selfref+nobtextures!=sector->Lines.Size())
 		{
 			sector->transdoor=false;
 		}
 
-		if (selfref+notextures!=sector->linecount)
+		if (selfref+notextures!=sector->Lines.Size())
 		{
 			// This is a crude attempt to fix an incorrect transparent door effect I found in some
 			// WolfenDoom maps but considering the amount of code required to handle it I left it in.
 			// Do this only if the sector only contains one-sided walls or ones with no lower texture.
 			if (solidwall)
 			{
-				if (solidwall+nobtextures+selfref==sector->linecount && nextsec)
+				if (solidwall+nobtextures+selfref==sector->Lines.Size() && nextsec)
 				{
 					sector->heightsec=nextsec;
 					sector->heightsec->MoreFlags=0;
@@ -604,9 +603,8 @@ void gl_PreprocessLevel()
 		PrepareTransparentDoors(&sectors[i]);
 
 		// This ignores vertices only used for seg splitting because those aren't needed here
-		for(int j = 0; j < sectors[i].linecount; j++)
+		for(auto l : sectors[i].Lines)
 		{
-			line_t *l = sectors[i].lines[j];
 			if (l->sidedef[0]->Flags & WALLF_POLYOBJ) continue;	// don't bother with polyobjects
 
 			int vtnum1 = int(l->v1 - vertexes);

@@ -286,10 +286,9 @@ void DDoor::DoorSound(bool raise, DSeqNode *curseq) const
 
 			// Search the front top textures of 2-sided lines on the door sector
 			// for a door sound to use.
-			for (int i = 0; i < m_Sector->linecount; ++i)
+			for (auto line : m_Sector->Lines)
 			{
 				const char *texname;
-				line_t *line = m_Sector->lines[i];
 
 				if (line->backsector == NULL)
 					continue;
@@ -694,14 +693,14 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay,
 	m_Line1 = line;
 	m_Line2 = line;
 
-	for (int i = 0; i < sec->linecount; ++i)
+	for (auto l : sec->Lines)
 	{
-		if (sec->lines[i] == line)
+		if (l == line)
 			continue;
 
-		if (sec->lines[i]->sidedef[0]->GetTexture(side_t::top) == line->sidedef[0]->GetTexture(side_t::top))
+		if (l->sidedef[0]->GetTexture(side_t::top) == line->sidedef[0]->GetTexture(side_t::top))
 		{
-			m_Line2 = sec->lines[i];
+			m_Line2 = l;
 			break;
 		}
 	}
@@ -789,9 +788,8 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay)
 			continue;
 		}
 
-		for (int i = 0; tag != 0 && i < sec->linecount; ++i)
+		for (auto line : sec->Lines)
 		{
-			line = sec->lines[i];
 			if (line->backsector == NULL)
 			{
 				continue;

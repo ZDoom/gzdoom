@@ -560,6 +560,7 @@ void PType::StaticInit()
 	RUNTIME_CLASS(PClassPointer)->TypeTableType = RUNTIME_CLASS(PClassPointer);
 	RUNTIME_CLASS(PEnum)->TypeTableType = RUNTIME_CLASS(PEnum);
 	RUNTIME_CLASS(PArray)->TypeTableType = RUNTIME_CLASS(PArray);
+	RUNTIME_CLASS(PResizableArray)->TypeTableType = RUNTIME_CLASS(PResizableArray);
 	RUNTIME_CLASS(PDynArray)->TypeTableType = RUNTIME_CLASS(PDynArray);
 	RUNTIME_CLASS(PMap)->TypeTableType = RUNTIME_CLASS(PMap);
 	RUNTIME_CLASS(PStruct)->TypeTableType = RUNTIME_CLASS(PStruct);
@@ -2048,6 +2049,80 @@ PArray *NewArray(PType *type, unsigned int count)
 		TypeTable.AddType(atype, RUNTIME_CLASS(PArray), (intptr_t)type, count, bucket);
 	}
 	return (PArray *)atype;
+}
+
+/* PArray *****************************************************************/
+
+IMPLEMENT_CLASS(PResizableArray, false, false)
+
+//==========================================================================
+//
+// PArray - Default Constructor
+//
+//==========================================================================
+
+PResizableArray::PResizableArray()
+{
+	mDescriptiveName = "ResizableArray";
+}
+
+//==========================================================================
+//
+// PArray - Parameterized Constructor
+//
+//==========================================================================
+
+PResizableArray::PResizableArray(PType *etype)
+	: PArray(etype, 0)
+{
+	mDescriptiveName.Format("ResizableArray<%s>", etype->DescriptiveName());
+}
+
+//==========================================================================
+//
+// PArray :: IsMatch
+//
+//==========================================================================
+
+bool PResizableArray::IsMatch(intptr_t id1, intptr_t id2) const
+{
+	const PType *elemtype = (const PType *)id1;
+	unsigned int count = (unsigned int)(intptr_t)id2;
+
+	return elemtype == ElementType && count == 0;
+}
+
+//==========================================================================
+//
+// PArray :: GetTypeIDs
+//
+//==========================================================================
+
+void PResizableArray::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
+{
+	id1 = (intptr_t)ElementType;
+	id2 = 0;
+}
+
+//==========================================================================
+//
+// NewResizableArray
+//
+// Returns a PArray for the given type and size, making sure not to create
+// duplicates.
+//
+//==========================================================================
+
+PResizableArray *NewResizableArray(PType *type)
+{
+	size_t bucket;
+	PType *atype = TypeTable.FindType(RUNTIME_CLASS(PResizableArray), (intptr_t)type, 0, &bucket);
+	if (atype == NULL)
+	{
+		atype = new PResizableArray(type);
+		TypeTable.AddType(atype, RUNTIME_CLASS(PResizableArray), (intptr_t)type, 0, bucket);
+	}
+	return (PResizableArray *)atype;
 }
 
 /* PDynArray **************************************************************/

@@ -208,6 +208,10 @@ ExpEmit::ExpEmit(VMFunctionBuilder *build, int type, int count)
 
 void ExpEmit::Free(VMFunctionBuilder *build)
 {
+	if (RegType == REGT_INT && RegNum == 0)
+	{
+		int a = 0;
+	}
 	if (!Fixed && !Konst && RegType <= REGT_TYPE)
 	{
 		build->Registers[RegType].Return(RegNum, RegCount);
@@ -4584,8 +4588,14 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 		else
 		{
 			// Use the register returned by the true condition as the
-			// target for the false condition.
-			out = trueop;
+			// target for the false condition, if temporary.
+			// If this is a local variable we need another register for the result.
+			if (trueop.Fixed)
+			{
+				out = ExpEmit(build, trueop.RegType);
+				build->Emit(truex->ValueType->GetMoveOp(), out.RegNum, trueop.RegNum, 0);
+			}
+			else out = trueop;
 		}
 	}
 	// Make sure to skip the false path.
@@ -6620,6 +6630,7 @@ FxArrayElement::FxArrayElement(FxExpression *base, FxExpression *_index)
 	index = _index;
 	AddressRequested = false;
 	AddressWritable = false;
+	SizeAddr = ~0u;
 }
 
 //==========================================================================
@@ -6691,10 +6702,31 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 		arraytype = static_cast<PArray*>(ptype->PointedType);
 		arrayispointer = true;
 	}
-	if (index->isConstant())
+
+	if (Array->IsResizableArray())
+	{
+		// if this is an array within a class or another struct we can simplify the expression by creating a new PField with a cumulative offset.
+		if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember)
+		{
+			auto parentfield = static_cast<FxStructMember *>(Array)->membervar;
+			SizeAddr = unsigned(parentfield->Offset + parentfield->Type->Align);
+		}
+		else if (Array->ExprType == EFX_GlobalVariable)
+		{
+			auto parentfield = static_cast<FxGlobalVariable *>(Array)->membervar;
+			SizeAddr = unsigned(parentfield->Offset + parentfield->Type->Align);
+		}
+		else
+		{
+			ScriptPosition.Message(MSG_ERROR, "Invalid resizable array");
+			delete this;
+			return nullptr;
+		}
+	}
+	else if (index->isConstant())
 	{
 		unsigned indexval = static_cast<FxConstant *>(index)->GetValue().GetInt();
-		if (indexval >= arraytype->ElementCount)
+		if (indexval >= arraytype->ElementCount && !Array->IsResizableArray())
 		{
 			ScriptPosition.Message(MSG_ERROR, "Array index out of bounds");
 			delete this;
@@ -6767,21 +6799,40 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 		arraytype = static_cast<PArray*>(Array->ValueType);
 	}
 	ExpEmit start = Array->Emit(build);
+	ExpEmit bound;
 
-	/* what was this for?
-	if (start.Konst)
+	// For resizable arrays we even need to check the bounds if if the index is constant.
+	if (SizeAddr != ~0u)
 	{
-		ExpEmit tmpstart(build, REGT_POINTER);
-		build->Emit(OP_LKP, tmpstart.RegNum, start.RegNum);
-		start.Free(build);
-		start = tmpstart;
+		auto f = new PField(NAME_None, TypeUInt32, 0, SizeAddr);
+		if (Array->ExprType == EFX_ClassMember || Array->ExprType == EFX_StructMember)
+		{
+			static_cast<FxStructMember *>(Array)->membervar = f;
+			static_cast<FxStructMember *>(Array)->AddressRequested = false;
+		}
+		else if (Array->ExprType == EFX_GlobalVariable)
+		{
+			static_cast<FxGlobalVariable *>(Array)->membervar = f;
+			static_cast<FxGlobalVariable *>(Array)->AddressRequested = false;
+		}
+
+		Array->ValueType = TypeUInt32;
+		bound = Array->Emit(build);
 	}
-	*/
+
 	if (index->isConstant())
 	{
 		unsigned indexval = static_cast<FxConstant *>(index)->GetValue().GetInt();
-		assert(indexval < arraytype->ElementCount && "Array index out of bounds");
+		assert(SizeAddr != ~0u || (indexval < arraytype->ElementCount && "Array index out of bounds"));
 
+		if (SizeAddr != ~0u)
+		{
+			ExpEmit indexreg(build, REGT_INT);
+			build->EmitLoadInt(indexreg.RegNum, indexval);
+			build->Emit(OP_BOUND_R, indexreg.RegNum, bound.RegNum);
+			indexreg.Free(build);
+			bound.Free(build);
+		}
 		if (AddressRequested)
 		{
 			if (indexval != 0)
@@ -6821,9 +6872,12 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	else
 	{
 		ExpEmit indexv(index->Emit(build));
-		// Todo: For dynamically allocated arrays (like global sector and linedef tables) we need to get the bound value in here somehow.
-		// Right now their bounds are not properly checked for.
-		if (arraytype->ElementCount > 65535)
+		if (SizeAddr != ~0u)
+		{
+			build->Emit(OP_BOUND_R, indexv.RegNum, bound.RegNum);
+			bound.Free(build);
+		}
+		else if (arraytype->ElementCount > 65535)
 		{
 			build->Emit(OP_BOUND_K, indexv.RegNum, build->GetConstantInt(arraytype->ElementCount));
 		}
@@ -7347,7 +7401,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	// Note: These builtins would better be relegated to the actual type objects, instead of polluting this file, but that's a task for later.
 
 	// Texture builtins.
-	if (Self->ValueType == TypeTextureID)
+	else if (Self->ValueType == TypeTextureID)
 	{
 		if (MethodName == NAME_IsValid || MethodName == NAME_IsNull || MethodName == NAME_Exists || MethodName == NAME_SetInvalid || MethodName == NAME_SetNull)
 		{
@@ -7390,7 +7444,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		}
 	}
 
-	if (Self->IsVector())
+	else if (Self->IsVector())
 	{
 		// handle builtins: Vectors got 2: Length and Unit.
 		if (MethodName == NAME_Length || MethodName == NAME_Unit)
@@ -7408,10 +7462,62 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		}
 	}
 
-	if (Self->ValueType == TypeString)
+	else if (Self->ValueType == TypeString)
 	{
 		// same for String methods. It also uses a hidden struct type to define them.
 		Self->ValueType = TypeStringStruct;
+	}
+	else if (Self->IsArray())
+	{
+		if (MethodName == NAME_Size)
+		{
+			if (ArgList.Size() > 0)
+			{
+				ScriptPosition.Message(MSG_ERROR, "too many parameters in call to %s", MethodName.GetChars());
+				delete this;
+				return nullptr;
+			}
+			if (!Self->IsResizableArray())
+			{
+				auto atype = Self->ValueType;
+				if (Self->ValueType->IsKindOf(RUNTIME_CLASS(PPointer))) atype = static_cast<PPointer*>(ValueType)->PointedType;
+				auto size = static_cast<PArray*>(atype)->ElementCount;
+				auto x = new FxConstant(size, ScriptPosition);
+				delete this;
+				return x;
+			}
+			else
+			{
+				// Resizable arrays can only be defined in C code and they can only exist in pointer form to reduce their impact on the code generator.
+				if (Self->ExprType == EFX_StructMember || Self->ExprType == EFX_ClassMember)
+				{
+					auto member = static_cast<FxStructMember*>(Self);
+					auto newfield = new PField(NAME_None, TypeUInt32, VARF_ReadOnly, member->membervar->Offset + member->membervar->Type->Align);	// the size is stored right behind the pointer.
+					member->membervar = newfield;
+					Self = nullptr;
+					delete this;
+					member->ValueType = TypeUInt32;
+					return member;
+				}
+				else if (Self->ExprType == EFX_GlobalVariable)
+				{
+					auto member = static_cast<FxGlobalVariable*>(Self);
+					auto newfield = new PField(NAME_None, TypeUInt32, VARF_ReadOnly, member->membervar->Offset + member->membervar->Type->Align);	// the size is stored right behind the pointer.
+					member->membervar = newfield;
+					Self = nullptr;
+					delete this;
+					member->ValueType = TypeUInt32;
+					return member;
+				}
+				else
+				{
+					// This should never happen because resizable arrays cannot be defined in scripts.
+					ScriptPosition.Message(MSG_ERROR, "Cannot retrieve size of array");
+					delete this;
+					return nullptr;
+				}
+			}
+		}
 	}
 
 	if (Self->ValueType->IsKindOf(RUNTIME_CLASS(PPointer)))

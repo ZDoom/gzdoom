@@ -578,7 +578,6 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 	int					osecnum;	//jff 3/4/98 save old loop index
 	double 				height;
 	double				stairstep;
-	int 				i;
 	int 				newsecnum = -1;
 	FTextureID			texture;
 	int 				ok;
@@ -669,18 +668,18 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 			}
 			else
 			{
-				for (i = 0; i < sec->linecount; i++)
+				for (auto line : sec->Lines)
 				{
-					if ( !((sec->lines[i])->flags & ML_TWOSIDED) )
+					if ( !(line->flags & ML_TWOSIDED) )
 						continue;
 
-					tsec = (sec->lines[i])->frontsector;
+					tsec = line->frontsector;
 					newsecnum = (int)(tsec-sectors);
 
 					if (secnum != newsecnum)
 						continue;
 
-					tsec = (sec->lines[i])->backsector;
+					tsec = line->backsector;
 					if (!tsec) continue;	//jff 5/7/98 if no backside, continue
 					newsecnum = (int)(tsec - sectors);
 
@@ -765,7 +764,6 @@ bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed)
 	sector_t*			s3;
 	int 				secnum;
 	bool 				rtn;
-	int 				i;
 	DFloor*				floor;
 	vertex_t*			spot;
 	double				height;
@@ -782,19 +780,19 @@ bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed)
 			continue; // safe now, because we check that tag is non-0 in the looping condition [fdari]
 						
 		rtn = true;
-		s2 = getNextSector (s1->lines[0], s1);	// s2 is pool's sector
+		s2 = getNextSector (s1->Lines[0], s1);	// s2 is pool's sector
 		if (!s2)								// note lowest numbered line around
 			continue;							// pillar must be two-sided
 
 		if (s2->PlaneMoving(sector_t::floor))
 			continue;
 
-		for (i = 0; i < s2->linecount; i++)
+		for (auto ln : s2->Lines)
 		{
-			if (!(s2->lines[i]->flags & ML_TWOSIDED) ||
-				(s2->lines[i]->backsector == s1))
+			if (!(ln->flags & ML_TWOSIDED) ||
+				(ln->backsector == s1))
 				continue;
-			s3 = s2->lines[i]->backsector;
+			s3 = ln->backsector;
 			
 			//	Spawn rising slime
 			floor = new DFloor (s2);

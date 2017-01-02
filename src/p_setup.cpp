@@ -775,16 +775,13 @@ static void SetTextureNoErr (side_t *side, int position, DWORD *color, const cha
 
 void P_FloodZone (sector_t *sec, int zonenum)
 {
-	int i;
-
 	if (sec->ZoneNumber == zonenum)
 		return;
 
 	sec->ZoneNumber = zonenum;
 
-	for (i = 0; i < sec->linecount; ++i)
+	for (auto check : sec->Lines)
 	{
-		line_t *check = sec->lines[i];
 		sector_t *other;
 
 		if (check->sidedef[1] == NULL || (check->flags & ML_ZONEBOUNDARY))
@@ -3093,7 +3090,6 @@ static void P_GroupLines (bool buildmap)
 	cycle_t times[16];
 	int*				linesDoneInEachSector;
 	int 				i;
-	int 				j;
 	int 				total;
 	line_t* 			li;
 	sector_t*			sector;
@@ -3140,13 +3136,13 @@ static void P_GroupLines (bool buildmap)
 		}
 		else
 		{
-			li->frontsector->linecount++;
+			li->frontsector->Lines.Count++;
 			total++;
 		}
 
 		if (li->backsector && li->backsector != li->frontsector)
 		{
-			li->backsector->linecount++;
+			li->backsector->Lines.Count++;
 			total++;
 		}
 	}
@@ -3165,7 +3161,7 @@ static void P_GroupLines (bool buildmap)
 
 	for (sector = sectors, i = 0; i < numsectors; i++, sector++)
 	{
-		if (sector->linecount == 0)
+		if (sector->Lines.Count == 0)
 		{
 			Printf ("Sector %i (tag %i) has no lines\n", i, tagManager.GetFirstSectorTag(sector));
 			// 0 the sector's tag so that no specials can use it
@@ -3173,8 +3169,8 @@ static void P_GroupLines (bool buildmap)
 		}
 		else
 		{
-			sector->lines = lineb_p;
-			lineb_p += sector->linecount;
+			sector->Lines.Array = lineb_p;
+			lineb_p += sector->Lines.Count;
 		}
 	}
 
@@ -3182,26 +3178,25 @@ static void P_GroupLines (bool buildmap)
 	{
 		if (li->frontsector != NULL)
 		{
-			li->frontsector->lines[linesDoneInEachSector[li->frontsector - sectors]++] = li;
+			li->frontsector->Lines[linesDoneInEachSector[li->frontsector - sectors]++] = li;
 		}
 		if (li->backsector != NULL && li->backsector != li->frontsector)
 		{
-			li->backsector->lines[linesDoneInEachSector[li->backsector - sectors]++] = li;
+			li->backsector->Lines[linesDoneInEachSector[li->backsector - sectors]++] = li;
 		}
 	}
 
 	for (i = 0, sector = sectors; i < numsectors; ++i, ++sector)
 	{
-		if (linesDoneInEachSector[i] != sector->linecount)
+		if (linesDoneInEachSector[i] != sector->Lines.Size())
 		{
 			I_Error("P_GroupLines: miscounted");
 		}
-		if (sector->linecount > 3)
+		if (sector->Lines.Size() > 3)
 		{
 			bbox.ClearBox();
-			for (j = 0; j < sector->linecount; ++j)
+			for (auto li : sector->Lines)
 			{
-				li = sector->lines[j];
 				bbox.AddToBox(li->v1->fPos());
 				bbox.AddToBox(li->v2->fPos());
 			}
@@ -3210,15 +3205,15 @@ static void P_GroupLines (bool buildmap)
 			sector->centerspot.X = (bbox.Right() + bbox.Left()) / 2;
 			sector->centerspot.Y = (bbox.Top() + bbox.Bottom()) / 2;
 		}
-		else if (sector->linecount > 0)
+		else if (sector->Lines.Size() > 0)
 		{
 			// For triangular sectors the above does not calculate good points unless the longest of the triangle's lines is perfectly horizontal and vertical
 			DVector2 pos = { 0,0 };
-			for (int i = 0; i < sector->linecount; i++)
+			for (auto ln : sector->Lines)
 			{
-				pos += sector->lines[i]->v1->fPos() + sector->lines[i]->v2->fPos();
+				pos += ln->v1->fPos() + ln->v2->fPos();
 			}
-			sector->centerspot = pos / (2 * sector->linecount);
+			sector->centerspot = pos / (2 * sector->Lines.Size());
 		}
 	}
 	delete[] linesDoneInEachSector;

@@ -710,12 +710,8 @@ static int fieldcmp(const void * a, const void * b)
 
 void InitThingdef()
 {
-	PType *TypeActor = NewPointer(RUNTIME_CLASS(AActor));
+	// Create all global variables here because this cannot be done on the script side and really isn't worth adding support for.
 
-	PStruct *sstruct = NewNativeStruct("Sector", nullptr);
-	auto sptr = NewPointer(sstruct);
-	sstruct->AddNativeField("soundtarget", TypeActor, myoffsetof(sector_t, SoundTarget));
-	
 	// expose the global validcount variable.
 	PField *vcf = new PField("validcount", TypeSInt32, VARF_Native | VARF_Static, (intptr_t)&validcount);
 	GlobalSymbols.AddSymbol(vcf);
@@ -746,7 +742,7 @@ void InitThingdef()
 	// set up the lines array in the sector struct. This is a bit messy because the type system is not prepared to handle a pointer to an array of pointers to a native struct even remotely well...
 	// As a result, the size has to be set to something large and arbritrary because it can change between maps. This will need some serious improvement when things get cleaned up.
 	pstruct = NewNativeStruct("Sector", nullptr);
-	pstruct->AddNativeField("lines", NewPointer(NewArray(NewPointer(NewNativeStruct("line", nullptr), false), 0x40000), false), myoffsetof(sector_t, lines), VARF_Native);
+	pstruct->AddNativeField("lines", NewPointer(NewResizableArray(NewPointer(NewNativeStruct("line", nullptr), false)), false), myoffsetof(sector_t, Lines), VARF_Native);
 
 	parray = NewArray(TypeBool, MAXPLAYERS);
 	playerf = new PField("playeringame", parray, VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&playeringame);

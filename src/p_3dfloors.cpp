@@ -216,7 +216,7 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 //==========================================================================
 static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 {
-	int s, i;
+	int s;
 	int flags;
 	int tag = line->args[0];
 	sector_t * sec = line->frontsector, *ss;
@@ -230,10 +230,8 @@ static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 		{
 			flags = FF_EXISTS | FF_RENDERALL | FF_SOLID | FF_INVERTSECTOR;
 			alpha = 255;
-			for (i = 0; i < sec->linecount; i++)
+			for (auto l: sec->Lines)
 			{
-				line_t * l = sec->lines[i];
-
 				if (l->special == Sector_SetContents && l->frontsector == sec)
 				{
 					alpha = clamp<int>(l->args[1], 0, 100);

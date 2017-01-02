@@ -58,7 +58,7 @@ class LittleFly : Actor
 			return fallback;
 		}
 		// Try neighboring sectors
-		for (int i = 0; i < sec.linecount; ++i)
+		for (int i = 0; i < sec.lines.Size(); ++i)
 		{
 			line ln = sec.lines[i];
 			sector sec2 = (ln.frontsector == sec) ? ln.backsector : ln.frontsector;

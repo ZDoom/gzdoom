@@ -1036,8 +1036,7 @@ public:
 	// jff 2/26/98 lockout machinery for stairbuilding
 	SBYTE stairlock;	// -2 on first locked -1 after thinker done 0 normally
 
-	short linecount;
-	struct line_t **lines;		// [linecount] size
+	TStaticPointedArray<line_t *> Lines;
 
 	// killough 3/7/98: support flat heights drawn at another sector's heights
 	sector_t *heightsec;		// other sector, or NULL if no other sector

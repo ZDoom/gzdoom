@@ -45,12 +45,8 @@
 sector_t *sector_t::NextSpecialSector (int type, sector_t *nogood) const
 {
 	sector_t *tsec;
-	int i;
-
-	for (i = 0; i < linecount; i++)
+	for (auto ln : Lines)
 	{
-		line_t *ln = lines[i];
-
 		if (NULL != (tsec = getNextSector (ln, this)) &&
 			tsec != nogood &&
 			tsec->special == type)
@@ -67,21 +63,18 @@ sector_t *sector_t::NextSpecialSector (int type, sector_t *nogood) const
 //
 double sector_t::FindLowestFloorSurrounding (vertex_t **v) const
 {
-	int i;
 	sector_t *other;
-	line_t *check;
 	double floor;
 	double ofloor;
 	vertex_t *spot;
 
-	if (linecount == 0) return GetPlaneTexZ(sector_t::floor);
+	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::floor);
 
-	spot = lines[0]->v1;
+	spot = Lines[0]->v1;
 	floor = floorplane.ZatPoint(spot);
 
-	for (i = 0; i < linecount; i++)
+	for (auto check : Lines)
 	{
-		check = lines[i];
 		if (NULL != (other = getNextSector (check, this)))
 		{
 			ofloor = other->floorplane.ZatPoint (check->v1);
@@ -111,21 +104,18 @@ double sector_t::FindLowestFloorSurrounding (vertex_t **v) const
 //
 double sector_t::FindHighestFloorSurrounding (vertex_t **v) const
 {
-	int i;
-	line_t *check;
 	sector_t *other;
 	double floor;
 	double ofloor;
 	vertex_t *spot;
 
-	if (linecount == 0) return GetPlaneTexZ(sector_t::floor);
+	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::floor);
 
-	spot = lines[0]->v1;
+	spot = Lines[0]->v1;
 	floor = -FLT_MAX;
 
-	for (i = 0; i < linecount; i++)
+	for (auto check : Lines)
 	{
-		check = lines[i];
 		if (NULL != (other = getNextSector (check, this)))
 		{
 			ofloor = other->floorplane.ZatPoint (check->v1);
@@ -166,18 +156,15 @@ double sector_t::FindNextHighestFloor (vertex_t **v) const
 	double ofloor, floor;
 	sector_t *other;
 	vertex_t *spot;
-	line_t *check;
-	int i;
 
-	if (linecount == 0) return GetPlaneTexZ(sector_t::floor);
+	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::floor);
 
-	spot = lines[0]->v1;
+	spot = Lines[0]->v1;
 	height = floorplane.ZatPoint(spot);
 	heightdiff = FLT_MAX;
 
-	for (i = 0; i < linecount; i++)
+	for (auto check : Lines)
 	{
-		check = lines[i];
 		if (NULL != (other = getNextSector (check, this)))
 		{
 			ofloor = other->floorplane.ZatPoint (check->v1);
@@ -221,18 +208,15 @@ double sector_t::FindNextLowestFloor (vertex_t **v) const
 	double ofloor, floor;
 	sector_t *other;
 	vertex_t *spot;
-	line_t *check;
-	int i;
 
-	if (linecount == 0) return GetPlaneTexZ(sector_t::floor);
+	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::floor);
 
-	spot = lines[0]->v1;
+	spot = Lines[0]->v1;
 	height = floorplane.ZatPoint (spot);
 	heightdiff = FLT_MAX;
 
-	for (i = 0; i < linecount; i++)
+	for (auto check : Lines)
 	{
-		check = lines[i];
 		if (NULL != (other = getNextSector (check, this)))
 		{
 			ofloor = other->floorplane.ZatPoint (check->v1);
@@ -275,19 +259,15 @@ double sector_t::FindNextLowestCeiling (vertex_t **v) const
 	double oceil, ceil;
 	sector_t *other;
 	vertex_t *spot;
-	line_t *check;
-	int i;
 
+	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::floor);
 
-	if (linecount == 0) return GetPlaneTexZ(sector_t::ceiling);
-
-	spot = lines[0]->v1;
+	spot = Lines[0]->v1;
 	height = ceilingplane.ZatPoint(spot);
 	heightdiff = FLT_MAX;
 
-	for (i = 0; i < linecount; i++)
+	for (auto check : Lines)
 	{
-		check = lines[i];
 		if (NULL != (other = getNextSector (check, this)))
 		{
 			oceil = other->ceilingplane.ZatPoint(check->v1);
@@ -330,18 +310,15 @@ double sector_t::FindNextHighestCeiling (vertex_t **v) const
 	double oceil, ceil;
 	sector_t *other;
 	vertex_t *spot;
-	line_t *check;
-	int i;
 
-	if (linecount == 0) return GetPlaneTexZ(sector_t::ceiling);
+	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::ceiling);
 
-	spot = lines[0]->v1;
+	spot = Lines[0]->v1;
 	height = ceilingplane.ZatPoint(spot);
 	heightdiff = FLT_MAX;
 
-	for (i = 0; i < linecount; i++)
+	for (auto check : Lines)
 	{
-		check = lines[i];
 		if (NULL != (other = getNextSector (check, this)))
 		{
 			oceil = other->ceilingplane.ZatPoint(check->v1);
@@ -376,17 +353,14 @@ double sector_t::FindLowestCeilingSurrounding (vertex_t **v) const
 	double oceil;
 	sector_t *other;
 	vertex_t *spot;
-	line_t *check;
-	int i;
 
-	if (linecount == 0) return GetPlaneTexZ(sector_t::ceiling);
+	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::ceiling);
 
-	spot = lines[0]->v1;
+	spot = Lines[0]->v1;
 	height = FLT_MAX;
 
-	for (i = 0; i < linecount; i++)
+	for (auto check : Lines)
 	{
-		check = lines[i];
 		if (NULL != (other = getNextSector (check, this)))
 		{
 			oceil = other->ceilingplane.ZatPoint(check->v1);
@@ -418,17 +392,14 @@ double sector_t::FindHighestCeilingSurrounding (vertex_t **v) const
 	double oceil;
 	sector_t *other;
 	vertex_t *spot;
-	line_t *check;
-	int i;
 
-	if (linecount == 0) return GetPlaneTexZ(sector_t::ceiling);
+	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::ceiling);
 
-	spot = lines[0]->v1;
+	spot = Lines[0]->v1;
 	height = -FLT_MAX;
 
-	for (i = 0; i < linecount; i++)
+	for (auto check : Lines)
 	{
-		check = lines[i];
 		if (NULL != (other = getNextSector (check, this)))
 		{
 			oceil = other->ceilingplane.ZatPoint(check->v1);
@@ -479,12 +450,12 @@ double sector_t::FindShortestTextureAround () const
 {
 	double minsize = FLT_MAX;
 
-	for (int i = 0; i < linecount; i++)
+	for (auto check : Lines)
 	{
-		if (lines[i]->flags & ML_TWOSIDED)
+		if (check->flags & ML_TWOSIDED)
 		{
-			CheckShortestTex (lines[i]->sidedef[0]->GetTexture(side_t::bottom), minsize);
-			CheckShortestTex (lines[i]->sidedef[1]->GetTexture(side_t::bottom), minsize);
+			CheckShortestTex (check->sidedef[0]->GetTexture(side_t::bottom), minsize);
+			CheckShortestTex (check->sidedef[1]->GetTexture(side_t::bottom), minsize);
 		}
 	}
 	return minsize < FLT_MAX ? minsize : TexMan[0]->GetHeight();
@@ -505,12 +476,12 @@ double sector_t::FindShortestUpperAround () const
 {
 	double minsize = FLT_MAX;
 
-	for (int i = 0; i < linecount; i++)
+	for (auto check : Lines)
 	{
-		if (lines[i]->flags & ML_TWOSIDED)
+		if (check->flags & ML_TWOSIDED)
 		{
-			CheckShortestTex (lines[i]->sidedef[0]->GetTexture(side_t::top), minsize);
-			CheckShortestTex (lines[i]->sidedef[1]->GetTexture(side_t::top), minsize);
+			CheckShortestTex (check->sidedef[0]->GetTexture(side_t::top), minsize);
+			CheckShortestTex (check->sidedef[1]->GetTexture(side_t::top), minsize);
 		}
 	}
 	return minsize < FLT_MAX ? minsize : TexMan[0]->GetHeight();
@@ -533,17 +504,14 @@ double sector_t::FindShortestUpperAround () const
 //
 sector_t *sector_t::FindModelFloorSector (double floordestheight) const
 {
-	int i;
 	sector_t *sec;
 
-	//jff 5/23/98 don't disturb sec->linecount while searching
-	// but allow early exit in old demos
-	for (i = 0; i < linecount; i++)
+	for (auto check : Lines)
 	{
-		sec = getNextSector (lines[i], this);
+		sec = getNextSector (check, this);
 		if (sec != NULL &&
-			(sec->floorplane.ZatPoint(lines[i]->v1) == floordestheight ||
-			 sec->floorplane.ZatPoint(lines[i]->v2) == floordestheight))
+			(sec->floorplane.ZatPoint(check->v1) == floordestheight ||
+			 sec->floorplane.ZatPoint(check->v2) == floordestheight))
 		{
 			return sec;
 		}
@@ -569,17 +537,14 @@ sector_t *sector_t::FindModelFloorSector (double floordestheight) const
 //
 sector_t *sector_t::FindModelCeilingSector (double floordestheight) const
 {
-	int i;
 	sector_t *sec;
 
-	//jff 5/23/98 don't disturb sec->linecount while searching
-	// but allow early exit in old demos
-	for (i = 0; i < linecount; i++)
+	for (auto check : Lines)
 	{
-		sec = getNextSector (lines[i], this);
+		sec = getNextSector (check, this);
 		if (sec != NULL &&
-			(sec->ceilingplane.ZatPoint(lines[i]->v1) == floordestheight ||
-			 sec->ceilingplane.ZatPoint(lines[i]->v2) == floordestheight))
+			(sec->ceilingplane.ZatPoint(check->v1) == floordestheight ||
+			 sec->ceilingplane.ZatPoint(check->v2) == floordestheight))
 		{
 			return sec;
 		}
@@ -592,13 +557,10 @@ sector_t *sector_t::FindModelCeilingSector (double floordestheight) const
 //
 int sector_t::FindMinSurroundingLight (int min) const
 {
-	int 		i;
-	line_t* 	line;
 	sector_t*	check;
 		
-	for (i = 0; i < linecount; i++)
+	for (auto line : Lines)
 	{
-		line = lines[i];
 		if (NULL != (check = getNextSector (line, this)) &&
 			check->lightlevel < min)
 		{
@@ -613,8 +575,6 @@ int sector_t::FindMinSurroundingLight (int min) const
 //
 double sector_t::FindHighestFloorPoint (vertex_t **v) const
 {
-	int i;
-	line_t *line;
 	double height = -FLT_MAX;
 	double probeheight;
 	vertex_t *spot = NULL;
@@ -623,15 +583,14 @@ double sector_t::FindHighestFloorPoint (vertex_t **v) const
 	{
 		if (v != NULL)
 		{
-			if (linecount == 0) *v = &vertexes[0];
-			else *v = lines[0]->v1;
+			if (Lines.Size() == 0) *v = &vertexes[0];
+			else *v = Lines[0]->v1;
 		}
 		return -floorplane.fD();
 	}
 
-	for (i = 0; i < linecount; i++)
+	for (auto line : Lines)
 	{
-		line = lines[i];
 		probeheight = floorplane.ZatPoint(line->v1);
 		if (probeheight > height)
 		{
@@ -655,8 +614,6 @@ double sector_t::FindHighestFloorPoint (vertex_t **v) const
 //
 double sector_t::FindLowestCeilingPoint (vertex_t **v) const
 {
-	int i;
-	line_t *line;
 	double height = FLT_MAX;
 	double probeheight;
 	vertex_t *spot = NULL;
@@ -665,15 +622,14 @@ double sector_t::FindLowestCeilingPoint (vertex_t **v) const
 	{
 		if (v != NULL)
 		{
-			if (linecount == 0) *v = &vertexes[0];
-			else *v = lines[0]->v1;
+			if (Lines.Size() == 0) *v = &vertexes[0];
+			else *v = Lines[0]->v1;
 		}
 		return ceilingplane.fD();
 	}
 
-	for (i = 0; i < linecount; i++)
+	for (auto line : Lines)
 	{
-		line = lines[i];
 		probeheight = ceilingplane.ZatPoint(line->v1);
 		if (probeheight < height)
 		{
@@ -738,15 +694,14 @@ DEFINE_ACTION_FUNCTION(_Sector, SetFade)
 
 void sector_t::ClosestPoint(const DVector2 &in, DVector2 &out) const
 {
-	int i;
 	double x = in.X, y = in.Y;
 	double bestdist = HUGE_VAL;
 	double bestx = 0, besty = 0;
 
-	for (i = 0; i < linecount; ++i)
+	for (auto check : Lines)
 	{
-		vertex_t *v1 = lines[i]->v1;
-		vertex_t *v2 = lines[i]->v2;
+		vertex_t *v1 = check->v1;
+		vertex_t *v2 = check->v2;
 		double a = v2->fX() - v1->fX();
 		double b = v2->fY() - v1->fY();
 		double den = a*a + b*b;
@@ -1133,9 +1088,8 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 
  void sector_t::RemoveForceField()
  {
-	 for (int i = 0; i < linecount; ++i)
+	 for (auto line : Lines)
 	 {
-		 line_t *line = lines[i];
 		 if (line->backsector != NULL && line->special == ForceField)
 		 {
 			 line->flags &= ~(ML_BLOCKING | ML_BLOCKEVERYTHING);
@@ -1377,8 +1331,7 @@ DEFINE_FIELD_X(Sector, sector_t, soundtraversed)
 DEFINE_FIELD_X(Sector, sector_t, stairlock)
 DEFINE_FIELD_X(Sector, sector_t, prevsec)
 DEFINE_FIELD_X(Sector, sector_t, nextsec)
-DEFINE_FIELD_X(Sector, sector_t, linecount)
-DEFINE_FIELD_X(Sector, sector_t, lines)
+DEFINE_FIELD_X(Sector, sector_t, Lines)
 DEFINE_FIELD_X(Sector, sector_t, heightsec)
 DEFINE_FIELD_X(Sector, sector_t, bottommap)
 DEFINE_FIELD_X(Sector, sector_t, midmap)

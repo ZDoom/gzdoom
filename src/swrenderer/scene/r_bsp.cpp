@@ -73,16 +73,6 @@ int				doorclosed;
 
 bool			r_fakingunderwater;
 
-extern bool		rw_prepped;
-extern bool		rw_havehigh, rw_havelow;
-extern int		rw_floorstat, rw_ceilstat;
-extern bool		rw_mustmarkfloor, rw_mustmarkceiling;
-
-double			rw_backcz1, rw_backcz2;
-double			rw_backfz1, rw_backfz2;
-double			rw_frontcz1, rw_frontcz2;
-double			rw_frontfz1, rw_frontfz2;
-
 static BYTE		FakeSide;
 
 int WindowLeft, WindowRight;

@@ -25,4 +25,41 @@ namespace swrenderer
 
 	extern FWallCoords WallC;
 	extern FWallTmapVals WallT;
+
+	extern double rw_backcz1;
+	extern double rw_backcz2;
+	extern double rw_backfz1;
+	extern double rw_backfz2;
+	extern double rw_frontcz1;
+	extern double rw_frontcz2;
+	extern double rw_frontfz1;
+	extern double rw_frontfz2;
+
+	extern fixed_t rw_offset_top;
+	extern fixed_t rw_offset_mid;
+	extern fixed_t rw_offset_bottom;
+
+	extern int rw_ceilstat, rw_floorstat;
+	extern bool rw_mustmarkfloor, rw_mustmarkceiling;
+	extern bool rw_prepped;
+	extern bool rw_markportal;
+	extern bool rw_havehigh;
+	extern bool rw_havelow;
+
+	extern float rw_light;
+	extern float rw_lightstep;
+	extern float rw_lightleft;
+
+	extern fixed_t rw_offset;
+	extern double rw_midtexturemid;
+	extern double rw_toptexturemid;
+	extern double rw_bottomtexturemid;
+	extern double rw_midtexturescalex;
+	extern double rw_midtexturescaley;
+	extern double rw_toptexturescalex;
+	extern double rw_toptexturescaley;
+	extern double rw_bottomtexturescalex;
+	extern double rw_bottomtexturescaley;
+
+	extern FTexture *rw_pic;
 }

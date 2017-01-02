@@ -28,6 +28,43 @@ namespace swrenderer
 	FWallCoords WallC;
 	FWallTmapVals WallT;
 
+	double rw_backcz1;
+	double rw_backcz2;
+	double rw_backfz1;
+	double rw_backfz2;
+	double rw_frontcz1;
+	double rw_frontcz2;
+	double rw_frontfz1;
+	double rw_frontfz2;
+
+	fixed_t rw_offset_top;
+	fixed_t rw_offset_mid;
+	fixed_t rw_offset_bottom;
+
+	int rw_ceilstat, rw_floorstat;
+	bool rw_mustmarkfloor, rw_mustmarkceiling;
+	bool rw_prepped;
+	bool rw_markportal;
+	bool rw_havehigh;
+	bool rw_havelow;
+
+	float rw_light;
+	float rw_lightstep;
+	float rw_lightleft;
+
+	fixed_t rw_offset;
+	double rw_midtexturemid;
+	double rw_toptexturemid;
+	double rw_bottomtexturemid;
+	double rw_midtexturescalex;
+	double rw_midtexturescaley;
+	double rw_toptexturescalex;
+	double rw_toptexturescaley;
+	double rw_bottomtexturescalex;
+	double rw_bottomtexturescaley;
+
+	FTexture *rw_pic;
+
 	// Transform and clip coordinates. Returns true if it was clipped away
 	bool FWallCoords::Init(const DVector2 &pt1, const DVector2 &pt2, double too_close)
 	{

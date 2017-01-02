@@ -34,7 +34,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2);
 
 
 
-void R_RenderSegLoop ();
+void R_RenderSegLoop(int x1, int x2);
 
 extern float	rw_light;		// [RH] Scale lights with viewsize adjustments
 extern float	rw_lightstep;

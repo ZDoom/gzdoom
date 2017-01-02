@@ -90,48 +90,12 @@ bool		markceiling;
 FTexture *toptexture;
 FTexture *bottomtexture;
 FTexture *midtexture;
-fixed_t rw_offset_top;
-fixed_t rw_offset_mid;
-fixed_t rw_offset_bottom;
 
 
 
 //
 // regular wall
 //
-extern double	rw_backcz1, rw_backcz2;
-extern double	rw_backfz1, rw_backfz2;
-extern double	rw_frontcz1, rw_frontcz2;
-extern double	rw_frontfz1, rw_frontfz2;
-
-int				rw_ceilstat, rw_floorstat;
-bool			rw_mustmarkfloor, rw_mustmarkceiling;
-bool			rw_prepped;
-bool			rw_markportal;
-bool			rw_havehigh;
-bool			rw_havelow;
-
-float			rw_light;		// [RH] Scale lights with viewsize adjustments
-float			rw_lightstep;
-float			rw_lightleft;
-
-static double	rw_frontlowertop;
-
-static int		rw_x;
-static int		rw_stopx;
-fixed_t			rw_offset;
-static double	rw_scalestep;
-static double	rw_midtexturemid;
-static double	rw_toptexturemid;
-static double	rw_bottomtexturemid;
-static double	rw_midtexturescalex;
-static double	rw_midtexturescaley;
-static double	rw_toptexturescalex;
-static double	rw_toptexturescaley;
-static double	rw_bottomtexturescalex;
-static double	rw_bottomtexturescaley;
-
-FTexture		*rw_pic;
 
 static fixed_t	*maskedtexturecol;
 
@@ -151,41 +115,6 @@ inline bool IsFogBoundary (sector_t *front, sector_t *back)
 	return r_fogboundary && fixedcolormap == NULL && front->ColorMap->Fade &&
 		front->ColorMap->Fade != back->ColorMap->Fade &&
 		(front->GetTexture(sector_t::ceiling) != skyflatnum || back->GetTexture(sector_t::ceiling) != skyflatnum);
-}
-
-
-//
-// R_RenderMaskedSegRange
-//
-float *MaskedSWall;
-float MaskedScaleY;
-
-static void BlastMaskedColumn (FTexture *tex)
-{
-	// calculate lighting
-	if (fixedcolormap == NULL && fixedlightlev < 0)
-	{
-		R_SetColorMapLight(basecolormap, rw_light, wallshade);
-	}
-
-	dc_iscale = xs_Fix<16>::ToFix(MaskedSWall[dc_x] * MaskedScaleY);
- 	if (sprflipvert)
-		sprtopscreen = CenterY + dc_texturemid * spryscale;
-	else
-		sprtopscreen = CenterY - dc_texturemid * spryscale;
-	
-	// killough 1/25/98: here's where Medusa came in, because
-	// it implicitly assumed that the column was all one patch.
-	// Originally, Doom did not construct complete columns for
-	// multipatched textures, so there were no header or trailer
-	// bytes in the column referred to below, which explains
-	// the Medusa effect. The fix is to construct true columns
-	// when forming multipatched textures (see r_data.c).
-
-	// draw the texture
-	R_DrawMaskedColumn(tex, maskedtexturecol[dc_x]);
-	rw_light += rw_lightstep;
-	spryscale += rw_scalestep;
 }
 
 // Clip a midtexture to the floor and ceiling of the sector in front of it.
@@ -288,11 +217,11 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		goto clearfog;
 	}
 
-	MaskedSWall = (float *)(openings + ds->swall) - ds->x1;
-	MaskedScaleY = ds->yscale;
+	float *MaskedSWall = (float *)(openings + ds->swall) - ds->x1;
+	float MaskedScaleY = ds->yscale;
 	maskedtexturecol = (fixed_t *)(openings + ds->maskedtexturecol) - ds->x1;
 	spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
-	rw_scalestep = ds->iscalestep;
+	float rw_scalestep = ds->iscalestep;
 
 	if (fixedlightlev >= 0)
 		R_SetColorMapLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
@@ -422,7 +351,21 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		{
 			for (dc_x = x1; dc_x < x2; ++dc_x)
 			{
-				BlastMaskedColumn (tex);
+				if (fixedcolormap == nullptr && fixedlightlev < 0)
+				{
+					R_SetColorMapLight(basecolormap, rw_light, wallshade);
+				}
+
+				dc_iscale = xs_Fix<16>::ToFix(MaskedSWall[dc_x] * MaskedScaleY);
+				if (sprflipvert)
+					sprtopscreen = CenterY + dc_texturemid * spryscale;
+				else
+					sprtopscreen = CenterY - dc_texturemid * spryscale;
+
+				R_DrawMaskedColumn(tex, maskedtexturecol[dc_x]);
+
+				rw_light += rw_lightstep;
+				spryscale += rw_scalestep;
 			}
 		}
 	}
@@ -530,8 +473,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	mceilingclip = openings + ds->sprtopclip - ds->x1;
 
 	spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
-	rw_scalestep = ds->iscalestep;
-	MaskedSWall = (float *)(openings + ds->swall) - ds->x1;
+	float *MaskedSWall = (float *)(openings + ds->swall) - ds->x1;
 
 	// find positioning
 	side_t *scaledside;
@@ -1020,10 +962,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 // CALLED: CORE LOOPING ROUTINE.
 //
 
-void R_RenderSegLoop ()
+void R_RenderSegLoop(int x1, int x2)
 {
-	int x1 = rw_x;
-	int x2 = rw_stopx;
 	int x;
 	double xscale;
 	double yscale;
@@ -1305,7 +1245,7 @@ void R_NewWall (bool needlights)
 	{ // two-sided line
 		// hack to allow height changes in outdoor areas
 
-		rw_frontlowertop = frontsector->GetPlaneTexZ(sector_t::ceiling);
+		double rw_frontlowertop = frontsector->GetPlaneTexZ(sector_t::ceiling);
 
 		if (frontsector->GetTexture(sector_t::ceiling) == skyflatnum &&
 			backsector->GetTexture(sector_t::ceiling) == skyflatnum)
@@ -1587,10 +1527,9 @@ bool R_StoreWallRange (int start, int stop)
 	draw_segment->tmapvals = WallT;
 	draw_segment->siz1 = 1 / WallC.sz1;
 	draw_segment->siz2 = 1 / WallC.sz2;
-	draw_segment->x1 = rw_x = start;
+	draw_segment->x1 = start;
 	draw_segment->x2 = stop;
 	draw_segment->curline = curline;
-	rw_stopx = stop;
 	draw_segment->bFogBoundary = false;
 	draw_segment->bFakeBoundary = false;
 	if(fake3D & 7) draw_segment->fake = 1;
@@ -1788,7 +1727,7 @@ bool R_StoreWallRange (int start, int stop)
 		}
 	}
 
-	R_RenderSegLoop ();
+	R_RenderSegLoop (start, stop);
 
 	if(fake3D & 7) {
 		return !(fake3D & FAKE3D_FAKEMASK);

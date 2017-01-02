@@ -48,6 +48,7 @@
 #include "stats.h"
 #include "zstring.h"
 #include "d_dehacked.h"
+#include "v_text.h"
 
 
 #include "gl/dynlights/gl_dynlight.h"
@@ -1336,12 +1337,13 @@ void gl_DoParseDefs(FScanner &sc, int workingLump)
 //
 //==========================================================================
 
-void gl_LoadGLDefs(const char * defsLump)
+void gl_LoadGLDefs(const char *defsLump)
 {
 	int workingLump, lastLump;
+	static const char *gldefsnames[] = { "GLDEFS", defsLump, nullptr };
 
 	lastLump = 0;
-	while ((workingLump = Wads.FindLump(defsLump, &lastLump)) != -1)
+	while ((workingLump = Wads.FindLumpMulti(gldefsnames, &lastLump)) != -1)
 	{
 		FScanner sc(workingLump);
 		gl_DoParseDefs(sc, workingLump);
@@ -1383,8 +1385,7 @@ void gl_ParseDefs()
 		break;
 	}
 	gl_ParseVavoomSkybox();
-	if (defsLump != NULL) gl_LoadGLDefs(defsLump);
-	gl_LoadGLDefs("GLDEFS");
+	gl_LoadGLDefs(defsLump);
 	gl_InitializeActorLights();
 }
 

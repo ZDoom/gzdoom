@@ -724,9 +724,10 @@ void AInventory::AbsorbDamage (int damage, FName damageType, int &newdamage)
 
 void AInventory::ModifyDamage (int damage, FName damageType, int &newdamage, bool passive)
 {
-	if (Inventory != NULL)
+	IFVIRTUAL(AInventory, ModifyDamage)
 	{
-		Inventory->ModifyDamage (damage, damageType, newdamage, passive);
+		VMValue params[5] = { (DObject*)this, damage, int(damageType), &newdamage, passive };
+		GlobalVMStack.Call(func, params, 5, nullptr, 0, nullptr);
 	}
 }
 

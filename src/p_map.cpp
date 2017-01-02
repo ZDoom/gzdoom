@@ -91,12 +91,6 @@ TArray<spechit_t> portalhit;
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, CanCollideWith)
-{
-	// No need to check the parameters, as they are not even used.
-	ACTION_RETURN_BOOL(true);
-}
-
 bool P_CanCollideWith(AActor *tmthing, AActor *thing)
 {
 	static unsigned VIndex = ~0u;

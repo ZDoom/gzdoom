@@ -190,7 +190,7 @@ class SBarInfoCommand
 		}
 		EColorRange	GetTranslation(FScanner &sc)
 		{
-			sc.MustGetToken(TK_Identifier);
+			if (!sc.CheckToken(TK_Null)) sc.MustGetToken(TK_Identifier);
 			EColorRange returnVal = CR_UNTRANSLATED;
 			FString namedTranslation; //we must send in "[translation]"
 			const BYTE *trans_ptr;

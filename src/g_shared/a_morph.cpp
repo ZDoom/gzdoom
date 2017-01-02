@@ -154,6 +154,18 @@ bool P_MorphPlayer (player_t *activator, player_t *p, PClassPlayerPawn *spawntyp
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, MorphPlayer)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_POINTER(victim, player_t);
+	PARAM_CLASS(spawntype, APlayerPawn);
+	PARAM_INT(duration);
+	PARAM_INT(style);
+	PARAM_CLASS_DEF(enter_flash, AActor);
+	PARAM_CLASS_DEF(exit_flash, AActor);
+	ACTION_RETURN_BOOL(P_MorphPlayer(self, victim, spawntype, duration, style, enter_flash, exit_flash));
+}
+
 //----------------------------------------------------------------------------
 //
 // FUNC P_UndoPlayerMorph
@@ -204,14 +216,15 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	mo->target = pmo->target;
 	mo->tracer = pmo->tracer;
 	pmo->player = nullptr;
+	mo->alternative = pmo->alternative = nullptr;
 
 	// Remove the morph power if the morph is being undone prematurely.
+	auto pmtype = PClass::FindActor("PowerMorph");
 	for (AInventory *item = pmo->Inventory, *next = nullptr; item != nullptr; item = next)
 	{
 		next = item->Inventory;
-		if (item->IsKindOf(RUNTIME_CLASS(APowerMorph)))
+		if (item->IsKindOf(pmtype))
 		{
-			static_cast<APowerMorph *>(item)->SetNoCallUndoMorph();
 			item->Destroy();
 		}
 	}
@@ -348,8 +361,6 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 			beastweap->Destroy ();
 		}
 	}
-	mo->alternative = nullptr;
-	pmo->alternative = nullptr;
 	pmo->Destroy ();
 	// Restore playerclass armor to its normal amount.
 	AHexenArmor *hxarmor = mo->FindInventory<AHexenArmor>();

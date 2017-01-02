@@ -128,7 +128,7 @@ public:
 
 	// still need to be done.
 	virtual void AbsorbDamage(int damage, FName damageType, int &newdamage);
-	virtual void ModifyDamage(int damage, FName damageType, int &newdamage, bool passive);
+	void ModifyDamage(int damage, FName damageType, int &newdamage, bool passive);
 
 	// visual stuff is for later. Right now the VM has not yet access to the needed functionality.
 	virtual bool DrawPowerup(int x, int y);

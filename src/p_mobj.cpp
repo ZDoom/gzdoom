@@ -7420,8 +7420,12 @@ DEFINE_ACTION_FUNCTION(AActor, ClearCounters)
 
 int AActor::GetModifiedDamage(FName damagetype, int damage, bool passive)
 {
-	if (Inventory != nullptr)
-		Inventory->ModifyDamage(damage, damagetype, damage, passive);
+	auto inv = Inventory;
+	while (inv != nullptr)
+	{
+		inv->ModifyDamage(damage, damagetype, damage, passive);
+		inv = inv->Inventory;
+	}
 
 	return damage;
 }
@@ -7845,6 +7849,25 @@ DEFINE_ACTION_FUNCTION(AActor, CountsAsKill)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	ACTION_RETURN_FLOAT(self->CountsAsKill());
+}
+
+DEFINE_ACTION_FUNCTION(AActor, ApplyDamageFactors)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(itemcls, AInventory);
+	PARAM_NAME(damagetype);
+	PARAM_INT(damage);
+	PARAM_INT(defdamage);
+
+	DmgFactors *df = itemcls->DamageFactors;
+	if (df != nullptr && df->CountUsed() != 0)
+	{
+		ACTION_RETURN_INT(df->Apply(damagetype, damage));
+	}
+	else
+	{
+		ACTION_RETURN_INT(defdamage);
+	}
 }
 
 //----------------------------------------------------------------------------

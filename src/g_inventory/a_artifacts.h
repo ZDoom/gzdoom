@@ -203,24 +203,6 @@ protected:
 	virtual void EndEffect() override;
 };
 
-class APowerDamage : public APowerup
-{
-	DECLARE_CLASS( APowerDamage, APowerup )
-protected:
-	virtual void InitEffect () override;
-	virtual void EndEffect () override;
-	virtual void ModifyDamage (int damage, FName damageType, int &newdamage, bool passive) override;
-};
-
-class APowerProtection : public APowerup
-{
-	DECLARE_CLASS( APowerProtection, APowerup )
-protected:
-	virtual void InitEffect () override;
-	virtual void EndEffect () override;
-	virtual void ModifyDamage (int damage, FName damageType, int &newdamage, bool passive) override;
-};
-
 class APowerMorph : public APowerup
 {
 	DECLARE_CLASS( APowerMorph, APowerup )
@@ -228,18 +210,12 @@ class APowerMorph : public APowerup
 public:
 	
 	virtual void Serialize(FSerializer &arc) override;
-	void SetNoCallUndoMorph() { bInUndoMorph = true; }
 
 	// Variables
 	PClassPlayerPawn *PlayerClass;
 	PClassActor *MorphFlash, *UnMorphFlash;
 	int MorphStyle;
 	player_t *MorphedPlayer;
-	bool bInUndoMorph;	// Because P_UndoPlayerMorph() can call EndEffect recursively
-
-protected:
-	virtual void InitEffect () override;
-	virtual void EndEffect () override;
 };
 
 #endif //__A_ARTIFACTS_H__

@@ -1576,6 +1576,22 @@ public:
 					sec->reflect[sector_t::ceiling] = (float)CheckFloat(key);
 					break;
 
+				case NAME_floorglowcolor:
+					sec->planes[sector_t::floor].GlowColor = CheckInt(key);
+					break;
+
+				case NAME_floorglowheight:
+					sec->planes[sector_t::floor].GlowHeight = (float)CheckFloat(key);
+					break;
+
+				case NAME_ceilingglowcolor:
+					sec->planes[sector_t::ceiling].GlowColor = CheckInt(key);
+					break;
+
+				case NAME_ceilingglowheight:
+					sec->planes[sector_t::ceiling].GlowHeight = (float)CheckFloat(key);
+					break;
+
 				case NAME_MoreIds:
 					// delay parsing of the tag string until parsing of the sector is complete
 					// This ensures that the ID is always the first tag in the list.

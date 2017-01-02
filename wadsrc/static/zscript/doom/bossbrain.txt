@@ -253,7 +253,7 @@ extend class Actor
 				}
 				else
 				{
-					spit.special2 = int((targ.pos.x - pos.x) / spit.Vel.y);
+					spit.special2 = int((targ.pos.x - pos.x) / spit.Vel.x);
 				}
 				// [GZ] Calculates when the projectile will have reached destination
 				spit.special2 += level.maptime;

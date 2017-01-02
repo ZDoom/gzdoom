@@ -23,6 +23,10 @@ namespace swrenderer
 		void InitFromLine(const DVector2 &left, const DVector2 &right);
 	};
 
+	extern seg_t *curline;
+	extern side_t *sidedef;
+	extern line_t *linedef;
+
 	extern FWallCoords WallC;
 	extern FWallTmapVals WallT;
 

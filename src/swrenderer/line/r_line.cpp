@@ -25,6 +25,10 @@
 
 namespace swrenderer
 {
+	seg_t *curline;
+	side_t *sidedef;
+	line_t *linedef;
+
 	FWallCoords WallC;
 	FWallTmapVals WallT;
 

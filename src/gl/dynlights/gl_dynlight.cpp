@@ -56,6 +56,7 @@
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_convert.h"
 #include "gl/data/gl_data.h"
+#include "gl/system//gl_interface.h"
 
 int ScriptDepth;
 void gl_InitGlow(FScanner &sc);
@@ -126,6 +127,7 @@ public:
    void SetParameter(double p) { m_Param = p; }
    void SetArg(int arg, BYTE val) { m_Args[arg] = val; }
    BYTE GetArg(int arg) { return m_Args[arg]; }
+   uint8_t GetAttenuate() const { return m_attenuate; }
    void SetOffset(float* ft) { m_Pos.X = ft[0]; m_Pos.Z = ft[1]; m_Pos.Y = ft[2]; }
    void SetSubtractive(bool subtract) { m_subtractive = subtract; }
    void SetAdditive(bool add) { m_additive = add; }
@@ -310,6 +312,12 @@ void gl_AddLightDefaults(FLightDefaults *defaults)
       }
    }
 
+   if (gl.legacyMode && (defaults->GetAttenuate()))
+   {
+	   defaults->SetArg(LIGHT_INTENSITY, defaults->GetArg(LIGHT_INTENSITY) * 2 / 3);
+	   defaults->SetArg(LIGHT_SECONDARY_INTENSITY, defaults->GetArg(LIGHT_SECONDARY_INTENSITY) * 2 / 3);
+   }
+
    LightDefaults.Push(defaults);
 }
 
@@ -437,11 +445,11 @@ void gl_ParsePulseLight(FScanner &sc)
 				defaults->SetOffset(floatTriple);
 				break;
 			case LIGHTTAG_SIZE:
-				intVal = clamp<int>(gl_ParseInt(sc), 0, 255);
+				intVal = clamp<int>(gl_ParseInt(sc), 0, 1024);
 				defaults->SetArg(LIGHT_INTENSITY, intVal);
 				break;
 			case LIGHTTAG_SECSIZE:
-				intVal = clamp<int>(gl_ParseInt(sc), 0, 255);
+				intVal = clamp<int>(gl_ParseInt(sc), 0, 1024);
 				defaults->SetArg(LIGHT_SECONDARY_INTENSITY, intVal);
 				break;
 			case LIGHTTAG_INTERVAL:

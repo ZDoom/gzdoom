@@ -78,6 +78,7 @@
 #include "gl/dynlights/gl_dynlight.h"
 #include "gl/utility/gl_convert.h"
 #include "gl/utility/gl_templates.h"
+#include "gl/system//gl_interface.h"
 
 EXTERN_CVAR(Int, vid_renderer)
 
@@ -127,6 +128,10 @@ void AVavoomLightWhite::BeginPlay ()
 	args[LIGHT_GREEN] = 128;
 	args[LIGHT_BLUE] = 128;
 
+	if (gl.legacyMode && (flags4 & MF4_ATTENUATE))
+	{
+		m_Radius[0] = m_Radius[0] * 2 / 3;
+	}
 	Super::BeginPlay();
 }
 
@@ -139,6 +144,11 @@ void AVavoomLightColor::BeginPlay ()
 	args[LIGHT_RED] = l_args[1] >> 1;
 	args[LIGHT_GREEN] = l_args[2] >> 1;
 	args[LIGHT_BLUE] = l_args[3] >> 1;
+
+	if (gl.legacyMode && (flags4 & MF4_ATTENUATE))
+	{
+		m_Radius[0] = m_Radius[0] * 2 / 3;
+	}
 
 	Super::BeginPlay();
 }
@@ -195,6 +205,12 @@ void ADynamicLight::BeginPlay()
 	m_Radius[1] = args[LIGHT_SECONDARY_INTENSITY];
 	specialf1 = DAngle(double(SpawnAngle)).Normalized360().Degrees;
 	visibletoplayer = true;
+
+	if (gl.legacyMode && (flags4 & MF4_ATTENUATE))
+	{
+		m_Radius[0] = m_Radius[0] * 2 / 3;
+		m_Radius[1] = m_Radius[1] * 2 / 3;
+	}
 }
 
 //==========================================================================

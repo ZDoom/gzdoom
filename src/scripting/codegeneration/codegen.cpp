@@ -208,6 +208,10 @@ ExpEmit::ExpEmit(VMFunctionBuilder *build, int type, int count)
 
 void ExpEmit::Free(VMFunctionBuilder *build)
 {
+	if (RegType == REGT_INT && RegNum == 0)
+	{
+		int a = 0;
+	}
 	if (!Fixed && !Konst && RegType <= REGT_TYPE)
 	{
 		build->Registers[RegType].Return(RegNum, RegCount);
@@ -4584,8 +4588,14 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 		else
 		{
 			// Use the register returned by the true condition as the
-			// target for the false condition.
-			out = trueop;
+			// target for the false condition, if temporary.
+			// If this is a local variable we need another register for the result.
+			if (trueop.Fixed)
+			{
+				out = ExpEmit(build, trueop.RegType);
+				build->Emit(truex->ValueType->GetMoveOp(), out.RegNum, trueop.RegNum, 0);
+			}
+			else out = trueop;
 		}
 	}
 	// Make sure to skip the false path.

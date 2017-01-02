@@ -128,12 +128,21 @@ namespace swrenderer
 
 			// L = light-pos
 			// dist = sqrt(dot(L, L))
-			// attenuation = 1 - MIN(dist * (1/radius), 1)
+			// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
 			float Lxy2 = lights[i].x; // L.x*L.x + L.y*L.y
 			float Lz = lights[i].z - viewpos_z;
 			float dist2 = Lxy2 + Lz * Lz;
-			float dist = dist2 * _mm_cvtss_f32(_mm_rsqrt_ss(_mm_load_ss(&dist2)));
-			uint32_t attenuation = (uint32_t)(256.0f - MIN(dist * lights[i].radius, 256.0f));
+			float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_load_ss(&dist2)));
+			float dist = dist2 * rcp_dist;
+			float distance_attenuation = (256.0f - MIN(dist * lights[i].radius, 256.0f));
+
+			// The simple light type
+			float simple_attenuation = distance_attenuation;
+
+			// The point light type
+			// diffuse = dot(N,L) * attenuation
+			float point_attenuation = lights[i].y * rcp_dist * distance_attenuation;
+			uint32_t attenuation = (uint32_t)(lights[i].y == 0.0f ? simple_attenuation : point_attenuation);
 
 			lit_r += (light_color_r * material_r * attenuation) >> 16;
 			lit_g += (light_color_g * material_g * attenuation) >> 16;
@@ -1733,8 +1742,17 @@ namespace swrenderer
 			float Lyz2 = lights[i].y; // L.y*L.y + L.z*L.z
 			float Lx = lights[i].x - viewpos_x;
 			float dist2 = Lyz2 + Lx * Lx;
-			float dist = dist2 * _mm_cvtss_f32(_mm_rsqrt_ss(_mm_load_ss(&dist2)));
-			uint32_t attenuation = (uint32_t)(256.0f - MIN(dist * lights[i].radius, 256.0f));
+			float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_load_ss(&dist2)));
+			float dist = dist2 * rcp_dist;
+			float distance_attenuation = (256.0f - MIN(dist * lights[i].radius, 256.0f));
+
+			// The simple light type
+			float simple_attenuation = distance_attenuation;
+
+			// The point light type
+			// diffuse = dot(N,L) * attenuation
+			float point_attenuation = lights[i].z * rcp_dist * distance_attenuation;
+			uint32_t attenuation = (uint32_t)(lights[i].z == 0.0f ? simple_attenuation : point_attenuation);
 
 			lit_r += (light_color_r * material_r * attenuation) >> 16;
 			lit_g += (light_color_g * material_g * attenuation) >> 16;

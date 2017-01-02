@@ -255,8 +255,13 @@ namespace swrenderer
 
 			static TriLight lightbuffer[64 * 1024];
 			static int nextlightindex = 0;
+			
+			// Plane normal
+			dc_normal.X = 0.0f;
+			dc_normal.Y = 0.0f;
+			dc_normal.Z = (y >= CenterY) ? 1.0f : -1.0f;
 
-			// Setup lights for column
+			// Setup lights for row
 			dc_num_lights = 0;
 			dc_lights = lightbuffer + nextlightindex;
 			visplane_light *cur_node = ds_light_list;
@@ -271,11 +276,13 @@ namespace swrenderer
 				float lz = (float)lightZ - dc_viewpos.Z;
 
 				// Precalculate the constant part of the dot here so the drawer doesn't have to.
+				bool is_point_light = (cur_node->lightsource->flags4 & MF4_ATTENUATE) != 0;
 				float lconstant = ly * ly + lz * lz;
+				float nlconstant = is_point_light ? lz * dc_normal.Z : 0.0f;
 
 				// Include light only if it touches this row
 				float radius = cur_node->lightsource->GetRadius();
-				if (radius * radius >= lconstant)
+				if (radius * radius >= lconstant && nlconstant >= 0.0f)
 				{
 					uint32_t red = cur_node->lightsource->GetRed();
 					uint32_t green = cur_node->lightsource->GetGreen();
@@ -285,6 +292,7 @@ namespace swrenderer
 					auto &light = dc_lights[dc_num_lights++];
 					light.x = lx;
 					light.y = lconstant;
+					light.z = nlconstant;
 					light.radius = 256.0f / radius;
 					light.color = (red << 16) | (green << 8) | blue;
 				}

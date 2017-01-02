@@ -248,7 +248,7 @@ SSAVec4i DrawSpanCodegen::Shade(SSAVec4i fg, bool isSimpleShade)
 		SSAVec4i light_color = SSAUBytePtr(SSAValue(dynlights[light_index][0]).v).load_vec4ub(true);
 		SSAFloat light_x = dynlights[light_index][1].load(true);
 		SSAFloat light_y = dynlights[light_index][2].load(true);
-		//SSAFloat light_z = dynlights[light_index][3].load(true);
+		SSAFloat light_z = dynlights[light_index][3].load(true);
 		SSAFloat light_rcp_radius = dynlights[light_index][4].load(true);
 
 		// L = light-pos
@@ -256,8 +256,19 @@ SSAVec4i DrawSpanCodegen::Shade(SSAVec4i fg, bool isSimpleShade)
 		// attenuation = 1 - MIN(dist * (1/radius), 1)
 		SSAFloat Lyz2 = light_y; // L.y*L.y + L.z*L.z
 		SSAFloat Lx = light_x - viewpos_x;
-		SSAFloat dist = SSAFloat::fastsqrt(Lyz2 + Lx * Lx);
-		SSAInt attenuation = SSAInt(SSAFloat(256.0f) - SSAFloat::MIN(dist * light_rcp_radius, SSAFloat(256.0f)), true);
+		SSAFloat dist2 = Lyz2 + Lx * Lx;
+		SSAFloat rcp_dist = SSAFloat::rsqrt(dist2);
+		SSAFloat dist = dist2 * rcp_dist;
+		SSAFloat distance_attenuation = SSAFloat(256.0f) - SSAFloat::MIN(dist * light_rcp_radius, SSAFloat(256.0f));
+
+		// The simple light type
+		SSAFloat simple_attenuation = distance_attenuation;
+
+		// The point light type
+		// diffuse = dot(N,L) * attenuation
+		SSAFloat point_attenuation = light_z * rcp_dist * distance_attenuation;
+
+		SSAInt attenuation = SSAInt((light_z == SSAFloat(0.0f)).select(simple_attenuation, point_attenuation), true);
 		SSAVec4i contribution = (light_color * fg * attenuation) >> 16;
 
 		stack_lit_color.store(lit_color + contribution);

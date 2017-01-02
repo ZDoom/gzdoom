@@ -42,6 +42,7 @@ public:
 
 	SSAInt zext_int();
 	SSAInt select(SSAInt a, SSAInt b);
+	SSAFloat select(SSAFloat a, SSAFloat b);
 	SSAUByte select(SSAUByte a, SSAUByte b);
 	SSAVec4i select(SSAVec4i a, SSAVec4i b);
 

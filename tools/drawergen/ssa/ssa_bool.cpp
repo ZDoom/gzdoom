@@ -58,6 +58,11 @@ SSAInt SSABool::select(SSAInt a, SSAInt b)
 	return SSAValue::from_llvm(SSAScope::builder().CreateSelect(v, a.v, b.v, SSAScope::hint()));
 }
 
+SSAFloat SSABool::select(SSAFloat a, SSAFloat b)
+{
+	return SSAValue::from_llvm(SSAScope::builder().CreateSelect(v, a.v, b.v, SSAScope::hint()));
+}
+
 SSAUByte SSABool::select(SSAUByte a, SSAUByte b)
 {
 	return SSAValue::from_llvm(SSAScope::builder().CreateSelect(v, a.v, b.v, SSAScope::hint()));

@@ -227,11 +227,13 @@ namespace swrenderer
 					float lz = (float)lightZ;
 
 					// Precalculate the constant part of the dot here so the drawer doesn't have to.
+					bool is_point_light = (cur_node->lightsource->flags4 & MF4_ATTENUATE) != 0;
 					float lconstant = lx * lx + ly * ly;
+					float nlconstant = is_point_light ? lx * dc_normal.X + ly * dc_normal.Y : 0.0f;
 
 					// Include light only if it touches this column
 					float radius = cur_node->lightsource->GetRadius();
-					if (radius * radius >= lconstant)
+					if (radius * radius >= lconstant && nlconstant >= 0.0f)
 					{
 						uint32_t red = cur_node->lightsource->GetRed();
 						uint32_t green = cur_node->lightsource->GetGreen();
@@ -240,6 +242,7 @@ namespace swrenderer
 						nextlightindex++;
 						auto &light = dc_lights[dc_num_lights++];
 						light.x = lconstant;
+						light.y = nlconstant;
 						light.z = lz;
 						light.radius = 256.0f / cur_node->lightsource->GetRadius();
 						light.color = (red << 16) | (green << 8) | blue;
@@ -364,6 +367,13 @@ namespace swrenderer
 			R_SetColorMapLight(fixedcolormap, 0, 0);
 		else
 			R_SetColorMapLight(basecolormap, 0, 0);
+
+		float dx = WallC.tright.X - WallC.tleft.X;
+		float dy = WallC.tright.Y - WallC.tleft.Y;
+		float length = sqrt(dx * dx + dy * dy);
+		dc_normal.X = dy / length;
+		dc_normal.Y = -dx / length;
+		dc_normal.Z = 0.0f;
 
 		float light = rw_light;
 

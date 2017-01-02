@@ -102,6 +102,7 @@ namespace swrenderer
 		uint8_t *dc_destorg;
 		int dc_destheight;
 		int dc_count;
+		FVector3 dc_normal;
 		FVector3 dc_viewpos;
 		FVector3 dc_viewpos_step;
 		TriLight *dc_lights;

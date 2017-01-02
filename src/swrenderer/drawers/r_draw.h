@@ -66,6 +66,7 @@ namespace swrenderer
 		extern uint8_t *dc_destorg;
 		extern int dc_destheight;
 		extern int dc_count;
+		extern FVector3 dc_normal;
 		extern FVector3 dc_viewpos;
 		extern FVector3 dc_viewpos_step;
 		extern TriLight *dc_lights;

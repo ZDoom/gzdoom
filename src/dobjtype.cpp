@@ -1652,7 +1652,11 @@ void PPointer::SetPointer(void *base, unsigned offset, TArray<size_t> *special) 
 
 void PPointer::WriteValue(FSerializer &ar, const char *key,const void *addr) const
 {
-	if (PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
+	if (PointedType->IsKindOf(RUNTIME_CLASS(PClassClass)))
+	{
+		ar(key, *(PClass **)addr);
+	}
+	else if (PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
 	{
 		ar(key, *(DObject **)addr);
 	}
@@ -1671,7 +1675,13 @@ void PPointer::WriteValue(FSerializer &ar, const char *key,const void *addr) con
 
 bool PPointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
-	if (PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
+	if (PointedType->IsKindOf(RUNTIME_CLASS(PClassClass)))
+	{
+		bool res = false;
+		::Serialize(ar, key, *(PClass **)addr, (PClass**)nullptr);
+		return res;
+	}
+	else if (PointedType->IsKindOf(RUNTIME_CLASS(PClass)))
 	{
 		bool res = false;
 		::Serialize(ar, key, *(DObject **)addr, nullptr, &res);
